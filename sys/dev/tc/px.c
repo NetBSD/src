@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.19 2003/06/29 22:30:52 fvdl Exp $	*/
+/* 	$NetBSD: px.c,v 1.19.2.1 2004/08/03 10:51:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19 2003/06/29 22:30:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.1 2004/08/03 10:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ px_attach(struct device *parent, struct device *self, void *aux)
 		si = &stic_consinfo;
 		console = 1;
 	} else {
-		if (stic_consinfo.si_slotbase == NULL)
+		if (stic_consinfo.si_slotbase == 0)
 			si = &stic_consinfo;
 		else {
 			si = malloc(sizeof(*si), M_DEVBUF, M_NOWAIT|M_ZERO);
@@ -188,6 +188,8 @@ px_init(struct stic_info *si, int bootstrap)
 	caddr_t kva, bva;
 	paddr_t bpa;
 
+	kva = (caddr_t)si->si_slotbase;
+
 	/*
 	 * Allocate memory for the packet buffers.  It must be located below
 	 * 8MB, since the STIC can't access outside that region.  Also, due
@@ -210,8 +212,6 @@ px_init(struct stic_info *si, int bootstrap)
 			panic("px_init: allocation failure");
 		bpa = TAILQ_FIRST(&pglist)->phys_addr;
 	}
-
-	kva = (caddr_t)si->si_slotbase;
 
 	si->si_vdac = (u_int32_t *)(kva + PX_VDAC_OFFSET);
 	si->si_vdac_reset = (u_int32_t *)(kva + PX_VDAC_RESET_OFFSET);

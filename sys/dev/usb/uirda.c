@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.16.2.1 2003/07/02 15:26:24 darrenr Exp $	*/
+/*	$NetBSD: uirda.c,v 1.16.2.2 2004/08/03 10:51:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.16.2.1 2003/07/02 15:26:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.16.2.2 2004/08/03 10:51:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ USB_ATTACH(uirda)
 
 	DPRINTFN(10,("uirda_attach: sc=%p\n", sc));
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 

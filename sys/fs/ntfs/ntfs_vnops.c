@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12.2.1 2003/07/02 15:26:32 darrenr Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.12.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.1 2003/07/02 15:26:32 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -101,7 +97,7 @@ static int	ntfs_fsync __P((struct vop_fsync_args *ap));
 #endif
 static int	ntfs_pathconf __P((void *));
 
-int	ntfs_prtactive = 1;	/* 1 => print out reclaim of active vnodes */
+extern int prtactive;
 
 #if defined(__FreeBSD__)
 int
@@ -261,7 +257,7 @@ ntfs_inactive(ap)
 
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
-	if (ntfs_prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount != 0)
 		vprint("ntfs_inactive: pushing active", vp);
 
 	VOP_UNLOCK(vp, 0);
@@ -288,7 +284,7 @@ ntfs_reclaim(ap)
 
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %d\n", vp, ip->i_number));
 
-	if (ntfs_prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount != 0)
 		vprint("ntfs_reclaim: pushing active", vp);
 
 	if ((error = ntfs_ntget(ip)) != 0)
@@ -331,11 +327,12 @@ ntfs_print(ap)
 int
 ntfs_strategy(ap)
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap;
 {
 	struct buf *bp = ap->a_bp;
-	struct vnode *vp = bp->b_vp;
+	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
 	struct ntfsmount *ntmp = ip->i_mp;
@@ -462,9 +459,6 @@ ntfs_access(ap)
 	mode_t mask, mode = ap->a_mode;
 	gid_t *gp;
 	int i;
-#ifdef QUOTA
-	int error;
-#endif
 
 	dprintf(("ntfs_access: %d\n",ip->i_number));
 
@@ -480,10 +474,6 @@ ntfs_access(ap)
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
-#ifdef QUOTA
-			if (error = getinoquota(ip))
-				return (error);
-#endif
 			break;
 		}
 	}
@@ -703,7 +693,7 @@ ntfs_readdir(ap)
 		off_t *cookiep;
 #endif
 
-		printf("ntfs_readdir: %d cookies\n",ncookies);
+		dprintf(("ntfs_readdir: %d cookies\n",ncookies));
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("ntfs_readdir: unexpected uio from NFS server");
 		dpStart = (struct dirent *)
@@ -993,7 +983,7 @@ const struct vnodeopv_entry_desc ntfs_vnodeop_entries[] = {
 	{ &vop_reallocblks_desc, genfs_eopnotsupp },	/* reallocblks */
 	{ &vop_vfree_desc, genfs_eopnotsupp },		/* vfree */
 	{ &vop_truncate_desc, genfs_eopnotsupp },	/* truncate */
-	{ &vop_update_desc, genfs_eopnotsupp },		/* update */
+	{ &vop_update_desc, genfs_nullop },		/* update */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_compat_getpages },	/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */

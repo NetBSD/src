@@ -1,7 +1,6 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.18.2.1 2003/07/02 15:27:19 darrenr Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.18.2.2 2004/08/03 10:56:49 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1997 Manuel Bouyer.
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -13,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,6 +32,38 @@
  * Modified for ext2fs by Manuel Bouyer.
  */
 
+/*-
+ * Copyright (c) 1997 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Manuel Bouyer.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	@(#)ffs_extern.h	8.3 (Berkeley) 4/16/94
+ * Modified for ext2fs by Manuel Bouyer.
+ */
+
 #ifndef _UFS_EXT2FS_EXT2FS_EXTERN_H_
 #define _UFS_EXT2FS_EXT2FS_EXTERN_H_
 
@@ -47,7 +74,7 @@ struct inode;
 struct mount;
 struct nameidata;
 struct lwp;
-struct statfs;
+struct statvfs;
 struct timeval;
 struct ucred;
 struct ufsmount;
@@ -116,13 +143,11 @@ int ext2fs_reload __P((struct mount *, struct ucred *, struct lwp *));
 int ext2fs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
 int ext2fs_unmount __P((struct mount *, int, struct lwp *));
 int ext2fs_flushfiles __P((struct mount *, int, struct lwp *));
-int ext2fs_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int ext2fs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int ext2fs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
 int ext2fs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
 int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
-int ext2fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		       struct lwp *));
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_cgupdate __P((struct ufsmount *, int));
 
@@ -152,6 +177,10 @@ int ext2fs_makeinode __P((int, struct vnode *, struct vnode **,
 int ext2fs_reclaim __P((void *));
 
 #define ext2fs_fsync genfs_fsync
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_ext2fs_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 __END_DECLS
 
 #define IS_EXT2_VNODE(vp)   (vp->v_tag == VT_EXT2FS)

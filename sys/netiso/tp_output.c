@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.22 2003/02/26 06:31:17 matt Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.22.2.1 2004/08/03 10:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.22 2003/02/26 06:31:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.22.2.1 2004/08/03 10:55:43 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -83,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.22 2003/02/26 06:31:17 matt Exp $");
 #include <sys/proc.h>
 
 #include <netiso/tp_param.h>
+#include <netiso/tp_var.h>
 #include <netiso/tp_user.h>
 #include <netiso/tp_stat.h>
 #include <netiso/tp_ip.h>
@@ -91,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.22 2003/02/26 06:31:17 matt Exp $");
 #include <netiso/argo_debug.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_trace.h>
-#include <netiso/tp_var.h>
 
 #define TPDUSIZESHIFT 24
 #define CLASSHIFT 16
@@ -121,10 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.22 2003/02/26 06:31:17 matt Exp $");
  */
 
 int
-tp_consistency(tpcb, cmd, param)
-	u_int           cmd;
-	struct tp_conn_param *param;
-	struct tp_pcb  *tpcb;
+tp_consistency(struct tp_pcb *tpcb, u_int cmd, struct tp_conn_param *param)
 {
 	int    error = EOK;
 	int             class_to_use = tp_mask_to_num(param->p_class);
@@ -392,10 +385,8 @@ done:
  * NOTES:
  */
 int
-tp_ctloutput(cmd, so, level, optname, mp)
-	int             cmd, level, optname;
-	struct socket  *so;
-	struct mbuf   **mp;
+tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
+	struct mbuf **mp)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct tp_pcb  *tpcb = sototpcb(so);
@@ -421,7 +412,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 		error = ENOTSOCK;
 		goto done;
 	}
-	if (*mp == MNULL) {
+	if (*mp == NULL) {
 		struct mbuf *m;
 
 		MGET(m, M_DONTWAIT, TPMT_SONAME);	/* does off, type, next */
@@ -453,7 +444,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			    tpcb->tp_state == TP_OPEN &&
 			    (old_credit < tpcb->tp_maxlcredit))
 				tp_emit(AK_TPDU_type, tpcb,
-					tpcb->tp_rcvnxt, 0, MNULL);
+					tpcb->tp_rcvnxt, 0, NULL);
 			tpcb->tp_rhiwat = so->so_rcv.sb_hiwat;
 		}
 		goto done;
@@ -697,7 +688,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 				error = EMSGSIZE;
 				goto done;
 			}
-			(*mp)->m_next = MNULL;
+			(*mp)->m_next = NULL;
 			(*mp)->m_nextpkt = 0;
 			if (tpcb->tp_ucddata)
 				m_cat(tpcb->tp_ucddata, *mp);
@@ -714,7 +705,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			      tpcb->tp_flags, so->so_snd.sb_cc, val_len, 0);
 			}
 #endif
-			*mp = MNULL;
+			*mp = NULL;
 			if (optname == TPOPT_CFRM_DATA && (so->so_state & SS_ISCONFIRMING))
 				(void) tp_confirm(tpcb);
 		}
@@ -757,7 +748,7 @@ done:
 	if (*mp) {
 		if (cmd == PRCO_SETOPT) {
 			m_freem(*mp);
-			*mp = MNULL;
+			*mp = NULL;
 		} else {
 			ASSERT(m_compress(*mp, mp) <= MLEN);
 			if (error)

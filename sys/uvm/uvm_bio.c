@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.28 2003/05/03 18:05:16 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.28.2.1 2004/08/03 10:57:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28 2003/05/03 18:05:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28.2.1 2004/08/03 10:57:03 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28 2003/05/03 18:05:16 yamt Exp $");
  * local functions
  */
 
-int	ubc_fault __P((struct uvm_faultinfo *, vaddr_t, struct vm_page **, int,
-    int, vm_fault_t, vm_prot_t, int));
-struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
+int	ubc_fault(struct uvm_faultinfo *, vaddr_t, struct vm_page **, int,
+    int, vm_fault_t, vm_prot_t, int);
+struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
 
 /*
  * local data structues
@@ -464,6 +464,7 @@ again:
 		struct vm_page *pgs[npages];
 		int gpflags = PGO_SYNCIO|PGO_OVERWRITE|PGO_PASTEOF;
 		int i;
+		KDASSERT(flags & UBC_WRITE);
 
 		if (umap->flags & UMAP_MAPPING_CACHED) {
 			umap->flags &= ~UMAP_MAPPING_CACHED;
@@ -539,7 +540,9 @@ ubc_release(va, flags)
 		uvm_unlock_pageq();
 		pmap_kremove(umapva, ubc_winsize);
 		pmap_update(pmap_kernel());
+		simple_lock(&uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
+		simple_unlock(&uobj->vmobjlock);
 		unmapped = TRUE;
 	} else {
 		unmapped = FALSE;
@@ -589,6 +592,7 @@ ubc_release(va, flags)
 }
 
 
+#if 0 /* notused */
 /*
  * removing a range of mappings from the ubc mapping cache.
  */
@@ -633,3 +637,4 @@ ubc_flush(uobj, start, end)
 	pmap_update(pmap_kernel());
 	simple_unlock(&ubc_object.uobj.vmobjlock);
 }
+#endif /* notused */

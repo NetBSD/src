@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.2 2002/12/05 17:12:06 thorpej Exp $ */
+/* $NetBSD: softfloat.c,v 1.2.6.1 2004/08/03 10:53:31 skrll Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -49,7 +49,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.2 2002/12/05 17:12:06 thorpej Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.2.6.1 2004/08/03 10:53:31 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -5403,7 +5403,7 @@ flag float128_lt_quiet( float128 a, float128 b )
  * They are based on the corresponding conversions to integer but return
  * unsigned numbers instead since these functions are required by GCC.
  *
- * Added by Mark Brinicombe <mark@netbsd.org>	27/09/97
+ * Added by Mark Brinicombe <mark@NetBSD.org>	27/09/97
  *
  * float64 version overhauled for SoftFloat 2a [bjh21 2000-07-15]
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.13 2001/11/13 01:10:49 lukem Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.13.16.1 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -69,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.13 2001/11/13 01:10:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.13.16.1 2004/08/03 10:55:41 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -92,7 +88,16 @@ __KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.13 2001/11/13 01:10:49 lukem Exp $")
 #include <netiso/iso_pcb.h>
 #include <netiso/cltp_var.h>
 
-struct protosw  isosw[] = {
+const int isoctlerrmap[PRC_NCMDS] = {
+	0,		0,		0,		0,
+	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
+	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
+	EMSGSIZE,	EHOSTUNREACH,	0,		0,
+	0,		0,		0,		0,
+	ENOPROTOOPT
+};
+
+const struct protosw  isosw[] = {
 	/*
 	 *  We need a datagram entry through which net mgmt programs can get
 	 *	to the iso_control procedure (iso ioctls). Thus, a minimal

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.26.2.1 2003/07/02 15:27:01 darrenr Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.26.2.2 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -217,6 +213,7 @@ extern u_int32_t ip6_id;		/* fragment identifier */
 extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
+extern int	ip6_sendredirect;	/* send ICMPv6 redirect? */
 extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
@@ -269,7 +266,8 @@ void	ip6_forward __P((struct mbuf *, int));
 void	ip6_mloopback __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *));
 int	ip6_output __P((struct mbuf *, struct ip6_pktopts *,
 			struct route_in6 *, int,
-			struct ip6_moptions *, struct ifnet **));
+			struct ip6_moptions *, struct socket *,
+			struct ifnet **));
 int	ip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	ip6_raw_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	ip6_setpktoptions __P((struct mbuf *, struct ip6_pktopts *, int));
@@ -283,7 +281,7 @@ void	frag6_slowtimo __P((void));
 void	frag6_drain __P((void));
 
 void	rip6_init __P((void));
-int	rip6_input __P((struct mbuf **mp, int *offp, int proto));
+int	rip6_input __P((struct mbuf **, int *, int));
 void	rip6_ctlinput __P((int, struct sockaddr *, void *));
 int	rip6_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 int	rip6_output __P((struct mbuf *, ...));
@@ -296,6 +294,9 @@ int	none_input __P((struct mbuf **, int *, int));
 struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 	struct ip6_pktopts *, struct ip6_moptions *, struct route_in6 *,
 	struct in6_addr *, int *));
+
+u_int32_t ip6_randomid __P((void));
+u_int32_t ip6_randomflowlabel __P((void));
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_VAR_H_ */

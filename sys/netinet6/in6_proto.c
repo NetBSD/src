@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.47 2003/04/17 19:58:57 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.47.2.1 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.47 2003/04/17 19:58:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.47.2.1 2004/08/03 10:55:13 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -133,28 +129,28 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.47 2003/04/17 19:58:57 thorpej Exp $
 
 extern	struct domain inet6domain;
 
-struct ip6protosw inet6sw[] = {
+const struct ip6protosw inet6sw[] = {
 { 0,		&inet6domain,	IPPROTO_IPV6,	0,
   0,		0,		0,		0,
   0,
   ip6_init,	0,		frag6_slowtimo,	frag6_drain,
-  ip6_sysctl,
+  NULL,
 },
 { SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
   udp6_usrreq,	udp6_init,
   0,		0,		0,
-  udp6_sysctl,
+  NULL,
 },
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
 #ifdef INET	/* don't call initialization and timeout routines twice */
-  0,		0,		0,		tcp6_drain,
+  0,		0,		0,		0,
 #else
-  tcp_init,	0,		tcp_slowtimo,	tcp6_drain,
+  tcp_init,	0,		tcp_slowtimo,	tcp_drain,
 #endif
-  tcp_sysctl,
+  NULL,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
@@ -165,7 +161,7 @@ struct ip6protosw inet6sw[] = {
   icmp6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
   icmp6_init,	icmp6_fasttimo,	0,		0,
-  icmp6_sysctl,
+  NULL,
 },
 { SOCK_RAW,	&inet6domain,	IPPROTO_DSTOPTS,PR_ATOMIC|PR_ADDR,
   dest6_input,	0,	 	0,		0,
@@ -187,21 +183,21 @@ struct ip6protosw inet6sw[] = {
   ah6_input,	0,	 	ah6_ctlinput,	0,
   0,
   0,		0,		0,		0,
-  ipsec6_sysctl,
+  NULL,
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inet6domain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
   esp6_input,	0,	 	esp6_ctlinput,	0,
   0,
   0,		0,		0,		0,
-  ipsec6_sysctl,
+  NULL,
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
   ipcomp6_input, 0,	 	0,		0,
   0,
   0,		0,		0,		0,
-  ipsec6_sysctl,
+  NULL,
 },
 #endif /* IPSEC */
 #ifdef INET
@@ -229,7 +225,7 @@ struct ip6protosw inet6sw[] = {
   0,            0,              0,              0,
 },
 /* raw wildcard */
-{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,
   rip6_init,	0,		0,		0,
@@ -256,12 +252,8 @@ struct domain inet6domain =
 #endif /* GATEWAY6 */
 #endif /* !IPV6FORWARDING */
 
-#ifndef	IPV6_SENDREDIRECTS
-#define	IPV6_SENDREDIRECTS	1
-#endif
-
 int	ip6_forwarding = IPV6FORWARDING;	/* act as router? */
-int	ip6_sendredirects = IPV6_SENDREDIRECTS;
+int	ip6_sendredirects = 1;
 int	ip6_defhlim = IPV6_DEFHLIM;
 int	ip6_defmcasthlim = IPV6_DEFAULT_MULTICAST_HOPS;
 int	ip6_accept_rtadv = 0;	/* "IPV6FORWARDING ? 0 : 1" is dangerous */
@@ -270,14 +262,12 @@ int	ip6_maxfrags = 200;
 int	ip6_log_interval = 5;
 int	ip6_hdrnestlimit = 50;	/* appropriate? */
 int	ip6_dad_count = 1;	/* DupAddrDetectionTransmits */
-u_int32_t ip6_flow_seq;
 int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
 				 * walk list every 5 sec. */
 int	ip6_v6only = 1;
 
-u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.20 2003/02/06 16:20:05 hannken Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.20.2.1 2004/08/03 10:51:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.20 2003/02/06 16:20:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.20.2.1 2004/08/03 10:51:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,6 @@ void	*dmabus_intr_establish __P((
 		int (*) __P((void *)),	/*handler*/
 		void *,			/*handler arg*/
 		void (*) __P((void))));	/*optional fast trap handler*/
-
-static	bus_space_tag_t dma_alloc_bustag __P((struct dma_softc *sc));
 
 CFATTACH_DECL(dma_sbus, sizeof(struct dma_softc),
     dmamatch_sbus, dmaattach_sbus, NULL, NULL);
@@ -176,7 +174,7 @@ dmaattach_sbus(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	burst = PROM_getpropint(node,"burst-sizes", -1);
+	burst = prom_getpropint(node,"burst-sizes", -1);
 	if (burst == -1)
 		/* take SBus burst sizes */
 		burst = sbusburst;
@@ -196,7 +194,7 @@ dmaattach_sbus(parent, self, aux)
 		 * the "cable-selection" property; default to TP and then
 		 * the user can change it via a "media" option to ifconfig.
 		 */
-		cabletype = PROM_getpropstring(node, "cable-selection");
+		cabletype = prom_getpropstring(node, "cable-selection");
 		csr = L64854_GCSR(sc);
 		if (strcmp(cabletype, "tpe") == 0) {
 			csr |= E_TP_AUI;
@@ -214,7 +212,11 @@ dmaattach_sbus(parent, self, aux)
 	}
 
 	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
-	sbt = dma_alloc_bustag(dsc);
+	if ((sbt = bus_space_tag_alloc(sc->sc_bustag, dsc)) == NULL) {
+		printf("%s: attach: out of memory\n", self->dv_xname);
+		return;
+	}
+	sbt->sparc_intr_establish = dmabus_intr_establish;
 	lsi64854_attach(sc);
 
 	/* Attach children */
@@ -247,21 +249,4 @@ dmabus_intr_establish(t, pri, level, handler, arg, fastvec)
 	}
 	return (bus_intr_establish(sc->sc_bustag, pri, level,
 				   handler, arg));
-}
-
-bus_space_tag_t
-dma_alloc_bustag(sc)
-	struct dma_softc *sc;
-{
-	bus_space_tag_t sbt;
-
-	sbt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag),
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sbt == NULL)
-		return (NULL);
-
-	sbt->cookie = sc;
-	sbt->parent = sc->sc_lsi64854.sc_bustag;
-	sbt->sparc_intr_establish = dmabus_intr_establish;
-	return (sbt);
 }

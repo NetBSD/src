@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.h,v 1.1 2000/10/02 17:21:26 itojun Exp $	*/
+/*	$NetBSD: esp_rijndael.h,v 1.1.28.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: esp_rijndael.h,v 1.1 2000/09/20 18:15:22 itojun Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-int esp_rijndael_schedlen __P((const struct esp_algorithm *));
+size_t esp_rijndael_schedlen __P((const struct esp_algorithm *));
 int esp_rijndael_schedule __P((const struct esp_algorithm *,
 	struct secasvar *));
 int esp_rijndael_blockdecrypt __P((const struct esp_algorithm *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.28 2003/04/02 10:39:38 fvdl Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.28.2.1 2004/08/03 10:56:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,14 +31,12 @@
  *	@(#)ffs_subr.c	8.5 (Berkeley) 3/21/95
  */
 
-#include <sys/cdefs.h>
-#if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.28 2003/04/02 10:39:38 fvdl Exp $");
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.28.2.1 2004/08/03 10:56:50 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -205,6 +199,7 @@ ffs_checkoverlap(bp, ip)
 	struct buf *bp;
 	struct inode *ip;
 {
+#if 0
 	struct buf *ebp, *ep;
 	daddr_t start, last;
 	struct vnode *vp;
@@ -231,6 +226,9 @@ ffs_checkoverlap(bp, ip)
 		    ep->b_blkno + btodb(ep->b_bcount) - 1);
 		panic("Disk buffer overlap");
 	}
+#else
+	printf("ffs_checkoverlap disabled due to buffer cache implementation changes\n");
+#endif
 }
 #endif /* _KERNEL && DIAGNOSTIC */
 
@@ -238,6 +236,8 @@ ffs_checkoverlap(bp, ip)
  * block operations
  *
  * check if a block is available
+ *  returns true if all the correponding bits in the free map are 1
+ *  returns false if any corresponding bit in the free map is 0 
  */
 int
 ffs_isblock(fs, cp, h)
@@ -266,7 +266,9 @@ ffs_isblock(fs, cp, h)
 }
 
 /*
- * check if a block is free
+ * check if a block is completely allocated
+ *  returns true if all the corresponding bits in the free map are 0
+ *  returns false if any corresponding bit in the free map is 1
  */
 int
 ffs_isfreeblock(fs, cp, h)

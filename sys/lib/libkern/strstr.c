@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.2 2002/10/08 21:45:36 jdolecek Exp $	*/
+/*	$NetBSD: strstr.c,v 1.2.8.1 2004/08/03 10:53:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.2 2002/10/08 21:45:36 jdolecek Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.2.8.1 2004/08/03 10:53:31 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +68,5 @@ strstr(s, find)
 		} while (strncmp(s, find, len) != 0);
 		s--;
 	}
-	/* LINTED interface specification */
-	return ((char *)s);
+	return __UNCONST(s);
 }

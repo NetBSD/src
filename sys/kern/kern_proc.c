@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.64 2003/03/19 20:35:04 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.64.2.1 2004/08/03 10:52:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -49,11 +49,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64 2003/03/19 20:35:04 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64.2.1 2004/08/03 10:52:49 skrll Exp $");
 
 #include "opt_kstack.h"
 
@@ -97,20 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.64 2003/03/19 20:35:04 dsl Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-
-static void pg_delete(pid_t);
-
-/*
- * Structure associated with user cacheing.
- */
-struct uidinfo {
-	LIST_ENTRY(uidinfo) ui_hash;
-	uid_t	ui_uid;
-	long	ui_proccnt;
-};
-#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-u_long uihash;		/* size of hash table - 1 */
 
 /*
  * Other process lists
@@ -138,18 +120,7 @@ struct proclist zombproc;	/* resources have been freed */
 struct lock proclist_lock;
 
 /*
- * List of processes that has called exit, but need to be reaped.
- * Locking of this proclist is special; it's accessed in a
- * critical section of process exit, and thus locking it can't
- * modify interrupt state.
- * We use a simple spin lock for this proclist.
- * Processes on this proclist are also on zombproc.
- */
-struct simplelock deadproc_slock;
-struct deadprocs deadprocs = SLIST_HEAD_INITIALIZER(deadprocs);
-
-/*
- * pid to proc lookup is done by indexing the pid_table array. 
+ * pid to proc lookup is done by indexing the pid_table array.
  * Since pid numbers are only allocated when an empty slot
  * has been found, there is no need to search any lists ever.
  * (an orphaned pgrp will lock the slot, a session will lock
@@ -163,12 +134,12 @@ struct deadprocs deadprocs = SLIST_HEAD_INITIALIZER(deadprocs);
 struct pid_table {
 	struct proc	*pt_proc;
 	struct pgrp	*pt_pgrp;
-}; 
+};
 #if 1	/* strongly typed cast - should be a noop */
-static __inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; };
+static __inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
 #else
 #define p2u(p) ((uint)p)
-#endif 
+#endif
 #define P_VALID(p) (!(p2u(p) & 1))
 #define P_NEXT(p) (p2u(p) >> 1)
 #define P_FREE(pid) ((struct proc *)(uintptr_t)((pid) << 1 | 1))
@@ -183,22 +154,39 @@ static uint pid_alloc_cnt;	/* number of allocated pids */
 static uint next_free_pt, last_free_pt;
 static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 
-struct pool proc_pool;
-struct pool lwp_pool;
-struct pool lwp_uc_pool;
-struct pool pcred_pool;
-struct pool plimit_pool;
-struct pool pstats_pool;
-struct pool pgrp_pool;
-struct pool rusage_pool;
-struct pool ras_pool;
-struct pool sadata_pool;
-struct pool saupcall_pool;
-struct pool ptimer_pool;
+POOL_INIT(proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
+    &pool_allocator_nointr);
+POOL_INIT(lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
+    &pool_allocator_nointr);
+POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
+    &pool_allocator_nointr);
+POOL_INIT(pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
+    &pool_allocator_nointr);
+POOL_INIT(pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
+    &pool_allocator_nointr);
+POOL_INIT(plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
+    &pool_allocator_nointr);
+POOL_INIT(pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
+    &pool_allocator_nointr);
+POOL_INIT(rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
+    &pool_allocator_nointr);
+POOL_INIT(ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
+    &pool_allocator_nointr);
+POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
+    &pool_allocator_nointr);
+POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, "saupcpl",
+    &pool_allocator_nointr);
+POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
+    &pool_allocator_nointr);
+POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
+    &pool_allocator_nointr);
+POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
+    &pool_allocator_nointr);
+POOL_INIT(session_pool, sizeof(struct session), 0, 0, 0, "sessionpl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_EMULDATA, "emuldata", "Per-process emulation data");
 MALLOC_DEFINE(M_PROC, "proc", "Proc structures");
-MALLOC_DEFINE(M_SESSION, "session", "session header");
 MALLOC_DEFINE(M_SUBPROC, "subproc", "Proc sub-structures");
 
 /*
@@ -212,10 +200,8 @@ const struct proclist_desc proclists[] = {
 	{ NULL		},
 };
 
-static void orphanpg __P((struct pgrp *));
-#ifdef DEBUG
-void pgrpdump __P((void));
-#endif
+static void orphanpg(struct pgrp *);
+static void pg_delete(pid_t);
 
 /*
  * Initialize global process hashing structures.
@@ -231,8 +217,6 @@ procinit(void)
 		LIST_INIT(pd->pd_list);
 
 	spinlockinit(&proclist_lock, "proclk", 0);
-
-	simple_lock_init(&deadproc_slock);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -252,37 +236,9 @@ procinit(void)
 #undef LINK_EMPTY
 
 	LIST_INIT(&alllwp);
-	LIST_INIT(&deadlwp);
-	LIST_INIT(&zomblwp);
 
 	uihashtbl =
 	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
-
-	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
-	    &pool_allocator_nointr);
-	pool_init(&lwp_pool, sizeof(struct lwp), 0, 0, 0, "lwppl",
-	    &pool_allocator_nointr);
-	pool_init(&lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-	    &pool_allocator_nointr);
-	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-	    &pool_allocator_nointr);
-	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
-	    &pool_allocator_nointr);
-	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
-	    &pool_allocator_nointr);
-	pool_init(&pstats_pool, sizeof(struct pstats), 0, 0, 0, "pstatspl",
-	    &pool_allocator_nointr);
-	pool_init(&rusage_pool, sizeof(struct rusage), 0, 0, 0, "rusgepl",
-	    &pool_allocator_nointr);
-	pool_init(&ras_pool, sizeof(struct ras), 0, 0, 0, "raspl",
-	    &pool_allocator_nointr);
-	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
-	    &pool_allocator_nointr);
-	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, 
-	    "saupcpl",
-	    &pool_allocator_nointr);
-	pool_init(&ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
-	    &pool_allocator_nointr);
 }
 
 /*
@@ -339,45 +295,7 @@ proclist_unlock_write(int s)
 }
 
 /*
- * Change the count associated with number of processes
- * a given user is using.
- */
-int
-chgproccnt(uid_t uid, int diff)
-{
-	struct uidinfo *uip;
-	struct uihashhead *uipp;
-
-	uipp = UIHASH(uid);
-
-	LIST_FOREACH(uip, uipp, ui_hash)
-		if (uip->ui_uid == uid)
-			break;
-
-	if (uip) {
-		uip->ui_proccnt += diff;
-		if (uip->ui_proccnt > 0)
-			return (uip->ui_proccnt);
-		if (uip->ui_proccnt < 0)
-			panic("chgproccnt: procs < 0");
-		LIST_REMOVE(uip, ui_hash);
-		FREE(uip, M_PROC);
-		return (0);
-	}
-	if (diff <= 0) {
-		if (diff == 0)
-			return(0);
-		panic("chgproccnt: lost user");
-	}
-	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
-	LIST_INSERT_HEAD(uipp, uip, ui_hash);
-	uip->ui_uid = uid;
-	uip->ui_proccnt = diff;
-	return (diff);
-}
-
-/*
- * Check that the specifies process group in in the session of the
+ * Check that the specified process group is in the session of the
  * specified process.
  * Treats -ve ids as process ids.
  * Used to validate TIOCSPGRP requests.
@@ -419,20 +337,25 @@ inferior(struct proc *p, struct proc *q)
  * Locate a process by number
  */
 struct proc *
-pfind(pid_t pid)
+p_find(pid_t pid, uint flags)
 {
 	struct proc *p;
+	char stat;
 
-	proclist_lock_read();
+	if (!(flags & PFIND_LOCKED))
+		proclist_lock_read();
 	p = pid_table[pid & pid_tbl_mask].pt_proc;
 	/* Only allow live processes to be found by pid. */
-	if (!P_VALID(p) || p->p_pid != pid ||
-	    !((1 << SACTIVE | 1 << SSTOP) & 1 << p->p_stat))
-		p = 0;
-
-	/* XXX MP - need to have a reference count... */
-	proclist_unlock_read();
-	return p;
+	if (P_VALID(p) && p->p_pid == pid &&
+	    ((stat = p->p_stat) == SACTIVE || stat == SSTOP
+		    || (stat == SZOMB && (flags & PFIND_ZOMBIE)))) {
+		if (flags & PFIND_UNLOCK_OK)
+			 proclist_unlock_read();
+		return p;
+	}
+	if (flags & PFIND_UNLOCK_FAIL)
+		 proclist_unlock_read();
+	return NULL;
 }
 
 
@@ -440,23 +363,26 @@ pfind(pid_t pid)
  * Locate a process group by number
  */
 struct pgrp *
-pgfind(pid_t pgid)
+pg_find(pid_t pgid, uint flags)
 {
-	struct pgrp *pgrp;
+	struct pgrp *pg;
 
-	proclist_lock_read();
-	pgrp = pid_table[pgid & pid_tbl_mask].pt_pgrp;
+	if (!(flags & PFIND_LOCKED))
+		proclist_lock_read();
+	pg = pid_table[pgid & pid_tbl_mask].pt_pgrp;
 	/*
 	 * Can't look up a pgrp that only exists because the session
 	 * hasn't died yet (traditional)
 	 */
-	if (pgrp == NULL || pgrp->pg_id != pgid
-	    || LIST_EMPTY(&pgrp->pg_members))
-		pgrp = 0;
+	if (pg == NULL || pg->pg_id != pgid || LIST_EMPTY(&pg->pg_members)) {
+		if (flags & PFIND_UNLOCK_FAIL)
+			 proclist_unlock_read();
+		return NULL;
+	}
 
-	/* XXX MP - need to have a reference count... */
-	proclist_unlock_read();
-	return pgrp;
+	if (flags & PFIND_UNLOCK_OK)
+		proclist_unlock_read();
+	return pg;
 }
 
 /*
@@ -468,9 +394,12 @@ proc0_insert(struct proc *p, struct lwp *l, struct pgrp *pgrp,
 {
 	int s;
 
+	simple_lock_init(&p->p_lock);
 	LIST_INIT(&p->p_lwps);
 	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
 	p->p_nlwps = 1;
+	simple_lock_init(&p->p_sigctx.ps_silock);
+	CIRCLEQ_INIT(&p->p_sigctx.ps_siginfo);
 
 	s = proclist_lock_write();
 
@@ -511,7 +440,7 @@ expand_pid_table(void)
 		FREE(new_pt, M_PROC);
 		return;
 	}
-	   
+
 	/*
 	 * Copy entries from old table into new one.
 	 * If 'pid' is 'odd' we need to place in the upper half,
@@ -520,7 +449,7 @@ expand_pid_table(void)
 	 * fixup the reference to them.
 	 * We stuff free items on the front of the freelist
 	 * because we can't write to unmodified entries.
-	 * Processing the table backwards maintians a semblance
+	 * Processing the table backwards maintains a semblance
 	 * of issueing pid numbers that increase with time.
 	 */
 	i = pt_size - 1;
@@ -536,7 +465,7 @@ expand_pid_table(void)
 				pid = pgrp->pg_id;
 		} else
 			pid = proc->p_pid;
-		
+
 		/* Save entry in appropriate half of table */
 		n_pt[pid & pt_size].pt_proc = proc;
 		n_pt[pid & pt_size].pt_pgrp = pgrp;
@@ -657,12 +586,12 @@ proc_free_mem(struct proc *p)
  * Move p to a new or existing process group (and session)
  *
  * If we are creating a new pgrp, the pgid should equal
- * the calling processes pid.
+ * the calling process' pid.
  * If is only valid to enter a process group that is in the session
  * of the process.
  * Also mksess should only be set if we are creating a process group
  *
- * Only called from sys_setsid, sys_setpgid/sys_setprp and the
+ * Only called from sys_setsid, sys_setpgid/sys_setpgrp and the
  * SYSV setpgrp support for hpux == enterpgrp(curproc, curproc->p_pid)
  */
 int
@@ -686,8 +615,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 		new_pgrp = NULL;
 	}
 	if (mksess)
-		MALLOC(sess, struct session *, sizeof(struct session),
-			    M_SESSION, M_WAITOK);
+		sess = pool_get(&session_pool, M_WAITOK);
 	else
 		sess = NULL;
 
@@ -804,7 +732,7 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
     done:
 	proclist_unlock_write(s);
 	if (sess != NULL)
-		free(sess, M_SESSION);
+		pool_put(&session_pool, sess);
 	if (new_pgrp != NULL)
 		pool_put(&pgrp_pool, new_pgrp);
 	if (pg_id != NO_PGID)
@@ -823,10 +751,11 @@ enterpgrp(struct proc *p, pid_t pgid, int mksess)
 int
 leavepgrp(struct proc *p)
 {
-	int s = proclist_lock_write();
+	int s;
 	struct pgrp *pgrp;
 	pid_t pg_id;
 
+	s = proclist_lock_write();
 	pgrp = p->p_pgrp;
 	LIST_REMOVE(p, p_pglist);
 	p->p_pgrp = 0;
@@ -882,7 +811,7 @@ pg_delete(pid_t pg_id)
 	struct pgrp *pgrp;
 	struct tty *ttyp;
 	struct session *ss;
-	int s;
+	int s, is_pgrp_leader;
 
 	s = proclist_lock_write();
 	pgrp = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
@@ -892,22 +821,29 @@ pg_delete(pid_t pg_id)
 		return;
 	}
 
-	/* Remove reference (if any) from tty to this process group */
-	ttyp = pgrp->pg_session->s_ttyp;
-	if (ttyp != NULL && ttyp->t_pgrp == pgrp)
-		ttyp->t_pgrp = NULL;
-
 	ss = pgrp->pg_session;
 
-	if (ss->s_sid == pgrp->pg_id) {
-		proclist_unlock_write(s);
-		SESSRELE(ss);
-		/* pgrp freed by sessdelete() if last reference */
-		return;
+	/* Remove reference (if any) from tty to this process group */
+	ttyp = ss->s_ttyp;
+	if (ttyp != NULL && ttyp->t_pgrp == pgrp) {
+		ttyp->t_pgrp = NULL;
+#ifdef DIAGNOSTIC
+		if (ttyp->t_session != ss)
+			panic("pg_delete: wrong session on terminal");
+#endif
 	}
 
+	/*
+	 * The leading process group in a session is freed
+	 * by sessdelete() if last reference.
+	 */
+	is_pgrp_leader = (ss->s_sid == pgrp->pg_id);
 	proclist_unlock_write(s);
 	SESSRELE(ss);
+
+	if (is_pgrp_leader)
+		return;
+
 	pg_free(pg_id);
 }
 
@@ -926,7 +862,7 @@ sessdelete(struct session *ss)
 
 	pg_free(ss->s_sid);
 
-	FREE(ss, M_SESSION);
+	pool_put(&session_pool, ss);
 }
 
 /*
@@ -938,19 +874,22 @@ sessdelete(struct session *ss)
  * process group and that of its children.
  * entering == 0 => p is leaving specified group.
  * entering == 1 => p is entering specified group.
+ *
+ * Call with proclist_lock held.
  */
 void
 fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 {
 	struct pgrp *hispgrp;
 	struct session *mysession = pgrp->pg_session;
+	struct proc *child;
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
 	 * group; if so, adjust count for p's process group.
 	 */
-	if ((hispgrp = p->p_pptr->p_pgrp) != pgrp &&
-	    hispgrp->pg_session == mysession) {
+	hispgrp = p->p_pptr->p_pgrp;
+	if (hispgrp != pgrp && hispgrp->pg_session == mysession) {
 		if (entering)
 			pgrp->pg_jobc++;
 		else if (--pgrp->pg_jobc == 0)
@@ -962,10 +901,10 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	 * their process groups; if so, adjust counts for children's
 	 * process groups.
 	 */
-	LIST_FOREACH(p, &p->p_children, p_sibling) {
-		if ((hispgrp = p->p_pgrp) != pgrp &&
-		    hispgrp->pg_session == mysession &&
-		    P_ZOMBIE(p) == 0) {
+	LIST_FOREACH(child, &p->p_children, p_sibling) {
+		hispgrp = child->p_pgrp;
+		if (hispgrp != pgrp && hispgrp->pg_session == mysession &&
+		    !P_ZOMBIE(child)) {
 			if (entering)
 				hispgrp->pg_jobc++;
 			else if (--hispgrp->pg_jobc == 0)
@@ -974,10 +913,12 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	}
 }
 
-/* 
+/*
  * A process group has become orphaned;
  * if there are any stopped processes in the group,
  * hang-up all process in that group.
+ *
+ * Call with proclist_lock held.
  */
 static void
 orphanpg(struct pgrp *pg)
@@ -999,19 +940,25 @@ orphanpg(struct pgrp *pg)
 void
 p_sugid(struct proc *p)
 {
-	struct plimit *newlim;
+	struct plimit *lim;
+	char *cn;
 
 	p->p_flag |= P_SUGID;
 	/* reset what needs to be reset in plimit */
-	if (p->p_limit->pl_corename != defcorename) {
-		if (p->p_limit->p_refcnt > 1 &&
-		    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-			newlim = limcopy(p->p_limit);
-			limfree(p->p_limit);
-			p->p_limit = newlim;
+	lim = p->p_limit;
+	if (lim->pl_corename != defcorename) {
+		if (lim->p_refcnt > 1 &&
+		    (lim->p_lflags & PL_SHAREMOD) == 0) {
+			p->p_limit = limcopy(lim);
+			limfree(lim);
+			lim = p->p_limit;
 		}
-		free(p->p_limit->pl_corename, M_TEMP);
-		p->p_limit->pl_corename = defcorename;
+		simple_lock(&lim->p_slock);
+		cn = lim->pl_corename;
+		lim->pl_corename = defcorename;
+		simple_unlock(&lim->p_slock);
+		if (cn != defcorename)
+			free(cn, M_TEMP);
 	}
 }
 
@@ -1051,7 +998,7 @@ pidtbl_dump(void)
 			    pgrp->pg_members.lh_first);
 			for (p = pgrp->pg_members.lh_first; p != 0;
 			    p = p->p_pglist.le_next) {
-				db_printf("\t\tpid %d addr %p pgrp %p %s\n", 
+				db_printf("\t\tpid %d addr %p pgrp %p %s\n",
 				    p->p_pid, p, p->p_pgrp, p->p_comm);
 			}
 		}
@@ -1083,7 +1030,7 @@ kstack_setup_magic(const struct lwp *l)
 	 * so that later modification on it can be detected.
 	 */
 	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++) {
 		*ip = KSTACK_MAGIC;
 	}
@@ -1103,17 +1050,17 @@ kstack_check_magic(const struct lwp *l)
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/* stack grows upwards (eg. hppa) */
-	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
+	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	end = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
 	for (ip--; ip >= end; ip--)
 		if (*ip != KSTACK_MAGIC)
 			break;
-		
+
 	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (caddr_t)ip;
 #else /* __MACHINE_STACK_GROWS_UP */
 	/* stack grows downwards (eg. i386) */
 	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++)
 		if (*ip != KSTACK_MAGIC)
 			break;

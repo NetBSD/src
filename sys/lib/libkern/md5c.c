@@ -1,8 +1,8 @@
-/*	$NetBSD: md5c.c,v 1.9 2001/11/15 09:48:20 lukem Exp $	*/
+/*	$NetBSD: md5c.c,v 1.9.16.1 2004/08/03 10:53:31 skrll Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
- * Algorithm and has been modifed by Jason R. Thorpe <thorpej@NetBSD.ORG>
+ * Algorithm and has been modifed by Jason R. Thorpe <thorpej@NetBSD.org>
  * for portability and formatting.
  */
 
@@ -41,7 +41,6 @@
 
 #define	ZEROIZE(d, l)		memset((d), 0, (l))
 
-typedef unsigned char *POINTER;
 typedef u_int16_t UINT2;
 typedef u_int32_t UINT4;
 
@@ -204,8 +203,7 @@ MD5Update(context, input, inputLen)
 	/* Transform as many times as possible. */
 	if (inputLen >= partLen) {
 		/* LINTED const castaway ok */
-		memcpy((POINTER)&context->buffer[idx],
-		    (POINTER)input, partLen);
+		memcpy(&context->buffer[idx], input, partLen);
 		MD5Transform(context->state, context->buffer);
 
 		for (i = partLen; i + 63 < inputLen; i += 64)
@@ -216,9 +214,7 @@ MD5Update(context, input, inputLen)
 		i = 0;
 
 	/* Buffer remaining input */
-	/* LINTED const castaway ok */
-	memcpy((POINTER)&context->buffer[idx], (POINTER)&input[i],
-	    inputLen - i);
+	memcpy(&context->buffer[idx], &input[i], inputLen - i);
 }
 
 /*
@@ -248,7 +244,7 @@ MD5Final(digest, context)
 	Encode(digest, context->state, 16);
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)(void *)context, sizeof(*context));
+	ZEROIZE((void *)context, sizeof(*context));
 }
 
 /*
@@ -341,5 +337,5 @@ MD5Transform(state, block)
 	state[3] += d;
 
 	/* Zeroize sensitive information. */
-	ZEROIZE((POINTER)(void *)x, sizeof (x));
+	ZEROIZE((void *)x, sizeof (x));
 }

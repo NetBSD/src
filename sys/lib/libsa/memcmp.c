@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.6 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.6.28.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,14 +44,28 @@
 #endif
 #include "stand.h"
 
+#undef memcmp
+#undef bcmp
+
+/* define bcmp to be the same as memcmp() */
+__strong_alias(bcmp, memcmp);
+
 /*
- * Cheezy memcmp(), as a wrapper around bcmp()
+ * Conformant memcmp()
  */
 int
 memcmp(b1, b2, len)
 	const void *b1, *b2;
 	size_t len;
 {
+	const unsigned char *c1 = b1, *c2 = b2;
+	int diff;
 
-	return (bcmp(b1, b2, len));
+	while (len > 0) {
+		diff = *c1++ - *c2++;
+		len--;
+		if (diff != 0)
+			return diff;
+	}
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.4.2.1 2003/07/02 15:26:28 darrenr Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.4.2.2 2004/08/03 10:52:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -90,9 +86,9 @@ struct iso_node {
 	doff_t	i_offset;	/* offset of free space in directory */
 	ino_t	i_ino;		/* inode number of found directory */
 
-	long iso_extent;	/* extent of file */
-	long i_size;
-	long iso_start;		/* actual start of data of file (may be different */
+	unsigned long iso_extent;	/* extent of file */
+	unsigned long i_size;
+	unsigned long iso_start;		/* actual start of data of file (may be different */
 				/* from iso_extent, if file has extended attributes) */
 	ISO_RRIP_INODE  inode;
 };

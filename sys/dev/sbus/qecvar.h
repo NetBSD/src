@@ -1,4 +1,4 @@
-/*	$NetBSD: qecvar.h,v 1.6 2003/05/03 18:11:39 wiz Exp $	*/
+/*	$NetBSD: qecvar.h,v 1.6.2.1 2004/08/03 10:51:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@ struct qec_softc {
 	struct sbusdev sc_sd;		/* sbus device */
 	bus_space_tag_t	sc_bustag;	/* bus & DMA tags */
 	bus_dma_tag_t	sc_dmatag;
-	struct	openprom_range *sc_range;/* PROM ranges */
-	int	sc_nrange;		/*	       */
 	struct	openprom_intr *sc_intr;	/* interrupt info */
 
 	bus_space_handle_t sc_regs;	/* QEC registers */

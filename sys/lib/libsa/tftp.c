@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.14 2003/03/18 19:20:09 mycroft Exp $	 */
+/*	$NetBSD: tftp.c,v 1.14.2.1 2004/08/03 10:53:53 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed for the NetBSD Project
- *	by Matthias Drochner.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -77,7 +71,7 @@ struct tftp_handle {
 	int             islastblock;	/* flag */
 	int             validsize;
 	int             off;
-	char           *path;	/* saved for re-requests */
+	const char     *path;	/* saved for re-requests */
 	struct {
 		u_char header[HEADER_SIZE];
 		struct tftphdr t;
@@ -261,7 +255,7 @@ tftp_terminate(h)
 
 int 
 tftp_open(path, f)
-	char           *path;
+	const char           *path;
 	struct open_file *f;
 {
 	struct tftp_handle *tftpfile;
@@ -301,7 +295,8 @@ tftp_read(f, addr, size, resid)
 	tftpfile = (struct tftp_handle *) f->f_fsdata;
 
 	while (size > 0) {
-		int needblock, count;
+		int needblock;
+		size_t count;
 
 #if !defined(LIBSA_NO_TWIDDLE)
 		if (!(tc++ % 16))
@@ -334,7 +329,7 @@ tftp_read(f, addr, size, resid)
 		}
 
 		if (tftpfile->currblock == needblock) {
-			int offinblock, inbuffer;
+			size_t offinblock, inbuffer;
 
 			offinblock = tftpfile->off % SEGSIZE;
 

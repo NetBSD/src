@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.102.2.1 2003/07/02 15:26:39 darrenr Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.102.2.2 2004/08/03 10:52:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -66,11 +66,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -90,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.1 2003/07/02 15:26:39 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.2 2004/08/03 10:52:52 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -118,24 +114,24 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.102.2.1 2003/07/02 15:26:39 darrenr 
 #include <net/if.h>
 
 /* XXX these should eventually move to subr_autoconf.c */
-static struct device *finddevice __P((const char *));
-static struct device *getdisk __P((char *, int, int, dev_t *, int));
-static struct device *parsedisk __P((char *, int, int, dev_t *));
+static struct device *finddevice(const char *);
+static struct device *getdisk(char *, int, int, dev_t *, int);
+static struct device *parsedisk(char *, int, int, dev_t *);
 
 /*
  * A generic linear hook.
  */
 struct hook_desc {
 	LIST_ENTRY(hook_desc) hk_list;
-	void	(*hk_fn) __P((void *));
+	void	(*hk_fn)(void *);
 	void	*hk_arg;
 };
 typedef LIST_HEAD(, hook_desc) hook_list_t;
 
-static void *hook_establish __P((hook_list_t *, void (*)(void *), void *));
-static void hook_disestablish __P((hook_list_t *, void *));
-static void hook_destroy __P((hook_list_t *));
-static void hook_proc_run __P((hook_list_t *, struct proc *));
+static void *hook_establish(hook_list_t *, void (*)(void *), void *);
+static void hook_disestablish(hook_list_t *, void *);
+static void hook_destroy(hook_list_t *);
+static void hook_proc_run(hook_list_t *, struct proc *);
 
 MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 
@@ -161,6 +157,7 @@ uiomove(buf, n, uio)
 		iov = uio->uio_iov;
 		cnt = iov->iov_len;
 		if (cnt == 0) {
+			KASSERT(uio->uio_iovcnt > 0);
 			uio->uio_iov++;
 			uio->uio_iovcnt--;
 			continue;
@@ -211,6 +208,23 @@ uiomove(buf, n, uio)
 		n -= cnt;
 	}
 	return (error);
+}
+
+/*
+ * Wrapper for uiomove() that validates the arguments against a known-good
+ * kernel buffer.
+ */
+int
+uiomove_frombuf(void *buf, size_t buflen, struct uio *uio)
+{
+	size_t offset;
+
+	if (uio->uio_offset < 0 || uio->uio_resid < 0 ||
+	    (offset = uio->uio_offset) != uio->uio_offset)
+		return (EINVAL);
+	if (offset >= buflen)
+		return (0);
+	return (uiomove((char *)buf + offset, buflen - offset, uio));
 }
 
 /*
@@ -350,9 +364,11 @@ hashinit(elements, htype, mtype, mflags, hashmask)
 	case HASH_TAILQ:
 		esize = sizeof(*hashtbl_tailq);
 		break;
-#ifdef DIAGNOSTIC
 	default:
+#ifdef DIAGNOSTIC
 		panic("hashinit: invalid table type");
+#else
+		return NULL;
 #endif
 	}
 
@@ -391,7 +407,7 @@ hashdone(hashtbl, mtype)
 static void *
 hook_establish(list, fn, arg)
 	hook_list_t *list;
-	void (*fn) __P((void *));
+	void (*fn)(void *);
 	void *arg;
 {
 	struct hook_desc *hd;
@@ -447,7 +463,7 @@ hook_proc_run(list, p)
 	struct hook_desc *hd;
 
 	for (hd = LIST_FIRST(list); hd != NULL; hd = LIST_NEXT(hd, hk_list)) {
-		((void (*) __P((struct proc *, void *)))*hd->hk_fn)(p,
+		((void (*)(struct proc *, void *))*hd->hk_fn)(p,
 		    hd->hk_arg);
 	}
 }
@@ -467,7 +483,7 @@ hook_list_t shutdownhook_list;
 
 void *
 shutdownhook_establish(fn, arg)
-	void (*fn) __P((void *));
+	void (*fn)(void *);
 	void *arg;
 {
 	return hook_establish(&shutdownhook_list, fn, arg);
@@ -517,11 +533,10 @@ hook_list_t mountroothook_list;
 
 void *
 mountroothook_establish(fn, dev)
-	void (*fn) __P((struct device *));
+	void (*fn)(struct device *);
 	struct device *dev;
 {
-	return hook_establish(&mountroothook_list, (void (*)__P((void *)))fn,
-	    dev);
+	return hook_establish(&mountroothook_list, (void (*)(void *))fn, dev);
 }
 
 void
@@ -554,10 +569,10 @@ hook_list_t exechook_list;
 
 void *
 exechook_establish(fn, arg)
-	void (*fn) __P((struct lwp *, void *));
+	void (*fn)(struct lwp *, void *);
 	void *arg;
 {
-	return hook_establish(&exechook_list, (void (*) __P((void *)))fn, arg);
+	return hook_establish(&exechook_list, (void (*)(void *))fn, arg);
 }
 
 void
@@ -581,10 +596,10 @@ hook_list_t exithook_list;
 
 void *
 exithook_establish(fn, arg)
-	void (*fn) __P((struct lwp *, void *));
+	void (*fn)(struct lwp *, void *);
 	void *arg;
 {
-	return hook_establish(&exithook_list, (void (*) __P((void *)))fn, arg);
+	return hook_establish(&exithook_list, (void (*)(void *))fn, arg);
 }
 
 void
@@ -608,9 +623,9 @@ hook_list_t forkhook_list;
 
 void *
 forkhook_establish(fn)
-	void (*fn) __P((struct proc *, struct proc *));
+	void (*fn)(struct proc *, struct proc *);
 {
-	return hook_establish(&forkhook_list, (void (*) __P((void *)))fn, NULL);
+	return hook_establish(&forkhook_list, (void (*)(void *))fn, NULL);
 }
 
 void
@@ -630,7 +645,7 @@ doforkhooks(p2, p1)
 	struct hook_desc *hd;
 
 	LIST_FOREACH(hd, &forkhook_list, hk_list) {
-		((void (*) __P((struct proc *, struct proc *)))*hd->hk_fn)
+		((void (*)(struct proc *, struct proc *))*hd->hk_fn)
 		    (p2, p1);
 	}
 }
@@ -644,16 +659,16 @@ doforkhooks(p2, p1)
  */
 struct powerhook_desc {
 	CIRCLEQ_ENTRY(powerhook_desc) sfd_list;
-	void	(*sfd_fn) __P((int, void *));
+	void	(*sfd_fn)(int, void *);
 	void	*sfd_arg;
 };
 
-CIRCLEQ_HEAD(, powerhook_desc) powerhook_list = 
+CIRCLEQ_HEAD(, powerhook_desc) powerhook_list =
 	CIRCLEQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
 powerhook_establish(fn, arg)
-	void (*fn) __P((int, void *));
+	void (*fn)(int, void *);
 	void *arg;
 {
 	struct powerhook_desc *ndp;
@@ -722,9 +737,13 @@ dopowerhooks(why)
 static struct device fakemdrootdev[NMD];
 #endif
 
+#ifdef MEMORY_DISK_IS_ROOT
+#define BOOT_FROM_MEMORY_HOOKS 1
+#endif
+
 #include "raid.h"
 #if NRAID == 1
-#define BOOT_FROM_RAID_HOOKS 1 
+#define BOOT_FROM_RAID_HOOKS 1
 #endif
 
 #ifdef BOOT_FROM_RAID_HOOKS
@@ -759,7 +778,8 @@ setroot(bootdv, bootpartition)
 		fakemdrootdev[i].dv_cfdata = NULL;
 		fakemdrootdev[i].dv_unit   = i;
 		fakemdrootdev[i].dv_parent = NULL;
-		sprintf(fakemdrootdev[i].dv_xname, "md%d", i);
+		snprintf(fakemdrootdev[i].dv_xname,
+		    sizeof(fakemdrootdev[i].dv_xname), "md%d", i);
 	}
 #endif /* MEMORY_DISK_HOOKS */
 
@@ -969,7 +989,8 @@ setroot(bootdv, bootpartition)
 			goto top;
 		}
 		memset(buf, 0, sizeof(buf));
-		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
+		snprintf(buf, sizeof(buf), "%s%d", rootdevname,
+		    DISKUNIT(rootdev));
 
 		rootdv = finddevice(buf);
 		if (rootdv == NULL) {
@@ -1034,7 +1055,8 @@ setroot(bootdv, bootpartition)
 		if (dumpdevname == NULL)
 			goto nodumpdev;
 		memset(buf, 0, sizeof(buf));
-		sprintf(buf, "%s%d", dumpdevname, DISKUNIT(dumpdev));
+		snprintf(buf, sizeof(buf), "%s%d", dumpdevname,
+		    DISKUNIT(dumpdev));
 
 		dumpdv = finddevice(buf);
 		if (dumpdv == NULL) {
@@ -1067,16 +1089,27 @@ finddevice(name)
 	const char *name;
 {
 	struct device *dv;
-#ifdef BOOT_FROM_RAID_HOOKS
+#if defined(BOOT_FROM_RAID_HOOKS) || defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
+#endif /* BOOT_FROM_RAID_HOOKS || BOOT_FROM_MEMORY_HOOKS */
 
+#ifdef BOOT_FROM_RAID_HOOKS
 	for (j = 0; j < numraid; j++) {
 		if (strcmp(name, raidrootdev[j].dv_xname) == 0) {
 			dv = &raidrootdev[j];
 			return (dv);
 		}
 	}
-#endif
+#endif /* BOOT_FROM_RAID_HOOKS */
+
+#ifdef BOOT_FROM_MEMORY_HOOKS
+	for (j = 0; j < NMD; j++) {
+		if (strcmp(name, fakemdrootdev[j].dv_xname) == 0) {
+			dv = &fakemdrootdev[j];
+			return (dv);
+		}
+	}
+#endif /* BOOT_FROM_MEMORY_HOOKS */
 
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	    dv = TAILQ_NEXT(dv, dv_list))
@@ -1196,7 +1229,7 @@ parsedisk(str, len, defpart, devp)
  * plus a possible `x' + suffix extension) fits into len bytes (including
  * the terminating NUL).
  * Returns the number of bytes stored in buf, or -1 if there was a problem.
- * E.g, given a len of 9 and a suffix of `B': 
+ * E.g, given a len of 9 and a suffix of `B':
  *	bytes		result
  *	-----		------
  *	99999		`99999 B'
@@ -1276,8 +1309,7 @@ format_bytes(buf, len, bytes)
  */
 int
 trace_enter(struct lwp *l, register_t code,
-	register_t realcode, const struct sysent *callp, void *args,
-	register_t rval[])
+	register_t realcode, const struct sysent *callp, void *args)
 {
 #if defined(KTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
@@ -1294,7 +1326,7 @@ trace_enter(struct lwp *l, register_t code,
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE))
-		return systrace_enter(p, code, args, rval);
+		return systrace_enter(p, code, args);
 #endif
 	return 0;
 }

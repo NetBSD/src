@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.58 2002/11/02 19:03:44 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.58.6.1 2004/08/03 10:54:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,11 +41,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -65,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58 2002/11/02 19:03:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58.6.1 2004/08/03 10:54:36 skrll Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -122,6 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58 2002/11/02 19:03:44 itojun Exp $")
 #include <netinet6/ipcomp.h>
 #endif /* IPSEC */
 
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif	/* FAST_IPSEC */
+
 #ifdef NSIP
 #include <netns/ns_var.h>
 #include <netns/idp_var.h>
@@ -141,23 +142,21 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.58 2002/11/02 19:03:44 itojun Exp $")
 #include <netinet/ip_gre.h>
 #endif
 
-extern	struct domain inetdomain;
-
-struct protosw inetsw[] = {
+const struct protosw inetsw[] = {
 { 0,		&inetdomain,	0,		0,
   0,		ip_output,	0,		0,
   0,
-  ip_init,	0,		ip_slowtimo,	ip_drain,	ip_sysctl
+  ip_init,	0,		ip_slowtimo,	ip_drain,	NULL
 },
 { SOCK_DGRAM,	&inetdomain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
   udp_input,	0,		udp_ctlinput,	ip_ctloutput,
   udp_usrreq,
-  udp_init,	0,		0,		0,		udp_sysctl
+  udp_init,	0,		0,		0,		NULL
 },
 { SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
-  tcp_init,	0,		tcp_slowtimo,	tcp_drain,	tcp_sysctl
+  tcp_init,	0,		tcp_slowtimo,	tcp_drain,	NULL
 },
 { SOCK_RAW,	&inetdomain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
@@ -167,27 +166,46 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_ICMP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   icmp_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
-  icmp_init,	0,		0,		0,		icmp_sysctl
+  icmp_init,	0,		0,		0,		NULL
 },
 #ifdef IPSEC
 { SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
   ah4_input,	0,	 	ah4_ctlinput,	0,
   0,
-  0,		0,		0,		0,		ipsec_sysctl
+  0,		0,		0,		0,		NULL
 },
 #ifdef IPSEC_ESP
 { SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
-  esp4_input,	0,	 	esp4_ctlinput,	0,
+  esp4_input,
+	0,	 	esp4_ctlinput,	0,
   0,
-  0,		0,		0,		0,		ipsec_sysctl
+  0,		0,		0,		0,		NULL
 },
 #endif
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
-  ipcomp4_input, 0,	 	0,		0,
+  ipcomp4_input,
+ 0,	 	0,		0,
   0,
-  0,		0,		0,		0,		ipsec_sysctl
+  0,		0,		0,		0,		NULL
 },
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+{ SOCK_RAW,	&inetdomain,	IPPROTO_AH,	PR_ATOMIC|PR_ADDR,
+  ipsec4_common_input,	0,	 	ah4_ctlinput,	0,
+  0,
+  0,		0,		0,		0,		NULL
+},
+{ SOCK_RAW,	&inetdomain,	IPPROTO_ESP,	PR_ATOMIC|PR_ADDR,
+  ipsec4_common_input,    0,	 	esp4_ctlinput,	0,
+  0,
+  0,		0,		0,		0,		NULL
+},
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPCOMP,	PR_ATOMIC|PR_ADDR,
+  ipsec4_common_input,    0,	 	0,		0,
+  0,
+  0,		0,		0,		0,		NULL
+},
+#endif /* FAST_IPSEC */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap4_input,	rip_output, 	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,	/*XXX*/
@@ -215,7 +233,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   igmp_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
-  igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,
+  NULL,		igmp_fasttimo,	igmp_slowtimo,	0,
 },
 #ifdef TPIP
 { SOCK_SEQPACKET,&inetdomain,	IPPROTO_TP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_LASTHDR|PR_ABRTACPTDIS,
@@ -248,7 +266,7 @@ struct protosw inetsw[] = {
 },
 #endif /* NSIP */
 /* raw wildcard */
-{ SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR,
+{ SOCK_RAW,	&inetdomain,	0,		PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   rip_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,
   rip_init,	0,		0,		0,

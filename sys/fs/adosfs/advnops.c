@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.6.2.1 2003/07/03 01:19:03 wrstuden Exp $	*/
+/*	$NetBSD: advnops.c,v 1.6.2.2 2004/08/03 10:52:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.1 2003/07/03 01:19:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.2 2004/08/03 10:52:23 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -179,7 +179,7 @@ adosfs_getattr(v)
 	vattr_null(vap);
 	vap->va_uid = ap->uid;
 	vap->va_gid = ap->gid;
-	vap->va_fsid = sp->a_vp->v_mount->mnt_stat.f_fsid.val[0];
+	vap->va_fsid = sp->a_vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	vap->va_atime.tv_sec = vap->va_mtime.tv_sec = vap->va_ctime.tv_sec =
 		ap->mtime.days * 24 * 60 * 60 + ap->mtime.mins * 60 +
 		ap->mtime.ticks / 50 + (8 * 365 + 2) * 24 * 60 * 60;
@@ -381,6 +381,7 @@ adosfs_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *sp = v;
 	struct buf *bp;
@@ -391,7 +392,6 @@ adosfs_strategy(v)
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
-	error = 0;
 	bp = sp->a_bp;
 	if (bp->b_vp == NULL) {
 		bp->b_flags |= B_ERROR;
@@ -399,7 +399,7 @@ adosfs_strategy(v)
 		error = EIO;
 		goto reterr;
 	}
-	vp = bp->b_vp;
+	vp = sp->a_vp;
 	ap = VTOA(vp);
 	if (bp->b_blkno == bp->b_lblkno) {
 		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno, NULL);
@@ -415,8 +415,7 @@ adosfs_strategy(v)
 		goto reterr;
 	}
 	vp = ap->amp->devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL(vp->v_op, VOFFSET(vop_strategy), sp);
+	error = VOP_STRATEGY(vp, bp);
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
@@ -758,7 +757,7 @@ adosfs_readdir(v)
 		memcpy(adp->name, ap->name, adp->namlen);
 		vput(vp);
 
-		error = uiomove((caddr_t) adp, sizeof(struct adirent), uio);
+		error = uiomove(adp, sizeof(struct adirent), uio);
 		if (error)
 			break;
 		if (sp->a_ncookies) {

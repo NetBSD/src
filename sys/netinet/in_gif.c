@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.32 2002/11/11 18:35:28 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.32.6.1 2004/08/03 10:54:36 skrll Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.32 2002/11/11 18:35:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.32.6.1 2004/08/03 10:54:36 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -79,8 +79,7 @@ int ip_gif_ttl = GIF_TTL;
 int ip_gif_ttl = 0;
 #endif
 
-extern struct domain inetdomain;
-struct protosw in_gif_protosw =
+const struct protosw in_gif_protosw =
 { SOCK_RAW,	&inetdomain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
   in_gif_input, rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -208,18 +207,12 @@ in_gif_output(ifp, family, m)
 		}
 	}
 
-	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
+	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
 	return (error);
 }
 
 void
-#if __STDC__
 in_gif_input(struct mbuf *m, ...)
-#else
-in_gif_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int off, proto;
 	struct ifnet *gifp = NULL;
@@ -336,7 +329,7 @@ gif_validate4(ip, sc, ifp)
 		return 0;
 	}
 	/* reject packets with broadcast on source */
-	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list) {
+	TAILQ_FOREACH(ia4, &in_ifaddrhead, ia_list) {
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
 		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.62 2003/02/03 23:51:04 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.62.2.1 2004/08/03 10:54:45 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,11 +78,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -102,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62 2003/02/03 23:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.1 2004/08/03 10:54:45 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -196,6 +192,24 @@ tcp_timer_init(void)
 }
 
 /*
+ * Return how many timers are currently being invoked.
+ */
+int
+tcp_timers_invoking(struct tcpcb *tp)
+{
+	int i;
+	int count = 0;
+
+	for (i = 0; i < TCPT_NTIMERS; i++)
+		if (callout_invoking(&tp->t_timer[i]))
+			count++;
+	if (callout_invoking(&tp->t_delack_ch))
+		count++;
+
+	return count;
+}
+
+/*
  * Callout to process delayed ACKs for a TCPCB.
  */
 void
@@ -211,6 +225,12 @@ tcp_delack(void *arg)
 	 */
 
 	s = splsoftnet();
+	callout_ack(&tp->t_delack_ch);
+	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
+
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
 	splx(s);
@@ -262,11 +282,16 @@ tcp_timer_rexmt(void *arg)
 	uint32_t rto;
 	int s;
 #ifdef TCP_DEBUG
-	struct socket *so;
+	struct socket *so = NULL;
 	short ostate;
 #endif
 
 	s = splsoftnet();
+	callout_ack(&tp->t_timer[TCPT_REXMT]);
+	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
 
 #ifdef TCP_DEBUG
 #ifdef INET
@@ -409,11 +434,16 @@ tcp_timer_persist(void *arg)
 	uint32_t rto;
 	int s;
 #ifdef TCP_DEBUG
-	struct socket *so;
+	struct socket *so = NULL;
 	short ostate;
 #endif
 
 	s = splsoftnet();
+	callout_ack(&tp->t_timer[TCPT_PERSIST]);
+	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
 
 #ifdef TCP_DEBUG
 #ifdef INET
@@ -476,6 +506,11 @@ tcp_timer_keep(void *arg)
 #endif
 
 	s = splsoftnet();
+	callout_ack(&tp->t_timer[TCPT_KEEP]);
+	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
 
 #ifdef TCP_DEBUG
 	ostate = tp->t_state;
@@ -553,11 +588,16 @@ tcp_timer_2msl(void *arg)
 	struct tcpcb *tp = arg;
 	int s;
 #ifdef TCP_DEBUG
-	struct socket *so;
+	struct socket *so = NULL;
 	short ostate;
 #endif
 
 	s = splsoftnet();
+	callout_ack(&tp->t_timer[TCPT_2MSL]);
+	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
 
 #ifdef TCP_DEBUG
 #ifdef INET

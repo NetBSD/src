@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.15.2.1 2003/07/02 15:27:07 darrenr Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.15.2.2 2004/08/03 10:56:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.15.2.1 2003/07/02 15:27:07 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.15.2.2 2004/08/03 10:56:05 skrll Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,10 @@ SYSCTL_INT(_net_smb, OID_AUTO, tcprcvbuf, CTLFLAG_RW, &nb_tcprcvbuf, 0, "");
 
 #ifndef __NetBSD__
 #define nb_sosend(so,m,flags,p) (so)->so_proto->pr_usrreqs->pru_sosend( \
-				    so, NULL, 0, m, 0, flags, l)
+				    so, NULL, 0, m, 0, flags, p)
 #else
-#define nb_sosend(so,m,flags,p) (*(so)->so_send)(so, NULL, (struct uio *)0, \
-					m, (struct mbuf *)0, flags)
+#define nb_sosend(so,m,flags,l) (*(so)->so_send)(so, NULL, (struct uio *)0, \
+					m, (struct mbuf *)0, flags, l)
 #endif
 
 static int  nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
@@ -266,7 +266,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 	struct mbuf *m;
 #endif
 
-	error = socreate(AF_INET, &so, SOCK_STREAM, IPPROTO_TCP);
+	error = socreate(AF_INET, &so, SOCK_STREAM, IPPROTO_TCP, l);
 	if (error)
 		return error;
 	nbp->nbp_tso = so;
@@ -288,7 +288,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 	m = m_get(M_WAIT, MT_SONAME);
 	*mtod(m, struct sockaddr *) = *(struct sockaddr *)to;
 	m->m_len = sizeof(struct sockaddr);
-	error = soconnect(so, m);
+	error = soconnect(so, m, l);
 	m_free(m);
 #endif
 	if (error)
@@ -493,7 +493,6 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 			rcvflg = MSG_WAITALL;
 			bzero(&auio, sizeof(auio));
 			auio.uio_resid = min(resid, NB_SORECEIVE_CHUNK);
-			auio.uio_procp = p;
 			auio.uio_lwp = l;
 			resid -= auio.uio_resid;
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.10 2002/09/11 02:46:47 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.10.6.1 2004/08/03 10:55:19 skrll Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,9 +62,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.10 2002/09/11 02:46:47 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.10.6.1 2004/08/03 10:55:19 skrll Exp $");
 
-#include "opt_ipsec.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -102,10 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.10 2002/09/11 02:46:47 itojun Exp 
 #include <netinet/icmp6.h>
 #include <netinet6/ip6protosw.h>
 
-#ifdef IPSEC
-#include <netinet6/ipsec.h>
-#endif /* IPSEC */
-
 #include "faith.h"
 
 #include <net/net_osdep.h>
@@ -128,7 +119,7 @@ udp6_output(in6p, m, addr6, control, p)
 	struct udphdr *udp6;
 	struct in6_addr *laddr, *faddr;
 	struct in6_addr laddr_mapped; /* XXX ugly */
-	u_short fport;
+	u_int16_t fport;
 	int error = 0;
 	struct ip6_pktopts opt, *stickyopt = in6p->in6p_outputopts;
 	int priv;
@@ -318,7 +309,7 @@ udp6_output(in6p, m, addr6, control, p)
 	udp6->uh_sport = in6p->in6p_lport; /* lport is always set in the PCB */
 	udp6->uh_dport = fport;
 	if (plen <= 0xffff)
-		udp6->uh_ulen = htons((u_short)plen);
+		udp6->uh_ulen = htons((u_int16_t)plen);
 	else
 		udp6->uh_ulen = 0;
 	udp6->uh_sum = 0;
@@ -330,7 +321,7 @@ udp6_output(in6p, m, addr6, control, p)
 		ip6->ip6_vfc 	&= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc 	|= IPV6_VERSION;
 #if 0				/* ip6_plen will be filled in ip6_output. */
-		ip6->ip6_plen	= htons((u_short)plen);
+		ip6->ip6_plen	= htons((u_int16_t)plen);
 #endif
 		ip6->ip6_nxt	= IPPROTO_UDP;
 		ip6->ip6_hlim	= in6_selecthlim(in6p,
@@ -344,20 +335,12 @@ udp6_output(in6p, m, addr6, control, p)
 			udp6->uh_sum = 0xffff;
 		}
 
-#ifdef IN6P_MINMTU
 		if (in6p->in6p_flags & IN6P_MINMTU)
 			flags |= IPV6_MINMTU;
-#endif
 
 		udp6stat.udp6s_opackets++;
-#ifdef IPSEC
-		if (ipsec_setsocket(m, in6p->in6p_socket) != 0) {
-			error = ENOBUFS;
-			goto release;
-		}
-#endif /* IPSEC */
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
-		    flags, in6p->in6p_moptions, NULL);
+		    flags, in6p->in6p_moptions, in6p->in6p_socket, NULL);
 		break;
 	case AF_INET:
 #ifdef INET
@@ -387,10 +370,9 @@ udp6_output(in6p, m, addr6, control, p)
 		ip->ip_tos = 0;	/* XXX */
 
 		udpstat.udps_opackets++;
-#ifdef IPSEC
-		(void)ipsec_setsocket(m, NULL);	/* XXX */
-#endif /* IPSEC */
-		error = ip_output(m, NULL, &in6p->in6p_route, flags /* XXX */);
+		error = ip_output(m, NULL, &in6p->in6p_route, flags /* XXX */,
+		    (struct ip_moptions *)NULL,
+		    (struct socket *)in6p->in6p_socket);
 		break;
 #else
 		error = EAFNOSUPPORT;

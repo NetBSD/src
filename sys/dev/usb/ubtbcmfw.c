@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.6.2.1 2003/07/02 15:26:22 darrenr Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.6.2.2 2004/08/03 10:51:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6.2.1 2003/07/02 15:26:22 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6.2.2 2004/08/03 10:51:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6.2.1 2003/07/02 15:26:22 darrenr Exp
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/ubtbcmfw.h>
 
 /*
  * Download firmware to BCM2033.
@@ -115,7 +114,7 @@ USB_ATTACH(ubtbcmfw)
 	usbd_pipe_handle bulk_out_pipe;
 	uint n;
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
@@ -295,28 +294,3 @@ ubtbcmfw_read(usbd_device_handle dev, usbd_pipe_handle in,
 	usbd_free_xfer(xfer);
 	return (err);
 }
-
-int
-hw_dev_ubtbcmfw_sysctl(int *name, u_int nlen, void *oldp,
-    size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
-{
-	int error;
-
-	/* Must be super user. */
-	error = suser(p->p_ucred, &p->p_acflag);
-	if (error)
-		return error;
-
-	/* all sysctl names at this level are terminal */
-	if (nlen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case HW_DEV_UBTBCMFW_FWPATH:
-		return sysctl_string(oldp, oldlenp, newp, newlen,
-		    ubtbcmfw_fwpath, sizeof(ubtbcmfw_fwpath));
-	default:
-		return EOPNOTSUPP;
-	}
-}
-

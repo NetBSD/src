@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2001/11/21 22:10:55 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.16.16.1 2004/08/03 10:53:53 skrll Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -71,7 +71,7 @@ cleandirsalib:		.NOTMAIN
 	@echo cleandiring the sa library objects
 	@if [ -d "${SADST}" ]; then ${SAMAKE} cleandir; fi
 
-depend:			.NOTMAIN dependsalib
+dependall depend:	.NOTMAIN dependsalib
 dependsalib:		.NOTMAIN .MAKE __always_make_salib
 	@echo depending the sa library objects
 	@${SAMAKE} depend

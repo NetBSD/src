@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
+/*	$NetBSD: umodem.c,v 1.45.6.1 2004/08/03 10:51:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
  */
 
 /*
- * Comm Class spec:  http://www.usb.org/developers/data/devclass/usbcdc10.pdf
- *                   http://www.usb.org/developers/data/devclass/usbcdc11.pdf
+ * Comm Class spec:  http://www.usb.org/developers/devclass_docs/usbccs10.pdf
+ *                   http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
  */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.45.6.1 2004/08/03 10:51:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ USB_ATTACH(umodem)
 	int i;
 	struct ucom_attach_args uca;
 
-	usbd_devinfo(uaa->device, 0, devinfo);
+	usbd_devinfo(uaa->device, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 
 	sc->sc_udev = dev;

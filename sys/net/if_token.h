@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.7 2000/02/27 03:04:09 soren Exp $	*/
+/*	$NetBSD: if_token.h,v 1.7.28.1 2004/08/03 10:54:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -56,7 +52,7 @@ struct token_rif {
 	u_int16_t tr_rdf[TOKEN_MAX_BRIDGE];	/* route-designator fields */
 } __attribute__((__packed__));
 
-/* standard values for adress control and frame control field */
+/* standard values for address control and frame control field */
 #define TOKEN_AC		0x10
 #define TOKEN_FC		0x40
 

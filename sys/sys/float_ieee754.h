@@ -1,4 +1,4 @@
-/*	$NetBSD: float_ieee754.h,v 1.1 2003/05/12 15:22:56 kleink Exp $	*/
+/*	$NetBSD: float_ieee754.h,v 1.1.2.1 2004/08/03 10:56:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,10 +31,16 @@
  *	@(#)float.h	8.1 (Berkeley) 6/10/93
  */
 
+/*
+ * NOTICE: This is not a standalone file.  To use it, #include it in
+ * your port's float.h header.
+ */
+
 #ifndef _SYS_FLOAT_IEEE754_H_
 #define _SYS_FLOAT_IEEE754_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 
 #ifndef FLT_ROUNDS
 __BEGIN_DECLS
@@ -46,6 +48,19 @@ extern int __flt_rounds __P((void));
 __END_DECLS
 #define FLT_ROUNDS	__flt_rounds()
 #endif
+
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#ifndef FLT_EVAL_METHOD
+#if __GNUC_PREREQ__(3, 3)
+#define	FLT_EVAL_METHOD	__FLT_EVAL_METHOD__
+#endif /* GCC >= 3.3 */
+#endif /* defined(FLT_EVAL_METHOD) */
+#endif /* !defined(_ANSI_SOURCE) && ... */
 
 #define FLT_RADIX	2		/* b */
 
@@ -69,6 +84,10 @@ __END_DECLS
 #define DBL_MAX		1.7976931348623157E+308
 #define DBL_MAX_10_EXP	308
 
+/*
+ * If no extended-precision type is defined by the machine-dependent
+ * header including this, default to `long double' being double-precision.
+ */
 #ifndef LDBL_MANT_DIG
 #define LDBL_MANT_DIG	DBL_MANT_DIG
 #define LDBL_EPSILON	DBL_EPSILON
@@ -79,26 +98,14 @@ __END_DECLS
 #define LDBL_MAX_EXP	DBL_MAX_EXP
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
-#elif LDBL_MANT_DIG == 64
-#define LDBL_EPSILON	1.0842021724855044340E-19L
-#define LDBL_DIG	18
-#define LDBL_MIN_EXP	(-16381)
-#ifndef LDBL_MIN
-#define LDBL_MIN	1.6810515715560467531E-4932L
-#endif
-#define LDBL_MIN_10_EXP	(-4931)
-#define LDBL_MAX_EXP	16384
-#define LDBL_MAX	1.1897314953572317650E+4932L
-#define LDBL_MAX_10_EXP	4932
-#elif LDBL_MANT_DIG == 113
-#define	LDBL_EPSILON	1.925929944387235853055977942584927319E-34L
-#define	LDBL_DIG	33
-#define	LDBL_MIN_EXP	(-16381)
-#define	LDBL_MIN	3.3621031431120935062626778173217526026E-4932L
-#define	LDBL_MIN_10_EXP	(-4931)
-#define	LDBL_MAX_EXP	16384
-#define	LDBL_MAX	1.1897314953572317650857593266280070162E4932L
-#define	LDBL_MAX_10_EXP	4932
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#define	DECIMAL_DIG	17		/* ceil((1+p*log10(b))-(b==10) */
+#endif /* !defined(_ANSI_SOURCE) && ... */
 #endif /* LDBL_MANT_DIG */
 
 #endif	/* _SYS_FLOAT_IEEE754_H_ */

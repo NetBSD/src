@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.1 2002/11/26 19:06:38 christos Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.1.8.1 2004/08/03 10:56:30 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,47 +39,105 @@
 #ifndef	_SYS_SIGINFO_H_
 #define	_SYS_SIGINFO_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_compat_netbsd32.h"
+#endif
+
+#include <machine/signal.h>	/* XXX: __HAVE_SIGINFO */
+#ifdef _KERNEL
+#include <sys/queue.h>
+#endif
+
 typedef union sigval {
 	int	sival_int;
 	void	*sival_ptr;
 } sigval_t;
 
+struct _ksiginfo {
+	int	_signo;
+	int	_code;
+	int	_errno;
+#ifdef _LP64
+	/* In _LP64 the union starts on an 8-byte boundary. */
+	int	_pad;
+#endif
+	union {
+		struct {
+			pid_t	_pid;
+			uid_t	_uid;
+			sigval_t	_sigval;
+		} _rt;
+
+		struct {
+			pid_t	_pid;
+			uid_t	_uid;
+			int	_status;
+			clock_t	_utime;
+			clock_t	_stime;
+		} _child;
+
+		struct {
+			void   *_addr;
+			int	_trap;
+		} _fault;
+
+		struct {
+			long	_band;
+			int	_fd;
+		} _poll;
+	} _reason;
+};
+
+#ifdef _KERNEL
+typedef struct ksiginfo {
+	u_long		ksi_flags;	/* 4 or 8 bytes, depending on LP64 */
+	CIRCLEQ_ENTRY(ksiginfo) ksi_list;
+	struct _ksiginfo ksi_info;
+} ksiginfo_t;
+
+#define	KSI_TRAP	0x01	/* signal caused by trap */
+#define	KSI_EMPTY	0x02	/* no additional information */
+
+/* Macros to initialize a ksiginfo_t. */
+#define	KSI_INIT(ksi)							\
+do {									\
+	memset((ksi), 0, sizeof(*(ksi)));				\
+} while (/*CONSTCOND*/0)
+
+#define	KSI_INIT_EMPTY(ksi)						\
+do {									\
+	KSI_INIT((ksi));						\
+	(ksi)->ksi_flags = KSI_EMPTY;					\
+} while (/*CONSTCOND*/0)
+
+#define	KSI_INIT_TRAP(ksi)						\
+do {									\
+	KSI_INIT((ksi));						\
+	(ksi)->ksi_flags = KSI_TRAP;					\
+} while (/*CONSTCOND*/0)
+
+/* Copy the part of ksiginfo_t without the queue pointers */
+#define	KSI_COPY(fksi, tksi)						\
+do {									\
+	(tksi)->ksi_info = (fksi)->ksi_info;				\
+	(tksi)->ksi_flags = (fksi)->ksi_flags;				\
+} while (/*CONSTCOND*/0)
+
+
+/* Predicate macros to test how a ksiginfo_t was generated. */
+#define	KSI_TRAP_P(ksi)		(((ksi)->ksi_flags & KSI_TRAP) != 0)
+#define	KSI_EMPTY_P(ksi)	(((ksi)->ksi_flags & KSI_EMPTY) != 0)
+
+/*
+ * Old-style signal handler "code" arguments were only non-zero for
+ * signals caused by traps.
+ */
+#define	KSI_TRAPCODE(ksi)	(KSI_TRAP_P(ksi) ? (ksi)->ksi_trap : 0)
+#endif /* _KERNEL */
+
 typedef union siginfo {
 	char	si_pad[128];	/* Total size; for future expansion */
-	struct {
-		int	_signo;
-		int	_code;
-		int	_errno;
-#ifdef _LP64
-		/* In _LP64 the union starts on an 8-byte boundary. */
-		int	_pad;
-#endif
-		union {
-			struct {
-				pid_t	_pid;
-				uid_t	_uid;
-				sigval_t	_sigval;
-			} _rt;
-
-			struct {
-				pid_t	_pid;
-				uid_t	_uid;
-				int	_status;
-				clock_t	_utime;
-				clock_t	_stime;
-			} _child;
-
-			struct {
-				void   *_addr;
-				int	_trap;
-			} _fault;
-
-			struct {
-				long	_band;
-				int	_fd;
-			} _poll;
-		} _reason;
-	} _info;
+	struct _ksiginfo _info;
 } siginfo_t;
 
 /** Field access macros */
@@ -100,6 +158,26 @@ typedef union siginfo {
 #define	si_band		_info._reason._poll._band
 #define	si_fd		_info._reason._poll._fd
 
+#ifdef _KERNEL
+/** Field access macros */
+#define	ksi_signo	ksi_info._signo
+#define	ksi_code	ksi_info._code
+#define	ksi_errno	ksi_info._errno
+
+#define	ksi_sigval	ksi_info._reason._rt._sigval
+#define	ksi_pid		ksi_info._reason._child._pid
+#define	ksi_uid		ksi_info._reason._child._uid
+#define	ksi_status	ksi_info._reason._child._status
+#define	ksi_utime	ksi_info._reason._child._utime
+#define	ksi_stime	ksi_info._reason._child._stime
+
+#define	ksi_addr	ksi_info._reason._fault._addr
+#define	ksi_trap	ksi_info._reason._fault._trap
+
+#define	ksi_band	ksi_info._reason._poll._band
+#define	ksi_fd		ksi_info._reason._poll._fd
+#endif /* _KERNEL */
+
 /** si_code */
 /* SIGILL */
 #define	ILL_ILLOPC	1	/* Illegal opcode			*/
@@ -117,8 +195,8 @@ typedef union siginfo {
 #define	FPE_FLTDIV	3	/* Floating point divide by zero	*/
 #define	FPE_FLTOVF	4	/* Floating point overflow		*/
 #define	FPE_FLTUND	5	/* Floating point underflow		*/
-#define	FPE_FLTRES	6	/* Floating poing inexact result	*/
-#define	FPE_FLTINV	7	/* Invalid Floating poing operation	*/
+#define	FPE_FLTRES	6	/* Floating point inexact result	*/
+#define	FPE_FLTINV	7	/* Invalid Floating point operation	*/
 #define	FPE_FLTSUB	8	/* Subscript out of range		*/
 
 /* SIGSEGV */
@@ -127,7 +205,7 @@ typedef union siginfo {
 
 /* SIGBUS */
 #define	BUS_ADRALN	1	/* Invalid address alignment		*/
-#define	BUS_ADRERR	2	/* Non-existant physical address	*/
+#define	BUS_ADRERR	2	/* Non-existent physical address	*/
 #define	BUS_OBJERR	3	/* Object specific hardware error	*/
 
 /* SIGTRAP */
@@ -154,13 +232,60 @@ typedef union siginfo {
 
 
 /** si_code */
+#define SI_NOINFO	32767	/* No signal specific info available	*/
 #define	SI_USER		0	/* Sent by kill(2)			*/
 #define	SI_QUEUE	-1	/* Sent by the sigqueue(2)		*/
-#define	SI_TIMER	-2	/* Generated by expiration of a timer 	*/
+#define	SI_TIMER	-2	/* Generated by expiration of a timer	*/
 				/* set by timer_settime(2)		*/
 #define	SI_ASYNCIO	-3	/* Generated by completion of an	*/
 				/* asynchronous I/O signal		*/
 #define	SI_MESGQ	-4	/* Generated by arrival of a message on	*/
 				/* an empty message queue		*/
+
+#if defined(COMPAT_NETBSD32) && defined(_KERNEL)
+
+typedef union sigval32 {
+	int sival_int;
+	uint32_t sival_ptr;
+} sigval32_t;
+
+struct __ksiginfo32 {
+	int	_signo;
+	int	_code;
+	int	_errno;
+
+	union {
+		struct {
+			pid_t _pid;
+			uid_t _uid;
+			sigval32_t _sigval;
+		} _rt;
+
+		struct {
+			pid_t _pid;
+			uid_t _uid;
+			int _status;
+			clock_t _utime;
+			clock_t _stime;
+		} _child;
+
+		struct {
+			uint32_t _addr;
+			int _trap;
+		} _fault;
+
+		struct {
+			int32_t _band;
+			int _fd;
+		} _poll;
+	} _reason;
+};
+
+typedef union siginfo32 {
+	char	si_pad[128];
+	struct __ksiginfo32 _info;
+} siginfo32_t;
+
+#endif /* COMPAT_NETBSD32 && _KERNEL */
 
 #endif /* !_SYS_SIGINFO_H_ */

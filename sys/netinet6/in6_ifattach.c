@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.54 2002/11/02 07:30:55 perry Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.54.6.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.54 2002/11/02 07:30:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.54.6.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.54 2002/11/02 07:30:55 perry Exp 
 #include <netinet/in_var.h>
 
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6_mroute.h>
 
 #include <net/net_osdep.h>
 
@@ -579,6 +579,12 @@ in6_ifattach(ifp, altifp)
 	/* some of the interfaces are inherently not IPv6 capable */
 	switch (ifp->if_type) {
 	case IFT_BRIDGE:
+#ifdef IFT_PFLOG
+	case IFT_PFLOG:
+#endif
+#ifdef IFT_PFSYNC
+	case IFT_PFSYNC:
+#endif
 		return;
 	}
 
@@ -667,6 +673,9 @@ in6_ifdetach(ifp)
 	short rtflags;
 	struct sockaddr_in6 sin6;
 	struct in6_multi_mship *imm;
+
+	/* remove ip6_mrouter stuff */
+	ip6_mrouter_detach(ifp);
 
 	/* remove neighbor management table */
 	nd6_purge(ifp);

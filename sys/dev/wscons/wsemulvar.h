@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.8 2001/10/13 15:56:16 augustss Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.8.18.1 2004/08/03 10:52:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -50,6 +50,9 @@ struct wsemul_ops {
 	int	(*translate)(void *, keysym_t, char **);
 	void	(*detach)(void *cookie, u_int *crow, u_int *ccol);
 	void    (*reset)(void *, enum wsemul_resetops);
+	void	(*getmsgattrs)(void *, struct wsdisplay_msgattrs *);
+	void	(*setmsgattrs)(void *, const struct wsscreen_descr *,
+		               const struct wsdisplay_msgattrs *);
 };
 
 #if defined(_KERNEL_OPT)

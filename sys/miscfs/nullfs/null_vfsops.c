@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.42.2.2 2003/07/02 21:48:15 wrstuden Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.42.2.3 2004/08/03 10:54:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,10 +74,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.2 2003/07/02 21:48:15 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.42.2.3 2004/08/03 10:54:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -128,7 +125,7 @@ nullfs_mount(mp, path, data, ndp, l)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct null_args));
+	error = copyin(data, &args, sizeof(struct null_args));
 	if (error)
 		return (error);
 
@@ -162,9 +159,10 @@ nullfs_mount(mp, path, data, ndp, l)
 	 */
 	nmp = (struct null_mount *) malloc(sizeof(struct null_mount),
 	    M_UFSMNT, M_WAITOK);		/* XXX */
-	memset((caddr_t)nmp, 0, sizeof(struct null_mount));
+	memset(nmp, 0, sizeof(struct null_mount));
 
 	mp->mnt_data = nmp;
+	mp->mnt_leaf = lowerrootvp->v_mount->mnt_leaf;
 	nmp->nullm_vfs = lowerrootvp->v_mount;
 	if (nmp->nullm_vfs->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
@@ -209,7 +207,7 @@ nullfs_mount(mp, path, data, ndp, l)
 	vp->v_flag |= VROOT;
 	nmp->nullm_rootvp = vp;
 
-	error = set_statfs_info(path, UIO_USERSPACE, args.la.target,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
 	    UIO_USERSPACE, mp, l);
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_mount: lower %s, alias at %s\n",
@@ -276,6 +274,27 @@ nullfs_unmount(mp, mntflags, l)
 	return (0);
 }
 
+SYSCTL_SETUP(sysctl_vfs_null_setup, "sysctl vfs.null subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "null",
+		       SYSCTL_DESCR("Loopback file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 9, CTL_EOL);
+	/*
+	 * XXX the "9" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "9" is the order as taken from sys/mount.h
+	 */
+}
+
 extern const struct vnodeopv_desc null_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const nullfs_vnodeopv_descs[] = {
@@ -290,7 +309,7 @@ struct vfsops nullfs_vfsops = {
 	nullfs_unmount,
 	layerfs_root,
 	layerfs_quotactl,
-	layerfs_statfs,
+	layerfs_statvfs,
 	layerfs_sync,
 	layerfs_vget,
 	layerfs_fhtovp,
@@ -298,8 +317,9 @@ struct vfsops nullfs_vfsops = {
 	layerfs_init,
 	NULL,
 	layerfs_done,
-	layerfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,
+	layerfs_snapshot,
 	nullfs_vnodeopv_descs,
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.10 2003/01/01 00:10:27 thorpej Exp $ */
+/* $NetBSD: vme.c,v 1.10.2.1 2004/08/03 10:52:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10 2003/01/01 00:10:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.10.2.1 2004/08/03 10:52:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,9 +224,9 @@ vmeattach(parent, self, aux)
 	if (sc->slaveconfig) {
 		/* first get info about the bus master's slave side,
 		 if present */
-		config_search((cfmatch_t)vmesubmatch1, self, 0);
+		config_search(vmesubmatch1, self, 0);
 	}
-	config_search((cfmatch_t)vmesubmatch, self, 0);
+	config_search(vmesubmatch, self, 0);
 
 #ifdef VMEDEBUG
 	if (sc->vme32ext)
@@ -333,11 +333,15 @@ _vme_space_get(sc, len, ams, align, addr)
 	vme_addr_t *addr;
 {
 	struct extent *ex;
+	u_long help;
+	int res;
 
 	ex = vme_select_map(sc, ams);
 	if (!ex)
 		return (EINVAL);
 
-	return (extent_alloc(ex, len, align, EX_NOBOUNDARY, EX_NOWAIT,
-			     (u_long *)addr));
+	res = extent_alloc(ex, len, align, EX_NOBOUNDARY, EX_NOWAIT, &help);
+	if (!res)
+		*addr = help;
+	return (res);
 }

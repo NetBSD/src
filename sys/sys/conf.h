@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.110.2.1 2003/07/02 15:27:14 darrenr Exp $	*/
+/*	$NetBSD: conf.h,v 1.110.2.2 2004/08/03 10:56:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -93,6 +89,14 @@ struct cdevsw {
 
 #ifdef _KERNEL
 
+#define DEV_STRATEGY(bp) \
+	do { \
+		const struct bdevsw *bdev = bdevsw_lookup((bp)->b_dev); \
+		if (bdev == NULL) \
+			panic("DEV_STRATEGY: block device not found"); \
+		(*bdev->d_strategy)((bp)); \
+	} while (/*CONSTCOND*/0)
+
 int devsw_attach(const char *, const struct bdevsw *, int *,
 		 const struct cdevsw *, int *);
 void devsw_detach(const struct bdevsw *, const struct cdevsw *);
@@ -153,64 +157,46 @@ struct linesw {
 	char	*l_name;	/* Linesw name */
 	int	l_no;		/* Linesw number (compatibility) */
 
-	int	(*l_open)	__P((dev_t dev, struct tty *tp));
-	int	(*l_close)	__P((struct tty *tp, int flags));
-	int	(*l_read)	__P((struct tty *tp, struct uio *uio,
-				     int flag));
-	int	(*l_write)	__P((struct tty *tp, struct uio *uio,
-				     int flag));
-	int	(*l_ioctl)	__P((struct tty *tp, u_long cmd, caddr_t data,
-				     int flag, struct lwp *p));
-	int	(*l_rint)	__P((int c, struct tty *tp));
-	int	(*l_start)	__P((struct tty *tp));
-	int	(*l_modem)	__P((struct tty *tp, int flag));
-	int	(*l_poll)	__P((struct tty *tp, int events,
-				     struct lwp *p));
+	int	(*l_open)	__P((dev_t, struct tty *));
+	int	(*l_close)	__P((struct tty *, int));
+	int	(*l_read)	__P((struct tty *, struct uio *, int));
+	int	(*l_write)	__P((struct tty *, struct uio *, int));
+	int	(*l_ioctl)	__P((struct tty *, u_long, caddr_t, int,
+				    struct lwp *));
+	int	(*l_rint)	__P((int, struct tty *));
+	int	(*l_start)	__P((struct tty *));
+	int	(*l_modem)	__P((struct tty *, int));
+	int	(*l_poll)	__P((struct tty *, int, struct lwp *));
 };
 
 #ifdef _KERNEL
 extern struct linesw **linesw;
 extern int nlinesw;
 extern void ttyldisc_init __P((void));
-int ttyldisc_add __P((struct linesw *disc, int no));
-struct linesw *ttyldisc_remove __P((char *name));
-struct linesw *ttyldisc_lookup __P((char *name));
+int ttyldisc_add __P((struct linesw *, int));
+struct linesw *ttyldisc_remove __P((char *));
+struct linesw *ttyldisc_lookup __P((char *));
 
 /* For those defining their own line disciplines: */
 #define	ttynodisc ((int (*) __P((dev_t, struct tty *)))enodev)
-#define	ttyerrclose ((int (*) __P((struct tty *, int flags)))enodev)
+#define	ttyerrclose ((int (*) __P((struct tty *, int)))enodev)
 #define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
-#define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
+#define	ttyerrinput ((int (*) __P((int, struct tty *)))enodev)
 #define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
 #define	ttyerrpoll ((int (*) __P((struct tty *, int, struct lwp *)))enodev)
 
 int	ttynullioctl __P((struct tty *, u_long, caddr_t, int, struct lwp *));
 #endif
 
-/*
- * Swap device table
- */
-struct swdevt {
-	dev_t	sw_dev;
-	int	sw_flags;
-	int	sw_nblks;
-	struct	vnode *sw_vp;
-};
-#define	SW_FREED	0x01
-#define	SW_SEQUENTIAL	0x02
-#define	sw_freed	sw_flags	/* XXX compat */
-
 #ifdef _KERNEL
-extern struct swdevt swdevt[];
 
 #define	DEV_MEM		0	/* minor device 0 is physical memory */
 #define	DEV_KMEM	1	/* minor device 1 is kernel memory */
-#define DEV_NULL	2	/* minor device 2 is EOF/rathole */
-#ifdef __arm__			/* XXX: FIX ME ARM! */
-#define DEV_ZERO	3	/* minor device 3 is '\0'/rathole */
-#else
-#define DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
+#define	DEV_NULL	2	/* minor device 2 is EOF/rathole */
+#ifdef COMPAT_16
+#define	_DEV_ZERO_oARM	3	/* reserved: old ARM /dev/zero minor */
 #endif
+#define	DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
 
 #endif /* _KERNEL */
 

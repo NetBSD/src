@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.48 2003/02/05 00:02:39 perry Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.48.2.1 2004/08/03 10:56:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -140,6 +136,17 @@
 #endif
 
 /*
+ * The following macro is used to remove const cast-away warnings
+ * from gcc -Wcast-qual; it should be used with caution because it
+ * can hide valid errors; in particular most valid uses are in
+ * situations where the API requires it, not to cast away string
+ * constants. We don't use *intptr_t on purpose here and we are
+ * explicit about unsigned long so that we don't have additional
+ * dependencies.
+ */
+#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
+
+/*
  * GCC2 provides __extension__ to suppress warnings for various GNU C
  * language extensions under "-ansi -pedantic".
  */
@@ -173,6 +180,12 @@
 #define	__unused	__attribute__((__unused__))
 #else
 #define	__unused	/* delete */
+#endif
+
+#if __GNUC_PREREQ__(3, 1)
+#define	__used		__attribute__((__used__))
+#else
+#define	__used		/* delete */
 #endif
 
 #if __GNUC_PREREQ__(2, 7)
@@ -229,11 +242,22 @@
 #ifdef __lint__
 #define	__RENAME(x)	__symbolrename(x)
 #else
- #error "No function renaming possible"
+#error "No function renaming possible"
 #endif /* __lint__ */
 #endif /* __GNUC__ */
 #else /* _STANDALONE || _KERNEL */
 #define	__RENAME(x)	no renaming in kernel or standalone environment
+#endif
+
+/*
+ * A barrier to stop the optimizer from moving code or assume live
+ * register values. This is gcc specific, the version is more or less
+ * arbitrary, might work with older compilers.
+ */
+#if __GNUC_PREREQ__(2, 95)
+#define	__insn_barrier()	__asm __volatile("":::"memory")
+#else
+#define	__insn_barrier()	/* */
 #endif
 
 /*

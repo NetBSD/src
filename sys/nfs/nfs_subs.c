@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.125.2.1 2003/07/02 15:27:10 darrenr Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.125.2.2 2004/08/03 10:56:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -74,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.1 2003/07/02 15:27:10 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.2 2004/08/03 10:56:17 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -133,7 +129,6 @@ u_int32_t rpc_call, rpc_vers, rpc_reply, rpc_msgdenied, rpc_autherr,
 u_int32_t nfs_prog, nqnfs_prog, nfs_true, nfs_false;
 
 /* And other global data */
-static u_int32_t nfs_xid = 0;
 const nfstype nfsv2_type[9] =
 	{ NFNON, NFREG, NFDIR, NFBLK, NFCHR, NFLNK, NFNON, NFCHR, NFNON };
 const nfstype nfsv3_type[9] =
@@ -665,8 +660,6 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	int i;
 	struct mbuf *mreq;
 	int siz, grpsiz, authsiz;
-	struct timeval tv;
-	static u_int32_t base;
 
 	authsiz = nfsm_rndup(auth_len);
 	mb = m_gethdr(M_WAIT, MT_DATA);
@@ -687,22 +680,7 @@ nfsm_rpchead(cr, nmflag, procid, auth_type, auth_len, auth_str, verf_len,
 	 */
 	nfsm_build(tl, u_int32_t *, 8 * NFSX_UNSIGNED);
 
-	/*
-	 * derive initial xid from system time
-	 * XXX time is invalid if root not yet mounted
-	 */
-	if (!base && (rootvp)) {
-		microtime(&tv);
-		base = tv.tv_sec << 12;
-		nfs_xid = base;
-	}
-	/*
-	 * Skip zero xid if it should ever happen.
-	 */
-	if (++nfs_xid == 0)
-		nfs_xid++;
-
-	*tl++ = *xidp = txdr_unsigned(nfs_xid);
+	*tl++ = *xidp = nfs_getxid();
 	*tl++ = rpc_call;
 	*tl++ = rpc_vers;
 	if (nmflag & NFSMNT_NQNFS) {
@@ -1051,27 +1029,35 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			m1->m_next = m2;
 		}
 		m1->m_len = 0;
-		dst = m1->m_dat;
+		if (m1->m_flags & M_PKTHDR)
+			dst = m1->m_pktdat;
+		else
+			dst = m1->m_dat;
+		m1->m_data = dst;
 	} else {
 		/*
 		 * If the first mbuf has no external data
 		 * move the data to the front of the mbuf.
 		 */
-		if ((dst = m1->m_dat) != src)
+		if (m1->m_flags & M_PKTHDR)
+			dst = m1->m_pktdat;
+		else
+			dst = m1->m_dat;
+		m1->m_data = dst;
+		if (dst != src)
 			memmove(dst, src, left);
 		dst += left; 
 		m1->m_len = left;
 		m2 = m1->m_next;
 	}
-	m1->m_flags &= ~M_PKTHDR;
-	*cp2 = m1->m_data = m1->m_dat;   /* data is at beginning of buffer */
+	*cp2 = m1->m_data;
 	*dposp = mtod(m1, caddr_t) + siz;
 	/*
 	 * Loop through mbufs pulling data up into first mbuf until
 	 * the first mbuf is full or there is no more data to
 	 * pullup.
 	 */
-	while ((len = (MLEN - m1->m_len)) != 0 && m2) {
+	while ((len = M_TRAILINGSPACE(m1)) != 0 && m2) {
 		if ((len = min(len, m2->m_len)) != 0)
 			memcpy(dst, m2->m_data, len);
 		m1->m_len += len;
@@ -1276,6 +1262,9 @@ nfs_searchdircache(vp, off, do32, hashent)
 	 */
 	if (off == 0)
 		return &dzero;
+
+	if (!np->n_dircache)
+		return NULL;
 
 	/*
 	 * We use a 32bit cookie as search key, directly reconstruct
@@ -1636,8 +1625,9 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		if (vp->v_type == VFIFO) {
 			extern int (**fifo_nfsv2nodeop_p) __P((void *));
 			vp->v_op = fifo_nfsv2nodeop_p;
-		}
-		if (vp->v_type == VCHR || vp->v_type == VBLK) {
+		} else if (vp->v_type == VREG) {
+			lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
+		} else if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
 			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
 			if (nvp) {
@@ -1666,7 +1656,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				*vpp = vp = nvp;
 			}
 		}
-		np->n_mtime = mtime.tv_sec;
+		np->n_mtime = mtime;
 	}
 	uid = fxdr_unsigned(uid_t, fp->fa_uid);
 	gid = fxdr_unsigned(gid_t, fp->fa_gid);
@@ -1683,7 +1673,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	vap->va_mode = vmode;
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
-	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
+	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	switch (vtyp) {
 	case VDIR:
 		vap->va_blocksize = NFS_DIRFRAGSIZ;
@@ -1773,7 +1763,8 @@ nfs_getattrcache(vp, vaper)
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr *vap;
 
-	if ((time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
+	if (np->n_attrstamp == 0 ||
+	    (time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -2148,8 +2139,7 @@ nfs_zeropad(mp, len, nul)
 	int nul;
 {
 	struct mbuf *m;
-	int count, i;
-	char *cp;
+	int count;
 
 	/*
 	 * Trim from tail.  Scan the mbuf chain,
@@ -2189,10 +2179,15 @@ nfs_zeropad(mp, len, nul)
 		m->m_next = NULL;
 	}
 
+	KDASSERT(m->m_next == NULL);
+
 	/*
 	 * zero-padding.
 	 */
 	if (nul > 0) {
+		char *cp;
+		int i;
+
 		if (M_ROMAP(m) || M_TRAILINGSPACE(m) < nul) {
 			struct mbuf *n;
 
@@ -2200,9 +2195,8 @@ nfs_zeropad(mp, len, nul)
 			n = m_get(M_WAIT, MT_DATA);
 			MCLAIM(n, &nfs_mowner);
 			n->m_len = nul;
-			n->m_next = m->m_next;
+			n->m_next = NULL;
 			m->m_next = n;
-			m = n;
 			cp = mtod(n, caddr_t);
 		} else {
 			cp = mtod(m, caddr_t) + m->m_len;
@@ -2772,4 +2766,56 @@ nfsrv_setcred(incred, outcred)
 	for (i = 0; i < incred->cr_ngroups; i++)
 		outcred->cr_groups[i] = incred->cr_groups[i];
 	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
+}
+
+u_int32_t
+nfs_getxid()
+{
+	static u_int32_t base;
+	static u_int32_t nfs_xid = 0;
+	static struct simplelock nfs_xidlock = SIMPLELOCK_INITIALIZER;
+	u_int32_t newxid;
+
+	simple_lock(&nfs_xidlock);
+	/*
+	 * derive initial xid from system time
+	 * XXX time is invalid if root not yet mounted
+	 */
+	if (__predict_false(!base && (rootvp))) {
+		struct timeval tv;
+
+		microtime(&tv);
+		base = tv.tv_sec << 12;
+		nfs_xid = base;
+	}
+
+	/*
+	 * Skip zero xid if it should ever happen.
+	 */
+	if (__predict_false(++nfs_xid == 0))
+		nfs_xid++;
+	newxid = nfs_xid;
+	simple_unlock(&nfs_xidlock);
+
+	return txdr_unsigned(newxid);
+}
+
+/*
+ * assign a new xid for existing request.
+ * used for NFSERR_JUKEBOX handling.
+ */
+void
+nfs_renewxid(struct nfsreq *req)
+{
+	u_int32_t xid;
+	int off;
+
+	xid = nfs_getxid();
+	if (req->r_nmp->nm_sotype == SOCK_STREAM)
+		off = sizeof(u_int32_t); /* RPC record mark */
+	else
+		off = 0;
+
+	m_copyback(req->r_mreq, off, sizeof(xid), (void *)&xid);
+	req->r_xid = xid;
 }

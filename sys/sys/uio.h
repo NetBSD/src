@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.28.2.1 2003/07/02 15:27:18 darrenr Exp $	*/
+/*	$NetBSD: uio.h,v 1.28.2.2 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,6 +33,12 @@
 
 #ifndef _SYS_UIO_H_
 #define	_SYS_UIO_H_
+
+#ifdef _KERNEL
+#ifndef __UIO_EXPOSE
+#define __UIO_EXPOSE
+#endif
+#endif
 
 #include <machine/ansi.h>
 #include <sys/featuretest.h>
@@ -72,6 +74,8 @@ enum uio_seg {
 	UIO_SYSSPACE		/* from system space */
 };
 
+#ifdef __UIO_EXPOSE
+
 struct uio {
 	struct	iovec *uio_iov;	/* pointer to array of iovecs */
 	int	uio_iovcnt;	/* number of iovecs in array */
@@ -81,6 +85,8 @@ struct uio {
 	enum	uio_rw uio_rw;	/* see above */
 	struct	lwp *uio_lwp;	/* LWP if UIO_USERSPACE */
 };
+
+#endif /* __UIO_EXPOSE */
 
 /*
  * Limits
@@ -109,7 +115,7 @@ ssize_t	readv __P((int, const struct iovec *, int));
 ssize_t	writev __P((int, const struct iovec *, int));
 __END_DECLS
 #else
-int ureadc __P((int c, struct uio *));
+int ureadc __P((int, struct uio *));
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_UIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.33 2003/04/02 10:39:36 fvdl Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.33.2.1 2004/08/03 10:56:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.33 2003/04/02 10:39:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.33.2.1 2004/08/03 10:56:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -389,6 +385,11 @@ ffs_balloc_ufs1(v)
 		}
 	}
 
+	if (flags & B_METAONLY) {
+		*bpp = bp;
+		return (0);
+	}
+
 	/*
 	 * Get the data block, allocating if necessary.
 	 */
@@ -521,7 +522,7 @@ fail:
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
-		ffs_blkfree(ip, *blkp, fs->fs_bsize);
+		ffs_blkfree(fs, ip->i_devvp, *blkp, fs->fs_bsize, ip->i_number);
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {
@@ -941,6 +942,11 @@ ffs_balloc_ufs2(v)
 		}
 	}
 
+	if (flags & B_METAONLY) {
+		*bpp = bp;
+		return (0);
+	}
+
 	/*
 	 * Get the data block, allocating if necessary.
 	 */
@@ -1073,7 +1079,7 @@ fail:
 		}
 	}
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
-		ffs_blkfree(ip, *blkp, fs->fs_bsize);
+		ffs_blkfree(fs, ip->i_devvp, *blkp, fs->fs_bsize, ip->i_number);
 		deallocated += fs->fs_bsize;
 	}
 	if (deallocated) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.22 2001/11/19 17:18:09 soren Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.22.16.1 2004/08/03 10:51:15 skrll Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -83,15 +83,8 @@ struct scsipi_mode_sense {
 #define	SMS_PAGE_CTRL_CHANGEABLE 	0x40
 #define	SMS_PAGE_CTRL_DEFAULT 		0x80
 #define	SMS_PAGE_CTRL_SAVED 		0xC0
-	union {
-		struct {
-			u_int8_t unused;
-			u_int8_t length;
-		} scsi __attribute__((packed));
-		struct {
-			u_int8_t length[2];
-		} atapi __attribute__((packed));
-	} u_len;
+	u_int8_t unused;
+	u_int8_t length;
 	u_int8_t control;
 } __attribute__((packed));
 
@@ -111,16 +104,8 @@ struct scsipi_mode_select {
 	u_int8_t byte2;
 #define	SMS_SP	0x01		/* save page */
 #define	SMS_PF	0x10		/* page format (0 = SCSI-1, 1 = SCSI-2) */
-	u_int8_t unused;
-	union {
-		struct {
-			u_int8_t unused;
-			u_int8_t length;
-		} scsi __attribute__((packed));
-		struct {
-			u_int8_t length[2];
-		} atapi __attribute__((packed));
-	} u_len;
+	u_int8_t unused[2];
+	u_int8_t length;
 	u_int8_t control;
 } __attribute__((packed));
 
@@ -295,6 +280,7 @@ struct scsipi_inquiry_data {
 /* 9*/	char    vendor[8];
 /*17*/	char    product[16];
 /*33*/	char    revision[4];
+#define	SCSIPI_INQUIRY_LENGTH_SCSI2	36
 /*37*/	u_int8_t vendor_specific[20];
 /*57*/	u_int8_t flags4;
 #define        SID_IUS         0x01
@@ -305,6 +291,7 @@ struct scsipi_inquiry_data {
 #define	SID_CLOCKING_SD_DT    0x0C
 /*58*/	u_int8_t reserved;
 /*59*/	char    version_descriptor[8][2];
+#define	SCSIPI_INQUIRY_LENGTH_SCSI3	74
 } __attribute__((packed)); /* 74 Bytes */
 
 /* Data structures for mode select/mode sense */

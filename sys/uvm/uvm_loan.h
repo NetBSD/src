@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.h,v 1.11 2003/05/03 17:54:32 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.h,v 1.11.2.1 2004/08/03 10:57:06 skrll Exp $	*/
 
 /*
  *
@@ -50,11 +50,12 @@
  * loan prototypes
  */
 
-void uvm_loan_init __P((void));
-int uvm_loan __P((struct vm_map *, vaddr_t, vsize_t, void *, int));
-void uvm_unloan __P((void *, int, int));
-void uvm_loanuobjpages __P((struct vm_page **, int));
-struct vm_page *uvm_loanbreak __P((struct vm_page *));
+void uvm_loan_init(void);
+int uvm_loan(struct vm_map *, vaddr_t, vsize_t, void *, int);
+void uvm_unloan(void *, int, int);
+int uvm_loanuobjpages(struct uvm_object *, voff_t, int,
+    struct vm_page **);
+struct vm_page *uvm_loanbreak(struct vm_page *);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.94.2.1 2004/08/03 10:54:45 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,11 +118,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -142,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94.2.1 2004/08/03 10:54:45 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -158,6 +154,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $"
 #include <sys/errno.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
+#ifdef TCP_SIGNATURE
+#include <sys/md5.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -179,6 +178,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $"
 #include <netinet6/nd6.h>
 #endif
 
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif	/* FAST_IPSEC*/
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif
@@ -191,6 +194,10 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.94 2003/06/30 14:51:06 ragge Exp $"
 #include <netinet/tcp_var.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
+
+#ifdef IPSEC
+#include <netkey/key.h>
+#endif
 
 #ifdef notyet
 extern struct mbuf *m_copypack();
@@ -210,6 +217,8 @@ int	tcp_cwm_burstsize = 4;
 #include <sys/device.h>
 
 extern struct evcnt tcp_output_bigheader;
+extern struct evcnt tcp_output_predict_hit;
+extern struct evcnt tcp_output_predict_miss;
 extern struct evcnt tcp_output_copysmall;
 extern struct evcnt tcp_output_copybig;
 extern struct evcnt tcp_output_refbig;
@@ -225,7 +234,7 @@ static
 #ifndef GPROF
 __inline
 #endif
-void
+int
 tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 {
 #ifdef INET
@@ -282,9 +291,23 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	ifp = rt->rt_ifp;
 
 	size = tcp_mssdflt;
-	if (tp->t_mtudisc && rt->rt_rmx.rmx_mtu != 0)
+	if (tp->t_mtudisc && rt->rt_rmx.rmx_mtu != 0) {
+#ifdef INET6
+		if (in6p && rt->rt_rmx.rmx_mtu < IPV6_MMTU) {
+			/*
+			 * RFC2460 section 5, last paragraph: if path MTU is
+			 * smaller than 1280, use 1280 as packet size and
+			 * attach fragment header.
+			 */
+			size = IPV6_MMTU - iphlen - sizeof(struct ip6_frag) -
+			    sizeof(struct tcphdr);
+		} else
+			size = rt->rt_rmx.rmx_mtu - iphlen -
+			    sizeof(struct tcphdr);
+#else
 		size = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
-	else if (ifp->if_flags & IFF_LOOPBACK)
+#endif
+	} else if (ifp->if_flags & IFF_LOOPBACK)
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 #ifdef INET
 	else if (inp && tp->t_mtudisc)
@@ -326,8 +349,9 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	 */
 #ifdef INET
 	if (inp) {
-#ifdef IPSEC
-		optlen += ipsec4_hdrsiz_tcp(tp);
+#if defined(IPSEC) || defined(FAST_IPSEC)
+		if (! IPSEC_PCB_SKIP_IPSEC(inp->inp_sp, IPSEC_DIR_OUTBOUND))
+			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		optlen += ip_optlen(inp);
 	}
@@ -335,20 +359,26 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 #ifdef INET6
 #ifdef INET
 	if (in6p && tp->t_family == AF_INET) {
-#ifdef IPSEC
-		optlen += ipsec4_hdrsiz_tcp(tp);
+#if defined(IPSEC) || defined(FAST_IPSEC)
+		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+			optlen += ipsec4_hdrsiz_tcp(tp);
 #endif
 		/* XXX size -= ip_optlen(in6p); */
 	} else
 #endif
 	if (in6p && tp->t_family == AF_INET6) {
 #ifdef IPSEC
-		optlen += ipsec6_hdrsiz_tcp(tp);
+		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+			optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
 		optlen += ip6_optlen(in6p);
 	}
 #endif
 	size -= optlen;
+
+	/* there may not be any room for data if mtu is too small */
+	if (size < 0)
+		return (EMSGSIZE);
 
 	/*
 	 * *rxsegsizep holds *estimated* inbound segment size (estimation
@@ -387,6 +417,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 		}
 		tp->t_segsz = *txsegsizep;
 	}
+
+	return (0);
 }
 
 static
@@ -397,7 +429,7 @@ int
 tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
     long len, int hdrlen, struct mbuf **mp)
 {
-	struct mbuf *m;
+	struct mbuf *m, *m0;
 
 	if (tp->t_force && len == 1)
 		tcpstat.tcps_sndprobe++;
@@ -440,49 +472,48 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 
 	m->m_data += max_linkhdr;
 	m->m_len = hdrlen;
+
+	/*
+	 * To avoid traversing the whole sb_mb chain for correct
+	 * data to send, remember last sent mbuf, its offset and
+	 * the sent size.  When called the next time, see if the
+	 * data to send is directly following the previous transfer.
+	 * This is important for large TCP windows.
+	 */
+	if (off == 0 || tp->t_lastm == NULL ||
+	    (tp->t_lastoff + tp->t_lastlen) != off) {
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_miss);
+		/*
+		 * Either a new packet or a retransmit.
+		 * Start from the beginning.
+		 */
+		tp->t_lastm = so->so_snd.sb_mb;
+		tp->t_inoff = off;
+	} else {
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_hit);
+		tp->t_inoff += tp->t_lastlen;
+	}
+
+	/* Traverse forward to next packet */
+	while (tp->t_inoff > 0) {
+		if (tp->t_lastm == NULL)
+			panic("tp->t_lastm == NULL");
+		if (tp->t_inoff < tp->t_lastm->m_len)
+			break;
+		tp->t_inoff -= tp->t_lastm->m_len;
+		tp->t_lastm = tp->t_lastm->m_next;
+	}
+
+	tp->t_lastoff = off;
+	tp->t_lastlen = len;
+	m0 = tp->t_lastm;
+	off = tp->t_inoff;
+
 	if (len <= M_TRAILINGSPACE(m)) {
-		m_copydata(so->so_snd.sb_mb, off, (int) len,
-		    mtod(m, caddr_t) + hdrlen);
+		m_copydata(m0, off, (int) len, mtod(m, caddr_t) + hdrlen);
 		m->m_len += len;
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
-		struct mbuf *m0;
-
-		/*
-		 * To avoid traversing the whole sb_mb chain for correct
-		 * data to send, remember last sent mbuf,  its offset and
-		 * the sent size. When called the next time, see if the
-		 * data to send is the directly following the previous
-		 * transfer.  This is important for large TCP windows.
-		 */
-		if (0 && off > 8*1024) { /* Only for long chains */
-			if (tp->t_lastm == NULL ||
-			    (tp->t_lastoff + tp->t_lastlen) != off) {
-				/* Prediction failed */
-				tp->t_lastm = so->so_snd.sb_mb;
-				tp->t_inoff = off;
-			} else {
-				tp->t_inoff += tp->t_lastlen;
-				tp->t_lastoff = off - tp->t_lastoff;
-			}
-
-			/* Traverse forward to next packet */
-			while (tp->t_inoff > 0) {
-				if (tp->t_lastm == NULL)
-					panic("tp->t_lastm == NULL");
-				if (tp->t_inoff < tp->t_lastm->m_len)
-					break;
-				tp->t_inoff -= tp->t_lastm->m_len;
-				tp->t_lastm = tp->t_lastm->m_next;
-			}
-
-			tp->t_lastoff = off;
-			tp->t_lastlen = len;
-			m0 = tp->t_lastm;
-			off = tp->t_inoff;
-		} else
-			m0 = so->so_snd.sb_mb;
-
 		m->m_next = m_copy(m0, off, (int) len);
 		if (m->m_next == NULL) {
 			m_freem(m);
@@ -524,6 +555,9 @@ tcp_output(tp)
 	int maxburst = TCP_MAXBURST;
 	int af;		/* address family on the wire */
 	int iphdrlen;
+#ifdef TCP_SIGNATURE
+	int sigoff = 0;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -552,19 +586,20 @@ tcp_output(tp)
 		if (tp->t_in6pcb)
 			break;
 #endif
-		return EINVAL;
+		return (EINVAL);
 #endif
 #ifdef INET6
 	case AF_INET6:
 		if (tp->t_in6pcb)
 			break;
-		return EINVAL;
+		return (EINVAL);
 #endif
 	default:
-		return EAFNOSUPPORT;
+		return (EAFNOSUPPORT);
 	}
 
-	tcp_segsize(tp, &txsegsize, &rxsegsize);
+	if (tcp_segsize(tp, &txsegsize, &rxsegsize))
+		return (EMSGSIZE);
 
 	idle = (tp->snd_max == tp->snd_una);
 
@@ -874,6 +909,31 @@ send:
 		optlen += TCPOLEN_TSTAMP_APPA;
 	}
 
+#ifdef TCP_SIGNATURE
+#if defined(INET6) && defined(FAST_IPSEC)
+	if (tp->t_family == AF_INET) 
+#endif
+	if (tp->t_flags & TF_SIGNATURE) {
+		u_char *bp;
+		/*
+		 * Initialize TCP-MD5 option (RFC2385)
+		 */
+		bp = (u_char *)opt + optlen;
+		*bp++ = TCPOPT_SIGNATURE;
+		*bp++ = TCPOLEN_SIGNATURE;
+		sigoff = optlen + 2;
+		bzero(bp, TCP_SIGLEN);
+		bp += TCP_SIGLEN;
+		optlen += TCPOLEN_SIGNATURE;
+		/*
+		 * Terminate options list and maintain 32-bit alignment.
+ 		 */
+		*bp++ = TCPOPT_NOP;
+		*bp++ = TCPOPT_EOL;
+ 		optlen += 2;
+ 	}
+#endif /* TCP_SIGNATURE */
+
 	hdrlen += optlen;
 
 #ifdef DIAGNOSTIC
@@ -990,8 +1050,8 @@ send:
 		win = 0;
 	if (win > (long)TCP_MAXWIN << tp->rcv_scale)
 		win = (long)TCP_MAXWIN << tp->rcv_scale;
-	if (win < (long)(tp->rcv_adv - tp->rcv_nxt))
-		win = (long)(tp->rcv_adv - tp->rcv_nxt);
+	if (win < (long)(int32_t)(tp->rcv_adv - tp->rcv_nxt))
+		win = (long)(int32_t)(tp->rcv_adv - tp->rcv_nxt);
 	th->th_win = htons((u_int16_t) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		u_int32_t urp = tp->snd_up - tp->snd_nxt;
@@ -1007,6 +1067,35 @@ send:
 		 * number wraparound.
 		 */
 		tp->snd_up = tp->snd_una;		/* drag it along */
+
+#ifdef TCP_SIGNATURE
+#if defined(INET6) && defined(FAST_IPSEC)
+	if (tp->t_family == AF_INET) /* XXX */
+#endif
+	if (sigoff && (tp->t_flags & TF_SIGNATURE)) {
+		struct secasvar *sav;
+		u_int8_t *sigp;
+
+		sav = tcp_signature_getsav(m, th);
+		
+		if (sav == NULL) {
+			if (m)
+				m_freem(m);
+			return (EPERM);
+		}
+
+		m->m_pkthdr.len = hdrlen + len;
+		sigp = (caddr_t)th + sizeof(*th) + sigoff;
+		tcp_signature(m, th, (caddr_t)th - mtod(m, caddr_t), sav, sigp);
+
+		key_sa_recordxfer(sav, m);
+#ifdef FAST_IPSEC
+		KEY_FREESAV(&sav);
+#else
+		key_freesav(sav);
+#endif
+	}
+#endif
 
 	/*
 	 * Set ourselves up to be checksummed just before the packet
@@ -1092,11 +1181,11 @@ send:
 		 */
 		if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
 		    tp->snd_nxt != tp->snd_una) {
-			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 			if (TCP_TIMER_ISARMED(tp, TCPT_PERSIST)) {
 				TCP_TIMER_DISARM(tp, TCPT_PERSIST);
 				tp->t_rxtshift = 0;
 			}
+			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
 		}
 	} else
 		if (SEQ_GT(tp->snd_nxt + len, tp->snd_max))
@@ -1153,14 +1242,6 @@ send:
 #endif
 	}
 
-#ifdef IPSEC
-	if (ipsec_setsocket(m, so) != 0) {
-		m_freem(m);
-		error = ENOBUFS;
-		goto out;
-	}
-#endif /*IPSEC*/
-
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -1174,7 +1255,7 @@ send:
 		error = ip_output(m, opts, ro,
 			(tp->t_mtudisc ? IP_MTUDISC : 0) |
 			(so->so_options & SO_DONTROUTE),
-			0);
+			(struct ip_moptions *)0, so);
 		break;
 	    }
 #endif
@@ -1188,7 +1269,8 @@ send:
 		else
 			opts = NULL;
 		error = ip6_output(m, opts, (struct route_in6 *)ro,
-			so->so_options & SO_DONTROUTE, 0, NULL);
+			so->so_options & SO_DONTROUTE, 
+			(struct ip6_moptions *)0, so, NULL);
 		break;
 	    }
 #endif

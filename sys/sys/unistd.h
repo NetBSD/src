@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.28 2003/05/31 11:50:15 bjh21 Exp $	*/
+/*	$NetBSD: unistd.h,v 1.28.2.1 2004/08/03 10:56:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -116,6 +112,17 @@
 #define	L_SET		SEEK_SET
 #define	L_INCR		SEEK_CUR
 #define	L_XTND		SEEK_END
+
+/*
+ * fsync_range values.
+ *
+ * Note the following flag values were chosen to not overlap
+ * values for SEEK_XXX flags.  While not currently implemented,
+ * it is possible to extend this call to respect SEEK_CUR and
+ * SEEK_END offset addressing modes.
+ */
+#define	FDATASYNC	0x0010	/* sync data and minimal metadata */
+#define	FFILESYNC	0x0020	/* sync data and metadata */
 #endif
 
 /* configurable pathname variables */

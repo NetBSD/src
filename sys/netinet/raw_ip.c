@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.70.2.1 2003/07/02 15:27:00 darrenr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.70.2.2 2004/08/03 10:54:43 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -41,11 +41,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -65,8 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.1 2003/07/02 15:27:00 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.2 2004/08/03 10:54:43 skrll Exp $");
 
+#include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
@@ -97,6 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.1 2003/07/02 15:27:00 darrenr Exp 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif /*IPSEC*/
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
+#endif	/* FAST_IPSEC*/
 
 struct inpcbtable rawcbtable;
 
@@ -132,16 +134,11 @@ rip_init()
  * mbuf chain.
  */
 void
-#if __STDC__
 rip_input(struct mbuf *m, ...)
-#else
-rip_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int proto;
 	struct ip *ip = mtod(m, struct ip *);
+	struct inpcb_hdr *inph;
 	struct inpcb *inp;
 	struct inpcb *last = 0;
 	struct mbuf *opts = 0;
@@ -167,7 +164,10 @@ rip_input(m, va_alist)
 	ip->ip_len = ntohs(ip->ip_len) - (ip->ip_hl << 2);
 	NTOHS(ip->ip_off);
 
-	CIRCLEQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
+	CIRCLEQ_FOREACH(inph, &rawcbtable.inpt_queue, inph_queue) {
+		inp = (struct inpcb *)inph;
+		if (inp->inp_af != AF_INET)
+			continue;
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
 			continue;
 		if (!in_nullhost(inp->inp_laddr) &&
@@ -179,7 +179,7 @@ rip_input(m, va_alist)
 		if (last) {
 			struct mbuf *n;
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 			/* check AH/ESP integrity. */
 			if (ipsec4_in_reject_so(m, last->inp_socket)) {
 				ipsecstat.in_polvio++;
@@ -203,7 +203,7 @@ rip_input(m, va_alist)
 		}
 		last = inp;
 	}
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (last && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
@@ -247,10 +247,12 @@ rip_pcbnotify(table, faddr, laddr, proto, errno, notify)
 	int nmatch;
 
 	nmatch = 0;
-	for (inp = CIRCLEQ_FIRST(&table->inpt_queue);
+	for (inp = (struct inpcb *)CIRCLEQ_FIRST(&table->inpt_queue);
 	    inp != (struct inpcb *)&table->inpt_queue;
 	    inp = ninp) {
-		ninp = inp->inp_queue.cqe_next;
+		ninp = (struct inpcb *)inp->inp_queue.cqe_next;
+		if (inp->inp_af != AF_INET)
+			continue;
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != proto)
 			continue;
 		if (in_hosteq(inp->inp_faddr, faddr) &&
@@ -301,13 +303,7 @@ rip_ctlinput(cmd, sa, v)
  * Tack on options user may have setup with control call.
  */
 int
-#if __STDC__
 rip_output(struct mbuf *m, ...)
-#else
-rip_output(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct inpcb *inp;
 	struct ip *ip;
@@ -373,20 +369,14 @@ rip_output(m, va_alist)
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
 		if (ip->ip_id == 0)
-			ip->ip_id = htons(ip_id++);
+			ip->ip_id = ip_newid();
 		opts = NULL;
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
 		ipstat.ips_rawout++;
 	}
-#ifdef IPSEC
-	if (ipsec_setsocket(m, inp->inp_socket) != 0) {
-		m_freem(m);
-		return ENOBUFS;
-	}
-#endif /*IPSEC*/
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
-	    &inp->inp_errormtu));
+	     inp->inp_socket, &inp->inp_errormtu));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_output.c,v 1.11 2001/11/13 01:08:11 lukem Exp $	*/
+/*	$NetBSD: ns_output.c,v 1.11.16.1 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_output.c,v 1.11 2001/11/13 01:08:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_output.c,v 1.11.16.1 2004/08/03 10:56:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +59,7 @@ int ns_output_cnt = 0;
 struct mbuf *ns_lastout;
 
 int
-#if __STDC__
 ns_output(struct mbuf *m0, ...)
-#else
-ns_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct route *ro;
 	int flags;

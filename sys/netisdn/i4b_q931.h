@@ -27,7 +27,7 @@
  *	i4b_q931.h - Q931 handling header file
  *	--------------------------------------
  *
- *	$Id: i4b_q931.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_q931.h,v 1.1.1.1.26.1 2004/08/03 10:55:40 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -74,7 +74,7 @@
 
 #define MSG_SETUP_LEN		18	/* without number strings ! */
 
-#define IEI_BEARERCAP_LEN	2	/* 2 octetts lenght */
+#define IEI_BEARERCAP_LEN	2	/* 2 octetts length */
 
 #define IT_CAP_SPEECH		0x80	/* BC: information xfer capability */
 #define IT_CAP_UNR_DIG_INFO	0x88	/* BC: information xfer capability */

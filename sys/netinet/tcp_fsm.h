@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.11 2001/10/20 03:19:41 matt Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.11.18.1 2004/08/03 10:54:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,9 +69,17 @@
  * if all data queued for output is included in the segment.
  */
 const u_char	tcp_outflags[TCP_NSTATES] = {
-    TH_RST|TH_ACK, 0, TH_SYN, TH_SYN|TH_ACK,
-    TH_ACK, TH_ACK,
-    TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
+	TH_RST|TH_ACK,	/* CLOSED */
+	0,		/* LISTEN */
+	TH_SYN,		/* SYN_SENT */
+	TH_SYN|TH_ACK,	/* SYN_RCVD */
+	TH_ACK,		/* ESTABLISHED */
+	TH_ACK,		/* CLOSE_WAIT */
+	TH_FIN|TH_ACK,	/* FIN_WAIT_1 */
+	TH_FIN|TH_ACK,	/* CLOSING */
+	TH_FIN|TH_ACK,	/* LAST_ACK */
+	TH_ACK,		/* FIN_WAIT_2 */
+	TH_ACK,		/* TIME_WAIT */
 };
 #endif
 
@@ -89,6 +93,8 @@ const char * const tcpstates[] = {
 	"ESTABLISHED",	"CLOSE_WAIT",	"FIN_WAIT_1",	"CLOSING",
 	"LAST_ACK",	"FIN_WAIT_2",	"TIME_WAIT",
 };
+#elif defined(_KERNEL)
+extern const char * const tcpstates[];
 #endif
 
 #endif /* _NETINET_TCP_FSM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.109.2.1 2003/07/02 15:27:25 darrenr Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.109.2.2 2004/08/03 10:56:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.1 2003/07/02 15:27:25 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.2 2004/08/03 10:56:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.1 2003/07/02 15:27:25 darrenr 
 #include <ufs/lfs/lfs_extern.h>
 
 extern pid_t lfs_writer_daemon;
-extern int lfs_subsys_pages;
-extern int lfs_dirvcount;
-extern struct simplelock lfs_subsys_lock;
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -310,7 +303,9 @@ lfs_fsync(void *v)
 	 * activity from the pagedaemon.
 	 */
 	if (ap->a_flags & FSYNC_LAZY) {
+		simple_lock(&lfs_subsys_lock);
 		wakeup(&lfs_writer_daemon);
+		simple_unlock(&lfs_subsys_lock);
 		return 0;
 	}
 
@@ -371,8 +366,6 @@ lfs_inactive(void *v)
 #define	SET_DIROP(vp)		SET_DIROP2((vp), NULL)
 #define	SET_DIROP2(vp, vp2)	lfs_set_dirop((vp), (vp2))
 static int lfs_set_dirop(struct vnode *, struct vnode *);
-extern int lfs_dirvcount;
-extern int lfs_do_flush;
 
 #define	NRESERVE(fs)	(btofsb(fs, (NIADDR + 3 + (2 * NIADDR + 3)) << fs->lfs_bshift))
 
@@ -395,28 +388,40 @@ lfs_set_dirop(struct vnode *vp, struct vnode *vp2)
 
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
-	while (fs->lfs_writer || lfs_dirvcount > LFS_MAX_DIROP) {
-		if (fs->lfs_writer)
-			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_sdirop", 0);
-		if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
-			wakeup(&lfs_writer_daemon);
-			preempt(NULL);
-		}
+restart:
+	simple_lock(&fs->lfs_interlock);
+	if (fs->lfs_writer) {
+		ltsleep(&fs->lfs_dirops, (PRIBIO + 1) | PNORELOCK,
+		    "lfs_sdirop", 0, &fs->lfs_interlock);
+		goto restart;
+	}
+	simple_lock(&lfs_subsys_lock);
+	if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
+		wakeup(&lfs_writer_daemon);
+		simple_unlock(&lfs_subsys_lock);
+		simple_unlock(&fs->lfs_interlock);
+		preempt(1);
+		goto restart;
+	}
 
-		if (lfs_dirvcount > LFS_MAX_DIROP) {
+	if (lfs_dirvcount > LFS_MAX_DIROP) {
+		simple_unlock(&fs->lfs_interlock);
 #ifdef DEBUG_LFS
-			printf("lfs_set_dirop: sleeping with dirops=%d, "
-			       "dirvcount=%d\n", fs->lfs_dirops,
-			       lfs_dirvcount); 
+		printf("lfs_set_dirop: sleeping with dirops=%d, "
+		       "dirvcount=%d\n", fs->lfs_dirops, lfs_dirvcount); 
 #endif
-			if ((error = tsleep(&lfs_dirvcount, PCATCH|PUSER,
-					   "lfs_maxdirop", 0)) != 0) {
-				goto unreserve;
-			}
-		}							
-	}								
+		if ((error = ltsleep(&lfs_dirvcount,
+		    PCATCH | PUSER | PNORELOCK, "lfs_maxdirop", 0,
+		    &lfs_subsys_lock)) != 0) {
+			goto unreserve;
+		}
+		goto restart;
+	}							
+	simple_unlock(&lfs_subsys_lock);
+
 	++fs->lfs_dirops;						
 	fs->lfs_doifile = 1;						
+	simple_unlock(&fs->lfs_interlock);
 
 	/* Hold a reference so SET_ENDOP will be happy */
 	vref(vp);
@@ -447,33 +452,38 @@ unreserve:
 		vrele(vp2);						\
 }
 
-#define	MARK_VNODE(dvp)	 do {						\
-	struct inode *_ip = VTOI(dvp);					\
-	struct lfs *_fs = _ip->i_lfs;					\
-									\
-	if (!((dvp)->v_flag & VDIROP)) {				\
-		(void)lfs_vref(dvp);					\
-		++lfs_dirvcount;					\
-		TAILQ_INSERT_TAIL(&_fs->lfs_dchainhd, _ip, i_lfs_dchain); \
-	}								\
-	(dvp)->v_flag |= VDIROP;					\
-	if (!(_ip->i_flag & IN_ADIROP)) {				\
-		++_fs->lfs_nadirop;					\
-	}								\
-	_ip->i_flag |= IN_ADIROP;					\
-} while (0)
+#define	MARK_VNODE(vp)		lfs_mark_vnode(vp)
+#define	UNMARK_VNODE(vp)	lfs_unmark_vnode(vp)
 
-#define UNMARK_VNODE(vp) lfs_unmark_vnode(vp)
-
-void lfs_unmark_vnode(struct vnode *vp)
+void
+lfs_mark_vnode(struct vnode *vp)
 {
-	struct inode *ip;
+	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs;
 
-	ip = VTOI(vp);
+	if (!(ip->i_flag & IN_ADIROP)) {
+		if (!(vp->v_flag & VDIROP)) {
+			(void)lfs_vref(vp);
+			++lfs_dirvcount;
+			TAILQ_INSERT_TAIL(&fs->lfs_dchainhd, ip, i_lfs_dchain);
+			vp->v_flag |= VDIROP;
+		}
+		++fs->lfs_nadirop;
+		ip->i_flag |= IN_ADIROP;
+	} else
+		KASSERT(vp->v_flag & VDIROP);
+}
 
-	if (ip->i_flag & IN_ADIROP)
+void
+lfs_unmark_vnode(struct vnode *vp)
+{
+	struct inode *ip = VTOI(vp);
+
+	if (ip->i_flag & IN_ADIROP) {
+		KASSERT(vp->v_flag & VDIROP);
 		--ip->i_lfs->lfs_nadirop;
-	ip->i_flag &= ~IN_ADIROP;
+		ip->i_flag &= ~IN_ADIROP;
+	}
 }
 
 int
@@ -908,7 +918,7 @@ lfs_close(void *v)
 	struct timespec ts;
 
 	if (vp == ip->i_lfs->lfs_ivnode &&
-	    vp->v_mount->mnt_flag & MNT_UNMOUNT)
+	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
 		return 0;
 
 	if (vp->v_usecount > 1 && vp != ip->i_lfs->lfs_ivnode) {
@@ -975,7 +985,6 @@ lfsfifo_close(void *v)
 /*
  * Reclaim an inode so that it can be used for other purposes.
  */
-int lfs_no_inactive = 0;
 
 int
 lfs_reclaim(void *v)
@@ -1017,6 +1026,7 @@ int
 lfs_strategy(void *v)
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf	*bp;
@@ -1027,7 +1037,7 @@ lfs_strategy(void *v)
 	int		i, sn, error, slept;
 
 	bp = ap->a_bp;
-	vp = bp->b_vp;
+	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
 
@@ -1093,8 +1103,7 @@ lfs_strategy(void *v)
 	simple_unlock(&fs->lfs_interlock);
 
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
+	VOP_STRATEGY(vp, bp);
 	return (0);
 }
 
@@ -1112,15 +1121,6 @@ lfs_flush_dirops(struct lfs *fs)
 
 	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL)
 		return;
-
-	/* XXX simplelock fs->lfs_dirops */
-	while (fs->lfs_dirops > 0) {
-		++fs->lfs_diropwait;  
-		tsleep(&fs->lfs_writer, PRIBIO+1, "pndirop", 0);
-		--fs->lfs_diropwait; 
-	}
-	/* disallow dirops during flush */
-	fs->lfs_writer++;
 
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
@@ -1189,9 +1189,6 @@ lfs_flush_dirops(struct lfs *fs)
 	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
-	
-	if (--fs->lfs_writer == 0)
-		wakeup(&fs->lfs_dirops);
 }
 
 /*
@@ -1226,13 +1223,13 @@ lfs_fcntl(void *v)
 	}
 
 	/* Avoid locking a draining lock */
-	if (ap->a_vp->v_mount->mnt_flag & MNT_UNMOUNT) {
+	if (ap->a_vp->v_mount->mnt_iflag & IMNT_UNMOUNT) {
 		return ESHUTDOWN;
 	}
 
 	p = ap->a_l->l_proc;
 	fs = VTOI(ap->a_vp)->i_lfs;
-	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsid;
+	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
 	switch (ap->a_command) {
 	    case LFCNSEGWAITALL:
@@ -1294,6 +1291,7 @@ lfs_fcntl(void *v)
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
+		lfs_writer_enter(fs, "pndirop");
 		off = fs->lfs_offset;
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
 		lfs_flush_dirops(fs);
@@ -1302,6 +1300,7 @@ lfs_fcntl(void *v)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
 		lfs_segunlock(fs);
+		lfs_writer_leave(fs);
 
 #ifdef DEBUG_LFS
 		LFS_CLEANERINFO(cip, fs, bp);
@@ -1342,6 +1341,11 @@ lfs_getpages(void *v)
 	if ((ap->a_access_type & VM_PROT_WRITE) != 0) {
 		LFS_SET_UINO(VTOI(ap->a_vp), IN_MODIFIED);
 	}
+
+	/*
+	 * we're relying on the fact that genfs_getpages() always read in
+	 * entire filesystem blocks.
+	 */
 	return genfs_getpages(v);
 }
 
@@ -1360,11 +1364,15 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	    int flags, int checkfirst)
 {
 	int by_list;
-	struct vm_page *curpg, *pgs[MAXBSIZE / PAGE_SIZE], *pg;
-	struct lwp *l = curlwp ? curlwp : &lwp0;
-	off_t soff;
+	struct vm_page *curpg = NULL; /* XXX: gcc */
+	struct vm_page *pgs[MAXBSIZE / PAGE_SIZE], *pg;
+	off_t soff = 0; /* XXX: gcc */
 	voff_t off;
-	int i, dirty, tdirty, nonexistent, any_dirty;
+	int i;
+	int nonexistent;
+	int any_dirty;	/* number of dirty pages */
+	int dirty;	/* number of dirty pages in a block */
+	int tdirty;
 	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
 
   top:
@@ -1375,12 +1383,14 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 
 	if (by_list) {
 		curpg = TAILQ_FIRST(&vp->v_uobj.memq);
-		PHOLD(l);
 	} else {
 		soff = startoffset;
 	}
 	while (by_list || soff < MIN(blkeof, endoffset)) {
 		if (by_list) {
+			/*
+			 * find the first page in a block.
+			 */
 			if (pages_per_block > 1) {
 				while (curpg && (curpg->offset & fs->lfs_bmask))
 					curpg = TAILQ_NEXT(curpg, listq);
@@ -1473,16 +1483,13 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		}
 
 		if (checkfirst && any_dirty)
-			return any_dirty;
+			break;
 
 		if (by_list) {
 			curpg = TAILQ_NEXT(curpg, listq);
 		} else {
 			soff += MAX(PAGE_SIZE, fs->lfs_bsize);
 		}
-	}
-	if (by_list) {
-		PRELE(l);
 	}
 
 	/*
@@ -1531,6 +1538,8 @@ check_dirty(struct lfs *fs, struct vnode *vp,
  *     block are either resident or not, even if those pages are higher
  *     than EOF; that means that we will be getting requests to free
  *     "unused" pages above EOF all the time, and should ignore them.
+ *
+ * XXX note that we're (ab)using PGO_LOCKED as "seglock held".
  */
 
 int
@@ -1549,15 +1558,15 @@ lfs_putpages(void *v)
 	struct segment *sp;
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
-	int pages_per_block;
-	int s, sync, dirty, pagedaemon;
+	int s;
+	boolean_t seglocked, sync, pagedaemon;
 	struct vm_page *pg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	sync = (ap->a_flags & PGO_SYNCIO);
+	sync = (ap->a_flags & PGO_SYNCIO) != 0;
 	pagedaemon = (curproc == uvm.pagedaemon_proc);
 
 	/* Putpages does nothing for metadata. */
@@ -1615,7 +1624,6 @@ lfs_putpages(void *v)
 	 * Extend page range to start and end at block boundaries.
 	 * (For the purposes of VOP_PUTPAGES, fragments don't exist.)
 	 */
-	pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
 	origoffset = ap->a_offlo;
 	origendoffset = ap->a_offhi;
 	startoffset = origoffset & ~(fs->lfs_bmask);
@@ -1658,15 +1666,15 @@ lfs_putpages(void *v)
 		int r;
 
 		/* If no pages are dirty, we can just use genfs_putpages. */
-		if ((dirty = check_dirty(fs, vp, startoffset, endoffset, blkeof,
-					 ap->a_flags, 1)) != 0)
+		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
+				ap->a_flags, 1) != 0)
 			break;
 
 		if ((r = genfs_putpages(v)) != EDEADLK)
 			return r;
 
 		/* Start over. */
-		preempt(NULL);
+		preempt(1);
 		simple_lock(&vp->v_interlock);
 	} while(1);
 		
@@ -1695,12 +1703,7 @@ lfs_putpages(void *v)
 		int locked;
 
 		/* printf("putpages to clean VDIROP, flushing\n"); */
-		while (fs->lfs_dirops > 0) {
-			++fs->lfs_diropwait;
-			tsleep(&fs->lfs_writer, PRIBIO+1, "ppdirop", 0);
-			--fs->lfs_diropwait;
-		}
-		++fs->lfs_writer;
+		lfs_writer_enter(fs, "ppdirop");
 		locked = VOP_ISLOCKED(vp) && /* XXX */
 			vp->v_lock.lk_lockholder == curproc->p_pid;
 		if (locked)
@@ -1712,8 +1715,7 @@ lfs_putpages(void *v)
 		simple_lock(&vp->v_interlock);
 		if (locked)
 			VOP_LOCK(vp, LK_EXCLUSIVE);
-		if (--fs->lfs_writer == 0)
-			wakeup(&fs->lfs_dirops);
+		lfs_writer_leave(fs);
 
 		/* XXX the flush should have taken care of this one too! */
 	}
@@ -1733,61 +1735,18 @@ lfs_putpages(void *v)
 	 * unless genfs_putpages returns EDEADLK; then we must flush
 	 * what we have, and correct FIP and segment header accounting.
 	 */
-	if (ap->a_flags & PGO_LOCKED) {
-		sp = fs->lfs_sp;
-		sp->vp = vp;
 
+	seglocked = (ap->a_flags & PGO_LOCKED) != 0;
+	if (!seglocked) {
+		simple_unlock(&vp->v_interlock);
 		/*
-		 * Make sure that all pages in any given block are dirty, or
-		 * none of them are.
+		 * Take the seglock, because we are going to be writing pages.
 		 */
-	    again:
-		check_dirty(fs, vp, startoffset, endoffset, blkeof,
-			    ap->a_flags, 0);
-
-		if ((error = genfs_putpages(v)) == EDEADLK) {
-#ifdef DEBUG_LFS
-			printf("lfs_putpages: genfs_putpages returned EDEADLK"
-			       " ino %d off %x (seg %d)\n",
-			       ip->i_number, fs->lfs_offset,
-			       dtosn(fs, fs->lfs_offset));
-#endif
-			/* If nothing to write, short-circuit */
-			if (sp->cbpp - sp->bpp == 1) {
-				preempt(NULL);
-				simple_lock(&vp->v_interlock);
-				goto again;
-			}
-			/* Write gathered pages */
-			lfs_updatemeta(sp);
-			(void) lfs_writeseg(fs, sp);
- 
-			/* Reinitialize brand new FIP and add us to it */
-			sp->vp = vp;
-			sp->fip->fi_version = ip->i_gen;
-			sp->fip->fi_ino = ip->i_number;
-			/* Add us to the new segment summary. */
-			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-			sp->sum_bytes_left -=
-				sizeof(struct finfo) - sizeof(int32_t);
-
-			/* Give the write a chance to complete */
-			preempt(NULL);
-
-			/* We've lost the interlock.  Start over. */
-			simple_lock(&vp->v_interlock);
-			goto again;
-		}
-		lfs_updatemeta(sp);
-		return error;
+		error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0));
+		if (error != 0)
+			return error;
+		simple_lock(&vp->v_interlock);
 	}
-
-	simple_unlock(&vp->v_interlock);
-	/*
-	 * Take the seglock, because we are going to be writing pages.
-	 */
-	if ((error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0))) != 0)
-		return error;
 
 	/*
 	 * VOP_PUTPAGES should not be called while holding the seglock.
@@ -1801,16 +1760,21 @@ lfs_putpages(void *v)
 	 * (This should duplicate the setup at the top of lfs_writefile().)
 	 */
 	sp = fs->lfs_sp;
-	if (sp->seg_bytes_left < fs->lfs_bsize ||
-	    sp->sum_bytes_left < sizeof(struct finfo))
-		(void) lfs_writeseg(fs, fs->lfs_sp); 
- 
-	sp->sum_bytes_left -= sizeof(struct finfo) - sizeof(int32_t);
-	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	if (!seglocked) {
+		if (sp->seg_bytes_left < fs->lfs_bsize ||
+		    sp->sum_bytes_left < sizeof(struct finfo))
+			(void) lfs_writeseg(fs, fs->lfs_sp); 
+	 
+		sp->sum_bytes_left -= FINFOSIZE;
+		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	}
+	KASSERT(sp->vp == NULL);
 	sp->vp = vp;
  
-	if (vp->v_flag & VDIROP)
-		((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
+	if (!seglocked) {
+		if (vp->v_flag & VDIROP)
+			((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
+	}
  
 	sp->fip->fi_nblocks = 0;
 	sp->fip->fi_ino = ip->i_number;
@@ -1822,8 +1786,7 @@ lfs_putpages(void *v)
 	 * Whenever we lose the interlock we have to rerun check_dirty, as
 	 * well.
 	 */
-    again2:
-	simple_lock(&vp->v_interlock);
+again:
 	check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags, 0);
 
 	if ((error = genfs_putpages(v)) == EDEADLK) {
@@ -1834,54 +1797,68 @@ lfs_putpages(void *v)
 		       dtosn(fs, fs->lfs_offset));
 #endif
 		/* If nothing to write, short-circuit */
-		if (sp->cbpp - sp->bpp == 1) {
-			preempt(NULL);
-			goto again2;
+		if (sp->cbpp - sp->bpp > 1) {
+			/* Write gathered pages */
+			lfs_updatemeta(sp);
+			(void) lfs_writeseg(fs, sp);
+	 
+			/*
+			 * Reinitialize brand new FIP and add us to it.
+			 * (This should duplicate the fixup in
+			 * lfs_gatherpages().)
+			 */
+			KASSERT(sp->vp == vp);
+			sp->fip->fi_version = ip->i_gen;
+			sp->fip->fi_ino = ip->i_number;
+			/* Add us to the new segment summary. */
+			++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+			sp->sum_bytes_left -= FINFOSIZE;
 		}
-		/* Write gathered pages */
-		lfs_updatemeta(sp);
-		(void) lfs_writeseg(fs, sp);
- 
-		/*
-		 * Reinitialize brand new FIP and add us to it.
-		 * (This should duplicate the fixup in lfs_gatherpages().)
-		 */
-		sp->vp = vp;
-		sp->fip->fi_version = ip->i_gen;
-		sp->fip->fi_ino = ip->i_number;
-		/* Add us to the new segment summary. */
-		++((SEGSUM *)(sp->segsum))->ss_nfinfo;
-		sp->sum_bytes_left -=
-			sizeof(struct finfo) - sizeof(int32_t);
 
 		/* Give the write a chance to complete */
-		preempt(NULL);
+		preempt(1);
 
 		/* We've lost the interlock.  Start over. */
-		goto again2;
+		simple_lock(&vp->v_interlock);
+		goto again;
 	}
 
-	/* Write indirect blocks as well */
-	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_indir);
-	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_dindir);
-	lfs_gather(fs, fs->lfs_sp, vp, lfs_match_tindir);
+	KASSERT(sp->vp == vp);
+	if (!seglocked) {
+		sp->vp = NULL; /* XXX lfs_gather below will set this */
+
+		/* Write indirect blocks as well */
+		lfs_gather(fs, fs->lfs_sp, vp, lfs_match_indir);
+		lfs_gather(fs, fs->lfs_sp, vp, lfs_match_dindir);
+		lfs_gather(fs, fs->lfs_sp, vp, lfs_match_tindir);
+
+		KASSERT(sp->vp == NULL);
+		sp->vp = vp;
+	}
 
 	/*
 	 * Blocks are now gathered into a segment waiting to be written.
 	 * All that's left to do is update metadata, and write them.
 	 */
-	lfs_updatemeta(fs->lfs_sp);
-	fs->lfs_sp->vp = NULL;
+	lfs_updatemeta(sp);
+	KASSERT(sp->vp == vp);
+	sp->vp = NULL;
+
+	if (seglocked) {
+		/* we're called by lfs_writefile. */
+		return error;
+	}
+
 	/*
 	 * Clean up FIP, since we're done writing this file.
 	 * This should duplicate cleanup at the end of lfs_writefile().
 	 */
 	if (sp->fip->fi_nblocks != 0) {
-		sp->fip = (FINFO*)((caddr_t)sp->fip + sizeof(struct finfo) +
-			sizeof(int32_t) * (sp->fip->fi_nblocks - 1));
+		sp->fip = (FINFO*)((caddr_t)sp->fip + FINFOSIZE +
+			sizeof(int32_t) * sp->fip->fi_nblocks);
 		sp->start_lbp = &sp->fip->fi_blocks[0];
 	} else {
-		sp->sum_bytes_left += sizeof(FINFO) - sizeof(int32_t);
+		sp->sum_bytes_left += FINFOSIZE;
 		--((SEGSUM *)(sp->segsum))->ss_nfinfo;
 	}
 	lfs_writeseg(fs, fs->lfs_sp);
@@ -1938,7 +1915,7 @@ lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 
 	olbn = lblkno(fs, ip->i_size);
 	nlbn = lblkno(fs, size);
-	if ((flags & GOP_SIZE_WRITE) && nlbn < NDADDR && olbn <= nlbn) {
+	if (!(flags & GOP_SIZE_MEM) && nlbn < NDADDR && olbn <= nlbn) {
 		*eobp = fragroundup(fs, size);
 	} else {
 		*eobp = blkroundup(fs, size);

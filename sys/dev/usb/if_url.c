@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.7 2003/01/15 22:40:34 bouyer Exp $	*/
+/*	$NetBSD: if_url.c,v 1.7.2.1 2004/08/03 10:51:33 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Shingo WATANABE.
- * 4. Neither the name of the author nor the names of any co-contributors
+ * 3. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -46,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.7 2003/01/15 22:40:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.7.2.1 2004/08/03 10:51:33 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -161,8 +158,8 @@ static const struct url_type {
 } url_devs [] = {
 	/* MELCO LUA-KTX */
 	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUAKTX }, 0},
-	/* GREEN HOUSE USBKR100 */
-	{{ USB_VENDOR_GREENHOUSE2, USB_PRODUCT_GREENHOUSE2_USBKR100}, 0}
+	/* Realtek RTL8150L Generic (GREEN HOUSE USBKR100) */
+	{{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8150L}, 0}
 };
 #define url_lookup(v, p) ((struct url_type *)usb_lookup(url_devs, v, p))
 
@@ -194,7 +191,7 @@ USB_ATTACH(url)
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, s;
 
-	usbd_devinfo(dev, 0, devinfo);
+	usbd_devinfo(dev, 0, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", devname, devinfo);
 

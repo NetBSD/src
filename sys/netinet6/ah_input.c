@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.38 2003/05/14 06:47:38 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.38.2.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38 2003/05/14 06:47:38 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38.2.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -123,11 +123,7 @@ ah4_input(m, va_alist)
 		goto fail;
 	}
 	nxt = ah->ah_nxt;
-#ifdef _IP_VHL
-	hlen = IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	/* find the sassoc. */
 	spi = ah->ah_spi;
@@ -143,8 +139,8 @@ ah4_input(m, va_alist)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ah4_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv4 AH input: non-mature/dying SA found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
@@ -328,8 +324,7 @@ ah4_input(m, va_alist)
 #endif /* INET6 */
 #endif /* 0 */
 
-	if (m->m_flags & M_AUTHIPHDR
-	 && m->m_flags & M_AUTHIPDGM) {
+	if (m->m_flags & M_AUTHIPHDR && m->m_flags & M_AUTHIPDGM) {
 #if 0
 		ipseclog((LOG_DEBUG,
 		    "IPv4 AH input: authentication succeess\n"));
@@ -392,30 +387,6 @@ ah4_input(m, va_alist)
 			goto fail;
 		}
 
-#if 1
-		/*
-		 * Should the inner packet be considered authentic?
-		 * My current answer is: NO.
-		 *
-		 * host1 -- gw1 === gw2 -- host2
-		 *	In this case, gw2 can trust the	authenticity of the
-		 *	outer packet, but NOT inner.  Packet may be altered
-		 *	between host1 and gw1.
-		 *
-		 * host1 -- gw1 === host2
-		 *	This case falls into the same scenario as above.
-		 *
-		 * host1 === host2
-		 *	This case is the only case when we may be able to leave
-		 *	M_AUTHIPHDR and M_AUTHIPDGM set.
-		 *	However, if host1 is wrongly configured, and allows
-		 *	attacker to inject some packet with src=host1 and
-		 *	dst=host2, you are in risk.
-		 */
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-#endif
-
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
 		    ipsec_addhist(m, IPPROTO_IPV4, 0) != 0) {
@@ -462,9 +433,9 @@ ah4_input(m, va_alist)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 
 		if (m->m_len < sizeof(*ip)) {
@@ -625,8 +596,8 @@ ah6_input(mp, offp, proto)
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ah6_input called to allocate SA:%p\n", sav));
-	if (sav->state != SADB_SASTATE_MATURE
-	 && sav->state != SADB_SASTATE_DYING) {
+	if (sav->state != SADB_SASTATE_MATURE &&
+	    sav->state != SADB_SASTATE_DYING) {
 		ipseclog((LOG_DEBUG,
 		    "IPv6 AH input: non-mature/dying SA found for spi %u; ",
 		    (u_int32_t)ntohl(spi)));
@@ -770,8 +741,7 @@ ah6_input(mp, offp, proto)
 	}
 #endif
 
-	if (m->m_flags & M_AUTHIPHDR
-	 && m->m_flags & M_AUTHIPDGM) {
+	if (m->m_flags & M_AUTHIPHDR && m->m_flags & M_AUTHIPDGM) {
 #if 0
 		ipseclog((LOG_DEBUG,
 		    "IPv6 AH input: authentication succeess\n"));
@@ -816,10 +786,6 @@ ah6_input(mp, offp, proto)
 		flowinfo = ip6->ip6_flow;
 		m_adj(m, off + stripsiz);
 		if (m->m_len < sizeof(*ip6)) {
-			/*
-			 * m_pullup is prohibited in KAME IPv6 input processing
-			 * but there's no other way!
-			 */
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m) {
 				ipsec6stat.in_inval++;
@@ -838,15 +804,6 @@ ah6_input(mp, offp, proto)
 			ipsec6stat.in_inval++;
 			goto fail;
 		}
-
-#if 1
-		/*
-		 * should the inner packet be considered authentic?
-		 * see comment in ah4_input().
-		 */
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-#endif
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
@@ -903,9 +860,9 @@ ah6_input(mp, offp, proto)
 				goto fail;
 			}
 			m_adj(n, stripsiz);
-			m_cat(m, n);
 			/* m_cat does not update m_pkthdr.len */
 			m->m_pkthdr.len += n->m_pkthdr.len;
+			m_cat(m, n);
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		/* XXX jumbogram */
@@ -970,6 +927,7 @@ ah6_ctlinput(cmd, sa, d)
 	} else {
 		m = NULL;
 		ip6 = NULL;
+		off = 0;
 	}
 
 	if (ip6) {

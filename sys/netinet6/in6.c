@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.77 2003/06/24 07:43:44 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.77.2.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,9 +62,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.77 2003/06/24 07:43:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.77.2.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include "opt_inet.h"
+#include "opt_pfil_hooks.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -100,6 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.77 2003/06/24 07:43:44 itojun Exp $");
 #include <netinet6/in6_ifattach.h>
 
 #include <net/net_osdep.h>
+
+#ifdef PFIL_HOOKS
+#include <net/pfil.h>
+#endif
 
 MALLOC_DEFINE(M_IP6OPT, "ip6_options", "IPv6 options");
 
@@ -297,7 +298,7 @@ in6_ifindex2scopeid(idx)
 	struct ifaddr *ifa;
 	struct sockaddr_in6 *sin6;
 
-	if (idx < 0 || if_index < idx)
+	if (idx < 0 || if_indexlim <= idx)
 		return -1;
 	ifp = ifindex2ifnet[idx];
 	if (!ifp)
@@ -741,6 +742,11 @@ in6_control(so, cmd, data, ifp, p)
 		 */
 		pfxlist_onlink_check();
 
+#ifdef PFIL_HOOKS
+		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCAIFADDR_IN6,
+		    ifp, PFIL_IFADDR);
+#endif
+
 		break;
 	}
 
@@ -781,6 +787,10 @@ in6_control(so, cmd, data, ifp, p)
 		in6_purgeaddr(&ia->ia_ifa);
 		if (pr && purgeprefix)
 			prelist_remove(pr);
+#ifdef PFIL_HOOKS
+		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR_IN6,
+		    ifp, PFIL_IFADDR);
+#endif
 		break;
 	}
 
@@ -1005,10 +1015,8 @@ in6_update_ifa(ifp, ifra, ia)
 	 */
 	if (dst6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia->ia_dstaddr.sin6_addr)) {
-		int e;
-
 		if ((ia->ia_flags & IFA_ROUTE) != 0 &&
-		    (e = rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST)) != 0) {
+		    rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST) != 0) {
 			nd6log((LOG_ERR, "in6_update_ifa: failed to remove "
 			    "a route to the old destination: %s\n",
 			    ip6_sprintf(&ia->ia_addr.sin6_addr)));
@@ -1061,42 +1069,46 @@ in6_update_ifa(ifp, ifra, ia)
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 
 	/*
+	 * We are done if we have simply modified an existing address.
+	 */
+	if (!hostIsNew)
+		return (error);
+
+	/*
 	 * Beyond this point, we should call in6_purgeaddr upon an error,
 	 * not just go to unlink.
 	 */
 
+	/* join necessary multiast groups */
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
 		struct sockaddr_in6 mltaddr, mltmask;
 #ifndef SCOPEDROUTING
 		u_int32_t zoneid = 0;
 #endif
 
-		if (hostIsNew) {
-			/* join solicited multicast addr for new host id */
-			struct sockaddr_in6 llsol;
+		/* join solicited multicast addr for new host id */
+		struct sockaddr_in6 llsol;
 
-			bzero(&llsol, sizeof(llsol));
-			llsol.sin6_family = AF_INET6;
-			llsol.sin6_len = sizeof(llsol);
-			llsol.sin6_addr.s6_addr16[0] = htons(0xff02);
-			llsol.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-			llsol.sin6_addr.s6_addr32[1] = 0;
-			llsol.sin6_addr.s6_addr32[2] = htonl(1);
-			llsol.sin6_addr.s6_addr32[3] =
-			    ifra->ifra_addr.sin6_addr.s6_addr32[3];
-			llsol.sin6_addr.s6_addr8[12] = 0xff;
-			imm = in6_joingroup(ifp, &llsol.sin6_addr, &error);
-			if (imm) {
-				LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
-				    i6mm_chain);
-			} else {
-				nd6log((LOG_ERR, "in6_update_ifa: addmulti "
-				    "failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&llsol.sin6_addr),
-				    if_name(ifp), error));
-				goto cleanup;
-			}
+		bzero(&llsol, sizeof(llsol));
+		llsol.sin6_family = AF_INET6;
+		llsol.sin6_len = sizeof(llsol);
+		llsol.sin6_addr.s6_addr16[0] = htons(0xff02);
+		llsol.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+		llsol.sin6_addr.s6_addr32[1] = 0;
+		llsol.sin6_addr.s6_addr32[2] = htonl(1);
+		llsol.sin6_addr.s6_addr32[3] =
+		    ifra->ifra_addr.sin6_addr.s6_addr32[3];
+		llsol.sin6_addr.s6_addr8[12] = 0xff;
+		imm = in6_joingroup(ifp, &llsol.sin6_addr, &error);
+		if (!imm) {
+			nd6log((LOG_ERR,
+			    "in6_update_ifa: addmulti "
+			    "failed for %s on %s (errno=%d)\n",
+			    ip6_sprintf(&llsol.sin6_addr),
+			    if_name(ifp), error));
+			goto cleanup;
 		}
+		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 
 		bzero(&mltmask, sizeof(mltmask));
 		mltmask.sin6_len = sizeof(struct sockaddr_in6);
@@ -1154,10 +1166,7 @@ in6_update_ifa(ifp, ifra, ia)
 		mltaddr.sin6_scope_id = zoneid;	/* XXX */
 #endif
 		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-		if (imm) {
-			LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
-			    i6mm_chain);
-		} else {
+		if (!imm) {
 			nd6log((LOG_WARNING,
 			    "in6_update_ifa: addmulti failed for "
 			    "%s on %s (errno=%d)\n",
@@ -1165,21 +1174,22 @@ in6_update_ifa(ifp, ifra, ia)
 			    if_name(ifp), error));
 			goto cleanup;
 		}
+		LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 
 		/*
 		 * join node information group address
 		 */
 		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) == 0) {
 			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-			if (imm) {
-				LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
-				    i6mm_chain);
-			} else {
+			if (!imm) {
 				nd6log((LOG_WARNING, "in6_update_ifa: "
 				    "addmulti failed for %s on %s (errno=%d)\n",
 				    ip6_sprintf(&mltaddr.sin6_addr),
 				    if_name(ifp), error));
 				/* XXX not very fatal, go on... */
+			} else {
+				LIST_INSERT_HEAD(&ia->ia6_memberships,
+				    imm, i6mm_chain);
 			}
 		}
 
@@ -1220,17 +1230,14 @@ in6_update_ifa(ifp, ifra, ia)
 				RTFREE(rt);
 			}
 			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-			if (imm) {
-				LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
-				    i6mm_chain);
-			} else {
+			if (!imm) {
 				nd6log((LOG_WARNING, "in6_update_ifa: "
-				    "addmulti failed for %s on %s "
-				    "(errno=%d)\n",
+				    "addmulti failed for %s on %s (errno=%d)\n",
 				    ip6_sprintf(&mltaddr.sin6_addr),
 				    if_name(ifp), error));
 				goto cleanup;
 			}
+			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 		}
 	}
 
@@ -1333,7 +1340,7 @@ in6_unlink_ifa(ia, ifp)
 
 	if (oia->ia6_multiaddrs.lh_first != NULL) {
 		/*
-		 * XXX thorpej@netbsd.org -- if the interface is going
+		 * XXX thorpej@NetBSD.org -- if the interface is going
 		 * XXX away, don't save the multicast entries, delete them!
 		 */
 		if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
@@ -1766,7 +1773,7 @@ in6_restoremkludge(ia, ifp)
 				in6m->in6m_ia = ia;
 				IFAREF(&ia->ia_ifa);
 				LIST_INSERT_HEAD(&ia->ia6_multiaddrs,
-						 in6m, in6m_entry);
+				    in6m, in6m_entry);
 			}
 			LIST_INIT(&mk->mk_head);
 			break;
@@ -1914,6 +1921,7 @@ in6_delmulti(in6m)
 	struct in6_multi *in6m;
 {
 	struct	in6_ifreq ifr;
+	struct	in6_ifaddr *ia;
 	int	s = splsoftnet();
 
 	if (--in6m->in6m_refcount == 0) {
@@ -1929,6 +1937,18 @@ in6_delmulti(in6m)
 		LIST_REMOVE(in6m, in6m_entry);
 		if (in6m->in6m_ia) {
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
+		}
+		/*
+		 * Delete all references of this multicasting group from
+		 * the membership arrays
+		 */
+		for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+			struct in6_multi_mship *imm;
+			LIST_FOREACH(imm, &ia->ia6_memberships,
+			    i6mm_chain) {
+				if (imm->i6mm_maddr == in6m)
+					imm->i6mm_maddr = NULL;
+			}
 		}
 
 		/*
@@ -2042,8 +2062,8 @@ ip6_sprintf(addr)
 	static char ip6buf[8][48];
 	int i;
 	char *cp;
-	const u_short *a = (const u_short *)addr;
-	const u_char *d;
+	const u_int16_t *a = (const u_int16_t *)addr;
+	const u_int8_t *d;
 	int dcolon = 0;
 
 	ip6round = (ip6round + 1) & 7;
@@ -2244,7 +2264,8 @@ in6_are_prefix_equal(p1, p2, len)
 
 	if (bcmp(&p1->s6_addr, &p2->s6_addr, bytelen))
 		return (0);
-	if (p1->s6_addr[bytelen] >> (8 - bitlen) !=
+	if (bitlen != 0 &&
+	    p1->s6_addr[bytelen] >> (8 - bitlen) !=
 	    p2->s6_addr[bytelen] >> (8 - bitlen))
 		return (0);
 

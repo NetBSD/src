@@ -1,7 +1,40 @@
-/*	$NetBSD: union_vfsops.c,v 1.8.2.1 2003/07/03 01:32:56 wrstuden Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.8.2.2 2004/08/03 10:52:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * This code is derived from software donated to Berkeley by
+ * Jan-Simon Pendry.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)union_vfsops.c	8.20 (Berkeley) 5/20/95
+ */
+
+/*
  * Copyright (c) 1994 Jan-Simon Pendry.
  * All rights reserved.
  *
@@ -44,10 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.8.2.1 2003/07/03 01:32:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.8.2.2 2004/08/03 10:52:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -65,8 +99,8 @@ int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
 int union_start __P((struct mount *, int, struct lwp *));
 int union_unmount __P((struct mount *, int, struct lwp *));
 int union_root __P((struct mount *, struct vnode **, struct lwp *));
-int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
-int union_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int union_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
+int union_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int union_sync __P((struct mount *, int, struct ucred *, struct lwp *));
 int union_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
 int union_fhtovp __P((struct mount *, struct fid *, struct vnode **,
@@ -74,8 +108,6 @@ int union_fhtovp __P((struct mount *, struct fid *, struct vnode **,
 int union_checkexp __P((struct mount *, struct mbuf *, int *,
 		      struct ucred **));
 int union_vptofh __P((struct vnode *, struct fid *));
-int union_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		      struct lwp *));
 
 /*
  * Mount union filesystem
@@ -126,7 +158,7 @@ union_mount(mp, path, data, ndp, l)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct union_args));
+	error = copyin(data, &args, sizeof(struct union_args));
 	if (error)
 		goto bad;
 
@@ -225,9 +257,10 @@ union_mount(mp, path, data, ndp, l)
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
 	mp->mnt_data = um;
+	mp->mnt_leaf = um->um_uppervp->v_mount->mnt_leaf;
 	vfs_getnewfsid(mp);
 
-	error = set_statfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
+	error = set_statvfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
 	    mp, l);
 	if (error)
 		goto bad;
@@ -437,7 +470,7 @@ union_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct lwp *l;
 {
 
@@ -445,42 +478,40 @@ union_quotactl(mp, cmd, uid, arg, l)
 }
 
 int
-union_statfs(mp, sbp, l)
+union_statvfs(mp, sbp, l)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct lwp *l;
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
-	struct statfs mstat;
-	int lbsize;
+	struct statvfs *sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
+	unsigned long lbsize;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_statfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
+	printf("union_statvfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
 	    um->um_lowervp, um->um_uppervp);
 #endif
 
-	memset(&mstat, 0, sizeof(mstat));
-
 	if (um->um_lowervp) {
-		error = VFS_STATFS(um->um_lowervp->v_mount, &mstat, l);
+		error = VFS_STATVFS(um->um_lowervp->v_mount, sbuf, l);
 		if (error)
-			return (error);
+			goto done;
 	}
 
 	/* now copy across the "interesting" information and fake the rest */
-	lbsize = mstat.f_bsize;
-	sbp->f_blocks = mstat.f_blocks - mstat.f_bfree;
-	sbp->f_files = mstat.f_files - mstat.f_ffree;
+	lbsize = sbuf->f_bsize;
+	sbp->f_blocks = sbuf->f_blocks - sbuf->f_bfree;
+	sbp->f_files = sbuf->f_files - sbuf->f_ffree;
 
-	error = VFS_STATFS(um->um_uppervp->v_mount, &mstat, l);
+	error = VFS_STATVFS(um->um_uppervp->v_mount, sbuf, l);
 	if (error)
-		return (error);
+		goto done;
 
-	sbp->f_type = 0;
-	sbp->f_flags = mstat.f_flags;
-	sbp->f_bsize = mstat.f_bsize;
-	sbp->f_iosize = mstat.f_iosize;
+	sbp->f_flag = sbuf->f_flag;
+	sbp->f_bsize = sbuf->f_bsize;
+	sbp->f_frsize = sbuf->f_frsize;
+	sbp->f_iosize = sbuf->f_iosize;
 
 	/*
 	 * The "total" fields count total resources in all layers,
@@ -489,16 +520,21 @@ union_statfs(mp, sbp, l)
 	 * is writable).
 	 */
 
-	if (mstat.f_bsize != lbsize)
-		sbp->f_blocks = sbp->f_blocks * lbsize / mstat.f_bsize;
-	sbp->f_blocks += mstat.f_blocks;
-	sbp->f_bfree = mstat.f_bfree;
-	sbp->f_bavail = mstat.f_bavail;
-	sbp->f_files += mstat.f_files;
-	sbp->f_ffree = mstat.f_ffree;
+	if (sbuf->f_bsize != lbsize)
+		sbp->f_blocks = sbp->f_blocks * lbsize / sbuf->f_bsize;
+	sbp->f_blocks += sbuf->f_blocks;
+	sbp->f_bfree = sbuf->f_bfree;
+	sbp->f_bavail = sbuf->f_bavail;
+	sbp->f_bresvd = sbuf->f_bresvd;
+	sbp->f_files += sbuf->f_files;
+	sbp->f_ffree = sbuf->f_ffree;
+	sbp->f_favail = sbuf->f_favail;
+	sbp->f_fresvd = sbuf->f_fresvd;
 
-	copy_statfs_info(sbp, mp);
-	return (0);
+	copy_statvfs_info(sbp, mp);
+done:
+	free(sbuf, M_TEMP);
+	return error;
 }
 
 /*ARGSUSED*/
@@ -562,17 +598,25 @@ union_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-int
-union_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct lwp *l;
+SYSCTL_SETUP(sysctl_vfs_union_setup, "sysctl vfs.union subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "union",
+		       SYSCTL_DESCR("Union file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 15, CTL_EOL);
+	/*
+	 * XXX the "15" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "15" is the order as taken from sys/mount.h
+	 */
 }
 
 extern const struct vnodeopv_desc union_vnodeop_opv_desc;
@@ -589,7 +633,7 @@ struct vfsops union_vfsops = {
 	union_unmount,
 	union_root,
 	union_quotactl,
-	union_statfs,
+	union_statvfs,
 	union_sync,
 	union_vget,
 	union_fhtovp,
@@ -597,8 +641,9 @@ struct vfsops union_vfsops = {
 	union_init,
 	NULL,				/* vfs_reinit */
 	union_done,
-	union_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	union_checkexp,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	union_vnodeopv_descs,
 };

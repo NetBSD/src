@@ -1,9 +1,38 @@
-/*	$NetBSD: kern_malloc.c,v 1.79 2003/05/06 18:07:57 fvdl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.79.2.1 2004/08/03 10:52:47 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1987, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)kern_malloc.c	8.4 (Berkeley) 5/20/95
+ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
- * Copyright (c) 1987, 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.79 2003/05/06 18:07:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.79.2.1 2004/08/03 10:52:47 skrll Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -129,8 +158,8 @@ hitmlog(void *a)
 	long l;
 
 #define	PRT do { \
-	if (malloclog[l].addr == a && malloclog[l].action) { \
-		lp = &malloclog[l]; \
+	lp = &malloclog[l]; \
+	if (lp->addr == a && lp->action) { \
 		printf("malloc log entry %ld:\n", l); \
 		printf("\taddr = %p\n", lp->addr); \
 		printf("\tsize = %ld\n", lp->size); \
@@ -146,6 +175,7 @@ hitmlog(void *a)
 
 	for (l = 0; l < malloclogptr; l++)
 		PRT;
+#undef PRT
 }
 #endif /* MALLOCLOG */
 
@@ -237,7 +267,6 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #ifdef DIAGNOSTIC
 	uint32_t *end, *lp;
 	int copysize;
-	const char *savedtype;
 #endif
 
 #ifdef LOCKDEBUG
@@ -245,7 +274,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		simple_lock_only_held(NULL, "malloc");
 #endif
 #ifdef MALLOC_DEBUG
-	if (debug_malloc(size, ksp, flags, (void **) &va))
+	if (debug_malloc(size, ksp, flags, (void *) &va))
 		return ((void *) va);
 #endif
 	indx = BUCKETINDX(size);
@@ -328,8 +357,8 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			 * Copy in known text to detect modification
 			 * after freeing.
 			 */
-			end = (int32_t *)&cp[copysize];
-			for (lp = (int32_t *)cp; lp < end; lp++)
+			end = (uint32_t *)&cp[copysize];
+			for (lp = (uint32_t *)cp; lp < end; lp++)
 				*lp = WEIRD_ADDR;
 			freep->type = M_FREE;
 #endif /* DIAGNOSTIC */
@@ -347,7 +376,6 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #ifdef DIAGNOSTIC
 	freep = (struct freelist *)va;
 	/* XXX potential to get garbage pointer here. */
-	savedtype = freep->type->ks_shortdesc;
 	if (kbp->kb_next) {
 		int rv;
 		vaddr_t addr = (vaddr_t)kbp->kb_next;
@@ -362,7 +390,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			    "word %ld of object %p size %ld previous type %s "
 			    "(invalid addr %p)\n",
 			    (long)((int32_t *)&kbp->kb_next - (int32_t *)kbp),
-			    va, size, savedtype, kbp->kb_next);
+			    va, size, "foo", kbp->kb_next);
 #ifdef MALLOCLOG
 			hitmlog(va);
 #endif
@@ -377,21 +405,21 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #else
 	freep->type = (struct malloc_type *) WEIRD_ADDR;
 #endif
-	end = (int32_t *)&freep->next +
+	end = (uint32_t *)&freep->next +
 	    (sizeof(freep->next) / sizeof(int32_t));
-	for (lp = (int32_t *)&freep->next; lp < end; lp++)
+	for (lp = (uint32_t *)&freep->next; lp < end; lp++)
 		*lp = WEIRD_ADDR;
 
 	/* and check that the data hasn't been modified. */
 	end = (uint32_t *)&va[copysize];
-	for (lp = (int32_t *)va; lp < end; lp++) {
+	for (lp = (uint32_t *)va; lp < end; lp++) {
 		if (__predict_true(*lp == WEIRD_ADDR))
 			continue;
 		printf("Data modified on freelist: "
 		    "word %ld of object %p size %ld previous type %s "
 		    "(0x%x != 0x%x)\n",
 		    (long)(lp - (uint32_t *)va), va, size,
-		    savedtype, *lp, WEIRD_ADDR);
+		    "bar", *lp, WEIRD_ADDR);
 #ifdef MALLOCLOG
 		hitmlog(va);
 #endif
@@ -419,7 +447,7 @@ out:
 out:
 #endif
 #ifdef MALLOCLOG
-	domlog(va, size, type, 1, file, line);
+	domlog(va, size, ksp, 1, file, line);
 #endif
 	simple_unlock(&malloc_slock);
 	splx(s);
@@ -433,7 +461,7 @@ out:
  */
 #ifdef MALLOCLOG
 void
-_free(void *addr, struct malloc_type *type, const char *file, long line)
+_free(void *addr, struct malloc_type *ksp, const char *file, long line)
 #else
 void
 free(void *addr, struct malloc_type *ksp)
@@ -461,8 +489,8 @@ free(void *addr, struct malloc_type *ksp)
 	 * have allocated in the first place.  That is, check
 	 * to see that the address is within kmem_map.
 	 */
-	if (__predict_false((vaddr_t)addr < kmem_map->header.start ||
-	    (vaddr_t)addr >= kmem_map->header.end))
+	if (__predict_false((vaddr_t)addr < vm_map_min(kmem_map) ||
+	    (vaddr_t)addr >= vm_map_max(kmem_map)))
 		panic("free: addr %p not within kmem_map", addr);
 #endif
 
@@ -472,7 +500,7 @@ free(void *addr, struct malloc_type *ksp)
 	s = splvm();
 	simple_lock(&malloc_slock);
 #ifdef MALLOCLOG
-	domlog(addr, 0, type, 2, file, line);
+	domlog(addr, 0, ksp, 2, file, line);
 #endif
 #ifdef DIAGNOSTIC
 	/*
@@ -798,6 +826,7 @@ kmeminit(void)
 {
 	__link_set_decl(malloc_types, struct malloc_type);
 	struct malloc_type * const *ksp;
+	vaddr_t kmb, kml;
 #ifdef KMEMSTATS
 	long indx;
 #endif
@@ -823,9 +852,12 @@ kmeminit(void)
 
 	kmemusage = (struct kmemusage *) uvm_km_zalloc(kernel_map,
 	    (vsize_t)(nkmempages * sizeof(struct kmemusage)));
-	kmem_map = uvm_km_suballoc(kernel_map, (void *)&kmembase,
-	    (void *)&kmemlimit, (vsize_t)(nkmempages << PAGE_SHIFT), 
+	kmb = 0;
+	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
+	    &kml, (vsize_t)(nkmempages << PAGE_SHIFT), 
 	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
+	kmembase = (char *)kmb;
+	kmemlimit = (char *)kml;
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
 		if (1 << indx >= PAGE_SIZE)
@@ -874,3 +906,45 @@ dump_kmemstats(void)
 #endif /* KMEMSTATS */
 }
 #endif /* DDB */
+
+
+#if 0
+/* 
+ * Diagnostic messages about "Data modified on
+ * freelist" indicate a memory corruption, but
+ * they do not help tracking it down.
+ * This function can be called at various places 
+ * to sanity check malloc's freelist and discover
+ * where does the corruption take place.
+ */
+int
+freelist_sanitycheck(void) {
+	int i,j;
+	struct kmembuckets *kbp;
+	struct freelist *freep;
+	int rv = 0;
+		
+	for (i = MINBUCKET; i <= MINBUCKET + 15; i++) {
+		kbp = &bucket[i];	
+		freep = (struct freelist *)kbp->kb_next;
+		j = 0;
+		while(freep) {
+			vm_map_lock(kmem_map);
+			rv = uvm_map_checkprot(kmem_map, (vaddr_t)freep,
+			    (vaddr_t)freep + sizeof(struct freelist), 
+			    VM_PROT_WRITE);
+			vm_map_unlock(kmem_map);
+
+			if ((rv == 0) || (*(int *)freep != WEIRD_ADDR)) {
+				printf("bucket %i, chunck %d at %p modified\n",
+				    i, j, freep);
+				return 1;
+			}
+			freep = (struct freelist *)freep->next;
+			j++;
+		}
+	}
+
+	return 0;
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.8 2003/06/29 22:30:37 fvdl Exp $	*/
+/*	$NetBSD: zx.c,v 1.8.2.1 2004/08/03 10:51:05 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8 2003/06/29 22:30:37 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8.2.1 2004/08/03 10:51:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,7 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	struct zx_softc *sc;
 	struct fbcmap *cm;
 	struct fbcursor *cu;
+	uint32_t curbits[2][32];
 	int rv, v, count, i;
 
 	sc = zx_cd.cd_devs[minor(dev)];
@@ -386,9 +387,12 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			if ((u_int)cu->size.x > 32 || (u_int)cu->size.y > 32)
 				return (EINVAL);
 			count = cu->size.y * 4;
-			if (!uvm_useracc(cu->image, count, B_READ) ||
-			    !uvm_useracc(cu->mask, count, B_READ))
-				return (EFAULT);
+			rv = copyin(cu->mask, curbits[0], count);
+			if (rv)
+				return rv;
+			rv = copyin(cu->image, curbits[1], count);
+			if (rv)
+				return rv;
 		}
 		if ((v & FB_CUR_SETCUR) != 0) {
 			if (cu->enable)
@@ -424,8 +428,8 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			sc->sc_cursize = cu->size;
 			count = cu->size.y * 4;
 			memset(sc->sc_curbits, 0, sizeof(sc->sc_curbits));
-			copyin(cu->mask, (caddr_t)sc->sc_curbits[0], count);
-			copyin(cu->image, (caddr_t)sc->sc_curbits[1], count);
+			memcpy(sc->sc_curbits[0], curbits[0], count);
+			memcpy(sc->sc_curbits[1], curbits[1], count);
 			zx_cursor_set(sc);
 		}
 		break;
@@ -441,12 +445,10 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 		if (cu->image != NULL) {
 			count = sc->sc_cursize.y * 4;
-			rv = copyout((caddr_t)sc->sc_curbits[1],
-			    (caddr_t)cu->image, count);
+			rv = copyout(sc->sc_curbits[1], cu->image, count);
 			if (rv)
 				return (rv);
-			rv = copyout((caddr_t)sc->sc_curbits[0],
-			    (caddr_t)cu->mask, count);
+			rv = copyout(sc->sc_curbits[0], cu->mask, count);
 			if (rv)
 				return (rv);
 		}
@@ -558,7 +560,7 @@ int
 zx_cross_loadwid(struct zx_softc *sc, u_int type, u_int index, u_int value)
 {
 	volatile struct zx_cross *zx;
-	u_int tmp;
+	u_int tmp = 0;
 
 	zx = sc->sc_zx;
 	SETREG(zx->zx_type, ZX_CROSS_TYPE_WID);
@@ -655,7 +657,7 @@ zx_cursor_set(struct zx_softc *sc)
 		SETREG(zcu->zcu_misc, zcu->zcu_misc & ~0x80);
 
 	for (j = 0; j < 2; j++) {
-		SETREG(zcu->zcu_type, 0x20 << i);
+		SETREG(zcu->zcu_type, 0x20 << j);
 
 		for (i = sc->sc_shifty; i < 32; i++) {
 			data = sc->sc_curbits[j][i];

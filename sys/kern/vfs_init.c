@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.23 2003/05/17 15:53:42 mjl Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.23.2.1 2004/08/03 10:52:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -54,11 +54,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.23 2003/05/17 15:53:42 mjl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.23.2.1 2004/08/03 10:52:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -130,12 +126,12 @@ const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
  * extra level of indirection for arrays.  It's an interesting
  * "feature" of C.
  */
-typedef int (*PFI) __P((void *));
+typedef int (*PFI)(void *);
 
-static void vfs_opv_init_explicit __P((const struct vnodeopv_desc *));
-static void vfs_opv_init_default __P((const struct vnodeopv_desc *));
+static void vfs_opv_init_explicit(const struct vnodeopv_desc *);
+static void vfs_opv_init_default(const struct vnodeopv_desc *);
 #ifdef DEBUG
-static void vfs_op_check __P((void));
+static void vfs_op_check(void);
 #endif
 
 /*
@@ -176,7 +172,7 @@ static void
 vfs_opv_init_explicit(vfs_opv_desc)
 	const struct vnodeopv_desc *vfs_opv_desc;
 {
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 	const struct vnodeopv_entry_desc *opve_descp;
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
@@ -221,7 +217,7 @@ vfs_opv_init_default(vfs_opv_desc)
 	const struct vnodeopv_desc *vfs_opv_desc;
 {
 	int j;
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
 
@@ -241,7 +237,7 @@ void
 vfs_opv_init(vopvdpp)
 	const struct vnodeopv_desc * const *vopvdpp;
 {
-	int (**opv_desc_vector) __P((void *));
+	int (**opv_desc_vector)(void *);
 	int i;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.173 2003/05/13 04:41:59 gson Exp $	*/
+/*	$NetBSD: uhci.c,v 1.173.2.1 2004/08/03 10:51:34 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.173 2003/05/13 04:41:59 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.173.2.1 2004/08/03 10:51:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ int uhcinoloop = 0;
 
 /*
  * The UHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
+ * the data stored in memory needs to be swapped.
  */
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
@@ -1176,13 +1176,13 @@ uhci_intr(void *arg)
 	if (sc->sc_dying)
 		return (0);
 
-	DPRINTFN(15,("uhci_intr: real interrupt\n"));
 	if (sc->sc_bus.use_polling) {
 #ifdef DIAGNOSTIC
-		printf("uhci_intr: ignored interrupt while polling\n");
+		DPRINTFN(16, ("uhci_intr: ignored interrupt while polling\n"));
 #endif
 		return (0);
 	}
+
 	return (uhci_intr1(sc));
 }
 
@@ -1249,7 +1249,7 @@ uhci_intr1(uhci_softc_t *sc)
 	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
 
-	DPRINTFN(10, ("%s: uhci_intr: exit\n", USBDEVNAME(sc->sc_bus.bdev)));
+	DPRINTFN(15, ("%s: uhci_intr: exit\n", USBDEVNAME(sc->sc_bus.bdev)));
 
 	return (1);
 }
@@ -1258,7 +1258,7 @@ void
 uhci_softintr(void *v)
 {
 	uhci_softc_t *sc = v;
-	uhci_intr_info_t *ii;
+	uhci_intr_info_t *ii, *nextii;
 
 	DPRINTFN(10,("%s: uhci_softintr (%d)\n", USBDEVNAME(sc->sc_bus.bdev),
 		     sc->sc_bus.intr_context));
@@ -1276,8 +1276,10 @@ uhci_softintr(void *v)
 	 * We scan all interrupt descriptors to see if any have
 	 * completed.
 	 */
-	for (ii = LIST_FIRST(&sc->sc_intrhead); ii; ii = LIST_NEXT(ii, list))
+	for (ii = LIST_FIRST(&sc->sc_intrhead); ii; ii = nextii) {
+		nextii = LIST_NEXT(ii, list);
 		uhci_check_intr(sc, ii);
+	}
 
 #ifdef USB_USE_SOFTINTR
 	if (sc->sc_softwake) {
@@ -1427,6 +1429,15 @@ uhci_idone(uhci_intr_info_t *ii)
 		if (UHCI_TD_GET_PID(le32toh(std->td.td_token)) !=
 			UHCI_TD_PID_SETUP)
 			actlen += UHCI_TD_GET_ACTLEN(status);
+		else {
+			/*
+			 * UHCI will report CRCTO in addition to a STALL or NAK
+			 * for a SETUP transaction.  See section 3.2.2, "TD
+			 * CONTROL AND STATUS".
+			 */
+			if (status & (UHCI_TD_STALLED | UHCI_TD_NAK))
+				status &= ~UHCI_TD_CRCTO;
+		}
 	}
 	/* If there are left over TDs we need to update the toggle. */
 	if (std != NULL)
@@ -1952,8 +1963,6 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	/*
 	 * Step 3: Execute callback.
 	 */
-	xfer->hcpriv = ii;
-
 	DPRINTFN(1,("uhci_abort_xfer: callback\n"));
 	s = splusb();
 #ifdef DIAGNOSTIC
@@ -3303,7 +3312,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 		}
 		break;
 	case C(UR_GET_DESCRIPTOR, UT_READ_CLASS_DEVICE):
-		if (value != 0) {
+		if ((value & 0xff) != 0) {
 			err = USBD_IOERROR;
 			goto ret;
 		}
@@ -3472,6 +3481,7 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 {
 	usbd_pipe_handle pipe = xfer->pipe;
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
+	unsigned int ival;
 
 	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%d flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
@@ -3479,7 +3489,9 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	sc->sc_ival = mstohz(xfer->pipe->endpoint->edesc->bInterval);
+	/* XXX temporary variable needed to avoid gcc3 warning */
+	ival = xfer->pipe->endpoint->edesc->bInterval;
+	sc->sc_ival = mstohz(ival);
 	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 	sc->sc_intr_xfer = xfer;
 	return (USBD_IN_PROGRESS);

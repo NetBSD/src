@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.4 2000/07/23 22:56:14 mycroft Exp $	*/
+/*	$NetBSD: timepps.h,v 1.4.24.1 2004/08/03 10:56:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -127,30 +127,28 @@ typedef struct {
 #define PPS_IOC_GETPARAMS	_IOR('1', 4, pps_params_t)
 #define PPS_IOC_GETCAP		_IOR('1', 5, int)
 #define PPS_IOC_FETCH		_IOWR('1', 6, pps_info_t)
-#define PPS_IOC_KCBIND		_IOWR('1', 7, int)
+#define PPS_IOC_KCBIND		_IOW('1', 7, int)
 
 #ifndef _KERNEL
 
 #include <sys/cdefs.h>
 #include <sys/ioctl.h>
 
-static __inline int time_pps_create __P((int filedes, pps_handle_t *handle));
-static __inline int time_pps_destroy __P((pps_handle_t handle));
-static __inline int time_pps_setparams __P((pps_handle_t handle, 
-	const pps_params_t *ppsparams));
-static __inline int time_pps_getparams __P((pps_handle_t handle,
-	pps_params_t *ppsparams));
-static __inline int time_pps_getcap __P((pps_handle_t handle, int *mode));
-static __inline int time_pps_fetch __P((pps_handle_t handle,
-	const int tsformat, pps_info_t *ppsinfobuf,
-	const struct timespec *timeout));
+static __inline int time_pps_create __P((int, pps_handle_t *));
+static __inline int time_pps_destroy __P((pps_handle_t));
+static __inline int time_pps_setparams __P((pps_handle_t, 
+	const pps_params_t *));
+static __inline int time_pps_getparams __P((pps_handle_t, pps_params_t *));
+static __inline int time_pps_getcap __P((pps_handle_t, int *));
+static __inline int time_pps_fetch __P((pps_handle_t, const int, pps_info_t *,
+	const struct timespec *));
 #if 0
-static __inline int time_pps_wait __P((pps_handle_t handle,
-       const struct timespec *timeout, pps_info_t *ppsinfobuf));
+static __inline int time_pps_wait __P((pps_handle_t, const struct timespec *,
+	pps_info_t *));
 #endif
 
-static __inline int time_pps_kcbind __P((pps_handle_t handle,
-	 const int kernel_consumer, const int edge, const int tsformat));
+static __inline int time_pps_kcbind __P((pps_handle_t, const int, const int,
+	const int));
 
 static __inline int
 time_pps_create(filedes, handle)
@@ -209,7 +207,7 @@ time_pps_kcbind(handle, kernel_consumer, edge, tsformat)
 	const int edge;
 	const int tsformat;
 {
-	return (ioctl(handle, PPS_IOC_KCBIND, edge));
+	return (ioctl(handle, PPS_IOC_KCBIND, &edge));
 }
 #endif /* !_KERNEL*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.14 2003/05/13 02:13:14 dbj Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.14.2.1 2004/08/03 10:52:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,11 +41,11 @@
  */
 
 /*
- * "Stub" to allow remote cpu to debug over a serial line using gdb.
+ * "Stub" to allow remote CPU to debug over a serial line using gdb.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14 2003/05/13 02:13:14 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14.2.1 2004/08/03 10:52:54 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -80,18 +76,18 @@ int kgdb_debug_init = 0;	/* != 0 waits for remote at system init */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 label_t *kgdb_recover = 0;
 
-static void kgdb_copy __P((void *, void *, int));
-/* static void kgdb_zero __P((void *, int)); */
-static void kgdb_send __P((u_char *));
-static int kgdb_recv __P((u_char *, int));
-static int digit2i __P((u_char));
-static u_char i2digit __P((int));
-static void mem2hex __P((void *, void *, int));
-static u_char *hex2mem __P((void *, u_char *, int));
-static vaddr_t hex2i __P((u_char **));
+static void kgdb_copy(void *, void *, int);
+/* static void kgdb_zero(void *, int); */
+static void kgdb_send(u_char *);
+static int kgdb_recv(u_char *, int);
+static int digit2i(u_char);
+static u_char i2digit(int);
+static void mem2hex(void *, void *, int);
+static u_char *hex2mem(void *, u_char *, int);
+static vaddr_t hex2i(u_char **);
 
-static int (*kgdb_getc) __P((void *));
-static void (*kgdb_putc) __P((void *, int));
+static int (*kgdb_getc)(void *);
+static void (*kgdb_putc)(void *, int);
 static void *kgdb_ioarg;
 
 /* KGDB_BUFLEN must be at least (2*KGDB_NUMREGS*sizeof(kgdb_reg_t)+1) */
@@ -329,8 +325,8 @@ kgdb_recv(bp, maxlen)
  */
 void
 kgdb_attach(getfn, putfn, ioarg)
-	int (*getfn) __P((void *));
-	void (*putfn) __P((void *, int));
+	int (*getfn)(void *);
+	void (*putfn)(void *, int);
 	void *ioarg;
 {
 	kgdb_getc = getfn;
@@ -411,7 +407,7 @@ kgdb_trap(type, regs)
 		kgdb_active = 1;
 	} else {
 		/* Tell remote host that an exception has occurred. */
-		sprintf(buffer, "S%02x", kgdb_signal(type));
+		snprintf(buffer, sizeof(buffer), "S%02x", kgdb_signal(type));
 		kgdb_send(buffer);
 	}
 
@@ -439,7 +435,8 @@ kgdb_trap(type, regs)
 			 * knowing if we're in or out of this loop
 			 * when he issues a "remote-signal".
 			 */
-			sprintf(buffer, "S%02x", kgdb_signal(type));
+			snprintf(buffer, sizeof(buffer), "S%02x",
+			    kgdb_signal(type));
 			kgdb_send(buffer);
 			continue;
 

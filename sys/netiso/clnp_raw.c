@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.18.2.1 2003/07/02 15:27:02 darrenr Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.18.2.2 2004/08/03 10:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.18.2.1 2003/07/02 15:27:02 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.18.2.2 2004/08/03 10:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -91,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.18.2.1 2003/07/02 15:27:02 darrenr Ex
 #include <machine/stdarg.h>
 
 struct sockproto rclnp_proto = {PF_ISO, 0};
+
 /*
  * FUNCTION:		rclnp_input
  *
@@ -106,13 +103,7 @@ struct sockproto rclnp_proto = {PF_ISO, 0};
  *			indicating no protocol.
  */
 void
-#if __STDC__
 rclnp_input(struct mbuf *m, ...)
-#else
-rclnp_input(m, va_alist)
-	struct mbuf    *m;	/* ptr to packet */
-	va_dcl
-#endif
 {
 	struct sockaddr_iso *src;	/* ptr to src address */
 	struct sockaddr_iso *dst;	/* ptr to dest address */
@@ -149,13 +140,7 @@ rclnp_input(m, va_alist)
  * NOTES:
  */
 int
-#if __STDC__
 rclnp_output(struct mbuf *m0, ...)
-#else
-rclnp_output(m0, va_alist)
-	struct mbuf    *m0;	/* packet to send */
-	va_dcl
-#endif
 {
 	struct socket  *so;	/* socket to send from */
 	struct rawisopcb *rp;	/* ptr to raw cb */
@@ -211,12 +196,12 @@ rclnp_output(m0, va_alist)
  * NOTES:
  */
 int
-rclnp_ctloutput(op, so, level, optname, m)
-	int             op;	/* type of operation */
-	struct socket  *so;	/* ptr to socket */
-	int             level;	/* level of option */
-	int             optname;/* name of option */
-	struct mbuf   **m;	/* ptr to ptr to option data */
+rclnp_ctloutput(
+	int             op,	/* type of operation */
+	struct socket  *so,	/* ptr to socket */
+	int             level,	/* level of option */
+	int             optname,/* name of option */
+	struct mbuf   **m)	/* ptr to ptr to option data */
 {
 	int             error = 0;
 	struct rawisopcb *rp = sotorawisopcb(so);	/* raw cb ptr */
@@ -302,11 +287,8 @@ rclnp_ctloutput(op, so, level, optname, m)
 
 /* ARGSUSED */
 int
-clnp_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+clnp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct lwp *l)
 {
 	int    error = 0;
 	struct rawisopcb *rp = sotorawisopcb(so);
@@ -321,10 +303,10 @@ clnp_usrreq(so, req, m, nam, control, l)
 			error = EISCONN;
 			break;
 		}
-		MALLOC(rp, struct rawisopcb *, sizeof *rp, M_PCB, M_WAITOK);
+		MALLOC(rp, struct rawisopcb *, sizeof *rp, M_PCB,
+		    M_WAITOK|M_ZERO);
 		if (rp == 0)
 			return (ENOBUFS);
-		bzero(rp, sizeof *rp);
 		so->so_pcb = rp;
 		break;
 

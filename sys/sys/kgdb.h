@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.6 2002/01/05 22:57:38 dbj Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.6.16.1 2004/08/03 10:56:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -21,11 +21,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -88,7 +84,7 @@ extern int kgdb_dev, kgdb_rate, kgdb_active;
 extern int kgdb_debug_init, kgdb_debug_panic;
 extern label_t *kgdb_recover;
 
-void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *ioarg));
+void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 int kgdb_trap __P((int, db_regs_t *));

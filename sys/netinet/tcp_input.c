@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.171 2003/06/29 22:31:58 fvdl Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.171.2.1 2004/08/03 10:54:44 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -118,11 +118,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -152,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171 2003/06/29 22:31:58 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.1 2004/08/03 10:54:44 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -171,6 +167,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171 2003/06/29 22:31:58 fvdl Exp $")
 #include <sys/pool.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
+#ifdef TCP_SIGNATURE
+#include <sys/md5.h>
+#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -220,13 +219,24 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171 2003/06/29 22:31:58 fvdl Exp $")
 #if defined(NFAITH) && NFAITH > 0
 #include <net/if_faith.h>
 #endif
+#endif	/* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
+#include <netipsec/key.h>
+#ifdef INET6
+#include <netipsec/ipsec6.h>
 #endif
+#endif	/* FAST_IPSEC*/
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
 
 static int tcp_rst_ppslim_count = 0;
 static struct timeval tcp_rst_ppslim_last;
+static int tcp_ackdrop_ppslim_count = 0;
+static struct timeval tcp_ackdrop_ppslim_last;
 
 #define TCP_PAWS_IDLE	(24 * 24 * 60 * 60 * PR_SLOWHZ)
 
@@ -240,8 +250,8 @@ static struct timeval tcp_rst_ppslim_last;
 #ifdef INET6
 #define ND6_HINT(tp) \
 do { \
-	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 \
-	 && tp->t_in6pcb->in6p_route.ro_rt) { \
+	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 && \
+	    tp->t_in6pcb->in6p_route.ro_rt) { \
 		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL, 0); \
 	} \
 } while (/*CONSTCOND*/ 0)
@@ -335,6 +345,8 @@ static void tcp6_log_refused
     __P((const struct ip6_hdr *, const struct tcphdr *));
 #endif
 
+#define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
+
 int
 tcp_reass(tp, th, m, tlen)
 	struct tcpcb *tp;
@@ -388,7 +400,9 @@ tcp_reass(tp, th, m, tlen)
 		if (pkt_seq == p->ipqe_seq + p->ipqe_len) {
 			p->ipqe_len += pkt_len;
 			p->ipqe_flags |= pkt_flags;
-			m_cat(p->ipqe_m, m);
+			m_cat(p->ipre_mlast, m);
+			TRAVERSE(p->ipre_mlast);
+			m = NULL;
 			tiqe = p;
 			TAILQ_REMOVE(&tp->timeq, p, ipqe_timeq);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_appendtail);
@@ -418,6 +432,8 @@ tcp_reass(tp, th, m, tlen)
 			q->ipqe_flags |= pkt_flags;
 			m_cat(m, q->ipqe_m);
 			q->ipqe_m = m;
+			q->ipre_mlast = m; /* last mbuf may have changed */
+			TRAVERSE(q->ipre_mlast);
 			tiqe = q;
 			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prependfirst);
@@ -449,7 +465,8 @@ tcp_reass(tp, th, m, tlen)
 			pkt_len += q->ipqe_len;
 			pkt_flags |= q->ipqe_flags;
 			pkt_seq = q->ipqe_seq;
-			m_cat(q->ipqe_m, m);
+			m_cat(q->ipre_mlast, m);
+			TRAVERSE(q->ipre_mlast);
 			m = q->ipqe_m;
 			TCP_REASS_COUNTER_INCR(&tcp_reass_append);
 			goto free_ipqe;
@@ -503,8 +520,8 @@ tcp_reass(tp, th, m, tlen)
 		 * merge the fragment and segment then treat as
 		 * a longer received packet.
 		 */
-		if (SEQ_LT(q->ipqe_seq, pkt_seq)
-		    && SEQ_GT(q->ipqe_seq + q->ipqe_len, pkt_seq))  {
+		if (SEQ_LT(q->ipqe_seq, pkt_seq) &&
+		    SEQ_GT(q->ipqe_seq + q->ipqe_len, pkt_seq))  {
 			int overlap = q->ipqe_seq + q->ipqe_len - pkt_seq;
 #ifdef TCPREASS_DEBUG
 			printf("tcp_reass[%p]: trim starting %d bytes of %u:%u(%u)\n",
@@ -513,7 +530,8 @@ tcp_reass(tp, th, m, tlen)
 #endif
 			m_adj(m, overlap);
 			rcvpartdupbyte += overlap;
-			m_cat(q->ipqe_m, m);
+			m_cat(q->ipre_mlast, m);
+			TRAVERSE(q->ipre_mlast);
 			m = q->ipqe_m;
 			pkt_seq = q->ipqe_seq;
 			pkt_len += q->ipqe_len - overlap;
@@ -527,8 +545,8 @@ tcp_reass(tp, th, m, tlen)
 		 * received packet.  The packet will then be
 		 * contatentated with this fragment a bit later.
 		 */
-		if (SEQ_GT(q->ipqe_seq, pkt_seq)
-		    && SEQ_LT(q->ipqe_seq, pkt_seq + pkt_len))  {
+		if (SEQ_GT(q->ipqe_seq, pkt_seq) &&
+		    SEQ_LT(q->ipqe_seq, pkt_seq + pkt_len))  {
 			int overlap = pkt_seq + pkt_len - q->ipqe_seq;
 #ifdef TCPREASS_DEBUG
 			printf("tcp_reass[%p]: trim trailing %d bytes of %u:%u(%u)\n",
@@ -557,11 +575,10 @@ tcp_reass(tp, th, m, tlen)
 			m_cat(m, q->ipqe_m);
 			TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
-			if (tiqe == NULL) {
-			    tiqe = q;
-			} else {
-			    pool_put(&ipqent_pool, q);
-			}
+			if (tiqe == NULL)
+				tiqe = q;
+			else
+				pool_put(&ipqent_pool, q);
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prepend);
 			break;
 		}
@@ -583,11 +600,10 @@ tcp_reass(tp, th, m, tlen)
 	  free_ipqe:
 		TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 		TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
-		if (tiqe == NULL) {
-		    tiqe = q;
-		} else {
-		    pool_put(&ipqent_pool, q);
-		}
+		if (tiqe == NULL)
+			tiqe = q;
+		else
+			pool_put(&ipqent_pool, q);
 	}
 
 #ifdef TCP_REASS_COUNTERS
@@ -629,6 +645,7 @@ tcp_reass(tp, th, m, tlen)
 	 * Insert the new fragment queue entry into both queues.
 	 */
 	tiqe->ipqe_m = m;
+	tiqe->ipre_mlast = m;
 	tiqe->ipqe_seq = pkt_seq;
 	tiqe->ipqe_len = pkt_len;
 	tiqe->ipqe_flags = pkt_flags;
@@ -764,12 +781,7 @@ tcp6_log_refused(ip6, th)
  * protocol specification dated September, 1981 very closely.
  */
 void
-#if __STDC__
 tcp_input(struct mbuf *m, ...)
-#else
-tcp_input(m, va_alist)
-	struct mbuf *m;
-#endif
 {
 	struct tcphdr *th;
 	struct ip *ip;
@@ -829,7 +841,7 @@ tcp_input(m, va_alist)
 #endif
 
 	/*
-	 * Get IP and TCP header together in first mbuf.
+	 * Get IP and TCP header.
 	 * Note: IP leaves IP header in first mbuf.
 	 */
 	ip = mtod(m, struct ip *);
@@ -986,12 +998,12 @@ findpcb:
 			bzero(&d, sizeof(d));
 			d.s6_addr16[5] = htons(0xffff);
 			bcopy(&ip->ip_dst, &d.s6_addr32[3], sizeof(ip->ip_dst));
-			in6p = in6_pcblookup_connect(&tcb6, &s, th->th_sport,
-				&d, th->th_dport, 0);
+			in6p = in6_pcblookup_connect(&tcbtable, &s,
+			    th->th_sport, &d, th->th_dport, 0);
 			if (in6p == 0) {
 				++tcpstat.tcps_pcbhashmiss;
-				in6p = in6_pcblookup_bind(&tcb6, &d,
-					th->th_dport, 0);
+				in6p = in6_pcblookup_bind(&tcbtable, &d,
+				    th->th_dport, 0);
 			}
 		}
 #endif
@@ -1009,13 +1021,16 @@ findpcb:
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
 		}
-#ifdef IPSEC
-		if (inp && ipsec4_in_reject(m, inp)) {
+#if defined(IPSEC) || defined(FAST_IPSEC)
+		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		    ipsec4_in_reject(m, inp)) {
 			ipsecstat.in_polvio++;
 			goto drop;
 		}
 #ifdef INET6
-		else if (in6p && ipsec4_in_reject_so(m, in6p->in6p_socket)) {
+		else if (in6p &&
+		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		    ipsec4_in_reject_so(m, in6p->in6p_socket)) {
 			ipsecstat.in_polvio++;
 			goto drop;
 		}
@@ -1033,11 +1048,11 @@ findpcb:
 #else
 		faith = 0;
 #endif
-		in6p = in6_pcblookup_connect(&tcb6, &ip6->ip6_src, th->th_sport,
-			&ip6->ip6_dst, th->th_dport, faith);
+		in6p = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
+		    th->th_sport, &ip6->ip6_dst, th->th_dport, faith);
 		if (in6p == NULL) {
 			++tcpstat.tcps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&tcb6, &ip6->ip6_dst,
+			in6p = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
 				th->th_dport, faith);
 		}
 		if (in6p == NULL) {
@@ -1049,8 +1064,9 @@ findpcb:
 			TCP_FIELDS_TO_HOST(th);
 			goto dropwithreset_ratelim;
 		}
-#ifdef IPSEC
-		if (ipsec6_in_reject(m, in6p)) {
+#if defined(IPSEC) || defined(FAST_IPSEC)
+		if ((in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
+		    ipsec6_in_reject(m, in6p)) {
 			ipsec6stat.in_polvio++;
 			goto drop;
 		}
@@ -1098,11 +1114,18 @@ findpcb:
 			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_bad);
 			goto badcsum;
 
-		case M_CSUM_TCPv4|M_CSUM_DATA:
+		case M_CSUM_TCPv4|M_CSUM_DATA: {
+			u_int32_t hw_csum = m->m_pkthdr.csum_data;
 			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_data);
-			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0)
+			if (m->m_pkthdr.csum_flags & M_CSUM_NO_PSEUDOHDR) {
+				hw_csum = in_cksum_phdr(ip->ip_src.s_addr,
+				    ip->ip_dst.s_addr,
+				    htons(hw_csum + tlen + off + IPPROTO_TCP));
+			}
+			if ((hw_csum ^ 0xffff) != 0)
 				goto badcsum;
 			break;
+		}
 
 		case M_CSUM_TCPv4:
 			/* Checksum was okay. */
@@ -1339,6 +1362,29 @@ findpcb:
 				}
 #endif
 
+#ifdef IPSEC
+				switch (af) {
+#ifdef INET
+				case AF_INET:
+					if (ipsec4_in_reject_so(m, so)) {
+						ipsecstat.in_polvio++;
+						tp = NULL;
+						goto dropwithreset;
+					}
+					break;
+#endif
+#ifdef INET6
+				case AF_INET6:
+					if (ipsec6_in_reject_so(m, so)) {
+						ipsec6stat.in_polvio++;
+						tp = NULL;
+						goto dropwithreset;
+					}
+					break;
+#endif
+				}
+#endif
+
 				/*
 				 * LISTEN socket received a SYN
 				 * from itself?  This can't possibly
@@ -1401,8 +1447,13 @@ after_listen:
 	/*
 	 * Process options.
 	 */
+#ifdef TCP_SIGNATURE
+	if (optp || (tp->t_flags & TF_SIGNATURE))
+#else
 	if (optp)
-		tcp_dooptions(tp, optp, optlen, th, &opti);
+#endif
+		if (tcp_dooptions(tp, optp, optlen, th, m, toff, &opti) < 0)
+			goto drop;
 
 	/*
 	 * Header prediction: check for the two common cases
@@ -1451,14 +1502,16 @@ after_listen:
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
-					tcp_now - tp->t_rtttime);
+					  tcp_now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
 				ND6_HINT(tp);
+
+				if (acked > (tp->t_lastoff - tp->t_inoff))
+					tp->t_lastm = NULL;
 				sbdrop(&so->so_snd, acked);
-				if (tp->t_lastm != NULL)
-					tp->t_lastoff -= acked;
+				tp->t_lastoff -= acked;
 
 				/*
 				 * We want snd_recover to track snd_una to
@@ -1726,11 +1779,13 @@ after_listen:
 		if (todrop > tlen ||
 		    (todrop == tlen && (tiflags & TH_FIN) == 0)) {
 			/*
-			 * Any valid FIN must be to the left of the window.
-			 * At this point the FIN must be a duplicate or
-			 * out of sequence; drop it.
+			 * Any valid FIN or RST must be to the left of the
+			 * window.  At this point the FIN or RST must be a
+			 * duplicate or out of sequence; drop it.
 			 */
-			tiflags &= ~TH_FIN;
+			if (tiflags & TH_RST)
+				goto drop;
+			tiflags &= ~(TH_FIN|TH_RST);
 			/*
 			 * Send an ACK to resynchronize and drop any data.
 			 * But keep on processing for RST or ACK.
@@ -1739,6 +1794,13 @@ after_listen:
 			todrop = tlen;
 			tcpstat.tcps_rcvdupbyte += todrop;
 			tcpstat.tcps_rcvduppack++;
+		} else if ((tiflags & TH_RST) &&
+			   th->th_seq != tp->last_ack_sent) {
+			/*
+			 * Test for reset before adjusting the sequence
+			 * number for overlapping data.
+			 */
+			goto dropafterack_ratelim;
 		} else {
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
@@ -1773,6 +1835,12 @@ after_listen:
 	if (todrop > 0) {
 		tcpstat.tcps_rcvpackafterwin++;
 		if (todrop >= tlen) {
+			/*
+			 * The segment actually starts after the window.
+			 * th->th_seq + tlen - tp->rcv_nxt - tp->rcv_wnd >= tlen
+			 * th->th_seq - tp->rcv_nxt - tp->rcv_wnd >= 0
+			 * th->th_seq >= tp->rcv_nxt + tp->rcv_wnd
+			 */
 			tcpstat.tcps_rcvbyteafterwin += tlen;
 			/*
 			 * If a new connection request is received
@@ -1800,7 +1868,7 @@ after_listen:
 			 * window edge, and have to drop data and PUSH from
 			 * incoming segments.  Continue processing, but
 			 * remember to ack.  Otherwise, drop segment
-			 * and ack.
+			 * and (if not RST) ack.
 			 */
 			if (tp->rcv_wnd == 0 && th->th_seq == tp->rcv_nxt) {
 				tp->t_flags |= TF_ACKNOW;
@@ -1836,37 +1904,52 @@ after_listen:
 	 *    CLOSING, LAST_ACK, TIME_WAIT STATES
 	 *	Close the tcb.
 	 */
-	if (tiflags&TH_RST) switch (tp->t_state) {
+	if (tiflags & TH_RST) {
+		if (th->th_seq != tp->last_ack_sent)
+			goto dropafterack_ratelim;
 
-	case TCPS_SYN_RECEIVED:
-		so->so_error = ECONNREFUSED;
-		goto close;
+		switch (tp->t_state) {
+		case TCPS_SYN_RECEIVED:
+			so->so_error = ECONNREFUSED;
+			goto close;
 
-	case TCPS_ESTABLISHED:
-	case TCPS_FIN_WAIT_1:
-	case TCPS_FIN_WAIT_2:
-	case TCPS_CLOSE_WAIT:
-		so->so_error = ECONNRESET;
-	close:
-		tp->t_state = TCPS_CLOSED;
-		tcpstat.tcps_drops++;
-		tp = tcp_close(tp);
-		goto drop;
+		case TCPS_ESTABLISHED:
+		case TCPS_FIN_WAIT_1:
+		case TCPS_FIN_WAIT_2:
+		case TCPS_CLOSE_WAIT:
+			so->so_error = ECONNRESET;
+		close:
+			tp->t_state = TCPS_CLOSED;
+			tcpstat.tcps_drops++;
+			tp = tcp_close(tp);
+			goto drop;
 
-	case TCPS_CLOSING:
-	case TCPS_LAST_ACK:
-	case TCPS_TIME_WAIT:
-		tp = tcp_close(tp);
-		goto drop;
+		case TCPS_CLOSING:
+		case TCPS_LAST_ACK:
+		case TCPS_TIME_WAIT:
+			tp = tcp_close(tp);
+			goto drop;
+		}
 	}
 
 	/*
-	 * If a SYN is in the window, then this is an
-	 * error and we send an RST and drop the connection.
+	 * Since we've covered the SYN-SENT and SYN-RECEIVED states above
+	 * we must be in a synchronized state.  RFC791 states (under RST
+	 * generation) that any unacceptable segment (an out-of-order SYN
+	 * qualifies) received in a synchronized state must elicit only an
+	 * empty acknowledgment segment ... and the connection remains in
+	 * the same state.
 	 */
 	if (tiflags & TH_SYN) {
-		tp = tcp_drop(tp, ECONNRESET);
-		goto dropwithreset;
+		if (tp->rcv_nxt == th->th_seq) {
+			tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack - 1,
+			    TH_ACK);
+			if (tcp_saveti)
+				m_freem(tcp_saveti);
+			return;
+		}
+			
+		goto dropafterack_ratelim;
 	}
 
 	/*
@@ -1990,6 +2073,15 @@ after_listen:
 					(void) tcp_output(tp);
 					goto drop;
 				}
+			} else if (tlen) {
+				tp->t_dupacks = 0;	/*XXX*/
+				/* drop very old ACKs unless th_seq matches */
+				if (th->th_seq != tp->rcv_nxt &&
+				    SEQ_LT(th->th_ack,
+				    tp->snd_una - tp->max_sndwnd)) {
+					goto drop;
+				}
+				break;
 			} else
 				tp->t_dupacks = 0;
 			break;
@@ -2072,15 +2164,14 @@ after_listen:
 		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
-			tp->t_lastm = NULL;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
 			ourfinisacked = 1;
 		} else {
-			sbdrop(&so->so_snd, acked);
-			tp->snd_wnd -= acked;
-			tp->t_lastoff -= acked;
-			if (tp->t_lastoff <= 0)
+			if (acked > (tp->t_lastoff - tp->t_inoff))
 				tp->t_lastm = NULL;
+			sbdrop(&so->so_snd, acked);
+			tp->t_lastoff -= acked;
+			tp->snd_wnd -= acked;
 			ourfinisacked = 0;
 		}
 		sowwakeup(so);
@@ -2375,6 +2466,20 @@ dropafterack:
 	 */
 	if (tiflags & TH_RST)
 		goto drop;
+	goto dropafterack2;
+
+dropafterack_ratelim:
+	/*
+	 * We may want to rate-limit ACKs against SYN/RST attack.
+	 */
+	if (ppsratecheck(&tcp_ackdrop_ppslim_last, &tcp_ackdrop_ppslim_count,
+	    tcp_ackdrop_ppslim) == 0) {
+		/* XXX stat */
+		goto drop;
+	}
+	/* ...fall into dropafterack2... */
+
+dropafterack2:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
@@ -2456,18 +2561,153 @@ drop:
 	return;
 }
 
-void
-tcp_dooptions(tp, cp, cnt, th, oi)
+#ifdef TCP_SIGNATURE
+int
+tcp_signature_apply(void *fstate, caddr_t data, u_int len)
+{
+
+	MD5Update(fstate, (u_char *)data, len);
+	return (0);
+}
+
+struct secasvar *
+tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
+{
+	struct secasvar *sav;
+#ifdef FAST_IPSEC
+	union sockaddr_union dst;
+#endif
+	struct ip *ip;
+	struct ip6_hdr *ip6;
+
+	ip = mtod(m, struct ip *);
+	switch (ip->ip_v) {
+	case 4:
+		ip = mtod(m, struct ip *);
+		ip6 = NULL;
+		break;
+	case 6:
+		ip = NULL;
+		ip6 = mtod(m, struct ip6_hdr *);
+		break;
+	default:
+		return (NULL);
+	}
+
+#ifdef FAST_IPSEC
+	/* Extract the destination from the IP header in the mbuf. */
+	bzero(&dst, sizeof(union sockaddr_union));
+	dst.sa.sa_len = sizeof(struct sockaddr_in);
+	dst.sa.sa_family = AF_INET;
+	dst.sin.sin_addr = ip->ip_dst;
+
+	/*
+	 * Look up an SADB entry which matches the address of the peer.
+	 */
+	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
+#else
+	if (ip)
+		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
+		    (caddr_t)&ip->ip_dst, IPPROTO_TCP,
+		    htonl(TCP_SIG_SPI));
+	else
+		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
+		    (caddr_t)&ip6->ip6_dst, IPPROTO_TCP,
+		    htonl(TCP_SIG_SPI));
+#endif
+
+	return (sav);	/* freesav must be performed by caller */
+}
+
+int
+tcp_signature(struct mbuf *m, struct tcphdr *th, int thoff,
+    struct secasvar *sav, char *sig)
+{
+	MD5_CTX ctx;
+	struct ip *ip;
+	struct ipovly *ipovly;
+	struct ip6_hdr *ip6;
+	struct ippseudo ippseudo;
+	struct ip6_hdr_pseudo ip6pseudo;
+	struct tcphdr th0;
+	int l, tcphdrlen;
+
+	if (sav == NULL)
+		return (-1);
+
+	tcphdrlen = th->th_off * 4;
+
+	switch (mtod(m, struct ip *)->ip_v) {
+	case 4:
+		ip = mtod(m, struct ip *);
+		ip6 = NULL;
+		break;
+	case 6:
+		ip = NULL;
+		ip6 = mtod(m, struct ip6_hdr *);
+		break;
+	default:
+		return (-1);
+	}
+
+	MD5Init(&ctx);
+
+	if (ip) {
+		memset(&ippseudo, 0, sizeof(ippseudo));
+		ipovly = (struct ipovly *)ip;
+		ippseudo.ippseudo_src = ipovly->ih_src;
+		ippseudo.ippseudo_dst = ipovly->ih_dst;
+		ippseudo.ippseudo_pad = 0;
+		ippseudo.ippseudo_p = IPPROTO_TCP;
+		ippseudo.ippseudo_len = htons(m->m_pkthdr.len - thoff);
+		MD5Update(&ctx, (char *)&ippseudo, sizeof(ippseudo));
+	} else {
+		memset(&ip6pseudo, 0, sizeof(ip6pseudo));
+		ip6pseudo.ip6ph_src = ip6->ip6_src;
+		in6_clearscope(&ip6pseudo.ip6ph_src);
+		ip6pseudo.ip6ph_dst = ip6->ip6_dst;
+		in6_clearscope(&ip6pseudo.ip6ph_dst);
+		ip6pseudo.ip6ph_len = htons(m->m_pkthdr.len - thoff);
+		ip6pseudo.ip6ph_nxt = IPPROTO_TCP;
+		MD5Update(&ctx, (char *)&ip6pseudo, sizeof(ip6pseudo));
+	}
+
+	th0 = *th;
+	th0.th_sum = 0;
+	MD5Update(&ctx, (char *)&th0, sizeof(th0));
+
+	l = m->m_pkthdr.len - thoff - tcphdrlen;
+	if (l > 0)
+		m_apply(m, thoff + tcphdrlen,
+		    m->m_pkthdr.len - thoff - tcphdrlen,
+		    tcp_signature_apply, &ctx);
+
+	MD5Update(&ctx, _KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
+	MD5Final(sig, &ctx);
+
+	return (0);
+}
+#endif
+
+int
+tcp_dooptions(tp, cp, cnt, th, m, toff, oi)
 	struct tcpcb *tp;
 	u_char *cp;
 	int cnt;
 	struct tcphdr *th;
+	struct mbuf *m;
+	int toff;
 	struct tcp_opt_info *oi;
 {
 	u_int16_t mss;
-	int opt, optlen;
+	int opt, optlen = 0;
+#ifdef TCP_SIGNATURE
+	caddr_t sigp = NULL;
+	char sigbuf[TCP_SIGLEN];
+	struct secasvar *sav = NULL;
+#endif
 
-	for (; cnt > 0; cnt -= optlen, cp += optlen) {
+	for (; cp && cnt > 0; cnt -= optlen, cp += optlen) {
 		opt = cp[0];
 		if (opt == TCPOPT_EOL)
 			break;
@@ -2570,8 +2810,82 @@ tcp_dooptions(tp, cp, cnt, th, oi)
 				/* tcp_mark_sacked(tp, lwe, rwe); */
 			}
 			break;
+#ifdef TCP_SIGNATURE
+		case TCPOPT_SIGNATURE:
+			if (optlen != TCPOLEN_SIGNATURE)
+				continue;
+			if (sigp && bcmp(sigp, cp + 2, TCP_SIGLEN))
+				return (-1);
+
+			sigp = sigbuf;
+			memcpy(sigbuf, cp + 2, TCP_SIGLEN);
+			memset(cp + 2, 0, TCP_SIGLEN);
+			tp->t_flags |= TF_SIGNATURE;
+			break;
+#endif
 		}
 	}
+
+#ifdef TCP_SIGNATURE
+	if (tp->t_flags & TF_SIGNATURE) {
+
+		sav = tcp_signature_getsav(m, th);
+
+		if (sav == NULL && tp->t_state == TCPS_LISTEN)
+			return (-1);
+	}
+
+	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
+		if (sav == NULL)
+			return (-1);
+#ifdef FAST_IPSEC
+		KEY_FREESAV(&sav);
+#else
+		key_freesav(sav);
+#endif
+		return (-1);
+	}
+
+	if (sigp) {
+		char sig[TCP_SIGLEN];
+
+		TCP_FIELDS_TO_NET(th);
+		if (tcp_signature(m, th, toff, sav, sig) < 0) {
+			TCP_FIELDS_TO_HOST(th);
+			if (sav == NULL)
+				return (-1);
+#ifdef FAST_IPSEC
+			KEY_FREESAV(&sav);
+#else
+			key_freesav(sav);
+#endif
+			return (-1);
+		}
+		TCP_FIELDS_TO_HOST(th);
+
+		if (bcmp(sig, sigp, TCP_SIGLEN)) {
+			tcpstat.tcps_badsig++;
+			if (sav == NULL)
+				return (-1);
+#ifdef FAST_IPSEC
+			KEY_FREESAV(&sav);
+#else
+			key_freesav(sav);
+#endif
+			return (-1);
+		} else
+			tcpstat.tcps_goodsig++;
+
+		key_sa_recordxfer(sav, m);
+#ifdef FAST_IPSEC
+		KEY_FREESAV(&sav);
+#else
+		key_freesav(sav);
+#endif
+	}
+#endif
+
+	return (0);
 }
 
 /*
@@ -2786,10 +3100,13 @@ do {									\
 		(void) m_free((sc)->sc_ipopts);				\
 	if ((sc)->sc_route4.ro_rt != NULL)				\
 		RTFREE((sc)->sc_route4.ro_rt);				\
-	pool_put(&syn_cache_pool, (sc));				\
+	if (callout_invoking(&(sc)->sc_timer))				\
+		(sc)->sc_flags |= SCF_DEAD;				\
+	else								\
+		pool_put(&syn_cache_pool, (sc));			\
 } while (/*CONSTCOND*/0)
 
-struct pool syn_cache_pool;
+POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL);
 
 /*
  * We don't estimate RTT with SYNs, so each packet starts with the default
@@ -2814,10 +3131,6 @@ syn_cache_init()
 	/* Initialize the hash buckets. */
 	for (i = 0; i < tcp_syn_cache_size; i++)
 		TAILQ_INIT(&tcp_syn_cache[i].sch_bucket);
-
-	/* Initialize the syn cache pool. */
-	pool_init(&syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0,
-	    "synpl", NULL);
 }
 
 void
@@ -2834,10 +3147,8 @@ syn_cache_insert(sc, tp)
 	 * the hash secrets.
 	 */
 	if (syn_cache_count == 0) {
-		struct timeval tv;
-		microtime(&tv);
-		syn_hash1 = arc4random() ^ (u_long)&sc;
-		syn_hash2 = arc4random() ^ tv.tv_usec;
+		syn_hash1 = arc4random();
+		syn_hash2 = arc4random();
 	}
 
 	SYN_HASHALL(sc->sc_hash, &sc->sc_src.sa, &sc->sc_dst.sa);
@@ -2933,6 +3244,14 @@ syn_cache_timer(void *arg)
 	int s;
 
 	s = splsoftnet();
+	callout_ack(&sc->sc_timer);
+
+	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
+		tcpstat.tcps_sc_delayed_free++;
+		pool_put(&syn_cache_pool, sc);
+		splx(s);
+		return;
+	}
 
 	if (__predict_false(sc->sc_rxtshift == TCP_MAXRXTSHIFT)) {
 		/* Drop it -- too many retransmissions. */
@@ -3129,16 +3448,9 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #ifdef INET
 	case AF_INET:
 		if (inp) {
-			struct in_ifaddr *ia;
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
 			inp->inp_options = ip_srcroute();
-			INADDR_TO_IA(inp->inp_laddr, ia);
-			KASSERT(ia != NULL); 
-			KASSERT(inp->inp_ia == NULL);
-			inp->inp_ia = ia; 
-			LIST_INSERT_HEAD(&ia->ia_inpcbs, inp, inp_ialink);
-			IFAREF(&ia->ia_ifa);
 			in_pcbstate(inp, INP_BOUND);
 			if (inp->inp_options == NULL) {
 				inp->inp_options = sc->sc_ipopts;
@@ -3159,6 +3471,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 				in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
 			else
 				in6p->in6p_flags &= ~IN6P_IPV6_V6ONLY;
+			in6_pcbstate(in6p, IN6P_BOUND);
 		}
 #endif
 		break;
@@ -3168,10 +3481,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		if (in6p) {
 			in6p->in6p_laddr = ((struct sockaddr_in6 *)dst)->sin6_addr;
 			in6p->in6p_lport = ((struct sockaddr_in6 *)dst)->sin6_port;
-#if 0
-			in6p->in6p_flowinfo = ip6->ip6_flow & IPV6_FLOWINFO_MASK;
-			/*inp->inp_options = ip6_srcroute();*/ /* soon. */
-#endif
+			in6_pcbstate(in6p, IN6P_BOUND);
 		}
 		break;
 #endif
@@ -3190,7 +3500,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	}
 #endif
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	/*
 	 * we make a copy of policy, instead of sharing the policy,
 	 * for better behavior in terms of SA lookup and dead SA removal.
@@ -3297,6 +3607,11 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
 	tcpstat.tcps_accepts++;
 
+#ifdef TCP_SIGNATURE
+	if (sc->sc_flags & SCF_SIGNATURE)
+		tp->t_flags |= TF_SIGNATURE;
+#endif
+
 	/* Initialize tp->t_ourmss before we deal with the peer's! */
 	tp->t_ourmss = sc->sc_ourmaxseg;
 	tcp_mss_from_peer(tp, sc->sc_peermaxseg);
@@ -3341,8 +3656,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	return (so);
 
 resetandabort:
-	(void) tcp_respond(NULL, m, m, th,
-			   th->th_seq + tlen, (tcp_seq)0, TH_RST|TH_ACK);
+	(void)tcp_respond(NULL, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
 abort:
 	if (so != NULL)
 		(void) soabort(so);
@@ -3404,7 +3718,7 @@ syn_cache_unreach(src, dst, th)
 	}
 
 	/*
-	 * If we've rertransmitted 3 times and this is our second error,
+	 * If we've retransmitted 3 times and this is our second error,
 	 * we remove the entry.  Otherwise, we allow it to continue on.
 	 * This prevents us from incorrectly nuking an entry during a
 	 * spurious network outage.
@@ -3454,8 +3768,11 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
 	struct mbuf *ipopts;
+	struct tcp_opt_info opti;
 
 	tp = sototcpcb(so);
+
+	bzero(&opti, sizeof(opti));
 
 	/*
 	 * RFC1122 4.2.3.10, p. 104: discard bcast/mcast SYN
@@ -3483,9 +3800,19 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 		ipopts = NULL;
 	}
 
-	if (optp) {
+#ifdef TCP_SIGNATURE
+	if (optp || (tp->t_flags & TF_SIGNATURE))
+#else
+	if (optp)
+#endif
+	{
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
-		tcp_dooptions(&tb, optp, optlen, th, oi);
+#ifdef TCP_SIGNATURE
+		tb.t_flags |= (tp->t_flags & TF_SIGNATURE);
+#endif
+		if (tcp_dooptions(&tb, optp, optlen, th, m, m->m_pkthdr.len -
+		    sizeof(struct tcphdr) - optlen - hlen, oi) < 0)
+			return (0);
 	} else
 		tb.t_flags = 0;
 
@@ -3579,6 +3906,10 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 		sc->sc_requested_s_scale = 15;
 		sc->sc_request_r_scale = 15;
 	}
+#ifdef TCP_SIGNATURE
+	if (tb.t_flags & TF_SIGNATURE)
+		sc->sc_flags |= SCF_SIGNATURE;
+#endif
 	sc->sc_tp = tp;
 	if (syn_cache_respond(sc, m) == 0) {
 		syn_cache_insert(sc, tp);
@@ -3604,8 +3935,10 @@ syn_cache_respond(sc, m)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif
+	struct tcpcb *tp;
 	struct tcphdr *th;
 	u_int hlen;
+	struct socket *so;
 
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
@@ -3621,11 +3954,14 @@ syn_cache_respond(sc, m)
 	default:
 		if (m)
 			m_freem(m);
-		return EAFNOSUPPORT;
+		return (EAFNOSUPPORT);
 	}
 
 	/* Compute the size of the TCP options. */
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
+#ifdef TCP_SIGNATURE
+	    ((sc->sc_flags & SCF_SIGNATURE) ? (TCPOLEN_SIGNATURE + 2) : 0) +
+#endif
 	    ((sc->sc_flags & SCF_TIMESTAMP) ? TCPOLEN_TSTAMP_APPA : 0);
 
 	tlen = hlen + sizeof(struct tcphdr) + optlen;
@@ -3654,11 +3990,7 @@ syn_cache_respond(sc, m)
 	/* Fixup the mbuf. */
 	m->m_data += max_linkhdr;
 	m->m_len = m->m_pkthdr.len = tlen;
-#ifdef IPSEC
 	if (sc->sc_tp) {
-		struct tcpcb *tp;
-		struct socket *so;
-
 		tp = sc->sc_tp;
 		if (tp->t_inpcb)
 			so = tp->t_inpcb->inp_socket;
@@ -3668,19 +4000,15 @@ syn_cache_respond(sc, m)
 #endif
 		else
 			so = NULL;
-		/* use IPsec policy on listening socket, on SYN ACK */
-		if (ipsec_setsocket(m, so) != 0) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-	}
-#endif
+	} else
+		so = NULL;
 	m->m_pkthdr.rcvif = NULL;
 	memset(mtod(m, u_char *), 0, tlen);
 
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		ip = mtod(m, struct ip *);
+		ip->ip_v = 4;
 		ip->ip_dst = sc->sc_src.sin.sin_addr;
 		ip->ip_src = sc->sc_dst.sin.sin_addr;
 		ip->ip_p = IPPROTO_TCP;
@@ -3691,6 +4019,7 @@ syn_cache_respond(sc, m)
 #ifdef INET6
 	case AF_INET6:
 		ip6 = mtod(m, struct ip6_hdr *);
+		ip6->ip6_vfc = IPV6_VERSION;
 		ip6->ip6_dst = sc->sc_src.sin6.sin6_addr;
 		ip6->ip6_src = sc->sc_dst.sin6.sin6_addr;
 		ip6->ip6_nxt = IPPROTO_TCP;
@@ -3735,12 +4064,44 @@ syn_cache_respond(sc, m)
 		optp += TCPOLEN_TSTAMP_APPA;
 	}
 
+#ifdef TCP_SIGNATURE
+	if (sc->sc_flags & SCF_SIGNATURE) {
+		struct secasvar *sav;
+		u_int8_t *sigp;
+
+		sav = tcp_signature_getsav(m, th);
+		
+		if (sav == NULL) {
+			if (m)
+				m_freem(m);
+			return (EPERM);
+		}
+
+		*optp++ = TCPOPT_SIGNATURE;
+		*optp++ = TCPOLEN_SIGNATURE;
+		sigp = optp;
+		bzero(optp, TCP_SIGLEN);
+		optp += TCP_SIGLEN;
+		*optp++ = TCPOPT_NOP;
+		*optp++ = TCPOPT_EOL;
+
+		(void)tcp_signature(m, th, hlen, sav, sigp);
+
+		key_sa_recordxfer(sav, m);
+#ifdef FAST_IPSEC
+		KEY_FREESAV(&sav);
+#else
+		key_freesav(sav);
+#endif
+	}
+#endif
+
 	/* Compute the packet's checksum. */
 	switch (sc->sc_src.sa.sa_family) {
 	case AF_INET:
 		ip->ip_len = htons(tlen - hlen);
 		th->th_sum = 0;
-		th->th_sum = in_cksum(m, tlen);
+		th->th_sum = in4_cksum(m, IPPROTO_TCP, hlen, tlen - hlen);
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -3774,12 +4135,15 @@ syn_cache_respond(sc, m)
 #endif
 	}
 
+	/* XXX use IPsec policy on listening socket, on SYN ACK */
+	tp = sc->sc_tp;
+
 	switch (sc->sc_src.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
-		    (ip_mtudisc ? IP_MTUDISC : 0),
-		    NULL);
+		    (ip_mtudisc ? IP_MTUDISC : 0), 
+		    (struct ip_moptions *)NULL, so);
 		break;
 #endif
 #ifdef INET6
@@ -3787,8 +4151,8 @@ syn_cache_respond(sc, m)
 		ip6->ip6_hlim = in6_selecthlim(NULL,
 				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
 
-		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro,
-			0, NULL, NULL);
+		error = ip6_output(m, NULL /*XXX*/, (struct route_in6 *)ro, 0,
+			(struct ip6_moptions *)0, so, NULL);
 		break;
 #endif
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.26 2003/05/01 12:45:31 wiz Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.26.2.1 2004/08/03 10:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -173,6 +169,10 @@
 #define	F_GETLK		7		/* get record locking information */
 #define	F_SETLK		8		/* set record locking information */
 #define	F_SETLKW	9		/* F_SETLK; wait if blocked */
+#if defined(_NETBSD_SOURCE)
+#define	F_CLOSEM	10		/* close all fds >= to the one given */
+#define	F_MAXFD		11		/* return the max open fd */
+#endif
 
 /* file descriptor flags (F_GETFD, F_SETFD) */
 #define	FD_CLOEXEC	1		/* close-on-exec flag */

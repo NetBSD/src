@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.109.2.1 2003/07/02 15:26:37 darrenr Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.109.2.2 2004/08/03 10:52:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -54,11 +54,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -78,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.109.2.1 2003/07/02 15:26:37 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.109.2.2 2004/08/03 10:52:44 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -204,7 +200,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
     struct proc **rnewprocp)
 {
-	struct proc	*p1, *p2;
+	struct proc	*p1, *p2, *parent;
 	uid_t		uid;
 	struct lwp	*l2;
 	int		count, s;
@@ -278,7 +274,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
-	simple_lock_init(&p2->p_lwplock);
+	simple_lock_init(&p2->p_sigctx.ps_silock);
+	CIRCLEQ_INIT(&p2->p_sigctx.ps_siginfo);
+	simple_lock_init(&p2->p_lock);
 	LIST_INIT(&p2->p_lwps);
 
 	/*
@@ -298,8 +296,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	crhold(p1->p_ucred);
 
 	LIST_INIT(&p2->p_raslist);
-	p2->p_nras = 0;
-	simple_lock_init(&p2->p_raslock);
 #if defined(__HAVE_RAS)
 	ras_fork(p1, p2);
 #endif
@@ -330,8 +326,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (p1->p_limit->p_lflags & PL_SHAREMOD)
 		p2->p_limit = limcopy(p1->p_limit);
 	else {
+		simple_lock(&p1->p_limit->p_slock);
+		p1->p_limit->p_refcnt++;
+		simple_unlock(&p1->p_limit->p_slock);
 		p2->p_limit = p1->p_limit;
-		p2->p_limit->p_refcnt++;
 	}
 
 	/* Inherit STOPFORK and STOPEXEC flags */
@@ -341,12 +339,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_flag |= P_CONTROLT;
 	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
-	p2->p_pptr = (flags & FORK_NOWAIT) ? initproc : p1;
+	parent = (flags & FORK_NOWAIT) ? initproc : p1;
+	p2->p_pptr = parent;
 	LIST_INIT(&p2->p_children);
 
 	s = proclist_lock_write();
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	LIST_INSERT_HEAD(&p2->p_pptr->p_children, p2, p_sibling);
+	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
 	proclist_unlock_write(s);
 
 #ifdef KTRACE
@@ -428,6 +427,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_acflag = AFORK;
 	p2->p_nrlwps = 1;
 	if (p1->p_flag & P_STOPFORK) {
+		p1->p_nstopchild++;
 		p2->p_stat = SSTOP;
 		l2->l_stat = LSSTOP;
 	} else {
@@ -464,7 +464,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 #ifdef KTRACE
 	if (KTRPOINT(p2, KTR_EMUL))
-		ktremul(l2);
+		p2->p_traceflag |= KTRFAC_TRC_EMUL;
 #endif
 
 	/*

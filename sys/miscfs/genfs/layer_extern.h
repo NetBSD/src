@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.8.2.1 2003/07/02 15:26:50 darrenr Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.8.2.2 2004/08/03 10:54:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -88,17 +84,17 @@ struct vnode *
 /* vfs routines */
 int	layerfs_start __P((struct mount *, int, struct lwp *));
 int	layerfs_root __P((struct mount *, struct vnode **, struct lwp *));
-int	layerfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+int	layerfs_quotactl __P((struct mount *, int, uid_t, void *,
 			     struct lwp *));
-int	layerfs_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int	layerfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int	layerfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
 int	layerfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
 int	layerfs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
 int	layerfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	layerfs_vptofh __P((struct vnode *, struct fid *));
-int	layerfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct lwp *));
+int	layerfs_snapshot __P((struct mount *, struct vnode *,
+			    struct timespec *));
 
 /* VOP routines */
 int	layer_bypass __P((void *));
@@ -106,7 +102,6 @@ int	layer_getattr __P((void *));
 int	layer_inactive __P((void *));
 int	layer_reclaim __P((void *));
 int	layer_print __P((void *));
-int	layer_strategy __P((void *));
 int	layer_bwrite __P((void *));
 int	layer_bmap __P((void *));
 int	layer_lock __P((void *));
@@ -117,5 +112,8 @@ int	layer_lookup __P((void *));
 int	layer_setattr __P((void *));
 int	layer_access __P((void *));
 int	layer_open __P((void *));
+int	layer_remove __P((void *));
+int	layer_rename __P((void *));
+int	layer_rmdir __P((void *));
 int	layer_getpages __P((void *));
 int	layer_putpages __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.30.2.1 2003/07/02 15:27:13 darrenr Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.30.2.2 2004/08/03 10:56:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -147,13 +143,29 @@
 		memcpy((caddr_t)tl, (caddr_t)(f), NFSX_V3FH); \
 		}
 
+/*
+ * nfsm_mtofh: dissect a "resulted obj" part of create-like operations
+ * like mkdir.
+ *
+ * for nfsv3, dissect post_op_fh3 and following post_op_attr.
+ * for nfsv2, dissect fhandle and following fattr.
+ *
+ * d: (IN) the vnode of the parent directry.
+ * v: (OUT) the corresponding vnode (we allocate one if needed)
+ * v3: (IN) true for nfsv3.
+ * f: (OUT) true if we got valid filehandle.  always true for nfsv2.
+ */
+
 #define nfsm_mtofh(d, v, v3, f, l) \
 		{ struct nfsnode *ttnp; nfsfh_t *ttfhp; int ttfhsize; \
+		int hasattr = 0; \
 		if (v3) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			(f) = fxdr_unsigned(int, *tl); \
-		} else \
+		} else { \
 			(f) = 1; \
+			hasattr = 1; \
+		} \
 		if (f) { \
 			nfsm_getfh(ttfhp, ttfhsize, (v3)); \
 			if ((t1 = nfs_nget((d)->v_mount, ttfhp, ttfhsize, \
@@ -167,13 +179,21 @@
 		if (v3) { \
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 			if (f) \
-				(f) = fxdr_unsigned(int, *tl); \
+				hasattr = fxdr_unsigned(int, *tl); \
 			else if (fxdr_unsigned(int, *tl)) \
 				nfsm_adv(NFSX_V3FATTR); \
 		} \
-		if (f) \
+		if (f && hasattr) \
 			nfsm_loadattr((v), (struct vattr *)0, 0); \
 		}
+
+/*
+ * nfsm_getfh: dissect a filehandle.
+ *
+ * f: (OUT) a filehandle.
+ * s: (OUT) size of the filehandle in bytes.
+ * v3: (IN) true if nfsv3.
+ */
 
 #define nfsm_getfh(f, s, v3) \
 		{ if (v3) { \
@@ -198,6 +218,17 @@
 		} \
 		(v) = ttvp; }
 
+/*
+ * nfsm_postop_attr: process nfsv3 post_op_attr
+ *
+ * dissect post_op_attr.  if we got a one,
+ * call nfsm_loadattrcache to update attribute cache.
+ *
+ * v: (IN/OUT) the corresponding vnode
+ * f: (OUT) true if we got valid attribute
+ * flags: (IN) flags for nfsm_loadattrcache
+ */
+
 #define	nfsm_postop_attr(v, f, flags) \
 		{ struct vnode *ttvp = (v); \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
@@ -212,20 +243,49 @@
 			(v) = ttvp; \
 		} }
 
+/*
+ * nfsm_wcc_data: process nfsv3 wcc_data
+ *
+ * dissect pre_op_attr and then let nfsm_postop_attr dissect post_op_attr.
+ *
+ * v: (IN/OUT) the corresponding vnode
+ * f: (IN/OUT)
+ *	NFSV3_WCCRATTR	return true if we got valid post_op_attr.
+ *	NFSV3_WCCCHK	return true if pre_op_attr's mtime is the same
+ *			as our n_mtime.  (ie. our cache isn't stale.)
+ * flags: (IN) flags for nfsm_loadattrcache
+ */
+
 /* Used as (f) for nfsm_wcc_data() */
 #define NFSV3_WCCRATTR	0
 #define NFSV3_WCCCHK	1
 
 #define	nfsm_wcc_data(v, f, flags) \
-		{ int ttattrf, ttretf = 0; \
+		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
+			struct timespec ctime; \
 			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
-			if (f) \
-				ttretf = (VTONFS(v)->n_mtime == \
-					fxdr_unsigned(u_int32_t, *(tl + 2))); \
+			fxdr_nfsv3time(tl + 4, &ctime); \
+			if (VTONFS(v)->n_ctime == ctime.tv_sec) \
+				renewctime = 1; \
+			if ((v)->v_type == VDIR) { \
+				if (timespeccmp(&VTONFS(v)->n_nctime, \
+				    &ctime, ==)) \
+					renewnctime = 1; \
+			} \
+			if (f) { \
+				struct timespec mtime; \
+				fxdr_nfsv3time(tl + 2, &mtime); \
+				ttretf = timespeccmp(&VTONFS(v)->n_mtime, \
+				    &mtime, ==); \
+			} \
 		} \
 		nfsm_postop_attr((v), ttattrf, (flags)); \
+		if (renewctime && ttattrf) \
+			VTONFS(v)->n_ctime = VTONFS(v)->n_vattr->va_ctime.tv_sec; \
+		if (renewnctime && ttattrf) \
+			VTONFS(v)->n_nctime = VTONFS(v)->n_vattr->va_ctime; \
 		if (f) { \
 			(f) = ttretf; \
 		} else { \
@@ -335,14 +395,16 @@
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
 #define nfsm_padlen(a)	(nfsm_rndup(a) - (a))
 
-#define	nfsm_request(v, t, p, c)	\
+#define	nfsm_request1(v, t, p, c, rexmitp)	\
 		if ((error = nfs_request((v), mreq, (t), (p), \
-		   (c), &mrep, &md, &dpos)) != 0) { \
+		   (c), &mrep, &md, &dpos, (rexmitp))) != 0) { \
 			if (error & NFSERR_RETERR) \
 				error &= ~NFSERR_RETERR; \
 			else \
 				goto nfsmout; \
 		}
+
+#define	nfsm_request(v, t, p, c)	nfsm_request1((v), (t), (p), (c), NULL)
 
 #define	nfsm_strtom(a,s,m) \
 		if ((s) > (m)) { \

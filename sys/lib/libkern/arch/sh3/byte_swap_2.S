@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_2.S,v 1.2 2000/07/21 11:19:10 msaitoh Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2.24.1 2004/08/03 10:53:49 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -35,10 +35,11 @@ ALTENTRY(ntohs)
 ALTENTRY(htons)
 #endif
 	rts
-	swap.b	r4, r0
+	 swap.b	r4, r0
+
 #if BYTE_ORDER == BIG_ENDIAN
-ALTENTRY(ntohs)
+ENTRY(ntohs)
 ALTENTRY(htons)
-#endif
 	rts
-	mov	r4, r0
+	 mov	r4, r0
+#endif

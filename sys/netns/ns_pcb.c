@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.18 2003/01/20 01:38:43 simonb Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.18.2.1 2004/08/03 10:56:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.18 2003/01/20 01:38:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.18.2.1 2004/08/03 10:56:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,16 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.18 2003/01/20 01:38:43 simonb Exp $");
 static const struct	ns_addr zerons_addr;
 
 int
-ns_pcballoc(so, head)
-	struct socket *so;
-	struct nspcb *head;
+ns_pcballoc(struct socket *so, struct nspcb *head)
 {
 	struct nspcb *nsp;
 
-	nsp = malloc(sizeof(*nsp), M_PCB, M_NOWAIT);
+	nsp = malloc(sizeof(*nsp), M_PCB, M_NOWAIT|M_ZERO);
 	if (nsp == 0)
 		return (ENOBUFS);
-	bzero((caddr_t)nsp, sizeof(*nsp));
 	nsp->nsp_socket = so;
 	insque(nsp, head);
 	so->so_pcb = nsp;
@@ -75,10 +68,7 @@ ns_pcballoc(so, head)
 }
 	
 int
-ns_pcbbind(nsp, nam, p)
-	struct nspcb *nsp;
-	struct mbuf *nam;
-	struct proc *p;
+ns_pcbbind(struct nspcb *nsp, struct mbuf *nam, struct proc *p)
 {
 	struct sockaddr_ns *sns;
 	u_int16_t lport = 0;
@@ -126,9 +116,7 @@ noname:
  * then pick one.
  */
 int
-ns_pcbconnect(nsp, nam)
-	struct nspcb *nsp;
-	struct mbuf *nam;
+ns_pcbconnect(struct nspcb *nsp, struct mbuf *nam)
 {
 	struct ns_ifaddr *ia;
 	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
@@ -230,8 +218,7 @@ ns_pcbconnect(nsp, nam)
 }
 
 void
-ns_pcbdisconnect(nsp)
-	struct nspcb *nsp;
+ns_pcbdisconnect(struct nspcb *nsp)
 {
 
 	nsp->nsp_faddr = zerons_addr;
@@ -240,8 +227,7 @@ ns_pcbdisconnect(nsp)
 }
 
 void
-ns_pcbdetach(nsp)
-	struct nspcb *nsp;
+ns_pcbdetach(struct nspcb *nsp)
 {
 	struct socket *so = nsp->nsp_socket;
 
@@ -254,9 +240,7 @@ ns_pcbdetach(nsp)
 }
 
 void
-ns_setsockaddr(nsp, nam)
-	struct nspcb *nsp;
-	struct mbuf *nam;
+ns_setsockaddr(struct nspcb *nsp, struct mbuf *nam)
 {
 	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
 	
@@ -269,9 +253,7 @@ ns_setsockaddr(nsp, nam)
 }
 
 void
-ns_setpeeraddr(nsp, nam)
-	struct nspcb *nsp;
-	struct mbuf *nam;
+ns_setpeeraddr(struct nspcb *nsp, struct mbuf *nam)
 {
 	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
 	
@@ -287,15 +269,12 @@ ns_setpeeraddr(nsp, nam)
  * Pass some notification to all connections of a protocol
  * associated with address dst.  Call the
  * protocol specific routine to handle each connection.
- * Also pass an extra paramter via the nspcb. (which may in fact
+ * Also pass an extra parameter via the nspcb. (which may in fact
  * be a parameter list!)
  */
 void
-ns_pcbnotify(dst, errno, notify, param)
-	struct ns_addr *dst;
-	long param;
-	int errno;
-	void (*notify) __P((struct nspcb *));
+ns_pcbnotify(struct ns_addr *dst, int errno,
+	void (*notify)(struct nspcb *), long param)
 {
 	struct nspcb *nsp, *oinp;
 	int s = splnet();
@@ -323,8 +302,7 @@ ns_pcbnotify(dst, errno, notify, param)
  * and allocate a (hopefully) better one.
  */
 void
-ns_rtchange(nsp)
-	struct nspcb *nsp;
+ns_rtchange(struct nspcb *nsp)
 {
 	if (nsp->nsp_route.ro_rt) {
 		rtfree(nsp->nsp_route.ro_rt);
@@ -338,10 +316,7 @@ ns_rtchange(nsp)
 }
 
 struct nspcb *
-ns_pcblookup(faddr, lport, wildp)
-	const struct ns_addr *faddr;
-	u_int16_t lport;
-	int wildp;
+ns_pcblookup(const struct ns_addr *faddr, u_int16_t lport, int wildp)
 {
 	struct nspcb *nsp, *match = 0;
 	int matchwild = 3, wildcard;

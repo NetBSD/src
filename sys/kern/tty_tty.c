@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.21.2.1 2003/07/02 15:26:44 darrenr Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.21.2.2 2004/08/03 10:52:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.21.2.1 2003/07/02 15:26:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.21.2.2 2004/08/03 10:52:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,13 +119,19 @@ cttywrite(dev, uio, flag)
 	int flag;
 {
 	struct vnode *ttyvp = cttyvp(uio->uio_lwp->l_proc);
+	struct mount *mp;
 	int error;
 
 	if (ttyvp == NULL)
 		return (EIO);
+	mp = NULL;
+	if (ttyvp->v_type != VCHR &&
+	    (error = vn_start_write(ttyvp, &mp, V_WAIT | V_PCATCH)) != 0)
+		return (error);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
 	VOP_UNLOCK(ttyvp, 0);
+	vn_finished_write(mp, 0);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.53.2.1 2003/07/02 15:26:45 darrenr Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.53.2.2 2004/08/03 10:52:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.53.2.1 2003/07/02 15:26:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.53.2.2 2004/08/03 10:52:57 skrll Exp $");
 
 #include "opt_mbuftrace.h"
+#include "opt_sb_max.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.53.2.1 2003/07/02 15:26:45 darren
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
@@ -61,6 +59,9 @@ const char	netcon[] = "netcon";
 const char	netcls[] = "netcls";
 const char	netio[] = "netio";
 const char	netlck[] = "netlck";
+
+u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
+static u_long sb_max_adj;	/* adjusted sb_max */
 
 /*
  * Procedures to manipulate state flags of socket
@@ -304,10 +305,8 @@ sb_lock(struct sockbuf *sb)
  * if the socket buffer has the SB_ASYNC flag set.
  */
 void
-sowakeup(struct socket *so, struct sockbuf *sb)
+sowakeup(struct socket *so, struct sockbuf *sb, int code)
 {
-	struct proc	*p;
-
 	selnotify(&sb->sb_sel, 0);
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
@@ -315,10 +314,12 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 		wakeup((caddr_t)&sb->sb_cc);
 	}
 	if (sb->sb_flags & SB_ASYNC) {
-		if (so->so_pgid < 0)
-			gsignal(-so->so_pgid, SIGIO);
-		else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
-			psignal(p, SIGIO);
+		int band;
+		if (code == POLL_IN)
+			band = POLLIN|POLLRDNORM;
+		else
+			band = POLLOUT|POLLWRNORM;
+		fownsignal(so->so_pgid, SIGIO, code, band, so);
 	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
@@ -357,12 +358,28 @@ sowakeup(struct socket *so, struct sockbuf *sb)
  */
 
 int
+sb_max_set(u_long new_sbmax)
+{
+	int s;
+
+	if (new_sbmax < (16 * 1024))
+		return (EINVAL);
+
+	s = splsoftnet();
+	sb_max = new_sbmax;
+	sb_max_adj = (u_quad_t)new_sbmax * MCLBYTES / (MSIZE + MCLBYTES);
+	splx(s);
+
+	return (0);
+}
+
+int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
 
-	if (sbreserve(&so->so_snd, sndcc) == 0)
+	if (sbreserve(&so->so_snd, sndcc, so) == 0)
 		goto bad;
-	if (sbreserve(&so->so_rcv, rcvcc) == 0)
+	if (sbreserve(&so->so_rcv, rcvcc, so) == 0)
 		goto bad2;
 	if (so->so_rcv.sb_lowat == 0)
 		so->so_rcv.sb_lowat = 1;
@@ -372,7 +389,7 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 		so->so_snd.sb_lowat = so->so_snd.sb_hiwat;
 	return (0);
  bad2:
-	sbrelease(&so->so_snd);
+	sbrelease(&so->so_snd, so);
  bad:
 	return (ENOBUFS);
 }
@@ -383,13 +400,27 @@ soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
  * if buffering efficiency is near the normal case.
  */
 int
-sbreserve(struct sockbuf *sb, u_long cc)
+sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 {
+	struct proc *p = curproc; /* XXX */
+	rlim_t maxcc;
+	uid_t uid;
 
-	if (cc == 0 || 
-	    (u_quad_t) cc > (u_quad_t) sb_max * MCLBYTES / (MSIZE + MCLBYTES))
+	KDASSERT(sb_max_adj != 0);
+	if (cc == 0 || cc > sb_max_adj)
 		return (0);
-	sb->sb_hiwat = cc;
+	if (so) {
+		if (p && p->p_ucred->cr_uid == so->so_uid)
+			maxcc = p->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
+		else
+			maxcc = RLIM_INFINITY;
+		uid = so->so_uid;
+	} else {
+		uid = 0;	/* XXX: nothing better */
+		maxcc = RLIM_INFINITY;
+	}
+	if (!chgsbsize(uid, &sb->sb_hiwat, cc, maxcc))
+		return 0;
 	sb->sb_mbmax = min(cc * 2, sb_max);
 	if (sb->sb_lowat > sb->sb_hiwat)
 		sb->sb_lowat = sb->sb_hiwat;
@@ -400,11 +431,13 @@ sbreserve(struct sockbuf *sb, u_long cc)
  * Free mbufs held by a socket, and reserved mbuf space.
  */
 void
-sbrelease(struct sockbuf *sb)
+sbrelease(struct sockbuf *sb, struct socket *so)
 {
 
 	sbflush(sb);
-	sb->sb_hiwat = sb->sb_mbmax = 0;
+	(void)chgsbsize(so->so_uid, &sb->sb_hiwat, 0,
+	    RLIM_INFINITY);
+	sb->sb_mbmax = 0;
 }
 
 /*
@@ -478,14 +511,21 @@ sblastmbufchk(struct sockbuf *sb, const char *where)
 }
 #endif /* SOCKBUF_DEBUG */
 
-#define	SBLINKRECORD(sb, m0)						\
+/*
+ * Link a chain of records onto a socket buffer
+ */
+#define	SBLINKRECORDCHAIN(sb, m0, mlast)				\
 do {									\
 	if ((sb)->sb_lastrecord != NULL)				\
 		(sb)->sb_lastrecord->m_nextpkt = (m0);			\
 	else								\
 		(sb)->sb_mb = (m0);					\
-	(sb)->sb_lastrecord = (m0);					\
+	(sb)->sb_lastrecord = (mlast);					\
 } while (/*CONSTCOND*/0)
+
+
+#define	SBLINKRECORD(sb, m0)						\
+    SBLINKRECORDCHAIN(sb, m0, m0)
 
 /*
  * Append mbuf chain m to the last record in the
@@ -502,7 +542,7 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
 		return;
 
 #ifdef MBUFTRACE
-	m_claim(m, sb->sb_mowner);
+	m_claimm(m, sb->sb_mowner);
 #endif
 
 	SBLASTRECORDCHK(sb, "sbappend 1");
@@ -545,7 +585,7 @@ sbappendstream(struct sockbuf *sb, struct mbuf *m)
 	SBLASTMBUFCHK(sb, __func__);
 
 #ifdef MBUFTRACE
-	m_claim(m, sb->sb_mowner);
+	m_claimm(m, sb->sb_mowner);
 #endif
 
 	sbcompress(sb, m, sb->sb_mbtail);
@@ -592,7 +632,7 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 		return;
 
 #ifdef MBUFTRACE
-	m_claim(m0, sb->sb_mowner);
+	m_claimm(m0, sb->sb_mowner);
 #endif
 	/*
 	 * Put the first mbuf on the queue.
@@ -667,7 +707,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
  * Returns 0 if no space in sockbuf or insufficient mbufs.
  */
 int
-sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
+sbappendaddr(struct sockbuf *sb, const struct sockaddr *asa, struct mbuf *m0,
 	struct mbuf *control)
 {
 	struct mbuf	*m, *n, *nlast;
@@ -680,7 +720,7 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 			panic("sbappendaddr");
 		space += m0->m_pkthdr.len;
 #ifdef MBUFTRACE
-		m_claim(m0, sb->sb_mowner);
+		m_claimm(m0, sb->sb_mowner);
 #endif
 	}
 	for (n = control; n; n = n->m_next) {
@@ -730,6 +770,138 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 
 	return (1);
 }
+
+/*
+ * Helper for sbappendchainaddr: prepend a struct sockaddr* to
+ * an mbuf chain.
+ */
+static __inline struct mbuf *
+m_prepend_sockaddr(struct sockbuf *sb, struct mbuf *m0,
+		   const struct sockaddr *asa)
+{
+	struct mbuf *m;
+	const int salen = asa->sa_len;
+
+	/* only the first in each chain need be a pkthdr */
+	MGETHDR(m, M_DONTWAIT, MT_SONAME);
+	if (m == 0)
+		return (0);
+	MCLAIM(m, sb->sb_mowner);
+#ifdef notyet
+	if (salen > MHLEN) {
+		MEXTMALLOC(m, salen, M_NOWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return (0);
+		}
+	}
+#else
+	KASSERT(salen <= MHLEN);
+#endif
+	m->m_len = salen;
+	memcpy(mtod(m, caddr_t), (caddr_t)asa, salen);
+	m->m_next = m0;
+	m->m_pkthdr.len = salen + m0->m_pkthdr.len;
+
+	return m;
+}
+
+int
+sbappendaddrchain(struct sockbuf *sb, const struct sockaddr *asa,
+		  struct mbuf *m0, int sbprio)
+{
+	int space;
+	struct mbuf *m, *n, *n0, *nlast;
+	int error;
+
+	/*
+	 * XXX sbprio reserved for encoding priority of this* request:
+	 *  SB_PRIO_NONE --> honour normal sb limits
+	 *  SB_PRIO_ONESHOT_OVERFLOW --> if socket has any space,
+	 *	take whole chain. Intended for large requests
+	 *      that should be delivered atomically (all, or none).
+	 * SB_PRIO_OVERDRAFT -- allow a small (2*MLEN) overflow
+	 *       over normal socket limits, for messages indicating
+	 *       buffer overflow in earlier normal/lower-priority messages
+	 * SB_PRIO_BESTEFFORT -->  ignore limits entirely.
+	 *       Intended for  kernel-generated messages only.
+	 *        Up to generator to avoid total mbuf resource exhaustion.
+	 */
+	(void)sbprio;
+
+	if (m0 && (m0->m_flags & M_PKTHDR) == 0)
+		panic("sbappendaddrchain");
+
+	space = sbspace(sb);
+	
+#ifdef notyet
+	/* 
+	 * Enforce SB_PRIO_* limits as described above.
+	 */
+#endif
+
+	n0 = NULL;
+	nlast = NULL;
+	for (m = m0; m; m = m->m_nextpkt) {
+		struct mbuf *np;
+
+#ifdef MBUFTRACE
+		m_claimm(m, sb->sb_mowner);
+#endif
+
+		/* Prepend sockaddr to this record (m) of input chain m0 */
+	  	n = m_prepend_sockaddr(sb, m, asa);
+		if (n == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
+
+		/* Append record (asa+m) to end of new chain n0 */
+		if (n0 == NULL) {
+			n0 = n;
+		} else {
+			nlast->m_nextpkt = n;
+		}
+		/* Keep track of last record on new chain */
+		nlast = n;
+
+		for (np = n; np; np = np->m_next)
+			sballoc(sb, np);
+	}
+
+	SBLASTRECORDCHK(sb, "sbappendaddrchain 1");
+
+	/* Drop the entire chain of (asa+m) records onto the socket */
+	SBLINKRECORDCHAIN(sb, n0, nlast);
+
+	SBLASTRECORDCHK(sb, "sbappendaddrchain 2");
+
+	for (m = nlast; m->m_next; m = m->m_next)
+		;
+	sb->sb_mbtail = m;
+	SBLASTMBUFCHK(sb, "sbappendaddrchain");
+
+	return (1);
+
+bad:
+	/*
+	 * On error, free the prepended addreseses. For consistency
+	 * with sbappendaddr(), leave it to our caller to free
+	 * the input record chain passed to us as m0.
+	 */
+	while ((n = n0) != NULL) {
+	  	struct mbuf *np;
+
+		/* Undo the sballoc() of this record */
+		for (np = n; np; np = np->m_next)
+			sbfree(sb, np);
+
+		n0 = n->m_nextpkt;	/* iterate at next prepended address */
+		MFREE(n, np);		/* free prepended address (not data) */
+	}
+	return 0;	
+}
+
 
 int
 sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)

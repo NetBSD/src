@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.35 2002/12/01 22:58:43 matt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.35.6.1 2004/08/03 10:57:01 skrll Exp $	*/
 
 /*
  *

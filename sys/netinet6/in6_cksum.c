@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.14 2002/09/27 15:37:53 provos Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.14.6.1 2004/08/03 10:55:11 skrll Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -66,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.14 2002/09/27 15:37:53 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.14.6.1 2004/08/03 10:55:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -103,9 +99,6 @@ in6_cksum(m, nxt, off, len)
 	int sum = 0;
 	int mlen = 0;
 	int byte_swapped = 0;
-#if 0
-	int srcifid = 0, dstifid = 0;
-#endif
 	struct ip6_hdr *ip6;
 	union {
 		u_int16_t phs[4];
@@ -140,16 +133,6 @@ in6_cksum(m, nxt, off, len)
 	 * First create IP6 pseudo header and calculate a summary.
 	 */
 	ip6 = mtod(m, struct ip6_hdr *);
-#if 0
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
-		srcifid = ip6->ip6_src.s6_addr16[1];
-		ip6->ip6_src.s6_addr16[1] = 0;
-	}
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-		dstifid = ip6->ip6_dst.s6_addr16[1];
-		ip6->ip6_dst.s6_addr16[1] = 0;
-	}
-#endif
 	w = (u_int16_t *)&ip6->ip6_src;
 	uph.ph.ph_len = htonl(len);
 	uph.ph.ph_nxt = nxt;
@@ -170,12 +153,6 @@ in6_cksum(m, nxt, off, len)
 	sum += uph.phs[0];  sum += uph.phs[1];
 	sum += uph.phs[2];  sum += uph.phs[3];
 
-#if 0
-	if (srcifid)
-		ip6->ip6_src.s6_addr16[1] = srcifid;
-	if (dstifid)
-		ip6->ip6_dst.s6_addr16[1] = dstifid;
-#endif
  skip_phdr:
 	/*
 	 * Secondly calculate a summary of the first mbuf excluding offset.

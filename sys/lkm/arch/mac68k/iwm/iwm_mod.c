@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.6.6.1 2004/08/03 10:53:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.6.6.1 2004/08/03 10:53:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -45,10 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $");
 #include <sys/errno.h>
 
 /* The module entry */
-int iwmfd_lkmentry __P((struct lkm_table *lkmtp, int cmd, int ver));
+int iwmfd_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
 
-extern int fd_mod_init __P((void));
-extern void fd_mod_free __P((void));
+static int iwmfd_load(struct lkm_table *lkmtp, int cmd);
+static int iwmfd_unload(struct lkm_table *lkmtp, int cmd);
+
+extern int fd_mod_init(void);
+extern void fd_mod_free(void);
 
 extern const struct bdevsw fd_bdevsw;
 extern const struct cdevsw fd_cdevsw;
@@ -61,35 +64,23 @@ MOD_DEV("iwmfd", "fd", &fd_bdevsw, -1, &fd_cdevsw, -1)
  * External entry point; should generally match name of .o file.
  */
 int
-iwmfd_lkmentry (lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;		  
-	int cmd;
-	int ver;
+iwmfd_lkmentry (struct lkm_table *lkmtp, int cmd, int ver)
 {
-	int error = 0;
 
-	if (ver != LKM_VERSION)
-		return (EINVAL);
+	DISPATCH(lkmtp, cmd, ver, iwmfd_load, iwmfd_unload, lkm_nofunc);
+}
 
-	switch (cmd) {
-	case LKM_E_LOAD:
-		lkmtp->private.lkm_any = (struct lkm_any *)&_module;
-		error = lkmdispatch(lkmtp, cmd);
-		if (error != 0)
-			break;
-		error = fd_mod_init();
-		break;
+static int
+iwmfd_load(struct lkm_table *lkmtp, int cmd)
+{
 
-	case LKM_E_UNLOAD:
-		fd_mod_free();
-		lkmtp->private.lkm_any = (struct lkm_any *)&_module;
-		error = lkmdispatch(lkmtp, cmd);
-		break;
+	return fd_mod_init();
+}
 
-	case LKM_E_STAT:
-		error = lkmdispatch(lkmtp, cmd);
-		break;
-	}
+static int
+iwmfd_unload(struct lkm_table *lkmtp, int cmd)
+{
 
-	return (error);
+	fd_mod_free();
+	return (0);
 }

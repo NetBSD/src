@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.28.2.1 2003/07/02 15:26:40 darrenr Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.28.2.2 2004/08/03 10:52:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -40,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.28.2.1 2003/07/02 15:26:40 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.28.2.2 2004/08/03 10:52:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.28.2.1 2003/07/02 15:26:40 darrenr Ex
 struct logsoftc {
 	int	sc_state;		/* see above for possibilities */
 	struct	selinfo sc_selp;	/* process waiting on select call */
-	int	sc_pgid;		/* process/group for async I/O */
+	pid_t	sc_pgid;		/* process/group for async I/O */
 } logsoftc;
 
 int	log_open;			/* also used in log() */
@@ -128,7 +124,7 @@ logopen(dev, flags, mode, l)
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
-	logsoftc.sc_pgid = -l->l_proc->p_pid;	/* signal process only */
+	logsoftc.sc_pgid = l->l_proc->p_pid;	/* signal process only */
 	/*
 	 * The message buffer is initialized during system configuration.
 	 * If it's been clobbered, note that and return an error.  (This
@@ -281,18 +277,11 @@ logkqfilter(dev_t dev, struct knote *kn)
 void
 logwakeup()
 {
-	struct proc *p;
-
 	if (!log_open)
 		return;
 	selnotify(&logsoftc.sc_selp, 0);
-	if (logsoftc.sc_state & LOG_ASYNC) {
-		if (logsoftc.sc_pgid > 0)
-			gsignal(logsoftc.sc_pgid, SIGIO); 
-		else if (logsoftc.sc_pgid < 0 &&
-		    (p = pfind(-logsoftc.sc_pgid)) != NULL)
-			psignal(p, SIGIO);
-	}
+	if (logsoftc.sc_state & LOG_ASYNC)
+		fownsignal(logsoftc.sc_pgid, SIGIO, 0, 0, NULL);
 	if (logsoftc.sc_state & LOG_RDWAIT) {
 		wakeup((caddr_t)msgbufp);
 		logsoftc.sc_state &= ~LOG_RDWAIT;
@@ -308,10 +297,9 @@ logioctl(dev, com, data, flag, lwp)
 	int flag;
 	struct lwp *lwp;
 {
+	struct proc *p = lwp->l_proc;
 	long l;
 	int s;
-	pid_t pgid;
-	int error;
 
 	switch (com) {
 
@@ -336,18 +324,12 @@ logioctl(dev, com, data, flag, lwp)
 		break;
 
 	case TIOCSPGRP:
-		pgid = *(int *)data;
-		if (pgid != 0) {
-			error = pgid_in_session(lwp->l_proc, pgid);
-			if (error)
-				return error;
-		}
-		logsoftc.sc_pgid = pgid;
-		break;
+	case FIOSETOWN:
+		return fsetown(p, &logsoftc.sc_pgid, com, data);
 
 	case TIOCGPGRP:
-		*(int *)data = logsoftc.sc_pgid;
-		break;
+	case FIOGETOWN:
+		return fgetown(p, logsoftc.sc_pgid, com, data);
 
 	default:
 		return (EPASSTHROUGH);

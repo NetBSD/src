@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.31 2002/10/24 20:54:41 christos Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.31.6.1 2004/08/03 10:54:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.31 2002/10/24 20:54:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.31.6.1 2004/08/03 10:54:35 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -124,10 +120,9 @@ x25_lxalloc(rt)
 	struct sockaddr *dst = rt_key(rt);
 	struct ifaddr *ifa;
 
-	MALLOC(lx, struct llinfo_x25 *, sizeof(*lx), M_PCB, M_NOWAIT);
+	MALLOC(lx, struct llinfo_x25 *, sizeof(*lx), M_PCB, M_NOWAIT|M_ZERO);
 	if (lx == 0)
 		return lx;
-	Bzero(lx, sizeof(*lx));
 	lx->lx_rt = rt;
 	lx->lx_family = dst->sa_family;
 	rt->rt_refcnt++;
@@ -626,7 +621,7 @@ x25_dg_rtinit(dst, ia, af)
 			 */
 			struct in_ifaddr *ina;
 
-			for (ina = in_ifaddr.tqh_first; ina != 0;
+			for (ina = in_ifaddrhead.tqh_first; ina != 0;
 			     ina = ina->ia_list.tqe_next)
 				if (ina->ia_ifp == ia->ia_ifp) {
 					my_addr = ina->ia_addr.sin_addr;

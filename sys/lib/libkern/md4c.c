@@ -1,8 +1,8 @@
-/*	$NetBSD: md4c.c,v 1.2 2001/11/15 09:48:20 lukem Exp $	*/
+/*	$NetBSD: md4c.c,v 1.2.16.1 2004/08/03 10:53:31 skrll Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
- * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.ORG>
+ * Algorithm and has been modified by Jason R. Thorpe <thorpej@NetBSD.org>
  * for portability and formatting.
  */
 

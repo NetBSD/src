@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.77.2.1 2003/07/02 15:27:23 darrenr Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.77.2.2 2004/08/03 10:56:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -47,11 +47,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -71,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.1 2003/07/02 15:27:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.2 2004/08/03 10:56:57 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,9 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77.2.1 2003/07/02 15:27:23 darrenr E
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-
-extern int locked_queue_count;
-extern long locked_queue_bytes;
 
 static int lfs_update_seguse(struct lfs *, long, size_t);
 static int lfs_indirtrunc (struct inode *, daddr_t, daddr_t,
@@ -386,7 +379,7 @@ lfs_truncate(void *v)
 		if (ovp->v_type != VDIR)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
-		allocbuf(bp, size);
+		allocbuf(bp, size, 1);
 		if ((bp->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
 		if (bp->b_flags & B_DELWRI)
@@ -408,6 +401,8 @@ lfs_truncate(void *v)
 		error = ufs_balloc_range(ovp, length - 1, 1, ap->a_cred,
 					 aflags);
 		if (error) {
+			lfs_reserve(fs, ovp, NULL,
+				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 			goto errout;
 		}
 		eoz = blkroundup(fs, length);
@@ -416,6 +411,8 @@ lfs_truncate(void *v)
 		error = VOP_PUTPAGES(ovp, trunc_page(length), round_page(eoz),
 		    PGO_CLEANIT | PGO_DEACTIVATE | (aflags ? PGO_SYNCIO : 0));
 		if (error) {
+			lfs_reserve(fs, ovp, NULL,
+				    -btofsb(fs, (2 * NIADDR + 3) << fs->lfs_bshift));
 			goto errout;
 		}
 	}
@@ -567,9 +564,10 @@ done:
 	oip->i_ffs1_blocks -= real_released;
 	fs->lfs_bfree += blocksreleased;
 #ifdef DIAGNOSTIC
-	if (oip->i_size == 0 && oip->i_ffs1_blocks != 0) {
-		printf("lfs_truncate: truncate to 0 but %d blocks on inode\n",
-		       oip->i_ffs1_blocks);
+	if (oip->i_size == 0 &&
+	    (oip->i_ffs1_blocks != 0 || oip->i_lfs_effnblks != 0)) {
+		printf("lfs_truncate: truncate to 0 but %d blks/%d effblks\n",
+		       oip->i_ffs1_blocks, oip->i_lfs_effnblks);
 		panic("lfs_truncate: persistent blocks");
 	}
 #endif
@@ -685,7 +683,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("lfs_indirtrunc: bad buffer size");
 		bp->b_blkno = fsbtodb(fs, dbn);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(vp, bp);
 		error = biowait(bp);
 	}
 	if (error) {

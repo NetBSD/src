@@ -1,12 +1,12 @@
-/*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.9.2.1 2004/08/03 10:51:38 skrll Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * Carlstedt Research & Technology and by Charles M. Hamnnum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9.2.1 2004/08/03 10:51:38 skrll Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Ex
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsi_changer.h>
 
-#include <dev/scsipi/atapi_disk.h>
-
 #include <sys/disk.h>		/* XXX */
 #include <dev/scsipi/sdvar.h>	/* XXX */
 
@@ -90,9 +88,6 @@ struct umass_scsipi_softc {
 
 
 #define SHORT_INQUIRY_LENGTH    36 /* XXX */
-
-#define UMASS_SCSIID_HOST	0x00
-#define UMASS_SCSIID_DEVICE	0x01
 
 #define UMASS_ATAPI_DRIVE	0
 
@@ -135,9 +130,9 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus = umass_scsipi_setup(sc);
 
 	scbus->sc_channel.chan_bustype = &scsi_bustype;
-	scbus->sc_channel.chan_ntargets = UMASS_SCSIID_DEVICE + 1;
+	scbus->sc_channel.chan_ntargets = 2;
 	scbus->sc_channel.chan_nluns = sc->maxlun + 1;
-	scbus->sc_channel.chan_id = UMASS_SCSIID_HOST;
+	scbus->sc_channel.chan_id = scbus->sc_channel.chan_ntargets - 1;
 	DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n",
 			     USBDEVNAME(sc->sc_dev)));
 
@@ -202,7 +197,7 @@ umass_scsipi_setup(struct umass_softc *sc)
 	memset(&scbus->sc_channel, 0, sizeof(scbus->sc_channel));
 	scbus->sc_channel.chan_adapter = &scbus->sc_adapter;
 	scbus->sc_channel.chan_channel = 0;
-	scbus->sc_channel.chan_flags = SCSIPI_CHAN_OPENINGS;
+	scbus->sc_channel.chan_flags = SCSIPI_CHAN_OPENINGS | SCSIPI_CHAN_NOSETTLE;
 	scbus->sc_channel.chan_openings = 1;
 	scbus->sc_channel.chan_max_periph = 1;
 	scbus->sc_channel.chan_defquirks |= sc->sc_busquirks;
@@ -243,7 +238,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 	struct scsipi_xfer *xs;
 	struct umass_softc *sc = (void *)adapt->adapt_dev;
 	struct umass_scsipi_softc *scbus = (struct umass_scsipi_softc *)sc->bus;
-	struct scsipi_generic *cmd, trcmd;
+	struct scsipi_generic *cmd;
 	int cmdlen;
 	int dir;
 #ifdef UMASS_DEBUG
@@ -276,7 +271,7 @@ umass_scsipi_request(struct scsipi_channel *chan,
 #ifdef UMASS_DEBUG
 		if (chan->chan_bustype->bustype_type == SCSIPI_BUSTYPE_ATAPI ?
 		    periph->periph_target != UMASS_ATAPI_DRIVE :
-		    periph->periph_target != UMASS_SCSIID_DEVICE) {
+		    periph->periph_target == chan->chan_id) {
 			DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
 			    USBDEVNAME(sc->sc_dev),
 			    periph->periph_target));
@@ -287,27 +282,6 @@ umass_scsipi_request(struct scsipi_channel *chan,
 
 		cmd = xs->cmd;
 		cmdlen = xs->cmdlen;
-
-		/* XXX should use transform */
-
-		if (cmd->opcode == START_STOP &&
-		    (sc->sc_quirks & UMASS_QUIRK_NO_START_STOP)) {
-			/*printf("%s: START_STOP\n", USBDEVNAME(sc->sc_dev));*/
-			xs->error = XS_NOERROR;
-			goto done;
-		}
-
-		if (cmd->opcode == INQUIRY &&
-		    (sc->sc_quirks & UMASS_QUIRK_FORCE_SHORT_INQUIRY)) {
-			/*
-			 * Some drives wedge when asked for full inquiry
-			 * information.
-			 */
-			memcpy(&trcmd, cmd, sizeof trcmd);
-			trcmd.bytes[4] = SHORT_INQUIRY_LENGTH;
-			cmd = &trcmd;
-			xs->datalen = SHORT_INQUIRY_LENGTH;
-		}
 
 		dir = DIR_NONE;
 		if (xs->datalen) {
@@ -465,43 +439,21 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		break;
 
 	case STATUS_CMD_UNKNOWN:
-		/* we can't issue REQUEST SENSE */
-		if (xs->xs_periph->periph_quirks & PQUIRK_NOSENSE) {
-			/*
-			 * If no residue and no other USB error,
-			 * command succeeded.
-			 */
-			if (residue == 0) {
-				xs->error = XS_NOERROR;
-				break;
-			}
-
-			/*
-			 * Some devices return a short INQUIRY
-			 * response, omitting response data from the
-			 * "vendor specific data" on...
-			 */
-			if (xs->cmd->opcode == INQUIRY &&
-			    residue < xs->datalen) {
-				xs->error = XS_NOERROR;
-				break;
-			}
-
-			xs->error = XS_DRIVER_STUFFUP;
-			break;
-		}
 		/* FALLTHROUGH */
 	case STATUS_CMD_FAILED:
 		/* fetch sense data */
+		sc->sc_sense = 1;
 		memset(&scbus->sc_sense_cmd, 0, sizeof(scbus->sc_sense_cmd));
 		scbus->sc_sense_cmd.opcode = REQUEST_SENSE;
 		scbus->sc_sense_cmd.byte2 = periph->periph_lun <<
 		    SCSI_CMD_LUN_SHIFT;
 		scbus->sc_sense_cmd.length = sizeof(xs->sense);
 
-		cmdlen = sizeof(scbus->sc_sense_cmd);
-		if (sc->sc_cmd == UMASS_CPROTO_UFI) /* XXX */
-			cmdlen = UFI_COMMAND_LENGTH;
+		if (sc->sc_cmd == UMASS_CPROTO_UFI ||
+		    sc->sc_cmd == UMASS_CPROTO_ATAPI)
+			cmdlen = UFI_COMMAND_LENGTH;	/* XXX */
+		else
+			cmdlen = sizeof(scbus->sc_sense_cmd);
 		sc->sc_methods->wire_xfer(sc, periph->periph_lun,
 					  &scbus->sc_sense_cmd, cmdlen,
 					  &xs->sense, sizeof(xs->sense),
@@ -541,20 +493,11 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	DPRINTF(UDMASS_CMD,("umass_scsipi_sense_cb: xs=%p residue=%d "
 		"status=%d\n", xs, residue, status));
 
+	sc->sc_sense = 0;
 	switch (status) {
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen ||
-		    (sc->sc_quirks & UMASS_QUIRK_RS_NO_CLEAR_UA /* XXX */))) {
-			/*
-			 * Some drivers return SENSE errors even after INQUIRY.
-			 * The upper layer doesn't like that.
-			 */
-			xs->error = XS_NOERROR;
-			break;
-		}
-		/* XXX look at residue */
 		if (residue == 0 || residue == 14)/* XXX */
 			xs->error = XS_SENSE;
 		else

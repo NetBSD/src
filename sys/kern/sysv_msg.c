@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.35 2003/01/18 10:06:35 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.35.2.1 2004/08/03 10:52:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.35 2003/01/18 10:06:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.35.2.1 2004/08/03 10:52:56 skrll Exp $");
 
 #define SYSVMSG
 
@@ -78,20 +78,21 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.35 2003/01/18 10:06:35 thorpej Exp $"
 #define MSG_PRINTF(a)
 #endif
 
-int	nfree_msgmaps;		/* # of free map entries */
-short	free_msgmaps;		/* head of linked list of free map entries */
-struct	__msg *free_msghdrs;	/* list of free msg headers */
-char	*msgpool;		/* MSGMAX byte long msg buffer pool */
-struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
-struct __msg *msghdrs;		/* MSGTQL msg headers */
-struct	msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
+static int	nfree_msgmaps;		/* # of free map entries */
+static short	free_msgmaps;	/* head of linked list of free map entries */
+static struct	__msg *free_msghdrs;	/* list of free msg headers */
+static char	*msgpool;		/* MSGMAX byte long msg buffer pool */
+static struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
+static struct __msg *msghdrs;		/* MSGTQL msg headers */
+struct	msqid_ds *msqids;		/* MSGMNI msqid_ds struct's */
 
-static void msg_freehdr __P((struct __msg *));
+static void msg_freehdr(struct __msg *);
 
 void
 msginit()
 {
-	int i;
+	int i, sz;
+	vaddr_t v;
 
 	/*
 	 * msginfo.msgssz should be a power of two for efficiency reasons.
@@ -113,8 +114,17 @@ msginit()
 		panic("msginfo.msgseg > 32767");
 	}
 
-	if (msgmaps == NULL)
-		panic("msgmaps is NULL");
+	/* Allocate pageable memory for our structures */
+	sz = msginfo.msgmax
+		+ msginfo.msgseg * sizeof(struct msgmap)
+		+ msginfo.msgtql * sizeof(struct __msg)
+		+ msginfo.msgmni * sizeof(struct msqid_ds);
+	if ((v = uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
+		panic("sysv_msg: cannot allocate memory");
+	msgpool = (void *)v;
+	msgmaps = (void *) (msgpool + msginfo.msgmax);
+	msghdrs = (void *) (msgmaps + msginfo.msgseg);
+	msqids = (void *) (msghdrs + msginfo.msgtql);
 
 	for (i = 0; i < msginfo.msgseg; i++) {
 		if (i > 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.33 2003/05/01 07:52:59 itojun Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.33.2.1 2004/08/03 10:54:18 skrll Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.33 2003/05/01 07:52:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.33.2.1 2004/08/03 10:54:18 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -156,7 +156,7 @@ static int ip_gif_ttl = 40;	/*XXX*/
 #endif
 
 extern struct domain inetdomain;
-struct protosw in_stf_protosw =
+const struct protosw in_stf_protosw =
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
   in_stf_input, rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -201,7 +201,8 @@ stf_clone_create(ifc, unit)
 	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT);
 	memset(sc, 0, sizeof(struct stf_softc));
 
-	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
+	snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname), "%s%d",
+	    ifc->ifc_name, unit);
 
 	sc->encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV6,
 	    stf_encapcheck, &in_stf_protosw, sc);
@@ -465,7 +466,8 @@ stf_output(ifp, m, dst, rt)
 	}
 
 	ifp->if_opackets++;
-	return ip_output(m, NULL, &sc->sc_ro, 0, NULL);
+	return ip_output(m, NULL, &sc->sc_ro, 0,
+	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 }
 
 static int
@@ -521,7 +523,7 @@ stf_checkaddr4(sc, in, inifp)
 	/*
 	 * reject packets with broadcast
 	 */
-	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list)
+	TAILQ_FOREACH(ia4, &in_ifaddrhead, ia_list)
 	{
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
@@ -597,12 +599,7 @@ stf_checkaddr6(sc, in6, inifp)
 }
 
 void
-#if __STDC__
 in_stf_input(struct mbuf *m, ...)
-#else
-in_stf_input(m, va_alist)
-	struct mbuf *m;
-#endif
 {
 	int off, proto;
 	struct stf_softc *sc;

@@ -1,9 +1,41 @@
-/*	$NetBSD: ip_mroute.c,v 1.75 2003/06/30 10:34:53 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.75.2.1 2004/08/03 10:54:40 skrll Exp $	*/
+
+/*
+ * Copyright (c) 1992, 1993
+ *      The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Stephen Deering of Stanford University.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *      @(#)ip_mroute.c 8.2 (Berkeley) 11/15/93
+ */
 
 /*
  * Copyright (c) 1989 Stephen Deering
- * Copyright (c) 1992, 1993
- *      The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Stephen Deering of Stanford University.
@@ -54,8 +86,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75 2003/06/30 10:34:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75.2.1 2004/08/03 10:54:40 skrll Exp $");
 
+#include "opt_inet.h"
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
@@ -88,6 +121,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75 2003/06/30 10:34:53 itojun Exp $"
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
+#endif
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif
 
 #include <machine/stdarg.h>
@@ -131,10 +169,10 @@ extern int rsvp_on;
 #endif /* RSVP_ISI */
 
 /* vif attachment using sys/netinet/ip_encap.c */
-extern struct domain inetdomain;
 static void vif_input __P((struct mbuf *, ...));
 static int vif_encapcheck __P((const struct mbuf *, int, int, void *));
-static struct protosw vif_protosw =
+
+static const struct protosw vif_protosw =
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR,
   vif_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
@@ -657,7 +695,8 @@ add_vif(m)
 		/* Create a fake encapsulation interface. */
 		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
 		bzero(ifp, sizeof(*ifp));
-		sprintf(ifp->if_xname, "mdecap%d", vifcp->vifc_vifi);
+		snprintf(ifp->if_xname, sizeof(ifp->if_xname), "mdecap%d",
+		    vifcp->vifc_vifi);
 
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
@@ -1527,7 +1566,7 @@ encap_send(ip, vifp, m)
 	 */
 	ip_copy = mtod(mb_copy, struct ip *);
 	*ip_copy = multicast_encap_iphdr;
-	ip_copy->ip_id = htons(ip_id++);
+	ip_copy->ip_id = ip_newid();
 	ip_copy->ip_len = htons(len);
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
@@ -1552,13 +1591,7 @@ encap_send(ip, vifp, m)
  * De-encapsulate a packet and feed it back through ip input.
  */
 static void
-#if __STDC__
 vif_input(struct mbuf *m, ...)
-#else
-vif_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int off, proto;
 	va_list ap;
@@ -1810,12 +1843,9 @@ tbf_send_packet(vifp, m)
 
 	if (vifp->v_flags & VIFF_TUNNEL) {
 		/* If tunnel options */
-#ifdef IPSEC
-		/* Don't lookup socket in forwading case */
-		(void)ipsec_setsocket(m, NULL);
-#endif
 		ip_output(m, (struct mbuf *)0, &vifp->v_route,
-		    IP_FORWARDING, (struct ip_moptions *)0);
+		    IP_FORWARDING, (struct ip_moptions *)NULL,
+		    (struct socket *)NULL);
 	} else {
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
@@ -1827,12 +1857,9 @@ tbf_send_packet(vifp, m)
 		imo.imo_multicast_vif = -1;
 #endif
 
-#ifdef IPSEC
-		/* Don't lookup socket in forwading case */
-		(void)ipsec_setsocket(m, NULL);
-#endif
 		error = ip_output(m, (struct mbuf *)0, (struct route *)0,
-		    IP_FORWARDING|IP_MULTICASTOPTS, &imo);
+		    IP_FORWARDING|IP_MULTICASTOPTS, &imo,
+		    (struct socket *)NULL);
 
 		if (mrtdebug & DEBUG_XMIT)
 			log(LOG_DEBUG, "phyint_send on vif %ld err %d\n",

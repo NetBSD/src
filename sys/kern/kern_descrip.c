@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.110.2.1 2003/07/02 15:26:36 darrenr Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.110.2.2 2004/08/03 10:52:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.1 2003/07/02 15:26:36 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.2 2004/08/03 10:52:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,9 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.110.2.1 2003/07/02 15:26:36 darre
  */
 struct filelist	filehead;	/* head of list of open files */
 int		nfiles;		/* actual number of open files */
-struct pool	file_pool;	/* memory pool for file structures */
-struct pool	cwdi_pool;	/* memory pool for cwdinfo structures */
-struct pool	filedesc0_pool;	/* memory pool for filedesc0 structures */
+POOL_INIT(file_pool, sizeof(struct file), 0, 0, 0, "filepl",
+    &pool_allocator_nointr);
+POOL_INIT(cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
+    &pool_allocator_nointr);
+POOL_INIT(filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
+    &pool_allocator_nointr);
 
 /* Global file list lock */
 static struct simplelock filelist_slock = SIMPLELOCK_INITIALIZER;
@@ -86,7 +85,9 @@ MALLOC_DEFINE(M_IOCTLOPS, "ioctlops", "ioctl data buffer");
 
 static __inline void	fd_used(struct filedesc *, int);
 static __inline void	fd_unused(struct filedesc *, int);
+static __inline int	find_next_zero(uint32_t *, int, u_int);
 int			finishdup(struct lwp *, int, int, register_t *);
+int			find_last_set(struct filedesc *, int);
 int			fcntl_forfs(int, struct lwp *, int, void *);
 
 dev_type_open(filedescopen);
@@ -96,9 +97,76 @@ const struct cdevsw filedesc_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
+static __inline int
+find_next_zero(uint32_t *bitmap, int want, u_int bits)
+{
+	int i, off, maxoff;
+	uint32_t sub;
+
+	if (want > bits)
+		return -1;
+
+	off = want >> NDENTRYSHIFT;
+	i = want & NDENTRYMASK;
+	if (i) {
+		sub = bitmap[off] | ((u_int)~0 >> (NDENTRIES - i));
+		if (sub != ~0)
+			goto found;
+		off++;
+	}
+
+	maxoff = NDLOSLOTS(bits);
+	while (off < maxoff) {
+		if ((sub = bitmap[off]) != ~0)
+			goto found;
+		off++;
+	}
+
+	return (-1);
+
+ found:
+	return (off << NDENTRYSHIFT) + ffs(~sub) - 1;
+}
+
+int
+find_last_set(struct filedesc *fd, int last)
+{
+	int off, i;
+	struct file **ofiles = fd->fd_ofiles;
+	uint32_t *bitmap = fd->fd_lomap;
+
+	off = (last - 1) >> NDENTRYSHIFT;
+
+	while (off >= 0 && !bitmap[off])
+		off--;
+
+	if (off < 0)
+		return (0);
+       
+	i = ((off + 1) << NDENTRYSHIFT) - 1;
+	if (i >= last)
+		i = last - 1;
+
+	while (i > 0 && ofiles[i] == NULL)
+		i--;
+
+	return (i);
+}
+
 static __inline void
 fd_used(struct filedesc *fdp, int fd)
 {
+	u_int off = fd >> NDENTRYSHIFT;
+
+	LOCK_ASSERT(simple_lock_held(&fdp->fd_slock));
+	KDASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) == 0);
+
+	fdp->fd_lomap[off] |= 1 << (fd & NDENTRYMASK);
+	if (fdp->fd_lomap[off] == ~0) {
+		KDASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
+		    (1 << (off & NDENTRYMASK))) == 0);
+		fdp->fd_himap[off >> NDENTRYSHIFT] |= 1 << (off & NDENTRYMASK);
+	}
 
 	if (fd > fdp->fd_lastfile)
 		fdp->fd_lastfile = fd;
@@ -107,19 +175,27 @@ fd_used(struct filedesc *fdp, int fd)
 static __inline void
 fd_unused(struct filedesc *fdp, int fd)
 {
+	u_int off = fd >> NDENTRYSHIFT;
 
+	LOCK_ASSERT(simple_lock_held(&fdp->fd_slock));
 	if (fd < fdp->fd_freefile)
 		fdp->fd_freefile = fd;
+
+	if (fdp->fd_lomap[off] == ~0) {
+		KDASSERT((fdp->fd_himap[off >> NDENTRYSHIFT] &
+		    (1 << (off & NDENTRYMASK))) != 0);
+		fdp->fd_himap[off >> NDENTRYSHIFT] &=
+		    ~(1 << (off & NDENTRYMASK));
+	}
+	KDASSERT((fdp->fd_lomap[off] & (1 << (fd & NDENTRYMASK))) != 0);
+	fdp->fd_lomap[off] &= ~(1 << (fd & NDENTRYMASK));
+
 #ifdef DIAGNOSTIC
 	if (fd > fdp->fd_lastfile)
 		panic("fd_unused: fd_lastfile inconsistent");
 #endif
-	if (fd == fdp->fd_lastfile) {
-		do {
-			fd--;
-		} while (fd >= 0 && fdp->fd_ofiles[fd] == NULL);
-		fdp->fd_lastfile = fd;
-	}
+	if (fd == fdp->fd_lastfile)
+		fdp->fd_lastfile = find_last_set(fdp, fd);
 }
 
 /*
@@ -241,6 +317,14 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 		}
 		if (new != i)
 			panic("dup2: fdalloc");
+	} else {
+		simple_lock(&fdp->fd_slock);
+		/*
+		 * Mark `new' slot "used" only if it was empty.
+		 */
+		if (fdp->fd_ofiles[new] == NULL)
+			fd_used(fdp, new);
+		simple_unlock(&fdp->fd_slock);
 	}
 
 	/*
@@ -273,9 +357,27 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 
 	p = l->l_proc;
 	fd = SCARG(uap, fd);
+	cmd = SCARG(uap, cmd);
 	fdp = p->p_fd;
 	error = 0;
 	flg = F_POSIX;
+
+	switch (cmd) {
+	case F_CLOSEM:
+		if (fd < 0)
+			return EBADF;
+		while (fdp->fd_lastfile >= fd)
+			fdrelease(l, fdp->fd_lastfile);
+		return 0;
+
+	case F_MAXFD:
+		*retval = fdp->fd_lastfile;
+		return 0;
+
+	default:
+		/* Handled below */
+		break;
+	}
 
  restart:
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
@@ -283,7 +385,6 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 
 	FILE_USE(fp);
 
-	cmd = SCARG(uap, cmd);
 	if ((cmd & F_FSCTL)) {
 		error = fcntl_forfs(fd, l, cmd, SCARG(uap, arg));
 		goto out;
@@ -356,31 +457,12 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	case F_GETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			*retval = ((struct socket *)fp->f_data)->so_pgid;
-			goto out;
-		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, &tmp, l);
-		*retval = -tmp;
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOGETOWN, retval, l);
 		break;
 
 	case F_SETOWN:
-		if (fp->f_type == DTYPE_SOCKET) {
-			((struct socket *)fp->f_data)->so_pgid =
-			    (long)SCARG(uap, arg);
-			goto out;
-		}
-		if ((long)SCARG(uap, arg) <= 0) {
-			tmp = (-(long)SCARG(uap, arg));
-		} else {
-			struct proc *p1 = pfind((long)SCARG(uap, arg));
-			if (p1 == 0) {
-				error = ESRCH;
-				goto out;
-			}
-			tmp = (long)p1->p_pgrp->pg_id;
-		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCSPGRP, &tmp, l);
+		tmp = (int)(intptr_t) SCARG(uap, arg);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOSETOWN, &tmp, l);
 		break;
 
 	case F_SETLKW:
@@ -479,21 +561,21 @@ finishdup(struct lwp *l, int old, int new, register_t *retval)
 	 * the file may block.
 	 *
 	 * Note: `old' is already used for us.
+	 * Note: Caller already marked `new' slot "used".
 	 */
+	simple_lock(&fdp->fd_slock);
 	delfp = fdp->fd_ofiles[new];
 
 	fp = fdp->fd_ofiles[old];
+	KDASSERT(fp != NULL);
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
-	fp->f_count++;
-	/*
-	 * Note, don't have to mark it "used" in the table if there
-	 * was already a file in the `new' slot.
-	 */
-	if (delfp == NULL)
-		fd_used(fdp, new);
+	simple_unlock(&fdp->fd_slock);
+
 	*retval = new;
-	FILE_UNUSE(fp, l);
+	simple_lock(&fp->f_slock);
+	fp->f_count++;
+	FILE_UNUSE_HAVELOCK(fp, l);
 
 	if (delfp != NULL) {
 		simple_lock(&delfp->f_slock);
@@ -509,8 +591,10 @@ void
 fdremove(struct filedesc *fdp, int fd)
 {
 
+	simple_lock(&fdp->fd_slock);
 	fdp->fd_ofiles[fd] = NULL;
 	fd_unused(fdp, fd);
+	simple_unlock(&fdp->fd_slock);
 }
 
 int
@@ -521,25 +605,33 @@ fdrelease(struct lwp *l, int fd)
 	struct filedesc	*fdp;
 
 	fdp = p->p_fd;
+	simple_lock(&fdp->fd_slock);
+	if ((u_int) fd > fdp->fd_lastfile)
+		goto badf;
 	fpp = &fdp->fd_ofiles[fd];
 	fp = *fpp;
 	if (fp == NULL)
-		return (EBADF);
+		goto badf;
 
 	simple_lock(&fp->f_slock);
 	if (!FILE_IS_USABLE(fp)) {
 		simple_unlock(&fp->f_slock);
-		return (EBADF);
+		goto badf;
 	}
 
 	FILE_USE(fp);
 
 	*fpp = NULL;
 	fdp->fd_ofileflags[fd] = 0;
+	fd_unused(fdp, fd);
+	simple_unlock(&fdp->fd_slock);
 	if (fd < fdp->fd_knlistsize)
 		knote_fdclose(l, fd);
-	fd_unused(fdp, fd);
 	return (closef(fp, l));
+
+badf:
+	simple_unlock(&fdp->fd_slock);
+	return (EBADF);
 }
 
 /*
@@ -560,8 +652,6 @@ sys_close(struct lwp *l, void *v, register_t *retval)
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
 
-	if ((u_int) fd >= fdp->fd_nfiles)
-		return (EBADF);
 #if 0
 	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
@@ -670,9 +760,11 @@ int
 fdalloc(struct proc *p, int want, int *result)
 {
 	struct filedesc	*fdp;
-	int i, lim, last;
+	int i, lim, last, error;
+	u_int off, new;
 
 	fdp = p->p_fd;
+	simple_lock(&fdp->fd_slock);
 
 	/*
 	 * Search for a free descriptor starting at the higher
@@ -681,41 +773,82 @@ fdalloc(struct proc *p, int want, int *result)
 	 */
 	lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 	last = min(fdp->fd_nfiles, lim);
+ again:
 	if ((i = want) < fdp->fd_freefile)
 		i = fdp->fd_freefile;
-	for (; i < last; i++) {
-		if (fdp->fd_ofiles[i] == NULL) {
-			fd_used(fdp, i);
-			if (want <= fdp->fd_freefile)
-				fdp->fd_freefile = i;
-			*result = i;
-			return (0);
+	off = i >> NDENTRYSHIFT;
+	new = find_next_zero(fdp->fd_himap, off,
+	    (last + NDENTRIES - 1) >> NDENTRYSHIFT);
+	if (new != -1) {
+		i = find_next_zero(&fdp->fd_lomap[new], 
+		    new > off ? 0 : i & NDENTRYMASK, NDENTRIES);
+		if (i == -1) {
+			/* 
+			 * free file descriptor in this block was
+			 * below want, try again with higher want.
+			 */
+			want = (new + 1) << NDENTRYSHIFT;
+			goto again;
+		}
+		i += (new << NDENTRYSHIFT);
+		if (i < last) {
+			if (fdp->fd_ofiles[i] == NULL) {
+				fd_used(fdp, i);
+				if (want <= fdp->fd_freefile)
+					fdp->fd_freefile = i;
+				*result = i;
+				error = 0;
+				goto out;
+			}
 		}
 	}
 
-	/* No space in current array.  Expand? */
-	if (fdp->fd_nfiles >= lim)
-		return (EMFILE);
+	/* No space in current array.  Expand or let the caller do it. */
+	error = (fdp->fd_nfiles >= lim) ? EMFILE : ENOSPC;
 
-	/* Let the caller do it. */
-	return (ENOSPC);
+out:
+	simple_unlock(&fdp->fd_slock);
+	return (error);
 }
 
 void
 fdexpand(struct proc *p)
 {
 	struct filedesc	*fdp;
-	int		i, nfiles;
+	int		i, nfiles, oldnfiles;
 	struct file	**newofile;
 	char		*newofileflags;
+	uint32_t	*newhimap = NULL, *newlomap = NULL;
 
 	fdp = p->p_fd;
 
-	if (fdp->fd_nfiles < NDEXTENT)
+restart:
+	oldnfiles = fdp->fd_nfiles;
+
+	if (oldnfiles < NDEXTENT)
 		nfiles = NDEXTENT;
 	else
-		nfiles = 2 * fdp->fd_nfiles;
+		nfiles = 2 * oldnfiles;
+
 	newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
+	if (NDHISLOTS(nfiles) > NDHISLOTS(oldnfiles)) {
+		newhimap = malloc(NDHISLOTS(nfiles) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+		newlomap = malloc(NDLOSLOTS(nfiles) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+	}
+
+	simple_lock(&fdp->fd_slock);
+	/* lock fdp */
+	if (fdp->fd_nfiles != oldnfiles) {
+		/* fdp changed; retry */
+		simple_unlock(&fdp->fd_slock);
+		free(newofile, M_FILEDESC);
+		if (newhimap != NULL) free(newhimap, M_FILEDESC);
+		if (newlomap != NULL) free(newlomap, M_FILEDESC);
+		goto restart;
+	}
+
 	newofileflags = (char *) &newofile[nfiles];
 	/*
 	 * Copy the existing ofile and ofileflags arrays
@@ -728,11 +861,34 @@ fdexpand(struct proc *p)
 	memcpy(newofileflags, fdp->fd_ofileflags,
 	    (i = sizeof(char) * fdp->fd_nfiles));
 	memset(newofileflags + i, 0, nfiles * sizeof(char) - i);
-	if (fdp->fd_nfiles > NDFILE)
+	if (oldnfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC);
+
+	if (NDHISLOTS(nfiles) > NDHISLOTS(oldnfiles)) {
+		memcpy(newhimap, fdp->fd_himap,
+		    (i = NDHISLOTS(oldnfiles) * sizeof(uint32_t)));
+		memset((char *)newhimap + i, 0,
+		    NDHISLOTS(nfiles) * sizeof(uint32_t) - i);
+
+		memcpy(newlomap, fdp->fd_lomap,
+		    (i = NDLOSLOTS(oldnfiles) * sizeof(uint32_t)));
+		memset((char *)newlomap + i, 0,
+		    NDLOSLOTS(nfiles) * sizeof(uint32_t) - i);
+
+		if (NDHISLOTS(oldnfiles) > NDHISLOTS(NDFILE)) {
+			free(fdp->fd_himap, M_FILEDESC);
+			free(fdp->fd_lomap, M_FILEDESC);
+		}
+		fdp->fd_himap = newhimap;
+		fdp->fd_lomap = newlomap;
+	}
+
 	fdp->fd_ofiles = newofile;
 	fdp->fd_ofileflags = newofileflags;
 	fdp->fd_nfiles = nfiles;
+
+	simple_unlock(&fdp->fd_slock);
+
 	fdexpanded++;
 }
 
@@ -759,21 +915,6 @@ fdavail(struct proc *p, int n)
 }
 
 /*
- * Initialize the data structures necessary for managing files.
- */
-void
-finit(void)
-{
-
-	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
-	    &pool_allocator_nointr);
-	pool_init(&cwdi_pool, sizeof(struct cwdinfo), 0, 0, 0, "cwdipl",
-	    &pool_allocator_nointr);
-	pool_init(&filedesc0_pool, sizeof(struct filedesc0), 0, 0, 0, "fdescpl",
-	    &pool_allocator_nointr);
-}
-
-/*
  * Create a new open file structure and allocate
  * a file descriptor for the process that refers to it.
  */
@@ -797,6 +938,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	if (nfiles >= maxfiles) {
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		simple_unlock(&filelist_slock);
+		fd_unused(p->p_fd, i);
 		pool_put(&file_pool, fp);
 		return (ENFILE);
 	}
@@ -815,6 +957,7 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 		LIST_INSERT_HEAD(&filehead, fp, f_list);
 	}
 	simple_unlock(&filelist_slock);
+	KDASSERT(p->p_fd->fd_ofiles[i] == NULL);
 	p->p_fd->fd_ofiles[i] = fp;
 	simple_lock_init(&fp->f_slock);
 	fp->f_count = 1;
@@ -863,6 +1006,7 @@ cwdinit(struct proc *p)
 
 	cwdi = pool_get(&cwdi_pool, PR_WAITOK);
 
+	simple_lock_init(&cwdi->cwdi_slock);
 	cwdi->cwdi_cdir = p->p_cwdi->cwdi_cdir;
 	if (cwdi->cwdi_cdir)
 		VREF(cwdi->cwdi_cdir);
@@ -881,9 +1025,12 @@ cwdinit(struct proc *p)
 void
 cwdshare(struct proc *p1, struct proc *p2)
 {
+	struct cwdinfo *cwdi = p1->p_cwdi;
 
-	p2->p_cwdi = p1->p_cwdi;
-	p1->p_cwdi->cwdi_refcnt++;
+	simple_lock(&cwdi->cwdi_slock);
+	cwdi->cwdi_refcnt++;
+	simple_unlock(&cwdi->cwdi_slock);
+	p2->p_cwdi = cwdi;
 }
 
 /*
@@ -893,29 +1040,30 @@ cwdshare(struct proc *p1, struct proc *p2)
 void
 cwdunshare(struct proc *p)
 {
-	struct cwdinfo *newcwdi;
+	struct cwdinfo *oldcwdi, *newcwdi;
 
 	if (p->p_cwdi->cwdi_refcnt == 1)
 		return;
 
 	newcwdi = cwdinit(p);
-	cwdfree(p);
+	oldcwdi = p->p_cwdi;
 	p->p_cwdi = newcwdi;
+	cwdfree(oldcwdi);
 }
 
 /*
  * Release a cwdinfo structure.
  */
 void
-cwdfree(struct proc *p)
+cwdfree(struct cwdinfo *cwdi)
 {
-	struct cwdinfo *cwdi;
+	int n;
 
-	cwdi = p->p_cwdi;
-	if (--cwdi->cwdi_refcnt > 0)
+	simple_lock(&cwdi->cwdi_slock);
+	n = --cwdi->cwdi_refcnt;
+	simple_unlock(&cwdi->cwdi_slock);
+	if (n > 0)
 		return;
-
-	p->p_cwdi = NULL;
 
 	vrele(cwdi->cwdi_cdir);
 	if (cwdi->cwdi_rdir)
@@ -952,6 +1100,9 @@ fdinit1(struct filedesc0 *newfdp)
 	newfdp->fd_fd.fd_ofileflags = newfdp->fd_dfileflags;
 	newfdp->fd_fd.fd_nfiles = NDFILE;
 	newfdp->fd_fd.fd_knlistsize = -1;
+	newfdp->fd_fd.fd_himap = newfdp->fd_dhimap;
+	newfdp->fd_fd.fd_lomap = newfdp->fd_dlomap;
+	simple_lock_init(&newfdp->fd_fd.fd_slock);
 }
 
 /*
@@ -960,9 +1111,12 @@ fdinit1(struct filedesc0 *newfdp)
 void
 fdshare(struct proc *p1, struct proc *p2)
 {
+	struct filedesc *fdp = p1->p_fd;
 
-	p2->p_fd = p1->p_fd;
-	p1->p_fd->fd_refcnt++;
+	simple_lock(&fdp->fd_slock);
+	p2->p_fd = fdp;
+	fdp->fd_refcnt++;
+	simple_unlock(&fdp->fd_slock);
 }
 
 /*
@@ -1004,13 +1158,17 @@ struct filedesc *
 fdcopy(struct proc *p)
 {
 	struct filedesc	*newfdp, *fdp;
-	struct file	**fpp;
-	int		i;
+	struct file	**fpp, **nfpp;
+	int		i, nfiles, lastfile;
 
 	fdp = p->p_fd;
 	newfdp = pool_get(&filedesc0_pool, PR_WAITOK);
-	memcpy(newfdp, fdp, sizeof(struct filedesc));
 	newfdp->fd_refcnt = 1;
+	simple_lock_init(&newfdp->fd_slock);
+
+restart:
+	nfiles = fdp->fd_nfiles;
+	lastfile = fdp->fd_lastfile;
 
 	/*
 	 * If the number of open files fits in the internal arrays
@@ -1018,10 +1176,7 @@ fdcopy(struct proc *p)
 	 * additional memory for the number of descriptors currently
 	 * in use.
 	 */
-	if (newfdp->fd_lastfile < NDFILE) {
-		newfdp->fd_ofiles = ((struct filedesc0 *) newfdp)->fd_dfiles;
-		newfdp->fd_ofileflags =
-		    ((struct filedesc0 *) newfdp)->fd_dfileflags;
+	if (lastfile < NDFILE) {
 		i = NDFILE;
 	} else {
 		/*
@@ -1029,33 +1184,79 @@ fdcopy(struct proc *p)
 		 * for the file descriptors currently in use,
 		 * allowing the table to shrink.
 		 */
-		i = newfdp->fd_nfiles;
-		while (i >= 2 * NDEXTENT && i > newfdp->fd_lastfile * 2)
+		i = nfiles;
+		while (i >= 2 * NDEXTENT && i > lastfile * 2)
 			i /= 2;
 		newfdp->fd_ofiles = malloc(i * OFILESIZE, M_FILEDESC, M_WAITOK);
+	}
+	if (NDHISLOTS(i) > NDHISLOTS(NDFILE)) {
+		newfdp->fd_himap = malloc(NDHISLOTS(i) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+		newfdp->fd_lomap = malloc(NDLOSLOTS(i) * sizeof(uint32_t),
+		    M_FILEDESC, M_WAITOK);
+	}
+
+	simple_lock(&fdp->fd_slock);
+	if (nfiles != fdp->fd_nfiles || lastfile != fdp->fd_lastfile) {
+		simple_unlock(&fdp->fd_slock);
+		if (i > NDFILE)
+			free(newfdp->fd_ofiles, M_FILEDESC);
+		if (NDHISLOTS(i) > NDHISLOTS(NDFILE)) {
+			free(newfdp->fd_himap, M_FILEDESC);
+			free(newfdp->fd_lomap, M_FILEDESC);
+		}
+		goto restart;
+	}
+
+	if (lastfile < NDFILE) {
+		newfdp->fd_ofiles = ((struct filedesc0 *) newfdp)->fd_dfiles;
+		newfdp->fd_ofileflags =
+		    ((struct filedesc0 *) newfdp)->fd_dfileflags;
+	} else {
 		newfdp->fd_ofileflags = (char *) &newfdp->fd_ofiles[i];
 	}
-	newfdp->fd_nfiles = i;
-	memcpy(newfdp->fd_ofiles, fdp->fd_ofiles, i * sizeof(struct file **));
-	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
-	/*
-	 * kq descriptors cannot be copied.
-	 */
-	if (newfdp->fd_knlistsize != -1) {
-		fpp = newfdp->fd_ofiles;
-		for (i = newfdp->fd_lastfile; i-- >= 0; fpp++) {
-			if (*fpp != NULL && (*fpp)->f_type == DTYPE_KQUEUE)
-				*fpp = NULL;
-		}
-		newfdp->fd_knlist = NULL;
-		newfdp->fd_knlistsize = -1;
-		newfdp->fd_knhash = NULL;
-		newfdp->fd_knhashmask = 0;
+	if (NDHISLOTS(i) <= NDHISLOTS(NDFILE)) {
+		newfdp->fd_himap =
+		    ((struct filedesc0 *) newfdp)->fd_dhimap;
+		newfdp->fd_lomap =
+		    ((struct filedesc0 *) newfdp)->fd_dlomap;
 	}
-	fpp = newfdp->fd_ofiles;
-	for (i = newfdp->fd_lastfile; i >= 0; i--, fpp++)
-		if (*fpp != NULL)
+
+	newfdp->fd_nfiles = i;
+	newfdp->fd_lastfile = lastfile;
+	newfdp->fd_freefile = fdp->fd_freefile;
+
+	memset(newfdp->fd_ofiles + lastfile, 0,
+		(i - lastfile) * sizeof(struct file **));
+	memcpy(newfdp->fd_ofileflags, fdp->fd_ofileflags, i * sizeof(char));
+	if (i < NDENTRIES * NDENTRIES)
+		i = NDENTRIES * NDENTRIES; /* size of inlined bitmaps */
+	memcpy(newfdp->fd_himap, fdp->fd_himap, NDHISLOTS(i)*sizeof(uint32_t));
+	memcpy(newfdp->fd_lomap, fdp->fd_lomap, NDLOSLOTS(i)*sizeof(uint32_t));
+
+	fpp = fdp->fd_ofiles;
+	nfpp = newfdp->fd_ofiles;
+	for (i = 0; i <= lastfile; i++, fpp++, nfpp++) {
+		if ((*nfpp = *fpp) == NULL)
+			continue;
+
+		if ((*fpp)->f_type == DTYPE_KQUEUE)
+			/* kq descriptors cannot be copied. */
+			fdremove(newfdp, i);
+		else {
+			simple_lock(&(*fpp)->f_slock);
 			(*fpp)->f_count++;
+			simple_unlock(&(*fpp)->f_slock);
+		}
+	}
+
+	simple_unlock(&fdp->fd_slock);
+
+	newfdp->fd_knlist = NULL;
+	newfdp->fd_knlistsize = -1;
+	newfdp->fd_knhash = NULL;
+	newfdp->fd_knhashmask = 0;
+
 	return (newfdp);
 }
 
@@ -1071,8 +1272,12 @@ fdfree(struct lwp *l)
 	int		i;
 
 	fdp = p->p_fd;
-	if (--fdp->fd_refcnt > 0)
+	simple_lock(&fdp->fd_slock);
+	i = --fdp->fd_refcnt;
+	simple_unlock(&fdp->fd_slock);
+	if (i > 0)
 		return;
+
 	fpp = fdp->fd_ofiles;
 	for (i = fdp->fd_lastfile; i >= 0; i--, fpp++) {
 		fp = *fpp;
@@ -1088,6 +1293,10 @@ fdfree(struct lwp *l)
 	p->p_fd = NULL;
 	if (fdp->fd_nfiles > NDFILE)
 		free(fdp->fd_ofiles, M_FILEDESC);
+	if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
+		free(fdp->fd_himap, M_FILEDESC);
+		free(fdp->fd_lomap, M_FILEDESC);
+	}
 	if (fdp->fd_knlist)
 		free(fdp->fd_knlist, M_KEVENT);
 	if (fdp->fd_knhash)
@@ -1304,44 +1513,45 @@ filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 {
 
 	/*
-	 * XXX Kludge: set p->p_dupfd to contain the value of the
+	 * XXX Kludge: set dupfd to contain the value of the
 	 * the file descriptor being sought for duplication. The error
 	 * return ensures that the vnode for this device will be released
 	 * by vn_open. Open will detect this special error and take the
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
 	 * will simply report the error.
 	 */
-	l->l_proc->p_dupfd = minor(dev);
+	l->l_dupfd = minor(dev);
 	return (ENODEV);
 }
 
 /*
  * Duplicate the specified descriptor to a free descriptor.
+ *
+ * 'indx' has been fdalloc'ed (and will be fdremove'ed on error) by the caller.
  */
 int
 dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 {
 	struct proc	*p = l->l_proc;
 	struct filedesc *fdp;
-	struct file	*wfp, *fp;
+	struct file	*wfp;
 
 	fdp = p->p_fd;
+
+	/* should be cleared by the caller */
+	KASSERT(fdp->fd_ofiles[indx] == NULL);
+
 	/*
 	 * If the to-be-dup'd fd number is greater than the allowed number
 	 * of file descriptors, or the fd to be dup'd has already been
-	 * closed, reject.  Note, check for new == old is necessary as
-	 * falloc could allocate an already closed to-be-dup'd descriptor
-	 * as the new descriptor.
+	 * closed, reject.
 	 */
-	fp = fdp->fd_ofiles[indx];
 
+	/*
+	 * Note, in the case of indx == dfd, fd_getfile below returns NULL.
+	 */
 	if ((wfp = fd_getfile(fdp, dfd)) == NULL)
 		return (EBADF);
-
-	if (fp == wfp) {
-		simple_unlock(&fp->f_slock);
-		return (EBADF);
-	}
 
 	FILE_USE(wfp);
 
@@ -1367,17 +1577,21 @@ dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 			FILE_UNUSE(wfp, l);
 			return (EACCES);
 		}
+		simple_lock(&fdp->fd_slock);
 		fdp->fd_ofiles[indx] = wfp;
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
+		simple_unlock(&fdp->fd_slock);
+		simple_lock(&wfp->f_slock);
 		wfp->f_count++;
-		fd_used(fdp, indx);
-		FILE_UNUSE(wfp, l);
+		/* 'indx' has been fd_used'ed by caller */
+		FILE_UNUSE_HAVELOCK(wfp, l);
 		return (0);
 
 	case ENXIO:
 		/*
 		 * Steal away the file pointer from dfd, and stuff it into indx.
 		 */
+		simple_lock(&fdp->fd_slock);
 		fdp->fd_ofiles[indx] = fdp->fd_ofiles[dfd];
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
 		fdp->fd_ofiles[dfd] = NULL;
@@ -1386,8 +1600,9 @@ dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 		 * Complete the clean up of the filedesc structure by
 		 * recomputing the various hints.
 		 */
-		fd_used(fdp, indx);
+		/* 'indx' has been fd_used'ed by caller */
 		fd_unused(fdp, dfd);
+		simple_unlock(&fdp->fd_slock);
 		FILE_UNUSE(wfp, l);
 		return (0);
 
@@ -1565,3 +1780,72 @@ restart:
 	return (0);
 }
 #undef CHECK_UPTO
+
+/*
+ * Sets descriptor owner. If the owner is a process, 'pgid'
+ * is set to positive value, process ID. If the owner is process group,
+ * 'pgid' is set to -pg_id.
+ */
+int
+fsetown(struct proc *p, pid_t *pgid, int cmd, const void *data)
+{
+	int id = *(int *)data;
+	int error;
+
+	switch (cmd) {
+	case TIOCSPGRP:
+		if (id < 0)
+			return (EINVAL);
+		id = -id;
+		break;
+	default:
+		break;
+	}
+
+	if (id > 0 && !pfind(id))
+		return (ESRCH);
+	else if (id < 0 && (error = pgid_in_session(p, -id)))
+		return (error);
+
+	*pgid = id;
+	return (0);
+}
+
+/*
+ * Return descriptor owner information. If the value is positive,
+ * it's process ID. If it's negative, it's process group ID and
+ * needs the sign removed before use.
+ */
+int
+fgetown(struct proc *p, pid_t pgid, int cmd, void *data)
+{
+	switch (cmd) {
+	case TIOCGPGRP:
+		*(int *)data = -pgid;
+		break;
+	default:
+		*(int *)data = pgid;
+		break;
+	}
+	return (0);
+}
+
+/*
+ * Send signal to descriptor owner, either process or process group.
+ */
+void
+fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
+{
+	struct proc *p1;
+	ksiginfo_t ksi; 
+
+	memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = code;
+	ksi.ksi_band = band;
+
+	if (pgid > 0 && (p1 = pfind(pgid)))
+		kpsignal(p1, &ksi, fdescdata);
+	else if (pgid < 0)
+		kgsignal(-pgid, &ksi, fdescdata);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.5 2002/12/30 16:41:53 veego Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.5.2.1 2004/08/03 10:53:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -132,9 +132,9 @@ static const struct direntry dot[2] = {
 #define okclus(fs, c)  ((c) >= LOCLUS && (c) <= (fs)->xclus)
 
 /* Get start cluster from directory entry */
-#define stclus(sz, de)  ((sz) != 32 ? getushort((de)->deStartCluster) : \
+#define stclus(sz, de)  ((sz) != 32 ? (u_int)getushort((de)->deStartCluster) : \
                          ((u_int)getushort((de)->deHighClust) << 16) |  \
-			 getushort((de)->deStartCluster))
+			 (u_int)getushort((de)->deStartCluster))
 
 static int dosunmount(DOS_FS *);
 static int parsebs(DOS_FS *, DOS_BS *);
@@ -202,7 +202,7 @@ dosunmount(DOS_FS * fs)
  * Open DOS file
  */
 int
-dosfs_open(char *path, struct open_file *fd)
+dosfs_open(const char *path, struct open_file *fd)
 {
 	const struct direntry *de;
 	DOS_FILE *f;
@@ -467,7 +467,7 @@ namede(DOS_FS * fs, const char *path, const struct direntry ** dep)
 static int
 lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 {
-	DOS_DIR *dir;
+	static DOS_DIR *dir = NULL;
 	u_char  lfn[261];
 	u_char  sfn[13];
 	u_int   nsec, lsec, xdn, chk, sec, ent, x;
@@ -480,7 +480,11 @@ lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 				return 0;
 			}
 
-	dir = alloc(sizeof(DOS_DIR) * DEPSEC);
+	if (dir == NULL) {
+		dir = alloc(sizeof(DOS_DIR) * DEPSEC);
+		if (dir == NULL)
+			return (ENOMEM);
+	}
 
 	if (!clus && fs->fatsz == 32)
 		clus = fs->rdcl;
@@ -538,7 +542,7 @@ lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 						}
 						if (ok) {
 							*dep = &dir[ent].de;
-							goto out;
+							goto out2;
 						}
 					}
 				}
@@ -555,6 +559,8 @@ lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 	err = ENOENT;
  out:
 	free(dir, sizeof(DOS_DIR) * DEPSEC);
+	dir = NULL;
+ out2:
 	return (err);
 }
 

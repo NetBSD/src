@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.70 2003/05/10 13:23:07 darrenr Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.70.2.1 2004/08/03 10:55:13 skrll Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70 2003/05/10 13:23:07 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70.2.1 2004/08/03 10:55:13 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.70 2003/05/10 13:23:07 darrenr Exp $");
 #include <netinet/udp_var.h>
 #include <netinet/ip_ecn.h>
 #include <netinet/tcp.h>
-#include <netinet/udp.h>
 
 #include <netinet/ip6.h>
 #ifdef INET6
@@ -107,8 +106,6 @@ int ip4_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy *ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
-static int sp_cachegen = 1;	/* cache generation # */
-
 #ifdef INET6
 struct ipsecstat ipsec6stat;
 int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;
@@ -120,6 +117,11 @@ int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 #endif /* INET6 */
 
+u_int ipsec_spdgen = 1;		/* SPD generation # */
+
+#ifdef SADB_X_EXT_TAG
+static struct pf_tag *ipsec_get_tag __P((struct mbuf *));
+#endif
 static struct secpolicy *ipsec_checkpcbcache __P((struct mbuf *,
 	struct inpcbpolicy *, int));
 static int ipsec_fillpcbcache __P((struct inpcbpolicy *, struct mbuf *,
@@ -190,31 +192,32 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 		return NULL;
 	}
 #ifdef DIAGNOSTIC
-	if (dir >= sizeof(pcbsp->cache)/sizeof(pcbsp->cache[0]))
+	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
 		panic("dir too big in ipsec_checkpcbcache");
 #endif
 	/* SPD table change invalidates all the caches */
-	if (pcbsp->cachegen[dir] == 0 || sp_cachegen > pcbsp->cachegen[dir]) {
+	if (ipsec_spdgen != pcbsp->sp_cache[dir].cachegen) {
 		ipsec_invalpcbcache(pcbsp, dir);
 		return NULL;
 	}
-	if (!pcbsp->cache[dir])
+	if (!pcbsp->sp_cache[dir].cachesp)
 		return NULL;
-	if (pcbsp->cache[dir]->state != IPSEC_SPSTATE_ALIVE) {
+	if (pcbsp->sp_cache[dir].cachesp->state != IPSEC_SPSTATE_ALIVE) {
 		ipsec_invalpcbcache(pcbsp, dir);
 		return NULL;
 	}
-	if ((pcbsp->cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
-		if (!pcbsp->cache[dir])
+	if ((pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
+		if (!pcbsp->sp_cache[dir].cachesp)
 			return NULL;
 		if (ipsec_setspidx(m, &spidx, 1) != 0)
 			return NULL;
-		if (bcmp(&pcbsp->cacheidx[dir], &spidx, sizeof(spidx))) {
-			if (!pcbsp->cache[dir]->spidx ||
-			    !key_cmpspidx_withmask(pcbsp->cache[dir]->spidx,
+		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx,
+			 sizeof(spidx))) {
+			if (!pcbsp->sp_cache[dir].cachesp->spidx ||
+			    !key_cmpspidx_withmask(pcbsp->sp_cache[dir].cachesp->spidx,
 			    &spidx))
 				return NULL;
-			pcbsp->cacheidx[dir] = spidx;
+			pcbsp->sp_cache[dir].cacheidx = spidx;
 		}
 	} else {
 		/*
@@ -229,12 +232,13 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 		 */
 	}
 
-	pcbsp->cache[dir]->lastused = mono_time.tv_sec;
-	pcbsp->cache[dir]->refcnt++;
+	pcbsp->sp_cache[dir].cachesp->lastused = mono_time.tv_sec;
+	pcbsp->sp_cache[dir].cachesp->refcnt++;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",
-		pcbsp->cache[dir]->refcnt, pcbsp->cache[dir]));
-	return pcbsp->cache[dir];
+		pcbsp->sp_cache[dir].cachesp->refcnt,
+		pcbsp->sp_cache[dir].cachesp));
+	return pcbsp->sp_cache[dir].cachesp;
 }
 
 static int
@@ -253,24 +257,43 @@ ipsec_fillpcbcache(pcbsp, m, sp, dir)
 		return EINVAL;
 	}
 #ifdef DIAGNOSTIC
-	if (dir >= sizeof(pcbsp->cache)/sizeof(pcbsp->cache[0]))
+	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
 		panic("dir too big in ipsec_checkpcbcache");
 #endif
 
-	if (pcbsp->cache[dir])
-		key_freesp(pcbsp->cache[dir]);
-	pcbsp->cache[dir] = NULL;
-	if (ipsec_setspidx(m, &pcbsp->cacheidx[dir], 1) != 0) {
+	if (pcbsp->sp_cache[dir].cachesp)
+		key_freesp(pcbsp->sp_cache[dir].cachesp);
+	pcbsp->sp_cache[dir].cachesp = NULL;
+	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_MAYBE;
+	if (ipsec_setspidx(m, &pcbsp->sp_cache[dir].cacheidx, 1) != 0) {
 		return EINVAL;
 	}
-	pcbsp->cache[dir] = sp;
-	if (pcbsp->cache[dir]) {
-		pcbsp->cache[dir]->refcnt++;
+	pcbsp->sp_cache[dir].cachesp = sp;
+	if (pcbsp->sp_cache[dir].cachesp) {
+		pcbsp->sp_cache[dir].cachesp->refcnt++;
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec_fillpcbcache cause refcnt++:%d SP:%p\n",
-			pcbsp->cache[dir]->refcnt, pcbsp->cache[dir]));
+			pcbsp->sp_cache[dir].cachesp->refcnt,
+			pcbsp->sp_cache[dir].cachesp));
+
+		/*
+		 * If the PCB is connected, we can remember a hint to
+		 * possibly short-circuit IPsec processing in other places.
+		 */
+		if (pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) {
+			switch (pcbsp->sp_cache[dir].cachesp->policy) {
+			case IPSEC_POLICY_NONE:
+			case IPSEC_POLICY_BYPASS:
+				pcbsp->sp_cache[dir].cachehint =
+				    IPSEC_PCBHINT_NO;
+				break;
+			default:
+				pcbsp->sp_cache[dir].cachehint =
+				    IPSEC_PCBHINT_YES;
+			}
+		}
 	}
-	pcbsp->cachegen[dir] = sp_cachegen;
+	pcbsp->sp_cache[dir].cachegen = ipsec_spdgen;
 
 	return 0;
 }
@@ -285,11 +308,13 @@ ipsec_invalpcbcache(pcbsp, dir)
 	for (i = IPSEC_DIR_INBOUND; i <= IPSEC_DIR_OUTBOUND; i++) {
 		if (dir != IPSEC_DIR_ANY && i != dir)
 			continue;
-		if (pcbsp->cache[i])
-			key_freesp(pcbsp->cache[i]);
-		pcbsp->cache[i] = NULL;
-		pcbsp->cachegen[i] = 0;
-		bzero(&pcbsp->cacheidx[i], sizeof(pcbsp->cacheidx[i]));
+		if (pcbsp->sp_cache[i].cachesp)
+			key_freesp(pcbsp->sp_cache[i].cachesp);
+		pcbsp->sp_cache[i].cachesp = NULL;
+		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_MAYBE;
+		pcbsp->sp_cache[i].cachegen = 0;
+		bzero(&pcbsp->sp_cache[i].cacheidx,
+		      sizeof(pcbsp->sp_cache[i].cacheidx));
 	}
 	return 0;
 }
@@ -299,7 +324,7 @@ ipsec_pcbconn(pcbsp)
 	struct inpcbpolicy *pcbsp;
 {
 
-	pcbsp->cacheflags |= IPSEC_PCBSP_CONNECTED;
+	pcbsp->sp_cacheflags |= IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
 	return 0;
 }
@@ -309,18 +334,34 @@ ipsec_pcbdisconn(pcbsp)
 	struct inpcbpolicy *pcbsp;
 {
 
-	pcbsp->cacheflags &= ~IPSEC_PCBSP_CONNECTED;
+	pcbsp->sp_cacheflags &= ~IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
 	return 0;
 }
 
-int
+void
 ipsec_invalpcbcacheall()
 {
 
-	sp_cachegen++;
-	return 0;
+	if (ipsec_spdgen == UINT_MAX)
+		ipsec_spdgen = 1;
+	else
+		ipsec_spdgen++;
 }
+
+#ifdef SADB_X_EXT_TAG
+static struct pf_tag *
+ipsec_get_tag(m)
+	struct mbuf *m;
+{
+	struct m_tag	*mtag;
+
+	if ((mtag = m_tag_find(m, PACKET_TAG_PF_TAG, NULL)) != NULL)
+		return ((struct pf_tag *)(mtag + 1));
+	else
+		return (NULL);
+}
+#endif
 
 /*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
@@ -329,7 +370,7 @@ ipsec_invalpcbcacheall()
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  *
  * NOTE: IPv6 mapped adddress concern is implemented here.
@@ -345,6 +386,10 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	struct secpolicy *currsp = NULL;	/* policy on socket */
 	struct secpolicy *kernsp = NULL;	/* policy on kernel */
 	struct secpolicyindex spidx;
+#ifdef SADB_X_EXT_TAG
+	struct pf_tag *t;
+#endif
+	u_int16_t tag;
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
@@ -366,6 +411,13 @@ ipsec4_getpolicybysock(m, dir, so, error)
 #ifdef DIAGNOSTIC
 	if (pcbsp == NULL)
 		panic("ipsec4_getpolicybysock: pcbsp is NULL.");
+#endif
+
+#ifdef SADB_X_EXT_TAG
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
+#else
+	tag = 0;
 #endif
 
 	/* if we have a cached entry, and if it is still valid, use it. */
@@ -392,7 +444,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	if (currsp == NULL)
 		panic("ipsec4_getpolicybysock: currsp is NULL.");
 
-	/* when privilieged socket */
+	/* when privileged socket */
 	if (pcbsp->priv) {
 		switch (currsp->policy) {
 		case IPSEC_POLICY_BYPASS:
@@ -404,7 +456,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
 			if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 1) == 0 &&
-			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+			    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec4_getpolicybysock called "
@@ -435,10 +487,10 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		/* NOTREACHED */
 	}
 
-	/* when non-privilieged socket */
+	/* when non-privileged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 1) == 0 &&
-	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+	    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec4_getpolicybysock called "
@@ -452,7 +504,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	switch (currsp->policy) {
 	case IPSEC_POLICY_BYPASS:
 		ipseclog((LOG_ERR, "ipsec4_getpolicybysock: "
-		       "Illegal policy for non-priviliged defined %d\n",
+		       "Illegal policy for non-privileged defined %d\n",
 			currsp->policy));
 		*error = EINVAL;
 		return NULL;
@@ -486,7 +538,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  */
 struct secpolicy *
 ipsec4_getpolicybyaddr(m, dir, flag, error)
@@ -496,6 +548,10 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 	int *error;
 {
 	struct secpolicy *sp = NULL;
+#ifdef SADB_X_EXT_TAG
+	struct pf_tag *t;
+#endif
+	u_int16_t tag;
 
 	/* sanity check */
 	if (m == NULL || error == NULL)
@@ -507,14 +563,21 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 
 	bzero(&spidx, sizeof(spidx));
 
-	/* make a index to look for a policy */
+	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
 	if (*error != 0)
 		return NULL;
 
-	sp = key_allocsp(&spidx, dir);
+#ifdef SADB_X_EXT_TAG
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
+#else
+	tag = 0;
+#endif
+
+	sp = key_allocsp(tag, &spidx, dir);
     }
 
 	/* SP found */
@@ -540,7 +603,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  */
 struct secpolicy *
@@ -554,6 +617,10 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	struct secpolicy *currsp = NULL;	/* policy on socket */
 	struct secpolicy *kernsp = NULL;	/* policy on kernel */
 	struct secpolicyindex spidx;
+#ifdef SADB_X_EXT_TAG
+	struct pf_tag *t;
+#endif
+	u_int16_t tag;
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
@@ -569,6 +636,13 @@ ipsec6_getpolicybysock(m, dir, so, error)
 #ifdef DIAGNOSTIC
 	if (pcbsp == NULL)
 		panic("ipsec6_getpolicybysock: pcbsp is NULL.");
+#endif
+
+#ifdef SADB_X_EXT_TAG
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
+#else
+	tag = 0;
 #endif
 
 	/* if we have a cached entry, and if it is still valid, use it. */
@@ -595,7 +669,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	if (currsp == NULL)
 		panic("ipsec6_getpolicybysock: currsp is NULL.");
 
-	/* when privilieged socket */
+	/* when privileged socket */
 	if (pcbsp->priv) {
 		switch (currsp->policy) {
 		case IPSEC_POLICY_BYPASS:
@@ -607,7 +681,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
 			if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 1) == 0 &&
-			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+			    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec6_getpolicybysock called "
@@ -638,10 +712,10 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		/* NOTREACHED */
 	}
 
-	/* when non-privilieged socket */
+	/* when non-privileged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 1) == 0 &&
-	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+	    (kernsp = key_allocsp(tag, &spidx, dir)) != NULL) {
 		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec6_getpolicybysock called "
@@ -655,7 +729,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	switch (currsp->policy) {
 	case IPSEC_POLICY_BYPASS:
 		ipseclog((LOG_ERR, "ipsec6_getpolicybysock: "
-		    "Illegal policy for non-priviliged defined %d\n",
+		    "Illegal policy for non-privileged defined %d\n",
 		    currsp->policy));
 		*error = EINVAL;
 		return NULL;
@@ -692,7 +766,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  */
 #ifndef IP_FORWARDING
 #define IP_FORWARDING 1
@@ -706,6 +780,10 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 	int *error;
 {
 	struct secpolicy *sp = NULL;
+#ifdef SADB_X_EXT_TAG
+	struct pf_tag *t;
+#endif
+	u_int16_t tag;
 
 	/* sanity check */
 	if (m == NULL || error == NULL)
@@ -717,14 +795,21 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 
 	bzero(&spidx, sizeof(spidx));
 
-	/* make a index to look for a policy */
+	/* make an index to look for a policy */
 	*error = ipsec_setspidx_mbuf(&spidx, AF_INET6, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
 	if (*error != 0)
 		return NULL;
 
-	sp = key_allocsp(&spidx, dir);
+#ifdef SADB_X_EXT_TAG
+	t = ipsec_get_tag(m);
+	tag = t ? t->tag : 0;
+#else
+	tag = 0;
+#endif
+
+	sp = key_allocsp(tag, &spidx, dir);
     }
 
 	/* SP found */
@@ -834,11 +919,7 @@ ipsec_setspidx(m, spidx, needport)
 		m_copydata(m, 0, sizeof(ipbuf), (caddr_t)&ipbuf);
 		ip = &ipbuf;
 	}
-#ifdef _IP_VHL
-	v = _IP_VHL_V(ip->ip_vhl);
-#else
 	v = ip->ip_v;
-#endif
 	switch (v) {
 	case 4:
 		error = ipsec4_setspidx_ipaddr(m, spidx);
@@ -898,11 +979,7 @@ ipsec4_get_ulp(m, spidx, needport)
 		return;
 
 	nxt = ip.ip_p;
-#ifdef _IP_VHL
-	off = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	off = ip.ip_hl << 2;
-#endif
 	while (off < m->m_pkthdr.len) {
 		switch (nxt) {
 		case IPPROTO_TCP:
@@ -1056,22 +1133,14 @@ ipsec6_setspidx_ipaddr(m, spidx)
 	bzero(sin6, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_src, &sin6->sin6_addr, sizeof(ip6->ip6_src));
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
-		sin6->sin6_addr.s6_addr16[1] = 0;
-		sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
-	}
+	in6_recoverscope(sin6, &ip6->ip6_src, NULL);
 	spidx->prefs = sizeof(struct in6_addr) << 3;
 
 	sin6 = (struct sockaddr_in6 *)&spidx->dst;
 	bzero(sin6, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
-	bcopy(&ip6->ip6_dst, &sin6->sin6_addr, sizeof(ip6->ip6_dst));
-	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-		sin6->sin6_addr.s6_addr16[1] = 0;
-		sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
-	}
+	in6_recoverscope(sin6, &ip6->ip6_dst, NULL);
 	spidx->prefd = sizeof(struct in6_addr) << 3;
 
 	return 0;
@@ -1110,9 +1179,9 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 		panic("ipsec_init_pcbpolicy: NULL pointer was passed.");
 
 	if (!initialized) {
-		if ((in = key_newsp()) == NULL)
+		if ((in = key_newsp(0)) == NULL)
 			return ENOBUFS;
-		if ((out = key_newsp()) == NULL) {
+		if ((out = key_newsp(0)) == NULL) {
 			key_freesp(in);
 			in = NULL;
 			return ENOBUFS;
@@ -1122,11 +1191,15 @@ ipsec_init_pcbpolicy(so, pcb_sp)
 		in->policy = IPSEC_POLICY_ENTRUST;
 		in->dir = IPSEC_DIR_INBOUND;
 		in->readonly = 1;
+		in->persist = 1;
+		in->so = NULL;
 
 		out->state = IPSEC_SPSTATE_ALIVE;
 		out->policy = IPSEC_POLICY_ENTRUST;
 		out->dir = IPSEC_DIR_OUTBOUND;
 		out->readonly = 1;
+		out->persist = 1;
+		out->so = NULL;
 
 		initialized++;
 	}
@@ -1218,8 +1291,11 @@ ipsec_deepcopy_policy(src)
 	struct ipsecrequest *r;
 	struct secpolicy *dst;
 
-	dst = key_newsp();
-	if (src == NULL || dst == NULL)
+	if (src == NULL)
+		return NULL;
+
+	dst = key_newsp(0);
+	if (dst == NULL)
 		return NULL;
 
 	/*
@@ -1257,6 +1333,7 @@ ipsec_deepcopy_policy(src)
 	dst->state = src->state;
 	dst->policy = src->policy;
 	dst->dir = src->dir;
+	dst->so = src->so;
 	/* do not touch the refcnt fields */
 
 	return dst;
@@ -1741,7 +1818,8 @@ ipsec4_in_reject_so(m, so)
 	 * ipsec4_getpolicybyaddr() with IP_FORWARDING flag.
 	 */
 	if (so == NULL)
-		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
+		sp = ipsec4_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec4_getpolicybysock(m, IPSEC_DIR_INBOUND, so, &error);
 
@@ -1794,7 +1872,8 @@ ipsec6_in_reject_so(m, so)
 	 * ipsec6_getpolicybyaddr() with IP_FORWARDING flag.
 	 */
 	if (so == NULL)
-		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_INBOUND, IP_FORWARDING, &error);
+		sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+		    IP_FORWARDING, &error);
 	else
 		sp = ipsec6_getpolicybysock(m, IPSEC_DIR_INBOUND, so, &error);
 
@@ -2012,25 +2091,14 @@ ipsec4_encapsulate(m, sav)
 		panic("ipsec4_encapsulate: assumption failed (first mbuf length)");
 
 	ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-	hlen = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 
 	if (m->m_len != hlen)
 		panic("ipsec4_encapsulate: assumption failed (first mbuf length)");
 
 	/* generate header checksum */
 	ip->ip_sum = 0;
-#ifdef _IP_VHL
-	if (ip->ip_vhl == IP_VHL_BORING)
-		ip->ip_sum = in_cksum_hdr(ip);
-	else
-		ip->ip_sum = in_cksum(m, hlen);
-#else
 	ip->ip_sum = in_cksum(m, hlen);
-#endif
 
 	plen = m->m_pkthdr.len;
 
@@ -2062,11 +2130,7 @@ ipsec4_encapsulate(m, sav)
 	/* construct new IPv4 header. see RFC 2401 5.1.2.1 */
 	/* ECN consideration. */
 	ip_ecn_ingress(ip4_ipsec_ecn, &ip->ip_tos, &oip->ip_tos);
-#ifdef _IP_VHL
-	ip->ip_vhl = IP_MAKE_VHL(IPVERSION, sizeof(struct ip) >> 2);
-#else
 	ip->ip_hl = sizeof(struct ip) >> 2;
-#endif
 	ip->ip_off &= htons(~IP_OFFMASK);
 	ip->ip_off &= htons(~IP_MF);
 	switch (ip4_ipsec_dfbit) {
@@ -2086,7 +2150,7 @@ ipsec4_encapsulate(m, sav)
 		ipseclog((LOG_ERR, "IPv4 ipsec: size exceeds limit: "
 		    "leave ip_len as is (invalid packet)\n"));
 	}
-	ip->ip_id = htons(ip_id++);
+	ip->ip_id = ip_newid();
 	bcopy(&((struct sockaddr_in *)&sav->sah->saidx.src)->sin_addr,
 		&ip->ip_src, sizeof(ip->ip_src));
 	bcopy(&((struct sockaddr_in *)&sav->sah->saidx.dst)->sin_addr,
@@ -2153,10 +2217,8 @@ ipsec6_encapsulate(m, sav)
 	ovbcopy((caddr_t)ip6, (caddr_t)oip6, sizeof(struct ip6_hdr));
 
 	/* Fake link-local scope-class addresses */
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_src))
-		oip6->ip6_src.s6_addr16[1] = 0;
-	if (IN6_IS_SCOPE_LINKLOCAL(&oip6->ip6_dst))
-		oip6->ip6_dst.s6_addr16[1] = 0;
+	in6_clearscope(&oip6->ip6_src);
+	in6_clearscope(&oip6->ip6_dst);
 
 	/* construct new IPv6 header. see RFC 2401 5.1.2.2 */
 	/* ECN consideration. */
@@ -2167,10 +2229,10 @@ ipsec6_encapsulate(m, sav)
 		/* ip6->ip6_plen will be updated in ip6_output() */
 	}
 	ip6->ip6_nxt = IPPROTO_IPV6;
-	bcopy(&((struct sockaddr_in6 *)&sav->sah->saidx.src)->sin6_addr,
-		&ip6->ip6_src, sizeof(ip6->ip6_src));
-	bcopy(&((struct sockaddr_in6 *)&sav->sah->saidx.dst)->sin6_addr,
-		&ip6->ip6_dst, sizeof(ip6->ip6_dst));
+	in6_embedscope(&ip6->ip6_src,
+	    (struct sockaddr_in6 *)&sav->sah->saidx.src, NULL, NULL);
+	in6_embedscope(&ip6->ip6_dst, 
+	    (struct sockaddr_in6 *)&sav->sah->saidx.dst, NULL, NULL);
 	ip6->ip6_hlim = IPV6_DEFHLIM;
 
 	/* XXX Should ip6_src be updated later ? */
@@ -2188,6 +2250,8 @@ ipsec6_encapsulate(m, sav)
  * 0 (zero) is returned if packet disallowed, 1 if packet permitted.
  *
  * based on RFC 2401.
+ *
+ * XXX need to update for 64bit sequence number - 2401bis
  */
 int
 ipsec_chkreplay(seq, sav)
@@ -2247,6 +2311,7 @@ ipsec_chkreplay(seq, sav)
  * check replay counter whether to update or not.
  * OUT:	0:	OK
  *	1:	NG
+ * XXX need to update for 64bit sequence number - 2401bis
  */
 int
 ipsec_updatereplay(seq, sav)
@@ -2254,7 +2319,7 @@ ipsec_updatereplay(seq, sav)
 	struct secasvar *sav;
 {
 	struct secreplay *replay;
-	u_int32_t diff;
+	u_int64_t diff;
 	int fr;
 	u_int32_t wsizeb;	/* constant: bits of window size */
 	int frlast;		/* constant: last frame */
@@ -2323,7 +2388,7 @@ ipsec_updatereplay(seq, sav)
 	}
 
 ok:
-	if (replay->count == ~0) {
+	if (replay->count == 0xffffffff) {
 
 		/* set overflow flag */
 		replay->overflow++;
@@ -2510,6 +2575,7 @@ ipsec4_checksa(isr, state)
 	saidx.reqid = isr->saidx.reqid;
 	sin = (struct sockaddr_in *)&saidx.src;
 	if (sin->sin_len == 0) {
+		bzero(sin, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
@@ -2517,6 +2583,7 @@ ipsec4_checksa(isr, state)
 	}
 	sin = (struct sockaddr_in *)&saidx.dst;
 	if (sin->sin_len == 0) {
+		bzero(sin, sizeof(*sin));
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_port = IPSEC_PORT_ANY;
@@ -2757,29 +2824,19 @@ ipsec6_checksa(isr, state, tunnel)
 	saidx.reqid = isr->saidx.reqid;
 	sin6 = (struct sockaddr_in6 *)&saidx.src;
 	if (sin6->sin6_len == 0 || tunnel) {
+		bzero(sin6, sizeof(*sin6));
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
-		bcopy(&ip6->ip6_src, &sin6->sin6_addr,
-			sizeof(ip6->ip6_src));
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
-			/* fix scope id for comparing SPD */
-			sin6->sin6_addr.s6_addr16[1] = 0;
-			sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
-		}
+		in6_recoverscope(sin6, &ip6->ip6_src, NULL);
 	}
 	sin6 = (struct sockaddr_in6 *)&saidx.dst;
 	if (sin6->sin6_len == 0 || tunnel) {
+		bzero(sin6, sizeof(*sin6));
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_port = IPSEC_PORT_ANY;
-		bcopy(&ip6->ip6_dst, &sin6->sin6_addr,
-			sizeof(ip6->ip6_dst));
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
-			/* fix scope id for comparing SPD */
-			sin6->sin6_addr.s6_addr16[1] = 0;
-			sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
-		}
+		in6_recoverscope(sin6, &ip6->ip6_dst, NULL);
 	}
 
 	return key_checkrequest(isr, &saidx);
@@ -3140,11 +3197,7 @@ ipsec4_splithdr(m)
 	if (m->m_len < sizeof(struct ip))
 		panic("ipsec4_splithdr: first mbuf too short");
 	ip = mtod(m, struct ip *);
-#ifdef _IP_VHL
-	hlen = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 	if (m->m_len > hlen) {
 		MGETHDR(mh, M_DONTWAIT, MT_HEADER);
 		if (!mh) {
@@ -3153,6 +3206,7 @@ ipsec4_splithdr(m)
 		}
 		M_COPY_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
@@ -3190,6 +3244,7 @@ ipsec6_splithdr(m)
 		}
 		M_COPY_PKTHDR(mh, m);
 		MH_ALIGN(mh, hlen);
+		m_tag_delete_chain(m, NULL);
 		m->m_flags &= ~M_PKTHDR;
 		m->m_len -= hlen;
 		m->m_data += hlen;
@@ -3222,11 +3277,7 @@ ipsec4_tunnel_validate(ip, nxt0, sav)
 	/* do not decapsulate if the SA is for transport mode only */
 	if (sav->sah->saidx.mode == IPSEC_MODE_TRANSPORT)
 		return 0;
-#ifdef _IP_VHL
-	hlen = _IP_VHL_HL(ip->ip_vhl) << 2;
-#else
 	hlen = ip->ip_hl << 2;
-#endif
 	if (hlen != sizeof(struct ip))
 		return 0;
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
@@ -3257,6 +3308,7 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 {
 	u_int8_t nxt = nxt0 & 0xff;
 	struct sockaddr_in6 *sin6;
+	struct in6_addr in6;
 
 	if (nxt != IPPROTO_IPV6)
 		return 0;
@@ -3266,7 +3318,8 @@ ipsec6_tunnel_validate(ip6, nxt0, sav)
 	switch (((struct sockaddr *)&sav->sah->saidx.dst)->sa_family) {
 	case AF_INET6:
 		sin6 = ((struct sockaddr_in6 *)&sav->sah->saidx.dst);
-		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &sin6->sin6_addr))
+		in6_embedscope(&in6, sin6, NULL, NULL);
+		if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &in6))
 			return 0;
 		break;
 	case AF_INET:
@@ -3319,7 +3372,6 @@ ipsec_copypkt(m)
 					}
 #endif
 					M_COPY_PKTHDR(mnew, n);
-					mnew->m_flags = n->m_flags & M_COPYFLAGS;
 				}
 				else {
 					MGET(mnew, M_DONTWAIT, MT_DATA);
@@ -3447,44 +3499,6 @@ ipsec_optaux(m, mtag)
 }
 
 int
-ipsec_setsocket(m, so)
-	struct mbuf *m;
-	struct socket *so;
-{
-	struct m_tag *mtag;
-	struct ipsecaux *aux;
-
-	/* if so == NULL, don't insist on getting the aux mbuf */
-	if (so) {
-		mtag = ipsec_addaux(m);
-		if (mtag == NULL)
-			return ENOBUFS;
-	} else
-		mtag = ipsec_findaux(m);
-	if (mtag != NULL) {
-		aux = (struct ipsecaux *)(mtag + 1);
-		aux->so = so;
-	}
-	ipsec_optaux(m, mtag);
-	return 0;
-}
-
-struct socket *
-ipsec_getsocket(m)
-	struct mbuf *m;
-{
-	struct m_tag *mtag;
-	struct ipsecaux *aux;
-
-	mtag = ipsec_findaux(m);
-	if (mtag != NULL) {
-		aux = (struct ipsecaux *)(mtag + 1);
-		return aux->so;
-	} else
-		return NULL;
-}
-
-int
 ipsec_addhist(m, proto, spi)
 	struct mbuf *m;
 	int proto;
@@ -3546,93 +3560,185 @@ u_char	ipsecctlermap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-int
-ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+/*
+ * sysctl helper routine for some net.inet.ipsec and net.inet6.ipnet6
+ * nodes.  ensures that the given value is correct and clears the
+ * ipsec cache accordingly.
+ */
+static int
+sysctl_ipsec(SYSCTLFN_ARGS)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
+	int error, t;
+	struct sysctlnode node;
 
-	/* common sanity checks */
-	switch (name[0]) {
+	node = *rnode;
+	if (rnode->sysctl_num == IPSECCTL_DEF_POLICY)
+		t = (*((struct secpolicy**)rnode->sysctl_data))->policy;
+	else
+		t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	switch (rnode->sysctl_num) {
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 	case IPSECCTL_DEF_ESP_NETLEV:
 	case IPSECCTL_DEF_AH_TRANSLEV:
 	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_LEVEL_USE:
-			case IPSEC_LEVEL_REQUIRE:
-				break;
-			default:
-				return EINVAL;
-			}
-		}
+		if (t != IPSEC_LEVEL_USE && 
+		    t != IPSEC_LEVEL_REQUIRE)
+			return (EINVAL);
+		ipsec_invalpcbcacheall();
 		break;
 	case IPSECCTL_DEF_POLICY:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_POLICY_DISCARD:
-			case IPSEC_POLICY_NONE:
-				break;
-			default:
-				return EINVAL;
-			}
-			ipsec_invalpcbcacheall();
-		}
+		if (t != IPSEC_POLICY_DISCARD &&
+		    t != IPSEC_POLICY_NONE)
+			return (EINVAL);
+		ipsec_invalpcbcacheall();
 		break;
-	}
-
-	switch (name[0]) {
-	case IPSECCTL_STATS:
-		return sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &ipsecstat, sizeof(ipsecstat));
-	case IPSECCTL_DEF_POLICY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_def_policy->policy);
-	case IPSECCTL_DEF_ESP_TRANSLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_esp_trans_deflev);
-	case IPSECCTL_DEF_ESP_NETLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_esp_net_deflev);
-	case IPSECCTL_DEF_AH_TRANSLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ah_trans_deflev);
-	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ah_net_deflev);
-	case IPSECCTL_AH_CLEARTOS:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ah_cleartos);
-	case IPSECCTL_AH_OFFSETMASK:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ah_offsetmask);
-	case IPSECCTL_DFBIT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip4_ipsec_dfbit);
-	case IPSECCTL_ECN:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip4_ipsec_ecn);
-	case IPSECCTL_DEBUG:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ipsec_debug);
 	default:
-		return EOPNOTSUPP;
+		return (EINVAL);
 	}
-	/* NOTREACHED */
+
+	if (rnode->sysctl_num == IPSECCTL_DEF_POLICY)
+		(*((struct secpolicy**)rnode->sysctl_data))->policy = t;
+	else
+		*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ipsec",
+		       SYSCTL_DESCR("IPv4 related IPSec settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("IPSec statistics and counters"),
+		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_STATS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "def_policy",
+		       SYSCTL_DESCR("Default action for non-IPSec packets"),
+		       sysctl_ipsec, 0, &ip4_def_policy, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_POLICY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode traffic"),
+		       sysctl_ipsec, 0, &ip4_esp_trans_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled traffic"),
+		       sysctl_ipsec, 0, &ip4_esp_net_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode headers"),
+		       sysctl_ipsec, 0, &ip4_ah_trans_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled headers"),
+		       sysctl_ipsec, 0, &ip4_ah_net_deflev, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
+#if 0 /* obsolete, do not reuse */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "inbound_call_ike", NULL,
+		       NULL, 0, &ip4_inbound_call_ike, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_INBOUND_CALL_IKE, CTL_EOL);
+#endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_cleartos",
+		       SYSCTL_DESCR("Clear IP TOS field before calculating AH"),
+		       NULL, 0, &ip4_ah_cleartos, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_AH_CLEARTOS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_offsetmask",
+		       SYSCTL_DESCR("Mask for IP fragment offset field when "
+				    "calculating AH"),
+		       NULL, 0, &ip4_ah_offsetmask, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_AH_OFFSETMASK, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "dfbit",
+		       SYSCTL_DESCR("IP header DF bit setting for tunneled "
+				    "traffic"),
+		       NULL, 0, &ip4_ipsec_dfbit, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DFBIT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ecn",
+		       SYSCTL_DESCR("Behavior of ECN for tunneled traffic"),
+		       NULL, 0, &ip4_ipsec_ecn, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_ECN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "debug",
+		       SYSCTL_DESCR("Enable IPSec debugging output"),
+		       NULL, 0, &ipsec_debug, 0,
+		       CTL_NET, PF_INET, IPPROTO_AH,
+		       IPSECCTL_DEBUG, CTL_EOL);
+
+	/*
+	 * "aliases" for the ipsec subtree
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "esp", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_ESP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ipcomp", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IPCOMP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ah", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
 }
 
 #ifdef INET6
@@ -3648,83 +3754,105 @@ u_char	ipsec6ctlermap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-int
-ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
+SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
+	     "sysctl net.inet6.ipsec6 subtree setup")
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
 
-	/* common sanity checks */
-	switch (name[0]) {
-	case IPSECCTL_DEF_ESP_TRANSLEV:
-	case IPSECCTL_DEF_ESP_NETLEV:
-	case IPSECCTL_DEF_AH_TRANSLEV:
-	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_LEVEL_USE:
-			case IPSEC_LEVEL_REQUIRE:
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		break;
-	case IPSECCTL_DEF_POLICY:
-		if (newp != NULL && newlen == sizeof(int)) {
-			switch (*(int *)newp) {
-			case IPSEC_POLICY_DISCARD:
-			case IPSEC_POLICY_NONE:
-				break;
-			default:
-				return EINVAL;
-			}
-			ipsec_invalpcbcacheall();
-		}
-		break;
-	}
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ipsec6",
+		       SYSCTL_DESCR("IPv6 related IPSec settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH, CTL_EOL);
 
-	switch (name[0]) {
-	case IPSECCTL_STATS:
-		return sysctl_struct(oldp, oldlenp, newp, newlen,
-		    &ipsec6stat, sizeof(ipsec6stat));
-	case IPSECCTL_DEF_POLICY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_def_policy->policy);
-	case IPSECCTL_DEF_ESP_TRANSLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_esp_trans_deflev);
-	case IPSECCTL_DEF_ESP_NETLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_esp_net_deflev);
-	case IPSECCTL_DEF_AH_TRANSLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_ah_trans_deflev);
-	case IPSECCTL_DEF_AH_NETLEV:
-		if (newp != NULL)
-			ipsec_invalpcbcacheall();
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_ah_net_deflev);
-	case IPSECCTL_ECN:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_ipsec_ecn);
-	case IPSECCTL_DEBUG:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ipsec_debug);
-	default:
-		return EOPNOTSUPP;
-	}
-	/* NOTREACHED */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("IPSec statistics and counters"),
+		       NULL, 0, &ipsec6stat, sizeof(ipsec6stat),
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_STATS, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "def_policy",
+		       SYSCTL_DESCR("Default action for non-IPSec packets"),
+		       sysctl_ipsec, 0, &ip6_def_policy, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_POLICY, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode traffic"),
+		       sysctl_ipsec, 0, &ip6_esp_trans_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "esp_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled traffic"),
+		       sysctl_ipsec, 0, &ip6_esp_net_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_ESP_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_trans_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "transport mode headers"),
+		       sysctl_ipsec, 0, &ip6_ah_trans_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_TRANSLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ah_net_deflev",
+		       SYSCTL_DESCR("Default required security level for "
+				    "tunneled headers"),
+		       sysctl_ipsec, 0, &ip6_ah_net_deflev, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEF_AH_NETLEV, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ecn",
+		       SYSCTL_DESCR("Behavior of ECN for tunneled traffic"),
+		       NULL, 0, &ip6_ipsec_ecn, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_ECN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "debug",
+		       SYSCTL_DESCR("Enable IPSec debugging output"),
+		       NULL, 0, &ipsec_debug, 0,
+		       CTL_NET, PF_INET6, IPPROTO_AH,
+		       IPSECCTL_DEBUG, CTL_EOL);
+
+	/*
+	 * "aliases" for the ipsec6 subtree
+	 */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "esp6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ESP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ipcomp6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPCOMP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_ALIAS,
+		       CTLTYPE_NODE, "ah6", NULL,
+		       NULL, IPPROTO_AH, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_CREATE, CTL_EOL);
 }
 #endif /* INET6 */

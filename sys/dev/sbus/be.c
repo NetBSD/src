@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.39 2003/05/03 18:11:38 wiz Exp $	*/
+/*	$NetBSD: be.c,v 1.39.2.1 2004/08/03 10:51:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.39 2003/05/03 18:11:38 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.39.2.1 2004/08/03 10:51:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -168,6 +168,9 @@ struct be_softc {
 
 	/* MAC address */
 	u_int8_t sc_enaddr[6];
+#ifdef BEDEBUG
+	int	sc_debug;
+#endif
 };
 
 int	bematch __P((struct device *, struct cfdata *, void *));
@@ -248,7 +251,6 @@ beattach(parent, self, aux)
 	int instance;
 	int rseg, error;
 	u_int32_t v;
-	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 3) {
 		printf("%s: only %d register sets\n",
@@ -290,16 +292,16 @@ beattach(parent, self, aux)
 	sc->sc_qec = qec;
 	sc->sc_qr = qec->sc_regs;
 
-	sc->sc_rev = PROM_getpropint(node, "board-version", -1);
+	sc->sc_rev = prom_getpropint(node, "board-version", -1);
 	printf(" rev %x", sc->sc_rev);
 
 	bestop(sc);
 
-	sc->sc_channel = PROM_getpropint(node, "channel#", -1);
+	sc->sc_channel = prom_getpropint(node, "channel#", -1);
 	if (sc->sc_channel == -1)
 		sc->sc_channel = 0;
 
-	sc->sc_burst = PROM_getpropint(node, "burst-sizes", -1);
+	sc->sc_burst = prom_getpropint(node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
 		sc->sc_burst = qec->sc_burst;
 
@@ -311,7 +313,7 @@ beattach(parent, self, aux)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 					 beintr, sc);
 
-	myetheraddr(sc->sc_enaddr);
+	prom_getether(node, sc->sc_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/*
@@ -479,6 +481,9 @@ beattach(parent, self, aux)
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	IFQ_SET_READY(&ifp->if_snd);
 
+	/* claim 802.1q capability */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
@@ -583,11 +588,12 @@ be_read(sc, idx, len)
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
-	    len > ETHERMTU + sizeof(struct ether_header)) {
-
-		printf("%s: invalid packet size %d; dropping\n",
-			ifp->if_xname, len);
-
+	    len > ETHER_MAX_LEN + ETHERCAP_VLAN_MTU) {
+#ifdef BEDEBUG
+		if (sc->sc_debug)
+			printf("%s: invalid packet size %d; dropping\n",
+				ifp->if_xname, len);
+#endif
 		ifp->if_ierrors++;
 		return;
 	}
@@ -1162,6 +1168,13 @@ beinit(sc)
 	bus_space_write_4(t, cr, BE_CRI_QMASK, 0);
 	bus_space_write_4(t, cr, BE_CRI_BMASK, 0);
 	bus_space_write_4(t, cr, BE_CRI_CCNT, 0);
+
+	/* Set max packet length */
+	v = ETHER_MAX_LEN;
+	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU)
+		v += ETHER_VLAN_ENCAP_LEN;
+	bus_space_write_4(t, br, BE_BRI_RXMAX, v);
+	bus_space_write_4(t, br, BE_BRI_TXMAX, v);
 
 	/* Enable transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG,

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.169 2003/06/29 22:32:26 fvdl Exp $	*/
+/*	$NetBSD: param.h,v 1.169.2.1 2004/08/03 10:56:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -17,11 +17,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -64,10 +60,11 @@
  *	     NetBSD-1.2.1 = 102000100
  *
  *
- * Don't forget to change conf/osrelease.sh too.
+ * When new releases are made, src/gnu/usr.bin/groff/tmac/mdoc.local
+ * needs to be updated and the changes sent back to the groff maintainers.
  */
 
-#define	__NetBSD_Version__	106210000	/* NetBSD 1.6U */
+#define	__NetBSD_Version__	200070000	/* NetBSD 2.0G */
 
 /*
  * Historical NetBSD #define
@@ -159,7 +156,7 @@
  * the maximum (in the "maxsaddr" sense) stack address of the 
  * allocated memory.
  */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(__EXPOSE_STACK)
 #ifdef __MACHINE_STACK_GROWS_UP
 #define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) + (_size))
 #define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) - (_size))
@@ -175,7 +172,7 @@
 #define	STACK_ALLOC(sp, _size)		(((caddr_t)(sp)) - (_size))
 #define	STACK_MAX(p, _size)		((caddr_t)(p))
 #endif
-#endif /* _KERNEL */
+#endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
 
 /*
  * Priorities.  Note that with 32 run queues, differences less than 4 are
