@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.72 2002/12/28 15:12:26 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.73 2002/12/28 17:22:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.72 2002/12/28 15:12:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.73 2002/12/28 17:22:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,6 +333,7 @@ lfs_fsync(void *v)
 int
 lfs_inactive(void *v)
 {
+#ifdef DIAGNOSTIC
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
 		struct proc *a_p;
@@ -342,6 +343,7 @@ lfs_inactive(void *v)
 
 	KASSERT(!(vp->v_flag & VDIROP));
 	KASSERT(!(ip->i_flag & IN_ADIROP));
+#endif
 
 	return ufs_inactive(v);
 }
