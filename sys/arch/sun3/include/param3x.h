@@ -1,4 +1,4 @@
-/*	$NetBSD: param3x.h,v 1.10 1997/10/02 01:12:17 gwr Exp $	*/
+/*	$NetBSD: param3x.h,v 1.11 1997/10/03 02:16:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@
 
 #define	UPAGES		2		/* pages of u-area */
 
-#define MSGBUFOFF	0x100
+#define MSGBUFOFF	0x200
 #define MSGBUFSIZE	(NBPG - MSGBUFOFF)
 
 #include <m68k/param.h>
