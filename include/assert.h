@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.11 2000/12/20 18:35:46 christos Exp $	*/
+/*	$NetBSD: assert.h,v 1.12 2001/05/06 15:31:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,13 +45,15 @@
  * multiple times, with and without NDEBUG defined.
  */
 
+#include <sys/cdefs.h>
+
 #undef assert
 #undef _assert
 
 #ifdef NDEBUG
 # ifndef lint
-#  define assert(e)	((void)0)
-#  define _assert(e)	((void)0)
+#  define assert(e)	(__static_cast(void,0))
+#  define _assert(e)	(__static_cast(void,0))
 # else /* !lint */
 #  define assert(e)
 #  define _assert(e)
@@ -60,43 +62,41 @@
 # define _assert(e)	assert(e)
 # if __STDC__
 #  define assert(e)							\
-	((e) ? (void)0 : __assert13(__FILE__, __LINE__,			\
-	                            __assert_function__, #e))
+	((e) ? __static_cast(void,0) : __assert13(__FILE__, __LINE__,	\
+	                                          __assert_function__, #e))
 # else	/* PCC */
 #  define assert(e)							\
-	((e) ? (void)0 : __assert13(__FILE__, __LINE__,			\
-	                            __assert_function__, "e"))
+	((e) ? __static_cast(void,0) : __assert13(__FILE__, __LINE__,	\
+	                                          __assert_function__, "e"))
 # endif /* !__STDC__ */
 #endif /* NDEBUG */
 
 #undef _DIAGASSERT
 #if !defined(_DIAGNOSTIC)
 # if !defined(lint)
-#  define _DIAGASSERT(e) ((void)0)
+#  define _DIAGASSERT(e) (__static_cast(void,0))
 # else /* !lint */
 #  define _DIAGASSERT(e)
 # endif /* lint */
 #else /* _DIAGNOSTIC */
 # if __STDC__
 #  define _DIAGASSERT(e)						\
-	((e) ? (void)0 : __diagassert13(__FILE__, __LINE__,		\
-	                                __assert_function__, #e))
+	((e) ? __static_cast(void,0) : __diagassert13(__FILE__, __LINE__, \
+	                                              __assert_function__, #e))
 # else	/* !__STDC__ */
 #  define _DIAGASSERT(e)	 					\
-	((e) ? (void)0 : __diagassert13(__FILE__, __LINE__,		\
-	                                __assert_function__, "e"))
+	((e) ? __static_cast(void,0) : __diagassert13(__FILE__, __LINE__, \
+	                                              __assert_function__, "e"))
 # endif
 #endif /* _DIAGNOSTIC */
 
-
-#include <sys/cdefs.h>
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #define	__assert_function__	__func__
 #elif __GNUC_PREREQ__(2, 6)
 #define	__assert_function__	__PRETTY_FUNCTION__
 #else
-#define	__assert_function__	((const void *)0)
+#define	__assert_function__	(__static_cast(const void *,0))
 #endif
 
 #ifndef __ASSERT_DECLARED
