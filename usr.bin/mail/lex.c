@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.12 1998/12/19 16:33:08 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.13 1999/02/09 04:51:30 dean Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.12 1998/12/19 16:33:08 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.13 1999/02/09 04:51:30 dean Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ setfile(name)
 	FILE *ibuf;
 	int i;
 	struct stat stb;
-	char isedit = *name != '%';
+	char isedit = *name != '%' || getuserid(myname) != getuid();
 	char *who = name[1] ? name + 1 : myname;
 	static int shudclob;
 	extern char *tempMesg;
