@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14 2002/04/03 00:09:52 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.15 2002/05/31 15:04:14 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -72,11 +72,47 @@ char cpu_model[80];
 void
 cpu_probe_cache(void)
 {
-	/* XXXX Initialze cache_info */
-	curcpu()->ci_ci.dcache_size = PAGE_SIZE;
+	u_int assoc, pvr, vers;
+
+	__asm __volatile ("mfpvr %0" : "=r"(pvr));
+	vers = pvr >> 16;
+
+	switch (vers) {
+#define	K	*1024
+	case MPC601:
+	case MPC750:
+	case MPC7450:
+	case MPC7455:
+		curcpu()->ci_ci.dcache_size = 32 K;
+		curcpu()->ci_ci.icache_size = 32 K;
+		assoc = 8;
+		break;
+	case MPC603e:
+	case MPC604:
+		curcpu()->ci_ci.dcache_size = 16 K;
+		curcpu()->ci_ci.icache_size = 16 K;
+		assoc = 4;
+		break;
+	case MPC604ev:
+		curcpu()->ci_ci.dcache_size = 32 K;
+		curcpu()->ci_ci.icache_size = 32 K;
+		assoc = 4;
+		break;
+	default:
+		curcpu()->ci_ci.dcache_size = PAGE_SIZE;
+		curcpu()->ci_ci.icache_size = PAGE_SIZE;
+		assoc = 1;
+#undef	K
+	}
+
+	/* Presently common across all implementations. */
 	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
-	curcpu()->ci_ci.icache_size = PAGE_SIZE;
 	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
+
+	/*
+	 * Possibly recolor.
+	 */
+        uvm_page_recolor(atop(curcpu()->ci_ci.dcache_line_size / assoc));
 }
 
 struct cpu_info *
