@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.42 2002/03/17 19:40:30 atatat Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.42.4.1 2002/05/16 16:21:37 gehenna Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.42 2002/03/17 19:40:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.42.4.1 2002/05/16 16:21:37 gehenna Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -742,12 +742,7 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 	gi->gd_regsize  = 64*1024;
 
 	gi->gd_fbaddr   = (caddr_t)ztwopa(fb);
-#ifdef BANKEDDEVPAGER
-	gi->gd_fbsize	= 4*1024*1024;  /* XXX */
-	gi->gd_bank_size = 64*1024;
-#else
 	gi->gd_fbsize   = 64*1024;	/* larger, but that's whats mappable */
-#endif
 
 	gi->gd_colors   = 1 << md->DEP;
 	gi->gd_planes   = md->DEP;
@@ -1009,18 +1004,6 @@ rt_mode(struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3)
 		*(int *)arg = retina_mon_max;
 		return (0);
 
-#ifdef BANKEDDEVPAGER
-	    case GM_GRFGETBANK:
-		*(int *)arg = rt_getbank (gp, a2, a3);
-		return (0);
-
-	    case GM_GRFGETCURBANK:
-		*(int *)arg = rt_getcurbank (gp);
-		return (0);
-
-	    case GM_GRFSETBANK:
-		return (rt_setbank (gp, arg));
-#endif
 	    case GM_GRFIOCTL:
 		return (rt_ioctl (gp, a2, arg));
 
@@ -1065,57 +1048,6 @@ rt_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 
 	return (EPASSTHROUGH);
 }
-
-#ifdef BANKEDDEVPAGER
-
-/* Retina banks can overlap. Don't use this information (yet?), and
-   only switch 64k sized banks. */
-
-int
-rt_getbank(struct grf_softc *gp, u_long offs, int prot)
-{
-	/* XXX */
-	if (offs <  0 || offs >= 4*1024*1024)
-		return (-1);
-	else
-		return (offs >> 16);
-}
-
-
-int
-rt_getcurbank(struct grf_softc *gp)
-{
-	struct grfinfo *gi = &gp->g_display;
-	volatile unsigned char *ba;
-	int bank;
-
-	ba = gp->g_regkva;
-	bank = RSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO) |
-			(RSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI) << 8);
-
-	/* bank register is multiple of 64 byte, make this multiple of 64k */
-	bank >>= 10;
-	return (bank);
-}
-
-
-int
-rt_setbank(struct grf_softc *gp, int bank)
-{
-	volatile unsigned char *ba;
-
-	ba = gp->g_regkva;
-	/* bank register is multiple of 64 byte, make this multiple of 64k */
-	bank <<= 10;
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_LO, (unsigned char) bank);
-	bank >>= 8;
-	WSeq (ba, SEQ_ID_PRIM_HOST_OFF_HI, (unsigned char) bank);
-
-	return (0);
-}
-
-#endif	/* BANKEDDEVPAGER */
-
 
 int
 rt_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
