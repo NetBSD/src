@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec.c,v 1.6 1994/07/12 00:34:31 gwr Exp $	*/
+/*	$NetBSD: sunos_exec.c,v 1.7 1994/10/25 23:03:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -55,31 +55,31 @@
 #include <compat/sunos/exec.h>
 
 #ifdef sparc
-#define	sun_exec_aout_prep_zmagic exec_aout_prep_zmagic
-#define	sun_exec_aout_prep_nmagic exec_aout_prep_nmagic
-#define	sun_exec_aout_prep_omagic exec_aout_prep_omagic
+#define	sunos_exec_aout_prep_zmagic exec_aout_prep_zmagic
+#define	sunos_exec_aout_prep_nmagic exec_aout_prep_nmagic
+#define	sunos_exec_aout_prep_omagic exec_aout_prep_omagic
 #endif
 
 int
-sun_exec_aout_makecmds(p, epp)
+sunos_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct sun_exec *sunmag = epp->ep_hdr;
+	struct sunos_exec *sunmag = epp->ep_hdr;
 	int error = ENOEXEC;
 
-	if(sunmag->a_machtype != SUN_M_NATIVE)
+	if(sunmag->a_machtype != SUNOS_M_NATIVE)
 		return (ENOEXEC);
 
 	switch (sunmag->a_magic) {
 	case ZMAGIC:
-		error = sun_exec_aout_prep_zmagic(p, epp);
+		error = sunos_exec_aout_prep_zmagic(p, epp);
 		break;
 	case NMAGIC:
-		error = sun_exec_aout_prep_nmagic(p, epp);
+		error = sunos_exec_aout_prep_nmagic(p, epp);
 		break;
 	case OMAGIC:
-		error = sun_exec_aout_prep_omagic(p, epp);
+		error = sunos_exec_aout_prep_omagic(p, epp);
 		break;
 	}
 	if (error==0)
@@ -94,17 +94,17 @@ sun_exec_aout_makecmds(p, epp)
 
 /* suns keep data seg aligned to SEGSIZ because of sun custom mmu */
 #define SEGSIZ		0x20000
-#define SUN_N_TXTADDR(x,m)	__LDPGSZ
-#define SUN_N_DATADDR(x,m)	(((m)==OMAGIC) ? \
-	(SUN_N_TXTADDR(x,m) + (x).a_text) : \
-	(SEGSIZ + ((SUN_N_TXTADDR(x,m) + (x).a_text - 1) & ~(SEGSIZ-1))))
-#define SUN_N_BSSADDR(x,m)	(SUN_N_DATADDR(x,m)+(x).a_data)
+#define SUNOS_N_TXTADDR(x,m)	__LDPGSZ
+#define SUNOS_N_DATADDR(x,m)	(((m)==OMAGIC) ? \
+	(SUNOS_N_TXTADDR(x,m) + (x).a_text) : \
+	(SEGSIZ + ((SUNOS_N_TXTADDR(x,m) + (x).a_text - 1) & ~(SEGSIZ-1))))
+#define SUNOS_N_BSSADDR(x,m)	(SUNOS_N_DATADDR(x,m)+(x).a_data)
 
-#define SUN_N_TXTOFF(x,m)	((m)==ZMAGIC ? 0 : sizeof (struct exec))
-#define SUN_N_DATOFF(x,m)	(SUN_N_TXTOFF(x,m) + (x).a_text)
+#define SUNOS_N_TXTOFF(x,m)	((m)==ZMAGIC ? 0 : sizeof (struct exec))
+#define SUNOS_N_DATOFF(x,m)	(SUNOS_N_TXTOFF(x,m) + (x).a_text)
 
 /*
- * sun_exec_aout_prep_zmagic(): Prepare a SunOS ZMAGIC binary's exec package
+ * sunos_exec_aout_prep_zmagic(): Prepare a SunOS ZMAGIC binary's exec package
  *
  * First, set of the various offsets/lengths in the exec package.
  *
@@ -113,16 +113,16 @@ sun_exec_aout_makecmds(p, epp)
  * text, data, bss, and stack segments.
  */
 int
-sun_exec_aout_prep_zmagic(p, epp)
+sunos_exec_aout_prep_zmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
 	struct exec_vmcmd *ccmdp;
 
-	epp->ep_taddr = SUN_N_TXTADDR(*execp, ZMAGIC);
+	epp->ep_taddr = SUNOS_N_TXTADDR(*execp, ZMAGIC);
 	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = SUN_N_DATADDR(*execp, ZMAGIC);
+	epp->ep_daddr = SUNOS_N_DATADDR(*execp, ZMAGIC);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 
@@ -143,12 +143,12 @@ sun_exec_aout_prep_zmagic(p, epp)
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, SUN_N_TXTOFF(*execp, ZMAGIC), 
+	    epp->ep_taddr, epp->ep_vp, SUNOS_N_TXTOFF(*execp, ZMAGIC), 
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, SUN_N_DATOFF(*execp, ZMAGIC),
+	    epp->ep_daddr, epp->ep_vp, SUNOS_N_DATOFF(*execp, ZMAGIC),
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
@@ -160,10 +160,10 @@ sun_exec_aout_prep_zmagic(p, epp)
 }
 
 /*
- * sun_exec_aout_prep_nmagic(): Prepare a SunOS NMAGIC binary's exec package
+ * sunos_exec_aout_prep_nmagic(): Prepare a SunOS NMAGIC binary's exec package
  */
 int
-sun_exec_aout_prep_nmagic(p, epp)
+sunos_exec_aout_prep_nmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
@@ -171,20 +171,20 @@ sun_exec_aout_prep_nmagic(p, epp)
 	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
-	epp->ep_taddr = SUN_N_TXTADDR(*execp, NMAGIC);
+	epp->ep_taddr = SUNOS_N_TXTADDR(*execp, NMAGIC);
 	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = SUN_N_DATADDR(*execp, NMAGIC);
+	epp->ep_daddr = SUNOS_N_DATADDR(*execp, NMAGIC);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_text,
-	    epp->ep_taddr, epp->ep_vp, SUN_N_TXTOFF(*execp, NMAGIC),
+	    epp->ep_taddr, epp->ep_vp, SUNOS_N_TXTOFF(*execp, NMAGIC),
 	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, execp->a_data,
-	    epp->ep_daddr, epp->ep_vp, SUN_N_DATOFF(*execp, NMAGIC),
+	    epp->ep_daddr, epp->ep_vp, SUNOS_N_DATOFF(*execp, NMAGIC),
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
@@ -198,10 +198,10 @@ sun_exec_aout_prep_nmagic(p, epp)
 }
 
 /*
- * sun_exec_aout_prep_omagic(): Prepare a SunOS OMAGIC binary's exec package
+ * sunos_exec_aout_prep_omagic(): Prepare a SunOS OMAGIC binary's exec package
  */
 int
-sun_exec_aout_prep_omagic(p, epp)
+sunos_exec_aout_prep_omagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
@@ -209,16 +209,16 @@ sun_exec_aout_prep_omagic(p, epp)
 	struct exec_vmcmd *ccmdp;
 	long bsize, baddr;
 
-	epp->ep_taddr = SUN_N_TXTADDR(*execp, OMAGIC);
+	epp->ep_taddr = SUNOS_N_TXTADDR(*execp, OMAGIC);
 	epp->ep_tsize = execp->a_text;
-	epp->ep_daddr = SUN_N_DATADDR(*execp, OMAGIC);
+	epp->ep_daddr = SUNOS_N_DATADDR(*execp, OMAGIC);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 
 	/* set up command for text and data segments */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn,
 	    execp->a_text + execp->a_data, epp->ep_taddr, epp->ep_vp,
-	    SUN_N_TXTOFF(*execp, OMAGIC), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	    SUNOS_N_TXTOFF(*execp, OMAGIC), VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
 	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.3 1994/06/29 06:30:07 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.4 1994/10/25 23:03:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -30,19 +30,19 @@
 #ifndef	_SUNOS_EXEC_H_
 #define	_SUNOS_EXEC_H_
 
-struct sun_exec {
+struct sunos_exec {
 	u_char	a_dynamic:1;	/* has a __DYNAMIC */
 	u_char	a_toolversion:7;/* version of toolset used to create this file */
 	u_char	a_machtype;	/* machine type */
 	u_short	a_magic;	/* magic number */
 };
-#define SUN_M_68020	2	/* runs only on 68020 */
-#define	SUN_M_SPARC	3	/* runs only on SPARC */
+#define SUNOS_M_68020	2	/* runs only on 68020 */
+#define	SUNOS_M_SPARC	3	/* runs only on SPARC */
 
 #ifdef sparc
-#define SUN_M_NATIVE	SUN_M_SPARC
+#define SUNOS_M_NATIVE	SUNOS_M_SPARC
 #else
-#define SUN_M_NATIVE	SUN_M_68020
+#define SUNOS_M_NATIVE	SUNOS_M_68020
 #endif
 
 #endif /* !_SUNOS_EXEC_H_ */
