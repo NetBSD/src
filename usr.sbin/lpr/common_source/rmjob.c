@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.13 1997/10/05 15:12:04 mrg Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.14 1999/09/26 10:32:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rmjob.c,v 1.13 1997/10/05 15:12:04 mrg Exp $");
+__RCSID("$NetBSD: rmjob.c,v 1.14 1999/09/26 10:32:27 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,7 +192,7 @@ lockchk(s)
 			n = 1;
 			break;
 		}
-		sleep(i);
+		sleep((size_t)i);
 	}
 	current[n-1] = '\0';
 	(void)fclose(fp);
@@ -322,7 +322,8 @@ void
 rmremote()
 {
 	char *cp, *s;
-	int i, rem, len;
+	int i, rem;
+	size_t len;
 
 	if (!remote)
 		return;	/* not sending to a remote machine */
@@ -373,7 +374,7 @@ rmremote()
 		if (len > sizeof(line))
 			(void)free(s);
 		while ((i = read(rem, line, sizeof(line))) > 0)
-			(void)fwrite(line, 1, i, stdout);
+			(void)fwrite(line, 1, (size_t)i, stdout);
 		(void)close(rem);
 	}
 }
