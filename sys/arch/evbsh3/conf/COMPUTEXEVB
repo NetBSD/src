@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.4.4.1 2000/08/08 19:56:06 msaitoh Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.4.4.2 2000/09/29 07:47:30 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -22,12 +22,14 @@ options		IOM_RAM_BEGIN=0x8c000000
 options		IOM_RAM_SIZE=0x01000000	# 16MB
 options		LED_ADDR=0xb8000000
 
+options		COMPUTEXEVB	# don't forget.
+
 options		BSC_BCR1_VAL	=0x0008
 options		BSC_BCR2_VAL	=0x3fd0
 options		BSC_WCR1_VAL	=0x3ff3
 options		BSC_WCR2_VAL	=0xffdf
 options		BSC_MCR_VAL	=0x0004
-options		BSC_SDMR_VAL	=0xffffe088
+options		BSC_SDMR3_VAL	=0xffffe088
 options		BSC_RTCSR_VAL	=0xa508
 options		BSC_RTCNT_VAL	=0xa500
 options		BSC_RTCOR_VAL	=0xa582
