@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2004/03/26 14:11:01 drochner Exp $
+#	$NetBSD: genassym.cf,v 1.7 2004/07/18 20:27:11 chs Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -197,6 +197,7 @@ member	PCB_FPREGS	pcb_fpregs
 member	PCB_ONFAULT	pcb_onfault
 member	PCB_SPACE	pcb_space
 member	PCB_UVA		pcb_uva
+member	PCB_KSP		pcb_ksp
 
 struct	user
 member	U_PCB		u_pcb
