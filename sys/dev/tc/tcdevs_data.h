@@ -1,3 +1,5 @@
+/*	$NetBSD: tcdevs_data.h,v 1.9 1998/01/09 06:56:48 thorpej Exp $	*/
+
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
