@@ -1,7 +1,7 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.30 1993/10/20 23:07:56 cgd Exp $
+#	$Id: SUN_LAMP,v 1.31 1993/12/10 16:22:58 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -56,7 +56,7 @@ device		ed0 at isa? port 0x300 net irq 10 iomem 0xd0000 vector edintr
 
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device	sl
+pseudo-device	sl	4
 pseudo-device	log
 pseudo-device	pty	32
 
