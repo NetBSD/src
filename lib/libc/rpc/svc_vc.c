@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.5 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.6 2000/07/08 11:41:50 kleink Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.5 2000/07/06 03:10:35 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.6 2000/07/08 11:41:50 kleink Exp $");
 #endif
 #endif
 
@@ -75,10 +75,8 @@ __weak_alias(svc_vc_create,_svc_vc_create)
 #endif
 
 static SVCXPRT *makefd_xprt __P((int, u_int, u_int));
-#if 0
 static bool_t rendezvous_request __P((SVCXPRT *, struct rpc_msg *));
 static enum xprt_stat rendezvous_stat __P((SVCXPRT *));
-#endif
 static void svc_vc_destroy __P((SVCXPRT *));
 static int read_vc __P((caddr_t, caddr_t, int));
 static int write_vc __P((caddr_t, caddr_t, int));
@@ -87,9 +85,7 @@ static bool_t svc_vc_recv __P((SVCXPRT *, struct rpc_msg *));
 static bool_t svc_vc_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svc_vc_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
 static bool_t svc_vc_reply __P((SVCXPRT *, struct rpc_msg *));
-#if 0
 static void svc_vc_rendezvous_ops __P((SVCXPRT *));
-#endif
 static void svc_vc_ops __P((SVCXPRT *));
 static bool_t svc_vc_control __P((SVCXPRT *xprt, const u_int rq, void *in));
 
@@ -153,6 +149,7 @@ svc_vc_create(fd, sendsize, recvsize)
 	xprt->xp_p2 = NULL;
 	xprt->xp_p3 = NULL;
 	xprt->xp_verf = _null_auth;
+	svc_vc_rendezvous_ops(xprt);
 	xprt->xp_port = (u_short)-1;	/* It is the rendezvouser */
 	xprt->xp_fd = fd;
 
@@ -284,7 +281,6 @@ done:
 	return (xprt);
 }
 
-#if 0
 /*ARGSUSED*/
 static bool_t
 rendezvous_request(xprt, msg)
@@ -340,7 +336,6 @@ rendezvous_stat(xprt)
 
 	return (XPRT_IDLE);
 }
-#endif
 
 static void
 svc_vc_destroy(xprt)
@@ -625,7 +620,6 @@ svc_vc_ops(xprt)
 	mutex_unlock(&ops_lock);
 }
 
-#if 0
 static void
 svc_vc_rendezvous_ops(xprt)
 	SVCXPRT *xprt;
@@ -653,4 +647,3 @@ svc_vc_rendezvous_ops(xprt)
 	xprt->xp_ops2 = &ops2;
 	mutex_unlock(&ops_lock);
 }
-#endif
