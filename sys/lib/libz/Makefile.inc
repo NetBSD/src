@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1997/02/16 21:25:23 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1998/02/07 00:11:33 cgd Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -33,7 +33,11 @@ ZMAKE= \
 	cd ${ZDIR} && MAKEOBJDIR=${ZDST} ${MAKE} \
 	    CC=${CC:Q} CFLAGS=${CFLAGS:Q} \
 	    AS=${AS:Q} AFLAGS=${AFLAGS:Q} \
+	    LORDER=${LORDER:Q} \
+	    TSORT=${TSORT:Q} \
 	    LD=${LD:Q} STRIP=${STRIP:Q} \
+	    AR=${AR:Q} NM=${NM:Q} \
+	    RANLIB=${RANLIB:Q} SIZE=${SIZE:Q} \
 	    MACHINE=${MACHINE} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    ZCPPFLAGS=${CPPFLAGS:S@^-I.@-I../../.@g:Q} \
 	    ZMISCCPPFLAGS=${ZMISCCPPFLAGS:Q} \
