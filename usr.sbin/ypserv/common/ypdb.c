@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.5 1997/11/01 14:24:54 lukem Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.6 1999/07/25 09:33:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypdb.c,v 1.5 1997/11/01 14:24:54 lukem Exp $");
+__RCSID("$NetBSD: ypdb.c,v 1.6 1999/07/25 09:33:37 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -112,15 +112,21 @@ ypdb_fetch(db, key)
 	DBM *db;
 	datum key;
 {
-	datum retval;
+	datum retkey;
+	DBT nk, nd;
 	int status;
 
-	status = (db->get)(db, (DBT *)&key, (DBT *)&retval, 0);
+	nk.data = key.dptr;
+	nk.size = (size_t)key.dsize;
+	status = (db->get)(db, &nk, &nd, 0);
 	if (status) {
-		retval.dptr = NULL;
-		retval.dsize = 0;
+		retkey.dptr = NULL;
+		retkey.dsize = 0;
+	} else {
+		retkey.dptr = nd.data;
+		retkey.dsize = (int)nd.size;
 	}
-	return (retval);
+	return (retkey);
 }
 
 /*
@@ -134,11 +140,17 @@ ypdb_firstkey(db)
 	DBM *db;
 {
 	int status;
-	datum retdata, retkey;
+	datum retkey;
+	DBT nk, nd;
 
-	status = (db->seq)(db, (DBT *)&retkey, (DBT *)&retdata, R_FIRST);
-	if (status)
+	status = (db->seq)(db, &nk, &nd, R_FIRST);
+	if (status) {
 		retkey.dptr = NULL;
+		retkey.dsize = 0;
+	} else {
+		retkey.dptr = nk.data;
+		retkey.dsize = (int)nk.size;
+	}
 	return (retkey);
 }
 
@@ -153,11 +165,17 @@ ypdb_nextkey(db)
 	DBM *db;
 {
 	int status;
-	datum retdata, retkey;
+	datum retkey;
+	DBT nk, nd;
 
-	status = (db->seq)(db, (DBT *)&retkey, (DBT *)&retdata, R_NEXT);
-	if (status)
+	status = (db->seq)(db, &nk, &nd, R_NEXT);
+	if (status) {
 		retkey.dptr = NULL;
+		retkey.dsize = 0;
+	} else {
+		retkey.dptr = nk.data;
+		retkey.dsize = (int)nk.size;
+	}
 	return (retkey);
 }
 
@@ -173,10 +191,15 @@ ypdb_setkey(db, key)
         datum key;
 {
 	int status;
-	datum retdata;
-	status = (db->seq)(db, (DBT *)&key, (DBT *)&retdata, R_CURSOR);
-	if (status)
+	DBT nk, nd;
+
+	nk.data = key.dptr;
+	nk.size = (size_t)key.dsize;
+	status = (db->seq)(db, &nk, &nd, R_CURSOR);
+	if (status) {
 		key.dptr = NULL;
+		key.dsize = 0;
+	}
 	return (key);
 }
 
@@ -192,8 +215,11 @@ ypdb_delete(db, key)
 	datum key;
 {
 	int status;
+	DBT nk;
 
-	status = (db->del)(db, (DBT *)&key, 0);
+	nk.data = key.dptr;
+	nk.size = (size_t)key.dsize;
+	status = (db->del)(db, &nk, 0);
 	if (status)
 		return (-1);
 	else
@@ -213,8 +239,14 @@ ypdb_store(db, key, content, flags)
 	datum key, content;
 	int flags;
 {
+	DBT nk, nd;
+
 	if (key.dsize > YPMAXRECORD || content.dsize > YPMAXRECORD)
 		return -1;
-	return ((db->put)(db, (DBT *)&key, (DBT *)&content,
+	nk.data = key.dptr;
+	nk.size = (size_t)key.dsize;
+	nd.data = content.dptr;
+	nd.size = (size_t)content.dsize;
+	return ((db->put)(db, &nk, &nd,
 	    (flags == YPDB_INSERT) ? R_NOOVERWRITE : 0));
 }
