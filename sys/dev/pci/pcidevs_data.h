@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.44 1997/10/27 23:27:35 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.45 1997/11/16 22:33:21 christos Exp 
  */
 
 /*
@@ -1542,6 +1542,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Tekram Technology (2nd PCI Vendor ID)",
 	    "DC-690C",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TLAN,
+	    0,
+	    "Texas Instruments",
+	    "TLAN",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,

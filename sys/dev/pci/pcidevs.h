@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.44 1997/10/27 23:27:35 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.45 1997/11/16 22:33:21 christos Exp 
  */
 
 /*
@@ -898,6 +898,7 @@
 #define	PCI_PRODUCT_TEKRAM2_DC690C	0x690c		/* DC-690C */
 
 /* Texas Instruments products */
+#define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
 #define	PCI_PRODUCT_TI_PCI1130	0xac12		/* PCI1130 */
 #define	PCI_PRODUCT_TI_PCI1131	0xac15		/* PCI1131 */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 */
