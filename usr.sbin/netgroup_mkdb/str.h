@@ -1,3 +1,5 @@
+/*	$NetBSD: str.h,v 1.2 1996/10/04 05:15:30 christos Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -28,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: str.h,v 1.1 1994/12/04 17:11:05 christos Exp $
+ * $NetBSD: str.h,v 1.2 1996/10/04 05:15:30 christos Exp $
  */
 
 #include <sys/types.h>
