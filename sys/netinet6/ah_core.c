@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.33 2003/07/25 10:00:50 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.34 2003/07/25 10:16:28 itojun Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.33 2003/07/25 10:00:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.34 2003/07/25 10:16:28 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -179,7 +179,7 @@ ah_algorithm_lookup(idx)
 			ah_hmac_sha2_512_init, ah_hmac_sha2_512_loop,
 			ah_hmac_sha2_512_result, },
 		{ ah_sumsiz_1216, ah_common_mature, 160, 160,
-			"hmac-sha2-512",
+			"hmac-ripemd160",
 			ah_hmac_ripemd160_init, ah_hmac_ripemd160_loop,
 			ah_hmac_ripemd160_result, },
 		{ ah_sumsiz_1216, ah_common_mature, 128, 128,
