@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.14 1993/11/28 18:10:06 deraadt Exp $
+ * $Id: machdep.c,v 1.15 1994/01/27 19:00:13 pk Exp $
  */
 
 #include <sys/param.h>
@@ -878,22 +878,26 @@ struct proc *p;
 u_long addr;
 {
 	/* TDR: IMPLIMENT! */
+	return EINVAL;
 }
 
 int
 ptrace_getregs(p, addr)
 struct proc *p;
-u_long addr;
+u_long *addr;
 {
-	/* TDR: IMPLIMENT! */
+	return copyout(p->p_md.md_tf, addr, sizeof(struct trapframe));
 }
 
 int
 ptrace_setregs(p, addr)
 struct proc *p;
-u_long addr;
+u_long *addr;
 {
-	/* TDR: IMPLIMENT! */
+	int error;
+
+	if (error = copyin(addr, p->p_md.md_tf, sizeof(struct trapframe)))
+		return error;
 }
 
 int
@@ -901,4 +905,24 @@ ptrace_single_step(p)
 struct proc *p;
 {
 	/* TDR: IMPLIMENT! */
+	return EINVAL;
+}
+
+int
+ptrace_getfpregs(p, addr)
+struct proc *p;
+u_long *addr;
+{
+	return copyout(p->p_md.md_fpstate, addr, sizeof(struct fpstate));
+}
+
+int
+ptrace_setfpregs(p, addr)
+struct proc *p;
+u_long *addr;
+{
+	int error;
+
+	if (error = copyin(addr, p->p_md.md_fpstate, sizeof(struct fpstate)))
+		return error;
 }
