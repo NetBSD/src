@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.26 1998/07/08 16:28:25 mjacob Exp $ */
+/* $NetBSD: interrupt.c,v 1.27 1998/07/13 00:14:52 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.26 1998/07/08 16:28:25 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.27 1998/07/13 00:14:52 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,9 +137,11 @@ machine_check(mces, framep, vector, param)
 	struct trapframe *framep;
 	unsigned long vector, param;
 {
-	struct mchkinfo *mcp = &mchkinfo[alpha_pal_whami()];
 	const char *type;
+	struct mchkinfo *mcp;
 
+	if ((mcp = mchkinfo) != NULL)
+		mcp += alpha_pal_whami();
 	/* Make sure it's an error we know about. */
 	if ((mces & (ALPHA_MCES_MIP|ALPHA_MCES_SCE|ALPHA_MCES_PCE)) == 0) {
 		type = "fatal machine check or error (unknown type)";
@@ -149,7 +151,7 @@ machine_check(mces, framep, vector, param)
 	/* Machine checks. */
 	if (mces & ALPHA_MCES_MIP) {
 		/* If we weren't expecting it, then we punt. */
-		if (!mcp->mc_expected) {
+		if (mcp == NULL || !mcp->mc_expected) {
 			type = "unexpected machine check";
 			goto fatal;
 		}
@@ -158,14 +160,12 @@ machine_check(mces, framep, vector, param)
 	}
 
 	/* System correctable errors. */
-	if (mces & ALPHA_MCES_SCE) {
+	if (mces & ALPHA_MCES_SCE)
 		printf("Warning: received system correctable error.\n");
-	}
 
 	/* Processor correctable errors. */
-	if (mces & ALPHA_MCES_PCE) {
+	if (mces & ALPHA_MCES_PCE)
 		printf("Warning: received processor correctable error.\n"); 
-	}
 
 	/* Clear pending machine checks and correctable errors */
 	alpha_pal_wrmces(mces);
