@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.57 1999/03/31 23:26:08 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.58 1999/10/30 22:49:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.57 1999/03/31 23:26:08 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.58 1999/10/30 22:49:58 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,9 @@ struct nlist namelist[] = {
 	{ "_allevents" },
 #define X_POOLHEAD	12
 	{ "_pool_head" },
-#define X_END		13
+#define	X_UVMEXP	13
+	{ "_uvmexp" },
+#define X_END		14
 #if defined(pc532)
 #define	X_IVT		(X_END)
 	{ "_ivt" },
@@ -434,19 +436,23 @@ dovmstat(interval, reps)
 			printhdr();
 		/* Read new disk statistics */
 		dkreadstats();
-		size = sizeof(uvmexp);
-		mib[0] = CTL_VM;
-		mib[1] = VM_UVMEXP;
-		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-			printf("can't get uvmexp: %s\n", strerror(errno));
-			memset(&uvmexp, 0, sizeof(uvmexp));
-		}
-		size = sizeof(total);
-		mib[0] = CTL_VM;
-		mib[1] = VM_METER;
-		if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-			printf("Can't get kerninfo: %s\n", strerror(errno));
+		kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+		if (memf != NULL) {
+			/*
+			 * XXX Can't do this if we're reading a crash
+			 * XXX dump because they're lazily-calculated.
+			 */
+			printf("Unable to get vmtotals from crash dump.\n");
 			memset(&total, 0, sizeof(total));
+		} else {
+			size = sizeof(total);
+			mib[0] = CTL_VM;
+			mib[1] = VM_METER;
+			if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
+				printf("Can't get vmtotals: %s\n",
+				    strerror(errno));
+				memset(&total, 0, sizeof(total));
+			}
 		}
 		(void)printf("%2d%2d%2d",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
@@ -536,16 +542,7 @@ dosum()
 	struct nchstats nchstats;
 	long nchtotal;
 
-	int	mib[2];
-	size_t	size;
-
-	size = sizeof(uvmexp);
-	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
-	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-		printf("can't get uvmexp: %s\n", strerror(errno));
-		memset(&uvmexp, 0, sizeof(uvmexp));
-	}
+	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
 
 	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
 
@@ -637,16 +634,9 @@ dosum()
 void
 doforkst()
 {
-	int	mib[2];
-	size_t	size;
 
-	size = sizeof(uvmexp);
-	mib[0] = CTL_VM;
-	mib[1] = VM_UVMEXP;
-	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-		printf("can't get uvmexp: %s\n", strerror(errno));
-		memset(&uvmexp, 0, sizeof(uvmexp));
-	}
+	kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
+
 	(void)printf("%u forks total\n", uvmexp.forks);
 	(void)printf("%u forks blocked parent\n", uvmexp.forks_ppwait);
 	(void)printf("%u forks shared address space with parent\n",
