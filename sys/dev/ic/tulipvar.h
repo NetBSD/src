@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.21 1999/11/19 18:22:43 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.22 1999/12/11 00:33:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -475,6 +475,13 @@ do {									\
 
 #define	TULIP_ISSET(sc, reg, mask)					\
 	(TULIP_READ((sc), (reg)) & (mask))
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define	TULIP_SP_FIELD_C(x)	((x) << 16)
+#else
+#define	TULIP_SP_FIELD_C(x)	(x)
+#endif
+#define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C(((u_int16_t *)(x))[(f)])
 
 #ifdef _KERNEL
 extern const struct tulip_mediasw tlp_21040_mediasw;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.34 1999/12/07 18:24:01 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.35 1999/12/11 00:33:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <machine/endian.h>
 
 #include <vm/vm.h>		/* for PAGE_SIZE */
  
@@ -616,18 +618,18 @@ tlp_start(ifp)
 			 * We'll do it below.
 			 */
 			sc->sc_txdescs[nexttx].td_status =
-			    (nexttx == firsttx) ? 0 : TDSTAT_OWN;
+			    (nexttx == firsttx) ? 0 : htole32(TDSTAT_OWN);
 			sc->sc_txdescs[nexttx].td_bufaddr1 =
-			    dmamap->dm_segs[seg].ds_addr;
+			    htole32(dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].td_ctl =
-			    (dmamap->dm_segs[seg].ds_len << TDCTL_SIZE1_SHIFT) |
-			    TDCTL_CH;
+			    htole32((dmamap->dm_segs[seg].ds_len <<
+			        TDCTL_SIZE1_SHIFT) | TDCTL_CH);
 			lasttx = nexttx;
 		}
 
 		/* Set `first segment' and `last segment' appropriately. */
-		sc->sc_txdescs[sc->sc_txnext].td_ctl |= TDCTL_Tx_FS;
-		sc->sc_txdescs[lasttx].td_ctl |= TDCTL_Tx_LS;
+		sc->sc_txdescs[sc->sc_txnext].td_ctl |= htole32(TDCTL_Tx_FS);
+		sc->sc_txdescs[lasttx].td_ctl |= htole32(TDCTL_Tx_LS);
 
 #ifdef TLP_DEBUG
 		if (ifp->if_flags & IFF_DEBUG) {
@@ -635,13 +637,13 @@ tlp_start(ifp)
 			for (seg = sc->sc_txnext;; seg = TULIP_NEXTTX(seg)) {
 				printf("     descriptor %d:\n", seg);
 				printf("       td_status:   0x%08x\n",
-				    sc->sc_txdescs[seg].td_status);
+				    le32toh(sc->sc_txdescs[seg].td_status));
 				printf("       td_ctl:      0x%08x\n",
-				    sc->sc_txdescs[seg].td_ctl);
+				    le32toh(sc->sc_txdescs[seg].td_ctl));
 				printf("       td_bufaddr1: 0x%08x\n",
-				    sc->sc_txdescs[seg].td_bufaddr1);
+				    le32toh(sc->sc_txdescs[seg].td_bufaddr1));
 				printf("       td_bufaddr2: 0x%08x\n",
-				    sc->sc_txdescs[seg].td_bufaddr2);
+				    le32toh(sc->sc_txdescs[seg].td_bufaddr2));
 				if (seg == lasttx)
 					break;
 			}
@@ -691,7 +693,7 @@ tlp_start(ifp)
 		 * Cause a transmit interrupt to happen on the
 		 * last packet we enqueued.
 		 */
-		sc->sc_txdescs[lasttx].td_ctl |= TDCTL_Tx_IC;
+		sc->sc_txdescs[lasttx].td_ctl |= htole32(TDCTL_Tx_IC);
 		TULIP_CDTXSYNC(sc, lasttx, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -702,7 +704,7 @@ tlp_start(ifp)
 		if ((sc->sc_flags & TULIPF_IC_FS) != 0 &&
 		    last_txs->txs_firstdesc != lasttx) {
 			sc->sc_txdescs[last_txs->txs_firstdesc].td_ctl |=
-			    TDCTL_Tx_IC;
+			    htole32(TDCTL_Tx_IC);
 			TULIP_CDTXSYNC(sc, last_txs->txs_firstdesc, 1,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
@@ -711,7 +713,7 @@ tlp_start(ifp)
 		 * The entire packet chain is set up.  Give the
 		 * first descriptor to the chip now.
 		 */
-		sc->sc_txdescs[firsttx].td_status |= TDSTAT_OWN;
+		sc->sc_txdescs[firsttx].td_status |= htole32(TDSTAT_OWN);
 		TULIP_CDTXSYNC(sc, firsttx, 1,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1055,7 +1057,7 @@ tlp_rxintr(sc)
 		TULIP_CDRXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		rxstat = sc->sc_rxdescs[i].td_status;
+		rxstat = le32toh(sc->sc_rxdescs[i].td_status);
 
 		if (rxstat & TDSTAT_OWN) {
 			/*
@@ -1246,20 +1248,20 @@ tlp_txintr(sc)
 			for (i = txs->txs_firstdesc;; i = TULIP_NEXTTX(i)) {
 				printf("     descriptor %d:\n", i);
 				printf("       td_status:   0x%08x\n",
-				    sc->sc_txdescs[i].td_status);
+				    le32toh(sc->sc_txdescs[i].td_status));
 				printf("       td_ctl:      0x%08x\n",
-				    sc->sc_txdescs[i].td_ctl);
+				    le32toh(sc->sc_txdescs[i].td_ctl));
 				printf("       td_bufaddr1: 0x%08x\n",
-				    sc->sc_txdescs[i].td_bufaddr1);
+				    le32toh(sc->sc_txdescs[i].td_bufaddr1));
 				printf("       td_bufaddr2: 0x%08x\n",
-				    sc->sc_txdescs[i].td_bufaddr2);
+				    le32toh(sc->sc_txdescs[i].td_bufaddr2));
 				if (i == txs->txs_lastdesc)
 					break;
 			}
 		}
 #endif
 
-		txstat = sc->sc_txdescs[txs->txs_lastdesc].td_status;
+		txstat = le32toh(sc->sc_txdescs[txs->txs_lastdesc].td_status);
 		if (txstat & TDSTAT_OWN)
 			break;
 
@@ -1459,12 +1461,10 @@ tlp_init(sc)
 	}
 #if BYTE_ORDER == BIG_ENDIAN
 	/*
-	 * XXX There are reports that this doesn't work properly
-	 * in the old Tulip driver, but BUSMODE_DBO does.  However,
-	 * BUSMODE_DBO is not available on the 21040, and requires
-	 * us to byte-swap the setup packet.  What to do?
+	 * Can't use BUSMODE_BLE or BUSMODE_DBO; not all chips
+	 * support them, and even on ones that do, it doesn't
+	 * always work.
 	 */
-	sc->sc_busmode |= BUSMODE_BLE;
 #endif
 	TULIP_WRITE(sc, CSR_BUSMODE, sc->sc_busmode);
 
@@ -1504,9 +1504,9 @@ tlp_init(sc)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < TULIP_NTXDESC; i++) {
-		sc->sc_txdescs[i].td_ctl = TDCTL_CH;
+		sc->sc_txdescs[i].td_ctl = htole32(TDCTL_CH);
 		sc->sc_txdescs[i].td_bufaddr2 =
-		    TULIP_CDTXADDR(sc, TULIP_NEXTTX(i));
+		    htole32(TULIP_CDTXADDR(sc, TULIP_NEXTTX(i)));
 	}
 	TULIP_CDTXSYNC(sc, 0, TULIP_NTXDESC,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -2220,25 +2220,25 @@ tlp_filter_setup(sc)
 			 */
 			goto hashperfect;
 		}
-		*sp++ = ((u_int16_t *) enm->enm_addrlo)[0];
-		*sp++ = ((u_int16_t *) enm->enm_addrlo)[1];
-		*sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
+		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 0);
+		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 1);
+		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 2);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
 		cnt++;
-		*sp++ = 0xffff;
-		*sp++ = 0xffff;
-		*sp++ = 0xffff;
+		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = TULIP_SP_FIELD_C(0xffff);
 	}
 
 	/* Pad the rest with our station address. */
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = ((u_int16_t *) enaddr)[0];
-		*sp++ = ((u_int16_t *) enaddr)[1];
-		*sp++ = ((u_int16_t *) enaddr)[2];
+		*sp++ = TULIP_SP_FIELD(enaddr, 0);
+		*sp++ = TULIP_SP_FIELD(enaddr, 1);
+		*sp++ = TULIP_SP_FIELD(enaddr, 2);
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2273,28 +2273,28 @@ tlp_filter_setup(sc)
 			goto allmulti;
 		}
 		hash = tlp_mchash(enm->enm_addrlo, hashsize);
-		sp[hash >> 4] |= 1 << (hash & 0xf);
+		sp[hash >> 4] |= htole32(1 << (hash & 0xf));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
 		hash = tlp_mchash(etherbroadcastaddr, hashsize);
-		sp[hash >> 4] |= 1 << (hash & 0xf);
+		sp[hash >> 4] |= htole32(1 << (hash & 0xf));
 	}
 
 	if (sc->sc_filtmode == TDCTL_Tx_FT_HASHONLY) {
 		/* ...and our station address. */
 		hash = tlp_mchash(enaddr, hashsize);
-		sp[hash >> 4] |= 1 << (hash & 0xf);
+		sp[hash >> 4] |= htole32(1 << (hash & 0xf));
 	} else {
 		/*
 		 * Hash-Perfect mode; put our station address after
 		 * the hash table.
 		 */
-		sp[39] = ((u_int16_t *) enaddr)[0];
-		sp[40] = ((u_int16_t *) enaddr)[1];
-		sp[41] = ((u_int16_t *) enaddr)[2];
+		sp[39] = TULIP_SP_FIELD(enaddr, 0);
+		sp[40] = TULIP_SP_FIELD(enaddr, 1);
+		sp[41] = TULIP_SP_FIELD(enaddr, 2);
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2311,14 +2311,14 @@ tlp_filter_setup(sc)
 	cnt = 0;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		cnt++;
-		*sp++ = 0xffff;
-		*sp++ = 0xffff;
-		*sp++ = 0xffff;
+		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = TULIP_SP_FIELD_C(0xffff);
 	}
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = ((u_int16_t *) enaddr)[0];
-		*sp++ = ((u_int16_t *) enaddr)[1];
-		*sp++ = ((u_int16_t *) enaddr)[2];
+		*sp++ = TULIP_SP_FIELD(enaddr, 0);
+		*sp++ = TULIP_SP_FIELD(enaddr, 1);
+		*sp++ = TULIP_SP_FIELD(enaddr, 2);
 	}
 	ifp->if_flags |= IFF_ALLMULTI;
 
@@ -2332,13 +2332,14 @@ tlp_filter_setup(sc)
 	/*
 	 * Fill in the setup packet descriptor.
 	 */
-	sc->sc_setup_desc.td_bufaddr1 = TULIP_CDSPADDR(sc);
-	sc->sc_setup_desc.td_bufaddr2 = TULIP_CDTXADDR(sc, sc->sc_txnext);
+	sc->sc_setup_desc.td_bufaddr1 = htole32(TULIP_CDSPADDR(sc));
+	sc->sc_setup_desc.td_bufaddr2 =
+	    htole32(TULIP_CDTXADDR(sc, sc->sc_txnext));
 	sc->sc_setup_desc.td_ctl =
-	    (TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
+	    htole32((TULIP_SETUP_PACKET_LEN << TDCTL_SIZE1_SHIFT) |
 	    sc->sc_filtmode | TDCTL_Tx_SET | TDCTL_Tx_FS | TDCTL_Tx_LS |
-	    TDCTL_Tx_IC | TDCTL_CH;
-	sc->sc_setup_desc.td_status = TDSTAT_OWN;
+	    TDCTL_Tx_IC | TDCTL_CH);
+	sc->sc_setup_desc.td_status = htole32(TDSTAT_OWN);
 	TULIP_CDSDSYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/*
