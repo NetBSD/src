@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.197 2000/02/03 16:56:23 dante Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.198 2000/02/08 16:24:00 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.190 2000/02/03 16:51:42 dante Exp 
+ *	NetBSD: pcidevs,v 1.191 2000/02/08 16:22:37 bouyer Exp 
  */
 
 /*
@@ -515,6 +515,7 @@
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
+#define	PCI_VENDOR_USR	0x12b9		/* US Robotics (3Com) */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
@@ -1384,6 +1385,9 @@
 
 /* ULSI Systems products */
 #define	PCI_PRODUCT_ULSI_US201	0x0201		/* US201 */
+
+/* US Robotics products */
+#define	PCI_PRODUCT_USR_3CP5609	0x1008		/* 3CP5609 PCI 16550 Modem */
 
 /* V3 Semiconductor products */
 #define	PCI_PRODUCT_V3_V292PBC	0x0292		/* V292PBC AMD290x0 Host-PCI Bridge */
