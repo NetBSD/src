@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.6 1997/06/21 22:46:43 kleink Exp $	*/
+/*	$NetBSD: aucc.c,v 1.7 1997/06/23 23:46:25 is Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -33,10 +33,6 @@
 #include "aucc.h"
 #if NAUCC > 0
 
-#ifdef LEV6_DEFER
-#error Not prepared yet for coexistance with LEV6_DEFER.
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -51,6 +47,17 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/auccvar.h>
+
+
+#ifdef LEV6_DEFER
+#define AUCC_MAXINT 3
+#define AUCC_ALLINTF (INTF_AUD0|INTF_AUD1|INTF_AUD2)
+#else
+#define AUCC_MAXINT 4
+#define AUCC_ALLINTF (INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3)
+#endif
+/* this unconditionally; we may use AUD3 as slave channel with LEV6_DEFER */
+#define AUCC_ALLDMAF (DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3)
 
 #ifdef AUDIO_DEBUG
 /*extern printf __P((const char *,...));*/
@@ -295,8 +302,8 @@ init_aucc(sc)
 	sc->sc_channelmask=0xf;
 
 	/* clear interrupts and dma: */
-	custom.intena = INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3;
-	custom.dmacon = DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3;
+	custom.intena = AUCC_ALLINTF;
+	custom.dmacon = AUCC_ALLDMAF;;
 
 	sc->sc_encoding=AUDIO_ENCODING_ULAW;	
 
@@ -322,7 +329,7 @@ aucc_open(dev, flags)
 	if (sc->sc_open)
 		return (EBUSY);
 	sc->sc_open = 1;
-	for (i=0;i<4;i++) {
+	for (i=0;i<AUCC_MAXINT;i++) {
 		sc->sc_channel[i].nd_intr=NULL;
 		sc->sc_channel[i].nd_intrdata=NULL;
 	}
@@ -565,7 +572,7 @@ aucc_start_output(addr, p, cc, intr, arg)
 	}
 
 	/* enable interrupt on 1st channel */
-	for (i=0;i<4;i++) {
+	for (i=0;i<AUCC_MAXINT;i++) {
 		if (masks2[i]&mask) {
 			DPRINTF(("first channel is %d\n",i));
 			j=i;
@@ -588,8 +595,8 @@ aucc_start_output(addr, p, cc, intr, arg)
 
 	/* disable ints, dma for channels, until all parameters set */
 	/* XXX custom.dmacon=mask;*/
-	custom.intreq=mask<<7;
-	custom.intena=mask<<7;
+	custom.intreq=mask<<INTB_AUD0;
+	custom.intena=mask<<INTB_AUD0;
 
 
 	/* dma buffers: we use same buffer 4 all channels */
@@ -620,9 +627,9 @@ sc->sc_channel[i].nd_per, sc->sc_channel[i].nd_volume, cc>>1));
 	channel[j].handler=aucc_inthdl;
 
 	/* enable ints */
-	custom.intena=INTF_SETCLR|INTF_INTEN| (masks2[j]<<7);
+	custom.intena=INTF_SETCLR|INTF_INTEN| (masks2[j]<<INTB_AUD0);
 
-	DPRINTF(("enabled ints: 0x%x\n",(masks2[j]<<7)));
+	DPRINTF(("enabled ints: 0x%x\n",(masks2[j]<<INTB_AUD0)));
 
 	/* enable dma */
 	custom.dmacon=DMAF_SETCLR|DMAF_MASTER|mask;
@@ -654,8 +661,8 @@ aucc_halt_output(addr)
 
 	/* XXX only halt, if input is also halted ?? */
 	/* stop dma, etc */
-	custom.intena=INTF_AUD0|INTF_AUD1|INTF_AUD2|INTF_AUD3;
-	custom.dmacon = DMAF_AUD0|DMAF_AUD1|DMAF_AUD2|DMAF_AUD3;
+	custom.intena = AUCC_ALLINTF;
+	custom.dmacon = AUCC_ALLDMAF;
 	/* mark every busy unit idle */
 	for (i=0;i<4;i++) {
 		sc->sc_channel[i].nd_busy=sc->sc_channel[i].nd_mask=0;
@@ -842,9 +849,9 @@ aucc_inthdl(int ch)
 	   mark idle */
 	DPRINTF(("inthandler called, channel %d, mask 0x%x\n",ch,mask));
 
-	custom.intreq=mask<<7; /* clear request */
+	custom.intreq=mask<<INTB_AUD0; /* clear request */
 	/* XXX: maybe we can leave ints and/or DMA on, if another sample has to be played?*/
-	custom.intena=mask<<7;
+	custom.intena=mask<<INTB_AUD0;
 	/*
 	 * XXX custom.dmacon=mask; NO!!! 
 	 */ 
