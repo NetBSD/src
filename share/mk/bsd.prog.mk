@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.64 1997/03/27 09:10:10 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.65 1997/03/27 11:05:32 mycroft Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -166,23 +166,32 @@ ${DESTDIR}${FILESDIR_${F}}/${FILESNAME_${F}}: ${F}
 .endif
 
 .if defined(SCRIPTS)
+SCRIPTSDIR?=${BINDIR}
+SCRIPTSOWN?=${BINOWN}
+SCRIPTSGRP?=${BINGRP}
+SCRIPTSMODE?=${BINMODE}
 .for S in ${SCRIPTS}
+SCRIPTSDIR_${S}?=${SCRIPTSDIR}
+SCRIPTSOWN_${S}?=${SCRIPTSOWN}
+SCRIPTSGRP_${S}?=${SCRIPTSGRP}
+SCRIPTSMODE_${S}?=${SCRIPTSMODE}
 .if defined(SCRIPTSNAME)
 SCRIPTSNAME_${S} ?= ${SCRIPTSNAME}
 .else
 SCRIPTSNAME_${S} ?= ${S:T:R}
 .endif
-proginstall:: ${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}
+SCRIPTSDIR_${S} ?= ${SCRIPTSDIR}
+proginstall:: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}
+.PHONY: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 .endif
 .if !defined(BUILD)
-${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}: .MADE
+${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: .MADE
 .endif
 
-${DESTDIR}${BINDIR}/${SCRIPTSNAME_${S}}: ${S}
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.ALLSRC} ${.TARGET}
+${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
+	${INSTALL} ${COPY} -o ${SCRIPTSOWN_${S}} -g ${SCRIPTSGRP_${S}} \
+		-m ${SCRIPTSMODE_${S}} ${.ALLSRC} ${.TARGET}
 .endfor
 .endif
 
