@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.45 2001/07/07 16:15:03 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.46 2001/09/01 07:12:24 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -405,9 +405,15 @@ isp_wait_complete(struct ispsoftc *isp)
 		 * than 5 seconds for polled commands.
 		 */
 		while (usecs < 5 * 1000000) {
-			(void) isp_intr(isp);
+			u_int16_t isr, sema, mbox;
 			if (isp->isp_mboxbsy == 0) {
 				break;
+			}
+			if (ISP_READ_ISR(isp, &isr, &sema, &mbox)) {
+				isp_intr(isp, isr, sema, mbox);
+				if (isp->isp_mboxbsy == 0) {
+					break;
+				}
 			}
 			USEC_DELAY(500);
 			usecs += 500;
