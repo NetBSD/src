@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2002/06/04 14:44:34 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.59 2002/09/24 17:18:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1139,7 +1139,7 @@ static int
 bus_class(dev)
 	struct device *dev;
 {
-	char *name;
+	const char *name;
 	int i, class;
 
 	class = BUSCLASS_NONE;
@@ -1251,7 +1251,8 @@ device_register(dev, aux)
 	void *aux;
 {
 	struct bootpath *bp = bootpath_store(0, NULL);
-	char *dvname, *bpname;
+	const char *dvname;
+	char *bpname;
 
 	/*
 	 * If device name does not match current bootpath component
