@@ -1,3 +1,5 @@
+#	$NetBSD: files.mips,v 1.14 1998/01/05 20:51:43 perry Exp $
+#
 file	arch/mips/mips/db_disasm.c	ddb
 file	arch/mips/mips/db_interface.c	ddb
 file	arch/mips/mips/db_trace.c	ddb

@@ -1,3 +1,5 @@
+#	$NetBSD: std.arm32,v 1.5 1998/01/05 20:51:32 perry Exp $
+#
 # standard NetBSD/arm32 options
 
 machine	arm32

@@ -1,3 +1,4 @@
+!	$NetBSD: anyboo.cmd,v 1.3 1998/01/05 20:52:04 perry Exp $
 !
 ! BOOTSTRAP ANY DEVICE TO A SINGLE USER SHELL
 !

@@ -1,3 +1,4 @@
+/*	$NetBSD: palette.c,v 1.2 1998/01/05 20:52:32 perry Exp $	*/
 /*
  * pelette - manipulate text colormap for NetBSD/x68k.
  * author: Masaru Oki

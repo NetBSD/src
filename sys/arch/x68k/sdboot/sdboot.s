@@ -1,3 +1,5 @@
+|	$NetBSD: sdboot.s,v 1.2 1998/01/05 20:52:20 perry Exp $
+|
 | file: boot.s
 | author: chapuni(GBA02750@niftyserve.or.jp)
 |.offset	$100000

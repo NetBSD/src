@@ -1,3 +1,5 @@
+!	$NetBSD: utboot.cmd,v 1.2 1998/01/05 20:52:14 perry Exp $
+!
 SET DEF HEX
 SET DEF LONG
 SET REL:0

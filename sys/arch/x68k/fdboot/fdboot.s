@@ -1,3 +1,5 @@
+|	$NetBSD: fdboot.s,v 1.3 1998/01/05 20:52:16 perry Exp $
+|
 | file: boot.s
 | author: chapuni(GBA02750@niftyserve.or.jp)
 |.offset	$100000

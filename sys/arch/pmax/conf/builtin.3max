@@ -1,3 +1,5 @@
+#	$NetBSD: builtin.3max,v 1.4 1998/01/05 20:51:48 perry Exp $
+
 ########################################################################
 # Configuration for 3MAX (5000/200) which has turbochannel but no ASIC.#
 # 3MAX (5000/200) baseboard devices and on-baseboard "options"         #

@@ -2,6 +2,8 @@
 #
 # `/etc/shutdown.local'
 # executed by poffd(8)
+#
+#	$NetBSD: shutdown.local.sample,v 1.2 1998/01/05 20:52:37 perry Exp $
 
 SCSI_ID_OF_MO=5			# eject the medium of this ID of SCSI device.
 GOODBYE_CHIME=/etc/byebye.pcm	# ring this file at shutdown.
