@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.56 1999/02/14 20:04:26 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.57 1999/04/18 10:52:31 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -112,7 +112,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-S
+LINKFLAGS+=	-X
 .endif
 
 %LOAD
