@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  * 	from: @(#)subr_log.c	7.11 (Berkeley) 3/17/91
- *	$Id: subr_acct.c,v 1.3 1993/06/27 06:01:51 andrew Exp $
+ *	$Id: subr_acct.c,v 1.4 1993/06/30 13:43:03 mycroft Exp $
  */
 
 /*
@@ -72,7 +72,7 @@ acctopen(dev_t dev, int flags, int mode, struct proc *p)
 #else
 acctopen()
 	dev_t dev;
-	int flags, int mode;
+	int flags, mode;
 	struct proc *p;
 #endif
 {
