@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.41 2004/09/08 11:38:22 jmmv Exp $
+#	$NetBSD: DELPHI,v 1.42 2004/09/12 12:49:22 jdolecek Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.41 $"
+ident 		"DELPHI-$Revision: 1.42 $"
 
 maxusers	64		# estimated number of users
 
@@ -89,8 +89,6 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-#options 	COMPAT_AOUT	# binary compat for NetBSD a.out binaries
 
 # File systems
 file-system 	FFS		# UFS
