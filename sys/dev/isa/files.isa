@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.52 1998/02/16 22:12:49 thorpej Exp $
+#	$NetBSD: files.isa,v 1.53 1998/02/27 23:54:16 pk Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -185,12 +185,6 @@ device  iy: ether, ifnet, arp
 attach	iy at isa
 file    dev/isa/if_iy.c			iy
 
-# XXX ???
-# XXX NOT IN TREE?
-#device	ix: ether, ifnet, arp
-#attach	ix at isa
-#file	dev/isa/if_ix.c			ix
-
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
 # device declaration in sys/conf/files
@@ -209,12 +203,20 @@ file	dev/isa/if_ne_isa.c		ne_isa
 attach	sm at isa with sm_isa
 file	dev/isa/if_sm_isa.c		sm_isa
 
-# Intel i82586-based boards
-# (AT&T StarLAN 10, AT&T EN100, AT&T StarLAN Fiber, 3Com 3C507)
-# MUST BE LAST ! the probe clobbers some boards (like SMC boards).
-device	ie: ether, ifnet, elink, arp
-attach	ie at isa
-file	dev/isa/if_ie.c			ie
+# 3Com 3C507
+device	ef: ether, ifnet, arp, elink, i82586
+attach	ef at isa
+file	dev/isa/if_ef.c		ef
+
+# AT&T StarLan boards
+device	ai: ether, ifnet, arp, i82586
+attach	ai at isa
+file	dev/isa/if_ai.c		ai
+
+# EtherExpress/16
+device	ix: ether, ifnet, arp, i82586
+attach	ix at isa
+file	dev/isa/if_ix.c		ix
 
 #
 # ISA Sound hardware
