@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.10 1998/03/09 06:20:26 mikel Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.11 1998/03/16 15:48:00 leo Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -426,7 +426,12 @@ ahc_isa_attach(parent, self, aux)
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc, iot, ioh, type, AHC_FNONE);
+	ahc_construct(ahc, iot, ioh, ia->ia_dmat, type, AHC_FNONE);
+
+	/*
+	 * Tell the bus-dma interface that we can do 32bit dma
+	 */
+	ahc->sc_dmaflags = ISABUS_DMA_32BIT;
 
 #ifdef DEBUG
 	/*
