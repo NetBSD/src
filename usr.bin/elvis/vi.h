@@ -6,7 +6,7 @@
  *	Beaverton, OR 97005
  *	kirkenda@cs.pdx.edu
  *
- *	$Id: vi.h,v 1.3 1993/08/02 17:54:15 mycroft Exp $
+ *	$Id: vi.h,v 1.4 1993/11/03 08:27:19 cgd Exp $
  */
 
 #define VERSION "ELVIS 1.7, by Steve Kirkendall (30 December 1992)"
@@ -258,7 +258,7 @@ extern int	argno;				/* the current element of args[] */
 extern int	nargs;				/* number of filenames in args */
 extern long	changes;			/* counts changes, to prohibit short-cuts */
 extern int	significant;			/* boolean: was a *REAL* change made? */
-extern int	exitcode;			/* 0=not updated, 1=overwritten, else error */
+extern int	exitcode;			/* 0=overwritten, 1=error */
 extern BLK	tmpblk;				/* a block used to accumulate changes */
 extern long	topline;			/* file line number of top line */
 extern int	leftcol;			/* column number of left col */
