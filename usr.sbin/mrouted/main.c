@@ -8,7 +8,7 @@
  *
  *
  * From: Id: main.c,v 1.5 1993/06/24 05:11:16 deering Exp $
- *      $Id: main.c,v 1.2 1994/05/08 15:08:55 brezak Exp $
+ *      $Id: main.c,v 1.3 1995/05/20 02:38:23 mycroft Exp $
  */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.2 1994/05/08 15:08:55 brezak Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1995/05/20 02:38:23 mycroft Exp $";
 #endif
 
 #include "defs.h"
@@ -327,10 +327,8 @@ void log(severity, syserr, format, a, b, c, d, e)
 	    fprintf(stderr, fmt, a, b, c, d, e);
 	    if (syserr == 0)
 		fprintf(stderr, "\n");
-	    else if(syserr < sys_nerr)
-		fprintf(stderr, ": %s\n", sys_errlist[syserr]);
 	    else
-		fprintf(stderr, ": errno %d\n", syserr);
+		fprintf(stderr, ": %s\n", strerror(syserr));
     }
 
     if (severity <= LOG_NOTICE) {
