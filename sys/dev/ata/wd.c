@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.276 2004/05/21 20:35:53 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.277 2004/05/27 02:23:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.276 2004/05/21 20:35:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.277 2004/05/27 02:23:12 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1628,9 +1628,9 @@ wd_setcache(struct wd_softc *wd, int bits)
 	wdc_c.timeout = 30000; /* 30s timeout */
 	wdc_c.flags = AT_WAIT;
 	if (bits & DKCACHE_WRITE)
-		wdc_c.r_precomp = WDSF_WRITE_CACHE_EN;
+		wdc_c.r_features = WDSF_WRITE_CACHE_EN;
 	else
-		wdc_c.r_precomp = WDSF_WRITE_CACHE_DS;
+		wdc_c.r_features = WDSF_WRITE_CACHE_DS;
 	if (wd->atabus->ata_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
 		printf("%s: wd_setcache command not complete\n",
 		    wd->sc_dev.dv_xname);
@@ -1833,7 +1833,7 @@ wdioctlstrategy(struct buf *bp)
 	wdc_c.r_cyl = wi->wi_atareq.cylinder;
 	wdc_c.r_sector = wi->wi_atareq.sec_num;
 	wdc_c.r_count = wi->wi_atareq.sec_count;
-	wdc_c.r_precomp = wi->wi_atareq.features;
+	wdc_c.r_features = wi->wi_atareq.features;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
 	wdc_c.data = wi->wi_bp.b_data;
@@ -1860,7 +1860,7 @@ wdioctlstrategy(struct buf *bp)
 			wi->wi_atareq.cylinder = wdc_c.r_cyl;
 			wi->wi_atareq.sec_num = wdc_c.r_sector;
 			wi->wi_atareq.sec_count = wdc_c.r_count;
-			wi->wi_atareq.features = wdc_c.r_precomp;
+			wi->wi_atareq.features = wdc_c.r_features;
 			wi->wi_atareq.error = wdc_c.r_error;
 		}
 	}

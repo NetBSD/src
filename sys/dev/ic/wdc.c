@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.177 2004/05/27 02:09:26 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.178 2004/05/27 02:23:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.177 2004/05/27 02:09:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.178 2004/05/27 02:23:12 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1666,7 +1666,7 @@ __wdccommand_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 		    WDCTL_4BIT | WDCTL_IDS);
 	}
 	wdccommand(chp, drive, wdc_c->r_command, wdc_c->r_cyl, wdc_c->r_head,
-	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_precomp);
+	    wdc_c->r_sector, wdc_c->r_count, wdc_c->r_features);
 
 	if ((wdc_c->flags & AT_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT; /* wait for interrupt */
@@ -1815,8 +1815,8 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		    chp->cmd_iohs[wd_seccnt], 0);
 		wdc_c->r_error = bus_space_read_1(chp->cmd_iot,
 		    chp->cmd_iohs[wd_error], 0);
-		wdc_c->r_precomp = bus_space_read_1(chp->cmd_iot,
-		    chp->cmd_iohs[wd_precomp], 0);
+		wdc_c->r_features = bus_space_read_1(chp->cmd_iot,
+		    chp->cmd_iohs[wd_features], 0);
 	}
 	
 	if (wdc_c->flags & AT_POLL) {
@@ -1841,14 +1841,14 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 void
 wdccommand(struct wdc_channel *chp, u_int8_t drive, u_int8_t command,
     u_int16_t cylin, u_int8_t head, u_int8_t sector, u_int8_t count,
-    u_int8_t precomp)
+    u_int8_t features)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
 
 	WDCDEBUG_PRINT(("wdccommand %s:%d:%d: command=0x%x cylin=%d head=%d "
-	    "sector=%d count=%d precomp=%d\n", wdc->sc_dev.dv_xname,
+	    "sector=%d count=%d features=%d\n", wdc->sc_dev.dv_xname,
 	    chp->ch_channel, drive, command, cylin, head, sector, count,
-	    precomp), DEBUG_FUNCS);
+	    features), DEBUG_FUNCS);
 
 	if (wdc->cap & WDC_CAPABILITY_SELECT)
 		wdc->select(chp,drive);
@@ -1858,7 +1858,7 @@ wdccommand(struct wdc_channel *chp, u_int8_t drive, u_int8_t command,
 	    WDSD_IBM | (drive << 4) | head);
 	/* Load parameters into the wd_features register. */
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_features], 0,
-	    precomp);
+	    features);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_lo], 0, cylin);
 	bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_hi],
 	    0, cylin >> 8);

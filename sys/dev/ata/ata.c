@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.28 2004/04/13 19:51:06 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.29 2004/05/27 02:23:12 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.28 2004/04/13 19:51:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.29 2004/05/27 02:23:12 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -447,7 +447,7 @@ ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 	wdc_c.r_command = SET_FEATURES;
 	wdc_c.r_st_bmask = 0;
 	wdc_c.r_st_pmask = 0;
-	wdc_c.r_precomp = WDSF_SET_MODE;
+	wdc_c.r_features = WDSF_SET_MODE;
 	wdc_c.r_count = mode;
 	wdc_c.flags = flags;
 	wdc_c.timeout = 1000; /* 1s */

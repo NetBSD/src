@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.41 2004/04/14 05:26:29 minoura Exp $	*/
+/*	$NetBSD: atavar.h,v 1.42 2004/05/27 02:23:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -216,7 +216,7 @@ struct wdc_command {
 	u_int16_t r_cyl;
 	u_int8_t r_sector;
 	u_int8_t r_count;
-	u_int8_t r_precomp;
+	u_int8_t r_features;
 	u_int8_t r_st_bmask;	/* status register mask to wait for before
 				   command */
 	u_int8_t r_st_pmask;	/* status register mask to wait for after
