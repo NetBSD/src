@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.1 2003/09/02 21:31:01 manu Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.2 2003/12/06 11:43:56 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.1 2003/09/02 21:31:01 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.2 2003/12/06 11:43:56 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -205,15 +205,8 @@ native_to_darwin_statfs(bs, ds)
 		dflags |= DARWIN_MNT_UNION;
 	if (bs->f_flags|MNT_ASYNC)
 		dflags |= DARWIN_MNT_ASYNC;
-#ifdef DEBUG_DARWIN
-	if ((bs->f_flags|MNT_NOCOREDUMP) ||
-	    (bs->f_flags|MNT_IGNORE) ||
-	    (bs->f_flags|MNT_NOATIME) ||
-	    (bs->f_flags|MNT_SYMPERM) ||
-	    (bs->f_flags|MNT_NODEVMTIME) ||
-	    (bs->f_flags|MNT_SOFTDEP))
-		printf("Ignored darwin_statfs flags %lx\n", bs->f_flags);
-#endif
+	if (bs->f_flags|MNT_IGNORE)
+		dflags |= DARWIN_MNT_DONTBROWSE;
 
 	ds->f_otype = bs->f_type; /* XXX */
 	ds->f_oflags = dflags & 0xffff;
