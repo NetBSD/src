@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.107 2003/08/07 16:32:43 agc Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.108 2003/09/07 00:25:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.107 2003/08/07 16:32:43 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.108 2003/09/07 00:25:04 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1114,7 +1114,6 @@ procfs_readdir(v)
 
 		for (; i < 2 && uio->uio_resid >= UIO_MX; i++) {
 			pt = &proc_targets[i];
-			d.d_fileno = (pfs->pfs_pid << 8) + i;
 			d.d_namlen = pt->pt_namlen;
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid,
 			    pt->pt_pfstype, -1);
