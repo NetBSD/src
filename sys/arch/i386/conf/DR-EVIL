@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.8 2000/01/25 01:50:12 thorpej Exp $
+#	$NetBSD: DR-EVIL,v 1.9 2000/01/26 06:47:41 thorpej Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -376,7 +376,7 @@ aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 #scsibus* at adw?
 #scsibus* at aha?
 #scsibus* at ahb?
-#scsibus* at ahc?
+scsibus* at ahc?
 scsibus* at aic?
 #scsibus* at bha?
 #scsibus* at isp?
@@ -529,6 +529,9 @@ sm*	at mhzc?
 ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 tlp*	at cardbus? dev ? function ?	# DECchip 21x4x and clones
 fxp*	at cardbus? dev ? function ?	# Intel i8255x
+
+# CardBus SCSI cards
+ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
