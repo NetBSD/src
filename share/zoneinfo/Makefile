@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1997/05/07 16:12:00 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 1997/06/18 01:27:43 jtc Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -38,7 +38,7 @@ TZDIR=	${DESTDIR}/usr/share/zoneinfo
 REDO=		posix_only
 
 # Since "." may not be in PATH...
-YEARISTYPE=	"sh ${.CURDIR}/datfiles/yearistype.sh"
+YEARISTYPE=	"sh ${.CURDIR}/yearistype.sh"
 
 YDATA=		africa antarctica asia australasia \
 		europe northamerica southamerica pacificnew etcetera factory \
@@ -53,19 +53,19 @@ ZIC=zic
 
 .PHONY:	posix_only
 posix_only: ${TDATA}
-	(cd ${.CURDIR}/datfiles; \
+	(cd ${.CURDIR}; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA})
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
-	(cd ${.CURDIR}/datfiles; \
+	(cd ${.CURDIR}; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA})
 
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
-	(cd ${.CURDIR}/datfiles; \
+	(cd ${.CURDIR}; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA})
-	(cd ${.CURDIR}/datfiles; \
+	(cd ${.CURDIR}; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA})
 
 .PHONY:	posix_right
@@ -75,10 +75,9 @@ posix_right: posix_only other_two
 right_posix: right_only other_two
 
 afterinstall: ${DATA} ${REDO}
-	(cd ${.CURDIR}/datfiles; \
+	(cd ${.CURDIR}; \
 	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES})
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
 	find ${TZDIR} -type f | xargs chmod a=r
 
-.PATH:	${.CURDIR}/datfiles
 .include <bsd.prog.mk>
