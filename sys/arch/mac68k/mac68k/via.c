@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.27 1995/08/14 03:16:07 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.28 1995/08/25 02:56:41 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -136,7 +136,7 @@ void VIA_initialize()
 		/*
 		 * unlock nubus
 		 */
-		via_reg(VIA2, vPCR)   = 0x06;
+		via_reg(VIA2, vPCR)   = 0x66;
 		via_reg(VIA2, vBufB) |= 0x02;
 		via_reg(VIA2, vDirB) |= 0x02;
 
@@ -144,6 +144,12 @@ void VIA_initialize()
 		via2itab[1] = via2_nubus_intr;
 
 	}else{	/* RBV */
+		if (current_mac_model->class == MACH_CLASSIIci) {
+			/*
+			 * Disable cache card. (p. 174--GtMFH)
+			 */
+			via_reg(VIA2, rBufB) |= DB2O_CEnable;
+		}
 		real_via2_intr = rbv_intr;
 		via2itab[1] = rbv_nubus_intr;
 	}
@@ -355,9 +361,9 @@ via_shutdown()
 int
 rbv_vidstatus()
 {
+/*
 	int montype;
 
-/*
 	montype = via_reg(VIA2, rMonitor) & RBVMonitorMask;
 	if(montype == RBVMonIDNone)
 		montype = RBVMonIDOff;
