@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.16 1999/05/11 02:18:52 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.17 1999/05/24 20:12:10 tron Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -261,8 +261,10 @@ pppasyncrelinq(sc)
 {
     int s;
 
+#if NBPFILTER > 0
     /* Change DLT to back none. */
     bpf_change_type(&sc->sc_bpf, DLT_NULL, 0);
+#endif
 
     s = spltty();
     if (sc->sc_outm) {
