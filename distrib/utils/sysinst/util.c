@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.98 2003/06/11 23:06:15 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.99 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -414,7 +414,8 @@ again:
  * Get from an already-mounted pathname.
  */
 
-int get_via_localdir(void)
+int
+get_via_localdir(void)
 {
 
 	/* Get device, filesystem, and filepath */
@@ -1120,7 +1121,8 @@ sanity_check(void)
 
 #ifdef notdef
 /* set reverse to 1 to default to no */
-int askyesno(int reverse)
+int
+askyesno(int reverse)
 {
 	WINDOW *yesnowin;
 	int c, found;

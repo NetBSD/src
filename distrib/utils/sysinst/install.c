@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.33 2003/06/16 10:42:47 dsl Exp $	*/
+/*	$NetBSD: install.c,v 1.34 2003/06/16 19:42:14 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,7 +47,7 @@
 /* Do the system install. */
 
 void
-do_install()
+do_install(void)
 {
 	doingwhat = msg_string(MSG_install);
 
