@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.11 2000/10/14 07:19:24 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 2000/10/14 16:23:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1540,12 +1540,12 @@ GLOBAL(cache_clr)
 /* interrupt counters */
 GLOBAL(intrnames)
 	.asciz	"spur"
-	.asciz	"lev1"		| AST ???
-	.asciz	"lev2"		| software interrupt
-	.asciz	"lev3"		| slot intr, VME intr 2, fd, lpt
-	.asciz	"lev4"		| slot intr, VME intr 4, le, scsi
-	.asciz	"lev5"		| kb, ms, zs
-	.asciz	"clock"		| clock
+	.asciz	"AST"		| lev1: AST
+	.asciz	"softint"	| lev2: software interrupt
+	.asciz	"lev3"		| lev3: slot intr, VME intr 2, fd, lpt
+	.asciz	"lev4"		| lev4: slot intr, VME intr 4, le, scsi
+	.asciz	"lev5"		| lev5: kb, ms, zs
+	.asciz	"clock"		| lev6: clock
 	.asciz	"nmi"		| parity error
 	.asciz	"statclock"
 GLOBAL(eintrnames)
