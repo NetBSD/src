@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.3 2003/11/26 14:27:15 scw Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.4 2004/04/02 14:14:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.3 2003/11/26 14:27:15 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.4 2004/04/02 14:14:18 scw Exp $");
 
 #include "vmetwo.h"
 
@@ -104,7 +104,7 @@ vmetwo_init(sc)
 			sc->sc_master[0].vr_am |= MVMEBUS_AM_CAP_USER;
 
 		/* As is the datasize */
-		sc->sc_master[0].vr_datasize = VME_D32 | VME_D16 | VME_D8;
+		sc->sc_master[0].vr_datasize = VME_D32 | VME_D16;
 		if (reg & VME2_IO_CONTROL_I1D16)
 			sc->sc_master[0].vr_datasize &= ~VME_D32;
 
@@ -118,9 +118,9 @@ vmetwo_init(sc)
 	if (reg & VME2_IO_CONTROL_I2EN) {
 		/* These two ranges are fixed to A24D16 and A32D16 */
 		sc->sc_master[1].vr_am = VME_AM_A24;
-		sc->sc_master[1].vr_datasize = VME_D16 | VME_D8;
+		sc->sc_master[1].vr_datasize = VME_D16;
 		sc->sc_master[2].vr_am = VME_AM_A32;
-		sc->sc_master[2].vr_datasize = VME_D16 | VME_D8;
+		sc->sc_master[2].vr_datasize = VME_D16;
 
 		/* However, SUPER/USER is selectable */
 		if (reg & VME2_IO_CONTROL_I2SU) {
@@ -201,7 +201,7 @@ vmetwo_master_range(sc, range, vr)
 	/*
 	 * Fix up the datasizes available through this range
 	 */
-	vr->vr_datasize = VME_D32 | VME_D16 | VME_D8;
+	vr->vr_datasize = VME_D32 | VME_D16;
 	if (attr & VME2_MASTER_ATTR_D16)
 		vr->vr_datasize &= ~VME_D32;
 	attr &= VME2_MASTER_ATTR_AM_MASK;
