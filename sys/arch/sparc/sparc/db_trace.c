@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.7 1996/03/31 23:45:14 pk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.8 1996/04/04 23:25:35 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -72,16 +72,18 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (!INKERNEL(pc))
 			break;
 
+		/*
+		 * Switch to frame that contains arguments
+		 */
+		frame = frame->fr_fp;
+		if (!INKERNEL(frame))
+			break;
+
 		db_find_sym_and_offset(pc, &name, &offset);
 		if (name == NULL)
 			name = "?";
 
 		db_printf("%s(", name);
-
-		/*
-		 * Switch to frame that contains arguments
-		 */
-		frame = frame->fr_fp;
 
 		/*
 		 * Print %i0..%i5, hope these still reflect the
