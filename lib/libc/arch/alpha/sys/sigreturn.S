@@ -1,4 +1,4 @@
-/* $NetBSD: sigreturn.S,v 1.4 2000/06/14 06:49:03 cgd Exp $ */
+/* $NetBSD: sigreturn.S,v 1.5 2004/03/26 22:15:03 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -36,6 +36,6 @@
  */
 
 WARN_REFERENCES(sigreturn, \
-    "warning: reference to compatibility sigreturn(); include <signal.h> for correct reference")
+    "warning: reference to compatibility sigreturn()")
 
 PSEUDO(sigreturn,compat_13_sigreturn13)
