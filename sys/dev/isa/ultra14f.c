@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.28 1994/05/05 05:36:58 cgd Exp $
+ *      $Id: ultra14f.c,v 1.29 1994/05/11 02:28:42 mycroft Exp $
  */
 
 /*
@@ -1057,8 +1057,7 @@ uha_scsi_cmd(xs)
 	if (!(flags & SCSI_NOMASK)) {
 		s = splbio();
 		uha_send_mbox(uha, mscp);
-		timeout(uha_timeout, mscp,
-		    (xs->timeout * hz) / 1000);
+		timeout(uha_timeout, mscp, (xs->timeout * hz) / 1000);
 		splx(s);
 		SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 		return SUCCESSFULLY_QUEUED;
