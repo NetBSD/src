@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.10 1997/01/09 20:21:06 tls Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.11 1997/10/09 15:13:20 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char rcsid[] = "$NetBSD: rpc_main.c,v 1.10 1997/01/09 20:21:06 tls Exp $";
+static char rcsid[] = "$NetBSD: rpc_main.c,v 1.11 1997/10/09 15:13:20 mycroft Exp $";
 #endif
 
 /*
@@ -299,7 +299,7 @@ static void find_cpp()
 
   if( stat(CPP, &buf) < 0 )  {	/* SVR4 or explicit cpp does not exist */
     if (cppDefined) {
-      fprintf( stderr, "cannot find C preprocessor: %s \n", CPP );
+      fprintf( stderr, "cannot find C preprocessor: %s\n", CPP );
       crash();
     } else {			/* try the other one */
       CPP = SUNOS_CPP;
@@ -593,7 +593,7 @@ s_output(argc, argv, infile, define, extend, outfile, nomain, netflag)
 	if (Cflag) {
 		f_print (fout,
 			"#include <rpc/pmap_clnt.h> /* for pmap_unset */\n");
-		f_print (fout, "#include <string.h> /* strcmp */ \n"); 
+		f_print (fout, "#include <string.h> /* strcmp */\n"); 
 	}
 	f_print(fout, "#include <netdb.h>\n"); /*evas*/
 	if (strcmp(svcclosetime, "-1") == 0)
