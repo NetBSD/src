@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/02/07 08:30:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.13 2004/03/14 08:08:45 jdc Exp $
 
 .include <bsd.own.mk>
 
@@ -51,7 +51,15 @@ SUBDIR+=	Xpmax
 .endif
 
 .if ${XSERVER_XSUN} != "no"
-SUBDIR+=	Xsun Xsun24 XsunMono
+SUBDIR+=	Xsun
+.endif
+
+.if ${XSERVER_XSUNMONO} != "no"
+SUBDIR+=	XsunMono
+.endif
+
+.if ${XSERVER_XSUN24} != "no"
+SUBDIR+=	Xsun24
 .endif
 
 .if ${XSERVER_XVFB} != "no"
