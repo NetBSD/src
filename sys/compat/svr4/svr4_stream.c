@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.39 2000/07/27 14:00:56 mrg Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.40 2000/08/29 15:15:13 sommerfeld Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -511,6 +511,9 @@ si_listen(fp, fd, ioc, p)
 	if (st == NULL)
 		return EINVAL;
 
+	if (ioc->len > sizeof(lst))
+		return EINVAL;
+
 	if ((error = copyin(ioc->buf, &lst, ioc->len)) != 0)
 		return error;
 
@@ -711,6 +714,9 @@ ti_getinfo(fp, fd, ioc, p)
 
 	memset(&info, 0, sizeof(info));
 
+	if (ioc->len > sizeof(info))
+		return EINVAL;
+	
 	if ((error = copyin(ioc->buf, &info, ioc->len)) != 0)
 		return error;
 
@@ -760,6 +766,9 @@ ti_bind(fp, fd, ioc, p)
 		return EINVAL;
 	}
 
+	if (ioc->len > sizeof(bnd))
+		return EINVAL;
+	
 	if ((error = copyin(ioc->buf, &bnd, ioc->len)) != 0)
 		return error;
 
