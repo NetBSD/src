@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40 1996/03/31 22:51:58 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.41 1996/05/14 13:57:29 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -409,15 +409,17 @@ badtrap:
 		 * nsaved to -1.  If we decide to deliver a signal on
 		 * our way out, we will clear nsaved.
 		 */
-if (pcb->pcb_uw || pcb->pcb_nsaved) panic("trap T_RWRET 1");
+		if (pcb->pcb_uw || pcb->pcb_nsaved)
+			panic("trap T_RWRET 1");
 #ifdef DEBUG
-if (rwindow_debug)
-	printf("%s[%d]: rwindow: pcb<-stack: %x\n",
-		p->p_comm, p->p_pid, tf->tf_out[6]);
+		if (rwindow_debug)
+			printf("%s[%d]: rwindow: pcb<-stack: %x\n",
+				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(p, SIGILL);
-if (pcb->pcb_nsaved) panic("trap T_RWRET 2");
+		if (pcb->pcb_nsaved)
+			panic("trap T_RWRET 2");
 		pcb->pcb_nsaved = -1;		/* mark success */
 		break;
 
@@ -432,21 +434,22 @@ if (pcb->pcb_nsaved) panic("trap T_RWRET 2");
 		 * the cpu; we need to force it out to the stack.
 		 */
 #ifdef DEBUG
-if (rwindow_debug)
-	printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
-		p->p_comm, p->p_pid, tf->tf_out[6]);
+		if (rwindow_debug)
+			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: %x\n",
+				p->p_comm, p->p_pid, tf->tf_out[6]);
 #endif
 		write_user_windows();
 		if (rwindow_save(p) || read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(p, SIGILL);
 #ifdef DEBUG
-if (rwindow_debug)
-	printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
-		p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
+		if (rwindow_debug)
+			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: %x\n",
+				p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
 			sigexit(p, SIGILL);
-if (pcb->pcb_nsaved) panic("trap T_WINUF");
+		if (pcb->pcb_nsaved)
+			panic("trap T_WINUF");
 		pcb->pcb_nsaved = -1;		/* mark success */
 		break;
 
@@ -554,13 +557,13 @@ rwindow_save(p)
 	if (i == 0)
 		return (0);
 #ifdef DEBUG
-if(rwindow_debug)
-	printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
+	if(rwindow_debug)
+		printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
 #endif
 	do {
 #ifdef DEBUG
-if(rwindow_debug)
-	printf(" %x", rw[1].rw_in[6]);
+		if(rwindow_debug)
+			printf(" %x", rw[1].rw_in[6]);
 #endif
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
 		    sizeof *rw))
@@ -568,8 +571,8 @@ if(rwindow_debug)
 		rw++;
 	} while (--i > 0);
 #ifdef DEBUG
-if(rwindow_debug)
-	printf("\n");
+	if(rwindow_debug)
+		printf("\n");
 #endif
 	pcb->pcb_nsaved = 0;
 	return (0);
@@ -865,16 +868,16 @@ static int lastdouble;
 	va = trunc_page(sfva);
 
 #ifdef DEBUG
-if (lastdouble) {
-	printf("stacked tfault @ %x (pc %x); sfsr %x", sfva, pc, sfsr);
-	lastdouble = 0;
-	if (curproc == NULL)
-		printf("NULL proc\n");
-	else
-		printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-			curproc->p_pid, curproc->p_comm,
-			curproc->p_sigmask, curproc->p_sigcatch);
-}
+	if (lastdouble) {
+		printf("stacked tfault @ %x (pc %x); sfsr %x", sfva, pc, sfsr);
+		lastdouble = 0;
+		if (curproc == NULL)
+			printf("NULL proc\n");
+		else
+			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
+				curproc->p_pid, curproc->p_comm,
+				curproc->p_sigmask, curproc->p_sigcatch);
+	}
 #endif
 	if (((sfsr & SFSR_AT_TEXT) || type == T_TEXTFAULT) &&
 	    !(sfsr & SFSR_AT_STORE) && (sfsr & SFSR_OW)) {
