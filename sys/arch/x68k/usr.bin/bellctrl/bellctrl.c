@@ -1,4 +1,4 @@
-/*	$NetBSD: bellctrl.c,v 1.3 2001/12/27 02:23:26 wiz Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.4 2003/05/17 09:24:15 isaki Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
@@ -131,7 +131,7 @@ int maximum;
 
     if (arg[0] == '-' && arg[1] == '1' && arg[2] == '\0')
 	return 1;
-    for (p = arg; isdigit(*p); p++)
+    for (p = arg; isdigit((unsigned char)*p); p++)
 	;
     if (*p || atoi(arg) > maximum)
 	return 0;
