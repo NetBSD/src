@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4.2.2 2000/02/10 21:39:30 he Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.3 2000/03/29 22:38:45 he Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -12,14 +12,16 @@ TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
 SRCS=	${MAIN} whatis contents hardware xfer prep install\
 	upgrade donations legal.common legal postinstall ../Makefile.inc\
 	${MERGED_SRCS}
+ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} \
+	-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE}
 
 PRESET=	${GFLAGS} -dV=$V -dV_S=${V_S} -dMACHINE=$M -d.CURDIR=${.CURDIR} -r$M=1 
 
-POST_PLAIN= -P-b -P-u -P-o -Tascii
+POST_PLAIN= -P-b -P-u -P-o
 
 ARGS_PS=	${PRESET} -dformat=PostScript
-ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN}
-ARGS_HTML=	${PRESET} -dformat=HTML  ${POST_PLAIN} -ww
+ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN} -Tascii
+ARGS_HTML=	${PRESET} -dformat=HTML  ${POST_PLAIN} -Tlatin1 -ww
 ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii
 
 #
@@ -52,6 +54,17 @@ echosrcs! ${SRCS}
 
 echomore!
 	@echo ${.OBJDIR}/${TARG}.more
+
+.ifndef RELEASEDIR
+release:
+	@echo setenv RELEASEDIR first
+	@false
+.else
+release:
+.for i in ${TARGS}
+	${ICMD} ${i} ${RELEASEDIR}/.
+.endfor
+.endif
 
 .PATH: ${.CURDIR}/../common
 
