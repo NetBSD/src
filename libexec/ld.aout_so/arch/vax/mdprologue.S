@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.4 1998/08/20 15:12:03 matt Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.5 1998/08/21 01:03:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas <matt@3am-software.com>
@@ -49,7 +49,7 @@ _rtl:					/* crt0 calls us here */
 	 * Add the 1st entry in the GOT (e.g. __DYNAMIC) to the base
 	 * address of ld.so and pushd that onto the stack.
 	 */
-	addl3	_GLOBAL_OFFSET_TABLE_,(r0),-(sp)
+	addl3	__GLOBAL_OFFSET_TABLE_,(r0),-(sp)
 	pushl	r0			/* 2nd arg == crtp */
 	pushl	(ap)			/* 1st arg == version */
 	calls	$3,_rtld		/* _rtld(version, crtp, DYNAMIC) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 1998/08/18 18:46:17 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.4 1998/08/21 01:03:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -85,8 +85,8 @@
 #define TEXT_START(ex)		(N_TXTADDR(ex) + N_ADJUST(ex))
 #define DATA_START(ex)		(N_DATADDR(ex) + N_ADJUST(ex))
 
-#define RELOC_STATICS_THROUGH_GOT_P(r)	(0)
-#define JMPSLOT_NEEDS_RELOC		(0)
+#define RELOC_STATICS_THROUGH_GOT_P(r)	(1)
+#define JMPSLOT_NEEDS_RELOC		(1)
 
 #define md_got_reloc(r)			(0)
 
@@ -98,15 +98,16 @@ typedef long	got_t;
 
 /*
  *	.word	^M<reg-mask>
- *	pushl	#reloc_index
  *	jmp	L^addr
  */
 typedef struct jmpslot {
 	u_short mask;
 	u_short	opcode;
-	u_short	addr[2];
+	u_short	offset[2];
 #define JMPSLOT_RELOC_MASK		0xffff
+	u_short addr[2];
 	u_short	reloc_index;
+	u_short filler;
 } jmpslot_t;
 
 /*
