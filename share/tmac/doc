@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.8 1999/01/13 07:05:09 ross Exp $
+.\"	$NetBSD: doc,v 1.9 1999/03/06 10:12:08 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2294,18 +2294,16 @@
 .		ie \\n(C\\n(aP>2 .y\\n(C\\n(aP
 .		el \{\
 .			as b1 \&\\*(xR\\*(A\\n(aP\fP\s0
-.			if \\n(aC>\\n(aP \{\
-.				nr aP \\n(aP+1
+.			nr aP \\n(aP+1
+.			if \\n(aC>=\\n(aP \{\
 .				if \\n(C\\n(aP==2 \{\
 .					as b1 \&(\\*(A\\n(aP)
 .					nr aP \\n(aP+1
 .				\}
-.				if \\n(aC>=\\n(aP \{\
-.					c\\n(C\\n(aP
-.				\}
 .			\}
+.			ie \\n(aC>=\\n(aP .c\\n(C\\n(aP
+.			el .aZ
 .		\}
-.		aZ
 .       \}
 .\}
 ..
