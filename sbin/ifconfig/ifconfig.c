@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.43 1998/08/06 03:47:28 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.44 1998/08/06 19:22:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.43 1998/08/06 03:47:28 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.44 1998/08/06 19:22:00 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ int	get_media_subtype __P((int, const char *));
 int	get_media_options __P((int, const char *));
 int	lookup_media_word __P((struct ifmedia_description *, int,
 	    const char *));
-void	print_media_word __P((int, int));
+void	print_media_word __P((int, int, int));
 
 /*
  * XNS support liberally adapted from code written at the University of
@@ -865,15 +865,16 @@ lookup_media_word(desc, type, val)
 }
 
 void
-print_media_word(ifmw, print_type)
-	int ifmw, print_type;
+print_media_word(ifmw, print_type, as_syntax)
+	int ifmw, print_type, as_syntax;
 {
 	struct ifmedia_description *desc;
 	int seen_option = 0;
 
 	if (print_type)
 		printf("%s ", get_media_type_string(ifmw));
-	printf(get_media_subtype_string(ifmw));
+	printf("%s%s", as_syntax ? "media " : "",
+	    get_media_subtype_string(ifmw));
 
 	/* Find options. */
 	for (desc = ifm_option_descriptions; desc->ifmt_string != NULL;
@@ -882,14 +883,12 @@ print_media_word(ifmw, print_type)
 		    (ifmw & desc->ifmt_word) != 0 &&
 		    (seen_option & IFM_OPTIONS(desc->ifmt_word)) == 0) {
 			if (seen_option == 0)
-				printf(" <");
+				printf(" %s", as_syntax ? "mediaopt " : "");
 			printf("%s%s", seen_option ? "," : "",
 			    desc->ifmt_string);
 			seen_option |= IFM_OPTIONS(desc->ifmt_word);
 		}
 	}
-	if (seen_option)
-		printf(">");
 	if (IFM_INST(ifmw) != 0)
 		printf(" [inst %d]", IFM_INST(ifmw));
 }
@@ -949,11 +948,11 @@ status(ap, alen)
 		err(1, "SIOCGIFMEDIA");
 
 	printf("\tmedia: ");
-	print_media_word(ifmr.ifm_current, 1);
+	print_media_word(ifmr.ifm_current, 1, 0);
 	if (ifmr.ifm_active != ifmr.ifm_current) {
 		putchar(' ');
 		putchar('(');
-		print_media_word(ifmr.ifm_active, 0);
+		print_media_word(ifmr.ifm_active, 0, 0);
 		putchar(')');
 	}
 	putchar('\n');
@@ -982,11 +981,21 @@ status(ap, alen)
 	}
 
 	if (mflag) {
-		printf("\tsupported media:\n");
-		for (i = 0; i < ifmr.ifm_count; i++) {
-			printf("\t\t");
-			print_media_word(media_list[i], 1);
-			printf("\n");
+		int type, printed_type;
+
+		for (type = IFM_NMIN; type <= IFM_NMAX; type += IFM_NMIN) {
+			for (i = 0, printed_type = 0; i < ifmr.ifm_count; i++) {
+				if (IFM_TYPE(media_list[i]) == type) {
+					if (printed_type == 0) {
+					    printf("\tsupported %s media:\n",
+					      get_media_type_string(type));
+					    printed_type = 1;
+					}
+					printf("\t\t");
+					print_media_word(media_list[i], 0, 1);
+					printf("\n");
+				}
+			}
 		}
 	}
 
