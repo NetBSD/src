@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.21 2002/03/07 22:56:30 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.22 2002/04/24 05:25:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -126,6 +126,9 @@ struct	pthread_st {
 	 */
 	pthread_spin_t*	pt_heldlock;
 
+	/* Identifier, for debugging. */
+	int		pt_num;
+
 	/* Thread-specific data */
 	void*		pt_specific[PTHREAD_KEYS_MAX];
 
@@ -144,12 +147,13 @@ struct	pthread_st {
 #define PT_THREAD_IDLE		3
 
 /* Thread states */
-#define PT_STATE_RUNNABLE	1
-#define PT_STATE_BLOCKED_SYS	2
-#define PT_STATE_BLOCKED_QUEUE	3
-#define PT_STATE_ZOMBIE		4
-#define PT_STATE_DEAD		5
-#define PT_STATE_RECYCLABLE	6
+#define PT_STATE_RUNNING	1
+#define PT_STATE_RUNNABLE	2
+#define PT_STATE_BLOCKED_SYS	3
+#define PT_STATE_BLOCKED_QUEUE	4
+#define PT_STATE_ZOMBIE		5
+#define PT_STATE_DEAD		6
+#define PT_STATE_RECYCLABLE	7
 
 /* Flag values */
 
@@ -186,7 +190,7 @@ void	pthread_init(void)  __attribute__ ((__constructor__));
 /* Utility functions */
 
 /* Set up/clean up a thread's basic state. */
-void	pthread__initthread(pthread_t t);
+void	pthread__initthread(pthread_t self, pthread_t t);
 
 /* Go do something else. Don't go back on the run queue */
 void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
@@ -269,6 +273,8 @@ void	pthread__destroy_tsd(pthread_t self);
 #define PTHREAD__DEBUG_SHMSIZE	(1<<18)
 
 extern int pthread__debug_counters[PTHREADD_NCOUNTERS];
+
+extern int pthread__dbg; /* Set by libpthread_dbg */
 
 #define PTHREADD_ADD(x) (pthread__debug_counters[(x)]++)
 
