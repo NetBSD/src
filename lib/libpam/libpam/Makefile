@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:43 christos Exp $
+# $NetBSD: Makefile,v 1.3 2004/12/28 23:37:50 thorpej Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -169,4 +169,5 @@ openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
 .include <bsd.lib.mk>
 .PATH.h: ${DIST}/include
 .PATH.c: ${DIST}/lib
-.PATH.3: ${DIST}/doc/man
+#.PATH.3: ${DIST}/doc/man	# XXX work around a make bug
+.PATH: ${DIST}/doc/man
