@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.168 2004/07/22 19:51:37 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.169 2004/07/22 19:55:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.168 2004/07/22 19:51:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.169 2004/07/22 19:55:08 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -698,13 +698,40 @@ wi_init(struct ifnet *ifp)
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    sc->sc_firmware_type == WI_INTERSIL) {
 		wi_write_val(sc, WI_RID_OWN_BEACON_INT, ic->ic_lintval);
-		wi_write_val(sc, WI_RID_BASIC_RATE, 0x03);   /* 1, 2 */
-		wi_write_val(sc, WI_RID_SUPPORT_RATE, 0x0f); /* 1, 2, 5.5, 11 */
 		wi_write_val(sc, WI_RID_DTIM_PERIOD, 1);
 	}
 
-	if (sc->sc_firmware_type == WI_INTERSIL)
+	if (sc->sc_firmware_type == WI_INTERSIL) {
+		struct ieee80211_rateset *rs =
+		    &ic->ic_sup_rates[IEEE80211_MODE_11B];
+		u_int16_t basic = 0, supported = 0, rate;
+
+		for (i = 0; i < rs->rs_nrates; i++) {
+			switch (rs->rs_rates[i] & IEEE80211_RATE_VAL) {
+			case 2:
+				rate = 1;
+				break;
+			case 4:
+				rate = 2;
+				break;
+			case 11:
+				rate = 4;
+				break;
+			case 22:
+				rate = 8;
+				break;
+			default:
+				rate = 0;
+				break;
+			}
+			if (rs->rs_rates[i] & IEEE80211_RATE_BASIC)
+				basic |= rate;
+			supported |= rate;
+		}
+		wi_write_val(sc, WI_RID_BASIC_RATE, basic);
+		wi_write_val(sc, WI_RID_SUPPORT_RATE, supported);
 		wi_write_val(sc, WI_RID_ALT_RETRY_COUNT, sc->sc_alt_retry);
+	}
 
 	/*
 	 * Initialize promisc mode.
