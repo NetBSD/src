@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exnames - interpreter/scanner name load/execute
- *              xRevision: 94 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.6 2003/03/04 17:25:18 kochi Exp $");
 
 #define __EXNAMES_C__
 

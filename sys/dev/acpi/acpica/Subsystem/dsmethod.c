@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              xRevision: 90 $
+ *              $Revision: 1.8 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.7 2003/05/25 10:08:24 kochi Exp $");
-
 #define __DSMETHOD_C__
 
 #include "acpi.h"
@@ -172,7 +169,7 @@ AcpiDsParseMethod (
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "**** Parsing [%4.4s] **** NamedObj=%p\n",
-        ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii, ObjHandle));
+        AcpiUtGetNodeName (ObjHandle), ObjHandle));
 
     /* Extract the method object from the method Node */
 
@@ -254,7 +251,7 @@ AcpiDsParseMethod (
 
     ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
         "**** [%4.4s] Parsed **** NamedObj=%p Op=%p\n",
-        ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii, ObjHandle, Op));
+        AcpiUtGetNodeName (ObjHandle), ObjHandle, Op));
 
     AcpiPsDeleteParseTree (Op);
     return_ACPI_STATUS (Status);

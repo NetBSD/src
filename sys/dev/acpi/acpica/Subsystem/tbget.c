@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbget - ACPI Table get* routines
- *              xRevision: 83 $
+ *              $Revision: 1.8 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbget.c,v 1.7 2003/05/11 21:20:23 fvdl Exp $");
 
 #define __TBGET_C__
 
@@ -229,8 +226,7 @@ AcpiTbGetTableHeader (
         if (ACPI_FAILURE (Status))
         {
             ACPI_REPORT_ERROR (("Could not map memory at %8.8X%8.8X for length %X\n",
-                ACPI_HIDWORD (Address->Pointer.Physical),
-                ACPI_LODWORD (Address->Pointer.Physical),
+                ACPI_FORMAT_UINT64 (Address->Pointer.Physical),
                 sizeof (ACPI_TABLE_HEADER)));
             return_ACPI_STATUS (Status);
         }
@@ -454,8 +450,7 @@ AcpiTbGetThisTable (
         {
             ACPI_REPORT_ERROR (("Could not map memory for table [%4.4s] at %8.8X%8.8X for length %X\n",
                 Header->Signature,
-                ACPI_HIDWORD (Address->Pointer.Physical),
-                ACPI_LODWORD (Address->Pointer.Physical), Header->Length));
+                ACPI_FORMAT_UINT64 (Address->Pointer.Physical), Header->Length));
             return (Status);
         }
 
@@ -499,8 +494,7 @@ AcpiTbGetThisTable (
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "Found table [%4.4s] at %8.8X%8.8X, mapped/copied to %p\n",
         FullTable->Signature,
-        ACPI_HIDWORD (Address->Pointer.Physical),
-        ACPI_LODWORD (Address->Pointer.Physical), FullTable));
+        ACPI_FORMAT_UINT64 (Address->Pointer.Physical), FullTable));
 
     return_ACPI_STATUS (Status);
 }
@@ -550,18 +544,19 @@ AcpiTbGetTablePtr (
      */
     if (Instance == 1)
     {
-        /*
-         * Just pluck the pointer out of the global table!
-         * Will be null if no table is present
-         */
-        *TablePtrLoc = AcpiGbl_AcpiTables[TableType].Pointer;
+        /* Get the first */
+
+        if (AcpiGbl_TableLists[TableType].Next)
+        {
+            *TablePtrLoc = AcpiGbl_TableLists[TableType].Next->Pointer;
+        }
         return_ACPI_STATUS (AE_OK);
     }
 
     /*
      * Check for instance out of range
      */
-    if (Instance > AcpiGbl_AcpiTables[TableType].Count)
+    if (Instance > AcpiGbl_TableLists[TableType].Count)
     {
         return_ACPI_STATUS (AE_NOT_EXIST);
     }
@@ -573,7 +568,7 @@ AcpiTbGetTablePtr (
      * need to walk from the 2nd table until we reach the Instance
      * that the user is looking for and return its table pointer.
      */
-    TableDesc = AcpiGbl_AcpiTables[TableType].Next;
+    TableDesc = AcpiGbl_TableLists[TableType].Next;
     for (i = 2; i < Instance; i++)
     {
         TableDesc = TableDesc->Next;

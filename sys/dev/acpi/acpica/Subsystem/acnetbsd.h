@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       xRevision: 11 $
+ *       $Revision: 1.10 $
  *
  *****************************************************************************/
 
@@ -161,19 +161,27 @@
 
 #ifdef ACPI_DEBUG
 #define ACPI_DEBUG_OUTPUT
+#define	ACPI_DISASSEMBLER
+#define ACPI_DBG_TRACK_ALLOCATIONS
 #ifdef DEBUGGER_THREADING
 #undef DEBUGGER_THREADING
 #endif /* DEBUGGER_THREADING */
 #define DEBUGGER_THREADING 0	/* integrated with DDB */
 #include "opt_ddb.h"
 #ifdef DDB
-/* we enable debugger/disassembler component only when DDB is compiled in */
 #define ACPI_DEBUGGER
-#define ACPI_DISASSEMBLER
 #endif /* DDB */
 #endif /* ACPI_DEBUG */
 
+static __inline int
+isprint(int ch)
+{
+	return(isspace(ch) || isascii(ch));
+}
+
 #else /* _KERNEL */
+
+#include <ctype.h>
 
 /* Not building kernel code, so use libc */
 #define ACPI_USE_STANDARD_HEADERS
@@ -181,10 +189,14 @@
 #define	__cli()
 #define	__sti()
 
+/* XXX */
+#define __inline inline
+
 #endif /* _KERNEL */
 
 /* Always use NetBSD code over our local versions */
 #define ACPI_USE_SYSTEM_CLIBRARY
+#define ACPI_USE_NATIVE_DIVIDE
 
 /* NetBSD doesn't have strupr, should be fixed. (move to libkern) */
 static __inline char *
@@ -196,11 +208,5 @@ strupr(char *str)
 	c++;
     }
     return(str);
-}
-
-static __inline int
-isprint(int ch)
-{
-	return(isspace(ch) || isascii(ch));
 }
 #endif /* __ACNETBSD_H__ */

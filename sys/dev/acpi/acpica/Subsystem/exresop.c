@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresop - AML Interpreter operand/object resolution
- *              xRevision: 62 $
+ *              $Revision: 1.9 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresop.c,v 1.8 2003/03/04 17:25:19 kochi Exp $");
 
 #define __EXRESOP_C__
 
@@ -314,6 +311,7 @@ AcpiExResolveOperands (
                 case AML_REF_OF_OP:
                 case AML_ARG_OP:
                 case AML_LOCAL_OP:
+                case AML_LOAD_OP:   /* DdbHandle from LOAD_OP or LOAD_TABLE_OP */
 
                     ACPI_DEBUG_ONLY_MEMBERS (ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
                         "Reference Opcode: %s\n", OpInfo->Name)));
@@ -321,8 +319,9 @@ AcpiExResolveOperands (
 
                 default:
                     ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                        "Unknown Reference Opcode %X\n",
-                        ObjDesc->Reference.Opcode));
+                        "Unknown Reference Opcode %X [%s]\n",
+                        ObjDesc->Reference.Opcode,
+                        (AcpiPsGetOpcodeInfo (ObjDesc->Reference.Opcode))->Name));
 
                     return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
                 }
@@ -335,8 +334,8 @@ AcpiExResolveOperands (
             /* Invalid descriptor */
 
             ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                "Bad descriptor type %X in Obj %p\n",
-                ACPI_GET_DESCRIPTOR_TYPE (ObjDesc), ObjDesc));
+                    "Invalid descriptor %p [%s]\n",
+                    ObjDesc, AcpiUtGetDescriptorName (ObjDesc)));
 
             return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
         }
@@ -474,6 +473,13 @@ AcpiExResolveOperands (
             /* Any operand type will do */
 
             TypeNeeded = ACPI_TYPE_ANY;
+            break;
+
+        case ARGI_DDBHANDLE:
+
+            /* Need an operand of type ACPI_TYPE_DDB_HANDLE */
+
+            TypeNeeded = ACPI_TYPE_LOCAL_REFERENCE;
             break;
 
 

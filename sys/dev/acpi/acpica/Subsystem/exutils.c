@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exutils - interpreter/scanner utilities
- *              xRevision: 108 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.6 2003/03/04 17:25:20 kochi Exp $");
 
 #define __EXUTILS_C__
 
@@ -375,7 +372,11 @@ AcpiExDigitsNeeded (
     /*
      * ACPI_INTEGER is unsigned, so we don't worry about a '-'
      */
-    CurrentValue = Value;
+    if ((CurrentValue = Value) == 0)
+    {
+        return_VALUE (1);
+    }
+
     NumDigits = 0;
 
     while (CurrentValue)

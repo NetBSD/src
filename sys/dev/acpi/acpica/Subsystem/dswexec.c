@@ -2,7 +2,7 @@
  *
  * Module Name: dswexec - Dispatcher method execution callbacks;
  *                        dispatch to interpreter.
- *              xRevision: 98 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -115,9 +115,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.6 2003/03/04 17:25:14 kochi Exp $");
-
 #define __DSWEXEC_C__
 
 #include "acpi.h"
@@ -127,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.6 2003/03/04 17:25:14 kochi Exp $");
 #include "acinterp.h"
 #include "acnamesp.h"
 #include "acdebug.h"
+#include "acdisasm.h"
 
 
 #define _COMPONENT          ACPI_DISPATCHER
@@ -520,10 +518,26 @@ AcpiDsExecEndOp (
         }
         else
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
-                "[%s]: Could not resolve operands, %s\n",
-                AcpiPsGetOpcodeName (WalkState->Opcode),
-                AcpiFormatException (Status)));
+            /*
+             * Treat constructs of the form "Store(LocalX,LocalX)" as noops when the
+             * Local is uninitialized.
+             */
+            if  ((Status == AE_AML_UNINITIALIZED_LOCAL) &&
+                (WalkState->Opcode == AML_STORE_OP) &&
+                (WalkState->Operands[0]->Common.Type == ACPI_TYPE_LOCAL_REFERENCE) &&
+                (WalkState->Operands[1]->Common.Type == ACPI_TYPE_LOCAL_REFERENCE) &&
+                (WalkState->Operands[0]->Reference.Opcode ==
+                 WalkState->Operands[1]->Reference.Opcode))
+            {
+                Status = AE_OK;
+            }
+            else
+            {
+                ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
+                    "[%s]: Could not resolve operands, %s\n",
+                    AcpiPsGetOpcodeName (WalkState->Opcode),
+                    AcpiFormatException (Status)));
+            }
         }
 
         /* Always delete the argument objects and clear the operand stack */
@@ -766,7 +780,7 @@ Cleanup:
         AcpiDsDeleteResultIfNotUsed (Op, WalkState->ResultObj, WalkState);
     }
 
-#if _UNDER_DEVELOPMENT
+#ifdef _UNDER_DEVELOPMENT
 
     if (WalkState->ParserState.Aml == WalkState->ParserState.AmlEnd)
     {
@@ -777,6 +791,17 @@ Cleanup:
     /* Always clear the object stack */
 
     WalkState->NumOperands = 0;
+
+#ifdef ACPI_DISASSEMBLER
+
+    /* On error, display method locals/args */
+
+    if (ACPI_FAILURE (Status))
+    {
+        AcpiDmDumpMethodInfo (Status, WalkState, Op);
+    }
+#endif
+
     return_ACPI_STATUS (Status);
 }
 
