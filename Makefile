@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 1998/07/25 10:35:53 mycroft Exp $
+#	$NetBSD: Makefile,v 1.61 1998/07/26 17:28:58 mycroft Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -53,46 +53,38 @@ build: beforeinstall
 	${MAKE} cleandir
 .endif
 	${MAKE} includes
-	(cd ${.CURDIR}/lib/csu && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
-	(cd ${.CURDIR}/gnu/lib && ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	(cd ${.CURDIR}/lib/csu && \
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
+	(cd ${.CURDIR}/lib && \
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
+	(cd ${.CURDIR}/gnu/lib && \
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .if defined(USE_EGCS)
 	(cd ${.CURDIR}/gnu/usr.bin/egcs/libgcc && \
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc && \
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .endif
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 # libtelnet depends on libdes and libkrb.  libkrb depends on
 # libcom_err.
 .if exists(domestic/lib/libdes)
 	(cd ${.CURDIR}/domestic/lib/libdes && \
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .endif
 .if exists(domestic/lib/libcom_err)
 	(cd ${.CURDIR}/domestic/lib/libcom_err && \
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .endif
 .if exists(domestic/lib/libkrb)
 	(cd ${.CURDIR}/domestic/lib/libkrb && \
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .endif
 	(cd ${.CURDIR}/domestic/lib && \
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
+	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
-.if defined(USE_EGCS)
-.if defined(DESTDIR) && (${HAVE_GCC28} == "")
-	@echo '***** WARNING ***** Your system compiler is not GCC 2.8 or higher,'
-	@echo 'and you have built a distribution with GCC 2.8 and DESTDIR set.'
-	@echo 'You will need to rebuild libgcc from gnu/usr.bin/egcs/libgcc'
-	@echo 'in order to have full C++ support in the binary set.'
-.else
-	(cd ${.CURDIR}/gnu/usr.bin/egcs/libgcc &&\
-	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.endif # DESTDIR && !HAVE_GCC28
-.endif # USE_EGCS
 	@echo -n "Build finished at: "
 	@date
 
