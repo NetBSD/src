@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.47 2001/03/05 16:46:23 wiz Exp $	*/
+/*	$NetBSD: file.c,v 1.48 2001/09/26 13:48:28 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.47 2001/03/05 16:46:23 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.48 2001/09/26 13:48:28 hubertf Exp $");
 #endif
 #endif
 
@@ -667,7 +667,7 @@ unpack(char *pkg, char *flist)
 	} else
 		strcat(args, "z");
 	strcat(args, "xpf");
-	if (vsystem("%s %s %s %s", TAR_CMD, args, pkg, flist ? flist : "")) {
+	if (vsystem("%s %s %s %s", TAR_FULLPATHNAME, args, pkg, flist ? flist : "")) {
 		warnx("%s extract of %s failed!", TAR_CMD, pkg);
 		return 1;
 	}
