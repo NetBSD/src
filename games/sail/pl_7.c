@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pl_7.c	5.7 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: pl_7.c,v 1.4 1993/08/10 02:20:52 mycroft Exp $";
+static char rcsid[] = "$Id: pl_7.c,v 1.5 1993/11/10 15:59:04 cgd Exp $";
 #endif /* not lint */
 
 #include "player.h"
@@ -60,12 +60,6 @@ initscreen()
 	(void) leaveok(slot_w, 1);
 	(void) leaveok(stat_w, 1);
 	(void) leaveok(turn_w, 1);
-#ifdef SIGTSTP
-	{
-		void susp();
-		(void) signal(SIGTSTP, susp);
-	}
-#endif
 	noecho();
 	crmode();
 }
@@ -469,14 +463,3 @@ adjustview()
 	else if (mf->col > viewcol + (VIEW_X - VIEW_X/8))
 		viewcol = mf->col - VIEW_X/8;
 }
-
-#ifdef SIGTSTP
-void
-susp()
-{
-	blockalarm();
-	tstp(SIGTSTP);
-	(void) signal(SIGTSTP, susp);
-	unblockalarm();
-}
-#endif
