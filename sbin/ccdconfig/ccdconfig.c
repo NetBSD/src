@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.8 1997/01/30 04:02:09 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.9 1997/04/21 11:26:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -438,9 +438,9 @@ resolve_ccdname(name)
 			free(path);
 			return (NULL);
 		}
-		(void)sprintf(path, "/dev/%s%c", name, 'a' + rawpart);
+		(void)snprintf(path, newlen, "/dev/%s%c", name, 'a' + rawpart);
 	} else
-		(void)sprintf(path, "/dev/%s", name);
+		(void)snprintf(path, newlen, "/dev/%s", name);
 
 	return (path);
 }
