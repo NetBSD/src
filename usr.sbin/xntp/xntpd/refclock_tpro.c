@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_tpro.c,v 1.2 1998/01/09 06:07:10 perry Exp $	*/
+/*	$NetBSD: refclock_tpro.c,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
 
 /*
  * refclock_tpro - clock driver for the KSI/Odetics TPRO-S IRIG-B reader
@@ -178,22 +178,22 @@ tpro_poll(unit, peer)
 	 * since the year may be suspect. All format error checking is
 	 * done by the sprintf() and sscanf() routines.
 	 */
-	sprintf(pp->lastcode,
+	sprintf(pp->a_lastcode,
 	    "%1x%1x%1x %1x%1x:%1x%1x:%1x%1x.%1x%1x%1x%1x%1x%1x %1x",
 	    tp->day100, tp->day10, tp->day1, tp->hour10, tp->hour1,
 	    tp->min10, tp->min1, tp->sec10, tp->sec1, tp->ms100,
 	    tp->ms10, tp->ms1, tp->usec100, tp->usec10, tp->usec1,
 	    tp->status);
-	pp->lencode = strlen(pp->lastcode);
+	pp->lencode = strlen(pp->a_lastcode);
 
 #ifdef DEBUG
 	if (debug)
 		printf("tpro: time %s timecode %d %s\n",
 		    ulfptoa(&pp->lastrec, 6), pp->lencode,
-		    pp->lastcode);
+		    pp->a_lastcode);
 #endif
-	record_clock_stats(&peer->srcadr, pp->lastcode);
-	if (sscanf(pp->lastcode, "%3d %2d:%2d:%2d.%6ld", &pp->day,
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
+	if (sscanf(pp->a_lastcode, "%3d %2d:%2d:%2d.%6ld", &pp->day,
 	    &pp->hour, &pp->minute, &pp->second, &pp->usec)
 	    != 5) {
 		refclock_report(peer, CEVNT_BADTIME);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_select.h,v 1.2 1998/01/09 06:06:13 perry Exp $	*/
+/*	$NetBSD: ntp_select.h,v 1.3 1998/03/06 18:17:17 christos Exp $	*/
 
 /*
  * Not all machines define FD_SET in sys/types.h
@@ -9,7 +9,14 @@
 /* Was: (defined(RS6000)||defined(SYS_PTX))&&!defined(_BSD) */
 /* Could say: !defined(FD_SET) && defined(HAVE_SYS_SELECT_H) */
 #if defined(HAVE_SYS_SELECT_H) && !defined(_BSD)
+#ifndef SYS_VXWORKS
 #include <sys/select.h>
+#else
+#include <sockLib.h>
+extern int  select (int width, fd_set *pReadFds, fd_set *pWriteFds,
+            fd_set *pExceptFds, struct timeval *pTimeOut);
+
+#endif
 #endif
 
 #if !defined(FD_SET) && !defined(SYS_WINNT)

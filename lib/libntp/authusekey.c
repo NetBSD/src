@@ -1,4 +1,4 @@
-/*	$NetBSD: authusekey.c,v 1.2 1998/01/09 03:15:59 perry Exp $	*/
+/*	$NetBSD: authusekey.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 /*
  * authusekey - decode a key from ascii and use it
@@ -32,7 +32,7 @@
 
 int
 authusekey(keyno, keytype, str)
-	u_long keyno;
+	u_int32 keyno;
 	int keytype;
 	const char *str;
 {
@@ -41,7 +41,7 @@ authusekey(keyno, keytype, str)
 	u_char keybytes[8];
 	char *xdigit;
 	int i;
-	static char *hex = "0123456789abcdef";
+	static const char *hex = "0123456789abcdef";
 #endif
 	const char *cp;
 	int len;

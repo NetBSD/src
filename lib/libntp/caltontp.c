@@ -1,7 +1,7 @@
-/*	$NetBSD: caltontp.c,v 1.2 1998/01/09 03:16:02 perry Exp $	*/
+/*	$NetBSD: caltontp.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 /*
- * caltontp - convert a julian date to an NTP time
+ * caltontp - convert a date to an NTP time
  */
 #include <sys/types.h>
 
@@ -9,84 +9,35 @@
 #include "ntp_calendar.h"
 #include "ntp_stdlib.h"
 
-/*
- * calmonthtab - month start offsets from the beginning of a cycle.
- */
-static u_short calmonthtab[12] = {
-	0,						/* March */
-	MAR,						/* April */
-	(MAR+APR),					/* May */
-	(MAR+APR+MAY),					/* June */
-	(MAR+APR+MAY+JUN),				/* July */
-	(MAR+APR+MAY+JUN+JUL),				/* August */
-	(MAR+APR+MAY+JUN+JUL+AUG),			/* September */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP),			/* October */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT),		/* November */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT+NOV),		/* December */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT+NOV+DEC),	/* January */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT+NOV+DEC+JAN),	/* February */
-};
-
 u_long
 caltontp(jt)
 	register const struct calendar *jt;
 {
-	register int cyear;
-	register int resyear;
-	register u_long nt;
-	register int yearday;
+    u_long ace_days;			     /* absolute Christian Era days */
+    u_long ntp_days;
+    int    prior_years;
+    u_long ntp_time;
+    
+    /*
+     * First convert today's date to absolute days past 12/1/1 BC
+     */
+    prior_years = jt->year-1;
+    ace_days = jt->yearday		     /* days this year */
+	+(DAYSPERYEAR*prior_years)	     /* plus days in previous years */
+	+(prior_years/4)		     /* plus prior years's leap days */
+	-(prior_years/100)		     /* minus leapless century years */
+	+(prior_years/400);		     /* plus leapful Gregorian yrs */
 
-	/*
-	 * Find the start of the cycle this is in.
-	 */
-	cyear = (int)(jt->year - 1900) >> 2;
-	resyear = (jt->year - 1900) - (cyear << 2);
-	yearday = 0;
-	if (resyear == 0) {
-		if (jt->yearday == 0) {
-			if (jt->month == 1 || jt->month == 2) {
-				cyear--;
-				resyear = 3;
-			}
-		} else {
-			if (jt->yearday <= (u_short)(JAN+FEBLEAP)) {
-				cyear--;
-				resyear = 3;
-				yearday = calmonthtab[10] + jt->yearday;
-			} else {
-				yearday = jt->yearday - (JAN+FEBLEAP);
-			}
-		}
-	} else {
-		if (jt->yearday == 0) {
-			if (jt->month == 1 || jt->month == 2)
-				resyear--;
-		} else {
-			if (jt->yearday <= (u_short)(JAN+FEB)) {
-				resyear--;
-				yearday = calmonthtab[10] + jt->yearday;
-			} else {
-				yearday = jt->yearday - (JAN+FEB);
-			}
-		}
-	}
+    /*
+     * Subtract out 1/1/1900, the beginning of the NTP epoch
+     */
+    ntp_days = ace_days - DAY_NTP_STARTS;
 
-	if (yearday == 0) {
-		if (jt->month >= 3) {
-			yearday = calmonthtab[jt->month - 3] + jt->monthday;
-		} else {
-			yearday = calmonthtab[jt->month + 9] + jt->monthday;
-		}
-	}
+    /*
+     * Do the obvious:
+     */
+    ntp_time = 
+	ntp_days*SECSPERDAY+SECSPERMIN*(MINSPERHR*jt->hour + jt->minute);
 
-	nt = TIMESDPERC((u_long)cyear);
-	while (resyear-- > 0)
-		nt += DAYSPERYEAR;
-	nt += (u_long) (yearday - 1);
-
-	nt = TIMES24(nt) + (u_long)jt->hour;
-	nt = TIMES60(nt) + (u_long)jt->minute;
-	nt = TIMES60(nt) + (u_long)jt->second;
-
-	return nt + MAR1900;
+    return ntp_time;
 }

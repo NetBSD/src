@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_mx4200.c,v 1.2 1998/01/09 06:07:04 perry Exp $	*/
+/*	$NetBSD: refclock_mx4200.c,v 1.3 1998/03/06 18:17:24 christos Exp $	*/
 
 /*
  * This software was developed by the Computer Systems Engineering group
@@ -493,8 +493,8 @@ mx4200_ref(peer)
 {
 	register struct mx4200unit *up;
 	struct refclockproc *pp;
-	double dtemp, lat, lon, alt;
-	char lats[32], lons[32];
+	double minute, lat, lon, alt;
+	char lats[16], lons[16];
 	char nsc, ewc;
 
 	pp = peer->procptr;
@@ -558,10 +558,10 @@ mx4200_ref(peer)
 		ewc = 'W';
 	}
 	alt = up->avg_alt;
-	dtemp = (lat - (double)(int)lat) * 600.0 / 10.0;
-	sprintf(lats,"%02d%02.4f", (int)lat, dtemp);
-	dtemp = (lon - (double)(int)lon) * 600.0 / 10.0;
-	sprintf(lons,"%02d%02.4f", (int)lon, dtemp);
+	minute = (lat - (double)(int)lat) * 600.0 / 10.0;
+	sprintf(lats,"%02d%02.4f", (int)lat, minute);
+	minute = (lon - (double)(int)lon) * 600.0 / 10.0;
+	sprintf(lons,"%03d%02.4f", (int)lon, minute);
 
 	mx4200_send(peer, "%s,%03d,,,,,%s,%c,%s,%c,%.2f,%d", pmvxg,
 	    PMVXG_S_INITMODEA,
@@ -711,7 +711,7 @@ mx4200_receive(rbufp)
 	/*
 	 * Read clock output.  Automatically handles STREAMS, CLKLDISC.
 	 */
-	pp->lencode = refclock_gtlin(rbufp, pp->lastcode, BMAX, &pp->lastrec);
+	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &pp->lastrec);
 
 	/*
 	 * There is a case where <cr><lf> generates 2 timestamps.
@@ -720,10 +720,10 @@ mx4200_receive(rbufp)
 		return;
 
 	up->pollcnt = 2;
-	pp->lastcode[pp->lencode] = '\0';
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	pp->a_lastcode[pp->lencode] = '\0';
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	mx4200_debug(peer, "mx4200_receive: %d %s\n",
-		pp->lencode, pp->lastcode);
+		pp->lencode, pp->a_lastcode);
 
 	/*
 	 * The structure of the control port sentences is based on the
@@ -747,8 +747,8 @@ mx4200_receive(rbufp)
 	 *
 	 * Reject if any important landmarks are missing.
 	 */
-	cp = pp->lastcode + pp->lencode - 3;
-	if (cp < pp->lastcode || *pp->lastcode != '$' || cp[0] != '*' ) {
+	cp = pp->a_lastcode + pp->lencode - 3;
+	if (cp < pp->a_lastcode || *pp->a_lastcode != '$' || cp[0] != '*' ) {
 		mx4200_debug(peer, "mx4200_receive: bad format\n");
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
@@ -757,7 +757,7 @@ mx4200_receive(rbufp)
 	/*
 	 * Check and discard the checksum
 	 */
-	ck = mx4200_cksum(&pp->lastcode[1], pp->lencode - 4);
+	ck = mx4200_cksum(&pp->a_lastcode[1], pp->lencode - 4);
 	if (char2hex[ck >> 4] != cp[1] || char2hex[ck & 0xf] != cp[2]) {
 		mx4200_debug(peer, "mx4200_receive: bad checksum\n");
 		refclock_report(peer, CEVNT_BADREPLY);
@@ -769,7 +769,7 @@ mx4200_receive(rbufp)
 	 * Get the sentence type.
 	 */
 	sentence_type = 0;
-	if ((cp = strchr(pp->lastcode, ',')) == NULL) {
+	if ((cp = strchr(pp->a_lastcode, ',')) == NULL) {
 		mx4200_debug(peer, "mx4200_receive: no sentence\n", cp);
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
@@ -1175,7 +1175,7 @@ mx4200_parse_t(peer)
 	pp = peer->procptr;
 	up = (struct mx4200unit *)pp->unitptr;
 
-	cp = pp->lastcode;
+	cp = pp->a_lastcode;
 
 	if ((cp = strchr(cp, ',')) == NULL)
 		return ("no rec-type");
@@ -1511,7 +1511,7 @@ mx4200_parse_p(peer)
 	/* Should never happen! */
 	if (up->moving) return ("mobile platform - no pos!");
 
-	cp = pp->lastcode;
+	cp = pp->a_lastcode;
 
 	if ((cp = strchr(cp, ',')) == NULL)
 		return ("no rec-type");
@@ -1670,7 +1670,7 @@ mx4200_parse_d(peer)
 	/* Should never happen! */
 	if (up->moving) return ("mobile platform - no dop!");
 
-	cp = pp->lastcode;
+	cp = pp->a_lastcode;
 
 	if ((cp = strchr(cp, ',')) == NULL)
 		return ("no rec-type");
@@ -1847,7 +1847,7 @@ mx4200_parse_s(peer)
 	pp = peer->procptr;
 	up = (struct mx4200unit *)pp->unitptr;
 
-	cp = pp->lastcode;
+	cp = pp->a_lastcode;
 
 	if ((cp = strchr(cp, ',')) == NULL)
 		return ("no rec-type");

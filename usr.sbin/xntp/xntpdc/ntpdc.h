@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.h,v 1.2 1998/01/09 06:07:16 perry Exp $	*/
+/*	$NetBSD: ntpdc.h,v 1.3 1998/03/06 18:17:25 christos Exp $	*/
 
 /*
  * ntpdc.h - definitions of interest to xntpdc
@@ -50,11 +50,11 @@ struct parse {
  * syntax.
  */
 struct xcmd {
-	char *keyword;		/* command key word */
-	void (*handler)	P((struct parse *, FILE *));	/* command handler */
-	u_char arg[MAXARGS];	/* descriptors for arguments */
-	char *desc[MAXARGS];	/* descriptions for arguments */
-	char *comment;
+  const char *keyword;		/* command key word */
+  void (*handler)	P((struct parse *, FILE *));	/* command handler */
+  u_char arg[MAXARGS];		/* descriptors for arguments */
+  const char *desc[MAXARGS];	/* descriptions for arguments */
+  const char *comment;
 };
 
 extern	int	doquery	P((int, int, int, int, int, char *, int *, int *, char **, int));

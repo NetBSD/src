@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.2 1998/01/09 06:06:13 perry Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.3 1998/03/06 18:17:18 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for XNTP lib.
@@ -9,41 +9,34 @@
 #include "ntp_string.h"
 #include "l_stdlib.h"
 
-#ifndef	P
-#if defined(__STDC__) || defined(USE_PROTOTYPES)
-#define P(x)	x
-#else
-#define	P(x)	()
-#if	!defined(const)
-#define	const
-#endif
-#endif
-#endif
-
 #if defined(__STDC__)
-extern	void	msyslog		P((int, char *, ...));
+extern	void	msyslog		P((int, const char *, ...));
 #else
 extern	void	msyslog		P(());
 #endif
 
+#if 0				/* HMS: These seem to be unused now */
 extern	void	auth_des	P((u_long *, u_char *));
-extern	void	auth_delkeys	P((void));
-extern	int	auth_havekey	P((u_long));
 extern	int	auth_parity	P((u_long *));
 extern	void	auth_setkey	P((u_long, u_long *));
 extern	void	auth_subkeys	P((u_long *, u_char *, u_char *));
-extern	int	authistrusted	P((u_long));
-extern	int	authusekey	P((u_long, int, const char *));
 
 extern	void	auth_delkeys	P((void));
 
-extern	void	auth1crypt	P((u_long, u_int32 *, int));
-extern	int	auth2crypt	P((u_long, u_int32 *, int));
-extern	int	authdecrypt	P((u_long, u_int32 *, int));
-extern	int	authencrypt	P((u_long, u_int32 *, int));
-extern	int	authhavekey	P((u_long));
+#endif
+
+extern	void	auth1crypt	P((u_int32, u_int32 *, int));
+extern	int	auth2crypt	P((u_int32, u_int32 *, int));
+extern	void	auth_delkeys	P((void));
+extern	int	auth_havekey	P((u_int32));
+extern	int	authdecrypt	P((u_int32, u_int32 *, int));
+extern	int	authencrypt	P((u_int32, u_int32 *, int));
+extern	int	authhavekey	P((u_int32));
+extern	int	authistrusted	P((u_int32));
 extern	int	authreadkeys	P((const char *));
-extern	void	authtrust	P((u_long, int));
+extern	void	authtrust	P((u_int32, int));
+extern	int	authusekey	P((u_int32, int, const char *));
+
 extern	void	calleapwhen	P((u_long, u_long *, u_long *));
 extern	u_long	calyearstart	P((u_long));
 extern	const char *clockname	P((int));
@@ -53,26 +46,26 @@ extern	int	ntp_getopt	P((int, char **, char *));
 extern	void	init_auth	P((void));
 extern	void	init_lib	P((void));
 extern	void	init_random	P((void));
-extern	struct savekey *auth_findkey P((u_long));
+extern	struct savekey *auth_findkey P((u_int32));
 extern	int	auth_moremem	P((void));
 
 #ifdef	DES
-extern	void	DESauth1crypt	P((u_long, u_int32 *, int));
-extern	int	DESauth2crypt	P((u_long, u_int32 *, int));
-extern	int	DESauthdecrypt	P((u_long, const u_int32 *, int));
-extern	int	DESauthencrypt	P((u_long, u_int32 *, int));
-extern	void	DESauth_setkey	P((u_long, const u_int32 *));
+extern	void	DESauth1crypt	P((u_int32, u_int32 *, int));
+extern	int	DESauth2crypt	P((u_int32, u_int32 *, int));
+extern	int	DESauthdecrypt	P((u_int32, const u_int32 *, int));
+extern	int	DESauthencrypt	P((u_int32, u_int32 *, int));
+extern	void	DESauth_setkey	P((u_int32, const u_int32 *));
 extern	void	DESauth_subkeys	P((const u_int32 *, u_char *, u_char *));
 extern	void	DESauth_des	P((u_int32 *, u_char *));
 extern	int	DESauth_parity	P((u_int32 *));
 #endif	/* DES */
 
 #ifdef	MD5
-extern	void	MD5auth1crypt	P((u_long, u_int32 *, int));
-extern	int	MD5auth2crypt	P((u_long, u_int32 *, int));
-extern	int	MD5authdecrypt	P((u_long, const u_int32 *, int));
-extern	int	MD5authencrypt	P((u_long, u_int32 *, int));
-extern	void	MD5auth_setkey	P((u_long, const u_int32 *));
+extern	void	MD5auth1crypt	P((u_int32, u_int32 *, int));
+extern	int	MD5auth2crypt	P((u_int32, u_int32 *, int));
+extern	int	MD5authdecrypt	P((u_int32, const u_int32 *, int));
+extern	int	MD5authencrypt	P((u_int32, u_int32 *, int));
+extern	void	MD5auth_setkey	P((u_int32, const u_int32 *));
 #endif	/* MD5 */
 
 extern	int	atoint		P((const char *, long *));
@@ -82,7 +75,7 @@ extern	char *	humandate	P((u_long));
 extern	char *	inttoa		P((long));
 extern	char *	mfptoa		P((u_long, u_long, int));
 extern	char *	mfptoms		P((u_long, u_long, int));
-extern	char *	modetoa		P((int));
+extern	const char * modetoa	P((int));
 extern  const char * eventstr   P((int));
 extern  const char * ceventstr  P((int));
 extern	char *	statustoa	P((int, int));

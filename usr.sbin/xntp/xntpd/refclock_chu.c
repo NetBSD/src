@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.2 1998/01/09 06:06:54 perry Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
 
 /*
  * refclock_chu - clock driver for the CHU time code
@@ -341,13 +341,13 @@ chu_receive(rbufp)
 	 * we want.
 	 */
 	for (i = 0; i < NCHUCHARS; i++) {
-		pp->lastcode[2 * i] = hexstring[chuc->codechars[i] &
+		pp->a_lastcode[2 * i] = hexstring[chuc->codechars[i] &
 		    0xf];
-		pp->lastcode[2 * i + 1] = hexstring[chuc->codechars[i]
+		pp->a_lastcode[2 * i + 1] = hexstring[chuc->codechars[i]
 		    >> 4];
 	}
 	pp->lencode = 2 * i;
-	pp->lastcode[pp->lencode] = '\0';
+	pp->a_lastcode[pp->lencode] = '\0';
 #ifdef DEBUG
 	if (debug > 3) {
 		printf("chu: %s packet\n", (chuc->chutype == CHU_YEAR)?
@@ -382,7 +382,7 @@ chu_receive(rbufp)
 	 	 * Break out the code into the BCD nibbles.
 		 * Put it in the half of lastcode.
 		 */
-		code = up->lastcode;
+		code = up->a_lastcode;
 		code += 2*NCHUCHARS;
 		for (i = 0; i < NCHUCHARS; i++) {
 			*code++ = chuc->codechars[i] & 0xf;
@@ -424,7 +424,7 @@ chu_receive(rbufp)
 	 * with the first half since both are identical.  Note the first
 	 * BCD character is the low order nibble, the second the high order.
 	 */
-	code = up->lastcode;
+	code = up->a_lastcode;
 	for (i = 0; i < NCHUCHARS; i++) {
 		*code++ = chuc->codechars[i] & 0xf;
 		*code++ = (chuc->codechars[i] >> 4) & 0xf;
@@ -444,7 +444,7 @@ chu_receive(rbufp)
 	/*
 	 * If the first nibble isn't a 6, we're up the creek
 	 */
-	code = up->lastcode;
+	code = up->a_lastcode;
 	if (*code++ != 6) {
 		refclock_report(peer, CEVNT_BADREPLY);
 		return;
@@ -485,7 +485,7 @@ chu_receive(rbufp)
 	 * receive timestamp.  If this doesn't work, mark the
 	 * date as bad and forget it.
 	 */
-	if (!clocktime(day, hour, minute, second, 0,
+	if (!clocktime(day, hour, minute, second, GMT,
 	    rbufp->recv_time.l_ui, &pp->yearstart, (u_int32 *)&reftime)) {
 		refclock_report(peer, CEVNT_BADDATE);
 		return;
@@ -770,7 +770,7 @@ chu_process(up)
 
 	pp->lasttime = current_time;
 	up->pollcnt = 2;
-	record_clock_stats(&peer->srcadr, pp->lastcode);
+	record_clock_stats(&peer->srcadr, pp->a_lastcode);
 	refclock_receive(peer, &up->offsets[imax], 0,
 	    dispersion, &up->rectimes[imax], &up->rectimes[imax],
 	    pp->leap);

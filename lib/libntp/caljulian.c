@@ -1,4 +1,4 @@
-/*	$NetBSD: caljulian.c,v 1.2 1998/01/09 03:16:01 perry Exp $	*/
+/*	$NetBSD: caljulian.c,v 1.3 1998/03/06 18:17:14 christos Exp $	*/
 
 /*
  * caljulian - determine the Julian date from an NTP time.
@@ -10,98 +10,107 @@
 #include "ntp_stdlib.h"
 
 /*
- * calmonthtab - month start offsets from the beginning of a cycle.
+ * calmonthtab - days-in-the-month table
  */
-static u_short calmonthtab[12] = {
-	0,						/* March */
-	MAR,						/* April */
-	(MAR+APR),					/* May */
-	(MAR+APR+MAY),					/* June */
-	(MAR+APR+MAY+JUN),				/* July */
-	(MAR+APR+MAY+JUN+JUL),				/* August */
-	(MAR+APR+MAY+JUN+JUL+AUG),			/* September */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP),			/* October */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT),		/* November */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT+NOV),		/* December */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT+NOV+DEC),	/* January */
-	(MAR+APR+MAY+JUN+JUL+AUG+SEP+OCT+NOV+DEC+JAN),	/* February */
-};
-
-/*
- * caldaytab - calendar year start day offsets
- */
-static u_short caldaytab[YEARSPERCYCLE] = {
-	(DAYSPERYEAR - (JAN + FEB)),
-	((DAYSPERYEAR * 2) - (JAN + FEB)),
-	((DAYSPERYEAR * 3) - (JAN + FEB)),
-	((DAYSPERYEAR * 4) - (JAN + FEB)),
+static u_short calmonthtab[11] = {
+    JAN,
+    FEB,
+    MAR,
+    APR,
+    MAY,
+    JUN,
+    JUL,
+    AUG,
+    SEP,
+    OCT,
+    NOV
 };
 
 void
 caljulian(ntptime, jt)
-	u_long ntptime;
-	register struct calendar *jt;
+    u_long                    ntptime;
+    register struct calendar *jt;
 {
-	register int i;
-	register u_long nt;
-	register u_short snt;
-	register int cyear;
+    u_long ntp_day;
+    u_long minutes;
+    /*
+     * Absolute, zero-adjusted Christian era day, starting from the
+     * mythical day 12/1/1 BC
+     */
+    u_long acez_day;
 
+    u_long d400;			     /* Days into a Gregorian cycle */
+    u_long d100;			     /* Days into a normal century */
+    u_long d4;				     /* Days into a 4-year cycle */
+    u_long n400;			     /* # of Gregorian cycles */
+    u_long n100;			     /* # of normal centuries */
+    u_long n4;				     /* # of 4-year cycles */
+    u_long n1;				     /* # of years into a leap year */
+					     /*   cycle */
+
+    /*
+     * Do the easy stuff first: take care of hh:mm:ss, ignoring leap
+     * seconds
+     */
+    jt->second = ntptime % SECSPERMIN;
+    minutes    = ntptime / SECSPERMIN;
+    jt->minute = minutes % MINSPERHR;
+    jt->hour   = (minutes / MINSPERHR) % HRSPERDAY;
+    
+    /*
+     * Find the day past 1900/01/01 00:00 UTC
+     */
+    ntp_day = ntptime / SECSPERDAY;
+    acez_day = DAY_NTP_STARTS + ntp_day - 1;
+    n400     = acez_day/GREGORIAN_CYCLE_DAYS;
+    d400     = acez_day%GREGORIAN_CYCLE_DAYS;
+    n100     = d400 / GREGORIAN_NORMAL_CENTURY_DAYS;
+    d100     = d400 % GREGORIAN_NORMAL_CENTURY_DAYS;
+    n4       = d100 / GREGORIAN_NORMAL_LEAP_CYCLE_DAYS;
+    d4       = d100 % GREGORIAN_NORMAL_LEAP_CYCLE_DAYS;
+    n1       = d4 / DAYSPERYEAR;
+
+    /*
+     * Calculate the year and year-of-day
+     */
+    jt->yearday = 1 + d4%DAYSPERYEAR;
+    jt->year    = 400*n400 + 100*n100 + n4*4 + n1;
+
+    if (n100 == 4 || n1 == 4)
+    {
 	/*
-	 * Find the start of the cycle this is in.
+	 * If the cycle year ever comes out to 4, it must be December 31st
+	 * of a leap year.
 	 */
-	nt = ntptime;
-	if (nt >= MAR1988) {
-		cyear = CYCLE22;
-		nt -= MAR1988;
-	} else {
-		cyear = 0;
-		nt -= MAR1900;
-	}
-	while (nt >= SECSPERCYCLE) {
-		nt -= SECSPERCYCLE;
-		cyear++;
-	}
+	jt->month    = 12;
+	jt->monthday = 31;
+	jt->yearday  = 366;
+    }
+    else
+    {
+	/*
+	 * Else, search forwards through the months to get the right month
+	 * and date.
+	 */
+	int monthday;
+
+	jt->year++;
+	monthday = jt->yearday;
+
+	for (jt->month=0;jt->month<11; jt->month++)
+	{
+	    int t;
 	
-	/*
-	 * Seconds, minutes and hours are too hard to do without
-	 * divides, so we don't.
-	 */
-	jt->second = (u_char) (nt % SECSPERMIN);
-	nt /= SECSPERMIN;		/* nt in minutes */
-	jt->minute = (u_char) (nt % MINSPERHR);
-	snt = (u_short) (nt / MINSPERHR);		/* snt in hours */
-	jt->hour = (u_char) (snt % HRSPERDAY);
-	snt /= HRSPERDAY;		/* nt in days */
+	    t = monthday - calmonthtab[jt->month];
+	    if (jt->month == 1 && is_leapyear(jt->year))
+		t--;
 
-	/*
-	 * snt is now the number of days into the cycle, from 0 to 1460.
-	 */
-	cyear <<= 2;
-	if (snt < caldaytab[0]) {
-		jt->yearday = snt + JAN + FEBLEAP + 1;	/* first year is leap */
-	} else {
-		for (i = 1; i < YEARSPERCYCLE; i++)
-			if (snt < caldaytab[i])
-				break;
-		jt->yearday = snt - caldaytab[i-1] + 1;
-		cyear += i;
+	    if (t > 0)
+		monthday = t;
+	    else
+		break;
 	}
-	jt->year = cyear + 1900;
-
-	/*
-	 * One last task, to compute the month and day.  Normalize snt to
-	 * a day within a cycle year.
-	 */
-	while (snt >= DAYSPERYEAR)
-		snt -= DAYSPERYEAR;
-	for (i = 0; i < 11; i++)
-		if (snt < calmonthtab[i+1])
-			break;
-	
-	if (i > 9)
-		jt->month = i - 9;	/* January or February */
-	else
-		jt->month = i + 3;	/* March through December */
-	jt->monthday = snt - calmonthtab[i] + 1;
+	jt->month++;
+	jt->monthday = monthday;
+    }
 }
