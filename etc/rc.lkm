@@ -1,4 +1,4 @@
-#	$NetBSD: rc.lkm,v 1.5 2000/05/26 17:46:16 tron Exp $
+#	$NetBSD: rc.lkm,v 1.6 2000/09/10 16:50:05 jdolecek Exp $
 #
 # this script loads or unloads LKMs (loadable kernel modules).
 
@@ -6,7 +6,7 @@ if [ -s /etc/lkm.conf ]; then
 	case "$1" in
 	start)
 		(while read path options entry postinstall output when; do
-			cmd='modload '
+			flags=''
 	
 			case $path in
 			\#*|"")
@@ -29,7 +29,7 @@ if [ -s /etc/lkm.conf ]; then
 			-)
 				;;
 			*)
-				cmd="$cmd $options"
+				flags="$flags $options"
 				;;
 			esac
 	
@@ -37,7 +37,7 @@ if [ -s /etc/lkm.conf ]; then
 			-)
 				;;
 			*)
-				cmd="$cmd -e $entry"
+				flags="$flags -e $entry"
 				;;
 			esac
 	
@@ -45,7 +45,7 @@ if [ -s /etc/lkm.conf ]; then
 			-)
 				;;
 			*)
-				cmd="$cmd -p $postinstall"
+				flags="$flags -p $postinstall"
 				;;
 			esac
 	
@@ -54,9 +54,9 @@ if [ -s /etc/lkm.conf ]; then
 				;;
 			*)
 				if [ "$output" = TEMP ]; then
-					cmd="$cmd -o /tmp/lkm.$$"
+					flags="$flags -o /tmp/lkm.$$"
 				else
-					cmd="$cmd -o $output"
+					flags="$flags -o $output"
 				fi
 				;;
 			esac
@@ -73,12 +73,20 @@ if [ -s /etc/lkm.conf ]; then
 				;;
 			esac
 	
-			if [ $when != $lkmstage ]; then
+			if [ "$when" != "$lkmstage" ]; then
 				continue
 			fi
 	
+			# try to find out booted kernel via sysctl
+			# if supported
+			booted_kernel=`/sbin/sysctl -n machdep.booted_kernel 2>/dev/null`
+			if [ ! -z "$booted_kernel" -a -r "$booted_kernel" ];
+			then
+				flags="-A $booted_kernel $flags"
+			fi
+
 			echo -n "`basename $path .o`: "
-			$cmd $path
+			modload $flags $path
 			rm -f /tmp/lkm.$$
 		done) < /etc/lkm.conf
 		;;
@@ -97,7 +105,7 @@ if [ -s /etc/lkm.conf ]; then
 				;;
 			esac
 
-			if [ $when = $lkmstage ]; then
+			if [ "$when" = "$lkmstage" ]; then
 				modunload -n ${name}
 			fi
 		done) < /etc/lkm.conf
