@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_mc.c,v 1.4 1995/12/20 00:38:57 cgd Exp $	*/
+/*	$NetBSD: clock_mc.c,v 1.5 1996/04/12 02:05:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>		/* XXX */
+#include <machine/bus.h>
 
 #include <alpha/alpha/clockvar.h>
 #include <dev/ic/mc146818reg.h>
@@ -78,8 +79,8 @@ struct mcclockdata {
 	void	(*mc_write) __P((struct clock_softc *csc, u_int reg,
 		    u_int datum));
 	u_int	(*mc_read) __P((struct clock_softc *csc, u_int reg));
-	__const void *mc_accessfns;
-	void	*mc_accessarg;
+	bus_chipset_tag_t mc_bc;
+	bus_io_handle_t mc_ioh;
 	void	*mc_addr;
 };
 
@@ -119,32 +120,44 @@ mcclock_attach(parent, self, aux)
 	csc->sc_set = mcclock_set;
 
 #if NIOASIC
-	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		struct ioasicdev_attach_args *ioasicdev = aux;
+		struct mcclockdata *cdp;
 
 		/* 
 		 * XXX should really allocate a new one and copy, or
 		 * something.  unlikely we'll have more than one...
 		 */
-		csc->sc_data = &mcclockdata_tc;
-		mcclockdata_tc.mc_addr = (void *)ioasicdev->iada_addr;
+		csc->sc_data = cdp = &mcclockdata_tc;
+		cdp->mc_addr = (void *)ioasicdev->iada_addr;
 	} else
 #endif
 #if NISA
-	if (parent->dv_cfdata->cf_driver == &isacd) {
+    {
+	extern struct cfdriver isa_cd;
+
+	if (parent->dv_cfdata->cf_driver == &isa_cd) {
+		struct isa_attach_args *ia = aux;
+		struct mcclockdata *cdp;
+
 		/* 
 		 * XXX should really allocate a new one and copy, or
 		 * something.  unlikely we'll have more than one...
 		 */
-		csc->sc_data = &mcclockdata_isa;
-		mcclockdata_isa.mc_accessfns = ida->ida_piofns;
-		mcclockdata_isa.mc_accessarg = ida->ida_pioarg;
+		csc->sc_data = cdp = &mcclockdata_isa;
+		cdp->mc_bc = ia->ia_bc;
+		if (bus_io_map(cdp->mc_bc, ia->ia_iobase, ia->ia_iosize,
+		    &cdp->mc_ioh))
+			panic("couldn't map clock I/O space");
 	} else
 #endif
 	{
 		printf("\n");
 		panic("clockattach: can't tell what bus we're on");
 	}
+#if NISA
+    }
+#endif
 
 	/* Turn interrupts off, just in case. */
 	mc146818_write(csc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
@@ -257,11 +270,11 @@ mc_write_isa(csc, reg, datum)
 	u_int reg, datum;
 {
 	struct mcclockdata *cdp = csc->sc_data;
-	__const struct isa_pio_fns *ipf = cdp->mc_accessfns;
-	void *ipfa = cdp->mc_accessarg;
+	bus_chipset_tag_t bc = cdp->mc_bc;
+	bus_io_handle_t ioh = cdp->mc_ioh;
 
-	OUTB(ipf, ipfa, IO_RTC, reg);
-	OUTB(ipf, ipfa, IO_RTC + 1, datum);
+	bus_io_write_1(bc, ioh, 0, reg);
+	bus_io_write_1(bc, ioh, 1, datum);
 }
 
 static u_int
@@ -270,10 +283,10 @@ mc_read_isa(csc, reg)
 	u_int reg;
 {
 	struct mcclockdata *cdp = csc->sc_data;
-	__const struct isa_pio_fns *ipf = cdp->mc_accessfns;
-	void *ipfa = cdp->mc_accessarg;
+	bus_chipset_tag_t bc = cdp->mc_bc;
+	bus_io_handle_t ioh = cdp->mc_ioh;
 
-	OUTB(ipf, ipfa, IO_RTC, reg);
-	return INB(ipf, ipfa, IO_RTC + 1);
+	bus_io_write_1(bc, ioh, 0, reg);
+	return bus_io_read_1(bc, ioh, 1);
 }
 #endif /* NISA */
