@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2002/09/27 21:37:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.27 2002/10/07 00:53:31 lukem Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -15,6 +15,8 @@
 #	Please send copies of changes and bug-fixes to:
 #	sjg@quick.com.au
 #
+
+USE_SHLIBDIR=	yes
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
