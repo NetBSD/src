@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_msg.h,v 1.9 1998/02/11 23:01:26 lukem Exp $	*/
+/*	$NetBSD: rpc_msg.h,v 1.10 1998/02/13 04:36:15 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -161,7 +161,7 @@ struct rpc_msg {
 
 __BEGIN_DECLS
 /*
- * XDR routine to handle a rpc message.
+ * XDR routine to handle an rpc message.
  * xdr_callmsg(xdrs, cmsg)
  * 	XDR *xdrs;
  * 	struct rpc_msg *cmsg;
@@ -169,7 +169,7 @@ __BEGIN_DECLS
 extern bool_t	xdr_callmsg	__P((XDR *, struct rpc_msg *));
 
 /*
- * XDR routine to pre-serialize the static part of a rpc message.
+ * XDR routine to pre-serialize the static part of an rpc message.
  * xdr_callhdr(xdrs, cmsg)
  * 	XDR *xdrs;
  * 	struct rpc_msg *cmsg;
@@ -177,7 +177,7 @@ extern bool_t	xdr_callmsg	__P((XDR *, struct rpc_msg *));
 extern bool_t	xdr_callhdr	__P((XDR *, struct rpc_msg *));
 
 /*
- * XDR routine to handle a rpc reply.
+ * XDR routine to handle an rpc reply.
  * xdr_replymsg(xdrs, rmsg)
  * 	XDR *xdrs;
  * 	struct rpc_msg *rmsg;
