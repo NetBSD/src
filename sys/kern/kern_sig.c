@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.102 2000/07/08 18:10:25 sommerfeld Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.103 2000/07/27 14:01:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1393,7 +1393,7 @@ coredump(p)
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t) trunc_page(USRSTACK - ctob(vm->vm_ssize)),
+		    (caddr_t)(u_long)trunc_page(USRSTACK - ctob(vm->vm_ssize)),
 		    core.c_ssize,
 		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
@@ -1471,7 +1471,7 @@ coredump32(p, vp)
 		if (error)
 			goto out;
 		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t) trunc_page(USRSTACK - ctob(vm->vm_ssize)),
+		    (caddr_t)(u_long)trunc_page(USRSTACK - ctob(vm->vm_ssize)),
 		    core.c_ssize,
 		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);

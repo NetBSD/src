@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.84 2000/06/28 15:39:35 mrg Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.85 2000/07/27 14:00:56 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1586,7 +1586,7 @@ svr4_sys_memcntl(p, v, retval)
 
 			SCARG(&msa, addr) = SCARG(uap, addr);
 			SCARG(&msa, len) = SCARG(uap, len);
-			SCARG(&msa, flags) = (int)SCARG(uap, arg);
+			SCARG(&msa, flags) = (int)(u_long)SCARG(uap, arg);
 
 			return sys___msync13(p, &msa, retval);
 		}
@@ -1596,7 +1596,7 @@ svr4_sys_memcntl(p, v, retval)
 
 			SCARG(&maa, addr) = SCARG(uap, addr);
 			SCARG(&maa, len) = SCARG(uap, len);
-			SCARG(&maa, behav) = (int)SCARG(uap, arg);
+			SCARG(&maa, behav) = (int)(u_long)SCARG(uap, arg);
 
 			return sys_madvise(p, &maa, retval);
 		}
