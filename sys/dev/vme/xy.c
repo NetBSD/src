@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.31 2001/01/07 18:09:03 fvdl Exp $	*/
+/*	$NetBSD: xy.c,v 1.32 2001/01/08 02:03:48 fvdl Exp $	*/
 
 /*
  *
@@ -934,7 +934,7 @@ xyioctl(dev, command, addr, flag, p)
 	case ODIOCGDINFO:
 		newlabel = *(xy->sc_dk.dk_label);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.11 2001/01/07 18:09:02 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 2001/01/08 02:03:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1321,7 +1321,7 @@ fdioctl(dev, cmd, addr, flag, p)
 #ifdef __HAVE_OLD_DISKLABEL
 		if (cmd == ODIOCGDINFO) {
 			if (buffer.d_npartitions > OLDMAXPARTITIONS)
-				buffer.d_npartitions = OLDMAXPARTITIONS;
+				return ENOTTY;
 			memcpy(addr, &buffer, sizeof (struct olddisklabel));
 		} else
 #endif

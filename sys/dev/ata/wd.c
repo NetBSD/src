@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.211 2001/01/07 18:09:01 fvdl Exp $ */
+/*	$NetBSD: wd.c,v 1.212 2001/01/08 02:03:45 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -950,7 +950,7 @@ wdioctl(dev, xfer, addr, flag, p)
 	case ODIOCGDINFO:
 		newlabel = *(wd->sc_dk.dk_label);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif
@@ -1030,7 +1030,7 @@ wdioctl(dev, xfer, addr, flag, p)
 	case ODIOCGDEFLABEL:
 		wdgetdefaultlabel(wd, &newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif

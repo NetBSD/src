@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.68 2001/01/07 18:09:01 fvdl Exp $	*/
+/*	$NetBSD: mcd.c,v 1.69 2001/01/08 02:03:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -618,7 +618,7 @@ ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 		newlabel = *(sc->sc_dk.dk_label);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif
@@ -676,7 +676,7 @@ ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDEFLABEL:
 		mcdgetdefaultlabel(sc, &newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
 		return 0;
 #endif

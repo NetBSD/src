@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.70 2001/01/07 18:09:01 fvdl Exp $	*/
+/*	$NetBSD: ccd.c,v 1.71 2001/01/08 02:03:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1151,7 +1151,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	case ODIOCGDINFO:
 		newlabel = *(cs->sc_dkdev.dk_label);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
@@ -1213,7 +1213,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	case ODIOCGDEFLABEL:
 		ccdgetdefaultlabel(cs, &newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			newlabel.d_npartitions = OLDMAXPARTITIONS;
+			return ENOTTY;
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
