@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ucontext.h,v 1.2 1995/03/31 03:06:49 christos Exp $	 */
+/*	$NetBSD: svr4_ucontext.h,v 1.3 1995/08/14 01:13:29 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -53,7 +53,7 @@ typedef struct svr4_ucontext {
 	u_long			 uc_flags;
 	struct svr4_ucontext	*uc_link;
 	svr4_sigset_t		 uc_sigmask;
-	svr4_stack_t		 uc_stack;
+	struct svr4_sigaltstack	 uc_stack;
 	svr4_mcontext_t		 uc_mcontext;
 	long			 uc_pad[5];
 } svr4_ucontext_t;
