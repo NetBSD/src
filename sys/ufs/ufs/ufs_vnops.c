@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.116 2004/06/20 18:25:54 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.117 2004/07/24 15:02:32 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.116 2004/06/20 18:25:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.117 2004/07/24 15:02:32 dbj Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1744,10 +1744,10 @@ ufs_strategy(void *v)
 			biodone(bp);
 			return (error);
 		}
-		if ((long)bp->b_blkno == -1) /* no valid data */
+		if (bp->b_blkno == -1) /* no valid data */
 			clrbuf(bp);
 	}
-	if ((long)bp->b_blkno < 0) { /* block is not on disk */
+	if (bp->b_blkno < 0) { /* block is not on disk */
 		biodone(bp);
 		return (0);
 	}
