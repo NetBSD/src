@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.6 1997/04/27 03:21:43 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.7 1997/06/14 08:43:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.6 1997/04/27 03:21:43 lukem Exp $";
+static char rcsid[] = "$NetBSD: popen.c,v 1.7 1997/06/14 08:43:33 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,8 +67,9 @@ static int *pids;
 static int fds;
 
 FILE *
-ftpd_popen(program, type)
+ftpd_popen(program, type, nostderr)
 	char *program, *type;
+	int nostderr;
 {
 	char *cp;
 	FILE *iop;
@@ -122,7 +123,10 @@ ftpd_popen(program, type)
 				dup2(pdes[1], STDOUT_FILENO);
 				(void)close(pdes[1]);
 			}
-			dup2(STDOUT_FILENO, STDERR_FILENO); /* stderr too! */
+			if (nostderr)
+				(void)close(STDERR_FILENO);
+			else		/* stderr too! */
+				dup2(STDOUT_FILENO, STDERR_FILENO);
 			(void)close(pdes[0]);
 		} else {
 			if (pdes[0] != STDIN_FILENO) {
