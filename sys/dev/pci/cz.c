@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.9 2000/06/14 17:54:33 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.10 2000/07/28 06:10:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -396,6 +396,12 @@ cz_attach(struct device *parent,
 	 *	hardware flow control.
 	 */
 	CZ_WIN_RAM(cz);
+
+	if (cz->cz_nchannels == 0) {
+		/* No channels?  No more work to do! */
+		return;
+	}
+
 	cz->cz_ports = malloc(sizeof(struct cztty_softc) * cz->cz_nchannels,
 	    M_DEVBUF, M_WAITOK);
 	cztty_attached_ttys += cz->cz_nchannels;
@@ -652,10 +658,14 @@ cz_load_firmware(struct cz_softc *cz)
 	}
 
 	fid = CZ_FWCTL_READ(cz, BRDCTL_FWVERSION);
-	printf("%s: %s, %d channels (ttyCZ%04d..ttyCZ%04d), "
-	    "firmware %x.%x.%x\n",
-	    cz->cz_dev.dv_xname, board, cz->cz_nchannels,
-	    cztty_attached_ttys, cztty_attached_ttys + (cz->cz_nchannels - 1),
+	printf("%s: %s, ", cz->cz_dev.dv_xname, board);
+	if (cz->cz_nchannels == 0)
+		printf("no channels attached, ");
+	else
+		printf("%d channels (ttyCZ%04d..ttyCZ%04d), ",
+		    cz->cz_nchannels, cztty_attached_ttys,
+		    cztty_attached_ttys + (cz->cz_nchannels - 1));
+	printf("firmware %x.%x.%x\n",
 	    (fid >> 8) & 0xf, (fid >> 4) & 0xf, fid & 0xf);
 
 	return (0);
@@ -703,6 +713,14 @@ cz_intr(void *arg)
 
 		/* now clear this interrupt, posslibly enabling another */
 		CZ_PLX_WRITE(cz, PLX_LOCAL_PCI_DOORBELL, command);
+
+		if (cz->cz_ports == NULL) {
+#ifdef CZ_DEBUG
+			printf("%s: interrupt on channel %d, but no channels\n",
+			    cz->cz_dev.dv_xname, channel);
+#endif
+			continue;
+		}
 
 		sc = &cz->cz_ports[channel];
 
@@ -862,6 +880,8 @@ cztty_getttysoftc(dev_t dev)
 	for (i = 0, j = 0; i < cz_cd.cd_ndevs; i++) {
 		k = j;
 		cz = cz_cd.cd_devs[i];
+		if (cz->cz_ports == NULL)
+			continue;
 		j += cz->cz_nchannels;
 		if (j > u)
 			break;
