@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302 1998/05/21 23:34:40 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.303 1998/05/28 16:56:26 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,9 +193,17 @@ extern struct proc *npxproc;
 #endif
 
 #include "vga.h"
+#include "pcdisplay.h"
+#if (NVGA > 0) || (NPCDISPLAY > 0)
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #if (NVGA > 0)
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
+#endif
+#if (NPCDISPLAY > 0)
+#include <dev/isa/pcdisplayvar.h>
+#endif
 #endif
 
 #include "pckbc.h"
@@ -2094,11 +2102,15 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NPC > 0) || (NVT > 0) || (NVGA > 0)
+#if (NPC > 0) || (NVT > 0) || (NVGA > 0) || (NPCDISPLAY > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 #if (NVGA > 0)
 		if (!vga_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM,
 				  -1, 1))
+			goto dokbd;
+#endif
+#if (NPCDISPLAY > 0)
+		if (!pcdisplay_cnattach(I386_BUS_SPACE_IO, I386_BUS_SPACE_MEM))
 			goto dokbd;
 #endif
 #if (NPC > 0) || (NVT > 0)
@@ -2111,7 +2123,7 @@ dokbd:
 #endif
 		return;
 	}
-#endif /* PC | VT | VGA */
+#endif /* PC | VT | VGA | PCDISPLAY */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = I386_BUS_SPACE_IO;
