@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 1997/05/18 17:26:30 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 1997/05/25 05:19:51 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -98,7 +98,6 @@ typedef struct pv_entry {
 } *pv_entry_t;
 
 pv_entry_t	pv_table;	/* array of entries, one per page */
-extern void	pmap_remove_pv();
 
 #define pa_index(pa)		atop((pa) - first_phys_addr)
 #define pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
@@ -162,6 +161,13 @@ u_int		tlbpid_gen = 1;		/* TLB PID generation count */
 int		tlbpid_cnt = 2;		/* next available TLB PID */
 pt_entry_t	*Sysmap;		/* kernel pte table */
 u_int		Sysmapsize;		/* number of pte's in Sysmap */
+
+
+/* Forward function declarations */
+void	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
+int	pmap_alloc_tlbpid __P((register struct proc *p));
+void	pmap_zero_page __P((vm_offset_t phys));
+
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -333,7 +339,6 @@ pmap_pinit(pmap)
 	} else {
 		register struct segtab *stp;
 		vm_page_t mem;
-		void pmap_zero_page();
 
 		mem = vm_page_alloc1();
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
@@ -576,7 +581,7 @@ pmap_page_protect(pa, prot)
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
-	    prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE))
+	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
 		printf("pmap_page_protect(%x, %x)\n", pa, prot);
 #endif
 	if (!IS_VM_PHYSADDR(pa))
@@ -814,7 +819,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 {
 	register pt_entry_t *pte;
 	register u_int npte;
-	register int i, j;
+	register int i;
 	vm_page_t mem;
 
 #ifdef DEBUG
