@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.4 2001/08/24 04:20:08 nathanw Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.5 2001/08/30 23:25:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -985,7 +985,7 @@ setrunnable(struct lwp *l)
 		 * at what point it's better to reschedule on a different
 		 * CPU than the last one.
 		 */
-		need_resched((p->p_cpu != NULL) ? p->p_cpu : curcpu());
+		need_resched((l->l_cpu != NULL) ? l->l_cpu : curcpu());
 	}
 }
 
@@ -1011,7 +1011,7 @@ resetpriority(struct lwp *l)
 		 * XXXSMP
 		 * Same applies as in setrunnable() above.
 		 */
-		need_resched((p->p_cpu != NULL) ? p->p_cpu : curcpu());
+		need_resched((l->l_cpu != NULL) ? l->l_cpu : curcpu());
 	}
 }
 
