@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.11 2002/05/12 09:01:45 bjh21 Exp $
+#	$NetBSD: lorder.sh,v 1.12 2002/09/14 05:00:58 thorpej Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -41,16 +41,33 @@
 # Once we find it, we canonicalize its name and set the path to the
 # default path so that other commands we use are picked properly.
 
-if ! type "${NM:=nm}" > /dev/null 2>&1; then
-        PATH=/bin:/usr/bin
-        export PATH
-        if ! type "${NM}" > /dev/null 2>&1; then
-                echo "lorder: ${NM}: not found" >&2
-                exit 1
-        fi
+if [ "x${NM}" = "x" ]; then
+	NM=nm
+fi
+if ! type "${NM}" > /dev/null 2>&1; then
+	PATH=/bin:/usr/bin
+	export PATH
+	if ! type "${NM}" > /dev/null 2>&1; then
+		echo "lorder: ${NM}: not found" >&2
+		exit 1
+	fi
 fi
 cmd='set `type "${NM}"` ; eval echo \$$#'
 NM=`eval $cmd`
+
+if [ "x${MKTEMP}" = "x" ]; then
+	MKTEMP=mktemp
+fi
+if ! type "${MKTEMP}" > /dev/null 2>&1; then
+	PATH=/bin:/usr/bin
+	export PATH
+	if ! type "${MKTEMP}" > /dev/null 2>&1; then
+		echo "lorder: ${MKTEMP}: not found" >&2
+		exit 1
+	fi
+fi
+cmd='set `type "${MKTEMP}"` ; eval echo \$$#'
+MKTEMP=`eval $cmd`
 
 # only one argument is a special case, just output the name twice
 case $# in
@@ -63,9 +80,9 @@ case $# in
 esac
 
 # temporary files
-N=`mktemp /tmp/_nm_.XXXXXX` || exit 1
-R=`mktemp /tmp/_reference_.XXXXXX` || exit 1
-S=`mktemp /tmp/_symbol_.XXXXXX` || exit 1
+N=`${MKTEMP} /tmp/_nm_.XXXXXX` || exit 1
+R=`${MKTEMP} /tmp/_reference_.XXXXXX` || exit 1
+S=`${MKTEMP} /tmp/_symbol_.XXXXXX` || exit 1
 
 # remove temporary files on exit
 trap "rm -f $N $R $S; exit 0" 0
