@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $Id: dot.profile,v 1.1 1996/05/16 19:58:59 mark Exp $
+#       $NetBSD: dot.profile,v 1.2 1998/01/06 04:45:12 perry Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
