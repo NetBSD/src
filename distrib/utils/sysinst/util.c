@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.114 2003/11/15 12:53:34 sekiya Exp $	*/
+/*	$NetBSD: util.c,v 1.115 2003/11/30 14:36:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -226,7 +226,7 @@ run_makedev(void)
 	/* make /dev, in case the user  didn't extract it. */
 	make_target_dir("/dev");
 	target_chdir_or_die("/dev");
-	run_prog(0, NULL, "/bin/sh MAKEDEV all");
+	run_program(0, "/bin/sh MAKEDEV all");
 
 	chdir(owd);
 	free(owd);
@@ -275,7 +275,7 @@ get_via_floppy(void)
 					return 0;
 				else if (yesno == 2)
 					return 1;
-				while (run_prog(0, NULL, 
+				while (run_program(0, 
 				    "/sbin/mount -r -t %s %s /mnt2",
 				    fdtype, fddev)) {
 					msg_display(MSG_fdremount, fname);
@@ -326,7 +326,7 @@ again:
 
 	/* Mount it */
 	for (retries = 5;; --retries) {
-		if (run_prog(retries > 0 ? RUN_SILENT : 0, NULL,
+		if (run_program(retries > 0 ? RUN_SILENT : 0, 
 		    "/sbin/mount -rt cd9660 /dev/%s /mnt2", cdrom_dev) == 0)
 			break;
 		if (retries > 0) {
@@ -377,7 +377,7 @@ again:
 	umount_mnt2();
 
 	/* Mount it */
-	if (run_prog(0, NULL, "/sbin/mount -rt %s /dev/%s /mnt2",
+	if (run_program(0, "/sbin/mount -rt %s /dev/%s /mnt2",
 	    localfs_fs, localfs_dev)) {
 
 		msg_display(MSG_localfsbadmount, localfs_dir, localfs_dev); 
@@ -707,13 +707,13 @@ extract_file(char *path)
 
 	/* now extract set files files into "./". */
 	if (verbose == 1)
-		tarexit = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 				    "progress -zf %s tar -xepf -", path);
 	else if (verbose == 2)
-		tarexit = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+		tarexit = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 				    "tar -zxvepf %s", path);
 	else
-		tarexit = run_prog(RUN_DISPLAY, NULL,
+		tarexit = run_program(RUN_DISPLAY, 
 				    "tar -zxepf %s", path);
 
 	chdir(owd);
@@ -1028,7 +1028,7 @@ get_and_unpack_sets(msg success_msg, msg failure_msg)
 		    ext_dir + strlen(target_prefix()));
 		process_menu(MENU_yesno, NULL);
 		if (yesno)
-			run_prog(0, NULL, "/bin/rm -rf %s", ext_dir);
+			run_program(0, "/bin/rm -rf %s", ext_dir);
 	}
 
 	/* Mounted dist dir? */
@@ -1045,7 +1045,7 @@ umount_mnt2(void)
 {
 	if (!mnt2_mounted)
 		return;
-	run_prog(RUN_SILENT, NULL, "/sbin/umount /mnt2");
+	run_program(RUN_SILENT, "/sbin/umount /mnt2");
 	mnt2_mounted = 0;
 }
 
@@ -1117,51 +1117,6 @@ sanity_check(void)
 	process_menu(MENU_ok, NULL);
 	return 1;
 }
-
-#ifdef notdef
-/* set reverse to 1 to default to no */
-int
-askyesno(int reverse)
-{
-	WINDOW *yesnowin;
-	int c, found;
-
-	yesnowin = subwin(stdscr, 5, 20, getmaxy(stdscr)/2 - 2, getmaxx(stdscr)/2 - 10);
-	if (yesnowin == NULL) {
-		fprintf(stderr, "sysinst: failed to allocate yes/no box\n");
-		exit(1);
-	}
-	box(yesnowin, '*', '*');
-	wmove(yesnowin, 2,2);
-	
-	if (reverse)
-		waddstr(yesnowin, "Yes or No: [N]");
-	else
-		waddstr(yesnowin, "Yes or No: [Y]");
-
-	wrefresh(yesnowin);
-	while ((c = getchar()) != 0) {
-		if (c == 'y' || c == 'Y') {
-			found = 1;
-			break;
-		} else if (c == 'n' || c == 'N' ) {
-			found = 0;
-			break;
-		} else if (c == '\n' || c == '\r') {
-			if (reverse)
-				found = 0;
-			else
-				found = 1;
-			break;
-		}
-	}
-	wclear(yesnowin);
-	wrefresh(yesnowin);
-	delwin(yesnowin);
-	refresh();
-	return(found);
-}
-#endif
 
 /*
  * Some globals to pass things back from callbacks
@@ -1433,7 +1388,7 @@ set_root_password(void)
 	msg_display(MSG_rootpw);
 	process_menu(MENU_yesno, NULL);
 	if (yesno)
-		run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "passwd -l root");
+		run_program(RUN_DISPLAY|RUN_CHROOT, "passwd -l root");
 	return 0;
 }
 
@@ -1443,7 +1398,7 @@ set_root_shell(void)
 
 	msg_display(MSG_rootsh);
 	process_menu(MENU_rootsh, NULL);
-	run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "chpass -s %s root", shellpath);
+	run_program(RUN_DISPLAY|RUN_CHROOT, "chpass -s %s root", shellpath);
 	return 0;
 }
 
@@ -1490,7 +1445,7 @@ enable_rc_conf(void)
 {
 	const char *tp = target_prefix();
 
-	run_prog(0, NULL, "sed -an -e 's/^rc_configured=NO/rc_configured=YES/;"
+	run_program(0, "sed -an -e 's/^rc_configured=NO/rc_configured=YES/;"
 				    "H;$!d;g;w %s/etc/rc.conf' %s/etc/rc.conf",
 		tp, tp);
 }

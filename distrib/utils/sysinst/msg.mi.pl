@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.33 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.34 2003/11/30 14:36:43 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -212,13 +212,13 @@ message askunits	/* XXX translate */
 {Change input units (sectors/cylinders/MB)}
 
 message NetBSD_partition_cant_change
-{partycja NetBSD - nie mozna zmienic}
+{partycja NetBSD}
 
 message Whole_disk_cant_change
-{Caly dysk - nie mozna zmienic}
+{Caly dysk}
 
 message Boot_partition_cant_change
-{partycja uruchomic - nie mozna zmienic}
+{partycja uruchomic}
 
 message add_another_ptn	/* XXX translate */
 {Add a user defined partition}
@@ -239,18 +239,17 @@ twojej partycji zostal zmniejszony do %d %s.
 }
 
 message fspart
-{Mamy teraz twoje partycje BSD-disklabel jako (Rozmiar i Przesuniecie w %s):
-
+{Mamy teraz twoje partycje BSD-disklabel jako:
 
 }
 
-message fspart_header
-{     Rozmiar  Przesun.    Koniec Typ SP Ochrona Mount Mountpoint 
-   --------- --------- --------- ------ ------- ----- ----------
+message fspart_header	/* XXX abbreviations (or change fspart_row below) */
+{    Rozm %3s  Prze %3s Koniec %3s Typ SP     Ochrona Mount Mountpoint 
+   --------- --------- ---------- ---------- ------- ----- ----------
 }
 
 message fspart_row
-{%9d %9d %9d %-6s %-7s %-5s %s}
+{%9d %9d %10d %-10s %-7s %-5s %s}
 
 message show_all_unused_partitions	/* XXX translate */
 {Show all unused partitions}
@@ -408,7 +407,7 @@ message nomount
 {Typ partycji %c to nie 4.2BSD lub msdos i dlatego nie ma ona swojego mountpoint.}
 
 message mountfail
-{zamountowanie urzadzenia %s na %s nie powiodlo sie.
+{zamountowanie urzadzenia /dev/%s%c na %s nie powiodlo sie.
 }
 
 message extractcomplete
@@ -751,12 +750,12 @@ message makedev
 }
 
 message badfs
-{Wyglada na to, ze %s%s nie jest systemem plikow BSD albo nie powiodlo sie
+{Wyglada na to, ze /dev/%s%c nie jest systemem plikow BSD albo nie powiodlo sie
 jego sprawdzenie. Aktualizacja zostala przerwana. (Blad numer %d.)
 }
 
 message badmount
-{System plikow %s%s nie zostal pomyslnie zamountowany. Aktualizacja przerwana.}
+{System plikow /dev/%s%c nie zostal pomyslnie zamountowany. Aktualizacja przerwana.}
 
 message rootmissing
 { docelowy / jest zagubiony %s.
