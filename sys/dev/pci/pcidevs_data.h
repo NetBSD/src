@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.146 1999/07/28 22:38:00 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.147 1999/07/29 20:58:19 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.141 1999/07/28 22:36:10 soren Exp 
+ *	NetBSD: pcidevs,v 1.142 1999/07/29 20:56:55 thorpej Exp 
  */
 
 /*
@@ -1496,6 +1496,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "IDT",
 	    "77201/77211 ATM (\"NICStAR\")",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I920,
+	    0,
+	    "Initio",
+	    "INIC-920 SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I940,
+	    0,
+	    "Initio",
+	    "INIC-940 SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I935,
+	    0,
+	    "Initio",
+	    "INIC-935 SCSI",
+	},
+	{
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I950,
+	    0,
+	    "Initio",
+	    "INIC-950 SCSI",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,

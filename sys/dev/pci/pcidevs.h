@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.148 1999/07/28 22:38:00 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.149 1999/07/29 20:58:19 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.141 1999/07/28 22:36:10 soren Exp 
+ *	NetBSD: pcidevs,v 1.142 1999/07/29 20:56:55 thorpej Exp 
  */
 
 /*
@@ -898,6 +898,12 @@
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (\"NICStAR\") */
+
+/* Initio products */
+#define	PCI_PRODUCT_INITIO_I920	0x0002		/* INIC-920 SCSI */
+#define	PCI_PRODUCT_INITIO_I940	0x9400		/* INIC-940 SCSI */
+#define	PCI_PRODUCT_INITIO_I935	0x9401		/* INIC-935 SCSI */
+#define	PCI_PRODUCT_INITIO_I950	0x9500		/* INIC-950 SCSI */
 
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
