@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.8 1995/03/18 14:55:45 cgd Exp $	*/
+/*	$NetBSD: fsck.h,v 1.9 1995/03/21 01:30:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -187,7 +187,7 @@ ino_t	maxino;			/* number of inodes in file system */
 ino_t	lastino;		/* last inode in use */
 char	*statemap;		/* ptr to inode state table */
 char	*typemap;		/* ptr to inode type table */
-short	*lncntp;		/* ptr to link count table */
+int16_t	*lncntp;		/* ptr to link count table */
 
 ino_t	lfdir;			/* lost & found directory inode number */
 char	*lfname;		/* lost & found directory name */
