@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.10 2003/08/20 13:32:33 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.11 2003/10/02 10:39:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,9 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/kernel.h>
+#endif
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
@@ -75,6 +77,9 @@ static int arc4_initialized = 0;
 static int arc4_numruns = 0;
 static u_int8_t arc4_sbox[256];
 static struct timeval arc4_tv_nextreseed;
+#ifndef _KERNEL
+extern struct timeval mono_time;
+#endif
 
 static inline u_int8_t arc4_randbyte(void);
 
