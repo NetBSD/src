@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.29 2003/11/11 15:00:09 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.30 2003/11/11 17:26:32 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.29 2003/11/11 15:00:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.30 2003/11/11 17:26:32 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -504,16 +504,12 @@ mach_task_suspend(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
 		return mach_msg_error(args, EINVAL);
-	if ((mr->mr_port == NULL) || (mr->mr_port->mp_recv == NULL)) {
-#ifdef DEBUG_MACH
-		printf("mach_task_suspend: port = %p, recv = %p\n",
-		    mr->mr_port, mr->mr_port->mp_recv);
-#endif
-		return mach_msg_error(args, EINVAL);
-	}
 
-	l = mr->mr_port->mp_recv->mr_lwp;
-	p = l->l_proc;
+	if ((mr->mr_port == NULL) || 
+	    (mr->mr_port->mp_datatype != MACH_MP_PROC))
+		return mach_msg_error(args, EINVAL);
+
+	p = (struct proc *)mr->mr_port->mp_data;
 	med = p->p_emuldata;
 	med->med_suspend++; /* XXX Mach also has a per thread semaphore */
 		
@@ -558,16 +554,12 @@ mach_task_resume(args)
 	mn = req->req_msgh.msgh_remote_port;
 	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == 0)
 		return mach_msg_error(args, EINVAL);
-	if ((mr->mr_port == NULL) || (mr->mr_port->mp_recv == NULL)) {
-#ifdef DEBUG_MACH
-		printf("mach_task_resume: port = %p, recv = %p\n",
-		    mr->mr_port, mr->mr_port->mp_recv);
-#endif
-		return mach_msg_error(args, EINVAL);
-	}
 
-	l = mr->mr_port->mp_recv->mr_lwp;
-	p = l->l_proc;
+	if ((mr->mr_port == NULL) || 
+	    (mr->mr_port->mp_datatype != MACH_MP_PROC))
+		return mach_msg_error(args, EINVAL);
+
+	p = (struct proc *)mr->mr_port->mp_data;
 	med = p->p_emuldata;
 	med->med_suspend--; /* XXX Mach also has a per thread semaphore */
 	if (med->med_suspend > 0)
@@ -587,6 +579,7 @@ mach_task_resume(args)
 	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = 0;
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
