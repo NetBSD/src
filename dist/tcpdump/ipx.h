@@ -1,9 +1,9 @@
-/*	$NetBSD: ipx.h,v 1.1.1.1 2001/06/25 19:26:32 itojun Exp $	*/
+/*	$NetBSD: ipx.h,v 1.1.1.2 2002/05/31 09:28:27 itojun Exp $	*/
 
 /*
  * IPX protocol formats 
  *
- * @(#) Header: /tcpdump/master/tcpdump/ipx.h,v 1.4 2001/01/15 03:23:59 guy Exp
+ * @(#) Header: /tcpdump/master/tcpdump/ipx.h,v 1.5 2002/03/05 11:35:45 guy Exp
  */
 
 /* well-known sockets */
@@ -27,7 +27,7 @@ struct ipxHdr {
     u_int16_t	srcNet[2];	/* source net */
     u_int8_t	srcNode[6];	/* source node */
     u_int16_t	srcSkt;		/* source socket */
-} ipx_hdr_t;
+};
 
 #define ipxSize	30
 
