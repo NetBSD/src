@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.13 1999/04/20 14:22:32 mycroft Exp $       */
+/*      $NetBSD: catman.c,v 1.14 2000/01/09 04:54:54 tsutsui Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/utsname.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <err.h>
@@ -56,10 +57,6 @@
 
 #include "config.h"
 #include "pathnames.h"
-
-#ifndef MACHINE
-#define MACHINE __ARCHITECTURE__
-#endif
 
 int f_nowhatis = 0;
 int f_noaction = 0;
@@ -156,8 +153,15 @@ setdefentries(m_path, m_add, sections)
 	int i;
 
 	/* Get the machine type. */
-	if ((machine = getenv("MACHINE")) == NULL)
-		machine = MACHINE;
+	if ((machine = getenv("MACHINE")) == NULL) {
+		struct utsname utsname;
+
+		if (uname(&utsname) == -1) {
+			perror("uname");
+			exit(1);
+		}
+		machine = utsname.machine;
+	}
 
 	/* If there's no _default list, create an empty one. */
 	if ((defp = getlist("_default")) == NULL)
