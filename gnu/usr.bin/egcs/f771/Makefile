@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1998/03/31 04:25:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/03/31 05:04:18 mrg Exp $
 
 PROG=	f771
 SRCS=	bad.c bit.c bld.c com.c data.c equiv.c expr.c global.c implic.c \
@@ -22,7 +22,7 @@ $(FINIFILES): fini
 fini:	fini.o proj.o
 	$(CC) -o fini fini.o proj.o
 
-str.c:	str-1t.j str-2t.j str-fo.j str-io.j str-nq.j str-op.j str-ot.j
+st.c sta.c stb.c stc.c std.c ste.c stt.c stu.c stw.c:	$(FINIFILES)
 
 CPPFLAGS+=	-I$(F) -I.
 CLEANFILES+=	$(FINIFILES) fini fini.o
