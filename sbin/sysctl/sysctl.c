@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.43 2001/01/09 21:31:02 fvdl Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.44 2001/02/04 21:13:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.43 2001/01/09 21:31:02 fvdl Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.44 2001/02/04 21:13:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,6 +125,7 @@ struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 struct ctlname procname[] = { {0, 0}, {"curproc", CTLTYPE_NODE} };
 
 char names[BUFSIZ];
+extern char *__progname;
 
 struct list {
 	struct	ctlname *list;
@@ -1160,8 +1161,6 @@ findname(string, level, bufp, namelist)
 static void
 usage()
 {
-	extern char *__progname;
-
 	(void)fprintf(stderr, "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
 	    __progname, "[-n] variable ...", 
 	    __progname, "[-n] -w variable=value ...",
