@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.22 2002/10/04 04:01:13 mycroft Exp $	 */
+/*	$NetBSD: load.c,v 1.23 2002/10/04 04:04:26 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -62,7 +62,6 @@ Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
-#endif
 
 void
 _rtld_objlist_add(list, obj)
@@ -87,6 +86,7 @@ _rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
 	}
 	return NULL;
 }
+#endif
 
 /*
  * Load a shared object into memory, if it is not already loaded.  The
