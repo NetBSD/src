@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.10 1998/07/29 00:19:20 thorpej Exp $
+#	$NetBSD: POWERMAC,v 1.11 1998/07/29 05:38:04 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -61,7 +61,7 @@ pci0	at mainbus0 bus ?
 pci1	at mainbus0 bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 
-macofcons0	at pci? dev ? function ?	# Openfirmware console
+#macofcons0	at pci? dev ? function ?	# Openfirmware console
 
 de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?
@@ -79,9 +79,9 @@ zstty1	at zsc0 channel 1
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 
-#grfati0 at pci? dev ? function ?	# ATY,mach64
-#grf0	at grfati0
-#ite0	at grf0
+grfati0 at pci? dev ? function ?	# ATY,mach64
+grf0	at grfati0
+ite0	at grf0
 
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
