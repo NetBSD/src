@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkey_dump.c,v 1.10 2002/05/14 11:24:21 itojun Exp $	*/
-/*	$KAME: pfkey_dump.c,v 1.36 2002/05/13 05:30:08 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.11 2002/06/27 14:39:47 itojun Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.37 2002/05/14 10:50:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -56,9 +56,9 @@
 do { \
 	if (sizeof((str)[0]) == 0 \
 	 || num >= sizeof(str)/sizeof((str)[0])) \
-		printf("%d ", (num)); \
+		printf("%u ", (num)); \
 	else if (strlen((str)[(num)]) == 0) \
-		printf("%d ", (num)); \
+		printf("%u ", (num)); \
 	else \
 		printf("%s ", (str)[(num)]); \
 } while (0)
@@ -73,7 +73,7 @@ do { \
 	if (p && p->str) \
 		printf("%s ", p->str); \
 	else \
-		printf("%d ", (num)); \
+		printf("%u ", (num)); \
 } while (0)
 
 static char *str_ipaddr __P((struct sockaddr *));
@@ -514,7 +514,7 @@ str_upperspec(ulp, p1, p2)
 			if (ent)
 				printf("%s", ent->p_name);
 			else
-				printf("%d", ulp);
+				printf("%u", ulp);
 
 			endprotoent();
 			break;

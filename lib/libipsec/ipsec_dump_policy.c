@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.3 2000/06/12 10:40:52 itojun Exp $	*/
-/*	$KAME: ipsec_dump_policy.c,v 1.11 2000/05/07 05:29:47 itojun Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.4 2002/06/27 14:39:47 itojun Exp $	*/
+/*	$KAME: ipsec_dump_policy.c,v 1.12 2001/11/13 12:38:47 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -261,7 +261,7 @@ ipsec_dump_ipsecrequest(buf, len, xisr, bound)
 			ch = '#';
 		else
 			ch = ':';
-		snprintf(buf, len, "%s/%s/%s/%s%c%d", proto, mode, abuf, level,
+		snprintf(buf, len, "%s/%s/%s/%s%c%u", proto, mode, abuf, level,
 		    ch, xisr->sadb_x_ipsecrequest_reqid);
 	}
 
