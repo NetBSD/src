@@ -1,4 +1,4 @@
-/*	$Id: loan1.c,v 1.2 2004/02/15 12:49:27 yamt Exp $	*/
+/*	$Id: loan1.c,v 1.3 2004/02/15 12:50:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -36,6 +36,9 @@
 #include <unistd.h>
 
 #define	BUFSIZE	(32 * 1024)	/* enough size to trigger sosend_loan */
+
+void testloan(void *, char, int);
+int main(int, char *[]);
 
 void
 testloan(void *vp, char pat, int docheck)
