@@ -1,8 +1,8 @@
-#	$NetBSD: mdc2.inc,v 1.2 2000/06/21 19:34:25 thorpej Exp $
+#	$NetBSD: mdc2.inc,v 1.3 2000/07/16 07:16:23 mrg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from ../../dist/openssl/crypto/mdc2/Makefile.ssl
+#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/mdc2/Makefile.ssl
 #
 
 .PATH:	${OPENSSLSRC}/crypto/mdc2

@@ -1,8 +1,8 @@
-#	$NetBSD: txt_db.inc,v 1.2 2000/06/21 19:34:28 thorpej Exp $
+#	$NetBSD: txt_db.inc,v 1.3 2000/07/16 07:16:24 mrg Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from ../../dist/openssl/crypto/txt_db/Makefile.ssl
+#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/txt_db/Makefile.ssl
 #
 
 .PATH:	${OPENSSLSRC}/crypto/txt_db
