@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.29 2002/11/15 14:45:40 itohy Exp $
+#	$NetBSD: MAKEDEV,v 1.30 2002/11/16 04:53:55 itohy Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,6 +70,11 @@
 # Pseudo terminals:
 #	pty*	set of 62 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
+#
+# Maple Bus devices:
+#	maple	Maple control devices
+#	mlcd*	Maple LCD devices
+#	mmem*	Maple storage devices
 #
 # Special purpose devices:
 #	clockctl clock control for non root users
