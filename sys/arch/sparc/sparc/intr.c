@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.66 2002/12/18 06:20:36 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.67 2002/12/19 10:38:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,9 @@
 #endif
 
 void *softnet_cookie;
+#if defined(MULTIPROCESSOR)
+void *xcall_cookie;
+#endif
 
 void	strayintr __P((struct clockframe *));
 #ifdef DIAGNOSTIC
@@ -250,11 +253,15 @@ nmi_hard()
 		panic("nmi");
 }
 
+/*
+ * Non-maskable soft interrupt level 15 handler
+ */
 void
 nmi_soft(tf)
 	struct trapframe *tf;
 {
 
+	/* XXX - Most of this is superseded by xcallintr() below */
 #ifdef MULTIPROCESSOR
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_SAVEFPU:
@@ -282,14 +289,14 @@ nmi_soft(tf)
 	    }
 	case XPMSG_FUNC:
 	    {
-		struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
+		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
 
 		p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
 		break;
 	    }
 	case XPMSG_VCACHE_FLUSH_PAGE:
 	    {
-		struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
+		volatile struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -299,7 +306,7 @@ nmi_soft(tf)
 	    }
 	case XPMSG_VCACHE_FLUSH_SEGMENT:
 	    {
-		struct xpmsg_flush_segment *p = &cpuinfo.msg.u.xpmsg_flush_segment;
+		volatile struct xpmsg_flush_segment *p = &cpuinfo.msg.u.xpmsg_flush_segment;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -309,7 +316,7 @@ nmi_soft(tf)
 	    }
 	case XPMSG_VCACHE_FLUSH_REGION:
 	    {
-		struct xpmsg_flush_region *p = &cpuinfo.msg.u.xpmsg_flush_region;
+		volatile struct xpmsg_flush_region *p = &cpuinfo.msg.u.xpmsg_flush_region;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -319,7 +326,7 @@ nmi_soft(tf)
 	    }
 	case XPMSG_VCACHE_FLUSH_CONTEXT:
 	    {
-		struct xpmsg_flush_context *p = &cpuinfo.msg.u.xpmsg_flush_context;
+		volatile struct xpmsg_flush_context *p = &cpuinfo.msg.u.xpmsg_flush_context;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -329,17 +336,17 @@ nmi_soft(tf)
 	    }
 	case XPMSG_VCACHE_FLUSH_RANGE:
 	    {
-		struct xpmsg_flush_range *p = &cpuinfo.msg.u.xpmsg_flush_range;
+		volatile struct xpmsg_flush_range *p = &cpuinfo.msg.u.xpmsg_flush_range;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
-		cpuinfo.sp_cache_flush(p->va, p->size);
+		cpuinfo.sp_cache_flush(p->va, p->size, p->ctx);
 		setcontext(ctx);
 		break;
 	    }
 	case XPMSG_DEMAP_TLB_PAGE:
 	    {
-		struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
+		volatile struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -349,7 +356,7 @@ nmi_soft(tf)
 	    }
 	case XPMSG_DEMAP_TLB_SEGMENT:
 	    {
-		struct xpmsg_flush_segment *p = &cpuinfo.msg.u.xpmsg_flush_segment;
+		volatile struct xpmsg_flush_segment *p = &cpuinfo.msg.u.xpmsg_flush_segment;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -359,7 +366,7 @@ nmi_soft(tf)
 	    }
 	case XPMSG_DEMAP_TLB_REGION:
 	    {
-		struct xpmsg_flush_region *p = &cpuinfo.msg.u.xpmsg_flush_region;
+		volatile struct xpmsg_flush_region *p = &cpuinfo.msg.u.xpmsg_flush_region;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -369,7 +376,7 @@ nmi_soft(tf)
 	    }
 	case XPMSG_DEMAP_TLB_CONTEXT:
 	    {
-		struct xpmsg_flush_context *p = &cpuinfo.msg.u.xpmsg_flush_context;
+		volatile struct xpmsg_flush_context *p = &cpuinfo.msg.u.xpmsg_flush_context;
 		int ctx = getcontext();
 
 		setcontext(p->ctx);
@@ -384,7 +391,46 @@ nmi_soft(tf)
 	cpuinfo.flags |= CPUFLG_GOTMSG;
 #endif
 }
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Respond to an xcall() request from another CPU.
+ */
+static void xcallintr(void *v)
+{
+	struct cpu_info *cpi = cpus[cpuinfo.ci_cpuid];
+
+	switch (cpi->msg.tag) {
+	case XPMSG_PAUSECPU:
+	    {
+#if defined(DDB)
+		struct trapframe *tf = v;
+		volatile db_regs_t regs;
+
+		regs.db_tf = *tf;
+		regs.db_fr = *(struct frame *)tf->tf_out[6];
+		cpi->ci_ddb_regs = &regs;
 #endif
+		cpi->flags |= CPUFLG_PAUSED|CPUFLG_GOTMSG;
+		while (cpi->flags & CPUFLG_PAUSED) /**/;
+#if defined(DDB)
+		cpi->ci_ddb_regs = NULL;
+#endif
+		return;
+	    }
+	case XPMSG_FUNC:
+	    {
+		volatile struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
+
+		if (p->func)
+			p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
+		break;
+	    }
+	}
+	cpi->flags |= CPUFLG_GOTMSG;
+}
+#endif /* MULTIPROCESSOR */
+#endif /* SUN4M || SUN4D */
 
 /*
  * Level 15 interrupts are special, and not vectored here.
@@ -617,6 +663,10 @@ softintr_init()
 {
 
 	softnet_cookie = softintr_establish(IPL_SOFTNET, softnet, NULL);
+#if defined(MULTIPROCESSOR) && (defined(SUN4M) || defined(SUN4D))
+	/* Establish a standard soft interrupt handler for cross calls */
+	xcall_cookie = softintr_establish(13, xcallintr, NULL);
+#endif
 }
 
 /*
