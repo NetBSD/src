@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.14.2.1 1997/06/01 04:11:23 cgd Exp $ */
+/* $NetBSD: interrupt.c,v 1.14.2.2 1997/06/07 05:50:38 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -97,7 +97,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14.2.1 1997/06/01 04:11:23 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14.2.2 1997/06/07 05:50:38 cgd Exp $");
 __KERNEL_COPYRIGHT(0, \
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -263,6 +263,15 @@ machine_check(framep, vector, param)
 	return;
 
 fatal:
+	/*
+	 * Clear everything pending, so we don't lose (as badly) if we
+	 * drop IPL.
+	 */
+	alpha_pal_wrmces(mces);
+
+	/*
+	 * Roll over and die.
+	 */
 	printf("\n");
 	printf("%s:\n", type);
 	printf("\n");
