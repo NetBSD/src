@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.19 1998/04/19 07:59:13 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.20 1998/04/20 02:46:59 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.19 1998/04/19 07:59:13 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.20 1998/04/20 02:46:59 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.19 1998/04/19 07:59:13 jonathan Exp $"
  */
 struct fbinfo;
 struct tcfbsw {
-	const char fbsw_name[8];
+	const char fbsw_name[TC_ROM_LLEN+1];
 	int (*fbsw_initfn) __P((struct fbinfo*, char*, int, int));
 };
 
@@ -84,7 +84,7 @@ struct tcfbsw {
 const struct tcfbsw tcfbsw[] = {
 
 #if NMFB > 0
-  tcfbsw_entry("PMAG_AA ", mfbinit),
+  tcfbsw_entry("PMAG-AA ", mfbinit),
 #endif
 
 #if NSFB > 0
@@ -93,6 +93,18 @@ const struct tcfbsw tcfbsw[] = {
 
 #if NCFB > 0
   tcfbsw_entry("PMAG-BA ", cfbinit),
+#endif
+
+#if NPX > 0
+  tcfbsw_entry("PMAG-CA", pxinit),
+  tcfbsw_entry("PMAG-C ", pxinit),
+#endif
+
+#if NPXG > 0
+  tcfbsw_entry("PMAG-DA", pxginit),
+  tcfbsw_entry("PMAG-E ", pxginit),
+  tcfbsw_entry("PMAG-F ", pxginit),
+  tcfbsw_entry("PMAG-FA", pxginit),
 #endif
 };
 const int ntcfbsw = sizeof(tcfbsw) / sizeof(tcfbsw[0]);
@@ -340,7 +352,7 @@ tc_consprobeslot(tc_slotaddr)
 		if (tcfbsw[i].fbsw_initfn == 0) 
 			break;
 		if (strcmp(name, tcfbsw[i].fbsw_name) == 0) {
-			if (tcfbsw[i].fbsw_initfn(NULL, slotaddr, 0, 0))
+			if (tcfbsw[i].fbsw_initfn(NULL, slotaddr, 0, 1))
 				return (1);
 		}
 	}
