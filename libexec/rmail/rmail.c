@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.11 1997/10/20 02:08:30 enami Exp $	*/
+/*	$NetBSD: rmail.c,v 1.12 1998/08/25 19:11:12 ross Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.11 1997/10/20 02:08:30 enami Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.12 1998/08/25 19:11:12 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ main(argc, argv)
 			}
 
 		/* Else use the string up to the last bang. */
-		if (p == NULL)
+		if (p == NULL) {
 			if (*addrp == '!')
 				err(EX_DATAERR,
 				    "bang starts address: %s", addrp);
@@ -178,6 +178,7 @@ main(argc, argv)
 				if (debug)
 					(void)fprintf(stderr, "bang: %s\n", p);
 			}
+		}
 
 		/* 'p' now points to any system string from this line. */
 		if (p != NULL) {
