@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_ecoff.c,v 1.1 2001/10/30 23:51:03 thorpej Exp $ */
+/* $NetBSD: loadfile_ecoff.c,v 1.2 2001/10/31 01:51:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,8 +75,28 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-static int
-coff_exec(fd, coff, marks, flags)
+#ifdef _STANDALONE
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+#else           
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>  
+#include <fcntl.h>
+#include <err.h>
+#endif  
+
+#include <sys/param.h> 
+#include <sys/exec.h>
+
+#include "loadfile.h"
+
+#ifdef BOOT_ECOFF
+
+int
+loadfile_coff(fd, coff, marks, flags)
 	int fd;
 	struct ecoff_exechdr *coff;
 	u_long *marks;
@@ -158,3 +178,5 @@ coff_exec(fd, coff, marks, flags)
 	marks[MARK_END] = LOADADDR(maxp);
 	return 0;
 }
+
+#endif /* BOOT_ECOFF */

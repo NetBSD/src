@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/08/05 06:10:25 matt Exp $
+#	$NetBSD: Makefile,v 1.8 2001/10/31 01:51:45 thorpej Exp $
 
 S=${.CURDIR}/../../../../
 HOSTPROG=	wrtvid
@@ -10,7 +10,7 @@ DPADD+=	machine m68k
 
 .PATH.c: ${LIBSA}
 
-SRCS=	wrtvid.c loadfile.c
+SRCS=	wrtvid.c loadfile.c loadfile_aout.c loadfile_elf32.c
 CLEANFILES+= machine m68k
 
 # only needed during build

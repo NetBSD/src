@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2001/10/30 23:39:08 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 2001/10/31 01:51:45 thorpej Exp $
 
 .include <bsd.own.mk>
 
 WARNS?=1
 PROG=	installboot
-SRCS=	installboot.c byteorder.c loadfile.c
+SRCS=	installboot.c byteorder.c loadfile.c loadfile_aout.c \
+	loadfile_elf32.c
 MKMAN=	no
 CFLAGS+=-g
 
