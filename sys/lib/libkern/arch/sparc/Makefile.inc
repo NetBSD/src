@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 1998/08/04 03:39:49 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.24 1999/02/24 16:25:43 chs Exp $
 
 SRCS+=  __main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -10,8 +10,7 @@ SRCS+=  __main.c __assert.c \
 	htonl.S htons.S ntohl.S ntohs.S \
 	random.S
 
-SRCS+=	umul.S mul.S rem.S sdiv.S udiv.S umul.S urem.S
-SRCS+=	mul.S saveregs.S umul.S
+SRCS+=	mul.S umul.S saveregs.S
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
