@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.52 2000/02/01 22:52:05 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.53 2000/03/06 20:54:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -770,6 +770,7 @@ ether_ifattach(ifp, lla)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_input = ether_input;
+	ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 	if ((sdl = ifp->if_sadl) &&
 	    sdl->sdl_family == AF_LINK) {
 		sdl->sdl_type = IFT_ETHER;
@@ -789,6 +790,54 @@ ether_ifdetach(ifp)
 {
 
 	/* Nothing. */
+}
+
+u_int32_t
+ether_crc32_le(buf, len)
+	const u_int8_t *buf;
+	size_t len;
+{
+	u_int32_t c, crc, carry;
+	size_t i, j;
+
+	crc = 0xffffffffU;	/* initial value */
+
+	for (i = 0; i < len; i++) {
+		c = buf[i];
+		for (j = 0; j < 8; j++) {
+			carry = ((crc & 0x01) ? 1 : 0) ^ (c & 0x01);
+			crc >>= 1;
+			c >>= 1;
+			if (carry)
+				crc = (crc ^ ETHER_CRC_POLY_LE) | carry;
+		}
+	}
+
+	return (crc);
+}
+
+u_int32_t
+ether_crc32_be(buf, len)
+	const u_int8_t *buf;
+	size_t len;
+{
+	u_int32_t c, crc, carry;
+	size_t i, j;
+
+	crc = 0xffffffffU;	/* initial value */
+
+	for (i = 0; i < len; i++) {
+		c = buf[i];
+		for (j = 0; j < 8; j++) {
+			carry = ((crc & 0x80000000U) ? 1 : 0) ^ (c & 0x01);
+			crc <<= 1;
+			c >>= 1;
+			if (carry)
+				crc = (crc ^ ETHER_CRC_POLY_BE) | carry;
+		}
+	}
+
+	return (crc);
 }
 
 #ifdef INET
