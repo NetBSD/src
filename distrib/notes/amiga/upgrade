@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.24 2002/08/02 14:35:50 is Exp $
+.\"	$NetBSD: upgrade,v 1.25 2004/02/21 18:23:21 snj Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,7 +178,7 @@ After this is done, you will be asked if you want to configure your network.
 .Pp
 You are now allowed to edit your fstab.
 Normally you don't have to.
-Note that the upgrade-kit uses it's own copy of the fstab.
+Note that the upgrade-kit uses its own copy of the fstab.
 Whatever you do here
 .Em won't
 affect your actual fstab.
