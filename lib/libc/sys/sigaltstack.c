@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.2 1997/11/29 18:39:46 kleink Exp $	*/
+/*	$NetBSD: sigaltstack.c,v 1.1 1997/11/29 18:38:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,85 +36,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/signal.h>
-#include <sys/systm.h>
+#define __LIBC12_SOURCE__
 
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-
-#include <machine/limits.h>
-
-#include <compat/common/compat_util.h>
-
+#include <limits.h>
+#include <signal.h>
+#include <stddef.h>
 
 int
-compat_13_sys_sigaltstack(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sigaltstack(onss, ooss)
+	const struct sigaltstack13 *onss;
+	struct sigaltstack13 *ooss;
 {
-	struct sys___sigaltstack14_args ua;
-	struct compat_13_sys_sigaltstack_args /* {
-		syscallarg(const struct sigaltstack13 *) nss;
-		syscallarg(struct sigaltstack13 *) oss;
-	} */ *uap = v;
-	struct sigaltstack13 tmp13;
-	struct sigaltstack tmp, *nssp, *ossp;
-	caddr_t sg;
+	stack_t nss, oss;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	nss.ss_sp = onss->ss_sp;
+	nss.ss_size = onss->ss_size;
+	nss.ss_flags = onss->ss_flags;
 
+	error = __sigaltstack14(&nss, &oss);
 
-	if (SCARG(uap, nss) != NULL) {
-		error = copyin(SCARG(uap, nss), &tmp13,
-		    sizeof(struct sigaltstack13));
-		if (error != 0)
-			return (error);
-		
-		tmp.ss_sp = tmp13.ss_sp;
-		tmp.ss_size = tmp13.ss_size;
-		tmp.ss_flags = tmp13.ss_flags;
-		
-		nssp = stackgap_alloc(&sg, sizeof(struct sigaltstack));
-		error = copyout(&tmp, nssp, sizeof(struct sigaltstack));
-		if (error != 0)
-			return (error);
-	} else
-		nssp = NULL;
-
-	if (SCARG(uap, oss) != NULL)
-		ossp = stackgap_alloc(&sg, sizeof(struct sigaltstack));
-	else
-		ossp = NULL;
-
-	SCARG(&ua, nss) = nssp;
-	SCARG(&ua, oss) = ossp;
-
-	error = sys___sigaltstack14(p, &ua, retval);
-	if (error != 0)
-		return (error);
-
-	if (SCARG(uap, oss) != NULL) {
-		error = copyin(SCARG(&ua, oss), &tmp,
-		    sizeof(struct sigaltstack));
-		if (error != 0)
-			return (error);
-		
-		tmp13.ss_sp = tmp.ss_sp;
-		if (tmp.ss_size > INT_MAX)
-			tmp13.ss_size = INT_MAX;
+	if (error == 0 && ooss != NULL) {
+		ooss->ss_sp = oss.ss_sp;
+		if (oss.ss_size > INT_MAX)
+			ooss->ss_size = INT_MAX;
 		else
-			tmp13.ss_size = tmp.ss_size;
-		tmp13.ss_flags = tmp.ss_flags;
-
-		error = copyout(&tmp13, SCARG(uap, oss),
-		    sizeof(struct sigaltstack13));
-		if (error != 0)
-			return (error);
+			ooss->ss_size = oss.ss_size;
+		ooss->ss_flags = oss.ss_flags;
 	}
 
-	return (0);
+	return (error);
 }
