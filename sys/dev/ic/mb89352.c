@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.19 2003/07/05 19:31:11 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.20 2003/07/05 19:50:17 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.19 2003/07/05 19:31:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.20 2003/07/05 19:50:17 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -901,22 +901,6 @@ nextbyte:
 	 * itself.
 	 */
 	for (;;) {
-#if 0
-		for (;;) {
-			if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
-				break;
-			/* Wait for REQINIT.  XXX Need timeout. */
-		}
-#endif
-		if (bus_space_read_1(iot, ioh, INTS) != 0) {
-			/*
-			 * Target left MESSAGE IN, probably because it
-			 * a) noticed our ATN signal, or
-			 * b) ran out of messages.
-			 */
-			goto out;
-		}
-
 		/* If parity error, just dump everything on the floor. */
 		if ((bus_space_read_1(iot, ioh, SERR) &
 		     (SERR_SCSI_PAR|SERR_SPC_PAR)) != 0) {
@@ -924,42 +908,32 @@ nextbyte:
 			spc_sched_msgout(sc, SEND_PARITY_ERROR);
 		}
 
-		/* send TRANSFER command. */
-		bus_space_write_1(iot, ioh, TCH, 0);
-		bus_space_write_1(iot, ioh, TCM, 0);
-		bus_space_write_1(iot, ioh, TCL, 1);
-		bus_space_write_1(iot, ioh, PCTL,
-		    sc->sc_phase | PCTL_BFINT_ENAB);
-#ifdef x68k
-		bus_space_write_1(iot, ioh, SCMD,
-		    SCMD_XFR /* | SCMD_PROG_XFR */);
-#else
-		bus_space_write_1(iot, ioh, SCMD,
-		    SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
-#endif
-		for (;;) {
-#if 0
-			if ((bus_space_read_1(iot, ioh, SSTS) &
-			    SSTS_BUSY) != 0 &&
-			    (bus_space_read_1(iot, ioh, SSTS) &
-			    SSTS_DREG_EMPTY) != 0)
-#endif
-			if ((bus_space_read_1(iot, ioh, SSTS) &
-			    SSTS_DREG_EMPTY) == 0)
-				break;
-			if (bus_space_read_1(iot, ioh, INTS) != 0)
+		if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_ATN) != 0)
+			bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ATN);
+
+		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0) {
+			/* XXX needs timeout */
+			if ((bus_space_read_1(iot, ioh, PSNS) & PH_MASK)
+			     != PH_MSGIN ||
+			    (bus_space_read_1(iot, ioh, SSTS) & SSTS_INITIATOR)
+			     == 0)
 				goto out;
 		}
+
+		bus_space_write_1(iot, ioh, PCTL, PH_MSGIN);
+		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
+		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
+			continue;	/* XXX needs timeout */
 
 		/* Gather incoming message bytes if needed. */
 		if ((sc->sc_flags & SPC_DROP_MSGIN) == 0) {
 			if (n >= SPC_MAX_MSG_LEN) {
-				(void) bus_space_read_1(iot, ioh, DREG);
+				(void) bus_space_read_1(iot, ioh, TEMP);
 				sc->sc_flags |= SPC_DROP_MSGIN;
 				spc_sched_msgout(sc, SEND_REJECT);
 			} else {
 				*sc->sc_imp++ =
-				    bus_space_read_1(iot, ioh, DREG);
+				    bus_space_read_1(iot, ioh, TEMP);
 				n++;
 				/*
 				 * This testing is suboptimal, but most
@@ -976,19 +950,16 @@ nextbyte:
 					break;
 			}
 		} else
-			(void) bus_space_read_1(iot, ioh, DREG);
+			(void) bus_space_read_1(iot, ioh, TEMP);
 
 		/*
 		 * If we reach this spot we're either:
 		 * a) in the middle of a multi-byte message, or
 		 * b) dropping bytes.
 		 */
-#if 0
+
 		/* Ack the last byte read. */
-		/*(void) bus_space_read_1(iot, ioh, DREG);*/
-		while ((bus_space_read_1(iot, ioh, PSNS) & ACKI) != 0)
-			;
-#endif
+		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 	}
 
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
@@ -1160,11 +1131,7 @@ nextbyte:
 	}
 
 	/* Ack the last message byte. */
-#if 0 /* XXX? */
-	(void) bus_space_read_1(iot, ioh, DREG);
-	while ((bus_space_read_1(iot, ioh, PSNS) & ACKI) != 0)
-		;
-#endif
+	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 
 	/* Go get the next message, if any. */
 	goto nextmsg;
@@ -1172,6 +1139,10 @@ nextbyte:
 out:
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
+
+	while ((bus_space_read_1(iot, ioh, SSTS) & SSTS_ACTIVE) 
+	    == SSTS_INITIATOR)
+		continue;	/* XXX needs timeout */
 }
 
 /*
@@ -1310,7 +1281,7 @@ nextbyte:
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
 	bus_space_write_1(iot, ioh, SCMD,
-	    SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);
+	    SCMD_XFR | SCMD_PROG_XFR);
 #endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
@@ -1416,7 +1387,7 @@ spc_dataout_pio(sc, p, n)
 	bus_space_write_1(iot, ioh, SCMD, SCMD_XFR);	/* XXX */
 #else
 	bus_space_write_1(iot, ioh, SCMD,
-	    SCMD_XFR | SCMD_PROG_XFR | SCMD_ICPT_XFR);	/* XXX */
+	    SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
 #endif
 	for (;;) {
 		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
@@ -1511,8 +1482,8 @@ spc_datain_pio(sc, p, n)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_short intstat;
 	int in = 0;
+	u_int8_t intstat, sstat;
 #define DINAMOUNT 8		/* Full FIFO */
 
 	SPC_TRACE(("spc_datain_pio  "));
@@ -1542,40 +1513,31 @@ spc_datain_pio(sc, p, n)
 	while (n > 0) {
 		int xfer;
 
-#define INTSMASK 0xff
 		/* Wait for fifo half full or phase mismatch */
 		for (;;) {
-			intstat = (bus_space_read_1(iot, ioh, SSTS) << 8) |
-			    bus_space_read_1(iot, ioh, INTS);
-			if ((intstat & (INTSMASK | (SSTS_DREG_FULL << 8))) !=
-			    0)
-				break;
-			if ((intstat & (SSTS_DREG_EMPTY << 8)) == 0)
+			/* XXX needs timeout */
+			intstat = bus_space_read_1(iot, ioh, INTS);
+			sstat = bus_space_read_1(iot, ioh, SSTS);
+			if (intstat != 0 ||
+			    (sstat & SSTS_DREG_EMPTY) == 0)
 				break;
 		}
 
-#if 1
-		if ((intstat & INTSMASK) != 0)
-			goto phasechange;
-#else
-		if ((intstat & INTSMASK) != 0 &&
-		    (intstat & (SSTS_DREG_EMPTY << 8)))
-			goto phasechange;
-#endif
-		if ((intstat & (SSTS_DREG_FULL << 8)) != 0)
-			xfer = min(DINAMOUNT, n);
-		else
-			xfer = min(1, n);
+		if (sstat & SSTS_DREG_FULL) {
+			xfer = DINAMOUNT;
+			n -= xfer;
+			in += xfer;
+			bus_space_read_multi_1(iot, ioh, DREG, p, xfer);
+			p += xfer;
+		}
+		while (n > 0 &&
+		    (bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) == 0) {
+			n--;
+			in++;
+			*p++ = bus_space_read_1(iot, ioh, DREG);
+		}
 
-		SPC_MISC((">%d ", xfer));
-
-		n -= xfer;
-		in += xfer;
-
-		bus_space_read_multi_1(iot, ioh, DREG, p, xfer);
-		p += xfer;
-
-		if ((intstat & INTSMASK) != 0)
+		if (intstat != 0)
 			goto phasechange;
 	}
 
@@ -1588,6 +1550,7 @@ spc_datain_pio(sc, p, n)
 	 */
 	if (in == 0) {
 		for (;;) {
+			/* XXX needs timeout */
 			if (bus_space_read_1(iot, ioh, INTS) != 0)
 				break;
 		}
@@ -1956,10 +1919,18 @@ dophase:
 			break;
 		SPC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-#if 0
-		acb->target_stat = bus_space_read_1(iot, ioh, DREG);
-#endif
-		spc_datain_pio(sc, &acb->target_stat, 1);
+
+		if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_ATN) != 0)
+			bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ATN);
+		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0)
+			continue;	/* XXX needs timeout */
+		bus_space_write_1(iot, ioh, PCTL, PH_STAT);
+		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
+		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
+			continue;	/* XXX needs timeout */
+		acb->target_stat = bus_space_read_1(iot, ioh, TEMP);
+		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
+
 		SPC_MISC(("target_stat=0x%02x  ", acb->target_stat));
 		sc->sc_prevphase = PH_STAT;
 		goto loop;
