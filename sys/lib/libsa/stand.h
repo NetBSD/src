@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.28 1999/02/11 14:32:00 pk Exp $	*/
+/*	$NetBSD: stand.h,v 1.29 1999/02/12 10:51:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -129,7 +129,6 @@ int	getfile __P((char *prompt, int mode));
 char	*strerror __P((int));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
-__dead void	exit __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	memcmp __P((const void *, const void *, size_t));
