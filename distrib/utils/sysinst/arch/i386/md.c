@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.33 2000/03/14 22:42:51 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.34 2000/04/10 01:40:51 hubertf Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -473,16 +473,29 @@ md_cleanup_install(void)
 
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
-
-	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
-	    realfrom, realto);
+	sprintf(sedcmd, "sed "
+			"-e 's/rc_configured=NO/rc_configured=YES/'"
+			"-e 's/wscons=NO/wscons=YES/'"
+			" < %s > %s", realfrom, realto);
 	if (logging)
 		(void)fprintf(log, "%s\n", sedcmd);
 	if (scripting)
 		(void)fprintf(script, "%s\n", sedcmd);
 	do_system(sedcmd);
-
 	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+
+	strncpy(realfrom, target_expand("/etc/ttys"), STRSIZE);
+	strncpy(realto, target_expand("/etc/ttys.install"), STRSIZE);
+	sprintf(sedcmd, "sed "
+			"-e '/^ttyE/s/off/on/'"
+			" < %s > %s", realfrom, realto);
+	if (logging)
+		(void)fprintf(log, "%s\n", sedcmd);
+	if (scripting)
+		(void)fprintf(script, "%s\n", sedcmd);
+	do_system(sedcmd);
+	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
