@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strings.c	5.10 (Berkeley) 5/23/91";*/
-static char rcsid[] = "$Id: strings.c,v 1.3 1993/11/12 18:06:06 hpeyerl Exp $";
+static char rcsid[] = "$Id: strings.c,v 1.4 1993/11/13 01:51:02 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,14 @@ static char rcsid[] = "$Id: strings.c,v 1.3 1993/11/12 18:06:06 hpeyerl Exp $";
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
+
+enum offset_radix {			/* radix used for string offset */
+	OFFSET_NONE,
+	OFFSET_OCT,
+	OFFSET_DEC,
+	OFFSET_HEX
+} ;
 
 #define DEF_LEN		4		/* default minimum string length */
 #define ISSTR(ch)	(isascii(ch) && (isprint(ch) || ch == '\t'))
@@ -75,17 +83,21 @@ main(argc, argv)
 	register u_char *C;
 	EXEC *head;
 	int exitcode, minlen;
-	short asdata, oflg, fflg;
+	short asdata, fflg;
+	enum offset_radix oflg;
 	u_char *bfr;
 	char *file, *p;
+
+	setlocale(LC_ALL, "");
 
 	/*
 	 * for backward compatibility, allow '-' to specify 'a' flag; no
 	 * longer documented in the man page or usage string.
 	 */
-	asdata = exitcode = fflg = oflg = 0;
+	asdata = exitcode = fflg = 0;
+	oflg = OFFSET_NONE;
 	minlen = -1;
-	while ((ch = getopt(argc, argv, "-0123456789an:of")) != EOF)
+	while ((ch = getopt(argc, argv, "-0123456789an:oft:")) != -1)
 		switch((char)ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
@@ -112,7 +124,23 @@ main(argc, argv)
 			minlen = atoi(optarg);
 			break;
 		case 'o':
-			oflg = 1;
+			oflg = OFFSET_OCT;
+			break;
+		case 't':
+			switch (*optarg) {
+			case 'o':
+				oflg = OFFSET_OCT;
+				break;
+			case 'd':
+				oflg = OFFSET_DEC;
+				break;
+			case 'x':
+				oflg = OFFSET_HEX;
+				break;
+			default:
+				usage();
+				/* NOTREACHED */
+			}
 			break;
 		case '?':
 		default:
@@ -168,13 +196,22 @@ start:
 				*C++ = ch;
 				if (++cnt < minlen)
 					continue;
+
 				if (fflg)
 					printf("%s:", file);
-				if (oflg)
-					printf("%07ld %s",
-					    foff - minlen, (char *)bfr);
-				else
-					printf("%s", bfr);
+				switch (oflg) {
+				case OFFSET_OCT:
+					printf("%07lo ", foff - minlen);
+					break;
+				case OFFSET_DEC:
+					printf("%07ld ", foff - minlen);
+					break;
+				case OFFSET_HEX:
+					printf("%07lx ", foff - minlen);
+					break;
+				}
+				printf("%s", bfr);
+
 				while ((ch = getch()) != EOF && ISSTR(ch))
 					putchar((char)ch);
 				putchar('\n');
@@ -207,6 +244,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: strings [-afo] [-n length] [file ... ]\n");
+	    "usage: strings [-afo] [-n length] [-t {o,d,x}] [file ... ]\n");
 	exit(1);
 }
