@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.5 1997/10/14 09:20:08 mark Exp $	*/
+/*	$NetBSD: cpus.h,v 1.6 1998/05/01 15:32:55 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -142,12 +142,6 @@ typedef struct _cpu {
 	} cpu_local;
 	void *cpu_cd;		/* CPU dependant data */
 } cpu_t;
-
-
-struct cpu_softc {
-	struct	device sc_device;
-	int	sc_open;
-};
 
 #ifdef _KERNEL
 
