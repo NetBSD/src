@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.9 1998/09/07 14:31:57 kleink Exp $	*/
+/*	$NetBSD: fgets.c,v 1.10 1998/11/15 17:15:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.9 1998/09/07 14:31:57 kleink Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.10 1998/11/15 17:15:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ fgets(buf, n, fp)
 	int n;
 	FILE *fp;
 {
-	size_t len;
+	int len;
 	char *s;
 	unsigned char *p, *t;
 
@@ -96,19 +96,19 @@ fgets(buf, n, fp)
 		 */
 		if (len > n)
 			len = n;
-		t = memchr((void *)p, '\n', len);
+		t = memchr((void *)p, '\n', (size_t)len);
 		if (t != NULL) {
 			len = ++t - p;
 			fp->_r -= len;
 			fp->_p = t;
-			(void)memcpy((void *)s, (void *)p, len);
+			(void)memcpy((void *)s, (void *)p, (size_t)len);
 			s[len] = 0;
 			FUNLOCKFILE(fp)
 			return (buf);
 		}
 		fp->_r -= len;
 		fp->_p += len;
-		(void)memcpy((void *)s, (void *)p, len);
+		(void)memcpy((void *)s, (void *)p, (size_t)len);
 		s += len;
 		n -= len;
 	}
