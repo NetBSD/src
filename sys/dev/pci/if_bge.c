@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.63 2004/03/20 02:04:07 jonathan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.64 2004/03/27 01:17:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.63 2004/03/20 02:04:07 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.64 2004/03/27 01:17:49 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.63 2004/03/20 02:04:07 jonathan Exp $")
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -168,7 +169,13 @@ bge_rx_threshes[] = {
 #define NBGE_RX_THRESH (sizeof(bge_rx_threshes) / sizeof(bge_rx_threshes[0]))
 
 /* XXX patchable; should be sysctl'able */
-int	bge_auto_thresh = 0;
+static int	bge_auto_thresh = 1;
+static int	bge_rx_thresh_lvl;
+
+#ifdef __NetBSD__
+static struct sysctlnode *bge_node_root;
+static int bge_rxthresh_nodenum;
+#endif /* __NetBSD__ */
 
 int bge_probe(struct device *, struct cfdata *, void *);
 void bge_attach(struct device *, struct device *, void *);
@@ -3716,4 +3723,78 @@ bge_shutdown(xsc)
 
 	bge_stop(sc);
 	bge_reset(sc);
+}
+
+
+static int
+sysctl_bge_verify(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int*)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+#if 0
+	DPRINTF2(("%s: t = %d, nodenum = %d, rnodenum = %d\n", __func__, t,
+	    node.sysctl_num, rnode->sysctl_num));
+#endif
+
+	if (node.sysctl_num == bge_rxthresh_nodenum) {
+		if (t < 0 || t >= NBGE_RX_THRESH)
+			return (EINVAL);
+		bge_update_all_threshes(t);
+	} else
+		return (EINVAL);
+
+	*(int*)rnode->sysctl_data = t;
+
+	return (0);
+}
+
+/*
+ * Setup sysctl(3) MIB, hw.bge.*.
+ *
+ * TBD condition SYSCTL_PERMANENT on being an LKM or not
+ */
+SYSCTL_SETUP(sysctl_bge, "sysctl bge subtree setup")
+{
+	int rc;
+	struct sysctlnode *node;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0) {
+		goto err;
+	}
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "bge", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0) {
+		goto err;
+	}
+
+	bge_node_root = node;
+
+	/* BGE Rx interrupt mitigation level */
+	if ((rc = sysctl_createv(clog, 0, NULL, &node, 
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "rx_lvl", NULL, sysctl_bge_verify, 0,
+	    &bge_rx_thresh_lvl,
+	    0, CTL_HW, bge_node_root->sysctl_num, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		goto err;
+	}
+
+	bge_rxthresh_nodenum = node->sysctl_num;
+	node = NULL;
+
+	return;
+
+err:
+	printf("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
