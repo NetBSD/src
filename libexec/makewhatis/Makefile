@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.11 2002/03/08 21:59:07 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.12 2002/08/19 13:54:36 lukem Exp $
+
+.include <bsd.obj.mk>
 
 PROG=	makewhatis
 SRCS=	makewhatis.c config.c
-.PATH:	${.CURDIR}/../../usr.bin/man
-CPPFLAGS+=-I${.CURDIR}/../../usr.bin
+.PATH:	${NETBSDSRCDIR}/usr.bin/man
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin
 
 MAN=	${PROG}.8
 
