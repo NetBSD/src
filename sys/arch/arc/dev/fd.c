@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20 2000/04/07 16:58:54 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.21 2000/05/16 05:45:45 thorpej Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -425,8 +425,6 @@ fdattach(parent, self, aux)
 	fdc->sc_fd[drive] = fd;
 	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
 	fd->sc_dk.dk_driver = &fddkdriver;
-	/* XXX Need to do some more fiddling with sc_dk. */
-	dk_establish(&fd->sc_dk, &fd->sc_dev);
 
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);

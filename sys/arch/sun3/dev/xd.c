@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.26 2000/03/23 06:46:17 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.27 2000/05/16 05:45:51 thorpej Exp $	*/
 
 /*
  *
@@ -564,7 +564,6 @@ xdattach(parent, self, aux)
 
 	/* Do init work common to attach and open. */
 	xd_init(xd);
-	dk_establish(&xd->sc_dk, &xd->sc_dev);
 }
 
 /*
