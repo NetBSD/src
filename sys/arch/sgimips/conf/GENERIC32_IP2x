@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.1 2003/11/13 02:31:46 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.2 2003/11/22 15:08:44 sekiya Exp $
 #
 # Indy
 
@@ -8,7 +8,7 @@ makeoptions	TEXTADDR=0x88069000	# Indy
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1 $"
+#ident		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -156,6 +156,7 @@ hpc2 		at gio? addr 0x1f980000
 sq* 		at hpc0 offset ?
 wdsc* 		at hpc0 offset ?
 dsclock*	at hpc0 offset ?
+#dpclock*	at hpc0 offset ?
 haltwo*         at hpc0 offset ?
 
 #
