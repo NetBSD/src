@@ -136,16 +136,21 @@ getlhs(delim)
 }
 
 
-/* ccl: expand a character class */
+/* ccl: expand a POSIX character class */
 char *
-ccl(src)
-	char	*src;
+ccl(s)
+	char *s;
 {
-	if (*src == '^')
-		src++;
-	if (*src == ']')
-		src++;
-	while (*src != ']' && *src != '\n')
-		src++;
-	return  (*src == ']') ? src : NULL;
+	int c, d;
+
+	if (*s == '^')
+		s++;
+	if (*s == ']')
+		s++;
+	for (; *s != ']' && *s != '\n'; s++)
+		if (*s == '[' && ((d = *(s+1)) == '.' || d == ':' || d == '='))
+			for (s++, c = *++s; *s != ']' || c != d; s++)
+				if ((c = *s) == '\n')
+					return NULL;
+	return  (*s == ']') ? s : NULL;
 }
