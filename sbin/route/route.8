@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.11 1997/08/27 06:38:06 mikel Exp $
+.\"	$NetBSD: route.8,v 1.12 1997/09/15 09:15:28 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm route
 .Nd manually manipulate the routing tables.
 .Sh SYNOPSIS
-.Nm route
+.Nm
 .Op Fl nqv
 .Ar command
 .Oo
@@ -48,7 +48,7 @@
 .Ar args
 .Oc
 .Sh DESCRIPTION
-.Nm Route
+.Nm
 is a utility used to manually manipulate the network
 routing tables.  It normally is not needed, as a
 system routing table management daemon such as
@@ -56,7 +56,7 @@ system routing table management daemon such as
 should tend to this task.
 .Pp
 The
-.Nm route
+.Nm
 utility supports a limited number of general options,
 but a rich command language, enabling the user to specify
 any arbitrary request that could be delivered via the
@@ -77,7 +77,7 @@ Suppress all output.
 .El
 .Pp
 The
-.Nm route
+.Nm
 utility provides several commands:
 .Pp
 .Bl -tag -width Fl -compact
@@ -102,14 +102,14 @@ routing lookup misses, or suspected network partitionings.
 The monitor command has the syntax
 .Pp
 .Bd -filled -offset indent -compact
-.Nm route Op Fl n
+.Nm "" Op Fl n
 .Cm monitor
 .Ed
 .Pp
 The flush command has the syntax
 .Pp
 .Bd -filled -offset indent -compact
-.Nm route Op Fl n
+.Nm "" Op Fl n
 .Cm flush
 .Op Ar family
 .Ed
@@ -117,7 +117,7 @@ The flush command has the syntax
 If the 
 .Cm flush
 command is specified, 
-.Nm route
+.Nm
 will ``flush'' the routing tables of all gateway entries.
 When the address family is specified by any of the
 .Fl osi ,
@@ -131,7 +131,7 @@ delineated family will be deleted.
 The other commands have the following syntax:
 .Pp
 .Bd -filled -offset indent -compact
-.Nm route Op Fl n
+.Nm "" Op Fl n
 .Ar command
 .Op Fl net No \&| Fl host
 .Ar destination gateway
@@ -279,7 +279,7 @@ If this lookup fails,
 .Xr getnetbyname 3
 is then used to interpret the name as that of a network.
 .Pp
-.Nm Route
+.Nm
 uses a routing socket and the new message types
 .Dv RTM_ADD ,
 .Dv RTM_DELETE ,
