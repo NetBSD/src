@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.6 2001/11/16 01:57:08 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.7 2001/11/16 15:33:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,11 +41,13 @@
  *
  * The EHCI 0.96 spec can be found at
  * http://developer.intel.com/technology/usb/download/ehci-r096.pdf
+ * and the USB 2.0 spec at
+ * http://www.usb.org/developers/data/usb_20.zip
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.6 2001/11/16 01:57:08 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.7 2001/11/16 15:33:13 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
