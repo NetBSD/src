@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.5 1995/06/26 22:57:29 pk Exp $ */
+/*	$NetBSD: disksubr.c,v 1.6 1995/08/18 08:14:30 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Theo de Raadt
@@ -44,6 +44,9 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/sun_disklabel.h>
+#if defined(SUN4)
+#include <machine/oldmon.h>
+#endif
 
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/espvar.h>
@@ -53,25 +56,70 @@ int sun_disklabel_from_bsd	__P((caddr_t, struct disklabel *));
 
 extern struct device *bootdv;
 
-/* was this the boot device ? */
+/* 
+ * find the boot device (if it was a disk).   we must check to see if
+ * unit info in saved bootpath structure matches unit info in our softc.
+ * note that knowing the device name (e.g. "xd0") is not useful... we
+ * must check the drive number (or target/lun, in the case of SCSI).
+ * (XXX is it worth ifdef'ing this?)
+ */
+
 int
 dk_establish(dk, dev)
 	struct dkdevice *dk;
 	struct device *dev;
 {
-	/* XXX: sd -> scsibus -> esp */
-	struct bootpath *bp = ((struct esp_softc *)dev->dv_parent->dv_parent)->sc_bp;
+	struct bootpath *bp = bootpath_store(0, NULL); /* restore bootpath! */
 	char name[10];
-
-#define CRAZYMAP(v) ((v) == 3 ? 0 : (v) == 0 ? 3 : (v))
+	struct xd_softc *xdsc;
+	struct scsibus_softc *sbsc;
+	int targ, lun;
 
 	if (bp == NULL)
 		return -1;
-	sprintf(name, "%s%d", bp->name, CRAZYMAP(bp->val[0]));
-	if (strcmp(name, dev->dv_xname) == 0) {
-		bootdv = dev;
+
+	/*
+	 * scsi: sd,cd
+	 */
+	if (strncmp("sd", dev->dv_xname, 2) == 0 || 
+	    strncmp("cd", dev->dv_xname, 2) == 0) {
+		sbsc = (struct scsibus_softc *)dev->dv_parent;
+		targ = lun = 0;
+
+#if defined(SUN4)
+		if (cputyp == CPU_SUN4) {
+			if (dev->dv_xname[0] == 's' && bp->val[0] == 0) { 
+				/* disk unit 0 is magic */
+				if (sbsc->sc_link[0][0] == NULL) {
+					targ = 3; /* remap to 3 */
+					lun = 0;
+				}
+			} else {
+				extern struct om_vector *oldpvec;
+				if (oldpvec->monId[0] > '1') {
+					targ = bp->val[0] >> 3; /* new format */
+					lun = bp->val[0] & 0x7;
+				} else {
+					targ = bp->val[0] >> 2; /* old format */
+					lun = bp->val[0] & 0x3;
+				}
+			}
+		} else
+#endif
+		{
+			lun = bp->val[1];
+			targ = (dev->dv_xname[0] == 's')
+				? sd_crazymap(bp->val[0])
+				: bp->val[0];
+		}
+
+		if (sbsc->sc_link[targ][lun]->device_softc == (void *)dev) {
+			bootdv = dev; /* got it! */
+			return 1;
+		}
 	}
-	return 1;
+
+	return -1;
 }
 
 /*
