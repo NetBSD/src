@@ -1,6 +1,9 @@
-#	$Id: Makefile,v 1.18 1994/01/05 21:20:05 pk Exp $
+#	$Id: Makefile,v 1.19 1994/01/05 21:27:44 mycroft Exp $
 
 LIB=		g++
+
+DPADD+=		${LIBCURSES}
+LDADD+=		-lcurses
 
 SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		regex.cc Regex.cc String.cc  Integer.cc Rational.cc Complex.cc Random.cc \
