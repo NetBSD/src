@@ -1,6 +1,7 @@
-/* $NetBSD: alpha_cpu.h,v 1.7.2.1 1997/06/01 04:12:01 cgd Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.7.2.2 1997/06/06 00:14:03 cgd Exp $ */
 
 /*
+ * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
@@ -266,6 +267,7 @@ void		alpha_pal_imb __P((void));
 void		alpha_pal_draina __P((void));
 void		alpha_pal_halt __P((void)) __attribute__((__noreturn__));
 unsigned long	alpha_pal_rdmces __P((void));
+unsigned long	alpha_pal_rdps __P((void));
 unsigned long	alpha_pal_rdusp __P((void));
 unsigned long	alpha_pal_swpipl __P((unsigned long));
 unsigned long	_alpha_pal_swpipl __P((unsigned long));	/* for profiling */

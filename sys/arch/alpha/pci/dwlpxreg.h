@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.4.2.2 1997/06/01 04:13:15 cgd Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.4.2.3 1997/06/06 00:14:08 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -42,7 +42,7 @@
  *	  Order Number EK-T8030-TM. A01''
  */
 
-#define	REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * There are (potentially) 4 I/O hoses, and there are three
