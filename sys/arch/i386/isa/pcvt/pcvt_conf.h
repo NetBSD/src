@@ -82,11 +82,17 @@
 #define PCVT_NETBSD 100
 #endif
 #endif
-#endif
 
 #ifdef NetBSD1_1
 #define PCVT_NETBSD (110 + (NetBSD1_1 - 1))
 #endif
+
+#ifdef NetBSD1_2
+#define PCVT_NETBSD (120 + (NetBSD1_2 - 1))
+#endif
+
+#endif
+
 
 /*---------------------------------------------------------------------------
  * Note that each of the options below should rather be overriden by the
