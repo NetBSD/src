@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.32 2002/10/18 20:35:25 thorpej Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.33 2003/05/23 20:13:50 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -432,10 +432,10 @@ _rtld_relocate_nonplt_objects(obj)
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 			rdbg(("%s %s in %s --> %p in %s", reloc_names[type],
 			    obj->strtab + obj->symtab[symnum].st_name,
-			    obj->path, (void *)*where, defobj->path));
+			    obj->path, (void *)value, defobj->path));
 		} else {
 			rdbg(("%s in %s --> %p", reloc_names[type],
-			    obj->path, (void *)*where));
+			    obj->path, (void *)value));
 		}
 #endif
 	}
