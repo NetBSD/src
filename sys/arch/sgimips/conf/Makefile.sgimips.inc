@@ -1,13 +1,4 @@
-#	$NetBSD: Makefile.sgimips.inc,v 1.4 2001/10/08 10:14:41 simonb Exp $
-
-SYSTEM_LD_TAIL=	@echo ${LD} -N -T ${KERNLDSCRIPT} -Ttext 0x88002000 \
-		-e start ${GP} -x -o $@.high '$${SYSTEM_OBJ}' vers.o ; \
-		${LD} -N -T ${KERNLDSCRIPT} -Ttext 0x88002000 \
-		-e start ${GP} -x -o $@.high ${SYSTEM_OBJ} vers.o swapnetbsd.o
-# XXX
-SYSTEM_LD_TAIL+=; \
-		${SIZE} $@; chmod 755 $@ ; \
-		${SIZE} $@.high; chmod 755 $@.high
+#	$NetBSD: Makefile.sgimips.inc,v 1.5 2001/11/19 17:39:31 soren Exp $
 
 # Used if DEBUG != ""
 DEBUG_SYSTEM_LD_TAIL+=; \
