@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.101 2003/09/07 22:17:43 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.102 2004/05/12 20:23:29 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -145,10 +145,6 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase)
 	_rtld_objself.mapbase = mapbase;
 	_rtld_objself.relocbase = relocbase;
 	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
-
-#ifdef RTLD_RELOCATE_SELF
-#error platform still uses RTLD_RELOCATE_SELF
-#endif
 
 	_rtld_digest_dynamic(&_rtld_objself);
 	assert(!_rtld_objself.needed && !_rtld_objself.pltrel &&
