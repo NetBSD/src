@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.536 2005/03/22 09:28:24 tron Exp $
+# $NetBSD: mi,v 1.537 2005/03/22 12:45:07 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3472,10 +3472,6 @@
 ./var/db/obsolete/man				base-sys-root
 ./var/db/obsolete/misc				base-sys-root
 ./var/db/obsolete/text				base-sys-root
-./var/db/obsolete/xbase				base-x11-root		x11
-./var/db/obsolete/xcomp				base-x11-root		x11
-./var/db/obsolete/xfont				base-x11-root		x11
-./var/db/obsolete/xserver			base-x11-root		x11
 ./var/db/xdm					base-sys-root
 ./var/empty					base-obsolete		obsolete
 ./var/games					base-games-root

@@ -1,5 +1,9 @@
-# $NetBSD: mi,v 1.45 2005/03/21 14:43:44 tron Exp $
+# $NetBSD: mi,v 1.46 2005/03/22 12:45:07 tron Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
+./var/db/obsolete/xbase				xbase-sys-root
+./var/db/obsolete/xcomp				xbase-sys-root
+./var/db/obsolete/xfont				xbase-sys-root
+./var/db/obsolete/xserver			xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
 ./usr/X11R6/bin/atobm
