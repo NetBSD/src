@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2002/02/18 03:38:01 shin Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/05 21:23:29 thorpej Exp $
 
 .include "../Makefile.inc"
 
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
+.include <bsd.own.mk>
 
 SUBDIR=
 

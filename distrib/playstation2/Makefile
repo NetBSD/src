@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2002/02/09 13:56:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/03/05 21:23:31 thorpej Exp $
 
 .include "../Makefile.inc"
 
+.include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.kernobj.mk>
 

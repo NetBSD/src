@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.5 2002/02/16 01:53:52 reinoud Exp $
+# $NetBSD: Makefile,v 1.6 2002/03/05 21:23:30 thorpej Exp $
+
+.include <bsd.own.mk>
 
 ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}

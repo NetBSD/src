@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/05 20:41:29 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 2002/03/05 21:23:29 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -67,5 +67,4 @@ clean cleandir distclean:
 
 .INTERRUPT: unconfig
 
-.include <bsd.own.mk>
 .include <bsd.subdir.mk>

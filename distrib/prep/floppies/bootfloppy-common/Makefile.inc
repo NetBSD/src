@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/10/21 23:23:22 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2002/03/05 21:23:30 thorpej Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
+.include <bsd.own.mk>
 .include <bsd.subdir.mk>
 
 IMAGE?=		boot.fs
@@ -33,5 +34,4 @@ release:
 clean cleandir distclean:
 	rm -f *.core ${IMAGE} ${CLEANFILES}
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
