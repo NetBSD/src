@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 2002/10/03 02:56:47 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.50 2002/11/16 03:10:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.49 2002/10/03 02:56:47 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.50 2002/11/16 03:10:34 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -150,7 +150,7 @@ parse_conf(const char *findclass)
 	char		*class, *word, *arg, *template;
 	const char	*infile;
 	size_t		 line;
-	unsigned int	 timeout;
+	unsigned long	 timeout;
 	struct ftpconv	*conv, *cnext;
 
 	init_curclass();
@@ -359,20 +359,23 @@ parse_conf(const char *findclass)
 			CONF_STRING(homedir);
 
 		} else if (strcasecmp(word, "limit") == 0) {
-			int limit;
+			long limit;
 
 			curclass.limit = DEFAULT_LIMIT;
 			REASSIGN(curclass.limitfile, NULL);
 			if (none || EMPTYSTR(arg))
 				continue;
-			limit = (int)strtol(arg, &endp, 10);
-			if (*endp != 0) {
+			errno = 0;
+			endp = NULL;
+			limit = strtol(arg, &endp, 10);
+			if (errno || *arg == '\0' || *endp != '\0' ||
+			    limit < 0 || limit > INT_MAX) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid limit %s",
 				    infile, (int)line, arg);
 				continue;
 			}
-			curclass.limit = limit;
+			curclass.limit = (int)limit;
 			REASSIGN(curclass.limitfile,
 			    EMPTYSTR(p) ? NULL : xstrdup(p));
 
@@ -384,8 +387,11 @@ parse_conf(const char *findclass)
 			curclass.maxtimeout = DEFAULT_MAXTIMEOUT;
 			if (none || EMPTYSTR(arg))
 				continue;
-			timeout = (unsigned int)strtoul(arg, &endp, 10);
-			if (*endp != 0) {
+			errno = 0;
+			endp = NULL;
+			timeout = strtoul(arg, &endp, 10);
+			if (errno || *arg == '\0' || *endp != '\0' ||
+			    timeout > UINT_MAX) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid maxtimeout %s",
 				    infile, (int)line, arg);
@@ -393,18 +399,18 @@ parse_conf(const char *findclass)
 			}
 			if (timeout < 30) {
 				syslog(LOG_WARNING,
-				    "%s line %d: maxtimeout %d < 30 seconds",
+				    "%s line %d: maxtimeout %ld < 30 seconds",
 				    infile, (int)line, timeout);
 				continue;
 			}
 			if (timeout < curclass.timeout) {
 				syslog(LOG_WARNING,
-				    "%s line %d: maxtimeout %d < timeout (%d)",
+				    "%s line %d: maxtimeout %ld < timeout (%d)",
 				    infile, (int)line, timeout,
 				    curclass.timeout);
 				continue;
 			}
-			curclass.maxtimeout = timeout;
+			curclass.maxtimeout = (unsigned int)timeout;
 
 		} else if (strcasecmp(word, "mmapsize") == 0) {
 			curclass.mmapsize = 0;
@@ -439,7 +445,7 @@ parse_conf(const char *findclass)
 			CONF_FLAG(passive);
 
 		} else if (strcasecmp(word, "portrange") == 0) {
-			int minport, maxport;
+			long minport, maxport;
 			char *min, *max;
 
 			curclass.portmin = 0;
@@ -454,16 +460,22 @@ parse_conf(const char *findclass)
 				   infile, (int)line);
 				continue;
 			}
-			minport = (int)strtol(min, &endp, 10);
-			if (*endp != 0 || minport < IPPORT_RESERVED ||
+			errno = 0;
+			endp = NULL;
+			minport = strtol(min, &endp, 10);
+			if (errno || *min == '\0' || *endp != '\0' ||
+			    minport < IPPORT_RESERVED ||
 			    minport > IPPORT_ANONMAX) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid minport %s",
 				    infile, (int)line, min);
 				continue;
 			}
-			maxport = (int)strtol(max, &endp, 10);
-			if (*endp != 0 || maxport < IPPORT_RESERVED ||
+			errno = 0;
+			endp = NULL;
+			maxport = strtol(max, &endp, 10);
+			if (errno || *min == '\0' || *endp != '\0' ||
+			    maxport < IPPORT_RESERVED ||
 			    maxport > IPPORT_ANONMAX) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid maxport %s",
@@ -472,12 +484,12 @@ parse_conf(const char *findclass)
 			}
 			if (minport >= maxport) {
 				syslog(LOG_WARNING,
-				    "%s line %d: minport %d >= maxport %d",
+				    "%s line %d: minport %ld >= maxport %ld",
 				    infile, (int)line, minport, maxport);
 				continue;
 			}
-			curclass.portmin = minport;
-			curclass.portmax = maxport;
+			curclass.portmin = (int)minport;
+			curclass.portmax = (int)maxport;
 
 		} else if (strcasecmp(word, "private") == 0) {
 			CONF_FLAG(private);
@@ -519,8 +531,11 @@ parse_conf(const char *findclass)
 			curclass.timeout = DEFAULT_TIMEOUT;
 			if (none || EMPTYSTR(arg))
 				continue;
-			timeout = (unsigned int)strtoul(arg, &endp, 10);
-			if (*endp != 0) {
+			errno = 0;
+			endp = NULL;
+			timeout = strtoul(arg, &endp, 10);
+			if (errno || *arg == '\0' || *endp != '\0' ||
+			    timeout > UINT_MAX) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid timeout %s",
 				    infile, (int)line, arg);
@@ -528,18 +543,18 @@ parse_conf(const char *findclass)
 			}
 			if (timeout < 30) {
 				syslog(LOG_WARNING,
-				    "%s line %d: timeout %d < 30 seconds",
+				    "%s line %d: timeout %ld < 30 seconds",
 				    infile, (int)line, timeout);
 				continue;
 			}
 			if (timeout > curclass.maxtimeout) {
 				syslog(LOG_WARNING,
-				    "%s line %d: timeout %d > maxtimeout (%d)",
+				    "%s line %d: timeout %ld > maxtimeout (%d)",
 				    infile, (int)line, timeout,
 				    curclass.maxtimeout);
 				continue;
 			}
-			curclass.timeout = timeout;
+			curclass.timeout = (unsigned int)timeout;
 
 		} else if (strcasecmp(word, "template") == 0) {
 			if (none)
@@ -547,19 +562,22 @@ parse_conf(const char *findclass)
 			REASSIGN(template, EMPTYSTR(arg) ? NULL : xstrdup(arg));
 
 		} else if (strcasecmp(word, "umask") == 0) {
-			mode_t fumask;
+			u_long fumask;
 
 			curclass.umask = DEFAULT_UMASK;
 			if (none || EMPTYSTR(arg))
 				continue;
-			fumask = (mode_t)strtoul(arg, &endp, 8);
-			if (*endp != 0 || fumask > 0777) {
+			errno = 0;
+			endp = NULL;
+			fumask = strtoul(arg, &endp, 8);
+			if (errno || *arg == '\0' || *endp != '\0' ||
+			    fumask > 0777) {
 				syslog(LOG_WARNING,
 				    "%s line %d: invalid umask %s",
 				    infile, (int)line, arg);
 				continue;
 			}
-			curclass.umask = fumask;
+			curclass.umask = (mode_t)fumask;
 
 		} else if (strcasecmp(word, "upload") == 0) {
 			CONF_FLAG(upload);
