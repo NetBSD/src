@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.31 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.32 1999/08/31 08:58:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.31 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.32 1999/08/31 08:58:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -730,19 +730,22 @@ waitforjob(jp)
 #endif
 	else
 		st = WTERMSIG(status) + 128;
+#if JOBS
+	if (jp->jobctl) {
+		/*
+		 * This is truly gross.
+		 * If we're doing job control, then we did a TIOCSPGRP which
+		 * caused us (the shell) to no longer be in the controlling
+		 * session -- so we wouldn't have seen any ^C/SIGINT.  So, we
+		 * intuit from the subprocess exit status whether a SIGINT
+		 * occured, and if so interrupt ourselves.  Yuck.  - mycroft
+		 */
+		if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT)
+			raise(SIGINT);
+	}
+#endif
 	if (! JOBS || jp->state == JOBDONE)
 		freejob(jp);
-#if 0
-	/*
-	 * XXXX
-	 * Why was this here?  It causes us to lose SIGINTs unless the current
-	 * command happens to also catch the SIGINT and exit with the right
-	 * status.  I don't see how that can possibly be correct.  -- mycroft
-	 */
-	CLEAR_PENDING_INT;
-	if (WIFSIGNALED(status) && WTERMSIG(status) == SIGINT)
-		raise(SIGINT);
-#endif
 	INTON;
 	return st;
 }
