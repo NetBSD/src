@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5.4.1 2000/06/27 21:42:42 thorpej Exp $ */
+/*	$NetBSD: md.c,v 1.5.4.2 2000/09/21 14:06:29 minoura Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -241,7 +241,7 @@ md_post_newfs(void)
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
 	return run_prog(0, 1, NULL,
-	    "/usr/mdec/installboot -v /usr/mdec/sdboot /dev/r%sa",
+	    "/usr/mdec/installboot /usr/mdec/sdboot /dev/r%sa",
 	    diskdev);
 }
 
@@ -313,6 +313,7 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
+#if notyet			/* sed is too large for ramdisk */
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 	char sedcmd[STRSIZE];
@@ -329,7 +330,7 @@ md_cleanup_install(void)
 	do_system(sedcmd);
 
 	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
-
+#endif
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
