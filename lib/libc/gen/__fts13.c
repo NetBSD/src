@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.10 1998/11/05 13:57:22 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.11 1998/11/05 21:26:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.10 1998/11/05 13:57:22 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.11 1998/11/05 21:26:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -691,14 +691,14 @@ fts_build(sp, type)
 	for (head = tail = NULL, nitems = 0; (dp = readdir(dirp)) != NULL;) {
 		size_t dlen;
 
+		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
+			continue;
+
 #if defined(__svr4__) || defined(__SVR4)
 		dlen = strlen(dp->d_name);
 #else
 		dlen = dp->d_namlen;
 #endif
-		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
-			continue;
-
 		if ((p = fts_alloc(sp, dp->d_name, dlen)) == NULL)
 			goto mem1;
 		if (dlen > maxlen) {
