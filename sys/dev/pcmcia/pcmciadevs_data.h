@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.95 2000/07/24 21:47:40 gmcgarry Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.96 2000/07/26 07:24:17 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -619,6 +619,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "RATOC REX-R280"	},
 	},
 	{
+	    PCMCIA_VENDOR_SAMSUNG, PCMCIA_PRODUCT_SAMSUNG_SWL_2000N,
+	    PCMCIA_CIS_SAMSUNG_SWL_2000N,
+	    0,
+	    "Samsung",
+	    "Samsung MagicLAN SWL-2000N"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -1036,6 +1043,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Nokia Communications",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SAMSUNG, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Samsung",
 	    NULL,
 	},
 	{

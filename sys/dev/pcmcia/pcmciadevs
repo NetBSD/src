@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.96 2000/07/24 21:45:00 gmcgarry Exp $
+$NetBSD: pcmciadevs,v 1.97 2000/07/26 07:24:15 onoe Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ vendor BAY			0x01eb  Bay Networks
 vendor IODATA			0x01bf	I-O DATA
 vendor FARALLON			0x0200  Farallon Communications
 vendor NOKIA			0x023d	Nokia Communications
+vendor SAMSUNG			0x0250	Samsung
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
 vendor COMPEX			0x8a01	Compex Corporation
@@ -237,6 +238,9 @@ product RAYTHEON WLAN		0x0000 WLAN Adapter
 
 /* RATOC System Inc. Products */
 product RATOC REX_R280		0x1	RATOC REX-R280
+
+/* Samsung */
+product	SAMSUNG SWL_2000N	0x02	Samsung MagicLAN SWL-2000N
 
 /* Cards we know only by their cis */
 vendor PREMAX			-1 	Premax

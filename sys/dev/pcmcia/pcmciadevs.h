@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.95 2000/07/24 21:47:40 gmcgarry Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.96 2000/07/26 07:24:16 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -76,6 +76,7 @@
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
 #define	PCMCIA_VENDOR_FARALLON	0x0200	/* Farallon Communications */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
+#define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_LEXARMEDIA	0x4e01	/* Lexar Media */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
@@ -408,6 +409,11 @@
 #define	PCMCIA_CIS_RATOC_REX_R280	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_RATOC_REX_R280	0x1
 #define	PCMCIA_STR_RATOC_REX_R280	"RATOC REX-R280"
+
+/* Samsung */
+#define	PCMCIA_CIS_SAMSUNG_SWL_2000N	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SAMSUNG_SWL_2000N	0x02
+#define	PCMCIA_STR_SAMSUNG_SWL_2000N	"Samsung MagicLAN SWL-2000N"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
