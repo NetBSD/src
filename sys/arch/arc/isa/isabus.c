@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.27 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.27 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.28 2005/01/22 08:43:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -165,7 +165,7 @@ const struct evcnt *isabr_intr_evcnt(isa_chipset_tag_t, int);
 void	*isabr_intr_establish(isa_chipset_tag_t, int, int, int,
 			int (*)(void *), void *);
 void	isabr_intr_disestablish(isa_chipset_tag_t, void*);
-int	isabr_iointr(unsigned int, struct clockframe *);
+uint32_t isabr_iointr(uint32_t, struct clockframe *);
 void	isabr_initicu(void);
 void	intr_calculatemasks(void);
 int	fakeintr(void *a);
@@ -405,8 +405,8 @@ isabr_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 /*
  *	Process an interrupt from the ISA bus.
  */
-int
-isabr_iointr(unsigned mask, struct clockframe *cf)
+uint32_t
+isabr_iointr(uint32_t mask, struct clockframe *cf)
 {
 	struct intrhand *ih;
 	int isa_vector;
