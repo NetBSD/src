@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.56 2000/05/05 19:05:29 itojun Exp $
+.\" $NetBSD: main,v 1.57 2000/05/07 09:57:46 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -801,6 +801,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.ORG Ta Sy sun3x
 .It Ta Ross Harvey Ta Mt ross@NetBSD.ORG Ta Sy alpha
 .It Ta "Jun-ichiro itojun Hagino" Ta Mt itojun@NetBSD.ORG Ta Sy sh3
+.It Ta Ben Harris Ta Mt bjh21@NetBSD.ORG Ta Sy arm26
 .It Ta Eduardo Horvath Ta Mt eeh@NetBSD.ORG Ta Sy sparc64
 .It Ta Darrin Jewell Ta Mt dbj@NetBSD.ORG Ta Sy next68k
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.ORG Ta Sy sparc
