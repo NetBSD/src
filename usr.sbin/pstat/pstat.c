@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.71 2002/02/23 01:06:41 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.72 2002/02/24 02:02:59 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.71 2002/02/23 01:06:41 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.72 2002/02/24 02:02:59 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -780,10 +780,6 @@ kinfo_vnodes(avnodes)
 	return (beg);
 }
 
-const char hdr[] =
-    "  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
-int ttyspace = 128;
-
 void
 ttymode()
 {
@@ -794,7 +790,9 @@ ttymode()
 	KGET(TTY_NTTY, ntty);
 	(void)printf("%d terminal device%s\n", ntty, ntty == 1 ? "" : "s");
 	KGET(TTY_TTYLIST, tty_head);
-	(void)printf(hdr);
+	(void)printf(
+	    "  LINE RAW CAN OUT  HWT LWT     COL STATE  %-*s  PGID DISC\n",
+	    PTRSTRWIDTH, "SESS");
 	for (tp = tty_head.tqh_first; tp; tp = tty.tty_link.tqe_next) {
 		KGET2(tp, &tty, sizeof tty, "tty struct");
 		ttyprt(&tty);
@@ -818,7 +816,7 @@ const struct flagbit_desc ttystates[] = {
 	{ TS_LNCH,	'L'},
 	{ TS_TYPEN,	'P'},
 	{ TS_CNTTB,	'N'},
-	{ 0,	       '\0'},
+	{ 0,		'\0'},
 };
 
 void
@@ -826,31 +824,40 @@ ttyprt(tp)
 	struct tty *tp;
 {
 	char state[sizeof(ttystates) / sizeof(ttystates[0]) + 1];
+	char dev[2 + 3 + 1 + 5 + 1]; /* 12bit major + 20bit minor */
 	struct linesw t_linesw;
 	char *name, buffer;
 	pid_t pgid;
-	int n;
+	int n, ovflw;
 
-	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL)
-		(void)printf("0x%3x:%1x ", major(tp->t_dev), minor(tp->t_dev));
-	else
-		(void)printf("%-7s ", name);
-	(void)printf("%2d %3d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
-	(void)printf("%3d %4d %3d %7d ", tp->t_outq.c_cc,
-	    tp->t_hiwat, tp->t_lowat, tp->t_column);
+	if (usenumflag || (name = devname(tp->t_dev, S_IFCHR)) == NULL) {
+		(void)snprintf(dev, sizeof(dev), "0x%3x:%x",
+		    major(tp->t_dev), minor(tp->t_dev));
+		name = dev;
+	}
+	ovflw = 0;
+	PRWORD(ovflw, "%-*s", 7, 0, name);
+	PRWORD(ovflw, " %*d", 3, 1, tp->t_rawq.c_cc);
+	PRWORD(ovflw, " %*d", 4, 1, tp->t_canq.c_cc);
+	PRWORD(ovflw, " %*d", 4, 1, tp->t_outq.c_cc);
+	PRWORD(ovflw, " %*d", 5, 1, tp->t_hiwat);
+	PRWORD(ovflw, " %*d", 4, 1, tp->t_lowat);
+	PRWORD(ovflw, " %*d", 8, 1, tp->t_column);
 	n = getflags(ttystates, state, tp->t_state);
 	if (tp->t_wopen) {
 		state[n++] = 'W';
 		state[n] = '\0';
 	}
-	(void)printf("%-6s %8lX", state, (u_long)tp->t_session);
+	PRWORD(ovflw, " %-*s", 7, 1, state);
+	PRWORD(ovflw, " %*lX", PTRSTRWIDTH + 1, 1, (u_long)tp->t_session);
 	pgid = 0;
 	if (tp->t_pgrp != NULL)
 		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
-	(void)printf("%6d ", pgid);
+	PRWORD(ovflw, " %*d", 6, 1, pgid);
 	KGET2(tp->t_linesw, &t_linesw, sizeof(t_linesw),
 	    "line discipline switch table");
 	name = t_linesw.l_name;
+	(void)putchar(' ');
 	for (;;) {
 		KGET2(name, &buffer, sizeof(buffer), "line discipline name");
 		if (buffer == '\0')
@@ -880,7 +887,7 @@ filemode()
 	struct file *addr;
 	char flags[sizeof(filemode_flags) / sizeof(filemode_flags[0])];
 	char *buf;
-	int len, maxfile, nfile;
+	int len, maxfile, nfile, ovflw;
 	static char *dtypes[] = { "???", "inode", "socket" };
 
 	KGET(FNL_MAXFILE, maxfile);
@@ -901,20 +908,26 @@ filemode()
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
 
 	(void)printf("%d/%d open files\n", nfile, maxfile);
-	(void)printf("   LOC   TYPE    FLG     CNT  MSG    DATA    OFFSET\n");
+	(void)printf("%*s%s%*s TYPE    FLG     CNT  MSG  %*s%s%*s  OFFSET\n",
+	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
+	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
 	for (; (char *)fp < buf + len; addr = fp->f_list.le_next, fp++) {
 		if ((unsigned)fp->f_type > DTYPE_SOCKET)
 			continue;
-		(void)printf("%lx ", (long)addr);
-		(void)printf("%-8.8s", dtypes[fp->f_type]);
+		ovflw = 0;
 		(void)getflags(filemode_flags, flags, fp->f_flag);
-		(void)printf("%6s  %3d", flags, fp->f_count);
-		(void)printf("  %3d", fp->f_msgcount);
-		(void)printf("  %8.1lx", (long)fp->f_data);
+		PRWORD(ovflw, "%*lx", PTRSTRWIDTH, 0, (long)addr);
+		PRWORD(ovflw, " %-*s", 9, 1, dtypes[fp->f_type]);
+		PRWORD(ovflw, " %*s", 6, 1, flags);
+		PRWORD(ovflw, " %*d", 5, 1, fp->f_count);
+		PRWORD(ovflw, " %*d", 5, 1, fp->f_msgcount);
+		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)fp->f_data);
 		if (fp->f_offset < 0)
-			(void)printf("  %llx\n", (long long)fp->f_offset);
+			PRWORD(ovflw, "  %-*llx\n", PTRSTRWIDTH + 1, 2,
+			    (long long)fp->f_offset);
 		else
-			(void)printf("  %lld\n", (long long)fp->f_offset);
+			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
+			    (long long)fp->f_offset);
 	}
 	free(buf);
 }
