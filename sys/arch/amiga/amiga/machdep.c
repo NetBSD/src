@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 1996/09/29 21:27:36 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 1996/10/08 22:58:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -431,7 +431,7 @@ again:
 		    phys_segs[i].first_page);
 #endif
 
-#ifdef DEBUG
+#ifdef DEBUG_KERNEL_START
 	printf("calling initcpu...\n");
 #endif
 	/*
