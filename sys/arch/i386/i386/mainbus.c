@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 1996/03/08 21:55:47 cgd Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 1996/03/14 02:37:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -99,7 +99,6 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_bc = NULL;
 		mba.mba_pba.pba_bus = 0;
-		mba.mba_pba.pba_maxndevs = pci_mode == 2 ? 16 : 32;
 		config_found(self, &mba.mba_pba, mainbus_print);
 	}
 #endif
