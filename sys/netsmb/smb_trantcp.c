@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.6 2003/02/21 20:12:05 jdolecek Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.7 2003/02/21 21:12:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -157,10 +157,8 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 
 	if (tv) {
 		atv = *tv;
-		if (itimerfix(&atv)) {
-			error = EINVAL;
-			goto done_noproclock;
-		}
+		if (itimerfix(&atv))
+			return (EINVAL);
 		s = splclock();
 		timeradd(&atv, &time, &atv);
 		splx(s);
@@ -203,11 +201,10 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 
 done:
 	l->l_flag &= ~L_SELECT;
-
-done_noproclock:
+	/* select is not restarted after signals... */
 	if (error == ERESTART)
-		return 0;
-	return error;
+		error = 0;
+	return (error);
 }
 
 static int
