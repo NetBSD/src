@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.15 1996/10/13 02:10:14 christos Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.16 1998/07/25 00:42:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -1153,7 +1153,8 @@ pk_message(lcn, xcp, fmt, va_alist)
 		printf("X.25: ");
 
 	va_start(ap, fmt);
-	printf("%:\n", fmt, ap);
+	vprintf(fmt, ap);
+	printf("\n");
 	va_end(ap);
 }
 
