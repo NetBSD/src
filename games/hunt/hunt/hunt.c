@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.11 2000/04/14 05:58:03 simonb Exp $	*/
+/*	$NetBSD: hunt.c,v 1.12 2001/02/05 00:40:45 christos Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.11 2000/04/14 05:58:03 simonb Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.12 2001/02/05 00:40:45 christos Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -94,6 +94,7 @@ int	main __P((int, char *[]));
 SOCKET *list_drivers __P((void));
 # endif
 
+extern int	Otto_mode;
 /*
  * main:
  *	Main program for local process
@@ -105,7 +106,6 @@ main(ac, av)
 {
 	char		*term;
 	int		c;
-	extern int	Otto_mode;
 	long		enter_status;
 
 	enter_status = env_init((long) Q_CLOAK);
