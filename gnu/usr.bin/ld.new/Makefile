@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/07/24 09:09:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 1999/07/30 04:07:26 mycroft Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -30,8 +30,8 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${BFDOBJ} -I${DIST}/ld \
 		-DSCRIPTDIR=\"${SCRIPTDIR}\" \
 		-DTARGET='"${MACHINE_GNU_ARCH}--netbsd"' \
 		-DEMULATION_LIST='${EMULS:S/^/\&ld_/:S/$/_emulation,/} 0'
-LDADD+=		-L${BFDOBJ} -lbfd -lgnumalloc
-DPADD+=		${BFDOBJ}/libbfd_pic.a ${LIBGNUMALLOC}
+LDADD+=		-L${BFDOBJ} -lbfd
+DPADD+=		${BFDOBJ}/libbfd_pic.a
 YHEADER=1
 
 DIST=		${.CURDIR}/../../dist
