@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.22 2002/06/27 16:22:35 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.23 2002/06/27 23:11:29 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -55,6 +55,12 @@
 # Console ports:
 #	ttyE?	Workstation console ("wscons") glass-tty emulators
 #
+# Pointing devices:
+#	wsmouse* wscons mouse events
+#
+# Keyboard devices:
+#	wskbd*	wscons keyboard events
+#
 # Terminal ports:
 #	scif*	serial communcation interface with FIFO
 #	com*	standard PC COM ports			(XXX)
@@ -77,6 +83,7 @@
 #	tun*	network tunnel driver
 #	joy*	joystick device
 #	systrace syscall tracer
+#	wsmux*	wscons event multiplexor
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
