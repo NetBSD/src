@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.4 2000/01/16 21:47:01 uch Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.5 2000/03/23 06:38:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -62,7 +63,8 @@ struct tc5165buf_chip {
 	u_int16_t		scc_buf[TC5165_COLUMN_MAX];
 	int			scc_enabled;
 	int			scc_queued;
-	
+	struct callout		scc_soft_ch;
+
 	struct skbd_controller	scc_controller;
 };
 
@@ -111,7 +113,9 @@ tc5165buf_attach(parent, self, aux)
 	printf(": ");
 	sc->sc_tc = ca->ca_tc;
 	sc->sc_chip = &tc5165buf_chip;
-	
+
+	callout_init(&sc->sc_chip->scc_soft_ch);
+
 	sc->sc_chip->scc_cst = ca->ca_csio.cstag;
 
 	if (bus_space_map(sc->sc_chip->scc_cst, ca->ca_csio.csbase, 
@@ -205,8 +209,8 @@ tc5165buf_intr(arg)
 		return 0;
 	
 	scc->scc_queued = 1;
-	timeout(tc5165buf_soft, scc, 1);
-	
+	callout_reset(&scc->scc_soft_ch, 1, tc5165buf_soft, scc);
+
 	return 0;
 }
 

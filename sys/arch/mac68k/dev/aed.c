@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.9 2000/02/14 07:01:45 scottr Exp $	*/
+/*	$NetBSD: aed.c,v 1.10 2000/03/23 06:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -98,6 +98,8 @@ aedattach(parent, self, aux)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
 	struct aed_softc *sc = (struct aed_softc *)self;
+
+	callout_init(&sc->sc_repeat_ch);
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
@@ -319,7 +321,8 @@ aed_kbdrpt(kstate)
 	aed_handoff(&aed_sc->sc_rptevent);	/* do key down */
 
 	if (aed_sc->sc_repeating == aed_sc->sc_rptevent.u.k.key) {
-		timeout(aed_kbdrpt, kstate, aed_sc->sc_rptinterval);
+		callout_reset(&aed_sc->sc_repeat_ch, aed_sc->sc_rptinterval,
+		    aed_kbdrpt, kstate);
 	}
 }
 
@@ -339,15 +342,16 @@ aed_dokeyupdown(event)
 	if (ADBK_PRESS(event->u.k.key) && keyboard[kbd_key][0] != 0) {
 		/* ignore shift & control */
 		if (aed_sc->sc_repeating != -1) {
-			untimeout(aed_kbdrpt, (void *)aed_sc);
+			callout_stop(&aed_sc->sc_repeat_ch);
 		}
 		aed_sc->sc_rptevent = *event;
 		aed_sc->sc_repeating = kbd_key;
-		timeout(aed_kbdrpt, (void *)aed_sc, aed_sc->sc_rptdelay);
+		callout_reset(&aed_sc->sc_repeat_ch, aed_sc->sc_rptdelay,
+		    aed_kbdrpt, (void *)aed_sc);
 	} else {
 		if (aed_sc->sc_repeating != -1) {
 			aed_sc->sc_repeating = -1;
-			untimeout(aed_kbdrpt, (void *)aed_sc);
+			callout_stop(&aed_sc->sc_repeat_ch);
 		}
 		aed_sc->sc_rptevent = *event;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.15 1999/04/06 19:31:37 pk Exp $ */
+/*	$NetBSD: lpt.c,v 1.16 2000/03/23 06:36:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -57,6 +57,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
@@ -89,6 +90,7 @@ int lptdebug = 1;
 
 struct lpt_softc {
 	struct device	sc_dev;
+	struct callout	sc_wakeup_ch;
 	size_t		sc_count;
 	struct buf	*sc_inbuf;
 	u_char		*sc_cp;
@@ -158,6 +160,8 @@ void	*auxp;
 	ym2149_strobe(1);
 
 	printf("\n");
+
+	callout_init(&sc->sc_wakeup_ch);
 }
 
 /*
@@ -235,7 +239,7 @@ lptwakeup(arg)
 
 	lptpseudointr(sc);
 
-	timeout(lptwakeup, sc, STEP);
+	callout_reset(&sc->sc_wakeup_ch, STEP, lptwakeup, sc);
 }
 
 /*
@@ -256,7 +260,7 @@ lpclose(dev, flag, mode, p)
 		(void) pushbytes(sc);
 
 	if ((sc->sc_flags & LPT_NOINTR) == 0) {
-		untimeout(lptwakeup, sc);
+		callout_stop(&sc->sc_wakeup_ch);
 
 		sps = splhigh();
 		MFP->mf_ierb &= ~IB_PBSY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.29 2000/02/06 02:54:16 thorpej Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.30 2000/03/23 06:30:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,12 +52,15 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
+
+struct callout pffasttimo_ch, pfslowtimo_ch;
 
 /*
  * Current time values for fast and slow timeouts.  We can use u_int
@@ -128,8 +131,12 @@ domaininit()
 		max_linkhdr = 16;
 	max_hdr = max_linkhdr + max_protohdr;
 	max_datalen = MHLEN - max_hdr;
-	timeout(pffasttimo, NULL, 1);
-	timeout(pfslowtimo, NULL, 1);
+
+	callout_init(&pffasttimo_ch);
+	callout_init(&pfslowtimo_ch);
+
+	callout_reset(&pffasttimo_ch, 1, pffasttimo, NULL);
+	callout_reset(&pfslowtimo_ch, 1, pfslowtimo, NULL);
 }
 
 struct domain *
@@ -269,7 +276,7 @@ pfslowtimo(arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_slowtimo)
 				(*pr->pr_slowtimo)();
-	timeout(pfslowtimo, NULL, hz/2);
+	callout_reset(&pfslowtimo_ch, hz / 2, pfslowtimo, NULL);
 }
 
 void
@@ -285,5 +292,5 @@ pffasttimo(arg)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_fasttimo)
 				(*pr->pr_fasttimo)();
-	timeout(pffasttimo, NULL, hz/5);
+	callout_reset(&pffasttimo_ch, hz / 5, pffasttimo, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.9 1999/08/06 08:27:31 leo Exp $	*/
+/*	$NetBSD: ser.c,v 1.10 2000/03/23 06:36:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -154,6 +154,8 @@ struct ser_softc {
 	struct device	 sc_dev;
 	struct tty	*sc_tty;
 
+	struct callout sc_diag_ch;
+
 	int		 sc_overflows;
 	int		 sc_floods;
 	int		 sc_errors;
@@ -293,6 +295,8 @@ void	*auxp;
 	MFP->mf_iera |= IA_RRDY|IA_RERR|IA_TRDY|IA_TERR;
 	MFP->mf_imrb &= ~(IB_SCTS|IB_SDCD);
 	MFP->mf_imra &= ~(IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
+
+	callout_init(&sc->sc_diag_ch);
 
 #ifdef SERCONSOLE
 	/*
@@ -1080,7 +1084,7 @@ serrxint(sc, tp)
 	if (cc == RXBUFSIZE) {
 		sc->sc_floods++;
 		if (sc->sc_errors++ == 0)
-			timeout(serdiag, sc, 60 * hz);
+			callout_reset(&sc->sc_diag_ch, 60 * hz, serdiag, sc);
 	}
 
 	while (cc--) {
@@ -1094,7 +1098,8 @@ serrxint(sc, tp)
 		else if (ISSET(rsr, RSR_OERR)) {
 			sc->sc_overflows++;
 			if (sc->sc_errors++ == 0)
-				timeout(serdiag, sc, 60 * hz);
+				callout_reset(&sc->sc_diag_ch, 60 * hz,
+				    serdiag, sc);
 		}
 		code = sc->sc_rbuf[get] |
 		    lsrmap[(rsr & (RSR_BREAK|RSR_FERR|RSR_PERR)) >> 3];

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.15 1999/09/17 20:09:07 thorpej Exp $	*/
+/*	$NetBSD: kernel.h,v 1.16 2000/03/23 06:31:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,5 +67,18 @@ extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
+
+/*
+ * These globals indicate the number of times hardlock() has ticked,
+ * and the successive attempt of softclock() to catch up with it.  These
+ * are large unsigned numbers so that arithmetic can be performed on them
+ * with no reasonable worry about an overflow occurring (we get over 500
+ * million years with this).
+ *
+ * IMPORTANT NOTE: you *must* be at splclock() in order to read both
+ * hardclock_ticks and softclock_ticks.  This is because the 64-bit
+ * quantities may not be readable in an atomic fashion on all CPU types.
+ */
+extern u_int64_t hardclock_ticks, softclock_ticks;
 
 #endif /* _SYS_KERNEL_H_ */
