@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.134 2000/11/19 14:03:39 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.135 2000/11/19 14:14:31 tsutsui Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.134 $"
+ident		"ALPHA-$Revision: 1.135 $"
 
 maxusers 32
 
@@ -480,7 +480,5 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
-
-# rnd is EXPERIMENTAL
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
