@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.21 2002/07/03 17:16:27 pooka Exp $
+#	$NetBSD: configure.ac,v 1.22 2002/09/13 19:07:01 thorpej Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -31,7 +31,7 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
 	sys/stat.h sys/time.h sys/types.h sys/utsname.h sys/wait.h \
 	assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
 	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
-	unistd.h,,
+	termios.h unistd.h,,
 	AC_MSG_ERROR([standard system header file not found]))
 
 # Find headers that may not be available.
@@ -41,8 +41,7 @@ AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h \
 AC_CHECK_HEADERS(machine/bswap.h sys/cdefs.h sys/endian.h sys/featuretest.h \
 	err.h inttypes.h libgen.h paths.h stdint.h util.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
-AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h md2.h md4.h md5.h netconfig.h \
-	rmd160.h sha1.h,,
+AC_CHECK_HEADERS(rpc/types.h fts.h getopt.h netconfig.h,,
 	[echo '#include "config.h"' >include/$ac_header.new
 	echo '#include "'$srcdir/../../include/$ac_header'"' >>include/$ac_header.new
 	if cmp include/$ac_header.new include/$ac_header >/dev/null 2>&1; then
@@ -97,9 +96,9 @@ AC_SEARCH_LIBS(fparseln, util)
 AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
 	isblank issetugid lchmod lchown lutimes pread pwcache_userdb \
-	pwrite setenv setgroupent setprogname setpassent \
-	snprintf strlcat strlcpy strsep svis user_from_uid \
-	vasprintf vasnprintf vis vsnprintf)
+	pwrite random setenv setgroupent setprogname setpassent \
+	snprintf strlcat strlcpy strsep user_from_uid \
+	vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([setgroupent, setpassent],,, [
 #include <grp.h>

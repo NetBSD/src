@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.3 2002/04/28 22:28:38 bjh21 Exp $
+$NetBSD: README,v 1.4 2002/09/13 19:07:01 thorpej Exp $
 
 Special notes for cross-hosting a NetBSD build on certain platforms.  
 Only those platforms which have been tested to complete a "build.sh" run
@@ -30,25 +30,28 @@ NETBSD (earlier releases):
 
 SOLARIS:
 
-* Tested on Solaris/x86 8 (5.8) with gcc 2.95.2 (not yet tested with
-  SUNWspro).
+* Tested on Solaris/x86 8 (5.8) with gcc 2.95.2 and Solaris/sparc 8 (5.8)
+  with gcc 3.2 (not yet tested with SUNWspro).
 
 * $HOST_CC needs to be set properly (for gcc, it should be set to "gcc",
   otherwise the improper /usr/ucb/cc may be invoked by accident).
 
-* The SUNWxcu4 package (containing /usr/xpg4/bin/*) must be installed.
-
-* The SUNWzlib package (or a built version of zlib visible to $HOST_CC)
-  must be installed.  This will be fixed in the future to include zlib
-  in libnbcompat.
+* The SUNWzlib package (or a built version of zlib visible to $HOST_CC,
+  such as SMCzlib from sunfreeware.com) must be installed.  This will be
+  fixed in the future to include zlib in libnbcompat.
 
 * Needs the following paths, in this order, in $PATH:
 
-      /usr/xpg4/bin:/usr/ccs/bin:/usr/bin
+      /usr/ccs/bin
+      <path to host C and C++ compilers>
+      /usr/bin
 
-  (/usr/ucb may optionally be placed before /usr/bin per your preference,
-  but /usr/ucb *MUST NOT* be before /usr/ccs/bin or /usr/xpg4/bin!)
+  /usr/ucb may optionally be placed before /usr/bin, per your preference,
+  but /usr/ucb *MUST NOT* be before /usr/ccs/bin or before the path to
+  the host C and C++ compilers.
 
-* Needs the "mktemp" script from src/tools/compat/scripts, made
-  executable, available somewhere in $PATH.  (Solaris has no
-  command-line mktemp(1).)  This may be worked around in the future.
+  Also note that /usr/xpg4/bin *MUST NOT* be in the path before /usr/bin.
+  /usr/xpg4/bin/sh is a symbolic link to /usr/bin/ksh, which has different
+  semantics for "pwd" than /usr/bin/sh.  Since nbmake uses /bin/sh (which
+  is a symbolic link to /usr/bin/sh), the different semantics break obj
+  directories in the presence of symbolic links, especially if using NFS.

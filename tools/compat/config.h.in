@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.19 2002/07/03 17:16:27 pooka Exp $	*/
+/*	$NetBSD: config.h.in,v 1.20 2002/09/13 19:07:01 thorpej Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -14,15 +14,10 @@
 #undef HAVE_FTS_H
 #undef HAVE_INTTYPES_H
 #undef HAVE_LIBGEN_H
-#undef HAVE_MD2_H
-#undef HAVE_MD4_H
-#undef HAVE_MD5_H
 #undef HAVE_NDIR_H
 #undef HAVE_NETDB_H
 #undef HAVE_MACHINE_BSWAP_H
 #undef HAVE_MALLOC_H
-#undef HAVE_RMD160_H
-#undef HAVE_SHA1_H
 #undef HAVE_STDDEF_H
 #undef HAVE_STRING_H
 #undef HAVE_SYS_DIR_H
@@ -31,6 +26,7 @@
 #undef HAVE_SYS_SYSLIMITS_H
 #undef HAVE_SYS_SYSMACROS_H
 #undef HAVE_SYS_TYPES_H
+#undef HAVE_TERMIOS_H
 #undef HAVE_UNISTD_H
 #undef STDC_HEADERS
 
@@ -69,6 +65,7 @@
 #undef HAVE_PREAD
 #undef HAVE_PWCACHE_USERDB
 #undef HAVE_PWRITE
+#undef HAVE_RANDOM
 #undef HAVE_SETENV
 #undef HAVE_SETGROUPENT
 #undef HAVE_SETPASSENT
@@ -77,11 +74,9 @@
 #undef HAVE_STRLCAT
 #undef HAVE_STRLCPY
 #undef HAVE_STRSEP
-#undef HAVE_SVIS
 #undef HAVE_USER_FROM_UID
 #undef HAVE_VASPRINTF
 #undef HAVE_VASNPRINTF
-#undef HAVE_VIS
 #undef HAVE_VSNPRINTF
 
 #undef HAVE_DECL_SETGROUPENT
