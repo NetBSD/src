@@ -1,4 +1,4 @@
-/*	$NetBSD: nbtool_config.h.in,v 1.6 2004/07/24 16:32:01 dbj Exp $	*/
+/*	$NetBSD: nbtool_config.h.in,v 1.7 2004/10/12 03:28:31 jmc Exp $	*/
 
 #ifndef	__NETBSD_NBTOOL_CONFIG_H__
 #define	__NETBSD_NBTOOL_CONFIG_H__
@@ -39,6 +39,8 @@
 #undef HAVE_U_INT
 #undef HAVE_U_SHORT
 #undef HAVE_U_QUAD_T
+
+#undef HAVE_FSTATVFS
 
 #undef HAVE_BSWAP16
 #undef HAVE_BSWAP32
