@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.h	7.11 (Berkeley) 3/19/91
- *	$Id: if.h,v 1.6 1993/12/10 11:45:25 cgd Exp $
+ *	$Id: if.h,v 1.7 1994/02/10 17:16:33 mycroft Exp $
  */
 
 #ifndef _NET_IF_H_
@@ -61,13 +61,8 @@
  * routing and gateway routines maintaining information used to locate
  * interfaces.  These routines live in the files if.c and route.c
  */
-#ifndef _TIME_ /*  XXX fast fix for SNMP, going away soon */
-#ifdef KERNEL
-#include "../sys/time.h"
-#else
+/*  XXX fast fix for SNMP, going away soon */
 #include <sys/time.h>
-#endif
-#endif
 
 /*
  * Structure defining a queue for a network interface.
@@ -91,10 +86,8 @@ struct ifnet {
 		int	ifq_drops;
 	} if_snd;			/* output queue */
 /* procedure handles */
-	int	(*if_init)();		/* init routine */
 	int	(*if_output)();		/* output routine (enqueue) */
 	int	(*if_start)();		/* initiate output routine */
-	int	(*if_done)();		/* output complete routine */
 	int	(*if_ioctl)();		/* ioctl routine */
 	int	(*if_reset)();		/* bus reset routine */
 	int	(*if_watchdog)();	/* timer routine */
