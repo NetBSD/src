@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.3 2000/03/17 11:47:43 soren Exp $	*/
+/*	$NetBSD: endian.h,v 1.4 2001/08/22 07:42:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -83,10 +83,10 @@ typedef u_int32_t	in_addr_t;
 typedef u_int16_t	in_port_t;
 
 __BEGIN_DECLS
-in_addr_t	htonl __P((in_addr_t)) __attribute__((__const__));
-in_port_t	htons __P((in_port_t)) __attribute__((__const__));
-in_addr_t	ntohl __P((in_addr_t)) __attribute__((__const__));
-in_port_t	ntohs __P((in_port_t)) __attribute__((__const__));
+uint32_t	htonl __P((uint32_t)) __attribute__((__const__));
+uint16_t	htons __P((uint16_t)) __attribute__((__const__));
+uint32_t	ntohl __P((uint32_t)) __attribute__((__const__));
+uint16_t	ntohs __P((uint16_t)) __attribute__((__const__));
 __END_DECLS
 
 /*
@@ -105,10 +105,10 @@ __END_DECLS
 
 #else	/* LITTLE_ENDIAN || !defined(lint) */
 
-#define	NTOHL(x)	(x) = ntohl((in_addr_t)(x))
-#define	NTOHS(x)	(x) = ntohs((in_port_t)(x))
-#define	HTONL(x)	(x) = htonl((in_addr_t)(x))
-#define	HTONS(x)	(x) = htons((in_port_t)(x))
+#define	NTOHL(x)	(x) = ntohl((uint32_t)(x))
+#define	NTOHS(x)	(x) = ntohs((uint16_t)(x))
+#define	HTONL(x)	(x) = htonl((uint32_t)(x))
+#define	HTONS(x)	(x) = htons((uint16_t)(x))
 #endif	/* LITTLE_ENDIAN || !defined(lint) */
 
 /*

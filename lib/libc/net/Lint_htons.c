@@ -1,4 +1,4 @@
-/* $NetBSD: Lint_htons.c,v 1.3 2000/06/14 06:49:07 cgd Exp $ */
+/* $NetBSD: Lint_htons.c,v 1.4 2001/08/22 07:42:09 itojun Exp $ */
 
 /*
  * This file placed in the public domain.
@@ -9,9 +9,9 @@
 #undef htons
 
 /*ARGSUSED*//*NOSTRICT*/
-in_port_t
+uint16_t
 htons(host16)
-	in_port_t host16;
+	uint16_t host16;
 {
 	return (0);
 }
