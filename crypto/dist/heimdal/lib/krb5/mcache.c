@@ -33,9 +33,11 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: mcache.c,v 1.1.1.2 2000/08/02 19:59:34 assar Exp $");
+RCSID("$Id: mcache.c,v 1.2 2000/08/10 02:23:07 thorpej Exp $");
 
 typedef struct krb5_mcache {
+    struct krb5_mcache *next;
+    char *filename;
     krb5_principal primary_principal;
     struct link {
 	krb5_creds cred;
@@ -43,33 +45,90 @@ typedef struct krb5_mcache {
     } *creds;
 } krb5_mcache;
 
+static struct krb5_mcache *mcc_head;
+
+#define	MCACHE(X)	((krb5_mcache *)(X)->data.data)
+
+#define	FILENAME(X)	(MCACHE(X)->filename)
+
 #define MCC_CURSOR(C) ((struct link*)(C))
 
 static char*
 mcc_get_name(krb5_context context,
 	     krb5_ccache id)
 {
-    return "";			/* XXX */
+    return FILENAME(id);
 }
 
 static krb5_error_code
 mcc_resolve(krb5_context context, krb5_ccache *id, const char *res)
 {
-    krb5_abortx(context, "unimplemented mcc_resolve called");
+    krb5_mcache *m;
+
+    for (m = mcc_head; m != NULL; m = m->next)
+	if (strcmp(m->filename, res) == 0)
+	    break;
+
+    if (m != NULL) {
+	(*id)->data.data = m;
+	(*id)->data.length = sizeof(*m);
+	return 0;
+    }
+
+    m = malloc(sizeof(*m));
+    if (m == NULL)
+	return KRB5_CC_NOMEM;
+
+    m->filename = strdup(res);
+    if (m->filename == NULL) {
+	free(m);
+	return KRB5_CC_NOMEM;
+    }
+
+    m->primary_principal = NULL;
+    m->creds = NULL;
+    (*id)->data.data = m;
+    (*id)->data.length = sizeof(*m);
+
+    m->next = mcc_head;
+    mcc_head = m;
+
+    return 0;
 }
 
 static krb5_error_code
 mcc_gen_new(krb5_context context, krb5_ccache *id)
 {
     krb5_mcache *m;
+    char *file;
+    int fd;
 
     m = malloc (sizeof(*m));
     if (m == NULL)
 	return KRB5_CC_NOMEM;
+
+    asprintf(&file, "%sXXXXXX", KRB5_DEFAULT_CCFILE_ROOT);
+    if (file == NULL) {
+	free(m);
+	return KRB5_CC_NOMEM;
+    }
+    fd = mkstemp(file);
+    if (fd < 0) {
+	free(m);
+	free(file);
+	return errno;
+    }
+    close(fd);
+
+    m->filename = file;
     m->primary_principal = NULL;
     m->creds = NULL;
     (*id)->data.data = m;
     (*id)->data.length = sizeof(*m);
+
+    m->next = mcc_head;
+    mcc_head = m;
+
     return 0;
 }
 
@@ -96,7 +155,18 @@ mcc_close(krb5_context context,
 	  krb5_ccache id)
 {
     krb5_mcache *m = (krb5_mcache *)id->data.data;
+    krb5_mcache *n;
     struct link *l;
+
+    if (m == mcc_head)
+	mcc_head = m->next;
+    else {
+	for (n = mcc_head; n != NULL; n = n->next)
+	    if (n->next == m) {
+		n->next = m->next;
+		break;
+	    }
+    }
 
     krb5_free_principal (context, m->primary_principal);
     l = m->creds;
@@ -108,6 +178,7 @@ mcc_close(krb5_context context,
 	l = l->next;
 	free (old);
     }
+    free (FILENAME(id));
     krb5_data_free(&id->data);
     return 0;
 }
@@ -116,6 +187,9 @@ static krb5_error_code
 mcc_destroy(krb5_context context,
 	    krb5_ccache id)
 {
+
+    (void) unlink(FILENAME(id));
+
     return 0;
 }
 
