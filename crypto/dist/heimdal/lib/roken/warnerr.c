@@ -33,8 +33,10 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#ifdef __RCSID
 __RCSID("$Heimdal: warnerr.c,v 1.15 2001/07/09 14:56:51 assar Exp $"
-        "$NetBSD: warnerr.c,v 1.1.1.5 2002/09/12 12:41:42 joda Exp $");
+        "$NetBSD: warnerr.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 #endif
 
 #include "roken.h"
