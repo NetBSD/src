@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.32 1997/08/03 23:40:27 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.33 1997/08/14 15:41:49 drochner Exp 
  */
 
 /*
