@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2003/02/23 02:43:25 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2003/02/26 21:32:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -260,7 +260,6 @@ cpu_startup()
 	}
 
 	if (cpu_feature & CPUID_MTRR) {
-		mtrr_funcs = &i686_mtrr_funcs;
 		i686_mtrr_init_first();
 		mtrr_init_cpu(ci);
 	}
@@ -1244,10 +1243,8 @@ init_x86_64(first_avail)
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
 		for (x = 0; x < bim->num; x++) {
-			addr = ((u_int64_t)bim->entry[x].addrhi << 32) |
-				bim->entry[x].addrlo;
-			size = ((u_int64_t)bim->entry[x].sizehi << 32) |
-				bim->entry[x].sizelo;
+			addr = bim->entry[x].addr;
+			size = bim->entry[x].size;
 #if DEBUG_MEMLOAD
 			printf("    addr 0x%lx  size 0x%lx  type 0x%x\n",
 			    addr, size, bim->entry[x].type);
