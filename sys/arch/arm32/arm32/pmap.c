@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 1999/03/27 05:57:03 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 1999/03/27 09:41:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -1954,6 +1954,13 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		panic("pmap_enter: too big");
 	if (va >= VM_MAXUSER_ADDRESS && va < VM_MAX_ADDRESS)
 		panic("pmap_enter: entering PT page");
+	if (pmap != pmap_kernel() && va != 0) {
+		if (va < VM_MIN_ADDRESS || va >= VM_MAXUSER_ADDRESS)
+			panic("pmap_enter: kernel page in user map");
+	} else {
+		if (va >= VM_MIN_ADDRESS && va < VM_MAXUSER_ADDRESS)
+			panic("pmap_enter: user page in kernel map");
+	}
 #endif
 
 	/*
@@ -2008,8 +2015,6 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	flags = 0;
 	if (prot & VM_PROT_WRITE)
 		flags |= PT_Wr;
-	if (va >= VM_MIN_ADDRESS && va < VM_MAXUSER_ADDRESS)
-		flags |= PT_Us;
 	if (wired)
 		flags |= PT_W;
 
@@ -2036,7 +2041,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 				pv = &vm_physmem[bank].pmseg.pvent[off];
 				(void) pmap_modify_pv(pmap, va, pv,
-				    PT_Wr | PT_Us | PT_W, flags);
+				    PT_Wr | PT_W, flags);
  			}
 		} else {
 			/* We are replacing the page with a new one. */
@@ -2077,10 +2082,11 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		printf("pmap_enter: pmap=%p va=%lx pa=%lx opa=%lx bank=%d off=%d pv=%p\n", pmap, va, pa, opa, bank, off, pv);
 #endif
 
-	/* Construct the pte, giving the correct access */
+	/* Construct the pte, giving the correct access. */
 	npte = (pa & PG_FRAME);
 
-	if (flags & PT_Us)
+	/* VA 0 is magic. */
+	if (pmap != pmap_kernel() && va != 0)
 		npte |= PT_AP(AP_U);
 
 	if (bank != -1) {
@@ -2428,9 +2434,8 @@ pmap_testbit(pa, setbits)
  */
 
 void
-pmap_changebit(pa, setbits, maskbits)
+pmap_clearbit(pa, maskbits)
 	vm_offset_t pa;
-	int setbits;
 	int maskbits;
 {
 	struct pv_entry *pv;
@@ -2439,8 +2444,8 @@ pmap_changebit(pa, setbits, maskbits)
 	int bank, off;
 	int s;
 
-	PDEBUG(1, printf("pmap_changebit: pa=%08lx set=%08x mask=%08x\n",
-	    pa, setbits, maskbits));
+	PDEBUG(1, printf("pmap_clearbit: pa=%08lx mask=%08x\n",
+	    pa, maskbits));
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return;
 	pv = &vm_physmem[bank].pmseg.pvent[off];
@@ -2449,35 +2454,36 @@ pmap_changebit(pa, setbits, maskbits)
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
-	if (maskbits)
-		vm_physmem[bank].pmseg.attrs[off] &= ~maskbits;
+	vm_physmem[bank].pmseg.attrs[off] &= ~maskbits;
+
+	if (pv->pv_pmap == NULL) {
+		splx(s);
+		return;
+	}
 
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
 	 */
-	if (pv->pv_pmap != NULL) {
-		for (; pv; pv = pv->pv_next) {
-			va = pv->pv_va;
+	for (; pv; pv = pv->pv_next) {
+		va = pv->pv_va;
 
-			/*
-			 * XXX don't write protect pager mappings
-			 */
-			if (maskbits & (PT_Wr|PT_M|PT_H)) {
-				if (va >= uvm.pager_sva && va < uvm.pager_eva)
-					continue;
-			}
-
-			pv->pv_flags = (pv->pv_flags & ~maskbits) | setbits;
-			pte = pmap_pte(pv->pv_pmap, va);
-			if (maskbits & (PT_Wr|PT_M))
-				*pte = (*pte) & ~PT_AP(AP_W);
-			if (setbits & PT_Wr)
-				*pte = (*pte) | PT_AP(AP_W);
-			if (maskbits & PT_H)
-				*pte = ((*pte) & ~L2_MASK) | L2_INVAL;
+		/*
+		 * XXX don't write protect pager mappings
+		 */
+		if (va >= uvm.pager_sva && va < uvm.pager_eva) {
+			printf("pmap_clearbit: bogon alpha\n");
+			continue;
 		}
-		cpu_tlb_flushID();
+
+		pv->pv_flags &= ~maskbits;
+		pte = pmap_pte(pv->pv_pmap, va);
+		if (maskbits & (PT_Wr|PT_M))
+			*pte = *pte & ~PT_AP(AP_W);
+		if (maskbits & PT_H)
+			*pte = (*pte & ~L2_MASK) | L2_INVAL;
 	}
+	cpu_tlb_flushID();
+
 	splx(s);
 }
 
@@ -2487,7 +2493,7 @@ pmap_clear_modify(pa)
 	vm_offset_t pa;
 {
 	PDEBUG(0, printf("pmap_clear_modify pa=%08lx\n", pa));
-	pmap_changebit(pa, 0, PT_M);
+	pmap_clearbit(pa, PT_M);
 }
 
 
@@ -2496,7 +2502,7 @@ pmap_clear_reference(pa)
 	vm_offset_t pa;
 {
 	PDEBUG(0, printf("pmap_clear_reference pa=%08lx\n", pa));
-	pmap_changebit(pa, 0, PT_H);
+	pmap_clearbit(pa, PT_H);
 }
 
 
@@ -2505,8 +2511,9 @@ pmap_copy_on_write(pa)
 	vm_offset_t pa;
 {
 	PDEBUG(0, printf("pmap_copy_on_write pa=%08lx\n", pa));
-	pmap_changebit(pa, 0, PT_Wr);
+	pmap_clearbit(pa, PT_Wr);
 }
+
 
 boolean_t
 pmap_is_modified(pa)
@@ -2516,7 +2523,7 @@ pmap_is_modified(pa)
     
 	result = pmap_testbit(pa, PT_M);
 	PDEBUG(0, printf("pmap_is_modified pa=%08lx %x\n", pa, result));
-	return(result);
+	return (result);
 }
 
 
@@ -2528,7 +2535,7 @@ pmap_is_referenced(pa)
 	
 	result = pmap_testbit(pa, PT_H);
 	PDEBUG(0, printf("pmap_is_referenced pa=%08lx %x\n", pa, result));
-	return(result);
+	return (result);
 }
 
 
