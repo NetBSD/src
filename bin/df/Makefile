@@ -1,8 +1,7 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.7 1994/01/28 00:22:37 cgd Exp $
+#	from: @(#)Makefile	8.2 (Berkeley) 4/1/94
+#	$Id: Makefile,v 1.8 1994/09/16 20:59:27 mycroft Exp $
 
 PROG=	df
-CFLAGS+=-DCOMPAT_43
 BINGRP=	operator
 BINMODE=2555
 
