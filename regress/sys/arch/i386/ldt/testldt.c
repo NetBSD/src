@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	struct segment_descriptor *sd;
 	struct gate_descriptor *gd;
 	
-	segv_act.sa_handler = (__sighandler_t) busfault;
+	segv_act.sa_handler = (sig_t) busfault;
 	if (sigaction(SIGBUS, &segv_act, NULL) < 0) {
 		perror("sigaction");
 		exit(1);
