@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2003/02/27 04:10:36 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.5 2003/03/28 23:10:32 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2003/02/27 04:10:36 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2003/03/28 23:10:32 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,7 +75,7 @@ void *kernel_floor;
 struct vm_map *kmem_map, *mb_map, *phys_map, *exec_map, *pager_map;
 struct vm_map *st_map, *pt_map, *lkm_map;
 u_long nchash_addr, nchashtbl_addr, kernel_map_addr;
-int debug, verbose, recurse;
+int debug, verbose, recurse, page_size;
 int print_all, print_map, print_maps, print_solaris, print_ddb;
 rlim_t maxssiz;
 
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
 			print_ddb = 1;
 			break;
 		case 'D':
-			debug = atoi(optarg);
+			debug = strtol(optarg, NULL, 0);
 			break;
 		case 'l':
 			print_maps = 1;
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 			kernel = optarg;
 			break;
 		case 'p':
-			pid = atoi(optarg);
+			pid = strtol(optarg, NULL, 0);
 			break;
 		case 'P':
 			pid = getpid();
@@ -239,7 +239,7 @@ main(int argc, char *argv[])
 			if (argc == 0)
 				pid = getppid();
 			else {
-				pid = atoi(argv[0]);
+				pid = strtol(argv[0], NULL, 0);
 				argv++;
 				argc--;
 			}
@@ -351,7 +351,7 @@ using_lockdebug(kvm_t *kd)
 void
 load_symbols(kvm_t *kd)
 {
-	int rc, i;
+	int rc, i, mib[2];
 
 	rc = kvm_nlist(kd, &ksyms[0]);
 	if (rc != 0) {
@@ -395,6 +395,12 @@ load_symbols(kvm_t *kd)
 	get_map_address(st_map);
 	get_map_address(pt_map);
 	get_map_address(lkm_map);
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_PAGESIZE;
+	i = sizeof(page_size);
+	if (sysctl(&mib[0], 2, &page_size, &i, NULL, 0) == -1)
+		err(1, "sysctl: hw.pagesize");
 }
 
 const char *

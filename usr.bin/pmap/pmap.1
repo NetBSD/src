@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.8 2003/02/22 17:45:04 atatat Exp $
+.\"	$NetBSD: pmap.1,v 1.9 2003/03/28 23:10:33 atatat Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,16 +77,22 @@ The
 .Ar number
 is a bit mask of the values:
 .Pp
-.Bl -tag -width flag -compact
-.It Cm 1
+.Bl -tag -width 0x1000 -compact
+.It Cm 0x01
 dump the process's vmspace structure
-.It Cm 2
+.It Cm 0x02
 dump the process's vm_map structure
-.It Cm 4
+.It Cm 0x04
 dump the vm_map.header structure
-.It Cm 8
+.It Cm 0x08
 dump each vm_map_entry in its entirety
-.It Cm 16
+.It Cm 0x10
+dump the vm_amap structure attached to the vm_map_entry, if applicable
+.It Cm 0x20
+dump the vm_amap slot data, if present (requires 0x10)
+.It Cm 0x40
+dump the vm_anon data from the am_anon array, if present (requires 0x20)
+.It Cm 0x1000
 dump the namei cache as it is traversed
 .El
 .It Fl M Ar core
@@ -167,9 +173,10 @@ or
 .Fl m ,
 more information is printed, possibly including device and inode
 numbers, file path names, or other identifying information.
-If specified more than once, a * will be printed in between two
-entries that are not adjacent, making the visual identification of
-spaces in the process's map easier to see.
+If specified more than once, a small note will be printed in between
+two entries that are not adjacent, making the visual identification of
+spaces in the process's map easier to see, that indicates the number
+of pages and the amount of memory space that is skipped.
 .El
 .Pp
 The
@@ -190,7 +197,7 @@ exits 0 on success, and \*[Gt]0 if an error occurred.
 While the meaning most of the output is self evident, some pieces of
 it may appear to be a little inscrutable.
 .Pp
-Here a portion of the default output from pmap being run at an
+Here is a portion of the default output from pmap being run at an
 .Xr sh 1
 prompt shows the starting address of the map entry, the size of the
 map entry, the current protection level of the map entry, and either
