@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.11 2000/03/27 15:53:04 minoura Exp $	*/
+/*	$NetBSD: par.c,v 1.12 2000/06/11 14:20:45 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -137,6 +137,12 @@ parmatch(pdp, cfp, aux)
 	ia->ia_size = 0x2000;
 	if (intio_map_allocate_region (pdp, ia, INTIO_MAP_TESTONLY))
 		return 0;
+	if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
+		ia->ia_intr = 99;
+#if DIAGNOSTIC
+	if (ia->ia_intr != 99)
+		return 0;
+#endif
 
 	return 1;
 }
@@ -170,6 +176,9 @@ parattach(pdp, dp, aux)
 
 	intio_set_sicilian_intr(intio_get_sicilian_intr() &
 				~SICILIAN_INTR_PAR);
+
+	intio_intr_establish(ia->ia_intr, "par",
+			     (intio_intr_handler_t) parintr, (void*) 1);
 
 	callout_init(&sc->sc_timo_ch);
 	callout_init(&sc->sc_start_ch);
