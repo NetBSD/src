@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.62 2004/07/05 08:51:19 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.63 2004/12/13 02:39:07 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.62 2004/07/05 08:51:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.63 2004/12/13 02:39:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -133,6 +133,8 @@ CFATTACH_DECL(sbus_xbox, sizeof(struct sbus_softc),
     sbus_match_xbox, sbus_attach_xbox, NULL, NULL);
 
 extern struct cfdriver sbus_cd;
+
+static int sbus_mainbus_attached;
 
 /* The "primary" Sbus */
 struct sbus_softc *sbus_sc;
@@ -213,7 +215,7 @@ sbus_match_mainbus(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (CPU_ISSUN4)
+	if (CPU_ISSUN4 || sbus_mainbus_attached)
 		return (0);
 
 	return (strcmp(cf->cf_name, ma->ma_name) == 0);
@@ -260,14 +262,7 @@ sbus_attach_mainbus(parent, self, aux)
 	struct mainbus_attach_args *ma = aux;
 	int node = ma->ma_node;
 
-	/*
-	 * XXX there is only one Sbus, for now -- do not know how to
-	 * address children on others
-	 */
-	if (sc->sc_dev.dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
+	sbus_mainbus_attached = 1;
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
