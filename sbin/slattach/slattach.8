@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.13 1996/08/10 21:30:06 explorer Exp $
+.\"	$NetBSD: slattach.8,v 1.14 1997/09/15 11:20:04 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,16 +40,16 @@
 .Nm slattach
 .Nd attach serial lines as network interfaces
 .Sh SYNOPSIS
-.Nm slattach
+.Nm
 .Op Fl hm
 .Op Fl s Ar baudrate
 .Ar ttyname
 .Sh DESCRIPTION
-.Nm Slattach
+.Nm
 is used to assign a tty line to a network interface,
 and to define the network source and destination addresses.
 The following operands are supported by
-.Nm slattach :
+.Nm "" :
 .Bl -tag -width Ar
 .It Fl h
 Turn on RTS/CTS flow control.  By default, no flow control is done.
@@ -92,7 +92,7 @@ Only the super-user may attach a network interface.
 To detach the interface, use
 .Dq Li ifconfig interface-name down
 after killing off the
-.Nm slattach
+.Nm
 process.
 .Ar Interface-name
 is the name that is shown by
