@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: make-print-version.c,v 1.2 2000/06/19 20:51:53 thorpej Exp $");
+RCSID("$Id: make-print-version.c,v 1.2.2.1 2001/04/05 23:24:53 he Exp $");
 #endif
 
 #include <stdio.h>
