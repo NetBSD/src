@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.96 2000/03/18 06:47:28 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.97 2000/03/18 06:59:02 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1532,7 +1532,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.96 2000/03/18 06:47:28 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.97 2000/03/18 06:59:02 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7951,15 +7951,19 @@ struct table_entry {
 
 static struct table_entry device_tab[] =
 {
-#ifdef NCR_GETCC_WITHMSG
-	{"HP      ", "C372", "", QUIRK_NOTAGS|QUIRK_NOMSG},
-	{"", "", "", QUIRK_NOMSG},
-	{"SONY", "SDT-5000", "3.17", QUIRK_NOMSG},
-	{"WangDAT", "Model 2600", "01.7", QUIRK_NOMSG},
-	{"WangDAT", "Model 3200", "02.2", QUIRK_NOMSG},
-	{"WangDAT", "Model 1300", "02.4", QUIRK_NOMSG},
-#endif
-	{"", "", "", 0} /* catch all: must be last entry. */
+	/* XXX maybe doesn't need QUIRK_NOMSG? */
+	{"HP      ",	"C372",		"",	QUIRK_NOTAGS|QUIRK_NOMSG},
+
+	/* XXX maybe doesn't need QUIRK_NOMSG? */
+	{"QUANTUM",	"ATLAS IV",	"",	QUIRK_NOTAGS|QUIRK_NOMSG},
+
+	/*
+	 * XXX not clear what the value of NCR_GETCC_WITHMSG is if
+	 * XXX QUIRK_NOMSG is always turned on, but I am just an
+	 * XXX egg.  --cgd
+	 */
+	/* catch all: must be the last entry. */
+	{"",		"", 		"",	QUIRK_NOMSG},
 };
 
 static u_long ncr_lookup(char * id)
