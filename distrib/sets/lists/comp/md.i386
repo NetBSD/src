@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.50 2000/11/05 22:29:03 thorpej Exp $
+# $NetBSD: md.i386,v 1.51 2001/01/30 03:18:04 jwise Exp $
 ./usr/include/i386		comp-c-include
 ./usr/include/i386/_G_config.h		comp-c-include
 ./usr/include/i386/ansi.h		comp-c-include
@@ -63,11 +63,11 @@
 ./usr/include/i386/vm86.h		comp-c-include
 ./usr/include/i386/vmparam.h		comp-c-include
 ./usr/lib/libi386.a		comp-c-lib
-./usr/lib/libi386.so		comp-c-shlib
+./usr/lib/libi386.so		comp-c-lib
 ./usr/lib/libi386_p.a		comp-c-proflib
 ./usr/lib/libi386_pic.a		comp-c-piclib
 ./usr/lib/libm387.a		comp-c-lib
-./usr/lib/libm387.so		comp-c-shlib
+./usr/lib/libm387.so		comp-c-lib
 ./usr/lib/libm387_p.a		comp-c-proflib
 ./usr/lib/libm387_pic.a		comp-c-piclib
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib
