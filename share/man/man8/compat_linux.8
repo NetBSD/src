@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.5 1997/02/27 08:05:38 mikel Exp $
+.\"	$NetBSD: compat_linux.8,v 1.6 1997/03/25 19:29:01 perry Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -41,8 +41,9 @@ for now. Both the a.out and ELF binary formats are supported. Most programs
 should work, including the ones that use the Linux SVGAlib. Programs that
 will not work include the Linux /proc filesystem (which is different from
 the optional NetBSD /proc filesystem), and i386-specific calls, such as
-enabling virtual 8086 mode. Currently, sound is not supported for Linux
-binaries (they will probably run, but not produce any sound).
+enabling virtual 8086 mode. Currently, sound is only partially
+supported for Linux binaries (they will probably run, depending on
+what Linux sound support features are used).
 
 The Linux compatibility feature is active
 for kernels compiled with the
@@ -243,6 +244,17 @@ such as YP and DNS. You must create or get a valid copy of this file
 and put it in /emul/linux/etc.
 
 .Ss Finding the necessary files.
+[
+.Em Note:
+As of March, 1997, a reasonable set of Linux libraries and other files
+needed for Linux emulation may be obtained from
+.Dl ftp://ftp.freebsd.org/pub/FreeBSD/distfiles/linux_lib-2.3.tar.gz
+It is recommended you try to retrieve this file (or a more recent
+version) from ftp.freebsd.org first as this tar file contains
+everything one typically needs and is is very simple to use for this
+application. Failing that, see the instructions below.
+]
+.Pp
 .Em Note:
 the information below is valid as of the time this
 document was written (March, 1995), but certain details
