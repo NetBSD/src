@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.10 1999/03/09 02:41:39 ross Exp $
+.\" $NetBSD: at.1,v 1.11 1999/05/22 05:05:11 jwise Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
@@ -12,7 +12,7 @@
 .Op Fl V
 .Op Fl q Ar queue
 .Op Fl f Ar file
-.Op Fl mldbv
+.Op Fl mldrbv
 .Ar time
 .Nm at
 .Op Fl V
@@ -205,13 +205,16 @@ Reads the job from
 rather than standard input.
 .It Fl l
 Is an alias for
-.Nm atq.
+.Nm atq .
 .It Fl d
 Is an alias for
-.Nm atrm.
+.Nm atrm .
+.It Fl r
+Is an alias for
+.Nm atrm .
 .It Fl b
 Is an alias for
-.Nm batch.
+.Nm batch .
 .It Fl v
 For
 .Nm atq ,

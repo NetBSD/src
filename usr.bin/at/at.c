@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.12 1998/07/27 07:41:31 mycroft Exp $	*/
+/*	$NetBSD: at.c,v 1.13 1999/05/22 05:05:11 jwise Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -75,7 +75,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.12 1998/07/27 07:41:31 mycroft Exp $");
+__RCSID("$NetBSD: at.c,v 1.13 1999/05/22 05:05:11 jwise Exp $");
 #endif
 #endif
 
@@ -583,7 +583,7 @@ main(argc, argv)
 		ATQ, ATRM, AT, BATCH, CAT
 	};				/* what program we want to run */
 	int program = AT;		/* our default program */
-	char *options = "q:f:mvldbVc";	/* default options for at */
+	char *options = "q:f:mvldbrVc";	/* default options for at */
 	int disp_version = 0;
 	time_t timer;
 
@@ -637,6 +637,7 @@ main(argc, argv)
 			break;
 
 		case 'd':
+		case 'r':
 			if (program != AT)
 				usage();
 
