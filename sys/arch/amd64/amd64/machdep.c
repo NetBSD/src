@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2003/09/26 12:02:56 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2003/10/06 22:53:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2003/09/26 12:02:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/10/06 22:53:47 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -485,41 +485,20 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-/*
- * Send an interrupt to process.
- *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user
- * specified pc, psl.
- */
-void
-sendsig(sig, mask, code)
-	int sig;
-	const sigset_t *mask;
-	u_long code;
+void *
+getframe(struct lwp *l, int sig, int *onstack)
 {
-	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	struct sigacts *ps = p->p_sigacts;
-	struct trapframe *tf;
+	struct trapframe *tf = l->l_md.md_regs;
 	char *sp;
-	struct sigframe *fp, frame;
-	int onstack;
-	size_t tocopy;
-	sig_t catcher = SIGACTION(p, sig).sa_handler;
-
-	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	onstack =
+	*onstack =
 	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
-	if (onstack)
+	if (*onstack)
 		sp = ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
 					  p->p_sigctx.ps_sigstk.ss_size);
 	else
@@ -529,47 +508,71 @@ sendsig(sig, mask, code)
 	 * fxsave and the ABI.
 	 */
 	sp = (char *)((unsigned long)sp & ~15) - 8;
-	fp = (struct sigframe *)sp - 1;
 
-	if (l->l_md.md_flags & MDP_USEDFPU) {
-		fpusave_lwp(l, 1);
-		frame.sf_sc.sc_fpstate =
-		    (struct fxsave64 *)&fp->sf_sc.sc_mcontext.__fpregs;
-		memcpy(&frame.sf_sc.sc_mcontext.__fpregs,
-		    &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
-		    sizeof (struct fxsave64));
-		tocopy = sizeof (struct sigframe);
-	} else {
-		frame.sf_sc.sc_fpstate = NULL;
-		tocopy = sizeof (struct sigframe) -
-		    sizeof (fp->sf_sc.sc_mcontext.__fpregs);
-	}
+	return (void *)sp;
+}
+
+void
+buildcontext(struct lwp *l, void *catcher, void *f)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+
+	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rsp = (u_int64_t)f;
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+}
+
+static void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+	struct sigacts *ps = p->p_sigacts;
+	int onstack, tocopy;
+	int sig = ksi->ksi_signo;
+	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	struct trapframe *tf = l->l_md.md_regs;
+
+	fp--;
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
-	case 0:		/* legacy on-stack sigtramp */
-		frame.sf_ra = (uint64_t) p->p_sigctx.ps_sigcode;
-		break;
-#endif /* COMPAT_16 */
-
-	case 1:
-		frame.sf_ra = (uint64_t) ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* Don't know what trampoline version; kill it. */
+	case 0:		/* handled by sendsig_sigcontext */
+	case 1:		/* handled by sendsig_sigcontext */
+	default:	/* unknown version */
+		printf("nsendsig: bad version %d\n",
+		    ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
+	case 2:
+		break;
 	}
 
-	/* Save register context. */
-	memcpy(&frame.sf_sc.sc_mcontext.__gregs, tf, sizeof (*tf));
+	/*
+	 * Don't bother copying out FP state if there is none.
+	 */
+	if (l->l_md.md_flags & MDP_USEDFPU)
+		tocopy = sizeof (struct sigframe_siginfo);
+	else
+		tocopy = sizeof (struct sigframe_siginfo) -
+		    sizeof (frame.sf_uc.uc_mcontext.__fpregs);
 
-	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask. */
-	frame.sf_sc.sc_mask = *mask;
+	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
+	frame.sf_si._info = *ksi;
+	frame.sf_uc.uc_flags = _UC_SIGMASK;
+	frame.sf_uc.uc_sigmask = *mask;
+	frame.sf_uc.uc_link = NULL;
+	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	    ? _UC_SETSTACK : _UC_CLRSTACK;
+	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
 	if (copyout(&frame, fp, tocopy) != 0) {
 		/*
@@ -580,29 +583,27 @@ sendsig(sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	buildcontext(l, catcher, fp);
 
 	tf->tf_rdi = sig;
-	tf->tf_rsi = code;
-	tf->tf_rdx = (int64_t) &fp->sf_sc;
-
-	tf->tf_rip = (u_int64_t)catcher;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_rsp = (u_int64_t)fp;
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_rsi = (uint64_t)&fp->sf_si;
+	tf->tf_rdx = (uint64_t)&fp->sf_uc;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+void
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+#ifdef COMPAT_16
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		sendsig_sigcontext(ksi, mask);
+	else
+#endif
+		sendsig_siginfo(ksi, mask);
+}
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
@@ -634,76 +635,6 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 
 	l->l_md.md_flags |= MDP_IRET;
-}
-
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper privileges or to cause
- * a machine fault.
- */
-int
-sys___sigreturn14(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct sigcontext *scp, context;
-	struct trapframe *tf;
-	uint64_t rflags;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context,
-	    sizeof(struct sigcontext) - sizeof(struct fxsave64)) != 0)
-		return EFAULT;
-
-	/* Restore register context. */
-	tf = l->l_md.md_regs;
-	/*
-	 * Check for security violations.  If we're returning to
-	 * protected mode, the CPU will validate the segment registers
-	 * automatically and generate a trap on violations.  We handle
-	 * the trap, rather than doing all of the checking here.
-	 */
-	rflags = context.sc_mcontext.__gregs[_REG_RFL];
-	if (((rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_mcontext.__gregs[_REG_CS], rflags))
-		return EINVAL;
-
-	memcpy(tf, &context.sc_mcontext.__gregs, sizeof (*tf));
-
-	/* Restore (possibly fixed up) FP state and force it to be reloaded */
-	if (l->l_md.md_flags & MDP_USEDFPU) {
-		fpusave_lwp(l, 0);
-		if (context.sc_fpstate != NULL && copyin(context.sc_fpstate,
-		    &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
-		    sizeof (struct fxsave64)) != 0)
-			return EFAULT;
-	}
-
-	/* Restore signal stack. */
-	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
-
-	return EJUSTRETURN;
 }
 
 int	waittime = -1;
@@ -1820,6 +1751,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		    sizeof (mcp->__fpregs));
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
 	return 0;
 }
 

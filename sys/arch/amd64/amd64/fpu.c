@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 2003/08/07 16:26:35 agc Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 2003/10/06 22:53:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.4 2003/08/07 16:26:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2003/10/06 22:53:47 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -153,6 +153,7 @@ fputrap(frame)
 	register struct lwp *l = curcpu()->ci_fpcurlwp;
 	struct savefpu *sfp = &l->l_addr->u_pcb.pcb_savefpu;
 	u_int16_t cw;
+	ksiginfo_t ksi;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -174,8 +175,11 @@ fputrap(frame)
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
+	memset(&ksi, 0, sizeof (ksi));
+	ksi.ksi_signo = SIGFPE;
+	ksi.ksi_addr = (void *)frame->tf_rip;
 	KERNEL_PROC_LOCK(l);
-	(*l->l_proc->p_emul->e_trapsignal)(l, SIGFPE, frame->tf_err);
+	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
 	KERNEL_PROC_UNLOCK(l);
 }
 
