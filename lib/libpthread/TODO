@@ -23,6 +23,7 @@ Features that need more/better regression tests:
 
 
 Things that need fixing:
+- Correct [non]resumption of PT_IDLED thread.
 - Recycle dead threads for new threads.
 
 
