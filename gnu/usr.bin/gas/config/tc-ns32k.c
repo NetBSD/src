@@ -1337,7 +1337,7 @@ int *sizeP;
 	int	prec;
 	LITTLENUM_TYPE words[MAX_LITTLENUMS];
 	LITTLENUM_TYPE *wordP;
-	extern char *atof_ns32k();
+	extern char *atof_ieee();
 	char *t;
 	
 	switch (type) {
@@ -1352,12 +1352,12 @@ int *sizeP;
 		*sizeP = 0;
 		return "Bad call to MD_ATOF()";
 	}
-	t = atof_ns32k(input_line_pointer, type, words);
+	t = atof_ieee(input_line_pointer, type, words);
 	if (t)
 	    input_line_pointer=t;
 	
 	*sizeP = prec * sizeof(LITTLENUM_TYPE);
-	for (wordP = words +prec; prec--;) {
+	for (wordP = words + prec; prec--;) {
 		md_number_to_chars(litP, (long)(*--wordP), sizeof(LITTLENUM_TYPE));
 		litP+=sizeof(LITTLENUM_TYPE);
 	}
