@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.54 2001/09/12 03:14:08 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.55 2001/11/01 07:39:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.54 2001/09/12 03:14:08 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.55 2001/11/01 07:39:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -612,24 +612,24 @@ find_dev(dev_t dev, int type)
 	DIR *dfd;
 	struct dirent *dir;
 	struct stat sb;
-	char *dp, devname[MAXPATHLEN + 1];
+	char *dp, device[MAXPATHLEN + 1];
 
 	if ((dfd = opendir(_PATH_DEV)) == NULL) {
 		syslog(LOG_ERR, "%s: %m", _PATH_DEV);
 		exit(1);
 	}
-	(void)strcpy(devname, _PATH_DEV);
+	(void)strcpy(device, _PATH_DEV);
 	while ((dir = readdir(dfd))) {
-		(void)strcpy(devname + sizeof(_PATH_DEV) - 1, dir->d_name);
-		if (lstat(devname, &sb)) {
-			syslog(LOG_ERR, "%s: %m", devname);
+		(void)strcpy(device + sizeof(_PATH_DEV) - 1, dir->d_name);
+		if (lstat(device, &sb)) {
+			syslog(LOG_ERR, "%s: %m", device);
 			continue;
 		}
 		if ((sb.st_mode & S_IFMT) != type)
 			continue;
 		if (dev == sb.st_rdev) {
 			closedir(dfd);
-			if ((dp = strdup(devname)) == NULL) {
+			if ((dp = strdup(device)) == NULL) {
 				syslog(LOG_ERR, "%m");
 				exit(1);
 			}
