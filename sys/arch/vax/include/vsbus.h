@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.10 2000/01/24 02:40:33 matt Exp $ */
+/*	$NetBSD: vsbus.h,v 1.11 2000/03/04 07:27:49 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,6 +41,7 @@
 #define _VAX_VSBUS_H_
 
 #include <machine/bus.h>
+#include <machine/sgmap.h>
 
 struct	vsbus_attach_args {
 	vaddr_t	va_addr;		/* virtual CSR address */
@@ -70,11 +71,21 @@ struct	vsbus_attach_args {
 #define	SMADDR		0x30000000
 #define	SMSIZE		0x20000		/* Actually 256k, only 128k used */
 
+struct	vsbus_softc {
+	struct	device sc_dev;
+	u_char	*sc_intmsk;	/* Mask register */
+	u_char	*sc_intclr;	/* Clear interrupt register */
+	u_char	*sc_intreq;	/* Interrupt request register */
+	u_char	sc_mask;	/* Interrupts to enable after autoconf */
+	struct vax_bus_dma_tag sc_dmatag;
+	struct vax_sgmap sc_sgmap;
+};
+
 #ifdef _KERNEL
-uint32_t *vsbus_iomap;
-u_char	vsbus_setmask __P((unsigned char));
-void	vsbus_clrintr __P((unsigned char));
-void	vsbus_copytoproc(struct proc *, caddr_t, caddr_t, int);
-void	vsbus_copyfromproc(struct proc *, caddr_t, caddr_t, int);
+void	vsbus_dma_init __P((struct vsbus_softc *));
+u_char	vsbus_setmask __P((int));
+void	vsbus_clrintr __P((int));
+void	vsbus_copytoproc __P((struct proc *, caddr_t, caddr_t, int));
+void	vsbus_copyfromproc __P((struct proc *, caddr_t, caddr_t, int));
 #endif
 #endif /* _VAX_VSBUS_H_ */

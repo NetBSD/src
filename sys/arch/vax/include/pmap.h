@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 1999/08/01 13:48:07 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.38 2000/03/04 07:27:48 matt Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -92,12 +92,12 @@ struct pv_entry {
 #define TRUNC_PAGE(x)	((uint)(x) & ~PGOFSET)
 
 /* Mapping macros used when allocating SPT */
-#define MAPVIRT(ptr, count)					\
-	(vm_offset_t)ptr = virtual_avail;			\
+#define MAPVIRT(ptr, count)				\
+	(vaddr_t)ptr = virtual_avail;			\
 	virtual_avail += (count) * VAX_NBPG;
 
-#define MAPPHYS(ptr, count, perm)				\
-	(vm_offset_t)ptr = avail_start + KERNBASE;		\
+#define MAPPHYS(ptr, count, perm)			\
+	(vaddr_t)ptr = avail_start + KERNBASE;		\
 	avail_start += (count) * VAX_NBPG;
 
 #ifdef	_KERNEL
@@ -177,7 +177,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));
-vaddr_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
+vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
 void	pmap_pinit __P((pmap_t));
 
 #endif PMAP_H

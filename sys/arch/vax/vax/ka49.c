@@ -208,7 +208,6 @@ ka49_mchk(addr)
 void
 ka49_steal_pages()
 {
-
 	/*
 	 * Get the soft and hard memory error vectors now.
 	 */
@@ -217,6 +216,7 @@ ka49_steal_pages()
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka49_cache_enable();
+
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.1 2000/03/04 00:24:06 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.2 2000/03/04 07:27:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.1 2000/03/04 00:24:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.2 2000/03/04 07:27:50 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,7 +150,7 @@ asc_vsbus_match( struct device *parent, struct cfdata *cf, void *aux)
 	   && vax_boardtype != VAX_BTYP_49)
 		return 0;
 
-	printf("asc_vsbus_match\n");
+	printf("asc_vsbus_match: pa=0x%lx, va=0x%lx\n", va->va_paddr, va->va_addr);
 
 	ncr_regs = (volatile int *) va->va_addr;
 

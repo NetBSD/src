@@ -147,32 +147,8 @@ ka48_mchk(addr)
 void
 ka48_steal_pages()
 {
-	extern	vm_offset_t virtual_avail, avail_end;
-	int	i;
-
 	/* Turn on caches (to speed up execution a bit) */
 	ka48_cache_enable();
-	/*
-	 * The I/O MMU maps all 16K device addressable memory to
-	 * the low 16M of the physical memory. In this way the
-	 * device operations emulate the VS3100 way.
-	 * This area must be on a 128k boundary and that causes
-	 * a slight waste of memory. We steal it from the end.
-	 *
-	 * This will be reworked the day NetBSD/vax changes to
-	 * 4K pages. (No use before that).
-	 */
-	{	int *io_map, *lio_map;
-
-		avail_end &= ~0x3ffff;
-		lio_map = (int *)avail_end;
-		*(int *)(VS_REGS + 8) = avail_end & 0x07fe0000;
-		MAPVIRT(io_map, (0x20000 / VAX_NBPG));
-		pmap_map((vm_offset_t)io_map, (vm_offset_t)avail_end,
-		    (vm_offset_t)avail_end + 0x20000, VM_PROT_READ|VM_PROT_WRITE);
-		for (i = 0; i < 0x8000; i++)
-			lio_map[i] = 0x80000000|i;
-	}
 }
 
 static void
