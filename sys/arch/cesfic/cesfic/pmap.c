@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6 2001/09/29 22:00:31 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 2001/11/19 06:40:12 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -496,7 +496,7 @@ pmap_init()
 		maxproc = (HP_PTMAXSIZE / HP_MAX_PTSIZE);
 	} else
 		s = (maxproc * HP_MAX_PTSIZE);
-	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
+	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 	    TRUE, &pt_map_store);
 
 #if defined(M68040)
@@ -776,12 +776,15 @@ pmap_release(pmap)
 		panic("pmap_release count");
 #endif
 
-	if (pmap->pm_ptab)
+	if (pmap->pm_ptab) {
+		pmap_remove(pmap_kernel(), (vaddr_t)pmap->pm_ptab,
+		    (vaddr_t)pmap->pm_ptab + HP_MAX_PTSIZE);
+		uvm_km_pgremove(uvm.kernel_object, (vaddr_t)pmap->pm_ptab,
+		    (vaddr_t)pmap->pm_ptab + HP_MAX_PTSIZE);
 		uvm_km_free_wakeup(pt_map, (vaddr_t)pmap->pm_ptab,
 				   HP_MAX_PTSIZE);
-	if (pmap->pm_stab != Segtabzero)
-		uvm_km_free_wakeup(st_map, (vaddr_t)pmap->pm_stab,
-				   HP_STSIZE);
+	}
+	KASSERT(pmap->pm_stab == Segtabzero);
 }
 
 /*
@@ -867,19 +870,23 @@ pmap_remove(pmap, sva, eva)
 		nssva = hp300_trunc_seg(sva) + HP_SEG_SIZE;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
-		/*
-		 * If VA belongs to an unallocated segment,
-		 * skip to the next segment boundary.
-		 */
-		if (!pmap_ste_v(pmap, sva)) {
-			sva = nssva;
-			continue;
-		}
+
 		/*
 		 * Invalidate every valid mapping within this segment.
 		 */
+
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
+
+			/*
+			 * If this segment is unallocated,
+			 * skip to the next segment boundary.
+			 */
+
+			if (!pmap_ste_v(pmap, sva)) {
+				sva = nssva;
+				break;
+			}
 			if (pmap_pte_v(pte)) {
 #ifdef M68K_MMU_HP
 				if (pmap_aliasmask) {
@@ -2111,23 +2118,18 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		/*
 		 * If reference count drops to 1, and we're not instructed
 		 * to keep it around, free the PT page.
-		 *
-		 * Note: refcnt == 1 comes from the fact that we allocate
-		 * the page with uvm_fault_wire(), which initially wires
-		 * the page.  The first reference we actually add causes
-		 * the refcnt to be 2.
 		 */
 		if (refs == 1 && (flags & PRM_KEEPPTPAGE) == 0) {
+#ifdef DIAGNOSTIC
 			struct pv_entry *pv;
+#endif
 			paddr_t pa;
 
 			pa = pmap_pte_pa(pmap_pte(pmap_kernel(), ptpva));
 #ifdef DIAGNOSTIC
 			if (PAGE_IS_MANAGED(pa) == 0)
 				panic("pmap_remove_mapping: unmanaged PT page");
-#endif
 			pv = pa_to_pvh(pa);
-#ifdef DIAGNOSTIC
 			if (pv->pv_ptste == NULL)
 				panic("pmap_remove_mapping: ptste == NULL");
 			if (pv->pv_pmap != pmap_kernel() ||
@@ -2137,7 +2139,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				    "bad PT page pmap %p, va 0x%lx, next %p",
 				    pv->pv_pmap, pv->pv_va, pv->pv_next);
 #endif
-			pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
+			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
 			uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 			PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
@@ -2438,6 +2440,7 @@ pmap_enter_ptpage(pmap, va)
 	vaddr_t va;
 {
 	paddr_t ptpa;
+	struct vm_page *pg;
 	struct pv_entry *pv;
 	st_entry_t *ste;
 	int s;
@@ -2554,32 +2557,33 @@ pmap_enter_ptpage(pmap, va)
 		}
 #endif
 		splx(s);
-	}
-	/*
-	 * For user processes we just simulate a fault on that location
-	 * letting the VM system allocate a zero-filled page.
-	 *
-	 * Note we use a wire-fault to keep the page off the paging
-	 * queues.  This sets our PT page's reference (wire) count to
-	 * 1, which is what we use to check if the page can be freed.
-	 * See pmap_remove_mapping().
-	 */
-	else {
+	} else {
+
 		/*
-		 * Count the segment table reference now so that we won't
+		 * For user processes we just allocate a page from the
+		 * VM system.  Note that we set the page "wired" count to 1,
+		 * which is what we use to check if the page can be freed.
+		 * See pmap_remove_mapping().
+		 *
+		 * Count the segment table reference first so that we won't
 		 * lose the segment table when low on memory.
 		 */
+
 		pmap->pm_sref++;
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
-		    ("enter: about to fault UPT pg at %lx\n", va));
-		s = uvm_fault_wire(pt_map, va, va + PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE);
-		if (s != 0) {
-			printf("uvm_fault_wire(pt_map, 0x%lx, 0x%lx, RW) "
-			    "-> %d\n", va, va + PAGE_SIZE, s);
-			panic("pmap_enter: uvm_fault_wire failed");
+		    ("enter: about to alloc UPT pg at %lx\n", va));
+		while ((pg = uvm_pagealloc(uvm.kernel_object, va, NULL,
+					   UVM_PGA_ZERO)) == NULL) {
+			uvm_wait("ptpage");
 		}
-		ptpa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
+		pg->wire_count = 1;
+		pg->flags &= ~(PG_BUSY|PG_FAKE);
+		UVM_PAGE_OWN(pg, NULL);
+		ptpa = VM_PAGE_TO_PHYS(pg);
+		pmap_enter(pmap_kernel(), va, ptpa,
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+		pmap_update(pmap_kernel());
 	}
 #if defined(M68040)
 	/*
