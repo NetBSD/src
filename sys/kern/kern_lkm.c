@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.76 2004/10/25 22:59:12 peter Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.77 2004/10/25 23:06:41 peter Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.76 2004/10/25 22:59:12 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.77 2004/10/25 23:06:41 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -367,7 +367,7 @@ lkmioctl(dev, cmd, data, flag, p)
 
 		resrvp->addr = curp->area;	/* ret kernel addr */
 
-		if (cmd == LMRESERV && resrvp->sym_size) {
+		if (resrvp->sym_size) {
 			curp->sym_size = resrvp->sym_size;
 			curp->sym_symsize = resrvp->sym_symsize;
 			curp->syms = (u_long) LKM_SPACE_ALLOC(curp->sym_size);
@@ -377,8 +377,7 @@ lkmioctl(dev, cmd, data, flag, p)
 			curp->sym_size = 0;
 			curp->syms = 0;
 			curp->sym_offset = 0;
-			if (cmd == LMRESERV)
-				resrvp->sym_addr = 0;
+			resrvp->sym_addr = 0;
 		}
 
 #ifdef DEBUG
