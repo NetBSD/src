@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.1 1997/04/27 09:09:50 jonathan Exp $
+.\"	$NetBSD: isapnp.4,v 1.2 1997/04/27 11:58:46 jonathan Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -81,6 +81,7 @@ The
 .Nm
 bus ignores  device that have already been found and configured as
 .Xr isa 4
+devices.
 The
 .Nm
 bus is only effective on machines which lack a PnP BIOS, or  on
@@ -88,7 +89,7 @@ which the PnP BIOS has been disabled.
 The manual pages for each individual 
 .Nm
 driver also list
-the supported variants on other buses.
+the supported front-ends for other buses.
 .Sh SEE ALSO
 .Xr com 4 ,
 .Xr ep 4 ,
