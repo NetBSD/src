@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.53 1998/06/11 10:30:14 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.54 1998/06/11 10:36:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 1998/06/11 10:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 1998/06/11 10:36:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1555,6 +1555,12 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * mapping would have been flushed when it was invalidated.
 		 */
 		tflush = FALSE;
+
+		/*
+		 * No need to synchronize the I-stream, either, for basically
+		 * the same reason.
+		 */
+		needisync = FALSE;
 
 		if (pmap != pmap_kernel()) {
 			/*
