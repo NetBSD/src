@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/04/29 05:18:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/06/09 20:37:41 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,6 @@ SRCS=	button.c charproc.c charsets.c cursor.c data.c doublechr.c \
 	fontutils.c input.c menu.c misc.c print.c ptydata.c screen.c \
 	scrollbar.c tabs.c util.c xstrings.c TekPrsTbl.c Tekproc.c VTPrsTbl.c \
 	main.c charclass.c precompose.c wcwidth.c xutf8.c
-
-BINOWN= root
-BINMODE=4555
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/xterm \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
