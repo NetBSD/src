@@ -34,7 +34,7 @@ LIB    = dhcp
 SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 	 lpf.c dlpi.c packet.c tr.c ethernet.c memory.c print.c options.c \
 	 inet.c convert.c tree.c tables.c hash.c alloc.c fddi.c \
-	 inet_addr.c dns.c resolv.c execute.c discover.c auth.c
+	 inet_addr.c dns.c resolv.c execute.c discover.c comapi.c
 
 MKLINT=	no
 MKPIC=	no
