@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2001/05/25 23:34:44 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2001/05/26 16:32:44 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -234,8 +234,8 @@
  * locking data structures
  */
 
-simple_lock_data_t pvalloc_lock;
-simple_lock_data_t pmaps_lock;
+struct simplelock pvalloc_lock;
+struct simplelock pmaps_lock;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 struct lock pmap_main_lock;

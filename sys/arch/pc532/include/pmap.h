@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2001/04/22 23:19:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 2001/05/26 16:32:43 chs Exp $	*/
 
 /*
  *
@@ -252,7 +252,7 @@ struct pmap {
 struct pv_entry;
 
 struct pv_head {
-	simple_lock_data_t pvh_lock;	/* locks every pv on this list */
+	struct simplelock pvh_lock;	/* locks every pv on this list */
 	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
 };
 

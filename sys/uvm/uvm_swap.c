@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.51 2001/05/25 04:06:17 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.52 2001/05/26 16:32:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -214,7 +214,7 @@ LIST_HEAD(swap_priority, swappri);
 static struct swap_priority swap_priority;
 
 /* locks */
-lock_data_t swap_syscall_lock;
+struct lock swap_syscall_lock;
 
 /*
  * prototypes

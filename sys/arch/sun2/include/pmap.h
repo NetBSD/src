@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2001/04/25 17:35:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2001/05/26 16:32:45 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ typedef struct pmap *pmap_t;
 struct pmap {
 	unsigned char   	*pm_segmap; 	/* soft copy of segmap */
 	int             	pm_ctxnum;	/* MMU context number */
-	simple_lock_data_t	pm_lock;    	/* lock on pmap */
+	struct simplelock	pm_lock;    	/* lock on pmap */
 	int             	pm_refcount;	/* reference count */
 	int             	pm_version;
 };
