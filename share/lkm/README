@@ -29,7 +29,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: README,v 1.1 1993/06/08 03:53:20 cgd Exp $
+#	$Id: README,v 1.2 1993/06/08 04:10:41 cgd Exp $
 #
 
 0.0	README
@@ -119,8 +119,8 @@
 4.2	Virtual file system modules
 
 	A virtual file system can be loaded as a module.  The example
-	provided is for the "pcfs" file system; this is the standard
-	code in /sys/pcfs combined in a single object with another
+	provided is for the "kernfs" file system; this is the code in
+	NetBSD's /sys/kernfs combined in a single object with another
 	piece of code giving a module entry point for the file system;
 	with very little effort, any file system can be set up this way
 	(although I suggest you leave "ufs" statically linked, since
