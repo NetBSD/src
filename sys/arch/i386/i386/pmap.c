@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72 1999/06/17 19:23:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.73 1999/07/08 18:05:28 thorpej Exp $	*/
 
 /*
  *
@@ -1791,8 +1791,8 @@ struct pmap *pmap;
   pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, NBPG);
   if (pmap->pm_pdir == NULL)
     panic("pmap_pinit: kernel_map out of virtual space!");
-  pmap->pm_pdirpa = (u_int32_t) 
-    pmap_extract(pmap_kernel(), (vaddr_t) pmap->pm_pdir);
+  (void) pmap_extract(pmap_kernel(), (vaddr_t) pmap->pm_pdir,
+		      (paddr_t *) &pmap->pm_pdirpa);
 
   /* init PDP */
   /* zero init area */
@@ -2052,15 +2052,13 @@ struct proc *p;
 
 /*
  * pmap_extract: extract a PA for the given VA
- *
- * => returns 0 if no mapping (thus preventing it from returning 
- *	physical page 0!)
  */
 
-paddr_t pmap_extract(pmap, va)
+boolean_t pmap_extract(pmap, va, pap)
 
 struct pmap *pmap;
 vaddr_t va;
+paddr_t *pap;
 
 {
   paddr_t retval;
@@ -2070,9 +2068,11 @@ vaddr_t va;
     ptes = pmap_map_ptes(pmap);
     retval = (paddr_t) (ptes[i386_btop(va)] & PG_FRAME);
     pmap_unmap_ptes(pmap);
-    return(retval | (va & ~PG_FRAME));
+    if (pap != NULL)
+      *pap = retval | (va & ~PG_FRAME);
+    return (TRUE);
   }
-  return(0);
+  return (FALSE);
 }
 
 

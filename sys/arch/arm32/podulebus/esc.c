@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.6 1999/03/24 05:50:57 mrg Exp $	*/
+/*	$NetBSD: esc.c,v 1.7 1999/07/08 18:05:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -201,7 +201,8 @@ escinitialize(dev)
  * Setup bump buffer.
  */
 	dev->sc_bump_va = (u_char *)uvm_km_zalloc(kernel_map, dev->sc_bump_sz);
-	dev->sc_bump_pa = pmap_extract(kernel_pmap, (vm_offset_t)dev->sc_bump_va);
+	(void) pmap_extract(kernel_pmap, (vaddr_t)dev->sc_bump_va,
+	    (paddr_t *)&dev->sc_bump_pa);
 
 /*
  * Setup pages to noncachable, that way we don't have to flush the cache

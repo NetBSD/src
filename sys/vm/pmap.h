@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33 1999/06/17 19:23:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34 1999/07/08 18:11:03 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -144,7 +144,7 @@ pmap_t		 pmap_create __P((vsize_t));
 void		 pmap_destroy __P((pmap_t));
 void		 pmap_enter __P((pmap_t,
 		    vaddr_t, paddr_t, vm_prot_t, boolean_t, vm_prot_t));
-paddr_t		pmap_extract __P((pmap_t, vaddr_t));
+boolean_t	 pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
 #if defined(PMAP_NEW) && defined(PMAP_GROWKERNEL)
 vaddr_t		 pmap_growkernel __P((vaddr_t));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.5 1999/05/25 23:14:09 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.6 1999/07/08 18:11:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@ x68k_bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 		/*
 		 * Get the physical address for this segment.
 		 */
-		curaddr = pmap_extract(pmap, vaddr);
+		(void) pmap_extract(pmap, vaddr, &curaddr);
 
 		/*
 		 * If we're beyond the bounce threshold, notify

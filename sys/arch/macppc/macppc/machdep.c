@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 1999/06/28 08:20:45 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 1999/07/08 18:08:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -602,6 +602,7 @@ setregs(p, pack, stack)
 {
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;
+	paddr_t pa;
 
 	bzero(tf, sizeof *tf);
 	tf->fixreg[1] = -roundup(-stack + 8, 16);
@@ -638,9 +639,10 @@ setregs(p, pack, stack)
 	p->p_addr->u_pcb.pcb_flags = 0;
 
 	/* sync I-cache for signal trampoline code */
-	__syncicache((void *)pmap_extract(p->p_addr->u_pcb.pcb_pm,
-					  (vaddr_t)p->p_sigacts->ps_sigcode),
-		     pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
+	(void) pmap_extract(p->p_addr->u_pcb.pcb_pm,
+	    (vaddr_t)p->p_sigacts->ps_sigcode, &pa);
+	__syncicache((void *)pa,
+	    pack->ep_emul->e_esigcode - pack->ep_emul->e_sigcode);
 }
 
 /*
@@ -978,8 +980,7 @@ kvtop(addr)
 	va = trunc_page(addr);
 	off = (int)addr - va;
 
-	pa = pmap_extract(pmap_kernel(), va);
-	if (pa == 0) {
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
 		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
 		return (int)addr;
 	}

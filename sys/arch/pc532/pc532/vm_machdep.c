@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 1999/06/26 09:09:52 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 1999/07/08 18:08:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -328,12 +328,11 @@ int
 kvtop(addr)
 	register caddr_t addr;
 {
-	vaddr_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
-	if (va == 0)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -371,8 +370,8 @@ vmapbuf(bp, len)
 	 * mapping is removed).
 	 */
 	while (len) {
-		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
-				   faddr);
+		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		faddr += PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.29 1999/03/24 05:50:57 mrg Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.30 1999/07/08 18:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -512,7 +512,7 @@ vidcaudio_stereo(channel, position)
 	return 0;
 }
 
-#define PHYS(x) (pmap_extract(kernel_pmap, ((x)&PG_FRAME)))
+#define PHYS(x) pmap_extract(kernel_pmap, ((x)&PG_FRAME), (paddr_t *)(y))
 
 /*
  * Program the next buffer to be used
@@ -528,16 +528,21 @@ vidcaudio_dma_program(cur, end, intr, arg)
 	void (*intr)();
 	void *arg;
 {
+	paddr_t pa1, pa2;
+
 	/* If there isn't a transfer in progress then start a new one */
 	if (ag.in_progress == 0) {
 		ag.buffer = 0;
 		IOMD_WRITE_WORD(IOMD_SD0CR, 0x90);	/* Reset State Machine */
 		IOMD_WRITE_WORD(IOMD_SD0CR, 0x30);	/* Reset State Machine */
 
-		IOMD_WRITE_WORD(IOMD_SD0CURB, PHYS(cur));
-		IOMD_WRITE_WORD(IOMD_SD0ENDB, PHYS(end-16)|FLAGS);
-		IOMD_WRITE_WORD(IOMD_SD0CURA, PHYS(cur));
-		IOMD_WRITE_WORD(IOMD_SD0ENDA, PHYS(end-16)|FLAGS);
+		PHYS(cur, &pa1);
+		PHYS(end - 16, &pa2);
+
+		IOMD_WRITE_WORD(IOMD_SD0CURB, pa1);
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, pa2|FLAGS);
+		IOMD_WRITE_WORD(IOMD_SD0CURA, pa1);
+		IOMD_WRITE_WORD(IOMD_SD0ENDA, pa2|FLAGS);
 
 		ag.in_progress = 1;
 
@@ -573,8 +578,8 @@ vidcaudio_dma_program(cur, end, intr, arg)
 		} else {
 			/* We're OK to schedule it now */
 			ag.buffer = (++ag.buffer) & 1;
-			ag.next_cur = PHYS(cur);
-			ag.next_end = PHYS(end-16);
+			PHYS(cur, &ag.next_cur);
+			PHYS(end - 16, &ag.next_end);
 			ag.next_intr = intr;
 			ag.next_arg = arg;
 #ifdef DEBUG

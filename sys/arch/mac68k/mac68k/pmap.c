@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1999/06/17 19:23:25 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 1999/07/08 18:05:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -439,7 +439,7 @@ pmap_init()
 		panic("pmap_init: can't allocate data structures");
 
 	Segtabzero = (st_entry_t *)addr;
-	Segtabzeropa = (st_entry_t *)pmap_extract(pmap_kernel(), addr);
+	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
 	addr += MAC_STSIZE;
 
 	pv_table = (struct pv_entry *)addr;
@@ -503,7 +503,8 @@ pmap_init()
 		(--kpt_pages)->kpt_next = kpt_free_list;
 		kpt_free_list = kpt_pages;
 		kpt_pages->kpt_va = addr2;
-		kpt_pages->kpt_pa = pmap_extract(pmap_kernel(), addr2);
+		(void) pmap_extract(pmap_kernel(), addr2,
+		    (paddr_t *)&kpt_pages->kpt_pa);
 	} while (addr != addr2);
 
 	PMAP_DPRINTF(PDB_INIT, ("pmap_init: KPT: %ld pages from %lx to %lx\n",
@@ -1371,24 +1372,36 @@ pmap_unwire(pmap, va)
  *	pmap/virtual address pair.
  */
 paddr_t
-pmap_extract(pmap, va)
+pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vaddr_t va;
+	paddr_t *pap;
 {
+	boolean_t rv = FALSE;
 	paddr_t pa;
+	u_int pte;
 
 	PMAP_DPRINTF(PDB_FOLLOW,
 	    ("pmap_extract(%p, %lx) -> ", pmap, va));
 
-	pa = 0;
-	if (pmap && pmap_ste_v(pmap, va))
-		pa = *pmap_pte(pmap, va);
-	if (pa)
-		pa = (pa & PG_FRAME) | (va & ~PG_FRAME);
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("%lx\n", pa));
-
-	return (pa);
+	if (pmap && pamp_ste_v(pmap, va)) {
+		pte = *(u_int *)pmap_pte(pmap, va);
+		if (pte) {
+			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
+			if (pap != NULL)
+				*pap = pa;
+			rv = TRUE;
+		}
+	}
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW) {
+		if (rv)
+			printf("%lx\n", pa);
+		else
+			printf("failed\n");
+	}
+#endif
+	return (rv);
 }
 
 /*
@@ -1546,7 +1559,7 @@ ok:
 		 * We call pmap_remove_entry to take care of invalidating
 		 * ST and Sysptmap entries.
 		 */
-		kpa = pmap_extract(pmap, pv->pv_va);
+		(void) pmap_extract(pmap, pv->pv_va, (paddr_t *)&kpa);
 		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
 				    PRM_TFLUSH|PRM_CFLUSH);
 		/*
@@ -2170,8 +2183,8 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap->pm_stab == Segtabzero) {
 		pmap->pm_stab = (st_entry_t *)
 		    uvm_km_zalloc(st_map, MAC_STSIZE);
-		pmap->pm_stpa = (st_entry_t *)
-		    pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab);
+		(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
+		    (paddr_t *)&pmap->pm_stpa);
 #if defined(M68040)
 		if (mmutype == MMU_68040) {
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.1 1999/06/04 13:42:14 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.2 1999/07/08 18:08:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -472,8 +472,6 @@ psycho_iommu_init(sc)
 	if (name == 0)
 		panic("couldn't malloc iommu name");
 	snprintf(name, 32, "%s dvma", sc->sc_dev.dv_xname);
-
-	DPRINTF(PDB_IOMMU, ("psycho base %p phys %p\n", (long)sc->sc_regs, (long)pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_regs)));
 
 	/* XXX XXX XXX FIX ME tsbsize XXX XXX XXX */
 	iommu_init(name, &sc->sc_is, 0);

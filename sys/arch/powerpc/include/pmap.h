@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1999/06/17 19:23:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1999/07/08 18:08:58 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,7 +74,7 @@ extern struct pmap kernel_pmap_;
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
-paddr_t pmap_extract __P((struct pmap *, vaddr_t));
+boolean_t pmap_extract __P((struct pmap *, vaddr_t, paddr_t *));
 void ptemodify __P((paddr_t, u_int, u_int));
 int ptebits __P((paddr_t, int));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 1999/06/28 14:44:57 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.40 1999/07/08 18:08:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -281,7 +281,7 @@ void		pmap_clear_reference4_4c __P((paddr_t pa));
 void		pmap_copy_page4_4c __P((paddr_t, paddr_t));
 void		pmap_enter4_4c __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 		    boolean_t, vm_prot_t));
-paddr_t		pmap_extract4_4c __P((pmap_t, vaddr_t));
+boolean_t	pmap_extract4_4c __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	pmap_is_modified4_4c __P((paddr_t pa));
 boolean_t	pmap_is_referenced4_4c __P((paddr_t pa));
 void		pmap_page_protect4_4c __P((paddr_t, vm_prot_t));
@@ -299,7 +299,7 @@ void		pmap_clear_reference4m __P((paddr_t pa));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
 void		pmap_enter4m __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 		    boolean_t, vm_prot_t));
-paddr_t		pmap_extract4m __P((pmap_t, vaddr_t));
+boolean_t	pmap_extract4m __P((pmap_t, vaddr_t, paddr_t *));
 boolean_t	pmap_is_modified4m __P((paddr_t pa));
 boolean_t	pmap_is_referenced4m __P((paddr_t pa));
 void		pmap_page_protect4m __P((paddr_t, vm_prot_t));
@@ -344,7 +344,7 @@ extern void	(*pmap_clear_reference_p) __P((paddr_t pa));
 extern void	(*pmap_copy_page_p) __P((paddr_t, paddr_t));
 extern void	(*pmap_enter_p) __P((pmap_t, vaddr_t, paddr_t, vm_prot_t,
 		    boolean_t, vm_prot_t));
-extern paddr_t	(*pmap_extract_p) __P((pmap_t, vaddr_t));
+extern boolean_t (*pmap_extract_p) __P((pmap_t, vaddr_t, paddr_t *));
 extern boolean_t(*pmap_is_modified_p) __P((paddr_t pa));
 extern boolean_t(*pmap_is_referenced_p) __P((paddr_t pa));
 extern void	(*pmap_page_protect_p) __P((paddr_t, vm_prot_t));

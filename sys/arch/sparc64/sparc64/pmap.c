@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 1999/06/21 01:44:14 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 1999/07/08 18:11:00 thorpej Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 /* #define BOOT_DEBUG */
@@ -2096,11 +2096,14 @@ pmap_protect(pm, sva, eva, prot)
  * Extract the physical page address associated
  * with the given map/virtual_address pair.
  * GRR, the vm code knows; we should not have to do this!
+ *
+ * XXX XXX XXX Need to deal with the case that the address is NOT MAPPED!
  */
-paddr_t
-pmap_extract(pm, va)
+boolean_t
+pmap_extract(pm, va, pap)
 	register struct pmap *pm;
 	vaddr_t va;
+	paddr_t *pap;
 {
 	paddr_t pa;
 
@@ -2116,7 +2119,6 @@ pmap_extract(pm, va)
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			paddr_t pa;
 			pa = ldxa(&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
 			printf("pmap_extract: va=%p segs[%ld]=%lx", va, (long)va_to_seg(va), (long)pa);
 			if (pa) {
@@ -2132,7 +2134,9 @@ pmap_extract(pm, va)
 		}
 #endif
 	}
-	return pa;
+	if (pap != NULL)
+		*pap = pa;
+	return (TRUE);
 }
 
 #if 0

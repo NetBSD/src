@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 1999/04/06 05:55:06 scottr Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 1999/07/08 18:05:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -703,6 +703,7 @@ writeback(fp, docachepush)
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
@@ -744,7 +745,8 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			DCFL(pmap_extract(pmap_kernel(), (vaddr_t)fa));
+			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
+			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
 		} else
@@ -967,8 +969,7 @@ dumpwb(num, s, a, d)
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("               PA ");
-	pa = pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a);
-	if (pa == 0)
+	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == FALSE)
 		printf("<invalid address>");
 	else
 		printf("%lx, current value %lx", pa, fuword((caddr_t)a));

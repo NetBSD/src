@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.19 1999/06/30 15:18:58 drochner Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.20 1999/07/08 18:08:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -863,7 +863,7 @@ sparc_vme4_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		pa = pmap_extract(pmap, vaddr);
+		(void) pmap_extract(pmap, vaddr, &pa);
 
 		/*
 		 * Compute the segment size, and adjust counts.

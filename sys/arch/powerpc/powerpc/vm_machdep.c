@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 1999/05/26 22:19:38 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13 1999/07/08 18:08:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,8 +76,9 @@ cpu_fork(p1, p2, stack, stacksize)
 	*pcb = p1->p_addr->u_pcb;
 	
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
-	pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm);
-	
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
+	    (paddr_t *)&pcb->pcb_pmreal);
+
 	/*
 	 * Setup the trap frame for the new process
 	 */
@@ -142,7 +143,8 @@ cpu_swapin(p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	
-	pcb->pcb_pmreal = (struct pmap *)pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm);
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
+	    (paddr_t *)&pcb->pcb_pmreal);
 }
 
 /*
@@ -157,7 +159,7 @@ pagemove(from, to, size)
 	vaddr_t va;
 	
 	for (va = (vaddr_t)from; size > 0; size -= NBPG) {
-		pa = pmap_extract(pmap_kernel(), va);
+		(void) pmap_extract(pmap_kernel(), va, &pa);
 		pmap_remove(pmap_kernel(), va, va + NBPG);
 		pmap_enter(pmap_kernel(), (vaddr_t)to, pa,
 		    VM_PROT_READ|VM_PROT_WRITE, 1, VM_PROT_READ|VM_PROT_WRITE);
@@ -248,7 +250,8 @@ vmapbuf(bp, len)
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 	for (; len > 0; len -= NBPG) {
-		pa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map), faddr);
+		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr, &pa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, pa,
 		    VM_PROT_READ|VM_PROT_WRITE, 1, 0);
 		faddr += NBPG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1999/06/17 19:23:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 1999/07/08 18:11:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -589,7 +589,7 @@ void   pmap_reference __P((pmap_t));
 boolean_t   pmap_is_referenced __P((vm_offset_t));
 boolean_t   pmap_is_modified __P((vm_offset_t));
 void   pmap_clear_modify __P((vm_offset_t));
-vm_offset_t pmap_extract __P((pmap_t, vm_offset_t));
+boolean_t pmap_extract __P((pmap_t, vaddr_t, paddr_t *));
 u_int  pmap_free_pages __P((void));
 #endif /* INCLUDED_IN_PMAP_H */
 int    pmap_page_index __P((vm_offset_t));
@@ -2959,15 +2959,16 @@ pmap_clear_pv(pa, flag)
 /* pmap_extract			INTERFACE
  **
  * Return the physical address mapped by the virtual address
- * in the specified pmap or 0 if it is not known.
+ * in the specified pmap.
  *
  * Note: this function should also apply an exclusive lock
  * on the pmap system during its duration.
  */
-vm_offset_t
-pmap_extract(pmap, va)
-	pmap_t      pmap;
-	vm_offset_t va;
+boolean_t
+pmap_extract(pmap, va, pap)
+	pmap_t pmap;
+	vaddr_t va;
+	paddr_t *pap;
 {
 	int a_idx, b_idx, pte_idx;
 	a_tmgr_t	*a_tbl;
@@ -2976,32 +2977,39 @@ pmap_extract(pmap, va)
 	mmu_short_pte_t	*c_pte;
 
 	if (pmap == pmap_kernel())
-		return pmap_extract_kernel(va);
+		return pmap_extract_kernel(va, pap);
 	if (pmap == NULL)
-		return 0;
+		return FALSE;
 
 	if (pmap_stroll(pmap, va, &a_tbl, &b_tbl, &c_tbl,
 		&c_pte, &a_idx, &b_idx, &pte_idx) == FALSE)
-		return 0;
+		return FALSE;
 
 	if (!MMU_VALID_DT(*c_pte))
-		return 0;
+		return FALSE;
 
-	return (MMU_PTE_PA(*c_pte));
+	if (pap != NULL)
+		*pap = MMU_PTE_PA(*c_pte);
+	return (TRUE);
 }
 
 /* pmap_extract_kernel		INTERNAL
  **
  * Extract a translation from the kernel address space.
  */
-vm_offset_t
-pmap_extract_kernel(va)
-	vm_offset_t va;
+boolean_t
+pmap_extract_kernel(va, pap)
+	vaddr_t va;
+	paddr_t *pap;
 {
 	mmu_short_pte_t *pte;
 
 	pte = &kernCbase[(u_int) m68k_btop(va - KERNBASE)];
-	return MMU_PTE_PA(*pte);
+	if (!MMU_VALID_DT(*pte))
+		return (FALSE);
+	if (pap != NULL)
+		*pap = MMU_PTE_PA(*pte);
+	return (TRUE);
 }
 
 /* pmap_remove_kernel		INTERNAL

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.21 1999/03/24 05:50:57 mrg Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.22 1999/07/08 18:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -1325,14 +1325,15 @@ vidc_cursor_init(vc)
 	static char *cursor_data = NULL;
 	int counter;
 	int line;
+	paddr_t pa;
 
 	if (!cursor_data) {
 		/* Allocate cursor memory first time round */
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor\n");
-		IOMD_WRITE_WORD(IOMD_CURSINIT, pmap_extract(kernel_pmap,
-		    (vm_offset_t)cursor_data));
+		(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_data, &pa);
+		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}
 
 	/* Blank the cursor while initialising it's sprite */
@@ -1365,8 +1366,10 @@ vidc_cursor_init(vc)
 	}
 
 
-	p_cursor_normal = pmap_extract(kernel_pmap,(vm_offset_t)cursor_normal );
-	p_cursor_transparent = pmap_extract(kernel_pmap,(vm_offset_t)cursor_transparent);
+	(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_normal,
+	    (paddr_t *)&p_cursor_normal);
+	(void) pmap_extract(kernel_pmap, (vaddr_t)cursor_transparent,
+	    (paddr_t *)&p_cursor_transparent);
 
 /*
 	memset ( cursor_normal, 0x55,
