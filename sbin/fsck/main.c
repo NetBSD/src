@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.27 (Berkeley) 8/7/90";*/
-static char rcsid[] = "$Id: main.c,v 1.10 1993/10/15 15:15:25 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.11 1994/04/06 00:08:58 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -301,7 +301,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	if (!preen) {
 		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
 		if (hotroot)
-			printf("\n***** REBOOT UNIX *****\n");
+			printf("\n***** REBOOT NETBSD *****\n");
 	}
 	if (hotroot) {
 		sync();
