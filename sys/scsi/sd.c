@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.65 1995/03/29 23:04:52 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.66 1995/04/01 10:29:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -263,8 +263,10 @@ sdopen(dev, flag, fmt)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
-		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0)
-			return ENXIO;
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+			error = EIO;
+			goto bad3;
+		}
 	} else {
 		/* Check that it is still responding and ok. */
 		if (error = scsi_test_unit_ready(sc_link,

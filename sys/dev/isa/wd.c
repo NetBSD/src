@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.135 1995/03/29 23:36:27 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.136 1995/04/01 10:31:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -873,8 +873,10 @@ wdopen(dev, flag, fmt)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens.
 		 */
-		if ((wd->sc_flags & WDF_LOADED) == 0)
-			return ENXIO;
+		if ((wd->sc_flags & WDF_LOADED) == 0) {
+			error = EIO;
+			goto bad3;
+		}
 	} else {
 		if ((wd->sc_flags & WDF_LOADED) == 0) {
 			wd->sc_flags |= WDF_LOADED;
@@ -921,6 +923,7 @@ bad:
 	if (wd->sc_dk.dk_openmask == 0) {
 	}
 
+bad3:
 	wdunlock(wd);
 	return error;
 }
