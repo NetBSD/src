@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.66 1998/01/22 00:39:31 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.67 1998/02/06 07:22:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,6 +60,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/gdt.h>
@@ -129,7 +133,11 @@ cpu_fork(p1, p2)
 		union descriptor *new_ldt;
 
 		len = pcb->pcb_ldt_len * sizeof(union descriptor);
+#if defined(UVM)
+		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len);
+#else
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
+#endif
 		bcopy(pcb->pcb_ldt, new_ldt, len);
 		pcb->pcb_ldt = new_ldt;
 		ldt_alloc(pcb, new_ldt, len);
@@ -179,7 +187,7 @@ cpu_swapout(p)
  *
  * We clean up a little and then call switch_exit() with the old proc as an
  * argument.  switch_exit() first switches to proc0's context, then does the
- * vmspace_free() and kmem_free() that we don't do here, and finally jumps
+ * vmspace_free() and uvm_km_free() that we don't do here, and finally jumps
  * into switch() to wait for another process to wake up.
  */
 void
@@ -204,10 +212,16 @@ cpu_exit(p)
 #endif
 
 	vm = p->p_vmspace;
+#if !defined(UVM)
 	if (vm->vm_refcnt == 1)
 		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
+#endif
 
+#if defined(UVM)
+	uvmexp.swtch++;
+#else
 	cnt.v_swtch++;
+#endif
 	switch_exit(p);
 }
 
@@ -284,6 +298,47 @@ setredzone(pte, vaddr)
 }
 #endif
 
+#if defined(PMAP_NEW)
+/*
+ * Move pages from one kernel virtual address to another.
+ * Both addresses are assumed to reside in the Sysmap,
+ * and size must be a multiple of CLSIZE.
+ */
+void
+pagemove(from, to, size)
+	register caddr_t from, to;
+	size_t size;
+{
+	register pt_entry_t *fpte, *tpte, ofpte, otpte;
+
+	if (size % CLBYTES)
+		panic("pagemove");
+	fpte = kvtopte(from);
+	tpte = kvtopte(to);
+	while (size > 0) {
+		otpte = *tpte;
+		ofpte = *fpte;
+		*tpte++ = *fpte;
+		*fpte++ = 0;
+#if defined(I386_CPU)
+		if (cpu_class != CPUCLASS_386)
+#endif
+		{
+			if (otpte & PG_V)
+				pmap_update_pg((vm_offset_t) to);
+			if (ofpte & PG_V)
+				pmap_update_pg((vm_offset_t) from);
+		}
+		from += NBPG;
+		to += NBPG;
+		size -= NBPG;
+	}
+#if defined(I386_CPU)
+	if (cpu_class == CPUCLASS_386)
+		pmap_update();
+#endif
+}
+#else /* PMAP_NEW */
 /*
  * Move pages from one kernel virtual address to another.
  * Both addresses are assumed to reside in the Sysmap,
@@ -309,6 +364,7 @@ pagemove(from, to, size)
 	}
 	pmap_update();
 }
+#endif /* PMAP_NEW */
 
 /*
  * Convert kernel VA to physical address
@@ -345,6 +401,53 @@ extern vm_map_t phys_map;
  * All requests are (re)mapped into kernel VA space via the phys_map
  * (a name with only slightly more meaning than "kernel_map")
  */
+
+#if defined(PMAP_NEW)
+
+void
+vmapbuf(bp, len)
+	struct buf *bp;
+	vm_size_t len;
+{
+	vm_offset_t faddr, taddr, off, fpa;
+	pt_entry_t *tpte;
+
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vmapbuf");
+	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
+	off = (vm_offset_t)bp->b_data - faddr;
+	len = round_page(off + len);
+#if defined(UVM)
+	taddr= uvm_km_valloc_wait(phys_map, len);
+#else
+	taddr = kmem_alloc_wait(phys_map, len);
+#endif
+	bp->b_data = (caddr_t)(taddr + off);
+	/*
+	 * The region is locked, so we expect that pmap_pte() will return
+	 * non-NULL.
+	 * XXX: unwise to expect this in a multithreaded environment.
+	 * anything can happen to a pmap between the time we lock a 
+	 * region, release the pmap lock, and then relock it for
+	 * the pmap_extract().
+	 *
+	 * no need to flush TLB since we expect nothing to be mapped
+	 * where we we just allocated (TLB will be flushed when our
+	 * mapping is removed).
+	 */
+	tpte = PTE_BASE + i386_btop(taddr);
+	while (len) {
+		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+				   faddr);
+		*tpte = fpa | PG_RW | PG_V | pmap_pg_g;
+		tpte++;
+		faddr += PAGE_SIZE;
+		len -= PAGE_SIZE;
+	}
+}
+
+#else /* PMAP_NEW */
+
 void
 vmapbuf(bp, len)
 	struct buf *bp;
@@ -359,7 +462,11 @@ vmapbuf(bp, len)
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vm_offset_t)bp->b_data - faddr;
 	len = round_page(off + len);
+#if defined(UVM)
+	taddr= uvm_km_valloc_wait(phys_map, len);
+#else
 	taddr = kmem_alloc_wait(phys_map, len);
+#endif
 	bp->b_data = (caddr_t)(taddr + off);
 	/*
 	 * The region is locked, so we expect that pmap_pte() will return
@@ -372,6 +479,8 @@ vmapbuf(bp, len)
 		len -= PAGE_SIZE;
 	} while (len);
 }
+
+#endif
 
 /*
  * Free the io map PTEs associated with this IO operation.
@@ -389,7 +498,11 @@ vunmapbuf(bp, len)
 	addr = trunc_page(bp->b_data);
 	off = (vm_offset_t)bp->b_data - addr;
 	len = round_page(off + len);
+#if defined(UVM)
+	uvm_km_free_wakeup(phys_map, addr, len);
+#else
 	kmem_free_wakeup(phys_map, addr, len);
+#endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }

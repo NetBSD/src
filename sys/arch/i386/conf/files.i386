@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.105 1998/01/22 01:16:23 thorpej Exp $
+#	$NetBSD: files.i386,v 1.106 1998/02/06 07:21:50 mrg Exp $
 #
 # new style config file for i386 architecture
 #
@@ -41,7 +41,8 @@ file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/microtime.s
 file	arch/i386/i386/ns_cksum.c	ns
-file	arch/i386/i386/pmap.c
+file	arch/i386/i386/pmap.c		!pmap_new
+file	arch/i386/i386/pmap.new.c	pmap_new
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/random.s
 file	arch/i386/i386/sys_machdep.c

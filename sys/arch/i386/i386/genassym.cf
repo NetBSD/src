@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 1997/11/13 03:25:27 mycroft Exp $
+#	$NetBSD: genassym.cf,v 1.6 1998/02/06 07:21:53 mrg Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -48,6 +48,10 @@ include <sys/mbuf.h>
 
 include <vm/vm.h>
 
+ifdef UVM
+include <uvm/uvm_extern.h>
+endif
+
 include <machine/trap.h>
 include <machine/pmap.h>
 include <machine/vmparam.h>
@@ -77,12 +81,20 @@ endif
 
 define	SRUN			SRUN
 
+if PMAP_NEW
+define	PDSLOT_PTE		PDSLOT_PTE
+define	PDSLOT_APTE		PDSLOT_APTE
+define	PDSLOT_KERN		PDSLOT_KERN
+define	NKPTP_MIN		NKPTP_MIN
+define	NKPTP_MAX		NKPTP_MAX
+else
 define	PTDPTDI			PTDPTDI
 define	KPTDI			KPTDI
 define	NKPDE_BASE		NKPDE_BASE
 define	NKPDE_MAX		NKPDE_MAX
 define	NKPDE_SCALE		NKPDE_SCALE
 define	APTDPTDI		APTDPTDI
+endif
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
@@ -101,8 +113,13 @@ define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
 define	M_NEXT			offsetof(struct mbuf, m_next)
 
+ifdef UVM
+define	V_TRAP			offsetof(struct uvmexp, traps)
+define	V_INTR			offsetof(struct uvmexp, intrs)
+else
 define	V_TRAP			offsetof(struct vmmeter, v_trap)
 define	V_INTR			offsetof(struct vmmeter, v_intr)
+endif
 
 define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
