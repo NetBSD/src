@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.58 2002/02/03 22:21:56 skrll Exp $ */
+/*	$NetBSD: md.c,v 1.59 2002/05/29 20:36:40 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -649,15 +649,6 @@ get_bootmodel()
 void
 md_init()
 {
-	char *bootmodel;
-
-	bootmodel = get_bootmodel();
-	if (strcmp(bootmodel, "laptop") == 0)
-		dist_list[0] = special_kernel_list[0];
-	else if (strcmp(bootmodel, "tiny") == 0)
-		dist_list[0] = special_kernel_list[1];
-	else if (strcmp(bootmodel, "ps2") == 0)
-		dist_list[0] = special_kernel_list[2];
 }
 
 void
