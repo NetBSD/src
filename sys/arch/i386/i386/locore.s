@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.195 1998/06/25 23:19:36 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.196 1998/06/25 23:23:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -48,6 +48,7 @@
 #include "opt_pmap_new.h"
 #include "opt_compat_freebsd.h"
 #include "opt_compat_linux.h"
+#include "opt_compat_ibcs2.h"
 
 #include "npx.h"
 #include "assym.h"
