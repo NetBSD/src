@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)errlst.c	5.10 (Berkeley) 2/19/91";*/
-static char *rcsid = "$Id: errlst.c,v 1.3 1993/08/26 00:44:28 jtc Exp $";
+static char *rcsid = "$Id: errlst.c,v 1.4 1993/10/13 23:41:02 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 char *sys_errlist[] = {
@@ -136,5 +136,4 @@ char *sys_errlist[] = {
 	"Function not implemented",		/* 78 - ENOSYS */
 	"Inappropriate file type or format",	/* 79 - EFTYPE */
 };
-int errno;
 int sys_nerr = { sizeof sys_errlist/sizeof sys_errlist[0] };
