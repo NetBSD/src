@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.7 2000/10/23 14:56:17 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.8 2000/10/23 23:18:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -55,7 +55,7 @@ typedef struct scr_table {
 struct siop_xfer_common {
 	u_int8_t msg_out[8];	/* 0 */
 	u_int8_t msg_in[8];	/* 8 */
-	int status;		/* 16 */
+	u_int32_t status;	/* 16 */
 	u_int32_t pad1;		/* 20 */
 	u_int32_t id;		/* 24 */
 	u_int32_t pad2;		/* 28 */
@@ -67,6 +67,10 @@ struct siop_xfer_common {
 	scr_table_t t_status;	/* 72 */
 	scr_table_t data[SIOP_NSG]; /* 80 */
 } __attribute__((__packed__));
+
+/* status can hold the SCSI_* status values, and 2 additionnal values: */
+#define SCSI_SIOP_NOCHECK	0xfe	/* don't check the scsi status */
+#define SCSI_SIOP_NOSTATUS	0xff	/* device didn't report status */
 
 /* xfer description of the script: tables and reselect script */
 struct siop_xfer {

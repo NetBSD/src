@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.35 2000/10/23 14:56:16 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.36 2000/10/23 23:18:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -111,6 +111,7 @@ static int siop_stat_intr_sdp = 0;
 static int siop_stat_intr_done = 0;
 static int siop_stat_intr_xferdisc = 0;
 static int siop_stat_intr_lunresel = 0;
+static int siop_stat_intr_qfull = 0;
 void siop_printstats __P((void));
 #define INCSTAT(x) x++
 #else
@@ -200,6 +201,7 @@ siop_attach(sc)
 	}
 	TAILQ_INIT(&sc->free_list);
 	TAILQ_INIT(&sc->ready_list);
+	TAILQ_INIT(&sc->urgent_list);
 	TAILQ_INIT(&sc->cmds);
 	TAILQ_INIT(&sc->lunsw_list);
 	sc->sc_currschedslot = 0;
@@ -568,8 +570,11 @@ siop_intr(v)
 			 * unexpected disconnect. Usually the target signals
 			 * a fatal condition this way. Attempt to get sense.
 			 */
-			 if (siop_cmd)
-				goto check_sense;
+			 if (siop_cmd) {
+				siop_cmd->siop_tables.status =
+				    htole32(SCSI_CHECK);
+				goto end;
+			}
 			printf("%s: unexpected disconnect without "
 			    "command\n", sc->sc_dev.dv_xname);
 			goto reset;
@@ -924,52 +929,6 @@ scintr:
 				siop_cmd->status = CMDST_SENSE_DONE;
 			else
 				siop_cmd->status = CMDST_DONE;
-			switch(le32toh(siop_cmd->siop_tables.status)) {
-			case SCSI_OK:
-				xs->error = (siop_cmd->status == CMDST_DONE) ?
-				    XS_NOERROR : XS_SENSE;
-				break;
-			case SCSI_BUSY:
-				xs->error = XS_BUSY;
-				break;
-			case SCSI_CHECK:
-check_sense:
-				if (siop_cmd->status == CMDST_SENSE_DONE) {
-					/* request sense on a request sense ? */
-					printf("request sense failed\n");
-					xs->error = XS_DRIVER_STUFFUP;
-				} else {
-					siop_cmd->status = CMDST_SENSE;
-				}
-				break;
-			case SCSI_QUEUE_FULL:
-				/*
-				 * device didn't queue the command. We have to
-				 * retry it.
-				 * We insert it at the head of the queue,
-				 * hoping to preserve order. Also remember the
-				 * condition, to avoid starting new commands
-				 * for this device before one is done.
-				 */
-				CALL_SCRIPT(Ent_script_sched);
-				siop_lun->siop_tag[tag].active = NULL;
-				siop_lun->lun_flags |= SIOP_LUNF_FULL;
-				siop_cmd->status = CMDST_READY;
-				siop_setuptables(siop_cmd);
-				TAILQ_INSERT_HEAD(&sc->ready_list,
-				    siop_cmd, next);
-				siop_start(sc);
-				return 1;
-			case 0xff:
-				/*
-				 * the status byte was not updated, cmd was
-				 * aborted
-				 */
-				xs->error = XS_SELTIMEOUT;
-				break;
-			default:
-				xs->error = XS_DRIVER_STUFFUP;
-			}
 			goto end;
 		default:
 			printf("unknown irqcode %x\n", irqcode);
@@ -1005,6 +964,64 @@ siop_scsicmd_end(siop_cmd)
 	struct scsipi_xfer *xs = siop_cmd->xs;
 	struct siop_softc *sc = siop_cmd->siop_sc;
 
+	switch(le32toh(siop_cmd->siop_tables.status)) {
+	case SCSI_OK:
+		xs->error = (siop_cmd->status == CMDST_DONE) ?
+		    XS_NOERROR : XS_SENSE;
+		break;
+	case SCSI_BUSY:
+		xs->error = XS_BUSY;
+		break;
+	case SCSI_CHECK:
+		if (siop_cmd->status == CMDST_SENSE_DONE) {
+			/* request sense on a request sense ? */
+			printf("request sense failed\n");
+			xs->error = XS_DRIVER_STUFFUP;
+		} else {
+			siop_cmd->status = CMDST_SENSE;
+		}
+		break;
+	case SCSI_QUEUE_FULL:
+		{
+		struct siop_lun *siop_lun = siop_cmd->siop_target->siop_lun[
+		    xs->sc_link->scsipi_scsi.lun];
+		/*
+		 * device didn't queue the command. We have to
+		 * retry it.
+		 * We insert it in the urgent list, hoping to preserve order.
+		 * But unfortunably, commands already in the scheduler may
+		 * be accepted before this one.
+		 * Also remember the condition, to avoid starting new commands
+		 * for this device before one is done.
+		 */
+		INCSTAT(siop_stat_intr_qfull);
+#ifdef SIOP_DEBUG
+		printf("%s:%d:%d: queue full (tag %d)\n", sc->sc_dev.dv_xname,
+		    xs->sc_link->scsipi_scsi.target,
+		    xs->sc_link->scsipi_scsi.lun, siop_cmd->tag);
+#endif
+		callout_stop(&xs->xs_callout);
+		siop_lun->lun_flags |= SIOP_LUNF_FULL;
+		siop_cmd->status = CMDST_READY;
+		siop_setuptables(siop_cmd);
+		TAILQ_INSERT_TAIL(&sc->urgent_list, siop_cmd, next);
+		return;
+		}
+	case SCSI_SIOP_NOCHECK:
+		/*
+		 * don't check status, xs->error is already valid
+		 */
+		break;
+	case SCSI_SIOP_NOSTATUS:
+		/*
+		 * the status byte was not updated, cmd was
+		 * aborted
+		 */
+		xs->error = XS_SELTIMEOUT;
+		break;
+	default:
+		xs->error = XS_DRIVER_STUFFUP;
+	}
 	if (siop_cmd->status != CMDST_SENSE_DONE &&
 	    xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
@@ -1049,7 +1066,7 @@ siop_scsicmd_end(siop_cmd)
 
 		siop_setuptables(siop_cmd);
 		/* arrange for the cmd to be handled now */
-		TAILQ_INSERT_HEAD(&sc->ready_list, siop_cmd, next);
+		TAILQ_INSERT_HEAD(&sc->urgent_list, siop_cmd, next);
 		return;
 	} else if (siop_cmd->status == CMDST_SENSE_DONE) {
 		bus_dmamap_sync(sc->sc_dmat, siop_cmd->dmamap_data, 0,
@@ -1079,9 +1096,16 @@ siop_handle_qtag_reject(siop_cmd)
 	int tag = siop_cmd->siop_tables.msg_out[2];
 	struct siop_lun *siop_lun = sc->targets[target]->siop_lun[lun];
 
+#ifdef SIOP_DEBUG
+	printf("%s:%d:%d: tag message %d (%d) rejected (status %d)\n",
+	    sc->sc_dev.dv_xname, target, lun, tag, siop_cmd->tag,
+	    siop_cmd->status);
+#endif
+
 	if (siop_lun->siop_tag[0].active != NULL) {
-		printf("%s: untagged command already running for target %d
-		    lun %d\n", sc->sc_dev.dv_xname, target, lun);
+		printf("%s: untagged command already running for target %d "
+		    "lun %d (status %d)\n", sc->sc_dev.dv_xname, target, lun,
+		    siop_lun->siop_tag[0].active->status);
 		return -1;
 	}
 	/* clear tag slot */
@@ -1121,7 +1145,9 @@ siop_handle_reset(sc)
 	/* stop, reset and restart the chip */
 	siop_reset(sc);
 	TAILQ_INIT(&reset_list);
-	/* find all active commands */
+	/*
+	 * Process all commands: first commmands being executed
+	 */
 	for (target = 0; target <= sc->sc_link.scsipi_scsi.max_target;
 	    target++) {
 		if (sc->targets[target] == NULL)
@@ -1130,9 +1156,10 @@ siop_handle_reset(sc)
 			siop_lun = sc->targets[target]->siop_lun[lun];
 			if (siop_lun == NULL)
 				continue;
+			siop_lun->lun_flags &= ~SIOP_LUNF_FULL;
 			for (tag = 0; tag <
 			    ((sc->targets[target]->flags & TARF_TAG) ?
-			    SIOP_NTAG : 0);
+			    SIOP_NTAG : 1);
 			    tag++) {
 				siop_cmd = siop_lun->siop_tag[tag].active;
 				if (siop_cmd == NULL)
@@ -1146,12 +1173,23 @@ siop_handle_reset(sc)
 		sc->targets[target]->status = TARST_ASYNC;
 		sc->targets[target]->flags &= ~TARF_ISWIDE;
 	}
+	/* Next commands from the urgent list */
+	for (siop_cmd = TAILQ_FIRST(&sc->urgent_list); siop_cmd != NULL;
+	    siop_cmd = next_siop_cmd) {
+		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
+		siop_cmd->flags &= ~CMDFL_TAG;
+		printf("cmd %p (target %d:%d) in reset list (wait)\n",
+		    siop_cmd, siop_cmd->xs->sc_link->scsipi_scsi.target,
+		    siop_cmd->xs->sc_link->scsipi_scsi.lun);
+		TAILQ_REMOVE(&sc->urgent_list, siop_cmd, next);
+		TAILQ_INSERT_TAIL(&reset_list, siop_cmd, next);
+	}
+	/* Then command waiting in the input list */
 	for (siop_cmd = TAILQ_FIRST(&sc->ready_list); siop_cmd != NULL;
 	    siop_cmd = next_siop_cmd) {
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
-		if (siop_cmd->status != CMDST_SENSE) 
-			continue;
-		printf("cmd %p (target %d:%d) in reset list (sense)\n",
+		siop_cmd->flags &= ~CMDFL_TAG;
+		printf("cmd %p (target %d:%d) in reset list (wait)\n",
 		    siop_cmd, siop_cmd->xs->sc_link->scsipi_scsi.target,
 		    siop_cmd->xs->sc_link->scsipi_scsi.lun);
 		TAILQ_REMOVE(&sc->ready_list, siop_cmd, next);
@@ -1163,6 +1201,7 @@ siop_handle_reset(sc)
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
 		siop_cmd->xs->error = (siop_cmd->flags & CMDFL_TIMEOUT) ?
 		    XS_TIMEOUT : XS_RESET;
+		siop_cmd->siop_tables.status = htole32(SCSI_SIOP_NOCHECK);
 		printf("cmd %p (status %d) about to be processed\n", siop_cmd,
 		    siop_cmd->status);
 		if (siop_cmd->status == CMDST_SENSE ||
@@ -1319,7 +1358,7 @@ siop_start(sc)
 	int timeout;
 	int target, lun, tag, slot;
 	int newcmd = 0; 
-	int msgcount;
+	int doingready = 0;
 
 	/*
 	 * first make sure to read valid data
@@ -1349,9 +1388,10 @@ siop_start(sc)
 	} else {
 		slot++;
 	}
-
-	for (siop_cmd = TAILQ_FIRST(&sc->ready_list); siop_cmd != NULL;
-	    siop_cmd = next_siop_cmd) {
+	/* first handle commands from the urgent list */
+	siop_cmd = TAILQ_FIRST(&sc->urgent_list);
+again:
+	for (; siop_cmd != NULL; siop_cmd = next_siop_cmd) {
 		next_siop_cmd = TAILQ_NEXT(siop_cmd, next);
 #ifdef DIAGNOSTIC
 		if (siop_cmd->status != CMDST_READY &&
@@ -1379,18 +1419,6 @@ siop_start(sc)
 			}
 			if (tag == SIOP_NTAG) /* no free tag */
 				continue;
-			msgcount =
-			    le32toh(siop_cmd->siop_tables.t_msgout.count);
-			if (siop_cmd->xs->bp != NULL &&
-			    (siop_cmd->xs->bp->b_flags & B_ASYNC))
-				siop_cmd->siop_tables.msg_out[msgcount] =
-				    MSG_SIMPLE_Q_TAG;
-			else
-				siop_cmd->siop_tables.msg_out[msgcount] =
-				    MSG_ORDERED_Q_TAG;
-			siop_cmd->siop_tables.msg_out[msgcount + 1] = tag;
-			siop_cmd->siop_tables.t_msgout.count =
-			    htole32(msgcount + 2);
 		} else {
 			tag = 0;
 		}
@@ -1413,6 +1441,26 @@ siop_start(sc)
 		printf("using slot %d for DSA 0x%lx\n", slot,
 		    (u_long)siop_cmd->dsa);
 #endif
+		/* Ok, we can add the tag message */
+		if (tag > 0) {
+#ifdef DIAGNOSTIC
+			int msgcount =
+			    le32toh(siop_cmd->siop_tables.t_msgout.count);
+			if (msgcount != 1)
+				printf("%s:%d:%d: tag %d with msgcount %d\n",
+				    sc->sc_dev.dv_xname, target, lun, tag,
+				    msgcount);
+#endif
+			if (siop_cmd->xs->bp != NULL &&
+			    (siop_cmd->xs->bp->b_flags & B_ASYNC))
+				siop_cmd->siop_tables.msg_out[1] =
+				    MSG_SIMPLE_Q_TAG;
+			else
+				siop_cmd->siop_tables.msg_out[1] =
+				    MSG_ORDERED_Q_TAG;
+			siop_cmd->siop_tables.msg_out[2] = tag;
+			siop_cmd->siop_tables.t_msgout.count = htole32(3);
+		}
 		/* note that we started a new command */
 		newcmd = 1;
 		/* mark command as active */
@@ -1422,7 +1470,10 @@ siop_start(sc)
 			siop_cmd->status = CMDST_SENSE_ACTIVE;
 		} else
 			panic("siop_start: bad status");
-		TAILQ_REMOVE(&sc->ready_list, siop_cmd, next);
+		if (doingready)
+			TAILQ_REMOVE(&sc->ready_list, siop_cmd, next);
+		else
+			TAILQ_REMOVE(&sc->urgent_list, siop_cmd, next);
 		siop_lun->siop_tag[tag].active = siop_cmd;
 		/* patch scripts with DSA addr */
 		dsa = siop_cmd->dsa;
@@ -1461,6 +1512,13 @@ siop_start(sc)
 		sc->sc_currschedslot = slot;
 		slot++;
 	}
+	if (doingready == 0) {
+		/* now process ready list */
+		doingready = 1;
+		siop_cmd = TAILQ_FIRST(&sc->ready_list);
+		goto again;
+	}
+
 end:
 	/* if nothing changed no need to flush cache and wakeup script */
 	if (newcmd == 0)
@@ -1654,10 +1712,6 @@ siop_morecbd(sc)
 		    le32toh(newcbd->cmds[i].siop_tables.t_msgin.addr),
 		    le32toh(newcbd->cmds[i].siop_tables.t_msgout.addr),
 		    le32toh(newcbd->cmds[i].siop_tables.t_status.addr));
-		for (j = 0; j < sizeof(load_dsa) / sizeof(load_dsa[0]);
-		    j += 2) {
-			printf("0x%x 0x%x\n", scr[j], scr[j+1]);
-		}
 #endif
 	}
 	TAILQ_INSERT_TAIL(&sc->cmds, newcbd, next);
@@ -1929,5 +1983,6 @@ siop_printstats()
 	printf("siop_stat_intr_sdp %d\n", siop_stat_intr_sdp);
 	printf("siop_stat_intr_done %d\n", siop_stat_intr_done);
 	printf("siop_stat_intr_lunresel %d\n", siop_stat_intr_lunresel);
+	printf("siop_stat_intr_qfull %d\n", siop_stat_intr_qfull);
 }
 #endif
