@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.2 1998/09/12 16:53:11 eeh Exp $	*/
+/*	$NetBSD: crt0.c,v 1.3 1998/09/13 01:50:17 eeh Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -98,12 +98,16 @@ extern unsigned char _etext, _eprol;
  */
 
 __asm__("
+	.data
+__data_start:					! Start of data section
 	.text
 	.align 4
 	.global start
 	.global _start
 start:
 _start:
+	setx	__data_start, %o0, %g4		! Point %g4 to start of data section
+	clr	%g4				! egcs thinks this is zero. XXX
 	clr	%fp
 	add	%sp, 8*16 + 0x7ff, %o0		! start of stack
 	mov	%g1, %o1			! Cleanup routine
@@ -160,7 +164,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.2 1998/09/12 16:53:11 eeh Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.3 1998/09/13 01:50:17 eeh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
