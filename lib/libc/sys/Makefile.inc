@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.53 1997/04/17 19:07:15 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.54 1997/05/02 18:16:50 kleink Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -57,13 +57,13 @@ PNOERR= ${NOERR:.o=.po}
 SNOERR= ${NOERR:.o=.so}
 LNOERR= ${NOERR:.o=.ln}
 
-PSEUDO=	_exit.o
-PPSEUDO=${PSEUDO:.o=.po}
-SPSEUDO=${PSEUDO:.o=.so}
-LPSEUDO=${PSEUDO:.o=.ln}
+PSEUDONOERR=	_exit.o
+PPSEUDONOERR=	${PSEUDONOERR:.o=.po}
+SPSEUDONOERR=	${PSEUDONOERR:.o=.so}
+LPSEUDONOERR=	${PSEUDONOERR:.o=.ln}
 
-OBJS+=	${ASM} ${NOERR} ${PSEUDO}
-LOBJS+=	${LASM} ${LNOERR} ${LPSEUDO}
+OBJS+=	${ASM} ${NOERR} ${PSEUDONOERR}
+LOBJS+=	${LASM} ${LNOERR} ${LPSEUDONOERR}
 
 ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -123,33 +123,41 @@ ${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${PPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${PPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
+	@printf '#include "SYS.h"\n \
+	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
-${SPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
+	@printf '#include "SYS.h"\n \
+	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 .else
-${SPSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${SPSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
+	@printf '#include "SYS.h"\n \
+	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 .endif
 
-${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+${PSEUDONOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
+    /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
+	@printf '#include "SYS.h"\n \
+	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LPSEUDO}: /usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
+${LPSEUDONOERR}: /usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/_//} ${.PREFIX} | \
 	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
