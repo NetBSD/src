@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.14 1995/06/02 16:19:55 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.15 1995/09/09 19:38:03 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -64,7 +64,8 @@
 
 struct denode **dehashtbl;
 u_long dehash;			/* size of hash table - 1 */
-#define	DEHASH(dev, deno)	(((dev) + (deno)) & dehash)
+#define	DEHASH(dev, dcl, doff)	(((dev) + (dcl) + (doff) / sizeof(struct direntry)) \
+				 & dehash)
 
 int
 msdosfs_init()
@@ -82,7 +83,7 @@ msdosfs_hashget(dev, dirclust, diroff)
 	struct denode *dep;
 	
 	for (;;)
-		for (dep = dehashtbl[DEHASH(dev, dirclust + diroff)];;
+		for (dep = dehashtbl[DEHASH(dev, dirclust, diroff)];;
 		     dep = dep->de_next) {
 			if (dep == NULL)
 				return (NULL);
@@ -109,7 +110,7 @@ msdosfs_hashins(dep)
 {
 	struct denode **depp, *deq;
 	
-	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust + dep->de_diroffset)];
+	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust, dep->de_diroffset)];
 	if (deq = *depp)
 		deq->de_prev = &dep->de_next;
 	dep->de_next = deq;
@@ -280,7 +281,7 @@ deget(pmp, dirclust, diroffset, direntptr, depp)
 		if (ldep->de_StartCluster == MSDOSFSROOT)
 			nvp->v_flag |= VROOT;
 		else {
-			error = pcbmap(ldep, 0xffff, 0, &size);
+			error = pcbmap(ldep, 0xffff, 0, &size, 0);
 			if (error == E2BIG) {
 				ldep->de_FileSize = size << pmp->pm_cnshift;
 				error = 0;
@@ -322,6 +323,9 @@ deupdat(dep, waitfor)
 		return (0);
 
 	dep->de_flag &= ~DE_MODIFIED;
+
+	if (dep->de_Attributes & ATTR_DIRECTORY)
+		panic("deupdat: directory");
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY ||
 	    dep->de_refcnt <= 0)
@@ -412,7 +416,7 @@ detrunc(dep, length, flags, cred, p)
 		dep->de_StartCluster = 0;
 		eofentry = ~0;
 	} else {
-		if (error = pcbmap(dep, de_clcount(pmp, length) - 1, 0, &eofentry)) {
+		if (error = pcbmap(dep, de_clcount(pmp, length) - 1, 0, &eofentry, 0)) {
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): pcbmap fails %d\n", error);
 #endif
@@ -459,7 +463,8 @@ detrunc(dep, length, flags, cred, p)
 	 * we free the trailing clusters.
 	 */
 	dep->de_FileSize = length;
-	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
+	if (!isadir)
+		dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
 	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
 	allerror = deupdat(dep, 1);
@@ -651,11 +656,8 @@ msdosfs_inactive(ap)
 	printf("msdosfs_inactive(): dep %08x, refcnt %d, mntflag %x, MNT_RDONLY %x\n",
 	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
 #endif
-	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 		error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
-		dep->de_Name[0] = SLOT_DELETED;
-		dep->de_flag |= DE_MODIFIED;
-	}
 	deupdat(dep, 0);
 	VOP_UNLOCK(vp);
 	/*

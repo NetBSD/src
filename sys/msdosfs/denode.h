@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.15 1995/06/02 15:33:22 mycroft Exp $	*/
+/*	$NetBSD: denode.h,v 1.16 1995/09/09 19:38:00 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -167,6 +167,7 @@ struct denode {
 #define	DE_WANTED	0x0002	/* Denode is wanted by a process. */
 #define	DE_UPDATE	0x0004	/* Modification time update request. */
 #define	DE_MODIFIED	0x0008	/* Denode has been modified. */
+#define	DE_RENAME	0x0010	/* Denode is in the process of being renamed */
 
 /*
  * Transfer directory entries between internal and external form.
@@ -216,7 +217,7 @@ struct defid {
 	u_short defid_pad;	/* force long alignment */
 
 	u_long defid_dirclust;	/* cluster this dir entry came from */
-	u_long defid_dirofs;	/* index of entry within the cluster */
+	u_long defid_dirofs;	/* offset of entry within the cluster */
 
 	/* u_long	defid_gen;	/* generation number */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.18 1995/07/24 21:20:28 cgd Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.19 1995/09/09 19:38:04 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -125,11 +125,12 @@ fatblock(pmp, ofs, bnp, sizep, bop)
  *  If cnp is null, nothing is returned.
  */
 int
-pcbmap(dep, findcn, bnp, cnp)
+pcbmap(dep, findcn, bnp, cnp, sp)
 	struct denode *dep;
 	u_long findcn;		/* file relative cluster to get		 */
 	daddr_t *bnp;		/* returned filesys relative blk number	 */
 	u_long *cnp;		/* returned cluster number		 */
+	int *sp;		/* returned block size			 */
 {
 	int error;
 	u_long i;
@@ -150,7 +151,7 @@ pcbmap(dep, findcn, bnp, cnp)
 	 * If they don't give us someplace to return a value then don't
 	 * bother doing anything.
 	 */
-	if (bnp == NULL && cnp == NULL)
+	if (bnp == NULL && cnp == NULL && sp == NULL)
 		return (0);
 
 	cn = dep->de_StartCluster;
@@ -168,9 +169,12 @@ pcbmap(dep, findcn, bnp, cnp)
 				return (E2BIG);
 			}
 			if (bnp)
-				*bnp = pmp->pm_rootdirblk + (findcn * pmp->pm_SectPerClust);
+				*bnp = pmp->pm_rootdirblk + findcn * pmp->pm_SectPerClust;
 			if (cnp)
 				*cnp = MSDOSFSROOT;
+			if (sp)
+				*sp = min(pmp->pm_bpcluster,
+				    dep->de_FileSize - findcn * pmp->pm_bpcluster);
 			return (0);
 		} else {		/* just an empty file */
 			if (cnp)
@@ -178,6 +182,12 @@ pcbmap(dep, findcn, bnp, cnp)
 			return (E2BIG);
 		}
 	}
+
+	/*
+	 * All other files do I/O in cluster sized blocks
+	 */
+	if (sp)
+		*sp = pmp->pm_bpcluster;
 
 	/*
 	 * Rummage around in the fat cache, maybe we can avoid tromping
@@ -690,7 +700,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	 * Start at a (pseudo) random place to maximize cluster runs
 	 * under multiple writers.
 	 */
-	foundcn = newst = (start * 1103515245 + 12345) % (pmp->pm_maxcluster + 1);
+	newst = (start * 1103515245 + 12345) % (pmp->pm_maxcluster + 1);
 	foundl = 0;
 	
 	for (cn = newst; cn <= pmp->pm_maxcluster;) {
@@ -889,7 +899,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	if (dep->de_fc[FC_LASTFC].fc_frcn == FCE_EMPTY &&
 	    dep->de_StartCluster != 0) {
 		fc_lfcempty++;
-		error = pcbmap(dep, 0xffff, 0, &cn);
+		error = pcbmap(dep, 0xffff, 0, &cn, 0);
 		/* we expect it to return E2BIG */
 		if (error != E2BIG)
 			return (error);
@@ -954,7 +964,7 @@ extendfile(dep, count, bpp, ncp, flags)
 					/*
 					 * Do the bmap now, as in msdosfs_write
 					 */
-					if (pcbmap(dep, bp->b_lblkno, &bp->b_blkno, 0))
+					if (pcbmap(dep, bp->b_lblkno, &bp->b_blkno, 0, 0))
 						bp->b_blkno = -1;
 					if (bp->b_blkno == -1)
 						panic("extendfile: pcbmap");

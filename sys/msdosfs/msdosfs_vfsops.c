@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.31 1995/07/24 06:38:22 leo Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.32 1995/09/09 19:38:08 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -211,8 +211,6 @@ msdosfs_mountfs(devvp, mp, p)
 	int	ronly, error;
 #ifdef	atari
 	int	bsize, dtype, tmp;
-#else	/* !atari */
-	int	size, bpc, bit, i;
 #endif	/* !atari */
 
 	/*
@@ -252,16 +250,10 @@ msdosfs_mountfs(devvp, mp, p)
 		goto error_exit;
 	}
 #else	/* !atari */
-	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, NOCRED, p) != 0)
-		size = DEV_BSIZE;
-	else
-		size = dpart.disklab->d_secsize;
 
 	/*
 	 * Read the boot sector of the filesystem, and then check the boot
-	 * signature.  If not a dos boot sector then error out.  We could
-	 * also add some checking on the bsOemName field.  So far I've seen
-	 * the following values: "IBM  3.3" "MSDOS3.3" "MSDOS5.0"
+	 * signature.  If not a dos boot sector then error out.
 	 */
 	bp = NULL;
 	pmp = NULL;
@@ -400,19 +392,6 @@ msdosfs_mountfs(devvp, mp, p)
 
 #ifdef	atari
 	/*
-	 * The following check will almost always fail for a gemdos fs.
-	 * The root directory is kept as a number of logical sectors,
-	 * not as a number of clusters. The driver assumes it can
-	 * handle the root directory like any other directory. It
-	 * might be a lot of work to fix this. Let's ignore it.
-	 */
-#else	/* !atari */
-	if ((pmp->pm_rootdirsize % pmp->pm_SectPerClust) != 0)
-		printf("mountmsdosfs(): root directory is not a multiple of the clustersize in length\n");
-#endif	/* !atari */
-
-#ifdef	atari
-	/*
 	 * Be prepared for block size != 512
 	 */
 	pmp->pm_brbomask = bsize - 1;
@@ -426,7 +405,6 @@ msdosfs_mountfs(devvp, mp, p)
 	 * > 0 and a power of 2.
 	 */
 	bsize = pmp->pm_SectPerClust * pmp->pm_BytesPerSec;
-	pmp->pm_depclust  = bsize / sizeof(struct direntry);
 	pmp->pm_crbomask  = bsize - 1;
 	pmp->pm_bpcluster = bsize;
 	for (tmp = 0; bsize >>= 1; ++tmp)
@@ -438,25 +416,13 @@ msdosfs_mountfs(devvp, mp, p)
 	 * Compute mask and shift value for isolating cluster relative byte
 	 * offsets and cluster numbers from a file offset.
 	 */
-	bpc = pmp->pm_SectPerClust * pmp->pm_BytesPerSec;
-	pmp->pm_bpcluster = bpc;
-	pmp->pm_depclust = bpc / sizeof(struct direntry);
-	pmp->pm_crbomask = bpc - 1;
-	if (bpc == 0) {
+	pmp->pm_bpcluster = pmp->pm_SectPerClust * pmp->pm_BytesPerSec;
+	pmp->pm_crbomask = pmp->pm_bpcluster - 1;
+	pmp->pm_cnshift = ffs(pmp->pm_bpcluster) - 1;
+	if (pmp->pm_cnshift < 0
+	    || pmp->pm_bpcluster ^ (1 << pmp->pm_cnshift)) {
 		error = EINVAL;
 		goto error_exit;
-	}
-	bit = 1;
-	for (i = 0; i < 32; i++) {
-		if (bit & bpc) {
-			if (bit ^ bpc) {
-				error = EINVAL;
-				goto error_exit;
-			}
-			pmp->pm_cnshift = i;
-			break;
-		}
-		bit <<= 1;
 	}
 
 	pmp->pm_brbomask = 0x01ff;	/* 512 byte blocks only (so far) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.7 1995/07/24 06:37:47 leo Exp $	*/
+/*	$NetBSD: fat.h,v 1.8 1995/09/09 19:38:01 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -99,7 +99,7 @@
  */
 #define	DE_CLEAR	1	/* Zero out the blocks allocated */
 
-int pcbmap __P((struct denode *, u_long, daddr_t *, u_long *));
+int pcbmap __P((struct denode *, u_long, daddr_t *, u_long *, int *));
 int clusterfree __P((struct msdosfsmount *, u_long, u_long *));
 int clusteralloc __P((struct msdosfsmount *, u_long, u_long, u_long, u_long *, u_long *));
 int extendfile __P((struct denode *, u_long, struct buf **, u_long *, int));
