@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.89 2003/06/16 10:42:50 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.90 2003/07/07 12:30:25 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,17 +61,13 @@
 #define BIFLAG_EXTINT13	0
 #endif
 
-mbr_sector_t mbr;
-struct nativedisk_info *nativedisk;
 static struct biosdisk_info *biosdisk = NULL;
-int netbsd_mbr_installed = 0;
 
 /* prototypes */
 
-static int md_read_bootcode(const char *, mbr_sector_t *);
-static int count_mbr_parts(struct mbr_partition *);
-static int mbr_root_above_chs(struct mbr_partition *);
+static int mbr_root_above_chs(void);
 static void md_upgrade_mbrtype(void);
+static int md_read_bootcode(const char *path, mbr_sector_t *mbr);
 #if defined(__i386__)
 static unsigned int get_bootmodel(void);
 #endif
@@ -80,16 +76,27 @@ static unsigned int get_bootmodel(void);
 int
 md_get_info(void)
 {
+	mbr_info_t *ext;
+	mbr_partition_t *p;
+	const char *bootcode;
+	int i;
+	int names, fl, ofl;
+#define	ACTIVE_FOUND	0x0100
+#define	NETBSD_ACTIVE	0x0200
+#define	NETBSD_NAMED	0x0400
+#define	ACTIVE_NAMED	0x0800
+
 	if (read_mbr(diskdev, &mbr) < 0)
-		memset(&mbr, 0, sizeof mbr - 2);
+		memset(&mbr.mbr, 0, sizeof mbr.mbr - 2);
 	md_bios_info(diskdev);
 
 edit:
-	edit_mbr(&mbr);
+	if (edit_mbr(&mbr) == 0)
+		return 0;
 
 	root_limit = 0;
 	if (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13)) {
-		if (mbr_root_above_chs(part)) {
+		if (mbr_root_above_chs()) {
 			msg_display(MSG_partabovechs);
 			process_menu(MENU_noyes, NULL);
 			if (!yesno)
@@ -99,26 +106,100 @@ edit:
 			root_limit = bcyl * bhead * bsec;
 	}
 
-	if (count_mbr_parts(part) > 1) {
-		msg_display(MSG_installbootsel);
-		process_menu(MENU_yesno, NULL);
-		if (yesno && !md_read_bootcode(_PATH_BOOTSEL, &mbr)) {
-			configure_bootsel();
-			netbsd_mbr_installed = 2;
+	/* Ensure the install partition and active partition are bootable */
+	fl = BFL_NEWMBR;
+	names = 0;
+	for (ext = &mbr; ext != NULL; ext = ext->extended) {
+		p = ext->mbr.mbr_parts;
+		for (i = 0; i < NMBRPART; p++, i++) {
+			if (p->mbrp_flag == MBR_FLAGS_ACTIVE) {
+				fl |= ACTIVE_FOUND;
+			    if (ext->sector + p->mbrp_start == ptstart)
+				fl |= NETBSD_ACTIVE;
+			}
+			if (ext->nametab[i][0] == 0) {
+				if (ext->sector == 0)
+					continue;
+				if (ext->sector + p->mbrp_start == ptstart)
+					/* force name & bootsel... */
+					names++;
+				continue;
+			}
+			if (ext->sector != 0)
+				fl |= BFL_EXTLBA;
+			if (ext->sector + p->mbrp_start == ptstart)
+				fl |= NETBSD_NAMED;
+			else if (p->mbrp_flag == MBR_FLAGS_ACTIVE)
+				fl |= ACTIVE_NAMED;
+			else
+				names++;
 		}
 	}
+	if (!(fl & ACTIVE_FOUND))
+		fl |= NETBSD_ACTIVE;
+	if (fl & NETBSD_NAMED && fl & NETBSD_ACTIVE)
+		fl |= ACTIVE_NAMED;
 
-	if (!netbsd_mbr_installed) {
-		if (mbr_root_above_chs(part))
-			msg_display(MSG_installlbambr);
-		else if (count_mbr_parts(part) > 1)
-			msg_display(MSG_installnormalmbr);
+	if ((names > 0 || !(fl & NETBSD_ACTIVE)) && 
+	    (!(fl & NETBSD_NAMED) || !(fl & ACTIVE_NAMED))) {
+		/*
+		 * There appear to be multiple bootable partitions, but they
+		 * don't all have bootmenu texts.
+		 */
+		msg_display(MSG_missing_bootmenu_text);
+		process_menu(MENU_yesno, NULL);
+		if (yesno)
+			goto edit;
+	}
+
+	if ((fl & BFL_EXTLBA) &&
+	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
+		/* Need unsupported LBA reads to read boot sectors */
+		msg_display(MSG_no_extended_bootmenu);
+		process_menu(MENU_noyes, NULL);
+		if (!yesno)
+			goto edit;
+	}
+
+	if (names > 0 || fl & (NETBSD_NAMED | ACTIVE_NAMED)) {
+		/* Need bootselect code */
+		fl |= BFL_SELACTIVE;
+		bootcode = fl & BFL_EXTLBA ? _PATH_BOOTEXT : _PATH_BOOTSEL;
+	} else
+		bootcode = _PATH_MBR;
+
+	/* Look at what is installed */
+	if (mbr.mbr.mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC))
+		/* Netbsd bootcode, grab its features */
+		ofl = mbr.mbr.mbr_bootsel.mbrb_flags;
+	else {
+		/* Not netbsd code, might be ok if we are booting the active
+		 * partition.
+		 */
+		if (mbr.mbr.mbr_signature == htole16(MBR_MAGIC) &&
+		    mbr.mbr.mbr_bootinst[0] != 0 &&
+		    (fl & (BFL_SELACTIVE | BFL_EXTLBA)) == 0 &&
+		    !mbr_root_above_chs())
+			ofl = BFL_NEWMBR;
+		else
+			ofl = 0;
+	}
+
+	fl &= BFL_NEWMBR | BFL_SELACTIVE | BFL_EXTLBA;
+	ofl &= BFL_NEWMBR | BFL_SELACTIVE | BFL_EXTLBA;
+	if (fl & ~ofl) {
+		/* Existing boot code isn't the right one... */
+		if (fl & BFL_SELACTIVE)
+			msg_display(MSG_installbootsel);
 		else
 			msg_display(MSG_installmbr);
-		process_menu(MENU_yesno, NULL);
-		if (yesno && !md_read_bootcode(_PATH_MBR, &mbr))
-			netbsd_mbr_installed = 1;
-	}
+	} else
+		/* Existing code would (probably) be ok */
+		msg_display(MSG_updatembr);
+
+	process_menu(MENU_yesno, NULL);
+	if (yesno)
+		md_read_bootcode(bootcode, &mbr.mbr);
 
 	return 1;
 }
@@ -150,10 +231,10 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 	}
 	close(fd);
 
-	if (new_mbr.mbr_bootsel.mbrb_magic != native_to_le16(MBR_MAGIC))
+	if (new_mbr.mbr_bootsel.mbrb_magic != htole16(MBR_MAGIC))
 		return -1;
 
-	if (mbr->mbr_bootsel.mbrb_magic == native_to_le16(MBR_MAGIC)) {
+	if (mbr->mbr_bootsel.mbrb_magic == htole16(MBR_MAGIC)) {
 		len = offsetof(mbr_sector_t, mbr_bootsel);
 		if (!(mbr->mbr_bootsel.mbrb_flags & BFL_NEWMBR))
 			/*
@@ -167,7 +248,7 @@ md_read_bootcode(const char *path, mbr_sector_t *mbr)
 	memcpy(mbr, &new_mbr, len);
 	/* Keep flags from object file - indicate the properties */
 	mbr->mbr_bootsel.mbrb_flags = new_mbr.mbr_bootsel.mbrb_flags;
-	mbr->mbr_signature = native_to_le16(MBR_MAGIC);
+	mbr->mbr_signature = htole16(MBR_MAGIC);
 
 	return 0;
 }
@@ -183,7 +264,6 @@ md_pre_disklabel(void)
 		process_menu(MENU_ok, NULL);
 		return 1;
 	}
-	md_upgrade_mbrtype();
 	return 0;
 }
 
@@ -216,8 +296,7 @@ md_post_newfs(void)
 	/* Copy bootstrap in by hand - /sbin/installboot explodes ramdisks */
 	ret = 1;
 
-	snprintf(bootxx, sizeof bootxx, "/dev/r%sa", diskdev);
-	td = open(bootxx, O_RDWR);
+	td = opendisk(diskdev, O_RDWR, bootxx, sizeof bootxx, 0);
 	sd = open("/usr/mdec/bootxx_ffsv1", O_RDONLY);
 	if (td == -1 || sd == -1)
 		goto bad_bootxx;
@@ -233,10 +312,10 @@ md_post_newfs(void)
 		bp.bp_conspeed = atoi(boottype + 6);
 	}
 
-	if (write(td, bootxx, 512) != 512)
+	if (pwrite(td, bootxx, 512, ptstart * (off_t)512) != 512)
 		goto bad_bootxx;
 	len -= 512 * 2;
-	if (pwrite(td, bootxx + 512 * 2, len, 512 * 2) != len)
+	if (pwrite(td, bootxx + 512*2, len, (ptstart + 2) * (off_t)512) != len)
 		goto bad_bootxx;
 	ret = 0;
 
@@ -304,7 +383,7 @@ md_upgrade_mbrtype(void)
 	if (read_mbr(diskdev, &mbr) < 0)
 		return;
 
-	mbrp = &mbr.mbr_parts[0];
+	mbrp = &mbr.mbr.mbr_parts[0];
 
 	for (i = 0; i < NMBRPART; i++) {
 		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
@@ -396,12 +475,10 @@ md_bios_info(dev)
 		sysctl(mib, 2, disklist, &len, NULL, 0);
 	}
 
-	nativedisk = NULL;
-
 	for (i = 0; i < disklist->dl_nnativedisks; i++) {
 		nat = &disklist->dl_nativedisks[i];
 		if (!strcmp(dev, nat->ni_devname)) {
-			nativedisk = nip = nat;
+			nip = nat;
 			break;
 		}
 	}
@@ -458,6 +535,7 @@ nogeom:
 	return 0;
 }
 
+#if 0
 static int
 count_mbr_parts(pt)
 	struct mbr_partition *pt;
@@ -470,13 +548,13 @@ count_mbr_parts(pt)
 
 	return count;
 }
+#endif
 
 static int
-mbr_root_above_chs(mbr_partition_t *pt)
+mbr_root_above_chs(void)
 {
 
-	return pt[bsdpart].mbrp_start + DEFROOTSIZE * (MEG / 512)
-							>= bcyl * bhead * bsec;
+	return ptstart + DEFROOTSIZE * (MEG / 512) >= bcyl * bhead * bsec;
 }
 
 #if defined(__i386__)

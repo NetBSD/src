@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.10 2003/06/12 10:51:40 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.11 2003/07/07 12:30:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -92,6 +92,6 @@ ne sera peut-etre pas possible. Voulez-vous reelement faire ceci ?
 ('Non' vous ramènera au menu d'edition des partitions.)}
 
 message set_kernel_1
-{Kernel (GENERIC)}  
+{Kernel (GENERIC)}
 message set_kernel_2
 {Kernel (TX3912)}

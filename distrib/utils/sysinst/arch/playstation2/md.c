@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2003/06/14 12:58:50 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.13 2003/07/07 12:30:27 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,12 +46,6 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-
-#ifdef __mips__
-extern mbr_sector_t mbr;
-#else
-mbr_sector_t mbr;
-#endif
 
 int
 md_get_info()

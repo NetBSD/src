@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.35 2003/06/27 22:20:16 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.36 2003/07/07 12:30:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,6 +73,8 @@ do_upgrade(void)
 
 	if (md_pre_update() < 0)
 		return;
+
+	process_menu(MENU_distset, NULL);
 
 	/* if we need the user to mount root, ask them to. */
 	if (must_mount_root()) {

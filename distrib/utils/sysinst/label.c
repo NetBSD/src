@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.33 2003/06/27 13:36:04 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.34 2003/07/07 12:30:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.33 2003/06/27 13:36:04 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.34 2003/07/07 12:30:20 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,16 +48,15 @@ __RCSID("$NetBSD: label.c,v 1.33 2003/06/27 13:36:04 dsl Exp $");
 #include <unistd.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
+#include <ufs/ffs/fs.h>
 
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 
 struct ptn_menu_info {
-	int	menu_no;
 	int	flags;
 #define PIF_SHOW_UNUSED		1
-	char	texts[MAXPARTITIONS][70];
 };
 
 /*
@@ -65,9 +64,8 @@ struct ptn_menu_info {
  */
 static int boringpart(partinfo *, int, int, int);
 
-int	checklabel(partinfo *, int, int, int, int *, int *);
-void	translate_partinfo(partinfo *lp, struct partition *pp);
-void	atofsb(const char *, int *, int *);
+static int	checklabel(partinfo *, int, int, int, int *, int *);
+static void	atofsb(const char *, int *, int *);
 
 
 /*
@@ -92,7 +90,7 @@ boringpart(partinfo *lp, int i, int rawpart, int bsdpart)
  * Sets reference arguments ovly1 and ovly2 to the indices of
  * overlapping partitions if any are found.
  */
-int
+static int
 checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 	int *ovly1, int *ovly2)
 {
@@ -180,7 +178,7 @@ set_bsize(partinfo *p, int size)
 	if (!PI_ISBSDFS(p))
 		size = 0;
 
-	p->pi_bsize = size;
+	p->pi_frag = 8;
 	p->pi_fsize = size / 8;
 
 	return 0;
@@ -190,7 +188,8 @@ int
 set_fsize(partinfo *p, int nfrag)
 {
 
-	p->pi_fsize = p->pi_bsize / nfrag;
+	p->pi_fsize = p->pi_fsize * p->pi_frag / nfrag;
+	p->pi_frag = nfrag;
 	return 0;
 }
 
@@ -199,7 +198,16 @@ edit_fs_preserve(menudesc *m, menu_ent *e, void *arg)
 {
 	partinfo *p = arg;
 
-	p->pi_newfs ^= 1;
+	p->pi_flags ^= PIF_NEWFS;
+	return 0;
+}
+
+static int
+edit_fs_mount(menudesc *m, menu_ent *e, void *arg)
+{
+	partinfo *p = arg;
+
+	p->pi_flags ^= PIF_MOUNT;
 	return 0;
 }
 
@@ -207,17 +215,29 @@ static int
 edit_fs_mountpt(menudesc *m, menu_ent *e, void *arg)
 {
 	partinfo *p = arg;
+	char buff[4];
 
-	if (PI_ISBSDFS(p) || p->pi_fstype == FS_MSDOS) {
-		msg_prompt_add(MSG_mountpoint,
-			p->pi_mount,
-			p->pi_mount,
-			sizeof p->pi_mount);
-		if (strcmp(p->pi_mount, "none") == 0)
-			p->pi_mount[0] = '\0';
-	} else {
-		msg_display(MSG_nomount, 'a' + p - bsdlabel);
-		process_menu(MENU_ok, NULL);
+	if (!PI_ISBSDFS(p) && p->pi_fstype != FS_MSDOS) {
+		msg_prompt_win(MSG_nomount, -1, 18, 0, 0,
+			"OK", buff, sizeof buff,
+			'a' + p - bsdlabel);
+		p->pi_mount[0] = 0;
+		return 0;
+	}
+
+	msg_prompt_win(MSG_mountpoint, -1, 18, 0, 0,
+		p->pi_mount, p->pi_mount, sizeof p->pi_mount);
+
+	if (p->pi_mount[0] == ' ' || strcmp(p->pi_mount, "none") == 0) {
+		p->pi_mount[0] = 0;
+		return 0;
+	}
+
+	if (p->pi_mount[0] != '/') {
+		memmove(p->pi_mount + 1, p->pi_mount,
+		    sizeof p->pi_mount - 1);
+		p->pi_mount[sizeof p->pi_mount - 1] = 0;
+		p->pi_mount[0] = '/';
 	}
 
 	return 0;
@@ -228,69 +248,51 @@ edit_restore(menudesc *m, menu_ent *e, void *arg)
 {
 	partinfo *p = arg;
 
-	p->pi_reset = 1;
+	p->pi_flags |= PIF_RESET;
 	return 1;
 }
 
 static void
-set_ptn_labels(menudesc *m, void *arg)
+set_ptn_header(menudesc *m, void *arg)
 {
-	static char l[8][70];
 	partinfo *p = arg;
-	menu_ent *opt;
-	int i;
-	int ms = MEG / sectorsize;
-	int s;
 
 	msg_clear();
 	msg_table_add(MSG_edfspart, 'a' + (p - bsdlabel));
 
-	snprintf(l[0], sizeof l[0], msg_string(MSG_fstype_fmt),
-		fstypenames[p->pi_fstype]);
-	s = p->pi_offset;
-	snprintf(l[1], sizeof l[0], msg_string(MSG_start_fmt),
-		s / ms, s / dlcylsize, s );
-	s = p->pi_size;
-	snprintf(l[2], sizeof l[0], msg_string(MSG_size_fmt),
-		s / ms, s / dlcylsize, s );
-	s = p->pi_offset + p->pi_size;
-	snprintf(l[3], sizeof l[0], msg_string(MSG_end_fmt),
-		s / ms, s / dlcylsize, s );
-
 	if (PI_ISBSDFS(p)) {
-		m->opts[4].opt_menu = MENU_selbsize;
-		m->opts[5].opt_menu = MENU_selfsize;
-		snprintf(l[4], sizeof l[0],
-			msg_string(MSG_bsize_fmt), p->pi_bsize);
-		snprintf(l[5], sizeof l[0],
-			msg_string(MSG_fsize_fmt), p->pi_fsize);
+		m->opts[4].opt_flags &= ~OPT_IGNORE;
+		m->opts[5].opt_flags &= ~OPT_IGNORE;
 	} else {
-		m->opts[4].opt_menu = OPT_NOMENU;
-		m->opts[5].opt_menu = OPT_NOMENU;
-		strcpy(l[4], "      -");
-		strcpy(l[5], "      -");
+		m->opts[4].opt_flags |= OPT_IGNORE;
+		m->opts[5].opt_flags |= OPT_IGNORE;
 	}
-
-	snprintf(l[6], sizeof l[0], msg_string(MSG_preserve_fmt),
-		msg_string(p->pi_newfs ? MSG_No : MSG_Yes));
-	snprintf(l[7], sizeof l[0], msg_string(MSG_mount_fmt), p->pi_mount);
-
-	for (opt = m->opts, i = 0; i < nelem(l); i++, opt++)
-		opt->opt_name = l[i];
 }
+
+static void set_ptn_label(menudesc *m, int opt, void *arg);
 
 static int
 edit_ptn(menudesc *menu, menu_ent *opt, void *arg)
 {
 	static menu_ent fs_fields[] = {
-	    {"", MENU_selfskind, OPT_SUB, NULL},
-	    {"", OPT_NOMENU, 0, edit_fs_start},
-	    {"", OPT_NOMENU, 0, edit_fs_size},
-	    {"", OPT_NOMENU, 0, NULL},
-	    {"", MENU_selbsize, OPT_SUB, NULL},
-	    {"", MENU_selfsize, OPT_SUB, NULL},
-	    {"", OPT_NOMENU, 0, edit_fs_preserve},
-	    {"", OPT_NOMENU, 0, edit_fs_mountpt},
+#define PTN_MENU_FSKIND		0
+	    {NULL, MENU_selfskind, OPT_SUB, NULL},
+#define PTN_MENU_START		1
+	    {NULL, OPT_NOMENU, 0, edit_fs_start},
+#define PTN_MENU_SIZE		2
+	    {NULL, OPT_NOMENU, 0, edit_fs_size},
+#define PTN_MENU_END		3
+	    {NULL, OPT_NOMENU, OPT_IGNORE, NULL},	/* displays 'end' */
+#define PTN_MENU_BSIZE		4
+	    {NULL, MENU_selbsize, OPT_SUB, NULL},
+#define PTN_MENU_FSIZE		5
+	    {NULL, MENU_selfsize, OPT_SUB, NULL},
+#define PTN_MENU_NEWFS		6
+	    {NULL, OPT_NOMENU, 0, edit_fs_preserve},
+#define PTN_MENU_MOUNT		7
+	    {NULL, OPT_NOMENU, 0, edit_fs_mount},
+#define PTN_MENU_MOUNTPT	8
+	    {NULL, OPT_NOMENU, 0, edit_fs_mountpt},
 	    {MSG_askunits, MENU_sizechoice, OPT_SUB, NULL},
 	    {MSG_restore, OPT_NOMENU, 0, edit_restore},
 	};
@@ -303,21 +305,76 @@ edit_ptn(menudesc *menu, menu_ent *opt, void *arg)
 		fspart_menu = new_menu(NULL, fs_fields, nelem(fs_fields),
 			0, 7, 0, 70,
 			MC_NOBOX | MC_NOCLEAR | MC_SCROLL,
-			set_ptn_labels, NULL,
+			set_ptn_header, set_ptn_label, NULL,
 			NULL, MSG_partition_sizes_ok);
 	}
 
 	p = bsdlabel + (opt - menu->opts);
-	p->pi_reset = 0;
+	p->pi_flags &= ~PIF_RESET;
 	p_save = *p;
 	for (;;) {
 		process_menu(fspart_menu, p);
-		if (!p->pi_reset)
+		if (!(p->pi_flags & PIF_RESET))
 			break;
 		*p = p_save;
 	}
 
 	return 0;
+}
+
+static void
+set_ptn_label(menudesc *m, int opt, void *arg)
+{
+	partinfo *p = arg;
+	int ms = MEG / sectorsize;
+	int s;
+
+	switch (opt) {
+	case PTN_MENU_FSKIND:
+		wprintw(m->mw, msg_string(MSG_fstype_fmt),
+			fstypenames[p->pi_fstype]);
+		break;
+	case PTN_MENU_START:
+		s = p->pi_offset;
+		wprintw(m->mw, msg_string(MSG_start_fmt),
+			s / ms, s / dlcylsize, s );
+		break;
+	case PTN_MENU_SIZE:
+		s = p->pi_size;
+		wprintw(m->mw, msg_string(MSG_size_fmt),
+			s / ms, s / dlcylsize, s );
+		break;
+	case PTN_MENU_END:
+		s = p->pi_offset + p->pi_size;
+		wprintw(m->mw, msg_string(MSG_end_fmt),
+			s / ms, s / dlcylsize, s );
+		break;
+	case PTN_MENU_FSIZE:
+		if (PI_ISBSDFS(p))
+			wprintw(m->mw,
+				msg_string(MSG_bsize_fmt), p->pi_fsize * p->pi_frag);
+		else
+			wprintw(m->mw, "      -");
+		break;
+	case PTN_MENU_BSIZE:
+		if (PI_ISBSDFS(p))
+			wprintw(m->mw,
+				msg_string(MSG_fsize_fmt), p->pi_fsize);
+		else
+			wprintw(m->mw, "      -");
+		break;
+	case PTN_MENU_NEWFS:
+		wprintw(m->mw, msg_string(MSG_newfs_fmt),
+			msg_string(p->pi_flags & PIF_NEWFS ? MSG_Yes : MSG_No));
+		break;
+	case PTN_MENU_MOUNT:
+		wprintw(m->mw, msg_string(MSG_mount_fmt),
+			msg_string(p->pi_flags & PIF_MOUNT ? MSG_Yes : MSG_No));
+		break;
+	case PTN_MENU_MOUNTPT:
+		wprintw(m->mw, msg_string(MSG_mountpt_fmt), p->pi_mount);
+		break;
+	}
 }
 
 static int
@@ -346,17 +403,16 @@ set_label_texts(menudesc *menu, void *arg)
 			last_used_ptn = ptn;
 		m = &menu->opts[ptn];
 		m->opt_menu = OPT_NOMENU;
-		m->opt_flags = 0;
-		m->opt_name = pi->texts[ptn];
+		m->opt_name = NULL;
 		if (ptn == rawptn
 #ifdef PART_BOOT
 		    || ptn == PART_BOOT
 #endif
 		    || ptn == C) {
-			m->opt_action = NULL;
+			m->opt_flags = OPT_IGNORE;
 		} else
-			m->opt_action = edit_ptn;
-		fmt_fspart(pi->texts[ptn], sizeof pi->texts[0], ptn);
+			m->opt_flags = 0;
+		m->opt_action = edit_ptn;
 	}
 
 	if (!(pi->flags & PIF_SHOW_UNUSED) && ptn != ++last_used_ptn) {
@@ -373,7 +429,7 @@ set_label_texts(menudesc *menu, void *arg)
 	m->opt_action = NULL;
 	m->opt_name = MSG_askunits;
 
-	set_menu_numopts(pi->menu_no, ptn + 1);
+	menu->numopts = ptn + 1;
 }
 
 /*
@@ -385,33 +441,35 @@ int
 edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 {
 	static struct menu_ent *menu;
-	static struct ptn_menu_info *pi;
+	static int menu_no = -1;
+	static struct ptn_menu_info pi;
 	int maxpart = getmaxpartitions();
 
 	if (menu == NULL) {
 		menu = malloc((maxpart + 1) * sizeof *menu);
-		pi = malloc(offsetof(struct ptn_menu_info, texts[maxpart]) );
-		if (!menu || !pi)
+		if (!menu)
 			return 1;
+	}
 
-		pi->flags = 0;
-		current_cylsize = dlcylsize;
-
-		pi->menu_no = new_menu(NULL, menu, maxpart + 1,
+	if (menu_no == -1) {
+		menu_no = new_menu(NULL, menu, maxpart + 1,
 			0, 6, maxpart + 2, 74,
 			MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
-			set_label_texts, NULL, NULL,
+			set_label_texts, fmt_fspart, NULL, NULL,
 			MSG_partition_sizes_ok);
 	}
 
-	if (pi->menu_no < 0)
+	if (menu_no < 0)
 		return 1;
+
+	pi.flags = 0;
+	current_cylsize = dlcylsize;
 
 	for (;;) {
 		int i, j;
 
 		/* first give the user the option to edit the label... */
-		process_menu(pi->menu_no, pi);
+		process_menu(menu_no, &pi);
 
 		/* User thinks the label is OK. check for overlaps */
 		if (checklabel(lp, nparts, rawpart, bsdpart, &i, &j) == 0) {
@@ -435,19 +493,11 @@ edit_and_check_label(partinfo *lp, int nparts, int rawpart, int bsdpart)
 void
 emptylabel(partinfo *lp)
 {
-	register int i, maxpart;
 
-	maxpart = getmaxpartitions();
-
-	for (i = 0; i < maxpart; i++) {
-		lp[i].pi_fstype = FS_UNUSED;
-		lp[i].pi_offset = 0;
-		lp[i].pi_size = 0;
-		lp[i].pi_bsize = 0;
-		lp[i].pi_fsize = 0;
-	}
+	memset(lp, 0, sizeof *lp);
 }
 
+#if 0
 /*
  * XXX MSDOS?
  */
@@ -467,13 +517,13 @@ translate_partinfo(partinfo *lp, struct partition *pp)
 	case FS_BSDFFS:
 		(*lp).pi_offset = 0;
 		(*lp).pi_size = 0;
-		(*lp).pi_bsize = pp->p_fsize * pp->p_frag;
+		(*lp).pi_frag = pp->p_frag;
 		(*lp).pi_fsize = pp->p_fsize;
 		break;
 
 	case FS_EX2FS:
 		(*lp).pi_fstype = FS_UNUSED;	/* XXX why? */
-		(*lp).pi_bsize = pp->p_fsize * pp->p_frag;
+		(*lp).pi_frag = pp->p_frag;
 		(*lp).pi_fsize = pp->p_fsize;
 		break;
 
@@ -482,6 +532,7 @@ translate_partinfo(partinfo *lp, struct partition *pp)
 		break;
 	}
 }
+#endif
 
 /*
  * Read a label from disk into a sysinst label structure.
@@ -490,33 +541,96 @@ int
 incorelabel(const char *dkname, partinfo *lp)
 {
 	struct disklabel lab;
-	int fd;
 	int i, maxpart;
 	struct partition *pp;
-	char nambuf[STRSIZE];
+	int fd;
+	char buf[64];
 
-	fd = opendisk(dkname, O_RDONLY,  nambuf, STRSIZE, 0);
+	emptylabel(lp);
 
-	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
-		/*XXX err(4, "ioctl DIOCGDINFO");*/
-		return(errno);
-	}
-	close(fd);
+	if (get_real_geom(dkname, &lab) == 0)
+		return -1;
+
 	touchwin(stdscr);
 	maxpart = getmaxpartitions();
-	if (maxpart > 16)
-		maxpart = 16;
+	if (maxpart > MAXPARTITIONS)
+		maxpart = MAXPARTITIONS;
+	if (maxpart > lab.d_npartitions)
+		maxpart = lab.d_npartitions;
 
-
-	/* XXX set globals used by MD code to compute disk size? */
-	
+	fd = opendisk(dkname, O_RDONLY, buf, sizeof buf, 0);
 	pp = &lab.d_partitions[0];
-	emptylabel(lp);
-	for (i = 0; i < maxpart; i++) {
-		translate_partinfo(lp+i, pp+i);
+	for (i = 0; i < maxpart; lp++, pp++, i++) {
+		lp->pi_partition = *pp;
+		strlcpy(lp->pi_mount, get_last_mounted(fd, pp->p_offset),
+			sizeof lp->pi_mount);
+	}
+	if (fd != -1)
+		close(fd);
+
+	return 0;
+}
+
+/*
+ * Try to get 'last mounted on' (or equiv) from fs superblock.
+ */
+const char *
+get_last_mounted(int fd, int partstart)
+{
+	static char sblk[SBLOCKSIZE];		/* is this enough? */
+	const static int sblocks[] = SBLOCKSEARCH;
+	const int *sbp;
+	char *cp;
+	char *mnt = "";
+	int l;
+
+	if (fd == -1)
+		return mnt;
+
+	/* Check UFS1/2 (and hence LFS) superblock */
+	for (sbp = sblocks; *mnt == 0 && *sbp != -1; sbp++) {
+		if (pread(fd, sblk, sizeof sblk,
+		    partstart * (off_t)512 + *sbp) != sizeof sblk)
+			continue;
+		/* Maybe we should validate the checksum??? */
+		switch (((struct fs *)sblk)->fs_magic) {
+		case FS_UFS1_MAGIC:
+		case FS_UFS2_MAGIC:
+		case FS_UFS1_MAGIC_SWAPPED:
+		case FS_UFS2_MAGIC_SWAPPED:
+			mnt = ((struct fs *)sblk)->fs_fsmnt;
+			continue;
+		}
+
+#if 0	/* Requires fs/ext2fs/ext2fs.h which collides badly... */
+		if ((struct ext2fs *)sblk)->e2fs_magic == E2FS_MAGIC) {
+			mnt = ((struct ext2fs *)sblk)->e2fs_fsmnt;
+			continue;
+		}
+#endif
+		if (*sbp != 0)
+			continue;
+
+		/* If start of disk check for other fs types */
+		if (sblk[0x42] == 0x29 && memcmp(sblk + 0x52, "FAT", 3) == 0) {
+			/* Probably a FAT filesystem, report volume name */
+			cp = strchr(sblk + 0x47, ' ');
+			if (cp == NULL || cp - (sblk + 0x47) > 11)
+				cp = sblk + 0x47 + 11;
+			*cp = 0;
+			return sblk + 0x47;
+		}
 	}
 
-	return (0);
+	/* If sysinst mounted this last then strip prefix */
+	l = strlen(targetroot_mnt);
+	if (memcmp(mnt, targetroot_mnt, l) == 0) {
+		if (mnt[l] == 0)
+			return "/";
+		if (mnt[l] == '/')
+			return mnt + l;
+	}
+	return mnt;
 }
 
 /* Ask for a partition offset, check bounds and do the needed roundups */
@@ -632,7 +746,7 @@ getpartsize(int partstart, int defpartsize)
  * returns the number of sectors, and the unit used (for roundups).
  */
 
-void
+static void
 atofsb(const char *str, int *p_val, int *localsizemult)
 {
 	int i;
