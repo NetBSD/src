@@ -17,21 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-/*
- * HISTORY
- * $Log: tm-umax.h,v $
- * Revision 1.2  1995/08/29 08:03:32  phil
- * Changes from Matthias Pfaller to get gdb to work.
- *
- * Revision 1.1  1994/04/28 17:11:32  phil
- * Adding ns32k support.
- *
- * Revision 4.8.1.1  93/04/16  15:38:43  pds
- * 	Mach 3.0 fixes. (jtv@hut.fi)
- * 	[93/02/09  14:36:37  pds]
- * 
- *	[93/02/09            pds]
- */
 
 #define TARGET_BYTE_ORDER LITTLE_ENDIAN
 

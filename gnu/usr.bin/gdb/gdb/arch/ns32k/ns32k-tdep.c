@@ -17,24 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
-/*
- * HISTORY
- * $Log: ns32k-tdep.c,v $
- * Revision 1.3  1995/08/29 08:03:31  phil
- * Changes from Matthias Pfaller to get gdb to work.
- *
- * Revision 1.2  1994/05/24 23:58:24  phil
- * Follow changes to sys/arch/pc532/include/reg.h.
- *
- * Revision 1.1  1994/04/28  17:11:31  phil
- * Adding ns32k support.
- *
- * Revision 2.1.1.1  93/04/16  16:35:44  pds
- * 	Added copyright notice and whist markers.
- * 	[93/04/16            pds]
- * 
- */
-
 /* @@@ isa_NAN should be in ieee generic float routines file */
 
 /* Check for bad floats/doubles in P
@@ -81,24 +63,3 @@ isa_NAN(p, len)
     }
   else return 1;
 }
-
-/* this table must line up with REGISTER_NAMES in tm-ns32k.h */
-static int regmap[] = 
-{
-  REG_R0, REG_R1, REG_R2, REG_R3, REG_R4, REG_R5, REG_R6, REG_R7,
-  0, 0, 0, 0, 0, 0, 0, 0,
-  REG_SP, REG_FP, REG_PC, REG_PSR,
-  0, 0, 0, 0, 0
-};
-
-/* blockend is the value of u.u_ar0, and points to the
-   place where r7 is stored.  */
-
-int
-ns32k_register_u_addr (blockend, regnum)
-     int blockend;
-     int regnum;
-{
-    return (blockend + 4 * regmap[regnum]);
-}
-
