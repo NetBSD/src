@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.7 1998/12/02 17:14:53 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.8 1998/12/02 22:51:50 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.7 1998/12/02 17:11:51 augustss Exp 
+ *	NetBSD: usbdevs,v 1.8 1998/12/02 22:49:51 augustss Exp 
  */
 
 /*
@@ -49,12 +49,14 @@
 
 #define	USB_VENDOR_NEC	0x0409		/* NEC */
 #define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak */
-#define	USB_VENDOR_CATC	0x0423		/* Computer Access Technology Corporation */
+/* Computer Access Technology Corporation */
+#define	USB_VENDOR_CATC	0x0423		/* CATC */
 #define	USB_VENDOR_NANAO	0x0440		/* Nanao */
 #define	USB_VENDOR_UNIXTAR	0x0451		/* Unixtar */
 #define	USB_VENDOR_GENIUS	0x0458		/* Genius */
 #define	USB_VENDOR_CHERRY	0x046a		/* Cherry */
-#define	USB_VENDOR_BTC	0x046e		/* Behavior Technology Corporation */
+/* Behavior Technology Corporation */
+#define	USB_VENDOR_BTC	0x046e		/* BTC */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
