@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.69 1998/10/14 14:53:36 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.70 2000/02/05 12:32:57 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -320,6 +320,9 @@ oclockattach(parent, self, aux)
 #endif /* SUN4 */
 }
 
+/* We support only on eeprom device */
+static int eeprom_attached;
+
 /*
  * Sun 4/100, 4/200 EEPROM match routine.
  */
@@ -335,7 +338,8 @@ eeprom_match(parent, cf, aux)
 	if (uoba->uoba_isobio4 == 0)
 		return (0);
 
-	if (cf->cf_unit != 0)
+	if (eeprom_attached)
+		/* We support only on eeprom device */
 		return (0);
 
 	/* Only these sun4s have oclock */
@@ -363,6 +367,7 @@ eeprom_attach(parent, self, aux)
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	bus_space_handle_t bh;
 
+	eeprom_attached = 1;
 	printf("\n");
 
 	if (obio_bus_map(oba->oba_bustag,
