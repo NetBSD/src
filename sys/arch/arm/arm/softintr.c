@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2002/01/24 18:48:03 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
