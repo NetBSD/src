@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 2000/04/13 09:52:46 mrg Exp $	*/
+/*	$NetBSD: zs.c,v 1.19 2000/05/17 09:28:22 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ extern int fbnode;
 /* Interrupt handlers. */
 static int zshard __P((void *));
 static int zssoft __P((void *));
-static struct intrhand levelsoft = { zssoft };
+static struct intrhand levelsoft = { zssoft, 0, IPL_SOFTSERIAL };
 
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -371,7 +371,6 @@ zs_attach_sbus(parent, self, aux)
 			cn = &consdev_zs;
 		}
 	}
-	zs_attach(zsc, sa->sa_pri);
 	if (cn) {
 		cn_tab = cn;
 		(*cn->cn_init)(cn);
@@ -379,6 +378,7 @@ zs_attach_sbus(parent, self, aux)
 		zs_kgdb_init();
 #endif
 	}
+	zs_attach(zsc, sa->sa_pri);
 }
 
 static void
@@ -424,7 +424,7 @@ zs_attach(zsc, pri)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel;
-	static int didintr, prevpri;
+	static int didintr, prevpri;	/* XXX: multiple sbus's with mutilple zs's? */
 
 	printf(" softpri %d\n", PIL_TTY);
 
