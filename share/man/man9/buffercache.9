@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.5 2003/09/06 19:38:19 yamt Exp $
+.\"     $NetBSD: buffercache.9,v 1.6 2003/09/07 10:09:07 yamt Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -253,7 +253,7 @@ that is associated with a given vnode and block
 offset, specified by
 .Fa vp
 and
-.Fa blkno
+.Fa blkno .
 If it is found in the block cache, make it busy and return it.
 Otherwise, return an empty block of the correct size.
 It is up to the caller to ensure that the cached blocks
