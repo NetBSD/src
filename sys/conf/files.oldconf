@@ -1,4 +1,4 @@
-#	$NetBSD: files.oldconf,v 1.78 1997/01/06 08:41:19 thorpej Exp $
+#	$NetBSD: files.oldconf,v 1.79 1997/01/07 11:35:22 mrg Exp $
 #
 adosfs/adlookup.c	optional adosfs
 adosfs/adutil.c		optional adosfs
@@ -190,11 +190,11 @@ netinet/tcp_subr.c	optional inet
 netinet/tcp_timer.c	optional inet
 netinet/tcp_usrreq.c	optional inet
 netinet/udp_usrreq.c	optional inet
-netinet/ip_fil.c	optional ipl device-driver
-netinet/fil.c		optional ipl
-netinet/ip_nat.c	optional ipl
-netinet/ip_frag.c	optional ipl
-netinet/ip_state.c	optional ipl
+netinet/ip_fil.c	optional ipfilter device-driver
+netinet/fil.c		optional ipfilter
+netinet/ip_nat.c	optional ipfilter
+netinet/ip_frag.c	optional ipfilter
+netinet/ip_state.c	optional ipfilter
 netiso/clnp_debug.c	optional iso
 netiso/clnp_er.c	optional iso
 netiso/clnp_frag.c	optional iso
