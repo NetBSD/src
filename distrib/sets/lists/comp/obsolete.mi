@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.56 2001/10/22 04:54:00 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.57 2001/10/31 19:57:18 gmcgarry Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -699,6 +699,7 @@
 /usr/share/man/cat9/disk_detach.0
 /usr/share/man/cat9/vslock.0
 /usr/share/man/cat9/vsunlock.0
+/usr/share/man/cat9/vn_marktext.0
 /usr/share/man/man3/MD5_Init.3
 /usr/share/man/man3/RAND_seed.3
 /usr/share/man/man3/blowfish.3
@@ -775,6 +776,7 @@
 /usr/share/man/man9/disk_detach.9
 /usr/share/man/man9/vslock.9
 /usr/share/man/man9/vsunlock.9
+/usr/share/man/man9/vn_marktext.9
 /usr/share/misc/gprof.callg
 /usr/share/misc/gprof.flat
 /usr/share/mk/bsd.crypto.mk
