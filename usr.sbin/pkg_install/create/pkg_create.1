@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.27 2001/04/09 12:47:37 wiz Exp $
+.\" $NetBSD: pkg_create.1,v 1.28 2001/05/18 13:21:38 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl hlORVv
+.Op Fl hlORUVv
 .Bk -words
 .Op Fl B Ar build-info-file
 .Ek
@@ -257,6 +257,8 @@ directory is limited.  Be sure to leave some number of `X' characters
 for
 .Xr mktemp 3
 to fill in with a unique ID.
+.It Fl U
+Do not update the package file database with any file information.
 .It Fl V
 Print version number and exit.
 .It Fl v
