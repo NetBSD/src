@@ -1,4 +1,4 @@
-|	$NetBSD: SRT0.S,v 1.1.1.1 1995/02/14 22:56:37 gwr Exp $
+|	$NetBSD: SRT0.S,v 1.1.1.2 1995/06/01 20:37:55 gwr Exp $
 
 | Copyright (c) 1995 Gordon W. Ross
 | All rights reserved.
@@ -31,6 +31,8 @@
 |	SRT0.S - Stand-alone Run-Time startup code, part 0
 	.file	"SRT0.S"
 	.text
+	.globl	__estack
+__estack:
 	.globl	start
 start:
 | Check to see if the code is located correctly.
@@ -60,8 +62,9 @@ restart:
 | now in the relocated code
 
 | Set up stack (just before relocated text)
-	lea	start:l, a0
+	lea	__estack:l, a0
 	movl	a0, sp
+	subl	a6, a6
 
 | Call the run-time startup C code, which will:
 |   initialize, call main, call exit

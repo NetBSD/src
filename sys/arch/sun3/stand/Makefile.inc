@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1995/02/14 22:56:36 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.1.1.2 1995/06/01 20:37:46 gwr Exp $
 
 .if defined(SA_PROG)
 

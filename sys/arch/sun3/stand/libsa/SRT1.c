@@ -1,4 +1,4 @@
-/*	$NetBSD: SRT1.c,v 1.1.1.1 1995/02/14 22:56:37 gwr Exp $	*/
+/*	$NetBSD: SRT1.c,v 1.1.1.2 1995/06/01 20:37:57 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
