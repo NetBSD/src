@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.5 2004/06/27 15:37:11 dsl Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.6 2004/08/19 10:34:36 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@ ENTRY(bootxx)
 	.balign	4
 ENTRY(bootxx_magic)
 	.long	X86_BOOT_MAGIC_1	/* checked by installboot & pbr code */
-bootparams:				/* space for patchable variables */
-	.long	1f - bootparams		/* length of this data area */
+boot_params:				/* space for patchable variables */
+	.long	1f - boot_params	/* length of this data area */
 #include <boot_params.S>
 	.space	4 * 4			/* some spare */
 
@@ -91,7 +91,7 @@ bootparams:				/* space for patchable variables */
 
 	pop	%edx			/* bios disk number */
 	pop	%ebx			/* expected partition start sector */
-	movl	$bootparams, %esi
+	movl	$boot_params, %esi
 	lcall	$SECONDARY_LOAD_ADDRESS/16, $0
 
 boot_fail:
