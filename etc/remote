@@ -31,9 +31,9 @@ unix300|300 Baud dial-out to another UNIX system:\
 # Rackmount:	U U D U D U D D U D
 #
 dial2400|2400 Baud Hayes attributes:\
-        :dv=/dev/tty19:br#2400:cu=/dev/tty19:at=hayes:du:
+        :dv=/dev/tty00:br#2400:cu=/dev/tty00:at=hayes:du:
 dial1200|1200 Baud Hayes attributes:\
-        :dv=/dev/tty19:br#1200:cu=/dev/tty19:at=hayes:du:
+        :dv=/dev/tty00:br#1200:cu=/dev/tty00:at=hayes:du:
 
 # Hardwired line
 com0c|com0:dv=/dev/tty00:br#9600:
