@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.16 1998/02/03 18:23:43 perry Exp $	*/
+/*	$NetBSD: getcap.c,v 1.17 1998/02/26 02:40:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.16 1998/02/03 18:23:43 perry Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.17 1998/02/26 02:40:11 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -208,12 +208,13 @@ cgetent(buf, db_array, name)
 static int
 getent(cap, len, db_array, fd, name, depth, nfield)
 	char **cap, **db_array, *name, *nfield;
-	u_int *len;
+	size_t *len;
 	int fd, depth;
 {
 	DB *capdbp;
 	char *r_end, *rp = NULL, **db_p;	/* pacify gcc */
-	int myfd = 0, eof, foundit, retval, clen;
+	int myfd = 0, eof, foundit, retval;
+	size_t clen;
 	char *record, *cbuf;
 	int tc_not_resolved;
 	char pbuf[_POSIX_PATH_MAX];
@@ -409,8 +410,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	 */
 tc_exp:	{
 		char *newicap, *s;
-		int newilen;
-		u_int ilen;
+		size_t ilen, newilen;
 		int diff, iret, tclen;
 		char *icap, *scan, *tc, *tcstart, *tcend;
 
@@ -517,7 +517,7 @@ tc_exp:	{
 			 * Insert tc'ed record into our record.
 			 */
 			s = tcstart + newilen;
-			bcopy(tcend, s, rp - tcend);
+			bcopy(tcend, s, (size_t)(rp - tcend));
 			bcopy(newicap, tcstart, newilen);
 			rp += diff;
 			free(icap);
@@ -663,7 +663,7 @@ cgetnext(bp, db_array)
 	char **db_array;
 {
 	size_t len;
-	int status, i, done;
+	int status, done;
 	char *cp, *line, *rp, *np, buf[BSIZE], nbuf[BSIZE];
 	u_int dummy;
 
@@ -720,7 +720,6 @@ cgetnext(bp, db_array)
 		/* 
 		 * Line points to a name line.
 		 */
-		i = 0;
 		done = 0;
 		np = nbuf;
 		for (;;) {
