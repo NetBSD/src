@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.2.2.3 1998/06/13 14:26:18 bouyer Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.2.2.4 1998/07/27 19:02:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -48,6 +48,7 @@
 
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
+#include <dev/isapnp/isapnpdevs.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
@@ -80,12 +81,7 @@ wdc_isapnp_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct isapnp_attach_args *ipa = aux;
-
-	if (strcmp(ipa->ipa_devcompat, "PNP0600"))
-		return (0);
-
-	return (1);
+	return isapnp_devmatch(aux, &isapnp_wdc_devinfo);
 }
 
 void
