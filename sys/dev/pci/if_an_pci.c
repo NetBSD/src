@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.4 2001/06/18 13:21:24 onoe Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.5 2001/07/08 18:02:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,14 +42,6 @@
  * PCI to "dumb bus" bridge chip.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-
-#ifdef INET
-#define	ANCACHE		/* XXX: should be defined elsewhere */
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h> 
 #include <sys/mbuf.h>   
@@ -68,15 +60,6 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/if_ieee80211.h>
-
-#if NBPFILTER > 0 
-#include <net/bpf.h>
-#endif 
-
-#ifdef INET
-#include <netinet/in.h> 
-#include <netinet/if_inarp.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>

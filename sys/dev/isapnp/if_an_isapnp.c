@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.2 2001/06/21 14:02:56 onoe Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.3 2001/07/08 17:58:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,14 +42,6 @@
  * decoder hack.
  */
 
-#include "opt_inet.h"
-#include "opt_ns.h"
-#include "bpfilter.h"
-
-#ifdef INET
-#define	ANCACHE		/* XXX: should be defined elsewhere */
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -66,20 +58,6 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/if_ieee80211.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/if_inarp.h>
-#endif
-
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
