@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.22 2003/10/17 21:08:57 matt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.23 2003/10/17 22:21:38 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -278,7 +278,6 @@ ENTRY_NOPROFILE(cpu_switch)
 #endif
 	li	%r0,0
 	streg	%r0,CI_CURLWP(%r7)	/* Zero to not accumulate cpu time */
-	ldptr	%r0,CI_CURPCB(%r7)
 
 /* Lock the scheduler. */
 #if defined(PPC_IBM4XX)
@@ -345,12 +344,12 @@ switch_common:
 1:
 	/* just did this resched thing */
 	li	%r3,0
-	GET_CPUINFO(%r4)
-	stint	%r3,CI_WANT_RESCHED(%r4)
+	GET_CPUINFO(%r7)
+	stint	%r3,CI_WANT_RESCHED(%r7)
 	streg	%r3,L_BACK(%r31)	/* probably superfluous */
 
 #ifdef MULTIPROCESSOR
-	streg	%r4,L_CPU(%r31)		/* l->l_cpu = curcpu() */
+	streg	%r7,L_CPU(%r31)		/* l->l_cpu = curcpu() */
 #endif
 
 	/* lwp now running on a processor. */
@@ -358,8 +357,19 @@ switch_common:
 	stint	%r3,L_STAT(%r31)
 
 	/* record new lwp */
-	stptr	%r31,CI_CURLWP(%r4)
+	stptr	%r31,CI_CURLWP(%r7)
 	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
+	stptr	%r4,CI_CURPCB(%r7)	/* indicate new pcb */
+#if 0
+	li	%r3,CI_CURPCB
+#ifdef PPC_OEA64
+	stdcx.	%r4,%r3,%r7		/* clear possible reservation */
+#else
+	stwcx.	%r4,%r3,%r7		/* clear possible reservation */
+#endif
+	isync
+#endif
+
 
 #if !defined(MULTIPROCESSOR)		/* XXX */
 	li	%r3,0			/* if it is the same lwp, return 0 */
@@ -385,16 +395,6 @@ switch_common:
 
 switch_exited:
 #endif
-
-	/* indicate new pcb */
-	GET_CPUINFO(%r6)
-	stptru	%r4,CI_CURPCB(%r6)
-#ifdef PPC_OEA64
-	stdcx.	%r4,%r0,%r6		/* clear possible reservation */
-#else
-	stwcx.	%r4,%r0,%r6		/* clear possible reservation */
-#endif
-	isync
 
 	ldreg	%r1,PCB_SP(%r4)		/* get new lwp's SP */
 	SWITCHFRAME_RESTORE(%r1)	/* get non-volatile, CR, R2, USER_SR */
