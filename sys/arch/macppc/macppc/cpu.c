@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2000/07/08 07:23:17 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 2000/09/05 15:29:28 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -328,7 +328,9 @@ display_l2cr()
 			printf(" with parity");
 #endif
 		printf(" backside cache");
-	}
+	} else
+		printf(": L2 cache not enabled");
+
 	printf("\n");
 }
 
