@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp1.S,v 1.1 2002/07/09 23:32:38 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp1.S,v 1.2 2002/07/11 17:47:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -52,6 +52,8 @@
 
 #define _LOCORE
 #include <machine/frame.h>
+#include <machine/psl.h>
+#include <machine/signal.h>
 
 /*
  * When this code is run, the stack looks like:
