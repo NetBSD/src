@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.23 2002/03/25 20:42:50 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.24 2002/03/28 12:59:35 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.23 2002/03/25 20:42:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.24 2002/03/28 12:59:35 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -128,6 +128,10 @@ irix_sys_syssgi(p, v, retval)
 		return (sys_getgroups(p, &cup, retval));
 		break;
 	}
+
+	case IRIX_SGI_SETSID: 	/* Set session ID: setsid(2) */
+		return (sys_setsid(p, NULL, retval)); 
+		break;
 
 	case IRIX_SGI_GETSID: {	/* Get session ID: getsid(2) */
 		struct sys_getsid_args cup;
