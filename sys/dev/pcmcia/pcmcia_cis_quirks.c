@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.15 2001/12/16 05:44:33 ichiro Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.16 2001/12/16 06:07:50 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.15 2001/12/16 05:44:33 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.16 2001/12/16 06:07:50 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,8 @@ static const struct pcmcia_function pcmcia_fujitsu_j182a_func0 = {
 
 static const struct pcmcia_config_entry pcmcia_fujitsu_j182a_func0_cfe0 = {
 	0x31,			/* cfe number */
-	PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16 | PCMCIA_CFE_IRQLEVEL,
+	PCMCIA_CFE_IO8 | PCMCIA_CFE_IO16 |
+	PCMCIA_CFE_IRQLEVEL | PCMCIA_CFE_POWERDOWN,
 	PCMCIA_IFTYPE_IO,
 	1,			/* num_iospace */
 	10,			/* iomask */
