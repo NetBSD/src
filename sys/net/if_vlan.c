@@ -1,11 +1,11 @@
-/*	$NetBSD: if_vlan.c,v 1.10 2000/10/03 23:33:38 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.11 2000/10/03 23:50:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran and Jason R. Thorpe of Zembu Labs, Inc.
+ * by Andrew Doran, and by Jason R. Thorpe of Zembu Labs, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -182,7 +182,7 @@ static void	vlan_clone_destroy(struct ifnet *);
 static int	vlan_config(struct ifvlan *, struct ifnet *);
 static int	vlan_ioctl(struct ifnet *, u_long, caddr_t);
 static void	vlan_start(struct ifnet *);
-static int	vlan_unconfig(struct ifnet *);
+static void	vlan_unconfig(struct ifnet *);
 
 void		vlanattach(int);
 
@@ -205,12 +205,16 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifvlan *ifv;
 	struct ifnet *ifp;
+	int s;
 
 	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK);
 	memset(ifv, 0, sizeof(struct ifvlan));
 	ifp = &ifv->ifv_ec.ec_if;
 	LIST_INIT(&ifv->ifv_mc_listhead);
+
+	s = splnet();
 	LIST_INSERT_HEAD(&ifv_list, ifv, ifv_list);
+	splx(s);
 
 	sprintf(ifp->if_xname, "%s%d", ifc->ifc_name, unit);
 	ifp->if_softc = ifv;
@@ -226,14 +230,13 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 static void
 vlan_clone_destroy(struct ifnet *ifp)
 {
-	struct ifvlan *ifv;
+	struct ifvlan *ifv = ifp->if_softc;
 	int s;
 
-	ifv = (struct ifvlan *)ifp->if_softc;
-	s = splsoftnet();
-
+	s = splnet();
 	LIST_REMOVE(ifv, ifv_list);
 	vlan_unconfig(ifp);
+	splx(s);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -241,10 +244,11 @@ vlan_clone_destroy(struct ifnet *ifp)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	free(ifv, M_DEVBUF);
-
-	splx(s);
 }
 
+/*
+ * Configure a VLAN interface.  Must be called at splnet().
+ */
 static int
 vlan_config(struct ifvlan *ifv, struct ifnet *p)
 {
@@ -328,17 +332,17 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 	return (0);
 }
 
-static int
+/*
+ * Unconfigure a VLAN interface.  Must be called at splnet().
+ */
+static void
 vlan_unconfig(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
-	int s;
 
 	ifv = ifp->if_softc;
 	if (ifv->ifv_p == NULL)
-		return (0);
-
-	s = splsoftnet();
+		return;
 
 	/*
  	 * Since the interface is being unconfigured, we need to empty the
@@ -383,26 +387,44 @@ vlan_unconfig(struct ifnet *ifp)
 	ifv->ifv_p = NULL;
 	ifv->ifv_if.if_mtu = 0;
 
+	if_down(ifp);
+	ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
+}
+
+/*
+ * Called when a parent interface is detaching; destroy any VLAN
+ * configuration for the parent interface.
+ */
+void
+vlan_ifdetach(struct ifnet *p)
+{
+	struct ifvlan *ifv;
+	int s;
+
+	s = splnet();
+
+	for (ifv = LIST_FIRST(&ifv_list); ifv != NULL;
+	     ifv = LIST_NEXT(ifv, ifv_list)) {
+		if (ifv->ifv_p == p)
+			vlan_unconfig(&ifv->ifv_if);
+	}
+
 	splx(s);
-	return (0);
 }
 
 static int
 vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;	/* XXX */
-	struct ifaddr *ifa;
+	struct ifvlan *ifv = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifnet *pr;
-	struct ifreq *ifr;
-	struct ifvlan *ifv;
 	struct vlanreq vlr;
 	struct sockaddr *sa;
-	int error;
+	int s, error = 0;
 
-	error = 0;
-	ifr = (struct ifreq *)data;
-	ifa = (struct ifaddr *)data;
-	ifv = ifp->if_softc;
+	s = splnet();
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -444,8 +466,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		if (vlr.vlr_parent[0] == '\0') {
 			vlan_unconfig(ifp);
-			if_down(ifp);
-			ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
 			break;
 		}
 		if (vlr.vlr_tag != EVL_VLANOFTAG(vlr.vlr_tag)) {
@@ -495,6 +515,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = EINVAL;
 	}
+
+	splx(s);
 
 	return (error);
 }
