@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.22 1994/08/07 10:34:40 pk Exp $
+ *	$Id: rtld.c,v 1.23 1994/08/12 08:11:16 pk Exp $
  */
 
 #include <sys/param.h>
@@ -544,7 +544,8 @@ caddr_t			addr;
 	else
 		sym = "";
 
-	if (getenv("LD_SUPPRESS_WARNINGS") == NULL)
+	if (getenv("LD_SUPPRESS_WARNINGS") == NULL &&
+	    getenv("LD_WARN_NON_PURE_CODE") != NULL)
 		warnx("ld.so: warning: non pure code in %s at %x (%s)\n",
 				smp->som_path, r->r_address, sym);
 
