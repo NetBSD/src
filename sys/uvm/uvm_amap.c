@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.12 1998/08/13 02:10:59 eeh Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.13 1998/08/29 01:05:28 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -48,6 +48,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -56,6 +57,12 @@
 #define UVM_AMAP		/* pull in uvm_amap.h functions */
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
+
+/*
+ * pool for vm_amap_structures.
+ */
+
+struct pool uvm_amap_pool;
 
 /*
  * local functions
@@ -146,7 +153,7 @@ amap_alloc1(slots, padslots, waitf)
 	struct vm_amap *amap;
 	int totalslots = slots + padslots;
 
-	MALLOC(amap, struct vm_amap *, sizeof(*amap), M_UVMAMAP, waitf);
+	amap = pool_get(&uvm_amap_pool, (waitf == M_WAITOK) ? PR_WAITOK : 0);
 	if (amap == NULL)
 		return(NULL);
 
@@ -176,7 +183,7 @@ amap_alloc1(slots, padslots, waitf)
 		if (amap->am_bckptr)
 			FREE(amap->am_bckptr, M_UVMAMAP);
 	}
-	FREE(amap, M_UVMAMAP);
+	pool_put(&uvm_amap_pool, amap);
 	return (NULL);
 }
 
@@ -234,7 +241,7 @@ amap_free(amap)
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		FREE(amap->am_ppref, M_UVMAMAP);
 #endif
-	FREE(amap, M_UVMAMAP);
+	pool_put(&uvm_amap_pool, amap);
 
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
 }
@@ -1034,6 +1041,13 @@ uvm_anon_init()
 	struct vm_anon *anon;
 	int nanon = uvmexp.free - (uvmexp.free / 16); /* XXXCDC ??? */
 	int lcv;
+
+	/*
+	 * Initialize the vm_amap pool.
+	 */
+	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0,
+	    "amappl", 0,
+	    pool_page_alloc_nointr, pool_page_free_nointr, M_UVMAMAP);
 
 	MALLOC(anon, struct vm_anon *, sizeof(*anon) * nanon, M_UVMAMAP, M_NOWAIT);
 	if (anon == NULL) {
