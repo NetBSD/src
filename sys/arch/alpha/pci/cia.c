@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.c,v 1.5 1996/04/13 00:24:30 cgd Exp $	*/
+/*	$NetBSD: cia.c,v 1.6 1996/06/10 00:02:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -100,6 +100,9 @@ cia_init(ccp)
         cia_bus_io_init(&ccp->cc_bc, ccp);
         cia_bus_mem_init(&ccp->cc_bc, ccp);
         cia_pci_init(&ccp->cc_pc, ccp);
+
+	ccp->cc_hae_mem = REGVAL(CIA_CSR_HAE_MEM);
+	ccp->cc_hae_io = REGVAL(CIA_CSR_HAE_IO);
 }
 
 void
