@@ -2,12 +2,12 @@ Installation is currently only supported from the local Macintosh hard
 drive or from an AppleShare volume (however, you may upgrade a system from
 within NetBSD; see the section on upgrading for more details).  This means
 that you'll need at least enough room for the largest file that you will
-have to install.  This is the 8.6MB base.tgz file.  There has been talk of
+have to install.  This is the 8.6M base.tgz file.  There has been talk of
 allowing an install from split files.  If you have the time, desire, and
 knowledge, please feel free to add that functionality.
 
 If the install is being done from an AppleShare-mounted volume, the install
-utility must be in the same folder as the data files.
+utility must be in the same folder as the binary distribution sets.
 
 Each distribution file is in "raw" archive format.
 
