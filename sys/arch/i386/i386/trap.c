@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.52 1994/09/05 01:08:43 mycroft Exp $
+ *	$Id: trap.c,v 1.53 1994/10/20 04:43:26 cgd Exp $
  */
 
 /*
@@ -534,23 +534,24 @@ syscall(frame)
 		callp = &callp[0];		/* illegal */
 	else
 		callp = &callp[code];
-	argsize = callp->sy_narg * sizeof(int);
+	argsize = callp->sy_argsize;
 	if (argsize && (error = copyin(params, (caddr_t)args, argsize))) {
 #ifdef SYSCALL_DEBUG
-		scdebug_call(p, code, callp->sy_narg, args);
+		scdebug_call(p, code, argsize, args);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
+			ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize,
+			    &args);
 #endif
 		goto bad;
 	}
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, callp->sy_narg, args);
+	scdebug_call(p, code, argsize, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, &args);
 #endif
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;

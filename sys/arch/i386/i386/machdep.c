@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.122 1994/10/09 12:57:15 mycroft Exp $
+ *	$Id: machdep.c,v 1.123 1994/10/20 04:43:21 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -597,14 +598,12 @@ check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
-struct sigreturn_args {
-	struct sigcontext *scp;
-};
-
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
 {
 	struct sigcontext *scp, context;
 	register struct sigframe *fp;
@@ -618,7 +617,7 @@ sigreturn(p, uap, retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	scp = uap->scp;
+	scp = SCARG(uap, sigcntxp);
 	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
@@ -864,7 +863,7 @@ setregs(p, entry, stack, retval)
 	struct proc *p;
 	u_long entry;
 	u_long stack;
-	int retval[2];
+	register_t *retval;
 {
 	register struct trapframe *tf;
 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.10 1994/04/24 22:49:05 mycroft Exp $
+ *	$Id: sys_machdep.c,v 1.11 1994/10/20 04:43:24 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -50,6 +50,9 @@
 #include <sys/buf.h>
 #include <sys/trace.h>
 #include <sys/signal.h>
+
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -67,39 +70,40 @@ int	nvualarm;
 
 vtrace(p, uap, retval)
 	struct proc *p;
-	register struct args {
-		int	request;
-		int	value;
-	} *uap;
-	int *retval;
+	register struct vtrace_args /* {
+		syscallarg(int) request;
+		syscallarg(int) value;
+	} */ *uap;
+	register_t *retval;
 {
 	int vdoualarm();
 
-	switch (uap->request) {
+	switch (SCARG(uap, request)) {
 
 	case VTR_DISABLE:		/* disable a trace point */
 	case VTR_ENABLE:		/* enable a trace point */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
-		traceflags[uap->value] = uap->request;
+		*retval = traceflags[SCARG(uap, value)];
+		traceflags[SCARG(uap, value)] = SCARG(uap, request);
 		break;
 
 	case VTR_VALUE:		/* return a trace point setting */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
+		*retval = traceflags[SCARG(uap, value)];
 		break;
 
 	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
+		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
+		    nvualarm > 5)
 			return (EINVAL);
 		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, uap->value);
+		timeout(vdoualarm, (caddr_t)p->p_pid, SCARG(uap, value));
 		break;
 
 	case VTR_STAMP:
-		trace(TR_STAMP, uap->value, p->p_pid);
+		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
 		break;
 	}
 	return (0);
@@ -138,7 +142,7 @@ int
 i386_get_ldt(p, args, retval)
 	struct proc *p;
 	char *args;
-	int *retval;
+	register_t *retval;
 {
 	int error = 0;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -152,29 +156,30 @@ i386_get_ldt(p, args, retval)
 
 	uap = &ua;
 #ifdef	DEBUG
-	printf("i386_get_ldt: start=%d num=%d descs=%x\n", uap->start, uap->num, uap->desc);
+	printf("i386_get_ldt: start=%d num=%d descs=%x\n", SCARG(uap, start),
+	    SCARG(uap, num), SCARG(uap, desc));
 #endif
 
-	if (uap->start < 0 || uap->num < 0)
+	if (SCARG(uap, start) < 0 || SCARG(uap, num) < 0)
 		return(EINVAL);
 
 	s = splhigh();
 
 	if (pcb->pcb_ldt) {
 		nldt = pcb->pcb_ldt_len;
-		num = min(uap->num, nldt);
-		lp = &((union descriptor *)(pcb->pcb_ldt))[uap->start];
+		num = min(SCARG(uap, num), nldt);
+		lp = &((union descriptor *)(pcb->pcb_ldt))[SCARG(uap, start)];
 	} else {
 		nldt = sizeof(ldt)/sizeof(ldt[0]);
-		num = min(uap->num, nldt);
-		lp = &ldt[uap->start];
+		num = min(SCARG(uap, num), nldt);
+		lp = &ldt[SCARG(uap, start)];
 	}
-	if (uap->start > nldt) {
+	if (SCARG(uap, start) > nldt) {
 		splx(s);
 		return(EINVAL);
 	}
 
-	error = copyout(lp, uap->desc, num * sizeof(union descriptor));
+	error = copyout(lp, SCARG(uap, desc), num * sizeof(union descriptor));
 	if (!error)
 		*retval = num;
 
@@ -192,7 +197,7 @@ int
 i386_set_ldt(p, args, retval)
 	struct proc *p;
 	char *args;
-	int *retval;
+	register_t *retval;
 {
 	int error = 0, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
@@ -206,15 +211,16 @@ i386_set_ldt(p, args, retval)
 	uap = &ua;
 
 #ifdef	DEBUG
-	printf("i386_set_ldt: start=%d num=%d descs=%x\n", uap->start, uap->num, uap->desc);
+	printf("i386_set_ldt: start=%d num=%d descs=%x\n", SCARG(uap, start),
+	    SCARG(uap, num), SCARG(uap, desc));
 #endif
 
-	if (uap->start < 0 || uap->num < 0)
+	if (SCARG(uap, start) < 0 || SCARG(uap, num) < 0)
 		return(EINVAL);
 
 	/* XXX Should be 8192 ! */
-	if (uap->start > 512 ||
-	    (uap->start + uap->num) > 512)
+	if (SCARG(uap, start) > 512 ||
+	    (SCARG(uap, start) + SCARG(uap, num)) > 512)
 		return(EINVAL);
 
 	/* allocate user ldt */
@@ -231,9 +237,9 @@ i386_set_ldt(p, args, retval)
 	}
 
 	/* Check descriptors for access violations */
-	for (i = 0, n = uap->start; i < uap->num; i++, n++) {
+	for (i = 0, n = SCARG(uap, start); i < SCARG(uap, num); i++, n++) {
 		union descriptor desc, *dp;
-		dp = &uap->desc[i];
+		dp = &SCARG(uap, desc)[i];
 		error = copyin(dp, &desc, sizeof(union descriptor));
 		if (error)
 			return(error);
@@ -282,9 +288,10 @@ i386_set_ldt(p, args, retval)
 	s = splhigh();
 
 	/* Fill in range */
-	for (i = 0, n = uap->start; i < uap->num && !error; i++, n++) {
+	for (i = 0, n = SCARG(uap, start); i < SCARG(uap, num) && !error;
+	    i++, n++) {
 		union descriptor desc, *dp;
-		dp = &uap->desc[i];
+		dp = &SCARG(uap, desc)[i];
 		lp = &((union descriptor *)(pcb->pcb_ldt))[n];
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): ldtp=%x\n", p->p_pid, lp);
@@ -292,7 +299,7 @@ i386_set_ldt(p, args, retval)
 		error = copyin(dp, lp, sizeof(union descriptor));
 	}
 	if (!error) {
-		*retval = uap->start;
+		*retval = SCARG(uap, start);
 		if (p == curproc)
 			set_user_ldt(pcb);
 	}
@@ -302,27 +309,25 @@ i386_set_ldt(p, args, retval)
 }
 #endif	/* USER_LDT */
 
-struct sysarch_args {
-	int op;
-	char *parms;
-};
-
 int
 sysarch(p, uap, retval)
 	struct proc *p;
-	register struct sysarch_args *uap;
-	int *retval;
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
+	register_t *retval;
 {
 	int error = 0;
 
-	switch(uap->op) {
+	switch(SCARG(uap, op)) {
 #ifdef	USER_LDT
 	case I386_GET_LDT: 
-		error = i386_get_ldt(p, uap->parms, retval);
+		error = i386_get_ldt(p, SCARG(uap, parms), retval);
 		break;
 
 	case I386_SET_LDT: 
-		error = i386_set_ldt(p, uap->parms, retval);
+		error = i386_set_ldt(p, SCARG(uap, parms), retval);
 		break;
 #endif
 	default:
