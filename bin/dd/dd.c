@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.18 2000/10/16 09:22:34 kleink Exp $	*/
+/*	$NetBSD: dd.c,v 1.19 2000/10/25 10:57:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.18 2000/10/16 09:22:34 kleink Exp $");
+__RCSID("$NetBSD: dd.c,v 1.19 2000/10/25 10:57:20 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,9 +97,9 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
-			default:
-				errx(EXIT_FAILURE, "usage: dd [operand ...]");
-				/* NOTREACHED */
+		default:
+			errx(EXIT_FAILURE, "usage: dd [operand ...]");
+			/* NOTREACHED */
 		}
 	}
 	argc -= (optind - 1);
