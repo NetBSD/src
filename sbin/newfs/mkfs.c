@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.38.4.2 2001/11/25 19:28:00 he Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.38.4.3 2001/11/25 19:32:37 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.38.4.2 2001/11/25 19:28:00 he Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.38.4.3 2001/11/25 19:32:37 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,8 +542,6 @@ next:
 	sblock.fs_rotdelay = rotdelay;
 	sblock.fs_minfree = minfree;
 	sblock.fs_maxcontig = maxcontig;
-	sblock.fs_headswitch = headswitch;
-	sblock.fs_trkseek = trackseek;
 	sblock.fs_maxbpg = maxbpg;
 	sblock.fs_rps = rpm / 60;
 	sblock.fs_optim = opt;
