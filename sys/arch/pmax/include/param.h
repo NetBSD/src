@@ -1,5 +1,5 @@
-/* $Id: param.h,v 1.26.2.1 1998/10/15 02:38:13 nisimura Exp $ */
-/*	$NetBSD: param.h,v 1.26.2.1 1998/10/15 02:38:13 nisimura Exp $	*/
+/* $Id: param.h,v 1.26.2.2 1999/02/24 14:33:34 drochner Exp $ */
+/*	$NetBSD: param.h,v 1.26.2.2 1999/02/24 14:33:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,8 +52,10 @@
 /*
  * Machine dependent constants for MIPS-based DECstations.
  */
-#define _MACHINE	pmax
-#define MACHINE		"pmax"
+#define	_MACHINE_ARCH	mipsel
+#define	MACHINE_ARCH	"mipsel"
+#define	_MACHINE	pmax
+#define	MACHINE		"pmax"
 #define MID_MACHINE	MID_PMAX
 
 #define KERNBASE	0x80000000	/* start of kernel virtual */
