@@ -1,3 +1,5 @@
+/*	$NetBSD: fabs.S,v 1.2 1995/12/13 19:36:06 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,15 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)fabs.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: fabs.S,v 1.1 1993/11/25 23:36:59 paulus Exp $"
+#if 0
+	RCSID("from: @(#)fabs.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: fabs.S,v 1.2 1995/12/13 19:36:06 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* fabs - floating absolute value */
-
-#include "DEFS.h"
 
 ENTRY(fabs)
 	fmoved	sp@(4),fp0

@@ -1,3 +1,5 @@
+/*	$NetBSD: fpsetround.S,v 1.6 1995/12/13 19:36:20 thorpej Exp $	*/
+
 /*
  * Written by J.T. Conklin, Apr 6, 1995
  * Public Domain.

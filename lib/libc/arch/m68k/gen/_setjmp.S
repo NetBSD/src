@@ -1,3 +1,5 @@
+/*	$NetBSD: _setjmp.S,v 1.2 1995/12/13 19:35:39 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,10 +37,14 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: _setjmp.S,v 1.1 1993/11/25 23:36:47 paulus Exp $"
+#if 0
+	RCSID("from: @(#)_setjmp.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: _setjmp.S,v 1.2 1995/12/13 19:35:39 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,8 +57,6 @@
  * by restoring registers from the stack,
  * The previous signal state is NOT restored.
  */
-
-#include "DEFS.h"
 
 ENTRY(_setjmp)
 	movl	sp@(4),a0	/* save area pointer */
