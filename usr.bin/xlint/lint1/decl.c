@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.4 1995/10/02 17:14:11 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.5 1995/10/02 17:18:57 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.4 1995/10/02 17:14:11 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.5 1995/10/02 17:18:57 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -345,10 +345,6 @@ addtype(tp)
 		}
 		dcs->d_type = tp;
 		return;
-	} else {
-		if (tflag && tp->t_tspec == SIGNED)
-			/* 'signed' is illegal in traditional C */
-			warning(265);
 	}
 
 	t = tp->t_tspec;
@@ -527,12 +523,6 @@ void
 addqual(q)
 	tqual_t	q;
 {
-	if (tflag) {
-		/* const and volatile are illegal in traditional C */
-		warning(269);
-		return;
-	}
-
 	if (q == CONST) {
 		if (dcs->d_const) {
 			/* duplicate "%s" */
@@ -1801,7 +1791,7 @@ decl1ext(dsym, initflg)
 			dsym->s_inline = 1;
 		} else {
 			/* variable declared inline: %s */
-			warning(310, dsym->s_name);
+			warning(268, dsym->s_name);
 		}
 	}
 
@@ -2282,7 +2272,7 @@ decl1arg(sym, initflg)
 
 	if (dcs->d_inline)
 		/* argument declared inline: %s */
-		warning(311, sym->s_name);
+		warning(269, sym->s_name);
 
 	/*
 	 * Arguments must have complete types. lengths() prints the needed
@@ -2489,7 +2479,7 @@ decl1loc(dsym, initflg)
 			dsym->s_inline = 1;
 		} else {
 			/* variable declared inline: %s */
-			warning(310, dsym->s_name);
+			warning(268, dsym->s_name);
 		}
 	}
 

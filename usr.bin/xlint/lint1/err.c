@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.3 1995/10/02 17:14:17 jpo Exp $	*/
+/*	$NetBSD: err.c,v 1.4 1995/10/02 17:19:01 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.3 1995/10/02 17:14:17 jpo Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.4 1995/10/02 17:19:01 jpo Exp $";
 #endif
 
 /* number of errors found */
@@ -321,11 +321,11 @@ const	char *msgs[] = {
 	"\\\" inside character constants undefined in traditional C", /* 262 */
 	"\\? undefined in traditional C",			      /* 263 */
 	"\\v undefined in traditional C",			      /* 264 */
-	"'signed' illegal in traditional C",			      /* 265 */
+	"",							      /* 265 */
 	"'long double' is illegal in traditional C",		      /* 266 */
 	"shift equal to size of object",			      /* 267 */
-	"",							      /* 268*/
-	"const and volatile are illegal in traditional C",	      /* 269 */
+	"variable declared inline: %s",				      /* 268 */
+	"argument declared inline: %s",				      /* 269 */
 	"function prototypes are illegal in traditional C",	      /* 270 */
 	"switch expression must be of type `int' in traditional C",   /* 271 */
 	"empty translation unit",				      /* 272 */
@@ -366,8 +366,6 @@ const	char *msgs[] = {
 	"static variable %s set but not used",			      /* 307 */
 	"extra bits set to 1 in conversion of '%s' to '%s', op %s",   /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
-	"variable declared inline: %s",				      /* 310 */
-	"argument declared inline: %s",				      /* 311 */
 };
 
 /*

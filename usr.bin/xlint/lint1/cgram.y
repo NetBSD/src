@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.4 1995/10/02 17:14:06 jpo Exp $	*/
+/*	$NetBSD: cgram.y,v 1.5 1995/10/02 17:18:53 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.4 1995/10/02 17:14:06 jpo Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.5 1995/10/02 17:18:53 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -933,15 +933,10 @@ type_qualifier_list:
 type_qualifier:
 	  T_QUAL {
 		$$ = xcalloc(1, sizeof (pqinf_t));
-		if (tflag) {
-			/* const and volatile illegal in traditional C */
-			warning(269);
+		if ($1 == CONST) {
+			$$->p_const = 1;
 		} else {
-			if ($1 == CONST) {
-				$$->p_const = 1;
-			} else {
-				$$->p_volatile = 1;
-			}
+			$$->p_volatile = 1;
 		}
 	  }
 	;

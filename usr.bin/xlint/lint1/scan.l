@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.4 1995/10/02 17:14:40 jpo Exp $	*/
+/*	$NetBSD: scan.l,v 1.5 1995/10/02 17:19:03 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: scan.l,v 1.4 1995/10/02 17:14:40 jpo Exp $";
+static char rcsid[] = "$NetBSD: scan.l,v 1.5 1995/10/02 17:19:03 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -188,41 +188,51 @@ static	struct	kwtab {
 	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
 	tspec_t	kw_tspec;	/* type spec. if kw_token T_TYPE or T_SOU */
 	tqual_t	kw_tqual;	/* type qual. fi kw_token T_QUAL */
+	u_int	kw_stdc : 1;	/* STDC keyword */
+	u_int	kw_gcc : 1;	/* GCC keyword */
 } kwtab[] = {
-	{ "auto",	T_SCLASS,	AUTO,	0,	0	},
-	{ "break",	T_BREAK,	0,	0,	0	},
-	{ "case",	T_CASE,		0,	0,	0	},
-	{ "char",	T_TYPE,		0,	CHAR,	0	},
-	{ "const",	T_QUAL,		0,	0,	CONST	},
-	{ "continue",	T_CONTINUE,	0,	0,	0	},
-	{ "default",	T_DEFAULT,	0,	0,	0	},
-	{ "do",		T_DO,		0,	0,	0	},
-	{ "double",	T_TYPE,		0,	DOUBLE,	0	},
-	{ "else",	T_ELSE,		0,	0,	0	},
-	{ "enum",	T_ENUM,		0,	0,	0	},
-	{ "extern",	T_SCLASS,	EXTERN,	0,	0	},
-	{ "float",	T_TYPE,		0,	FLOAT,	0	},
-	{ "for",	T_FOR,		0,	0,	0	},
-	{ "goto",	T_GOTO,		0,	0,	0	},
-	{ "if",		T_IF,		0,	0,	0	},
-	{ "inline",	T_SCLASS,	INLINE,	0,	0       },
-	{ "int",	T_TYPE,		0,	INT,	0	},
-	{ "long",	T_TYPE,		0,	LONG,	0	},
-	{ "register",	T_SCLASS,	REG,	0,	0	},
-	{ "return",	T_RETURN,	0,	0,	0	},
-	{ "short",	T_TYPE,		0,	SHORT,	0	},
-	{ "signed",	T_TYPE,		0,	SIGNED,	0	},
-	{ "sizeof",	T_SIZEOF,	0,	0,	0	},
-	{ "static",	T_SCLASS,	STATIC,	0,	0	},
-	{ "struct",	T_SOU,		0,	STRUCT,	0	},
-	{ "switch",	T_SWITCH,	0,	0,	0	},
-	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0	},
-	{ "union",	T_SOU,		0,	UNION,	0	},
-	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0	},
-	{ "void",	T_TYPE,		0,	VOID,	0	},
-	{ "volatile",	T_QUAL,		0,	0,	VOLATILE },
-	{ "while",	T_WHILE,	0,	0,	0	},
-	{ NULL,		0,		0,	0,	0	}
+	{ "auto",	T_SCLASS,	AUTO,	0,	0,	  0, 0 },
+	{ "break",	T_BREAK,	0,	0,	0,	  0, 0 },
+	{ "case",	T_CASE,		0,	0,	0,	  0, 0 },
+	{ "char",	T_TYPE,		0,	CHAR,	0,	  0, 0 },
+	{ "const",	T_QUAL,		0,	0,	CONST,	  1, 0 },
+	{ "__const__",	T_QUAL,		0,	0,	CONST,	  0, 0 },
+	{ "__const",	T_QUAL,		0,	0,	CONST,	  0, 0 },
+	{ "continue",	T_CONTINUE,	0,	0,	0,	  0, 0 },
+	{ "default",	T_DEFAULT,	0,	0,	0,	  0, 0 },
+	{ "do",		T_DO,		0,	0,	0,	  0, 0 },
+	{ "double",	T_TYPE,		0,	DOUBLE,	0,	  0, 0 },
+	{ "else",	T_ELSE,		0,	0,	0,	  0, 0 },
+	{ "enum",	T_ENUM,		0,	0,	0,	  0, 0 },
+	{ "extern",	T_SCLASS,	EXTERN,	0,	0,	  0, 0 },
+	{ "float",	T_TYPE,		0,	FLOAT,	0,	  0, 0 },
+	{ "for",	T_FOR,		0,	0,	0,	  0, 0 },
+	{ "goto",	T_GOTO,		0,	0,	0,	  0, 0 },
+	{ "if",		T_IF,		0,	0,	0,	  0, 0 },
+	{ "inline",	T_SCLASS,	INLINE,	0,	0,	  0, 1 },
+	{ "__inline__",	T_SCLASS,	INLINE,	0,	0,	  0, 0 },
+	{ "__inline",	T_SCLASS,	INLINE,	0,	0,	  0, 0 },
+	{ "int",	T_TYPE,		0,	INT,	0,	  0, 0 },
+	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0 },
+	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0 },
+	{ "return",	T_RETURN,	0,	0,	0,	  0, 0 },
+	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0 },
+	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1, 0 },
+	{ "__signed__",	T_TYPE,		0,	SIGNED,	0,	  0, 0 },
+	{ "__signed",	T_TYPE,		0,	SIGNED,	0,	  0, 0 },
+	{ "sizeof",	T_SIZEOF,	0,	0,	0,	  0, 0 },
+	{ "static",	T_SCLASS,	STATIC,	0,	0,	  0, 0 },
+	{ "struct",	T_SOU,		0,	STRUCT,	0,	  0, 0 },
+	{ "switch",	T_SWITCH,	0,	0,	0,	  0, 0 },
+	{ "typedef",	T_SCLASS,	TYPEDEF, 0,	0,	  0, 0 },
+	{ "union",	T_SOU,		0,	UNION,	0,	  0, 0 },
+	{ "unsigned",	T_TYPE,		0,	UNSIGN,	0,	  0, 0 },
+	{ "void",	T_TYPE,		0,	VOID,	0,	  0, 0 },
+	{ "volatile",	T_QUAL,		0,	0,	VOLATILE, 1, 0 },
+	{ "__volatile__", T_QUAL,	0,	0,	VOLATILE, 0, 0 },
+	{ "__volatile",	T_QUAL,		0,	0,	VOLATILE, 0, 0 },
+	{ "while",	T_WHILE,	0,	0,	0,	  0, 0 },
+	{ NULL,		0,		0,	0,	0,	  0, 0 }
 };
 
 /* Symbol table */
@@ -257,6 +267,10 @@ initscan()
 	u_quad_t uq;
 
 	for (kw = kwtab; kw->kw_name != NULL; kw++) {
+		if (kw->kw_stdc && tflag)
+			continue;
+		if (kw->kw_gcc && !gflag)
+			continue;
 		sym = getblk(sizeof (sym_t));
 		sym->s_name = kw->kw_name;
 		sym->s_keyw = 1;
