@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.4 2002/10/25 18:57:06 junyoung Exp $	*/
+/*	$NetBSD: machfb.c,v 1.5 2002/10/29 13:50:11 junyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -61,10 +61,6 @@
 #define MACH64_REG_OFF		0x7ffc00
 
 #define	NBARS		3	/* number of Mach64 PCI BARs */
-
-#ifdef __sparc__
-int sparc_screen_is_console(struct pci_attach_args *);
-#endif
 
 struct vga_bar {
 	bus_addr_t vb_base;
@@ -257,6 +253,7 @@ void	mach64_restore_screen(struct mach64screen *,
 	    const struct wsscreen_descr *, u_int16_t *);
 void 	mach64_set_screentype(struct mach64_softc *,
 	    const struct wsscreen_descr *);
+int	mach64_is_console(struct pci_attach_args *);
 
 void	mach64_cursor(void *, int, int, int);
 int	mach64_mapchar(void *, int, u_int *);
@@ -575,11 +572,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	mach64_rasops_info.ri_ops.allocattr(&mach64_rasops_info, 0, 0, 0,
 	    &defattr);
 
-#ifdef __sparc__
-	console = sparc_screen_is_console(pa);
-#else
-	console = 1;
-#endif
+	console = mach64_is_console(pa);
 	if (console)
 		wsdisplay_cnattach(&mach64_defaultscreen, &mach64_rasops_info, 
 		    0, 0, defattr);
@@ -1130,6 +1123,22 @@ mach64_set_screentype(struct mach64_softc *sc, const struct wsscreen_descr *des)
 
 }
 
+int
+mach64_is_console(struct pci_attach_args *pa)
+{
+#ifdef __sparc__
+	int node;
+
+	node = PCITAG_NODE(pa->pa_tag);
+	if (node == -1)
+		return 0;
+
+	return (node == OF_instance_to_package(OF_stdout()));
+#else
+	return 1;
+#endif
+}
+
 /*
  * wsdisplay_emulops
  */
@@ -1280,17 +1289,3 @@ mach64_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 
 	return 0;
 }
-
-#ifdef __sparc__
-int
-sparc_screen_is_console(struct pci_attach_args *pa)
-{
-	int node;
-
-	node = PCITAG_NODE(pa->pa_tag);
-	if (node == -1)
-		return 0;
-
-	return (node == OF_instance_to_package(OF_stdout()));
-}
-#endif
