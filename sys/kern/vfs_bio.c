@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.67.4.1 2001/04/01 17:06:00 he Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.67.4.2 2002/02/13 22:11:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -685,7 +685,7 @@ start:
 		if (!ISSET(bp->b_flags, B_INVAL)) {
 #ifdef DIAGNOSTIC
 			if (ISSET(bp->b_flags, B_DONE|B_DELWRI) &&
-			    bp->b_bcount < size)
+			    bp->b_bcount < size && vp->v_type != VBLK)
 				panic("getblk: block size invariant failed");
 #endif
 			SET(bp->b_flags, B_BUSY);
