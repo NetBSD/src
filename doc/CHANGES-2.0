@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.391 2004/08/12 18:27:49 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.392 2004/08/12 18:33:30 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6457,3 +6457,10 @@ lib/libc/stdlib/Makefile.inc			1.57
 
 	Actually add _Exit.
 	[yamt, ticket #750]
+
+etc/rc.d/sendmail				1.19
+
+	Switch the check to see if the corresponding db file needs to be
+	rebuilt from "newer than" to "not older than".  The latter check also
+	manages to take into account cases where the db file doesnt yet exist.
+	[atatat, ticket #753]
