@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.12 2000/05/10 21:22:34 dante Exp $        */
+/* $NetBSD: adwlib.c,v 1.13 2000/05/14 18:25:49 dante Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -3033,11 +3033,7 @@ ADW_SOFTC	*sc;
 	}
 
 	/* Translate initialization return value to status value. */
-	if (status == 0) {
-		status = ADW_TRUE;
-	} else {
-		status = ADW_FALSE;
-	}
+	status = (status == 0)? ADW_TRUE : ADW_FALSE;
 
 	/*
 	 * Restore the BIOS signature word.
@@ -3248,7 +3244,7 @@ u_int32_t       idle_cmd_parameter;
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int		result;
+	u_int16_t	result;
 	u_int32_t	i, j, s;
 
 	s = splbio();
@@ -3256,8 +3252,6 @@ u_int32_t       idle_cmd_parameter;
 	/*
 	 * Clear the idle command status which is set by the microcode
 	 * to a non-zero value to indicate when the command is completed.
-	 * The non-zero result is one of the IDLE_CMD_STATUS_* values
-	 * defined in a_advlib.h.
 	 */
 	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD_STATUS, (u_int16_t) 0);
 
@@ -3268,7 +3262,7 @@ u_int32_t       idle_cmd_parameter;
 	 * parameters have been written to LRAM.
 	 */
 	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD_PARAMETER,
-	    idle_cmd_parameter);
+			idle_cmd_parameter);
 	ADW_WRITE_WORD_LRAM(iot, ioh, ASC_MC_IDLE_CMD, idle_cmd);
 
 	/*
@@ -3318,7 +3312,7 @@ ADW_SCSI_REQ_Q *scsiq;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int8_t		tid;
-	ADW_SCSI_INQUIRY	*inq;
+	struct scsipi_inquiry_data *inq;
 	u_int16_t		tidmask;
 	u_int16_t		cfg_word;
 
@@ -3339,12 +3333,13 @@ ADW_SCSI_REQ_Q *scsiq;
 
 	tid = scsiq->target_id;
 
-	inq = (ADW_SCSI_INQUIRY *) scsiq->vdata_addr;
+	inq = (struct scsipi_inquiry_data *) scsiq->vdata_addr;
 
 	/*
 	 * WDTR, SDTR, and Tag Queuing cannot be enabled for old devices.
 	 */
-	if (inq->rsp_data_fmt < 2 && inq->ansi_apr_ver < 2) {
+	if (((inq->response_format & SID_RespDataFmt) < 2) /*SCSI-1 | CCS*/ &&
+	    ((inq->version & SID_ANSII) < 2)) {
 		return;
 	} else {
 		/*
@@ -3369,7 +3364,7 @@ ADW_SCSI_REQ_Q *scsiq;
 #ifdef SCSI_ADW_WDTR_DISABLE
 	if(!(tidmask & SCSI_ADW_WDTR_DISABLE))
 #endif /* SCSI_ADW_WDTR_DISABLE */
-		if ((sc->wdtr_able & tidmask) && inq->WBus16) {
+		if ((sc->wdtr_able & tidmask) && (inq->flags3 & SID_WBus16)) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_WDTR_ABLE,
 					cfg_word);
 			if ((cfg_word & tidmask) == 0) {
@@ -3407,7 +3402,7 @@ ADW_SCSI_REQ_Q *scsiq;
 #ifdef SCSI_ADW_SDTR_DISABLE
 	if(!(tidmask & SCSI_ADW_SDTR_DISABLE))
 #endif /* SCSI_ADW_SDTR_DISABLE */
-		if ((sc->sdtr_able & tidmask) && inq->Sync) {
+		if ((sc->sdtr_able & tidmask) && (inq->flags3 & SID_Sync)) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_SDTR_ABLE, cfg_word);
 			if ((cfg_word & tidmask) == 0) {
 				cfg_word |= tidmask;
@@ -3442,7 +3437,8 @@ ADW_SCSI_REQ_Q *scsiq;
 			 * and WDTR messages to negotiate synchronous speed
 			 * and offset, transfer width, and protocol options.
 			 */
-			if (inq->Clocking & INQ_CLOCKING_DT_ONLY)
+			if ((inq->flags4 & SID_Cloacking) &
+					SIDV_CLOCKING_DT_ONLY)
 			{
 				ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_PPR_ABLE,
 						sc->ppr_able);
@@ -3467,7 +3463,7 @@ ADW_SCSI_REQ_Q *scsiq;
 #ifdef SCSI_ADW_TAGQ_DISABLE
 	if(!(tidmask & SCSI_ADW_TAGQ_DISABLE))
 #endif /* SCSI_ADW_TAGQ_DISABLE */
-		if ((sc->tagqng_able & tidmask) && inq->CmdQue) {
+		if ((sc->tagqng_able & tidmask) && (inq->flags3 & SID_CmdQue)) {
 			ADW_READ_WORD_LRAM(iot, ioh, ASC_MC_TAGQNG_ABLE,
 					cfg_word);
 			cfg_word |= tidmask;
