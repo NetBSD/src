@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.24 2004/03/05 02:53:58 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.25 2004/03/07 22:15:19 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.24 2004/03/05 02:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.25 2004/03/07 22:15:19 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -150,7 +150,6 @@ static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
           )                                                               \
         )
 
-static struct pool rf_stripelock_pool;
 #define RF_MAX_FREE_STRIPELOCK 128
 #define RF_MIN_FREE_STRIPELOCK  32
 
@@ -161,7 +160,7 @@ static void rf_RaidShutdownStripeLocks(void *);
 static void 
 rf_ShutdownStripeLockFreeList(void *ignored)
 {
-	pool_destroy(&rf_stripelock_pool);
+	pool_destroy(&rf_pools.stripelock);
 }
 
 int 
@@ -169,12 +168,8 @@ rf_ConfigureStripeLockFreeList(RF_ShutdownList_t **listp)
 {
 	unsigned mask;
 
-	pool_init(&rf_stripelock_pool, sizeof(RF_StripeLockDesc_t),
-		  0, 0, 0, "rf_stripelock_pl", NULL);
-	pool_sethiwat(&rf_stripelock_pool, RF_MAX_FREE_STRIPELOCK);
-	pool_prime(&rf_stripelock_pool, RF_MIN_FREE_STRIPELOCK);
-	pool_setlowat(&rf_stripelock_pool, RF_MIN_FREE_STRIPELOCK);
-
+	rf_pool_init(&rf_pools.stripelock, sizeof(RF_StripeLockDesc_t),
+		     "rf_stripelock_pl", RF_MIN_FREE_STRIPELOCK, RF_MAX_FREE_STRIPELOCK);
 	rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
 
 	for (mask = 0x1; mask; mask <<= 1)
@@ -637,7 +632,7 @@ AllocStripeLockDesc(RF_StripeNum_t stripeID)
 {
 	RF_StripeLockDesc_t *p;
 
-	p = pool_get(&rf_stripelock_pool, PR_WAITOK);
+	p = pool_get(&rf_pools.stripelock, PR_WAITOK);
 	if (p) {
 		p->stripeID = stripeID;
 		p->granted = NULL;
@@ -652,7 +647,7 @@ AllocStripeLockDesc(RF_StripeNum_t stripeID)
 static void 
 FreeStripeLockDesc(RF_StripeLockDesc_t *p)
 {
-	pool_put(&rf_stripelock_pool, p);
+	pool_put(&rf_pools.stripelock, p);
 }
 
 #if RF_DEBUG_STRIPELOCK

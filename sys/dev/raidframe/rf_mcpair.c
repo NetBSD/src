@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.16 2004/03/05 02:53:58 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.17 2004/03/07 22:15:19 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.16 2004/03/05 02:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.17 2004/03/07 22:15:19 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -42,11 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.16 2004/03/05 02:53:58 oster Exp $")
 #include "rf_debugMem.h"
 #include "rf_general.h"
 #include "rf_shutdown.h"
+#include "rf_netbsd.h"
 
 #include <sys/pool.h>
 #include <sys/proc.h>
 
-static struct pool rf_mcpair_pool;
 #define RF_MAX_FREE_MCPAIR 128
 #define RF_MIN_FREE_MCPAIR  24
 
@@ -55,19 +55,15 @@ static void rf_ShutdownMCPair(void *);
 static void 
 rf_ShutdownMCPair(void *ignored)
 {
-	pool_destroy(&rf_mcpair_pool);
+	pool_destroy(&rf_pools.mcpair);
 }
 
 int 
 rf_ConfigureMCPair(RF_ShutdownList_t **listp)
 {
 
-	pool_init(&rf_mcpair_pool, sizeof(RF_MCPair_t), 0, 0, 0,
-		  "rf_mcpair_pl", NULL);
-	pool_sethiwat(&rf_mcpair_pool, RF_MAX_FREE_MCPAIR);
-	pool_prime(&rf_mcpair_pool, RF_MIN_FREE_MCPAIR);
-	pool_setlowat(&rf_mcpair_pool, RF_MIN_FREE_MCPAIR);
-
+	rf_pool_init(&rf_pools.mcpair, sizeof(RF_MCPair_t),
+		     "rf_mcpair_pl", RF_MIN_FREE_MCPAIR, RF_MAX_FREE_MCPAIR);
 	rf_ShutdownCreate(listp, rf_ShutdownMCPair, NULL);
 
 	return (0);
@@ -78,7 +74,7 @@ rf_AllocMCPair()
 {
 	RF_MCPair_t *t;
 
-	t = pool_get(&rf_mcpair_pool, PR_WAITOK);
+	t = pool_get(&rf_pools.mcpair, PR_WAITOK);
 	simple_lock_init(&t->mutex);
 	t->cond = 0;
 	t->flag = 0;
@@ -89,7 +85,7 @@ rf_AllocMCPair()
 void 
 rf_FreeMCPair(RF_MCPair_t *t)
 {
-	pool_put(&rf_mcpair_pool, t);
+	pool_put(&rf_pools.mcpair, t);
 }
 
 /* the callback function used to wake you up when you use an mcpair to
