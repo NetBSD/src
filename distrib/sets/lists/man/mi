@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.41 2002/06/26 17:23:01 he Exp $
+# $NetBSD: mi,v 1.253.2.42 2002/08/29 17:17:54 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -240,6 +240,7 @@
 ./usr/share/man/cat1/openssl_rand.0
 ./usr/share/man/cat1/openssl_req.0
 ./usr/share/man/cat1/openssl_rsa.0
+./usr/share/man/cat1/openssl_rsautl.0
 ./usr/share/man/cat1/openssl_s_client.0
 ./usr/share/man/cat1/openssl_s_server.0
 ./usr/share/man/cat1/openssl_sess_id.0
@@ -1675,6 +1676,7 @@
 ./usr/share/man/man1/openssl_rand.1
 ./usr/share/man/man1/openssl_req.1
 ./usr/share/man/man1/openssl_rsa.1
+./usr/share/man/man1/openssl_rsautl.1
 ./usr/share/man/man1/openssl_s_client.1
 ./usr/share/man/man1/openssl_s_server.1
 ./usr/share/man/man1/openssl_sess_id.1
