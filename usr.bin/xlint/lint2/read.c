@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.14 2004/06/20 22:20:17 jmc Exp $ */
+/* $NetBSD: read.c,v 1.15 2004/09/12 08:58:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.14 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: read.c,v 1.15 2004/09/12 08:58:52 yamt Exp $");
 #endif
 
 #include <ctype.h>
@@ -576,6 +576,9 @@ inptype(const char *cp, const char **epp)
 	}
 
 	switch (c) {
+	case 'B':
+		tp->t_tspec = BOOL;
+		break;
 	case 'C':
 		tp->t_tspec = s == 's' ? SCHAR : (s == 'u' ? UCHAR : CHAR);
 		break;
@@ -687,6 +690,7 @@ inptype(const char *cp, const char **epp)
 	case UCHAR:
 	case SCHAR:
 	case CHAR:
+	case BOOL:
 	case UNSIGN:
 	case SIGNED:
 	case NOTSPEC:
@@ -739,6 +743,10 @@ gettlen(const char *cp, const char **epp)
 	t = NOTSPEC;
 
 	switch (c) {
+	case 'B':
+		if (s == '\0')
+			t = BOOL;
+		break;
 	case 'C':
 		if (s == 's') {
 			t = SCHAR;
@@ -883,6 +891,7 @@ gettlen(const char *cp, const char **epp)
 	case UCHAR:
 	case SCHAR:
 	case CHAR:
+	case BOOL:
 	case UNSIGN:
 	case SIGNED:
 	case NOTSPEC:
