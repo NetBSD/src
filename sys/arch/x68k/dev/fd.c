@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.9 1997/01/31 02:15:54 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.10 1997/02/05 16:35:47 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -866,6 +866,7 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
+	char bits[64];
 
 	if (n == 0) {
 		out_fdc(NE7CMD_SENSEI);
@@ -880,15 +881,18 @@ fdcstatus(dv, n, s)
 		printf("\n");
 		break;
 	case 2:
-		printf(" (st0 %b cyl %d)\n",
-		    fdc->sc_status[0], NE7_ST0BITS,
-		    fdc->sc_status[1]);
+		printf(" (st0 %s cyl %d)\n",
+		    bitmask_snprintf(fdc->sc_status[0], NE7_ST0BITS,
+		    bits, sizeof(bits)), fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d\n",
-		    fdc->sc_status[0], NE7_ST0BITS,
-		    fdc->sc_status[1], NE7_ST1BITS,
-		    fdc->sc_status[2], NE7_ST2BITS,
+		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
+		    NE7_ST0BITS, bits, sizeof(bits)));
+		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
+		    NE7_ST1BITS, bits, sizeof(bits)));
+		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
+		    NE7_ST2BITS, bits, sizeof(bits)));
+		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 		break;
 #ifdef DIAGNOSTIC
@@ -1377,11 +1381,19 @@ fdcretry(fdc)
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 			fd->sc_skip, (struct disklabel *)NULL);
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
-		    fdc->sc_status[0], NE7_ST0BITS,
-		    fdc->sc_status[1], NE7_ST1BITS,
-		    fdc->sc_status[2], NE7_ST2BITS,
-		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
+						    NE7_ST0BITS, bits,
+						    sizeof(bits)));
+		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
+						   NE7_ST1BITS, bits,
+						   sizeof(bits)));
+		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
+						   NE7_ST2BITS, bits,
+						   sizeof(bits)));
+		printf(" cyl %d head %d sec %d)\n",
+		       fdc->sc_status[3],
+		       fdc->sc_status[4],
+		       fdc->sc_status[5]);
 
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
