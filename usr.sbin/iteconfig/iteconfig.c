@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: iteconfig.c,v 1.2 1994/04/05 04:34:51 cgd Exp $
+ *      $Id: iteconfig.c,v 1.3 1994/04/10 00:56:57 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -60,8 +60,8 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	struct ite_window_size is, newis;
-	struct ite_bell_values ib, newib;
+	struct itewinsize is, newis;
+	struct itebell ib, newib;
 	struct winsize ws;
 	colormap_t *cm;
 	int ch, fd, i, iflag, max_colors;
@@ -73,8 +73,8 @@ main(argc, argv)
 	if (fd == -1)
 		err(1, "open console");
 
-	xioctl(fd, ITE_GET_WINDOW_SIZE, &is);
-	xioctl(fd, ITE_GET_BELL_VALUES, &ib);
+	xioctl(fd, ITEIOCGWINSZ, &is);
+	xioctl(fd, ITEIOCGBELL, &ib);
 
 	memcpy(&newis, &is, sizeof(is));
 	memcpy(&newib, &ib, sizeof(ib));
@@ -93,13 +93,11 @@ main(argc, argv)
 		case 'i':
 			iflag = 1;
 			break;
-		case 'P':		/* undocumented backward compat */
 		case 'p':
-			newib.period = xstrtol(optarg);
+			newib.pitch = xstrtol(optarg);
 			break;
-		case 'T':		/* undocumented backward compat */
 		case 't':
-			newib.time = xstrtol(optarg);
+			newib.msec = xstrtol(optarg);
 			break;
 		case 'V':		/* undocumented backward compat */
 		case 'v':
@@ -127,12 +125,12 @@ main(argc, argv)
 	argv += optind;
 
 	if (memcmp(&newis, &is, sizeof(is))) {
-		xioctl(fd, ITE_SET_WINDOW_SIZE, &newis);
-		xioctl(fd, ITE_GET_WINDOW_SIZE, &is);
+		xioctl(fd, ITEIOCSWINSZ, &newis);
+		xioctl(fd, ITEIOCGWINSZ, &is);
 	}
 	if (memcmp(&newib, &ib, sizeof(ib))) {
-		xioctl(fd, ITE_SET_BELL_VALUES, &newib);
-		xioctl(fd, ITE_GET_BELL_VALUES, &ib);
+		xioctl(fd, ITEIOCSBELL, &newib);
+		xioctl(fd, ITEIOCGBELL, &ib);
 	}
 	
 	/*
@@ -150,7 +148,7 @@ main(argc, argv)
 		cm->entry[i] = val;
 		i++;
 	}
-	xioctl(fd, VIEW_USECOLORMAP, cm);
+	xioctl(fd, VIOCSCMAP, cm);
 	free(cm);
 	cm = xgetcmap(fd, max_colors);
 
@@ -161,8 +159,8 @@ main(argc, argv)
 		printf("tty size: rows %d cols %d\n", ws.ws_row, ws.ws_col);
 		printf("ite size: w: %d  h: %d  d: %d  [x: %d  y: %d]\n",
 		    is.width, is.height, is.depth, is.x, is.y);
-		printf("ite bell: vol: %d  count: %d  period: %d\n",
-		    ib.volume, ib.time, ib.period);
+		printf("ite bell: vol: %d  millisec: %d  pitch: %d\n",
+		    ib.volume, ib.msec, ib.pitch);
 		printcmap(cm, ws.ws_col);
 	}
 	close(fd);
@@ -203,7 +201,7 @@ xgetcmap(fd, ncolors)
 	cm->first = 0;
 	cm->size = ncolors;
 	cm->entry = (u_long *) & cm[1];
-	xioctl(fd, VIEW_GETCOLORMAP, cm);
+	xioctl(fd, VIOCGCMAP, cm);
 	return(cm);
 }
 
