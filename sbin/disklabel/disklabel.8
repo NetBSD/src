@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.50 2004/03/18 21:13:19 wiz Exp $
+.\"	$NetBSD: disklabel.8,v 1.51 2004/03/19 18:22:31 dyoung Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,10 +42,12 @@
 .Nm
 .Op Fl rt
 .Op Fl C
+.Op Fl F
 .Ar disk
 .Nm
 .Fl w
 .Op Fl r
+.Op Fl F
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
@@ -54,15 +56,18 @@
 .Op Fl r
 .Op Fl I
 .Op Fl C
+.Op Fl F
 .Ar disk
 .Nm
 .Fl i
 .Op Fl I
 .Op Fl r
+.Op Fl F
 .Ar disk
 .Nm
 .Fl R
 .Op Fl r
+.Op Fl F
 .Ar disk Ar protofile
 .Nm
 .Op Fl NW
@@ -70,6 +75,7 @@
 .sp
 .Nm
 .Fl B
+.Op Fl F
 .Op Fl f Ar disktab
 .Oo
 .Fl b Ar boot1
@@ -80,6 +86,7 @@
 .Nm
 .Fl w
 .Fl B
+.Op Fl F
 .Op Fl f Ar disktab
 .Oo
 .Fl b Ar boot1
@@ -90,6 +97,7 @@
 .Nm
 .Fl R
 .Fl B
+.Op Fl F
 .Op Fl f Ar disktab
 .Oo
 .Fl b Ar boot1
@@ -120,6 +128,15 @@ on a system; it must be used when first installing a label on a disk.
 Any special effects of the
 .Fl r
 flag are described with the affected commands.
+.Pp
+The
+.Fl F
+option indicates that
+.Nm
+should treat
+.Ar disk 
+as if it is a regular file, instead of as if it is a block device,
+for the purposes of reading and writing a disklabel.
 .Pp
 The
 .Fl I
