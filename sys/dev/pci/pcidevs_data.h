@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.195 2000/02/03 16:56:23 dante Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.196 2000/02/08 16:24:01 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.190 2000/02/03 16:51:42 dante Exp 
+ *	NetBSD: pcidevs,v 1.191 2000/02/08 16:22:37 bouyer Exp 
  */
 
 /*
@@ -3436,6 +3436,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "US201",
 	},
 	{
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5609,
+	    0,
+	    "US Robotics (3Com)",
+	    "3CP5609 PCI 16550 Modem",
+	},
+	{
 	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V292PBC,
 	    0,
 	    "V3 Semiconductor",
@@ -6547,6 +6553,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_RISCOM, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "RISCom",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_USR, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "US Robotics (3Com)",
 	    NULL,
 	},
 	{
