@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 1999/05/20 08:21:46 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 1999/05/25 23:31:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -206,7 +206,7 @@ cpu_startup()
 #if defined(PMAP_NEW)
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * NBPG,
-		    msgbuf_paddr + i * NBPG, VM_PROT_ALL);
+		    msgbuf_paddr + i * NBPG, VM_PROT_READ | VM_PROT_WRITE);
 #else
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
