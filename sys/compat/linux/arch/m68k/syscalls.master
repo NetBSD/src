@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27 2000/12/27 22:04:05 fvdl Exp $
+	$NetBSD: syscalls.master,v 1.28 2000/12/29 20:10:17 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -65,7 +65,7 @@
 7	STD		{ int linux_sys_waitpid(int pid, int *status, \
 			    int options);}
 8	STD		{ int linux_sys_creat(const char *path, int mode); }
-9	NOARGS		{ int sys_link(const char *path, const char *link); }
+9	STD		{ int linux_sys_link(const char *path, const char *link); }
 10	STD		{ int linux_sys_unlink(const char *path); }
 11	STD		{ int linux_sys_execve(const char *path, char **argp, \
 			    char **envp); }
