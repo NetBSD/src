@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.57 1998/12/20 01:15:52 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58 1998/12/21 06:58:39 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -253,6 +253,11 @@ int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
+extern caddr_t	CADDR1, CADDR2;
+
+pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
+pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
+
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
 void	pmap_collect_pv __P((void));
@@ -339,6 +344,13 @@ pmap_init()
 	int		bank;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_init()\n"));
+
+	/*
+	 * Before we do anything else, initialize the PTE pointers
+	 * used by pmap_zero_page() and pmap_copy_page().
+	 */
+	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
+	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
 
 	/*
 	 * Now that kernel map has been allocated, we can mark as
@@ -1234,6 +1246,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (pmap == NULL)
 		return;
 
+#ifdef DIAGNOSTIC
+	/*
+	 * pmap_enter() should never be used for CADDR1 and CADDR2.
+	 */
+	if (pmap == pmap_kernel() &&
+	    (va == (vaddr_t)CADDR1 || va == (vaddr_t)CADDR2))
+		panic("pmap_enter: used for CADDR1 or CADDR2");
+#endif
+
 	/*
 	 * For user mapping, allocate kernel VM resources if necessary.
 	 */
@@ -1763,27 +1784,39 @@ ok:
  *	machine dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *
- *	Note: this is a bad implementation for virtual cache machines
- *	(320/350) because pmap_enter doesn't cache-inhibit the temporary
- *	kernel mapping and we wind up with data cached for that KVA.
- *	It is probably a win for physical cache machines (370/380)
- *	as the cache loading is not wasted.
+ *	      (Actually, we go to splimp(), and since we don't
+ *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	vaddr_t kva;
-	extern caddr_t CADDR1;
+	int s, npte;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%lx)\n", phys));
 
-	kva = (vaddr_t) CADDR1;
-	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	zeropage((caddr_t)kva);
-	pmap_remove_mapping(pmap_kernel(), kva, PT_ENTRY_NULL,
-			    PRM_TFLUSH|PRM_CFLUSH);
+	npte = phys | PG_V;
+#ifdef M68K_MMU_HP
+	if (pmap_aliasmask) {
+		/*
+		 * Cache-inhibit the mapping on VAC machines, as we would
+		 * be wasting the cache load.
+		 */
+		npte |= PG_CI;
+	}
+#endif
+
+	s = splimp();
+
+	*caddr1_pte = npte;
+	TBIS((vaddr_t)CADDR1);
+
+	zeropage(CADDR1);
+
+	*caddr1_pte = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+
+	splx(s);
 }
 
 /*
@@ -1794,25 +1827,47 @@ pmap_zero_page(phys)
  *	dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *
- *	Note: see above wrt. cache effects.
+ *	      (Actually, we go to splimp(), and since we don't
+ *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_copy_page(src, dst)
 	paddr_t src, dst;
 {
-	vaddr_t skva, dkva;
-	extern caddr_t CADDR1, CADDR2;
+	int s, npte1, npte2;
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%lx, %lx)\n", src, dst));
 
-	skva = (vaddr_t)CADDR1;
-	dkva = (vaddr_t)CADDR2;
-	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, TRUE);
-	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	copypage((caddr_t)skva, (caddr_t)dkva);
-	/* CADDR1 and CADDR2 are virtually contiguous */
-	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
+	npte1 = src | PG_RO | PG_V;
+	npte2 = dst | PG_V;
+#ifdef M68K_MMU_HP
+	if (pmap_aliasmask) {
+		/*
+		 * Cache-inhibit the mapping on VAC machines, as we would
+		 * be wasting the cache load.
+		 */
+		npte1 |= PG_CI;
+		npte2 |= PG_CI;
+	}
+#endif
+
+	s = splimp();
+
+	*caddr1_pte = npte1;
+	TBIS((vaddr_t)CADDR1);
+
+	*caddr2_pte = npte2;
+	TBIS((vaddr_t)CADDR2);
+
+	copypage(CADDR1, CADDR2);
+
+	*caddr1_pte = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+
+	*caddr2_pte = PG_NV;
+	TBIS((vaddr_t)CADDR2);
+
+	splx(s);
 }
 
 /*
