@@ -39,24 +39,26 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dirname.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: dirname.c,v 1.3 1993/08/27 22:30:19 jtc Exp $";
+static char rcsid[] = "$Id: dirname.c,v 1.4 1993/10/01 22:23:58 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <locale.h>
 
-static void usage ();
+static void usage	__P((void));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	register char *p;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	setlocale(LC_ALL, "");
+
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
@@ -90,8 +92,10 @@ main(argc, argv)
 	 * (3) If there are any trailing slash characters in string, they
 	 *     shall be removed.
 	 */
-	for (; *p; ++p);
-	while (*--p == '/');
+	for (; *p; ++p)
+		;
+	while (*--p == '/')
+		;
 	*++p = '\0';
 
 	/*
