@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.82 2003/01/15 22:06:03 is Exp $
+#	$NetBSD: MAKEDEV,v 1.83 2003/03/30 20:15:36 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -79,7 +79,7 @@
 #	ttyA*	mfc serial ports
 #	ttyB*	msc serial ports
 #	ttyC*	com style serial ports (DraCo, HyperCom)
-#		On the DraCo, units 0 and 1 are the builtin "modem" and
+#		On the DraCo, units 0 and 1 are the built-in "modem" and
 #		"mouse" ports, if configured.
 #
 # Pseudo terminals:
@@ -387,7 +387,7 @@ tty0*|ttyA*|ttyB*)
 	chown uucp $name$unit $mname$unit
 	;;
 
-# newstyle tty devices:
+# new style tty devices:
 ttyC*)
 	case $i in
 	ttyC*) name=ttyC; mname=dtyC;	unit=${i#ttyC};	chr=32;;
