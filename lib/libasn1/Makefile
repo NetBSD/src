@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2001/10/04 16:11:24 tv Exp $
+# $NetBSD: Makefile,v 1.13 2001/10/06 21:51:53 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ MKLINT= no
 
 LIB=	asn1
 
-.if ${USETOOLS} == "no"
+.if !defined(USETOOLS) || (${USETOOLS} == "no")
 COMPILEETOBJ!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
