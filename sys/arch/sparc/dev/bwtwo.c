@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.15 1995/10/09 15:39:34 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.15.2.1 1996/02/16 00:24:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,6 +150,7 @@ bwtwoattach(parent, self, args)
 	sc->sc_fb.fb_driver = &bwtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2BW;
+	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
 	switch (ca->ca_bustype) {
 	case BUS_OBIO:
@@ -223,12 +224,8 @@ bwtwoattach(parent, self, args)
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 #endif
-	/*
-	 * XXX: this could cause a panic in fb_attach() if more
-	 * than one frame buffer device is found on a Sun 4.
-	 */
 	if (node == fbnode || cputyp == CPU_SUN4)
-		fb_attach(&sc->sc_fb);
+		fb_attach(&sc->sc_fb, isconsole);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.5 1995/10/08 01:40:25 pk Exp $ */
+/*	$NetBSD: fbvar.h,v 1.5.2.1 1996/02/16 00:24:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,13 +76,16 @@ struct fbdevice {
 	struct	fbdriver *fb_driver;	/* pointer to driver */
 	struct	device *fb_device;	/* parameter for fbd_unblank */
 
+	int	fb_flags;		/* flags from config */
+#define	FB_FORCE	0x00000001	/* force device into /dev/fb */
+
 #ifdef RASTERCONSOLE
 	/* Raster console emulator state */
 	struct	rconsole fb_rcons;
 #endif
 };
 
-void	fbattach __P((struct fbdevice *));
+void	fb_attach __P((struct fbdevice *, int));
 void	fb_setsize __P((struct fbdevice *, int, int, int, int, int));
 #ifdef RASTERCONSOLE
 void	fbrcons_init __P((struct fbdevice *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.11 1995/10/08 01:39:19 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.11.2.1 1996/02/16 00:24:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,12 +72,71 @@ fb_unblank()
 }
 
 void
-fb_attach(fb)
+fb_attach(fb, isconsole)
 	struct fbdevice *fb;
+	int isconsole;
 {
+	static int no_replace, seen_force;
 
-if (devfb) panic("multiple /dev/fb declarers");
+	/*
+	 * We've already had a framebuffer forced into /dev/fb.  Don't
+	 * allow any more, even if this is the console.
+	 */
+	if (seen_force) {
+		if (devfb) {	/* sanity */
+			printf("%s: /dev/fb already full\n",
+				fb->fb_device->dv_xname);
+			return;
+		} else
+			seen_force = 0;
+	}
+
+	/*
+	 * Check to see if we're being forced into /dev/fb.
+	 */
+	if (fb->fb_flags & FB_FORCE) {
+		if (devfb)
+			printf("%s: forcefully replaced %s\n",
+				fb->fb_device->dv_xname,
+				devfb->fb_device->dv_xname);
+		devfb = fb;
+		seen_force = no_replace = 1;
+		goto attached;
+	}
+
+	/*
+	 * Check to see if we're the console.  If we are, then replace
+	 * any currently existing framebuffer.
+	 */
+	if (isconsole) {
+		if (devfb)
+			printf("%s: replaced %s\n", fb->fb_device->dv_xname,
+				devfb->fb_device->dv_xname);
+		devfb = fb;
+		no_replace = 1;
+		goto attached;
+	}
+
+	/*
+	 * For the final case, we check to see if we can replace an
+	 * existing framebuffer, if not, say so and return.
+	 */
+	if (no_replace) {
+		if (devfb) {	/* sanity */
+			printf("%s: /dev/fb already full\n",
+				fb->fb_device->dv_xname);
+			return;
+		} else
+			no_replace = 0;
+	}
+
+	if (devfb)
+		printf("%s: replaced %d\n", fb->fb_device->dv_xname,
+			devfb->fb_device->dv_xname);
 	devfb = fb;
+
+ attached:
+	printf("%s: attached to /dev/fb\n", devfb->fb_device->dv_xname);
 }
 
 int
@@ -140,6 +199,17 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 	case BUS_VME16:
 	case BUS_VME32:
 	case BUS_OBIO:
+#if defined(SUN4M)
+		if (cputyp == CPU_SUN4M) {   /* 4m has framebuffer on obio */
+			fb->fb_type.fb_width = getpropint(node, "width",
+							  def_width);
+			fb->fb_type.fb_height = getpropint(node, "height",
+							   def_height);
+			fb->fb_linebytes = getpropint(node, "linebytes",
+			    (fb->fb_type.fb_width * depth) / 8);
+			break;
+		}
+#endif
 		/* Set up some defaults. */
 		fb->fb_type.fb_width = def_width;
 		fb->fb_type.fb_height = def_height;
@@ -199,8 +269,8 @@ fb_setsize(fb, depth, def_width, def_height, node, bustype)
 		break;
 
 	case BUS_SBUS:
-		fb->fb_type.fb_width = getpropint(node, "width", 1152);
-		fb->fb_type.fb_height = getpropint(node, "height", 900);
+		fb->fb_type.fb_width = getpropint(node, "width", def_width);
+		fb->fb_type.fb_height = getpropint(node, "height", def_height);
 		fb->fb_linebytes = getpropint(node, "linebytes",
 		    (fb->fb_type.fb_width * depth) / 8);
 		break;
