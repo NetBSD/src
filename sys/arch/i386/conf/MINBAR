@@ -1,4 +1,4 @@
-#	$NetBSD: MINBAR,v 1.8 1999/03/27 07:04:37 explorer Exp $
+#	$NetBSD: MINBAR,v 1.9 1999/07/05 09:14:09 fvdl Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	MINBAR -- offshore CVS server
@@ -84,9 +84,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-# Executable format options
-#options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
 # File systems
 file-system 	FFS		# UFS
