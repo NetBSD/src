@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2001/06/06 17:36:03 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2001/06/15 18:26:06 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -63,11 +63,6 @@ struct pte {
 #define	PTE_PP		0x00000003
 #define	PTE_RO		0x00000003
 #define	PTE_RW		0x00000002
-
-#define	PTE_RSVD	0x00000e04
-#define	PTE_WIRED	0x00000004
-#define	PTE_GIDX_MASK	0x00000e00
-#define	PTE_GIDX_SHFT	9
 
 #ifndef	_LOCORE
 typedef	struct pte pte_t;
