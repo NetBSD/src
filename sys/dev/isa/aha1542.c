@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.50 1995/09/14 20:43:09 pk Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.51 1995/09/26 19:31:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -66,11 +66,9 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#ifdef DDB
-int Debugger();
-#else /* !DDB */
+#ifndef DDB
 #define Debugger() panic("should call debugger here (aha1542.c)")
-#endif /* !DDB */
+#endif /* ! DDB */
 
 /************************** board definitions *******************************/
 

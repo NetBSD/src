@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.47 1995/09/14 20:43:14 pk Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.48 1995/09/26 19:31:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -67,11 +67,9 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-#ifdef DDB
-int Debugger();
-#else /* DDB */
+#ifndef DDB
 #define Debugger() panic("should call debugger here (bt742a.c)")
-#endif /* DDB */
+#endif /* ! DDB */
 
 typedef u_long physaddr;
 typedef u_long physlen;
