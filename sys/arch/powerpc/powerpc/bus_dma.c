@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2001/06/06 17:37:37 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -419,10 +419,15 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	paddr_t avail_start, avail_end;
+	paddr_t avail_start = 0xffffffff, avail_end = 0;
+	int bank;
 
-	avail_start = vm_physmem[0].avail_start << PGSHIFT;
-	avail_end = vm_physmem[vm_nphysseg - 1].avail_end << PGSHIFT;
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		if (avail_start > vm_physmem[bank].avail_start << PGSHIFT)
+			avail_start = vm_physmem[bank].avail_start << PGSHIFT;
+		if (avail_end < vm_physmem[bank].avail_end << PGSHIFT)
+			avail_end = vm_physmem[bank].avail_end << PGSHIFT;
+	}
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,
 	    nsegs, rsegs, flags, avail_start, avail_end - PAGE_SIZE);
