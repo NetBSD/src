@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 1999/09/13 17:18:57 jsm Exp $	*/
+/*	$NetBSD: init.c,v 1.11 1999/09/18 16:47:11 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.10 1999/09/13 17:18:57 jsm Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 1999/09/18 16:47:11 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -84,7 +84,7 @@ getutmp(uname)
 	struct passwd *ptr;
 
 	ptr = getpwuid(getuid());
-	strcpy(uname, ptr ? ptr->pw_name : "");
+	strncpy(uname, ptr ? ptr->pw_name : "", 8);
 }
 
 const char   *const list[] = {		/* hereditary wizards */
