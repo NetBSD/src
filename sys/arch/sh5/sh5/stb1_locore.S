@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1_locore.S,v 1.5 2002/09/04 13:58:36 scw Exp $	*/
+/*	$NetBSD: stb1_locore.S,v 1.6 2002/09/10 11:56:33 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -68,16 +68,14 @@
  * virtual address space until pmap_bootstrap has been called.
  */
 Lsh5_stb1_init:
-	addz.l	r2, r63, r2		/* Clear the upper 32-bits of r2 */
-	movi	2, r1
+	add.l	r2, r63, r2		/* Sign-extend the upper 32bits of r2 */
+	movi	3, r1			/* Inv/Enable the Caches */
 	LDC32(0x01600000, r0)		/* Instruction Cache Control Register */
-	putcfg	r0, 0, r1		/* Invalidate instruction cache */
+	putcfg	r0, 0, r1		/* Inv & Enable instruction cache */
 	putcfg	r0, 1, r63
-	synci
 	LDC32(0x01e00000, r0)		/* Operand Cache Control Register */
-	putcfg	r0, 0, r1		/* Invalidate operand cache */
+	putcfg	r0, 0, r1		/* Inv & Enable operand cache */
 	putcfg	r0, 1, r63
-	synco
 
 	pta/u	1f, tr0			/* Pre-load branches */
 	LDC32(0x00800000 + (16 * 63), r0)	/* Top of DTLB */
@@ -95,12 +93,12 @@ Lsh5_stb1_init:
 	putcfg	r1, 0, r63
 
 	/* Fix up KSEG0 physical page and attributes in ITLB */
-	movi	SH5_PTEL_CB_NOCACHE | SH5_PTEL_SZ_512MB | SH5_PTEL_PR_X, r3
+	movi	SH5_PTEL_CB_WRITEBACK | SH5_PTEL_SZ_512MB | SH5_PTEL_PR_X, r3
 	or	r2, r3, r3
 	putcfg	r1, 1, r3
 
 	/* Ditto for DTLB */
-	movi	SH5_PTEL_CB_NOCACHE | SH5_PTEL_SZ_512MB | SH5_PTEL_PR_R | SH5_PTEL_PR_W, r3
+	movi	SH5_PTEL_CB_WRITEBACK | SH5_PTEL_SZ_512MB | SH5_PTEL_PR_R | SH5_PTEL_PR_W, r3
 	or	r2, r3, r3
 	putcfg	r0, 1, r3
 
@@ -114,8 +112,8 @@ Lsh5_stb1_init:
 	putcfg	r1, 0, r2
 
 	/*
-	 * The TLB is primed, the cache is clean. All we have to do now
-	 * is enable the MMU and FPU before returning to the caller.
+	 * The TLB is primed, the cache is clean and enabled. All we have
+	 * to do now is enable the MMU and FPU before returning to the caller.
 	 */
 	getcon	sr, r0
 	LDUC32(SH5_CONREG_SR_ASID_MASK << SH5_CONREG_SR_ASID_SHIFT, r1)
@@ -155,12 +153,11 @@ Lsh5_stb1_init:
  */
 ENTRY_NOPROFILE(_sh5_stb1_tlbinv)
 	getcon	sr, r5
-	LDC32(SH5_CONREG_SR_BL, r4)
 	ori	r2, SH5_PTEH_V, r2	/* Only check valid entries */
 	ori	r3, SH5_PTEH_V, r3
 	addz.l	r2, r63, r2		/* Zero-extend PTEH */
 	addz.l	r3, r63, r3		/* Zero-extend PTEL */
-	or	r4, r5, r4		/* Block exceptions */
+	ori	r5, SH5_CONREG_SR_IMASK_ALL, r4		/* Block interrupts */
 	putcon	r4, sr
 
 	ptabs/u	r18, tr1		/* Get return address to tr1 */
@@ -195,7 +192,7 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv)
 	addi	r0, 16, r0		/* Next ITLB entry */
 	bge/l	r1, r63, tr0		/* Back if not done and not found */
 
-	putcon	r5, sr			/* Re-enable exceptions */
+	putcon	r5, sr			/* Restore interrupt mask */
 	blink	tr1, r63
 
 
@@ -313,18 +310,27 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbinv_cookie)
  *
  * Callable from C code.
  *
- * Invalidate all instruction and data TLB entries (except [DI]TLB#0,
- * which maps the kernel in KSEG0).
+ * Invalidate all instruction and data TLB entries with non-zero ASIDs.
  */
 ENTRY_NOPROFILE(_sh5_stb1_tlbinv_all)
 	pta/u	1f, tr0			/* Pre-load branches */
 	ptabs/u	r18, tr1		/* Get return address to tr1 */
 	LDC32(0x00800000 + (16 * 63), r0)	/* DTLB Top */
 	movi	(16 * 63), r1		/* ITLB Top */
-1:	putcfg	r0, 0, r63		/* Invalidate DTLB entry */
+	movi	(SH5_PTEH_ASID_MASK << SH5_PTEH_ASID_SHIFT), r2
+
+1:	getcfg	r0, 0, r3		/* Fetch DTLB entry */
+	and	r3, r2, r4		/* Keep ASID */
+	cmvne	r4, r63, r3		/* If ASID != 0, clear r3 */
+	putcfg	r0, 0, r3		/* Invalidate DTLB entry */
 	addi	r0, -16, r0		/* Next DTLB slot */
+
+	getcfg	r1, 0, r3		/* Fetch ITLB entry */
+	and	r3, r2, r4		/* Keep asid */
+	cmvne	r4, r63, r3		/* If ASID != 0, clear r3 */
 	putcfg	r1, 0, r63		/* Invalidate ITLB entry */
 	addi	r1, -16, r1		/* Next ITLB slot */
+
 	bne/l	r1, r63, tr0		/* Back until all checked */
 	blink	tr1, r63
 
@@ -439,28 +445,76 @@ ENTRY_NOPROFILE(_sh5_stb1_tlbload)
 
 /******************************************************************************
  *
- * void _sh5_stb1_cache_purge(vaddr_t start, vsize_t len)
+ * void _sh5_stb1_cache_dpurge(vaddr_t start, vsize_t len)
  */
-ENTRY_NOPROFILE(_sh5_stb1_cache_purge)
+ENTRY_NOPROFILE(_sh5_stb1_cache_dpurge)
 	pta/l	1f, tr0
 	ptabs/l	r18, tr1
+	add	r2, r3, r3
 1:	ocbp	r2, 0
 	addi	r2, 32, r2
-	addi	r3, -32, r3
-	bgt/l	r3, r63, tr0
+	bgtu/l	r3, r2, tr0
+	synco
 	synci
 	blink	tr1, r63
 
 /******************************************************************************
  *
- * void _sh5_stb1_cache_invalidate(vaddr_t start, vsize_t len)
+ * void _sh5_stb1_cache_dpurge_iinv(vaddr_t start, vsize_t len)
  */
-ENTRY_NOPROFILE(_sh5_stb1_cache_invalidate)
+ENTRY_NOPROFILE(_sh5_stb1_cache_dpurge_iinv)
+	pta/l	1f, tr0
+	ptabs/l	r18, tr1
+	add	r2, r3, r3
+1:	ocbp	r2, 0
+	icbi	r2, 0
+	addi	r2, 32, r2
+	bgtu/l	r3, r2, tr0
+	synco
+	synci
+	blink	tr1, r63
+
+/******************************************************************************
+ *
+ * void _sh5_stb1_cache_dinv(vaddr_t start, vsize_t len)
+ */
+ENTRY_NOPROFILE(_sh5_stb1_cache_dinv)
 	pta/l	1f, tr0
 	ptabs/l	r18, tr0
+	add	r2, r3, r3
 1:	ocbi	r2, 0
 	addi	r2, 32, r2
-	addi	r3, -32, r3
-	bgt/l	r3, r63, tr0
+	bgtu/l	r3, r2, tr0
+	synco
+	synci
+	blink	tr0, r63
+
+/******************************************************************************
+ *
+ * void _sh5_stb1_cache_dinv_iinv(vaddr_t start, vsize_t len)
+ */
+ENTRY_NOPROFILE(_sh5_stb1_cache_dinv_iinv)
+	pta/l	1f, tr0
+	ptabs/l	r18, tr0
+	add	r2, r3, r3
+1:	ocbi	r2, 0
+	icbi	r2, 0
+	addi	r2, 32, r2
+	bgtu/l	r3, r2, tr0
+	synco
+	synci
+	blink	tr0, r63
+
+/******************************************************************************
+ *
+ * void _sh5_stb1_cache_iinv(vaddr_t start, vsize_t len)
+ */
+ENTRY_NOPROFILE(_sh5_stb1_cache_iinv)
+	pta/l	1f, tr0
+	ptabs/l	r18, tr0
+	add	r2, r3, r3
+1:	icbi	r2, 0
+	addi	r2, 32, r2
+	bgtu/l	r3, r2, tr0
 	synci
 	blink	tr0, r63
