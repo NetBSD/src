@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.2 1997/04/06 08:40:58 cgd Exp $ */
+/* $NetBSD: boot.c,v 1.3 1997/07/25 00:07:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
 #include <sys/exec.h>
 #include <sys/exec_ecoff.h>
 
+#include <machine/autoconf.h>
 #include <machine/prom.h>
 
 #define _KERNEL
@@ -55,9 +56,13 @@ int loadfile __P((char *, u_int64_t *));
 char boot_file[128];
 char boot_flags[128];
 
+struct bootinfo bootinfo;
+
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
 vm_offset_t ffp_save, ptbr_save;
+
+extern vm_offset_t ssym, esym;
 
 int debug;
 
@@ -106,8 +111,21 @@ main()
 
 	printf("\n");
 	if (win) {
+		/*
+		 * Fill in the bootinfo for the kernel.
+		 */
+		bzero(&bootinfo, sizeof(bootinfo));
+		bootinfo.version    = 1;
+		bootinfo.un.v1.ssym = ssym;
+		bootinfo.un.v1.esym = esym;
+		bcopy(name, bootinfo.un.v1.booted_kernel,
+		    sizeof(bootinfo.un.v1.booted_kernel));
+		bcopy(boot_flags, bootinfo.un.v1.boot_flags,
+		    sizeof(bootinfo.un.v1.boot_flags));
+
 		(void)printf("Entering %s at 0x%lx...\n", name, entry);
-		(*(void (*)())entry)(ffp_save, ptbr_save, 0);
+		(*(void (*)())entry)(ffp_save, ptbr_save,
+		    BOOTINFO_MAGIC, &bootinfo, 0);
 	}
 
 	(void)printf("Boot failed!  Halting...\n");
