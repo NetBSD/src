@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.5 2000/08/30 23:51:53 jhawk Exp $
+# $NetBSD: Makefile,v 1.6 2000/12/30 17:21:45 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/kadm5
 
@@ -7,7 +10,7 @@ MKLINT= no
 
 LIB=	kadm5clnt
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 kadm5_err.c kadm5_err.h: kadm5_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/kadm5/kadm5_err.et
@@ -38,9 +41,9 @@ INCSDIR= /usr/include/kadm5
 
 INCS=	kadm5_err.h admin.h kadm5-protos.h private.h kadm5-private.h
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
-KRB5!=	cd ${.CURDIR}/../libkrb5 && ${MAKE} print-objdir
-HDB!=	cd ${.CURDIR}/../libhdb && ${MAKE} print-objdir
+ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
+KRB5!=	cd ${.CURDIR}/../libkrb5 && ${PRINTOBJDIR}
+HDB!=	cd ${.CURDIR}/../libhdb && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${ASN1}				\

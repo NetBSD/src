@@ -1,4 +1,9 @@
-# $NetBSD: Makefile,v 1.6 2000/12/25 23:59:07 itojun Exp $
+# $NetBSD: Makefile,v 1.7 2000/12/30 17:21:45 sommerfeld Exp $
+
+NOMAN=	noman
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken
 
@@ -16,7 +21,7 @@ YHEADER=	1
 
 BINDIR=	/usr/bin
 
-LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${MAKE} print-objdir
+LIBROKEN!=	cd ${.CURDIR}/../../libroken && ${PRINTOBJDIR}
 
 HOST_CPPFLAGS+= -I.				\
 	 -I${.CURDIR}/../../../include/heimdal	\
@@ -24,8 +29,6 @@ HOST_CPPFLAGS+= -I.				\
 	 -I${DIST}/heimdal/lib/asn1		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
-
-NOMAN=	noman
 
 DPSRCS=	print_version.h
 
