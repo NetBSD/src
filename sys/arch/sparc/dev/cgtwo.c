@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.38 2002/09/27 20:35:43 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.39 2002/10/01 18:57:51 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,9 +94,8 @@ static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
 
-const struct cfattach cgtwo_ca = {
-	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
-};
+CFATTACH_DECL(cgtwo, sizeof(struct cgtwo_softc),
+    cgtwomatch, cgtwoattach, NULL, NULL)
 
 extern struct cfdriver cgtwo_cd;
 
