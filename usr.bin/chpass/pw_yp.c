@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.6 1996/08/09 09:22:18 thorpej Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.7 1996/11/26 23:38:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$NetBSD: pw_yp.c,v 1.6 1996/08/09 09:22:18 thorpej Exp $";
+static char rcsid[] = "$NetBSD: pw_yp.c,v 1.7 1996/11/26 23:38:44 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,43 @@ static char rcsid[] = "$NetBSD: pw_yp.c,v 1.6 1996/08/09 09:22:18 thorpej Exp $"
 #undef passwd
 
 static char *domain;
+
+/*
+ * Check if rpc.yppasswdd is running on the master YP server.
+ * XXX this duplicates some code, but is much less complex
+ * than the alternative.
+ */
+int
+check_yppasswdd()
+{
+	char *master;
+	int rpcport;
+
+	/*
+	 * Get local domain
+	 */
+	if (!domain && yp_get_default_domain(&domain) != 0)
+		return (1);
+
+	/*
+	 * Find the host for the passwd map; it should be running
+	 * the daemon.
+	 */
+	if (yp_master(domain, "passwd.byname", &master) != 0)
+		return (1);
+
+	/*
+	 * Ask the portmapper for the port of the daemon.
+	 */
+	if ((rpcport = getrpcport(master, YPPASSWDPROG, YPPASSWDPROC_UPDATE,
+	    IPPROTO_UDP)) == 0)
+		return (1);
+
+	/*
+	 * Successful contact with rpc.yppasswdd.
+	 */
+	return (0);
+}
 
 pw_yp(pw, uid)
 	struct passwd *pw;

@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.9 1996/08/09 09:22:11 thorpej Exp $	*/
+/*	$NetBSD: chpass.c,v 1.10 1996/11/26 23:38:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.9 1996/08/09 09:22:11 thorpej Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.10 1996/11/26 23:38:42 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ extern	char *__progname;		/* from crt0.o */
 char *tempname;
 uid_t uid;
 int use_yp;
+int yflag;
 
 void	(*Pw_error) __P((const char *, int, int));
 
@@ -90,7 +91,7 @@ main(argc, argv)
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw;
 	int ch, pfd, tfd, dfd;
-	char *arg, tempname[] = "/etc/pw.XXXXXX";
+	char *arg, *username = NULL, tempname[] = "/etc/pw.XXXXXX";
 
 #ifdef	YP
 	use_yp = _yp_check(NULL);
@@ -114,6 +115,7 @@ main(argc, argv)
 #ifdef	YP
 			if (!use_yp)
 				errx(1, "YP not in use.");
+			yflag = 1;
 #else
 			errx(1, "YP support not compiled in.");
 #endif
@@ -123,6 +125,49 @@ main(argc, argv)
 		}
 	argc -= optind;
 	argv += optind;
+
+	uid = getuid();
+	switch (argc) {
+	case 0:
+		/* nothing */
+		break;
+
+	case 1:
+		username = argv[0];
+		break;
+
+	default:
+		usage();
+	}
+
+#ifdef YP
+	/*
+	 * We need to determine if we _really_ want to use YP.
+	 * If we defaulted to YP (i.e. were not given the -y flag),
+	 * and the master is not running rpc.yppasswdd, we check
+	 * to see if the user exists in the local passwd database.
+	 * If so, we use it, otherwise we error out.
+	 */
+	if (use_yp && yflag == 0) {
+		if (check_yppasswdd()) {
+			/*
+			 * We weren't able to contact rpc.yppasswdd.
+			 * Check to see if we're in the local
+			 * password database.  If we are, use it.
+			 */
+			if (username != NULL)
+				pw = getpwnam(username);
+			else
+				pw = getpwuid(uid);
+			if (pw != NULL)
+				use_yp = 0;
+			else {
+				errx(1, "master YP server not running yppasswd daemon.\n\t%s\n",
+				    "Can't change password.");
+			}
+		}
+	}
+#endif
 
 #ifdef YP
 	if (use_yp)
@@ -135,35 +180,30 @@ main(argc, argv)
 	if (op == LOADENTRY && use_yp)
 		errx(1, "cannot load entry using YP.\n\tUse the -l flag to load local.");
 #endif
-	uid = getuid();
 
-	if (op == EDITENTRY || op == NEWSH)
-		switch(argc) {
-		case 0:
-#ifdef	YP
+	if (op == EDITENTRY || op == NEWSH) {
+		if (username == NULL) {
+#ifdef YP
+			if (use_yp)
+				pw = ypgetpwnam(username);
+			else
+#endif /* YP */
+				pw = getpwnam(username);
+			if (pw == NULL)
+				errx(1, "unknown user: %s", username);
+			if (uid && uid != pw->pw_uid)
+				baduser();
+		} else {
+#ifdef YP
 			if (use_yp)
 				pw = ypgetpwuid(uid);
 			else
-#endif	/* YP */
+#endif /* YP */
 				pw = getpwuid(uid);
-			if (!pw)
+			if (pw == NULL)
 				errx(1, "unknown user: uid %u\n", uid);
-			break;
-		case 1:
-#ifdef	YP
-			if (use_yp)
-				pw = ypgetpwnam(*argv);
-			else
-#endif	/* YP */
-				pw = getpwnam(*argv);
-			if (!pw)
-				errx(1, "unknown user: %s", *argv);
-			if (uid && uid != pw->pw_uid)
-				baduser();
-			break;
-		default:
-			usage();
 		}
+	}
 
 	if (op == NEWSH) {
 		/* protect p_shell -- it thinks NULL is /bin/sh */
