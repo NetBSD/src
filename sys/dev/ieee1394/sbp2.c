@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.2 2002/11/22 16:28:56 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.3 2002/11/30 06:18:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.2 2002/11/22 16:28:56 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.3 2002/11/30 06:18:54 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,10 +76,12 @@ static void sbp2_free_addr(struct sbp2 *, u_int64_t);
 static void sbp2_orb_resp(struct ieee1394_abuf *, int);
 static void sbp2_data_resp(struct ieee1394_abuf *, int);
 static void sbp2_enable_status(struct ieee1394_abuf *, int);
-/*static void sbp2_agent_status(struct ieee1394_abuf *, int);*/
 static void sbp2_null_resp(struct ieee1394_abuf *, int);
 static void sbp2_doorbell_reset(struct ieee1394_abuf *, int);
 static void sbp2_status_resp(struct sbp2_status *, void *);
+#ifdef SBP2_DEBUG
+static void sbp2_agent_status(struct ieee1394_abuf *, int);
+#endif
 
 static CIRCLEQ_HEAD(, sbp2_orb) sbp2_freeorbs =
     CIRCLEQ_HEAD_INITIALIZER(sbp2_freeorbs);
@@ -92,7 +94,7 @@ static struct simplelock sbp2_maps_lock = SIMPLELOCK_INITIALIZER;
 #ifdef SBP2_DEBUG
 #define DPRINTF(x)      if (sbp2debug) printf x
 #define DPRINTFN(n,x)   if (sbp2debug>(n)) printf x
-int     sbp2debug = 2;
+int     sbp2debug = 3;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -535,8 +537,9 @@ sbp2_login_resp(struct ieee1394_abuf *ab, int rcode)
 	
 	DPRINTF(("csr: 0x%016qx\n", (quad_t)ab->ab_addr));
 #ifdef SBP2_DEBUG
-	for (i = 0; i < (ab->ab_retlen / 4); i++) 
-		DPRINTF(("%d: 0x%08x\n", i, ntohl(ab->ab_data[i])));
+	if (sbp2debug > 2) 
+		for (i = 0; i < (ab->ab_retlen / 4); i++) 
+			DPRINTF(("%d: 0x%08x\n", i, ntohl(ab->ab_data[i])));
 #endif
 	
 	lun->cmdreg = SBP2_LOGINRESP_CREATE_CMDREG(ntohl(ab->ab_data[1]),
@@ -688,7 +691,8 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	u_int64_t addr;
 	
 #ifdef FW_DEBUG
-	fwdebug = 3;
+	if (sbp2debug > 2)
+		fwdebug = 3;
 #endif
 	TAILQ_FOREACH(lun, &sbp2->luns, lun_list)
 		if (lun->lun == cmd->lun) {
@@ -793,13 +797,6 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 		sbp2->sc->sc1394_callback.sc1394_write(&lun->command);
 	}
 	lun->state = SBP2_STATE_ACTIVE;
-/*	lun->status.ab_addr = lun->cmdreg + SBP2_CMDREG_AGENT_STATE;
-	lun->status.ab_cb = sbp2_agent_status;
-	lun->status.ab_cbarg = lun;
-	lun->status.ab_length = 4;
-	lun->status.ab_req = sbp2->sc;
-	lun->status.ab_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
-	sbp2->sc->sc1394_callback.sc1394_read(&lun->status);*/
 	
 	CIRCLEQ_INSERT_HEAD(&sbp2->orbs, orb, orb_list);
 	simple_unlock(&toporb->orb_lock);
@@ -809,12 +806,14 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	return orb;
 }
 
-/*static void
+#ifdef SBP2_DEBUG
+static void
 sbp2_agent_status(struct ieee1394_abuf *abuf, int status)
 {
 	DPRINTF(("sbp2_agent_status: 0x%08x\n", ntohl(abuf->ab_data[0])));
 	return;
-}*/
+}
+#endif
 
 static void
 sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
@@ -826,9 +825,23 @@ sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
 	
 	orb = abuf->ab_cbarg;
 	
+	DPRINTFN(1, ("orb addr: 0x%016qx\n", orb->cmd.ab_addr));
+        DPRINTFN(1, ("orb next ptr: 0x%08x%08x\n", ntohl(orb->cmd.ab_data[0]), ntohl(orb->cmd.ab_data[1])));
 	DPRINTFN(1, ("retlen: %d, length: %d\n", abuf->ab_retlen,
 		     abuf->ab_length));
 
+#ifdef SBP2_DEBUG
+        if (sbp2debug > 2) {
+		orb->lun->status.ab_addr = 
+		    orb->lun->cmdreg + SBP2_CMDREG_AGENT_STATE;
+		orb->lun->status.ab_cb = sbp2_agent_status;
+		orb->lun->status.ab_cbarg = orb->lun;
+		orb->lun->status.ab_length = 4;
+		orb->lun->status.ab_req = orb->sbp2->sc;
+		orb->lun->status.ab_tcode = IEEE1394_TCODE_READ_REQ_QUAD;
+		orb->sbp2->sc->sc1394_callback.sc1394_read(&orb->lun->status);
+        }
+#endif
 	simple_lock(&orb->orb_lock);
 	switch (orb->state) {
 	case SBP2_ORB_INIT_STATE:
@@ -1057,7 +1070,7 @@ sbp2_alloc_orb(void)
 	
 	simple_lock(&sbp2_freeorbs_lock);
 	if (CIRCLEQ_EMPTY(&sbp2_freeorbs)) {
-		DPRINTFN(1, ("Alloc'ing more orbs\n"));
+		DPRINTFN(2, ("Alloc'ing more orbs\n"));
 		for (i = 0; i < SBP2_NUM_ALLOC; i++) {
 			simple_unlock(&sbp2_freeorbs_lock);
 			orb = malloc(sizeof(struct sbp2_orb), M_1394DATA,
