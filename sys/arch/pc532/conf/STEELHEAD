@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.24 1998/06/26 01:54:06 lukem Exp $
+#	$NetBSD: STEELHEAD,v 1.25 1999/04/29 15:31:00 phil Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -23,12 +23,12 @@ options 	"COMPAT_09"		# NetBSD-0.9
 options 	"COMPAT_10"		# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
+options 	COMPAT_13
 
 # file system options
 file-system 	FFS			# Berkeley fast file system
 #file-system	MFS			# memory file system; uses RAM and swap
 file-system	NFS			# Network File System client
-file-system	ISOFS			# ISO 9660 CD-ROM file system, with RR
 file-system	CD9660			# ISO 9660 CD-ROM file system, with RR
 #file-system	MSDOSFS			# MS-DOS FAT file system
 file-system	FDESC			# /dev/fd
