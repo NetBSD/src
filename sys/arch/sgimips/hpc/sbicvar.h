@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.2 2001/11/10 07:32:43 wdk Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.3 2001/11/18 05:14:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -180,6 +180,7 @@ struct  sbic_softc {
 					    size_t *,int,size_t *));
 	int  (*sc_dmago) __P((struct sbic_softc *));
 	void (*sc_dmastop) __P((struct sbic_softc *));
+	void (*sc_reset) __P((struct sbic_softc *));
 };
 
 /* values for sc_flags */
