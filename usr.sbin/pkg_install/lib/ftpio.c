@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.13 2000/02/02 14:09:40 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.14 2000/02/02 14:42:53 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.13 2000/02/02 14:09:40 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.14 2000/02/02 14:42:53 hubertf Exp $");
 #endif
 
 /*
@@ -455,10 +455,16 @@ expandURL(char *expandedurl, const char *wildcardurl)
 	char *s, buf[FILENAME_MAX];
 	char tmpname[FILENAME_MAX];
 	char best[FILENAME_MAX];
+	int tfd;
 
-	strcpy(tmpname, "/tmp/pkg.XXX");
-	mktemp(tmpname);
-	assert(tmpname != NULL);
+	strcpy(tmpname, "/tmp/pkg.XXXXXX");
+	tfd=mkstemp(tmpname);
+	if (tfd == -1) {
+		warnx("Cannot generate temp file for ftp(1)'s ls output");
+		return -1; /* error */
+	}
+	close(tfd); /* We don't need the file descriptor, but will use 
+		       the file in a second */
 
 	s=strpbrk(pkg, "<>[]?*{"); /* Could leave out "[]?*" here;
 				    * ftp(1) is not that stupid */
