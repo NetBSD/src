@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.96 1999/08/25 05:09:32 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.97 1999/10/27 14:58:28 is Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -83,7 +83,7 @@ ${PASM}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
-	    ${CPP} -DPROF ${ACPPFLAGS} ${AINC} | \
+	    ${CPP} -DGPROF ${ACPPFLAGS} ${AINC} | \
 	    ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
@@ -107,7 +107,7 @@ ${PNOERR}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
-	    ${CPP} -DPROF ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DGPROF ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
@@ -131,7 +131,7 @@ ${PPSEUDONOERR}: ${ARCHDIR}/SYS.h \
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' | \
-	    ${CPP} -DPROF ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
+	    ${CPP} -DGPROF ${ACPPFLAGS} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
