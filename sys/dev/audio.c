@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.19 1996/02/20 10:00:31 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.20 1996/02/20 11:47:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -646,7 +646,7 @@ audio_drain(sc)
 		 * timeout.
 		 */
 		error = audio_sleep_timo(&sc->sc_wchan, "aud dr", 60*hz);
-		if (error != 0)
+		if (error)
 			return (error);
 	}
 	return (0);
@@ -737,7 +737,7 @@ audio_read(dev, uio, ioflag)
 					return (EWOULDBLOCK);
 				}
 				error = audio_sleep(&sc->sc_rchan, "aud hr");
-				if (error != 0) {
+				if (error) {
 					splx(s);
 					return (error);
 				}
@@ -764,7 +764,7 @@ audio_read(dev, uio, ioflag)
 				audiostartr(sc);
 			error = audio_sleep(&sc->sc_rchan, "aud rd");
 			splx(s);
-			if (error != 0)
+			if (error)
 				return (error);
 		}
 		hp = cb->hp;
@@ -1440,7 +1440,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_out_sr(sc->hw_hdl, p->sample_rate);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_50ms = 50 * hw->get_out_sr(sc->hw_hdl) / 1000;
 	}
@@ -1449,7 +1449,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_in_sr(sc->hw_hdl, r->sample_rate);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_50ms = 50 * hw->get_in_sr(sc->hw_hdl) / 1000;
 	}
@@ -1458,7 +1458,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_encoding(sc->hw_hdl, p->encoding);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_pencoding = p->encoding;
 	}	
@@ -1467,7 +1467,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_encoding(sc->hw_hdl, r->encoding);
-		if (error != 0)
+		if (error)
 			return(error);
 		sc->sc_rencoding = r->encoding;
 	}
@@ -1476,7 +1476,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_precision(sc->hw_hdl, p->precision);
-		if (error != 0)
+		if (error)
 			return(error);
 		
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1490,7 +1490,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_precision(sc->hw_hdl, r->precision);
-		if (error != 0)
+		if (error)
 			return(error);
 		
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1504,7 +1504,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_channels(sc->hw_hdl, p->channels);
-		if (error != 0)
+		if (error)
 			return(error);
 
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1518,7 +1518,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_channels(sc->hw_hdl, r->channels);
-		if (error != 0)
+		if (error)
 			return(error);
 
 		sc->sc_blksize = audio_blocksize = audio_calc_blksize(sc);
@@ -1532,7 +1532,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_out_port(sc->hw_hdl, p->port);
-		if (error != 0)
+		if (error)
 			return(error);
 	}
 	if (r->port != ~0) {
@@ -1540,7 +1540,7 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 		error = hw->set_in_port(sc->hw_hdl, r->port);
-		if (error != 0)
+		if (error)
 			return(error);
 	}
 	if (p->gain != ~0) {
@@ -1548,14 +1548,18 @@ audiosetinfo(sc, ai)
 		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = p->gain;
-		hw->set_port(sc->hw_hdl, &ct);
+		error = hw->set_port(sc->hw_hdl, &ct);
+		if (error)
+			return(error);
 	}
 	if (r->gain != ~0) {
 		ct.dev = hw->get_in_port(sc->hw_hdl);
 		ct.type = AUDIO_MIXER_VALUE;
 		ct.un.value.num_channels = 1;
 		ct.un.value.level[AUDIO_MIXER_LEVEL_MONO] = r->gain;
-		hw->set_port(sc->hw_hdl, &ct);
+		error = hw->set_port(sc->hw_hdl, &ct);
+		if (error)
+			return(error);
 	}
 	
 	if (p->pause != (u_char)~0) {
@@ -1625,7 +1629,7 @@ audiosetinfo(sc, ai)
 			audio_init_record(sc);
 	}
 	error = hw->commit_settings(sc->hw_hdl);
-	if (error != 0)
+	if (error)
 		return (error);
 
 	if (cleared) {
