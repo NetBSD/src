@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.26 2001/02/20 08:49:16 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.27 2001/02/21 00:11:53 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -222,9 +222,9 @@ struct ip6protosw inet6sw[] = {
 #endif
 },
 #ifdef ISO
-{ SOCK_RAW,	&inet6domain,	IPPROTO_EON,	0,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR,
   encap6_input,	rip6_output,	0,		rip6_ctloutput,
-  rip_usrreq,	/*XXX*/
+  rip6_usrreq,	/*XXX*/
   0,		0,		0,		0,
 },
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.45 2001/02/20 08:49:15 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.46 2001/02/21 00:11:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -244,7 +244,7 @@ struct protosw inetsw[] = {
   eonprotoinit,	0,		0,		0,
 },
 #else
-{ SOCK_RAW,	&inetdomain,	IPPROTO_EON,	0,
+{ SOCK_RAW,	&inetdomain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR,
   encap4_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,	/*XXX*/
   0,		0,		0,		0,
