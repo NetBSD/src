@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.153 2001/09/27 02:05:43 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.154 2001/09/28 11:59:53 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,6 +52,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
