@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.46 2000/06/01 04:16:39 mycroft Exp $	*/
+/*	$NetBSD: var.c,v 1.47 2000/06/01 09:39:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.46 2000/06/01 04:16:39 mycroft Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.47 2000/06/01 09:39:02 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.46 2000/06/01 04:16:39 mycroft Exp $");
+__RCSID("$NetBSD: var.c,v 1.47 2000/06/01 09:39:02 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1947,26 +1947,28 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    termc = *--cp;
 		    delim = '\0';
 
-		    switch (how) {
-		    case '+':
-			Var_Append(v->name, pattern.rhs, v_ctxt);
-			break;
-		    case '!':
-			newStr = Cmd_Exec (pattern.rhs, &emsg);
-			if (emsg)
-			    Error (emsg, str);
-			else
-			   Var_Set(v->name, newStr,  v_ctxt);
-			if (newStr)
-			    free(newStr);
-			break;
-		    case '?':
-			if ((v->flags & VAR_JUNK) == 0)
+		    if (ctxt != VAR_FOR) {
+			switch (how) {
+			case '+':
+			    Var_Append(v->name, pattern.rhs, v_ctxt);
 			    break;
-			/* FALLTHROUGH */
-		    default:
-			Var_Set(v->name, pattern.rhs, v_ctxt);
-			break;
+			case '!':
+			    newStr = Cmd_Exec (pattern.rhs, &emsg);
+			    if (emsg)
+				Error (emsg, str);
+			    else
+				Var_Set(v->name, newStr,  v_ctxt);
+			    if (newStr)
+				free(newStr);
+			    break;
+			case '?':
+			    if ((v->flags & VAR_JUNK) == 0)
+				break;
+			    /* FALLTHROUGH */
+			default:
+			    Var_Set(v->name, pattern.rhs, v_ctxt);
+			    break;
+			}
 		    }
 		    if (v->flags & VAR_JUNK) {
 			free(v->name);
