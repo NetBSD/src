@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.18 2002/04/10 14:23:59 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.19 2002/04/12 02:19:31 lukem Exp $
 
 .include <bsd.own.mk>
-.include <bsd.kernobj.mk>
+.include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-.include "${.CURDIR}/../../../Makefile.inc"
+.include <bsd.kernobj.mk>
 
 BASENAME=	boot
 IMAGE1=		${BASENAME}1.fs
@@ -31,6 +31,7 @@ realall: netbsd ${BOOT}
 	    if=${FSTMP} of=${IMAGE1}.tmp
 	@echo "installing new bootblocks"
 	${MDEC}/installboot -v -b 17 ${BOOT} ${MDEC}/bootxx ${IMAGE1}.tmp
+		# XXXDISTRIB
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
 		disks=$$(($$size / $$dksize + 1)); \
@@ -88,7 +89,7 @@ ${BOOT}: ${MDEC}/${BOOT}
 
 release: check_RELEASEDIR
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	cp -p ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
+	${RELINSTALL} ${BASENAME}?.fs ${RELEASEDIR}/installation/floppy
 
 clean cleandir distclean:
 	rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
