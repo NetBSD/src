@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2000/02/20 03:52:24 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.10.4.1 2001/04/21 17:44:31 he Exp $
 #
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 #
@@ -24,4 +24,4 @@ snap_md_post:
 .endif
 	cd ${.CURDIR}/../distrib/sun3 && \
 	  ${MAKE} depend && ${MAKE} ${_J} && ${MAKE} release
-
+	cd ${.CURDIR}/../distrib/notes && ${MAKE} && ${MAKE} release
