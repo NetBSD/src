@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.84 1998/09/03 15:13:51 tsubai Exp $
+#	$NetBSD: bsd.own.mk,v 1.85 1998/09/11 14:52:20 eeh Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -109,7 +109,8 @@ NOPIC=
 #
 .if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "mips") || \
-    (${MACHINE_ARCH} == "powerpc")
+    (${MACHINE_ARCH} == "powerpc") || \
+    (${MACHINE_ARCH} == "sparc64")
 OBJECT_FMT?=ELF
 .else
 OBJECT_FMT?=a.out
@@ -121,7 +122,8 @@ NOPROFILE=
 .endif
 
 # Some platforms are already transitioned to egcs.
-.if (${MACHINE_ARCH} == "alpha")
+.if (${MACHINE_ARCH} == "alpha") || \
+    (${MACHINE_ARCH} == "sparc64")
 USE_EGCS=1
 .endif
 
@@ -137,6 +139,7 @@ GNU_ARCH.mipsel=mipsel
 GNU_ARCH.ns32k=ns32k
 GNU_ARCH.powerpc=powerpc
 GNU_ARCH.sparc=sparc
+GNU_ARCH.sparc64=sparc64
 GNU_ARCH.vax=vax
 # XXX temporary compatibility
 GNU_ARCH.mips=mipsel
