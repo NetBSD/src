@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14 2000/03/28 03:11:28 simonb Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.15 2000/05/29 09:16:36 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2000/03/28 03:11:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2000/05/29 09:16:36 nisimura Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -110,16 +110,11 @@ process_read_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
-	if (p->p_md.md_flags & MDP_FPUSED) {
 #if !defined(NOFPU) && !defined(SOFTFLOAT)
-		if (p == fpcurproc)
-			savefpregs(p);
+	if ((p->p_md.md_flags & MDP_FPUSED) && p == fpcurproc)
+		savefpregs(p);
 #endif
-		memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs,
-			sizeof(struct fpreg));
-	}
-	else
-		memset(regs, 0, sizeof(struct fpreg));
+	memcpy(regs, &p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	return 0;
 }
 
@@ -128,16 +123,10 @@ process_write_fpregs(p, regs)
 	struct proc *p;
 	struct fpreg *regs;
 {
+#if 0	/* no FP insn is executed yet */
 	if ((p->p_md.md_flags & MDP_FPUSED) == 0)	/* XXX */
 		return EINVAL;
-
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-	if (p->p_md.md_flags & MDP_FPUSED) {
-		if (p == fpcurproc)
-			savefpregs(p);
-	}
 #endif
-
 	memcpy(&p->p_addr->u_pcb.pcb_fpregs, regs, sizeof(struct fpreg));
 	return 0;
 }
