@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.11 2000/04/29 00:43:36 mycroft Exp $	*/
+/*	$NetBSD: color.c,v 1.12 2000/05/06 19:03:39 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.11 2000/04/29 00:43:36 mycroft Exp $");
+__RCSID("$NetBSD: color.c,v 1.12 2000/05/06 19:03:39 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -91,7 +91,8 @@ __change_pair __P((short));
 bool
 has_colors(void)
 {
-	if (cO > 0)
+	if (cO > 0 && PA > 0 && ((af != NULL && ab != NULL) || iP != NULL ||
+	    iC != NULL || (sB != NULL && sF != NULL)))
 		return(TRUE);
 	else
 		return(FALSE);
