@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.7 2003/04/29 05:15:14 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.8 2003/04/29 05:32:41 thorpej Exp $
 
 NOMAN=  # defined
 
@@ -50,6 +50,7 @@ COPTS+=	-ffreestanding
 CWARNFLAGS+= -Wno-main
 
 CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
+CLEANFILES+= ${PROGSYM}
 SRCS+= vers.c
 
 .if !make(obj) && !make(clean) && !make(cleandir)
@@ -98,6 +99,17 @@ vers.c: ${VERSIONFILE}
 
 ${PROG}: ${PROGSYM}
 	${OBJCOPY} -O binary ${PROGSYM} ${.TARGET}
+
+# Prevent the normal install target from doing anything.
+proginstall::
+
+# Install the raw binary or the symbol version, based on whether or
+# not the resulting gzboot needs to be mdsetimage'd.
+.if ${MAXIMAGESIZE} == "0"
+FILES=	${PROG}
+.else
+FILES=	${PROGSYM}
+.endif
 
 .include <bsd.prog.mk>
 
