@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.5 1995/06/28 08:27:08 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.6 1995/08/03 01:00:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -167,16 +167,6 @@ NESTED(sigcode,0,0,ra,0,0)
 	call_pal PAL_OSF1_callsys
 XNESTED(esigcode,0)
 	END(sigcode)
-
-/**************************************************************************/
-
-/*
- * Memory barrier: get all of the stuff in write caches out to memory.
- */
-LEAF(alpha_mb,0)
-	mb
-	RET
-	END(alpha_mb)
 
 /**************************************************************************/
 
@@ -945,6 +935,10 @@ LEAF(switch_exit, 1)
 
 /**************************************************************************/
 
+#define	COPY_FRAME_SIZE	32
+#define	COPY_FRAME_RA	0
+#define	COPY_FRAME_S6	8
+
 /*
  * Copy a null-terminated string within the kernel's address space.
  * If lenp is not NULL, store the number of chars copied in *lenp
@@ -953,6 +947,12 @@ LEAF(switch_exit, 1)
  */
 LEAF(copystr, 4)
 	SETGP(pv)
+
+	/* set up stack frame */
+	lda	sp, -COPY_FRAME_SIZE(sp)
+	stq	ra, COPY_FRAME_RA(sp)
+	stq	s6, COPY_FRAME_S6(sp)
+
 	mov	a2, t0			/* t0 = i = len */
 	beq	a2, 2f			/* if (len == 0), bail out */
 
@@ -976,6 +976,11 @@ LEAF(copystr, 4)
 	subl	t0, a2, t0		/* *lenp = (i - len) */
 	stq	t0, 0(a3)
 3:
+	/* tear down stack frame */
+	ldq	ra, COPY_FRAME_RA(sp)
+	ldq	s6, COPY_FRAME_S6(sp)
+	addq	sp, COPY_FRAME_SIZE, sp
+
 	beq	t1, 4f			/* *from == '\0'; leave quietly */
 
 	CONST(ENAMETOOLONG, v0)		/* *from != '\0'; error. */
@@ -992,7 +997,7 @@ NESTED(copyinstr, 4, 16, ra, 0, 0)
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	CONST(VM_MAX_ADDRESS, t0)		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_noframe		/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, curproc
@@ -1016,7 +1021,7 @@ NESTED(copyoutstr, 4, 16, ra, 0, 0)
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	CONST(VM_MAX_ADDRESS, t0)		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_noframe		/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, curproc
@@ -1041,6 +1046,12 @@ NESTED(copyoutstr, 4, 16, ra, 0, 0)
  */
 LEAF(bcopy, 3)
 	SETGP(pv)
+
+	/* set up stack frame */
+	lda	sp, -COPY_FRAME_SIZE(sp)
+	stq	ra, COPY_FRAME_RA(sp)
+	stq	s6, COPY_FRAME_S6(sp)
+
 	mov	a2, t0			/* t0 = i = len */
 	beq	a2, 2f			/* if (len == 0), bail out */
 
@@ -1059,7 +1070,11 @@ LEAF(bcopy, 3)
 	bne	a2, 1b			/* if (len != 0) copy more */
 
 2:
-	mov	zero, v0		/* return 0. */
+	/* tear down stack frame */
+	ldq	ra, COPY_FRAME_RA(sp)
+	ldq	s6, COPY_FRAME_S6(sp)
+	addq	sp, COPY_FRAME_SIZE, sp
+
 	RET
 	END(bcopy)
 
@@ -1069,7 +1084,7 @@ NESTED(copyin, 3, 16, ra, 0, 0)
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	CONST(VM_MAX_ADDRESS, t0)		/* make sure that src addr   */
 	cmpult	a0, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_noframe		/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, curproc
@@ -1084,7 +1099,8 @@ NESTED(copyin, 3, 16, ra, 0, 0)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
-	RET					/* v0 left over from copystr */
+	mov	zero, v0			/* return 0. */
+	RET
 	END(copyin)
 
 NESTED(copyout, 3, 16, ra, 0, 0)
@@ -1093,7 +1109,7 @@ NESTED(copyout, 3, 16, ra, 0, 0)
 	stq	ra, (16-8)(sp)			/* save ra		     */
 	CONST(VM_MAX_ADDRESS, t0)		/* make sure that dest addr  */
 	cmpult	a1, t0, t1			/* is in user space.	     */
-	beq	t1, copyerr			/* if it's not, error out.   */
+	beq	t1, copyerr_noframe		/* if it's not, error out.   */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
 	ldq	at_reg, curproc
@@ -1108,11 +1124,19 @@ NESTED(copyout, 3, 16, ra, 0, 0)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
-	RET					/* v0 left over from copystr */
+	mov	zero, v0			/* return 0. */
+	RET
 	END(copyout)
 
 LEAF(copyerr, 0)
 	SETGP(pv)
+
+	/* tear down copy functions' stack frame */
+	ldq	ra, COPY_FRAME_RA(sp)
+	ldq	s6, COPY_FRAME_S6(sp)
+	addq	sp, COPY_FRAME_SIZE, sp
+
+XLEAF(copyerr_noframe, 0)
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
 	lda	sp, 16(sp)			/* kill stack frame.	     */
 	CONST(EFAULT, v0)			/* return EFAULT.	     */
