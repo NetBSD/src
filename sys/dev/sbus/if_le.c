@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1998/08/15 10:51:19 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.5 1998/08/28 20:01:08 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -281,6 +281,10 @@ leattach_sbus(parent, self, aux)
 		bus_dma_segment_t seg;
 		int rseg, error;
 
+#ifndef BUS_DMA_24BIT
+/* XXX - This flag is not defined on all archs */
+#define BUS_DMA_24BIT	0
+#endif
 		error = bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
 					 &seg, 1, &rseg,
 					 BUS_DMA_NOWAIT | BUS_DMA_24BIT);
@@ -297,11 +301,6 @@ leattach_sbus(parent, self, aux)
 		}
 
 		sc->sc_addr = seg.ds_addr & 0xffffff;
-#if defined (SUN4M)
-		if ((sc->sc_addr & 0xffffff) >=
-		    (sc->sc_addr & 0xffffff) + MEMSIZE)
-			panic("if_le: Lance buffer crosses 16MB boundary");
-#endif
 		sc->sc_memsize = MEMSIZE;
 		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	}
