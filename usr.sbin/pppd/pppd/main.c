@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 1998/07/06 07:04:28 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.31 1998/07/26 15:48:44 mycroft Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.47 1998/03/30 06:25:34 paulus Exp ";
 #else
-__RCSID("$NetBSD: main.c,v 1.30 1998/07/06 07:04:28 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.31 1998/07/26 15:48:44 mycroft Exp $");
 #endif
 #endif
 
@@ -1394,18 +1394,19 @@ int
 vfmtmsg(buf, buflen, fmt, args)
     char *buf;
     int buflen;
-    char *fmt;
+    const char *fmt;
     va_list args;
 {
     int c, i, n;
     int width, prec, fillch;
     int base, len, neg, quoted;
     unsigned long val = 0;
-    char *str, *f, *buf0;
+    char *buf0, *s;
+    const char *str, *f;
     unsigned char *p;
     char num[32];
     time_t t;
-    static char hexchars[] = "0123456789abcdef";
+    static const char hexchars[] = "0123456789abcdef";
 
     buf0 = buf;
     --buflen;
@@ -1505,9 +1506,9 @@ vfmtmsg(buf, buflen, fmt, args)
 	    continue;
 	case 't':
 	    time(&t);
-	    str = ctime(&t);
-	    str += 4;		/* chop off the day name */
-	    str[15] = 0;	/* chop off year and newline */
+	    s = ctime(&t);
+	    s[19] = 0;		/* chop off year and newline */
+	    str = s + 4;	/* chop off the day name */
 	    break;
 	case 'v':		/* "visible" string */
 	case 'q':		/* quoted string */
@@ -1563,24 +1564,25 @@ vfmtmsg(buf, buflen, fmt, args)
 	    continue;
 	}
 	if (base != 0) {
-	    str = num + sizeof(num);
-	    *--str = 0;
-	    while (str > num + neg) {
-		*--str = hexchars[val % base];
+	    s = num + sizeof(num);
+	    *--s = 0;
+	    while (s > num + neg) {
+		*--s = hexchars[val % base];
 		val = val / base;
 		if (--prec <= 0 && val == 0)
 		    break;
 	    }
 	    switch (neg) {
 	    case 1:
-		*--str = '-';
+		*--s = '-';
 		break;
 	    case 2:
-		*--str = 'x';
-		*--str = '0';
+		*--s = 'x';
+		*--s = '0';
 		break;
 	    }
-	    len = num + sizeof(num) - 1 - str;
+	    len = num + sizeof(num) - 1 - s;
+	    str = s;
 	} else {
 	    len = strlen(str);
 	    if (prec > 0 && len > prec)
