@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.37 2000/11/01 06:19:59 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.38 2000/12/04 20:19:49 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -670,7 +670,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 			/* Insert IGN */
 			vec |= sc->sc_ign;
 			bus_space_write_8(sc->sc_bustag,
-			    (bus_space_handle_t)ih->ih_map, 0, vec);
+			    (bus_space_handle_t)(u_long)ih->ih_map, 0, vec);
 		} else {
 			int64_t *intrptr = &sc->sc_sysio->scsi_int_map;
 			int64_t intrmap = 0;
@@ -693,7 +693,7 @@ sbus_intr_establish(t, pri, level, flags, handler, arg)
 				/* Enable the interrupt */
 				intrmap |= INTMAP_V;
 				bus_space_write_8(sc->sc_bustag,
-				    (bus_space_handle_t)ih->ih_map, 0,
+				    (bus_space_handle_t)(u_long)ih->ih_map, 0,
 				    (u_long)intrmap);
 			} else
 				panic("IRQ not found!");
