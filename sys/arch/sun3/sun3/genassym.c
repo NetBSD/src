@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.23 1994/11/21 21:38:33 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.24 1995/01/24 06:01:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -116,6 +116,7 @@ main()
 	def1(NBSG);
 
 	/* sun3 memory map */
+	def1(DVMA_SPACE_START);
 	def1(MONSTART);
 	def1(PROM_BASE);
 	def1(USRSTACK);

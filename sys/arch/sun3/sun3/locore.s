@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 1994/12/20 05:30:30 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 1995/01/24 06:01:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -41,11 +41,14 @@
 | Define some addresses, mostly so DDB can print useful info.
 .set	_kernbase,KERNBASE
 .globl	_kernbase
+.set	_dvma_base,DVMA_SPACE_START
+.globl	_dvma_base
 
 .set	_prom_start,MONSTART
 .globl	_prom_start
 .set	_prom_base,PROM_BASE
 .globl	_prom_base
+
 
 | This is where the UPAGES get mapped.
 .set	_kstack,UADDR
