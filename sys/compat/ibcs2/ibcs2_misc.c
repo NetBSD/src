@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.49 2000/08/11 22:19:29 matt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.50 2000/08/18 17:38:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -543,7 +543,7 @@ again:
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
-	if (eofflag || (len = buflen - auio.uio_resid) == 0)
+	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
 	for (cookie = cookiebuf; len > 0 && resid > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
