@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.50 2001/02/12 04:04:37 jhawk Exp $
+.\"	$NetBSD: ddb.4,v 1.51 2001/04/11 23:26:09 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 - 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -990,6 +990,16 @@ If the kernel configuration option
 .D1 Cd options DDB_ONPANIC=0
 is used,
 .Va onpanic
+will be initialised to off.
+.It Va fromconsole
+If non-zero (the default),
+the kernel allows to enter
+.Nm
+from the console (by break signal or special key sequence).
+If the kernel configuration option
+.D1 Cd options DDB_FROMCONSOLE=0
+is used,
+.Va fromconsole
 will be initialised to off.
 .It Va radix
 Input and output radix.
