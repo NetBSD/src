@@ -1,4 +1,4 @@
-.\"	$NetBSD: cd.4,v 1.9 1998/12/02 11:05:59 bouyer Exp $
+.\"	$NetBSD: cd.4,v 1.10 1999/02/15 18:45:28 bouyer Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -335,9 +335,9 @@ Eject the
 .It Dv CDIOCLOADUNLOAD
 Cause the ATAPI changer to load or unload discs.
 
-.\".It Dv CDIOCCLOSE
-.\"Tell the drive to close its door and load the media.
-.\"Not all drives support this feature.
+.It Dv CDIOCCLOSE
+Tell the drive to close its door and load the media.
+Not all drives support this feature.
 .\"
 .\".It Dv CDIOCPITCH
 .\".Pq Li "struct ioc_pitch"
