@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.73 1999/02/27 00:47:35 wrstuden Exp $	*/
+/*	$NetBSD: mount.h,v 1.74 1999/03/25 05:06:32 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -130,7 +130,16 @@ struct mount {
  * Mount flags.  XXX BEWARE: these are not in numerical order!
  *
  * Unmount uses MNT_FORCE flag.
+ *
+ * Note that all mount flags are listed here.  if you need to add one, take
+ * one of the __MNT_UNUSED flags.
  */
+
+#define __MNT_UNUSED1	0x00100000
+#define __MNT_UNUSED2	0x00400000
+#define __MNT_UNUSED3	0x00800000
+#define __MNT_UNUSED4	0x80000000
+
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
 #define	MNT_NOEXEC	0x00000004	/* can't exec from filesystem */
@@ -140,8 +149,8 @@ struct mount {
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
-#define MNT_NODEVMTIME	0x08000000	/* Never update mod times for devs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
+#define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
 
 /*
  * exported mount flags.
@@ -166,7 +175,7 @@ struct mount {
  * Since f_flags in struct statfs is short, this mask overflows on
  * most architecture.  XXX.
  */
-#define	MNT_VISFLAGMASK	0x2400ffff
+#define	MNT_VISFLAGMASK	0x7c00ffff
 
 /*
  * External filesystem control flags.
