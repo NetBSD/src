@@ -1,6 +1,6 @@
-#	$NetBSD: files.bebox,v 1.6 1998/02/03 03:59:54 sakamoto Exp $
+#	$NetBSD: files.bebox,v 1.7 1998/02/12 01:03:58 sakamoto Exp $
 #
-# First try for be specific configuration info
+# First try for bebox specific configuration info
 #
 maxpartitions 16
 
@@ -55,6 +55,12 @@ major	{cd = 6}
 
 include "dev/ata/files.ata"
 major	{wd = 0}
+
+#
+# Memory Disk for install floppy
+#
+file arch/bebox/bebox/md_root.c   memory_disk_hooks 
+major   {md = 17}
 
 #
 # System bus types
