@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.193 2001/10/23 22:55:30 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.194 2001/10/24 02:34:33 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -56,7 +56,7 @@ INSTALL=	STRIP=${STRIP} ${TOOLDIR}/bin/binstall
 INSTALL_INFO=	${TOOLDIR}/bin/install-info
 LD=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-ld
 LEX=		${TOOLDIR}/bin/lex
-LINT=		CC="${CC}" ${TOOLDIR}/bin/lint
+LINT=		CC="${CC}" ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM="${NM}" ${TOOLDIR}/bin/lorder
 #MAKE=		${TOOLDIR}/bin/bmake
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
