@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.331 2001/03/30 14:35:45 minoura Exp $
+# $NetBSD: mi,v 1.332 2001/04/03 01:43:18 minoura Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1151,7 +1151,6 @@
 ./usr/share/man/cat8/eeprom.0			man-sysutil-catman
 ./usr/share/man/cat8/envstat.0			man-sysutil-catman
 ./usr/share/man/cat8/error.0			man-postfix-catman
-./usr/share/man/cat8/error.0			man-sysutil-catman
 ./usr/share/man/cat8/eshconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/faithd.0			man-router-catman
 ./usr/share/man/cat8/fastboot.0			man-sysutil-catman
@@ -2640,7 +2639,7 @@
 ./usr/share/man/man8/edquota.8			man-sysutil-man
 ./usr/share/man/man8/eeprom.8			man-sysutil-man
 ./usr/share/man/man8/envstat.8			man-sysutil-man
-./usr/share/man/man8/error.8			man-sysutil-man
+./usr/share/man/man8/error.8			man-postfix-man
 ./usr/share/man/man8/eshconfig.8		man-sysutil-man
 ./usr/share/man/man8/faithd.8			man-router-man
 ./usr/share/man/man8/fastboot.8			man-sysutil-man
