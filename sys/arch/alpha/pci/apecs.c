@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.35 1999/04/10 01:21:38 cgd Exp $ */
+/* $NetBSD: apecs.c,v 1.35.4.1 1999/11/14 23:39:18 fvdl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.35 1999/04/10 01:21:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.35.4.1 1999/11/14 23:39:18 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,8 @@ apecsattach(parent, self, aux)
 	    alphabus_dma_get_tag(&acp->ac_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &acp->ac_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
+	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, apecsprint);
 }
 
