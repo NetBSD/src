@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.140 2001/11/20 08:43:37 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.141 2002/01/16 18:52:35 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -3521,9 +3521,9 @@ Lslowtrap_reenter:
  *	%g4 = tt == T_AST
  */
 softtrap:
-	sethi	%hi(EINTSTACK-BIAS), %g5
+	sethi	%hi(EINTSTACK-STKB), %g5
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
-	or	%g5, %lo(EINTSTACK-BIAS), %g5
+	or	%g5, %lo(EINTSTACK-STKB), %g5
 	dec	%g7
 	sub	%g5, %g6, %g5
 	sethi	%hi(CPCB), %g6
