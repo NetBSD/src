@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.21 2002/10/23 09:11:02 jdolecek Exp $	*/
+/*	$NetBSD: apci.c,v 1.22 2003/03/06 18:24:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.21 2002/10/23 09:11:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apci.c,v 1.22 2003/03/06 18:24:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,16 @@ int	apcicngetc __P((dev_t));
 void	apcicnputc __P((dev_t, int));
 
 static struct consdev apci_cons = {
-       NULL, NULL, apcicngetc, apcicnputc, nullcnpollc, NULL, NODEV, CN_REMOTE
+       NULL,
+       NULL,
+       apcicngetc,
+       apcicnputc,
+       nullcnpollc,
+       NULL,
+       NULL,
+       NULL,
+       NODEV,
+       CN_REMOTE
 };
 
 

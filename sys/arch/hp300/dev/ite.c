@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.57 2002/10/23 09:11:06 jdolecek Exp $	*/
+/*	$NetBSD: ite.c,v 1.58 2003/03/06 18:24:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.57 2002/10/23 09:11:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.58 2003/03/06 18:24:53 thorpej Exp $");
 
 #include "hil.h"
 
@@ -155,7 +155,16 @@ static struct	ite_data ite_cn;
  * console stuff
  */
 static struct consdev ite_cons = {
-	NULL, NULL, itecngetc, itecnputc, nullcnpollc, NULL, NODEV, CN_NORMAL
+	NULL,
+	NULL,
+	itecngetc,
+	itecnputc,
+	nullcnpollc,
+	NULL,
+	NULL,
+	NULL,
+	NODEV,
+	CN_NORMAL
 };
 static int console_kbd_attached;
 static int console_display_attached;

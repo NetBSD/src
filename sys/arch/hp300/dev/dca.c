@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.53 2002/10/23 09:11:03 jdolecek Exp $	*/
+/*	$NetBSD: dca.c,v 1.54 2003/03/06 18:24:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.53 2002/10/23 09:11:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.54 2003/03/06 18:24:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -171,7 +171,16 @@ void	dcacnputc __P((dev_t, int));
 
 static int dcadefaultrate = TTYDEF_SPEED;
 static struct consdev dca_cons = {
-       NULL, NULL, dcacngetc, dcacnputc, nullcnpollc, NULL, NODEV, CN_REMOTE
+       NULL,
+       NULL,
+       dcacngetc,
+       dcacnputc,
+       nullcnpollc,
+       NULL,
+       NULL,
+       NULL,
+       NODEV,
+       CN_REMOTE
 };
 static struct dcadevice *dca_cn = NULL;        /* pointer to hardware */
 static int dcaconsinit;                        /* has been initialized */
