@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.9 1997/04/22 11:17:58 mrg Exp $	*/
+/*	$NetBSD: gmon.c,v 1.10 1997/07/13 19:53:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -33,14 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && defined(LIBC_SCCS)
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gmon.c,v 1.9 1997/04/22 11:17:58 mrg Exp $";
+__RCSID("$NetBSD: gmon.c,v 1.10 1997/07/13 19:53:06 christos Exp $");
 #endif
 #endif
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/gmon.h>
@@ -51,6 +53,7 @@ static char rcsid[] = "$NetBSD: gmon.c,v 1.9 1997/04/22 11:17:58 mrg Exp $";
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
+#include <err.h>
 
 extern char *minbrk __asm ("minbrk");
 
@@ -63,6 +66,8 @@ static int	s_scale;
 #define ERR(s) write(2, s, sizeof(s))
 
 void	moncontrol __P((int));
+void	monstartup __P((u_long, u_long));
+void	_mcleanup __P((void));
 static int hertz __P((void));
 
 void
@@ -222,13 +227,13 @@ _mcleanup()
 
 	fd = open(proffile , O_CREAT|O_TRUNC|O_WRONLY, 0666);
 	if (fd < 0) {
-		perror( proffile );
+		warn("mcount: Cannot open `%s'", proffile);
 		return;
 	}
 #ifdef DEBUG
 	log = open("gmon.log", O_CREAT|O_TRUNC|O_WRONLY, 0664);
 	if (log < 0) {
-		perror("mcount: gmon.log");
+		warn("mcount: Cannot open `gmon.log'");
 		return;
 	}
 	len = snprintf(buf2, sizeof buf2, "[mcleanup1] kcount 0x%x ssiz %d\n",
@@ -310,5 +315,3 @@ hertz()
 		return(0);
 	return (1000000 / tim.it_interval.tv_usec);
 }
-
-
