@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.222 2003/09/08 18:06:40 wiz Exp $
+.\"	$NetBSD: options.4,v 1.223 2003/09/22 17:13:32 cl Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -306,6 +306,12 @@ to be performed, and allows the
 mode of the
 .Xr nfssvc 2
 system call to be used for compatibility with the deprecated nfsiod program.
+.It Cd options COMPAT_16
+Enable binary compatibility with
+.Nx 1.6 .
+This allows the use of old signal trampoline code which has been deprecated
+with the addition of
+.Xr siginfo 5 .
 .It Cd options COMPAT_43
 Enables compatibility with
 .Bx 4.3 .
