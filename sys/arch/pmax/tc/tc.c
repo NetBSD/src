@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.4 1995/09/25 20:33:26 jonathan Exp $	*/
+/*	$NetBSD: tc.c,v 1.5 1995/10/09 01:45:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -160,11 +160,11 @@ cpu_tcdesc(cpu)
 		tc_enable_interrupt = kn02_enable_intr;
 		return &kn02_tc_desc;
 	} else if (cpu == DS_3MIN) {
-		DPRINTF(("tcattach: 3MIN Turbochannel (UNTESTED)\n"));
+		DPRINTF(("tcattach: 3MIN Turbochannel\n"));
 		tc_enable_interrupt = kmin_enable_intr;
 		return &kmin_tc_desc;
 	} else if (cpu == DS_MAXINE) {
-		DPRINTF(("MAXINE turbochannel (UNTESTED)\n"));
+		DPRINTF(("MAXINE turbochannel\n"));
 		tc_enable_interrupt = xine_enable_intr;
 		return &xine_tc_desc;
 	} else if (cpu == DS_PMAX) {
