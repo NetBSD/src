@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.17 2001/11/10 07:37:00 lukem Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.17.10.1 2003/08/26 06:46:16 tron Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.17 2001/11/10 07:37:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.17.10.1 2003/08/26 06:46:16 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ uvm_io(map, uio)
 		togo = togo - (endva - VM_MAXUSER_ADDRESS + 1);
 	pageoffset = baseva & PAGE_MASK;
 	baseva = trunc_page(baseva);
-	chunksz = MIN(round_page(togo + pageoffset), MAXBSIZE);
+	chunksz = MIN(round_page(togo + pageoffset), trunc_page(MAXPHYS));
 	error = 0;
 
 	/*
