@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sys-bsd.c,v 1.13 1996/10/16 00:15:51 jtk Exp $";
+static char rcsid[] = "$Id: sys-bsd.c,v 1.14 1997/03/10 19:36:40 is Exp $";
 #endif
 
 /*
@@ -51,7 +51,7 @@ static char rcsid[] = "$Id: sys-bsd.c,v 1.13 1996/10/16 00:15:51 jtk Exp $";
 #include <netinet/in.h>
 
 #if RTM_VERSION >= 3
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #include "pppd.h"
