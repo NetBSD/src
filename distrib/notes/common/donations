@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.7 1999/05/05 23:32:24 billc Exp $	
+.\"	$NetBSD: donations,v 1.8 1999/05/06 11:29:14 jtk Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,7 @@ Michael L. Hitch
 Jordan K. Hubbard
 Scott Kaplan
 Noah M. Keiserman
+John Kohl
 Chris Legrow
 Neil J. McRae
 Perry E. Metzger
