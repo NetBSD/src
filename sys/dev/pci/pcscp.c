@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.8 2000/03/20 05:48:29 tsutsui Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.9 2000/06/02 18:34:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -99,9 +99,9 @@ struct pcscp_softc {
 
 /* don't have to use MI defines in MD code... */
 #undef	NCR_READ_REG
-#define NCR_READ_REG(sc, reg)		pcscp_read_reg((sc), (reg))
+#define	NCR_READ_REG(sc, reg)		pcscp_read_reg((sc), (reg))
 #undef	NCR_WRITE_REG
-#define NCR_WRITE_REG(sc, reg, val)	pcscp_write_reg((sc), (reg), (val))
+#define	NCR_WRITE_REG(sc, reg, val)	pcscp_write_reg((sc), (reg), (val))
 
 int	pcscp_match __P((struct device *, struct cfdata *, void *)); 
 void	pcscp_attach __P((struct device *, struct device *, void *));  
@@ -267,14 +267,14 @@ pcscp_attach(parent, self, aux)
 
 	/* map and establish interrupt */
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	    pa->pa_intrline, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	esc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, 
-					(int (*)(void *))ncr53c9x_intr, esc);
+	    (int (*)(void *))ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
@@ -284,7 +284,7 @@ pcscp_attach(parent, self, aux)
 	}
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
-		       intrstr);
+		    intrstr);
 
 	/*
 	 * Create the DMA maps for the data transfers.
@@ -315,21 +315,21 @@ pcscp_attach(parent, self, aux)
 	    sizeof(u_int32_t) * MDL_SIZE , (caddr_t *)&esc->sc_mdladdr,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map the MDL memory, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	if ((error = bus_dmamap_create(esc->sc_dmat, 
 	    sizeof(u_int32_t) * MDL_SIZE, 1, sizeof(u_int32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
 		printf("%s: unable to map_create for the MDL, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_mdldmap,
 	     esc->sc_mdladdr, sizeof(u_int32_t) * MDL_SIZE,
 	     NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to load for the MDL, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 
@@ -404,11 +404,11 @@ pcscp_dma_intr(sc)
 
 	if (dmastat & DMASTAT_ERR) {
 		/* XXX not tested... */
-		WRITE_DMAREG(esc, DMA_CMD, DMACMD_ABORT |
-			     (datain ? DMACMD_DIR : 0));
+		WRITE_DMAREG(esc, DMA_CMD,
+		    DMACMD_ABORT | (datain ? DMACMD_DIR : 0));
 
 		printf("%s: error: DMA error detected; Aborting.\n",
-		       sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 		bus_dmamap_unload(esc->sc_dmat, dmap);
 		return -1;
 	}
@@ -416,8 +416,8 @@ pcscp_dma_intr(sc)
 	if (dmastat & DMASTAT_ABT) {
 		/* XXX What should be done? */
 		printf("%s: dma_intr: DMA aborted.\n", sc->sc_dev.dv_xname);
-		WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE |
-			     (datain ? DMACMD_DIR : 0));
+		WRITE_DMAREG(esc, DMA_CMD,
+		    DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 		esc->sc_active = 0;
 		return 0;
 	}
@@ -433,10 +433,10 @@ pcscp_dma_intr(sc)
 	if (esc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
 		NCR_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-			NCR_READ_REG(sc, NCR_TCL) |
-				(NCR_READ_REG(sc, NCR_TCM) << 8),
-			NCR_READ_REG(sc, NCR_TCL),
-			NCR_READ_REG(sc, NCR_TCM)));
+		    NCR_READ_REG(sc, NCR_TCL) |
+		    (NCR_READ_REG(sc, NCR_TCM) << 8),
+		    NCR_READ_REG(sc, NCR_TCL),
+		    NCR_READ_REG(sc, NCR_TCM)));
 		return 0;
 	}
 
@@ -460,10 +460,10 @@ pcscp_dma_intr(sc)
 		if (datain) {
 			resid = NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
 			while (resid > 1)
-				resid = NCR_READ_REG(sc, NCR_FFLAG) &
-					NCRFIFO_FF;
+				resid =
+				    NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF;
 			WRITE_DMAREG(esc, DMA_CMD, DMACMD_BLAST | DMACMD_MDL |
-					     (datain ? DMACMD_DIR : 0));
+			    (datain ? DMACMD_DIR : 0));
 
 			for (i = 0; i < 0x8000; i++) /* XXX 0x8000 ? */
 				if (READ_DMAREG(esc, DMA_STAT) & DMASTAT_BCMP)
@@ -475,9 +475,9 @@ pcscp_dma_intr(sc)
 		}
 		
 		resid += (NCR_READ_REG(sc, NCR_TCL) |
-			  (NCR_READ_REG(sc, NCR_TCM) << 8) |
-			  ((sc->sc_cfg2 & NCRCFG2_FE)
-				? (NCR_READ_REG(sc, NCR_TCH) << 16) : 0));
+		    (NCR_READ_REG(sc, NCR_TCM) << 8) |
+		    ((sc->sc_cfg2 & NCRCFG2_FE)
+		    ? (NCR_READ_REG(sc, NCR_TCH) << 16) : 0));
 
 		if (resid == 0 && esc->sc_dmasize == 65536 &&
 		    (sc->sc_cfg2 & NCRCFG2_FE) == 0)
@@ -491,7 +491,7 @@ pcscp_dma_intr(sc)
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 
 	bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-			datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	    datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, dmap);
 
 	trans = esc->sc_dmasize - resid;
@@ -525,11 +525,10 @@ pcscp_dma_intr(sc)
 	}
 
 	NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-		NCR_READ_REG(sc, NCR_TCL),
-		NCR_READ_REG(sc, NCR_TCM),
-		(sc->sc_cfg2 & NCRCFG2_FE)
-			? NCR_READ_REG(sc, NCR_TCH) : 0,
-			trans, resid));
+	    NCR_READ_REG(sc, NCR_TCL),
+	    NCR_READ_REG(sc, NCR_TCM),
+	    (sc->sc_cfg2 & NCRCFG2_FE) ? NCR_READ_REG(sc, NCR_TCH) : 0,
+	    trans, resid));
 
 	*esc->sc_dmalen -= trans;
 	*esc->sc_dmaaddr += trans;
@@ -572,12 +571,12 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 		return 0;
 
 	error = bus_dmamap_load(esc->sc_dmat, dmap, *esc->sc_dmaaddr,
-				*esc->sc_dmalen, NULL,
-				sc->sc_nexus->xs->xs_control & XS_CTL_NOSLEEP ?
-				BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+	    *esc->sc_dmalen, NULL,
+	    sc->sc_nexus->xs->xs_control & XS_CTL_NOSLEEP ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: unable to load dmamap, error = %d\n",
-		       sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		return error;
 	}
 
@@ -591,7 +590,7 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	/* the first segment is possibly not aligned with 4k MDL boundary */
 	count = dmap->dm_segs[0].ds_len;
 	s_addr = dmap->dm_segs[0].ds_addr;
-	s_offset = s_addr & MDL_SEG_OFFSET; 	
+	s_offset = s_addr & MDL_SEG_OFFSET;
 	s_addr -= s_offset;
 	rest = MDL_SEG_SIZE - s_offset;
 
@@ -641,11 +640,11 @@ pcscp_dma_go(sc)
 
 	/* sync transfer buffer */
 	bus_dmamap_sync(esc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-			datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* sync MDL */
 	bus_dmamap_sync(esc->sc_dmat, mdldmap, 0, mdldmap->dm_mapsize,
-			BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 
 	/* set Starting MDL Address */
 	WRITE_DMAREG(esc, DMA_SMDLA, mdldmap->dm_segs[0].ds_addr);
@@ -653,13 +652,13 @@ pcscp_dma_go(sc)
 	/* set DMA command register bits */
 	/* XXX DMA Transfer Interrupt Enable bit is broken? */
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_IDLE | DMACMD_MDL |
-		     /* DMACMD_INTE | */
-		     (datain ? DMACMD_DIR : 0));
+	    /* DMACMD_INTE | */
+	    (datain ? DMACMD_DIR : 0));
 
 	/* issue DMA start command */
 	WRITE_DMAREG(esc, DMA_CMD, DMACMD_START | DMACMD_MDL |
-		     /* DMACMD_INTE | */
-		     (datain ? DMACMD_DIR : 0));
+	    /* DMACMD_INTE | */
+	    (datain ? DMACMD_DIR : 0));
 
 	esc->sc_active = 1;
 }
@@ -672,8 +671,8 @@ pcscp_dma_stop(sc)
 
 	/* dma stop */
 	/* XXX What should we do here ? */
-	WRITE_DMAREG(esc, DMA_CMD, DMACMD_ABORT |
-		     ( esc->sc_datain ? DMACMD_DIR : 0));
+	WRITE_DMAREG(esc, DMA_CMD,
+	    DMACMD_ABORT | (esc->sc_datain ? DMACMD_DIR : 0));
 
 	esc->sc_active = 0;
 }
