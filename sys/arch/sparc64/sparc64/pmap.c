@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 1999/11/14 17:25:01 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 1999/12/30 16:31:18 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 /* #define BOOT_DEBUG */
@@ -3434,7 +3434,12 @@ pmap_page_cache(pa, mode)
 vm_page_t
 vm_page_alloc1()
 {
-	return uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	vm_page_t pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	if (pg) {
+		pg->flags &= ~PG_BUSY;	/* never busy */
+		pg->wire_count = 1;	/* no mappings yet */
+	}
+	return pg;
 }
 
 /*
@@ -3449,11 +3454,13 @@ void
 vm_page_free1(mem)
 	register vm_page_t	mem;
 {
-	if (mem->flags != (PG_BUSY|PG_CLEAN|PG_FAKE)) {
+	if (mem->flags != (PG_CLEAN|PG_FAKE)) {
 		printf("Freeing invalid page %p\n", mem);
 		Debugger();
 		return;
 	}
+	mem->flags |= PG_BUSY;
+	mem->wire_count = 0;
 	uvm_pagefree(mem);
 }
 
