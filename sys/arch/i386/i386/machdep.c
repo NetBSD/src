@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.248 1997/08/25 23:02:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.249 1997/08/26 18:56:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -649,8 +649,8 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		{
 			CPUCLASS_686,
 			{
-				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				"Pentium Pro compatible"	/* Default */
+				"M2", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				"M2"		/* Default */
 			}
 		} }
 	}
