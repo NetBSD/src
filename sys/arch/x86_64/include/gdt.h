@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.2 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: gdt.h,v 1.3 2003/03/05 23:56:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,11 +36,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LOCORE
 struct proc;
 struct pmap;
 
-void gdt_init __P((void));
-int tss_alloc __P((struct pcb *));
-void tss_free __P((int));
-void ldt_alloc __P((struct pmap *, char *, size_t));
-void ldt_free __P((struct pmap *));
+void gdt_init(void);
+void gdt_init_cpu __P((struct cpu_info *));
+void gdt_reload_cpu __P((struct cpu_info *));
+void gdt_alloc_cpu __P((struct cpu_info *));
+
+int tss_alloc(struct pcb *);
+void tss_free(int);
+
+void ldt_alloc(struct pmap *, char *, size_t);
+void ldt_free(struct pmap *);
+
+void set_mem_gdt(struct mem_segment_descriptor *, void *, size_t,
+		 int, int, int, int, int);
+void set_sys_gdt(struct sys_segment_descriptor *, void *, size_t, int, int,
+		 int);
+#endif
+
+#define MINGDTSIZ       2048
+#define MAXGDTSIZ       65536

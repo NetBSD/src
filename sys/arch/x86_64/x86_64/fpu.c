@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 2003/03/05 23:56:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -91,17 +91,13 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-void fpudna(struct lwp *);
-void fpuexit(void);
-static void fpusave1(struct lwp *);
-
-struct lwp	*fpulwp;
+void fpudna(struct cpu_info *);
 
 /*
  * Init the FPU.
  */
 void
-fpuinit(void)
+fpuinit(struct cpu_info *ci)
 {
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
@@ -120,13 +116,13 @@ void
 fputrap(frame)
 	struct trapframe *frame;
 {
-	register struct lwp *l = fpulwp;
+	register struct lwp *l = curcpu()->ci_fpcurlwp;
 	struct savefpu *sfp = &l->l_addr->u_pcb.pcb_savefpu;
 	u_int16_t cw;
 
 #ifdef DIAGNOSTIC
 	/*
-	 * At this point, fpulwp should be curlwp.  If it wasn't, the TS bit
+	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
 	 */
 	if (l != curlwp)
@@ -144,19 +140,9 @@ fputrap(frame)
 	}
 	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
 	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
+	KERNEL_PROC_LOCK(l);
 	(*l->l_proc->p_emul->e_trapsignal)(l, SIGFPE, frame->tf_err);
-}
-
-/*
- * Wrapper for the fnsave instruction.  We set the TS bit in the saved CR0 for
- * this lwp, so that it will get a DNA exception on the FPU instruction and
- * force a reload.
- */
-static inline void
-fpusave1(struct lwp *l)
-{
-	fxsave(&l->l_addr->u_pcb.pcb_savefpu);
-	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
+	KERNEL_PROC_UNLOCK(l);
 }
 
 /*
@@ -167,29 +153,54 @@ fpusave1(struct lwp *l)
  * saved state.
  */
 void
-fpudna(struct lwp *l)
+fpudna(struct cpu_info *ci)
 {
 	u_int16_t cw;
+	struct lwp *l;
+	int s;
 
-#ifdef DIAGNOSTIC
-	if (cpl != 0)
-		panic("fpudna: masked");
+	if (ci->ci_fpsaving) {
+		printf("recursive fpu trap; cr0=%x\n", rcr0());
+		return;
+	}
+
+	s = splipi();
+
+#ifdef MULTIPROCESSOR
+	l = ci->ci_curlwp;
+#else
+	l = curlwp;
 #endif
-
-	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
-	clts();
 
 	/*
 	 * Initialize the FPU state to clear any exceptions.  If someone else
 	 * was using the FPU, save their state.
 	 */
-	if (fpulwp != 0 && fpulwp != l)
-		fpusave1(fpulwp);
+	if (ci->ci_fpcurlwp != 0 && ci->ci_fpcurlwp != l) 
+		fpusave_cpu(ci, 1);
+	else {
+		clts();
+		fninit();
+		fwait();
+		stts();
+	}
+	splx(s);
 
-	fninit();
-	fwait();
+	KDASSERT(ci->ci_fpcurlwp == NULL);
+#ifndef MULTIPROCESSOR
+	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
+#else
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_lwp(l, 1);
+#endif
 
-	fpulwp = l;
+	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	clts();
+
+	s = splipi();
+	ci->ci_fpcurlwp = l;
+	l->l_addr->u_pcb.pcb_fpcpu = ci;
+	splx(s);
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
 		cw = l->l_addr->u_pcb.pcb_savefpu.fp_fxsave.fx_fcw;
@@ -199,47 +210,91 @@ fpudna(struct lwp *l)
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu);
 }
 
-/*
- * Drop the current FPU state on the floor.
- */
-void
-fpudrop(void)
-{
-	struct lwp *l = fpulwp;
 
-	fpulwp = NULL;
+void
+fpusave_cpu(struct cpu_info *ci, int save)
+{
+	struct lwp *l;
+	int s;
+
+	KDASSERT(ci == curcpu());
+
+	l = ci->ci_fpcurlwp;
+	if (l == NULL)
+		return;
+
+	if (save) {
+#ifdef DIAGNOSTIC
+		if (ci->ci_fpsaving != 0)
+			panic("fpusave_cpu: recursive save!");
+#endif
+		 /*
+		  * Set ci->ci_fpsaving, so that any pending exception will be
+		  * thrown away.  (It will be caught again if/when the FPU
+		  * state is restored.)
+		  */
+		clts();
+		ci->ci_fpsaving = 1;
+		fxsave(&l->l_addr->u_pcb.pcb_savefpu);
+		ci->ci_fpsaving = 0;
+	}
+
 	stts();
 	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
+
+	s = splipi();
+	l->l_addr->u_pcb.pcb_fpcpu = NULL;
+	ci->ci_fpcurlwp = NULL;
+	splx(s);
 }
 
 /*
- * Save fpulwp's FPU state.
- *
- * The FNSAVE instruction clears the FPU state.  Rather than reloading the FPU
- * immediately, we clear fpulwp and turn on CR0_TS to force a DNA and a reload
- * of the FPU state the next time we try to use it.  This routine is only
- * called when forking or core dumping, so the lazy reload at worst forces us
- * to trap once per fork(), and at best saves us a reload once per fork().
+ * Save l's FPU state, which may be on this processor or another processor.
  */
 void
-fpusave(struct lwp *l)
+fpusave_lwp(struct lwp *l, int save)
 {
+	struct cpu_info *ci = curcpu();
+	struct cpu_info *oci;
+
+	KDASSERT(l->l_addr != NULL);
+	KDASSERT(l->l_flag & L_INMEM);
+
+	oci = l->l_addr->u_pcb.pcb_fpcpu;
+	if (oci == NULL)
+		return;
+
+#if defined(MULTIPROCESSOR)
+	if (oci == ci) {
+		int s = splipi();
+		fpusave_cpu(ci, save);
+		splx(s);
+	} else {
+#ifdef DIAGNOSTIC
+		int spincount;
+#endif
+
+		x86_send_ipi(oci,
+		    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
 
 #ifdef DIAGNOSTIC
-	if (cpl != 0)
-		panic("fpusave: masked");
+		spincount = 0;
 #endif
-	clts();
-	fpusave1(l);
-	fpulwp = 0;
-	stts();
-}
-
-void
-fpudiscard(struct lwp *l)
-{
-	if (l == fpulwp) {
-		fpulwp = 0;
-		stts();
+		while (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+#ifdef DIAGNOSTIC
+		{
+			spincount++;
+			if (spincount > 10000000) {
+				panic("fp_save ipi didn't");
+			}
+		}
+#else
+		__splbarrier();		/* XXX replace by generic barrier */
+		;
+#endif
 	}
+#else
+	KASSERT(ci->ci_fpcurlwp == l);
+	fpusave_cpu(ci, save);
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 2002/10/23 09:12:51 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.6 2003/03/05 23:56:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,5 +188,5 @@ mmmmap(dev, off, prot)
 
 	if (off > ctob(physmem) && suser(p->p_ucred, &p->p_acflag) != 0)
 		return (-1);
-	return (x86_64_btop(off));
+	return (x86_btop(off));
 }

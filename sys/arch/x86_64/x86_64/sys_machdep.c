@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.6 2003/01/26 00:05:39 fvdl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7 2003/03/05 23:56:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include "opt_user_ldt.h"
 #include "opt_perfctrs.h"
 #endif
+
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,6 +359,8 @@ x86_64_set_ioperm(p, args, retval)
 
 #endif
 
+#ifdef MTRR
+
 int
 x86_64_get_mtrr(struct lwp *l, void *args, register_t *retval)
 {
@@ -411,6 +415,7 @@ x86_64_set_mtrr(struct lwp *l, void *args, register_t *retval)
 
 	return error;
 }
+#endif
 
 int
 sys_sysarch(l, v, retval)
@@ -447,13 +452,14 @@ sys_sysarch(l, v, retval)
 		error = x86_64_set_ioperm(l, SCARG(uap, parms), retval);
 		break;
 #endif
-
+#ifdef MTRR
 	case X86_64_GET_MTRR:
 		error = x86_64_get_mtrr(l, SCARG(uap, parms), retval);
 		break;
 	case X86_64_SET_MTRR:
 		error = x86_64_set_mtrr(l, SCARG(uap, parms), retval);
 		break;
+#endif
 
 #if defined(PERFCTRS) && 0
 	case X86_64_PMC_INFO:

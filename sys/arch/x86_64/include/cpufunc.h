@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4 2002/12/03 22:03:01 fvdl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.5 2003/03/05 23:56:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,13 @@ static __inline void
 ltr(u_short sel)
 {
 	__asm __volatile("ltr %0" : : "r" (sel));
+}
+
+static __inline void
+lcr8(u_int val)
+{
+	u_int64_t val64 = val;
+	__asm __volatile("movq %0,%%cr8" : : "r" (val64));
 }
 
 /*
@@ -255,6 +262,9 @@ breakpoint(void)
 {
 	__asm __volatile("int $3");
 }
+
+#define read_psl()	read_rflags()
+#define write_psl(x)	write_rflags(x)
 
 #endif /* _KERNEL */
 
