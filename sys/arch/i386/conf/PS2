@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.7 2000/11/20 20:07:36 jdolecek Exp $
+#	$NetBSD: PS2,v 1.7.6.1 2001/04/09 01:53:28 nathanw Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -21,15 +21,15 @@
 include "arch/i386/conf/std.i386"
 
 # Enable the hooks used for initializing the root memory-disk.
-options 	MEMORY_DISK_HOOKS
-options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
-options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3072	# size of memory disk, in blocks
+#options 	MEMORY_DISK_HOOKS
+#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
+#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
+#options 	MINIROOTSIZE=3072	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"	# generates smaller code than -O2, -O1
 
-maxusers	2		# estimated number of users
+maxusers	8		# estimated number of users
 
 options 	I386_CPU
 options 	I486_CPU
@@ -55,11 +55,11 @@ options 	DDB             # in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 
 file-system 	FFS             # UFS
-#file-system 	NFS             # Network File System client
+file-system 	NFS             # Network File System client
 file-system 	MSDOSFS         # MS-DOS file system
 #file-system 	FDESC           # /dev/fd
 file-system 	KERNFS          # /kern
-file-system	MFS		# memory file system
+#file-system	MFS		# memory file system
 
 #options 	QUOTA           # UFS quotas
 #options 	NFSSERVER       # Network File System server
@@ -69,13 +69,13 @@ options 	INET            # IP + ICMP + TCP + UDP
 
 options 	MCAVERBOSE      # verbose MCA device autoconfig messages
 
-#options 	NFS_BOOT_BOOTP
+options		NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 options 	WSEMUL_VT100            # VT100 / VT220 emulation
 options 	WS_KERNEL_FG=WSCOL_GREEN
 
-config		netbsd  root on ? type ?
-#config		netbsd  root on ? type nfs
+#config		netbsd  root on ? type ?
+config		netbsd  root on ? type nfs
 
 #
 # Device Configuration
@@ -107,6 +107,15 @@ fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?			# the drives themselves
 tr*	at mca? slot ?			# IBM Token Ring adapter
 
+# MCA serial interfaces
+com*	at mca? slot ?			# 16x50s on comm boards
+
+# MCA network devices
+elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
+ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
+we*	at mca? slot ?			# WD/SMC Ethernet
+ate*	at mca? slot ?			# Allied Telesis AT1720
+
 # MCA SCSI controllers
 aha*	at mca? slot ?			# Adaptec AHA-1640
 
@@ -122,7 +131,13 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-#pseudo-device	bpfilter	4	# Berkeley packet filter
+# network pseudo-devices
+pseudo-device	bpfilter	4	# Berkeley packet filter
 pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md		1	# memory disk device (ramdisk)
+# rnd works; RND_COM does not on port i386 yet.
+pseudo-device	rnd			# /dev/random and in-kernel generator
+#options 	RND_COM			# use "com" randomness as well (BROKEN)

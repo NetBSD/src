@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.33.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
+/*	$NetBSD: procfs.h,v 1.33.2.2 2001/04/09 01:58:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -58,7 +58,8 @@ typedef enum {
 	Pmap,		/* memory map */
 	Pcmdline,	/* process command line args */
 	Pmeminfo,	/* system memory info (if -o linux) */
-	Pcpuinfo	/* CPU info (if -o linux) */
+	Pcpuinfo,	/* CPU info (if -o linux) */
+	Pmaps,		/* memory map, Linux style (if -o linux) */
 } pfstype;
 
 /*
@@ -139,7 +140,7 @@ int procfs_doctl __P((struct proc *, struct lwp *, struct pfsnode *,
 int procfs_dostatus __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
 int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *,
-    struct uio *));
+    struct uio *, int));
 int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 int procfs_domeminfo __P((struct proc *, struct proc *, struct pfsnode *,

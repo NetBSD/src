@@ -27,7 +27,7 @@
  *	i4b_l3timer.c - timer and timeout handling for layer 3
  *	------------------------------------------------------
  *
- *	$Id: i4b_l3timer.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
+ *	$Id: i4b_l3timer.c,v 1.2.2.1 2001/04/09 01:58:48 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -63,7 +63,6 @@
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_isdnq931.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.5 2001/03/04 03:40:39 takemura Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.5.2.1 2001/04/09 01:55:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ static u_int8_t mobilepro_keytrans[] = {
 /*30	k	j	h	g	4	3	2	1	*/
 /*38	i	u	y	t	-	caps	del	esc	*/
 /*40	alt_R	-	-	-	BS	p	TAB	Fn	*/
-/*48	-	alt_L	-	-	f12	f11	f10	f9	*/
+/*48	-	alt_L	-	-	pgdn	pgup	f10	f9	*/
 /*50	-	-	ctrl	-	f8	f7	f6	f5	*/
 /*58	-	-	-	shift	f4	f3	f2	f1	*/
 /*----------------------------------------------------------------------*/
@@ -314,10 +314,20 @@ static u_int8_t mobilepro_keytrans[] = {
 /*28*/	 51,	 50,	 49,	 48,	IGN,	IGN,	 11,	 10,
 /*30*/	 37,	 36,	 35,	 34,	  5,	  4,	  3,	  2,
 /*38*/	 23,	 22,	 21,	 20,	IGN,	 58,	 14,	  1,
-/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	IGN,
-/*48*/	IGN,	 56,	IGN,	IGN,	 88,	 87,	 68,	 67,
+/*40*/	184,	IGN,	IGN,	IGN,	 14,	 25,	 15,	219,
+/*48*/	IGN,	 56,	IGN,	IGN,	 81,	 73,	 68,	 67,
 /*50*/	IGN,	IGN,	 29,	IGN,	 66,	 65,	 64,	 63,
 /*58*/	IGN,	IGN,	IGN,	 42,	 62,	 61,	 60,	 59,
+};
+
+static const keysym_t mobilepro_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(219), KS_Cmd,		KS_Meta_L,	KS_Multi_key,
+	KC(73),  KS_Cmd_BrightnessUp,	KS_KP_Prior,	KS_KP_9,
+	KC(81),  KS_Cmd_BrightnessDown,	KS_KP_Next,	KS_KP_3,
+	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
 /* NEC MobilePro 750c by "Castor Fu" <castor@geocast.com> */
@@ -461,7 +471,10 @@ static u_int8_t pocketpostpet_keytrans[] = {
 #endif /* hpcmips */
 
 #ifdef hpcsh
-/* HP Jornada 680/690 (Japanese) */
+/* 
+ * HP Jornada 680/690 
+ */
+/* Japanese */
 const u_int8_t jornada6x0_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK, /* ctrl 29 */
@@ -482,9 +495,59 @@ const u_int8_t jornada6x0_jp_keytrans[] = {
 /*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 };
 
-const int jornada6x0_jp_special_keymap[] = {
+/* Hungarian */
+const u_int8_t jornada6x0_hu_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */ 59 ,  45,  31,  17,   3, UNK,  29, UNK,
+/* 1 */ 60 ,  46,  32,  18,   4,  42, UNK, UNK,
+/* 2 */ 61 ,  47,  33,  19,   5, UNK,  57, UNK,
+/* 3 */ 66 ,  52,  38,  24,  10, UNK,  14, 203,
+/* 4 */ 65 ,  51,  37,  23,   9, UNK, 184, UNK,
+/* 5 */ 64 ,  50,  36,  22,   8, UNK, UNK, UNK,
+/* 6 */ 62 ,  48,  34,  20,   6, UNK, UNK,  56,
+/* 7 */ 63 ,  49,  35,  21,   7, UNK, UNK,  41,
+/* 8 */ 67 ,  53,  39,  25,  11, 200, UNK, 208,
+/* 9 */ 68 ,  40,  27,  26,  12, UNK, UNK, 205,
+/*10 */ 87 ,  28,  43,  14,  13,  54, UNK, UNK,
+/*11 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*12 */   1,  44,  30,  16,   2,  15, UNK, UNK,
+/*13 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*14 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*15 */ UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK
+};
+
+const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= -1
+};
+
+/* 
+ * HP 620LX
+ */
+/* Japanese */
+const u_int8_t hp620lx_jp_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */	2  , 16 , 112, UNK, IGN, UNK, 42 , 30 , /* REC button */
+/* 1 */	3  , 17 , 58 , 44 , UNK, 45 , 15 , 31 ,
+/* 2 */	4  , 18 , UNK, 56 , 59 , 46 , 1  , 32 ,
+/* 3 */	5  , 19 , UNK, UNK, 60 , 123, UNK, 33 ,
+/* 4 */	6  , 20 , 47 , 57 , 61 , 48 , UNK, 34 ,
+/* 5 */	7  , 21 , UNK, 121, 62 , 49 , UNK, 35 ,
+/* 6 */	8  , 22 , UNK, 125, 63 , 50 , UNK, 36 ,
+/* 7 */	9  , 23 , 52 , 115, 64 , 51 , UNK, 37 ,
+/* 8 */	10 , 24 , 53 , 203, 65 , 200, 39 , 38 ,
+/* 9 */	11 , 25 , 40 , 208, 66 , 205, 27 , 26 ,
+/*10 */	12 , 13 , 28 , UNK, UNK, UNK, 41 , 43 ,
+/*11 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN, /* ON button */
+/*12 */	29 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*13 */	14 , IGN, IGN, IGN, IGN, IGN, IGN, IGN,
+/*14 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
+/*15 */	SPL, IGN, IGN, IGN, IGN, IGN, IGN, IGN  /* LED button */
+};
+
+const int hp620lx_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= 88,
+	[KEY_SPECIAL_LIGHT]	= 120
 };
 
 #endif /* hpcsh */
@@ -528,7 +591,7 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_NEC_MCR_520A,
 		mobilepro_keytrans,
 		NULL,
-		NULLCMDMAP,
+		CMDMAP(mobilepro_cmdmap),
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_530A,
 		mobilepro_keytrans,
@@ -592,14 +655,49 @@ const struct hpckbd_keymap_table {
 		KB_JP },
 #endif /* hpcmips */
 #ifdef hpcsh
-	{	&platid_mask_MACH_HP_JORNADA_690JP,
-		jornada6x0_jp_keytrans,
-		jornada6x0_jp_special_keymap,
-		NULLCMDMAP,
-		KB_JP },
+	/*
+	 * HP Jornada 680/690
+	 */
+	/* Japanese */
 	{	&platid_mask_MACH_HP_JORNADA_680JP,
 		jornada6x0_jp_keytrans,
-		jornada6x0_jp_special_keymap,
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
+	{	&platid_mask_MACH_HP_JORNADA_690JP,
+		jornada6x0_jp_keytrans,
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
+	/* Hungarian */
+	{	&platid_mask_MACH_HP_JORNADA_680HU,
+		jornada6x0_hu_keytrans,
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_US }, /* XXX should be KB_HU */
+	{	&platid_mask_MACH_HP_JORNADA_690HU,
+		jornada6x0_hu_keytrans,
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_US }, /* XXX should be KB_HU */
+	/* German */
+	{	&platid_mask_MACH_HP_JORNADA_680DE,
+		jornada6x0_hu_keytrans, /* XXX may be */
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_DE },
+	{	&platid_mask_MACH_HP_JORNADA_690DE,
+		jornada6x0_hu_keytrans, /* XXX may be */
+		jornada6x0_special_keymap,
+		NULLCMDMAP,
+		KB_DE },
+	/*
+	 * HP 620LX
+	 */
+	/* Japanese */
+	{	&platid_mask_MACH_HP_LX_620JP,
+		hp620lx_jp_keytrans,
+		hp620lx_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
 #endif /* hpcsh */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.40 2001/02/21 21:39:56 jdolecek Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.40.2.1 2001/04/09 01:57:20 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,12 +61,17 @@ struct wdc_pcmcia_softc {
 	struct channel_softc wdc_channel;
 	struct pcmcia_io_handle sc_pioh;
 	struct pcmcia_io_handle sc_auxpioh;
+	struct pcmcia_mem_handle sc_pmembaseh;
+	struct pcmcia_mem_handle sc_pmemh;
+	struct pcmcia_mem_handle sc_auxpmemh;
+	int sc_memwindow;
 	int sc_iowindow;
 	int sc_auxiowindow;
 	void *sc_ih;
 	struct pcmcia_function *sc_pf;
 	int sc_flags;
 #define	WDC_PCMCIA_ATTACH	0x0001
+#define WDC_PCMCIA_MEMMODE	0x0002
 };
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
@@ -213,6 +218,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct wdc_pcmcia_product *wpp;
+	bus_addr_t offset;
 	int quirks;
 
 	sc->sc_pf = pa->pf;
@@ -242,6 +248,23 @@ wdc_pcmcia_attach(parent, self, aux)
 		pcmcia_io_free(pa->pf, &sc->sc_pioh);
 	}
 
+	/* 
+	 * Compact Falsh memory mapped mode
+	 * CF+ and CompactFlash Spec. Rev 1.4, 6.1.3 Memory Mapped Addressing.
+	 * http://www.compactflash.org/cfspc1_4.pdf
+	 */
+	if (cfe == NULL) {
+		SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
+			if (cfe->iftype != PCMCIA_IFTYPE_MEMORY)
+				continue;
+			if (pcmcia_mem_alloc(pa->pf, cfe->memspace[0].length,
+			    &sc->sc_pmembaseh) == 0) {
+				sc->sc_flags |= WDC_PCMCIA_MEMMODE;
+				break;
+			}
+		}
+	}
+
 	if (cfe == NULL) {
 		printf(": can't handle card info\n");
 		goto no_config_entry;
@@ -260,18 +283,45 @@ wdc_pcmcia_attach(parent, self, aux)
 	else
 		quirks = 0;
 
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
-	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
-		printf(": can't map first I/O space\n");
-		goto iomap_failed;
-	} 
+	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
+		if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_COMMON, 0,
+		    sc->sc_pmembaseh.size, &sc->sc_pmembaseh, &offset,
+		    &sc->sc_memwindow)) {
+			printf(": can't map memory space\n");
+			goto map_failed;
+		}
 
-	if (cfe->num_iospace <= 1)
+		sc->sc_pmemh.memt = sc->sc_pmembaseh.memt;
+		if (offset == 0) {
+			sc->sc_pmemh.memh = sc->sc_pmembaseh.memh;
+		} else {
+			if (bus_space_subregion(sc->sc_pmemh.memt,
+				sc->sc_pmembaseh.memh, offset,
+				WDC_PCMCIA_REG_NPORTS, &sc->sc_pmemh.memh))
+				goto mapaux_failed;
+		}
+
+		sc->sc_auxpmemh.memt = sc->sc_pmemh.memt;
+		if (bus_space_subregion(sc->sc_pmemh.memt,
+		    sc->sc_pmemh.memh, WDC_PCMCIA_AUXREG_OFFSET,
+		    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpmemh.memh))
+			goto mapaux_failed;
+		
+		printf(" memory mapped mode");
+	} else {
+		if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
+		    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
+			printf(": can't map first I/O space\n");
+			goto map_failed;
+		} 
+	}
+
+	if (cfe->num_iospace <= 1 || sc->sc_flags & WDC_PCMCIA_MEMMODE)
 		sc->sc_auxiowindow = -1;
 	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
 		printf(": can't map second I/O space\n");
-		goto iomapaux_failed;
+		goto mapaux_failed;
 	}
 
 	if ((wpp != NULL) && (wpp->wpp_name != NULL))
@@ -279,13 +329,21 @@ wdc_pcmcia_attach(parent, self, aux)
 	
 	printf("\n");
 
-	sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
-	sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;
-	sc->wdc_channel.ctl_iot = sc->sc_auxpioh.iot;
-	sc->wdc_channel.ctl_ioh = sc->sc_auxpioh.ioh;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
+	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
+		sc->wdc_channel.cmd_iot = sc->sc_pmemh.memt;
+		sc->wdc_channel.cmd_ioh = sc->sc_pmemh.memh;
+		sc->wdc_channel.ctl_iot = sc->sc_auxpmemh.memt;
+		sc->wdc_channel.ctl_ioh = sc->sc_auxpmemh.memh;
+	} else {
+		sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
+		sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;
+		sc->wdc_channel.ctl_iot = sc->sc_auxpioh.iot;
+		sc->wdc_channel.ctl_ioh = sc->sc_auxpioh.ioh;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanptr = &sc->wdc_channel;
@@ -314,23 +372,29 @@ wdc_pcmcia_attach(parent, self, aux)
 
  ch_queue_alloc_failed:
 	/* Unmap our aux i/o window. */
-	if (sc->sc_auxiowindow != -1)
+	if (!(sc->sc_flags & WDC_PCMCIA_MEMMODE) && (sc->sc_auxiowindow != -1))
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
 
- iomapaux_failed:
+ mapaux_failed:
 	/* Unmap our i/o window. */
-	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
+	if (sc->sc_flags & WDC_PCMCIA_MEMMODE)
+		pcmcia_mem_unmap(sc->sc_pf, sc->sc_memwindow);
+	else
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
 
- iomap_failed:
+ map_failed:
 	/* Disable the function */
 	pcmcia_function_disable(sc->sc_pf);
 
  enable_failed:
 	/* Unmap our i/o space. */
-	pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
-	if (cfe->num_iospace == 2)
-		pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
-
+	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
+		pcmcia_mem_free(sc->sc_pf, &sc->sc_pmembaseh);
+	} else  {
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+		if (cfe->num_iospace == 2)
+		    pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+	}
  no_config_entry:
 	sc->sc_iowindow = -1;
 }
@@ -354,11 +418,16 @@ wdc_pcmcia_detach(self, flags)
 		free(sc->wdc_channel.ch_queue, M_DEVBUF);
 
 	/* Unmap our i/o window and i/o space. */
-	pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
-	pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
-	if (sc->sc_auxiowindow != -1) {
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
-		pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
+		pcmcia_mem_unmap(sc->sc_pf, sc->sc_memwindow);
+		pcmcia_mem_free(sc->sc_pf, &sc->sc_pmembaseh);
+	} else {
+		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
+		if (sc->sc_auxiowindow != -1) {
+			pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
+			pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
+		}
 	}
 
 	return (0);

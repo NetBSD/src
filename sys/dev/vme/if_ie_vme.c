@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.12 2001/01/22 22:28:47 bjh21 Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.12.2.1 2001/04/09 01:57:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -228,7 +228,7 @@ static int media[] = {
 
 
 static void ie_vmereset __P((struct ie_softc *, int));
-static void ie_vmeattend __P((struct ie_softc *));
+static void ie_vmeattend __P((struct ie_softc *, int));
 static void ie_vmerun __P((struct ie_softc *));
 static int  ie_vmeintr __P((struct ie_softc *, int));
 
@@ -265,8 +265,9 @@ ie_vmereset(sc, what)
 }
 
 void
-ie_vmeattend(sc)
+ie_vmeattend(sc, why)
 	struct ie_softc *sc;
+	int why;
 {
 	struct ie_vme_softc *vsc = (struct ie_vme_softc *)sc;
 

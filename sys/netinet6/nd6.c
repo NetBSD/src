@@ -1,5 +1,5 @@
-/*	$NetBSD: nd6.c,v 1.42 2001/02/23 08:02:41 itojun Exp $	*/
-/*	$KAME: nd6.c,v 1.131 2001/02/21 16:28:18 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.42.2.1 2001/04/09 01:58:41 nathanw Exp $	*/
+/*	$KAME: nd6.c,v 1.137 2001/03/21 21:52:06 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -521,7 +521,7 @@ nd6_timer(ignored_arg)
 		ln = next;
 	}
 	
-	/* expire */
+	/* expire default router list */
 	dr = TAILQ_FIRST(&nd_defrouter);
 	while (dr) {
 		if (dr->expire && dr->expire < time_second) {
@@ -880,7 +880,7 @@ nd6_free(rt)
 	rtrequest(RTM_DELETE, rt_key(rt), (struct sockaddr *)0,
 		  rt_mask(rt), 0, (struct rtentry **)0);
 
-	return next;
+	return(next);
 }
 
 /*
@@ -973,6 +973,7 @@ nd6_resolve(ifp, rt, m, dst, desten)
 			*desten = 0;
 			return(1);
 		default:
+			m_freem(m);
 			return(0);
 		}
 	}
@@ -1027,6 +1028,7 @@ nd6_resolve(ifp, rt, m, dst, desten)
 				ln, 0);
 		}
 	}
+	/* do not free mbuf here, it is queued into llinfo_nd6 */
 	return(0);
 }
 #endif /* OLDIP6OUTPUT */
@@ -1072,7 +1074,7 @@ nd6_rtrequest(req, rt, info)
 				ln->ln_expire = time_second;
 #if 1
 			if (ln && ln->ln_expire == 0) {
-				/* cludge for desktops */
+				/* kludge for desktops */
 #if 0
 				printf("nd6_request: time.tv_sec is zero; "
 				       "treat it as 1\n");
@@ -1378,7 +1380,7 @@ nd6_ioctl(cmd, data, ifp)
 
 			pfr = pr->ndpr_advrtrs.lh_first;
 			j = 0;
-			while(pfr) {
+			while (pfr) {
 				if (j < DRLSTSIZ) {
 #define RTRADDR prl->prefix[i].advrtr[j]
 					RTRADDR = pfr->router->rtaddr;
@@ -1579,8 +1581,12 @@ nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 
 		rt = nd6_lookup(from, 1, ifp);
 		is_newentry = 1;
-	} else
+	} else {
+		/* do nothing if static ndp is set */
+		if (rt->rt_flags & RTF_STATIC)
+			return NULL;
 		is_newentry = 0;
+	}
 
 	if (!rt)
 		return NULL;
@@ -1649,8 +1655,19 @@ fail:
 		ln->ln_state = newstate;
 
 		if (ln->ln_state == ND6_LLINFO_STALE) {
+			/*
+			 * XXX: since nd6_output() below will cause
+			 * state tansition to DELAY and reset the timer,
+			 * we must set the timer now, although it is actually
+			 * meaningless.
+			 */
+			ln->ln_expire = time_second + nd6_gctimer;
+
 			if (ln->ln_hold) {
 #ifdef OLDIP6OUTPUT
+				ln->ln_asked = 0;
+				ln->ln_state = ND6_LLINFO_DELAY;
+				ln->ln_expire = time_second + nd6_delay;
 				(*ifp->if_output)(ifp, ln->ln_hold,
 						  rt_key(rt), rt);
 #else
@@ -1662,9 +1679,8 @@ fail:
 					   (struct sockaddr_in6 *)rt_key(rt),
 					   rt);
 #endif
-				ln->ln_hold = 0;
+				ln->ln_hold = NULL;
 			}
-			ln->ln_expire = time_second + nd6_gctimer;
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
 			/* probe right away */
 			ln->ln_expire = time_second;
@@ -1946,12 +1962,10 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 	
   sendpkt:
 
-#ifdef FAKE_LOOPBACK_IF
-	if (ifp->if_flags & IFF_LOOPBACK) {
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		return((*ifp->if_output)(origifp, m, (struct sockaddr *)dst,
 					 rt));
 	}
-#endif
 	return((*ifp->if_output)(ifp, m, (struct sockaddr *)dst, rt));
 
   bad:
@@ -1985,22 +1999,26 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 			*desten = 0;
 			return(1);
 		default:
+			m_freem(m);
 			return(0);
 		}
 	}
 
 	if (rt == NULL) {
 		/* this could happen, if we could not allocate memory */
+		m_freem(m);
 		return(0);
 	}
 	if (rt->rt_gateway->sa_family != AF_LINK) {
 		printf("nd6_storelladdr: something odd happens\n");
+		m_freem(m);
 		return(0);
 	}
 	sdl = SDL(rt->rt_gateway);
 	if (sdl->sdl_alen == 0) {
 		/* this should be impossible, but we bark here for debugging */
 		printf("nd6_storelladdr: sdl_alen == 0\n");
+		m_freem(m);
 		return(0);
 	}
 

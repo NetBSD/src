@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.3 2000/02/02 08:05:33 thorpej Exp $	*/
+/*	$NetBSD: mii.h,v 1.3.6.1 2001/04/09 01:56:52 nathanw Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -90,10 +90,6 @@
 #define	IDR2_OUILSB	0xfc00	/* OUI LSB */
 #define	IDR2_MODEL	0x03f0	/* vendor model */
 #define	IDR2_REV	0x000f	/* vendor revision */
-
-#define	MII_OUI(id1, id2)	(((id1) << 6) | ((id2) >> 10))
-#define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
-#define	MII_REV(id2)		((id2) & IDR2_REV)
 
 #define	MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
 #define ANAR_NP		0x8000	/* Next page (ro) */

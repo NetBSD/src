@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.5.2.2 2001/03/13 20:29:50 nathanw Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.5.2.3 2001/04/09 01:58:38 nathanw Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -501,15 +501,8 @@ in6_recoverscope(sin6, in6, ifp)
 			/* sanity check */
 			if (scopeid < 0 || if_index < scopeid)
 				return ENXIO;
-#ifndef FAKE_LOOPBACK_IF
-			if (ifp && (ifp->if_flags & IFF_LOOPBACK) == 0 &&
-			    ifp->if_index != scopeid) {
-				return ENXIO;
-			}
-#else
 			if (ifp && ifp->if_index != scopeid)
 				return ENXIO;
-#endif
 			sin6->sin6_addr.s6_addr16[1] = 0;
 			sin6->sin6_scope_id = scopeid;
 		}

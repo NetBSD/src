@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.1.1.1 2001/01/05 12:50:03 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.1.1.1.4.1 2001/04/09 01:58:49 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -64,11 +64,12 @@
 #endif
 
 #include <netisdn/i4b_isdnq931.h>
-#include <netisdn/i4b_l2l3.h>
+#include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l3fsm.h>
 #include <netisdn/i4b_q931.h>
@@ -82,37 +83,41 @@ static void n_connect_request(u_int cdid);
 static void n_connect_response(u_int cdid, int response, int cause);
 static void n_disconnect_request(u_int cdid, int cause);
 static void n_alert_request(u_int cdid);
-static void n_mgmt_command(int unit, int cmd, void *parm);
+static void n_mgmt_command(int bri, int cmd, void *parm);
 
 /*---------------------------------------------------------------------------*
  *	i4b_mdl_status_ind - status indication from lower layers
  *---------------------------------------------------------------------------*/
 int
-i4b_mdl_status_ind(int unit, int status, int parm)
+i4b_mdl_status_ind(int bri, int status, int parm)
 {
+	struct l2_softc * l2sc = (struct l2_softc*)isdn_find_l2_by_bri(bri);
 	int sendup;
 	int i;
 	
-	NDBGL3(L3_MSG, "unit = %d, status = %d, parm = %d", unit, status, parm);
+	NDBGL3(L3_MSG, "bri = %d, status = %d, parm = %d", bri, status, parm);
 
 	switch(status)
 	{
 		case STI_ATTACH:
-			NDBGL3(L3_MSG, "STI_ATTACH: attaching unit %d to controller %d", unit, nctrl);
+			NDBGL3(L3_MSG, "STI_ATTACH: attaching bri %d to controller %d", bri, nctrl);
 		
 			/* init function pointers */
 			
 			ctrl_desc[nctrl].N_CONNECT_REQUEST = n_connect_request;
 			ctrl_desc[nctrl].N_CONNECT_RESPONSE = n_connect_response;
 			ctrl_desc[nctrl].N_DISCONNECT_REQUEST = n_disconnect_request;
-			ctrl_desc[nctrl].N_ALERT_REQUEST = n_alert_request;	
+			ctrl_desc[nctrl].N_ALERT_REQUEST = n_alert_request;
+#if 0
 			ctrl_desc[nctrl].N_DOWNLOAD = NULL;	/* only used by active cards */
 			ctrl_desc[nctrl].N_DIAGNOSTICS = NULL;	/* only used by active cards */
+#endif
 			ctrl_desc[nctrl].N_MGMT_COMMAND = n_mgmt_command;
 		
 			/* init type and unit */
 			
-			ctrl_desc[nctrl].unit = unit;
+			ctrl_desc[nctrl].l1_token = l2sc->l1_token;
+			ctrl_desc[nctrl].bri = bri;
 			ctrl_desc[nctrl].ctrl_type = CTRL_PASSIVE;
 			ctrl_desc[nctrl].card_type = parm;
 		
@@ -125,7 +130,7 @@ i4b_mdl_status_ind(int unit, int status, int parm)
 			
 			/* init unit to controller table */
 			
-			utoc_tab[unit] = nctrl;
+			utoc_tab[bri] = nctrl;
 			
 			/* increment no. of controllers */
 			
@@ -134,30 +139,29 @@ i4b_mdl_status_ind(int unit, int status, int parm)
 			break;
 			
 		case STI_L1STAT:
-			i4b_l4_l12stat(unit, 1, parm);
-			NDBGL3(L3_MSG, "STI_L1STAT: unit %d layer 1 = %s", unit, status ? "up" : "down");
+			i4b_l4_l12stat(bri, 1, parm);
+			NDBGL3(L3_MSG, "STI_L1STAT: bri %d layer 1 = %s", bri, status ? "up" : "down");
 			break;
 			
 		case STI_L2STAT:
-			i4b_l4_l12stat(unit, 2, parm);
-			NDBGL3(L3_MSG, "STI_L2STAT: unit %d layer 2 = %s", unit, status ? "up" : "down");
+			i4b_l4_l12stat(bri, 2, parm);
+			NDBGL3(L3_MSG, "STI_L2STAT: bri %d layer 2 = %s", bri, status ? "up" : "down");
 			break;
 
 		case STI_TEIASG:
-			ctrl_desc[unit].tei = parm;
-			i4b_l4_teiasg(unit, parm);
-			NDBGL3(L3_MSG, "STI_TEIASG: unit %d TEI = %d = 0x%02x", unit, parm, parm);
+			ctrl_desc[bri].tei = parm;
+			i4b_l4_teiasg(bri, parm);
+			NDBGL3(L3_MSG, "STI_TEIASG: bri %d TEI = %d = 0x%02x", bri, parm, parm);
 			break;
 
 		case STI_PDEACT:	/* L1 T4 timeout */
-			NDBGL3(L3_ERR, "STI_PDEACT: unit %d TEI = %d = 0x%02x", unit, parm, parm);
+			NDBGL3(L3_ERR, "STI_PDEACT: bri %d TEI = %d = 0x%02x", bri, parm, parm);
 
 			sendup = 0;
 
 			for(i=0; i < N_CALL_DESC; i++)
 			{
-				if( (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-				    (ctrl_desc[call_desc[i].controller].unit == unit))
+				if(call_desc[i].bri == bri)
                 		{
 					i4b_l3_stop_all_timers(&(call_desc[i]));
 					if(call_desc[i].cdid != CDID_UNUSED)
@@ -165,25 +169,24 @@ i4b_mdl_status_ind(int unit, int status, int parm)
 				}
 			}
 
-			ctrl_desc[utoc_tab[unit]].dl_est = DL_DOWN;
-			ctrl_desc[utoc_tab[unit]].bch_state[CHAN_B1] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[unit]].bch_state[CHAN_B2] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[unit]].tei = -1;
+			ctrl_desc[utoc_tab[bri]].dl_est = DL_DOWN;
+			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B1] = BCH_ST_FREE;
+			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B2] = BCH_ST_FREE;
+			ctrl_desc[utoc_tab[bri]].tei = -1;
 
 			if(sendup)
 			{
-				i4b_l4_pdeact(unit, sendup);
+				i4b_l4_pdeact(bri, sendup);
 				call_desc[i].cdid = CDID_UNUSED;
 			}
 			break;
 
 		case STI_NOL1ACC:	/* no outgoing access to S0 */
-			NDBGL3(L3_ERR, "STI_NOL1ACC: unit %d no outgoing access to S0", unit);
+			NDBGL3(L3_ERR, "STI_NOL1ACC: bri %d no outgoing access to S0", bri);
 
 			for(i=0; i < N_CALL_DESC; i++)
 			{
-				if( (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-				    (ctrl_desc[call_desc[i].controller].unit == unit))
+				if(call_desc[i].bri == bri)
                 		{
 					if(call_desc[i].cdid != CDID_UNUSED)
 					{
@@ -194,14 +197,14 @@ i4b_mdl_status_ind(int unit, int status, int parm)
 				}
 			}
 
-			ctrl_desc[utoc_tab[unit]].dl_est = DL_DOWN;
-			ctrl_desc[utoc_tab[unit]].bch_state[CHAN_B1] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[unit]].bch_state[CHAN_B2] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[unit]].tei = -1;
+			ctrl_desc[utoc_tab[bri]].dl_est = DL_DOWN;
+			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B1] = BCH_ST_FREE;
+			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B2] = BCH_ST_FREE;
+			ctrl_desc[utoc_tab[bri]].tei = -1;
 			break;
 
 		default:
-			NDBGL3(L3_ERR, "ERROR, unit %d, unknown status value %d!", unit, status);
+			NDBGL3(L3_ERR, "ERROR, bri %d, unknown status value %d!", bri, status);
 			break;
 	}		
 	return(0);
@@ -211,45 +214,39 @@ i4b_mdl_status_ind(int unit, int status, int parm)
  *	send command to the lower layers
  *---------------------------------------------------------------------------*/
 static void
-n_mgmt_command(int unit, int cmd, void *parm)
+n_mgmt_command(int bri, int cmd, void *parm)
 {
 	int i;
 
 	switch(cmd)
 	{
 		case CMR_DOPEN:
-			NDBGL3(L3_MSG, "CMR_DOPEN for unit %d", unit);
+			NDBGL3(L3_MSG, "CMR_DOPEN for bri %d", bri);
 			
 			for(i=0; i < N_CALL_DESC; i++)
 			{
-				if( (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-				    (ctrl_desc[call_desc[i].controller].unit == unit))
+				if(call_desc[i].bri == bri)
                 		{
                 			call_desc[i].cdid = CDID_UNUSED;
 				}
 			}
 
-			ctrl_desc[utoc_tab[unit]].dl_est = DL_DOWN;
-			ctrl_desc[utoc_tab[unit]].bch_state[CHAN_B1] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[unit]].bch_state[CHAN_B2] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[unit]].tei = -1;
+			ctrl_desc[utoc_tab[bri]].dl_est = DL_DOWN;
+			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B1] = BCH_ST_FREE;
+			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B2] = BCH_ST_FREE;
+			ctrl_desc[utoc_tab[bri]].tei = -1;
 			break;
 
 		case CMR_DCLOSE:
-			NDBGL3(L3_MSG, "CMR_DCLOSE for unit %d", unit);
-			break;
-			
-		case CMR_SETTRACE:
-			NDBGL3(L3_MSG, "CMR_SETTRACE for unit %d", unit);
+			NDBGL3(L3_MSG, "CMR_DCLOSE for bri %d", bri);
 			break;
 			
 		default:
-			NDBGL3(L3_MSG, "unknown cmd %d for unit %d", cmd, unit);
+			NDBGL3(L3_MSG, "unknown cmd %d for bri %d", cmd, bri);
 			break;
 	}
 
-	MDL_Command_Req(unit, cmd, parm);
-	
+	i4b_mdl_command_req(bri, cmd, parm);
 }
 
 /*---------------------------------------------------------------------------*
@@ -307,7 +304,7 @@ n_connect_response(u_int cdid, int response, int cause)
 
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
-		ctrl_desc[cd->controller].bch_state[cd->channelid] = chstate;
+		ctrl_desc[cd->bri].bch_state[cd->channelid] = chstate;
 	}
 	else
 	{

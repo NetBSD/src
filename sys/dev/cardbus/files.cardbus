@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.13 2001/02/24 02:13:33 lukem Exp $
+#	$NetBSD: files.cardbus,v 1.13.2.1 2001/04/09 01:55:55 nathanw Exp $
 #
 # files.cardbus
 #
@@ -58,3 +58,8 @@ file	dev/cardbus/ahc_cardbus.c	ahc_cardbus
 attach	rtk at cardbus with rtk_cardbus
 file	dev/cardbus/if_rtk_cardbus.c	rtk_cardbus
 
+#
+# Advansys SCSI controller.
+#
+attach	adv at cardbus with adv_cardbus
+file	dev/cardbus/adv_cardbus.c	adv_cardbus

@@ -35,7 +35,7 @@
  *	Fritz!Card PCI specific routines for isic driver
  *	------------------------------------------------
  *
- *	$Id: isic_pci_avm_fritz_pci.c,v 1.2 2001/02/20 22:24:39 martin Exp $
+ *	$Id: isic_pci_avm_fritz_pci.c,v 1.2.2.1 2001/04/09 01:57:01 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -87,13 +87,12 @@
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_mbuf.h>
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
-
-#ifndef __FreeBSD__
 
 #include <dev/pci/isic_pci.h>
 
@@ -101,35 +100,11 @@
 #define FRITZPCI_PORT0_IO_MAPOFF	PCI_MAPREG_START+4
 #define FRITZPCI_PORT0_MEM_MAPOFF	PCI_MAPREG_START
 
-#endif
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 /* prototypes */
 static void avma1pp_disable(struct l1_softc *);
 static int isic_hscx_fifo(l1_bchan_state_t *chan, struct l1_softc *sc);
-
-#ifdef __FreeBSD__
-
-static void avma1pp_intr(struct l1_softc *);
-static void avma1pp_disable(struct l1_softc *);
-void avma1pp_map_int(pcici_t , void *, unsigned *);
-static void hscx_write_reg(int, u_int, u_int, struct l1_softc *);
-static u_char hscx_read_reg(int, u_int, struct l1_softc *);
-static u_int hscx_read_reg_int(int, u_int, struct l1_softc *);
-static void hscx_read_fifo(int, void *, size_t, struct l1_softc *);
-static void hscx_write_fifo(int, const void *, size_t, struct l1_softc *);
-static void avma1pp_hscx_int_handler(struct l1_softc *);
-static void avma1pp_hscx_intr(int, u_int, struct l1_softc *);
-static void avma1pp_init_linktab(struct l1_softc *);
-static void avma1pp_bchannel_setup(int, int, int, int);
-static void avma1pp_bchannel_start(int, int);
-static void avma1pp_hscx_init(struct l1_softc *, int, int);
-static void avma1pp_bchannel_stat(int, int, bchan_statistics_t *);
-static void avma1pp_set_linktab(int, int, drvr_link_t *);
-static isdn_link_t * avma1pp_ret_linktab(int, int);
-int isic_attach_avma1pp(int, u_int, u_int);
-extern void isicintr_sc(struct l1_softc *);
-
-#else
 
 static int avma1pp_intr(void*);
 static void avma1pp_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size);
@@ -141,11 +116,10 @@ static void hscx_read_fifo(int chan, void *buf, size_t len, struct l1_softc *sc)
 static void hscx_write_reg(int chan, u_int off, u_int val, struct l1_softc *sc);
 static u_char hscx_read_reg(int chan, u_int off, struct l1_softc *sc);
 static u_int hscx_read_reg_int(int chan, u_int off, struct l1_softc *sc);
-static void avma1pp_bchannel_stat(int unit, int h_chan, bchan_statistics_t *bsp);
+static void avma1pp_bchannel_stat(isdn_layer1token, int h_chan, bchan_statistics_t *bsp);
 static void avma1pp_map_int(struct pci_l1_softc *sc, struct pci_attach_args *pa);
-static void avma1pp_bchannel_setup(int unit, int h_chan, int bprot, int activate);
+static void avma1pp_bchannel_setup(isdn_layer1token, int h_chan, int bprot, int activate);
 static void avma1pp_init_linktab(struct l1_softc *);
-#endif
 
 /*---------------------------------------------------------------------------*
  *	AVM PCI Fritz!Card special registers
@@ -806,8 +780,6 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	struct l1_softc *sc = &psc->sc_isic;
 	u_int v;
 
-	l1_sc[sc->sc_unit] = sc;	/* XXX - hack! */
-
 	/* setup io mappings */
 	sc->sc_num_mappings = 1;
 	MALLOC_MAPS(sc);
@@ -912,9 +884,9 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 	isic_isac_init(sc);
 
 	/* init the "HSCX" */
-	avma1pp_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
+	avma1pp_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
 	
-	avma1pp_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
+	avma1pp_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* can't use the normal B-Channel stuff */
 	avma1pp_init_linktab(sc);
@@ -939,7 +911,7 @@ isic_attach_fritzPci(struct pci_l1_softc *psc, struct pci_attach_args *pa)
 
 	/* init higher protocol layers */
 	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 }
 
 #endif
@@ -1059,13 +1031,11 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 
 				if(sc->sc_trace & TRACE_B_RX)
 				{
-					i4b_trace_hdr_t hdr;
-					hdr.unit = sc->sc_unit;
+					struct i4b_trace_hdr hdr;
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_NT;
 					hdr.count = ++sc->sc_trace_bcount;
-					MICROTIME(hdr.time);
-					MPH_Trace_Ind(&hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
 				if (stat & HSCX_STAT_RME)
@@ -1106,13 +1076,11 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 
 					  if(sc->sc_trace & TRACE_B_RX)
 					  {
-							i4b_trace_hdr_t hdr;
-							hdr.unit = sc->sc_unit;
+							struct i4b_trace_hdr hdr;
 							hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 							hdr.dir = FROM_NT;
 							hdr.count = ++sc->sc_trace_bcount;
-							MICROTIME(hdr.time);
-							MPH_Trace_Ind(&hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+							isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 						}
 
 					  if(!(isic_hscx_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
@@ -1207,13 +1175,11 @@ avma1pp_hscx_intr(int h_chan, u_int stat, struct l1_softc *sc)
 
 				if(sc->sc_trace & TRACE_B_TX)
 				{
-					i4b_trace_hdr_t hdr;
-					hdr.unit = sc->sc_unit;
+					struct i4b_trace_hdr hdr;
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					MICROTIME(hdr.time);
-					MPH_Trace_Ind(&hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 				
 				if(chan->bprot == BPROT_NONE)
@@ -1430,13 +1396,9 @@ avma1pp_hscx_init(struct l1_softc *sc, int h_chan, int activate)
 }
 
 static void
-avma1pp_bchannel_setup(int unit, int h_chan, int bprot, int activate)
+avma1pp_bchannel_setup(isdn_layer1token t, int h_chan, int bprot, int activate)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
 	int s = splnet();
@@ -1498,13 +1460,9 @@ avma1pp_bchannel_setup(int unit, int h_chan, int bprot, int activate)
 }
 
 static void
-avma1pp_bchannel_start(int unit, int h_chan)
+avma1pp_bchannel_start(isdn_layer1token t, int h_chan)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	register l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 	int activity = -1;
@@ -1548,13 +1506,11 @@ avma1pp_bchannel_start(int unit, int h_chan)
 	
 	if(sc->sc_trace & TRACE_B_TX)	/* if trace, send mbuf to trace dev */
 	{
-		i4b_trace_hdr_t hdr;
-		hdr.unit = unit;
+		struct i4b_trace_hdr hdr;
 		hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_trace_bcount;
-		MICROTIME(hdr.time);
-		MPH_Trace_Ind(&hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+		isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 	}			
 
 	isic_hscx_fifo(chan, sc);
@@ -1571,13 +1527,9 @@ avma1pp_bchannel_start(int unit, int h_chan)
  *	return the address of isic drivers linktab	
  *---------------------------------------------------------------------------*/
 static isdn_link_t *
-avma1pp_ret_linktab(int unit, int channel)
+avma1pp_ret_linktab(isdn_layer1token t, int channel)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
 	return(&chan->isdn_linktab);
@@ -1587,13 +1539,9 @@ avma1pp_ret_linktab(int unit, int channel)
  *	set the driver linktab in the b channel softc
  *---------------------------------------------------------------------------*/
 static void
-avma1pp_set_linktab(int unit, int channel, drvr_link_t *dlt)
+avma1pp_set_linktab(isdn_layer1token t, int channel, drvr_link_t *dlt)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[channel];
 
 	chan->drvr_linktab = dlt;
@@ -1618,7 +1566,7 @@ avma1pp_init_linktab(struct l1_softc *sc)
 	}
 
 	/* local setup */
-	lt->unit = sc->sc_unit;
+	lt->l1token = sc;
 	lt->channel = HSCX_CH_A;
 	lt->bch_config = avma1pp_bchannel_setup;
 	lt->bch_tx_start = avma1pp_bchannel_start;
@@ -1634,7 +1582,7 @@ avma1pp_init_linktab(struct l1_softc *sc)
 	chan = &sc->sc_chan[HSCX_CH_B];
 	lt = &chan->isdn_linktab;
 
-	lt->unit = sc->sc_unit;
+	lt->l1token = sc;
 	lt->channel = HSCX_CH_B;
 	lt->bch_config = avma1pp_bchannel_setup;
 	lt->bch_tx_start = avma1pp_bchannel_start;
@@ -1652,13 +1600,9 @@ avma1pp_init_linktab(struct l1_softc *sc)
  * use this instead of isic_bchannel_stat in i4b_bchan.c because it's static
  */
 static void
-avma1pp_bchannel_stat(int unit, int h_chan, bchan_statistics_t *bsp)
+avma1pp_bchannel_stat(isdn_layer1token t, int h_chan, bchan_statistics_t *bsp)
 {
-#ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[unit];
-#else
-	struct l1_softc *sc = isic_find_sc(unit);
-#endif
+	struct l1_softc *sc = (struct l1_softc*)t;
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	int s;
 
@@ -1732,13 +1676,11 @@ isic_hscx_fifo(l1_bchan_state_t *chan, struct l1_softc *sc)
 	
 				if(sc->sc_trace & TRACE_B_TX)
 				{
-					i4b_trace_hdr_t hdr;
-					hdr.unit = sc->sc_unit;
+					struct i4b_trace_hdr hdr;
 					hdr.type = (chan->channel == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					MICROTIME(hdr.time);
-					MPH_Trace_Ind(&hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 			}
 			else

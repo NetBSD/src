@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.40 2000/11/21 05:23:37 soren Exp $	*/
+/*	$NetBSD: bha.c,v 1.40.2.1 2001/04/09 01:56:09 nathanw Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -1400,15 +1400,15 @@ bha_scsi_cmd(xs)
 		if (flags & XS_CTL_DATA_UIO) {
 			error = bus_dmamap_load_uio(dmat,
 			    ccb->dmamap_xfer, (struct uio *)xs->data,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
+			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 		} else
 #endif /* TFS */
 		{
 			error = bus_dmamap_load(dmat,
 			    ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
-			    (flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			    BUS_DMA_WAITOK);
+			    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
+			     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
 		}
 
 		if (error) {

@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.12 2001/02/07 10:23:47 haya Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.12.2.1 2001/04/09 01:55:54 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.15 2001/02/07 09:56:21 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.17 2001/03/14 01:41:09 christos Exp 
  */
 
 /*
@@ -104,6 +104,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "3CXFEM656C 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_ADVSYS, CARDBUS_PRODUCT_ADVSYS_ULTRA,
+	    0,
+	    "Advanced System Products",
+	    "Ultra SCSI",
+	},
+	{
 	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
 	    0,
 	    "Realtek Semiconductor",
@@ -152,6 +158,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "FE2500 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_PCM200,
+	    0,
+	    "AboCom Systems",
+	    "FE2500 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_82557,
 	    0,
 	    "Intel",
@@ -191,6 +203,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_3COM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "3Com",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ADVSYS, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Advanced System Products",
 	    NULL,
 	},
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.25 2001/02/24 00:03:12 cgd Exp $	*/
+/*	$NetBSD: dpt.c,v 1.25.2.1 2001/04/09 01:56:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25 2001/02/24 00:03:12 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.25.2.1 2001/04/09 01:56:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,10 @@ dpt_cmd(sc, cp, addr, eatacmd, icmd)
 	if (cp == NULL)
 		addr = 0;
 
-	dpt_outl(sc, HA_DMA_BASE, (u_int32_t)addr);
+	dpt_outb(sc, HA_DMA_BASE+0, (addr    ) & 0xff);
+	dpt_outb(sc, HA_DMA_BASE+1, (addr>>8 ) & 0xff);
+	dpt_outb(sc, HA_DMA_BASE+2, (addr>>16) & 0xff);
+	dpt_outb(sc, HA_DMA_BASE+3, (addr>>24) & 0xff);
 
 	if (eatacmd == CP_IMMEDIATE) {
 		if (cp == NULL) {
@@ -516,7 +519,7 @@ dpt_readcfg(sc)
 
 	/* Begin reading */
  	while (i--)
-		*p++ = dpt_inw(sc, HA_DATA);
+		*p++ = bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
 
 	if ((i = ec->ec_cfglen) > (sizeof(struct eata_cfg)
 	    - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
@@ -530,12 +533,12 @@ dpt_readcfg(sc)
 	i >>= 1;
 
 	while (i--)
-		*p++ = dpt_inw(sc, HA_DATA);
+		*p++ = bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh, HA_DATA);
 	
 	/* Flush until we have read 512 bytes. */
 	i = (512 - j + 1) >> 1;
 	while (i--)
- 		dpt_inw(sc, HA_DATA);
+		dpt_inw(sc, HA_DATA);
 	
 	/* Defaults for older Firmware */
 	if (p <= (u_short *)&ec->ec_hba[DPT_MAX_CHANNELS - 1])
@@ -814,6 +817,7 @@ dpt_scsi_cmd(xs)
 		 * older firmware revisions don't even support it.
 		 */
 		if ((flags & XS_CTL_RESET) != 0) {
+			splx(s);
 			xs->error = XS_DRIVER_STUFFUP;
 			return (COMPLETE);
 		}
@@ -902,14 +906,16 @@ dpt_scsi_cmd(xs)
 #ifdef TFS
 		if ((flags & XS_CTL_DATA_UIO) != 0) {
 			error = bus_dmamap_load_uio(dmat, xfer, 
-			    (struct uio *)xs->data, (flags & XS_CTL_NOSLEEP) ? 
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    (struct uio *)xs->data, ((flags & XS_CTL_NOSLEEP) ? 
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			    BUS_DMA_STREAMING);
 		} else
 #endif	/* TFS */
 		{
 			error = bus_dmamap_load(dmat, xfer, xs->data, 
-			    xs->datalen, NULL, (flags & XS_CTL_NOSLEEP) ? 
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    xs->datalen, NULL, ((flags & XS_CTL_NOSLEEP) ? 
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			    BUS_DMA_STREAMING);
 		}
 
 		if (error) {

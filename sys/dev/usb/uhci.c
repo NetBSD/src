@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.133 2001/01/21 02:39:52 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.133.2.1 2001/04/09 01:57:33 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -634,11 +634,9 @@ uhci_allocx(struct usbd_bus *bus)
 		UXFER(xfer)->iinfo.sc = sc;
 #ifdef DIAGNOSTIC
 		UXFER(xfer)->iinfo.isdone = 1;
+		xfer->busy_free = XFER_BUSY;
 #endif
 	}
-#ifdef DIAGNOSTIC
-	xfer->busy_free = XFER_BUSY;
-#endif
 	return (xfer);
 }
 
@@ -710,6 +708,8 @@ uhci_power(int why, void *v)
 		/* save some state if BIOS doesn't */
 		sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
 		sc->sc_saved_sof = UREAD1(sc, UHCI_SOF);
+
+		UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
 
 		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
@@ -1167,6 +1167,7 @@ uhci_intr(void *arg)
 	if (sc->sc_suspend != PWR_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
+		UWRITE2(sc, UHCI_STS, status); /* acknowledge the ints */
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.1 2001/03/05 22:49:25 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.2 2001/04/09 01:55:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
+#include <compat/linux/common/linux_emuldata.h>
 
 const int linux_ptrace_request_map[] = {
 	LINUX_PTRACE_TRACEME,	PT_TRACE_ME,
@@ -231,22 +232,16 @@ linux_sys_brk(l, v, retval)
 	char *nbrk = SCARG(uap, nsize);
 	struct sys_obreak_args oba;
 	struct vmspace *vm = p->p_vmspace;
-	caddr_t oldbrk;
+	struct linux_emuldata *ed = (struct linux_emuldata*)p->p_emuldata;
 
-	oldbrk = vm->vm_daddr + ctob(vm->vm_dsize);
-	/*
-	 * XXX inconsistent.. Linux always returns at least the old
-	 * brk value, but it will be page-aligned if this fails,
-	 * and possibly not page aligned if it succeeds (the user
-	 * supplied pointer is returned).
-	 */
 	SCARG(&oba, nsize) = nbrk;
 
 	if ((caddr_t) nbrk > vm->vm_daddr && sys_obreak(l, &oba, retval) == 0)
-		retval[0] = (register_t)nbrk;
+		ed->p_break = (char *)nbrk;
 	else
-		retval[0] = (register_t)oldbrk;
+		nbrk = ed->p_break;
 
+	retval[0] = (register_t)nbrk;
 	return 0;
 }
 
@@ -1425,4 +1420,18 @@ linux_sys_sysinfo(l, v, retval)
 	si.mem_unit = 1;
 
 	return (copyout(&si, SCARG(uap, arg), sizeof si));
+}
+
+/*
+ * This gets called for unsupported syscalls. The difference to sys_nosys()
+ * is that process does not get SIGSYS, the call just returns with ENOSYS.
+ * This is the way Linux does it and glibc depends on this behaviour.
+ */
+int
+linux_sys_nosys(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	return (ENOSYS);
 }

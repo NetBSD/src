@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2001/01/27 07:51:22 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.4.2.1 2001/04/09 01:55:29 nathanw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -67,8 +67,13 @@
 3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
 4	NOARGS		{ ssize_t sys_write(int fd, const void *buf, \
 			    size_t nbyte); }
+#ifdef COMPAT_AOUT_ALTPATH
 5	STD		{ int aoutm68k_sys_open(const char *path, \
 			    int flags, ... mode_t mode); }
+#else
+5	NOARGS		{ int sys_open(const char *path, int flags, \
+			    ... mode_t mode); }
+#endif
 6	NOARGS		{ int sys_close(int fd); }
 7	NOARGS		{ int sys_wait4(int pid, int *status, int options, \
 			    struct rusage *rusage); }
@@ -78,18 +83,33 @@
 #else
 8	EXCL		compat_43_sys_creat
 #endif
+#ifdef COMPAT_AOUT_ALTPATH
 9	STD		{ int aoutm68k_sys_link(const char *path, \
 			    const char *link); }
 10	STD		{ int aoutm68k_sys_unlink(const char *path); }
+#else
+9	NOARGS		{ int sys_link(const char *path, const char *link); }
+10	NOARGS		{ int sys_unlink(const char *path); }
+#endif
 11	OBSOL		execv
+#ifdef COMPAT_AOUT_ALTPATH
 12	STD		{ int aoutm68k_sys_chdir(const char *path); }
+#else
+12	NOARGS		{ int sys_chdir(const char *path); }
+#endif
 13	NOARGS		{ int sys_fchdir(int fd); }
 14	NOARGS		{ int sys_mknod(const char *path, mode_t mode, \
 			    dev_t dev); }
+#ifdef COMPAT_AOUT_ALTPATH
 15	STD		{ int aoutm68k_sys_chmod(const char *path, \
 			    mode_t mode); }
 16	STD		{ int aoutm68k_sys_chown(const char *path, uid_t uid, \
 			    gid_t gid); }
+#else
+15	NOARGS		{ int sys_chmod(const char *path, mode_t mode); }
+16	NOARGS		{ int sys_chown(const char *path, uid_t uid, \
+			    gid_t gid); }
+#endif
 17	NOARGS		{ int sys_obreak(char *nsize); } break
 18	NOARGS		{ int sys_getfsstat(struct statfs *buf, long bufsize, \
 			    int flags); }
@@ -121,9 +141,14 @@
 			    unsigned int *alen); }
 32	NOARGS		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    unsigned int *alen); }
+#ifdef COMPAT_AOUT_ALTPATH
 33	STD		{ int aoutm68k_sys_access(const char *path, int flags); }
 34	STD		{ int aoutm68k_sys_chflags(const char *path, \
 			    u_long flags); }
+#else
+33	NOARGS		{ int sys_access(const char *path, int flags); }
+34	NOARGS		{ int sys_chflags(const char *path, u_long flags); }
+#endif
 35	NOARGS		{ int sys_fchflags(int fd, u_long flags); }
 36	NOARGS		{ void sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
@@ -184,6 +209,7 @@
 #else
 55	EXCL		compat_12_sys_reboot
 #endif
+#ifdef COMPAT_AOUT_ALTPATH
 56	STD		{ int aoutm68k_sys_revoke(const char *path); }
 57	STD		{ int aoutm68k_sys_symlink(const char *path, \
 			    const char *link); }
@@ -191,8 +217,21 @@
 			    char *buf, size_t count); }
 59	STD		{ int aoutm68k_sys_execve(const char *path, \
 			    char * const *argp, char * const *envp); }
+#else
+56	NOARGS		{ int sys_revoke(const char *path); }
+57	NOARGS		{ int sys_symlink(const char *path, \
+			    const char *link); }
+58	NOARGS		{ int sys_readlink(const char *path, \
+			    char *buf, size_t count); }
+59	NOARGS		{ int sys_execve(const char *path, \
+			    char * const *argp, char * const *envp); }
+#endif
 60	NOARGS		{ mode_t sys_umask(mode_t newmask); }
+#ifdef COMPAT_AOUT_ALTPATH
 61	STD		{ int aoutm68k_sys_chroot(const char *path); }
+#else
+61	NOARGS		{ int sys_chroot(const char *path); }
+#endif
 #ifdef COMPAT_43
 62	STD		{ int aoutm68k_compat_43_sys_fstat(int fd, \
 			    struct aoutm68k_stat43 *sb); } fstat43
@@ -354,15 +393,28 @@
 #endif
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
+#ifdef COMPAT_AOUT_ALTPATH
 128	STD		{ int aoutm68k_sys_rename(const char *from, \
 			    const char *to); }
+#else
+128	NOARGS		{ int sys_rename(const char *from, const char *to); }
+#endif
 #ifdef COMPAT_43
+#ifdef COMPAT_AOUT_ALTPATH
 129	STD		{ int aoutm68k_compat_43_sys_truncate(const char *path, \
 			    long length); } otruncate
+#else
+129	NOARGS		{ int compat_43_sys_truncate(const char *path, \
+			    long length); } otruncate
+#endif
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); } \
 			    oftruncate
 #else
+#ifdef COMPAT_AOUT_ALTPATH
 129	EXCL		aoutm68k_compat_43_sys_truncate
+#else
+129	EXCL		compat_43_sys_truncate
+#endif
 130	EXCL		compat_43_sys_ftruncate
 #endif
 131	NOARGS		{ int sys_flock(int fd, int how); }
@@ -374,9 +426,15 @@
 135	NOARGS		{ int sys_socketpair(int domain, int type, \
 			    int protocol, int *rsv); }
 136	NOARGS		{ int sys_mkdir(const char *path, mode_t mode); }
+#ifdef COMPAT_AOUT_ALTPATH
 137	STD		{ int aoutm68k_sys_rmdir(const char *path); }
 138	STD		{ int aoutm68k_sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
+#else
+137	NOARGS		{ int sys_rmdir(const char *path); }
+138	NOARGS		{ int sys_utimes(const char *path, \
+			    const struct timeval *tptr); }
+#endif
 139	OBSOL		4.2 sigreturn
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
@@ -431,14 +489,23 @@
 #else
 156	EXCL		compat_43_sys_getdirentries
 #endif
+#ifdef COMPAT_AOUT_ALTPATH
 157	STD		{ int aoutm68k_sys_statfs(const char *path, \
 			    struct statfs *buf); }
+#else
+157	NOARGS		{ int sys_statfs(const char *path, \
+			    struct statfs *buf); }
+#endif
 158	NOARGS		{ int sys_fstatfs(int fd, struct statfs *buf); }
 159	UNIMPL
 160	UNIMPL
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
+#ifdef COMPAT_AOUT_ALTPATH
 161	STD		{ int aoutm68k_sys_getfh(const char *fname, \
 			    fhandle_t *fhp); }
+#else
+161	NOARGS		{ int sys_getfh(const char *fname, fhandle_t *fhp); }
+#endif
 #else
 161	EXCL		getfh
 #endif
@@ -526,8 +593,12 @@
 189	EXCL		aoutm68k_compat_12_sys_fstat
 190	EXCL		aoutm68k_compat_12_sys_lstat
 #endif
+#ifdef COMPAT_AOUT_ALTPATH
 191	STD		{ long aoutm68k_sys_pathconf(const char *path, \
 			    int name); }
+#else
+191	NOARGS		{ long sys_pathconf(const char *path, int name); }
+#endif
 192	NOARGS		{ long sys_fpathconf(int fd, int name); }
 193	UNIMPL
 194	NOARGS		{ int sys_getrlimit(int which, \
@@ -545,15 +616,24 @@
 198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
 199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
+#ifdef COMPAT_AOUT_ALTPATH
 200	STD		{ int aoutm68k_sys_truncate(const char *path, int pad, \
 			    off_t length); }
+#else
+200	NOARGS		{ int sys_truncate(const char *path, int pad, \
+			    off_t length); }
+#endif
 201	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); }
 202	NOARGS		{ int sys___sysctl(int *name, u_int namelen, \
 			    void *old, size_t *oldlenp, void *new, \
 			    size_t newlen); }
 203	NOARGS		{ int sys_mlock(const void *addr, size_t len); }
 204	NOARGS		{ int sys_munlock(const void *addr, size_t len); }
+#ifdef COMPAT_AOUT_ALTPATH
 205	STD		{ int aoutm68k_sys_undelete(const char *path); }
+#else
+205	NOARGS		{ int sys_undelete(const char *path); }
+#endif
 206	NOARGS		{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
 207	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
@@ -684,18 +764,31 @@
 267	UNIMPL
 268	UNIMPL
 269	UNIMPL
+#ifdef COMPAT_AOUT_ALTPATH
 270	STD		{ int aoutm68k_sys___posix_rename(const char *from, \
 			    const char *to); }
+#else
+270	NOARGS		{ int sys___posix_rename(const char *from, \
+			    const char *to); }
+#endif
 271	NOARGS		{ int sys_swapctl(int cmd, const void *arg, int misc); }
 272	NOARGS		{ int sys_getdents(int fd, char *buf, size_t count); }
 273	NOARGS		{ int sys_minherit(void *addr, size_t len, \
 			    int inherit); }
+#ifdef COMPAT_AOUT_ALTPATH
 274	STD		{ int aoutm68k_sys_lchmod(const char *path, \
 			    mode_t mode); }
 275	STD		{ int aoutm68k_sys_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
 276	STD		{ int aoutm68k_sys_lutimes(const char *path, \
 			    const struct timeval *tptr); }
+#else
+274	NOARGS		{ int sys_lchmod(const char *path, mode_t mode); }
+275	NOARGS		{ int sys_lchown(const char *path, uid_t uid, \
+			    gid_t gid); }
+276	NOARGS		{ int sys_lutimes(const char *path, \
+			    const struct timeval *tptr); }
+#endif
 277	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
 278	STD		{ int aoutm68k_sys___stat13(const char *path, \
 			    struct aoutm68k_stat *ub); }
@@ -707,8 +800,13 @@
 			    const struct sigaltstack *nss, \
 			    struct sigaltstack *oss); }
 282	NOARGS		{ int sys___vfork14(void); }
+#ifdef COMPAT_AOUT_ALTPATH
 283	STD		{ int aoutm68k_sys___posix_chown(const char *path, \
 			    uid_t uid, gid_t gid); }
+#else
+283	NOARGS		{ int sys___posix_chown(const char *path, uid_t uid, \
+			    gid_t gid); }
+#endif
 284	NOARGS		{ int sys___posix_fchown(int fd, uid_t uid, \
 			    gid_t gid); }
 285	NOARGS		{ int sys___posix_lchown(const char *path, uid_t uid, \

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.37 2001/02/28 05:53:59 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.37.2.1 2001/04/09 01:56:20 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -259,15 +259,15 @@ struct isposinfo {
 /*
  * Driver prototypes..
  */
-void isp_attach __P((struct ispsoftc *));
-void isp_uninit __P((struct ispsoftc *));
+void isp_attach(struct ispsoftc *);
+void isp_uninit(struct ispsoftc *);
 
-static inline void isp_lock __P((struct ispsoftc *));
-static inline void isp_unlock __P((struct ispsoftc *));
-static inline char *strncat __P((char *, const char *, size_t));
+static inline void isp_lock(struct ispsoftc *);
+static inline void isp_unlock(struct ispsoftc *);
+static inline char *strncat(char *, const char *, size_t);
 static inline u_int64_t
-isp_microtime_sub __P((struct timeval *, struct timeval *));
-static void isp_wait_complete __P((struct ispsoftc *));
+isp_microtime_sub(struct timeval *, struct timeval *);
+static void isp_wait_complete(struct ispsoftc *);
 #if	_BYTE_ORDER == _BIG_ENDIAN
 static inline void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
 static inline void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
@@ -316,8 +316,7 @@ static inline void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
  * Platform specific 'inline' or support functions
  */
 static inline void
-isp_lock(isp)
-	struct ispsoftc *isp;
+isp_lock(struct ispsoftc *isp)
 {
 	int s = splbio();
 	if (isp->isp_osinfo.islocked++ == 0) {
@@ -328,8 +327,7 @@ isp_lock(isp)
 }
 
 static inline void
-isp_unlock(isp)
-	struct ispsoftc *isp;
+isp_unlock(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.islocked-- <= 1) {
 		isp->isp_osinfo.islocked = 0;
@@ -338,10 +336,7 @@ isp_unlock(isp)
 }
 
 static inline char *
-strncat(d, s, c)
-	char *d;
-	const char *s;
-	size_t c;
+strncat(char *d, const char *s, size_t c)
 {
         char *t = d;
 
@@ -359,9 +354,7 @@ strncat(d, s, c)
 }
 
 static inline u_int64_t
-isp_microtime_sub(b, a)
-	struct timeval *b;
-	struct timeval *a;
+isp_microtime_sub(struct timeval *b, struct timeval *a)
 {
 	struct timeval x;
 	u_int64_t elapsed;
@@ -373,8 +366,7 @@ isp_microtime_sub(b, a)
 }
 
 static inline void
-isp_wait_complete(isp)
-	struct ispsoftc *isp;
+isp_wait_complete(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
 		int usecs = 0;

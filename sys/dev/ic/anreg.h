@@ -1,4 +1,4 @@
-/*	$NetBSD: anreg.h,v 1.5 2000/12/20 23:30:36 onoe Exp $	*/
+/*	$NetBSD: anreg.h,v 1.5.2.1 2001/04/09 01:56:08 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -458,9 +458,9 @@ struct an_ltv_radioinfo {
 /*
  * Status (read only). Note: the manual claims this RID is 108 bytes
  * long (0x6A is the last datum, which is 2 bytes long) however when
- * this RID is read from the NIC, it returns a length of 110. To be
- * on the safe side, this structure is padded with an extra 16-bit
- * word. (There is a misprint in the manual which says the macaddr
+ * this RID is read from the NIC, it returns a length of 110 or 112.
+ * To be on the safe side, this structure is padded with 4 extra 16-bit
+ * words. (There is a misprint in the manual which says the macaddr
  * field is 8 bytes long.)
  *
  * Also, the channel_set and current_channel fields appear to be
@@ -500,7 +500,7 @@ struct an_ltv_status {
 	u_int16_t		an_max_noise_prev_sec;	/* 0x7A */
 	u_int16_t		an_avg_noise_prev_min;	/* 0x7C */
 	u_int16_t		an_max_noise_prev_min;	/* 0x7E */
-	u_int16_t		an_spare[2];
+	u_int16_t		an_spare[4];
 };
 
 #define AN_STATUS_OPMODE_CONFIGURED		0x0001

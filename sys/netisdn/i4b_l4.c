@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.2.2.1 2001/04/09 01:58:48 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -120,9 +120,7 @@ i4b_l4_pdeact(int controller, int numactive)
 	
 	for(i=0; i < N_CALL_DESC; i++)
 	{
-		if((call_desc[i].cdid != CDID_UNUSED)				  &&
-		   (ctrl_desc[call_desc[i].controller].ctrl_type == CTRL_PASSIVE) &&
-		   (ctrl_desc[call_desc[i].controller].unit == controller))
+		if(call_desc[i].cdid != CDID_UNUSED && call_desc[i].bri == controller)
 		{
 			cd = &call_desc[i];
 			
@@ -139,7 +137,7 @@ i4b_l4_pdeact(int controller, int numactive)
 		
 			if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 			{
-				ctrl_desc[cd->controller].bch_state[cd->channelid] = BCH_ST_FREE;
+				ctrl_desc[cd->bri].bch_state[cd->channelid] = BCH_ST_FREE;
 			}
 
 			cd->cdid = CDID_UNUSED;
@@ -361,7 +359,7 @@ i4b_l4_connect_ind(call_desc_t *cd)
 		mp->header.type = MSG_CONNECT_IND;
 		mp->header.cdid = cd->cdid;
 
-		mp->controller = cd->controller;
+		mp->controller = cd->bri;
 		mp->channel = cd->channelid;
 		mp->bprot = cd->bprot;
 
@@ -417,7 +415,7 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 
 		mp->header.type = MSG_CONNECT_ACTIVE_IND;
 		mp->header.cdid = cd->cdid;
-		mp->controller = cd->controller;
+		mp->controller = cd->bri;
 		mp->channel = cd->channelid;
 		if(cd->datetime[0] != '\0')
 			strcpy(mp->datetime, cd->datetime);
@@ -446,7 +444,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
-		ctrl_desc[cd->controller].bch_state[cd->channelid] = BCH_ST_FREE;
+		ctrl_desc[cd->bri].bch_state[cd->channelid] = BCH_ST_FREE;
 	}
 	else
 	{
@@ -559,7 +557,7 @@ i4b_l4_proceeding_ind(call_desc_t *cd)
 
 		mp->header.type = MSG_PROCEEDING_IND;
 		mp->header.cdid = cd->cdid;
-		mp->controller = cd->controller;
+		mp->controller = cd->bri;
 		mp->channel = cd->channelid;
 		i4bputqueue(m);
 	}
@@ -596,7 +594,7 @@ i4b_l4_packet_ind(int driver, int driver_unit, int dir, struct mbuf *pkt)
 static int
 i4b_link_bchandrvr(call_desc_t *cd)
 {
-	int t = ctrl_desc[cd->controller].ctrl_type;
+	int t = ctrl_desc[cd->bri].ctrl_type;
 	
 	if(t < 0 || t >= CTRL_NUMTYPES || ctrl_types[t].get_linktab == NULL)
 	{
@@ -605,7 +603,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 	else
 	{
 		cd->ilt = ctrl_types[t].get_linktab(
-			ctrl_desc[cd->controller].unit,
+			ctrl_desc[cd->bri].l1_token,
 			cd->channelid);
 	}
 
@@ -658,7 +656,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 	if(t >= 0 && t < CTRL_NUMTYPES && ctrl_types[t].set_linktab != NULL)
 	{
 		ctrl_types[t].set_linktab(
-				ctrl_desc[cd->controller].unit,
+				ctrl_desc[cd->bri].l1_token,
 				cd->channelid,
 				cd->dlt);
 	}
@@ -708,7 +706,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 
 	/* activate B channel */
 		
-	(*cd->ilt->bch_config)(cd->ilt->unit, cd->ilt->channel, cd->bprot, 1);
+	(*cd->ilt->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 1);
 
 	return(0);
 }
@@ -719,7 +717,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 static void
 i4b_unlink_bchandrvr(call_desc_t *cd)
 {
-	int t = ctrl_desc[cd->controller].ctrl_type;
+	int t = ctrl_desc[cd->bri].ctrl_type;
 
 	if(t < 0 || t >= CTRL_NUMTYPES || ctrl_types[t].get_linktab == NULL)
 	{
@@ -729,13 +727,13 @@ i4b_unlink_bchandrvr(call_desc_t *cd)
 	else
 	{
 		cd->ilt = ctrl_types[t].get_linktab(
-				ctrl_desc[cd->controller].unit,
+				ctrl_desc[cd->bri].l1_token,
 				cd->channelid);
 	}
 	
 	/* deactivate B channel */
 		
-	(*cd->ilt->bch_config)(cd->ilt->unit, cd->ilt->channel, cd->bprot, 0);
+	(*cd->ilt->bch_config)(cd->ilt->l1token, cd->ilt->channel, cd->bprot, 0);
 } 
 
 /*---------------------------------------------------------------------------
@@ -930,7 +928,7 @@ i4b_idle_check(call_desc_t *cd)
 		if((i4b_get_idletime(cd) + cd->max_idle_time) <= SECOND)
 		{
 			NDBGL4(L4_TIMO, "%ld: incoming-call, line idle timeout, disconnecting!", (long)SECOND);
-			(*ctrl_desc[cd->controller].N_DISCONNECT_REQUEST)(cd->cdid,
+			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid,
 					(CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
@@ -979,7 +977,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 		if((i4b_get_idletime(cd) + cd->shorthold_data.idle_time) <= SECOND)
 		{
 			NDBGL4(L4_TIMO, "%ld: outgoing-call-st, idle timeout, disconnecting!", (long)SECOND);
-			(*ctrl_desc[cd->controller].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
 		else
@@ -1020,7 +1018,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 			else
 			{	/* no activity, hangup */
 				NDBGL4(L4_TIMO, "%ld: outgoing-call, idle timeout, last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-				(*ctrl_desc[cd->controller].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+				(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 				i4b_l4_idle_timeout_ind(cd);
 				cd->idletime_state = IST_IDLE;
 			}
@@ -1075,7 +1073,7 @@ i4b_idle_check_var_unit(call_desc_t *cd)
 		else
 		{	/* no activity, hangup */
 			NDBGL4(L4_TIMO, "%ld: outgoing-call, var idle timeout - last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-			(*ctrl_desc[cd->controller].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 			cd->idletime_state = IST_IDLE;
 		}

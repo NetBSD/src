@@ -27,7 +27,7 @@
  *	i4b_trace.h - header file for trace data read device
  *	----------------------------------------------------
  *
- *	$Id: i4b_trace.h,v 1.1.1.1 2001/01/05 12:49:53 martin Exp $ 
+ *	$Id: i4b_trace.h,v 1.1.1.1.4.1 2001/04/09 01:58:52 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -41,9 +41,9 @@
 /*---------------------------------------------------------------------------*
  *	structure of the header at the beginning of every trace mbuf
  *---------------------------------------------------------------------------*/
-typedef struct {
+typedef struct i4b_trace_hdr {
 	int length;		/* length of the following mbuf		*/
-	int unit;		/* controller unit number		*/
+	int bri;		/* controllers current bri number	*/
 	int type;		/* type of channel			*/
 #define TRC_CH_I	0		/* Layer 1 INFO's		*/
 #define TRC_CH_D 	1		/* D channel 			*/
@@ -55,7 +55,7 @@ typedef struct {
 	int trunc;		/* # of truncated bytes (frame > MCLBYTES) */
 	unsigned int count;	/* frame count for this unit/type	*/
 	struct timeval time;	/* timestamp for this frame		*/
-} i4b_trace_hdr_t;
+} i4b_trace_hdr;
 
 #define INFO0		0	/* layer 1 */
 #define INFO1_8		1

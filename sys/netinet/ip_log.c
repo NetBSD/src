@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.12 2001/02/05 10:42:44 chs Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.12.2.1 2001/04/09 01:58:26 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_log.c,v 2.5.2.1 2000/07/19 13:11:47 darrenr Exp
+ * Id: ip_log.c,v 2.5.2.2 2000/08/13 03:50:41 darrenr Exp
  */
 #include <sys/param.h>
 #if defined(KERNEL) && !defined(_KERNEL)
@@ -24,8 +24,6 @@
 #  endif
 # else
 #  ifdef KLD_MODULE
-#   include <sys/osreldate.h>
-#  else
 #   include <osreldate.h>
 #  endif
 # endif

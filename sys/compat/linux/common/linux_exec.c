@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.45.2.1 2001/03/05 22:49:24 nathanw Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.45.2.2 2001/04/09 01:55:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ void syscall __P((void));
 static void linux_e_proc_exec __P((struct proc *, struct exec_package *));
 static void linux_e_proc_fork __P((struct proc *, struct proc *));
 static void linux_e_proc_exit __P((struct proc *));
+static void linux_e_proc_init __P((struct proc *, struct vmspace *));
 
 /*
  * Execve(2). Just check the alternate emulation path, and pass it on
@@ -133,15 +134,10 @@ const struct emul emul_linux = {
 #endif
 };
 
-/*
- * Allocate per-process structures. Called when executing Linux
- * process. We can re-used the old emuldata - if it's not null,
- * the executed process is of same emulation as original forked one.
- */
 static void
-linux_e_proc_exec(p, epp)
+linux_e_proc_init(p, vmspace)
 	struct proc *p;
-	struct exec_package *epp;
+	struct vmspace *vmspace;
 {
 	if (!p->p_emuldata) {
 		/* allocate new Linux emuldata */
@@ -150,6 +146,24 @@ linux_e_proc_exec(p, epp)
 	}
 
 	memset(p->p_emuldata, '\0', sizeof(struct linux_emuldata));
+	
+	/* Set the process idea of the break to the real value */
+	((struct linux_emuldata*)(p->p_emuldata))->p_break = 
+	    vmspace->vm_daddr + ctob(vmspace->vm_dsize);
+}
+
+/*
+ * Allocate per-process structures. Called when executing Linux
+ * process. We can reuse the old emuldata - if it's not null,
+ * the executed process is of same emulation as original forked one.
+ */
+static void
+linux_e_proc_exec(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	/* exec, use our vmspace */
+	linux_e_proc_init(p, p->p_vmspace);
 }
 
 /*
@@ -177,5 +191,7 @@ linux_e_proc_fork(p, parent)
 	 * So just allocate new emuldata for the new process.
 	 */
 	p->p_emuldata = NULL;
-	linux_e_proc_exec(p, NULL);
+
+	/* fork, use parent's vmspace (our vmspace may not be setup yet) */
+	linux_e_proc_init(p, parent->p_vmspace);
 }

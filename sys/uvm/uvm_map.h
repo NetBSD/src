@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.24.2.1 2001/03/05 22:50:11 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.24.2.2 2001/04/09 01:59:18 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -342,9 +342,9 @@ int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, vsize_t,
 void		uvm_map_setup __P((vm_map_t, vaddr_t, vaddr_t, int));
 int		uvm_map_submap __P((vm_map_t, vaddr_t, vaddr_t, vm_map_t));
 MAP_INLINE
-int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
+void		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
 void		uvm_unmap_detach __P((vm_map_entry_t,int));
-int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
+void		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
 				      vm_map_entry_t *));
 
 #endif /* _KERNEL */

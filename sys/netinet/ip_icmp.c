@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.59 2001/03/01 16:31:38 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.59.2.1 2001/04/09 01:58:24 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -919,7 +919,6 @@ icmp_mtudisc(icp, faddr)
 		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
 		if (error) {
 			rtfree(rt);
-			rtfree(nrt);
 			return;
 		}
 		nrt->rt_rmx = rt->rt_rmx;

@@ -1,11 +1,11 @@
-/*	$NetBSD: joy_pnpbios.c,v 1.1 2001/01/28 00:37:52 nathanw Exp $	*/
+/*	$NetBSD: iopio.h,v 1.1.4.2 2001/04/09 01:56:02 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,57 +36,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _I2O_IOPIO_H_
+#define	_I2O_IOPIO_H_
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
+#define	IOP_MAX_MSG_XFERS	3	/* Maximum transfer count per msg */
+#define	IOP_MAX_OUTBOUND	256	/* Maximum outbound queue depth */
+#define	IOP_MAX_INBOUND		256	/* Maximum inbound queue depth */
+#define	IOP_MF_RESERVE		4	/* Frames to reserve for ctl ops */
+#define	IOP_MAX_XFER		64*1024	/* Maximum transfer size */
+#define	IOP_MAX_MSG_SIZE	128	/* Maximum message frame size */
 
-#include <machine/bus.h>
+struct iop_tidmap {
+	u_short	it_tid;
+	u_short	it_flags;
+	char	it_dvname[sizeof(((struct device *)NULL)->dv_xname)];
+};
+#define	IT_CONFIGURED	0x02	/* target configured */
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <i386/pnpbios/pnpbiosvar.h>
-
-#include <i386/isa/joyvar.h>
-
-int	joy_pnpbios_match __P((struct device *, struct cfdata *, void *));
-void	joy_pnpbios_attach __P((struct device *, struct device *, void *));
-
-struct cfattach joy_pnpbios_ca = {
-	sizeof(struct joy_softc), joy_pnpbios_match, joy_pnpbios_attach
+struct ioppt_buf {
+	void	*ptb_data;	/* pointer to buffer */
+	size_t	ptb_datalen;	/* buffer size in bytes */
+	int	ptb_out;	/* non-zero if transfer is to IOP */
 };
 
-int
-joy_pnpbios_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct pnpbiosdev_attach_args *aa = aux;
+struct ioppt {
+	void	*pt_msg;	/* pointer to message buffer */
+	size_t	pt_msglen;	/* message buffer size in bytes */
+	void	*pt_reply;	/* pointer to reply buffer */
+	size_t	pt_replylen;	/* reply buffer size in bytes */
+	int	pt_timo;	/* completion timeout in ms */
+	int	pt_nbufs;	/* number of transfers */
+	struct	ioppt_buf pt_bufs[IOP_MAX_MSG_XFERS]; /* transfers */
+};
 
-	if (strcmp(aa->idstr, "PNPB02F"))
-		return (0);
+#define	IOPIOCPT	_IOWR('u', 0, struct ioppt)
+#define	IOPIOCGLCT	_IOWR('u', 1, struct iovec)
+#define	IOPIOCGSTATUS	_IOWR('u', 2, struct iovec)
+#define	IOPIOCRECONFIG	_IO('u', 3)
+#define	IOPIOCGTIDMAP	_IOWR('u', 4, struct iovec)
 
-	return (1);
-}
-
-void
-joy_pnpbios_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct joy_softc *sc = (struct joy_softc *)self;
-	struct pnpbiosdev_attach_args *aa = aux;
-
-	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
-		return;
-	}
-
-	printf("\n");
-	pnpbios_print_devres(self, aa);
-
-	joyattach(sc);
-}
+#endif	/* !_I2O_IOPIO_H_ */

@@ -27,7 +27,7 @@
  *	i4b_l3.h - layer 3 header file
  *	------------------------------
  *
- *	$Id: i4b_l3.h,v 1.1.1.1 2001/01/05 12:49:56 martin Exp $ 
+ *	$Id: i4b_l3.h,v 1.1.1.1.4.1 2001/04/09 01:58:47 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -54,14 +54,7 @@ extern void i4b_l3_tx_release ( call_desc_t *cd, int send_cause_flag );
 extern void i4b_l3_tx_release_complete ( call_desc_t *cd, int send_cause_flag );
 extern void i4b_l3_tx_setup ( call_desc_t *cd );
 extern void i4b_l3_tx_status ( call_desc_t *cd, u_char q850cause );
-extern int i4b_dl_data_ind ( int unit, struct mbuf *m );
-extern int i4b_dl_establish_cnf ( int unit );
-extern int i4b_dl_establish_ind ( int unit );
-extern int i4b_dl_release_cnf ( int unit );
-extern int i4b_dl_release_ind ( int unit );
-extern int i4b_dl_unit_data_ind ( int unit, struct mbuf *m );
 extern int i4b_get_dl_stat( call_desc_t *cd );
-extern int i4b_mdl_status_ind ( int unit, int status, int parm);
 extern void i4b_print_frame ( int len, u_char *buf );
 extern void next_l3state ( call_desc_t *cd, int event );
 extern char *print_l3state ( call_desc_t *cd );

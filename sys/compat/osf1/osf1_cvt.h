@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.6 1999/06/26 01:23:25 cgd Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.6.14.1 2001/04/09 01:55:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,8 @@ void	osf1_cvt_sigset_from_native(const sigset_t *nss, osf1_sigset_t *oss);
 int	osf1_cvt_sigset_to_native(const osf1_sigset_t *oss, sigset_t *nss);
 void	osf1_cvt_stat_from_native(const struct stat *nst,
 				  struct osf1_stat *ost);
+void	osf1_cvt_stat2_from_native(const struct stat *nst,
+				  struct osf1_stat2 *ost);
 void	osf1_cvt_statfs_from_native(const struct statfs *nsfs,
 				    struct osf1_statfs *osfs);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.1 2001/03/05 22:49:58 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.2 2001/04/09 01:58:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -334,7 +334,7 @@ diragain:
 		en = ndp->dc_entry;
 
 		pdp = dp = (struct dirent *)bp->b_data;
-		edp = bp->b_data + bp->b_bcount;
+		edp = bp->b_data + bp->b_bcount - bp->b_resid;
 		enn = 0;
 		while (enn < en && (caddr_t)dp < edp) {
 			pdp = dp;
@@ -378,11 +378,11 @@ diragain:
 			enn++;
 		}
 
-		if (uio->uio_resid < (bp->b_bcount - on)) {
+		if (uio->uio_resid < (bp->b_bcount - bp->b_resid - on)) {
 			n = uio->uio_resid;
 			enough = 1;
 		} else
-			n = bp->b_bcount - on;
+			n = bp->b_bcount - bp->b_resid - on;
 
 		ep = bp->b_data + on + n;
 
@@ -412,7 +412,7 @@ diragain:
 		 * set of the offset to it.
 		 */
 
-		if ((on + n) < bp->b_bcount) {
+		if ((on + n) < bp->b_bcount - bp->b_resid) {
 			curoff = NFS_GETCOOKIE(pdp);
 			nndp = nfs_enterdircache(vp, curoff, ndp->dc_blkcookie,
 			    enn, bp->b_lblkno);
@@ -1253,8 +1253,8 @@ loopdone:
 		splx(s);
 	}
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND",0,0,0,0);
-		return EINPROGRESS;
+		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -1497,7 +1497,7 @@ nfs_putpages(v)
 		splx(s);
 	}
 	if (async) {
-		return EINPROGRESS;
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);

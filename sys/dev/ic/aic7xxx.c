@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.66 2001/02/24 00:01:22 cgd Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.66.2.1 2001/04/09 01:56:06 nathanw Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -4262,8 +4262,9 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsipi_xfer *xs,
 		error = bus_dmamap_load(ahc->parent_dmat,
 			    scb->dmamap, xs->data,
 			    xs->datalen, NULL,
-			    (xs->xs_control & XS_CTL_NOSLEEP) ?
-			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			    ((xs->xs_control & XS_CTL_NOSLEEP) ?
+			     BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+			    BUS_DMA_STREAMING);
 		if (error) {
 			if (!ahc_istagged_device(ahc, xs, 0))
 				ahc_index_busy_tcl(ahc, hscb->tcl, TRUE);

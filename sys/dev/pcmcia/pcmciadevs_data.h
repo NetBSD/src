@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.120 2001/02/19 21:32:38 aymeric Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.120.2.1 2001/04/09 01:57:19 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.120 2001/02/13 02:07:53 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -310,6 +310,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "I-O DATA PCLA/TE"	},
+	},
+	{
+	    PCMCIA_VENDOR_IODATA2, PCMCIA_PRODUCT_IODATA2_WNB11PCM,
+	    PCMCIA_CIS_IODATA2_WNB11PCM,
+	    0,
+	    "I-O DATA",
+	    "I-O DATA WN-B11/PCM"	},
 	},
 	{
 	    PCMCIA_VENDOR_FARALLON, PCMCIA_PRODUCT_FARALLON_SKYLINE,
@@ -660,6 +667,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Aironet Wireless Communications",
 	    "Aironet PC4800 Wireless LAN Adapter"	},
+	},
+	{
+	    PCMCIA_VENDOR_AIRONET, PCMCIA_PRODUCT_AIRONET_350,
+	    PCMCIA_CIS_AIRONET_350,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet 350 Wireless LAN Adapter"	},
 	},
 	{
 	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
@@ -1233,6 +1247,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Samsung",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_IODATA2, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "I-O DATA",
 	    NULL,
 	},
 	{

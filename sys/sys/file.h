@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.23 2001/02/26 16:39:14 lukem Exp $	*/
+/*	$NetBSD: file.h,v 1.23.2.1 2001/04/09 01:59:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,6 +47,7 @@
 struct proc;
 struct uio;
 struct iovec;
+struct stat;
 
 /*
  * Kernel descriptor table.
@@ -74,6 +75,8 @@ struct file {
 		int	(*fo_fcntl)	(struct file *fp, u_int com,
 					    caddr_t data, struct proc *p);
 		int	(*fo_poll)	(struct file *fp, int events,
+					    struct proc *p);
+		int	(*fo_stat)	(void *fdata, struct stat *sp,
 					    struct proc *p);
 		int	(*fo_close)	(struct file *fp, struct proc *p);
 	} *f_ops;

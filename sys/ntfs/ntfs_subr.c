@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.26.2.1 2001/03/05 22:50:01 nathanw Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.26.2.2 2001/04/09 01:58:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -55,6 +55,10 @@
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_compr.h>
 #include <ntfs/ntfs_ihash.h>
+
+#if defined(NTFS_DEBUG)
+int ntfs_debug = NTFS_DEBUG;
+#endif
 
 #if defined(__FreeBSD__)
 MALLOC_DEFINE(M_NTFSNTVATTR, "NTFS vattr", "NTFS file attribute information");
@@ -1494,7 +1498,7 @@ ntfs_writentvattr_plain(
 		return ENOTTY;
 	}
 
-	ddprintf(("ntfs_writentvattr_plain: data in run: %d chains\n",
+	ddprintf(("ntfs_writentvattr_plain: data in run: %lu chains\n",
 		 vap->va_vruncnt));
 
 	off = roff;
@@ -1600,7 +1604,7 @@ ntfs_readntvattr_plain(
 		struct buf     *bp;
 		size_t          tocopy;
 
-		ddprintf(("ntfs_readntvattr_plain: data in run: %d chains\n",
+		ddprintf(("ntfs_readntvattr_plain: data in run: %lu chains\n",
 			 vap->va_vruncnt));
 
 		off = roff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.146.2.1 2001/03/05 22:49:48 nathanw Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146.2.2 2001/04/09 01:58:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1218,6 +1218,10 @@ vput(vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
+	if (vp->v_flag & VTEXT) {
+		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag &= ~VTEXT;
 	simple_unlock(&vp->v_interlock);
 	VOP_INACTIVE(vp, p);
@@ -1258,6 +1262,10 @@ vrele(vp)
 	else
 		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
 	simple_unlock(&vnode_free_list_slock);
+	if (vp->v_flag & VTEXT) {
+		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag &= ~VTEXT;
 	if (vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK) == 0)
 		VOP_INACTIVE(vp, p);
@@ -1482,6 +1490,10 @@ vclean(vp, flags, p)
 	if (vp->v_flag & VXLOCK)
 		panic("vclean: deadlock, vp %p", vp);
 	vp->v_flag |= VXLOCK;
+	if (vp->v_flag & VTEXT) {
+		uvmexp.vtextpages -= vp->v_uvm.u_obj.uo_npages;
+		uvmexp.vnodepages += vp->v_uvm.u_obj.uo_npages;
+	}
 	vp->v_flag &= ~VTEXT;
 
 	/*

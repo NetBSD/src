@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_input.c,v 1.37.2.2 2001/03/13 20:29:50 nathanw Exp $	*/
-/*	$KAME: ip6_input.c,v 1.183 2001/03/01 15:15:23 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.37.2.3 2001/04/09 01:58:39 nathanw Exp $	*/
+/*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -259,15 +259,17 @@ ip6_input(m)
 		else
 			ip6stat.ip6s_mext1++;
 	} else {
+#define M2MMAX	(sizeof(ip6stat.ip6s_m2m)/sizeof(ip6stat.ip6s_m2m[0]))
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
 				ip6stat.ip6s_m2m[loif[0].if_index]++;	/*XXX*/
-			} else if (m->m_pkthdr.rcvif->if_index <= 31)
+			} else if (m->m_pkthdr.rcvif->if_index < M2MMAX)
 				ip6stat.ip6s_m2m[m->m_pkthdr.rcvif->if_index]++;
 			else
 				ip6stat.ip6s_m2m[0]++;
 		} else
 			ip6stat.ip6s_m1++;
+#undef M2MMAX
 	}
 
 	in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_receive);
@@ -304,12 +306,23 @@ ip6_input(m)
 	 * Note that filters must _never_ set this flag, as another filter
 	 * in the list may have previously cleared it.
 	 */
-	if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
-			   PFIL_IN) != 0)
-		return;
-	if (m == NULL)
-		return;
-	ip6 = mtod(m, struct ip6_hdr *);
+	/*
+	 * let ipfilter look at packet on the wire,
+	 * not the decapsulated packet.
+	 */
+#ifdef IPSEC
+	if (!ipsec_gethist(m, NULL))
+#else
+	if (1)
+#endif
+	{
+		if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
+				   PFIL_IN) != 0)
+			return;
+		if (m == NULL)
+			return;
+		ip6 = mtod(m, struct ip6_hdr *);
+	}
 #endif /* PFIL_HOOKS */
 
 
@@ -379,32 +392,48 @@ ip6_input(m)
 		}
 	}
 
-#ifndef FAKE_LOOPBACK_IF
-	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0)
-#else
-	if (1)
-#endif
-	{
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1]
-				= htons(m->m_pkthdr.rcvif->if_index);
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1]
-				= htons(m->m_pkthdr.rcvif->if_index);
+	/* drop packets if interface ID portion is already filled */
+	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src) &&
+		    ip6->ip6_src.s6_addr16[1]) {
+			ip6stat.ip6s_badscope++;
+			goto bad;
+		}
+		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst) &&
+		    ip6->ip6_dst.s6_addr16[1]) {
+			ip6stat.ip6s_badscope++;
+			goto bad;
+		}
 	}
 
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1]
+			= htons(m->m_pkthdr.rcvif->if_index);
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1]
+			= htons(m->m_pkthdr.rcvif->if_index);
+
 	/*
-	 * XXX we need this since we do not have "goto ours" hack route
-	 * for some of our ifaddrs on loopback interface.
-	 * we should correct it by changing in6_ifattach to install
-	 * "goto ours" hack route.
+	 * We use rt->rt_ifp to determine if the address is ours or not.
+	 * If rt_ifp is lo0, the address is ours.
+	 * The problem here is, rt->rt_ifp for fe80::%lo0/64 is set to lo0,
+	 * so any address under fe80::%lo0/64 will be mistakenly considered
+	 * local.  The special case is supplied to handle the case properly
+	 * by actually looking at interface addresses
+	 * (using in6ifa_ifpwithaddr).
 	 */
-	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) != 0) {
-		if (IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
-			ours = 1;
-			deliverifp = m->m_pkthdr.rcvif;
-			goto hbhcheck;
+	if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) != 0 &&
+	    IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_dst)) {
+		if (!in6ifa_ifpwithaddr(m->m_pkthdr.rcvif, &ip6->ip6_dst)) {
+			icmp6_error(m, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_ADDR, 0);
+			/* m is already freed */
+			return;
 		}
+
+		ours = 1;
+		deliverifp = m->m_pkthdr.rcvif;
+		goto hbhcheck;
 	}
 
 	/*
@@ -693,6 +722,7 @@ ip6_input(m)
 	ip6stat.ip6s_delivered++;
 	in6_ifstat_inc(deliverifp, ifs6_in_deliver);
 	nest = 0;
+
 	while (nxt != IPPROTO_DONE) {
 		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
 			ip6stat.ip6s_toomanyhdr++;

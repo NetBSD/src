@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.123 2001/02/24 01:59:47 lukem Exp $
+#	$NetBSD: files.pci,v 1.123.2.1 2001/04/09 01:56:58 nathanw Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -66,8 +66,6 @@ file	dev/pci/dpt_pci.c		dpt_pci
 # device declaration in sys/conf/files
 attach	adv at pci with adv_pci
 file	dev/pci/adv_pci.c		adv_pci
-file	dev/ic/advlib.c			adv_pci
-file	dev/ic/advmcode.c		adv_pci
 
 # AdvanSys ULTRA WIDE SCSI controllers
 # device declaration in sys/conf/files
@@ -285,6 +283,17 @@ device	cmpci { }: audio, auconv, mulaw
 attach	cmpci at pci
 file	dev/pci/cmpci.c			cmpci
 
+# Yamaha YMF724/740/744/754 PCI audio controller
+device	yds { }: audio, auconv, mulaw, ac97
+attach	yds at pci
+file	dev/pci/yds.c			yds
+
+attach	opl at yds with opl_yds
+file	dev/pci/opl_yds.c		opl_yds
+
+attach	mpu at yds with mpu_yds
+file	dev/pci/mpu_yds.c		mpu_yds
+
 # SMC EPIC/100 Fast Ethernet on PCI
 attach	epic at pci with epic_pci
 file	dev/pci/if_epic_pci.c		epic_pci
@@ -329,7 +338,7 @@ file	dev/pci/fwohci_pci.c		fwohci_pci
 
 # IEEE 1394 TI "Lynx" controller
 attach	fwlynx at pci with fwlynx_pci
-file	dev/pci/fwlync.c		fwlynx_pci
+file	dev/pci/fwlynx_pci.c		fwlynx_pci
 
 # VIA Rhine/Rhine II Fast Ethernet controllers
 device	vr: ether, ifnet, arp, mii, mii_bitbang

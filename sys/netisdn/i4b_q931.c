@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.2.2.1 2001/04/09 01:58:49 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -65,7 +65,7 @@
 #endif
 
 #include <netisdn/i4b_isdnq931.h>
-#include <netisdn/i4b_l2l3.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
@@ -118,7 +118,7 @@ setup_cr(call_desc_t *cd, unsigned char cr)
  *	decode and process a Q.931 message
  *---------------------------------------------------------------------------*/
 void
-i4b_decode_q931(int unit, int msg_len, u_char *msg_ptr)
+i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 {
 	call_desc_t *cd;
 	int codeset = CODESET_0;
@@ -180,7 +180,7 @@ i4b_decode_q931(int unit, int msg_len, u_char *msg_ptr)
 
 	/* find or allocate calldescriptor */
 
-	if((cd = cd_by_unitcr(unit, crval,
+	if((cd = cd_by_unitcr(bri, crval,
 			crflag == CRF_DEST ? CRF_ORIG : CRF_DEST)) == NULL)
 	{
 		if(*msg_ptr == SETUP)
@@ -188,7 +188,7 @@ i4b_decode_q931(int unit, int msg_len, u_char *msg_ptr)
 			/* get and init new calldescriptor */
 
 			cd = reserve_cd();	/* cdid filled in */
-			cd->controller = utoc_tab[unit];
+			cd->bri = bri;
 			cd->cr = crval;		
 			cd->crflag = CRF_DEST;	/* we are the dest side */
 			cd->ilt = NULL;		/* reset link tab ptrs */
@@ -210,7 +210,7 @@ i4b_decode_q931(int unit, int msg_len, u_char *msg_ptr)
 
 	/* decode and handle message type */
 	
-	i4b_decode_q931_message(unit, cd, *msg_ptr);
+	i4b_decode_q931_message(bri, cd, *msg_ptr);
 	msg_ptr++;
 	msg_len--;
 	
@@ -243,7 +243,7 @@ i4b_decode_q931(int unit, int msg_len, u_char *msg_ptr)
 		switch(codeset)
 		{
 			case CODESET_0:
-				offset = i4b_decode_q931_cs0_ie(unit, cd, msg_len, msg_ptr);
+				offset = i4b_decode_q931_cs0_ie(bri, cd, msg_len, msg_ptr);
 				msg_len -= offset;
 				msg_ptr += offset;
 				break;
@@ -371,8 +371,8 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 				{
 					if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 					{
-						if(ctrl_desc[cd->controller].bch_state[cd->channelid] == BCH_ST_FREE)
-							ctrl_desc[cd->controller].bch_state[cd->channelid] = BCH_ST_RSVD;
+						if (i4b_l2_channel_get_state(unit, cd->channelid) == BCH_ST_FREE)
+							i4b_l2_channel_set_state(unit, cd->channelid, BCH_ST_RSVD);
 						else
 							NDBGL3(L3_P_ERR, "IE ChannelID, Channel NOT free!!");
 					}

@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005var.h,v 1.2 2000/09/21 22:20:38 bjh21 Exp $ */
+/* $NetBSD: seeq8005var.h,v 1.2.4.1 2001/04/09 01:56:29 nathanw Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -36,27 +36,52 @@
 #ifndef _SEEQ8005VAR_H_
 #define _SEEQ8005VAR_H_
 
+#include <net/if_media.h>
+
+/* Enumerate the possible cip variants */
+enum seeq_variant {
+	SEEQ_8004, SEEQ_8005
+};
+
 /*
  * per-line info and status
  */
 
 struct seeq8005_softc {
 	struct device sc_dev;
+
 	/* These fields should be initialised by the board driver. */
 	bus_space_tag_t sc_iot;		/* I/O base addr */
 	bus_space_handle_t sc_ioh;
+
+	int (*sc_mediachange)(struct seeq8005_softc *);
+	void (*sc_mediastatus)(struct seeq8005_softc *, struct ifmediareq *);
+
 	/* These fields are used internally by the seeq8005 driver. */
 	struct ethercom sc_ethercom;	/* Ethernet common */
+	struct ifmedia sc_media;	/* supported media information */
+
 	int sc_config1;			/* Current config1 bits */
 	int sc_config2;			/* Current config2 bits */
+	int sc_config3;			/* Current config3 bits 8004 only */
 	int sc_command;			/* Current command bits */
 	u_int sc_rx_ptr;		/* Receive buffer pointer */
-	u_int sc_tx_ptr;		/* Transmit buffer pointer */
-	u_int sc_flags;			/* Assorted flags: */
-#define SEEQ8005_80C04	0x01		/*   Chip is actually an 80C04. */
+
+	u_int sc_tx_bufs;		/* Number of tx buffers */
+	u_int sc_tx_used;		/* Number of tx buffers in use */
+	u_int sc_tx_cur;		/* Next tx buffer to transmit */
+	u_int sc_tx_next;		/* Next tx buffer to fill */
+
+	u_int sc_buffersize;		/* Size of packet buffer */
+	u_int sc_tx_bufsize;		/* Size of TX packet buffer */
+	u_int sc_rx_bufsize;		/* Size of RX packet buffer */
+
+	int sc_enabled;			/* Enabled state */
+	enum seeq_variant sc_variant;	/* Chip variant */
 };
 
-extern void seeq8005_attach(struct seeq8005_softc *, const u_int8_t *);
+extern void seeq8005_attach(struct seeq8005_softc *, const u_int8_t *, int *,
+    int, int);
 extern int seeq8005intr(void *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: esm.c,v 1.7 2001/02/12 23:56:40 ichiro Exp $	*/
+/*      $NetBSD: esm.c,v 1.7.2.1 2001/04/09 01:56:58 nathanw Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -75,6 +75,7 @@
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 #include <dev/ic/ac97var.h>
+#include <dev/ic/ac97reg.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -99,6 +100,7 @@ int esm_debug = 0xfffc;
 #define ESM_DEBUG_APU		0x0040
 #define ESM_DEBUG_CODEC		0x0080
 #define ESM_DEBUG_PCI		0x0100
+#define ESM_DEBUG_RESUME	0x0200
 #else
 #define DPRINTF(x,y)	/* nothing */
 #define DUMPREG(x)	/* nothing */
@@ -1420,19 +1422,25 @@ esm_powerhook(why, v)
 	DPRINTF(ESM_DEBUG_PARAM,
 	("%s: ESS maestro 2E why=%d\n", ess->sc_dev.dv_xname, why));
 	switch (why) {
-		case PWR_RESUME:
-			/* esm_resume() */
-			/* printf ("esm resumed\n"); */
+		case PWR_SUSPEND:
+		case PWR_STANDBY:
 			ess->esm_suspend = why;
+			esm_suspend(ess);
+			DPRINTF(ESM_DEBUG_RESUME, ("esm_suspend\n"));
+			break;
+			
+		case PWR_RESUME:
+			ess->esm_suspend = why;
+			esm_resume(ess);
+			DPRINTF(ESM_DEBUG_RESUME, ("esm_resumed\n"));
 			break;
 	}
 }
 
-#if 0
 int
 esm_suspend(struct esm_softc *ess)
 {
-	int i, x;
+	int x;
 
 	x = splaudio();
 	wp_stoptimer(ess);
@@ -1452,26 +1460,31 @@ esm_suspend(struct esm_softc *ess)
 	return 0;
 }
 
-
 int
 esm_resume(struct esm_softc *ess)
 {
-	int i, x;
+	int x;
 
 	esm_power(ess, PPMI_D0);
 	delay(100000);
 	esm_init(ess);
+
+	(*ess->codec_if->vtbl->restore_ports)(ess->codec_if);
+#if 0
 	if (mixer_reinit(dev)) {
 		printf("%s: unable to reinitialize the mixer\n",
 		    ess->sc_dev.dv_xname);
 		return ENXIO;
 	}
+#endif
 
 	x = splaudio();
+#if TODO
 	if (ess->pactive)
 		esm_start_output(ess);
 	if (ess->ractive)
 		esm_start_input(ess);
+#endif 
 	if (ess->pactive || ess->ractive) {
 		set_timer(ess);
 		wp_starttimer(ess);
@@ -1480,7 +1493,7 @@ esm_resume(struct esm_softc *ess)
 	return 0;
 }
 
-
+#if 0
 int
 esm_shutdown(struct esm_softc *ess)
 {

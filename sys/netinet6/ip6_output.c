@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_output.c,v 1.31.2.2 2001/03/13 20:29:50 nathanw Exp $	*/
-/*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.3 2001/04/09 01:58:41 nathanw Exp $	*/
+/*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -735,7 +735,7 @@ skip_ipsec2:;
 		u_int32_t ifmtu = nd_ifinfo[ifp->if_index].linkmtu;
 
 		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
-		if (mtu > ifmtu) {
+		if (mtu > ifmtu || mtu == 0) {
 			/*
 			 * The MTU on the route is larger than the MTU on
 			 * the interface!  This shouldn't happen, unless the
@@ -743,6 +743,9 @@ skip_ipsec2:;
 			 * interface was brought up.  Change the MTU in the
 			 * route to match the interface MTU (as long as the
 			 * field isn't locked).
+			 *
+			 * if MTU on the route is 0, we need to fix the MTU.
+			 * this case happens with path MTU discovery timeouts.
 			 */
 			 mtu = ifmtu;
 			 if ((ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
@@ -791,17 +794,10 @@ skip_ipsec2:;
 	}
 	else
 		origifp = ifp;
-#ifndef FAKE_LOOPBACK_IF
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-#else
-	if (1)
-#endif
-	{
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = 0;
-	}
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] = 0;
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] = 0;
 
 	/*
 	 * If the outgoing packet contains a hop-by-hop options header,
@@ -1150,7 +1146,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			      oldoptlen);
 			optbuf = mtod(n, caddr_t) + oldoptlen;
 			m_freem(mopt);
-			exthdrs->ip6e_hbh = n;
+			mopt = exthdrs->ip6e_hbh = n;
 		} else {
 			optbuf = mtod(mopt, u_char *) + mopt->m_len;
 			mopt->m_len += JUMBOOPTLEN;
@@ -2166,18 +2162,11 @@ ip6_mloopback(ifp, m, dst)
 	}
 #endif
 
-#ifndef FAKE_LOOPBACK_IF
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-#else
-	if (1)
-#endif
-	{
-		ip6 = mtod(copym, struct ip6_hdr *);
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = 0;
-	}
+	ip6 = mtod(copym, struct ip6_hdr *);
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] = 0;
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] = 0;
 
 	(void)looutput(ifp, copym, (struct sockaddr *)dst, NULL);
 }

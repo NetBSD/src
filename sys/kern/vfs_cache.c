@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.28 2000/11/24 07:25:51 chs Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.28.2.1 2001/04/09 01:58:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,6 +36,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_revcache.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +383,9 @@ cache_enter(dvp, vp, cnp)
 	 */
 	if (vp &&
 	    (vp != dvp) &&
+#ifndef NAMECACHE_ENTER_REVERSE
 	    (vp->v_type == VDIR) &&
+#endif
 	    ((ncp->nc_nlen > 2) ||
 	     ((ncp->nc_nlen == 2) && (ncp->nc_name[0] != '.') && (ncp->nc_name[1] != '.')) ||
 	     ((ncp->nc_nlen == 1) && (ncp->nc_name[0] != '.'))))
@@ -404,7 +407,11 @@ nchinit()
 	nchashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &nchash);
 	ncvhashtbl =
+#ifdef NAMECACHE_ENTER_REVERSE
+	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
+#else
 	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
+#endif
 	pool_init(&namecache_pool, sizeof(struct namecache), 0, 0, 0,
 	    "ncachepl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_CACHE);

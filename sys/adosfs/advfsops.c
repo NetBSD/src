@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.44 2001/01/22 12:17:36 jdolecek Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.44.2.1 2001/04/09 01:50:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -243,6 +243,8 @@ adosfs_mountfs(devvp, mp, p)
 	mp->mnt_data = (qaddr_t)amp;
         mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
+	mp->mnt_fs_bshift = ffs(amp->bsize) - 1;
+	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
 
 	/*

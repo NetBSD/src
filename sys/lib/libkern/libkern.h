@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.32 2000/11/01 19:37:18 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.32.2.1 2001/04/09 01:58:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,6 +55,16 @@ LIBKERN_INLINE u_long ulmax __P((u_long, u_long)) __attribute__ ((unused));
 LIBKERN_INLINE u_long ulmin __P((u_long, u_long)) __attribute__ ((unused));
 LIBKERN_INLINE int abs __P((int)) __attribute__ ((unused));
 
+LIBKERN_INLINE int isspace __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int isascii __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int isupper __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int islower __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int isalpha __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int isdigit __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int isxdigit __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int toupper __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int tolower __P((int)) __attribute__((__unused__));
+
 #ifdef LIBKERN_BODY
 LIBKERN_INLINE int
 imax(a, b)
@@ -110,6 +120,84 @@ abs(j)
 	int j;
 {
 	return(j < 0 ? -j : j);
+}
+
+LIBKERN_INLINE int
+isspace(ch)
+	int ch;
+{
+
+	return (ch == ' ' || (ch >= '\t' && ch <= '\r'));
+}
+
+LIBKERN_INLINE int
+isascii(ch)
+	int ch;
+{
+
+	return ((ch & ~0x7f) == 0);
+}
+
+LIBKERN_INLINE int
+isupper(ch)
+	int ch;
+{
+
+	return (ch >= 'A' && ch <= 'Z');
+}
+
+LIBKERN_INLINE int
+islower(ch)
+	int ch;
+{
+
+	return (ch >= 'a' && ch <= 'z');
+}
+
+LIBKERN_INLINE int
+isalpha(ch)
+	int ch;
+{
+
+	return (isupper(ch) || islower(ch));
+}
+
+LIBKERN_INLINE int
+isdigit(ch)
+	int ch;
+{
+
+	return (ch >= '0' && ch <= '9');
+}
+
+LIBKERN_INLINE int
+isxdigit(ch)
+	int ch;
+{
+
+	return (isdigit(ch) ||
+	    (ch >= 'A' && ch <= 'F') ||
+	    (ch >= 'a' && ch <= 'f'));
+}
+
+LIBKERN_INLINE int
+toupper(ch)
+	int ch;
+{
+
+	if (islower(ch))
+		return (ch - 0x20);
+	return (ch);
+}
+
+LIBKERN_INLINE int
+tolower(ch)
+	int ch;
+{
+
+	if (isupper(ch))
+		return (ch + 0x20);
+	return (ch);
 }
 #endif
 

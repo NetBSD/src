@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.63 2001/01/24 09:04:16 itojun Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.63.2.1 2001/04/09 01:58:31 nathanw Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -227,7 +227,7 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	else if (ifp->if_flags & IFF_LOOPBACK)
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 #ifdef INET
-	else if (ip_mtudisc)
+	else if (inp && ip_mtudisc)
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	else if (inp && in_localaddr(inp->inp_faddr))
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
@@ -239,13 +239,16 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 			/* mapped addr case */
 			struct in_addr d;
 			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
-			if (in_localaddr(d))
+			if (ip_mtudisc || in_localaddr(d))
 				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		} else
 #endif
 		{
-			if (in6_localaddr(&in6p->in6p_faddr))
-				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+			/*
+			 * for IPv6, path MTU discovery is always turned on,
+			 * or the node must use packet size <= 1280.
+			 */
+			size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		}
 	}
 #endif
@@ -668,7 +671,7 @@ send:
  
  		/* Form timestamp option as shown in appendix A of RFC 1323. */
  		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
- 		*lp++ = htonl(tcp_now);
+ 		*lp++ = htonl(TCP_TIMESTAMP(tp));
  		*lp   = htonl(tp->ts_recent);
  		optlen += TCPOLEN_TSTAMP_APPA;
  	}

@@ -27,7 +27,7 @@
  *	i4b_iframe.c - i frame handling routines
  *	------------------------------------------
  *
- *	$Id: i4b_iframe.c,v 1.2 2001/01/19 12:44:45 martin Exp $ 
+ *	$Id: i4b_iframe.c,v 1.2.2.1 2001/04/09 01:58:44 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -65,7 +65,6 @@
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2l3.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -77,9 +76,8 @@
  *	implements the routine "I COMMAND" Q.921 03/93 pp 68 and pp 77
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_i_frame(int unit, struct mbuf *m)
+i4b_rxd_i_frame(l2_softc_t *l2sc, struct mbuf *m)
 {
-	l2_softc_t *l2sc = &l2_softc[unit];
 	u_char *ptr = m->m_data;
 	int nr;
 	int ns;
@@ -132,7 +130,7 @@ i4b_rxd_i_frame(int unit, struct mbuf *m)
 
 			l2sc->iframe_sent = 0;	/* reset i acked already */
 
-			DL_Data_Ind(l2sc->unit, m);	/* pass data up */
+			i4b_dl_data_ind(l2sc->bri, m);	/* pass data up */
 
 			if(!l2sc->iframe_sent)
 			{
@@ -261,8 +259,8 @@ i4b_i_frame_queued_up(l2_softc_t *l2sc)
 	*(ptr + OFF_INR) = (l2sc->vr << 1) & 0xfe; /* P bit = 0 */
 
 	l2sc->stat.tx_i++;	/* update frame counter */
-	
-	PH_Data_Req(l2sc->unit, m, MBUF_DONTFREE); /* free'd when ack'd ! */
+
+	l2sc->driver->ph_data_req(l2sc->l1_token, m, MBUF_DONTFREE); /* free'd when ack'd ! */
 
 	l2sc->iframe_sent = 1;		/* in case we ack an I frame with another I frame */
 	

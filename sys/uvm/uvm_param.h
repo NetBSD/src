@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.4 2001/01/09 13:55:20 pk Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.4.2.1 2001/04/09 01:59:22 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -109,7 +109,11 @@ typedef int	boolean_t;
 #define	VM_UVMEXP	3		/* struct uvmexp */
 #define	VM_NKMEMPAGES	4		/* kmem_map pages */
 #define	VM_UVMEXP2	5		/* struct uvmexp_sysctl */
-#define	VM_MAXID	6		/* number of valid vm ids */
+#define	VM_ANONMIN	6
+#define	VM_VTEXTMIN	7
+#define	VM_VNODEMIN	8
+
+#define	VM_MAXID	9		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -118,22 +122,10 @@ typedef int	boolean_t;
 	{ "uvmexp", CTLTYPE_STRUCT }, \
 	{ "nkmempages", CTLTYPE_INT }, \
 	{ "uvmexp2", CTLTYPE_STRUCT }, \
+	{ "anonmin", CTLTYPE_INT }, \
+	{ "vtextmin", CTLTYPE_INT }, \
+	{ "vnodemin", CTLTYPE_INT }, \
 }
-
-
-/* 
- *	Return values from the VM routines.
- */
-#define	KERN_SUCCESS		0
-#define	KERN_INVALID_ADDRESS	1
-#define	KERN_PROTECTION_FAILURE	2
-#define	KERN_NO_SPACE		3
-#define	KERN_INVALID_ARGUMENT	4
-#define	KERN_FAILURE		5
-#define	KERN_RESOURCE_SHORTAGE	6
-#define	KERN_NOT_RECEIVER	7
-#define	KERN_NO_ACCESS		8
-#define	KERN_PAGES_LOCKED	9
 
 #ifndef ASSEMBLER
 /*
@@ -153,7 +145,7 @@ typedef int	boolean_t;
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
 extern int		ubc_nwins;	/* number of UBC mapping windows */
-extern int		ubc_winsize;	/* size of a UBC mapping window */
+extern int		ubc_winshift;	/* shift for a UBC mapping window */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */

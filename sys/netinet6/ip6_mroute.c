@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_mroute.c,v 1.17 2001/02/11 05:24:45 itojun Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.39 2001/02/10 02:13:13 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.17.2.1 2001/04/09 01:58:40 nathanw Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -1421,8 +1421,10 @@ phyint_send(ip6, mifp, m)
 	if (mb_copy &&
 	    (M_HASCL(mb_copy) || mb_copy->m_len < sizeof(struct ip6_hdr)))
 		mb_copy = m_pullup(mb_copy, sizeof(struct ip6_hdr));
-	if (mb_copy == NULL)
+	if (mb_copy == NULL) {
+		splx(s);
 		return;
+	}
 	/* set MCAST flag to the outgoing packet */
 	mb_copy->m_flags |= M_MCAST;
 
@@ -1483,26 +1485,25 @@ phyint_send(ip6, mifp, m)
 			log(LOG_DEBUG, "phyint_send on mif %d err %d\n",
 			    mifp - mif6table, error);
 #endif
-	}
-	else {
+	} else {
 #ifdef MULTICAST_PMTUD
 		icmp6_error(mb_copy, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
-		return;
 #else
 #ifdef MRT6DEBUG
-		if (mrt6debug & DEBUG_DEBUG_XMIT)
+		if (mrt6debug & DEBUG_XMIT)
 			log(LOG_DEBUG,
 			    "phyint_send: packet too big on %s o %s g %s"
 			    " size %d(discarded)\n",
-			    ifp->if_xname,
+			    if_name(ifp),
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    mb_copy->m_pkthdr.len);
 #endif /* MRT6DEBUG */
 		m_freem(mb_copy); /* simply discard the packet */
-		return;
 #endif
 	}
+
+	splx(s);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.34 2001/01/22 22:28:45 bjh21 Exp $	*/
+/*	$NetBSD: i82586.c,v 1.34.2.1 2001/04/09 01:56:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34 2001/01/22 22:28:45 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34.2.1 2001/04/09 01:56:14 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -359,7 +359,7 @@ i82586_start_cmd(sc, cmd, iecmdbuf, mask, async)
 	off = IE_SCB_CMD(sc->scb);
 	sc->ie_bus_write16(sc, off, cmd);
 	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_WRITE);
-	(sc->chan_attn)(sc);
+	(sc->chan_attn)(sc, CARD_RESET);
 
 	if (async != 0) {
 		sc->async_cmd_inprogress = 1;
@@ -1266,7 +1266,7 @@ i82586_proberam(sc)
 	if (sc->hwreset)
 		(sc->hwreset)(sc, CHIP_PROBE);
 
-	(sc->chan_attn) (sc);
+	(sc->chan_attn) (sc, CHIP_PROBE);
 
 	delay(100);		/* wait a while... */
 
@@ -1368,10 +1368,10 @@ ie_run_tdr(sc, cmd)
 	else if (result & IE_TDR_XCVR)
 		printf("%s: transceiver problem\n", sc->sc_dev.dv_xname);
 	else if (result & IE_TDR_OPEN)
-		printf("%s: TDR detected an open %d clocks away\n",
+		printf("%s: TDR detected incorrect termination %d clocks away\n",
 			sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else if (result & IE_TDR_SHORT)
-		printf("%s: TDR detected a short %d clocks away\n",
+		printf("%s: TDR detected a short circuit %d clocks away\n",
 			sc->sc_dev.dv_xname, result & IE_TDR_TIME);
 	else
 		printf("%s: TDR returned unknown status 0x%x\n",

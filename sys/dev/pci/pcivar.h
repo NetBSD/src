@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.44 2001/02/12 09:14:53 mrg Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.44.2.1 2001/04/09 01:57:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -132,7 +132,9 @@ struct pci_quirkdata {
 };
 #define	PCI_QUIRK_MULTIFUNCTION		1
 
+#ifdef _KERNEL
 #include "locators.h"
+#endif
 
 /*
  * Locators devices that attach to 'pcibus', as specified to config.

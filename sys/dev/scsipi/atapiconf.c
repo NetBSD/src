@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.36 2001/01/18 20:28:21 jdolecek Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.36.2.1 2001/04/09 01:57:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -102,6 +102,11 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 "CD-ROM  CDR-N16", "", "1.25"},	ADEV_NOCAPACITY}, /* Sanyo */
 	{{T_CDROM, T_REMOV,
 	 "UJDCD8730", "", "1.14"},		ADEV_NODOORLOCK}, /* Acer */
+	{{T_DIRECT, T_REMOV,		/* Panasonic MultiMediaCard */
+	  "04DA", "1B00", "0010"},		ADEV_BYTE5_ZERO |
+	 					ADEV_NO_FLEX_PAGE },
+	{{T_DIRECT, T_REMOV,		/* ZiO! MultiMediaCard */
+	  "eUSB", "MultiMediaCard", ""},	ADEV_NO_FLEX_PAGE },
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.40 2001/03/01 22:10:57 thorpej Exp $	*/
+/*	$NetBSD: siop.c,v 1.40.2.1 2001/04/09 01:56:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -1331,7 +1331,8 @@ siop_scsicmd(xs)
 	}
 	if (xs->xs_control & (XS_CTL_DATA_IN | XS_CTL_DATA_OUT)) {
 		error = bus_dmamap_load(sc->sc_dmat, siop_cmd->dmamap_data,
-		    xs->data, xs->datalen, NULL, BUS_DMA_NOWAIT);
+		    xs->data, xs->datalen, NULL, BUS_DMA_NOWAIT |
+		    BUS_DMA_STREAMING);
 		if (error) {
 			printf("%s: unable to load data DMA map: %d\n",
 			    sc->sc_dev.dv_xname, error);

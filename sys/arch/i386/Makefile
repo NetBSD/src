@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.18 2001/02/22 04:40:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2001/04/09 01:53:25 nathanw Exp $
 
 # Makefile for i386 tags file and boot blocks
-
-SYSDIR?=	/sys
 
 TI386=	${SYSDIR}/arch/i386/tags
 SI386=	${SYSDIR}/arch/i386/i386/*.[ch] ${SYSDIR}/arch/i386/include/*.h \

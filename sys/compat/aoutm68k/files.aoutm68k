@@ -1,4 +1,4 @@
-#	$NetBSD: files.aoutm68k,v 1.1 2000/12/02 20:40:06 scw Exp $
+#	$NetBSD: files.aoutm68k,v 1.1.4.1 2001/04/09 01:55:29 nathanw Exp $
 #
 # Config file description for m68k a.out compat code.
 
@@ -7,7 +7,7 @@
 
 file	compat/aoutm68k/aoutm68k_exec.c		compat_aout_m68k
 file	compat/aoutm68k/aoutm68k_ioctl.c	compat_aout_m68k
-file	compat/aoutm68k/aoutm68k_misc.c		compat_aout_m68k
+file	compat/aoutm68k/aoutm68k_misc.c	compat_aout_m68k & compat_aout_altpath
 file	compat/aoutm68k/aoutm68k_stat.c		compat_aout_m68k
 file	compat/aoutm68k/aoutm68k_syscalls.c	compat_aout_m68k
 file	compat/aoutm68k/aoutm68k_sysent.c	compat_aout_m68k

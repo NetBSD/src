@@ -1,4 +1,4 @@
-/* $NetBSD: dzkbdvar.h,v 1.1 2000/12/02 17:03:55 ragge Exp $ */
+/* $NetBSD: dzkbdvar.h,v 1.1.4.1 2001/04/09 01:55:56 nathanw Exp $ */
 
 struct dzkm_attach_args {
 	int	daa_line;	/* Line to search */
@@ -11,7 +11,7 @@ struct dzkm_attach_args {
 /* These functions must be present for the keyboard/mouse to work */
 int dzgetc(struct dz_linestate *);
 void dzputc(struct dz_linestate *, int);
-void dzsetlpr(struct dz_linestate *, u_short);
+void dzsetlpr(struct dz_linestate *, int);
 
 /* Exported functions */
 int dzkbd_cnattach(struct dz_linestate *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.11 2000/07/04 03:29:00 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.11.2.1 2001/04/09 01:56:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,9 +111,9 @@ tqphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_TSC)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxTSC)
 		switch MII_MODEL(ma->mii_id2) {
-		case MII_MODEL_TSC_78Q2120:
+		case MII_MODEL_xxTSC_78Q2120:
 		/* case MII_MODEL_TSC_78Q2121: */
 			return (10);
 	}
@@ -130,7 +130,7 @@ tqphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_TSC_78Q2120,
+	printf(": %s, rev. %d\n", MII_STR_xxTSC_78Q2120,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;

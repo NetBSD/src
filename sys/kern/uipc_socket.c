@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.1 2001/03/05 22:49:46 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.2 2001/04/09 01:57:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -257,7 +257,8 @@ soaccept(struct socket *so, struct mbuf *nam)
 	if ((so->so_state & SS_NOFDREF) == 0)
 		panic("soaccept: !NOFDREF");
 	so->so_state &= ~SS_NOFDREF;
-	if ((so->so_state & SS_ISDISCONNECTED) == 0)
+	if ((so->so_state & SS_ISDISCONNECTED) == 0 ||
+	    (so->so_proto->pr_flags & PR_ABRTACPTDIS) == 0)
 		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT,
 		    (struct mbuf *)0, nam, (struct mbuf *)0, (struct proc *)0);
 	else

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.37 2001/02/02 05:58:04 marcus Exp $ */
+/* $NetBSD: wsconsio.h,v 1.37.2.1 2001/04/09 01:57:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -86,6 +86,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_HPC_KBD	7	/* HPC bultin keyboard */
 #define		WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
 #define		WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
+#define		WSKBD_TYPE_RISCPC	10	/* RiscPC keyboard, resembling AT codes */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -304,7 +305,6 @@ struct wsdisplay_font {
 #define WSDISPLAY_FONTENC_IBM 1
 #define WSDISPLAY_FONTENC_PCVT 2
 #define WSDISPLAY_FONTENC_ISO7 3 /* greek */
-#define WSDISPLAY_FONTENC_SONY 4
 	int fontwidth, fontheight, stride;
 	int bitorder, byteorder;
 #define	WSDISPLAY_FONTORDER_KNOWN 0		/* i.e, no need to convert */

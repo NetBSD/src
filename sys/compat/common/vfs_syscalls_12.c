@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.6.6.1 2001/03/05 22:49:19 nathanw Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.6.6.2 2001/04/09 01:55:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -209,20 +209,11 @@ compat_12_sys_fstat(struct lwp *l, void *v, register_t *retval)
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
-	switch (fp->f_type) {
 
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
+	FILE_USE(fp);
+	error = (*fp->f_ops->fo_stat)(fp->f_data, &ub, p);
+	FILE_UNUSE(fp, p);
 
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
-		break;
-
-	default:
-		panic("compat_12_sys_fstat");
-		/*NOTREACHED*/
-	}
 	if (error == 0) {
 		cvtstat(&ub, &oub);
 		error = copyout(&oub, SCARG(uap, sb), sizeof (oub));

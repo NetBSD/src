@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.10 2001/01/12 03:36:50 simonb Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.10.2.1 2001/04/09 01:53:35 nathanw Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,6 +52,8 @@
 #define APM_CPUIDLE_SLOW	0x04
 #define APM_DISABLED		0x08
 #define APM_DISENGAGED		0x10
+
+#define APM_ERR_LIMIT		10
 
 #define	APM_ERR_CODE(regs)	(((regs)->AX & 0xff00) >> 8)
 #define	APM_ERR_PM_DISABLED	0x01

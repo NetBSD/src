@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.1 2001/03/05 22:49:49 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.2 2001/04/09 01:58:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -786,9 +786,9 @@ loopdone:
 	}
 
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND",0,0,0,0);
+		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		lockmgr(&vp->v_glock, LK_RELEASE, NULL);
-		return EINPROGRESS;
+		return 0;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -1058,8 +1058,8 @@ genfs_putpages(v)
 		splx(s);
 	}
 	if (async) {
-		UVMHIST_LOG(ubchist, "returning PEND", 0,0,0,0);
-		return EINPROGRESS;
+		UVMHIST_LOG(ubchist, "returning 0 (async)", 0,0,0,0);
+		return 0;
 	}
 	if (bp != NULL) {
 		UVMHIST_LOG(ubchist, "waiting for mbp %p", mbp,0,0,0);

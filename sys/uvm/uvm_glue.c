@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.2 2001/03/19 20:46:57 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.3 2001/04/09 01:59:14 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -221,15 +221,13 @@ uvm_vslock(p, addr, len, access_type)
 {
 	vm_map_t map;
 	vaddr_t start, end;
-	int rv;
+	int error;
 
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-
-	rv = uvm_fault_wire(map, start, end, access_type);
-
-	return (rv);
+	error = uvm_fault_wire(map, start, end, access_type);
+	return error;
 }
 
 /*
@@ -292,7 +290,7 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	void *arg;
 {
 	struct user *up = l2->l_addr;
-	int rv;
+	int error;
 
 	/*
 	 * Wire down the U-area for the process, which contains the PCB
@@ -303,10 +301,10 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * Note the kernel stack gets read/write accesses right off
 	 * the bat.
 	 */
-	rv = uvm_fault_wire(kernel_map, (vaddr_t)up,
+	error = uvm_fault_wire(kernel_map, (vaddr_t)up,
 	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
-	if (rv != KERN_SUCCESS)
-		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
+	if (error)
+		panic("uvm_fork: uvm_fault_wire failed: %d", error);
 
 	/*
 	 * cpu_fork() copy and update the pcb, and make the child ready

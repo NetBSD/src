@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.72 2000/11/08 23:13:03 eeh Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.72.2.1 2001/04/09 01:56:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -328,7 +328,7 @@ zstty_attach(parent, self, aux)
 		 * Allow kgdb to "take over" this port.  Returns true
 		 * if this serial port is in-use by kgdb.
 		 */
-		printf(" (kgdb)");
+		printf(" (kgdb)\n");
 		/*
 		 * This is the kgdb port (exclusive use)
 		 * so skip the normal attach code.
@@ -365,6 +365,9 @@ zstty_attach(parent, self, aux)
 	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
 		/* Call zsparam similar to open. */
 		struct termios t;
+
+		/* Wait a while for previous console output to complete */
+		DELAY(10000);
 
 		/* Setup the "new" parameters in t. */
 		t.c_ispeed = 0;

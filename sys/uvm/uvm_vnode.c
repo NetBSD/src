@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46.2.1 2001/03/05 22:50:12 nathanw Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.2 2001/04/09 01:59:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -252,8 +252,6 @@ uvn_reference(uobj)
  * remove a reference to a VM object.
  *
  * => caller must call with object unlocked and map locked.
- * => this starts the detach process, but doesn't have to finish it
- *    (async i/o could still be pending).
  */
 static void
 uvn_detach(uobj)
@@ -305,7 +303,7 @@ uvn_releasepg(pg, nextpgp)
  * there are two tailq's in the uvm. structure... one for pending async
  * i/o and one for "done" async i/o.   to do an async i/o one puts
  * a buf on the "pending" list (protected by splbio()), starts the
- * i/o and returns VM_PAGER_PEND.    when the i/o is done, we expect
+ * i/o and returns 0.    when the i/o is done, we expect
  * some sort of "i/o done" function to be called (at splbio(), interrupt
  * time).   this function should remove the buf from the pending list
  * and place it on the "done" list and wakeup the daemon.   the daemon
@@ -396,6 +394,7 @@ uvn_flush(uobj, start, stop, flags)
 	int s;
 	int npages, result, lcv;
 	boolean_t retval, need_iosync, by_list, needs_clean, all, wasclean;
+	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	voff_t curoff;
 	u_short pp_version;
 	UVMHIST_FUNC("uvn_flush"); UVMHIST_CALLED(maphist);
@@ -525,7 +524,7 @@ uvn_flush(uobj, start, stop, flags)
 
 		if ((flags & PGO_CLEANIT) == 0 || (pp->flags & PG_BUSY) != 0) {
 			needs_clean = FALSE;
-			if (flags & PGO_SYNCIO)
+			if (!async)
 				need_iosync = TRUE;
 		} else {
 
@@ -590,7 +589,6 @@ uvn_flush(uobj, start, stop, flags)
 		UVM_PAGE_OWN(pp, "uvn_flush");
 		pmap_page_protect(pp, VM_PROT_READ);
 		pp_version = pp->version;
-ReTry:
 		ppsp = pps;
 		npages = sizeof(pps) / sizeof(struct vm_page *);
 
@@ -612,34 +610,10 @@ ReTry:
 		uvm_lock_pageq();
 
 		/*
-		 * VM_PAGER_AGAIN: given the structure of this pager, this 
-		 * can only happen when  we are doing async I/O and can't
-		 * map the pages into kernel memory (pager_map) due to lack
-		 * of vm space.   if this happens we drop back to sync I/O.
-		 */
-
-		if (result == VM_PAGER_AGAIN) {
-
-			/*
-			 * it is unlikely, but page could have been released
-			 * while we had the object lock dropped.   we ignore
-			 * this now and retry the I/O.  we will detect and
-			 * handle the released page after the syncio I/O
-			 * completes.
-			 */
-#ifdef DIAGNOSTIC
-			if (flags & PGO_SYNCIO)
-	panic("uvn_flush: PGO_SYNCIO return 'try again' error (impossible)");
-#endif
-			flags |= PGO_SYNCIO;
-			goto ReTry;
-		}
-
-		/*
-		 * the cleaning operation is now done.   finish up.  note that
-		 * on error (!OK, !PEND) uvm_pager_put drops the cluster for us.
-		 * if success (OK, PEND) then uvm_pager_put returns the cluster
-		 * to us in ppsp/npages.
+		 * the cleaning operation is now done.  finish up.  note that
+		 * on error uvm_pager_put drops the cluster for us.
+		 * on success uvm_pager_put returns the cluster to us in
+		 * ppsp/npages.
 		 */
 
 		/*
@@ -647,7 +621,7 @@ ReTry:
 		 * we can move on to the next page.
 		 */
 
-		if (result == VM_PAGER_PEND &&
+		if (result == 0 && async &&
 		    (flags & (PGO_DEACTIVATE|PGO_FREE)) == 0) {
 
 			/*
@@ -704,17 +678,17 @@ ReTry:
 			 * verify the page wasn't moved while obj was
 			 * unlocked
 			 */
-			if (result == VM_PAGER_PEND && ptmp->uobject != uobj)
+			if (result == 0 && async && ptmp->uobject != uobj)
 				continue;
 
 			/*
 			 * unbusy the page if I/O is done.   note that for
-			 * pending I/O it is possible that the I/O op
+			 * async I/O it is possible that the I/O op
 			 * finished before we relocked the object (in
 			 * which case the page is no longer busy).
 			 */
 
-			if (result != VM_PAGER_PEND) {
+			if (result != 0 || !async) {
 				if (ptmp->flags & PG_WANTED) {
 					/* still holding object lock */
 					wakeup(ptmp);
@@ -733,7 +707,7 @@ ReTry:
 					continue;
 				} else {
 					if ((flags & PGO_WEAK) == 0 &&
-					    !(result == VM_PAGER_ERROR &&
+					    !(result == EIO &&
 					      curproc == uvm.pagedaemon_proc)) {
 						ptmp->flags |=
 							(PG_CLEAN|PG_CLEANCHK);
@@ -756,12 +730,12 @@ ReTry:
 					uvm_pagedeactivate(ptmp);
 				}
 			} else if (flags & PGO_FREE) {
-				if (result == VM_PAGER_PEND) {
+				if (result == 0 && async) {
 					if ((ptmp->flags & PG_BUSY) != 0)
 						/* signal for i/o done */
 						ptmp->flags |= PG_RELEASED;
 				} else {
-					if (result != VM_PAGER_OK) {
+					if (result != 0) {
 						printf("uvn_flush: obj=%p, "
 						   "offset=0x%llx.  error %d\n",
 						    pp->uobject,
@@ -832,7 +806,7 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
 
 	*loffset = offset;
-	*hoffset = min(offset + MAXBSIZE, round_page(uvn->u_size));
+	*hoffset = MIN(offset + MAXBSIZE, round_page(uvn->u_size));
 }
 
 /*
@@ -853,7 +827,7 @@ uvn_put(uobj, pps, npages, flags)
 	int error;
 
 	error = VOP_PUTPAGES(vp, pps, npages, flags, NULL);
-	return uvm_errno2vmerror(error);
+	return error;
 }
 
 
@@ -885,7 +859,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
-	return uvm_errno2vmerror(error);
+	return error;
 }
 
 
@@ -939,13 +913,7 @@ uvn_findpage(uobj, offset, pgp, flags)
 				UVMHIST_LOG(ubchist, "noalloc", 0,0,0,0);
 				return 0;
 			}
-			if (uvmexp.vnodepages > 
-			    (uvmexp.active + uvmexp.inactive + uvmexp.wired +
-			     uvmexp.free) * 7 / 8) {
-				pg = NULL;
-			} else {
-				pg = uvm_pagealloc(uobj, offset, NULL, 0);
-			}
+			pg = uvm_pagealloc(uobj, offset, NULL, 0);
 			if (pg == NULL) {
 				if (flags & UFP_NOWAIT) {
 					UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
@@ -956,7 +924,11 @@ uvn_findpage(uobj, offset, pgp, flags)
 				simple_lock(&uobj->vmobjlock);
 				continue;
 			}
-			uvmexp.vnodepages++;
+			if (UVM_OBJ_IS_VTEXT(uobj)) {
+				uvmexp.vtextpages++;
+			} else {
+				uvmexp.vnodepages++;
+			}
 			UVMHIST_LOG(ubchist, "alloced",0,0,0,0);
 			break;
 		} else if (flags & UFP_NOCACHE) {

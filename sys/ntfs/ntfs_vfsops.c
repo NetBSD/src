@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.1 2001/03/05 22:50:01 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.2 2001/04/09 01:58:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -845,7 +845,7 @@ ntfs_fhtovp(
 	struct ntfid *ntfhp = (struct ntfid *)fhp;
 	int error;
 
-	ddprintf(("ntfs_fhtovp(): %s: %d\n", mp->mnt_stat->f_mntonname,
+	ddprintf(("ntfs_fhtovp(): %s: %d\n", mp->mnt_stat.f_mntonname,
 		ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
@@ -870,7 +870,7 @@ ntfs_vptofh(
 	struct ntfid *ntfhp;
 	struct fnode *fn;
 
-	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat->f_mntonname,
+	ddprintf(("ntfs_fhtovp(): %s: %p\n", vp->v_mount->mnt_stat.f_mntonname,
 		vp));
 
 	fn = VTOF(vp);
