@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.1 2000/10/19 14:11:31 ad Exp $	*/
+/*	$NetBSD: twevar.h,v 1.2 2000/10/20 15:14:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@
 #ifndef TWE_MAX_QUEUECNT
 #define	TWE_MAX_QUEUECNT	128	/* Maximum per-adapter queue count */
 #endif
-#ifndef TWE_MAX_PI_QUEUECNT
-#define	TWE_MAX_PI_QUEUECNT	32	/* Maximum per-initiator queue count */
+#ifndef TWE_MAX_PU_QUEUECNT
+#define	TWE_MAX_PU_QUEUECNT	32	/* Maximum per-unit queue count */
 #endif
 
 #if TWE_SG_SIZE > (((MAXPHYS + NBPG - 1) / NBPG) + 1)
@@ -127,23 +127,15 @@ struct twe_ccb {
 #define	TWE_CCB_COMPLETE	0x04	/* Command completed */
 #define	TWE_CCB_ACTIVE		0x08	/* Command active */
 
-/* Per-initiator state. */
-struct twe_initiator {
-	int	ti_queuecnt;
-	int	ti_waitcnt;
-};
-
 struct twe_attach_args {
 	int		twea_unit;
 };
 
 #define	tweacf_unit	cf_loc[TWECF_UNIT]
 
-int	twe_ccb_alloc(struct twe_softc *, struct twe_initiator *,
-		      struct twe_ccb **, int);
+int	twe_ccb_alloc(struct twe_softc *, struct twe_ccb **, int);
 void	twe_ccb_enqueue(struct twe_softc *sc, struct twe_ccb *ccb);
-void	twe_ccb_free(struct twe_softc *sc, struct twe_initiator *,
-		     struct twe_ccb *);
+void	twe_ccb_free(struct twe_softc *sc, struct twe_ccb *);
 int	twe_ccb_map(struct twe_softc *, struct twe_ccb *);
 int	twe_ccb_poll(struct twe_softc *, struct twe_ccb *, int);
 int	twe_ccb_submit(struct twe_softc *, struct twe_ccb *);

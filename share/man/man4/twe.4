@@ -1,4 +1,4 @@
-.\"	$NetBSD: twe.4,v 1.1 2000/10/19 14:55:51 ad Exp $
+.\"	$NetBSD: twe.4,v 1.2 2000/10/20 15:14:25 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Sh SYNOPSIS
 .Cd "twe* at pci? dev ? function ?"
 .Cd options TWE_MAX_QUEUECNT=n
-.Cd options TWE_MAX_PI_QUEUECNT=n
+.Cd options TWE_MAX_PU_QUEUECNT=n
 .Sh DESCRIPTION
 The
 .Nm
@@ -64,7 +64,7 @@ commands.
 The default value is 128.
 The maximum value that the underlying hardware can support is 256.
 .It Cd options TWE_MAX_PI_QUEUECNT=n
-Set the maximum per-initiator (per disk array) queued command count to
+Set the maximum per-unit queued command count to
 .Ar n
 commands.
 The default value is 32.

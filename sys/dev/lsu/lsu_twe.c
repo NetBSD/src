@@ -1,4 +1,4 @@
-/*	$NetBSD: lsu_twe.c,v 1.1 2000/10/19 14:11:30 ad Exp $	*/
+/*	$NetBSD: lsu_twe.c,v 1.2 2000/10/20 15:14:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,8 +64,9 @@
 
 struct lsu_twe_softc {
 	struct	lsu_softc sc_lsu;
-	struct	twe_initiator sc_ti;
+	struct	buf_queue sc_bufq;
 	int	sc_hwunit;
+	int	sc_queuecnt;
 };
 
 static void	lsu_twe_attach(struct device *, struct device *, void *);
@@ -120,6 +121,7 @@ lsu_twe_attach(struct device *parent, struct device *self, void *aux)
 	    (lsu->sc_nheads * lsu->sc_nsectors);
 
 	printf("\n");
+	BUFQ_INIT(&sc->sc_bufq);
 	lsuattach(lsu);
 }
 
@@ -134,7 +136,7 @@ lsu_twe_dobio(struct lsu_twe_softc *sc, int unit, void *data, int datasize,
 
 	twe = (struct twe_softc *)sc->sc_lsu.sc_dv.dv_parent;
 
-	if ((rv = twe_ccb_alloc(twe, &sc->sc_ti, &ccb, tx == NULL)) != 0)
+	if ((rv = twe_ccb_alloc(twe, &ccb, tx == NULL)) != 0)
 		return (rv);
 
 	ccb->ccb_data = data;
@@ -157,7 +159,7 @@ lsu_twe_dobio(struct lsu_twe_softc *sc, int unit, void *data, int datasize,
 
 	/* Map the data transfer. */
 	if ((rv = twe_ccb_map(twe, ccb)) != 0) {
-		twe_ccb_free(twe, &sc->sc_ti, ccb);
+		twe_ccb_free(twe, ccb);
 		return (rv);
 	}
 
@@ -170,7 +172,7 @@ lsu_twe_dobio(struct lsu_twe_softc *sc, int unit, void *data, int datasize,
 		if ((rv = twe_ccb_submit(twe, ccb)) == 0)
 			rv = twe_ccb_poll(twe, ccb, 2000);
 		twe_ccb_unmap(twe, ccb);
-		twe_ccb_free(twe, &sc->sc_ti, ccb);
+		twe_ccb_free(twe, ccb);
 		splx(s);
 	} else {
 		memcpy(&ccb->ccb_tx, tx, sizeof(struct twe_context));
@@ -186,15 +188,39 @@ lsu_twe_start(struct lsu_softc *lsu, struct buf *bp)
 {
 	struct twe_context tx;
 	struct lsu_twe_softc *sc;
+	int s, rv;
 
 	sc = (struct lsu_twe_softc *)lsu;
+
+	s = splbio();
+	if (bp != NULL) {
+		if (sc->sc_queuecnt == TWE_MAX_PU_QUEUECNT) {
+			BUFQ_INSERT_TAIL(&sc->sc_bufq, bp);
+			return (0);
+		}
+	} else {
+		bp = BUFQ_FIRST(&sc->sc_bufq);
+		BUFQ_REMOVE(&sc->sc_bufq, bp);
+	}
+	sc->sc_queuecnt++;
+	splx(s);
 
 	tx.tx_handler = lsu_twe_handler;
 	tx.tx_context = bp;
 	tx.tx_dv = &lsu->sc_dv;
 
-	return (lsu_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
-	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, &tx));
+	if ((rv = lsu_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
+	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, &tx)) != 0) {
+	    	s = splbio();
+	    	sc->sc_queuecnt--;
+		bp->b_flags |= B_ERROR;
+		bp->b_error = rv;
+		bp->b_resid = bp->b_bcount;
+		lsudone(lsu, bp);
+		splx(s);
+	}
+
+	return (0);
 }
 
 static void
@@ -211,7 +237,11 @@ lsu_twe_handler(struct twe_ccb *ccb, int error)
 	twe = (struct twe_softc *)sc->sc_lsu.sc_dv.dv_parent;
 
 	twe_ccb_unmap(twe, ccb);
-	twe_ccb_free(twe, &sc->sc_ti, ccb);
+	twe_ccb_free(twe, ccb);
+
+	if (--sc->sc_queuecnt < TWE_MAX_PU_QUEUECNT &&
+	    BUFQ_FIRST(&sc->sc_bufq) != NULL)
+		lsu_twe_start(&sc->sc_lsu, NULL);
 
 	if (error) {
 		bp->b_flags |= B_ERROR;
