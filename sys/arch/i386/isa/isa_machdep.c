@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.45.2.4 2000/08/21 02:25:16 sommerfeld Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.45.2.5 2000/12/02 03:55:09 sommerfeld Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -505,17 +505,19 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
 #if NIOAPIC > 0
-	struct mp_intr_map *mip;
+	struct mp_intr_map *mip = NULL;
 	
 	if (mp_busses != NULL) {
 		int mpspec_pin = irq;
 		int airq;
 		int bus = mp_isa_bus;
-		
-		for (mip = mp_busses[bus].mb_intrs; mip != NULL; mip=mip->next) {
-			if (mip->bus_pin == mpspec_pin) {
-				airq = mip->ioapic_ih | irq;
-				break;
+		if (mp_isa_bus != -1) {
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == mpspec_pin) {
+					airq = mip->ioapic_ih | irq;
+					break;
+				}
 			}
 		}
 #if NEISA > 0
