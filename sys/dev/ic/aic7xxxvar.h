@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.14 1997/08/27 11:24:50 bouyer Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.15 1998/03/16 15:36:17 leo Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -203,6 +203,17 @@ struct scb {
 	u_char	position;	/* Position in card's scbarray */
 	struct ahc_dma_seg ahc_dma[AHC_NSEG];
 	struct scsipi_sense sense_cmd;	/* SCSI command block */
+
+#if defined(__NetBSD__)
+	/*
+	 * This DMA map maps the buffer involved in the transfer.
+	 * Its contents are loaded into "ahc_dma" above.
+	 */
+	bus_dmamap_t dmamap_xfer;
+
+	struct scsi_generic scsi_cmd;	/* dma-able copy of xs->cmd */
+	struct scsipi_sense_data scsi_sense;
+#endif
 };
 
 struct ahc_data {
@@ -213,6 +224,10 @@ struct ahc_data {
 	void	*sc_ih;
 	bus_space_tag_t sc_st;
 	bus_space_handle_t sc_sh;
+	bus_dma_tag_t sc_dt;
+	int	sc_dmaflags;
+
+	bus_dmamap_t sc_dmamap_control;		/* Maps the control blocks */
 	LIST_HEAD(, scsipi_xfer) sc_xxxq;	/* XXX software request queue */
 	struct scsipi_xfer *sc_xxxqlast;	/* last entry in queue */
 #endif
@@ -300,7 +315,8 @@ struct ahc_data *ahc_alloc __P((int unit, u_long io_base, ahc_type type, ahc_fla
 void	ahc_reset __P((char *devname, bus_space_tag_t st,
 	    bus_space_handle_t sh));
 void	ahc_construct __P((struct ahc_data *ahc, bus_space_tag_t st,
-	    bus_space_handle_t sh, ahc_type type, ahc_flag flags));
+	    bus_space_handle_t sh, bus_dma_tag_t dt, ahc_type type,
+	    ahc_flag flags));
 #endif
 void	ahc_free __P((struct ahc_data *));
 int	ahc_init __P((struct ahc_data *));
