@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.14 2002/11/05 21:25:28 perry Exp $
+#	$NetBSD: 3RDPARTY,v 1.15 2002/11/09 11:45:29 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -75,7 +75,7 @@ nsswitch/nsdispatch need to be reimplemented.
 
 Package:	binutils/gas
 Version:	1.92.3/2.11.2
-Current Vers:	2.13
+Current Vers:	2.13.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -85,7 +85,7 @@ Version 1.92.3 still in-tree for historical reasons, but unused.
 
 Package:	binutils/ld
 Version:	???/2.11.2
-Current Vers:	2.13
+Current Vers:	2.13.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
@@ -95,7 +95,7 @@ Version ??? still in-tree for historical reasons, but unused.
 
 Package:	binutils/misc
 Version:	2.11.2
-Current Vers:	2.13
+Current Vers:	2.13.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Mailing List:	bug-gnu-utils@gnu.org
