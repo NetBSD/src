@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.15 1995/06/02 17:51:21 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.16 1995/10/09 08:07:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,10 +43,6 @@
  */
 #include "sd.h"
 #if NSD > 0
-
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.15 1995/06/02 17:51:21 mycroft Exp $";
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
