@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.12 1998/06/08 06:53:48 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.13 1998/06/10 21:15:41 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.12 1998/06/08 06:53:48 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.13 1998/06/10 21:15:41 kleink Exp $");
 #endif
 
 #include <sys/param.h>
@@ -244,7 +244,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 {
 	FILE *data_file;
 	char myname[MAXHOSTNAMELEN];
-	int line_no = 0;
+	size_t line_no = 0;
 	size_t len;
 	char *p, *k, *v, *slash;
 	DBM *new_db;
@@ -320,7 +320,8 @@ create_database(infile, database, yp_input_file, yp_output_file,
 bad_record:
 			ypdb_close(new_db);
 			unlink(db_mapname);
-			errx(1, "error adding record for line %d", line_no);
+			errx(1, "error adding record for line %lu",
+			    (unsigned long)line_no);
 		}
 	}
 
