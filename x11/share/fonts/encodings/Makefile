@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/04/28 14:17:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/03/23 01:00:33 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,8 @@ FILES=	ansi-1251.enc armscii-8.enc dec-special.enc \
 	microsoft-cp1252.enc microsoft-cp1253.enc microsoft-cp1254.enc \
 	microsoft-cp1255.enc microsoft-cp1256.enc microsoft-cp1257.enc \
 	microsoft-cp1258.enc microsoft-win3.1.enc mulearabic-0.enc \
-	mulearabic-1.enc mulearabic-2.enc mulelao-1.enc tcvn-0.enc \
-	tis620-2.enc
+	mulearabic-1.enc mulearabic-2.enc mulelao-1.enc sun_eu_greek.enc \
+	tcvn-0.enc tis620-2.enc
 
 GZFILES=adobe-dingbats.enc.gz adobe-standard.enc.gz adobe-symbol.enc.gz \
 	viscii1.1-1.enc.gz

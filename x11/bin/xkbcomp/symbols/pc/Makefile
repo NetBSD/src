@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/04/28 14:17:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/03/23 01:00:33 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -8,20 +8,20 @@ FILES=		al am ar \
 		cz cz_qwerty \
 		de dev dk dvorak dz \
 		ee el en_US es \
-		fi fr fr-latin9 \
+		fi fo fr fr-latin9 \
 		gb ge_la ge_ru guj gur \
-		hr \
+		hr hsb hu \
 		ie il il_phonetic ir is it iu \
-		kan \
-		la latin lo lt lv \
+		kan ky \
+		la lat latin lo lt lv \
 		mk ml mm mt mt_us \
 		nl no \
 		ogham ori \
 		pc pl pl2 pt \
 		ro ru \
-		sapmi se se_FI se_NO se_SE si sk sk_qwerty sr syr syr_phonetic \
+		sapmi se se_FI se_NO se_SE si sin sk sk_qwerty sr syr syr_phonetic \
 		tel th th_tis th_pat tj tml tr \
-		ua us us_intl uz \
+		ua us ur_PK us_intl uz \
 		yu 
 
 .PATH:		${X11SRCDIR.xc}/programs/xkbcomp/symbols/pc
