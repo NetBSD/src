@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.1 2001/11/26 19:17:08 yamt Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.2 2001/11/27 21:40:55 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -186,7 +186,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.1 2001/11/26 19:17:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.2 2001/11/27 21:40:55 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -354,8 +354,13 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 	 * greater than the MTU for an ethernet frame. The code depends on
 	 * this and to port this to a OS where this was not the case would
 	 * not be straightforward.
+	 *
+	 * we need 1 byte spare because our
+	 * packet read loop can overrun.
+	 * and we may need pad bytes to align ip header.
 	 */
-	if (MCLBYTES < ETHER_MAX_LEN) {
+	if (MCLBYTES < ETHER_MAX_LEN + 1 +
+		ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header)) {
 		printf("%s: MCLBYTES too small for Ethernet frame\n",
 		    sc->sc_dev.dv_xname);
 		return 1;
@@ -1544,7 +1549,6 @@ cs_process_receive(sc)
 	struct ifnet *ifp;
 	struct mbuf *m;
 	int totlen;
-	int len;
 	u_int16_t *pBuff, *pBuffLimit;
 	int pad;
 	unsigned int frameOffset;
@@ -1574,6 +1578,15 @@ cs_process_receive(sc)
 		totlen = CS_READ_PORT(sc, PORT_RXTX_DATA);
 	}
 
+	if (totlen > ETHER_MAX_LEN) {
+		printf("%s: invalid packet length\n", sc->sc_dev.dv_xname);
+
+		/* skip the received frame */
+		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
+			CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
+		return;
+	}
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
 		printf("%s: cs_process_receive: unable to allocate mbuf\n",
@@ -1593,36 +1606,38 @@ cs_process_receive(sc)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 
-	/*
-	 * save processing by always using a mbuf cluster, guarenteed to fit
-	 * packet, on i386 NetBSD anyway.
-	 */
-	MCLGET(m, M_DONTWAIT);
-	if (m->m_flags & M_EXT) {
-		len = MCLBYTES;
-	} else {
-		/* couldn't allocate an mbuf cluster */
-		printf("%s: cs_process_receive: unable to allocate a cluster\n",
-		    sc->sc_dev.dv_xname);
-		m_freem(m);
+	/* number of bytes to align ip header on word boundary for ipintr */
+	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 
-		/* skip the received frame */
-		CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
-		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
-		return;
+	/*
+	 * alloc mbuf cluster if we need.
+	 * we need 1 byte spare because following
+	 * packet read loop can overrun.
+	 */
+	if (totlen + pad + 1 > MHLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			/* couldn't allocate an mbuf cluster */
+			printf("%s: cs_process_receive: unable to allocate a cluster\n",
+				sc->sc_dev.dv_xname);
+			m_freem(m);
+
+			/* skip the received frame */
+			CS_WRITE_PACKET_PAGE(sc, PKTPG_RX_CFG,
+				CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
+			return;
+		}
 	}
 
 	/* align ip header on word boundary for ipintr */
-	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;
-	len -= pad + 1;
 
-	m->m_len = len = min(totlen, len);
+	m->m_len = totlen;
 	pBuff = mtod(m, u_int16_t *);
 
 	/* now read the data from the chip */
 	if (sc->sc_memorymode) {
-		pBuffLimit = pBuff + (len + 1) / 2;	/* don't want to go over */
+		pBuffLimit = pBuff + (totlen + 1) / 2;	/* don't want to go over */
 		while (pBuff < pBuffLimit) {
 			*pBuff++ = CS_READ_PACKET_PAGE(sc, frameOffset);
 			frameOffset += 2;
@@ -1630,7 +1645,7 @@ cs_process_receive(sc)
 	}
 	else {
 		bus_space_read_multi_2(sc->sc_iot, sc->sc_ioh, PORT_RXTX_DATA,
-			pBuff, (len + 1)>>1);
+			pBuff, (totlen + 1)>>1);
 	}
 
 	cs_ether_input(sc, m);
