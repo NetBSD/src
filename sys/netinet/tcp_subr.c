@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.109 2001/03/21 03:35:11 chs Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.110 2001/05/24 07:22:27 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1170,8 +1170,11 @@ tcp6_ctlinput(cmd, sa, d)
 		 */
 
 		/* check if we can safely examine src and dst ports */
-		if (m->m_pkthdr.len < off + sizeof(th))
+		if (m->m_pkthdr.len < off + sizeof(th)) {
+			if (cmd == PRC_MSGSIZE)
+				icmp6_mtudisc_update((struct ip6ctlparam *)d, 0);
 			return;
+		}
 
 		bzero(&th, sizeof(th));
 		m_copydata(m, off, sizeof(th), (caddr_t)&th);
@@ -1251,6 +1254,8 @@ tcp_ctlinput(cmd, sa, v)
 		 * Check to see if we have a valid TCP connection
 		 * corresponding to the address in the ICMP message
 		 * payload.
+		 *
+		 * Boundary check is made in icmp_input(), with ICMP_ADVLENMIN.
 		 */
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
 		if (in_pcblookup_connect(&tcbtable,
