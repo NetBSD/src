@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 1998/01/13 00:55:15 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.108 1998/01/14 14:49:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -345,10 +345,8 @@ struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
 /*static*/ vm_offset_t	avail_start;	/* first free physical page */
 /*static*/ vm_offset_t	avail_end;	/* last free physical page */
-/*static*/ vm_offset_t	avail_next;	/* pmap_next_page() state:
-					   next free physical page */
-/*static*/ vm_offset_t	unavail_start;	/* first stolen free physical page */
-/*static*/ vm_offset_t	unavail_end;	/* last stolen free physical page */
+/*static*/ vm_offset_t	unavail_gap_start;/* first stolen free phys page */
+/*static*/ vm_offset_t	unavail_gap_end;/* last stolen free physical page */
 /*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
 
@@ -871,16 +869,19 @@ static void
 pmap_page_upload()
 {
 	int		n = 0;
-	vm_offset_t	start, end;
+	vm_offset_t	start, end, avail_next;
 
-	if (unavail_start != 0 && avail_next != unavail_start) {
+	avail_next = avail_start;
+	if (unavail_gap_start != 0) {
 		/* First, the gap we created in pmap_bootstrap() */
-		vm_page_physload(
-			atop(avail_next),
-			atop(unavail_start),
-			atop(avail_next),
-			atop(unavail_start));
-		avail_next = unavail_end;
+		if (avail_next != unavail_gap_start)
+			/* Avoid empty ranges */
+			vm_page_physload(
+				atop(avail_next),
+				atop(unavail_gap_start),
+				atop(avail_next),
+				atop(unavail_gap_start));
+		avail_next = unavail_gap_end;
 	}
 
 	for (n = 0; n < npmemarr; n++) {
@@ -2815,7 +2816,6 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		callrom();
 	}
 	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-	avail_next = avail_start;
 	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
 		physmem += btoc(mp->len);
 
@@ -3107,8 +3107,8 @@ pmap_bootstrap4m(void)
 	/*
 	 * Grab physical memory list use it to compute `physmem' and
 	 * `avail_end'. The latter is used in conjuction with
-	 * `avail_start' and `avail_next' to dispatch left-over
-	 * physical pages to the VM system.
+	 * `avail_start' to dispatch left-over physical pages to the
+	 * VM system.
 	 */
 	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
 	sortm(pmemarr, npmemarr);
@@ -3117,7 +3117,6 @@ pmap_bootstrap4m(void)
 		callrom();
 	}
 	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-	avail_next = avail_start;
 	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
 		physmem += btoc(mp->len);
 
@@ -3126,7 +3125,7 @@ pmap_bootstrap4m(void)
 	 * alignment restrictions. We allocate in a sequence that
 	 * minimizes alignment gaps.
 	 * The amount of physical memory that becomes unavailable for
-	 * general VM use is marked by [unavail_start, unavail_end>.
+	 * general VM use is marked by [unavail_gap_start, unavail_gap_end>.
 	 */
 
 	/*
@@ -3142,7 +3141,7 @@ pmap_bootstrap4m(void)
 #endif
 
 	p = (caddr_t) roundup((u_int)p, (0 - DVMA4M_BASE) / 1024);
-	unavail_start = (int)p - KERNBASE;
+	unavail_gap_start = (int)p - KERNBASE;
 
 	kernel_iopte_table = (u_int *)p;
 	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
@@ -3191,7 +3190,7 @@ pmap_bootstrap4m(void)
 	/* Round to next page and mark end of stolen pages */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	pagetables_end = p;
-	unavail_end = (int)p - KERNBASE;
+	unavail_gap_end = (int)p - KERNBASE;
 
 	/*
 	 * Since we've statically allocated space to map the entire kernel,
@@ -3323,7 +3322,7 @@ pmap_bootstrap4m(void)
 		int pte;
 
 		if ((int)q >= KERNBASE + avail_start &&
-		    (int)q < KERNBASE + unavail_start)
+		    (int)q < KERNBASE + unavail_gap_start)
 			/* This gap is part of VM-managed pages */
 			continue;
 
