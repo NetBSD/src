@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.2 2003/05/03 18:11:13 wiz Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.3 2003/07/08 10:06:30 itojun Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -51,7 +51,7 @@
 #define _AIC79XX_INLINE_H_
 
 /******************************** Debugging ***********************************/
-static __inline char *ahd_name(struct ahd_softc *ahd);
+static __inline char *ahd_name(struct ahd_softc *);
 
 static __inline char *
 ahd_name(struct ahd_softc *ahd)
@@ -60,26 +60,20 @@ ahd_name(struct ahd_softc *ahd)
 }
 
 /************************ Sequencer Execution Control *************************/
-static __inline void ahd_known_modes(struct ahd_softc *ahd,
-				     ahd_mode src, ahd_mode dst);
-static __inline ahd_mode_state ahd_build_mode_state(struct ahd_softc *ahd,
-						    ahd_mode src,
-						    ahd_mode dst);
-static __inline void ahd_extract_mode_state(struct ahd_softc *ahd,
-					    ahd_mode_state state,
-					    ahd_mode *src, ahd_mode *dst);
-static __inline void ahd_set_modes(struct ahd_softc *ahd, ahd_mode src,
-				   ahd_mode dst);
-static __inline void ahd_update_modes(struct ahd_softc *ahd);
-static __inline void ahd_assert_modes(struct ahd_softc *ahd, ahd_mode srcmode,
-				      ahd_mode dstmode, const char *file,
-				      int line);
-static __inline ahd_mode_state ahd_save_modes(struct ahd_softc *ahd);
-static __inline void ahd_restore_modes(struct ahd_softc *ahd,
-				       ahd_mode_state state);
-static __inline int  ahd_is_paused(struct ahd_softc *ahd);
-static __inline void ahd_pause(struct ahd_softc *ahd);
-static __inline void ahd_unpause(struct ahd_softc *ahd);
+static __inline void ahd_known_modes(struct ahd_softc *, ahd_mode, ahd_mode);
+static __inline ahd_mode_state ahd_build_mode_state(struct ahd_softc *,
+    ahd_mode, ahd_mode);
+static __inline void ahd_extract_mode_state(struct ahd_softc *,
+    ahd_mode_state, ahd_mode *, ahd_mode *);
+static __inline void ahd_set_modes(struct ahd_softc *, ahd_mode, ahd_mode);
+static __inline void ahd_update_modes(struct ahd_softc *);
+static __inline void ahd_assert_modes(struct ahd_softc *, ahd_mode,
+    ahd_mode, const char *, int);
+static __inline ahd_mode_state ahd_save_modes(struct ahd_softc *);
+static __inline void ahd_restore_modes(struct ahd_softc *, ahd_mode_state);
+static __inline int  ahd_is_paused(struct ahd_softc *);
+static __inline void ahd_pause(struct ahd_softc *);
+static __inline void ahd_unpause(struct ahd_softc *);
 
 static __inline void
 ahd_known_modes(struct ahd_softc *ahd, ahd_mode src, ahd_mode dst)
@@ -235,15 +229,11 @@ ahd_unpause(struct ahd_softc *ahd)
 }
 
 /*********************** Scatter Gather List Handling *************************/
-static __inline void	*ahd_sg_setup(struct ahd_softc *ahd, struct scb *scb,
-				      void *sgptr, bus_addr_t addr,
-				      bus_size_t len, int last);
-static __inline void	 ahd_setup_scb_common(struct ahd_softc *ahd,
-					      struct scb *scb);
-static __inline void	 ahd_setup_data_scb(struct ahd_softc *ahd,
-					    struct scb *scb);
-static __inline void	 ahd_setup_noxfer_scb(struct ahd_softc *ahd,
-					      struct scb *scb);
+static __inline void	*ahd_sg_setup(struct ahd_softc *, struct scb *,
+			    void *, bus_addr_t, bus_size_t, int);
+static __inline void	 ahd_setup_scb_common(struct ahd_softc *, struct scb *);
+static __inline void	 ahd_setup_data_scb(struct ahd_softc *, struct scb *);
+static __inline void	 ahd_setup_noxfer_scb(struct ahd_softc *, struct scb *);
 
 static __inline void *
 ahd_sg_setup(struct ahd_softc *ahd, struct scb *scb,
@@ -333,24 +323,18 @@ ahd_setup_noxfer_scb(struct ahd_softc *ahd, struct scb *scb)
 }
 
 /************************** Memory mapping routines ***************************/
-static __inline size_t	ahd_sg_size(struct ahd_softc *ahd);
+static __inline size_t	ahd_sg_size(struct ahd_softc *);
 static __inline void *
-			ahd_sg_bus_to_virt(struct ahd_softc *ahd,
-					   struct scb *scb,
-					   uint32_t sg_busaddr);
+			ahd_sg_bus_to_virt(struct ahd_softc *, struct scb *,
+			    uint32_t);
 static __inline uint32_t
-			ahd_sg_virt_to_bus(struct ahd_softc *ahd,
-					   struct scb *scb,
-					   void *sg);
-static __inline void	ahd_sync_scb(struct ahd_softc *ahd,
-				     struct scb *scb, int op);
-static __inline void	ahd_sync_sglist(struct ahd_softc *ahd,
-					struct scb *scb, int op);
-static __inline void	ahd_sync_sense(struct ahd_softc *ahd,
-				       struct scb *scb, int op);
+			ahd_sg_virt_to_bus(struct ahd_softc *, struct scb *,
+			    void *);
+static __inline void	ahd_sync_scb(struct ahd_softc *, struct scb *, int);
+static __inline void	ahd_sync_sglist(struct ahd_softc *, struct scb *, int);
+static __inline void	ahd_sync_sense(struct ahd_softc *, struct scb *, int);
 static __inline uint32_t
-			ahd_targetcmd_offset(struct ahd_softc *ahd,
-					     u_int index);
+			ahd_targetcmd_offset(struct ahd_softc *, u_int);
 
 static __inline size_t
 ahd_sg_size(struct ahd_softc *ahd)
@@ -418,54 +402,44 @@ ahd_targetcmd_offset(struct ahd_softc *ahd, u_int index)
 }
 
 /*********************** Miscelaneous Support Functions ***********************/
-static __inline void	ahd_complete_scb(struct ahd_softc *ahd,
-					 struct scb *scb);
-static __inline void	ahd_update_residual(struct ahd_softc *ahd,
-					    struct scb *scb);
+static __inline void	ahd_complete_scb(struct ahd_softc *, struct scb *);
+static __inline void	ahd_update_residual(struct ahd_softc *, struct scb *);
 static __inline struct ahd_initiator_tinfo *
-			ahd_fetch_transinfo(struct ahd_softc *ahd,
-					    char channel, u_int our_id,
-					    u_int remote_id,
-					    struct ahd_tmode_tstate **tstate);
+			ahd_fetch_transinfo(struct ahd_softc *, char, u_int,
+			    u_int, struct ahd_tmode_tstate **);
 static __inline uint16_t
-			ahd_inw(struct ahd_softc *ahd, u_int port);
-static __inline void	ahd_outw(struct ahd_softc *ahd, u_int port,
-				 u_int value);
+			ahd_inw(struct ahd_softc *, u_int);
+static __inline void	ahd_outw(struct ahd_softc *, u_int, u_int);
 static __inline uint32_t
-			ahd_inl(struct ahd_softc *ahd, u_int port);
-static __inline void	ahd_outl(struct ahd_softc *ahd, u_int port,
-				 uint32_t value);
+			ahd_inl(struct ahd_softc *, u_int);
+static __inline void	ahd_outl(struct ahd_softc *, u_int, uint32_t);
 static __inline uint64_t
-			ahd_inq(struct ahd_softc *ahd, u_int port);
-static __inline void	ahd_outq(struct ahd_softc *ahd, u_int port,
-				 uint64_t value);
-static __inline u_int	ahd_get_scbptr(struct ahd_softc *ahd);
-static __inline void	ahd_set_scbptr(struct ahd_softc *ahd, u_int scbptr);
-static __inline u_int	ahd_get_hnscb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_hnscb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_hescb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_hescb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_snscb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_snscb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_sescb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_sescb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_get_sdscb_qoff(struct ahd_softc *ahd);
-static __inline void	ahd_set_sdscb_qoff(struct ahd_softc *ahd, u_int value);
-static __inline u_int	ahd_inb_scbram(struct ahd_softc *ahd, u_int offset);
-static __inline u_int	ahd_inw_scbram(struct ahd_softc *ahd, u_int offset);
+			ahd_inq(struct ahd_softc *, u_int);
+static __inline void	ahd_outq(struct ahd_softc *, u_int, uint64_t);
+static __inline u_int	ahd_get_scbptr(struct ahd_softc *);
+static __inline void	ahd_set_scbptr(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_hnscb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_hnscb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_hescb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_hescb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_snscb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_snscb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_sescb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_sescb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_get_sdscb_qoff(struct ahd_softc *);
+static __inline void	ahd_set_sdscb_qoff(struct ahd_softc *, u_int);
+static __inline u_int	ahd_inb_scbram(struct ahd_softc *, u_int);
+static __inline u_int	ahd_inw_scbram(struct ahd_softc *, u_int);
 static __inline uint32_t
-			ahd_inl_scbram(struct ahd_softc *ahd, u_int offset);
-static __inline void	ahd_swap_with_next_hscb(struct ahd_softc *ahd,
-						struct scb *scb);
-static __inline void	ahd_queue_scb(struct ahd_softc *ahd, struct scb *scb);
+			ahd_inl_scbram(struct ahd_softc *, u_int);
+static __inline void	ahd_swap_with_next_hscb(struct ahd_softc *,
+	struct scb *);
+static __inline void	ahd_queue_scb(struct ahd_softc *, struct scb *);
 static __inline uint8_t *
-			ahd_get_sense_buf(struct ahd_softc *ahd,
-					  struct scb *scb);
+			ahd_get_sense_buf(struct ahd_softc *, struct scb *);
 static __inline uint32_t
-			ahd_get_sense_bufaddr(struct ahd_softc *ahd,
-					      struct scb *scb);
-static __inline void	ahd_post_scb(struct ahd_softc *ahd,
-					 struct scb *scb);
+			ahd_get_sense_bufaddr(struct ahd_softc *, struct scb *);
+static __inline void	ahd_post_scb(struct ahd_softc *, struct scb *);
 
 
 static __inline void
@@ -821,11 +795,11 @@ ahd_get_sense_bufaddr(struct ahd_softc *ahd, struct scb *scb)
 }
 
 /************************** Interrupt Processing ******************************/
-static __inline void	ahd_sync_qoutfifo(struct ahd_softc *ahd, int op);
-static __inline void	ahd_sync_tqinfifo(struct ahd_softc *ahd, int op);
-static __inline u_int	ahd_check_cmdcmpltqueues(struct ahd_softc *ahd);
-static __inline int	ahd_intr(void *arg);
-static __inline void	ahd_minphys(struct buf *bp);
+static __inline void	ahd_sync_qoutfifo(struct ahd_softc *, int);
+static __inline void	ahd_sync_tqinfifo(struct ahd_softc *, int);
+static __inline u_int	ahd_check_cmdcmpltqueues(struct ahd_softc *);
+static __inline int	ahd_intr(void *);
+static __inline void	ahd_minphys(struct buf *);
 
 static __inline void
 ahd_sync_qoutfifo(struct ahd_softc *ahd, int op)
@@ -996,7 +970,7 @@ ahd_minphys(bp)
         minphys(bp);
 }
 
-static __inline u_int32_t scsi_4btoul(u_int8_t *bytes);
+static __inline u_int32_t scsi_4btoul(u_int8_t *);
 
 static __inline u_int32_t
 scsi_4btoul(u_int8_t *bytes)
