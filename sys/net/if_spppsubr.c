@@ -1,3 +1,5 @@
+/*	$NetBSD: if_spppsubr.c,v 1.2 1999/03/25 05:25:42 explorer Exp $	*/
+
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -13,8 +15,6 @@
  * all derivative works or modified versions.
  *
  * Version 1.9, Wed Oct  4 18:58:15 MSK 1995
- *
- * $Id: if_spppsubr.c,v 1.1 1999/03/25 03:38:00 explorer Exp $
  */
 #undef DEBUG
 

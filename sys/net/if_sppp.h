@@ -1,3 +1,5 @@
+/*	$NetBSD: if_sppp.h,v 1.2 1999/03/25 05:25:42 explorer Exp $	*/
+
 /*
  * Defines for synchronous PPP/Cisco link level subroutines.
  *
