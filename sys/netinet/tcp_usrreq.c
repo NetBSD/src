@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.97 2005/03/09 05:07:19 atatat Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.98 2005/03/10 05:43:25 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.97 2005/03/09 05:07:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.98 2005/03/10 05:43:25 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1565,7 +1565,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "pcblist",
+		       CTLTYPE_NODE, "pcblist",
 		       SYSCTL_DESCR("TCP protocol control block list"),
 		       sysctl_inpcblist, 0, &tcbtable, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_CREATE,
