@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.473 2002/06/18 07:56:13 tshiozak Exp $	*/
+/*	$NetBSD: machdep.c,v 1.474 2002/06/18 09:56:33 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.473 2002/06/18 07:56:13 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.474 2002/06/18 09:56:33 tron Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3085,7 +3085,7 @@ init386(first_avail)
 	 */
 #ifdef DIAGNOSTIC
 	if (realmode_reserved_start > BIOSTRAMP_BASE ||
-	    (realmode_reseved_start+realmode_reserved_size) < (BIOSTRAMP_BASE+
+	    (realmode_reserved_start+realmode_reserved_size) < (BIOSTRAMP_BASE+
 							       PAGE_SIZE)) {
 	    panic("cannot steal memory for PT page of bioscall.");
 	}
