@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.23 1999/03/25 21:39:19 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.24 1999/03/25 22:33:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -288,25 +288,40 @@ lfs_fsync(v)
  * We do this by setting lfs_dirvcount to the number of marked vnodes; it
  * is decremented during segment write, when VDIROP is taken off.
  */
-#define	SET_DIROP(fs) {							\
-	while ((fs)->lfs_writer || (fs)->lfs_dirvcount>LFS_MAXDIROP) {	\
-		if((fs)->lfs_writer)					\
-			tsleep(&(fs)->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);\
-		if((fs)->lfs_dirvcount > LFS_MAXDIROP) {		\
-			printf("(dirvcount=%d)\n",(fs)->lfs_dirvcount); \
-			tsleep(&(fs)->lfs_dirvcount, PRIBIO + 1, "lfs_maxdirop", 0);\
-		}							\
-	}								\
-	++(fs)->lfs_dirops;						\
-	(fs)->lfs_doifile = 1;						\
+#define	SET_DIROP(fs) lfs_set_dirop(fs)
+static int lfs_set_dirop __P((struct lfs *));
+
+static int lfs_set_dirop(fs)
+	struct lfs *fs;
+{
+	int error;
+
+	while (fs->lfs_writer || fs->lfs_dirvcount>LFS_MAXDIROP) {
+		if(fs->lfs_writer)
+			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirop", 0);
+		if(fs->lfs_dirvcount > LFS_MAXDIROP) {		
+#ifdef DEBUG_LFS
+			printf("(dirvcount=%d)\n",fs->lfs_dirvcount); 
+#endif
+			if((error=tsleep(&fs->lfs_dirvcount, PCATCH|PUSER, "lfs_maxdirop", 0))!=0)
+				return error;
+		}							
+	}								
+	++fs->lfs_dirops;						
+	fs->lfs_doifile = 1;						
+
+	return 0;
 }
 
-#define	SET_ENDOP(fs) {							\
+#define	SET_ENDOP(fs,str) {						\
 	--(fs)->lfs_dirops;						\
 	if (!(fs)->lfs_dirops) {					\
 		wakeup(&(fs)->lfs_writer);				\
-		if ((fs)->lfs_dirvcount > LFS_MAXDIROP)			\
-			lfs_flush((fs),0);				\
+		if ((fs)->lfs_dirvcount > LFS_MAXDIROP)	{		\
+			++(fs)->lfs_writer;				\
+			lfs_flush((fs),0);                              \
+			--(fs)->lfs_writer;				\
+		}                                                       \
 	}								\
 }
 
@@ -316,6 +331,16 @@ lfs_fsync(v)
 		++VTOI((dvp))->i_lfs->lfs_dirvcount;			\
 	}								\
         (dvp)->v_flag |= VDIROP;					\
+} while(0)
+
+#define MAYBE_INACTIVE(fs,vp) do {                                      \
+        if((vp) && ((vp)->v_flag & VDIROP) && (vp)->v_usecount == 1     \
+           && VTOI(vp) && VTOI(vp)->i_ffs_nlink == 0)                   \
+        {                                                               \
+		if (VOP_LOCK((vp), LK_EXCLUSIVE) == 0) { 		\
+                        VOP_INACTIVE((vp),curproc);                     \
+		}                                                       \
+        }                                                               \
 } while(0)
 
 int
@@ -331,10 +356,12 @@ lfs_symlink(v)
 	} */ *ap = v;
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_symlink(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"symilnk");
 	return (ret);
 }
 
@@ -350,10 +377,12 @@ lfs_mknod(v)
 		} */ *ap = v;
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_mknod(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"mknod");
 	return (ret);
 }
 
@@ -369,10 +398,12 @@ lfs_create(v)
 	} */ *ap = v;
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_create(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"create");
 	return (ret);
 }
 
@@ -387,10 +418,11 @@ lfs_whiteout(v)
 	} */ *ap = v;
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_whiteout(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"whiteout");
 	return (ret);
 }
 
@@ -406,10 +438,12 @@ lfs_mkdir(v)
 	} */ *ap = v;
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_mkdir(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"mkdir");
 	return (ret);
 }
 
@@ -423,12 +457,13 @@ lfs_remove(v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	int ret;
-
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	MARK_VNODE(ap->a_vp);
 	ret = ufs_remove(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"remove");
 	return (ret);
 }
 
@@ -444,11 +479,13 @@ lfs_rmdir(v)
 	} */ *ap = v;
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	MARK_VNODE(ap->a_vp);
 	ret = ufs_rmdir(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"rmdir");
 	return (ret);
 }
 
@@ -463,10 +500,11 @@ lfs_link(v)
 	} */ *ap = v;
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_dvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_link(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"link");
 	return (ret);
 }
 
@@ -484,11 +522,14 @@ lfs_rename(v)
 	} */ *ap = v;
 	int ret;
 	
-	SET_DIROP(VTOI(ap->a_fdvp)->i_lfs);
+	if((ret=SET_DIROP(VTOI(ap->a_fdvp)->i_lfs))!=0)
+		return ret;
 	MARK_VNODE(ap->a_fdvp);
 	MARK_VNODE(ap->a_tdvp);
 	ret = ufs_rename(ap);
-	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_fvp);
+	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_tvp);
+	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs,"rename");
 	return (ret);
 }
 
