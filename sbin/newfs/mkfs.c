@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.30 1998/03/18 17:10:15 bouyer Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.31 1998/04/01 15:28:12 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.30 1998/03/18 17:10:15 bouyer Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.31 1998/04/01 15:28:12 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.30 1998/03/18 17:10:15 bouyer Exp $");
 #ifndef STANDALONE
 #include <a.out.h>
 #include <stdio.h>
+#include <time.h>
 #endif
 #include <extern.h>
 
