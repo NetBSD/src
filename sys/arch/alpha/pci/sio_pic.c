@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.21 1998/05/23 18:35:56 matt Exp $ */
+/* $NetBSD: sio_pic.c,v 1.22 1998/08/01 18:54:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.21 1998/05/23 18:35:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.22 1998/08/01 18:54:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,12 +499,28 @@ sio_intr_disestablish(v, cookie)
 	void *v;
 	void *cookie;
 {
+	struct alpha_shared_intrhand *ih = cookie;
+	int s, irq = ih->ih_num;
+	int ist = INITIALLY_LEVEL_TRIGGERED(irq) ?  IST_LEVEL : IST_NONE;
 
-	printf("sio_intr_disestablish(%p)\n", cookie);
-	/* XXX */
+	s = splhigh();
 
-	/* XXX NEVER ALLOW AN INITIALLY-ENABLED INTERRUPT TO BE DISABLED */
-	/* XXX NEVER ALLOW AN INITIALLY-LT INTERRUPT TO BECOME UNTYPED */
+	/* Remove it from the link. */
+	alpha_shared_intr_disestablish(sio_intr, cookie, "isa irq");
+
+	/*
+	 * Decide if we should disable the interrupt.  We must ensure
+	 * that:
+	 *
+	 *	- An initially-enabled interrupt is never disabled.
+	 *	- An initially-LT interrupt is never untyped.
+	 */
+	if (alpha_shared_intr_isactive(sio_intr, irq) == 0) {
+		sio_setirqstat(irq, INITIALLY_ENABLED(irq), ist);
+		alpha_shared_intr_set_dfltsharetype(sio_intr, irq, ist);
+	}
+
+	splx(s);
 }
 
 void
