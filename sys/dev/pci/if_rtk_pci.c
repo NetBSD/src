@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.19 2003/10/25 23:48:45 fvdl Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.20 2004/02/13 10:05:50 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -35,10 +35,10 @@
  */
 
 /*
- * RealTek 8129/8139 PCI NIC driver
+ * Realtek 8129/8139 PCI NIC driver
  *
  * Supports several extremely cheap PCI 10/100 adapters based on
- * the RealTek chipset. Datasheets can be obtained from
+ * the Realtek chipset. Datasheets can be obtained from
  * www.realtek.com.tw.
  *
  * Written by Bill Paul <wpaul@ctr.columbia.edu>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.19 2003/10/25 23:48:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.20 2004/02/13 10:05:50 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.19 2003/10/25 23:48:45 fvdl Exp $")
  * there appear to be problems with memory mapped mode: it looks like
  * doing too many memory mapped access back to back in rapid succession
  * can hang the bus. I'm inclined to blame this on crummy design/construction
- * on the part of RealTek. Memory mapped mode does appear to work on
+ * on the part of Realtek. Memory mapped mode does appear to work on
  * uniprocessor systems though.
  */
 #ifndef dreamcast		/* XXX */
@@ -100,9 +100,9 @@ struct rtk_pci_softc {
 
 static const struct rtk_type rtk_pci_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
-		RTK_8129, "RealTek 8129 10/100BaseTX" },
+		RTK_8129, "Realtek 8129 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
-		RTK_8139, "RealTek 8139 10/100BaseTX" },
+		RTK_8139, "Realtek 8139 10/100BaseTX" },
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
 		RTK_8139, "Accton MPX 5030/5038 10/100BaseTX" },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,

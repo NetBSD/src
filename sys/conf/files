@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.653 2004/02/03 19:46:18 tsarna Exp $
+#	$NetBSD: files,v 1.654 2004/02/13 10:05:49 wiz Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -726,12 +726,12 @@ file	dev/ic/lsi64854.c		lsi64854
 define	cd18xx
 file	dev/ic/cd18xx.c			cd18xx
 
-# RealTek 8019/8029 NE2000-compatible network interface subroutines
+# Realtek 8019/8029 NE2000-compatible network interface subroutines
 #
 define	rtl80x9
 file	dev/ic/rtl80x9.c		rtl80x9
 
-# RealTek 8129/8139 Ethernet controllers
+# Realtek 8129/8139 Ethernet controllers
 #
 device	rtk: ether, ifnet, arp, mii
 file	dev/ic/rtl81x9.c		rtk
