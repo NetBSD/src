@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.62 2001/06/16 12:00:03 jdolecek Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.63 2001/06/21 19:08:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -673,9 +673,6 @@ int sysctl_ntptime __P((void *, size_t *));
 int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
 #endif
 int sysctl_dombuf __P((int *, u_int, void *, size_t *, void *, size_t));
-#ifdef NEW_PIPE
-int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
-#endif
 
 void fill_eproc __P((struct proc *, struct eproc *));
 
