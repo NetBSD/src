@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
  *
@@ -45,8 +45,8 @@
 
 /* Get the defines... */
 #include <machine/asm.h>
+#include <machine/icu.h>
 #include "assym.h"
-#include "icu.h"
 #include "aic.h"
 #include "dp.h"
 #include "ncr.h"
@@ -306,6 +306,7 @@ ENTRY(low_level_reboot)
 	ret	0
 xxxlow:
 	lmr	mcr, 0 			/* Turn off mapping. */
+	lprd	sp, __save_sp(pc)  	/* get monitor's sp. */
 	movd	0x10000000, tos		/* The ROM Address */
 	ret	0			/* Jump to the ROM! */
 
@@ -527,6 +528,11 @@ fusu_ret:
 	exit	[r2]
 	ret	0
 
+/* Two more fu/su routines .... for now ... just return -1. */
+ENTRY(fuswintr)
+ENTRY(suswintr)
+	movqd -1, r0
+	ret	0
 
 /* C prototype:  copyin ( int *usrc, int *kdst, u_int i)  
    C prototype:  copyout ( int *ksrc, int *udst, u_int i) 
@@ -568,32 +574,32 @@ cifault:
 	exit	[r2,r3]
 	ret	0
 
-/* setrq: adds a process into a queue.  p->p_pri has a value between
+/* setrunqueue: adds a process into a queue.  p->p_pri has a value between
  * 0 and 127.  By dividing by 4, it is shrunk into the 32 available queues.
  *
- * C calling prototype:  void setrq (struct proc *p)
+ * C calling prototype:  void setrunqueue (struct proc *p)
  *
  * Should be called at splhigh() and p->p_stat should be SRUN
  *
  */
 
-ENTRY(setrq)
+ENTRY(setrunqueue)
 	enter	[r2,r3,r4],0
 	movd	B_ARG0, r2
-	cmpqd	0, P_RLINK(r2)		/* Items not on any list NULL-point */
+	cmpqd	0, P_BACK(r2)		/* Items not on any list NULL-point */
 	beq	set1
 	addr	m_setrq(pc),tos		/* Was on the list! */
 	bsr	_panic	
 set1:
-	movzbd	P_PRI(r2),r3
+	movzbd	P_PRIORITY(r2),r3
 	ashd	-2,r3
 	sbitd	r3,_whichqs(pc)		/* set queue full */
 	addr	_qs(pc)[r3:q], r3	/* get addr of qs entry */
-	movd	P_RLINK(r3),r4		/* get addr of last entry. */
-	movd	P_LINK(r4), P_LINK(r2)  /* set p->p_link */
-	movd	r2, P_LINK(r4)		/* update tail's p_link */
-	movd    r4, P_RLINK(r2)		/* set p->p_rlink */
-	movd	r2, P_RLINK(r3)		/* update qs ph_rlink */
+	movd	P_BACK(r3),r4		/* get addr of last entry. */
+	movd	P_FORW(r4), P_FORW(r2)  /* set p->p_forw */
+	movd	r2, P_FORW(r4)		/* update tail's p_forw */
+	movd    r4, P_BACK(r2)		/* set p->p_back */
+	movd	r2, P_BACK(r3)		/* update qs ph_back */
 	exit	[r2,r3,r4]
 	ret	0
 
@@ -609,7 +615,7 @@ set1:
 ENTRY(remrq)
 	enter	[r2,r3,r4,r5],0
 	movd	B_ARG0, r2
-	movzbd	P_PRI(r2), r3
+	movzbd	P_PRIORITY(r2), r3
 	ashd	-2, r3
 	cbitd	r3, _whichqs(pc)	/* clear queue full */
 	bfs	rem1
@@ -617,12 +623,12 @@ ENTRY(remrq)
 	addr	m_remrq(pc),tos		/* No queue entry! */
 	bsr	_panic	
 rem1:
-	movd	P_LINK(r2),  r4		/* Addr of next item. */
-	movd	P_RLINK(r2), r5		/* Addr of prev item. */
-	movd	r4, P_LINK(r5)		/* Unlink item. */
-	movd	r5, P_RLINK(r4)
-	movqd	0, P_LINK(r2)		/* show not on queue. */
-	movqd	0, P_RLINK(r2)		/* show not on queue. */
+	movd	P_FORW(r2),  r4		/* Addr of next item. */
+	movd	P_BACK(r2), r5		/* Addr of prev item. */
+	movd	r4, P_FORW(r5)		/* Unlink item. */
+	movd	r5, P_BACK(r4)
+	movqd	0, P_FORW(r2)		/* show not on queue. */
+	movqd	0, P_BACK(r2)		/* show not on queue. */
 	cmpd	r4, r5			/* r4 = r5 => empty queue */
 	beq	rem2
 
@@ -666,7 +672,7 @@ sw1:	/* Get something from a Queue! */
 	/* Get the process and unlink it from the queue. */
 	addr	_qs(pc)[r0:q], r1	/* address of qs entry! */
 	movd	0(r1), r2		/* get process pointer! */
-	movd	P_LINK(r2), r3		/* get address of next entry. */
+	movd	P_FORW(r2), r3		/* get address of next entry. */
 
   /* Test code */
   cmpqd	0, r3
@@ -676,7 +682,7 @@ notzero:
 
 	/* unlink the entry. */
 	movd	r3, 0(r1)		/* New head pointer. */
-	movd	r1, P_RLINK(r3) 	/* New reverse pointer. */
+	movd	r1, P_BACK(r3) 		/* New reverse pointer. */
 	cmpd	r1, r3			/* Empty? */
 	bne	restart
 
@@ -686,7 +692,7 @@ notzero:
 restart:	/* r2 has pointer to new proc.. */
 
 	/* Reload the new kernel context ... r2 points to proc entry. */
-	movqd	0, P_RLINK(r2)		/* NULL p_link */
+	movqd	0, P_BACK(r2)		/* NULL p_forw */
 	movqd	0, _want_resched(pc)	/* We did a resched! */
 	movd	P_ADDR(r2), r3		/* get new pcb pointer */
 
@@ -1180,15 +1186,10 @@ no_net:
 	beq	no_soft
 	bsr	_splsoftclock
 	movd	r0, tos		/* save the pl */
-	/* Make it a new interrupt frame again. */
-	movd	Cur_pl(pc), tos
-	movqd	0,tos
-	addr	0(sp),tos	/* Push the pointer. */
 	bsr	_softclock
-	adjspb	-12
 	movqd	0, _want_softclock(pc)
-	bsr	_splx
-	movd	tos, r0
+	bsr	_splx		/* parameter is alread on the stack. */
+	movd	tos, r0		/* pop the parameter. */
 	
 no_soft:
 	cmpqd	0, _want_resched(pc)
@@ -1280,6 +1281,7 @@ ENTRY(splbio)
 	ret	0
 
 ENTRY(splclock)
+ENTRY(splstatclock)
 	ints_off
 	save	[r1]
 	movd	Cur_pl(pc), r0

@@ -55,7 +55,7 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-/*
+/*  XXX needed?  PAN
  * function vs. inline configuration;
  * these are defined to get generic functions
  * rather than inline or machine-dependent implementations
@@ -73,40 +73,47 @@
  * clockframe; for now, use generic intrframe.
  */
 
-typedef struct intrframe clockframe;
+#define clockframe intrframe 
 
 #define	CLKF_USERMODE(framep)	((framep)->if_psr & PSR_USR)
 #define	CLKF_BASEPRI(framep)	((framep)->if_pl == ~PL_zero)
 #define	CLKF_PC(framep)		((framep)->if_pc)
-
-#define	resettodr()	/* no todr to set */
+#define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
 
 #ifdef KERNEL
-#include "../../pc532/icu.h"
+#include <machine/icu.h>
 #endif
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched()	{ want_resched++; aston(); }
+int	want_resched;	/* resched() was called */
+#define	need_resched()	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process from the softclock
- * interrupt.  On tahoe, request an ast to send us through trap(),
+ * interrupt.  On the pc532, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	signotify(p)	setsoftast()
 
-#define aston() (astpending++)
+/* 
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
 
-int	astpending;		/* need to trap before returning to user mode */
-int	want_resched;		/* resched() was called */
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 #endif
