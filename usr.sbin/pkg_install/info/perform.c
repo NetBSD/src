@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.42 2003/01/05 21:49:57 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.43 2003/01/10 11:55:46 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.42 2003/01/05 21:49:57 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.43 2003/01/10 11:55:46 agc Exp $");
 #endif
 #endif
 
@@ -175,6 +175,9 @@ pkg_do(char *pkg)
 		/* Start showing the package contents */
 		if (!Quiet) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n");
+			}
 		}
 		if (Flags & SHOW_COMMENT) {
 			show_file("Comment:\n", COMMENT_FNAME);
@@ -225,6 +228,9 @@ pkg_do(char *pkg)
 			show_file("Size in bytes including required pkgs: ", SIZE_ALL_FNAME);
 		}
 		if (!Quiet) {
+			if (fexists(PRESERVE_FNAME)) {
+				printf("*** PACKAGE MAY NOT BE DELETED ***\n\n");
+			}
 			puts(InfoPrefix);
 		}
 		free_plist(&plist);
