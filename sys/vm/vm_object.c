@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.42 1997/02/21 20:30:49 thorpej Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.43 1997/02/23 09:01:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -321,7 +321,7 @@ vm_object_deallocate(object)
 
 #ifdef DIAGNOSTIC
 		if (vm_object_paging(object))
-			panic("vm_object_deallocate: unreferenced object still paging");
+			printf("vm_object_deallocate: unreferenced object still paging\n");
 #endif
 
 		/*
@@ -1176,10 +1176,34 @@ vm_object_overlay(object)
 			    backing_object->size);
 	}
 
+	/*
+	 * At this point, there may still be asynchronous paging in the parent
+	 * object.  Any pages being paged in will be represented by fake pages.
+	 * There are three cases:
+	 * 1) The page is being paged in from the parent object's own pager.
+	 *    In this case, we just delete our copy, since it's not needed.
+	 * 2) The page is being paged in from the backing object.  We prevent
+	 *    this case by waiting for paging to complete on the backing object
+	 *    before continuing.
+	 * 3) The page is being paged in from a backing object behind the one
+	 *    we're deleting.  We'll never notice this case, because the
+	 *    backing object we're deleting won't have the page.
+	 */
+
+	vm_object_unlock(object);
 RetryRename:
-	vm_object_unlock(backing_object);
-	vm_object_paging_wait(object);
-	vm_object_lock(backing_object);
+	vm_object_paging_wait(backing_object);
+	/*
+	 * While we were asleep, the parent object might have been deleted.  If
+	 * so, the backing object will now have only one reference (the one we
+	 * hold).  If this happened, just deallocate the backing object and
+	 * return failure status so vm_object_collapse() will stop.  This will
+	 * continue vm_object_deallocate() where it stopped due to our
+	 * reference.
+	 */
+	if (backing_object->ref_count == 1)
+		goto fail;
+	vm_object_lock(object);
 
 	/*
 	 * Next, move any pages in core from the backing object to the
@@ -1191,11 +1215,10 @@ RetryRename:
 		next_page = backing_page->listq.tqe_next;
 		new_offset = backing_page->offset - backing_offset;
 
-		/*
-		 * If this page is currently in transit, don't mess with it.
-		 */
-		if (backing_page->flags & PG_BUSY)
-			continue;
+#ifdef DIAGNOSTIC
+		if (backing_page->flags & (PG_BUSY | PG_FAKE))
+			panic("vm_object_overlay: busy or fake page in backing_object");
+#endif
 
 		/*
 		 * If the parent has a page here, or if this page falls
@@ -1205,22 +1228,9 @@ RetryRename:
 		 */
 		if (backing_page->offset >= backing_offset &&
 		    new_offset < object->size &&
-		    ((page = vm_page_lookup(object, new_offset)) == NULL ||
-		     (page->flags & PG_FAKE)) &&
+		    ((page = vm_page_lookup(object, new_offset)) == NULL) &&
 		    (object->pager == NULL ||
 		     !vm_pager_has_page(object->pager, new_offset))) {
-			/*
-			 * If the parent had a fake page with no backing store,
-			 * delete it and wake up anyone who might have been
-			 * waiting for it.
-			 */
-			if (page) {
-#ifdef DIAGNOSTIC
-				printf("vm_object_overlay: fake page with no backing store\n");
-#endif
-				FREE_PAGE(page);
-			}
-
 			/*
 			 * If the backing page was ever paged out, it was due
 			 * to it being dirty at one point.  Unless we have no
@@ -1266,13 +1276,6 @@ RetryRename:
 		goto done;
 
 	/*
-	 * If there is still asynchronous paging on the backing object, we
-	 * can't do any more, so punt.
-	 */
-	if (vm_object_paging(backing_object))
-		goto fail;
-
-	/*
 	 * If the parent object has no pager, then simply move the pager
 	 * from the backing object.
 	 */
@@ -1297,22 +1300,9 @@ RetryRename:
 		 * If the parent object already has this page, delete it.
 		 * Otherwise, start a pagein.
 		 */
-		if (((page = vm_page_lookup(object, new_offset)) == NULL ||
-		     (page->flags & PG_FAKE)) &&
+		if (((page = vm_page_lookup(object, new_offset)) == NULL) &&
 		    (object->pager == NULL ||
 		     !vm_pager_has_page(object->pager, new_offset))) {
-			/*
-			 * If the parent had a fake page with no backing store,
-			 * delete it and wake up anyone who might have been
-			 * waiting for it.
-			 */
-			if (page) {
-#ifdef DIAGNOSTIC
-				printf("vm_object_overlay: fake page with no backing store\n");
-#endif
-				FREE_PAGE(page);
-			}
-
 			vm_object_unlock(object);
 
 			/*
@@ -1325,7 +1315,7 @@ RetryRename:
 				vm_object_unlock(backing_object);
 				VM_WAIT;
 				vm_object_lock(backing_object);
-				goto Retry2;
+				goto RetryRename;
 			}
 
 			vm_object_paging_begin(backing_object);
@@ -1365,19 +1355,6 @@ RetryRename:
 			backing_page->flags &= ~(PG_FAKE | PG_CLEAN);
 			PAGE_WAKEUP(backing_page);
 
-		Retry2:
-			/*
-			 * While we were asleep, the parent object might have
-			 * been deleted.  If so, the backing object will now
-			 * have only one reference (the one we hold).  If this
-			 * happened, just deallocate the backing object and
-			 * return failure status so vm_object_collapse() will
-			 * stop.
-			 */
-			if (backing_object->ref_count == 1)
-				goto fail;
-
-			vm_object_lock(object);
 			goto RetryRename;
 		} else {
 			/*
@@ -1444,31 +1421,20 @@ vm_object_bypass(object)
 	vm_page_t	backing_page, page;
 
 	/*
-	 * If all of the pages in the backing object are
-	 * shadowed by the parent object, the parent
-	 * object no longer has to shadow the backing
-	 * object; it can shadow the next one in the
-	 * chain.
+	 * If all of the pages in the backing object are shadowed by the parent
+	 * object, the parent object no longer has to shadow the backing
+	 * object; it can shadow the next one in the chain.
 	 *
-	 * The backing object must not be paged out - we'd
-	 * have to check all of the paged-out pages, as
-	 * well.
-	 */
-	if (backing_object->pager != NULL)
-		goto fail;
-
-#if 0
-	/*
-	 * If the parent object is currently paging, punt.
+	 * Since we're not actually saving any space here, it's not worth
+	 * bothering to slog through the backing object's pager looking for
+	 * pages, or waiting for paging to complete.
 	 *
-	 * XXXXX FIXME
-	 * Why do we do this?  If it's a pagein, there should be a page
-	 * allocated already.  If it's a pageout, then there always is.
-	 * We should still be able to do the scan.
+	 * See comments in vm_object_overlay() regarding simultaneous paging in
+	 * the parent object.
 	 */
-	if (vm_object_paging(object))
+	if (vm_object_paging(backing_object) ||
+	    backing_object->pager != NULL)
 		goto fail;
-#endif
 
 	/*
 	 * Should have a check for a 'small' number
@@ -1479,6 +1445,11 @@ vm_object_bypass(object)
 	     backing_page = backing_page->listq.tqe_next) {
 		new_offset = backing_page->offset - backing_offset;
 
+#ifdef DIAGNOSTIC
+		if (backing_page->flags & (PG_BUSY | PG_FAKE))
+			panic("vm_object_bypass: busy or fake page in backing_object");
+#endif
+
 		/*
 		 * If the parent has a page here, or if this page falls
 		 * outside the parent, keep going.
@@ -1487,8 +1458,7 @@ vm_object_bypass(object)
 		 */
 		if (backing_page->offset >= backing_offset &&
 		    new_offset < object->size &&
-		    ((page = vm_page_lookup(object, new_offset)) == NULL ||
-		     (page->flags & PG_FAKE)) &&
+		    ((page = vm_page_lookup(object, new_offset)) == NULL) &&
 		    (object->pager == NULL ||
 		     !vm_pager_has_page(object->pager, new_offset))) {
 			/*
@@ -1517,8 +1487,7 @@ vm_object_bypass(object)
 	
 	/*
 	 * Since backing_object's ref_count was at least 2, it will not
-	 * vanish, but we need to decrease the reference count on the
-	 * backing object anyway.
+	 * vanish, but we need to decrease its reference count anyway.
 	 */
 	object_bypasses++;
 	vm_object_unlock(backing_object);
