@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.39 2000/10/12 03:29:59 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.40 2000/10/12 04:50:58 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1317,7 +1317,7 @@ static int wi_ioctl(ifp, command, data)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENXIO);
 
-	s = splimp();
+	s = splnet();
 
 	ifr = (struct ifreq *)data;
 	switch (command) {
@@ -1443,15 +1443,13 @@ wi_init(ifp)
 	struct wi_softc *sc = ifp->if_softc;
 	struct wi_req wreq;
 	struct wi_ltv_macaddr mac;
-	int s, error, id = 0;
+	int error, id = 0;
 
 	if ((error = wi_enable(sc)) != 0)
 		goto out;
 
 	wi_stop(ifp, 0);
 	wi_reset(sc);
-
-	s = splimp();
 
 	/* Program max data length. */
 	WI_SETVAL(WI_RID_MAX_DATALEN, sc->wi_max_data_len);
@@ -1535,8 +1533,6 @@ wi_init(ifp)
 
 	/* Enable interrupts */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
-
-	splx(s);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
