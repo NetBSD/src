@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.34 1998/02/05 04:57:44 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.35 1998/02/08 05:07:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,13 @@ obio_match(parent, cf, aux)
 	return(1);
 }
 
-#define	OBIO_INCR	0x020000
+/*
+ * We need control over the order of attachment on OBIO,
+ * so do "direct" style autoconfiguration with addresses
+ * tried in sequence starting at zero and incrementing
+ * by OBIO_INCR. Sun3 OBIO addresses are fixed forever.
+ */
+#define OBIO_INCR	0x020000
 #define OBIO_END	0x200000
 
 static void
@@ -145,6 +151,17 @@ obio_submatch(parent, cf, aux)
 		return 0;
 
 	/*
+	 * Note that the Sun3 does not really support vectored
+	 * interrupts on OBIO, but the locator is permitted for
+	 * consistency with the Sun3X.  Verify its absence...
+	 */
+#ifdef	DIAGNOSTIC
+	if (cf->cf_intvec != -1)
+		panic("obio_submatch: %s%d can not have a vector\n",
+		    cf->cf_driver->cd_name, cf->cf_unit);
+#endif
+
+	/*
 	 * Copy the locators into our confargs for the child.
 	 * Note: ca->ca_bustype was set by our parent driver
 	 * (mainbus) and ca->ca_paddr was set by obio_attach.
@@ -187,15 +204,36 @@ obio_submatch(parent, cf, aux)
  */
 static caddr_t prom_mappings[SAVE_SLOTS];
 
-caddr_t obio_find_mapping(int pa, int size)
+/*
+ * Find a virtual address for a device at physical address 'pa'.
+ * If one is found among the mappings already made by the PROM
+ * at power-up time, use it.  Otherwise return 0 as a sign that
+ * a mapping will have to be created.
+ */
+caddr_t
+obio_find_mapping(int pa, int sz)
 {
-	if ((size <= NBPG) &&
-		(pa < SAVE_LAST) &&
-		((pa & SAVE_MASK) == 0))
-	{
-		return prom_mappings[pa >> SAVE_SHIFT];
-	}
-	return (caddr_t)0;
+	int off, va;
+
+	off = pa & PGOFSET;
+	pa -= off;
+	sz += off;
+
+	/* The saved mappings are all one page long. */
+	if (sz > NBPG)
+		return (caddr_t)0;
+
+	/* Within our table? */
+	if (pa >= SAVE_LAST)
+		return (caddr_t)0;
+
+	/* Do we have this one? */
+	va = prom_mappings[pa >> SAVE_SHIFT];
+	if (va == 0)
+		return (caddr_t)0;
+
+	/* Found it! */
+	return ((caddr_t)(va + off));
 }
 
 /*
