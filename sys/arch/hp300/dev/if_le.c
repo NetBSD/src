@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.11 1994/02/16 21:07:22 mycroft Exp $
+ *	$Id: if_le.c,v 1.12 1994/05/13 08:36:17 mycroft Exp $
  */
 
 #include "le.h"
@@ -121,9 +121,6 @@ struct	le_softc {
 	int	sc_txoff;
 	int	sc_busy;
 	short	sc_iflags;
-#if NBPFILTER > 0
-	caddr_t sc_bpf;
-#endif
 } le_softc[NLE];
 
 /* access LANCE registers */
@@ -208,16 +205,16 @@ leattach(hd)
 
 	ifp->if_unit = hd->hp_unit;
 	ifp->if_name = "le";
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	if_attach(ifp);
+	ether_ifattach(ifp);
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 	return (1);
 }
 
@@ -433,8 +430,8 @@ lestart(ifp)
 		 * If bpf is listening on this interface, let it
 		 * see the packet before we commit it to the wire.
 		 */
-		if (sc->sc_bpf)
-			bpf_tap(sc->sc_bpf, sc->sc_r2->ler2_tbuf[bix], len);
+		if (ifp->if_bpf)
+			bpf_tap(ifp->if_bpf, sc->sc_r2->ler2_tbuf[bix], len);
 #endif
 		tmd->tmd3 = 0;
 		tmd->tmd2 = -len;
@@ -664,13 +661,11 @@ leread(sc, buf, len)
 	 * If so, hand off the raw packet to bpf, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (sc->sc_bpf) {
-		bpf_tap(sc->sc_bpf, buf, len + sizeof(struct ether_header));
+	if (ifp->if_bpf) {
+		bpf_tap(ifp->if_bpf, buf, len + sizeof(struct ether_header));
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (et->ether_dhost[0] & 1) == 0 &&
 		    bcmp(et->ether_dhost, sc->sc_addr,
-			    sizeof(et->ether_dhost)) != 0 &&
-		    bcmp(et->ether_dhost, etherbroadcastaddr,
 			    sizeof(et->ether_dhost)) != 0)
 			return;
 	}
