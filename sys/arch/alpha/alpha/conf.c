@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.23.2.1 1997/09/01 20:00:10 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.23.2.2 1997/09/04 00:52:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,6 +34,10 @@
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.23.2.2 1997/09/04 00:52:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +98,13 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
+/* open, close, read, ioctl, poll */
+#define cdev_satlink_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread  mmrw
@@ -141,6 +152,8 @@ cdev_decl(fd);
 #include "ipfilter.h"
 cdev_decl(ipl);
 cdev_decl(wd);
+#include "satlink.h"
+cdev_decl(satlink);
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
@@ -186,6 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
 	cdev_disk_init(NWDC,wd),	/* 36: IDE disk driver */
 	cdev_se_init(NSE,se),		/* 37: Cabletron SCSI<->Ethernet */
+	cdev_satlink_init(NSATLINK,satlink), /* 38: planetconnect satlink */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 

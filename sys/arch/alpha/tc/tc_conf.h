@@ -1,4 +1,4 @@
-/* $NetBSD: tc_conf.h,v 1.7 1997/06/06 23:55:34 thorpej Exp $ */
+/* $NetBSD: tc_conf.h,v 1.7.4.1 1997/09/04 00:54:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -30,6 +30,9 @@
 /*
  * Machine-specific TurboChannel configuration definitions.
  */
+
+#include "opt_dec_3000_300.h"
+#include "opt_dec_3000_500.h"
 
 #ifdef DEC_3000_500
 #include <alpha/tc/tc_dma_3000_500.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.3 1997/04/07 23:40:11 cgd Exp $ */
+/* $NetBSD: shared_intr.c,v 1.3.4.1 1997/09/04 00:53:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -31,10 +31,9 @@
  * Common shared-interrupt-line functionality.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.3 1997/04/07 23:40:11 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.3.4.1 1997/09/04 00:53:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.6 1997/04/07 23:40:23 cgd Exp $ */
+/* $NetBSD: pcppi.c,v 1.6.4.1 1997/09/04 00:53:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,10 +27,9 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.6 1997/04/07 23:40:23 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.6.4.1 1997/09/04 00:53:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

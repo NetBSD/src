@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.8.4.1 1997/08/23 07:07:12 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.8.4.2 1997/09/04 00:53:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,10 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.8.4.1 1997/08/23 07:07:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.8.4.2 1997/09/04 00:53:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +176,8 @@ dwlpxattach(parent, self, aux)
 	 * Attach PCI bus
 	 */
 	pba.pba_busname = "pci";
-	pba.pba_iot = sc->dwlpx_cc.cc_iot;
-	pba.pba_memt = sc->dwlpx_cc.cc_memt;
+	pba.pba_iot = &sc->dwlpx_cc.cc_iot;
+	pba.pba_memt = &sc->dwlpx_cc.cc_memt;
 	pba.pba_dmat =	/* start with direct, may change... */
 	    alphabus_dma_get_tag(&sc->dwlpx_cc.cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &sc->dwlpx_cc.cc_pc;
@@ -195,8 +194,8 @@ dwlpx_init(sc)
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
 
 	if (ccp->cc_initted == 0) {
-		ccp->cc_iot = dwlpx_bus_io_init(ccp);
-		ccp->cc_memt = dwlpx_bus_mem_init(ccp);
+		dwlpx_bus_io_init(&ccp->cc_iot, ccp);
+		dwlpx_bus_mem_init(&ccp->cc_memt, ccp);
 	}
 	dwlpx_pci_init(&ccp->cc_pc, ccp);
 	ccp->cc_sc = sc;
