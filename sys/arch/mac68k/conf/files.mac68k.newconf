@@ -1,5 +1,5 @@
 #	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k.newconf,v 1.12 1994/06/26 12:55:32 briggs Exp $
+#	$Id: files.mac68k.newconf,v 1.13 1994/07/09 06:27:53 briggs Exp $
 # files.mac68k.newconf
 # mac68k-specific configuration info
 
@@ -14,14 +14,15 @@ device	ser at mainbus: tty
 file	arch/mac68k/dev/ser.c		ser needs-count
 
 device	adb at mainbus
-file	arch/mac68k/dev/adb.c		adb needs-count
+file	arch/mac68k/dev/adbsys.c	adb
 
-pseudo-device con
-file	arch/mac68k/dev/console.c		con needs-count
+file	arch/mac68k/dev/asc.c		# this should be a real device...
+
 device	grf at nubus
 file	arch/mac68k/dev/grf.c		grf needs-count
 file	arch/mac68k/dev/grf_gb.c		grf
-device	ite at nubus
+device	ite at mainbus
+file	arch/mac68k/dev/ite.c			ite needs-count
 
 device	ae at nubus: ifnet, ether
 file	arch/mac68k/dev/if_ae.c		ae needs-count
@@ -54,14 +55,11 @@ major {st=5}
 file	arch/mac68k/scsi/uk.c		uk needs-flag
 file	arch/mac68k/scsi/su.c		su needs-flag
 
-file	arch/mac68k/dev/asc.c		# this should be a real device...
+file	arch/m68k/m68k/copy.s
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
-file	arch/mac68k/mac68k/cons.c
-file	arch/m68k/m68k/copy.s
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/fpu.c
-file	arch/mac68k/mac68k/itedumm.c		ite needs-count
 file	arch/mac68k/mac68k/mac68k_init.c	mc68040
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/mem.c
@@ -76,3 +74,5 @@ file	compat/sunos/sun_misc.c		compat_sunos
 file	compat/sunos/sun_sysent.c	compat_sunos
 file	compat/sunos/sun_ioctl.c	compat_sunos
 file	compat/sunos/sun_exec.c		compat_sunos
+
+file	dev/cons.c
