@@ -36,6 +36,10 @@
 #if (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104250000)
 /* sendmail 8.10 */
 #define ALIAS_DB_MAP	"hash:/etc/mail/aliases"
+#if (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104000000)
+/* NetBSD 1.4 and later has basename(3) */
+#define HAVE_BASENAME
+#endif
 #else
 #define ALIAS_DB_MAP	"hash:/etc/aliases"
 #endif
