@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)move.c	5.8 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: move.c,v 1.6 1993/12/08 08:21:41 mycroft Exp $";
+static char rcsid[] = "$Id: move.c,v 1.7 1994/04/05 22:56:56 deraadt Exp $";
 #endif /* not lint */
 
 /*************************************************************************
@@ -548,6 +548,9 @@ getcap()
 	char *xPC;
 	struct point z;
 	void stop();
+#ifdef TIOCGWINSZ
+	struct winsize ws;
+#endif
 
 	term = getenv("TERM");
 	if (term==0) {
@@ -566,8 +569,17 @@ getcap()
 
 	ap = tcapbuf;
 
-	LINES = tgetnum("li");
-	COLUMNS = tgetnum("co");
+#ifdef TIOCGWINSZ
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != -1 &&
+	    ws.ws_col && ws.ws_row) {
+		LINES = ws.ws_row;
+		COLUMNS = ws.ws_col;
+	} else
+#endif
+	{
+		LINES = tgetnum("li");
+		COLUMNS = tgetnum("co");
+	}
 	if (!lcnt)
 		lcnt = LINES - 2;
 	if (!ccnt)
