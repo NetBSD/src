@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.11 2003/02/26 22:23:09 fvdl Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.12 2003/09/17 11:57:34 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11 2003/02/26 22:23:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.12 2003/09/17 11:57:34 drochner Exp $");
 
 #include "opt_pcibios.h"
 
@@ -242,7 +242,7 @@ pcibios_pir_init()
 		p = (caddr_t)ISA_HOLE_VADDR(pa);
 		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R')) {
 			/*
-			 * XXX: Some laptops (Toshiba/Libretto L series
+			 * XXX: Some laptops (Toshiba/Libretto L series)
 			 * use _PIR instead of $PIR. So we try that too.
 			 */
 			if (*(int *)p != BIOS32_MAKESIG('_', 'P', 'I', 'R'))
