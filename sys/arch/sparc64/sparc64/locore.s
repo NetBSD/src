@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 2000/07/19 04:36:42 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.81 2000/07/19 15:48:25 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -5887,6 +5887,7 @@ _C_LABEL(openfirmware):
 	movle	%icc, %i2, %i3
 	mov	%g6, %l6
 	mov	%g7, %l7
+	wrpr	%i3, %g0, %pil
 	jmpl	%o1, %o7
 	! Enable 64-bit addresses for the prom
 #if !defined(_LP64) || defined(TRAPTRACE)
