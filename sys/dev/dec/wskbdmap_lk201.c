@@ -1,11 +1,11 @@
-/* $NetBSD: wskbdmap_lk201.c,v 1.2 1998/09/18 15:35:45 drochner Exp $ */
+/* $NetBSD: wskbdmap_lk201.c,v 1.3 1999/01/06 12:04:09 drochner Exp $ */
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/dec/wskbdmap_lk201.h>
 
-#define KC(n)		(0xe000 | ((n)-MIN_LK201_KEY))  /* see wsksymvar.h */
+#define KC(n) KS_KEYCODE((n) - MIN_LK201_KEY)
 
 static const keysym_t zskbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
