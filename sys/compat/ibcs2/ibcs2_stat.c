@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.23 2002/08/08 00:15:32 itojun Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.24 2003/01/18 07:40:46 thorpej Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.23 2002/08/08 00:15:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.24 2003/01/18 07:40:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.23 2002/08/08 00:15:32 itojun Exp $
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
@@ -135,8 +136,8 @@ cvt_statvfs(sp, buf, len)
 }
 
 int
-ibcs2_sys_statfs(p, v, retval)
-	struct proc *p;
+ibcs2_sys_statfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -146,6 +147,7 @@ ibcs2_sys_statfs(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) fstype;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statfs *sp;
 	int error;
@@ -166,8 +168,8 @@ ibcs2_sys_statfs(p, v, retval)
 }
 
 int
-ibcs2_sys_fstatfs(p, v, retval)
-	struct proc *p;
+ibcs2_sys_fstatfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -177,6 +179,7 @@ ibcs2_sys_fstatfs(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) fstype;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
@@ -197,8 +200,8 @@ ibcs2_sys_fstatfs(p, v, retval)
 }
 
 int
-ibcs2_sys_statvfs(p, v, retval)
-	struct proc *p;
+ibcs2_sys_statvfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -206,6 +209,7 @@ ibcs2_sys_statvfs(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_statvfs *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct mount *mp;
 	struct statfs *sp;
 	int error;
@@ -227,8 +231,8 @@ ibcs2_sys_statvfs(p, v, retval)
 }
 
 int
-ibcs2_sys_fstatvfs(p, v, retval)
-	struct proc *p;
+ibcs2_sys_fstatvfs(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -236,6 +240,7 @@ ibcs2_sys_fstatvfs(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_statvfs *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
@@ -257,8 +262,8 @@ ibcs2_sys_fstatvfs(p, v, retval)
 }
 
 int
-ibcs2_sys_stat(p, v, retval)
-	struct proc *p;
+ibcs2_sys_stat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -266,6 +271,7 @@ ibcs2_sys_stat(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
 	struct sys___stat13_args cup;
@@ -275,7 +281,7 @@ ibcs2_sys_stat(p, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(p, &cup, retval)) != 0)
+	if ((error = sys___stat13(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -285,8 +291,8 @@ ibcs2_sys_stat(p, v, retval)
 }
 
 int
-ibcs2_sys_lstat(p, v, retval)
-	struct proc *p;
+ibcs2_sys_lstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -294,6 +300,7 @@ ibcs2_sys_lstat(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
 	struct sys___lstat13_args cup;
@@ -304,7 +311,7 @@ ibcs2_sys_lstat(p, v, retval)
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
-	if ((error = sys___lstat13(p, &cup, retval)) != 0)
+	if ((error = sys___lstat13(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
 		return error;
@@ -314,8 +321,8 @@ ibcs2_sys_lstat(p, v, retval)
 }
 
 int
-ibcs2_sys_fstat(p, v, retval)
-	struct proc *p;
+ibcs2_sys_fstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -323,6 +330,7 @@ ibcs2_sys_fstat(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct ibcs2_stat *) st;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat st;
 	struct ibcs2_stat ibcs2_st;
 	struct sys___fstat13_args cup;
@@ -331,7 +339,7 @@ ibcs2_sys_fstat(p, v, retval)
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(st));
-	if ((error = sys___fstat13(p, &cup, retval)) != 0)
+	if ((error = sys___fstat13(l, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, sb), &st, sizeof(st))) != 0)
 		return error;
@@ -341,8 +349,8 @@ ibcs2_sys_fstat(p, v, retval)
 }
 
 int
-ibcs2_sys_utssys(p, v, retval)
-	struct proc *p;
+ibcs2_sys_utssys(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
