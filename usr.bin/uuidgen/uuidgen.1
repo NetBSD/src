@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuidgen.1,v 1.1 2004/09/13 23:35:19 thorpej Exp $
+.\"	$NetBSD: uuidgen.1,v 1.2 2004/09/13 23:44:04 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -34,10 +34,9 @@
 .Nd generate universally unique identifiers
 .Sh SYNOPSIS
 .Nm
-.Op Fl 1
+.Op Fl 1s
 .Op Fl n Ar count
 .Op Fl o Ar filename
-.Op Fl s
 .Sh DESCRIPTION
 The
 .Nm
@@ -49,21 +48,20 @@ generates a single UUID and outputs it in the standard string representation
 to stdout.
 The following options can be used to change the behavior of
 .Nm :
-.Bl -tag -width indent
+.Bl -tag -offset indent -width XoXfilenameXX
 .It Fl 1
 This option only has effect if multiple identifiers are to be generated and
 instructs
 .Nm
 to not generate them in batch, but one at a time.
-.It Fl n
+.It Fl n Ar count
 This option controls the number of identifiers generated.
-By default, multiple
-identifiers are generated in batch.
-.It Fl o
+By default, multiple identifiers are generated in batch.
+.It Fl o Ar filename
 Redirect output to
 .Ar filename
 instead of stdout.
-.It Fl c
+.It Fl s
 Output UUIDs as initialized C structures, rather than in the standard
 string format.
 .El
