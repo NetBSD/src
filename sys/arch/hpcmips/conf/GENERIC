@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.78 2001/02/27 08:51:06 sato Exp $
+# 	$NetBSD: GENERIC,v 1.79 2001/03/02 09:14:36 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.78 $"
+#ident 		"GENERIC-$Revision: 1.79 $"
 
 maxusers	8
 
@@ -133,6 +133,7 @@ hpcfb*		at	mqvideo?
 ite8181video0 at vrip? addr 0x0a000000 size 0x800000 # ITE8181 video controller
 hpcfb*		at	ite8181video?
 
+vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_430
 vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530
 vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_SIGMARION
 vrc4172pwm*  at vrip? addr 0x15003880 size 0x6 platform NEC_MCR_530A
@@ -197,6 +198,7 @@ wskbd*		at	btnmgr0 mux 1
 button0 at vrgiu? platform NEC_MCR_3XX id BTN_REC port 4
 button0 at vrgiu? platform NEC_MCR_500 id BTN_REC port 4
 button0 at vrgiu? platform IBM_WORKPAD id BTN_REC port 1 active 0 
+button1 at vrgiu? platform NEC_MCR_430 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_520 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
@@ -208,6 +210,7 @@ button2 at vrgiu? platform NEC_MCR_530 id BTN_APP0  port 2
 button2 at vrgiu? platform IBM_WORKPAD id BTN_APP0  port 2 active 0
 button3 at vrgiu? platform NEC_MCCS id BTN_LIGHT port 8
 pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_430 id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCR_500 id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_530 id PWCTL_COM0 port 46
 #pwctl0 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM0 port 46
@@ -222,11 +225,13 @@ pwctl2 at vrgiu? platform NEC_MCR_FORDOCOMO id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCR_500 id PWCTL_LCD port 10
 pwctl2 at vrgiu? platform NEC_MCCS id PWCTL_LCD port 10
 pwctl3 at vrgiu? platform NEC_MCR_3XX id PWCTL_SPEAKER port 12
+pwctl3 at vrgiu? platform NEC_MCR_430 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_500 id PWCTL_SPEAKER port 12
 pwctl3 at vrgiu? platform NEC_MCR_510 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_520 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_530 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform IBM_WORKPAD id PWCTL_SPEAKER port 49
+#pwctl4 at vrgiu? platform NEC_MCR_430 id PWCTL_COM1 port 47
 #pwctl4 at vrgiu? platform NEC_MCR_530 id PWCTL_COM1 port 47
 #pwctl4 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM1 port 47
 vrisab0 at vrgiu? platform NEC_MCR
