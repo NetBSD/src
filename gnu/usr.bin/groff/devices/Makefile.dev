@@ -20,6 +20,8 @@ all:	$(FONTFILES)
 .if !target(clean)
 clean cleandir:
 	-rm -f $(FONTFILES)
+.else
+COPY=	-c
 .endif
 
 .if !target(install)
@@ -30,7 +32,7 @@ install:
 			$(DEVICEDIR)/generate; \
 	fi
 	-for f in $(FONTFILES); do \
-		install -c -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
+		install ${COPY} -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
 			$(DEVICEDIR)/$$f; \
 	done
 .endif
