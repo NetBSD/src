@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.63 1999/01/27 22:04:51 thorpej Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.64 1999/04/05 02:50:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.63 1999/01/27 22:04:51 thorpej Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.64 1999/04/05 02:50:52 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -517,17 +517,12 @@ writelabel(f, boot, lp)
 #ifdef __alpha__
 		/*
 		 * The Alpha requires that the boot block be checksummed.
-		 * The first 63 8-byte quantites are summed into the 64th.
+		 * The NetBSD/alpha disklabel.h provides a macro to do it.
 		 */
 		{
-			int i;
-			u_int64_t *dp, sum;
+			struct boot_block *bb = (struct boot_block *)boot;
 
-			dp = (u_int64_t *)boot;
-			sum = 0;
-			for (i = 0; i < 63; i++)
-				sum += dp[i];
-			dp[63] = sum;
+			CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
 		}
 #endif
 
