@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.8 1998/02/05 04:57:10 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.9 1998/06/29 20:02:49 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -44,17 +44,12 @@
 int errno;
 
 /*ARGSUSED*/
-int
-exec_sun(file, loadaddr)
+int exec_sun(file, loadaddr)
 	char	*file;
 	char	*loadaddr;
 {
-	register int io;
-	struct exec x;
-	int cc, magic;
-	void *entry;
-	register char *cp;
-	register int *ip;
+	char *entry;
+	int io, rv;
 
 #ifdef	DEBUG
 	printf("exec_sun: file=%s loadaddr=0x%x\n", file, loadaddr);
@@ -63,6 +58,28 @@ exec_sun(file, loadaddr)
 	io = open(file, 0);
 	if (io < 0)
 		return(-1);
+	rv = load_sun(io, loadaddr, &entry);
+	close(io);
+
+	if (rv == 0) {
+		printf("Starting program at 0x%x\n", entry);
+		chain_to((void*)entry);
+		/* not reached */
+	}
+	return (rv);
+}
+
+
+/*ARGSUSED*/
+int load_sun(io, loadaddr, entry)
+	int io;
+	char *loadaddr;
+	char **entry;
+{
+	struct exec x;
+	int cc, magic;
+	register char *cp;
+	register int *ip;
 
 	/*
 	 * Read in the exec header, and validate it.
@@ -71,14 +88,14 @@ exec_sun(file, loadaddr)
 		goto shread;
 	if (N_BADMAG(x)) {
 		errno = EFTYPE;
-		goto closeout;
+		return (-1);
 	}
 
 	cp = loadaddr;
 	magic = N_GETMAGIC(x);
 	if (magic == ZMAGIC)
 		cp += sizeof(x);
-	entry = cp;
+	*entry = cp;
 
 	/*
 	 * Leave a copy of the exec header before the text.
@@ -161,16 +178,10 @@ exec_sun(file, loadaddr)
 		cp += cc;
 	}
 	printf("=0x%x\n", cp - loadaddr);
-	close(io);
-
-	printf("Starting program at 0x%x\n", (int)entry);
-	chain_to(entry);
-	/* not reached */
+	return (0);
 
 shread:
 	printf("exec: short read\n");
 	errno = EIO;
-closeout:
-	close(io);
 	return(-1);
 }
