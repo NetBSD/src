@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.74 2004/03/16 23:15:40 lukem Exp $
+# $NetBSD: postinstall,v 1.75 2004/04/18 04:02:27 dbj Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -434,7 +434,7 @@ do_rc()
 	compare_dir ${op} ${SRC_DIR}/etc/rc.d ${DEST_DIR}/etc/rc.d 555 \
 		DAEMON LOGIN NETWORKING SERVERS accounting altqd amd \
 		apmd bootparams bootconf.sh ccd cgd cleartmp cron \
-		dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
+		dhclient dhcpd dhcrelay dmesg downinterfaces fixsb fsck \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec isdnd \
 		kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
 		mountall mountcritlocal mountcritremote mountd moused \
