@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2001/02/17 18:21:03 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2001/02/25 13:33:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
@@ -119,10 +118,6 @@ extern paddr_t avail_start, avail_end;
 extern char *kernel_text, *etext;
 extern int end, *esym;
 extern u_int lowram;
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
-#endif
 
 /* prototypes for local functions */
 void	identifycpu __P((void));
