@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.10 1994/01/07 18:32:14 mycroft Exp $
+ *	$Id: vm_page.c,v 1.11 1994/01/08 04:02:36 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -138,7 +138,8 @@ int	vm_page_free_reserved = 0;
  *
  *	Sets page_shift and page_mask from page_size.
  */
-void vm_set_page_size()
+void
+vm_set_page_size()
 {
 	page_mask = page_size - 1;
 
@@ -162,7 +163,8 @@ void vm_set_page_size()
  *	Each page cell is initialized and placed on the free list.
  *	Returns the range of available kernel virtual memory.
  */
-void vm_page_bootstrap(startp, endp)
+void
+vm_page_bootstrap(startp, endp)
 	vm_offset_t	*startp;
 	vm_offset_t	*endp;
 {
@@ -273,9 +275,10 @@ void vm_page_bootstrap(startp, endp)
  *	for the object/offset-to-page hash table headers.
  *	Each page cell is initialized and placed on the free list.
  */
-vm_offset_t vm_page_startup(start, end, vaddr)
+vm_offset_t
+vm_page_startup(start, end, vaddr)
 	register vm_offset_t	start;
-	vm_offset_t	end;
+	vm_offset_t		end;
 	register vm_offset_t	vaddr;
 {
 	register vm_offset_t	mapped;
@@ -440,7 +443,8 @@ vm_offset_t vm_page_startup(start, end, vaddr)
  *	We implement pmap_steal_memory and pmap_startup with the help
  *	of two simpler functions, pmap_virtual_space and pmap_next_page.
  */
-vm_offset_t pmap_steal_memory(size)
+vm_offset_t
+pmap_steal_memory(size)
 	vm_size_t	size;
 {
 	vm_offset_t	addr, vaddr, paddr;
@@ -497,7 +501,8 @@ vm_offset_t pmap_steal_memory(size)
 	return addr;
 }
 
-void pmap_startup(startp, endp)
+void
+pmap_startup(startp, endp)
 	vm_offset_t	*startp;
 	vm_offset_t	*endp;
 {
@@ -557,8 +562,8 @@ void pmap_startup(startp, endp)
  *
  *	The object and page must be locked.
  */
-
-void vm_page_insert(mem, object, offset)
+void
+vm_page_insert(mem, object, offset)
 	register vm_page_t	mem;
 	register vm_object_t	object;
 	register vm_offset_t	offset;
@@ -612,8 +617,8 @@ void vm_page_insert(mem, object, offset)
  *
  *	The object and page must be locked.
  */
-
-void vm_page_remove(mem)
+void
+vm_page_remove(mem)
 	register vm_page_t	mem;
 {
 	register queue_t	bucket;
@@ -659,8 +664,8 @@ void vm_page_remove(mem)
  *
  *	The object must be locked.  No side effects.
  */
-
-vm_page_t vm_page_lookup(object, offset)
+vm_page_t
+vm_page_lookup(object, offset)
 	register vm_object_t	object;
 	register vm_offset_t	offset;
 {
@@ -700,7 +705,8 @@ vm_page_t vm_page_lookup(object, offset)
  *
  *	The object must be locked.
  */
-void vm_page_rename(mem, new_object, new_offset)
+void
+vm_page_rename(mem, new_object, new_offset)
 	register vm_page_t	mem;
 	register vm_object_t	new_object;
 	vm_offset_t		new_offset;
@@ -723,7 +729,8 @@ void vm_page_rename(mem, new_object, new_offset)
  *
  *	Object must be locked.
  */
-vm_page_t vm_page_alloc(object, offset)
+vm_page_t
+vm_page_alloc(object, offset)
 	vm_object_t	object;
 	vm_offset_t	offset;
 {
@@ -780,7 +787,8 @@ vm_page_t vm_page_alloc(object, offset)
  *
  *	Object and page must be locked prior to entry.
  */
-void vm_page_free(mem)
+void
+vm_page_free(mem)
 	register vm_page_t	mem;
 {
 	vm_page_remove(mem);
@@ -818,7 +826,8 @@ void vm_page_free(mem)
  *
  *	The page queues must be locked.
  */
-void vm_page_wire(mem)
+void
+vm_page_wire(mem)
 	register vm_page_t	mem;
 {
 	VM_PAGE_CHECK(mem);
@@ -849,7 +858,8 @@ void vm_page_wire(mem)
  *
  *	The page queues must be locked.
  */
-void vm_page_unwire(mem)
+void
+vm_page_unwire(mem)
 	register vm_page_t	mem;
 {
 	VM_PAGE_CHECK(mem);
@@ -872,7 +882,8 @@ void vm_page_unwire(mem)
  *
  *	The page queues must be locked.
  */
-void vm_page_deactivate(m)
+void
+vm_page_deactivate(m)
 	register vm_page_t	m;
 {
 	VM_PAGE_CHECK(m);
@@ -913,8 +924,8 @@ void vm_page_deactivate(m)
  *
  *	The page queues must be locked.
  */
-
-void vm_page_activate(m)
+void
+vm_page_activate(m)
 	register vm_page_t	m;
 {
 	VM_PAGE_CHECK(m);
@@ -942,8 +953,8 @@ void vm_page_activate(m)
  *	Written as a standard pagein routine, to
  *	be used by the zero-fill object.
  */
-
-boolean_t vm_page_zero_fill(m)
+boolean_t
+vm_page_zero_fill(m)
 	vm_page_t	m;
 {
 	VM_PAGE_CHECK(m);
@@ -957,8 +968,8 @@ boolean_t vm_page_zero_fill(m)
  *
  *	Copy one page to another
  */
-
-void vm_page_copy(src_m, dest_m)
+void
+vm_page_copy(src_m, dest_m)
 	vm_page_t	src_m;
 	vm_page_t	dest_m;
 {
