@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.5 1998/07/30 20:45:35 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.6 1998/08/14 22:59:55 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.4 1998/07/30 20:44:25 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.5 1998/08/14 22:59:35 thorpej Exp 
  */
 
 /*
@@ -173,6 +173,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK DFL9610 Ethernet & Digital Cellular"	},
 	},
 	{
+	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
+	    PCMCIA_CIS_NEWMEDIA_BASICS,
+	    0,
+	    "NewMedia Corporation",
+	    "NewMedia BASICS Ethernet"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
 	    PCMCIA_CIS_MEGAHERTZ_XJ2288,
 	    0,
@@ -317,6 +324,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NEWMEDIA, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "NewMedia Corporation",
 	    NULL,
 	},
 	{

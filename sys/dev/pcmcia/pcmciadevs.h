@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.5 1998/07/30 20:45:35 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.6 1998/08/14 22:59:54 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.4 1998/07/30 20:44:25 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.5 1998/08/14 22:59:35 thorpej Exp 
  */
 
 /*
@@ -55,6 +55,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia Corporation */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -139,6 +140,11 @@
 #define	PCMCIA_CIS_TDK_DFL9610	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_DFL9610	0x0d0a
 #define	PCMCIA_STR_TDK_DFL9610	"TDK DFL9610 Ethernet & Digital Cellular"
+
+/* NewMedia Products */
+#define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NEWMEDIA_BASICS	0x0019
+#define	PCMCIA_STR_NEWMEDIA_BASICS	"NewMedia BASICS Ethernet"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
