@@ -37,7 +37,7 @@
  *
  * from: Utah Hdr: hpux_compat.c 1.41 91/04/06
  * from: @(#)ultrix_compat.c	7.4 (Berkeley) 10/11/92
- * $Id: ultrix_compat.c,v 1.1.1.1 1993/10/12 03:22:47 deraadt Exp $
+ * $Id: ultrix_compat.c,v 1.2 1994/05/05 03:31:07 cgd Exp $
  */
 
 /*
@@ -279,4 +279,33 @@ ultrixgetsysinfo(p, uap, retval)
 	return (0);
 }
 
+#define ULTRIX_RLIM_NLIMITS	6	/* ultrix only has _CPU -> _RSS */
+
+struct ultrix_getrlimit_args {
+	int	which;
+	struct	orlimit *rlp;
+};
+ultrixgetrlimit(p, uap, retval)
+	struct proc *p;
+	struct ultrix_getrlimit_args *uap;
+	int *retval;
+{
+	if (uap->which >= ULTRIX_RLIM_NLIMITS)
+		return EINVAL;
+	return ogetrlimit(p, uap, retval);
+}
+
+struct ultrix_setrlimit_args {
+	int	which;
+	struct	orlimit *rlp;
+};
+ultrixsetrlimit(p, uap, retval)
+	struct proc *p;
+	struct ultrix_getrlimit_args *uap;
+	int *retval;
+{
+	if (uap->which >= ULTRIX_RLIM_NLIMITS)
+		return EINVAL;
+	return osetrlimit(p, uap, retval);
+}
 #endif
