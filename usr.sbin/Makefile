@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.131 2000/01/28 19:32:43 itojun Exp $
+#	$NetBSD: Makefile,v 1.132 2000/02/08 13:53:01 tron Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
-# XXX Temporary for NO_SENDMAIL and BUILD_POSTFIX
+# XXX Temporary for BUILD_POSTFIX
 .include <bsd.own.mk>
 
 SRCTOP=	..
@@ -29,10 +29,6 @@ SUBDIR+=faithd gifconfig ifmcstat mld6query mtrace6 ndp pim6dd pim6sd \
 
 # ATM PVC
 SUBDIR+=pvcsif pvctxctl
-
-.if !defined(NO_SENDMAIL)
-SUBDIR+=	sendmail
-.endif
 
 .if defined(BUILD_POSTFIX)
 SUBDIR+=	postfix
