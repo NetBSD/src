@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.29 1996/09/09 14:51:17 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.30 1996/09/09 17:09:50 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -52,7 +52,7 @@
  * Globals.  All but ip_mrouter and ip_mrtproto could be static,
  * except for netstat or debugging purposes.
  */
-struct socket  *ip_mrouter  = NULL;
+struct socket  *ip_mrouter  = 0;
 int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 
 #define NO_RTE_FOUND 	0x1
@@ -184,18 +184,18 @@ static int pim_assert;
 
 #define MFCFIND(o, g, rt) { \
 	register struct mfc *_rt; \
-	(rt) = NULL; \
+	(rt) = 0; \
 	++mrtstat.mrts_mfc_lookups; \
 	for (_rt = mfchashtbl[MFCHASH(o, g)].lh_first; \
 	     _rt; _rt = _rt->mfc_hash.le_next) { \
 		if (in_hosteq(_rt->mfc_origin, (o)) && \
 		    in_hosteq(_rt->mfc_mcastgrp, (g)) && \
-		    _rt->mfc_stall == NULL) { \
+		    _rt->mfc_stall == 0) { \
 			(rt) = _rt; \
 			break; \
 		} \
 	} \
-	if ((rt) == NULL) \
+	if ((rt) == 0) \
 		++mrtstat.mrts_mfc_misses; \
 }
 
@@ -349,7 +349,7 @@ get_sg_cnt(req)
 	s = splsoftnet();
 	MFCFIND(req->src, req->grp, rt);
 	splx(s);
-	if (rt != NULL) {
+	if (rt != 0) {
 		req->pktcnt = rt->mfc_pkt_cnt;
 		req->bytecnt = rt->mfc_byte_cnt;
 		req->wrong_if = rt->mfc_wrong_if;
@@ -391,7 +391,7 @@ ip_mrouter_init(so, m)
 
 	if (mrtdebug)
 		log(LOG_DEBUG,
-		    "ip_mrouter_init: so_type = %d, pr_protocol = %d",
+		    "ip_mrouter_init: so_type = %d, pr_protocol = %d\n",
 		    so->so_type, so->so_proto->pr_protocol);
 
 	if (so->so_type != SOCK_RAW ||
@@ -405,7 +405,7 @@ ip_mrouter_init(so, m)
 	if (*v != 1)
 		return (EINVAL);
 
-	if (ip_mrouter != NULL)
+	if (ip_mrouter != 0)
 		return (EADDRINUSE);
 
 	ip_mrouter = so;
@@ -418,7 +418,7 @@ ip_mrouter_init(so, m)
 	timeout(expire_upcalls, (caddr_t)0, EXPIRE_TIMEOUT);
 
 	if (mrtdebug)
-		log(LOG_DEBUG, "ip_mrouter_init");
+		log(LOG_DEBUG, "ip_mrouter_init\n");
 
 	return (0);
 }
@@ -447,7 +447,7 @@ ip_mrouter_done()
 	numvifs = 0;
 	pim_assert = 0;
 	
-	untimeout(expire_upcalls, (caddr_t)NULL);
+	untimeout(expire_upcalls, (caddr_t)0);
 	
 	/*
 	 * Free all multicast forwarding cache entries.
@@ -466,12 +466,12 @@ ip_mrouter_done()
 	/* Reset de-encapsulation cache. */
 	have_encap_tunnel = 0;
 	
-	ip_mrouter = NULL;
+	ip_mrouter = 0;
 	
 	splx(s);
 	
 	if (mrtdebug)
-		log(LOG_DEBUG, "ip_mrouter_done");
+		log(LOG_DEBUG, "ip_mrouter_done\n");
 	
 	return (0);
 }
@@ -553,7 +553,7 @@ add_vif(m)
 	
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {
 		if (vifcp->vifc_flags & VIFF_SRCRT) {
-			log(LOG_ERR, "Source routed tunnels not supported.");
+			log(LOG_ERR, "Source routed tunnels not supported\n");
 			return (EOPNOTSUPP);
 		}
 
@@ -612,7 +612,7 @@ add_vif(m)
 		numvifs = vifcp->vifc_vifi + 1;
 	
 	if (mrtdebug)
-		log(LOG_DEBUG, "add_vif #%d, lcladdr %x, %s %x, thresh %x, rate %d",
+		log(LOG_DEBUG, "add_vif #%d, lcladdr %x, %s %x, thresh %x, rate %d\n",
 		    vifcp->vifc_vifi, 
 		    ntohl(vifcp->vifc_lcl_addr.s_addr),
 		    (vifcp->vifc_flags & VIFF_TUNNEL) ? "rmtaddr" : "mask",
@@ -684,7 +684,7 @@ del_vif(m)
 	splx(s);
 	
 	if (mrtdebug)
-		log(LOG_DEBUG, "del_vif %d, numvifs %d", *vifip, numvifs);
+		log(LOG_DEBUG, "del_vif %d, numvifs %d\n", *vifip, numvifs);
 	
 	return (0);
 }
@@ -709,7 +709,7 @@ expire_mfc(rt)
 {
 	struct rtdetq *rte, *nrte;
 
-	for (rte = rt->mfc_stall; rte != NULL; rte = nrte) {
+	for (rte = rt->mfc_stall; rte != 0; rte = nrte) {
 		nrte = rte->next;
 		m_freem(rte->m);
 		free(rte, M_MRTABLE);
@@ -744,7 +744,7 @@ add_mfc(m)
 	/* If an entry already exists, just update the fields */
 	if (rt) {
 		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc update o %x g %x p %x",
+			log(LOG_DEBUG,"add_mfc update o %x g %x p %x\n",
 			    ntohl(mfccp->mfcc_origin.s_addr),
 			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 			    mfccp->mfcc_parent);
@@ -766,16 +766,16 @@ add_mfc(m)
 	for (rt = mfchashtbl[hash].lh_first; rt; rt = rt->mfc_hash.le_next) {
 		if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
 		    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp) &&
-		    rt->mfc_stall != NULL) {
+		    rt->mfc_stall != 0) {
 			if (nstl++)
-				log(LOG_ERR, "add_mfc %s o %x g %x p %x dbx %p",
+				log(LOG_ERR, "add_mfc %s o %x g %x p %x dbx %p\n",
 				    "multiple kernel entries",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
 
 			if (mrtdebug & DEBUG_MFC)
-				log(LOG_DEBUG,"add_mfc o %x g %x p %x dbg %p",
+				log(LOG_DEBUG,"add_mfc o %x g %x p %x dbg %p\n",
 				    ntohl(mfccp->mfcc_origin.s_addr),
 				    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 				    mfccp->mfcc_parent, rt->mfc_stall);
@@ -784,7 +784,7 @@ add_mfc(m)
 				nexpire[hash]--;
 
 			/* free packets Qed at the end of this entry */
-			for (rte = rt->mfc_stall; rte != NULL; rte = nrte) {
+			for (rte = rt->mfc_stall; rte != 0; rte = nrte) {
 				nrte = rte->next;
 #ifdef RSVP_ISI
 				ip_mdq(rte->m, rte->ifp, rt, -1);
@@ -807,13 +807,13 @@ add_mfc(m)
 		 * No mfc; make a new one
 		 */
 		if (mrtdebug & DEBUG_MFC)
-			log(LOG_DEBUG,"add_mfc no upcall o %x g %x p %x",
+			log(LOG_DEBUG,"add_mfc no upcall o %x g %x p %x\n",
 			    ntohl(mfccp->mfcc_origin.s_addr),
 			    ntohl(mfccp->mfcc_mcastgrp.s_addr),
 			    mfccp->mfcc_parent);
 	
 		rt = (struct mfc *)malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
-		if (rt == NULL) {
+		if (rt == 0) {
 			splx(s);
 			return (ENOBUFS);
 		}
@@ -877,14 +877,14 @@ del_mfc(m)
 	mfccp = mtod(m, struct mfcctl *);
 
 	if (mrtdebug & DEBUG_MFC)
-		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x",
+		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x\n",
 		    ntohl(mfccp->mfcc_origin.s_addr),
 		    ntohl(mfccp->mfcc_mcastgrp.s_addr));
 
 	s = splsoftnet();
 
 	MFCFIND(mfccp->mfcc_origin, mfccp->mfcc_mcastgrp, rt);
-	if (rt == NULL) {
+	if (rt == 0) {
 		splx(s);
 		return (EADDRNOTAVAIL);
 	}
@@ -950,7 +950,7 @@ ip_mforward(m, ifp)
 #endif /* RSVP_ISI */
 
     if (mrtdebug & DEBUG_FORWARD)
-	log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p",
+	log(LOG_DEBUG, "ip_mforward: src %x, dst %x, ifp %p\n",
 	    ntohl(ip->ip_src.s_addr), ntohl(ip->ip_dst.s_addr), ifp);
 
     if (ip->ip_hl < (IP_HDR_LEN + TUNNEL_LEN) >> 2 ||
@@ -965,7 +965,7 @@ ip_mforward(m, ifp)
 	 * Source-route tunnels are no longer supported.
 	 */
 	if ((srctun++ % 1000) == 0)
-	    log(LOG_ERR, "ip_mforward: received source-routed packet from %x",
+	    log(LOG_ERR, "ip_mforward: received source-routed packet from %x\n",
 		ntohl(ip->ip_src.s_addr));
 
 	return (1);
@@ -1005,7 +1005,7 @@ ip_mforward(m, ifp)
     MFCFIND(ip->ip_src, ip->ip_dst, rt);
 
     /* Entry exists, so forward if necessary */
-    if (rt != NULL) {
+    if (rt != 0) {
 	splx(s);
 #ifdef RSVP_ISI
 	return (ip_mdq(m, ifp, rt, -1));
@@ -1030,7 +1030,7 @@ ip_mforward(m, ifp)
 
 	mrtstat.mrts_no_route++;
 	if (mrtdebug & (DEBUG_FORWARD | DEBUG_MFC))
-	    log(LOG_DEBUG, "ip_mforward: no rte s %x g %x",
+	    log(LOG_DEBUG, "ip_mforward: no rte s %x g %x\n",
 		ntohl(ip->ip_src.s_addr),
 		ntohl(ip->ip_dst.s_addr));
 
@@ -1039,12 +1039,12 @@ ip_mforward(m, ifp)
 	 * just going to fail anyway.
 	 */
 	rte = (struct rtdetq *)malloc(sizeof(*rte), M_MRTABLE, M_NOWAIT);
-	if (rte == NULL) {
+	if (rte == 0) {
 	    splx(s);
 	    return (ENOBUFS);
 	}
 	mb0 = m_copy(m, 0, M_COPYALL);
-	if (mb0 == NULL) {
+	if (mb0 == 0) {
 	    free(rte, M_MRTABLE);
 	    splx(s);
 	    return (ENOBUFS);
@@ -1055,18 +1055,18 @@ ip_mforward(m, ifp)
 	for (rt = mfchashtbl[hash].lh_first; rt; rt = rt->mfc_hash.le_next) {
 	    if (in_hosteq(ip->ip_src, rt->mfc_origin) &&
 		in_hosteq(ip->ip_dst, rt->mfc_mcastgrp) &&
-		rt->mfc_stall != NULL)
+		rt->mfc_stall != 0)
 		break;
 	}
 
-	if (rt == NULL) {
+	if (rt == 0) {
 	    int hlen = ip->ip_hl << 2;
 	    int i;
 	    struct igmpmsg *im;
 
 	    /* no upcall, so make a new entry */
 	    rt = (struct mfc *)malloc(sizeof(*rt), M_MRTABLE, M_NOWAIT);
-	    if (rt == NULL) {
+	    if (rt == 0) {
 		free(rte, M_MRTABLE);
 		m_free(mb0);
 		splx(s);
@@ -1075,7 +1075,7 @@ ip_mforward(m, ifp)
 	    /* Make a copy of the header to send to the user level process */
 	    mm = m_copy(m, 0, hlen);
 	    M_PULLUP(mm, hlen);
-	    if (mm == NULL) {
+	    if (mm == 0) {
 		free(rte, M_MRTABLE);
 		m_free(mb0);
 		free(rt, M_MRTABLE);
@@ -1096,7 +1096,7 @@ ip_mforward(m, ifp)
 	    mrtstat.mrts_upcalls++;
 
 	    if (socket_send(ip_mrouter, mm, &sin) < 0) {
-		log(LOG_WARNING, "ip_mforward: ip_mrouter socket queue full");
+		log(LOG_WARNING, "ip_mforward: ip_mrouter socket queue full\n");
 		++mrtstat.mrts_upq_sockfull;
 		free(rte, M_MRTABLE);
 		m_free(mb0);
@@ -1126,7 +1126,7 @@ ip_mforward(m, ifp)
 	    struct rtdetq **p;
 	    register int npkts = 0;
 
-	    for (p = &rt->mfc_stall; *p != NULL; p = &(*p)->next)
+	    for (p = &rt->mfc_stall; *p != 0; p = &(*p)->next)
 		if (++npkts > MAX_UPQ) {
 		    mrtstat.mrts_upq_ovflw++;
 		    free(rte, M_MRTABLE);
@@ -1139,7 +1139,7 @@ ip_mforward(m, ifp)
 	    *p = rte;
 	}
 
-	rte->next		= NULL;
+	rte->next		= 0;
 	rte->m 			= mb0;
 	rte->ifp 		= ifp;
 #ifdef UPCALL_TIMING
@@ -1181,7 +1181,7 @@ expire_upcalls(v)
 			++mrtstat.mrts_cache_cleanups;
 			if (mrtdebug & DEBUG_EXPIRE)
 				log(LOG_DEBUG,
-				    "expire_upcalls: expiring (%x %x)",
+				    "expire_upcalls: expiring (%x %x)\n",
 				    ntohl(rt->mfc_origin.s_addr),
 				    ntohl(rt->mfc_mcastgrp.s_addr));
 
@@ -1245,7 +1245,7 @@ ip_mdq(m, ifp, rt)
     if ((vifi >= numvifs) || (viftable[vifi].v_ifp != ifp)) {
 	/* came in the wrong interface */
 	if (mrtdebug & DEBUG_FORWARD)
-	    log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p",
+	    log(LOG_DEBUG, "wrong if: ifp %p vifi %d vififp %p\n",
 		ifp, vifi, viftable[vifi].v_ifp); 
 	++mrtstat.mrts_wrong_if;
 	++rt->mfc_wrong_if;
@@ -1270,7 +1270,7 @@ ip_mdq(m, ifp, rt)
 	    if (delta > ASSERT_MSG_TIME) {
 		mm = m_copy(m, 0, hlen);
 		M_PULLUP(mm, hlen);
-		if (mm == NULL) {
+		if (mm == 0) {
 		    return (ENOBUFS);
 		}
 
@@ -1349,7 +1349,7 @@ phyint_send(ip, vifp, m)
 	 */
 	mb_copy = m_copy(m, 0, M_COPYALL);
 	M_PULLUP(mb_copy, hlen);
-	if (mb_copy == NULL)
+	if (mb_copy == 0)
 		return;
 
 	if (vifp->v_rate_limit <= 0)
@@ -1374,13 +1374,13 @@ encap_send(ip, vifp, m)
 	 * mbuf since if we don't the ethernet driver will.
 	 */
 	MGETHDR(mb_copy, M_DONTWAIT, MT_DATA);
-	if (mb_copy == NULL)
+	if (mb_copy == 0)
 		return;
 	mb_copy->m_data += max_linkhdr;
 	mb_copy->m_pkthdr.len = len;
 	mb_copy->m_len = sizeof(multicast_encap_iphdr);
 	
-	if ((mb_copy->m_next = m_copy(m, 0, M_COPYALL)) == NULL) {
+	if ((mb_copy->m_next = m_copy(m, 0, M_COPYALL)) == 0) {
 		m_freem(mb_copy);
 		return;
 	}
@@ -1388,7 +1388,7 @@ encap_send(ip, vifp, m)
 	if (i > len)
 		i = len;
 	mb_copy = m_pullup(mb_copy, i);
-	if (mb_copy == NULL)
+	if (mb_copy == 0)
 		return;
 	
 	/*
@@ -1479,7 +1479,7 @@ ipip_input(m, va_alist)
 			mrtstat.mrts_cant_tunnel++; /*XXX*/
 			m_freem(m);
 			if (mrtdebug)
-				log(LOG_DEBUG, "ip_mforward: no tunnel with %x",
+				log(LOG_DEBUG, "ip_mforward: no tunnel with %x\n",
 				    ntohl(ip->ip_src.s_addr));
 			return;
 		}
@@ -1642,7 +1642,7 @@ tbf_reprocess_q(arg)
 {
 	register struct vif *vifp = arg;
 
-	if (ip_mrouter == NULL) 
+	if (ip_mrouter == 0) 
 		return;
 
 	tbf_update_tokens(vifp);
@@ -1772,7 +1772,8 @@ priority(vifp, ip)
 		break;
 	}
 
-	if (tbfdebug > 1) log(LOG_DEBUG, "port %x prio %d", ntohs(udp->uh_dport), prio);
+	if (tbfdebug > 1)
+	    log(LOG_DEBUG, "port %x prio %d\n", ntohs(udp->uh_dport), prio);
     } else
 	prio = 50;
 
@@ -1802,7 +1803,7 @@ ip_rsvp_vif_init(so, m)
 	return (EOPNOTSUPP);
 
     /* Check mbuf. */
-    if (m == NULL || m->m_len != sizeof(int)) {
+    if (m == 0 || m->m_len != sizeof(int)) {
 	return (EINVAL);
     }
     i = *(mtod(m, int *));
@@ -1819,7 +1820,7 @@ ip_rsvp_vif_init(so, m)
     }
 
     /* Check if socket is available. */
-    if (viftable[i].v_rsvpd != NULL) {
+    if (viftable[i].v_rsvpd != 0) {
 	splx(s);
 	return (EADDRINUSE);
     }
@@ -1853,7 +1854,7 @@ ip_rsvp_vif_done(so, m)
 	return (EOPNOTSUPP);
 
     /* Check mbuf. */
-    if (m == NULL || m->m_len != sizeof(int)) {
+    if (m == 0 || m->m_len != sizeof(int)) {
 	return (EINVAL);
     }
     i = *(mtod(m, int *));
@@ -1870,7 +1871,7 @@ ip_rsvp_vif_done(so, m)
 	printf("ip_rsvp_vif_done: v_rsvpd = %x so = %x\n",
 	       viftable[i].v_rsvpd, so);
 
-    viftable[i].v_rsvpd = NULL;
+    viftable[i].v_rsvpd = 0;
     /* This may seem silly, but we need to be sure we don't over-decrement
      * the RSVP counter, in case something slips up.
      */
@@ -1901,7 +1902,7 @@ ip_rsvp_force_done(so)
      */
     for (vifi = 0; vifi < numvifs; vifi++) {
 	if (viftable[vifi].v_rsvpd == so) {
-	    viftable[vifi].v_rsvpd = NULL;
+	    viftable[vifi].v_rsvpd = 0;
 	    /* This may seem silly, but we need to be sure we don't
 	     * over-decrement the RSVP counter, in case something slips up.
 	     */
@@ -1941,7 +1942,7 @@ rsvp_input(m, ifp)
     /* If the old-style non-vif-associated socket is set, then use
      * it and ignore the new ones.
      */
-    if (ip_rsvpd != NULL) {
+    if (ip_rsvpd != 0) {
 	if (rsvpdebug)
 	    printf("rsvp_input: Sending packet up old-style socket\n");
 	rip_input(m);
@@ -1971,7 +1972,7 @@ rsvp_input(m, ifp)
     if (rsvpdebug)
 	printf("rsvp_input: check socket\n");
 
-    if (viftable[vifi].v_rsvpd == NULL) {
+    if (viftable[vifi].v_rsvpd == 0) {
 	/* drop packet, since there is no specific socket for this
 	 * interface */
 	if (rsvpdebug)
