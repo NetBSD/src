@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.69 2001/02/19 21:30:39 aymeric Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70 2001/02/20 22:34:23 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -102,7 +102,7 @@ static const struct ne2000dev {
     { PCMCIA_STR_SYNERGY21_S21810,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_SYNERGY21_S21810,
-      0, -1, { 0x00, 0x47, 0x43 } },
+      0, -1, { 0x00, 0x48, 0x54 } },
 
     { PCMCIA_STR_AMBICOM_AMB8002T,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
