@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.18 2003/03/01 19:30:30 mjacob Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.19 2003/03/01 19:49:45 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.18 2003/03/01 19:30:30 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.19 2003/03/01 19:49:45 mjacob Exp $");
 
 #include "bpfilter.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.18 2003/03/01 19:30:30 mjacob Exp $");
 
 #include <dev/pci/if_stgereg.h>
 
-#define	STGE_CU_BUG			1
+/* #define	STGE_CU_BUG			1 */
 #define	STGE_VLAN_UNTAG			1
 /* #define	STGE_VLAN_CFI		1 */
 
