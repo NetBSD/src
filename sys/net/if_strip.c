@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.27 2001/01/08 23:43:34 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.28 2001/01/11 22:23:11 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -188,11 +188,7 @@ typedef char ttychar_t;
  * time.  So, setting SLIP_HIWAT to ~100 guarantees that we'll lose
  * at most 1% while maintaining good interactive response.
  */
-#if NBPFILTER > 0
 #define	BUFOFFSET	(128+sizeof(struct ifnet **)+SLIP_HDRLEN)
-#else
-#define	BUFOFFSET	(128+sizeof(struct ifnet **))
-#endif
 #define	SLMAX		(MCLBYTES - BUFOFFSET)
 #define	SLBUFSIZE	(SLMAX + BUFOFFSET)
 #define SLMTU		1100 /* XXX -- appromaximated. 1024 may be safer. */
@@ -378,20 +374,14 @@ stripinit(sc)
 {
 	u_char *p;
 
-	if (sc->sc_ep == NULL) {
-		/*
-		 * XXX the trick this is used for is evil...
-		 */
-		sc->sc_xxx = (u_char *)malloc(MCLBYTES, M_MBUF, M_WAITOK);
-		if (sc->sc_xxx)
-			sc->sc_ep = sc->sc_xxx + SLBUFSIZE;
-		else {
-			printf("%s: can't allocate buffer\n",
-			    sc->sc_if.if_xname);
-			sc->sc_if.if_flags &= ~IFF_UP;
-			return (0);
-		}
+	if (sc->sc_mbuf == NULL) {
+		MGETHDR(sc->sc_mbuf, M_WAIT, MT_DATA);
+		MCLGET(sc->sc_mbuf, M_WAIT);
 	}
+	sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	    sc->sc_mbuf->m_ext.ext_size;
+	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	    BUFOFFSET;
 
 	/* Get contiguous buffer in which to de-bytestuff/rll-decode input */
 	if (sc->sc_rxbuf == NULL) {
@@ -420,8 +410,6 @@ stripinit(sc)
 		}
 	}
 
-	sc->sc_buf = sc->sc_ep - SLMAX;
-	sc->sc_mp = sc->sc_buf;
 	sl_compress_init(&sc->sc_comp);
 
 	/* Initialize radio probe/reset state machine */
@@ -529,16 +517,18 @@ stripclose(tp)
 		if_down(&sc->sc_if);
 		sc->sc_ttyp = NULL;
 		tp->t_sc = NULL;
-		free((caddr_t)(sc->sc_ep - SLBUFSIZE), M_MBUF);
+
+		m_freem(sc->sc_mbuf);
+		sc->sc_mbuf = NULL;
+		sc->sc_ep = sc->sc_mp = sc->sc_pktstart = NULL;
+
 		/* XXX */
 		free((caddr_t)(sc->sc_rxbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
+		sc->sc_rxbuf = NULL;
+
 		/* XXX */
 		free((caddr_t)(sc->sc_txbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
-		sc->sc_ep = 0;
-		sc->sc_mp = 0;
-		sc->sc_buf = 0;
-		sc->sc_rxbuf = 0;
-		sc->sc_txbuf = 0;
+		sc->sc_txbuf = NULL;
 
 		if (sc->sc_flags & SC_TIMEOUT) {
 			callout_stop(&sc->sc_timo_ch);
@@ -1084,42 +1074,46 @@ strip_btom(sc, len)
 	int len;
 {
 	struct mbuf *m;
-	u_char *p;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
 
 	/*
-	 * If we have more than MHLEN bytes, it's cheaper to
-	 * queue the cluster we just filled & allocate a new one
-	 * for the input buffer.  Otherwise, fill the mbuf we
-	 * allocated above.  Note that code in the input routine
-	 * guarantees that packet will fit in a cluster.
+	 * We always prepend enough space for the SLIP "header".
 	 */
-	if (len >= MHLEN) {
+	sc->sc_pktstart -= SLIP_HDRLEN;
+	len += SLIP_HDRLEN;
+
+	/*
+	 * If the packet will fit into the header mbuf we allocated
+	 * above, copy it there and re-use the input buffer we already
+	 * have.
+	 */
+	if (len < MHLEN)
+		memcpy(mtod(m, caddr_t), sc->sc_pktstart, len);
+	else {
 		/*
-		 * XXX this is that evil trick I mentioned...
+		 * Allocate a new input buffer and swap.
 		 */
-		p = sc->sc_xxx; 
-		sc->sc_xxx = (u_char *)malloc(MCLBYTES, M_MBUF, M_NOWAIT);
-		if (sc->sc_xxx == NULL) {
-			/*
-			 * We couldn't allocate a new buffer - if
-			 * memory's this low, it's time to start
-			 * dropping packets.
-			 */
-			(void) m_free(m);
+		m = sc->sc_mbuf;
+		MGETHDR(sc->sc_mbuf, M_DONTWAIT, MT_DATA);
+		if (sc->sc_mbuf == NULL) {
+			sc->sc_mbuf = m;
 			return (NULL);
 		}
-		sc->sc_ep = sc->sc_xxx + SLBUFSIZE;
-		MEXTADD(m, p, MCLBYTES, M_MBUF, NULL, NULL);
-		m->m_data = (caddr_t)sc->sc_buf;
-	} else
-		bcopy((caddr_t)sc->sc_buf, mtod(m, caddr_t), len);
+		MCLGET(sc->sc_mbuf, M_DONTWAIT);
+		if ((sc->sc_mbuf->m_flags & M_EXT) == 0) {
+			sc->sc_mbuf = m;
+			return (NULL);
+		}
+		sc->sc_ep = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+		    sc->sc_mbuf->m_ext.ext_size;
 
-	m->m_len = len;
-	m->m_pkthdr.len = len;
+		m->m_data = sc->sc_pktstart;
+	}
+
+	m->m_pkthdr.len = m->m_len = len;
 	m->m_pkthdr.rcvif = &sc->sc_if;
 	return (m);
 }
@@ -1171,7 +1165,7 @@ stripinput(c, tp)
 		 * If the first character in a packet is a \n, drop it.
 		 * (it can never be the first char of a vaild frame).
 		 */
-		if (sc->sc_mp - sc->sc_buf == 0)
+		if (sc->sc_mp - sc->sc_pktstart == 0)
 			break;
 
 	/* Fall through to */
@@ -1195,7 +1189,7 @@ stripinput(c, tp)
 	 */
 
 
-	len = sc->sc_mp - sc->sc_buf;
+	len = sc->sc_mp - sc->sc_pktstart;
 
 #ifdef XDEBUG
  	if (len < 15 || sc->sc_flags & SC_ERROR)
@@ -1214,7 +1208,7 @@ stripinput(c, tp)
 	 * Process an IP packet, ARP packet, AppleTalk packet,
 	 * AT command resposne, or Starmode error.
 	 */
-	len = strip_newpacket(sc, sc->sc_buf, sc->sc_mp);
+	len = strip_newpacket(sc, sc->sc_pktstart, sc->sc_mp);
 	if (len <= 1)
 		/* less than min length packet - ignore */
 		goto newpack;
@@ -1230,15 +1224,15 @@ stripinput(c, tp)
 		 * where the buffer started so we can
 		 * compute the new header length.
 		 */
-		bcopy(sc->sc_buf, chdr, CHDR_LEN);
+		bcopy(sc->sc_pktstart, chdr, CHDR_LEN);
 	}
 #endif
 
-	if ((c = (*sc->sc_buf & 0xf0)) != (IPVERSION << 4)) {
+	if ((c = (*sc->sc_pktstart & 0xf0)) != (IPVERSION << 4)) {
 		if (c & 0x80)
 			c = TYPE_COMPRESSED_TCP;
 		else if (c == TYPE_UNCOMPRESSED_TCP)
-			*sc->sc_buf &= 0x4f; /* XXX */
+			*sc->sc_pktstart &= 0x4f; /* XXX */
 		/*
 		 * We've got something that's not an IP packet.
 		 * If compression is enabled, try to decompress it.
@@ -1247,13 +1241,13 @@ stripinput(c, tp)
 		 * enable compression.  Otherwise, drop it.
 		 */
 		if (sc->sc_if.if_flags & SC_COMPRESS) {
-			len = sl_uncompress_tcp(&sc->sc_buf, len,
+			len = sl_uncompress_tcp(&sc->sc_pktstart, len,
 						(u_int)c, &sc->sc_comp);
 			if (len <= 0)
 				goto error;
 		} else if ((sc->sc_if.if_flags & SC_AUTOCOMP) &&
 		    c == TYPE_UNCOMPRESSED_TCP && len >= 40) {
-			len = sl_uncompress_tcp(&sc->sc_buf, len,
+			len = sl_uncompress_tcp(&sc->sc_pktstart, len,
 						(u_int)c, &sc->sc_comp);
 			if (len <= 0)
 				goto error;
@@ -1262,26 +1256,27 @@ stripinput(c, tp)
 			goto error;
 	}
 
+	m = strip_btom(sc, len);
+	if (m == NULL)
+		goto error;
+
 #if NBPFILTER > 0
 	if (sc->sc_if.if_bpf) {
 		/*
 		 * Put the SLIP pseudo-"link header" in place.
-		 * We couldn't do this any earlier since
-		 * decompression probably moved the buffer
-		 * pointer.  Then, invoke BPF.
+		 * Note the space for it has already been
+		 * allocated in strip_btom().
 		 */
-		u_char *hp = sc->sc_buf - SLIP_HDRLEN;
+		u_char *hp = mtod(m, u_char *);
 
 		hp[SLX_DIR] = SLIPDIR_IN;
-		bcopy(chdr, &hp[SLX_CHDR], CHDR_LEN);
-		bpf_tap(sc->sc_if.if_bpf, hp, len + SLIP_HDRLEN);
+		memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
+
+		bpf_mtap(sc->sc_if.if_bpf, m);
 	}
 #endif
-	m = strip_btom(sc, len);
-	if (m == NULL) {
-		goto error;
-	}
 
+	m_adj(m, SLIP_HDRLEN);
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_lastchange = time;
 	s = splimp();
@@ -1301,8 +1296,8 @@ error:
 	sc->sc_if.if_ierrors++;
 
 newpack:
-
-	sc->sc_mp = sc->sc_buf = sc->sc_ep - SLMAX;
+	sc->sc_mp = sc->sc_pktstart = (u_char *) sc->sc_mbuf->m_ext.ext_buf +
+	    BUFOFFSET;
 }
 
 /*
@@ -1681,7 +1676,7 @@ strip_newpacket(sc, ptr, end)
 	}
 
 	/* XXX redundant copy */
-	bcopy(sc->sc_rxbuf, sc->sc_buf, packetlen );
+	bcopy(sc->sc_rxbuf, sc->sc_pktstart, packetlen );
 	return(packetlen);
 }
 
@@ -1943,7 +1938,7 @@ RecvErr(msg, sc)
 	struct strip_softc *sc;
 {
 	static const int MAX_RecErr = 80;
-	u_char *ptr = sc->sc_buf;
+	u_char *ptr = sc->sc_pktstart;
 	u_char *end = sc->sc_mp;
 	u_char pkt_text[MAX_RecErr], *p = pkt_text;
 	*p++ = '\"';
