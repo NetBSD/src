@@ -27,12 +27,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $NetBSD: dot.profile,v 1.3 1998/01/06 04:45:05 perry Exp $
+#       $NetBSD: dot.profile,v 1.4 1998/01/09 21:51:28 perry Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=vt100
 export TERM
+HOME=/
+export HOME
 
 umask 022
 

@@ -1,7 +1,9 @@
-#	$NetBSD: dot.profile,v 1.2 1998/01/09 18:56:59 perry Exp $
+#	$NetBSD: dot.profile,v 1.3 1998/01/09 21:51:59 perry Exp $
 #
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/ export PATH
 TERM=vt100 export TERM
+HOME=/
+export HOME
 
 # set up some sane defaults
 echo 'erase ^?, werase ^H, kill ^U, intr ^C'

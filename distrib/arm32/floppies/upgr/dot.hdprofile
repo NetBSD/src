@@ -1,4 +1,4 @@
-# $NetBSD: dot.hdprofile,v 1.1 1996/05/16 19:59:17 mark Exp $
+# $NetBSD: dot.hdprofile,v 1.2 1998/01/09 21:51:36 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -33,6 +33,8 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=vt100
 export TERM
+HOME=/
+export HOME
 
 umask 022
 

@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 1997/12/22 00:39:34 cjs Exp $
+#	$NetBSD: dot.profile,v 1.2 1998/01/09 21:51:26 perry Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -34,6 +34,8 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 TERM=pc3
 export TERM
+HOME=/
+export HOME
 
 umask 022
 
