@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 1995/10/15 03:01:57 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 1996/03/10 19:55:22 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -321,7 +321,7 @@ copyfault:
 		extern int	*nofault;
 
 		if (nofault)	/* If we're probing. */
-			longjmp((label_t *) nofault);
+			longjmp((label_t *) nofault, 0);
 		if (type == T_ILLINST)
 			printf("Kernel Illegal Instruction trap.\n");
 		else
