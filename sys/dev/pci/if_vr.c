@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.58 2002/10/21 23:38:12 fair Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.59 2003/01/03 19:01:09 lha Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.58 2002/10/21 23:38:12 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.59 2003/01/03 19:01:09 lha Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,8 @@ struct vr_softc {
 	struct ethercom		vr_ec;		/* Ethernet common info */
 	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
+
+	u_int8_t		vr_revid;	/* Rhine chip revision */
 
 	struct callout		vr_tick_ch;	/* tick callout */
 
@@ -504,9 +506,17 @@ vr_reset(sc)
 		if (!(CSR_READ_2(sc, VR_COMMAND) & VR_CMD_RESET))
 			break;
 	}
-	if (i == VR_TIMEOUT)
-		printf("%s: reset never completed!\n",
-			sc->vr_dev.dv_xname);
+	if (i == VR_TIMEOUT) {
+		if (sc->vr_revid < REV_ID_VT3065_A) {
+			printf("%s: reset never completed!\n",
+			    sc->vr_dev.dv_xname);
+		} else {
+			/* Use newer force reset command */
+			printf("%s: using force reset command.\n",
+			    sc->vr_dev.dv_xname);
+			VR_SETBIT(sc, VR_MISC_CR1, VR_MISCCR1_FORSRST);
+		}
+	}			
 
 	/* Wait a little while for the chip to get its brains in order. */
 	DELAY(1000);
@@ -1453,6 +1463,9 @@ vr_attach(parent, self, aux)
 	command |= PCI_COMMAND_MASTER_ENABLE;
 	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, command);
 
+	/* Get revision */
+	sc->vr_revid = PCI_CONF_READ(VR_PCI_REVID) & 0x000000FF;
+	
 	/*
 	 * Map control/status registers.
 	 */
@@ -1511,6 +1524,13 @@ vr_attach(parent, self, aux)
 		printf("%s: interrupting at %s\n",
 			sc->vr_dev.dv_xname, intrstr);
 	}
+
+	/*
+	 * Windows may put the chip in suspend mode when it
+	 * shuts down. Be sure to kick it in the head to wake it
+	 * up again.
+	 */
+	VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
 
 	/* Reset the adapter. */
 	vr_reset(sc);
