@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.2 2000/07/05 18:45:26 thorpej Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.3 2000/07/05 21:32:51 thorpej Exp $	*/
 /*	$KAME: ip_encap.c,v 1.30 2000/04/19 04:29:37 itojun Exp $	*/
 
 /*
@@ -385,6 +385,12 @@ encap_attach(af, proto, sp, sm, dp, dm, psw, arg)
 		error = EEXIST;
 		goto fail;
 	}
+
+	/*
+	 * XXX NEED TO CHECK viftable IN THE ip_mroute CODE!!!
+	 * XXX Actually, that code needs to be replaced with
+	 * XXX new code that uses `gif' tunnels.
+	 */
 
 	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT);	/*XXX*/
 	if (ep == NULL) {
