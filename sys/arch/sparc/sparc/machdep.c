@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.10 1993/11/05 12:43:04 deraadt Exp $
+ * $Id: machdep.c,v 1.11 1993/11/10 03:13:49 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -883,15 +883,15 @@ mapdev(phys, virt, size)
 }
 
 cpu_exec_aout_makecmds(p, epp)
-struct proc *p;
-struct exec_package *epp;
+	struct proc *p;
+	struct exec_package *epp;
 {
 #ifdef COMPAT_SUNOS
 struct sunos_aout_magic {
-	unsigned char	a_dynamic:1;	/* has a __DYNAMIC */
-	unsigned char	a_toolversion:7;/* version of toolset used to create this file */
-	unsigned char	a_machtype;	/* machine type */
-	unsigned short	a_magic;	/* magic number */
+	u_char	a_dynamic:1;	/* has a __DYNAMIC */
+	u_char	a_toolversion:7;/* version of toolset used to create this file */
+	u_char	a_machtype;	/* machine type */
+	u_short	a_magic;	/* magic number */
 };
 #define	SUNOS_M_SPARC	3		/* runs only on SPARC */
 
@@ -901,14 +901,14 @@ struct sunos_aout_magic {
 	if(sunmag.a_machtype != SUNOS_M_SPARC)
 		return (ENOEXEC);
 
+	epp->ep_emul = EMUL_SUNOS;
 	switch (sunmag.a_magic) {
 	case ZMAGIC:
 		return exec_aout_prep_zmagic(p, epp);
 	case NMAGIC:
 		return exec_aout_prep_nmagic(p, epp);
 	case OMAGIC:
-	printf("SUN OMAGIC: currently unsupported (fixme)\n");
-		break;
+		return exec_aout_prep_omagic(p, epp);
 	default:
 		break;
 	}

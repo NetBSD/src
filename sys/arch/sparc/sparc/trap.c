@@ -44,7 +44,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.4 1993/10/27 17:29:31 deraadt Exp $
+ * $Id: trap.c,v 1.5 1993/11/10 03:13:51 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ const char *trap_type[] = {
 	T, T, T, T, T, T, T, T,	/* 78..7f */
 
 	/* user (software trap) vectors */
-	"sun syscall",		/* 80 */
+	"syscall",		/* 80 */
 	"breakpoint",		/* 81 */
 	"zero divide",		/* 82 */
 	"flush windows",	/* 83 */
@@ -149,7 +149,7 @@ const char *trap_type[] = {
 	"fix align",		/* 86 */
 	"integer overflow",	/* 87 */
 	"kgdb exec",		/* 88 */
-	"syscall"		/* 89 */
+	"4.4 syscall"		/* 89 */
 };
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
@@ -660,13 +660,11 @@ out:
  * `in' registers within the syscall trap code (because of the automatic
  * `save' effect of each trap).  They are, however, the %o registers of the
  * thing that made the system call, and are named that way here.
- *
- * The `suncompat' parameter actually only exists if COMPAT_SUNOS is defined.
  */
-syscall(code, tf, pc, suncompat)
+syscall(code, tf, pc)
 	register u_int code;
 	register struct trapframe *tf;
-	int pc, suncompat;
+	int pc;
 {
 	register int i, nsys, *ap, nap;
 	register struct sysent *callp;
@@ -693,19 +691,24 @@ syscall(code, tf, pc, suncompat)
 	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
 #ifdef DEBUG_SCALL
-printf("sc[%d] %s%d/X%x(", p->p_pid, suncompat ? "sun" : "", code, code);
+printf("sc[%d] %s%d/X%x(", p->p_pid, p->p_emul ? "netbsd" : "sunos",
+code, code);
 #endif
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
+	switch (p->p_emul) {
+	case EMUL_NETBSD:
+		callp = sysent, nsys = nsysent;
+		break;
 #ifdef COMPAT_SUNOS
-	if (suncompat) {
+	case EMUL_SUNOS:
 		extern int nsun_sysent;
 		extern struct sysent sun_sysent[];
 
 		callp = sun_sysent, nsys = nsun_sysent;
-	} else
+		break;
 #endif
-		callp = sysent, nsys = nsysent;
+	}
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -720,28 +723,12 @@ printf("sc[%d] %s%d/X%x(", p->p_pid, suncompat ? "sun" : "", code, code);
 	 */
 	ap = &tf->tf_out[0];
 	nap = 6;
-	switch (code) {
 
-/* TDR: fix this */
-#define SYS_syscall	0
-#define SYS___syscall	100000
-
-	case SYS_syscall:
+	if (code == SYS_syscall) {
 		code = *ap++;
 		nap--;
-		break;
-
-	case SYS___syscall:
-#ifdef COMPAT_SUNOS
-		if (suncompat)
-			break;
-#endif
-		code = ap[_QUAD_LOWWORD];
-		ap += 2;
-		nap -= 2;
-		break;
-
 	}
+
 	/* Callp currently points to syscall, which returns ENOSYS. */
 	if (code < nsys) {
 		callp += code;
