@@ -56,7 +56,7 @@ major   {fd = 17}
 device	rd
 attach	rd at mainbus
 file	dev/ramdisk.c				rd needs-count
-file	arch/arm32/dev/rd_hooks.c		rd ramdisk_hooks
+file	arch/arm32/dev/rd_hooks.c		rd | ramdisk_hooks
 major   {rd = 18}
 
 # Old ramdisc driver

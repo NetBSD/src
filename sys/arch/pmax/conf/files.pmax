@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.28 1996/03/17 06:09:10 cgd Exp $
+#	$NetBSD: files.pmax,v 1.29 1996/03/17 13:21:21 cgd Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -185,13 +185,13 @@ file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns
 
 ## Support code for LK-201 keyboards, mice, and qvss ring buffers
-file	arch/pmax/dev/lk201.c		pm or cfb or sfb or mfb or xcfb
+file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb
 file	arch/pmax/dev/qvss_compat.c	fb
 
 
 # VDAC/RAMDAC support for framebuffers. Other  devices supported by
 # NetBSD  may use the same chips, too.
-file	arch/pmax/dev/bt459.c			cfb or sfb
+file	arch/pmax/dev/bt459.c			cfb | sfb
 
 #
 # Pseudo-device driver for framebuffers.  All user-level requests,
