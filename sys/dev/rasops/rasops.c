@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.28 2000/04/04 20:59:17 nathanw Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.29 2000/04/05 20:33:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.28 2000/04/04 20:59:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.29 2000/04/05 20:33:28 nathanw Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -624,21 +624,24 @@ rasops_init_devcmap(ri)
 		
 	p = rasops_cmap;
 	
-	for (i = 0; i < 16; i++, p++) {
+	for (i = 0; i < 16; i++) {
 		if (ri->ri_rnum <= 8)
 			c = (*p >> (8 - ri->ri_rnum)) << ri->ri_rpos;
 		else 
 			c = (*p << (ri->ri_rnum - 8)) << ri->ri_rpos;
+		p++;
 
 		if (ri->ri_gnum <= 8)
 			c |= (*p >> (8 - ri->ri_gnum)) << ri->ri_gpos;
 		else 
 			c |= (*p << (ri->ri_gnum - 8)) << ri->ri_gpos;
+		p++;
 
 		if (ri->ri_bnum <= 8)
 			c |= (*p >> (8 - ri->ri_bnum)) << ri->ri_bpos;
 		else 
 			c |= (*p << (ri->ri_bnum - 8)) << ri->ri_bpos;
+		p++;
 
 		/* Fill the word for generic routines, which want this */
 		if (ri->ri_depth == 24)
