@@ -1,4 +1,4 @@
-/*	$NetBSD: unzip.c,v 1.1 1998/09/01 20:03:47 itohy Exp $	*/
+/*	$NetBSD: unzip.c,v 1.2 2001/06/12 16:57:29 minoura Exp $	*/
 
 /*
  *	Extract gzip'ed data on the memory
@@ -20,17 +20,31 @@ void
 flush_window()
 {
 #if defined(__GNUC__) && defined(__m68k__)
-   asm("lea	_outcnt,a0\n\
-	movel	a0@,d0\n\
-	addl	d0,_udst_cnt\n\
-	movel	d0,sp@-\n\
+#ifdef __ELF__
+   asm("lea	outcnt,%a0\n\
+	movel	%a0@,%d0\n\
+	addl	%d0,udst_cnt\n\
+	movel	%d0,%sp@-\n\
+	pea	window\n\
+	lea	udst,%a1\n\
+	movel	%a1@,%sp@-\n\
+	addl	%d0,%a1@\n\
+	clrl	%a0@\n\
+	jbsr	memcpy\n\
+	lea	%sp@(12),%sp");
+#else
+   asm("lea	_outcnt,%a0\n\
+	movel	%a0@,%d0\n\
+	addl	%d0,_udst_cnt\n\
+	movel	%d0,%sp@-\n\
 	pea	_window\n\
-	lea	_udst,a1\n\
-	movel	a1@,sp@-\n\
-	addl	d0,a1@\n\
-	clrl	a0@\n\
+	lea	_udst,%a1\n\
+	movel	%a1@,%sp@-\n\
+	addl	%d0,%a1@\n\
+	clrl	%a0@\n\
 	jbsr	_memcpy\n\
-	lea	sp@(12),sp");
+	lea	%sp@(12),%sp");
+#endif
 #else
     register unsigned cnt = outcnt;
 
