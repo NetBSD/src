@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod.c,v 1.3 2001/10/02 01:20:03 erh Exp $ */
+/* $NetBSD: wcstod.c,v 1.4 2001/10/28 12:08:43 yamt Exp $ */
 
 /*-
  * Copyright (c)1999, 2000, 2001 Citrus Project,
@@ -36,14 +36,8 @@
 #include <wchar.h>
 #include <wctype.h>
 
-/* XXX our lint can't handle wide char constant */
-#if defined(lint)
-#define _L(x) ((const wchar_t *)0)
-#define _LC(x) ((wchar_t)0)
-#else
 #define _L(x) __CONCAT(L,x)
 #define _LC(x) __CONCAT(L,x)
-#endif
 
 double
 wcstod(const wchar_t *nptr, wchar_t **endptr)
