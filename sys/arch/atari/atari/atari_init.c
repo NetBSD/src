@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.17 1996/08/23 11:07:56 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.18 1996/09/16 06:28:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -504,12 +504,13 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	MFP->mf_imra  = MFP->mf_imrb = 0;
 	MFP->mf_aer   = MFP->mf_ddr  = 0;
 	MFP->mf_vr    = 0x40;
-	if(machineid & ATARI_TT) {
+	if(machineid & (ATARI_TT|ATARI_HADES)) {
 		MFP2->mf_iera = MFP2->mf_ierb = 0;
 		MFP2->mf_imra = MFP2->mf_imrb = 0;
 		MFP2->mf_aer  = 0x80;
 		MFP2->mf_vr   = 0x50;
-
+	}
+	if(machineid & ATARI_TT) {
 		/*
 		 * Initialize the SCU, to enable interrupts on the SCC (ipl5),
 		 * MFP (ipl6) and softints (ipl1).
