@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: Header: fixunsdfsi.s,v 1.3 91/10/08 00:03:15 torek Exp
- * $Id: fixunsdfsi.S,v 1.1 1993/10/07 00:21:32 cgd Exp $
+ * $Id: fixunsdfsi.S,v 1.2 1995/08/14 15:47:32 pk Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -60,8 +60,13 @@ ENTRY(__fixunsdfsi)
 	sub	%sp, 8, %sp
 	std	%o0, [%sp + 64]		! get argument into fpu reg
 	ldd	[%sp + 64], %f0
+#ifdef PIC
+	PICCY_SET(Lbig, %g1, %o0)
+	ldd	[%g1], %f2
+#else
 	sethi	%hi(Lbig), %g1
 	ldd	[%g1 + %lo(Lbig)], %f2
+#endif
 	fcmped	%f0, %f2		! d < 2^31, or NaN, or -Inf?
 	nop				! (fpop2 delay)
 	fbul,a	1f			! if so, use fdtoi to convert to int
