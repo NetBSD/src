@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.5 2002/08/17 19:54:32 thorpej Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.6 2003/04/05 23:08:53 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,11 +79,7 @@ ENTRY(_sbrk)
 	str	r1, [r2]
 
 	/* Return old curbrk value */
-#ifdef __APCS_26__
-	movs	r15, r14
-#else
 	mov	r15, r14
-#endif
 
 	.align	0
 #ifdef PIC
