@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.33 1997/11/07 07:38:10 scottr Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.34 1997/11/26 06:28:51 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -330,6 +330,7 @@ adb_init()
 	int adbindex, adbaddr;
 	int error, cmd, devtype=0;
 	u_char buffer[9];
+	extern int adb_initted;
 
 #ifdef MRG_ADB
 	/* Even if serial console only, some models require the
@@ -598,4 +599,6 @@ adb_init()
 		printf("returned %d from SetADBInfo\n", error);
 #endif
 	}
+
+	adb_initted = 1;
 }
