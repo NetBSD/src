@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.9.6.2 2004/09/21 13:29:47 skrll Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.9.6.3 2005/02/04 11:46:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.9.6.2 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.9.6.3 2005/02/04 11:46:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.9.6.2 2004/09/21 13:29:47 skrll Exp $"
 
 #define OPL_SIZE 4
 
-int	opl_isa_match __P((struct device *, struct cfdata *, void *));
-void	opl_isa_attach __P((struct device *, struct device *, void *));
+int	opl_isa_match(struct device *, struct cfdata *, void *);
+void	opl_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(opl_isa, sizeof(struct opl_softc),
     opl_isa_match, opl_isa_attach, NULL, NULL);

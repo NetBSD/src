@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.20.2.3 2004/09/21 13:29:42 skrll Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.20.2.4 2005/02/04 11:46:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct ieee1394_node {
 	size_t node_configrom_len;
 };
 
-int ieee1394_init __P((struct ieee1394_softc *));
+int ieee1394_init(struct ieee1394_softc *);
 
 
 struct ieee1394_it_func_t {

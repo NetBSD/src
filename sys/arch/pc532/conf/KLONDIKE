@@ -1,5 +1,5 @@
 
-#	$NetBSD: KLONDIKE,v 1.25.6.4 2004/11/14 08:15:24 skrll Exp $
+#	$NetBSD: KLONDIKE,v 1.25.6.5 2005/02/04 11:44:47 skrll Exp $
 #
 # KLONDIKE: Matthias Pfaller's pc532
 #
@@ -95,3 +95,4 @@ pseudo-device	sl 1			# compressed SLIP
 pseudo-device	ppp 1			# Point-to-Point Protocol
 pseudo-device	tun 1			# ip tunneling
 pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	fss 4			# file system snapshot device

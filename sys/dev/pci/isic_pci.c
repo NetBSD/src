@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.18.6.1 2004/08/03 10:49:09 skrll Exp $ */
+/* $NetBSD: isic_pci.c,v 1.18.6.2 2005/02/04 11:46:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18.6.1 2004/08/03 10:49:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18.6.2 2005/02/04 11:46:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -75,11 +75,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.18.6.1 2004/08/03 10:49:09 skrll Exp 
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_pci_match __P((struct device *, struct cfdata *, void *));
-static void isic_pci_attach __P((struct device *, struct device *, void *));
-static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
+static int isic_pci_match(struct device *, struct cfdata *, void *);
+static void isic_pci_attach(struct device *, struct device *, void *);
+static const struct isic_pci_product * find_matching_card(struct pci_attach_args *pa);
 
-static void isic_pci_isdn_attach __P((struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname));
+static void isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname);
 static int isic_pci_detach(struct device *self, int flags);
 static int isic_pci_activate(struct device *self, enum devact act);
 

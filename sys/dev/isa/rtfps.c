@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.46.2.2 2004/09/21 13:29:47 skrll Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.46.2.3 2005/02/04 11:46:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.46.2.2 2004/09/21 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.46.2.3 2005/02/04 11:46:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,9 @@ struct rtfps_softc {
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
-int rtfpsprobe __P((struct device *, struct cfdata *, void *));
-void rtfpsattach __P((struct device *, struct device *, void *));
-int rtfpsintr __P((void *));
+int rtfpsprobe(struct device *, struct cfdata *, void *);
+void rtfpsattach(struct device *, struct device *, void *);
+int rtfpsintr(void *);
 
 CFATTACH_DECL(rtfps, sizeof(struct rtfps_softc),
     rtfpsprobe, rtfpsattach, NULL, NULL);

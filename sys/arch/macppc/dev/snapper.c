@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.1.4.6 2005/01/17 19:29:57 skrll Exp $	*/
+/*	$NetBSD: snapper.c,v 1.1.4.7 2005/02/04 11:44:33 skrll Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -77,8 +77,9 @@ struct snapper_softc {
 
 	dbdma_regmap_t *sc_odma;
 	dbdma_regmap_t *sc_idma;
-	struct dbdma_command sc_odmacmd[20];
-	struct dbdma_command sc_idmacmd[20];
+	unsigned char	dbdma_cmdspace[sizeof(struct dbdma_command) * 40 + 15];
+	struct dbdma_command *sc_odmacmd;
+	struct dbdma_command *sc_idmacmd;
 };
 
 int snapper_match(struct device *, struct cfdata *, void *);
@@ -315,11 +316,17 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct snapper_softc *sc;
 	struct confargs *ca;
+	unsigned long v;
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
 	int soundbus, intr[6];
 
 	sc = (struct snapper_softc *)self;
 	ca = aux;
+
+	v = (((unsigned long) &sc->dbdma_cmdspace[0]) + 0xf) & ~0xf;
+	sc->sc_odmacmd = (struct dbdma_command *) v;
+	sc->sc_idmacmd = sc->sc_odmacmd + 20;
+
 #ifdef DIAGNOSTIC
 	if ((vaddr_t)sc->sc_odmacmd & 0x0f) {
 		printf(": bad dbdma alignment\n");
@@ -349,7 +356,7 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 	intr_establish(oirq, oirq_type, IPL_AUDIO, snapper_intr, sc);
 	/* intr_establish(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc); */
 
-	printf("%s: irq %d,%d,%d\n", sc->sc_dev.dv_xname, cirq, oirq, iirq);
+	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
 	config_interrupts(self, snapper_defer);
 }

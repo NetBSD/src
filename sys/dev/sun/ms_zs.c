@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_zs.c,v 1.9.6.3 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: ms_zs.c,v 1.9.6.4 2005/02/04 11:47:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.9.6.3 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.9.6.4 2005/02/04 11:47:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,10 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: ms_zs.c,v 1.9.6.3 2004/09/21 13:33:27 skrll Exp $");
 #include <dev/sun/event_var.h>
 #include <dev/sun/msvar.h>
 
-static void ms_zs_rxint __P((struct zs_chanstate *));
-static void ms_zs_stint __P((struct zs_chanstate *, int));
-static void ms_zs_txint __P((struct zs_chanstate *));
-static void ms_zs_softint __P((struct zs_chanstate *));
+static void ms_zs_rxint(struct zs_chanstate *);
+static void ms_zs_stint(struct zs_chanstate *, int);
+static void ms_zs_txint(struct zs_chanstate *);
+static void ms_zs_softint(struct zs_chanstate *);
 
 struct zsops zsops_ms = {
 	ms_zs_rxint,	/* receive char available */

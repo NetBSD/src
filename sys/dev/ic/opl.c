@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.18.2.3 2004/09/21 13:28:05 skrll Exp $	*/
+/*	$NetBSD: opl.c,v 1.18.2.4 2005/02/04 11:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.18.2.3 2004/09/21 13:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.18.2.4 2005/02/04 11:45:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,23 +113,23 @@ static void opl_command(struct opl_softc *, int, int, int);
 void opl_reset(struct opl_softc *);
 void opl_freq_to_fnum (int freq, int *block, int *fnum);
 
-int oplsyn_open __P((midisyn *ms, int));
-void oplsyn_close __P((midisyn *));
-void oplsyn_reset __P((void *));
-void oplsyn_noteon __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_noteoff __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_keypressure __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_ctlchange __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_programchange __P((midisyn *, u_int32_t, u_int32_t));
-void oplsyn_pitchbend __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
-void oplsyn_loadpatch __P((midisyn *, struct sysex_info *, struct uio *));
+int oplsyn_open(midisyn *ms, int);
+void oplsyn_close(midisyn *);
+void oplsyn_reset(void *);
+void oplsyn_noteon(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_noteoff(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_keypressure(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_ctlchange(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_programchange(midisyn *, u_int32_t, u_int32_t);
+void oplsyn_pitchbend(midisyn *, u_int32_t, u_int32_t, u_int32_t);
+void oplsyn_loadpatch(midisyn *, struct sysex_info *, struct uio *);
 
 
-void opl_set_op_reg __P((struct opl_softc *, int, int, int, u_char));
-void opl_set_ch_reg __P((struct opl_softc *, int, int, u_char));
-void opl_load_patch __P((struct opl_softc *, int));
-u_int32_t opl_get_block_fnum __P((int freq));
-int opl_calc_vol __P((int regbyte, int volume, int main_vol));
+void opl_set_op_reg(struct opl_softc *, int, int, int, u_char);
+void opl_set_ch_reg(struct opl_softc *, int, int, u_char);
+void opl_load_patch(struct opl_softc *, int);
+u_int32_t opl_get_block_fnum(int freq);
+int opl_calc_vol(int regbyte, int volume, int main_vol);
 
 struct midisyn_methods opl3_midi = {
 	oplsyn_open,

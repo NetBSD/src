@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.18.2.3 2004/09/21 13:25:39 skrll Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.18.2.4 2005/02/04 11:45:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,8 @@ int linux_ioctl_hdio __P((struct lwp *, struct linux_sys_ioctl_args *,
 int linux_ioctl_fdio __P((struct lwp *p, struct linux_sys_ioctl_args *uap, 
                  register_t *retval));
 int linux_ioctl_blkio __P((struct lwp *p, struct linux_sys_ioctl_args *uap, 
+                 register_t *retval));
+int linux_ioctl_sg __P((struct lwp *p, struct linux_sys_ioctl_args *uap, 
                  register_t *retval));
 __END_DECLS
 #endif	/* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.70.2.4 2004/09/21 13:37:12 skrll Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.70.2.5 2005/02/04 11:47:48 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.4 2004/09/21 13:37:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.5 2005/02/04 11:47:48 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -102,11 +102,11 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.4 2004/09/21 13:37:12 skrll Exp $"
 
 struct inpcbtable rawcbtable;
 
-int	 rip_pcbnotify __P((struct inpcbtable *, struct in_addr,
-    struct in_addr, int, int, void (*) __P((struct inpcb *, int))));
-int	 rip_bind __P((struct inpcb *, struct mbuf *));
-int	 rip_connect __P((struct inpcb *, struct mbuf *));
-void	 rip_disconnect __P((struct inpcb *));
+int	 rip_pcbnotify(struct inpcbtable *, struct in_addr,
+    struct in_addr, int, int, void (*)(struct inpcb *, int));
+int	 rip_bind(struct inpcb *, struct mbuf *);
+int	 rip_connect(struct inpcb *, struct mbuf *);
+void	 rip_disconnect(struct inpcb *);
 
 /*
  * Nominal space allocated to a raw ip socket.
@@ -122,7 +122,7 @@ void	 rip_disconnect __P((struct inpcb *));
  * Initialize raw connection block q.
  */
 void
-rip_init()
+rip_init(void)
 {
 
 	in_pcbinit(&rawcbtable, 1, 1);
@@ -236,12 +236,9 @@ rip_input(struct mbuf *m, ...)
 }
 
 int
-rip_pcbnotify(table, faddr, laddr, proto, errno, notify)
-	struct inpcbtable *table;
-	struct in_addr faddr, laddr;
-	int proto;
-	int errno;
-	void (*notify) __P((struct inpcb *, int));
+rip_pcbnotify(struct inpcbtable *table,
+    struct in_addr faddr, struct in_addr laddr, int proto, int errno,
+    void (*notify)(struct inpcb *, int))
 {
 	struct inpcb *inp, *ninp;
 	int nmatch;
@@ -266,13 +263,10 @@ rip_pcbnotify(table, faddr, laddr, proto, errno, notify)
 }
 
 void *
-rip_ctlinput(cmd, sa, v)
-	int cmd;
-	struct sockaddr *sa;
-	void *v;
+rip_ctlinput(int cmd, struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
-	void (*notify) __P((struct inpcb *, int)) = in_rtchange;
+	void (*notify)(struct inpcb *, int) = in_rtchange;
 	int errno;
 
 	if (sa->sa_family != AF_INET ||
@@ -383,11 +377,8 @@ rip_output(struct mbuf *m, ...)
  * Raw IP socket option processing.
  */
 int
-rip_ctloutput(op, so, level, optname, m)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **m;
+rip_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **m)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
@@ -462,9 +453,7 @@ rip_ctloutput(op, so, level, optname, m)
 }
 
 int
-rip_bind(inp, nam)
-	struct inpcb *inp;
-	struct mbuf *nam;
+rip_bind(struct inpcb *inp, struct mbuf *nam)
 {
 	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
 
@@ -483,9 +472,7 @@ rip_bind(inp, nam)
 }
 
 int
-rip_connect(inp, nam)
-	struct inpcb *inp;
-	struct mbuf *nam;
+rip_connect(struct inpcb *inp, struct mbuf *nam)
 {
 	struct sockaddr_in *addr = mtod(nam, struct sockaddr_in *);
 
@@ -501,8 +488,7 @@ rip_connect(inp, nam)
 }
 
 void
-rip_disconnect(inp)
-	struct inpcb *inp;
+rip_disconnect(struct inpcb *inp)
 {
 
 	inp->inp_faddr = zeroin_addr;
@@ -513,11 +499,8 @@ u_long	rip_recvspace = RIPRCVQ;
 
 /*ARGSUSED*/
 int
-rip_usrreq(so, req, m, nam, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+rip_usrreq(struct socket *so, int req,
+    struct mbuf *m, struct mbuf *nam, struct mbuf *control, struct lwp *l)
 {
 	struct inpcb *inp;
 	struct proc *p;

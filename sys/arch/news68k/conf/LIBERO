@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.21.2.5 2005/01/17 19:29:58 skrll Exp $
+# 	$NetBSD: LIBERO,v 1.21.2.6 2005/02/04 11:44:46 skrll Exp $
 
 #	NEWS1750 config file;
 #
@@ -155,6 +155,7 @@ pseudo-device	md		1	# memory disk device
 pseudo-device	vnd		4	# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	sl		2	# SLIP interfaces
 #pseudo-device	ppp		2	# PPP interfaces
 #pseudo-device	tun		4	# Network "tunnel" device

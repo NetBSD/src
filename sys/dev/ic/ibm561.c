@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.3.6.3 2004/09/21 13:27:57 skrll Exp $ */
+/* $NetBSD: ibm561.c,v 1.3.6.4 2005/02/04 11:45:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.3.6.3 2004/09/21 13:27:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.3.6.4 2005/02/04 11:45:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,23 +58,15 @@ __KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.3.6.3 2004/09/21 13:27:57 skrll Exp $")
 /*
  * Functions exported via the RAMDAC configuration table.
  */
-void	ibm561_init __P((struct ramdac_cookie *));
-int	ibm561_set_cmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cmap *));
-int	ibm561_get_cmap __P((struct ramdac_cookie *,
-	    struct wsdisplay_cmap *));
-int	ibm561_set_cursor __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *));
-int	ibm561_get_cursor __P((struct ramdac_cookie *,
-	    struct wsdisplay_cursor *));
-int	ibm561_set_curpos __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	ibm561_get_curpos __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	ibm561_get_curmax __P((struct ramdac_cookie *,
-	    struct wsdisplay_curpos *));
-int	ibm561_set_dotclock __P((struct ramdac_cookie *,
-	    unsigned));
+void	ibm561_init(struct ramdac_cookie *);
+int	ibm561_set_cmap(struct ramdac_cookie *, struct wsdisplay_cmap *);
+int	ibm561_get_cmap(struct ramdac_cookie *, struct wsdisplay_cmap *);
+int	ibm561_set_cursor(struct ramdac_cookie *, struct wsdisplay_cursor *);
+int	ibm561_get_cursor(struct ramdac_cookie *, struct wsdisplay_cursor *);
+int	ibm561_set_curpos(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	ibm561_get_curpos(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	ibm561_get_curmax(struct ramdac_cookie *, struct wsdisplay_curpos *);
+int	ibm561_set_dotclock(struct ramdac_cookie *, unsigned);
 
 /* XXX const */
 struct ramdac_funcs ibm561_funcsstruct = {
@@ -100,9 +92,9 @@ struct ramdac_funcs ibm561_funcsstruct = {
 struct ibm561data {
 	void            *cookie;
 
-	int             (*ramdac_sched_update) __P((void *, void (*)(void *)));
-	void            (*ramdac_wr) __P((void *, u_int, u_int8_t));
-	u_int8_t        (*ramdac_rd) __P((void *, u_int));
+	int             (*ramdac_sched_update)(void *, void (*)(void *));
+	void            (*ramdac_wr)(void *, u_int, u_int8_t);
+	u_int8_t        (*ramdac_rd)(void *, u_int);
 
 #define CHANGED_CURCMAP		0x0001	/* cursor cmap */
 #define CHANGED_CMAP		0x0002	/* color map */
@@ -135,7 +127,7 @@ struct ibm561data {
 /*
  * private functions
  */
-void	ibm561_update __P((void *));
+void	ibm561_update(void *);
 static void ibm561_load_cmap(struct ibm561data *);
 static void ibm561_load_dotclock(struct ibm561data *);
 static void ibm561_regbegin(struct ibm561data *, u_int16_t);

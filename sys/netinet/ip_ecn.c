@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.c,v 1.12 2002/04/10 09:18:57 itojun Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.12.10.1 2005/02/04 11:47:48 skrll Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.11 2001/05/03 16:09:29 itojun Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.12 2002/04/10 09:18:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.12.10.1 2005/02/04 11:47:48 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -59,10 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.12 2002/04/10 09:18:57 itojun Exp $");
  * modify outer ECN (TOS) field on ingress operation (tunnel encapsulation).
  */
 void
-ip_ecn_ingress(mode, outer, inner)
-	int mode;
-	u_int8_t *outer;
-	const u_int8_t *inner;
+ip_ecn_ingress(int mode, u_int8_t *outer, const u_int8_t *inner)
 {
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip_ecn_ingress");
@@ -84,10 +81,7 @@ ip_ecn_ingress(mode, outer, inner)
  * modify inner ECN (TOS) field on egress operation (tunnel decapsulation).
  */
 void
-ip_ecn_egress(mode, outer, inner)
-	int mode;
-	const u_int8_t *outer;
-	u_int8_t *inner;
+ip_ecn_egress(int mode, const u_int8_t *outer, u_int8_t *inner)
 {
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip_ecn_egress");
@@ -105,10 +99,7 @@ ip_ecn_egress(mode, outer, inner)
 
 #ifdef INET6
 void
-ip6_ecn_ingress(mode, outer, inner)
-	int mode;
-	u_int32_t *outer;
-	const u_int32_t *inner;
+ip6_ecn_ingress(int mode, u_int32_t *outer, const u_int32_t *inner)
 {
 	u_int8_t outer8, inner8;
 
@@ -123,10 +114,7 @@ ip6_ecn_ingress(mode, outer, inner)
 }
 
 void
-ip6_ecn_egress(mode, outer, inner)
-	int mode;
-	const u_int32_t *outer;
-	u_int32_t *inner;
+ip6_ecn_egress(int mode, const u_int32_t *outer, u_int32_t *inner)
 {
 	u_int8_t outer8, inner8;
 

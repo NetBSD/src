@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.28.2.3 2004/09/21 13:37:12 skrll Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.28.2.4 2005/02/04 11:47:48 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.28.2.3 2004/09/21 13:37:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.28.2.4 2005/02/04 11:47:48 skrll Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -102,9 +102,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.28.2.3 2004/09/21 13:37:12 skrll Exp $"
 void gre_inet_ntoa(struct in_addr in); 	/* XXX */
 #endif
 
-struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
+struct gre_softc *gre_lookup(struct mbuf *, u_int8_t);
 
-int	gre_input2 __P((struct mbuf *, int, u_char));
+int gre_input2(struct mbuf *, int, u_char);
 
 /*
  * De-encapsulate a packet and feed it back through ip input (this
@@ -341,9 +341,7 @@ gre_mobile_input(struct mbuf *m, ...)
  * Find the gre interface associated with our src/dst/proto set.
  */
 struct gre_softc *
-gre_lookup(m, proto)
-	struct mbuf *m;
-	u_int8_t proto;
+gre_lookup(struct mbuf *m, u_int8_t proto)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct gre_softc *sc;

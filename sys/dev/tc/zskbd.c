@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.8.6.4 2005/01/13 08:33:12 skrll Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.8.6.5 2005/02/04 11:47:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.8.6.4 2005/01/13 08:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.8.6.5 2005/02/04 11:47:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,17 +118,17 @@ struct zskbd_softc {
 
 struct zsops zsops_zskbd;
 
-static void	zskbd_input __P((struct zskbd_softc *, int));
+static void	zskbd_input(struct zskbd_softc *, int);
 
-static int	zskbd_match __P((struct device *, struct cfdata *, void *));
-static void	zskbd_attach __P((struct device *, struct device *, void *));
+static int	zskbd_match(struct device *, struct cfdata *, void *);
+static void	zskbd_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(zskbd, sizeof(struct zskbd_softc),
     zskbd_match, zskbd_attach, NULL, NULL);
 
-static int	zskbd_enable __P((void *, int));
-static void	zskbd_set_leds __P((void *, int));
-static int	zskbd_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+static int	zskbd_enable(void *, int);
+static void	zskbd_set_leds(void *, int);
+static int	zskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 const struct wskbd_accessops zskbd_accessops = {
 	zskbd_enable,
@@ -144,7 +144,7 @@ const struct wskbd_consops zskbd_consops = {
 	zskbd_cnpollc,
 };
 
-static int zskbd_sendchar __P((void *, u_char));
+static int zskbd_sendchar(void *, u_char);
 
 const struct wskbd_mapdata zskbd_keymapdata = {
 	lkkbd_keydesctab,
@@ -155,7 +155,7 @@ const struct wskbd_mapdata zskbd_keymapdata = {
 #endif
 };
 
-int zskbd_cnattach __P((struct zs_chanstate *));	/* EXPORTED */
+int zskbd_cnattach(struct zs_chanstate *);	/* EXPORTED */
 
 /*
  * kbd_match: how is this zs channel configured?
@@ -370,10 +370,10 @@ zskbd_input(sc, data)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void zskbd_rxint __P((struct zs_chanstate *));
-static void zskbd_stint __P((struct zs_chanstate *, int));
-static void zskbd_txint __P((struct zs_chanstate *));
-static void zskbd_softint __P((struct zs_chanstate *));
+static void zskbd_rxint(struct zs_chanstate *);
+static void zskbd_stint(struct zs_chanstate *, int);
+static void zskbd_txint(struct zs_chanstate *);
+static void zskbd_softint(struct zs_chanstate *);
 
 static void
 zskbd_rxint(cs)

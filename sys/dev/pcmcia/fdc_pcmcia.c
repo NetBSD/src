@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.10.6.3 2004/09/21 13:32:19 skrll Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.10.6.4 2005/02/04 11:47:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.10.6.3 2004/09/21 13:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.10.6.4 2005/02/04 11:47:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,10 @@ struct fdc_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-int fdc_pcmcia_match __P((struct device *, struct cfdata *, void *));
-int fdc_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void fdc_pcmcia_attach __P((struct device *, struct device *, void *));
-static void fdc_conf __P((struct fdc_softc *));
+int fdc_pcmcia_match(struct device *, struct cfdata *, void *);
+int fdc_pcmcia_validate_config(struct pcmcia_config_entry *);
+void fdc_pcmcia_attach(struct device *, struct device *, void *);
+static void fdc_conf(struct fdc_softc *);
 
 CFATTACH_DECL(fdc_pcmcia, sizeof(struct fdc_pcmcia_softc),
     fdc_pcmcia_match, fdc_pcmcia_attach, NULL, NULL);

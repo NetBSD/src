@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.26.6.3 2004/09/21 13:37:12 skrll Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.26.6.4 2005/02/04 11:47:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.26.6.3 2004/09/21 13:37:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.26.6.4 2005/02/04 11:47:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +94,7 @@ do { \
 int ip_maxflows = IPFLOW_MAX;
 
 static unsigned
-ipflow_hash(
-	struct in_addr dst,
-	struct in_addr src,
-	unsigned tos)
+ipflow_hash(struct in_addr dst,	struct in_addr src, unsigned tos)
 {
 	unsigned hash = tos;
 	int idx;
@@ -107,8 +104,7 @@ ipflow_hash(
 }
 
 static struct ipflow *
-ipflow_lookup(
-	const struct ip *ip)
+ipflow_lookup(const struct ip *ip)
 {
 	unsigned hash;
 	struct ipflow *ipf;
@@ -127,7 +123,7 @@ ipflow_lookup(
 }
 
 void
-ipflow_init()
+ipflow_init(void)
 {
 	int i;
 
@@ -137,8 +133,7 @@ ipflow_init()
 }
 
 int
-ipflow_fastforward(
-	struct mbuf *m)
+ipflow_fastforward(struct mbuf *m)
 {
 	struct ip *ip, ip_store;
 	struct ipflow *ipf;
@@ -273,8 +268,7 @@ ipflow_fastforward(
 }
 
 static void
-ipflow_addstats(
-	struct ipflow *ipf)
+ipflow_addstats(struct ipflow *ipf)
 {
 	ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
 	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
@@ -283,8 +277,7 @@ ipflow_addstats(
 }
 
 static void
-ipflow_free(
-	struct ipflow *ipf)
+ipflow_free(struct ipflow *ipf)
 {
 	int s;
 	/*
@@ -302,8 +295,7 @@ ipflow_free(
 }
 
 struct ipflow *
-ipflow_reap(
-	int just_one)
+ipflow_reap(int just_one)
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
 		struct ipflow *ipf, *maybe_ipf = NULL;
@@ -350,8 +342,7 @@ ipflow_reap(
 }
 
 void
-ipflow_slowtimo(
-	void)
+ipflow_slowtimo(void)
 {
 	struct ipflow *ipf, *next_ipf;
 
@@ -372,9 +363,7 @@ ipflow_slowtimo(
 }
 
 void
-ipflow_create(
-	const struct route *ro,
-	struct mbuf *m)
+ipflow_create(const struct route *ro, struct mbuf *m)
 {
 	const struct ip *const ip = mtod(m, struct ip *);
 	struct ipflow *ipf;
@@ -432,8 +421,7 @@ ipflow_create(
 }
 
 void
-ipflow_invalidate_all(
-	void)
+ipflow_invalidate_all(void)
 {
 	struct ipflow *ipf, *next_ipf;
 	int s;

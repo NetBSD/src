@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.4.2.4 2004/11/29 07:24:15 skrll Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.4.2.5 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -69,6 +69,7 @@ struct gt_softc {
 #define	GT_PCIOK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 2, 2)
 #define	GT_ETHEROK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 4, 3)
 #define	GT_OBIOOK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 7, 5)
+#define	GT_I2COK(gt, ga, cd)		GT_CHILDOK((gt), (ga), (cd), 12, 1)
 
 #define	GT_CHILDFOUND(gt, ga, pos) \
 	((void)(((gt)->gt_childmask |= (1 << (((ga)->ga_unit) + (pos))))))
@@ -77,6 +78,7 @@ struct gt_softc {
 #define	GT_PCIFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 2)
 #define	GT_ETHERFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 4)
 #define	GT_OBIOFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 7)
+#define	GT_I2CFOUND(gt, ga)		GT_CHILDFOUND((gt), (ga), 12)
 
 struct gt_attach_args {
 	const char *ga_name;		/* class name of device */

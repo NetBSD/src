@@ -1,4 +1,4 @@
-/*	$NetBSD: pcic_pci_machdep.c,v 1.2 2001/11/15 07:03:35 lukem Exp $	*/
+/*	$NetBSD: pcic_pci_machdep.c,v 1.2.18.1 2005/02/04 11:44:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.2 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.2.18.1 2005/02/04 11:44:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,16 +53,13 @@ __KERNEL_RCSID(0, "$NetBSD: pcic_pci_machdep.c,v 1.2 2001/11/15 07:03:35 lukem E
 extern int pcic_isa_intr_alloc_mask;
 
 void *
-pcic_pci_machdep_intr_est(pc)
-	pci_chipset_tag_t pc;
+pcic_pci_machdep_intr_est(pci_chipset_tag_t pc)
 {
 	return NULL;
 }
 
 void *
-pcic_pci_machdep_pcic_intr_establish(sc, fct)
-	struct pcic_softc *sc;
-	int (*fct) __P((void *));
+pcic_pci_machdep_pcic_intr_establish(struct pcic_softc *sc, int (*fct)(void *))
 {
 	if (isa_intr_alloc(NULL, PCIC_CSC_INTR_IRQ_VALIDMASK &
 			   pcic_isa_intr_alloc_mask, IST_EDGE, &(sc->irq)))
@@ -73,20 +70,14 @@ pcic_pci_machdep_pcic_intr_establish(sc, fct)
 }
 
 void *
-pcic_pci_machdep_chip_intr_establish(pch, pf, ipl, fct, arg)
-	pcmcia_chipset_handle_t pch;
-	struct pcmcia_function *pf;
-	int ipl;
-	int (*fct) __P((void *));
-	void *arg;
+pcic_pci_machdep_chip_intr_establish(pcmcia_chipset_handle_t pch,
+    struct pcmcia_function *pf, int ipl, int (*fct)(void *), void *arg)
 {
 	return (pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg));
 }
 
 void
-pcic_pci_machdep_chip_intr_disestablish(pch, ih)
-	pcmcia_chipset_handle_t pch;
-	void *ih;
+pcic_pci_machdep_chip_intr_disestablish(pcmcia_chipset_handle_t pch, void *ih)
 {
 	pcic_isa_chip_intr_disestablish(pch, ih);
 }

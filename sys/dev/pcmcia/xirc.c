@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.11.2.4 2004/09/21 13:32:22 skrll Exp $	*/
+/*	$NetBSD: xirc.c,v 1.11.2.5 2005/02/04 11:47:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.11.2.4 2004/09/21 13:32:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.11.2.5 2005/02/04 11:47:09 skrll Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -133,28 +133,28 @@ struct xirc_softc {
 #define	XIRC_ETHERNET_ALLOCED	0x20
 };
 
-int	xirc_match __P((struct device *, struct cfdata *, void *));
-void	xirc_attach __P((struct device *, struct device *, void *));
-int	xirc_detach __P((struct device *, int));
-int	xirc_activate __P((struct device *, enum devact));
+int	xirc_match(struct device *, struct cfdata *, void *);
+void	xirc_attach(struct device *, struct device *, void *);
+int	xirc_detach(struct device *, int);
+int	xirc_activate(struct device *, enum devact);
 
 CFATTACH_DECL(xirc, sizeof(struct xirc_softc),
     xirc_match, xirc_attach, xirc_detach, xirc_activate);
 
-int	xirc_print __P((void *, const char *));
+int	xirc_print(void *, const char *);
 
-int	xirc_manfid_ciscallback __P((struct pcmcia_tuple *, void *));
+int	xirc_manfid_ciscallback(struct pcmcia_tuple *, void *);
 struct pcmcia_config_entry *
-	xirc_mako_alloc __P((struct xirc_softc *));
+	xirc_mako_alloc(struct xirc_softc *);
 struct pcmcia_config_entry *
-	xirc_dingo_alloc_modem __P((struct xirc_softc *));
+	xirc_dingo_alloc_modem(struct xirc_softc *);
 struct pcmcia_config_entry *
-	xirc_dingo_alloc_ethernet __P((struct xirc_softc *));
+	xirc_dingo_alloc_ethernet(struct xirc_softc *);
 
-int	xirc_enable __P((struct xirc_softc *, int, int));
-void	xirc_disable __P((struct xirc_softc *, int, int));
+int	xirc_enable(struct xirc_softc *, int, int);
+void	xirc_disable(struct xirc_softc *, int, int);
 
-int	xirc_intr __P((void *));
+int	xirc_intr(void *);
 
 int
 xirc_match(parent, match, aux)
@@ -579,16 +579,16 @@ xirc_disable(sc, flag, media)
 /****** Here begins the com attachment code. ******/
 
 #if NCOM_XIRC > 0
-int	com_xirc_match __P((struct device *, struct cfdata *, void *));
-void	com_xirc_attach __P((struct device *, struct device *, void *));
-int	com_xirc_detach __P((struct device *, int));
+int	com_xirc_match(struct device *, struct cfdata *, void *);
+void	com_xirc_attach(struct device *, struct device *, void *);
+int	com_xirc_detach(struct device *, int);
 
 /* No xirc-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(com_xirc, sizeof(struct com_softc),
     com_xirc_match, com_xirc_attach, com_detach, com_activate);
 
-int	com_xirc_enable __P((struct com_softc *));
-void	com_xirc_disable __P((struct com_softc *));
+int	com_xirc_enable(struct com_softc *);
+void	com_xirc_disable(struct com_softc *);
 
 int
 com_xirc_match(parent, match, aux)
@@ -656,16 +656,16 @@ com_xirc_disable(sc)
 /****** Here begins the xi attachment code. ******/
 
 #if NXI_XIRC > 0
-int	xi_xirc_match __P((struct device *, struct cfdata *, void *));
-void	xi_xirc_attach __P((struct device *, struct device *, void *));
+int	xi_xirc_match(struct device *, struct cfdata *, void *);
+void	xi_xirc_attach(struct device *, struct device *, void *);
 
 /* No xirc-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(xi_xirc, sizeof(struct xi_softc),
     xi_xirc_match, xi_xirc_attach, xi_detach, xi_activate);
 
-int	xi_xirc_enable __P((struct xi_softc *));
-void	xi_xirc_disable __P((struct xi_softc *));
-int	xi_xirc_lan_nid_ciscallback __P((struct pcmcia_tuple *, void *));
+int	xi_xirc_enable(struct xi_softc *);
+void	xi_xirc_disable(struct xi_softc *);
+int	xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *, void *);
 
 int
 xi_xirc_match(parent, match, aux)

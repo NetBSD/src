@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.h,v 1.8.6.3 2004/09/21 13:37:11 skrll Exp $	*/
+/*	$NetBSD: in_gif.h,v 1.8.6.4 2005/02/04 11:47:47 skrll Exp $	*/
 /*	$KAME: in_gif.h,v 1.6 2001/07/25 00:55:48 itojun Exp $	*/
 
 /*
@@ -45,5 +45,13 @@ int gif_encapcheck4(const struct mbuf *, int, int, void *);
 #endif
 int in_gif_attach(struct gif_softc *);
 int in_gif_detach(struct gif_softc *);
+
+struct etherip_header {
+        u_int8_t eip_ver;        /* version/reserved */
+        u_int8_t eip_pad;        /* required padding byte */
+};
+#define ETHERIP_VER_VERS_MASK   0x0f
+#define ETHERIP_VER_RSVD_MASK   0xf0
+#define ETHERIP_VERSION         0x03
 
 #endif /*_NETINET_IN_GIF_H_*/

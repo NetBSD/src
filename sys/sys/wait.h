@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.19.2.3 2004/09/21 13:38:51 skrll Exp $	*/
+/*	$NetBSD: wait.h,v 1.19.2.4 2005/02/04 11:48:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -171,11 +171,11 @@ union wait {
 __BEGIN_DECLS
 struct rusage;	/* forward declaration */
 
-pid_t	wait __P((int *));
-pid_t	waitpid __P((pid_t, int *, int));
+pid_t	wait(int *);
+pid_t	waitpid(pid_t, int *, int);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-pid_t	wait3 __P((int *, int, struct rusage *));
-pid_t	wait4 __P((pid_t, int *, int, struct rusage *));
+pid_t	wait3(int *, int, struct rusage *);
+pid_t	wait4(pid_t, int *, int, struct rusage *);
 #endif
 __END_DECLS
 #endif

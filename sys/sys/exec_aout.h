@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.31.2.5 2005/02/04 07:09:29 skrll Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.31.2.6 2005/02/04 11:48:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -189,25 +189,25 @@ struct exec {
 #ifdef _KERNEL
 
 /* the "a.out" format's entry in the exec switch */
-int	exec_aout_makecmds __P((struct lwp *, struct exec_package *));
+int	exec_aout_makecmds(struct lwp *, struct exec_package *);
 
 /* functions which prepare various a.out executable types */
 /*
  * MI portion
  */
-int	exec_aout_prep_zmagic __P((struct lwp *, struct exec_package *));
-int	exec_aout_prep_nmagic __P((struct lwp *, struct exec_package *));
-int	exec_aout_prep_omagic __P((struct lwp *, struct exec_package *));
+int	exec_aout_prep_zmagic(struct lwp *, struct exec_package *);
+int	exec_aout_prep_nmagic(struct lwp *, struct exec_package *);
+int	exec_aout_prep_omagic(struct lwp *, struct exec_package *);
 
 /* For compatibility modules */
-int	exec_aout_prep_oldzmagic __P((struct lwp *, struct exec_package *));
-int	exec_aout_prep_oldnmagic __P((struct lwp *, struct exec_package *));
-int	exec_aout_prep_oldomagic __P((struct lwp *, struct exec_package *));
+int	exec_aout_prep_oldzmagic(struct lwp *, struct exec_package *);
+int	exec_aout_prep_oldnmagic(struct lwp *, struct exec_package *);
+int	exec_aout_prep_oldomagic(struct lwp *, struct exec_package *);
 
 /*
  * MD portion
  */
-int	cpu_exec_aout_makecmds __P((struct lwp *, struct exec_package *));
+int	cpu_exec_aout_makecmds(struct lwp *, struct exec_package *);
 
 #endif /* _KERNEL */
 

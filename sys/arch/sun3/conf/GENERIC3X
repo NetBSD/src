@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.57.2.5 2005/01/24 08:34:47 skrll Exp $
+# $NetBSD: GENERIC3X,v 1.57.2.6 2005/02/04 11:45:07 skrll Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -86,6 +86,7 @@ options 	NFSSERVER	# nfs server support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
 options 	INET		# IP prototol stack support
@@ -166,7 +167,7 @@ le0 at obio0 addr 0x65002000 ipl 3
 #	bits 8-15: disable synchronous negotiation for target [bit-8]
 #
 dma0 at obio0 addr 0x66001000 ipl 2
-esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
+esp0 at obio0 addr 0x66000000 ipl 2 flags 0x000000
 
 # Floppy drive
 fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
@@ -268,6 +269,7 @@ pseudo-device	vnd		4	# paging to files
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+pseudo-device	fss		4	# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.17.2.5 2005/01/24 08:34:18 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.17.2.6 2005/02/04 11:44:47 skrll Exp $
 #
 #	INSTALL kernel for RISC-NEWS
 
@@ -107,5 +107,6 @@ wskbd0	at kb? console ?
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	md		1	# memory disk device
+#pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	rnd			# /dev/random and in-kernel generator

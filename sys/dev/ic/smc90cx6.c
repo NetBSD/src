@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.40.2.3 2004/09/21 13:28:08 skrll Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.40.2.4 2005/02/04 11:45:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.40.2.3 2004/09/21 13:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.40.2.4 2005/02/04 11:45:27 skrll Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -132,15 +132,15 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.40.2.3 2004/09/21 13:28:08 skrll Exp 
  * #define fill(i) get mbuf && copy mbuf to chip(i)
  */
 
-void	bah_init __P((struct bah_softc *));
-void	bah_reset __P((struct bah_softc *));
-void	bah_stop __P((struct bah_softc *));
-void	bah_start __P((struct ifnet *));
-int	bahintr __P((void *));
-int	bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
-void	bah_watchdog __P((struct ifnet *));
-void	bah_srint __P((void *vsc));
-static	void bah_tint __P((struct bah_softc *, int));
+void	bah_init(struct bah_softc *);
+void	bah_reset(struct bah_softc *);
+void	bah_stop(struct bah_softc *);
+void	bah_start(struct ifnet *);
+int	bahintr(void *);
+int	bah_ioctl(struct ifnet *, unsigned long, caddr_t);
+void	bah_watchdog(struct ifnet *);
+void	bah_srint(void *vsc);
+static	void bah_tint(struct bah_softc *, int);
 void	bah_reconwatch(void *);
 
 /* short notation */
@@ -217,7 +217,7 @@ bah_attach_subr(sc)
 #ifdef BAHSOFTCOPY
 	sc->sc_rxcookie = softintr_establish(IPL_SOFTNET, bah_srint, sc);
 	sc->sc_txcookie = softintr_establish(IPL_SOFTNET,
-		(void (*) __P((void *)))bah_start, ifp);
+		(void (*)(void *))bah_start, ifp);
 #endif
 
 	callout_init(&sc->sc_recon_ch);

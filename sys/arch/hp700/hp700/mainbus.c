@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11.2.3 2005/01/24 08:59:39 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.2.4 2005/02/04 11:44:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,9 +70,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.3 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.4 2005/02/04 11:44:19 skrll Exp $");
 
 #include "locators.h"
+#include "opt_power_switch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11.2.3 2005/01/24 08:59:39 skrll Exp $
 
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/intr.h>
+#include <hp700/hp700/power.h>
 #include <hp700/dev/cpudevs.h>
 
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
@@ -184,8 +186,10 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	u_int frames;
+#ifdef USE_BTLB
 	vsize_t btlb_size;
 	int error;
+#endif /* USE_BTLB */
 
 	/*
 	 * We must be called with a page-aligned address in 
@@ -210,6 +214,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		 * If this mapping is more than eight pages long,
 		 * try to add a BTLB entry.
 		 */
+#ifdef USE_BTLB
 		if (frames > 8 &&
 		    frames >= hppa_btlb_size_min) {
 			btlb_size = frames;
@@ -230,6 +235,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 			else if (error != ENOMEM)
 				return error;
 		}
+#endif /* USE_BTLB */
 
 		/*
 		 * Enter another single-page mapping.
@@ -251,8 +257,10 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 {
 	bus_addr_t bpa;
 	u_int frames;
+#ifdef USE_BTLB
 	vsize_t btlb_size;
 	int error;
+#endif /* USE_BTLB */
 
 	/*
 	 * We must be called with a page-aligned address in 
@@ -273,6 +281,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 		 * If this mapping is more than eight pages long,
 		 * try to remove a BTLB entry.
 		 */
+#ifdef USE_BTLB
 		if (frames > 8 &&
 		    frames >= hppa_btlb_size_min) {
 			btlb_size = frames;
@@ -289,6 +298,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 			else if (error != ENOENT)
 				return error;
 		}
+#endif /* USE_BTLB */
 
 		/*
 		 * Remove another single-page mapping.
@@ -1589,6 +1599,16 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
 	nca.ca_dp.dp_mod = -1;
 	pdc_scanbus(self, &nca, mb_module_callback);
+
+#ifdef POWER_SWITCH
+	/*
+	 * Initialize soft power switch code. This may need to bus_space_map(9)
+	 * the power switch status register. So call it from here to give it
+	 * a bus space tag. This may need to use the lasi_pwr_sw_reg so call
+	 * it after all IO hardware is found.
+	 */
+	pwr_sw_init(&hppa_bustag);
+#endif /* POWER_SWITCH */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.1.10.3 2004/09/21 13:16:25 skrll Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.1.10.4 2005/02/04 11:44:19 skrll Exp $	*/
 
 /*	$OpenBSD: stdarg.h,v 1.2 1998/11/23 03:28:23 mickey Exp $	*/
 
@@ -38,11 +38,19 @@
 
 typedef double *va_list;
 
+#ifdef __lint__
+
+#define va_start(ap, last)      ((ap) = *(va_list *)0)
+#define va_arg(ap, type)        (*(type *)(void *)&(ap))
+#define va_end(ap)
+
+#else
+
 #ifdef __GNUC__
 #define	va_start(ap,lastarg)	((ap) = (va_list)__builtin_saveregs())
 #else
 #define	va_start(ap,lastarg)	__builtin_va_start(ap, &lastarg)
-#endif
+#endif /* __GNUC__ */
 
 #define va_arg(ap,type)							\
 	(sizeof(type) > 8 ?						\
@@ -53,5 +61,7 @@ typedef double *va_list;
 	     (*((type *) (void *) ((char *)ap + ((8 - sizeof(type)) % 4))))))
 
 #define	va_end(ap)
+
+#endif /* __lint__ */
 
 #endif /* !_HPPA_STDARG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.6.2.5 2005/01/17 19:29:29 skrll Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.6.2.6 2005/02/04 11:44:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.6.2.5 2005/01/17 19:29:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.6.2.6 2005/02/04 11:44:31 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,8 +76,7 @@ struct lpcib_softc {
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
 
-static void tcotimer_configure(struct lpcib_softc *,
-				struct pci_attach_args *);
+static void tcotimer_configure(struct lpcib_softc *, struct pci_attach_args *);
 static int tcotimer_setmode(struct sysmon_wdog *);
 static int tcotimer_tickle(struct sysmon_wdog *);
 

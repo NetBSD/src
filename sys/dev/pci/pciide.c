@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.194.2.3 2004/09/21 13:31:06 skrll Exp $	*/
+/*	$NetBSD: pciide.c,v 1.194.2.4 2005/02/04 11:46:40 skrll Exp $	*/
 
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.194.2.3 2004/09/21 13:31:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.194.2.4 2005/02/04 11:46:40 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -83,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.194.2.3 2004/09/21 13:31:06 skrll Exp $
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-int	pciide_match __P((struct device *, struct cfdata *, void *));
-void	pciide_attach __P((struct device *, struct device *, void *));
+int	pciide_match(struct device *, struct cfdata *, void *);
+void	pciide_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pciide, sizeof(struct pciide_softc),
     pciide_match, pciide_attach, NULL, NULL);

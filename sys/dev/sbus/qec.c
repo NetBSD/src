@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.26.6.3 2004/09/21 13:33:13 skrll Exp $ */
+/*	$NetBSD: qec.c,v 1.26.6.4 2005/02/04 11:47:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.26.6.3 2004/09/21 13:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.26.6.4 2005/02/04 11:47:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,25 +54,25 @@ __KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.26.6.3 2004/09/21 13:33:13 skrll Exp $");
 #include <dev/sbus/qecreg.h>
 #include <dev/sbus/qecvar.h>
 
-static int	qecprint	__P((void *, const char *));
-static int	qecmatch	__P((struct device *, struct cfdata *, void *));
-static void	qecattach	__P((struct device *, struct device *, void *));
-void		qec_init	__P((struct qec_softc *));
+static int	qecprint(void *, const char *);
+static int	qecmatch(struct device *, struct cfdata *, void *);
+static void	qecattach(struct device *, struct device *, void *);
+void		qec_init(struct qec_softc *);
 
-static int qec_bus_map __P((
+static int qec_bus_map(
 		bus_space_tag_t,
 		bus_addr_t,		/*coded slot+offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
-		bus_space_handle_t *));
-static void *qec_intr_establish __P((
+		bus_space_handle_t *);
+static void *qec_intr_establish(
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' interrupt level*/
-		int (*) __P((void *)),	/*handler*/
+		int (*)(void *),	/*handler*/
 		void *,			/*arg*/
-		void (*) __P((void))));	/*optional fast trap handler*/
+		void (*)(void));	/*optional fast trap handler*/
 
 CFATTACH_DECL(qec, sizeof(struct qec_softc),
     qecmatch, qecattach, NULL, NULL);
@@ -249,9 +249,9 @@ qec_intr_establish(t, pri, level, handler, arg, fastvec)
 	bus_space_tag_t t;
 	int pri;
 	int level;
-	int (*handler) __P((void *));
+	int (*handler)(void *);
 	void *arg;
-	void (*fastvec) __P((void));	/* ignored */
+	void (*fastvec)(void);	/* ignored */
 {
 	struct qec_softc *sc = t->cookie;
 

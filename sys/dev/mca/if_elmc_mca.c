@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.12.2.4 2005/01/17 19:31:11 skrll Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.12.2.5 2005/02/04 11:46:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.12.2.4 2005/01/17 19:31:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.12.2.5 2005/02/04 11:46:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,17 +79,17 @@ struct elmc_mca_softc {
 	void		*sc_ih;		/* interrupt handle */
 };
 
-int	elmc_mca_match __P((struct device *, struct cfdata *, void *));
-void	elmc_mca_attach __P((struct device *, struct device *, void *));
+int	elmc_mca_match(struct device *, struct cfdata *, void *);
+void	elmc_mca_attach(struct device *, struct device *, void *);
 
-static void	elmc_mca_copyin __P((struct ie_softc *, void *, int, size_t));
-static void	elmc_mca_copyout __P((struct ie_softc *, const void *, int, size_t));
-static u_int16_t elmc_mca_read_16 __P((struct ie_softc *, int));
-static void	elmc_mca_write_16 __P((struct ie_softc *, int, u_int16_t));
-static void	elmc_mca_write_24 __P((struct ie_softc *, int, int));
-static void	elmc_mca_attn __P((struct ie_softc *, int));
-static void	elmc_mca_hwreset __P((struct ie_softc *, int));
-static int	elmc_mca_intrhook __P((struct ie_softc *, int));
+static void	elmc_mca_copyin(struct ie_softc *, void *, int, size_t);
+static void	elmc_mca_copyout(struct ie_softc *, const void *, int, size_t);
+static u_int16_t elmc_mca_read_16(struct ie_softc *, int);
+static void	elmc_mca_write_16(struct ie_softc *, int, u_int16_t);
+static void	elmc_mca_write_24(struct ie_softc *, int, int);
+static void	elmc_mca_attn(struct ie_softc *, int);
+static void	elmc_mca_hwreset(struct ie_softc *, int);
+static int	elmc_mca_intrhook(struct ie_softc *, int);
 
 int
 elmc_mca_match(struct device *parent, struct cfdata *cf, void *aux)

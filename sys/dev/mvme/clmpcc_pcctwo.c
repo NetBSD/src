@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.5.8.3 2004/09/21 13:30:59 skrll Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.5.8.4 2005/02/04 11:46:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.5.8.3 2004/09/21 13:30:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.5.8.4 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,10 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.5.8.3 2004/09/21 13:30:59 skrll 
 
 
 /* Definition of the driver for autoconfig. */
-int clmpcc_pcctwo_match __P((struct device *, struct cfdata *, void *));
-void clmpcc_pcctwo_attach __P((struct device *, struct device *, void *));
-void clmpcc_pcctwo_iackhook __P((struct clmpcc_softc *, int));
-void clmpcc_pcctwo_consiackhook __P((struct clmpcc_softc *, int));
+int clmpcc_pcctwo_match(struct device *, struct cfdata *, void *);
+void clmpcc_pcctwo_attach(struct device *, struct device *, void *);
+void clmpcc_pcctwo_iackhook(struct clmpcc_softc *, int);
+void clmpcc_pcctwo_consiackhook(struct clmpcc_softc *, int);
 
 CFATTACH_DECL(clmpcc_pcctwo, sizeof(struct clmpcc_softc),
     clmpcc_pcctwo_match, clmpcc_pcctwo_attach, NULL, NULL);

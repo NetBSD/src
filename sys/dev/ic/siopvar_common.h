@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.24.2.3 2004/09/21 13:28:08 skrll Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.24.2.4 2005/02/04 11:45:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -146,7 +146,7 @@ struct siop_common_softc {
 	bus_space_tag_t sc_ramt;	/* bus_space ram tag */
 	bus_space_handle_t sc_ramh;	/* bus_space ram handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
-	void (*sc_reset) __P((struct siop_common_softc*)); /* reset callback */
+	void (*sc_reset)(struct siop_common_softc*); /* reset callback */
 	bus_dmamap_t  sc_scriptdma;	/* DMA map for script */
 	bus_addr_t sc_scriptaddr;	/* on-board ram or physical address */
 	u_int32_t *sc_script;		/* script location in memory */
@@ -180,29 +180,29 @@ struct siop_common_softc {
 #define SF_PCI_CLS	0x08000000 /* PCI cache line size */
 #define SF_PCI_WRI	0x10000000 /* PCI write and invalidate */
 
-int	siop_common_attach __P((struct siop_common_softc *));
-void	siop_common_reset __P((struct siop_common_softc *));
-void	siop_setuptables __P((struct siop_common_cmd *));
-int	siop_modechange __P((struct siop_common_softc *));
+int	siop_common_attach(struct siop_common_softc *);
+void	siop_common_reset(struct siop_common_softc *);
+void	siop_setuptables(struct siop_common_cmd *);
+int	siop_modechange(struct siop_common_softc *);
 
-int	siop_wdtr_neg __P((struct siop_common_cmd *));
-int	siop_sdtr_neg __P((struct siop_common_cmd *));
-int	siop_ppr_neg __P((struct siop_common_cmd *));
-void	siop_sdtr_msg __P((struct siop_common_cmd *, int, int, int));
-void	siop_wdtr_msg __P((struct siop_common_cmd *, int, int));
-void	siop_ppr_msg __P((struct siop_common_cmd *, int, int, int));
-void	siop_update_xfer_mode __P((struct siop_common_softc *, int));
-int	siop_iwr __P((struct siop_common_cmd *));
+int	siop_wdtr_neg(struct siop_common_cmd *);
+int	siop_sdtr_neg(struct siop_common_cmd *);
+int	siop_ppr_neg(struct siop_common_cmd *);
+void	siop_sdtr_msg(struct siop_common_cmd *, int, int, int);
+void	siop_wdtr_msg(struct siop_common_cmd *, int, int);
+void	siop_ppr_msg(struct siop_common_cmd *, int, int, int);
+void	siop_update_xfer_mode(struct siop_common_softc *, int);
+int	siop_iwr(struct siop_common_cmd *);
 /* actions to take at return of siop_wdtr_neg(), siop_sdtr_neg() and siop_iwr */
 #define SIOP_NEG_NOP	0x0
 #define SIOP_NEG_MSGOUT	0x1
 #define SIOP_NEG_ACK	0x2
 
-void	siop_minphys __P((struct buf *));
-int	siop_ioctl __P((struct scsipi_channel *, u_long,
-		caddr_t, int, struct proc *));
-void 	siop_ma  __P((struct siop_common_cmd *));
-void 	siop_sdp __P((struct siop_common_cmd *, int));
-void 	siop_update_resid __P((struct siop_common_cmd *, int));
-void	siop_clearfifo __P((struct siop_common_softc *));
-void	siop_resetbus __P((struct siop_common_softc *));
+void	siop_minphys(struct buf *);
+int	siop_ioctl(struct scsipi_channel *, u_long,
+		caddr_t, int, struct proc *);
+void 	siop_ma (struct siop_common_cmd *);
+void 	siop_sdp(struct siop_common_cmd *, int);
+void 	siop_update_resid(struct siop_common_cmd *, int);
+void	siop_clearfifo(struct siop_common_softc *);
+void	siop_resetbus(struct siop_common_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.25.2.3 2004/09/21 13:38:51 skrll Exp $	*/
+/*	$NetBSD: termios.h,v 1.25.2.4 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -259,24 +259,24 @@ typedef	__pid_t		pid_t;
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-speed_t	cfgetispeed __P((const struct termios *));
-speed_t	cfgetospeed __P((const struct termios *));
-int	cfsetispeed __P((struct termios *, speed_t));
-int	cfsetospeed __P((struct termios *, speed_t));
-int	tcgetattr __P((int, struct termios *));
-int	tcsetattr __P((int, int, const struct termios *));
-int	tcdrain __P((int));
-int	tcflow __P((int, int));
-int	tcflush __P((int, int));
-int	tcsendbreak __P((int, int));
+speed_t	cfgetispeed(const struct termios *);
+speed_t	cfgetospeed(const struct termios *);
+int	cfsetispeed(struct termios *, speed_t);
+int	cfsetospeed(struct termios *, speed_t);
+int	tcgetattr(int, struct termios *);
+int	tcsetattr(int, int, const struct termios *);
+int	tcdrain(int);
+int	tcflow(int, int);
+int	tcflush(int, int);
+int	tcsendbreak(int, int);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-pid_t	tcgetsid __P((int));
+pid_t	tcgetsid(int);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 
 
 #if defined(_NETBSD_SOURCE)
-void	cfmakeraw __P((struct termios *));
-int	cfsetspeed __P((struct termios *, speed_t));
+void	cfmakeraw(struct termios *);
+int	cfsetspeed(struct termios *, speed_t);
 #endif /* defined(_NETBSD_SOURCE) */
 __END_DECLS
 

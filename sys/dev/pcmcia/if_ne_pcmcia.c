@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.6 2004/10/19 15:57:26 skrll Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.7 2005/02/04 11:47:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.6 2004/10/19 15:57:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.7 2005/02/04 11:47:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,13 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.6 2004/10/19 15:57:26 skrll
 #include <dev/ic/ax88190reg.h>
 #include <dev/ic/ax88190var.h>
 
-int	ne_pcmcia_match __P((struct device *, struct cfdata *, void *));
-int	ne_pcmcia_validate_config __P((struct pcmcia_config_entry *));
-void	ne_pcmcia_attach __P((struct device *, struct device *, void *));
-int	ne_pcmcia_detach __P((struct device *, int));
+int	ne_pcmcia_match(struct device *, struct cfdata *, void *);
+int	ne_pcmcia_validate_config(struct pcmcia_config_entry *);
+void	ne_pcmcia_attach(struct device *, struct device *, void *);
+int	ne_pcmcia_detach(struct device *, int);
 
-int	ne_pcmcia_enable __P((struct dp8390_softc *));
-void	ne_pcmcia_disable __P((struct dp8390_softc *));
+int	ne_pcmcia_enable(struct dp8390_softc *);
+void	ne_pcmcia_disable(struct dp8390_softc *);
 
 struct ne_pcmcia_softc {
 	struct ne2000_softc sc_ne2000;		/* real "ne2000" softc */
@@ -82,12 +82,10 @@ struct ne_pcmcia_softc {
 #define	NE_PCMCIA_ATTACHED	3
 };
 
-u_int8_t *
-	ne_pcmcia_get_enaddr __P((struct ne_pcmcia_softc *, int,
-	    u_int8_t [ETHER_ADDR_LEN]));
-u_int8_t *
-	ne_pcmcia_dl10019_get_enaddr __P((struct ne_pcmcia_softc *,
-	    u_int8_t [ETHER_ADDR_LEN]));
+u_int8_t *ne_pcmcia_get_enaddr(struct ne_pcmcia_softc *, int,
+	    u_int8_t [ETHER_ADDR_LEN]);
+u_int8_t *ne_pcmcia_dl10019_get_enaddr(struct ne_pcmcia_softc *,
+	    u_int8_t [ETHER_ADDR_LEN]);
 
 CFATTACH_DECL(ne_pcmcia, sizeof(struct ne_pcmcia_softc),
     ne_pcmcia_match, ne_pcmcia_attach, ne_pcmcia_detach, dp8390_activate);

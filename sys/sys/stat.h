@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.43.2.3 2004/09/21 13:38:50 skrll Exp $	*/
+/*	$NetBSD: stat.h,v 1.43.2.4 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -276,35 +276,35 @@ struct stat {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	chmod __P((const char *, mode_t));
-int	mkdir __P((const char *, mode_t));
-int	mkfifo __P((const char *, mode_t));
+int	chmod(const char *, mode_t);
+int	mkdir(const char *, mode_t);
+int	mkfifo(const char *, mode_t);
 #ifdef __LIBC12_SOURCE__
-int	stat __P((const char *, struct stat12 *));
-int	fstat __P((int, struct stat12 *));
-int	__stat13 __P((const char *, struct stat *));
-int	__fstat13 __P((int, struct stat *));
+int	stat(const char *, struct stat12 *);
+int	fstat(int, struct stat12 *);
+int	__stat13(const char *, struct stat *);
+int	__fstat13(int, struct stat *);
 #else
-int	stat __P((const char *, struct stat *))	__RENAME(__stat13);
-int	fstat __P((int, struct stat *))		__RENAME(__fstat13);
+int	stat(const char *, struct stat *) __RENAME(__stat13);
+int	fstat(int, struct stat *) __RENAME(__fstat13);
 #endif
-mode_t	umask __P((mode_t));
+mode_t	umask(mode_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-int	fchmod __P((int, mode_t));
+int	fchmod(int, mode_t);
 #ifdef __LIBC12_SOURCE__
-int	lstat __P((const char *, struct stat12 *));
-int	__lstat13 __P((const char *, struct stat *));
+int	lstat(const char *, struct stat12 *);
+int	__lstat13(const char *, struct stat *);
 #else
-int	lstat __P((const char *, struct stat *))	__RENAME(__lstat13);
+int	lstat(const char *, struct stat *) __RENAME(__lstat13);
 #endif
-int	mknod __P((const char *, mode_t, dev_t));
+int	mknod(const char *, mode_t, dev_t);
 #endif /* defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE) */
 
 #if defined(_NETBSD_SOURCE)
-int	chflags __P((const char *, unsigned long));
-int	fchflags __P((int, unsigned long));
-int	lchflags __P((const char *, unsigned long));
-int	lchmod __P((const char *, mode_t));
+int	chflags(const char *, unsigned long);
+int	fchflags(int, unsigned long);
+int	lchflags(const char *, unsigned long);
+int	lchmod(const char *, mode_t);
 #endif /* defined(_NETBSD_SOURCE) */
 __END_DECLS
 

@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.9.2.5 2004/11/14 08:15:24 skrll Exp $
+#	$NetBSD: OFWGENCFG,v 1.9.2.6 2005/02/04 11:44:56 skrll Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -143,6 +143,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
+#pseudo-device	fss	4		# file system snapshot device
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
 #pseudo-device	md	1		# Ramdisk driver

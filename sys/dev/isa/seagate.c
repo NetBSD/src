@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.54.2.2 2004/09/21 13:29:48 skrll Exp $	*/
+/*	$NetBSD: seagate.c,v 1.54.2.3 2005/02/04 11:46:10 skrll Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.54.2.2 2004/09/21 13:29:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.54.2.3 2005/02/04 11:46:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,28 +275,27 @@ static const char *bases[] = {
 #define	nbases		(sizeof(bases) / sizeof(bases[0]))
 #endif
 
-int seaintr __P((void *));
-void sea_scsipi_request __P((struct scsipi_channel *,
-	scsipi_adapter_req_t, void *));
-void sea_timeout __P((void *));
-void sea_done __P((struct sea_softc *, struct sea_scb *));
-struct sea_scb *sea_get_scb __P((struct sea_softc *, int));
-void sea_free_scb __P((struct sea_softc *, struct sea_scb *, int));
-static void sea_main __P((void));
-static void sea_information_transfer __P((struct sea_softc *));
-int sea_poll __P((struct sea_softc *, struct scsipi_xfer *, int));
-void sea_init __P((struct sea_softc *));
-void sea_send_scb __P((struct sea_softc *sea, struct sea_scb *scb));
-void sea_reselect __P((struct sea_softc *sea));
-int sea_select __P((struct sea_softc *sea, struct sea_scb *scb));
-int sea_transfer_pio __P((struct sea_softc *sea, u_char *phase,
-    int *count, u_char **data));
-int sea_abort __P((struct sea_softc *, struct sea_scb *scb));
+int seaintr(void *);
+void sea_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+void sea_timeout(void *);
+void sea_done(struct sea_softc *, struct sea_scb *);
+struct sea_scb *sea_get_scb(struct sea_softc *, int);
+void sea_free_scb(struct sea_softc *, struct sea_scb *, int);
+static void sea_main(void);
+static void sea_information_transfer(struct sea_softc *);
+int sea_poll(struct sea_softc *, struct scsipi_xfer *, int);
+void sea_init(struct sea_softc *);
+void sea_send_scb(struct sea_softc *sea, struct sea_scb *scb);
+void sea_reselect(struct sea_softc *sea);
+int sea_select(struct sea_softc *sea, struct sea_scb *scb);
+int sea_transfer_pio(struct sea_softc *sea, u_char *phase,
+    int *count, u_char **data);
+int sea_abort(struct sea_softc *, struct sea_scb *scb);
 
-void	sea_grow_scb __P((struct sea_softc *));
+void	sea_grow_scb(struct sea_softc *);
 
-int	seaprobe __P((struct device *, struct cfdata *, void *));
-void	seaattach __P((struct device *, struct device *, void *));
+int	seaprobe(struct device *, struct cfdata *, void *);
+void	seaattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sea, sizeof(struct sea_softc),
     seaprobe, seaattach, NULL, NULL);

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.20.2.4 2005/01/24 08:34:47 skrll Exp $
+# $NetBSD: INSTALL3X,v 1.20.2.5 2005/02/04 11:45:07 skrll Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -140,7 +140,7 @@ le0 at obio0 addr 0x65002000 ipl 3
 # Both `dma' and `esp' are needed.
 # See GENERIC3X for the flags description.
 dma0 at obio0 addr 0x66001000 ipl 2
-esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
+esp0 at obio0 addr 0x66000000 ipl 2 flags 0x000000
 
 # Floppy drive
 fdc0 at obio0 addr 0x6e000000 ipl 6 vect 0x40
@@ -195,3 +195,4 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
+#pseudo-device	fss		4	# file system snapshot device

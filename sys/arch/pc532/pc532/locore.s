@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72.2.3 2004/09/21 13:19:57 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.72.2.4 2005/02/04 11:44:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -667,7 +667,7 @@ KENTRY(longjmp, 4)
  */
 
 /*
- * setrunqueue(struct lwp *p);
+ * setrunqueue(struct lwp *l);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
 KENTRY(setrunqueue, 4)
@@ -695,7 +695,7 @@ KENTRY(setrunqueue, 4)
 #endif
 
 /*
- * remrunqueue(struct proc *p);
+ * remrunqueue(struct lwp *l);
  * Remove a process from its queue.  Should be called at splclock().
  */
 KENTRY(remrunqueue, 4)

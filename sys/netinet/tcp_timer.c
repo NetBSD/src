@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.62.2.3 2004/09/21 13:37:14 skrll Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.62.2.4 2005/02/04 11:47:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.3 2004/09/21 13:37:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.62.2.4 2005/02/04 11:47:49 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -242,7 +242,7 @@ tcp_delack(void *arg)
  * causes finite state machine actions if timers expire.
  */
 void
-tcp_slowtimo()
+tcp_slowtimo(void)
 {
 	int s;
 
@@ -257,8 +257,7 @@ tcp_slowtimo()
  * Cancel all timers for TCP tp.
  */
 void
-tcp_canceltimers(tp)
-	struct tcpcb *tp;
+tcp_canceltimers(struct tcpcb *tp)
 {
 	int i;
 
@@ -372,6 +371,7 @@ tcp_timer_rexmt(void *arg)
 		tp->t_srtt = 0;
 	}
 	tp->snd_nxt = tp->snd_una;
+	tp->snd_high = tp->snd_max;
 	/*
 	 * If timing a segment in this window, stop the timer.
 	 */
@@ -414,6 +414,7 @@ tcp_timer_rexmt(void *arg)
 	/* Loss Window MUST be one segment. */
 	tp->snd_cwnd = tp->t_segsz;
 	tp->snd_ssthresh = win * tp->t_segsz;
+	tp->t_partialacks = -1;
 	tp->t_dupacks = 0;
 	}
 	(void) tcp_output(tp);

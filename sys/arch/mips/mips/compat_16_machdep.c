@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2.4.5 2005/01/17 19:29:58 skrll Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.2.4.6 2005/02/04 11:44:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2.4.5 2005/01/17 19:29:58 skrll Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2.4.6 2005/02/04 11:44:45 skrll Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -82,7 +82,6 @@ int sigpid = 0;
 #define SDB_FPSTATE	0x04
 #endif
 
-#ifdef COMPAT_16
 /*
  * Send a signal to process.
  */
@@ -178,16 +177,14 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	f->f_regs[_R_SP] = (int)scp;
 
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
 	case 0:		/* legacy on-stack sigtramp */
 		f->f_regs[_R_RA] = (int)p->p_sigctx.ps_sigcode;
 		break;
-#endif /* COMPAT_16 */
-
+#ifdef COMPAT_16
 	case 1:
 		f->f_regs[_R_RA] = (int)ps->sa_sigdesc[sig].sd_tramp;
 		break;
-
+#endif
 	default:
 		/* Don't know what trampoline version; kill it. */
 		sigexit(l, SIGILL);
@@ -205,6 +202,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 }
 
+#ifdef COMPAT_16 /* not needed if COMPAT_ULTRIX only */
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -273,4 +271,4 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	return (EJUSTRETURN);
 }
-#endif
+#endif /* COMPAT_16 */

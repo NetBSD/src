@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.20 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.20.22.1 2005/02/04 11:47:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.13.2.4 2004/11/14 08:15:05 skrll Exp $
+# $NetBSD: NULL,v 1.13.2.5 2005/02/04 11:44:15 skrll Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -92,7 +92,6 @@ file-system 	FFS		# Berkeley fast file system
 #options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 #options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #Support for System V IPC facilities.
@@ -119,7 +118,7 @@ options 	USERCONF	# userconf(4) support
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #Amiga specific options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.166.2.6 2004/10/19 15:58:30 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.166.2.7 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -100,34 +100,32 @@ struct emul {
 	const struct sysent *e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
-	void		(*e_sendsig) __P((const struct ksiginfo *,
-					  const sigset_t *));
-	void		(*e_trapsignal) __P((struct lwp *,
-					     const struct ksiginfo *));
-	int		(*e_tracesig) __P((struct proc *, int));
+	void		(*e_sendsig)(const struct ksiginfo *,
+					  const sigset_t *);
+	void		(*e_trapsignal)(struct lwp *, const struct ksiginfo *);
+	int		(*e_tracesig)(struct proc *, int);
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 					/* Set registers before execution */
 	struct uvm_object **e_sigobject;/* shared sigcode object */
-	void		(*e_setregs) __P((struct lwp *, struct exec_package *,
-					  u_long));
+	void		(*e_setregs)(struct lwp *, struct exec_package *,
+					  u_long);
 
 					/* Per-process hooks */
-	void		(*e_proc_exec) __P((struct proc *,
-					    struct exec_package *));
-	void		(*e_proc_fork) __P((struct proc *, struct proc *, int));
-	void		(*e_proc_exit) __P((struct proc *));
-	void		(*e_lwp_fork)  __P((struct lwp *, struct lwp *));
-	void		(*e_lwp_exit)  __P((struct lwp *));
+	void		(*e_proc_exec)(struct proc *, struct exec_package *);
+	void		(*e_proc_fork)(struct proc *, struct proc *, int);
+	void		(*e_proc_exit)(struct proc *);
+	void		(*e_lwp_fork)(struct lwp *, struct lwp *);
+	void		(*e_lwp_exit)(struct lwp *);
 
 #ifdef __HAVE_SYSCALL_INTERN
-	void		(*e_syscall_intern) __P((struct proc *));
+	void		(*e_syscall_intern)(struct proc *);
 #else
-	void		(*e_syscall) __P((void));
+	void		(*e_syscall)(void);
 #endif
 					/* Emulation specific sysctl data */
 	struct sysctlnode *e_sysctlovly;
-	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
+	int		(*e_fault)(struct proc *, vaddr_t, int, int);
 };
 
 /* 

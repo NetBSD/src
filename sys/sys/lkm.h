@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.27.2.7 2004/11/29 07:25:04 skrll Exp $	*/
+/*	$NetBSD: lkm.h,v 1.27.2.8 2005/02/04 11:48:06 skrll Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -182,7 +182,7 @@ struct lkm_table {
 	char	refcnt;		/* Reference count */
 	char	forced;		/* Forced load, skipping compatibility check */
 
-	int	(*entry) __P((struct lkm_table *, int, int));/* entry function */
+	int	(*entry)(struct lkm_table *, int, int);/* entry function */
 	union lkm_generic	private;	/* module private data */
 
 	u_long	size;
@@ -295,9 +295,9 @@ struct lkm_table {
 	_LKM_E_DEBUG _LKM_E_DIAGNOSTIC _LKM_E_LOCKDEBUG \
 	_LKM_E_MULTIPROCESSOR _LKM_E_MALLOCLOG
 
-int lkm_nofunc __P((struct lkm_table *, int));
-int lkmexists __P((struct lkm_table *));
-int lkmdispatch __P((struct lkm_table *, int));
+int lkm_nofunc(struct lkm_table *, int);
+int lkmexists(struct lkm_table *);
+int lkmdispatch(struct lkm_table *, int);
 
 /*
  * LKM_DISPATCH -- body function for use in module entry point function;

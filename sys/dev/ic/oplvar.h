@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.8.16.3 2004/09/21 13:28:05 skrll Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.8.16.4 2005/02/04 11:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,11 +63,11 @@ struct opl_softc {
 	u_int8_t pan[MIDI_MAX_CHANS];
 	u_int8_t panl, panr;
 
-	int	(*spkrctl)__P((void *, int));
+	int	(*spkrctl)(void *, int);
 	void	*spkrarg;
 
 #ifndef AUDIO_NO_POWER_CTL
-	int	(*powerctl)__P((void *, int));
+	int	(*powerctl)(void *, int);
 	void	*powerarg;
 #endif
 };
@@ -104,7 +104,7 @@ struct opl_operators {
 extern const struct opl_operators opl2_instrs[];
 extern const struct opl_operators opl3_instrs[];
 
-int	opl_find __P((struct opl_softc *));
-void	opl_attach __P((struct opl_softc *));
-int	opl_detach __P((struct opl_softc *, int));
+int	opl_find(struct opl_softc *);
+void	opl_attach(struct opl_softc *);
+int	opl_detach(struct opl_softc *, int);
 #endif

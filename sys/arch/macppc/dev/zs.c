@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26.2.4 2005/01/17 19:29:57 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.26.2.5 2005/02/04 11:44:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26.2.4 2005/01/17 19:29:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.26.2.5 2005/02/04 11:44:33 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,7 +113,7 @@ static int zs_defspeed[2] = {
 
 /* console stuff */
 void	*zs_conschan = 0;
-int	zs_conschannel;
+int	zs_conschannel = -1;
 #ifdef	ZS_CONSOLE_ABORT
 int	zs_cons_canabort = 1;
 #else

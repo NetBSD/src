@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.6.6.3 2004/09/21 13:32:38 skrll Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.6.6.4 2005/02/04 11:47:09 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.6.6.3 2004/09/21 13:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.6.6.4 2005/02/04 11:47:09 skrll Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -313,7 +313,7 @@ dmcinit(struct ifnet *ifp)
 	 * Check to see that an address has been set
 	 * (both local and destination for an address family).
 	 */
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 		if (ifa->ifa_addr->sa_family && ifa->ifa_dstaddr->sa_family)
 			break;
 	if (ifa == (struct ifaddr *) 0)

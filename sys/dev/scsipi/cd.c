@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.185.2.9 2004/12/18 09:32:21 skrll Exp $	*/
+/*	$NetBSD: cd.c,v 1.185.2.10 2005/02/04 11:47:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.9 2004/12/18 09:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.185.2.10 2005/02/04 11:47:23 skrll Exp $");
 
 #include "rnd.h"
 
@@ -124,7 +124,7 @@ static int	cd_pause(struct cd_softc *, int);
 static int	cd_reset(struct cd_softc *);
 static int	cd_read_subchannel(struct cd_softc *, int, int, int,
 		    struct cd_sub_channel_info *, int, int);
-static int	cd_read_toc(struct cd_softc *, int, int, void *, int, int, int);
+static int	cd_read_toc_f0(struct cd_softc *, int, int, void *, int, int, int);
 static int	cd_get_parms(struct cd_softc *, int);
 static int	cd_load_toc(struct cd_softc *, struct cd_toc *, int);
 static int	cdreadmsaddr(struct cd_softc *, int *);
@@ -1098,7 +1098,7 @@ cdreadmsaddr(struct cd_softc *cd, int *addr)
 	struct cd_toc toc;
 	struct cd_toc_entry *cte;
 
-	error = cd_read_toc(cd, 0, 0, &toc,
+	error = cd_read_toc_f0(cd, 0, 0, &toc,
 	    sizeof(struct ioc_toc_header) + sizeof(struct cd_toc_entry),
 	    XS_CTL_DATA_ONSTACK,
 	    0x40 /* control word for "get MS info" */);
@@ -1314,7 +1314,7 @@ bad:
 	case CDIOREADTOCHEADER: {
 		struct ioc_toc_header th;
 
-		if ((error = cd_read_toc(cd, 0, 0, &th, sizeof(th),
+		if ((error = cd_read_toc_f0(cd, 0, 0, &th, sizeof(th),
 		    XS_CTL_DATA_ONSTACK, 0)) != 0)
 			return (error);
 		if (cd->sc_periph->periph_quirks & PQUIRK_LITTLETOC)
@@ -1338,7 +1338,7 @@ bad:
 		if (len > sizeof(toc.entries) ||
 		    len < sizeof(struct cd_toc_entry))
 			return (EINVAL);
-		error = cd_read_toc(cd, te->address_format, te->starting_track,
+		error = cd_read_toc_f0(cd, te->address_format, te->starting_track,
 		    &toc, len + sizeof(struct ioc_toc_header),
 		    XS_CTL_DATA_ONSTACK, 0);
 		if (error)
@@ -1754,7 +1754,7 @@ cd_read_subchannel(struct cd_softc *cd, int mode, int format, int track,
  * Read table of contents
  */
 static int
-cd_read_toc(struct cd_softc *cd, int mode, int start, void *data, int len,
+cd_read_toc_f0(struct cd_softc *cd, int mode, int start, void *data, int len,
     int flags, int control)
 {
 	struct scsipi_read_toc cmd;
@@ -1770,7 +1770,8 @@ cd_read_toc(struct cd_softc *cd, int mode, int start, void *data, int len,
 	ntoc = len;
 	cmd.opcode = READ_TOC;
 	if (mode == CD_MSF_FORMAT)
-		cmd.byte2 |= CD_MSF;
+		cmd.addr_mode |= CD_MSF;
+	cmd.resp_format = 0;
 	cmd.from_track = start;
 	_lto2b(ntoc, cmd.data_len);
 	cmd.control = control;
@@ -1785,14 +1786,14 @@ cd_load_toc(struct cd_softc *cd, struct cd_toc *toc, int flags)
 {
 	int ntracks, len, error;
 
-	if ((error = cd_read_toc(cd, 0, 0, toc, sizeof(toc->header),
+	if ((error = cd_read_toc_f0(cd, 0, 0, toc, sizeof(toc->header),
 	    flags, 0)) != 0)
 		return (error);
 
 	ntracks = toc->header.ending_track - toc->header.starting_track + 1;
 	len = (ntracks + 1) * sizeof(struct cd_toc_entry) +
 	    sizeof(toc->header);
-	if ((error = cd_read_toc(cd, CD_MSF_FORMAT, 0, toc, len,
+	if ((error = cd_read_toc_f0(cd, CD_MSF_FORMAT, 0, toc, len,
 	    flags, 0)) != 0)
 		return (error);
 	return (0);

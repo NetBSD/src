@@ -1,4 +1,4 @@
-/*	$NetBSD: nullcons_subr.c,v 1.1.4.5 2004/09/21 13:26:25 skrll Exp $	*/
+/*	$NetBSD: nullcons_subr.c,v 1.1.4.6 2005/02/04 11:45:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1.4.5 2004/09/21 13:26:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nullcons_subr.c,v 1.1.4.6 2005/02/04 11:45:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -60,7 +60,7 @@ dev_type_read(nullcndev_read);
 dev_type_ioctl(nullcndev_ioctl);
 dev_type_tty(nullcndev_tty);
 
-static int	nullcons_newdev __P((struct consdev *));
+static int	nullcons_newdev(struct consdev *);
 
 const struct cdevsw nullcn_devsw = {
 	nullopen, nullclose, nullcndev_read, nullwrite, nullcndev_ioctl,

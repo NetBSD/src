@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.21.6.1 2005/01/31 08:19:33 skrll Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.21.6.2 2005/02/04 11:46:36 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.21.6.1 2005/01/31 08:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.21.6.2 2005/02/04 11:46:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -61,8 +61,8 @@ cons_decl(ofcons_);
 
 static int stdin, stdout;
 
-static int ofcons_match __P((struct device *, struct cfdata *, void *));
-static void ofcons_attach __P((struct device *, struct device *, void *));
+static int ofcons_match(struct device *, struct cfdata *, void *);
+static void ofcons_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ofcons, sizeof(struct ofcons_softc),
     ofcons_match, ofcons_attach, NULL, NULL);
@@ -82,7 +82,7 @@ const struct cdevsw ofcons_cdevsw = {
 	nostop, ofcons_tty, ofcons_poll, nommap, ttykqfilter, D_TTY
 };
 
-static int ofcons_probe __P((void));
+static int ofcons_probe(void);
 
 static int
 ofcons_match(parent, match, aux)
@@ -112,9 +112,9 @@ ofcons_attach(parent, self, aux)
 	callout_init(&sc->sc_poll_ch);
 }
 
-static void ofcons_start __P((struct tty *));
-static int ofcons_param __P((struct tty *, struct termios *));
-static void ofcons_pollin __P((void *));
+static void ofcons_start(struct tty *);
+static int ofcons_param(struct tty *, struct termios *);
+static void ofcons_pollin(void *);
 
 int
 ofcons_open(dev, flag, mode, l)

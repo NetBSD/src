@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.80.2.5 2004/09/21 13:31:04 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.80.2.6 2005/02/04 11:46:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.5 2004/09/21 13:31:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80.2.6 2005/02/04 11:46:39 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -58,17 +58,17 @@ int pci_config_dump = 1;
 int pci_config_dump = 0;
 #endif
 
-int pcimatch __P((struct device *, struct cfdata *, void *));
-void pciattach __P((struct device *, struct device *, void *));
+int pcimatch(struct device *, struct cfdata *, void *);
+void pciattach(struct device *, struct device *, void *);
 int pcirescan(struct device *, const char *, const int *);
 void pcidevdetached(struct device *, struct device *);
 
 CFATTACH_DECL2(pci, sizeof(struct pci_softc),
     pcimatch, pciattach, NULL, NULL, pcirescan, pcidevdetached);
 
-int	pciprint __P((void *, const char *));
-int	pcisubmatch __P((struct device *, struct cfdata *,
-			 const locdesc_t *, void *));
+int	pciprint(void *, const char *);
+int	pcisubmatch(struct device *, struct cfdata *,
+			 const locdesc_t *, void *);
 
 #ifdef PCI_MACHDEP_ENUMERATE_BUS
 #define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
@@ -699,4 +699,28 @@ pci_dma64_available(struct pci_attach_args *pa)
                         return 1;
 #endif
         return 0;
+}
+
+void
+pci_conf_capture(pci_chipset_tag_t pc, pcitag_t tag,
+		  struct pci_conf_state *pcs)
+{
+	int off;
+
+	for (off = 0; off < 16; off++)
+		pcs->reg[off] = pci_conf_read(pc, tag, (off * 4));
+
+	return;
+}
+
+void
+pci_conf_restore(pci_chipset_tag_t pc, pcitag_t tag,
+		  struct pci_conf_state *pcs)
+{
+	int off;
+
+	for (off = 0; off < 16; off++)
+		pci_conf_write(pc, tag, (off * 4), pcs->reg[off]);
+
+	return;
 }

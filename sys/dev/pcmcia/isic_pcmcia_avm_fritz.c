@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.5.10.3 2004/09/21 13:32:21 skrll Exp $ 
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.5.10.4 2005/02/04 11:47:09 skrll Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.5.10.3 2004/09/21 13:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.5.10.4 2005/02/04 11:47:09 skrll Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1
@@ -93,10 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.5.10.3 2004/09/21 13:32:
 #include <dev/pcmcia/isic_pcmcia.h>
 
 /* PCMCIA support routines */
-static u_int8_t avma1_pcmcia_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void avma1_pcmcia_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void avma1_pcmcia_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void avma1_pcmcia_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+static u_int8_t avma1_pcmcia_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void avma1_pcmcia_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void avma1_pcmcia_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void avma1_pcmcia_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
 #endif
 
 /*---------------------------------------------------------------------------*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.92.2.6 2005/01/24 08:35:53 skrll Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.92.2.7 2005/02/04 11:47:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92.2.6 2005/01/24 08:35:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.92.2.7 2005/02/04 11:47:45 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -141,13 +141,13 @@ int	arpt_refresh = (5*60);	/* time left before refreshing */
 #define	rt_expire rt_rmx.rmx_expire
 #define	rt_pksent rt_rmx.rmx_pksent
 
-static	void arprequest __P((struct ifnet *,
-	    struct in_addr *, struct in_addr *, u_int8_t *));
-static	void arptfree __P((struct llinfo_arp *));
-static	void arptimer __P((void *));
-static	struct llinfo_arp *arplookup __P((struct mbuf *, struct in_addr *,
-					  int, int));
-static	void in_arpinput __P((struct mbuf *));
+static	void arprequest(struct ifnet *,
+	    struct in_addr *, struct in_addr *, u_int8_t *);
+static	void arptfree(struct llinfo_arp *);
+static	void arptimer(void *);
+static	struct llinfo_arp *arplookup(struct mbuf *, struct in_addr *,
+					  int, int);
+static	void in_arpinput(struct mbuf *);
 
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
@@ -167,10 +167,10 @@ static int	revarp_in_progress = 0;
 static struct	ifnet *myip_ifp = NULL;
 
 #ifdef DDB
-static void db_print_sa __P((const struct sockaddr *));
-static void db_print_ifa __P((struct ifaddr *));
-static void db_print_llinfo __P((caddr_t));
-static int db_show_radix_node __P((struct radix_node *, void *));
+static void db_print_sa(const struct sockaddr *);
+static void db_print_ifa(struct ifaddr *);
+static void db_print_llinfo(caddr_t);
+static int db_show_radix_node(struct radix_node *, void *);
 #endif
 
 /*
@@ -178,12 +178,10 @@ static int db_show_radix_node __P((struct radix_node *, void *));
  */
 
 static char *
-lla_snprintf __P((u_int8_t *, int));
+lla_snprintf(u_int8_t *, int);
 
 static char *
-lla_snprintf(adrp, len)
-	u_int8_t *adrp;
-	int len;
+lla_snprintf(u_int8_t *adrp, int len)
 {
 #define NUMBUFS 3
 	static char buf[NUMBUFS][16*3];
@@ -244,8 +242,8 @@ struct domain arpdomain =
  */
 
 static int	arp_locked;
-static __inline int arp_lock_try __P((int));
-static __inline void arp_unlock __P((void));
+static __inline int arp_lock_try(int);
+static __inline void arp_unlock(void);
 
 static __inline int
 arp_lock_try(int recurse)
@@ -267,7 +265,7 @@ arp_lock_try(int recurse)
 }
 
 static __inline void
-arp_unlock()
+arp_unlock(void)
 {
 	int s;
 
@@ -304,7 +302,7 @@ do {									\
  */
 
 void
-arp_drain()
+arp_drain(void)
 {
 	struct llinfo_arp *la, *nla;
 	int count = 0;
@@ -336,8 +334,7 @@ arp_drain()
  */
 /* ARGSUSED */
 static void
-arptimer(arg)
-	void *arg;
+arptimer(void *arg)
 {
 	int s;
 	struct llinfo_arp *la, *nla;
@@ -380,10 +377,7 @@ arptimer(arg)
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(req, rt, info)
-	int req;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -611,10 +605,8 @@ arp_rtrequest(req, rt, info)
  *	- arp header source ethernet address
  */
 static void
-arprequest(ifp, sip, tip, enaddr)
-	struct ifnet *ifp;
-	struct in_addr *sip, *tip;
-	u_int8_t *enaddr;
+arprequest(struct ifnet *ifp,
+    struct in_addr *sip, struct in_addr *tip, u_int8_t *enaddr)
 {
 	struct mbuf *m;
 	struct arphdr *ah;
@@ -672,12 +664,8 @@ arprequest(ifp, sip, tip, enaddr)
  * taken over here, either now or for later transmission.
  */
 int
-arpresolve(ifp, rt, m, dst, desten)
-	struct ifnet *ifp;
-	struct rtentry *rt;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	u_char *desten;
+arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
+    struct sockaddr *dst, u_char *desten)
 {
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
@@ -762,7 +750,7 @@ arpresolve(ifp, rt, m, dst, desten)
  * then the protocol-specific routine is called.
  */
 void
-arpintr()
+arpintr(void)
 {
 	struct mbuf *m;
 	struct arphdr *ar;
@@ -830,8 +818,7 @@ badlen:
  * but formerly didn't normally send requests.
  */
 static void
-in_arpinput(m)
-	struct mbuf *m;
+in_arpinput(struct mbuf *m)
 {
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
@@ -1121,9 +1108,7 @@ reply:
 /*
  * Free an arp entry.
  */
-static void
-arptfree(la)
-	struct llinfo_arp *la;
+static void arptfree(struct llinfo_arp *la)
 {
 	struct rtentry *rt = la->la_rt;
 	struct sockaddr_dl *sdl;
@@ -1147,10 +1132,7 @@ arptfree(la)
  * Lookup or enter a new address in arptab.
  */
 static struct llinfo_arp *
-arplookup(m, addr, create, proxy)
-	struct mbuf *m;
-	struct in_addr *addr;
-	int create, proxy;
+arplookup(struct mbuf *m, struct in_addr *addr, int create, int proxy)
 {
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
@@ -1195,18 +1177,14 @@ arplookup(m, addr, create, proxy)
 }
 
 int
-arpioctl(cmd, data)
-	u_long cmd;
-	caddr_t data;
+arpioctl(u_long cmd, caddr_t data)
 {
 
 	return (EOPNOTSUPP);
 }
 
 void
-arp_ifinit(ifp, ifa)
-	struct ifnet *ifp;
-	struct ifaddr *ifa;
+arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	struct in_addr *ip;
 
@@ -1229,8 +1207,7 @@ arp_ifinit(ifp, ifa)
  * then the protocol-specific routine is called.
  */
 void
-revarpinput(m)
-	struct mbuf *m;
+revarpinput(struct mbuf *m)
 {
 	struct arphdr *ar;
 
@@ -1268,8 +1245,7 @@ out:
  * Note: also supports ARP via RARP packets, per the RFC.
  */
 void
-in_revarpinput(m)
-	struct mbuf *m;
+in_revarpinput(struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct arphdr *ah;
@@ -1321,8 +1297,7 @@ out:
  * The request should be RFC 903-compliant.
  */
 void
-revarprequest(ifp)
-	struct ifnet *ifp;
+revarprequest(struct ifnet *ifp)
 {
 	struct sockaddr sa;
 	struct mbuf *m;
@@ -1358,10 +1333,8 @@ revarprequest(ifp)
  * Timeout if no response is received.
  */
 int
-revarpwhoarewe(ifp, serv_in, clnt_in)
-	struct ifnet *ifp;
-	struct in_addr *serv_in;
-	struct in_addr *clnt_in;
+revarpwhoarewe(struct ifnet *ifp, struct in_addr *serv_in,
+    struct in_addr *clnt_in)
 {
 	int result, count = 20;
 
@@ -1392,9 +1365,9 @@ revarpwhoarewe(ifp, serv_in, clnt_in)
 #include <machine/db_machdep.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
+
 static void
-db_print_sa(sa)
-	const struct sockaddr *sa;
+db_print_sa(const struct sockaddr *sa)
 {
 	int len;
 	u_char *p;
@@ -1414,9 +1387,9 @@ db_print_sa(sa)
 	}
 	db_printf("]\n");
 }
+
 static void
-db_print_ifa(ifa)
-	struct ifaddr *ifa;
+db_print_ifa(struct ifaddr *ifa)
 {
 	if (ifa == 0)
 		return;
@@ -1431,9 +1404,9 @@ db_print_ifa(ifa)
 			  ifa->ifa_refcnt,
 			  ifa->ifa_metric);
 }
+
 static void
-db_print_llinfo(li)
-	caddr_t li;
+db_print_llinfo(caddr_t li)
 {
 	struct llinfo_arp *la;
 
@@ -1443,14 +1416,13 @@ db_print_llinfo(li)
 	db_printf("  la_rt=%p la_hold=%p, la_asked=0x%lx\n",
 			  la->la_rt, la->la_hold, la->la_asked);
 }
+
 /*
  * Function to pass to rn_walktree().
  * Return non-zero error to abort walk.
  */
 static int
-db_show_radix_node(rn, w)
-	struct radix_node *rn;
-	void *w;
+db_show_radix_node(struct radix_node *rn, void *w)
 {
 	struct rtentry *rt = (struct rtentry *)rn;
 
@@ -1481,16 +1453,13 @@ db_show_radix_node(rn, w)
 
 	return (0);
 }
+
 /*
  * Function to print all the route trees.
  * Use this from ddb:  "show arptab"
  */
 void
-db_show_arptab(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_show_arptab(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct radix_node_head *rnh;
 	rnh = rt_tables[AF_INET];
