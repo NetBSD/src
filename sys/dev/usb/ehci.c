@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.35 2002/08/13 09:58:05 enami Exp $	*/
+/*	$NetBSD: ehci.c,v 1.36 2002/08/14 11:20:28 augustss Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.35 2002/08/13 09:58:05 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.36 2002/08/14 11:20:28 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,6 +325,11 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
 	DPRINTF(("ehci_init: cparams=0x%x\n", cparams));
+
+	if (EHCI_HCC_64BIT(cparams)) {
+		/* MUST clear segment register if 64 bit capable. */
+		EWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
+	}
 
 	sc->sc_bus.usbrev = USBREV_2_0;
 
