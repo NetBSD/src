@@ -1,4 +1,4 @@
-.\"	$NetBSD: rd.4,v 1.5 1999/12/15 23:44:52 abs Exp $
+.\"	$NetBSD: rd.4,v 1.6 2001/04/11 19:07:09 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ The driver recognizes the following drives:
 7912, 7914, 7933, 7936, 7937, 7945,
 .Tn 757A/B ,
 .Tn 7958A/B ,
-.Tn 7959B,
+.Tn 7959B ,
 7962, 7963, 9122, 9134, 7912, 7936,
 and 9122,
 not all of which have been tested.
@@ -99,7 +99,7 @@ three respectively
 The location and size (in sectors) of the
 partitions for these drives:
 .Bl -column header diskx undefined length
-.Tn 7945/7946 No partitions:
+.Tn 7945/7946 No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	112	15904	1-142
 	rd?b	16016	20160	143-322
@@ -110,7 +110,7 @@ partitions for these drives:
 	rd?g	36176	72240	323-967
 	rd?h	56336	52080	503-967
 
-.Tn 9134D No partitions:
+.Tn 9134D No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	96	15936	1-166
 	rd?b	16032	13056	167-302
@@ -121,7 +121,7 @@ partitions for these drives:
 	rd?g	undefined
 	rd?h	undefined
 
-.Tn 9122S No partitions:
+.Tn 9122S No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	undefined
 	rd?b	undefined
@@ -132,7 +132,7 @@ partitions for these drives:
 	rd?g	undefined
 	rd?h	undefined
 
-.Tn 7912P No partitions:
+.Tn 7912P No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	0	15904	0-70
 	rd?b	16128	22400	72-171
@@ -143,7 +143,7 @@ partitions for these drives:
 	rd?g	38528	89600	172-571
 	rd?h	58688	69440	262-571
 
-.Tn 7914CT/P No partitions:
+.Tn 7914CT/P No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	224	15904	1-71
 	rd?b	16128	40320	72-251
@@ -154,7 +154,7 @@ partitions for these drives:
 	rd?g	56448	201600	252-1151
 	rd?h	81088	176960	362-1151
 
-.Tn 7958A No partitions:
+.Tn 7958A No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	252	16128	1-64
 	rd?b	16380	32256	65-192
@@ -165,7 +165,7 @@ partitions for these drives:
 	rd?g	48636	206640	193-1012
 	rd?h	64764	190512	257-1012
 
-.Tn 7957A No partitions:
+.Tn 7957A No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	154	16016	1-104
 	rd?b	16170	24640	105-264
@@ -176,7 +176,7 @@ partitions for these drives:
 	rd?g	40810	118734	265-1035
 	rd?h	58520	101024	380-1035
 
-.Tn 7933H No partitions:
+.Tn 7933H No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	598	16146	1-27
 	rd?b	16744	66976	28-139
@@ -187,7 +187,7 @@ partitions for these drives:
 	rd?g	83720	706238	140-1320
 	rd?h	431158	358800	721-1320
 
-.Tn 9134L No partitions:
+.Tn 9134L No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	80	15920	1-199
 	rd?b	16000	20000	200-449
@@ -198,7 +198,7 @@ partitions for these drives:
 	rd?g	36000	41840	450-972
 	rd?h	48000	29840	600-972
 
-.Tn 7936H No partitions:
+.Tn 7936H No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	861	16359	1-19
 	rd?b	17220	67158	20-97
@@ -209,7 +209,7 @@ partitions for these drives:
 	rd?g	84378	516600	98-697
 	rd?h	341817	259161	397-697
 
-.Tn 7937H No partitions:
+.Tn 7937H No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	1599	15990	1-10
 	rd?b	17589	67158	11-52
@@ -220,7 +220,7 @@ partitions for these drives:
 	rd?g	84747	1031355	53-697
 	rd?h	593229	522873	371-697
 
-.Tn 7957B/7961B No partitions:
+.Tn 7957B/7961B No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	126	16002	1-127
 	rd?b	16128	32760	128-387
@@ -231,7 +231,7 @@ partitions for these drives:
 	rd?g	48888	111006	388-1268
 	rd?h	65268	94626	518-1268
 
-.Tn 7958B/7962B No partitions:
+.Tn 7958B/7962B No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	378	16254	1-43
 	rd?b	16632	32886	44-130
@@ -242,7 +242,7 @@ partitions for these drives:
 	rd?g	49518	247590	131-785
 	rd?h	65772	231336	174-785
 
-.Tn 7959B/7963B No partitions:
+.Tn 7959B/7963B No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	378	16254	1-43
 	rd?b	16632	49140	44-173
