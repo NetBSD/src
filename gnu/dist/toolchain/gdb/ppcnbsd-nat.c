@@ -232,6 +232,7 @@ fetch_kcore_registers (pcb)
      struct pcb *pcb;
 {
   struct switchframe sf;
+  struct callframe cf;
   int regno;
 
   /*
@@ -240,12 +241,18 @@ fetch_kcore_registers (pcb)
    */
   if (target_read_memory(pcb->pcb_sp, (char *)&sf, sizeof(sf)))
     error("Cannot read switchframe.");
-  supply_register(1, (char *)&pcb->pcb_sp);
   supply_register(2, (char *)&sf.fixreg2);
-  supply_register(PC_REGNUM, (char *)&sf.lr);
-  supply_register(LR_REGNUM, (char *)&sf.lr);
   supply_register(CR_REGNUM, (char *)&sf.cr);
   for (regno = 13; regno < 32; regno++)
     supply_register(regno, (char *)&sf.fixreg[regno - 13]);
+  if (target_read_memory(sf.sp, (char *)&cf, sizeof(cf)))
+    error("Cannot read callframe.");
+  supply_register(30, (char *)&cf.r30);
+  supply_register(31, (char *)&cf.r31);
+  supply_register(1, (char *)&cf.sp);
+  if (target_read_memory(cf.sp, (char *)&cf, sizeof(cf)))
+    error("Cannot read switchframe.");
+  supply_register(PC_REGNUM, (char *)&cf.lr);
+  supply_register(LR_REGNUM, (char *)&cf.lr);
 }
 #endif	/* FETCH_KCORE_REGISTERS */
