@@ -1,17 +1,27 @@
-#	$NetBSD: Makefile,v 1.11 2002/04/19 07:08:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2002/04/22 17:17:35 lukem Exp $
 #
 
 PROG=	installboot
 SRCS=	installboot.c sum.c machines.c fstypes.c \
 	ffs.c ffs_bswap.c \
-	alpha.c pmax.c sparc64.c vax.c
+	alpha.c pmax.c sparc64.c sun68k.c vax.c
 MAN=	installboot.8
 
 WARNS?=	3
 
 UFSSRC=		${_SRC_TOP_}/sys/ufs
-CPPFLAGS+=	-I${.CURDIR}
+CPPFLAGS+=	-I${.CURDIR} -I.
 .PATH:		${.CURDIR}/arch ${UFSSRC}/ffs
+
+
+sun68k.c:	sun68k_bbinfo.h
+
+sun68k_bbinfo.h: ${_SRC_TOP_}/sys/arch/sun68k/stand/libsa/bbinfo.h
+	@echo "Copying ${.ALLSRC} to ${.TARGET}"
+	@cp ${.ALLSRC} ${.TARGET}
+
+CLEANFILES+=	sun68k_bbinfo.h
+
 
 .ifndef HOSTPROG
 # list of MACHINEs to enable the compat symlink /usr/mdec/installboot
