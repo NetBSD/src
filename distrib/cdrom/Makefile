@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2002/06/24 14:49:15 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2002/09/29 07:23:15 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -28,6 +28,7 @@ all:
 .endif
 
 CD_RELEASE?=
+CD_SIZE?=		650000
 RELEASENAME?=		NetBSD-${CD_RELEASE}
 MKISOFS_ARGS=		-f -A "NetBSD ${CD_RELEASE}" \
 			-hide-rr-moved -m Split -m cdrom
@@ -69,11 +70,12 @@ SUBDIR+=	macppc_installboot
 ##### Default paths for programs #####
 
 MKISOFS?=	/usr/pkg/bin/mkisofs
-MKSUNBOOTCD?=	/usr/src/distrib/utils/mksunbootcd/mksunbootcd
+MKSUNBOOTCDDIR!=cd ${NETBSDSRCDIR}/distrib/utils/mksunbootcd && ${PRINTOBJDIR}
+MKSUNBOOTCD?=	${MKSUNBOOTCDDIR}/mksunbootcd
 RSYNC?=		/usr/pkg/bin/rsync
-ALPHA_IBOOT?=	/sys/arch/alpha/stand/installboot/installboot
-PMAX_IBOOT?=	/sys/arch/pmax/stand/installboot/installboot
-VAX_IBOOT?=	/sys/arch/vax/stand/installboot/installboot -sa
+ALPHA_IBOOT?=	${INSTALLBOOT} -m alpha -o sunsum
+PMAX_IBOOT?=	${INSTALLBOOT} -m pmax -o sunsum,append
+VAX_IBOOT?=	${INSTALLBOOT} -m vax -o sunsum,append
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 .endif
@@ -183,8 +185,8 @@ MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.i386} -c boot.catalog
 
 .if !empty(ports:Mmacppc)
 MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
-			--macbin -map ${.CURDIR}/hfsmap.lst \
-			-boot-hfs-file ${MACPPC_IBOOTDIR}/macppcboot.raw
+	--macbin -map ${.CURDIR}/hfsmap.lst \
+	-boot-hfs-file ${.CURDIR}/macppc_installboot/macppcboot.raw
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
 MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
 .endif
@@ -344,7 +346,7 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 	size=$$(($$(($$size + 16383)) / 16384 * 16384 + 32768)) && \
 	sizek=$$(($$size / 1024)) && \
 	echo "Projected size of ${image}.iso: $$size bytes ($${sizek}K)." && \
-	if [ $$sizek -gt 666000 ]; then echo "Image too large for 74-minute CD!"; false; fi
+	if [ $$sizek -gt ${CD_SIZE} ]; then echo "Image too large for ${CD_SIZE} KB CD!"; false; fi
 
 # Actually build the image with all the bootstrap goo....
 
@@ -363,13 +365,13 @@ ${IMAGEDIR}/${image}.iso: fetch size-${image}
 	dd if=${EXTFILEDIR}/macppc.ofwboot bs=64k count=1 conv=sync >>$@ 2>/dev/null
 .endif
 .if !empty(BASE_PORTS.${image}:Mpmax)
-	${PMAX_IBOOT} -sa $@ ${BOOTFILE.pmax}
+	${PMAX_IBOOT} $@ ${BOOTFILE.pmax}
 .endif
 .if !empty(BASE_PORTS.${image}:Mvax)
 	${VAX_IBOOT} $@ ${BOOTFILE.vax}
 .endif
 .if !empty(BASE_PORTS.${image}:Malpha)
-	${ALPHA_IBOOT} -s $@ ${BOOTFILE.alpha}
+	${ALPHA_IBOOT} $@ ${BOOTFILE.alpha}
 .endif
 	@echo Rounding up to 32k boundary and padding 32k....
 	@size=`ls -l $@ | awk '{print $$5}'` && \
