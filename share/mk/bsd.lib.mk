@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.242 2003/12/07 12:56:45 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.243 2003/12/23 10:30:02 rtr Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -385,16 +385,20 @@ SOBJS=
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
+.if !target(__archivebuild)
 __archivebuild: .USE
 	${_MKTARGET_BUILD}
 	rm -f ${.TARGET}
 	${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 	${RANLIB} ${.TARGET}
+.endif
 
+.if !target(__archiveinstall)
 __archiveinstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${UPDATE:D:U-a "${RANLIB} -t"} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
+.endif
 
 __archivesymlinkpic: .USE
 	${_MKTARGET_INSTALL}
