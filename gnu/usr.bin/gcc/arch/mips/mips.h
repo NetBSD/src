@@ -3811,3 +3811,19 @@ while (0)
 #define NO_BUILTIN_PTRDIFF_TYPE
 #define PTRDIFF_TYPE (TARGET_LONG64 ? "long int" : "int")
 #endif
+
+/* A C statement to output something to the assembler file to switch to section
+   NAME for object DECL which is either a FUNCTION_DECL, a VAR_DECL or
+   NULL_TREE.  Some target formats do not support arbitrary sections.  Do not
+   define this macro in such cases.  */
+
+#define ASM_OUTPUT_SECTION_NAME(F, DECL, NAME) \
+do {								\
+  extern FILE *asm_out_text_file;				\
+  if ((DECL) && TREE_CODE (DECL) == FUNCTION_DECL)		\
+    fprintf (asm_out_text_file, "\t.section %s,\"ax\",@progbits\n", (NAME)); \
+  else if ((DECL) && TREE_READONLY (DECL))			\
+    fprintf (F, "\t.section %s,\"a\",@progbits\n", (NAME));	\
+  else								\
+    fprintf (F, "\t.section %s,\"aw\",@progbits\n", (NAME));	\
+} while (0)
