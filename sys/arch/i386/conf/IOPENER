@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.40 2003/10/08 11:55:44 bouyer Exp $
+#	$NetBSD: IOPENER,v 1.41 2003/10/18 08:12:07 lukem Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.40 $"
+#ident 		"IOPENER-$Revision: 1.41 $"
 
 maxusers	32		# estimated number of users
 
@@ -269,22 +269,8 @@ siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
-# ATA bus support
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ? 
-atabus* at cmdide? channel ? 
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
-
-# ATA bus support
-atabus* at pciide? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations

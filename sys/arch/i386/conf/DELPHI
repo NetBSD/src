@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.30 2003/10/08 11:55:43 bouyer Exp $
+#	$NetBSD: DELPHI,v 1.31 2003/10/18 08:12:07 lukem Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.30 $"
+ident 		"DELPHI-$Revision: 1.31 $"
 
 maxusers	64		# estimated number of users
 
@@ -428,20 +428,8 @@ viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 #wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1	at isa? port 0x170 irq 15 flags 0x00
 
-# ATA bus support
-atabus* at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ? 
-atabus* at cmdide? channel ? 
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
-#atabus* at wdc? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
