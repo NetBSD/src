@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)gprof.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: gprof.c,v 1.6 1994/10/06 15:39:58 mycroft Exp $";
+static char *rcsid = "$Id: gprof.c,v 1.7 1994/10/19 20:43:24 pk Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
@@ -78,7 +78,7 @@ main(argc, argv)
 	    cyclethreshold = atoi( *++argv );
 	    break;
 	case 'c':
-#if defined(vax) || defined(tahoe)
+#if defined(vax) || defined(tahoe) || defined(sparc)
 	    cflag = TRUE;
 #else
 	    fprintf(stderr, "gprof: -c isn't supported on this architecture yet\n");
