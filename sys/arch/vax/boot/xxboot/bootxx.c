@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.3 2000/04/16 01:41:23 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.4 2000/04/18 20:25:13 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -105,6 +105,8 @@ Xmain()
 		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
 		rpb->iovec = (int)bqo;
 		bootregs[11] = (int)rpb;
+		if (rpb->devtyp == BDEV_SDN)
+			rpb->devtyp = BDEV_SD;	/* XXX until driver fixed */
 		bootdev = rpb->devtyp;
 		memsz = rpb->pfncnt << 9;
 
