@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.39.4.1 2000/09/30 14:24:46 sommerfeld Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.39.4.2 2000/10/18 02:06:04 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.39.4.1 2000/09/30 14:24:46 sommerfeld Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.39.4.2 2000/10/18 02:06:04 tv Exp $");
 #endif
 #endif
 
@@ -1004,22 +1004,29 @@ int
 wait_for_reply(register int sock, register struct sockaddr_in *fromp,
     register struct timeval *tp)
 {
-	fd_set fds;
+	fd_set *fdsp;
+	size_t nfds;
 	struct timeval now, wait;
 	struct timezone tz;
 	register int cc = 0;
 	int fromlen = sizeof(*fromp);
 	int retval;
 
-	FD_ZERO(&fds);
-	FD_SET(sock, &fds);
+	nfds = howmany(sock + 1, NFDBITS);
+	if ((fdsp = malloc(nfds)) == NULL) {
+		Fprintf(stderr, "%s: malloc: %s\n", prog, strerror(errno));
+		exit(1);
+	}
+	memset(fdsp, 0, nfds);
+	FD_SET(sock, fdsp);
 
 	wait.tv_sec = tp->tv_sec + waittime;
 	wait.tv_usec = tp->tv_usec;
 	(void)gettimeofday(&now, &tz);
 	tvsub(&wait, &now);
 
-	retval = select(sock + 1, &fds, NULL, NULL, &wait);
+	retval = select(sock + 1, fdsp, NULL, NULL, &wait);
+	free(fdsp);
 	if (retval < 0)  {
 		/* If we continue, we probably just flood the remote host. */
 		Fprintf(stderr, "%s: select: %s\n", prog, strerror(errno));
