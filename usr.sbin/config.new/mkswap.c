@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkswap.c	8.1 (Berkeley) 6/6/93
- *	$Id: mkswap.c,v 1.5 1994/06/22 10:44:19 pk Exp $
+ *	$Id: mkswap.c,v 1.6 1994/06/22 11:39:06 pk Exp $
  */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "config.h"
+#include "sem.h"
 
 static int mkoneswap __P((struct config *));
 
@@ -74,6 +75,7 @@ mkoneswap(cf)
 	register FILE *fp;
 	register char *fname;
 	char buf[200];
+	char *mountroot;
 
 	(void)sprintf(buf, "swap%s.c", cf->cf_name);
 	fname = path(buf);
@@ -102,9 +104,11 @@ mkoneswap(cf)
 			goto wrerror;
 	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
 		goto wrerror;
-	if (fputs("extern int ffs_mountroot();\n", fp) < 0)
+	mountroot =
+	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "ffs_mountroot";
+	if (fprintf(fp, "extern int %s();\n", mountroot) < 0)
 		goto wrerror;
-	if (fputs("int (*mountroot)() = ffs_mountroot;\n", fp) < 0)
+	if (fprintf(fp, "int (*mountroot)() = %s;\n", mountroot) < 0)
 		goto wrerror;
 
 	if (fclose(fp)) {
