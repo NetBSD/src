@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.63 2005/02/27 00:27:34 perry Exp $	*/
+/*	$NetBSD: twe.c,v 1.64 2005/03/16 17:11:17 erh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.63 2005/02/27 00:27:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.64 2005/03/16 17:11:17 erh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ static int	twe_submatch(struct device *, struct cfdata *,
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
+static void twe_clear_pci_abort(struct twe_softc *sc);
+static void twe_clear_pci_parity_error(struct twe_softc *sc);
 
 static int	twe_add_unit(struct twe_softc *, int);
 static int	twe_del_unit(struct twe_softc *, int);
@@ -1365,6 +1367,29 @@ twe_status_wait(struct twe_softc *sc, u_int32_t status, int timo)
 }
 
 /*
+ * Clear a PCI parity error.
+ */
+static void
+twe_clear_pci_parity_error(struct twe_softc *sc)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x0, TWE_CTL_CLEAR_PARITY_ERROR);
+
+	//FreeBSD: pci_write_config(sc->twe_dev, PCIR_STATUS, TWE_PCI_CLEAR_PARITY_ERROR, 2);
+}
+
+
+/*
+ * Clear a PCI abort.
+ */
+static void
+twe_clear_pci_abort(struct twe_softc *sc)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x0, TWE_CTL_CLEAR_PCI_ABORT);
+
+	//FreeBSD: pci_write_config(sc->twe_dev, PCIR_STATUS, TWE_PCI_CLEAR_PCI_ABORT, 2);
+}
+
+/*
  * Complain if the status bits aren't what we expect.
  */
 static int
@@ -1384,6 +1409,17 @@ twe_status_check(struct twe_softc *sc, u_int status)
 		printf("%s: unexpected status bits: 0x%08x\n",
 		    sc->sc_dv.dv_xname, status & TWE_STS_UNEXPECTED_BITS);
 		rv = -1;
+		if (status & TWE_STS_PCI_PARITY_ERROR) {
+			printf("%s: PCI parity error: Reseat card, move card "
+			       "or buggy device present.\n",
+			       sc->sc_dv.dv_xname);
+			twe_clear_pci_parity_error(sc);
+		}
+		if (status & TWE_STS_PCI_ABORT) {
+			printf("%s: PCI abort, clearing.\n",
+			       sc->sc_dv.dv_xname);
+			twe_clear_pci_abort(sc);
+		}
 	}
 
 	return (rv);
