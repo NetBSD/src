@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29.2.2 2001/06/21 19:25:26 nathanw Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29.2.3 2001/08/30 23:22:58 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -227,7 +227,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				return;
 			}	
 			l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
-			if (!(l->l_flag&L_INMEM)) {
+			if (!(l->l_flag & L_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}
