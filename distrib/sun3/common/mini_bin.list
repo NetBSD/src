@@ -1,5 +1,5 @@
 #
-# $NetBSD: mini_bin.list,v 1.4 1997/12/15 17:34:09 gwr Exp $
+# $NetBSD: mini_bin.list,v 1.5 1999/05/16 08:21:53 gwr Exp $
 #
 # miniroot files from /bin:
 # Extras not in ../../miniroot/list:
@@ -20,6 +20,7 @@ COPY	${DESTDIR}/bin/ls		bin
 COPY	${DESTDIR}/bin/mkdir		bin
 COPY	${DESTDIR}/bin/mt		bin
 COPY	${DESTDIR}/bin/mv		bin
+COPY	${DESTDIR}/bin/pax		bin
 COPY	${DESTDIR}/bin/ps		bin
 COPY	${DESTDIR}/bin/pwd		bin
 COPY	${DESTDIR}/bin/rm		bin
@@ -31,4 +32,7 @@ COPY	${DESTDIR}/bin/sync		bin
 
 COPY	${DESTDIR}/bin/test		bin
 LINK		   bin/test		bin/[
+
+# new, combined pax,tar,cpio
+LINK		   bin/pax		usr/bin/tar
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/04/22 04:32:12 gwr Exp $
+#	$NetBSD: Makefile,v 1.9 1999/05/16 08:21:53 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -13,19 +13,17 @@ TREE=	${TOP}/common/${IMAGE}.tree
 LISTS=	${TOP}/common/${CBIN}.list \
 	${TOP}/common/${IMAGE}.list
 
-KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/RAMDISK/netbsd
-KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/RAMDISK3X/netbsd
+KERNEL3  = ${KERNOBJDIR}/RAMDISK/netbsd
+KERNEL3X = ${KERNOBJDIR}/RAMDISK3X/netbsd
 
-MOUNT_POINT=	/mnt
-#BDEV=		/dev/md0
-#CDEV=		/dev/md0
-BDEV=		/dev/sd1b
-CDEV=		/dev/rsd1b
+MOUNT_POINT?=	/mnt
+BDEV?=		/dev/sd1b
+CDEV?=		/dev/rsd1b
 
 # These are all the parameters for the root fs: (256K)
 DISKTYPE=	rdroot
 NBLKS=		512
-# old format, minfree, opt, b/i  trks, sects, cpg
+# bigendian, old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -B be -O -m 0 -o space -i 2048 -t 2 -u 16 -c 16
 
 CLEANFILES= netbsd-rd.sun3 netbsd-rd.sun3x rdsetroot ${IMAGE}.fs
