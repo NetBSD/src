@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.2 1997/04/16 22:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -44,11 +44,15 @@
  */
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <machine/asm.h>
 
-#define	CACHELINE	32		/* Note that this value is really hardwired */
+#define	CACHELINE	32		/* Note that this value is really
+					   hardwired */
 
 	.data
-ofentry:	.long	0		/* actual entry to firmware in virtual mode */
+ofentry:
+	.long	0			/* actual entry to firmware in
+					   virtual mode */
 
 #define	BATSIZE		(8*8)
 #define	SRSIZE		(16*4)
@@ -58,19 +62,21 @@ ofentry:	.long	0		/* actual entry to firmware in virtual mode */
 #define	SI2SIZE		(3*256)
 #define	SVSIZE		(BATSIZE+SRSIZE+SPRGSIZE+SDR1SIZE+SI1SIZE+SI2SIZE)
 
-.lcomm	fwsave,SVSIZE
-.lcomm	clsave,SVSIZE
+	.local	fwsave
+	.comm	fwsave,SVSIZE,8
 
-	.text
-	.globl	_ofwr_init
-_ofwr_init:
+	.local	clsave
+	.comm	clsave,SVSIZE,8
+
+ENTRY(ofwr_init)
 	mflr	31			/* save return address */
 
 	mr	13,6			/* save args (only pointer used) */
 	lis	8,ofentry@ha
 	stw	5,ofentry@l(8)		/* save virtual mode firmware entry */
 
-	lis	3,fwsave@ha		/* save the mmu values of the firmware */
+	lis	3,fwsave@ha		/* save the mmu values of the
+					   firmware */
 	addi	3,3,fwsave@l
 	bl	savemmu
 
@@ -113,7 +119,9 @@ fwentry:
 	stw	3,8(1)			/* save return value */
 
 	mfmsr	4
-	andi.	4,4,~(PSL_IR|PSL_DR)	/* turn off MMU */
+	lis	3,(PSL_IR|PSL_DR)@h	/* turn off MMU */
+	ori	3,3,(PSL_IR|PSL_DR)@l
+	andc	4,4,3
 	mtmsr	4
 	isync
 
