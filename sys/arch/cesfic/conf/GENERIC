@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18 2003/02/27 19:22:40 perseant Exp $
+# $NetBSD: GENERIC,v 1.19 2003/04/26 14:10:13 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -120,3 +120,4 @@ pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
 pseudo-device	rnd
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89 2003/04/10 22:07:06 christos Exp $
+# $NetBSD: GENERIC,v 1.90 2003/04/26 14:10:05 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.90 $"
 
 maxusers	8
 
@@ -478,3 +478,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
