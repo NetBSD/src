@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.13 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.13.2.1 2004/04/07 06:58:12 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.13 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.13.2.1 2004/04/07 06:58:12 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,11 +77,12 @@ static PATTERN *pattail = NULL;		/* file pattern match list tail */
 static REPLACE *rephead = NULL;		/* replacement string list head */
 static REPLACE *reptail = NULL;		/* replacement string list tail */
 
-static int rep_name(char *, int *, int);
+static int rep_name(char *, size_t, int *, int);
 static int tty_rename(ARCHD *);
 static int fix_path(char *, int *, char *, int);
 static int fn_match(char *, char *, char **);
 static char * range_match(char *, int);
+static int checkdotdot(const char *);
 #ifdef NET2_REGEX
 static int resub(regexp *, char *, char *, char *);
 #else
@@ -125,13 +126,17 @@ rep_add(char *str)
 
 	/*
 	 * first character in the string specifies what the delimiter is for
-	 * this expression.  find the end and middle, from the end.  this
-	 * allows the string to be something like /foo\/bar//, but will still
-	 * fail on /foo\/bar/foo\/baz/.  XXX need to parse the RE to properly
-	 * do this!
+	 * this expression.
 	 */
-	if ((pt2 = strrchr(str+1, *str)) == NULL || pt2 == str+1 ||
-	    (*pt2 = '\0') || (pt1 = strrchr(str+1, *str)) == NULL) {
+	for (pt1 = str+1; *pt1; pt1++) {
+		if (*pt1 == '\\') {
+			pt1++;
+			continue;
+		}
+		if (*pt1 == *str)
+			break;
+	}
+	if (pt1 == NULL) {
 		tty_warn(1, "Invalid replacement string %s", str);
 		return(-1);
 	}
@@ -164,7 +169,39 @@ rep_add(char *str)
 	 * we then point the node at the new substitution string
 	 */
 	*pt1++ = *str;
-	rep->nstr = pt1;
+	for (pt2 = pt1; *pt2; pt2++) {
+		if (*pt2 == '\\') {
+			pt2++;
+			continue;
+		}
+		if (*pt2 == *str)
+			break;
+	}
+	if (pt2 == NULL) {
+#ifdef NET2_REGEX
+		(void)free((char *)rep->rcmp);
+#else
+		regfree(&(rep->rcmp));
+#endif
+		(void)free((char *)rep);
+		tty_warn(1, "Invalid replacement string %s", str);
+		return(-1);
+	}
+
+	*pt2 = '\0';
+
+	/* Make sure to dup replacement, who knows where it came from! */
+	if ((rep->nstr = strdup(pt1)) == NULL) {
+#ifdef NET2_REGEX
+		(void)free((char *)rep->rcmp);
+#else
+		regfree(&(rep->rcmp));
+#endif
+		(void)free((char *)rep);
+		tty_warn(1, "Unable to allocate memory for replacement string");
+		return(-1);
+	}
+
 	pt1 = pt2++;
 	rep->flgs = 0;
 
@@ -217,13 +254,12 @@ rep_add(char *str)
  *	supplied to pax, all members in the archive will be selected (and the
  *	pattern match list is empty).
  *
- *	if ischdir is !0, a special entry used for chdiring is created.
  * Return:
  *	0 if the pattern was added to the list, -1 otherwise
  */
 
 int
-pat_add(char *str, int ischdir)
+pat_add(char *str, char *chdn)
 {
 	PATTERN *pt;
 
@@ -249,7 +285,8 @@ pat_add(char *str, int ischdir)
 	pt->pend = NULL;
 	pt->plen = strlen(str);
 	pt->fow = NULL;
-	pt->flgs = ischdir ? PTCHDIR : 0;
+	pt->flgs = 0;
+	pt->chdname = chdn;
 	if (pathead == NULL) {
 		pattail = pathead = pt;
 		return(0);
@@ -276,7 +313,7 @@ pat_chk(void)
 	 * if not complain
 	 */
 	for (pt = pathead; pt != NULL; pt = pt->fow) {
-		if (pt->flgs & (MTCH|PTCHDIR))
+		if (pt->flgs & MTCH)
 			continue;
 		if (!wban) {
 			tty_warn(1, "WARNING! These patterns were not matched:");
@@ -294,7 +331,7 @@ pat_chk(void)
  *
  *	NOTE: When the -c option is used, we are called when there was no match
  *	by pat_match() (that means we did match before the inverted sense of
- *	the logic). Now this seems really strange at first, but with -c  we
+ *	the logic). Now this seems really strange at first, but with -c we
  *	need to keep track of those patterns that cause a archive member to NOT
  *	be selected (it found an archive member with a specified pattern)
  * Return:
@@ -385,7 +422,7 @@ pat_sel(ARCHD *arcn)
 	 * we are then done with this pattern, so we delete it from the list
 	 * because it can never be used for another match.
 	 * Seems kind of strange to do for a -c, but the pax spec is really
-	 * vague on the interaction of -c -n and -d. We assume that when -c
+	 * vague on the interaction of -c, -n, and -d. We assume that when -c
 	 * and the pattern rejects a member (i.e. it matched it) it is done.
 	 * In effect we place the order of the flags as having -c last.
 	 */
@@ -442,13 +479,7 @@ pat_match(ARCHD *arcn)
 	 * have to search down the list one at a time looking for a match.
 	 */
 	pt = pathead;
-	fchdir(curdirfd);
 	while (pt != NULL) {
-		if (pt->flgs & PTCHDIR) {
-			ar_dochdir(pt->pstr);
-			pt = pt->fow;
-			continue;
-		}
 		/*
 		 * check for a file name match unless we have DIR_MTCH set in
 		 * this pattern then we want a prefix match
@@ -621,6 +652,53 @@ mod_name(ARCHD *arcn)
 	int res = 0;
 
 	/*
+	 * Strip off leading '/' if appropriate.
+	 * Currently, this option is only set for the tar format.
+	 */
+	if (rmleadslash && arcn->name[0] == '/') {
+		if (arcn->name[1] == '\0') {
+			arcn->name[0] = '.';
+		} else {
+			(void)memmove(arcn->name, &arcn->name[1],
+			    strlen(arcn->name));
+			arcn->nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			tty_warn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+	if (rmleadslash && arcn->ln_name[0] == '/' &&
+	    (arcn->type == PAX_HLK || arcn->type == PAX_HRG)) {
+		if (arcn->ln_name[1] == '\0') {
+			arcn->ln_name[0] = '.';
+		} else {
+			(void)memmove(arcn->ln_name, &arcn->ln_name[1],
+			    strlen(arcn->ln_name));
+			arcn->ln_nlen--;
+		}
+		if (rmleadslash < 2) {
+			rmleadslash = 2;
+			tty_warn(0, "Removing leading / from absolute path names in the archive");
+		}
+	}
+
+	if (secure) {
+		if (checkdotdot(arcn->name)) {
+			tty_warn(0, "Ignoring file containing `..' (%s)",
+				arcn->name);
+			return 1;
+		}
+#ifdef notdef
+		if (checkdotdot(arcn->ln_name)) {
+			tty_warn(0, "Ignoring link containing `..' (%s)",
+				arcn->ln_name);
+			return 1;
+		}
+#endif
+	}
+
+	/*
 	 * IMPORTANT: We have a problem. what do we do with symlinks?
 	 * Modifying a hard link name makes sense, as we know the file it
 	 * points at should have been seen already in the archive (and if it
@@ -644,12 +722,14 @@ mod_name(ARCHD *arcn)
 		 * we have replacement strings, modify the name and the link
 		 * name if any.
 		 */
-		if ((res = rep_name(arcn->name, &(arcn->nlen), 1)) != 0)
+		if ((res = rep_name(arcn->name, sizeof(arcn->name), 
+			&(arcn->nlen), 1)) != 0)
 			return(res);
 
 		if (((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
 		    (arcn->type == PAX_HRG)) &&
-		    ((res = rep_name(arcn->ln_name, &(arcn->ln_nlen), 0)) != 0))
+		    ((res = rep_name(arcn->ln_name, sizeof(arcn->ln_name),
+			&(arcn->ln_nlen), 0)) != 0))
 			return(res);
 	}
 
@@ -661,7 +741,7 @@ mod_name(ARCHD *arcn)
 			return(res);
 		if ((arcn->type == PAX_SLK) || (arcn->type == PAX_HLK) ||
 		    (arcn->type == PAX_HRG))
-			sub_name(arcn->ln_name, &(arcn->ln_nlen));
+			sub_name(arcn->ln_name, &(arcn->ln_nlen), sizeof(arcn->ln_name));
 	}
 	return(res);
 }
@@ -727,7 +807,7 @@ tty_rename(ARCHD *arcn)
 	 */
 	tty_prnt("Processing continues, name changed to: %s\n", tmpname);
 	res = add_name(arcn->name, arcn->nlen, tmpname);
-	arcn->nlen = l_strncpy(arcn->name, tmpname, PAXPATHLEN+1);
+	arcn->nlen = strlcpy(arcn->name, tmpname, sizeof(arcn->name));
 	if (res < 0)
 		return(-1);
 	return(0);
@@ -823,6 +903,7 @@ fix_path( char *or_name, int *or_len, char *dir_name, int dir_len)
  *	--Parameters--
  *	name is the file name we are going to apply the regular expressions to
  *	(and may be modified)
+ *	namelen the size of the name buffer.
  *	nlen is the length of this name (and is modified to hold the length of
  *	the final string).
  *	prnt is a flag that says whether to print the final result.
@@ -832,7 +913,7 @@ fix_path( char *or_name, int *or_len, char *dir_name, int dir_len)
  */
 
 static int
-rep_name(char *name, int *nlen, int prnt)
+rep_name(char *name, size_t namelen, int *nlen, int prnt)
 {
 	REPLACE *pt;
 	char *inpt;
@@ -983,9 +1064,38 @@ rep_name(char *name, int *nlen, int prnt)
 		 */
 		if (*nname == '\0')
 			return(1);
-		*nlen = l_strncpy(name, nname, PAXPATHLEN + 1);
+		*nlen = strlcpy(name, nname, namelen);
 	}
 	return(0);
+}
+
+
+/*
+ * checkdotdot()
+ *	Return true if a component of the name contains a reference to ".."
+ */
+static int
+checkdotdot(const char *name)
+{
+	const char *p;
+	/* 1. "..{[/],}" */
+	if (name[0] == '.' && name[1] == '.' &&
+	    (name[2] == '/' || name[2] == '\0'))
+		return 1;
+
+	/* 2. "*[/]..[/]*" */
+	if (strstr(name, "/../") != NULL)
+		return 1;
+
+	/* 3. "*[/].." */
+	for (p = name; *p; p++)
+		continue;
+	if (p - name < 3)
+		return 0;
+	if (p[-1] == '.' && p[-2] == '.' && p[-3] == '/')
+		return 1;
+
+	return 0;
 }
 
 #ifdef NET2_REGEX
@@ -1028,9 +1138,8 @@ resub(regexp *prog, char *src, char *dest, char *destend)
 		 * fail if we run out of space or the match string is damaged
 		 */
 		if (len > (destend - dpt))
-			len = destend - dpt;
-		if (l_strncpy(dpt, prog->startp[no], len) != len)
-			return(-1);
+			return (-1);
+		strncpy(dpt, prog->startp[no], len);
 		dpt += len;
 	}
 	return(dpt - dest);
@@ -1096,9 +1205,8 @@ resub(regex_t *rp, regmatch_t *pm, char *src, char *txt, char *dest,
 		 * fail if we run out of space or the match string is damaged
 		 */
 		if (len > (destend - dpt))
-			len = destend - dpt;
-		if (l_strncpy(dpt, txt + pmpt->rm_so, len) != len)
-			return(-1);
+			return -1;
+		strncpy(dpt, txt + pmpt->rm_so, len);
 		dpt += len;
 	}
 	return(dpt - dest);
