@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.643 2004/08/04 19:28:52 mycroft Exp $
+$NetBSD: pcidevs,v 1.644 2004/08/05 01:48:09 lukem Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -795,7 +795,7 @@ product ADDTRON 8139	0x1360	8139 Ethernet
 product ADMTEK AL981	0x0981	AL981 10/100 Ethernet
 product ADMTEK AN985	0x0985	AN985 10/100 Ethernet
 product ADMTEK AN985_2	0x1985	AN985 10/100 Ethernet (OEM)
-product	ADMTEK ADM8211	0x8201	ADM8211 11Mbps 802.11b WLAN
+product ADMTEK ADM8211	0x8201	ADM8211 11Mbps 802.11b WLAN
 
 /* Advanced System Products */
 product ADVSYS 1200A	0x1100
@@ -1932,7 +1932,7 @@ product MATROX G550_AGP		0x2527	MGA G550 AGP
 product MEDIAQ MQ200		0x0200	MQ200
 
 /* Microsoft Corporation products */
-product	MICROSOFT MN120		0x0001	MN-120 10/100 Ethernet Notebook Adapter
+product MICROSOFT MN120		0x0001	MN-120 10/100 Ethernet Notebook Adapter
 
 /* Middle Digital, Inc. products */
 product MIDDLE_DIGITAL WEASEL_VGA	0x9050	Weasel Virtual VGA
@@ -2747,8 +2747,8 @@ product VIATECH VT8366		0x3099	VT8366 (Apollo KT266) CPU-PCI Bridge
 product VIATECH VT8653		0x3101	VT8653 (Apollo Pro 266T) CPU-PCI Bridge
 product VIATECH VT8237_EHCI	0x3104	VT8237 EHCI USB Controller
 product VIATECH VT6105		0x3106	VT6105 (Rhine III) 10/100 Ethernet
-product	VIATECH	VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
-product	VIATECH	VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
+product VIATECH VT8623_VGA	0x3122	VT8623 (Apollo CLE266) VGA Controller
+product VIATECH VT8623		0x3123	VT8623 (Apollo CLE266) CPU-PCI Bridge
 product VIATECH VT8233A		0x3147	VT8233A PCI-ISA Bridge
 product VIATECH VT8237_SATA	0x3149	VT8237 Integrated SATA Controller
 product VIATECH VT8235		0x3177	VT8235 (Apollo KT400) PCI-ISA Bridge
@@ -2756,9 +2756,9 @@ product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
 product VIATECH VT8237		0x3227	VT8237 (Apollo KT600) PCI-ISA Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8231		0x8231	VT8231 IDE Controller
-product	VIATECH	VT8231_PWR	0x8235	VT8231 Power Management Controller
+product VIATECH VT8231_PWR	0x8235	VT8231 Power Management Controller
 product VIATECH VT8363_PPB	0x8305	VT8363 KT133 PCI to AGP Bridge
-product VIATECH	VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
+product VIATECH VT8371_PPB	0x8391	VT8371 (Apollo KX133) PCI-PCI Bridge
 product VIATECH VT8501AGP	0x8501	VT8501 CPU-AGP Bridge
 product VIATECH VT82C597AGP	0x8597	VT82C597 (Apollo VP3) CPU-AGP Bridge
 product VIATECH VT82C598AGP	0x8598	VT82C598 (Apollo MVP3) CPU-AGP Bridge
@@ -2881,7 +2881,7 @@ product XIRCOM X3201_3		0x0002	X3201-3 Fast Ethernet Controller
 /* this is the device id `indicating 21143 driver compatibility' */
 product XIRCOM X3201_3_21143	0x0003	X3201-3 Fast Ethernet Controller (21143)
 product XIRCOM WINGLOBAL	0x000c	WinGlobal Modem
-product	XIRCOM MODEM56		0x0103	56k Modem
+product XIRCOM MODEM56		0x0103	56k Modem
 
 /* Yamaha products */
 product YAMAHA YMF724	0x0004	724 Audio
