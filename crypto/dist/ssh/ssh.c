@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.21.2.1 2002/06/26 16:54:18 tv Exp $	*/
+/*	$NetBSD: ssh.c,v 1.21.2.2 2002/07/03 23:01:31 lukem Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -625,7 +625,8 @@ again:
 		    _PATH_HOST_RSA_KEY_FILE, "", NULL);
 		PRIV_END;
 
-		if (sensitive_data.keys[0] == NULL &&
+		if (options.hostbased_authentication == 1 &&
+		    sensitive_data.keys[0] == NULL &&
 		    sensitive_data.keys[1] == NULL &&
 		    sensitive_data.keys[2] == NULL) {
 			sensitive_data.keys[1] = key_load_public(
