@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.116 2001/01/29 11:23:43 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.117 2001/02/10 14:08:45 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.117 2001/01/29 11:23:13 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.118 2001/02/10 14:08:10 ichiro Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -494,6 +494,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "TDK LAC-CF010"	},
 	},
 	{
+	    PCMCIA_VENDOR_TDF, PCMCIA_PRODUCT_TDF_LAK_CD011WL,
+	    PCMCIA_CIS_TDF_LAK_CD011WL,
+	    0,
+	    "",
+	    "TDK LAK-CD011WL"	},
+	},
+	{
 	    PCMCIA_VENDOR_XIRCOM, PCMCIA_PRODUCT_XIRCOM_CE,
 	    PCMCIA_CIS_XIRCOM_CE,
 	    0,
@@ -837,6 +844,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega Wireless LAN PCC-11"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCA_11,
+	    PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11,
+	    0,
+	    "Corega K.K.",
+	    "Corega Wireless LAN PCCA-11"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SVEC_COMBOCARD,
 	    PCMCIA_CIS_SVEC_COMBOCARD,
 	    0,
@@ -961,6 +975,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "",
 	    "NANOSPEED ROOT-RZ2000 WLAN Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NEC_CMZ_RT_WP,
+	    PCMCIA_CIS_NEC_CMZ_RT_WP,
+	    0,
+	    "",
+	    "NEC Wireless Card CMZ-RT-WP"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NTT_ME_WLAN,
+	    PCMCIA_CIS_NTT_ME_WLAN,
+	    0,
+	    "",
+	    "NTT-ME 11Mbps Wireless LAN PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
