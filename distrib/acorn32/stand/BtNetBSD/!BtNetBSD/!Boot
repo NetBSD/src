@@ -1,7 +1,11 @@
 |
-| $NetBSD: !Boot,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+| $NetBSD: !Boot,v 1.1.1.1.2.1 2002/06/18 14:10:17 lukem Exp $
 | boot file for !BtNetBSD application
 |
 IconSprites <Obey$Dir>.!Sprites
 Set File$Type_fe6 Unix
+Set File$Type_1a9 NBKernel
 Set BtNetBSD$Dir <Obey$Dir>
+
+Set Alias$@RunType_1a9 Run <BtNetBSD$Dir>.!Run %%*0
+
