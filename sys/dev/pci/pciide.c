@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.116 2001/05/06 20:06:35 fvdl Exp $	*/
+/*	$NetBSD: pciide.c,v 1.117 2001/05/14 20:41:27 matt Exp $	*/
 
 
 /*
@@ -200,6 +200,10 @@ int  hpt_pci_intr __P((void *));
 void acard_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void acard_setup_channel __P((struct channel_softc*));
 int  acard_pci_intr __P((void *));
+
+#ifdef PCIIDE_WINBOND_ENABLE
+void winbond_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+#endif
 
 void pciide_channel_dma_setup __P((struct pciide_channel *));
 int  pciide_dma_table_setup __P((struct pciide_softc*, int, int));
@@ -477,6 +481,34 @@ const struct pciide_product_desc pciide_acard_products[] =  {
 	}
 };
 
+#ifdef PCIIDE_SERVERWORKS_ENABLE
+const struct pciide_product_desc pciide_serverworks_products[] =  {
+	{ PCI_PRODUCT_SERVERWORKS_IDE,
+	  0,
+	  "ServerWorks ROSB4 IDE Controller",
+	  piix_chip_map,
+	},
+	{ 0,
+	  0,
+	  NULL,
+	}
+};
+#endif
+
+#ifdef PCIIDE_WINBOND_ENABLE
+const struct pciide_product_desc pciide_winbond_products[] =  {
+	{ PCI_PRODUCT_WINBOND_W83C553F_1,
+	  0,
+	  "Winbond W83C553F IDE controller",
+	  winbond_chip_map,
+	},
+	{ 0,
+	  0,
+	  NULL,
+	}
+};
+#endif
+
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
 	const struct pciide_product_desc *ide_products;
@@ -495,6 +527,12 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_TRIONES, pciide_triones_products },
 #ifdef PCIIDE_ACARD_ENABLE
 	{ PCI_VENDOR_ACARD, pciide_acard_products },
+#endif
+#ifdef PCIIDE_SERVERWORKS_ENABLE
+	{ PCI_VENDOR_SERVERWORKS, pciide_serverworks_products },
+#endif
+#ifdef PCIIDE_WINBOND_ENABLE
+	{ PCI_VENDOR_WINBOND, pciide_winbond_products },
 #endif
 	{ 0, NULL }
 };
