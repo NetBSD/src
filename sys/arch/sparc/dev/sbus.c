@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.42 2001/10/05 13:32:23 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.43 2001/12/20 07:53:59 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ void sbusreset __P((int));
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *));
-int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			      int, bus_space_handle_t *));
+static paddr_t sbus_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+				  int, int));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
 		bus_type_t,		/*slot*/
@@ -577,17 +577,16 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	return (EINVAL);
 }
 
-int
-sbus_bus_mmap(t, btype, paddr, flags, hp)
+static paddr_t
+sbus_bus_mmap(t, baddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t btype;
-	bus_addr_t paddr;
+	bus_addr_t baddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
-	int slot = (int)btype;
-	int offset = (int)paddr;
 	struct sbus_softc *sc = t->cookie;
+	int slot = BUS_ADDR_IOSPACE(baddr);
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
@@ -596,11 +595,10 @@ sbus_bus_mmap(t, btype, paddr, flags, hp)
 		if (sc->sc_range[i].cspace != slot)
 			continue;
 
-		paddr = BUS_ADDR(sc->sc_range[i].pspace, 
-			sc->sc_range[i].poffset + offset);
-		if ((*hp = bus_space_mmap(sc->sc_bustag, paddr, 0,
-			0/*prot unused*/, flags)) != -1)
-			return (0);
+		paddr = BUS_ADDR(sc->sc_range[i].pspace,
+			    sc->sc_range[i].poffset + BUS_ADDR_PADDR(baddr));
+		return (bus_space_mmap(sc->sc_bustag, paddr, off,
+				       prot, flags));
 	}
 
 	return (-1);
@@ -799,7 +797,7 @@ sbus_alloc_bustag(sc)
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
 	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
+	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }
