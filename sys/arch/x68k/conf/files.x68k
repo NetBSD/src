@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.54 2003/06/24 19:56:22 martin Exp $
+#	$NetBSD: files.x68k,v 1.55 2003/07/27 01:19:34 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -100,7 +100,6 @@ file	arch/x68k/dev/kbd.c		kbd needs-flag
 device rtc
 attach	rtc at intio
 file	arch/x68k/dev/rtclock.c		rtc
-file	dev/clock_subr.c		rtc
 
 device dmac
 attach	dmac at intio

@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.10 2002/10/26 13:50:39 jdolecek Exp $
+#	$NetBSD: files.playstation2,v 1.11 2003/07/27 01:19:30 thorpej Exp $
 
 maxpartitions 8
 
@@ -27,7 +27,6 @@ file arch/playstation2/playstation2/sifbios.c
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
 file arch/playstation2/playstation2/kloader.c		kloader_kernel_path
 
-file	dev/clock_subr.c
 #
 #	PlayStation 2 internal devices (not optional)
 #

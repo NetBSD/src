@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.42 2003/03/18 16:40:22 matt Exp $
+#	$NetBSD: files.prep,v 1.43 2003/07/27 01:19:30 thorpej Exp $
 #
 # prep-specific configuration info
 #
@@ -40,7 +40,6 @@ file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 
 # General files
-file	dev/clock_subr.c
 file	dev/cons.c
 
 #

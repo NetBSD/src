@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.122 2002/12/07 10:27:03 pk Exp $
+#	$NetBSD: files.sparc,v 1.123 2003/07/27 01:19:32 thorpej Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -94,7 +94,6 @@ attach eeprom at obio
 file	arch/sparc/sparc/eeprom.c		eeprom
 
 file	arch/sparc/sparc/clock.c
-file	dev/clock_subr.c
 
 device power
 attach power at obio

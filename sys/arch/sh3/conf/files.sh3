@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.29 2003/05/08 12:37:36 christos Exp $
+#	$NetBSD: files.sh3,v 1.30 2003/07/27 01:19:31 thorpej Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -33,7 +33,6 @@ file	arch/sh3/sh3/mmu_sh4.c		sh4
 file	arch/sh3/sh3/clock.c
 file	arch/sh3/sh3/devreg.c		sh3 & sh4
 file	arch/sh3/sh3/interrupt.c
-file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c
 

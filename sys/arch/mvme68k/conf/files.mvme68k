@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.57 2003/06/28 08:26:45 he Exp $
+#	$NetBSD: files.mvme68k,v 1.58 2003/07/27 01:19:28 thorpej Exp $
 
 # config file for mvme68k
 
@@ -103,7 +103,6 @@ file arch/m68k/m68k/db_memrw.c			ddb | kgdb
 file arch/m68k/m68k/pmap_motorola.c
 file arch/m68k/m68k/sys_machdep.c
 file arch/m68k/m68k/vm_machdep.c
-file dev/clock_subr.c
 file dev/cons.c
 file dev/cninit.c
 

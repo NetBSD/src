@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.69 2002/11/03 01:12:03 chs Exp $
+#	$NetBSD: files.sun3,v 1.70 2003/07/27 01:19:33 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -130,7 +130,6 @@ device oclock
 attach oclock at obio
 file arch/sun3/sun3/clock.c		_sun3_
 file arch/sun3/sun3x/clock.c		_sun3x_
-file dev/clock_subr.c
 
 # EEPROM (or NV-RAM)
 device eeprom

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.3 2003/05/11 21:39:01 fvdl Exp $
+#	$NetBSD: files.amd64,v 1.4 2003/07/27 01:19:25 thorpej Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -139,7 +139,6 @@ file	dev/pci/lpt_puc.c			lpt_puc
 
 # PC clock
 file	arch/amd64/isa/clock.c			isa
-file	dev/clock_subr.c			isa
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device

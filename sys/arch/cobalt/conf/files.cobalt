@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.15 2003/01/20 01:26:14 soren Exp $
+#	$NetBSD: files.cobalt,v 1.16 2003/07/27 01:19:25 thorpej Exp $
 
 maxpartitions 16
 
@@ -32,7 +32,6 @@ file arch/cobalt/cobalt/machdep.c
 
 file dev/md_root.c			memory_disk_hooks
 
-file dev/clock_subr.c
 file dev/cons.c
 
 include "dev/i2o/files.i2o"

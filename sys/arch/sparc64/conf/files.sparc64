@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.80 2003/07/17 21:02:03 petrov Exp $
+#	$NetBSD: files.sparc64,v 1.81 2003/07/27 01:19:32 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -69,7 +69,6 @@ attach timer at mainbus, sbus
 device eeprom
 attach eeprom at sbus, ebus
 file	arch/sparc64/sparc64/clock.c
-file	dev/clock_subr.c
 
 device power
 attach power at sbus, ebus

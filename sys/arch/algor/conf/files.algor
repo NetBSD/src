@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.15 2002/10/26 13:50:20 jdolecek Exp $
+#	$NetBSD: files.algor,v 1.16 2003/07/27 01:17:39 thorpej Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -36,7 +36,6 @@ file	arch/algor/algor/algor_p6032_intr.c	algor_p6032
 file	arch/algor/algor/autoconf.c
 file	arch/algor/algor/bus_dma.c
 file	arch/algor/algor/clock.c
-file	dev/clock_subr.c
 file	arch/algor/algor/disksubr.c
 file	arch/algor/algor/interrupt.c
 file	arch/algor/algor/led.c

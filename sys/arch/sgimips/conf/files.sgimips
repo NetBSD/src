@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.22 2002/10/26 13:50:43 jdolecek Exp $
+#	$NetBSD: files.sgimips,v 1.23 2003/07/27 01:19:31 thorpej Exp $
 
 maxpartitions 16
 
@@ -75,7 +75,6 @@ file arch/sgimips/sgimips/softintr.c
 
 file dev/md_root.c			memory_disk_hooks
 
-file dev/clock_subr.c
 file dev/cons.c
 
 # Machine-independent I2O drivers.

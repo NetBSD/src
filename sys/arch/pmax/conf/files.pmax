@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.104 2003/05/25 14:04:45 tsutsui Exp $
+#	$NetBSD: files.pmax,v 1.105 2003/07/27 01:19:30 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -81,7 +81,6 @@ device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at ibus with mcclock_ibus
 file	arch/pmax/pmax/clock.c
-file	dev/clock_subr.c
 file	arch/pmax/pmax/mcclock.c	mcclock
 file	dev/dec/mcclock.c		mcclock
 file	dev/dec/mcclock_pad32.c		mcclock

@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.6 2002/11/09 05:36:49 cgd Exp $
+# $NetBSD: files.sbmips,v 1.7 2003/07/27 01:19:35 thorpej Exp $
 
 maxpartitions 8
 
@@ -10,7 +10,6 @@ file arch/sbmips/sbmips/softintr.c
 file arch/sbmips/sbmips/console.c
 file arch/sbmips/sbmips/disksubr.c
 file arch/sbmips/sbmips/systemsw.c
-file dev/clock_subr.c
 file dev/cons.c
 
 file arch/sbmips/sbmips/sb1250_icu.c

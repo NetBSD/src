@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbmips,v 1.3 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.evbmips,v 1.4 2003/07/27 01:19:27 thorpej Exp $
 
 # maxpartitions must be the first item in files.${ARCH}
 maxpartitions 16
@@ -15,8 +15,6 @@ defflag		MIPS_MALTA	# MIPS Malta mips32/64 eval board
 # Various items that a buggy proms might not provide us.
 defparam	MEMSIZE
 defparam	ETHADDR
-
-file	dev/clock_subr.c
 
 # Console glue.
 file	dev/cons.c
