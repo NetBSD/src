@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.36 2000/02/26 20:12:56 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.37 2000/03/15 16:44:48 drochner Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #endif
 
 #ifdef BUS_SPACE_DEBUG
+#include <sys/systm.h> /* for printf() prototype */
 /*
  * Macros for checking the aligned-ness of pointers passed to bus
  * space ops.  Strict alignment is required by the Alpha architecture,

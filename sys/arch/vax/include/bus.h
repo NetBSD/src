@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 2000/03/05 21:22:48 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 2000/03/15 16:44:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #define _VAX_BUS_H_
 
 #ifdef BUS_SPACE_DEBUG
+#include <sys/systm.h> /* for printf() prototype */
 /*
  * Macros for sanity-checking the aligned-ness of pointers passed to
  * bus space ops.  These are not strictly necessary on the VAX, but
