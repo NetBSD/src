@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83 2003/04/06 10:00:00 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.84 2003/04/26 14:10:14 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.83 $"
+#ident		"GENERIC-$Revision: 1.84 $"
 
 maxusers	32		# estimated number of users
 
@@ -415,3 +415,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 #pseudo-device	wsmux
+pseudo-device	ksyms			# /dev/ksyms

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2002/09/18 02:43:59 lukem Exp $
+# $NetBSD: GENERIC,v 1.28 2003/04/26 14:10:11 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -166,3 +166,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
+pseudo-device	ksyms			# /dev/ksyms

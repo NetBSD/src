@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65 2003/02/27 19:22:46 perseant Exp $
+# $NetBSD: GENERIC,v 1.66 2003/04/26 14:10:07 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.65 $"
+#ident		"GENERIC-$Revision: 1.66 $"
 
 maxusers	32
 
@@ -498,6 +498,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

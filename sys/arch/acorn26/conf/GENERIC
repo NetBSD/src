@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.12 2003/02/27 19:22:37 perseant Exp $
+# $NetBSD: GENERIC,v 1.13 2003/04/26 14:10:15 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -233,4 +233,4 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
-
+pseudo-device	ksyms			# /dev/ksyms

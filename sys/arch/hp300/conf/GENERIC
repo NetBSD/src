@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2003/04/10 22:06:56 christos Exp $
+# $NetBSD: GENERIC,v 1.92 2003/04/26 14:10:12 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	32		# estimated number of users
 
@@ -264,3 +264,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+pseudo-device	ksyms			# /dev/ksyms
