@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.1 2002/10/04 18:37:20 elric Exp $ */
+/* $NetBSD: params.h,v 1.2 2002/10/12 21:02:18 elric Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,15 +46,24 @@ struct params {
 	u_int8_t	*keygen_salt;
 	int		 keygen_saltlen;
 	int		 keygen_iterations;
+	int		 verify_method;
 	u_int8_t	*key_hash;
 	int		 key_hashlen;
 	u_int8_t	*xor_key;
 	int		 xor_keylen;
 };
 
+/* key generation methods */
+
 #define KEYGEN_UNKNOWN		0x0
 #define KEYGEN_RANDOMKEY	0x1
 #define KEYGEN_PKCS5_PBKDF2	0x2
+
+/* verification methods */
+
+#define VERIFY_UNKNOWN		0x0
+#define VERIFY_NONE		0x1
+#define VERIFY_DISKLABEL	0x2
 
 void	params_init(struct params *);
 void	params_free(struct params *);
@@ -78,6 +87,8 @@ int	params_setkeygen_method(struct params *, int);
 int	params_setkeygen_method_str(struct params *, const char *);
 int	params_setkeygen_salt(struct params *, const char *, int);
 int	params_setkeygen_salt_b64(struct params *, const char *);
+int	params_setverify_method(struct params *, int);
+int	params_setverify_method_str(struct params *, const char *);
 int	params_setxor_key(struct params *, const char *, int);
 int	params_setxor_key_b64(struct params *, const char *);
 int	params_setkey_hash(struct params *, const char *, int);
