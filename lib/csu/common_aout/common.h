@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.10 1998/09/05 13:27:48 pk Exp $	*/
+/*	$NetBSD: common.h,v 1.11 1999/06/17 21:09:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 
 #include <sys/mman.h>
 #ifdef sun
-#define MAP_COPY	MAP_PRIVATE
 #define MAP_ANON	0
 #endif
 
