@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.206 2002/07/24 03:03:58 lukem Exp $
+.\"	$NetBSD: main,v 1.207 2002/07/26 02:45:37 rafal Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -469,7 +469,7 @@ program execution.
 .It
 A rewritten SCSI middle layer to provide a cleaner interface between
 the different kernel layers, including a kernel thread to handle error
-recovery out of interrupt context.
+recovery outside of the interrupt context.
 See
 .Xr scsipi 9 .
 .It
@@ -1006,7 +1006,11 @@ All the above source sets are located in the
 subdirectory of the distribution tree.
 .Pp
 The source sets are distributed as compressed tar files.
-They may be unpacked into
+Except for the
+.Sy pkgsrc 
+set, which is traditionally unpacked into
+.Pa /usr/pkgsrc ,
+all sets may be unpacked into
 .Pa /usr/src
 with the command:
 .Dl # Ic "( cd / ; tar -zxpf - ) \*< set_name.tgz"
