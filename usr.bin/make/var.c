@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.55 2000/09/05 17:57:52 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.56 2000/09/05 21:08:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.55 2000/09/05 17:57:52 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.56 2000/09/05 21:08:35 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.55 2000/09/05 17:57:52 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.56 2000/09/05 21:08:35 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1883,7 +1883,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *  	  :R	    	Substitute the root of each word
      *  	  	    	(pathname minus the suffix).
      *		  :O		("Order") Sort words in variable.
-     *		  :U		("Uniq") Remove adjacent duplicate words.
+     *		  :u		("uniq") Remove adjacent duplicate words.
      *		  :?<true-value>:<false-value>
      *				If the variable evaluates to true, return
      *				true value, else return the second value.
