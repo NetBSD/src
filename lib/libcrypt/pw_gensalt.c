@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.2 2005/01/11 23:02:30 christos Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.3 2005/01/11 23:21:31 christos Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.2 2005/01/11 23:02:30 christos Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.3 2005/01/11 23:21:31 christos Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: pw_gensalt.c,v 1.2 2005/01/11 23:02:30 christos Exp $");
 #include <errno.h>
 #include <pwd.h>
 
-#include <crypt.h>
+#include "crypt.h"
 
 
 static const struct pw_salt {
@@ -69,6 +69,7 @@ static const struct pw_salt {
 };
 
 int
+/*ARGSUSED2*/
 __gensalt_old(char *salt, size_t saltsiz, size_t nrounds)
 {
 	if (saltsiz < 3) {
@@ -81,6 +82,7 @@ __gensalt_old(char *salt, size_t saltsiz, size_t nrounds)
 }
 
 int
+/*ARGSUSED2*/
 __gensalt_new(char *salt, size_t saltsiz, size_t nrounds)
 {
 	if (saltsiz < 10) {
@@ -100,6 +102,7 @@ __gensalt_new(char *salt, size_t saltsiz, size_t nrounds)
 }
 
 int
+/*ARGSUSED2*/
 __gensalt_md5(char *salt, size_t saltsiz, size_t nrounds)
 {
 	if (saltsiz < 13) {  /* $1$8salt$\0 */
