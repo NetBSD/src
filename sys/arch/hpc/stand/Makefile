@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/05/21 15:57:02 uch Exp $
+#	$NetBSD: Makefile,v 1.8 2001/06/19 16:50:06 uch Exp $
 #
 
 PROJECT_DIRS	= hpcboot libz libsa
@@ -74,6 +74,11 @@ install1:
 uuencode:
 	find binary -name "hpcboot*.exe" -print | \
 	awk '{ print "uuencode", $$1, $$1, ">", $$1".uu ; rm -f", $$1 }' | sh
-
-
-
+	cp binary/build_number.h build_number.h
+	awk '{if (/HPCBOOT_BUILD_NUMBER/)				\
+		{ i = $$3 + 1;						\
+			printf("#define HPCBOOT_BUILD_NUMBER	%d\n", i);\
+		} else {						\
+			printf("%s\n", $$0);				\
+		}}' build_number.h > binary/build_number.h
+	rm -f build_number.h
