@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.57 2001/05/13 17:17:35 sommerfeld Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.58 2001/06/05 04:40:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -592,7 +592,12 @@ pool_get(struct pool *pp, int flags)
 	if (__predict_false(curproc == NULL && doing_shutdown == 0 &&
 			    (flags & PR_WAITOK) != 0))
 		panic("pool_get: must have NOWAIT");
+
+#ifdef LOCKDEBUG
+	if (flags & PR_WAITOK)
+		simple_lock_only_held(NULL, "pool_get(PR_WAITOK)");
 #endif
+#endif /* DIAGNOSTIC */
 
 	simple_lock(&pp->pr_slock);
 	pr_enter(pp, file, line);
@@ -953,7 +958,7 @@ _pool_put(struct pool *pp, void *v, const char *file, long line)
 	simple_unlock(&pp->pr_slock);
 }
 #undef pool_put
-#endif
+#endif /* DIAGNOSTIC */
 
 void
 pool_put(struct pool *pp, void *v)
@@ -1633,6 +1638,11 @@ pool_cache_get(struct pool_cache *pc, int flags)
 {
 	struct pool_cache_group *pcg;
 	void *object;
+
+#ifdef LOCKDEBUG
+	if (flags & PR_WAITOK)
+		simple_lock_only_held(NULL, "pool_cache_get(PR_WAITOK)");
+#endif
 
 	simple_lock(&pc->pc_slock);
 
