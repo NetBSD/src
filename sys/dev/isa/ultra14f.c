@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.11 1993/06/09 22:36:53 deraadt Exp $
+ *	$Id: ultra14f.c,v 1.12 1993/07/17 11:00:11 deraadt Exp $
  */
  
 #include <sys/types.h>
@@ -293,6 +293,7 @@ int     uha_debug = 0;
 
 struct  scsi_switch     uha_switch = 
 {
+	"uha",
 	uha_scsi_cmd,
 	uhaminphys,
 	0,

@@ -12,13 +12,16 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.7 1993/06/09 22:36:49 deraadt Exp $
+ *	$Id: bt742a.c,v 1.8 1993/07/17 11:00:09 deraadt Exp $
  */
 
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.7  1993/06/09 22:36:49  deraadt
+ * Revision 1.8  1993/07/17 11:00:09  deraadt
+ * scsi_switch had wrong entries for these controllers...
+ *
+ * Revision 1.7  1993/06/09  22:36:49  deraadt
  * minor silliness related to two or more controllers
  *
  * Revision 1.6  1993/05/22  08:01:05  cgd
@@ -443,6 +446,7 @@ long int bt_adapter_info();
 
 struct	scsi_switch	bt_switch =
 {
+	"bt",
 	bt_scsi_cmd,
 	btminphys,
 	0,
