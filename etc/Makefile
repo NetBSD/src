@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.106 1999/03/08 02:37:56 cjs Exp $
+#	$NetBSD: Makefile,v 1.107 1999/03/10 19:10:15 scottr Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -107,8 +107,8 @@ distribution distrib-dirs release snapshot:
 .else
 distribution: distrib-dirs
 .if !defined(INSTALL_DONE)
-	(cd ..; ${MAKE} includes)
-	(cd ..; ${MAKE} install)
+	(cd ..; ${MAKE} _DISTRIB= includes)
+	(cd ..; ${MAKE} _DISTRIB= install)
 .endif
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
