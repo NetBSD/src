@@ -566,7 +566,7 @@ is_start(ifp)
                 etype = ntohs(eh->ether_type);
                 if (etype >= ETHERTYPE_TRAIL &&
                     etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-			datasize = ((etype - ETHERTYPE_TRAIL) << 9);
+			datasize = (etype - ETHERTYPE_TRAIL) << 9;
 			off = datasize + sizeof(struct ether_header);
 
 			/* copy trailer_header into a data structure */
@@ -790,6 +790,7 @@ is_read(sc, buf, len)
 	struct mbuf *m;
 	u_short off;
 	int resid;
+	u_short etype;
 
 	/*
 	 * Deal with trailer protocol: if type is trailer type
@@ -797,15 +798,15 @@ is_read(sc, buf, len)
 	 * Remember that type was trailer by setting off.
 	 */
 	eh = (struct ether_header *)buf;
-	eh->ether_type = ntohs((u_short)eh->ether_type);
-	len = len - sizeof(struct ether_header) - 4;
+	etype = ntohs(eh->ether_type);
+	len -= sizeof(struct ether_header) + 4;
 #define nedataaddr(eh, off, type)       ((type)(((caddr_t)((eh)+1)+(off))))
-	if (eh->ether_type >= ETHERTYPE_TRAIL &&
-	    eh->ether_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (eh->ether_type - ETHERTYPE_TRAIL) * 512;
-		if (off >= ETHERMTU)
+	if (etype >= ETHERTYPE_TRAIL &&
+	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
+		off = (etype - ETHERTYPE_TRAIL) << 9;
+		if ((off + sizeof(struct trailer_header)) > len)
 			return;
-		eh->ether_type = ntohs(*nedataaddr(eh, off, u_short *));
+		eh->ether_type = *nedataaddr(eh, off, u_short *);
 		resid = ntohs(*(nedataaddr(eh, off+2, u_short *)));
 		if (off + resid > len)
 			return;
