@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.10 1995/10/02 17:31:37 jpo Exp $	*/
+/*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.10 1995/10/02 17:31:37 jpo Exp $";
+static char rcsid[] = "$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $";
 #endif
 
 #include <sys/param.h>
@@ -294,8 +294,6 @@ addscl(sc)
 	scl_t	sc;
 {
 	if (sc == INLINE) {
-		/* syntax error */
-		(void)gnuism(249);
 		if (dcs->d_inline)
 			/* duplicate '%s' */
 			warning(10, "inline");
