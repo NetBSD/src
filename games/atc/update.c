@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.7 1998/09/11 12:53:29 hubertf Exp $	*/
+/*	$NetBSD: update.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.7 1998/09/11 12:53:29 hubertf Exp $");
+__RCSID("$NetBSD: update.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -222,9 +222,9 @@ update(dummy)
 #endif
 }
 
-char *
+const char *
 command(pp)
-	PLANE	*pp;
+	const PLANE	*pp;
 {
 	static char	buf[50], *bp, *comm_start;
 
@@ -255,7 +255,7 @@ command(pp)
 
 char
 name(p)
-	PLANE	*p;
+	const PLANE	*p;
 {
 	if (p->plane_type == 0)
 		return ('A' + p->plane_no);
@@ -392,7 +392,7 @@ findplane(n)
 
 int
 too_close(p1, p2, dist)
-	PLANE	*p1, *p2;
+	const PLANE	*p1, *p2;
 	int	 dist;
 {
 	if (ABS(p1->altitude - p2->altitude) <= dist &&
