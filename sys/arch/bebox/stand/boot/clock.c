@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1998/01/19 03:00:59 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 1998/01/19 11:39:59 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -77,15 +77,15 @@ findcpuspeed()
 	u_quad_t tstart, tend;
 
 	/* Put counter in count down mode */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_16BIT|TIMER_RATEGEN);
-	outb(TIMER_CNTR0, 0xff);	/* lo */
-	outb(TIMER_CNTR0, 0xff);	/* hi */
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0|TIMER_16BIT|TIMER_RATEGEN);
+	outb(IO_TIMER1 + TIMER_CNTR0, 0xff);	/* lo */
+	outb(IO_TIMER1 + TIMER_CNTR0, 0xff);	/* hi */
 	for (i = FIRST_GUESS; i; i--)
 		;
 	/* Read the value left in the counter */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
-	remainder = inb(TIMER_CNTR0);
-	remainder += (inb(TIMER_CNTR0) << 8);
+	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
+	remainder = inb(IO_TIMER1 + TIMER_CNTR0);
+	remainder += (inb(IO_TIMER1 + TIMER_CNTR0) << 8);
 
 	tstart = mftb();
 	for (i = FIRST_GUESS; i; i--)
