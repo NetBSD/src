@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.13 1996/12/02 07:07:21 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -140,6 +140,16 @@ void		__C(CHIP,_io_set_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_set_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t));
 
+/* copy */
+void		__C(CHIP,_io_copy_1) __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		__C(CHIP,_io_copy_2) __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		__C(CHIP,_io_copy_4) __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		__C(CHIP,_io_copy_8) __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
@@ -208,7 +218,10 @@ static struct alpha_bus_space __C(CHIP,_io_space) = {
 	__C(CHIP,_io_set_region_8),
 
 	/* copy */
-	/* XXX IMPLEMENT */
+	__C(CHIP,_io_copy_1),
+	__C(CHIP,_io_copy_2),
+	__C(CHIP,_io_copy_4),
+	__C(CHIP,_io_copy_8),
 };
 
 bus_space_tag_t
@@ -684,3 +697,21 @@ CHIP_io_set_region_N(1,u_int8_t)
 CHIP_io_set_region_N(2,u_int16_t)
 CHIP_io_set_region_N(4,u_int32_t)
 CHIP_io_set_region_N(8,u_int64_t)
+
+#define	CHIP_io_copy_N(BYTES)						\
+void									\
+__C(__C(CHIP,_io_copy_),BYTES)(v, h1, o1, h2, o2, c)			\
+	void *v;							\
+	bus_space_handle_t h1, h2;					\
+	bus_size_t o1, o2, c;						\
+{									\
+	bus_size_t i, o;						\
+									\
+	for (i = 0, o = 0; i < c; i++, o += BYTES)			\
+		__C(__C(CHIP,_io_write_),BYTES)(v, h2, o2 + o,		\
+		    __C(__C(CHIP,_io_read_),BYTES)(v, h1, o1 + o));	\
+}
+CHIP_io_copy_N(1)
+CHIP_io_copy_N(2)
+CHIP_io_copy_N(4)
+CHIP_io_copy_N(8)

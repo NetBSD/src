@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.12 1996/12/02 07:07:20 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -134,6 +134,16 @@ void		tc_mem_set_region_4 __P((void *, bus_space_handle_t,
 void		tc_mem_set_region_8 __P((void *, bus_space_handle_t,
 		    bus_size_t, u_int64_t, bus_size_t));
 
+/* copy */
+void		tc_mem_copy_1 __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		tc_mem_copy_2 __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		tc_mem_copy_4 __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+void		tc_mem_copy_8 __P((void *, bus_space_handle_t,
+		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
+
 static struct alpha_bus_space tc_mem_space = {
 	/* cookie */
 	NULL,
@@ -199,7 +209,10 @@ static struct alpha_bus_space tc_mem_space = {
 	tc_mem_set_region_8,
 
 	/* copy */
-	/* XXX IMPLEMENT */
+	tc_mem_copy_1,
+	tc_mem_copy_2,
+	tc_mem_copy_4,
+	tc_mem_copy_8,
 };
 
 bus_space_tag_t
@@ -574,3 +587,27 @@ tc_mem_set_region_N(1,u_int8_t)
 tc_mem_set_region_N(2,u_int16_t)
 tc_mem_set_region_N(4,u_int32_t)
 tc_mem_set_region_N(8,u_int64_t)
+
+#define	tc_mem_copy_N(BYTES)						\
+void									\
+__abs_c(tc_mem_copy_,BYTES)(v, h1, o1, h2, o2, c)			\
+	void *v;							\
+	bus_space_handle_t h1, h2;					\
+	bus_size_t o1, o2, c;						\
+{									\
+	bus_size_t i, o;						\
+									\
+	if ((h1 & TC_SPACE_SPARSE) != 0 &&				\
+	    (h2 & TC_SPACE_SPARSE) != 0) {				\
+		bcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES);	\
+		return;							\
+	}								\
+									\
+	for (i = 0, o = 0; i < c; i++, o += BYTES)			\
+		__abs_c(tc_mem_write_,BYTES)(v, h2, o2 + o,		\
+		    __abs_c(tc_mem_read_,BYTES)(v, h1, o1 + o));	\
+}
+tc_mem_copy_N(1)
+tc_mem_copy_N(2)
+tc_mem_copy_N(4)
+tc_mem_copy_N(8)
