@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.6 2000/03/14 08:23:24 sato Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.7 2000/04/03 04:32:00 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -43,7 +43,7 @@
 #include <hpcmips/vr/bcureg.h>
 #endif
 
-int vrpmu_pwsw = 0;
+int vrpmu_pwstate = 1;
 
 #ifdef VRPMUDEBUG
 #define DEBUG_BOOT	0x1	/* boot time */
@@ -290,10 +290,13 @@ vrpmu_intr(arg)
 	if (intstat1 & PMUINT_BATTINTR)
 		;
 	if (intstat1 & PMUINT_POWERSW) {
-		vrpmu_pwsw = !vrpmu_pwsw;
+		vrpmu_pwstate = !vrpmu_pwstate;
 		config_hook_call(CONFIG_HOOK_BUTTONEVENT,
 				 CONFIG_HOOK_BUTTONEVENT_POWER,
-				 (void*)vrpmu_pwsw);
+				 (void*)vrpmu_pwstate);
+		config_hook_call(CONFIG_HOOK_POWERCONTROL,
+				 CONFIG_HOOK_POWERCONTROL_LCD,
+				 (void*)vrpmu_pwstate);
 	}
 
 	if (intstat2 & PMUINT_GPIO12)
