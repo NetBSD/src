@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.17 1995/06/09 01:53:50 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.18 1996/06/25 16:40:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.17 1995/06/09 01:53:50 christos Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.18 1996/06/25 16:40:38 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -582,9 +582,9 @@ hashcd() {
 
 void
 changepath(newval)
-	char *newval;
+	const char *newval;
 {
-	char *old, *new;
+	const char *old, *new;
 	int index;
 	int firstchange;
 	int bltin;
