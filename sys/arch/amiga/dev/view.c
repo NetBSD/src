@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.14 1996/10/10 23:56:37 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.15 1996/10/11 21:12:54 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -45,6 +45,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/poll.h>
 #include <machine/cpu.h>
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
@@ -412,12 +413,10 @@ viewmmap(dev, off, prot)
 
 /*ARGSUSED*/
 int
-viewselect(dev, rw, p)
+viewpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
-	if (rw == FREAD)
-		return(0);
-	return(1);
+	return(events & (POLLOUT | POLLWRNORM));
 }
