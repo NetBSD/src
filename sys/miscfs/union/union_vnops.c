@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.39 1998/04/10 01:39:45 thorpej Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.40 1998/04/10 01:43:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1148,7 +1148,7 @@ union_link(v)
 			vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 			if (dun->un_uppervp == un->un_dirvp) {
 				dun->un_flags &= ~UN_ULOCK;
-				VOP_UNLOCK(un->un_uppervp, 0);
+				VOP_UNLOCK(dun->un_uppervp, 0);
 			}
 			error = union_copyup(un, 1, cnp->cn_cred, p);
 			if (dun->un_uppervp == un->un_dirvp) {
@@ -1170,6 +1170,7 @@ union_link(v)
 				 * and since LOCKPARENT is set returns
 				 * the starting directory locked.
 				 */
+				VOP_UNLOCK(ap->a_dvp, 0);
 				error = relookup(ap->a_dvp, &vp, ap->a_cnp);
 				if (error) {
 					vrele(ap->a_dvp);
