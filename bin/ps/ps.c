@@ -77,7 +77,7 @@ int	sumrusage;		/* -S */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
-static int needuser, needcomm, needenv;
+static int needuser, needcomm, needenv, commandonly;
 
 enum sort { DEFAULT, SORTMEM, SORTCPU } sortby = DEFAULT;
 
@@ -131,10 +131,13 @@ main(argc, argv)
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "aCeghjLlM:mN:O:o:p:rSTt:uvW:wx")) != EOF)
+	    "acCeghjLlM:mN:O:o:p:rSTt:uvW:wx")) != EOF)
 		switch((char)ch) {
 		case 'a':
 			all = 1;
+			break;
+		case 'c':
+			commandonly = 1;
 			break;
 		case 'e':			/* XXX set ufmt */
 			needenv = 1;
@@ -398,10 +401,13 @@ saveuser(ki)
 	/*
 	 * save arguments if needed
 	 */
-	if (needcomm)
-		ki->ki_args = fmt(kvm_getargv, ki, KI_PROC(ki)->p_comm,
-		    MAXCOMLEN);
-	else
+	if (needcomm) {
+		if (commandonly)
+			ki->ki_args = strdup(KI_PROC(ki)->p_comm);
+		else
+			ki->ki_args = fmt(kvm_getargv, ki, KI_PROC(ki)->p_comm,
+			    MAXCOMLEN);
+	} else
 		ki->ki_args = NULL;
 	if (needenv)
 		ki->ki_env = fmt(kvm_getenvv, ki, (char *)NULL, 0);
