@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.12 2003/05/01 12:49:16 yamt Exp $	*/
+/*	$NetBSD: lockf.h,v 1.13 2003/05/01 13:06:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -74,9 +74,7 @@ struct lockf {
 
 #ifdef _KERNEL
 
-__BEGIN_DECLS
-int	 lf_advlock __P((struct vop_advlock_args *, struct lockf **, off_t));
-__END_DECLS
+int lf_advlock(struct vop_advlock_args *, struct lockf **, off_t);
 
 #endif /* _KERNEL */
 
