@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.2 2001/11/11 01:05:11 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.3 2001/11/11 17:18:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas
@@ -43,6 +43,17 @@ Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)
 
 /*
+ * CPWAIT -- Canonical method to wait for CP15 update.
+ * From: Intel 80200 manual, section 2.3.3.
+ *
+ * NOTE: Clobbers r0.
+ */
+#define	CPWAIT								 \
+	mrc	p15, 0, r0, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	mov	r0, r0			/* wait for it to complete */	;\
+	sub	pc, pc, #4		/* branch to next insn */
+
+/*
  * Functions to set the MMU Translation Table Base register
  *
  * We need to clean and flush the cache as it uses virtual
@@ -74,10 +85,7 @@ ENTRY(xscale_setttb)
 	/* The cleanID above means we only need to flush the I cache here */
 	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ and BTB */
 
-	/* Make sure that pipeline is emptied */
-	mrc	p15, 0, r0, c2, c0, 0	/* read some register in CP15 */
-	mov	r0, r0			/* force read to complete */
-	sub	pc, pc, #4		/* branch to next instruction */
+	CPWAIT
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 	msr	cpsr_all, r3
@@ -128,16 +136,32 @@ ENTRY(xscale_cache_cleanD_E)
  *
  *	* Virtual address of the memory region to use
  *	* Size of memory region
+ *
+ * Note the virtual address for the Data cache clean operation
+ * does not need to be backed by physical memory, since no loads
+ * will actually be performed by the allocate-line operation.
+ *
+ * Note that the Mini-Data cache MUST be cleaned by executing
+ * loads from memory mapped into a region reserved exclusively
+ * for cleaning of the Mini-Data cache.
  */
 	.data
 
 	.global	_C_LABEL(xscale_cache_clean_addr)
 _C_LABEL(xscale_cache_clean_addr):
-	.word	0xf0000000
+	.word	0x00000000
 
 	.global	_C_LABEL(xscale_cache_clean_size)
 _C_LABEL(xscale_cache_clean_size):
 	.word	0x00008000
+
+	.global	_C_LABEL(xscale_minidata_clean_addr)
+_C_LABEL(xscale_minidata_clean_addr):
+	.word	0x00000000
+
+	.global	_C_LABEL(xscale_minidata_clean_size)
+_C_LABEL(xscale_minidata_clean_size):
+	.word	0x00000800
 
 	.text
 
@@ -145,6 +169,11 @@ Lxscale_cache_clean_addr:
 	.word	_C_LABEL(xscale_cache_clean_addr)
 Lxscale_cache_clean_size:
 	.word	_C_LABEL(xscale_cache_clean_size)
+
+Lxscale_minidata_clean_addr:
+	.word	_C_LABEL(xscale_minidata_clean_addr)
+Lxscale_minidata_clean_size:
+	.word	_C_LABEL(xscale_minidata_clean_size)
 
 #ifdef CACHE_CLEAN_BLOCK_INTR
 #define	XSCALE_CACHE_CLEAN_BLOCK					\
@@ -195,9 +224,10 @@ ENTRY(xscale_cache_cleanD)
 	 * kernel addresses, so there is no need to purge it on
 	 * context switch.
 	 */
-	mov	r1, #64
+	ldr	r2, Lxscale_minidata_clean_addr
+	ldmia	r2, {r0, r1}
 1:	ldr	r3, [r0], #32
-	subs	r1, r1, #1
+	subs	r1, r1, #32
 	bne	1b
 #endif
 
@@ -319,9 +349,6 @@ ENTRY(xscale_context_switch)
 	/* If we have updated the TTB we must flush the TLB */
 	mcr	p15, 0, r0, c8, c7, 0	/* flush the I+D tlb */
 
-	/* Make sure that pipeline is emptied */
-	mrc	p15, 0, r0, c2, c0, 0	/* read some register in CP15 */
-	mov	r0, r0			/* force the read to complete */
-	sub	pc, pc, #4		/* branch to next instruction */
+	CPWAIT
 
 	mov	pc, lr
