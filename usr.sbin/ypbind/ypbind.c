@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.33 1997/07/18 23:08:45 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.33.2.1 1998/11/03 18:38:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.33 1997/07/18 23:08:45 thorpej Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.33.2.1 1998/11/03 18:38:36 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -51,6 +51,12 @@ __RCSID("$NetBSD: ypbind.c,v 1.33 1997/07/18 23:08:45 thorpej Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <syslog.h>
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 #include <ctype.h>
 #include <dirent.h>
 #include <netdb.h>
@@ -127,6 +133,7 @@ int	_yp_invalid_domain __P((const char *));		/* from libc */
 int	main __P((int, char *[]));
 
 static void usage __P((void));
+static void yp_log __P((int, const char *, ...));
 static struct _dom_binding *makebinding __P((const char *));
 static int makelock __P((struct _dom_binding *));
 static void removelock __P((struct _dom_binding *));
@@ -159,15 +166,44 @@ usage()
 	    __progname, opt);
 	exit(1);
 }
-	
+
+static void
+#if __STDC__
+yp_log(int pri, const char *fmt, ...)
+#else
+yp_log(pri, fmt, va_alist)
+	int pri;
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+
+#if defined(DEBUG)
+	if (debug)
+		vfprintf(stderr, fmt, ap);
+	else
+#endif
+		vsyslog(pri, fmt, ap);
+	va_end(ap);
+}
+
 static struct _dom_binding *
 makebinding(dm)
 	const char *dm;
 {
 	struct _dom_binding *ypdb;
 
-	if ((ypdb = (struct _dom_binding *)malloc(sizeof *ypdb)) == NULL)
-		err(1, "makebinding");
+	if ((ypdb = (struct _dom_binding *)malloc(sizeof *ypdb)) == NULL) {
+		yp_log(LOG_ERR, "makebinding");
+		exit(1);
+	}
 
 	(void) memset(ypdb, 0, sizeof *ypdb);
 	(void) strncpy(ypdb->dom_domain, dm, sizeof ypdb->dom_domain);
@@ -498,6 +534,9 @@ main(argc, argv)
 			usage();
 	}
 
+	/* initialise syslog */
+	openlog("ypbind", LOG_PERROR | LOG_PID, LOG_DAEMON);
+
 	/* blow away everything in BINDINGDIR */
 
 	lockfd = open(_PATH_YPBIND_LOCK, O_CREAT|O_SHLOCK|O_RDWR|O_TRUNC, 0644);
@@ -577,7 +616,7 @@ main(argc, argv)
 			checkwork();
 			break;
 		case -1:
-			warn("select");
+			yp_log(LOG_WARNING, "select: %m");
 			break;
 		default:
 			if (FD_ISSET(rpcsock, &fdsr))
@@ -688,7 +727,7 @@ ping(ypdb)
 	if (sendto(pingsock, buf, outlen, 0, 
 		   (struct sockaddr *)&ypdb->dom_server_addr,
 		   sizeof ypdb->dom_server_addr) == -1)
-		warn("ping: sendto");
+		yp_log(LOG_WARNING, "ping: sendto: %m");
 	return 0;
 
 }
@@ -770,7 +809,7 @@ nag_servers(ypdb)
 
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 			   sizeof bindsin) == -1)
-			warn("broadcast: sendto");
+			yp_log(LOG_WARNING, "broadcast: sendto: %m");
 	}
 
 	switch (ypbindmode) {
@@ -804,7 +843,7 @@ broadcast(buf, outlen)
 
 	/* find all networks and send the RPC packet out them all */
 	if ((sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1) {
-		warn("broadcast: socket");
+		yp_log(LOG_WARNING, "broadcast: socket: %m");
 		return -1;
 	}
 
@@ -816,13 +855,14 @@ broadcast(buf, outlen)
 	ifc.ifc_len = sizeof inbuf;
 	ifc.ifc_buf = inbuf;
 	if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
+		yp_log(LOG_WARNING, "broadcast: ioctl(SIOCGIFCONF): %m");
 		(void) close(sock);
-		warn("broadcast: ioctl(SIOCGIFCONF)");
 		return -1;
 	}
 	ifr = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
-	for (i = 0; i < ifc.ifc_len; i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+	for (i = 0; i < ifc.ifc_len;
+	    i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
 #if defined(BSD) && BSD >= 199103
 		len = sizeof ifr->ifr_name + ifr->ifr_addr.sa_len;
 #else
@@ -832,7 +872,8 @@ broadcast(buf, outlen)
 		if (ifreq.ifr_addr.sa_family != AF_INET)
 			continue;
 		if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
-			warn("broadcast: ioctl(SIOCGIFFLAGS)");
+			yp_log(LOG_WARNING,
+			    "broadcast: ioctl(SIOCGIFFLAGS): %m");
 			continue;
 		}
 		if ((ifreq.ifr_flags & IFF_UP) == 0)
@@ -841,12 +882,14 @@ broadcast(buf, outlen)
 		ifreq.ifr_flags &= (IFF_LOOPBACK | IFF_BROADCAST);
 		if (ifreq.ifr_flags == IFF_BROADCAST) {
 			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
-				warn("broadcast: ioctl(SIOCGIFBRDADDR)");
+				yp_log(LOG_WARNING, 
+				    "broadcast: ioctl(SIOCGIFBRDADDR): %m");
 				continue;
 			}
 		} else if (ifreq.ifr_flags == IFF_LOOPBACK) {
 			if (ioctl(sock, SIOCGIFADDR, &ifreq) < 0) {
-				warn("broadcast: ioctl(SIOCGIFADDR)");
+				yp_log(LOG_WARNING,
+				    "broadcast: ioctl(SIOCGIFADDR): %m");
 				continue;
 			}
 		} else
@@ -856,7 +899,7 @@ broadcast(buf, outlen)
 		bindsin.sin_addr = in;
 		if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 			   sizeof bindsin) == -1)
-			warn("broadcast: sendto");
+			yp_log(LOG_WARNING, "broadcast: sendto: %m");
 	}
 	(void) close(sock);
 	return 0;
@@ -881,8 +924,10 @@ direct(buf, outlen)
 		snprintf(ypservers_path, sizeof(ypservers_path),
 		    "%s/%s%s", BINDINGDIR, domainname, YPSERVERSSUFF);
 		df = fopen(ypservers_path, "r");
-		if (df == NULL)
-			err(1, ypservers_path);
+		if (df == NULL) {
+			yp_log(LOG_WARNING, "%s: ", ypservers_path);
+			exit(1);
+		}
 	}
 
 	memset(&bindsin, 0, sizeof bindsin);
@@ -908,7 +953,7 @@ direct(buf, outlen)
 			continue;
 		hp = gethostbyname(p);
 		if (!hp) {
-			herror(p);
+			yp_log(LOG_ERR, "%s: %s", p, hstrerror(h_errno));
 			continue;
 		}
 		/* step through all addresses in case first is unavailable */
@@ -917,16 +962,17 @@ direct(buf, outlen)
 			    hp->h_length);
 			if (sendto(rpcsock, buf, outlen, 0,
 			    (struct sockaddr *)&bindsin, sizeof bindsin) < 0) {
-				warn("direct: sendto");
+				yp_log(LOG_WARNING, "direct: sendto: %m");
 				continue;
 			} else
 				count++;
 		}
 	}
-	if (!count)
-		errx(1, "no contactable servers found in %s",
+	if (!count) {
+		yp_log(LOG_ERR, "no contactable servers found in %s",
 		    ypservers_path);
-
+		return -1;
+	}
 	return 0;
 }
 
@@ -952,7 +998,7 @@ direct_set(buf, outlen, ypdb)
 	    ypdb->dom_domain, ypdb->dom_vers);
 
 	if ((fd = open(path, O_SHLOCK|O_RDONLY, 0644)) == -1) {
-		warn(path);
+		yp_log(LOG_WARNING, "%s: %m", path);
 		been_ypset = 0;
 		return -1;
 	}
@@ -970,7 +1016,7 @@ direct_set(buf, outlen, ypdb)
 	(void)close(fd);
 	if (bytes != (iov[0].iov_len + iov[1].iov_len)) {
 		/* Binding file corrupt? */
-		warn(path);
+		yp_log(LOG_WARNING, "%s: %m", path);
 		been_ypset = 0;
 		return -1;
 	}
@@ -980,7 +1026,7 @@ direct_set(buf, outlen, ypdb)
 
 	if (sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bindsin,
 	    sizeof(bindsin)) < 0) {
-		warn("direct_set: sendto");
+		yp_log(LOG_WARNING, "direct_set: sendto: %m");
 		return -1;
 	}
 
@@ -1174,7 +1220,7 @@ rpc_received(dom, raddrp, force)
 
 	if (writev(ypdb->dom_lockfd, iov, 2) !=
 	    iov[0].iov_len + iov[1].iov_len) {
-		warnx("writev");
+		yp_log(LOG_WARNING, "writev: %m");
 		(void) close(ypdb->dom_lockfd);
 		removelock(ypdb);
 		ypdb->dom_lockfd = -1;
