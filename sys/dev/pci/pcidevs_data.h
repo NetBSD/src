@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.313 2001/03/17 02:26:49 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.314 2001/03/20 00:41:19 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.309 2001/03/17 02:26:26 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.310 2001/03/20 00:39:12 mrg Exp 
  */
 
 /*
@@ -4586,6 +4586,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems",
 	    "PCIO Happy Meal Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUSIII,
+	    0,
+	    "Sun Microsystems",
+	    "PCIO Ebus2 (US III)",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "ERI Ethernet",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_FIREWIRE,
+	    0,
+	    "Sun Microsystems",
+	    "FireWire controller",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_USB,
+	    0,
+	    "Sun Microsystems",
+	    "USB controller",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.315 2001/03/17 02:26:48 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.316 2001/03/20 00:41:19 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.309 2001/03/17 02:26:26 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.310 2001/03/20 00:39:12 mrg Exp 
  */
 
 /*
@@ -1606,6 +1606,10 @@
 /* Sun Microsystems products */
 #define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO Ebus2 */
 #define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* PCIO Happy Meal Ethernet */
+#define	PCI_PRODUCT_SUN_EBUSIII	0x1100		/* PCIO Ebus2 (US III) */
+#define	PCI_PRODUCT_SUN_ERINETWORK	0x1101		/* ERI Ethernet */
+#define	PCI_PRODUCT_SUN_FIREWIRE	0x1102		/* FireWire controller */
+#define	PCI_PRODUCT_SUN_USB	0x1103		/* USB controller */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* psycho PCI controller */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
