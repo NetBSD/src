@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.37 2001/07/09 21:46:21 reinoud Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.38 2001/07/10 20:10:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -35,8 +35,6 @@
  * Interfaces with the NetBSD generic audio driver to provide SUN
  * /dev/audio (partial) compatibility.
  */
-
-#include "opt_cputypes.h"
 
 #include <sys/param.h>	/* proc.h */
 #include <sys/conf.h>   /* autoconfig functions */
