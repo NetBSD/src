@@ -6,10 +6,11 @@ least 8MB of RAM and more disk space is recommended.  About 75MB will be
 necessary to install all of the NetBSD _VER binary system distribution
 sets (note that this does not count swap space!).  An addition 25MB or so
 is needed for the binary X11 distribution sets.  Much more disk space is
-required to install the source and objects as well (about another 200-300MB
-as a guess).
+required to install the source and objects as well (at least another 300MB).
+
 
 Supported models:
+
 	Mac II, IIx, IIcx, SE/30, IIci, IIsi, IIvx, IIvi,
 	Performa 400/405/410/430, Performa 450, Performa 460/466/467,
 	Performa 520, Performa 550/560, Performa 600,
@@ -17,58 +18,47 @@ Supported models:
 	MacTV,
 	Centris 650,
 	Quadra 610, Quadra 630, Quadra 650, Quadra 700, Quadra 800,
-<<<<<<< 1.4
-	Quadra/Centris 660AV, Quadra 840AV,
-=======
 	Quadra/Centris 660AV, Quadra 840AV
->>>>>>> 1.5
+
 
 Supported devices on all of the above systems include:
+
 	Onboard SCSI bus and most SCSI tapes, hard drives, and CD-ROMs
 	Internal sound--enough to beep on some machines, anyway
-<<<<<<< 1.4
-	Most basic NuBUS video cards (there have been some
-		problems with some 24-bit color cards)
-=======
 	Most basic NuBus video cards (there have been some
 		problems with some 24-bit color cards and with most
                 QuickDraw acclerators)
->>>>>>> 1.5
 	Both internal serial ports
 	ADB keyboards and mice (both Apple and a number of third party
-<<<<<<< 1.4
-		multi-button mice are supported)
-=======
 		multi-button mice and trackballs are supported)
->>>>>>> 1.5
 	Ethernet cards based on the Natl. Semiconductor 8390 and the
 		SONIC (DP83932) chips
 		(Asante, Apple, and a few others--problems still
 		 with ethernet and many NuBus video cards).
 	Onboard ethernet based on the SONIC chip for Quadra-series Macs
-<<<<<<< 1.4
-=======
 	Onboard ethernet based on the MACE chip for the AV Quadras.
 	Comm-slot ethernet may be working for some machines/cards.
->>>>>>> 1.5
 	
+
 If your 68030 system is not listed above, it may be because of a problem
 with accessing onboard video, and it may still work with a serial console.
 Some of the known ones in this category:
+
 	Classic-series Macs 
 	PowerBook 100-series and Duo-series Macs
+
 
 If your 68LC040 system is not listed above, it is due to a problem with
 floating point emulation (FPE) for this type of processor.  Machines in
 this category include:
+
 	Newer LC-series machines
 	Newer Performa-series machines
-<<<<<<< 1.4
-=======
 	Some PowerBook 500-series Macs
->>>>>>> 1.5
+
 
 What isn't supported, but often asked about:
+
 	Macintosh IIfx:  This machine has unusual custom chips for the
 		ADB and serial interfaces which makes support for it
 		difficult.  Work is in progress on this, though.
