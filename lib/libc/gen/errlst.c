@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)errlst.c	5.10 (Berkeley) 2/19/91";*/
-static char rcsid[] = "$Id: errlst.c,v 1.2 1993/07/30 08:22:10 mycroft Exp $";
+/*static char *sccsid = "from: @(#)errlst.c	5.10 (Berkeley) 2/19/91";*/
+static char *rcsid = "$Id: errlst.c,v 1.3 1993/08/26 00:44:28 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 char *sys_errlist[] = {

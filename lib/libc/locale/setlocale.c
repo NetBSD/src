@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)setlocale.c	5.2 (Berkeley) 2/24/91";*/
-static char rcsid[] = "$Id: setlocale.c,v 1.3 1993/08/06 22:56:18 jtc Exp $";
+/*static char *sccsid = "from: @(#)setlocale.c	5.2 (Berkeley) 2/24/91";*/
+static char *rcsid = "$Id: setlocale.c,v 1.4 1993/08/26 00:45:44 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <locale.h>
