@@ -1,3 +1,5 @@
+/*	$NetBSD: genget.c,v 1.7 1998/02/27 10:33:46 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,17 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: genget.c,v 1.6 1997/10/09 13:52:42 lukem Exp $");
+__RCSID("$NetBSD: genget.c,v 1.7 1998/02/27 10:33:46 christos Exp $");
 #endif
 #endif /* not lint */
 
 
 #include <ctype.h>
-#include "misc-proto.h"
-
-int isprefix __P((char *, char *));
-char **genget __P((char *, char **, int));
-int Ambiguous __P((char *));
+#include "misc.h"
 
 #define	LOWER(x) (isupper(x) ? tolower(x) : (x))
 /*
@@ -108,7 +106,7 @@ genget(name, table, stlen)
  */
 	int
 Ambiguous(s)
-	char *s;
+	void *s;
 {
-	return((char **)s == &ambiguous);
+	return(s == &ambiguous);
 }

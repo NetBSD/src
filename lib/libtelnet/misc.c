@@ -1,3 +1,5 @@
+/*	$NetBSD: misc.c,v 1.7 1998/02/27 10:33:46 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.6 1997/10/09 13:52:44 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.7 1998/02/27 10:33:46 christos Exp $");
 #endif
 #endif /* not lint */
 
