@@ -140,7 +140,7 @@
 ./usr/include/dev/isa/espvar.h
 ./usr/include/dev/isa/gusreg.h
 ./usr/include/dev/isa/ics2101var.h
-./usr/include/dev/isa/if_edreg.h
+./usr/include/dev/isa/if_ecreg.h
 ./usr/include/dev/isa/if_egreg.h
 ./usr/include/dev/isa/if_elreg.h
 ./usr/include/dev/isa/if_fereg.h
@@ -148,6 +148,7 @@
 ./usr/include/dev/isa/if_ieatt.h
 ./usr/include/dev/isa/if_iee16.h
 ./usr/include/dev/isa/if_levar.h
+./usr/include/dev/isa/if_wereg.h
 ./usr/include/dev/isa/isadmareg.h
 ./usr/include/dev/isa/isadmavar.h
 ./usr/include/dev/isa/isareg.h
