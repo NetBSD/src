@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.11 2000/02/01 22:54:47 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.12 2000/02/04 07:59:20 haya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@ struct tulip_cardbus_softc {
 
 	int	sc_cbenable;		/* what CardBus access type to enable */
 	int	sc_csr;			/* CSR bits */
+	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
 };
 
 int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
@@ -300,11 +301,12 @@ tlp_cardbus_attach(parent, self, aux)
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
 	if (Cardbus_mapreg_map(csc->sc_ct, TULIP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &sc->sc_st, &sc->sc_sh, NULL, NULL) == 0) {
+	    &sc->sc_st, &sc->sc_sh, NULL, &csc->sc_mapsize) == 0) {
 		csc->sc_cbenable = CARDBUS_MEM_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 	} else if (Cardbus_mapreg_map(csc->sc_ct, TULIP_PCI_IOBA,
-	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, NULL, NULL) == 0) {
+	    PCI_MAPREG_TYPE_IO, 0, &sc->sc_st, &sc->sc_sh, NULL,
+	    &csc->sc_mapsize) == 0) {
 		csc->sc_cbenable = CARDBUS_IO_ENABLE;
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
@@ -438,15 +440,33 @@ tlp_cardbus_detach(self, flags)
 {
 	struct tulip_cardbus_softc *csc = (void *) self;
 	struct tulip_softc *sc = &csc->sc_tulip;
+	struct cardbus_devfunc *ct;
 	int rv;
+	int reg;
+
+#if defined DIAGNOSTIC
+	if ((ct = csc->sc_ct) == NULL) {
+		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+	}
+#endif
 
 	rv = tlp_detach(sc);
 	if (rv == 0) {
 		/*
 		 * Unhook the interrupt handler.
 		 */
-		cardbus_intr_disestablish(csc->sc_ct->ct_cc,
-		    csc->sc_ct->ct_cf, csc->sc_ih);
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+
+		/*
+		 * release bus space and close window
+		 */
+		if (csc->sc_cbenable == CARDBUS_MEM_ENABLE) {
+			reg = TULIP_PCI_MMBA;
+		} else {
+			reg = TULIP_PCI_IOBA;
+		}
+
+		Cardbus_mapreg_unmap(ct, reg, sc->sc_st, sc->sc_sh, csc->sc_mapsize);
 	}
 	return (rv);
 }
