@@ -1,13 +1,13 @@
-# $NetBSD: AMIGA,v 1.37 2001/07/08 16:34:03 abs Exp $
+# $NetBSD: AMIGA,v 1.38 2001/08/25 21:19:20 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.160 2001/07/08 16:32:13 abs Exp $
+# Created from: #NetBSD: GENERIC,v 1.161 2001/08/25 21:15:46 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.37 $"
+#ident  		"GENERIC-$Revision: 1.38 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -280,6 +280,9 @@ audio*		at aucc?
 #Alas, Melody-Z2 dont configure in the DraCo bus. 
 melody* 	at zbus0		# Melody MPEG audio decoder
 audio*		at melody?
+
+repulse*	at zbus0		# ALiENDESiGN Repulse
+audio*		at repulse?
 
 #Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
