@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.269 2000/11/02 01:09:04 itojun Exp $
+#	$NetBSD: mi,v 1.270 2000/11/04 18:35:49 thorpej Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -1081,6 +1081,7 @@
 ./usr/include/sys/vnode.h		comp-c-include
 ./usr/include/sys/vnode_if.h		comp-c-include
 ./usr/include/sys/wait.h		comp-c-include
+./usr/include/sys/wdog.h		comp-c-include
 ./usr/include/sysexits.h		comp-c-include
 ./usr/include/syslog.h		comp-c-include
 ./usr/include/tar.h		comp-c-include
