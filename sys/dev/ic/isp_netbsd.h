@@ -1,5 +1,5 @@
-/* $NetBSD: isp_netbsd.h,v 1.12 1999/03/26 22:39:45 mjacob Exp $ */
-/* release_03_25_99 */
+/* $NetBSD: isp_netbsd.h,v 1.13 1999/04/04 02:29:51 mjacob Exp $ */
+/* release_4_3_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -63,7 +63,7 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	993
+#define	ISP_PLATFORM_VERSION_MINOR	994
 
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
@@ -89,6 +89,9 @@ struct isposinfo {
 #else
 #define	MemoryBarrier()
 #endif
+
+#define	DMA_MSW(x)	(((x) >> 16) & 0xffff)
+#define	DMA_LSW(x)	(((x) & 0xffff))
 
 #if	defined(SCSIDEBUG)
 #define	DFLT_DBLEVEL		3
@@ -258,7 +261,8 @@ static inline const char *isp2100_pdb_statename(int pdb_state)
 /*
  * Keep these off for now...
  */
-#define	ISP_NO_FASTPOST_SCSI		1
-#define	ISP_NO_FASTPOST_FC		1
+
+#define	ISP_NO_FASTPOST_SCSI	1
+#define	ISP_NO_FASTPOST_FC	1
 
 #endif	/* _ISP_NETBSD_H */
