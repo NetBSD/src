@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.31 2001/12/04 00:05:07 darrenr Exp $ */
+/*	$NetBSD: memreg.c,v 1.32 2002/03/11 16:27:04 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,12 +132,11 @@ memregattach_mainbus(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_map2(ma->ma_bustag,
-			   ma->ma_iospace,
+	if (bus_space_map(ma->ma_bustag,
 			   ma->ma_paddr,
 			   sizeof(par_err_reg),
 			   BUS_SPACE_MAP_LINEAR,
-			   0, &bh) != 0) {
+			   &bh) != 0) {
 		printf("memregattach_mainbus: can't map register\n");
 		return;
 	}
@@ -160,11 +159,10 @@ memregattach_obio(parent, self, aux)
 			return;
 		}
 
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset,
+		if (sbus_bus_map(sa->sa_bustag,
+				 sa->sa_slot, sa->sa_offset,
 				 sizeof(par_err_reg),
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
+				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 			printf("memregattach_obio: can't map register\n");
 			return;
 		}
