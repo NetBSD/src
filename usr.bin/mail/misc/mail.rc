@@ -1,2 +1,2 @@
-set append dot save asksub
+set append dot save asksub crt
 ignore Received Message-Id Resent-Message-Id Status Mail-From Return-Path Via
