@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.74 1998/09/27 17:23:25 drochner Exp $ */
+/* $NetBSD: pmap.c,v 1.75 1998/10/19 22:09:14 tron Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,10 +151,11 @@
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
 #include "opt_new_scc_driver.h"
+#include "opt_sysv.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 1998/09/27 17:23:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 1998/10/19 22:09:14 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

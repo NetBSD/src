@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1998/10/11 23:21:03 chuck Exp $ */
+/*	$NetBSD: machdep.c,v 1.21 1998/10/19 22:09:20 tron Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 
 #include "opt_uvm.h"
 #include "opt_compat_sunos.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/signal.h>
