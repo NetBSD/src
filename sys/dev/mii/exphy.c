@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.7 1998/10/23 01:52:50 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.8 1998/11/02 22:31:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -187,13 +187,13 @@ exphy_service(self, mii, cmd)
 	int cmd;
 {
 	struct exphy_softc *sc = (struct exphy_softc *)self;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
 	/*
 	 * We can't isolate the 3Com PHY, so it has to be the only one!
 	 */
-	if (IFM_INST(mii->mii_media.ifm_media) != sc->sc_mii.mii_inst)
+	if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 		panic("exphy_service: can't isolate 3Com PHY");
-
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -206,7 +206,7 @@ exphy_service(self, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(mii->mii_media.ifm_media)) {
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 			/*
 			 * If we're already in auto mode, just return.
@@ -224,10 +224,8 @@ exphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			EXPHY_WRITE(sc, MII_ANAR,
-			    mii_anar(mii->mii_media.ifm_media));
-			EXPHY_WRITE(sc, MII_BMCR,
-			    mii->mii_media.ifm_cur->ifm_data);
+			EXPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
+			EXPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -235,7 +233,7 @@ exphy_service(self, mii, cmd)
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(mii->mii_media.ifm_media) != IFM_AUTO)
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
 		/*

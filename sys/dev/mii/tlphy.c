@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.10 1998/08/17 16:41:45 bouyer Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.11 1998/11/02 22:31:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -214,6 +214,7 @@ tlphy_service(self, mii, cmd)
 	int cmd;
 {
 	struct tlphy_softc *sc = (struct tlphy_softc *)self;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
 	switch (cmd) {
@@ -221,8 +222,7 @@ tlphy_service(self, mii, cmd)
 		/*
 		 * If we're not polling our PHY instance, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 			return (0);
 		break;
 
@@ -231,8 +231,7 @@ tlphy_service(self, mii, cmd)
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst) {
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst) {
 			reg = TLPHY_READ(sc, MII_BMCR);
 			TLPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
@@ -244,7 +243,7 @@ tlphy_service(self, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(mii->mii_media.ifm_media)) {
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 			/*
 			 * The ThunderLAN PHY doesn't self-configure after
@@ -262,10 +261,8 @@ tlphy_service(self, mii, cmd)
 		default:
 			TLPHY_WRITE(sc, MII_TLPHY_CTRL, 0);
 			delay(100000);
-			TLPHY_WRITE(sc, MII_ANAR,
-			    mii_anar(mii->mii_media.ifm_media));
-			TLPHY_WRITE(sc, MII_BMCR,
-			    mii->mii_media.ifm_cur->ifm_data);
+			TLPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
+			TLPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -273,14 +270,13 @@ tlphy_service(self, mii, cmd)
 		/*
 		 * If we're not currently selected, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 			return (0);
 
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(mii->mii_media.ifm_media) != IFM_AUTO)
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.3 1998/08/12 20:56:35 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.4 1998/11/02 22:31:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -175,6 +175,7 @@ inphy_service(self, mii, cmd)
 	int cmd;
 {
 	struct inphy_softc *sc = (struct inphy_softc *)self;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 
 	switch (cmd) {
@@ -182,8 +183,7 @@ inphy_service(self, mii, cmd)
 		/*
 		 * If we're not polling our PHY instance, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 			return (0);
 		break;
 
@@ -192,8 +192,7 @@ inphy_service(self, mii, cmd)
 		 * If the media indicates a different PHY instance,
 		 * isolate ourselves.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst) {
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst) {
 			reg = INPHY_READ(sc, MII_BMCR);
 			INPHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 			return (0);
@@ -205,7 +204,7 @@ inphy_service(self, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(mii->mii_media.ifm_media)) {
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
 			/*
 			 * If we're already in auto mode, just return.
@@ -223,10 +222,8 @@ inphy_service(self, mii, cmd)
 			/*
 			 * BMCR data is stored in the ifmedia entry.
 			 */
-			INPHY_WRITE(sc, MII_ANAR,
-			    mii_anar(mii->mii_media.ifm_media));
-			INPHY_WRITE(sc, MII_BMCR,
-			    mii->mii_media.ifm_cur->ifm_data);
+			INPHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
+			INPHY_WRITE(sc, MII_BMCR, ife->ifm_data);
 		}
 		break;
 
@@ -234,14 +231,13 @@ inphy_service(self, mii, cmd)
 		/*
 		 * If we're not currently selected, just return.
 		 */
-		if (IFM_INST(mii->mii_media.ifm_media) !=
-		    sc->sc_mii.mii_inst)
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii.mii_inst)
 			return (0);
 
 		/*
 		 * Only used for autonegotiation.
 		 */
-		if (IFM_SUBTYPE(mii->mii_media.ifm_media) != IFM_AUTO)
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
 		/*
