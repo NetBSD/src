@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/04/22 15:18:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2002/05/31 11:29:17 tv Exp $
 
 HOSTPROGNAME=	nbinstallboot
 HOST_SRCDIR=	usr.sbin/installboot
@@ -13,5 +13,5 @@ $(OBJS): ufs.stamp
 
 ufs.stamp:
 	-rm -f ufs
-	ln -fs ${.CURDIR}/../../sys/ufs ufs
+	ln -f -s ${.CURDIR}/../../sys/ufs ufs
 	@touch $@
