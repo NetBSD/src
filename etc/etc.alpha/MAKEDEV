@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.9 1996/06/18 00:35:43 cgd Exp $
+#	$NetBSD: MAKEDEV,v 1.10 1996/10/18 21:16:39 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -42,15 +42,16 @@
 #	st*	SCSI tape
 #
 # Disks:
-#	sd*	SCSI disks
-#	cd*	SCSI CD-ROM
-#	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
+#	cd*	SCSI CD-ROM
+#	rd*	"ramdisk" pseudo-disks
+#	sd*	SCSI disks
+#	vnd*	"file" pseudo-disks
 #
 # Terminals:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
 #	ttyC?	AlphaStation NS16550 ("com") serial ports
-#	ttyE?	Workstation console (framebuffer & keyboard) tty emulators
+#	ttyE?	Workstation console ("wscons") glass-tty emulators
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -60,14 +61,16 @@
 #	lpa*	interruptless lp
 #
 # Special purpose devices:
-#	ch*	SCSI media changer
+#	audio	audio device
 #	bpf*	packet filter
+#	ch*	SCSI media changer
 #	fd	file descriptors
-#	lkm	loadable kernel modules interface
-#	tun*	network tunnel driver
-#	mmclock	memory mapped clock
 #	kbd	keyboard (provides events, for X11)
+#	lkm	loadable kernel modules interface
 #	mouse	mouse (provides events, for X11)
+#	ss*	SCSI scanner
+#	tun*	network tunnel driver
+#	uk*	SCSI unknown
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -78,10 +81,10 @@ case $i in
 all)
 	sh MAKEDEV std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV ccd0 ccd1 ccd2 ccd3 rd0 rd1 ss0 ss1 uk0 uk1
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh MAKEDEV mmclock kbd mouse lpa0 lpt0
+	sh MAKEDEV kbd mouse lpa0 lpt0 audio
 	sh MAKEDEV local
 	;;
 
@@ -111,10 +114,11 @@ fd)
 	chmod 666 fd/*
 	;;
 
-cd*|sd*|vnd*|ccd*)
+ccd*|cd*|rd*|sd*|vnd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	cd*)	name=cd;	blk=3; chr=13;;
+	rd*)	name=rd;	blk=6; chr=28;;
 	sd*)	name=sd;	blk=8; chr=8;;
 	vnd*)	name=vnd;	blk=9; chr=9;;
 	ccd*)	name=ccd;	blk=7; chr=27;;
@@ -207,16 +211,26 @@ st*)
 	umask 77
 	;;
 
-ch*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+ch*|uk*)
 	case $i in
-	ch*) name=ch;	chr=14;;
+	ch*) name=ch;	unit=${i#ch};	chr=14;;
+	uk*) name=uk;	unit=${i#uk};	chr=33;;
 	esac
 	rm -f $name$unit
-	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chgrp operator ${name}${unit}
-	chmod 640 ${name}${unit}
-	umask 77
+	mknod $name$unit	c $chr $unit
+	chgrp operator $name$unit
+	chmod 640 $name$unit
+	;;
+
+ss*)
+	case $i in
+	ss*) name=ss;	unit=${i#ss};	chr=32;;
+	esac
+	rm -f $name$unit n$name$unit
+	mknod $name$unit	c $chr $(($unit * 16 + 0))
+	mknod n$name$unit	c $chr $(($unit * 16 + 1))
+	chgrp operator $name$unit n$name$unit
+	chmod 640 $name$unit n$name$unit
 	;;
 
 bpf*)
@@ -242,12 +256,6 @@ lkm)
 	chmod 640 lkm
 	;;
 
-mmclock)
-	rm -f mmclock
-	mknod mmclock c 28 0
-	chmod 444 mmclock
-	;;
-
 kbd)
 	rm -f kbd
 	mknod kbd c 29 0
@@ -258,6 +266,15 @@ mouse)
 	rm -f mouse
 	mknod mouse c 30 0
 	chmod 666 mouse
+	;;
+
+audio*)
+	rm -f audio sound mixer
+	mknod sound c 42 0
+	mknod audio c 42 128
+	mknod mixer c 42 16
+	chown root.wheel audio sound mixer
+	chmod 666 audio sound mixer
 	;;
 
 lpt*|lpa*)
