@@ -1,4 +1,4 @@
-/*	$NetBSD: ncavar.h,v 1.1 1998/10/25 18:41:57 christos Exp $	*/
+/*	$NetBSD: ncavar.h,v 1.2 1998/10/25 23:48:56 scottr Exp $	*/
 
 /*-
  * Copyright (c)  1998 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@ struct nca_softc {
         char            **sc_dmaaddr; 
         size_t          *sc_pdmalen;
 
-        bus_space_tag_t sc_iot;
-        bus_space_handle_t sc_ioh;
         void *sc_ih;
         struct isadev sc_id;
         int sc_irq;
