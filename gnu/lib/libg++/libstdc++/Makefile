@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1998/02/19 02:17:06 cgd Exp $
+#	$NetBSD: Makefile,v 1.11 1998/09/13 22:23:17 tv Exp $
 
 LIB=	stdc++
 
@@ -13,14 +13,14 @@ ioprims.c ioprintf.c ioseekoff.c ioseekpos.c iostrerror.c ioungetc.c \
 iovfprintf.c iovfscanf.c outfloat.c strops.c cmathi.cc cstdlibi.cc \
 cstringi.cc exceptioni.cc newi.cc stddefi.cc stdexcepti.cc typeinfoi.cc \
 cstrmain.cc cstrio.cc fcomplex.cc fcomio.cc dcomplex.cc dcomio.cc \
-ldcomplex.cc ldcomio.cc random.cc tempbuf.cc tree.cc rx.c \
+ldcomplex.cc ldcomio.cc random.cc tempbuf.cc tree.cc
 
 CXXFLAGS+=	-nostdinc++ 
 CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
 NOMAN=		noman
 NOLINT=		nolint (c++)
 
-.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
+.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl
 
 .if (${MACHINE} != "alpha")
 LDADD=	${DESTDIR}/usr/lib/c++rt0.o
