@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.17 1996/03/20 12:41:48 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.18 1996/03/27 10:08:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -67,6 +67,7 @@
 #include <machine/mfp.h>
 #include <machine/dma.h>
 #include <machine/video.h>
+#include <atari/dev/ym2149reg.h>
 #include <atari/dev/fdreg.h>
 
 /*
@@ -287,8 +288,7 @@ void		*auxp;
 		 */
 		fdselect(first_found, 0, FLP_DD);
 		fd_state = FLP_MON;
-		timeout((FPV)fdmotoroff, (void*)getsoftc(fd_cd, first_found),
-					 			FLP_MONDELAY);
+		timeout((FPV)fdmotoroff, (void*)getsoftc(fd_cd,first_found), 0);
 
 		/*
 		 * enable disk related interrupts
@@ -719,7 +719,7 @@ static int
 fdselect(drive, head, dense)
 int	drive, head, dense;
 {
-	int	i, sps, spinning;
+	int	i, spinning;
 #ifdef FLP_DEBUG
 	printf("fdselect: drive=%d, head=%d, dense=%d\n", drive, head, dense);
 #endif
@@ -738,12 +738,8 @@ int	drive, head, dense;
 			panic("fdselect: unknown density code\n");
 	}
 	if(i != selected) {
-		sps = splhigh();
-
 		selected = i;
-		SOUND->sd_selr = YM_IOA;
-		SOUND->sd_wdat = (SOUND->sd_rdat & 0x78) | (i ^ 0x07);
-		splx(sps);
+		ym2149_fd_select(i ^ PA_FDSEL);
 	}
 	return(spinning);
 }
@@ -751,13 +747,7 @@ int	drive, head, dense;
 static void
 fddeselect()
 {
-	int	sps;
-
-	sps = splhigh();
-	SOUND->sd_selr = YM_IOA;
-	SOUND->sd_wdat = SOUND->sd_rdat | 0x07;
-	splx(sps);
-
+	ym2149_fd_select(PA_FDSEL);
 	motoron = selected = 0;
 	DMA->dma_drvmode   = 0;
 }

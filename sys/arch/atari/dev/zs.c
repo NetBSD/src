@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 1996/03/17 01:26:56 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 1996/03/27 10:08:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -70,7 +70,7 @@
 #include <machine/iomap.h>
 #include <machine/scu.h>
 #include <machine/mfp.h>
-#include <machine/video.h>
+#include <atari/dev/ym2149reg.h>
 
 #include <dev/ic/z8530reg.h>
 #include <atari/dev/zsvar.h>
@@ -326,10 +326,8 @@ struct proc	*p;
 	 * When port A (ser02) is selected on the TT, make sure
 	 * the port is enabled.
 	 */
-	if((machineid & ATARI_TT) && !(unit & 1)) {
-		SOUND->sd_selr = YM_IOA;
-		SOUND->sd_wdat = SOUND->sd_rdat | PA_SER2;
-	}
+	if((machineid & ATARI_TT) && !(unit & 1))
+		ym2149_ser2_select();
 
 	if (cs->cs_rbuf == NULL) {
 		cs->cs_rbuf = malloc(ZLRB_RING_SIZE * sizeof(int), M_DEVBUF,
