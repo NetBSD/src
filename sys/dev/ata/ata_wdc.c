@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.1.2.4 1998/06/05 17:28:22 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.1.2.5 1998/06/09 12:56:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -572,6 +572,9 @@ again:
 	/* fall through */
 
 	case PIOMODE:
+		/* Don't try to set mode if controller can't be adjusted */
+		if ((chp->wdc->cap & WDC_CAPABILITY_PIO) == 0)
+			goto dmamode;
 		/*
 		 * if mode is < 3, it is unknown. Assume the defaults are
 		 * good.
