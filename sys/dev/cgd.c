@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.22 2005/02/27 00:26:58 perry Exp $ */
+/* $NetBSD: cgd.c,v 1.23 2005/03/31 11:28:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.22 2005/02/27 00:26:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.23 2005/03/31 11:28:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -592,12 +592,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct proc *p)
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	while ((bp = BUFQ_GET(&cs->sc_dksc.sc_bufq)) != NULL) {
-		bp->b_error = EIO;
-		bp->b_flags |= B_ERROR;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-	}
+	bufq_drain(&cs->sc_dksc.sc_bufq);
 	splx(s);
 	bufq_free(&cs->sc_dksc.sc_bufq);
 
