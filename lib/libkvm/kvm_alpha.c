@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_alpha.c,v 1.20 2001/08/05 17:51:40 matt Exp $ */
+/* $NetBSD: kvm_alpha.c,v 1.21 2003/04/09 22:46:39 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -49,42 +49,19 @@
 
 #include "kvm_private.h"
 
-struct vmstate {
-	vsize_t		page_shift;
-};
-
+/*ARGSUSED*/
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
 {
-
-	if (kd->vmst != 0)
-		free(kd->vmst);
+	return;
 }
 
+/*ARGSUSED*/
 int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	cpu_kcore_hdr_t *cpu_kh;
-	struct vmstate *vm;
-
-	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
-	if (vm == NULL)
-		return (-1);
-
-	cpu_kh = kd->cpu_data;
-
-	/* Compute page_shift. */
-	for (vm->page_shift = 0; (1L << vm->page_shift) < cpu_kh->page_size;
-	     vm->page_shift++)
-		/* nothing */ ;
-	if ((1L << vm->page_shift) != cpu_kh->page_size) {
-		free(vm);
-		return (-1);
-	}
-
-	kd->vmst = vm;
 	return (0);
 }
 
@@ -95,7 +72,6 @@ _kvm_kvatop(kd, va, pa)
 	u_long *pa;
 {
 	cpu_kcore_hdr_t *cpu_kh;
-	struct vmstate *vm;
 	alpha_pt_entry_t pte;
 	u_long pteoff, page_off;
 	int rv;
@@ -106,10 +82,7 @@ _kvm_kvatop(kd, va, pa)
         }
 
 	cpu_kh = kd->cpu_data;
-	vm = kd->vmst;
 	page_off = va & (cpu_kh->page_size - 1);
-
-#define	PAGE_SHIFT	vm->page_shift
 
 	if (va >= ALPHA_K0SEG_BASE && va <= ALPHA_K0SEG_END) {
 		/*
@@ -175,8 +148,6 @@ lose:
 		*pa = -1;
 		rv = 0;
 	}
-
-#undef PAGE_SHIFT
 
 	return (rv);
 }
