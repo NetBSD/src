@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.9 2000/07/03 08:59:27 scottr Exp $	*/
+/*	$NetBSD: ams.c,v 1.10 2000/10/01 05:10:57 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -288,9 +288,8 @@ ems_init(sc)
 		 * try to initialize it as other types
 		 */
 		cmd = ADBTALK(adbaddr, 3);
-		adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
-			
-		if (buffer[2] == ADBMS_EXTENDED) {
+		if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0 &&
+		    buffer[2] == ADBMS_EXTENDED) {
 			sc->handler_id = ADBMS_EXTENDED;
 			cmd = ADBTALK(adbaddr, 1);
 			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd)) {
@@ -360,9 +359,8 @@ ems_init(sc)
 			 * try to initialize it as other types
 			 */
 			cmd = ADBTALK(adbaddr, 3);
-			adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd);
-				
-			if (buffer[2] == ADBMS_MSA3) {
+			if (adb_op_sync((Ptr)buffer, (Ptr)0, (Ptr)0, cmd) == 0
+			    && buffer[2] == ADBMS_MSA3) {
 				sc->handler_id = ADBMS_MSA3;
 				/* Initialize as above */
 				cmd = ADBLISTEN(adbaddr, 2);
