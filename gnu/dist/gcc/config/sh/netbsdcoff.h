@@ -53,7 +53,7 @@
 
 #undef LINK_SPEC
 #define LINK_SPEC \
-  "%{ml:-m shl} %{mrelax:-relax} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
+  "%{ml:-m shlunx} %{mrelax:-relax} %{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 
 /* We have atexit(3).  */
 
