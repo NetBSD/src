@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 1994/10/27 04:16:17 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16 1994/10/31 06:30:52 andrew Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -67,7 +67,7 @@
 #define	UPTDI		0x3de		/* ptd entry for u./kernel&user stack */
 #define	PTDPTDI		0x3df		/* ptd entry that points to ptd! */
 #define	KPTDI		0x3e0		/* start of kernel virtual pde's */
-#define	NKPDE		11
+#define	NKPDE		12
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
 
 /*
