@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.43.8.5 2002/06/20 03:41:10 nathanw Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.43.8.6 2002/06/21 06:56:33 gmcgarry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -543,7 +543,7 @@ svr4_trap(type, l)
 	int n;
 	struct trapframe *tf = l->l_md.md_tf;
 
-	if (p->p_emul != &emul_svr4)
+	if (l->l_proc->p_emul != &emul_svr4)
 		return 0;
 
 	switch (type) {
@@ -609,11 +609,11 @@ svr4_trap(type, l)
 			microtime(&tv);
 
 			tm =
-			    (u_quad_t) (p->p_rtime.tv_sec +
+			    (u_quad_t) (l->l_proc->p_rtime.tv_sec +
 			                tv.tv_sec -
 			                    spc->spc_runtime.tv_sec)
 			                * 1000000 +
-			    (u_quad_t) (p->p_rtime.tv_usec +
+			    (u_quad_t) (l->l_proc->p_rtime.tv_usec +
 			                tv.tv_usec -
 			                    spc->spc_runtime.tv_usec)
 			                * 1000;
