@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.66 2000/05/31 05:02:34 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.67 2000/06/01 13:36:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1374,10 +1374,6 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	}
 	if (where == NULL || sizep == NULL)
 		return (EINVAL);
-	/*
-	 * Allocate a temporary buffer to hold the arguments.
-	 */
-	arg = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	/*
 	 * Zombies don't have a stack, so we can't read their psstrings.
@@ -1394,6 +1390,11 @@ sysctl_procargs(name, namelen, where, sizep, up)
 		return (EFAULT);
 	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;	/* XXX */
+
+	/*
+	 * Allocate a temporary buffer to hold the arguments.
+	 */
+	arg = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 
 	/*
 	 * Read in the ps_strings structure.
