@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.3 2001/11/07 02:24:18 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.4 2001/11/07 02:56:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -119,7 +119,8 @@ iq80310_intstat_read(void)
 	if (1/*rev F or later board*/)
 		intstat |= (CPLD_READ(IQ80310_XINT0_STATUS) & 0x7) << 5;
 
-	return (intstat);
+	/* XXX Why do we have to mask off? */
+	return (intstat & intr_current_mask);
 }
 
 __inline void
@@ -174,7 +175,8 @@ void
 stray_irqhandler(int irq)
 {
 
-	panic("no handlers for IRQ %d\n", irq);
+	panic("no handlers for IRQ %d (xint_mask = 0x%02x)\n", irq,
+	    CPLD_READ(IQ80310_XINT_MASK));
 }
 
 void *
