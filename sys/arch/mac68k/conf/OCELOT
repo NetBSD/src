@@ -1,4 +1,4 @@
-#	$NetBSD: OCELOT,v 1.6 1995/11/21 05:00:34 briggs Exp $
+#	$NetBSD: OCELOT,v 1.7 1996/03/12 21:06:23 scottr Exp $
 #
 # OCELOT
 
@@ -40,7 +40,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		M68040
-options		M68030		# Includes the 020+851
+options		M68030
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		COMPAT_09
