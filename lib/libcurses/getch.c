@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.27 2000/05/01 12:30:30 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.28 2000/05/17 16:23:49 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.27 2000/05/01 12:30:30 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.28 2000/05/17 16:23:49 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -696,6 +696,10 @@ wgetch(WINDOW *win)
 	__save_termios();
 
 	if (win->flags & __KEYPAD) {
+		if (!(curscr->flags & __KEYPAD)) {
+			tputs(KS, 0, __cputchar);
+			curscr->flags |= __KEYPAD;
+		}
 		switch (win->delay)
 		{
 		case -1:
@@ -713,6 +717,10 @@ wgetch(WINDOW *win)
 			break;
 		}
 	} else {
+		if (curscr->flags & __KEYPAD) {
+			tputs(KE, 0, __cputchar);
+			curscr->flags &= ~__KEYPAD;
+		}
 		switch (win->delay)
 		{
 		case -1:

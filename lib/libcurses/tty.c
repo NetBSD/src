@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.19 2000/05/01 12:30:30 blymn Exp $	*/
+/*	$NetBSD: tty.c,v 1.20 2000/05/17 16:23:49 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.19 2000/05/01 12:30:30 blymn Exp $");
+__RCSID("$NetBSD: tty.c,v 1.20 2000/05/17 16:23:49 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -425,7 +425,8 @@ __startwin(void)
 
 	tputs(TI, 0, __cputchar);
 	tputs(VS, 0, __cputchar);
-	tputs(KS, 0, __cputchar);
+	if (curscr->flags & __KEYPAD)
+		tputs(KS, 0, __cputchar);
 }
 
 int
