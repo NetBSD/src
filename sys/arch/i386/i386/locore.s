@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.6 2001/08/24 04:19:57 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.7 2001/08/30 23:23:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1810,13 +1810,13 @@ NENTRY(switch_error)
 #endif /* DIAGNOSTIC */
 
 /*
- * void cpu_switch(struct lwp *l)
+ * int cpu_switch(struct lwp *l)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * process is the same as the old one, we short-circuit the context save and
  * restore.
  * see cpu_switch(9)
  */
-/* LINTSTUB: Func: void cpu_switch(struct lwp *l) */
+/* LINTSTUB: Func: int cpu_switch(struct lwp *l) */
 ENTRY(cpu_switch)
 	pushl	%ebx
 	pushl	%esi
@@ -2293,8 +2293,8 @@ ENTRY(switch_exit)
 
 
 /* switch_lwp_exit(struct lwp *l);
- * Switch to lwp0's saved context and deallocate the address space and kernel
- * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
+ * Switch to lwp0's saved context and deallocate the kernel
+ * stack for l.  Then jump into cpu_switch(), as if we were in lwp0 all along.
  */
 	.globl	_C_LABEL(lwp0),_C_LABEL(uvmspace_free),_C_LABEL(kernel_map)
 	.globl	_C_LABEL(uvm_km_free),_C_LABEL(tss_free)
@@ -2343,7 +2343,7 @@ ENTRY(switch_lwp_exit)
 	sti
 
 	/*
-	 * Schedule the dead process's vmspace and stack to be freed.
+	 * Schedule the dead LWP's stack to be freed.
 	 */
 	pushl	%edi			/* lwp_exit2(l) */
 	call	_C_LABEL(lwp_exit2)
