@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.66 1999/02/19 16:59:36 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.67 1999/03/30 16:40:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -918,23 +918,23 @@ gusattach(parent, self, aux)
  		sc->sc_flags |= GUS_MIXER_INSTALLED;
  		gus_init_ics2101(sc);
 	}
-	if (sc->sc_revision < 0xa || !gus_init_cs4231(sc)) {
-		/* Not using the CS4231, so create our DMA maps. */
-		if (sc->sc_playdrq != -1) {
-			if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
-			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-				printf("%s: can't create map for drq %d\n",
-				       sc->sc_dev.dv_xname, sc->sc_playdrq);
-				return;
-			}
+	if (sc->sc_revision >= 10)
+		gus_init_cs4231(sc);
+
+	if (sc->sc_playdrq != -1) {
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
+		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			       sc->sc_dev.dv_xname, sc->sc_playdrq);
+			return;
 		}
-		if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
-			if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
-			    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-				printf("%s: can't create map for drq %d\n",
-				       sc->sc_dev.dv_xname, sc->sc_recdrq);
-				return;
-			}
+	}
+	if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
+		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			       sc->sc_dev.dv_xname, sc->sc_recdrq);
+			return;
 		}
 	}
 
