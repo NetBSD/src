@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.49 1999/09/08 22:56:56 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.49.8.1 2002/04/22 22:02:12 he Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -7,6 +7,9 @@
 SRCS+=	bm.c strcasecmp.c strcoll.c strdup.c strerror.c strlcat.c strlcpy.c \
 	strmode.c strsignal.c strtok.c strtok_r.c strxfrm.c \
 	__strerror.c __strsignal.c
+
+# namespace protection wrappers
+SRCS+=	_strlcat.c _strlcpy.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
