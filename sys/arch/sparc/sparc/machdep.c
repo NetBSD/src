@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 1996/03/14 21:09:17 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.60 1996/03/16 23:31:42 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +84,7 @@
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/oldmon.h>
+#include <machine/bsd_openprom.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -265,7 +266,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -623,8 +624,6 @@ boot(howto)
 	int i;
 	static char str[4];	/* room for "-sd\0" */
 	extern int cold;
-	extern volatile void romhalt(void);
-	extern volatile void romboot(char *);
 
 	if (cold) {
 		printf("halted\n\n");
@@ -761,7 +760,7 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -945,9 +944,9 @@ oldmon_w_trace(va)
 
 #define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
 
-	printf("\nstack trace with sp = %x\n", va);
+	printf("\nstack trace with sp = %lx\n", va);
 	stop = round_up(va);
-	printf("stop at %x\n", stop);
+	printf("stop at %lx\n", stop);
 	fp = (struct frame *) va;
 	while (round_up((u_long) fp) == stop) {
 		printf("  %x(%x, %x, %x, %x, %x, %x, %x) fp %p\n", fp->fr_pc, 
@@ -974,7 +973,7 @@ oldmon_w_cmd(va, ar)
 			printf("w: case 4\n");
 			break;
 		default:
-			printf("w: unknown case %d\n", va);
+			printf("w: unknown case %ld\n", va);
 			break;
 		}
 		break;
