@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/02/13 02:55:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1999/03/13 23:22:56 lukem Exp $
 
 LIB=	sup
 
@@ -11,8 +11,9 @@ SRCS+=	atoo.c errmsg.c expand.c ffilecopy.c filecopy.c \
 
 CLEANFILES+=netcrypt.c
 
-MKPROFILE=no
+MKLINT=	no
 MKPIC=	no
+MKPROFILE=no
 
 netcrypt.c: netcryptvoid.c
 	rm -f netcrypt.c
