@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.504 2002/12/06 17:53:52 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.505 2002/12/07 15:18:08 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.504 2002/12/06 17:53:52 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.505 2002/12/07 15:18:08 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1716,8 +1716,6 @@ identifycpu(struct cpu_info *ci)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
 		step = CPUID2STEPPING(ci->ci_signature);
-		printf("%s: family %x model %x step %x\n", cpuname, family,
-			model, step);
 
 		for (i = 0; i < max; i++) {
 			if (!strncmp((char *)ci->ci_vendor,
@@ -1815,6 +1813,8 @@ identifycpu(struct cpu_info *ci)
 	if (ci->ci_tsc_freq != 0)
 		printf(", %qd.%02qd MHz", (ci->ci_tsc_freq + 4999) / 1000000,
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+	if (ci->ci_signature != 0)
+		printf(", id 0x%x", ci->ci_signature);
 	printf("\n");
 
 	if (ci->ci_info)
