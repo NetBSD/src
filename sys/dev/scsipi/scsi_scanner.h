@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_scanner.h,v 1.7 2001/11/19 17:18:08 soren Exp $	*/
+/*	$NetBSD: scsi_scanner.h,v 1.8 2004/12/07 23:07:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -36,8 +36,8 @@
 
 /* SCSI scanner commands */
 #define GET_IMAGE_STATUS	0x0f
-#define READ_BIG		0x28
-#define WRITE_BIG		0x2a
+#define READ_10			0x28
+#define WRITE_10		0x2a
 #define OBJECT_POSITION		0x31
 #define GET_BUFFER_STATUS	0x34
 
