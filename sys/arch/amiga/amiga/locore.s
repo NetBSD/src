@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.85 1997/06/16 21:12:38 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.86 1997/06/17 00:34:11 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -118,12 +118,6 @@ _addrerr4060:
 #if defined(M68060)
 	.globl _buserr60
 _buserr60:
-	tstl	_nofault		| device probe?
-	jeq	Lnonofault60		| no, handle as usual
-	movl	_nofault,sp@-		| yes,
-	jbsr	_longjmp		|  longjmp(nofault)
-	/* NOTREACHED */
-Lnonofault60:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
@@ -158,11 +152,6 @@ Lberr3:
 #if defined(M68040)
 	.globl _buserr40
 _buserr40:
-	tstl	_nofault		| device probe?
-	jeq	Lnonofault40		| no, handle as usual
-	movl	_nofault,sp@-		| yes,
-	jbsr	_longjmp		|  longjmp(nofault)
-Lnonofault40:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
@@ -184,10 +173,6 @@ Lbe1stpg:
 #endif
 
 _buserr:
-	tstl	_nofault		| device probe?
-	jeq	_addrerr		| no, handle as usual
-	movl	_nofault,sp@-		| yes,
-	jbsr	_longjmp		|  longjmp(nofault)
 _addrerr:
 #if !(defined(M68020) || defined(M68030))
 	jra	_badtrap
@@ -272,6 +257,12 @@ Lisberr1:
 	clrw	sp@			| re-clear pad word
 #endif
 Lisberr:				| also used by M68040/60
+	tstl	_nofault		| device probe?
+	jeq	LberrIsProbe		| no, handle as usual
+	movl	_nofault,sp@-		| yes,
+	jbsr	_longjmp		|  longjmp(nofault)
+	/* NOTREACHED */
+LberrIsProbe:
 	movl	#T_BUSERR,sp@-		| mark bus error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
