@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.12 1993/06/14 19:35:59 mycroft Exp $
+ *	$Id: icu.s,v 1.13 1993/06/14 19:44:37 mycroft Exp $
  */
 
 /*
@@ -258,7 +258,7 @@ _spl0:
 in_spl0:
 	movl	_cpl,%eax
 	pushl   %eax	# save old priority
-	cmpl	$0,_netisr
+	testl   $~((1 << NETISR_SCLK) | (1 << NETISR_AST)),_netisr
 	jz	over_net_stuff_for_spl0
 	movl	_netmask,%eax	# mask off those network devices
 	movl	%eax,_cpl	# set new priority
