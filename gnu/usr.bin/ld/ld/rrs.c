@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.19 1998/01/05 22:00:58 cgd Exp $	*/
+/*	$NetBSD: rrs.c,v 1.20 1998/08/13 07:34:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -530,8 +530,9 @@ claim_rrs_internal_gotslot(entry, rp, lsp, addend)
 	if (lsp->gotslot_offset != -1) {
 		/* Already claimed */
 		if (*GOTP(lsp->gotslot_offset) != addend)
-			errx(1, "%s: gotslot at %#x is multiple valued",
-				get_file_name(entry), lsp->gotslot_offset);
+			errx(1, "%s: gotslot at %#x is multiple valued: %#x vs %#x",
+				get_file_name(entry), lsp->gotslot_offset,
+				*GOTP(lsp->gotslot_offset), addend);
 		return lsp->gotslot_offset;
 	}
 
