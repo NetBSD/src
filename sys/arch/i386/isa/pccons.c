@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.57 1994/03/03 19:28:04 mycroft Exp $
+ *	$Id: pccons.c,v 1.58 1994/03/03 20:48:16 mycroft Exp $
  */
 
 /*
@@ -545,10 +545,6 @@ pcioctl(dev, cmd, data, flag, p)
 		return 0;
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
-#ifdef XFREE86_BUG_COMPAT
-		/* XXX Why doesn't the X server do this? */
-		set_cursor_shape();
-#endif
 		return 0;
 	case CONSOLE_X_BELL:
 		/*
@@ -1553,6 +1549,10 @@ pc_xmode_off()
 		return;
 	pc_xmode = 0;
 
+#ifdef XFREE86_BUG_COMPAT
+	/* XXX It would be hard to justify why the X server doesn't do this. */
+	set_cursor_shape();
+#endif
 	async_update();
 
 	fp = (struct trapframe *)curproc->p_regs;
