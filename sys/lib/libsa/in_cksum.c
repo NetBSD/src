@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.3 1995/04/22 13:53:48 cgd Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4 1999/02/11 09:10:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -40,6 +40,20 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <net/if_ether.h>
+
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/udp.h>
+#include <netinet/udp_var.h>
+
+#include "stand.h"
+#include "net.h"
 
 /*
  * Checksum routine for Internet Protocol family headers.

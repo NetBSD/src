@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.20 1998/03/01 07:15:39 ross Exp $	*/
+/*	$NetBSD: ufs.c,v 1.21 1999/02/11 09:10:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -84,6 +84,7 @@ max(a, b)
 #endif
 
 #include "stand.h"
+#include "ufs.h"
 
 /*
  * In-core open file.

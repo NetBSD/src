@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.10 1997/09/06 13:57:14 drochner Exp $	*/
+/*	$NetBSD: netif.c,v 1.11 1999/02/11 09:10:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -75,6 +75,8 @@ netif_init()
 			drv->netif_ifs[i].dif_used = 0;
 	}
 }
+
+int	netif_match __P((struct netif *, void *));
 
 int
 netif_match(nif, machdep_hint)

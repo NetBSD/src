@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.h,v 1.4 1997/09/06 13:55:57 drochner Exp $	*/
+/*	$NetBSD: bootp.h,v 1.5 1999/02/11 09:10:43 pk Exp $	*/
 
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
@@ -135,3 +135,5 @@ struct cmu_vend {
 
 /* v_flags values */
 #define VF_SMASK	1	/* Subnet mask field contains valid data */
+
+extern void	bootp __P((int));
