@@ -461,6 +461,7 @@
 ./usr/share/man/cat4/tl.0
 ./usr/share/man/cat4/tlphy.0
 ./usr/share/man/cat4/tp.0
+./usr/share/man/cat4/tr.0
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/uaudio.0
@@ -1572,6 +1573,7 @@
 ./usr/share/man/man4/tl.4
 ./usr/share/man/man4/tlphy.4
 ./usr/share/man/man4/tp.4
+./usr/share/man/man4/tr.4
 ./usr/share/man/man4/tty.4
 ./usr/share/man/man4/tun.4
 ./usr/share/man/man4/uaudio.4
