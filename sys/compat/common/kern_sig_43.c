@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.1 1995/06/24 20:16:21 christos Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.2 1995/08/15 16:52:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -117,7 +117,7 @@ compat_43_sigstack(p, uap, retval)
 
 	psp = p->p_sigacts;
 	ss.ss_sp = psp->ps_sigstk.ss_base;
-	ss.ss_onstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	ss.ss_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	if (SCARG(uap, oss) && (error = copyout((caddr_t)&ss,
 	    (caddr_t)SCARG(uap, oss), sizeof (struct sigstack))))
 		return (error);
@@ -125,7 +125,7 @@ compat_43_sigstack(p, uap, retval)
 	    (caddr_t)&ss, sizeof (ss))) == 0) {
 		psp->ps_sigstk.ss_base = ss.ss_sp;
 		psp->ps_sigstk.ss_size = 0;
-		psp->ps_sigstk.ss_flags |= ss.ss_onstack & SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= ss.ss_onstack & SS_ONSTACK;
 		psp->ps_flags |= SAS_ALTSTACK;
 	}
 	return (error);
