@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.18 1999/12/07 14:54:46 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.19 1999/12/23 02:10:07 mjl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.18 1999/12/07 14:54:46 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.19 1999/12/23 02:10:07 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -582,7 +582,7 @@ chkhost(f)
 			inet_ntoa(f->sin_addr));
 
 	(void)strncpy(fromb, hp->h_name, sizeof(fromb) - 1);
-	from[sizeof(fromb) - 1] = '\0';
+	fromb[sizeof(fromb) - 1] = '\0';
 	from = fromb;
 
 	/* Check for spoof, ala rlogind */
