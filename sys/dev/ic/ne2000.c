@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.17 1999/01/18 19:17:00 mjacob Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.18 1999/03/23 21:41:07 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -493,7 +493,7 @@ ne2000_write_mbuf(sc, m, buf)
 					    NE2000_ASIC_DATA,
 					    *(u_int16_t *)savebyte);
 					leftover = 0;
-				} else if (ALIGNED_POINTER(data,
+				} else if (BUS_SPACE_ALIGNED_POINTER(data,
 					   u_int16_t) == 0) {
 					/*
 					 * Unaligned data; buffer the next

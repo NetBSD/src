@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.10 1998/10/27 22:45:13 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.11 1999/03/23 21:41:08 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -654,7 +654,8 @@ ec_write_mbuf(sc, m, buf)
 				    *(u_int16_t *)savebyte);
 				buf += 2;
 				leftover = 0;
-			} else if (ALIGNED_POINTER(data, u_int16_t) == 0) {
+			} else if (BUS_SPACE_ALIGNED_POINTER(data, u_int16_t)
+				   == 0) {
 				/*
 				 * Unaligned data; buffer the next byte.
 				 */
