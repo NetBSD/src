@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.1 1997/01/30 01:10:35 thorpej Exp $	*/
+/*	$NetBSD: md5.c,v 1.2 1997/10/17 11:37:09 lukem Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -17,6 +17,11 @@
  *  documentation and/or software.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: md5.c,v 1.2 1997/10/17 11:37:09 lukem Exp $");
+#endif /* not lint */
+
 #include <sys/types.h>
 
 #include <err.h>
@@ -24,6 +29,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+
+void	MDFilter __P((int));
+void	MDString __P((const char *));
+void	MDTestSuite __P((void));
+void	MDTimeTrial __P((void));
 
 /*
  * Length of test block, number of test blocks.
@@ -118,11 +128,11 @@ MDFilter(pipe)
 {
 	MD5_CTX context;
 	int len;
-	unsigned char buffer[BUFSIZ], digest[16];
+	unsigned char buffer[BUFSIZ];
 	char buf[33];
 
 	MD5Init(&context);
-	while (len = fread(buffer, 1, BUFSIZ, stdin)) {
+	while ((len = fread(buffer, 1, BUFSIZ, stdin)) > 0) {
 		if (pipe && (len != fwrite(buffer, 1, len, stdout)))
 			err(1, "stdout");
 		MD5Update(&context, buffer, len);
