@@ -36,6 +36,8 @@
 #  include "ansi_stdlib.h"
 #endif /* HAVE_STDLIB_H */
 
+#include <string.h>
+
 extern char *xmalloc (), *xrealloc ();
 
 #if !defined (SHELL)
