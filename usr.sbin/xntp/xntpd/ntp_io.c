@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.9 1999/01/29 13:19:17 bouyer Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.10 1999/05/27 17:12:22 bad Exp $	*/
 
 /*
  * xntp_io.c - input/output routines for xntpd.  The socket-opening code
@@ -607,11 +607,15 @@ create_sockets(port)
        * for the two aliases on the one physical interface. -wsr
        */
       for (j=0; j < i; j++)
-	if ((inter_list[j].sin.sin_addr.s_addr &
+	if (((inter_list[j].sin.sin_addr.s_addr ==
+	    inter_list[i].sin.sin_addr.s_addr) ||
+	    ((inter_list[j].sin.sin_addr.s_addr &
 	    inter_list[j].mask.sin_addr.s_addr) ==
 	    (inter_list[i].sin.sin_addr.s_addr &
-	    inter_list[i].mask.sin_addr.s_addr))
+	    inter_list[i].mask.sin_addr.s_addr))))
 	  {
+	    if (inter_list[j].flags & INT_LOOPBACK)
+	      inter_list[j] = inter_list[i];
 	    break;
 	  }
       if (j == i)
