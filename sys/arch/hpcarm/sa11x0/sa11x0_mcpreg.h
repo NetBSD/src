@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_mcpreg.h,v 1.1 2001/07/11 16:02:25 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_mcpreg.h,v 1.2 2001/07/12 03:58:35 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -63,3 +63,22 @@
 
 /* MCP control register 0 */
 #define CR1_CFS		(1 << 20)
+
+/* MCP status register */
+#define SR_ATS		(1 << 0)	/* Audio transmit FIFO req-flag */
+#define SR_ARS		(1 << 1)	/* Audio receive FIFO req */
+#define SR_TTS		(1 << 2)	/* Telecom transmit FIFO req-flag */
+#define SR_TRS		(1 << 3)	/* Telecom receive FIFO req */ 
+#define SR_ATU		(1 << 4)	/* Audio transmit FIFO underrun */
+#define SR_ARO		(1 << 5) 	/* Audio receive FIFO overrun */
+#define SR_TTU		(1 << 6)	/* Telecom transmit FIFO underrun */
+#define SR_TRO		(1 << 7)	/* Telecom receive FIFO overrun */
+#define SR_ANF		(1 << 8)	/* Audio transmit FIFO not full */
+#define SR_ANE		(1 << 9)	/* Audio receive FIFO not empty */
+#define SR_TNF		(1 << 10)	/* Telecom transmit FIFO not full */
+#define SR_TNE		(1 << 11)	/* Telecom receive FIFO not empty */
+#define SR_CWC		(1 << 12)	/* Codec write completed */
+#define SR_CRC		(1 << 13)	/* Codec read completed */
+#define SR_ACE		(1 << 14)	/* Audio codec enabled */
+#define SR_TCE		(1 << 15)	/* Telecom codec enabled */
+
