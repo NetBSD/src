@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.517 2003/03/25 18:30:16 tsubai Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.518 2003/03/29 20:56:55 jdc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.516 2003/03/25 18:28:15 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.517 2003/03/29 20:49:03 jdc Exp 
  */
 
 /*
@@ -7708,6 +7708,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "3CP5609 PCI 16550 Modem",
 	},
 	{
+	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_2415,
+	    0,
+	    "US Robotics",
+	    "Wireless PCI-PCMCIA adapter",
+	},
+	{
 	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V292PBC,
 	    0,
 	    "V3 Semiconductor",
@@ -11479,6 +11485,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_USR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "US Robotics (3Com)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_USR2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "US Robotics",
 	    NULL,
 	},
 	{
