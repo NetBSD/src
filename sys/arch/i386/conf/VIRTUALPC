@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.6 2004/07/06 22:53:37 mycroft Exp $
+# $NetBSD: VIRTUALPC,v 1.7 2004/07/15 03:53:49 atatat Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.6 $"
+#ident 		"VIRTUALPC-$Revision: 1.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -76,6 +76,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Beep when it is safe to power down the system (requires sysbeep)
 #options 	BEEP_ONHALT

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.41 2003/10/07 09:43:58 tron Exp $
+#	$NetBSD: INSTALL,v 1.42 2004/07/15 03:53:52 atatat Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -75,6 +75,7 @@ config		netbsd	root on ? type ?
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM

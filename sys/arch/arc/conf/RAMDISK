@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.47 2003/12/14 01:32:01 thorpej Exp $
+#	$NetBSD: RAMDISK,v 1.48 2004/07/15 03:53:45 atatat Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.47 $"
+#ident		"GENERIC-$Revision: 1.48 $"
 
 maxusers	32		# estimated number of users
 
@@ -45,6 +45,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.

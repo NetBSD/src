@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.5 2004/06/28 21:07:49 bouyer Exp $
+# $NetBSD: GENERIC,v 1.6 2004/07/15 03:53:51 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10
@@ -109,6 +109,7 @@ file-system 	NULLFS
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Kernel(s) to compile
 config		netbsd root on ? type ?

@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.17 2003/12/13 22:06:23 chs Exp $
+# $NetBSD: RAMDISK,v 1.18 2004/07/15 03:53:52 atatat Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -29,6 +29,7 @@ maxusers	2
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Which kernel debugger?  Uncomment either this:
 #options 	DDB

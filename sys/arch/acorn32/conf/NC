@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.24 2004/03/13 18:25:25 bjh21 Exp $
+#	$NetBSD: NC,v 1.25 2004/07/15 03:53:44 atatat Exp $
 #
 #	NC - with vidcconsole
 #
@@ -106,6 +106,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 

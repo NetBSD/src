@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.7 2004/06/26 07:32:06 abs Exp $
+#	$NetBSD: GENERIC,v 1.8 2004/07/15 03:53:49 atatat Exp $
 #
 #
 
@@ -44,6 +44,7 @@ options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
 
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
