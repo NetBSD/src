@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.1 1998/06/04 21:34:46 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.2 1998/06/06 22:28:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -376,9 +376,39 @@ __C(CHIP,_mem_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
+	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+	bus_addr_t memaddr;
+	int error;
 
-	/* XXX XXX XXX XXX XXX XXX */
-	panic("%s not implemented", __S(__C(CHIP,_mem_alloc)));
+	/* Requests for linear uncacheable space can't be satisfied. */
+	if (linear && !cacheable)
+		return (EOPNOTSUPP);
+
+	/*
+	 * Do the requested allocation.
+	 */
+#ifdef EXTENT_DEBUG
+	printf("mem: allocating from 0x%lx to 0x%lx\n", rstart, rend);
+#endif
+	error = extent_alloc_subregion(CHIP_MEM_EXTENT(v), rstart, rend,
+	    size, align, boundary,
+	    EX_FAST | EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0),
+	    &memaddr);
+	if (error) {
+#ifdef EXTENT_DEBUG
+		printf("mem: allocation failed (%d)\n", error);
+		extent_print(CHIP_MEM_EXTENT(v));
+#endif
+	}
+
+#ifdef EXTENT_DEBUG
+	printf("mem: allocated 0x%lx to 0x%lx\n", memaddr, memaddr + size - 1);
+#endif
+
+	*bshp = ALPHA_PHYS_TO_K0SEG(CHIP_MEM_SYS_START(v)) + memaddr;
+
+	return (0);
 }
 
 void
@@ -388,8 +418,8 @@ __C(CHIP,_mem_free)(v, bsh, size)
 	bus_size_t size;
 {
 
-	/* XXX XXX XXX XXX XXX XXX */
-	panic("%s not implemented", __S(__C(CHIP,_mem_free)));
+	/* Unmap does all we need to do. */
+	__C(CHIP,_mem_unmap)(v, bsh, size);
 }
 
 inline void
