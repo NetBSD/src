@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.82 2002/09/09 01:03:10 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.83 2002/09/09 02:32:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -176,16 +176,16 @@ END(mips3_wbflush)
  *	the QED RM52xx family of CPUs, and MIPS32 & MIPS64 CPUs.
  */
 LEAF(mips_wait_idle)
-	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
-	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
-	COP0_SYNC
-	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
 #if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
 #endif
+	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
+	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
+	COP0_SYNC
+	nop
 
 	/* Try to zero some free pages. */
 	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
