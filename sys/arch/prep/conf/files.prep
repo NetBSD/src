@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.10 2000/11/27 21:50:13 matt Exp $
+#	$NetBSD: files.prep,v 1.11 2000/12/01 21:54:01 matt Exp $
 #
 # prep-specific configuration info
 #
@@ -59,6 +59,10 @@ device	cpu
 attach	cpu at mainbus
 file	arch/prep/prep/cpu.c		cpu
 
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
+
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
@@ -76,6 +80,11 @@ file	arch/prep/pci/pchb.c		pchb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/prep/pci/pcib.c		pcib
+
+# IBM G10 display on ThinkPad 820
+device	gten: wsemuldisplaydev, rasops8
+attach	gten at pci
+file	arch/prep/pci/gten.c		gten needs-flag
 
 #
 # ISA and mixed ISA+PCI drivers
@@ -105,8 +114,6 @@ attach	pc at isa
 device	pcconskbd
 attach	pcconskbd at pckbc
 file	arch/prep/isa/pccons.c		pc | pcconskbd needs-flag
-
-include "dev/wscons/files.wscons"
 
 include "dev/pckbc/files.pckbc"
 
