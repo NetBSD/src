@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 1998/09/12 19:46:00 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 1998/09/12 19:50:59 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1739,8 +1739,8 @@ memfault_sun4:
 	/* memory error = death for now XXX */
 	clr	%o3
 	clr	%o4
-	set	CPUINFO_VA+CPUINFO_MEMERR, %o0
-	ld	[%o0], %o0
+	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
 	jmpl	%o0, %o7		! memerr(0, ser, sva, 0, 0)
 	 clr	%o0
 	call	_callrom
@@ -1841,8 +1841,8 @@ memfault_sun4c:
 	 * If memerr() returns, return from the trap.
 	 */
 	wr	%l0, PSR_ET, %psr
-	set	CPUINFO_VA+CPUINFO_MEMERR, %o0
-	ld	[%o0], %o0
+	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
 	jmpl	%o0, %o7		! memerr(0, ser, sva, aer, ava)
 	 clr	%o0
 
@@ -1863,8 +1863,8 @@ memfault_sun4c:
 	 * %o1 through %o4 still hold the error reg contents.
 	 */
 1:
-	set	CPUINFO_VA+CPUINFO_MEMERR, %o0
-	ld	[%o0], %o0
+	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
 	jmpl	%o0, %o7		! memerr(1, ser, sva, aer, ava)
 	 mov	1, %o0
 
@@ -1894,8 +1894,8 @@ memfault_sun4m:
 	std	%g4, [%sp + CCFSZ + 32]	! save g4, g5
 
 	! get fault status/address
-	set	CPUINFO_VA+CPUINFO_FAULTSTATUS, %o0
-	ld	[%o0], %o0
+	sethi	%hi(CPUINFO_VA+CPUINFO_FAULTSTATUS), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_FAULTSTATUS)], %o0
 	jmpl	%o0, %o7
 	 std	%g6, [%sp + CCFSZ + 40]	! sneak in g6, g7
 
@@ -2572,8 +2572,8 @@ nmi_sun4c:
 
 nmi_common:
 	! and call C code
-	set	CPUINFO_VA+CPUINFO_MEMERR, %o0
-	ld	[%o0], %o0
+	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
 	jmpl	%o0, %o7		! memerr(0, ser, sva, aer, ava)
 	clr	%o0
 
@@ -2620,8 +2620,8 @@ nmi_sun4m:
 	rd	%y, %l4			! save y
 
 	! now read sync error registers
-	set	CPUINFO_VA+CPUINFO_FAULTSTATUS, %o0
-	ld	[%o0], %o0
+	sethi	%hi(CPUINFO_VA+CPUINFO_FAULTSTATUS), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_FAULTSTATUS)], %o0
 	jmpl	%o0, %o7
 	 std	%g4, [%sp + CCFSZ + 8]	! save g4,g5
 
@@ -2631,8 +2631,8 @@ nmi_sun4m:
 	mov	%g7, %l7
 	clr	%o5
 
-	set	CPUINFO_VA+CPUINFO_MEMERR, %o0
-	ld	[%o0], %o0
+	sethi	%hi(CPUINFO_VA+CPUINFO_MEMERR), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_MEMERR)], %o0
 	jmpl	%o0, %o7		! memerr4m(0, sfsr, sfva, afsr, afva)
 	 clr	%o0
 
