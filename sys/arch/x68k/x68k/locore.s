@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 1999/04/30 16:50:44 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 1999/05/05 13:46:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1649,6 +1649,23 @@ ENTRY(spl0)
 	movw	#PSL_LOWIPL,sp@		| and new SR
 	jra	Lgotsir			| go handle it
 Lspldone:
+	rts
+
+/*
+ * _delay(u_int N)
+ *
+ * Delay for at least (N/256) microsecends.
+ * This routine depends on the variable:  delay_divisor
+ * which should be set based on the CPU clock rate.
+ */
+ENTRY_NOPROFILE(_delay)
+	| d0 = arg = (usecs << 8)
+	movl	sp@(4),d0
+	| d1 = delay_divisor
+	movl	_C_LABEL(delay_divisor),d1
+L_delay:
+	subl	d1,d0
+	jgt	L_delay
 	rts
 
 /*

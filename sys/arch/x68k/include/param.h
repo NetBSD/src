@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 1998/12/13 15:04:01 minoura Exp $	*/
+/*	$NetBSD: param.h,v 1.12 1999/05/05 13:46:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,9 +82,10 @@
 
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-extern int	cpuspeed;
-#define	delay(n)	do { register int N = cpuspeed * (n); while (--N > 0); } while(0)
-#define DELAY(n)	delay(n)
+#define	delay(us)	_delay((us) << 8)
+#define DELAY(us)	delay(us)
+
+void	_delay __P((u_int));
 #endif /* _KERNEL && !_LOCORE */
 
 #if defined(_KERNEL) && !defined(_LKM)
