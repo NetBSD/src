@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144.2.2 2000/06/24 06:59:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.144.2.3 2000/06/30 18:15:39 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bind bootp catman \
 	wsfontload ypbind yppoll ypserv ypset zdump zic
 
 # IPv6
-SUBDIR+=faithd gifconfig ifmcstat mld6query mtrace6 ndp pim6dd pim6sd \
+SUBDIR+=faithd ifmcstat mld6query mtrace6 ndp pim6dd pim6sd \
 	rip6query route6d rtadvd traceroute6 rtsold
 
 # ATM PVC
