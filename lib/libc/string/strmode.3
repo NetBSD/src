@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strmode.3	5.4 (Berkeley) 7/31/91
-.\"	$Id: strmode.3,v 1.5 1997/03/08 13:44:49 mouse Exp $
+.\"	$Id: strmode.3,v 1.6 1997/08/19 05:44:17 mikel Exp $
 .\"
 .Dd July 31, 1991
 .Dt STRMODE 3
@@ -130,14 +130,9 @@ The file is executable or the directory is searchable.
 None of the above apply.
 .El
 .Pp
-The last character is a plus sign ``+'' if any there are any alternative
+The last character is a plus sign ``+'' if there are any alternative
 or additional access control methods associated with the inode, otherwise
 it will be a space.
-.Sh RETURN VALUES
-The
-.Fn strmode
-function
-always returns 0.
 .Sh SEE ALSO
 .Xr chmod 1 ,
 .Xr find 1 ,
@@ -147,5 +142,5 @@ always returns 0.
 .Sh HISTORY
 The
 .Fn strmode
-function
-.Ud .
+function first appeared in
+.Bx 4.4 .
