@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.15 1997/03/10 23:01:42 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.16 1997/04/08 20:08:21 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -121,6 +122,7 @@ sbus_attach(parent, self, aux)
 	register int node;
 	register char *name;
 	struct confargs oca;
+	int rlen;
 
 	/*
 	 * XXX there is only one Sbus, for now -- do not know how to
@@ -149,8 +151,15 @@ sbus_attach(parent, self, aux)
 	else
 		oca.ca_ra.ra_bp = NULL;
 
-	sc->sc_range = ra->ra_range;
-	sc->sc_nrange = ra->ra_nrange;
+	rlen = getproplen(node, "ranges");
+	if (rlen > 0) {
+		sc->sc_nrange = rlen / sizeof(struct rom_range);
+		sc->sc_range =
+			(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
+		if (sc->sc_range == 0)
+			panic("sbus: PROM ranges too large: %d", rlen);
+		(void)getprop(node, "ranges", sc->sc_range, rlen);
+	}
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses

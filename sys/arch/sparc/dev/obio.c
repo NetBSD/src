@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.30 1997/03/10 23:01:41 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.31 1997/04/08 20:08:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -155,6 +155,7 @@ obioattach(parent, self, args)
 	register char *name;
 	register const char *sp;
 	const char *const *ssp;
+	int rlen;
 	extern int autoconf_nzs;
 
 	static const char *const special4m[] = {
@@ -202,8 +203,16 @@ obioattach(parent, self, args)
 	else
 		oca.ca_ra.ra_bp = NULL;
 
-	sc->bu.scu_sbus.sc_range = ra->ra_range;
-	sc->bu.scu_sbus.sc_nrange = ra->ra_nrange;
+	node = ra->ra_node;
+	rlen = getproplen(node, "ranges");
+	if (rlen > 0) {
+		sc->bu.scu_sbus.sc_nrange = rlen / sizeof(struct rom_range);
+		sc->bu.scu_sbus.sc_range =
+			(struct rom_range *)malloc(rlen, M_DEVBUF, M_NOWAIT);
+		if (sc->bu.scu_sbus.sc_range == 0)
+			panic("obio: PROM ranges too large: %d", rlen);
+		(void)getprop(node, "ranges", sc->bu.scu_sbus.sc_range, rlen);
+	}
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses
