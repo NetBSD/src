@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.11 2003/09/12 04:39:59 briggs Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.12 2003/12/04 07:02:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.11 2003/09/12 04:39:59 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_mainbus.c,v 1.12 2003/12/04 07:02:18 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,17 +131,23 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Check the configuration of the ATU to see if another BIOS
-	 * has configured us.  If a PC BIOS didn't configured us, then
-	 * BAR0 is 00000000.0000000c and BAR1 is 00000000.8000000c.  If
-	 * a BIOS has configured us, at least one of those should be
-	 * different.
+	 * has configured us.  If a PC BIOS didn't configured us, then:
+	 * 	IQ80321: BAR0 00000000.0000000c BAR1 is 00000000.8000000c.
+	 * 	IQ31244: BAR0 00000000.00000004 BAR1 is 00000000.0000000c.
+	 * If a BIOS has configured us, at least one of those should be
+	 * different.  This is pretty fragile, but it's not clear what
+	 * would work better.
 	 */
 	b0l = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x0);
 	b0u = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x4);
 	b1l = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0x8);
 	b1u = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, PCI_MAPREG_START+0xc);
+	b0l &= PCI_MAPREG_MEM_ADDR_MASK;
+	b0u &= PCI_MAPREG_MEM_ADDR_MASK;
+	b1l &= PCI_MAPREG_MEM_ADDR_MASK;
+	b1u &= PCI_MAPREG_MEM_ADDR_MASK;
 
-	if ((b0u != b1u) || (b0l != 0x0000000c) || (b1l != 0x8000000cU))
+	if ((b0u != b1u) || (b0l != 0) || ((b1l & ~0x80000000U) != 0))
 		sc->sc_is_host = 0;
 	else
 		sc->sc_is_host = 1;
