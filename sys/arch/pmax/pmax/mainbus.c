@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24 1998/04/19 10:54:54 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25 1998/08/29 16:24:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -98,8 +98,6 @@ mbattach(parent, self, aux)
 {
 	register struct device *mb = self;
 	struct confargs nca;
-
-	extern int ncpus;
 
 	printf("\n");
 
