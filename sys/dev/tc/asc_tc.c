@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.2 1996/10/10 20:25:35 christos Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.3 1996/10/12 16:15:34 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -136,8 +136,6 @@ asc_tc_attach(parent, self, aux)
 	/* tie pseudo-slot to device */
 	tc_intr_establish(parent, t->ta_cookie, TC_IPL_BIO,
 			  asc_intr, asc);
-
-	kprintf(": target %d\n", asc->sc_id);
 }
 
 
