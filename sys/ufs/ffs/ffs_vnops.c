@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.27 2000/05/13 23:43:14 perseant Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.28 2000/05/27 04:52:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -301,7 +301,8 @@ loop:
 	if (ap->a_flags & FSYNC_WAIT) {
 		while (vp->v_numoutput) {
 			vp->v_flag |= VBWAIT;
-			sleep((caddr_t)&vp->v_numoutput, PRIBIO + 1);
+			(void) tsleep(&vp->v_numoutput, PRIBIO + 1,
+			    "ffsfsync", 0);
 		}
 
 		if (ap->a_flags & FSYNC_DATAONLY) {

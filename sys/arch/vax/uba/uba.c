@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.44 2000/05/19 18:54:29 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.45 2000/05/27 04:52:33 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -593,7 +593,7 @@ ubasetup(uh, bp, flags)
 			return (0);
 		}
 		uh->uh_mrwant++;
-		sleep((caddr_t)&uh->uh_mrwant, PSWP);
+		(void) tsleep(&uh->uh_mrwant, PSWP, "ubamrwant", 0);
 	}
 	if ((flags & UBA_NEED16) && reg + npf > 128) {
 		/*
@@ -613,7 +613,7 @@ ubasetup(uh, bp, flags)
 				return (0);
 			}
 			uh->uh_bdpwant++;
-			sleep((caddr_t)&uh->uh_bdpwant, PSWP);
+			(void) tsleep(&uh->uh_bdpwant, PSWP, "ubabdpwant", 0);
 		}
 		uh->uh_bdpfree &= ~(1 << (bdp-1));
 	} else if (flags & UBA_HAVEBDP)

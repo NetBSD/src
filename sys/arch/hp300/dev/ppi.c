@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.18 2000/03/23 06:37:24 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19 2000/05/27 04:52:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -346,7 +346,7 @@ again:
 		s = splbio();
 		if ((sc->sc_flags & PPIF_UIO) &&
 		    hpibreq(sc->sc_dev.dv_parent, &sc->sc_hq) == 0)
-			sleep(sc, PRIBIO+1);
+			(void) tsleep(sc, PRIBIO + 1, "ppirw", 0);
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */

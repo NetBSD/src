@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.15 2000/01/18 19:51:03 thorpej Exp $ */
+/*	$NetBSD: ts.c,v 1.16 2000/05/27 04:52:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -379,7 +379,7 @@ tscommand (dev, cmd, count)
 		if (bp->b_bcount == 0 && (bp->b_flags & B_DONE))
 			break;
 		bp->b_flags |= B_WANTED;
-		sleep ((caddr_t)bp, PRIBIO);
+		(void) tsleep(bp, PRIBIO, "tscmd", 0);
 		/* check MOT-flag !!! */
 	}
 	bp->b_flags = B_BUSY | B_READ;

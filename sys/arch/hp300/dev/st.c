@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.27 2000/05/19 18:54:32 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.28 2000/05/27 04:52:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1204,7 +1204,7 @@ again:
 		if (bp->b_flags & B_DONE)
 			break;
 		bp->b_flags |= B_WANTED;
-		sleep((caddr_t)bp, PRIBIO);
+		(void) tsleep(bp, PRIBIO, "stcmd", 0);
 	}
 	bp->b_flags = B_BUSY|B_READ;
 	splx(s);

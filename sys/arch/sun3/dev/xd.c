@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.28 2000/05/19 18:54:28 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.29 2000/05/27 04:52:31 thorpej Exp $	*/
 
 /*
  *
@@ -1499,7 +1499,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 			return XD_ERR_AOK;	/* success */
 		case XD_SUB_WAIT:
 			while (iorq->iopb->done == 0) {
-				sleep(iorq, PRIBIO);
+				(void) tsleep(iorq, PRIBIO, "xdciorq", 0);
 			}
 			return (iorq->errno);
 		case XD_SUB_POLL:
@@ -1531,7 +1531,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 		return (XD_ERR_AOK);	/* success */
 	case XD_SUB_WAIT:
 		while (iorq->iopb->done == 0) {
-			sleep(iorq, PRIBIO);
+			(void) tsleep(iorq, PRIBIO, "xdciorq", 0);
 		}
 		return (iorq->errno);
 	case XD_SUB_POLL:

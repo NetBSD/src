@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.16 2000/05/20 03:25:14 thorpej Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.17 2000/05/27 04:52:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -121,7 +121,7 @@ chkdq(ip, change, cred, flags)
 				continue;
 			while (dq->dq_flags & DQ_LOCK) {
 				dq->dq_flags |= DQ_WANT;
-				sleep((caddr_t)dq, PINOD+1);
+				(void) tsleep(dq, PINOD+1, "chkdq", 0);
 			}
 			ncurblocks = dq->dq_curblocks + change;
 			if (ncurblocks >= 0)
@@ -147,7 +147,7 @@ chkdq(ip, change, cred, flags)
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			sleep((caddr_t)dq, PINOD+1);
+			(void) tsleep(dq, PINOD+1, "chkdq", 0);
 		}
 		dq->dq_curblocks += change;
 		dq->dq_flags |= DQ_MOD;
@@ -237,7 +237,7 @@ chkiq(ip, change, cred, flags)
 				continue;
 			while (dq->dq_flags & DQ_LOCK) {
 				dq->dq_flags |= DQ_WANT;
-				sleep((caddr_t)dq, PINOD+1);
+				(void) tsleep(dq, PINOD+1, "chkiq", 0);
 			}
 			ncurinodes = dq->dq_curinodes + change;
 			if (ncurinodes >= 0)
@@ -262,7 +262,7 @@ chkiq(ip, change, cred, flags)
 			continue;
 		while (dq->dq_flags & DQ_LOCK) {
 			dq->dq_flags |= DQ_WANT;
-			sleep((caddr_t)dq, PINOD+1);
+			(void) tsleep(dq, PINOD+1, "chkiq", 0);
 		}
 		dq->dq_curinodes += change;
 		dq->dq_flags |= DQ_MOD;
@@ -525,7 +525,7 @@ setquota(mp, id, type, addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+1);
+		(void) tsleep(dq, PINOD+1, "setquota", 0);
 	}
 	/*
 	 * Copy all but the current values.
@@ -585,7 +585,7 @@ setuse(mp, id, type, addr)
 	dq = ndq;
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+1);
+		(void) tsleep(dq, PINOD+1, "setuse", 0);
 	}
 	/*
 	 * Reset time limit if have a soft limit and were
@@ -872,7 +872,7 @@ dqsync(vp, dq)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY);
 	while (dq->dq_flags & DQ_LOCK) {
 		dq->dq_flags |= DQ_WANT;
-		sleep((caddr_t)dq, PINOD+2);
+		(void) tsleep(dq, PINOD+2, "dqsync", 0);
 		if ((dq->dq_flags & DQ_MOD) == 0) {
 			if (vp != dqvp)
 				VOP_UNLOCK(dqvp, 0);
