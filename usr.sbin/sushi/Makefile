@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/01/14 06:26:56 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2001/01/16 02:34:14 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -11,8 +11,8 @@ MAN=	sushi.8
 
 LIBINSTALL != cd ${.CURDIR}/../pkg_install/lib && ${PRINTOBJDIR}
 
-LDADD+=	-lutil -lcurses -lcdk -lform -lm -L${LIBINSTALL} -linstall
-DPADD+= ${LIBUTIL} ${LIBCURSES} ${LIBCDK} ${LIBFORM} ${LIBM} \
+LDADD+=	-lutil -lcdk -lform -lcurses -lm -L${LIBINSTALL} -linstall
+DPADD+= ${LIBUTIL} ${LIBCDK} ${LIBFORM} ${LIBCURSES} ${LIBM} \
 	${LIBINSTALL}/libinstall.a
 
 NLS=	C.msg
