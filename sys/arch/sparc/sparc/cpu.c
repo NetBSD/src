@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.92 1999/03/31 14:09:09 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.93 1999/05/20 10:06:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1090,7 +1090,7 @@ viking_mmu_enable()
 /* ROSS Hypersparc */
 struct module_info module_hypersparc = {		/* UNTESTED */
 	CPUTYP_UNKNOWN,
-	VAC_WRITETHROUGH, /* should be:VAC_NONE/VAC_WRITEBACK*/
+	VAC_WRITEBACK,
 	cpumatch_hypersparc,
 	getcacheinfo_obp,
 	0,
@@ -1117,10 +1117,8 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
-sc->flags |= CPUFLG_CACHE_MANDATORY;
 	if (node == 0)
 		sta(0, ASI_HICACHECLR, 0);
-	printf("warning: hypersparc support still under construction\n");
 }
 
 void
