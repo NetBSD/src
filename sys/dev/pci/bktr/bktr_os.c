@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.17 2000/12/30 17:02:53 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.18 2001/03/03 00:08:06 mjl Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -760,7 +760,7 @@ bktr_mmap( dev_t dev, vm_offset_t offset, int nprot )
 	bktr = (struct bktr_softc*)devclass_get_softc(bktr_devclass, unit);
 	if (bktr == NULL) {
 		/* the device is no longer valid/functioning */
-		return (ENXIO);
+		return (-1);
 	}
 
 	if (nprot & PROT_EXEC)
