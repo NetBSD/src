@@ -14,7 +14,7 @@
  *
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  *
- *      $Id: aha1742.c,v 1.14.2.5 1994/02/02 11:30:48 mycroft Exp $
+ *      $Id: aha1742.c,v 1.14.2.6 1994/02/02 19:21:31 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -246,7 +246,7 @@ struct ecb {
 	physaddr hashkey;	/* physaddr of this struct */
 };
 
-struct ahb_data {
+struct ahb_softc {
 	struct device sc_dev;
 	struct isadev sc_id;
 	struct intrhand sc_ih;
@@ -261,25 +261,25 @@ struct ahb_data {
 	struct scsi_link sc_link;
 };
 
-void ahb_send_mbox __P((struct ahb_data *, int, int, struct ecb *));
-int ahb_poll __P((struct ahb_data *, int));
-void ahb_send_immed __P((struct ahb_data *, int, u_long));
+void ahb_send_mbox __P((struct ahb_softc *, int, int, struct ecb *));
+int ahb_poll __P((struct ahb_softc *, int));
+void ahb_send_immed __P((struct ahb_softc *, int, u_long));
 int ahbprobe __P((struct device *, struct device *, void *));
-int ahbprobe1 __P((struct device *, struct ahb_data *, struct isa_attach_args *));
+int ahbprobe1 __P((struct device *, struct ahb_softc *, struct isa_attach_args *));
 void ahbattach __P((struct device *, struct device *, void *));
-u_int ahb_adapter_info __P((struct ahb_data *));
+u_int ahb_adapter_info __P((struct ahb_softc *));
 int ahbintr __P((void *));
-void ahb_done __P((struct ahb_data *, struct ecb *, int));
-void ahb_free_ecb __P((struct ahb_data *, struct ecb *, int));
-struct ecb *ahb_get_ecb __P((struct ahb_data *, int));
-struct ecb *ahb_ecb_phys_kv __P((struct ahb_data *, physaddr));
-int ahb_find __P((struct ahb_data *));
-void ahb_init __P((struct ahb_data *));
+void ahb_done __P((struct ahb_softc *, struct ecb *, int));
+void ahb_free_ecb __P((struct ahb_softc *, struct ecb *, int));
+struct ecb *ahb_get_ecb __P((struct ahb_softc *, int));
+struct ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
+int ahb_find __P((struct ahb_softc *));
+void ahb_init __P((struct ahb_softc *));
 void ahbminphys __P((struct buf *));
 int ahb_scsi_cmd __P((struct scsi_xfer *));
 void ahb_timeout __P((caddr_t));
 void ahb_print_ecb __P((struct ecb *));
-void ahb_print_active_ecb __P((struct ahb_data *));
+void ahb_print_active_ecb __P((struct ahb_softc *));
 
 struct	ecb *cheat;
 
@@ -297,7 +297,7 @@ struct cfdriver ahbcd = {
 	ahbprobe,
 	ahbattach,
 	DV_DULL,
-	sizeof(struct ahb_data)
+	sizeof(struct ahb_softc)
 };
 
 struct scsi_adapter ahb_switch =
@@ -326,7 +326,7 @@ struct scsi_device ahb_dev =
  */
 void
 ahb_send_mbox(ahb, opcode, target, ecb)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	int opcode, target;
 	struct ecb *ecb;
 {
@@ -357,7 +357,7 @@ ahb_send_mbox(ahb, opcode, target, ecb)
  */
 int
 ahb_poll(ahb, wait)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	int wait;
 {				/* in msec  */
 	u_short port = ahb->baseport;
@@ -391,7 +391,7 @@ ahb_poll(ahb, wait)
  */
 void
 ahb_send_immed(ahb, target, cmd)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	int target;
 	u_long cmd;
 {
@@ -428,7 +428,7 @@ ahbprobe(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct ahb_data *ahb = (void *)self;
+	struct ahb_softc *ahb = (void *)self;
 	u_short port;
 	u_char byte1, byte2, byte3;
 
@@ -466,7 +466,7 @@ ahbprobe(parent, self, aux)
 int
 ahbprobe1(parent, ahb, ia)
 	struct device *parent;
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	struct isa_attach_args *ia;
 {
 
@@ -510,7 +510,7 @@ ahbattach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct ahb_data *ahb = (void *)self;
+	struct ahb_softc *ahb = (void *)self;
 
 	ahb_init(ahb);
 
@@ -542,7 +542,7 @@ ahbattach(parent, self, aux)
  */
 u_int 
 ahb_adapter_info(ahb)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 {
 
 	return 2;	/* 2 outstanding requests at a time per device */
@@ -555,7 +555,7 @@ int
 ahbintr(arg)
 	void *arg;
 {
-	struct ahb_data *ahb = arg;
+	struct ahb_softc *ahb = arg;
 	struct ecb *ecb;
 	u_char stat, ahbstat;
 	u_long mboxval;
@@ -636,7 +636,7 @@ ahbintr(arg)
  */
 void
 ahb_done(ahb, ecb, failed)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	struct ecb *ecb;
 	int failed;
 {
@@ -719,7 +719,7 @@ ahb_done(ahb, ecb, failed)
  */
 void
 ahb_free_ecb(ahb, ecb, flags)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	struct ecb *ecb;
 	int flags;
 {
@@ -750,7 +750,7 @@ ahb_free_ecb(ahb, ecb, flags)
  */
 struct ecb *
 ahb_get_ecb(ahb, flags)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	int flags;
 {
 	int opri;
@@ -808,7 +808,7 @@ ahb_get_ecb(ahb, flags)
  */
 struct ecb *
 ahb_ecb_phys_kv(ahb, ecb_phys)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 	physaddr ecb_phys;
 {
 	int hashnum = ECB_HASH(ecb_phys);
@@ -827,7 +827,7 @@ ahb_ecb_phys_kv(ahb, ecb_phys)
  */
 int
 ahb_find(ahb)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 {
 	u_short port = ahb->baseport;
 	u_short stport = port + G2STAT;
@@ -913,7 +913,7 @@ ahb_find(ahb)
 
 void
 ahb_init(ahb)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 {
 
 }
@@ -936,7 +936,7 @@ ahb_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct ahb_data *ahb = sc_link->adapter_softc;
+	struct ahb_softc *ahb = sc_link->adapter_softc;
 	struct ecb *ecb;
 	struct ahb_dma_seg *sg;
 	int seg;		/* scatter gather seg being worked on */
@@ -1156,7 +1156,7 @@ ahb_timeout(arg)
 {
 	int s = splbio();
 	struct ecb *ecb = (void *)arg;
-	struct ahb_data *ahb = ecb->xs->sc_link->adapter_softc;
+	struct ahb_softc *ahb = ecb->xs->sc_link->adapter_softc;
 
 	sc_print_addr(ecb->xs->sc_link);
 	printf("timed out ");
@@ -1211,7 +1211,7 @@ ahb_print_ecb(ecb)
 
 void
 ahb_print_active_ecb(ahb)
-	struct ahb_data *ahb;
+	struct ahb_softc *ahb;
 {
 	struct ecb *ecb;
 	int i = 0;
