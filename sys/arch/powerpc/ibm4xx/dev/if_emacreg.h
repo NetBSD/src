@@ -1,10 +1,10 @@
-/*	$NetBSD: com_mainbus.c,v 1.1 2001/06/13 06:01:51 simonb Exp $	*/
+/*	$NetBSD: if_emacreg.h,v 1.1 2001/06/24 02:13:37 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Eduardo Horvath and Simon Burge for Wasabi Systems, Inc.
+ * Written by Simon Burge and Eduardo Horvath for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,66 +35,39 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/device.h>
-#include <sys/tty.h>
+/*
+ * MAL buffer descriptor control/status bit definitions, in the
+ * md_stat_ctrl field of the MAL descriptor <machine/mal.h>.
+ */
 
-#include <machine/autoconf.h>
-#include <machine/bus.h>
+/* EMAC transmit control definitions */
+#define	EMAC_TXC_GFCS		0x0200	/* Generate FCS */
+#define	EMAC_TXC_GPAD		0x0100	/* Generate padding */
+#define	EMAC_TXC_ISA		0x0080	/* Insert Source Address */
+#define	EMAC_TXC_RSA		0x0040	/* Replace Source Address */
+#define	EMAC_TXC_IVT		0x0020	/* Insert VLAN Tag */
+#define	EMAC_TXC_RVT		0x0010	/* Replace VLAN Tag */
 
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
+/* EMAC transmit status definitions */
+#define EMAC_TXS_BFCS		0x0200	/* Bad FCS */
+#define EMAC_TXS_BPP		0x0100	/* Bad previous packet */
+#define EMAC_TXS_LCS		0x0080	/* Loss of carrier sense */
+#define EMAC_TXS_ED		0x0040	/* Excessive deferral */
+#define EMAC_TXS_EC		0x0020	/* Excessive collisions */
+#define EMAC_TXS_LC		0x0010	/* Late collision */
+#define EMAC_TXS_MC		0x0008	/* Multiple collision */
+#define EMAC_TXS_SC		0x0004	/* Single collision */
+#define EMAC_TXS_UR		0x0002	/* Underrun */
+#define EMAC_TXS_SQE		0x0001	/* Signal Quality Error */
 
-struct com_mainbus_softc {
-	struct com_softc sc_com;
-	void *sc_ih;
-};
-
-static int	com_mainbus_probe(struct device *, struct cfdata *, void *);
-static void	com_mainbus_attach(struct device *, struct device *, void *);
-
-struct cfattach com_mainbus_ca = {
-	sizeof(struct com_mainbus_softc), com_mainbus_probe, com_mainbus_attach
-};
-
-int comfound = 0;
-
-int
-com_mainbus_probe(struct device *parent, struct cfdata *cf, void *aux)
-{
-	union mainbus_attach_args *maa = aux;
-
-	/* match only com devices */
-	if (strcmp(maa->mba_rmb.rmb_name, cf->cf_driver->cd_name) != 0)
-		return 0;
-
-	return (comfound < 2);
-}
-
-struct com_softc *com0; /* XXX */
-
-void
-com_mainbus_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct com_mainbus_softc *msc = (void *)self;
-	struct com_softc *sc = &msc->sc_com;
-	union mainbus_attach_args *maa = aux;
-	int addr = maa->mba_rmb.rmb_addr;
-	int irq = maa->mba_rmb.rmb_irq;
-	
-	sc->sc_iot = galaxy_make_bus_space_tag(0, 0);
-	sc->sc_iobase = sc->sc_ioh = addr;
-	/* UART is clocked externally @ 11.0592MHz == COM_FREQ*6 */
-	sc->sc_frequency = COM_FREQ * 6;
-
-	comfound ++;
-
-	/* XXX console check */
-	/* XXX map */
-
-	com_attach_subr(sc);
-
-	intr_establish(irq, IST_LEVEL, IPL_SERIAL, comintr, sc);
-
-	return;
-}
+/* EMAC receive status definitions */
+#define EMAC_RXS_OE		0x0200	/* Overrun error */
+#define EMAC_RXS_PP		0x0100	/* Pause packet received */
+#define EMAC_RXS_BP		0x0080	/* Bad packet */
+#define EMAC_RXS_RP		0x0040	/* Runt packet */
+#define EMAC_RXS_SE		0x0020	/* Short event */
+#define EMAC_RXS_AE		0x0010	/* Alignment error */
+#define EMAC_RXS_BFCS		0x0008	/* Bad FCS */
+#define EMAC_RXS_PTL		0x0004	/* Packet too long */
+#define EMAC_RXS_ORE		0x0002	/* Out of range error */
+#define EMAC_RXS_IRE		0x0001	/* In range error */

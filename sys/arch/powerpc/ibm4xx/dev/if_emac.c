@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.2 2001/06/24 01:19:17 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.1 2001/06/24 02:13:37 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
