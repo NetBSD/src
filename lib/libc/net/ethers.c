@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.10.2.1 1997/11/10 22:34:00 thorpej Exp $	*/
+/*	$NetBSD: ethers.c,v 1.10.2.2 1997/11/11 21:46:01 mjacob Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -75,7 +75,7 @@ ether_ntohost(hostname, e)
 {
 	FILE *f; 
 	char *p;
-	int len;
+	size_t len;
 	struct ether_addr try;
 
 #ifdef YP
@@ -133,7 +133,7 @@ ether_hostton(hostname, e)
 {
 	FILE *f;
 	char *p;
-	int len;
+	size_t len;
 	char try[MAXHOSTNAMELEN + 1];
 #ifdef YP
 	int hostlen = strlen(hostname);
