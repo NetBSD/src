@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.25 2001/06/06 17:42:30 matt Exp $
+#	$NetBSD: files.bebox,v 1.26 2001/06/12 17:13:34 tsubai Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -8,13 +8,13 @@ maxusers 2 8 64
 
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/bus_space.c
-#file	arch/bebox/bebox/bus_dma.c
 file	arch/bebox/bebox/clock.c
 file	arch/bebox/bebox/conf.c
 file	arch/bebox/bebox/disksubr.c		disk
 file	arch/bebox/bebox/extintr.c
 file	arch/bebox/bebox/machdep.c
 file	arch/bebox/bebox/procfs_machdep.c	procfs
+file	arch/powerpc/powerpc/bus_dma.c
 
 # General files
 file	dev/cons.c
