@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.34 2002/02/05 21:00:09 ross Exp $
+.\" $NetBSD: doc2html,v 1.35 2002/02/07 00:59:18 ross Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,16 +72,20 @@ TODO:
 	was missing) it MUST have a doc2html@@ alias. (Scan for @@ to see.)
 ..
 .
+.if dError .Error - multiple inclusion of doc2html
+.
 .de TS
 <pre>
 ..
 .de TE
+.	DEBUG .tm TE
 </pre>
 ..
 .de PS
 <pre>
 ..
 .de PE
+.	DEBUG .tm PE
 </pre>
 ..
 .
@@ -170,7 +174,6 @@ TODO:
 .ds doc-punct { . , : ; ( ) [ ] }
 .ds close-mode
 .ds open-mode
-.ds recurse-prepend
 .ds doc-anchor
 .ds Nm-save
 .ds T " x
@@ -202,16 +205,20 @@ TODO:
 .	as document-title " \\$*
 .	init-html
 ..
-.\"
 .\"----------------------------------------------------------------------
+.\" troff requests we delete
+.
+.rm wh
+.
 .\" troff requests we translate
-.\"
+.
 .rn br br-real
 .rn sp sp-real
 .rn fi fi-real
 .rn nf nf-real
+.
 .de br
-	<br>
+.	if \\n[in-pre]=0 <br>
 ..
 .de sp-nice-try-ross
 .	ie !\\n(.$ <br>
@@ -231,10 +238,12 @@ TODO:
 .	el <br><br>
 ..
 .de end-preformat
+.	DEBUG .tm end-preformat \\n[in-pre]
 .	if \\n[in-pre] </pre>
 .	nr in-pre 0
 ..
 .de fi
+.	DEBUG fi
 .	end-preformat
 ..
 .de nf
@@ -261,21 +270,19 @@ TODO:
 <html>
 <head>
 	<title>
-		\\*[document-title]
+		\\*[document-title]\\$*
 		\\*[title-section]
 	</title>
-
         <style type="text/css">
         <!--
 		body { margin-left:4%; }
-		H1 { color: maroon; padding: 4pt; margin-left: -4% }
-		H2 { color: maroon; padding: 4pt; margin-left: -4% }
-		H3 { color: maroon; padding: 4pt; margin-left: -4% }
-		H4 { color: maroon; padding: 4pt; margin-left: -4% }
-		H5 { color: maroon; padding: 4pt; margin-left: -4% }
+		H1, H2, H3, H4, H5 {
+			color: maroon; padding: 4pt; margin-left: -4%;
+			border: solid; border-width: thin; width: 100%;
+			background: rgb(204,204,255)
+		}
         -->
         </style>
-
 </head>
 <body \\*[body-params]>
 \\*[dot-de] init-html
@@ -404,6 +411,7 @@ TODO:
 .\\*[get-file]
 ..
 .de Ed
+.	DEBUG .tm Ed
 </pre>
 .	doc-pop .Ed
 .	if \\n[Bd-literal] </code>
@@ -604,7 +612,6 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .\"
 .de recurse
 .	nr r-lvl +1
-.	ds active-prepend \\*[recurse-prepend]
 .DEBUG .tm r \\n[r-lvl] __\\*[doc-pcresult]==\\$@__
 .	while \\n(.$ \{\
 .		doc-checkpunct \\$1 \\*[doc-punct]
@@ -621,12 +628,6 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .		ie \\n[is-request] \{\
 .			ds recurse-tmp1 \\$1
 .			shift
-.			if \\w?\\*[active-prepend]?&\\w?\\*[recurse-prepend]? \{\
-.				if \\n[doc-dosep] .as doc-pcresult \\*[sepstring]
-.				as doc-pcresult "\\*[active-prepend]
-.				nr doc-dosep 0
-.			\}
-.			ds recurse-prepend
 .			\\*[recurse-tmp1] \\$@
 .			break
 .		\}
@@ -642,8 +643,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .			\}
 .			if \\n[doc-dosep] .as doc-pcresult \\*[sepstring]
 .			nr doc-dosep 1
-.			as doc-pcresult \\*[active-prepend]\\$1
-.			ds recurse-prepend
+.			as doc-pcresult \\$1
 .			shift
 .			continue
 .		\}
@@ -713,8 +713,9 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 ..
 .de Fl
 .DEBUG .tm .Fl \\$*
+.	as doc-pcresult <b>-</b>
+.	nr doc-dosep 0
 .	mode-bold-on
-.	ds recurse-prepend -
 .	recurse \\$@
 .	mode-bold-off
 .	pc-fin
@@ -838,52 +839,56 @@ AT&T UNIX\\$*
 .de safe-blm
 ..
 .
+.nr quote-level 0
 .de doc-quote-open
+.	nr quote-level +1
 .	blm safe-blm
 .	if \\n[r-lvl]&\\n[doc-dosep] .as doc-pcresult \\*[sepstring]
 .	nr doc-dosep 0
-.	ev quotation_ev
-.	  di quotation
-.	    br-real
-.	    nr quotation_line \\n[.c]
+.	ie \\n[quote-level]=1 \{\
+.		ev quotation_ev
+.		di quotation
+.		br-real
+.		nr quotation_line \\n[.c]
+.	\}
+.	el \{\
+.		di
+.		as quotation \\$1
+.		da quotation
+.	\}
 ..
 .
 .de general-close
+.	nr quote-level -1
 .	if \\w\\n[.z]=0 .Error no quotation is open
 .	br-real
-.	di
-.	ev
-.	if \\w\\n[.z]>0 \{\
-.		tm Already in a diversion?! \\n[.z]
-.		backtrace
-.		Error multiple diversions: two quotations open?
-.	\}
-.	if \\n[dn]=0 \{\
-.tm  gb1 \\n[dn] \\n[dl]
+.	if \\n[quote-level]=0 \{\
+.		di
+.		ev
 .		ev quotation_ev
 .		br-real
 .		da quotation
-.		nf
+.		nf-real
 .
 .		di
 .		ev
-.tm  gb2 \\n[dn] \\n[dl]
+.		as doc-pcresult \\$1\\*[quotation]\\
+.		blm Pp
 .	\}
-.	as doc-pcresult \\$1\\*[quotation]\\
 .
 .
-.	blm Pp
 ..
 .
 .de make-quoter
 \\*[dot-de] \\$1o
-.	doc-quote-open
+.	doc-quote-open \\$2
 .	recurse \\\\$@
 .	pc-fin
 \\*[dot-dot]
 \\*[dot-de] \\$1c
+.	DEBUG .tm CLOSE 1,\\\\$@,
 .	general-close \\$2
-.	shift
+.	DEBUG .tm CLOSE 2,\\\\$@,\\$3,
 .	recurse \\\\$@ \\$3
 .	pc-fin
 \\*[dot-dot]
@@ -896,11 +901,11 @@ AT&T UNIX\\$*
 .
 .\" generate Aq Ao Ac Bq Bo Bc Dq Do Dc Pq Po Pc Qq Qo Qc Sq So Sc Oo Oc
 .make-quoter A &lt; &gt;
-.make-quoter B \&[ \&]
-.make-quoter D \&`` \&''
-.make-quoter P \&( \&)
-.make-quoter Q \&" \&"
-.make-quoter S \&` \&'
+.make-quoter B \&[ ]
+.make-quoter D \&`` ''
+.make-quoter P \&( )
+.make-quoter Q \&" "
+.make-quoter S \&` '
 .als Oo Bo
 .als Oc Bc
 .de Error
@@ -923,6 +928,7 @@ AT&T UNIX\\$*
 .	ds sepstring , \" (need the space)
 .	recurse \\$@
 .	as doc-pcresult \\*[close-mode])
+.	resetmode
 .	pc-fin
 ..
 .de Fo
@@ -1350,12 +1356,8 @@ AT&T UNIX\\$*
 	The body-params string used with -mdoc2html is used here as well.
 ..
 .de TH
-<html>
-<title>
-	\\$*
-.nr mo-section \\$2
-</title>
-<body \\*[body-params]>
+.	init-html \\$@
+.	nr mo-section \\$2
 ..
 .de SH
 .	end-preformat
@@ -1375,11 +1377,10 @@ AT&T UNIX\\$*
 .	\}
 ..
 .de I
-.	it 1 mo-end-italic
 .	ie \\n(.$ <i>\&\\$*</i>
 .	el \{\
 .		if 1 <i>
-.		it 1 mo-end-bold
+.		it 1 mo-end-italic
 .	\}
 ..
 .de mo-end-bold
@@ -1455,6 +1456,7 @@ AT&T UNIX\\$*
 <code><pre>
 ..
 .de DE
+.	DEBUG .tm DE
 </pre></code>
 ..
 .als Ds DS
