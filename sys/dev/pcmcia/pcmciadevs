@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.12 1998/08/15 21:36:25 thorpej Exp $
+$NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $
 
 /*
  * Copyright (c) 1998, Christos Zoulas
@@ -61,6 +61,7 @@ product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B SCSI Host Adapter
 /* 3COM Products */
 product 3COM 3C562		0x0562 3Com 3c562 33.6 Modem/10Mbps Ethernet
 product 3COM 3C589		0x0589 3Com 3c589 10Mbps Ethernet
+product 3COM 3C574		0x0574 3Com 3c574-TX 10/100Mbps Ethernet
 
 /* Dayna Products */
 product DAYNA COMMUNICARD_E	0x002d Dayna CommuniCard E
