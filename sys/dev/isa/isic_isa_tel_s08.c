@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/8 and clones
  *	================================================================
  *
- *	$Id: isic_isa_tel_s08.c,v 1.4 2002/03/24 20:35:49 martin Exp $ 
+ *	$Id: isic_isa_tel_s08.c,v 1.5 2005/02/04 02:10:40 perry Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -50,7 +50,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.4 2002/03/24 20:35:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.5 2005/02/04 02:10:40 perry Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_8
@@ -100,10 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.4 2002/03/24 20:35:49 martin 
 #include <dev/ic/hscx.h>
 
 #ifndef __FreeBSD__
-static u_int8_t tels08_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void tels08_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void tels08_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
-static void tels08_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static u_int8_t tels08_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void tels08_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void tels08_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
+static void tels08_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
 #endif
 
 /*---------------------------------------------------------------------------*

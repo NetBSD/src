@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.8 2003/11/08 16:08:13 tsutsui Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.9 2005/02/04 02:10:37 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -183,8 +183,8 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
-void	epic_attach __P((struct epic_softc *));
-int	epic_intr __P((void *));
+void	epic_attach(struct epic_softc *);
+int	epic_intr(void *);
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_SMC83C170VAR_H_ */

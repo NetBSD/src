@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.11 2003/05/03 18:11:40 wiz Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.12 2005/02/04 02:10:48 perry Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.11 2003/05/03 18:11:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.12 2005/02/04 02:10:48 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,8 @@ struct asc_softc {
 	struct tcds_slotconfig *sc_tcds;	/* DMA/slot info lives here */
 };
 
-static int  asc_tcds_match  __P((struct device *, struct cfdata *, void *));
-static void asc_tcds_attach __P((struct device *, struct device *, void *));
+static int  asc_tcds_match (struct device *, struct cfdata *, void *);
+static void asc_tcds_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(asc_tcds, sizeof(struct asc_softc),
     asc_tcds_match, asc_tcds_attach, NULL, NULL);
@@ -114,17 +114,17 @@ CFATTACH_DECL(asc_tcds, sizeof(struct asc_softc),
 /*
  * Functions and the switch for the MI code.
  */
-static u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
-static void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-static int	tcds_dma_isintr __P((struct ncr53c9x_softc *));
-static void	tcds_dma_reset __P((struct ncr53c9x_softc *));
-static int	tcds_dma_intr __P((struct ncr53c9x_softc *));
-static int	tcds_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-static void	tcds_dma_go __P((struct ncr53c9x_softc *));
-static void	tcds_dma_stop __P((struct ncr53c9x_softc *));
-static int	tcds_dma_isactive __P((struct ncr53c9x_softc *));
-static void	tcds_clear_latched_intr __P((struct ncr53c9x_softc *));
+static u_char	asc_read_reg(struct ncr53c9x_softc *, int);
+static void	asc_write_reg(struct ncr53c9x_softc *, int, u_char);
+static int	tcds_dma_isintr(struct ncr53c9x_softc *);
+static void	tcds_dma_reset(struct ncr53c9x_softc *);
+static int	tcds_dma_intr(struct ncr53c9x_softc *);
+static int	tcds_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+	    size_t *, int, size_t *);
+static void	tcds_dma_go(struct ncr53c9x_softc *);
+static void	tcds_dma_stop(struct ncr53c9x_softc *);
+static int	tcds_dma_isactive(struct ncr53c9x_softc *);
+static void	tcds_clear_latched_intr(struct ncr53c9x_softc *);
 
 static struct ncr53c9x_glue asc_tcds_glue = {
 	asc_read_reg,

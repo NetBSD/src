@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.31 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.32 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -108,19 +108,19 @@ struct ep_softc {
 	void *sd_hook;
 
 	/* power management hooks */
-	int (*enable) __P((struct ep_softc *));
-	void (*disable) __P((struct ep_softc *));
+	int (*enable)(struct ep_softc *);
+	void (*disable)(struct ep_softc *);
 	int enabled;
 };
 
 
-u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-int	epconfig __P((struct ep_softc *, u_short, u_int8_t *));
+u_int16_t epreadeeprom(bus_space_tag_t, bus_space_handle_t, int);
+int	epconfig(struct ep_softc *, u_short, u_int8_t *);
 
-int	epintr __P((void *));
+int	epintr(void *);
 
-int	epenable __P((struct ep_softc *));
-void	epdisable __P((struct ep_softc *));
+int	epenable(struct ep_softc *);
+void	epdisable(struct ep_softc *);
 
-int	ep_activate __P((struct device *, enum devact));
-int	ep_detach __P((struct device *, int));
+int	ep_activate(struct device *, enum devact);
+int	ep_detach(struct device *, int);

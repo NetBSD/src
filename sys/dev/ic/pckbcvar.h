@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.9 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.10 2005/02/04 02:10:37 perry Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -75,7 +75,7 @@ struct pckbc_internal {
 	int rbuf_write;
 };
 
-typedef void (*pckbc_inputfcn) __P((void *, int));
+typedef void (*pckbc_inputfcn)(void *, int);
 
 /*
  * State per device.
@@ -84,7 +84,7 @@ struct pckbc_softc {
 	struct device sc_dv;
 	struct pckbc_internal *id;
 
-	void (*intr_establish) __P((struct pckbc_softc *, pckbc_slot_t));
+	void (*intr_establish)(struct pckbc_softc *, pckbc_slot_t);
 };
 
 struct pckbc_attach_args {
@@ -97,19 +97,18 @@ extern struct pckbc_internal pckbc_consdata;
 extern int pckbc_console_attached;
 
 /* These functions are sometimes called by match routines */
-int pckbc_send_cmd __P((bus_space_tag_t, bus_space_handle_t, u_char));
-int pckbc_poll_data1 __P((void *, pckbc_slot_t));
+int pckbc_send_cmd(bus_space_tag_t, bus_space_handle_t, u_char);
+int pckbc_poll_data1(void *, pckbc_slot_t);
 
 /* More normal calls from attach routines */
-void pckbc_attach __P((struct pckbc_softc *));
-int pckbc_cnattach __P((bus_space_tag_t, bus_addr_t, bus_size_t,
-			pckbc_slot_t));
-int pckbc_is_console __P((bus_space_tag_t, bus_addr_t));
-int pckbcintr __P((void *));
-int pckbcintr_hard __P((void *));
-void pckbcintr_soft __P((void *));
+void pckbc_attach(struct pckbc_softc *);
+int pckbc_cnattach(bus_space_tag_t, bus_addr_t, bus_size_t, pckbc_slot_t);
+int pckbc_is_console(bus_space_tag_t, bus_addr_t);
+int pckbcintr(void *);
+int pckbcintr_hard(void *);
+void pckbcintr_soft(void *);
 
 /* md hook for use without mi wscons */
-int pckbc_machdep_cnattach __P((pckbc_tag_t, pckbc_slot_t));
+int pckbc_machdep_cnattach(pckbc_tag_t, pckbc_slot_t);
 
 #endif /* _DEV_IC_PCKBCVAR_H_ */

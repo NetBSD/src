@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.25 2004/08/10 18:43:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.26 2005/02/04 02:10:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.25 2004/08/10 18:43:49 mycroft Exp
 
 extern const struct isdn_layer1_isdnif_driver isic_std_driver;
 
-static int isic_pcmcia_match __P((struct device *, struct cfdata *, void *));
-static void isic_pcmcia_attach __P((struct device *, struct device *, void *));
-static const struct isic_pcmcia_card_entry * find_matching_card __P((struct pcmcia_attach_args *pa));
-static int isic_pcmcia_isdn_attach __P((struct isic_softc *sc, const char*));
+static int isic_pcmcia_match(struct device *, struct cfdata *, void *);
+static void isic_pcmcia_attach(struct device *, struct device *, void *);
+static const struct isic_pcmcia_card_entry * find_matching_card(struct pcmcia_attach_args *pa);
+static int isic_pcmcia_isdn_attach(struct isic_softc *sc, const char*);
 static int isic_pcmcia_detach(struct device *self, int flags);
 static int isic_pcmcia_activate(struct device *self, enum devact act);
 

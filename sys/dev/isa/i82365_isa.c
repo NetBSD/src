@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.22 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.23 2005/02/04 02:10:40 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.22 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.23 2005/02/04 02:10:40 perry Exp $");
 
 #define	PCICISADEBUG
 
@@ -61,8 +61,8 @@ int	pcicisa_debug = 0;
 #define	DPRINTF(arg)
 #endif
 
-int	pcic_isa_probe __P((struct device *, struct cfdata *, void *));
-void	pcic_isa_attach __P((struct device *, struct device *, void *));
+int	pcic_isa_probe(struct device *, struct cfdata *, void *);
+void	pcic_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcic_isa, sizeof(struct pcic_isa_softc),
     pcic_isa_probe, pcic_isa_attach, NULL, NULL);

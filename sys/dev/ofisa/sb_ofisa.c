@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.12 2005/02/04 02:10:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.12 2005/02/04 02:10:44 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.11 2003/05/03 18:11:32 wiz Exp $");
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
 
-int	sb_ofisa_match __P((struct device *, struct cfdata *, void *));
-void	sb_ofisa_attach __P((struct device *, struct device *, void *));
+int	sb_ofisa_match(struct device *, struct cfdata *, void *);
+void	sb_ofisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sb_ofisa, sizeof(struct sbdsp_softc),
     sb_ofisa_match, sb_ofisa_attach, NULL, NULL);

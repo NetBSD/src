@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.10 2004/10/17 21:49:08 heas Exp $ */
+/*	$NetBSD: gemvar.h,v 1.11 2005/02/04 02:10:36 perry Exp $ */
 
 /*
  *
@@ -179,8 +179,8 @@ struct gem_softc {
 	void		*sc_sh;		/* shutdownhook cookie */
 
 	/* Special hardware hooks */
-	void	(*sc_hwreset) __P((struct gem_softc *));
-	void	(*sc_hwinit) __P((struct gem_softc *));
+	void	(*sc_hwreset)(struct gem_softc *);
+	void	(*sc_hwinit)(struct gem_softc *);
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;
@@ -257,10 +257,10 @@ do {									\
 } while (0)
 
 #ifdef _KERNEL
-void	gem_attach __P((struct gem_softc *, const uint8_t *));
-int	gem_intr __P((void *));
+void	gem_attach(struct gem_softc *, const uint8_t *);
+int	gem_intr(void *);
 
-void	gem_reset __P((struct gem_softc *));
+void	gem_reset(struct gem_softc *);
 #endif /* _KERNEL */
 
 

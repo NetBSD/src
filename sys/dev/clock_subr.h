@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.10 2003/07/18 21:41:24 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.11 2005/02/04 02:10:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@ struct clock_ymdhms {
 	u_char dt_sec;
 };
 
-time_t	clock_ymdhms_to_secs __P((struct clock_ymdhms *));
-void	clock_secs_to_ymdhms __P((time_t, struct clock_ymdhms *));
+time_t	clock_ymdhms_to_secs(struct clock_ymdhms *);
+void	clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 
 /*
  * BCD to decimal and decimal to BCD.

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_ofisa.c,v 1.7 2002/10/02 16:34:29 thorpej Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.8 2005/02/04 02:10:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.7 2002/10/02 16:34:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.8 2005/02/04 02:10:44 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,8 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.7 2002/10/02 16:34:29 thorpej Exp $"
 
 #define	JOY_NPORTS	1	/* XXX should be in a header file */
 
-int	joy_ofisa_match __P((struct device *, struct cfdata *, void *));
-void	joy_ofisa_attach __P((struct device *, struct device *, void *));
+int	joy_ofisa_match(struct device *, struct cfdata *, void *);
+void	joy_ofisa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(joy_ofisa, sizeof(struct joy_softc),
     joy_ofisa_match, joy_ofisa_attach, NULL, NULL);

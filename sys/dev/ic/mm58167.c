@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.3 2001/11/13 13:14:41 lukem Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.4 2005/02/04 02:10:36 perry Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.3 2001/11/13 13:14:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.4 2005/02/04 02:10:36 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.3 2001/11/13 13:14:41 lukem Exp $");
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
 
-int mm58167_gettime __P((todr_chip_handle_t, struct timeval *));
-int mm58167_settime __P((todr_chip_handle_t, struct timeval *));
-int mm58167_getcal __P((todr_chip_handle_t, int *));
-int mm58167_setcal __P((todr_chip_handle_t, int));
+int mm58167_gettime(todr_chip_handle_t, struct timeval *);
+int mm58167_settime(todr_chip_handle_t, struct timeval *);
+int mm58167_getcal(todr_chip_handle_t, int *);
+int mm58167_setcal(todr_chip_handle_t, int);
 
 /*
  * To quote SunOS's todreg.h:

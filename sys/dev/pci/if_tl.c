@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.67 2005/01/23 10:53:19 dan Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.68 2005/02/04 02:10:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.67 2005/01/23 10:53:19 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.68 2005/02/04 02:10:45 perry Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -123,44 +123,44 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.67 2005/01/23 10:53:19 dan Exp $");
 #define TL_NBUF 32
 #endif
 
-static int tl_pci_match __P((struct device *, struct cfdata *, void *));
-static void tl_pci_attach __P((struct device *, struct device *, void *));
-static int tl_intr __P((void *));
+static int tl_pci_match(struct device *, struct cfdata *, void *);
+static void tl_pci_attach(struct device *, struct device *, void *);
+static int tl_intr(void *);
 
-static int tl_ifioctl __P((struct ifnet *, ioctl_cmd_t, caddr_t));
-static int tl_mediachange __P((struct ifnet *));
-static void tl_mediastatus __P((struct ifnet *, struct ifmediareq *));
-static void tl_ifwatchdog __P((struct ifnet *));
-static void tl_shutdown __P((void*));
+static int tl_ifioctl(struct ifnet *, ioctl_cmd_t, caddr_t);
+static int tl_mediachange(struct ifnet *);
+static void tl_mediastatus(struct ifnet *, struct ifmediareq *);
+static void tl_ifwatchdog(struct ifnet *);
+static void tl_shutdown(void*);
 
-static void tl_ifstart __P((struct ifnet *));
-static void tl_reset __P((tl_softc_t*));
-static int  tl_init __P((struct ifnet *));
-static void tl_stop __P((struct ifnet *, int));
-static void tl_restart __P((void  *));
-static int  tl_add_RxBuff __P((tl_softc_t*, struct Rx_list*, struct mbuf*));
-static void tl_read_stats __P((tl_softc_t*));
-static void tl_ticks __P((void*));
-static int tl_multicast_hash __P((u_int8_t*));
-static void tl_addr_filter __P((tl_softc_t*));
+static void tl_ifstart(struct ifnet *);
+static void tl_reset(tl_softc_t*);
+static int  tl_init(struct ifnet *);
+static void tl_stop(struct ifnet *, int);
+static void tl_restart(void  *);
+static int  tl_add_RxBuff(tl_softc_t*, struct Rx_list*, struct mbuf*);
+static void tl_read_stats(tl_softc_t*);
+static void tl_ticks(void*);
+static int tl_multicast_hash(u_int8_t*);
+static void tl_addr_filter(tl_softc_t*);
 
-static u_int32_t tl_intreg_read __P((tl_softc_t*, u_int32_t));
-static void tl_intreg_write __P((tl_softc_t*, u_int32_t, u_int32_t));
-static u_int8_t tl_intreg_read_byte __P((tl_softc_t*, u_int32_t));
-static void tl_intreg_write_byte __P((tl_softc_t*, u_int32_t, u_int8_t));
+static u_int32_t tl_intreg_read(tl_softc_t*, u_int32_t);
+static void tl_intreg_write(tl_softc_t*, u_int32_t, u_int32_t);
+static u_int8_t tl_intreg_read_byte(tl_softc_t*, u_int32_t);
+static void tl_intreg_write_byte(tl_softc_t*, u_int32_t, u_int8_t);
 
-void	tl_mii_sync __P((struct tl_softc *));
-void	tl_mii_sendbits __P((struct tl_softc *, u_int32_t, int));
+void	tl_mii_sync(struct tl_softc *);
+void	tl_mii_sendbits(struct tl_softc *, u_int32_t, int);
 
 
 #if defined(TLDEBUG_RX)
-static void ether_printheader __P((struct ether_header*));
+static void ether_printheader(struct ether_header*);
 #endif
 
-int tl_mii_read __P((struct device *, int, int));
-void tl_mii_write __P((struct device *, int, int, int));
+int tl_mii_read(struct device *, int, int);
+void tl_mii_write(struct device *, int, int, int);
 
-void tl_statchg __P((struct device *));
+void tl_statchg(struct device *);
 
 	/* I2C glue */
 static int tl_i2c_acquire_bus(void *, int);
@@ -187,9 +187,9 @@ static const struct i2c_bitbang_ops tl_i2cbb_ops = {
 	}
 };
 
-static __inline void netsio_clr __P((tl_softc_t*, u_int8_t));
-static __inline void netsio_set __P((tl_softc_t*, u_int8_t));
-static __inline u_int8_t netsio_read __P((tl_softc_t*, u_int8_t));
+static __inline void netsio_clr(tl_softc_t*, u_int8_t);
+static __inline void netsio_set(tl_softc_t*, u_int8_t);
+static __inline u_int8_t netsio_read(tl_softc_t*, u_int8_t);
 static __inline void netsio_clr(sc, bits)
 	tl_softc_t* sc;
 	u_int8_t bits;
@@ -257,7 +257,7 @@ const struct tl_vendor_desc tl_vendors[] = {
 	{ 0, NULL },
 };
 
-const struct tl_product_desc *tl_lookup_product __P((u_int32_t));
+const struct tl_product_desc *tl_lookup_product(u_int32_t);
 
 const struct tl_product_desc *
 tl_lookup_product(id)

@@ -1,4 +1,4 @@
-/* $NetBSD: bt485var.h,v 1.1 2000/03/04 10:25:57 elric Exp $ */
+/* $NetBSD: bt485var.h,v 1.2 2005/02/04 02:10:36 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 
 struct ramdac_funcs *bt485_funcs(void);
-struct ramdac_cookie *bt485_register __P((void *,
+struct ramdac_cookie *bt485_register(void *,
 	int (*)(void *, void (*)(void *)),
 	void (*)(void *, u_int, u_int8_t),
-	u_int8_t (*)(void *, u_int)));
-void bt485_cninit __P((void *,
+	u_int8_t (*)(void *, u_int));
+void bt485_cninit(void *,
 	int (*)(void *, void (*)(void *)),
 	void (*)(void *, u_int, u_int8_t),
-	u_int8_t (*)(void *, u_int)));
+	u_int8_t (*)(void *, u_int));

@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.7 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.8 2005/02/04 02:10:45 perry Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_ELSA_ISDNMC
@@ -86,11 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_elsa_isdnmc.c,v 1.7 2004/08/08 23:17:13 
 
 #ifndef __FreeBSD__
 /* PCMCIA support routines */
-static u_int8_t elsa_isdnmc_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
-static void elsa_isdnmc_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void elsa_isdnmc_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
-static void elsa_isdnmc_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
-static void elsa_isdnmc_clrirq __P((struct isic_softc *sc));
+static u_int8_t elsa_isdnmc_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
+static void elsa_isdnmc_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static void elsa_isdnmc_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void elsa_isdnmc_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size);
+static void elsa_isdnmc_clrirq(struct isic_softc *sc);
 #endif
 
 /*
