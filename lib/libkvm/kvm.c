@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.56 1998/06/29 20:36:30 msaitoh Exp $	*/
+/*	$NetBSD: kvm.c,v 1.57 1998/06/30 20:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.56 1998/06/29 20:36:30 msaitoh Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.57 1998/06/30 20:29:39 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -829,7 +829,7 @@ int kvm_dump_inval(kd)
 kvm_t	*kd;
 {
 	struct nlist	nlist[2];
-	u_long		pa;
+	u_long		pa, val;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, kd->program, "clearing dump on live kernel");
@@ -846,14 +846,9 @@ kvm_t	*kd;
 		return (-1);
 
 	errno = 0;
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, pa), SEEK_SET) == -1
-		&& errno != 0) {
-		_kvm_err(kd, 0, "cannot invalidate dump - lseek");
-		return (-1);
-	}
-	pa = 0;
-	if (write(kd->pmfd, &pa, sizeof(pa)) != sizeof(pa)) {
-		_kvm_err(kd, 0, "cannot invalidate dump - write");
+	val = 0;
+	if (pwrite(kd->pmfd, &val, sizeof(val), _kvm_pa2off(kd, pa)) == -1) {
+		_kvm_syserr(kd, 0, "cannot invalidate dump - pwrite");
 		return (-1);
 	}
 	return (0);
@@ -875,12 +870,7 @@ kvm_read(kd, kva, buf, len)
 		 * device and let the active kernel do the address translation.
 		 */
 		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
-			&& errno != 0) {
-			_kvm_err(kd, 0, "invalid address (%x)", kva);
-			return (-1);
-		}
-		cc = read(kd->vmfd, buf, len);
+		cc = pread(kd->vmfd, buf, len, (off_t)kva);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_read");
 			return (-1);
@@ -904,12 +894,7 @@ kvm_read(kd, kva, buf, len)
 				cc = len;
 			foff = _kvm_pa2off(kd, pa);
 			errno = 0;
-			if (lseek(kd->pmfd, foff, SEEK_SET) == -1
-				&& errno != 0) {
-				_kvm_syserr(kd, 0, _PATH_MEM);
-				break;
-			}
-			cc = read(kd->pmfd, cp, cc);
+			cc = pread(kd->pmfd, cp, cc, foff);
 			if (cc < 0) {
 				_kvm_syserr(kd, kd->program, "kvm_read");
 				break;
@@ -945,12 +930,7 @@ kvm_write(kd, kva, buf, len)
 		 * Just like kvm_read, only we write.
 		 */
 		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
-			&& errno != 0) {
-			_kvm_err(kd, 0, "invalid address (%x)", kva);
-			return (-1);
-		}
-		cc = write(kd->vmfd, buf, len);
+		cc = pwrite(kd->vmfd, buf, len, (off_t)kva);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_write");
 			return (-1);
