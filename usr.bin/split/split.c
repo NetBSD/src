@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.17 2003/06/29 22:57:23 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.18 2003/07/10 20:43:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.17 2003/06/29 22:57:23 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.18 2003/07/10 20:43:40 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,6 +76,7 @@ main(int argc, char *argv[])
 {
 	int ch;
 	char *ep, *p;
+	char const *base;
 	off_t bytecnt = 0;	/* Byte count to split on. */
 	off_t numlines = 0;	/* Line count to split on. */
 	size_t namelen;
@@ -141,20 +142,14 @@ main(int argc, char *argv[])
 	if ((name_max = pathconf(".", _PC_NAME_MAX)) == -1 &&
 	    errno != 0)
 		err(EXIT_FAILURE, "pathconf");
-	if (*argv != NULL) {
-		namelen = strlen(*argv) + sfxlen;
-		if (name_max != -1 && namelen > name_max)
-			errx(EXIT_FAILURE, "Output file name too long");
-		if ((fname = malloc(namelen + 1)) == NULL)
-			err(EXIT_FAILURE, NULL);
-		(void)strcpy(fname, *argv++);		/* File name prefix. */
-	} else {
-		if (name_max != -1 && 1 + sfxlen > name_max)
-			errx(EXIT_FAILURE, "Output file name too long");
-		if ((fname = malloc(sfxlen + 2)) == NULL)
-			err(EXIT_FAILURE, NULL);
-		fname[0] = '\0';
-	}
+
+	base = (*argv != NULL) ? *argv++ : "x";
+	namelen = strlen(base) + sfxlen;
+	if (name_max != -1 && namelen > name_max)
+		errx(EXIT_FAILURE, "Output file name too long");
+	if ((fname = malloc(namelen + 1)) == NULL)
+		err(EXIT_FAILURE, NULL);
+	(void)strcpy(fname, base);		/* File name prefix. */
 
 	if (*argv != NULL)
 		usage();
@@ -283,39 +278,22 @@ static void
 newfile(void)
 {
 	static int fnum;
-	static int defname;
 	static char *fpnt;
 	int quot, i;
 
 	if (ofd == -1) {
-		if (fname[0] == '\0') {
-			fname[0] = 'x';
-			fpnt = fname + 1;
-			defname = 1;
-		} else {
-			fpnt = fname + strlen(fname);
-			defname = 0;
-		}
-	} else {
-		if (close(ofd) != 0)
-			err(1, "%s", fname);
-	}
-	/*
-	 * Hack to increase max files; original code wandered through
-	 * magic characters.  Maximum files is 3 * 26 * 26 == 2028
-	 */
-	fpnt[sfxlen] = '\0';
+		fpnt = fname + strlen(fname);
+		fpnt[sfxlen] = '\0';
+	} else if (close(ofd) != 0)
+		err(1, "%s", fname);
+
 	quot = fnum;
 	for (i = sfxlen - 1; i >= 0; i--) {
 		fpnt[i] = quot % 26 + 'a';
 		quot = quot / 26;
 	}
-	if (quot > 0) {
-		if (!defname || fname[0] == 'z')
-			errx(1, "too many files.");
-		++fname[0];
-		fnum = 0;
-	}
+	if (quot > 0)
+		errx(1, "too many files.");
 	++fnum;
 	if ((ofd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, DEFFILEMODE)) < 0)
 		err(1, "%s", fname);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: split.1,v 1.11 2003/06/27 17:19:54 bjh21 Exp $
+.\"	$NetBSD: split.1,v 1.12 2003/07/10 20:43:40 bjh21 Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)split.1	8.3 (Berkeley) 4/16/94
 .\"
-.Dd June 27, 2003
+.Dd July 10, 2003
 .Dt SPLIT 1
 .Os
 .Sh NAME
@@ -100,26 +100,30 @@ is not specified, two letters are used as the suffix.
 .Pp
 If the
 .Ar name
-argument is not specified, the file is split into lexically ordered
-files named with prefixes in the range of
-.Dq Li x-z
-and with suffixes as above.
+argument is not specified,
+.Ql x
+is used.
+.Sh STANDARDS
+The
+.Nm
+utility conforms to
+.St -p1003.1-2001 .
 .Sh HISTORY
 A
 .Nm
 command appeared in
 .At v6 .
+.Pp
 The
 .Fl a
-option was introduce in
+option was introduced in
 .Nx 2.0 .
-.Sh BUGS
-For historical reasons, if you specify
-.Ar name ,
+Before that, if
+.Ar name
+was not specified,
 .Nm
-can only create 676 separate
-files.
-The default naming convention allows 2028 separate files.
+would vary the first letter of the filename
+to increase the number of possible output files.
 The
 .Fl a
-option can be used to work around this limitation.
+option makes this unnecessary.
