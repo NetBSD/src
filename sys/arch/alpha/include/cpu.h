@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.51 2001/02/27 21:11:41 mjacob Exp $ */
+/* $NetBSD: cpu.h,v 1.52 2001/02/27 22:00:19 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -169,6 +169,7 @@ extern	u_long cpu_amask;		/* from AMASK instruction */
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
+#define	cpu_wait(p)		/* nothing */
 #define	cpu_number()		alpha_pal_whami()
 
 /*
