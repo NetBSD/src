@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/10/05 19:48:39 matt Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.1 2003/10/05 19:48:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,43 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <stddef.h>
-#include <signal.h>
-#include <errno.h>
+#include "SYS.h"
 
-#include "extern.h"
+/*
+ * The ARM signal trampoline is invoked only to return from
+ * the signal; the kernel calls the signal handler directly.
+ *
+ * On entry, the stack looks like:
+ *
+ *		ucontext structure
+ *	sp->	siginfo structure
+ * and  r5 points to the ucontext
+ */
+ENTRY_NP(__sigtramp_siginfo_2)
+	mov r0, r5				/* set the arg         */
+	SYSTRAP(setcontext)			/* and call setcontext */
 
-__weak_alias(__sigaction14, __libc_sigaction14)
-
-int
-__libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
-{
-	extern const int __sigtramp_sigcontext_1[];
-	extern const int __sigtramp_siginfo_2[];
-	int rv;
-
-	/*
-	 * If no sigaction, use the "default" trampoline since it won't
-	 * be used.
-	 */
-	if (act == NULL)
-		return  __sigaction_sigtramp(sig, act, oact, NULL, 0);
-
-	/*
-	 * We select the non-SA_SIGINFO trampoline if SA_SIGINFO is not
-	 * set in the sigaction.
-	 */
-	if ((act->sa_flags & SA_SIGINFO) == 0) {
-		rv =  __sigaction_sigtramp(sig, act, oact,
-		    __sigtramp_sigcontext_1, 1);
-		if (rv >= 0 || errno != EINVAL)
-			return rv;
-	}
-
-	/*
-	 * If SA_SIGINFO was specificed or the compatibility trampolines
-	 * can't be used, use the siginfo trampoline.
-	 */
-	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
-}
+	/* If that failed, exit with the error code. */
+	SYSTRAP(exit)
