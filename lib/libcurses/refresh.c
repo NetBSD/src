@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.14.6.2 2000/03/05 23:25:17 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.14.6.3 2000/03/16 21:27:44 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.14.6.2 2000/03/05 23:25:17 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.14.6.3 2000/03/16 21:27:44 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -142,15 +142,22 @@ wrefresh(win)
 				__CTRACE(" %x", curscr->lines[i]->line[j].attr);
 			__CTRACE("\n");
 			__CTRACE("W: %d:", i);
-			__CTRACE(" 0x%x \n", win->lines[i]->hash);
-			__CTRACE(" 0x%x ", win->lines[i]->flags);
-			for (j = 0; j < win->maxx; j++)
-				__CTRACE("%c", win->lines[i]->line[j].ch);
-			__CTRACE("\n");
-			__CTRACE(" attr:");
-			for (j = 0; j < win->maxx; j++)
-				__CTRACE(" %x", win->lines[i]->line[j].attr);
-			__CTRACE("\n");
+			/* Handle small windows */
+			if (i >= win->begy && i < (win->begy + win->maxy)) {
+				__CTRACE(" 0x%x \n",
+				    win->lines[i - win->begy]->hash);
+				__CTRACE(" 0x%x ",
+				    win->lines[i - win->begy]->flags);
+				for (j = 0; j < win->maxx; j++)
+					__CTRACE("%c", win->lines[i - win
+					    ->begy]->line[j].ch);
+				__CTRACE("\n");
+				__CTRACE(" attr:");
+				for (j = 0; j < win->maxx; j++)
+					__CTRACE(" %x", win->lines[i - win
+					    ->begy]->line[j].attr);
+				__CTRACE("\n");
+			}
 		}
 	}
 #endif				/* DEBUG */
