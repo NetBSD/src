@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.8 2002/10/10 22:44:21 matt Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.9 2003/01/18 06:23:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -685,7 +685,8 @@ s_sctrap:
 	addi	3,1,8
 /* Call the appropriate syscall handler: */
 	GET_CPUINFO(4)
-	lwz	4,CI_CURPROC(4)
+	lwz	4,CI_CURLWP(4)
+	lwz	4,L_PROC(4)
 	lwz	4,P_MD_SYSCALL(4)
 	mtctr	4
 	bctrl

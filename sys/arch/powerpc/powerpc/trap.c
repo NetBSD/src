@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2002/11/25 02:07:37 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 2003/01/18 06:23:35 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,8 +36,11 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 
@@ -62,7 +65,7 @@ volatile int astpending;
 volatile int want_resched;
 #endif
 
-static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
+static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
 static inline void setusr __P((int));
 
 void trap __P((struct trapframe *));	/* Called from locore / trap_subr */
@@ -75,7 +78,8 @@ void
 trap(struct trapframe *frame)
 {
 	struct cpu_info * const ci = curcpu();
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l ? l->l_proc : NULL;
 	struct pcb *pcb = curpcb;
 	struct vm_map *map;
 	int type = frame->exc;
@@ -98,10 +102,10 @@ trap(struct trapframe *frame)
 	case EXC_RUNMODETRC|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_TRC|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		frame->srr1 &= ~PSL_SE;
-		trapsignal(p, SIGTRAP, EXC_TRC);
-		KERNEL_PROC_UNLOCK(p);
+		trapsignal(l, SIGTRAP, EXC_TRC);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 	case EXC_DSI: {
 		faultbuf *fb;
@@ -133,13 +137,13 @@ trap(struct trapframe *frame)
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= user_sr << ADDR_SR_SHFT;
 				map = &p->p_vmspace->vm_map;
-				/* KERNEL_PROC_LOCK(p); */
+				/* KERNEL_PROC_LOCK(l); */
 
 				if ((frame->dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_evictions > 0 &&
 				    pmap_pte_spill(vm_map_pmap(map),
 					    trunc_page(va))) {
-					/* KERNEL_PROC_UNLOCK(p); */
+					/* KERNEL_PROC_UNLOCK(l); */
 					KERNEL_UNLOCK();
 					return;
 				}
@@ -159,7 +163,7 @@ trap(struct trapframe *frame)
 				 */
 				if (rv == 0)
 					uvm_grow(p, trunc_page(va));
-				/* KERNEL_PROC_UNLOCK(p); */
+				/* KERNEL_PROC_UNLOCK(l); */
 			}
 			KERNEL_UNLOCK();
 			if (rv == 0)
@@ -189,7 +193,7 @@ trap(struct trapframe *frame)
 		goto brain_damage2;
 	}
 	case EXC_DSI|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ci->ci_ev_udsi.ev_count++;
 		if (frame->dsisr & DSISR_STORE)
 			ftype = VM_PROT_WRITE;
@@ -204,7 +208,7 @@ trap(struct trapframe *frame)
 		if ((frame->dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar))) {
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 
@@ -214,7 +218,7 @@ trap(struct trapframe *frame)
 			 * Record any stack growth...
 			 */
 			uvm_grow(p, trunc_page(frame->dar));
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
@@ -226,16 +230,16 @@ trap(struct trapframe *frame)
 			    frame->dar, frame->srr0, frame->dsisr, rv);
 		}
 		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: "
+			printf("UVM: pid %d (%s) lid %d, uid %d killed: "
 			       "out of swap\n",
-			       p->p_pid, p->p_comm,
+			       p->p_pid, p->p_comm, l->l_lid,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, EXC_DSI);
+			trapsignal(l, SIGKILL, EXC_DSI);
 		} else {
-			trapsignal(p, SIGSEGV, EXC_DSI);
+			trapsignal(l, SIGSEGV, EXC_DSI);
 		}
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_ISI:
@@ -244,7 +248,7 @@ trap(struct trapframe *frame)
 		goto brain_damage2;
 
 	case EXC_ISI|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ci->ci_ev_isi.ev_count++;
 		/*
 		 * Try to spill an evicted pte into the page table
@@ -255,37 +259,37 @@ trap(struct trapframe *frame)
 		if ((frame->srr1 & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0))) {
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 
 		ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 		rv = uvm_fault(map, trunc_page(frame->srr0), 0, ftype);
 		if (rv == 0) {
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			break;
 		}
 		ci->ci_ev_isi_fatal.ev_count++;
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d (%s): user ISI trap @ %#x "
-			    "(SSR1=%#x)\n",
-			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+			printf("trap: pid %d (%s) lid %d: user ISI trap @ %#x "
+			    "(SSR1=%#x)\n", p->p_pid, p->p_comm, l->l_lid,
+			    frame->srr0, frame->srr1);
 		}
-		trapsignal(p, SIGSEGV, EXC_ISI);
-		KERNEL_PROC_UNLOCK(p);
+		trapsignal(l, SIGSEGV, EXC_ISI);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_FPU|EXC_USER:
 		ci->ci_ev_fpu.ev_count++;
 		if (pcb->pcb_fpcpu) {
-			save_fpu_proc(p);
+			save_fpu_lwp(l);
 		}
 		enable_fpu();
 		break;
 
 	case EXC_AST|EXC_USER:
 		astpending = 0;		/* we are about to do it */
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		uvmexp.softs++;
 		if (p->p_flag & P_OWEUPC) {
 			p->p_flag &= ~P_OWEUPC;
@@ -293,25 +297,25 @@ trap(struct trapframe *frame)
 		}
 		/* Check whether we are being preempted. */
 		if (want_resched)
-			preempt(NULL);
-		KERNEL_PROC_UNLOCK(p);
+			preempt(0);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_ALI|EXC_USER:
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		ci->ci_ev_ali.ev_count++;
-		if (fix_unaligned(p, frame) != 0) {
+		if (fix_unaligned(l, frame) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
 			if (cpu_printfataltraps) {
-				printf("trap: pid %d (%s): user ALI @ %#x "
+				printf("trap: pid %d.%d (%s): user ALI @ %#x "
 				    "by %#x (DSISR %#x)\n",
-				    p->p_pid, p->p_comm,
+				    p->p_pid, l->l_lid, p->p_comm,
 				    frame->dar, frame->srr0, frame->dsisr);
 			}
-			trapsignal(p, SIGBUS, EXC_ALI);
+			trapsignal(l, SIGBUS, EXC_ALI);
 		} else
 			frame->srr0 += 4;
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_PERF|EXC_USER:
@@ -320,44 +324,44 @@ trap(struct trapframe *frame)
 		ci->ci_ev_vec.ev_count++;
 #ifdef ALTIVEC
 		if (pcb->pcb_veccpu)
-			save_vec_proc(p);
+			save_vec_lwp(l);
 		enable_vec();
 		break;
 #else
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user VEC trap @ %#x "
 			    "(SSR1=%#x)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
-		trapsignal(p, SIGILL, EXC_PGM);
-		KERNEL_PROC_UNLOCK(p);
+		trapsignal(l, SIGILL, EXC_PGM);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 #endif
 	case EXC_MCHK|EXC_USER:
 		ci->ci_ev_umchk.ev_count++;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
 			printf("trap: pid %d (%s): user MCHK trap @ %#x "
 			    "(SSR1=%#x)\n",
 			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
 		}
-		trapsignal(p, SIGBUS, EXC_PGM);
-		KERNEL_PROC_UNLOCK(p);
+		trapsignal(l, SIGBUS, EXC_PGM);
+		KERNEL_PROC_UNLOCK(l);
 
 	case EXC_PGM|EXC_USER:
 		ci->ci_ev_pgm.ev_count++;
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d (%s): user PGM trap @ %#x "
-			    "(SSR1=%#x)\n",
-			    p->p_pid, p->p_comm, frame->srr0, frame->srr1);
+			printf("trap: pid %d (%s) lid %d: user PGM trap @ %#x "
+			    "(SSR1=%#x)\n", p->p_pid, p->p_comm, l->l_lid,
+			    frame->srr0, frame->srr1);
 		}
 		if (frame->srr1 & 0x00020000)	/* Bit 14 is set if trap */
-			trapsignal(p, SIGTRAP, EXC_PGM);
+			trapsignal(l, SIGTRAP, EXC_PGM);
 		else
-			trapsignal(p, SIGILL, EXC_PGM);
-		KERNEL_PROC_UNLOCK(p);
+			trapsignal(l, SIGILL, EXC_PGM);
+		KERNEL_PROC_UNLOCK(l);
 		break;
 
 	case EXC_MCHK: {
@@ -392,7 +396,7 @@ brain_damage2:
 #endif
 		panic("trap");
 	}
-	userret(p, frame);
+	userret(l, frame);
 }
 
 static inline void
@@ -560,8 +564,8 @@ badaddr_read(addr, size, rptr)
  */
 
 static int
-fix_unaligned(p, frame)
-	struct proc *p;
+fix_unaligned(l, frame)
+	struct lwp *l;
 	struct trapframe *frame;
 {
 	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
@@ -598,7 +602,7 @@ fix_unaligned(p, frame)
 			 * the PCB.
 			 */
 
-			save_fpu_proc(p);
+			save_fpu_lwp(l);
 			enable_fpu();
 			save_fpu_cpu();
 			if (indicator == EXC_ALI_LFD) {
@@ -708,4 +712,37 @@ copyoutstr(kaddr, udaddr, len, done)
 		*done = d;
 	}
 	return rv;
+}
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	upcallret((void *) l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	struct trapframe *frame = trapframe(l);
+
+	userret(l, frame);
 }
