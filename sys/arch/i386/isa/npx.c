@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.37 1995/05/01 08:25:34 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.38 1995/05/03 00:09:13 mycroft Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -588,6 +588,7 @@ npxinit()
 		npx_nointr = 0;
 	}
 	pcb->pcb_cr0 &= ~CR0_TS;
+	pcb->pcb_flags |= PCB_USEDFPU;
 	npxproc = curproc;
 	fldcw(&control);
 }
