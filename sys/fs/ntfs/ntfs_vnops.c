@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.4 2003/04/09 18:41:05 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.5 2003/04/09 18:46:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.4 2003/04/09 18:41:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.5 2003/04/09 18:46:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,23 +444,6 @@ ntfs_write(ap)
 #endif
 
 	return (error);
-}
-
-static int
-ntfs_remove(void *v)
-{
-	struct vop_remove_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	if (ap->a_dvp == ap->a_vp)
-		vrele(ap->a_vp);
-	else
-		vput(ap->a_vp);
-	vput(ap->a_dvp);
-	return (EOPNOTSUPP);
 }
 
 int
@@ -915,6 +898,23 @@ ntfs_pathconf(v)
 		return (EINVAL);
 	}
 	/* NOTREACHED */
+}
+
+static int
+ntfs_remove(void *v)
+{
+	struct vop_remove_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+
+	if (ap->a_dvp == ap->a_vp)
+		vrele(ap->a_vp);
+	else
+		vput(ap->a_vp);
+	vput(ap->a_dvp);
+	return (EOPNOTSUPP);
 }
 
 static int
