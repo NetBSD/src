@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.11 2005/03/16 19:54:11 tron Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.12 2005/03/16 23:02:20 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -144,4 +144,9 @@ sys/dev/tc/px.c					1.22
 
 	Fix a 3 year old error which caused px_init() to fail. Fixes PR 28798.
 	[mhitch, ticket #1063]
+
+sys/netinet6/ipsec.c				1.101
+
+	Fix possible remote DoS via IPSec AH packets.
+	[itojun, ticket #1327]
 
