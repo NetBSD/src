@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 1999/03/31 00:44:50 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.24.2.1 1999/04/05 15:08:02 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,6 @@
 /* md.c -- pmax machine specific routines */
 
 #include <sys/types.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
 #include <curses.h>
@@ -360,7 +359,7 @@ int	md_make_bsd_partitions (void)
 		(void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 			       'a'+i, bsdlabel[i].pi_size,
 			       'a'+i, bsdlabel[i].pi_offset,
-			       'a'+i, fstype[bsdlabel[i].pi_fstype]);
+			       'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
 		if (bsdlabel[i].pi_fstype == FS_BSDFFS)
 			(void)fprintf (f, "b%c#%d:f%c#%d",
 				       'a'+i, bsdlabel[i].pi_bsize,
