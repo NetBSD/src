@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.40 2003/01/06 21:05:38 matt Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.41 2003/02/04 20:05:11 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -339,6 +339,7 @@ struct ncr53c9x_softc {
 	int sc_features;	/* Chip features */
 	int sc_minsync;		/* Minimum sync period / 4 */
 	int sc_maxxfer;		/* Maximum transfer size */
+	struct simplelock sc_lock;
 };
 
 /* values for sc_state */
