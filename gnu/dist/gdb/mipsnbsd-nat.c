@@ -130,17 +130,17 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, ignore)
 
   core_reg = (struct md_core *)core_reg_sect;
 
-  if (which == 0) {
-    /* Integer registers */
-    memcpy(&registers[REGISTER_BYTE (0)],
-	   &core_reg->intreg, sizeof(struct reg));
-  }
+  /* We get everything from the .reg section. */
+  if (which != 0)
+    return;
 
-  else if (which == 2) {
-    /* Floating point registers */
-    memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)],
-	   &core_reg->freg, sizeof(struct fpreg));
-  }
+  /* Integer registers */
+  memcpy(&registers[REGISTER_BYTE (0)],
+	 &core_reg->intreg, sizeof(struct reg));
+  
+  /* Floating point registers */
+  memcpy(&registers[REGISTER_BYTE (FP0_REGNUM)],
+	 &core_reg->freg, sizeof(struct fpreg));
 }
 
 #ifdef	FETCH_KCORE_REGISTERS
