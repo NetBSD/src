@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.67 2003/03/03 22:31:29 kanaoka Exp $
+#	$NetBSD: 3RDPARTY,v 1.68 2003/03/04 03:41:59 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -85,7 +85,7 @@ _res declaration differences.  DNSSEC portion is disabled.
 
 Package:	bind/resolver
 Version:	4.9.11
-Current Vers:	4.9.11/8.3.4/9.2.1
+Current Vers:	4.9.11/8.3.4/9.2.2
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind/
 Mailing List:
