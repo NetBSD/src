@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.68 1994/05/18 05:12:10 cgd Exp $
+ *	$Id: locore.s,v 1.69 1994/05/24 07:21:02 deraadt Exp $
  */
 
 /*
@@ -222,6 +222,23 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/* less than Pentium; must be 486 */
 	movl	$CPU_486,_cpu-KERNBASE
+
+	/* check for Cyrix 486DLC -- based on check routine  */
+	/* documented in "Cx486SLC/e SMM Programmer's Guide" */
+	xorw	%dx,%dx
+	cmpw	%dx,%dx			# set flags to known state
+	pushfw
+	popw	%cx			# store flags in ecx
+	movw	$0xffff,%ax
+	movw	$0x0004,%bx
+	divw	%bx
+	pushfw
+	popw	%ax
+	andw	$0x08d5,%ax		# mask off important bits
+	andw	$0x08d5,%cx
+	cmpw	%ax,%cx
+	jnz	2f			# if flags changed, Intel chip
+	movl	$CPU_486DLC,_cpu-KERNBASE # set CPU value for Cyrix
 	jmp	2f
 
 1:	movl	$CPU_586,_cpu-KERNBASE
@@ -467,6 +484,45 @@ reloc_gdt:
 	je	1f			# 386s can't handle WP mode
 	movl	%cr0,%eax		# get control word
 	orl	$CR0_WP,%eax		# enable ring 0 Write Protection
+	movl	%eax,%cr0
+
+	/* Initialize Cyrix 486DLC family CPU if present */
+	cmpl	$CPU_486DLC,_cpu
+	jne	1f
+	/* Set cache parameters */
+	invd				# Start with guaranteed clean cache
+	movb	$0xc0,%al		# Configuration Register index (CCR0)
+	outb	%al,$0x22
+	# movb	$0x22,%al		# Configuration Register CCR0 data
+	movb	$0x02,%al		# Configuration Register CCR0 data
+	outb	%al,$0x23
+	movb	$0xc1,%al		# CCR1
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 1	*/
+	movb	$0xc6,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 2	*/
+	movb	$0xc9,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 3	*/
+	movb	$0xcc,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* clear non-cacheable region 4	*/
+	movb	$0xcf,%al
+	outb	%al,$0x22
+	xorb	%al,%al
+	outb	%al,$0x23
+	/* enable caching in CR0 */
+	movl	%cr0,%eax
+	andl	$0x8050001f,%eax
 	movl	%eax,%cr0
 1:
 #endif
