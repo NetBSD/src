@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.3 2000/10/18 18:27:54 tv Exp $
+#	$NetBSD: Makefile,v 1.2.2.4 2001/04/06 09:31:17 he Exp $
 
 PROG=	dhclient
 MKMAN=	no
@@ -7,14 +7,14 @@ CPPFLAGS+=	-DCLIENT_PATH='"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
 LDSTATIC?=	-static
 
 RSRCDIR= ${.CURDIR}/../../../usr.sbin/dhcp
-.PATH: ${RSRCDIR}/client ${RSRCDIR}/common ${RSRCDIR}/minires ${RSRCDIR}/omapip
+.PATH: ${RSRCDIR}/client ${RSRCDIR}/common ${RSRCDIR}/dst ${RSRCDIR}/omapip
 .NOPATH: ${PROG}
 
 SRCS=	dhclient.c clparse.c
 
-.include "Src-minires"
-MINIOBJS+= ${MINISRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
-SRCS+= ${MINISRCS}
+.include "Src-dst"
+DSTOBJS+= ${DSTSRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
+SRCS+= ${DSTSRCS}
 
 .include "Src-omapip"
 OMOBJS+= ${OMSRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
@@ -29,7 +29,7 @@ COPTS+=	-Os
 
 all: ${PROG}
 
-${MINIOBJS}:
+${DSTOBJS}:
 	${CC} ${CFLAGS} ${CPPFLAGS} -DMINIRES_LIB -c ${.IMPSRC}
 
 .SUFFIXES: .OM.c
