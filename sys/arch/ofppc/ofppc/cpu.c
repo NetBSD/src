@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2001/08/26 02:47:40 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2001/10/20 08:22:58 billc Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@ cpu_match(struct device *parent, struct cfdata *cfdata, void *aux)
 	if (OF_getprop(oba->oba_phandle, "device_type", name, sizeof name) <= 3)
 		return (0);
 	if (!strcmp(name, "cpu"))
-		return (0);
-	return (1);
+		return (1);
+	return (0);
 }
 
 void
