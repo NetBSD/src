@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cy.c,v 1.4 1994/02/09 21:13:43 mycroft Exp $
+ *	$Id: cy.c,v 1.5 1994/03/06 17:18:51 mycroft Exp $
  */
 
 /*
@@ -146,7 +146,7 @@ int		cyspeed(int speed, int *prescaler_io);
 static void	cy_channel_init(dev_t dev, int reset);
 static void	cd1400_channel_cmd(cy_addr base, u_char cmd);
 
-void		DELAY(int delay);
+void		delay(int delay);
 
 extern unsigned int	delaycount;	/* calibrated 1 ms cpu-spin delay */
 
@@ -239,14 +239,14 @@ cyprobe(struct isa_device *dev)
     /* Cyclom-16Y hardware reset (Cyclom-8Ys don't care) */
     i = *(cy_addr)(dev->id_maddr + CYCLOM_RESET_16);
 
-    DELAY(500);	/* wait for the board to get its act together (500 us) */
+    delay(500);	/* wait for the board to get its act together (500 us) */
 
     for (i = 0; i < CD1400s_PER_CYCLOM; i++) {
 	cy_addr	base = dev->id_maddr + i * CD1400_MEMSIZE;
 
 	/* wait for chip to become ready for new command */
 	for (j = 0; j < 100; j += 50) {
-	    DELAY(50);	/* wait 50 us */
+	    delay(50);	/* wait 50 us */
 
 	    if (!*(base + CD1400_CCR))
 	    	break;
@@ -260,7 +260,7 @@ cyprobe(struct isa_device *dev)
 
 	/* wait for the CD1400 to initialise itself */
 	for (j = 0; j < 1000; j += 50) {
-	    DELAY(50);	/* wait 50 us */
+	    delay(50);	/* wait 50 us */
 
 	    /* retrieve firmware version */
 	    version = *(base + CD1400_GFRCR);

@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.6 1994/02/21 15:23:11 mycroft Exp $
+ *	$Id: mcd.c,v 1.7 1994/03/06 17:19:13 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -550,11 +550,11 @@ mcdprobe(isa_dev)
 
 	/* Send a reset. */
 	outb(iobase + mcd_reset, 0);
-	DELAY(300000);
+	delay(300000);
 	/* Get any pending status and throw away. */
 	for (i = 10; i; i--)
 		inb(iobase + mcd_status);
-	DELAY(1000);
+	delay(1000);
 
 	/* Send get status command. */
 	outb(iobase + mcd_command, MCD_CMDGETSTAT);
@@ -576,7 +576,7 @@ mcdprobe(isa_dev)
  * driven routines mcd_getreply etc. rather than arbitrary delays.
  */
 
-	DELAY (2000);
+	delay (2000);
 	outb(iobase + mcd_command, MCD_CMDCONTINFO);
 	i = mcd_getreply(sc, DELAY_GETREPLY);
 
@@ -628,7 +628,7 @@ mcd_waitrdy(iobase, dly)
 	for (i = dly; i; i--) {
 		if ((inb(iobase + mcd_xfer) & MCD_ST_BUSY) == 0)
 			return 0;
-		DELAY(1);
+		delay(1);
 	}
 	return -1;
 }
@@ -997,7 +997,7 @@ readerr:
 #ifdef notyet
 	printf("%s: unit timeout; resetting\n", sc->sc_dev.dv_xname);
 	outb(mbx->iobase + mcd_reset, MCD_CMDRESET);
-	DELAY(300000);
+	delay(300000);
 	(void)mcd_getstat(sc, 1);
 	(void)mcd_getstat(sc, 1);
 	/*sc->status &= ~MCDDSKCHNG; */

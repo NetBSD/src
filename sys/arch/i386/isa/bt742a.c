@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.14 1994/03/01 12:42:36 deraadt Exp $
+ *	$Id: bt742a.c,v 1.15 1994/03/06 17:18:46 mycroft Exp $
  */
 
 /*
@@ -840,7 +840,7 @@ bt_init(unit)
 	 * setup dma channel from jumpers and save int
 	 * level
 	 */
-	DELAY(200);
+	delay(200);
 
 	bt_cmd(unit, 0, sizeof(conf), 0, &conf, BT_CONF_GET);
 	switch (conf.chan) {

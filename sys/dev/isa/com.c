@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.19 1994/02/09 21:13:41 mycroft Exp $
+ *	$Id: com.c,v 1.20 1994/03/06 17:18:50 mycroft Exp $
  */
 
 #include "com.h"
@@ -122,7 +122,7 @@ struct isa_device *dev;
 	/* force access to id reg */
 	outb(dev->id_iobase+com_cfcr, 0);
 	outb(dev->id_iobase+com_iir, 0);
-	DELAY(100);
+	delay(100);
 	if ((inb(dev->id_iobase+com_iir) & 0x38) == 0)
 		return(8);
 	return(0);
@@ -139,14 +139,14 @@ struct isa_device *isdp;
 
 	unit = isdp->id_unit;
 	if (unit == comconsole)
-		DELAY(1000);
+		delay(1000);
 	com_addr[unit] = port;
 	com_active |= 1 << unit;
 	comsoftCAR |= 1 << unit;	/* XXX */
 
 	/* look for a NS 16550AF UART with FIFOs */
 	outb(port+com_fifo, FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_4);
-	DELAY(100);
+	delay(100);
 	if ((inb(port+com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK) {
 		com_hasfifo |= 1 << unit;
 		printf("com%d: fifo\n", isdp->id_unit);

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.13 1994/03/03 22:22:51 mycroft Exp $
+ *	$Id: npx.c,v 1.14 1994/03/06 17:19:15 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -219,7 +219,7 @@ npxprobe1(dvp)
 	 * it after a warm boot.
 	 */
 	outb(0xf1, 0);		/* full reset on some systems, NOP on others */
-	DELAY(1000);
+	delay(1000);
 	outb(0xf0, 0);		/* clear BUSY# latch */
 	/*
 	 * Prepare to trap all ESC (i.e., NPX) instructions and all WAIT
@@ -247,7 +247,7 @@ npxprobe1(dvp)
 	 * IRQ13 and cleared the BUSY# latch early to handle them anyway.
 	 */
 	fninit();
-	DELAY(1000);		/* wait for any IRQ13 (fwait might hang) */
+	delay(1000);		/* wait for any IRQ13 (fwait might hang) */
 #ifdef DIAGNOSTIC
 	if (npx_intrs_while_probing != 0)
 		printf("fninit caused %u bogus npx interrupt(s)\n",
