@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 1996/05/05 12:17:26 oki Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.2 1996/05/21 15:32:58 oki Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -39,8 +39,8 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-
 #include <vm/vm.h>
+#include <ddb/db_output.h>
 
 #include <machine/db_machdep.h>
 #include <machine/pte.h>
@@ -117,12 +117,12 @@ db_write_text(dst, ch)
 
 /*printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);*/
 	*pte &= ~PG_RO;
-	TBIS(dst);
+	TBIS((vm_offset_t)dst);
 
 	*dst = ch;
 
 	*pte = oldpte;
-	TBIS(dst);
+	TBIS((vm_offset_t)dst);
 	cachectl (4, dst, 1);
 }
 

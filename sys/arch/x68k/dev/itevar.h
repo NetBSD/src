@@ -1,3 +1,5 @@
+/*	$NetBSD: itevar.h,v 1.2 1996/05/21 15:32:25 oki Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -260,12 +262,12 @@ void	view_init __P((struct ite_softc *));
 void	view_deinit __P((struct ite_softc *));
 
 #ifdef _KERNEL
-extern	struct ite_softc ite_softc[];
 #if ITEKANJI
 extern unsigned char kern_font[];
 #endif
 #if x68k
 /* keyboard LED status variable */
 extern unsigned char kbdled;
+void kbd_setLED __P((void));
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 1996/05/05 12:17:24 oki Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 1996/05/21 15:33:35 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@ cpu_fork(p1, p2)
 	register struct trapframe *tf;
 	register struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline(), child_return();
+	extern void child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
@@ -234,6 +234,7 @@ pagemove(from, to, size)
  * kernel VA space at `vaddr'.  Read/write and cache-inhibit status
  * are specified by `prot'.
  */ 
+void
 physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
 	register int size, prot;
@@ -250,6 +251,7 @@ physaccess(vaddr, paddr, size, prot)
 	TBIAS();
 }
 
+void
 physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
@@ -274,6 +276,7 @@ physunaccess(vaddr, size)
  * Look at _lev6intr in locore.s for more details.
  */
 /*ARGSUSED*/
+void
 setredzone(pte, vaddr)
 	pt_entry_t *pte;
 	caddr_t vaddr;
@@ -283,6 +286,7 @@ setredzone(pte, vaddr)
 /*
  * Convert kernel VA to physical address
  */
+int
 kvtop(addr)
 	register caddr_t addr;
 {
@@ -364,6 +368,7 @@ vunmapbuf(bp, sz)
 #ifdef MAPPEDCOPY
 u_int mappedcopysize = 4096;
 
+int
 mappedcopyin(fromp, top, count)
 	register char *fromp, *top;
 	register int count;
@@ -406,6 +411,7 @@ mappedcopyin(fromp, top, count)
 	return (0);
 }
 
+int
 mappedcopyout(fromp, top, count)
 	register char *fromp, *top;
 	register int count;
