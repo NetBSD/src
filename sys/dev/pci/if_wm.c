@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.79 2004/10/05 21:29:56 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.80 2004/10/06 00:04:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.79 2004/10/05 21:29:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.80 2004/10/06 00:04:01 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1570,7 +1570,9 @@ wm_start(struct ifnet *ifp)
 #endif
 	struct wm_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx = -1, ofree, seg;
+	int error, nexttx, lasttx = -1, ofree, seg, segs_needed;
+	bus_addr_t curaddr;
+	bus_size_t seglen, curlen;
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
 
@@ -1642,6 +1644,8 @@ wm_start(struct ifnet *ifp)
 			break;
 		}
 
+		segs_needed = dmamap->dm_nsegs;
+
 		/*
 		 * Ensure we have enough descriptors free to describe
 		 * the packet.  Note, we always reserve one descriptor
@@ -1649,7 +1653,7 @@ wm_start(struct ifnet *ifp)
 		 * TDT register, plus one more in the event we need
 		 * to re-load checksum offload context.
 		 */
-		if (dmamap->dm_nsegs > (sc->sc_txfree - 2)) {
+		if (segs_needed > sc->sc_txfree - 2) {
 			/*
 			 * Not enough free descriptors to transmit this
 			 * packet.  We haven't committed anything yet,
@@ -1658,8 +1662,8 @@ wm_start(struct ifnet *ifp)
 			 * layer that there are no more slots left.
 			 */
 			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: need %d descriptors, have %d\n",
-			    sc->sc_dev.dv_xname, dmamap->dm_nsegs,
+			    ("%s: TX: need %d (%) descriptors, have %d\n",
+			    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed,
 			    sc->sc_txfree - 1));
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -1694,8 +1698,8 @@ wm_start(struct ifnet *ifp)
 		    BUS_DMASYNC_PREWRITE);
 
 		DPRINTF(WM_DEBUG_TX,
-		    ("%s: TX: packet has %d DMA segments\n",
-		    sc->sc_dev.dv_xname, dmamap->dm_nsegs));
+		    ("%s: TX: packet has %d (%d) DMA segments\n",
+		    sc->sc_dev.dv_xname, dmamap->dm_nsegs, segs_needed));
 
 		WM_EVCNT_INCR(&sc->sc_ev_txseg[dmamap->dm_nsegs - 1]);
 
@@ -1710,7 +1714,7 @@ wm_start(struct ifnet *ifp)
 		 */
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
-		txs->txs_ndesc = dmamap->dm_nsegs;
+		txs->txs_ndesc = segs_needed;
 
 		/*
 		 * Set up checksum offload parameters for
@@ -1735,23 +1739,32 @@ wm_start(struct ifnet *ifp)
 		 * Initialize the transmit descriptor.
 		 */
 		for (nexttx = sc->sc_txnext, seg = 0;
-		     seg < dmamap->dm_nsegs;
-		     seg++, nexttx = WM_NEXTTX(sc, nexttx)) {
-			wm_set_dma_addr(&sc->sc_txdescs[nexttx].wtx_addr,
-			    dmamap->dm_segs[seg].ds_addr);
-			sc->sc_txdescs[nexttx].wtx_cmdlen =
-			    htole32(cksumcmd | dmamap->dm_segs[seg].ds_len);
-			sc->sc_txdescs[nexttx].wtx_fields.wtxu_status = 0;
-			sc->sc_txdescs[nexttx].wtx_fields.wtxu_options =
-			    cksumfields;
-			sc->sc_txdescs[nexttx].wtx_fields.wtxu_vlan = 0;
-			lasttx = nexttx;
+		     seg < dmamap->dm_nsegs; seg++) {
+			for (seglen = dmamap->dm_segs[seg].ds_len,
+			     curaddr = dmamap->dm_segs[seg].ds_addr;
+			     seglen != 0;
+			     curaddr += curlen, seglen -= curlen,
+			     nexttx = WM_NEXTTX(sc, nexttx)) {
+				curlen = seglen;
 
-			DPRINTF(WM_DEBUG_TX,
-			    ("%s: TX: desc %d: low 0x%08x, len 0x%04x\n",
-			    sc->sc_dev.dv_xname, nexttx,
-			    (u_int)le32toh(dmamap->dm_segs[seg].ds_addr),
-			    (u_int)le32toh(dmamap->dm_segs[seg].ds_len)));
+				wm_set_dma_addr(
+				    &sc->sc_txdescs[nexttx].wtx_addr,
+				    curaddr);
+				sc->sc_txdescs[nexttx].wtx_cmdlen =
+				    htole32(cksumcmd | curlen);
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_status =
+				    0;
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_options =
+				    cksumfields;
+				sc->sc_txdescs[nexttx].wtx_fields.wtxu_vlan = 0;
+				lasttx = nexttx;
+
+				DPRINTF(WM_DEBUG_TX,
+				    ("%s: TX: desc %d: low 0x%08x, "
+				     "len 0x%04x\n",
+				    sc->sc_dev.dv_xname, nexttx,
+				    curaddr & 0xffffffffU, curlen, curlen));
+			}
 		}
 
 		KASSERT(lasttx != -1);
@@ -1787,7 +1800,7 @@ wm_start(struct ifnet *ifp)
 		    lasttx, le32toh(sc->sc_txdescs[lasttx].wtx_cmdlen)));
 
 		/* Sync the descriptors we're using. */
-		WM_CDTXSYNC(sc, sc->sc_txnext, dmamap->dm_nsegs,
+		WM_CDTXSYNC(sc, sc->sc_txnext, txs->txs_ndesc,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Give the packet to the chip. */
@@ -2000,7 +2013,7 @@ wm_txintr(struct wm_softc *sc)
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: checking job %d\n", sc->sc_dev.dv_xname, i));
 
-		WM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
+		WM_CDTXSYNC(sc, txs->txs_firstdesc, txs->txs_ndesc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 		status =
