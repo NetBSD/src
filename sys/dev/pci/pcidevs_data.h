@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.500 2003/01/24 03:16:08 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.501 2003/01/24 05:34:25 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.498 2003/01/24 03:15:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.500 2003/01/24 05:33:12 thorpej Exp 
  */
 
 /*
@@ -5668,16 +5668,34 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Ethernet",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100X,
+	    0,
+	    "Promise Technology",
+	    "Ultra100X/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA66_0,
+	    0,
+	    "Promise Technology",
+	    "Ultra66/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_MBULTRA133,
+	    0,
+	    "Promise Technology",
+	    "MBUltra133/ATA Bus Master IDE Accelerator",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
 	    0,
 	    "Promise Technology",
 	    "Serial ATA/150 TX2plus Bus Master IDE Accelerator",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100,
 	    0,
 	    "Promise Technology",
-	    "DC5030",
+	    "Ultra100/ATA Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA33,
@@ -5692,28 +5710,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Ultra66/ATA Bus Master IDE Accelerator",
 	},
 	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100,
-	    0,
-	    "Promise Technology",
-	    "Ultra100/ATA Bus Master IDE Accelerator",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100X,
-	    0,
-	    "Promise Technology",
-	    "Ultra100X/ATA Bus Master IDE Accelerator",
-	},
-	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100TX2,
 	    0,
 	    "Promise Technology",
 	    "Ultra100TX2/ATA Bus Master IDE Accelerator",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100TX2v2,
-	    0,
-	    "Promise Technology",
-	    "Ultra100TX2v2/ATA Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133,
@@ -5728,10 +5728,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Ultra133TX2/ATA Bus Master IDE Accelerator",
 	},
 	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
+	    0,
+	    "Promise Technology",
+	    "DC5030",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100TX2v2,
+	    0,
+	    "Promise Technology",
+	    "Ultra100TX2v2/ATA Bus Master IDE Accelerator",
+	},
+	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA133TX2v2,
 	    0,
 	    "Promise Technology",
 	    "Ultra133TX2v2/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_FASTTRAK133LITE,
+	    0,
+	    "Promise Technology",
+	    "Fasttrak133 Lite Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
