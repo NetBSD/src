@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.59 2003/08/26 18:12:33 jmmv Exp $	*/
+/*	$NetBSD: jobs.c,v 1.60 2003/11/14 10:27:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.59 2003/08/26 18:12:33 jmmv Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.60 2003/11/14 10:27:10 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -842,7 +842,7 @@ forkshell(struct job *jp, union node *n, int mode)
 	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
 	switch ((pid = fork())) {
 	case -1:
-		TRACE(("Fork failed, errno=%d", errno));
+		TRACE(("Fork failed, errno=%d\n", errno));
 		INTON;
 		error("Cannot fork");
 		break;
