@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.20 1999/12/23 10:15:05 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.21 2000/01/04 14:20:05 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -18,14 +18,15 @@
 #ifndef _MATH_H_
 #define _MATH_H_
 
+#include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <machine/math.h>
 
 /*
  * ANSI/POSIX
  */
-extern const char __infinity[];
-#define HUGE_VAL	(*(const double *)(const void *)__infinity)
+extern __const char __infinity[];
+#define HUGE_VAL	(*(__const double *)(__const void *)__infinity)
 
 /*
  * XOPEN/SVID
@@ -99,8 +100,6 @@ struct exception {
 
 #endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
-
-#include <sys/cdefs.h>
 __BEGIN_DECLS
 /*
  * ANSI/POSIX
