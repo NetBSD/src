@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.48 2002/05/16 20:28:33 eeh Exp $	*/
+/*	$NetBSD: psycho.c,v 1.49 2002/06/12 00:43:22 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -490,7 +490,7 @@ found:
 
 
 		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
-			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+			bus_space_subregion(sc->sc_bustag, pci_ctl,
 				offsetof(struct pci_ctl, pci_strbuf),
 				sizeof (struct iommu_strbuf), 
 				&sc->sc_is->is_sb[0]);
@@ -519,7 +519,7 @@ found:
 		sc->sc_configaddr = osc->sc_configaddr;
 
 		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
-			bus_space_subregion(sc->sc_bustag, sc->sc_bh,
+			bus_space_subregion(sc->sc_bustag, pci_ctl,
 				offsetof(struct pci_ctl, pci_strbuf),
 				sizeof (struct iommu_strbuf), 
 				&sc->sc_is->is_sb[1]);
