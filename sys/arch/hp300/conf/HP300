@@ -38,7 +38,7 @@ options		PANICBUTTON
 options		KTRACE
 options		"NKMEMCLUSTERS=512"
 options		KGDB,"KGDBDEV=15*256+0","KGDBRATE=19200"
-options		HPFPLIB
+options		FPSP
 
 config		netbsd root on sd0 swap on sd0b and rd0b
 config		vgnetbsd root on sd0 swap on sd0d and sd1d and sd2d
