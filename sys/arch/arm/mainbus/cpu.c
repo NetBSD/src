@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2001/03/03 17:46:31 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2001/03/03 17:49:58 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -77,8 +77,6 @@ extern int cpuctrl;		/* cpu control register value */
 void identify_master_cpu __P((int cpu_number, char *dev_name));
 void identify_arm_cpu	__P((int cpu_number));
 void identify_arm_fpu	__P((int cpu_number));
-
-extern int initialise_fpe	__P((cpu_t *cpu));
 
 
 /*
