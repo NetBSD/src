@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4 1996/11/19 04:54:43 cgd Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.5 1996/11/23 06:38:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -51,7 +51,7 @@ struct {
 	void	(*console) __P((bus_space_tag_t, bus_space_tag_t));
 } isa_display_console_devices[] = {
 #if NVGA_ISA
-	{ vga_isa_probe, vga_isa_console },
+	{ vga_isa_console_match, vga_isa_console_attach },
 #endif
 	{ },
 };
