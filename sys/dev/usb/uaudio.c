@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.34 2000/12/29 14:49:28 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.35 2001/01/04 03:53:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -116,7 +116,9 @@ struct chan {
 	void	(*intr)(void *);	/* dma completion intr handler */
 	void	*arg;		/* arg for intr() */
 	usbd_pipe_handle pipe;
-	int	dir;		/* direction, UE_DIR_XXX */
+	int	dir;		/* direction */
+#define	IN	0x01
+#define	OUT	0x02
 
 	u_int	sample_size;
 	u_int	sample_rate;
@@ -1099,7 +1101,7 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 	chan = asf1d->bNrChannels;
 	prec = asf1d->bBitResolution;
 	if (prec != 8 && prec != 16) {
-#ifdef AUDIO_DEBUG
+#ifdef UAUDIO_DEBUG
 		printf("%s: ignored setting with precision %d\n",
 		       USBDEVNAME(sc->sc_dev), prec);
 #endif
@@ -1136,7 +1138,7 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 	ai.asf1desc = asf1d;
 	uaudio_add_alt(sc, &ai);
 	sc->sc_chan.terminal = asid->bTerminalLink; /* XXX */
-	sc->sc_chan.dir = dir;
+	sc->sc_chan.dir |= dir == UE_DIR_IN ? IN : OUT;
 	return (USBD_NORMAL_COMPLETION);
 }
 #undef offs
@@ -1161,6 +1163,7 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 	DPRINTF(("uaudio_identify_as: AS interface is %d\n", sc->sc_as_iface));
 
 	sc->sc_chan.terminal = -1;
+	sc->sc_chan.dir = 0;
 
 	/* Loop through all the alternate settings. */
 	while (offs <= size) {
@@ -1174,7 +1177,7 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 			err = uaudio_process_as(sc, buf, &offs, size, id);
 			break;
 		default:
-#ifdef AUDIO_DEBUG
+#ifdef UAUDIO_DEBUG
 			printf("%s: ignored audio interface with %d "
 			       "endpoints\n",
 			       USBDEVNAME(sc->sc_dev), id->bNumEndpoints);
@@ -1193,6 +1196,8 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 		       USBDEVNAME(sc->sc_dev));
 		return (USBD_INVAL);
 	}
+	if (sc->sc_chan.dir == (OUT | IN))
+		sc->sc_props |= AUDIO_PROP_FULLDUPLEX;
 	return (USBD_NORMAL_COMPLETION);
 }
 
@@ -1375,9 +1380,9 @@ uaudio_open(void *addr, int flags)
 	if (sc->sc_chan.terminal < 0)
 		return (ENXIO);
 
-	if ((flags & FREAD) && sc->sc_chan.dir != UE_DIR_IN)
+	if ((flags & FREAD) && !(sc->sc_chan.dir & IN))
 		return (EACCES);
-	if ((flags & FWRITE) && sc->sc_chan.dir != UE_DIR_OUT)
+	if ((flags & FWRITE) && !(sc->sc_chan.dir & OUT))
 		return (EACCES);
 
         sc->sc_chan.intr = 0;
