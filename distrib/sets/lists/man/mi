@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.495 2002/06/24 05:48:41 itojun Exp $
+# $NetBSD: mi,v 1.496 2002/06/27 14:25:44 christos Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -955,6 +955,7 @@
 ./usr/share/man/cat4/sv.0			man-sys-catman
 ./usr/share/man/cat4/sw.0			man-sys-catman
 ./usr/share/man/cat4/sysbeep.0			man-sys-catman
+./usr/share/man/cat4/systrace.0			man-sys-catman
 ./usr/share/man/cat4/tb.0			man-sys-catman
 ./usr/share/man/cat4/tc.0			man-sys-catman
 ./usr/share/man/cat4/tcds.0			man-sys-catman
@@ -2097,6 +2098,7 @@
 ./usr/share/man/man1/suspend.1			man-util-man
 ./usr/share/man/man1/sysstat.1			man-util-man
 ./usr/share/man/man1/systat.1			man-util-man
+./usr/share/man/man1/systrace.1			man-util-man
 ./usr/share/man/man1/tail.1			man-util-man
 ./usr/share/man/man1/talk.1			man-netutil-man
 ./usr/share/man/man1/tar.1			man-util-man
