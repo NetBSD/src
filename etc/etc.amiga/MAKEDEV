@@ -46,6 +46,7 @@
 #	st*	SCSI tapes
 #
 # Disks:
+#	fd*	Floppy disks
 #	sd*	SCSI disks, includes flopticals
 #	vnd*	"file" pseudo-disks
 #
@@ -68,7 +69,7 @@
 #	grf*	custom chip (grf0) or Retina (grf1) video
 #	kbd	Amiga keyboard
 #	view*	generic interface to graphic displays.
-#	aconf	autoconfig information
+#	aconf	autoconfig information (not yet)
 #	lkm	loadable kernel modules interface.
 #	bpf*	Berkeley Packet Filter
 
@@ -81,7 +82,7 @@ all)
 	sh MAKEDEV std st0 ite0 ite1 mouse0 mouse1 tty0 grf0 grf1 kbd
 	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sdf6 vnd0 vnd1 vnd2 vnd3 vnd4
 	sh MAKEDEV view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 bpf0 bpf1 bpf2 bpf3 par0 aconf lkm local
+	sh MAKEDEV vnd5 vnd6 fd0 bpf0 bpf1 bpf2 bpf3 par0 lkm local
 	;;
 
 std)
@@ -142,6 +143,22 @@ st*)
 		;;
 	*)
 		echo bad unit for tape in: $1
+		;;
+	esac
+	umask 77
+	;;
+fd*)
+	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
+	rm -f fd$unit rfd$unit
+	case $unit in
+	0|1|2|3)
+		mknod fd$unit b 2 $unit
+		mknod rfd$unit c 18 $unit
+		chgrp operator fd$unit rfd$unit
+		chmod 640 fd$unit rfd$unit
+		;;
+	*)
+		echo bad unit for floppy disk in: $i
 		;;
 	esac
 	umask 77
@@ -297,10 +314,10 @@ pty*)
 	esac
 	;;
 
-aconf)
-	rm -f autoconfig
-	mknod autoconfig c 18 0 ; chmod 644 autoconfig
-	;;
+# aconf) not yet
+#	rm -f autoconfig
+#	mknod autoconfig c 18 0 ; chmod 644 autoconfig
+#	;;
 
 bpf*)
 	unit=`expr $i : 'bpf\(.*\)'`
