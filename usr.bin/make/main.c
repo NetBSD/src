@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52 2000/04/14 06:11:09 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.53 2000/04/16 23:24:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.52 2000/04/14 06:11:09 simonb Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.53 2000/04/16 23:24:23 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.52 2000/04/14 06:11:09 simonb Exp $");
+__RCSID("$NetBSD: main.c,v 1.53 2000/04/16 23:24:23 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -147,6 +147,7 @@ static void		usage __P((void));
 
 static char *curdir;			/* startup directory */
 static char *objdir;			/* where we chdir'ed to */
+static char *progname;			/* the program name */
 
 /*-
  * MainParseArgs --
@@ -477,6 +478,10 @@ main(argc, argv)
 					/* avoid faults on read-only strings */
 	static char syspath[] = _PATH_DEFSYSPATH;
 
+	if ((progname = strrchr(argv[0], '/')) != NULL)
+		progname++;
+	else
+		progname = argv[0];
 #ifdef RLIMIT_NOFILE
 	/*
 	 * get rid of resource limit on file descriptors
@@ -1094,6 +1099,7 @@ Error(va_alist)
 	va_start(ap);
 	fmt = va_arg(ap, char *);
 #endif
+	fprintf(stderr, "%s: ", progname);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
