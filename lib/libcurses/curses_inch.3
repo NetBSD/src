@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_inch.3,v 1.9 2004/03/16 19:51:08 wiz Exp $
+.\"	$NetBSD: curses_inch.3,v 1.10 2004/04/21 06:24:32 jdc Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd January 20, 2004
+.Dd April 18, 2004
 .Dt CURSES_INCH 3
 .Os
 .Sh NAME
@@ -46,9 +46,13 @@
 .Nm winchstr ,
 .Nm mvwinchstr ,
 .Nm innstr ,
-.Nm winnstr
+.Nm winnstr ,
+.Nm mvinnstr ,
+.Nm mvwinnstr ,
 .Nm instr ,
 .Nm winstr
+.Nm mvinstr ,
+.Nm mvwinstr
 .Nd curses read screen contents routines
 .Sh LIBRARY
 .Lb libcurses
@@ -79,9 +83,17 @@
 .Ft int
 .Fn winnstr "WINDOW *win" "char *str" "int n"
 .Ft int
+.Fn mvinnstr "int y" "int x" "char *str" "int n"
+.Ft int
+.Fn mvwinnstr "WINDOW *win" "int y" "int x" "char *str" "int n"
+.Ft int
 .Fn instr "char *str"
 .Ft int
 .Fn winstr "WINDOW *win" "char *str"
+.Ft int
+.Fn mvinstr "int y" "int x" "char *str"
+.Ft int
+.Fn mvwinstr "WINDOW *win" "int y" "int x" "char *str"
 .Sh DESCRIPTION
 These functions read the contents of
 .Dv stdscr
@@ -158,6 +170,24 @@ functions are the same as the
 .Fn winchstr ,
 and
 .Fn winchstr
+functions, respectively, except that
+.Fn wmove
+is called to move the cursor to the position specified by
+.Fa y ,
+.Fa x
+before the output is printed on the window.
+Likewise, the
+.Fn mvinstr ,
+.Fn mvinnstr ,
+.Fn mvwinstr ,
+and
+.Fn mvwinnstr
+functions are the same as the
+.Fn instr ,
+.Fn innstr ,
+.Fn winstr ,
+and
+.Fn winstr
 functions, respectively, except that
 .Fn wmove
 is called to move the cursor to the position specified by

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.693 2004/04/21 01:05:31 christos Exp $
+#	$NetBSD: mi,v 1.694 2004/04/21 06:24:32 jdc Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3703,6 +3703,10 @@
 ./usr/share/man/cat3/mvgetnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvhline.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvinchnstr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mvinchstr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mvinnstr.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvinstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvprintw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvvline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwaddch.0			comp-c-catman		.cat
@@ -3715,6 +3719,10 @@
 ./usr/share/man/cat3/mvwgetstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwhline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwin.0			comp-c-catman		.cat
+./usr/share/man/cat3/mvwinchnstr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mvwinchstr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mvwinnstr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mvwinstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwprintw.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwvline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/napms.0			comp-c-catman		.cat
@@ -7400,6 +7408,10 @@
 ./usr/share/man/man3/mvgetnstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvgetstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvhline.3			comp-c-man		.man
+./usr/share/man/man3/mvinchnstr.3		comp-c-man		.man
+./usr/share/man/man3/mvinchstr.3		comp-c-man		.man
+./usr/share/man/man3/mvinnstr.3			comp-c-man		.man
+./usr/share/man/man3/mvinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvprintw.3			comp-c-man		.man
 ./usr/share/man/man3/mvvline.3			comp-c-man		.man
 ./usr/share/man/man3/mvwaddch.3			comp-c-man		.man
@@ -7412,6 +7424,10 @@
 ./usr/share/man/man3/mvwgetstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvwhline.3			comp-c-man		.man
 ./usr/share/man/man3/mvwin.3			comp-c-man		.man
+./usr/share/man/man3/mvwinchnstr.3		comp-c-man		.man
+./usr/share/man/man3/mvwinchstr.3		comp-c-man		.man
+./usr/share/man/man3/mvwinnstr.3		comp-c-man		.man
+./usr/share/man/man3/mvwinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvwprintw.3		comp-c-man		.man
 ./usr/share/man/man3/mvwvline.3			comp-c-man		.man
 ./usr/share/man/man3/napms.3			comp-c-man		.man
