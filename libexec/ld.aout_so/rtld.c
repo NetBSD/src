@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.28 1994/12/19 12:21:21 pk Exp $
+ *	$Id: rtld.c,v 1.29 1995/03/06 20:51:24 pk Exp $
  */
 
 #include <sys/param.h>
@@ -125,6 +125,10 @@ struct somap_private {
 #define LM_ETEXT(smp)	((char *) \
 	((smp)->som_addr + LM_TXTADDR(smp) + LD_TEXTSZ((smp)->som_dynamic)))
 
+/* Needed shared objects */
+#define LM_NEED(smp)	((struct sod *) \
+	((smp)->som_addr + LM_TXTADDR(smp) + LD_NEED((smp)->som_dynamic)))
+
 /* PLT is in data segment, so don't use LM_OFFSET here */
 #define LM_PLT(smp)	((jmpslot_t *) \
 	((smp)->som_addr + LD_PLT((smp)->som_dynamic)))
@@ -179,6 +183,8 @@ static struct rt_symbol	*enter_rts __P((char *, long, int, caddr_t,
 						long, struct so_map *));
 static void		maphints __P((void));
 static void		unmaphints __P((void));
+
+static int		dl_cascade __P((struct so_map *));
 
 static inline int
 strcmp (register const char *s1, register const char *s2)
@@ -1054,11 +1060,11 @@ findhint(name, major, minor, preferred_path)
 	while (1) {
 		/* Sanity check */
 		if (bp->hi_namex >= hheader->hh_strtab_sz) {
-			fprintf(stderr, "Bad name index: %#x\n", bp->hi_namex);
+			warnx("Bad name index: %#x\n", bp->hi_namex);
 			break;
 		}
 		if (bp->hi_pathx >= hheader->hh_strtab_sz) {
-			fprintf(stderr, "Bad path index: %#x\n", bp->hi_pathx);
+			warnx("Bad path index: %#x\n", bp->hi_pathx);
 			break;
 		}
 
@@ -1188,6 +1194,10 @@ xprintf("%s: %s\n", name, strerror(errno));
 		dlerrno = errno;
 		return NULL;
 	}
+
+	if (dl_cascade(smp) == 0)
+		return NULL;
+
 	if (LM_PRIVATE(smp)->spd_refcount++ == 0) {
 		LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
 		reloc_map(smp);
@@ -1285,4 +1295,56 @@ char	*fmt;
 	vsprintf(buf, fmt, ap);
 	(void)write(1, buf, strlen(buf));
 	va_end(ap);
+}
+
+static int
+dl_cascade(smp)
+	struct so_map	*smp;
+{
+	struct sod	*sodp;
+	struct so_map	*smp2;
+
+	sodp = LM_NEED(smp);
+	if ((char *) sodp < LM_ETEXT(smp))
+	{
+		struct so_map	*smp2;
+		struct sod	cas_sod;
+
+		for (;;)
+		{
+			cas_sod.sod_name = (long) (sodp->sod_name + LM_LDBASE(smp));
+			cas_sod.sod_library = sodp->sod_library;
+			cas_sod.sod_major = sodp->sod_major;
+			cas_sod.sod_minor = sodp->sod_minor;
+			if ((smp2 = map_object(&cas_sod, &dlmap)) == NULL)
+			{
+#ifdef DEBUG
+xprintf("ld.so: map_object failed on cascaded %s %s (%d.%d): %s\n", cas_sod.sod_library ? "library" : "file", cas_sod.sod_name, cas_sod.sod_major, cas_sod.sod_minor, strerror(errno));
+#endif
+				dlerrno = errno;
+				return 0;
+			}
+#if 0
+			/*
+			 * XXX - this doesn't work for some reason.  not
+			 * at all sure why.  -mrg
+			 */
+			if (dl_cascade(smp2) == 0)
+				return 0;
+#endif
+
+			if (LM_PRIVATE(smp2)->spd_refcount++ == 0) {
+				LM_PRIVATE(smp2)->spd_flags |= RTLD_DL;
+				reloc_map(smp2);
+				reloc_copy(smp2);
+				init_map(smp2, ".init");
+				init_map(smp2, "_init");
+			}
+
+			if (!sodp->sod_next)
+				break;
+			sodp++;
+		}
+	}
+	return 1;
 }
