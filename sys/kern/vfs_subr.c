@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.98 1999/02/09 01:57:05 wrstuden Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.99 1999/03/22 17:24:19 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -529,7 +529,8 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	int s, error;
 
 	if (flags & V_SAVE) {
-		if ((error = VOP_FSYNC(vp, cred, FSYNC_WAIT, p)) != 0)
+		error = VOP_FSYNC(vp, cred, FSYNC_WAIT|FSYNC_RECLAIM, p);
+		if (error != 0)
 			return (error);
 		if (vp->v_dirtyblkhd.lh_first != NULL)
 			panic("vinvalbuf: dirty bufs");
