@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1997/02/11 00:58:34 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1997/02/12 16:06:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1126,6 +1126,8 @@ dumpmem(ptr, sz, ustack)
 			if ((val = fuword(ptr++)) == -1)
 				break;
 		} else {
+			if (curproc == 0)
+				break;
 			if (ustack == 0 &&
 			    (ptr < KSADDR || ptr > KSADDR+(NBPG/4-1)))
 				break;
