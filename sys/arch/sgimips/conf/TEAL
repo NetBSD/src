@@ -1,4 +1,4 @@
-#	$NetBSD: TEAL,v 1.1 2001/05/11 05:05:42 thorpej Exp $
+#	$NetBSD: TEAL,v 1.2 2001/07/07 23:17:58 wdk Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -21,6 +21,11 @@ options 	DDB
 options 	DDB_HISTORY_SIZE=100
 options 	DEBUG
 options 	DIAGNOSTIC
+
+#options	KGDB
+#options	KGDBDEV=0x2301		# KGDB port - this is Serial(1)
+#options	KGDBRATE=19200		# KGDB Baud Rate
+
 #makeoptions 	DEBUG="-g"
 
 file-system	FFS
