@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/10/22 05:58:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2004/02/07 04:46:59 lukem Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -22,20 +22,22 @@ GENSRCS=bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
 	str_vars.h time_table.h time_vars.h raw_table.h raw_vars.h
 
 SRCS=	${PSRCS} ${GENSRCS}
+DPSRCS=	${GENSRCS}
 
 CLEANFILES+= ${GENSRCS}
 
-CPPFLAGS+= -I${.OBJDIR}
+CPPFLAGS+= -I.
 
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 
 # XXX Note that there is no ${AWK} variable in our build system. This
 # is probably a deficiency.
-${GENSRCS}: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_params.c
+${GENSRCS}: postconf-hdrs
+CLEANFILES+= postconf-hdrs
+postconf-hdrs: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_params.c
 	${_MKMSG_CREATE} ${GENSRCS}
 	awk -f ${DIST}/extract.awk ${DIST}/../*/*.c
+	touch ${.TARGET}
 
 .include <bsd.prog.mk>
-
-${OBJS}: ${GENSRCS}
