@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.24 2003/09/27 10:07:57 tsutsui Exp $
+#	$NetBSD: ARCTIC,v 1.25 2003/10/08 11:04:56 bouyer Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -167,6 +167,9 @@ wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 wdc1		at isa? port 0x170 irq 15 flags 0x00
 #wdc*		at isapnp?
 
+# ATA bus
+atabus* 	at wdc? channel ?
+
 # IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
@@ -178,10 +181,10 @@ wdc1		at isa? port 0x170 irq 15 flags 0x00
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-wd*		at wdc? channel ? drive ? flags 0x0000
+wd*		at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus*	at wdc? channel ?
+atapibus*	at atabus?
 
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x378 irq 7
