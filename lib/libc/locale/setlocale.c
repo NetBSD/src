@@ -88,7 +88,7 @@ setlocale(category, locale)
 	int category;
 	const char *locale;
 {
-	int found, i, len;
+	int i, len;
 	char *env, *r;
 
 	/*
@@ -118,20 +118,20 @@ setlocale(category, locale)
 	if (!*locale) {
 		env = getenv(categories[category]);
 
-		if (!env)
+		if (!env || !*env)
 			env = getenv(categories[0]);
 
-		if (!env)
+		if (!env || !*env)
 			env = getenv("LANG");
 
-		if (!env)
+		if (!env || !*env)
 			env = "C";
 
 		(void)strncpy(new_categories[category], env, 31);
 		new_categories[category][31] = 0;
 		if (!category) {
 			for (i = 1; i < _LC_LAST; ++i) {
-				if (!(env = getenv(categories[i])))
+				if (!(env = getenv(categories[i])) || !*env)
 					env = new_categories[0];
 				(void)strncpy(new_categories[i], env, 31);
 				new_categories[i][31] = 0;
@@ -169,13 +169,11 @@ setlocale(category, locale)
 	if (category)
 		return (loadlocale(category));
 
-	found = 0;
 	for (i = 1; i < _LC_LAST; ++i)
-		if (loadlocale(i) != NULL)
-			found = 1;
-	if (found)
-	    return (currentlocale());
-	return (NULL);
+		if (loadlocale(i) == NULL)
+			return (NULL);
+
+	return (currentlocale());
 }
 
 static char *
