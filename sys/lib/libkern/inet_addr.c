@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1 1997/12/12 20:14:01 gwr Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.2 1999/04/12 01:05:01 ross Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -23,6 +23,14 @@
 
 #include <sys/types.h>
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
+
 /*
  * Warning - these are not the standard definitions,
  * but are the minimum sufficient for this source.
@@ -36,7 +44,7 @@
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
  */
-u_int32_t
+u_long
 inet_addr(src)
 	const char *src;
 {
