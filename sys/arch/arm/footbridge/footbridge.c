@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.3 2001/11/23 19:21:47 thorpej Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.4 2002/01/05 22:41:47 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -53,7 +53,8 @@
 #include <arm/footbridge/footbridgevar.h>
 #include <arm/footbridge/dc21285reg.h>
 #include <arm/footbridge/dc21285mem.h>
-
+#include <arm/footbridge/footbridge.h>
+ 
 /*
  * DC21285 'Footbridge' device
  *
@@ -69,7 +70,6 @@ static void footbridge_attach	__P((struct device *parent, struct device *self,
         	                     void *aux));
 static int footbridge_print	__P((void *aux, const char *pnp));
 static int footbridge_intr	__P((void *arg));
-void footbridge_sa110_cc_setup	__P((void));
 
 /* Driver and attach structures */
 struct cfattach footbridge_ca = {
