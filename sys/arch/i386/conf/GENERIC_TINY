@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.58 2003/09/09 07:14:02 itojun Exp $
+#	$NetBSD: GENERIC_TINY,v 1.59 2003/10/08 11:10:04 bouyer Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -346,8 +346,10 @@ wdc*	at pcmcia? function ?
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 
+atabus* at wdc? channel ?
+
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
+wd*	at atabus? drive ?			# the drives themselves
 
 # ATAPI bus support
 atapibus* at atapi?
