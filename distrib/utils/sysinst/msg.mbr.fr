@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.11 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.12 2004/03/28 19:06:49 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,7 +63,7 @@ message Use_the_entire_disk
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Total disksize %d %s.
+{   Taille totale du disque %d %s.
 
 .if BOOTSEL
    Début(%3s) Taille(%3s) Flg Type                   Nom de démarre
@@ -82,12 +82,12 @@ message noactivepart
 Cela peut empêcher votre système de démarrer correctement.
 Dois-je marquer la partition NetBSD active?}
 
-message setbiosgeom	/* XXX translate */
+message setbiosgeom
 {
 On va vous demander la géométrie.
-Please enter the number of sectors per track (maximum 63)
-and number of heads (maximum 256) that the BIOS uses to access the disk.
-The number of cylinders will be calculated from the disk size.
+SVP entrez le nombre de secteur par piste (maximum 63) et le nombre de
+têtes (maximum 256) que le BIOS utilise pour accéder au disque.
+Le nombre de cylindres sera déduit de la taille du disque.
 
 }
 
@@ -120,28 +120,28 @@ message ptn_start
 {     Début: %d %s}
 message ptn_size
 {    taille: %d %s}
-message ptn_end	/* XXX translate */
+message ptn_end
 {       fin: %d %s}
 message ptn_active
 {    active: %s}
 message ptn_install
-{   install: %s}
+{   installation: %s}
 .if BOOTSEL
-message bootmenu	/* XXX translate */
-{  bootmenu: %s}
-message boot_dflt	/* XXX translate */
-{   default: %s}
+message bootmenu
+{  menu de boot: %s}
+message boot_dflt
+{   défaut: %s}
 .endif
 
-message get_ptn_size {%staille (maximum %d %s)}	/* XXX translate */
-message Invalid_numeric {Invalid numeric: }	/* XXX translate */
-message Too_large {Too large: }	/* XXX translate */
-message Space_allocated {Space allocated: }	/* XXX translate */
-message ptn_starts {Space at %d..%d %s (taille %d %s)\n}	/* XXX translate */
+message get_ptn_size {%staille (maximum %d %s)}
+message Invalid_numeric {Nombre invalide: }
+message Too_large {Trop grand : }
+message Space_allocated {Espace alloué: }
+message ptn_starts {Espace à %d..%d %s (taille %d %s)\n}
 message get_ptn_start {%s%sDébut (en %s)}
-message get_ptn_id {Partition kind (0..255)}	/* XXX translate */
-message No_free_space {No free space}	/* XXX translate */
-message Only_one_extended_ptn {There can only be one extended partition}	/* XXX translate */
+message get_ptn_id {Type de partition (0..255)}
+message No_free_space {Pas d'espace libre}
+message Only_one_extended_ptn {Il ne peut y avoir qu'une seule partition étendue}
 
 
 message editparttable
@@ -153,27 +153,27 @@ message Partition_table_ok
 {Partition table OK}
 
 message Delete_partition
-{Delete Partition}	/* XXX translate */
+{Supprimer la Partition}
 message Dont_change
 {Ne pas modifier}
 message Other_kind 
-{Other, input number}	/* XXX translate */
+{Autre, entrer un chiffre}
 
 
-message reeditpart	/* XXX translate */
+message reeditpart
 {
 
-Voulez vous rééditer la table des partitions (or abandon the installation)?
+Voulez vous rééditer la table des partitions (ou abandonner l'installation)?
 }
 
 message nobsdpart
 {Il n'y a pas de partition NetBSD dans la table des partitions du secteur de
 boot.}
 
-message multbsdpart	/* XXX translate */
+message multbsdpart
 {Il y a plusieurs partition NetBSD dans la table des partitions du secteur de
 boot.
-You should set the 'install' flag on the one you want to use.}
+Positionnez le drapeau 'installation' sur celle à utiliser.}
 
 message dofdisk
 {Configuration de la table des partition DOS ...
