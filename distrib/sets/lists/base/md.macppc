@@ -1,6 +1,5 @@
-# $NetBSD: md.macppc,v 1.13 2001/12/04 00:12:46 jdolecek Exp $
+# $NetBSD: md.macppc,v 1.14 2002/05/18 04:20:04 lukem Exp $
 ./usr/mdec/bootxx		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin
 ./usr/mdec/ofwboot		base-sysutil-bin
 ./usr/mdec/ofwboot.elf		base-sysutil-bin
 ./usr/mdec/ofwboot.xcf		base-sysutil-bin
