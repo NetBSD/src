@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.30 1999/07/28 00:01:02 augustss Exp $
+$NetBSD: acronyms,v 1.31 1999/07/31 21:51:40 thorpej Exp $
 
 AFAICT	as far as I can tell
 AFAICR	as far as I can recall
@@ -21,6 +21,7 @@ DTWT	do the wrong thing
 DWIM	do what I mean
 EG	evil grin
 ETLA	extended three letter acronym
+FSDO	for some definition of
 FWIW	for what it's worth
 FYI	for your information
 G	grin
