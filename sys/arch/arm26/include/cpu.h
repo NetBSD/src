@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.2 2000/05/26 21:19:30 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.3 2000/08/25 16:43:47 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -53,5 +53,32 @@ extern struct cpu_info cpu_info_store;
 #endif
 
 #define INSN_SIZE 4
+
+#ifdef _KERNEL
+/* ASTs etc */
+
+#include <sys/proc.h>
+extern int want_resched, astpending;
+
+#define setsoftast()							\
+do {									\
+	astpending = 1;							\
+} while (/* CONSTCOND */ 0)
+
+#define need_resched(ci)						\
+do {									\
+	want_resched = 1;						\
+	setsoftast();							\
+} while (/* CONSTCOND */ 0)
+
+#define need_proftick(p)						\
+do {									\
+	(p)->p_flag |= P_OWEUPC;					\
+	setsoftast();							\
+} while (/* CONSTCOND */ 0)
+
+#define signotify(p) setsoftast()
+
+#endif /* _KERNEL */
 
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3 2000/08/25 01:04:07 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.4 2000/08/25 16:43:47 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -99,17 +99,6 @@ extern int hardsplx(int);
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-/*
- * Emulated AST handling (faked trap on return to user code)
- */
-
-#define signotify(p)	setsoftast()
-extern void setsoftast(void);
-
-struct cpu_info;
-extern void need_resched(struct cpu_info *);
-extern void need_proftick(struct proc *);
 
 /*
  * Soft Interrupts

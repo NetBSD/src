@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.12 2000/08/25 01:04:07 thorpej Exp $ */
+/* $NetBSD: except.c,v 1.13 2000/08/25 16:43:46 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.12 2000/08/25 01:04:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13 2000/08/25 16:43:46 bjh21 Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -697,23 +697,6 @@ ast_handler(struct trapframe *tf)
 
 	userret(p, pc, sticks);
 }
-
-
-void
-setsoftast()
-{
-	astpending = 1;
-}
-
-extern int want_resched; /* XXX */
-
-void
-need_resched(struct cpu_info *ci)
-{
-	want_resched = 1;
-	setsoftast();
-}
-
 
 #ifdef DEBUG
 static void

@@ -1,22 +1,15 @@
-/* $NetBSD: stubs.c,v 1.4 2000/08/20 15:16:52 bjh21 Exp $ */
+/* $NetBSD: stubs.c,v 1.5 2000/08/25 16:43:46 bjh21 Exp $ */
 /*
  * stubs.c -- functions I haven't written yet
  */
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: stubs.c,v 1.4 2000/08/20 15:16:52 bjh21 Exp $");
+__RCSID("$NetBSD: stubs.c,v 1.5 2000/08/25 16:43:46 bjh21 Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-
-void
-need_proftick(p)
-	struct proc *p;
-{
-	panic("need_proftick not implemented");
-}
 
 void
 resettodr()
