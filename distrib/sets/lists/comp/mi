@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.504 2002/12/05 03:59:19 explorer Exp $
+#	$NetBSD: mi,v 1.505 2002/12/12 09:45:34 scw Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2010,6 +2010,8 @@
 ./usr/share/man/cat3/gethostid.0	comp-c-catman
 ./usr/share/man/cat3/gethostname.0	comp-c-catman
 ./usr/share/man/cat3/getifaddrs.0	comp-c-catman
+./usr/share/man/cat3/getlabeloffset.0	comp-c-catman
+./usr/share/man/cat3/getlabelsector.0	comp-c-catman
 ./usr/share/man/cat3/getloadavg.0	comp-c-catman
 ./usr/share/man/cat3/getmaxpartitions.0	comp-c-catman
 ./usr/share/man/cat3/getmaxx.0		comp-c-catman
@@ -4993,6 +4995,8 @@
 ./usr/share/man/man3/gethostid.3		comp-c-man
 ./usr/share/man/man3/gethostname.3		comp-c-man
 ./usr/share/man/man3/getifaddrs.3		comp-c-man
+./usr/share/man/man3/getlabeloffset.3	comp-c-man
+./usr/share/man/man3/getlabelsector.3	comp-c-man
 ./usr/share/man/man3/getloadavg.3		comp-c-man
 ./usr/share/man/man3/getmaxpartitions.3		comp-c-man
 ./usr/share/man/man3/getmaxx.3		comp-c-man
