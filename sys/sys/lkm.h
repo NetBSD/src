@@ -1,6 +1,4 @@
 /*
- * lkm.h
- *
  * Header file used by loadable kernel modules and loadable kernel module
  * utilities.
  *
@@ -36,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lkm.h,v 1.3 1994/05/05 06:34:18 cgd Exp $
+ *	$Id: lkm.h,v 1.4 1994/05/05 09:43:58 mycroft Exp $
  */
 
 #ifndef _SYS_LKM_H_
@@ -55,7 +53,7 @@ typedef enum loadmod {
 } MODTYPE;
 
 
-#define	LKM_VERSION	1		/* version of module loader*/
+#define	LKM_VERSION	1		/* version of module loader */
 #define	MAXLKMNAME	32
 
 /****************************************************************************/
@@ -66,23 +64,23 @@ typedef enum loadmod {
  * Loadable system call
  */
 struct lkm_syscall {
-	MODTYPE		lkm_type;
-	int		lkm_ver;
-	char		*lkm_name;
-	unsigned long	lkm_offset;		/* save/assign area*/
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	char	*lkm_name;
+	u_long	lkm_offset;		/* save/assign area */
 	struct sysent	*lkm_sysent;
-	struct sysent	lkm_oldent;		/* save area for unload*/
+	struct sysent	lkm_oldent;	/* save area for unload */
 };
 
 /*
  * Loadable file system
  */
 struct lkm_vfs {
-	MODTYPE		lkm_type;
-	int		lkm_ver;
-	char		*lkm_name;
-	unsigned long	lkm_offset;
-	unsigned long	lkm_flags;
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	char	*lkm_name;
+	u_long	lkm_offset;
+	u_long	lkm_flags;
 	struct vfsops	*lkm_vfsops;
 };
 
@@ -98,13 +96,13 @@ typedef enum devtype {
  * Loadable device driver
  */
 struct lkm_dev {
-	MODTYPE		lkm_type;
-	int		lkm_ver;
-	char		*lkm_name;
-	unsigned long	lkm_offset;
-	DEVTYPE		lkm_devtype;
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	char	*lkm_name;
+	u_long	lkm_offset;
+	DEVTYPE	lkm_devtype;
 	union {
-		void		*anon;
+		void	*anon;
 		struct bdevsw	*bdev;
 		struct cdevsw	*cdev;
 	} lkm_dev;
@@ -118,10 +116,10 @@ struct lkm_dev {
  * Loadable streams module
  */
 struct lkm_strmod {
-	MODTYPE		lkm_type;
-	int		lkm_ver;
-	char		*lkm_name;
-	unsigned long	lkm_offset;
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	char	*lkm_name;
+	u_long	lkm_offset;
 	/*
 	 * Removed: future release
 	 */
@@ -131,10 +129,10 @@ struct lkm_strmod {
  * Exec loader
  */
 struct lkm_exec {
-	MODTYPE		lkm_type;
-	int		lkm_ver;
-	char		*lkm_name;
-	unsigned long	lkm_offset;
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	char	*lkm_name;
+	u_long	lkm_offset;
 	struct execsw	*lkm_exec;
 	struct execsw	lkm_oldexec;
 };
@@ -143,23 +141,21 @@ struct lkm_exec {
  * Miscellaneous module (complex load/unload, potentially complex stat
  */
 struct lkm_misc {
-	MODTYPE		lkm_type;
-	int		lkm_ver;
-	char		*lkm_name;
-	unsigned long	lkm_offset;
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	char	*lkm_name;
+	u_long	lkm_offset;
 };
-
 
 /*
  * Any module (to get type and name info without knowing type)
  */
 struct lkm_any {
-	MODTYPE		lkm_type;
-	int		lkm_ver;
-	char		*lkm_name;
-	unsigned long	lkm_offset;
+	MODTYPE	lkm_type;
+	int	lkm_ver;
+	char	*lkm_name;
+	u_long	lkm_offset;
 };
-
 
 
 /*
@@ -190,19 +186,19 @@ union lkm_all {
  * Per module information structure
  */
 struct lkm_table {
-	int		type;
-	unsigned long	size;
-	unsigned long	offset;
-	unsigned long	area;
-	char		used;
+	int	type;
+	u_long	size;
+	u_long	offset;
+	u_long	area;
+	char	used;
 
-	int			ver;		/* version (INIT)*/
-	int			refcnt;		/* reference count (INIT)*/
-	int			depcnt;		/* dependency count (INIT)*/
-	int			id;		/* identifier (INIT)*/
+	int	ver;		/* version (INIT) */
+	int	refcnt;		/* reference count (INIT) */
+	int	depcnt;		/* dependency count (INIT) */
+	int	id;		/* identifier (INIT) */
 
-	int			(*entry)();	/* entry function*/
-	union lkm_generic	private;	/* module private data*/
+	int	(*entry)();	/* entry function */
+	union lkm_generic	private;	/* module private data */
 };
 
 
@@ -220,7 +216,7 @@ struct lkm_table {
 		sysentp				\
 	};
 
-#define	MOD_VFS(name,vfsslot,flags,vfsopsp)		\
+#define	MOD_VFS(name,vfsslot,flags,vfsopsp)	\
 	static struct lkm_vfs _module = {	\
 		LM_VFS,				\
 		LKM_VERSION,			\
@@ -269,25 +265,25 @@ extern int	nosys();
  * that a single function can be used if desired.
  */
 #define	DISPATCH(lkmtp,cmd,ver,load,unload,stat)			\
-	if( ver != LKM_VERSION)						\
-		return( EINVAL);	/* version mismatch*/		\
-	switch( cmd) {							\
-	int	_err;							\
+	if (ver != LKM_VERSION)						\
+		return EINVAL;	/* version mismatch */			\
+	switch (cmd) {							\
+	int	error;							\
 	case LKM_E_LOAD:						\
 		lkmtp->private.lkm_any = (struct lkm_any *)&_module;	\
-		if( load != nosys && (_err = load( lkmtp, cmd)))	\
-			return( _err);					\
+		if (load != nosys && (error = load(lkmtp, cmd)))	\
+			return error;					\
 		break;							\
 	case LKM_E_UNLOAD:						\
-		if( unload != nosys && (_err = unload( lkmtp, cmd)))	\
-			return( _err);					\
+		if (unload != nosys && (error = unload(lkmtp, cmd)))	\
+			return error;					\
 		break;							\
 	case LKM_E_STAT:						\
-		if( stat != nosys && (_err = stat( lkmtp, cmd)))	\
-			return( _err);					\
+		if (stat != nosys && (error = stat(lkmtp, cmd)))	\
+			return error;					\
 		break;							\
 	}								\
-	return( lkmdispatch( lkmtp, cmd));
+	return lkmdispatch(lkmtp, cmd);
 
 #endif /* KERNEL */
 
@@ -296,16 +292,16 @@ extern int	nosys();
 /*
  * IOCTL's recognized by /dev/lkm
  */
-#define	LMRESERV	_IOWR( 'K', 0, struct lmc_resrv)
-#define	LMLOADBUF	_IOW( 'K', 1, struct lmc_loadbuf)
-#define	LMUNRESRV	_IO( 'K', 2)
-#define	LMREADY		_IOW( 'K', 3, int)
+#define	LMRESERV	_IOWR('K', 0, struct lmc_resrv)
+#define	LMLOADBUF	_IOW('K', 1, struct lmc_loadbuf)
+#define	LMUNRESRV	_IO('K', 2)
+#define	LMREADY		_IOW('K', 3, int)
 
-#define	LMLOAD		_IOW( 'K', 9, struct lmc_load)
-#define	LMUNLOAD	_IOWR( 'K', 10, struct lmc_unload)
-#define	LMSTAT		_IOWR( 'K', 11, struct lmc_stat)
+#define	LMLOAD		_IOW('K', 9, struct lmc_load)
+#define	LMUNLOAD	_IOWR('K', 10, struct lmc_unload)
+#define	LMSTAT		_IOWR('K', 11, struct lmc_stat)
 
-#define	MODIOBUF	512		/* # of bytes at a time to loadbuf*/
+#define	MODIOBUF	512		/* # of bytes at a time to loadbuf */
 
 /*
  * IOCTL arguments
@@ -316,10 +312,10 @@ extern int	nosys();
  * Reserve a page-aligned block of kernel memory for the module
  */
 struct lmc_resrv {
-	unsigned long	size;		/* IN: size of module to reserve*/
-	char		*name;		/* IN: name (must be provided*/
-	int		slot;		/* OUT: allocated slot (module ID)*/
-	unsigned long	addr;		/* OUT: Link-to address*/
+	u_long	size;		/* IN: size of module to reserve */
+	char	*name;		/* IN: name (must be provided */
+	int	slot;		/* OUT: allocated slot (module ID) */
+	u_long	addr;		/* OUT: Link-to address */
 };
 
 
@@ -328,8 +324,8 @@ struct lmc_resrv {
  * are assumed to occur contiguously.
  */
 struct lmc_loadbuf {
-	int		cnt;		/* IN: # of chars pointed to by data*/
-	char		*data;		/* IN: pointer to data buffer*/
+	int	cnt;		/* IN: # of chars pointed to by data */
+	char	*data;		/* IN: pointer to data buffer */
 };
 
 
@@ -337,18 +333,18 @@ struct lmc_loadbuf {
  * Load a module (assumes it's been mmapped to address before call)
  */
 struct lmc_load {
-	caddr_t		address;	/* IN: user space mmap address*/
-	int		status;		/* OUT: status of operation*/
-	int		id;		/* OUT: module ID if loaded*/
+	caddr_t	address;	/* IN: user space mmap address */
+	int	status;		/* OUT: status of operation */
+	int	id;		/* OUT: module ID if loaded */
 };
 
 /*
  * Unload a module (by name/id)
  */
 struct lmc_unload {
-	int		id;		/* IN: module ID to unload*/
-	char		*name;		/* IN: module name to unload if id -1*/
-	int		status;		/* OUT: status of operation*/
+	int	id;		/* IN: module ID to unload */
+	char	*name;		/* IN: module name to unload if id -1 */
+	int	status;		/* OUT: status of operation */
 };
 
 
@@ -356,14 +352,14 @@ struct lmc_unload {
  * Get module information for a given id (or name if id == -1).
  */
 struct lmc_stat {
-	int		id;			/* IN: module ID to unload*/
-	char		name[ MAXLKMNAME];	/* IN/OUT: name of module*/
-	unsigned long	offset;			/* OUT: target table offset*/
-	MODTYPE		type;			/* OUT: type of module*/
-	unsigned long	area;			/* OUT: kernel load addr*/
-	unsigned long	size;			/* OUT: module size (pages)*/
-	unsigned long	private;		/* OUT: module private data*/
-	int		ver;			/* OUT: lkm compile version*/
+	int	id;			/* IN: module ID to unload */
+	char	name[MAXLKMNAME];	/* IN/OUT: name of module */
+	u_long	offset;			/* OUT: target table offset */
+	MODTYPE	type;			/* OUT: type of module */
+	u_long	area;			/* OUT: kernel load addr */
+	u_long	size;			/* OUT: module size (pages) */
+	u_long	private;		/* OUT: module private data */
+	int	ver;			/* OUT: lkm compile version */
 };
 
 #endif	/* !_SYS_LKM_H_ */
