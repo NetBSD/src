@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.65 1995/02/25 17:08:29 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.66 1995/02/25 17:17:33 cgd Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -54,7 +54,7 @@ MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctime.3 ctype.3 daemon.3 \
 	isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 \
 	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 \
 	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
-	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \	
+	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
 	signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 syslog.3 tcgetpgrp.3 \
 	tcsendbreak.3 tcsetattr.3 tcsetpgrp.3 time.3 times.3 timezone.3 \
 	tolower.3 toupper.3 ttyname.3 tzset.3 ualarm.3 uname.3 unvis.3 \
