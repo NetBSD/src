@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.32 2003/01/12 05:24:17 matt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.33 2003/01/30 20:03:46 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.32 2003/01/12 05:24:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.33 2003/01/30 20:03:46 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	struct uvm_object *uobj;
 	int error;
+	const int fixed = (cmd->ev_flags & VMCMD_FIXED) ? UVM_FLAG_FIXED : 0;
 
 	KASSERT(cmd->ev_vp->v_flag & VTEXT);
 
@@ -170,7 +171,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
 		uobj, cmd->ev_offset, 0,
 		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY, 
-			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
+			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|fixed));
 	if (error) {
 		uobj->pgops->pgo_detach(uobj);
 	}
@@ -188,6 +189,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 	long diff;
+	const int fixed = (cmd->ev_flags & VMCMD_FIXED) ? UVM_FLAG_FIXED : 0;
 
 	if (cmd->ev_len == 0)
 		return 0;
@@ -201,7 +203,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
-			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
+			fixed|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
 
 	if (error)
 		return error;
@@ -257,6 +259,7 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 	long diff;
+	const int fixed = (cmd->ev_flags & VMCMD_FIXED) ? UVM_FLAG_FIXED : 0;
 
 	diff = cmd->ev_addr - trunc_page(cmd->ev_addr);
 	cmd->ev_addr -= diff;			/* required by uvm_map */
@@ -266,7 +269,7 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
-			UVM_FLAG_FIXED|UVM_FLAG_COPYONW));
+			fixed|UVM_FLAG_COPYONW));
 	return error;
 }
 
