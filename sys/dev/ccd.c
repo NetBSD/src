@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.18 1995/10/09 05:37:57 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.19 1995/10/12 21:28:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -381,7 +381,7 @@ ccdinit(ccd, cpaths, p)
 	 * pretty close.
 	 */
 	ccg->ccg_secsize = DEV_BSIZE;
-	ccg->ccg_ntracks = 1;		/* We don't even use this... */
+	ccg->ccg_ntracks = 1;
 	ccg->ccg_nsectors = 1024 * (1024 / ccg->ccg_secsize);
 	ccg->ccg_ncylinders = cs->sc_size / ccg->ccg_nsectors;
 
@@ -426,10 +426,10 @@ ccdinterleave(cs, unit)
 	if (cs->sc_ileave == 0) {
 		bn = 0;
 		ii = cs->sc_itable;
-		/* Allocate space for ii_index. */
-		ii->ii_index = malloc(cs->sc_nccdisks, M_DEVBUF, M_WAITOK);
 
 		for (ix = 0; ix < cs->sc_nccdisks; ix++) {
+			/* Allocate space for ii_index. */
+			ii->ii_index = malloc(sizeof(int), M_DEVBUF, M_WAITOK);
 			ii->ii_ndisk = 1;
 			ii->ii_startblk = bn;
 			ii->ii_startoff = 0;
@@ -452,7 +452,8 @@ ccdinterleave(cs, unit)
 	bn = lbn = 0;
 	for (ii = cs->sc_itable; ; ii++) {
 		/* Allocate space for ii_index. */
-		ii->ii_index = malloc(cs->sc_nccdisks, M_DEVBUF, M_WAITOK);
+		ii->ii_index = malloc((sizeof(int) * cs->sc_nccdisks),
+		    M_DEVBUF, M_WAITOK);
 
 		/*
 		 * Locate the smallest of the remaining components
@@ -1102,9 +1103,9 @@ ccdioctl(dev, cmd, data, flag, p)
 			(void)vn_close(cs->sc_cinfo[i].ci_vp, FREAD|FWRITE,
 			    p->p_ucred, p);
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
+			free(cs->sc_itable[i].ii_index, M_DEVBUF);
 		}
 		free(cs->sc_cinfo, M_DEVBUF);
-		free(cs->sc_itable->ii_index, M_DEVBUF);
 		free(cs->sc_itable, M_DEVBUF);
 		bzero(cs, sizeof(struct ccd_softc));
 
@@ -1306,7 +1307,7 @@ ccdgetdisklabel(dev)
 	lp->d_nsectors = ccg->ccg_nsectors;
 	lp->d_ntracks = ccg->ccg_ntracks;
 	lp->d_ncylinders = ccg->ccg_ncylinders;
-	lp->d_secpercyl = lp->d_secperunit / lp->d_ncylinders;
+	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
 
 	strncpy(lp->d_typename, "ccd", sizeof(lp->d_typename));
 	lp->d_type = DTYPE_CCD;
