@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 2003/04/26 19:02:51 fvdl Exp $ */
+/*	$NetBSD: md.c,v 1.2 2003/05/03 17:04:09 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -606,14 +606,14 @@ configure_bootsel()
 
 
 	mbs = (struct mbr_bootsel *)&mbr[MBR_BOOTSELOFF];
-	mbs->flags = BFL_SELACTIVE;
+	mbs->mbrb_flags = BFL_SELACTIVE;
 
 	/* Setup default labels for partitions, since if not done by user */
 	/* they don't get set and and bootselector doesn't 'appear' when  */
 	/* it's loaded.                                                   */
 	for (i = 0; i < NMBRPART; i++) {
-		if (parts[i].mbrp_typ != 0 && mbs->nametab[i][0] == '\0')
-			snprintf(mbs->nametab[i], sizeof(mbs->nametab[0]),
+		if (parts[i].mbrp_typ != 0 && mbs->mbrb_nametab[i][0] == '\0')
+			snprintf(mbs->mbrb_nametab[i], sizeof(mbs->mbrb_nametab[0]),
 			    "entry %d", i+1);
 	}
 
@@ -622,7 +622,7 @@ configure_bootsel()
 	for (i = 0; i < NMBRPART; i++) {
 		if (parts[i].mbrp_typ != 0 &&
 		   parts[i].mbrp_start >= (bcyl * bhead * bsec)) {
-			mbs->flags |= BFL_EXTINT13;
+			mbs->mbrb_flags |= BFL_EXTINT13;
 			break;
 		}
 	}
@@ -638,7 +638,7 @@ disp_bootsel(part, mbsp)
 	msg_table_add(MSG_bootsel_header);
 	for (i = 0; i < 4; i++) {
 		msg_table_add(MSG_bootsel_row,
-		    i, get_partname(i), mbs->nametab[i]);
+		    i, get_partname(i), mbs->mbrb_nametab[i]);
 	}
 	msg_display_add(MSG_newline);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2003/04/26 19:02:51 fvdl Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2003/05/03 17:04:09 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,7 +122,7 @@ EXTERN char *boottype INIT("");
  * If not defined, we assume the port does not support disklabels and
  * hand-edited disklabel will NOT be written by MI code.
  *
- * On x86_64, do what the 1.2 install scripts did. 
+ * On amd64, do what the 1.2 install scripts did. 
  */
 #define DISKLABEL_CMD "disklabel -w -r"
 
@@ -140,27 +140,11 @@ extern struct biosdisk_info *biosdisk;
 #define _PATH_MBR	"/usr/mdec/mbr"
 #define _PATH_BOOTSEL	"/usr/mdec/mbr_bootsel"
 
-struct mbr_bootsel {
-	u_int8_t defkey;
-	u_int8_t flags;
-	u_int16_t timeo;
-	char nametab[4][9];
-	u_int16_t magic;
-} __attribute__((packed));
- 
 extern struct mbr_bootsel *mbs;
  
-#define BFL_SELACTIVE   0x01
-#define BFL_EXTINT13    0x02
- 
-#define SCAN_ENTER      0x1c
-#define SCAN_F1         0x3b
-
 #define LIB_COUNT	0
 #define LIB_MOVE	1
  
-#define MBR_BOOTSELOFF  (MBR_PARTOFF - sizeof (struct mbr_bootsel))
-
 extern int defbootselpart, defbootseldisk;
 
 void disp_bootsel (struct mbr_partition *, struct mbr_bootsel *);
