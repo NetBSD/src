@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.5 1997/04/11 17:52:46 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.6 1997/07/06 18:25:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,8 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
+#if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: history.c,v 1.6 1997/07/06 18:25:27 christos Exp $");
+#endif
 #endif /* not lint && not SCCSID */
 
 /*

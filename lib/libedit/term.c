@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.9 1997/04/11 22:40:06 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.10 1997/07/06 18:25:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: term.c,v 1.9 1997/04/11 22:40:06 christos Exp $";
+__RCSID("$NetBSD: term.c,v 1.10 1997/07/06 18:25:36 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -57,6 +58,7 @@ static char rcsid[] = "$NetBSD: term.c,v 1.9 1997/04/11 22:40:06 christos Exp $"
 #include <unistd.h>
 #include "termcap.h"	/* XXX: should be <termcap.h> */
 #include <sys/types.h>
+#include <sys/ioctl.h>
 
 #include "el.h"
 
@@ -249,6 +251,7 @@ private struct termcapval {
 
 /* do two or more of the attributes use me */
 
+private void	term_setflags		__P((EditLine *));
 private	void	term_rebuffer_display	__P((EditLine *));
 private	void	term_free_display	__P((EditLine *));
 private	void	term_alloc_display	__P((EditLine *));

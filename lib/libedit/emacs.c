@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.3 1997/01/11 06:47:54 lukem Exp $	*/
+/*	$NetBSD: emacs.c,v 1.4 1997/07/06 18:25:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: emacs.c,v 1.3 1997/01/11 06:47:54 lukem Exp $";
+__RCSID("$NetBSD: emacs.c,v 1.4 1997/07/06 18:25:25 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
