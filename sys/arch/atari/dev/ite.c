@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.33 2001/05/02 10:32:15 scw Exp $	*/
+/*	$NetBSD: ite.c,v 1.34 2001/07/09 12:06:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -153,7 +153,13 @@ struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
 };
 
-extern struct cfdriver ite_cd;
+extern struct cfdriver	ite_cd;
+
+/*
+ * Keep track of the device number of the ite console. Only used in the
+ * itematch/iteattach functions.
+ */
+static int		cons_ite = -1;
 
 int
 itematch(pdp, cfp, auxp)
@@ -161,27 +167,29 @@ itematch(pdp, cfp, auxp)
 	struct cfdata	*cfp;
 	void		*auxp;
 {
-	struct grf_softc *gp  = auxp;
-	int		 maj;
+	static int	 nmatches = 0;
 	
+	/*
+	 * Handle early console stuff. The first cf_unit number
+	 * matches the console unit. All other early matches will fail.
+	 */
+	if (atari_realconfig == 0) {
+		if (cons_ite >= 0)
+			return 0;
+		cons_ite = cfp->cf_unit;
+		return 1;
+	}
+
 	/*
 	 * all that our mask allows (more than enough no one 
 	 * has > 32 monitors for text consoles on one machine)
 	 */
+	if (nmatches >= sizeof(ite_confunits) * NBBY)
+		return 0;	/* checks STAR */
 	if (cfp->cf_unit >= sizeof(ite_confunits) * NBBY)
-		return(0);
-	/*
-	 * XXX
-	 * normally this would be done in attach, however
-	 * during early init we do not have a device pointer
-	 * and thus no unit number.
-	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
-
-	gp->g_itedev = makedev(maj, cfp->cf_unit);
-	return(1);
+		return 0;	/* refuses ite100 at .... */
+	nmatches++;
+	return 1;
 }
 
 void
@@ -192,16 +200,20 @@ void		*auxp;
 	struct grf_softc	*gp;
 	struct ite_softc	*ip;
 	int			s;
+	int			maj, unit;
 
 	gp = (struct grf_softc *)auxp;
+	ip = (struct ite_softc *)dp;
 
-	/*
-	 * mark unit as attached (XXX see itematch)
-	 */
-	ite_confunits |= 1 << ITEUNIT(gp->g_itedev);
+	for(maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == iteopen)
+			break;
+	unit = (dp != NULL) ? ip->device.dv_unit : cons_ite;
+	gp->g_itedev = makedev(maj, unit);
 
 	if(dp) {
-		ip = (struct ite_softc *)dp;
+
+		ite_confunits |= 1 << ITEUNIT(gp->g_itedev);
 
 		s = spltty();
 		if(con_itesoftc.grf != NULL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.10 2000/03/29 14:19:23 leo Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.11 2001/07/09 12:06:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -178,6 +178,7 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	static struct grf_softc		congrf;
+	static int			first_attach = 1;
 	       grf_auxp_t		*grf_bus_auxp = auxp;
 	       grf_auxp_t		grf_auxp;
 	       struct grf_softc		*gp;
@@ -194,8 +195,8 @@ void		*auxp;
 	 * Handle exeption case: early console init
 	 */
 	if(dp == NULL) {
-		congrf.g_unit    = 0;
-		congrf.g_grfdev  = makedev(maj, 0);
+		congrf.g_unit    = cfdata_grf->cf_unit;
+		congrf.g_grfdev  = makedev(maj, congrf.g_unit);
 		congrf.g_itedev  = (dev_t)-1;
 		congrf.g_flags   = GF_ALIVE;
 		congrf.g_mode    = grf_mode;
@@ -213,7 +214,7 @@ void		*auxp;
 	gp->g_unit = gp->g_device.dv_unit;
 	grfsp[gp->g_unit] = gp;
 
-	if((cfdata_grf != NULL) && (gp->g_unit == 0)) {
+	if((cfdata_grf != NULL) && (gp->g_unit == congrf.g_unit)) {
 		/*
 		 * We inited earlier just copy the info, take care
 		 * not to copy the device struct though.
@@ -243,9 +244,10 @@ void		*auxp;
 	config_found(dp, gp, grfetprint);
 
 	/*
-	 * If attaching unit 0, go ahead and 'find' the rest of us
+	 * If attaching the first unit, go ahead and 'find' the rest of us
 	 */
-	if (gp->g_unit == 0) {
+	if (first_attach) {
+		first_attach = 0;
 		grf_auxp.from_bus_match = 0;
 		for (grf_auxp.unit=0; grf_auxp.unit < NGRFET; grf_auxp.unit++) {
 		    config_found(pdp, (void*)&grf_auxp, grf_bus_auxp->busprint);
