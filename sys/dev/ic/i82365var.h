@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.2 1997/10/16 23:18:22 thorpej Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.3 1998/02/01 23:33:51 marc Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -122,7 +122,6 @@ int	pcic_intr __P((void *arg));
 
 static inline int pcic_read __P((struct pcic_handle *, int));
 static inline void pcic_write __P((struct pcic_handle *, int, int));
-static inline void pcic_wait_ready __P((struct pcic_handle *));
 
 int	pcic_chip_mem_alloc __P((pcmcia_chipset_handle_t, bus_size_t,
 	    struct pcmcia_mem_handle *));
@@ -166,22 +165,4 @@ pcic_write(h, idx, data)
 		bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_INDEX,
 		    h->sock + idx);
 	bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_DATA, (data));
-}
-
-static __inline void pcic_wait_ready __P((struct pcic_handle *));
-static __inline void
-pcic_wait_ready(h)
-	struct pcic_handle *h;
-{
-	int i;
-
-	for (i = 0; i < 10000; i++) {
-		if (pcic_read(h, PCIC_IF_STATUS) & PCIC_IF_STATUS_READY)
-			return;
-		delay(500);
-	}
-
-#ifdef DIAGNOSTIC
-	printf("pcic_wait_ready ready never happened\n");
-#endif
 }
