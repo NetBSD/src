@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.1 1997/07/19 00:01:40 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.2 1997/07/22 23:12:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,19 +78,19 @@ a2kbbc_match(pdp, cfp, auxp)
 	void *auxp;
 {
 	if (!matchname("a2kbbc", auxp))
-		return(0);
+		return (0);
 
-	if (cfp->cf_unit)
-		return(0);	/* only one of us please */
+	if (cfp->cf_unit != 0)
+		return (0);	/* only one of us please */
 
 	if (is_a1200() || is_a3000() || is_a4000() || is_draco())
-		return(0);
+		return (0);
 
 	a2kclockaddr = (void *)ztwomap(0xdc0000);
 	if (a2gettod() == 0)
-		return(0);
+		return (0);
 
-	return(1);
+	return (1);
 }
 
 /*
