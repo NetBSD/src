@@ -1,7 +1,7 @@
 /* 
  * implement string functions for dc
  *
- * Copyright (C) 1994 Free Software Foundation, Inc.
+ * Copyright (C) 1994, 1997 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@
 #include "dc.h"
 #include "dc-proto.h"
 
+/* here is the completion of the dc_string type: */
 struct dc_string {
 	char *s_ptr;  /* pointer to base of string */
 	size_t s_len; /* length of counted string */
@@ -65,7 +66,7 @@ dc_dup_str DC_DECLARG((value))
 {
 	dc_data result;
 
-	++((struct dc_string *)value)->s_refs;
+	++value->s_refs;
 	result.v.string = value;
 	result.dc_type = DC_STRING;
 	return result;
@@ -94,9 +95,7 @@ dc_out_str DC_DECLARG((value, newline, discard_flag))
 	dc_boolean newline DC_DECLSEP
 	dc_boolean discard_flag DC_DECLEND
 {
-	struct dc_string *string = value;
-
-	printf("%s", string->s_ptr);
+	fwrite(value->s_ptr, value->s_len, sizeof *value->s_ptr, stdout);
 	if (newline == DC_TRUE)
 		printf("\n");
 	if (discard_flag == DC_TRUE)
@@ -185,7 +184,7 @@ const char *
 dc_str2charp DC_DECLARG((value))
 	dc_str value DC_DECLEND
 {
-	return ((struct dc_string *)value)->s_ptr;
+	return value->s_ptr;
 }
 
 /* return the length of the dc_str value;
@@ -197,7 +196,7 @@ size_t
 dc_strlen DC_DECLARG((value))
 	dc_str value DC_DECLEND
 {
-	return ((struct dc_string *)value)->s_len;
+	return value->s_len;
 }
 
 

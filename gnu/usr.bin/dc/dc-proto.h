@@ -1,7 +1,7 @@
 /*
  * prototypes of all externally visible dc functions
  * 
- * Copyright (C) 1994 Free Software Foundation, Inc.
+ * Copyright (C) 1994, 1997 Free Software Foundation, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,10 @@ extern void *dc_malloc DC_PROTO((size_t));
 extern void dc_array_set DC_PROTO((int, int, dc_data));
 extern void dc_array_init DC_PROTO((void));
 extern void dc_binop DC_PROTO((int (*)(dc_num, dc_num, int, dc_num *), int));
+extern void dc_binop2 DC_PROTO((int (*)(dc_num, dc_num, int,
+								dc_num *, dc_num *), int));
+extern void dc_triop DC_PROTO((int (*)(dc_num, dc_num, dc_num, int,
+								dc_num *), int));
 extern void dc_clear_stack DC_PROTO((void));
 extern void dc_free_num DC_PROTO((dc_num *));
 extern void dc_free_str DC_PROTO((dc_str *));
@@ -46,6 +50,7 @@ extern void dc_string_init DC_PROTO((void));
 extern int  dc_cmpop DC_PROTO((void));
 extern int  dc_compare DC_PROTO((dc_num, dc_num));
 extern int  dc_evalfile DC_PROTO((FILE *));
+extern int  dc_evalstr DC_PROTO((dc_data));
 extern int  dc_num2int DC_PROTO((dc_num, dc_boolean));
 extern int  dc_numlen DC_PROTO((dc_num));
 extern int  dc_pop DC_PROTO((dc_data *));
@@ -69,7 +74,9 @@ extern dc_data dc_readstring DC_PROTO((FILE *, int , int));
 
 extern int dc_add DC_PROTO((dc_num, dc_num, int, dc_num *));
 extern int dc_div DC_PROTO((dc_num, dc_num, int, dc_num *));
+extern int dc_divrem DC_PROTO((dc_num, dc_num, int, dc_num *, dc_num *));
 extern int dc_exp DC_PROTO((dc_num, dc_num, int, dc_num *));
+extern int dc_modexp DC_PROTO((dc_num, dc_num, dc_num, int, dc_num *));
 extern int dc_mul DC_PROTO((dc_num, dc_num, int, dc_num *));
 extern int dc_rem DC_PROTO((dc_num, dc_num, int, dc_num *));
 extern int dc_sub DC_PROTO((dc_num, dc_num, int, dc_num *));
