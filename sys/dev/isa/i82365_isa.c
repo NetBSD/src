@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.4 1997/10/20 18:43:10 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.5 1997/10/29 21:33:16 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -308,10 +308,13 @@ pcic_isa_attach(parent, self, aux)
  * allow patching or kernel option file override of available IRQs. Useful if
  * order of probing would screw up other devices, or if PCIC hardware/cards
  * have trouble with certain interrupt lines.
+ *
+ * We disable IRQ 10 by default, since some common laptops (namely, the
+ * NEC Versa series) reserve IRQ 10 for the docking station SCSI interface.
  */
 
 #ifndef PCIC_INTR_ALLOC_MASK
-#define	PCIC_INTR_ALLOC_MASK	0xffff
+#define	PCIC_INTR_ALLOC_MASK	0xfbff
 #endif
 
 int	pcic_intr_alloc_mask = PCIC_INTR_ALLOC_MASK;
