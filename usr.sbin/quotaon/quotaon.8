@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)quotaon.8	8.2 (Berkeley) 12/11/93
-.\"	$Id: quotaon.8,v 1.3 1994/06/13 22:04:13 mycroft Exp $
+.\"	$Id: quotaon.8,v 1.4 1997/10/17 12:40:03 lukem Exp $
 .\"
 .Dd December 11, 1993
 .Dt QUOTAON 8
@@ -42,12 +42,12 @@
 .Nm quotaoff
 .Nd turn filesystem quotas on and off
 .Sh SYNOPSIS
-.Nm quotaon
+.Nm
 .Op Fl g
 .Op Fl u
 .Op Fl v
 .Ar filesystem Ar ...
-.Nm quotaon
+.Nm ""
 .Op Fl g
 .Op Fl u
 .Op Fl v
@@ -63,17 +63,17 @@
 .Op Fl v
 .Fl a
 .Sh DESCRIPTION
-.Nm Quotaon
+.Nm
 announces to the system that disk quotas should be enabled on one or more
 filesystems.
-.Nm Quotaoff
+.Nm quotaoff
 announces to the system that the specified
 filesystems should have any disk quotas
 diskquotas turned off.
 The filesystems specified must have entries in
 .Pa /etc/fstab
 and be mounted.
-.Nm Quotaon
+.Nm
 expects each filesystem to have quota files named
 .Pa quota.user
 and
@@ -89,7 +89,7 @@ Available options:
 If the
 .Fl a
 flag is supplied in place of any filesystem names,
-.Nm quotaon Ns / Ns Nm quotaoff
+.Nm "" Ns / Ns Nm quotaoff
 will enable/disable all the filesystems indicated in
 .Pa /etc/fstab
 to be read-write with disk quotas.
@@ -106,7 +106,7 @@ Only user quotas listed in
 should be enabled/disabled.
 .It Fl v
 Causes
-.Nm quotaon
+.Nm
 and
 .Nm quotaoff
 to print a message for each filesystem where quotas are turned on or off.
