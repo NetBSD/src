@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.312 2003/04/11 01:25:25 simonb Exp $
+$NetBSD: usbdevs,v 1.313 2003/04/17 16:41:00 jdolecek Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ vendor AIWA		0x0677	Aiwa
 vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
 vendor SIEMENS		0x067c	Siemens
-vendor ADVANCELOGIC	0x0680	Avance Logic
+vendor AVANCELOGIC	0x0680	Avance Logic
 vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor MINOLTA		0x0686	Minolta
 vendor CTX		0x0698	Chuntex
@@ -489,6 +489,9 @@ product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 
 /* Audio-Technica products */
 product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
+
+/* Avance Logic products */
+product AVANCELOGIC USBAUDIO	0x0100	USB Audio Speaker
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
