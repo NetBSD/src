@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.1.2.1 2002/03/11 00:43:12 thorpej Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.1.2.2 2002/03/19 04:11:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -91,12 +91,18 @@
 #include <machine/lock.h>
 
 /*
- * The simple lock.  Provides a simple spinning mutex.  Note the
- * member which is used in atomic operations must be aligned in
- * order for it to work on the widest range of processor types.
+ * The simple lock.  Provides a simple spinning mutex.
+ *
+ * In case you're wondering about the union, we want to
+ * make sure this structure is aligned to at least an
+ * integer boundary, but allow machine-dependent code
+ * to provide a smaller __cpu_simple_lock_t if it wants.
  */
 struct simplelock {
-	__cpu_simple_lock_t lock_data;
+	union {
+		__cpu_simple_lock_t lock_un_data;
+		int lock_un_dummy;
+	} lock_un;
 #ifdef LOCKDEBUG
 	const char *lock_file;
 	const char *unlock_file;
@@ -107,11 +113,20 @@ struct simplelock {
 #endif
 };
 
+#define	lock_data	lock_un.lock_un_data
+
 #ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0,	\
-				  0, { NULL, NULL }, LK_NOCPU }
+#define	SIMPLELOCK_INITIALIZER						\
+	{ .lock_un = { .lock_un_data = __SIMPLELOCK_UNLOCKED },		\
+	  .lock_file = NULL,						\
+	  .unlock_file = NULL,						\
+	  .lock_line = 0,						\
+	  .unlock_line = 0,						\
+	  .list = { 0, 0 },						\
+	  .lock_holder = LK_NOCPU }
 #else
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
+#define	SIMPLELOCK_INITIALIZER						\
+	{ .lock_un = { .lock_un_data = __SIMPLELOCK_UNLOCKED } }
 #endif
 
 /*
