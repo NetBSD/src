@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.35 1997/05/14 19:00:17 veego Exp $	*/
+/*	$NetBSD: advnops.c,v 1.36 1997/10/10 01:57:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -674,7 +674,7 @@ adosfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
+		off_t *a_cookies;
 		int a_ncookies;
 	} */ *sp = v;
 	int error, useri, chainc, hashi, scanned, uavail;
