@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.21 2003/05/29 02:47:49 gson Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.22 2003/08/31 01:36:12 gson Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.21 2003/05/29 02:47:49 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.22 2003/08/31 01:36:12 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,8 +487,8 @@ acpibat_get_status(struct acpibat_softc *sc)
 }
 
 #define SCALE(x)	((x)/1000000), (((x)%1000000)/1000)
-#define CAPUNITS(sc)	(ABAT_ISSET((sc), ABAT_F_PWRUNIT_MA)?"mAh":"mWh")
-#define RATEUNITS(sc)	(ABAT_ISSET((sc), ABAT_F_PWRUNIT_MA)?"mA":"mW")
+#define CAPUNITS(sc)	(ABAT_ISSET((sc), ABAT_F_PWRUNIT_MA)?"Ah":"Wh")
+#define RATEUNITS(sc)	(ABAT_ISSET((sc), ABAT_F_PWRUNIT_MA)?"A":"W")
 static void
 acpibat_print_info(struct acpibat_softc *sc)
 {
