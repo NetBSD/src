@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.38 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.38.2.1 2001/08/16 13:53:08 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -571,7 +571,7 @@ sys_semop(p, v, retval)
 		syscallarg(size_t) nsops;
 	} */ *uap = v;
 	int semid = SCARG(uap, semid);
-	int nsops = SCARG(uap, nsops);
+	size_t nsops = SCARG(uap, nsops);
 	struct sembuf sops[MAX_SOPS];
 	struct semid_ds *semaptr;
 	struct sembuf *sopptr = NULL;

@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.9 2001/08/16 13:47:19 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.10 2001/08/16 13:53:07 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -175,3 +175,7 @@ sys/dev/ic/pckbc.c				1.6-1.8
   Change the way the aux port is probed for. Some older chipsets w/o
   mouse port seem to interpret the "test aux port" (0xa9) command differently,
   leading to a non-working keyboard.
+
+sys/kern/sysv_sem.c				1.41
+
+  Make local variable "nsops" the same (unsigned) type as its syscall arg.
