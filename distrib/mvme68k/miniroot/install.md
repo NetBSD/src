@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.1 1997/12/17 22:10:31 scw Exp $
+#	$NetBSD: install.md,v 1.2 1999/02/20 16:21:19 scw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,6 +88,7 @@ md_get_ifdevs() {
 	# return available network devices
 	__mount_kernfs
 	sed -n -e '/^le[0-9] /s/ .*//p' \
+	       -e '/^ie[0-9] /s/ .*//p' \
 		< /kern/msgbuf | sort -u
 }
 

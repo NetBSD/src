@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1997/12/17 22:10:31 scw Exp $
+#	$NetBSD: list,v 1.2 1999/02/20 16:21:19 scw Exp $
 
 # mvme68k's extras
 LINK	instbin			sbin/disklabel
@@ -40,7 +40,7 @@ COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
-COPY	${CURDIR}/../../sys/arch/mvme68k/compile/VME147/netbsd	netbsd
+COPY	${CURDIR}/../../sys/arch/mvme68k/compile/GENERIC/netbsd	netbsd
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow

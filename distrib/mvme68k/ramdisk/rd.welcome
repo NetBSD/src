@@ -18,6 +18,6 @@ The easiest is loading from tape, which is done as follows:
 
 After installing the boot block, reboot using the swap partition. That is,
 use "halt" then at the Bug monitor prompt use a command like:
-	bo 0,,b:
+	147-Bug> bo 0,,b:   OR   167-Bug> bo 0,,,b:
 
 To view this message again, type:  cat /.welcome
