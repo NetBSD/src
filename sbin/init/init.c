@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.33 1998/09/18 22:00:46 thorpej Exp $	*/
+/*	$NetBSD: init.c,v 1.34 1998/11/14 07:17:58 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.33 1998/09/18 22:00:46 thorpej Exp $");
+__RCSID("$NetBSD: init.c,v 1.34 1998/11/14 07:17:58 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -579,6 +579,7 @@ single_user()
 {
 	pid_t pid, wpid;
 	int status;
+	int from_securitylevel;
 	sigset_t mask;
 #ifdef ALTSHELL
 	char *shell = _PATH_BSHELL;
@@ -596,7 +597,8 @@ single_user()
 	/*
 	 * If the kernel is in secure mode, downgrade it to insecure mode.
 	 */
-	if (getsecuritylevel() > 0)
+	from_securitylevel = getsecuritylevel();
+	if (from_securitylevel > 0)
 		setsecuritylevel(0);
 
 	if ((pid = fork()) == 0) {
@@ -613,8 +615,8 @@ single_user()
 		 */
 		typ = getttynam("console");
 		pp = getpwnam("root");
-		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp &&
-		    *pp->pw_passwd != '\0') {
+		if (typ && (from_securitylevel >=2 || (typ->ty_status
+		    & TTY_SECURE) == 0) && pp && *pp->pw_passwd != '\0') {
 			fprintf(stderr,
 			    "Enter root password, or ^D to go multi-user\n");
 			for (;;) {
