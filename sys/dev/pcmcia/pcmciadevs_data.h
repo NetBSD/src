@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.168 2002/05/26 14:37:19 tshiozak Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.169 2002/05/31 13:29:35 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.168 2002/05/26 14:35:10 tshiozak Exp 
+ *	NetBSD: pcmciadevs,v 1.169 2002/05/31 13:29:19 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -202,6 +202,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Bay Networks",
 	    "BayStack 660 Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_EMOBILITY_11B,
+	    PCMCIA_CIS_BAY_EMOBILITY_11B,
+	    0,
+	    "Bay Networks",
+	    "e-Mobility 11Mb Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_BREEZECOM, PCMCIA_PRODUCT_BREEZECOM_BREEZENET,
