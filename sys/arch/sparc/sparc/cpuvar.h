@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.33 2001/06/03 04:03:29 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.34 2001/06/07 17:59:48 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -393,6 +393,9 @@ void getcpuinfo __P((struct cpu_info *sc, int node));
 void mmu_install_tables __P((struct cpu_info *));
 void pmap_alloc_cpu __P((struct cpu_info *));
 void pmap_globalize_boot_cpu __P((struct cpu_info *));
+#if defined(MULTIPROCESSOR)
+void raise_ipi_wait_and_unlock __P((struct cpu_info *));
+#endif
 
 extern struct cpu_info **cpus;
 
