@@ -1,4 +1,4 @@
-.\" $NetBSD: time.9,v 1.10 2001/09/04 03:00:47 wiz Exp $
+.\" $NetBSD: time.9,v 1.11 2001/09/04 04:03:50 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -108,11 +108,11 @@ and
 .Va runtime
 may be read and written without special precautions.
 .Sh SEE ALSO
-.\" .Xr hz 9 ,
+.Xr settimeofday 2 ,
 .\" .Xr hardclock 9 ,
+.Xr hz 9 ,
 .Xr inittodr 9 ,
-.Xr microtime 9 ,
-.Xr settimeofday 2
+.Xr microtime 9
 .Sh BUGS
 .Va runtime
 should not be updated when the system time is
