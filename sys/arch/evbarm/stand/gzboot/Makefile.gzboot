@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.4 2002/02/24 20:29:44 thorpej Exp $
+#	$NetBSD: Makefile.gzboot,v 1.5 2002/04/25 22:30:38 thorpej Exp $
 
 NOMAN=  # defined
 
@@ -34,6 +34,9 @@ CPPFLAGS+= -nostdinc -I. -I${EVBARM_STAND}/gzboot -I${EVBARM_STAND}/board
 CPPFLAGS+= -I${S} -I${S}/arch -I${S}/lib/libsa
 
 CPPFLAGS+= -D_STANDALONE
+
+# Specify the heap size (used by board mem_init() routines)
+CPPFLAGS+= -DHEAP_SIZE=1048576		# 1M
 
 # libsa options
 CPPFLAGS+= -DHEAP_VARIABLE
