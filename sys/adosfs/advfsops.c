@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.25 1997/06/26 21:04:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -510,6 +510,17 @@ adosfs_vget(mp, an, vpp)
 		ap->gid = amp->gid;
 	} else {
 		ap->adprot = adoswordn(bp, ap->nwords - 48) ^ 15;
+		/*
+		 * ADOS directories do not have a `x' protection bit as
+		 * it is known in VFS; this functionality is fulfilled
+		 * by the ADOS `r' bit.
+		 *
+		 * To retain the ADOS behaviour, fake execute permissions
+		 * in that case.
+		 */
+		if (ap->type == ADIR || ap->type == ALDIR)
+			ap->adprot |= (ap->adprot & 0x888) >> 2;
+
 		/*
 		 * Get uid/gid from extensions in file header
 		 * (really need to know if this is a muFS partition)
