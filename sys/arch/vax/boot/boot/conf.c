@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.2 1999/06/30 18:30:42 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include "lib/libsa/stand.h"
 #include "lib/libsa/ufs.h"
 #include "lib/libsa/nfs.h"
+#include "lib/libsa/ustarfs.h"
 
 #include "vaxstand.h"
 
@@ -83,10 +84,9 @@ int	cnvtab[] = {
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
-};
-
-struct fs_ops nfs_system[] = {
+	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
+	    ustarfs_seek, ustarfs_stat },
+	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
 };
 

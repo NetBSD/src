@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.2 1999/06/30 18:30:42 ragge Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,7 +45,6 @@ devopen(f, fname, file)
 {
 	int dev, ctlr, unit, part, adapt, i, a[4], x;
 	struct devsw *dp;
-	extern struct fs_ops nfs_system[];
 	extern int cnvtab[];
 	char *s, *c, *u;
 
@@ -111,7 +110,6 @@ devopen(f, fname, file)
 	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
 
 	if (dev > 95) { /* MOP boot over network, root & swap over NFS */
-		bcopy(nfs_system, file_system, sizeof(struct fs_ops));
 		i = (*dp->dv_open)(f, dp->dv_name);
 	} else
 		i = (*dp->dv_open)(f, adapt, ctlr, unit, part);
