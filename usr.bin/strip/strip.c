@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.6 1993/09/07 16:12:15 brezak Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.7 1993/11/18 21:09:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,8 +59,8 @@ typedef struct nlist NLIST;
 #define	strx	n_un.n_strx
 
 void err __P((const char *fmt, ...));
-void s_stab __P((const char *, int, EXEC *));
-void s_sym __P((const char *, int, EXEC *));
+int s_stab __P((const char *, int, EXEC *));
+int s_sym __P((const char *, int, EXEC *));
 void usage __P((void));
 
 int xflag = 0;
@@ -71,8 +71,8 @@ main(argc, argv)
 {
 	register int fd, nb;
 	EXEC head;
-	void (*sfcn)__P((const char *, int, EXEC *));
-	int ch;
+	int (*sfcn)__P((const char *, int, EXEC *));
+	int ch, errors;
 	char *fn;
 
 	sfcn = s_sym;
@@ -91,24 +91,35 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
+	errors = 0;
 	while (fn = *argv++) {
-		if ((fd = open(fn, O_RDWR)) < 0 ||
-		    (nb = read(fd, &head, sizeof(EXEC))) == -1) {
+		if ((fd = open(fn, O_RDWR)) < 0) {
+			errors |= 1;
 			err("%s: %s", fn, strerror(errno));
+			continue;
+		}
+		if ((nb = read(fd, &head, sizeof(EXEC))) == -1) {
+			errors |= 1;
+			err("%s: %s", fn, strerror(errno));
+			(void)close(fd);
 			continue;
 		}
 		if (nb != sizeof(EXEC) || N_BADMAG(head)) {
+			errors |= 1;
 			err("%s: %s", fn, strerror(EFTYPE));
+			(void)close(fd);
 			continue;
 		}
-		sfcn(fn, fd, &head);
-		if (close(fd))
+		errors |= sfcn(fn, fd, &head);
+		if (close(fd)) {
+			errors |= 1;
 			err("%s: %s", fn, strerror(errno));
+		}
 	}
-	exit(0);
+	exit(errors);
 }
 
-void
+int
 s_sym(fn, fd, ep)
 	const char *fn;
 	int fd;
@@ -118,7 +129,7 @@ s_sym(fn, fd, ep)
 
 	/* If no symbols or data/text relocation info, quit. */
 	if (!ep->a_syms && !ep->a_trsize && !ep->a_drsize)
-		return;
+		return 0;
 
 	/*
 	 * New file size is the header plus text and data segments; OMAGIC
@@ -133,11 +144,14 @@ s_sym(fn, fd, ep)
 	/* Rewrite the header and truncate the file. */
 	if (lseek(fd, 0L, SEEK_SET) == -1 ||
 	    write(fd, ep, sizeof(EXEC)) != sizeof(EXEC) ||
-	    ftruncate(fd, fsize))
+	    ftruncate(fd, fsize)) {
 		err("%s: %s", fn, strerror(errno)); 
+		return 1;
+	}
+	return 0;
 }
 
-void
+int
 s_stab(fn, fd, ep)
 	const char *fn;
 	int fd;
@@ -151,13 +165,21 @@ s_stab(fn, fd, ep)
 
 	/* Quit if no symbols. */
 	if (ep->a_syms == 0)
-		return;
+		return 0;
 
 	/* Map the file. */
 	if (fstat(fd, &sb) ||
 	    (ep = (EXEC *)mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1)
+	    MAP_FILE | MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
 		err("%s: %s", fn, strerror(errno));
+		return 1;
+	}
+
+	if (N_SYMOFF(*ep) >= sb.st_size) {
+		err("%s: bad symbol table", fn);
+		munmap((caddr_t)ep, sb.st_size);
+		return 1;
+	}
 
 	/*
 	 * Initialize old and new symbol pointers.  They both point to the
@@ -172,8 +194,11 @@ s_stab(fn, fd, ep)
 	 * of the string table.
 	 */
 	strbase = (char *)ep + N_STROFF(*ep);
-	if ((nstrbase = malloc((u_int)*(u_long *)strbase)) == NULL)
-		err("%s", strerror(errno));
+	if ((nstrbase = malloc((u_int)*(u_long *)strbase)) == NULL) {
+		err("%s", strerror(ENOMEM));
+		munmap((caddr_t)ep, sb.st_size);
+		return 1;
+	}
 	nstr = nstrbase + sizeof(u_long);
 
 	/*
@@ -191,7 +216,7 @@ s_stab(fn, fd, ep)
                              (sym->n_type & ~N_EXT) == N_FN ||
                              strcmp(p, "gcc_compiled.") == 0 ||
                              strcmp(p, "gcc2_compiled.") == 0 ||
-                             strcmp(p, "___gnu_compiled_c") == 0)) {
+                             strncmp(p, "___gnu_compiled_", 16) == 0)) {
                                 continue;
                         }
 			len = strlen(p) + 1;
@@ -211,17 +236,23 @@ s_stab(fn, fd, ep)
 	 * at the address past the last symbol entry.
 	 */
 	bcopy(nstrbase, (void *)nsym, len);
+	free(nstrbase);
 
 	/* Truncate to the current length. */
-	if (ftruncate(fd, (char *)nsym + len - (char *)ep))
+	if (ftruncate(fd, (char *)nsym + len - (char *)ep)) {
+		munmap((caddr_t)ep, sb.st_size);
 		err("%s: %s", fn, strerror(errno));
+		return 1;
+	}
+
 	munmap((caddr_t)ep, sb.st_size);
+	return 0;
 }
 
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: strip [-d] file ...\n");
+	(void)fprintf(stderr, "usage: strip [-dx] file ...\n");
 	exit(1);
 }
 
@@ -250,5 +281,4 @@ err(fmt, va_alist)
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
-	exit(1);
 }
