@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.29 2002/07/20 06:44:45 tsutsui Exp $	*/
+/*	$NetBSD: reboot.c,v 1.30 2002/08/02 14:59:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.29 2002/07/20 06:44:45 tsutsui Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.30 2002/08/02 14:59:40 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,16 +61,14 @@ __RCSID("$NetBSD: reboot.c,v 1.29 2002/07/20 06:44:45 tsutsui Exp $");
 #include <unistd.h>
 #include <util.h>
 
-int main __P((int, char *[]));
-void usage __P((void));
+int main(int, char *[]);
+void usage(void);
 
 int dohalt;
 int dopoweroff;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	const char *progname;
 	int i;
@@ -233,7 +231,7 @@ restart:
 }
 
 void
-usage()
+usage(void)
 {
 	const char *pflag = dohalt ? "p" : "";
 
