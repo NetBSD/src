@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.16 2000/04/11 17:57:44 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.17 2000/05/02 17:45:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -318,7 +318,7 @@ vr_cons_init()
 
 #if NHPCFB > 0
 	mb_bus_space_init(); /* At this time, not initialized yet */
-	if(hpcfb_cnattach(system_bus_iot, 0x0c000000, 0, 0)) {
+	if (hpcfb_cnattach(NULL)) {
 		printf("%s(%d): can't init fb console", __FILE__, __LINE__);
 	} else {
 		goto find_keyboard;
