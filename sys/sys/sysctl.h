@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.116.2.4 2004/04/09 20:14:31 jmc Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.116.2.5 2004/04/22 07:50:48 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1145,10 +1145,10 @@ struct sysctldesc {
 
 #define __sysc_desc_roundup(x) ((((x) - 1) | (sizeof(int32_t) - 1)) + 1)
 #define __sysc_desc_adv(d, l) \
-	(((const char*)(d)) + offsetof(struct sysctldesc, descr_str) + \
+	(/*LINTED ptr cast*/(struct sysctldesc *) \
+	((const char*)(d)) + offsetof(struct sysctldesc, descr_str) + \
 		__sysc_desc_roundup(l))
-#define NEXT_DESCR(d) ((struct sysctldesc *) \
-	__sysc_desc_adv((d), (d)->descr_len))
+#define NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
 
 static __inline struct sysctlnode *
 sysctl_rootof(struct sysctlnode *n)
