@@ -1,4 +1,4 @@
-/* $NetBSD: cpuvar.h,v 1.1 2000/06/05 21:47:18 thorpej Exp $ */
+/* $NetBSD: cpuvar.h,v 1.2 2000/11/18 19:25:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,5 +42,6 @@ struct cpu_softc {
 	struct evcnt sc_evcnt_device;	/* device interrupts */
 #if defined(MULTIPROCESSOR)
 	struct evcnt sc_evcnt_ipi;	/* interprocessor interrupts */
+	struct evcnt sc_evcnt_which_ipi[ALPHA_NIPIS];
 #endif
 };

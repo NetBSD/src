@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.57 2000/11/18 17:45:31 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.58 2000/11/18 19:25:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2000/11/18 17:45:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.58 2000/11/18 19:25:35 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -382,8 +382,7 @@ recognized:
 	evcnt_attach_dynamic(&sc->sc_evcnt_device, EVCNT_TYPE_INTR,
 	    NULL, sc->sc_dev.dv_xname, "device");
 #if defined(MULTIPROCESSOR)
-	evcnt_attach_dynamic(&sc->sc_evcnt_ipi, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "ipi");
+	alpha_ipi_init(ci);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.34 2000/08/22 19:46:26 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.35 2000/11/18 19:25:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -168,6 +168,9 @@ _splraise(int s)
 typedef void (*ipifunc_t)(void);
 extern	ipifunc_t ipifuncs[ALPHA_NIPIS];
 
+struct cpu_info;
+
+void	alpha_ipi_init(struct cpu_info *);
 void	alpha_send_ipi(unsigned long, unsigned long);
 void	alpha_broadcast_ipi(unsigned long);
 void	alpha_multicast_ipi(unsigned long, unsigned long);
