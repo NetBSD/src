@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.9 1996/06/13 19:59:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.9 1996/06/13 19:59:31 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -784,6 +784,8 @@ mode(f)
 		tty.c_lflag &= ~(ECHO|ICANON|ISIG|IEXTEN);
 		tty.c_iflag &= ~ICRNL;
 		tty.c_oflag &= ~OPOST;
+		tty.c_cc[VMIN] = 1;
+		tty.c_cc[VTIME] = 0;
 		if (eight) {
 			tty.c_iflag &= IXOFF;
 			tty.c_cflag &= ~(CSIZE|PARENB);
