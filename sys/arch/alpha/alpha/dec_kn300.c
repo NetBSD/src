@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.14 1999/12/03 22:48:22 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.15 2000/05/22 20:09:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.14 1999/12/03 22:48:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.15 2000/05/22 20:09:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,11 +180,10 @@ dec_kn300_device_register(dev, aux)
 		return;
 
 	if (!initted) {
-		scsiboot = (strcmp(b->protocol, "scsi") == 0) ||
-		    (strcmp(b->protocol, "SCSI") == 0);
-		netboot = (strcmp(b->protocol, "bootp") == 0) ||
-		    (strcmp(b->protocol, "mop") == 0);
-#if	BDEBUG
+		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0) ||
+		    (strcmp(b->protocol, "MOP") == 0);
+#ifdef BDEBUG
 		printf("proto:%s bus:%d slot:%d chan:%d", b->protocol,
 		    b->bus, b->slot, b->channel);
 		if (b->remote_address)
@@ -209,7 +208,7 @@ dec_kn300_device_register(dev, aux)
 				return;
 	
 			pcidev = dev;
-#if	BDEBUG
+#ifdef BDEBUG
 			printf("\npcidev = %s\n", pcidev->dv_xname);
 #endif
 			return;
@@ -228,7 +227,7 @@ dec_kn300_device_register(dev, aux)
 			/* XXX function? */
 	
 			scsidev = dev;
-#if	BDEBUG
+#ifdef BDEBUG
 			printf("\nscsidev = %s\n", scsidev->dv_xname);
 #endif
 
@@ -261,7 +260,7 @@ dec_kn300_device_register(dev, aux)
 
 		/* we've found it! */
 		booted_device = dev;
-#if	BDEBUG
+#ifdef BDEBUG
 		printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 		found = 1;
@@ -279,8 +278,9 @@ dec_kn300_device_register(dev, aux)
 			/* XXX function? */
 	
 			booted_device = dev;
-#if	BDEBUG
-			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#ifdef BDEBUG
+			printf("\nbooted_device = %s\n",
+			    booted_device->dv_xname);
 #endif
 			found = 1;
 			return;
