@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.34 1998/09/28 09:03:22 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.35 1998/11/06 16:53:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.34 1998/09/28 09:03:22 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.35 1998/11/06 16:53:29 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -978,7 +978,7 @@ getsockbufsize(arg)
 	char *cp;
 	int val;
 
-	if (!isdigit(arg[0]))
+	if (!isdigit((unsigned char)arg[0]))
 		return (-1);
 
 	val = strtol(arg, &cp, 10);
