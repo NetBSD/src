@@ -108,7 +108,8 @@ static u_char lintomulaw[256] = {
 };
 
 void
-mulaw_to_ulinear8(p, cc)
+mulaw_to_ulinear8(v, p, cc)
+	void *v;
 	u_char *p;
 	int cc;
 {
@@ -119,7 +120,8 @@ mulaw_to_ulinear8(p, cc)
 }
 
 void
-ulinear8_to_mulaw(p, cc)
+ulinear8_to_mulaw(v, p, cc)
+	void *v;
 	u_char *p;
 	int cc;
 {
@@ -130,7 +132,8 @@ ulinear8_to_mulaw(p, cc)
 }
 
 void
-change_sign8(p, cc)
+change_sign8(v, p, cc)
+	void *v;
 	u_char *p;
 	int cc;
 {
@@ -141,7 +144,8 @@ change_sign8(p, cc)
 }
 
 void
-change_sign16(p, cc)
+change_sign16(v, p, cc)
+	void *v;
 	u_char *p;
 	int cc;
 {
@@ -159,7 +163,8 @@ change_sign16(p, cc)
 }
 
 void
-swap_bytes(p, cc)
+swap_bytes(v, p, cc)
+	void *v;
 	u_char *p;
 	int cc;
 {
@@ -171,4 +176,14 @@ swap_bytes(p, cc)
 		p[1] = t;
 		p += 2;
 	}
+}
+
+void
+swap_bytes_change_sign16(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	swap_bytes(v, p, cc);
+	change_sign16(v, p, cc);
 }
