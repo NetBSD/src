@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.146 2001/12/01 00:03:45 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.147 2001/12/01 00:05:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.146 2001/12/01 00:03:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.147 2001/12/01 00:05:04 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -1946,8 +1946,6 @@ st_interpret_sense(xs)
 
 	if (key == SKEY_NOT_READY && st->asc == 0x4 && st->ascq == 0x1) {
 		/* Not Ready, Logical Unit Is in Process Of Becoming Ready */
-		scsipi_printaddr(periph);
-		printf("waiting for device to become ready\n");
 		scsipi_periph_freeze(periph, 1);
 		callout_reset(&periph->periph_callout,
 		    hz, scsipi_periph_timed_thaw, periph);
