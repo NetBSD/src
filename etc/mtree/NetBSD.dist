@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.276 2005/03/15 16:05:04 peter Exp $
+#	$NetBSD: NetBSD.dist,v 1.277 2005/03/20 18:25:22 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -80,6 +80,7 @@
 ./usr/X11R6/include/freetype2/freetype/cache
 ./usr/X11R6/include/freetype2/freetype/config
 ./usr/X11R6/include/freetype2/freetype/internal
+./usr/X11R6/include/freetype2/freetype/internal/services
 ./usr/X11R6/lib
 ./usr/X11R6/lib/X11
 ./usr/X11R6/lib/X11/app-defaults
