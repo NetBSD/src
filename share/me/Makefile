@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.11 (Berkeley) 7/1/90
-#	$Id: Makefile,v 1.9 1997/03/24 21:57:07 christos Exp $
+#	$Id: Makefile,v 1.10 1997/03/26 23:11:15 thorpej Exp $
 
 MELIB=	${BINDIR}/me
 TMLIB=	${BINDIR}/tmac
@@ -25,7 +25,7 @@ ${DESTDIR}${MELIB}/${M}: .MADE
 
 ${DESTDIR}${MELIB}/${M}: ${M}
 	@rm -f ${.TARGET}
-	sed -f strip.sed < ${.ALLSRC} > ${.TARGET}
+	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${.TARGET}
 	@chown ${BINOWN}:${BINGRP} ${.TARGET}
 	@chmod 444 ${.TARGET}
 .endfor
@@ -42,7 +42,7 @@ ${DESTDIR}${TMLIB}/${M}: .MADE
 
 ${DESTDIR}${TMLIB}/${M}: ${M}
 	@rm -f ${.TARGET}
-	sed -f strip.sed < ${.ALLSRC} > ${.TARGET}
+	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${.TARGET}
 	@chown ${BINOWN}:${BINGRP} ${.TARGET}
 	@chmod 444 ${.TARGET}
 .endfor
