@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: upgrade.sh,v 1.2 1999/01/25 23:34:20 garbled Exp $
+#	$NetBSD: upgrade.sh,v 1.3 1999/04/07 06:47:50 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -227,7 +227,7 @@ echo	"Updating boot blocks on ${drivename}..."
 # shouldn't be needed, but...
 $DONTDOIT rm -f /mnt/boot
 $DONTDOIT cp /usr/mdec/boot /mnt/boot
-$DONTDOIT /usr/mdec/installboot /mnt/boot /usr/mdec/bootxx /dev/r${drivename}c
+$DONTDOIT /usr/mdec/installboot /dev/r${drivename}c /usr/mdec/bootxx_ffs
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: UPDATE OF DISK LABEL FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
