@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.13 1999/01/16 14:16:46 lukem Exp $
+.\"	$NetBSD: yp.8,v 1.14 1999/06/28 01:03:45 abs Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -77,7 +77,6 @@
 .Fl x
 .Pp
 .Nm ypserv
-.Op Fl a Ar aclfile
 .Op Fl d
 .Op Fl x
 .Pp
@@ -144,6 +143,7 @@ it hangs.
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
 .Xr group 5 ,
+.Xr hosts_access 5 ,
 .Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
 .Xr ypbind 8 ,
