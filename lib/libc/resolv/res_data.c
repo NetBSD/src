@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.1.1.1 2004/05/20 17:18:55 christos Exp $	*/
+/*	$NetBSD: res_data.c,v 1.2 2004/05/20 17:34:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -81,7 +81,7 @@ struct __res_state _res
 
 /* Proto. */
 
-int  res_ourserver_p(const res_state, const struct sockaddr_in *);
+int  res_ourserver_p(const res_state, const struct sockaddr *);
 
 int
 res_init(void) {
@@ -160,6 +160,7 @@ res_mkquery(int op,			/* opcode of query */
 			     newrr_in, buf, buflen));
 }
 
+#ifdef _LIBRESOLV
 int
 res_mkupdate(ns_updrec *rrecp_in, u_char *buf, int buflen) {
 	if ((_res.options & RES_INIT) == 0U && res_init() == -1) {
@@ -169,6 +170,7 @@ res_mkupdate(ns_updrec *rrecp_in, u_char *buf, int buflen) {
 
 	return (res_nmkupdate(&_res, rrecp_in, buf, buflen));
 }
+#endif
 
 int
 res_query(const char *name,	/* domain name */
@@ -195,7 +197,7 @@ res_send_setrhook(res_send_rhook hook) {
 
 int
 res_isourserver(const struct sockaddr_in *inp) {
-	return (res_ourserver_p(&_res, inp));
+	return (res_ourserver_p(&_res, (const struct sockaddr *)(const void *)inp));
 }
 
 int
@@ -208,6 +210,7 @@ res_send(const u_char *buf, int buflen, u_char *ans, int anssiz) {
 	return (res_nsend(&_res, buf, buflen, ans, anssiz));
 }
 
+#ifdef _LIBRESOLV
 int
 res_sendsigned(const u_char *buf, int buflen, ns_tsig_key *key,
 	       u_char *ans, int anssiz)
@@ -219,12 +222,14 @@ res_sendsigned(const u_char *buf, int buflen, ns_tsig_key *key,
 
 	return (res_nsendsigned(&_res, buf, buflen, key, ans, anssiz));
 }
+#endif
 
 void
 res_close(void) {
 	res_nclose(&_res);
 }
 
+#ifdef _LIBRESOLV
 int
 res_update(ns_updrec *rrecp_in) {
 	if ((_res.options & RES_INIT) == 0U && res_init() == -1) {
@@ -234,6 +239,7 @@ res_update(ns_updrec *rrecp_in) {
 
 	return (res_nupdate(&_res, rrecp_in, NULL));
 }
+#endif
 
 int
 res_search(const char *name,	/* domain name */
@@ -264,6 +270,12 @@ res_querydomain(const char *name,
 	return (res_nquerydomain(&_res, name, domain,
 				 class, type,
 				 answer, anslen));
+}
+
+int
+res_opt(int a, u_char *b, int c, int d)
+{
+	return res_nopt(_res, a, b, c, d);
 }
 
 const char *
