@@ -1,4 +1,4 @@
-/*	$NetBSD: kbc.c,v 1.7 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: kbc.c,v 1.8 2004/09/04 11:28:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.7 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.8 2004/09/04 11:28:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.7 2003/07/15 02:59:26 lukem Exp $");
 #include <news68k/dev/hbvar.h>
 #include <news68k/dev/kbcvar.h>
 
+#include "ioconf.h"
+
 #define KBC_SIZE 0x10 /* XXX */
 
 /* Definition of the driver for autoconfig. */
@@ -52,8 +54,6 @@ static int  kbc_print(void *, const char *name);
 
 CFATTACH_DECL(kbc, sizeof(struct device),
     kbc_match, kbc_attach, NULL, NULL);
-
-extern struct cfdriver kbc_cd;
 
 static int kbc_match(parent, cf, aux)
 	struct device *parent;

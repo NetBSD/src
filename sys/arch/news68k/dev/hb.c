@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.12 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: hb.c,v 1.13 2004/09/04 11:28:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.12 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.13 2004/09/04 11:28:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.12 2003/07/15 02:59:26 lukem Exp $");
 #include <news68k/news68k/isr.h>
 #include <news68k/dev/hbvar.h>
 
+#include "ioconf.h"
+
 static int  hb_match(struct device *, struct cfdata *, void *);
 static void hb_attach(struct device *, struct device *, void *);
 static int  hb_search(struct device *, struct cfdata *, void *);
@@ -47,8 +49,6 @@ static int  hb_print(void *, const char *);
 
 CFATTACH_DECL(hb, sizeof(struct device),
     hb_match, hb_attach, NULL, NULL);
-
-extern struct cfdriver hb_cd;
 
 static int
 hb_match(parent, cf, aux)

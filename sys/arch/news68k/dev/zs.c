@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.19 2004/09/04 11:28:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.19 2004/09/04 11:28:32 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.18 2003/07/15 02:59:26 lukem Exp $");
 #include <dev/ic/z8530reg.h>
 
 #include <news68k/dev/hbvar.h>
+
+#include "ioconf.h"
 
 int  zs_getc(void *);
 void zs_putc(void *, int);
@@ -150,8 +152,6 @@ static int  zs_print(void *, const char *name);
 
 CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
     zs_match, zs_attach, NULL, NULL);
-
-extern struct cfdriver zsc_cd;
 
 static int zshard(void *);
 void zssoft(void *);

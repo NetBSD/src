@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.6 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.7 2004/09/04 11:28:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.6 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.7 2004/09/04 11:28:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.6 2003/07/15 02:59:26 lukem Exp $");
 #include <news68k/news68k/clockvar.h>
 
 #include <news68k/dev/hbvar.h>
+
+#include "ioconf.h"
 
 /*
  * interrupt level for clock
@@ -78,7 +80,6 @@ CFATTACH_DECL(timer_hb, sizeof(struct device),
 static volatile u_int8_t *ctrl_timer; /* XXX */
 
 extern volatile u_char *ctrl_led; /* XXX */
-extern struct cfdriver timer_cd;
 
 int
 timer_hb_match(parent, cf, aux)

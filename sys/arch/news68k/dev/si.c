@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.14 2004/08/13 12:54:44 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.15 2004/09/04 11:30:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.14 2004/08/13 12:54:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.15 2004/09/04 11:30:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.14 2004/08/13 12:54:44 tsutsui Exp $");
 
 #include <news68k/dev/hbvar.h>
 #include <news68k/dev/dmac_0266.h>
+
+#include "ioconf.h"
 
 #define MIN_DMA_LEN 128
 #define DMAC_BASE	0xe0e80000 /* XXX */
@@ -210,7 +212,6 @@ si_intr(unit)
 	int unit;
 {
 	struct si_softc *sc;
-	extern struct cfdriver si_cd;
 
 	if (unit >= si_cd.cd_ndevs)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 2003/07/15 02:59:26 lukem Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 2004/09/04 11:30:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2003/07/15 02:59:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.9 2004/09/04 11:30:39 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.8 2003/07/15 02:59:26 lukem Exp $");
 #include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
+
+#include "ioconf.h"
 
 /*
  * LANCE registers.
@@ -212,7 +214,6 @@ leintr(unit)
 	int unit;
 {
 	struct am7990_softc *sc;
-	extern struct cfdriver le_cd;
 
 	if (unit >= le_cd.cd_ndevs)
 		return 0;

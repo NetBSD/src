@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.8 2003/11/01 22:49:38 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.9 2004/09/04 11:28:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.8 2003/11/01 22:49:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.9 2004/09/04 11:28:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,13 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.8 2003/11/01 22:49:38 tsutsui Exp $
 
 #include <news68k/dev/hbvar.h>
 
+#include "ioconf.h"
+
 int  mkclock_hb_match(struct device *, struct cfdata  *, void *);
 void mkclock_hb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mkclock_hb, sizeof(struct mk48txx_softc),
     mkclock_hb_match, mkclock_hb_attach, NULL, NULL);
-
-extern struct cfdriver mkclock_cd;
 
 int
 mkclock_hb_match(parent, cf, aux)
