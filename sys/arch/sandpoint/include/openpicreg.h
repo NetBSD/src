@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.1 2001/02/04 18:32:14 briggs Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.2 2001/02/05 19:22:24 briggs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -59,5 +59,7 @@
 	    | (irq))
 	    
 #define OPENPIC_IDEST(irq)		OPENPIC_SRC_VECTOR(irq) + 0x10
+
+void openpic_init __P((unsigned char *));
 
 #include <powerpc/openpicreg.h>
