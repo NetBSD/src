@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.181 2001/09/28 20:36:46 tshiozak Exp $
+$NetBSD: usbdevs,v 1.182 2001/09/28 23:41:09 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -342,7 +342,7 @@ product ABOCOM XX9		0x4104	XX9
 product ABOCOM XX10		0xabc1	XX10
 
 /* Accton products */
-product ACCTON USB10_100	0x1046	USB 10/100 Ethernet Adapter
+product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
 
 /* Acer Peripherals, Inc. products */
 product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
