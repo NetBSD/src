@@ -1,4 +1,4 @@
-.\"	$NetBSD: utmp.5,v 1.6 1997/06/22 08:11:08 lukem Exp $
+.\"	$NetBSD: utmp.5,v 1.7 1997/10/08 13:47:18 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,16 +58,13 @@ the
 .Nm wtmp
 file.
 .Pp
-These files can grow rapidly on busy systems, daily or weekly rotation
-is recommended. 
-If any of these files do not exist, it is not created.
-These
-files must be created manually and are normally maintained in either the script
-.Pa /etc/daily
-or the script
-.Pa /etc/weekly .
-(See
-.Xr cron 8 . )
+The
+.Nm wtmp
+file can grow rapidly on busy systems, and is normally rotated with
+.Xr newsyslog 8 .
+.Pp
+These files must be created manually;
+if they do not exist, they are not created automatically.
 .Bd -literal -offset indent
 #define _PATH_UTMP      "/var/run/utmp"
 #define _PATH_WTMP      "/var/log/wtmp"
@@ -210,7 +207,8 @@ file.
 .Xr login 1 ,
 .Xr who 1 ,
 .Xr ac 8 ,
-.Xr init 8
+.Xr init 8 ,
+.Xr newsyslog 8
 .Sh HISTORY
 A
 .Nm utmp
