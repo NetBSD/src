@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.62 2000/02/08 18:46:03 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.63 2000/03/02 12:37:51 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -1101,6 +1101,21 @@ usbd_get_endpoint_descriptor(iface, address)
 			return (iface->endpoints[i].edesc);
 	}
 	return (0);
+}
+
+/*
+ * usbd_ratecheck() can limit the number of error messages that occurs.
+ * When a device is unplugged it may take up to 0.25s for the hub driver
+ * to notice it.  If the driver continuosly tries to do I/O operations
+ * this can generate a large number of messages.
+ */
+int
+usbd_ratecheck(last)
+	struct timeval *last;
+{
+	static struct timeval errinterval = { 0, 2500000 }; /* 0.25 s*/
+
+	return (ratecheck(last, &errinterval));
 }
 
 #if defined(__FreeBSD__)
