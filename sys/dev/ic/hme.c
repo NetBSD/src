@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.15 2000/06/25 01:05:16 eeh Exp $	*/
+/*	$NetBSD: hme.c,v 1.16 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -775,27 +775,8 @@ hme_read(sc, ix, len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
-		struct ether_header *eh;
-
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-
-		/* We assume that the header fit entirely in one mbuf. */
-		eh = mtod(m, struct ether_header *);
-
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ether_cmp(eh->ether_dhost, sc->sc_enaddr) == 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	/* Pass the packet up. */

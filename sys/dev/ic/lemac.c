@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.15 2000/06/28 17:12:58 mrg Exp $ */
+/* $NetBSD: lemac.c,v 1.16 2000/10/01 23:32:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -283,17 +283,6 @@ lemac_input(
     } else {
 	LEMAC_GETBUF16(sc, offset, sizeof(eh) / 2, (void *) &eh);
     }
-
-    /*
-     * If this is single cast but not to us
-     * drop it!
-     */
-    if ((eh.ether_dhost[0] & 1) == 0
-#if NBPFILTER > 0
-	    && (sc->sc_if.if_flags & IFF_PROMISC) == 0
-#endif
-	    && !LEMAC_ADDREQUAL(eh.ether_dhost, sc->sc_enaddr))
-	return;
 
     MGETHDR(m, M_DONTWAIT, MT_DATA);
     if (m == NULL) {

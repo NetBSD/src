@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.83 2000/09/28 10:10:14 tsutsui Exp $	*/
+/*	$NetBSD: elink3.c,v 1.84 2000/10/01 23:32:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1500,7 +1500,6 @@ epread(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 	int len;
 
 	len = bus_space_read_2(iot, ioh, ep_w1_reg(sc, ELINK_W1_RX_STATUS));
@@ -1548,31 +1547,15 @@ again:
 
 	++ifp->if_ipackets;
 
-	/* We assume the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(sc->sc_ethercom.ec_if.if_sadl),
-		        sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
+
 	(*ifp->if_input)(ifp, m);
 
 	/*

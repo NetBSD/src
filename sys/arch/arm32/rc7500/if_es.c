@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.16 1999/05/18 23:52:52 thorpej Exp $	*/
+/*	$NetBSD: if_es.c,v 1.17 2000/10/01 23:32:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -560,7 +560,6 @@ esrint(sc)
 	u_short pktctlw, pktlen, *buf;
 	struct ifnet *ifp;
 	struct mbuf *top, **mp, *m;
-	struct ether_header *eh;
 	u_char *b, *pktbuf;
 
 #ifdef ESDEBUG
@@ -652,8 +651,6 @@ esrint(sc)
 	top = NULL;
 	mp = &top;
 
-	eh = (struct ether_header *) pktbuf;
-
 	b = pktbuf;
 
 	while (pktlen > 0) {
@@ -683,22 +680,8 @@ esrint(sc)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (sc->sc_ethercom.ec_if.if_bpf) {
+	if (sc->sc_ethercom.ec_if.if_bpf)
 		bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, top);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((sc->sc_ethercom.ec_if.if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(top);
-			return;
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, top);
