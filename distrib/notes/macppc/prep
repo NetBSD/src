@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.26 2002/05/03 05:19:27 mbw Exp $
+.\"	$NetBSD: prep,v 1.27 2002/05/09 09:45:29 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -929,9 +929,9 @@ This method loads
 .Pa ofwboot.xcf
 from an HFS or HFS+ partition which then loads the kernel from an acceptable
 source (such as an FFS partition or an HFS or HFS+ partition).  The FFS-based
-kernel may be on the boot floppy image
-.No ( Ns Pa boot.fs No Ns )
-located on an HFS or HFS+ partition, or located on a full FFS partition.
+kernel may be on a previously installed 
+.Nx
+filesystem.
 .Pp
 Alternatively, the kernel (compressed
 or non-compressed) may be on an HFS or HFS+ partition.  Due to Open Firmware
@@ -1316,11 +1316,11 @@ on any unix-like machine.
 .bullet)
 .It
 Copy 
-.Pa netbsd.ram.gz No and Pa ofwboot.xcf
+.Pa netbsd.INSTALL.gz No and Pa ofwboot.xcf
 to the floppy.
 .It
 Rename
-.Pa netbsd.ram.gz No to Pa netbsd.gz ,
+.Pa netbsd.INSTALL.gz No to Pa netbsd.gz ,
 since OpenFirmware can't deal with MS-DOS filenames longer than eight
 characters.
 .enum)
@@ -1445,7 +1445,7 @@ Skip forward to
 Place
 .Pa ofwboot.xcf
 and the installation kernel
-.Pa netbsd.ram.gz
+.Pa netbsd.GENERIC_MD.gz
 at the top level of your Macintosh filesystem. That is, drag the two
 icons onto your hard drive icon (not the desktop).  Make sure they're
 both on the same partition.
@@ -1527,8 +1527,11 @@ CD-R image, as described in the section above.
 Place
 .Pa ofwboot.xcf
 and the installation kernel 
-.Pa netbsd.ram.gz
+.Pa netbsd.GENERIC_MD.gz
 at the top level of the CD.
+Due to restrictions in the way that Open Firmware deals with ISO
+filenames, you may wish to name your kernel
+.Pa netbsd.gz .
 You may also place the
 .Nx \*V
 distribution sets on the disk.
@@ -1574,7 +1577,7 @@ Click the
 button and drag
 .Pa installation/ofwboot.xcf
 and
-.Pa installation/netbsd.ram.gz
+.Pa binary/kernel/netbsd.GENERIC_MD.gz
 into the window
 .Pp
 .It
@@ -1615,10 +1618,14 @@ CD-R image, as described two sections above.
 Place
 .Pa ofwboot.xcf
 and the installation kernel 
-.Pa netbsd.ram.gz
+.Pa netbsd.GENERIC_MD.gz
 at the top level of the CD. Make sure that the
 bootloader is present on the HFS partition, and the kernel is on both the
-ISO9660 and HFS partitions. You may also place the
+ISO9660 and HFS partitions. 
+Due to restrictions in the way that Open Firmware deals with ISO
+filenames, you may wish to name your kernel
+.Pa netbsd.gz .
+You may also place the
 .Nx \*V
 distribution sets on the ISO9660 partition
 .No ( Ns Em not
@@ -1684,7 +1691,7 @@ button and select the temporary partition you just created
 Click the
 .Dq ISO...
 button and drag
-.Pa installation/netbsd.ram.gz
+.Pa binary/kernel/netbsd.GENERIC_MD.gz
 into the window.  You may also want to drag the 
 .Nx \*V
 distribution sets to this window as well.
