@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.12 1997/04/19 06:04:54 thorpej Exp $	*/
+/*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.12 1997/04/19 06:04:54 thorpej Exp $";
+static char rcsid[] = "$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -511,6 +511,8 @@ ttysetup(speed)
 	cfsetispeed(&cntrl, speed);
 	cntrl.c_cflag &= ~(CSIZE|PARENB);
 	cntrl.c_cflag |= CS8;
+	if (boolean(value(DC)))
+		cntrl.c_cflag |= CLOCAL;
 	cntrl.c_iflag &= ~(ISTRIP|ICRNL);
 	cntrl.c_oflag &= ~OPOST;
 	cntrl.c_lflag &= ~(ICANON|ISIG|IEXTEN|ECHO);
