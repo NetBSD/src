@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.21 1996/05/18 18:54:03 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.21.4.1 1996/06/01 00:15:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,6 +134,7 @@ long		videobitdepth;
 unsigned long	videosize;
 
 /* Calculated by itecninit() */
+static int	ite_initted = 0;
 static int	width, height;		/* width, height in pixels */
 static int	scrcols, scrrows;	/* width, height in characters */
 static int	screenrowbytes;		/* number of visible bytes per row */
@@ -828,9 +829,13 @@ iteopen(dev, mode, devtype, p)
 
 	dprintf("iteopen(): enter(0x%x)\n", (int) dev);
 
-	if (ite_tty == NULL)
+	if (!ite_initted)
+		return (ENXIO);
+
+	if (ite_tty == NULL) {
 		tp = ite_tty = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = ite_tty;
 	if ((tp->t_state & (TS_ISOPEN | TS_XCLUDE)) == (TS_ISOPEN | TS_XCLUDE)
 	    && p->p_ucred->cr_uid != 0)
@@ -1080,6 +1085,7 @@ itecnprobe(struct consdev * cp)
 int
 itecninit(struct consdev * cp)
 {
+	ite_initted = 1;
 	width = videosize & 0xffff;
 	height = (videosize >> 16) & 0xffff;
 	scrrows = height / CHARHEIGHT;
