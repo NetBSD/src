@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.6 2003/08/22 14:05:03 kleink Exp $
+.\" $NetBSD: iconv.3,v 1.7 2003/09/01 06:16:14 tshiozak Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -121,22 +121,33 @@ returns the number of such
 There are two special cases of
 .Fn iconv :
 .Bl -tag -width 0123
-.It "(src == NULL || *src == NULL) \*[Am]\*[Am] dst != NULL \*[Am]\*[Am] *dst != NULL"
-If the destination codeset is stateful,
-.Fa iconv
-places the destination into its initial state and stores the shift
-sequence for switching to the initial state in the buffer pointed
-to by
+.It "src == NULL || *src == NULL"
+.\" 
+If the source and/or destination codesets are stateful,
+.Fn iconv
+places these into their initial state.
+.Pp
+If both
+.Fa dst
+and
+.Fa *dst
+are non-NULL,
+.Fn iconv
+stores the shift sequence for the destination switching to the initial state
+in the buffer pointed to by
 .Fa *dst .
 The buffer size is specified by the value pointed to by
 .Fa dstleft
 as above.
 .Fn iconv
 will fail if the buffer is too small to store the shift sequence.
-.It "(src == NULL || *src == NULL) \*[Am]\*[Am] (dst == NULL || *dst == NULL)"
-If the source codeset is stateful,
-.Fa iconv
-places the source into its initial state.
+.Pp
+On the other hand,
+.Fa dst
+or
+.Fa *dst
+may be NULL.  In this case, the shift sequence for the destination switching
+to the initial state is discarded.
 .El
 .\" ----------------------------------------------------------------------
 .Sh RETURN VALUES
