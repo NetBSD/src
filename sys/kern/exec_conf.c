@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.18 1996/09/26 20:51:04 cgd Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.19 1996/10/02 05:29:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -29,21 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#undef EXEC_SCRIPT					/* XXX should die */
-#define EXEC_SCRIPT					/* XXX should die */
-#undef EXEC_AOUT					/* XXX should die */
-#define EXEC_AOUT					/* XXX should die */
-
-#if defined(COMPAT_ULTRIX) || defined(COMPAT_OSF1)	/* XXX should die */
-#undef EXEC_ECOFF					/* XXX should die */
-#define EXEC_ECOFF					/* XXX should die */
-#endif							/* XXX should die */
-
-#if defined(COMPAT_SVR4) || defined(COMPAT_LINUX)	/* XXX should die */
-#undef EXEC_ELF32					/* XXX should die */
-#define EXEC_ELF32					/* XXX should die */
-#endif							/* XXX should die */
 
 #include <sys/param.h>
 #include <sys/exec.h>
