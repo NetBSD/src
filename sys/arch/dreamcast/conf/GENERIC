@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.29 2002/11/15 14:15:36 itohy Exp $
+# $NetBSD: GENERIC,v 1.30 2002/12/27 11:43:38 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -165,6 +165,8 @@ gapspci*	at g2bus?			# GAPS PCI bridge
 pci*		at gapspci?
 rtk*		at pci? dev ? function ?	# SEGA Broadband Adapter
 ukphy*		at mii? phy ?
+
+mbe*		at g2bus?			# SEGA LAN Adapter
 
 #pseudo-device	cgd		2	# cryptographic disk devices
 pseudo-device	md		1	# memory disk device (ramdisk)
