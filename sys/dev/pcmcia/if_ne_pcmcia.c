@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.113 2004/05/25 11:51:11 is Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.114 2004/06/19 04:20:48 itohy Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.113 2004/05/25 11:51:11 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.114 2004/06/19 04:20:48 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,6 +429,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXD,
       PCMCIA_CIS_COREGA_FETHER_PCC_TXD,
       0, -1, { 0x00, 0x90, 0x99 } },
+
+    { PCMCIA_STR_COREGA_FETHER_II_PCC_TXD,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_FETHER_II_PCC_TXD,
+      PCMCIA_CIS_COREGA_FETHER_II_PCC_TXD,
+      0, -1, { 0x00, 0x90, 0x99 }, NE2000DVF_AX88190 | NE2000DVF_AX88790 },
 
     { PCMCIA_STR_COMPEX_LINKPORT_ENET_B,
       PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
