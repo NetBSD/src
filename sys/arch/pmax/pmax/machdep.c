@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.9 1994/06/14 02:47:40 glass Exp $
+ *      $Id: machdep.c,v 1.10 1994/06/15 05:18:47 glass Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -2164,10 +2164,10 @@ cpu_exec_ecoff_hook(p, epp, eap)
 	struct exec_package *epp;
 	struct ecoff_aouthdr *eap;
 {
+
 	epp->ep_emul = EMUL_ULTRIX;
 	epp->ep_setup = cpu_exec_ecoff_setup;
 	return 0;
 }
-
 
 #endif
