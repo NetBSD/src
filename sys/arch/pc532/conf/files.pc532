@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.26 1996/12/28 23:25:13 pk Exp $
+#	$NetBSD: files.pc532,v 1.27 1997/01/21 09:45:06 thorpej Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -14,8 +14,6 @@ attach	mainbus at root
 major	{vnd = 5}
 
 # Memory Disk for install floppy
-pseudo-device md
-file dev/md.c			md needs-flag
 file arch/pc532/dev/md_root.c	memory_disk_hooks
 major	{md = 3}
 

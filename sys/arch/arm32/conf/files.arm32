@@ -42,8 +42,6 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # Memory disk driver
-pseudo-device	md
-file	dev/md.c				md needs-count
 file	arch/arm32/dev/md_hooks.c		md | memory_disk_hooks
 major   {md = 18}
 

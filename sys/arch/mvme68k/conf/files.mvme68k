@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.10 1996/12/28 23:23:20 pk Exp $
+#	$NetBSD: files.mvme68k,v 1.11 1997/01/21 09:44:28 thorpej Exp $
 
 # config file for mvme68k
 
@@ -48,8 +48,6 @@ device vmel { [ atype = -1 ], addr = 0, [ ipl = -1 ], [ vec = - 1 ] }
 attach vmel at vmechip
 
 # Memory disk for boot tape
-pseudo-device md
-file dev/md.c				md needs-flag
 file arch/mvme68k/dev/md_root.c		memory_disk_hooks
 
 # MVME-147 VME controller chip
