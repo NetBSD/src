@@ -91,6 +91,7 @@ struct cgen_fields
 {
   int length;
   long f_nil;
+  long f_anyof;
   long f_op1;
   long f_op2;
   long f_op3;

@@ -1,5 +1,6 @@
 /* Print mips instructions for GDB, the GNU debugger, or for objdump.
-   Copyright (c) 1989, 91-97, 1998 Free Software Foundation, Inc.
+   Copyright (c) 1989, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2000
+   Free Software Foundation, Inc.
    Contributed by Nobuyuki Hikichi(hikichi@sra.co.jp).
 
 This file is part of GDB, GAS, and the GNU binutils.
@@ -49,7 +50,7 @@ static int _print_insn_mips PARAMS ((bfd_vma, unsigned long int,
 
 
 /* FIXME: This should be shared with gdb somehow.  */
-#define REGISTER_NAMES 	\
+#define STD_REGISTER_NAMES 	\
     {	"zero",	"at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3", \
 	"t0",	"t1",	"t2",	"t3",	"t4",	"t5",	"t6",	"t7", \
 	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7", \
@@ -63,13 +64,17 @@ static int _print_insn_mips PARAMS ((bfd_vma, unsigned long int,
 	"epc",  "prid"\
     }
 
-static CONST char * CONST reg_names[] = REGISTER_NAMES;
+static CONST char * CONST std_reg_names[] = STD_REGISTER_NAMES;
 
 /* The mips16 register names.  */
 static const char * const mips16_reg_names[] =
 {
   "s0", "s1", "v0", "v1", "a0", "a1", "a2", "a3"
 };
+
+/* Scalar register names. set_mips_isa_type() decides which register name
+   table to use.  */
+static CONST char * CONST *reg_names = NULL;
 
 /* subroutine */
 static void
@@ -132,7 +137,8 @@ print_insn_arg (d, l, pc, info)
 
     case 'a':
       (*info->print_address_func)
-	(((pc & 0xF0000000) | (((l >> OP_SH_TARGET) & OP_MASK_TARGET) << 2)),
+	(((pc & ~ (bfd_vma) 0x0fffffff)
+	  | (((l >> OP_SH_TARGET) & OP_MASK_TARGET) << 2)),
 	 info);
       break;
 
@@ -151,6 +157,30 @@ print_insn_arg (d, l, pc, info)
 			     reg_names[(l >> OP_SH_RD) & OP_MASK_RD]);
       break;
 
+    case 'U':
+      {
+      /* First check for both rd and rt being equal. */
+      int reg = (l >> OP_SH_RD) & OP_MASK_RD;
+      if (reg == ((l >> OP_SH_RT) & OP_MASK_RT))
+        (*info->fprintf_func) (info->stream, "$%s",
+                               reg_names[reg]);
+      else                        
+        {
+          /* If one is zero use the other. */
+          if (reg == 0)
+            (*info->fprintf_func) (info->stream, "$%s",
+                                   reg_names[(l >> OP_SH_RT) & OP_MASK_RT]);
+          else if (((l >> OP_SH_RT) & OP_MASK_RT) == 0)
+            (*info->fprintf_func) (info->stream, "$%s",
+                                   reg_names[reg]);
+          else /* Bogus, result depends on processor. */
+            (*info->fprintf_func) (info->stream, "$%s or $%s",
+                                   reg_names[reg],
+                                   reg_names[(l >> OP_SH_RT) & OP_MASK_RT]);
+          }
+      }
+      break;
+
     case 'z':
       (*info->fprintf_func) (info->stream, "$%s", reg_names[0]);
       break;
@@ -165,7 +195,6 @@ print_insn_arg (d, l, pc, info)
 			     (l >> OP_SH_CODE) & OP_MASK_CODE);
       break;
 
-
     case 'q':
       (*info->fprintf_func) (info->stream, "0x%x",
 			     (l >> OP_SH_CODE2) & OP_MASK_CODE2);
@@ -178,7 +207,12 @@ print_insn_arg (d, l, pc, info)
 
     case 'B':
       (*info->fprintf_func) (info->stream, "0x%x",
-			     (l >> OP_SH_SYSCALL) & OP_MASK_SYSCALL);
+			     (l >> OP_SH_CODE20) & OP_MASK_CODE20);
+      break;
+
+    case 'J':
+      (*info->fprintf_func) (info->stream, "0x%x",
+			     (l >> OP_SH_CODE19) & OP_MASK_CODE19);
       break;
 
     case 'S':
@@ -186,7 +220,6 @@ print_insn_arg (d, l, pc, info)
       (*info->fprintf_func) (info->stream, "$f%d",
 			     (l >> OP_SH_FS) & OP_MASK_FS);
       break;
-
 
     case 'T':
     case 'W':
@@ -229,6 +262,10 @@ print_insn_arg (d, l, pc, info)
 			     (l >> OP_SH_PERFREG) & OP_MASK_PERFREG);
       break;
 
+    case 'H':
+      (*info->fprintf_func) (info->stream, "%d", 
+			     (l >> OP_SH_SEL) & OP_MASK_SEL);
+      break;
 
     default:
       /* xgettext:c-format */
@@ -250,76 +287,98 @@ set_mips_isa_type (mach, isa, cputype)
      int *isa;
      int *cputype;
 {
-  int target_processor = 0;
-  int mips_isa = 0;
+  int target_processor = CPU_UNKNOWN;
+  int mips_isa = ISA_UNKNOWN;
+
+  /* Use standard MIPS register names by default.  */
+  reg_names = std_reg_names;
 
   switch (mach)
     {
-      case bfd_mach_mips3000:
-	target_processor = 3000;
-	mips_isa = 1;
-	break;
-      case bfd_mach_mips3900:
-	target_processor = 3900;
-	mips_isa = 1;
-	break;
-      case bfd_mach_mips4000:
-	target_processor = 4000;
-	mips_isa = 3;
-	break;
-      case bfd_mach_mips4010:
-	target_processor = 4010;
-	mips_isa = 2;
-	break;
-      case bfd_mach_mips4100:
-	target_processor = 4100;
-	mips_isa = 3;
-	break;
-      case bfd_mach_mips4111:
-	target_processor = 4100;
-	mips_isa = 3;
-	break;
-      case bfd_mach_mips4300:
-	target_processor = 4300;
-	mips_isa = 3;
-	break;
-      case bfd_mach_mips4400:
-	target_processor = 4400;
-	mips_isa = 3;
-	break;
-      case bfd_mach_mips4600:
-	target_processor = 4600;
-	mips_isa = 3;
-	break;
-      case bfd_mach_mips4650:
-	target_processor = 4650;
-	mips_isa = 3;
-	break;
-      case bfd_mach_mips5000:
-	target_processor = 5000;
-	mips_isa = 4;
-	break;
-      case bfd_mach_mips6000:
-	target_processor = 6000;
-	mips_isa = 2;
-	break;
-      case bfd_mach_mips8000:
-	target_processor = 8000;
-	mips_isa = 4;
-	break;
-      case bfd_mach_mips10000:
-	target_processor = 10000;
-	mips_isa = 4;
-	break;
-      case bfd_mach_mips16:
-	target_processor = 16;
-	mips_isa = 3;
-	break;
-      default:
-	target_processor = 3000;
-	mips_isa = 3;
-	break;
-
+    case bfd_mach_mips3000:
+      target_processor = CPU_R3000;
+      mips_isa = ISA_MIPS1;
+      break;
+    case bfd_mach_mips3900:
+      target_processor = CPU_R3900;
+      mips_isa = ISA_MIPS1;
+      break;
+    case bfd_mach_mips4000:
+      target_processor = CPU_R4000;
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips4010:
+      target_processor = CPU_R4010;
+      mips_isa = ISA_MIPS2;
+      break;
+    case bfd_mach_mips4100:
+      target_processor = CPU_VR4100;
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips4111:
+      target_processor = CPU_VR4100; /* FIXME: Shouldn't this be CPU_R4111 ??? */
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips4300:
+      target_processor = CPU_R4300;
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips4400:
+      target_processor = CPU_R4400;
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips4600:
+      target_processor = CPU_R4600;
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips4650:
+      target_processor = CPU_R4650;
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips5000:
+      target_processor = CPU_R5000;
+      mips_isa = ISA_MIPS4;
+      break;
+    case bfd_mach_mips6000:
+      target_processor = CPU_R6000;
+      mips_isa = ISA_MIPS2;
+      break;
+    case bfd_mach_mips8000:
+      target_processor = CPU_R8000;
+      mips_isa = ISA_MIPS4;
+      break;
+    case bfd_mach_mips10000:
+      target_processor = CPU_R10000;
+      mips_isa = ISA_MIPS4;
+      break;
+    case bfd_mach_mips16:
+      target_processor = CPU_MIPS16;
+      mips_isa = ISA_MIPS3;
+      break;
+    case bfd_mach_mips32:
+      target_processor = CPU_MIPS32;
+      mips_isa = ISA_MIPS32;
+      break;
+    case bfd_mach_mips32_4k:
+      target_processor = CPU_MIPS32_4K;
+      mips_isa = ISA_MIPS32;
+      break;
+    case bfd_mach_mips5:
+      target_processor = CPU_MIPS5;
+      mips_isa = ISA_MIPS5;
+      break;
+    case bfd_mach_mips64:
+      target_processor = CPU_MIPS64;
+      mips_isa = ISA_MIPS64;
+      break;
+    case bfd_mach_mips_sb1:
+      target_processor = CPU_SB1;
+      mips_isa = ISA_MIPS64;
+      break;
+    default:
+      target_processor = CPU_R3000;
+      mips_isa = ISA_MIPS3;
+      break;
     }
 
   *isa = mips_isa;

@@ -572,3 +572,54 @@ Disassembly of section .text:
  9b8:	66 0f bd 90 90 90 90 90 [ 	]*bsr    0x90909090\(%eax\),%dx
  9c0:	66 0f be 90 90 90 90 90 [ 	]*movsbw 0x90909090\(%eax\),%dx
  9c8:	66 0f c1 90 90 90 90 90 [ 	]*xadd   %dx,0x90909090\(%eax\)
+
+0+9d0 <gs_foo>:
+ 9d0:	c3 [ 	]*ret    
+
+0+9d1 <short_foo>:
+ 9d1:	c3 [ 	]*ret    
+
+0+9d2 <bar>:
+ 9d2:	e8 f9 ff ff ff [ 	]*call   9d0 <gs_foo>
+ 9d7:	e8 f5 ff ff ff [ 	]*call   9d1 <short_foo>
+ 9dc:	8d 83 00 00 00 00 [ 	]*lea    0x0\(%ebx\),%eax
+ 9e2:	dd 1c d0 [ 	]*fstpl  \(%eax,%edx,8\)
+ 9e5:	b9 00 00 00 00 [ 	]*mov    \$0x0,%ecx
+ 9ea:	88 04 16 [ 	]*mov    %al,\(%esi,%edx,1\)
+ 9ed:	88 04 32 [ 	]*mov    %al,\(%edx,%esi,1\)
+ 9f0:	88 04 56 [ 	]*mov    %al,\(%esi,%edx,2\)
+ 9f3:	88 04 56 [ 	]*mov    %al,\(%esi,%edx,2\)
+ 9f6:	eb 0c [ 	]*jmp    a04 <rot5>
+ 9f8:	6c [ 	]*insb   \(%dx\),%es:\(%edi\)
+ 9f9:	66 0f c1 90 90 90 90 90 [ 	]*xadd   %dx,0x90909090\(%eax\)
+ a01:	83 e0 f8 [ 	]*and    \$0xfffffff8,%eax
+
+0+a04 <rot5>:
+ a04:	8b 44 ce 04 [ 	]*mov    0x4\(%esi,%ecx,8\),%eax
+ a08:	6c [ 	]*insb   \(%dx\),%es:\(%edi\)
+ a09:	0c 90 [ 	]*or     \$0x90,%al
+ a0b:	0d 90 90 90 90 [ 	]*or     \$0x90909090,%eax
+ a10:	0e [ 	]*push   %cs
+ a11:	8b 04 5d 00 00 00 00 [ 	]*mov    0x0\(,%ebx,2\),%eax
+ a18:	10 14 85 90 90 90 90 [ 	]*adc    %dl,0x90909090\(,%eax,4\)
+ a1f:	2f [ 	]*das    
+ a20:	ea 90 90 90 90 90 90 [ 	]*ljmp   \$0x9090,\$0x90909090
+ a27:	66 a5 [ 	]*movsw  %ds:\(%esi\),%es:\(%edi\)
+ a29:	70 90 [ 	]*jo     9bb <foo\+0x9bb>
+ a2b:	75 fe [ 	]*jne    a2b <rot5\+0x27>
+ a2d:	0f 6f 35 28 00 00 00 [ 	]*movq   0x28,%mm6
+ a34:	03 3c c3 [ 	]*add    \(%ebx,%eax,8\),%edi
+ a37:	0f 6e 44 c3 04 [ 	]*movd   0x4\(%ebx,%eax,8\),%mm0
+ a3c:	03 bc cb 00 80 00 00 [ 	]*add    0x8000\(%ebx,%ecx,8\),%edi
+ a43:	0f 6e 8c cb 04 80 00 00 [ 	]*movd   0x8004\(%ebx,%ecx,8\),%mm1
+ a4b:	0f 6e 94 c3 04 00 01 00 [ 	]*movd   0x10004\(%ebx,%eax,8\),%mm2
+ a53:	03 bc c3 00 00 01 00 [ 	]*add    0x10000\(%ebx,%eax,8\),%edi
+ a5a:	66 8b 04 43 [ 	]*mov    \(%ebx,%eax,2\),%ax
+ a5e:	66 8b 8c 4b 00 20 00 00 [ 	]*mov    0x2000\(%ebx,%ecx,2\),%cx
+ a66:	66 8b 84 43 00 40 00 00 [ 	]*mov    0x4000\(%ebx,%eax,2\),%ax
+ a6e:	ff e0 [ 	]*jmp    \*%eax
+ a70:	ff 20 [ 	]*jmp    \*\(%eax\)
+ a72:	ff 25 d2 09 00 00 [ 	]*jmp    \*0x9d2
+ a78:	e9 55 ff ff ff [ 	]*jmp    9d2 <bar>
+ a7d:	8b 83 (00 00|d0 09) 00 00 [ 	]*mov    (0x0|0x9d0)\(%ebx\),%eax
+[ 	]*...

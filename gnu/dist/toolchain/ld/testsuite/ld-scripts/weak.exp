@@ -35,7 +35,7 @@ set weak_regexp_big \
 set weak_regexp_little \
 ".*Contents of section .text:.*1000 08100000 0c200000 12121212 34343434.*Contents of section .data:.*2000 08100000 0c200000 56565656 78787878.*"
 
-if {! [ld_simple_link $ld tmpdir/weak "-T $srcdir/$subdir/weak.t tmpdir/weak1.o tmpdir/weak2.o"] } then {
+if {! [ld_simple_link $ld tmpdir/weak "$flags -T $srcdir/$subdir/weak.t tmpdir/weak1.o tmpdir/weak2.o"] } then {
     fail $testname
 } else {
     if {[which $objdump] == 0} then {

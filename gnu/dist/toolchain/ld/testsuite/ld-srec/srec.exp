@@ -228,18 +228,19 @@ proc run_srec_test { test objs } {
 	set flags "$flags --defsym V_SPILL=0 --defsym V_FILL=0"
     }
 
-    # ARM targets call __gccmain
-    if [istarget arm*-*-*] {
-	set flags "$flags --defsym ___gccmain=0"
-    }
+    if {[istarget arm*-*-*]       || \
+        [istarget strongarm*-*-*] || \
+        [istarget xscale*-*-*]    || \
+        [istarget thumb-*-*] } {
     
-    if [istarget strongarm*-*-*] {
-	set flags "$flags --defsym __gccmain=0"
-    }
-    
-    # Thumb targets call __gccmain
-    if [istarget thumb-*-*] {
-	set flags "$flags --defsym ___gccmain=0"
+        # ARM targets call __gccmain
+        set flags "$flags --defsym __gccmain=0"
+
+        # ARM targets cannot convert format in the linker 
+        # using the --oformat command line switch
+	setup_xfail "*arm*-*-*"
+	setup_xfail "xscale-*-*"
+	setup_xfail "thumb-*-*"
     }
 
     # PowerPC EABI code calls __eabi.
@@ -252,13 +253,20 @@ proc run_srec_test { test objs } {
 	set flags "$flags --defsym __truncsipsi2_d0_d2=0"
     }
 
+    # m6811/m6812 code has references to soft registers.
+    if {[istarget m6811-*-*] || [istarget m6812-*-*]} {
+	set flags "$flags --defsym _.frame=0 --defsym _.d1=0 --defsym _.d2=0"
+	set flags "$flags --defsym _.d3=0 --defsym _.d4=0"
+	set flags "$flags --defsym _.tmp=0 --defsym _.xy=0"
+    }
+
     # V850 targets need libgcc.a
     if [istarget v850*-*-elf] {
 	set objs "$objs -L ../gcc -lgcc"
     }
     
     if { ![ld_simple_link $ld tmpdir/sr1 "$flags $objs"] \
-	 || ![ld_simple_link $ld tmpdir/sr2.sr "$flags -oformat srec $objs"] } {
+	 || ![ld_simple_link $ld tmpdir/sr2.sr "$flags --oformat srec $objs"] } {
 	setup_xfail "hppa*-*-*elf*"
 	fail $test
 	return
@@ -326,7 +334,8 @@ setup_xfail "*-*-aix*" "*-*-xcoff*"
 
 # The S-record linker doesn't build ARM/Thumb stubs.
 setup_xfail "arm-*-coff"
-setup_xfail "strongarm*-*-*"
+setup_xfail "strongarm*-*-coff"
+setup_xfail "xscale*-*-coff"
 setup_xfail "arm-*-pe*"
 # setup_xfail "arm-*elf*"
 setup_xfail "thumb-*-coff*"
@@ -343,6 +352,9 @@ setup_xfail "v850*-*-elf"
 # The S-record linker doesn't handle Alpha Elf relaxation.
 setup_xfail "alpha*-*-elf*" "alpha*-*-linux-gnu*" "alpha*-*-gnu*"
 setup_xfail "alpha*-*-netbsd*"
+
+# The S-record linker hasn't any hope of coping with HPPA relocs.
+setup_xfail "hppa*-*-*"
 
 # The S-record linker doesn't support the special PE headers - the PE
 # emulation tries to write pe-specific information to the PE headers
@@ -376,6 +388,7 @@ setup_xfail "powerpc*-*-eabi*"
 setup_xfail "v850*-*-elf"
 setup_xfail "alpha*-*-elf*" "alpha*-*-linux-gnu*" "alpha*-*-gnu*"
 setup_xfail "alpha*-*-netbsd*"
+setup_xfail "hppa*-*-*"
 setup_xfail "*-*-cygwin*" "*-*-mingw*" "*-*-pe*" "*-*-winnt*"
 
 run_srec_test $test2 "tmpdir/sr3.o"

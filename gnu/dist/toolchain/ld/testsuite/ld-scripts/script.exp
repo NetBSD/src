@@ -24,11 +24,17 @@ proc check_script { } {
 	    verbose "bad output from nm"
 	    fail $testname
 	} else {
+	    set text_end 0x104
+	    set data_end 0x1004
+	    if [istarget *c54x*-*-*] then {
+		set text_end 0x102
+		set data_end 0x1002
+	    }
 	    if {$nm_output(text_start) != 0x100} {
 		send_log "text_start == $nm_output(text_start)\n"
 		verbose "text_start == $nm_output(text_start)"
 		fail $testname
-	    } else { if {$nm_output(text_end) < 0x104 \
+	    } else { if {$nm_output(text_end) < $text_end \
 			  || $nm_output(text_end) > 0x110} {
 		send_log "text_end == $nm_output(text_end)\n"
 		verbose "text_end == $nm_output(text_end)"
@@ -37,7 +43,7 @@ proc check_script { } {
 		send_log "data_start == $nm_output(data_start)\n"
 		verbose "data_start == $nm_output(data_start)"
 		fail $testname
-	    } else { if {$nm_output(data_end) < 0x1004 \
+	    } else { if {$nm_output(data_end) < $data_end \
 			 || $nm_output(data_end) > 0x1010} {
 		send_log "data_end == $nm_output(data_end)\n"
 		verbose "data_end == $nm_output(data_end)"

@@ -3,7 +3,7 @@
 # objdump: -fd
 
 .*:.*file format.*mips.*
-architecture: mips:[34][0-9]00, flags 0x00000011:
+architecture: mips:.*, flags 0x00000011:
 HAS_RELOC, HAS_SYMS
 start address 0x0000000000000000
 
@@ -25,3 +25,4 @@ Disassembly of section .text:
   28:	00000000 	nop
   2c:	03e00008 	jr	\$ra
   30:	27bd0028 	addiu	\$sp,\$sp,40
+	...

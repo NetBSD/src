@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-#include "sysdep.h"
 #include <stdio.h>
+#include "sysdep.h"
 #include "opcode/d30v.h" 
 #include "dis-asm.h"
 #include "opintl.h"

@@ -469,3 +469,4 @@ Disassembly of section .text:
 [ 	]*[0-9a-f]+: R_MIPS_LO16	.bss
 [0-9a-f]+ <[^>]*> addu	\$a0,\$a0,\$at
 [0-9a-f]+ <[^>]*> addu	\$a0,\$a0,\$a1
+	...

@@ -1,0 +1,498 @@
+This is ld.info, produced by makeinfo version 4.0 from ./ld.texinfo.
+
+START-INFO-DIR-ENTRY
+* Ld: (ld).                       The GNU linker.
+END-INFO-DIR-ENTRY
+
+   This file documents the GNU linker LD version 2.11.
+
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+Software Foundation, Inc.
+
+
+File: ld.info,  Node: Index,  Prev: GNU Free Documentation License,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* ":                                     Symbols.
+* -(:                                    Options.
+* --add-stdcall-alias:                   Options.
+* --allow-shlib-undefined:               Options.
+* --architecture=ARCH:                   Options.
+* --auxiliary:                           Options.
+* --base-file:                           Options.
+* --check-sections:                      Options.
+* --cref:                                Options.
+* --defsym SYMBOL=EXP:                   Options.
+* --demangle[=STYLE]:                    Options.
+* --disable-new-dtags:                   Options.
+* --disable-stdcall-fixup:               Options.
+* --discard-all:                         Options.
+* --discard-locals:                      Options.
+* --dll:                                 Options.
+* --dynamic-linker FILE:                 Options.
+* --embedded-relocs:                     Options.
+* --emit-relocs:                         Options.
+* --enable-new-dtags:                    Options.
+* --enable-stdcall-fixup:                Options.
+* --entry=ENTRY:                         Options.
+* --exclude-symbols:                     Options.
+* --export-all-symbols:                  Options.
+* --export-dynamic:                      Options.
+* --file-alignment:                      Options.
+* --filter:                              Options.
+* --force-exe-suffix:                    Options.
+* --format=FORMAT:                       Options.
+* --format=VERSION:                      TI COFF.
+* --gc-sections:                         Options.
+* --gpsize:                              Options.
+* --heap:                                Options.
+* --help:                                Options.
+* --image-base:                          Options.
+* --just-symbols=FILE:                   Options.
+* --kill-at:                             Options.
+* --library-path=DIR:                    Options.
+* --library=ARCHIVE:                     Options.
+* --major-image-version:                 Options.
+* --major-os-version:                    Options.
+* --major-subsystem-version:             Options.
+* --minor-image-version:                 Options.
+* --minor-os-version:                    Options.
+* --minor-subsystem-version:             Options.
+* --mri-script=MRI-CMDFILE:              Options.
+* --multi-subspace:                      HPPA ELF32.
+* --nmagic:                              Options.
+* --no-check-sections:                   Options.
+* --no-demangle:                         Options.
+* --no-gc-sections:                      Options.
+* --no-keep-memory:                      Options.
+* --no-undefined:                        Options.
+* --no-warn-mismatch:                    Options.
+* --no-whole-archive:                    Options.
+* --noinhibit-exec:                      Options.
+* --oformat:                             Options.
+* --omagic:                              Options.
+* --output-def:                          Options.
+* --output=OUTPUT:                       Options.
+* --print-map:                           Options.
+* --relax:                               Options.
+* --relax on i960:                       i960.
+* --relocateable:                        Options.
+* --script=SCRIPT:                       Options.
+* --section-alignment:                   Options.
+* --section-start SECTIONNAME=ORG:       Options.
+* --sort-common:                         Options.
+* --split-by-file:                       Options.
+* --split-by-reloc:                      Options.
+* --stack:                               Options.
+* --stats:                               Options.
+* --strip-all:                           Options.
+* --strip-debug:                         Options.
+* --stub-group-size=N:                   HPPA ELF32.
+* --subsystem:                           Options.
+* --support-old-code:                    ARM.
+* --target-help:                         Options.
+* --thumb-entry=ENTRY:                   ARM.
+* --trace:                               Options.
+* --trace-symbol=SYMBOL:                 Options.
+* --traditional-format:                  Options.
+* --undefined=SYMBOL:                    Options.
+* --unique[=SECTION]:                    Options.
+* --verbose:                             Options.
+* --version:                             Options.
+* --version-script=VERSION-SCRIPTFILE:   Options.
+* --warn-comon:                          Options.
+* --warn-constructors:                   Options.
+* --warn-multiple-gp:                    Options.
+* --warn-once:                           Options.
+* --warn-section-align:                  Options.
+* --whole-archive:                       Options.
+* --wrap:                                Options.
+* -AARCH:                                Options.
+* -aKEYWORD:                             Options.
+* -assert KEYWORD:                       Options.
+* -b FORMAT:                             Options.
+* -Bdynamic:                             Options.
+* -Bshareable:                           Options.
+* -Bstatic:                              Options.
+* -Bsymbolic:                            Options.
+* -c MRI-CMDFILE:                        Options.
+* -call_shared:                          Options.
+* -d:                                    Options.
+* -dc:                                   Options.
+* -dn:                                   Options.
+* -dp:                                   Options.
+* -dy:                                   Options.
+* -E:                                    Options.
+* -e ENTRY:                              Options.
+* -EB:                                   Options.
+* -EL:                                   Options.
+* -F:                                    Options.
+* -f:                                    Options.
+* -fini:                                 Options.
+* -G:                                    Options.
+* -g:                                    Options.
+* -hNAME:                                Options.
+* -i:                                    Options.
+* -init:                                 Options.
+* -lARCHIVE:                             Options.
+* -LDIR:                                 Options.
+* -M:                                    Options.
+* -m EMULATION:                          Options.
+* -Map:                                  Options.
+* -N:                                    Options.
+* -n:                                    Options.
+* -non_shared:                           Options.
+* -O LEVEL:                              Options.
+* -o OUTPUT:                             Options.
+* -q:                                    Options.
+* -qmagic:                               Options.
+* -Qy:                                   Options.
+* -r:                                    Options.
+* -R FILE:                               Options.
+* -rpath:                                Options.
+* -rpath-link:                           Options.
+* -S:                                    Options.
+* -s:                                    Options.
+* -shared:                               Options.
+* -soname=NAME:                          Options.
+* -static:                               Options.
+* -t:                                    Options.
+* -T SCRIPT:                             Options.
+* -Tbss ORG:                             Options.
+* -Tdata ORG:                            Options.
+* -Ttext ORG:                            Options.
+* -u SYMBOL:                             Options.
+* -Ur:                                   Options.
+* -V:                                    Options.
+* -v:                                    Options.
+* -X:                                    Options.
+* -x:                                    Options.
+* -Y PATH:                               Options.
+* -y SYMBOL:                             Options.
+* -z KEYWORD:                            Options.
+* .:                                     Location Counter.
+* /DISCARD/:                             Output Section Discarding.
+* :PHDR:                                 Output Section Phdr.
+* =FILLEXP:                              Output Section Fill.
+* >REGION:                               Output Section Region.
+* [COMMON]:                              Input Section Common.
+* ABSOLUTE (MRI):                        MRI.
+* absolute and relocatable symbols:      Expression Section.
+* absolute expressions:                  Expression Section.
+* ABSOLUTE(EXP):                         Builtin Functions.
+* ADDR(SECTION):                         Builtin Functions.
+* address, section:                      Output Section Address.
+* ALIAS (MRI):                           MRI.
+* ALIGN (MRI):                           MRI.
+* align location counter:                Builtin Functions.
+* ALIGN(EXP):                            Builtin Functions.
+* allocating memory:                     MEMORY.
+* architecture:                          Miscellaneous Commands.
+* architectures:                         Options.
+* archive files, from cmd line:          Options.
+* archive search path in linker script:  File Commands.
+* arithmetic:                            Expressions.
+* arithmetic operators:                  Operators.
+* ARM interworking support:              ARM.
+* ASSERT:                                Miscellaneous Commands.
+* assertion in linker script:            Miscellaneous Commands.
+* assignment in scripts:                 Assignments.
+* AT(LMA):                               Output Section LMA.
+* AT>LMA_REGION:                         Output Section LMA.
+* back end:                              BFD.
+* BASE (MRI):                            MRI.
+* BFD canonical format:                  Canonical format.
+* BFD requirements:                      BFD.
+* big-endian objects:                    Options.
+* binary input format:                   Options.
+* BLOCK(EXP):                            Builtin Functions.
+* bug criteria:                          Bug Criteria.
+* bug reports:                           Bug Reporting.
+* bugs in ld:                            Reporting Bugs.
+* BYTE(EXPRESSION):                      Output Section Data.
+* C++ constructors, arranging in link:   Output Section Keywords.
+* CHIP (MRI):                            MRI.
+* COLLECT_NO_DEMANGLE:                   Environment.
+* combining symbols, warnings on:        Options.
+* command files:                         Scripts.
+* command line:                          Options.
+* common allocation:                     Options.
+* common allocation in linker script:    Miscellaneous Commands.
+* common symbol placement:               Input Section Common.
+* compatibility, MRI:                    Options.
+* constants in linker scripts:           Constants.
+* CONSTRUCTORS:                          Output Section Keywords.
+* constructors:                          Options.
+* constructors, arranging in link:       Output Section Keywords.
+* crash of linker:                       Bug Criteria.
+* CREATE_OBJECT_SYMBOLS:                 Output Section Keywords.
+* cross reference table:                 Options.
+* cross references:                      Miscellaneous Commands.
+* current output location:               Location Counter.
+* data:                                  Output Section Data.
+* dbx:                                   Options.
+* DEF files, creating:                   Options.
+* default emulation:                     Environment.
+* default input format:                  Environment.
+* DEFINED(SYMBOL):                       Builtin Functions.
+* deleting local symbols:                Options.
+* demangling, default:                   Environment.
+* demangling, from command line:         Options.
+* discarding sections:                   Output Section Discarding.
+* discontinuous memory:                  MEMORY.
+* DLLs, creating:                        Options.
+* dot:                                   Location Counter.
+* dot inside sections:                   Location Counter.
+* dynamic linker, from command line:     Options.
+* dynamic symbol table:                  Options.
+* ELF program headers:                   PHDRS.
+* emulation:                             Options.
+* emulation, default:                    Environment.
+* END (MRI):                             MRI.
+* endianness:                            Options.
+* entry point:                           Entry Point.
+* entry point, from command line:        Options.
+* entry point, thumb:                    ARM.
+* ENTRY(SYMBOL):                         Entry Point.
+* error on valid input:                  Bug Criteria.
+* example of linker script:              Simple Example.
+* expression evaluation order:           Evaluation.
+* expression sections:                   Expression Section.
+* expression, absolute:                  Builtin Functions.
+* expressions:                           Expressions.
+* EXTERN:                                Miscellaneous Commands.
+* fatal signal:                          Bug Criteria.
+* file name wildcard patterns:           Input Section Wildcards.
+* FILEHDR:                               PHDRS.
+* filename symbols:                      Output Section Keywords.
+* fill pattern, entire section:          Output Section Fill.
+* FILL(EXPRESSION):                      Output Section Data.
+* finalization function:                 Options.
+* first input file:                      File Commands.
+* first instruction:                     Entry Point.
+* FORCE_COMMON_ALLOCATION:               Miscellaneous Commands.
+* FORMAT (MRI):                          MRI.
+* functions in expressions:              Builtin Functions.
+* garbage collection <1>:                Input Section Keep.
+* garbage collection:                    Options.
+* generating optimized output:           Options.
+* GNU Free Documentation License:        GNU Free Documentation License.
+* GNU linker:                            Overview.
+* GNUTARGET:                             Environment.
+* GROUP(FILES):                          File Commands.
+* grouping input files:                  File Commands.
+* groups of archives:                    Options.
+* H8/300 support:                        H8/300.
+* header size:                           Builtin Functions.
+* heap size:                             Options.
+* help:                                  Options.
+* holes:                                 Location Counter.
+* holes, filling:                        Output Section Data.
+* HPPA multiple sub-space stubs:         HPPA ELF32.
+* HPPA stub grouping:                    HPPA ELF32.
+* i960 support:                          i960.
+* image base:                            Options.
+* implicit linker scripts:               Implicit Linker Scripts.
+* INCLUDE FILENAME:                      File Commands.
+* including a linker script:             File Commands.
+* including an entire archive:           Options.
+* incremental link:                      Options.
+* initialization function:               Options.
+* initialized data in ROM:               Output Section LMA.
+* input file format in linker script:    Format Commands.
+* input filename symbols:                Output Section Keywords.
+* input files in linker scripts:         File Commands.
+* input files, displaying:               Options.
+* input format:                          Options.
+* input object files in linker scripts:  File Commands.
+* input section basics:                  Input Section Basics.
+* input section wildcards:               Input Section Wildcards.
+* input sections:                        Input Section.
+* INPUT(FILES):                          File Commands.
+* integer notation:                      Constants.
+* integer suffixes:                      Constants.
+* internal object-file format:           Canonical format.
+* invalid input:                         Bug Criteria.
+* K and M integer suffixes:              Constants.
+* KEEP:                                  Input Section Keep.
+* l =:                                   MEMORY.
+* L, deleting symbols beginning:         Options.
+* lazy evaluation:                       Evaluation.
+* ld bugs, reporting:                    Bug Reporting.
+* LDEMULATION:                           Environment.
+* len =:                                 MEMORY.
+* LENGTH =:                              MEMORY.
+* library search path in linker script:  File Commands.
+* link map:                              Options.
+* link-time runtime library search path: Options.
+* linker crash:                          Bug Criteria.
+* linker script concepts:                Basic Script Concepts.
+* linker script example:                 Simple Example.
+* linker script file commands:           File Commands.
+* linker script format:                  Script Format.
+* linker script input object files:      File Commands.
+* linker script simple commands:         Simple Commands.
+* linker scripts:                        Scripts.
+* LIST (MRI):                            MRI.
+* little-endian objects:                 Options.
+* LOAD (MRI):                            MRI.
+* load address:                          Output Section LMA.
+* LOADADDR(SECTION):                     Builtin Functions.
+* loading, preventing:                   Output Section Type.
+* local symbols, deleting:               Options.
+* location counter:                      Location Counter.
+* LONG(EXPRESSION):                      Output Section Data.
+* M and K integer suffixes:              Constants.
+* machine architecture:                  Miscellaneous Commands.
+* machine dependencies:                  Machine Dependent.
+* mapping input sections to output sections: Input Section.
+* MAX:                                   Builtin Functions.
+* MEMORY:                                MEMORY.
+* memory region attributes:              MEMORY.
+* memory regions:                        MEMORY.
+* memory regions and sections:           Output Section Region.
+* memory usage:                          Options.
+* MIN:                                   Builtin Functions.
+* MIPS embedded PIC code:                Options.
+* MRI compatibility:                     MRI.
+* NAME (MRI):                            MRI.
+* name, section:                         Output Section Name.
+* names:                                 Symbols.
+* naming the output file:                Options.
+* NEXT(EXP):                             Builtin Functions.
+* NMAGIC:                                Options.
+* NOCROSSREFS(SECTIONS):                 Miscellaneous Commands.
+* NOLOAD:                                Output Section Type.
+* not enough room for program headers:   Builtin Functions.
+* o =:                                   MEMORY.
+* objdump -i:                            BFD.
+* object file management:                BFD.
+* object files:                          Options.
+* object formats available:              BFD.
+* object size:                           Options.
+* OMAGIC:                                Options.
+* opening object files:                  BFD outline.
+* operators for arithmetic:              Operators.
+* options:                               Options.
+* ORDER (MRI):                           MRI.
+* org =:                                 MEMORY.
+* ORIGIN =:                              MEMORY.
+* output file after errors:              Options.
+* output file format in linker script:   Format Commands.
+* output file name in linker scripot:    File Commands.
+* output section attributes:             Output Section Attributes.
+* output section data:                   Output Section Data.
+* OUTPUT(FILENAME):                      File Commands.
+* OUTPUT_ARCH(BFDARCH):                  Miscellaneous Commands.
+* OUTPUT_FORMAT(BFDNAME):                Format Commands.
+* OVERLAY:                               Overlay Description.
+* overlays:                              Overlay Description.
+* partial link:                          Options.
+* PHDRS:                                 PHDRS.
+* precedence in expressions:             Operators.
+* prevent unnecessary loading:           Output Section Type.
+* program headers:                       PHDRS.
+* program headers and sections:          Output Section Phdr.
+* program headers, not enough room:      Builtin Functions.
+* program segments:                      PHDRS.
+* PROVIDE:                               PROVIDE.
+* PUBLIC (MRI):                          MRI.
+* QUAD(EXPRESSION):                      Output Section Data.
+* quoted symbol names:                   Symbols.
+* read-only text:                        Options.
+* read/write from cmd line:              Options.
+* regions of memory:                     MEMORY.
+* relative expressions:                  Expression Section.
+* relaxing addressing modes:             Options.
+* relaxing on H8/300:                    H8/300.
+* relaxing on i960:                      i960.
+* relocatable and absolute symbols:      Expression Section.
+* relocatable output:                    Options.
+* removing sections:                     Output Section Discarding.
+* reporting bugs in ld:                  Reporting Bugs.
+* requirements for BFD:                  BFD.
+* retain relocations in final executable: Options.
+* retaining specified symbols:           Options.
+* ROM initialized data:                  Output Section LMA.
+* round up location counter:             Builtin Functions.
+* runtime library name:                  Options.
+* runtime library search path:           Options.
+* scaled integers:                       Constants.
+* scommon section:                       Input Section Common.
+* script files:                          Options.
+* scripts:                               Scripts.
+* search directory, from cmd line:       Options.
+* search path in linker script:          File Commands.
+* SEARCH_DIR(PATH):                      File Commands.
+* SECT (MRI):                            MRI.
+* section address:                       Output Section Address.
+* section address in expression:         Builtin Functions.
+* section alignment, warnings on:        Options.
+* section data:                          Output Section Data.
+* section fill pattern:                  Output Section Fill.
+* section load address:                  Output Section LMA.
+* section load address in expression:    Builtin Functions.
+* section name:                          Output Section Name.
+* section name wildcard patterns:        Input Section Wildcards.
+* section size:                          Builtin Functions.
+* section, assigning to memory region:   Output Section Region.
+* section, assigning to program header:  Output Section Phdr.
+* SECTIONS:                              SECTIONS.
+* sections, discarding:                  Output Section Discarding.
+* segment origins, cmd line:             Options.
+* segments, ELF:                         PHDRS.
+* shared libraries:                      Options.
+* SHORT(EXPRESSION):                     Output Section Data.
+* SIZEOF(SECTION):                       Builtin Functions.
+* SIZEOF_HEADERS:                        Builtin Functions.
+* small common symbols:                  Input Section Common.
+* SORT:                                  Input Section Wildcards.
+* SQUAD(EXPRESSION):                     Output Section Data.
+* stack size:                            Options.
+* standard Unix system:                  Options.
+* start of execution:                    Entry Point.
+* STARTUP(FILENAME):                     File Commands.
+* strip all symbols:                     Options.
+* strip debugger symbols:                Options.
+* stripping all but some symbols:        Options.
+* suffixes for integers:                 Constants.
+* symbol defaults:                       Builtin Functions.
+* symbol definition, scripts:            Assignments.
+* symbol names:                          Symbols.
+* symbol tracing:                        Options.
+* symbol versions:                       VERSION.
+* symbol-only input:                     Options.
+* symbols, from command line:            Options.
+* symbols, relocatable and absolute:     Expression Section.
+* symbols, retaining selectively:        Options.
+* synthesizing linker:                   Options.
+* synthesizing on H8/300:                H8/300.
+* TARGET(BFDNAME):                       Format Commands.
+* thumb entry point:                     ARM.
+* TI COFF versions:                      TI COFF.
+* traditional format:                    Options.
+* unallocated address, next:             Builtin Functions.
+* undefined symbol:                      Options.
+* undefined symbol in linker script:     Miscellaneous Commands.
+* undefined symbols, warnings on:        Options.
+* uninitialized data placement:          Input Section Common.
+* unspecified memory:                    Output Section Data.
+* usage:                                 Options.
+* variables, defining:                   Assignments.
+* verbose:                               Options.
+* version:                               Options.
+* version script:                        VERSION.
+* version script, symbol versions:       Options.
+* VERSION {script text}:                 VERSION.
+* versions of symbols:                   VERSION.
+* warnings, on combining symbols:        Options.
+* warnings, on section alignment:        Options.
+* warnings, on undefined symbols:        Options.
+* what is this?:                         Overview.
+* wildcard file name patterns:           Input Section Wildcards.
+
+

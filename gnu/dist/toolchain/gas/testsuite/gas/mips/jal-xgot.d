@@ -30,13 +30,22 @@ Disassembly of section .text:
 0+003c <[^>]*> nop
 0+0040 <[^>]*> lw	\$gp,0\(\$sp\)
 0+0044 <[^>]*> lui	\$t9,0x0
-[ 	]*44: R_MIPS_CALL_HI16	external_text_label
+[ 	]*44: R_MIPS_CALL_HI16	weak_text_label
 0+0048 <[^>]*> addu	\$t9,\$t9,\$gp
 0+004c <[^>]*> lw	\$t9,0\(\$t9\)
-[ 	]*4c: R_MIPS_CALL_LO16	external_text_label
+[ 	]*4c: R_MIPS_CALL_LO16	weak_text_label
 0+0050 <[^>]*> nop
 0+0054 <[^>]*> jalr	\$t9
 0+0058 <[^>]*> nop
 0+005c <[^>]*> lw	\$gp,0\(\$sp\)
-0+0060 <[^>]*> b	0+0000 <text_label>
+0+0060 <[^>]*> lui	\$t9,0x0
+[ 	]*60: R_MIPS_CALL_HI16	external_text_label
+0+0064 <[^>]*> addu	\$t9,\$t9,\$gp
+0+0068 <[^>]*> lw	\$t9,0\(\$t9\)
+[ 	]*68: R_MIPS_CALL_LO16	external_text_label
+0+006c <[^>]*> nop
+0+0070 <[^>]*> jalr	\$t9
+0+0074 <[^>]*> nop
+0+0078 <[^>]*> lw	\$gp,0\(\$sp\)
+0+007c <[^>]*> b	0+0000 <text_label>
 	...
