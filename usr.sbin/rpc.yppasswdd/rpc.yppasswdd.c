@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.yppasswdd.c,v 1.6 2000/12/08 21:24:16 tron Exp $	*/
+/*	$NetBSD: rpc.yppasswdd.c,v 1.7 2000/12/08 21:51:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.6 2000/12/08 21:24:16 tron Exp $");
+__RCSID("$NetBSD: rpc.yppasswdd.c,v 1.7 2000/12/08 21:51:21 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,8 @@ main(int argc, char *argv[])
 			int len;
 
 			len = strlen(make_arg);
-			i++;
+			if (++i == argc)
+				usage();
 			for (; i < argc; i++) {
 				int arglen;
 
@@ -168,6 +169,6 @@ usage(void)
 {
 
 	fprintf(stderr, "usage: %s [-noshell] [-nogecos] [-nopw] "
-	    "[-m arg1 arg2 ...]\n", __progname);
+	    "[-m arg1 [arg2 ...]]\n", __progname);
 	exit(EXIT_FAILURE);
 }
