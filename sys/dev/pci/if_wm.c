@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.54 2003/10/21 16:41:51 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.55 2003/10/21 16:51:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.54 2003/10/21 16:41:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.55 2003/10/21 16:51:17 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -493,6 +493,10 @@ const struct wm_product {
 	  "Intel i82540EM 1000BASE-T Ethernet",
 	  WM_T_82540,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM_LOM,
+	  "Intel i82540EM (LOM) 1000BASE-T Ethernet",
+	  WM_T_82540,		WMP_F_1000T },
+
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EP_LOM,
 	  "Intel i82540EP 1000BASE-T Ethernet",
 	  WM_T_82540,		WMP_F_1000T },
@@ -509,6 +513,18 @@ const struct wm_product {
 	  "Intel i82545EM 1000BASE-T Ethernet",
 	  WM_T_82545,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_COPPER,
+	  "Intel i82545GM 1000BASE-T Ethernet",
+	  WM_T_82545_3,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_FIBER,
+	  "Intel i82545GM 1000BASE-X Ethernet",
+	  WM_T_82545_3,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82545GM_SERDES,
+	  "Intel i82545GM Gigabit Ethernet (SERDES)",
+	  WM_T_82545_3,		WMP_F_SERDES },
+#endif
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546EB_COPPER,
 	  "Intel i82546EB 1000BASE-T Ethernet",
 	  WM_T_82546,		WMP_F_1000T },
@@ -525,10 +541,18 @@ const struct wm_product {
 	  "Intel i82546EB 1000BASE-X Ethernet",
 	  WM_T_82546,		WMP_F_1000X },
 
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82540EM_LOM,
-	  "Intel i82540EM (LOM) 1000BASE-T Ethernet",
-	  WM_T_82540,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_COPPER,
+	  "Intel i82546GB 1000BASE-T Ethernet",
+	  WM_T_82546_3,		WMP_F_1000T },
 
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_FIBER,
+	  "Intel i82546GB 1000BASE-X Ethernet",
+	  WM_T_82546_3,		WMP_F_1000X },
+#if 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82546GB_SERDES,
+	  "Intel i82546GB Gigabit Ethernet (SERDES)",
+	  WM_T_82546_3,		WMP_F_SERDES },
+#endif
 	{ 0,			0,
 	  NULL,
 	  0,			0 },
