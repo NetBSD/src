@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_gensalt.c,v 1.6 2002/05/24 04:02:48 itojun Exp $	*/
+/*	$NetBSD: pwd_gensalt.c,v 1.7 2002/05/28 11:19:17 itojun Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pwd_gensalt.c,v 1.6 2002/05/24 04:02:48 itojun Exp $");
+__RCSID("$NetBSD: pwd_gensalt.c,v 1.7 2002/05/28 11:19:17 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -88,13 +88,12 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 		        pw_getconf(option, sizeof(option), "default", cipher);
 	}
 
-	srandom((int)time(NULL));
 	next = option;
 	now = strsep(&next, ",");
 	if (strcmp(now, "old") == 0) {
 		if (max < 3)
 			return (0);
-		to64(&salt[0], random(), 2);
+		to64(&salt[0], arc4random(), 2);
 		salt[2] = '\0';
 	} else if (strcmp(now, "newsalt") == 0) {
 		rounds = atol(next);
@@ -107,7 +106,7 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 		        rounds = 0xffffff;
 		salt[0] = _PASSWORD_EFMT1;
 		to64(&salt[1], (u_int32_t)rounds, 4);
-		to64(&salt[5], random(), 4);
+		to64(&salt[5], arc4random(), 4);
 		salt[9] = '\0';
 	} else if (strcmp(now, "md5") == 0) {
 		if (max < 13)  /* $1$8salt$\0 */
@@ -115,8 +114,8 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 		salt[0] = _PASSWORD_NONDES;
 		salt[1] = '1';
 		salt[2] = '$';
-		to64(&salt[3], random(), 4);
-		to64(&salt[7], random(), 4);
+		to64(&salt[3], arc4random(), 4);
+		to64(&salt[7], arc4random(), 4);
 		salt[11] = '$';
 		salt[12] = '\0';
 	} else if (strcmp(now, "blowfish") == 0) {
