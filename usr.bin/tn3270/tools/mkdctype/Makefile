@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 1998/03/04 13:16:12 christos Exp $
+#	$NetBSD: Makefile,v 1.10 1999/07/14 21:36:38 wrstuden Exp $
 
-PROG=	mkdctype
+HOSTPROG=	mkdctype
 SRCS=	mkdctype.c asc_ebc.c ebc_disp.c ectype.c
 
-.include <bsd.prog.mk>
+.include <bsd.hostprog.mk>
