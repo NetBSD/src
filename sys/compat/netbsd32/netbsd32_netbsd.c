@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.31 2000/07/09 03:03:35 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.32 2000/07/09 13:39:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -562,10 +562,10 @@ netbsd32_from_semid_ds(dsp, s32dsp)
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
- * environment, witht he necessary conversions to 64bit before
- * calling the real syscall.
+ * environment, with the necessary conversions to 64bit before
+ * calling the real syscall, unless we need to inline the whole
+ * syscall here, sigh.
  */
-
 
 int
 netbsd32_exit(p, v, retval)
@@ -944,7 +944,7 @@ netbsd32_getfsstat(p, v, retval)
 	long count, maxcount, error;
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statfs);
-	sfsp = (caddr_t)SCARG(uap, buf);
+	sfsp = (caddr_t)(u_long)SCARG(uap, buf);
 	simple_lock(&mountlist_slock);
 	count = 0;
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
@@ -3540,7 +3540,7 @@ netbsd32_pread(p, v, retval)
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
 	error = sys_pread(p, &ua, (register_t *)&rt);
-	*(netbsd32_ssize_t *)retval = rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -3567,7 +3567,7 @@ netbsd32_pwrite(p, v, retval)
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
 	error = sys_pwrite(p, &ua, (register_t *)&rt);
-	*(netbsd32_ssize_t *)retval = rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -3659,7 +3659,7 @@ netbsd32_ntp_gettime(p, v, retval)
 		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
 			*retval = TIME_ERROR;
 		else
-			*retval = (register_t)time_state;
+			*retval = time_state;
 	}
 	return(error);
 }
@@ -3752,8 +3752,9 @@ netbsd32_ntp_adjtime(p, v, retval)
 #endif /* PPS_SYNC */
 	(void)splx(s);
 
-	netbsd32_from_timeval(&ntv, &ntv32);
-	error = copyout((caddr_t)&ntv32, (caddr_t)SCARG(uap, tp), sizeof(ntv32));
+	netbsd32_from_timex(&ntv, &ntv32);
+	error = copyout((caddr_t)&ntv32, (caddr_t)(u_long)SCARG(uap, tp),
+	    sizeof(ntv32));
 	if (!error) {
 
 		/*
@@ -3769,7 +3770,7 @@ netbsd32_ntp_adjtime(p, v, retval)
 		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
 			*retval = TIME_ERROR;
 		else
-			*retval = (register_t)time_state;
+			*retval = time_state;
 	}
 	return error;
 }
@@ -3911,7 +3912,7 @@ netbsd32_pathconf(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(name);
 	error = sys_pathconf(p, &ua, (register_t *)&rt);
-	*(netbsd32_long *)retval = (netbsd32_long)rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -3932,7 +3933,7 @@ netbsd32_fpathconf(p, v, retval)
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(name);
 	error = sys_fpathconf(p, &ua, (register_t *)&rt);
-	*(netbsd32_long *)retval = (netbsd32_long)rt;
+	*retval = rt;
 	return (error);
 }
 
@@ -4657,7 +4658,7 @@ netbsd32_msgrcv(p, v, retval)
 	NETBSD32TOX_UAP(msgtyp, long);
 	NETBSD32TO64_UAP(msgflg);
 	error = sys_msgrcv(p, &ua, (register_t *)&rt);
-	*(netbsd32_ssize_t *)retval = rt;
+	*retval = rt;
 	return (error);
 #else
 	return (ENOSYS);
@@ -4687,7 +4688,7 @@ netbsd32_shmat(p, v, retval)
 	NETBSD32TOP_UAP(shmaddr, void);
 	NETBSD32TO64_UAP(shmflg);
 	error = sys_shmat(p, &ua, (register_t *)&rt);
-	*retval = (netbsd32_voidp)(u_long)rt;
+	*retval = rt;
 	return (error);
 #else
 	return (ENOSYS);
@@ -5340,7 +5341,7 @@ netbsd32_fktrace(p, v, retval)
 	} */ *uap = v;
 	struct sys_fktrace_args ua;
 
-	NETBSD32TOX_UAP(fd, const int);
+	NETBSD32TOX_UAP(fd, int);
 	NETBSD32TO64_UAP(ops);
 	NETBSD32TO64_UAP(facs);
 	NETBSD32TO64_UAP(pid);

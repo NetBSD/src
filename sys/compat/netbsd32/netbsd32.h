@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.10 1999/12/30 15:40:45 eeh Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.11 2000/07/09 13:39:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -39,6 +39,8 @@
  */
 
 #include <sys/mount.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 
 /*
  * first, define all the types we need.
@@ -285,6 +287,18 @@ struct netbsd32_sembuf {
 typedef u_int32_t netbsd32_shmid_dsp_t;
 struct netbsd32_shmid_ds {
 	struct netbsd32_ipc_perm	shm_perm; /* operation permission structure */
+	size_t		shm_segsz;	/* size of segment in bytes */
+	pid_t		shm_lpid;	/* process ID of last shm op */
+	pid_t		shm_cpid;	/* process ID of creator */
+	shmatt_t	shm_nattch;	/* number of current attaches */
+	netbsd32_time_t	shm_atime;	/* time of last shmat() */
+	netbsd32_time_t	shm_dtime;	/* time of last shmdt() */
+	netbsd32_time_t	shm_ctime;	/* time of last change by shmctl() */
+	netbsd32_voidp	_shm_internal;	/* sysv stupidity */
+};
+
+struct netbsd32_shmid_ds14 {
+	struct netbsd32_ipc_perm14	shm_perm; /* operation permission structure */
 	int		shm_segsz;	/* size of segment in bytes */
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
