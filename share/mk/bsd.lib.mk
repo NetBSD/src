@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.78 1996/12/19 07:51:59 cgd Exp $
+#	$NetBSD: bsd.lib.mk,v 1.79 1996/12/20 16:36:56 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -156,7 +156,7 @@ cleandir: _SUBDIRUSE clean
 .if defined(SRCS)
 afterdepend: .depend
 	@(TMP=/tmp/_depend$$$$; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so:/' \
+	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.so \1.ln:/' \
 	      < .depend > $$TMP; \
 	    mv $$TMP .depend)
 .endif
