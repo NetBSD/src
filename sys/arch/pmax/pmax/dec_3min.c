@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.27 1999/11/28 08:29:00 simonb Exp $ */
+/* $NetBSD: dec_3min.c,v 1.28 1999/12/01 08:35:27 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.27 1999/11/28 08:29:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.28 1999/12/01 08:35:27 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -117,8 +117,6 @@ void		dec_3min_cons_init __P((void));
 /*
  * Local declarations.
  */
-void dec_3min_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
-			       int clockmask));
 void kn02ba_wbflush __P((void));
 unsigned kn02ba_clkread __P((void));
 
@@ -165,9 +163,10 @@ dec_3min_init()
 	splvec.splclock = MIPS_SPL_0_1_2_3;
 	splvec.splstatclock = MIPS_SPL_0_1_2_3;
 
+	/* enable posting of MIPS_INT_MASK_3 to CAUSE register */
+	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
 	/* calibrate cpu_mhz value */ 
-	dec_3min_mcclock_cpuspeed(
-	    (void *)(ioasic_base + IOASIC_SLOT_8_START), MIPS_INT_MASK_3);
+	mc_cpuspeed((void *)(ioasic_base+IOASIC_SLOT_8_START), MIPS_INT_MASK_3);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
@@ -484,35 +483,6 @@ done:
  * Extra functions
  ************************************************************************
  */
-
-
-
-
-/*
- * Count instructions between 4ms mcclock interrupt requests,
- * using the ioasic clock-interrupt-pending bit to determine
- * when clock ticks occur.
- * Set up iosiac to allow only clock interrupts, then
- * call
- */
-void
-dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
-	volatile struct chiptime *mcclock_addr;
-	int clockmask;
-{
-	u_int32_t saved_imask;
-
-	saved_imask = *(u_int32_t *)(ioasic_base + IOASIC_IMSK);
-
-	/* Allow only clock interrupts through ioasic. */
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = KMIN_INTR_CLOCK;
-	kn02ba_wbflush();
-
-	mc_cpuspeed(mcclock_addr, clockmask);
-
-	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = saved_imask;
-	kn02ba_wbflush();
-}
 
 void
 kn02ba_wbflush()
