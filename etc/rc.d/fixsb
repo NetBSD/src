@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.2 2004/04/18 03:49:43 dbj Exp $
+# $NetBSD: fixsb,v 1.3 2004/04/21 16:12:31 dbj Exp $
 #
 
 # PROVIDE: fixsb
@@ -110,8 +110,16 @@ check_part()
 parse_fstab()
 {
   for l in 1 2; do
-    sed -e '/^#/d' -e 's,/dev/,&r,' "${fstab}" 2> /dev/null | \
+    cat "${fstab}" 2> /dev/null | \
       while read d m t o b f err; do
+        case "$d" in
+          \#*)
+          continue
+          ;;
+          /dev/*)
+          d="/dev/r${d#/dev/}"
+          ;;
+        esac
         if [ \( "$t" = "ffs" -o "$t" = "ufs" \) -a "$f" = "$l" ]; then
           echo "$d"
         fi
