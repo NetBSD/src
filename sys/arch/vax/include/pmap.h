@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.6 1995/02/13 00:43:28 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.7 1995/04/10 12:42:36 mycroft Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -55,7 +55,7 @@
 /*
  *  Pmap structure
  *
- * p0br == PR_P0BR in user struct, p0br is also == SBR in kernel_pmap
+ * p0br == PR_P0BR in user struct, p0br is also == SBR in pmap_kernel()
  * p1br is the same for stack space, stack is base of alloced pte mem
  */
 
@@ -66,8 +66,6 @@ typedef struct pmap {
 	struct pmap_statistics   stats;       /* statistics             */
 	simple_lock_data_t       lock;        /* lock on pmap           */
 } *pmap_t;
-
-extern pmap_t		kernel_pmap;
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
@@ -88,11 +86,12 @@ typedef struct pv_entry {
 #ifdef	KERNEL
 pv_entry_t	pv_table;		/* array of entries, 
 					   one per LOGICAL page */
+struct pmap	kernel_pmap_store;
 
 #define pa_index(pa)	                atop(pa)
 #define pa_to_pvh(pa)	                (&pv_table[atop(pa)])
 
-#define	pmap_kernel()			(kernel_pmap)
+#define	pmap_kernel()			(&kernel_pmap_store)
 
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 #endif	KERNEL

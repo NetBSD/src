@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.old.h,v 1.2 1995/03/28 18:13:54 jtc Exp $	*/
+/*	$NetBSD: pmap.old.h,v 1.3 1995/04/10 12:41:38 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -70,9 +70,9 @@ typedef struct pmap	*pmap_t;
 
 extern struct pmap	kernel_pmap_store;
 
-#define kernel_pmap	(&kernel_pmap_store)
+#define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
-	((pm) == kernel_pmap || (pm) == curproc->p_vmspace->vm_map.pmap)
+	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
 
 /*
  * Macros for speed
