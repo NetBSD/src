@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.4.2.1 2004/04/06 03:57:28 jmc Exp $
+# $NetBSD: md.sgimips,v 1.4.2.2 2004/08/12 04:08:39 jmc Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xprt
@@ -72,61 +72,274 @@
 ./usr/X11R6/lib/libXxf86dga.so.1
 ./usr/X11R6/lib/libXxf86dga.so.1.0
 ./usr/X11R6/lib/libxf86config.a
-./usr/X11R6/lib/modules/drivers/ati_drv.o
-./usr/X11R6/lib/modules/drivers/atimisc_drv.o
-./usr/X11R6/lib/modules/drivers/chips_drv.o
-./usr/X11R6/lib/modules/drivers/fbdev_drv.o
-./usr/X11R6/lib/modules/drivers/glint_drv.o
-./usr/X11R6/lib/modules/drivers/imstt_drv.o
-./usr/X11R6/lib/modules/drivers/mga_drv.o
-./usr/X11R6/lib/modules/drivers/newport_drv.o
-./usr/X11R6/lib/modules/drivers/nv_drv.o
-./usr/X11R6/lib/modules/drivers/r128_drv.o
-./usr/X11R6/lib/modules/drivers/radeon_drv.o
-./usr/X11R6/lib/modules/drivers/s3_drv.o
-./usr/X11R6/lib/modules/drivers/s3virge_drv.o
-./usr/X11R6/lib/modules/drivers/savage_drv.o
-./usr/X11R6/lib/modules/drivers/sis_drv.o
-./usr/X11R6/lib/modules/drivers/tdfx_drv.o
-./usr/X11R6/lib/modules/drivers/trident_drv.o
-./usr/X11R6/lib/modules/drivers/vga_drv.o
-./usr/X11R6/lib/modules/input/calcomp_drv.o
-./usr/X11R6/lib/modules/input/citron_drv.o
-./usr/X11R6/lib/modules/input/digitaledge_drv.o
-./usr/X11R6/lib/modules/input/dmc_drv.o
-./usr/X11R6/lib/modules/input/dynapro_drv.o
-./usr/X11R6/lib/modules/input/elographics_drv.o
-./usr/X11R6/lib/modules/input/fpit_drv.o
-./usr/X11R6/lib/modules/input/hyperpen_drv.o
-./usr/X11R6/lib/modules/input/js_x_drv.o
-./usr/X11R6/lib/modules/input/kbd_drv.o
-./usr/X11R6/lib/modules/input/magellan_drv.o
-./usr/X11R6/lib/modules/input/microtouch_drv.o
-./usr/X11R6/lib/modules/input/mouse_drv.o
-./usr/X11R6/lib/modules/input/mutouch_drv.o
-./usr/X11R6/lib/modules/input/palmax_drv.o
-./usr/X11R6/lib/modules/input/penmount_drv.o
-./usr/X11R6/lib/modules/input/spaceorb_drv.o
-./usr/X11R6/lib/modules/input/summa_drv.o
-./usr/X11R6/lib/modules/input/tek4957_drv.o
-./usr/X11R6/lib/modules/input/void_drv.o
-./usr/X11R6/lib/modules/input/wacom_drv.o
-./usr/X11R6/lib/modules/libddc.a
-./usr/X11R6/lib/modules/libi2c.a
-./usr/X11R6/lib/modules/libint10.a
-./usr/X11R6/lib/modules/libpcidata.a
-./usr/X11R6/lib/modules/librac.a
-./usr/X11R6/lib/modules/libramdac.a
-./usr/X11R6/lib/modules/libscanpci.a
-./usr/X11R6/lib/modules/libshadowfb.a
-./usr/X11R6/lib/modules/libvbe.a
-./usr/X11R6/lib/modules/libvgahw.a
-./usr/X11R6/lib/modules/libxaa.a
-./usr/X11R6/lib/modules/libxf1bpp.a
-./usr/X11R6/lib/modules/libxf24_32bpp.a
-./usr/X11R6/lib/modules/libxf4bpp.a
-./usr/X11R6/lib/modules/libxf8_16bpp.a
-./usr/X11R6/lib/modules/libxf8_32bpp.a
+./usr/X11R6/lib/modules/codeconv/libARABIC.so
+./usr/X11R6/lib/modules/codeconv/libARABIC.so.0
+./usr/X11R6/lib/modules/codeconv/libARABIC.so.0.0
+./usr/X11R6/lib/modules/codeconv/libARABIC_pic.a
+./usr/X11R6/lib/modules/codeconv/libARMSCII8.so
+./usr/X11R6/lib/modules/codeconv/libARMSCII8.so.0
+./usr/X11R6/lib/modules/codeconv/libARMSCII8.so.0.0
+./usr/X11R6/lib/modules/codeconv/libARMSCII8_pic.a
+./usr/X11R6/lib/modules/codeconv/libBIG5.so
+./usr/X11R6/lib/modules/codeconv/libBIG5.so.0
+./usr/X11R6/lib/modules/codeconv/libBIG5.so.0.0
+./usr/X11R6/lib/modules/codeconv/libBIG5HKSCS.so
+./usr/X11R6/lib/modules/codeconv/libBIG5HKSCS.so.0
+./usr/X11R6/lib/modules/codeconv/libBIG5HKSCS.so.0.0
+./usr/X11R6/lib/modules/codeconv/libBIG5HKSCS_pic.a
+./usr/X11R6/lib/modules/codeconv/libBIG5_pic.a
+./usr/X11R6/lib/modules/codeconv/libDOSENCODING.so
+./usr/X11R6/lib/modules/codeconv/libDOSENCODING.so.0
+./usr/X11R6/lib/modules/codeconv/libDOSENCODING.so.0.0
+./usr/X11R6/lib/modules/codeconv/libDOSENCODING_pic.a
+./usr/X11R6/lib/modules/codeconv/libGB2312.so
+./usr/X11R6/lib/modules/codeconv/libGB2312.so.0
+./usr/X11R6/lib/modules/codeconv/libGB2312.so.0.0
+./usr/X11R6/lib/modules/codeconv/libGB2312_pic.a
+./usr/X11R6/lib/modules/codeconv/libGBK.so
+./usr/X11R6/lib/modules/codeconv/libGBK.so.0
+./usr/X11R6/lib/modules/codeconv/libGBK.so.0.0
+./usr/X11R6/lib/modules/codeconv/libGBK_pic.a
+./usr/X11R6/lib/modules/codeconv/libGEORGIAN.so
+./usr/X11R6/lib/modules/codeconv/libGEORGIAN.so.0
+./usr/X11R6/lib/modules/codeconv/libGEORGIAN.so.0.0
+./usr/X11R6/lib/modules/codeconv/libGEORGIAN_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_1.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_1.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_1.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_10.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_10.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_10.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_10_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_11.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_11.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_11.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_11_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_14.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_14.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_14.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_14_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_15.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_15.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_15.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_15_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_1_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_2.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_2.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_2.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_2_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_3.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_3.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_3.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_3_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_4.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_4.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_4.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_4_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_5.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_5.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_5.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_5_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_6.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_6.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_6.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_6_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_7.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_7.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_7.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_7_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_8.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_8.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_8.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_8_pic.a
+./usr/X11R6/lib/modules/codeconv/libISO8859_9.so
+./usr/X11R6/lib/modules/codeconv/libISO8859_9.so.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_9.so.0.0
+./usr/X11R6/lib/modules/codeconv/libISO8859_9_pic.a
+./usr/X11R6/lib/modules/codeconv/libJISX0201.so
+./usr/X11R6/lib/modules/codeconv/libJISX0201.so.0
+./usr/X11R6/lib/modules/codeconv/libJISX0201.so.0.0
+./usr/X11R6/lib/modules/codeconv/libJISX0201_pic.a
+./usr/X11R6/lib/modules/codeconv/libJISX0208.so
+./usr/X11R6/lib/modules/codeconv/libJISX0208.so.0
+./usr/X11R6/lib/modules/codeconv/libJISX0208.so.0.0
+./usr/X11R6/lib/modules/codeconv/libJISX0208_pic.a
+./usr/X11R6/lib/modules/codeconv/libJISX0212.so
+./usr/X11R6/lib/modules/codeconv/libJISX0212.so.0
+./usr/X11R6/lib/modules/codeconv/libJISX0212.so.0.0
+./usr/X11R6/lib/modules/codeconv/libJISX0212_pic.a
+./usr/X11R6/lib/modules/codeconv/libKOI8.so
+./usr/X11R6/lib/modules/codeconv/libKOI8.so.0
+./usr/X11R6/lib/modules/codeconv/libKOI8.so.0.0
+./usr/X11R6/lib/modules/codeconv/libKOI8_pic.a
+./usr/X11R6/lib/modules/codeconv/libKSC5601.so
+./usr/X11R6/lib/modules/codeconv/libKSC5601.so.0
+./usr/X11R6/lib/modules/codeconv/libKSC5601.so.0.0
+./usr/X11R6/lib/modules/codeconv/libKSC5601_pic.a
+./usr/X11R6/lib/modules/codeconv/libKSCJOHAB.so
+./usr/X11R6/lib/modules/codeconv/libKSCJOHAB.so.0
+./usr/X11R6/lib/modules/codeconv/libKSCJOHAB.so.0.0
+./usr/X11R6/lib/modules/codeconv/libKSCJOHAB_pic.a
+./usr/X11R6/lib/modules/codeconv/libMULEENCODING.so
+./usr/X11R6/lib/modules/codeconv/libMULEENCODING.so.0
+./usr/X11R6/lib/modules/codeconv/libMULEENCODING.so.0.0
+./usr/X11R6/lib/modules/codeconv/libMULEENCODING_pic.a
+./usr/X11R6/lib/modules/codeconv/libTCVN.so
+./usr/X11R6/lib/modules/codeconv/libTCVN.so.0
+./usr/X11R6/lib/modules/codeconv/libTCVN.so.0.0
+./usr/X11R6/lib/modules/codeconv/libTCVN_pic.a
+./usr/X11R6/lib/modules/codeconv/libVISCII.so
+./usr/X11R6/lib/modules/codeconv/libVISCII.so.0
+./usr/X11R6/lib/modules/codeconv/libVISCII.so.0.0
+./usr/X11R6/lib/modules/codeconv/libVISCII_pic.a
+./usr/X11R6/lib/modules/extensions/libGLcore.so
+./usr/X11R6/lib/modules/extensions/libGLcore.so.0
+./usr/X11R6/lib/modules/extensions/libGLcore.so.0.0
+./usr/X11R6/lib/modules/extensions/libGLcore_pic.a
+./usr/X11R6/lib/modules/extensions/libdbe.so
+./usr/X11R6/lib/modules/extensions/libdbe.so.0
+./usr/X11R6/lib/modules/extensions/libdbe.so.0.0
+./usr/X11R6/lib/modules/extensions/libdbe_pic.a
+./usr/X11R6/lib/modules/extensions/libextmod.so
+./usr/X11R6/lib/modules/extensions/libextmod.so.0
+./usr/X11R6/lib/modules/extensions/libextmod.so.0.0
+./usr/X11R6/lib/modules/extensions/libextmod_pic.a
+./usr/X11R6/lib/modules/extensions/libglx.so
+./usr/X11R6/lib/modules/extensions/libglx.so.0
+./usr/X11R6/lib/modules/extensions/libglx.so.0.0
+./usr/X11R6/lib/modules/extensions/libglx_pic.a
+./usr/X11R6/lib/modules/extensions/librecord.so
+./usr/X11R6/lib/modules/extensions/librecord.so.0
+./usr/X11R6/lib/modules/extensions/librecord.so.0.0
+./usr/X11R6/lib/modules/extensions/librecord_pic.a
+./usr/X11R6/lib/modules/extensions/libxtrap.so
+./usr/X11R6/lib/modules/extensions/libxtrap.so.0
+./usr/X11R6/lib/modules/extensions/libxtrap.so.0.0
+./usr/X11R6/lib/modules/extensions/libxtrap_pic.a
+./usr/X11R6/lib/modules/drivers/libnewport_drv_pic.a
+./usr/X11R6/lib/modules/drivers/libnewport_drv.so
+./usr/X11R6/lib/modules/drivers/libnewport_drv.so.0
+./usr/X11R6/lib/modules/drivers/libnewport_drv.so.0.0
+./usr/X11R6/lib/modules/fonts/libbitmap.so
+./usr/X11R6/lib/modules/fonts/libbitmap.so.0
+./usr/X11R6/lib/modules/fonts/libbitmap.so.0.0
+./usr/X11R6/lib/modules/fonts/libbitmap_pic.a
+./usr/X11R6/lib/modules/fonts/libfreetype.so
+./usr/X11R6/lib/modules/fonts/libfreetype.so.0
+./usr/X11R6/lib/modules/fonts/libfreetype.so.0.0
+./usr/X11R6/lib/modules/fonts/libfreetype_pic.a
+./usr/X11R6/lib/modules/fonts/libspeedo.so
+./usr/X11R6/lib/modules/fonts/libspeedo.so.0
+./usr/X11R6/lib/modules/fonts/libspeedo.so.0.0
+./usr/X11R6/lib/modules/fonts/libspeedo_pic.a
+./usr/X11R6/lib/modules/fonts/libtype1.so
+./usr/X11R6/lib/modules/fonts/libtype1.so.0
+./usr/X11R6/lib/modules/fonts/libtype1.so.0.0
+./usr/X11R6/lib/modules/fonts/libtype1_pic.a
+./usr/X11R6/lib/modules/fonts/libxtt.so
+./usr/X11R6/lib/modules/fonts/libxtt.so.0
+./usr/X11R6/lib/modules/fonts/libxtt.so.0.0
+./usr/X11R6/lib/modules/fonts/libxtt_pic.a
+./usr/X11R6/lib/modules/input/libkbd_drv_pic.a
+./usr/X11R6/lib/modules/input/libkbd_drv.so
+./usr/X11R6/lib/modules/input/libkbd_drv.so.0
+./usr/X11R6/lib/modules/input/libkbd_drv.so.0.0
+./usr/X11R6/lib/modules/input/libmouse_drv_pic.a
+./usr/X11R6/lib/modules/input/libmouse_drv.so
+./usr/X11R6/lib/modules/input/libmouse_drv.so.0
+./usr/X11R6/lib/modules/input/libmouse_drv.so.0.0
+./usr/X11R6/lib/modules/input/libvoid_drv_pic.a
+./usr/X11R6/lib/modules/input/libvoid_drv.so
+./usr/X11R6/lib/modules/input/libvoid_drv.so.0
+./usr/X11R6/lib/modules/input/libvoid_drv.so.0.0
+./usr/X11R6/lib/modules/libcfb.so
+./usr/X11R6/lib/modules/libcfb.so.0
+./usr/X11R6/lib/modules/libcfb.so.0.0
+./usr/X11R6/lib/modules/libcfb16.so
+./usr/X11R6/lib/modules/libcfb16.so.0
+./usr/X11R6/lib/modules/libcfb16.so.0.0
+./usr/X11R6/lib/modules/libcfb16_pic.a
+./usr/X11R6/lib/modules/libcfb24.so
+./usr/X11R6/lib/modules/libcfb24.so.0
+./usr/X11R6/lib/modules/libcfb24.so.0.0
+./usr/X11R6/lib/modules/libcfb24_pic.a
+./usr/X11R6/lib/modules/libcfb32.so
+./usr/X11R6/lib/modules/libcfb32.so.0
+./usr/X11R6/lib/modules/libcfb32.so.0.0
+./usr/X11R6/lib/modules/libcfb32_pic.a
+./usr/X11R6/lib/modules/libcfb_pic.a
+./usr/X11R6/lib/modules/libddc_pic.a
+./usr/X11R6/lib/modules/libddc.so
+./usr/X11R6/lib/modules/libddc.so.0
+./usr/X11R6/lib/modules/libddc.so.0.0
+./usr/X11R6/lib/modules/libfb.so
+./usr/X11R6/lib/modules/libfb.so.0
+./usr/X11R6/lib/modules/libfb.so.0.0
+./usr/X11R6/lib/modules/libfb_pic.a
+./usr/X11R6/lib/modules/libi2c_pic.a
+./usr/X11R6/lib/modules/libi2c.so
+./usr/X11R6/lib/modules/libi2c.so.0
+./usr/X11R6/lib/modules/libi2c.so.0.0
+./usr/X11R6/lib/modules/libint10_pic.a
+./usr/X11R6/lib/modules/libint10.so
+./usr/X11R6/lib/modules/libint10.so.0
+./usr/X11R6/lib/modules/libint10.so.0.0
+./usr/X11R6/lib/modules/libmfb.so
+./usr/X11R6/lib/modules/libmfb.so.0
+./usr/X11R6/lib/modules/libmfb.so.0.0
+./usr/X11R6/lib/modules/libmfb_pic.a
+./usr/X11R6/lib/modules/libpcidata_pic.a
+./usr/X11R6/lib/modules/libpcidata.so
+./usr/X11R6/lib/modules/libpcidata.so.0
+./usr/X11R6/lib/modules/libpcidata.so.0.0
+./usr/X11R6/lib/modules/librac_pic.a
+./usr/X11R6/lib/modules/librac.so
+./usr/X11R6/lib/modules/librac.so.0
+./usr/X11R6/lib/modules/librac.so.0.0
+./usr/X11R6/lib/modules/libramdac_pic.a
+./usr/X11R6/lib/modules/libramdac.so
+./usr/X11R6/lib/modules/libramdac.so.0
+./usr/X11R6/lib/modules/libramdac.so.0.0
+./usr/X11R6/lib/modules/libscanpci_pic.a
+./usr/X11R6/lib/modules/libscanpci.so
+./usr/X11R6/lib/modules/libscanpci.so.0
+./usr/X11R6/lib/modules/libscanpci.so.0.0
+./usr/X11R6/lib/modules/libshadowfb_pic.a
+./usr/X11R6/lib/modules/libshadowfb.so
+./usr/X11R6/lib/modules/libshadowfb.so.0
+./usr/X11R6/lib/modules/libshadowfb.so.0.0
+./usr/X11R6/lib/modules/libvbe_pic.a
+./usr/X11R6/lib/modules/libvbe.so
+./usr/X11R6/lib/modules/libvbe.so.0
+./usr/X11R6/lib/modules/libvbe.so.0.0
+./usr/X11R6/lib/modules/libvgahw_pic.a
+./usr/X11R6/lib/modules/libvgahw.so
+./usr/X11R6/lib/modules/libvgahw.so.0
+./usr/X11R6/lib/modules/libvgahw.so.0.0
+./usr/X11R6/lib/modules/libxaa_pic.a
+./usr/X11R6/lib/modules/libxaa.so
+./usr/X11R6/lib/modules/libxaa.so.0
+./usr/X11R6/lib/modules/libxaa.so.0.0
+./usr/X11R6/lib/modules/libxf1bpp_pic.a
+./usr/X11R6/lib/modules/libxf1bpp.so
+./usr/X11R6/lib/modules/libxf1bpp.so.0
+./usr/X11R6/lib/modules/libxf1bpp.so.0.0
+./usr/X11R6/lib/modules/libxf24_32bpp_pic.a
+./usr/X11R6/lib/modules/libxf24_32bpp.so
+./usr/X11R6/lib/modules/libxf24_32bpp.so.0
+./usr/X11R6/lib/modules/libxf24_32bpp.so.0.0
+./usr/X11R6/lib/modules/libxf4bpp_pic.a
+./usr/X11R6/lib/modules/libxf4bpp.so
+./usr/X11R6/lib/modules/libxf4bpp.so.0
+./usr/X11R6/lib/modules/libxf4bpp.so.0.0
+./usr/X11R6/lib/modules/libxf8_16bpp_pic.a
+./usr/X11R6/lib/modules/libxf8_16bpp.so
+./usr/X11R6/lib/modules/libxf8_16bpp.so.0
+./usr/X11R6/lib/modules/libxf8_16bpp.so.0.0
+./usr/X11R6/lib/modules/libxf8_32bpp_pic.a
+./usr/X11R6/lib/modules/libxf8_32bpp.so
+./usr/X11R6/lib/modules/libxf8_32bpp.so.0
+./usr/X11R6/lib/modules/libxf8_32bpp.so.0.0
 ./usr/X11R6/man/cat1/XFree86.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/dga.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/gtf.0			-unknown-		.cat
@@ -135,39 +348,12 @@
 ./usr/X11R6/man/cat1/scanpci.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xf86cfg.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xf86config.0		-unknown-		.cat
-./usr/X11R6/man/cat4/ati.0			-unknown-		.cat
-./usr/X11R6/man/cat4/chips.0			-unknown-		.cat
-./usr/X11R6/man/cat4/citron.0			-unknown-		.cat
-./usr/X11R6/man/cat4/dmc.0			-unknown-		.cat
-./usr/X11R6/man/cat4/dynapro.0			-unknown-		.cat
-./usr/X11R6/man/cat4/elographics.0		-unknown-		.cat
-./usr/X11R6/man/cat4/fbdev.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/fbdevhw.0			-unknown-		.cat
-./usr/X11R6/man/cat4/fpit.0			-unknown-		.cat
-./usr/X11R6/man/cat4/glint.0			-unknown-		.cat
-./usr/X11R6/man/cat4/imstt.0			-unknown-		.cat
-./usr/X11R6/man/cat4/js_x.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/kbd.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/keyboard.0			-unknown-		.cat
-./usr/X11R6/man/cat4/mga.0			-unknown-		.cat
-./usr/X11R6/man/cat4/microtouch.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/mouse.0			-unknown-		.cat
-./usr/X11R6/man/cat4/mutouch.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/newport.0			-unknown-		.cat
-./usr/X11R6/man/cat4/nv.0			-unknown-		.cat
-./usr/X11R6/man/cat4/palmax.0			-unknown-		.cat
-./usr/X11R6/man/cat4/penmount.0			-unknown-		.cat
-./usr/X11R6/man/cat4/r128.0			-unknown-		.cat
-./usr/X11R6/man/cat4/radeon.0			-unknown-		.cat
-./usr/X11R6/man/cat4/s3virge.0			-unknown-		.cat
-./usr/X11R6/man/cat4/savage.0			-unknown-		.cat
-./usr/X11R6/man/cat4/sis.0			-unknown-		.cat
-./usr/X11R6/man/cat4/tdfx.0			-unknown-		.cat
-./usr/X11R6/man/cat4/tek4957.0			-unknown-		.cat
-./usr/X11R6/man/cat4/trident.0			-unknown-		.cat
-./usr/X11R6/man/cat4/vga.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
-./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
 ./usr/X11R6/man/cat5/XF86Config.0		-unknown-		.cat
 ./usr/X11R6/man/man1/XFree86.1			-unknown-		.man
 ./usr/X11R6/man/man1/dga.1			-unknown-		.man
@@ -177,37 +363,10 @@
 ./usr/X11R6/man/man1/scanpci.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86cfg.1			-unknown-		.man
 ./usr/X11R6/man/man1/xf86config.1		-unknown-		.man
-./usr/X11R6/man/man4/ati.4			-unknown-		.man
-./usr/X11R6/man/man4/chips.4			-unknown-		.man
-./usr/X11R6/man/man4/citron.4			-unknown-		.man
-./usr/X11R6/man/man4/dmc.4			-unknown-		.man
-./usr/X11R6/man/man4/dynapro.4			-unknown-		.man
-./usr/X11R6/man/man4/elographics.4		-unknown-		.man
-./usr/X11R6/man/man4/fbdev.4			-unknown-		.man
 ./usr/X11R6/man/man4/fbdevhw.4			-unknown-		.man
-./usr/X11R6/man/man4/fpit.4			-unknown-		.man
-./usr/X11R6/man/man4/glint.4			-unknown-		.man
-./usr/X11R6/man/man4/imstt.4			-unknown-		.man
-./usr/X11R6/man/man4/js_x.4			-unknown-		.man
 ./usr/X11R6/man/man4/kbd.4			-unknown-		.man
 ./usr/X11R6/man/man4/keyboard.4			-unknown-		.man
-./usr/X11R6/man/man4/mga.4			-unknown-		.man
-./usr/X11R6/man/man4/microtouch.4		-unknown-		.man
 ./usr/X11R6/man/man4/mouse.4			-unknown-		.man
-./usr/X11R6/man/man4/mutouch.4			-unknown-		.man
 ./usr/X11R6/man/man4/newport.4			-unknown-		.man
-./usr/X11R6/man/man4/nv.4			-unknown-		.man
-./usr/X11R6/man/man4/palmax.4			-unknown-		.man
-./usr/X11R6/man/man4/penmount.4			-unknown-		.man
-./usr/X11R6/man/man4/r128.4			-unknown-		.man
-./usr/X11R6/man/man4/radeon.4			-unknown-		.man
-./usr/X11R6/man/man4/s3virge.4			-unknown-		.man
-./usr/X11R6/man/man4/savage.4			-unknown-		.man
-./usr/X11R6/man/man4/sis.4			-unknown-		.man
-./usr/X11R6/man/man4/tdfx.4			-unknown-		.man
-./usr/X11R6/man/man4/tek4957.4			-unknown-		.man
-./usr/X11R6/man/man4/trident.4			-unknown-		.man
-./usr/X11R6/man/man4/vga.4			-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
-./usr/X11R6/man/man4/wacom.4			-unknown-		.man
 ./usr/X11R6/man/man5/XF86Config.5		-unknown-		.man
