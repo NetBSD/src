@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.h,v 1.8 1997/01/06 02:19:06 mark Exp $ */
+/* $NetBSD: irqhandler.h,v 1.8.2.1 1997/01/30 05:28:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -218,7 +218,7 @@
 
 #ifndef _LOCORE
 typedef struct irqhandler {
-	int (*ih_func)();		/* handler function */
+	int (*ih_func) __P((void *arg));/* handler function */
 	void *ih_arg;			/* Argument to handler */
 	int ih_level;			/* Interrupt level */
 	int ih_num;			/* Interrupt number (for accounting) */
@@ -233,7 +233,7 @@ typedef struct irqhandler {
 extern u_int irqmasks[IRQ_LEVELS];
 extern irqhandler_t *irqhandlers[NIRQS];
 
-void irq_init __P(());
+void irq_init __P((void));
 int irq_claim __P((int, irqhandler_t *));
 int irq_release __P((int, irqhandler_t *));
 void *intr_claim __P((int irq, int level, const char *name, int (*func) __P((void *)), void *arg));
@@ -251,7 +251,7 @@ u_int restore_interrupts __P((u_int));
 
 #ifndef _LOCORE
 typedef struct fiqhandler {
-	void (*fh_func)();	/* handler function */
+	void (*fh_func) __P((void));/* handler function */
 	u_int fh_size;		/* Size of handler function */
 	u_int fh_mask;		/* FIQ mask */
 	u_int fh_r8;		/* FIQ mode r8 */
