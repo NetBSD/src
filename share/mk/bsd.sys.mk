@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.106 2003/10/29 02:10:57 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.107 2003/11/08 06:06:50 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -134,12 +134,9 @@ TOOL_UUDECODE?=		uudecode
 TOOL_VGRIND?=		vgrind -f
 TOOL_ZIC?=		zic
 
-.SUFFIXES:	.c .cc .cpp .cxx .C .m .o .ln .lo .s .S .l .y ${YHEADER:D.h}
+.SUFFIXES:	.o .ln .lo .c ${YHEADER:D.h}
 
 # C
-.c:
-	${_MKTARGET_COMPILE}
-	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .c.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
@@ -148,9 +145,6 @@ TOOL_ZIC?=		zic
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[IDU]*} -i ${.IMPSRC}
 
 # C++
-.cc .cpp .cxx .C:
-	${_MKTARGET_COMPILE}
-	${LINK.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .cc.o .cpp.o .cxx.o .C.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
@@ -158,9 +152,6 @@ TOOL_ZIC?=		zic
 # Objective C
 # (Defined here rather than in <sys.mk> because `.m' is not just
 #  used for Objective C source)
-.m:
-	${_MKTARGET_COMPILE}
-	${LINK.m} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .m.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.m} ${.IMPSRC}
@@ -174,15 +165,10 @@ TOOL_ZIC?=		zic
 	mv ${.TARGET}.o ${.TARGET}
 
 # Assembly
-.s:
-	${_MKTARGET_COMPILE}
-	${LINK.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .s.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.s} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
-.S:
-	${_MKTARGET_COMPILE}
-	${LINK.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
+
 .S.o:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
@@ -191,12 +177,6 @@ TOOL_ZIC?=		zic
 LPREFIX?=	yy
 LFLAGS+=	-P${LPREFIX}
 
-.l.o: # remove to force use of .l.c->.c.o transforms
-.l:
-	${_MKTARGET_LEX}
-	${LEX.l} -o${.PREFIX}.${LPREFIX}.c ${.IMPSRC}
-	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.PREFIX}.${LPREFIX}.c ${LDLIBS} -ll
-	rm -f ${.PREFIX}.${LPREFIX}.c
 .l.c:
 	${_MKTARGET_LEX}
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
@@ -204,12 +184,6 @@ LFLAGS+=	-P${LPREFIX}
 # Yacc
 YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 
-.y.o: # remove to force use of .y.c->.c.o transforms
-.y:
-	${_MKTARGET_YACC}
-	${YACC.y} -b ${.PREFIX} ${.IMPSRC}
-	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.PREFIX}.tab.c ${LDLIBS}
-	rm -f ${.PREFIX}.tab.[ch]
 .y.c:
 	${_MKTARGET_YACC}
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
