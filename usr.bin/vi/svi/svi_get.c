@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)svi_get.c	8.22 (Berkeley) 3/24/94";
+static const char sccsid[] = "@(#)svi_get.c	8.26 (Berkeley) 8/17/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,7 +41,6 @@ static char sccsid[] = "@(#)svi_get.c	8.22 (Berkeley) 3/24/94";
 
 #include <bitstring.h>
 #include <ctype.h>
-#include <curses.h>
 #include <errno.h>
 #include <limits.h>
 #include <signal.h>
@@ -50,11 +49,12 @@ static char sccsid[] = "@(#)svi_get.c	8.22 (Berkeley) 3/24/94";
 #include <termios.h>
 
 #include "compat.h"
+#include <curses.h>
 #include <db.h>
 #include <regex.h>
 
 #include "vi.h"
-#include "vcmd.h"
+#include "../vi/vcmd.h"
 #include "svi_screen.h"
 
 /*
@@ -66,7 +66,7 @@ svi_get(sp, ep, tiqh, prompt, flags)
 	SCR *sp;
 	EXF *ep;
 	TEXTH *tiqh;
-	int prompt;
+	ARG_CHAR_T prompt;
 	u_int flags;
 {
 	MARK save;
