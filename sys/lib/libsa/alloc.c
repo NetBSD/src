@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.10 1997/07/04 18:47:25 drochner Exp $	*/
+/*	$NetBSD: alloc.c,v 1.10.2.1 1997/09/22 06:33:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -185,7 +185,7 @@ alloc(size)
 #endif
 		*(unsigned *)help = ALIGN(size);
 #ifdef ALLOC_TRACE
-		printf("=%x\n", help + ALIGN(sizeof(unsigned)));
+		printf("=%lx\n", (u_long)help + ALIGN(sizeof(unsigned)));
 #endif
 		return(help + ALIGN(sizeof(unsigned)));
 	}
@@ -198,7 +198,7 @@ found:
         help = (char*)*f;
 	*f = (*f)->next;
 #ifdef ALLOC_TRACE
-	printf("=%lx (origsize %u)\n", help + ALIGN(sizeof(unsigned)),
+	printf("=%lx (origsize %u)\n", (u_long)help + ALIGN(sizeof(unsigned)),
 	    *(unsigned *)help);
 #endif
 	return(help + ALIGN(sizeof(unsigned)));
@@ -212,12 +212,12 @@ free(ptr, size)
 	register struct fl *f =
 	    (struct fl *)((char*)ptr - ALIGN(sizeof(unsigned)));
 #ifdef ALLOC_TRACE
-	printf("free(%lx, %u) (origsize %u)\n", ptr, size, f->size);
+	printf("free(%lx, %u) (origsize %u)\n", (u_long)ptr, size, f->size);
 #endif
 #ifdef DEBUG
         if (size > f->size)
 	        printf("free %u bytes @%lx, should be <=%u\n",
-		    size, ptr, f->size);
+		    size, (u_long)ptr, f->size);
 
 	if (ptr < (void *)HEAP_START)
 		printf("free: %lx before start of heap.\n", (u_long)ptr);

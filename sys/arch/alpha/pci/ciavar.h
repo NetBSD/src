@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.8.6.2 1997/09/04 00:53:32 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.8.6.3 1997/09/22 06:30:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -50,6 +50,9 @@ struct cia_config {
 
 	u_int32_t cc_hae_mem;
 	u_int32_t cc_hae_io;
+
+	u_int32_t cc_rev;
+	u_int32_t cc_cnfg;
 
 	struct extent *cc_io_ex, *cc_d_mem_ex, *cc_s_mem_ex;
 	int	cc_mallocsafe;

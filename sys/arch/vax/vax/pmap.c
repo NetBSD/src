@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 1997/07/25 21:54:48 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.37.2.1 1997/09/22 06:32:58 thorpej Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,7 +35,6 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/msgbuf.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -76,6 +75,8 @@ pv_entry_t	pv_table;		/* array of entries,
 unsigned *pte_cmap;
 void	*scratch;
 struct	pmap p0pmap;
+
+extern	caddr_t msgbufaddr;
 
 #ifdef PMAPDEBUG
 int	startpmapdebug = 0;
@@ -205,7 +206,7 @@ pmap_bootstrap()
 	MAPPHYS(scratch, 4, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Kernel message buffer */
-	MAPPHYS(msgbufp, btoc(ROUND_PAGE(sizeof(struct msgbuf))),
+	MAPPHYS(msgbufaddr, btoc(ROUND_PAGE(MSGBUFSIZE)),
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Physical-to-virtual translation table */

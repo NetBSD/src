@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/04/25 22:17:33 veego Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 1997/09/22 06:31:52 thorpej Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -38,13 +38,13 @@
 
 TARGET = fpsp
 
-AS		= cc -x assembler-with-cpp -traditional-cpp -c -m68040 -I${.CURDIR}
-LD		= ld
+AS		= ${CC} -x assembler-with-cpp -traditional-cpp -c -m68040 -I${.CURDIR}
+LD?		= ld
 
 #
 # For the Library Version:
 #
-AR		= ar
+AR?		= ar
 LIB_FILTER 	= sed 's/fpsp.defs/l_fpsp.defs/'
 LIB_TARGET	= lib$(TARGET).a
 #

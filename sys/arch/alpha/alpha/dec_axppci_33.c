@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.26.4.2 1997/09/04 00:52:27 thorpej Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.26.4.3 1997/09/22 06:30:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.26.4.2 1997/09/04 00:52:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.26.4.3 1997/09/22 06:30:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,8 @@ dec_axppci_33_cons_init()
 			DELAY(160000000 / comcnrate);
 
 			if(comcnattach(&lcp->lc_iot, 0x3f8, comcnrate,
-				    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
+			    COM_FREQ,
+			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
 
 			break;

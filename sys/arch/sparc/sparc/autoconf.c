@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
+/*	$NetBSD: autoconf.c,v 1.73.2.1 1997/09/22 06:32:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -186,14 +186,14 @@ bootstrap()
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		extern void oldmon_w_cmd __P((u_long, char *));
-		extern struct msgbuf *msgbufp;
+		extern caddr_t	msgbufaddr;
 		/*
 		 * XXX
 		 * Some boot programs mess up physical page 0, which
 		 * is where we want to put the msgbuf. There's some
 		 * room, so shift it over half a page.
 		 */
-		msgbufp = (struct msgbuf *)((caddr_t) msgbufp + 4096);
+		msgbufaddr = (caddr_t) msgbufaddr + 4096;
 
 		/*
 		 * XXX:
@@ -232,7 +232,7 @@ bootstrap()
 	pmap_bootstrap(cpuinfo.mmu_ncontext,
 		       cpuinfo.mmu_nregion,
 		       cpuinfo.mmu_nsegment);
-	msgbufmapped = 1;	/* enable message buffer */
+	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 #ifdef KGDB
 	zs_kgdb_init();		/* XXX */
 #endif
@@ -335,6 +335,10 @@ bootstrap()
 
 		counterreg_4m = (struct counter_4m *)ra.ra_vaddrs[0];
 		timerreg_4m = (struct timer_4m *)ra.ra_vaddrs[ra.ra_nvaddrs-1];
+		for (i = 0; i < ra.ra_nvaddrs - 1; i++) {
+			extern void stopcounter __P((struct counter_4m *));
+			stopcounter((struct counter_4m *)ra.ra_vaddrs[i]);
+		}
 	}
 #endif /* SUN4M */
 
@@ -1670,8 +1674,16 @@ romgetcursoraddr(rowp, colp)
 void
 romhalt()
 {
+
 	if (CPU_ISSUN4COR4M)
 		*promvec->pv_synchook = NULL;
+
+#if defined(SUN4M)
+	if (0 && CPU_ISSUN4M) {
+		extern void srmmu_restore_prom_ctx __P((void));
+		srmmu_restore_prom_ctx();
+	}
+#endif
 
 	promvec->pv_halt();
 	panic("PROM exit failed");

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.5.2.1 1997/08/23 07:11:01 thorpej Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.5.2.2 1997/09/22 06:32:05 thorpej Exp $	*/
 
 /*
  * Architecture name.
@@ -21,6 +21,9 @@
 #define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
 #define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
 
+#ifndef MSGBUFSIZE
+#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all

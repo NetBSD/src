@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.15.4.1 1997/09/04 00:52:47 thorpej Exp $ */
+/* $NetBSD: mem.c,v 1.15.4.2 1997/09/22 06:30:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.4.1 1997/09/04 00:52:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.4.2 1997/09/22 06:30:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -66,7 +66,7 @@ cdev_decl(mm);
 
 caddr_t zeropage;
 extern int firstusablepage, lastusablepage;
-extern struct msgbuf *msgbufp;
+extern caddr_t msgbufaddr;
 
 /*ARGSUSED*/
 int
@@ -117,7 +117,7 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 kmemphys:
-			if (v == ALPHA_K0SEG_TO_PHYS((vm_offset_t)msgbufp)) {
+			if (v >= ALPHA_K0SEG_TO_PHYS((vm_offset_t)msgbufaddr)) {
 				extern int msgbufmapped;
 				if (msgbufmapped == 0) {
 					printf("Message Buf not Mapped\n");

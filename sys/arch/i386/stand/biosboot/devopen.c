@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 1997/07/15 12:45:26 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.4.2.1 1997/09/22 06:31:13 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -38,9 +38,14 @@
 #endif
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <libi386.h>
 #include <biosdisk.h>
+#include <bootinfo.h>
+
+extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
+			      unsigned int*, const char**));
 
 static struct {
 	char           *name;
@@ -50,14 +55,16 @@ static struct {
 		"fd", 0
 	},
 	{
+		"hd", 0x80
+	},
+#ifdef COMPAT_OLDBOOT
+	{
 		"wd", 0x80
 	},
 	{
 		"sd", 0x80
-	},
-	{
-		"hd", 0x80
 	}
+#endif
 };
 #define NUMBIOSDEVS (sizeof(biosdevtab) / sizeof(biosdevtab[0]))
 
@@ -95,13 +102,13 @@ bios2dev(biosdev, devname, unit)
 
 		if(disklabel.d_magic == DISKMAGIC) {
 			if(disklabel.d_type == DTYPE_SCSI)
-				*devname = biosdevtab[2].name;
+				*devname = biosdevtab[3].name;
 			else
-				*devname = biosdevtab[1].name;
+				*devname = biosdevtab[2].name;
 		} else
 #endif
 			/* call it "hd", we don't know better */
-			*devname = biosdevtab[3].name;
+			*devname = biosdevtab[1].name;
 	} else
 		*devname = biosdevtab[0].name;
 
@@ -109,6 +116,8 @@ bios2dev(biosdev, devname, unit)
 
 	return (0);
 }
+
+struct btinfo_bootpath bibp;
 
 /*
  * Open the BIOS disk device
@@ -132,5 +141,9 @@ devopen(f, fname, file)
 
 	dp = &devsw[0];		/* must be biosdisk */
 	f->f_dev = dp;
+
+	strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+
 	return (biosdiskopen(f, biosdev, partition));
 }

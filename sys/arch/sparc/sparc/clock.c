@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.52.4.1 1997/09/22 06:32:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,6 +200,7 @@ void clk_wenable __P((int));
 void myetheraddr __P((u_char *));
 int chiptotime __P((int, int, int, int, int, int));
 void timetochip __P((struct chiptime *));
+void stopcounter __P((struct counter_4m *));
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
@@ -576,6 +577,17 @@ clk_wenable(onoff)
 				prot, 1);
 }
 
+void
+stopcounter(creg)
+	struct counter_4m *creg;
+{
+	/* Stop the clock */
+	volatile int discard;
+	discard = creg->t_limit;
+	creg->t_limit = 0;
+	creg->t_ss = 0;
+}
+
 /*
  * XXX this belongs elsewhere
  */
@@ -751,8 +763,8 @@ statintr(cap)
 		discard = counterreg_4m->t_limit;
 		if (timerok == 0) {
 			/* Stop the clock */
-			counterreg_4m->t_limit = 0;
-			counterreg_4m->t_ss = 0;
+			printf("note: counter running!\n");
+			stopcounter(counterreg_4m);
 			timerreg_4m->t_cfg = TMR_CFG_USER;
 			return 1;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.c,v 1.2 1997/03/15 22:18:21 perry Exp $	*/
+/*	$NetBSD: 3c509.c,v 1.2.4.1 1997/09/22 06:31:37 thorpej Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -30,13 +30,13 @@ Author: Martin Renters.
 #include <machine/pio.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <libi386.h>
+#include <bootinfo.h>
 
 #include "etherdrv.h"
 #include "3c509.h"
-
-char etherdev[20];
 
 int ether_medium;
 unsigned short eth_base;
@@ -58,6 +58,8 @@ static struct mtabentry {
     {0, IS_UTP, "UTP"},
     {1, IS_AUI, "AUI"},
 };
+
+static struct btinfo_netif bi_netif;
 
 /**************************************************************************
 ETH_PROBE - Look for an adapter
@@ -155,10 +157,17 @@ ok:
 	  GO_WINDOW(2);
 	  outw(BASE + EP_W2_ADDR_0 + (i * 2), help);
 	}
-	for(i = 0; i < 6; i++) myadr[i] = eth_myaddr[i];
+	for(i = 0; i < 6; i++)
+		myadr[i] = eth_myaddr[i];
+
 	epreset();
 
-	sprintf(etherdev, "ep@isa,0x%x", eth_base);
+	strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
+	bi_netif.bus = BI_BUS_ISA;
+	bi_netif.addr.iobase = eth_base;
+
+	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+
 	return(1);
 }
 

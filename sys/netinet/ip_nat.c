@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.12 1997/07/21 16:53:47 kleink Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.12.2.1 1997/09/22 06:34:11 thorpej Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static	char	rcsid[] = "Id: ip_nat.c,v 2.0.2.25 1997/06/22 07:21:25 darrenr Exp";
+static	char	rcsid[] = "Id: ip_nat.c,v 2.0.2.33 1997/09/10 13:08:19 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -100,6 +100,7 @@ extern	kmutex_t	ipf_natfrag;
 static	int	flush_nattable __P((void));
 static	int	clear_natlist __P((void));
 static	void	nat_delete __P((struct nat *));
+static	int	nat_ifpaddr __P((nat_t *, void *, struct in_addr *));
 
 void fix_outcksum(sp, n)
 u_short *sp;
@@ -125,7 +126,11 @@ u_long n;
 	register u_short sumshort;
 	register u_long sum1;
 
+#ifdef sparc
+	sum1 = (~(*sp)) & 0xffff;
+#else
 	sum1 = (~ntohs(*sp)) & 0xffff;
+#endif
 	sum1 += ~(n) & 0xffff;
 	sum1 = (sum1 >> 16) + (sum1 & 0xffff);
 	/* Again */
@@ -175,7 +180,7 @@ int mode;
 	int s;
 #endif
 
-	nat = NULL;	/* XXX gcc -Wuninitialized */
+	nat = NULL;     /* XXX gcc -Wuninitialized */
 
 	/*
 	 * For add/delete, look to see if the NAT entry is already present
@@ -292,7 +297,8 @@ int mode;
 		break;
 	case FIONREAD :
 #ifdef	IPFILTER_LOG
-		*(int *)data = iplused[IPL_LOGNAT];
+		IWCOPY((caddr_t)&iplused[IPL_LOGNAT], (caddr_t)data,
+		       sizeof(iplused[IPL_LOGNAT]));
 #endif
 		break;
 	}
@@ -391,6 +397,65 @@ static int clear_natlist()
 }
 
 
+static int nat_ifpaddr(nat, ifptr, inp)
+nat_t *nat;
+void *ifptr;
+struct in_addr *inp;
+{
+#if SOLARIS
+	ill_t *ill = ifptr;
+#else
+	struct ifnet *ifp = ifptr;
+#endif
+	struct in_addr in;
+
+#if SOLARIS
+	in.s_addr = ill->ill_ipif->ipif_local_addr;
+#else
+	struct ifaddr *ifa;
+	struct sockaddr_in *sin;
+
+# if	(__FreeBSD_version >= 300000)
+	ifa = TAILQ_FIRST(&ifp->if_addrhead);
+# else
+#  ifdef	__NetBSD__
+	ifa = ifp->if_addrlist.tqh_first;
+#  else
+	ifa = ifp->if_addrlist;
+#  endif
+# endif
+# if	BSD < 199306
+	sin = (SOCKADDR_IN *)&ifa->ifa_addr;
+# else
+	sin = (SOCKADDR_IN *)ifa->ifa_addr;
+	while (sin && ifa &&
+	       sin->sin_family != AF_INET) {
+#  if	(__FreeBSD_version >= 300000)
+		ifa = TAILQ_NEXT(ifa, ifa_link);
+#  else
+#   ifdef	__NetBSD__
+		ifa = ifa->ifa_list.tqe_next;
+#   else
+		ifa = ifa->ifa_next;
+#   endif
+#  endif
+		sin = (SOCKADDR_IN *)ifa->ifa_addr;
+	}
+	if (!ifa)
+		sin = NULL;
+	if (!sin) {
+		KFREE(nat);
+		return -1;
+	}
+# endif
+	in = sin->sin_addr;
+	in.s_addr = ntohl(in.s_addr);
+#endif
+	*inp = in;
+	return 0;
+}
+
+
 /*
  * Create a new NAT table entry.
  */
@@ -427,11 +492,6 @@ int direction;
 	 * Search the current table for a match.
 	 */
 	if (direction == NAT_OUTBOUND) {
-#if SOLARIS
-		ill_t *ill = fin->fin_ifp;
-#else
-		struct ifnet *ifp = fin->fin_ifp;
-#endif
 		/*
 		 * If it's an outbound packet which doesn't match any existing
 		 * record, then create a new port
@@ -439,50 +499,10 @@ int direction;
 		do {
 			port = 0;
 			in.s_addr = np->in_nip;
-			if (!in.s_addr && (np->in_outmsk == 0xffffffff)) {
-#if SOLARIS
-				in.s_addr = ill->ill_ipif->ipif_local_addr;
-#else
-				struct ifaddr *ifa;
-				struct sockaddr_in *sin;
-
-# if	(__FreeBSD_version >= 300000)
-				ifa = TAILQ_FIRST(&ifp->if_addrhead);
-# else
-#  ifdef	__NetBSD__
-				ifa = ifp->if_addrlist.tqh_first;
-#  else
-				ifa = ifp->if_addrlist;
-#  endif
-# endif
-# if	BSD < 199306
-				sin = (SOCKADDR_IN *)&ifa->ifa_addr;
-# else
-				sin = (SOCKADDR_IN *)ifa->ifa_addr;
-				while (sin && ifa &&
-				       sin->sin_family != AF_INET) {
-#  if	(__FreeBSD_version >= 300000)
-					ifa = TAILQ_NEXT(ifa, ifa_link);
-#  else
-#   ifdef	__NetBSD__
-					ifa = ifa->ifa_list.tqe_next;
-#   else
-					ifa = ifa->ifa_next;
-#   endif
-#  endif
-					sin = (SOCKADDR_IN *)ifa->ifa_addr;
-				}
-				if (!ifa)
-					sin = NULL;
-				if (!sin) {
-					KFREE(nat);
+			if (!in.s_addr && (np->in_outmsk == 0xffffffff))
+				if (nat_ifpaddr(nat, fin->fin_ifp, &in) == -1)
 					return NULL;
-				}
-# endif
-				in = sin->sin_addr;
-				in.s_addr = ntohl(in.s_addr);
-#endif
-			}
+
 			if (nflags & IPN_TCPUDP) {
 				port = htons(np->in_pnext++);
 				if (np->in_pnext >= ntohs(np->in_pmax)) {
@@ -769,7 +789,7 @@ fr_info_t *fin;
 	MUTEX_ENTER(&ipf_nat);
 	if ((nat = ipfr_nat_knownfrag(ip, fin)))
 		;
-	else if ((nat = nat_outlookup(fin->fin_ifp, nflags, ip->ip_src, sport,
+	else if ((nat = nat_outlookup(ifp, nflags, ip->ip_src, sport,
 				      ip->ip_dst, dport)))
 		np = nat->nat_ptr;
 	else
@@ -1034,6 +1054,59 @@ void ip_natexpire()
 }
 
 
+/*
+ */
+void ip_natsync(ifp)
+void *ifp;
+{
+	register nat_t *nat;
+	register u_long sum1, sum2, sumd;
+	struct in_addr in;
+	ipnat_t *np;
+#if defined(_KERNEL) && !SOLARIS
+	int s;
+#endif
+
+	MUTEX_ENTER(&ipf_nat);
+	SPLNET(s);
+	for (nat = nat_instances; nat; nat = nat->nat_next)
+		if ((ifp == nat->nat_ifp) && (np = nat->nat_ptr))
+			if ((np->in_outmsk == 0xffffffff) && !np->in_nip) {
+				/*
+				 * Change the map-to address to be the same
+				 * as the new one.
+				 */
+				sum1 = nat->nat_outip.s_addr;
+				if (nat_ifpaddr(nat, ifp, &in) == -1)
+				nat->nat_outip.s_addr = htonl(in.s_addr);
+				sum2 = nat->nat_outip.s_addr;
+
+				/*
+				 * Readjust the checksum adjustment to take
+				 * into account the new IP#.
+				 *
+				 * Do it twice
+				 */
+				sum1 = (sum1 & 0xffff) + (sum1 >> 16);
+				sum1 = (sum1 & 0xffff) + (sum1 >> 16);
+
+				/* Do it twice */
+				sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+				sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+
+				 /* Because ~1 == -2, We really need ~1 == -1 */
+				if (sum1 > sum2)
+					sum2--;
+				sumd = sum2 - sum1;
+				sumd = (sumd & 0xffff) + (sumd >> 16);
+				sumd += nat->nat_sumd;
+				nat->nat_sumd = (sumd & 0xffff) + (sumd >> 16);
+			}
+	SPLX(s);
+	MUTEX_EXIT(&ipf_nat);
+}
+
+
 #ifdef	IPFILTER_LOG
 void nat_log(nat, type)
 struct nat *nat;
@@ -1041,22 +1114,10 @@ u_short type;
 {
 	struct ipnat *np;
 	struct natlog natl;
-	int rulen;
+	void *items[1];
+	size_t sizes[1];
+	int rulen, types[1];
 
-	if (iplused[IPL_LOGNAT] + sizeof(natl) > IPLLOGSIZE) {
-		nat_stats.ns_logfail++;
-		return;
-	}
-
-        if (iplh[IPL_LOGNAT] == iplbuf[IPL_LOGNAT] + IPLLOGSIZE)
-                iplh[IPL_LOGNAT] = iplbuf[IPL_LOGNAT];
-
-# ifdef	sun
-	uniqtime(&natl.nl_tv);
-# endif
-# if BSD >= 199306 || defined(__FreeBSD__)
-	microtime((struct timeval *)&natl);
-# endif
 	natl.nl_inip = nat->nat_inip;
 	natl.nl_outip = nat->nat_outip;
 	natl.nl_origip = nat->nat_oip;
@@ -1074,12 +1135,10 @@ u_short type;
 				break;
 			}
 	}
+	items[0] = &natl;
+	sizes[0] = sizeof(natl);
+	types[0] = 0;
 
-	if (!fr_copytolog(IPL_LOGNAT, (char *)&natl, sizeof(natl))) {
-		iplused[IPL_LOGNAT] += sizeof(natl);
-		nat_stats.ns_logged++;
-	} else
-		nat_stats.ns_logfail++;
-	wakeup(iplbuf[IPL_LOGNAT]);
+	(void) ipllog(IPL_LOGNAT, 0, items, sizes, types, 1);
 }
 #endif

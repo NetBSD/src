@@ -1,7 +1,7 @@
-/*	$NetBSD: nfswrapper.h,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2.2.2 1997/09/22 06:31:24 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996
+ * Copyright (c) 1997
  *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,12 +32,22 @@
  *
  */
 
+#include <machine/bootinfo.h>
 
-int	nfs_mountandopen __P((char *path, struct open_file *f));
-int	nfs_close __P((struct open_file *f));
-int	nfs_read __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-int	nfs_write __P((struct open_file *f, void *buf,
-			size_t size, size_t *resid));
-off_t	nfs_seek __P((struct open_file *f, off_t offset, int where));
-int	nfs_stat __P((struct open_file *f, struct stat *sb));
+struct bootinfo {
+	int nentries;
+	physaddr_t entry[1];
+};
+
+extern struct bootinfo *bootinfo;
+
+#define BI_ALLOC(max) (bootinfo = alloc(sizeof(struct bootinfo) \
+                                        + ((max) - 1) * sizeof(physaddr_t))) \
+                      ->nentries = 0
+
+#define BI_FREE() free(bootinfo, 0)
+
+#define BI_ADD(x, type, size) bi_add((struct btinfo_common*)(x), type, size)
+
+void bi_add __P((struct btinfo_common*, int, int));
+void bi_getbiosgeom __P((void));

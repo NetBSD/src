@@ -1,4 +1,4 @@
-/*	$NetBSD: msgbuf.h,v 1.9 1997/01/22 07:09:20 mikel Exp $	*/
+/*	$NetBSD: msgbuf.h,v 1.9.8.1 1997/09/22 06:34:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1981, 1984, 1993
@@ -38,16 +38,21 @@
 #ifndef _SYS_MSGBUF_H_
 #define _SYS_MSGBUF_H_
 
-#define	MSG_BSIZE	(4096 - 3 * sizeof(long))
-struct	msgbuf {
+struct	kern_msgbuf {
 #define	MSG_MAGIC	0x063061
 	long	msg_magic;
 	long	msg_bufx;		/* write pointer */
 	long	msg_bufr;		/* read pointer */
-	char	msg_bufc[MSG_BSIZE];	/* buffer */
+	long	msg_bufs;		/* real msg_bufc size (bytes) */
+	char	msg_bufc[1];		/* buffer */
 };
+
 #ifdef _KERNEL
-struct	msgbuf *msgbufp;
+extern int	msgbufmapped;		/* is the message buffer mapped */
+extern int	msgbufenabled;		/* is logging to the buffer enabled */
+extern struct	kern_msgbuf *msgbufp;	/* the mapped buffer, itself. */
+
+void	initmsgbuf __P((caddr_t buf, size_t bufsize));
 #endif
 
 #endif /* !_SYS_MSGBUF_H_ */

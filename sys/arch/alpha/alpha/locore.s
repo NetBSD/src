@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.32.2.2 1997/09/04 00:52:40 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.32.2.3 1997/09/22 06:30:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.32.2.2 1997/09/04 00:52:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.32.2.3 1997/09/22 06:30:06 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.32.2.2 1997/09/04 00:52:40 thorpej Exp 
 									\
 	/* Flush out the entire TLB.  (XXX only user side?) */		\
 	ldiq	a0, -2						;	\
-	call_pal PAL_OSF1_tbi
+	call_pal PAL_OSF1_tbi					;	\
+	call_pal PAL_imb
 
 
 	/* don't reorder instructions; paranoia. */
@@ -140,6 +141,17 @@ Lstart1: LDGP(pv)
  * Pull in the PALcode function stubs.
  */
 #include <alpha/alpha/pal.s>
+
+/**************************************************************************/
+
+/**************************************************************************/
+
+/*
+ * Pull in the BWX instruction stubs.
+ *
+ * XXX Eventually, we want to do these with inline __asm() statements.
+ */
+#include <alpha/alpha/bwx.s>
 
 /**************************************************************************/
 

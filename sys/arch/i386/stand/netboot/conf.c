@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.1 1997/03/14 02:40:30 perry Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.1.4.1 1997/09/22 06:31:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -40,7 +40,7 @@
 
 #include "dev_net.h"
 
-#include <nfswrapper.h>
+#include <nfs.h>
 #include <tftp.h>
 
 struct devsw devsw[] = {
@@ -50,7 +50,7 @@ int ndevs = sizeof(devsw)/sizeof(struct devsw);
 
 struct fs_ops file_system[] = {
 #ifdef SUPPORT_NFS
-  { nfs_mountandopen, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+  { nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
 #endif
 #ifdef SUPPORT_TFTP
  { tftp_open, tftp_close, tftp_read, tftp_write, tftp_seek, tftp_stat },

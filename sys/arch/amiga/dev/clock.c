@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 1997/07/19 00:01:43 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.30.2.1 1997/09/22 06:30:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,7 +222,7 @@ void calibrate_delay(dp)
 	} while (t2 <= t1);
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (dp)
 		printf("\ndiff %ld us, new divisor %u/1024 us\n", t2,
 		    delaydivisor); 
@@ -244,7 +244,7 @@ void calibrate_delay(dp)
 	} while (t2 <= t1);
 	t2 -= t1;
 	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (dp)
 		printf("diff %ld us, new divisor ", t2);
 #endif
