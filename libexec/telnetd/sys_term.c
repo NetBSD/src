@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.33 2002/08/20 13:58:22 christos Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.34 2002/08/22 07:23:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.33 2002/08/20 13:58:22 christos Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.34 2002/08/22 07:23:27 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1964,7 +1964,7 @@ jid_getutid(jid)
 
 	setutent();	/* just to make sure */
 	while (cur = getutent()) {
-		if ( (cur->ut_type != NULL) && (jid == cur->ut_jid) ) {
+		if ((cur->ut_type != NULL) && (jid == cur->ut_jid)) {
 			return(cur);
 		}
 	}
@@ -2041,20 +2041,16 @@ jobend(jid, path, user)
 	 * this is the only time when the
 	 * "saved_jid != jid" code is executed.
 	 */
-
-	if ( saved_jid && saved_jid != jid ) {
-		if (!path) {	/* called from signal handler */
+	if (saved_jid && saved_jid != jid) {
+		if (!path)	/* called from signal handler */
 			pty_saved_jid = jid;
-		} else {
+		else
 			pty_saved_jid = saved_jid;
-		}
 	}
 
 	if (path) {
-		strncpy(saved_path, path, sizeof(wtmp.ut_tpath));
-		strncpy(saved_user, user, sizeof(wtmp.ut_user));
-		saved_path[sizeof(saved_path)] = '\0';
-		saved_user[sizeof(saved_user)] = '\0';
+		strlcpy(saved_path, path, sizeof(saved_path));
+		strlcpy(saved_user, user, sizeof(saved_user));
 	}
 	if (saved_jid == 0) {
 		saved_jid = jid;
@@ -2063,7 +2059,7 @@ jobend(jid, path, user)
 
 	/* if the jid has changed, get the correct entry from the utmp file */
 
-	if ( saved_jid != jid ) {
+	if (saved_jid != jid) {
 		struct utmp *utp = NULL;
 		struct utmp *jid_getutid();
 
