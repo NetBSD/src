@@ -1,3 +1,5 @@
+/*	$NetBSD: arp.c,v 1.10 1995/03/01 11:51:01 chopps Exp $ */
+
 /*
  * Copyright (c) 1984, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$Id: arp.c,v 1.9 1995/02/28 22:51:16 chopps Exp $";
+static char *rcsid = "$Id: arp.c,v 1.10 1995/03/01 11:51:01 chopps Exp $";
 #endif /* not lint */
 
 /*
