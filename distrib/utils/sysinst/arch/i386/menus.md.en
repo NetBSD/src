@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.36 2001/11/29 23:20:58 thorpej Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.36.2.1 2002/07/29 14:47:35 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,6 +209,14 @@ menu editfsparts, y=13, exit;
 	option "Change f", action { editpart = F;}, sub menu edfspart;
 	option "Change g", action { editpart = G;}, sub menu edfspart;
 	option "Change h", action { editpart = H;}, sub menu edfspart;
+	option "Change i", action { editpart = I;}, sub menu edfspart;
+	option "Change j", action { editpart = J;}, sub menu edfspart;
+	option "Change k", action { editpart = K;}, sub menu edfspart;
+	option "Change l", action { editpart = L;}, sub menu edfspart;
+	option "Change m", action { editpart = M;}, sub menu edfspart;
+	option "Change n", action { editpart = N;}, sub menu edfspart;
+	option "Change o", action { editpart = O;}, sub menu edfspart;
+	option "Change p", action { editpart = P;}, sub menu edfspart;
 	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
  
 
