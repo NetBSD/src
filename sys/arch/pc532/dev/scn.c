@@ -1,4 +1,4 @@
-/* $NetBSD: scn.c,v 1.17 1995/05/16 07:30:38 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.18 1995/06/09 04:36:30 phil Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
