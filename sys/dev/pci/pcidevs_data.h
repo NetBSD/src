@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.290 2001/01/09 23:16:19 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.291 2001/01/09 23:20:22 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.287 2001/01/09 23:15:39 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.288 2001/01/09 23:19:03 rh Exp 
  */
 
 /*
@@ -1628,6 +1628,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cogent Data Technologies",
 	    "EX110TX PCI Fast Ethernet Adapter",
+	},
+	{
+	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2,
+	    0,
+	    "COMPAL Electronics, Inc.",
+	    "COMPAL 38W2 OEM Notebook",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE,
@@ -8521,6 +8527,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AIRONET, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Aironet Wireless Communications",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_COMPAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "COMPAL Electronics, Inc.",
 	    NULL,
 	},
 	{
