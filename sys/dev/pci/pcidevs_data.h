@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.38 1997/09/15 15:02:36 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.39 1997/09/23 22:35:48 mycroft Exp 
  */
 
 /*
@@ -750,6 +750,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Emulex",
 	    "\"Light Pulse\" FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
+	    0,
+	    "Ensoniq",
+	    "AudioPCI",
 	},
 	{
 	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
@@ -4577,6 +4583,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AURORA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Aurora Technologies",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ENSONIQ, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Ensoniq",
 	    NULL,
 	},
 	{
