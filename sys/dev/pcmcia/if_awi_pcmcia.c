@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.7 2000/02/01 08:58:25 enami Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.8 2000/02/01 10:00:41 enami Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ int	awi_pcmcia_enable __P((struct awi_softc *));
 void	awi_pcmcia_disable __P((struct awi_softc *));
 
 struct awi_pcmcia_softc {
-	struct awi_softc sc_awi;			/* real "awi" softc */
+	struct awi_softc sc_awi;		/* real "awi" softc */
 
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
@@ -171,10 +171,8 @@ awi_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer != PCMCIA_VENDOR_BAY)
-		return (0);
-
-	if (pa->product == PCMCIA_PRODUCT_BAY_STACK_650)
+	if (pa->manufacturer == PCMCIA_VENDOR_BAY &&
+	    pa->product == PCMCIA_PRODUCT_BAY_STACK_650)
 		return (1);
 
 	return (0);
