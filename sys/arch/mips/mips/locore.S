@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.146 2002/11/04 04:04:32 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.147 2002/11/04 04:06:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1265,24 +1265,24 @@ LEAF(mips_pagecopy)
 	li	a2, NBPG >> 6
 
 1:	ld	t0, 0(a1)
-	ld	t4, 32(a1)
+	ld	ta0, 32(a1)
 	ld	t2, 16(a1)
-	ld	t6, 48(a1)
+	ld	ta2, 48(a1)
 	subu	a2, 1
 	ld	t1, 8(a1)
 	ld	t3, 24(a1)
-	ld	t5, 40(a1)
-	ld	t7, 56(a1)
+	ld	ta1, 40(a1)
+	ld	ta3, 56(a1)
 
 	sd	t0, 0(a0)
-	sd	t4, 32(a0)
+	sd	ta0, 32(a0)
 	sd	t2, 16(a0)
-	sd	t6, 48(a0)
+	sd	ta2, 48(a0)
 	addu	a1, 64
 	sd	t1, 8(a0)
 	sd	t3, 24(a0)
-	sd	t5, 40(a0)
-	sd	t7, 56(a0)
+	sd	ta1, 40(a0)
+	sd	ta3, 56(a0)
 	bgtz	a2,1b
 	addu	a0, 64
 #else
@@ -1290,24 +1290,24 @@ LEAF(mips_pagecopy)
 	li	a2, NBPG >> 5
 
 1:	lw	t0, 0(a1)
-	lw	t4, 16(a1)
+	lw	ta0, 16(a1)
 	subu	a2, 1
 	lw	t1, 4(a1)
 	lw	t2, 8(a1)
 	lw	t3, 12(a1)
-	lw	t5, 20(a1)
-	lw	t6, 24(a1)
-	lw	t7, 28(a1)
+	lw	ta1, 20(a1)
+	lw	ta2, 24(a1)
+	lw	ta3, 28(a1)
 
 	sw	t0, 0(a0)
-	sw	t4, 16(a0)
+	sw	ta0, 16(a0)
 	addu	a1, 32
 	sw	t1, 4(a0)
 	sw	t2, 8(a0)
 	sw	t3, 12(a0)
-	sw	t5, 20(a0)
-	sw	t6, 24(a0)
-	sw	t7, 28(a0)
+	sw	ta1, 20(a0)
+	sw	ta2, 24(a0)
+	sw	ta3, 28(a0)
 	bgtz	a2,1b
 	addu	a0, 32
 #endif /* __mips_n32 || _LP64 */
