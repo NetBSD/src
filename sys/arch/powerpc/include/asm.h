@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.13 2003/07/31 06:23:55 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.14 2003/08/02 19:40:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -242,8 +242,6 @@
 #define	ldregu	lwzu		/* load PPC general register with udpate */
 #define	streg	stw		/* load PPC general register */
 #define	stregu	stwu		/* load PPC general register with udpate */
-#define	ldmreg	lmw		/* load multiple PPC general registers */
-#define	stmreg	stmw		/* store multiple PPC general registers */
 #define	SZREG	4		/* 4 byte registers */
 #else
 #define ldlong	ld		/* load "C" long */
@@ -258,8 +256,9 @@
 #define	ldregu	ldu		/* load PPC general register with update */
 #define	streg	std		/* store PPC general register */
 #define	stregu	stdu		/* store PPC general register with update */
-#define	ldmreg	lmd		/* load multiple PPC general registers */
-#define	stmreg	stmd		/* store multiple PPC general registers */
+/* redefined this to force an error on PPC64 to catch their use.  */
+#define	lmw	lmd		/* load multiple PPC general registers */
+#define	stmw	stmd		/* store multiple PPC general registers */
 #define	SZREG	8		/* 8 byte registers */
 #endif
 
