@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.3 1997/10/06 00:10:35 mark Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.4 1998/08/04 02:03:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -76,7 +76,7 @@ ENTRY(setjmp)
         mov	r15, r14
 
 Lsetjmp_magic:
-	.word	JMPBUF_MAGIC_SETJMP
+	.word	_JB_MAGIC_SETJMP
 
 
 ENTRY(longjmp)

@@ -34,7 +34,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define SIGCONTEXT_PC_OFFSET 20	/* XXX - check this */
 
 #define JB_ELEMENT_SIZE sizeof(int)	/* jmp_buf[_JBLEN] is array of ints */
-#define JB_PC	JMPBUF_REG_R14		/* Setjmp()'s return PC saved here */
+#define JB_PC	_JB_REG_R14		/* Setjmp()'s return PC saved here */
 
 /* Figure out where the longjmp will land.  Slurp the args out of the stack.
    We expect the first arg to be a pointer to the jmp_buf structure from which

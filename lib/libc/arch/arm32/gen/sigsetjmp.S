@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.3 1997/10/06 00:10:36 mark Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.4 1998/08/04 02:03:09 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -51,7 +51,7 @@ ENTRY(sigsetjmp)
 	b	_setjmp
 
 L_setjmp_magic:
-	.word	JMPBUF_MAGIC__SETJMP
+	.word	_JB_MAGIC__SETJMP
 
 ENTRY(siglongjmp)
 	ldr	r2, L_setjmp_magic
