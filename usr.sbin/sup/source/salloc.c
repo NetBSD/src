@@ -1,4 +1,4 @@
-/*	$NetBSD: salloc.c,v 1.5 2002/07/10 20:19:42 wiz Exp $	*/
+/*	$NetBSD: salloc.c,v 1.6 2004/12/21 16:19:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -43,10 +43,7 @@ char *
 salloc(const char *p)
 {
 	char *q;
-	int l;
-
-	q = malloc(l = strlen(p) + 1);
-	if (q != 0)
-		bcopy(p, q, l);
-	return (q);
+	if ((q = strdup(p)) == NULL)
+		goaway("Cannot allocate memory");
+	return q;
 }
