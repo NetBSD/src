@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.47 2000/03/25 20:23:05 frueauf Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.48 2000/03/28 23:57:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -404,8 +404,6 @@ hpux_sys_utssys(p, v, retval)
 	int i;
 	int error;
 	struct hpux_utsname	ut;
-	extern char ostype[], hostname[], osrelease[], version[];
-	extern char machine[];
 
 	switch (SCARG(uap, request)) {
 	/* uname */

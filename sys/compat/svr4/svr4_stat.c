@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.34 1999/09/07 18:20:19 christos Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.35 2000/03/28 23:57:34 simonb Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -540,8 +540,6 @@ svr4_sys_uname(p, v, retval)
 {
 	struct svr4_sys_uname_args *uap = v;
 	struct svr4_utsname	sut;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
-
 
 	memset(&sut, 0, sizeof(sut));
 
@@ -577,9 +575,6 @@ svr4_sys_systeminfo(p, v, retval)
 	int error;
 	size_t len;
 	char buf[256];
-	extern char ostype[], hostname[], osrelease[],
-		    version[], machine[], machine_arch[],
-		    domainname[];
 
 	u_int rlen = SCARG(uap, len);
 

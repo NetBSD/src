@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.52 2000/03/13 23:52:35 soren Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.53 2000/03/28 23:57:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@ linux_sys_olduname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_oldutsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
 	struct linux_oldutsname luts;
 	int len;
 	char *cp;
