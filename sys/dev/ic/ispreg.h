@@ -1,4 +1,4 @@
-/*	$NetBSD: ispreg.h,v 1.3 1997/08/16 00:20:28 mjacob Exp $	*/
+/*	$NetBSD: ispreg.h,v 1.4 1997/12/05 19:40:35 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible) register
@@ -328,6 +328,7 @@
 #define	ASYNC_LIP_OCCURRED		0x8010
 #define	ASYNC_LOOP_UP			0x8011
 #define	ASYNC_LOOP_DOWN			0x8012
+#define	ASYNC_LOOP_RESET		0x8013
 
 /*
  * SXP Block Register Offsets
