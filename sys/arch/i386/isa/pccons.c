@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.8 1993/04/20 23:09:36 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.9 1993/04/20 23:45:21 mycroft Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -451,16 +451,26 @@ pcxint(dev)
 pcstart(tp)
 	register struct tty *tp;
 {
+	register struct ringb *rbp;
 	int c, s;
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
-	do {
-	if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
+	rbp = &tp->t_out;
+	while(RB_LEN(rbp)) {
+		char c = getc(rbp);
+		if (!c) continue;
+		tp->t_state |= TS_BUSY;
+		splx(s);
+		sput(c, 0);
+		s = spltty();
+		tp->t_state &= ~TS_BUSY;
+	}
+	if (RB_LEN(rbp) <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_out);
+			wakeup((caddr_t)rbp);
 		}
 		if (tp->t_wsel) {
 			selwakeup(tp->t_wsel, tp->t_state & TS_WCOLL);
@@ -468,15 +478,6 @@ pcstart(tp)
 			tp->t_state &= ~TS_WCOLL;
 		}
 	}
-	if (RB_LEN(&tp->t_out) == 0)
-		goto out;
-	c = getc(&tp->t_out);
-	tp->t_state |= TS_BUSY;				/* 21 Aug 92*/
-	splx(s);
-	if (c) sput(c, 0);
-	(void)spltty();
-	tp->t_state &= ~TS_BUSY;			/* 21 Aug 92*/
-	} while(1);
 out:
 	splx(s);
 }
