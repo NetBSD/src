@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.1 1998/03/13 21:05:10 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.2 1998/04/10 08:19:53 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,8 +70,8 @@ bus_space_handle_t	*mhp;
 	vm_offset_t	va;
 	u_long		pa, endpa;
 
-	pa    = m68k_trunc_page(bpa + t);
-	endpa = m68k_round_page((bpa + t + size) - 1);
+	pa    = m68k_trunc_page(bpa + t->base);
+	endpa = m68k_round_page((bpa + t->base + size) - 1);
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
