@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_user.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_user.c,v 1.5 1993/12/20 12:40:28 cgd Exp $
+ *	$Id: vm_user.c,v 1.6 1994/01/07 22:40:12 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -89,6 +89,7 @@ struct svm_allocate_args {
 };
 
 /* ARGSUSED */
+int
 svm_allocate(p, uap, retval)
 	struct proc *p;
 	struct svm_allocate_args *uap;
@@ -117,6 +118,7 @@ struct svm_deallocate_args {
 };
 
 /* ARGSUSED */
+int
 svm_deallocate(p, uap, retval)
 	struct proc *p;
 	struct svm_deallocate_args *uap;
@@ -137,6 +139,7 @@ struct svm_inherit_args {
 };
 
 /* ARGSUSED */
+int
 svm_inherit(p, uap, retval)
 	struct proc *p;
 	struct svm_inherit_args *uap;
@@ -158,6 +161,7 @@ struct svm_protect_args {
 };
 
 /* ARGSUSED */
+int
 svm_protect(p, uap, retval)
 	struct proc *p;
 	struct svm_protect_args *uap;
@@ -175,6 +179,7 @@ svm_protect(p, uap, retval)
  *	vm_allocate allocates "zero fill" memory in the specfied
  *	map.
  */
+int
 vm_allocate(map, addr, size, anywhere)
 	register vm_map_t	map;
 	register vm_offset_t	*addr;
@@ -206,6 +211,7 @@ vm_allocate(map, addr, size, anywhere)
  *	vm_deallocate deallocates the specified range of addresses in the
  *	specified address map.
  */
+int
 vm_deallocate(map, start, size)
 	register vm_map_t	map;
 	vm_offset_t		start;
@@ -224,6 +230,7 @@ vm_deallocate(map, start, size)
  *	vm_inherit sets the inheritence of the specified range in the
  *	specified map.
  */
+int
 vm_inherit(map, start, size, new_inheritance)
 	register vm_map_t	map;
 	vm_offset_t		start;
@@ -240,7 +247,7 @@ vm_inherit(map, start, size, new_inheritance)
  *	vm_protect sets the protection of the specified range in the
  *	specified map.
  */
-
+int
 vm_protect(map, start, size, set_maximum, new_protection)
 	register vm_map_t	map;
 	vm_offset_t		start;
