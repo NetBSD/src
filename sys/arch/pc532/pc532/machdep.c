@@ -356,10 +356,11 @@ again:
 
 	if (nbuf == 0) {
 		nbuf = bufpages / 2;
-		if (nbuf < 16)
+		if (nbuf < 16) {
 			nbuf = 16;
 			/* XXX (cgd) -- broken vfs_bio currently demands this */
 			bufpages = 32;
+		}
 	}
 
 	if (nswbuf == 0) {
