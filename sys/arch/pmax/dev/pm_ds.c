@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.2 1996/10/13 16:59:14 christos Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.3 1996/10/23 02:34:23 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -64,6 +64,11 @@ extern struct fbuacces pmu;
 
 /* static struct for cold console init */
 struct fbinfo	pmfi;		/*XXX*/
+
+/*
+ * rcons methods and globals.
+ */
+extern struct pmax_fbtty pmfb;
 
 /*
  * XXX
@@ -179,6 +184,8 @@ pminit(fi, unit, cold_console_flag)
 	 */
 	fi->fi_fbu = (struct fbuaccess *)
 		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&pmu));
+
+	fi->fi_glasstty = &pmfb;
 
 	/*
 	 * set putc/getc entry point
