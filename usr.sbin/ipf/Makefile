@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/29 04:30:30 darrenr Exp $
+#	$NetBSD: Makefile,v 1.3 1997/04/12 23:57:37 mrg Exp $
 
-SUBDIR=		ipfstat ipmon ipnat ipftest ipsend iptest
+SUBDIR=		ipf ipfstat ipmon ipnat ipftest ipsend iptest
 
 .include <bsd.subdir.mk>
