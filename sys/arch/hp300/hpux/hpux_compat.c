@@ -38,7 +38,7 @@
  * from: Utah $Hdr: hpux_compat.c 1.64 93/08/05$
  *
  *	from: @(#)hpux_compat.c	8.4 (Berkeley) 2/13/94
- *	$Id: hpux_compat.c,v 1.10 1994/05/23 08:04:15 mycroft Exp $
+ *	$Id: hpux_compat.c,v 1.11 1994/05/25 11:55:06 mycroft Exp $
  */
 
 /*
@@ -1280,9 +1280,11 @@ hpux_ioctl(p, uap, retval)
 
 	com = uap->cmd;
 
+#ifdef COMPAT_OHPUX
 	/* XXX */
 	if (com == HPUXTIOCGETP || com == HPUXTIOCSETP)
 		return (getsettty(p, uap->fdes, com, uap->cmarg));
+#endif
 
 	if (((unsigned)uap->fdes) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[uap->fdes]) == NULL)
