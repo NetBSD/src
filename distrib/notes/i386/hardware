@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.49 1999/05/03 21:58:10 fvdl Exp $	
+.\"	$NetBSD: hardware,v 1.50 1999/05/13 15:25:42 sommerfeld Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -218,6 +218,14 @@ Supported devices include:
 		Mice [*] [+]
 		Printers [*] [+]
 		Generic support for HID devices [*] [+]
+	PCMCIA Controllers:
+		ISA, PCI, and ISA Plug\*&Play attachments for:
+			Intel 82365 PCIC, rev 0 and rev 1
+			Cirrus PD6710
+			Cirrus PD672X
+		[ Note: will work with most laptops as well as 
+		  with ISA cards which provide PCMCIA 
+		  slots for desktops ]
 .Ed
 .Pp
 Drivers for hardware marked with "[*]" are NOT present in kernels on the
