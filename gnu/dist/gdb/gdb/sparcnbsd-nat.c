@@ -152,3 +152,32 @@ store_inferior_registers (int regno)
 	return;
     }
 }
+
+void
+nbsd_reg_to_internal (rgs)
+	char *rgs;
+{
+  sparcnbsd_supply_reg32(rgs, -1);
+}
+
+void
+nbsd_fpreg_to_internal (frgs)
+	char *frgs;
+{
+  sparcnbsd_supply_fpreg32(frgs, -1);
+}
+
+void
+nbsd_internal_to_reg (regs)
+	char *regs;
+{
+  sparcnbsd_fill_reg32(regs, -1);
+}
+
+void
+nbsd_internal_to_fpreg (fpregs)
+	char *fpregs;
+{
+  sparcnbsd_fill_fpreg32(fpregs, -1);
+}
+
