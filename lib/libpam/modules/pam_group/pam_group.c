@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_group.c,v 1.5 2005/03/05 20:33:40 christos Exp $	*/
+/*	$NetBSD: pam_group.c,v 1.5.2.1 2005/04/04 17:55:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_group/pam_group.c,v 1.4 2003/12/11 13:55:15 des Exp $");
 #else
-__RCSID("$NetBSD: pam_group.c,v 1.5 2005/03/05 20:33:40 christos Exp $");
+__RCSID("$NetBSD: pam_group.c,v 1.5.2.1 2005/04/04 17:55:29 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,14 +69,16 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	const char *group, *user;
 	const void *ruser;
 	char *const *list;
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	struct group *grp;
 	int pam_err;
 	char *promptresp = NULL;
+	char pwbuf[1024];
 
 	/* get target account */
 	if (pam_get_user(pamh, &user, NULL) != PAM_SUCCESS ||
-	    user == NULL || (pwd = getpwnam(user)) == NULL)
+	    user == NULL ||
+	    getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 		return (PAM_AUTH_ERR);
 	if (pwd->pw_uid != 0 && openpam_get_option(pamh, "root_only"))
 		return (PAM_IGNORE);
