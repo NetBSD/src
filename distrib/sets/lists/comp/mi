@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.612 2003/09/07 11:29:18 yamt Exp $
+#	$NetBSD: mi,v 1.613 2003/09/07 21:06:06 seb Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4214,15 +4214,15 @@
 ./usr/share/man/cat9/pmc_start_profiling.0		comp-sys-catman
 ./usr/share/man/cat9/pmc_stop_profiling.0		comp-sys-catman
 ./usr/share/man/cat9/pool.0		comp-sys-catman
-./usr/share/man/cat9/pool_cache.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_destroy.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_destruct_object.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_get.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_get_paddr.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_init.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_invalidate.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_put.9		comp-sys-catman
-./usr/share/man/cat9/pool_cache_put_paddr.9		comp-sys-catman
+./usr/share/man/cat9/pool_cache.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_destroy.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_destruct_object.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_get.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_get_paddr.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_init.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_invalidate.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_put.0		comp-sys-catman
+./usr/share/man/cat9/pool_cache_put_paddr.0		comp-sys-catman
 ./usr/share/man/cat9/pool_create.0		comp-sys-catman
 ./usr/share/man/cat9/pool_destroy.0		comp-sys-catman
 ./usr/share/man/cat9/pool_get.0		comp-sys-catman
