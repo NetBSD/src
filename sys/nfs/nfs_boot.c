@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.55 2000/12/10 23:17:01 fvdl Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.56 2001/01/19 14:26:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -212,7 +212,8 @@ nfs_boot_ifupdown(ifp, procp, up)
 	}
 
 	if (up)
-		delay(3000000); /* give the link some time to get up */
+		/* give the link some time to get up */
+		tsleep(nfs_boot_ifupdown, PZERO, "nfsbif", 3 * hz);
 out:
 	soclose(so);
 	return (error);
@@ -270,7 +271,8 @@ nfs_boot_setaddress(ifp, procp, addr, netmask, braddr)
 		goto out;
 	}
 
-	delay(3000000); /* give the link some time to get up */
+	/* give the link some time to get up */
+	tsleep(nfs_boot_setaddress, PZERO, "nfsbtd", 3 * hz);
 out:
 	soclose(so);
 	return (error);
