@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.150 2001/11/01 16:34:21 tv Exp $
+#	$NetBSD: Makefile,v 1.151 2001/11/11 22:40:42 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -176,6 +176,7 @@ dependall-tools depend-tools all-tools install-tools install-regress \
 dependall-distrib depend-distrib all-distrib install-distrib includes-distrib:
 	@true
 
+.include <bsd.obj.mk>
 .include <bsd.subdir.mk>
 
 build-docs: ${.CURDIR}/BUILDING
