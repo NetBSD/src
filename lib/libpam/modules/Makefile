@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:43 christos Exp $
+# $NetBSD: Makefile,v 1.3 2004/12/29 15:04:06 lukem Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -31,8 +31,18 @@ SUBDIR=	pam_chroot pam_deny pam_echo pam_exec pam_ftpusers pam_group \
 	pam_guest pam_lastlog pam_login_access pam_nologin pam_permit \
 	pam_rhosts pam_rootok pam_securetty pam_self pam_unix
 
+LIB_ROOT_DIR=	${.CURDIR}/../..
+
+LIBDPLIBS=	util	${LIB_ROOT_DIR}/libutil
+
 .if (${MKKERBEROS} != "no")
 SUBDIR+= pam_krb5 pam_ksu
+LIBDPLIBS+=	krb5	${LIB_ROOT_DIR}/libkrb5 \
+		asn1	${LIB_ROOT_DIR}/libasn1 \
+		roken	${LIB_ROOT_DIR}/libroken \
+		com_err	${LIB_ROOT_DIR}/libcom_err \
+		crypt	${LIB_ROOT_DIR}/libcrypt \
+		crypto	${LIB_ROOT_DIR}/libcrypto
 .endif
 
 .if (${MKCRYPTO} != "no")
@@ -40,4 +50,5 @@ SUBDIR+= pam_krb5 pam_ksu
 #SUBDIR+= pam_ssh
 .endif
 
+.include <bsd.lib.mk>
 .include <bsd.subdir.mk>
