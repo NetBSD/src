@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd.c,v 1.3 1999/06/06 03:13:13 thorpej Exp $	*/
+/*	$NetBSD: lockd.c,v 1.4 2000/02/02 18:17:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockd.c,v 1.3 1999/06/06 03:13:13 thorpej Exp $");
+__RCSID("$NetBSD: lockd.c,v 1.4 2000/02/02 18:17:42 bouyer Exp $");
 #endif
 
 /*
@@ -83,6 +83,7 @@ int		_rpcsvcdirty = 0;
 int	main __P((int, char **));
 void	nlm_prog_1 __P((struct svc_req *, SVCXPRT *));
 void	nlm_prog_3 __P((struct svc_req *, SVCXPRT *));
+void	nlm_prog_4 __P((struct svc_req *, SVCXPRT *));
 
 int
 main(argc, argv)
@@ -110,6 +111,7 @@ main(argc, argv)
 
 	(void)pmap_unset(NLM_PROG, NLM_VERS);
 	(void)pmap_unset(NLM_PROG, NLM_VERSX);
+	(void)pmap_unset(NLM_PROG, NLM_VERS4);
 
 	transp = svcudp_create(RPC_ANYSOCK);
 	if (transp == NULL) {
@@ -126,6 +128,11 @@ main(argc, argv)
 		errx(1, "unable to register (NLM_PROG, NLM_VERSX, udp).");
 		/* NOTREACHED */
 	}
+	if (!svc_register(transp, NLM_PROG, NLM_VERS4,
+	    nlm_prog_4, IPPROTO_UDP)) {
+		errx(1, "unable to register (NLM_PROG, NLM_VERS4, udp).");
+		/* NOTREACHED */
+	}
 	transp = svctcp_create(RPC_ANYSOCK, 0, 0);
 	if (transp == NULL) {
 		errx(1, "cannot create tcp service.");
@@ -139,6 +146,11 @@ main(argc, argv)
 	if (!svc_register(transp, NLM_PROG, NLM_VERSX,
 	    nlm_prog_3, IPPROTO_TCP)) {
 		errx(1, "unable to register (NLM_PROG, NLM_VERSX, tcp).");
+		/* NOTREACHED */
+	}
+	if (!svc_register(transp, NLM_PROG, NLM_VERS4,
+	    nlm_prog_4, IPPROTO_TCP)) {
+		errx(1, "unable to register (NLM_PROG, NLM_VERS4, tcp).");
 		/* NOTREACHED */
 	}
 
