@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3.2.3 1997/11/25 06:58:06 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.3.2.4 1997/11/25 20:37:39 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,8 +47,8 @@
 EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
 EXTERN int bstuffset INIT(0);
 
-enum info {ID,SIZE,START,FLAG};
-EXTERN int part[4][4] INIT({{0}});
+enum info {ID,SIZE,START,FLAG,SET};
+EXTERN int part[4][5] INIT({{0}});
 EXTERN int activepart;
 EXTERN int bsdpart;
 EXTERN int usefull;
@@ -61,6 +61,9 @@ EXTERN int usefull;
  *
  * i386 has the  MD set kern first, because generic kernels are  too
  * big to fit on install floppies. i386 does not yet include the x sets. 
+ *
+ * Third entry is the last extension name in the split sets for loading
+ * from floppy.
  */
 EXTERN distinfo dist_list[]
 #ifdef MAIN
@@ -118,7 +121,6 @@ EXTERN	char *disk_names[]
  * On i386, that is  msdos.
  */
 EXTERN	char *fdtype INIT("msdos");
-
 
 
 
