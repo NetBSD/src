@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.3 2000/05/13 20:18:29 jdolecek Exp $
+# $NetBSD: TODO,v 1.4 2000/05/14 15:19:24 soren Exp $
 
 Bugs:
 * i386: detect the existence of MCA bus by BIOS call
@@ -8,7 +8,7 @@ Bugs:
 	is executed)
 
 Projects:
-* bus_dma(8) support (primarily for AHA-1640 ATM)
+* bus_dma(9) support (primarily for AHA-1640 ATM)
 * 3Com 3c507 driver (prolly port of ef driver - originally, 1.3 ie driver
 	has been ported in MCA release 2.1 by Scott Telford, the ISA
 	attachment was then (after 1.3) split into ex, ef, ai)
