@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 09:04:40 matt Exp $
 
 PROG=		cc1
 SRCS=		${G_C_OBJS:Nlibcpp.a:.o=.c} main.c
@@ -6,4 +6,4 @@ SRCS=		${G_C_OBJS:Nlibcpp.a:.o=.c} main.c
 .include "../Makefile.backend"
 .include "../Makefile.libcpp"
 
-.PATH: ${DIST}/gcc
+.PATH: ${DIST}/gcc ${G_out_file:H}

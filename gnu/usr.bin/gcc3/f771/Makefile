@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/08/19 01:13:25 uwe Exp $
+#	$NetBSD: Makefile,v 1.6 2003/09/23 09:04:41 matt Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c} main.c
@@ -30,4 +30,4 @@ main.c: ${DIST}/gcc/main.c
 	rm -f main.c
 	ln -s $> main.c
 
-.PATH: ${DIST}/gcc/f ${DIST}/libiberty
+.PATH: ${DIST}/gcc/f ${DIST}/libiberty ${G_out_file:H}
