@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.18 1997/06/18 01:27:43 jtc Exp $
+#	$NetBSD: Makefile,v 1.19 1997/06/18 01:56:03 jtc Exp $
+
+NOOBJ=
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -53,20 +55,16 @@ ZIC=zic
 
 .PHONY:	posix_only
 posix_only: ${TDATA}
-	(cd ${.CURDIR}; \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA})
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA}
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
-	(cd ${.CURDIR}; \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA})
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA}
 
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
-	(cd ${.CURDIR}; \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA})
-	(cd ${.CURDIR}; \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA})
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA}
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA}
 
 .PHONY:	posix_right
 posix_right: posix_only other_two
@@ -75,8 +73,7 @@ posix_right: posix_only other_two
 right_posix: right_only other_two
 
 afterinstall: ${DATA} ${REDO}
-	(cd ${.CURDIR}; \
-	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES})
+	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES}
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
 	find ${TZDIR} -type f | xargs chmod a=r
 
