@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.19 1999/12/16 06:00:24 itojun Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.20 2000/01/13 13:11:31 ad Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.19 1999/12/16 06:00:24 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.20 2000/01/13 13:11:31 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,8 @@ __RCSID("$NetBSD: telnetd.c,v 1.19 1999/12/16 06:00:24 itojun Exp $");
 
 #include <err.h>
 #include <termcap.h>
+
+#include <limits.h>
 
 #define P __P
 
@@ -136,7 +138,7 @@ int	registerd_host_only = 0;
 long	ptyibufbuf[BUFSIZ/sizeof(long)+1];
 char	*ptyibuf = ((char *)&ptyibufbuf[1])-1;
 char	*ptyip = ((char *)&ptyibufbuf[1])-1;
-char	ptyibuf2[BUFSIZ];
+char	ptyibuf2[BUFSIZ*4];
 unsigned char ctlbuf[BUFSIZ];
 struct	strbuf strbufc, strbufd;
 
@@ -953,9 +955,7 @@ telnet(f, p, host)
 	char	defent[TABBUFSIZ];
 	char	defstrs[TABBUFSIZ];
 #undef	TABBUFSIZ
-	char *HE;
-	char *HN;
-	char *IM;
+	char *HE, *HN, *IM, *IF, *ptyibuf2ptr;
 	int nfd;
 
 	/*
@@ -1153,6 +1153,7 @@ telnet(f, p, host)
 		HE = getstr("he", &cp);
 		HN = getstr("hn", &cp);
 		IM = getstr("im", &cp);
+		IF = getstr("if", &cp);
 		if (HN && *HN)
 			(void) strcpy(host_name, HN);
 		if (IM == 0)
@@ -1162,11 +1163,24 @@ telnet(f, p, host)
 		HE = 0;
 	}
 	edithost(HE, host_name);
-	if (hostinfo && *IM)
-		putf(IM, ptyibuf2);
+	ptyibuf2ptr = ptyibuf2;
+	if (hostinfo) {
+		if (IF)	{
+			char buf[_POSIX2_LINE_MAX];
+			FILE *fd;
+                        
+			if ((fd = fopen(IF, "r")) != NULL) {
+				while (fgets(buf, sizeof(buf) - 1, fd) != NULL)
+					ptyibuf2ptr = putf(buf, ptyibuf2ptr);
+				fclose(fd);
+			}
+		}
+		if (*IM)
+			ptyibuf2ptr = putf(IM, ptyibuf2ptr);
+	}
 
 	if (pcc)
-		(void) strncat(ptyibuf2, ptyip, pcc+1);
+		strncpy(ptyibuf2ptr, ptyip, pcc+1);
 	ptyip = ptyibuf2;
 	pcc = strlen(ptyip);
 #ifdef	LINEMODE

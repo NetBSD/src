@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.9 1999/02/12 05:30:11 dean Exp $	*/
+/*	$NetBSD: ext.h,v 1.10 2000/01/13 13:11:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -126,7 +126,6 @@ extern void
 #endif
 	ptyflush P((void)),
 	putchr P((int)),
-	putf P((char *, char *)),
 	recv_ayt P((void)),
 	send_do P((int, int)),
 	send_dont P((int, int)),
@@ -145,6 +144,9 @@ extern void
 	ttloop P((void)),
 	tty_binaryin P((int)),
 	tty_binaryout P((int));
+
+extern char *
+	putf P((char *, char *));
 
 extern int
 	end_slc P((unsigned char **)),
