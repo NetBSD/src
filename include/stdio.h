@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.7 1993/10/11 18:01:45 jtc Exp $
+ *	$Id: stdio.h,v 1.8 1993/12/01 23:59:29 jtc Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -270,10 +270,14 @@ int	 putw __P((int, FILE *));
 void	 setbuffer __P((FILE *, char *, int));
 int	 setlinebuf __P((FILE *));
 char	*tempnam __P((const char *, const char *));
-int	 snprintf __P((char *, size_t, const char *, ...));
-int	 vsnprintf __P((char *, size_t, const char *, _VA_LIST_));
-int	 vscanf __P((const char *, _VA_LIST_));
-int	 vsscanf __P((const char *, const char *, _VA_LIST_));
+int	 snprintf __P((char *, size_t, const char *, ...))
+		__attribute__((format (printf, 3, 4)));
+int	 vsnprintf __P((char *, size_t, const char *, _VA_LIST_))
+		__attribute__((format (printf, 3, 0)));
+int	 vscanf __P((const char *, _VA_LIST_))
+		__attribute__((format (scanf, 1, 0)));
+int	 vsscanf __P((const char *, const char *, _VA_LIST_))
+		__attribute__((format (scanf, 2, 0)));
 __END_DECLS
 
 /*
