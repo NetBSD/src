@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2004/12/16 12:14:51 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2005/01/01 04:54:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2004/12/16 12:14:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2005/01/01 04:54:29 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -159,23 +159,21 @@ extern int end, *esym;
 extern u_int lowram;
 
 /* prototypes for local functions */
-void identifycpu(void);
-void initcpu(void);
-void parityenable(void);
-void parityerror(void);
-void init_intreg(void);
-int readidrom(u_char *);
-
-int cpu_dumpsize(void);
-int cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
-void cpu_init_kcore_hdr(void);
+static void identifycpu(void);
+static void initcpu(void);
+static int cpu_dumpsize(void);
+static int cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
+static void cpu_init_kcore_hdr(void);
 
 #ifdef news1700
-void news1700_init(void);
+static void news1700_init(void);
+static void parityenable(void);
+static void parityerror(void);
 #endif
 #ifdef news1200
-void news1200_init(void);
+static void news1200_init(void);
 #endif
+
 /* functions called from locore.s */
 void dumpsys(void);
 void news68k_init(void);
@@ -361,7 +359,7 @@ char cpu_model[124];
 
 int news_machine_id;
 
-void
+static void
 identifycpu(void)
 {
 
@@ -462,7 +460,7 @@ cpu_reboot(int howto, char *bootstr)
 /*
  * Initialize the kernel crash dump header.
  */
-void
+static void
 cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
@@ -523,7 +521,7 @@ cpu_init_kcore_hdr(void)
  * Compute the size of the machine-dependent crash dump header.
  * Returns size in disk blocks.
  */
-int
+static int
 cpu_dumpsize(void)
 {
 	int size;
@@ -535,7 +533,7 @@ cpu_dumpsize(void)
 /*
  * Called by dumpsys() to dump the machine-dependent header.
  */
-int
+static int
 cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
 	int buf[dbtob(1) / sizeof(int)];
@@ -699,7 +697,7 @@ dumpsys(void)
 	printf("succeeded\n");
 }
 
-void
+static void
 initcpu(void)
 {
 
@@ -885,7 +883,7 @@ static const struct news68k_model news68k_models[] = {
 	{ 0,		NULL		}
 };
 
-void
+static void
 news1700_init(void)
 {
 	struct oidrom idrom;
@@ -934,7 +932,7 @@ news1700_init(void)
  * parity error handling (vectored NMI?)
  */
 
-void
+static void
 parityenable(void)
 {
 
@@ -956,7 +954,7 @@ parityenable(void)
 
 static int innmihand;	/* simple mutex */
 
-void
+static void
 parityerror(void)
 {
 
@@ -976,7 +974,7 @@ parityerror(void)
 #endif /* news1700 */
 
 #ifdef news1200
-void
+static void
 news1200_init(void)
 {
 	struct idrom idrom;
