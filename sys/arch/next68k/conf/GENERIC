@@ -109,8 +109,8 @@ options 	NFS_BOOT_DHCP
 
 # wscons options
 options         RCONS_2BPP              # necessary for nextdisplay
-options 	WSEMUL_SUN		# sun terminal emulation
-#options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
