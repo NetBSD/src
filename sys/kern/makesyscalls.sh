@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.35 1999/08/20 19:07:31 thorpej Exp $
+#	$NetBSD: makesyscalls.sh,v 1.35.12.1 2001/05/01 08:53:00 he Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
@@ -41,9 +41,6 @@ case $# in
 	;;
 esac
 
-# source the config file.
-. ./$1
-
 # the config file sets the following variables:
 #	sysnames	the syscall names file
 #	sysnumhdr	the syscall numbers file
@@ -54,8 +51,14 @@ esac
 #	namesname	the name for the 'char *[]' we define
 #	constprefix	the prefix for the system call constants
 #	registertype	the type for register_t
+#	sys_nosys	[optional] name of function called for unsupported
+#			syscalls, if not sys_nosys()
 #
 # NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'LIBCOMPAT'.
+
+# source the config file.
+sys_nosys="sys_nosys"	# default is sys_nosys(), if not specified otherwise
+. ./$1
 
 # tmp files:
 sysdcl="sysent.dcl"
@@ -129,6 +132,7 @@ BEGIN {
 	syscompat_pref = \"$syscompat_pref\"
 	sysent = \"$sysent\"
 	sysnamesbottom = \"$sysnamesbottom\"
+	sys_nosys = \"$sys_nosys\"
 	infile = \"$2\"
 
 	compatopts = \"$compatopts\"
@@ -146,7 +150,7 @@ BEGIN {
 		printf "#define %s(func) __CONCAT(%s_,func)\n", compat[i], \
 		    compat[i] > sysent
 		printf "#else\n" > sysent
-		printf "#define %s(func) sys_nosys\n", compat[i] > sysent
+		printf "#define %s(func) %s\n", compat[i], sys_nosys > sysent
 		printf "#endif\n" > sysent
 	}
 
@@ -367,8 +371,8 @@ function putent(nodefs, compatwrap) {
 
 	# output syscall switch entry
 	if (nodefs == "INDIR") {
-		printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s (indir) */\n", \
-		    syscall, funcalias) > sysent
+		printf("\t{ 0, 0,\n\t    %s },\t\t\t/* %d = %s (indir) */\n", \
+		    sys_nosys, syscall, funcalias) > sysent
 	} else {
 #		printf("\t{ { %d", argc) > sysent
 #		for (i = 1; i <= argc; i++) {
@@ -466,8 +470,8 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" {
 	for (i = 3; i <= NF; i++)
 		comment=comment " " $i
 
-	printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s */\n", \
-	    syscall, comment) > sysent
+	printf("\t{ 0, 0,\n\t    %s },\t\t\t/* %d = %s */\n", \
+	   sys_nosys, syscall, comment) > sysent
 	printf("\t\"#%d (%s)\",\t\t/* %d = %s */\n", \
 	    syscall, comment, syscall, comment) > sysnamesbottom
 	if ($2 != "UNIMPL")
