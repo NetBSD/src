@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.38 2000/10/02 03:57:53 sato Exp $
+#	$NetBSD: files.hpcmips,v 1.39 2000/10/03 03:13:04 sato Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -122,13 +122,17 @@ device vrip { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [intr=-1], [pwctl=-1
 attach vrip at mainbus
 file arch/hpcmips/vr/vrip.c		vrip needs-flag
 
+device vrbcu
+attach vrbcu at vrip
+file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
+
 device vrrtc
 attach vrrtc at vrip
-file arch/hpcmips/vr/rtc.c			vrrtc
+file arch/hpcmips/vr/rtc.c			vrrtc needs-flag
 
 device vrcmu
 attach vrcmu at vrip
-file arch/hpcmips/vr/cmu.c			vrcmu
+file arch/hpcmips/vr/cmu.c			vrcmu needs-flag
 
 device	vrisabif {[platform = -1], [isaportoffset=0], [isamemoffset=0]}		# GIU attachment
 device  gpbusif {[platform = -1], [comctrl = -1], [button0 = -1], [button1 = -1], [button2 = -1], [button3 = -1], [button4 = -1], [button5 = -1], [button6 = -1], [button7 = -1], [button8 = -1], [button9 = -1], [button10 = -1], [button11 = -1]} 
@@ -154,10 +158,6 @@ device button
 attach button at newgpbusif with button_vrgiu
 file arch/hpcmips/vr/button_vrgiu.c		button_vrgiu
 
-device vrbcu
-attach vrbcu at vrip
-file arch/hpcmips/vr/bcu_vrip.c			vrbcu needs-flag
-
 device vrkiu: hpckbdif
 attach vrkiu at vrip
 file arch/hpcmips/vr/vrkiu.c			vrkiu needs-flag
@@ -169,6 +169,10 @@ file arch/hpcmips/vr/vrpmu.c			vrpmu needs-flag
 device vrdsu
 attach vrdsu at vrip
 file arch/hpcmips/vr/vrdsu.c			vrdsu needs-flag
+
+device vrled
+attach vrled at vrip
+file arch/hpcmips/vr/vrled.c			vrled needs-flag
 
 define	tpcalib
 file arch/hpcmips/dev/tpcalib.c			tpcalib
