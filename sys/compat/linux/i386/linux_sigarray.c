@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.5 1995/06/24 20:20:30 christos Exp $	*/
+/*	$NetBSD: linux_sigarray.c,v 1.6 1995/08/13 22:55:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -52,166 +52,102 @@
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_signal.h>
 
-/*
- * Most of ths stuff in this file is taken from Christos' SVR4 emul
- * code. The things that need to be done are largely the same, so
- * re-inventing the wheel doesn't make much sense.
- */
+#define	sigemptyset(s)		bzero((s), sizeof(*(s)))
+#define	sigismember(s, n)	(*(s) & sigmask(n))
+#define	sigaddset(s, n)		(*(s) |= sigmask(n))
+ 
+#define	linux_sigmask(n)	(1 << ((n) - 1))
+#define	linux_sigemptyset(s)	bzero((s), sizeof(*(s)))
+#define	linux_sigismember(s, n)	(*(s) & linux_sigmask(n))
+#define	linux_sigaddset(s, n)	(*(s) |= linux_sigmask(n))
 
-/*
- * Some boring signal conversion functions. Just a switch() for all signals;
- * return the converted signal number, 0 if not supported.
- */
+int bsd_to_linux_sig[] = {
+	0,
+	LINUX_SIGHUP,
+	LINUX_SIGINT,
+	LINUX_SIGQUIT,
+	LINUX_SIGILL,
+	LINUX_SIGTRAP,
+	LINUX_SIGABRT,
+	0,
+	LINUX_SIGFPE,
+	LINUX_SIGKILL,
+	LINUX_SIGBUS,
+	LINUX_SIGSEGV,
+	0,
+	LINUX_SIGPIPE,
+	LINUX_SIGALRM,
+	LINUX_SIGTERM,
+	LINUX_SIGURG,
+	LINUX_SIGSTOP,
+	LINUX_SIGTSTP,
+	LINUX_SIGCONT,
+	LINUX_SIGCHLD,
+	LINUX_SIGTTIN,
+	LINUX_SIGTTOU,
+	LINUX_SIGIO,
+	LINUX_SIGXCPU,
+	LINUX_SIGXFSZ,
+	LINUX_SIGVTALRM,
+	LINUX_SIGPROF,
+	LINUX_SIGWINCH,
+	0,
+	LINUX_SIGUSR1,
+	LINUX_SIGUSR2,
+};
 
-int
-bsd_to_linux_sig(sig)
-	int sig;
-{
-	switch(sig) {
-	case SIGHUP:
-		return LINUX_SIGHUP;
-	case SIGINT:
-		return LINUX_SIGINT;
-	case SIGQUIT:
-		return LINUX_SIGQUIT;
-	case SIGILL:
-		return LINUX_SIGILL;
-	case SIGTRAP:
-		return LINUX_SIGTRAP;
-	case SIGABRT:
-		return LINUX_SIGABRT;
-	case SIGFPE:
-		return LINUX_SIGFPE;
-	case SIGKILL:
-		return LINUX_SIGKILL;
-	case SIGBUS:
-		return LINUX_SIGBUS;
-	case SIGSEGV:
-		return LINUX_SIGSEGV;
-	case SIGPIPE:
-		return LINUX_SIGPIPE;
-	case SIGALRM:
-		return LINUX_SIGALRM;
-	case SIGTERM:
-		return LINUX_SIGTERM;
-	case SIGURG:
-		return LINUX_SIGURG;
-	case SIGSTOP:
-		return LINUX_SIGSTOP;
-	case SIGTSTP:
-		return LINUX_SIGTSTP;
-	case SIGCONT:
-		return LINUX_SIGCONT;
-	case SIGCHLD:
-		return LINUX_SIGCHLD;
-	case SIGTTIN:
-		return LINUX_SIGTTIN;
-	case SIGTTOU:
-		return LINUX_SIGTTOU;
-	case SIGIO:
-		return LINUX_SIGIO;
-	case SIGXCPU:
-		return LINUX_SIGXCPU;
-	case SIGXFSZ:
-		return LINUX_SIGXFSZ;
-	case SIGVTALRM:
-		return LINUX_SIGVTALRM;
-	case SIGPROF:
-		return LINUX_SIGPROF;
-	case SIGWINCH:
-		return LINUX_SIGWINCH;
-	case SIGUSR1:
-		return LINUX_SIGUSR1;
-	case SIGUSR2:
-		return LINUX_SIGUSR2;
-	/* Not supported: EMT, SYS, INFO */
-	}
-	return 0;
-}
-
-int
-linux_to_bsd_sig(sig)
-	int sig;
-{
-	switch(sig) {
-	case LINUX_SIGHUP:
-		return SIGHUP;
-	case LINUX_SIGINT:
-		return SIGINT;
-	case LINUX_SIGQUIT:
-		return SIGQUIT;
-	case LINUX_SIGILL:
-		return SIGILL;
-	case LINUX_SIGTRAP:
-		return SIGTRAP;
-	case LINUX_SIGABRT:
-		return SIGABRT;
-	case LINUX_SIGBUS:
-		return SIGBUS;
-	case LINUX_SIGFPE:
-		return SIGFPE;
-	case LINUX_SIGKILL:
-		return SIGKILL;
-	case LINUX_SIGUSR1:
-		return SIGUSR1;
-	case LINUX_SIGSEGV:
-		return SIGSEGV;
-	case LINUX_SIGUSR2:
-		return SIGUSR2;
-	case LINUX_SIGPIPE:
-		return SIGPIPE;
-	case LINUX_SIGALRM:
-		return SIGALRM;
-	case LINUX_SIGTERM:
-		return SIGTERM;
-	case LINUX_SIGCHLD:
-		return SIGCHLD;
-	case LINUX_SIGCONT:
-		return SIGCONT;
-	case LINUX_SIGSTOP:
-		return SIGSTOP;
-	case LINUX_SIGTSTP:
-		return SIGTSTP;
-	case LINUX_SIGTTIN:
-		return SIGTTIN;
-	case LINUX_SIGTTOU:
-		return SIGTTOU;
-	case LINUX_SIGURG:
-		return SIGURG;
-	case LINUX_SIGXCPU:
-		return SIGXCPU;
-	case LINUX_SIGXFSZ:
-		return SIGXFSZ;
-	case LINUX_SIGVTALRM:
-		return SIGVTALRM;
-	case LINUX_SIGPROF:
-		return SIGPROF;
-	case LINUX_SIGWINCH:
-		return SIGWINCH;
-	case LINUX_SIGIO:
-		return SIGIO;
-	/* Not supported: STKFLT, PWR */
-	}
-	return 0;
-}
+int linux_to_bsd_sig[] = {
+	0,
+	SIGHUP,
+	SIGINT,
+	SIGQUIT,
+	SIGILL,
+	SIGTRAP,
+	SIGABRT,
+	SIGBUS,
+	SIGFPE,
+	SIGKILL,
+	SIGUSR1,
+	SIGSEGV,
+	SIGUSR2,
+	SIGPIPE,
+	SIGALRM,
+	SIGTERM,
+	0,
+	SIGCHLD,
+	SIGCONT,
+	SIGSTOP,
+	SIGTSTP,
+	SIGTTIN,
+	SIGTTOU,
+	SIGURG,
+	SIGXCPU,
+	SIGXFSZ,
+	SIGVTALRM,
+	SIGPROF,
+	SIGWINCH,
+	SIGIO,
+	0,
+	0,
+};
 
 /*
  * Ok, we know that Linux and BSD signals both are just an unsigned int.
  * Don't bother to use the sigismember() stuff for now.
  */
-static void
+void
 linux_to_bsd_sigset(lss, bss)
 	const linux_sigset_t *lss;
 	sigset_t *bss;
 {
 	int i, newsig;
 
-	*bss = (sigset_t) 0;
-	for (i = 1; i <= LINUX_NSIG; i++) {
-		if (*lss & sigmask(i)) {
-			newsig = linux_to_bsd_sig(i);
+	sigemptyset(bss);
+	for (i = 1; i < LINUX_NSIG; i++) {
+		if (linux_sigismember(lss, i)) {
+			newsig = linux_to_bsd_sig[i];
 			if (newsig)
-				*bss |= sigmask(newsig);
+				sigaddset(bss, newsig);
 		}
 	}
 }
@@ -223,36 +159,39 @@ bsd_to_linux_sigset(bss, lss)
 {
 	int i, newsig;
 	
-	*lss = (linux_sigset_t) 0;
-	for (i = 1; i <= NSIG; i++) {
-		if (*bss & sigmask(i)) {
-			newsig = bsd_to_linux_sig(i);
+	linux_sigemptyset(lss);
+	for (i = 1; i < NSIG; i++) {
+		if (sigismember(bss, i)) {
+			newsig = bsd_to_linux_sig[i];
 			if (newsig)
-				*lss |= sigmask(newsig);
+				linux_sigaddset(lss, newsig);
 		}
 	}
 }
 
 /*
  * Convert between Linux and BSD sigaction structures. Linux has
- * one extra field (sa_restorer) which we don't support. The Linux
- * SA_ONESHOT and SA_NOMASK flags (which together form the old
- * SysV signal behavior) are silently ignored. XXX
+ * one extra field (sa_restorer) which we don't support.
  */
 void
 linux_to_bsd_sigaction(lsa, bsa)
 	struct linux_sigaction *lsa;
 	struct sigaction *bsa;
 {
+
 	bsa->sa_handler = lsa->sa_handler;
 	linux_to_bsd_sigset(&bsa->sa_mask, &lsa->sa_mask);
 	bsa->sa_flags = 0;
-	bsa->sa_flags |= cvtto_bsd_mask(lsa->sa_flags, LINUX_SA_NOCLDSTOP,
-	    SA_NOCLDSTOP);
-	bsa->sa_flags |= cvtto_bsd_mask(lsa->sa_flags, LINUX_SA_ONSTACK,
-	    SA_ONSTACK);
-	bsa->sa_flags |= cvtto_bsd_mask(lsa->sa_flags, LINUX_SA_RESTART,
-	    SA_RESTART);
+	if ((lsa->sa_flags & LINUX_SA_ONSTACK) != 0)
+		bsa->sa_flags |= SA_ONSTACK;
+	if ((lsa->sa_flags & LINUX_SA_RESTART) != 0)
+		bsa->sa_flags |= SA_RESTART;
+	if ((lsa->sa_flags & LINUX_SA_ONESHOT) != 0)
+		bsa->sa_flags |= SA_RESETHAND;
+	if ((lsa->sa_flags & LINUX_SA_NOCLDSTOP) != 0)
+		bsa->sa_flags |= SA_NOCLDSTOP;
+	if ((lsa->sa_flags & LINUX_SA_NOMASK) != 0)
+		bsa->sa_flags |= SA_NODEFER;
 }
 
 void
@@ -260,15 +199,20 @@ bsd_to_linux_sigaction(bsa, lsa)
 	struct sigaction *bsa;
 	struct linux_sigaction *lsa;
 {
+
 	lsa->sa_handler = bsa->sa_handler;
 	bsd_to_linux_sigset(&lsa->sa_mask, &bsa->sa_mask);
 	lsa->sa_flags = 0;
-	lsa->sa_flags |= cvtto_linux_mask(bsa->sa_flags, SA_NOCLDSTOP,
-	    LINUX_SA_NOCLDSTOP);
-	lsa->sa_flags |= cvtto_linux_mask(bsa->sa_flags, SA_ONSTACK,
-	    LINUX_SA_ONSTACK);
-	lsa->sa_flags |= cvtto_linux_mask(bsa->sa_flags, SA_RESTART,
-	    LINUX_SA_RESTART);
+	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
+		lsa->sa_flags |= LINUX_SA_NOCLDSTOP;
+	if ((bsa->sa_flags & SA_ONSTACK) != 0)
+		lsa->sa_flags |= LINUX_SA_ONSTACK;
+	if ((bsa->sa_flags & SA_RESTART) != 0)
+		lsa->sa_flags |= LINUX_SA_RESTART;
+	if ((bsa->sa_flags & SA_NODEFER) != 0)
+		lsa->sa_flags |= LINUX_SA_NOMASK;
+	if ((bsa->sa_flags & SA_RESETHAND) != 0)
+		lsa->sa_flags |= LINUX_SA_ONESHOT;
 	lsa->sa_restorer = NULL;
 }
 
@@ -288,42 +232,46 @@ linux_sigaction(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	struct sigaction *nbsda = NULL, *obsda = NULL, tmpbsda;
 	struct linux_sigaction *nlsa, *olsa, tmplsa;
+	struct sigaction *nbsa, *obsa, tmpbsa;
 	struct sigaction_args sa;
 	caddr_t sg;
 	int error;
 
 	sg = stackgap_init(p->p_emul);
-	olsa = SCARG(uap, osa);
 	nlsa = SCARG(uap, nsa);
+	olsa = SCARG(uap, osa);
 
 	if (olsa != NULL)
-		obsda = stackgap_alloc(&sg, sizeof (struct sigaction));
+		obsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+	else
+		obsa = NULL;
 
 	if (nlsa != NULL) {
-		nbsda = stackgap_alloc(&sg, sizeof (struct sigaction));
-		if ((error = copyin(nlsa, &tmplsa, sizeof tmplsa)))
+		nbsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+		if ((error = copyin(nlsa, &tmplsa, sizeof(tmplsa))) != 0)
 			return error;
-		linux_to_bsd_sigaction(&tmplsa, &tmpbsda);
-		if ((error = copyout(&tmpbsda, nbsda, sizeof tmpbsda)))
+		linux_to_bsd_sigaction(&tmplsa, &tmpbsa);
+		if ((error = copyout(&tmpbsa, nbsa, sizeof(tmpbsa))) != 0)
 			return error;
-	}
+	} else
+		nbsa = NULL;
 
-	SCARG(&sa, signum) = linux_to_bsd_sig(SCARG(uap, signum));
-	SCARG(&sa, nsa) = nbsda;
-	SCARG(&sa, osa) = obsda;
+	SCARG(&sa, signum) = linux_to_bsd_sig[SCARG(uap, signum)];
+	SCARG(&sa, nsa) = nbsa;
+	SCARG(&sa, osa) = obsa;
 
-	if ((error = sigaction(p, &sa, retval)))
+	if ((error = sigaction(p, &sa, retval)) != 0)
 		return error;
 
 	if (olsa != NULL) {
-		if ((error = copyin(obsda, &tmpbsda, sizeof tmpbsda)))
+		if ((error = copyin(obsa, &tmpbsa, sizeof(tmpbsa))) != 0)
 			return error;
-		bsd_to_linux_sigaction(&tmpbsda, &tmplsa);
-		if ((error = copyout(&tmplsa, olsa, sizeof tmplsa)))
+		bsd_to_linux_sigaction(&tmpbsa, &tmplsa);
+		if ((error = copyout(&tmplsa, olsa, sizeof(tmplsa))) != 0)
 			return error;
 	}
+
 	return 0;
 }
 
@@ -353,11 +301,11 @@ linux_signal(p, uap, retval)
 
 	tmpsa.sa_handler = SCARG(uap, handler);
 	tmpsa.sa_mask = (sigset_t) 0;
-	tmpsa.sa_flags = 0;
+	tmpsa.sa_flags = SA_RESETHAND | SA_NODEFER;
 	if ((error = copyout(&tmpsa, nsa, sizeof tmpsa)))
 		return error;
 
-	SCARG(&sa_args, signum) = linux_to_bsd_sig(SCARG(uap, sig));
+	SCARG(&sa_args, signum) = linux_to_bsd_sig[SCARG(uap, sig)];
 	SCARG(&sa_args, osa) = osa;
 	SCARG(&sa_args, nsa) = nsa;
 	if ((error = sigaction(p, &sa_args, retval)))
@@ -376,10 +324,10 @@ linux_signal(p, uap, retval)
 int
 linux_sigprocmask(p, uap, retval)
 	register struct proc *p;
-	register struct linux_sigprocmask_args /* {
+	struct linux_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(linux_sigset_t *) set;
-		syscallarg(linux_sigset_t * oset;
+		syscallarg(linux_sigset_t *) oset;
 	} */ *uap;
 	register_t *retval;
 {
@@ -439,11 +387,12 @@ linux_sigprocmask(p, uap, retval)
 /* ARGSUSED */
 int
 linux_siggetmask(p, uap, retval)
-	struct proc *p;
+	register struct proc *p;
 	void *uap;
 	register_t *retval;
 {
-	bsd_to_linux_sigset(&p->p_sigmask, (linux_sigset_t *) retval);
+
+	bsd_to_linux_sigset(&p->p_sigmask, (linux_sigset_t *)retval);
 	return 0;
 }
 
@@ -455,7 +404,7 @@ linux_siggetmask(p, uap, retval)
  */
 int
 linux_sigsetmask(p, uap, retval)
-	struct proc *p;
+	register struct proc *p;
 	struct linux_sigsetmask_args /* {
 		syscallarg(linux_sigset_t) mask;
 	} */ *uap;
@@ -464,7 +413,7 @@ linux_sigsetmask(p, uap, retval)
 	linux_sigset_t mask;
 	sigset_t bsdsig;
 
-	bsd_to_linux_sigset(&p->p_sigmask, (linux_sigset_t *) retval);
+	bsd_to_linux_sigset(&p->p_sigmask, (linux_sigset_t *)retval);
 
 	mask = SCARG(uap, mask);
 	bsd_to_linux_sigset(&mask, &bsdsig);
@@ -478,24 +427,24 @@ linux_sigsetmask(p, uap, retval)
 
 int
 linux_sigpending(p, uap, retval)
-	struct proc *p;
+	register struct proc *p;
 	struct linux_sigpending_args /* {
 		syscallarg(linux_sigset_t *) mask;
 	} */ *uap;
 	register_t *retval;
 {
-	sigset_t bsdsig;
-	linux_sigset_t linuxsig;
+	sigset_t bs;
+	linux_sigset_t ls;
 
-	bsdsig = p->p_siglist & p->p_sigmask;
+	bs = p->p_siglist & p->p_sigmask;
+	bsd_to_linux_sigset(&bs, &ls);
 
-	bsd_to_linux_sigset(&bsdsig, &linuxsig);
-	return copyout(&linuxsig, SCARG(uap, mask), sizeof linuxsig);
+	return copyout(&ls, SCARG(uap, mask), sizeof(ls));
 }
 
 int
 linux_sigsuspend(p, uap, retval)
-	struct proc *p;
+	register struct proc *p;
 	struct linux_sigsuspend_args /* {
 		syscallarg(caddr_t) restart;
 		syscallarg(int) oldmask;
@@ -503,10 +452,10 @@ linux_sigsuspend(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	struct sigsuspend_args ssa;
+	struct sigsuspend_args sa;
 
-	linux_to_bsd_sigset(&SCARG(uap, mask), &SCARG(&ssa, mask));
-	return sigsuspend(p, &ssa, retval);
+	linux_to_bsd_sigset(&SCARG(uap, mask), &SCARG(&sa, mask));
+	return sigsuspend(p, &sa, retval);
 }
 
 /*
@@ -515,7 +464,7 @@ linux_sigsuspend(p, uap, retval)
  */
 int
 linux_pause(p, uap, retval)
-	struct proc *p;
+	register struct proc *p;
 	void *uap;	
 	register_t *retval;
 {	
@@ -530,13 +479,16 @@ linux_pause(p, uap, retval)
  */
 int
 linux_kill(p, uap, retval)
-	struct proc *p;
+	register struct proc *p;
 	struct linux_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
 	} */ *uap;
 	register_t *retval;
 {
-	SCARG(uap, signum) = linux_to_bsd_sig(SCARG(uap, signum));
-	return kill(p, (struct kill_args *) uap, retval);
+	struct kill_args ka;
+
+	SCARG(&ka, pid) = SCARG(uap, pid);
+	SCARG(&ka, signum) = linux_to_bsd_sig[SCARG(uap, signum)];
+	return kill(p, &ka, retval);
 }
