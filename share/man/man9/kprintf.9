@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.15 2002/12/31 23:53:09 thorpej Exp $
+.\"     $NetBSD: kprintf.9,v 1.16 2003/01/02 10:17:27 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,15 +132,18 @@ variable:
 .It Fn aprint_normal
 Sends to the console unless
 .Dv AB_QUIET
-is set.  Always sends to the log.
+is set.
+Always sends to the log.
 .It Fn aprint_naive
 Sends to the console only if
 .Dv AB_QUIET
-is set.  Never sends to the log.
+is set.
+Never sends to the log.
 .It Fn aprint_verbose
 Sends to the console only if
 .Dv AB_VERBOSE
-is set.  Always sends to the log.
+is set.
+Always sends to the log.
 .It Fn aprint_debug
 Sends to the console and the log only if
 .Dv AB_DEBUG
