@@ -27,14 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc.c,v 1.3 1994/02/13 21:13:11 chopps Exp $
+ *	$Id: cc.c,v 1.4 1994/03/25 16:30:03 chopps Exp $
  */
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 
 #include <amiga/amiga/custom.h>
-#include <amiga/amiga/dlists.h>
 #include <amiga/amiga/cc.h>
 
 #if defined (__GNUC__)
@@ -57,50 +57,7 @@ custom_chips_init ()
 /*
  * Vertical blank iterrupt sever chains.
  */
-
-static dll_list_t vbl_list;
-
-/* - vbl_sync */
-/* if this is set to 1 when the vbl handler is called, it resets it to zero when done. */
-static int vbl_sync_flag;
-
-/* - vbl enabled */
-/* if this is set to 1 then the vbl handler will perform, otherwise will only reset the */
-/* vbl_sync flag. */
-static int vbl_disabled;
-
-struct vbl_node *add_node;			  /* function to add to the list. */
-
-/* this function will return as soon as the vertical blank has finished. */
-void INLINE
-vbl_sync ()
-{
-	vbl_sync_flag = 1;
-	while (vbl_sync_flag)
-		;
-}
-
-void INLINE
-vbl_disable ()
-{
-	vbl_disabled++;
-}
-
-void INLINE
-vbl_enable ()
-{
-	if (vbl_disabled) 
-		vbl_disabled--;
-}
-
-void
-wait_for_vbl_function_removal (n)
-	struct vbl_node *n;
-{
-	if (n->node.next)
-		while (n->flags & VBLNF_REMOVE) 
-			;
-}
+LIST_HEAD(vbllist, vbl_node) vbl_list;
 
 void 
 turn_vbl_function_off (n)
@@ -121,122 +78,74 @@ turn_vbl_function_on (n)
 	n->flags &= (short) ~(VBLNF_OFF);
 }
 
-/* walk list search for correct spot to place node. */
-/* WARNING: do not call this function from interrupts that have a */
-/* higher priority than VBL (HL3) */
 void                    
 add_vbl_function (add, priority, data)
 	struct vbl_node *add;
 	short priority;
 	void *data;
 {
-	/* we are executing in top half of kernel and so we are syncronous. */
-	u_short ie = custom.intenar;
-	struct vbl_node *n;
-
-	add->data = data;
-	if (ie & INTF_INTEN) {
-		/* master interrupts enabled. */
-		vbl_disable ();		/* disable the handler. */
-		if (ie & INTF_VERTB) {
-			/* vertical blank interrupts enabled */
-			vbl_enable ();	/* enable the handler. */
-			add_node = add;	/* set add node it will be added on next vbl. */
-
-			while (add_node) /* wait for vbl it will clear add node after */
-				;	 /* doing this. then exit. */
-			
-			return;
-		}
-	}
-	/* NOTE: if master interrupts are enabled but VBL are not, our handler */
-	/*       will be disabled so that no chance of a interupted list manipulation */
-	/*       is possible. this could happen IF poor interrupt coding practices have */
-	/*       been implemented and a interrupt occurs that upstages us and */
-	/*       re-enables VBL interrupts. (ICK) I don't think this is the case but */
-	/*       I might as well guard against it. (its only 3 inline C instructions.)*/
+	int s;
+	struct vbl_node *n, *prev;
 	
-	for (n = (struct vbl_node *)vbl_list.head;
-	     n->node.next;
-	     n = (struct vbl_node *)n->node.next) {
+	s = spl3();
+	prev = NULL;
+	for (n = vbl_list.lh_first; n != NULL; n = n->link.le_next) {
 		if (add->priority > n->priority) {
 			/* insert add_node before. */
-			dinsert (&n->node, &add->node);	
+			if (prev == NULL) {
+				LIST_INSERT_HEAD(&vbl_list, add, link);
+			} else {
+				LIST_INSERT_AFTER(prev, add, link);
+			}
 			add = NULL;
 			break;
 		}
+		prev = n;
 	}
-	if (add) 
-		dadd_tail (&vbl_list, &add->node); /* add node to tail. */
-	if (ie & INTF_VERTB) 
-		vbl_enable ();		/* enable handler if nec. */
+	if (add) {
+		if (prev == NULL) {
+			LIST_INSERT_HEAD(&vbl_list, add, link);
+		} else {
+			LIST_INSERT_AFTER(prev, add, link);
+		}
+	}
+	splx(s);
 }
 
 void
 remove_vbl_function (n)
 	struct vbl_node *n;
 {
-	n->flags |= VBLNF_REMOVE;
+	int s;
+
+	s = spl3();
+	LIST_REMOVE(n, link);
+	splx(s);
 }
 
-
-/* This is executing in bottom half of kernel. */
-void
-vbl_call_function (n)
-	struct vbl_node *n;
-{
-	if (n && !(n->flags & VBLNF_OFF)) 
-		n->function (n->data);
-}
-
-/* This is executing in bottom half of kernel. */
 /* Level 3 hardware interrupt */
 void
 vbl_handler ()
 {
-	struct vbl_node *n, *tmp;
+	struct vbl_node *n;
 
-	vbl_sync_flag = 0;		/* always written to. */
-
-	/* if not enabled skip everything. */
-	if (vbl_disabled) 
-		goto ret_int;		/* NOTE: end of function. */
-    
 	/* handle all vbl functions */
-	for (n = (struct vbl_node *)vbl_list.head; n->node.next; n = tmp) {
-		if (add_node && add_node->priority > n->priority) {
-			/* insert, process and signal done. */
-			dinsert (&n->node, &add_node->node);
-			n = add_node;
-			add_node = NULL; 
-		}
-		tmp = (struct vbl_node *)n->node.next;
-		if (n->flags & VBLNF_REMOVE) {
-			dremove (&n->node);
-			n->flags &= ~(VBLNF_REMOVE);
-			n->node.next = NULL;
-		} else if (n->flags & VBLNF_TURNOFF) {
+	for (n = vbl_list.lh_first; n != NULL; n = n->link.le_next) {
+		if (n->flags & VBLNF_TURNOFF) {
 			n->flags |= VBLNF_OFF;
 			n->flags &= ~(VBLNF_TURNOFF);
 		} else {
-			/* execute the interrupt. */
-			vbl_call_function (n); 
+			if (n != NULL)
+				n->function(n->data);
 		}
 	}
-	if (add_node) {
-		/* add node to tail. */ 
-		dadd_tail (&vbl_list, &add_node->node);
-		vbl_call_function (add_node);
-		add_node = NULL;
-	}
-	ret_int:
 	custom.intreq = INTF_VERTB;
 }
 
 void
 cc_init_vbl ()
 {
-	dinit_list (&vbl_list);
+	LIST_INIT(&vbl_list);
 	/* init vertical blank interrupts */
 	custom.intena = INTF_SETCLR | INTF_VERTB; 
 }
@@ -349,7 +258,7 @@ wait_tof ()
 	
 	if (!custom.vposr & 0x8000) 
 		while (!(custom.vposr & 0x8000)) /* we are on short frame. */	
-			;			/* wait for long frame bit set. */
+			;	/* wait for long frame bit set. */
 }
 
 cop_t *
@@ -372,8 +281,8 @@ void
 install_copper_list (l)
 	cop_t *l;
 {
-	wait_tof ();
-	wait_tof ();
+	wait_tof();
+	wait_tof();
 	custom.cop1lc = l;
 }
 
@@ -497,174 +406,155 @@ play_sample (len, data, period, volume, channels, count)
  * Chipmem allocator.
  */
 
-mem_list_t chip;
+static CIRCLEQ_HEAD(chiplist, mem_node) chip_list;
+static CIRCLEQ_HEAD(freelist, mem_node) free_list;
+static u_long   chip_total;		/* total free. */
+static u_long   chip_size;		/* size of it all. */
 
 void
 cc_init_chipmem ()
 {
 	int s = splhigh ();
-	mem_node_t *mem;
+	struct mem_node *mem;
 	extern u_char *chipmem_end, *chipmem_start;
 
-	chip.size = chipmem_end - (chipmem_start+NBPG);
-	chip.memory = (u_char *)chipmem_steal (chip.size);
+	chip_size = chipmem_end - (chipmem_start+NBPG);
 
-	chip.free_nodes = 1;
-	chip.alloc_nodes = 0;
-	chip.total = chip.size - sizeof (mem_node_t);
+	chip_total = chip_size - sizeof(*mem);
     
-	mem = (mem_node_t *)chip.memory;
-	mem->size = chip.total;
+	mem = (struct mem_node *)chipmem_steal(chip_size);
+	mem->size = chip_total;
 
-	dinit_list (&chip.node_list);
-	dinit_list (&chip.free_list);
+	CIRCLEQ_INIT(&chip_list);
+	CIRCLEQ_INIT(&free_list);
     
-	dadd_head (&chip.node_list, &mem->node);
-	dadd_head (&chip.free_list, &mem->free);
+	CIRCLEQ_INSERT_HEAD(&chip_list, mem, link);
+	CIRCLEQ_INSERT_HEAD(&free_list, mem, free_link);
 	splx (s);
 }
 
-static void *
-allocate (m, size)
-	mem_list_t *m;
+void *
+alloc_chipmem (size)
 	u_long size;
 {
-	int s = splhigh();		/* disable everything. */
-	void *mem = NULL;
-	
-	if (size) {
-		dll_node_t *n;
+	void *mem;
+	int s;
+	struct mem_node *mn, *new;
 
-		if (size & ~(CM_BLOCKMASK)) 
-			size = (size & CM_BLOCKMASK) + CM_BLOCKSIZE;
-	
-		/* walk list of available nodes. */
-		for (n = chip.free_list.head; n->next; n = n->next) {
-			mem_node_t *mn = MNODE_FROM_FREE (n);
-			if (size == mn->size) {
-				dremove (n); /* remove from avail list. */
-				n->next = NULL;
-				n->prev = NULL;
-				m->free_nodes--;
-				m->alloc_nodes++;
-				m->total -= mn->size;
-				mem = (void *)&mn[1];
-				break;
-			} else if (size < mn->size) {
-				if ((mn->size - size) <= sizeof (mem_node_t)) {
-					/* our allocation would not leave room */
-					/* for a new node in between. */
-					
-					size = mn->size; /* increase size. */
-					dremove (n); /* remove from avail list. */
-					n->next = NULL;
-					n->prev = NULL;
-					m->free_nodes--;
-					m->alloc_nodes++;
-					m->total -= mn->size;
-					mem = (void *)&mn[1];
-					break;
-				} else {
-					/* split the node's memory. */
-					
-					mem_node_t *new = mn;
-					new->size -= size + sizeof (mem_node_t);
-					mn = (mem_node_t *)(MNODES_MEM(new) + new->size);
-					mn->size = size; /* this node is now */
-							 /* exactly size big. */
-					n = &mn->free;
+	if (size == 0)
+		return NULL;
 
-					/* add the new node to big list */
-					dappend (&new->node, &mn->node);
-					/* add the new node to free list */
-					dappend (&new->free, &mn->free); 
+	s = splhigh();
 
-					/* remove the old node from free list. */
-					dremove (&mn->free); 
-					n->next = NULL;
-					n->prev = NULL;
-		    
-					m->alloc_nodes++;
-					m->total -= (size + sizeof (mem_node_t));
-					mem = (void *)&mn[1];
-					break;
-				}
-			}
-		}
+	if (size & ~(CM_BLOCKMASK)) 
+		size = (size & CM_BLOCKMASK) + CM_BLOCKSIZE;
+
+	/* walk list of available nodes. */
+	mn = free_list.cqh_first;
+	while (size > mn->size && mn != (void *)&free_list) {
+		mn = mn->free_link.cqe_next;
 	}
+	if (mn == (void *)&free_list)
+		return(NULL);
+
+	if ((mn->size - size) <= sizeof (*mn)) {
+		/*
+		 * our allocation would not leave room 
+		 * for a new node in between.
+		 */
+		CIRCLEQ_REMOVE(&free_list, mn, free_link);
+		mn->free_link.cqe_next = NULL;
+		size = mn->size; /* increase size. (or same) */
+		chip_total -= mn->size;
+		splx (s);
+		return((void *)&mn[1]);
+	}
+
+	/* split the node's memory. */
+	new = mn;
+	new->size -= size + sizeof(struct mem_node);
+	mn = (struct mem_node *)(MNODES_MEM(new) + new->size);
+	mn->size = size;
+
+	/* add split node to node list */
+	CIRCLEQ_INSERT_AFTER(&chip_list, new, mn, link);
+	/* and mark as not on free list */
+	mn->free_link.cqe_next = NULL;
+
+	chip_total -= size + sizeof(struct mem_node);
 	splx (s);
-	return (mem);
+	return((void *)&mn[1]);
 }
 
-static void
-deallocate (m, mem)
-	mem_list_t *m;
+void
+free_chipmem(mem)
 	void *mem;
 {
-	int s = splhigh();		/* disable everything. */
-	mem_node_t *mn = mem;		/* point to the memory. */
-	mem_node_t *next, *prev;		
-	int      added = 0;		/* flag */
-	mn--;				/* now points to the node struct. */
+	int s;
+	struct mem_node *mn, *next, *prev;
+
+	if (mem == NULL)
+		return;
+
+	s = splhigh();
+	mn = (struct mem_node *)mem - 1;
+	next = mn->link.cqe_next;
+	prev = mn->link.cqe_prev;
 
 	/* check ahead of us. */
-	next = (mem_node_t *)mn->node.next;
-	prev = (mem_node_t *)mn->node.prev;
-	if (next->node.next && next->free.next) {
+	if (next->link.cqe_next != (void *)&chip_list && 
+	    next->free_link.cqe_next) {
 		/* if next is: a valid node and a free node. ==> merge */
-		dinsert (&next->free, &mn->free); /* add onto free list */
-		m->free_nodes++;
-	
-		dremove (&next->node);	/* remove next from main list. */
-		dremove (&next->free);	/* remove next from free list. */
-		m->free_nodes--;
-		m->alloc_nodes--;
-		m->total += mn->size + sizeof (mem_node_t);
-		added = 1;
-		mn->size += next->size + sizeof (mem_node_t);
+		CIRCLEQ_INSERT_BEFORE(&free_list, next, mn, free_link);
+		CIRCLEQ_REMOVE(&chip_list, next, link);
+		CIRCLEQ_REMOVE(&chip_list, next, free_link);
+		chip_total += mn->size + sizeof(struct mem_node);
+		mn->size += next->size + sizeof(struct mem_node);
 	}
-	if (prev->node.prev && prev->free.prev) {
+	if (prev->link.cqe_prev != (void *)&chip_list &&
+	    prev->free_link.cqe_prev) {
 		/* if prev is: a valid node and a free node. ==> merge */
-	    
-		if (mn->free.next) {	/* if we are on free list. */
-			dremove (&mn->free); /* remove us from free list. */
-			m->free_nodes--;
+		if (mn->free_link.cqe_next == NULL)
+			chip_total += mn->size + sizeof(struct mem_node);
+		else {
+			/* already on free list */
+			CIRCLEQ_REMOVE(&free_list, mn, free_link);
+			chip_total += sizeof(struct mem_node);
 		}
-		dremove (&mn->node);	/* remove us from main list. */
-		m->alloc_nodes--;
-		prev->size += mn->size + sizeof (mem_node_t);
-		
-		if (added) 
-			m->total += sizeof (mem_node_t);
-		else 
-			m->total += mn->size + sizeof (mem_node_t);
-	} else if (NULL == mn->free.next) {
-		/* we still are not on free list and we need to be. */
-		
-		while (next->node.next && prev->node.prev) {
-			if (next->free.next) {
-				dinsert (&next->free, &mn->free);
-				m->free_nodes++;
+		CIRCLEQ_REMOVE(&chip_list, mn, link);
+		prev->size += mn->size + sizeof(struct mem_node);
+	} else if (mn->free_link.cqe_next == NULL) {
+		/*
+		 * we still are not on free list and we need to be.
+		 * <-- | -->
+		 */
+		while (next->link.cqe_next != (void *)&chip_list && 
+		    prev->link.cqe_prev != (void *)&chip_list) {
+			if (next->free_link.cqe_next) {
+				CIRCLEQ_INSERT_BEFORE(&free_list, next, mn,
+				    free_link);
 				break;
 			}
-			if (prev->free.prev) {
-				dappend (&prev->free, &mn->free);
-				m->free_nodes++;
+			if (prev->free_link.cqe_next) {
+				CIRCLEQ_INSERT_AFTER(&free_list, prev, mn,
+				    free_link);
 				break;
 			}
-			prev = (mem_node_t *)prev->node.prev;
-			next = (mem_node_t *)next->node.next;
+			prev = prev->link.cqe_prev;
+			next = next->link.cqe_next;
 		}
-		if (NULL == mn->free.next) {
-			if (NULL == next->node.next) 
-				/* we are not on list so we can add */
-				/* ourselves to the tail. (we walked to it.) */
-				dadd_tail (&m->free_list, &mn->free);
-			else 	
-				dadd_head (&m->free_list, &mn->free);
-			m->free_nodes++;
+		if (mn->free_link.cqe_next == NULL) {
+			if (next->link.cqe_next == (void *)&chip_list) {
+				/*
+				 * we are not on list so we can add
+				 * ourselves to the tail. (we walked to it.)
+				 */
+				CIRCLEQ_INSERT_TAIL(&free_list,mn,free_link);
+			} else {
+				CIRCLEQ_INSERT_HEAD(&free_list,mn,free_link);
+			}
 		}
-		m->total += mn->size;	/* add our helpings to the pool. */
+		chip_total += mn->size;	/* add our helpings to the pool. */
 	}
 	splx (s);
 }
@@ -674,26 +564,11 @@ sizeof_chipmem (mem)
 	void *mem;
 {
 	if (mem) {
-		mem_node_t *mn = mem;
+		struct mem_node *mn = mem;
 		mn--;
 		return (mn->size);
 	}
 	return (0);
-}
-
-void *
-alloc_chipmem (size)
-	u_long size;
-{
-	return (allocate (&chip, size));
-}
-
-void
-free_chipmem (mem)
-	void *mem;
-{
-	if (mem)  
-		deallocate (&chip, mem);
 }
 
 u_long
@@ -704,16 +579,16 @@ avail_chipmem (largest)
 	
 	if (largest) {
 		int s = splhigh ();
-		dll_node_t *n;
+		struct mem_node *mn;
 
-		for (n = chip.free_list.head; n->next; n = n->next) {
-			mem_node_t *mn = MNODE_FROM_FREE (n);
+		for (mn = free_list.cqh_first; mn != (void *)&free_list;
+		     mn = mn->free_link.cqe_next) {
 			if (mn->size > val) 
 				val = mn->size;
 		}
 		splx (s);
 	} else 
-		val = chip.total;
+		val = chip_total;
 	return (val);
 }	      
 

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.11 1994/03/08 07:52:10 chopps Exp $
+ *	$Id: machdep.c,v 1.12 1994/03/25 16:30:05 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -465,9 +465,9 @@ identifycpu()
 		}
 		/* XXX */
 		if (mmutype == MMU_68030)
-			printf(", %sMhz MC68882 FPU", "25");
+			printf(", %sMHz MC68882 FPU", "25");
 		else
-			printf(", %sMhz MC68881 FPU", "16.67");
+			printf(", %sMHz MC68881 FPU", "16.67");
 	}
 	printf("\n");
 	/*
