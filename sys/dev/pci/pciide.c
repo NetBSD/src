@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.119 2001/06/08 04:48:58 simonb Exp $	*/
+/*	$NetBSD: pciide.c,v 1.120 2001/06/13 09:55:25 scw Exp $	*/
 
 
 /*
@@ -3607,11 +3607,26 @@ opti_chip_map(sc, pa)
 		return;
 	printf("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
-	pciide_mapreg_dma(sc, pa);
+
+	/*
+	 * XXXSCW:
+	 * There seem to be a couple of buggy revisions/implementations
+	 * of the OPTi pciide chipset. This kludge seems to fix one of
+	 * the reported problems (PR/11644) but still fails for the
+	 * other (PR/13151), although the latter may be due to other
+	 * issues too...
+	 */
+	if (PCI_REVISION(pa->pa_class) <= 0x12) {
+		printf(" but disabled due to chip rev. <= 0x12");
+		sc->sc_dma_ok = 0;
+		sc->sc_wdcdev.cap = 0;
+	} else {
+		sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA32;
+		pciide_mapreg_dma(sc, pa);
+	}
 	printf("\n");
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.PIO_cap = 4;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
