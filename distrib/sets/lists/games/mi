@@ -10,6 +10,7 @@
 ./usr/games/canfield
 ./usr/games/cfscores
 ./usr/games/chess
+./usr/games/countmail
 ./usr/games/cribbage
 ./usr/games/dm
 ./usr/games/factor
@@ -50,6 +51,8 @@
 ./usr/games/hide/trek
 ./usr/games/hide/worm
 ./usr/games/hide/wump
+./usr/games/hunt
+./usr/games/huntd
 ./usr/games/larn
 ./usr/games/mille
 ./usr/games/monop
@@ -163,6 +166,7 @@
 ./usr/share/man/cat6/caesar.0
 ./usr/share/man/cat6/canfield.0
 ./usr/share/man/cat6/chess.0
+./usr/share/man/cat6/countmail.0
 ./usr/share/man/cat6/cribbage.0
 ./usr/share/man/cat6/factor.0
 ./usr/share/man/cat6/fish.0
@@ -170,6 +174,8 @@
 ./usr/share/man/cat6/gomoku.0
 ./usr/share/man/cat6/hack.0
 ./usr/share/man/cat6/hangman.0
+./usr/share/man/cat6/hunt.0
+./usr/share/man/cat6/huntd.0
 ./usr/share/man/cat6/larn.0
 ./usr/share/man/cat6/mille.0
 ./usr/share/man/cat6/monop.0
@@ -204,6 +210,7 @@
 ./usr/share/man/man6/caesar.6
 ./usr/share/man/man6/canfield.6
 ./usr/share/man/man6/chess.6
+./usr/share/man/man6/countmail.6
 ./usr/share/man/man6/cribbage.6
 ./usr/share/man/man6/factor.6
 ./usr/share/man/man6/fish.6
@@ -211,6 +218,8 @@
 ./usr/share/man/man6/gomoku.6
 ./usr/share/man/man6/hack.6
 ./usr/share/man/man6/hangman.6
+./usr/share/man/man6/hunt.6
+./usr/share/man/man6/huntd.6
 ./usr/share/man/man6/larn.6
 ./usr/share/man/man6/mille.6
 ./usr/share/man/man6/monop.6
