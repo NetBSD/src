@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.5 1998/06/26 21:10:52 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.6 1998/07/28 22:01:24 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -136,8 +136,10 @@ struct wsemuldisplaydev_attach_args {
 	void	*accesscookie;				/* access cookie */
 };
 
-#define	wsemuldisplaydevcf_console	cf_loc[0]	/* spec'd as console? */
-#define	WSEMULDISPLAYDEVCF_CONSOLE_UNK	-1
+#include "locators.h"
+
+#define	wsemuldisplaydevcf_console	cf_loc[WSEMULDISPLAYDEVCF_CONSOLE]	/* spec'd as console? */
+#define	WSEMULDISPLAYDEVCF_CONSOLE_UNK	(WSEMULDISPLAYDEVCF_CONSOLE_DEFAULT)
 
 struct wscons_syncops {
 	int (*detach) __P((void *, int, void (*)(void *, int), void *));

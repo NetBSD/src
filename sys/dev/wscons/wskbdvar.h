@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.4 1998/06/11 22:15:15 drochner Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.5 1998/07/28 22:01:25 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -59,8 +59,10 @@ struct wskbddev_attach_args {
 	void	*accesscookie;				/* access cookie */
 };
 
-#define	wskbddevcf_console		cf_loc[0]	/* spec'd as console? */
-#define	WSKBDDEVCF_CONSOLE_UNK		-1
+#include "locators.h"
+
+#define	wskbddevcf_console		cf_loc[WSKBDDEVCF_CONSOLE]	/* spec'd as console? */
+#define	WSKBDDEVCF_CONSOLE_UNK		(WSKBDDEVCF_CONSOLE_DEFAULT)
 
 /*
  * Autoconfiguration helper functions.
