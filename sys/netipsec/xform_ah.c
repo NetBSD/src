@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.4 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.5 2003/12/12 21:36:32 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.4 2003/10/06 22:05:15 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.5 2003/12/12 21:36:32 thorpej Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -633,10 +633,10 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	}
 	ahstat.ahs_ibytes += m->m_pkthdr.len - skip - hl;
 	DPRINTF(("ah_input skip %d poff %d\n"
-		 "len: hl %d authsize %d rpl %d expect %d\n",
+		 "len: hl %d authsize %d rpl %d expect %ld\n",
 		 skip, protoff,
 		 hl, authsize, rplen,
-		 authsize + rplen - sizeof(struct ah)));
+		 (long)(authsize + rplen - sizeof(struct ah))));
 
 	/* Get crypto descriptors. */
 	crp = crypto_getreq(1);
