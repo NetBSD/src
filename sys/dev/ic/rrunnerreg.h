@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunnerreg.h,v 1.3 1998/11/20 04:12:58 kml Exp $	*/
+/*	$NetBSD: rrunnerreg.h,v 1.4 2003/11/02 10:31:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -521,8 +521,8 @@ struct rr_gen_info {
  * A few constants:
  */
 
-#define RR_DMA_BOUNDRY	(64 * 1024)	/* can't cross 64K boundries on DMA */
-#define RR_DMA_MAX	65535		/* maximum that can be transfered in
+#define RR_DMA_BOUNDARY	(64 * 1024)	/* can't cross 64K boundaries on DMA */
+#define RR_DMA_MAX	65535		/* maximum that can be transferred in
 					   one DMA operation */
 #define RR_ULP_COUNT	256		/* number of possible ULPs */
 #define RR_INIT_CMD	15		/* initial command index */
