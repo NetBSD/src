@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.94 1999/12/30 20:56:45 is Exp $
+#	$NetBSD: files.amiga,v 1.95 2000/01/23 21:10:26 aymeric Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -36,6 +36,9 @@ file	arch/amiga/amiga/amiga_bus_simple_4.c
 
 define	amibus_ww
 file	arch/amiga/amiga/amiga_bus_simple_2word.c
+
+define amibus_wb
+file	arch/amiga/amiga/amiga_bus_simple_1word.c
 
 # zorro expansion bus.
 device	zbus {}
@@ -405,6 +408,15 @@ file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/amiga/dev/md_root.c		memory_disk_hooks
 file	arch/m68k/m68k/cacheops.c
+
+define	gayle
+file	arch/amiga/amiga/gayle.c		gayle
+
+file	arch/amiga/dev/gayle_pcmcia.c		pccard
+device	pccard: pcmciabus, gayle
+attach	pccard at mainbus
+
+include "dev/pcmcia/files.pcmcia"
 
 major	{md = 15}	# Memory disk (for mini-kernel)
 
