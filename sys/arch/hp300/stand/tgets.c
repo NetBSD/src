@@ -1,11 +1,6 @@
-/*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,47 +30,60 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)volhdr.h	8.1 (Berkeley) 6/10/93
+ * from: @(#)gets.c	8.1 (Berkeley) 6/11/93
  *
- * $Id: volhdr.h,v 1.3 1994/01/26 02:39:04 brezak Exp $
+ * $Id: tgets.c,v 1.1 1994/01/26 02:39:03 brezak Exp $
  */
 
-/*
- * vohldr.h: volume header for "LIF" format volumes
- */
+tgets(buf)
+    char *buf;
+{
+    register int c;
+    int i;
+    register char *lp = buf;
 
-struct	lifvol {
-	short	vol_id;
-	char	vol_label[6];
-	int	vol_addr;
-	short	vol_oct;
-	short	vol_dummy;
-	int	vol_dirsize;
-	short	vol_version;
-	short	vol_zero;
-	int	vol_huh1;
-	int	vol_huh2;
-	int	vol_length;
-};
+    for (i = 240000; i > 0; i--) {
+	c = tgetchar() & 0177;
+	if (c) {
+	    for (;;) {
+		switch (c) {
+		case '\n':
+		case '\r':
+		    *lp = '\0';
+		    return;
+		case '\b':
+		case '\177':
+		    if (lp > buf) {
+			lp--;
+			putchar('\b');
+			putchar(' ');
+			putchar('\b');
+		    }
+		    break;
+		case '#':
+		    if (lp > buf)
+			--lp;
+		    break;
+		case 'r'&037: {
+		    register char *p;
 
-struct	lifdir {
-	char	dir_name[10];
-	short	dir_type;
-	int	dir_addr;
-	int	dir_length;
-	char	dir_toc[6];
-	short	dir_flag;
-	int	dir_exec;
-};
-
-/* load header for boot rom */
-struct load {
-	int address;
-	int count;
-};
-
-#define VOL_ID		-32768
-#define VOL_OCT		4096
-#define	DIR_TYPE	-5822
-#define DIR_FLAG	0x8001	/* dont ask me! */
-#define	SECTSIZE	256
+		    putchar('\n');
+		    for (p = buf; p < lp; ++p)
+			putchar(*p);
+		    break;
+		}
+		case '@':
+		case 'u'&037:
+		case 'w'&037:
+		    lp = buf;
+		    putchar('\n');
+		    break;
+		default:
+		    *lp++ = c;
+		}
+		c = getchar() & 0177;
+	    }
+	}
+    }
+    return(0);
+}

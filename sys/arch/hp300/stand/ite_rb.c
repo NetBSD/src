@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite_rb.c 1.5 89/02/20
  *	from: @(#)ite_rb.c	7.2 (Berkeley) 12/16/90
- *	$Id: ite_rb.c,v 1.3 1993/08/01 19:25:15 mycroft Exp $
+ *	$Id: ite_rb.c,v 1.4 1994/01/26 02:38:44 brezak Exp $
  */
 
 #include "samachdep.h"
@@ -109,7 +109,7 @@ rbox_init(ip)
 	CM2GRN[0x01].value = 0xFF;
 	CM2BLU[0x01].value = 0xFF;
 
- 	REGBASE->blink = 0x00;
+	REGBASE->blink = 0x00;
 	REGBASE->write_enable = 0x01;
 	REGBASE->opwen = 0x00;
 	
@@ -125,7 +125,7 @@ rbox_init(ip)
 
 rbox_putc(ip, c, dy, dx, mode)
 	register struct ite_softc *ip;
-        register int dy, dx;
+	register int dy, dx;
 	int c, mode;
 {
 	rbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -135,7 +135,7 @@ rbox_putc(ip, c, dy, dx, mode)
 
 rbox_cursor(ip, flag)
 	register struct ite_softc *ip;
-        register int flag;
+	register int flag;
 {
 	if (flag == DRAW_CURSOR)
 		draw_cursor(ip)
@@ -158,9 +158,9 @@ rbox_clear(ip, sy, sx, h, w)
 }
 
 rbox_scroll(ip, sy, sx, count, dir)
-        register struct ite_softc *ip;
-        register int sy, count;
-        int dir, sx;
+	register struct ite_softc *ip;
+	register int sy, count;
+	int dir, sx;
 {
 	register int dy = sy - count;
 	register int height = ip->rows - sy;

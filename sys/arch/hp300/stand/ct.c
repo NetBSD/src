@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,17 +30,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ct.c	7.3 (Berkeley) 5/5/91
- *	$Id: ct.c,v 1.2 1993/05/22 07:58:49 cgd Exp $
+ *	from: @(#)ct.c	8.1 (Berkeley) 7/15/93
+ *	     $Id: ct.c,v 1.3 1994/01/26 02:38:23 brezak Exp $
  */
 
 /*
  * CS80 tape driver
  */
 #include <sys/param.h>
-#include "../dev/ctreg.h"
 
-#include "saio.h"
+#include <hp300/dev/ctreg.h>
+
+#include "stand.h"
 #include "samachdep.h"
 
 struct	ct_iocmd ct_ioc;
@@ -49,11 +50,13 @@ struct	ct_stat ct_stat;
 struct	ct_ssmcmd ct_ssmc;
 
 struct	ct_softc {
+	int	sc_ctlr;
+	int	sc_unit;
 	char	sc_retry;
 	char	sc_alive;
 	short	sc_punit;
 	int	sc_blkno;
-} ct_softc[NCT];
+} ct_softc[NHPIB][NCT];
 
 #define	CTRETRY		5
 #define	MTFSF		10
@@ -71,16 +74,16 @@ struct	ctinfo {
 };
 int	nctinfo = sizeof(ctinfo) / sizeof(ctinfo[0]);
 
-ctinit(unit)
-	register int unit;
+ctinit(ctlr, unit)
+	register int ctlr, unit;
 {
-	register struct ct_softc *rs = &ct_softc[unit];
+	register struct ct_softc *rs = &ct_softc[ctlr][unit];
 	u_char stat;
 	register int type;
 
-	if (hpibrecv(unit, C_QSTAT, &stat, 1) != 1 || stat)
+	if (hpibrecv(ctlr, unit, C_QSTAT, &stat, 1) != 1 || stat)
 		return (0);
-	if (ctident(unit) < 0)
+	if (ctident(ctlr, unit) < 0)
 		return (0);
 	ct_ssmc.unit = C_SUNIT(rs->sc_punit);
 	ct_ssmc.cmd = C_SSM;
@@ -88,22 +91,22 @@ ctinit(unit)
 	ct_ssmc.refm = REF_MASK;
 	ct_ssmc.aefm = AEF_MASK;
 	ct_ssmc.iefm = IEF_MASK;
-	hpibsend(unit, C_CMD, &ct_ssmc, sizeof(ct_ssmc));
-	hpibswait(unit);
-	hpibrecv(unit, C_QSTAT, &stat, 1);
+	hpibsend(ctlr, unit, C_CMD, &ct_ssmc, sizeof(ct_ssmc));
+	hpibswait(ctlr, unit);
+	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	rs->sc_alive = 1;
 	return (1);
 }
 
-ctident(unit)
-	int unit;
+ctident(ctlr, unit)
+	int ctlr, unit;
 {
 	struct ct_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	int id, i;
 
-	id = hpibid(unit);
+	id = hpibid(ctlr, unit);
 	if ((id & 0x200) == 0)
 		return(-1);
 	for (i = 0; i < nctinfo; i++)
@@ -111,7 +114,7 @@ ctident(unit)
 			break;
 	if (i == nctinfo)
 		return(-1);
-	ct_softc[unit].sc_punit = ctinfo[i].punit;
+	ct_softc[ctlr][unit].sc_punit = ctinfo[i].punit;
 	id = i;
 
 	/*
@@ -122,9 +125,9 @@ ctident(unit)
 	cmd[0] = C_SUNIT(0);
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
-	hpibsend(unit, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(unit, C_EXEC, &desc, 37);
-	hpibrecv(unit, C_QSTAT, &stat, sizeof(stat));
+	hpibsend(ctlr, unit, C_CMD, cmd, sizeof(cmd));
+	hpibrecv(ctlr, unit, C_EXEC, &desc, 37);
+	hpibrecv(ctlr, unit, C_QSTAT, &stat, sizeof(stat));
 	bzero(name, sizeof(name));
 	if (!stat) {
 		register int n = desc.d_name;
@@ -144,37 +147,55 @@ ctident(unit)
 	return(id);
 }
 
-ctopen(io)
-	struct iob *io;
+ctopen(f, ctlr, unit, part)
+	struct open_file *f;
+	int ctlr, unit, part;
 {
-	register int unit = io->i_unit;
-	register struct ct_softc *rs = &ct_softc[unit];
+	register struct ct_softc *rs;
 	register int skip;
 
-	if (hpibalive(unit) == 0)
-		_stop("ct controller not configured");
+	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
+		return(EADAPT);
+	if (unit >= NCT)
+		return(ECTLR);
+	rs = &ct_softc[ctlr][unit];
 	if (rs->sc_alive == 0)
-		if (ctinit(unit) == 0)
-			_stop("ct init failed");
-	ctstrategy(io, MTREW);
-	skip = io->i_boff;
+		if (ctinit(ctlr, unit) == 0)
+			return(ENXIO);
+
+	rs->sc_unit = unit;
+	rs->sc_ctlr = ctlr;
+	f->f_devdata = (void *)rs;
+
+	ctstrategy(f, MTREW);
+	skip = part;
 	while (skip--)
-		ctstrategy(io, MTFSF);
+		ctstrategy(f, MTFSF);
+	return(0);
 }
 
-ctclose(io)
-	struct iob *io;
+ctclose(f)
+	struct open_file *f;
 {
-	ctstrategy(io, MTREW);
+	ctstrategy(f, MTREW);
 }
 
-ctstrategy(io, func)
-	register struct iob *io;
-	register int func;
+char io_buf[MAXBSIZE];
+
+ctstrategy(rs, func, dblk, size, buf, rsize)
+	register struct ct_softc *rs;
+	int func;
+	daddr_t dblk;
+	u_int size;
+	char *buf;
+	u_int *rsize;
 {
-	register int unit = io->i_unit;
-	register struct ct_softc *rs = &ct_softc[unit];
+	register int ctlr = rs->sc_ctlr;
+	register int unit = rs->sc_unit;
 	char stat;
+
+	if (size == 0 && (func == F_READ || func == F_WRITE))
+		return(0);
 
 	rs->sc_retry = 0;
 	ct_ioc.unit = C_SUNIT(rs->sc_punit);
@@ -186,77 +207,77 @@ top:
 	if (func == F_READ) {
 		ct_ioc.cmd = C_READ;
 		ct_ioc.addr = rs->sc_blkno;
-		ct_ioc.len = io->i_cc;
+		ct_ioc.len = size;
 	}
 	else if (func == F_WRITE) {
 		ct_ioc.cmd = C_WRITE;
 		ct_ioc.addr = rs->sc_blkno;
-		ct_ioc.len = io->i_cc;
+		ct_ioc.len = size;
 	}
 	else if (func == MTFSF) {
 		ct_ioc.cmd = C_READ;
 		ct_ioc.addr = rs->sc_blkno;
-		ct_ioc.len = io->i_cc = MAXBSIZE;
-		io->i_ma = io->i_buf;
+		ct_ioc.len = size = MAXBSIZE;
+		buf = io_buf;
 	}
 	else {
 		ct_ioc.cmd = C_READ;
 		ct_ioc.addr = 0;
 		ct_ioc.len = 0;
 		rs->sc_blkno = 0;
-		io->i_cc = 0;
+		size = 0;
 	}
 retry:
-	hpibsend(unit, C_CMD, &ct_ioc, sizeof(ct_ioc));
+	hpibsend(ctlr, unit, C_CMD, &ct_ioc, sizeof(ct_ioc));
 	if (func != MTREW) {
-		hpibswait(unit);
-		hpibgo(unit, C_EXEC, io->i_ma, io->i_cc,
+		hpibswait(ctlr, unit);
+		hpibgo(ctlr, unit, C_EXEC, buf, size,
 			func != F_WRITE ? F_READ : F_WRITE);
-		hpibswait(unit);
-	}
-	else {
-		while (hpibswait(unit) < 0)
+		hpibswait(ctlr, unit);
+	} else {
+		while (hpibswait(ctlr, unit) < 0)
 			;
 	}
-	hpibrecv(unit, C_QSTAT, &stat, 1);
+	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	if (stat) {
-		stat = cterror(unit);
+		stat = cterror(ctlr, unit);
 		if (stat == 0)
 			return (-1);
 		if (stat == 2)
 			return (0);
 		if (++rs->sc_retry > CTRETRY)
 			return (-1);
-		else
-			goto retry;
+		goto retry;
 	}
-	rs->sc_blkno += CTBTOK(io->i_cc);
+	rs->sc_blkno += CTBTOK(size);
 	if (func == MTFSF)
 		goto top;
-	return (io->i_cc);
+	*rsize = size;
+
+	return(0);
 }
 
-cterror(unit)
-	register int unit;
+cterror(ctlr, unit)
+	register int ctlr, unit;
 {
-	register struct ct_softc *ct = &ct_softc[unit];
+	register struct ct_softc *rs = &ct_softc[ctlr][unit];
 	char stat;
 
-	ct_rsc.unit = C_SUNIT(ct->sc_punit);
+	ct_rsc.unit = C_SUNIT(rs->sc_punit);
 	ct_rsc.cmd = C_STATUS;
-	hpibsend(unit, C_CMD, &ct_rsc, sizeof(ct_rsc));
-	hpibrecv(unit, C_EXEC, &ct_stat, sizeof(ct_stat));
-	hpibrecv(unit, C_QSTAT, &stat, 1);
+	hpibsend(ctlr, unit, C_CMD, &ct_rsc, sizeof(ct_rsc));
+	hpibrecv(ctlr, unit, C_EXEC, &ct_stat, sizeof(ct_stat));
+	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	if (stat) {
 		printf("ct%d: request status fail %d\n", unit, stat);
 		return(0);
 	}
 	if (ct_stat.c_aef & AEF_EOF) {
 		/* 9145 drives don't increment block number at EOF */
-		if ((ct_stat.c_blk - ct->sc_blkno) == 0)
-			ct->sc_blkno++;
+		if ((ct_stat.c_blk - rs->sc_blkno) == 0)
+			rs->sc_blkno++;
 		else
-			ct->sc_blkno = ct_stat.c_blk;
+			rs->sc_blkno = ct_stat.c_blk;
 		return (2);
 	}
 	printf("ct%d err: vu 0x%x, pend 0x%x, bn%d", unit,

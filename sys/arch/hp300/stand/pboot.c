@@ -30,20 +30,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)boot.c	8.1 (Berkeley) 6/10/93
- *
- * $Id: boot.c,v 1.3 1994/01/26 02:38:19 brezak Exp $
+ *	from: @(#)boot.c	8.1 (Berkeley) 6/10/93
+ *	     $Id: pboot.c,v 1.1 1994/01/26 02:38:52 brezak Exp $
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: pboot.c,v 1.1 1994/01/26 02:38:52 brezak Exp $";
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <a.out.h>
 #include "stand.h"
-
-#ifndef INSECURE
-#include <sys/stat.h>
-struct stat sb;
-#endif
+#include "samachdep.h"
 
 /*
  * Boot program... bits in `howto' determine whether boot stops to
@@ -51,57 +50,52 @@ struct stat sb;
  * information.
  */
 
-char line[100];
-char *ssym, *esym;
-
 extern	unsigned opendev;
 extern	char *lowram;
 extern	int noconsole;
-extern	int howto, bootdev;
+
+char *ssym, *esym;
+
+char *name;
+char *names[] = {
+	"/netbsd", "/onetbsd", "/netbsd.old",
+};
+#define NUMNAMES	(sizeof(names)/sizeof(char *))
+
+static int bdev, bctlr, bunit, bpart;
 
 main()
 {
-	int io, retry, type;
+	int currname = 0;
+	int io;
 
-	printf("%s CPU\nBoot\n", getmachineid());
-#ifdef JUSTASK
-	howto = RB_ASKNAME|RB_SINGLE;
-#else
-	if ((howto & RB_ASKNAME) == 0) {
-		type = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-		if ((unsigned)type < ndevs && devsw[type].dv_name)
-			strcpy(line, "/netbsd");
+	printf("\n>> NetBSD BOOT HP9000/%s CPU [%s]\n",
+	       getmachineid(), "$Revision: 1.1 $");
+
+	bdev  = B_TYPE(bootdev);
+	bctlr = B_CONTROLLER(bootdev);
+	bunit = B_UNIT(bootdev);
+	bpart = B_PARTITION(bootdev);
+
+	for (;;) {
+		name = names[currname++];
+		if (currname == NUMNAMES)
+		    currname = 0;
+
+		if (!noconsole) {
+		    howto = 0;
+		    getbootdev(&howto);
+		}
 		else
-			howto |= RB_SINGLE|RB_ASKNAME;
-	}
-#endif
-	for (retry = 0;;) {
-		if (!noconsole && (howto & RB_ASKNAME)) {
-			printf(": ");
-			gets(line);
-			if (line[0] == 0) {
-				strcpy(line, "/netbsd");
-				printf(": %s\n", line);
-			}
-		} else
-			printf(": %s\n", line);
-		io = open(line, 0);
+		    printf(": %s\n", name);
+
+		io = open(name, 0);
 		if (io >= 0) {
-#ifndef INSECURE
-			(void) fstat(io, &sb);
-			if (sb.st_uid || (sb.st_mode & 2)) {
-				printf("non-secure file, will not load\n");
-				close(io);
-				howto = RB_SINGLE|RB_ASKNAME;
-				continue;
-			}
-#endif
 			copyunix(howto, opendev, io);
 			close(io);
-			howto |= RB_SINGLE|RB_ASKNAME;
 		}
-		if (++retry > 2)
-			howto |= RB_SINGLE|RB_ASKNAME;
+		else
+		    printf("boot: %s\n", strerror(errno));
 	}
 }
 
@@ -115,13 +109,23 @@ copyunix(howto, devtype, io)
 	int i;
 	register char *load;	/* a5 contains load addr for unix */
 	register char *addr;
+	int dev, ctlr, unit, part;
 
+	dev = B_TYPE(opendev);
+	ctlr = B_CONTROLLER(opendev);
+	unit = B_UNIT(opendev);
+	part = B_PARTITION(opendev);
+	
 	i = read(io, (char *)&x, sizeof(x));
 	if (i != sizeof(x) ||
 	    N_BADMAG(x)) {
 		printf("Bad format\n");
 		return;
 	}
+	printf("Booting %s%d%c:%s @ 0x%x\n",
+	    devsw[dev].dv_name, unit + (8*ctlr), 'a'+part, name, x.a_entry);
+
+	/* Text */
 	printf("%d", x.a_text);
 	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, 0x400, SEEK_SET) == -1)
 		goto shread;
@@ -132,13 +136,18 @@ copyunix(howto, devtype, io)
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
 		while ((int)addr & CLOFSET)
 			*addr++ = 0;
+	/* Data */
 	printf("+%d", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
+
+	/* Bss */
 	printf("+%d", x.a_bss);
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
+
+	/* Symbols */
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
@@ -158,6 +167,9 @@ copyunix(howto, devtype, io)
 		    goto shread;
 		addr += i;
 	}
+
+	/* and that many bytes of (debug symbols?) */
+
 	printf("%d] ", i);
 
 #define	round_to_size(x) \
@@ -165,8 +177,18 @@ copyunix(howto, devtype, io)
 	esym = (char *)round_to_size(addr - lowram);
 #undef round_to_size
 
+	/* and note the end address of all this	*/
+	printf("total=0x%x ", addr);
+
 	x.a_entry += (int)lowram;
 	printf(" start 0x%x\n", x.a_entry);
+
+#ifdef DEBUG
+	printf("ssym=0x%x esym=0x%x\n", ssym, esym);
+	printf("\n\nReturn to boot...\n");
+	getchar();
+#endif
+
 #ifdef __GNUC__
 	asm("	movl %0,d7" : : "m" (howto));
 	asm("	movl %0,d6" : : "m" (devtype));
@@ -178,4 +200,47 @@ copyunix(howto, devtype, io)
 shread:
 	printf("Short read\n");
 	return;
+}
+
+char line[100];
+
+getbootdev(howto)
+     int *howto;
+{
+	char c, *ptr = line;
+
+	printf("Boot: [[[%s%d%c:]%s][-s][-a][-d]] :- ",
+	    devsw[bdev].dv_name, bunit + (8 * bctlr), 'a'+bpart, name);
+
+	if (tgets(line)) {
+		while (c = *ptr) {
+			while (c == ' ')
+				c = *++ptr;
+			if (!c)
+				return;
+			if (c == '-')
+				while ((c = *++ptr) && c != ' ')
+					switch (c) {
+					case 'a':
+						*howto |= RB_ASKNAME;
+						continue;
+					case 's':
+						*howto |= RB_SINGLE;
+						continue;
+					case 'd':
+						*howto |= RB_KDB;
+						continue;
+					case 'b':
+						*howto |= RB_HALT;
+						continue;
+					}
+			else {
+				name = ptr;
+				while ((c = *++ptr) && c != ' ');
+				if (c)
+					*ptr++ = 0;
+			}
+		}
+	} else
+		printf("\n");
 }
