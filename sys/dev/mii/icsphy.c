@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.31 2003/04/29 01:49:33 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.32 2003/07/01 22:46:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@
  */
 
 /*
- * driver for Integrated Circuit Systems' ICS1890 ethernet 10/100 PHY
+ * driver for Integrated Circuit Systems' ICS1889-1893 ethernet 10/100 PHY
  * datasheet from www.icst.com
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.31 2003/04/29 01:49:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.32 2003/07/01 22:46:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,14 @@ const struct mii_phy_funcs icsphy_funcs = {
 };
 
 const struct mii_phydesc icsphys[] = {
+	{ MII_OUI_ICS,		MII_MODEL_ICS_1889,
+	  MII_STR_ICS_1889 },
+
 	{ MII_OUI_ICS,		MII_MODEL_ICS_1890,
 	  MII_STR_ICS_1890 },
+
+	{ MII_OUI_ICS,		MII_MODEL_ICS_1892,
+	  MII_STR_ICS_1892 },
 
 	{ MII_OUI_ICS,		MII_MODEL_ICS_1893,
 	  MII_STR_ICS_1893 },
@@ -137,6 +143,7 @@ icsphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &icsphy_funcs;
@@ -271,5 +278,22 @@ icsphy_reset(sc)
 {
 
 	mii_phy_reset(sc);
-	PHY_WRITE(sc, MII_ICSPHY_ECR2, ECR2_10TPROT|ECR2_Q10T);
+	switch (sc->mii_mpd_model) {
+		case MII_MODEL_ICS_1890:
+		case MII_MODEL_ICS_1893:
+			PHY_WRITE(sc, MII_ICSPHY_ECR2, ECR2_100AUTOPWRDN);
+			break;
+		case MII_MODEL_ICS_1892:
+			PHY_WRITE(sc, MII_ICSPHY_ECR2,
+			    ECR2_10AUTOPWRDN|ECR2_100AUTOPWRDN);
+			break;
+		default:
+			/* 1889 have no ECR2 */
+			break;
+	}
+	/*
+	 * There is no description that the reset do auto-negotiation in the
+	 * data sheet.
+	 */
+	PHY_WRITE(sc, MII_BMCR, BMCR_S100|BMCR_STARTNEG|BMCR_FDX);
 }
