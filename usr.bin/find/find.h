@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.15 2002/09/27 15:56:26 provos Exp $	*/
+/*	$NetBSD: find.h,v 1.16 2003/02/23 14:41:30 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@ enum ntype {
 	N_INUM, N_IREGEX, N_LINKS, N_LS, N_MINDEPTH, N_MAXDEPTH,
 	N_MMIN, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK,
 	N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRINTX,
-	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV,
+	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV
 };
 
 /* node definition */
@@ -89,24 +89,24 @@ typedef struct _plandata {
 		regex_t _regexp_data;		/* compiled regexp */
 	} p_un;
 } PLAN;
-#define	a_data	p_un._a_data
-#define	c_data	p_un._c_data
-#define	i_data	p_un._i_data
-#define	f_data	p_un._f_data
-#define	g_data	p_un._g_data
-#define	l_data	p_un._l_data
-#define	m_data	p_un._m_data
-#define	mt_data	p_un._mt_data
-#define	o_data	p_un._o_data
-#define	p_data	p_un._p_data
-#define	t_data	p_un._t_data
-#define	u_data	p_un._u_data
-#define	e_argv	p_un.ex._e_argv
-#define	e_orig	p_un.ex._e_orig
-#define	e_len	p_un.ex._e_len
-#define	max_data p_un._max_data
-#define	min_data p_un._min_data
-#define	regexp_data p_un._regexp_data
+#define	a_data		p_un._a_data
+#define	c_data		p_un._c_data
+#define	i_data		p_un._i_data
+#define	f_data		p_un._f_data
+#define	g_data		p_un._g_data
+#define	l_data		p_un._l_data
+#define	m_data		p_un._m_data
+#define	mt_data		p_un._mt_data
+#define	o_data		p_un._o_data
+#define	p_data		p_un._p_data
+#define	t_data		p_un._t_data
+#define	u_data		p_un._u_data
+#define	e_argv		p_un.ex._e_argv
+#define	e_orig		p_un.ex._e_orig
+#define	e_len		p_un.ex._e_len
+#define	max_data	p_un._max_data
+#define	min_data	p_un._min_data
+#define	regexp_data	p_un._regexp_data
 
 typedef struct _option {
 	char *name;			/* option name */
