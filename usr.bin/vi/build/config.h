@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.5 2000/03/17 02:22:27 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.6 2000/05/25 06:47:53 jdc Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -61,9 +61,11 @@
 /* #undef HAVE_BROKEN_VDISABLE */
 
 /* Define if you have a BSD version of curses. */
+/*
 #ifndef __SVR4
 #define HAVE_BSD_CURSES 1
 #endif
+*/
 
 /* Define if you have the curses(3) addnstr function. */
 #define HAVE_CURSES_ADDNSTR 1
