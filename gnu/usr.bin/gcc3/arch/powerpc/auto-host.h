@@ -507,7 +507,7 @@
 
 /* Define to the name of a file containing a list of extra machine modes
    for this architecture. */
-#define EXTRA_MODES_FILE "sparc/sparc-modes.def"
+#define EXTRA_MODES_FILE "rs6000/rs6000-modes.def"
 
 /* Define if the target architecture needs extra machine modes to represent
    the results of comparisons. */
