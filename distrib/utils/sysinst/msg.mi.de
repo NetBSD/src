@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.1 2004/02/29 18:46:43 jschauma Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.2 2004/02/29 23:25:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,11 +70,13 @@ message hello
 {Willkommen zu Sysinst, dem Installationswerkzeug von NetBSD-@@VERSION@@.
 Dieses menübasierte Programm ist dazu konzipiert Ihnen dabei zu helfen NetBSD
 auf eine Festplatte zu installieren oder aber eine bereits bestehende
-Installation von NetBSD upzugraden (aufzurüsten) - mit minimalem Aufwand.
-In den folgenden Menüs können Sie mit Hilfe von Buchstaben (a, b, c, ...) die
-verschiedenen Menüeinträge anwählen. Alternativ können Sie durch Drücken von
-CTRL+N/CTRL+P den nächsten/vorhergehenden Eintrag anspringen. Die Cursor- und
-Bildlauftasten (Page-up/Page-down) sollten ebenfalls funktionieren.
+Installation von NetBSD upzugraden (aufzurüsten) - mit minimalem Aufwand. 
+In den folgenden Menüs können Sie mit Hilfe von Buchstaben (a, b, c, ...)
+die verschiedenen Menüeinträge anwählen.
+Alternativ können Sie durch Drücken von CTRL+N/CTRL+P den
+nächsten/vorhergehenden Eintrag anspringen.
+Die Cursor- und Bildlauftasten (Page-up/Page-down)
+sollten ebenfalls funktionieren. 
 Durch Betätigen der Eingabetaste aktivieren Sie die gegenwärtige Auswahl.
 
 }
@@ -91,11 +93,12 @@ sollten Sie bereits eine vollständige Datensicherung gemacht haben!
 Dieser Vorgang wird die folgenden Schritte durchführen:
 	a) Partitionieren Ihrer Disk
 	b) Erstellen eines neuen BSD Dateisystems
-	c) Laden und Installieren der Distributionssets (Kernel + Basissystem)
+	c) Laden und Installieren der Distributionssets (Kernel+Basissystem)
 	d) Grundlegendes Konfigurieren des Systems
 
 (Nachdem Sie Angaben zur Partitionierung ihrer Disk gemacht haben - doch bevor
-diese verändert wird - erhalten Sie die Möglichkeit diese Prozedur abzubrechen.)
+diese verändert wird - erhalten Sie die Möglichkeit diese Prozedur
+abzubrechen.)
 
 Wollen Sie weiterfahren?
 }
@@ -212,7 +215,7 @@ mit einem '+' markiert ist.
 
 message ptnheaders
 {
-       MB         Zylinder   Sektoren   Dateisystem
+       MB          Zylinder  Sektoren   Dateisystem
 }
 
 message askfsmount
@@ -263,7 +266,7 @@ message fspart
 /* XXX translate + align */
 message fspart_header
 {   Start %3s   End %3s  Size %3s FS type    Newfs Mount Mount point
-  --------- --------- --------- ---------- ----- ----- -----------
+   --------- --------- --------- ---------- ----- ----- -----------
 }
 
 message fspart_row
@@ -273,42 +276,42 @@ message show_all_unused_partitions
 {Anzeigen aller unbenutzten Partitionen}
 
 message partition_sizes_ok
-{Partitionsgrössen OK)}
+{Partitionsgrössen OK}
 
 message edfspart
 {Die gegenwärtigen Werte für die Partition '%c' sind unten angezeigt.
 Wählen Sie das Feld, dass Sie ändern möchten: 
 
-                          MB Zylinder   Sektoren
+                          MB  Zylinder  Sektoren
 	             ------- --------- ---------
 }
 
 message fstype_fmt
-{        Dateisystemtyp: %9s}
+{Dateisystemtyp: %9s}
 
 message start_fmt
 {         Start: %9u %8u%c %9u}
 
 message size_fmt
-{          Grösse: %9u %8u%c %9u}
+{        Grösse: %9u %8u%c %9u}
 
 message end_fmt
-{           Ende: %9u %8u%c %9u}
+{          Ende: %9u %8u%c %9u}
 
 message bsize_fmt
-{    Blockgrösse: %9d bytes}
+{   Blockgrösse: %9d bytes}
 
 message fsize_fmt
-{ Fragmentgrösse: %9d bytes}
+{Fragmentgrösse: %9d bytes}
 
 /* XXX Inodes - translate */
 message isize_fmt
-{ Durschschnittliche Dateigrösse: %9d Bytes (Als Anzahl der Inodes)}
+{ Durschschnittliche Dateigrösse: %d Bytes (Als Anzahl der Inodes)}
 message isize_fmt_dflt
-{ Durchschnittliche Dateigrösse:         4 Fragmente}
+{  Durchschnittliche Dateigrösse:  4 Fragmente}
 
 message newfs_fmt
-{         Neues Dateisystem (newfs): %9s}
+{Neues Dateisystem (newfs): %8s}
 
 message mount_fmt
 {         Mount: %9s} /* XXX translate */
@@ -317,7 +320,7 @@ message mount_options_fmt
 { Mountoptionen: } /* XXX translate */
 
 message mountpt_fmt
-{   Mountpoint: %9s} /* XXX translate */
+{    Mountpoint: %9s} /* XXX translate */
 
 message toggle
 {Wählen sie}	/* XXX translate */
@@ -846,16 +849,16 @@ Sie sollten:
 
 Erneut probieren, die Diskette mit der Datei "%s" zu mounten.
 
-Keine weiteren Dateien für dieses Set mehr laden, stattdessen beim nächsten
-Set ansetzen - falls ein weiteres vorhanden.
+Keine weiteren Dateien für dieses Set mehr laden, stattdessen beim
+nächsten Set ansetzen - falls ein weiteres vorhanden.
 
 Keine weiteren Sets mehr ab dem Diskettenlaufwerk laden und die Installation
 abbrechen.
 }
 
 message mntnetconfig
-{Sind die Netzwerkangaben, die Sie gemacht haben, passabel für den regulären
-Gebrauch? Sollen diese in /etc abgelegt werden?}
+{Sind die Netzwerkangaben, die Sie gemacht haben, passabel für den
+regulären Gebrauch? Sollen diese in /etc abgelegt werden?}
 
 message cur_distsets
 {Nachfolgend die Liste der Distributionssets, die zur Nutzung kommen.

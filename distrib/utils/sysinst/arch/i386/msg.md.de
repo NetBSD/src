@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2004/02/29 18:46:44 jschauma Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2004/02/29 23:25:09 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -84,12 +84,12 @@ message onebiosmatch
 }
 
 message onebiosmatch_header
-{BIOS # Zylinder  Köpfe Sektoren Anzahl Sektoren  GB
------- --------- ----- -------- --------------- ---
+{BIOS # Zylinder Köpfe Sektoren Anzahl Sektoren  GB
+------ -------- ----- -------- --------------- ---
 }
 
 message onebiosmatch_row
-{%#6x %9d %5d %7d %13u %3u\n}
+{%#6x %8d %5d %8d   %13u %3u\n}
 
 message This_is_the_correct_geometry
 {Das ist die korrekte Geometrie}
@@ -104,12 +104,12 @@ message biosmultmatch
 }
 
 message biosmultmatch_header
-{BIOS # Zylinder  Köpfe Sektoren Anzahl Sektoren  GB
------- --------- ----- -------- --------------- ---
+{   BIOS # Zylinder Köpfe Sektoren Anzahl Sektoren  GB
+   ------ -------- ----- -------- --------------- ---
 }
 
 message biosmultmatch_row
-{%-1d: %#6x %9d %5d %7d %13u %3u\n}
+{%-1d: %#6x %8d %5d %8d    %13u %3u\n}
 
 message biosgeom_advise
 {
