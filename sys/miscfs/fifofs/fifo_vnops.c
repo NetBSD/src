@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.46 2004/03/06 00:38:29 wrstuden Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.47 2004/04/29 16:10:54 jrf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.46 2004/03/06 00:38:29 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.47 2004/04/29 16:10:54 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,14 +192,14 @@ fifo_open(void *v)
 		if (fip->fi_readers++ == 0) {
 			fip->fi_writesock->so_state &= ~SS_CANTSENDMORE;
 			if (fip->fi_writers > 0)
-				wakeup((caddr_t)&fip->fi_writers);
+				wakeup(&fip->fi_writers);
 		}
 	}
 	if (ap->a_mode & FWRITE) {
 		if (fip->fi_writers++ == 0) {
 			fip->fi_readsock->so_state &= ~SS_CANTRCVMORE;
 			if (fip->fi_readers > 0)
-				wakeup((caddr_t)&fip->fi_readers);
+				wakeup(&fip->fi_readers);
 		}
 	}
 	if (ap->a_mode & FREAD) {
@@ -207,7 +207,7 @@ fifo_open(void *v)
 		} else {
 			while (!soreadable(fip->fi_readsock) && fip->fi_writers == 0) {
 				VOP_UNLOCK(vp, 0);
-				error = tsleep((caddr_t)&fip->fi_readers,
+				error = tsleep(&fip->fi_readers,
 				    PCATCH | PSOCK, "fifor", 0);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				if (error)
@@ -224,7 +224,7 @@ fifo_open(void *v)
 		} else {
 			while (fip->fi_readers == 0) {
 				VOP_UNLOCK(vp, 0);
-				error = tsleep((caddr_t)&fip->fi_writers,
+				error = tsleep(&fip->fi_writers,
 				    PCATCH | PSOCK, "fifow", 0);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				if (error)

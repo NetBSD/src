@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.98 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.99 2004/04/29 16:10:55 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.98 2003/09/27 13:29:02 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.99 2004/04/29 16:10:55 jrf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -860,7 +860,7 @@ kernfs_readdir(v)
 				d.d_fileno = KERNFS_FILENO(kt, kt->kt_tag, 0);
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -887,7 +887,7 @@ kernfs_readdir(v)
 			d.d_fileno = KERNFS_FILENO(kt, kt->kt_tag, 0);
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -930,7 +930,7 @@ kernfs_readdir(v)
 			d.d_fileno = KERNFS_FILENO(kt, kt->kt_tag, 0);
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -959,7 +959,7 @@ kernfs_readdir(v)
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%u", ntohl(sav->spi));
 			d.d_type = DT_REG;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -992,7 +992,7 @@ kernfs_readdir(v)
 			d.d_fileno = KERNFS_FILENO(kt, kt->kt_tag, 0);
 			memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 			d.d_type = kt->kt_type;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;
@@ -1011,7 +1011,7 @@ kernfs_readdir(v)
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%u", sp->id);
 			d.d_type = DT_REG;
-			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
+			if ((error = uiomove(&d, UIO_MX, uio)) != 0)
 				break;
 			if (cookies)
 				*cookies++ = i + 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.44 2004/04/21 01:05:42 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.45 2004/04/29 16:10:56 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.44 2004/04/21 01:05:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.45 2004/04/29 16:10:56 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct umap_args));
+	error = copyin(data, &args, sizeof(struct umap_args));
 	if (error)
 		return (error);
 
@@ -142,7 +142,7 @@ umapfs_mount(mp, path, data, ndp, p)
 
 	amp = (struct umap_mount *) malloc(sizeof(struct umap_mount),
 				M_UFSMNT, M_WAITOK);	/* XXX */
-	memset((caddr_t)amp, 0, sizeof(struct umap_mount));
+	memset(amp, 0, sizeof(struct umap_mount));
 
 	mp->mnt_data = amp;
 	amp->umapm_vfs = lowerrootvp->v_mount;
@@ -159,7 +159,7 @@ umapfs_mount(mp, path, data, ndp, p)
 
 	amp->info_nentries = args.nentries;
 	amp->info_gnentries = args.gnentries;
-	error = copyin(args.mapdata, (caddr_t)amp->info_mapdata, 
+	error = copyin(args.mapdata, amp->info_mapdata, 
 	    2*sizeof(u_long)*args.nentries);
 	if (error) {
 		vput(lowerrootvp);
@@ -173,7 +173,7 @@ umapfs_mount(mp, path, data, ndp, p)
 	 	    amp->info_mapdata[i][1]);
 #endif
 
-	error = copyin(args.gmapdata, (caddr_t)amp->info_gmapdata, 
+	error = copyin(args.gmapdata, amp->info_gmapdata, 
 	    2*sizeof(u_long)*args.gnentries);
 	if (error) {
 		vput(lowerrootvp);

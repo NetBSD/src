@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.47 2004/04/21 01:05:41 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.48 2004/04/29 16:10:55 jrf Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.47 2004/04/21 01:05:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.48 2004/04/29 16:10:55 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct null_args));
+	error = copyin(data, &args, sizeof(struct null_args));
 	if (error)
 		return (error);
 
@@ -159,7 +159,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	nmp = (struct null_mount *) malloc(sizeof(struct null_mount),
 	    M_UFSMNT, M_WAITOK);		/* XXX */
-	memset((caddr_t)nmp, 0, sizeof(struct null_mount));
+	memset(nmp, 0, sizeof(struct null_mount));
 
 	mp->mnt_data = nmp;
 	nmp->nullm_vfs = lowerrootvp->v_mount;

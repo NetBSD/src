@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.22 2004/04/21 01:05:41 christos Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.23 2004/04/29 16:10:55 jrf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.22 2004/04/21 01:05:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.23 2004/04/29 16:10:55 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ ov_mount(mp, path, data, ndp, p)
 	/*
 	 * Get argument
 	 */
-	error = copyin(data, (caddr_t)&args, sizeof(struct overlay_args));
+	error = copyin(data, &args, sizeof(struct overlay_args));
 	if (error)
 		return (error);
 
@@ -154,7 +154,7 @@ ov_mount(mp, path, data, ndp, p)
 	 */
 	nmp = (struct overlay_mount *) malloc(sizeof(struct overlay_mount),
 				M_UFSMNT, M_WAITOK);	/* XXX */
-	memset((caddr_t)nmp, 0, sizeof(struct overlay_mount));
+	memset(nmp, 0, sizeof(struct overlay_mount));
 
 	mp->mnt_data = nmp;
 	nmp->ovm_vfs = lowerrootvp->v_mount;
