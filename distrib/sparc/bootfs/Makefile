@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2001/10/23 16:30:35 tv Exp $
+#	$NetBSD: Makefile,v 1.31 2001/11/08 16:52:20 tron Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -53,7 +53,7 @@ CLEANFILES+=	netbsd.ram netbsd.ram.aout netbsd.tmp
 
 all:	netbsd.ram netbsd.ram.aout
 	dd if=/dev/zero of=${IMAGE} bs=${FSSIZE} count=1
-	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${GEOM}
+	vnconfig -v -c ${VND} ${IMAGE} ${GEOM}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	gzip -9 < netbsd.ram > ${MOUNT_POINT}/netbsd
@@ -64,11 +64,11 @@ all:	netbsd.ram netbsd.ram.aout
 	-rm -f ${MOUNT_POINT}/boot
 	${MDEC}/binstall -m ${MDEC} -f ${IMAGE} -v ffs ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
+	-vnconfig -u ${VND}
 
 netbsd.ram: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
