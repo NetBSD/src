@@ -29,10 +29,14 @@ extern initialize_file_ftype _initialize_corelow;
 extern initialize_file_ftype _initialize_solib;
 extern initialize_file_ftype _initialize_svr4_solib;
 extern initialize_file_ftype _initialize_vax_tdep;
+extern initialize_file_ftype _initialize_vaxnbsd_nat;
 extern initialize_file_ftype _initialize_vaxnbsd_tdep;
 extern initialize_file_ftype _initialize_ser_hardwire;
 extern initialize_file_ftype _initialize_ser_pipe;
 extern initialize_file_ftype _initialize_ser_tcp;
+extern initialize_file_ftype _initialize_kernel_u_addr;
+extern initialize_file_ftype _initialize_infptrace;
+extern initialize_file_ftype _initialize_inftarg;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
 extern initialize_file_ftype _initialize_sr_support;
@@ -81,6 +85,7 @@ extern initialize_file_ftype _initialize_mi_out;
 extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_main;
 extern initialize_file_ftype _initialize_mi_parse;
+extern initialize_file_ftype _initialize_nbsd_thread;
 void
 initialize_all_files (void)
 {
@@ -111,10 +116,14 @@ initialize_all_files (void)
   _initialize_solib ();
   _initialize_svr4_solib ();
   _initialize_vax_tdep ();
+  _initialize_vaxnbsd_nat ();
   _initialize_vaxnbsd_tdep ();
   _initialize_ser_hardwire ();
   _initialize_ser_pipe ();
   _initialize_ser_tcp ();
+  _initialize_kernel_u_addr ();
+  _initialize_infptrace ();
+  _initialize_inftarg ();
   _initialize_remote ();
   _initialize_dcache ();
   _initialize_sr_support ();
@@ -153,6 +162,7 @@ initialize_all_files (void)
   _initialize_nlmread ();
   _initialize_serial ();
   _initialize_mdebugread ();
+  _initialize_nbsd_thread ();
   _initialize_gnu_v2_abi ();
   _initialize_gnu_v3_abi ();
   _initialize_hpacc_abi ();
