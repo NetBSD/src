@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.60.2.6 2002/04/01 07:49:13 nathanw Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.60.2.7 2002/04/23 03:30:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -182,7 +182,8 @@ struct ctlname {
 #define	KERN_SBMAX		58	/* int: max socket buffer size */
 #define	KERN_TKSTAT		59	/* tty in/out counters */
 #define	KERN_MONOTONIC_CLOCK	60	/* int: POSIX monotonic clock */
-#define	KERN_MAXID		61	/* number of valid kern ids */
+#define	KERN_LWP		61	/* struct: lwp entries */
+#define	KERN_MAXID		62	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -246,6 +247,7 @@ struct ctlname {
 	{ "sbmax", CTLTYPE_INT }, \
 	{ "tkstat", CTLTYPE_NODE }, \
 	{ "monotonic_clock", CTLTYPE_INT }, \
+	{ "lwp", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -425,6 +427,31 @@ struct kinfo_proc2 {
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
 	u_int64_t p_cpuid;		/* LONG: cpu id */
+	u_int64_t p_realflag;	       	/* INT: P_* flags (not including LWPs). */
+	u_int64_t p_nlwps;		/* LONG: Number of LWPs */
+	u_int64_t p_nrlwps;		/* LONG: Number of running LWPs */
+
+};
+
+/*
+ * KERN_LWP structure. See notes on KERN_PROC2 about adding elements.
+ */
+struct kinfo_lwp {
+	u_int64_t l_forw;		/* PTR: linked run/sleep queue. */
+	u_int64_t l_back;
+	u_int64_t l_addr;		/* PTR: Kernel virtual addr of u-area */
+	int8_t	l_stat;			/* CHAR: S* process status. */
+	int32_t	l_lid;			/* LWPID_T: LWP identifier */
+	int32_t	l_flag;			/* INT: L_* flags. */
+	u_int32_t l_swtime;		/* U_INT: Time swapped in or out. */
+	u_int32_t l_slptime;		/* U_INT: Time since last blocked. */
+	int32_t	l_schedflags;		/* INT: PSCHED_* flags */
+	int32_t	l_holdcnt;              /* INT: If non-zero, don't swap. */
+	u_int8_t l_priority;		/* U_CHAR: Process priority. */
+	u_int8_t l_usrpri;		/* U_CHAR: User-priority based on l_cpu and p_nice. */
+	char	l_wmesg[KI_WMESGLEN];	/* wchan message */
+	u_int64_t l_wchan;		/* PTR: sleep address. */
+	u_int64_t l_cpuid;		/* LONG: cpu id */
 };
 
 /*
