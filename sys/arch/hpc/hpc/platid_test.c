@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_test.c,v 1.1 2001/01/28 02:52:22 uch Exp $	*/
+/*	$NetBSD: platid_test.c,v 1.2 2001/09/24 14:29:31 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -122,7 +122,7 @@ platid_bit_test()
 }
 
 void
-platid_search_test()
+platid_search_data_test()
 {
 	char *mcr700str = "MC-R700";
 	char *mcr500str = "MC-R500";
@@ -143,23 +143,99 @@ platid_search_test()
 		{ NULL, defstr }
 	};
 
+	printf("#\n");
+	printf("# platid_search_data() test\n");
+	printf("#\n");
+
 	printf("search MC-R700 in no default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_700A, d_null)->data);
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_700A, d_null)->data);
 	printf("search MC-R500 in no default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_500, d_null)->data);
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_500, d_null)->data);
 	printf("search MC/R530 in no default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_530, d_null)->data);
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_530, d_null)->data);
 	printf("search non exist MC-R300 in no default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_300, d_null) == NULL?"NULL":"any!!bug!");
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_300, d_null) == NULL?"NULL":"any!!bug!");
 	printf("search MC-R700 in default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_700A, d_default)->data);
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_700A, d_default)->data);
 	printf("search MC-R500 in default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_500, d_default)->data);
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_500, d_default)->data);
 	printf("search MC/R530 in default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_530, d_default)->data);
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_530, d_default)->data);
 	printf("search non exist MC-R300 in default table: %s\n",
-		(char *)platid_search(&platid_mask_MACH_NEC_MCR_300, d_default)->data);
+		(char *)platid_search_data(&platid_mask_MACH_NEC_MCR_300, d_default)->data);
 }
+
+void
+platid_search_test()
+{
+	struct platid_name *res;
+	struct platid_name tab[] = {
+		{ &platid_mask_MACH_NEC_MCR,
+		  TEXT("MC-R") },
+		{ &platid_mask_MACH_NEC_MCR_3XX,
+		  TEXT("MC-R300 series") },
+		{ &platid_mask_MACH_NEC_MCR_300,
+		  TEXT("MC-R300") },
+		{ &platid_mask_MACH_NEC_MCR_330,
+		  TEXT("MC-R330") },
+	};
+	int i, nmemb = sizeof(tab)/sizeof(*tab);
+
+	printf("#\n");
+	printf("# platid_search() test\n");
+	printf("#\n");
+	printf("# table contains: ");
+	for (i = 0; i < nmemb; i++)
+		printf(" %s%s", tab[i].name, i < nmemb - 1 ? "," : "");
+	printf("\n");
+
+	res = platid_search(&platid_mask_MACH_NEC_MCR_300,
+	    tab, nmemb, sizeof(struct platid_name));
+	printf("search MC-R300: %s\n",
+	    (res == NULL) ? "not found" : res->name);
+
+	res = platid_search(&platid_mask_MACH_NEC_MCR,
+	    tab, nmemb, sizeof(struct platid_name));
+	printf("search MC-R: %s\n",
+	    (res == NULL) ? "not found" : res->name);
+
+	res = platid_search(&platid_mask_MACH_NEC_MCR_700,
+	    tab, nmemb, sizeof(struct platid_name));
+	printf("search MC-R700: %s\n",
+	    (res == NULL) ? "not found" : res->name);
+
+	res = platid_search(&platid_mask_MACH_NEC_MCR_320,
+	    tab, nmemb, sizeof(struct platid_name));
+	printf("search MC-R320: %s\n",
+	    (res == NULL) ? "not found" : res->name);
+
+	res = platid_search(&platid_mask_MACH_NEC_MCCS_12,
+	    tab, nmemb, sizeof(struct platid_name));
+	printf("search MC-CS12: %s\n",
+	    (res == NULL) ? "not found" : res->name);
+}
+
+
+void
+platid_name_test()
+{
+	int i, err;
+
+	printf("#\n");
+	printf("# platid_name() test\n");
+	printf("#\n");
+	err = 0;
+	for (i = 0; i < platid_name_table_size; i++) {
+		if (strcmp(platid_name(platid_name_table[i].mask), 
+		    platid_name_table[i].name) != 0) {
+			printf("%s mismatch\n", platid_name_table[i].name);
+			err++;
+		}
+	}
+	printf("%s\n", err ? "ERROR" : "ok");
+}
+
+#define __PP(p)	PLATID_DEREFP(p)
 
 void
 main()
@@ -172,26 +248,28 @@ main()
 	pid.dw.dw1 =	PLATID_MACH_NEC_MCR_500;
 
 	printf("CPU_MIPS:\t%s\n",
-	       platid_match(&pid, GENERIC_MIPS) ? "O" : "X");
+	       platid_match(&pid, __PP(GENERIC_MIPS)) ? "O" : "X");
 	printf("CPU_MIPS_VR:\t%s\n",
-	       platid_match(&pid, GENERIC_MIPS_VR) ? "O" : "X");
+	       platid_match(&pid, __PP(GENERIC_MIPS_VR)) ? "O" : "X");
 	printf("CPU_MIPS_VR41XX:\t%s\n",
-	       platid_match(&pid, GENERIC_MIPS_VR_41XX) ? "O" : "X");
+	       platid_match(&pid, __PP(GENERIC_MIPS_VR_41XX)) ? "O" : "X");
 	printf("CPU_MIPS_VR4102:\t%s\n",
-	       platid_match(&pid, GENERIC_MIPS_VR_4102) ? "O" : "X");
+	       platid_match(&pid, __PP(GENERIC_MIPS_VR_4102)) ? "O" : "X");
 	printf("CPU_MIPS_VR4111:\t%s\n",
-	       platid_match(&pid, GENERIC_MIPS_VR_4111) ? "O" : "X");
+	       platid_match(&pid, __PP(GENERIC_MIPS_VR_4111)) ? "O" : "X");
 	printf("CPU_MIPS_VR4121:\t%s\n",
-	       platid_match(&pid, GENERIC_MIPS_VR_4121) ? "O" : "X");
+	       platid_match(&pid, __PP(GENERIC_MIPS_VR_4121)) ? "O" : "X");
 	printf("NEC_MCR:\t%s\n",
-	       platid_match(&pid, NEC_MCR) ? "O" : "X");
+	       platid_match(&pid, __PP(NEC_MCR)) ? "O" : "X");
 	printf("NEC_MCR_5XX:\t%s\n",
-	       platid_match(&pid, NEC_MCR_5XX) ? "O" : "X");
+	       platid_match(&pid, __PP(NEC_MCR_5XX)) ? "O" : "X");
 	printf("NEC_MCR_500:\t%s\n",
-	       platid_match(&pid, NEC_MCR_500) ? "O" : "X");
+	       platid_match(&pid, __PP(NEC_MCR_500)) ? "O" : "X");
 	printf("NEC_MCR_510:\t%s\n",
-	       platid_match(&pid, NEC_MCR_510) ? "O" : "X");
+	       platid_match(&pid, __PP(NEC_MCR_510)) ? "O" : "X");
 
+	platid_search_data_test();
 	platid_search_test();
+	platid_name_test();
 	exit(0);
 }
