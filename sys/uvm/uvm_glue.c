@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.24 1999/06/17 00:24:10 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.25 1999/06/17 05:57:33 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -157,11 +157,18 @@ uvm_useracc(addr, len, rw)
 	size_t len;
 	int rw;
 {
+	vm_map_t map;
 	boolean_t rv;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-	rv = uvm_map_checkprot(&curproc->p_vmspace->vm_map,
-			trunc_page(addr), round_page(addr+len), prot);
+	/* XXX curproc */
+	map = &curproc->p_vmspace->vm_map;
+
+	vm_map_lock_read(map);
+	rv = uvm_map_checkprot(map, trunc_page(addr), round_page(addr+len),
+	    prot);
+	vm_map_unlock_read(map);
+
 	return(rv);
 }
 
