@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.4 1995/02/01 01:40:25 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.5 1995/03/31 02:51:37 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -73,6 +73,11 @@ void svr4_getcontext __P((struct proc *, struct svr4_ucontext *,
 int svr4_setcontext __P((struct proc *p, struct svr4_ucontext *));
 void svr4_sendsig __P((sig_t, int, int, u_long));
 
+typedef struct {
+	svr4_gregset_t	greg;
+	svr4_fregset_t	freg;
+} svr4_mcontext_t;
+
 /*
  * SYSARCH numbers
  */
@@ -87,5 +92,24 @@ struct svr4_ssd {
 	unsigned int access2;
 };
 
+/*
+ * Processor traps
+ */
+#define	SVR4_T_DIVIDE		0
+#define	SVR4_T_TRCTRAP		1
+#define	SVR4_T_NMI		2
+#define	SVR4_T_BPTFLT		3
+#define	SVR4_T_OFLOW		4
+#define	SVR4_T_BOUND		5
+#define	SVR4_T_PRIVINFLT	6
+#define	SVR4_T_DNA		7
+#define	SVR4_T_DOUBLEFLT	8
+#define	SVR4_T_FPOPFLT		9
+#define	SVR4_T_TSSFLT		10
+#define	SVR4_T_SEGNPFLT		11
+#define	SVR4_T_STKFLT		12
+#define	SVR4_T_PROTFLT		13
+#define	SVR4_T_PAGEFLT		14
+#define	SVR4_T_ALIGNFLT		17
 
 #endif /* !_I386_SVR4_MACHDEP_H_ */
