@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.17 1996/06/15 14:58:02 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.18 1996/09/02 06:44:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -259,7 +259,7 @@ kdparam(tp, t)
 }
 
 
-int
+void
 kdstop(tp, flag)
 	struct tty *tp;
 	int flag;

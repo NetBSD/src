@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.26 1996/03/17 01:39:04 thorpej Exp $ */
+/*	$NetBSD: scn.c,v 1.27 1996/09/02 06:43:57 mycroft Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -955,6 +955,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
+void
 scnstop(tp, flag)
 	register struct tty *tp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 1996/06/05 17:13:05 oki Exp $ */
+/*	$NetBSD: zs.c,v 1.4 1996/09/02 06:44:36 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,7 +137,7 @@ struct zs_chanstate *zslist;
 static void	zsiopen __P((struct tty *));
 static void	zsiclose __P((struct tty *));
 static void	zsstart __P((struct tty *));
-int		zsstop __P((struct tty *, int));
+void		zsstop __P((struct tty *, int));
 static int	zsparam __P((struct tty *, struct termios *));
 static int	zshwiflow __P((struct tty *, int));
 
@@ -376,7 +376,7 @@ zsconsole(tp, unit, out, fnstop)
 	register struct tty *tp;
 	register int unit;
 	int out;
-	int (**fnstop) __P((struct tty *, int));
+	void (**fnstop) __P((struct tty *, int));
 {
 	int zs;
 	volatile struct zsdevice *addr;
@@ -391,7 +391,7 @@ zsconsole(tp, unit, out, fnstop)
 		v_putc = zscnputc;
 	} else
 		zs_consin = unit;
-	if(fnstop)
+	if (fnstop)
 		*fnstop = &zsstop;
 	zs_ctty = tp;
 }
@@ -1292,7 +1292,7 @@ out:
 /*
  * Stop output, e.g., for ^S or output flush.
  */
-int
+void
 zsstop(tp, flag)
 	register struct tty *tp;
 	int flag;

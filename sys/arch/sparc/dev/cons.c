@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.24 1996/05/29 02:03:11 mrg Exp $ */
+/*	$NetBSD: cons.c,v 1.25 1996/09/02 06:44:15 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,13 +81,13 @@ int	cons_ocount;		/* output byte count */
  * The output driver may munge the minor number in cons.t_dev.
  */
 struct tty cons;		/* rom console tty device */
-static int (*fcnstop) __P((struct tty *, int));
+static void (*fcnstop) __P((struct tty *, int));
 
 static void cnstart __P((struct tty *));
-int cnstop __P((struct tty *, int));
+void cnstop __P((struct tty *, int));
 
 static void cnfbstart __P((struct tty *));
-static int cnfbstop __P((struct tty *, int));
+static void cnfbstop __P((struct tty *, int));
 static void cnfbdma __P((void *));
 static struct tty  *xxcntty __P((dev_t));
 
@@ -467,13 +467,13 @@ cnstart(tp)
 	splx(s);
 }
 
-int
+void
 cnstop(tp, flag)
 	register struct tty *tp;
 	int flag;
 {
-	(void)(*fcnstop)(tp, flag);
-	return 0;
+
+	(*fcnstop)(tp, flag);
 }
 
 /*
@@ -517,7 +517,7 @@ cnfbstart(tp)
 /*
  * Stop frame buffer output: just assert TS_FLUSH if necessary.
  */
-static int
+static void
 cnfbstop(tp, flag)
 	register struct tty *tp;
 	int flag;
@@ -527,7 +527,6 @@ cnfbstop(tp, flag)
 	if ((tp->t_state & (TS_BUSY | TS_TTSTOP)) == TS_BUSY)
 		tp->t_state |= TS_FLUSH;
 	splx(s);
-	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.4 1996/05/30 18:44:51 cgd Exp $	*/
+/*	$NetBSD: wscons.c,v 1.5 1996/09/02 06:43:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -418,7 +418,7 @@ wsconsstart(tp)
 	splx(s);
 }
 
-int
+void
 wsconsstop(tp, flag)
 	struct tty *tp;
 	int flag;

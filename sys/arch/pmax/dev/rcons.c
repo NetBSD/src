@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.9 1996/05/19 01:06:14 jonathan Exp $	*/
+/*	$NetBSD: rcons.c,v 1.10 1996/09/02 06:44:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -340,20 +340,21 @@ rconsioctl(dev, cmd, data, flag, p)
 }
 
 /* ARGSUSED */
-int
-rconsstop (tp, rw)
+void
+rconsstop(tp, rw)
 	struct tty *tp;
 	int rw;
 {
-	return (0);
+
 }
 
 /*ARGSUSED*/
 void
-rconsreset (tp, rw)
+rconsreset(tp, rw)
 	struct tty *tp;
 	int rw;
 {
+
 }
 
 /*ARGSUSED*/

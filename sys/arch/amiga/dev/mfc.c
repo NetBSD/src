@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.14 1996/08/27 21:55:05 cgd Exp $ */
+/*	$NetBSD: mfc.c,v 1.15 1996/09/02 06:43:26 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -870,7 +870,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-int
+void
 mfcsstop(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -883,7 +883,6 @@ mfcsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-	return 0;
 }
 
 int
