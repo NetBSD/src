@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.51.4.2 2001/01/25 18:25:34 jhawk Exp $ */
+/* $NetBSD: isp_pci.c,v 1.51.4.3 2001/01/26 00:23:00 jhawk Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -63,7 +63,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <uvm/uvm_extern.h>
 
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
