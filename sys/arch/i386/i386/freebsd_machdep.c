@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.22 1998/09/13 01:43:17 thorpej Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.22.24.1 2002/04/03 22:10:58 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -200,6 +200,8 @@ freebsd_sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)psp->ps_sigcode;
