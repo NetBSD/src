@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.30 1999/03/24 06:06:12 mrg Exp $
+#	$NetBSD: GENERIC,v 1.31 1999/03/31 15:38:32 minoura Exp $
 
 #
 #	GENERIC
@@ -292,11 +292,8 @@ pseudo-device	ipfilter
 ## like, though 256 is more or less the upper limit.  Increasing this
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
-
 pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
-## THIS DEVICE IS EXPERIMENTAL; use at your own risk.
-
-#pseudo-device	rnd
+pseudo-device	rnd
