@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_dma.c,v 1.1.2.3 1997/06/05 18:47:37 thorpej Exp $ */
+/* $NetBSD: apecs_dma.c,v 1.1.2.4 1997/06/06 00:32:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.1.2.3 1997/06/05 18:47:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_dma.c,v 1.1.2.4 1997/06/06 00:32:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ apecs_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	struct apecs_config *acp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load(t, map, buf, buflen, p, flags,
+	error = pci_sgmap_pte64_load(t, map, buf, buflen, p, flags,
 	    &acp->ac_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
@@ -362,7 +362,7 @@ apecs_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	struct apecs_config *acp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_mbuf(t, map, m, flags, &acp->ac_sgmap);
+	error = pci_sgmap_pte64_load_mbuf(t, map, m, flags, &acp->ac_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
 
@@ -397,7 +397,7 @@ apecs_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	struct apecs_config *acp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_uio(t, map, uio, flags, &acp->ac_sgmap);
+	error = pci_sgmap_pte64_load_uio(t, map, uio, flags, &acp->ac_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
 
@@ -436,7 +436,7 @@ apecs_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	struct apecs_config *acp = t->_cookie;
 	int error;
 
-	error = pci_pte64_sgmap_load_raw(t, map, segs, nsegs, size, flags,
+	error = pci_sgmap_pte64_load_raw(t, map, segs, nsegs, size, flags,
 	    &acp->ac_sgmap);
 	if (error == 0)
 		APECS_TLB_INVALIDATE();
@@ -458,7 +458,7 @@ apecs_bus_dmamap_unload_sgmap(t, map)
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	pci_pte64_sgmap_unload(t, map, &acp->ac_sgmap);
+	pci_sgmap_pte64_unload(t, map, &acp->ac_sgmap);
 	APECS_TLB_INVALIDATE();
 
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxvar.h,v 1.3.2.2 1997/06/03 07:07:38 thorpej Exp $ */
+/* $NetBSD: dwlpxvar.h,v 1.3.2.3 1997/06/06 00:32:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <dev/pci/pcivar.h>
 #include <sys/extent.h>
 
-#include <alpha/pci/pci_pte32_sgmap.h>
+#include <alpha/pci/pci_sgmap_pte32.h>
 
 #define	_FSTORE	(EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long))
 

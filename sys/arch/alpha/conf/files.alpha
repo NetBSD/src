@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.46.2.4 1997/06/05 18:45:48 thorpej Exp $
+# $NetBSD: files.alpha,v 1.46.2.5 1997/06/06 00:34:02 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -257,8 +257,8 @@ file	arch/alpha/pci/dwlpx_bus_mem.c	dwlpx
 file	arch/alpha/pci/dwlpx_bus_io.c	dwlpx
 
 # common support files
-file	arch/alpha/pci/pci_pte32_sgmap.c	dwlpx
-file	arch/alpha/pci/pci_pte64_sgmap.c	apecs | cia | lca
+file	arch/alpha/pci/pci_sgmap_pte32.c	dwlpx
+file	arch/alpha/pci/pci_sgmap_pte64.c	apecs | cia | lca
 file	arch/alpha/pci/pci_swiz_io_common.c	apecs | cia | dwlpx | lca
 file	arch/alpha/pci/pci_swiz_mem_common.c	apecs | cia | dwlpx | lca
 
