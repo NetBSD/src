@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atalk.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
+/*	$NetBSD: print-atalk.c,v 1.3.2.1 2002/12/07 22:46:07 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.70 2001/11/15 08:23:12 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-atalk.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
+__RCSID("$NetBSD: print-atalk.c,v 1.3.2.1 2002/12/07 22:46:07 he Exp $");
 #endif
 #endif
 
@@ -193,21 +193,6 @@ atalk_print(register const u_char *bp, u_int length)
 	       ddpskt_string(dp->dstSkt));
 	bp += ddpSize;
 	length -= ddpSize;
-#ifdef LBL_ALIGN
-	if ((long)bp & 3) {
-		static u_char *abuf = NULL;
-
-		if (abuf == NULL) {
-			abuf = (u_char *)malloc(snaplen);
-			if (abuf == NULL)
-				error("atalk_print: malloc");
-		}
-		memcpy((char *)abuf, (char *)bp, min(length, snaplen));
-		snapend += abuf - (u_char *)bp;
-		packetp = abuf;
-		bp = abuf;
-	}
-#endif
 	ddp_print(bp, length, dp->type, snet, dp->srcNode, dp->srcSkt);
 }
 
