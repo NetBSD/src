@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.208 2002/06/18 07:56:12 tshiozak Exp $
+#	$NetBSD: files.i386,v 1.209 2002/07/03 02:46:11 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -57,11 +57,14 @@ defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
 # Large page size
 defflag			LARGEPAGES
 
+# kernel stack debug
+defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
+
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/bus_machdep.c
 file	arch/i386/i386/conf.c
 file	arch/i386/i386/consinit.c
-file	arch/i386/i386/db_dbgreg.s	ddb
+file	arch/i386/i386/db_dbgreg.s	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
