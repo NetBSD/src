@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.9 2004/01/17 21:16:13 bjh21 Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.10 2004/01/17 21:49:24 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.9 2004/01/17 21:16:13 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpckbd.c,v 1.10 2004/01/17 21:49:24 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,14 @@ static void	kbd_flush_input(struct rpckbd_softc *);
 static int	rpckbd_decode(struct rpckbd_softc *, int, u_int *, int *);
 static int	rpckbd_led_encode(int);
 static int	rpckbd_led_decode(int);
+
+/*
+ * Hackish support for a bell on the PC Keyboard; when a suitable feeper
+ * is found, it attaches itself into the pckbd driver here.
+ */
+static void	(*rpckbd_bell_fn)(void *, u_int, u_int, u_int, int);
+static void	*rpckbd_bell_fn_arg;
+
 static void	rpckbd_bell(int, int, int);
 
 
@@ -175,7 +183,7 @@ rpckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_RISCP;
+		*(int *)data = WSKBD_TYPE_RISCPC;
 		return 0;
 	    case WSKBDIO_SETLEDS:
 		/* same as rpckbd_set_leds */
@@ -450,18 +458,29 @@ void
 rpckbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 {
 
-	/* dunno yet */
+	if (rpckbd_bell_fn != NULL)
+		(*rpckbd_bell_fn)(rpckbd_bell_fn_arg, pitch, period,
+		    volume, TRUE);
 }
 
+
+void
+rpckbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
+{
+
+	if (rpckbd_bell_fn == NULL) {
+		rpckbd_bell_fn = fn;
+		rpckbd_bell_fn_arg = arg;
+	}
+}
 
 void
 rpckbd_bell(int pitch, int period, int volume)
 {
 
-	/* dunno yet */
-#if NBEEP > 0
-	sysbeep(pitch, period);
-#endif
+	if (rpckbd_bell_fn != NULL)
+		(*rpckbd_bell_fn)(rpckbd_bell_fn_arg, pitch, period,
+		    volume, FALSE);
 }
 
 
