@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.39 1999/08/07 10:36:49 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.40 1999/08/27 20:02:05 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,9 +67,11 @@ extern struct cpu_dep ka820_calls;
 extern struct cpu_dep ka43_calls;
 extern struct cpu_dep ka46_calls;
 extern struct cpu_dep ka48_calls;
+extern struct cpu_dep ka49_calls;
 extern struct cpu_dep ka410_calls;
 extern struct cpu_dep ka630_calls;
 extern struct cpu_dep ka650_calls;
+extern struct cpu_dep ka660_calls;
 extern struct cpu_dep ka670_calls;
 
 /*
@@ -151,7 +153,7 @@ start()
 #endif
 #if VAX49
 	case VAX_BTYP_49:
-		dep_call = &ka48_calls;
+		dep_call = &ka49_calls;
 		strcat(cpu_model, "4000/90");
 		break;
 #endif
@@ -182,6 +184,12 @@ start()
 			strcat(cpu_model, "III");
 			break;
 		}
+		break;
+#endif
+#if VAX660
+	case VAX_BTYP_660:
+		dep_call = &ka660_calls;
+		strcpy(cpu_model,"VAX 4000/200");
 		break;
 #endif
 #if VAX670
