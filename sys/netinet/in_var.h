@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.28 1998/07/16 06:45:09 tls Exp $	*/
+/*	$NetBSD: in_var.h,v 1.29 1998/07/29 05:18:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct	in_aliasreq {
 
 #ifdef	_KERNEL
 #ifndef IN_IFADDR_HASH_SIZE
-#define IN_IFADDR_HASH_SIZE 293
+#define IN_IFADDR_HASH_SIZE 509	/* 61, 127, 251, 509, 1021, 2039 are good */
 #endif
 
 /*
