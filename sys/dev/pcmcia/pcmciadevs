@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.93.2.4 2001/03/16 19:35:14 he Exp $
+$NetBSD: pcmciadevs,v 1.93.2.5 2001/04/04 15:45:40 he Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -187,7 +187,8 @@ product SIMPLETECH SPECTRUM24 0x801 Symbol Spectrum24 WLAN Adapter
 /* Socket Communications Products */
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
 product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
-product SOCEKT LP_ETHER_CF	0x0075 Socket Communications Low Power Ethernet CF
+product SOCKET LP_ETHER_CF	0x0075 Socket Communications LP-E CF
+product SOCKET LP_ETHER		0x000d Socket Communications LP-E
 
 /* TDK Products */
 product TDK LAK_CD021BX		0x0200 TDK LAK-CD021BX Ethernet
