@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.16 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.17 2000/04/19 13:52:39 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.16 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.17 2000/04/19 13:52:39 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: cr_put.c,v 1.16 2000/04/15 13:17:03 blymn Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
+
+/* the following is defined and set up in setterm.c */
+extern struct tinfo *_cursesi_genbuf;
 
 #define	HARDTABS	8
 
@@ -94,7 +97,7 @@ fgoto(in_refresh)
 	int     in_refresh;
 {
 	int     c, l;
-	char   *cgp;
+	char   cgp[1024];
 
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
@@ -164,7 +167,7 @@ fgoto(in_refresh)
 	if (destline < outline && !(CA || UP))
 		destline = outline;
 	if (CA) {
-		cgp = tgoto(CM, destcol, destline);
+		t_goto(_cursesi_genbuf, CM, destcol, destline, cgp, 1023);
 
 		/*
 		 * Need this condition due to inconsistent behavior
