@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.29 2001/03/28 18:42:13 ichiro Exp $
+#	$NetBSD: files.usb,v 1.30 2001/04/13 12:24:10 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -82,6 +82,7 @@ file	dev/usb/ulpt.c			ulpt			needs-flag
 device	umass: scsi, atapi
 attach	umass at uhub
 file	dev/usb/umass.c			umass
+file	dev/usb/umassbus.c		umass
 
 
 # Misc
