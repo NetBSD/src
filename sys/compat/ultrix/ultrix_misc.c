@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.44 1998/09/26 16:24:14 drochner Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.45 1998/10/02 18:53:23 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.44 1998/09/26 16:24:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.45 1998/10/02 18:53:23 drochner Exp $");
 
 /*
  * SunOS compatibility module.
@@ -160,7 +160,7 @@ extern char *ultrix_syscallnames[];
 
 extern void ULTRIX_EXEC_SETREGS __P((struct proc *, struct exec_package *,
 					u_long));
-extern char sigcode[], esigcode[];
+extern char ultrix_sigcode[], ultrix_esigcode[];
 
 struct emul emul_ultrix = {
 	"ultrix",
@@ -173,8 +173,8 @@ struct emul emul_ultrix = {
 	0,
 	copyargs,
 	ULTRIX_EXEC_SETREGS,
-	sigcode,
-	esigcode,
+	ultrix_sigcode,
+	ultrix_esigcode,
 };
 
 #define GSI_PROG_ENV 1
@@ -647,11 +647,9 @@ ultrix_sys_sigreturn(p, v, retval)
 {
 	struct ultrix_sys_sigreturn_args *uap = v;
 
-	/*
-	 * XXX That's broken; the Ultrix sigcontext differs
-	 * XXX from NetBSD's.
-	 */
-	return (sys___sigreturn14(p, uap, retval));
+	/* struct sigcontext13 is close enough to Ultrix */
+
+	return (compat_13_sys_sigreturn(p, uap, retval));
 }
 
 int
@@ -662,11 +660,9 @@ ultrix_sys_sigcleanup(p, v, retval)
 {
 	struct ultrix_sys_sigcleanup_args *uap = v;
 
-	/*
-	 * XXX That's broken; the Ultrix sigcontext differs
-	 * XXX from NetBSD's.
-	 */
-	return (sys___sigreturn14(p, uap, retval));
+	/* struct sigcontext13 is close enough to Ultrix */
+
+	return (compat_13_sys_sigreturn(p, uap, retval));
 }
 
 int
