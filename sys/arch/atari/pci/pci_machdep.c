@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.15 1999/01/01 19:54:52 thomas Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16 1999/02/19 20:57:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -48,6 +48,7 @@
 #include <machine/cpu.h>
 #include <machine/iomap.h>
 #include <machine/mfp.h>
+#include <machine/bswap.h>
 #include <machine/bus.h>
 
 #include <atari/atari/device.h>

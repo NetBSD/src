@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.5 1998/12/03 18:24:30 bouyer Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.6 1999/02/19 20:57:14 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
+#include <machine/bswap.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/iomap.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.3 1998/05/25 09:08:08 leo Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.4 1999/02/19 20:57:03 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <machine/bswap.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
