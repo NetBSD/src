@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.7 2002/05/02 17:11:39 martti Exp $
+.\"	$NetBSD: ipnat.5,v 1.8 2002/06/16 14:43:46 wiz Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -62,11 +62,11 @@ range of port numbers to remap into given as \fBport-number:port-number\fP.
 There are four commands recognised by IP Filter's NAT code:
 .TP
 .B map
-that is used for mapping one address or network to another in an unregulated
+for mapping one address or network to another in an unregulated
 round robin fashion;
 .TP
 .B rdr
-that is used for redirecting packets to one IP address and port pair to
+for redirecting packets from one IP address and port pair to
 another;
 .TP
 .B bimap
@@ -74,7 +74,7 @@ for setting up bidirectional NAT between an external IP address and an internal
 IP address and
 .TP
 .B map-block
-which sets up static IP address based translation, based on a algorithm to
+for setting up static IP address based translation, based on an algorithm to
 squeeze the addresses to be translated into the destination range.
 .SH MATCHING
 .PP
