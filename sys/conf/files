@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.142 1997/09/20 01:02:29 enami Exp $
+#	$NetBSD: files,v 1.143 1997/09/20 02:20:52 mikel Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -144,7 +144,6 @@ pseudo-device vnd: disk
 pseudo-device ccd: disk
 pseudo-device md: disk
 
-
 pseudo-device pty: tty
 pseudo-device tb: tty
 
@@ -155,8 +154,6 @@ pseudo-device tun: ifnet
 pseudo-device bpfilter: ifnet
 pseudo-device strip: ifnet
 pseudo-device ipfilter: ifnet
-
-# XXX machine-independent SCSI files should live somewhere here, maybe
 
 # kernel sources
 file adosfs/adlookup.c			adosfs
@@ -211,18 +208,18 @@ file kern/kern_exec.c
 file kern/kern_exit.c
 file kern/kern_fork.c
 file kern/kern_ktrace.c			ktrace
-file kern/kern_lock.c
 file kern/kern_lkm.c			lkm
-file kern/kern_ntptime.c
+file kern/kern_lock.c
 file kern/kern_malloc.c
+file kern/kern_ntptime.c
 file kern/kern_physio.c
 file kern/kern_proc.c
 file kern/kern_prot.c
 file kern/kern_resource.c
 file kern/kern_sig.c
 file kern/kern_subr.c
-file kern/kern_sysctl.c
 file kern/kern_synch.c
+file kern/kern_sysctl.c
 file kern/kern_time.c
 file kern/kern_xxx.c
 file kern/kgdb_stub.c			kgdb
@@ -302,6 +299,7 @@ file msdosfs/msdosfs_vfsops.c		msdosfs
 file msdosfs/msdosfs_vnops.c		msdosfs
 file net/bpf.c				bpfilter		needs-count
 file net/bpf_filter.c			bpfilter | ppp
+file net/bsd-comp.c			ppp & ppp_bsdcomp
 file net/if.c
 file net/if_arcsubr.c			arc			needs-flag
 file net/if_atmsubr.c			atm			needs-flag
@@ -312,18 +310,17 @@ file net/if_media.c
 file net/if_sl.c			sl			needs-count
 file net/if_strip.c			strip			needs-count
 file net/if_ppp.c			ppp			needs-count
-file net/ppp_tty.c			ppp
-file net/bsd-comp.c			ppp_bsdcomp
-file net/ppp-deflate.c			ppp_deflate
-file net/zlib.c				ppp_deflate
 file net/if_tun.c			tun			needs-count
+file net/pfil.c				pfil_hooks | ipfilter
+file net/ppp-deflate.c			ppp & ppp_deflate
+file net/ppp_tty.c			ppp
 file net/radix.c
 file net/raw_cb.c
 file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
-file net/pfil.c				pfil_hooks | ipfilter
+file net/zlib.c				ppp & ppp_deflate
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc
@@ -412,9 +409,9 @@ file netiso/tp_usrreq.c			iso | tpip
 file netiso/tuba_subr.c			iso | tuba
 file netiso/tuba_table.c		iso | tuba
 file netiso/tuba_usrreq.c		iso | tuba
+file netnatm/natm.c			natm
 file netnatm/natm_pcb.c			natm
 file netnatm/natm_proto.c		natm
-file netnatm/natm.c			natm
 file netns/idp_usrreq.c			ns
 file netns/ns.c				ns
 file netns/ns_error.c			ns
@@ -439,6 +436,15 @@ file nfs/nfs_subs.c			nfsserver | nfs
 file nfs/nfs_syscalls.c			nfsserver | nfs
 file nfs/nfs_vfsops.c			nfs
 file nfs/nfs_vnops.c			nfs
+file ufs/ext2fs/ext2fs_alloc.c		ext2fs
+file ufs/ext2fs/ext2fs_balloc.c		ext2fs
+file ufs/ext2fs/ext2fs_bmap.c		ext2fs
+file ufs/ext2fs/ext2fs_inode.c		ext2fs
+file ufs/ext2fs/ext2fs_lookup.c		ext2fs
+file ufs/ext2fs/ext2fs_readwrite.c	ext2fs
+file ufs/ext2fs/ext2fs_subr.c		ext2fs
+file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
+file ufs/ext2fs/ext2fs_vnops.c		ext2fs
 file ufs/ffs/ffs_alloc.c		ffs | mfs
 file ufs/ffs/ffs_balloc.c		ffs | mfs
 file ufs/ffs/ffs_inode.c		ffs | mfs
@@ -466,15 +472,6 @@ file ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs)
 file ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
 file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
-file ufs/ext2fs/ext2fs_alloc.c		ext2fs
-file ufs/ext2fs/ext2fs_balloc.c		ext2fs
-file ufs/ext2fs/ext2fs_bmap.c		ext2fs
-file ufs/ext2fs/ext2fs_inode.c		ext2fs
-file ufs/ext2fs/ext2fs_lookup.c		ext2fs
-file ufs/ext2fs/ext2fs_readwrite.c	ext2fs
-file ufs/ext2fs/ext2fs_subr.c		ext2fs
-file ufs/ext2fs/ext2fs_vfsops.c		ext2fs
-file ufs/ext2fs/ext2fs_vnops.c		ext2fs
 file vm/device_pager.c			devpager
 file vm/swap_pager.c			swappager
 file vm/vm_fault.c
