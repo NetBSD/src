@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower.c,v 1.6 2002/10/02 04:19:44 thorpej Exp $	*/
+/*	$NetBSD: firepower.c,v 1.7 2003/01/01 01:57:51 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -354,8 +354,8 @@ firepower_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }
