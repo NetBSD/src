@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.13 1996/05/20 01:37:18 cgd Exp $
+#	$NetBSD: ALPHA,v 1.14 1996/05/20 02:58:53 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -168,5 +168,6 @@ pseudo-device	loop
 pseudo-device	ppp
 pseudo-device	pty
 pseudo-device	sl
+pseudo-device	strip
 pseudo-device	tun
 pseudo-device	vnd
