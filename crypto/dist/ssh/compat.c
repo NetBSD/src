@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compat.c,v 1.35 2001/02/19 09:53:31 markus Exp $");
+RCSID("$OpenBSD: compat.c,v 1.39 2001/03/18 23:30:55 deraadt Exp $");
 
 #include <regex.h>
 
@@ -66,20 +66,31 @@ compat_datafellows(const char *version)
 		{ "MindTerm",		0 },
 		{ "^2\\.1\\.0",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG },
+		{ "^2\\.1 ",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
+					SSH_OLD_SESSIONID|SSH_BUG_DEBUG },
 		{ "^2\\.0\\.1[3-9]",	SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
-					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD },
+					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
+					SSH_BUG_PKOK },
 		{ "^2\\.0\\.",		SSH_BUG_SIGBLOB|SSH_BUG_HMAC|
 					SSH_OLD_SESSIONID|SSH_BUG_DEBUG|
 					SSH_BUG_PKSERVICE|SSH_BUG_X11FWD|
-					SSH_BUG_PKAUTH },
-		{ "^2\\.[23]\\.0",	SSH_BUG_HMAC},
+					SSH_BUG_PKAUTH|SSH_BUG_PKOK },
+		{ "^2\\.[23]\\.0",	SSH_BUG_HMAC },
 		{ "^2\\.[2-9]\\.",	0 },
-		{ "^2\\.4$",		SSH_OLD_SESSIONID}, /* Van Dyke */
-		{ "^3\\.0 SecureCRT",	SSH_OLD_SESSIONID},
-		{ "^1\\.7 SecureFX",	SSH_OLD_SESSIONID},
-		{ "^1\\.2\\.1[89]",	SSH_BUG_IGNOREMSG},
-		{ "^1\\.2\\.2[012]",	SSH_BUG_IGNOREMSG},
+		{ "^2\\.4$",		SSH_OLD_SESSIONID },	/* Van Dyke */
+		{ "^3\\.0 SecureCRT",	SSH_OLD_SESSIONID },
+		{ "^1\\.7 SecureFX",	SSH_OLD_SESSIONID },
+		{ "^1\\.2\\.1[89]",	SSH_BUG_IGNOREMSG },
+		{ "^1\\.2\\.2[012]",	SSH_BUG_IGNOREMSG },
+		{ "^SSH Compatible Server",			/* Netscreen */
+					SSH_BUG_PASSWORDPAD },
+		{ "^OSU_0",		SSH_BUG_PASSWORDPAD },
+		{ "^OSU_1\\.[0-4]",	SSH_BUG_PASSWORDPAD },
+		{ "^OSU_1\\.5alpha[1-3]",
+					SSH_BUG_PASSWORDPAD },
+		{ "^SSH_Version_Mapper",
+					SSH_BUG_SCANNER },
 		{ NULL,			0 }
 	};
 	/* process table, return first match */
