@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.231 2003/01/18 06:45:05 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.232 2003/01/20 12:06:49 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -429,24 +429,29 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #if defined(SUN4M) || defined(SUN4D)
 void		setpgt4m __P((int *ptep, int pte));
 void		setpte4m __P((vaddr_t va, int pte));
-
-#ifdef MULTIPROCESSOR
-#define PMAP_SET_CPUSET(pmap, cpi)	(pmap->pm_cpuset |= (1 << (cpi)->ci_cpuid))
-#define PMAP_CLR_CPUSET(pmap, cpi)	(pmap->pm_cpuset &= ~(1 << (cpi)->ci_cpuid))
-#define PMAP_CPUSET(pmap)		(pmap->pm_cpuset)
+#if defined(MULTIPROCESSOR)
 void		setpgt4m_va __P((vaddr_t, int *, int, int, int, u_int));
 #else
-#define PMAP_SET_CPUSET(pmap, cpi)	/* nothing */
-#define PMAP_CLR_CPUSET(pmap, cpi)	/* nothing */
-#define PMAP_CPUSET(pmap)		1	/* XXX: 1 or 0? */
 #define		setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset) do { \
 	if ((pageflush)) \
 		tlb_flush_page(va, ctx, 0); \
 	setpgt4m((ptep), (pte)); \
 } while (0)
-#endif
+#endif /* !MULTIPROCESSOR */
+#endif /* SUN4M || SUN4D */
 
-#endif
+#if defined(MULTIPROCESSOR)
+#define PMAP_SET_CPUSET(pmap, cpi)	\
+	(pmap->pm_cpuset |= (1 << (cpi)->ci_cpuid))
+#define PMAP_CLR_CPUSET(pmap, cpi)	\
+	(pmap->pm_cpuset &= ~(1 << (cpi)->ci_cpuid))
+#define PMAP_CPUSET(pmap)		(pmap->pm_cpuset)
+#else
+#define PMAP_SET_CPUSET(pmap, cpi)	/* nothing */
+#define PMAP_CLR_CPUSET(pmap, cpi)	/* nothing */
+#define PMAP_CPUSET(pmap)		1	/* XXX: 1 or 0? */
+#endif /* MULTIPROCESSOR */
+
 
 /* Function pointer messiness for supporting multiple sparc architectures
  * within a single kernel: notice that there are two versions of many of the
@@ -663,7 +668,7 @@ smp_tlb_flush_all()
 #define tlb_flush_region(va,ctx,s)	sp_tlb_flush(va,ctx,ASI_SRMMUFP_L1)
 #define tlb_flush_context(ctx,s)	sp_tlb_flush(ctx,0,ASI_SRMMUFP_L0)
 #define tlb_flush_all()			sp_tlb_flush_all()
-#endif
+#endif /* MULTIPROCESSOR */
 
 /*
  * Atomically update a PTE entry, coping with hardware updating the
@@ -775,7 +780,7 @@ setpgt4m(ptep, pte)
 	swap(ptep, pte);
 }
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 __inline void
 setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 	vaddr_t va;
@@ -788,7 +793,7 @@ setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 
 	updatepte4m(va, ptep, 0xffffffff, pte, pageflush ? ctx : 0, cpuset);
 }
-#endif
+#endif /* MULTIPROCESSOR */
 
 /* Set the page table entry for va to pte. */
 __inline void
@@ -3563,7 +3568,9 @@ srmmu_restore_prom_ctx()
 	sta(SRMMU_CXTPTR, ASI_SRMMU, prom_ctxreg);
 	tlb_flush_all();
 }
+#endif /* SUN4M || SUN4D */
 
+#if defined(MULTIPROCESSOR)
 /*
  * Globalize the boot cpu's cpu_info structure.
  */
@@ -3571,6 +3578,7 @@ void
 pmap_globalize_boot_cpuinfo(cpi)
 	struct cpu_info *cpi;
 {
+#if defined(SUN4M) || defined(SUN4D)	/* Only implemented for SUN4M/D */
 	vaddr_t va;
 	vsize_t off;
 
@@ -3580,6 +3588,7 @@ pmap_globalize_boot_cpuinfo(cpi)
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 	}
 	pmap_update(pmap_kernel());
+#endif /* SUN4M || SUN4D */
 }
 
 /*
@@ -3598,6 +3607,7 @@ void
 pmap_alloc_cpu(sc)
 	struct cpu_info *sc;
 {
+#if defined(SUN4M) || defined(SUN4D)	/* Only implemented for SUN4M/D */
 	vaddr_t va;
 	paddr_t pa;
 	paddr_t alignment;
@@ -3703,8 +3713,9 @@ pmap_alloc_cpu(sc)
 		sp = &rp->rg_segmap[VA_VSEG(sc->vpage[i])];
 		sc->vpage_pte[i] = &sp->sg_pte[VA_SUN4M_VPG(sc->vpage[i])];
 	}
-}
 #endif /* SUN4M || SUN4D */
+}
+#endif /* MULTIPROCESSOR */
 
 
 void
@@ -3769,7 +3780,7 @@ pmap_init()
 		pool_init(&L23_pool, n, n, 0, 0, "L2/L3 pagetable",
 			  &pgt_page_allocator);
 	}
-#endif
+#endif /* SUN4M || SUN4D */
 
 	pmap_initialized = 1;
 }
@@ -3953,7 +3964,7 @@ pmap_pmap_pool_ctor(void *arg, void *object, int flags)
 				setpgt4m(upt++, kpt[i]);
 		}
 	}
-#endif
+#endif /* SUN4M || SUN4D */
 
 	return (0);
 }
@@ -3990,7 +4001,7 @@ pmap_pmap_pool_dtor(void *arg, void *object)
 			pool_put(&L1_pool, pt);
 		}
 	}
-#endif
+#endif /* SUN4M || SUN4D */
 	splx(s);
 }
 
@@ -4462,7 +4473,7 @@ pmap_rmu4_4c(pm, va, endva, vr, vs)
 	}
 }
 
-#endif /* sun4,4c */
+#endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of pmap_rmu */
 /* remove from user */
@@ -4943,7 +4954,7 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 	splx(s);
 }
 
-#endif /* sun4, 4c */
+#endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M) || defined(SUN4D)	/* SRMMU version of protection routines above */
 /*
@@ -5824,7 +5835,7 @@ pmap_kremove4_4c(va, len)
 	splx(s);
 }
 
-#endif /*sun4,4c*/
+#endif /* SUN4 || SUN4C */
 
 #if defined(SUN4M) || defined(SUN4D)	/* SRMMU versions of enter routines */
 /*
@@ -7194,8 +7205,10 @@ pmap_deactivate(l)
 	p = l->l_proc;
 	if (p->p_vmspace &&
 	    (pm = p->p_vmspace->vm_map.pmap) != pmap_kernel()) {
+#if defined(SUN4M) || defined(SUN4D)
 		if (pm->pm_ctx && CPU_HAS_SRMMU)
 			sp_tlb_flush(0, pm->pm_ctxnum, ASI_SRMMUFP_L0);
+#endif
 
 		/* we no longer need broadcast tlb flushes for this pmap. */
 		PMAP_CLR_CPUSET(pm, &cpuinfo);
