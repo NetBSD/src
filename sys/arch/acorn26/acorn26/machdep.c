@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.2.4.1 2002/11/18 02:23:32 he Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.4.1 2002/11/18 02:23:32 he Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -125,7 +125,9 @@ haltsys:
 		*(volatile u_int8_t *)0x9c2 = 2; /* Zero page magic */
 		*(volatile u_int32_t *)0
 			= *(volatile u_int32_t *)MEMC_ROM_LOW_BASE;
-		asm volatile("movs pc, #3"); /* reboot in SVC mode */
+		/* reboot in SVC mode, IRQs and FIQs disabled */
+		asm volatile("movs pc, %0" : :
+		    "r" (R15_MODE_SVC | R15_FIQ_DISABLE | R15_IRQ_DISABLE));
 	}
 	panic("cpu_reboot failed");
 }
