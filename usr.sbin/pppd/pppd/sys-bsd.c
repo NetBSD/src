@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.50 2004/12/05 04:16:22 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.51 2005/02/20 11:12:45 cube Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.50 2004/12/05 04:16:22 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.51 2005/02/20 11:12:45 cube Exp $");
 #endif
 #endif
 
@@ -557,6 +557,20 @@ bundle_attach(ifnum)
     ifunit = ifnum;
 #endif
     return 1;
+}
+
+/*
+ * destroy_bundle - tell the driver to destroy our bundle.
+ */
+void destroy_bundle(void)
+{
+#if notyet
+	if (ppp_dev_fd >= 0) {
+		close(ppp_dev_fd);
+		remove_fd(ppp_dev_fd);
+		ppp_dev_fd = -1;
+	}
+#endif
 }
 
 /*
@@ -1147,6 +1161,24 @@ netif_set_mtu(unit, mtu)
 	
     if (ifunit >= 0 && ioctl(sock_fd, SIOCSIFMTU, (caddr_t) &ifr) < 0)
 	fatal("ioctl(SIOCSIFMTU): %m");
+}
+
+/*
+ * netif_get_mtu - get the MTU on the PPP network interface.
+ */
+int
+netif_get_mtu(int unit)
+{
+    struct ifreq ifr;
+
+    memset (&ifr, '\0', sizeof (ifr));
+    strlcpy(ifr.ifr_name, ifname, sizeof (ifr.ifr_name));
+
+    if (ifunit >= 0 && ioctl(sock_fd, SIOCGIFMTU, (caddr_t) &ifr) < 0) {
+	error("ioctl(SIOCGIFMTU): %m (line %d)", __LINE__);
+	return 0;
+    }
+    return ifr.ifr_mtu;
 }
 
 /*

@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/18 13:31:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2005/02/20 11:12:43 cube Exp $
 
 NOLINT=	# defined
 
 .include <bsd.own.mk>
 
-PCAPDIR=${NETBSDSRCDIR}/lib/libpcap
+.PATH: ${NETBSDSRCDIR}/dist/pppd/pppd/plugins
 
 LIB=minconn
 SRCS=minconn.c
-CPPFLAGS+=-I${.CURDIR}/../pppd
+CPPFLAGS+=-I${NETBSDSRCDIR}/dist/pppd/pppd
 
 LIBPREFIX=
 SHLIB_FULLVERSION=
