@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.46 1994/05/27 13:01:47 mycroft Exp $
+ *	$Id: trap.c,v 1.47 1994/06/14 20:43:42 mycroft Exp $
  */
 
 /*
@@ -572,17 +572,5 @@ syscall(frame)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
-#endif
-#ifdef	DIAGNOSTIC
-{ extern int _udatasel, _ucodesel;
-	if (frame.tf_ss != _udatasel)
-		printf("ss %x call %d\n", frame.tf_ss, code);
-	if ((frame.tf_cs & 0xffff) != _ucodesel)
-		printf("cs %x call %d\n", frame.tf_cs, code);
-	if (frame.tf_eip >= VM_MAXUSER_ADDRESS) {
-		printf("eip %x call %d\n", frame.tf_eip, code);
-		frame.tf_eip = 0;
-	}
-}
 #endif
 }
