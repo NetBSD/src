@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.7 1999/10/29 15:21:13 drochner Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.8 1999/11/27 01:51:20 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,8 +61,8 @@
  */
 
 struct boot_map {
-	int	num_blocks;		/* Number of blocks to read. */
-	int	start_block;		/* Starting block on disk. */
+	int32_t	num_blocks;		/* Number of blocks to read. */
+	int32_t	start_block;		/* Starting block on disk. */
 };
 
 /*
@@ -72,19 +72,20 @@ struct boot_map {
  * start block pairs.  Under NetBSD, contiguous mode is always used.
  */
 struct boot_block {
-	char	pad[8];
-	int	magic;			/* DEC_BOOT_MAGIC */
-	int	mode;			/* Mode for boot info. */
-	int	load_addr;		/* Address to start loading. */
-	int	exec_addr;		/* Address to start execing. */
-	struct	boot_map map[61];	/* boot program section(s). */
+	char		pad[8];
+	int32_t		magic;			/* DEC_BOOT_MAGIC */
+	int32_t		mode;			/* Mode for boot info. */
+	u_int32_t	load_addr;		/* Address to start loading. */
+	u_int32_t	exec_addr;		/* Address to start execing. */
+	struct		boot_map map[61];	/* boot program section(s). */
 };
 
 #define DEC_BOOT_MAGIC		0x0002757a
 #define DEC_BOOTMODE_CONTIGUOUS	0
 #define DEC_BOOTMODE_SCATTERED	1
 
-#define DEC_BOOT_SECTOR		0
+#define BOOT_BLOCK_OFFSET	0
+#define BOOT_BLOCK_BLOCKSIZE	512
 
 /*
  * DEC_NUM_DISK_PARTS is the number of partitions that are recorded in
@@ -98,8 +99,8 @@ struct boot_block {
  * partition starts and how many bytes it contains.
  */
 typedef struct dec_disk_map {
-	int	num_blocks;	/* Number of 512 byte blocks in partition. */
-	int	start_block;	/* Start of partition in blocks. */
+	int32_t	num_blocks;	/* Number of 512 byte blocks in partition. */
+	int32_t	start_block;	/* Start of partition in blocks. */
 } dec_disk_map;
 
 /*
@@ -107,8 +108,8 @@ typedef struct dec_disk_map {
  */
 typedef struct dec_disklabel {
     char	pad0[440];		/* DIFFERENT from sprite!!! */
-    int		magic;			/* DEC_LABEL_MAGIC */
-    int		is_partitioned;		/* 1 if disk is partitioned. */
+    int32_t	magic;			/* DEC_LABEL_MAGIC */
+    int32_t	is_partitioned;		/* 1 if disk is partitioned. */
     dec_disk_map map[DEC_NUM_DISK_PARTS]; /* Indicates disk partitions. */
 } dec_disklabel;
 
