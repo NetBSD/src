@@ -34,17 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90"
- *	$Id: sigsetjmp.S,v 1.8 1995/12/28 20:04:00 jtc Exp $
+ *	$Id: sigsetjmp.S,v 1.9 1995/12/28 21:32:28 jtc Exp $
  */
 
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: sigsetjmp.S,v 1.8 1995/12/28 20:04:00 jtc Exp $"
+	.asciz "$Id: sigsetjmp.S,v 1.9 1995/12/28 21:32:28 jtc Exp $"
 #endif
-
-#include "SYS.h"
 
 ENTRY(sigsetjmp)
 	movl	4(%esp),%ecx
