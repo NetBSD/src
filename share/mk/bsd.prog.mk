@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.40 1994/05/24 09:37:30 cgd Exp $
+#	$Id: bsd.prog.mk,v 1.41 1994/06/18 20:57:49 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -99,8 +99,7 @@ realinstall:
 	    ${PROG} ${DESTDIR}${BINDIR}
 .endif
 .if defined(HIDEGAME)
-	(cd ${DESTDIR}/usr/games; rm -f ${PROG}; ln -s dm ${PROG}; \
-	    chown games.bin ${PROG})
+	(cd ${DESTDIR}/usr/games; rm -f ${PROG}; ln -s dm ${PROG})
 .endif
 .endif
 
