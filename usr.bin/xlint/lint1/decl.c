@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.14 1998/07/27 12:10:22 mycroft Exp $	*/
+/*	$NetBSD: decl.c,v 1.15 1998/07/27 13:50:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -2027,7 +2027,7 @@ isredec(dsym, warn)
  * Checks if two types are compatible. Returns 0 if not, otherwise 1.
  *
  * ignqual	ignore qualifiers of type; used for function params
- * promot	promote left type; used for comparision of params of
+ * promot	promote left type; used for comparison of params of
  *		old style function definitions with params of prototypes.
  * *warn	set to 1 if an old style function declaration is not
  *		compatible with a prototype
