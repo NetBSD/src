@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1999/05/26 19:16:30 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1999/06/22 02:04:06 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -337,7 +337,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	pmap_bootstrap(startkernel, endkernel);
 
 #ifdef DDB
-	ddb_init((int)(endsym - startsym), startsym, endsym);
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #if NIPKDB > 0
 	/*
@@ -582,13 +582,13 @@ lookup_bootinfo(type)
 	int type;
 {
 	struct btinfo_common *bt;
-	void *help = (void *)bootinfo;
+	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
 
 	do {
-		bt = (struct btinfo_common *)help;
+		bt = help;
 		if (bt->type == type)
 			return (help);
-		help += bt->next;
+		help = (struct btinfo_common *)((char*)help + bt->next);
 	} while (bt->next &&
 		(size_t)help < (size_t)bootinfo + sizeof (bootinfo));
 
