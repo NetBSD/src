@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.9 2003/07/15 02:54:45 lukem Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.10 2003/08/04 22:26:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.9 2003/07/15 02:54:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.10 2003/08/04 22:26:59 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -455,6 +455,8 @@ cpu_setup(self, ci)
 		&ci->ci_ev_traps, self->dv_xname, "user DSI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_udsi_fatal, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_udsi, self->dv_xname, "user DSI failures");
+	evcnt_attach_dynamic(&ci->ci_ev_kisi, EVCNT_TYPE_TRAP,
+		&ci->ci_ev_traps, self->dv_xname, "kernel ISI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_isi, EVCNT_TYPE_TRAP,
 		&ci->ci_ev_traps, self->dv_xname, "user ISI traps");
 	evcnt_attach_dynamic(&ci->ci_ev_isi_fatal, EVCNT_TYPE_TRAP,
