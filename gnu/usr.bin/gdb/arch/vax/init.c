@@ -72,6 +72,7 @@ extern initialize_file_ftype _initialize_mdebugread;
 extern initialize_file_ftype _initialize_os9kread;
 extern initialize_file_ftype _initialize_annotate;
 extern initialize_file_ftype _initialize_inflow;
+extern initialize_file_ftype _initialize_vaxnbsd_nat;
 void
 initialize_all_files (void)
 {
@@ -141,4 +142,5 @@ initialize_all_files (void)
   _initialize_os9kread ();
   _initialize_annotate ();
   _initialize_inflow ();
+  _initialize_vaxnbsd_nat ();
 }
