@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.3 2002/12/09 22:28:21 jmc Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.4 2002/12/09 23:39:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.3 2002/12/09 22:28:21 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.4 2002/12/09 23:39:18 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.3 2002/12/09 22:28:21 jmc Exp $");
 #ifdef SBPSCSI_DEBUG
 #define DPRINTF(x)      if (sbpscsidebug) printf x
 #define DPRINTFN(n,x)   if (sbpscsidebug>(n)) printf x
-int     sbpscsidebug = 2;
+int     sbpscsidebug = 1;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
