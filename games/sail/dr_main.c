@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_main.c,v 1.4 1995/04/22 10:36:52 cgd Exp $	*/
+/*	$NetBSD: dr_main.c,v 1.5 1997/10/13 19:43:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,20 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: dr_main.c,v 1.4 1995/04/22 10:36:52 cgd Exp $";
+__RCSID("$NetBSD: dr_main.c,v 1.5 1997/10/13 19:43:54 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "driver.h"
+#include <stdlib.h>
+#include <unistd.h>
 
+int
 dr_main()
 {
-	register int n;
-	register struct ship *sp;
+	int n;
+	struct ship *sp;
 	int nat[NNATION];
 	int value = 0;
 

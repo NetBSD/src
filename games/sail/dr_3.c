@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_3.c,v 1.3 1995/04/22 10:36:49 cgd Exp $	*/
+/*	$NetBSD: dr_3.c,v 1.4 1997/10/13 19:43:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,21 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dr_3.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dr_3.c,v 1.3 1995/04/22 10:36:49 cgd Exp $";
+__RCSID("$NetBSD: dr_3.c,v 1.4 1997/10/13 19:43:32 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "driver.h"
+#include <stdlib.h>
 
+void
 moveall()		/* move all comp ships */
 {
-	register struct ship *sp, *sq;		/* r11, r10 */
-	register int n;				/* r9 */
-	register int k, l;			/* r8, r7 */
+	struct ship *sp, *sq;
+	int n;
+	int k, l;
 	int row[NSHIP], col[NSHIP], dir[NSHIP], drift[NSHIP];
 	char moved[NSHIP];
 
@@ -181,10 +184,11 @@ moveall()		/* move all comp ships */
 	}
 }
 
+int
 stillmoving(k)
-register int k;
+int k;
 {
-	register struct ship *sp;
+	struct ship *sp;
 
 	foreachship(sp)
 		if (sp->file->movebuf[k])
@@ -192,10 +196,11 @@ register int k;
 	return 0;
 }
 
+int
 isolated(ship)
-register struct ship *ship;
+struct ship *ship;
 {
-	register struct ship *sp;
+	struct ship *sp;
 
 	foreachship(sp) {
 		if (ship != sp && range(ship, sp) <= 10)
@@ -204,10 +209,11 @@ register struct ship *ship;
 	return 1;
 }
 
+int
 push(from, to)
-register struct ship *from, *to;
+struct ship *from, *to;
 {
-	register int bs, sb;
+	int bs, sb;
 
 	sb = to->specs->guns;
 	bs = from->specs->guns;
@@ -218,12 +224,13 @@ register struct ship *from, *to;
 	return from < to;
 }
 
+void
 step(com, sp, moved)
 char com;
-register struct ship *sp;
+struct ship *sp;
 char *moved;
 {
-	register int dist;
+	int dist;
 
 	switch (com) {
 	case 'r':
@@ -249,7 +256,7 @@ char *moved;
 	case 'd':
 		if (!*moved) {
 			if (windspeed != 0 && ++sp->file->drift > 2 &&
-			    (sp->specs->class >= 3 && !snagged(sp)
+			    ((sp->specs->class >= 3 && !snagged(sp))
 			     || (turn & 1) == 0)) {
 				sp->file->row -= dr[winddir];
 				sp->file->col -= dc[winddir];
@@ -260,13 +267,14 @@ char *moved;
 	}
 }
 
+void
 sendbp(from, to, sections, isdefense)
-register struct ship *from, *to;
+struct ship *from, *to;
 int sections;
 char isdefense;
 {
 	int n;
-	register struct BP *bp;
+	struct BP *bp;
 
 	bp = isdefense ? from->file->DBP : from->file->OBP;
 	for (n = 0; n < NBP && bp[n].turnsent; n++)
@@ -282,12 +290,13 @@ char isdefense;
 	}
 }
 
+int
 toughmelee(ship, to, isdefense, count)
-register struct ship *ship, *to;
+struct ship *ship, *to;
 int isdefense, count;
 {
-	register struct BP *bp;
-	register obp = 0;
+	struct BP *bp;
+	int obp = 0;
 	int n, OBP = 0, DBP = 0, dbp = 0;
 	int qual;
 
@@ -314,26 +323,28 @@ int isdefense, count;
 		return 0;
 }
 
+void
 reload()
 {
-	register struct ship *sp;
+	struct ship *sp;
 
 	foreachship(sp) {
 		sp->file->loadwith = 0;
 	}
 }
 
+void
 checksails()
 {
-	register struct ship *sp;
-	register int rig, full; 
+	struct ship *sp;
+	int rig, full; 
 	struct ship *close;
 
 	foreachship(sp) {
 		if (sp->file->captain[0] != 0)
 			continue;
 		rig = sp->specs->rig1;
-		if (windspeed == 6 || windspeed == 5 && sp->specs->class > 4)
+		if (windspeed == 6 || (windspeed == 5 && sp->specs->class > 4))
 			rig = 0;
 		if (rig && sp->specs->crew3) {
 			close = closestenemy(sp, 0, 0);

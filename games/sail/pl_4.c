@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $	*/
+/*	$NetBSD: pl_4.c,v 1.5 1997/10/13 19:45:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,23 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pl_4.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $";
+__RCSID("$NetBSD: pl_4.c,v 1.5 1997/10/13 19:45:20 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "player.h"
 
+void
 changesail()
 {
 	int rig, full;
 
 	rig = mc->rig1;
 	full = mf->FS;
-	if (windspeed == 6 || windspeed == 5 && mc->class > 4)
+	if (windspeed == 6 || (windspeed == 5 && mc->class > 4))
 		rig = 0;
 	if (mc->crew3 && rig) {
 		if (!full) {
@@ -66,13 +68,14 @@ changesail()
 			}
 		}
 	} else if (!rig)
-		Signal("Sails rent to pieces", (struct ship *)0);
+		Msg("Sails rent to pieces");
 }
 
+void
 acceptsignal()
 {
 	char buf[60];
-	register char *p = buf;
+	char *p = buf;
 
 	*p++ = '"';
 	sgetstr("Message? ", p, sizeof buf - 2);
@@ -83,11 +86,12 @@ acceptsignal()
 	Write(W_SIGNAL, ms, 1, (long)buf, 0, 0, 0);
 }
 
+void
 lookout()
 {
-	register struct ship *sp;
+	struct ship *sp;
 	char buf[3];
-	register char c;
+	char c;
 
 	sgetstr("What ship? ", buf, sizeof buf);
 	foreachship(sp) {
@@ -102,7 +106,7 @@ lookout()
 
 char *
 saywhat(sp, flag)
-register struct ship *sp;
+struct ship *sp;
 char flag;
 {
 	if (sp->file->captain[0])
@@ -117,18 +121,19 @@ char flag;
 		return "(computer)";
 }
 
+void
 eyeball(ship)
-register struct ship *ship;
+struct ship *ship;
 {
 	int i;
 
 	if (ship->file->dir != 0) {
-		Signal("Sail ho! (range %d, %s)",
-			(struct ship *)0, range(ms, ship), saywhat(ship, 0));
+		Msg("Sail ho! (range %d, %s)",
+		    range(ms, ship), saywhat(ship, 0));
 		i = portside(ms, ship, 1) - mf->dir;
 		if (i <= 0)
 			i += 8;
-		Signal("%s (%c%c) %s %s %s.",
+		Signal("%$ %s %s %s.",
 			ship, countryname[ship->nationality],
 			classname[ship->specs->class], directionname[i]);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
+/*	$NetBSD: pl_main.c,v 1.6 1997/10/13 19:45:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,21 +33,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $";
+__RCSID("$NetBSD: pl_main.c,v 1.6 1997/10/13 19:45:48 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "player.h"
 #include <sys/types.h>
 #include <sys/wait.h>
-
-void choke(), child();
+#include <stdlib.h>
+#include <unistd.h>
 
 /*ARGSUSED*/
+int
 pl_main()
 {
 
@@ -56,11 +58,12 @@ pl_main()
 		exit(1);
 	}
 	initialize();
-	Signal("Aye aye, Sir", (struct ship *)0);
+	Msg("Aye aye, Sir");
 	play();
 	return 0;			/* for lint,  play() never returns */
 }
 
+void
 initialize()
 {
 	register struct File *fp;
@@ -248,5 +251,5 @@ reprint:
 	draw_board();
 	(void) sprintf(message, "Captain %s assuming command", captain);
 	Write(W_SIGNAL, ms, 1, (long)message, 0, 0, 0);
-	newturn();
+	newturn(0);
 }

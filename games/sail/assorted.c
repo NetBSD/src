@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.4 1997/01/07 12:42:14 tls Exp $	*/
+/*	$NetBSD: assorted.c,v 1.5 1997/10/13 19:43:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,25 +33,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: assorted.c,v 1.4 1997/01/07 12:42:14 tls Exp $";
+__RCSID("$NetBSD: assorted.c,v 1.5 1997/10/13 19:43:05 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <err.h>
 
+static void strike __P((struct ship *, struct ship *));
+
+void
 table(rig, shot, hittable, on, from, roll)
 struct ship *on, *from;
 int rig, shot, hittable, roll;
 {
-	register int hhits = 0, chits = 0, ghits = 0, rhits = 0;
+	int hhits = 0, chits = 0, ghits = 0, rhits = 0;
 	int Ghit = 0, Hhit = 0, Rhit = 0, Chit = 0;
 	int guns, car, pc, hull;
 	int crew[3];
-	register int n;
+	int n;
 	int rigg[4];
 	char *message;
 	struct Tables *tp;
@@ -158,6 +165,10 @@ int rig, shot, hittable, roll;
 		break;
 	case L_EXPLODE:
 		message = "exploding shot on %s (%c%c)";
+		break;
+	default:
+		errx(1, "Unknown shot type %d", shot);
+
 	}
 	makesignal(from, message, on);
 	if (roll == 6 && rig) {
@@ -183,6 +194,8 @@ int rig, shot, hittable, roll;
 		case 7:
 			message = "main topmast and mizzen mast shattered";
 			break;
+		default:
+			errx(1, "Bad Rhit = %d", Rhit);
 		}
 		makesignal(on, message, (struct ship *)0);
 	} else if (roll == 6) {
@@ -209,6 +222,8 @@ int rig, shot, hittable, roll;
 		case 6:
 			message = "shot holes below the water line";
 			break;
+		default:
+			errx(1, "Bad Hhit = %d", Hhit);
 		}
 		makesignal(on, message, (struct ship *)0);
 	}
@@ -228,8 +243,9 @@ int rig, shot, hittable, roll;
 		strike(on, from);
 }
 
+void
 Cleansnag(from, to, all, flag)
-register struct ship *from, *to;
+struct ship *from, *to;
 char all, flag;
 {
 	if (flag & 1) {
@@ -254,8 +270,9 @@ char all, flag;
 	}
 }
 
+static void
 strike(ship, from)
-register struct ship *ship, *from;
+struct ship *ship, *from;
 {
 	int points;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.4 1997/01/07 12:42:21 tls Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.5 1997/10/13 19:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: lo_main.c,v 1.4 1997/01/07 12:42:21 tls Exp $";
+__RCSID("$NetBSD: lo_main.c,v 1.5 1997/10/13 19:44:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +58,7 @@ char *title[] = {
 	"Commander", "Lieutenant"
 };
 
+int
 lo_main()
 {
 	FILE *fp;
