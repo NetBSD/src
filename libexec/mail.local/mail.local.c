@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.11 1997/10/07 13:07:45 mrg Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.12 1997/10/07 13:13:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.11 1997/10/07 13:07:45 mrg Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.12 1997/10/07 13:13:41 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,8 @@ deliver(fd, name, lockfile)
 	}
 
 	curoff = lseek(mbfd, 0, SEEK_END);
-	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%qd\n", name, curoff);
+	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%qd\n", name,
+	    (long long)curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		err(FATAL, "temporary file: %s", strerror(errno));
 		rval = 1;
