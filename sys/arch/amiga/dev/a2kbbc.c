@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.6 1999/03/14 22:42:12 is Exp $	*/
+/*	$NetBSD: a2kbbc.c,v 1.7 1999/03/28 21:39:59 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -177,8 +177,10 @@ a2kugettod(tvp)
 		return (0);
   
 	secs = clock_ymdhms_to_secs(&dt);
-	tvp->tv_sec = secs;
-	tvp->tv_usec = 0;
+	if (tvp) {
+		tvp->tv_sec = secs;
+		tvp->tv_usec = 0;
+	}
 	return (1);
 }
 
