@@ -41,7 +41,7 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/vm_machdep.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/vm_machdep.c,v 1.2 1993/05/09 23:02:39 deraadt Exp $";
 
 #include "param.h"
 #include "systm.h"
@@ -115,8 +115,6 @@ cpu_fork(p1, p2)
 	return (0);
 }
 
-extern struct proc *npxproc;
-
 #ifdef notyet
 /*
  * cpu_exit is called as the last action during exit.
@@ -138,8 +136,9 @@ cpu_exit(p)
 {
 	static struct pcb nullpcb;	/* pcb to overwrite on last swtch */
 
-	/* free cporcessor (if we have it) */
-	if( p == npxproc) npxproc =0;
+#ifdef NPX
+	npxexit(p);
+#endif
 
 	/* move to inactive space and stack, passing arg accross */
 	p = swtch_to_inactive(p);
@@ -158,9 +157,9 @@ cpu_exit(p)
 	register struct proc *p;
 {
 	
-	/* free coprocessor (if we have it) */
-	if( p == npxproc) npxproc =0;
-
+#ifdef NPX
+	npxexit(p);
+#endif
 	splclock();
 	swtch();
 }
