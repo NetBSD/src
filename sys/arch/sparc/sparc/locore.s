@@ -1273,17 +1273,20 @@ Lpanic_red:
 #define	PTE_OF_ADDR4M(addr, pte, bad, page_offset) \
 	andn	addr, page_offset, pte
 
+/* note: the following misses the PPROT_RWX_RWX case */
 #define CMP_PTE_USER_READ4M(pte) \
 	or	pte, ASI_SRMMUFP_L3, pte; \
 	lda	[pte] ASI_SRMMUFP, pte; \
-	and	pte, 0x1f, pte; \
+	and	pte, (SRMMU_TETYPE | SRMMU_PROT_MASK), pte; \
 	cmp	pte, (SRMMU_TEPTE | PPROT_RX_RX)
 
+
+/* note: PTE bit 4 set implies no user writes */
 #define CMP_PTE_USER_WRITE4M(pte) \
 	or	pte, ASI_SRMMUFP_L3, pte; \
 	lda	[pte] ASI_SRMMUFP, pte; \
-	and	pte, 0x1f, pte; \
-	cmp	pte, (SRMMU_TEPTE | PPROT_RWX_RWX)
+	and	pte, (SRMMU_TETYPE | 0x14), pte; \
+	cmp	pte, (SRMMU_TEPTE | PPROT_WRITE)
 #endif /* 4m */
 
 #if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
