@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.5 2000/03/07 01:54:29 oster Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.6 2001/01/26 04:40:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -47,6 +47,7 @@
  *
  *--------------------------------------------------------------------*/
 
+#include "rf_archs.h"
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_raidframe.h"
@@ -58,10 +59,13 @@
 #include "rf_general.h"
 #include "rf_shutdown.h"
 
+
 extern int rf_copyback_in_progress;	/* debug only */
 
 /* found in rf_kintf.c */
 int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
+
+#if (RF_INCLUDE_PARITY_DECLUSTERING > 0) || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0)
 
 /* configuration code */
 
@@ -645,6 +649,9 @@ rf_remap_to_spare_space(
 	}
 }
 
+#endif /* (RF_INCLUDE_PARITY_DECLUSTERING > 0)  || (RF_INCLUDE_PARITY_DECLUSTERING_PQ > 0) */
+
+
 int 
 rf_InstallSpareTable(
     RF_Raid_t * raidPtr,
@@ -719,7 +726,6 @@ rf_GetNumSpareRUsDeclustered(raidPtr)
 
 	return (((RF_DeclusteredConfigInfo_t *) layoutPtr->layoutSpecificInfo)->TotSparePUsPerDisk);
 }
-
 
 void 
 rf_FreeSpareTable(raidPtr)
