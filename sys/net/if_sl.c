@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.51 1998/07/06 13:51:32 jtk Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.52 1998/08/26 15:12:55 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -167,9 +167,9 @@ Huh? Slip without inet?
 Huh?  SLMTU way too small.
 #endif
 #define	SLIP_HIWAT	roundup(50,CBSIZE)
-#ifndef NetBSD						/* XXX - cgd */
+#ifndef __NetBSD__					/* XXX - cgd */
 #define	CLISTRESERVE	1024	/* Can't let clists get too low */
-#endif	/* !NetBSD */
+#endif	/* !__NetBSD__ */
 
 /*
  * SLIP ABORT ESCAPE MECHANISM:
@@ -259,9 +259,7 @@ slopen(dev, tp)
 	register struct sl_softc *sc;
 	register int nsl;
 	int error;
-#ifdef NetBSD
 	int s;
-#endif
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -280,7 +278,7 @@ slopen(dev, tp)
 			tp->t_state |= TS_ISOPEN | TS_XCLUDE;
 			splx(s);
 			ttyflush(tp, FREAD | FWRITE);
-#ifdef NetBSD
+#ifdef __NetBSD__
 			/*
 			 * make sure tty output queue is large enough
 			 * to hold a full-sized packet (including frame
@@ -303,7 +301,7 @@ slopen(dev, tp)
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
 			splx(s);
-#endif /* NetBSD */
+#endif /* __NetBSD__ */
 			return (0);
 		}
 	return (ENXIO);
@@ -334,7 +332,7 @@ slclose(tp)
 		sc->sc_mp = 0;
 		sc->sc_buf = 0;
 	}
-#ifdef NetBSD
+#ifdef __NetBSD__
 	/* if necessary, install a new outq buffer of the appropriate size */
 	if (sc->sc_oldbufsize != 0) {
 		clfree(&tp->t_outq);
@@ -462,7 +460,7 @@ slstart(tp)
 	u_char bpfbuf[SLMTU + SLIP_HDRLEN];
 	register int len = 0;
 #endif
-#ifndef NetBSD						/* XXX - cgd */
+#ifndef __NetBSD__					/* XXX - cgd */
 	extern int cfreecount;
 #endif
 
@@ -483,7 +481,7 @@ slstart(tp)
 		if (sc == NULL)
 			return;
 
-#ifdef NetBSD						/* XXX - cgd */
+#ifdef __NetBSD__					/* XXX - cgd */
 		/*
 		 * Do not remove the packet from the IP queue if it
 		 * doesn't look like the packet will fit into the
@@ -492,7 +490,7 @@ slstart(tp)
 		 */
 		if (tp->t_outq.c_cn - tp->t_outq.c_cc < 2*SLMTU+2)
 			return;
-#endif /* NetBSD */
+#endif /* __NetBSD__ */
 
 		/*
 		 * Get a packet and send it to the interface.
