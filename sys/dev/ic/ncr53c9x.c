@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.77 2001/04/28 15:09:42 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.78 2001/04/30 13:58:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1101,6 +1101,7 @@ ncr53c9x_sched(sc)
 		if (tag != 0) {
 			li->queued[ecb->xs->xs_tag_id] = ecb;
 			ecb->tag[1] = ecb->xs->xs_tag_id;
+			li->used++;
 		}
 		splx(s);
 		if (li->untagged != NULL && (li->busy != 1)) {
