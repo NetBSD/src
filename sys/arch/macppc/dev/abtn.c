@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.2 2001/03/29 17:44:50 tsubai Exp $	*/
+/*	$NetBSD: abtn.c,v 1.3 2001/06/08 00:32:01 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 
 #include <macppc/dev/adbvar.h>
+#include <macppc/dev/pm_direct.h>
 
 #define NVRAM_BRIGHTNESS 0x140e
 #define ABTN_HANDLER_ID 31

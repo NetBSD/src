@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.4 2000/12/19 02:50:11 tsubai Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.5 2001/06/08 00:32:02 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -95,7 +95,10 @@ struct adb_softc {
 #define ADBLISTEN(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x08 | (reg))
 #define ADBTALK(dev, reg)	((((u_int8_t)(dev) & 0x0f) << 4) | 0x0c | (reg))
 
+void	adb_intr __P((void));
 int	adb_poweroff __P((void));
+void	adb_restart __P((void));
+void	adb_cuda_autopoll __P((void));
 int	CountADBs __P((void));
 void	ADBReInit __P((void));
 int	GetIndADB __P((ADBDataBlock * info, int index));
