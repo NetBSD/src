@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.7 1996/03/14 19:29:14 christos Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.8 1996/03/30 22:38:23 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -561,7 +561,7 @@ svr4_termioctl(fp, cmd, data, p, retval)
 		}
 
 	default:
-		DPRINTF(("Unknown svr4 termios %x\n", cmd));
+		DPRINTF(("Unknown svr4 termios %lx\n", cmd));
 		return ENOSYS;
 	}
 }
