@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.22 2002/06/01 23:51:01 lukem Exp $ */
+/*	$NetBSD: if_xi.c,v 1.23 2002/09/22 10:13:32 martin Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.22 2002/06/01 23:51:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.23 2002/09/22 10:13:32 martin Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -834,13 +834,14 @@ xi_intr(arg)
 	PAGE(sc, 40);
 	rx_status =
 	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RXST0);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + RXST0,
+	    ~rx_status & 0xff);
 	tx_status =
 	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST0);
-
-	/*
-	 * XXX Linux writes to RXST0 and TXST* here.  My CE2 works just fine
-	 * without it, and I can't see an obvious reason for it.
-	 */
+	tx_status |=
+	    bus_space_read_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST1) << 8;
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST0,0);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + TXST1,0);
 
 	PAGE(sc, 0);
 	while (esr & FULL_PKT_RCV) {
@@ -885,6 +886,7 @@ xi_intr(arg)
 
 	/* Check for rx overrun. */
 	if (rx_status & RX_OVERRUN) {
+		ifp->if_ierrors++;
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 		    CLR_RX_OVERRUN);
 		DPRINTF(XID_INTR, ("xi: overrun cleared\n"));
