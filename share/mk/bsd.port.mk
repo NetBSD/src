@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.38 1998/01/25 14:46:10 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.39 1998/01/25 14:50:47 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1057,7 +1057,7 @@ do-fetch:
 # re-distributed freely
 mirror:
 .if (${MIRROR_DISTFILE} == "yes")
-	@make fetch
+	@make fetch __ARCH_OK=yes NO_IGNORE=yes
 .endif
 
 # Extract
