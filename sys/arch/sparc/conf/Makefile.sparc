@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.29 1996/02/29 20:57:30 cgd Exp $
+# 	$NetBSD: Makefile.sparc,v 1.30 1996/03/15 00:02:28 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,8 @@ SPARC=	../..
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=		${DEBUG} -O2 -Werror
+GCCWFLAGS=-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS=		${DEBUG} -O2 ${GCCWFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext F8004000 -e start
 
