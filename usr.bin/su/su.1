@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.19 2000/05/10 19:04:36 jdolecek Exp $
+.\"	$NetBSD: su.1,v 1.20 2001/01/10 21:33:13 sjg Exp $
 .\"
 .Dd January 14, 2000
 .Dt SU 1
@@ -174,6 +174,14 @@ make
 the only member of group
 .Dq wheel ,
 which is the default.)
+.Pp
+For sites with very large user populations, group
+.Dq wheel
+can contain the names of other groups that will be considered authorized
+to
+.Nm
+to
+.Dq root .
 .Pp
 By default (unless the prompt is reset by a startup file) the super-user
 prompt is set to

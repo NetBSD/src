@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.45 2001/01/10 12:30:19 lukem Exp $	*/
+/*	$NetBSD: su.c,v 1.46 2001/01/10 21:33:13 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.45 2001/01/10 12:30:19 lukem Exp $");
+__RCSID("$NetBSD: su.c,v 1.46 2001/01/10 21:33:13 sjg Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,7 @@ int main __P((int, char **));
 
 static int chshell __P((const char *));
 static char *ontty __P((void));
+static int check_ingroup __P((int, const char *, const char *, int));
 
 
 int
@@ -123,7 +124,6 @@ main(argc, argv)
 	extern char **environ;
 	struct passwd *pwd;
 	char *p;
-	struct group *gr;
 #ifdef BSD4_4
 	struct timeval tp;
 #endif
@@ -238,26 +238,18 @@ main(argc, argv)
 	    ) {
 		char *pass = pwd->pw_passwd;
 		int ok = pwd->pw_uid != 0;
-		char **g;
 
 #ifdef ROOTAUTH
 		/*
 		 * Allow those in group rootauth to su to root, by supplying
 		 * their own password.
 		 */
-		if (!ok && (gr = getgrnam(ROOTAUTH)))
-			for (g = gr->gr_mem;; ++g) {
-				if (!*g) {
-					ok = 0;
-					break;
-				}
-				if (!strcmp(username, *g)) {
-					pass = userpass;
-					user = username;
-					ok = 1;
-					break;
-				}
+		if (!ok) {
+			if ((ok = check_ingroup(-1, ROOTAUTH, username, 0))) {
+				pass = userpass;
+				user = username;
 			}
+		}
 #endif
 		/*
 		 * Only allow those in group SUGROUP to su to root,
@@ -265,19 +257,7 @@ main(argc, argv)
 		 * If SUGROUP has no members, allow anyone to su root
 		 */
 		if (!ok) {
-			if ( !(gr = getgrnam(SUGROUP)) || !*gr->gr_mem)
-				ok = 1;
-			else
-				for (g = gr->gr_mem; ; g++) {
-					if (*g == NULL) {
-						ok = 0;
-						break;
-					}
-					if (strcmp(username, *g) == 0) {
-						ok = 1;
-						break;
-					}
-				}
+			ok = check_ingroup(-1, SUGROUP, username, 1);
 		}
 		if (!ok)
 			errx(1,
@@ -352,7 +332,7 @@ badlogin:
 			p = getenv("TERM");
 			/* Create an empty environment */
 			if ((environ = malloc(sizeof(char *))) == NULL)
-				err(1, NULL);
+				err(1, "fuck");
 			environ[0] = NULL;
 #ifdef LOGIN_CAP
 			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
@@ -686,3 +666,71 @@ koktologin(name, realm, toname)
 			   toname);
 }
 #endif
+
+static int
+check_ingroup (gid, gname, user, ifempty)
+	int gid;
+	const char *gname;
+	const char *user;
+	int ifempty;
+{
+	struct group *gr;
+	char **g;
+#ifdef SU_INDIRECT_GROUP
+	char **gr_mem;
+	int n = 0;
+	int i = 0;
+#endif
+	int ok = 0;
+
+	if (gname == NULL)
+		gr = getgrgid((gid_t) gid);
+	else
+		gr = getgrnam(gname);
+
+	/*
+	 * XXX we are relying on the fact that we only set ifempty when
+	 * calling to check for SUGROUP and that is the only time a
+	 * missing group is acceptable.
+	 */
+	if (gr == NULL)
+		return ifempty;
+	if (!*gr->gr_mem)		/* empty */
+		return ifempty;
+
+	/*
+	 * Ok, first see if user is in gr_mem
+	 */
+	for (g = gr->gr_mem; *g; ++g) {
+		if (strcmp(*g, user) == 0)
+			return 1;	/* ok */
+#ifdef SU_INDIRECT_GROUP
+		++n;			/* count them */
+#endif
+	}
+#ifdef SU_INDIRECT_GROUP
+	/*
+	 * No.
+	 * Now we need to duplicate the gr_mem list, and recurse for
+	 * each member to see if it is a group, and if so whether user is
+	 * in it.
+	 */
+	gr_mem = malloc((n + 1) * sizeof (char *));
+	for  (g = gr->gr_mem, i = 0; *g; ++g) {
+		gr_mem[i++] = strdup(*g);
+	}
+	gr_mem[i++] = NULL;
+    
+	for  (g = gr_mem; ok == 0 && *g; ++g) {
+		/*
+		 * If we get this far we don't accept empty/missing groups.
+		 */
+		ok = check_ingroup(-1, *g, user, 0);
+	}
+	for  (g = gr_mem; *g; ++g) {
+		free(*g);
+	}
+	free(gr_mem);
+#endif
+	return ok;
+}
