@@ -1,9 +1,10 @@
-/*	$NetBSD: indent.c,v 1.4 1997/01/09 20:20:11 tls Exp $	*/
+/*	$NetBSD: indent.c,v 1.5 1997/10/18 16:04:33 mrg Exp $	*/
 
 /*
- * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980 The Regents of the University of California.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1976 Board of Trustees of the University of Illinois.
+ * Copyright (c) 1985 Sun Microsystems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,14 +39,17 @@
 #ifndef lint
 char copyright[] =
 "@(#) Copyright (c) 1985 Sun Microsystems, Inc.\n\
- @(#) Copyright (c) 1980 The Regents of the University of California.\n\
- @(#) Copyright (c) 1976 Board of Trustees of the University of Illinois.\n\
- All rights reserved.\n";
+@(#) Copyright (c) 1976 Board of Trustees of the University of Illinois.\n\
+@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)indent.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$NetBSD: indent.c,v 1.4 1997/01/09 20:20:11 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
+#else
+static char rcsid[] = "$NetBSD: indent.c,v 1.5 1997/10/18 16:04:33 mrg Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

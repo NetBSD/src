@@ -1,9 +1,10 @@
-/*	$NetBSD: lexi.c,v 1.4 1997/09/09 09:28:19 agc Exp $	*/
+/*	$NetBSD: lexi.c,v 1.5 1997/10/18 16:04:49 mrg Exp $	*/
 
 /*
- * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980 The Regents of the University of California.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1976 Board of Trustees of the University of Illinois.
+ * Copyright (c) 1985 Sun Microsystems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +37,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lexi.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$NetBSD: lexi.c,v 1.4 1997/09/09 09:28:19 agc Exp $";
+#if 0
+static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: lexi.c,v 1.5 1997/10/18 16:04:49 mrg Exp $";
+#endif
 #endif /* not lint */
 
 /*
