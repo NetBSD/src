@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.147.2.1 2000/08/03 17:17:48 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.147.2.2 2000/08/28 05:39:44 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -655,13 +655,12 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "UMAX    ", "UMAX S-12       ", "V2.1"}, SDEV_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "ULTIMA  ", "A6000C          ", ""}, SDEV_NOLUNS},
-
+	{{T_PROCESSOR, T_FIXED,
+	 "SYMBIOS", "", ""},     SDEV_NOLUNS},
 	{{T_PROCESSOR, T_FIXED,
 	 "LITRONIC", "PCMCIA          ", ""},     SDEV_NOLUNS},
-
 	{{T_CHANGER, T_REMOV,
 	 "SONY    ", "CDL1100         ", ""},     SDEV_NOLUNS},
-
 	{{T_ENCLOSURE, T_FIXED,
 	 "SUN     ", "SENA            ", ""},     SDEV_NOLUNS},
 };
@@ -817,7 +816,7 @@ scsi_probedev(scsi, target, lun)
 	default:
 		break;
 	}
-	if (checkdtype)
+	if (checkdtype) {
 		switch (inqbuf.device & SID_TYPE) {
 		case T_DIRECT:
 		case T_SEQUENTIAL:
@@ -841,6 +840,25 @@ scsi_probedev(scsi, target, lun)
 		case T_NODEVICE:
 			goto bad;
 		}
+		/*
+		 * At this point we can also tell the adapter that it
+		 * may negotiate things as appropriate.
+		 */
+		if (sc_link->adapter->scsipi_ioctl) {
+			struct scbusaccel_args s;
+			s.sa_target = target;
+			s.sa_lun = lun;
+			s.sa_flags = 0;
+			if ((sc_link->quirks & SDEV_NOTAG) == 0)
+				s.sa_flags |= SC_ACCEL_TAGS;
+			if ((sc_link->quirks & SDEV_NOSYNC) == 0)
+				s.sa_flags |= SC_ACCEL_SYNC;
+			if ((sc_link->quirks & SDEV_NOWIDE) == 0)
+				s.sa_flags |= SC_ACCEL_WIDE;
+			(void) (*sc_link->adapter->scsipi_ioctl)
+			    (sc_link, SCBUSACCEL, (caddr_t)&s, FWRITE, curproc);
+		}
+	}
 
 	if ((cf = config_search(scsibussubmatch, (struct device *)scsi,
 	    &sa)) != NULL) {
