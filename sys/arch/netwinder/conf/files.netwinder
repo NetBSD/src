@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.28 2002/11/03 21:43:32 chris Exp $
+#	$NetBSD: files.netwinder,v 1.29 2003/10/08 17:29:59 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -102,7 +102,7 @@ file	arch/netwinder/pci/pcib.c		pcib
 # XXX (when the conf/files and files.isa bogons are fixed, this can
 # XXX be fixed as well.)
 
-file	arch/netwinder/pci/pciide_machdep.c	pciide
+file	arch/netwinder/pci/pciide_machdep.c	pciide_common
 
 include "dev/pckbc/files.pckbc"
 

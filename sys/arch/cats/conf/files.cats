@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.25 2003/10/04 15:43:05 chris Exp $
+#	$NetBSD: files.cats,v 1.26 2003/10/08 17:29:59 bouyer Exp $
 #
 # CATS-specific configuration info
 #
@@ -101,7 +101,7 @@ file	arch/cats/pci/pcib.c			pcib
 attach	lpt at puc with lpt_puc
 file	dev/pci/lpt_puc.c	lpt_puc
 
-file	arch/cats/pci/pciide_machdep.c	pciide
+file	arch/cats/pci/pciide_machdep.c	pciide_common
 
 # Include USB stuff
 include "dev/usb/files.usb"

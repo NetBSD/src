@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.16 2003/07/27 01:17:39 thorpej Exp $
+#	$NetBSD: files.algor,v 1.17 2003/10/08 17:29:59 bouyer Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -116,7 +116,7 @@ attach	pcib at pci
 file	arch/algor/pci/pcib.c			pcib & (algor_p5064 |
 							algor_p6032)
 
-file	arch/algor/pci/pciide_machdep.c		pciide
+file	arch/algor/pci/pciide_machdep.c		pciide_common
 
 #
 # ISA bus support.
