@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2000/05/28 09:58:15 blymn Exp $
+#	$NetBSD: Makefile,v 1.23.2.1 2000/09/04 03:39:41 jhawk Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
@@ -31,8 +31,8 @@ LINKS+=	${LIBDIR}/libtermcap_pic.a ${LIBDIR}/libtermlib_pic.a
 .endif
 
 .if exists(${.CURDIR}/shlib_version)
-LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	${LIBDIR}/libtermlib.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
+	${LIBDIR}/libtermlib.so.${SHLIB_FULLVERSION}
 
 .if (${OBJECT_FMT} == "ELF")
 LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR} \
