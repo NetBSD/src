@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.157 2001/04/01 19:24:06 augustss Exp $
+$NetBSD: usbdevs,v 1.158 2001/04/05 20:52:34 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -398,8 +398,9 @@ product BROTHER HL1050		0x0002	HL-1050 laser printer
 product BTC BTC7932		0x6782	Keyboard with mouse port
 
 /* Canon, Inc. products */
-product CANON S10		0x3041	PowerShot S10
 product CANON N656U		0x2206	CANOSCAN N656U
+product CANON S10		0x3041	PowerShot S10
+product CANON S100		0x3045	PowerShot S100
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter
