@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 2003/03/11 18:32:59 drochner Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4 2003/11/05 04:18:26 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -93,7 +93,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	f->f_dev = dp;
 
 	/* If the DHCP server provided a file name, use it. */
-	if (bootfile[0] != '\0')
+	if (!fname && bootfile[0] != '\0')
 		fname = bootfile;
 
 	filename = strchr(fname, ':');
