@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.216 2004/05/22 17:59:30 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.217 2004/05/22 18:06:40 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2939,11 +2939,11 @@ dist/ipf/man/ipfs.8				1.6
 	Fix formatting of some options and a typo.
 	[jmmv, ticket #375]
 
-sys/arch/i386/include/int_fmtio.h		1.5
-sys/arch/i386/include/int_limits.h		1.4
-sys/arch/i386/include/int_mwgwtypes.h		1.3
+sys/arch/i386/include/int_fmtio.h		1.5-1.6
+sys/arch/i386/include/int_limits.h		1.4-1.5
+sys/arch/i386/include/int_mwgwtypes.h		1.3-1.4
 
-	Change {u,}int_fast{8,16}_t to 32-bit types, as the previous
+	Change {u,}int_fast16_t to 32-bit types, as the previous
 	minimum-width implementation was a rather poor choice.
 
 	Note: While this is technically an ABI change I believe it
