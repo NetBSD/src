@@ -1,0 +1,22 @@
+#!/bin/sh
+# $NetBSD: script1,v 1.1 2001/03/06 21:21:07 garbled Exp $
+
+grep sendmail/sendmail /etc/mailer.conf >/dev/null
+if [ "$?" = "0" ]; then
+	echo "sendmail"
+	echo "postfix"
+fi
+
+grep postfix/sendmail /etc/mailer.conf >/dev/null
+if [ "$?" = "0" ]; then
+	echo "postfix"
+	echo "sendmail"
+fi
+
+for i in $BIGLIST
+do
+	pkg_info -e $i >/dev/null
+	if [ "$?" = "0" ]; then
+		echo "$i"
+	fi
+done
