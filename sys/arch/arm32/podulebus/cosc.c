@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.16 2001/04/25 17:53:11 bouyer Exp $	*/
+/*	$NetBSD: cosc.c,v 1.17 2001/05/13 13:53:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -228,13 +228,9 @@ coscattach(pdp, dp, auxp)
 	printf(" hostid=%d", sc->sc_softc.sc_host_id);
 
 #if COSC_POLL > 0
-        if (boot_args) {
-        	char *ptr;
-       
-		ptr = strstr(boot_args, "nocoscpoll");
-		if (ptr)
-			cosc_poll = 0;
-	}
+        if (boot_args)
+		get_bootconf_option(boot_args, "coscpoll",
+		    BOOTOPT_TYPE_BOOLEAN, &cosc_poll);
 
 	if (cosc_poll)
 		printf(" polling");

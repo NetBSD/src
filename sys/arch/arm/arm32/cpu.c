@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2001/04/20 18:08:48 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2001/05/13 13:53:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -230,10 +230,11 @@ identify_master_cpu(dv, cpu_number)
 
 #ifdef ARMFPE
 		if (boot_args) {
-			char *ptr;
+			int usearmfpe = 1;
 
-			ptr = strstr(boot_args, "noarmfpe");
-			if (!ptr) {
+			get_bootconf_option(boot_args, "armfpe",
+			    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
+			if (usearmfpe) {
 				if (initialise_arm_fpe(&cpus[cpu_number]) != 0)
 					identify_arm_fpu(dv, cpu_number);
 			}
