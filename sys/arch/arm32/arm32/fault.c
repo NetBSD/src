@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.40 1999/03/24 05:50:54 mrg Exp $	*/
+/*	$NetBSD: fault.c,v 1.41 1999/03/26 22:00:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -192,19 +192,6 @@ copyfault:
 			    pcb->pcb_onfault);
 		return;
 	}
-
-#ifdef DIAGNOSTIC
-	if (current_intr_depth > 0) {
-#ifdef DDB
-		printf("Fault with intr_depth > 0\n");
-		report_abort(NULL, fault_status, fault_address, fault_pc);
-		kdb_trap(-1, frame);
-		return;
-#else
-		panic("Fault with intr_depth > 0");
-#endif	/* DDB */
-	}
-#endif	/* DIAGNOSTIC */
 
 	/* More debug stuff */
 
@@ -413,6 +400,19 @@ copyfault:
 		    pmap_modified_emulation(map->pmap, va) :
 		    pmap_handled_emulation(map->pmap, va))
 			goto out;
+
+#ifdef DIAGNOSTIC
+		if (current_intr_depth > 0) {
+#ifdef DDB
+			printf("Non-emulated page fault with intr_depth > 0\n");
+			report_abort(NULL, fault_status, fault_address, fault_pc);
+			kdb_trap(-1, frame);
+			return;
+#else
+			panic("Fault with intr_depth > 0");
+#endif	/* DDB */
+		}
+#endif	/* DIAGNOSTIC */
 
 		rv = uvm_fault(map, va, 0, ftype);
 		if (rv == KERN_SUCCESS)

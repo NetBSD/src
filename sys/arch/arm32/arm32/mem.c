@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 1999/03/24 05:50:55 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 1999/03/26 22:00:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,7 +123,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			pmap_enter(pmap_kernel(), (vm_offset_t)memhook,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE, 0);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)memhook + o, c, uio);
