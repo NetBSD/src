@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.36 2003/08/07 16:32:31 agc Exp $	*/
+/*	$NetBSD: ufs.c,v 1.37 2003/08/18 08:00:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -59,12 +59,7 @@
  */
 
 /*
- * XXX NOTE: ufs.c (FFS) and lfs.c (LFS) should eventually use much common
- * XXX code.  until then, the two files should be easily diffable.
- */
-
-/*
- *	Stand-alone file reading package.
+ *	Stand-alone file reading package for UFS and LFS filesystems.
  */
 
 #include <sys/param.h>
@@ -157,15 +152,15 @@ struct file {
 	daddr_t		f_buf_blkno;	/* block number of data block */
 };
 
-static int	read_inode __P((ino_t, struct open_file *));
-static int	block_map __P((struct open_file *, daddr_t, daddr_t *));
-static int	buf_read_file __P((struct open_file *, char **, size_t *));
-static int	search_directory __P((char *, struct open_file *, ino_t *));
+static int	read_inode(ino_t, struct open_file *);
+static int	block_map(struct open_file *, daddr_t, daddr_t *);
+static int	buf_read_file(struct open_file *, char **, size_t *);
+static int	search_directory(const char *, struct open_file *, ino_t *);
 #ifdef LIBSA_FFSv1
-static void	ffs_oldfscompat __P((struct fs *));
+static void	ffs_oldfscompat(struct fs *);
 #endif
 #ifdef LIBSA_FFSv2
-static int	ffs_find_superblock __P((struct open_file *, struct fs *));
+static int	ffs_find_superblock(struct open_file *, struct fs *);
 #endif
 
 #ifdef LIBSA_LFS
@@ -208,9 +203,7 @@ find_inode_sector(ino_t inumber, struct open_file *f, daddr_t *isp)
  * Read a new inode into a file structure.
  */
 static int
-read_inode(inumber, f)
-	ino_t inumber;
-	struct open_file *f;
+read_inode(ino_t inumber, struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
@@ -284,10 +277,7 @@ out:
  * contains that block.
  */
 static int
-block_map(f, file_block, disk_block_p)
-	struct open_file *f;
-	daddr_t file_block;
-	daddr_t *disk_block_p;	/* out */
+block_map(struct open_file *f, daddr_t file_block, daddr_t *disk_block_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
@@ -389,10 +379,7 @@ block_map(f, file_block, disk_block_p)
  * the location in the buffer and the amount in the buffer.
  */
 static int
-buf_read_file(f, buf_p, size_p)
-	struct open_file *f;
-	char **buf_p;		/* out */
-	size_t *size_p;		/* out */
+buf_read_file(struct open_file *f, char **buf_p, size_t *size_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct fs *fs = fp->f_fs;
@@ -455,10 +442,7 @@ buf_read_file(f, buf_p, size_p)
  * i_number.
  */
 static int
-search_directory(name, f, inumber_p)
-	char *name;
-	struct open_file *f;
-	ino_t *inumber_p;		/* out */
+search_directory(const char *name, struct open_file *f, ino_t *inumber_p)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	struct direct *dp;
@@ -506,9 +490,7 @@ search_directory(name, f, inumber_p)
 daddr_t sblock_try[] = SBLOCKSEARCH;
 
 static int
-ffs_find_superblock(f, fs)
-	struct open_file *f;
-	struct fs *fs;
+ffs_find_superblock(struct open_file *f, struct fs *fs)
 {
 	int i, rc;
 	size_t buf_size;
@@ -532,9 +514,7 @@ ffs_find_superblock(f, fs)
  * Open a file.
  */
 int
-ufs_open(path, f)
-	char *path;
-	struct open_file *f;
+ufs_open(char *path, struct open_file *f)
 {
 #ifndef LIBSA_FS_SINGLECOMPONENT
 	char *cp, *ncp;
@@ -788,8 +768,7 @@ out:
 
 #ifndef LIBSA_NO_FS_CLOSE
 int
-ufs_close(f)
-	struct open_file *f;
+ufs_close(struct open_file *f)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	int level;
@@ -815,11 +794,7 @@ ufs_close(f)
  * Cross block boundaries when necessary.
  */
 int
-ufs_read(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;	/* out */
+ufs_read(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 	size_t csize;
@@ -856,11 +831,7 @@ ufs_read(f, start, size, resid)
  */
 #ifndef LIBSA_NO_FS_WRITE
 int
-ufs_write(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;	/* out */
+ufs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
 
 	return (EROFS);
@@ -869,10 +840,7 @@ ufs_write(f, start, size, resid)
 
 #ifndef LIBSA_NO_FS_SEEK
 off_t
-ufs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+ufs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 
@@ -894,9 +862,7 @@ ufs_seek(f, offset, where)
 #endif /* !LIBSA_NO_FS_SEEK */
 
 int
-ufs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+ufs_stat(struct open_file *f, struct stat *sb)
 {
 	struct file *fp = (struct file *)f->f_fsdata;
 
@@ -915,8 +881,7 @@ ufs_stat(f, sb)
  * XXX - goes away some day.
  */
 static void
-ffs_oldfscompat(fs)
-	struct fs *fs;
+ffs_oldfscompat(struct fs *fs)
 {
 #ifdef COMPAT_UFS
 	int i;
