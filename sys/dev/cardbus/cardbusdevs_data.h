@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.2 1999/11/08 19:57:32 joda Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.3 1999/11/18 15:09:59 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.4 1999/11/08 19:57:13 joda Exp 
+ *	NetBSD: cardbusdevs,v 1.5 1999/11/18 15:09:30 joda Exp 
  */
 
 /*
@@ -70,6 +70,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "82557 Fast Ethernet LAN Controller",
 	},
 	{
+	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
+	    0,
+	    "Intel",
+	    "Modem /* XXX product name? */",
+	},
+	{
 	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
 	    0,
 	    "Opti",
@@ -127,6 +133,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_INTEL, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Intel",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_INVALID, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "INVALID VENDOR ID",
 	    NULL,
 	},
 	{ 0, 0, 0, NULL, NULL, }

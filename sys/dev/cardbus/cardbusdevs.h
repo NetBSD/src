@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.2 1999/11/08 19:57:32 joda Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.3 1999/11/18 15:09:59 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.4 1999/11/08 19:57:13 joda Exp 
+ *	NetBSD: cardbusdevs,v 1.5 1999/11/18 15:09:30 joda Exp 
  */
 
 /*
@@ -54,6 +54,7 @@
 #define	CARDBUS_VENDOR_OPTI	0x1045		/* Opti */
 #define	CARDBUS_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	CARDBUS_VENDOR_INTEL	0x8086		/* Intel */
+#define	CARDBUS_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
 
 /*
  * List of known products.  Grouped by vendor.
@@ -72,6 +73,7 @@
 
 /* Intel products */
 #define	CARDBUS_PRODUCT_INTEL_82557	0x1229		/* 82557 Fast Ethernet LAN Controller */
+#define	CARDBUS_PRODUCT_INTEL_MODEM56	0x1002		/* Modem /* XXX product name? */ */
 
 /* Opti products */
 #define	CARDBUS_PRODUCT_OPTI_82C861	0xc861		/* 82C861 USB Host Controller (OHCI) */
