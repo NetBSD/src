@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.15 1998/09/05 13:20:08 pk Exp $	*/
+/*	$NetBSD: crt0.c,v 1.16 2002/02/22 13:46:30 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,12 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdlib.h>
-
-#include "common.h"
-
-extern void	start __P((char *)) __asm("start");
-
 /*
  * Stack layout provided to start:
  *
@@ -59,6 +53,12 @@ extern void	start __P((char *)) __asm("start");
  */
 
 register struct ps_strings *kps_strings __asm("r7");
+
+#include <stdlib.h>
+
+#include "common.h"
+
+extern void	start __P((char *)) __asm("start");
 
 void
 start(arg0)
@@ -103,7 +103,7 @@ __asm("__callmain:");		/* Defined for the benefit of debuggers */
  *  is the entrypoint. (Not really necessary, just to avoid confusion).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.15 1998/09/05 13:20:08 pk Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.16 2002/02/22 13:46:30 matthias Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef DYNAMIC
