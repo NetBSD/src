@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: mcache.c,v 1.1.1.1 2000/06/16 18:33:00 thorpej Exp $");
+RCSID("$Id: mcache.c,v 1.1.1.2 2000/08/02 19:59:34 assar Exp $");
 
 typedef struct krb5_mcache {
     krb5_principal primary_principal;

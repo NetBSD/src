@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: md5.h,v 1.1.1.1 2000/06/16 18:32:26 thorpej Exp $ */
+/* $Id: md5.h,v 1.1.1.2 2000/08/02 20:00:07 assar Exp $ */
 
 #include <stdlib.h>
 #ifdef HAVE_SYS_TYPES_H

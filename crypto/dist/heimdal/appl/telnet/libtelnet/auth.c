@@ -53,7 +53,7 @@
 
 #include <config.h>
 
-RCSID("$Id: auth.c,v 1.1.1.1 2000/06/16 18:31:53 thorpej Exp $");
+RCSID("$Id: auth.c,v 1.1.1.2 2000/08/02 19:58:17 assar Exp $");
 
 #if	defined(AUTHENTICATION)
 #include <stdio.h>

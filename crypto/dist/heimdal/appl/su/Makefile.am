@@ -1,11 +1,11 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:32:05 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.2 2000/08/02 19:58:11 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 INCLUDES += $(INCLUDE_krb4)
 
-noinst_PROGRAMS = su
-#bin_SUIDS = su
+bin_PROGRAMS = su
+bin_SUIDS = su
 su_SOURCES = su.c
 
 LDADD = $(LIB_kafs) \

@@ -140,14 +140,14 @@ checksum_authenticator(Authenticator *auth, void *data)
     MD5_CTX md5;
     int i;
 
-    MD5_Init (&md5);
-    MD5_Update (&md5, auth->crealm, strlen(auth->crealm));
+    MD5Init (&md5);
+    MD5Update (&md5, auth->crealm, strlen(auth->crealm));
     for(i = 0; i < auth->cname.name_string.len; i++)
-	MD5_Update(&md5, auth->cname.name_string.val[i], 
+	MD5Update(&md5, auth->cname.name_string.val[i], 
 		  strlen(auth->cname.name_string.val[i]));
-    MD5_Update (&md5, &auth->ctime, sizeof(auth->ctime));
-    MD5_Update (&md5, &auth->cusec, sizeof(auth->cusec));
-    MD5_Final (&md5, data);
+    MD5Update (&md5, &auth->ctime, sizeof(auth->ctime));
+    MD5Update (&md5, &auth->cusec, sizeof(auth->cusec));
+    MD5Final (&md5, data);
 }
 
 krb5_error_code

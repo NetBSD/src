@@ -33,7 +33,7 @@
 
 #include <config.h>
 
-RCSID("$Id: enc_des.c,v 1.1.1.1 2000/06/16 18:31:54 thorpej Exp $");
+RCSID("$Id: enc_des.c,v 1.1.1.2 2000/08/02 19:58:17 assar Exp $");
 
 #if	defined(AUTHENTICATION) && defined(ENCRYPTION) && defined(DES_ENCRYPTION)
 #include <arpa/telnet.h>

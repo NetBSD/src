@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: time.c,v 1.1.1.1 2000/06/16 18:33:01 thorpej Exp $");
+RCSID("$Id: time.c,v 1.1.1.2 2000/08/02 19:59:41 assar Exp $");
 
 /*
  * return ``corrected'' time in `timeret'.
@@ -62,5 +62,18 @@ krb5_us_timeofday (krb5_context context,
 
     *sec  = tv.tv_sec + context->kdc_sec_offset;
     *usec = tv.tv_usec;		/* XXX */
+    return 0;
+}
+
+krb5_error_code
+krb5_format_time(krb5_context context, time_t t, 
+		 char *s, size_t len, krb5_boolean include_time)
+{
+    struct tm *tm;
+    if(context->log_utc)
+	tm = gmtime (&t);
+    else
+	tm = localtime(&t);
+    strftime(s, len, include_time ? context->time_fmt : context->date_fmt, tm);
     return 0;
 }

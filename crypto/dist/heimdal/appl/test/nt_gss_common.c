@@ -35,7 +35,7 @@
 #include <gssapi.h>
 #include "nt_gss_common.h"
 
-RCSID("$Id: nt_gss_common.c,v 1.1.1.1 2000/06/16 18:31:46 thorpej Exp $");
+RCSID("$Id: nt_gss_common.c,v 1.1.1.2 2000/08/02 19:58:13 assar Exp $");
 
 /*
  * These are functions that are needed to interoperate with the

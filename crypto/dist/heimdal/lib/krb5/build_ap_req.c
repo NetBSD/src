@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: build_ap_req.c,v 1.1.1.1 2000/06/16 18:32:56 thorpej Exp $");
+RCSID("$Id: build_ap_req.c,v 1.1.1.2 2000/08/02 19:59:24 assar Exp $");
 
 krb5_error_code
 krb5_build_ap_req (krb5_context context,

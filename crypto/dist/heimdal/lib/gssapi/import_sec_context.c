@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$Id: import_sec_context.c,v 1.1.1.1 2000/06/16 18:32:48 thorpej Exp $");
+RCSID("$Id: import_sec_context.c,v 1.1.1.2 2000/08/02 19:59:09 assar Exp $");
 
 OM_uint32
 gss_import_sec_context (
@@ -121,24 +121,24 @@ gss_import_sec_context (
 
 #if 0
     {
-	size_t sz;
+	    size_t sz;
 
-	krb5_ret_data (sp, &data);
-	ac->authenticator = malloc (sizeof (*ac->authenticator));
-	if (ac->authenticator == NULL) {
-	    *minor_status = ENOMEM;
-	    ret = GSS_S_FAILURE;
-	    goto failure;
-	}
+	    krb5_ret_data (sp, &data);
+	    ac->authenticator = malloc (sizeof (*ac->authenticator));
+	    if (ac->authenticator == NULL) {
+		*minor_status = ENOMEM;
+		ret = GSS_S_FAILURE;
+		goto failure;
+	    }
 
-	kret = decode_Authenticator (data.data, data.length,
-				     ac->authenticator, &sz);
-	krb5_data_free (&data);
-	if (kret) {
-	    *minor_status = kret;
-	    ret = GSS_S_FAILURE;
-	    goto failure;
-	}
+	    kret = decode_Authenticator (data.data, data.length,
+					 ac->authenticator, &sz);
+	    krb5_data_free (&data);
+	    if (kret) {
+		*minor_status = kret;
+		ret = GSS_S_FAILURE;
+		goto failure;
+	    }
     }
 #endif
 

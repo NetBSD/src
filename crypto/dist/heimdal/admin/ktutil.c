@@ -33,12 +33,14 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$Id: ktutil.c,v 1.1.1.1 2000/06/16 18:31:39 thorpej Exp $");
+RCSID("$Id: ktutil.c,v 1.1.1.2 2000/08/02 19:58:04 assar Exp $");
 
 static int help_flag;
 static int version_flag;
 int verbose_flag;
 char *keytab_string; 
+
+static char keytab_buf[256];
 
 static int help(int argc, char **argv);
 
@@ -143,6 +145,10 @@ main(int argc, char **argv)
     if(keytab_string) {
 	ret = krb5_kt_resolve(context, keytab_string, &keytab);
     } else {
+	if(krb5_kt_default_name (context, keytab_buf, sizeof(keytab_buf)))
+	    strlcpy (keytab_buf, "unknown", sizeof(keytab_buf));
+	keytab_string = keytab_buf;
+
 	ret = krb5_kt_default(context, &keytab);
     }
     if(ret)

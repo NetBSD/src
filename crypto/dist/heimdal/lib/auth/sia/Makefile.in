@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4a from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-9, 2000 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -9,15 +9,6 @@
 # but WITHOUT ANY WARRANTY, to the extent permitted by law; without
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:32:41 thorpej Exp $
-
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:32:41 thorpej Exp $
-
-
-# $Id: Makefile.in,v 1.1.1.1 2000/06/16 18:32:41 thorpej Exp $
-
 
 SHELL = @SHELL@
 
@@ -40,8 +31,6 @@ mandir = @mandir@
 includedir = @includedir@
 oldincludedir = /usr/include
 
-DESTDIR =
-
 pkgdatadir = $(datadir)/@PACKAGE@
 pkglibdir = $(libdir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -54,9 +43,10 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_STRIP_FLAG =
 transform = @program_transform_name@
 
 NORMAL_INSTALL = :
@@ -65,21 +55,31 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+
+@SET_MAKE@
 host_alias = @host_alias@
 host_triplet = @host@
-AFS_EXTRA_LD = @AFS_EXTRA_LD@
 AIX_EXTRA_KAFS = @AIX_EXTRA_KAFS@
+AMDEP = @AMDEP@
+AMTAR = @AMTAR@
+AS = @AS@
 AWK = @AWK@
 CANONICAL_HOST = @CANONICAL_HOST@
 CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
+CPP = @CPP@
+CPPFLAGS_roken = @CPPFLAGS_roken@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
+DEPDIR = @DEPDIR@
+DIR_roken = @DIR_roken@
+DLLTOOL = @DLLTOOL@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
 INCLUDE_ = @INCLUDE_@
-LD = @LD@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
@@ -92,21 +92,31 @@ LIB_security = @LIB_security@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
-MAKE_X_PROGS_BIN_PROGS = @MAKE_X_PROGS_BIN_PROGS@
-MAKE_X_PROGS_BIN_SCRPTS = @MAKE_X_PROGS_BIN_SCRPTS@
-MAKE_X_PROGS_LIBEXEC_PROGS = @MAKE_X_PROGS_LIBEXEC_PROGS@
 NEED_WRITEAUTH_FALSE = @NEED_WRITEAUTH_FALSE@
 NEED_WRITEAUTH_TRUE = @NEED_WRITEAUTH_TRUE@
-NM = @NM@
 NROFF = @NROFF@
+OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
+STRIP = @STRIP@
 VERSION = @VERSION@
 VOID_RETSIGTYPE = @VOID_RETSIGTYPE@
 WFLAGS_NOIMPLICITINT = @WFLAGS_NOIMPLICITINT@
 WFLAGS_NOUNUSED = @WFLAGS_NOUNUSED@
 YACC = @YACC@
+dpagaix_CFLAGS = @dpagaix_CFLAGS@
+dpagaix_LDADD = @dpagaix_LDADD@
+install_sh = @install_sh@
+
+# $Id: Makefile.in,v 1.1.1.2 2000/08/02 20:00:23 assar Exp $
+
+
+# $Id: Makefile.in,v 1.1.1.2 2000/08/02 20:00:23 assar Exp $
+
+
+# $Id: Makefile.in,v 1.1.1.2 2000/08/02 20:00:23 assar Exp $
+
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
@@ -114,7 +124,9 @@ SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x .c .o
 
 INCLUDES = -I$(top_builddir)/include $(INCLUDE_krb4)
 
-AM_CFLAGS =  $(WFLAGS)
+AM_CFLAGS =  $(WFLAGS) $(CPPFLAGS_roken)
+
+CP = cp
 
 COMPILE_ET = $(top_builddir)/lib/com_err/compile_et
 
@@ -168,10 +180,11 @@ CATSUFFIX = @CATSUFFIX@
 
 NROFF_MAN = groff -mandoc -Tascii
 
-@KRB4_TRUE@LIB_kafs = $(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
+@KRB4_TRUE@LIB_kafs = @KRB4_TRUE@$(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
 
-@KRB5_TRUE@LIB_krb5 = $(top_builddir)/lib/krb5/libkrb5.la 	$(top_builddir)/lib/asn1/libasn1.la
-@KRB5_TRUE@LIB_gssapi = $(top_builddir)/lib/gssapi/libgssapi.la
+@KRB5_TRUE@LIB_krb5 = @KRB5_TRUE@$(top_builddir)/lib/krb5/libkrb5.la \
+@KRB5_TRUE@	$(top_builddir)/lib/asn1/libasn1.la
+@KRB5_TRUE@LIB_gssapi = @KRB5_TRUE@$(top_builddir)/lib/gssapi/libgssapi.la
 
 CHECK_LOCAL = $(PROGRAMS)
 
@@ -179,13 +192,31 @@ WFLAGS = @WFLAGS@ $(WFLAGS_NOIMPLICITINT)
 
 DEFS = @DEFS@
 
-@KRB4_TRUE@KAFS = $(top_builddir)/lib/kafs/.libs/libkafs.a
-@KRB4_TRUE@KAFS_S = $(top_builddir)/lib/kafs/.libs/libkafs.so
+@KRB4_TRUE@KAFS = @KRB4_TRUE@$(top_builddir)/lib/kafs/.libs/libkafs.a
+@KRB4_TRUE@KAFS_S = @KRB4_TRUE@$(top_builddir)/lib/kafs/.libs/libkafs.so
 
-L =  	$(KAFS)							$(top_builddir)/lib/krb5/.libs/libkrb5.a		$(top_builddir)/lib/asn1/.libs/libasn1.a		$(LIB_krb4)						$(top_builddir)/lib/des/.libs/libdes.a			$(top_builddir)/lib/com_err/.libs/libcom_err.a		$(top_builddir)/lib/roken/.libs/libroken.a		$(LIB_getpwnam_r)					-lc
+L = \
+	$(KAFS)						\
+	$(top_builddir)/lib/krb5/.libs/libkrb5.a	\
+	$(top_builddir)/lib/asn1/.libs/libasn1.a	\
+	$(LIB_krb4)					\
+	$(top_builddir)/lib/des/.libs/libdes.a		\
+	$(top_builddir)/lib/com_err/.libs/libcom_err.a	\
+	$(top_builddir)/lib/roken/.libs/libroken.a	\
+	$(LIB_getpwnam_r)				\
+	-lc
 
 
-L_shared =  	$(KAFS_S)						$(top_builddir)/lib/krb5/.libs/libkrb5.so		$(top_builddir)/lib/asn1/.libs/libasn1.so		$(LIB_krb4)						$(top_builddir)/lib/des/.libs/libdes.so			$(top_builddir)/lib/com_err/.libs/libcom_err.so		$(top_builddir)/lib/roken/.libs/libroken.so		$(LIB_getpwnam_r)					-lc
+L_shared = \
+	$(KAFS_S)					\
+	$(top_builddir)/lib/krb5/.libs/libkrb5.so	\
+	$(top_builddir)/lib/asn1/.libs/libasn1.so	\
+	$(LIB_krb4)					\
+	$(top_builddir)/lib/des/.libs/libdes.so		\
+	$(top_builddir)/lib/com_err/.libs/libcom_err.so	\
+	$(top_builddir)/lib/roken/.libs/libroken.so	\
+	$(LIB_getpwnam_r)				\
+	-lc
 
 
 EXTRA_DIST = sia.c krb5_matrix.conf krb5+c2_matrix.conf security.patch
@@ -198,6 +229,7 @@ LDFLAGS = -rpath $(libdir) -hidden -exported_symbol siad_\*
 OBJS = sia.o posix_getpw.o
 
 CLEANFILES = libsia_krb5.so $(OBJS) so_locations
+subdir = lib/auth/sia
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../../include/config.h
 CONFIG_CLEAN_FILES = 
@@ -205,15 +237,16 @@ CFLAGS = @CFLAGS@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+DIST_SOURCES = 
 DATA =  $(foo_DATA)
 
+depcomp = 
 DIST_COMMON =  Makefile.am Makefile.in
 
 
-DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
 GZIP_ENV = --best
 all: all-redirect
 .SUFFIXES:
@@ -230,19 +263,18 @@ install-fooDATA: $(foo_DATA)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(foodir)
 	@list='$(foo_DATA)'; for p in $$list; do \
-	  if test -f $(srcdir)/$$p; then \
-	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(foodir)/$$p"; \
-	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(foodir)/$$p; \
-	  else if test -f $$p; then \
-	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(foodir)/$$p"; \
-	    $(INSTALL_DATA) $$p $(DESTDIR)$(foodir)/$$p; \
-	  fi; fi; \
+	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(foodir)/$$f"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(foodir)/$$f; \
 	done
 
 uninstall-fooDATA:
 	@$(NORMAL_UNINSTALL)
-	list='$(foo_DATA)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(foodir)/$$p; \
+	@list='$(foo_DATA)'; for p in $$list; do \
+	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(foodir)/$$f"; \
+	  rm -f $(DESTDIR)$(foodir)/$$f; \
 	done
 tags: TAGS
 TAGS:
@@ -250,17 +282,16 @@ TAGS:
 
 distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 
-subdir = lib/auth/sia
-
 distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pR $$d/$$file $(distdir) \
+	    || exit 1; \
 	  else \
 	    test -f $(distdir)/$$file \
-	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
-	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	    || cp -p $$d/$$file $(distdir)/$$file \
+	    || exit 1; \
 	  fi; \
 	done
 	$(MAKE) $(AM_MAKEFLAGS) top_distdir="$(top_distdir)" distdir="$(distdir)" dist-hook
@@ -289,7 +320,7 @@ uninstall: uninstall-am
 all-am: Makefile $(DATA) all-local
 all-redirect: all-am
 install-strip:
-	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_STRIP_FLAG=-s install
 installdirs:
 	$(mkinstalldirs)  $(DESTDIR)$(foodir)
 
@@ -304,6 +335,7 @@ distclean-generic:
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
+	-rm -f Makefile.in
 mostlyclean-am:  mostlyclean-generic
 
 mostlyclean: mostlyclean-am
@@ -327,7 +359,7 @@ maintainer-clean: maintainer-clean-am
 dvi-am dvi check-local check check-am installcheck-am installcheck \
 install-exec-am install-exec install-data-local install-data-am \
 install-data install-am install uninstall-am uninstall all-local \
-all-redirect all-am all installdirs mostlyclean-generic \
+all-redirect all-am all install-strip installdirs mostlyclean-generic \
 distclean-generic clean-generic maintainer-clean-generic clean \
 mostlyclean distclean maintainer-clean
 
@@ -349,8 +381,8 @@ install-build-headers:: $(include_HEADERS) $(build_HEADERZ)
 		else file="$$f"; fi; \
 		if cmp -s  $$file $(buildinclude)/$$f 2> /dev/null ; then \
 		: ; else \
-			echo " cp $$file $(buildinclude)/$$f"; \
-			cp $$file $(buildinclude)/$$f; \
+			echo " $(CP) $$file $(buildinclude)/$$f"; \
+			$(CP) $$file $(buildinclude)/$$f; \
 		fi ; \
 	done
 
