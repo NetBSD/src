@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.7.2.1 2000/10/17 20:01:14 tv Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.7.2.2 2000/10/17 20:15:21 tv Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -50,7 +50,8 @@ static RF_FreeList_t *rf_revent_freelist;
 #include <sys/kernel.h>
 
 #define DO_WAIT(_rc)  \
-	tsleep(&(_rc)->eventQueue, PRIBIO,  "raidframe eventq", 0)
+	ltsleep(&(_rc)->eventQueue, PRIBIO,  "raidframe eventq", \
+		0, &((_rc)->eq_mutex))
 
 #define DO_SIGNAL(_rc)     wakeup(&(_rc)->eventQueue)
 
@@ -141,8 +142,10 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 #if RF_RECON_STATS > 0
 			reconDesc->numReconExecDelays++;
 #endif				/* RF_RECON_STATS > 0 */
-			status = tsleep(&reconDesc->reconExecTicks, 
-					PRIBIO, "recon delay", RECON_TIMO);
+
+			status = ltsleep(&reconDesc->reconExecTicks, PRIBIO, 
+					 "recon delay", RECON_TIMO,
+					 &rctrl->eq_mutex);
 			RF_ASSERT(status == EWOULDBLOCK);
 			reconDesc->reconExecTicks = 0;
 		}
