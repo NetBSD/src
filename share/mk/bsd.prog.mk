@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.192 2003/10/21 10:01:22 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.193 2003/11/11 11:43:45 dsl Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -28,6 +28,7 @@ LDSTATIC+=  ${LDSTATIC.${PROG}}
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 CFLAGS+=	${COPTS}
+MKDEP_SUFFIXES?=	.o .ln
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
 .if ${OBJECT_FMT} == "ELF"
@@ -206,14 +207,6 @@ cleanobjs:
 cleanextra:
 .if defined(CLEANFILES) && !empty(CLEANFILES)
 	rm -f ${CLEANFILES}
-.endif
-
-.if defined(SRCS) && !target(afterdepend)
-afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; trap 'rm -f $$TMP ; exit 1' 1 2 3 13 15; \
-	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.ln:/' \
-	      < .depend > $$TMP; \
-	    mv $$TMP .depend)
 .endif
 
 .if defined(PROG) && !target(proginstall)
