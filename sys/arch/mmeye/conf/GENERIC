@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2002/10/06 02:11:58 provos Exp $
+# $NetBSD: GENERIC,v 1.47 2002/10/14 18:39:34 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.47 $"
 
 maxusers	16		# estimated number of users
 
@@ -168,6 +168,7 @@ sm*	at pcmcia? function ?		# Megahertz Ethernet
 # Pseudo-Devices
 
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

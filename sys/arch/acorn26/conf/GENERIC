@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2002/10/06 02:11:54 provos Exp $
+# $NetBSD: GENERIC,v 1.8 2002/10/14 18:39:22 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -198,6 +198,7 @@ wsdisplay0	at arcvideo0
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

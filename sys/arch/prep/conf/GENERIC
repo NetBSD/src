@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.57 2002/10/06 02:12:00 provos Exp $
+# $NetBSD: GENERIC,v 1.58 2002/10/14 18:39:37 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.57 $"
+#ident		"GENERIC-$Revision: 1.58 $"
 
 maxusers	32
 
@@ -447,6 +447,7 @@ joy*	at isapnp?			# Game ports (usually on audio cards)
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.

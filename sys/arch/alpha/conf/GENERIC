@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.216 2002/09/24 14:47:56 provos Exp $
+# $NetBSD: GENERIC,v 1.217 2002/10/14 18:39:24 elric Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.216 $"
+#ident 		"GENERIC-$Revision: 1.217 $"
 
 maxusers 32
 
@@ -520,6 +520,7 @@ wsmouse*	at	pms?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
+#pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
