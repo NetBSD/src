@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.20 1998/08/12 14:47:30 christos Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.21 1999/07/06 14:36:10 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.20 1998/08/12 14:47:30 christos Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.21 1999/07/06 14:36:10 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -464,7 +464,7 @@ rusers_service(rqstp, transp)
 		svcerr_systemerr(transp);
 	}
 	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
+		syslog(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
 leave:
