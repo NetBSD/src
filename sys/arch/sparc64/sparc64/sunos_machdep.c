@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.8 1999/11/06 20:23:02 eeh Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.9 2000/04/06 12:17:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -32,9 +32,7 @@
  * SUCH DAMAGE.
  */
 
-/*
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +48,7 @@
 #include <sys/malloc.h>
 
 #include <sys/syscallargs.h>
+#include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
 
 #include <machine/frame.h>
@@ -106,7 +105,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
-		fp = (struct sunos_sigframe *)(psp->ps_sigstk.ss_sp +
+		fp = (struct sunos_sigframe *)((char *)psp->ps_sigstk.ss_sp +
 					       psp->ps_sigstk.ss_size);
 	else
 		fp = (struct sunos_sigframe *)oldsp;

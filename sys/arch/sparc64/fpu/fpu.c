@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.3 1999/11/06 20:10:24 eeh Exp $ */
+/*	$NetBSD: fpu.c,v 1.4 2000/04/06 12:17:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)fpu.c	8.1 (Berkeley) 6/11/93
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>

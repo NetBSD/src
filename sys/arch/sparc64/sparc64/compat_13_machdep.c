@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6 1999/11/06 20:18:13 eeh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7 2000/04/06 12:17:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
