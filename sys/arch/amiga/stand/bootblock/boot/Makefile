@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/03/03 20:32:58 tron Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 1999/04/03 19:40:20 is Exp $
 
 ### what we need:
 
@@ -18,7 +18,7 @@ FILES= xxboot fdboot
 BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
-COBJS+=  lseek.o open.o read.o close.o dev.o
+COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
 COBJS+=  ufs.o
 
 SOBJS = alloc.o ashrdi3.o bcopy.o muldi3.o printf.o startit.o
