@@ -1,0 +1,325 @@
+.\"	$NetBSD: ftpd.conf.5,v 1.1 1999/12/16 01:16:04 lukem Exp $
+.\"
+.\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Luke Mewburn.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 13, 1999
+.Dt FTPD.CONF 5
+.Os
+.Sh NAME
+.Nm ftpd.conf
+.Nd
+.Xr ftpd 8
+configuration file
+.Sh DESCRIPTION
+The
+.Nm
+file specifies various configuration options for
+.Xr ftpd 8
+that applies once a user has authenticated their connection.
+.Pp
+Each authenticated user is a member of a
+.Sy class ,
+which is determined by
+.Xr ftpusers 5 .
+.Sy class
+is used to determine which
+.Nm
+entries apply to the user.
+The following special classes exist:
+.Bl -tag -width "chroot" -compact -offset indent
+.It Sy all
+Matches any class.
+.It Sy none
+Matches no class.
+.El
+.Pp
+.Nm
+consists of a series of lines, each of which may contain a
+configuration directive, a comment, or be a blank line.
+Directives that appear later in the file override settings by previous
+directives.
+This allows
+.Sq wildcard
+entries to define defaults, and then have class-specific overrides.
+.Pp
+A
+.Dq \e
+is the escape character; it can be used to escape the meaning of the
+comment character, or if it is the last character on a line, extends
+a configuration directive across multiple lines.
+A
+.Dq #
+is the comment character, and all characters from it to the end of
+line are ignored (unless it is escaped with the escape character).
+.Pp
+The
+.Xr ftpd 8
+.Sy STAT
+command will return the class settings for the current user as defined by
+.Nm "" .
+.Pp
+Each configuration line may be one of:
+.Bl -tag -width 4n
+.It Sy checkportcmd Ar class Op Sy off
+Check the
+PORT
+command for validity.
+The
+PORT
+command will fail if the IP address specified does not match the ftp
+command connection, or if the remote TCP port number is less than
+.Dv IPPORT_RESERVED .
+It is
+.Em strongly
+encouraged that this option be used, espcially for sites concerned
+with potential security problems with ftp bounce attacks.
+If class is
+.Dq none
+or
+.Sy off
+is given, disable this feature, otherwise enable it.
+.It Sy classtype Ar class Ar type
+Set the class type of
+.Ar class
+to
+.Ar type .
+.Ar type
+may be one of:
+.Bl -tag -width "chroot" -offset indent
+.It Sy GUEST
+Guests (as per the
+.Dq anonymous
+and
+.Dq ftp
+logins).
+A
+.Xr chroot 2
+is performed after login.
+.It Sy CHROOT
+Chroot-ed users (as per
+.Pa /etc/ftpchroot ) .
+A
+.Xr chroot 2
+is performed after login.
+.It Sy REAL
+Normal users.
+.El
+.It Xo Sy conversion Ar class
+.Ar suffix Op Ar "type disable command"
+.Xc
+Define an automatic in-line file conversion.
+If a file to retrieve ends in
+.Ar suffix ,
+and a real file (sans
+.Ar suffix )
+exists, then the output of
+.Ar command
+is returned instead of the contents of the file.
+.Pp
+.Bl -tag -width "disable" -offset indent
+.It Ar suffix
+The suffix to initiate the conversion.
+.It Ar type
+A list of valid filetypes for the conversion.
+Valid types are:
+.Sq f
+(file), and
+.Sq d
+(directory).
+.It Ar disable
+The name of file that will prevent conversion if it exists.
+A filename of
+.Pa \&.
+will prevent this disabling action.
+.It Ar command
+The command to run for the conversion.
+The first word should be the full path name
+of the command, as
+.Xr execv 3
+is used to execute the command.
+The first instance of
+.Sq %s
+in
+.Ar command
+is replaced with the requested file (sans
+.Ar suffix ) .
+.El
+.Pp
+Conversion directives specified later in the file override earlier
+conversions with the same suffix.
+.It Sy display Ar class Op Ar file
+If
+.Ar file
+is not given or
+.Ar class
+is
+.Dq none ,
+disable this.
+Otherwise, each time the user enters a new directory, check if
+.Ar file
+exists, and if so, display its contents to the user.
+.It Sy maxtimeout Ar class Ar time
+Set the maximum timeout period that a client may request,
+defaulting to two hours.
+This cannot be less than 30 seconds, or the value for
+.Sy timeout .
+Ignored if class is
+.Dq none
+or
+.Ar time
+is not specified.
+.It Sy modify Ar class Op Sy off
+If class is
+.Dq none
+or
+.Sy off
+is given, disable the following commands:
+CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
+Otherwise, enable them.
+.It Sy motd Ar class Op Ar file
+If
+.Ar file
+is not given or
+.Ar class
+is
+.Dq none ,
+disable this.
+Otherwise, use
+.Ar file
+as the message of the day file to display after login.
+.It Sy notify Ar class Op Ar fileglob
+If
+.Ar fileglob
+is not given or
+.Ar class
+is
+.Dq none ,
+disable this.
+Otherwise, each time the user enters a new directory,
+notify the user of any files matching
+.Ar fileglob .
+.It Sy passive Ar class Op Sy off
+If class is
+.Dq none
+or
+.Sy off
+is given, disallow passive (PASV/LPSV/EPSV) connections.
+Otherwise, enable them.
+.It Sy rateget Ar rate
+Set the maximum get (RETR) transfer rate throttle to
+.Ar rate .
+If
+.Ar rate
+is 0, the throttle is disabled.
+.Pp
+An optional suffix may be provided, which changes the intrepretation of 
+.Ar rate
+as follows:
+.Bl -tag -width 3n -offset indent -compact
+.It b
+Causes no modification. (Optional)
+.It k
+Kilo; multiply the argument by 1024
+.It m
+Mega; multiply the argument by 1048576
+.It g
+Giga; multiply the argument by 1073741824
+.El
+.It Sy rateput Ar class
+Set the maximum put (STOR) transfer rate throttle to
+.Ar rate ,
+which is parsed as per
+.Sy rateget Ar rate .
+.It Sy timeout Ar class Ar time
+Set the inactivity timeout period.
+(the default is fifteen minutes).
+This cannot be less than 30 seconds, or greater than the value for
+.Sy maxtimeout .
+Ignored if class is
+.Dq none
+or
+.Ar time
+is not specified.
+.It Sy umask Ar class Ar umaskval
+Set the umask to
+.Ar umaskval .
+Ignored if class is
+.Dq none
+or
+.Ar umaskval
+is not specified.
+.It Sy upload Ar class Op Sy off
+If class is
+.Dq none
+or
+.Sy off
+is given, disable the following commands:
+APPE, STOR, and STOU,
+as well as the modify commands:
+CHMOD, DELE, MKD, RMD, RNFR, and UMASK.
+Otherwise, enable them.
+.El
+.Sh DEFAULTS
+The following defaults are used:
+.Pp
+.Bd -literal -offset indent -compact
+checkportcmd  none
+display       none
+maxtimeout    all    7200   # 2 hours
+modify        all
+motd          all    motd
+notify        none
+passive       all
+timeout       all    900    # 15 minutes
+umask         all    027
+upload        all
+classtype     guest  GUEST
+modify        guest  off
+umask         guest  0707
+.Ed
+.Sh FILES
+.Bl -tag -width /etc/ftpd.conf -compact
+.It Pa /etc/ftpd.conf
+This file.
+.El
+.Sh SEE ALSO
+.Xr ftpusers 5 ,
+.Xr ftpd 8
+.Sh HISTORY
+The
+.Nm
+functionality was implemented in
+.Nx 1.3
+and later releases by Luke Mewburn, based on work by Simon Burge.
