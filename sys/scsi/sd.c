@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.10 1993/05/20 23:12:53 deraadt Exp $
+ *	$Id: sd.c,v 1.11 1993/05/21 12:20:30 davidb Exp $
  */
 
 #include "sd.h"
@@ -196,21 +196,23 @@ sdopen(int dev)
 	if(scsi_debug & TRACEOPENS)
 		printf("device is ");
 
-	if (sd_test_unit_ready(unit, 0)) {
-		if(scsi_debug & TRACEOPENS)
-			printf("not reponding\n");
-		return ENXIO;
-	}
-	if(scsi_debug & TRACEOPENS)
-		printf("ok\n");
-
 	/*
 	 * In case it is a funny one, tell it to start
 	 * not needed for most hard drives (ignore failure)
+	 *
+	 * This needs to be done BEFORE the test_unit_ready - davidb/simonb
 	 */
 	sd_start_unit(unit, SCSI_ERR_OK|SCSI_SILENT);
 	if(scsi_debug & TRACEOPENS)
 		printf("started ");
+
+	if (sd_test_unit_ready(unit, 0)) {
+		if(scsi_debug & TRACEOPENS)
+			printf("not responding\n");
+		return ENXIO;
+	}
+	if(scsi_debug & TRACEOPENS)
+		printf("ok\n");
 
 	/*
 	 * Load the physical device parameters 
