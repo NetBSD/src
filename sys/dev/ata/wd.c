@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.274 2004/02/28 06:28:47 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.275 2004/05/03 20:11:40 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.274 2004/02/28 06:28:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.275 2004/05/03 20:11:40 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1651,7 +1651,11 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	if (wd->drvp->ata_vers < 4) /* WDCC_FLUSHCACHE is here since ATA-4 */
 		return;
 	memset(&wdc_c, 0, sizeof(struct wdc_command));
-	wdc_c.r_command = WDCC_FLUSHCACHE;
+	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0 &&
+	    (wd->sc_params.atap_cmd2_en & ATA_CMD2_FCE) != 0)
+		wdc_c.r_command = WDCC_FLUSHCACHE_EXT;
+	else
+		wdc_c.r_command = WDCC_FLUSHCACHE;
 	wdc_c.r_st_bmask = WDCS_DRDY;
 	wdc_c.r_st_pmask = WDCS_DRDY;
 	wdc_c.flags = flags;
