@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.63 2003/11/10 18:21:55 dsl Exp $
+#	$NetBSD: bsd.dep.mk,v 1.64 2003/11/11 11:36:40 dsl Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -39,22 +39,22 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 
 .c.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${CFLAGS:M-[ID]*} ${CPPFLAGS} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .m.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} \
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${OBJCFLAGS:M-[ID]*} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 .s.d .S.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${AFLAGS:M-[ID]*} ${CPPFLAGS} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${__acpp_flags} ${AINC} ${.IMPSRC}
 
 .C.d .cc.d .cpp.d .cxx.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
+	${MKDEP} -f ${.TARGET} -- ${MKDEPFLAGS} ${CXXFLAGS:M-[ID]*} \
 	    ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} \
 	    ${DESTDIR}/usr/include/g++} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
