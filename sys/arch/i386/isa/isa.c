@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.46 1994/03/29 04:34:18 mycroft Exp $
+ *	$Id: isa.c,v 1.47 1994/03/31 16:59:04 mycroft Exp $
  */
 
 /*
@@ -190,11 +190,7 @@ config_search(fn, parent, aux)
 			if ((*cd->cd_match)(parent, dv, aux))
 				return cf;
 		}
-		if (id->id_state == FSTATE_FOUND) {
-			cf = 0;
-			dv = 0;
-		} else
-			cd->cd_devs[id->id_unit] = 0;
+		cd->cd_devs[id->id_unit] = 0;
 	}
 	if (cf)
 		free(cf, M_DEVBUF);
