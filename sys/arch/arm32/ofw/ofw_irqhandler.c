@@ -1,7 +1,7 @@
-/* $NetBSD: ofw_irqhandler.c,v 1.6 1998/08/27 03:58:10 mark Exp $ */
+/* $NetBSD: ofw_irqhandler.c,v 1.7 1998/09/05 04:04:25 mark Exp $ */
 
 /*
- * Copyright (c) 1994-1996 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,26 +17,24 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe
+ *	for the NetBSD Project.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * RiscBSD kernel project
- *
- * irqhandler.c
+ *	from: irqhandler.c
  *
  * IRQ/FIQ initialisation, claim, release and handler routines
  *
@@ -50,7 +48,6 @@
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <vm/vm.h>
-#include <net/netisr.h>
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
@@ -58,32 +55,27 @@
 irqhandler_t *irqhandlers[NIRQS];
 fiqhandler_t *fiqhandlers;
 
-int current_intr_depth = 0;
-u_int irqmasks[IPL_LEVELS];
+int current_intr_depth;
 u_int current_mask;
 u_int actual_mask;
-u_int disabled_mask = 0;
+u_int disabled_mask;
 u_int spl_mask;
-u_int soft_interrupts;
+u_int irqmasks[IPL_LEVELS];
+u_int irqblock[NIRQS];
 extern u_int intrcnt[];
 
-u_int irqblock[NIRQS];
+extern u_int soft_interrupts;	/* Only so we can initialise it */
 
 extern char *_intrnames;
 
 /* Prototypes */
 
-int podule_irqhandler	__P((void));
+int podule_irqhandler		__P((void));
 extern void zero_page_readonly	__P((void));
 extern void zero_page_readwrite	__P((void));
 extern int fiq_setregs		__P((fiqhandler_t *));
 extern int fiq_getregs		__P((fiqhandler_t *));
 extern void set_spl_masks	__P((void));
-
-extern void arpintr	__P((void));
-extern void ipintr	__P((void));
-extern void pppintr	__P((void));
-extern void plipintr	__P((void));
 
 /*
  * void irq_init(void)
@@ -97,14 +89,12 @@ irq_init()
 	int loop;
 
 	/* Clear all the IRQ handlers and the irq block masks */
-
 	for (loop = 0; loop < NIRQS; ++loop) {
 		irqhandlers[loop] = NULL;
 		irqblock[loop] = 0;
 	}
 
 	/* Clear the FIQ handler */
-
 	fiqhandlers = NULL;
 
 	/*
@@ -112,16 +102,12 @@ irq_init()
 	 * We will start with no bits set and these will be updated as handlers
 	 * are installed at different IPL's.
 	 */
+	for (loop = 0; loop < IPL_LEVELS; ++loop)
+		irqmasks[loop] = 0;
 
-	irqmasks[IPL_BIO]   = 0x00000000;
-	irqmasks[IPL_NET]   = 0x00000000;
-	irqmasks[IPL_TTY]   = 0x00000000;
-	irqmasks[IPL_IMP]   = 0x00000000;
-	irqmasks[IPL_AUDIO] = 0x00000000;
-	irqmasks[IPL_CLOCK] = 0x00000000;
-	irqmasks[IPL_NONE]  = 0x00000000;
-
+	current_intr_depth = 0;
 	current_mask = 0x00000000;
+	disabled_mask = 0x00000000;
 	actual_mask = 0x00000000;
 	spl_mask = 0x00000000;
 	soft_interrupts = 0x00000000;
@@ -129,7 +115,6 @@ irq_init()
 	set_spl_masks();
 
 	/* Enable IRQ's and FIQ's */
-
 	enable_interrupts(I32_bit | F32_bit); 
 }
 
@@ -160,17 +145,18 @@ irq_claim(irq, handler)
 	 * IRQ_INSTRUCT indicates that we should get the irq number
 	 * from the irq structure
 	 */
-
 	if (irq == IRQ_INSTRUCT)
 		irq = handler->ih_num;
     
 	/* Make sure the irq number is valid */
-
 	if (irq < 0 || irq >= NIRQS)
 		return(-1);
 
-	/* Attach handler at top of chain */
+	/* Make sure the level is valid */
+	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
+    	        return(-1);
 
+	/* Attach handler at top of chain */
 	handler->ih_next = irqhandlers[irq];
 	irqhandlers[irq] = handler;
 
@@ -182,15 +168,13 @@ irq_claim(irq, handler)
 
 	/*
 	 * Record the interrupt number for accounting.
-	 * Done here as the accounting number may not be the same as the IRQ number
-	 * though for the moment they are
+	 * Done here as the accounting number may not be the same as the
+	 * IRQ number though for the moment they are
 	 */
- 
 	handler->ih_num = irq;
 
 #ifdef IRQSTATS
 	/* Get the interrupt name from the head of the list */
-
 	if (handler->ih_name) {
 		char *ptr = _intrnames + (irq * 14);
 		strcpy(ptr, "             ");
@@ -209,10 +193,13 @@ irq_claim(irq, handler)
 	 * If ih_level is out of range then don't bother to update
 	 * the masks.
 	 */
-
 	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
 		irqhandler_t *ptr;
 
+		/*
+		 * Find the lowest interrupt priority on the irq chain.
+		 * Interrupt is allowable at priorities lower than this.
+		 */
 		ptr = irqhandlers[irq];
 		if (ptr) {
 			level = ptr->ih_level - 1;
@@ -230,7 +217,7 @@ irq_claim(irq, handler)
 #include "sl.h"
 #include "ppp.h"
 #if NSL > 0 || NPPP > 0
-/* In the presence of SLIP or PPP, splimp > spltty. */
+		/* In the presence of SLIP or PPP, splimp > spltty. */
 		irqmasks[IPL_NET] &= irqmasks[IPL_TTY];
 #endif
 	}
@@ -238,10 +225,10 @@ irq_claim(irq, handler)
 	/*
 	 * We now need to update the irqblock array. This array indicates
 	 * what other interrupts should be blocked when interrupt is asserted
-	 * This basically emulates hardware interrupt priorities e.g. by blocking
-	 * all other IPL_BIO interrupts with an IPL_BIO interrupt is asserted.
-	 * For each interrupt we find the highest IPL and set the block mask to
-	 * the interrupt mask for that level.
+	 * This basically emulates hardware interrupt priorities e.g. by
+	 * blocking all other IPL_BIO interrupts with an IPL_BIO interrupt
+	 * is asserted. For each interrupt we find the highest IPL and set
+	 * the block mask to the interrupt mask for that level.
 	 */
 
 	for (loop = 0; loop < NIRQS; ++loop) {
@@ -290,18 +277,14 @@ irq_release(irq, handler)
 	 * IRQ_INSTRUCT indicates that we should get the irq number
 	 * from the irq structure
 	 */
-
 	if (irq == IRQ_INSTRUCT)
 		irq = handler->ih_num;
 
 	/* Make sure the irq number is valid */
-
 	if (irq < 0 || irq >= NIRQS)
 		return(-1);
 
-
 	/* Locate the handler */
-
 	irqhand = irqhandlers[irq];
 	prehand = &irqhandlers[irq];
     
@@ -311,19 +294,15 @@ irq_release(irq, handler)
 	}
 
 	/* Remove the handler if located */
-      
 	if (irqhand)
 		*prehand = irqhand->ih_next;
 	else
 		return(-1);
 
-
 	/* Now the handler has been removed from the chain mark is as inactive */
-
 	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
 
 	/* Make sure the head of the handler list is active */
-
 	if (irqhandlers[irq])
 		irqhandlers[irq]->ih_flags |= IRQ_FLAG_ACTIVE;
 
@@ -345,20 +324,17 @@ irq_release(irq, handler)
 	 * If ih_level is out of range then don't bother to update
 	 * the masks.
 	 */
-  
 	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
 		irqhandler_t *ptr;
 
-	/* Clean the bit from all the masks */
-
+		/* Clean the bit from all the masks */
 		for (level = 0; level < IPL_LEVELS; ++level)
 			irqmasks[level] &= ~(1 << irq);
 
-	/*
-	 * Find the lowest interrupt priority on the irq chain.
-	 * Interrupt is allowable at priorities lower than this.
-	 */
-
+		/*
+		 * Find the lowest interrupt priority on the irq chain.
+		 * Interrupt is allowable at priorities lower than this.
+		 */
 		ptr = irqhandlers[irq];
 		if (ptr) {
 			level = ptr->ih_level - 1;
@@ -377,12 +353,11 @@ irq_release(irq, handler)
 	/*
 	 * We now need to update the irqblock array. This array indicates
 	 * what other interrupts should be blocked when interrupt is asserted
-	 * This basically emulates hardware interrupt priorities e.g. by blocking
-	 * all other IPL_BIO interrupts with an IPL_BIO interrupt is asserted.
-	 * For each interrupt we find the highest IPL and set the block mask to
-	 * the interrupt mask for that level.
+	 * This basically emulates hardware interrupt priorities e.g. by
+	 * blocking all other IPL_BIO interrupts with an IPL_BIO interrupt
+	 * is asserted. For each interrupt we find the highest IPL and set
+	 * the block mask to the interrupt mask for that level.
 	 */
-
 	for (loop = 0; loop < NIRQS; ++loop) {
 		irqhandler_t *ptr;
 
@@ -405,7 +380,6 @@ irq_release(irq, handler)
 	 * Disable the appropriate mask bit if there are no handlers left for
 	 * this IRQ.
 	 */
-
 	if (irqhandlers[irq] == NULL)
 		disable_irq(irq);
 
@@ -543,4 +517,4 @@ fiq_release(handler)
 	return(-1);
 }
 
-/* End of irqhandler.c */
+/* End of ofw_irqhandler.c */
