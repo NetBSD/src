@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.1 2002/12/18 05:47:31 bsh Exp $
+#	$NetBSD: files.pxa2x0,v 1.2 2002/12/20 01:10:11 bsh Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
 #
@@ -12,7 +12,7 @@ file	arch/arm/xscale/pxa2x0.c
 file	arch/arm/xscale/pxa2x0_intr.c
 file	arch/arm/xscale/pxa2x0_irq.S
 file	arch/arm/xscale/pxa2x0_space.c
-file	arch/arm/xscale/pxa2x0_freqchg.S
+#file	arch/arm/xscale/pxa2x0_freqchg.S
 file	arch/arm/xscale/pxa2x0_dma.c
 #file	arch/arm/xscale/pxa2x0_i2c.c
 
