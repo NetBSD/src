@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.21 2001/08/18 19:31:47 ad Exp $	*/
+/*	$NetBSD: util.h,v 1.21.2.1 2003/10/25 03:32:14 cyber Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -54,6 +54,7 @@
 #define	FPARSELN_UNESCALL	0x0f
 
 __BEGIN_DECLS
+struct disklabel;
 struct iovec;
 struct passwd;
 struct termios;
@@ -90,6 +91,9 @@ int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);
 char	       *ttymsg(struct iovec *, int, const char *, int);
 int		ttyunlock(const char *);
+
+u_short		disklabel_dkcksum(struct disklabel *);
+int		disklabel_scan(struct disklabel *, char *, size_t);
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
