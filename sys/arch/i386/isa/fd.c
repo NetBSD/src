@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.79 1995/08/21 06:56:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -341,6 +341,13 @@ fdprobe(parent, match, aux)
 	int n;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+		return 0;
+	/*
+	 * XXX
+	 * This is to work around some odd interactions between this driver
+	 * and SMC Ethernet cards.
+	 */
+	if (cf->cf_loc[0] == -1 && drive >= 2)
 		return 0;
 
 	/* select drive and turn on motor */
@@ -940,7 +947,7 @@ loop:
 		/* allow 1/50 second for heads to settle */
 		timeout(fdcpseudointr, fdc, hz / 50);
 		return 1;
-		
+
 	case SEEKCOMPLETE:
 		/* Make sure seek really happened. */
 		out_fdc(iobase, NE7CMD_SENSEI);
@@ -1144,7 +1151,7 @@ fdioctl(dev, cmd, addr, flag)
 	switch (cmd) {
 	case DIOCGDINFO:
 		bzero(&buffer, sizeof(buffer));
-		
+
 		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
