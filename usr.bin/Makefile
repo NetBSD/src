@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 1999/06/09 02:58:57 simonb Exp $
+#	$NetBSD: Makefile,v 1.104 1999/07/12 03:21:50 darrenr Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -10,7 +10,7 @@ SUBDIR=	apply apropos asa at audio banner basename bdes biff \
 	crontab crunch ctags cut dirname du eject elf2aout elf2ecoff env \
 	error expand false fdformat fgen file find finger fmt fold fpr \
 	from fsplit fstat ftp gencat getconf getopt gprof head hesinfo \
-	hexdump id indent innetgr ipcrm ipcs join jot kdump ktrace \
+	hexdump id indent innetgr ipcrm ipcs join jot kdump ktrace ktruss \
 	lam last lastcomm ldd leave less lex locate lock \
 	logger login logname look lorder m4 machine mail \
 	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr modstat \
