@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmail.8,v 1.9 1997/03/13 02:50:18 perry Exp $
+.\"	$NetBSD: rmail.8,v 1.10 1997/10/20 02:10:22 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -40,10 +40,10 @@
 .Nm rmail
 .Nd handle remote mail received via uucp
 .Sh SYNOPSIS
-.Nm rmail
+.Nm
 .Ar user ...
 .Sh DESCRIPTION
-.Nm Rmail
+.Nm
 interprets incoming mail received via
 .Xr uucp 1 ,
 collapsing ``From'' lines in the form generated
@@ -53,7 +53,7 @@ into a single line of the form ``return-path!sender'',
 and passing the processed mail on to
 .Xr sendmail  8  .
 .Pp
-.Nm Rmail
+.Nm
 is explicitly designed for use with
 .Xr uucp
 and
@@ -64,6 +64,6 @@ and
 .Xr sendmail 8
 .Sh HISTORY
 The
-.Nm rmail
+.Nm
 program appeared in
 .Bx 4.2 .
