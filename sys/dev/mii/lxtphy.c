@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.10 1999/04/23 04:24:32 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.11 1999/05/14 11:40:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ lxtphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_LEVEL1 &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_LEVEL1_LXT970)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxLEVEL1 &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxLEVEL1_LXT970)
 		return (10);
 
 	return (0);
@@ -122,7 +122,7 @@ lxtphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_LEVEL1_LXT970,
+	printf(": %s, rev. %d\n", MII_STR_xxLEVEL1_LXT970,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
