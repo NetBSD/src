@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.139 2004/04/28 05:59:53 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.140 2004/04/28 06:00:57 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1447,3 +1447,10 @@ distrib/utils/sysinst/arch/i386/md.c		1.101
 	'all the disk' and the old version had the bootselect code (otherwise 
 	you get an empty menu). PR#25146
 	[dsl, ticket #199]
+
+usr.sbin/makefs/ffs.c				1.28
+
+	Allow for ROOTINO when deciding whether their are enough inodes in the
+	created filesystem.  Otherwise this fails when asked for 63 inodes for
+	i386 ramdisk-big.
+	[dsl, ticket #200]
