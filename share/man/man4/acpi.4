@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.14 2005/03/21 19:53:17 xtraeme Exp $
+.\" $NetBSD: acpi.4,v 1.15 2005/03/25 23:38:32 cube Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 21, 2005
+.Dd March 25, 2005
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@
 .Cd "acpiec*   at acpi?"
 .Cd "acpilid*  at acpi?"
 .Cd "acpitz*   at acpi?"
+.Cd "attimer*  at acpi?"
 .Cd "com*      at acpi?"
 .Cd "fdc*      at acpi?"
 .Cd "joy*      at acpi?"
@@ -120,6 +121,8 @@ lid switches.
 .It acpitz
 .Tn ACPI
 thermal zones.
+.It attimer
+AT Timer.
 .It com
 NS8250-, NS16450-, and NS16550-based serial ports.
 .It fdc
@@ -154,6 +157,7 @@ Toshiba Libretto device.
 .Xr acpilid 4 ,
 .Xr acpitz 4 ,
 .Xr apm 4 ,
+.Xr attimer 4 ,
 .Xr com 4 ,
 .Xr fdc 4 ,
 .Xr joy 4 ,
