@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.18 1994/05/05 05:35:52 cgd Exp $
+ *	$Id: mem.c,v 1.19 1994/05/21 15:57:30 mycroft Exp $
  */
 
 /*
@@ -67,17 +67,6 @@ mmclose(dev, flag, mode)
 	int flag, mode;
 {
 
-	switch (minor(dev)) {
-	case 0:
-		if (flag & FWRITE) {
-			struct trapframe *fp;
-			fp = (struct trapframe *)curproc->p_md.md_regs;
-			fp->tf_eflags &= ~PSL_IOPL;
-		}
-		break;
-	default:
-		break;
-	}
 	return(0);
 }
 
@@ -89,7 +78,7 @@ mmopen(dev, flag, mode)
 {
 
 	switch (minor(dev)) {
-	case 0:
+	case 14:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
 			fp = (struct trapframe *)curproc->p_md.md_regs;
