@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.2 1998/03/31 11:00:01 jonathan Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.3 1999/03/15 11:41:25 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -104,19 +104,19 @@
 
 
 struct sysinit sysinit[] = {
-	sys_notsupp("???"),			     /*  0: ??? */
-	sys_init(dec_3100_init,"DEC_3100"),	     /*  1: PMAX */
-	sys_init(dec_3max_init,"DEC_3MAX"),	     /*  2: 3MAX */
-	sys_init(dec_3min_init,"DEC_3MIN"),	     /*  3: 3MIN */
-	sys_init(dec_3maxplus_init,"DEC_5000_2x0"),  /*  4: 3MAXPLUS */
-	sys_notsupp("DEC_5800"),		     /*  5: 5800 */
-	sys_notsupp("DEC_5400"),		     /*  6: 5400 */
-	sys_init(dec_maxine_init,"DEC_MAXINE"),	     /*  7: MAXINE */
-	sys_notsupp("???"),			     /*  8: ??? */
-	sys_notsupp("???"),			     /*  9: ??? */
-	sys_notsupp("???"),			     /*  10: ??? */
-	sys_notsupp("DEC_5500"),		     /*  11: 5500 */
-	sys_init(dec_5100_init,"DEC_5100"),	     /*  12: 5100 */
+	sys_notsupp("???"),			     /*	 0: ??? */
+	sys_init(dec_3100_init,"DEC_3100"),	     /*	 1: PMAX */
+	sys_init(dec_3max_init,"DEC_3MAX"),	     /*	 2: 3MAX */
+	sys_init(dec_3min_init,"DEC_3MIN"),	     /*	 3: 3MIN */
+	sys_init(dec_3maxplus_init,"DEC_3MAXPLUS"),  /*	 4: 3MAXPLUS */
+	sys_notsupp("DEC_5800"),		     /*	 5: 5800 */
+	sys_notsupp("DEC_5400"),		     /*	 6: 5400 */
+	sys_init(dec_maxine_init,"DEC_MAXINE"),	     /*	 7: MAXINE */
+	sys_notsupp("???"),			     /*	 8: ??? */
+	sys_notsupp("???"),			     /*	 9: ??? */
+	sys_notsupp("???"),			     /*	 10: ??? */
+	sys_notsupp("DEC_5500"),		     /*	 11: 5500 */
+	sys_init(dec_5100_init,"DEC_5100"),	     /*	 12: 5100 */
 };
 int nsysinit = (sizeof(sysinit) / sizeof(sysinit[0]));
 
