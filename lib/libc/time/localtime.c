@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.13 1997/09/05 02:11:55 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.14 1998/01/22 07:06:58 jtc Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -9,9 +9,9 @@
 #ifndef lint
 #ifndef NOID
 #if 0
-static char	elsieid[] = "@(#)localtime.c	7.62";
+static char	elsieid[] = "@(#)localtime.c	7.64";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.13 1997/09/05 02:11:55 jtc Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.14 1998/01/22 07:06:58 jtc Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
@@ -79,11 +79,11 @@ static char		wildabbr[] = "WILDABBR";
 static const char	gmt[] = "GMT";
 
 struct ttinfo {				/* time type information */
-	long		tt_gmtoff;	/* GMT offset in seconds */
+	long		tt_gmtoff;	/* UTC offset in seconds */
 	int		tt_isdst;	/* used to set tm_isdst */
 	int		tt_abbrind;	/* abbreviation list index */
 	int		tt_ttisstd;	/* TRUE if transition is std time */
-	int		tt_ttisgmt;	/* TRUE if transition is GMT */
+	int		tt_ttisgmt;	/* TRUE if transition is UTC */
 };
 
 struct lsinfo {				/* leap second information */
@@ -344,27 +344,23 @@ register struct state * const	sp;
 	}
 	{
 		struct tzhead *	tzhp;
-		char		buf[sizeof *sp + sizeof *tzhp];
+		union {
+		  struct tzhead tzhead;
+		  char		buf[sizeof *sp + sizeof *tzhp];
+		} u;
 		int		ttisstdcnt;
 		int		ttisgmtcnt;
 
-		i = read(fid, buf, sizeof buf);
+		i = read(fid, u.buf, sizeof u.buf);
 		if (close(fid) != 0)
 			return -1;
-		p = buf;
-		p += sizeof tzhp->tzh_reserved;
-		ttisstdcnt = (int) detzcode(p);
-		p += 4;
-		ttisgmtcnt = (int) detzcode(p);
-		p += 4;
-		sp->leapcnt = (int) detzcode(p);
-		p += 4;
-		sp->timecnt = (int) detzcode(p);
-		p += 4;
-		sp->typecnt = (int) detzcode(p);
-		p += 4;
-		sp->charcnt = (int) detzcode(p);
-		p += 4;
+		ttisstdcnt = (int) detzcode(u.tzhead.tzh_ttisgmtcnt);
+		ttisgmtcnt = (int) detzcode(u.tzhead.tzh_ttisstdcnt);
+		sp->leapcnt = (int) detzcode(u.tzhead.tzh_leapcnt);
+		sp->timecnt = (int) detzcode(u.tzhead.tzh_timecnt);
+		sp->typecnt = (int) detzcode(u.tzhead.tzh_typecnt);
+		sp->charcnt = (int) detzcode(u.tzhead.tzh_charcnt);
+		p = u.tzhead.tzh_charcnt + sizeof u.tzhead.tzh_charcnt;
 		if (sp->leapcnt < 0 || sp->leapcnt > TZ_MAX_LEAPS ||
 			sp->typecnt <= 0 || sp->typecnt > TZ_MAX_TYPES ||
 			sp->timecnt < 0 || sp->timecnt > TZ_MAX_TIMES ||
@@ -372,7 +368,7 @@ register struct state * const	sp;
 			(ttisstdcnt != sp->typecnt && ttisstdcnt != 0) ||
 			(ttisgmtcnt != sp->typecnt && ttisgmtcnt != 0))
 				return -1;
-		if (i - (p - buf) < sp->timecnt * 4 +	/* ats */
+		if (i - (p - u.buf) < sp->timecnt * 4 +	/* ats */
 			sp->timecnt +			/* types */
 			sp->typecnt * (4 + 2) +		/* ttinfos */
 			sp->charcnt +			/* chars */
@@ -630,8 +626,8 @@ register struct rule * const	rulep;
 }
 
 /*
-** Given the Epoch-relative time of January 1, 00:00:00 GMT, in a year, the
-** year, a rule, and the offset from GMT at the time that rule takes effect,
+** Given the Epoch-relative time of January 1, 00:00:00 UTC, in a year, the
+** year, a rule, and the offset from UTC at the time that rule takes effect,
 ** calculate the Epoch-relative time that rule takes effect.
 */
 
@@ -717,10 +713,10 @@ const long				offset;
 	}
 
 	/*
-	** "value" is the Epoch-relative time of 00:00:00 GMT on the day in
+	** "value" is the Epoch-relative time of 00:00:00 UTC on the day in
 	** question.  To get the Epoch-relative time of the specified local
 	** time on that day, add the transition time and the current offset
-	** from GMT.
+	** from UTC.
 	*/
 	return value + rulep->r_time + offset;
 }
@@ -1107,7 +1103,7 @@ struct tm * const	tmp;
 #ifdef TM_ZONE
 	/*
 	** Could get fancy here and deliver something such as
-	** "GMT+xxxx" or "GMT-xxxx" if offset is non-zero,
+	** "UTC+xxxx" or "UTC-xxxx" if offset is non-zero,
 	** but this is no time for a treasure hunt.
 	*/
 	if (offset != 0)
@@ -1618,7 +1614,7 @@ struct tm * const	tmp;
 
 /*
 ** IEEE Std 1003.1-1988 (POSIX) legislates that 536457599
-** shall correspond to "Wed Dec 31 23:59:59 GMT 1986", which
+** shall correspond to "Wed Dec 31 23:59:59 UTC 1986", which
 ** is not the case if we are accounting for leap seconds.
 ** So, we provide the following conversion routines for use
 ** when exchanging timestamps with POSIX conforming systems.
