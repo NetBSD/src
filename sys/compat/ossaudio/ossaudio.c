@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.2 1996/10/17 19:46:39 fvdl Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.3 1997/03/19 05:12:13 mycroft Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -88,6 +88,22 @@ linux_ioctl_audio(p, uap, retval)
 		if (error)
 			return error;
 		break;
+	case LINUX_SOUND_PCM_WRITE_CHANNELS:
+		AUDIO_INITINFO(&tmpinfo);
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		tmpinfo.play.channels =
+		tmpinfo.record.channels = idat;
+		(void) (*fp->f_ops->fo_ioctl)(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		if (error)
+			return error;
+		idat = tmpinfo.play.channels;
+		error = copyout(&idat, SCARG(uap, data), sizeof idat);
+		if (error)
+			return error;
+		break;
 	case LINUX_SNDCTL_DSP_GETBLKSIZE:
 		error = (*fp->f_ops->fo_ioctl)(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
 		if (error)
@@ -165,4 +181,40 @@ linux_ioctl_audio(p, uap, retval)
 	}
 
 	return 0;
+}
+
+int
+linux_ioctl_mixer(p, uap, retval)
+	register struct proc *p;
+	register struct linux_sys_ioctl_args /* {
+		syscallarg(int) fd;
+		syscallarg(u_long) com;
+		syscallarg(caddr_t) data;
+	} */ *uap;
+	register_t *retval;
+{	       
+	register struct file *fp;
+	register struct filedesc *fdp;
+	u_long com;
+#if 0
+	struct audio_info tmpinfo;
+	int idat;
+	int error;
+#endif
+
+	fdp = p->p_fd;
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+		return (EBADF);
+
+	com = SCARG(uap, com);
+	retval[0] = 0;
+
+	switch (com) {
+	default:
+		return EINVAL;
+	}
 }
