@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.25 1998/10/08 17:43:24 wsanchez Exp $	*/
+/*	$NetBSD: cp.c,v 1.26 1999/02/25 05:43:04 dean Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.25 1998/10/08 17:43:24 wsanchez Exp $");
+__RCSID("$NetBSD: cp.c,v 1.26 1999/02/25 05:43:04 dean Exp $");
 #endif
 #endif /* not lint */
 
@@ -374,8 +374,9 @@ copy(argv, type, fts_options)
 			break;
 		case S_IFDIR:
 			if (!Rflag && !rflag) {
-				warnx("%s is a directory (not copied).",
-				    curr->fts_path);
+				if (curr->fts_info == FTS_D)
+					warnx("%s is a directory (not copied).",
+					    curr->fts_path);
 				(void)fts_set(ftsp, curr, FTS_SKIP);
 				rval = 1;
 				break;
