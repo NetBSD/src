@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.1.2.6 2002/10/22 01:31:38 nathanw Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.1.2.7 2002/12/16 18:19:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ pthread__alarm_add(pthread_t self, struct pt_alarm_t *alarm,
 	struct itimerspec it;
 	int retval;
 
+	pthread_lockinit(&alarm->pta_lock);
 	alarm->pta_time = ts;
 	alarm->pta_func = func;
 	alarm->pta_arg = arg;
@@ -121,11 +122,12 @@ pthread__alarm_del(pthread_t self, struct pt_alarm_t *alarm)
 	struct itimerspec it;
 	int retval;
 
+	next = NULL;
 	pthread_spinlock(self, &pthread_alarmqlock);
+	pthread_spinlock(self, &alarm->pta_lock);
 	if (alarm->pta_fired == 0) {
 		if (alarm == PTQ_FIRST(&pthread_alarmqueue)) {
 			next = PTQ_NEXT(alarm, pta_next);
-			PTQ_REMOVE(&pthread_alarmqueue, alarm, pta_next);
 			timespecclear(&it.it_interval);
 			if (next != NULL)
 				it.it_value = *next->pta_time;
@@ -138,19 +140,16 @@ pthread__alarm_del(pthread_t self, struct pt_alarm_t *alarm)
 			assert(retval == 0);
 			if (retval)
 				err(1, "timer_settime");
-		} else {
-			PTQ_REMOVE(&pthread_alarmqueue, alarm, pta_next);
 		}
+		PTQ_REMOVE(&pthread_alarmqueue, alarm, pta_next);
 	}
+	pthread_spinunlock(self, &alarm->pta_lock);
 	pthread_spinunlock(self, &pthread_alarmqlock);
 }
 
 int
-pthread__alarm_fired(void *arg)
+pthread__alarm_fired(struct pt_alarm_t *alarm)
 {
-	struct pt_alarm_t *alarm;
-	
-	alarm = arg;
 
 	return alarm->pta_fired;
 }
@@ -180,22 +179,15 @@ pthread__alarm_process(pthread_t self, void *arg)
 	     iterator = next) {
 		if (timespeccmp(&ts, iterator->pta_time, <))
 			break;
+		pthread_spinlock(self, &iterator->pta_lock);
 		next = PTQ_NEXT(iterator, pta_next);
 		PTQ_REMOVE(&pthread_alarmqueue, iterator, pta_next);
 		PTQ_INSERT_TAIL(&runq, iterator, pta_next);
 		iterator = next;
 		
 	}
-	pthread_spinunlock(self, &pthread_alarmqlock);
 
-	/* 2. Call the functions for all passed alarms. */
-	PTQ_FOREACH(iterator, &runq, pta_next) {
-		SDPRINTF(("(pro %p) calling function for alarm %p\n", self, iterator));
-		(*iterator->pta_func)(iterator->pta_arg);
-		iterator->pta_fired = 1;
-	}
-
-	/* 3. Reset the timer for the next element in the queue. */
+	/* 2. Reset the timer for the next element in the queue. */
 	if (next) {
 		timespecclear(&it.it_interval);
 		it.it_value = *next->pta_time;
@@ -206,4 +198,15 @@ pthread__alarm_process(pthread_t self, void *arg)
 		if (retval)
 			err(1, "timer_settime");
 	}
+	pthread_spinunlock(self, &pthread_alarmqlock);
+
+	/* 3. Call the functions for all passed alarms. */
+	PTQ_FOREACH(iterator, &runq, pta_next) {
+		SDPRINTF(("(pro %p) calling function for alarm %p\n", self, iterator));
+		(*iterator->pta_func)(iterator->pta_arg);
+		iterator->pta_fired = 1;
+		pthread_spinunlock(self, &iterator->pta_lock);
+	}
+		SDPRINTF(("(pro %p) done\n", self, iterator));
+
 }
