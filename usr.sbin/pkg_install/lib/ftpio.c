@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.11.2.6 2000/02/04 22:55:20 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.11.2.7 2000/02/22 22:51:10 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.11.2.6 2000/02/04 22:55:20 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.11.2.7 2000/02/22 22:51:10 he Exp $");
 #endif
 
 /*
@@ -18,7 +18,8 @@ __RCSID("$NetBSD: ftpio.c,v 1.11.2.6 2000/02/04 22:55:20 he Exp $");
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Hubert Feyrer.
+ *      This product includes software developed by Hubert Feyrer for
+ *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
