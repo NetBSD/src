@@ -6,9 +6,10 @@ SRCS=		cp-parse.c cp-decl.c cp-decl2.c cp-typeck.c cp-type2.c \
 		cp-except.c cp-expr.c cp-pt.c cp-edsel.c cp-xref.c \
 		cp-spew.c $(COMMON_SRC)
 
-CFLAGS+=        -I. -I$(.CURDIR) -I$(.CURDIR)/../common
+CFLAGS+=        -I. -I$(.CURDIR) -I$(.CURDIR)/../common \
+                -I$(.CURDIR)/.. -I$(.CURDIR)/../$(MACHINE)
 NOMAN=		noman
 YFLAGS=
-.PATH:          $(.CURDIR)/../common
+.PATH:          $(.CURDIR)/../common $(.CURDIR)/../$(MACHINE)
 
 .include <bsd.prog.mk>
