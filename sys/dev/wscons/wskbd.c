@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.3 1998/04/09 13:09:46 hannken Exp $ */
+/* $NetBSD: wskbd.c,v 1.4 1998/04/09 17:16:57 hannken Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.3 1998/04/09 13:09:46 hannken Exp $";
+    "$NetBSD: wskbd.c,v 1.4 1998/04/09 17:16:57 hannken Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -313,6 +313,7 @@ wskbd_attach(parent, self, aux)
 
 	sc->id->t_sc = sc;
 
+	sc->ioctl = ap->ioctl;
 	sc->id->t_accesscookie = ap->accesscookie;
 	sc->sc_ready = 0;				/* sanity */
 	sc->sc_repeating = 0;
