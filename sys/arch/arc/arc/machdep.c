@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2001/05/17 14:53:54 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2001/06/02 18:09:09 chs Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -179,9 +179,9 @@ char	cpu_model[30];
 struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */

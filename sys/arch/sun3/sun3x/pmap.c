@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2001/04/25 17:35:03 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2001/06/02 18:09:23 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -536,7 +536,7 @@ current_pmap()
 {
 	struct proc *p;
 	struct vmspace *vm;
-	vm_map_t	map;
+	struct vm_map *map;
 	pmap_t	pmap;
 
 	p = curproc;	/* XXX */

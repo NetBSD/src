@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2001/04/24 15:41:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2001/06/02 18:09:11 chs Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -84,9 +84,9 @@ char cpu_model[] = "Cobalt Microserver";
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */
 

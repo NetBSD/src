@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.31 2001/05/25 04:06:11 chs Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.32 2001/06/02 18:09:25 chs Exp $	*/
 
 /*
  *
@@ -284,7 +284,7 @@ amap_free(amap)
  */
 void
 amap_extend(entry, addsize)
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 	vsize_t addsize;
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
@@ -453,7 +453,7 @@ amap_extend(entry, addsize)
  */
 void
 amap_share_protect(entry, prot)
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 	vm_prot_t prot;
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
@@ -556,8 +556,8 @@ amap_wipeout(amap)
 
 void
 amap_copy(map, entry, waitf, canchunk, startva, endva)
-	vm_map_t map;
-	vm_map_entry_t entry;
+	struct vm_map *map;
+	struct vm_map_entry *entry;
 	int waitf;
 	boolean_t canchunk;
 	vaddr_t startva, endva;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.48 2001/05/26 16:32:47 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.49 2001/06/02 18:09:26 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  * global data structures
  */
 
-vm_map_t kernel_map = NULL;
+struct vm_map *kernel_map = NULL;
 
 struct vmi_list vmi_list;
 struct simplelock vmi_list_slock;
@@ -482,7 +482,7 @@ loop_by_list:
 
 vaddr_t
 uvm_km_kmemalloc(map, obj, size, flags)
-	vm_map_t map;
+	struct vm_map *map;
 	struct uvm_object *obj;
 	vsize_t size;
 	int flags;
@@ -593,7 +593,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 
 void
 uvm_km_free(map, addr, size)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t addr;
 	vsize_t size;
 {
@@ -609,11 +609,11 @@ uvm_km_free(map, addr, size)
 
 void
 uvm_km_free_wakeup(map, addr, size)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t addr;
 	vsize_t size;
 {
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 
 	vm_map_lock(map);
 	uvm_unmap_remove(map, trunc_page(addr), round_page(addr + size),
@@ -632,7 +632,7 @@ uvm_km_free_wakeup(map, addr, size)
 
 vaddr_t
 uvm_km_alloc1(map, size, zeroit)
-	vm_map_t map;
+	struct vm_map *map;
 	vsize_t size;
 	boolean_t zeroit;
 {
@@ -733,7 +733,7 @@ uvm_km_alloc1(map, size, zeroit)
 
 vaddr_t
 uvm_km_valloc(map, size)
-	vm_map_t map;
+	struct vm_map *map;
 	vsize_t size;
 {
 	return(uvm_km_valloc_align(map, size, 0));
@@ -741,7 +741,7 @@ uvm_km_valloc(map, size)
 
 vaddr_t
 uvm_km_valloc_align(map, size, align)
-	vm_map_t map;
+	struct vm_map *map;
 	vsize_t size;
 	vsize_t align;
 {
@@ -780,7 +780,7 @@ uvm_km_valloc_align(map, size, align)
 
 vaddr_t
 uvm_km_valloc_prefer_wait(map, size, prefer)
-	vm_map_t map;
+	struct vm_map *map;
 	vsize_t size;
 	voff_t prefer;
 {
@@ -822,7 +822,7 @@ uvm_km_valloc_prefer_wait(map, size, prefer)
 
 vaddr_t
 uvm_km_valloc_wait(map, size)
-	vm_map_t map;
+	struct vm_map *map;
 	vsize_t size;
 {
 	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
@@ -843,7 +843,7 @@ uvm_km_valloc_wait(map, size)
 /* ARGSUSED */
 vaddr_t
 uvm_km_alloc_poolpage1(map, obj, waitok)
-	vm_map_t map;
+	struct vm_map *map;
 	struct uvm_object *obj;
 	boolean_t waitok;
 {
@@ -894,7 +894,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 /* ARGSUSED */
 void
 uvm_km_free_poolpage1(map, addr)
-	vm_map_t map;
+	struct vm_map *map;
 	vaddr_t addr;
 {
 #if defined(PMAP_UNMAP_POOLPAGE)

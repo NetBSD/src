@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.58 2001/05/30 11:42:12 mrg Exp $	*/
+/*	$NetBSD: db_command.c,v 1.59 2001/06/02 18:09:25 chs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -353,7 +353,7 @@ db_map_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-        uvm_map_printit((vm_map_t) addr, full, db_printf);
+        uvm_map_printit((struct vm_map *) addr, full, db_printf);
 }
 
 /*ARGSUSED*/

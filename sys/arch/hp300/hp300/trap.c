@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 2001/05/30 15:24:29 lukem Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 2001/06/02 18:09:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -561,10 +561,10 @@ trap(type, code, v, frame)
 	    {
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
-		vm_map_t map;
+		struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))

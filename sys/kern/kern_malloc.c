@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.57 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.58 2001/06/02 18:09:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -48,7 +48,7 @@
 #include <uvm/uvm_extern.h>
 
 static struct vm_map_intrsafe kmem_map_store;
-vm_map_t kmem_map = NULL;
+struct vm_map *kmem_map = NULL;
 
 #include "opt_kmempages.h"
 
