@@ -29,10 +29,11 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$Id: netgroup_mkdb.c,v 1.1 1994/12/04 17:11:02 christos Exp $";
+static char *rcsid = "$Id: netgroup_mkdb.c,v 1.2 1995/04/17 15:13:00 christos Exp $";
 #endif
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -86,6 +87,7 @@ static DB	*ng_load __P((const char *));
 static void	 ng_write __P((DB *, DB *, int));
 static void	 ng_rwrite __P((DB *, DB *, int));
 static void	 usage __P((void));
+static void	 cleanup __P((void));
 
 #ifdef DEBUG_NG
 static void	 ng_dump __P((DB *));
@@ -96,11 +98,14 @@ static char    *dbname = _PATH_NETGROUP_DB;
 
 int
 main(argc, argv)
-	int             argc;
-	char          **argv;
+	int		  argc;
+	char		**argv;
 {
-	DB             *db, *ndb, *hdb, *udb;
-	int             ch;
+	DB		 *db, *ndb, *hdb, *udb;
+	int               ch;
+	char		  buf[MAXPATHLEN];
+	char		 *fname = _PATH_NETGROUP;
+
 
 	while ((ch = getopt(argc, argv, "o:")) != EOF)
 		switch (ch) {
@@ -116,11 +121,16 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc != 1)
+	if (argc == 1)
+		fname = *argv;
+	else if (argc > 1)
 		usage();
 
+	if (atexit(cleanup))
+		err(1, "Cannot install exit handler");
+
 	/* Read and parse the netgroup file */
-	ndb = ng_load(*argv);
+	ndb = ng_load(fname);
 #ifdef DEBUG_NG
 	(void) fprintf(stderr, "#### Database\n");
 	ng_dump(ndb);
@@ -140,23 +150,44 @@ main(argc, argv)
 	ng_rdump(udb);
 #endif
 
-	db = dbopen(dbname, O_RDWR | O_CREAT | O_EXCL,
+	(void) snprintf(buf, sizeof(buf), "%s.tmp", dbname);
+
+	db = dbopen(buf, O_RDWR | O_CREAT | O_EXCL,
 		    (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), DB_HASH, NULL);
 	if (!db)
-		err(1, dbname);
+		err(1, buf);
 
 	ng_write(db, ndb, _NG_KEYBYNAME);
 	ng_rwrite(db, udb, _NG_KEYBYUSER);
 	ng_rwrite(db, hdb, _NG_KEYBYHOST);
-	(db->close)(db);
+
+	if ((db->close)(db))
+		err(1, "Error closing database");
+
+	if (rename(buf, dbname) == -1)
+		err(1, "Cannot rename `%s' to `%s'", buf, dbname);
+
 	return 0;
 }
 
 
 /*
+ * cleanup(): Remove temporary files upon exit
+ */
+static void
+cleanup()
+{
+	char buf[MAXPATHLEN];
+	(void) snprintf(buf, sizeof(buf), "%s.tmp", dbname);
+	(void) unlink(buf);
+}
+
+
+
+/*
  * ng_load(): Load the netgroup database from a file
  */
-static DB      *
+static DB *
 ng_load(fname)
 	const char     *fname;
 {
