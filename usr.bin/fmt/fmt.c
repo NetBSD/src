@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.12 2000/09/15 11:23:17 abs Exp $	*/
+/*	$NetBSD: fmt.c,v 1.13 2000/09/18 13:42:53 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.12 2000/09/15 11:23:17 abs Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.13 2000/09/18 13:42:53 abs Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -117,7 +117,7 @@ main(argc, argv)
 	/*
 	 * LIZ@UOM 6/18/85 -- Check for goal and max length arguments 
 	 */
-	if (argc > 1 && !strcmp(argv[1], "-c")) {
+	if (argc > 1 && !strcmp(argv[1], "-C")) {
 		center++;
 		argc--;
 		argv++;
