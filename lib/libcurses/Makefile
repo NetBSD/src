@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 1/2/94
-#	$Id: Makefile,v 1.6 1994/01/24 08:36:38 cgd Exp $
+#	$Id: Makefile,v 1.7 1994/06/25 05:58:01 cgd Exp $
 
 CFLAGS+=#-DTFILE=\"/dev/ttyp0\"
 CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}
@@ -17,5 +17,9 @@ beforeinstall:
 	    /dev/null 2>&1 || \
 	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
 	    ${DESTDIR}/usr/include
+
+.if !make(all) && !make(depend) && !make(lint) && !make(tags)
+SUBDIR+= PSD.doc
+.endif
 
 .include <bsd.lib.mk>
