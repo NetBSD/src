@@ -1,4 +1,4 @@
-.\"	$NetBSD: lo.4,v 1.7 2003/08/07 10:31:03 agc Exp $
+.\"	$NetBSD: lo.4,v 1.8 2004/12/04 16:47:10 peter Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .Nm lo
 .Nd software loopback network interface
 .Sh SYNOPSIS
-.Cd "pseudo-device loop" Op Ar count
+.Cd "pseudo-device loop"
 .Sh DESCRIPTION
 The
 .Nm loop
@@ -55,6 +55,15 @@ The loopback should
 .Em never
 be configured first unless no hardware
 interfaces exist.
+.Pp
+The loopback interface
+.Nm lo0
+is created at boottime, it always exists and cannot be destroyed with
+.Xr ifconfig 8 .
+Additional loopback interfaces can be created by using the
+.Xr ifconfig 8
+.Sq create
+command.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It lo%d: can't handle af%d .
@@ -65,7 +74,8 @@ family; the packet was dropped.
 .Sh SEE ALSO
 .Xr inet 4 ,
 .Xr intro 4 ,
-.Xr ns 4
+.Xr ns 4 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
