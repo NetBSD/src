@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.9 1999/06/22 22:44:16 christos Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.10 1999/09/01 02:32:26 ross Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -176,6 +176,7 @@ ustarfs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
 {
+	int i;
 	int e = 0;	/* XXX work around gcc warning */
 	ustoffs	lda;
 	char *xferbase;
@@ -205,8 +206,13 @@ ustarfs_cylinder_read(f, seek2, forcelabel)
 #if !defined(LIBSA_NO_TWIDDLE)
 		twiddle();
 #endif
-		e = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ, seek2 / 512,
-			xferrqst, xferbase, &xfercount);
+		for (i = 0; i < 3; ++i) {
+			e = DEV_STRATEGY(f->f_dev)(f->f_devdata, F_READ,
+			    seek2 / 512, xferrqst, xferbase, &xfercount);
+			if (e == 0)
+				break;
+			printf("@");
+		}
 		if (e)
 			break;
 		if (xfercount != xferrqst)
@@ -214,6 +220,7 @@ ustarfs_cylinder_read(f, seek2, forcelabel)
 				(int)xfercount, (int)xferrqst);
 		xferrqst -= xfercount;
 		xferbase += xfercount;
+		seek2    += xfercount;
 	}
 	return e;
 }
