@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 1996/11/09 23:08:56 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.68 1997/02/22 00:06:06 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6185,8 +6185,13 @@ pmap_zero_page4m(pa)
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(pa));
 	}
-	pte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-	      (atop(pa) << SRMMU_PPNSHIFT));
+	pte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
+	       (atop(pa) << SRMMU_PPNSHIFT));
+	if (mmumod == SUN4M_MMU_SS)
+		pte |= SRMMU_PG_C;
+	else
+		pte &= ~SRMMU_PG_C;
+
 	va = vpage[0];
 	setpte4m((vm_offset_t) va, pte);
 	qzero(va, NBPG);
@@ -6221,8 +6226,12 @@ pmap_copy_page4m(src, dst)
 		if (vactype != VAC_NONE)
 			pv_flushcache(pvhead(dst));
 	}
-	dpte = ~SRMMU_PG_C & (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
-		(atop(dst) << SRMMU_PPNSHIFT));
+	dpte = (SRMMU_TEPTE | PPROT_S | PPROT_WRITE |
+	       (atop(dst) << SRMMU_PPNSHIFT));
+	if (mmumod == SUN4M_MMU_SS)
+		dpte |= SRMMU_PG_C;
+	else
+		dpte &= ~SRMMU_PG_C;
 
 	sva = vpage[0];
 	dva = vpage[1];
