@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.73.2.3 2000/08/08 23:46:56 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73.2.4 2002/01/05 18:01:58 he Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -680,7 +680,8 @@ proc_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 				newplim = limcopy(ptmp->p_limit);
 				limfree(ptmp->p_limit);
 				ptmp->p_limit = newplim;
-			} else if (ptmp->p_limit->pl_corename != defcorename) {
+			}
+			if (ptmp->p_limit->pl_corename != defcorename) {
 				free(ptmp->p_limit->pl_corename, M_TEMP);
 			}
 			ptmp->p_limit->pl_corename = tmps;
