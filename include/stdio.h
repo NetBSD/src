@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.29 1998/09/28 17:47:58 kleink Exp $	*/
+/*	$NetBSD: stdio.h,v 1.30 1998/11/20 14:39:38 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -287,7 +287,7 @@ __END_DECLS
  */
 #if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
      !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 199506L || \
-    (_XOPEN_SOURCE - 0) >= 500
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
 __BEGIN_DECLS
 #if 0 /* not yet */
 void	flockfile __P((FILE *));
@@ -421,20 +421,26 @@ static __inline int __sputc(int _c, FILE *_p) {
 
 #define	getc(fp)	__sgetc(fp)
 #define putc(x, fp)	__sputc(x, fp)
-#endif /* _REENTRANT */
+#endif /* !_REENTRANT */
 #endif /* lint */
 
 #define	getchar()	getc(stdin)
 #define	putchar(x)	putc(x, stdout)
 
 #ifndef _ANSI_SOURCE
+#ifndef _REENTRANT
 #define	fileno(p)	__sfileno(p)
+#endif /* !_REENTRANT */
+#endif /* !_ANSI_SOURCE */
 
+#if (!defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+     !defined(_XOPEN_SOURCE)) || (_POSIX_C_SOURCE - 0) >= 199506L || \
+    (_XOPEN_SOURCE - 0) >= 500 || defined(_REENTRANT)
 #define getc_unlocked(fp)	__sgetc(fp)
 #define putc_unlocked(x, fp)	__sputc(x, fp)
 
 #define getchar_unlocked()	getc_unlocked(stdin)
 #define putchar_unlocked(x)	putc_unlocked(x, stdout)
-#endif /* _ANSI_SOURCE */
+#endif /* (!_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 
 #endif /* _STDIO_H_ */
