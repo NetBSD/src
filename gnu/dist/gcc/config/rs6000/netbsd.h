@@ -32,9 +32,6 @@
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-/* Name the port. */
-#define TARGET_NAME	"powerpc-netbsd"
-
 /* Don't default to pcc-struct-return, because gcc is the only compiler, and
    we want to retain compatibility with older gcc versions.  */
 #define DEFAULT_PCC_STRUCT_RETURN 0
