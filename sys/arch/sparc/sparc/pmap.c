@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176 2001/01/21 07:48:30 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.177 2001/02/12 22:02:58 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -200,7 +200,13 @@ struct pvlist *pv_table;	/* array of entries, one per physical page */
 
 #define pvhead(pa)	(&pv_table[(pa) >> PGSHIFT])
 
-static psize_t pv_table_map __P((paddr_t));
+static psize_t pv_table_map __P((int));
+/*
+ * Physical memory to map pv_table[] (allocated in pmap_bootstrap()
+ * and used in pv_table_map()).
+ */
+static paddr_t pv_table_phys_storage;
+
 static struct pool pv_pool;
 
 
@@ -347,6 +353,10 @@ int	npmemarr;		/* number of entries in pmemarr */
 /*static*/ paddr_t	avail_end;	/* last free physical page */
 /*static*/ vaddr_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vaddr_t	virtual_end;	/* last free virtual page number */
+/*static*/ vaddr_t	etext_gap_start;/* start of gap between text & data */
+/*static*/ vaddr_t	etext_gap_end;	/* end of gap between text & data */
+/*static*/ paddr_t	etext_gap_start_pa;/* gap start, physical */
+/*static*/ paddr_t	etext_gap_end_pa;/* gap start, physical */
 
 static void pmap_page_upload __P((void));
 void pmap_release __P((pmap_t));
@@ -773,6 +783,19 @@ pmap_page_upload()
 {
 	int	n = 0;
 	paddr_t	start, end;
+
+#ifdef DIAGNOSTIC
+	if (avail_start <= etext_gap_end_pa)
+		panic("pmap_page_upload: etext gap overlap: %lx < %lx",
+			(u_long)avail_start, (u_long)etext_gap_end_pa);
+#endif
+
+	/* First, the `etext gap' */
+	uvm_page_physload(
+		atop(etext_gap_start_pa),
+		atop(etext_gap_end_pa),
+		atop(etext_gap_start_pa),
+		atop(etext_gap_end_pa), VM_FREELIST_DEFAULT);
 
 	for (n = 0; n < npmemarr; n++) {
 		/*
@@ -2543,16 +2566,15 @@ pv_flushcache(pv)
 }
 
 psize_t
-pv_table_map(base)
-	paddr_t base;
+pv_table_map(mapit)
+	int mapit;
 {
 	int nmem;
 	struct memarr *mp;
-	int mapit;
 	vsize_t s;
 	vaddr_t sva, va, eva;
 	paddr_t pa;
-	static paddr_t pv_physbase;
+	paddr_t pv_physbase;
 
 	/* 
 	 * Map pv_table[] as a `sparse' array. Virtual memory for pv_table
@@ -2564,25 +2586,19 @@ pv_table_map(base)
 	 * pv_table[]'s virtual address extent that will get used and
 	 * proceed to only map those extents to actual physical memory.
 	 *
-	 * pv_table_map() is called twice: the first time `base' is the start
-	 * of physical memory that needs to be mapped by pv_table[].
-	 * `base' is also the location from which physical memory is taken
-	 * to map pv_table[] itself. pv_table_map() will return the amount
-	 * of physical memory needed.
+	 * pv_table_map() is called twice: the first time `mapit' will be
+	 * zero, and the amount of memory needed to pv_table[] will be
+	 * returned. It is assumed that `etext_gap_start_pa' is the address
+	 * of the first managed page.
 	 *
-	 * The second time pv_table_map() is called, `base' will be zero
-	 * and the phyical memory allocated in the first round will be
-	 * used to actually map pv_table[].
+	 * The second time pv_table_map() is called, `mapit' will be set
+	 * and pv_table[] will actually be mapped, using the physical memory
+	 * given by `pv_storage' which must be set prior to starting this
+	 * second round.
 	 */ 
 
-	if (base != 0) {
-		/* Mark start of physical pages for pv_table[] */
-		pv_physbase = base;
-		mapit = 0;
-	} else {
-		pa = pv_physbase;
-		mapit = 1;
-	}
+	pv_physbase = etext_gap_start_pa;
+	pa = pv_table_phys_storage;
 
 	s = 0;
 	sva = eva = 0;
@@ -2658,6 +2674,7 @@ void
 pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
+	extern char etext[], kernel_data_start[];
 
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
@@ -2667,22 +2684,30 @@ pmap_bootstrap(nctx, nregion, nsegment)
 	nptesg = (NBPSG >> pgshift);
 #endif
 
-#if 0
-	ncontext = nctx;
-#endif
+	/*
+	 * The data segment in sparc ELF images is aligned to a 64KB
+	 * (the maximum page size defined by the ELF/sparc ABI) boundary.
+	 * This results in a unused portion of physical memory in between
+	 * the text/rodata and the data segment. We pick up that gap
+	 * here to remove it from the kernel map and give it to the
+	 * VM manager later.
+	 */
+	etext_gap_start = (vaddr_t)(etext + NBPG - 1) & ~PGOFSET;
+	etext_gap_end = (vaddr_t)kernel_data_start & ~PGOFSET;
+	etext_gap_start_pa = (paddr_t)(etext_gap_start - KERNBASE);
+	etext_gap_end_pa = (paddr_t)(etext_gap_end - KERNBASE);
 
-#if defined(SUN4M)
 	if (CPU_ISSUN4M) {
+#if defined(SUN4M)
 		pmap_bootstrap4m();
-		return;
-	}
 #endif
+	} else if (CPU_ISSUN4OR4C) {
 #if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
 		pmap_bootstrap4_4c(nctx, nregion, nsegment);
-		return;
-	}
 #endif
+	}
+
+	pmap_page_upload();
 }
 
 #if defined(SUN4) || defined(SUN4C)
@@ -2847,7 +2872,8 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	get_phys_mem();
 
 	/* Allocate physical memory for pv_table[] */
-	p += pv_table_map((paddr_t)p - KERNBASE);
+	pv_table_phys_storage = (paddr_t)(p - KERNBASE);
+	p += pv_table_map(0);
 	avail_start = (paddr_t)p - KERNBASE;
 
 	i = (int)p;
@@ -3055,8 +3081,16 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 
 		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
 			setpte4(p, getpte4(p) & mask);
+
+		/*
+		 * Unmap the `etext gap'; it'll be made available
+		 * to the VM manager.
+		 */
+		for (p = (caddr_t)etext_gap_start;
+		     p < (caddr_t)etext_gap_end;
+		     p += NBPG)
+			setpte4(p, 0);
 	}
-	pmap_page_upload();
 }
 #endif
 
@@ -3207,7 +3241,8 @@ pmap_bootstrap4m(void)
 	pagetables_end = p;
 
 	/* Allocate physical memory for pv_table[] */
-	p += pv_table_map((paddr_t)(p - KERNBASE));
+	pv_table_phys_storage = (paddr_t)(p - KERNBASE);
+	p += pv_table_map(0);
 	avail_start = (paddr_t)(p - KERNBASE);
 
 	/*
@@ -3321,13 +3356,25 @@ pmap_bootstrap4m(void)
 	for (q = (caddr_t) KERNBASE; q < p; q += NBPG) {
 		struct regmap *rp;
 		struct segmap *sp;
-		int pte;
+		int pte, *ptep;
 
 		/*
 		 * Now install entry for current page.
 		 */
 		rp = &pmap_kernel()->pm_regmap[VA_VREG(q)];
 		sp = &rp->rg_segmap[VA_VSEG(q)];
+		ptep = &sp->sg_pte[VA_VPG(q)];
+
+		/*
+		 * Unmap the `etext gap'; it'll be made available
+		 * to the VM manager.
+		 */
+		if (q >= (caddr_t)etext_gap_start &&
+		    q < (caddr_t)etext_gap_end) {
+			setpgt4m(ptep, 0);
+			continue;
+		}
+
 		sp->sg_npte++;
 
 		pte = ((int)q - KERNBASE) >> SRMMU_PPNPASHIFT;
@@ -3342,7 +3389,7 @@ pmap_bootstrap4m(void)
 		if (q < (caddr_t) trapbase || q >= etext)
 			pte |= PPROT_WRITE;
 
-		setpgt4m(&sp->sg_pte[VA_VPG(q)], pte);
+		setpgt4m(ptep, pte);
 	}
 
 	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0) {
@@ -3375,8 +3422,6 @@ pmap_bootstrap4m(void)
 	 * Now switch to kernel pagetables (finally!)
 	 */
 	mmu_install_tables(&cpuinfo);
-
-	pmap_page_upload();
 }
 
 static u_long prom_ctxreg;
@@ -3562,7 +3607,7 @@ pmap_init()
 		panic("pmap_init: CLSIZE!=1");
 
 	/* Map pv_table[] */
-	(void)pv_table_map(0);
+	(void)pv_table_map(1);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
