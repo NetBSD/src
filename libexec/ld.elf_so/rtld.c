@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.48 2002/02/03 23:34:42 thorpej Exp $	 */
+/*	$NetBSD: rtld.c,v 1.49 2002/05/26 00:02:07 wiz Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -867,23 +867,12 @@ _rtld_dladdr(addr, info)
  * will return the message.
  */
 void
-#ifdef __STDC__
 _rtld_error(const char *fmt,...)
-#else
-_rtld_error(va_alist)
-	va_dcl
-#endif
 {
 	static char     buf[512];
 	va_list         ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	xvsnprintf(buf, sizeof buf, fmt, ap);
 	error_message = buf;
 	va_end(ap);

@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.8 2001/08/14 20:13:56 eeh Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.9 2002/05/26 00:02:07 wiz Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -33,11 +33,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef RTLD_LOADER
 #define SZ_SHORT	0x01
@@ -213,23 +209,11 @@ xvprintf(fmt, ap)
 }
 
 void
-#ifdef __STDC__
 xprintf(const char *fmt, ...)
-#else
-xprintf(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	const char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
 
 	xvprintf(fmt, ap);
 
@@ -237,26 +221,12 @@ xprintf(va_alist)
 }
 
 void
-#ifdef __STDC__
 xsnprintf(char *buf, size_t buflen, const char *fmt, ...)
-#else
-xsnprintf(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	char *buf;
-	size_t buflen;
-	const char *fmt;
 
-	va_start(ap);
-	buf = va_arg(ap, char *);
-	buflen = va_arg(ap, size_t);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
+
 	xvsnprintf(buf, buflen, fmt, ap);
 
 	va_end(ap);
@@ -275,25 +245,11 @@ xstrerror(error)
 }
 
 void
-#ifdef __STDC__
 xerrx(int eval, const char *fmt, ...)
-#else
-xerrx(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
+
 	va_start(ap, fmt);
-#else
-	int eval;
-	const char *fmt;
-
-	va_start(ap);
-	eval = va_arg(ap, int);
-	fmt = va_arg(ap, const char *);
-#endif
-
 	xvprintf(fmt, ap);
 	va_end(ap);
 
@@ -301,25 +257,12 @@ xerrx(va_alist)
 }
 
 void
-#ifdef __STDC__
 xerr(int eval, const char *fmt, ...)
-#else
-xerr(va_alist)
-	va_dcl
-#endif
 {
 	int saved_errno = errno;
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	int eval;
-	const char *fmt;
 
-	va_start(ap);
-	eval = va_arg(ap, int);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	xvprintf(fmt, ap);
 	va_end(ap);
 
@@ -328,23 +271,12 @@ xerr(va_alist)
 }
 
 void
-#ifdef __STDC__
 xwarn(const char *fmt, ...)
-#else
-xwarn(va_alist)
-	va_dcl
-#endif
 {
 	int saved_errno = errno;
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	xvprintf(fmt, ap);
 	va_end(ap);
 
@@ -353,22 +285,11 @@ xwarn(va_alist)
 }
 
 void
-#ifdef __STDC__
 xwarnx(const char *fmt, ...)
-#else
-xwarnx(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	xvprintf(fmt, ap);
 	(void) write(2, "\n", 1);
 	va_end(ap);

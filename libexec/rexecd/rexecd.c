@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.9 2001/09/24 13:22:31 wiz Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.10 2002/05/26 00:02:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.9 2001/09/24 13:22:31 wiz Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.10 2002/05/26 00:02:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: rexecd.c,v 1.9 2001/09/24 13:22:31 wiz Exp $");
 #include <paths.h>
 #include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -287,30 +288,13 @@ doit(f, fromp)
 	exit(1);
 }
 
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#ifdef __STDC__
 error(const char *fmt, ...)
-#else
-error(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
 {
 	char buf[BUFSIZ];
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-
 	buf[0] = 1;
 	(void)vsnprintf(buf+1, sizeof(buf) - 1, fmt, ap);
 	(void)write(2, buf, strlen(buf));

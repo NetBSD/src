@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.1.1.1 1995/10/08 23:08:46 gwr Exp $	*/
+/*	$NetBSD: ssh.c,v 1.2 2002/05/26 00:09:09 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,11 +53,7 @@
 #endif
 
 #ifndef	__P
-#ifdef	__STDC__
 #define __P(x) x
-#else	/* STDC */
-#define	__P(x) ()
-#endif	/* STDC */
 #endif	/* __P */
 
 extern char *optarg;

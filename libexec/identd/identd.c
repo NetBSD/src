@@ -1,4 +1,4 @@
-/*	$NetBSD: identd.c,v 1.11 2001/09/16 16:34:26 wiz Exp $	*/
+/*	$NetBSD: identd.c,v 1.12 2002/05/26 00:02:07 wiz Exp $	*/
 
 /*
 ** identd.c                       A TCP/IP link identification protocol server
@@ -10,10 +10,6 @@
 **
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
-
-#if !defined(__STDC__) && !defined(_AIX)
-#define void int
-#endif
 
 #if defined(IRIX) || defined(SVR4) || defined(NeXT) || (defined(sco) && sco >= 42) || defined(_AIX4) || defined(__NetBSD__) || defined(__FreeBSD__) || defined(ultrix)
 #  define SIGRETURN_TYPE void
