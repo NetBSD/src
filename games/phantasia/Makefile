@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/06/01 19:47:19 jtk Exp $
+#	$NetBSD: Makefile,v 1.6 1997/04/19 07:29:31 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
@@ -7,12 +7,18 @@ DPADD=	${LIBM} ${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
 MAN=	phantasia.6
-CLEANFILES+=map setup setup.o
+CLEANFILES+=map setup setup.o host_phantglobs.o
 
 all: setup phantasia
 
-setup: phantglobs.o setup.o monsters.asc ${LIBM} 
-	${CC} phantglobs.o setup.o -o ${.TARGET} -lm
+setup: host_phantglobs.o setup.o monsters.asc ${LIBM} 
+	${HOST_CC} host_phantglobs.o setup.o -o ${.TARGET} -lm
+
+host_phantglobs.o: ${.CURDIR}/phantglobs.c
+	${HOST_COMPILE.c} -o host_phantglobs.o ${.CURDIR}/phantglobs.c
+
+setup.o: ${.CURDIR}/setup.c
+	${HOST_COMPILE.c} ${.CURDIR}/setup.c
 
 beforeinstall: 
 	./setup -m ${.CURDIR}/monsters.asc

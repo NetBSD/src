@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1997/03/24 22:15:47 christos Exp $
+#	$NetBSD: Makefile,v 1.15 1997/04/19 07:22:08 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	monop
@@ -18,6 +18,6 @@ cards.pck: initdeck
 	${.OBJDIR}/initdeck ${.CURDIR}/cards.inp
 
 initdeck: initdeck.c
-	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c ${LDADD}
+	${HOST_CC} ${HOST_CFLAGS} ${HOST_LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/initdeck.c
 
 .include <bsd.prog.mk>
