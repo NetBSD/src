@@ -1,4 +1,4 @@
-#       $Id: Makefile,v 1.1.1.2 2000/05/03 09:27:16 itojun Exp $
+#       Id: Makefile.dist,v 8.9 1999/09/27 21:39:11 gshapiro Exp
 
 SHELL= /bin/sh
 SUBDIRS= libsmutil libsmdb sendmail mail.local mailstats makemap \

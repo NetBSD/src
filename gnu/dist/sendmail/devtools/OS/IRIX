@@ -1,4 +1,4 @@
-#	$Id: IRIX,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: IRIX,v 8.10 1999/06/02 22:53:37 gshapiro Exp
 define(`confMAPDEF', `-DNDBM -DNIS')
 define(`confENVDEF', `-DIRIX')
 define(`confLIBS', `-lmld -lmalloc -lsun')

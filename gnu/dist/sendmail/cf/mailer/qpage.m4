@@ -23,7 +23,7 @@ POPDIVERT
 ###   QPAGE Mailer specification   ###
 ######################################
 
-VERSIONID(`$Id: qpage.m4,v 1.1.1.1 2000/05/03 09:27:37 itojun Exp $')
+VERSIONID(`Id: qpage.m4,v 8.9 1999/11/16 03:33:04 gshapiro Exp')
 
 Mqpage, P=QPAGE_MAILER_PATH, F=_MODMF_(QPAGE_MAILER_FLAGS, `QPAGE'),
 	M=QPAGE_MAILER_MAX,  T=DNS/RFC822/X-Unix,

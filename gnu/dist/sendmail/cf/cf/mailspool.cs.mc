@@ -24,7 +24,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Id: mailspool.cs.mc,v 1.1.1.2 2000/05/03 09:27:28 itojun Exp $')
+VERSIONID(`Id: mailspool.cs.mc,v 8.12 1999/02/07 07:26:04 gshapiro Exp')
 OSTYPE(sunos4.1)dnl
 DOMAIN(CS.Berkeley.EDU)dnl
 MAILER(local)dnl

@@ -1,4 +1,4 @@
-#	$Id: UXPDS.V10,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+#	Id: UXPDS.V10,v 8.13 1999/06/02 22:53:45 gshapiro Exp
 define(`confCC', `/usr/ccs/bin/cc')
 define(`confMAPDEF', `-DNDBM -DNIS')
 define(`confENVDEF', `-DUXPDS=10')

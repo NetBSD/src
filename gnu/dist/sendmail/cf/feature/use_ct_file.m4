@@ -13,7 +13,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: use_ct_file.m4,v 1.1.1.2 2000/05/03 09:27:34 itojun Exp $')
+VERSIONID(`Id: use_ct_file.m4,v 8.9 1999/02/07 07:26:13 gshapiro Exp')
 divert(-1)
 
 # if defined, the sendmail.cf will read the /etc/sendmail.ct file

@@ -1,7 +1,7 @@
 #
 #  Makefile for configuration files.
 #
-#	$Id: Makefile,v 1.1.1.2 2000/05/03 09:27:25 itojun Exp $
+#	Id: Makefile,v 8.40 2000/02/01 22:07:15 gshapiro Exp
 #
 
 #

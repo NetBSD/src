@@ -1,4 +1,4 @@
-#	$Id: UNIX_SV.4.x.i386,v 1.1.1.1 2000/05/03 09:27:19 itojun Exp $
+#	Id: UNIX_SV.4.x.i386,v 8.10 1999/09/17 20:49:59 gshapiro Exp
 define(`confCC', `gcc')
 define(`confMAPDEF', `-DNDBM')
 define(`confENVDEF', `-D__svr4__ -DUNIXWARE')

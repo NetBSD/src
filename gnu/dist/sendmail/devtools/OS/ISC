@@ -1,4 +1,4 @@
-#	$Id: ISC,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: ISC,v 8.8 1999/06/02 22:53:38 gshapiro Exp
 define(`confMAPDEF', `-DNDBM -DNIS')
 define(`confENVDEF', `-DISC_UNIX -D_POSIX_SOURCE -D_SYSV3')
 define(`confLIBS', `-lyp -lrpc -lndbm -linet -lcposix')

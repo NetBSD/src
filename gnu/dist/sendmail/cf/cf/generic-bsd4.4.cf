@@ -23,21 +23,21 @@
 ######################################################################
 ######################################################################
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: cfhead.m4,v 8.76 2000/03/21 23:56:59 gshapiro Exp  #####
+#####  Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp  #####
+#####  Id: generic-bsd4.4.mc,v 8.10 1999/02/07 07:26:02 gshapiro Exp  #####
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: bsd4.4.m4,v 8.14 1999/04/24 05:37:40 gshapiro Exp  #####
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: generic.m4,v 8.15 1999/04/04 00:51:09 ca Exp  #####
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: redirect.m4,v 8.15 1999/08/06 01:47:36 gshapiro Exp  #####
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: use_cw_file.m4,v 8.9 1999/02/07 07:26:13 gshapiro Exp  #####
 
 
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: proto.m4,v 8.446 2000/04/06 06:29:45 gshapiro Exp  #####
 
 
 # level 9 config file format
@@ -1045,7 +1045,7 @@ SLocal_trust_auth
 ###   Local and Program Mailer specification   ###
 ##################################################
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: local.m4,v 8.50 1999/11/21 19:02:08 ca Exp  #####
 
 #
 #  Envelope sender rewriting
@@ -1094,7 +1094,7 @@ Mprog,		P=/bin/sh, F=lsDFMoqeu9, S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=$z:/,
 ###   SMTP Mailer specification   ###
 #####################################
 
-#####  $Id: generic-bsd4.4.cf,v 1.1.1.2 2000/05/03 09:27:26 itojun Exp $  #####
+#####  Id: smtp.m4,v 8.56 2000/04/03 20:54:55 ca Exp  #####
 
 #
 #  common sender and masquerading recipient rewriting

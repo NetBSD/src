@@ -1,4 +1,4 @@
-#	$Id: EWS-UX_V,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: EWS-UX_V,v 8.10 1999/06/02 22:53:36 gshapiro Exp
 define(`confCC', `/usr/abiccs/bin/cc -KOlimit=1000')
 define(`confBEFORE', `sysexits.h ndbm.h ndbm.o')
 define(`confMAPDEF', `-DNDBM -DNIS')

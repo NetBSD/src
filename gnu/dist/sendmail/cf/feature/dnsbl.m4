@@ -11,7 +11,7 @@ divert(-1)
 
 divert(0)
 ifdef(`_DNSBL_R_',`dnl',`dnl
-VERSIONID(`$Id: dnsbl.m4,v 1.1.1.1 2000/05/03 09:27:31 itojun Exp $')')
+VERSIONID(`Id: dnsbl.m4,v 8.18 1999/08/03 04:30:56 gshapiro Exp')')
 divert(-1)
 define(`_DNSBL_SRV_', `ifelse(len(X`'_ARG_),`1',`rbl.maps.vix.com',_ARG_)')dnl
 define(`_DNSBL_MSG_', `ifelse(len(X`'_ARG2_),`1',`"550 Mail from " $`'&{client_addr} " refused by blackhole site '_DNSBL_SRV_`"',`_ARG2_')')dnl

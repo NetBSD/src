@@ -22,7 +22,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$Id: huginn.cs.mc,v 1.1.1.2 2000/05/03 09:27:28 itojun Exp $')
+VERSIONID(`Id: huginn.cs.mc,v 8.15 1999/02/07 07:26:03 gshapiro Exp')
 OSTYPE(hpux9)dnl
 DOMAIN(CS.Berkeley.EDU)dnl
 MASQUERADE_AS(CS.Berkeley.EDU)dnl

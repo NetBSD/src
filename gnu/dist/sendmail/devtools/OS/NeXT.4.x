@@ -1,4 +1,4 @@
-#	$Id: NeXT.4.x,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: NeXT.4.x,v 8.16 2000/03/11 21:21:01 gshapiro Exp
 PUSHDIVERT(1)
 # NEXTSTEP 3.1 and 3.2 only support m68k and i386
 #ARCH=  -arch m68k -arch i386 -arch hppa -arch sparc

@@ -27,7 +27,7 @@ POPDIVERT
 ###   PH Mailer specification   ###
 ####################################
 
-VERSIONID(`$Id: phquery.m4,v 1.1.1.2 2000/05/03 09:27:37 itojun Exp $')
+VERSIONID(`Id: phquery.m4,v 8.15 1999/10/18 04:57:54 gshapiro Exp')
 
 Mph,		P=PH_MAILER_PATH, F=_MODMF_(CONCAT(`nrDFM', PH_MAILER_FLAGS), `PH'), S=EnvFromL, R=EnvToL/HdrToL,
 		T=DNS/RFC822/X-Unix,

@@ -1,4 +1,4 @@
-#	$Id: NonStop-UX,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: NonStop-UX,v 8.12 1999/06/02 22:53:39 gshapiro Exp
 define(`confCC', `gcc')
 define(`confMAPDEF', `-DNDBM')
 define(`confENVDEF', `-DNonStop_UX_BXX -D_SVID')

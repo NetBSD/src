@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Id: delay_checks.m4,v 1.1.1.1 2000/05/03 09:27:31 itojun Exp $')
+VERSIONID(`Id: delay_checks.m4,v 8.7 2000/02/26 01:32:02 gshapiro Exp')
 divert(-1)
 
 define(`_DELAY_CHECKS_', 1)

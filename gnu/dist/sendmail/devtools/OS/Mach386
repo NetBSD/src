@@ -1,4 +1,4 @@
-#	$Id: Mach386,v 1.1.1.1 2000/05/03 09:27:18 itojun Exp $
+#	Id: Mach386,v 8.8 1999/04/24 05:37:55 gshapiro Exp
 define(`confCC', `gcc')
 define(`confMAPDEF', `-DNDBM')
 define(`confLIBS', `-ldbm')
