@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $        */
+/*	$NetBSD: pmap.c,v 1.2 1998/06/25 23:58:47 thorpej Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -93,6 +93,8 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

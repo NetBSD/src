@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1998/05/24 19:32:46 is Exp $        */
+/*	$NetBSD: pmap.c,v 1.20 1998/06/25 23:58:06 thorpej Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -95,6 +95,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

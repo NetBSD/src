@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1998/06/09 12:01:28 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1998/06/25 23:58:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.20 1998/05/24 19:32:41 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.21 1998/06/25 23:57:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
+
+#include "opt_compat_hpux.h"
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 

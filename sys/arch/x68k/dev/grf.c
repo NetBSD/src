@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.7 1998/01/12 21:13:43 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.8 1998/06/25 23:59:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,8 @@
  * This is the hardware-independent portion of the driver.
  * Hardware access is through the machine dependent grf switch routines.
  */
+
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.10 1997/03/31 07:34:19 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.11 1998/06/25 23:57:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,6 +130,10 @@ int	grfunmap __P((dev_t, caddr_t, struct proc *));
 int	grfon __P((dev_t));
 int	grfoff __P((dev_t));
 int	grfaddr __P((struct grf_softc *, int));
+
+#ifndef _LKM
+#include "opt_compat_hpux.h"
+#endif
 
 #ifdef COMPAT_HPUX
 int	hpuxgrfioctl __P((dev_t, int, caddr_t, int, struct proc *));

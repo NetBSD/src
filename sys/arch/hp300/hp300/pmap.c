@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 1998/05/27 05:58:40 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 1998/06/25 23:57:36 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -95,6 +95,7 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_compat_hpux.h"
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 

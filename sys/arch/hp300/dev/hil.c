@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.35 1997/10/16 18:02:19 carrel Exp $	*/
+/*	$NetBSD: hil.c,v 1.36 1998/06/25 23:57:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)hil.c	8.2 (Berkeley) 1/12/94
  */
+
+#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

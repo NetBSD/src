@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.14 1998/01/12 18:30:55 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.15 1998/06/25 23:57:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@
  *       HP 987x0 graphics systems.  "Gator" is not used for high res mono.
  *       (as in 9837 Gator systems)
  */
+
+#include "opt_compat_hpux.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>

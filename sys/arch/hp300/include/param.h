@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37 1997/09/20 12:07:09 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.38 1998/06/25 23:57:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,6 +82,10 @@
 
 void	_delay __P((u_int));
 #endif /* _KERNEL && !_LOCORE */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_hpux.h"
+#endif
 
 #ifdef COMPAT_HPUX
 /*
