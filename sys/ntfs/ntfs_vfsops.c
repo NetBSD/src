@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.9 2002/07/12 01:40:38 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.10 2002/07/15 20:47:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.9 2002/07/12 01:40:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.10 2002/07/15 20:47:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,8 +862,7 @@ ntfs_fhtovp(
 		ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc, 
-			vpp); /* XXX */
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -1025,8 +1024,7 @@ ntfs_vget(
 	struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curproc, 
-			vpp); /* XXX */
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
 }
 
 #if defined(__FreeBSD__)
