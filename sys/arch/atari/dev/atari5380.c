@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.1 1995/08/11 20:03:02 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.2 1995/08/19 12:36:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -67,9 +67,10 @@
 #define	NREQ		18	/* Size of issue queue			*/
 #define	AUTO_SENSE	1	/* Automatically issue a request-sense 	*/
 
-#define	DRNAME		ncrscsi	/* used in various prints	*/
+#define	DRNAME		ncrscsi	/* used in various prints		*/
 #undef	DBG_SEL			/* Show the selection process		*/
 #undef	DBG_REQ			/* Show enqueued/ready requests		*/
+#undef	DBG_ERR_RET		/* Show requests with != 0 return code	*/
 #undef	DBG_NOWRITE		/* Do not allow writes to the targets	*/
 #undef	DBG_PIO			/* Show the polled-I/O process		*/
 #undef	DBG_INF			/* Show information transfer process	*/
@@ -320,6 +321,25 @@ SC_REQ	*reqp;
 	return(1);
 }
 
+/*
+ * Convert physical DMA address to a virtual address.
+ */
+static u_char *
+ptov(reqp, phaddr)
+SC_REQ	*reqp;
+u_long	*phaddr;
+{
+	struct dma_chain	*dm;
+	u_char			*vaddr;
+
+	dm = reqp->dm_chain;
+	vaddr = reqp->xdata_ptr;
+	for(; dm < reqp->dm_cur; dm++)
+		vaddr += dm->dm_count;
+	vaddr += (u_long)phaddr - dm->dm_addr;
+	return(vaddr);
+}
+
 static int
 tt_get_dma_result(reqp, bytes_left)
 SC_REQ	*reqp;
@@ -367,18 +387,13 @@ u_long	*bytes_left;
 	if (((u_long)byte_p & 3) && PH_IN(reqp->phase)) {
 		u_char	*p, *q;
 
-		printf("There are %d restbytes!!\n", (u_long)byte_p & 3);
-#if 0
-		p = (u_char*)(leftover & ~3);
+		p = ptov(reqp, (u_long)byte_p & ~3);
 		q = (u_char*)&(SCSI_DMA->s_dma_res);
-		switch (leftover & 3) {
+		switch ((u_long)byte_p & 3) {
 			case 3: *p++ = *q++;
 			case 2: *p++ = *q++;
 			case 1: *p++ = *q++;
-			    printf("SCSI: dma residue count != 0, ");
-			    printf("Check buffer alignment\n");
 		}
-#endif
 	}
 	*bytes_left = leftover;
 	return ((dmastat & (SD_BUSERR|SD_ZERO)) ? 1 : 0);
@@ -463,6 +478,13 @@ struct dma_chain	*dm;
 		reqp->dr_flag |= DRIVER_BOUNCING;
 		return(1);
 	}
+	/*
+	 * Never allow DMA to happen on a Falcon when the transfer
+	 * size is no multiple of 512. This is the transfer unit of the
+	 * ST DMA-controller.
+	 */
+	if(dm->dm_count & 511)
+		return(1);
 	return(0);
 }
 
