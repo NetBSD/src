@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: MPC303,v 1.8 2002/01/20 03:34:28 shin Exp $
+# 	$NetBSD: MPC303,v 1.9 2002/01/26 10:24:58 takemura Exp $
 # 	From: NetBSD: GENERIC,v 1.91 2001/05/06 14:25:16 takemura Exp
 #
 # Kernel configuration file for Victor MP-C303; enami's test machine.
@@ -7,7 +7,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	16
 
@@ -94,6 +94,9 @@ options 	COMPAT_43
 options 	NFS_BOOT_BOOTPARAM
 
 options 	VR_FIND_DRAMLIM=0x03800000
+
+# compile options
+makeoptions	DEFGP="-G 14"
 
 #config		netbsd		root on ? type ?
 config		netbsd		root on aue0 type nfs

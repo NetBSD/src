@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.1 2002/01/02 13:13:19 uch Exp $
+# $NetBSD: VR41XX,v 1.2 2002/01/26 10:24:58 takemura Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	16
 
@@ -100,6 +100,9 @@ options 	COMPAT_43
 options 	NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
+
+# compile options
+makeoptions	DEFGP="-G 18"
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100

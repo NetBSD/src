@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.1 2002/01/18 13:51:01 shin Exp $
+# 	$NetBSD: LROUTER,v 1.2 2002/01/26 10:24:58 takemura Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -92,6 +92,9 @@ options 	INET6		# IPV6
 options 	COMPAT_43
 
 options 	NFS_BOOT_DHCP
+
+# compile options
+makeoptions	DEFGP="-G 18"
 
 config		netbsd		root on ? type ?
 config		nfsnetbsd	root on ? type nfs
