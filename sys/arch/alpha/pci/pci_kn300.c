@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.13 1999/12/04 20:29:02 mjacob Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.14 1999/12/15 20:10:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.13 1999/12/04 20:29:02 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.14 1999/12/15 20:10:04 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -291,7 +291,7 @@ kn300_iointr(framep, vec)
 	 * Stray interrupt; disable the IRQ on the appropriate MCPCIA
 	 * if we've reached the limit.
 	 */
-	alpha_shared_intr_stray(kn300_pci_intr, savirqs[irq], "kn300 irq");
+	alpha_shared_intr_stray(kn300_pci_intr, irq, "kn300 irq");
 	if (ALPHA_SHARED_INTR_DISABLE(kn300_pci_intr, irq) == 0)
 		return;
 
