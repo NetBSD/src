@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.58 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.59 2002/09/13 13:08:53 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.58 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.59 2002/09/13 13:08:53 gehenna Exp $");
 
 #include "opt_ddb.h"
 
@@ -733,7 +733,7 @@ _lkm_dev(lkmtp, cmd)
 	int cmd;
 {
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
-	int error = 0;
+	int error;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -744,6 +744,11 @@ _lkm_dev(lkmtp, cmd)
 		error = devsw_attach(args->lkm_devname,
 				     args->lkm_bdev, &args->lkm_bdevmaj,
 				     args->lkm_cdev, &args->lkm_cdevmaj);
+		if (error != 0)
+			return (error);
+
+		args->lkm_offset = makemajor(args->lkm_bdevmaj,
+					     args->lkm_cdevmaj);
 		break;
 
 	case LKM_E_UNLOAD:
@@ -756,7 +761,7 @@ _lkm_dev(lkmtp, cmd)
 		break;
 	}
 
-	return (error);
+	return (0);
 }
 
 #ifdef STREAMS
