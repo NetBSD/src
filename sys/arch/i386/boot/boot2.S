@@ -29,9 +29,12 @@
 /*
  * HISTORY
  * $Log: boot2.S,v $
- * Revision 1.3  1993/07/13 21:51:36  mycroft
- * Fix addressing bug in bdb junk.
+ * Revision 1.4  1993/11/10 16:08:19  cgd
+ * add addr32, as noted on freebsd-hackers by bde himself.
  *
+Revision 1.3  1993/07/13  21:51:36  mycroft
+Fix addressing bug in bdb junk.
+
 Revision 1.2  1993/07/11  12:02:22  andrew
 Fixes from bde, including support for loading @ any MB boundary (e.g. a
 kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
@@ -178,6 +181,7 @@ ENTRY(boot2)
 	mov	%ax, %es
 
 	/* fix up IDT entries for bdb */
+	addr32
 	movl	%es: -2(%ebx), %eax	/* actually movw to %ax */
 	addr32
 	movl	%eax, EXT(Idt)+8*DEBUG_VECTOR	/* actually movw %ax */
