@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.159 2001/11/24 21:53:16 perry Exp $
+#	$NetBSD: Makefile,v 1.160 2001/11/25 18:31:12 thorpej Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -147,6 +147,12 @@ build:
 .endfor
 	@echo -n "Build finished at: " && date
 .endif
+
+# Build a full distribution, but not a release (i.e. no sets into
+# ${RELEASEDIR}).
+
+distribution: build
+	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 distribution)
 
 # Build a release or snapshot (implies "make build").
 
