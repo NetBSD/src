@@ -1,4 +1,4 @@
-/*	$NetBSD: _startup.c,v 1.6 1997/01/25 21:47:44 gwr Exp $	*/
+/*	$NetBSD: _startup.c,v 1.7 1997/01/27 22:22:51 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <machine/obio.h>
 #include <machine/machdep.h>
 
-#include <sun3/sun3/sunmon.h>
 #include <sun3/sun3/interreg.h>
 #include <sun3/sun3/vector.h>
 
@@ -239,13 +238,13 @@ _verify_hardware()
 	switch (cpu_machine_id) {
 
 	case SUN3X_MACH_80 :
-		cpu_string = "80";
+		cpu_string = "80";  	/* Hydra */
 		delay_divisor = 102;	/* 20 MHz ? XXX */
 		cpu_has_vme = FALSE;
 		break;
 
 	case SUN3X_MACH_470:
-		cpu_string = "470";
+		cpu_string = "470"; 	/* Pegasus */
 		delay_divisor = 82; 	/* 25 MHz ? XXX */
 		cpu_has_vme = TRUE;
 		break;
