@@ -73,7 +73,7 @@ do
 			INCS="$INCS -I/usr/include"
 			NSI=skip
 		fi
-		eval $CPP $ALST $INCS $LIBS $CSU $OPTS $A || exit $?
+		eval $CPP $ALST $INCS $OPTS $A || exit $?
 		;;
 	esac
 done
@@ -85,7 +85,7 @@ then
 	then
 		INCS="$INCS -I/usr/include"
 	fi
-	eval exec $CPP $ALST $INCS $LIBS $CSU $OPTS
+	eval exec $CPP $ALST $INCS $OPTS
 fi
 
 exit 0
