@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.9 1999/11/21 15:01:51 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.9.4.1 2000/07/19 02:53:05 mrg Exp $	*/
 
 /*
  *
@@ -53,7 +53,7 @@
 #include <net/if.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
@@ -65,7 +65,6 @@
 /*
  * local structures
  */
-
 struct en_sbus_softc {
 	/* bus independent stuff */
 	struct en_softc	esc;		/* includes "device" structure */
@@ -74,21 +73,15 @@ struct en_sbus_softc {
 	struct sbusdev	sc_sd;		/* sbus device */
 };
 
-/*
- * local defines (SBUS specific stuff)
- */
-
-#define EN_IPL 5
 
 /*
  * prototypes
  */
-
 static	int en_sbus_match __P((struct device *, struct cfdata *, void *));
 static	void en_sbus_attach __P((struct device *, struct device *, void *));
 
 /*
- * SBUS autoconfig attachments
+ * SBus autoconfig attachments
  */
 
 struct cfattach en_sbus_ca = {
@@ -148,7 +141,7 @@ en_sbus_attach(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri,
-					 0, en_intr, sc);
+					 IPL_NET, 0, en_intr, sc);
 
 	sc->ipl = sa->sa_pri;	/* appropriate? */
 
