@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.20 1999/09/27 00:14:53 perry Exp $
+# $NetBSD: mi,v 1.21 2000/01/24 07:25:05 mycroft Exp $
 ./usr/games/adventure
 ./usr/games/arithmetic
 ./usr/games/atc
@@ -198,6 +198,7 @@
 ./usr/share/man/cat6/snake.0
 ./usr/share/man/cat6/tetris.0
 ./usr/share/man/cat6/trek.0
+./usr/share/man/cat6/wargames.0
 ./usr/share/man/cat6/worm.0
 ./usr/share/man/cat6/worms.0
 ./usr/share/man/cat6/wtf.0
@@ -243,6 +244,7 @@
 ./usr/share/man/man6/snake.6
 ./usr/share/man/man6/tetris.6
 ./usr/share/man/man6/trek.6
+./usr/share/man/man6/wargames.6
 ./usr/share/man/man6/worm.6
 ./usr/share/man/man6/worms.6
 ./usr/share/man/man6/wtf.6
