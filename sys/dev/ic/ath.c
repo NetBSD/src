@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.23 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: ath.c,v 1.24 2004/03/27 04:37:59 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.36 2003/11/29 01:23:59 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.23 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.24 2004/03/27 04:37:59 atatat Exp $");
 #endif
 
 /*
@@ -197,7 +197,6 @@ SYSCTL_INT(_hw_ath, OID_AUTO, regdomain, CTLFLAG_RD, &ath_regdomain,
 #endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
-static struct sysctlnode *ath_node_root;
 static int ath_dwelltime_nodenum, ath_calibrate_nodenum, ath_outdoor_nodenum,
            ath_countrycode_nodenum, ath_regdomain_nodenum, ath_debug_nodenum;
 #endif /* __NetBSD__ */
@@ -315,7 +314,7 @@ sysctl_ath_verify(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 {
-	int rc;
+	int rc, ath_node_num;
 	struct sysctlnode *node;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, NULL,
@@ -328,13 +327,13 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	ath_node_root = node;
+	ath_node_num = node->sysctl_num;
 
 	/* channel dwell time (ms) for AP/station scanning */
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "dwell", NULL, sysctl_ath_verify, 0, &ath_dwelltime,
-	    0, CTL_HW, ath_node_root->sysctl_num, CTL_CREATE,
+	    0, CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
@@ -345,7 +344,7 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "calibrate", NULL, sysctl_ath_verify,
 	    0, &ath_calinterval, 0, CTL_HW,
-	    ath_node_root->sysctl_num, CTL_CREATE, CTL_EOL)) != 0)
+	    ath_node_num, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	ath_calibrate_nodenum = node->sysctl_num;
@@ -354,7 +353,7 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
 	    "outdoor", NULL, NULL, 0, &ath_outdoor, 0,
-	    CTL_HW, ath_node_root->sysctl_num, CTL_CREATE,
+	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
@@ -364,7 +363,7 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
 	    "countrycode", NULL, NULL, 0, &ath_countrycode, 0,
-	    CTL_HW, ath_node_root->sysctl_num, CTL_CREATE,
+	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
@@ -374,7 +373,7 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY, CTLTYPE_INT,
 	    "regdomain", NULL, NULL, 0, &ath_regdomain, 0,
-	    CTL_HW, ath_node_root->sysctl_num, CTL_CREATE,
+	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
@@ -386,7 +385,7 @@ SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", NULL, sysctl_ath_verify, 0, &ath_debug, 0,
-	    CTL_HW, ath_node_root->sysctl_num, CTL_CREATE,
+	    CTL_HW, ath_node_num, CTL_CREATE,
 	    CTL_EOL)) != 0)
 		goto err;
 
