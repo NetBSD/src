@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.s,v 1.6 2002/06/24 10:05:54 itojun Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.s,v 1.7 2002/06/24 10:10:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,12 +89,12 @@ NENTRY(ibcs2_sigcode)
 	 * Handler has returned here as if we called it.  The sigcontext
 	 * is on the stack after the 3 args "we" pushed.
 	 */
-	leal    12(%esp),%eax           # get pointer to sigcontext
-	movl    %eax,4(%esp)            # put it in the argument slot
+	leal	12(%esp),%eax		# get pointer to sigcontext
+	movl	%eax,4(%esp)		# put it in the argument slot
 					# fake return address already there
-	movl    $IBCS2_SYS_sigreturn,%eax
-	int     $0x80                   # enter kernel with args on stack
-	movl    $IBCS2_SYS_exit,%eax
-	int     $0x80                   # exit if sigreturn fails
-	.globl  _C_LABEL(ibcs2_esigcode)
+	movl	$IBCS2_SYS_sigreturn,%eax
+	int	$0x80			# enter kernel with args on stack
+	movl	$IBCS2_SYS_exit,%eax
+	int	$0x80			# exit if sigreturn fails
+	.globl	_C_LABEL(ibcs2_esigcode)
 _C_LABEL(ibcs2_esigcode):
