@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/01/03 21:59:12 simonb Exp $
+#	$NetBSD: Makefile,v 1.14 2000/01/04 01:20:23 simonb Exp $
 
 DISKBINDIR=	/installation/diskimage
 KERNBINDIR=	/binary/kernel
@@ -53,7 +53,8 @@ realinstall:
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
 		-m ${BINMODE} netbsd.gz ${RELEASEDIR}${KERNBINDIR}/install.gz
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${BINMODE} netbsd.ecoff.gz ${RELEASEDIR}${KERNBINDIR}/install.ecoff.gz
+		-m ${BINMODE} netbsd.ecoff.gz \
+		${RELEASEDIR}${KERNBINDIR}/install.ecoff.gz
 
 clean cleandir distclean:
 	rm -f ${CLEANFILES}
