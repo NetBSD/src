@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.56 2003/11/27 21:43:22 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.57 2004/01/18 12:23:36 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -113,6 +113,50 @@ static int get_mapping(struct mbr_partition *, int, int *, int *, int *,
 			    unsigned long *);
 static void convert_mbr_chs(int, int, int, u_int8_t *, u_int8_t *,
 				 u_int8_t *, u_int32_t);
+
+/*
+ * Notes on the extended partition editor.
+ *
+ * The extended partition structure is actually a singly linked list.
+ * Each of the 'mbr' sectors can only contain 2 items, the first describes
+ * a user partition (relative to that mbr sector), the second describes
+ * the following partition (relative to the start of the extended partition).
+ *
+ * The 'start' sector for the user partition is always the size of one
+ * track - very often 63.  The extended partitions themselves should
+ * always start on a cylinder boundary using the BIOS geometry - often
+ * 16065 sectors per cylinder.
+ *
+ * The disk is also always described in increasing sector order.
+ *
+ * During editing we keep the mbr sectors accurate (it might have been
+ * easier to use absolute sector numbers though), and keep a copy of the
+ * entire sector - to preserve any information any other OS has tried
+ * to squirrel away in the (apparantly) unused space.
+ *
+ * For simplicity we add entries for unused space.  These should not
+ * get written to the disk.
+ *
+ * Typical disk (with some small numbers):
+ *
+ *      0 -> a       63       37	dos
+ *           b      100     1000	extended LBA (type 15)
+ *
+ *    100 -> a       63       37        user
+ *           b      100      200	extended partiton (type 5)
+ *
+ *    200 -> a       63       37        user
+ *           b      200      300	extended partiton (type 5)
+ *
+ *    300 -> a       63       37	user
+ *           b        0        0        0 (end of chain)
+ *
+ * If there is a gap, the 'b' partition will start beyond the area
+ * described by the 'a' partition.
+ *
+ * While writing this comment, I can't remember what happens is there
+ * is space at the start of the extended partition.
+ */
 
 /*
  * get C/H/S geometry from user via menu interface and
@@ -473,6 +517,7 @@ edit_mbr_start(menudesc *m, void *arg)
 			break;
 	}
 
+	/* Add description of start/size to user prompt */
 	len = 0;
 	for (i = 0; i < spaces; i++) {
 		len += snprintf(prompt + len, sizeof prompt - len,
@@ -485,6 +530,7 @@ edit_mbr_start(menudesc *m, void *arg)
 			break;
 	}
 
+	/* And loop until the user gives a sensible answer */
 	dflt_r = mbrp->mbrp_start / sizemult;
 	errmsg = "";
 	for (;;) {
@@ -500,6 +546,10 @@ edit_mbr_start(menudesc *m, void *arg)
 		if (new_r == dflt_r)
 			/* Unchanged */
 			return 0;
+		/*
+		 * Check that the start address from the user is inside one
+		 * of the free areas.
+		 */
 		new = new_r * sizemult;
 		for (i = 0; i < spaces; i++) {
 			if (new_r == freespace[i].start_r) {
@@ -515,6 +565,10 @@ edit_mbr_start(menudesc *m, void *arg)
 			continue;
 		}
 		limit = freespace[i].limit;
+		/*
+		 * We can only increase the start of an extended partition
+		 * if the corresponding space inside the partition isn't used.
+		 */
 		if (new > mbrp->mbrp_start &&
 		    MBR_IS_EXTENDED(mbrp->mbrp_type) &&
 		    (mbri->extended->mbr.mbr_parts[0].mbrp_type != 0 ||
@@ -597,8 +651,11 @@ edit_mbr_size(menudesc *m, void *arg)
 	} else {
 		ext = mbri->extended;
 		max = dflt;
+		/*
+		 * If the next extended partition describes a free area,
+		 * then merge it onto this area.
+		 */
 		if (ext != NULL && ext->mbr.mbr_parts[0].mbrp_type == 0) {
-			/* Easier to merge now and split later... */
 			if (ext->extended)
 				ext->extended->prev_ext = mbri;
 			mbri->extended = ext->extended;
@@ -649,9 +706,16 @@ edit_mbr_size(menudesc *m, void *arg)
 			errmsg = MSG_Too_large;
 			continue;
 		}
-		if (!MBR_IS_EXTENDED(mbrp->mbrp_type) || new == dflt)
+		if (new == dflt || opt >= MBR_PART_COUNT
+		    || !MBR_IS_EXTENDED(mbrp->mbrp_type))
 			break;
-		/* Must keep extended list aligned */
+		/*
+		 * We've been asked to change the size of the main extended
+		 * partition.  If this reduces the size, then that space
+		 * must be unallocated.  If it increases the size then
+		 * we must add a description ofthe new free space.
+		 */
+		/* Find last extended partition */
 		for (ext = mbri->extended; ext->extended; ext = ext->extended)
 			continue;
 		if ((new < dflt && (ext->mbr.mbr_parts[0].mbrp_type != 0
@@ -691,17 +755,18 @@ edit_mbr_size(menudesc *m, void *arg)
 		ext->mbr.mbr_parts[0].mbrp_size = delta - bsec;
 		ext->sector = mbri->sector + mbri->mbr.mbr_parts[0].mbrp_start
 					   + mbri->mbr.mbr_parts[0].mbrp_size;
-		mbri->mbr.mbr_parts[1].mbrp_start = ext->sector - ombri->sector;
+		mbri->mbr.mbr_parts[1].mbrp_start = ext->sector - ombri->extended->sector;
 		mbri->mbr.mbr_parts[1].mbrp_type = MBR_PTYPE_EXT;
 		mbri->mbr.mbr_parts[1].mbrp_size = delta;
 		break;
 	}
 
 	if (opt >= MBR_PART_COUNT && max - new <= bsec)
-		/* round up if not enough space for a header */
+		/* Round up if not enough space for a header for free area */
 		new = max;
 
 	if (new != mbrp->mbrp_size) {
+		/* Kill information about old partition from label */
 		mbri->last_mounted[opt < MBR_PART_COUNT ? opt : 0] = NULL;
 		remove_old_partitions(mbri->sector + mbrp->mbrp_start +
 					mbrp->mbrp_size, new - mbrp->mbrp_size);
@@ -711,7 +776,7 @@ edit_mbr_size(menudesc *m, void *arg)
 	if (opt < MBR_PART_COUNT || new == max)
 		return 0;
 
-	/* Need to allocate an extra item for the free space */
+	/* Add extended partition for the free space */
 	ext = calloc(1, sizeof *ext);
 	if (!ext) {
 		mbrp->mbrp_size = max;
@@ -733,7 +798,7 @@ edit_mbr_size(menudesc *m, void *arg)
 
 	ext->sector = mbri->sector + mbri->mbr.mbr_parts[0].mbrp_start
 				   + mbri->mbr.mbr_parts[0].mbrp_size;
-	mbri->mbr.mbr_parts[1].mbrp_start = ext->sector - ombri->sector;
+	mbri->mbr.mbr_parts[1].mbrp_start = ext->sector - ombri->extended->sector;
 	mbri->mbr.mbr_parts[1].mbrp_type = MBR_PTYPE_EXT;
 	mbri->mbr.mbr_parts[1].mbrp_size = freespace;
 
@@ -780,6 +845,7 @@ edit_mbr_install(menudesc *m, void *arg)
 		opt = 0;
 
 	start = mbri->sector + mbrp->mbrp_start;
+	/* We just remember the start address of the partition... */
 	if (start == ombri->install)
 		ombri->install = 0;
 	else
@@ -800,7 +866,7 @@ edit_mbr_bootmenu(menudesc *m, void *arg)
 	if (opt >= MBR_PART_COUNT)
 		opt = 0;
 
-	msg_prompt_win(/* XXX */ "bootmenu", -1, 18, 0, 0,
+	msg_prompt_win(/* XXX translate? */ "bootmenu", -1, 18, 0, 0,
 		mbri->nametab[opt],
 		mbri->nametab[opt], sizeof mbri->nametab[opt]);
 	if (mbri->nametab[opt][0] == ' ')
@@ -1402,34 +1468,56 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 	int fd, i, ret = 0;
 	struct mbr_partition *mbrp;
 	u_int32_t pstart, psize;
-	struct mbr_sector *mbrs;
+	struct mbr_sector *mbrs, mbrsec;
 	mbr_info_t *ext;
-#ifdef BOOTSEL
-	int netbsd_bootcode;
-	int8_t key = SCAN_1;
-
-	if (mbri->mbr.mbr_bootsel.mbrbs_magic == htole16(MBR_MAGIC)) {
-		netbsd_bootcode = 1;
-		mbri->mbr.mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
-	} else
-		netbsd_bootcode = 0;
-#endif
+	uint sector;
 
 	/* Open the disk. */
 	fd = opendisk(disk, O_WRONLY, diskpath, sizeof(diskpath), 0);
 	if (fd < 0)
 		return -1;
 
-	for (ext = mbri; ext != NULL; ext = ext->extended) {
-		mbrs = &ext->mbr;
 #ifdef BOOTSEL
-		if (netbsd_bootcode) {
+	/*
+	 * If the main boot code (appears to) contain the netbsd bootcode,
+	 * copy in all the menu strings and set the default keycode
+	 * to be that for the default partition.
+	 */
+	if (mbri->mbr.mbr_bootsel.mbrbs_magic == htole16(MBR_MAGIC)) {
+		int8_t key = SCAN_1;
+		mbri->mbr.mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
+		for (ext = mbri; ext != NULL; ext = ext->extended) {
+			mbrs = &ext->mbr;
+			mbrp = &mbrs->mbr_parts[0];
+			/* Ensure marker is set in each sector */
 			mbrs->mbr_bootsel.mbrbs_magic = htole16(MBR_MAGIC);
+			/* and copy in menu strings */
 			memcpy(&mbrs->mbr_bootsel.mbrbs_nametab, &ext->nametab,
 			    sizeof mbrs->mbr_bootsel.mbrbs_nametab);
+			for (i = 0; i < MBR_PART_COUNT; i++) {
+				if (ext->nametab[i][0] == 0)
+					continue;
+				if (ext->sector + pstart == mbri->bootsec)
+					mbri->mbr.mbr_bootsel.mbrbs_defkey = key;
+				key++;
+			}
 		}
+	}
 #endif
-		mbrp = &mbrs->mbr_parts[0];
+
+	for (ext = mbri; ext != NULL; ext = ext->extended) {
+		mbrsec = ext->mbr;	/* copy sector */
+		mbrp = &mbrsec.mbr_parts[0];
+		sector = ext->sector;
+
+		if (sector != 0 && ext->extended != NULL
+		    && ext->extended->mbr.mbr_parts[0].mbrp_type == 0) {
+			/* We are followed by an empty slot, collapse out */
+			ext = ext->extended;
+			/* Make us describe the next non-empty partition */
+			mbrp[1] = ext->extended->mbr.mbr_parts[1];
+		}
+
 		for (i = 0; i < MBR_PART_COUNT; i++) {
 			if (mbrp[i].mbrp_start == 0 && mbrp[i].mbrp_size == 0) {
 				mbrp[i].mbrp_scyl = 0;
@@ -1452,27 +1540,15 @@ write_mbr(const char *disk, mbr_info_t *mbri, int convert)
 				    &mbrp[i].mbrp_ecyl, &mbrp[i].mbrp_ehd,
 				    &mbrp[i].mbrp_esect, pstart + psize - 1);
 			}
-#ifdef BOOTSEL
-			if (netbsd_bootcode && ext->nametab[i][0] != 0) {
-				if (ext->sector + pstart == mbri->bootsec)
-					mbri->mbr.mbr_bootsel.mbrbs_defkey = key;
-				key++;
-			}
-#endif
 		}
 
-		mbrs->mbr_magic = htole16(MBR_MAGIC);
-		/*
-		 * Sector zero is written outside the loop after we have
-		 * set mbrbs_defkey.
-		 */
-		if (ext->sector != 0 && pwrite(fd, mbrs, sizeof *mbrs,
-		    ext->sector * (off_t)MBR_SECSIZE) < 0)
+		mbrsec.mbr_magic = htole16(MBR_MAGIC);
+		if (pwrite(fd, &mbrsec, sizeof mbrsec,
+					    sector * (off_t)MBR_SECSIZE) < 0) {
 			ret = -1;
+			break;
+		}
 	}
-
-	if (pwrite(fd, &mbri->mbr, sizeof mbri->mbr, 0) < 0)
-		ret = -1;
 
 	(void)close(fd);
 	return ret;
