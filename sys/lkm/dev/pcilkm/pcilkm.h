@@ -1,4 +1,4 @@
-/*	$NetBSD: pcilkm.h,v 1.2 2004/07/06 12:10:13 cube Exp $	*/
+/*	$NetBSD: pcilkm.h,v 1.3 2004/07/06 12:15:58 cube Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -63,7 +63,7 @@ extern const char * const	pcilkmcf_locnames[];
 		& __CONCAT(name,_ca),				\
 		& __CONCAT(name,_cd),				\
 		{ __CONCAT(name,_cfdata) } };			\
-	int __CONCAT(name,_lkmentry) (struct lkm_table *	\
+	int __CONCAT(name,_lkmentry) (struct lkm_table *,	\
 		int, int);					\
 	int __CONCAT(name,_lkmentry) (struct lkm_table *lkmtp,	\
 		int cmd, int ver)				\
