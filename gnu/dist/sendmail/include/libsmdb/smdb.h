@@ -1,4 +1,4 @@
-/* $NetBSD: smdb.h,v 1.1.1.7 2003/06/01 14:01:33 atatat Exp $ */
+/* $NetBSD: smdb.h,v 1.1.1.8 2005/03/15 02:05:53 atatat Exp $ */
 /*
  * Copyright (c) 1999-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -7,7 +7,7 @@
  * forth in the LICENSE file which can be found at the top level of
  * the sendmail distribution.
  *
- *	Id: smdb.h,v 8.40.2.1 2002/10/05 17:04:51 ca Exp
+ *	Id: smdb.h,v 8.41 2002/09/24 19:53:28 ca Exp
  *
  */
 

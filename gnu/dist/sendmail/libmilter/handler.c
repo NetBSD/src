@@ -1,7 +1,7 @@
-/* $NetBSD: handler.c,v 1.1.1.6 2003/06/01 14:01:47 atatat Exp $ */
+/* $NetBSD: handler.c,v 1.1.1.7 2005/03/15 02:06:05 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: handler.c,v 1.1.1.6 2003/06/01 14:01:47 atatat Exp $");
+__RCSID("$NetBSD: handler.c,v 1.1.1.7 2005/03/15 02:06:05 atatat Exp $");
 #endif
 
 /*
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: handler.c,v 1.1.1.6 2003/06/01 14:01:47 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: handler.c,v 8.30.2.4 2003/01/23 22:28:36 ca Exp")
+SM_RCSID("@(#)Id: handler.c,v 8.36 2003/09/08 21:27:14 yuri Exp")
 
 #include "libmilter.h"
 

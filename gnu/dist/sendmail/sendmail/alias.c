@@ -1,7 +1,7 @@
-/* $NetBSD: alias.c,v 1.1.1.9 2004/03/25 18:58:15 atatat Exp $ */
+/* $NetBSD: alias.c,v 1.1.1.10 2005/03/15 02:05:38 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alias.c,v 1.1.1.9 2004/03/25 18:58:15 atatat Exp $");
+__RCSID("$NetBSD: alias.c,v 1.1.1.10 2005/03/15 02:05:38 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: alias.c,v 1.1.1.9 2004/03/25 18:58:15 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: alias.c,v 8.214.2.2 2003/10/06 20:43:29 ca Exp")
+SM_RCSID("@(#)Id: alias.c,v 8.217 2003/07/28 17:47:18 ca Exp")
 
 #define SEPARATOR ':'
 # define ALIAS_SPEC_SEPARATORS	" ,/:"
@@ -145,7 +145,7 @@ alias(a, sendq, aliaslevel, e)
 	if (tTd(27, 5))
 	{
 		sm_dprintf("alias: QS_EXPANDED ");
-		printaddr(a, false);
+		printaddr(sm_debug_file(), a, false);
 	}
 	a->q_state = QS_EXPANDED;
 

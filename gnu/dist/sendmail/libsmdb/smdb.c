@@ -1,7 +1,7 @@
-/* $NetBSD: smdb.c,v 1.1.1.6 2003/06/01 14:01:47 atatat Exp $ */
+/* $NetBSD: smdb.c,v 1.1.1.7 2005/03/15 02:06:05 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: smdb.c,v 1.1.1.6 2003/06/01 14:01:47 atatat Exp $");
+__RCSID("$NetBSD: smdb.c,v 1.1.1.7 2005/03/15 02:06:05 atatat Exp $");
 #endif
 
 /*
@@ -14,7 +14,7 @@ __RCSID("$NetBSD: smdb.c,v 1.1.1.6 2003/06/01 14:01:47 atatat Exp $");
 */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: smdb.c,v 8.57 2002/05/24 23:09:11 gshapiro Exp")
+SM_RCSID("@(#)Id: smdb.c,v 8.58 2004/08/03 20:58:38 ca Exp")
 
 #include <fcntl.h>
 #include <stdlib.h>
@@ -23,6 +23,8 @@ SM_RCSID("@(#)Id: smdb.c,v 8.57 2002/05/24 23:09:11 gshapiro Exp")
 
 #include <sendmail/sendmail.h>
 #include <libsmdb/smdb.h>
+
+static bool	smdb_lockfile __P((int, int));
 
 /*
 ** SMDB_MALLOC_DATABASE -- Allocates a database structure.

@@ -1,7 +1,7 @@
-/* $NetBSD: stats.c,v 1.1.1.7 2003/06/01 14:01:31 atatat Exp $ */
+/* $NetBSD: stats.c,v 1.1.1.8 2005/03/15 02:05:50 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stats.c,v 1.1.1.7 2003/06/01 14:01:31 atatat Exp $");
+__RCSID("$NetBSD: stats.c,v 1.1.1.8 2005/03/15 02:05:50 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: stats.c,v 1.1.1.7 2003/06/01 14:01:31 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: stats.c,v 8.55 2002/05/21 22:28:52 gshapiro Exp")
+SM_RCSID("@(#)Id: stats.c,v 8.56 2002/06/27 22:47:37 gshapiro Exp")
 
 #include <sendmail/mailstats.h>
 
@@ -53,12 +53,10 @@ markstats(e, to, type)
 {
 	switch (type)
 	{
-#if _FFR_QUARANTINE
 	  case STATS_QUARANTINE:
 		if (e->e_from.q_mailer != NULL)
 			Stat.stat_nq[e->e_from.q_mailer->m_mno]++;
 		break;
-#endif /* _FFR_QUARANTINE */
 
 	  case STATS_REJECT:
 		if (e->e_from.q_mailer != NULL)
@@ -186,9 +184,7 @@ poststats(sfile)
 			stats.stat_bt[i] += Stat.stat_bt[i];
 			stats.stat_nr[i] += Stat.stat_nr[i];
 			stats.stat_nd[i] += Stat.stat_nd[i];
-#if _FFR_QUARANTINE
 			stats.stat_nq[i] += Stat.stat_nq[i];
-#endif /* _FFR_QUARANTINE */
 		}
 		stats.stat_cr += Stat.stat_cr;
 		stats.stat_ct += Stat.stat_ct;

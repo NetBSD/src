@@ -1,11 +1,11 @@
-/* $NetBSD: savemail.c,v 1.1.1.9 2003/06/01 14:01:29 atatat Exp $ */
+/* $NetBSD: savemail.c,v 1.1.1.10 2005/03/15 02:05:48 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: savemail.c,v 1.1.1.9 2003/06/01 14:01:29 atatat Exp $");
+__RCSID("$NetBSD: savemail.c,v 1.1.1.10 2005/03/15 02:05:48 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: savemail.c,v 1.1.1.9 2003/06/01 14:01:29 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: savemail.c,v 8.299.2.1 2002/10/23 15:08:47 ca Exp")
+SM_RCSID("@(#)Id: savemail.c,v 8.304 2004/10/06 21:36:06 ca Exp")
 
 static void	errbody __P((MCI *, ENVELOPE *, char *));
 static bool	pruneroute __P((char *));
@@ -80,7 +80,7 @@ savemail(e, sendbody)
 		sm_dprintf("\nsavemail, errormode = %c, id = %s, ExitStat = %d\n  e_from=",
 			e->e_errormode, e->e_id == NULL ? "NONE" : e->e_id,
 			ExitStat);
-		printaddr(&e->e_from, false);
+		printaddr(sm_debug_file(), &e->e_from, false);
 	}
 
 	if (e->e_id == NULL)
@@ -184,7 +184,12 @@ savemail(e, sendbody)
 			**  then write the error messages back to hir (sic).
 			*/
 
+#if USE_TTYPATH
 			p = ttypath();
+#else /* USE_TTYPATH */
+			p = NULL;
+#endif /* USE_TTYPATH */
+
 			if (p == NULL || sm_io_reopen(SmFtStdio,
 						      SM_TIME_DEFAULT,
 						      p, SM_IO_WRONLY, NULL,
@@ -524,11 +529,11 @@ returntosender(msg, returnq, flags, e)
 	{
 		sm_dprintf("\n*** Return To Sender: msg=\"%s\", depth=%d, e=%p, returnq=",
 			msg, returndepth, e);
-		printaddr(returnq, true);
+		printaddr(sm_debug_file(), returnq, true);
 		if (tTd(6, 20))
 		{
 			sm_dprintf("Sendq=");
-			printaddr(e->e_sendqueue, true);
+			printaddr(sm_debug_file(), e->e_sendqueue, true);
 		}
 	}
 
@@ -1183,6 +1188,9 @@ errbody(mci, e, separator)
 			/* X-Actual-Recipient: -- the real problem address */
 			if (actual[0] != '\0' &&
 			    q->q_finalrcpt != NULL &&
+#if _FFR_PRIV_NOACTUALRECIPIENT
+			    !bitset(PRIV_NOACTUALRECIPIENT, PrivacyFlags) &&
+#endif /* _FFR_PRIV_NOACTUALRECIPIENT */
 			    strcmp(actual, q->q_finalrcpt) != 0)
 			{
 				(void) sm_snprintf(buf, sizeof buf,

@@ -9,10 +9,10 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     Id: aliases.5,v 8.17 2000/12/14 23:09:46 gshapiro Exp
-.\"     $NetBSD: aliases.5,v 1.1.1.6 2003/06/01 14:01:19 atatat Exp $
+.\"     Id: aliases.5,v 8.19 2004/07/12 05:39:21 ca Exp
+.\"     $NetBSD: aliases.5,v 1.1.1.7 2005/03/15 02:05:38 atatat Exp $
 .\"
-.TH ALIASES 5 "Date: 2000/12/14 23:09:46"
+.TH ALIASES 5 "Date: 2004/07/12 05:39:21"
 .SH NAME
 aliases
 \- aliases file for sendmail
@@ -78,6 +78,17 @@ are comments.
 .PP
 Aliasing occurs only on local names.  
 Loops can not occur, since no message will be sent to any person more than once.
+.PP
+If an alias is found for
+.IR name ,
+sendmail then checks for an alias for
+.IR owner-name .
+If it is found and the result of the lookup expands to a single
+address, the envelope sender address of the message is rewritten to
+that address.
+If it is found and the result expands to more than one address, the
+envelope sender address is changed to
+.IR owner-name .
 .PP
 After aliasing has been done, local and valid recipients who have a 
 ``.forward'' 

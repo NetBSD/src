@@ -11,8 +11,8 @@
 # the sendmail distribution.
 #
 #
-#	Id: Build,v 8.179.2.4 2003/08/20 18:08:07 gshapiro Exp
-#	$NetBSD: Build,v 1.1.1.10 2004/03/25 18:57:21 atatat Exp $
+#	Id: Build,v 8.184 2003/08/20 18:08:35 gshapiro Exp
+#	$NetBSD: Build,v 1.1.1.11 2005/03/15 02:05:33 atatat Exp $
 #
 
 #
@@ -349,9 +349,10 @@ in
   NILE*)	arch=NILE
 		os=`uname -v`;;
 
-  CRAYT3E|CRAYTS)
-		os=$arch;;
-
+  CRAYT3E)	os=UNICOS-mk;;
+		
+  CRAY[CJT]90*|CRAYTS|CRAYSV1*|CRAYY-MP)
+		os=UNICOS;;
 esac
 
 # tweak operating system type and release
@@ -420,6 +421,8 @@ in
 		;;
   IRIX*)	rel=`echo $rel | sed -e 's/-.*$//'`;;
   NeXT)		mkdir="mkdirs";;
+  UNICOSMK)	rel=`echo $rel | sed -e 's/\(.*\)\.\(.*\)\.\(.*\)\..*$/\1.\2.\3/'`;;
+  UNICOS*)	rel=`echo $rel | sed -e 's/\(.*\)\.\(.*\)\..*$/\1.\2/'`;;
 esac
 
 # get "base part" of operating system release
@@ -671,7 +674,7 @@ then
 		(cd $obj
 		# This glob doesn't actually glob to something everywhere,
 		# thus the protective measures.
-		for i in ${obj_rel_base_dir}/${src_dir}/*.[ch13458]
+		for i in ${obj_rel_base_dir}/${src_dir}/*.[chly13458]
 		do
 			if [ -f $i ]
 			then

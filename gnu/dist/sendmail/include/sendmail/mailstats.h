@@ -1,4 +1,4 @@
-/* $NetBSD: mailstats.h,v 1.1.1.4 2003/06/01 14:01:32 atatat Exp $ */
+/* $NetBSD: mailstats.h,v 1.1.1.5 2005/03/15 02:05:51 atatat Exp $ */
 /*
  * Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -11,14 +11,10 @@
  * the sendmail distribution.
  *
  *
- *	Id: mailstats.h,v 8.18 2001/11/21 13:39:10 gshapiro Exp
+ *	Id: mailstats.h,v 8.19 2002/06/27 22:47:22 gshapiro Exp
  */
 
-#if _FFR_QUARANTINE
-# define STAT_VERSION	4
-#else /* _FFR_QUARANTINE */
-# define STAT_VERSION	3
-#endif /* _FFR_QUARANTINE */
+#define STAT_VERSION	4
 #define STAT_MAGIC	0x1B1DE
 
 /*
@@ -40,7 +36,5 @@ struct statistics
 	long	stat_bt[MAXMAILERS];	/* kbytes to each mailer */
 	long	stat_nr[MAXMAILERS];	/* # rejects by each mailer */
 	long	stat_nd[MAXMAILERS];	/* # discards by each mailer */
-#if _FFR_QUARANTINE
 	long	stat_nq[MAXMAILERS];	/* # quarantines by each mailer */
-#endif /* _FFR_QUARANTINE */
 };

@@ -1,11 +1,11 @@
-/* $NetBSD: smrsh.c,v 1.1.1.11 2004/03/25 18:58:02 atatat Exp $ */
+/* $NetBSD: smrsh.c,v 1.1.1.12 2005/03/15 02:05:36 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: smrsh.c,v 1.1.1.11 2004/03/25 18:58:02 atatat Exp $");
+__RCSID("$NetBSD: smrsh.c,v 1.1.1.12 2005/03/15 02:05:36 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1993 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1993
@@ -20,13 +20,13 @@ __RCSID("$NetBSD: smrsh.c,v 1.1.1.11 2004/03/25 18:58:02 atatat Exp $");
 #include <sm/gen.h>
 
 SM_IDSTR(copyright,
-"@(#) Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.\n\
+"@(#) Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.\n\
 	All rights reserved.\n\
      Copyright (c) 1993 Eric P. Allman.  All rights reserved.\n\
      Copyright (c) 1993\n\
 	The Regents of the University of California.  All rights reserved.\n")
 
-SM_IDSTR(id, "@(#)Id: smrsh.c,v 8.58.2.5 2003/12/15 17:09:39 ca Exp")
+SM_IDSTR(id, "@(#)Id: smrsh.c,v 8.65 2004/08/06 18:54:22 ca Exp")
 
 /*
 **  SMRSH -- sendmail restricted shell
@@ -102,6 +102,8 @@ SM_IDSTR(id, "@(#)Id: smrsh.c,v 8.58.2.5 2003/12/15 17:09:39 ca Exp")
 char newcmdbuf[1000];
 char *prg, *par;
 
+static void	addcmd __P((char *, bool, size_t));
+
 /*
 **  ADDCMD -- add a string to newcmdbuf, check for overflow
 **
@@ -115,7 +117,7 @@ char *prg, *par;
 **
 */
 
-void
+static void
 addcmd(s, cmd, len)
 	char *s;
 	bool cmd;

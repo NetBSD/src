@@ -1,11 +1,11 @@
-/* $NetBSD: signal.c,v 1.1.1.8 2004/03/25 19:03:39 atatat Exp $ */
+/* $NetBSD: signal.c,v 1.1.1.9 2005/03/15 02:06:06 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signal.c,v 1.1.1.8 2004/03/25 19:03:39 atatat Exp $");
+__RCSID("$NetBSD: signal.c,v 1.1.1.9 2005/03/15 02:06:06 atatat Exp $");
 #endif
 
 /*
- *  Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -15,7 +15,7 @@ __RCSID("$NetBSD: signal.c,v 1.1.1.8 2004/03/25 19:03:39 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: signal.c,v 8.37.2.4 2003/11/19 00:22:40 ca Exp")
+SM_RCSID("@(#)Id: signal.c,v 8.42 2004/08/20 21:10:30 ca Exp")
 
 #include "libmilter.h"
 
@@ -26,6 +26,9 @@ SM_RCSID("@(#)Id: signal.c,v 8.37.2.4 2003/11/19 00:22:40 ca Exp")
 static smutex_t M_Mutex;
 
 static int MilterStop = MILTER_CONT;
+
+static void	*mi_signal_thread __P((void *));
+static int	 mi_spawn_signal_thread __P((char *));
 
 /*
 **  MI_STOP -- return value of MilterStop

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.h,v 1.1.1.3 2004/03/25 19:01:55 atatat Exp $ */
+/* $NetBSD: conf.h,v 1.1.1.4 2005/03/15 02:05:52 atatat Exp $ */
 /*
  * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -11,7 +11,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: conf.h,v 1.90.2.20 2004/01/07 00:52:16 ca Exp
+ *	Id: conf.h,v 1.118 2004/08/20 20:30:32 ca Exp
  */
 
 /*
@@ -437,6 +437,8 @@ typedef int		pid_t;
 #   endif /* SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208) */
 #   if SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209)
 #    define HASURANDOMDEV	1	/* /dev/[u]random added in S9 */
+#    define HASCLOSEFROM	1	/* closefrom(3c) added in S9 */
+#    define HASFDWALK		1	/* fdwalk(3c) added in S9 */
 #   endif /* SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209) */
 #   if SOLARIS >= 21000 || (SOLARIS < 10000 && SOLARIS >= 210)
 #    define HASUNSETENV 1       /* unsetenv() added in S10 */
@@ -482,7 +484,7 @@ extern char		*getenv();
 
 #   else /* SUNOS403 */
 			/* 4.1.x specifics */
-#    define HASSETSID	1	/* has Posix setsid(2) call */
+#    define HASSETSID	1	/* has POSIX setsid(2) call */
 #    define HASSETVBUF	1	/* we have setvbuf(3) in libc */
 
 #   endif /* SUNOS403 */
@@ -511,7 +513,7 @@ extern char		*getenv();
 #  define LA_TYPE	LA_DGUX
 #  define HASSETREUID	1	/* has setreuid(2) call */
 #  define HASUNAME	1	/* use System V uname(2) system call */
-#  define HASSETSID	1	/* has Posix setsid(2) call */
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define HASINITGROUPS	1	/* has initgroups(3) call */
 #  define IP_SRCROUTE	0	/* does not have <netinet/ip_var.h> */
 #  define HASGETUSERSHELL 0	/* does not have getusershell(3) */
@@ -715,8 +717,7 @@ typedef int		pid_t;
 # endif /* NeXT */
 
 /*
-**  Apple Darwin (aka Rhapsody)
-**
+**  Apple Darwin
 **      Contributed by Wilfredo Sanchez <wsanchez@mit.edu>
 */
 
@@ -726,7 +727,7 @@ typedef int		pid_t;
 #  define HASFLOCK		1	/* has flock(2) */
 #  define HASUNAME		1	/* has uname(2) */
 #  define HASUNSETENV		1	/* has unsetenv(3) */
-#  define HASSETSID		1	/* has the setsid(2) */
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define HASINITGROUPS	1	/* has initgroups(3) */
 #  define HASSETVBUF		1	/* has setvbuf (3) */
 #  define HASSETREUID		0	/* setreuid(2) unusable */
@@ -795,7 +796,7 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  include <paths.h>
 #  define HASUNSETENV	1	/* has the unsetenv(3) call */
 #  define HASSETREUID	0	/* BSD-OS has broken setreuid(2) emulation */
-#  define HASSETSID	1	/* has the setsid(2) POSIX syscall */
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define USESETEUID	1	/* has usable seteuid(2) call */
 #  define HASFCHMOD	1	/* has fchmod(2) syscall */
 #  define HASSETLOGIN	1	/* has setlogin(2) */
@@ -843,7 +844,7 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  include <unix.h>
 #  include <sys/select.h>
 #  undef NGROUPS_MAX
-#  define HASSETSID	1	/* has the setsid(2) POSIX syscall */
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define USESETEUID	1	/* has usable seteuid(2) call */
 #  define HASFCHMOD	1	/* has fchmod(2) syscall */
 #  define HASGETDTABLESIZE 1	/* has getdtablesize(2) call */
@@ -866,7 +867,7 @@ extern unsigned int sleepX __P((unsigned int seconds));
 
 
 /*
-**  FreeBSD / NetBSD / OpenBSD (all architectures, all versions)
+**  DragonFly BSD/ FreeBSD / NetBSD / OpenBSD (all architectures, all versions)
 **
 **  4.3BSD clone, closer to 4.4BSD	for FreeBSD 1.x and NetBSD 0.9x
 **  4.4BSD-Lite based			for FreeBSD 2.x and NetBSD 1.x
@@ -874,13 +875,13 @@ extern unsigned int sleepX __P((unsigned int seconds));
 **	See also BSD defines.
 */
 
-# if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+# if defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #  include <paths.h>
 #  define HASUNSETENV	1	/* has unsetenv(3) call */
-#  define HASSETSID	1	/* has the setsid(2) POSIX syscall */
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define USESETEUID	1	/* has usable seteuid(2) call */
 #  define HASFCHMOD	1	/* has fchmod(2) syscall */
-#  define HASFCHOWN	1	/* fchown(2) */
+#  define HASFCHOWN	1	/* has fchown(2) syscall */
 #  define HASUNAME	1	/* has uname(2) syscall */
 #  define HASSTRERROR	1	/* has strerror(3) */
 #  define HAS_ST_GEN	1	/* has st_gen field in stat struct */
@@ -895,7 +896,12 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  ifndef LA_TYPE
 #   define LA_TYPE	LA_SUBR
 #  endif /* ! LA_TYPE */
-#  define SFS_TYPE	SFS_MOUNT	/* use <sys/mount.h> statfs() impl */
+#  if defined(__NetBSD__) && defined(__NetBSD_Version__) && __NetBSD_Version__ >= 200040000
+#   undef SFS_TYPE
+#   define SFS_TYPE	SFS_STATVFS
+#  else
+#   define SFS_TYPE	SFS_MOUNT	/* use <sys/mount.h> statfs() impl */
+#  endif
 #  if defined(__NetBSD__) && (NetBSD > 199307 || NetBSD0_9 > 1)
 #   undef SPT_TYPE
 #   define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
@@ -903,6 +909,34 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #  if defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3))
 #   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
 #  endif /* defined(__NetBSD__) && ((__NetBSD_Version__ > 102070000) || (NetBSD1_2 > 8) || defined(NetBSD1_4) || defined(NetBSD1_3)) */
+#  if defined(__NetBSD__) && defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104170000
+#   define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
+#  endif
+#  if defined(__NetBSD__) && defined(__NetBSD_Version__) && __NetBSD_Version__ >= 200060000
+#   define HASCLOSEFROM	1	/* closefrom(3) added in 2.0F */
+#  endif
+#  if defined(__NetBSD__)
+#   define USESYSCTL		1	/* use sysctl(3) for getting ncpus */
+#   include <sys/param.h>
+#   include <sys/sysctl.h>
+#  endif
+#  if defined(__DragonFly__)
+#   define HASSETLOGIN		1	/* has setlogin(2) */
+#   define HASSRANDOMDEV	1	/* has srandomdev(3) */
+#   define HASURANDOMDEV	1	/* has /dev/urandom(4) */
+#   undef SPT_TYPE
+#   include <libutil.h>
+#   define SPT_TYPE		SPT_BUILTIN
+#   define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
+#   ifndef SMRSH_CMDDIR
+#    define SMRSH_CMDDIR	"/usr/libexec/sm.bin"
+#   endif /* ! SMRSH_CMDDIR */
+#   ifndef SMRSH_PATH
+#    define SMRSH_PATH		"/bin:/usr/bin"
+#   endif /* ! SMRSH_PATH */
+#  define USESYSCTL		1	/* use sysctl(3) for getting ncpus */
+#  include <sys/sysctl.h>
+#  endif /* defined(__DragonFly__) */
 #  if defined(__FreeBSD__)
 #   define HASSETLOGIN	1	/* has setlogin(2) */
 #   if __FreeBSD_version >= 227001
@@ -950,8 +984,11 @@ extern unsigned int sleepX __P((unsigned int seconds));
 #   if OpenBSD >= 200012
 #    define HASSETUSERCONTEXT	1	/* BSDI-style login classes */
 #   endif /* OpenBSD >= 200012 */
+#   if OpenBSD >= 200405
+#    define HASCLOSEFROM	1	/* closefrom(3) added in 3.5 */
+#   endif /* OpenBSD >= 200405 */
 #  endif /* defined(__OpenBSD__) */
-# endif /* defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) */
+# endif /* defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) */
 
 
 /*
@@ -1366,7 +1403,11 @@ extern void		*malloc();
 #   if LINUX_VERSION_CODE < 66399
 #    define HASFLOCK	0	/* flock(2) is broken after 0.99.13 */
 #   else /* LINUX_VERSION_CODE < 66399 */
-#    define HASFLOCK	1	/* flock(2) fixed after 1.3.95 */
+#     if (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0))
+#      define HASFLOCK	1	/* flock(2) fixed after 1.3.95 */
+#     else /* (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0)) */
+#      define HASFLOCK	0	/* flock(2) is broken (again) after 2.4.0 */
+#     endif /* (LINUX_VERSION_CODE < KERNEL_VERSION(2,4,0)) */
 #   endif /* LINUX_VERSION_CODE < 66399 */
 #  endif /* ! HASFLOCK */
 #  ifndef LA_TYPE
@@ -1380,9 +1421,7 @@ extern void		*malloc();
 #   endif /* ! HASURANDOMDEV */
 #  endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(2,0,0)) */
 #  if defined(__GLIBC__) && defined(__GLIBC_MINOR__)
-#   ifndef HASSTRERROR
-#    define HASSTRERROR	1	/* has strerror(3) */
-#   endif /* HASSTRERROR */
+#   define HASSTRERROR	1	/* has strerror(3) */
 #  endif /* defined(__GLIBC__) && defined(__GLIBC_MINOR__) */
 #  ifndef TZ_TYPE
 #   define TZ_TYPE	TZ_NONE		/* no standard for Linux */
@@ -1601,22 +1640,66 @@ typedef int		pid_t;
 #  endif /* ! _PATH_SENDMAILPID */
 # endif /* _SEQUENT_ */
 
-
 /*
-**  Cray Unicos
+**  Cray UNICOS, UNICOS/mk, and UNICOS/mp
 **
+**    UNICOS:
 **	Ported by David L. Kensiski, Sterling Sofware <kensiski@nas.nasa.gov>
+**	Update Brian Ginsbach <ginsbach@cray.com>
+**    UNICOS/mk (Cray T3E):
+**	Contributed by Manu Mahonen <mailadm@csc.fi>
+**	of Center for Scientific Computing.
+**	Update Brian Ginsbach <ginsbach@cray.com>
+**    UNICOS/mp:
+**	From Aaron Davis <awd@cray.com> & Brian Ginsbach <ginsbach@cray.com>
 */
 
-# ifdef UNICOS
+# if defined(_CRAY) || defined(UNICOS) || defined(_UNICOSMP)
 #  define SYSTEM5	1	/* include all the System V defines */
-#  define SYS5SIGNALS	1	/* SysV signal semantics -- reset on each sig */
-#  define MAXPATHLEN	PATHSIZE
-#  define LA_TYPE	LA_ZERO
+#  define HASFCHMOD	1	/* has fchmod(2) syscall */
+#  define HASFCHOWN	1	/* has fchown(2) */
+#  define HASUNSETENV	1	/* has unsetenv(3) call */
+#  define HASINITGROUPS	1	/* has initgroups(3) call */
+#  define HASSETREUID	1	/* has setreuid(2) call */
+#  define USESETEUID	1	/* has usable seteuid(2) call */
+#  define HASGETDTABLESIZE 1	/* has getdtablesize(2) syscall */
+#  define HASSTRERROR	1	/* has strerror(3) */
+#  define GIDSET_T	gid_t
 #  define SFS_TYPE	SFS_4ARGS	/* four argument statfs() call */
-#  define SFS_BAVAIL	f_bfree		/* alternate field name */
-# endif /* UNICOS */
-
+#  define SFS_BAVAIL	f_bfree	/* alternate field name */
+#  define SAFENFSPATHCONF 1	/* pathconf(2) pessimizes on NFS filesystems */
+#  ifdef UNICOS
+#   define SYS5SIGNALS	1	/* SysV signal semantics -- reset on each sig */
+#   define LA_TYPE	LA_ZERO
+#   define _PATH_MAILDIR	"/usr/spool/mail"
+#   define GET_IPOPT_DST(dst) *(struct in_addr *)&(dst)
+#   ifndef MAXPATHLEN
+#    define MAXPATHLEN PATHSIZE
+#   endif /* ! MAXPATHLEN */
+#   ifndef _PATH_UNIX
+#    ifdef UNICOSMK
+#     define _PATH_UNIX		"/unicosmk.ar"
+#    else
+#     define _PATH_UNIX		"/unicos"
+#    endif /* UNICOSMK */
+#   endif /* ! _PATH_UNIX */
+#   ifndef _PATH_VENDOR_CF
+#    define _PATH_VENDOR_CF	"/usr/lib/sendmail.cf"
+#   endif /* ! _PATH_VENDOR_CF */
+#  endif /* UNICOS */
+#  ifdef _UNICOSMP
+#  if defined(_SC_NPROC_ONLN) && !defined(_SC_NPROCESSORS_ONLN)
+    /* _SC_NPROC_ONLN is 'mpadmin -u', total # of unrestricted processors */
+#   define _SC_NPROCESSORS_ONLN  _SC_NPROC_ONLN
+#  endif /* if defined(_SC_NPROC_ONLN) && !defined(_SC_NPROCESSORS_ONLN) */
+#   define HASGETUSERSHELL 0		/* does not have getusershell(3) call */
+#   define HASSETRLIMIT	   1		/* has setrlimit(2) syscall */
+#   define LA_TYPE	LA_IRIX6	/* figure out at run time */
+#   include <sys/cdefs.h>
+#   include <paths.h>
+#   define ARGV_T char *const *
+#  endif /* _UNICOSMP */
+# endif /* _CRAY */
 
 /*
 **  Apollo DomainOS
@@ -1732,7 +1815,7 @@ extern struct passwd *	sendmail_mpe_getpwuid __P((uid_t));
 #  define __svr4__
 #  define SYS5SIGNALS		1
 #  define HASFCHOWN		1	/* has fchown(2) call */
-#  define HASSETSID		1
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define HASSETREUID		1
 #  define HASWAITPID		1
 #  define HASGETDTABLESIZE	1
@@ -1782,7 +1865,7 @@ extern struct passwd *	sendmail_mpe_getpwuid __P((uid_t));
 #  define SYSTEM5		1
 #  define HASGETUSERSHELL	0	/* does not have getusershell(3) call */
 #  define HASSETREUID		1
-#  define HASSETSID		1
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define HASINITGROUPS		1
 #  define GIDSET_T		gid_t
 #  define SLEEP_T		unsigned
@@ -2004,7 +2087,7 @@ typedef int		(*sigfunc_t)();
 #   ifndef __svr4__
 #    define __svr4__		/* use all System V Release 4 defines below */
 #   endif /* ! __svr4__ */
-#   define HASSETSID	1	/* has Posix setsid(2) call */
+#   define HASSETSID	1	/* has POSIX setsid(2) call */
 #   define HASGETUSERSHELL 1	/* DOES have getusershell(3) call in libc */
 #   define LA_TYPE	LA_READKSYM	/* use MIOC_READKSYM ioctl */
 #   ifndef SPT_TYPE
@@ -2083,7 +2166,7 @@ extern char	*getenv();
 #   define __svr4__		/* use all System V Release 4 defines below */
 #  endif /* ! __svr4__ */
 #  define SYS5SIGNALS	1	/* SysV signal semantics -- reset on each sig */
-#  define HASSETSID	1	/* has Posix setsid(2) call */
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define LA_TYPE	LA_READKSYM	/* use MIOC_READSYM ioctl */
 #  define SFS_TYPE	SFS_USTAT	/* use System V ustat(2) syscall */
 #  define GIDSET_T	gid_t
@@ -2205,19 +2288,6 @@ typedef struct msgb		mblk_t;
 #  define SM_INT32		int	/* 32bit integer */
 # endif /* sinix */
 
-/*
-**  CRAY T3E
-**
-**	Contributed by Manu Mahonen <mailadm@csc.fi>
-**	of Center for Scientific Computing.
-*/
-# ifdef _CRAY
-#  define GET_IPOPT_DST(dst)	*(struct in_addr *)&(dst)
-#  define _PATH_MAILDIR	"/usr/spool/mail"
-#  if !defined(MAXPATHLEN)
-#   define MAXPATHLEN PATHSIZE
-#  endif /* !defined(MAXPATHLEN) */
-# endif /* _CRAY */
 
 /*
 **  Motorola 922, MC88110, UNIX SYSTEM V/88 Release 4.0 Version 4.3
@@ -2228,7 +2298,7 @@ typedef struct msgb		mblk_t;
 # ifdef MOTO
 #  define HASFCHMOD		1
 #  define HASSETRLIMIT		0
-#  define HASSETSID		1
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
 #  define HASSETREUID		1
 #  define HASULIMIT		1
 #  define HASWAITPID		1
@@ -2258,8 +2328,13 @@ typedef struct msgb		mblk_t;
 #  undef HAVE_SYS_ERRLIST
 #  define sys_errlist		__sys_errlist
 #  define sys_nerr		__sys_nerr
-#  define major(dev)		((int)(((dev) >> 8) & 0xff))
-#  define minor(dev)		((int)((dev) & 0xff))
+#  include <sys/mkdev.h>
+#  ifndef major
+#   define major(dev)		((int)(((dev) >> 8) & 0xff))
+#  endif /* ! major */
+#  ifndef minor
+#   define minor(dev)		((int)((dev) & 0xff))
+#  endif /* ! minor */
 # endif /* defined(__INTERIX) */
 
 
@@ -2360,8 +2435,8 @@ typedef struct msgb		mblk_t;
 
 /* general POSIX defines */
 # ifdef _POSIX_VERSION
-#  define HASSETSID	1	/* has Posix setsid(2) call */
-#  define HASWAITPID	1	/* has Posix waitpid(2) call */
+#  define HASSETSID	1	/* has POSIX setsid(2) call */
+#  define HASWAITPID	1	/* has POSIX waitpid(2) call */
 #  if _POSIX_VERSION >= 199500 && !defined(USESETEUID)
 #   define USESETEUID	1	/* has usable seteuid(2) call */
 #  endif /* _POSIX_VERSION >= 199500 && !defined(USESETEUID) */
@@ -2579,7 +2654,7 @@ typedef struct msgb		mblk_t;
 #endif /* ! EX_NOTFOUND */
 
 /* pseudo-code used for mci_setstat */
-# define EX_NOTSTICKY	-5	/* don't save persistent status */
+# define EX_NOTSTICKY	(-5)	/* don't save persistent status */
 
 
 /*
@@ -2867,7 +2942,7 @@ struct sm_align
 		long	al_l;
 		void	*al_p;
 		double	al_d;
-		void	(*al_f)();
+		void	(*al_f) __P((void));
 	} al_u;
 };
 #  define SM_ALIGN_SIZE offsetof(struct sm_align, al_u)

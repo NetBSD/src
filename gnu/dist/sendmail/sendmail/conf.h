@@ -1,4 +1,4 @@
-/* $NetBSD: conf.h,v 1.1.1.10 2003/06/01 14:01:21 atatat Exp $ */
+/* $NetBSD: conf.h,v 1.1.1.11 2005/03/15 02:05:39 atatat Exp $ */
 /*
  * Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -11,7 +11,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: conf.h,v 8.563.2.3 2002/10/31 03:28:36 ca Exp
+ *	Id: conf.h,v 8.567 2004/07/23 20:45:01 gshapiro Exp
  */
 
 /*
@@ -146,6 +146,16 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 # define DBMMODE	0640
 #endif /* ! DBMMODE */
 
+/*
+**  Value which means a uid or gid value should not change
+*/
+
+#ifndef NO_UID
+# define NO_UID		-1
+#endif /* ! NO_UID */
+#ifndef NO_GID
+# define NO_GID		-1
+#endif /* ! NO_GID */
 
 /**********************************************************************
 **  Compilation options.

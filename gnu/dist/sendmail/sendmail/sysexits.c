@@ -1,7 +1,7 @@
-/* $NetBSD: sysexits.c,v 1.1.1.4 2003/06/01 14:01:31 atatat Exp $ */
+/* $NetBSD: sysexits.c,v 1.1.1.5 2005/03/15 02:05:50 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysexits.c,v 1.1.1.4 2003/06/01 14:01:31 atatat Exp $");
+__RCSID("$NetBSD: sysexits.c,v 1.1.1.5 2005/03/15 02:05:50 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: sysexits.c,v 1.1.1.4 2003/06/01 14:01:31 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: sysexits.c,v 8.33.4.1 2002/09/09 02:42:37 gshapiro Exp")
+SM_RCSID("@(#)Id: sysexits.c,v 8.34 2002/09/09 02:43:00 gshapiro Exp")
 
 /*
 **  DSNTOEXITSTAT -- convert DSN-style error code to EX_ style.

@@ -13,8 +13,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`Id: local_procmail.m4,v 8.21.42.1 2002/11/17 04:25:07 ca Exp')
-VERSIONID(`$NetBSD: local_procmail.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
+VERSIONID(`Id: local_procmail.m4,v 8.22 2002/11/17 04:24:19 ca Exp')
+VERSIONID(`$NetBSD: local_procmail.m4,v 1.1.1.6 2005/03/15 02:06:02 atatat Exp $')
 divert(-1)
 
 ifdef(`_MAILER_local_',

@@ -1,6 +1,6 @@
 divert(-1)
 #
-# Copyright (c) 1998, 1999, 2001 Sendmail, Inc. and its suppliers.
+# Copyright (c) 1998, 1999, 2001-2002 Sendmail, Inc. and its suppliers.
 #	All rights reserved.
 # Copyright (c) 1983 Eric P. Allman.  All rights reserved.
 # Copyright (c) 1988, 1993
@@ -13,8 +13,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`Id: genericstable.m4,v 8.21 2001/03/16 00:51:26 gshapiro Exp')
-VERSIONID(`$NetBSD: genericstable.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
+VERSIONID(`Id: genericstable.m4,v 8.23 2002/06/27 23:23:57 gshapiro Exp')
+VERSIONID(`$NetBSD: genericstable.m4,v 1.1.1.6 2005/03/15 02:06:02 atatat Exp $')
 divert(-1)
 
 define(`_GENERICS_TABLE_', `')
@@ -22,5 +22,5 @@ define(`_GENERICS_TABLE_', `')
 LOCAL_CONFIG
 # Generics table (mapping outgoing addresses)
 Kgenerics ifelse(defn(`_ARG_'), `', DATABASE_MAP_TYPE MAIL_SETTINGS_DIR`genericstable',
-		 defn(`_ARG_'), `LDAP', `ldap -1 -v sendmailMTAMapValue -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=generics)(sendmailMTAKey=%0))',
+		 defn(`_ARG_'), `LDAP', `ldap -1 -v sendmailMTAMapValue,sendmailMTAMapSearch:FILTER:sendmailMTAMapObject,sendmailMTAMapURL:URL:sendmailMTAMapObject -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=generics)(sendmailMTAKey=%0))',
 		 `_ARG_')

@@ -1,5 +1,5 @@
-#	Id: Makefile,v 8.14 2002/01/07 22:24:36 gshapiro Exp
-#	$NetBSD: Makefile,v 1.1.1.7 2003/06/01 14:01:15 atatat Exp $
+#	Id: Makefile,v 8.15 2004/07/20 20:25:10 ca Exp
+#	$NetBSD: Makefile,v 1.1.1.8 2005/03/15 02:05:33 atatat Exp $
 
 DIR=		smm/08.sendmailop
 SRCS=		op.me
@@ -26,6 +26,7 @@ op.ps: ${SRCS}
 
 op.txt: ${SRCS}
 	rm -f $@
+	@echo "Note: see README file in case of errors."
 	${PIC} ${SRCS} | ${EQNASCII} | ${ROFFASCII} | ${ULASCII} > $@
 
 op.pdf: op.ps

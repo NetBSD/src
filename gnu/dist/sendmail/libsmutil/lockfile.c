@@ -1,7 +1,7 @@
-/* $NetBSD: lockfile.c,v 1.1.1.5 2003/06/01 14:01:17 atatat Exp $ */
+/* $NetBSD: lockfile.c,v 1.1.1.6 2005/03/15 02:05:35 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lockfile.c,v 1.1.1.5 2003/06/01 14:01:17 atatat Exp $");
+__RCSID("$NetBSD: lockfile.c,v 1.1.1.6 2005/03/15 02:05:35 atatat Exp $");
 #endif
 
 /*
@@ -19,7 +19,7 @@ __RCSID("$NetBSD: lockfile.c,v 1.1.1.5 2003/06/01 14:01:17 atatat Exp $");
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)Id: lockfile.c,v 8.19 2001/09/11 04:04:55 gshapiro Exp")
+SM_RCSID("@(#)Id: lockfile.c,v 8.21 2003/11/10 22:57:38 ca Exp")
 
 
 /*
@@ -49,7 +49,6 @@ lockfile(fd, filename, ext, type)
 #if !HASFLOCK
 	int action;
 	struct flock lfd;
-	extern int errno;
 
 	memset(&lfd, '\0', sizeof lfd);
 	if (bitset(LOCK_UN, type))

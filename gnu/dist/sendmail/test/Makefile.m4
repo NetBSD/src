@@ -1,5 +1,5 @@
-dnl Id: Makefile.m4,v 1.3.2.1 2002/06/21 21:58:49 ca Exp
-dnl $NetBSD: Makefile.m4,v 1.1.1.2 2003/06/01 14:01:32 atatat Exp $
+dnl Id: Makefile.m4,v 1.4 2002/06/21 22:01:54 ca Exp
+dnl $NetBSD: Makefile.m4,v 1.1.1.3 2005/03/15 02:05:51 atatat Exp $
 include(confBUILDTOOLSDIR`/M4/switch.m4')
 
 bldPRODUCT_START(`executable', `test')

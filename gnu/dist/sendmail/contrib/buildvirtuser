@@ -27,8 +27,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-# Id: buildvirtuser,v 1.5.2.1 2003/03/15 23:30:26 gshapiro Exp
-# $NetBSD: buildvirtuser,v 1.1.1.4 2003/06/01 14:01:45 atatat Exp $
+# Id: buildvirtuser,v 1.6 2003/03/15 23:30:09 gshapiro Exp
+# $NetBSD: buildvirtuser,v 1.1.1.5 2005/03/15 02:06:03 atatat Exp $
 
 =head1 NAME
 

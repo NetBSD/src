@@ -1,8 +1,8 @@
 #
 #  Makefile for configuration files.
 #
-#	Id: Makefile,v 8.56 2001/12/13 23:56:37 gshapiro Exp
-#	$NetBSD: Makefile,v 1.1.1.8 2003/06/01 14:01:40 atatat Exp $
+#	Id: Makefile,v 8.59 2004/08/06 03:54:05 gshapiro Exp
+#	$NetBSD: Makefile,v 1.1.1.9 2005/03/15 02:05:57 atatat Exp $
 #
 
 #
@@ -20,6 +20,8 @@ SUBMIT=	submit
 MAILDIR=/etc/mail
 M4=	m4
 CFDIR=	..
+SED=  sed
+ECHO= echo
 CHMOD=	chmod
 ROMODE=	444
 RM=	rm -f
@@ -36,6 +38,8 @@ CFMODE=0444
 .mc.cf:
 	$(RM) $@
 	$(M4) ${CFDIR}/m4/cf.m4 $*.mc > $@ || ( $(RM) $@ && exit 1 )
+	$(ECHO) "### $*.mc ###" >>$@
+	$(SED) -e 's/^/# /' $*.mc >>$@
 	$(CHMOD) $(ROMODE) $@
 
 GENERIC=generic-bsd4.4.cf generic-hpux9.cf generic-hpux10.cf \
@@ -100,6 +104,7 @@ M4FILES=\
 	${CFDIR}/feature/bestmx_is_local.m4 \
 	${CFDIR}/feature/bitdomain.m4 \
 	${CFDIR}/feature/blacklist_recipients.m4 \
+	${CFDIR}/feature/conncontrol.m4 \
 	${CFDIR}/feature/dnsbl.m4 \
 	${CFDIR}/feature/domaintable.m4 \
 	${CFDIR}/feature/generics_entire_domain.m4 \
@@ -114,12 +119,12 @@ M4FILES=\
 	${CFDIR}/feature/masquerade_envelope.m4 \
 	${CFDIR}/feature/no_default_msa.m4 \
 	${CFDIR}/feature/nocanonify.m4 \
-	${CFDIR}/feature/nodns.m4 \
 	${CFDIR}/feature/notsticky.m4 \
 	${CFDIR}/feature/nouucp.m4 \
 	${CFDIR}/feature/nullclient.m4 \
 	${CFDIR}/feature/promiscuous_relay.m4 \
 	${CFDIR}/feature/redirect.m4 \
+	${CFDIR}/feature/ratecontrol.m4 \
 	${CFDIR}/feature/relay_based_on_MX.m4 \
 	${CFDIR}/feature/relay_entire_domain.m4 \
 	${CFDIR}/feature/relay_hosts_only.m4 \
@@ -160,6 +165,7 @@ M4FILES=\
 	${CFDIR}/ostype/bsdi2.0.m4 \
 	${CFDIR}/ostype/dgux.m4 \
 	${CFDIR}/ostype/domainos.m4 \
+	${CFDIR}/ostype/dragonfly.m4 \
 	${CFDIR}/ostype/dynix3.2.m4 \
 	${CFDIR}/ostype/freebsd4.m4 \
 	${CFDIR}/ostype/freebsd5.m4 \

@@ -1,11 +1,11 @@
-/* $NetBSD: sfsasl.c,v 1.1.1.10 2004/03/25 19:01:03 atatat Exp $ */
+/* $NetBSD: sfsasl.c,v 1.1.1.11 2005/03/15 02:05:49 atatat Exp $ */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sfsasl.c,v 1.1.1.10 2004/03/25 19:01:03 atatat Exp $");
+__RCSID("$NetBSD: sfsasl.c,v 1.1.1.11 2005/03/15 02:05:49 atatat Exp $");
 #endif
 
 /*
- * Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1999-2004 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -15,10 +15,16 @@ __RCSID("$NetBSD: sfsasl.c,v 1.1.1.10 2004/03/25 19:01:03 atatat Exp $");
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)Id: sfsasl.c,v 8.91.2.5 2003/08/08 17:30:11 ca Exp")
+SM_RCSID("@(#)Id: sfsasl.c,v 8.101 2004/12/15 22:45:55 ca Exp")
 #include <stdlib.h>
 #include <sendmail.h>
 #include <errno.h>
+
+/* allow to disable error handling code just in case... */
+#ifndef DEAL_WITH_ERROR_SSL
+# define DEAL_WITH_ERROR_SSL	1
+#endif /* ! DEAL_WITH_ERROR_SSL */
+
 #if SASL
 # include "sfsasl.h"
 
@@ -285,9 +291,28 @@ sasl_write(fp, buf, size)
 # else /* SASL >= 20000 */
 	char *outbuf;
 # endif /* SASL >= 20000 */
-	unsigned int outlen;
+	unsigned int outlen, *maxencode;
 	size_t ret = 0, total = 0;
 	struct sasl_obj *so = (struct sasl_obj *) fp->f_cookie;
+
+	/*
+	**  Fetch the maximum input buffer size for sasl_encode().
+	**  This can be less than the size set in attemptauth()
+	**  due to a negotation with the other side, e.g.,
+	**  Cyrus IMAP lmtp program sets maxbuf=4096,
+	**  digestmd5 substracts 25 and hence we'll get 4071
+	**  instead of 8192 (MAXOUTLEN).
+	**  Hack (for now): simply reduce the size, callers are (must be)
+	**  able to deal with that and invoke sasl_write() again with
+	**  the rest of the data.
+	**  Note: it would be better to store this value in the context
+	**  after the negotiation.
+	*/
+
+	result = sasl_getprop(so->conn, SASL_MAXOUTBUF,
+                             (const void **) &maxencode);
+	if (result == SASL_OK && size > *maxencode && *maxencode > 0)
+		size = *maxencode;
 
 	result = sasl_encode(so->conn, buf,
 			     (unsigned int) size, &outbuf, &outlen);
@@ -355,16 +380,16 @@ sfdcsasl(fin, fout, conn)
 		SM_TIME_FOREVER);
 	info.fp = *fin;
 	info.conn = conn;
-	newin = sm_io_open(&sasl_vector, SM_TIME_DEFAULT, &info, SM_IO_RDONLY,
-			   NULL);
+	newin = sm_io_open(&sasl_vector, SM_TIME_DEFAULT, &info,
+			SM_IO_RDONLY_B, NULL);
 
 	if (newin == NULL)
 		return -1;
 
 	info.fp = *fout;
 	info.conn = conn;
-	newout = sm_io_open(&sasl_vector, SM_TIME_DEFAULT, &info, SM_IO_WRONLY,
-			    NULL);
+	newout = sm_io_open(&sasl_vector, SM_TIME_DEFAULT, &info,
+			SM_IO_WRONLY_B, NULL);
 
 	if (newout == NULL)
 	{
@@ -586,19 +611,19 @@ tls_read(fp, buf, size)
 */
 		break;
 	  case SSL_ERROR_SSL:
-#if _FFR_DEAL_WITH_ERROR_SSL
+#if DEAL_WITH_ERROR_SSL
 		if (r == 0 && errno == 0) /* out of protocol EOF found */
 			break;
-#endif /* _FFR_DEAL_WITH_ERROR_SSL */
+#endif /* DEAL_WITH_ERROR_SSL */
 		err = "generic SSL error";
 		if (LogLevel > 9)
 			tlslogerr("read");
 
-#if _FFR_DEAL_WITH_ERROR_SSL
+#if DEAL_WITH_ERROR_SSL
 		/* avoid repeated calls? */
 		if (r == 0)
 			r = -1;
-#endif /* _FFR_DEAL_WITH_ERROR_SSL */
+#endif /* DEAL_WITH_ERROR_SSL */
 		break;
 	}
 	if (err != NULL)
@@ -691,11 +716,11 @@ tls_write(fp, buf, size)
 		if (LogLevel > 9)
 			tlslogerr("write");
 
-#if _FFR_DEAL_WITH_ERROR_SSL
+#if DEAL_WITH_ERROR_SSL
 		/* avoid repeated calls? */
 		if (r == 0)
 			r = -1;
-#endif /* _FFR_DEAL_WITH_ERROR_SSL */
+#endif /* DEAL_WITH_ERROR_SSL */
 		break;
 	}
 	if (err != NULL)
@@ -756,13 +781,13 @@ sfdctls(fin, fout, con)
 		SM_TIME_FOREVER);
 	info.fp = *fin;
 	info.con = con;
-	tlsin = sm_io_open(&tls_vector, SM_TIME_DEFAULT, &info, SM_IO_RDONLY,
+	tlsin = sm_io_open(&tls_vector, SM_TIME_DEFAULT, &info, SM_IO_RDONLY_B,
 			   NULL);
 	if (tlsin == NULL)
 		return -1;
 
 	info.fp = *fout;
-	tlsout = sm_io_open(&tls_vector, SM_TIME_DEFAULT, &info, SM_IO_WRONLY,
+	tlsout = sm_io_open(&tls_vector, SM_TIME_DEFAULT, &info, SM_IO_WRONLY_B,
 			    NULL);
 	if (tlsout == NULL)
 	{

@@ -9,12 +9,11 @@ divert(-1)
 #
 #
 
-dnl 8.13: ifdef(`DNSBL_MAP', `', `define(`DNSBL_MAP', `dns -R A')')
-ifdef(`DNSBL_MAP', `', `define(`DNSBL_MAP', `host')')
+ifdef(`DNSBL_MAP', `', `define(`DNSBL_MAP', `dns -R A')')
 divert(0)
 ifdef(`_DNSBL_R_',`dnl',`dnl
-VERSIONID(`Id: dnsbl.m4,v 8.28 2002/05/19 21:22:40 gshapiro Exp')
-VERSIONID(`$NetBSD: dnsbl.m4,v 1.1.1.5 2003/06/01 14:01:43 atatat Exp $')
+VERSIONID(`Id: dnsbl.m4,v 8.29 2002/08/09 21:02:08 ca Exp')
+VERSIONID(`$NetBSD: dnsbl.m4,v 1.1.1.6 2005/03/15 02:06:02 atatat Exp $')
 define(`_DNSBL_R_',`')
 LOCAL_CONFIG
 # map for DNS based blacklist lookups

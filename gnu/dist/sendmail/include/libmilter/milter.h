@@ -1,4 +1,4 @@
-/* $NetBSD: milter.h,v 1.1.1.9 2004/03/25 19:01:58 atatat Exp $ */
+/* $NetBSD: milter.h,v 1.1.1.10 2005/03/15 02:05:53 atatat Exp $ */
 /*
  * Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
@@ -8,7 +8,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: milter.h,v 8.37.2.3 2003/12/02 00:19:51 msk Exp
+ *	Id: milter.h,v 8.39 2003/12/02 00:21:42 msk Exp
  */
 
 /*
@@ -26,11 +26,7 @@
 typedef pthread_t	sthread_t;
 typedef int		socket_t;
 
-#if _FFR_MILTER_MACROS_EOM
 # define MAX_MACROS_ENTRIES	5	/* max size of macro pointer array */
-#else /* _FFR_MILTER_MACROS_EOM */
-# define MAX_MACROS_ENTRIES	4	/* max size of macro pointer array */
-#endif /* _FFR_MILTER_MACROS_EOM */
 
 /*
 **  context for milter
