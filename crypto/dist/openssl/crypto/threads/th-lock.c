@@ -257,7 +257,7 @@ void CRYPTO_thread_setup(void)
 	int i;
 	char filename[20];
 
-	strcpy(filename,"/tmp/mttest.XXXXXX");
+	strlcpy(filename, "/tmp/mttest.XXXXXX", sizeof(filename));
 	mktemp(filename);
 
 	usconfig(CONF_STHREADIOOFF);
@@ -286,7 +286,7 @@ void CRYPTO_thread_cleanup(void)
 		{
 		char buf[10];
 
-		sprintf(buf,"%2d:",i);
+		snprintf(buf, sizeof(buf), "%2d:", i);
 		usdumpsema(lock_cs[i],stdout,buf);
 		usfreesema(lock_cs[i],arena);
 		}
