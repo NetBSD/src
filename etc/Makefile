@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.286 2004/05/12 16:56:41 cl Exp $
+#	$NetBSD: Makefile,v 1.287 2004/05/16 09:53:09 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -123,10 +123,6 @@ ETC_INSTALL_OBJ_FILE=cd ${.OBJDIR} && ${INSTALL_FILE} ${ETC_PKG}
 ETC_INSTALL_LINK=cd ${.CURDIR} && ${INSTALL_LINK} ${ETC_PKG}
 ETC_INSTALL_SYMLINK=cd ${.CURDIR} && ${INSTALL_SYMLINK} ${ETC_PKG}
 
-NAMEDB=	127 root.cache named.conf localhost loopback.v6
-
-SSH=	ssh_known_hosts
-
 .if ${TARGET_ENDIANNESS} == "1234"
 PWD_MKDB_ENDIAN=	-L
 .elif ${TARGET_ENDIANNESS} == "4321"
@@ -241,27 +237,14 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	    MAKEDEV.local ${DESTDIR}/dev
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    minfree ${DESTDIR}/var/crash
-.for file in cshrc login profile shrc
-	${ETC_INSTALL_FILE} -o root -g wheel -m 644 \
-	    root/dot.${file} ${DESTDIR}/root/.${file}
-.endfor
-	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
-	    root/dot.klogin ${DESTDIR}/root/.klogin
-	rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile
-	${ETC_INSTALL_LINK} ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc
-	${ETC_INSTALL_LINK} ${DESTDIR}/root/.profile ${DESTDIR}/.profile
-	${MAKEDIRTARGET} defaults install
-	${MAKEDIRTARGET} mtree install
-.for file in ${NAMEDB}
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    namedb/${file} ${DESTDIR}/etc/namedb
-.endfor
-.for file in ${SSH}
-	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ssh/${file} ${DESTDIR}/etc/ssh
-.endfor
-	${MAKEDIRTARGET} powerd install
-	${MAKEDIRTARGET} rc.d install
+	${MAKEDIRTARGET} defaults configinstall
+	${MAKEDIRTARGET} mtree configinstall
+	${MAKEDIRTARGET} namedb configinstall
+	${MAKEDIRTARGET} powerd configinstall
+	${MAKEDIRTARGET} rc.d configinstall
+	${MAKEDIRTARGET} root configinstall
+	${MAKEDIRTARGET} skel configinstall
+	${MAKEDIRTARGET} ssh configinstall
 	${ETC_INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    postinstall ${DESTDIR}/etc
 	${ETC_INSTALL_SYMLINK} -o root -g wheel -m 755 \
@@ -336,14 +319,13 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	    /dev/null ${DESTDIR}/var/games/snake.log
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/tetris.scores
-	${MAKEDIRTARGET} skel distribution
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail distribution
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix distribution
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
 .if (${MKCRYPTO} != "no")
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/ssh distribution
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/ssh configinstall
 .endif
 .if (${MKSENDMAIL} != "no")
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf distribution
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf configinstall
 .endif
 
 
