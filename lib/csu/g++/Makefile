@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.1 1994/01/05 21:05:33 pk Exp $
+#	$Id: Makefile,v 1.2 1994/01/05 23:32:09 mycroft Exp $
 
-CFLAGS+=	-DLIBC_SCCS
+CFLAGS+=	-DLIBC_SCCS -fpic
 OBJS=		c++rt0.o
 
 all: ${OBJS}
