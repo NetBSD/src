@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.6 2001/06/12 22:32:50 thorpej Exp $	*/
+/*	$NetBSD: rtl80x9.c,v 1.7 2001/07/08 17:52:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
