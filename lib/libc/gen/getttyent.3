@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getttyent.3	6.7 (Berkeley) 4/19/91
-.\"	$Id: getttyent.3,v 1.2 1993/07/30 08:36:48 mycroft Exp $
+.\"	$Id: getttyent.3,v 1.3 1994/03/12 06:38:48 cgd Exp $
 .\"
 .Dd April 19, 1991
 .Dt GETTTYENT 3
@@ -67,6 +67,12 @@ struct ttyent {
 	char	*ty_type;	/* terminal type */
 #define	TTY_ON		0x01	/* enable logins */
 #define	TTY_SECURE	0x02	/* allow uid of 0 to login */
+#define	TTY_LOCAL	0x04	/* set 'CLOCAL' on open (dev. specific) */
+#define	TTY_RTSCTS	0x08	/* set 'CRTSCTS' on open (dev. specific) */
+#define	TTY_SOFTCAR	0x10	/* ignore hardware carrier (dev. spec.) */
+	int	ty_status;	/* flag values */
+	int	ty_status;	/* flag values */
+	int	ty_status;	/* flag values */
 	int	ty_status;	/* flag values */
 	char	*ty_window;	/* command for window manager */
 	char	*ty_comment;	/* comment field */
@@ -87,7 +93,7 @@ The name of the default terminal type connected to this tty line.
 A mask of bit fields which indicate various actions allowed on this
 tty line.
 The possible flags are as follows:
-.Bl -tag -width TTY_SECURE
+.Bl -tag -width TTY_SOFTCAR
 .It Dv TTY_ON
 Enables logins (i.e.,
 .Xr init 8
@@ -96,6 +102,16 @@ will start the command referenced by
 on this entry).
 .It Dv TTY_SECURE
 Allow users with a uid of 0 to login on this terminal.
+.It Dv TTY_LOCAL
+If the terminal port's driver supports it, cause the line
+to be treated as ``local.''
+.It Dv TTY_RTSCTS
+If the terminal port's driver supports it, use
+full-duplex RTS/CTS hardware flow control on the line
+by default.
+.It Dv TTY_SOFTCAR
+If the terminal port's driver supports it, ignore hardware
+carrier on the line.
 .El
 .It Fa ty_window
 The command to execute for a window system associated with the line.
@@ -162,7 +178,8 @@ return 0 on failure and 1 on success.
 .Xr termcap 5 ,
 .Xr ttys 5 ,
 .Xr getty 8 ,
-.Xr init 8
+.Xr init 8 ,
+.Xr ttyflags 8
 .Sh HISTORY
 The
 .Fn getttyent ,
