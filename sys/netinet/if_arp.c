@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.71 2001/01/17 04:05:44 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.72 2001/01/26 11:40:32 is Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -598,7 +598,9 @@ arpresolve(ifp, rt, m, dst, desten)
 	}
 	if (la == 0 || rt == 0) {
 		arpstat.as_allocfail++;
-		log(LOG_DEBUG, "arpresolve: can't allocate llinfo\n");
+		log(LOG_DEBUG,
+		    "arpresolve: can't allocate llinfo on %s for %s\n",
+		    ifp->if_xname, in_fmtaddr(SIN(dst)->sin_addr));
 		m_freem(m);
 		return (0);
 	}
