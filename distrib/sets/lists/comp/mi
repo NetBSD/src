@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.701 2004/05/10 17:02:21 drochner Exp $
+#	$NetBSD: mi,v 1.702 2004/05/21 02:29:07 christos Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -80,6 +80,7 @@
 ./usr/include/arpa/ftp.h			comp-c-include
 ./usr/include/arpa/inet.h			comp-c-include
 ./usr/include/arpa/nameser.h			comp-c-include
+./usr/include/arpa/nameser_compat.h		comp-c-include
 ./usr/include/arpa/telnet.h			comp-c-include
 ./usr/include/arpa/tftp.h			comp-c-include
 ./usr/include/assert.h				comp-c-include
@@ -1174,6 +1175,7 @@
 ./usr/include/readline/readline.h		comp-c-include
 ./usr/include/regex.h				comp-c-include
 ./usr/include/regexp.h				comp-c-include
+./usr/include/res_update.h			comp-c-include
 ./usr/include/resolv.h				comp-c-include
 ./usr/include/rmd160.h				comp-c-include
 ./usr/include/rmt.h				comp-c-include
