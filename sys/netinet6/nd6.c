@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.70 2002/08/19 23:21:11 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.71 2002/08/19 23:23:22 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.70 2002/08/19 23:21:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.71 2002/08/19 23:23:22 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1976,13 +1976,13 @@ nd6_sysctl(name, oldp, oldlenp, newp, newlen)
 	case ICMPV6CTL_ND6_DRLIST:
 		error = fill_drlist(p, oldlenp, ol);
 		if (!error && p && oldp)
-			copyout(p, oldp, *oldlenp);
+			error = copyout(p, oldp, *oldlenp);
 		break;
 
 	case ICMPV6CTL_ND6_PRLIST:
 		error = fill_prlist(p, oldlenp, ol);
 		if (!error && p && oldp)
-			copyout(p, oldp, *oldlenp);
+			error = copyout(p, oldp, *oldlenp);
 		break;
 
 	default:
