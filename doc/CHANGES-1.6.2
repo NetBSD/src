@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.80 2003/06/30 02:39:29 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.81 2003/06/30 02:43:38 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -931,3 +931,12 @@ sys/dev/pci/pcidevs_data.h			regenerate
 	might not be necessary (not confirmed to be needed), but better safe
 	than sorry
 	[drochner, ticket #1343]
+
+distrib/utils/sysinst/arch/sgimips/md.c		1.4
+
+	Use the real size of the disk, not cyl*head*sect.
+	Handle the "use existing" option for partitions (but keep d as the
+	boot partition).
+	While I'm there use get_real_geom() instead of custom code to get the
+	existing disklabel.
+	[bouyer, ticket #1348]
