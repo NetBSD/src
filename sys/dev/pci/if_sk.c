@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.3 2003/10/15 02:18:52 briggs Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.4 2003/10/25 16:15:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -922,7 +922,7 @@ sk_lookup(const struct pci_attach_args *pa)
 {
 	const struct sk_product *psk;
 	
-	for ( psk = &sk_products[0]; psk->sk_vendor != NULL; psk++ ) {
+	for ( psk = &sk_products[0]; psk->sk_vendor != 0; psk++ ) {
 		if (PCI_VENDOR(pa->pa_id) == psk->sk_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == psk->sk_product)
 			return (psk);
