@@ -36,10 +36,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)getnetgrent.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: getnetgrent.c,v 1.2 1994/09/19 04:32:45 mycroft Exp $";
+static char *rcsid = "$Id: getnetgrent.c,v 1.3 1994/10/19 03:13:22 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
 
 #define _PATH_NETGROUP "/etc/netgroup"
