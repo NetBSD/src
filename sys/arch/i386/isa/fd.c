@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.32 1994/03/10 22:30:06 mycroft Exp $
+ *	$Id: fd.c,v 1.33 1994/03/12 03:39:00 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -266,22 +266,22 @@ struct isa_device *dev;
 {
 	unsigned fdt=0,st0, cyl;
 	fdu_t	fdu = dev->id_unit;
-	fdcu_t	fdcu = dev->id_masunit;
-	fdc_p	fdc = &fdc_data[dev->id_masunit];
-	fd_p	fd = &fd_data[dev->id_unit];
+	fdcu_t	fdcu = dev->id_parent->id_unit;
+	fdc_p	fdc = &fdc_data[fdcu];
+	fd_p	fd = &fd_data[fdu];
 	int	fdsu = dev->id_physid;
 
-	if(dev->id_physid < 0 || dev->id_physid > 1) {
+	if(fdsu < 0 || fdsu > 1) {
 		printf("fdc%d: cannot support physical unit %d\n",
-			dev->id_masunit, dev->id_physid);
+			fdcu, fdsu);
 		return 0;
 	}
-	if(dev->id_masunit==0)
+	if(fdcu==0)
 		fdt = rtcin(RTC_FDISKETTE);
 	else
 		fdt = 0xff;	/* cmos only knows two floppies */
 
-	if(dev->id_physid == 1)
+	if(fdsu == 1)
 		fdt <<= 4;
 
 #ifdef notyet
@@ -306,32 +306,32 @@ struct isa_device *dev;
 	switch(fdt & 0xf0) {
 	case RTCFDT_NONE:
 		/*printf("fd%d at fdc%d targ %d: nonexistant device\n",
-			dev->id_unit, dev->id_masunit, dev->id_physid);*/
+			fdu, fdcu, fdsu);*/
 		return 0;
 		break;
 	case RTCFDT_12M:
 		printf("fd%d at fdc%d targ %d: 1.2MB 80 cyl, 2 head, 15 sec\n",
-			dev->id_unit, dev->id_masunit, dev->id_physid);
+			fdu, fdcu, fdsu);
 		fd->type = 1;
 		break;
 	case RTCFDT_144M:
 		printf("fd%d at fdc%d targ %d: 1.44MB 80 cyl, 2 head, 18 sec\n",
-			dev->id_unit, dev->id_masunit, dev->id_physid);
+			fdu, fdcu, fdsu);
 		fd->type = 0;
 		break;
 	case RTCFDT_360K:
 		printf("fd%d at fdc%d targ %d: 360KB 40 cyl, 2 head, 9 sec\n",
-			dev->id_unit, dev->id_masunit, dev->id_physid);
+			fdu, fdcu, fdsu);
 		fd->type = 3;
 		break;
 	case RTCFDT_720K:
 		printf("fd%d at fdc%d targ %d: 720KB 80 cyl, 2 head, 9 sec\n",
-			dev->id_unit, dev->id_masunit, dev->id_physid);
+			fdu, fdcu, fdsu);
 		fd->type = 4;
 		break;
 	default:
 		printf("fd%d at fdc%d targ %d: unknown device type 0x%x\n",
-			dev->id_unit, dev->id_masunit, dev->id_physid,
+			fdu, fdcu, fdsu,
 			fdt & 0xf0);
 		return 0;
 		break;

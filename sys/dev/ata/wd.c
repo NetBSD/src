@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.69 1994/03/11 23:29:12 mycroft Exp $
+ *	$Id: wd.c,v 1.70 1994/03/12 03:41:13 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -265,9 +265,6 @@ wdattach(dev)
 	struct wdc_softc *wdc;
 	int i, blank;
 
-	if (dev->id_masunit >= NWDC)
-		return 0;
-    
 	lunit = dev->id_unit;
 	if (lunit == -1) {
 		printf("%s: cannot support unit ?\n", wdc->sc_dev.dv_xname);
@@ -276,7 +273,7 @@ wdattach(dev)
 	if (lunit >= NWD)
 		return 0;
 	
-	wdc = &wdc_softc[dev->id_masunit];
+	wdc = &wdc_softc[dev->id_parent->id_unit];
 
 	wd_softc[lunit] = wd =
 	    (void *)malloc(sizeof(struct wd_softc), M_TEMP, M_NOWAIT);

@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1742.c,v 1.19 1994/03/10 20:52:12 mycroft Exp $
+ *	$Id: aha1742.c,v 1.20 1994/03/12 03:34:04 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -391,7 +391,7 @@ ahbprobe(struct isa_device *dev)
 	int port;
 	u_char	byte1,byte2,byte3;
 
-	if (dev->id_masunit != -1)
+	if (dev->id_parent)
 		return 1;
 
 	ahb_slot++;
@@ -456,10 +456,10 @@ ahb_attach(struct isa_device *dev)
 {
 	static int firsttime;
 	static int firstswitch[NAHB];
-	int masunit = dev->id_masunit;
+	int masunit = dev->id_parent->id_unit;
 	int r;
 
-	if (masunit == -1)
+	if (!dev->id_parent)
 		return 1;
 
 	if (!firstswitch[masunit]) {

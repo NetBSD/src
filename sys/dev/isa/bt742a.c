@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.17 1994/03/10 20:52:14 mycroft Exp $
+ *	$Id: bt742a.c,v 1.18 1994/03/12 03:34:06 mycroft Exp $
  */
 
 /*
@@ -460,7 +460,7 @@ btprobe(dev)
 	int     unit;
 	struct bt_data *bt;
 
-	if (dev->id_masunit != -1)
+	if (dev->id_parent)
 		return 1;
 
 	dev->id_unit = unit = btunit;
@@ -495,10 +495,10 @@ btattach(dev)
 {
 	static int firsttime;
 	static int firstswitch[NBT];
-	int     masunit = dev->id_masunit;
+	int     masunit = dev->id_parent->id_unit;
 	int     r;
 
-	if (masunit == -1)
+	if (!dev->id_parent)
 		return 1;
 
 	if (!firstswitch[masunit]) {
