@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.13 1996/10/16 01:12:25 jtk Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.14 1996/12/05 07:01:30 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -106,21 +106,21 @@ int	ad1848debug = 0;
  * Initial values for the indirect registers of CS4248/AD1848.
  */
 static int ad1848_init_values[] = {
-    			/* Left Input Control */
+			/* Left Input Control */
     GAIN_12|INPUT_MIC_GAIN_ENABLE,
-    			/* Right Input Control */
+			/* Right Input Control */
     GAIN_12|INPUT_MIC_GAIN_ENABLE,
     ATTEN_12,		/* Left Aux #1 Input Control */
     ATTEN_12,		/* Right Aux #1 Input Control */
     ATTEN_12,		/* Left Aux #2 Input Control */
     ATTEN_12,		/* Right Aux #2 Input Control */
     /* bits 5-0 are attenuation select */
-    0x19,		/* Left DAC output Control */
-    0x19,		/* Right DAC output Control */
-    			/* Clock and Data Format */
-    CLOCK_XTAL1|FMT_PCM8|AUTO_CAL_ENABLE,
-    			/* Interface Config */
-    SINGLE_DMA,
+    ATTEN_12,		/* Left DAC output Control */
+    ATTEN_12,		/* Right DAC output Control */
+			/* Clock and Data Format */
+    CLOCK_XTAL1|FMT_PCM8,
+			/* Interface Config */
+    SINGLE_DMA|AUTO_CAL_ENABLE,
     INTERRUPT_ENABLE,	/* Pin control */
     0x00,		/* Test and Init */
     0xca,		/* Misc control */
@@ -128,7 +128,7 @@ static int ad1848_init_values[] = {
     0,			/* Upper base Count */
     0,			/* Lower base Count */
 
-    /* Thse are for CS4231 only (additional registers): */
+    /* These are for CS4231 &c. only (additional registers): */
     0,			/* Alt feature 1 */
     0,			/* Alt feature 2 */
     ATTEN_12,		/* Left line in */
@@ -139,13 +139,12 @@ static int ad1848_init_values[] = {
     0,			/* unused */
     0,			/* IRQ status */
     0,			/* unused */
-    			/* Mono input (mic) Control */
+			/* Mono input (mic) Control */
     MONO_INPUT_MUTE|ATTEN_6,		/* mute mic by default */
     0,			/* unused */
     0,			/* record format */
     0,			/* upper record count */
-    0,			/* lower record count */
-
+    0			/* lower record count */
 };
 
 void	ad1848_reset __P((struct ad1848_softc *));
@@ -250,18 +249,19 @@ ad1848_dump_regs(sc)
     int i;
     u_char r;
     
-    printf("ad1848 status=%x", inb(sc->sc_iobase+AD1848_STATUS));
+    printf("ad1848 status=%02x", inb(sc->sc_iobase+AD1848_STATUS));
     printf(" regs: ");
     for (i = 0; i < 16; i++) {
 	r = ad_read(sc, i);
-	printf("%x ", r);
+	printf("%02x ", r);
     }
-    if (sc->mode == 2)
+    if (sc->mode == 2) {
 	    for (i = 16; i < 32; i++) {
 		    r = ad_read(sc, i);
-		    printf("%x ", r);
+		    printf("%02x ", r);
 	    }
-    printf("\n");
+	    printf("\n");
+    }
 }
 #endif
 
@@ -303,7 +303,9 @@ ad1848_probe(sc)
     int i;
     
     if (!AD1848_BASE_VALID(iobase)) {
-	printf("ad1848: configured iobase %x invalid\n", iobase);
+#ifdef AUDIO_DEBUG
+	printf("ad1848: configured iobase %04x invalid\n", iobase);
+#endif
 	return 0;
     }
 
