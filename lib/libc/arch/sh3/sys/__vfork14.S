@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.1 2000/01/05 14:07:40 msaitoh Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.2 2001/02/16 20:03:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __vfork14.S,v 1.1 2000/01/05 14:07:40 msaitoh Exp $")
+	RCSID("$NetBSD: __vfork14.S,v 1.2 2001/02/16 20:03:09 msaitoh Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -72,4 +72,4 @@ err:
 LSYS___vfork14:
 	.long	SYS___vfork14
 L_errno:
-	.long	_errno
+	.long	_C_LABEL(errno)
