@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.17 2001/01/05 23:02:00 christos Exp $	*/
+/*	$NetBSD: tputs.c,v 1.18 2001/01/09 07:18:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.17 2001/01/05 23:02:00 christos Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.18 2001/01/09 07:18:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,9 @@ _tputs_convert(ptr, affcnt)
 	int affcnt;
 {
 	int i = 0;
+
+	_DIAGASSERT(ptr != NULL);
+	_DIAGASSERT(*ptr != NULL);
 
 	/*
 	 * Convert the number representing the delay.
@@ -167,8 +170,12 @@ t_puts(info, cp, affcnt, outc, args)
 	char pad[2], *pptr;
 	char *pc;
 
-	if (info != NULL)
-	{
+	/* XXX: info may be NULL ? */
+	/* cp is handled below */
+	_DIAGASSERT(outc != NULL);
+	_DIAGASSERT(args != NULL);
+
+	if (info != NULL) {
 		/*
 		 * if we have info then get the pad char from the
 		 * termcap entry if it exists, otherwise use the
