@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.34 1994/11/22 01:31:02 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.35 1995/04/10 00:46:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -57,6 +57,7 @@
 #include <sys/trace.h>
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
+#include <sys/conf.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -352,8 +353,8 @@ bdwrite(bp)
 		reassignbuf(bp, bp->b_vp);
 	}
 
-	/* If this is a tape block, write it the block now. */
-	if (ISSET(bp->b_flags, B_TAPE)) {
+	/* If this is a tape block, write the block now. */
+	if (bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
 		bwrite(bp);
 		return;
 	}
