@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.414 2002/03/11 23:19:02 joda Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.415 2002/03/19 22:03:07 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.411 2002/03/11 23:17:37 joda Exp 
+ *	NetBSD: pcidevs,v 1.412 2002/03/19 22:02:36 bouyer Exp 
  */
 
 /*
@@ -872,6 +872,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD766 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_ISA,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 PCI to ISA/LPC Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_IDE,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 EIDE Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 AC97 Audio",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_MD,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 AC97 Modem",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PPB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 PCI to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_USB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD768 USB Controller",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
