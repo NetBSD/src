@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.2 2002/08/23 00:58:58 augustss Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.3 2002/08/24 17:24:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.2 2002/08/23 00:58:58 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.3 2002/08/24 17:24:04 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,16 +48,17 @@ __KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.2 2002/08/23 00:58:58 augustss Exp $"
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/sysctl.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/ubtbcmfw.h>
 
 /*
  * Download firmware to BCM2033.
  */
-
 
 #define CONFIG_NO	1
 #define IFACE_IDX	0	/* Control interface */
@@ -65,8 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.2 2002/08/23 00:58:58 augustss Exp $"
 #define INTR_IN_EP	0x81
 #define BULK_OUT_EP	0x02
 
-#define UBTBCMFW_FILE_MINI_DRIVER "/etc/bcmfw/BCM2033-MD.hex"
-#define UBTBCMFW_FILE_FIRMWARE    "/etc/bcmfw/BCM2033-FW.bin"
+Static char ubtbcmfw_fwpath[128] = "/usr/libdata/firmware/bcm2033";
+
+#define MINI_DRIVER "BCM2033-MD.hex"
+#define FIRMWARE    "BCM2033-FW.bin"
 
 struct ubtbcmfw_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -106,6 +109,7 @@ USB_ATTACH(ubtbcmfw)
 	usbd_interface_handle iface;
 	usbd_status err;
 	char devinfo[1024];
+	char name[256];
 	char buf[16];
 	usbd_pipe_handle intr_in_pipe;
 	usbd_pipe_handle bulk_out_pipe;
@@ -141,8 +145,8 @@ USB_ATTACH(ubtbcmfw)
 	}
 
 	printf("%s: downloading firmware\n", USBDEVNAME(sc->sc_dev));
-	err = ubtbcmfw_load_file(dev, bulk_out_pipe,
-				 UBTBCMFW_FILE_MINI_DRIVER);
+	snprintf(name, sizeof name, "%s/%s", ubtbcmfw_fwpath, MINI_DRIVER);
+	err = ubtbcmfw_load_file(dev, bulk_out_pipe, name);
 	if (err) {
 		printf("%s: loading mini-driver failed\n",
 		       USBDEVNAME(sc->sc_dev));
@@ -165,7 +169,8 @@ USB_ATTACH(ubtbcmfw)
 		printf("%s: memory select failed\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
-	err = ubtbcmfw_load_file(dev, bulk_out_pipe, UBTBCMFW_FILE_FIRMWARE);
+	snprintf(name, sizeof name, "%s/%s", ubtbcmfw_fwpath, FIRMWARE);
+	err = ubtbcmfw_load_file(dev, bulk_out_pipe, name);
 	if (err) {
 		printf("%s: loading firmware failed\n",
 		       USBDEVNAME(sc->sc_dev));
@@ -215,9 +220,22 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	size_t resid, offs, size;
 	int error;
 	char buf[1024];
+	struct timeval delta;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
-	if ((error = vn_open(&nd, FREAD, 0)) != 0)
+	/* Loop until we are well passed boot */
+	for (;;) {
+		error = vn_open(&nd, FREAD, 0);
+		if (!error)
+			break;
+		timersub(&boottime, &time, &delta);
+		if (delta.tv_sec > 60)
+			break;
+		printf("ubtbcmfw_load_file: waiting for firmware file\n");
+		if (tsleep(buf, PZERO, "ubtbcmfw", hz * 5) != EWOULDBLOCK)
+			break;
+	}
+	if (error)
 		return (error);
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp, 0);
@@ -276,5 +294,29 @@ ubtbcmfw_read(usbd_device_handle dev, usbd_pipe_handle in,
 				 USBD_DEFAULT_TIMEOUT, buf, count, "ubtfrd");
 	usbd_free_xfer(xfer);
 	return (err);
+}
+
+int
+hw_dev_ubtbcmfw_sysctl(int *name, u_int nlen, void *oldp,
+    size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
+{
+	int error;
+
+	/* Must be super user. */
+	error = suser(p->p_ucred, &p->p_acflag);
+	if (error)
+		return error;
+
+	/* all sysctl names at this level are terminal */
+	if (nlen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case KERN_DEV_UBTBCMFW_FWPATH:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    ubtbcmfw_fwpath, sizeof(ubtbcmfw_fwpath));
+	default:
+		return EOPNOTSUPP;
+	}
 }
 
