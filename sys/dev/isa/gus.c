@@ -1,4 +1,5 @@
-/* $NetBSD: gus.c,v 1.1 1995/07/19 19:58:45 brezak Exp $ */
+/*	$NetBSD: gus.c,v 1.2 1995/07/24 05:54:52 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Ken Hornstein.  All rights reserved.
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -27,11 +28,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: gus.c,v 1.1 1995/07/19 19:58:45 brezak Exp $
- *
  */
+
 /*
+ *
  * TODO:
  *	. figure out why mixer activity while sound is playing causes problems
  *	  (phantom interrupts?)
@@ -43,6 +43,7 @@
  *	. use CS4231 for 16-bit sampling, for a-law and mu-law playback.
  *	. actually test full-duplex sampling(recording) and playback.
  */
+
 /*
  * Gravis UltraSound driver
  *
@@ -54,6 +55,7 @@
  *		See ultrawrd.doc inside--it's MS Word (ick), but it's the bible
  *
  */
+
 /*
  * The GUS Max has a slightly strange set of connections between the CS4231
  * and the GF1 and the DMA interconnects.  It's set up so that the CS4231 can
@@ -85,7 +87,6 @@
  * "C" is an optional combiner.
  *
  */
-
 
 #include "gus.h"
 #if NGUS > 0
@@ -393,8 +394,8 @@ int	gusmax_get_in_port __P((void *));
 int	gus_getdev __P((void *, struct audio_device *));
 
 static void	gus_deinterleave __P((struct gus_softc *, void *, int));
-static void	gus_expand __P((int, u_char *, int, void *));
-static void	gusmax_expand __P((int, u_char *, int, void *));
+static void	gus_expand __P((void *, int, u_char *, int));
+static void	gusmax_expand __P((void *, int, u_char *, int));
 
 static int	gus_mic_ctl __P((void *, int));
 static int	gus_linein_ctl __P((void *, int));
@@ -993,32 +994,32 @@ gusopen(dev, flags)
 }
 
 static void
-gusmax_expand(encoding, buf, count, hdl)
+gusmax_expand(hdl, encoding, buf, count)
+	void *hdl;
 	int encoding;
 	u_char *buf;
 	int count;
-	void *hdl;
 {
 	register struct ad1848_softc *ac = hdl;
 
-	gus_expand(encoding, buf, count, ac->parent);
+	gus_expand(ac->parent, encoding, buf, count);
 }
 
 static void
-gus_expand(encoding, buf, count, hdl)
+gus_expand(hdl, encoding, buf, count)
+	void *hdl;
 	int encoding;
 	u_char *buf;
 	int count;
-	void *hdl;
 {
 	struct gus_softc *sc = hdl;
 
-	mulaw_expand(encoding, buf, count, NULL);
+	mulaw_expand(NULL, encoding, buf, count);
 	/*
 	 * If we need stereo deinterleaving, do it now.
 	 */
 	if (sc->sc_channels == 2)
-	  gus_deinterleave(sc, (void *)buf, count);
+		gus_deinterleave(sc, (void *)buf, count);
 }
 
 static void
