@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.19 2002/12/27 09:59:25 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.20 2002/12/27 19:57:47 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.19 2002/12/27 09:59:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.20 2002/12/27 19:57:47 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.19 2002/12/27 09:59:25 manu Exp $");
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
-#include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_semaphore.h>
 #include <compat/mach/mach_exec.h>
 
@@ -241,16 +240,17 @@ mach_e_proc_init(p, vmspace)
 
 	LIST_INIT(&med->med_right);
 
-	med->med_bootstrap = mach_port_get();
 	med->med_kernel = mach_port_get();
 	med->med_host = mach_port_get();
 	med->med_exception = mach_port_get();
 
 	/* Make sure they will not be deallocated */
-	med->med_bootstrap->mp_refcount++;
 	med->med_kernel->mp_refcount++;
 	med->med_host->mp_refcount++;
 	med->med_exception->mp_refcount++;
+
+	med->med_bootstrap = mach_bootstrap_port;
+	med->med_bootstrap->mp_refcount++;
 
 	return;
 }
@@ -292,7 +292,6 @@ mach_init(void)
 	mach_semaphore_init();
 	mach_message_init();
 	mach_port_init();
-	mach_clock_init();
 
 	mach_cold = 0;
 

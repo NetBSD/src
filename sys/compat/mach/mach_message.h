@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.10 2002/12/24 15:54:26 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.11 2002/12/27 19:57:47 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -197,12 +197,17 @@ typedef struct {
 	mach_msg_size_t	msgh_descriptor_count;
 } mach_msg_body_t;
 
+struct mach_short_reply {
+	mach_msg_header_t sr_header;
+	mach_msg_trailer_t sr_trailer;
+};
 struct mach_trap_args {
 	struct proc *p;
 	void *smsg;
 	void *rmsg;
 	size_t *rsize;
 };
+
 struct mach_subsystem_namemap {
 	int	map_id;
 	int	(*map_handler)(struct mach_trap_args *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.16 2002/12/27 09:59:27 manu Exp $ */
+/*	$NetBSD: mach_task.c,v 1.17 2002/12/27 19:57:48 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.16 2002/12/27 09:59:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.17 2002/12/27 19:57:48 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -148,12 +148,11 @@ mach_ports_lookup(args)
 	    mach_right_get(med->med_bootstrap, p, MACH_PORT_TYPE_SEND);
 
 	/*
-	 * On Darwin, the data seems always null, so ifdef this out
+	 * On Darwin, the data seems always null...
 	 */
-#if 0
 	if ((error = copyout(&msp[0], (void *)va, sizeof(msp))) != 0)
 		return mach_msg_error(args, error);
-#endif
+
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.11 2002/12/27 09:59:26 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.12 2002/12/27 19:57:48 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -208,6 +208,8 @@ int mach_port_set_attributes(struct mach_trap_args *);
 int mach_port_insert_member(struct mach_trap_args *);
 int mach_port_move_member(struct mach_trap_args *);
 
+extern struct mach_port *mach_clock_port;
+extern struct mach_port *mach_bootstrap_port;
 
 /* In-kernel Mach port right description */
 struct mach_right {

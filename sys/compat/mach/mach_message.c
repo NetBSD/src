@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.12 2002/12/27 09:59:26 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.13 2002/12/27 19:57:47 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.12 2002/12/27 09:59:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.13 2002/12/27 19:57:47 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -86,29 +86,24 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		syscallarg(mach_msg_size_t) scatter_list_size;
 	} */ *uap = v;
 	struct mach_emuldata *med;
-	size_t send_size, rcv_size;
 	struct mach_port *mp;
 	struct mach_right *mr;
+	size_t send_size, rcv_size;
 	int error = 0;
 
-	/*
-	 * If neither send nor recieve, do nothing.
-	 */
-	if (SCARG(uap, option) & ~(MACH_SEND_MSG | MACH_RCV_MSG)) 
-		return 0;
-
-	/* 
-	 * XXX Sanity check on the message size. This is not an accurate
-	 * emulation, since Mach messages can be as large as 4GB. 
-	 * Additionnaly, this does not address DoS attack by queueing
-	 * lots of big messages in the kernel.
-	 */
 	send_size = SCARG(uap, send_size);
 	rcv_size = SCARG(uap, rcv_size);
-	if ((send_size > MACH_MAX_MSG_LEN) || (rcv_size > MACH_MAX_MSG_LEN)) {
+
+	/* XXX not safe enough: lots of big messages will kill us */
+	if (send_size > MACH_MAX_MSG_LEN) {
 		*retval = MACH_SEND_TOO_LARGE;
 		return 0;
 	}
+	if (rcv_size > MACH_MAX_MSG_LEN) {
+		*retval = MACH_RCV_TOO_LARGE;
+		return 0;
+	}
+
 
 	/* 
 	 * Two options: receive or send. If both are 
@@ -177,9 +172,8 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		 */
 		med = (struct mach_emuldata *)p->p_emuldata;
 		mp = rr->mr_port;
-		if ((mp == med->med_host) || 
-		    (mp == med->med_kernel) ||
-		    (mp == mach_clock_port)) {
+		if ((mp == med->med_host) || (mp == med->med_kernel) ||
+		    (mp == mach_clock_port) || (mp == mach_bootstrap_port)) {
 			struct mach_trap_args args;
 			mach_msg_header_t *rm;
 
@@ -224,14 +218,17 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			if ((*retval = (*map->map_handler)(&args)) != 0) 
 				goto out3;
 			
+#ifdef DEBUG_MACH
 			/* 
 			 * Catch potential bug in the handler
 			 */
-			if (rcv_size > SCARG(uap, rcv_size)) {
+			if ((SCARG(uap, option) & MACH_RCV_MSG) &&
+			    (rcv_size > SCARG(uap, rcv_size))) {
 				uprintf("mach_msg: reply too big in %s\n",
 				    map->map_name);
 				rcv_size = SCARG(uap, rcv_size);
 			}
+#endif
 
 			/*
 			 * Queue the reply
@@ -441,16 +438,37 @@ out1:
 #endif
 
 		if (mm->mm_size > rcv_size) {
+			struct mach_short_reply sr;
+
+			*retval = MACH_RCV_TOO_LARGE;
 			/* 
-			 * If MACH_RCV_LARGE was not set, destroy the
-			 * message. If it was set, just notice that 
-			 * the message is too big.
+			 * If MACH_RCV_LARGE was not set, destroy the message.
 			 */
 			if ((SCARG(uap, option) & MACH_RCV_LARGE) == 0) {
 				free(mm->mm_msg, M_EMULDATA);
 				mach_message_put_shlocked(mm);
+				goto unlock;
 			}		
-			*retval = MACH_RCV_TOO_LARGE;
+
+			/* 
+			 * If MACH_RCV_TOO_LARGE is set, then return 
+			 * a message with just header and trailer. The 
+			 * size in the header should correspond to the
+			 * whole message, so just copy the whole header.
+			 */
+			memcpy(&sr, mm->mm_msg, sizeof(mach_msg_header_t));
+			sr.sr_trailer.msgh_trailer_type = 0;
+			sr.sr_trailer.msgh_trailer_size = 8;
+
+			if ((error = copyout(&sr, urm, sizeof(sr))) != 0) {
+				*retval = MACH_RCV_INVALID_DATA;
+				goto unlock;
+			}
+#ifdef KTRACE
+			/* Dump the Mach message */
+			if (KTRPOINT(p, KTR_MMSG))
+				ktrmmsg(p, (char *)&sr, sizeof(sr)); 
+#endif
 			goto unlock;
 		}
 
