@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2003/10/31 03:28:13 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2003/11/08 12:08:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2003/10/31 03:28:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13 2003/11/08 12:08:12 tsutsui Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -472,8 +472,8 @@ trap(type, frame)
 	int type;
 	struct trapframe *frame;
 {
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	struct lwp *l;
+	struct proc *p;
 	struct pcb *pcbp;
 	vaddr_t va;
 	struct vm_map *map;
@@ -499,6 +499,10 @@ trap(type, frame)
 		space = frame->tf_isr;
 		vftype = inst_store(opcode) ? VM_PROT_WRITE : VM_PROT_READ;
 	}
+
+	if ((l = curlwp) == NULL)
+		l = &lwp0;
+	p = l->l_proc;
 
 #ifdef DIAGNOSTIC
 	/*
