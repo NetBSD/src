@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.5.6.3 2005/01/18 14:44:59 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.5.6.4 2005/02/12 22:30:23 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.3 2005/01/18 14:44:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.5.6.4 2005/02/12 22:30:23 bouyer Exp $");
 
 #include "opt_xen.h"
 
@@ -518,6 +518,10 @@ void xpq_debug_dump(void);
 #define XPQUEUE_SIZE 2048
 typedef union xpq_queue {
 	struct {
+		uint32_t ptr;
+		uint32_t val;
+	} cmd;
+	struct {
 		pd_entry_t *ptr;
 		pd_entry_t val;
 	} pde;
@@ -583,6 +587,27 @@ xpq_queue_pte_update(pt_entry_t *ptr, pt_entry_t val)
 	xpq_queue[xpq_idx].pte.ptr = ptr;
 	xpq_queue[xpq_idx].pte.val = val;
 	xpq_increment_idx();
+}
+
+int
+xpq_update_foreing(pt_entry_t *ptr, pt_entry_t val, int dom)
+{
+	xpq_queue_t xpq_up[3];
+
+	xpq_up[0].cmd.ptr = MMU_EXTENDED_COMMAND;
+	xpq_up[0].cmd.val = MMUEXT_SET_FOREIGNDOM | (dom << 16);
+	xpq_up[1].pte.ptr = ptr;
+	xpq_up[1].pte.val = val;
+#if 0
+	xpq_up[2].cmd.ptr = MMU_EXTENDED_COMMAND;
+	xpq_up[2].cmd.val = MMUEXT_CLEAR_FOREIGNDOM;
+	if (HYPERVISOR_mmu_update((mmu_update_t *)xpq_up, 3, NULL) < 0)
+		return EFAULT;
+#else
+	if (HYPERVISOR_mmu_update((mmu_update_t *)xpq_up, 2, NULL) < 0)
+		return EFAULT;
+#endif
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.1.8.1 2005/01/31 17:21:16 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.1.8.2 2005/02/12 22:30:24 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1.8.1 2005/01/31 17:21:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.1.8.2 2005/02/12 22:30:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,47 @@ privcmd_ioctl(void *v)
 		}
 		break;
 	case IOCTL_PRIVCMD_MMAP:
-		/* XXX */
+	{
+		int i, j, error;
+		privcmd_mmap_t *mcmd = ap->a_data;
+		privcmd_mmap_entry_t mentry;
+		vaddr_t va;
+		u_long ma;
+		//printf("IOCTL_PRIVCMD_MMAP: %d entries\n", mcmd->num);
+
+		pmap_t pmap = vm_map_pmap(&ap->a_p->p_vmspace->vm_map);
+		for (i = 0; i < mcmd->num; i++) {
+			error = copyin(mcmd->entry, &mentry, sizeof(mentry));
+			if (error)
+				return error;
+			//printf("entry %d va 0x%lx npages %lu mfm 0x%lx\n", i, mentry.va, mentry.npages, mentry.mfn);
+			if (mentry.va > VM_MAXUSER_ADDRESS)
+				return EINVAL;
+#if 0
+			if (mentry.va + (mentry.npages << PGSHIFT) >
+			    mrentry->vm_end)
+				return EINVAL;
+#endif
+			va = mentry.va & ~PAGE_MASK;
+			ma = mentry.mfn <<  PGSHIFT; /* XXX ??? */
+			for (j = 0; j < mentry.npages; j++) {
+				//printf("remap va 0x%lx to 0x%lx\n", va, ma);
+#if 0
+				if (!pmap_extract(pmap, va, NULL))
+					return EINVAL; /* XXX */
+#endif
+				if ((error = pmap_remap_pages(pmap, va, ma, 1,
+				    PMAP_WIRED | PMAP_CANFAIL, mcmd->dom)))
+					return error;
+				va += PAGE_SIZE;
+				ma += PAGE_SIZE;
+			}
+		}
+		break;
+	}
 	case IOCTL_PRIVCMD_MMAPBATCH:
 		/* XXX */
+		printf("IOCTL_PRIVCMD_MMAPBATCH\n");
 		error = EOPNOTSUPP;
 		break;
 	case IOCTL_PRIVCMD_GET_MACH2PHYS_START_MFN:
