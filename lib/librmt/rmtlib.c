@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.3 1996/08/09 04:17:36 jtc Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.4 1996/08/13 20:09:50 thorpej Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -478,7 +478,8 @@ int whence;
 
 #ifdef RMTIOCTL
 static _rmt_ioctl(fildes, op, arg)
-int fildes, op;
+int fildes;
+unsigned long op;
 char *arg;
 {
 	char c;
