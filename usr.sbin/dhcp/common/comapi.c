@@ -50,7 +50,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: comapi.c,v 1.1.1.1 2000/06/10 18:04:43 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: comapi.c,v 1.1.1.2 2000/07/08 20:40:14 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -76,7 +76,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_group_stuff_values,
 					     dhcp_group_lookup, 
 					     dhcp_group_create,
-					     dhcp_group_remove, 0, 0,
+					     dhcp_group_remove, 0, 0, 0,
 					     sizeof (struct group));
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register group object type: %s",
@@ -91,7 +91,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_subnet_stuff_values,
 					     dhcp_subnet_lookup, 
 					     dhcp_subnet_create,
-					     dhcp_subnet_remove, 0, 0,
+					     dhcp_subnet_remove, 0, 0, 0,
 					     sizeof (struct subnet));
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register subnet object type: %s",
@@ -107,7 +107,7 @@ void dhcp_common_objects_setup ()
 		 dhcp_shared_network_stuff_values,
 		 dhcp_shared_network_lookup, 
 		 dhcp_shared_network_create,
-		 dhcp_shared_network_remove, 0, 0,
+		 dhcp_shared_network_remove, 0, 0, 0,
 		 sizeof (struct shared_network));
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register shared network object type: %s",
@@ -123,7 +123,7 @@ void dhcp_common_objects_setup ()
 					     dhcp_interface_lookup, 
 					     dhcp_interface_create,
 					     dhcp_interface_remove,
-					     0, 0,
+					     0, 0, 0,
 					     sizeof (struct interface_info));
 	if (status != ISC_R_SUCCESS)
 		log_fatal ("Can't register interface object type: %s",

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: failover.c,v 1.1.1.3 2000/06/24 06:38:45 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: failover.c,v 1.1.1.4 2000/07/08 20:41:09 mellon Exp $ Copyright (c) 1999-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -2603,7 +2603,7 @@ void dhcp_failover_send_contact (void *vstate)
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(contact");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!state || state -> type != dhcp_type_failover_state)
@@ -2645,7 +2645,7 @@ isc_result_t dhcp_failover_send_connect (omapi_object_t *l)
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(connect");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!l || l -> type != dhcp_type_failover_link)
@@ -2708,7 +2708,7 @@ isc_result_t dhcp_failover_send_connectack (omapi_object_t *l,
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(connectack");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!l || l -> type != dhcp_type_failover_link)
@@ -2775,7 +2775,7 @@ isc_result_t dhcp_failover_send_disconnect (omapi_object_t *l,
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(disconnect");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!l || l -> type != dhcp_type_failover_link)
@@ -2824,7 +2824,7 @@ isc_result_t dhcp_failover_send_bind_update (dhcp_failover_state_t *state,
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(bndupd");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!state -> link_to_peer ||
@@ -2894,7 +2894,7 @@ isc_result_t dhcp_failover_send_bind_ack (dhcp_failover_state_t *state,
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(bndack");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!state -> link_to_peer ||
@@ -2970,7 +2970,7 @@ isc_result_t dhcp_failover_send_poolreq (dhcp_failover_state_t *state)
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(poolreq");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!state -> link_to_peer ||
@@ -3009,7 +3009,7 @@ isc_result_t dhcp_failover_send_poolresp (dhcp_failover_state_t *state,
 # define FMA obuf, &obufix, sizeof obuf
 	failover_print (FMA, "(poolresp");
 #else
-# define FMA (unsigned char *)0, (unsigned *)0, 0
+# define FMA (char *)0, (unsigned *)0, 0
 #endif
 
 	if (!state -> link_to_peer ||
