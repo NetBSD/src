@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.39 1998/03/24 00:23:55 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.40 1998/03/25 06:27:32 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.39 1998/03/24 00:23:55 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.40 1998/03/25 06:27:32 jonathan Exp $");
 
 /*
  * devDC7085.c --
@@ -199,21 +199,6 @@ struct speedtab dcspeedtab[] = {
  */
 extern int cold;
 dcregs *dc_cons_addr = 0;
-
-/*
- * Is there a framebuffer console device using this serial driver?
- * XXX used for ugly special-cased console input that should be redone
- * more cleanly.
- */
-#ifdef RCONS_BRAINDAMAGE
-static inline int raster_console __P((void));
-
-static inline int
-raster_console()
-{
-	return (cn_tab->cn_pri == CN_INTERNAL || cn_tab->cn_pri == CN_NORMAL);
-}
-#endif /*  RCONS_BRAINDAMAGE */
 
 /* Test to see if active serial console on this unit. */
 #define CONSOLE_ON_UNIT(unit) \
@@ -449,17 +434,6 @@ dcopen(dev, flag, mode, p)
 	if (error)
 		return (error);
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
-
-#if  NRASTERCONSOLE > 0 && RCONS_BRAINDAMAGE
-	/*
-	 * Handle console cases specially.
-	 */
-	if (firstopen && raster_console() && 
-	    unit == 0 && tp == sc->dc_tty[DCKBD_PORT]) {
-	  	extern struct tty *fbconstty;
-		tp->t_winsize = fbconstty->t_winsize;
-	}
-#endif	/* NRASTERCONSOLE && RCONS_BRAINDAMAGE */
 	return (error);
 }
 
@@ -895,29 +869,6 @@ dcstart(tp)
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
-
-#ifdef RCONS_BRAINDAMAGE
-	/* handle console specially */
-	/* XXX raster console output via serial port! */
-	if (raster_console() && tp == sc->dc_tty[DCKBD_PORT]) {
-		while (tp->t_outq.c_cc > 0) {
-			cc = getc(&tp->t_outq) & 0x7f;
-			cnputc(cc);
-		}
-		/*
-		 * After we flush the output queue we may need to wake
-		 * up the process that made the output.
-		 */
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((caddr_t)&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		goto out;
-	}
-#endif	/* RCONS_BRAINDAMAGE */
 
   	cc = ndqb(&tp->t_outq, 0);
 	if (cc == 0)
