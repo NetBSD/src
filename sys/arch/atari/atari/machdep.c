@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 1995/08/28 19:31:07 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 1995/08/28 20:07:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -387,7 +387,7 @@ extern char version[];
 identifycpu()
 {
 	extern char	*fpu_describe();
-	extern int	*fpu_probe();
+	extern int	fpu_probe();
 	       char	*mach, *mmu, *fpu, *cpu;
 
 	if (machineid & ATARI_TT)
