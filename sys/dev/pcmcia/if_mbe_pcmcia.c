@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.19 2000/05/15 07:57:19 enami Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.20 2000/05/15 08:08:12 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -341,30 +341,34 @@ mbe_pcmcia_get_enaddr_from_mem(psc, ea)
 	struct mb86960_softc *sc = &psc->sc_mb86960;
 	struct pcmcia_mem_handle pcmh;
 	bus_addr_t offset;
-	int i, mwindow;
+	int i, mwindow, rv = 1;
 
 	if (ea->maddr < 0)
-		return (1);
+		goto bad_memaddr;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
 		printf("%s: can't alloc mem for enet addr\n", 
 		    sc->sc_dev.dv_xname);
-		return (1);
+		goto memalloc_failed;
 	}
 
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, ea->maddr,
 	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
 		printf("%s: can't map mem for enet addr\n", 
 		    sc->sc_dev.dv_xname);
-		return (1);
+		goto memmap_failed;
 	}
 
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		ea->enaddr[i] = bus_space_read_1(pcmh.memt, pcmh.memh,
 		    offset + (i * 2));
 
+	rv = 0;
 	pcmcia_mem_unmap(psc->sc_pf, mwindow);
+memmap_failed:
 	pcmcia_mem_free(psc->sc_pf, &pcmh);
+memalloc_failed:
+bad_memaddr:
 
-	return (0);
+	return (rv);
 }
