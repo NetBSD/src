@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.52 2004/03/03 21:35:52 christos Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.53 2004/03/03 22:00:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.52 2004/03/03 21:35:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.53 2004/03/03 22:00:34 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ sys_pipe(l, v, retval)
 	register_t *retval;
 {
 	struct file *rf, *wf;
-	struct pipe *rpipe = NULL, *wpipe = NULL;
+	struct pipe *rpipe, *wpipe;
 	int fd, error;
 	struct proc *p;
 
@@ -323,14 +323,14 @@ pipe_create(pipep, allockva)
 	memset(pipe, 0, sizeof(struct pipe));
 	pipe->pipe_state = PIPE_SIGNALR;
 
-	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
-		return (error);
-
 	PIPE_TIMESTAMP(&pipe->pipe_ctime);
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	simple_lock_init(&pipe->pipe_slock);
 	lockinit(&pipe->pipe_lock, PRIBIO | PCATCH, "pipelk", 0, 0);
+
+	if (allockva && (error = pipespace(pipe, PIPE_SIZE)))
+		return (error);
 
 	return (0);
 }
