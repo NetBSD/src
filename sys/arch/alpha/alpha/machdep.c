@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.197 2000/02/26 00:17:25 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.198 2000/02/29 22:19:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2000/02/26 00:17:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2000/02/29 22:19:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,10 +217,10 @@ u_int64_t	cycles_per_usec;
 /* number of cpus in the box.  really! */
 int		ncpus;
 
-/* machine check info array, valloc()'ed in mdallocsys() */
-
-static struct mchkinfo startup_info,
-			*mchkinfo_all_cpus;
+#if !defined(MULTIPROCESSOR)
+/* A single machine check info structure for single CPU configurations. */
+struct mchkinfo mchkinfo_store;
+#endif
 
 struct bootinfo_kernel bootinfo;
 
@@ -256,7 +256,6 @@ int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
-caddr_t	mdallocsys __P((caddr_t));
 void	netintr __P((void));
 void	printregs __P((struct reg *));
 
@@ -694,9 +693,9 @@ nobootinfo:
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vsize_t)allocsys(NULL, mdallocsys);
+	size = (vsize_t)allocsys(NULL, NULL);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
-	if ((allocsys(v, mdallocsys) - v) != size)
+	if ((allocsys(v, NULL) - v) != size)
 		panic("alpha_init: table size inconsistency");
 
 	/*
@@ -838,19 +837,6 @@ nobootinfo:
 			hwrpb->rpb_intr_freq, hz);
 #endif
 	}
-}
-
-caddr_t
-mdallocsys(v)
-	caddr_t	v;
-{
-	/*
-	 * There appears to be a correlation between the number
-	 * of processor slots defined in the HWRPB and the whami
-	 * value that can be returned.
-	 */
-	ALLOCSYS(v, mchkinfo_all_cpus, struct mchkinfo, hwrpb->rpb_pcs_cnt);
-	return (v);
 }
 
 void
@@ -2094,14 +2080,6 @@ alpha_XXX_dmamap(v)						/* XXX */
 	return (vtophys(v) | alpha_XXX_dmamap_or);		/* XXX */
 }								/* XXX */
 /* XXX XXX END XXX XXX */
-
-struct mchkinfo *
-cpu_mchkinfo()
-{
-	if (mchkinfo_all_cpus == NULL)
-		return &startup_info;
-	return mchkinfo_all_cpus + alpha_pal_whami();
-}
 
 char *
 dot_conv(x)
