@@ -4,7 +4,8 @@ options		AVAGO
 options		DIAGNOSTIC, DEBUG
 options		INET
 options		FFS
-options		NFSCLIENT, NFSSERVER
+options		NFSCLIENT
+#options	NFSSERVER
 options 	SYSVSHM
 options 	KTRACE
 options 	COMPAT_43
@@ -13,12 +14,11 @@ options 	MFS
 options		OLD_EXEC
 options		TIMEZONE = "-600", DST = 2
 options		DEVPAGER, SWAPPAGER, VNODEPAGER
-#options	MSDOSFS
-#options	ETHER
+options		MSDOSFS
 maxusers	2
 
 config	netbsd		root on id0a swap on id0b
-config	sdnetbsd	root on sd1c swap on id0b
+#config	sdnetbsd	root on sd1c swap on id0b
 #config	wdnetbsd	root on wd0a swap on wd0b
 
 pseudo-device	sl
