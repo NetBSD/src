@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.16 2000/03/18 22:33:06 scw Exp $	*/
+/*	$NetBSD: isr.c,v 1.16.4.1 2000/07/22 15:51:42 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@ void
 isrinit()
 {
 	int i;
+
+	/* No soft interrupts pending */
+	ssir = 1;
 
 	/* Initialize the autovector lists. */
 	for (i = 0; i < NISRAUTOVEC; ++i) {
