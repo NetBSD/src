@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.16 2002/09/02 13:37:35 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.17 2002/09/03 14:54:00 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -334,6 +334,8 @@ struct ieee80211_auth {
 #define	IEEE80211_ASCAN_WAIT	2		/* active scan wait */
 #define	IEEE80211_PSCAN_WAIT 	5		/* passive scan wait */
 #define	IEEE80211_TRANS_WAIT 	5		/* transition wait */
+#define	IEEE80211_INACT_WAIT	5		/* inactivity timer interval */
+#define	IEEE80211_INACT_MAX	(300/IEEE80211_INACT_WAIT)
 
 /*
  * Structure for IEEE 802.11 drivers.
@@ -382,6 +384,7 @@ struct ieee80211_bss {
 	u_int16_t		bs_txseq;	/* seq to be transmitted */
 	u_int16_t		bs_rxseq;	/* seq previous received */
 	int			bs_fails;	/* failure count to associate */
+	int			bs_inact;	/* inactivity mark count */
 	int			bs_txrate;	/* index to bs_rates[] */
 	void			*bs_private;	/* driver private */
 };
@@ -421,6 +424,7 @@ struct ieee80211com {
 	u_int16_t		ic_lintval;	/* listen interval */
 	int			ic_mgt_timer;	/* mgmt timeout */
 	int			ic_scan_timer;	/* scant wait */
+	int			ic_inact_timer;	/* inactivity timer wait */
 	int			ic_des_esslen;
 	u_int8_t		ic_des_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_wepkey	ic_nw_keys[IEEE80211_WEP_NKID];
