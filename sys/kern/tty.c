@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.155 2003/08/07 16:31:55 agc Exp $	*/
+/*	$NetBSD: tty.c,v 1.156 2003/08/11 10:49:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.155 2003/08/07 16:31:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.156 2003/08/11 10:49:06 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1596,9 +1596,13 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 				goto sleep;
 			goto read;
 		}
-		t *= 100000;		/* time in us */
-#define	diff(t1, t2) (((t1).tv_sec - (t2).tv_sec) * 1000000 + \
-			 ((t1).tv_usec - (t2).tv_usec))
+		t *= hz;		/* time in deca-ticks */
+/*
+ * Time difference in deca-ticks, split division to avoid numeric overflow.
+ * Ok for hz < ~200kHz
+ */
+#define	diff(t1, t2) (((t1).tv_sec - (t2).tv_sec) * 10 * hz + \
+			 ((t1).tv_usec - (t2).tv_usec) / 100 * hz / 1000)
 		if (m > 0) {
 			if (qp->c_cc <= 0)
 				goto sleep;
@@ -1631,14 +1635,16 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 #undef diff
 		if (slp > 0) {
 			/*
+			 * Convert deca-ticks back to ticks.
 			 * Rounding down may make us wake up just short
 			 * of the target, so we round up.
-			 * The formula is ceiling(slp * hz/1000000).
-			 * 32-bit arithmetic is enough for hz < 169.
-			 *
-			 * Also, use plain wakeup() not ttwakeup().
+			 * Maybe we should do 'slp/10 + 1' because the
+			 * first tick maybe almost immediate.
+			 * However it is more useful for a program that sets
+			 * VTIME=10 to wakeup every second not every 1.01
+			 * seconds (if hz=100).
 			 */
-			slp = (long) (((u_long)slp * hz) + 999999) / 1000000;
+			slp = (slp + 9)/ 10;
 			goto sleep;
 		}
 	} else if ((qp = &tp->t_canq)->c_cc <= 0) {
