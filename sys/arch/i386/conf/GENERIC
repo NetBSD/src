@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.429 2001/09/30 00:56:51 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.430 2001/10/04 15:51:32 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.429 $"
+#ident 		"GENERIC-$Revision: 1.430 $"
 
 maxusers	32		# estimated number of users
 
@@ -691,8 +691,8 @@ lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
-qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
