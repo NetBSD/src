@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.17 1998/06/09 07:25:05 thorpej Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.18 1998/06/29 22:42:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -111,6 +111,7 @@ sbfind(parent, sc, ia)
 
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
+	sc->sc_ist = IST_EDGE;
 	sc->sc_drq8 = ia->ia_drq;
 	sc->sc_drq16 = ia->ia_drq2;
 	sc->sc_ic = ia->ia_ic;
