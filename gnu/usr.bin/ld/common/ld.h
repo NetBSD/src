@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.h,v 1.22 1998/08/28 14:45:46 matt Exp $	*/
+/*	$NetBSD: ld.h,v 1.23 1998/10/19 03:09:33 matt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -701,10 +701,10 @@ void	md_init_header __P((struct exec *, int, int));
 long	md_get_addend __P((struct relocation_info *, unsigned char *));
 void	md_relocate __P((struct relocation_info *, long, unsigned char *, int));
 void	md_make_jmpslot __P((jmpslot_t *, long, long));
-void	md_fix_jmpslot __P((jmpslot_t *, long, u_long));
+void	md_fix_jmpslot __P((jmpslot_t *, long, u_long, int));
 int	md_make_reloc __P((struct relocation_info *, struct relocation_info *, int));
 void	md_make_jmpreloc __P((struct relocation_info *, struct relocation_info *, int));
-void	md_make_gotreloc __P((struct relocation_info *, struct relocation_info *, int, got_t *));
+void	md_make_gotreloc __P((struct relocation_info *, struct relocation_info *, int));
 void	md_make_copyreloc __P((struct relocation_info *, struct relocation_info *));
 void	md_set_breakpoint __P((long, long *));
 

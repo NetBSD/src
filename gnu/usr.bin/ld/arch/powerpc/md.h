@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 1996/11/03 18:06:51 ws Exp $	*/
+/*	$NetBSD: md.h,v 1.2 1998/10/19 03:09:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfgang Solfrank
@@ -77,8 +77,10 @@
 #define	RELOC_COPY_P(r)			((r)->r_type == RELOC_COPY)
 #define	RELOC_LAZY_P(r)			((r)->r_type == RELOC_JMP_SLOT)
 
-#define RELOC_STATICS_THROUGH_GOT_P(r)	1
-#define JMPSLOT_NEEDS_RELOC		1
+#define RELOC_STATICS_THROUGH_GOT_P(r)		1
+#define JMPSLOT_NEEDS_RELOC			1
+#define	RELOC_SYMBOLICS_THROUGH_JMPSLOT		1
+#define	JMPSLOT_NONEXTERN_IS_INTERMODULE	0
 
 #define	CHECK_GOT_RELOC(r)						\
 	((r)->r_type >= RELOC_16_LO					\
