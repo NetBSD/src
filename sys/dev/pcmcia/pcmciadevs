@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.93.2.7 2001/06/16 19:19:12 he Exp $
+$NetBSD: pcmciadevs,v 1.93.2.8 2002/02/14 20:08:32 he Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,8 +72,10 @@ vendor FARALLON			0x0200  Farallon Communications
 vendor NOKIA			0x023d	Nokia Communications
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor LEXARMEDIA		0x4e01	Lexar Media
+vendor EDIMAX			0x890f	Edimax Technology Inc.
 vendor COMPEX			0x8a01	Compex Corporation
 vendor MELCO			0x8a01	Melco Corporation
+vendor ZONET			0x8a01	Zonet Technology Inc.
 vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
@@ -114,6 +116,9 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
 /* DIGITAL Products */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
+
+/* Edimax Products */
+product EDIMAX	EP4000A		0x0100 Edimax EP4000A
 
 /* Fujutsu Products */
 product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
@@ -219,6 +224,9 @@ product NEWMEDIA BUSTOASTER	0xc102 New Media BusToaster SCSI Host Adapter
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
 product SMC EZCARD		0x8022 SMC EZCard 10 PCMCIA
+
+/* ZONET */
+product ZONET ZEN		0x0100	Zonet Zen 10/10
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
