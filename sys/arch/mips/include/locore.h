@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.61 2002/05/13 04:15:40 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.62 2002/06/01 13:45:45 simonb Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -32,11 +32,6 @@
 #include <mips/cpuregs.h>
 
 struct tlb;
-
-/*
- * locore service routine for exception vectors. Used outside locore
- * only to print them by name in stack tracebacks
- */
 
 uint32_t mips_cp0_cause_read(void);
 void	mips_cp0_cause_write(uint32_t);
@@ -198,12 +193,10 @@ typedef struct  {
 	void (*wbflush)(void);
 } mips_locore_jumpvec_t;
 
-/* Override writebuffer-drain method. */
 void	mips_set_wbflush(void (*)(void));
+void	mips_wait_idle(void);
 
-/* stacktrace() -- print a stack backtrace to the console */
 void	stacktrace(void);
-/* logstacktrace() -- log a stack traceback to msgbuf */
 void	logstacktrace(void);
 
 /*

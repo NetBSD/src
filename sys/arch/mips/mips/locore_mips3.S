@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.78 2002/06/01 13:16:44 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.79 2002/06/01 13:45:45 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -163,7 +163,7 @@ END(mips3_wbflush)
 /* XXX simonb: ugg, another ugly #ifdef check... */
 #if (defined(MIPS3) && !defined(MIPS3_5900)) || defined(MIPS32) || defined(MIPS64)
 /*
- * rm52xx_idle:
+ * mips_wait_idle:
  *
  *	When no processes are on the runq, cpu_switch branches to
  *	idle to wait for something to come ready.
@@ -172,10 +172,9 @@ END(mips3_wbflush)
  *	for kernel profiling.
  *
  *	This version takes advantage of power-saving features on
- *	the QED RM52xx family of CPUs.
+ *	the QED RM52xx family of CPUs, and MIPS32 & MIPS64 CPUs.
  */
-LEAF(rm52xx_idle)
-XLEAF(mipsNN_idle)
+LEAF(mips_wait_idle)
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
@@ -235,8 +234,8 @@ XLEAF(mipsNN_idle)
 	j	ra
 	nop
 #endif
-END(rm52xx_idle)
-#endif /* MIPS3 && !MIPS3_5900 */	
+END(mips_wait_idle)
+#endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 
 
 /*
