@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.7 1997/10/16 23:48:22 christos Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.8 1997/10/18 16:30:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -566,12 +566,12 @@ freebsd_sys_stat(p, v, retval)
 {
 	struct freebsd_sys_stat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct stat *) ub;
+		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	FREEBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	return sys_stat(p, uap, retval);
+	return compat_12_sys_stat(p, uap, retval);
 }
 
 int
@@ -582,12 +582,12 @@ freebsd_sys_lstat(p, v, retval)
 {
 	struct freebsd_sys_lstat_args /* {
 		syscallarg(char *) path;
-		syscallarg(struct stat *) ub;
+		syscallarg(struct stat12 *) ub;
 	} */ *uap = v;
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	FREEBSD_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	return sys_lstat(p, uap, retval);
+	return compat_12_sys_lstat(p, uap, retval);
 }
 
 int
