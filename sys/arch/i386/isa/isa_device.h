@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa_device.h	7.1 (Berkeley) 5/9/91
- *	$Id: isa_device.h,v 1.8 1994/03/12 03:28:16 mycroft Exp $
+ *	$Id: isa_device.h,v 1.9 1994/03/29 04:34:22 mycroft Exp $
  */
 
 /*
@@ -42,7 +42,7 @@
  * Per device structure.
  */
 struct isa_device {
-	struct	isa_driver *id_driver;
+	struct	cfdriver *id_driver;
 	short	id_iobase;	/* base i/o address */
 	u_short	id_irq;		/* interrupt request */
 	short	id_drq;		/* DMA request */
@@ -54,22 +54,7 @@ struct isa_device {
 	int	id_physid;	/* eg. scsi id if needed */
 	struct	isa_device *id_parent;
 	unsigned *id_mask;	/* for devices which use an IRQ */
-	int	id_alive;	/* device is present */
-};
-
-/*
- * Per-driver structure.
- *
- * Each device driver defines entries for a set of routines
- * as well as an array of types which are acceptable to it.
- * These are used at boot time by the configuration program.
- */
-struct isa_driver {
-	int	(*probe)();		/* test whether device is present */
-	int	(*attach)();		/* setup driver for a device */
-	char	*name;			/* device name */
+	int	id_state;	/* config status */
 };
 
 extern struct isa_device isa_devtab[];
-
-extern struct isa_device *find_isadev(/* table, driver, unit*/);
