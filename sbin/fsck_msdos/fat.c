@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.9 1998/01/22 18:48:44 ws Exp $	*/
+/*	$NetBSD: fat.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.9 1998/01/22 18:48:44 ws Exp $");
+__RCSID("$NetBSD: fat.c,v 1.10 2000/04/25 23:02:51 jdolecek Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -87,6 +87,45 @@ checkclnum(boot, fat, cl, next)
 }
 
 /*
+ * Read a FAT from disk. Returns 1 if successful, 0 otherwise.
+ */
+int
+_readfat(fs, boot, no, buffer)
+	int fs;
+	struct bootblock *boot;
+	int no;
+	u_char **buffer;
+{
+	off_t off;
+
+	*buffer = malloc(boot->FATsecs * boot->BytesPerSec);
+	if (*buffer == NULL) {
+		perror("No space for FAT");
+		return 0;
+	}
+
+	off = boot->ResSectors + no * boot->FATsecs;
+	off *= boot->BytesPerSec;
+
+	if (lseek(fs, off, SEEK_SET) != off) {
+		perror("Unable to read FAT");
+		goto err;
+	}
+
+	if (read(fs, *buffer, boot->FATsecs * boot->BytesPerSec)
+	    != boot->FATsecs * boot->BytesPerSec) {
+		perror("Unable to read FAT");
+		goto err;
+	}
+
+	return 1;
+
+    err:
+	free(*buffer);
+	return 0;
+}
+
+/*
  * Read a FAT and decode it into internal format
  */
 int
@@ -99,36 +138,17 @@ readfat(fs, boot, no, fp)
 	struct fatEntry *fat;
 	u_char *buffer, *p;
 	cl_t cl;
-	off_t off;
 	int ret = FSOK;
 
 	boot->NumFree = boot->NumBad = 0;
-	fat = malloc(sizeof(struct fatEntry) * boot->NumClusters);
-	buffer = malloc(boot->FATsecs * boot->BytesPerSec);
-	if (fat == NULL || buffer == NULL) {
+
+	if (!_readfat(fs, boot, no, &buffer))
+		return FSFATAL;
+		
+	fat = calloc(boot->NumClusters, sizeof(struct fatEntry));
+	if (fat == NULL) {
 		perror("No space for FAT");
-		if (fat)
-			free(fat);
-		return FSFATAL;
-	}
-
-	memset(fat, 0, sizeof(struct fatEntry) * boot->NumClusters);
-
-	off = boot->ResSectors + no * boot->FATsecs;
-	off *= boot->BytesPerSec;
-
-	if (lseek(fs, off, SEEK_SET) != off) {
-		perror("Unable to read FAT");
 		free(buffer);
-		free(fat);
-		return FSFATAL;
-	}
-
-	if (read(fs, buffer, boot->FATsecs * boot->BytesPerSec)
-	    != boot->FATsecs * boot->BytesPerSec) {
-		perror("Unable to read FAT");
-		free(buffer);
-		free(fat);
 		return FSFATAL;
 	}
 
@@ -139,24 +159,44 @@ readfat(fs, boot, no, fp)
 		&& ((buffer[3]&0x0f) != 0x0f
 		    || buffer[4] != 0xff || buffer[5] != 0xff
 		    || buffer[6] != 0xff || (buffer[7]&0x0f) != 0x0f))) {
-		char *msg;
+		const char *msg;
 
-		switch (boot->ClustMask) {
-		case CLUST32_MASK:
-			msg = "FAT starts with odd byte sequence (%02x%02x%02x%02x%02x%02x%02x%02x)\n";
-			break;
-		case CLUST16_MASK:
-			msg = "FAT starts with odd byte sequence (%02x%02x%02x%02x)\n";
-			break;
-		default:
-			msg = "FAT starts with odd byte sequence (%02x%02x%02x)\n";
-			break;
+		/* Windows 95 OSR2 (and possibly any later) changes
+		 * the FAT signature to 0xXXffff7f for FAT16 and to
+		 * 0xXXffff0fffffff07 for FAT32 upon boot, to know that the
+		 * filesystem is dirty if it doesn't reboot cleanly.
+		 * Check this special condition before errorring out.
+		 */
+		if (buffer[0] == boot->Media && buffer[1] == 0xff
+		    && buffer[2] == 0xff
+		    && ((boot->ClustMask == CLUST16_MASK && buffer[3] == 0x7f)
+			|| (boot->ClustMask == CLUST32_MASK
+			    && buffer[3] == 0x0f && buffer[4] == 0xff
+			    && buffer[5] == 0xff && buffer[6] == 0xff
+			    && buffer[7] == 0x07)))
+			ret |= FSDIRTY;
+		else {
+			/* just some odd byte sequence in FAT */
+				
+			switch (boot->ClustMask) {
+			case CLUST32_MASK:
+				msg = "%s (%02x%02x%02x%02x%02x%02x%02x%02x)\n";
+				break;
+			case CLUST16_MASK:
+				msg = "%s (%02x%02x%02x%02x)\n";
+				break;
+			default:
+				msg = "%s (%02x%02x%02x)\n";
+				break;
+			}
+
+			pwarn(msg, "FAT starts with odd byte sequence",
+			      buffer[0], buffer[1], buffer[2], buffer[3],
+			      buffer[4], buffer[5], buffer[6], buffer[7]);
+	
+			if (ask(1, "Correct"))
+				ret |= FSFIXFAT;
 		}
-		pwarn(msg,
-		      buffer[0], buffer[1], buffer[2], buffer[3],
-		      buffer[4], buffer[5], buffer[6], buffer[7]);
-		if (ask(1, "Correct"))
-			ret |= FSFATMOD;
 	}
 	switch (boot->ClustMask) {
 	case CLUST32_MASK:
@@ -444,10 +484,11 @@ checkfat(boot, fat)
  * Write out FATs encoding them from the internal format
  */
 int
-writefat(fs, boot, fat)
+writefat(fs, boot, fat, correct_fat)
 	int fs;
 	struct bootblock *boot;
 	struct fatEntry *fat;
+	int correct_fat;
 {
 	u_char *buffer, *p;
 	cl_t cl;
@@ -464,21 +505,50 @@ writefat(fs, boot, fat)
 	memset(buffer, 0, fatsz);
 	boot->NumFree = 0;
 	p = buffer;
-	*p++ = (u_char)boot->Media;
-	*p++ = 0xff;
-	*p++ = 0xff;
-	switch (boot->ClustMask) {
-	case CLUST16_MASK:
-		*p++ = 0xff;
-		break;
-	case CLUST32_MASK:
-		*p++ = 0x0f;
+	if (correct_fat) {
+		*p++ = (u_char)boot->Media;
 		*p++ = 0xff;
 		*p++ = 0xff;
-		*p++ = 0xff;
-		*p++ = 0x0f;
-		break;
+		switch (boot->ClustMask) {
+		case CLUST16_MASK:
+			*p++ = 0xff;
+			break;
+		case CLUST32_MASK:
+			*p++ = 0x0f;
+			*p++ = 0xff;
+			*p++ = 0xff;
+			*p++ = 0xff;
+			*p++ = 0x0f;
+			break;
+		}
+	} else {
+		/* use same FAT signature as the old FAT has */
+		int count;
+		u_char *old_fat;
+
+		switch (boot->ClustMask) {
+		case CLUST32_MASK:
+			count = 8;
+			break;
+		case CLUST16_MASK:
+			count = 4;
+			break;
+		default:
+			count = 3;
+			break;
+		}
+
+		if (!_readfat(fs, boot, boot->ValidFat >= 0 ? boot->ValidFat :0,
+					 &old_fat)) {
+			free(buffer);
+			return FSFATAL;
+		}
+
+		memcpy(p, old_fat, count);
+		free(old_fat);
+		p += count;
 	}
+			
 	for (cl = CLUST_FIRST; cl < boot->NumClusters; cl++) {
 		switch (boot->ClustMask) {
 		case CLUST32_MASK:

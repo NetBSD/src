@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.14 1998/08/25 19:18:15 ross Exp $	*/
+/*	$NetBSD: dir.c,v 1.15 2000/04/25 23:02:51 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.14 1998/08/25 19:18:15 ross Exp $");
+__RCSID("$NetBSD: dir.c,v 1.15 2000/04/25 23:02:51 jdolecek Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -890,14 +890,6 @@ handleDirTree(dosfs, boot, fat)
 	if (mod & FSFATAL)
 		return FSFATAL;
 
-	if (mod & FSFATMOD) {
-		mod &= ~FSFATMOD;
-		mod |= writefat(dosfs, boot, fat); /* delay writing fats?	XXX */
-	}
-
-	if (mod & FSFATAL)
-		return FSFATAL;
-
 	/*
 	 * process the directory todo list
 	 */
@@ -918,13 +910,8 @@ handleDirTree(dosfs, boot, fat)
 		mod |= readDosDirSection(dosfs, boot, fat, dir);
 		if (mod & FSFATAL)
 			return FSFATAL;
-		if (mod & FSFATMOD) {
-			mod &= ~FSFATMOD;
-			mod |= writefat(dosfs, boot, fat); /* delay writing fats? XXX */
-		}
-		if (mod & FSFATAL)
-			return FSFATAL;
 	}
+
 	return mod;
 }
 
