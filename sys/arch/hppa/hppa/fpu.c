@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.6 2004/06/15 16:29:01 chs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.7 2004/07/24 18:59:05 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2004/06/15 16:29:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.7 2004/07/24 18:59:05 chs Exp $");
 
 #include <sys/param.h>       
 #include <sys/systm.h>
@@ -263,7 +263,7 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	 * b is a five-bit field starting at bit 10, 
 	 * x is a five-bit field starting at bit 15,
 	 * s is a two-bit field starting at bit 17, 
-	 * and t is a two-bit field starting at bit 31.
+	 * and t is a five-bit field starting at bit 31.
 	 */
 	inst = frame->tf_iir;
 	__asm __volatile(
@@ -355,9 +355,9 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
  * This is called to emulate an instruction.
  */
 void 
-hppa_fpu_emulate(struct trapframe *frame, struct lwp *l)
+hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 {
-	u_int inst, opcode, class, sub;
+	u_int opcode, class, sub;
 	u_int *fpregs;
 	int exception;
 
@@ -376,7 +376,7 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l)
 	 * is a two bit field starting at bit 16, else
 	 * it is a three bit field starting at bit 18.
 	 */
-	inst = frame->tf_iir;
+#if 0
 	__asm __volatile(
 		"	extru %3, 22, 2, %1	\n"
 		"	extru %3, 5, 6, %0	\n"
@@ -385,6 +385,15 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l)
 		"	extru %3, 16, 2, %2	\n"
 		: "=r" (opcode), "=r" (class), "=r" (sub)
 		: "r" (inst));
+#else
+	opcode = (inst >> (31 - 5)) & 0x3f;
+	class = (inst >> (31 - 22)) & 0x3;
+	if (class == 1) {
+		sub = (inst >> (31 - 16)) & 3;
+	} else {
+		sub = (inst >> (31 - 18)) & 7;
+	}
+#endif
 
 	/* Get this LWP's FPU registers. */
 	fpregs = (u_int *) l->l_addr->u_pcb.pcb_fpregs;
