@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.sh,v 1.1 2001/02/09 18:34:10 uch Exp $
+# $NetBSD: do_subst.sh,v 1.2 2001/03/04 16:51:05 uch Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -54,7 +54,6 @@ export NAME
 export SRCFILE_LIST
 export SRCFILE_LIST_ARM
 export SRCFILE_LIST_SH3
-export SRCFILE_LIST_SH4
 export SRCFILE_LIST_MIPS
 export CPPDEF_LIST STD_CPPDEF_LIST
 export INCDIR_LIST STD_INCDIR_LIST 
