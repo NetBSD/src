@@ -62,11 +62,7 @@
  * than PIPE_BUF.
  */
 #ifndef PIPE_MINDIRECT
-#if defined(__FreeBSD__)
 #define PIPE_MINDIRECT	8192
-#elif defined(__NetBSD__)
-#define PIPE_MINDIRECT PAGE_SIZE
-#endif
 #endif
 
 /*
