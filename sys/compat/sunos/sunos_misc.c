@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.62 1996/02/25 13:27:01 pk Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.63 1996/02/28 01:41:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
