@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.39 2002/06/30 00:10:34 sommerfeld Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.40 2002/08/01 23:36:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.39 2002/06/30 00:10:34 sommerfeld Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.40 2002/08/01 23:36:55 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -55,11 +55,11 @@ __RCSID("$NetBSD: vmstat.c,v 1.39 2002/06/30 00:10:34 sommerfeld Exp $");
 
 #include <stdlib.h>
 #include <string.h>
-#include <utmp.h>
 
 #include "systat.h"
 #include "extern.h"
 #include "dkstats.h"
+#include "utmpentry.h"
 
 static struct Info {
 	struct	uvmexp_sysctl uvmexp;
@@ -86,7 +86,6 @@ static void putint(int, int, int, int);
 static void putfloat(double, int, int, int, int, int);
 static int ucount(void);
 
-static	int ut;
 static	char buf[26];
 static	u_int64_t t;
 static	double etime;
@@ -96,15 +95,9 @@ static	long *intrloc;
 static	char **intrname;
 static	int nextintsrow;
 
-struct	utmp utmp;
-
 WINDOW *
 openvmstat(void)
 {
-
-	ut = open(_PATH_UTMP, O_RDONLY);
-	if (ut < 0)
-		error("No utmp");
 	return (stdscr);
 }
 
@@ -112,7 +105,6 @@ void
 closevmstat(WINDOW *w)
 {
 
-	(void) close(ut);
 	if (w == NULL)
 		return;
 	wclear(w);
@@ -490,13 +482,16 @@ vmstat_zero(char *args)
 static int
 ucount(void)
 {
-	int nusers = 0, onusers = -1;
+	static int onusers = -1;
+	static struct utmpentry *oehead = NULL;
+	int nusers = 0;
+	struct utmpentry *ehead;
 
-	if (ut < 0)
-		return (0);
-	while (read(ut, &utmp, sizeof(utmp)))
-		if (utmp.ut_name[0] != '\0')
-			nusers++;
+	nusers = getutentries(NULL, &ehead);
+	if (oehead != ehead) {
+		freeutentries(oehead);
+		oehead = ehead;
+	}
 
 	if (nusers != onusers) {
 		if (nusers == 1)
@@ -504,7 +499,6 @@ ucount(void)
 		else
 			mvprintw(STATROW, STATCOL + 8, "s");
 	}
-	lseek(ut, (off_t)0, SEEK_SET);
 	onusers = nusers;
 	return (nusers);
 }
