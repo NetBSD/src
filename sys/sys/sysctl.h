@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.131 2005/03/10 05:41:19 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.132 2005/03/10 05:43:33 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -349,7 +349,7 @@ struct ctlname {
 	{ "root_partition", CTLTYPE_INT}, \
 	{ "drivers", CTLTYPE_STRUCT }, \
 	{ "buf", CTLTYPE_NODE }, \
-	{ "file2", CTLTYPE_STRUCT }, \
+	{ "file2", CTLTYPE_NODE }, \
 }
 
 /*

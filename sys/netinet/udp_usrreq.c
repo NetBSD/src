@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.132 2005/03/09 05:07:19 atatat Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.133 2005/03/10 05:43:26 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.132 2005/03/09 05:07:19 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.133 2005/03/10 05:43:26 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1336,7 +1336,7 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "pcblist",
+		       CTLTYPE_NODE, "pcblist",
 		       SYSCTL_DESCR("UDP protocol control block list"),
 		       sysctl_inpcblist, 0, &udbtable, 0,
 		       CTL_NET, PF_INET, IPPROTO_UDP, CTL_CREATE,
