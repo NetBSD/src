@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.36 2004/05/18 06:20:28 martin Exp $ */
+/*	$NetBSD: stp4020.c,v 1.37 2004/07/05 07:26:04 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.36 2004/05/18 06:20:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.37 2004/07/05 07:26:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,9 +251,6 @@ stp4020_wr_winctl(h, win, idx, v)
 
 #ifndef SUN4U	/* XXX - move to SBUS machdep function? */
 
-#if !__FULL_SPARC_BUS_SPACE
-#error "stp4020 (nell) needs __FULL_SPARC_BUS_SPACE defined as well"
-#else
 static	u_int16_t stp4020_read_2(bus_space_tag_t,
 				 bus_space_handle_t,
 				 bus_size_t);
@@ -332,7 +329,6 @@ stp4020_write_8(space, handle, offset, value)
 {
 	(*(volatile u_int64_t *)(handle + offset)) = htole64(value);
 }
-#endif	/* __FULL_SPARC_BUS_SPACE */
 #endif	/* SUN4U */
 
 int
@@ -377,7 +373,9 @@ stp4020attach(parent, self, aux)
 	sbus_intno = sc->sc_dev.dv_cfdata->cf_flags & 1;
 
 	/* Transfer bus tags */
-#if __FULL_SPARC_BUS_SPACE
+#ifdef SUN4U
+	tag = sa->sa_bustag;
+#else
 	tag = (bus_space_tag_t)
 	    malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
 	*tag = *sa->sa_bustag;
@@ -387,9 +385,7 @@ stp4020attach(parent, self, aux)
 	tag->sparc_write_2 = stp4020_write_2;
 	tag->sparc_write_4 = stp4020_write_4;
 	tag->sparc_write_8 = stp4020_write_8;
-#else
-	tag = sa->sa_bustag;
-#endif	/* __FULL_SPARC_BUS_SPACE */
+#endif	/* ultra sparc */
 	sc->sc_bustag = tag;
 
 	/* Set up per-socket static initialization */
