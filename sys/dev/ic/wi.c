@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.140 2003/11/02 00:22:49 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.141 2003/11/02 00:55:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.140 2003/11/02 00:22:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.141 2003/11/02 00:55:46 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -777,7 +777,8 @@ wi_start(struct ifnet *ifp)
 			    (caddr_t)&frmhdr.wi_ehdr);
 			frmhdr.wi_ehdr.ether_type = 0;
                         wh = mtod(m0, struct ieee80211_frame *);
-			/* TBD set ni = m0->m_pkthdr.rcvif */ 
+			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			m0->m_pkthdr.rcvif = NULL;
 		} else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
 			struct llc *llc;
 
