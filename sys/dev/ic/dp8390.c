@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.18 1998/12/11 18:03:55 bad Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.19 1998/12/12 16:31:34 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1064,21 +1064,19 @@ dp8390_get(sc, src, total_len)
 	struct mbuf *m, *m0, *newm;
 	u_short len;
 
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == 0)
-		return 0;
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = total_len;
+	MGETHDR(m0, M_DONTWAIT, MT_DATA);
+	if (m0 == 0)
+		return (0);
+	m0->m_pkthdr.rcvif = ifp;
+	m0->m_pkthdr.len = total_len;
 	len = MHLEN;
+	m = m0;
 
-	m0 = m;
 	while (total_len > 0) {
 		if (total_len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(m0);
-				return 0;
-			}
+			if ((m->m_flags & M_EXT) == 0)
+				goto bad;
 			len = MCLBYTES;
 		}
 
@@ -1098,20 +1096,22 @@ dp8390_get(sc, src, total_len)
 			src = (*sc->ring_copy)(sc, src, mtod(m, caddr_t), len);
 		else
 			src = dp8390_ring_copy(sc, src, mtod(m, caddr_t), len);
+
 		total_len -= len;
 		if (total_len > 0) {
 			MGET(newm, M_DONTWAIT, MT_DATA);
-			if (newm == 0) {
-				m_freem(m0);
-				return 0;
-			}
-			m->m_next = newm;
-			m = newm;
+			if (newm == 0)
+				goto bad;
 			len = MLEN;
+			m = m->m_next = newm;
 		}
 	}
 
-	return m0;
+	return (m0);
+
+bad:
+	m_freem(m0);
+	return (0);
 }
 
 
