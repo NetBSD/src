@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.9 2000/08/12 17:53:00 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.10 2000/08/18 13:26:25 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,7 +90,7 @@ struct cpu_info {
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
 	
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
-	u_long ci_flags;		/* flags; see below */
+	u_int32_t ci_flags;		/* flags; see below */
 	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
 
@@ -105,6 +105,7 @@ struct cpu_info {
 
 	int		ci_want_resched;
 	int		ci_astpending;
+	struct trapframe	*ci_ddb_regs;
 };
 
 /*
@@ -124,6 +125,7 @@ struct cpu_info {
 
 #define	CPUF_PRESENT	0x1000		/* CPU is present */
 #define	CPUF_RUNNING	0x2000		/* CPU is running */
+#define	CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
 
 #ifdef MULTIPROCESSOR
 
@@ -131,6 +133,7 @@ struct cpu_info {
 
 #define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
 #define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
+#define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
 
 #define cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
 #define curcpu()	(cpu_info[cpu_number()])
@@ -279,9 +282,8 @@ void	i8254_microtime __P((struct timeval *));
 void	i8254_initclocks __P((void));
 
 /* npx.c */
-void	npxdrop __P((struct proc *));
-void	npxsave_proc __P((struct proc *));
-void	npxsave_cpu __P((struct cpu_info *));
+void	npxsave_proc __P((struct proc *, int));
+void	npxsave_cpu __P((struct cpu_info *, int));
 
 /* vm_machdep.c */
 int kvtop __P((caddr_t));
