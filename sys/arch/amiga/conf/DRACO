@@ -1,11 +1,11 @@
-#	$NetBSD: DRACO,v 1.5 1996/08/26 23:39:25 mrg Exp $
+#	$NetBSD: DRACO,v 1.6 1996/10/21 11:11:23 veego Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
 #
 
 # this will be replace by std.amiga soon:
-include "std.draco"
+include "arch/amiga/conf/std.draco"
 
 maxusers	8
 options		TIMEZONE=300, DST=1
