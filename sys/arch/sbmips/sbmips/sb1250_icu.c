@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.1 2002/03/06 02:13:52 simonb Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.2 2002/03/06 07:51:02 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -98,13 +98,13 @@ sb1250_icu_init(void)
 static void
 sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
-	int i, j;
+	int i, j, s;
 	uint64_t sstatus;
 	uint32_t cycles;
 
 	uvmexp.intrs++;
 
-{ int s = splhigh();
+	s = splhigh();	/* XXX */
 
 	/* XXX do something if 5? */
 	if (ipending & (MIPS_INT_MASK_0 << 5)) {
@@ -144,7 +144,7 @@ sb1250_cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 #endif
 	}
 
-splx(s); }
+	splx(s);	/* XXX */
 }
 
 static void
