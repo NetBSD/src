@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxpvar.h,v 1.5 1998/01/28 07:26:44 thorpej Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.6 1998/08/11 00:11:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -161,7 +161,7 @@ struct fxp_softc {
 	struct fxp_control_data *control_data;
 
 	struct fxp_rxdesc *sc_rxdescs;	/* receive buffer descriptors */
-	struct ifmedia sc_media;	/* media information */
+	struct mii_data sc_mii;		/* MII media information */
 	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
 	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
 	int tx_queued;			/* # of active TxCB's */
