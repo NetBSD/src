@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.12 1998/07/06 14:23:32 kleink Exp $	*/
+/*	$NetBSD: whatis.c,v 1.13 2002/03/08 20:23:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.12 1998/07/06 14:23:32 kleink Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.13 2002/03/08 20:23:11 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: whatis.c,v 1.12 1998/07/06 14:23:32 kleink Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
-#include "pathnames.h"
+#include <man/config.h>
+#include <man/pathnames.h>
 
 #define	MAXLINELEN	8192			/* max line handled */
 
@@ -122,14 +122,14 @@ main(argc, argv)
 	else {
 		config(conffile);
 		ep = (tp = getlist("_whatdb")) == NULL ?
-		   NULL : tp->list.tqh_first;
-		for (; ep != NULL; ep = ep->q.tqe_next) {
+		   NULL : TAILQ_FIRST(&tp->list);
+		for (; ep != NULL; ep = TAILQ_NEXT(ep, q)) {
 			if ((rv = glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
 			    &pg)) != 0) {
 				if (rv == GLOB_NOMATCH)
 					continue;
 				else
-					err(1, "glob");
+					err(EXIT_FAILURE, "glob");
 			}
 			if (pg.gl_pathc)
 				for (p = pg.gl_pathv; *p; p++)
