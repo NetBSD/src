@@ -38,7 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.13 1994/04/05 18:08:56 chopps Exp $
+ *	$Id: autoconf.c,v 1.14 1994/04/07 17:06:44 chopps Exp $
  */
 
 /*
@@ -587,7 +587,7 @@ same_hw_device(hw, ad)
 		found = dr_type(ad->amiga_driver, "par");
 		break;
 	case D_FLOP:
-		found = dr_type(ad->amiga_driver, "fp");
+		found = dr_type(ad->amiga_driver, "fd");
 		break;
 	default:
 		break;
