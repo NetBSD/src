@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.1 1999/04/02 03:34:09 cgd Exp $
+# $NetBSD: Makefile.bootxx,v 1.2 1999/04/05 22:03:48 cgd Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c prom.c prom_disp.S \
        putstr.c panic_putstr.c
@@ -28,9 +28,6 @@ ${PROG}: ${PROG}.sym
 
 SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 .include "../Makefile.bootprogs"
-
-NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
-CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
