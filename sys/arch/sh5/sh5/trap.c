@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.25 2003/08/12 13:50:23 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.26 2003/09/08 08:01:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.25 2003/08/12 13:50:23 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.26 2003/09/08 08:01:52 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -273,7 +273,8 @@ trap(struct lwp *l, struct trapframe *tf)
 	case T_RTLBMISS:
 	case T_WTLBMISS:
 	case T_ITLBMISS:
-		ftype = (traptype == T_WTLBMISS) ? VM_PROT_WRITE : VM_PROT_READ;
+		ftype = (traptype == T_WTLBMISS) ? VM_PROT_WRITE :
+		    ((traptype == T_ITLBMISS) ? VM_PROT_EXECUTE : VM_PROT_READ);
 		if (vaddr >= VM_MIN_KERNEL_ADDRESS)
 			goto kernelfault;
 
@@ -282,12 +283,16 @@ trap(struct lwp *l, struct trapframe *tf)
 		goto pagefault;
 
 	case T_RTLBMISS|T_USER:
-	case T_ITLBMISS|T_USER:
 		ftype = VM_PROT_READ;
+		goto pagefault;
+
+	case T_ITLBMISS|T_USER:
+		ftype = VM_PROT_EXECUTE;
 		goto pagefault;
 
 	case T_WTLBMISS|T_USER:
 		ftype = VM_PROT_WRITE;
+		/*FALLTHROUGH*/
 
 	pagefault:
 	    {
