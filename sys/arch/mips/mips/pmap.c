@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 2000/03/28 01:04:22 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.87 2000/03/28 05:58:33 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2000/03/28 01:04:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2000/03/28 05:58:33 nisimura Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1849,9 +1849,9 @@ pmap_alloc_asid(p)
 			MachTLBFlush();		/* MIPS_TBIAP */
 			pmap_asid_generation++; /* ok to wrap to 0 */
 			pmap_next_asid = 1;	/* 0 means invalid */
-			pmap->pm_asidgen = pmap_asid_generation;
 		}
 		pmap->pm_asid = pmap_next_asid++;
+		pmap->pm_asidgen = pmap_asid_generation;
 	}
 
 #ifdef DEBUG
