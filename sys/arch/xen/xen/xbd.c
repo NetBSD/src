@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.5 2004/04/24 20:05:49 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.6 2004/04/24 21:55:37 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.5 2004/04/24 20:05:49 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.6 2004/04/24 21:55:37 cl Exp $");
 
 #include "xbd.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.5 2004/04/24 20:05:49 cl Exp $");
 #include <sys/conf.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm.h>
 
@@ -224,6 +225,8 @@ static struct xbd_attach_args cd_ata = {
 	.xa_dkintf = &dkintf_esdi,
 };
 #endif
+
+static struct sysctlnode *diskcookies;
 
 
 #if defined(XBDDEBUG) && !defined(DEBUG)
@@ -468,6 +471,36 @@ signal_requests_to_xen(void)
 	return;
 }
 
+static void
+setup_sysctl(void)
+{
+	struct sysctlnode *pnode;
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       0,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(NULL, 0, NULL, &pnode,
+		       0,
+		       CTLTYPE_NODE, "domain0", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	if (pnode == NULL)
+		return;
+
+	sysctl_createv(NULL, 0, &pnode, &pnode,
+		       0,
+		       CTLTYPE_NODE, "diskcookie", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	if (pnode)
+		diskcookies = pnode;
+}
+
 int
 xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
     cfprint_t print)
@@ -478,6 +511,8 @@ xbd_scan(struct device *self, struct xbd_attach_args *mainbus_xbda,
 	int i;
 
 	init_interface();
+	if (xen_start_info.flags & SIF_PRIVILEGED)
+		setup_sysctl();
 
 #if NXBD > 0
 	xbd_major = devsw_name2blk("xbd", NULL, 0);
@@ -633,6 +668,14 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 	simple_lock_init(&xs->sc_slock);
 	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
 	xbdinit(xs, &vbd_info[xbda->xa_disk], xbda->xa_dkintf);
+	if (diskcookies) {
+		/* XXX beware that xs->sc_xd_device is a long */
+		sysctl_createv(NULL, 0, &diskcookies, NULL,
+		    0,
+		    CTLTYPE_INT, xs->sc_dev.dv_xname, NULL,
+		    NULL, 0, &xs->sc_xd_device, 0,
+		    CTL_CREATE, CTL_EOL);
+	}
 }
 
 int
