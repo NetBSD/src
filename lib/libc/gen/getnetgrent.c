@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.15 1998/07/26 19:34:10 mycroft Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.16 1998/07/27 09:47:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.15 1998/07/26 19:34:10 mycroft Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.16 1998/07/27 09:47:44 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,7 +69,7 @@ static struct netgroup *_nghead = (struct netgroup *)NULL;
 static struct netgroup *_nglist = (struct netgroup *)NULL;
 static DB *_ng_db;
 
-static int		getstring __P((char **, int, const char **));
+static int		getstring __P((char **, int, __aconst char **));
 static struct netgroup	*getnetgroup __P((char **));
 static int		 lookup __P((const char *, char *, char **, int));
 static void		 addgroup __P((char *, StringList *, char *));
@@ -91,7 +91,7 @@ static int
 getstring(pp, del, str)
 	char	**pp;
 	int	  del;
-	char	const **str;
+	char	__aconst **str;
 {
 	size_t len;
 	char *sp, *ep, *dp;
