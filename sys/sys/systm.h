@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.163 2003/06/29 22:32:29 fvdl Exp $	*/
+/*	$NetBSD: systm.h,v 1.164 2003/07/08 06:18:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -391,10 +391,10 @@ typedef struct cnm_state {
 #define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
 #endif
 
-void cn_init_magic __P((cnm_state_t *cnm));
-void cn_destroy_magic __P((cnm_state_t *cnm));
-int cn_set_magic __P((char *magic));
-int cn_get_magic __P((char *magic, int len));
+void cn_init_magic __P((cnm_state_t *));
+void cn_destroy_magic __P((cnm_state_t *));
+int cn_set_magic __P((char *));
+int cn_get_magic __P((char *, int));
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)						\

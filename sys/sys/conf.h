@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.110 2003/06/29 22:32:22 fvdl Exp $	*/
+/*	$NetBSD: conf.h,v 1.111 2003/07/08 06:17:59 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -153,34 +153,31 @@ struct linesw {
 	char	*l_name;	/* Linesw name */
 	int	l_no;		/* Linesw number (compatibility) */
 
-	int	(*l_open)	__P((dev_t dev, struct tty *tp));
-	int	(*l_close)	__P((struct tty *tp, int flags));
-	int	(*l_read)	__P((struct tty *tp, struct uio *uio,
-				     int flag));
-	int	(*l_write)	__P((struct tty *tp, struct uio *uio,
-				     int flag));
-	int	(*l_ioctl)	__P((struct tty *tp, u_long cmd, caddr_t data,
-				     int flag, struct proc *p));
-	int	(*l_rint)	__P((int c, struct tty *tp));
-	int	(*l_start)	__P((struct tty *tp));
-	int	(*l_modem)	__P((struct tty *tp, int flag));
-	int	(*l_poll)	__P((struct tty *tp, int events,
-				     struct proc *p));
+	int	(*l_open)	__P((dev_t, struct tty *));
+	int	(*l_close)	__P((struct tty *, int));
+	int	(*l_read)	__P((struct tty *, struct uio *, int));
+	int	(*l_write)	__P((struct tty *, struct uio *, int));
+	int	(*l_ioctl)	__P((struct tty *, u_long, caddr_t, int,
+				    struct proc *));
+	int	(*l_rint)	__P((int, struct tty *));
+	int	(*l_start)	__P((struct tty *));
+	int	(*l_modem)	__P((struct tty *, int));
+	int	(*l_poll)	__P((struct tty *, int, struct proc *));
 };
 
 #ifdef _KERNEL
 extern struct linesw **linesw;
 extern int nlinesw;
 extern void ttyldisc_init __P((void));
-int ttyldisc_add __P((struct linesw *disc, int no));
-struct linesw *ttyldisc_remove __P((char *name));
-struct linesw *ttyldisc_lookup __P((char *name));
+int ttyldisc_add __P((struct linesw *, int));
+struct linesw *ttyldisc_remove __P((char *));
+struct linesw *ttyldisc_lookup __P((char *));
 
 /* For those defining their own line disciplines: */
 #define	ttynodisc ((int (*) __P((dev_t, struct tty *)))enodev)
-#define	ttyerrclose ((int (*) __P((struct tty *, int flags)))enodev)
+#define	ttyerrclose ((int (*) __P((struct tty *, int)))enodev)
 #define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
-#define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
+#define	ttyerrinput ((int (*) __P((int, struct tty *)))enodev)
 #define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
 #define	ttyerrpoll ((int (*) __P((struct tty *, int, struct proc *)))enodev)
 
