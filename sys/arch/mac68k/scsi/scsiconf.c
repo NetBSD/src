@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: scsiconf.c,v 1.3 1994/01/30 01:21:37 briggs Exp $
+ *      $Id: scsiconf.c,v 1.4 1994/02/22 00:57:29 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -30,8 +30,8 @@
 #include "uk.h"
 #include "su.h"
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsiconf.h>
 
 #ifdef TFS
 #include "bll.h"

@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *	$Id: st.c,v 1.4 1994/02/03 05:28:07 briggs Exp $
+ *	$Id: st.c,v 1.5 1994/02/22 00:57:36 briggs Exp $
  */
 
 /*
@@ -37,9 +37,9 @@
 #include <sys/mtio.h>
 #include <sys/device.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_tape.h>
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsi_tape.h>
+#include <arch/mac68k/scsi/scsiconf.h>
 
 /* Defines for device specific stuff */
 #define	PAGE_0_SENSE_DATA_SIZE	12

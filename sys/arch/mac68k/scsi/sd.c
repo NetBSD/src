@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.6 1994/02/10 04:23:45 briggs Exp $
+ *      $Id: sd.c,v 1.7 1994/02/22 00:57:33 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -33,9 +33,9 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_disk.h>
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsi_disk.h>
+#include <arch/mac68k/scsi/scsiconf.h>
 
 #ifdef	DDB
 int     Debugger();
@@ -640,7 +640,9 @@ sdgetdisklabel(sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
+#if PRINT_DISKLABELS
 	printf("Disklabelling %s.\n", sd->sc_dk.dk_dev.dv_xname);
+#endif
 	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dk.dk_dev.dv_unit,
 				      RAW_PART), sdstrategy,
 	    			      &sd->sc_dk.dk_label,

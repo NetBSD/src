@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsiconf.h,v 1.3 1994/01/30 01:21:40 briggs Exp $
+ *	$Id: scsiconf.h,v 1.4 1994/02/22 00:57:31 briggs Exp $
  */
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
@@ -31,7 +31,7 @@ typedef	unsigned char 		u_int8;
 #endif
 
 #include <machine/cpu.h>
-#include <scsi/scsi_debug.h>
+#include <arch/mac68k/scsi/scsi_debug.h>
 
 /*
  * The following documentation tries to describe the relationship between the

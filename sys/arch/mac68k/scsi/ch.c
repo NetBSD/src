@@ -2,7 +2,7 @@
  * Written by grefen@?????
  * Based on scsi drivers by Julian Elischer (julian@tfs.com)
  *
- *      $Id: ch.c,v 1.3 1994/01/30 01:21:17 briggs Exp $
+ *      $Id: ch.c,v 1.4 1994/02/22 00:57:25 briggs Exp $
  */
 
 #include <sys/types.h>
@@ -16,9 +16,9 @@
 #include <sys/chio.h>
 #include <sys/device.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsi_changer.h>
-#include <scsi/scsiconf.h>
+#include <arch/mac68k/scsi/scsi_all.h>
+#include <arch/mac68k/scsi/scsi_changer.h>
+#include <arch/mac68k/scsi/scsiconf.h>
 
 #define	CHRETRIES	2
 
