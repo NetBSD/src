@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.38 2000/07/29 20:06:29 jdolecek Exp $ */
+/*	$NetBSD: autoconf.c,v 1.39 2000/09/24 12:32:39 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -63,6 +63,7 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
+#include <sys/boot_flag.h>
 
 #include <net/if.h>
 
@@ -319,19 +320,18 @@ bootpath_build()
 		if (*cp++ == '\0')
 			return;
 
-	for (;;) {
-		switch (*++cp) {
+	for (;*++cp;) {
+		fl = 0;
+		BOOT_FLAG(*cp, fl);
+		if (!fl) {
+			printf("unknown option `%c'\n", *cp);
+			continue;
+		}
+		boothowto |= fl;
 
-		case '\0':
-			return;
-
-		case 'a':
-			boothowto |= RB_ASKNAME;
-			break;
-
-		case 'd':	/* kgdb - always on zs	XXX */
+		/* specialties */
+		if (*cp == 'd') {
 #if defined(KGDB)
-			boothowto |= RB_KDB;	/* XXX unused */
 			kgdb_debug_panic = 1;
 			kgdb_connect(1);
 #elif defined(DDB)
@@ -339,20 +339,11 @@ bootpath_build()
 #else
 			printf("kernel has no debugger\n");
 #endif
-			break;
-
-		case 's':
-			boothowto |= RB_SINGLE;
-			break;
-
-		case 't':
-		{
+		} else if (*cp == 't') {
 			/* turn on traptrace w/o breaking into kdb */
 			extern int trap_trace_dis;
 
 			trap_trace_dis = 0;
-			break;
-		}
 		}
 	}
 }

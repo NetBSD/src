@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.220 2000/09/13 15:00:15 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.221 2000/09/24 12:32:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2000/09/13 15:00:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2000/09/24 12:32:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -721,6 +721,16 @@ nobootinfo:
 		case 's': /* single-user (default, supported for sanity) */
 		case 'S':
 			boothowto |= RB_SINGLE;
+			break;
+
+		case 'q': /* quiet boot */
+		case 'Q':
+			boothowto |= AB_QUIET;
+			break;
+			
+		case 'v': /* verbose boot */
+		case 'V':
+			boothowto |= AB_VERBOSE;
 			break;
 
 		case '-':

@@ -1,5 +1,5 @@
 REM>BBBB
-REM $NetBSD: BBBB,fd1,v 1.3 2000/07/22 15:36:15 bjh21 Exp $
+REM $NetBSD: BBBB,fd1,v 1.4 2000/09/24 12:32:33 jdolecek Exp $
 REM
 REM Copyright (c) 1998, 1999, 2000 Ben Harris
 REM All rights reserved.
@@ -68,6 +68,8 @@ WHILE LEN(A$) > 0
           WHEN "a" : howto% = howto% OR &01 : REM RB_ASKNAME
           WHEN "s" : howto% = howto% OR &02 : REM RB_SINGLE
           WHEN "d" : howto% = howto% OR &40 : REM RB_KDB
+          WHEN "q" : howto% = howto% OR &10000 : REM AB_QUIET
+          WHEN "v" : howto% = howto% OR &20000 : REM AB_VERBOSE
           WHEN " ", "" : done% = TRUE
           OTHERWISE : ERROR EXT 0, "Bad option: " + LEFT$(A$, 1)
         ENDCASE

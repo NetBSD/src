@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2000/09/13 15:00:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2000/09/24 12:32:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,7 @@
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
+#include <sys/boot_flag.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -198,21 +199,8 @@ next68k_init()
 		char *p = rom_boot_arg;
 		boothowto = 0;
 		if (*p++ == '-') {
-			for (;*p;p++) {
-				switch(*p) {
-				case 'a':
-					boothowto |= RB_ASKNAME;
-					break;
-				case 's':
-					boothowto |= RB_SINGLE;
-					break;
-				case 'd':
-					boothowto |= RB_KDB;
-					break;
-				default:
-					break;
-				}
-			}
+			for (;*p;p++)
+				BOOT_FLAG(*p, boothowto);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.5 1997/07/09 14:31:14 leo Exp $	*/
+/*	$NetBSD: installboot.h,v 1.6 2000/09/24 12:32:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -41,7 +41,7 @@
 /*
  * Should match 'bootversion' in locore.s to make installboot work.
  */
-#define	BOOTVERSION	0x02
+#define	BOOTVERSION	0x03
 
 u_int	dkcksum __P((struct disklabel *));
 daddr_t	readdisklabel __P((char *, struct disklabel *));
