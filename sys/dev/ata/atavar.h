@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.12 1999/03/07 14:02:53 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -40,15 +40,16 @@ struct ata_drive_datas {
     u_int8_t drive; /* drive number */
     int8_t ata_vers; /* ATA version supported */
     u_int16_t drive_flags; /* bitmask for drives present/absent and cap */
-#define DRIVE_ATA   0x01
-#define DRIVE_ATAPI 0x02
-#define DRIVE (DRIVE_ATA|DRIVE_ATAPI)
-#define DRIVE_CAP32 0x04
-#define DRIVE_DMA   0x08 
-#define DRIVE_UDMA  0x10
-#define DRIVE_MODE 0x20 /* the drive reported its mode */
-#define DRIVE_RESET 0x40 /* reset the drive state at next xfer */
-#define DRIVE_DMAERR 0x80 /* Udma transfer had crc error, don't try DMA */
+#define DRIVE_ATA	0x0001
+#define DRIVE_ATAPI	0x0002
+#define DRIVE_OLD	0x0004 
+#define DRIVE (DRIVE_ATA|DRIVE_ATAPI|DRIVE_OLD)
+#define DRIVE_CAP32	0x0008
+#define DRIVE_DMA	0x0010 
+#define DRIVE_UDMA	0x0020
+#define DRIVE_MODE	0x0040 /* the drive reported its mode */
+#define DRIVE_RESET	0x0080 /* reset the drive state at next xfer */
+#define DRIVE_DMAERR	0x0100 /* Udma transfer had crc error, don't try DMA */
     /*
      * Current setting of drive's PIO, DMA and UDMA modes.
      * Is initialised by the disks drivers at attach time, and may be
