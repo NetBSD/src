@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2005/03/20 02:43:50 thorpej Exp $	*/
+/*	$NetBSD: af_inet.h,v 1.1 2005/03/20 02:43:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,44 +29,17 @@
  * SUCH DAMAGE.
  */
 
-#define	RIDADDR 0  
-#define	ADDR    1
-#define	MASK    2
-#define	DSTADDR 3
+/* XXX */
+#include <netinet/in.h>
 
-struct afswtch {
-	const char *af_name;
-	short af_af;
-	void (*af_status)(int);
-	void (*af_getaddr)(const char *, int);
-	void (*af_getprefix)(const char *, int);
-	u_long af_difaddr;
-	u_long af_aifaddr;
-	u_long af_gifaddr;
-	void *af_ridreq;
-	void *af_addreq;
-};
+/* XXX */
+extern struct in_aliasreq in_addreq;
 
-extern const struct afswtch *afp;
-extern struct ifreq ifr;
-extern int s;
-extern int explicit_prefix;
-extern int clearaddr;
-extern int newaddr;
-extern char name[30];
+extern int setipdst;
 
-extern u_short flags;
-extern int lflag;
-extern int zflag;
-#ifdef INET6
-extern int Lflag;
-#endif /* INET6 */
+void	in_alias(struct ifreq *);
+void	in_status(int); 
+void	in_getaddr(const char *, int);
+void	in_getprefix(const char *, int);
 
-extern struct ifreq ifr, ridreq;
-extern struct ifaliasreq addreq;
-
-const struct afswtch *lookup_af_byname(const char *);
-const struct afswtch *lookup_af_bynum(int);
-const char *get_string(const char *, const char *, u_int8_t *, int *);
-void	print_string(const u_int8_t *, int);
-void    getsock(int);
+void	setifipdst(const char *, int d);
