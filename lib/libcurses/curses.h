@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.60 2001/10/08 10:45:13 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.61 2001/10/14 12:36:09 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -608,6 +608,7 @@ __END_DECLS
 #define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
 #define	getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
 #define	getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
+#define	getparyx(w, y, x)	(y) = getpary(w), (x) = getparx(w)
 
 /* Public function prototypes. */
 __BEGIN_DECLS
@@ -642,6 +643,8 @@ int	 getbegy(WINDOW *);
 int	 getbegx(WINDOW *);
 int	 getmaxy(WINDOW *);
 int	 getmaxx(WINDOW *);
+int	 getpary(WINDOW *);
+int	 getparx(WINDOW *);
 int	 gettmode(void);
 bool	 has_colors(void);
 bool	 has_ic(void);

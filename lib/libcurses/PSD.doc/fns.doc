@@ -527,6 +527,31 @@ until a newline or EOF is encountered.
 The newline stripped off the string.
 \*(Es
 .Ds
+.Fn getparx "WINDOW *win"
+.De
+Returns the x location of the given subwindow relative to the parent
+window.  If the window is not a subwindow then -1 is returned.
+.Ds
+.Fn getpary "WINDOW *win"
+.De
+Returns the y location of the given subwindow relative to the parent
+window.  If the window is not a subwindow then -1 is returned.
+.Ds
+.Fn getpary "WINDOW *win" "int y" "int x"
+Is a macro that sets the 
+.Vn y
+and
+.Vn x
+parameters to the respective coordinates of the top left hand corner
+of the subwindow relative to the parent window.  If the given window
+.Vn win
+is not a subwindow then both
+.Vn y
+and 
+.Vn x
+will be set to -1.
+.De
+.Ds
 .Fn gettmode ""
 .De
 Get the tty stats.
