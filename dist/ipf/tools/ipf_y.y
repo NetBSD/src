@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.5 2004/05/30 11:27:18 tron Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.6 2004/06/05 04:58:29 jmc Exp $	*/
 
 %{
 #include "ipf.h"
@@ -1945,6 +1945,7 @@ frentry_t *fr;
 	if (fr->fr_proto == 0 && f->fr_proto != 0)
 		fr->fr_proto = f->fr_proto;
 
-	if (((fr->fr_flx & FI_TCPUDP) == 0) && ((f->fr_flx & FI_TCPUDP) != 0))
+	if ((fr->fr_mproto == 0) && ((fr->fr_flx & FI_TCPUDP) == 0) &&
+	    ((f->fr_flx & FI_TCPUDP) != 0))
 		fr->fr_flx |= FI_TCPUDP;
 }
