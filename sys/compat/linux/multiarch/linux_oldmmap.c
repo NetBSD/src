@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.42 1998/07/02 23:26:58 thorpej Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.43 1998/07/07 00:40:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -551,7 +551,7 @@ linux_sys_mremap(p, v, retval)
 	 */
 	if (new_size < old_size) {
 		SCARG(&mua, addr) = (caddr_t)SCARG(uap, old_address) +
-		    SCARG(uap, new_size);
+		    new_size;
 		SCARG(&mua, len) = old_size - new_size;
 		error = sys_munmap(p, &mua, retval);
 		*retval = error ? 0 : (register_t)SCARG(uap, old_address);
