@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.2 2001/07/09 22:37:30 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.3 2001/07/13 01:42:51 nathanw Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct sadata *sd = p->p_sa;
 	struct sadata_upcall *s;
 
-	l->l_flag &= L_SA; /* XXX prevent recursive upcalls if we sleep for 
+	l->l_flag &= ~L_SA; /* XXX prevent recursive upcalls if we sleep for 
 			      memory */
 	s = pool_get(&saupcall_pool, PR_WAITOK);
 	l->l_flag |= L_SA;
@@ -252,10 +252,8 @@ sa_switch(struct lwp *l, int type)
 	LIST_REMOVE(l2, l_sibling);
 	/* XXX unlock */
 
-	PHOLD(l2);
 	cpu_setfunc(l2, sa_switchcall, l);
 	error = sa_upcall(l2, SA_UPCALL_BLOCKED, l, NULL, 0, 0);
-	PRELE(l2);
 	if (error) {
 		/* Put the lwp back */
 		/* XXX lock sadata */
@@ -271,8 +269,8 @@ sa_switch(struct lwp *l, int type)
 
 	SCHED_LOCK(s);
 	l2->l_priority = l2->l_usrpri;
-	l2->l_stat = LSRUN;
-	setrunqueue(l2);
+	setrunnable(l2);
+	PRELE(l2); /* Remove the artificial hold-count */
 	SCHED_UNLOCK(s);
 
 	KDASSERT(l2 != l);
@@ -313,6 +311,7 @@ sa_switch(struct lwp *l, int type)
 		p->p_nlwps--;
 		p->p_nrlwps--;
 		LIST_REMOVE(l2, l_sibling);
+		PHOLD(l2);
 		/* XXX lock sadata */
 		LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
 		sa->sa_ncached++;
@@ -360,7 +359,8 @@ sa_newcachelwp(struct lwp *l)
 		p->p_nlwps--;
 		l2->l_stat = LSSUSPENDED;
 		l2->l_flag |= (L_DETACHED | L_SA);
-		/* XXX lock sadata */
+		PHOLD(l2);
+		/* XXX lock sadata */	
 		LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
 		sa->sa_ncached++;
 		/* XXX unlock */
