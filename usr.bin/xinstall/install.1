@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.38 2003/08/07 11:17:50 agc Exp $
+.\"	$NetBSD: install.1,v 1.39 2003/12/29 02:01:27 simonb Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 21, 2002
+.Dd December 29, 2003
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -144,9 +144,8 @@
 .Ek
 .Ar directory ...\&
 .Sh DESCRIPTION
-The file(s) are moved (copied if the
-.Fl c
-option is specified, or linked if the
+The file(s) are copied 
+(or linked if the
 .Fl l
 option is specified) to the target file or directory.
 If the destination is a directory, then the
@@ -205,9 +204,8 @@ The counter used starts from 0, and the first available name resulting
 from the expansion is used.
 .It Fl c
 Copy the file.
-This flag turns off the default behavior of
-.Nm
-where it deletes the original file after creating the target.
+This is the default behavior; the flag is maintained for backwards
+compatibility only.
 .It Fl d
 Create directories.
 Missing parent directories are created as required.
