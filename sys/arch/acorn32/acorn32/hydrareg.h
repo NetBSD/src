@@ -1,4 +1,4 @@
-/*	$NetBSD: hydrareg.h,v 1.1 2002/09/30 23:22:05 bjh21 Exp $	*/
+/*	$NetBSD: hydrareg.h,v 1.2 2002/10/05 23:26:48 bjh21 Exp $	*/
 
 /*
  * This file is in the Public Domain
@@ -32,7 +32,7 @@
 #define HYDRA_FIQ_READBACK	1
 #define HYDRA_HARDWAREVER	2
 #define HYDRA_MMU_STATUS	6
-#define HYDRA_ID_STATUS		7 /* XXX doc says &1D, not &1C */
+#define HYDRA_ID_STATUS		7
 #define HYDRA_IRQ_STATUS	8
 #define HYDRA_IRQ_READBACK	9
 #define HYDRA_RST_STATUS	12
