@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.69 2003/10/21 08:12:46 petrov Exp $	*/
+/*	$NetBSD: iommu.c,v 1.70 2003/10/26 19:14:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.69 2003/10/21 08:12:46 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.70 2003/10/26 19:14:22 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -593,7 +593,7 @@ iommu_dvmamap_unload(t, sb, map)
 {
 	struct iommu_state *is = sb->sb_is;
 	int error, s;
-	bus_size_t sgsize;
+	bus_size_t sgsize = map->_dm_dvmasize;
 
 	/* Flush the iommu */
 #ifdef DEBUG
