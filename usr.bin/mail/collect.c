@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.24 2002/03/04 03:07:25 wiz Exp $	*/
+/*	$NetBSD: collect.c,v 1.25 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.24 2002/03/04 03:07:25 wiz Exp $");
+__RCSID("$NetBSD: collect.c,v 1.25 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,10 +91,10 @@ collect(struct header *hp, int printheaders)
 					   out of a long input line. */
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &escape;
-	(void) &eofcount;
-	(void) &getsub;
-	(void) &longline;
+	(void)&escape;
+	(void)&eofcount;
+	(void)&getsub;
+	(void)&longline;
 #endif
 
 	collf = NULL;
@@ -347,7 +347,7 @@ cont:
 					perror(tempEdit);
 					break;
 				}
-				(void) unlink(tempEdit);
+				(void)unlink(tempEdit);
 
 				if ((shellcmd = value("SHELL")) == NULL)
 					shellcmd = _PATH_CSHELL;
@@ -357,13 +357,13 @@ cont:
 				close(nullfd);
 
 				if (rc2 < 0) {
-					(void) Fclose(fbuf);
+					(void)Fclose(fbuf);
 					break;
 				}
 
 				if (fsize(fbuf) == 0) {
 					fprintf(stderr, "No bytes from command \"%s\"\n", cp+1);
-					(void) Fclose(fbuf);
+					(void)Fclose(fbuf);
 					break;
 				}
 
@@ -428,7 +428,7 @@ cont:
 				break;
 			}
 			while ((t = getc(fbuf)) != EOF)
-				(void) putchar(t);
+				(void)putchar(t);
 			Fclose(fbuf);
 			break;
 		case 'p':
@@ -440,7 +440,7 @@ cont:
 			printf("-------\nMessage contains:\n");
 			puthead(hp, stdout, GTO|GSUBJECT|GCC|GBCC|GNL);
 			while ((t = getc(collf)) != EOF)
-				(void) putchar(t);
+				(void)putchar(t);
 			goto cont;
 		case '|':
 			/*
@@ -514,7 +514,7 @@ exwrite(char name[], FILE *fp, int f)
 		cc++;
 		if (c == '\n')
 			lc++;
-		(void) putc(c, of);
+		(void)putc(c, of);
 		if (ferror(of)) {
 			perror(name);
 			Fclose(of);
@@ -542,7 +542,7 @@ mesedit(FILE *fp, int c)
 		collf = nf;
 		Fclose(fp);
 	}
-	(void) signal(SIGINT, sigint);
+	(void)signal(SIGINT, sigint);
 }
 
 /*
@@ -562,7 +562,7 @@ mespipe(FILE *fp, char cmd[])
 		perror(tempEdit);
 		goto out;
 	}
-	(void) unlink(tempEdit);
+	(void)unlink(tempEdit);
 	/*
 	 * stdin = current message.
 	 * stdout = new message.
@@ -571,22 +571,22 @@ mespipe(FILE *fp, char cmd[])
 		shellcmd = _PATH_CSHELL;
 	if (run_command(shellcmd,
 	    0, fileno(fp), fileno(nf), "-c", cmd, NULL) < 0) {
-		(void) Fclose(nf);
+		(void)Fclose(nf);
 		goto out;
 	}
 	if (fsize(nf) == 0) {
 		fprintf(stderr, "No bytes from \"%s\" !?\n", cmd);
-		(void) Fclose(nf);
+		(void)Fclose(nf);
 		goto out;
 	}
 	/*
 	 * Take new files.
 	 */
-	(void) fseek(nf, 0L, 2);
+	(void)fseek(nf, 0L, 2);
 	collf = nf;
-	(void) Fclose(fp);
+	(void)Fclose(fp);
 out:
-	(void) signal(SIGINT, sigint);
+	(void)signal(SIGINT, sigint);
 }
 
 /*
@@ -712,11 +712,11 @@ savedeadletter(FILE *fp)
 	cp = getdeadletter();
 	c = umask(077);
 	dbuf = Fopen(cp, "a");
-	(void) umask(c);
+	(void)umask(c);
 	if (dbuf == NULL)
 		return;
 	while ((c = getc(fp)) != EOF)
-		(void) putc(c, dbuf);
+		(void)putc(c, dbuf);
 	Fclose(dbuf);
 	rewind(fp);
 }

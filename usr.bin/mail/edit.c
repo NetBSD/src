@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.11 2002/03/04 03:07:25 wiz Exp $	*/
+/*	$NetBSD: edit.c,v 1.12 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: edit.c,v 1.11 2002/03/04 03:07:25 wiz Exp $");
+__RCSID("$NetBSD: edit.c,v 1.12 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ edit1(int *msgvec, int editortype)
 		fp = run_editor(setinput(mp), mp->m_size, editortype,
 				readonly);
 		if (fp != NULL) {
-			(void) fseek(otf, 0L, 2);
+			(void)fseek(otf, 0L, 2);
 			size = ftell(otf);
 			mp->m_block = blockof(size);
 			mp->m_offset = offsetof(size);
@@ -130,9 +130,9 @@ edit1(int *msgvec, int editortype)
 			}
 			if (ferror(otf))
 				perror("/tmp");
-			(void) Fclose(fp);
+			(void)Fclose(fp);
 		}
-		(void) signal(SIGINT, sigint);
+		(void)signal(SIGINT, sigint);
 	}
 	return 0;
 }
@@ -158,20 +158,20 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	}
 	if ((nf = Fdopen(t, "w")) == NULL) {
 		perror(tempEdit);
-		(void) unlink(tempEdit);
+		(void)unlink(tempEdit);
 		goto out;
 	}
 	if (size >= 0)
 		while (--size >= 0 && (t = getc(fp)) != EOF)
-			(void) putc(t, nf);
+			(void)putc(t, nf);
 	else
 		while ((t = getc(fp)) != EOF)
-			(void) putc(t, nf);
-	(void) fflush(nf);
+			(void)putc(t, nf);
+	(void)fflush(nf);
 	if (ferror(nf)) {
-		(void) Fclose(nf);
+		(void)Fclose(nf);
 		perror(tempEdit);
-		(void) unlink(tempEdit);
+		(void)unlink(tempEdit);
 		nf = NULL;
 		goto out;
 	}
@@ -181,7 +181,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 		modtime = statb.st_mtime;
 	if (Fclose(nf) < 0) {
 		perror(tempEdit);
-		(void) unlink(tempEdit);
+		(void)unlink(tempEdit);
 		nf = NULL;
 		goto out;
 	}
@@ -190,7 +190,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	         value(editortype == 'e' ? "EDITOR" : "VISUAL")) == NULL)
 		editcmd = editortype == 'e' ? _PATH_EX : _PATH_VI;
 	if (run_command(editcmd, 0, -1, -1, tempEdit, NULL, NULL) < 0) {
-		(void) unlink(tempEdit);
+		(void)unlink(tempEdit);
 		goto out;
 	}
 	/*
@@ -198,7 +198,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	 * temporary and return.
 	 */
 	if (readonlyflag) {
-		(void) unlink(tempEdit);
+		(void)unlink(tempEdit);
 		goto out;
 	}
 	if (stat(tempEdit, &statb) < 0) {
@@ -206,7 +206,7 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 		goto out;
 	}
 	if (modtime == statb.st_mtime) {
-		(void) unlink(tempEdit);
+		(void)unlink(tempEdit);
 		goto out;
 	}
 	/*
@@ -214,10 +214,10 @@ run_editor(FILE *fp, off_t size, int editortype, int readonlyflag)
 	 */
 	if ((nf = Fopen(tempEdit, "a+")) == NULL) {
 		perror(tempEdit);
-		(void) unlink(tempEdit);
+		(void)unlink(tempEdit);
 		goto out;
 	}
-	(void) unlink(tempEdit);
+	(void)unlink(tempEdit);
 out:
 	return nf;
 }

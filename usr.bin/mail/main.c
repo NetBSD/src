@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 2002/03/04 03:16:10 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.16 2002/03/05 21:18:15 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 2002/03/04 03:16:10 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 2002/03/05 21:18:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 	 * Figure out whether we are being run interactively,
 	 * start the SIGCHLD catcher, and so forth.
 	 */
-	(void) signal(SIGCHLD, sigchild);
+	(void)signal(SIGCHLD, sigchild);
 	if (isatty(0))
 		assign("interactive", "");
 	image = -1;
