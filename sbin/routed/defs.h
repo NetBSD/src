@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.18 1999/02/23 10:47:40 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.19 2001/01/15 13:19:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -115,11 +115,19 @@
 #define _HAVE_SIN_LEN
 #endif
 
-/* Turn on if IP_DROP_MEMBERSHIP and IP_ADD_MEMBERSHIP do not look at
- * the dstaddr of point-to-point interfaces.
+/* Turn on if IP_{ADD,DROP}_MEMBERSHIP and IP_MULTICAST_IF considers address
+ * within 0.0.0.0/8 as interface index.
  */
 #ifdef __NetBSD__
-#define MCAST_PPP_BUG
+#define MCAST_IFINDEX
+#endif
+
+/* Turn on if IP_DROP_MEMBERSHIP and IP_ADD_MEMBERSHIP do not look at
+ * the dstaddr of point-to-point interfaces.
+#undef MCAST_PPP_BUG
+ */
+#ifdef MCAST_IFINDEX
+#undef MCAST_PPP_BUG
 #endif
 
 #define DAY (24*60*60)

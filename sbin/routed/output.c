@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.18 2000/07/20 22:50:16 thorpej Exp $	*/
+/*	$NetBSD: output.c,v 1.19 2001/01/15 13:19:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)output.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.18 2000/07/20 22:50:16 thorpej Exp $");
+__RCSID("$NetBSD: output.c,v 1.19 2001/01/15 13:19:12 itojun Exp $");
 #endif
 
 #include "defs.h"
@@ -152,6 +152,10 @@ output(enum output_type type,
 		} else {
 			msg = "Send mcast";
 			if (rip_sock_mcast != ifp) {
+#ifdef MCAST_IFINDEX
+				/* specify ifindex */
+				tgt_mcast = htonl(ifp->int_index);
+#else
 #ifdef MCAST_PPP_BUG
 				/* Do not specify the primary interface
 				 * explicitly if we have the multicast
@@ -166,6 +170,7 @@ output(enum output_type type,
 				} else
 #endif
 				tgt_mcast = ifp->int_addr;
+#endif
 				if (0 > setsockopt(rip_sock,
 						   IPPROTO_IP, IP_MULTICAST_IF,
 						   &tgt_mcast,
