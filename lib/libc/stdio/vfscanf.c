@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.33 2003/01/18 11:29:59 thorpej Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.34 2003/05/27 14:32:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.33 2003/01/18 11:29:59 thorpej Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.34 2003/05/27 14:32:29 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,13 +95,14 @@ __weak_alias(vfscanf,__svfscanf)
  * SIGNOK, NDIGITS, PFXOK, and NZDIGITS are for integral.
  */
 #define	SIGNOK		0x0800	/* +/- is (still) legal */
-#define	NDIGITS		0x1000	/* no digits detected */
+#define	HAVESIGN	0x1000	/* sign detected */
+#define	NDIGITS		0x2000	/* no digits detected */
 
-#define	DPTOK		0x2000	/* (float) decimal point is still legal */
-#define	EXPOK		0x4000	/* (float) exponent (e+3, etc) still legal */
+#define	DPTOK		0x4000	/* (float) decimal point is still legal */
+#define	EXPOK		0x8000	/* (float) exponent (e+3, etc) still legal */
 
-#define	PFXOK		0x2000	/* 0x prefix is (still) legal */
-#define	NZDIGITS	0x4000	/* no zero digits detected */
+#define	PFXOK		0x4000	/* 0x prefix is (still) legal */
+#define	NZDIGITS	0x8000	/* no zero digits detected */
 
 /*
  * Conversion types.
@@ -559,13 +560,18 @@ literal:
 				case '+': case '-':
 					if (flags & SIGNOK) {
 						flags &= ~SIGNOK;
+						flags |= HAVESIGN;
 						goto ok;
 					}
 					break;
 
-				/* x ok iff flag still set & 2nd char */
+				/*
+				 * x ok iff flag still set and 2nd char (or
+				 * 3rd char if we have a sign).
+				 */
 				case 'x': case 'X':
-					if (flags & PFXOK && p == buf + 1) {
+					if (flags & PFXOK && p ==
+					    buf + 1 + !!(flags & HAVESIGN)) {
 						base = 16;	/* if %i */
 						flags &= ~PFXOK;
 						goto ok;
