@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.9 1993/06/27 05:54:40 andrew Exp $
+ *	$Id: trap.c,v 1.10 1993/07/08 04:01:13 cgd Exp $
  */
 
 /*
@@ -67,7 +67,6 @@
 
 struct	sysent sysent[];
 int	nsysent;
-int dostacklimits;
 unsigned rcr2();
 extern short cpl;
 
@@ -264,12 +263,8 @@ copyfault:
 		}
 #endif
 
-		/*
-		 * XXX: rude hack to make stack limits "work"
-		 */
 		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map
-			&& dostacklimits) {
+		if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
 			nss = clrnd(btoc((unsigned)vm->vm_maxsaddr
 				+ MAXSSIZ - (unsigned)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
