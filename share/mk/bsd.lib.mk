@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.202 2002/05/07 01:45:45 eeh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.203 2002/05/07 02:06:32 eeh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -122,7 +122,7 @@ FPICFLAGS ?= -fPIC
 CPICFLAGS ?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC -DBIGPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
-APICFLAGS ?= -KPIC -DBIGPIC
+APICFLAGS ?= -KPIC
 
 .else
 
