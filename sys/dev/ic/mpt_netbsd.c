@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.3 2003/04/16 23:16:41 thorpej Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.4 2003/04/16 23:17:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -919,11 +919,8 @@ mpt_run_xfer(mpt_softc_t *mpt, struct scsipi_xfer *xs)
 	/*
 	 * If we can't use interrupts, poll on completion.
 	 */
-	if (mpt_poll(mpt, xs, xs->timeout)) {
+	if (mpt_poll(mpt, xs, xs->timeout))
 		mpt_timeout(req);
-		if (mpt_poll(mpt, xs, xs->timeout))
-			mpt_timeout(req);
-	}
 }
 
 static void
