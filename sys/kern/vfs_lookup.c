@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.26 1998/03/01 02:22:35 fvdl Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.27 1998/06/25 21:17:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)vfs_lookup.c	8.10 (Berkeley) 5/27/95
  */
+
+#include "opt_ktrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
