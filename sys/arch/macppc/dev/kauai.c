@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.15 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: kauai.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.15 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.16 2004/08/20 06:39:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ kauai_attach(parent, self, aux)
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    WDC_REG_NPORTS);
 			printf("%s: couldn't subregion registers\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
+			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 			return;
 		}
 	}
@@ -176,24 +176,24 @@ kauai_attach(parent, self, aux)
 	}
 
 
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 5;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 	sc->sc_chanptr = chp;
-	sc->sc_wdcdev.channels = &sc->sc_chanptr;
-	sc->sc_wdcdev.nchannels = 1;
+	sc->sc_wdcdev.sc_atac.atac_channels = &sc->sc_chanptr;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = 1;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = kauai_dma_init;
 	sc->sc_wdcdev.dma_start = kauai_dma_start;
 	sc->sc_wdcdev.dma_finish = kauai_dma_finish;
-	sc->sc_wdcdev.set_modes = kauai_set_modes;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = kauai_set_modes;
 	sc->sc_calc_timing = calc_timing_kauai;
 	sc->sc_dmareg = (void *)dmabase;
 
 	chp->ch_channel = 0;
-	chp->ch_wdc = &sc->sc_wdcdev;
+	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
 	chp->ch_queue = &sc->sc_queue;
 
 	wdcattach(chp);
@@ -203,8 +203,8 @@ void
 kauai_set_modes(chp)
 	struct ata_channel *chp;
 {
-	struct kauai_softc *sc = (void *)chp->ch_wdc;
-	struct wdc_regs *wdr = chp->ch_wdc->regs;
+	struct kauai_softc *sc = (void *)chp->ch_atac;
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	struct ata_drive_datas *drvp0 = &chp->ch_drive[0];
 	struct ata_drive_datas *drvp1 = &chp->ch_drive[1];
 	struct ata_drive_datas *drvp;
@@ -291,7 +291,7 @@ kauai_dma_init(v, channel, drive, databuf, datalen, flags)
 	struct kauai_softc *sc = v;
 	dbdma_command_t *cmdp = sc->sc_dmacmd;
 	struct ata_channel *chp = &sc->sc_channel;
-	struct wdc_regs *wdr = chp->ch_wdc->regs;
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	vaddr_t va = (vaddr_t)databuf;
 	int read = flags & WDC_DMA_READ;
 	int cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;

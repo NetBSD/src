@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.5 2004/08/19 23:25:35 thorpej Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.6 2004/08/20 06:39:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.5 2004/08/19 23:25:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.6 2004/08/20 06:39:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,20 +114,20 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	aprint_normal("\n");
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap = WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	sc->sc_wdcdev.PIO_cap = 4;
-	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 2;
-	sc->sc_wdcdev.set_modes = geodeide_setup_channel;
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
+	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
+	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
+	sc->sc_wdcdev.sc_atac.atac_set_modes = geodeide_setup_channel;
+	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.sc_atac.atac_nchannels = PCIIDE_NUM_CHANNELS;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 
 	/*
 	 * Soekris Engineering Issue #0003:
@@ -146,7 +146,8 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
 		cp = &sc->pciide_channels[channel];
 		/* controller is compat-only */
 		if (pciide_chansetup(sc, channel, 0) == 0)

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.48 2004/08/14 15:08:04 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.49 2004/08/20 06:39:38 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.48 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.49 2004/08/20 06:39:38 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -538,7 +538,7 @@ ata_exec_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 void
 atastart(struct ata_channel *chp)
 {
-	struct wdc_softc *wdc = chp->ch_wdc;
+	struct atac_softc *atac = chp->ch_atac;
 	struct ata_xfer *xfer;
 
 #ifdef WDC_DIAGNOSTIC
@@ -571,8 +571,8 @@ atastart(struct ata_channel *chp)
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0)
 		panic("atastart: channel waiting for irq");
 #endif
-	if (wdc->claim_hw)
-		if (!(*wdc->claim_hw)(chp, 0))
+	if (atac->atac_claim_hw)
+		if (!(*atac->atac_claim_hw)(chp, 0))
 			return;
 
 	ATADEBUG_PRINT(("atastart: xfer %p channel %d drive %d\n", xfer,
@@ -584,7 +584,7 @@ atastart(struct ata_channel *chp)
 	chp->ch_queue->active_xfer = xfer;
 	TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
 	
-	if (wdc->cap & WDC_CAPABILITY_NOIRQ)
+	if (atac->atac_cap & ATAC_CAP_NOIRQ)
 		KASSERT(xfer->c_flags & C_POLL);
 	xfer->c_start(chp, xfer);
 }
@@ -608,11 +608,11 @@ ata_get_xfer(int flags)
 void
 ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 {
-	struct wdc_softc *wdc = chp->ch_wdc;
+	struct atac_softc *atac = chp->ch_atac;
 	int s;
 
-	if (wdc->free_hw)
-		(*wdc->free_hw)(chp);
+	if (atac->atac_free_hw)
+		(*atac->atac_free_hw)(chp);
 	s = splbio();
 	pool_put(&ata_xfer_pool, xfer);
 	splx(s);
@@ -655,14 +655,14 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 int
 ata_addref(struct ata_channel *chp)
 {
-	struct wdc_softc *wdc = chp->ch_wdc; 
-	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
+	struct atac_softc *atac = chp->ch_atac; 
+	struct scsipi_adapter *adapt = &atac->atac_atapi_adapter._generic;
 	int s, error = 0;
 
 	s = splbio();
 	if (adapt->adapt_refcnt++ == 0 &&
 	    adapt->adapt_enable != NULL) {
-		error = (*adapt->adapt_enable)(&wdc->sc_dev, 1);
+		error = (*adapt->adapt_enable)(&atac->atac_dev, 1);
 		if (error)
 			adapt->adapt_refcnt--;
 	}
@@ -673,21 +673,21 @@ ata_addref(struct ata_channel *chp)
 void
 ata_delref(struct ata_channel *chp)
 {
-	struct wdc_softc *wdc = chp->ch_wdc;
-	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
+	struct atac_softc *atac = chp->ch_atac;
+	struct scsipi_adapter *adapt = &atac->atac_atapi_adapter._generic;
 	int s;
 
 	s = splbio();
 	if (adapt->adapt_refcnt-- == 1 &&
 	    adapt->adapt_enable != NULL)
-		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
+		(void) (*adapt->adapt_enable)(&atac->atac_dev, 0);
 	splx(s);
 }
 
 void
 ata_print_modes(struct ata_channel *chp)
 {
-	struct wdc_softc *wdc = chp->ch_wdc;
+	struct atac_softc *atac = chp->ch_atac;
 	int drive;
 	struct ata_drive_datas *drvp;
 
@@ -697,7 +697,7 @@ ata_print_modes(struct ata_channel *chp)
 			continue;
 		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
 			drvp->drv_softc->dv_xname,
-			wdc->sc_dev.dv_xname,
+			atac->atac_dev.dv_xname,
 			chp->ch_channel, drive, drvp->PIO_mode);
 		if (drvp->drive_flags & DRIVE_DMA)
 			aprint_normal(", DMA mode %d", drvp->DMA_mode);
@@ -726,13 +726,13 @@ int
 ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
-	struct wdc_softc *wdc = chp->ch_wdc;
+	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
 	int cf_flags = drv_dev->dv_cfdata->cf_flags;
 
 	/* if drive or controller don't know its mode, we can't do much */
 	if ((drvp->drive_flags & DRIVE_MODE) == 0 ||
-	    (wdc->set_modes == NULL))
+	    (atac->atac_set_modes == NULL))
 		return 0;
 	/* current drive mode was set by a config flag, let it this way */
 	if ((cf_flags & ATA_CONFIG_PIO_SET) ||
@@ -760,7 +760,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	} else /* already using PIO, can't downgrade */
 		return 0;
 
-	wdc->set_modes(chp);
+	(*atac->atac_set_modes)(chp);
 	ata_print_modes(chp);
 	/* reset the channel, which will shedule all drives for setup */
 	wdc_reset_channel(chp, flags | AT_RST_NOCMD);
@@ -776,7 +776,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 {
 	struct ataparams params, params2;
 	struct ata_channel *chp = drvp->chnl_softc;
-	struct wdc_softc *wdc = chp->ch_wdc;
+	struct atac_softc *atac = chp->ch_atac;
 	struct device *drv_dev = drvp->drv_softc;
 	int i, printed;
 	char *sep = "";
@@ -786,8 +786,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		/* IDENTIFY failed. Can't tell more about the device */
 		return;
 	}
-	if ((wdc->cap & (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
-	    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) {
+	if ((atac->atac_cap & (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) ==
+	    (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) {
 		/*
 		 * Controller claims 16 and 32 bit transfers.
 		 * Re-do an IDENTIFY with 32-bit transfers,
@@ -845,7 +845,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			 * assume the defaults are good, so don't try
 			 * to set it
 			 */
-			if (wdc->set_modes)
+			if (atac->atac_set_modes)
 				/*
 				 * It's OK to pool here, it's fast enouth
 				 * to not bother waiting for interrupt
@@ -863,7 +863,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			 * If controller's driver can't set its PIO mode,
 			 * get the highter one for the drive.
 			 */
-			if (wdc->set_modes == NULL || wdc->PIO_cap >= i + 3) {
+			if (atac->atac_set_modes == NULL ||
+			    atac->atac_pio_cap >= i + 3) {
 				drvp->PIO_mode = i + 3;
 				drvp->PIO_cap = i + 3;
 				break;
@@ -881,8 +882,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
 				continue;
-			if ((wdc->cap & WDC_CAPABILITY_DMA) &&
-			    wdc->set_modes != NULL)
+			if ((atac->atac_cap & ATAC_CAP_DMA) &&
+			    atac->atac_set_modes != NULL)
 				if (ata_set_mode(drvp, 0x20 | i, AT_WAIT)
 				    != CMD_OK)
 					continue;
@@ -891,9 +892,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				sep = ",";
 				printed = 1;
 			}
-			if (wdc->cap & WDC_CAPABILITY_DMA) {
-				if (wdc->set_modes != NULL &&
-				    wdc->DMA_cap < i)
+			if (atac->atac_cap & ATAC_CAP_DMA) {
+				if (atac->atac_set_modes != NULL &&
+				    atac->atac_dma_cap < i)
 					continue;
 				drvp->DMA_mode = i;
 				drvp->DMA_cap = i;
@@ -907,8 +908,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				if ((params.atap_udmamode_supp & (1 << i))
 				    == 0)
 					continue;
-				if (wdc->set_modes != NULL &&
-				    (wdc->cap & WDC_CAPABILITY_UDMA))
+				if (atac->atac_set_modes != NULL &&
+				    (atac->atac_cap & ATAC_CAP_UDMA))
 					if (ata_set_mode(drvp, 0x40 | i,
 					    AT_WAIT) != CMD_OK)
 						continue;
@@ -926,9 +927,9 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					sep = ",";
 					printed = 1;
 				}
-				if (wdc->cap & WDC_CAPABILITY_UDMA) {
-					if (wdc->set_modes != NULL &&
-					    wdc->UDMA_cap < i)
+				if (atac->atac_cap & ATAC_CAP_UDMA) {
+					if (atac->atac_set_modes != NULL &&
+					    atac->atac_udma_cap < i)
 						continue;
 					drvp->UDMA_mode = i;
 					drvp->UDMA_cap = i;
@@ -942,10 +943,10 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 	drvp->drive_flags &= ~DRIVE_NOSTREAM;
 	if (drvp->drive_flags & DRIVE_ATAPI) {
-		if (wdc->cap & WDC_CAPABILITY_ATAPI_NOSTREAM)	
+		if (atac->atac_cap & ATAC_CAP_ATAPI_NOSTREAM)	
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	} else {
-		if (wdc->cap & WDC_CAPABILITY_ATA_NOSTREAM)	
+		if (atac->atac_cap & ATAC_CAP_ATA_NOSTREAM)	
 			drvp->drive_flags |= DRIVE_NOSTREAM;
 	}
 
@@ -962,7 +963,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		    (cf_flags & ATA_CONFIG_PIO_MODES) >> ATA_CONFIG_PIO_OFF;
 		drvp->drive_flags |= DRIVE_MODE;
 	}
-	if ((wdc->cap & WDC_CAPABILITY_DMA) == 0) {
+	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
 		/* don't care about DMA modes */
 		return;
 	}
@@ -976,7 +977,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			drvp->drive_flags |= DRIVE_DMA | DRIVE_MODE;
 		}
 	}
-	if ((wdc->cap & WDC_CAPABILITY_UDMA) == 0) {
+	if ((atac->atac_cap & ATAC_CAP_UDMA) == 0) {
 		/* don't care about UDMA modes */
 		return;
 	}
