@@ -25,3 +25,6 @@ would get a bad pointer reference and crash very early in kernels
 without DDB.
 
 [ mt(1) ] Don't attempt to set TCP_MAXSEG for remote mt.
+
+[ kernel/scsi ] In the sd driver, start a mode sense with a clean
+sense buffer.
