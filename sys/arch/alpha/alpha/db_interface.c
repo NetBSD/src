@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.13 2001/01/18 10:55:29 jdolecek Exp $ */
+/* $NetBSD: db_interface.c,v 1.14 2001/01/22 13:56:57 jdolecek Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2001/01/18 10:55:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2001/01/22 13:56:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -94,7 +94,7 @@ db_regs_t *ddb_regp;
 void	db_mach_cpu __P((db_expr_t, int, db_expr_t, char *));
 #endif
 
-struct db_command db_machine_cmds[] = {
+const struct db_command db_machine_command_table[] = {
 #if defined(MULTIPROCESSOR)
 	{ "cpu",	db_mach_cpu,	0,	0 },
 #endif
@@ -255,17 +255,6 @@ cpu_Debugger()
 {
 
 	__asm __volatile("call_pal 0x81");		/* bugchk */
-}
-
-/*
- * This is called before ddb_init() to install the
- * machine-specific command table.  (see machdep.c)
- */
-void
-db_machine_init()
-{
-
-	db_machine_commands_install(db_machine_cmds);
 }
 
 /*

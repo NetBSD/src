@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.15 2000/11/03 06:27:34 tsutsui Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.16 2001/01/22 13:56:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,29 +53,20 @@
 
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
+#include <ddb/db_interface.h>
 
 static void db_mach_abort   __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_halt    __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_reboot  __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_pagemap __P((db_expr_t, int, db_expr_t, char *));
 
-struct db_command db_machine_cmds[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "abort",	db_mach_abort,	0,	0 },
 	{ "halt",	db_mach_halt,	0,	0 },
 	{ "pgmap",	db_mach_pagemap, 	CS_SET_DOT, 0 },
 	{ "reboot",	db_mach_reboot,	0,	0 },
 	{ (char *)0, }
 };
-
-/*
- * This is called before ddb_init() to install the
- * machine-specific command table. (see machdep.c)
- */
-void
-db_machine_init()
-{
-	db_machine_commands_install(db_machine_cmds);
-}
 
 /*
  * Machine-specific ddb commands for the sun3:
