@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.4 1999/01/26 06:31:28 sakamoto Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.5 1999/02/01 23:40:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -120,6 +120,12 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/if_vrreg.h>
 #endif 
+
+#if defined(__NetBSD__) && defined(__alpha__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#undef vtophys
+#define	vtophys(va)	alpha_XXX_dmamap((vaddr_t)(va))
+#endif
 
 #define	VR_USEIOSPACE
 
@@ -2146,7 +2152,7 @@ vr_attach(parent, self, aux)
 	}
 
 	sc->vr_ldata = (struct vr_list_data *)sc->vr_ldata_ptr;
-	round = (unsigned int)sc->vr_ldata_ptr & 0xF;
+	round = (unsigned long)sc->vr_ldata_ptr & 0xF;
 	roundptr = sc->vr_ldata_ptr;
 	for (i = 0; i < 8; i++) {
 		if (round % 8) {
