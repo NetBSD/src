@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.7 2002/01/25 19:37:49 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8 2002/01/25 20:57:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_proc = NULL;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -165,6 +166,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load: error=%d\n", error);
@@ -213,6 +215,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = NULL;	/* always kernel */
 	}
 #ifdef DEBUG_DMA
 	printf("dmamap_load_mbuf: error=%d\n", error);
@@ -271,6 +274,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg + 1;
+		map->_dm_proc = p;
 	}
 	return (error);
 }
@@ -305,73 +309,133 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_proc = NULL;
 }
 
 /*
  * Common function for DMA map synchronization.  May be called
  * by bus-specific DMA map synchronization functions.
+ *
+ * This version works for the Virtually Indexed Virtually Tagged
+ * cache found on 32-bit ARM processors.
+ *
+ * XXX Should have separate versions for write-through vs.
+ * XXX write-back caches.  We currently assume write-back
+ * XXX here, which is not as efficient as it could be for
+ * XXX the write-through case.
  */
 void
 _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
-	int loop;
-	bus_addr_t vaddr;
-	bus_size_t length;
-	bus_dma_segment_t *seg;
+	bus_size_t minlen;
+	bus_addr_t addr;
+	int i;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_sync: t=%p map=%p offset=%lx len=%lx ops=%x\n",
 	    t, map, offset, len, ops);
 #endif	/* DEBUG_DMA */
 
-	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) {
-		/* Quick exit if length is zero */
-		if (len == 0)
-			return;
+	/*
+	 * Mixing of PRE and POST operations is not allowed.
+	 */
+	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+		panic("_bus_dmamap_sync: mix PRE and POST");
 
-		/* Find the segment pointed to by offset */
-		loop = map->dm_nsegs;
-		seg = &map->dm_segs[0];
-		while (offset >= seg->ds_len) {
-			offset -= seg->ds_len;
-			++seg;
-			/* Got any more segments ? */
-			--loop;
-			if (loop == 0)
-				return;
+#ifdef DIAGNOSTIC
+	if (offset >= map->dm_mapsize)
+		panic("_bus_dmamap_sync: bad offset %lu (map size is %lu)",
+		    offset, map->dm_mapsize);
+	if (len == 0 || (offset + len) > map->dm_mapsize)
+		panic("_bus_dmamap_sync: bad length");
+#endif
+
+	/*
+	 * For a virtually-indexed write-back cache, we need
+	 * to do the following things:
+	 *
+	 *	PREREAD -- Invalidate the D-cache.  We do this
+	 *	here in case a write-back is required by the back-end.
+	 *
+	 *	PREWRITE -- Write-back the D-cache.  Note that if
+	 *	we are doing a PREREAD|PREWRITE, we can collapse
+	 *	the whole thing into a single Wb-Inv.
+	 *
+	 *	POSTREAD -- Nothing.
+	 *
+	 *	POSTWRITE -- Nothing.
+	 */
+
+	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (ops == 0)
+		return;
+
+	/*
+	 * XXX Skip cache frobbing if mapping was COHERENT.
+	 */
+
+	/*
+	 * If the mapping is not the kernel's and also not the
+	 * current process's (XXX actually, vmspace), then we
+	 * don't have anything to do, since the cache is Wb-Inv'd
+	 * on context switch.
+	 *
+	 * XXX REVISIT WHEN WE DO FCSE!
+	 */
+	if (__predict_false(map->_dm_proc != NULL && map->_dm_proc != curproc))
+		return;
+
+	for (i = 0; i < map->dm_nsegs && len != 0; i++) {
+		/* Find beginning segment. */
+		if (offset >= map->dm_segs[i].ds_len) {
+			offset -= map->dm_segs[i].ds_len;
+			continue;
 		}
 
-		/* Set the starting address and maximum length */
-		vaddr = seg->_ds_vaddr + offset;
-		length = seg->ds_len - offset;
-		do {
-			/* Limit the length if not the whole segment */
-			if (len < length)
-				length = len;
+		/*
+		 * Now at the first segment to sync; nail
+		 * each segment until we have exhausted the
+		 * length.
+		 */
+		minlen = len < map->dm_segs[i].ds_len - offset ?
+		    len : map->dm_segs[i].ds_len - offset;
+
+		addr = map->dm_segs[i]._ds_vaddr;
+
 #ifdef DEBUG_DMA
-			printf("syncing: %lx,%lx\n", vaddr, length);
-#endif	/* DEBUG_DMA */
-			/* Actually sync the cache */
-			cpu_dcache_wbinv_range(vaddr, length);
+		printf("bus_dmamap_sync: flushing segment %d "
+		    "(0x%lx..0x%lx) ...", i, addr + offset,
+		    addr + offset + minlen - 1);
+#endif
 
-			/* Adjust the length */
-			len -= length;
+		switch (ops) {
+		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wbinv_range(addr + offset, minlen);
+			break;
 
-			/* sync complete ? */
-			if (len > 0) {
-				/* Got any more segments ? */
-				--loop;
-				if (loop == 0)
-					return;
-				++seg;
-				vaddr = seg->_ds_vaddr;
-				length = seg->ds_len;
-			}
-		} while (len > 0);
+		case BUS_DMASYNC_PREREAD:
+#if 1
+			cpu_dcache_wbinv_range(addr + offset, minlen);
+#else
+			cpu_dcache_inv_range(addr + offset, minlen);
+#endif
+			break;
 
-		cpu_drain_writebuf();
+		case BUS_DMASYNC_PREWRITE:
+			cpu_dcache_wb_range(addr + offset, minlen);
+			break;
+		}
+#ifdef DEBUG_DMA
+		printf("\n");
+#endif
+		offset = 0;
+		len -= minlen;
 	}
+
+	/* Drain the write buffer. */
+	cpu_drain_writebuf();
 }
 
 /*
