@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *
@@ -19,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.3 1993/09/29 08:28:18 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.4 1993/09/29 15:24:14 mycroft Exp $
  */
 
 #include "param.h"
@@ -62,7 +63,6 @@ struct lms_softc {		/* Driver status information */
 #define LMS_OPEN	0x01	/* Device is open */
 #define LMS_ASLP	0x02	/* Waiting for mouse data */
 	u_char	sc_status;	/* Mouse button status */
-	u_char	sc_button;	/* Previous mouse button status bits */
 	int	sc_x, sc_y;	/* accumulated motion in the X,Y axis */
 };
 
@@ -154,7 +154,6 @@ lmsopen(dev, flag)
 
 	sc->sc_state |= LMS_OPEN;
 	sc->sc_status = 0;
-	sc->sc_button = 0;
 	sc->sc_x = sc->sc_y = 0;
 	sc->sc_q.rb_count = sc->sc_q.rb_first = sc->sc_q.rb_last = 0;
 
@@ -325,13 +324,11 @@ lmsintr(arg)
 
 	outb(iobase + LMS_CNTRL, 0);
 
-	buttons = (~hi >> 5) & 7;
-	changed = buttons ^ sc->sc_button;
-	sc->sc_button = buttons;
-	sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) |
-			(changed << 3);
+	buttons = (~hi >> 5) & 0x07;
+	changed = ((buttons ^ sc->sc_status) & 0x07) << 3;
+	sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
 
-	if ((sc->sc_state & LMS_OPEN) && (dx || dy || changed)) {
+	if (dx || dy || changed) {
 		int	last = sc->sc_q.rb_last;
 		char	*cp = &sc->sc_q.rb_data[last];
 		int	count = sc->sc_q.rb_count;
