@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.10 1999/12/20 23:11:50 jwise Exp $	*/
+/*	$NetBSD: swap.c,v 1.11 2000/04/13 08:29:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Matthew R. Green.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.10 1999/12/20 23:11:50 jwise Exp $");
+__RCSID("$NetBSD: swap.c,v 1.11 2000/04/13 08:29:56 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,8 +47,7 @@ __RCSID("$NetBSD: swap.c,v 1.10 1999/12/20 23:11:50 jwise Exp $");
 #include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-
-#include <vm/vm_swap.h>
+#include <sys/swap.h>
 
 #include <stdio.h>
 #include <stdlib.h>
