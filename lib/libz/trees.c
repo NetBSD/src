@@ -1,4 +1,4 @@
-/*	$NetBSD: trees.c,v 1.2 1996/09/13 00:30:42 cgd Exp $	*/
+/*	$NetBSD: trees.c,v 1.3 1997/05/13 23:06:34 gwr Exp $	*/
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-1996 Jean-loup Gailly
@@ -30,6 +30,8 @@
  *          Algorithms, p290.
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
+
+/* from: Id: trees.c,v 1.11 1996/07/24 13:41:06 me Exp */
 
 #include "deflate.h"
 

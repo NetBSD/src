@@ -1,4 +1,4 @@
-/*	$NetBSD: minigzip.c,v 1.4 1997/01/23 14:03:29 mrg Exp $	*/
+/*	$NetBSD: minigzip.c,v 1.5 1997/05/13 23:06:33 gwr Exp $	*/
 
 /* minigzip.c -- simulate gzip using the zlib compression library
  * Copyright (C) 1995-1996 Jean-loup Gailly.
@@ -14,14 +14,14 @@
  * real thing. On MSDOS, use only on file names without extension
  * or in pipe mode.
  */
+  
+/* from: Id: minigzip.c,v 1.10 1996/07/24 13:41:04 me Exp */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "zlib.h"
-
-#define	OF(args) __P(args)
 
 #if defined(MSDOS) || defined(OS2) || defined(WIN32)
 #  include <fcntl.h>
