@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.19 2000/07/19 18:15:03 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.20 2000/07/26 21:50:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.19 2000/07/19 18:15:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.20 2000/07/26 21:50:48 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,8 +102,8 @@ struct asc_vsbus_softc {
 #define	ASC_MAXXFERSIZE		65536
 #define	ASC_FREQUENCY		25000000
 
-static int asc_vsbus_match __P((struct device *, struct cfdata *, void *));
-static void asc_vsbus_attach __P((struct device *, struct device *, void *));
+static int asc_vsbus_match(struct device *, struct cfdata *, void *);
+static void asc_vsbus_attach(struct device *, struct device *, void *);
 
 struct cfattach asc_vsbus_ca = {
 	sizeof(struct asc_vsbus_softc), asc_vsbus_match, asc_vsbus_attach
@@ -112,16 +112,16 @@ struct cfattach asc_vsbus_ca = {
 /*
  * Functions and the switch for the MI code
  */
-static u_char	asc_vsbus_read_reg __P((struct ncr53c9x_softc *, int));
-static void	asc_vsbus_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-static int	asc_vsbus_dma_isintr __P((struct ncr53c9x_softc *));
-static void	asc_vsbus_dma_reset __P((struct ncr53c9x_softc *));
-static int	asc_vsbus_dma_intr __P((struct ncr53c9x_softc *));
-static int	asc_vsbus_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-		    size_t *, int, size_t *));
-static void	asc_vsbus_dma_go __P((struct ncr53c9x_softc *));
-static void	asc_vsbus_dma_stop __P((struct ncr53c9x_softc *));
-static int	asc_vsbus_dma_isactive __P((struct ncr53c9x_softc *));
+static u_char	asc_vsbus_read_reg(struct ncr53c9x_softc *, int);
+static void	asc_vsbus_write_reg(struct ncr53c9x_softc *, int, u_char);
+static int	asc_vsbus_dma_isintr(struct ncr53c9x_softc *);
+static void	asc_vsbus_dma_reset(struct ncr53c9x_softc *);
+static int	asc_vsbus_dma_intr(struct ncr53c9x_softc *);
+static int	asc_vsbus_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+		    size_t *, int, size_t *);
+static void	asc_vsbus_dma_go(struct ncr53c9x_softc *);
+static void	asc_vsbus_dma_stop(struct ncr53c9x_softc *);
+static int	asc_vsbus_dma_isactive(struct ncr53c9x_softc *);
 
 static struct ncr53c9x_glue asc_vsbus_glue = {
 	asc_vsbus_read_reg,
