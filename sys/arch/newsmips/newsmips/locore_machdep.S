@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.11 2003/05/25 15:03:21 tsutsui Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.12 2003/06/09 12:20:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
 
 LEAF(to_monitor)
 	li	v0, MIPS_SR_BEV			# no interrupt and
-	mtc0	v0, MIPS_COP_0_STATUS_REG	# boot strap exception vector
+	mtc0	v0, MIPS_COP_0_STATUS		# boot strap exception vector
 	nop
 	nop
 	nop
