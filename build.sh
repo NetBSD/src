@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.92 2003/02/18 23:59:06 lukem Exp $
+#	$NetBSD: build.sh,v 1.93 2003/03/04 02:20:28 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -689,7 +689,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.92 2003/02/18 23:59:06 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.93 2003/03/04 02:20:28 lukem Exp $
 #
 
 EOF
@@ -802,6 +802,11 @@ main()
 {
 	initdefaults
 	parseoptions "$@"
+
+	build_start=$(date)
+	echo "===> ${progname} command: $0 $@"
+	echo "===> ${progname} started: $build_start"
+
 	rebuildmake
 	validatemakeparams
 	createmakewrapper
@@ -845,13 +850,9 @@ main()
 
 		esac
 	done
+
+	echo "===> ${progname} started: $build_start"
+	echo "===> ${progname} ended:   $(date)"
 }
 
-build_start=$(date)
-echo "===> ${progname} command: $0 $@"
-echo "===> ${progname} started: $build_start"
-
 main "$@"
-
-echo "===> ${progname} started: $build_start"
-echo "===> ${progname} ended:   $(date)"
