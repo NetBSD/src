@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1997/08/06 05:40:28 mikel Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1997/08/06 07:22:26 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.21 1997/08/06 05:40:28 mikel Exp $";
+__RCSID("$NetBSD: main.c,v 1.22 1997/08/06 07:22:26 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +88,6 @@ struct	utsname kerninfo;
 char	name[16];
 char	dev[] = _PATH_DEV;
 char	ttyn[32];
-char	*portselector();
-char	*ttyname();
 
 #define	OBUFSIZ		128
 #define	TABBUFSIZ	512
@@ -121,10 +120,15 @@ char partab[] = {
 #define	KILL	tmode.c_cc[VKILL]
 #define	EOT	tmode.c_cc[VEOF]
 
+static void	dingdong __P((int));
+static void	interrupt __P((int));
+void		timeoverrun __P((int));
+
 jmp_buf timeout;
 
 static void
-dingdong()
+dingdong(signo)
+	int signo;
 {
 
 	alarm(0);
@@ -135,7 +139,8 @@ dingdong()
 jmp_buf	intrupt;
 
 static void
-interrupt()
+interrupt(signo)
+	int signo;
 {
 
 	signal(SIGINT, interrupt);
@@ -154,6 +159,7 @@ timeoverrun(signo)
 	exit(1);
 }
 
+int		main __P((int, char **));
 static int	getname __P((void));
 static void	oflush __P((void));
 static void	prompt __P((void));
@@ -169,9 +175,12 @@ main(argc, argv)
 {
 	extern char **environ;
 	char *tname;
-	long allflags;
 	int repcnt = 0, failopenlogged = 0;
 	struct rlimit limit;
+
+#ifdef __GNUC__
+	(void)&tname;		/* XXX gcc -Wall */
+#endif
 
 	signal(SIGINT, SIG_IGN);
 /*
@@ -270,8 +279,6 @@ main(argc, argv)
 			exit(1);
 		}
 		if (AB) {
-			extern char *autobaud();
-
 			tname = autobaud();
 			continue;
 		}
@@ -415,7 +422,7 @@ getname()
 	*np = 0;
 	if (c == '\r')
 		crmod = 1;
-	if (upper && !lower && !LC || UC)
+	if ((upper && !lower && !LC) || UC)
 		for (np = name; *np; np++)
 			if (isupper(*np))
 				*np = tolower(*np);
