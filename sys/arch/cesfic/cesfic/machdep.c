@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2002/09/19 10:38:01 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2002/09/25 22:21:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +59,6 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

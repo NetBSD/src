@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.14 2002/02/25 14:58:07 ad Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.15 2002/09/25 22:21:39 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.14 2002/02/25 14:58:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.15 2002/09/25 22:21:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>

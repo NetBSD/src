@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.14 2002/06/02 14:44:40 drochner Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.15 2002/09/25 22:21:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

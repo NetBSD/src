@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2002/09/19 10:38:04 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2002/09/25 22:21:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -131,7 +131,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
