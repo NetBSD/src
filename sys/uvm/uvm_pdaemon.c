@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.14 1999/03/26 17:33:30 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.15 1999/03/30 10:12:01 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -301,7 +301,7 @@ uvm_pageout()
 		/*
 		 * done!    restart loop.
 		 */
-		if (uvmexp.free >= uvmexp.reserve_kernel ||
+		if (uvmexp.free > uvmexp.reserve_kernel ||
 		    uvmexp.paging == 0)
 			thread_wakeup(&uvmexp.free);
 	}
