@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.20 1999/07/01 08:12:48 itojun Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.21 2000/01/28 13:27:29 enami Exp $       */
 
 /*
  *
@@ -147,6 +147,10 @@ atm_output(ifp, m0, dst, rt0)
 		case AF_INET6:
 #endif
 #if defined(INET) || defined(INET6)
+			if (dst->sa_family == AF_INET)
+				etype = ETHERTYPE_IP;
+			else
+				etype = ETHERTYPE_IPV6;
 # ifdef ATM_PVCEXT
 			if (ifp->if_flags & IFF_POINTOPOINT) {
 				/* pvc subinterface */
@@ -162,10 +166,6 @@ atm_output(ifp, m0, dst, rt0)
 				/* XXX: put ATMARP stuff here */
 				/* XXX: watch who frees m on failure */
 			}
-			if (dst->sa_family == AF_INET)
-				etype = ETHERTYPE_IP;
-			else
-				etype = ETHERTYPE_IPV6;
 			break;
 #endif
 
