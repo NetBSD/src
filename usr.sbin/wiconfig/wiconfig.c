@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.25 2002/04/09 02:56:17 thorpej Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.26 2002/08/11 12:16:27 tron Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.25 2002/04/09 02:56:17 thorpej Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.26 2002/08/11 12:16:27 tron Exp $");
 #endif
 
 struct wi_table {
@@ -664,7 +664,7 @@ static struct wi_table wi_table[] = {
 static struct wi_table wi_crypt_table[] = {
 	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t",
 	    'e', "encryption" },
-	{ WI_RID_AUTH_CNTL, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t",
+	{ WI_RID_CNFAUTHMODE, WI_WORDS, "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t",
 	    'A', "authentication type" },
         { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
         { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
