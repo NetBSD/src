@@ -1,7 +1,7 @@
-/*	$NetBSD: ppb.c,v 1.16 1998/01/12 09:40:12 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.17 1998/03/04 06:31:46 cgd Exp $	*/
 
 /*
- * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,15 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * XXX NOTE:
- * XXX PROPER OPERATION OF DEVICES BEHIND PPB'S WHICH USE INTERRUPTS
- * XXX ON SYSTEMS OTHER THAN THE i386 IS NOT POSSIBLE AT THIS TIME.
- * XXX There needs to be some support for 'swizzling' the interrupt
- * XXX pin.  In general, pci_map_int() has to have a different
- * XXX interface.
- */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -46,7 +37,6 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -123,7 +113,7 @@ ppbattach(parent, self, aux)
 	/*
 	 * Attach the PCI bus than hangs off of it.
 	 */
-	pba.pba_busname = "pci";
+	pba.pba_busname = "pci";	/* XXX should be pci_ppb attachment */
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
