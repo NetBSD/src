@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.7 1999/10/21 21:16:07 erh Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.8 1999/10/22 10:47:37 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.7 1999/10/21 21:16:07 erh Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.8 1999/10/22 10:47:37 hannken Exp $");
 #endif
  
 #ifndef ELFSIZE
@@ -54,6 +54,12 @@ __RCSID("$NetBSD: exec_elf32.c,v 1.7 1999/10/21 21:16:07 erh Exp $");
     (defined(NLIST_ELF64) && (ELFSIZE == 64))
 
 #include <sys/exec_elf.h>
+
+#define CONCAT(x,y)     __CONCAT(x,y)
+#define ELFNAME(x)      CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define ELFNAME2(x,y)   CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define ELFNAMEEND(x)   CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define ELFDEFNNAME(x)  CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 struct listelem {
 	struct listelem *next;
