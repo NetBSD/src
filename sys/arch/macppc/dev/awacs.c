@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.2 2000/11/03 12:26:06 tsubai Exp $	*/
+/*	$NetBSD: awacs.c,v 1.3 2001/01/25 13:39:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -568,7 +568,23 @@ awacs_set_port(h, mc)
 
 	switch (mc->dev) {
 	case AWACS_OUTPUT_SELECT:
-		printf("output_select mask = 0x%x\n", mc->un.mask);
+		/* no change necessary? */
+		if (mc->un.mask == sc->sc_output_mask)
+			return 0;
+		switch(mc->un.mask) {
+		case 1<<0: /* speaker */
+			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
+			sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
+			awacs_write_codec(sc, sc->sc_codecctl1);
+			break;
+		case 1<<1: /* headphones */
+			sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+			awacs_write_codec(sc, sc->sc_codecctl1);
+			break;
+		default: /* XXX */
+			return -1;
+		}
 		sc->sc_output_mask = mc->un.mask;
 		return 0;
 
