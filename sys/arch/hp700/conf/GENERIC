@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.27 2004/07/15 03:53:46 atatat Exp $
+# $NetBSD: GENERIC,v 1.28 2004/07/25 21:52:56 jkunz Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.27 $"
+#ident 		"GENERIC-$Revision: 1.28 $"
 
 maxusers	32		# estimated number of users
 
@@ -210,18 +210,19 @@ mem*	at mainbus0		# /dev/*mem and memory controller
 # Basic Bus Support
 lasi*	at mainbus0		# LASI host adapter (LSI PN??? )
 asp0	at mainbus0		# this one comes w/ Viper and leds
-#wax*	at mainbus0		# Wax may host EISA as well
+wax*	at mainbus0		# Wax may host EISA as well
 mongoose* at mainbus0 irq 17	# EISA Bus Adapter (i82350 or TI??? )
 #vmeb*	at mainbus0 irq ?	# VME bus adapter
 #dino*	at mainbus0 irq ?	# PCI bus bridge
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 phantomas0	at mainbus0	# Phantom PseudoBC GSC+ Port
 lasi*	at phantomas0		# LASI on [ABCJ?]*
+wax*	at phantomas?		# Wax may host EISA as well
 
 # GSC bus support
 gsc*	at lasi?		# 712
 gsc*	at asp?			# 7xx (old)
-#gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
+gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
 
 # PCI bus support
 #pci*	at dino?
