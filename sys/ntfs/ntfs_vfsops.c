@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.13 1999/09/28 05:44:21 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.14 1999/09/29 15:36:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -58,7 +58,6 @@
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_vfsops.h>
 #include <ntfs/ntfs_ihash.h>
-#include <ntfs/ntfs_extern.h>
 #include <ntfs/ntfsmount.h>
 
 #if defined(__FreeBSD__)

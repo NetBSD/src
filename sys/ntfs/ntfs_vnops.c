@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.16 1999/09/22 14:39:53 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.17 1999/09/29 15:36:08 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,6 @@
 #include <ntfs/ntfs.h>
 #include <ntfs/ntfs_inode.h>
 #include <ntfs/ntfs_subr.h>
-#include <ntfs/ntfs_extern.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
 

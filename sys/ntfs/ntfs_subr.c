@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.14 1999/09/28 06:10:31 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.15 1999/09/29 15:36:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -51,7 +51,6 @@
 #include <ntfs/ntfsmount.h>
 #include <ntfs/ntfs_inode.h>
 #include <ntfs/ntfs_vfsops.h>
-#include <ntfs/ntfs_extern.h>
 #include <ntfs/ntfs_subr.h>
 #include <ntfs/ntfs_compr.h>
 #include <ntfs/ntfs_ihash.h>
