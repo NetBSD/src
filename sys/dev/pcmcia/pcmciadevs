@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.93.2.5 2001/04/04 15:45:40 he Exp $
+$NetBSD: pcmciadevs,v 1.93.2.6 2001/05/26 16:16:05 he Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,6 +185,7 @@ product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
 product SIMPLETECH SPECTRUM24 0x801 Symbol Spectrum24 WLAN Adapter
 
 /* Socket Communications Products */
+product SOCKET EA_ETHER		0x0000 Socket Communications EA
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
 product SOCKET DUAL_RS232	0x0006 Socket Communications Dual RS232
 product SOCKET LP_ETHER_CF	0x0075 Socket Communications LP-E CF
