@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.20 2003/03/03 23:49:18 fvdl Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.21 2003/03/16 13:34:24 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@
  * TODO:
  * - Digital Outputs
  * - (midi/mpu),joystick support
- * - Single source recording
  * - Multiple voices play (problem with /dev/audio architecture)
  * - Multiple sources recording (Pb with audio(4))
  * - Independant modification of each channel's parameters (via mixer ?)
@@ -57,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.20 2003/03/03 23:49:18 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.21 2003/03/16 13:34:24 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1524,10 +1523,6 @@ emuxki_voice_curaddr(struct emuxki_voice *voice)
 			voice->dataloc.chan[0]->loop.start);
 	else
 		/* returns number of bytes */
-		/*
-		 * XXX Linux driver suggests something special is needed
-		 * XXX when precision == 8.
-		 */
 		return (emuxki_read(voice->sc, 0,
 		    emuxki_recsrc_idxreg[voice->dataloc.source]) &
 		    EMU_RECIDX_MASK);
