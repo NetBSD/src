@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.26 2001/10/24 18:40:16 atatat Exp $
+.\"	$NetBSD: route.8,v 1.27 2001/11/16 12:08:49 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -207,7 +207,7 @@ The keyword
 can be used as the
 .Ar destination
 to set up a default route to a smart
-.Ar gateway.
+.Ar gateway .
 If no other routes match, this default route will be used as a last resort.
 .Pp
 If the destination is directly reachable
@@ -325,6 +325,13 @@ and
 .Dv RTM_CHANGE .
 As such, only the super-user may modify
 the routing tables.
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success, and >0 if an error occurs.  This includes
+the use of the
+.Cm get
+command to look up a route that is incomplete.
 .Sh EXAMPLES
 This sets the default route to 192.168.0.1:
 .Dl route add default 192.168.0.1
@@ -368,20 +375,12 @@ The attempted operation is privileged.
 Only root may modify the routing tables.
 These privileges are enforced by the kernel.
 .El
-.Pp
-.Sh EXIT STATUS
-The
-.Nm
-utility exits 0 on success, and >0 if an error occurs.  This includes
-the use of the
-.Cm get
-command to look up a route that is incomplete.
 .Sh SEE ALSO
-.Xr netintro 4 ,
-.Xr sysctl 8 ,
-.Xr route 4 ,
 .Xr esis 4 ,
-.Xr routed 8
+.Xr netintro 4 ,
+.Xr route 4 ,
+.Xr routed 8 ,
+.Xr sysctl 8
 .\" .Xr XNSrouted 8
 .Sh HISTORY
 The
