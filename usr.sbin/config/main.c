@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.91 2004/06/04 23:36:50 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.92 2004/06/04 23:41:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -628,8 +628,7 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 	struct nvlist *nv, *nextnv, *oldnv, *dep;
 	struct attr *a;
 	const char *name, *n;
-	char *p, c;
-	char low[500];
+	char buf[500];
 
 	if (fname != NULL && badfilename(fname)) {
 		return;
@@ -661,14 +660,9 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 			 * lower case name will be used as the option
 			 * file name.
 			 */
-			(void) strlcpy(low, "opt_", sizeof(low));
-			p = low + strlen(low);
-			for (n = nv->nv_name; (c = *n) != '\0'; n++)
-				*p++ = isupper(c) ? tolower(c) : c;
-			*p = '\0';
-			strlcat(low, ".h", sizeof(low));
-
-			name = intern(low);
+			(void) snprintf(buf, sizeof(buf), "opt_%s.h",
+			    strtolower(nv->nv_name));
+			name = intern(buf);
 		} else {
 			name = fname;
 		}
