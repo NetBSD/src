@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.29 2004/05/07 00:55:15 jonathan Exp $	*/
+/*	$NetBSD: netstat.h,v 1.30 2004/09/04 23:35:43 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,7 @@ void	udp_stats __P((u_long, char *));
 void	ip_stats __P((u_long, char *));
 void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
+void	pim_stats __P((u_long, char *));
 void	arp_stats __P((u_long, char *));
 #ifdef IPSEC
 /* run-time selector for which  implementation (KAME, FAST_IPSEC) to show */
