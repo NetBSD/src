@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.24 1996/05/01 16:58:41 mhitch Exp $	*/
+/*	$NetBSD: sbic.c,v 1.25 1996/05/12 02:26:10 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -558,13 +558,6 @@ sbic_scsidone(acb, stat)
 		return;
 	}
 #endif
-	/*
-	 * XXX Support old-style instrumentation for now.
-	 * IS THIS REALLY THE RIGHT PLACE FOR THIS?  --thorpej
-	 */
-	if (slp->device_softc &&
-	    ((struct device *)(slp->device_softc))->dv_unit < dk_ndrive)
-		++dk_xfer[((struct device *)(slp->device_softc))->dv_unit];
 	/*
 	 * is this right?
 	 */
