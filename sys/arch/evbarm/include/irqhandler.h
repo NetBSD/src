@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.2 2001/11/07 00:19:13 thorpej Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.3 2001/11/26 20:26:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -42,10 +42,6 @@
 
 #ifndef _ARM32_IRQHANDLER_H_
 #define _ARM32_IRQHANDLER_H_
-
-#ifdef NEWINTR
-#error irqhandler.h should not be included with NEWINTR
-#endif
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_cputypes.h"
