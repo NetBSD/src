@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_bmap.c,v 1.4 1994/07/19 14:14:08 mycroft Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.5 1994/12/13 22:33:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_bmap.c	8.3 (Berkeley) 1/23/94
+ *	@(#)cd9660_bmap.c	8.4 (Berkeley) 12/5/94
  */
 
 #include <sys/param.h>

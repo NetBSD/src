@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.18 1994/12/06 06:56:40 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.19 1994/12/13 22:33:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_vnops.c	8.3 (Berkeley) 1/23/94
+ *	@(#)cd9660_vnops.c	8.15 (Berkeley) 12/5/94
  */
 
 #include <sys/param.h>
@@ -1007,6 +1007,12 @@ cd9660_enotsupp()
 #define cd9660_setattr \
 	((int (*) __P((struct  vop_setattr_args *)))cd9660_enotsupp)
 #define cd9660_write ((int (*) __P((struct  vop_write_args *)))cd9660_enotsupp)
+#ifdef NFSSERVER
+int	lease_check __P((struct vop_lease_args *));
+#define	cd9660_lease_check lease_check
+#else
+#define	cd9660_lease_check ((int (*) __P((struct vop_lease_args *)))nullop)
+#endif
 #define cd9660_fsync ((int (*) __P((struct  vop_fsync_args *)))nullop)
 #define cd9660_remove \
 	((int (*) __P((struct  vop_remove_args *)))cd9660_enotsupp)
@@ -1048,6 +1054,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },	/* setattr */
 	{ &vop_read_desc, cd9660_read },	/* read */
 	{ &vop_write_desc, cd9660_write },	/* write */
+	{ &vop_lease_desc, cd9660_lease_check },/* lease */
 	{ &vop_ioctl_desc, cd9660_ioctl },	/* ioctl */
 	{ &vop_select_desc, cd9660_select },	/* select */
 	{ &vop_mmap_desc, cd9660_mmap },	/* mmap */
@@ -1099,6 +1106,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },	/* setattr */
 	{ &vop_read_desc, spec_read },		/* read */
 	{ &vop_write_desc, spec_write },	/* write */
+	{ &vop_lease_desc, spec_lease_check },	/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },	/* ioctl */
 	{ &vop_select_desc, spec_select },	/* select */
 	{ &vop_mmap_desc, spec_mmap },		/* mmap */
@@ -1148,6 +1156,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },	/* setattr */
 	{ &vop_read_desc, fifo_read },		/* read */
 	{ &vop_write_desc, fifo_write },	/* write */
+	{ &vop_lease_desc, fifo_lease_check },	/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },	/* ioctl */
 	{ &vop_select_desc, fifo_select },	/* select */
 	{ &vop_mmap_desc, fifo_mmap },		/* mmap */

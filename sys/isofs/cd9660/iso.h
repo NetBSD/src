@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.7 1994/09/19 09:09:59 mycroft Exp $	*/
+/*	$NetBSD: iso.h,v 1.8 1994/12/13 22:33:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)iso.h	8.2 (Berkeley) 1/23/94
+ *	@(#)iso.h	8.4 (Berkeley) 12/5/94
  */
 
 #define ISODCL(from, to) (to - from + 1)

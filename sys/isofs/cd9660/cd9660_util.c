@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.7 1994/09/19 09:09:54 mycroft Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.8 1994/12/13 22:33:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_util.c	8.1 (Berkeley) 1/21/94
+ *	@(#)cd9660_util.c	8.3 (Berkeley) 12/5/94
  */
 
 #include <sys/param.h>

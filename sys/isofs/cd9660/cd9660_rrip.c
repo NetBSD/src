@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.9 1994/10/29 07:58:38 cgd Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.10 1994/12/13 22:33:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cd9660_rrip.c	8.2 (Berkeley) 1/23/94
+ *	@(#)cd9660_rrip.c	8.6 (Berkeley) 12/5/94
  */
 
 #include <sys/param.h>
