@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.1 1999/12/10 11:04:08 itojun Exp $	*/
+/*	$NetBSD: dump.c,v 1.2 2000/02/25 09:19:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -31,7 +31,9 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/socket.h>
 
+#include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
 
