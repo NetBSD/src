@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.151 1999/10/17 09:44:48 ragge Exp $	*/
+/*	$NetBSD: sd.c,v 1.152 1999/10/30 16:35:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1205,9 +1205,6 @@ sddump(dev, blkno, va, size)
 	struct scsipi_xfer *xs;	/* ... convenience */
 	int	retval;
 
-	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return (ENODEV);
-
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
 		return (EFAULT);
@@ -1221,6 +1218,9 @@ sddump(dev, blkno, va, size)
 	/* Check for acceptable drive number. */
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
+
+	if ((sd->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	/* Make sure it was initialized. */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
