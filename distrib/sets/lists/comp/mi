@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.567 2003/05/13 15:49:26 thorpej Exp $
+#	$NetBSD: mi,v 1.568 2003/05/20 06:54:45 jdc Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -2616,12 +2616,18 @@
 ./usr/share/man/cat3/mpool_put.0	comp-c-catman
 ./usr/share/man/cat3/mpool_sync.0	comp-c-catman
 ./usr/share/man/cat3/mrand48.0	comp-c-catman
+./usr/share/man/cat3/mvaddch.0		comp-c-catman
+./usr/share/man/cat3/mvaddnstr.0	comp-c-catman
+./usr/share/man/cat3/mvaddstr.0		comp-c-catman
 ./usr/share/man/cat3/mvcur.0		comp-c-catman
 ./usr/share/man/cat3/mvderwin.0		comp-c-catman
 ./usr/share/man/cat3/mvgetnstr.0		comp-c-catman
 ./usr/share/man/cat3/mvgetstr.0		comp-c-catman
 ./usr/share/man/cat3/mvhline.0		comp-c-catman
 ./usr/share/man/cat3/mvvline.0		comp-c-catman
+./usr/share/man/cat3/mvwaddch.0		comp-c-catman
+./usr/share/man/cat3/mvwaddnstr.0	comp-c-catman
+./usr/share/man/cat3/mvwaddstr.0	comp-c-catman
 ./usr/share/man/cat3/mvwgetnstr.0		comp-c-catman
 ./usr/share/man/cat3/mvwgetstr.0		comp-c-catman
 ./usr/share/man/cat3/mvwhline.0		comp-c-catman
@@ -3171,6 +3177,7 @@
 ./usr/share/man/cat3/vwarn.0	comp-c-catman
 ./usr/share/man/cat3/vwarnx.0	comp-c-catman
 ./usr/share/man/cat3/waddch.0		comp-c-catman
+./usr/share/man/cat3/waddnstr.0		comp-c-catman
 ./usr/share/man/cat3/waddstr.0		comp-c-catman
 ./usr/share/man/cat3/warn.0	comp-c-catman
 ./usr/share/man/cat3/warnx.0	comp-c-catman
@@ -5743,12 +5750,18 @@
 ./usr/share/man/man3/mpool_put.3		comp-c-man
 ./usr/share/man/man3/mpool_sync.3		comp-c-man
 ./usr/share/man/man3/mrand48.3		comp-c-man
+./usr/share/man/man3/mvaddch.3		comp-c-man
+./usr/share/man/man3/mvaddnstr.3	comp-c-man
+./usr/share/man/cat3/mvaddstr.3		comp-c-man
 ./usr/share/man/man3/mvcur.3		comp-c-man
 ./usr/share/man/man3/mvderwin.3		comp-c-man
 ./usr/share/man/man3/mvgetnstr.3		comp-c-man
 ./usr/share/man/man3/mvgetstr.3		comp-c-man
 ./usr/share/man/man3/mvhline.3		comp-c-man
 ./usr/share/man/man3/mvvline.3		comp-c-man
+./usr/share/man/man3/mvwaddch.3		comp-c-man
+./usr/share/man/man3/mvwaddnstr.3	comp-c-man
+./usr/share/man/man3/mvwaddstr.3	comp-c-man
 ./usr/share/man/man3/mvwin.3		comp-c-man
 ./usr/share/man/man3/mvwgetnstr.3		comp-c-man
 ./usr/share/man/man3/mvwgetstr.3		comp-c-man
@@ -6298,6 +6311,7 @@
 ./usr/share/man/man3/vwarn.3		comp-c-man
 ./usr/share/man/man3/vwarnx.3		comp-c-man
 ./usr/share/man/man3/waddch.3		comp-c-man
+./usr/share/man/man3/waddnstr.3		comp-c-man
 ./usr/share/man/man3/waddstr.3		comp-c-man
 ./usr/share/man/man3/warn.3		comp-c-man
 ./usr/share/man/man3/warnx.3		comp-c-man
