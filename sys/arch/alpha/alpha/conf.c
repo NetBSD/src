@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.45 2000/02/22 21:12:03 tls Exp $ */
+/* $NetBSD: conf.c,v 1.46 2000/04/28 13:50:25 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.45 2000/02/22 21:12:03 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.46 2000/04/28 13:50:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ bdev_decl(raid);
 bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
+#include "ca.h"
+bdev_decl(ca);
 
 struct bdevsw	bdevsw[] =
 {
@@ -89,7 +91,8 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
-	bdev_disk_init(NRAID,raid),	/* 16 */
+	bdev_disk_init(NRAID,raid),	/* 16: RAIDframe disk driver */
+	bdev_disk_init(NCA,ca),		/* 17: Compaq array */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -322,7 +325,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
 	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
-	
+	cdev_disk_init(NCA,ca),		/* 59: Compaq array */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -422,6 +425,8 @@ static int chrtoblktbl[] = {
 	/* 55 */	NODEV,
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
+	/* 58 */	NODEV,
+	/* 59 */	17,
 };
 
 /*
