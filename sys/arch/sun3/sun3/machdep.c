@@ -1,4 +1,9 @@
-#include "control.h"
+#include "sys/systm.h"
+#include "sys/types.h"
+#include "sys/reboot.h"
+#include "sys/buf.h"
+#include "../include/control.h"
+#include "../include/mon.h"
 #include "../dev/idprom.h"
 
 
@@ -23,7 +28,7 @@ void cpu_startup()
 }
 
 
-consinit()
+void consinit()
 {
     mon_printf("determining console:");
     cninit();
@@ -39,12 +44,14 @@ void cpu_reset()
 
 int waittime = -1;
 
-boot(howto)
+void boot(howto)
      int howto;
 {
     if ((howto&RB_NOSYNC) == 0 && waittime < 0 && bfreelist[0].b_forw) {
 	struct buf *bp;
 	int iter, nbusy;
+	extern struct pcb proc0;
+
 	
 	waittime = 0;
 	(void) splnet();
@@ -74,7 +81,6 @@ boot(howto)
     }
     resettodr();
     splhigh();
-    devtype = major(rootdev);
     if (howto&RB_HALT) {
 	printf("\n");
 	printf("The operating system has halted.\n");

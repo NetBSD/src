@@ -38,8 +38,12 @@
 
 #include "../include/cpu.h"
 #include "../include/trap.h"
+#include "sys/types.h"
+#include "sys/cdefs.h"
+#include "sys/vm.h"
 #include "../include/pcb.h"
 #include "../include/psl.h"
+#include "../include/pte.h"
 #include "../include/control.h"
 #include "../include/param.h"
 #include "../include/memmap.h"
@@ -48,7 +52,7 @@
 main()
 {
     struct pcb *pcb = (struct pcb *) 0;
-    
+    struct vmmeter *vm = (struct vmmeter *)0;    
 				/* 68k isms */
     printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
     printf("#define\tFC_CONTROL %d\n",  FC_CONTROL);
@@ -58,7 +62,7 @@ main()
     printf("#define\tCONTEXT_REG %d\n", CONTEXT_REG);
     printf("#define\tCONTEXT_NUM %d\n", CONTEXT_NUM);
     printf("#define\tSEGMAP_BASE %d\n", SEGMAP_BASE);
-    printf("#define\tSEG_SIZE %d\n",    SEG_SIZE);
+    printf("#define\tNBSG %d\n",        NBSG);
 
 				/* sun3 memory map */
     printf("#define\tMAINMEM_MONMAP %d\n",    MAINMEM_MONMAP);
@@ -67,7 +71,19 @@ main()
 				/* errno-isms */
     printf("#define\tEFAULT %d\n",        EFAULT);
     printf("#define\tENAMETOOLONG %d\n",  ENAMETOOLONG);
-    printf("#define\tPC_ONFAULT %d\n", &pcb->pcb_onfault
+				/* unix structure-isms */
+    printf("#define\tPC_ONFAULT %d\n", &pcb->pcb_onfault);
+    printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
+				/* vm statistics */
+    printf("#define\tV_SWTCH %d\n", &vm->v_swtch);
+    printf("#define\tV_TRAP %d\n", &vm->v_trap);
+    printf("#define\tV_SYSCALL %d\n", &vm->v_syscall);
+    printf("#define\tV_INTR %d\n", &vm->v_intr);
+    printf("#define\tV_SOFT %d\n", &vm->v_soft);
+    printf("#define\tV_PDMA %d\n", &vm->v_pdma);
+    printf("#define\tV_FAULTS %d\n", &vm->v_faults);
+    printf("#define\tV_PGREC %d\n", &vm->v_pgrec);
+    printf("#define\tV_FASTPGREC %d\n", &vm->v_fastpgrec);
 
     exit(0);
 }
