@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.79 2001/05/31 18:46:09 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.80 2001/06/10 16:45:52 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -353,11 +353,27 @@ Lsavmaxmem:
 Linit1x2:
 	/* MVME-162 - 68040 CPU/MMU/FPU */
 	/* MVME-172 - 68060 CPU/MMU/FPU */
+
+	/*
+	 * Verify the user has removed the GPIO#0 jumper...
+	 */
+	btst	#0,0xfff4202d		| Clear == jumper installed
+	jne	1f			| Ok.
+
+	movl	#Le1x2jump,%sp@-
+	movl	#L1x2jump,%sp@-
+	CALLBUG(MVMEPROM_OUTSTRCRLF)
+	addql	#8,%sp			| clean up stack after call
+
+	CALLBUG(MVMEPROM_EXIT)
+	/* NOTREACHED */
+
+1:
 	/*
 	 * Determine if this board has a VMEchip2
 	 */
 	btst	#1,0xfff4202e		| VMEchip2 presence detect
-	jne	1f			| Jump if it doesn't exist.
+	jne	2f			| Jump if it doesn't exist.
 
 	/*
 	 * Disable all interrupts from VMEchip2. This is especially
@@ -369,7 +385,7 @@ Linit1x2:
 	movl	0xfff40088,%d0
 	andl	#0xff7fffff,%d0		| Clear 'MIEN'
 	movl	%d0,0xfff40088
-1:
+2:
 	/*
 	 * Determine how much onboard memory is installed
 	 */
@@ -394,6 +410,14 @@ ASLOCAL(Ldramsize1x2)
 	.long	0x00800000
 	.long	0x00000000
 	.long	0x01000000
+
+L1x2jump:
+	.ascii	"You must remove the jumper from pins 15-16 of J22 (mvme162)"
+	.ascii	"or pins 1-2\015\012"
+	.ascii	"J11 (mvme162-LX) first! See NetBSD/mvme68k FAQ for details."
+Le1x2jump:
+	.even
+
 	.text
 #endif
 
@@ -402,6 +426,22 @@ Linit1x7:
 	/* MVME-167 - 68040 CPU/MMU/FPU */
 	/* MVME-177 - 68060 CPU/MMU/FPU */
 
+	/*
+	 * Verify the user has removed the GPIO#0 jumper...
+	 */
+	moveq	#1,%d0
+	andl	0xfff40088,%d0		| Clear == jumper installed
+	jne	1f			| Ok.
+
+	movl	#Le1x7jump,%sp@-
+	movl	#L1x7jump,%sp@-
+	CALLBUG(MVMEPROM_OUTSTRCRLF)
+	addql	#8,%sp			| clean up stack after call
+
+	CALLBUG(MVMEPROM_EXIT)
+	/* NOTREACHED */
+
+1:
 	/*
 	 * Disable all interrupts from VMEchip2. This is especially
 	 * useful when the kernel doesn't have the VMEchip2 driver
@@ -412,6 +452,15 @@ Linit1x7:
 	movl	0xfff40088,%d0
 	andl	#0xff7fffff,%d0		| Clear 'MIEN'
 	movl	%d0,0xfff40088
+
+	.data
+	.even
+L1x7jump:
+	.ascii	"You must remove the jumper from pins 1-2 of J1!\015\012"
+	.ascii	"See NetBSD/mvme68k FAQ for details."
+Le1x7jump:
+	.even
+
 #endif
 
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
