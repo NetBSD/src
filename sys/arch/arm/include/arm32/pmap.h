@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 2002/03/25 02:44:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.39 2002/03/25 02:51:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -153,19 +153,18 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 /*
  * Functions that we need to export
  */
-extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
-extern void pmap_procwr __P((struct proc *, vaddr_t, int));
+vaddr_t	pmap_map(vaddr_t, vaddr_t, vaddr_t, int);
+void	pmap_procwr(struct proc *, vaddr_t, int);
+
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
-/*
- * Functions we use internally
- */
-void pmap_bootstrap __P((pd_entry_t *, pv_addr_t));
-void pmap_debug	__P((int));
-int pmap_handled_emulation __P((struct pmap *, vaddr_t));
-int pmap_modified_emulation __P((struct pmap *, vaddr_t));
-void pmap_postinit __P((void));
+/* Functions we use internally. */
+void	pmap_bootstrap(pd_entry_t *, pv_addr_t);
+void	pmap_debug(int);
+int	pmap_handled_emulation(struct pmap *, vaddr_t);
+int	pmap_modified_emulation(struct pmap *, vaddr_t);
+void	pmap_postinit(void);
 
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
@@ -190,12 +189,11 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 /* Virtual address to page table entry */
 #define vtopte(va) \
-	((pt_entry_t *)(PTE_BASE + \
-	(arm_btop((unsigned int)(va)) << 2)))
+	(((pt_entry_t *)PTE_BASE) + arm_btop((vaddr_t) (va)))
 
 /* Virtual address to physical address */
 #define vtophys(va) \
-	((*vtopte(va) & PG_FRAME) | ((unsigned int)(va) & ~PG_FRAME))
+	((*vtopte(va) & PG_FRAME) | ((vaddr_t) (va) & ~PG_FRAME))
 
 #define	l1pte_valid(pde)	((pde) != 0)
 #define	l1pte_section_p(pde)	(((pde) & L1_MASK) == L1_SECTION)
