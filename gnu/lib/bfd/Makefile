@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/17 20:01:26 gwr Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/17 20:51:25 gwr Exp $
 
 LIB=	bfd
 
@@ -51,29 +51,26 @@ SRCS = $(BFD_SRCS) $(OPCODE_SRCS) $(IBERTY_SRCS)
 OBJS = misc.o
 .include <bsd.lib.mk>
 
+CC_o=	$(CC) $(CFLAGS) $(CPPFLAGS)
+CC_so=	$(CC) $(CFLAGS) $(CPPFLAGS) $(CPICFLAGS)
 
 # Add $(ARCH_DEFS) when compiling these...
 archures.o: $(dist)/bfd/archures.c
-	$(CC) $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
-
+	$(CC_o)  $(ARCH_DEFS) -c $(.IMPSRC)
 archures.so: $(dist)/bfd/archures.c
-	$(CC) -o $@ $(CPICFLAGS) \
-	    $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
+	$(CC_so) $(ARCH_DEFS) -c $(.IMPSRC) -o $@
 
+# Add $(ARCH_DEFS) when compiling these...
 disassemble.o: $(dist)/opcodes/disassemble.c
-	$(CC) $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
-
+	$(CC_o)  $(ARCH_DEFS) -c $(.IMPSRC)
 disassemble.so: $(dist)/opcodes/disassemble.c
-	$(CC) -o $@ $(CPICFLAGS) \
-	    $(CFLAGS) $(ARCH_DEFS) -c $(.IMPSRC)
+	$(CC_so) $(ARCH_DEFS) -c $(.IMPSRC) -o $@
 
 # Add $(TDEFAULTS) when compiling these...
 targets.o: $(dist)/bfd/targets.c
-	$(CC) $(CFLAGS) $(TDEFAULTS) -c $(.IMPSRC)
-
+	$(CC_o)  $(TDEFAULTS) -c $(.IMPSRC)
 targets.so: $(dist)/bfd/targets.c
-	$(CC) -o $@ $(CPICFLAGS) \
-	    $(CFLAGS) $(TDEFAULTS) -c $(.IMPSRC)
+	$(CC_so) $(TDEFAULTS) -c $(.IMPSRC) -o $@
 
 # Avoid the unwanted .c.a default rule
 .NOPATH: libbfd.a libbfd.o libbfd.so
@@ -82,11 +79,9 @@ targets.so: $(dist)/bfd/targets.c
 # nm: .../bfd/libbfd.c: not object file or archive
 
 misc.o: $(dist)/bfd/libbfd.c
-	$(CC) -o $@ $(CFLAGS) \
-	    -c $(dist)/bfd/libbfd.c
+	$(CC_o)  -c $(dist)/bfd/libbfd.c -o $@
 misc.so: $(dist)/bfd/libbfd.c
-	$(CC) -o $@ $(CPICFLAGS) $(CFLAGS) \
-	    -c $(dist)/bfd/libbfd.c
+	$(CC_so) -c $(dist)/bfd/libbfd.c -o $@
 
 # Icky generated header files...
 CLEANFILES+= elf32-target.h elf64-target.h
