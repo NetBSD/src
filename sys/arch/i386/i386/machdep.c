@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.119 1994/09/05 01:08:51 mycroft Exp $
+ *	$Id: machdep.c,v 1.120 1994/09/07 20:32:45 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -1411,7 +1411,7 @@ pmap_next_page(addrp)
 	return TRUE;
 }
 
-unsigned int
+u_int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
