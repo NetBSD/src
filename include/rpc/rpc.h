@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.7 1997/08/24 01:47:12 lukem Exp $	*/
+/*	$NetBSD: rpc.h,v 1.8 1997/08/25 22:20:31 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -71,7 +71,6 @@
 /* Portmapper client, server, and protocol headers */
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
-#include <rpc/pmap_rmt.h>
 
 /*
  * COMMENT OUT THE NEXT INCLUDE (or add to the #ifndef) IF RUNNING ON
