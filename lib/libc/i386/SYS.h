@@ -34,11 +34,31 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.5 1993/08/01 18:40:06 mycroft Exp $
+ *	$Id: SYS.h,v 1.6 1993/09/28 21:04:01 pk Exp $
  */
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
+
+#ifdef PIC
+#define PIC_PROLOGUE	\
+	pushl	%ebx;	\
+	call	1f;	\
+1:			\
+	popl	%ebx;	\
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx
+#define PIC_EPILOGUE	\
+	popl	%ebx
+#define PIC_PLT(x)	x@PLT
+#define PIC_GOT(x)	x@GOT(%ebx)
+#define PIC_GOTOFF(x)	x@GOTOFF(%ebx)
+#else
+#define PIC_PROLOGUE
+#define PIC_EPILOGUE
+#define PIC_PLT(x)	x
+#define PIC_GOT(x)	x
+#define PIC_GOTOFF(x)	x
+#endif
 
 #define	SYSCALL(x)	2: jmp cerror; ENTRY(x); lea SYS_/**/x,%eax; LCALL(7,0); jb 2b
 #define	RSYSCALL(x)	SYSCALL(x); ret
