@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_uba.c	7.16 (Berkeley) 12/16/90
- *	$Id: if_uba.c,v 1.1 1994/08/02 20:19:49 ragge Exp $
+ *	$Id: if_uba.c,v 1.2 1994/10/08 15:42:57 ragge Exp $
  */
 
 #include "sys/param.h"
@@ -191,6 +191,7 @@ if_ubaget(ifu, ifr, totlen, off, ifp)
 	register int len;
 	caddr_t epkt = cp + totlen;
 
+printf("I if_ubaget\n");
 	top = 0;
 	mp = &top;
 	/*
@@ -242,14 +243,16 @@ if_ubaget(ifu, ifr, totlen, off, ifp)
 			cpte = kvtopte(cp);
 			ppte = kvtopte(pp);
 			x = vax_btop(cp - ifr->ifrw_addr);
+printf("if_ubaget: pp %x, cp %x, cpte %x, ppte %x, x\n",
+	pp,cp,cpte,ppte,x);
 			ip = (int *)&ifr->ifrw_mr[x];
 			for (i = 0; i < MCLBYTES/NBPG; i++) {
 				struct pte t;
 				t = *ppte; *ppte++ = *cpte; *cpte = t;
 				*ip++ = cpte++->pg_pfn|ifr->ifrw_proto;
-				mtpr(PR_TBIS, cp);
+				mtpr(cp,PR_TBIS);
 				cp += NBPG;
-				mtpr(PR_TBIS, (caddr_t)pp);
+				mtpr((caddr_t)pp,PR_TBIS);
 				pp += NBPG;
 			}
 			goto nocopy;
