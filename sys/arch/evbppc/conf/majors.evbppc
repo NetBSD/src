@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.3 2003/03/11 10:57:55 hannken Exp $
+#	$NetBSD: majors.evbppc,v 1.4 2003/03/13 14:56:56 hannken Exp $
 #
 # Device majors for evbppc
 #
@@ -59,3 +59,4 @@ device-major	wsdisplay	char 65			wsdisplay
 device-major	wskbd		char 66			wskbd
 device-major	wsmouse		char 67			wsmouse
 device-major	wsmux		char 68			wsmux
+device-major	wsfont		char 69			wsmux
