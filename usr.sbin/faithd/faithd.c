@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.10.2.1 2000/06/29 07:08:05 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.10.2.2 2000/07/07 11:33:34 itojun Exp $	*/
 /*	$KAME: faithd.c,v 1.19 2000/06/29 01:17:29 itojun Exp $	*/
 
 /*
@@ -303,7 +303,7 @@ play_service(int s_wld)
 	 * Wait, accept, fork, faith....
 	 */
 again:
-	setproctitle(procname);
+	setproctitle("%s", procname);
 
 	FD_ZERO(&rfds);
 	FD_SET(s_wld, &rfds);
