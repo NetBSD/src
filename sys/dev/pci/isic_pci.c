@@ -30,10 +30,10 @@
  *
  *---------------------------------------------------------------------------
  *
- *	pci_isic.c - pcmcia bus frontend for i4b_isic driver
- *	-------------------------------------------------------
+ *	isic_pci.c - pcmcia bus frontend for i4b_isic driver
+ *	----------------------------------------------------
  *
- *	$Id: pci_isic.c,v 1.3 2001/01/11 22:46:40 martin Exp $ 
+ *	$Id: isic_pci.c,v 1.1 2001/02/18 09:37:20 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
@@ -80,20 +80,20 @@
 
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_l1l2.h>
-#include <dev/pci/pci_isic.h>
+#include <dev/pci/isic_pci.h>
 
 #include "opt_isicpci.h"
 
-static int pci_isic_match __P((struct device *, struct cfdata *, void *));
-static void pci_isic_attach __P((struct device *, struct device *, void *));
+static int isic_pci_match __P((struct device *, struct cfdata *, void *));
+static void isic_pci_attach __P((struct device *, struct device *, void *));
 static const struct isic_pci_product * find_matching_card __P((struct pci_attach_args *pa));
 
 #ifdef ISICPCI_ELSA_QS1PCI
-static void isic_pciattach __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
+static void isic_pci_isdn_attach __P((struct pci_l1_softc *psc, struct pci_attach_args *pa));
 #endif
 
-struct cfattach pci_isic_ca = {
-	sizeof(struct pci_l1_softc), pci_isic_match, pci_isic_attach
+struct cfattach isic_pci_ca = {
+	sizeof(struct pci_l1_softc), isic_pci_match, isic_pci_attach
 };
 
 
@@ -114,7 +114,7 @@ static const struct isic_pci_product {
 	  CARD_TYPEP_ELSAQS1PCI,
 	  "ELSA QuickStep 1000pro/PCI",
 	  isic_attach_Eqs1pp,	/* card specific initialization */
-	  isic_pciattach	/* generic setup for ISAC/HSCX or IPAC boards */
+	  isic_pci_isdn_attach	/* generic setup for ISAC/HSCX or IPAC boards */
 	 },
 #endif
 
@@ -151,7 +151,7 @@ static const struct isic_pci_product * find_matching_card(pa)
  * Match card
  */
 static int
-pci_isic_match(parent, match, aux)
+isic_pci_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -168,7 +168,7 @@ pci_isic_match(parent, match, aux)
  * Attach the card
  */
 static void
-pci_isic_attach(parent, self, aux)
+isic_pci_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
@@ -201,7 +201,7 @@ pci_isic_attach(parent, self, aux)
  *---------------------------------------------------------------------------*/
 #ifdef ISICPCI_ELSA_QS1PCI
 static void
-isic_pciattach(psc, pa)
+isic_pci_isdn_attach(psc, pa)
 	struct pci_l1_softc *psc;
 	struct pci_attach_args *pa;
 {
