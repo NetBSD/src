@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent_r.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: getpwent_r.c,v 1.1.1.2 2002/06/20 10:30:27 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: getpwent_r.c,v 8.3 1999/01/08 19:24:33 vixie Exp";
+static const char rcsid[] = "Id: getpwent_r.c,v 8.6 2001/11/01 08:02:15 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <port_before.h>
@@ -29,7 +29,19 @@ static const char rcsid[] = "Id: getpwent_r.c,v 8.3 1999/01/08 19:24:33 vixie Ex
 #include <string.h>
 #include <stdio.h>
 #include <sys/types.h>
+#if (defined(POSIX_GETPWNAM_R) || defined(POSIX_GETPWUID_R))
+#if defined(_POSIX_PTHREAD_SEMANTICS)
+	/* turn off solaris remapping in <grp.h> */
+#undef _POSIX_PTHREAD_SEMANTICS
 #include <pwd.h>
+#define _POSIX_PTHREAD_SEMANTICS 1
+#else
+#define _UNIX95 1
+#include <pwd.h>
+#endif
+#else
+#include <pwd.h>
+#endif
 #include <port_after.h>
 
 #ifdef PASS_R_RETURN
@@ -52,7 +64,7 @@ getpwnam_r(const char *login,  struct passwd *pwptr,
 
 	if (pw == NULL) {
 		*result = NULL;
-		return (-1);
+		return (0);
 	}
 
 	res = copy_passwd(pw, pwptr, buf, buflen);
@@ -89,7 +101,7 @@ getpwuid_r(uid_t uid, struct passwd *pwptr,
 
 	if (pw == NULL) {
 		*result = NULL;
-		return (-1);
+		return (0);
 	}
 
 	res = copy_passwd(pw, pwptr, buf, buflen);
@@ -144,7 +156,12 @@ setpassent_r(int stayopen)
 }
 
 PASS_R_SET_RETURN
-setpwent_r(PASS_R_ENT_ARGS) {
+#ifdef PASS_R_ENT_ARGS
+setpwent_r(PASS_R_ENT_ARGS)
+#else
+setpwent_r(void)
+#endif
+{
 
 	setpwent();
 #ifdef PASS_R_SET_RESULT
@@ -153,7 +170,12 @@ setpwent_r(PASS_R_ENT_ARGS) {
 }
 
 PASS_R_END_RETURN
-endpwent_r(PASS_R_ENT_ARGS) {
+#ifdef PASS_R_ENT_ARGS
+endpwent_r(PASS_R_ENT_ARGS)
+#else
+endpwent_r(void)
+#endif
+{
 
 	endpwent();
 	PASS_R_END_RESULT(PASS_R_OK);
@@ -179,8 +201,8 @@ fgetpwent_r(FILE *f, struct passwd *pwptr, PASS_R_COPY_ARGS) {
 static int
 copy_passwd(struct passwd *pw, struct passwd *pwptr, char *buf, int buflen) {
 	char *cp;
-	int i, n;
-	int numptr, len;
+	int n;
+	int len;
 
 	/* Find out the amount of space required to store the answer. */
 	len = strlen(pw->pw_name) + 1;
@@ -194,7 +216,7 @@ copy_passwd(struct passwd *pw, struct passwd *pwptr, char *buf, int buflen) {
 	
 	if (len > buflen) {
 		errno = ERANGE;
-		return (-1);
+		return (ERANGE);
 	}
 
 	/* copy fixed atomic values*/
@@ -250,6 +272,6 @@ copy_passwd(struct passwd *pw, struct passwd *pwptr, char *buf, int buflen) {
 	return (0);
 }
 #else /* PASS_R_RETURN */
-	static int getpwent_r_unknown_systemm = 0;
+	static int getpwent_r_unknown_system = 0;
 #endif /* PASS_R_RETURN */
 #endif /* !def(_REENTRANT) || !def(DO_PTHREADS) || !def(WANT_IRS_PW) */

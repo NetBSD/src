@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_p.h,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: gen_p.h,v 1.1.1.2 2002/06/20 10:30:23 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: gen_p.h,v 1.10 1999/01/18 07:46:50 vixie Exp
+ * Id: gen_p.h,v 1.11 2001/05/29 05:48:39 marka Exp
  */
 
 /* Notes:
@@ -92,7 +92,7 @@ struct irs_rule {
  * This is the private data for a search access class.
  */
 struct gen_p {
-	const char *		options;
+	char *			options;
 	struct irs_rule *	map_rules[(int)irs_nmap];
 	struct irs_inst		accessors[(int)irs_nacc];
 	struct __res_state *	res;
