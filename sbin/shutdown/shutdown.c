@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.43 2005/02/05 13:15:12 xtraeme Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.44 2005/02/05 13:17:54 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.43 2005/02/05 13:15:12 xtraeme Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.44 2005/02/05 13:17:54 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ timeout(int signo)
 }
 
 void
-die_you_gravy_sucking_pig_dog()
+die_you_gravy_sucking_pig_dog(void)
 {
 
 	syslog(LOG_NOTICE, "%s by %s: %s",
