@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.17 1997/09/15 12:51:44 lukem Exp $	*/
+/*	$NetBSD: modload.c,v 1.18 1997/09/16 08:37:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.17 1997/09/15 12:51:44 lukem Exp $");
+__RCSID("$NetBSD: modload.c,v 1.18 1997/09/16 08:37:10 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -75,6 +75,7 @@ void	cleanup __P((void));
 int	linkcmd __P((char *, char *, char *, u_int, char *));
 int	main __P((int, char *[]));
 void	usage __P((void));
+int	verify_entry __P((char *, char *));
 
 int debug = 0;
 int verbose = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.17 1997/09/14 14:36:33 lukem Exp $	*/
+/*	$NetBSD: pass1.c,v 1.18 1997/09/16 08:37:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.17 1997/09/14 14:36:33 lukem Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.18 1997/09/16 08:37:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ checkinode(inumber, idesc)
 	if (/* dp->di_size < 0 || */
 	    dp->di_size + sblock.fs_bsize - 1 < dp->di_size) {
 		if (debug)
-			printf("bad size %qu:", dp->di_size);
+			printf("bad size %qu:",(unsigned long long)dp->di_size);
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
@@ -146,7 +146,7 @@ checkinode(inumber, idesc)
 	if (ndb < 0) {
 		if (debug)
 			printf("bad size %qu ndb %d:",
-				dp->di_size, ndb);
+				(unsigned long long)dp->di_size, ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
@@ -169,8 +169,9 @@ checkinode(inumber, idesc)
 				errexit("cannot read symlink");
 			if (debug) {
 				symbuf[dp->di_size] = 0;
-				printf("convert symlink %d(%s) of size %qd\n",
-					inumber, symbuf, dp->di_size);
+				printf("convert symlink %u(%s) of size %qd\n",
+				    inumber, symbuf,
+				    (unsigned long long)dp->di_size);
 			}
 			dp = ginode(inumber);
 			memcpy(dp->di_shortlink, symbuf, (long)dp->di_size);
