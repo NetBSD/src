@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2001/03/03 19:11:02 pk Exp $ */
+/*	$NetBSD: trap.c,v 1.99 2001/03/05 07:16:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -760,7 +760,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		p = &proc0;
 	sticks = p->p_sticks;
 
-	if ((psr & PSR_PS) == 0) {
+	if ((psr & PSR_PS) == 0)
 		KERNEL_PROC_LOCK(p);
 
 #ifdef FPU_DEBUG
