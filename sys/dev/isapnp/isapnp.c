@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.3 1997/02/09 18:36:44 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.4 1997/02/24 22:08:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -127,7 +127,7 @@ static int
 isapnp_findcard(sc)
 	struct isapnp_softc *sc;
 {
-	u_char v = ISAPNP_LFSR_INIT, csum = 0, w;
+	u_char v = ISAPNP_LFSR_INIT, csum, w;
 	int i, b;
 
 	if (sc->sc_ncards == ISAPNP_MAX_CARDS) {
@@ -158,13 +158,13 @@ isapnp_findcard(sc)
 	}
 
 	/* Read the remaining checksum byte */
-	for (b = 0; b < 8; b++) {
+	for (csum = 0, b = 0; b < 8; b++) {
 		u_char neg = isapnp_shift_bit(sc);
 
 		csum >>= 1;
 		csum |= neg;
-		sc->sc_id[sc->sc_ncards][9] = w;
 	}
+	sc->sc_id[sc->sc_ncards][8] = csum;
 
 	if (csum == v) {
 		sc->sc_ncards++;
