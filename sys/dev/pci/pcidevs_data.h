@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.409 2002/02/27 16:38:09 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.410 2002/02/27 21:01:56 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.406 2002/02/27 16:36:41 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.407 2002/02/27 21:00:28 martin Exp 
  */
 
 /*
@@ -1108,7 +1108,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Rage XL (AGP)",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_1,
 	    0,
 	    "ATI Technologies",
 	    "3D Rage Pro",
