@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.2 1997/03/13 17:52:49 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.3 1997/06/10 19:47:34 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -111,7 +111,7 @@ dvma_mapout(char *addr, int len)
 char *
 dvma_alloc(int len)
 {
-	len = _round_page(len);
+	len = m68k_round_page(len);
 	dvma_end -= len;
 	return((char*)dvma_end);
 }
