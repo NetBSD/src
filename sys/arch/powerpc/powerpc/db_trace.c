@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15 2001/12/30 20:53:04 dbj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16 2001/12/31 18:29:07 dbj Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -127,7 +127,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 	}
 
-	frame = (db_addr_t)ddb_regs.r[1];
+	if (have_addr) {
+		frame = (db_addr_t)addr;
+	} else {
+		frame = (db_addr_t)ddb_regs.r[1];
+	}
 	for (;;) {
 		if (frame < NBPG)
 			break;
