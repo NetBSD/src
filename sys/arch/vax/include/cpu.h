@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.46 2000/05/27 03:23:22 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.47 2000/05/27 16:33:04 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -136,7 +136,6 @@ extern	struct cpu_info cpu_info_store;
 
 extern struct device *booted_from;
 extern int mastercpu;
-extern int bootdev;
 
 #define	setsoftnet()	mtpr(12,PR_SIRR)
 #define setsoftclock()	mtpr(8,PR_SIRR)
@@ -179,6 +178,7 @@ void	vax_unmap_physmem __P((vaddr_t, int));
 void	ioaccess __P((vaddr_t, paddr_t, int));
 void	iounaccess __P((vaddr_t, int));
 void	findcpu(void);
+void	child_return(void *);
 #ifdef DDB
 int	kdbrint __P((int));
 #endif
