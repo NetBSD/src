@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.66 1998/11/17 14:38:42 bouyer Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.67 1999/06/12 11:19:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	int flags;
 {
 	struct scsipi_xfer *xs;
-	int error;
+	int error, s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_scsipi_cmd\n"));
 
@@ -121,7 +121,9 @@ scsi_scsipi_cmd(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	 * we have finished with the xfer stuct, free it and
 	 * check if anyone else needs to be started up.
 	 */
+	s = splbio();
 	scsipi_free_xs(xs, flags);
+	splx(s);
 	return (error);
 }
 
