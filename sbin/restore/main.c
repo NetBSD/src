@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2003/08/07 10:04:37 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2004/07/27 02:17:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2003/08/07 10:04:37 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2004/07/27 02:17:06 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: main.c,v 1.23 2003/08/07 10:04:37 agc Exp $");
 #include "extern.h"
 
 int	bflag = 0, cvtflag = 0, dflag = 0, vflag = 0, yflag = 0;
-int	hflag = 1, mflag = 1, Nflag = 0;
+int	hflag = 1, mflag = 1, Dflag = 0, Nflag = 0;
 char	command = '\0';
 int32_t	dumpnum = 1;
 int32_t	volno = 0;
@@ -100,7 +100,7 @@ main(argc, argv)
 	if ((tmpdir = getenv("TMPDIR")) == NULL)
 		tmpdir = _PATH_TMP;
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "b:cdf:himNRrs:tuvxy")) != -1)
+	while ((ch = getopt(argc, argv, "b:cD:df:himNRrs:tuvxy")) != -1)
 		switch(ch) {
 		case 'b':
 			/* Change default tape blocksize. */
@@ -113,6 +113,12 @@ main(argc, argv)
 			break;
 		case 'c':
 			cvtflag = 1;
+			break;
+		case 'D':
+			ddesc = digest_lookup(optarg);
+			if (ddesc == NULL)
+				err(1, "unknown digest algorithm: %s", optarg);
+			Dflag = 1;
 			break;
 		case 'd':
 			dflag = 1;
