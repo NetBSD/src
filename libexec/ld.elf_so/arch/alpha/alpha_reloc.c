@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.6 2002/09/05 20:08:16 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.7 2002/09/05 20:12:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -134,7 +134,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				return -1;
 
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value) +
-		    	*where + rela->r_addend;
+			    *where + rela->r_addend;
 			if (*where != tmp)
 				*where = tmp;
 			rdbg(dodebug, ("REFQUAD %s in %s --> %p in %s",
