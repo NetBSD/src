@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.11 2001/01/31 09:35:42 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.12 2001/02/01 08:29:46 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -425,6 +425,8 @@ my_driver(FORM * form, int c, char *path)
 		}
 		set_field_buffer(curfield, 0, tmp);
 		destroyCDKEntry(entry);
+		touchwin(stdscr);
+		wrefresh(stdscr);
 		return(FALSE);
 		/* NOTREACHED */
 		break;
@@ -1380,6 +1382,46 @@ form_generate(struct cqForm *cqf, char *basedir, char **args)
 	F[i].newpage = 0;
 }
 
+static void
+tab_help(FORM *form)
+{
+	CDKLABEL *label;
+	char *msg[4];
+	char *buffer;
+	FIELD *curfield;
+	int lines;
+
+	curfield = current_field(form);
+	buffer = field_buffer(curfield, 1);
+	if (buffer == NULL)
+		return;
+	if (*buffer == 's') {
+		msg[0] = catgets(catalog, 3, 10, "The current field is a list "
+		    "field, and selections can only be made from");
+		msg[1] = catgets(catalog, 3, 11, "the pre-defined list.  "
+		    "Please use TAB or the List(F4) command to edit.");
+		msg[2] = catgets(catalog, 3, 12, "Press the ENTER key to "
+		    "return from the list popup.");
+		lines = 3;
+	} else if (*buffer == 'm') {
+		msg[0] = catgets(catalog, 3, 13, "The current field is a "
+		    "multiple-selection list field.  The field can only");
+		msg[1] = catgets(catalog, 3, 14, "be edited by issuing "
+		    "the List(F4) command, and toggling desired options");
+		msg[2] = catgets(catalog, 3, 15, "with the spacebar.  "
+		    "Press the ENTER key to return from the list popup.");
+		lines = 3;
+	} else
+		return;
+
+	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, lines, TRUE, FALSE);
+	activateCDKLabel(label, NULL);
+	waitCDKLabel(label, NULL);
+	destroyCDKLabel(label);
+	touchwin(stdscr);
+	wrefresh(stdscr);
+}
+
 int
 handle_form(char *basedir, char *path, char **args)
 {
@@ -1440,6 +1482,9 @@ handle_form(char *basedir, char *path, char **args)
 			break;
 		case E_UNKNOWN_COMMAND:
 			done = my_driver(menuform, c, basedir);
+			break;
+		case E_REQUEST_DENIED:
+			tab_help(menuform);
 			break;
 		default:
 			break;
@@ -1534,6 +1579,9 @@ handle_preform(char *basedir, char *path)
 			break;
 		case E_UNKNOWN_COMMAND:
 			done = my_driver(menuform, c, basedir);
+			break;
+		case E_REQUEST_DENIED:
+			tab_help(menuform);
 			break;
 		default:
 			break;
