@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.9 1999/03/09 19:30:00 he Exp $	*/
+/*	$NetBSD: run.c,v 1.10 1999/03/11 16:48:27 marc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -319,6 +319,10 @@ launch_subwin(actionwin, args, win, display)
 			fclose(script);
 		}
 		execvp(argzero, origargs);
+		/* the parent will see this as the output from the
+		   child */
+		perror("execvp");
+		_exit(EXIT_FAILURE);
 	} break; /* end of child */
 	default: break;
 	}
