@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.4 1997/11/21 08:35:59 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.5 1998/10/14 00:58:47 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,31 +42,35 @@
 #include "value.h"
 #include "ww.h"
 
+#ifndef EXTERN
+#define EXTERN extern
+#endif
+
 #define NWINDOW 9
 
-struct timeval starttime;
+EXTERN struct timeval starttime;
 
-struct ww *window[NWINDOW];	/* the windows */
-struct ww *selwin;		/* the selected window */
-struct ww *lastselwin;		/* the last selected window */
-struct ww *cmdwin;		/* the command window */
-struct ww *framewin;		/* the window for framing */
-struct ww *boxwin;		/* the window for the box */
-struct ww *fgwin;		/* the last foreground window */
+EXTERN struct ww *window[NWINDOW];	/* the windows */
+EXTERN struct ww *selwin;		/* the selected window */
+EXTERN struct ww *lastselwin;		/* the last selected window */
+EXTERN struct ww *cmdwin;		/* the command window */
+EXTERN struct ww *framewin;		/* the window for framing */
+EXTERN struct ww *boxwin;		/* the window for the box */
+EXTERN struct ww *fgwin;		/* the last foreground window */
 
 #define isfg(w)		((w)->ww_order <= fgwin->ww_order)
 
-char *default_shell[128];	/* default shell argv */
-char *default_shellfile;	/* default shell program */
-int default_nline;		/* default buffer size for new windows */
-int default_smooth;		/* default "smooth" parameter */
-char escapec;			/* the escape character */
+EXTERN char *default_shell[128];	/* default shell argv */
+EXTERN char *default_shellfile;		/* default shell program */
+EXTERN int default_nline;		/* default buffer size for new windows */
+EXTERN int default_smooth;		/* default "smooth" parameter */
+EXTERN char escapec;			/* the escape character */
 
-	/* flags */
-char quit;			/* quit command issued */
-char terse;			/* terse mode */
-char debug;			/* debug mode */
-char incmd;			/* in command mode */
+/* flags */
+EXTERN char quit;			/* quit command issued */
+EXTERN char terse;			/* terse mode */
+EXTERN char debug;			/* debug mode */
+EXTERN char incmd;			/* in command mode */
 
 void		addwin __P((struct ww *, char));
 int		ccinit __P((void));

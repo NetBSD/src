@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd2.c,v 1.9 1998/08/25 20:59:42 ross Exp $	*/
+/*	$NetBSD: lcmd2.c,v 1.10 1998/10/14 00:58:47 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd2.c,v 1.9 1998/08/25 20:59:42 ross Exp $");
+__RCSID("$NetBSD: lcmd2.c,v 1.10 1998/10/14 00:58:47 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: lcmd2.c,v 1.9 1998/08/25 20:59:42 ross Exp $");
 #include <sys/resource.h>
 #include <string.h>
 #include "defs.h"
-#include "string.h"
+#include "window_string.h"
 #include "var.h"
 #include "lcmd.h"
 #include "alias.h"
@@ -163,7 +163,7 @@ strtime(t)
 	char *p = buf;
 
 	if (t->tv_sec > 60*60) {
-		(void) sprintf(p, "%ld:", t->tv_sec / (60*60));
+		(void) sprintf(p, "%ld:", (long int)t->tv_sec / (60*60));
 		while (*p++)
 			;
 		p--;

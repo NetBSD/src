@@ -1,4 +1,4 @@
-/*	$NetBSD: window_string.h,v 1.4 1997/11/21 08:36:22 lukem Exp $	*/
+/*	$NetBSD: window_string.h,v 1.5 1998/10/14 00:58:49 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,6 +38,15 @@
  *	@(#)string.h	8.1 (Berkeley) 6/6/93
  */
 
+#ifndef _W_STRING_H_
+#define _W_STRING_H_
+
+#include <stddef.h>
+
+#ifndef EXTERN
+#define EXTERN extern
+#endif
+
 #define STR_DEBUG
 
 char	*str_cat __P((char *, char *));
@@ -55,7 +64,7 @@ struct string {
 	char s_data[1];
 };
 
-struct string str_head;
+EXTERN struct string str_head;
 
 #define str_offset ((unsigned)str_head.s_data - (unsigned)&str_head)
 #define str_stos(s) ((struct string *)((unsigned)(s) - str_offset))
@@ -66,3 +75,5 @@ void	str_free __P((char *));
 #define str_free(s)	free(s)
 #define str_alloc(s)	malloc(s)
 #endif
+
+#endif /* _W_STRING_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.5 1997/11/21 08:36:45 lukem Exp $	*/
+/*	$NetBSD: var.c,v 1.6 1998/10/14 00:58:49 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,14 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: var.c,v 1.5 1997/11/21 08:36:45 lukem Exp $");
+__RCSID("$NetBSD: var.c,v 1.6 1998/10/14 00:58:49 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
 #include "value.h"
+#define EXTERN
 #include "var.h"
-#include "string.h"
+#undef  EXTERN
+#include "window_string.h"
 
 struct var *
 var_set1(head, name, v)
