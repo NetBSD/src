@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.4 2001/05/14 17:56:36 matt Exp $	*/
+/*	$NetBSD: ip32.c,v 1.5 2001/06/14 01:09:37 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -45,14 +45,15 @@
 #include <machine/sysconf.h>
 #include <mips/locore.h>
 
-extern struct platform platform;
-
 void	ip32_init(void);
 void	ip32_bus_reset(void);
 void 	ip32_intr(u_int, u_int, u_int, u_int);
 void	ip32_intr_establish(int, int, int (*)(void *), void *);
 int	crime_intr(void *);
 void	*crime_intr_establish(int, int, int, int (*)(void *), void *);
+
+static struct evcnt mips_int5_evcnt =
+    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
 void ip32_init(void)
 {
@@ -68,6 +69,8 @@ void ip32_init(void)
 	netmask = 0x7f00;
 	ttymask = 0x7f00;
 	clockmask = 0xff00;
+
+	evcnt_attach_static(&mips_int5_evcnt);
 }
 
 void
@@ -113,20 +116,18 @@ panic("pcierr: %x %x", *(volatile u_int32_t *)0xbf080004,
 		panic("interesting cpu_intr, pending 0x%x\n", ipending);
 #endif
 
-
 	if (ipending & MIPS_INT_MASK_5) {
 		cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + 900000);	/* XXX */
+		mips3_cp0_compare_write(cycles + platform.ticks_per_hz);
 
 		cf.pc = pc;
 		cf.sr = status;
 
 		hardclock(&cf);
+		mips_int5_evcnt.ev_count++;
 
 		cause &= ~MIPS_INT_MASK_5;
-	}
-else
-	if (ipending & 0x7c00)
+	} else if (ipending & 0x7c00)
 		crime_intr(NULL);
 
         for (i = 0; i < 5; i++) {
