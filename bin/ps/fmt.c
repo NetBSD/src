@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.16 2001/03/23 01:06:02 enami Exp $	*/
+/*	$NetBSD: fmt.c,v 1.17 2002/02/14 06:54:41 enami Exp $	*/
 
 #include <kvm.h>
 #include <stdio.h>
@@ -15,8 +15,9 @@ fmt_puts(s, leftp)
 	char *s;
 	int *leftp;
 {
-	static char *v = 0, *nv;
+	static char *v = 0;
 	static int maxlen = 0;
+	char *nv;
 	int len, nlen;
 
 	if (*leftp == 0)
