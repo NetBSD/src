@@ -1,13 +1,25 @@
-/*	$NetBSD: patchlevel.h,v 1.9 1998/09/20 15:27:16 christos Exp $	*/
+/*	$NetBSD: patchlevel.h,v 1.10 1999/11/01 17:39:26 christos Exp $	*/
 
 #define	FILE_VERSION_MAJOR	3
-#define	patchlevel		26
+#define	patchlevel		28
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * Id: patchlevel.h,v 1.26 1998/09/12 13:19:39 christos Exp 
+ * Id: patchlevel.h,v 1.28 1999/10/31 22:11:48 christos Exp 
  *
  * Log: patchlevel.h,v 
+ * Revision 1.28  1999/10/31 22:11:48  christos
+ * - add "char" type for compatibility with HP/UX
+ * - recognize HP/UX syntax &=n etc.
+ * - include errno.h for CYGWIN
+ * - conditionalize the S_IS* macros
+ * - revert the SHT_DYNSYM test that broke the linux stripped binaries test
+ * - lots of Magdir changes
+ *
+ * Revision 1.27  1999/02/14 17:21:41  christos
+ * Automake support and misc cleanups from Rainer Orth
+ * Enable reading character and block special files from Dale R. Worley
+ *
  * Revision 1.26  1998/09/12 13:19:39  christos
  * - add support for bi-endian indirect offsets (Richard Verhoeven)
  * - add recognition for bcpl (Joseph Myers)
