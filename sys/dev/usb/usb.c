@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.68 2002/02/20 20:30:12 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.69 2002/04/23 06:34:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.68 2002/02/20 20:30:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.69 2002/04/23 06:34:11 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.68 2002/02/20 20:30:12 christos Exp $");
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/fcntl.h>
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/vnode.h>
@@ -466,6 +467,8 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 	switch (cmd) {
 #ifdef USB_DEBUG
 	case USB_SETDEBUG:
+		if (!(flag & FWRITE))
+			return (EBADF);
 		usbdebug  = ((*(int *)data) & 0x000000ff);
 #ifdef UHCI_DEBUG
 		uhcidebug = ((*(int *)data) & 0x0000ff00) >> 8;
@@ -485,6 +488,9 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		int addr = ur->ucr_addr;
 		usbd_status err;
 		int error = 0;
+
+		if (!(flag & FWRITE))
+			return (EBADF);
 
 		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%d\n", addr, len));
 		if (len < 0 || len > 32768)
