@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1999/03/30 10:10:22 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 1999/03/30 20:59:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1174,7 +1174,7 @@ pmap_pinit(pmap)
 
 	/* Map zero page for the pmap. This will also map the L2 for it */
 	pmap_enter(pmap, 0x00000000, systempage.pv_pa,
-	    VM_PROT_READ, TRUE, 0);
+	    VM_PROT_READ, TRUE, VM_PROT_READ);
 }
 
 
