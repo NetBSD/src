@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)func.c	5.20 (Berkeley) 6/27/91";*/
-static char rcsid[] = "$Id: func.c,v 1.5 1993/08/23 16:04:39 mycroft Exp $";
+static char rcsid[] = "$Id: func.c,v 1.6 1994/05/05 03:00:45 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1029,7 +1029,7 @@ doumask(v)
     (void) umask(i);
 }
 
-typedef int RLIM_TYPE;
+typedef quad_t RLIM_TYPE;
 
 static struct limits {
     int     limconst;
