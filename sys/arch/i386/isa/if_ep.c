@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.2 1993/12/16 00:40:05 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.3 1993/12/16 04:29:07 hpeyerl Exp $
  */
 /*
  * TODO: 
@@ -671,11 +671,12 @@ epioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(sc->ns_addr);
+				ina->x_host = *(union ns_host *)(sc->ep_ac.ac_enaddr);
 			else {
 				ifp->if_flags &= ~IFF_RUNNING;
 				bcopy((caddr_t)ina->x_host.c_host,
-					(caddr_t)sc->ns_addr, sizeof(sc->ns_addr));		   
+					(caddr_t)sc->ns_addr,
+					sizeof(sc->ep_ac.ac_enaddr));		   
 			}
 			epinit(ifp->if_unit);
 			break;
