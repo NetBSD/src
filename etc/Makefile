@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.206 2002/03/31 16:07:53 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.207 2002/04/01 17:32:19 bjh21 Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -360,10 +360,11 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 .for configfile in ${KERNEL_SETS}
 	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
+	kernsuffixes="${KERNEL_SUFFIXES}"; \
 	cd $${kerndir} && \
 		tarlist=`for kernel in $${kernlist}; do \
 			echo "$${kernel}"; \
-			for s in ${KERNEL_SUFFIXES}; do \
+			for s in $${kernsuffixes}; do \
 				if [ -f $${kernel}.$${s} ]; then \
 					echo "$${kernel}.$${s}"; \
 				fi; \
@@ -375,10 +376,11 @@ snap_kern: check_DESTDIR check_RELEASEDIR
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}
 	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
+	kernsuffixes="${KERNEL_SUFFIXES}"; \
 	cd $${kerndir} &&	\
 		gziplist=`for kernel in $${kernlist}; do \
 			echo "$${kernel}"; \
-			for s in ${KERNEL_SUFFIXES}; do \
+			for s in $${kernsuffixes}; do \
 				if [ -f $${kernel}.$${s} ]; then \
 					echo "$${kernel}.$${s}"; \
 				fi; \
