@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.16 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: search.h,v 1.16.2.1 2005/03/23 00:17:16 tron Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -57,13 +57,13 @@ void	*lsearch(const void *, const void *, size_t *, size_t,
 void	 insque(void *, void *);
 void	 remque(void *);
 
-void	*tdelete(const void *, void **,
+void	*tdelete(const void * __restrict, void ** __restrict,
 		      int (*)(const void *, const void *));
-void	*tfind(const void *, void **,
+void	*tfind(const void *, void * const *,
 		      int (*)(const void *, const void *));
 void	*tsearch(const void *, void **, 
 		      int (*)(const void *, const void *));
-void	twalk(const void *, void (*)(const void *, VISIT, int));
+void	 twalk(const void *, void (*)(const void *, VISIT, int));
 __END_DECLS
 
 #endif /* !_SEARCH_H_ */
