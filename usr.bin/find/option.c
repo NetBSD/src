@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.13 1999/07/20 01:28:42 cgd Exp $	*/
+/*	$NetBSD: option.c,v 1.14 2000/03/16 18:44:30 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.13 1999/07/20 01:28:42 cgd Exp $");
+__RCSID("$NetBSD: option.c,v 1.14 2000/03/16 18:44:30 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,5 +147,6 @@ int
 typecompare(a, b)
 	const void *a, *b;
 {
+
 	return (strcmp(((OPTION *)a)->name, ((OPTION *)b)->name));
 }
