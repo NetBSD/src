@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.dist,v 1.4 1998/01/09 08:10:16 perry Exp $
+#	$NetBSD: Makefile.dist,v 1.5 1998/09/05 15:02:35 lukem Exp $
 #
 #
 #  Makefile for configuration files.
@@ -37,7 +37,7 @@ ALL=	generic-bsd4.4.cf generic-hpux9.cf generic-hpux10.cf \
 
 all: $(ALL)
 
-clean cleandir:
+clean cleandir distclean:
 	$(RM) $(ALL) core
 
 depend install: 
