@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.36 2001/12/21 03:58:15 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.37 2001/12/21 06:30:44 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.36 2001/12/21 03:58:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.37 2001/12/21 06:30:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -206,23 +206,19 @@ struct ip6protosw inet6sw[] = {
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input,	rip6_output, 	0,		rip6_ctloutput,
   rip6_usrreq,
-  0,		0,		0,		0,
+  encap_init,	0,		0,		0,
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input, rip6_output,	 0,		rip6_ctloutput,
   rip6_usrreq,
-#ifndef INET6
-  0,		0,		0,		0,
-#else
   encap_init,	0,		0,		0,
-#endif
 },
 #ifdef ISO
 { SOCK_RAW,	&inet6domain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap6_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,	/*XXX*/
-  0,		0,		0,		0,
+  encap_init,	0,		0,		0,
 },
 #endif
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,

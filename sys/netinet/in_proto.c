@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.53 2001/12/21 04:07:25 itojun Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.54 2001/12/21 06:30:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.53 2001/12/21 04:07:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.54 2001/12/21 06:30:43 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -201,7 +201,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap4_input,	rip_output, 	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,	/*XXX*/
-  0,		0,		0,		0,
+  encap_init,		0,		0,		0,
 },
 #endif /* INET6 */
 #if NGRE > 0
@@ -240,7 +240,7 @@ struct protosw inetsw[] = {
 { SOCK_RAW,	&inetdomain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
   encap4_input,	rip_output,	rip_ctlinput,	rip_ctloutput,
   rip_usrreq,	/*XXX*/
-  0,		0,		0,		0,
+  encap_init,	0,		0,		0,
 },
 #endif /* EON */
 #endif /* ISO */

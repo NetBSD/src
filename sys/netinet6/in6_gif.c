@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.26 2001/12/21 03:58:15 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.27 2001/12/21 06:30:44 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.26 2001/12/21 03:58:15 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.27 2001/12/21 06:30:44 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -80,10 +80,12 @@ int	ip6_gif_hlim = GIF_HLIM;
 extern struct domain inet6domain;
 struct ip6protosw in6_gif_protosw =
 { SOCK_RAW,	&inet6domain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
-  in6_gif_input, rip6_output,	0,		rip6_ctloutput,
+  in6_gif_input, rip6_output,	in6_gif_ctlinput, rip6_ctloutput,
   rip6_usrreq,
   0,            0,              0,              0,
 };
+
+extern LIST_HEAD(, gif_softc) gif_softc_list;
 
 int
 in6_gif_output(ifp, family, m)
@@ -416,4 +418,72 @@ in6_gif_detach(sc)
 	if (error == 0)
 		sc->encap_cookie6 = NULL;
 	return error;
+}
+
+void
+in6_gif_ctlinput(cmd, sa, d)
+	int cmd;
+	struct sockaddr *sa;
+	void *d;
+{
+	struct gif_softc *sc;
+	struct ip6ctlparam *ip6cp = NULL;
+	struct mbuf *m;
+	struct ip6_hdr *ip6;
+	int off;
+	void *cmdarg;
+	const struct sockaddr_in6 *sa6_src = NULL;
+	struct sockaddr_in6 *dst6;
+
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
+
+	if ((unsigned)cmd >= PRC_NCMDS)
+		return;
+	if (cmd == PRC_HOSTDEAD)
+		d = NULL;
+	else if (inet6ctlerrmap[cmd] == 0)
+		return;
+
+	/* if the parameter is from icmp6, decode it. */
+	if (d != NULL) {
+		ip6cp = (struct ip6ctlparam *)d;
+		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
+		off = ip6cp->ip6c_off;
+		cmdarg = ip6cp->ip6c_cmdarg;
+		sa6_src = ip6cp->ip6c_src;
+	} else {
+		m = NULL;
+		ip6 = NULL;
+		cmdarg = NULL;
+		sa6_src = &sa6_any;
+	}
+
+	if (!ip6)
+		return;
+
+	/*
+	 * for now we don't care which type it was, just flush the route cache.
+	 * XXX slow.  sc (or sc->encap_cookie6) should be passed from
+	 * ip_encap.c.
+	 */
+	for (sc = LIST_FIRST(&gif_softc_list); sc;
+	     sc = LIST_NEXT(sc, gif_list)) {
+		if ((sc->gif_if.if_flags & IFF_RUNNING) == 0)
+			continue;
+		if (sc->gif_psrc->sa_family != AF_INET6)
+			continue;
+		if (!sc->gif_ro6.ro_rt)
+			continue;
+
+		dst6 = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+		/* XXX scope */
+		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr)) {
+			/* flush route cache */
+			RTFREE(sc->gif_ro6.ro_rt);
+			sc->gif_ro6.ro_rt = NULL;
+		}
+	}
 }

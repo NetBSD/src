@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.1 2000/04/19 06:30:55 itojun Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.2 2001/12/21 06:30:43 itojun Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -35,14 +35,21 @@
 
 #ifdef _KERNEL
 
+#ifndef RNF_NORMAL
+#include <net/radix.h>
+#endif
+
 struct encaptab {
+	struct radix_node nodes[2];
 	LIST_ENTRY(encaptab) chain;
 	int af;
 	int proto;			/* -1: don't care, I'll check myself */
-	struct sockaddr_storage src;	/* my addr */
-	struct sockaddr_storage srcmask;
-	struct sockaddr_storage dst;	/* remote addr */
-	struct sockaddr_storage dstmask;
+	struct sockaddr *addrpack;	/* malloc'ed, for radix lookup */
+	struct sockaddr *maskpack;	/* ditto */
+	struct sockaddr *src;		/* my addr */
+	struct sockaddr *srcmask;
+	struct sockaddr *dst;		/* remote addr */
+	struct sockaddr *dstmask;
 	int (*func) __P((const struct mbuf *, int, int, void *));
 	const struct protosw *psw;	/* only pr_input will be used */
 	void *arg;			/* passed via m->m_pkthdr.aux */
@@ -57,6 +64,7 @@ const struct encaptab *encap_attach __P((int, int, const struct sockaddr *,
 const struct encaptab *encap_attach_func __P((int, int,
 	int (*) __P((const struct mbuf *, int, int, void *)),
 	const struct protosw *, void *));
+void	encap6_ctlinput __P((int, struct sockaddr *, void *));
 int	encap_detach __P((const struct encaptab *));
 void	*encap_getarg __P((struct mbuf *));
 #endif
