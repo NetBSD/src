@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.18 2000/01/26 09:04:59 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.19 2000/01/31 08:49:07 haya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -41,6 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
 
 #include <machine/bus.h>
 
@@ -444,7 +445,13 @@ cardbus_attach_card(sc)
       if (id != 0xffffffff && id != 0) {
 	break;
       }
-      delay(100*1000);		/* or tsleep */
+      if (cold) {		/* before kernel thread invoked */
+	delay(100*1000);
+      } else {			/* thread context */
+	if (tsleep((void *)sc, PCATCH, "cardbus", hz/10) != EWOULDBLOCK) {
+	  break;
+	}
+      }
     }
     if (i == 5) {
       return 0;
@@ -642,9 +649,8 @@ cardbus_detach_card(sc)
 	struct device *fndev = ct->ct_device;
 	ct_next = ct->ct_next;
 
-	printf("%s: detaching %s\n", sc->sc_dev.dv_xname, fndev->dv_xname);
+	DPRINTF(("%s: detaching %s\n", sc->sc_dev.dv_xname, fndev->dv_xname));
 	/* call device detach function */
-
 
 	if (0 != config_detach(fndev, 0)) {
 	    printf("%s: cannot detaching dev %s, function %d\n",
@@ -656,6 +662,9 @@ cardbus_detach_card(sc)
 	    free(ct, M_DEVBUF);
 	}
     }
+
+    sc->sc_poweron_func = 0;
+    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
 }
 
 
