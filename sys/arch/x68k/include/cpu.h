@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 1999/09/23 15:24:34 minoura Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2000/04/18 21:04:52 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,10 @@
 /*
  * Exported definitions unique to x68k/68k cpu support.
  */
+
+#ifdef _KERNEL
+#include "opt_m680x0.h"
+#endif
 
 /*
  * Get common m68k CPU definitions.
