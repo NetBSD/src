@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.3 1994/06/09 05:50:34 phil Exp $
+ *	$Id: crt0.c,v 1.4 1995/05/16 16:32:14 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "@(#)crt0.c	5.7 (Berkeley) 7/3/91"; */
-static char rcsid[] = "$Id: crt0.c,v 1.3 1994/06/09 05:50:34 phil Exp $";
+static char rcsid[] = "$Id: crt0.c,v 1.4 1995/05/16 16:32:14 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 extern void exit();
@@ -125,7 +125,6 @@ start(long param)
 	 *	ALL REGISTER VARIABLES!!!
 	 */
 	register struct kframe *kfp;
-	register char **targv;
 	register char **argv;
 	extern void _mcleanup();
 #ifdef DYNAMIC
@@ -134,11 +133,8 @@ start(long param)
 
 	/* just above the saved frame pointer */
 	kfp = (struct kframe *) (&param-1);
-	for (argv = targv = &kfp->kargv[0]; *targv++; /* void */)
-		/* void */ ;
-	if (targv >= (char **)(*argv))
-		--targv;
-	environ = targv;
+	argv = &kfp->kargv[0];
+	environ = argv + kfp->kargc + 1;
 
 	if (argv[0])
 		if ((__progname = _strrchr(argv[0], '/')) == NULL)

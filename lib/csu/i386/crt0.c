@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.16 1995/01/17 06:09:43 mycroft Exp $
+ *	$Id: crt0.c,v 1.17 1995/05/16 16:25:19 mycroft Exp $
  */
 
 
@@ -123,7 +123,6 @@ start()
 	 *	ALL REGISTER VARIABLES!!!
 	 */
 	register struct kframe *kfp;
-	register char **targv;
 	register char **argv;
 	extern void _mcleanup();
 #ifdef DYNAMIC
@@ -137,11 +136,8 @@ start()
 	/* just above the saved frame pointer */
 	asm ("lea 4(%%ebp), %0" : "=r" (kfp) );
 #endif /* not lint */
-	for (argv = targv = &kfp->kargv[0]; *targv++; /* void */)
-		/* void */ ;
-	if (targv >= (char **)(*argv))
-		--targv;
-	environ = targv;
+	argv = &kfp->kargv[0];
+	environ = argv + kfp->kargc + 1;
 
 	if (argv[0])
 		if ((__progname = _strrchr(argv[0], '/')) == NULL)
