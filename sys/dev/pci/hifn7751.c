@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.17 2003/08/28 15:05:10 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.18 2003/08/28 15:15:43 thorpej Exp $	*/
 /* 	$FreeBSD: hifn7751.c,v 1.5.2.6 2003/07/02 17:04:50 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.17 2003/08/28 15:05:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.18 2003/08/28 15:15:43 thorpej Exp $");
 
 #include "rnd.h"
 #include "opencrypto.h"
@@ -187,21 +187,21 @@ static const struct hifn_product {
 
 	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7751,
 	  0,
-	  "Hi/Fn 7751",
+	  "Hifn 7751",
 	},
 	{ PCI_VENDOR_NETSEC,	PCI_PRODUCT_NETSEC_7751,
 	  0,
-	  "Hi/Fn 7751 (NetSec)"
+	  "Hifn 7751 (NetSec)"
 	},
 
 	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7811,
 	  HIFN_IS_7811 | HIFN_HAS_RNG | HIFN_HAS_LEDS | HIFN_NO_BURSTWRITE,
-	  "Hi/Fn 7811",
+	  "Hifn 7811",
 	},
 
 	{ PCI_VENDOR_HIFN,	PCI_PRODUCT_HIFN_7951,
 	  HIFN_HAS_RNG | HIFN_HAS_PUBLIC,
-	  "Hi/Fn 7951",
+	  "Hifn 7951",
 	},
 
 
