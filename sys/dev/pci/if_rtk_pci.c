@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.12 2002/02/06 12:43:05 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.12.10.1 2003/04/28 08:05:01 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.12 2002/02/06 12:43:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.12.10.1 2003/04/28 08:05:01 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,6 +258,7 @@ rtk_pci_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_flags |= RTK_ENABLED;
 
 	rtk_attach(sc);
 }
