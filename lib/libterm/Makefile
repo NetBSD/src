@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.10 (Berkeley) 6/1/90
+#	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
 CFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
