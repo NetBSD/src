@@ -1,4 +1,4 @@
-.\"	$NetBSD: getrusage.2,v 1.8 1999/12/02 21:42:37 kleink Exp $
+.\"	$NetBSD: getrusage.2,v 1.8.6.1 2001/10/08 20:21:46 nathanw Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,6 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/time.h>
 .Fd #include <sys/resource.h>
 .Fd #define	RUSAGE_SELF	 0
 .Fd #define	RUSAGE_CHILDREN	-1
@@ -134,9 +133,9 @@ priority process becoming runnable or because the current process
 exceeded its time slice.
 .El
 .Sh NOTES
-The numbers 
+The numbers
 .Fa ru_inblock
-and 
+and
 .Fa ru_oublock
 account only for real
 I/O; data supplied by the caching mechanism is charged only
@@ -158,11 +157,11 @@ parameter is not in a valid part of the process address space.
 .Sh SEE ALSO
 .Xr gettimeofday 2 ,
 .Xr wait 2
-.Sh BUGS
-There is no way to obtain information about a child process
-that has not yet terminated.
 .Sh HISTORY
 The
 .Fn getrusage
 function call appeared in
 .Bx 4.2 .
+.Sh BUGS
+There is no way to obtain information about a child process
+that has not yet terminated.

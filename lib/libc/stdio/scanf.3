@@ -1,4 +1,4 @@
-.\"	$NetBSD: scanf.3,v 1.10 2000/12/29 15:22:51 kleink Exp $
+.\"	$NetBSD: scanf.3,v 1.10.2.1 2001/10/08 20:20:55 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     @(#)scanf.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd January 31, 1995
+.Dd April 30, 2001
 .Dt SCANF 3
 .Os
 .Sh NAME
@@ -152,6 +152,15 @@ and the next pointer is a pointer to a
 .Em short  int
 (rather than
 .Em int ) .
+.It Cm j
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to an
+.Em intmax_t
+(rather than
+.Em int ) .
 .It Cm l
 Indicates either that the conversion will be one of
 .Cm dioux
@@ -174,6 +183,24 @@ or
 .Cm n
 and the next pointer is a pointer to a
 .Em quad_t
+(rather than
+.Em int ) .
+.It Cm t
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Em ptrdiff_t
+(rather than
+.Em int ) .
+.It Cm z
+Indicates that the conversion will be one of
+.Cm dioux
+or
+.Cm n
+and the next pointer is a pointer to a
+.Em size_t
 (rather than
 .Em int ) .
 .It Cm L
@@ -356,7 +383,6 @@ and a `conversion' of
 .Ql %\e0
 causes an immediate return of
 .Dv EOF .
-.Pp
 .Sh RETURN VALUES
 These
 functions
@@ -377,11 +403,11 @@ end-of-file occurs. If an error or end-of-file occurs after conversion
 has begun,
 the number of conversions which were successfully completed is returned.
 .Sh SEE ALSO
-.Xr strtol 3 ,
-.Xr strtoul 3 ,
-.Xr strtod 3 ,
 .Xr getc 3 ,
-.Xr printf 3
+.Xr printf 3 ,
+.Xr strtod 3 ,
+.Xr strtol 3 ,
+.Xr strtoul 3
 .Sh STANDARDS
 The functions
 .Fn fscanf ,
@@ -389,7 +415,22 @@ The functions
 and
 .Fn sscanf
 conform to
-.St -ansiC .
+.St -isoC90 .
+The
+.Cm %j ,
+.Cm %t
+and
+.Cm %z
+conversion format modifiers
+conform to
+.St -isoC99 .
+The
+.Fn vfscanf ,
+.Fn vscanf
+and
+.Fn vsscanf
+functions conform to
+.St -isoC99 .
 .Sh HISTORY
 The functions
 .Fn vscanf ,

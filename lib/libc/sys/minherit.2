@@ -1,4 +1,4 @@
-.\"	$NetBSD: minherit.2,v 1.8 2000/08/04 20:03:07 wiz Exp $
+.\"	$NetBSD: minherit.2,v 1.8.2.1 2001/10/08 20:21:52 nathanw Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,12 +47,12 @@
 .Fn minherit "void *addr" "size_t len" "int inherit"
 .Sh DESCRIPTION
 The
-.Fn minherit 
+.Fn minherit
 system call
 changes the specified range of virtual addresses to have the specified
 fork-time inheritance characteristic
 .Fa inherit ,
-which can be set to 
+which can be set to
 .Dv MAP_INHERIT_NONE ,
 .Dv MAP_INHERIT_COPY ,
 or
@@ -65,30 +65,30 @@ Not all implementations will guarantee that the inheritance characteristic
 can be set on a page basis;
 the granularity of changes may be as large as an entire region.
 .Pp
-Normally, the entire address space is marked 
+Normally, the entire address space is marked
 .Dv MAP_INHERIT_COPY ;
 when the process calls
 .Fn fork ,
 the child receives a (virtual) copy of the entire address space.
-Pages or regions marked 
+Pages or regions marked
 .Dv MAP_INHERIT_SHARE
 are shared between the address spaces, while pages or regions marked
 .Dv MAP_INHERIT_NONE
 will be unmapped in the child.
-.Sh BUGS
-If the a particular port does not support page-granularity
-inheritance, there's no way to figure out how large a region is
-actually affected by 
-.Fn minherit .
 .Sh SEE ALSO
 .Xr fork 2 ,
-.Xr madvise 2 , 
-.Xr mincore 2 , 
-.Xr mprotect 2 , 
+.Xr madvise 2 ,
+.Xr mincore 2 ,
+.Xr mprotect 2 ,
 .Xr msync 2 ,
 .Xr munmap 2
 .Sh HISTORY
 The
 .Fn minherit
 function first appeared in
-.Bx Open .
+.Ox .
+.Sh BUGS
+If the a particular port does not support page-granularity
+inheritance, there's no way to figure out how large a region is
+actually affected by
+.Fn minherit .

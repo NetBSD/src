@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.17 2000/12/29 15:22:50 kleink Exp $
+.\"	$NetBSD: fseek.3,v 1.17.2.1 2001/10/08 20:20:50 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,7 @@ The new position, measured in bytes, is obtained by adding
 .Fa offset
 bytes to the position specified by
 .Fa whence .
-If 
+If
 .Fa whence
 is set to
 .Dv SEEK_SET ,
@@ -145,7 +145,7 @@ and
 (with whence set to
 .Dv SEEK_SET
 ), setting and storing the current value of
-the file offset into or from the object referenced by 
+the file offset into or from the object referenced by
 .Fa pos .
 On systems other than
 .Ux ,
@@ -166,13 +166,13 @@ return 0,
 and
 .Fn ftell
 returns the current offset.
-Otherwise, 
+Otherwise,
 .Fn fseek
 and
 .Fn ftell
 return \-1 and
 the others
-return a nonzero value and the global variable 
+return a nonzero value and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -185,7 +185,7 @@ is not a seekable stream.
 .It Bq Er EINVAL
 The
 .Fa whence
-argument to 
+argument to
 .Fn fseek
 was not
 .Dv SEEK_SET ,
@@ -220,7 +220,7 @@ for any of the errors specified for the routines
 .Xr fflush 3 ,
 .Xr fstat 2 ,
 .Xr lseek 2 ,
-and 
+and
 .Xr malloc 3 .
 .Sh SEE ALSO
 .Xr lseek 2

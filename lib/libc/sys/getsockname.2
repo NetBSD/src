@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockname.2,v 1.12 1999/12/02 21:42:37 kleink Exp $
+.\"	$NetBSD: getsockname.2,v 1.12.6.1 2001/10/08 20:21:46 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Sh DESCRIPTION
 The
 .Fn getsockname
-system call returns the current 
+system call returns the current
 .Fa name
 for the specified socket.
 The
@@ -74,21 +74,21 @@ is a file, not a socket.
 .It Bq Er ENOBUFS
 Insufficient resources were available in the system to perform the operation.
 .It Bq Er EFAULT
-The 
+The
 .Fa name
 parameter points to memory not in a valid part of the process address space.
 .El
 .Sh SEE ALSO
 .Xr bind 2 ,
 .Xr socket 2
+.Sh HISTORY
+The
+.Fn getsockname
+function call appeared in
+.Bx 4.2 .
 .Sh BUGS
 Names bound to sockets in the
 .Ux
 domain are inaccessible;
 .Fn getsockname
 returns a zero length name.
-.Sh HISTORY
-The
-.Fn getsockname
-function call appeared in
-.Bx 4.2 .

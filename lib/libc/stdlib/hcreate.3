@@ -1,4 +1,4 @@
-.\" 	$NetBSD: hcreate.3,v 1.2 2001/02/14 05:59:56 cgd Exp $
+.\" 	$NetBSD: hcreate.3,v 1.2.2.1 2001/10/08 20:21:10 nathanw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,6 @@ key must not be modified during the lifetime of the hash table.
 Search the hash table without inserting
 .Fa item .
 .El
-.Pp
 .Sh RETURN VALUES
 If successful, the
 .Fn hcreate
@@ -181,9 +180,6 @@ and
 .Fn hsearch
 functions conform to
 .St -xpg4.2 .
-.Sh BUGS
-.Pp
-The interface permits the use of only one hash table at a time.
 .Sh HISTORY
 The
 .Fn hcreate ,
@@ -192,3 +188,5 @@ and
 .Fn hsearch
 functions first appeared in
 .At V .
+.Sh BUGS
+The interface permits the use of only one hash table at a time.

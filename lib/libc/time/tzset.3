@@ -1,242 +1,256 @@
-.\"	$NetBSD: tzset.3,v 1.10 2000/06/05 11:56:13 kleink Exp $
-.TH TZSET 3
-.SH NAME
-tzset \- initialize time conversion information
-.SH SYNOPSIS
-.nf
-.B void tzset(void)
-.PP
-.fi
-.SH DESCRIPTION
-.I Tzset
-uses the value of the environment variable
-.B TZ
+.\"	$NetBSD: tzset.3,v 1.10.4.1 2001/10/08 20:22:23 nathanw Exp $
+.Dd April 1, 2001
+.Dt TZSET 3
+.Os
+.Sh NAME
+.Nm tzset
+.Nd initialize time conversion information
+.Sh LIBRARY
+.Lb libc
+.Sh SYNOPSIS
+.Fd #include <time.h>
+.Ft void
+.Fn tzset "void"
+.Sh DESCRIPTION
+The
+.Fn tzset
+function uses the value of the environment variable
+.Ev TZ
 to set time conversion information used by
-.IR localtime .
+.Xr localtime 3 .
 If
-.B TZ
+.Ev TZ
 does not appear in the environment,
-the best available approximation to local wall clock time, as specified
-by the
-.IR tzfile (5)-format
-file
-.B localtime
-in the system time conversion information directory, is used by
-.IR localtime .
+the best available approximation to local wall clock time, as
+specified by the
+.Xr tzfile 5
+format file
+.Pa /etc/localtime
+is used by
+.Xr localtime 3 .
 If
-.B TZ
+.Ev TZ
 appears in the environment but its value is a null string,
 Coordinated Universal Time (UTC) is used (without leap second
 correction).  If
-.B TZ
+.Ev TZ
 appears in the environment and its value is not a null string:
-.IP
+.Bl -dash
+.It
 if the value begins with a colon, it is used as a pathname of a file
 from which to read the time conversion information;
-.IP
+.It
 if the value does not begin with a colon, it is first used as the
 pathname of a file from which to read the time conversion information,
-and, if that file cannot be read, is used directly as a specification of
-the time conversion information.
-.PP
+and, if that file cannot be read, is used directly as a specification
+of the time conversion information.
+.El
+.Pp
 When
-.B TZ
-is used as a pathname, if it begins with a slash,
-it is used as an absolute pathname; otherwise,
-it is used as a pathname relative to a system time conversion information
-directory.
+.Ev TZ
+is used as a pathname, if it begins with a slash, it is used as an
+absolute pathname; otherwise, it is used as a pathname relative to
+.Pa /usr/share/zoneinfo .
 The file must be in the format specified in
-.IR tzfile (5).
-.PP
+.Xr tzfile 5 .
+.Pp
 When
-.B TZ
+.Ev TZ
 is used directly as a specification of the time conversion information,
 it must have the following syntax (spaces inserted for clarity):
-.IP
-\fIstd\|offset\fR[\fIdst\fR[\fIoffset\fR][\fB,\fIrule\fR]]
-.PP
-Where:
-.RS
-.TP 15
-.IR std " and " dst
+.Sm off
+.Bd -literal -offset indent
+.Cm std Cm offset Oo
+.Cm dst Oo
+.Cm offset Oc Oo
+.No , Cm rule Oc Oc
+.Ed
+.Sm on
+.Pp
+where:
+.Bl -tag -width "std and dst" -compact
+.It Cm std No and Cm dst
 Three or more bytes that are the designation for the standard
-.RI ( std )
+.Cm ( std )
 or summer
-.RI ( dst )
+.Cm ( dst )
 time zone.  Only
-.I std
+.Cm std
 is required; if
-.I dst
+.Cm dst
 is missing, then summer time does not apply in this locale.
 Upper- and lowercase letters are explicitly allowed.  Any characters
-except a leading colon
-.RB ( : ),
-digits, comma
-.RB ( , ),
-minus
-.RB ( \(mi ),
-plus
-.RB ( \(pl ),
+except a leading colon (:), digits, comma (,) , minus (-) , plus (+),
 and ASCII NUL are allowed.
-.TP
-.I offset
+.It Cm offset
 Indicates the value one must add to the local time to arrive at
 Coordinated Universal Time.  The
-.I offset
+.Cm offset
 has the form:
-.RS
-.IP
-\fIhh\fR[\fB:\fImm\fR[\fB:\fIss\fR]]
-.RE
-.IP
+.Sm off
+.Bd -literal -offset indent
+.Cm hh Oo
+.Cm :mm Oo
+.Cm :ss Oc Oc
+.Ed
+.Sm on
+.Pp
 The minutes
-.RI ( mm )
+.Cm ( mm )
 and seconds
-.RI ( ss )
+.Cm ( ss )
 are optional.  The hour
-.RI ( hh )
+.Cm ( hh )
 is required and may be a single digit.  The
-.I offset
+.Cm offset
 following
-.I std
+.Cm std
 is required.  If no
-.I offset
+.Cm offset
 follows
-.IR dst ,
+.Cm dst ,
 summer time is assumed to be one hour ahead of standard time.  One or
 more digits may be used; the value is always interpreted as a decimal
 number.  The hour must be between zero and 24, and the minutes (and
 seconds) \(em if present \(em between zero and 59.  If preceded by a
-.RB `` \(mi '',
+.Dq -
 the time zone shall be east of the Prime Meridian; otherwise it shall be
 west (which may be indicated by an optional preceding
-.RB `` \(pl '').
-.TP
-.I rule
+.Dq + ) .
+.It Cm rule
 Indicates when to change to and back from summer time.  The
-.I rule
+.Cm rule
 has the form:
-.RS
-.IP
-\fIdate\fB/\fItime\fB,\fIdate\fB/\fItime\fR
-.RE
-.IP
+.Sm off
+.Bd -literal -offset -indent
+.Xo
+.Cm date No /
+.Cm time No ,
+.Cm date No /
+.Cm time
+.Xc
+.Ed
+.Sm on
+.Pp
 where the first
-.I date
+.Cm date
 describes when the change from standard to summer time occurs and the
 second
-.I date
+.Cm date
 describes when the change back happens.  Each
-.I time
+.Cm time
 field describes when, in current local time, the change to the other
 time is made.
 .IP
 The format of
-.I date
+.Fa date
 is one of the following:
-.RS
-.TP 10
-.BI J n
+.Bl -tag -width "The Julian day" -compact
+.It Cm J Ns Ar n
 The Julian day
-.I n
-.RI "(1\ \(<=" "\ n\ " "\(<=\ 365).
+.Ar n
+(1 \*(<=
+.Ar n
+\*(<= 365).
 Leap days are not counted; that is, in all years \(em including leap
 years \(em February 28 is day 59 and March 1 is day 60.  It is
 impossible to explicitly refer to the occasional February 29.
-.TP
-.I n
-The zero-based Julian day
-.RI "(0\ \(<=" "\ n\ " "\(<=\ 365).
-Leap days are counted, and it is possible to refer to February 29.
-.TP
-.BI M m . n . d
+.It Ar n
+The zero-based Julian day (0\ \(<=
+.Ar n
+\(<=\ 365). Leap days are counted, and it is possible to refer to
+February 29.
+.Sm off
+.It Xo Cm M Ns Ar m
+.No . Ar n No . Ar d
+.Xc
+.Sm on
 The
-.IR d' th
+.Ar d Ns 'th
 day
-.RI "(0\ \(<=" "\ d\ " "\(<=\ 6)
-of week
-.I n
+(0 \(<=
+.Ar d
+\(<=\ 6) of week
+.Ar n
 of month
-.I m
+.Ar m
 of the year
-.RI "(1\ \(<=" "\ n\ " "\(<=\ 5,
-.RI "1\ \(<=" "\ m\ " "\(<=\ 12,
-where week 5 means ``the last
-.I d
-day in month
-.IR m ''
-which may occur in either the fourth or the fifth week).  Week 1 is the
-first week in which the
-.IR d' th
+(1 \(<=
+.Ar n
+\(<=\ 5, 1 \(<=
+.Ar m
+\(<=\ 12, where week 5 means
+.Dq the\ last Ar d No day\ in\ month Ar m
+which may occur in either the fourth or the fifth week).  Week 1 is
+the first week in which the
+.Ar d Ns 'th
 day occurs.  Day zero is Sunday.
-.RE
-.IP "" 15
+.El
 The
-.I time
+.Cm time
 has the same format as
-.I offset
+.Cm offset
 except that no leading sign
-.RB (`` \(mi ''
+.Dq -
 or
-.RB `` \(pl '')
+.Dq +
 is allowed.  The default, if
-.I time
+.Cm time
 is not given, is
-.BR 02:00:00 .
-.RE
-.LP
+.Cm 02:00:00 .
+.El
 If no
-.I rule
+.Cm rule
 is present in
-.BR TZ ,
-the rules specified
-by the
-.IR tzfile (5)-format
-file
-.B posixrules
-in the system time conversion information directory are used, with the
-standard and summer time offsets from UTC replaced by those specified by
-the
-.I offset
+.Ev TZ ,
+the rules specified by the
+.Xr tzfile 5
+format file
+.Pa posixrules
+in
+.Pa /usr/share/zoneinfo
+are used, with the standard and summer time offsets from UTC replaced
+by those specified by the
+.Cm offset
 values in
-.BR TZ .
-.PP
-For compatibility with System V Release 3.1, a semicolon
-.RB ( ; )
-may be used to separate the
-.I rule
+.Ev TZ .
+.Pp
+For compatibility with System V Release 3.1, a semicolon (;) may be
+used to separate the
+.Cm rule
 from the rest of the specification.
-.PP
+.Pp
 If the
-.B TZ
+.Ev TZ
 environment variable does not specify a
-.IR tzfile (5)-format
-and cannot be interpreted as a direct specification,
-UTC is used.
-.SH FILES
-.ta \w'/usr/share/zoneinfo/posixrules\0\0'u
-/etc/localtime	local time zone file
-.br
-/usr/share/zoneinfo	time zone information directory
-.br
-/usr/share/zoneinfo/posixrules	used with POSIX-style TZ's
-.br
-/usr/share/zoneinfo/GMT	for UTC leap seconds
-.sp
+.Xr tzfile 5
+format file and cannot be interpreted as a direct specification, UTC
+is used.
+.Sh FILES
+.Bl -tag -width /usr/share/zoneinfo/posixrules -compact
+.It Pa /etc/localtime
+local time zone file
+.It Pa /usr/share/zoneinfo
+time zone information directory
+.It Pa /usr/share/zoneinfo/posixrules
+used with POSIX-style TZ's
+.It Pa /usr/share/zoneinfo/GMT
+for UTC leap seconds
+.El
+.Pp
 If
-.B /usr/share/zoneinfo/GMT
-is absent,
-UTC leap seconds are loaded from
-.BR /usr/share/zoneinfo/posixrules .
-.SH SEE ALSO
-getenv(3),
-ctime(3),
-strftime(3),
-time(3),
-tzfile(5)
-.SH STANDARDS
+.Pa /usr/share/zoneinfo/GMT
+is absent, UTC leap seconds are loaded from
+.Pa /usr/share/zoneinfo/posixrules .
+.Sh SEE ALSO
+.Xr ctime 3 ,
+.Xr getenv 3 ,
+.Xr strftime 3 ,
+.Xr time 3 ,
+.Xr tzfile 5
+.Sh STANDARDS
 The
 tzset()
 function conforms to
-IEEE Std1003.1-1988 (``POSIX'').
+.St -p1003.1-88 .
 .\" @(#)newtzset.3	7.5

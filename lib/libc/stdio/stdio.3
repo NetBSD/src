@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdio.3,v 1.8 1999/03/22 19:44:57 garbled Exp $
+.\"	$NetBSD: stdio.3,v 1.8.12.1 2001/10/08 20:20:56 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -111,10 +111,10 @@ At program startup, three streams are predefined and need not be
 opened explicitly:
 .Bl -bullet -compact -offset indent
 .It
-.Em standard input 
+.Em standard input
 (for reading conventional input),
 .It
-.Em standard output 
+.Em standard output
 (for writing conventional output), and
 .It
 .Em standard error
@@ -156,10 +156,9 @@ The
 .Nm
 library is a part of the library
 .Pa libc.a
-and routines are automatically loaded as needed by the compilers
-.Xr cc 1
-and
-.Xr pc 1 .
+and routines are automatically loaded as needed by compilers such
+as
+.Xr cc 1 .
 The
 .Tn SYNOPSIS
 sections of the following manual pages indicate which include files
@@ -175,7 +174,7 @@ without first removing their current definitions with
 .Dv FOPEN_MAX ,
 .Dv L_cuserid ,
 .Dv L_ctermid ,
-.Dv L_tmpnam,
+.Dv L_tmpnam ,
 .Dv NULL ,
 .Dv SEEK_END ,
 .Dv SEEK_SET ,
@@ -206,16 +205,10 @@ and
 .Fn putchar
 exist and will be used if the macros definitions are explicitly removed.
 .Sh SEE ALSO
-.Xr open 2 ,
 .Xr close 2 ,
+.Xr open 2 ,
 .Xr read 2 ,
 .Xr write 2
-.Sh BUGS
-The standard buffered functions do not interact well with certain other
-library and system functions, especially
-.Xr vfork 2
-and
-.Xr abort 3 .
 .Sh STANDARDS
 The
 .Nm
@@ -287,3 +280,9 @@ vsnprintf	formatted output conversion
 vsprintf	formatted output conversion
 vsscanf	input format conversion
 .El
+.Sh BUGS
+The standard buffered functions do not interact well with certain other
+library and system functions, especially
+.Xr vfork 2
+and
+.Xr abort 3 .

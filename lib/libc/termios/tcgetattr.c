@@ -1,4 +1,4 @@
-/*	$NetBSD: tcgetattr.c,v 1.7 2000/01/22 22:19:21 mycroft Exp $	*/
+/*	$NetBSD: tcgetattr.c,v 1.7.6.1 2001/10/08 20:22:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcgetattr.c,v 1.7 2000/01/22 22:19:21 mycroft Exp $");
+__RCSID("$NetBSD: tcgetattr.c,v 1.7.6.1 2001/10/08 20:22:18 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,6 @@ tcgetattr(fd, t)
 	struct termios *t;
 {
 
-	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(t != NULL);
 
 	return (ioctl(fd, TIOCGETA, t));

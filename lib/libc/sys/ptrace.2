@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.13 2000/09/27 22:31:43 nathanw Exp $
+.\"	$NetBSD: ptrace.2,v 1.13.2.1 2001/10/08 20:22:01 nathanw Exp $
 .\"
 .\" This file is in the public domain.
 .Dd November 7, 1994
@@ -53,9 +53,7 @@ that the process expects to be traced by its parent.  All the other
 arguments are ignored.  (If the parent process does not expect to trace
 the child, it will probably be rather confused by the results; once the
 traced process stops, it cannot be made to continue except via
-.Eo \&
-.Fn ptrace
-.Ec \&.)
+.Fn ptrace . )
 When a process has used this request and calls
 .Xr execve 2
 or any of the routines built on it
@@ -175,7 +173,7 @@ succeeds, the traced process is no longer traced and continues
 execution normally.
 .El
 .Pp
-Additionally, the following requests exist but are 
+Additionally, the following requests exist but are
 not avaliable on all machine architectures. The file
 .Aq Pa machine/ptrace.h
 lists which requests exist on a given machine.

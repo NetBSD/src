@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.15 2000/12/29 15:22:51 kleink Exp $
+.\"	$NetBSD: printf.3,v 1.15.2.1 2001/10/08 20:20:53 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 30, 2001
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@
 .Nm snprintf ,
 .Nm asprintf ,
 .Nm vprintf ,
-.Nm vfprintf,
+.Nm vfprintf ,
 .Nm vsprintf ,
 .Nm vsnprintf ,
 .Nm vasprintf
@@ -87,7 +87,7 @@ as described below.
 and
 .Fn vprintf
 write output to
-.Em stdout,
+.Em stdout ,
 the standard output stream;
 .Fn fprintf
 and
@@ -334,6 +334,26 @@ conversion corresponds to a pointer to a
 argument.
 .It
 The optional character
+.Cm j ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to an
+.Em intmax_t
+or
+.Em uintmax_t
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+.Em intmax_t
+argument.
+.It
+The optional character
 .Cm l
 (ell) specifying that a following
 .Cm d ,
@@ -343,7 +363,7 @@ The optional character
 .Cm x ,
 or
 .Cm X
-conversion applies to a pointer to a
+conversion corresponds to a
 .Em long int
 or
 .Em unsigned long int
@@ -374,6 +394,47 @@ argument, or that a following
 .Cm n
 conversion corresponds to a pointer to a
 .Em quad_t
+argument.
+.It
+The optional character
+.Cm t ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to a
+.Em ptrdiff_t
+or
+the corresponding unsigned integer type
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+.Em ptrdiff_t
+argument.
+.It
+The optional character
+.Cm z ,
+specifying that a following
+.Cm d ,
+.Cm i ,
+.Cm o ,
+.Cm u ,
+.Cm x ,
+or
+.Cm X
+conversion corresponds to a
+.Em size_t
+or
+the corresponding signed integer type
+argument, or that a following
+.Cm n
+conversion corresponds to a pointer to a
+signed integer type correspoinding to
+.Em ptrdiff_t
 argument.
 .It
 The character
@@ -550,7 +611,6 @@ is
 In no case does a non-existent or small field width cause truncation of
 a field; if the result of a conversion is wider than the field width, the
 field is expanded to contain the conversion result.
-.Pp
 .Sh EXAMPLES
 .br
 To print a date and time in the form `Sunday, July 3, 10:02',
@@ -592,7 +652,8 @@ char *newfmt(const char *fmt, ...)
 .Ed
 .Sh SEE ALSO
 .Xr printf 1 ,
-.Xr scanf 3
+.Xr scanf 3 ,
+.Xr printf 9
 .Sh STANDARDS
 The
 .Fn fprintf ,
@@ -604,7 +665,21 @@ and
 .Fn vsprintf
 functions
 conform to
-.St -ansiC .
+.St -isoC90 .
+The conversion format modifiers
+.Cm %j ,
+.Cm %t
+and
+.Cm %z
+conform to
+.St -isoC99 .
+The
+.Fn snprintf
+and
+.Fn vsnprintf
+functions
+conform to
+.St -isoC99 .
 .Sh HISTORY
 The functions
 .Fn snprintf

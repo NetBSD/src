@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgsnd.2,v 1.9 1999/12/02 21:42:38 kleink Exp $	
+.\"	$NetBSD: msgsnd.2,v 1.9.6.1 2001/10/08 20:21:56 nathanw Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Ft int
 .Fn msgsnd "int msqid" "const void *msgp" "size_t msgsz" "int msgflg"
 .Sh DESCRIPTION
-The 
+The
 .Fn msgsnd
 function sends a message from the message queue specified in
 .Fa msqid .
@@ -63,7 +63,7 @@ struct mymsg {
 .Va mtype
 is an integer greater than 0 that can be used for selecting messages (see
 .Xr msgrcv 2 ) .
-.Va mtext 
+.Va mtext
 is an array of bytes, with size up to the system limit
 .Dv MSGMAX .
 .Pp
@@ -94,7 +94,7 @@ The message was sent.
 .It
 The message queue is removed, in which case -1 will be returned and
 .Va errno
-set to 
+set to
 .Er EINVAL .
 .It
 The caller catches a signal. The call returns with

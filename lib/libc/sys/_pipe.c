@@ -1,4 +1,4 @@
-/*	$NetBSD: _pipe.c,v 1.1 2000/09/28 08:38:55 kleink Exp $	*/
+/*	$NetBSD: _pipe.c,v 1.1.4.1 2001/10/08 20:21:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.

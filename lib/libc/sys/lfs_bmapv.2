@@ -1,4 +1,4 @@
-.\"	$NetBSD: lfs_bmapv.2,v 1.1 2000/05/24 21:54:59 perseant Exp $
+.\"	$NetBSD: lfs_bmapv.2,v 1.1.6.1 2001/10/08 20:21:49 nathanw Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ fills in the bi_daddr field for every block listed in the block array
 with the disk address corrseponding to the logical block
 .Fa bi_lbn
 of the file with inode
-.Fa bi_inode.
+.Fa bi_inode .
 If
 .Fa bi_lbn
 is LFS_UNUSED_LBN, the disk location of the inode block containing the
@@ -66,7 +66,7 @@ The
 .Fa fsidp
 argument contains the id of the filesystem to which the inodes and
 blocks belong.
-The 
+The
 .Fa blkiov
 argument is an array of BLOCK_INFO structures (see below).  The
 .Fa blkcnt
@@ -97,13 +97,13 @@ indicates:
 points outside the process's allocated address space.
 .It Bq Er EINVAL
 .Fa *fsidp
-does not specify a valid filesystem. 
+does not specify a valid filesystem.
 .El
 .Sh SEE ALSO
-.Xr lfs_cleanerd 8 ,
 .Xr lfs_markv 2 ,
 .Xr lfs_segclean 2 ,
-.Xr lfs_segwait 2
+.Xr lfs_segwait 2 ,
+.Xr lfs_cleanerd 8
 .Sh HISTORY
 The
 .Fn lfs_bmapv

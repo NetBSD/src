@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.8 1998/05/05 14:24:00 tv Exp $
+.\"	$NetBSD: strptime.3,v 1.8.12.1 2001/10/08 20:22:22 nathanw Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,13 +44,15 @@
 .Sh SYNOPSIS
 .Fd #include <time.h>
 .Ft char *
-.Fn strptime "const char *buf" "const char *format" "struct tm *tm"
+.Fn strptime "const char * restrict buf" "const char * restrict format" "struct tm * restrict tm"
 .Sh DESCRIPTION
 The
 .Fn strptime
 function converts the character string pointed to by
 .Fa buf
-to values which are stored in the ``tm'' structure pointed to by
+to values which are stored in the
+.Va tm
+structure pointed to by
 .Fa tm ,
 using the format specified by
 .Fa format .
@@ -72,8 +74,10 @@ match any number of whitespace characters in
 .Fa buf ,
 including none.
 .Pp
-A conversion specification consists of a percent sign `%' followed by one
-or two conversion characters which specify the replacement required. 
+A conversion specification consists of a percent sign
+.Ql %
+followed by one
+or two conversion characters which specify the replacement required.
 There must be white-space or other non-alphanumeric characters between any
 two conversion specifications.
 .Pp
@@ -190,14 +194,14 @@ nor specifications supported by the system, the behavior will be as if the
 unmodified conversion specification were used.
 .Sh RETURN VALUES
 If successful, the
-.Nm
+.Fn strptime
 function returns a pointer to the character following the last character
 parsed.  Otherwise, a null pointer is returned.
 .Sh SEE ALSO
 .Xr ctime 3 ,
 .Xr isspace 3 ,
-.Xr strftime 3 ,
-.Xr localtime 3
+.Xr localtime 3 ,
+.Xr strftime 3
 .Sh STANDARDS
 The
 .Fn strptime

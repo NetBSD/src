@@ -1,4 +1,4 @@
-.\"	$NetBSD: chroot.2,v 1.12 1999/12/02 21:42:36 kleink Exp $
+.\"	$NetBSD: chroot.2,v 1.12.6.1 2001/10/08 20:21:37 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 18, 2001
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@
 .Fd #include <unistd.h>
 .Ft int
 .Fn chroot "const char *dirname"
+.Ft int
+.Fn fchroot "int fd"
 .Sh DESCRIPTION
 .Fa dirname
 is the address of the pathname of a directory, terminated by an ASCII NUL.
@@ -66,6 +68,12 @@ It should be noted that, on most other systems,
 has no effect on the process's current directory.
 .Pp
 This call is restricted to the super-user.
+.Pp
+The
+.Fn fchroot
+function performs the same operation on an open directory file
+known by the file descriptor
+.Fa fd .
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.  Otherwise,
 a value of -1 is returned and
@@ -78,9 +86,9 @@ will fail and the root directory will be unchanged if:
 .It Bq Er ENOTDIR
 A component of the path name is not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
@@ -95,6 +103,24 @@ points outside the process's allocated address space.
 .It Bq Er EIO
 An I/O error occurred while reading from or writing to the file system.
 .El
+.Pp
+.Fn fchroot
+will fail and the root directory will be unchanged if:
+.Bl -tag -width Er
+.It Bq Er EACCES
+Search permission is denied for the directory referenced
+by the file descriptor.
+.It Bq Er EBADF
+The argument
+.Fa fd
+is not a valid file descriptor.
+.It Bq Er EIO
+An I/O error occurred while reading from or writing to the file system.
+.It Bq Er ENOTDIR
+The argument
+.Fa fd
+does not reference a directory.
+.El
 .Sh SEE ALSO
 .Xr chdir 2
 .Sh HISTORY
@@ -102,8 +128,12 @@ The
 .Fn chroot
 function call appeared in
 .Bx 4.2 .
-Working directory handling was changed in 
+Working directory handling was changed in
 .Nx 1.4
-to prevent one way a process could use a second 
+to prevent one way a process could use a second
 .Fn chroot
 call to a different directory to "escape" from the restricted subtree.
+The
+.Fn fchroot
+function appeared in
+.Nx 1.4 .

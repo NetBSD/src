@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.12 2000/10/11 18:26:04 phil Exp $
+.\"	$NetBSD: strtok.3,v 1.12.2.1 2001/10/08 20:21:29 nathanw Exp $
 .\"
 .Dd February 3, 1994
 .Dt STRTOK 3
@@ -47,7 +47,7 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
-.Fn strtok "char *str" "const char *sep"
+.Fn strtok "char * restrict str" "const char * restrict sep"
 .Ft char *
 .Fn strtok_r "char *str" "const char *sep" "char **lasts"
 .Sh DESCRIPTION
@@ -75,7 +75,7 @@ function
 returns a pointer to the beginning of each subsequent token in the string,
 after replacing the separator character itself with a
 .Dv NUL
-character. 
+character.
 Separator characters at the beginning of the string or at the
 continuation point are skipped so that zero length tokens
 are not returned.

@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.3 2000/07/15 15:07:35 bjh21 Exp $ */
+/* $NetBSD: softfloat.c,v 1.3.2.1 2001/10/08 20:20:43 nathanw Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.3 2000/07/15 15:07:35 bjh21 Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.3.2.1 2001/10/08 20:20:43 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -1219,7 +1219,6 @@ float32 int64_to_float32( int64 a )
     flag zSign;
     uint64 absA;
     int8 shiftCount;
-    bits32 zSig;
 
     if ( a == 0 ) return 0;
     zSign = ( a < 0 );
@@ -2228,7 +2227,6 @@ IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 flag float32_le_quiet( float32 a, float32 b )
 {
     flag aSign, bSign;
-    int16 aExp, bExp;
 
     if (    ( ( extractFloat32Exp( a ) == 0xFF ) && extractFloat32Frac( a ) )
          || ( ( extractFloat32Exp( b ) == 0xFF ) && extractFloat32Frac( b ) )
@@ -3035,7 +3033,6 @@ float64 float64_sqrt( float64 a )
     int16 aExp, zExp;
     bits64 aSig, zSig, doubleZSig;
     bits64 rem0, rem1, term0, term1;
-    float64 z;
 
     aSig = extractFloat64Frac( a );
     aExp = extractFloat64Exp( a );
@@ -3189,7 +3186,6 @@ IEC/IEEE Standard for Binary Floating-Point Arithmetic.
 flag float64_le_quiet( float64 a, float64 b )
 {
     flag aSign, bSign;
-    int16 aExp, bExp;
 
     if (    ( ( extractFloat64Exp( a ) == 0x7FF ) && extractFloat64Frac( a ) )
          || ( ( extractFloat64Exp( b ) == 0x7FF ) && extractFloat64Frac( b ) )
@@ -5391,3 +5387,107 @@ flag float128_lt_quiet( float128 a, float128 b )
 
 #endif
 
+
+#if defined(SOFTFLOAT_FOR_GCC) && defined(SOFTFLOAT_NEED_FIXUNS)
+
+/*
+ * These two routines are not part of the original softfloat distribution.
+ *
+ * They are based on the corresponding conversions to integer but return
+ * unsigned numbers instead since these functions are required by GCC.
+ *
+ * Added by Mark Brinicombe <mark@netbsd.org>	27/09/97
+ *
+ * float64 version overhauled for SoftFloat 2a [bjh21 2000-07-15]
+ */
+
+/*
+-------------------------------------------------------------------------------
+Returns the result of converting the double-precision floating-point value
+`a' to the 32-bit unsigned integer format.  The conversion is
+performed according to the IEC/IEEE Standard for Binary Floating-point
+Arithmetic, except that the conversion is always rounded toward zero.  If
+`a' is a NaN, the largest positive integer is returned.  If the conversion
+overflows, the largest integer positive is returned.
+-------------------------------------------------------------------------------
+*/
+uint32 float64_to_uint32_round_to_zero( float64 a )
+{
+    flag aSign;
+    int16 aExp, shiftCount;
+    bits64 aSig, savedASig;
+    uint32 z;
+
+    aSig = extractFloat64Frac( a );
+    aExp = extractFloat64Exp( a );
+    aSign = extractFloat64Sign( a );
+
+    if (aSign) {
+        float_raise( float_flag_invalid );
+    	return(0);
+    }
+
+    if ( 0x41E < aExp ) {
+        float_raise( float_flag_invalid );
+        return 0xffffffff;
+    }
+    else if ( aExp < 0x3FF ) {
+        if ( aExp || aSig ) float_exception_flags |= float_flag_inexact;
+        return 0;
+    }
+    aSig |= LIT64( 0x0010000000000000 );
+    shiftCount = 0x433 - aExp;
+    savedASig = aSig;
+    aSig >>= shiftCount;
+    z = aSig;
+    if ( ( aSig<<shiftCount ) != savedASig ) {
+        float_exception_flags |= float_flag_inexact;
+    }
+    return z;
+
+}
+
+/*
+-------------------------------------------------------------------------------
+Returns the result of converting the single-precision floating-point value
+`a' to the 32-bit unsigned integer format.  The conversion is
+performed according to the IEC/IEEE Standard for Binary Floating-point
+Arithmetic, except that the conversion is always rounded toward zero.  If
+`a' is a NaN, the largest positive integer is returned.  If the conversion
+overflows, the largest positive integer is returned.
+-------------------------------------------------------------------------------
+*/
+uint32 float32_to_uint32_round_to_zero( float32 a )
+{
+    flag aSign;
+    int16 aExp, shiftCount;
+    bits32 aSig;
+    uint32 z;
+
+    aSig = extractFloat32Frac( a );
+    aExp = extractFloat32Exp( a );
+    aSign = extractFloat32Sign( a );
+    shiftCount = aExp - 0x9E;
+
+    if (aSign) {
+        float_raise( float_flag_invalid );
+    	return(0);
+    }
+    if ( 0 < shiftCount ) {
+        float_raise( float_flag_invalid );
+        return 0xFFFFFFFF;
+    }
+    else if ( aExp <= 0x7E ) {
+        if ( aExp | aSig ) float_exception_flags |= float_flag_inexact;
+        return 0;
+    }
+    aSig = ( aSig | 0x800000 )<<8;
+    z = aSig>>( - shiftCount );
+    if ( aSig<<( shiftCount & 31 ) ) {
+        float_exception_flags |= float_flag_inexact;
+    }
+    return z;
+
+}
+
+#endif

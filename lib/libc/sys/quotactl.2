@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.15 2000/06/17 19:33:34 hubertf Exp $
+.\"	$NetBSD: quotactl.2,v 1.15.4.1 2001/10/08 20:22:01 nathanw Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@ The
 .Fa addr
 argument specifies a file from which to take the quotas.
 The quota file must exist;
-it is normally created with the 
+it is normally created with the
 .Xr quotacheck 8
 program.
 The
@@ -107,7 +107,7 @@ Get disk quota limits and current usage for the user or group
 .Fa addr
 is a pointer to a
 .Fa struct dqblk
-structure (defined in 
+structure (defined in
 .Ao Pa ufs/ufs/quota.h Ac ) .
 .It Dv Q_SETQUOTA
 Set disk quota limits for the user or group
@@ -116,7 +116,7 @@ Set disk quota limits for the user or group
 .Fa addr
 is a pointer to a
 .Fa struct dqblk
-structure (defined in 
+structure (defined in
 .Ao Pa ufs/ufs/quota.h Ac ) .
 The usage fields of the
 .Fa dqblk
@@ -169,9 +169,9 @@ search permission is denied for a component of a path prefix.
 .It Bq Er ENOTDIR
 A component of a path prefix was not a directory.
 .It Bq Er ENAMETOOLONG
-A component of a pathname exceeded 
+A component of a pathname exceeded
 .Dv {NAME_MAX}
-characters, or an entire path name exceeded 
+characters, or an entire path name exceeded
 .Dv {PATH_MAX}
 characters.
 .It Bq Er ENOENT
@@ -193,7 +193,7 @@ points outside the process's allocated address space, or
 an invalid
 .Fa addr
 was supplied; the associated structure could not be copied in or out
-of the kernel. 
+of the kernel.
 .It Bq Er EPERM
 The call was privileged and the caller was not the super-user.
 .El
@@ -204,14 +204,14 @@ The call was privileged and the caller was not the super-user.
 .Xr quotacheck 8 ,
 .Xr quotaon 8 ,
 .Xr repquota 8
+.Sh HISTORY
+The
+.Fn quotactl
+function call appeared in
+.Bx 4.3 Reno .
 .Sh BUGS
 There should be some way to integrate this call with the resource
 limit interface provided by
 .Xr setrlimit 2
 and
 .Xr getrlimit 2 .
-.Sh HISTORY
-The
-.Fn quotactl
-function call appeared in
-.Bx 4.3 Reno .

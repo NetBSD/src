@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.36.2.1 2001/08/08 16:25:14 nathanw Exp $	*/
+/*	$NetBSD: malloc.c,v 1.36.2.2 2001/10/08 20:21:13 nathanw Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -104,6 +104,7 @@ static pt_spin_t thread_lock = __SIMPLELOCK_UNLOCKED;
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -166,7 +167,8 @@ static size_t malloc_pagemask;
 #endif
 
 #define pageround(foo) (((foo) + (malloc_pagemask))&(~(malloc_pagemask)))
-#define ptr2idx(foo) (((size_t)(u_long)(foo) >> malloc_pageshift)-malloc_origo)
+#define ptr2idx(foo) \
+    (((size_t)(uintptr_t)(foo) >> malloc_pageshift)-malloc_origo)
 
 #ifndef THREAD_LOCK
 #define THREAD_LOCK()
@@ -311,24 +313,45 @@ wrtwarning(char *p)
 static void *
 map_pages(size_t pages)
 {
-    caddr_t result, tail;
+    caddr_t result, rresult, tail;
+    intptr_t bytes = pages << malloc_pageshift;
 
-    result = (caddr_t)pageround((size_t)(u_long)sbrk((intptr_t)0));
-    tail = result + (pages << malloc_pageshift);
-
-    if (brk(tail)) {
-#ifdef MALLOC_EXTRA_SANITY
-	wrterror("(ES): map_pages fails\n");
-#endif /* MALLOC_EXTRA_SANITY */
-	return 0;
+    if (bytes < 0 || (size_t)bytes < pages) {
+	errno = ENOMEM;
+	return NULL;
     }
+
+    if ((result = sbrk(bytes)) == (void *)-1)
+	return NULL;
+
+    /*
+     * Round to a page, in case sbrk(2) did not do this for us
+     */
+    rresult = (caddr_t)pageround((size_t)(uintptr_t)result);
+    if (result < rresult) {
+	/* make sure we have enough space to fit bytes */
+	if (sbrk((intptr_t)(rresult - result)) == (void *) -1) {
+	    /* we failed, put everything back */
+	    if (brk(result)) {
+		wrterror("brk(2) failed [internal error]\n");
+	    }
+	}
+    }
+    tail = rresult + (size_t)bytes;
+
     last_idx = ptr2idx(tail) - 1;
     malloc_brk = tail;
 
-    if ((last_idx+1) >= malloc_ninfo && !extend_pgdir(last_idx))
-	return 0;;
+    if ((last_idx+1) >= malloc_ninfo && !extend_pgdir(last_idx)) {
+	malloc_brk = result;
+	last_idx = ptr2idx(malloc_brk) - 1;
+	/* Put back break point since we failed. */
+	if (brk(malloc_brk))
+	    wrterror("brk(2) failed [internal error]\n");
+	return 0;
+    }
 
-    return result;
+    return rresult;
 }
 
 /*
@@ -339,6 +362,13 @@ extend_pgdir(size_t idx)
 {
     struct  pginfo **new, **old;
     size_t newlen, oldlen;
+
+    /* check for overflow */
+    if ((((~(1UL << ((sizeof(size_t) * NBBY) - 1)) / sizeof(*page_dir)) + 1)
+	+ (malloc_pagesize / sizeof *page_dir)) < idx) {
+	errno = ENOMEM;
+	return 0;
+    }
 
     /* Make it this many pages */
     newlen = pageround(idx * sizeof *page_dir) + malloc_pagesize;
@@ -479,7 +509,7 @@ malloc_init (void)
      * We need a maximum of malloc_pageshift buckets, steal these from the
      * front of the page_directory;
      */
-    malloc_origo = pageround((size_t)(u_long)sbrk((intptr_t)0))
+    malloc_origo = pageround((size_t)(uintptr_t)sbrk((intptr_t)0))
 	>> malloc_pageshift;
     malloc_origo -= malloc_pageshift;
 
@@ -509,11 +539,16 @@ static void *
 malloc_pages(size_t size)
 {
     void *p, *delay_free = 0;
-    int i;
+    size_t i;
     struct pgfree *pf;
     size_t idx;
 
-    size = pageround(size);
+    idx = pageround(size);
+    if (idx < size) {
+	errno = ENOMEM;
+	return NULL;
+    } else
+	size = idx;
 
     p = 0;
 
@@ -773,7 +808,7 @@ irealloc(void *ptr, size_t size)
     if (*mp == MALLOC_FIRST) {			/* Page allocation */
 
 	/* Check the pointer */
-	if ((size_t)(u_long)ptr & malloc_pagemask) {
+	if ((size_t)(uintptr_t)ptr & malloc_pagemask) {
 	    wrtwarning("modified (page-) pointer.\n");
 	    return 0;
 	}
@@ -791,13 +826,13 @@ irealloc(void *ptr, size_t size)
     } else if (*mp >= MALLOC_MAGIC) {		/* Chunk allocation */
 
 	/* Check the pointer for sane values */
-	if (((size_t)(u_long)ptr & ((*mp)->size-1))) {
+	if (((size_t)(uintptr_t)ptr & ((*mp)->size-1))) {
 	    wrtwarning("modified (chunk-) pointer.\n");
 	    return 0;
 	}
 
 	/* Find the chunk index in the page */
-	i = ((size_t)(u_long)ptr & malloc_pagemask) >> (*mp)->shift;
+	i = ((size_t)(uintptr_t)ptr & malloc_pagemask) >> (*mp)->shift;
 
 	/* Verify that it isn't a free chunk already */
         if ((*mp)->bits[i/MALLOC_BITS] & (1<<(i%MALLOC_BITS))) {
@@ -856,7 +891,7 @@ free_pages(void *ptr, size_t idx, struct pginfo *info)
 	return;
     }
 
-    if ((size_t)(u_long)ptr & malloc_pagemask) {
+    if ((size_t)(uintptr_t)ptr & malloc_pagemask) {
 	wrtwarning("modified (page-) pointer.\n");
 	return;
     }
@@ -976,9 +1011,9 @@ free_bytes(void *ptr, size_t idx, struct pginfo *info)
     void *vp;
 
     /* Find the chunk number on the page */
-    i = ((size_t)(u_long)ptr & malloc_pagemask) >> info->shift;
+    i = ((size_t)(uintptr_t)ptr & malloc_pagemask) >> info->shift;
 
-    if (((size_t)(u_long)ptr & (info->size-1))) {
+    if (((size_t)(uintptr_t)ptr & (info->size-1))) {
 	wrtwarning("modified (chunk-) pointer.\n");
 	return;
     }
@@ -1112,6 +1147,7 @@ free(void *ptr)
     if (malloc_active++) {
 	wrtwarning("recursive call.\n");
 	malloc_active--;
+	THREAD_UNLOCK();
 	return;
     } else {
 	ifree(ptr);

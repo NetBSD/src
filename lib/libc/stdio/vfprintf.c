@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.35 2000/12/30 04:13:25 itojun Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.35.2.1 2001/10/08 20:20:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.35 2000/12/30 04:13:25 itojun Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.35.2.1 2001/10/08 20:20:58 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: vfprintf.c,v 1.35 2000/12/30 04:13:25 itojun Exp $");
 
 #include <assert.h>
 #include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -186,8 +188,11 @@ __UNCONST(v)
 #define	LONGINT		0x010		/* long integer */
 #define	QUADINT		0x020		/* quad integer */
 #define	SHORTINT	0x040		/* short integer */
-#define	ZEROPAD		0x080		/* zero (as opposed to blank) pad */
-#define FPT		0x100		/* Floating point number */
+#define	MAXINT		0x080		/* (unsigned) intmax_t */
+#define	PTRINT		0x100		/* (unsigned) ptrdiff_t */
+#define	SIZEINT		0x200		/* (signed) size_t */
+#define	ZEROPAD		0x400		/* zero (as opposed to blank) pad */
+#define FPT		0x800		/* Floating point number */
 int
 vfprintf(fp, fmt0, ap)
 	FILE *fp;
@@ -222,7 +227,10 @@ vfprintf(fp, fmt0, ap)
 #define	u_quad_t  unsigned long long
 #endif
 
-	u_quad_t _uquad;	/* integer arguments %[diouxX] */
+#define	INTMAX_T	intmax_t
+#define	UINTMAX_T	uintmax_t
+
+	UINTMAX_T _uintmax;	/* integer arguments %[diouxX] */
 	enum { OCT, DEC, HEX } base;/* base for [diouxX] conversion */
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
@@ -280,12 +288,18 @@ vfprintf(fp, fmt0, ap)
 	 * argument extraction methods.
 	 */
 #define	SARG() \
-	(flags&QUADINT ? va_arg(ap, quad_t) : \
+	(flags&MAXINT ? va_arg(ap, intmax_t) : \
+	    flags&PTRINT ? va_arg(ap, ptrdiff_t) : \
+	    flags&SIZEINT ? va_arg(ap, ssize_t) : /* XXX */ \
+	    flags&QUADINT ? va_arg(ap, quad_t) : \
 	    flags&LONGINT ? va_arg(ap, long) : \
 	    flags&SHORTINT ? (long)(short)va_arg(ap, int) : \
 	    (long)va_arg(ap, int))
 #define	UARG() \
-	(flags&QUADINT ? va_arg(ap, u_quad_t) : \
+	(flags&MAXINT ? va_arg(ap, uintmax_t) : \
+	    flags&PTRINT ? va_arg(ap, uintptr_t) : /* XXX */ \
+	    flags&SIZEINT ? va_arg(ap, size_t) : \
+	    flags&QUADINT ? va_arg(ap, u_quad_t) : \
 	    flags&LONGINT ? va_arg(ap, u_long) : \
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
@@ -413,6 +427,9 @@ reswitch:	switch (ch) {
 		case 'h':
 			flags |= SHORTINT;
 			goto rflag;
+		case 'j':
+			flags |= MAXINT;
+			goto rflag;
 		case 'l':
 			if (*fmt == 'l') {
 				fmt++;
@@ -423,6 +440,12 @@ reswitch:	switch (ch) {
 			goto rflag;
 		case 'q':
 			flags |= QUADINT;
+			goto rflag;
+		case 't':
+			flags |= PTRINT;
+			goto rflag;
+		case 'z':
+			flags |= SIZEINT;
 			goto rflag;
 		case 'c':
 			*buf = va_arg(ap, int);
@@ -435,9 +458,9 @@ reswitch:	switch (ch) {
 			/*FALLTHROUGH*/
 		case 'd':
 		case 'i':
-			_uquad = SARG();
-			if ((quad_t)_uquad < 0) {
-				_uquad = -_uquad;
+			_uintmax = SARG();
+			if ((intmax_t)_uintmax < 0) {
+				_uintmax = -_uintmax;
 				sign = '-';
 			}
 			base = DEC;
@@ -509,7 +532,13 @@ reswitch:	switch (ch) {
 			break;
 #endif /* FLOATING_POINT */
 		case 'n':
-			if (flags & QUADINT)
+			if (flags & MAXINT)
+				*va_arg(ap, intmax_t *) = ret;
+			else if (flags & PTRINT)
+				*va_arg(ap, ptrdiff_t *) = ret;
+			else if (flags & SIZEINT)
+				*va_arg(ap, ssize_t *) = ret;	/* XXX */
+			else if (flags & QUADINT)
 				*va_arg(ap, quad_t *) = ret;
 			else if (flags & LONGINT)
 				*va_arg(ap, long *) = ret;
@@ -522,7 +551,7 @@ reswitch:	switch (ch) {
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
 		case 'o':
-			_uquad = UARG();
+			_uintmax = UARG();
 			base = OCT;
 			goto nosign;
 		case 'p':
@@ -534,7 +563,7 @@ reswitch:	switch (ch) {
 			 *	-- ANSI X3J11
 			 */
 			/* NOSTRICT */
-			_uquad = (u_long)va_arg(ap, void *);
+			_uintmax = (u_long)va_arg(ap, void *);
 			base = HEX;
 			xdigs = "0123456789abcdef";
 			flags |= HEXPREFIX;
@@ -565,7 +594,7 @@ reswitch:	switch (ch) {
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
 		case 'u':
-			_uquad = UARG();
+			_uintmax = UARG();
 			base = DEC;
 			goto nosign;
 		case 'X':
@@ -573,10 +602,10 @@ reswitch:	switch (ch) {
 			goto hex;
 		case 'x':
 			xdigs = "0123456789abcdef";
-hex:			_uquad = UARG();
+hex:			_uintmax = UARG();
 			base = HEX;
 			/* leading 0x/X only if non-zero */
-			if (flags & ALT && _uquad != 0)
+			if (flags & ALT && _uintmax != 0)
 				flags |= HEXPREFIX;
 
 			/* unsigned conversions */
@@ -595,7 +624,7 @@ number:			if ((dprec = prec) >= 0)
 			 *	-- ANSI X3J11
 			 */
 			bp = buf + BUF;
-			if (_uquad != 0 || prec != 0) {
+			if (_uintmax != 0 || prec != 0) {
 				/*
 				 * Unsigned mod is hard, and unsigned mod
 				 * by a constant is easier than that by
@@ -604,9 +633,9 @@ number:			if ((dprec = prec) >= 0)
 				switch (base) {
 				case OCT:
 					do {
-						*--bp = to_char(_uquad & 7);
-						_uquad >>= 3;
-					} while (_uquad);
+						*--bp = to_char(_uintmax & 7);
+						_uintmax >>= 3;
+					} while (_uintmax);
 					/* handle octal leading 0 */
 					if (flags & ALT && *bp != '0')
 						*--bp = '0';
@@ -614,19 +643,19 @@ number:			if ((dprec = prec) >= 0)
 
 				case DEC:
 					/* many numbers are 1 digit */
-					while (_uquad >= 10) {
-						*--bp = to_char(_uquad % 10);
-						_uquad /= 10;
+					while (_uintmax >= 10) {
+						*--bp = to_char(_uintmax % 10);
+						_uintmax /= 10;
 					}
-					*--bp = to_char(_uquad);
+					*--bp = to_char(_uintmax);
 					break;
 
 				case HEX:
 					do {
 						*--bp = xdigs[(size_t)
-						    (_uquad & 15)];
-						_uquad >>= 4;
-					} while (_uquad);
+						    (_uintmax & 15)];
+						_uintmax >>= 4;
+					} while (_uintmax);
 					break;
 
 				default:

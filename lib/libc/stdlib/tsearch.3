@@ -1,4 +1,4 @@
-.\" $NetBSD: tsearch.3,v 1.1 1999/02/22 10:33:15 christos Exp $
+.\" $NetBSD: tsearch.3,v 1.1.12.1 2001/10/08 20:21:22 nathanw Exp $
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	OpenBSD: tsearch.3,v 1.2 1998/06/21 22:13:49 millert Exp 
+.\"	OpenBSD: tsearch.3,v 1.2 1998/06/21 22:13:49 millert Exp
 .\"
 .Dd June 15, 1997
 .Dt TSEARCH 3
@@ -90,14 +90,10 @@ and calls the function
 on each node.
 .Fa Action
 is called with three arguments: a pointer to the current node,
-a value from the enum 
+a value from the enum
 .Sy "typedef enum { preorder, postorder, endorder, leaf } VISIT;"
 specifying the traversal type, and a node level (where level
 zero is the root of the tree).
-.Sh SEE ALSO
-.Xr bsearch 3 ,
-.Xr hsearch 3 ,
-.Xr lsearch 3
 .Sh RETURN VALUES
 The
 .Fn tsearch
@@ -115,3 +111,7 @@ is NULL or the datum cannot be found.
 The
 .Fn twalk
 function returns no value.
+.Sh SEE ALSO
+.Xr bsearch 3 ,
+.Xr hsearch 3 ,
+.Xr lsearch 3

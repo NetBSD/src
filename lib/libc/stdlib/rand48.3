@@ -1,4 +1,4 @@
-.\"	$NetBSD: rand48.3,v 1.6 2000/07/05 15:45:33 msaitoh Exp $
+.\"	$NetBSD: rand48.3,v 1.6.2.1 2001/10/08 20:21:16 nathanw Exp $
 .\"
 .\" Copyright (c) 1993 Martin Birgmeier
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Lb libc
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
-.Ft double 
+.Ft double
 .Fn drand48 void
 .Ft double
 .Fn erand48 "unsigned short xseed[3]"
@@ -155,9 +155,9 @@ always also set the multiplicand and addend for any of the six
 generator calls.
 .Pp
 For a more powerful random number generator, see
-.Xr random 3
-.Sh AUTHOR
-Martin Birgmeier
+.Xr random 3 .
 .Sh SEE ALSO
 .Xr rand 3 ,
 .Xr random 3
+.Sh AUTHORS
+Martin Birgmeier
