@@ -1,3 +1,5 @@
+/*	$NetBSD: adv.c,v 1.2 1998/08/29 13:45:56 dante Exp $	*/
+
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: adv_pci.c,v 1.2 1998/08/29 13:44:49 dante Exp $	*/
+
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
  * 
