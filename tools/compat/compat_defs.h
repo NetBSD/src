@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.6 2002/02/26 22:29:38 tv Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.7 2002/03/07 22:46:07 tv Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -362,6 +362,10 @@ void *setmode(const char *);
 #define BYTE_ORDER LITTLE_ENDIAN
 #endif
 
+#ifndef DEV_BSIZE
+#define DEV_BSIZE (1 << 9)
+#endif
+
 #undef MIN
 #undef MAX
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
@@ -393,6 +397,9 @@ void *setmode(const char *);
 #ifndef powerof2
 #define powerof2(x) ((((x)-1)&(x))==0)
 #endif
+
+#undef roundup
+#define roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 
 /* <sys/stat.h> */
 
