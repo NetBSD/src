@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.9 2001/03/30 23:28:00 wdk Exp $	*/
+/*	$NetBSD: zs.c,v 1.10 2001/07/08 04:25:36 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -249,8 +249,8 @@ zs_attach(parent, self, aux)
 		}
 		ch->cs_bustag = ca->ca_bustag;
 
-		bcopy(zs_init_reg, cs->cs_creg, 16);
-		bcopy(zs_init_reg, cs->cs_preg, 16);
+		memcpy(cs->cs_creg, zs_init_reg, 16);
+		memcpy(cs->cs_preg, zs_init_reg, 16);
 
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
 			cs->cs_defspeed = zs_get_speed(cs);
@@ -348,7 +348,7 @@ zshard(arg)
 		}
 		zsc->zs_intrcnt.ev_count++;
 	}
-	return 0;
+	return rval;
 }
 
 /*
@@ -411,7 +411,7 @@ zs_set_speed(cs, bps)
 {
 	int tconst, real_bps;
 
-#if 1
+#if 0
 	while (!(zs_read_csr(cs) & ZSRR0_TX_READY))
 	        {/*nop*/}
 #endif
@@ -565,7 +565,9 @@ void
 zs_abort(cs)
 	struct zs_chanstate *cs;
 {
-#ifdef DDB
+#if defined(KGDB)
+	zskgdb(cs);
+#elif defined(DDB)
 	Debugger();
 #endif
 }
