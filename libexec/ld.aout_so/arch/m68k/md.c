@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 1998/12/20 17:43:37 veego Exp $	*/
+/*	$NetBSD: md.c,v 1.15 1999/01/05 10:02:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -329,8 +329,8 @@ md_swapin_reloc(r, n)
 	for (; n; n--, r++) {
 		r->r_address = md_swap_long(r->r_address);
 		bits = ((int *)r)[1];
-		r->r_symbolnum = md_swap_long(bits) & 0x00ffffff;
-		bits = ((unsigned char *)r)[7];
+		r->r_symbolnum = md_swap_long(bits) >> 8;
+		bits >>= 24;
 		r->r_pcrel = (bits >> 7) & 1;
 		r->r_length = (bits >> 5) & 3;
 		r->r_extern = (bits >> 4) & 1;
@@ -352,7 +352,6 @@ md_swapout_reloc(r, n)
 
 	for (; n; n--, r++) {
 		r->r_address = md_swap_long(r->r_address);
-		((int *)r)[1] = md_swap_long(r->r_symbolnum) & 0xffffff00;
 		bits = (r->r_pcrel & 1) << 7;
 		bits |= (r->r_length & 3) << 5;
 		bits |= (r->r_extern & 1) << 4;
@@ -362,6 +361,7 @@ md_swapout_reloc(r, n)
 #ifdef N_SIZE
 		bits |= (r->r_copy & 1);
 #endif
+		((int *)r)[1] = md_swap_long(r->r_symbolnum) >> 8;
 		((unsigned char *)r)[7] = bits;
 	}
 }

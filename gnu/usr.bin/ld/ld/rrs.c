@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.27 1998/12/17 14:34:51 pk Exp $	*/
+/*	$NetBSD: rrs.c,v 1.28 1999/01/05 10:02:20 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1189,7 +1189,7 @@ write_rrs_text()
 
 	/* Write the symbol table */
 	if (rrs_symbol_size == sizeof(struct nlist))
-		md_swapout_symbols(rrs_symbols, number_of_rrs_symbols);
+		md_swapout_symbols((struct nlist *) rrs_symbols, number_of_rrs_symbols);
 	else
 		md_swapout_zsymbols(rrs_symbols, number_of_rrs_symbols);
 	mywrite(rrs_symbols, symsize, 1, outstream);

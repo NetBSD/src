@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 1998/12/21 12:16:16 is Exp $	*/
+/*	$NetBSD: md.h,v 1.8 1999/01/05 10:02:21 itohy Exp $	*/
 
 /*
  *	- m68k dependent definitions
@@ -141,8 +141,8 @@ void	md_swapout_jmpslot __P((jmpslot_t *, int));
 #define md_swapout_so_debug(d)			swap_so_debug(d)
 #define md_swapin_rrs_hash(f,n)			swap_rrs_hash(f,n)
 #define md_swapout_rrs_hash(f,n)		swap_rrs_hash(f,n)
-#define md_swapin_sod(l,n)			swapin_link_object(l,n)
-#define md_swapout_sod(l,n)			swapout_link_object(l,n)
+#define md_swapin_sod(l,n)			swapin_sod(l,n)
+#define md_swapout_sod(l,n)			swapout_sod(l,n)
 #define md_swapout_got(g,n)			swap_longs((long*)(g),n)
 #define md_swapin_ranlib_hdr(h,n)		swap_ranlib_hdr(h,n)
 #define md_swapout_ranlib_hdr(h,n)		swap_ranlib_hdr(h,n)
