@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/12/18 07:37:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1998/05/21 20:52:21 tv Exp $
 
 LIB=	common
 
-SRCS=	arparse.c arlex.c arsup.c bucomm.c version.c filemode.c rddbg.c \
+SRCS=	arparse.y arlex.l arsup.c bucomm.c version.c filemode.c rddbg.c \
 	debug.c stabs.c ieee.c rdcoff.c wrstabs.c
+YHEADER=1
 
 CPPFLAGS+=-DVERSION='"${VERSION}"' -DTARGET='"${TARGET}"'
 
 NOPROFILE=
 NOPIC=
+NOLINT=
 
 # only needed during build
 libinstall::
