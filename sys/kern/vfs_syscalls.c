@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.39 1994/11/18 02:48:58 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.40 1994/12/04 03:09:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -620,12 +620,14 @@ open(p, uap, retval)
 	fp->f_data = (caddr_t) NULL;
 	if (error = vn_open(&nd, flags, cmode, fp)) {
 		ffree(fp);
-		if ((error == ENODEV || error == ENXIO) &&
-		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
-		    (error =
-			dupfdopen(fdp, indx, p->p_dupfd, flags, error)) == 0) {
-			*retval = indx;
-			return (0);
+		if (p->p_dupfd >= 0) {
+			switch (error) {
+			case ENODEV:	/* XXX from fdopen or fdesc_open */
+				return (finishdup(fdp, p->p_dupfd, indx, retval));
+
+			case ENXIO:	/* XXX from portal_open */
+				return (finishmove(fdp, p->p_dupfd, indx, retval));
+			}
 		}
 		if (error == ERESTART)
 			error = EINTR;
