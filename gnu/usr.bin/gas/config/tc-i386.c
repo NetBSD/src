@@ -25,7 +25,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$Id: tc-i386.c,v 1.1 1993/10/02 20:59:19 pk Exp $";
+static char rcsid[] = "$Id: tc-i386.c,v 1.2 1993/10/25 21:57:06 pk Exp $";
 #endif
 
 #include "as.h"
@@ -2037,6 +2037,11 @@ relax_addressT segment_address_in_file;
 	switch (fixP->fx_r_type) {
 	case NO_RELOC:
 		break;
+	case RELOC_32:
+		if (!S_IS_EXTERNAL(fixP->fx_addsy))
+			break;
+		r_symbolnum = fixP->fx_addsy->sy_number;
+		break;
 	case RELOC_GLOB_DAT:
 		extra_bits = (1 << 4) & 0x10; /* r_baserel */
 		r_symbolnum = fixP->fx_addsy->sy_number;
@@ -2057,8 +2062,10 @@ relax_addressT segment_address_in_file;
 	where[4] = r_symbolnum & 0x0ff;
 	where[7] = ((((
 			(!S_IS_DEFINED(fixP->fx_addsy) ||
-				fixP->fx_r_type == RELOC_GLOB_DAT &&
-				S_IS_EXTERNAL(fixP->fx_addsy)
+				(S_IS_EXTERNAL(fixP->fx_addsy) &&
+				(fixP->fx_r_type == RELOC_GLOB_DAT ||
+				fixP->fx_r_type == RELOC_32)
+				)
 			)
 							) << 3)  & 0x08)
 		    | ((nbytes_r_length[fixP->fx_size] << 1) & 0x06)
