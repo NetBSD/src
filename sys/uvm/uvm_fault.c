@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.35 1999/06/16 18:43:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.36 1999/06/16 22:11:23 thorpej Exp $	*/
 
 /*
  *
@@ -1708,10 +1708,10 @@ Case2:
 /*
  * uvm_fault_wire: wire down a range of virtual addresses in a map.
  *
- * => map should be locked by caller?   If so how can we call
- *	uvm_fault?   WRONG.
- * => XXXCDC: locking here is all screwed up!!!  start with 
- *	uvm_map_pageable and fix it.
+ * => map may be read-locked by caller, but MUST NOT be write-locked.
+ * => if map is read-locked, any operations which may cause map to
+ *	be write-locked in uvm_fault() must be taken care of by
+ *	the caller.  See uvm_map_pageable().
  */
 
 int
@@ -1757,6 +1757,23 @@ uvm_fault_wire(map, start, end, access_type)
 
 void
 uvm_fault_unwire(map, start, end)
+	vm_map_t map;
+	vaddr_t start, end;
+{
+
+	vm_map_lock_read(map);
+	uvm_fault_unwire_locked(map, start, end);
+	vm_map_unlock_read(map);
+}
+
+/*
+ * uvm_fault_unwire_locked(): the guts of uvm_fault_unwire().
+ *
+ * => map must be at least read-locked.
+ */
+
+void
+uvm_fault_unwire_locked(map, start, end)
 	vm_map_t map;
 	vaddr_t start, end;
 {
