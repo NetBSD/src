@@ -38,7 +38,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)fstat.c	8.1 (Berkeley) 6/6/93";
+/*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
+static char *rcsid = "$Id: fstat.c,v 1.11 1994/06/13 22:12:13 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -464,7 +465,6 @@ ufs_filestat(vp, fsp)
 	struct vnode *vp;
 	struct filestat *fsp;
 {
-#ifdef notyet
 	struct inode inode;
 
 	if (!KVM_READ(VTOI(vp), &inode, sizeof (inode))) {
@@ -477,16 +477,6 @@ ufs_filestat(vp, fsp)
 	fsp->mode = (mode_t)inode.i_mode;
 	fsp->size = (u_long)inode.i_size;
 	fsp->rdev = inode.i_rdev;
-#else
-	struct inode *inode;
-
-	inode = VTOI(vp);
-	fsp->fsid = inode->i_dev & 0xffff;
-	fsp->fileid = (long)inode->i_number;
-	fsp->mode = (mode_t)inode->i_mode;
-	fsp->size = (u_long)inode->i_size;
-	fsp->rdev = inode->i_rdev;
-#endif
 
 	return 1;
 }
@@ -496,7 +486,6 @@ nfs_filestat(vp, fsp)
 	struct vnode *vp;
 	struct filestat *fsp;
 {
-#ifdef notyet
 	struct nfsnode nfsnode;
 	register mode_t mode;
 
@@ -536,9 +525,6 @@ nfs_filestat(vp, fsp)
 	fsp->mode = mode;
 
 	return 1;
-#else
-	return 0;
-#endif
 }
 
 
