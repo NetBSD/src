@@ -565,4 +565,4 @@ struct sysent svr4_sysent[] = {
 	    nosys },				/* 186 = unimplemented svr4_auditsys */
 };
 
-int	nsvr4_sysent= sizeof(svr4_sysent) / sizeof(svr4_sysent[0]);
+int	nsvr4_sysent= sizeof(svr4_sysent) / sizeof(svr4_sysen
