@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.16 1997/11/05 07:28:32 jonathan Exp $	*/
+/*	$NetBSD: net.c,v 1.17 1997/11/09 15:54:17 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -295,14 +295,10 @@ mnt_net_config(void)
 			 */
 			f = target_fopen("/etc/hosts", "a");
 			if (f != 0) {
-				fprintf(f, "#\n");
-				fprintf(f, "#Added by NetBSD sysinst\n");
-				fprintf(f, "#\n");
-				fprintf(f, "%s %s\n", net_ip, net_host);
-				fprintf(f, "%s %s.%s\n", 
-					net_ip, net_host, net_domain);
-				fprintf(f, "127.0.0.1 localhost\n");
-				  fclose(f);
+				fprintf(f, msg_string(MSG_etc_hosts),
+					net_ip, net_host, net_domain,
+					net_host);
+				fclose(f);
 			}
 
 			/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
