@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.26.2.1 1999/04/13 21:33:56 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.26.2.2 1999/04/15 17:30:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -249,8 +249,8 @@ lfs_markv(p, v, retval)
 			 * of a usable vnode in vp is signaled by a valid v_daddr.
 			 */
 			if(v_daddr != LFS_UNUSED_DADDR) {
-				if(ip->i_flag & (IN_MODIFIED|IN_CLEANING))
 #ifdef DEBUG_LFS
+				if(ip->i_flag & (IN_MODIFIED|IN_CLEANING))
 					iwritten++;
 #endif
 				if(lfs_fastvget_unlock) {
