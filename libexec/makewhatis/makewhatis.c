@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.22 2002/03/07 20:37:14 jdolecek Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.23 2002/03/08 21:59:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: makewhatis.c,v 1.22 2002/03/07 20:37:14 jdolecek Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.23 2002/03/08 21:59:07 jdolecek Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: makewhatis.c,v 1.22 2002/03/07 20:37:14 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
@@ -60,6 +61,7 @@ __RCSID("$NetBSD: makewhatis.c,v 1.22 2002/03/07 20:37:14 jdolecek Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <glob.h>
 #include <locale.h>
 #include <paths.h>
 #include <signal.h>
@@ -68,6 +70,9 @@ __RCSID("$NetBSD: makewhatis.c,v 1.22 2002/03/07 20:37:14 jdolecek Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <zlib.h>
+
+#include <man/config.h>
+#include <man/pathnames.h>
 
 typedef struct manpagestruct manpage;
 struct manpagestruct {
@@ -104,6 +109,7 @@ void	 processmanpages(manpage **,whatis **);
 void	 dumpwhatis(FILE *, whatis *);
 void	*emalloc(size_t);
 char	*estrdup(const char *);
+static int makewhatis(char * const *manpath);
 
 char * const default_manpath[] = {
 	"/usr/share/man",
@@ -111,22 +117,126 @@ char * const default_manpath[] = {
 };
 
 const char *sectionext	= "0123456789ln";
-const char *whatisdb	= "whatis.db";
+const char *whatisdb	= _PATH_WHATIS;
 
 int
 main(int argc, char *const *argv)
 {
 	char	* const *manpath;
+	int c, dofork=1;
+	const char *conffile = NULL;
+	ENTRY *ep;
+	TAG *tp;
+	int rv, jobs = 0, status;
+	glob_t pg;
+	char *paths[2], **p, *sl;
+	int retval = EXIT_SUCCESS;
+
+	(void)setlocale(LC_ALL, "");
+
+	while((c = getopt(argc, argv, "C:f")) != -1) {
+		switch(c) {
+		case 'C':
+			conffile = optarg;
+			break;
+		case 'f':
+			/* run all processing on foreground */
+			dofork = 0;
+			break;
+		default:
+			fprintf(stderr, "Usage: %s [-C file] [-f] [path ...]\n",
+				getprogname());
+			exit(EXIT_FAILURE);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+			
+	if (argc >= 2) {
+		manpath = &argv[0];
+	
+	    mkwhatis:
+		return (makewhatis(manpath));
+	}
+
+	/*
+	 * Try read config file, fallback to default_manpath[]
+	 * if man.conf not available.
+	 */
+	config(conffile);
+	if ((tp = getlist("_whatdb")) == NULL) {
+		manpath = default_manpath;
+		goto mkwhatis;
+	}
+
+	/* Build individual databases */
+	paths[1] = NULL;
+	TAILQ_FOREACH(ep, &tp->list, q) {
+		if ((rv = glob(ep->s,
+		    GLOB_BRACE | GLOB_NOSORT | GLOB_ERR | GLOB_NOCHECK,
+		    NULL, &pg)) != 0)
+			err(EXIT_FAILURE, "glob('%s')", ep->s);
+
+		/* We always have something to work with here */
+		for (p = pg.gl_pathv; *p; p++) {
+			sl = strrchr(*p, '/');
+			if (!sl)
+				err(EXIT_FAILURE, "glob: _whatdb entry '%s' doesn't contain slash", ep->s);
+
+			/*
+			 * Cut the last component of path, leaving just
+			 * the directory. We will use the result as root
+			 * for manpage search.
+			 * glob malloc()s space for the paths, so it's
+			 * okay to change it in-place.
+			 */
+			*sl = '\0';
+			paths[0] = *p;
+
+			if (!dofork) {
+				/* Do not fork child */
+				makewhatis(paths);
+				continue;
+			}
+
+			switch (fork()) {
+			case 0:
+				exit(makewhatis(paths));
+				break;
+			case -1:
+				warn("fork");
+				makewhatis(paths);
+				break;
+			default:
+				jobs++;
+				break;
+			}
+			
+		}
+
+		globfree(&pg);
+	}
+
+	/* Wait for the childern to finish */
+	while(jobs > 0) {
+		wait(&status);
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != EXIT_SUCCESS)
+			retval = EXIT_FAILURE;
+		jobs--;
+	}
+				
+	return (retval);
+}
+
+static int
+makewhatis(char * const * manpath)
+{
 	FTS	*fts;
 	FTSENT	*fe;
 	manpage *source;
 	whatis	*dest;
 	FILE	*out;
 	size_t	sdoff, sdlen;
-
-	(void)setlocale(LC_ALL, "");
-
-	manpath = (argc < 2) ? default_manpath : &argv[1];
 
 	if ((fts = fts_open(manpath, FTS_LOGICAL, NULL)) == NULL)
 		err(EXIT_FAILURE, "Cannot open `%s'", *manpath);
