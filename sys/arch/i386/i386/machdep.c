@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.352 1999/04/26 22:46:45 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.353 1999/05/12 19:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1664,8 +1664,7 @@ setregs(p, pack, stack)
 #endif
 
 #ifdef USER_LDT
-	if (pcb->pcb_flags & PCB_USER_LDT)
-		i386_user_cleanup(pcb);
+	pmap_ldt_cleanup(p);
 #endif
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
