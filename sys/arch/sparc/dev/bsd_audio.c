@@ -42,7 +42,7 @@
  *	@(#)bsd_audio.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: bsd_audio.c,v 1.18 93/04/24 16:20:35 leres Exp  (LBL)
- * $Id: bsd_audio.c,v 1.1 1993/10/02 10:22:33 deraadt Exp $
+ * $Id: bsd_audio.c,v 1.2 1994/09/17 23:57:27 deraadt Exp $
  */
 #include "bsdaudio.h"
 #if NBSDAUDIO > 0
@@ -283,7 +283,8 @@ audioattach(parent, self, args)
 	void *args;
 {
 	register struct audio_softc *sc = (struct audio_softc *)self;
-	register struct romaux *ra = args;
+	register struct confargs *ca = args;
+	register struct romaux *ra = &ca->ca_ra;
 	register volatile struct amd7930 *amd;
 	register int pri;
 

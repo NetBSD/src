@@ -32,7 +32,7 @@
  *
  * from: Header: if_le.c,v 1.25 93/10/31 04:47:50 leres Locked 
  * from: @(#)if_le.c	8.2 (Berkeley) 10/30/93
- * $Id: if_le.c,v 1.10 1994/07/04 21:37:27 deraadt Exp $
+ * $Id: if_le.c,v 1.11 1994/09/17 23:57:35 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -84,8 +84,8 @@
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 
-#include <sparc/sbus/if_lereg.h>
-#include <sparc/sbus/sbusvar.h>
+#include <sparc/dev/if_lereg.h>
+#include <sparc/dev/sbusvar.h>
 
 /* DVMA address to LANCE address -- the Sbus/MMU will resupply the 0xff */
 #define	LANCE_ADDR(x)	((int)(x) & ~0xff000000)
@@ -147,8 +147,9 @@ struct le_softc {
 
 /* autoconfiguration driver */
 void	leattach(struct device *, struct device *, void *);
+int	lematch(struct device *, struct cfdata *, void *);
 struct	cfdriver lecd =
-    { NULL, "le", matchbyname, leattach, DV_IFNET, sizeof(struct le_softc) };
+    { NULL, "le", lematch, leattach, DV_IFNET, sizeof(struct le_softc) };
 
 /* Forwards */
 void	leattach(struct device *, struct device *, void *);
@@ -167,6 +168,31 @@ void	leerror(struct le_softc *, int);
 void	lererror(struct le_softc *, char *);
 void	lexerror(struct le_softc *);
 
+int
+lematch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	register struct confargs *ca = aux;
+	register struct romaux *ra = &ca->ca_ra;
+
+	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
+		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
+		    ra->ra_intr);
+		ra->ra_len = NBPG;
+
+		/*
+		 * On the VME or OBIO busses, if we don't bus error it
+		 * exists. The obio/vme functions will have mapped the 
+		 * first page for us, but we need to look at a register
+		 * much later on. So, map it instead.
+		 */
+		return (probeget(ra->ra_vaddr, 2) != 0);
+	}
+	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+}
+
 /*
  * Interface exists: make available by filling in network interface
  * record.  System will initialize the interface when it is ready
@@ -179,7 +205,7 @@ leattach(parent, self, args)
 	void *args;
 {
 	register struct le_softc *sc = (struct le_softc *)self;
-	register struct sbus_attach_args *sa = args;
+	register struct confargs *ca = args;
 	register volatile struct lereg2 *ler2;
 	struct ifnet *ifp = &sc->sc_if;
 	register struct bootpath *bp;
@@ -189,14 +215,14 @@ leattach(parent, self, args)
 	extern void myetheraddr(u_char *);
 	extern caddr_t dvma_malloc(size_t);
 
-	if (sa->sa_ra.ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", sa->sa_ra.ra_nintr);
+	if (ca->ca_ra.ra_nintr != 1) {
+		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
 		return;
 	}
-	pri = sa->sa_ra.ra_intr[0].int_pri;
+	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
 	sc->sc_r1 = (volatile struct lereg1 *)
-	    mapiodev(sa->sa_ra.ra_paddr, sizeof(struct lereg1));
+	    mapiodev(ca->ca_ra.ra_paddr, sizeof(struct lereg1));
 	ler2 = sc->sc_r2 = (volatile struct lereg2 *)
 	    dvma_malloc(sizeof(struct lereg2));
 
@@ -255,12 +281,12 @@ leattach(parent, self, args)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-#define SAME_LANCE(bp, sa) \
-	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
+#define SAME_LANCE(bp, ca) \
+	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
-	bp = sa->sa_ra.ra_bp;
-	if (bp != NULL && strcmp(bp->name, "le") == 0 && SAME_LANCE(bp, sa))
+	bp = ca->ca_ra.ra_bp;
+	if (bp != NULL && strcmp(bp->name, "le") == 0 && SAME_LANCE(bp, ca))
 		bootdv = &sc->sc_dev;
 }
 
@@ -431,7 +457,7 @@ leinit(unit)
 		s = splimp();
 		ifp->if_flags |= IFF_RUNNING;
 		lereset(&sc->sc_dev);
-	        lestart(ifp);
+		lestart(ifp);
 		splx(s);
 	}
 	return (0);

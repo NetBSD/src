@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.12 1994/08/25 20:57:38 deraadt Exp $
+ * $Id: kbd.c,v 1.13 1994/09/17 23:57:36 deraadt Exp $
  */
 
 /*
@@ -284,10 +284,10 @@ kbdattach(int nkbd)
 	if (kbd_softc.k_cons != NULL) {
 		k = &kbd_softc;
 		tp = k->k_kbd;
-		(*k->k_open)(tp);       /* never to be closed */
+		(*k->k_open)(tp);	/* never to be closed */
 		if (ttyoutput(KBD_CMD_RESET, tp) >= 0)
 			panic("kbdattach");
-		(*tp->t_oproc)(tp);     /* get it going */
+		(*tp->t_oproc)(tp);	/* get it going */
 	}
 }
 

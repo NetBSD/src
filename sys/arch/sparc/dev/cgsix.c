@@ -42,7 +42,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: cgsix.c,v 1.2 93/10/18 00:01:51 torek Exp 
- * $Id: cgsix.c,v 1.4 1994/07/04 21:37:22 deraadt Exp $
+ * $Id: cgsix.c,v 1.5 1994/09/17 23:57:32 deraadt Exp $
  */
 
 /*
@@ -73,10 +73,10 @@
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
 
-#include <sparc/sbus/btreg.h>
-#include <sparc/sbus/btvar.h>
-#include <sparc/sbus/cgsixreg.h>
-#include <sparc/sbus/sbusvar.h>
+#include <sparc/dev/btreg.h>
+#include <sparc/dev/btvar.h>
+#include <sparc/dev/cgsixreg.h>
+#include <sparc/dev/sbusvar.h>
 
 union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
 	u_char	cm_map[2][3];	/* 2 R/G/B entries */
@@ -110,8 +110,9 @@ struct cgsix_softc {
 
 /* autoconfiguration driver */
 static void	cgsixattach(struct device *, struct device *, void *);
+static int	cgsixmatch(struct device *, struct cfdata *, void *);
 struct cfdriver cgsixcd =
-    { NULL, "cgsix", matchbyname, cgsixattach,
+    { NULL, "cgsix", cgsixmatch, cgsixattach,
       DV_DULL, sizeof(struct cgsix_softc) };
 
 /* frame buffer generic driver */
@@ -134,6 +135,37 @@ static void cg6_setcursor __P((struct cgsix_softc *));/* set position */
 static void cg6_loadcursor __P((struct cgsix_softc *));/* set shape */
 
 /*
+ * Match a cgsix.
+ */
+int
+cgsixmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
+
+	if (ca->ca_bustype == BUS_VME || ca->ca_bustype == BUS_OBIO) {
+		struct cg6_layout *p = (struct cg6_layout *)ra->ra_vaddr;
+
+		printf("[addr %8x %8x irq %d]", ra->ra_paddr, ra->ra_vaddr,
+		    ra->ra_intr);
+		ra->ra_len = NBPG;
+
+		/*
+		 * On the VME or OBIO busses, if we don't bus error it
+		 * exists. The obio/vme functions will have mapped the 
+		 * first page for us, but we need to look at a register
+		 * much later on. So, map it instead.
+		 */
+		obio_tmp_map(&p->cg6_fhc_un.un_fhc);
+		return (probeget(&p->cg6_fhc_un.un_fhc, 4) != 0);
+	}
+	return (strcmp(cf->cf_driver->cd_name, ra->ra_name) == 0);
+}
+
+/*
  * Attach a display.
  */
 void
@@ -142,24 +174,44 @@ cgsixattach(parent, self, args)
 	void *args;
 {
 	register struct cgsix_softc *sc = (struct cgsix_softc *)self;
-	register struct sbus_attach_args *sa = args;
-	register int node = sa->sa_ra.ra_node, ramsize, i;
+	register struct confargs *ca = args;
+	register int node, ramsize, i;
 	register volatile struct bt_regs *bt;
 	register volatile struct cg6_layout *p;
+	int sbus = 1;
+	char *nam;
 
 	sc->sc_fb.fb_major = CGSIX_MAJOR;	/* XXX to be removed */
 
 	sc->sc_fb.fb_driver = &cg6_fbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
-	sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
-	sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
-	sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
+
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+	case BUS_VME:
+		sbus = node = 0;
+		sc->sc_fb.fb_type.fb_width = 1152;
+		sc->sc_fb.fb_type.fb_height = 900;
+		sc->sc_fb.fb_linebytes = 1152;
+		nam = "cgsix";
+		break;
+	case BUS_SBUS:
+		node = ca->ca_ra.ra_node;
+		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
+		sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
+		sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
+		nam = getpropstring(node, "model");
+		break;
+	case BUS_MAIN:
+		printf("cgsix on mainbus?\n");
+		return;
+	}
 	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
 	sc->sc_fb.fb_type.fb_depth = 8;
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", getpropstring(node, "model"),
+	printf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
 	/*
@@ -167,7 +219,7 @@ cgsixattach(parent, self, args)
 	 * the video RAM mapped.  Just map what we care about for ourselves
 	 * (the FHC, THC, and Brooktree registers).
 	 */
-	sc->sc_physadr = p = (struct cg6_layout *)sa->sa_ra.ra_paddr;
+	sc->sc_physadr = p = (struct cg6_layout *)ca->ca_ra.ra_paddr;
 	sc->sc_bt = bt = (volatile struct bt_regs *)
 	    mapiodev((caddr_t)&p->cg6_bt_un.un_btregs, sizeof *sc->sc_bt);
 	sc->sc_fhc = (volatile int *)
@@ -193,7 +245,8 @@ cgsixattach(parent, self, args)
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
 
 	printf("\n");
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	if (ca->ca_bustype == BUS_SBUS)
+		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb);
 }
