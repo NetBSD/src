@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.25 2004/12/27 01:51:49 mycroft Exp $ */
+/* $NetBSD: rtw.c,v 1.26 2004/12/27 06:12:28 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.25 2004/12/27 01:51:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.26 2004/12/27 06:12:28 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.25 2004/12/27 01:51:49 mycroft Exp $");
 
 int rtw_rfprog_fallback = 0;
 int rtw_host_rfio = 0;
-int rtw_flush_rfio = 1;
-int rtw_rfio_delay = 0;
 
 #ifdef RTW_DEBUG
 int rtw_debug = 0;
@@ -100,12 +98,11 @@ int rtw_debug = 0;
 	sc->sc_attach_state = state;				\
 } while (0)
 
-int rtw_dwelltime = 1000;	/* milliseconds */
+int rtw_dwelltime = 200;	/* milliseconds */
 
 static void rtw_start(struct ifnet *);
 
 static int rtw_sysctl_verify_rfio(SYSCTLFN_PROTO);
-static int rtw_sysctl_verify_rfio_delay(SYSCTLFN_PROTO);
 static int rtw_sysctl_verify_rfprog(SYSCTLFN_PROTO);
 #ifdef RTW_DEBUG
 static void rtw_print_txdesc(struct rtw_softc *, const char *,
@@ -152,27 +149,11 @@ SYSCTL_SETUP(sysctl_rtw, "sysctl rtw(4) subtree setup")
 	    CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	/* force host to flush I/O by reading RTW_PHYADDR */
-	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "flush_rfio", SYSCTL_DESCR("Enable RF I/O flushing"),
-	    rtw_sysctl_verify_rfio, 0, &rtw_flush_rfio, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
-		goto err;
-
 	/* force host to control RF I/O bus */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "host_rfio", SYSCTL_DESCR("Enable host control of RF I/O"),
 	    rtw_sysctl_verify_rfio, 0, &rtw_host_rfio, 0,
-	    CTL_CREATE, CTL_EOL)) != 0)
-		goto err;
-
-	/* control RF I/O delay */
-	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
-	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "rfio_delay", SYSCTL_DESCR("Set RF I/O delay"),
-	    rtw_sysctl_verify_rfio_delay, 0, &rtw_rfio_delay, 0,
 	    CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
@@ -200,12 +181,6 @@ rtw_sysctl_verify(SYSCTLFN_ARGS, int lower, int upper)
 	*(int*)rnode->sysctl_data = t;
 
 	return (0);
-}
-
-static int
-rtw_sysctl_verify_rfio_delay(SYSCTLFN_ARGS)
-{
-	return rtw_sysctl_verify(SYSCTLFN_CALL(rnode), 0, 1000000);
 }
 
 static int
