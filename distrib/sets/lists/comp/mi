@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.425 2002/02/02 17:36:07 thorpej Exp $
+#	$NetBSD: mi,v 1.426 2002/02/04 08:51:28 thorpej Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -666,7 +666,6 @@
 ./usr/include/soundcard.h		comp-c-include
 ./usr/include/stab.h			comp-c-include
 ./usr/include/stdarg.h			comp-c-include
-./usr/include/stdbool.h			comp-c-include
 ./usr/include/stddef.h			comp-c-include
 ./usr/include/stdint.h			comp-c-include
 ./usr/include/stdio.h			comp-c-include
