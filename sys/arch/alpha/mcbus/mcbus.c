@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.5 1999/04/10 01:21:38 cgd Exp $ */
+/* $NetBSD: mcbus.c,v 1.6 1999/04/15 22:19:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.5 1999/04/10 01:21:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.6 1999/04/15 22:19:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,18 @@ struct cfattach mcbus_ca = {
 	sizeof (mcbus_softc_t), mcbusmatch, mcbusattach
 };
 
-extern void mcpcia_config_cleanup __P((void));
+/*
+ * Tru64 UNIX (formerly Digital UNIX (formerly DEC OSF/1)) probes for MCPCIAs
+ * in the following order:
+ *
+ *	5, 4, 7, 6
+ *
+ * This is so that the built-in CD-ROM on the internal 53c810 is always
+ * dka500.  We probe them in the same order, for consistency.
+ */
+const int mcbus_mcpcia_probe_order[] = { 5, 4, 7, 6 };
 
+extern void mcpcia_config_cleanup __P((void));
 
 static int
 mcbusprint(aux, cp)
@@ -132,11 +142,9 @@ mcbusattach(parent, self, aux)
 		"(no bcache)", "1MB BCache", "2MB BCache", "4MB BCache",
 		"??(4)??", "??(5)??", "??(6)??", "??(7)??"
 	};
-	static const u_int8_t pci_mid_order[4] = { 5, 4, 7, 6 };
 	struct mcbus_dev_attach_args ta;
 	mcbus_softc_t *mbp = (mcbus_softc_t *)self;
-	u_int8_t mid;
-	int i;
+	int i, mid;
 
 	printf("\n");
 
@@ -149,26 +157,35 @@ mcbusattach(parent, self, aux)
 	 * Find and "configure" memory.
 	 */
 	ta.ma_name = mcbus_cd.cd_name;
-	ta.ma_gid = MCBUS_GID_FROM_INSTANCE(self->dv_unit);
+	/*
+	 * XXX If we ever support more than one MCBUS, we'll
+	 * XXX have to probe for them, and map them to unit
+	 * XXX numbers.
+	 */
+	ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 	ta.ma_mid = 1;
 	ta.ma_type = MCBUS_TYPE_MEM;
 	mbp->mcbus_types[1] = MCBUS_TYPE_MEM;
-	config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
+	(void) config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
 
 	/*
-	 * Now find PCI busses. In keeping with Digital's ordering
-	 * of things, we'll search in a specific MID order.
+	 * Now find PCI busses.
 	 */
 	for (i = 0; i < MCPCIA_PER_MCBUS; i++) {
-		mid = pci_mid_order[i];
+		mid = mcbus_mcpcia_probe_order[i];
 		ta.ma_name = mcbus_cd.cd_name;
-		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(self->dv_unit);
+		/*
+		 * XXX If we ever support more than one MCBUS, we'll
+		 * XXX have to probe for them, and map them to unit
+		 * XXX numbers.
+		 */
+		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_PCI;
 		/*
-		 * Attach any  children nodes (PCI busses).
+		 * XXX MUST ACTUALLY PROBE FOR MCPCIA!
 		 */
-		config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
+		(void) config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
 	}
 
 	/*
@@ -184,13 +201,18 @@ mcbusattach(parent, self, aux)
 		printf("%s mid %d: %s %s\n", self->dv_xname,
 		    mid, mcbus_node_type_str(MCBUS_TYPE_CPU),
 		    bcs[mcbus_primary.mcbus_bcache & 0x7]);
-#if	0
+#if 0
 		ta.ma_name = mcbus_cd.cd_name;
-		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(self->dv_unit);
+		/*
+		 * XXX If we ever support more than one MCBUS, we'll
+		 * XXX have to probe for them, and map them to unit
+		 * XXX numbers.
+		 */
+		ta.ma_gid = MCBUS_GID_FROM_INSTANCE(0);
 		ta.ma_mid = mid;
 		ta.ma_type = MCBUS_TYPE_CPU;
 		mbp->mcbus_types[mid] = MCBUS_TYPE_CPU;
-		config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
+		(void) config_found_sm(self, &ta, mcbusprint, mcbussubmatch);
 #endif
 	}
 
