@@ -1,8 +1,8 @@
-/*	$NetBSD: printenv.c,v 1.6 1997/10/19 12:44:26 lukem Exp $	*/
+/*	$NetBSD: printenv.c,v 1.7 1999/09/10 04:05:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
- *    Regents of the University of California.  All rights reserved.
+ *    The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printenv.c	8.2 (Berkeley) 5/4/95";*/
-__RCSID("$NetBSD: printenv.c,v 1.6 1997/10/19 12:44:26 lukem Exp $");
+__RCSID("$NetBSD: printenv.c,v 1.7 1999/09/10 04:05:28 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
