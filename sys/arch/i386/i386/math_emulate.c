@@ -1,7 +1,7 @@
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
  *
- *	$Id: math_emulate.c,v 1.4 1993/05/26 18:43:33 proven Exp $
+ *	$Id: math_emulate.c,v 1.5 1994/01/11 17:39:07 mycroft Exp $
  */
 
 /*
@@ -79,8 +79,8 @@ math_emulate(struct trapframe * info)
 	u_long oldeip;
 
 	/* ever used fp? */
-	if ((((struct pcb *)curproc->p_addr)->pcb_flags & FP_SOFTFP) == 0) {
-		((struct pcb *)curproc->p_addr)->pcb_flags |= FP_SOFTFP;
+	if ((curproc->p_addr->u_pcb.pcb_flags & FP_SOFTFP) == 0) {
+		curproc->p_addr->u_pcb.pcb_flags |= FP_SOFTFP;
 		I387.cwd = 0x037f;
 		I387.swd = 0x0000;
 		I387.twd = 0x0000;

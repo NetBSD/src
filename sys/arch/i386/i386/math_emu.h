@@ -3,7 +3,7 @@
  *
  * (C) 1991 Linus Torvalds
  *
- *	$Id: math_emu.h,v 1.2 1993/05/22 07:59:52 cgd Exp $
+ *	$Id: math_emu.h,v 1.3 1994/01/11 17:37:28 mycroft Exp $
  */
 #ifndef _LINUX_MATH_EMU_H
 #define _LINUX_MATH_EMU_H
@@ -69,7 +69,7 @@ struct i387_struct {
 	long	st_space[20];	/* 8*10 bytes for each FP-reg = 80 bytes */
 };
 
-#define I387 (*(struct i387_struct *)&(((struct pcb *)curproc->p_addr)->pcb_savefpu))
+#define I387 (*(struct i387_struct *)&(curproc->p_addr->u_pcb.pcb_savefpu))
 #define SWD (*(struct swd *) &I387.swd)
 #define ROUNDING ((I387.cwd >> 10) & 3)
 #define PRECISION ((I387.cwd >> 8) & 3)
