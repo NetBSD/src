@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/07/10 10:34:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2003/10/22 06:04:03 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ CLEANFILES+=	op.ps
 all: op.ps
 
 op.ps: ${SRCS}
+	${_MKTARGET_FORMAT}
 	${RM} ${.TARGET}
 	${TOOL_PIC} ${.ALLSRC} | ${TOOL_EQN} | \
 	    ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
