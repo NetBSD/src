@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.3 1997/04/01 16:31:19 matthias Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4 1997/04/21 16:16:31 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -75,6 +75,8 @@
 
 /*
  * movs[bdw] for fast blockmoves.
+ * movs[bdw](from, to, n) update "from" and "to".
+ * movs[bdw]nu(from, to, n) do not update "from" and "to".
  */
 #define movs(type, from, to, n) \
 	register int r0 __asm ("r0") = n; \
@@ -123,6 +125,11 @@
 		lmr(ivar0, p); \
 		lmr(ivar1, p); \
 	} while(0)
+
+/*
+ * Trigger a T_BPT.
+ */
+#define breakpoint() __asm __volatile("bpt")
 
 /*
  * Bits in the cfg register.
