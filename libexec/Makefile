@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2000/06/23 06:01:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.39 2000/08/06 19:31:24 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -10,7 +10,7 @@ SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd ld.aout_so \
 
 .if (${MKCRYPTO} != "no")
 # Heimdal/KTH Kerberos
-SUBDIR+= hprop hpropd kadmind kdc kfd kpasswdd
+SUBDIR+= hprop hpropd kadmind kfd kpasswdd
 .endif
 
 .include <bsd.subdir.mk>
