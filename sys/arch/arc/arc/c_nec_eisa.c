@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.2 2001/08/13 18:45:49 soda Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.3 2002/12/07 13:09:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -100,9 +100,9 @@ c_nec_eisa_init()
 
 	/* XXX - not really confirmed */
 	arc_bus_space_init(&arc_bus_io, "r94eisaio",
-	    RD94_P_PCI_IO, RD94_V_PCI_IO, 0, RD94_S_PCI_IO);
+	    RD94_P_PCI_IO, RD94_V_EISA_IO, 0, RD94_S_EISA_IO);
 	arc_bus_space_init(&arc_bus_mem, "r94eisamem",
-	    RD94_P_PCI_MEM, RD94_V_PCI_MEM, 0, RD94_S_PCI_MEM);
+	    RD94_P_PCI_MEM, RD94_V_EISA_MEM, 0, RD94_S_EISA_MEM);
 
 	/*
 	 * Initialize wired TLB for I/O space which is used on early stage
