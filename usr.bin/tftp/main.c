@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2000/11/21 14:28:54 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2000/12/30 18:00:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.13 2000/11/21 14:28:54 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.14 2000/12/30 18:00:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ setpeer(argc, argv)
 		printf("usage: %s host-name [port]\n", argv[0]);
 		return;
 	}
-	if (argc == 3)
+	if (argc == 2)
 		setpeer0(argv[1], NULL);
 	else
 		setpeer0(argv[1], argv[2]);

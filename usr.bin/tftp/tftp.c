@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.14 2000/11/21 14:58:21 itojun Exp $	*/
+/*	$NetBSD: tftp.c,v 1.15 2000/12/30 18:00:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.14 2000/11/21 14:58:21 itojun Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.15 2000/12/30 18:00:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: tftp.c,v 1.14 2000/11/21 14:58:21 itojun Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "extern.h"
 #include "tftpsubs.h"
@@ -86,6 +87,7 @@ static void startclock __P((void));
 static void stopclock __P((void));
 static void timer __P((int));
 static void tpacket __P((const char *, struct tftphdr *, int));
+static int cmpport __P((struct sockaddr *, struct sockaddr *));
 
 /*
  * Send the requested file.
@@ -106,6 +108,7 @@ sendfile(fd, name, mode)
 	int fromlen;
 	FILE *file;
 	struct sockaddr_storage peer;
+	struct sockaddr_storage serv;	/* valid server port number */
 
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
@@ -115,6 +118,7 @@ sendfile(fd, name, mode)
 	block = 0;
 	amount = 0;
 	memcpy(&peer, &peeraddr, peeraddr.ss_len);
+	memset(&serv, 0, sizeof(serv));
 
 	signal(SIGALRM, timer);
 	do {
@@ -154,19 +158,14 @@ send_data:
 				warn("recvfrom");
 				goto abort;
 			}
-			switch (peer.ss_family) {	/* added */
-			case AF_INET:
-				((struct sockaddr_in *)&peer)->sin_port =
-				    ((struct sockaddr_in *)&from)->sin_port;
-				break;
-			case AF_INET6:
-				((struct sockaddr_in6 *)&peer)->sin6_port =
-				    ((struct sockaddr_in6 *)&from)->sin6_port;
-				break;
-			default:
-				/* unsupported */
-				break;
+			if (!serv.ss_family)
+				serv = from;
+			else if (!cmpport((struct sockaddr *)&serv,
+			    (struct sockaddr *)&from)) {
+				warn("server port mismatch");
+				goto abort;
 			}
+			peer = from;
 			if (trace)
 				tpacket("received", ap, n);
 			/* should verify packet came from server */
@@ -227,6 +226,7 @@ recvfile(fd, name, mode)
 	FILE *file;
 	volatile int convert;		/* true if converting crlf -> lf */
 	struct sockaddr_storage peer;
+	struct sockaddr_storage serv;	/* valid server port number */
 
 	startclock();
 	dp = w_init();
@@ -237,6 +237,7 @@ recvfile(fd, name, mode)
 	firsttrip = 1;
 	amount = 0;
 	memcpy(&peer, &peeraddr, peeraddr.ss_len);
+	memset(&serv, 0, sizeof(serv));
 
 	signal(SIGALRM, timer);
 	do {
@@ -273,19 +274,14 @@ send_ack:
 				warn("recvfrom");
 				goto abort;
 			}
-			switch (peer.ss_family) {	/* added */
-			case AF_INET:
-				((struct sockaddr_in *)&peer)->sin_port =
-				    ((struct sockaddr_in *)&from)->sin_port;
-				break;
-			case AF_INET6:
-				((struct sockaddr_in6 *)&peer)->sin6_port =
-				    ((struct sockaddr_in6 *)&from)->sin6_port;
-				break;
-			default:
-				/* unsupported */
-				break;
+			if (!serv.ss_family)
+				serv = from;
+			else if (!cmpport((struct sockaddr *)&serv,
+			    (struct sockaddr *)&from)) {
+				warn("server port mismatch");
+				goto abort;
 			}
+			peer = from;
 			if (trace)
 				tpacket("received", dp, n);
 			/* should verify client address */
@@ -499,4 +495,21 @@ timer(sig)
 		longjmp(toplevel, -1);
 	}
 	longjmp(timeoutbuf, 1);
+}
+
+static int
+cmpport(sa, sb)
+	struct sockaddr *sa;
+	struct sockaddr *sb;
+{
+	char a[NI_MAXSERV], b[NI_MAXSERV];
+
+	if (getnameinfo(sa, sa->sa_len, NULL, 0, a, sizeof(a), NI_NUMERICSERV))
+		return 0;
+	if (getnameinfo(sb, sb->sa_len, NULL, 0, b, sizeof(b), NI_NUMERICSERV))
+		return 0;
+	if (strcmp(a, b) != 0)
+		return 0;
+
+	return 1;
 }
