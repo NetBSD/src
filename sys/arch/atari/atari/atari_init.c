@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.32 1997/07/05 20:50:41 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.33 1997/07/30 15:37:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -210,15 +210,15 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	PAGE_SHIFT = PG_SHIFT;
 
 	/*
+	 * Determine the type of machine we are running on. This needs
+	 * to be done early (and before initcpu())!
+	 */
+	set_machtype();
+
+	/*
 	 * Initialize cpu specific stuff
 	 */
 	initcpu();
-
-	/*
-	 * Determine the type of machine we are running on. This needs
-	 * to be done early!
-	 */
-	set_machtype();
 
 	/*
 	 * We run the kernel from ST memory at the moment.
@@ -968,6 +968,19 @@ initcpu()
 		}
 		break;
 #endif /* defined(M68040) */
+#if defined(M68030) || defined(M68020)
+	case CPU_68030:
+	case CPU_68020:
+		{
+			extern trapfun	*vectab[256];
+			extern trapfun	buserr2030, addrerr2030;
+
+			/* bus/addrerr vectors */
+			vectab[2] = buserr2030;
+			vectab[3] = addrerr2030;
+		}
+		break;
+#endif /* defined(M68030) || defined(M68020) */
 	}
 
 	DCIS();
