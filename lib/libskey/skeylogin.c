@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.2 1994/05/31 08:50:31 deraadt Exp $
+ * $Id: skeylogin.c,v 1.3 1994/05/31 08:51:15 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -116,7 +116,7 @@ char *name;
 	if(stat(KEYFILE,&statbuf) == -1 && errno == ENOENT) {
 		mp->keyfile = fopen(KEYFILE,"w+");
 		if(mp->keyfile)
-			chmod(KEYFILE, 644);
+			chmod(KEYFILE, 0644);
 	} else {
 		/* Otherwise open normally for update */
 		mp->keyfile = fopen(KEYFILE,"r+");
