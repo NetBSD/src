@@ -1,9 +1,9 @@
-#	$NetBSD: files.iq80310,v 1.1 2001/11/04 02:20:22 thorpej Exp $
+#	$NetBSD: files.iq80310,v 1.2 2001/11/04 03:01:19 thorpej Exp $
 #
 # Intel IQ80310 evaluation board configuration info
 #
 
-file	arch/evbarm/iq80310/iq80310_machdep.c		iq80310
+file	arch/evbarm/iq80310/iq80310_machdep.c
 
 # IQ80310 PCI support
-file	arch/evbarm/iq80310/pci_machdep.c		pci & iq80310
+file	arch/evbarm/iq80310/pci_machdep.c		pci
