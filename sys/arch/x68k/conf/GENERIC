@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.4 1996/08/26 23:41:26 mrg Exp $
+#	$NetBSD: GENERIC,v 1.5 1996/09/10 22:47:38 thorpej Exp $
 
 #
 #	GENERIC
@@ -45,6 +45,7 @@ options		COMPAT_12
 options 	TCP_COMPAT_42		# 4.2 networking ABI
 #options 	COMPAT_SUNOS		# SunOS binaries
 #options	COMPAT_HPUX		# HP-UX binaries; VERY EXPERIMENTAL
+#options 	COMPAT_M68K4K		# NetBSD/m68k4k binaries
 
 # file system options
 #options 	QUOTA			# file system quotas
