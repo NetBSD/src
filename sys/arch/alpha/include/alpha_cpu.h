@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.8 1997/04/06 08:47:14 cgd Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.9 1997/04/24 23:58:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -277,4 +277,4 @@ void		alpha_pal_wrusp __P((unsigned long));
 void		alpha_pal_wrvptptr __P((unsigned long));
 void		alpha_pal_wrmces __P((unsigned long));
 
-#endif __ALPHA_ALPHA_CPU_H__
+#endif /* __ALPHA_ALPHA_CPU_H__ */
