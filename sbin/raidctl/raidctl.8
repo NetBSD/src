@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.9 1999/08/10 18:21:39 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.10 1999/11/19 22:48:02 kristerw Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -224,7 +224,7 @@ START array
 .Ed
 .Pp
 indicates an array with 1 row, 3 columns, and 0 spare disks.  Note
-that although multi-dimenstional arrays may be specified, they are 
+that although multi-dimensional arrays may be specified, they are 
 .Ar NOT
 supported in the driver.
 .Pp
@@ -324,7 +324,7 @@ fifo 1
 .Ed
 .Pp
 where the queueing method is specified as fifo (first-in, first-out),
-and the size of the per-component queue is limited to 1 requests.  A
+and the size of the per-component queue is limited to 1 request.  A
 value of 1 is quite conservative here, and values of 100 or more may
 been used to increase the driver performance. 
 Other queuing methods may also be specified, but a discussion of them
@@ -353,7 +353,7 @@ of the options for
 .Nm "" ,
 and that they understand how the component reconstruction process
 works.  While this example is not created as a tutorial, the steps
-shown here can be easily dupilicated using four equal-sized partitions
+shown here can be easily duplicated using four equal-sized partitions
 from any number of disks (including all four from a single disk).  
 .Pp
 The primary uses of 
@@ -532,7 +532,7 @@ raidctl -f /dev/sd2e raid0
 .Ed
 .Pp
 The system will then be performing all operations in degraded mode,
-were missing data is re-computed from existing data and the parity.
+where missing data is re-computed from existing data and the parity.
 In this case, obtaining the status of raid0 will return:
 .Bd -unfilled -offset indent
 Components:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_null.8,v 1.9 1999/03/07 11:02:08 mycroft Exp $
+.\"	$NetBSD: mount_null.8,v 1.10 1999/11/19 22:48:01 kristerw Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,11 +116,11 @@ of target-pn subtree will be aliased under mount-point-pn.
 The null layer is the minimum file system layer,
 simply bypassing all possible operations to the lower layer
 for processing there.  The majority of its activity centers
-on the bypass routine, though which nearly all vnode operations
+on the bypass routine, through which nearly all vnode operations
 pass.
 .Pp
 The bypass routine accepts arbitrary vnode operations for
-handling by the lower layer.  It begins by examing vnode
+handling by the lower layer.  It begins by examining vnode
 operation arguments and replacing any null-nodes by their
 lower-layer equivalents.  It then invokes the operation
 on the lower layer.  Finally, it replaces the null-nodes
@@ -187,7 +187,7 @@ process when constructing other vnode stacks.
 .Sh CREATING OTHER FILE SYSTEM LAYERS
 One of the easiest ways to construct new file system layers is to make
 a copy of the null layer, rename all files and variables, and
-then begin modifyng the copy.  Sed can be used to easily rename
+then begin modifying the copy.  Sed can be used to easily rename
 all variables.
 .Pp
 The umap layer is an example of a layer descended from the 
