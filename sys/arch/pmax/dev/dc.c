@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.40 1998/03/25 06:27:32 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.41 1998/03/26 06:36:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.40 1998/03/25 06:27:32 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.41 1998/03/26 06:36:36 thorpej Exp $");
 
 /*
  * devDC7085.c --
@@ -331,9 +331,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 				LPR_PARENB | LPR_8_BIT_CHAR | DCMOUSE_PORT;
 			wbflush();
 			DELAY(10000);
-/*XXX*/printf("reset mouse\n");
 			MouseInit(makedev(DCDEV, DCMOUSE_PORT), dcPutc, dcGetc);
-/*XXX*/printf("done\n");
 			splx(s);
 		}
 	}
