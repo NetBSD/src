@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.9 2001/10/21 22:24:25 simonb Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.10 2002/01/07 19:22:16 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -472,8 +472,8 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 #ifdef DEBUG
 	/* Sanity checking. */
 	if (CNO >= len && len != 0) {
-		msgq(sp, M_ERR, "Error: %s/%d: cno (%u) >= len (%u)",
-		     tail(__FILE__), __LINE__, CNO, len);
+		msgq(sp, M_ERR, "Error: %s/%d: cno (%lu) >= len (%lu)",
+		     tail(__FILE__), __LINE__, (u_long) CNO, (u_long) len);
 		return (1);
 	}
 #endif
