@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.7 2001/11/26 20:49:05 thorpej Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.1 2002/02/06 21:30:27 thorpej Exp $	*/
 
 /*
  * Copyright 1997

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.21 2002/01/25 19:19:27 thorpej Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.1 2002/02/06 21:30:26 thorpej Exp $	*/
 
 /*
  * Copyright 1997

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARKINST,v 1.12 2002/01/27 13:23:12 jdolecek Exp $
+#	$NetBSD: SHARKINST,v 1.13 2002/02/06 21:30:28 thorpej Exp $
 # From:  NetBSD: SHARK,v 1.23 1999/06/26 06:56:26 cgd Exp
 #
 #	SHARK Install Kernel
@@ -26,7 +26,6 @@ makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
 
 # Architecture options
 
-options 	OFW		# Enable common Open Firmware bits
 options 	SHARK		# We are a Shark
 options 	NSIO		# We are using the National Semi SuperIO
 

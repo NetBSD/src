@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.45 2002/01/27 13:23:12 jdolecek Exp $
+#	$NetBSD: SHARK,v 1.46 2002/02/06 21:30:28 thorpej Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.45 $"
+#ident		"GENERIC-$Revision: 1.46 $"
 
 # estimated number of users
 maxusers	32
@@ -25,7 +25,6 @@ options 	CPU_SA110	# Support the SA110 core
 
 # Architecture options
 
-options 	OFW		# Enable common Open Firmware bits
 options 	SHARK		# We are a Shark
 options 	NSIO		# We are using the National Semi SuperIO
 makeoptions	COPTS="-O2 -march=armv4 -mtune=strongarm"
