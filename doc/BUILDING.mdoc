@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.24 2003/07/18 01:55:08 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.25 2003/07/18 08:38:45 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd July 3, 2003
+.Dd July 18, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -447,6 +447,30 @@ will be set to
 unconditionally.
 .DFLTy
 .
+.It Sy MKUNPRIVED
+.YorN
+Indicates whether an unprivileged install will occur.
+The user, group, permissions, and file flags, will not be set on
+the installed item; instead the information will be appended to
+a file called
+.Pa METALOG
+in
+.Sy DESTDIR .
+The contents of
+.Pa METALOG
+is used during the generation of the distribution tar files to ensure
+that the appropriate file ownership is stored.
+.DFLTn
+.
+.It Sy MKUPDATE
+.YorN
+Indicates whether all install operations intended to write to
+.Sy DESTDIR
+will compare file timestamps before installing, and skip the install
+phase if the destination files are up-to-date.
+This also has implications on full builds (see next subsection).
+.DFLTn
+.
 .It Sy TOOLDIR
 Directory to hold the host tools, once built.
 This directory should be unique to a given host system and
@@ -461,28 +485,6 @@ information of the host platform will be created in the
 .Sy .OBJDIR
 of
 .Pa src/tools .
-.DFLTu
-.
-.It Sy UNPRIVED
-If set, then an unprivileged install will occur.
-The user, group, permissions, and file flags, will not be set on
-the installed item; instead the information will be appended to
-a file called
-.Pa METALOG
-in
-.Sy DESTDIR .
-The contents of
-.Pa METALOG
-is used during the generation of the distribution tar files to ensure
-that the appropriate file ownership is stored.
-.DFLTu
-.
-.It Sy UPDATE
-If set, then all install operations intended to write to
-.Sy DESTDIR
-will compare file timestamps before installing, and skip the install
-phase if the destination files are up-to-date.
-This also has implications on full builds (see next subsection).
 .DFLTu
 .
 .It Sy USETOOLS
@@ -552,6 +554,17 @@ Indicates whether object directories will be created automatically
 pass) at the start of a build.
 .DFLTn
 .
+.It Sy MKUPDATE
+.YorN
+If set, then in addition to the effects described for
+.Sy MKUPDATE=yes
+above, this implies the effects of
+.Sy NOCLEANDIR
+(i.e., 
+.Dq make cleandir
+is avoided).
+.DFLTn
+.
 .It Sy NBUILDJOBS
 Now obsolete.
 Use the 
@@ -593,7 +606,7 @@ system include files have changed.
 However, this option should not be used when updating the entire
 .Nx
 source tree arbitrarily; it is suggested to use
-.Sy UPDATE
+.Sy MKUPDATE=yes
 in that case.
 .DFLTu
 .
@@ -613,14 +626,6 @@ will provide a default of
 unless run in
 .Sq expert
 mode
-.
-.It Sy UPDATE
-If set, then in addition to the effects described for UPDATE above, this
-implies the effects of
-.Sy NOCLEANDIR
-(i.e., 
-.Dq make cleandir
-is avoided).
 .
 .El
 .
@@ -1027,7 +1032,7 @@ This overrides various sanity checks, and allows:
 .Sy DESTDIR
 does not have to be set to a non-root path for builds,
 and
-.Sy UNPRIVED
+.Sy MKUNPRIVED=yes
 does not have to be set when building as a non-root user.
 .Pp
 .Em Note :
@@ -1144,14 +1149,12 @@ will only be rebuilt as needed (when the source files for
 change).
 .
 .It Fl U
-Set the
-.Sy UNPRIVED
-variable.
+Set
+.Sy MKUNPRIVED=yes .
 .
 .It Fl u
-Set the
-.Sy UPDATE
-variable.
+Set
+.Sy MKUPDATE=yes .
 .
 .It Xo
 .Fl V
@@ -1253,7 +1256,7 @@ and
 directories that
 .Sy build.sh
 selects (and will display).
-.Sy UPDATE
+.Sy MKUPDATE=yes
 .Pq Fl u
 is set to prevent the
 .Dq make cleandir ,

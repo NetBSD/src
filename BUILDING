@@ -233,29 +233,30 @@ CONFIGURATION
 
                  Default: ``yes''
 
+     MKUNPRIVED  Can be set to ``yes'' or ``no''.  Indicates whether an un-
+                 privileged install will occur.  The user, group, permissions,
+                 and file flags, will not be set on the installed item; in-
+                 stead the information will be appended to a file called
+                 METALOG in DESTDIR.  The contents of METALOG is used during
+                 the generation of the distribution tar files to ensure that
+                 the appropriate file ownership is stored.
+
+                 Default: ``no''
+
+     MKUPDATE    Can be set to ``yes'' or ``no''.  Indicates whether all in-
+                 stall operations intended to write to DESTDIR will compare
+                 file timestamps before installing, and skip the install phase
+                 if the destination files are up-to-date.  This also has im-
+                 plications on full builds (see next subsection).
+
+                 Default: ``no''
+
      TOOLDIR     Directory to hold the host tools, once built.  This directory
                  should be unique to a given host system and NetBSD source
                  tree.  (However, multiple targets may share the same TOOLDIR;
                  the target-dependent files have unique names.)  If unset, a
                  default based on the uname(1) information of the host plat-
                  form will be created in the .OBJDIR of src/tools.
-
-                 Default: Unset.
-
-     UNPRIVED    If set, then an unprivileged install will occur.  The user,
-                 group, permissions, and file flags, will not be set on the
-                 installed item; instead the information will be appended to a
-                 file called METALOG in DESTDIR.  The contents of METALOG is
-                 used during the generation of the distribution tar files to
-                 ensure that the appropriate file ownership is stored.
-
-                 Default: Unset.
-
-     UPDATE      If set, then all install operations intended to write to
-                 DESTDIR will compare file timestamps before installing, and
-                 skip the install phase if the destination files are up-to-
-                 date.  This also has implications on full builds (see next
-                 subsection).
 
                  Default: Unset.
 
@@ -297,6 +298,13 @@ CONFIGURATION
 
                       Default: ``no''
 
+     MKUPDATE         Can be set to ``yes'' or ``no''.  If set, then in addi-
+                      tion to the effects described for MKUPDATE=yes above,
+                      this implies the effects of NOCLEANDIR (i.e., ``make
+                      cleandir'' is avoided).
+
+                      Default: ``no''
+
      NBUILDJOBS       Now obsolete.  Use the make(1) option -j, instead (see
                       below)
 
@@ -323,7 +331,7 @@ CONFIGURATION
                       cause the system include files have changed.  However,
                       this option should not be used when updating the entire
                       NetBSD source tree arbitrarily; it is suggested to use
-                      UPDATE in that case.
+                      MKUPDATE=yes in that case.
 
                       Default: Unset.
 
@@ -334,10 +342,6 @@ CONFIGURATION
 
                       Note: build.sh will provide a default of releasedir (in
                       the top-level .OBJDIR) unless run in `expert' mode
-
-     UPDATE           If set, then in addition to the effects described for
-                      UPDATE above, this implies the effects of NOCLEANDIR
-                      (i.e., ``make cleandir'' is avoided).
 
 BUILDING
    "make" command line options
@@ -526,8 +530,8 @@ BUILDING
 
      -E        Set `expert' mode.  This overrides various sanity checks, and
                allows: DESTDIR does not have to be set to a non-root path for
-               builds, and UNPRIVED does not have to be set when building as a
-               non-root user.
+               builds, and MKUNPRIVED=yes does not have to be set when build-
+               ing as a non-root user.
 
                Note: It is highly recommended that you know what you are doing
                when you use this option.
@@ -584,9 +588,9 @@ BUILDING
                ``make'' will only be rebuilt as needed (when the source files
                for make(1) change).
 
-     -U        Set the UNPRIVED variable.
+     -U        Set MKUNPRIVED=yes.
 
-     -u        Set the UPDATE variable.
+     -u        Set MKUPDATE=yes.
 
      -V var=[value]
                Set the variable var to value (which is optional).
@@ -630,9 +634,9 @@ EXAMPLES
 
           Using unprivileged mode, build a complete release to DESTDIR and
           RELEASEDIR directories that build.sh selects (and will display).
-          UPDATE (-u) is set to prevent the ``make cleandir'', so that if this
-          is run after example 2, it doesn't need to redo that portion of the
-          release build.
+          MKUPDATE=yes (-u) is set to prevent the ``make cleandir'', so that
+          if this is run after example 2, it doesn't need to redo that portion
+          of the release build.
 
 OBSOLETE VARIABLES
      NBUILDJOBS  Use the make(1) option -j, instead.
@@ -651,4 +655,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                           July 3, 2003                           NetBSD
+NetBSD                           July 18, 2003                          NetBSD
