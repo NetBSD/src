@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.26 2004/08/25 12:44:38 wiz Exp $
+.\"	$NetBSD: vacation.1,v 1.27 2004/08/25 12:47:57 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 indication
 .Sh SYNOPSIS
 .Nm
-.Fl diI
+.Fl dIi
 .Op Fl f Ar databasefile
 .Op Fl m Ar messagefile
 .Op Fl r Ar interval
@@ -104,10 +104,10 @@ Do not check if the recipient is present in the
 .Dv To:
 or
 .Dv Cc:
-lines. Usage of this option is strongly discouraged because it will result
-in
+lines.
+Usage of this option is strongly discouraged because it will result in
 .Nm
-replying to mailing lists or other inappropriate places (eg. messages that
+replying to mailing lists or other inappropriate places (e.g., messages that
 you have been
 .Dv Bcc
 to).
@@ -124,7 +124,8 @@ instead of the the value read from the message.
 .It Fl t Ar interval
 Set the reply interval to
 .Ar interval
-days. If the
+days.
+If the
 .Ar interval
 number is followed by
 .Dv w ,
@@ -251,5 +252,5 @@ Adding
 .Fl t Ar A
 or
 .Fl t Ar D
-should only be done for misconfigured or non-compliant MTA's.
+should only be done for misconfigured or non-compliant MTAs.
 Doing so may auto-respond to messages that were not supposed to be replied to.
