@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.80 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.81 2004/08/07 20:05:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.80 2003/11/02 11:07:44 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.81 2004/08/07 20:05:25 mycroft Exp $");
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -1091,9 +1091,8 @@ nextbyte:
 				periph = acb->xs->xs_periph;
 				printf("%s: %ld extra bytes from %d:%d\n",
 				    sc->sc_dev.dv_xname, (long)-sc->sc_dleft,
-				    periph->periph_target,
-				    periph->periph_lun);
-				acb->data_length = 0;
+				    periph->periph_target, periph->periph_lun);
+				sc->sc_dleft = 0;
 			}
 			acb->xs->resid = acb->data_length = sc->sc_dleft;
 			sc->sc_state = AIC_CMDCOMPLETE;
