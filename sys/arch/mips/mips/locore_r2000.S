@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.44 1998/09/09 00:07:53 thorpej Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.45 1998/09/11 16:46:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,14 @@
 #define INTR_FRAME_SIZE	(4 * 38 + 4 * 4 + 4 + 4)
 #define INTR_RA_OFFSET	STAND_RA_OFFSET
 #define INTR_FRAME_OFFSET STAND_FRAME_SIZE
+
+/*
+ *  Mark where code entered from exception hander jumptable
+ * starts, for stack traceback code.
+ */
+
+	.globl	_C_LABEL(mips1_exceptionentry_start)
+_C_LABEL(mips1_exceptionentry_start):
 
 /*
  *----------------------------------------------------------------------------
@@ -158,7 +166,7 @@ _C_LABEL(mips1_exceptionEnd):
  *
  * mips1_SlowFault --
  *
- * Alternate entry point into the mips1_UserGenExceptionor or
+ * Alternate entry point into the mips1_UserGenException or
  * or mips1_user_Kern_exception, when the ULTB miss handler couldn't
  * find a TLB entry.
  *
@@ -258,6 +266,8 @@ NNON_LEAF(mips1_KernGenException, TRAP_FRAME_SIZE, ra)
 	j	k0
 	rfe	
 	.set	at
+	.global	_C_LABEL(mips1_KernGenExceptionEnd)
+_C_LABEL(mips1_KernGenExceptionEnd):
 END(mips1_KernGenException)
 
 /*----------------------------------------------------------------------------
@@ -373,6 +383,8 @@ NNON_LEAF(mips1_UserGenException, STAND_FRAME_SIZE, ra)
 	j	k0
 	rfe
 	.set	at
+	.globl	_C_LABEL(mips1_UserGenExceptionEnd)
+_C_LABEL(mips1_UserGenExceptionEnd):
 END(mips1_UserGenException)
 
 /*
@@ -477,6 +489,8 @@ NNON_LEAF(mips1_SystemCall, STAND_FRAME_SIZE, ra)
 	j	k0
 	rfe
 	.set	at
+	.globl	_C_LABEL(mips1_SystemCallEnd)
+_C_LABEL(mips1_SystemCallEnd):
 END(mips1_SystemCall)
 
 /*----------------------------------------------------------------------------
@@ -567,6 +581,8 @@ NNON_LEAF(mips1_KernIntr, INTR_FRAME_SIZE, ra)
 	addu	sp, sp, INTR_FRAME_SIZE	# restore kernel SP
 	j	k0				# Now return from interrupt
 	rfe					#
+	.globl	_C_LABEL(mips1_KernIntrEnd)
+_C_LABEL(mips1_KernIntrEnd):
 END(mips1_KernIntr)
 
 /*----------------------------------------------------------------------------
@@ -711,15 +727,9 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	j	k0
 	rfe
 	.set	at
+	.globl	_C_LABEL(mips1_UserIntrEnd)
+_C_LABEL(mips1_UserIntrEnd):
 END(mips1_UserIntr)
-
-/*
- *  Mark where code entreed from exception hander jumptable
- * ends, for stack traceback code.
- */
-
-	.globl	_C_LABEL(mips1_exceptionentry_end)
-_C_LABEL(mips1_exceptionentry_end):
 
 
 /*----------------------------------------------------------------------------
@@ -728,7 +738,6 @@ _C_LABEL(mips1_exceptionentry_end):
  *
  *----------------------------------------------------------------------------
  */
-
 
 
 #if 0
@@ -848,6 +857,14 @@ NLEAF(mips1_TLBMissException)
 	.set	at
 END(mips1_TLBMissException)
 
+/*
+ *  Mark where code entered from exception hander jumptable
+ * ends, for stack traceback code.
+ */
+
+	.globl	_C_LABEL(mips1_exceptionentry_end)
+_C_LABEL(mips1_exceptionentry_end):
+
 
 /*--------------------------------------------------------------------------
  *
@@ -950,8 +967,9 @@ END(mips1_SetPID)
  * mips1_TLBFlush --
  *
  *	Flush the "random" entries from the TLB.
+ *	Arg "tlbsize" is the number of entries to flush.
  *
- *	mips1_TLBFlush()
+ *	mips1_TLBFlush(tlbsize)
  *
  * Results:
  *	None.
@@ -972,7 +990,7 @@ LEAF(mips1_TLBFlush)
  * Align the starting value (t1) and the upper bound (t2).
  */
 	li	t1, MIPS1_TLB_FIRST_RAND_ENTRY << MIPS1_TLB_INDEX_SHIFT
-	li	t2, MIPS1_TLB_NUM_TLB_ENTRIES << MIPS1_TLB_INDEX_SHIFT
+	sll	t2, a0, MIPS1_TLB_INDEX_SHIFT
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# Set the index register.
 	addu	t1, t1, 1 << MIPS1_TLB_INDEX_SHIFT	# Increment index.
@@ -1237,8 +1255,8 @@ END(mips1_TLBGetPID)
  *	None.
  *
  * Side effects:
- *	The size of the data cache is stored into mips_L1DataCacheSize and the
- *	size of instruction cache is stored into mips_L1InstCacheSize.
+ *	The size of the data cache is stored into mips_L1DCacheSize and the
+ *	size of instruction cache is stored into mips_L1ICacheSize.
  *
  *----------------------------------------------------------------------------
  */
@@ -1259,7 +1277,7 @@ NON_LEAF(mips1_ConfigCache, STAND_FRAME_SIZE, ra)
  */
 	jal	_C_LABEL(mips1_SizeCache)	# Get the size of the d-cache.
 	nop
-	sw	v0, _C_LABEL(mips_L1DataCacheSize)
+	sw	v0, _C_LABEL(mips_L1DCacheSize)
 	nop					# Make sure sw out of pipe
 	nop
 	nop
@@ -1277,7 +1295,7 @@ NON_LEAF(mips1_ConfigCache, STAND_FRAME_SIZE, ra)
 	nop
 	nop
 	nop
-	sw	v0, _C_LABEL(mips_L1InstCacheSize)
+	sw	v0, _C_LABEL(mips_L1ICacheSize)
 	la	t0, 1f
 	j	t0				# Back to cached mode
 	nop
@@ -1361,8 +1379,8 @@ END(mips1_SizeCache)
  *----------------------------------------------------------------------------
  */
 LEAF(mips1_FlushCache)
-	lw	t1, _C_LABEL(mips_L1InstCacheSize)	# Must load before isolating
-	lw	t2, _C_LABEL(mips_L1DataCacheSize)	# Must load before isolating
+	lw	t1, _C_LABEL(mips_L1ICacheSize)	# Must load before isolating
+	lw	t2, _C_LABEL(mips_L1DCacheSize)	# Must load before isolating
 	mfc0	t3, MIPS_COP_0_STATUS_REG 	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts.
 	la	v0, 1f

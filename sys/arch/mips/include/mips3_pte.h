@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.7 1997/06/16 23:41:44 jonathan Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.8 1998/09/11 16:46:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,9 @@ struct tlb {
 
 /* pte accessor macros */
 
+#define mips3_pfn_is_ext(x) ((x) & 0x3c000000)
 #define mips3_vad_to_pfn(x) (((unsigned)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
+#define mips3_vad_to_pfn64(x) (((quad_t)(x) >> MIPS3_PG_SHIFT) & MIPS3_PG_FRAME)
 #define mips3_pfn_to_vad(x) (((x) & MIPS3_PG_FRAME) << MIPS3_PG_SHIFT)
 #define mips3_vad_to_vpn(x) ((unsigned)(x) & MIPS3_PG_SVPN)
 #define mips3_vpn_to_vad(x) ((x) & MIPS3_PG_SVPN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.54 1998/08/25 01:55:39 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.55 1998/09/11 16:46:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,7 +122,7 @@
  *
  * XXX	we don't restore all the regs, because the r3000 and r4000
  *     	use different mechanisms to set up the return address.
- *     	the current Pica code uses v1 for that, so we leave
+ *     	the current Arc code uses v1 for that, so we leave
  *     	it up to the caller of this macro to restore AT and v0.
  *	Don't ask why, I don't know.
  */
@@ -163,7 +163,7 @@
  *
  * XXX	we don't restore all the regs, because the r3000 and r4000
  *     	use different mechanisms to set up the return address.
- *     	the current Pica code uses v1 for that, so we leave
+ *     	the current Arc code uses v1 for that, so we leave
  *     	it up to the caller of this macro to restore AT and v0.
  *	Don't ask why, I don't konw.
  */
@@ -207,6 +207,9 @@
 start:
 _C_LABEL(kernel_text):
 	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable interrupts
+#ifdef arc /* XXX */
+	mtc0	zero, MIPS_COP_0_CAUSE_REG	# Clear soft interrupts
+#endif
 /*
  * Initialize stack and call machine startup.
  */
@@ -446,6 +449,15 @@ nomatch:
 END(bcmp)
 
 /*
+ * memcpy(to, from, len)
+ * {ov}bcopy(from, to, len)
+ */
+ALEAF(memcpy)
+	move	v0, a0			# swap from and to
+	move	a0, a1
+	move	a1, v0
+
+/*
  * {ov}bcopy(from, to, len)
  */
 LEAF(bcopy)
@@ -583,6 +595,8 @@ backcopy:
 	nop
 	
 	.set	at
+	.globl	_C_LABEL(bcopy_end)
+_C_LABEL(bcopy_end):
 END(bcopy)
 
 /*
@@ -683,6 +697,8 @@ LEAF(idle)
 	nop
 	b	sw1
 	mtc0	zero, MIPS_COP_0_STATUS_REG	# Disable all interrupts
+	.globl	_C_LABEL(idle_end)
+_C_LABEL(idle_end):
 END(idle)
 
 /*
@@ -774,6 +790,8 @@ sw1:
 	sw	a0, _C_LABEL(curpcb)		# set curpcb
 	jr	s1				# CPU-specific: resume process
 	move	a3, v0				# BDSLOT: a3 = TLB PID
+	.globl	_C_LABEL(cpu_switch_end)
+_C_LABEL(cpu_switch_end):
 END(cpu_switch)
 
 /*
@@ -1280,6 +1298,13 @@ NLEAF(mips_read_causereg)
 	nop
 END(mips_read_causereg)
 
+#if defined(DEBUG)
+NLEAF(mips_read_statusreg)
+	mfc0	v0, MIPS_COP_0_STATUS_REG
+	j	ra
+	nop
+END(mips_read_causereg)
+#endif
 
 /*----------------------------------------------------------------------------
  *
@@ -1690,28 +1715,28 @@ _C_LABEL(fpu_id):
 _C_LABEL(cpu_arch):
 	.word	0
 
-	.globl	_C_LABEL(mips_L1DataCacheSize)
-_C_LABEL(mips_L1DataCacheSize):
+	.globl	_C_LABEL(mips_L1DCacheSize)
+_C_LABEL(mips_L1DCacheSize):
 	.word	0
 
-.globl	_C_LABEL(mips_L1InstCacheSize)
-_C_LABEL(mips_L1InstCacheSize):
+.globl	_C_LABEL(mips_L1ICacheSize)
+_C_LABEL(mips_L1ICacheSize):
 	.word	0
 
-	.globl	_C_LABEL(mips_L1DataCacheLSize)
-_C_LABEL(mips_L1DataCacheLSize):
+	.globl	_C_LABEL(mips_L1DCacheLSize)
+_C_LABEL(mips_L1DCacheLSize):
 	.word	0
 
-	.globl	_C_LABEL(mips_L1InstCacheLSize)
-_C_LABEL(mips_L1InstCacheLSize):
+	.globl	_C_LABEL(mips_L1ICacheLSize)
+_C_LABEL(mips_L1ICacheLSize):
 	.word	0
 
 	.globl	_C_LABEL(mips_CacheAliasMask)
 _C_LABEL(mips_CacheAliasMask):
 	.word 0
 
-	.globl	_C_LABEL(mips_L2CacheSize)
-_C_LABEL(mips_L2CacheSize):
+	.globl	_C_LABEL(mips_L2CachePresent)
+_C_LABEL(mips_L2CachePresent):
 	.word	0
 
 	.globl	_C_LABEL(mips_L2CacheLSize)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.29 1998/09/02 06:41:22 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.30 1998/09/11 16:46:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.29 1998/09/02 06:41:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.30 1998/09/11 16:46:33 jonathan Exp $");
 
 #include "opt_uvm.h"
 
@@ -102,8 +102,14 @@ int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 int	cpu_dump __P((void));
 
-void	mips1_vector_init __P((void));
-void	mips3_vector_init __P((void));
+#ifdef MIPS1
+static void	mips1_vector_init __P((void));
+#endif
+
+#ifdef MIPS3
+static void	mips3_vector_init __P((void));
+#endif
+
 
 mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,
@@ -127,6 +133,13 @@ int	bufpages = 0;
 #endif
 
 int cpu_mhz;
+int mips_num_tlb_entries;
+
+#ifdef MIPS3
+u_int	mips_L2CacheSize;
+int	mips_L2CacheIsSnooping;	/* Set if L2 cache snoops uncached writes */
+int	mips_L2CacheMixed;
+#endif
 
 struct	user *proc0paddr;
 struct	proc nullproc;		/* for use by switch_exit() */
@@ -164,7 +177,7 @@ mips_locore_jumpvec_t mips1_locore_vec =
 	mips1_cpu_switch_resume
 };
 
-void
+static void
 mips1_vector_init()
 {
 	extern char mips1_UTLBMiss[], mips1_UTLBMissEnd[];
@@ -223,7 +236,64 @@ mips_locore_jumpvec_t mips3_locore_vec =
 	mips3_cpu_switch_resume
 };
 
+/*----------------------------------------------------------------------------
+ *
+ * mips3_ConfigCache --
+ *
+ *	Size the caches.
+ *	NOTE: should only be called from mach_init().
+ *
+ * Results:
+ *     	None.
+ *
+ * Side effects:
+ *	The size of the data cache is stored into mips_L1DCacheSize.
+ *	The size of instruction cache is stored into mips_L1ICacheSize.
+ *	Alignment mask for cache aliasing test is stored in mips_CacheAliasMask.
+ *
+ * XXX: method to retrieve mips_L2CacheSize is port dependent.
+ *
+ *----------------------------------------------------------------------------
+ */
 void
+mips3_ConfigCache()
+{
+	u_int32_t config = mips3_read_config();
+	static int snoop_check = 0;
+	register int i;
+
+	mips_L1ICacheSize = MIPS3_CONFIG_CACHE_SIZE(config,
+	    MIPS3_CONFIG_IC_MASK, MIPS3_CONFIG_IC_SHIFT);
+	mips_L1ICacheLSize = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
+	    MIPS3_CONFIG_IB);
+	mips_L1DCacheSize = MIPS3_CONFIG_CACHE_SIZE(config,
+	    MIPS3_CONFIG_DC_MASK, MIPS3_CONFIG_DC_SHIFT);
+	mips_L1DCacheLSize = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
+	    MIPS3_CONFIG_DB);
+
+	mips_CacheAliasMask = (mips_L1DCacheLSize - 1) & ~(NBPG - 1);
+
+	/*
+	 * Clear out the I and D caches.
+	 */
+	mips_L2CachePresent = 0; /* kluge to skip L2 cache flush */
+	mips3_FlushCache();
+
+	i = *(volatile int *)&snoop_check;	/* Read and cache */
+	mips3_FlushCache();			/* Flush */
+	*(volatile int *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&snoop_check))
+	    = ~i;				/* Write uncached */
+	mips_L2CacheIsSnooping = *(volatile int *)&snoop_check == ~i;
+	*(volatile int *)&snoop_check = i;	/* Write uncached */
+	mips3_FlushCache();			/* Flush */
+
+
+	mips_L2CachePresent = (config & MIPS3_CONFIG_SC) == 0;
+	mips_L2CacheLSize = MIPS3_CONFIG_CACHE_L2_LSIZE(config);
+	mips_L2CacheMixed = (config & MIPS3_CONFIG_SS) == 0;
+}
+
+static void
 mips3_vector_init()
 {
 
@@ -236,7 +306,7 @@ mips3_vector_init()
 	/*
 	 * Copy down exception vector code.
 	 */
-#if 0  /* XXX not restricted? */
+#if 0  /* XXX: this should be checked, if we will handle XTLB miss. */
 	if (mips3_TLBMissEnd - mips3_TLBMiss > 0x80)
 		panic("startup: UTLB code too large");
 #endif
@@ -256,6 +326,12 @@ mips3_vector_init()
 	 * Clear out the I and D caches.
 	 */
 	mips3_ConfigCache();
+
+#ifdef pmax		/* XXX */
+	mips_L2CachePresent = 1;
+	mips_L2CacheSize = 1024 * 1024;
+#endif
+
 	mips3_FlushCache();
 }
 #endif	/* MIPS3 */
@@ -299,24 +375,75 @@ mips_vector_init()
 	case MIPS_R2000:
 	case MIPS_R3000:
 		cpu_arch = 1;
-		mips1_TLBFlush();
+		mips_num_tlb_entries = MIPS1_TLB_NUM_TLB_ENTRIES;
+		break;
+#endif /* MIPS1 */
+
+#ifdef MIPS3
+	case MIPS_R4000:
+		cpu_arch = 3;
+		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
+		mips3_L1TwoWayCache = 0;
+		mips3_cacheflush_bug = 0;
+		mips3_cacheflush_bug = 1; /* XXX FIXME: probably not needed */
+		break;
+	case MIPS_R4300:
+		cpu_arch = 3;
+		mips_num_tlb_entries = MIPS_R4300_TLB_NUM_TLB_ENTRIES;
+		mips3_L1TwoWayCache = 0;
+		mips3_cacheflush_bug = 0;
+		break;
+	case MIPS_R4600:
+		cpu_arch = 3;
+		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
+		mips3_L1TwoWayCache = 1;
+		/* disable interrupt while cacheflush to workaround the bug */
+		mips3_cacheflush_bug = 1;	/* R4600 only??? */
+		break;
+#ifdef ENABLE_MIPS_R4700 /* ID conflict */
+	case MIPS_R4700:
+		cpu_arch = 3;
+		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
+		mips3_L1TwoWayCache = 1;
+		mips3_cacheflush_bug = 0;
+		break;
+#endif
+#ifndef ENABLE_MIPS_R3NKK /* ID conflict */
+	case MIPS_R5000:
+#endif
+	case MIPS_RM5230:
+		cpu_arch = 3 /*4*/; 	/* FIXME: these are MIPS ISA IV */
+		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
+		mips3_L1TwoWayCache = 1;
+		mips3_cacheflush_bug = 0;
+		break;
+#endif /* MIPS3 */
+
+	default:
+		printf("CPU type (%d) not supported\n", cpu_id.cpu.cp_imp);
+		cpu_reboot(RB_HALT, NULL);
+	}
+
+	switch (cpu_arch) {
+#ifdef MIPS1
+	case 1:
+		mips1_TLBFlush(MIPS1_TLB_NUM_TLB_ENTRIES);
 		for (i = 0; i < MIPS1_TLB_FIRST_RAND_ENTRY; ++i)
 			mips1_TLBWriteIndexed(i, MIPS_KSEG0_START, 0);
 		mips1_vector_init();
 		break;
 #endif
 #ifdef MIPS3
-	case MIPS_R4000:
-		cpu_arch = 3;
+	case 3:
+	case 4:
 		mips3_SetWIRED(0);
-		mips3_TLBFlush();
+		mips3_TLBFlush(mips_num_tlb_entries);
 		mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
 		mips3_vector_init();
 		break;
 #endif
-
 	default:
-		printf("CPU type (%d) not supported\n", cpu_id.cpu.cp_imp);
+		printf("MIPS ISA %d: not supported\n", cpu_arch);
 		cpu_reboot(RB_HALT, NULL);
 	}
 }
@@ -364,7 +491,7 @@ cpu_identify()
 		printf("MIPS R6000 CPU");
 		break;
 	case MIPS_R4000:
-		if(mips_L1InstCacheSize == 16384)
+		if(mips_L1ICacheSize == 16384)
 			printf("MIPS R4400 CPU");
 		else
 			printf("MIPS R4000 CPU");
@@ -382,7 +509,14 @@ cpu_identify()
 		printf("MIPS R10000/T5 CPU");
 		break;
 	case MIPS_R4200:
+#if 0
+		printf("NEC VR4200 CPU (ICE)");
+#else
 		printf("MIPS R4200 CPU (ICE)");
+#endif
+		break;
+	case MIPS_R4300:
+		printf("NEC VR4300 CPU");
 		break;
 	case MIPS_R8000:
 		printf("MIPS R8000 Blackbird/TFP CPU");
@@ -390,15 +524,27 @@ cpu_identify()
 	case MIPS_R4600:
 		printf("QED R4600 Orion CPU");
 		break;
-	case MIPS_R3SONY:
+	case MIPS_R4700:	/* ID conflict: case MIPS_R3SONY: */
+#ifndef ENABLE_MIPS_R4700
 		printf("Sony R3000 based CPU");
+#else
+		printf("QED R4700 Orion CPU");
+#endif
+		break;
 		break;
 	case MIPS_R3TOSH:
 		printf("Toshiba R3000 based CPU");
 		break;
-	case MIPS_R3NKK:
+ 	case MIPS_R5000:	/* ID conflict:	case MIPS_R3NKK: */
+#ifdef ENABLE_MIPS_R3NKK
 		printf("NKK R3000 based CPU");
+#else
+		printf("MIPS R5000 based CPU");
+#endif
 		break;
+	case MIPS_RM5230:
+		printf("QED RM5230 based CPU");
+  		break;
 	default:
 		printf("Unknown CPU type (0x%x)",cpu_id.cpu.cp_imp);
 		break;
@@ -442,21 +588,37 @@ cpu_identify()
 		printf("MIPS R10000/T5 FPU");
 		break;
 	case MIPS_R4210:
+#if 0
+		printf("NEC VR4200 FPC (ICE)");
+#else
 		printf("MIPS R4200 FPC (ICE)");
+#endif
+		break;
 	case MIPS_R8000:
 		printf("MIPS R8000 Blackbird/TFP");
 		break;
 	case MIPS_R4600:
 		printf("QED R4600 Orion FPC");
 		break;
-	case MIPS_R3SONY:
+	case MIPS_R4700:	/* ID conflict: case MIPS_R3SONY: */
+#ifndef ENALBE_MIPS_R4700
 		printf("Sony R3000 based FPC");
+#else
+		printf("QED R4700 Orion FPC");
+#endif
 		break;
 	case MIPS_R3TOSH:
 		printf("Toshiba R3000 based FPC");
 		break;
-	case MIPS_R3NKK:
+ 	case MIPS_R5010:	/* ID conflict:	case MIPS_R3NKK: */
+#ifdef ENABLE_MIPS_R3NKK
 		printf("NKK R3000 based FPC");
+#else
+		printf("MIPS R5010 based FPC");
+#endif
+		break;
+	case MIPS_RM5230:
+		printf("QED RM5230 based FPC");
 		break;
 	default:
 		printf("Unknown FPU type (0x%x)", fpu_id.cpu.cp_imp);
@@ -465,16 +627,65 @@ cpu_identify()
 	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
 	printf("\n");
 
-	printf("        L1 cache: %dkb Instruction, %dkb Data.",
-	    mips_L1InstCacheSize / 1024,
-	    mips_L1DataCacheSize / 1024);
-	if (mips_L2CacheSize)
-		printf(" L2 cache: %dkb mixed.\n", mips_L2CacheSize / 1024);
+	printf("        L1 cache: %dkb/%db Instruction, %dkb/%db Data.",
+	    mips_L1ICacheSize / 1024, mips_L1ICacheLSize, 
+	    mips_L1DCacheSize / 1024, mips_L1DCacheLSize);
+#ifdef MIPS3
+	if (mips3_L1TwoWayCache)
+		printf(" Two way set associative.");
 	else
-		printf("\n");
+#endif
+		printf(" Direct mapped.");
+	printf("\n");
+
+#ifdef MIPS3
+	if (!mips_L2CachePresent)
+		printf("        No L2 cache.\n");
+	else {
+		printf("        L2 cache: ");
+		if (mips_L2CacheSize)
+			printf("%dkb", mips_L2CacheSize / 1024);
+		else
+			printf("unknown size");
+		printf("/%db %s (%s).\n", mips_L2CacheLSize,
+		    mips_L2CacheMixed ? "mixed" : "separated",
+		    mips_L2CacheIsSnooping ? "snooping" : "no snooping");
+	}
+#endif
 
 	/* XXX cache sizes for MIPS1? */
 	/* XXX hardware mcclock CPU-speed computation */
+
+#ifdef MIPS3
+	/*
+	 * sanity check.
+	 * good place to do this is mips_vector_init(),
+	 * but printf() doesn't work in it.
+	 */
+	if (mips3_L1TwoWayCache &&
+	    (mips_L1ICacheLSize < 32 || mips_L1DCacheLSize < 32)) {
+		/*
+		 * current implementation of mips3_FlushCache(),
+		 * mips3_FlushICache(), mips3_FlushDCache() and
+		 * mips3_HitFlushDCache() assume that
+		 * if the CPU has two way L1 cache, line size >= 32.
+		 */
+		printf("L1 cache: two way, but Inst/Data line size = %d/%d\n",
+		    mips_L1ICacheLSize, mips_L1DCacheLSize);
+		printf("Please fix implementation of mips3_*Flush*Cache\n");
+		cpu_reboot(RB_HALT, NULL);
+	}
+	if (mips_L2CachePresent && mips_L2CacheLSize < 32) {
+		/*
+		 * current implementation of mips3_FlushCache(),
+		 * mips3_FlushDCache() and mips3_HitFlushDCache() assume
+		 * that if the CPU has L2 cache, line size >= 32.
+		 */
+		printf("L2 cache line size = %d\n", mips_L2CacheLSize);
+		printf("Please fix implementation of mips3_*Flush*Cache\n");
+		cpu_reboot(RB_HALT, NULL);
+	}
+#endif
 }
 
 
@@ -1083,8 +1294,8 @@ mips_init_proc0(space)
 	int i;
 
 	proc0.p_addr = proc0paddr = (struct user *)space;
-	curpcb = (struct pcb *)proc0.p_addr;
 	proc0.p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
+	curpcb = &proc0.p_addr->u_pcb;
 
 	pa = MIPS_KSEG0_TO_PHYS(proc0.p_addr);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.9 1998/08/25 01:55:38 nisimura Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.10 1998/09/11 16:46:31 jonathan Exp $	*/
 
 /*
  * Architecture name.
@@ -29,9 +29,15 @@
  * Round p (pointer or byte index) up to a correctly-aligned value for all
  * data types (int, long, ...).   The result is u_int and must be cast to
  * any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits). 
+ *
  */
 #define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	NBPG		4096		/* bytes/page */

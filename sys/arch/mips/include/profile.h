@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.11 1997/11/05 04:02:26 thorpej Exp $	*/
+/*	$NetBSD: profile.h,v 1.12 1998/09/11 16:46:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,19 +42,23 @@
 #define _MIPS_PROFILE_H_
 
 #ifdef _KERNEL
-
  /*
   *  Declare non-profiled _splhigh() /_splx() entrypoints for _mcount.
   *  see MCOUNT_ENTER and MCOUNT_EXIT.
   */
 #define	_KERNEL_MCOUNT_DECL \
     extern int _splhigh __P((void)); extern int _splx __P((int));
-
 #else   /* !_KERNEL */
-
 /* Make __mcount static. */
 #define	_KERNEL_MCOUNT_DECL	static
 #endif	/* !_KERNEL */
+
+#ifdef _KERNEL
+# define _PROF_CPLOAD	""
+#else
+# define _PROF_CPLOAD	".cpload $25;"
+#endif
+
 
 #define	_MCOUNT_DECL \
     _KERNEL_MCOUNT_DECL \
@@ -62,9 +66,11 @@
 
 #define	MCOUNT \
 	__asm__(".globl _mcount;" \
+	".type _mcount,@function;" \
 	"_mcount:;" \
 	".set noreorder;" \
 	".set noat;" \
+	_PROF_CPLOAD \
 	"sw $4,8($29);" \
 	"sw $5,12($29);" \
 	"sw $6,16($29);" \
@@ -90,7 +96,7 @@
 /*
  * The following two macros do splhigh and splx respectively.
  * They have to be defined this way because these are real
- * functions on the PMAX, and we do not want to invoke mcount
+ * functions on the MIPS, and we do not want to invoke mcount
  * recursively.
  */
 #define	MCOUNT_ENTER	s = _splhigh()

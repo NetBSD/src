@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 1997/06/22 07:42:52 jonathan Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 1998/09/11 16:46:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,13 +135,13 @@
 
 #if  MIPS3 +  MIPS1 > 1
 # define PSL_LOWIPL \
-	((cpu_arch == 3) ? MIPS3_PSL_LOWIPL : MIPS1_PSL_LOWIPL)
+	(CPUISMIPS3 ? MIPS3_PSL_LOWIPL : MIPS1_PSL_LOWIPL)
 #define PSL_USERSET \
-	((cpu_arch == 3) ? MIPS3_PSL_USERSET : MIPS1_PSL_USERSET)
+	(CPUISMIPS3 ? MIPS3_PSL_USERSET : MIPS1_PSL_USERSET)
 # define PSL_USRCLR \
-	((cpu_arch == 3) ? MIPS3_PSL_USRCLR : MIPS1_PSL_USRCLR)
+	(CPUISMIPS3 ? MIPS3_PSL_USRCLR : MIPS1_PSL_USRCLR)
 # define USERMODE(ps) \
-	((cpu_arch == 3) ? MIPS3_USERMODE(ps) : MIPS1_USERMODE(ps))
+	(CPUISMIPS3 ? MIPS3_USERMODE(ps) : MIPS1_USERMODE(ps))
 # define  BASEPRI(ps)	\
-	((cpu_arch == 3) ? MIPS3_BASEPRI(ps) : MIPS1_BASEPRI(ps))
+	(CPUISMIPS3 ? MIPS3_BASEPRI(ps) : MIPS1_BASEPRI(ps))
 #endif

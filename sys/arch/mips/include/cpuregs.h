@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.14 1998/04/23 10:32:08 jonathan Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.15 1998/09/11 16:46:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,11 +212,6 @@
 #define MIPS3_SR_ERL		0x00000004
 #define MIPS3_SR_EXL		0x00000002
 
-/* backwards compatibility with names used in Pica port */
-#define MIPS_SR_RP		MIPS3_SR_RP   
-#define MIPS_SR_FR_32		MIPS3_SR_FR_32
-#define MIPS_SR_RE		MIPS3_SR_RE   
-
 #define MIPS_SR_SOFT_RESET	MIPS3_SR_SOFT_RESET
 #define MIPS_SR_DIAG_CH		MIPS3_SR_DIAG_CH
 #define MIPS_SR_DIAG_CE		MIPS3_SR_DIAG_CE
@@ -276,6 +271,76 @@
 
 #define MIPS3_CNTXT_PTE_BASE	0xFF800000
 #define MIPS3_CNTXT_BAD_VPN2	0x007FFFF0
+
+/*
+ * The bits in the MIPS3 config register.
+ *
+ *	bit 0..5: R/W, Bit 6..31: R/O
+ */
+
+/* kseg0 coherency algorithm - see MIPS3_TLB_ATTR values */
+#define MIPS3_CONFIG_K0_MASK	0x00000007
+
+/*
+ * R/W Update on Store Conditional
+ *	0: Store Conditional uses coherency algorithm specified by TLB
+ *	1: Store Conditional uses cacheable coherent update on write
+ */
+#define MIPS3_CONFIG_CU		0x00000008
+
+#define MIPS3_CONFIG_DB		0x00000010	/* Primary D-cache line size */
+#define MIPS3_CONFIG_IB		0x00000020	/* Primary I-cache line size */
+#define MIPS3_CONFIG_CACHE_L1_LSIZE(config, bit) \
+	(((config) & (bit)) ? 0x10 : 0x20)
+
+#define MIPS3_CONFIG_DC_MASK	0x000001c0	/* Primary D-cache size */
+#define MIPS3_CONFIG_DC_SHIFT	6	
+#define MIPS3_CONFIG_IC_MASK	0x00000e00	/* Primary I-cache size */
+#define MIPS3_CONFIG_IC_SHIFT	9
+#define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
+	(0x1000 << (((config) & (mask)) >> (shift)))
+
+/* Block ordering: 0: sequential, 1: sub-block */
+#define MIPS3_CONFIG_EB		0x00002000
+
+/* ECC mode - 0: ECC mode, 1: parity mode */
+#define MIPS3_CONFIG_EM		0x00004000
+
+/* BigEndianMem - 0: kernel and memory are little endian, 1: big endian */
+#define MIPS3_CONFIG_BE		0x00008000
+
+/* Dirty Shared coherency state - 0: enabled, 1: disabled */
+#define MIPS3_CONFIG_SM		0x00010000
+
+/* Secondary Cache - 0: present, 1: not present */
+#define MIPS3_CONFIG_SC		0x00020000
+
+/* System Port width - 0: 64-bit, 1,2,3: reserved */
+#define MIPS3_CONFIG_EW_MASK	0x000c0000
+#define MIPS3_CONFIG_EW_SHIFT	18
+
+/* Secondary Cache port width - 0: 128-bit data path to S-cache, 1: reserved */
+#define MIPS3_CONFIG_SW		0x00100000
+
+/* Split Secondary Cache Mode - 0: I/D mixed, 1: I/D separated by SCAddr(17) */
+#define MIPS3_CONFIG_SS		0x00200000
+
+/* Secondary Cache line size */
+#define MIPS3_CONFIG_SB_MASK	0x00c00000
+#define MIPS3_CONFIG_SB_SHIFT	22
+#define MIPS3_CONFIG_CACHE_L2_LSIZE(config) \
+	(0x10 << (((config) & MIPS3_CONFIG_SB_MASK) >> MIPS3_CONFIG_SB_SHIFT))
+
+/* write back data rate */
+#define MIPS3_CONFIG_EP_MASK	0x0f000000
+#define MIPS3_CONFIG_EP_SHIFT	24
+
+/* System clock ratio - this value is CPU dependent */
+#define MIPS3_CONFIG_EC_MASK	0x70000000
+#define MIPS3_CONFIG_EC_SHIFT	28
+
+/* Master-Checker Mode - 1: enabled */
+#define MIPS3_CONFIG_CM		0x80000000
 
 /*
  * Location of exception vectors.
@@ -437,10 +502,29 @@
 
 #define MIPS3_TLB_PHYS_PAGE_SHIFT	6
 #define MIPS3_TLB_PF_NUM		0x3fffffc0
-#define MIPS3_TLB_ATTR_MASK		0x00000038
+
 #define MIPS3_TLB_MOD_BIT		0x00000004
 #define MIPS3_TLB_VALID_BIT		0x00000002
 #define MIPS3_TLB_GLOBAL_BIT		0x00000001
+
+/*
+ * MIPS3_TLB_ATTR values - coherency algorithm:
+ * 0: cacheable, noncoherent, write-through, no write allocate
+ * 1: cacheable, noncoherent, write-through, write allocate
+ * 2: uncached
+ * 3: cacheable, noncoherent, write-back (noncoherent)
+ * 4: cacheable, coherent, write-back, exclusive (exclusive)
+ * 5: cacheable, coherent, write-back, exclusive on write (sharable)
+ * 6: cacheable, coherent, write-back, update on write (update)
+ * 7: cacheable, ?, ?, ?, ?
+ */
+#define MIPS3_TLB_ATTR_WT		0 /* IDT */
+#define MIPS3_TLB_ATTR_WT_WRITEALLOCATE	1 /* IDT */
+#define MIPS3_TLB_ATTR_UNCACHED		2 /* R4000/R4400, IDT */
+#define MIPS3_TLB_ATTR_WB_NONCOHERENT	3 /* R4000/R4400, IDT */
+#define MIPS3_TLB_ATTR_WB_EXCLUSIVE	4 /* R4000/R4400 */
+#define MIPS3_TLB_ATTR_WB_SHARABLE	5 /* R4000/R4400 */
+#define MIPS3_TLB_ATTR_WB_UPDATE	6 /* R4000/R4400 */
 
 
 /*
@@ -471,6 +555,7 @@
 #define MIPS1_TLB_FIRST_RAND_ENTRY	8
 
 #define MIPS3_TLB_NUM_TLB_ENTRIES	48
+#define MIPS_R4300_TLB_NUM_TLB_ENTRIES	32
 #define MIPS3_TLB_WIRED_ENTRIES		8
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.14 1998/07/27 13:55:34 mycroft Exp $	*/
+/*	$NetBSD: varargs.h,v 1.15 1998/09/11 16:46:32 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,8 @@
  *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
-#ifndef _PMAX_VARARGS_H_
-#define	_PMAX_VARARGS_H_
+#ifndef _MIPS_VARARGS_H_
+#define	_MIPS_VARARGS_H_
 
 #include <machine/ansi.h>
 
@@ -65,4 +65,4 @@ typedef _BSD_VA_LIST_	va_list;
 
 #define	va_end(ap)	
 
-#endif /* !_PMAX_VARARGS_H_ */
+#endif /* !_MIPS_VARARGS_H_ */
