@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.8 1996/10/09 07:28:47 matthias Exp $	*/
+/*	$NetBSD: icu.h,v 1.9 1996/11/24 13:34:44 matthias Exp $	*/
 
 /* 
  * Copyright (c) 1993 Philip A. Nelson.
@@ -76,6 +76,16 @@
 #define ICUB(n)	*((unsigned char  *)(ICU_ADR + n))
 #define ICUW(n)	*((unsigned short *)(ICU_ADR + n))
 
+/*
+ * ICU IPND register;
+ * induce h/w interrupt condition atomicly by poking magic value
+ * into IPND (Interrupt pending register).
+ */
+#define IPND_SET	0x80
+#define IPND_CLR	0x00
+#define setsofticu(ir)	(ICUB(IPND + (((ir) < 8) ? 0 : 1)) = (IPND_SET + (ir)))
+#define clrsofticu(ir)	(ICUB(IPND + (((ir) < 8) ? 0 : 1)) = (IPND_CLR + (ir)))
+
 #ifndef _LOCORE
 /* Interrupt trigger modes
  */
@@ -95,6 +105,7 @@ enum {HIGH_LEVEL, LOW_LEVEL, RISING_EDGE, FALLING_EDGE} int_modes;
 #define IR_TTY2RDY	8
 #define IR_TTY3		7
 #define IR_TTY3RDY	6
+#define IR_SOFT		14
 
 /*    edge polarity
  *	0	0	falling edge
@@ -125,7 +136,7 @@ scsi_select_ctlr(int ctlr)
 
 	old = (ICUB(PDAT) & ICU_SCSI_BIT) == 0;
 	if (ctlr == DP8490)
-		ICUB(PDAT) &= ~ICU_SCSI_BIT;	/* select = 0 for 8490 */
+		ICUB(PDAT) &= ~ICU_SCSI_BIT;	/* select = 0 for dp8490 */
 	else
 		ICUB(PDAT) |= ICU_SCSI_BIT;	/* select = 1 for AIC6250 */
 	return(old);
