@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.11 2001/11/15 09:48:02 lukem Exp $	*/
+/*	$NetBSD: rbus.c,v 1.12 2001/12/24 09:37:53 christos Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.11 2001/11/15 09:48:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.12 2001/12/24 09:37:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 	bus_space_handle_t *bshp;
 {
 	bus_addr_t decodesize = mask + 1;
-	bus_addr_t boundary, search_addr;
+	bus_addr_t boundary, search_addr, search_end;
 	int val;
 	bus_addr_t result;
 	int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
@@ -139,13 +139,13 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 			boundary = decodesize > align ? decodesize : align;
 
 			search_addr = (substart & ~(boundary - 1)) + addr;
+			search_end = subend + addr;
 
 			if (search_addr < substart) {
 				search_addr += boundary;
 			}
-
 			val = 1;
-			for (; search_addr + size <= subend;
+			for (; search_addr + size <= search_end;
 			     search_addr += boundary) {
 				val = extent_alloc_subregion(rbt->rb_ext,
 				    search_addr, search_addr + size, size,
