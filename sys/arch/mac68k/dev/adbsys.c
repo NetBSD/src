@@ -30,13 +30,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: adbsys.c,v 1.1 1994/07/08 07:55:49 lkestel Exp $
+ * $Id: adbsys.c,v 1.2 1994/07/09 17:21:13 briggs Exp $
  *
  */
 
 /*
  * $Log: adbsys.c,v $
- * Revision 1.1  1994/07/08 07:55:49  lkestel
+ * Revision 1.2  1994/07/09 17:21:13  briggs
+ * Cleanup a printf, raise the probe timeout, and notice if the probe
+ * does time out.
+ *
+ * Revision 1.1  1994/07/08  07:55:49  lkestel
  * 6x10.h: shifted font over by two pixels.
  * keyboard.h: added constants for commonly used keys and reformatted
  *   array so that gcc would be happy.
@@ -520,8 +524,9 @@ void adb_init_II()
 	adb_start_xaction_II(ADB_MKCMD(2, ADB_CMD_TALK, 3), ADB_SYS_RESTART);
 
 	hey = 0;
-	while((adb_sys_state == ADB_SYS_RESTART) && (hey < 3000000))
+	while((adb_sys_state == ADB_SYS_RESTART) && (hey < 6000000))
 		hey++;
+	if (hey >= 6000000) printf("adb_init(): timed out!!!!!\n");
 
 #if 1	/* only kept around for old DESKTOP code */
 	for(hey = 2; hey < ADB_MAX_DEVS; hey++)
@@ -1041,7 +1046,7 @@ adbattach(parent, dev, aux)
 	struct device	*parent, *dev;
 	void		*aux;
 {
-	printf("adb event device\n");
+	printf(" adb event device.\n");
 	/* adb_init();  -- called from autoconf... In case ddb needs it?  */
 }
 
