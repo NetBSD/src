@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.54 1999/06/15 23:27:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.55 1999/06/16 00:29:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -600,7 +600,7 @@ uvm_map(map, startp, size, uobj, uoffset, flags)
 			goto step3;
 
 		/* wired_count's must match (new area is unwired) */
-		if (prev_entry->wired_count)
+		if (VM_MAPENT_ISWIRED(prev_entry))
 			goto step3; 
 
 		/*
@@ -991,7 +991,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 		 * unwiring will put the entries back into the pmap (XXX).
 		 */
 
-		if (entry->wired_count)
+		if (VM_MAPENT_ISWIRED(entry))
 			uvm_map_entry_unwire(map, entry);
 
 		/*
@@ -1116,7 +1116,7 @@ uvm_unmap_detach(first_entry, amap_unref_flags)
 		 * sanity check
 		 */
 		/* was part of vm_map_entry_delete() */
-		if (first_entry->wired_count)
+		if (VM_MAPENT_ISWIRED(first_entry))
 			panic("unmap: still wired!");
 #endif
 
@@ -2033,11 +2033,10 @@ uvm_map_pageable(map, start, end, new_pageable)
 		 * really wired down and that there are no holes.  
 		 */
 		while ((entry != &map->header) && (entry->start < end)) {
-			
 			if (entry->wired_count == 0 ||
 			    (entry->end < end &&
-			    (entry->next == &map->header ||
-			    entry->next->start > entry->end))) {
+			     (entry->next == &map->header ||
+			      entry->next->start > entry->end))) {
 				vm_map_unlock(map);
 				UVMHIST_LOG(maphist,
 				    "<- done (INVALID UNWIRE ARG)",0,0,0,0);
@@ -2060,7 +2059,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 		while ((entry != &map->header) && (entry->start < end)) {
 			UVM_MAP_CLIP_END(map, entry, end);
 			entry->wired_count--;
-			if (entry->wired_count == 0)
+			if (VM_MAPENT_ISWIRED(entry) == 0)
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
 		}
@@ -2095,9 +2094,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 	 */
 
 	while ((entry != &map->header) && (entry->start < end)) {
-
-		if (entry->wired_count == 0) {  /* not already wired? */
-
+		if (VM_MAPENT_ISWIRED(entry) == 0) { /* not already wired? */
 			/* 
 			 * perform actions of vm_map_lookup that need the
 			 * write lock on the map: create an anonymous map
@@ -2105,7 +2102,6 @@ uvm_map_pageable(map, start, end, new_pageable)
 			 * for a zero-fill region.  (XXXCDC: submap case
 			 * ok?)
 			 */
-
 			if (!UVM_ET_ISSUBMAP(entry)) {  /* not submap */
 				if (UVM_ET_ISNEEDSCOPY(entry) && 
 				    ((entry->protection & VM_PROT_WRITE) ||
@@ -2115,7 +2111,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 					/* XXXCDC: wait OK? */
 				}
 			}
-		} /* wired_count == 0 */
+		}
 		UVM_MAP_CLIP_START(map, entry, start);
 		UVM_MAP_CLIP_END(map, entry, end);
 		entry->wired_count++;
@@ -2189,7 +2185,7 @@ uvm_map_pageable(map, start, end, new_pageable)
 		entry = start_entry;
 		while (entry != failed_entry) {
 			entry->wired_count--;
-			if (entry->wired_count == 0)
+			if (VM_MAPENT_ISWIRED(entry) == 0)
 				uvm_map_entry_unwire(map, entry);
 			entry = entry->next;
 		}
@@ -2248,8 +2244,9 @@ uvm_map_pageable_all(map, flags, limit)
 		 */
 		for (entry = map->header.next; entry != &map->header;
 		     entry = entry->next) {
-			if (entry->wired_count) {
-				if (--entry->wired_count == 0)
+			if (VM_MAPENT_ISWIRED(entry)) {
+				entry->wired_count--;
+				if (VM_MAPENT_ISWIRED(entry) == 0)
 					uvm_map_entry_unwire(map, entry);
 			}
 		}
@@ -2305,7 +2302,7 @@ uvm_map_pageable_all(map, flags, limit)
 	for (size = 0, entry = map->header.next; entry != &map->header;
 	     entry = entry->next) {
 		if (entry->protection != VM_PROT_NONE &&
-		    entry->wired_count == 0) {	/* not already wired? */
+		    VM_MAPENT_ISWIRED(entry) == 0) { /* not already wired? */
 			size += entry->end - entry->start;
 		}
 	}
@@ -2332,7 +2329,7 @@ uvm_map_pageable_all(map, flags, limit)
 	     entry = entry->next) {
 		if (entry->protection == VM_PROT_NONE)
 			continue;
-		if (entry->wired_count == 0) {	/* not already wired? */
+		if (VM_MAPENT_ISWIRED(entry) == 0) { /* not already wired? */
 			/*
 			 * perform actions of vm_map_lookup that need the
 			 * write lock on the map: create an anonymous map
@@ -2349,7 +2346,7 @@ uvm_map_pageable_all(map, flags, limit)
 					/* XXXCDC: wait OK? */
 				}
 			}
-		} /* wired_count == 0 */
+		}
 		entry->wired_count++;
 	}
 
@@ -2398,7 +2395,7 @@ uvm_map_pageable_all(map, flags, limit)
 		for (entry = map->header.next; entry != failed_entry;
 		     entry = entry->next) {
 			entry->wired_count--;
-			if (entry->wired_count == 0)
+			if (VM_MAPENT_ISWIRED(entry) == 0)
 				uvm_map_entry_unwire(map, entry);
 		}
 		vm_map_unlock(map);
@@ -2972,7 +2969,7 @@ uvmspace_fork(vm1)
 
 			  if ((amap_flags(old_entry->aref.ar_amap) & 
 			       AMAP_SHARED) != 0 ||
-			      old_entry->wired_count != 0) {
+			      VM_MAPENT_ISWIRED(old_entry)) {
 
 			    amap_copy(new_map, new_entry, M_WAITOK, FALSE,
 				      0, 0);
@@ -2991,7 +2988,7 @@ uvmspace_fork(vm1)
 			 * allocated any needed amap (above).
 			 */
 
-			if (old_entry->wired_count != 0) {
+			if (VM_MAPENT_ISWIRED(old_entry)) {
 
 			  /* 
 			   * resolve all copy-on-write faults now

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.33 1999/06/04 23:38:41 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.34 1999/06/16 00:29:04 thorpej Exp $	*/
 
 /*
  *
@@ -647,7 +647,7 @@ ReFault:
 	 */
 
 	enter_prot = ufi.entry->protection;
-	wired = (ufi.entry->wired_count != 0) || (fault_type == VM_FAULT_WIRE);
+	wired = VM_MAPENT_ISWIRED(ufi.entry) || (fault_type == VM_FAULT_WIRE);
 	if (wired)
 		access_type = enter_prot; /* full access for wired */
 
@@ -847,7 +847,7 @@ ReFault:
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
 			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
 			    enter_prot, 
-			    (ufi.entry->wired_count != 0), 0);
+			    VM_MAPENT_ISWIRED(ufi.entry), 0);
 		}
 		simple_unlock(&anon->an_lock);
 	}

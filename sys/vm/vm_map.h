@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.30 1999/06/15 23:27:48 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.31 1999/06/16 00:29:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -122,6 +122,8 @@ struct vm_map_entry {
 #define UVM_MAP_STATIC		0x01		/* static map entry */
 
 };
+
+#define	VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
 
 /*
  *	Maps are doubly-linked lists of map entries, kept sorted
