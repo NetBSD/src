@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.171 2001/11/06 10:56:46 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.172 2001/11/10 22:56:18 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -425,6 +425,7 @@
 ./usr/share/man/cat8/bebox
 ./usr/share/man/cat8/cobalt
 ./usr/share/man/cat8/dreamcast
+./usr/share/man/cat8/evbarm
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hpcmips
 ./usr/share/man/cat8/hpcsh
@@ -503,6 +504,7 @@
 ./usr/share/man/man8/bebox
 ./usr/share/man/man8/cobalt
 ./usr/share/man/man8/dreamcast
+./usr/share/man/man8/evbarm
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hpcmips
 ./usr/share/man/man8/hpcsh
