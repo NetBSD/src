@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2002/08/19 15:01:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.44 2002/09/17 23:18:33 thorpej Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -8,8 +8,6 @@ NOLINT=		# defined
 LIB=		gcc
 
 .cc: # disable .cc->NULL transform
-
-.if defined(USE_NEW_TOOLCHAIN)
 
 .if exists(${.CURDIR}/${MACHINE_ARCH}.mk)
 .include "${.CURDIR}/${MACHINE_ARCH}.mk"
@@ -68,84 +66,4 @@ INCSDIR=	/usr/include/g++
 ${OBJS} ${SOBJS} ${POBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
 .else
 .include <bsd.prog.mk> # do nothing
-.endif
-
-.else
-#
-# XXX - BEGIN - Old toolchain build goop - delete when everything migrated - XXX
-#
-HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
-
-.if !empty(HAVE_GCC28)
-MKPIC:=		no
-MKPROFILE:=	no
-
-DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
-ARCH=		${NETBSDSRCDIR}/gnu/usr.bin/egcs/arch
-
-.if exists(${ARCH}/${MACHINE_ARCH})
-ARCHSUBDIR= ${MACHINE_ARCH}
-.elif exists(${ARCH}/${MACHINE_CPU})
-ARCHSUBDIR= ${MACHINE_CPU}
-.else
-.BEGIN:
-	@echo no egcs/arch/${MACHINE_ARCH} nor egcs/arch/${MACHINE_CPU} exists
-	@false
-.endif
-
-CPPFLAGS+=	-I${ARCH}/${ARCHSUBDIR} -I${ARCH} \
-		-I${DIST}/config -I${DIST}/cp -I${DIST}
-
-LIB2OBJS=	__gcc_bcmp.o _varargs.o __dummy.o _eprintf.o _bb.o _shtab.o \
-		_clear_cache.o _trampoline.o __main.o _exit.o _ctors.o \
-		_pure.o
-.if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386") || \
-    (${MACHINE_ARCH} == "sparc64")
-LIB2OBJS+=	_fixxfdi.o _fixunsxfdi.o _floatdixf.o _fixunsxfsi.o
-.endif
-.if (${MACHINE_ARCH} == "vax")
-LIB2OBJS+=	_udiv_w_sdiv.o
-.endif
-.if (${MACHINE_ARCH} == "sh3eb") || (${MACHINE_ARCH} == "sh3el") || \
-    (${MACHINE_ARCH} == "arm")
-LIB2OBJS+=	_fixunsdfsi.o _fixunssfsi.o
-.endif
-OBJS+=		${LIB2OBJS}
-
-# Extra code to include in libgcc2 for C++ support.
-SRCS+=		tinfo.cc tinfo2.cc new.cc exception.cc frame.c
-OBJS+=		${NEW1OBJS} ${NEW2OBJS}
-CXXFLAGS+=	-I${DIST}/cp/inc
-LIB2OBJS+=	_eh.o
-NEW1OBJS=	_op_new.o _op_newnt.o
-NEW2OBJS=	_op_vnew.o _op_vnewnt.o _op_delete.o _op_delnt.o \
-		_op_vdel.o _op_vdelnt.o
-
-INCS=		exception new new.h typeinfo
-INCSDIR=	/usr/include/g++
-
-${NEW1OBJS}: new1.cc
-	${COMPILE.cc} -DL$* -o $@ $>
-${NEW2OBJS}: new2.cc
-	${COMPILE.cc} -DL$* -o $@ $>
-
-${LIB2OBJS}: libgcc2.c
-	${COMPILE.c} -DL$* -o $@ $>
-
-afterinstall:
-	@if [ ! -f _eh.o ]; then\
-		echo '***** You should rebuild and reinstall libgcc.a using the new egcs'; \
-		echo '***** compiler in order to include all the necessary C++ support.'; \
-	fi
-
-.PATH:		${DIST} ${DIST}/cp ${DIST}/cp/inc
-
-.include <bsd.lib.mk>
-.else
-# Do nothing. (PROG undefined)
-.include <bsd.prog.mk>
-.endif
-#
-# XXX - END - Old toolchain build goop - delete when everything migrated - XXX
-#
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.102 2002/09/08 03:59:02 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.103 2002/09/17 23:18:29 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -91,19 +91,16 @@ UNPRIVED	If defined, don't set the owner/group/mode when installing
 
 MKBFD		If "no", don't build libbfd, libiberty, or any of
 		the things that depend on them (binutils/gas/ld,
-		gdb, dbsym, mdsetimage).  Only meaningful if
-		USE_NEW_TOOLCHAIN is set.
+		gdb, dbsym, mdsetimage).
 
 MKCATPAGES	If "no", don't build or install the catman pages.
 
 MKDOC		If "no", don't build or install the documentation.
 
-MKGDB		If "no", don't build gdb.  Only meaningful if
-		USE_NEW_TOOLCHAIN is set.
+MKGDB		If "no", don't build gdb.
 
 MKGCC		If "no", don't build gcc or any of the gcc-related
 		libraries (libg2c, libgcc, libobjc, libstdc++).
-		Only meaningful if USE_NEW_TOOLCHAIN is set.
 
 MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
 		Has no effect on most platforms.
@@ -363,6 +360,38 @@ MKSOFTFLOAT	If "yes", build with options to enable the compiler to
 		generate output containing library calls for floating
 		point and possibly soft-float library support.  Defaults
 		to "no".
+
+TOOLCHAIN_MISSING
+		If "yes", this indicates that the platform being built
+		does not have a working in-tree toolchain.  If the
+		MACHINE_ARCH in question falls into this category, the
+		variable is conditionally assigned the value "yes".
+		Otherwise, the variable is unconditionally assigned the
+		value "no".
+
+		If TOOLCHAIN_MISSING is "yes", the variables MKBFD, MKGCC,
+		and MKGDB are unconditionally assigned the value "no".
+
+EXTERNAL_TOOLCHAIN
+		This variable is not directly set by <bsd.own.mk>, but
+		including <bsd.own.mk> is the canonical way to gain
+		access to this variable.  The variable should be defined
+		either in the user's environment or in the user's mk.conf
+		file.  If defined, this variable indicates the root of
+		an external toolchain which will be used to build the
+		tree.  For example, if a platform is a TOOLCHAIN_MISSING
+		platform, EXTERNAL_TOOLCHAIN can be used to re-enable the
+		cross-compile framework.
+
+		If EXTERNAL_TOOLCHAIN is defined, the variable MKGCC is
+		unconditionally assigned the value "no", since the external
+		version of the compiler may not be able to build the library
+		components of the in-tree compiler.
+
+		NOTE: This variable is not yet used in as many places as
+		it should be.  Expect the exact semantics of this variable
+		to change in the short term as parts of the cross-compile
+		framework continue to be cleaned up.
 
 bsd.own.mk is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
