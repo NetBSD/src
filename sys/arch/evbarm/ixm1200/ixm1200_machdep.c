@@ -1,5 +1,5 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.21 2003/05/05 04:23:26 igy Exp $ */
-#undef DEBUG_BEFOREMMU
+/*	$NetBSD: ixm1200_machdep.c,v 1.22 2003/05/05 04:34:48 igy Exp $ */
+
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.21 2003/05/05 04:23:26 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.22 2003/05/05 04:34:48 igy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -148,16 +148,6 @@ u_int cpu_reset_address = (u_int) ixp12x0_reset;
 #define CONADDR IXPCOM_UART_BASE
 #endif
 
-cons_decl(com);
-cons_decl(ixpcom);
-
-struct consdev constab[] = {
-#if (NIXPCOM > 0)
-	cons_init(ixpcom),
-#endif
-	{ 0 },
-};
-
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE  1
 #define ABT_STACK_SIZE  1
@@ -229,10 +219,6 @@ void consinit		__P((void));
 u_int cpu_get_control	__P((void));
 
 void ixdp_ixp12x0_cc_setup(void);
-
-#ifdef DEBUG_BEFOREMMU
-static void fakecninit();
-#endif
 
 extern int db_trapper(u_int, u_int, trapframe_t *, int);
 
@@ -331,14 +317,6 @@ initarm(void *arg)
         Elf_Shdr *sh;
 #endif
 
-#ifdef DEBUG_BEFOREMMU
-	/*
-	 * At this point, we cannot call real consinit().
-	 * Just call a faked up version of consinit(), which does the thing
-	 * with MMU disabled.
-	 */
-	fakecninit();
-#endif
         /*
          * Since we map v0xf0000000 == p0x90000000, it's possible for
          * us to initialize the console now.
@@ -737,19 +715,6 @@ consinit(void)
 			   CONSPEED, CONMODE))
 		panic("can't init serial console @%lx", IXPCOM_UART_HWBASE);
 }
-
-#ifdef DEBUG_BEFOREMMU
-cons_decl(ixpcom);
-void
-fakecninit()
-{
-	static struct consdev fakecntab = cons_init(ixpcom);
-	cn_tab = &fakecntab;
-
-	(*cn_tab->cn_init)(0);
-	cn_tab->cn_pri = CN_REMOTE;
-}
-#endif
 
 /*
  * For optimal cache cleaning we need two 16K banks of
