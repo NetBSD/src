@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.2 1999/11/14 02:15:51 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.3 2000/04/01 20:17:12 soren Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -53,7 +53,7 @@ static void	pciide_pnpbios_attach(struct device *, struct device *, void *);
 
 extern void	pciide_channel_dma_setup(struct pciide_channel *);
 extern int	pciide_dma_init(void *, int, int, void *, size_t, int);
-extern void	pciide_dma_start(void *, int, int, int);
+extern void	pciide_dma_start(void *, int, int);
 extern int	pciide_dma_finish(void *, int, int, int);
 extern int	pciide_compat_intr (void *);
 
