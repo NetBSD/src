@@ -1,4 +1,4 @@
-/*	$NetBSD: ihareg.h,v 1.2 2001/07/27 16:16:34 tsutsui Exp $ */
+/*	$NetBSD: ihareg.h,v 1.3 2001/11/17 21:26:12 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -207,10 +207,6 @@
 #define     ABTXFR	    0x04       /*     Abort Xfer		     */
 #define     FRXFR	    0x02       /*     Force Xfer		     */
 #define     STRXFR	    0x01       /*     Start Xfer		     */
-#define     ST_X_IN	    (XDIR | STRXFR)
-#define     ST_X_OUT	    (	    STRXFR)
-#define     ST_SG_IN	    (SGXFR | ST_X_IN)
-#define     ST_SG_OUT	    (SGXFR | ST_X_OUT)
 #define TUL_ISTUS0	0xDC	       /* R/W Interrupt Status Register	     */
 #define     DGINT	    0x80       /*     DMA Global Interrupt	     */
 #define     RSVRD0	    0x40       /*     Reserved			     */
