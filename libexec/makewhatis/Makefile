@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/08/19 13:54:36 lukem Exp $
-
-.include <bsd.obj.mk>
+#	$NetBSD: Makefile,v 1.13 2002/09/04 06:39:58 junyoung Exp $
 
 PROG=	makewhatis
 SRCS=	makewhatis.c config.c
