@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.33 2002/10/08 09:59:27 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.34 2002/10/08 12:12:56 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.33 2002/10/08 09:59:27 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.34 2002/10/08 12:12:56 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -280,27 +280,29 @@ rnd_estimate_entropy(rndsource_t *rs, u_int32_t t)
 }
 
 /*
- * Attach the random device, and initialize the global random pool
- * for our use.
+ * "Attach" the random device. This is an (almost) empty stub, since
+ * pseudo-devices don't get attached until after config, after the
+ * entropy sources will attach. We just use the timing of this event
+ * as another potential source of initial entropy.
  */
 void
 rndattach(int num)
 {
 	u_int32_t c;
 
-	/*
-	 * rnd_init() is actually called very early on in the boot
-	 * process, pseudo's don't get attached until much later
-	 * (after many of the sources have been attached). 
-	 * XXX Maybe this is left "in case", maybe it should be an assert?
-	 */	
-	rnd_init();
+	/* Trap unwary players who don't call rnd_init() early */
+	KASSERT(rnd_ready);
 
 	/* mix in another counter */
 	c = rnd_counter();
 	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
 }
 
+/*
+ * initialize the global random pool for our use.
+ * rnd_init() must be called very early on in the boot process, so
+ * the pool is ready for other devices to attach as sources.
+ */
 void
 rnd_init(void)
 {
