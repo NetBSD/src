@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.35 1999/11/15 22:04:14 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.36 1999/11/26 01:39:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -362,7 +362,7 @@ ums_intr(xfer, addr, status)
 	if (status == USBD_CANCELLED)
 		return;
 
-	if (status != USBD_NORMAL_COMPLETION) {
+	if (status) {
 		DPRINTF(("ums_intr: status=%d\n", status));
 		usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
 		return;

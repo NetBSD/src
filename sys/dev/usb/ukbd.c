@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.48 1999/11/12 19:11:25 mjacob Exp $        */
+/*      $NetBSD: ukbd.c,v 1.49 1999/11/26 01:39:27 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -455,7 +455,7 @@ ukbd_intr(xfer, addr, status)
 	if (status == USBD_CANCELLED)
 		return;
 
-	if (status != USBD_NORMAL_COMPLETION) {
+	if (status) {
 		DPRINTF(("ukbd_intr: status=%d\n", status));
 		usbd_clear_endpoint_stall_async(sc->sc_intrpipe);
 		return;
