@@ -1,8 +1,10 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$Id: Makefile.inc,v 1.5 1994/01/04 05:16:44 cgd Exp $
+#	$Id: Makefile.inc,v 1.6 1994/09/19 04:43:02 mycroft Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
+
+CFLAGS+=-DFLOATING_POINT
 
 SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c \
 	fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c fopen.c \

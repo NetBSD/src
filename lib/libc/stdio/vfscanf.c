@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfscanf.c	5.7 (Berkeley) 12/14/92";*/
-static char *rcsid = "$Id: vfscanf.c,v 1.7 1994/05/22 23:21:44 cgd Exp $";
+static char *rcsid = "$Id: vfscanf.c,v 1.8 1994/09/19 04:43:05 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -49,9 +49,10 @@ static char *rcsid = "$Id: vfscanf.c,v 1.7 1994/05/22 23:21:44 cgd Exp $";
 #endif
 #include "local.h"
 
-#define FLOATING_POINT
-
+#ifdef FLOATING_POINT
 #include "floatio.h"
+#endif
+
 #define	BUF		513	/* Maximum length of numeric string. */
 
 /*
