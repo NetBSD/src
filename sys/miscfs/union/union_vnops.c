@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.14 1994/12/14 18:47:48 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.15 1994/12/15 18:58:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -409,12 +409,14 @@ union_whiteout(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_dvp);
+	struct vnode *dvp;
 
-	if (un->un_uppervp == NULLVP)
+	if ((dvp = un->un_uppervp) == NULLVP)
 		return (EOPNOTSUPP);
 
 	FIXUP(un);
-	return (VOP_WHITEOUT(un->un_uppervp, ap->a_cnp, ap->a_flags));
+	ap->a_dvp = dvp;
+	return (VCALL(dvp, VOFFSET(vop_whiteout), ap));
 }
 
 int
@@ -427,9 +429,9 @@ union_mknod(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_dvp);
-	struct vnode *dvp = un->un_uppervp;
+	struct vnode *dvp;
 
-	if (dvp != NULLVP) {
+	if ((dvp = un->un_uppervp) != NULLVP) {
 		int error;
 		struct vnode *vp;
 		struct mount *mp;
@@ -475,7 +477,7 @@ union_open(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode *tvp;
+	struct vnode *vp = un->un_uppervp;
 	int mode = ap->a_mode;
 	struct ucred *cred = ap->a_cred;
 	struct proc *p = ap->a_p;
@@ -484,37 +486,37 @@ union_open(ap)
 	/*
 	 * If there is an existing upper vp then simply open that.
 	 */
-	tvp = un->un_uppervp;
-	if (tvp == NULLVP) {
+	if ((vp = un->un_uppervp) == NULLVP) {
 		/*
 		 * If the lower vnode is being opened for writing, then
 		 * copy the file contents to the upper vnode and open that,
 		 * otherwise can simply open the lower vnode.
 		 */
-		tvp = un->un_lowervp;
-		if ((ap->a_mode & FWRITE) && (tvp->v_type == VREG)) {
-			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, p);
-			if (error == 0)
-				error = VOP_OPEN(un->un_uppervp, mode, cred, p);
-			return (error);
+		vp = un->un_lowervp;
+		if ((ap->a_mode & FWRITE) && (vp->v_type == VREG)) {
+			if (error = union_copyup(un, (mode & O_TRUNC) == 0,
+			    ap->a_cred, ap->a_p))
+				return (error);
+			vp = un->un_uppervp;
+			ap->a_vp = vp;
+			return (VCALL(vp, VOFFSET(vop_open), ap));
 		}
 
 		/*
 		 * Just open the lower vnode
 		 */
 		un->un_openl++;
-		VOP_LOCK(tvp);
-		error = VOP_OPEN(tvp, mode, cred, p);
-		VOP_UNLOCK(tvp);
+		VOP_LOCK(vp);
+		ap->a_vp = vp;
+		error = VCALL(vp, VOFFSET(vop_open), ap);
+		VOP_UNLOCK(vp);
 
 		return (error);
 	}
 
 	FIXUP(un);
-
-	error = VOP_OPEN(tvp, mode, cred, p);
-
-	return (error);
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_open), ap));
 }
 
 int
@@ -583,8 +585,7 @@ union_access(ap)
 			}
 		}
 		VOP_UNLOCK(vp);
-		if (error)
-			return (error);
+		return (error);
 	}
 
 	return (error);
@@ -673,7 +674,7 @@ union_setattr(ap)
 	} */ *ap;
 {
 	struct union_node *un = VTOUNION(ap->a_vp);
-	struct vnode *uvp = un->un_uppervp;
+	struct vnode *vp;
 	int error;
 
 	/*
@@ -681,23 +682,21 @@ union_setattr(ap)
 	 * by creating a zero length upper object.  This is to
 	 * handle the case of open with O_TRUNC and O_CREAT.
 	 */
-	if ((uvp == NULLVP) &&
+	if ((vp = un->un_uppervp) == NULLVP &&
 	    /* assert(un->un_lowervp != NULLVP) */
-	    (un->un_lowervp->v_type == VREG)) {
-		error = union_copyup(un, (ap->a_vap->va_size != 0),
-						ap->a_cred, ap->a_p);
-		if (error)
-			return (error);
+	    un->un_lowervp->v_type == VREG) {
+		return (union_copyup(un, (ap->a_vap->va_size != 0),
+						ap->a_cred, ap->a_p));
 	}
 
 	/*
 	 * Try to set attributes in upper layer,
 	 * otherwise return read-only filesystem error.
 	 */
-	if (uvp != NULLVP) {
+	if (vp != NULLVP) {
 		FIXUP(un);
-		ap->a_vp = uvp;
-		error = VCALL(uvp, VOFFSET(vop_setattr), ap);
+		ap->a_vp = vp;
+		error = VCALL(vp, VOFFSET(vop_setattr), ap);
 		if ((error == 0) && (ap->a_vap->va_size != VNOVAL))
 			union_newsize(ap->a_vp, ap->a_vap->va_size, VNOVAL);
 	} else {
@@ -792,10 +791,10 @@ union_lease(ap)
 		int a_flag;
 	} */ *ap;
 {
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	register struct vnode *vp = OTHERVP(ap->a_vp);
 
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_lease), ap));
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_lease), ap));
 }
 
 int
@@ -809,10 +808,10 @@ union_ioctl(ap)
 		struct proc *a_p;
 	} */ *ap;
 {
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	register struct vnode *vp = OTHERVP(ap->a_vp);
 
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_ioctl), ap));
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_ioctl), ap));
 }
 
 int
@@ -825,10 +824,10 @@ union_select(ap)
 		struct proc *a_p;
 	} */ *ap;
 {
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	register struct vnode *vp = OTHERVP(ap->a_vp);
 
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_select), ap));
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_select), ap));
 }
 
 int
@@ -840,10 +839,10 @@ union_mmap(ap)
 		struct proc *a_p;
 	} */ *ap;
 {
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	register struct vnode *vp = OTHERVP(ap->a_vp);
 
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_mmap), ap));
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_mmap), ap));
 }
 
 int
@@ -883,10 +882,10 @@ union_seek(ap)
 		struct ucred *a_cred;
 	} */ *ap;
 {
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	register struct vnode *vp = OTHERVP(ap->a_vp);
 
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_seek), ap));
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_seek), ap));
 }
 
 int
@@ -1225,14 +1224,14 @@ union_readdir(ap)
 	} */ *ap;
 {
 	register struct union_node *un = VTOUNION(ap->a_vp);
-	register struct vnode *uvp = un->un_uppervp;
+	register struct vnode *vp = un->un_uppervp;
 
-	if (uvp == NULLVP)
+	if (vp == NULLVP)
 		return (0);
 
 	FIXUP(un);
-	ap->a_vp = uvp;
-	return (VCALL(uvp, VOFFSET(vop_readdir), ap));
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_readdir), ap));
 }
 
 int
@@ -1505,10 +1504,10 @@ union_advlock(ap)
 		int  a_flags;
 	} */ *ap;
 {
-	register struct vnode *ovp = OTHERVP(ap->a_vp);
+	register struct vnode *vp = OTHERVP(ap->a_vp);
 
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_advlock), ap));
+	ap->a_vp = vp;
+	return (VCALL(vp, VOFFSET(vop_advlock), ap));
 }
 
 
