@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.12 1994/01/03 16:22:15 mycroft Exp $
+ *	$Id: npx.c,v 1.13 1994/03/03 22:22:51 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -219,6 +219,7 @@ npxprobe1(dvp)
 	 * it after a warm boot.
 	 */
 	outb(0xf1, 0);		/* full reset on some systems, NOP on others */
+	DELAY(1000);
 	outb(0xf0, 0);		/* clear BUSY# latch */
 	/*
 	 * Prepare to trap all ESC (i.e., NPX) instructions and all WAIT
