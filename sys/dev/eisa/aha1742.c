@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.44 1995/01/18 04:20:16 mycroft Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.45 1995/04/13 04:16:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1017,7 +1017,7 @@ ahb_scsi_cmd(xs)
 			SC_DEBUG(sc_link, SDEV_DB4,
 			    ("%d @0x%x:- ", xs->datalen, xs->data));
 			datalen = xs->datalen;
-			thiskv = (int) xs->data;
+			thiskv = (long) xs->data;
 			thisphys = KVTOPHYS(thiskv);
 
 			while (datalen && seg < AHB_NSEG) {
