@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.15 1996/03/31 22:12:34 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.16 1996/04/10 20:33:38 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -189,11 +189,10 @@ void	rominterpret __P((char *));
 
 /* Openprom V2 style boot path */
 struct bootpath {
-	char	name[16];		/* name of this node */
-	int	val[2];			/* up to two optional values */
+	char	name[16];	/* name of this node */
+	int	val[3];		/* up to three optional values */
+	struct device *dev;	/* device that recognised this component */
 };
-
-struct device *bootdv;			/* found during autoconfiguration */
 
 struct bootpath	*bootpath_store __P((int, struct bootpath *));
 int		sd_crazymap __P((int));
@@ -202,8 +201,8 @@ int		sd_crazymap __P((int));
 struct	device *parsedisk __P((char *, int, int, dev_t *));
 
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
-void	mountroot_hook_establish __P((void (*func) __P((struct device *)),
-		struct device *));
+void	mountroot_hook_establish __P((void (*) __P((struct device *)),
+				      struct device *));
 
 void	configure __P((void));
 void	bootstrap __P((void));
@@ -211,7 +210,7 @@ int	firstchild __P((int));
 int	nextsibling __P((int));
 void	callrom __P((void));
 struct device *getdevunit __P((char *, int));
-void   *findzs __P((int));
+void	*findzs __P((int));
 int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
 int	findnode __P((int, const char *));
