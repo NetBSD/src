@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_RC4
-#error RC4 is disabled.
-#endif
 
 #include <sys/types.h>
 #define RC4_INT u_int32_t

@@ -289,9 +289,7 @@ typedef struct ssl3_state_st
 
 		/* used to hold the new cipher we are going to use */
 		SSL_CIPHER *new_cipher;
-#ifndef NO_DH
 		DH *dh;
-#endif
 		/* used when SSL_ST_FLUSH_DATA is entered */
 		int next_state;			
 
