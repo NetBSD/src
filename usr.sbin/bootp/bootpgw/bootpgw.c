@@ -26,7 +26,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpgw.c,v 1.2 1994/08/22 22:14:48 gwr Exp $";
+static char rcsid[] = "$Id: bootpgw.c,v 1.3 1995/05/19 22:05:08 mycroft Exp $";
 #endif
 
 /*
@@ -139,7 +139,6 @@ char *pktbuf;					/* Receive packet buffer */
 int pktlen;
 char *progname;
 char *servername;
-int32 server_ipa;				/* Real server IP address, network order. */
 
 char myhostname[64];
 struct in_addr my_ip_addr;
@@ -343,15 +342,14 @@ main(argc, argv)
 	/*
 	 * Get address of real bootp server.
 	 */
-	if (isdigit(servername[0]))
-		server_ipa = inet_addr(servername);
-	else {
+	if (inet_aton(servername, &send_addr.sin_addr) == 0) {
 		hep = gethostbyname(servername);
 		if (!hep) {
 			fprintf(stderr, "bootpgw: can't get addr for %s\n", servername);
 			exit(1);
 		}
-		bcopy(hep->h_addr, (char *)&server_ipa, sizeof(server_ipa));
+		memcpy(&send_addr.sin_addr, hep->h_addr,
+		    sizeof(send_addr.sin_addr));
 	}
 
 	if (standalone) {
@@ -585,7 +583,6 @@ handle_request()
 	/* Set up socket address for send. */
 	send_addr.sin_family = AF_INET;
 	send_addr.sin_port = htons(bootps_port);
-	send_addr.sin_addr.s_addr = server_ipa;
 
 	/* Send reply with same size packet as request used. */
 	if (sendto(s, pktbuf, pktlen, 0,
