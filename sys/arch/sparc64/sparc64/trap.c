@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 2002/09/22 07:19:52 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.84 2002/09/29 04:12:03 chs Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -712,20 +712,6 @@ badtrap:
 			p->p_md.md_fpstate = fs;
 		}
 		/*
-		 * If we have not found an FPU, we have to emulate it.
-		 *
-		 * Since All UltraSPARC CPUs have an FPU how can this happen?
-		 */
-		if (!foundfpu) {
-#ifdef notyet
-			fpu_emulate(p, tf, fs);
-			break;
-#else
-			trapsignal(p, SIGFPE, 0);	/* XXX code?? */
-			break;
-#endif
-		}
-		/*
 		 * We may have more FPEs stored up and/or ops queued.
 		 * If they exist, handle them and get out.  Otherwise,
 		 * resolve the FPU state, turn it on, and try again.
@@ -733,7 +719,6 @@ badtrap:
 		 * Ultras should never have a FPU queue.
 		 */
 		if (fs->fs_qsize) {
-
 			printf("trap: Warning fs_qsize is %d\n",fs->fs_qsize);
 			fpu_cleanup(p, fs);
 			break;
@@ -744,7 +729,7 @@ badtrap:
 			loadfpstate(fs);
 			fpproc = p;		/* now we do have it */
 		}
-		tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
+		tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 		break;
 	}
 

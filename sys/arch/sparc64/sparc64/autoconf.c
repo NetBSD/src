@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2002/09/27 20:36:15 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.64 2002/09/29 04:12:02 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -464,9 +464,6 @@ st_crazymap(n)
 void
 cpu_configure()
 {
-#if 0
-	extern struct user *proc0paddr;	/* XXX see below */
-#endif
 
 	/* build the bootpath */
 	bootpath_build();
@@ -486,15 +483,6 @@ cpu_configure()
 
 	/* Enable device interrupts */
         setpstate(getpstate()|PSTATE_IE);
-
-#if 0
-	/*
-	 * XXX Re-zero proc0's user area, to nullify the effect of the
-	 * XXX stack running into it during auto-configuration.
-	 * XXX - should fix stack usage.
-	 */
-	bzero(proc0paddr, sizeof(struct user));
-#endif
 
 	(void)spl0();
 }
@@ -643,7 +631,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	OF_getprop(findroot(), "name", platform_type, sizeof(platform_type));
 	printf(": %s\n", platform_type);
 
-
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
 	 * configured before we can do the rest.  For instance, the
@@ -651,37 +638,27 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 * If the device cannot be located or configured, panic.
 	 */
 
-/*
- * The rest of this routine is for OBP machines exclusively.
- */
-
 	node = findroot();
 
 	/* Establish the first component of the boot path */
 	bootpath_store(1, bootpath);
 
-	/* the first early device to be configured is the cpu */
-	{
-		/* XXX - what to do on multiprocessor machines? */
-		
-		for (node = OF_child(node); node; node = OF_peer(node)) {
-			if (OF_getprop(node, "device_type", 
-				buf, sizeof(buf)) <= 0)
-				continue;
-			if (strcmp(buf, "cpu") == 0) {
-				bzero(&ma, sizeof(ma));
-				ma.ma_bustag = &mainbus_space_tag;
-				ma.ma_dmatag = &mainbus_dma_tag;
-				ma.ma_node = node;
-				ma.ma_name = "cpu";
-				config_found(dev, (void *)&ma, mbprint);
-				break;
-			}
-		}
-		if (node == 0)
-			panic("None of the CPUs found");
+	/* first early device to be configured is the cpu */
+	for (node = OF_child(node); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0)
+			continue;
+		if (strcmp(buf, "cpu") != 0)
+			continue;
+		bzero(&ma, sizeof(ma));
+		ma.ma_bustag = &mainbus_space_tag;
+		ma.ma_dmatag = &mainbus_dma_tag;
+		ma.ma_node = node;
+		ma.ma_name = "cpu";
+		config_found(dev, &ma, mbprint);
+		break;
 	}
-
+	if (node == 0)
+		panic("None of the CPUs found");
 
 	node = findroot();	/* re-init root node */
 
@@ -701,7 +678,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 		DPRINTF(ACDB_PROBE, ("Node: %x", node));
 		if ((OF_getprop(node, "device_type", buf, sizeof(buf)) > 0) &&
-			strcmp(buf, "cpu") == 0)
+		    strcmp(buf, "cpu") == 0)
 			continue;
 		OF_getprop(node, "name", buf, sizeof(buf));
 		DPRINTF(ACDB_PROBE, (" name %s\n", buf));
@@ -717,12 +694,12 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_name = buf;
 		ma.ma_node = node;
 		if (OF_getprop(node, "upa-portid", &portid, sizeof(portid)) !=
-			sizeof(portid)) 
+		    sizeof(portid)) 
 			portid = -1;
 		ma.ma_upaid = portid;
 
 		if (PROM_getprop(node, "reg", sizeof(*ma.ma_reg), 
-			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
+				 &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
@@ -734,7 +711,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no reg\n");
 		}
 #endif
-		rv = PROM_getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
+		rv = PROM_getprop(node, "interrupts", sizeof(*ma.ma_interrupts),
 			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -743,8 +720,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
 			if (ma.ma_interrupts)
-				printf(" interrupts %08x\n", 
-					*ma.ma_interrupts);
+				printf(" interrupts %08x\n", *ma.ma_interrupts);
 			else
 				printf(" no interrupts\n");
 		}
@@ -760,8 +736,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
 			if (ma.ma_naddress)
-				printf(" address %08x\n", 
-					*ma.ma_address);
+				printf(" address %08x\n", *ma.ma_address);
 			else
 				printf(" no address\n");
 		}
