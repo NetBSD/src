@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.36 2000/08/08 19:01:03 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.37 2000/08/11 02:25:52 itojun Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -848,17 +848,14 @@ to support the
 and
 .Xr ruptime 1
 commands.
-.It Sy kerberos
+.It Sy kdc
 .Sq YES
 or
 .Sq NO .
-Runs the kerberos server
-.Xr kerberos 8
-and the kerberos admininstration server,
-.Xr kadmind 8 .
+Runs the
+.Xr kdc 8
+kerberos server.
 This should only be run on the kerberos master server.
-Both servers implement version IV of the Kerberos protocol, not the
-newer Kerberos version 5.
 .El
 .Ss Hardware daemons:
 .Bl -tag -width net_interfaces
