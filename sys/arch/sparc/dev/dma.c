@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.40 1997/03/10 23:01:40 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.41 1997/03/23 22:54:29 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -61,7 +61,9 @@
 int dmaprint		__P((void *, const char *));
 void dmaattach		__P((struct device *, struct device *, void *));
 int dmamatch		__P((struct device *, struct cfdata *, void *));
-void dma_reset		__P((struct dma_softc *));
+void dma_reset		__P((struct dma_softc *, int));
+void espdma_reset	__P((struct dma_softc *));
+void ledma_reset	__P((struct dma_softc *));
 void dma_enintr		__P((struct dma_softc *));
 int dma_isintr		__P((struct dma_softc *));
 int espdmaintr		__P((struct dma_softc *));
@@ -167,15 +169,17 @@ dmaattach(parent, self, aux)
 	 * others need it too?
 	 */
 	if (CPU_ISSUN4M) {
+		int sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+		if (sbusburst == 0)
+			sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
+
 		sc->sc_burst = getpropint(ca->ca_ra.ra_node,"burst-sizes", -1);
-		if (sc->sc_burst == -1) {
-			/* check parent SBus for burst sizes */
-			if (((struct sbus_softc *)parent)->sc_burst == 0)
-				sc->sc_burst = SBUS_BURST_32 - 1; /* 1->16 */
-			else
-				sc->sc_burst = 
-					((struct sbus_softc *)parent)->sc_burst;
-		}
+		if (sc->sc_burst == -1)
+			/* take SBus burst sizes */
+			sc->sc_burst = sbusburst;
+
+		/* Clamp at parent's burst sizes */
+		sc->sc_burst &= sbusburst;
 	}
 
 	printf(": rev ");
@@ -203,13 +207,14 @@ dmaattach(parent, self, aux)
 
 	/* indirect functions */
 	if (sc->sc_dev.dv_cfdata->cf_attach == &dma_ca) {
+		sc->reset = espdma_reset;
 		sc->intr = espdmaintr;
 	} else {
+		sc->reset = ledma_reset;
 		sc->intr = ledmaintr;
 	}
 	sc->enintr = dma_enintr;
 	sc->isintr = dma_isintr;
-	sc->reset = dma_reset;
 	sc->setup = dma_setup;
 	sc->go = dma_go;
 
@@ -303,8 +308,9 @@ espsearch:
 } while(0)
 
 void
-dma_reset(sc)
+dma_reset(sc, isledma)
 	struct dma_softc *sc;
+	int isledma;
 {
 	DMA_DRAIN(sc, 1);
 	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
@@ -313,7 +319,7 @@ dma_reset(sc)
 	/*DMAWAIT1(sc); why was this here? */
 	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
 	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
-	if (sc->sc_rev > DMAREV_1)
+	if (sc->sc_rev > DMAREV_1 && isledma == 0)
 		DMACSR(sc) |= D_FASTER;
 
 	switch (sc->sc_rev) {
@@ -340,6 +346,19 @@ dma_reset(sc)
 	sc->sc_active = 0;			/* and of course we aren't */
 }
 
+void
+espdma_reset(sc)
+	struct dma_softc *sc;
+{
+	dma_reset(sc, 0);
+}
+
+void
+ledma_reset(sc)
+	struct dma_softc *sc;
+{
+	dma_reset(sc, 1);
+}
 
 void
 dma_enintr(sc)
@@ -567,11 +586,11 @@ ledmaintr(sc)
 	csr = DMACSR(sc);
 
 	if (csr & D_ERR_PEND) {
-		printf("Lance DMA error, see your doctor!\n");
 		DMACSR(sc) &= ~D_EN_DMA;	/* Stop DMA */
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
 			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
+		DMA_RESET(sc);
 	}
 	return 1;
 }
