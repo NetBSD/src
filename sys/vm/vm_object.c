@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.45 1997/02/25 23:28:09 thorpej Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.46 1997/03/03 20:56:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -318,11 +318,6 @@ vm_object_deallocate(object)
 			vm_object_cache_unlock();
 			return;
 		}
-
-#ifdef DIAGNOSTIC
-		if (vm_object_paging(object))
-			printf("vm_object_deallocate: unreferenced object still paging\n");
-#endif
 
 		/*
 		 * See if this object can persist.  If so, enter
