@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.6 1996/10/13 03:35:45 christos Exp $	*/
+/*	$NetBSD: ka650.c,v 1.7 1997/01/11 11:31:57 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -80,6 +80,7 @@ uvaxIII_conf(parent, self, aux)
 	 * check which here. but that later...
 	 */
 	strcpy(cpu_model,"MicroVAX III");
+	printf(": %s\n", cpu_model);
 	ka650encache();
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
