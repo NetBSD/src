@@ -67,6 +67,7 @@
 ./sbin/mount_ados
 ./sbin/mount_cd9660
 ./sbin/mount_fdesc
+./sbin/mount_ffs
 ./sbin/mount_kernfs
 ./sbin/mount_lfs
 ./sbin/mount_mfs
@@ -75,6 +76,7 @@
 ./sbin/mount_null
 ./sbin/mount_portal
 ./sbin/mount_procfs
+./sbin/mount_ufs
 ./sbin/mount_umap
 ./sbin/mount_union
 ./sbin/mountd
@@ -356,6 +358,7 @@
 ./usr/include/vm
 ./usr/lib
 ./usr/libdata
+./usr/libdata/lint
 ./usr/libexec
 ./usr/libexec/atrun
 ./usr/libexec/comsat
