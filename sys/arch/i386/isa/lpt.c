@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.17 1993/10/29 21:35:20 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.18 1994/02/16 21:40:56 mycroft Exp $
  */
 
 /*
@@ -143,11 +143,13 @@ lpt_port_test(port, data, mask)
 
 	data &= mask;
 	outb(port, data);
-	timeout = 100;
+	timeout = 1000;
 	do {
+		delay(10);
 		temp = inb(port) & mask;
 	} while (temp != data && --timeout);
-	lprintf("lpt: port=0x%x out=0x%x in=0x%x\n", port, data, temp);
+	lprintf("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", port, data,
+	    temp, timeout);
 	return (temp == data);
 }
 
@@ -308,14 +310,14 @@ lptopen(dev, flag)
 	if (sc->sc_irq == IRQNONE && (flags & LPT_NOINTR) == 0)
 		return ENXIO;
 
-	if (sc->sc_state)
-		return EBUSY;
-
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
 		printf("%s: state=0x%x not zero\n", sc->sc_dev.dv_xname,
-		       sc->sc_state);
+		    sc->sc_state);
 #endif
+
+	if (sc->sc_state)
+		return EBUSY;
 
 	sc->sc_state = LPT_INIT;
 
@@ -354,9 +356,9 @@ lptopen(dev, flag)
 	sc->sc_control = control;
 	outb(iobase + lpt_control, control);
 
-	sc->sc_state = LPT_OPEN;
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
 	sc->sc_count = 0;
+	sc->sc_state = LPT_OPEN;
 	lptout(sc);
 
 	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
@@ -420,9 +422,9 @@ lptclose(dev, flag)
 
 	(void) pushbytes(sc);
 
+	sc->sc_state = 0;
 	outb(iobase + lpt_control, LPC_NINIT);
 	brelse(sc->sc_inbuf);
-	sc->sc_state = 0;
 
 	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
 	return 0;
@@ -496,7 +498,7 @@ lptwrite(dev, uio)
 	size_t	n;
 	int	error = 0;
 
-	while (n = MIN(LPT_BSIZE, uio->uio_resid)) {
+	while (n = min(LPT_BSIZE, uio->uio_resid)) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_un.b_addr, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);
@@ -559,7 +561,7 @@ lptioctl(dev, cmd, data, flag)
 	int	error = 0;
 
 	switch (cmd) {
-	    default:
+	default:
 		error = ENODEV;
 	}
 
