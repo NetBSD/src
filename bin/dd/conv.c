@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.10 2001/01/16 02:41:17 cgd Exp $	*/
+/*	$NetBSD: conv.c,v 1.11 2001/04/28 22:47:23 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,11 +42,12 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: conv.c,v 1.10 2001/01/16 02:41:17 cgd Exp $");
+__RCSID("$NetBSD: conv.c,v 1.11 2001/04/28 22:47:23 ross Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <string.h>

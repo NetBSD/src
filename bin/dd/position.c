@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.9 2000/08/02 16:46:16 christos Exp $	*/
+/*	$NetBSD: position.c,v 1.10 2001/04/28 22:47:23 ross Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.9 2000/08/02 16:46:16 christos Exp $");
+__RCSID("$NetBSD: position.c,v 1.10 2001/04/28 22:47:23 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: position.c,v 1.9 2000/08/02 16:46:16 christos Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>
