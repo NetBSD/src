@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.89 2001/10/26 06:45:40 jmc Exp $
+# $NetBSD: Makefile.sun3,v 1.90 2001/11/20 08:43:40 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -219,9 +219,6 @@ machdep.o: Makefile
 
 # depend on CPU configuration 
 db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile
-
-# depends on KGDBDEV, KGDBRATE
-kgdb_stub.o: Makefile
 
 # depends on DDB, etc.
 stub.o: Makefile

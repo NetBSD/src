@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.90 2001/09/01 21:52:31 atatat Exp $
+# 	$NetBSD: GENERIC,v 1.91 2001/11/20 08:43:33 lukem Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident		"GENERIC-$Revision: 1.90 $"
+#ident		"GENERIC-$Revision: 1.91 $"
 
 maxusers	64
 
@@ -50,8 +50,8 @@ options 	LKM			# loadable kernel modules
 
 # Old 4.4BSD/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
-#options 	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
-#options 	"KGDBDEV=15*256+0"	# device for kernel gdb
+#options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
+#options 	KGDB_DEV="15*256+0"	# device for kernel gdb
 
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)

@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.113 2001/09/01 23:08:43 atatat Exp $
+#	$NetBSD: GENERIC,v 1.114 2001/11/20 08:43:27 lukem Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	16		# estimated number of users
 
@@ -42,11 +42,11 @@ options 	LKM		# loadable kernel modules
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-options 	DDB		# in-kernel debugger
+options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	KGDB		# remote debugger
-#options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
-#options 	KGDBRATE=38400	# baud rate
+#options 	KGDB			# remote debugger
+#options 	KGDB_DEV=0xc01		# kgdb device number (dev_t)
+#options 	KGDB_DEVRATE=38400	# baud rate
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options

@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.4 2001/07/08 16:32:25 abs Exp $
+# $NetBSD: RAMDISK,v 1.5 2001/11/20 08:43:38 lukem Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -32,7 +32,7 @@ maxusers	2
 # ... or these for KGDB (gdb remote target)
 #makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB
-#options 	KGDBDEV=0x0C00	# ttya=0C00 ttyb=0C01
+#options 	KGDB_DEV=0x0C00	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB

@@ -1,4 +1,4 @@
-#	$NetBSD: TEAL,v 1.5 2001/11/18 08:21:38 thorpej Exp $
+#	$NetBSD: TEAL,v 1.6 2001/11/20 08:43:33 lukem Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -26,8 +26,8 @@ options 	DEBUG
 options 	DIAGNOSTIC
 
 #options	KGDB
-#options	KGDBDEV=0x2301		# KGDB port - this is Serial(1)
-#options	KGDBRATE=19200		# KGDB Baud Rate
+#options	KGDB_DEV=0x2301		# KGDB port - this is Serial(1)
+#options	KGDB_DEVRATE=19200	# KGDB Baud Rate
 
 #makeoptions 	DEBUG="-g"
 

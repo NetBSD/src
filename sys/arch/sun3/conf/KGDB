@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.26 2001/07/08 16:32:25 abs Exp $
+#	$NetBSD: KGDB,v 1.27 2001/11/20 08:43:40 lukem Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -30,7 +30,7 @@ options 	SYSVSHM		# System V shared memory
 # ... or these for KGDB (gdb remote target)
 makeoptions DEBUG="-g"		# debugging symbols for gdb
 options 	KGDB
-options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
+options 	KGDB_DEV=0x0C01	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB

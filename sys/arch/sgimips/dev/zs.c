@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 2001/11/18 08:16:15 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.7 2001/11/20 08:43:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.42 2001/09/01 23:08:46 atatat Exp $
+# $NetBSD: GENERIC3X,v 1.43 2001/11/20 08:43:39 lukem Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -27,7 +27,7 @@ options 	DDB
 # ... or these for KGDB (gdb remote target)
 #makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB
-#options 	KGDBDEV=0x0C01	# ttya=0C00 ttyb=0C01
+#options 	KGDB_DEV=0x0C01	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB

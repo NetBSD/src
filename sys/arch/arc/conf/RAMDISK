@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.20 2001/11/13 17:54:47 augustss Exp $
+#	$NetBSD: RAMDISK,v 1.21 2001/11/20 08:43:22 lukem Exp $
 #	$OpenBSD: RAMDISK,v 1.9 1999/08/29 12:14:03 niklas Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
@@ -43,15 +43,15 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# cheap kernel consistency checks
-#options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-options 	DDB		# in-kernel debugger
+options 	DIAGNOSTIC		# cheap kernel consistency checks
+#options 	DEBUG			# expensive debugging checks/support
+#options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
+options 	DDB			# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-#options 	KGDB		# remote gdb
-#options 	KGDBRATE=19200	# kernel gdb port rate (default 9600)
-#options 	KGDBDEV="17*256+0"	# device for kernel gdb
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	KGDB			# remote gdb
+#options 	KGDB_DEVRATE=19200	# kernel gdb port rate (default 9600)
+#options 	KGDB_DEV="17*256+0"	# device for kernel gdb
+#makeoptions	DEBUG="-g"		# compile full symbol table
 
 # Compatibility options
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

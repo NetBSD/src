@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADA,v 1.9 2001/11/13 17:54:50 augustss Exp $
+#	$NetBSD: ARMADA,v 1.10 2001/11/20 08:43:23 lukem Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.9 $"
+#ident		"CARDBUS-$Revision: 1.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -67,7 +67,7 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
-#options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
+#options 	"KGDB_DEVNAME=\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options

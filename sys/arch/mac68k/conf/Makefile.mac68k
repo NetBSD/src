@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.80 2001/10/26 06:45:37 jmc Exp $
+#	$NetBSD: Makefile.mac68k,v 1.81 2001/11/20 08:43:28 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -189,9 +189,6 @@ uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 genassym.o machdep.o: Makefile
-
-# depends on KGDBDEV, KGDBRATE
-kgdb_stub.o: Makefile
 
 # depend on CPU configuration 
 locore.o pmap.o trap.o: Makefile

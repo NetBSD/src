@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.6 2001/09/16 16:34:35 wiz Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7 2001/11/20 08:43:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,7 +52,7 @@
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.6 2001/09/16 16:34:35 wiz Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.7 2001/11/20 08:43:42 lukem Exp $";
 #endif
 
 #include <sys/param.h>
@@ -73,15 +73,15 @@ static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.6 2001/09/16 16:34:35 wiz Exp $"
 extern int kernacc();
 extern void chgkprot();
 
-#ifndef KGDBDEV
-#define KGDBDEV NODEV
+#ifndef KGDB_DEV
+#define KGDB_DEV NODEV
 #endif
-#ifndef KGDBRATE
-#define KGDBRATE 9600
+#ifndef KGDB_DEVRATE
+#define KGDB_DEVRATE 9600
 #endif
 
-dev_t kgdb_dev = KGDBDEV;	/* remote debugging device (NODEV if none) */
-int kgdb_rate = KGDBRATE;	/* remote debugging baud rate */
+dev_t kgdb_dev = KGDB_DEV;	/* remote debugging device (NODEV if none) */
+int kgdb_rate = KGDB_DEVRATE;	/* remote debugging baud rate */
 int kgdb_active = 0;            /* remote debugging active if != 0 */
 int kgdb_debug_init = 0;	/* != 0 waits for remote at system init */
 int kgdb_debug_panic = 1;	/* != 0 waits for remote on panic */

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.9 2001/09/01 23:08:43 atatat Exp $
+# 	$NetBSD: GENERIC,v 1.10 2001/11/20 08:43:28 lukem Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -30,8 +30,8 @@ options 	DIAGNOSTIC		# extra kernel sanity checking
 options 	SCSIVERBOSE		# Verbose SCSI errors
 
 #options	KGDB			# Remote kernel debug using gdb
-#options	KGDBDEV=0x0100		# KGDB port (this is serial0)
-#options	KGDBRATE=19200		# KGDB Baud Rate (default=19200)
+#options	KGDB_DEV=0x0100		# KGDB port (this is serial0)
+#options	KGDB_DEVRATE=19200	# KGDB Baud Rate (default=19200)
 #makeoptions	DEBUG="-g"		# Build kernel with debug symbols
 
 # Compatibility options

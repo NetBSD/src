@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2001/11/13 17:54:51 augustss Exp $
+# $NetBSD: GENERIC,v 1.47 2001/11/20 08:43:31 lukem Exp $
 #
 # GENERIC next68k
 #
@@ -6,7 +6,7 @@
 
 include "arch/next68k/conf/std.next68k"
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.47 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -34,10 +34,10 @@ options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"		# debugging symbols for gdb
-#options 	KGDB		# support for kernel gdb
-#options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
-#options 	KGDBRATE=0x2580	# baud rate
+#makeoptions DEBUG="-g"			# debugging symbols for gdb
+#options 	KGDB			# support for kernel gdb
+#options 	KGDB_DEV=0xc01		# kgdb device number (dev_t)
+#options 	KGDB_DEVRATE=9600	# baud rate
 
 # Other debugging options
 options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
