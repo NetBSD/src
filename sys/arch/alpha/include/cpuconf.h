@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.8 1998/06/06 20:18:50 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.9 2000/03/29 02:59:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,7 +70,7 @@ struct platform {
 	void	(*mcheck_handler) __P((unsigned long, struct trapframe *,
 		unsigned long, unsigned long));
 	void	(*powerdown) __P((void));
-} platform;
+};
 
 /*
  * There is an array of functions to initialize the platform structure.
