@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.2 1997/09/16 06:52:48 thorpej Exp $ */
+/* $NetBSD: db_instruction.h,v 1.3 1997/09/16 19:03:22 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -224,38 +224,7 @@ typedef union {
  * that we probably have to support for compat reasons.
  */
 
-#define	op_bpt		0x0080
-#define	op_chmk		0x0083
-#define	op_imb		0x0086
-#define	op_rei		0x0092
-
-/*
- * Privileged ones
- */
-
-#define	op_halt		0x0000
-#define	op_ldqp		0x0003
-#define	op_stqp		0x0004
-#define	op_swpctxt	0x0005
-/*#define op_swppal	0x000a */
-#define	op_mtpr_fen	0x000c
-#define	op_mtpr_ipir	0x000d
-#define	op_mfpr_ipl	0x000e
-#define	op_mtpr_ipl	0x000f
-#define	op_mfpr_mces	0x0010
-#define	op_mtpr_mces	0x0011
-#define	op_mfpr_prbr	0x0013
-#define	op_mtpr_prbr	0x0014
-#define	op_mfpr_ptbr	0x0015
-#define	op_mtpr_scbb	0x0017
-#define	op_mtpr_sirr	0x0018
-#define	op_mtpr_tbia	0x001b
-#define	op_mtpr_tbiap	0x001c
-#define	op_mtpr_tbis	0x001d
-#define	op_mfpr_usp	0x0022
-#define	op_mtpr_usp	0x0023
-#define	op_mfpr_whami	0x003f
-
+/* See <machine/pal.h> */
 
 		/* ARIT, "function" opcodes (bits 5..11)  */
 
