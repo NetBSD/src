@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.409 2004/01/30 08:48:18 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.410 2004/02/13 05:13:37 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -616,7 +616,7 @@ INSTPRIV?=	${INSTPRIV.unpriv} -N ${NETBSDSRCDIR}/etc
 .endif
 SYSPKGTAG?=	${SYSPKG:D-T ${SYSPKG}_pkg}
 SYSPKGDOCTAG?=	${SYSPKG:D-T ${SYSPKG}-doc_pkg}
-STRIPFLAG?=	-s
+STRIPFLAG?=	
 
 .if ${NEED_OWN_INSTALL_TARGET} != "no"
 INSTALL_DIR?=		${INSTALL} ${INSTPRIV} -d
