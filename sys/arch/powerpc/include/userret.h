@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.6 2004/02/13 11:36:17 wiz Exp $	*/
+/*	$NetBSD: userret.h,v 1.7 2004/04/04 16:47:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -59,7 +59,7 @@ userret(struct lwp *l, struct trapframe *frame)
 #ifdef PPC_HAVE_FPU
 	if ((pcb->pcb_flags & PCB_FPU) &&
 	    (l != ci->ci_fpulwp || pcb->pcb_fpcpu != ci)) {
-		frame->srr1 &= ~PSL_FP;
+		frame->srr1 &= ~(PSL_FP|PSL_FE0|PSL_FE1);
 	}
 #endif
 #ifdef ALTIVEC
