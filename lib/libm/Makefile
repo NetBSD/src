@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
+#  $NetBSD: Makefile,v 1.29 1996/06/26 07:38:42 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -42,7 +42,10 @@
 #					    default standard
 # 
 
-.if (${MACHINE_ARCH} == "i386")
+.if (${MACHINE_ARCH} == "alpha")
+.PATH: ${.CURDIR}/arch/alpha
+ARCH_SRCS = s_copysign.S s_copysignf.S
+.elif (${MACHINE_ARCH} == "i386")
 # Uncomment the following lines if you have a i387 (or i486 or Pentium)
 #.PATH:	${.CURDIR}/arch/i387
 #ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
