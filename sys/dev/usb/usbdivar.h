@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.11 1998/12/26 12:53:04 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.12 1998/12/28 20:14:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ typedef void (*usbd_xfercb)__P((usbd_request_handle req));
 
 struct usbd_methods {
 	usbd_status	      (*transfer)__P((usbd_request_handle reqh));
+	usbd_status	      (*start)__P((usbd_request_handle reqh));
 	void		      (*abort)__P((usbd_request_handle reqh));
 	void		      (*close)__P((usbd_pipe_handle pipe));	
 	usbd_status	      (*isobuf)__P((usbd_pipe_handle pipe,
@@ -139,7 +140,6 @@ struct usbd_pipe {
 	void		       *discoarg;
 
 	usbd_request_handle     intrreqh; /* used for repeating requests */
-	usbd_request_handle     curreqh; /* currently running request */
 
 	/* Filled by HC driver. */
 	struct usbd_methods    *methods;
@@ -191,6 +191,8 @@ usbd_status	usbd_new_device __P((bdevice *parent,
 void		usbd_remove_device __P((usbd_device_handle,
 					struct usbd_port *));
 int		usbd_printBCD __P((char *cp, int bcd));
+usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
+void		usb_start_next __P((usbd_pipe_handle pipe));
 usbd_status	usbd_fill_iface_data __P((usbd_device_handle dev, 
 					  int i, int a));
 
