@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.14 1998/04/15 13:01:51 bouyer Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.15 1998/05/01 03:50:59 thorpej Exp $       */
 
 /*
  *
@@ -35,6 +35,8 @@
 /*
  * if_atmsubr.c
  */
+
+#include "opt_gateway.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,10 +268,14 @@ atm_input(ifp, ah, m, rxhand)
 	  switch (etype) {
 #ifdef INET
 	  case ETHERTYPE_IP:
+#ifdef GATEWAY
+		  if (ipflow_fastforward(m))
+			return;
+#endif
 		  schednetisr(NETISR_IP);
 		  inq = &ipintrq;
 		  break;
-#endif
+#endif /* INET */
 	  default:
 	      m_freem(m);
 	      return;
