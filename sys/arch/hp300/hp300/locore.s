@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.118 2001/12/08 04:01:48 gmcgarry Exp $	*/
+/*	$NetBSD: locore.s,v 1.119 2002/02/10 00:47:59 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -412,8 +412,18 @@ Lhpmmu2:
 	movl	%d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
 Lstploaddone:
 	lea	MAXADDR,%a2		| PA of last RAM page
+#if 0
 	ASRELOC(Lhighcode, %a1)		| addr of high code
 	ASRELOC(Lehighcode, %a3)	| end addr
+#else
+	/* don't want pc-relative addressing */
+	.word	0x43f9			| lea Lhighcode, %a1
+	.long	Lhighcode
+	addl	%a5, %a1
+	.word	0x47f9			| lea Lehighcode, %a3
+	.long	Lehighcode
+	addl	%a5, %a3
+#endif
 Lcodecopy:
 	movw	%a1@+,%a2@+		| copy a word
 	cmpl	%a3,%a1			| done yet?
@@ -453,18 +463,21 @@ Lhighcode:
 	.long	0x4e7b0003		| movc %d0,%tc
 	movl	#0x80008000,%d0
 	movc	%d0,%cacr		| turn on both caches
-	jmp	Lenab1
+	.word	0x4ef9			| jmp Lenab1
+	.long	Lenab1			| (forced not be be pc-relative)
 Lmotommu2:
 	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
 					| enable 68881 and i-cache
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
-	jmp	Lenab1
+	.word	0x4ef9			| jmp Lenab1
+	.long	Lenab1			| (forced not be be pc-relative)
 Lhpmmu3:
 	movl	#0,INTIOBASE+MMUBASE+MMUCMD		| clear external cache
 	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD	| turn on MMU
-	jmp	Lenab1					| jmp to mapped code
+	.word	0x4ef9			| jmp Lenab1
+	.long	Lenab1			| (forced not be be pc-relative)
 Lehighcode:
 
 	/*
