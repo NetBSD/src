@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.11 2002/01/24 17:53:08 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.12 2002/03/19 19:41:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -519,9 +519,15 @@ ENTRY(xscale_context_switch)
  *
  * This is called when there is nothing on any of the run queues.
  * We go into IDLE mode so that any IRQ or FIQ will awaken us.
+ *
+ * If this is called with anything other than ARM_SLEEP_MODE_IDLE,
+ * ignore it.
  */
 ENTRY(xscale_cpu_sleep)
+	tst	r0, #0x00000000
+	bne	1f
 	mov	r0, #0x1
 	mcr	p14, 0, r0, c7, c0, 0
 
+1:
 	mov	pc, lr
