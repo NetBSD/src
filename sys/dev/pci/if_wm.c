@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.36 2003/04/15 22:52:40 tron Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.37 2003/04/29 01:15:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -594,12 +594,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	preg = PCI_REVISION(pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG));
-	printf(": %s, rev. %d\n", wmp->wmp_name, preg);
+	aprint_naive(": Ethernet controller\n");
+	aprint_normal(": %s, rev. %d\n", wmp->wmp_name, preg);
 
 	sc->sc_type = wmp->wmp_type;
 	if (sc->sc_type < WM_T_82543) {
 		if (preg < 2) {
-			printf("%s: i82542 must be at least rev. 2\n",
+			aprint_error("%s: i82542 must be at least rev. 2\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
@@ -631,7 +632,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
 	} else {
-		printf("%s: unable to map device registers\n",
+		aprint_error("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
@@ -652,12 +653,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf("%s: unable to wake from power state D3\n",
+			aprint_error("%s: unable to wake from power state D3\n",
 			    sc->sc_dev.dv_xname);
 			return;
 		}
 		if (preg != PCI_PMCSR_STATE_D0) {
-			printf("%s: waking up from power state D%d\n",
+			aprint_normal("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, preg);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    PCI_PMCSR_STATE_D0);
@@ -668,20 +669,21 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: unable to map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wm_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
+		aprint_error("%s: unable to establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -690,7 +692,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct wm_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    0)) != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
+		aprint_error(
+		    "%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
@@ -698,7 +701,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct wm_control_data), (caddr_t *)&sc->sc_control_data,
 	    0)) != 0) {
-		printf("%s: unable to map control data, error = %d\n",
+		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
@@ -706,7 +709,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct wm_control_data), 1,
 	    sizeof(struct wm_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		printf("%s: unable to create control data DMA map, "
+		aprint_error("%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
@@ -714,7 +717,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct wm_control_data), NULL,
 	    0)) != 0) {
-		printf("%s: unable to load control data DMA map, error = %d\n",
+		aprint_error(
+		    "%s: unable to load control data DMA map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
@@ -726,7 +730,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_MAX_LEN_JUMBO,
 		    WM_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			printf("%s: unable to create Tx DMA map %d, "
+			aprint_error("%s: unable to create Tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_4;
 		}
@@ -738,7 +742,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < WM_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			printf("%s: unable to create Rx DMA map %d, "
+			aprint_error("%s: unable to create Rx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
@@ -771,7 +775,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			enaddr[5] ^= 1;
 	}
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(enaddr));
 
 	/*
@@ -848,12 +852,12 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_type < WM_T_82543 ||
 	    (CSR_READ(sc, WMREG_STATUS) & STATUS_TBIMODE) != 0) {
 		if (wmp->wmp_flags & WMP_F_1000T)
-			printf("%s: WARNING: TBIMODE set on 1000BASE-T "
+			aprint_error("%s: WARNING: TBIMODE set on 1000BASE-T "
 			    "product!\n", sc->sc_dev.dv_xname);
 		wm_tbi_mediainit(sc);
 	} else {
 		if (wmp->wmp_flags & WMP_F_1000X)
-			printf("%s: WARNING: TBIMODE clear on 1000BASE-X "
+			aprint_error("%s: WARNING: TBIMODE clear on 1000BASE-X "
 			    "product!\n", sc->sc_dev.dv_xname);
 		wm_gmii_mediainit(sc);
 	}
@@ -944,7 +948,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(wm_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
 		    sc->sc_dev.dv_xname);
 	return;
 
