@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.6 1998/06/29 20:48:00 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.7 1999/02/05 15:16:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
  * only for compiling Linux programs.
  */
 
-#ifndef _soundcard_h_
-#define _soundcard_h_
+#ifndef _SOUNDCARD_H_
+#define _SOUNDCARD_H_
 
 #define SOUND_VERSION	0x030000
 
@@ -289,4 +289,4 @@ __BEGIN_DECLS
 int _oss_ioctl __P((int fd, unsigned long com, void *argp));
 __END_DECLS
 
-#endif
+#endif /* !_SOUNDCARD_H_ */
