@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.16 2003/07/10 10:34:04 lukem Exp $
+#	$NetBSD: Makefile.crunch,v 1.17 2005/01/18 12:30:21 lukem Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -9,8 +9,8 @@
 #
 # Optional variables:
 #	SMALLPROG	if != 0, add SMALLPROG=1 to CRUNCHENV.  [default: 1]
-#	SMALLPROG_INET6	if != 0 and SMALLPROG != 0, add SMALLPROG_INET6=1
-#			to CRUNCHENV.  [default: 0]
+#	SMALLPROG_INET6	if != 0 and SMALLPROG != 0, and ${USE_INET6} != "no",
+#			add SMALLPROG_INET6=1 to CRUNCHENV.  [default: 0]
 #	CRUNCHENV	environment to pass to crunchgen(1) and when building
 #			the crunched program.
 #	CRUNCHGEN_FLAGS	extra options to crunchgen(1)
@@ -29,7 +29,7 @@ SMALLPROG?=		1
 SMALLPROG_INET6?=	0
 .if ${SMALLPROG}				# {
 CRUNCHENV+=		SMALLPROG=1
-.if ${SMALLPROG_INET6}
+.if ${SMALLPROG_INET6} && (${USE_INET6} != "no")
 CRUNCHENV+=		SMALLPROG_INET6=1
 .endif
 .endif						# }
