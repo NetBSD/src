@@ -1,10 +1,11 @@
-/* $NetBSD: plist.c,v 1.4 1997/10/16 00:50:46 hubertf Exp $ */
+/*	$NetBSD: plist.c,v 1.5 1997/10/17 14:54:47 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: plist.c,v 1.4 1997/10/16 00:50:46 hubertf Exp $";
+__RCSID("$NetBSD: plist.c,v 1.5 1997/10/17 14:54:47 lukem Exp $");
 #endif
 #endif
 
@@ -449,6 +450,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, Package *pkg)
 		}
 	    }
 	    last_file = p->name;
+	    break;
+	default:
 	    break;
 	}
     }
