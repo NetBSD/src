@@ -1,4 +1,4 @@
-/* $NetBSD: s_atanf.S,v 1.4 2000/05/12 20:11:16 is Exp $ */
+/* $NetBSD: s_atanf.S,v 1.5 2000/05/16 19:07:36 is Exp $ */
 
 /*
  * FPLSP wrapper for atanf
@@ -9,10 +9,10 @@
 
 ENTRY(atanf)
 #ifdef __SVR4_ABI__
-	jbra _ASM_LABEL(___060FPLSP0030)
+	jbra _C_LABEL(__fplsp060_0030)
 #else
 	movel %sp@(4),%sp@-
-	jbsr _ASM_LABEL(___060FPLSP0030)
+	jbsr _C_LABEL(__fplsp060_0030)
 	fmoves %fp0,%sp@
 	movel %sp@+,%d0
 	rts
