@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.228 1999/03/27 11:42:12 kleink Exp $
+#	$NetBSD: GENERIC,v 1.229 1999/03/27 23:27:58 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -551,9 +551,6 @@ opl*	at ess?
 opl*	at sb?
 opl*	at sv?
 
-# USB Audio devices
-#uaudio*	at uhub? port ? configuration ? interface ?
-
 # Audio support
 audio*	at aria?
 audio*	at eap?
@@ -564,7 +561,6 @@ audio*	at pas?
 audio*	at sb?
 audio*	at sp?
 audio*	at sv?
-#audio*	at uaudio?
 audio*	at wss?
 audio*	at ym?
 

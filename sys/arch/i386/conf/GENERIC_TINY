@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.4 1999/03/27 07:04:36 explorer Exp $
+#	$NetBSD: GENERIC_TINY,v 1.5 1999/03/27 23:27:58 nathanw Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, PCMCIA or SCSI.
@@ -441,9 +441,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
-# USB Audio devices
-#uaudio*	at uhub? port ?
-
 # Audio support
 #audio*	at aria?
 #audio*	at eap?
@@ -452,7 +449,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #audio*	at pas?
 #audio*	at sb?
 #audio*	at sp?
-#audio*	at uaudio?
 #audio*	at wss?
 #audio*	at ym?
 
