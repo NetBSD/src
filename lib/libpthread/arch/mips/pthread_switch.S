@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.1 2001/11/28 10:43:56 wdk Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.2 2002/11/20 09:30:52 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,9 +75,9 @@
 	/* NOTREACHED */
 
 NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
-	.mask	0x80000000, -4
 	PIC_PROLOGUE(pthread__switch, t9)
 	subu	sp, sp, (CALLFRAME_SIZ+CONTEXTSIZE)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	sw	ra, CALLFRAME_RA(sp)
 	la	t0, CALLFRAME_SIZ(sp)
 	sw	t0, PT_UC(a0)
@@ -105,7 +105,7 @@ NESTED(pthread__switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
  */
 
 NESTED(pthread__switch_away, CALLFRAME_SIZ, ra)
-	.mask	0x00000000, -4
+	.mask	0x00000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	STACK_SWITCH(a1, s2)
 
 	/* If we're invoked from the switch-to-next provisions of
@@ -126,9 +126,9 @@ NESTED(pthread__switch_away, CALLFRAME_SIZ, ra)
 	END(pthread__switch_away)
 	
 NESTED(pthread__locked_switch, CALLFRAME_SIZ+CONTEXTSIZE, ra)
-	.mask	0x80000000, -4
 	PIC_PROLOGUE(pthread__locked_switch, t9)
 	subu	sp, sp, (CALLFRAME_SIZ+CONTEXTSIZE)
+	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	sw	ra, CALLFRAME_RA(sp)
 	sw	a0, 0(sp)
 	sw	a1, 4(sp)
@@ -234,7 +234,7 @@ locked_return_point:
  */
 
 NESTED(pthread__upcall_switch, 0, ra)
-	.mask	0x00000000, -4
+	.mask	0x00000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PIC_PROLOGUE(pthread__upcall_switch, t9)
 	/* Loading the global pointer is unnecessary;  this routine
 	 * is only ever called from the pthreads module, and the C
