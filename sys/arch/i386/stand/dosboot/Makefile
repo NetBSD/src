@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/14 04:59:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/07 16:15:02 mycroft Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -24,7 +24,7 @@ SRCS+= getopt.c ls.c
 ${PROG}: ${PROG}.com
 	@# do nothing
 
-install:
+proginstall::
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG}.com ${DESTDIR}${BINDIR}
 
