@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.129 2003/12/01 18:57:07 dbj Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.130 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.129 2003/12/01 18:57:07 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.130 2003/12/04 19:38:25 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -105,7 +105,7 @@ struct vfsops ffs_vfsops = {
 	ffs_init,
 	ffs_reinit,
 	ffs_done,
-	ffs_sysctl,
+	NULL,
 	ffs_mountroot,
 	ufs_check_export,
 	ffs_vnodeopv_descs,
@@ -1528,33 +1528,43 @@ ffs_done()
 	pool_destroy(&ffs_inode_pool);
 }
 
-int
-ffs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_ffs_setup, "sysctl vfs.ffs subtree setup")
 {
 	extern int doasyncfree;
 	extern int ffs_log_changeopt;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "ffs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 1, CTL_EOL);
 
-	switch (name[0]) {
-	case FFS_ASYNCFREE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &doasyncfree));
-	case FFS_LOG_CHANGEOPT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-			&ffs_log_changeopt));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	/*
+	 * @@@ should we even bother with these first three?
+	 */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "doclusterread", NULL,
+		       sysctl_notavail, 0, NULL, 0,
+		       CTL_VFS, 1, FFS_CLUSTERREAD, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "doclusterwrite", NULL,
+		       sysctl_notavail, 0, NULL, 0,
+		       CTL_VFS, 1, FFS_CLUSTERWRITE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "doreallocblks", NULL,
+		       sysctl_notavail, 0, NULL, 0,
+		       CTL_VFS, 1, FFS_REALLOCBLKS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "doasyncfree", NULL,
+		       NULL, 0, &doasyncfree, 0,
+		       CTL_VFS, 1, FFS_ASYNCFREE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_INT, "log_changeopt", NULL,
+		       NULL, 0, &ffs_log_changeopt, 0,
+		       CTL_VFS, 1, FFS_LOG_CHANGEOPT, CTL_EOL);
 }
 
 /*

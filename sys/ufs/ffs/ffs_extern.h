@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.33 2003/08/07 16:34:29 agc Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.34 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -134,8 +134,6 @@ int ffs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ffs_vget __P((struct mount *, ino_t, struct vnode **));
 int ffs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ffs_vptofh __P((struct vnode *, struct fid *));
-int ffs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		    struct proc *));
 int ffs_sbupdate __P((struct ufsmount *, int));
 int ffs_cgupdate __P((struct ufsmount *, int));
 

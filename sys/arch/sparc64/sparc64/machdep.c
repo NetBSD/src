@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 2003/11/25 05:14:58 cdi Exp $ */
+/*	$NetBSD: machdep.c,v 1.159 2003/12/04 19:38:22 atatat Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2003/11/25 05:14:58 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2003/12/04 19:38:22 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -435,66 +435,70 @@ parse_bootargs(args)
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_machdep_boot(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node = *rnode;
 	u_int chosen;
 	char bootargs[256];
-	char *cp = NULL;
+	char *cp;
 
-	/* all sysctl names are this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);	/* overloaded */
+	if ((chosen = OF_finddevice("/chosen")) == -1)
+		return (ENOENT);
+	if (node.sysctl_num == CPU_BOOTED_DEVICE)
+		cp = "bootpath";
+	else
+		cp = "bootargs";
+	if (OF_getprop(chosen, cp, bootargs, sizeof bootargs) < 0)
+		return (ENOENT);
 
-	switch (name[0]) {
+	switch (node.sysctl_num) {
 	case CPU_BOOTED_KERNEL:
-		if (((chosen = OF_finddevice("/chosen")) == -1) ||
-		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
-		      < 0))
-			return (ENOENT);
-
 		cp = parse_bootfile(bootargs);
-		if (cp == NULL)
-			return (ENOENT);
-		if (*cp == '\0')
-			/* Unknown to firmware, return default name */
-			cp = "netbsd";
-		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
-
+                if (cp != NULL && cp[0] == '\0')
+                        /* Unknown to firmware, return default name */
+                        cp = "netbsd";
+		break;
 	case CPU_BOOT_ARGS:
-		if (((chosen = OF_finddevice("/chosen")) == -1) ||
-		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
-		      < 0))
-			return (ENOENT);
-
 		cp = parse_bootargs(bootargs);
-		if (cp == NULL || cp[0] == '\0')
-			return (ENOENT);
-		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
-
+		break;
 	case CPU_BOOTED_DEVICE:
-		if (((chosen = OF_finddevice("/chosen")) == -1) ||
-		    ((OF_getprop(chosen, "bootpath", bootargs, sizeof bootargs))
-		      < 0))
-			return (ENOENT);
-
-		return (sysctl_rdstring(oldp, oldlenp, newp, bootargs));
-
-	case CPU_ARCH:
-		/* CPU architecture version */
-		return (sysctl_rdint(oldp, oldlenp, newp, 9));
-
-	default:
-		return (EOPNOTSUPP);
+		cp = bootargs;
+		break;
 	}
-	/* NOTREACHED */
+
+	if (cp == NULL || cp[0] == '\0')
+		return (ENOENT);
+
+	node.sysctl_data = cp;
+	node.sysctl_size = strlen(cp) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_boot, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "boot_args", NULL,
+		       sysctl_machdep_boot, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOT_ARGS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_device", NULL,
+		       sysctl_machdep_boot, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_DEVICE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+		       CTLTYPE_INT, "cpu_arch", NULL,
+		       NULL, 9, NULL, 0,
+		       CTL_MACHDEP, CPU_ARCH, CTL_EOL);
 }
 
 void *

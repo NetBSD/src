@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.133 2003/10/02 06:01:51 itojun Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.134 2003/12/04 19:38:25 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.133 2003/10/02 06:01:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.134 2003/12/04 19:38:25 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -78,9 +78,6 @@ extern int nfs_ticks;
 
 MALLOC_DEFINE(M_NFSMNT, "NFS mount", "NFS mount structure");
 
-int nfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		      struct proc *));
-
 /*
  * nfs vfs operations.
  */
@@ -111,7 +108,7 @@ struct vfsops nfs_vfsops = {
 	nfs_vfs_init,
 	nfs_vfs_reinit,
 	nfs_vfs_done,
-	nfs_sysctl,
+	NULL,
 	nfs_mountroot,
 	nfs_checkexp,
 	nfs_vnodeopv_descs,
@@ -967,63 +964,46 @@ nfs_vget(mp, ino, vpp)
 /*
  * Do that sysctl thang...
  */
-int
-nfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+static int
+sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 {
-	int rv;
+	int error;
 
-	/*
-	 * All names at this level are terminal.
-	 */
-	if(namelen > 1)
-		return ENOTDIR;	/* overloaded */
+	nfs_getset_niothreads(0);
+        error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
+	nfs_getset_niothreads(1);
 
-	switch(name[0]) {
-	case NFS_NFSSTATS:
-		if(!oldp) {
-			*oldlenp = sizeof nfsstats;
-			return 0;
-		}
-
-		if(*oldlenp < sizeof nfsstats) {
-			*oldlenp = sizeof nfsstats;
-			return ENOMEM;
-		}
-
-		rv = copyout(&nfsstats, oldp, sizeof nfsstats);
-		if(rv) return rv;
-
-		if(newp && newlen != sizeof nfsstats)
-			return EINVAL;
-
-		if(newp) {
-			return copyin(newp, &nfsstats, sizeof nfsstats);
-		}
-		return 0;
-
-	case NFS_IOTHREADS:
-		nfs_getset_niothreads(0);
-
-		rv = (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &nfs_niothreads));
-
-		if (newp)
-			nfs_getset_niothreads(1);
-
-		return rv;
-                
-	default:
-		return EOPNOTSUPP;
-	}
+	return (0);
 }
 
+SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "nfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 2, CTL_EOL);
+	/*
+	 * XXX the "2" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "2" is the order as taken from sys/mount.h
+	 */
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_STRUCT, "nfsstats", NULL,
+		       NULL, 0, &nfsstats, sizeof(nfsstats), 
+		       CTL_VFS, 2, NFS_NFSSTATS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "iothreads", NULL,
+		       sysctl_vfs_nfs_iothreads, 0, &nfs_niothreads, 0,
+		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
+}
 
 /*
  * At this point, this should never happen

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.50 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.51 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.50 2003/09/27 13:29:02 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.51 2003/12/04 19:38:24 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.50 2003/09/27 13:29:02 darcy Exp
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/syslog.h>
@@ -114,8 +115,6 @@ int	procfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	procfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	procfs_vptofh __P((struct vnode *, struct fid *));
-int	procfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct proc *));
 /*
  * VFS Operations.
  *
@@ -334,17 +333,22 @@ procfs_done()
 	procfs_hashdone();
 }
 
-int
-procfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_procfs_setup, "sysctl vfs.procfs subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "procfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 12, CTL_EOL);
+	/*
+	 * XXX the "12" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "12" is the order as taken from sys/mount.h
+	 */
 }
 
 extern const struct vnodeopv_desc procfs_vnodeop_opv_desc;
@@ -369,7 +373,7 @@ struct vfsops procfs_vfsops = {
 	procfs_init,
 	procfs_reinit,
 	procfs_done,
-	procfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	procfs_checkexp,
 	procfs_vnodeopv_descs,

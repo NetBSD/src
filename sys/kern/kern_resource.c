@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.73 2003/08/24 17:52:47 chs Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.74 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.73 2003/08/24 17:52:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.74 2003/12/04 19:38:23 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.73 2003/08/24 17:52:47 chs Exp $
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <sys/mount.h>
 #include <sys/sa.h>
@@ -558,4 +559,301 @@ pstatsfree(ps)
 {
 
 	pool_put(&pstats_pool, ps);
+}
+
+/*
+ * sysctl interface in five parts
+ */
+
+/*
+ * a routine for sysctl proc subtree helpers that need to pick a valid
+ * process by pid.
+ */
+static int
+sysctl_proc_findproc(struct proc *p, struct proc **p2, pid_t pid)
+{
+	struct proc *ptmp;
+	int i, error = 0;
+
+	if (pid == PROC_CURPROC)
+		ptmp = p;
+	else if ((ptmp = pfind(pid)) == NULL)
+		error = ESRCH;
+	else {
+		/*
+		 * suid proc of ours or proc not ours
+		 */
+		if (p->p_cred->p_ruid != ptmp->p_cred->p_ruid ||
+		    p->p_cred->p_ruid != ptmp->p_cred->p_svuid)
+			error = suser(p->p_ucred, &p->p_acflag);
+
+		/*
+		 * sgid proc has sgid back to us temporarily
+		 */
+		else if (ptmp->p_cred->p_rgid != ptmp->p_cred->p_svgid)
+			error = suser(p->p_ucred, &p->p_acflag);
+
+		/*
+		 * our rgid must be in target's group list (ie,
+		 * sub-processes started by a sgid process)
+		 */
+		else {
+			for (i = 0; i < p->p_ucred->cr_ngroups; i++) {
+				if (p->p_ucred->cr_groups[i] ==
+				    ptmp->p_cred->p_rgid)
+					break;
+			}
+			if (i == p->p_ucred->cr_ngroups)
+				error = suser(p->p_ucred, &p->p_acflag);
+		}
+	}
+
+	*p2 = ptmp;
+	return (error);
+}
+
+/*
+ * sysctl helper routine for setting a process's specific corefile
+ * name.  picks the process based on the given pid and checks the
+ * correctness of the new value.
+ */
+static int
+sysctl_proc_corename(SYSCTLFN_ARGS)
+{
+	struct proc *ptmp, *p;
+	struct plimit *newplim;
+	int error = 0, len;
+	char cname[MAXPATHLEN], *tmp;
+	struct sysctlnode node;
+
+	/*
+	 * is this all correct?
+	 */
+	if (namelen != 0)
+		return (EINVAL);
+	if (name[-1] != PROC_PID_CORENAME)
+		return (EINVAL);
+
+	/*
+	 * whom are we tweaking?
+	 */
+	p = l->l_proc;
+	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-2]);
+	if (error)
+		return (error);
+
+	/*
+	 * let them modify a temporary copy of the core name
+	 */
+	node = *rnode;
+	strlcpy(cname, ptmp->p_limit->pl_corename, sizeof(cname));
+	node.sysctl_data = cname;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	/*
+	 * if that failed, or they have nothing new to say, or we've
+	 * heard it before...
+	 */
+	if (error || newp == NULL ||
+	    strcmp(cname, ptmp->p_limit->pl_corename) == 0)
+		return (error);
+
+	/*
+	 * no error yet and cname now has the new core name in it.
+	 * let's see if it looks acceptable.  it must be either "core"
+	 * or end in ".core" or "/core".
+	 */
+	len = strlen(cname);
+	if (len < 4)
+		return (EINVAL);
+	if (strcmp(cname + len - 4, "core") != 0)
+		return (EINVAL);
+	if (len > 4 && cname[len - 5] != '/' && cname[len - 5] != '.')
+		return (EINVAL);
+
+	/*
+	 * hmm...looks good.  now...where do we put it?
+	 */
+	tmp = malloc(len + 1, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (tmp == NULL)
+		return (ENOMEM);
+	strlcpy(tmp, cname, len + 1);
+
+	if (ptmp->p_limit->p_refcnt > 1 &&
+	    (ptmp->p_limit->p_lflags & PL_SHAREMOD) == 0) {
+		newplim = limcopy(ptmp->p_limit);
+		limfree(ptmp->p_limit);
+		ptmp->p_limit = newplim;
+	}
+	if (ptmp->p_limit->pl_corename != defcorename)
+		FREE(ptmp->p_limit->pl_corename, M_SYSCTLDATA);
+	ptmp->p_limit->pl_corename = tmp;
+
+	return (error);
+}
+
+/*
+ * sysctl helper routine for checking/setting a process's stop flags,
+ * one for fork and one for exec.
+ */
+static int
+sysctl_proc_stop(SYSCTLFN_ARGS)
+{
+	struct proc *p, *ptmp;
+	int i, f, error = 0;
+	struct sysctlnode node;
+
+	if (namelen != 0)
+		return (EINVAL);
+
+	p = l->l_proc;
+	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-2]);
+	if (error)
+		return (error);
+
+	switch (rnode->sysctl_num) {
+	case PROC_PID_STOPFORK:
+		f = P_STOPFORK;
+		break;
+	case PROC_PID_STOPEXEC:
+		f = P_STOPEXEC;
+		break;
+#ifdef PROC_PID_STOPEXIT
+	case PROC_PID_STOPEXIT:
+		f = P_STOPEXIT;
+		break;
+#endif /* PROC_PID_STOPEXIT */
+	default:
+		return (EINVAL);
+	}
+
+	i = (ptmp->p_flag & f) ? 1 : 0;
+	node = *rnode;
+	node.sysctl_data = &i;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (i)
+		ptmp->p_flag |= f;
+	else
+		ptmp->p_flag &= ~f;
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for a process's rlimits as exposed by sysctl.
+ */
+static int
+sysctl_proc_plimit(SYSCTLFN_ARGS)
+{
+	struct proc *ptmp, *p;
+	u_int limitno;
+	int which, error = 0;
+        struct rlimit alim;
+	struct sysctlnode node;
+
+	if (namelen != 0)
+		return (EINVAL);
+
+	which = name[-1];
+	if (which != PROC_PID_LIMIT_TYPE_SOFT &&
+	    which != PROC_PID_LIMIT_TYPE_HARD)
+		return (EINVAL);
+
+	limitno = name[-2] - 1;
+	if (limitno >= RLIM_NLIMITS)
+		return (EINVAL);
+
+	if (name[-3] != PROC_PID_LIMIT)
+		return (EINVAL);
+
+	p = l->l_proc;
+	error = sysctl_proc_findproc(p, &ptmp, (pid_t)name[-4]);
+	if (error)
+		return (error);
+
+	node = *rnode;
+	memcpy(&alim, &ptmp->p_rlimit[limitno], sizeof(alim));
+	if (which == PROC_PID_LIMIT_TYPE_HARD)
+		node.sysctl_data = &alim.rlim_max;
+	else
+		node.sysctl_data = &alim.rlim_cur;
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	return (dosetrlimit(ptmp, p->p_cred, limitno, &alim));
+}
+
+/*
+ * and finally, the actually glue that sticks it to the tree
+ */
+SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
+{
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "proc", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_PROC, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_ANYNUMBER,
+		       CTLTYPE_NODE, "curproc", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, CTL_EOL);
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READONLY2|SYSCTL_ANYWRITE,
+		       CTLTYPE_STRING, "corename", NULL,
+		       sysctl_proc_corename, 0, NULL, MAXPATHLEN,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_CORENAME, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "rlimit", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, CTL_EOL);
+
+#define create_proc_plimit(s, n) do {					\
+	sysctl_createv(SYSCTL_PERMANENT,				\
+		       CTLTYPE_NODE, s, NULL,				\
+		       NULL, 0, NULL, 0,				\
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
+		       CTL_EOL);					\
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE|SYSCTL_ANYWRITE, \
+		       CTLTYPE_QUAD, "soft", NULL,			\
+		       sysctl_proc_plimit, 0, NULL, 0,			\
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
+		       PROC_PID_LIMIT_TYPE_SOFT, CTL_EOL);		\
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE|SYSCTL_ANYWRITE, \
+		       CTLTYPE_QUAD, "hard", NULL,			\
+		       sysctl_proc_plimit, 0, NULL, 0,			\
+		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
+		       PROC_PID_LIMIT_TYPE_HARD, CTL_EOL);		\
+	} while (0/*CONSTCOND*/)
+
+	create_proc_plimit("cputime",		PROC_PID_LIMIT_CPU);
+	create_proc_plimit("filesize",		PROC_PID_LIMIT_FSIZE);
+	create_proc_plimit("datasize",		PROC_PID_LIMIT_DATA);
+	create_proc_plimit("stacksize",		PROC_PID_LIMIT_STACK);
+	create_proc_plimit("coredumpsize",	PROC_PID_LIMIT_CORE);
+	create_proc_plimit("memoryuse",		PROC_PID_LIMIT_RSS);
+	create_proc_plimit("memorylocked",	PROC_PID_LIMIT_MEMLOCK);
+	create_proc_plimit("maxproc",		PROC_PID_LIMIT_NPROC);
+	create_proc_plimit("descriptors",	PROC_PID_LIMIT_NOFILE);
+
+#undef create_proc_plimit
+
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE|SYSCTL_ANYWRITE,
+		       CTLTYPE_INT, "stopfork", NULL,
+		       sysctl_proc_stop, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPFORK, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE|SYSCTL_ANYWRITE,
+		       CTLTYPE_INT, "stopexec", NULL,
+		       sysctl_proc_stop, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXEC, CTL_EOL);
+#ifdef PROC_PID_STOPEXIT
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE|SYSCTL_ANYWRITE,
+		       CTLTYPE_INT, "stopexit", NULL,
+		       sysctl_proc_stop, 0, NULL, 0,
+		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
+#endif /* PROC_PID_STOPEXIT */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.277 2003/10/19 17:45:35 cl Exp $ */
+/* $NetBSD: machdep.c,v 1.278 2003/12/04 19:38:21 atatat Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277 2003/10/19 17:45:35 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278 2003/12/04 19:38:21 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1676,59 +1676,42 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 /*
  * machine dependent system variables.
  */
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
-	dev_t consdev;
 
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
 
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		if (cn_tab != NULL)
-			consdev = cn_tab->cn_dev;
-		else
-			consdev = NODEV;
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
-			sizeof consdev));
-
-	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp,
-		    root_device->dv_xname));
-
-	case CPU_UNALIGNED_PRINT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_unaligned_print));
-
-	case CPU_UNALIGNED_FIX:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_unaligned_fix));
-
-	case CPU_UNALIGNED_SIGBUS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_unaligned_sigbus));
-
-	case CPU_BOOTED_KERNEL:
-		return (sysctl_rdstring(oldp, oldlenp, newp,
-		    bootinfo.booted_kernel));
-
-	case CPU_FP_SYNC_COMPLETE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &alpha_fp_sync_complete));
-
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRUCT, "console_device", NULL,
+		       sysctl_consdev, 0, NULL, sizeof(dev_t),
+		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "root_device", NULL,
+		       sysctl_root_device, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_ROOT_DEVICE, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "unaligned_print", NULL,
+		       NULL, 0, &alpha_unaligned_print, 0,
+		       CTL_MACHDEP, CPU_UNALIGNED_PRINT, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "unaligned_fix", NULL,
+		       NULL, 0, &alpha_unaligned_fix, 0,
+		       CTL_MACHDEP, CPU_UNALIGNED_FIX, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "unaligned_sigbus", NULL,
+		       NULL, 0, &alpha_unaligned_sigbus, 0,
+		       CTL_MACHDEP, CPU_UNALIGNED_SIGBUS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       NULL, 0, bootinfo.booted_kernel, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+		       CTLTYPE_INT, "fp_sync_complete", NULL,
+		       NULL, 0, &alpha_fp_sync_complete, 0,
+		       CTL_MACHDEP, CPU_FP_SYNC_COMPLETE, CTL_EOL);
 }
 
 /*

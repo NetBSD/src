@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.56 2003/09/27 13:29:02 darcy Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.57 2003/12/04 19:38:24 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.56 2003/09/27 13:29:02 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.57 2003/12/04 19:38:24 atatat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.56 2003/09/27 13:29:02 darcy Exp
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -79,8 +80,6 @@ int	kernfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	kernfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	kernfs_vptofh __P((struct vnode *, struct fid *));
-int	kernfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			   struct proc *));
 
 void
 kernfs_init()
@@ -306,17 +305,22 @@ kernfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-int
-kernfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_kern_setup, "sysctl vfs.kern subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "kernfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 11, CTL_EOL);
+	/*
+	 * XXX the "11" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "11" is the order as taken from sys/mount.h
+	 */
 }
 
 extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
@@ -341,7 +345,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_init,
 	kernfs_reinit,
 	kernfs_done,
-	kernfs_sysctl,
+	NULL,
 	NULL,				/* vfs_mountroot */
 	kernfs_checkexp,
 	kernfs_vnodeopv_descs,

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.6 2003/08/07 16:31:38 agc Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.7 2003/12/04 19:38:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.6 2003/08/07 16:31:38 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.7 2003/12/04 19:38:23 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -116,7 +116,7 @@ struct vfsops filecore_vfsops = {
 	filecore_init,
 	filecore_reinit,
 	filecore_done,
-	filecore_sysctl,
+	NULL,
 	NULL,				/* filecore_mountroot */
 	filecore_checkexp,
 	filecore_vnodeopv_descs,
@@ -732,15 +732,20 @@ filecore_vptofh(vp, fhp)
        	return 0;
 }
 
-int
-filecore_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+SYSCTL_SETUP(sysctl_vfs_filecore_setup, "sysctl vfs.filecore subtree setup")
 {
-	return (EOPNOTSUPP);
+
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(SYSCTL_PERMANENT,
+		       CTLTYPE_NODE, "union", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 19, CTL_EOL);
+	/*
+	 * XXX the "19" above could be dynamic, thereby eliminating
+	 * one more instance of the "number to vfs" mapping problem,
+	 * but "19" is the order as taken from sys/mount.h
+	 */
 }
