@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.18 2001/12/26 01:07:45 wiz Exp $
+.\"	$NetBSD: sleep.9,v 1.19 2002/02/13 08:18:51 ross Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Nm wakeup
 .Nd process context sleep and and wakeup
 .Sh SYNOPSIS
-.Fd #include <sys/proc.h>
+.Fd #include \*[Lt]sys/proc.h\*[Gt]
 .Ft int
 .Fn "ltsleep" "void *ident" "int priority" "const char *wmesg" "int timo" "__volatile struct simplelock *slock"
 .Ft int
@@ -157,7 +157,7 @@ The
 function puts the process in an uninterruptible sleep.
 It is functionally equivalent to:
 .Bd -literal -offset indent
-ltsleep(ident, priority & PRIMASK, 0, 0, NULL)
+ltsleep(ident, priority \*[Am] PRIMASK, 0, 0, NULL)
 .Ed
 .Pp
 The

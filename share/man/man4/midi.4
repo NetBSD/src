@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.21 2001/11/18 23:23:11 augustss Exp $
+.\" $NetBSD: midi.4,v 1.22 2002/02/13 08:17:41 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,8 +54,8 @@
 .\" .Cd "midi* at wss?"
 .Cd "pseudo-device sequencer"
 .Pp
-.Fd #include <sys/types.h>
-.Fd #include <sys/midiio.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/midiio.h\*[Gt]
 .Sh DESCRIPTION
 The
 .Nm
@@ -80,7 +80,7 @@ downloading patches to a device, since it is hard to get the accurate timing
 needed for quality music from a user program.  But the devices can act as
 a simple patchboard for MIDI devices.  For example, a MIDI keyboard could
 be connected to a synthesizer by the command
-.Cd "cat -u /dev/rmidi1 >/dev/rmidi2"
+.Cd "cat -u /dev/rmidi1 \*[Gt]/dev/rmidi2"
 .Pp
 The
 .Pa /dev/music

@@ -1,4 +1,4 @@
-.\"	$NetBSD: dir.5,v 1.8 2001/06/19 12:34:26 wiz Exp $
+.\"	$NetBSD: dir.5,v 1.9 2002/02/13 08:18:10 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,8 @@
 .Nm dirent
 .Nd directory file format
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/dir.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/dir.h\*[Gt]
 .Sh DESCRIPTION
 Directories provide a convenient hierarchical method of grouping
 files while obscuring the underlying details of the storage medium.
@@ -127,7 +127,7 @@ typedef struct _dirdesc {
 	long	dd_seek;  /* magic cookie returned by getdirentries */
 } DIR;
 
-#define	dirfd(dirp)	((dirp)->dd_fd)
+#define	dirfd(dirp)	((dirp)-\*[Gt]dd_fd)
 
 #ifndef NULL
 #define	NULL	0
@@ -137,7 +137,7 @@ typedef struct _dirdesc {
 
 #ifndef _KERNEL
 
-#include <sys/cdefs.h>
+#include \*[Lt]sys/cdefs.h\*[Gt]
 
 #endif /* !_KERNEL */
 

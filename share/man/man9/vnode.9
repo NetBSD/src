@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.5 2002/01/06 22:42:41 deberg Exp $
+.\"     $NetBSD: vnode.9,v 1.6 2002/02/13 08:18:56 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,8 +67,8 @@
 .Nm vprint
 .Nd kernel representation of a file or directory
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/vnode.h>
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/vnode.h\*[Gt]
 .Ft int
 .Fn vcount "struct vnode *vp"
 .Ft void
@@ -151,7 +151,7 @@ struct vnode {
         int             v_flag;                 /* flags */
         int             v_numoutput;            /* num pending writes */
         long            v_writecount;           /* ref count of writers */
-        long            v_holdcnt;              /* page & buffer refs */
+        long            v_holdcnt;              /* page \*[Am] buffer refs */
         daddr_t         v_lastr;                /* last read */
         u_long          v_id;                   /* capability id */
         struct mount    *v_mount;               /* ptr to vfs we are in */
@@ -299,7 +299,7 @@ Every time a vnode is reassigned to a new file, the vnode capability
 identifier
 .Em v_id
 is changed.  It is used to maintain the name lookup cache consistency
-by providing a unique <vnode *,v_id> tuple without requiring the cache
+by providing a unique \*[Lt]vnode *,v_id\*[Gt] tuple without requiring the cache
 to hold a reference.  The name lookup cache can later compare the
 vnode's capability identifier to its copy and see if the vnode still
 points to the same file.  See
@@ -544,7 +544,7 @@ followed by
 Mark the vnode
 .Fa vp
 as active by incrementing
-.Em vp->v_holdcnt
+.Em vp-\*[Gt]v_holdcnt
 and moving the vnode from the freelist to the holdlist.  Once on the
 holdlist, the vnode will not be recycled until it is released with
 .Fn holdrele .
@@ -555,7 +555,7 @@ This function is an alias for
 Mark the vnode
 .Fa vp
 as inactive by decrementing
-.Em vp->v_holdcnt
+.Em vp-\*[Gt]v_holdcnt
 and moving the vnode from the holdlist to the freelist.
 .It Fn HOLDRELE "vp"
 This function is an alias for
@@ -582,7 +582,7 @@ system is unmounted.
 The argument
 .Fa tag
 is the vnode tag assigned to
-.Fa *vpp->v_tag .
+.Fa *vpp-\*[Gt]v_tag .
 The argument
 .Fa vops
 is the vnode operations vector of the file system requesting the new
@@ -661,11 +661,11 @@ to
 .Fa maj .
 .It Fn vwakeup "bp"
 Update outstanding I/O count
-.Em vp->v_numoutput
+.Em vp-\*[Gt]v_numoutput
 for the vnode
-.Em bp->b_vp
+.Em bp-\*[Gt]b_vp
 and do wakeup if requested and
-.Em vp->vflag
+.Em vp-\*[Gt]vflag
 has VBWAIT set.
 .It Fn vflushbuf "vp" "sync"
 Flush all dirty buffers to disk for the file with the locked vnode
@@ -675,9 +675,9 @@ The argument
 specifies whether the I/O should be synchronous and
 .Fn vflushbuf
 will sleep until
-.Em vp->v_numoutput
+.Em vp-\*[Gt]v_numoutput
 is zero and
-.Em vp->v_dirtyblkhd
+.Em vp-\*[Gt]v_dirtyblkhd
 is empty.
 .It Fn vinvalbuf "vp" "flags" "cred" "p" "slpflag" "slptimeo"
 Flush out and invalidate all buffers associated with locked vnode

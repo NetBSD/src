@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.8 2001/12/26 01:07:45 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.9 2002/02/13 08:18:51 ross Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -38,8 +38,8 @@
 .Nm scsipi
 .Nd SCSI/ATAPI middle-layer interface
 .Sh SYNOPSIS
-.Fd #include <dev/scsipi/atapiconf.h>
-.Fd #include <dev/scsipi/scsiconf.h>
+.Fd #include \*[Lt]dev/scsipi/atapiconf.h\*[Gt]
+.Fd #include \*[Lt]dev/scsipi/scsiconf.h\*[Gt]
 .Ft void
 .Fn scsipi_async_event "struct scsipi_channel *chan" "scsipi_async_event_t event" "void *arg"
 .Ft void
@@ -192,7 +192,7 @@ number of LUNs per target
 adapter's ID on this channel
 .It Va int chan_defquirks
 default device quirks.  Quirks are defined in
-.Pa <dev/scsipi/scsipiconf.h>
+.Pa \*[Lt]dev/scsipi/scsipiconf.h\*[Gt]
 and are usually set in the middle layer based on the device's inquiry
 data.  For some kinds of adapters it may be convenient to have a set of
 quirks applied to all devices, regardless of the inquiry data.
@@ -392,7 +392,7 @@ Disable the adapter if
 .Va enable
 is zero, or enable it if non-zero.  Returns 0 if operation is successful,
 or error from
-.Pa <sys/errno.h> .
+.Pa \*[Lt]sys/errno.h\*[Gt] .
 This callback is optional, and is useful mostly for hot-plug devices.
 For example, this callback would power on or off
 the relevant PCMCIA socket for a PCMCIA controller.
@@ -497,7 +497,7 @@ set.
 will call the
 .Fn adapt_request
 callback again only if called with
-.Fa xs->error
+.Fa xs-\*[Gt]error
 set to
 .Dv XS_NOERROR ,
 and

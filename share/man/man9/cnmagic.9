@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.7 2001/12/26 01:07:45 wiz Exp $
+.\" $NetBSD: cnmagic.9,v 1.8 2002/02/13 08:18:38 ross Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Nm cn_destroy_magic
 .Nd console magic key sequence management
 .Sh SYNOPSIS
-.Fd #include <sys/systm.h>
+.Fd #include \*[Lt]sys/systm.h\*[Gt]
 .Va typedef struct cnm_state cnm_state_t;
 .Ft void
 .Fn cn_trap
@@ -116,7 +116,7 @@ Determine whether a given
 is the system console.  This macro tests to see if
 .Fa dev
 is the same as
-.Va cn_tab->cn_dev
+.Va cn_tab-\*[Gt]cn_dev
 but can be overridden in MI header files.
 .It Fn "void cn_check_magic" "dev_t dev" "int k" "cnm_state_t *cnms"
 .Pp
@@ -192,4 +192,4 @@ first appeared in
 The
 .Nx
 console magic key sequence management framework was designed and implemented by
-Eduardo Horvath <eeh@netbsd.org>
+Eduardo Horvath \*[Lt]eeh@netbsd.org\*[Gt]

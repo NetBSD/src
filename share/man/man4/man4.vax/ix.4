@@ -1,4 +1,4 @@
-.\"	$NetBSD: ix.4,v 1.12 2002/01/15 02:08:38 wiz Exp $
+.\"	$NetBSD: ix.4,v 1.13 2002/02/13 08:18:07 ross Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ A program to load the image is provided in
 .Pa /usr/src/new/np100 .
 The sequence of commands would be:
 .Bd -literal -offset indent
-# ./npload np.image [/dev/np<board #> if other than np00]
+# ./npload np.image [/dev/np\*[Lt]board #\*[Gt] if other than np00]
 # sleep 10
 # ifconfig ix0 ...
 .Ed
