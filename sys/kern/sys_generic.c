@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.30 1996/09/07 21:47:23 mycroft Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.31 1996/12/22 10:21:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,8 +75,8 @@ sys_read(p, v, retval)
 {
 	register struct sys_read_args /* {
 		syscallarg(int) fd;
-		syscallarg(char *) buf;
-		syscallarg(u_int) nbyte;
+		syscallarg(void *) buf;
+		syscallarg(size_t) nbyte;
 	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
@@ -135,7 +135,7 @@ sys_readv(p, v, retval)
 {
 	register struct sys_readv_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct iovec *) iovp;
+		syscallarg(const struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
 	} */ *uap = v;
 	register struct file *fp;
@@ -170,7 +170,7 @@ sys_readv(p, v, retval)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	error = copyin((caddr_t)SCARG(uap, iovp), (caddr_t)iov, iovlen);
+	error = copyin(SCARG(uap, iovp), iov, iovlen);
 	if (error)
 		goto done;
 	auio.uio_resid = 0;
@@ -231,8 +231,8 @@ sys_write(p, v, retval)
 {
 	register struct sys_write_args /* {
 		syscallarg(int) fd;
-		syscallarg(char *) buf;
-		syscallarg(u_int) nbyte;
+		syscallarg(const void *) buf;
+		syscallarg(size_t) nbyte;
 	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
@@ -247,7 +247,7 @@ sys_write(p, v, retval)
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
 	    (fp->f_flag & FWRITE) == 0)
 		return (EBADF);
-	aiov.iov_base = (caddr_t)SCARG(uap, buf);
+	aiov.iov_base = (char *)SCARG(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, nbyte);
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -294,7 +294,7 @@ sys_writev(p, v, retval)
 {
 	register struct sys_writev_args /* {
 		syscallarg(int) fd;
-		syscallarg(struct iovec *) iovp;
+		syscallarg(const struct iovec *) iovp;
 		syscallarg(u_int) iovcnt;
 	} */ *uap = v;
 	register struct file *fp;
@@ -329,7 +329,7 @@ sys_writev(p, v, retval)
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_USERSPACE;
 	auio.uio_procp = p;
-	error = copyin((caddr_t)SCARG(uap, iovp), (caddr_t)iov, iovlen);
+	error = copyin(SCARG(uap, iovp), iov, iovlen);
 	if (error)
 		goto done;
 	auio.uio_resid = 0;
@@ -439,7 +439,7 @@ sys_ioctl(p, v, retval)
 		data = stkbuf;
 	if (com&IOC_IN) {
 		if (size) {
-			error = copyin(SCARG(uap, data), data, (u_int)size);
+			error = copyin(SCARG(uap, data), data, size);
 			if (error) {
 				if (memp)
 					free(memp, M_IOCTLOPS);
@@ -512,7 +512,7 @@ sys_ioctl(p, v, retval)
 		 * already set and checked above.
 		 */
 		if (error == 0 && (com&IOC_OUT) && size)
-			error = copyout(data, SCARG(uap, data), (u_int)size);
+			error = copyout(data, SCARG(uap, data), size);
 		break;
 	}
 	if (memp)
@@ -556,7 +556,7 @@ sys_select(p, v, retval)
 
 #define	getbits(name, x) \
 	if (SCARG(uap, name)) { \
-		error = copyin((caddr_t)SCARG(uap, name), bits + ni * x, ni); \
+		error = copyin(SCARG(uap, name), bits + ni * x, ni); \
 		if (error) \
 			goto done; \
 	} else \
@@ -567,7 +567,7 @@ sys_select(p, v, retval)
 #undef	getbits
 
 	if (SCARG(uap, tv)) {
-		error = copyin((caddr_t)SCARG(uap, tv), (caddr_t)&atv,
+		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
 			sizeof (atv));
 		if (error)
 			goto done;
@@ -617,7 +617,7 @@ done:
 	if (error == 0) {
 #define	putbits(name, x) \
 		if (SCARG(uap, name)) { \
-			error = copyout(bits + ni * x, (caddr_t)SCARG(uap, name), ni); \
+			error = copyout(bits + ni * x, SCARG(uap, name), ni); \
 			if (error) \
 				goto out; \
 		}
@@ -699,7 +699,7 @@ sys_poll(p, v, retval)
 	else
 		bits = smallbits;
 
-	error = copyin((caddr_t)SCARG(uap, fds), bits, ni);
+	error = copyin(SCARG(uap, fds), bits, ni);
 	if (error)
 		goto done;
 
@@ -749,7 +749,7 @@ done:
 	if (error == EWOULDBLOCK)
 		error = 0;
 	if (error == 0) {
-		error = copyout(bits, (caddr_t)SCARG(uap, fds), ni);
+		error = copyout(bits, SCARG(uap, fds), ni);
 		if (error)
 			goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.23 1996/11/15 23:53:32 cgd Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.24 1996/12/22 10:21:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -111,7 +111,7 @@ sys_clock_gettime(p, v, retval)
 	microtime(&atv);
 	TIMEVAL_TO_TIMESPEC(&atv,&ats);
 
-	return copyout((caddr_t)&ats, SCARG(uap, tp), sizeof(ats));
+	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
 }
 
 /* ARGSUSED */
@@ -137,8 +137,7 @@ sys_clock_settime(p, v, retval)
 	if (clock_id != CLOCK_REALTIME)
 		return (EINVAL);
 
-	if ((error = copyin((const char *)SCARG(uap, tp), (caddr_t)&ats,
-	    sizeof(ats))) != 0)
+	if ((error = copyin(SCARG(uap, tp), &ats, sizeof(ats))) != 0)
 		return (error);
 
 	TIMESPEC_TO_TIMEVAL(&atv,&ats);
@@ -169,8 +168,7 @@ sys_clock_getres(p, v, retval)
 		ts.tv_sec = 0;
 		ts.tv_nsec = 1000000000 / hz;
 
-		error = copyout((caddr_t)&ts, (caddr_t)SCARG(uap, tp),
-			sizeof (ts));
+		error = copyout(&ts, SCARG(uap, tp), sizeof (ts));
 	}
 
 	return error;
@@ -193,14 +191,12 @@ sys_gettimeofday(p, v, retval)
 
 	if (SCARG(uap, tp)) {
 		microtime(&atv);
-		error = copyout((caddr_t)&atv, (caddr_t)SCARG(uap, tp),
-				sizeof (atv));
+		error = copyout(&atv, SCARG(uap, tp), sizeof (atv));
 		if (error)
 			return (error);
 	}
 	if (SCARG(uap, tzp))
-		error = copyout((caddr_t)&tz, (caddr_t)SCARG(uap, tzp),
-		    sizeof (tz));
+		error = copyout(&tz, SCARG(uap, tzp), sizeof (tz));
 	return (error);
 }
 
@@ -212,8 +208,8 @@ sys_settimeofday(p, v, retval)
 	register_t *retval;
 {
 	struct sys_settimeofday_args /* {
-		syscallarg(struct timeval *) tv;
-		syscallarg(struct timezone *) tzp;
+		syscallarg(const struct timeval *) tv;
+		syscallarg(const struct timezone *) tzp;
 	} */ *uap = v;
 	struct timeval atv;
 	struct timezone atz;
@@ -222,11 +218,11 @@ sys_settimeofday(p, v, retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	/* Verify all parameters before changing time. */
-	if (SCARG(uap, tv) && (error = copyin((caddr_t)SCARG(uap, tv),
-	    (caddr_t)&atv, sizeof(atv))))
+	if (SCARG(uap, tv) && (error = copyin(SCARG(uap, tv),
+	    &atv, sizeof(atv))))
 		return (error);
-	if (SCARG(uap, tzp) && (error = copyin((caddr_t)SCARG(uap, tzp),
-	    (caddr_t)&atz, sizeof(atz))))
+	if (SCARG(uap, tzp) && (error = copyin(SCARG(uap, tzp),
+	    &atz, sizeof(atz))))
 		return (error);
 	if (SCARG(uap, tv))
 		settime(&atv);
@@ -247,7 +243,7 @@ sys_adjtime(p, v, retval)
 	register_t *retval;
 {
 	register struct sys_adjtime_args /* {
-		syscallarg(struct timeval *) delta;
+		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
 	struct timeval atv;
@@ -257,8 +253,7 @@ sys_adjtime(p, v, retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	error = copyin((caddr_t)SCARG(uap, delta), (caddr_t)&atv,
-	    sizeof(struct timeval));
+	error = copyin(SCARG(uap, delta), &atv, sizeof(struct timeval));
 	if (error)
 		return (error);
 
@@ -293,7 +288,7 @@ sys_adjtime(p, v, retval)
 	if (SCARG(uap, olddelta)) {
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
-		(void) copyout((caddr_t)&atv, (caddr_t)SCARG(uap, olddelta),
+		(void) copyout(&atv, SCARG(uap, olddelta),
 		    sizeof(struct timeval));
 	}
 	return (0);
@@ -353,8 +348,7 @@ sys_getitimer(p, v, retval)
 	} else
 		aitv = p->p_stats->p_timer[SCARG(uap, which)];
 	splx(s);
-	return (copyout((caddr_t)&aitv, (caddr_t)SCARG(uap, itv),
-	    sizeof (struct itimerval)));
+	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
 }
 
 /* ARGSUSED */
@@ -366,19 +360,18 @@ sys_setitimer(p, v, retval)
 {
 	register struct sys_setitimer_args /* {
 		syscallarg(u_int) which;
-		syscallarg(struct itimerval *) itv;
+		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
 	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
-	register struct itimerval *itvp;
+	register const struct itimerval *itvp;
 	int s, error;
 
 	if (SCARG(uap, which) > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
-	if (itvp && (error = copyin((caddr_t)itvp, (caddr_t)&aitv,
-	    sizeof(struct itimerval))))
+	if (itvp && (error = copyin(itvp, &aitv, sizeof(struct itimerval))))
 		return (error);
 	if (SCARG(uap, oitv) != NULL) {
 		SCARG(&getargs, which) = SCARG(uap, which);
