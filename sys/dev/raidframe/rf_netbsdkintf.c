@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.2 1998/11/13 11:51:55 simonb Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -405,10 +405,17 @@ static void InitBP(struct buf *bp, struct vnode *, unsigned rw_flag, dev_t dev,
 void	raidattach __P((int));
 int	raidsize __P((dev_t));
 
-void rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
-void rf_CopybackReconstructedData(RF_Raid_t *raidPtr);
+void	rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
+void	rf_CopybackReconstructedData(RF_Raid_t *raidPtr);
 static	int raidinit __P((dev_t,RF_Raid_t *,int));
 
+int	raidopen __P((dev_t, int, int, struct proc *));
+int	raidclose __P((dev_t, int, int, struct proc *));
+int	raidioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int	raidwrite __P((dev_t, struct uio *, int));
+int	raidread __P((dev_t, struct uio *, int));
+void	raidstrategy __P((struct buf *));
+int	raiddump __P((dev_t, daddr_t, caddr_t, size_t));
 
 /*
  * Pilfered from ccd.c
