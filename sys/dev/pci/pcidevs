@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.205 2000/03/31 04:45:29 tsarna Exp $
+$NetBSD: pcidevs,v 1.206 2000/04/03 15:04:42 joda Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1159,7 +1159,19 @@ product NUMBER9 I128	0x2309	Imagine-128
 product NUMBER9 I128_2	0x2339	Imagine-128 II
 
 /* Nvidia Corporationn products */
-product NVIDIA	RIVATNT	0x0020	Riva TNT
+product NVIDIA	RIVATNT		0x0020	RIVA TNT
+product NVIDIA	RIVATNT2	0x0028	RIVA TNT2
+product NVIDIA	RIVATNT2U	0x0029	RIVA TNT2 Ultra
+product NVIDIA	VANTA		0x002C	Vanta
+product NVIDIA	RIVATNT2M64	0x002D	RIVA TNT2 Model 64
+product NVIDIA	ALADDINTNT2	0x00A0	Aladdin TNT2
+product NVIDIA	GEFORCE256	0x0100	GeForce 256
+product NVIDIA	GEFORCEDDR	0x0101	GeForce DDR
+product NVIDIA	QUADRO		0x0103	Quadro
+product NVIDIA	GEFORCE2	0x0150	GeForce2 GTS
+product NVIDIA	GEFORCE2DDR	0x0151	GeForce2 GTS (DDR)
+product NVIDIA	GEFORCE2BR	0x0152	GeForce2 GTS
+product NVIDIA	QUADRO2		0x0153	Quadro2
 
 /* Nvidia Corporation & SGS Thomson Microelectric */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
