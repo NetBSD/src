@@ -1,13 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.7 2001/09/25 01:43:35 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/10/27 01:57:40 perry Exp $
 
 .include <bsd.own.mk>
-
-# Ensure that TOOLDIR is set.
-.if !defined(TOOLDIR)
-.BEGIN:
-	@echo "===> TOOLDIR must be set in ${MAKECONF} or the environment"
-	@false
-.endif
 
 # Stash the current directory (some builds here actually change .CURDIR).
 _CURDIR?=${.CURDIR}
