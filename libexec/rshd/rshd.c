@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.38 2005/03/11 16:04:09 ginsbach Exp $	*/
+/*	$NetBSD: rshd.c,v 1.39 2005/03/12 18:23:30 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.38 2005/03/11 16:04:09 ginsbach Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.39 2005/03/12 18:23:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ static struct pam_conv pamc = { openpam_nullconv, NULL };
 static pam_handle_t *pamh;
 static int pam_err;
 
-#define PAM_END { \
+#define PAM_END do { \
 	if ((pam_err = pam_setcred(pamh, PAM_DELETE_CRED)) != PAM_SUCCESS) \
 		syslog(LOG_ERR|LOG_AUTH, "pam_setcred(): %s", \
 		    pam_strerror(pamh, pam_err)); \
@@ -127,7 +127,7 @@ static int pam_err;
 	if ((pam_err = pam_end(pamh, pam_err)) != PAM_SUCCESS) \
 		syslog(LOG_ERR|LOG_AUTH, "pam_end(): %s", \
 		    pam_strerror(pamh, pam_err)); \
-}
+} while (/*CONSTCOND*/0)
 #else
 #define PAM_END
 #endif
@@ -263,7 +263,6 @@ doit(struct sockaddr *fromp)
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
 #ifdef  LOGIN_CAP
 	login_cap_t *lc;
-	char *sh;
 #endif
 	char naddr[NI_MAXHOST];
 	char saddr[NI_MAXHOST];
@@ -522,10 +521,34 @@ doit(struct sockaddr *fromp)
 			errorstr = "Permission denied.";
 		goto badlogin;
 	}
-#endif
 
 	if (pwd->pw_uid && !access(_PATH_NOLOGIN, F_OK))
 		rshd_errx(1, "Logins currently disabled.");
+#endif
+
+#ifdef LOGIN_CAP
+	/*
+	 * PAM modules might add supplementary groups in
+	 * pam_setcred(), so initialize them first.
+	 * But we need to open the session as root.
+	 */
+	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) != 0) {
+		syslog(LOG_ERR, "setusercontext: %m");
+		exit(1);
+	}
+#else
+	initgroups(pwd->pw_name, pwd->pw_gid);
+#endif
+
+#ifdef USE_PAM
+	if ((pam_err = pam_open_session(pamh, 0)) != PAM_SUCCESS) {
+		syslog(LOG_ERR, "pam_open_session: %s",
+		    pam_strerror(pamh, pam_err));
+	} else if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED))
+	    != PAM_SUCCESS) {
+		syslog(LOG_ERR, "pam_setcred: %s", pam_strerror(pamh, pam_err));
+	}
+#endif
 
 	(void) write(STDERR_FILENO, "\0", 1);
 	sent_null = 1;
@@ -575,7 +598,7 @@ doit(struct sockaddr *fromp)
 				}
 
 			} while ((set[0].revents | set[1].revents) & POLLIN);
-			PAM_END
+			PAM_END;
 			exit(0);
 		}
 		(void) close(s);
@@ -589,17 +612,28 @@ doit(struct sockaddr *fromp)
 		if (pid == -1)
 			rshd_errx(1, "Can't fork. (%s)", strerror(errno));
 		if (pid) {
-			/* Parent. */
-			while (wait(NULL) > 0 || errno == EINTR)
-				continue;
-			PAM_END
-			exit(0);
- 		}
+			pid_t xpid;
+			int status;
+			if ((xpid = waitpid(pid, &status, 0)) != pid) {
+				pam_err = pam_close_session(pamh, 0);
+				if (pam_err != PAM_SUCCESS) {
+					syslog(LOG_ERR,
+					    "pam_close_session: %s",
+					    pam_strerror(pamh, pam_err));
+				}
+				PAM_END;
+				if (xpid != -1)
+					syslog(LOG_WARNING,
+					    "wrong PID: %d != %d", pid, xpid);
+				else
+					syslog(LOG_WARNING,
+					    "wait pid=%d failed %m", pid);
+				exit(1);
+			}
+		}
 	}
 #endif
 
-	if (*pwd->pw_shell == '\0')
-		pwd->pw_shell = _PATH_BSHELL;
 #ifdef F_CLOSEM
 	(void)fcntl(3, F_CLOSEM, 0);
 #else
@@ -612,20 +646,26 @@ doit(struct sockaddr *fromp)
 	if (setlogin(pwd->pw_name) < 0)
 		syslog(LOG_ERR, "setlogin() failed: %m");
 
+	if (*pwd->pw_shell == '\0')
+		pwd->pw_shell = _PATH_BSHELL;
+
 	(void)pam_setenv(pamh, "HOME", pwd->pw_dir, 1);
 	(void)pam_setenv(pamh, "SHELL", pwd->pw_shell, 1);
 	(void)pam_setenv(pamh, "USER", pwd->pw_name, 1);
 	(void)pam_setenv(pamh, "PATH", _PATH_DEFPATH, 1);
 	environ = pam_getenvlist(pamh);
 	(void)pam_end(pamh, pam_err);
-#endif
+#else
 #ifdef LOGIN_CAP
-	if ((sh = login_getcapstr(lc, "shell", NULL, NULL))) {
-		if(!(sh = strdup(sh))) {
-                	syslog(LOG_ERR, "Cannot alloc mem");
-                	exit(1);
+	{
+		char *sh;
+		if ((sh = login_getcapstr(lc, "shell", NULL, NULL))) {
+			if(!(sh = strdup(sh))) {
+				syslog(LOG_ERR, "Cannot alloc mem");
+				exit(1);
+			}
+			pwd->pw_shell = sh;
 		}
-		pwd->pw_shell = sh;
 	}
 #endif
 	environ = envinit;
@@ -633,28 +673,6 @@ doit(struct sockaddr *fromp)
 	strlcat(path, _PATH_DEFPATH, sizeof(path));
 	strlcat(shell, pwd->pw_shell, sizeof(shell));
 	strlcat(username, pwd->pw_name, sizeof(username));
-#ifdef LOGIN_CAP
-	/*
-	 * PAM modules might add supplementary groups in
-	 * pam_setcred(), so initialize them first.
-	 * But we need to open the session as root.
-	 */
-	if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETGROUP) != 0) {
-		syslog(LOG_ERR, "setusercontext: %m");
-		exit(1);
-	}
-#else
-	initgroups(pwd->pw_name, pwd->pw_gid);
-#endif
-
-#ifdef USE_PAM
-	if ((pam_err = pam_open_session(pamh, 0)) != PAM_SUCCESS) {
-		syslog(LOG_ERR, "pam_open_session: %s",
-		    pam_strerror(pamh, pam_err));
-	} else if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED))
-	    != PAM_SUCCESS) {
-		syslog(LOG_ERR, "pam_setcred: %s", pam_strerror(pamh, pam_err));
-	}
 #endif
 
 	cp = strrchr(pwd->pw_shell, '/');
