@@ -63,6 +63,8 @@ mbattach(parent, self, aux)
 	struct device *parent, *self;
  	void *aux;
 {
+	int clk, net;
+
 	printf("\n");
 	/*
 	 * The ICU is initialized by the Monitor as follows:
@@ -76,6 +78,17 @@ mbattach(parent, self, aux)
 	ICUB(IPS)  = 0x7e;	/* 0=i/o, 1=int_req */
 	ICUB(PDIR) = 0x7e;	/* 1=in, 0=out */
 	ICUB(PDAT) = 0xfe;	/* keep ROM at high mem */
+
+	/* Set up the ICU. */
+	intr_init();
+
+	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
+	clk = intr_establish(SOFTINT, (void (*)(void *))softclock, NULL,
+				"softclock", IPL_NET, IPL_NET, 0);
+	net = intr_establish(SOFTINT, softnet, NULL,
+				"softnet", IPL_NET, IPL_NET, 0);
+	if (clk != SIR_CLOCK || net != SIR_NET)
+		panic("Wrong clock or net softint allocated");
 
 	config_search(mbsearch, self, NULL);
 }
