@@ -1,4 +1,4 @@
-/* $NetBSD: dec_2100_a500.c,v 1.4 2001/05/30 15:24:26 lukem Exp $ */
+/* $NetBSD: dec_2100_a500.c,v 1.5 2001/06/05 04:53:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.4 2001/05/30 15:24:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_2100_a500.c,v 1.5 2001/06/05 04:53:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ dec_2100_a500_cons_init(void)
 	tcp = ttwoga_init(0, 0);
 
 	switch (ctb->ctb_term_type) {
-	case 2: 
+	case CTB_PRINTERPORT: 
 		/* serial console ... */
 		assert(CTB_TURBOSLOT_HOSE(ctbslot) == 0);
 		/* XXX */
@@ -184,7 +184,7 @@ dec_2100_a500_cons_init(void)
 			break;
 		}
 
-	case 3:
+	case CTB_GRAPHICS:
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
