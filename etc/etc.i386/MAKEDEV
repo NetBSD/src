@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.75 1998/11/13 04:49:02 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.76 1998/12/07 18:46:27 sommerfe Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,6 +119,7 @@ all)
 	sh $0 usbs
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 wscons
 	;;
 
 floppy)
