@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$NetBSD: syslogd.c,v 1.7 1996/02/05 02:30:26 perry Exp $";
+static char rcsid[] = "$NetBSD: syslogd.c,v 1.8 1997/04/26 05:08:29 mrg Exp $";
 #endif /* not lint */
 
 /*
@@ -311,11 +311,13 @@ main(argc, argv)
 		klogm = 0;
 	}
 
-	/* tuck my process id away */
-	fp = fopen(PidFile, "w");
-	if (fp != NULL) {
-		fprintf(fp, "%d\n", getpid());
-		(void) fclose(fp);
+	/* tuck my process id away, if i'm not in debug mode */
+	if (Debug == 0) {
+		fp = fopen(PidFile, "w");
+		if (fp != NULL) {
+			fprintf(fp, "%d\n", getpid());
+			(void) fclose(fp);
+		}
 	}
 
 	dprintf("off & running....\n");
