@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
+/*	$NetBSD: misc.c,v 1.7 1997/10/19 04:40:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,15 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $";
+__RCSID("$NetBSD: misc.c,v 1.7 1997/10/19 04:40:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -60,31 +62,28 @@ static char rcsid[] = "$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $";
  */
 int
 indx(s1, s2)
-char *s1;
-char *s2;
+	char *s1;
+	char *s2;
 {
-	register char *t;
-	register char *p;
-	register char *m;
+	char *t;
 
-	for (p = s1; *p; p++) {
-		for (t = p, m = s2; *m && *m == *t; m++, t++);
-		if (!*m)
-			return (p - s1);
-	}
-	return (-1);
+	t = strstr(s1, s2);
+	if (t == NULL)
+		return (-1);
+	return (t - s1);
 }
+
 /*
  *  putback - push character back onto input
  */
 void
 putback(c)
-char c;
+	char c;
 {
 	if (bp < endpbb)
 		*bp++ = c;
 	else
-		oops("too many characters pushed back");
+		errx(1, "too many characters pushed back");
 }
 
 /*
@@ -94,10 +93,10 @@ char c;
  */
 void
 pbstr(s)
-register char *s;
+	char *s;
 {
-	register char *es;
-	register char *zp;
+	char *es;
+	char *zp;
 
 	es = s;
 	zp = bp;
@@ -109,7 +108,7 @@ register char *s;
 		if (zp < endpbb)
 			*zp++ = *es--;
 	if ((bp = zp) == endpbb)
-		oops("too many characters pushed back");
+		errx(1, "too many characters pushed back");
 }
 
 /*
@@ -117,9 +116,9 @@ register char *s;
  */
 void
 pbnum(n)
-int n;
+	int n;
 {
-	register int num;
+	int num;
 
 	num = (n < 0) ? -n : n;
 	do {
@@ -136,12 +135,12 @@ int n;
  */
 void
 chrsave(c)
-char c;
+	char c;
 {
 	if (ep < endest)
 		*ep++ = c;
 	else
-		oops("string space overflow");
+		errx(1, "string space overflow");
 }
 
 /*
@@ -149,18 +148,18 @@ char c;
  */
 void
 getdiv(n)
-int n;
+	int n;
 {
-	register int c;
-	register FILE *dfil;
+	int c;
+	FILE *dfil;
 
 	if (active == outfile[n])
-		oops("%s: diversion still active.", "undivert");
+		errx(1, "undivert: diversion still active");
 	(void) fclose(outfile[n]);
 	outfile[n] = NULL;
 	m4temp[UNIQUE] = n + '0';
 	if ((dfil = fopen(m4temp, "r")) == NULL)
-		oops("%s: cannot undivert.", m4temp);
+		err(1, "%s: cannot undivert", m4temp);
 	else
 		while ((c = getc(dfil)) != EOF)
 			putc(c, active);
@@ -171,14 +170,14 @@ int n;
 #else
 	if (unlink(m4temp) == -1)
 #endif
-		oops("%s: cannot unlink.", m4temp);
+		err(1, "%s: cannot unlink", m4temp);
 }
 
 void
 onintr(signo)
 	int signo;
 {
-	oops("interrupted.");
+	errx(1, "interrupted");
 }
 
 /*
@@ -187,7 +186,7 @@ onintr(signo)
 void
 killdiv()
 {
-	register int n;
+	int n;
 
 	for (n = 0; n < MAXOUT; n++)
 		if (outfile[n] != NULL) {
@@ -203,31 +202,30 @@ killdiv()
 
 char *
 xalloc(n)
-unsigned long n;
+	unsigned long n;
 {
-	register char *p = malloc(n);
+	char *p = malloc(n);
 
 	if (p == NULL)
-		oops("malloc: %s", strerror(errno));
+		err(1, "malloc");
 	return p;
 }
 
 char *
 xstrdup(s)
-const char *s;
+	const char *s;
 {
-	register char *p = strdup(s);
+	char *p = strdup(s);
 	if (p == NULL)
-		oops("strdup: %s", strerror(errno));
+		err(1, "strdup");
 	return p;
 }
 
 char *
 basename(s)
-register char *s;
+	char *s;
 {
-	register char *p;
-	extern char *strrchr();
+	char *p;
 
 	if ((p = strrchr(s, '/')) == NULL)
 		return s;
@@ -240,33 +238,4 @@ usage()
 {
 	fprintf(stderr, "usage: m4 [-Dname[=val]] [-Uname]\n");
 	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-oops(const char *fmt, ...)
-#else
-oops(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "%s: ", progname);
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $	*/
+/*	$NetBSD: expr.c,v 1.8 1997/10/19 04:39:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,16 +36,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $";
+__RCSID("$NetBSD: expr.c,v 1.8 1997/10/19 04:39:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <stdio.h>
+
+#include "mdef.h"
+#include "extern.h"
 
 /*
  *      expression evaluator: performs a standard recursive
@@ -138,9 +142,9 @@ static jmp_buf expjump;
 
 int
 expr(expbuf)
-char *expbuf;
+	char *expbuf;
 {
-	register int rval;
+	int rval;
 
 	nxtch = expbuf;
 	if (setjmp(expjump) != 0)
@@ -160,7 +164,7 @@ char *expbuf;
 static int
 query()
 {
-	register int bool, true_val, false_val;
+	int bool, true_val, false_val;
 
 	bool = lor();
 	if (skipws() != '?') {
@@ -182,7 +186,7 @@ query()
 static int
 lor()
 {
-	register int c, vl, vr;
+	int c, vl, vr;
 
 	vl = land();
 	while ((c = skipws()) == '|') {
@@ -202,7 +206,7 @@ lor()
 static int
 land()
 {
-	register int c, vl, vr;
+	int c, vl, vr;
 
 	vl = not();
 	while ((c = skipws()) == '&') {
@@ -222,7 +226,7 @@ land()
 static int
 not()
 {
-	register int val, c;
+	int val, c;
 
 	if ((c = skipws()) == '!' && getch() != '=') {
 		ungetch();
@@ -242,7 +246,7 @@ not()
 static int
 eqrel()
 {
-	register int vl, vr, eqrel;
+	int vl, vr, eqrel;
 
 	vl = shift();
 	while ((eqrel = geteqrel()) != -1) {
@@ -280,7 +284,7 @@ eqrel()
 static int
 shift()
 {
-	register int vl, vr, c;
+	int vl, vr, c;
 
 	vl = primary();
 	while (((c = skipws()) == '<' || c == '>') && getch() == c) {
@@ -304,7 +308,7 @@ shift()
 static int
 primary()
 {
-	register int c, vl, vr;
+	int c, vl, vr;
 
 	vl = term();
 	while ((c = skipws()) == '+' || c == '-') {
@@ -326,7 +330,7 @@ primary()
 static int
 term()
 {
-	register int c, vl, vr;
+	int c, vl, vr;
 
 	vl = exp();
 	while ((c = skipws()) == '*' || c == '/' || c == '%') {
@@ -354,7 +358,7 @@ term()
 static int
 exp()
 {
-	register c, vl, vr, n;
+	int c, vl, vr, n;
 
 	vl = unary();
 	switch (c = skipws()) {
@@ -383,7 +387,7 @@ exp()
 static int
 unary()
 {
-	register int val, c;
+	int val, c;
 
 	if ((c = skipws()) == '+' || c == '-' || c == '~') {
 		val = unary();
@@ -408,7 +412,7 @@ unary()
 static int
 factor()
 {
-	register int val;
+	int val;
 
 	if (skipws() == '(') {
 		val = query();
@@ -428,9 +432,9 @@ factor()
 static int
 constant()
 {
-	register int i;
-	register int value;
-	register char c;
+	int i;
+	int value;
+	char c;
 	int v[sizeof(int)];
 
 	if (skipws() != '\'') {
@@ -489,7 +493,7 @@ constant()
 static int
 num()
 {
-	register int rval, c, base;
+	int rval, c, base;
 	int ndig;
 
 	base = ((c = skipws()) == '0') ? OCTAL : DECIMAL;
@@ -516,7 +520,7 @@ num()
 static int
 geteqrel()
 {
-	register int c1, c2;
+	int c1, c2;
 
 	c1 = skipws();
 	c2 = getch();
@@ -560,7 +564,7 @@ geteqrel()
 static int
 skipws()
 {
-	register char c;
+	char c;
 
 	while ((c = getch()) <= ' ' && c > EOS)
 		;
@@ -573,7 +577,7 @@ skipws()
  */
 static void
 experr(msg)
-char *msg;
+	char *msg;
 {
 	printf("m4: %s in expr.\n", msg);
 	longjmp(expjump, -1);
