@@ -1,10 +1,10 @@
 ./sbin/edlabel
 ./usr/lib/libamu.so.0.0
 ./usr/lib/libbfd.so.0.0
-./usr/lib/libc.so.12.20
+./usr/lib/libc.so.12.21
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.1
-./usr/lib/libedit.so.1.0
+./usr/lib/libedit.so.1.1
 ./usr/lib/libg++.so.4.0
 ./usr/lib/libgnumalloc.so.0.0
 ./usr/lib/libkvm.so.5.0
@@ -19,7 +19,7 @@
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.0.0
-./usr/lib/libutil.so.4.2
+./usr/lib/libutil.so.4.3
 ./usr/lib/libwrap.so.0.0
 ./usr/lib/libz.so.0.0
 ./usr/libexec/ld.so

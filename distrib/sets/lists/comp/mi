@@ -235,10 +235,19 @@
 ./usr/include/dev/tc/clockvar.h
 ./usr/include/dev/tc/if_levar.h
 ./usr/include/dev/tc/ioasicvar.h
+./usr/include/dev/tc/sticreg.h
+./usr/include/dev/tc/sticvar.h
 ./usr/include/dev/tc/tcdevs.h
 ./usr/include/dev/tc/tcdevs_data.h
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
+./usr/include/dev/vme
+./usr/include/dev/vme/vmevar.h
+./usr/include/dev/vme/xdreg.h
+./usr/include/dev/vme/xdvar.h
+./usr/include/dev/vme/xio.h
+./usr/include/dev/vme/xyreg.h
+./usr/include/dev/vme/xyvar.h
 ./usr/include/dev/vndvar.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
@@ -579,6 +588,7 @@
 ./usr/include/glob.h
 ./usr/include/grp.h
 ./usr/include/histedit.h
+./usr/include/history.h
 ./usr/include/ieeefp.h
 ./usr/include/iso646.h
 ./usr/include/isofs
@@ -779,6 +789,7 @@
 ./usr/include/pwd.h
 ./usr/include/ranlib.h
 ./usr/include/re_comp.h
+./usr/include/readline.h
 ./usr/include/regex.h
 ./usr/include/regexp.h
 ./usr/include/resolv.h
@@ -1451,6 +1462,7 @@
 ./usr/share/man/cat3/execl.0
 ./usr/share/man/cat3/execle.0
 ./usr/share/man/cat3/execlp.0
+./usr/share/man/cat3/exect.0
 ./usr/share/man/cat3/execv.0
 ./usr/share/man/cat3/execvp.0
 ./usr/share/man/cat3/exit.0
@@ -1474,6 +1486,7 @@
 ./usr/share/man/cat3/fnmatch.0
 ./usr/share/man/cat3/fopen.0
 ./usr/share/man/cat3/forkpty.0
+./usr/share/man/cat3/fparseln.0
 ./usr/share/man/cat3/fprintf.0
 ./usr/share/man/cat3/fpurge.0
 ./usr/share/man/cat3/fputc.0
@@ -1794,7 +1807,6 @@
 ./usr/share/man/cat3/setenv.0
 ./usr/share/man/cat3/setfsent.0
 ./usr/share/man/cat3/setgrent.0
-./usr/share/man/cat3/setgrfile.0
 ./usr/share/man/cat3/setgroupent.0
 ./usr/share/man/cat3/sethostent.0
 ./usr/share/man/cat3/sethostid.0
@@ -1811,7 +1823,6 @@
 ./usr/share/man/cat3/setproctitle.0
 ./usr/share/man/cat3/setprotoent.0
 ./usr/share/man/cat3/setpwent.0
-./usr/share/man/cat3/setpwfile.0
 ./usr/share/man/cat3/setrgid.0
 ./usr/share/man/cat3/setrpcent.0
 ./usr/share/man/cat3/setruid.0
@@ -2415,6 +2426,7 @@
 ./usr/share/man/man3/execl.3
 ./usr/share/man/man3/execle.3
 ./usr/share/man/man3/execlp.3
+./usr/share/man/man3/exect.3
 ./usr/share/man/man3/execv.3
 ./usr/share/man/man3/execvp.3
 ./usr/share/man/man3/exit.3
@@ -2438,6 +2450,7 @@
 ./usr/share/man/man3/fnmatch.3
 ./usr/share/man/man3/fopen.3
 ./usr/share/man/man3/forkpty.3
+./usr/share/man/man3/fparseln.3
 ./usr/share/man/man3/fprintf.3
 ./usr/share/man/man3/fpurge.3
 ./usr/share/man/man3/fputc.3
@@ -2758,7 +2771,6 @@
 ./usr/share/man/man3/setenv.3
 ./usr/share/man/man3/setfsent.3
 ./usr/share/man/man3/setgrent.3
-./usr/share/man/man3/setgrfile.3
 ./usr/share/man/man3/setgroupent.3
 ./usr/share/man/man3/sethostent.3
 ./usr/share/man/man3/sethostid.3
@@ -2775,7 +2787,6 @@
 ./usr/share/man/man3/setproctitle.3
 ./usr/share/man/man3/setprotoent.3
 ./usr/share/man/man3/setpwent.3
-./usr/share/man/man3/setpwfile.3
 ./usr/share/man/man3/setrgid.3
 ./usr/share/man/man3/setrpcent.3
 ./usr/share/man/man3/setruid.3
