@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.37 2001/09/05 13:55:27 tsutsui Exp $ */
+/*	$NetBSD: if_ie.c,v 1.38 2003/01/20 15:03:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -1121,7 +1121,12 @@ iestart(ifp)
 			(sc->sc_memcpy)(buffer, mtod(m, caddr_t), m->m_len);
 			buffer += m->m_len;
 		}
-		len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
+		if (m0->m_pkthdr.len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+			sc->sc_memset(buffer, 0,
+			    ETHER_MIN_LEN - ETHER_CRC_LEN - m0->m_pkthdr.len);
+			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
+		} else
+			len = m0->m_pkthdr.len;
 
 		m_freem(m0);
 		sc->xmit_buffs[sc->xchead]->ie_xmit_flags = SWAP(len);

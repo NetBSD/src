@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.11 2002/10/02 04:22:52 thorpej Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.12 2003/01/20 15:01:44 bouyer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -501,17 +501,18 @@ xe_dma_tx_mbuf (sc, m)
 
 		buflen = m->m_pkthdr.len;
 
-		/* Fix runt packets,  @@@ memory overrun */
-		if (buflen < ETHERMIN+sizeof(struct ether_header)) {
-			buflen = ETHERMIN+sizeof(struct ether_header);
-		}
-
 		{
 			u_char *p = buf;
 			for (m=xsc->sc_tx_mb_head; m; m = m->m_next) {
 				if (m->m_len == 0) continue;
 				bcopy(mtod(m, u_char *), p, m->m_len);
 				p += m->m_len;
+			}
+			/* Fix runt packets */
+			if (buflen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+				memset(p, 0,
+				    ETHER_MIN_LEN - ETHER_CRC_LEN - buflen);
+				buflen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 			}
 		}
 		

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.11 2003/01/20 14:59:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -61,7 +61,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ie.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $");
+__RCSID("$NetBSD: if_ie.c,v 1.11 2003/01/20 14:59:27 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1552,8 +1552,12 @@ iestart(ifp)
 #endif
 
 		m_freem(m0);
-		len = max(len, ETHER_MIN_LEN);
-
+		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+			memset(buffer, 0, ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
+			buffer += ETHER_MIN_LEN - ETHER_CRC_LEN;
+		}
+			
 		/* When we write directly to the card we dont need this */
     		if (len&1)
    		    host2ie(sc, txbuf, sc->xmit_cbuffs[sc->xchead], len+1 );
