@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.9 1998/04/18 10:35:48 drochner Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.10 1998/06/09 00:05:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ le_isapnp_attach(parent, self, aux)
 	am7990_config(sc);
 
 	if (ipa->ipa_ndrq > 0)
-		isa_dmacascade(parent->dv_parent, ipa->ipa_drq[0].num);
+		isa_dmacascade(ipa->ipa_ic, ipa->ipa_drq[0].num);
 
 	lesc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, le_isapnp_intredge, sc);
