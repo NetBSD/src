@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 1996/03/31 22:18:16 pk Exp $ */
+/*	$NetBSD: param.h,v 1.24 1996/05/15 02:13:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,8 +47,6 @@
  * Sun4M support by Aaron Brown, Harvard University.
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
- *
- * $Id: param.h,v 1.23 1996/03/31 22:18:16 pk Exp $
  */
 #define	_MACHINE	sparc
 #define	MACHINE		"sparc"

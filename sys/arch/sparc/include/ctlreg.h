@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.10 1996/03/31 22:06:58 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.11 1996/05/15 02:13:45 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -51,8 +51,6 @@
  * Sun4M support by Aaron Brown, Harvard University.
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
- *
- * $Id: ctlreg.h,v 1.10 1996/03/31 22:06:58 pk Exp $
  */
 
 /*
