@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.39 2002/06/10 17:38:31 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.40 2002/06/10 17:40:26 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.39 2002/06/10 17:38:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.40 2002/06/10 17:40:26 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -410,14 +410,14 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		sc->g_proto = ifr->ifr_flags;
 		switch (sc->g_proto) {
-		case IPPROTO_GRE :
+		case IPPROTO_GRE:
 			ifp->if_flags |= IFF_LINK0;
 			break;
-		case IPPROTO_MOBILE :
+		case IPPROTO_MOBILE:
 			ifp->if_flags &= ~IFF_LINK0;
 			break;
 		default:
-			error = EINVAL;
+			error = EPROTONOSUPPORT;
 			break;
 		}
 		break;
