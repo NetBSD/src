@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.6 (Berkeley) 5/2/91
-#	$Id: Makefile,v 1.5 1994/01/28 00:34:52 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	dmesg
 MAN8=	dmesg.0
