@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.155 2001/08/20 11:31:10 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.156 2001/08/20 15:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -942,40 +942,26 @@ int cd_interpret_sense(xs)
 		return (retval);
 	}
 
-	switch (sense->flags & SSD_KEY) {
-		/*
-		 * If we got a "Unit not ready" (SKEY_NOT_READY) and
-		 * "Logical Unit Is In The Process of Becoming Ready" (Sense
-		 * code 0x04,0x01), then wait a bit for the drive to spin up
-		 */
-		case SKEY_NOT_READY:
-			if (sense->add_sense_code == 0x4 &&
-			    sense->add_sense_code_qual == 0x01)	{
-				/*
-				 * Sleep for 5 seconds to wait for the drive to spin up
-				 */
-				SC_DEBUG(periph, SCSIPI_DB1, ("Waiting 5 sec for CD "
-								"spinup\n"));
-				scsipi_periph_freeze(periph, 1);
-				callout_reset(&periph->periph_callout,
-						5 * hz, scsipi_periph_timed_thaw, periph);
-				retval = ERESTART;
-			}
-			break;
+	/*
+	 * If we got a "Unit not ready" (SKEY_NOT_READY) and "Logical Unit
+	 * Is In The Process of Becoming Ready" (Sense code 0x04,0x01), then
+	 * wait a bit for the drive to spin up
+	 */
 
+	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
+	    sense->add_sense_code == 0x4 &&
+	    sense->add_sense_code_qual == 0x01)	{
 		/*
-		 * If we receive notification that the medium has changed,
-		 * then retry the operation.
+		 * Sleep for 5 seconds to wait for the drive to spin up
 		 */
-		case SKEY_UNIT_ATTENTION:
-			if (sense->add_sense_code == 0x28 &&
-			    sense->add_sense_code_qual == 0x00)
-				retval = ERESTART;
-			break;
-		default:
-			break;
+
+		SC_DEBUG(periph, SCSIPI_DB1, ("Waiting 5 sec for CD "
+						"spinup\n"));
+		scsipi_periph_freeze(periph, 1);
+		callout_reset(&periph->periph_callout,
+		    5 * hz, scsipi_periph_timed_thaw, periph);
+		retval = ERESTART;
 	}
-
 	return (retval);
 }
 
