@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.171 2003/08/24 17:52:47 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.172 2003/08/29 13:29:32 enami Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.171 2003/08/24 17:52:47 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.172 2003/08/29 13:29:32 enami Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1312,8 +1312,8 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 		*e->e_sigobject = uobj;
 	}
 
-	/* Just a hint to uvm_mmap where to put it. */
-	va = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
+	/* Just a hint to uvm_map where to put it. */
+	va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, round_page(sz));
 	(*uobj->pgops->pgo_reference)(uobj);
 	error = uvm_map(&p->p_vmspace->vm_map, &va, round_page(sz),
 			uobj, 0, 0,
