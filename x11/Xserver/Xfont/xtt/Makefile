@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2005/03/21 01:26:02 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2005/03/21 14:38:48 tron Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/fonts
 
@@ -33,9 +33,7 @@ CPPFLAGS+=	-DTT_MAKE_OPTION_SINGLE_OBJECT=1 \
 .include <bsd.x11.mk>
 
 .if !empty(X11FLAGS.LOADABLE)
-CPPFLAGS+=	-DFONTMODULE \
-		-DCCONV_MODULE \
-		-DCCONV_MODULE_DIR=\"/usr/X11R6/lib/modules/codeconv\"
+CPPFLAGS+=	-DFONTMODULE
 LIBDIR=	${XMODULEDIR}
 .else
 libinstall::
