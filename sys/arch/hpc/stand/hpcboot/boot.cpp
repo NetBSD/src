@@ -1,7 +1,7 @@
-/*	$NetBSD: boot.cpp,v 1.4 2004/08/06 18:33:09 uch Exp $	*/
+/*	$NetBSD: boot.cpp,v 1.5 2004/08/13 15:48:21 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -151,6 +151,10 @@ Boot::~Boot()
 BOOL
 Boot::create()
 {
+
+	// Set this console (setuped by machine dependent part) as default.
+	Console::changeConsole(*_cons);
+
 	// File manager.
 	_file = new FileManager(_cons, args.file);
 	_file->setDebug() = args.fileDebug;
