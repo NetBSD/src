@@ -1,4 +1,4 @@
-/*	$NetBSD: strcasecmp.c,v 1.14 2002/11/19 12:58:15 junyoung Exp $	*/
+/*	$NetBSD: strcasecmp.c,v 1.15 2003/04/22 16:12:18 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)strcasecmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcasecmp.c,v 1.14 2002/11/19 12:58:15 junyoung Exp $");
+__RCSID("$NetBSD: strcasecmp.c,v 1.15 2003/04/22 16:12:18 junyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <sys/types.h>
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
@@ -57,8 +56,8 @@ int
 strcasecmp(s1, s2)
 	const char *s1, *s2;
 {
-	const u_char *us1 = (const u_char *)s1,
-			*us2 = (const u_char *)s2;
+	const unsigned char *us1 = (const unsigned char *)s1,
+			*us2 = (const unsigned char *)s2;
 
 	_DIAGASSERT(s1 != NULL);
 	_DIAGASSERT(s2 != NULL);
@@ -81,8 +80,8 @@ strncasecmp(s1, s2, n)
 		return (0);
 
 	if (n != 0) {
-		const u_char *us1 = (const u_char *)s1,
-				*us2 = (const u_char *)s2;
+		const unsigned char *us1 = (const unsigned char *)s1,
+				*us2 = (const unsigned char *)s2;
 
 		do {
 			if (tolower(*us1) != tolower(*us2++))
