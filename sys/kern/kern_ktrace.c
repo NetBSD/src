@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.68 2003/02/23 14:37:34 pk Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.69 2003/04/03 18:54:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.68 2003/02/23 14:37:34 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.69 2003/04/03 18:54:16 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -536,7 +536,7 @@ sys_ktrace(l, v, retval)
 	ops = KTROP(ops) | (ops & KTRFLAG_DESCEND);
 
 	curp->p_traceflag |= KTRFAC_ACTIVE;
-	if (ops != KTROP_CLEAR) {
+	if ((ops & KTROP_CLEAR) == 0) {
 		/*
 		 * an operation which requires a file argument.
 		 */
