@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.9 2001/01/03 15:23:26 lukem Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.10 2001/01/25 01:25:06 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.9 2001/01/03 15:23:26 lukem Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.10 2001/01/25 01:25:06 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: iso2022.c,v 1.9 2001/01/03 15:23:26 lukem Exp $");
 #include "iso2022.h"
 
 static int getcs __P((char *, _Iso2022Charset *));
+const char *_ISO2022_magic __P((void));
 int _ISO2022_init __P((_RuneLocale *));
 int _ISO2022_init_stream __P((_RuneLocale *));
 struct seqtable;
@@ -170,6 +171,13 @@ getcs(p, cs)
 	}
 
 	return 1;
+}
+
+const char *
+_ISO2022_magic()
+{
+
+	return _RUNE_MODULE_1("LC_CTYPE");
 }
 
 int
