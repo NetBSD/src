@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 2000/06/27 04:18:58 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 2000/06/29 08:15:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,8 +77,6 @@
 #include <machine/reg.h>
 
 #include <m68k/fpe/fpu_emulate.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

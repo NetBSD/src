@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.13 2000/06/26 14:20:48 mrg Exp $	*/
+/*	$NetBSD: extintr.c,v 1.14 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -44,7 +44,7 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/intr.h>

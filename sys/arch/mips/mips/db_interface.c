@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.28 2000/06/09 06:30:35 soda Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.29 2000/06/29 08:11:27 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,8 @@
 #include <sys/user.h>
 #include <sys/reboot.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+
 #include <mips/pte.h>
 #include <mips/cpu.h>
 #include <mips/locore.h>

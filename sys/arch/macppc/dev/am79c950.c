@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.7 1999/05/18 23:52:53 thorpej Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.8 2000/06/29 08:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -75,7 +75,7 @@
 #include <netccitt/pk_extern.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

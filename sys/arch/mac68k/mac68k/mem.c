@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 2000/06/26 04:55:47 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.27 2000/06/29 08:15:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,8 +53,6 @@
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

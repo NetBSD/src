@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.48 2000/06/26 14:20:47 mrg Exp $	*/
+/*	$NetBSD: nubus.c,v 1.49 2000/06/29 08:15:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -35,7 +35,7 @@
 #include <sys/buf.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

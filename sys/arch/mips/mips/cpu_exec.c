@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.23 2000/04/11 04:37:47 chs Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.24 2000/06/29 08:11:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,8 @@
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sys/exec_ecoff.h>
 #include <sys/exec_elf.h>

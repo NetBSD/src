@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.2 2000/01/11 08:24:14 nisimura Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.3 2000/06/29 08:17:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2000/01/11 08:24:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2000/06/29 08:17:26 mrg Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2 2000/01/11 08:24:14 nisimura Exp
 #include <sys/trace.h>
 #include <sys/mount.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/syscallargs.h>
 
