@@ -1,5 +1,5 @@
-# $NetBSD: GENERIC,v 1.1 2004/03/11 21:44:08 cl Exp $
-# NetBSD: GENERIC,v 1.594 2004/02/25 18:56:26 perry Exp 
+# $NetBSD: GENERIC,v 1.1.2.1 2004/05/22 15:58:28 he Exp $
+# NetBSD: GENERIC,v 1.596 2004/04/07 13:13:59 augustss Exp 
 #
 # GENERIC machine description file
 #
@@ -23,12 +23,13 @@ include 	"arch/xen/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.1.2.1 $"
 
 maxusers	32		# estimated number of users
 
 #
 options		XEN
+options		DOM0OPS
 options		HZ=50
 
 # CPU support.  At least one is REQUIRED.
@@ -45,15 +46,9 @@ options 	I686_CPU
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
 
-# force Xen console
-options		CONSDEVNAME="\"xen\""
-
-# This option allows you to force a serial console at the specified
-# I/O address.   see console(4) for details.
-#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
-#	you don't want the option below ON iff you are using the
-#	serial console option of the new boot strap code.
-#options 	CONS_OVERRIDE	# Always use above! independent of boot info
+# This option allows you to force the Xen virtual console
+#options 	CONSDEVNAME="\"xencons\""
+#options 	CONS_OVERRIDE	# Always use above! independent of commandline
 
 # Standard system options
 
@@ -130,13 +125,13 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
 # File systems
 file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
-#file-system 	LFS		# log-structured file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	NTFS		# Windows/NT file system (experimental)
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -185,9 +180,40 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
+#
+# wscons options
+#
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+options 	PCDISPLAY_SOFTCURSOR
+# modify the screen type of the console; defaults to "80x25"
+#options 	VGA_CONSOLE_SCREENTYPE="\"80x24\""
+# work around a hardware bug that loaded fonts don't work; found on ATI cards
+#options 	VGA_CONSOLE_ATI_BROKEN_FONTSEL
+# the following enables some functions to get mouse console support.
+# if you want a really secure system, it may be better not to enable them,
+# see wsmoused(8), section SECURITY CONSIDERATIONS for more info.
+#options 	WSDISPLAY_CHARFUNCS		# mouse console support
+# enable VGA raster mode capable of displaying multilingual text on console
+#options 	VGA_RASTERCONSOLE
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
-#config		netbsd	root on xennet0 type nfs
+#config		netbsd	root on wd0a type ffs
 #config		netbsd	root on ? type nfs
 
 #
@@ -198,10 +224,26 @@ mainbus0 at root
 
 cpu* at mainbus?
 
-npx0	at mainbus?		# x86 math coprocessor
+hypervisor*	at mainbus?		# Xen hypervisor
 
-xenc*	at mainbus?		# Xen virtual console
-xennet*	at mainbus?		# Xen virtual network interface
+npx0		at hypervisor?		# x86 math coprocessor
+
+xencons*	at hypervisor?		# Xen virtual console
+xennet* 	at hypervisor?		# Xen virtual network interface
+
+xbd*		at hypervisor?		# Xen virtual block device
+wd*		at hypervisor?		# Xen vbd (wd identity)
+sd*		at hypervisor?		# Xen vbd (sd identity)
+cd*		at hypervisor?		# Xen vbd (cd identity)
+
+xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse interface
+pckbd*		at xenkbc?		# Keyboard
+pms*		at xenkbc?		# PS/2 Mouse for wsmouse
+vga*		at hypervisor?		# Xen VGA display
+
+wskbd*		at pckbd? console ?
+wsdisplay*	at vga? console ?
+wsmouse*	at pms? mux 0
 
 
 # Pull in optional local configuration
@@ -266,4 +308,6 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
 
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms

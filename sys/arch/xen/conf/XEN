@@ -1,4 +1,4 @@
-# $NetBSD: XEN,v 1.1 2004/03/11 21:44:08 cl Exp $
+# $NetBSD: XEN,v 1.1.2.1 2004/05/22 15:58:28 he Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -12,6 +12,7 @@ maxusers	32		# estimated number of users
 
 #
 options		XEN
+options		DOM0OPS
 options		HZ=50
 
 #options 	I586_CPU
@@ -22,8 +23,7 @@ options 	I686_CPU
 
 #options 	MTRR		# memory-type range register syscall support
 
-options		CONSDEVNAME="\"xen\""
-#options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
+#options 	CONSDEVNAME="\"xencons\""
 #options 	CONS_OVERRIDE
 
 options		INSECURE	# disable kernel security levels - X needs this
@@ -70,8 +70,8 @@ options 	COMPAT_16	# NetBSD 1.6
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
-#file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	FFS		# UFS
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 #file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
@@ -108,23 +108,49 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_SERVADDR="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_SERVER="\"server:/path/to/root\""
 
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	PCDISPLAY_SOFTCURSOR
+
 config		netbsd	root on ? type ?
+#config		netbsd	root on wd0a type ffs
 #config		netbsd	root on xennet0 type nfs
 
 mainbus0 at root
 
 cpu* at mainbus?
 
-npx0	at mainbus?		# x86 math coprocessor
+hypervisor*	at mainbus?		# Xen hypervisor
 
-xenc*	at mainbus?		# Xen virtual console
-xennet*	at mainbus?		# Xen virtual network interface
+npx0		at hypervisor?		# x86 math coprocessor
+
+xencons*	at hypervisor?		# Xen virtual console
+xennet* 	at hypervisor?		# Xen virtual network interface
+
+xbd*		at hypervisor?		# Xen virtual block device
+wd*		at hypervisor?		# Xen vbd (wd identity)
+sd*		at hypervisor?		# Xen vbd (sd identity)
+cd*		at hypervisor?		# Xen vbd (cd identity)
+
+xenkbc* 	at hypervisor?		# Xen Keyboard/Mouse Interface
+pckbd*		at xenkbc?		# Keyboard
+vga*		at hypervisor?		# Xen VGA display
+pms*		at xenkbc?		# PS/2 Mouse for wsmouse
+
+wskbd*		at pckbd? console ?
+wsdisplay*	at vga? console ?
+wsmouse*	at pms? mux 0
 
 
 include	"arch/xen/conf/GENERIC.local"
 
 
-#pseudo-device	ccd		4	# concatenated/striped disk devices
+pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
@@ -144,4 +170,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
