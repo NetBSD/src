@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1996/06/17 06:36:34 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 1996/06/23 21:08:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -619,9 +619,11 @@ mach_init(argc, argv, code, cv)
 	physmem = btoc((vm_offset_t)v - KERNBASE);
 	cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);
 	while (cp < (char *)MACH_MAX_MEM_ADDR) {
+	  	int j;
 		if (badaddr(cp, 4))
 			break;
 		i = *(int *)cp;
+		j = ((int *)cp)[4];
 		*(int *)cp = 0xa5a5a5a5;
 		/*
 		 * Data will persist on the bus if we read it right away.
@@ -632,6 +634,7 @@ mach_init(argc, argv, code, cv)
 		if (*(int *)cp != 0xa5a5a5a5)
 			break;
 		*(int *)cp = i;
+		((int *)cp)[4] = j;
 		cp += NBPG;
 		physmem++;
 	}
