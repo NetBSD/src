@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.12 1996/10/13 03:00:27 christos Exp $ */
+/*	$NetBSD: cache.c,v 1.13 1996/11/18 11:23:32 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -160,6 +160,8 @@ cache_enable()
 				printf(
 			"cache NOT enabled for %x/%x cpu/mmu combination\n",
 					cpumod, mmumod);
+				cache_alias_bits = GUESS_CACHE_ALIAS_BITS;
+				cache_alias_dist = GUESS_CACHE_ALIAS_DIST;
 				break;	/* ugh, SS and MS have same MMU # */
 			}
 			cache_alias_bits = CACHE_ALIAS_BITS_SS;
