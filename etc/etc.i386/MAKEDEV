@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.152 2001/12/19 18:30:02 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.153 2002/01/01 22:49:32 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -133,6 +133,7 @@
 #	agp*	AGP GART devices
 #	pci*	PCI bus access devices
 #	dpti*	DPT/Adaptec RAID management interface
+#	audio*	radio devices
 #
 
 dialin=0
@@ -170,6 +171,7 @@ all)
 	sh $0 speaker lkm mms0 lms0 pms0 joy0 joy1 apm local satlink0 iop0 mlx0
 	sh $0 mly0
 	sh $0 audio
+	sh $0 radio
 	sh $0 usbs
 	sh $0 isdn
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
@@ -192,6 +194,11 @@ audio)
 	ln -fs audio0 audio
 	ln -fs mixer0 mixer
 	ln -fs audioctl0 audioctl
+	;;
+
+radio)
+	sh $0 radio0 radio1
+	ln -fs radio0 radio
 	;;
 
 floppy)
@@ -737,6 +744,17 @@ music*)
 	mknod $sequencer c $major $(($unit + 128))
 	chown root.wheel $music $sequencer
 	chmod 666 $music $sequencer
+	;;
+
+radio*)
+	unit=${i#radio}
+	radio=radio$unit
+	major=87
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $radio
+	mknod $radio c $major $unit
+	chown root.wheel $radio
+	chmod 666 $radio
 	;;
 
 apm*)
