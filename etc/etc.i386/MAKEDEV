@@ -22,7 +22,8 @@
 #	@(#)MAKEDEV	5.2 (Berkeley) 6/22/90
 #
 # Device "make" file.  Valid arguments:
-#	all	makes all known devices, standard number of units (or close)
+#	all	makes all known devices, including local devices.
+#		Tries to make the 'standard' number of each type.
 #	std	standard devices
 #	local	configuration specific devices
 #
@@ -45,9 +46,10 @@
 #	mms*	Microsoft bus mouse
 #	lms*	Logitech bus mouse
 #	pms*	PS/2 mouse
+#	mouse-*	"mouse link"				(XXX)
 # 
 # Terminal ports:
-#	com*	standard PC COM ports
+#	com*	standard PC COM ports			(XXX)
 #	tty*	alias for PC COM ports, this is what the system really wants
 #
 # Pseudo terminals:
@@ -55,14 +57,13 @@
 #
 # Printers:
 #	lpt*	stock lp
-#	lpa*	interruptless lp
+#	lpa*	interruptless lp			(XXX - installed)
 #
 # Call units:
 #
 # Special purpose devices:
 #	bpf*	packet filter
-#	speaker	pc speaker
-#	dcf*	dcf clock
+#	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
 #	audio	audio device
 #
@@ -74,9 +75,12 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 tty0 tty1 pty0 st0
-	sh MAKEDEV ch0 cd0 lpt0 lpt1 lpt2 lpa0 lpa1 lpa2 speaker lkm mcd0
-	sh MAKEDEV audio
+	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0
+	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 vnd2 vnd3 lpa0 lpa1
+	sh MAKEDEV lpt0 lpt1 lpt2 vga bpf0 bpf1 bpf2 bpf3 speaker lkm
+	sh MAKEDEV mms0 lms0 pms0 audio local
+# MISSING:
+#	sh MAKEDEV mouse-?
 	;;
 
 std)
@@ -111,7 +115,7 @@ wt*)
 	umask 77
 	;;
 
-fd*|wd*|as*|sd*)
+fd*|wd*|sd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
 	fd*) name=fd; blk=2; chr=9;;
@@ -147,7 +151,7 @@ fd*|wd*|as*|sd*)
 	umask 77
 	;;
 
-com*|tty*)
+com*|tty*)					# (XXX -- com should die)
 	unit=`expr $i : '...\(.*\)'`
 	rm -f com$unit tty0$unit
 	mknod tty0$unit c 8 $unit
@@ -171,8 +175,8 @@ pty*)
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
 				printf("rm -f tty%s%x; mknod tty%s%x c 5 %d; \
-					rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
-					n, i, n, i, b+i, n, i, n, i, b+i); }'`
+				    rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
+				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
 		if [ $class = 1 ]; then
 			mv ttyqf ttyv0; mv ptyqf ptyv0
@@ -266,6 +270,15 @@ vnd*)
 	chmod 640 ${name}${unit}c r${name}${unit}c
 	;;
 
+lpa*)						# (XXX - installed)
+	unit=`expr $i : 'lpa\(.*\)'`
+	chr=25
+	rm -f lpa$unit lpa${unit}p
+	mknod lpa${unit}        c $chr `expr $unit + 0`
+	mknod lpa${unit}p       c $chr `expr $unit + 32`
+	chown root.wheel lpa${unit} lpa${unit}p
+	;;
+
 lpt*)
 	unit=`expr $i : 'lpt\(.*\)'`
 	rm -f lpt$unit
@@ -273,16 +286,10 @@ lpt*)
 	chown root.wheel lpt$unit
 	;;
 
-# Note: the stock pccons driver does not have a minor for the keyboard
 vga)
-	chr=21
-	device=`expr ${i} : '\(.*\)co'`
-	case ${i} in
-	vga) name=vga; chr=12; minor=0;;
-	esac
-	rm -f ${name}
-	mknod ${name} c ${chr} ${minor}
-	chown root.wheel $name
+	rm -f vga
+	mknod vga c 12 0
+	chown root.wheel vga
 	;;
 
 bpf*)
@@ -292,23 +299,7 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
-dcf*)
-	unit=`expr $i : 'dcf\(.*\)'`
-	rm -f dcf$unit
-	mknod dcf$unit c 24 $unit
-	chown root.wheel dcf$unit
-        ;;
-
-lpa*)
-	unit=`expr $i : 'lpa\(.*\)'`
-	chr=25
-	rm -f lpa$unit lpa${unit}p
-	mknod lpa${unit}        c $chr `expr $unit + 0`
-	mknod lpa${unit}p       c $chr `expr $unit + 32`
-	chown root.wheel lpa${unit} lpa${unit}p
-	;;
-
-speaker)
+speaker)					# (XXX - installed)
 	rm -f speaker
 	mknod speaker c 27 0
 	chown root.wheel speaker
@@ -342,7 +333,7 @@ pms*)
 	chown root.wheel pms$unit
 	;;
 
-mouse*)
+mouse*)						# (XXX)
 	name=`expr $i : 'mouse-\(.*\)'`
 	if [ ! -c $name ]; then
 		$0 $name	# make the appropriate device
