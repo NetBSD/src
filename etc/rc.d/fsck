@@ -1,10 +1,27 @@
 #!/bin/sh
 #
-# $NetBSD: fsck.sh,v 1.2 2000/04/26 05:13:51 thorpej Exp $
+# $NetBSD: fsck,v 1.1 2000/08/21 23:38:07 lukem Exp $
 #
 
 # PROVIDE: fsck
 # REQUIRE: localswap
+
+. /etc/rc.subr
+
+name="fsck"
+start_cmd="fsck_start"
+stop_cmd=":"
+
+stop_boot()
+{
+	#	Terminate the process (which may include the parent /etc/rc)
+	#	if booting directly to multiuser mode.
+	#
+	if [ "$autoboot" = yes ]; then
+		kill -TERM $$
+	fi
+	exit 1
+}
 
 fsck_start()
 {
@@ -20,38 +37,32 @@ fsck_start()
 		0)
 			;;
 		2)
-			exit 1
+			stop_boot
 			;;
 		4)
 			echo "Rebooting..."
 			reboot
 			echo "Reboot failed; help!"
-			exit 1
+			stop_boot
 			;;
 		8)
 			echo "Automatic file system check failed; help!"
-			exit 1
+			stop_boot
 			;;
 		12)
 			echo "Boot interrupted."
-			exit 1
+			stop_boot
 			;;
 		130)
-			exit 1
+			stop_boot
 			;;
 		*)
 			echo "Unknown error; help!"
-			exit 1
+			stop_boot
 			;;
 		esac
-
-					# Reset SIGQUIT handler.
-		trap "echo 'Boot interrupted.'; exit 1" 3
 	fi
 }
 
-case "$1" in
-*start)
-	fsck_start
-	;;
-esac
+load_rc_config $name
+run_rc_command "$1"
