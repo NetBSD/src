@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwhod.c	5.20 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: rwhod.c,v 1.4 1993/12/15 23:52:40 mycroft Exp $";
+static char rcsid[] = "$Id: rwhod.c,v 1.5 1994/03/28 07:10:40 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -101,7 +101,6 @@ int	s, utmpf, kmemf = -1;
 
 extern int errno;
 char	*strcpy(), *malloc();
-long	lseek();
 void	getkmem(), onalrm();
 struct	in_addr inet_makeaddr();
 
