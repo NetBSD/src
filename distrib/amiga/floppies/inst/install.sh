@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.4 1996/09/28 18:05:58 chopps Exp $
+#	$Id: install.sh,v 1.5 1997/05/14 22:19:46 is Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -277,7 +277,6 @@ echo "/dev/${usrpart}	/usr	ffs	rw	1	2" >> $FSTAB
 sync
 echo	" done."
 
-echo	""
 echo	""
 echo	"OK!  The preliminary work of setting up your disk is now complete,"
 echo	"and you can install the actual NetBSD software."
