@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 1998/09/30 18:40:58 pk Exp $ */
+/*	$NetBSD: proc.h,v 1.5 1998/10/21 07:11:47 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)proc.h	8.1 (Berkeley) 6/11/93
  */
+
+#include <sparc/sparc/cpuvar.h>
 
 /*
  * Machine-dependent part of the proc structure for SPARC.
