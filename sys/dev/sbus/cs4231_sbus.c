@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.11 1999/06/05 14:29:11 mrg Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.12 1999/11/21 15:01:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -132,9 +132,10 @@ cs4231_attach_sbus(parent, self, aux)
 	sbus_establish(&sc->sc_sd, &sc->sc_ad1848.sc_dev);
 
 	/* Establish interrupt channel */
-	bus_intr_establish(sa->sa_bustag,
-			   sa->sa_pri, 0,
-			   cs4231_intr, sc);
+	if (sa->sa_nintr)
+		bus_intr_establish(sa->sa_bustag,
+				   sa->sa_pri, 0,
+				   cs4231_intr, sc);
 
 	evcnt_attach(&sc->sc_ad1848.sc_dev, "intr", &sc->sc_intrcnt);
 	audio_attach_mi(&audiocs_hw_if, sc, &sc->sc_ad1848.sc_dev);

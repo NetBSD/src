@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1999/05/16 14:47:52 mrg Exp $	*/
+/*	$NetBSD: if_le.c,v 1.9 1999/11/21 15:01:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -272,6 +272,8 @@ leattach_sbus(parent, self, aux)
 
 	am7990_config(&lesc->sc_am7990);
 
-	(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri, 0,
-				 am7990_intr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr != 0)
+		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri, 0,
+					 am7990_intr, sc);
 }

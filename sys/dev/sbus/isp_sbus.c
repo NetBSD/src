@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.15 1999/10/28 16:12:10 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.16 1999/11/21 15:01:51 pk Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -136,7 +136,8 @@ isp_sbus_attach(parent, self, aux)
 
 	sbc->sbus_bustag = sa->sa_bustag;
 	sbc->sbus_dmatag = sa->sa_dmatag;
-	sbc->sbus_pri = sa->sa_pri;
+	if (sa->sa_nintr != 0)
+		sbc->sbus_pri = sa->sa_pri;
 	sbc->sbus_mdvec = mdvec;
 
 	if (sa->sa_npromvaddrs != 0) {
