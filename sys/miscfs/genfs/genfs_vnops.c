@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.74 2003/04/10 21:34:12 jdolecek Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.75 2003/04/10 21:53:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.74 2003/04/10 21:34:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.75 2003/04/10 21:53:33 jdolecek Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -183,20 +183,12 @@ genfs_einval(void *v)
 	return (EINVAL);
 }
 
-/*ARGSUSED*/
-int
-genfs_eopnotsupp(void *v)
-{
-
-	return (EOPNOTSUPP);
-}
-
 /*
  * Called when an fs doesn't support a particular vop.
  * This takes care to vrele, vput, or vunlock passed in vnodes.
  */
 int
-genfs_eopnotsupp_rele(void *v)
+genfs_eopnotsupp(void *v)
 {
 	struct vop_generic_args /*
 		struct vnodeop_desc *a_desc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.95 2003/04/05 23:32:52 dsl Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.96 2003/04/10 21:53:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.95 2003/04/05 23:32:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.96 2003/04/10 21:53:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,8 @@ static int nproc_root_targets =
     sizeof(proc_root_targets) / sizeof(proc_root_targets[0]);
 
 int	procfs_lookup	__P((void *));
-#define	procfs_create	genfs_eopnotsupp_rele
-#define	procfs_mknod	genfs_eopnotsupp_rele
+#define	procfs_create	genfs_eopnotsupp
+#define	procfs_mknod	genfs_eopnotsupp
 int	procfs_open	__P((void *));
 int	procfs_close	__P((void *));
 int	procfs_access	__P((void *));
@@ -143,11 +143,11 @@ int	procfs_setattr	__P((void *));
 #define procfs_revoke	genfs_revoke
 #define	procfs_fsync	genfs_nullop
 #define	procfs_seek	genfs_nullop
-#define	procfs_remove	genfs_eopnotsupp_rele
+#define	procfs_remove	genfs_eopnotsupp
 int	procfs_link	__P((void *));
-#define	procfs_rename	genfs_eopnotsupp_rele
-#define	procfs_mkdir	genfs_eopnotsupp_rele
-#define	procfs_rmdir	genfs_eopnotsupp_rele
+#define	procfs_rename	genfs_eopnotsupp
+#define	procfs_mkdir	genfs_eopnotsupp
+#define	procfs_rmdir	genfs_eopnotsupp
 int	procfs_symlink	__P((void *));
 int	procfs_readdir	__P((void *));
 int	procfs_readlink	__P((void *));
