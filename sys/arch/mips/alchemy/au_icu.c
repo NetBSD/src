@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.7 2003/07/15 02:43:34 lukem Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.8 2003/10/27 02:16:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.7 2003/07/15 02:43:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.8 2003/10/27 02:16:15 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -348,7 +348,7 @@ au_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	struct evbmips_intrhand *ih;
 	int level;
-	u_int32_t icu_base, irqmask;
+	u_int32_t icu_base = 0, irqmask = 0;	/* Both XXX gcc */
 
 	for (level = 3; level >= 0; level--) {
 		if ((ipending & (MIPS_INT_MASK_0 << level)) == 0)
