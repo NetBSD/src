@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.176 1998/03/18 15:57:30 bouyer Exp $
+#	$NetBSD: files,v 1.177 1998/03/22 04:37:04 enami Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -168,6 +168,13 @@ file	dev/ic/i82586.c			i82586
 # SMC 91Cxx Ethernet Controller
 device	sm: arp, ether, ifnet
 file	dev/ic/smc91cxx.c		sm
+
+# MB8696x Ethernet Controller
+define	mb86960
+file	dev/ic/mb86960.c		mb86960
+
+# Generic MB8696x Ethernet Controller driver
+device	mbe: arp, ether, ifnet, mb86960
 
 # Interwave Am78C201 audio driver
 define	interwave
