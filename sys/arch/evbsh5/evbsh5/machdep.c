@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2003/04/02 03:54:27 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2003/04/20 21:18:50 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -116,7 +116,7 @@ struct boot_params bootparams = {
 			BP_MEM_TYPE_SDRAM,	/* type */
 			0xff,			/* pport */
 			0xfffffff80000000ll,	/* physstart */
-			0x00800000ll		/* physsize */
+			0x08000000ll		/* physsize (128MB) */
 		},
 		{ BP_MEM_TYPE_UNUSED },
 		{ BP_MEM_TYPE_UNUSED },
