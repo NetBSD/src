@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.27 1999/09/29 00:34:38 simonb Exp $	*/
+/*	$NetBSD: curses.h,v 1.28 1999/10/04 23:21:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -472,7 +472,7 @@ int	 wunderend __P((WINDOW *));
 int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
 
 /* Private functions that are needed for user programs prototypes. */
-void	 __cputchar __P((int));
+int	 __cputchar __P((int));
 int	 __waddbytes __P((WINDOW *, const char *, int, int));
 __END_DECLS
 
