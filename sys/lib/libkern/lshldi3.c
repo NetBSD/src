@@ -1,4 +1,4 @@
-/*	$NetBSD: lshldi3.c,v 1.5 1995/10/07 09:26:29 mycroft Exp $	*/
+/*	$NetBSD: lshldi3.c,v 1.6 1998/03/27 01:30:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,11 +37,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)lshldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: lshldi3.c,v 1.5 1995/10/07 09:26:29 mycroft Exp $";
+__RCSID("$NetBSD: lshldi3.c,v 1.6 1998/03/27 01:30:03 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,12 +59,13 @@ __lshldi3(a, shift)
 {
 	union uu aa;
 
+	if (shift == 0)
+		return(a);
 	aa.q = a;
 	if (shift >= LONG_BITS) {
-		aa.ul[H] = shift >= QUAD_BITS ? 0 :
-		    aa.ul[L] << (shift - LONG_BITS);
+		aa.ul[H] = aa.ul[L] << (shift - LONG_BITS);
 		aa.ul[L] = 0;
-	} else if (shift > 0) {
+	} else {
 		aa.ul[H] = (aa.ul[H] << shift) |
 		    (aa.ul[L] >> (LONG_BITS - shift));
 		aa.ul[L] <<= shift;

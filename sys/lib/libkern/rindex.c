@@ -1,8 +1,8 @@
-/*	$NetBSD: rindex.c,v 1.2 1998/02/22 05:10:55 mycroft Exp $	*/
+/*	$NetBSD: rindex.c,v 1.3 1998/03/27 01:30:08 cgd Exp $	*/
 
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)rindex.c	5.9 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)rindex.c	8.1 (Berkeley) 6/4/93";
 #else
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: rindex.c,v 1.2 1998/02/22 05:10:55 mycroft Exp $");
+__RCSID("$NetBSD: rindex.c,v 1.3 1998/03/27 01:30:08 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -55,9 +55,10 @@ strrchr(p, ch)
 #else
 rindex(p, ch)
 #endif
-	register const char *p, ch;
+	const char *p;
+	int ch;
 {
-	register char *save;
+	char *save;
 
 	for (save = NULL;; ++p) {
 		if (*p == ch)

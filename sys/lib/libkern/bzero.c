@@ -1,3 +1,5 @@
+/*	$NetBSD: bzero.c,v 1.8 1998/03/27 01:30:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -31,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)bzero.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$NetBSD: bzero.c,v 1.7 1997/10/13 11:55:23 lukem Exp $";
+#if 0
+static char *sccsid = "@(#)bzero.c	5.7 (Berkeley) 2/24/91";
+#else
+__RCSID("$NetBSD: bzero.c,v 1.8 1998/03/27 01:30:00 cgd Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
@@ -48,9 +54,9 @@ static char *rcsid = "$NetBSD: bzero.c,v 1.7 1997/10/13 11:55:23 lukem Exp $";
 void
 bzero(b, length)
 	void *b;
-	register size_t length;
+	size_t length;
 {
-	register char *p;
+	char *p;
 
 	for (p = b; length--;)
 		*p++ = '\0';
