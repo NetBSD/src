@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.38 1997/10/13 00:47:22 explorer Exp $	*/
+/*	$NetBSD: am7990.c,v 1.39 1997/10/15 16:34:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -145,24 +145,57 @@ void am7990_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 #define	ifp	(&sc->sc_ethercom.ec_if)
 
-static inline int ether_cmp __P((char *, char *));
+static inline u_int16_t ether_cmp __P((void *, void *));
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and
- * unrolled for speed.
- * Note: test last byte of ethernet address first, as it will
- * likely have the most random distribution.
+ * unrolled for speed.  Use this like bcmp().
+ *
+ * XXX: Add <machine/inlines.h> for stuff like this?
+ * XXX: or maybe add it to libkern.h instead?
+ *
+ * "I'd love to have an inline assembler version of this."
+ * XXX: Who wanted that? mycroft?  I wrote one, but this
+ * version in C is as good as hand-coded assembly. -gwr
+ *
+ * Please do NOT tweak this without looking at the actual
+ * assembly code generated before and after your tweaks!
  */
-static inline int
-ether_cmp(a, b)
-	char *a, *b;
+static inline u_int16_t
+ether_cmp(one, two)
+	void *one, *two;
 {
+	register u_int16_t *a = (u_short *) one;
+	register u_int16_t *b = (u_short *) two;
+	register u_int16_t diff;
 
-	return ((a[5] != b[5]) || (a[4] != b[4]) || (a[3] != b[3]) ||
-		(a[2] != b[2]) || (a[1] != b[1]) || (a[0] != b[0]));
+#ifdef	m68k
+	/*
+	 * The post-increment-pointer form produces the best
+	 * machine code for m68k.  This was carefully tuned
+	 * so it compiles to just 8 short (2-byte) op-codes!
+	 */
+	diff  = *a++ - *b++;
+	diff |= *a++ - *b++;
+	diff |= *a++ - *b++;
+#else
+	/*
+	 * Most modern CPUs do better with a single expresion.
+	 * Note that short-cut evaluation is NOT helpful here,
+	 * because it just makes the code longer, not faster!
+	 */
+	diff = (a[0] - b[0]) | (a[1] - b[1]) | (a[2] - b[2]);
+#endif
+
+	return (diff);
 }
 
 #define ETHER_CMP	ether_cmp
+
+#ifdef LANCE_REVC_BUG
+/* Make sure this is short-aligned, for ether_cmp(). */
+static u_int16_t bcast_enaddr[3] = { ~0, ~0, ~0 };
+#endif
 
 /*
  * am7990 configuration driver.  Attachments are provided by
@@ -306,7 +339,13 @@ am7990_meminit(sc)
 	if (sc->sc_initmodemedia == 1)
 		init.init_mode |= LE_MODE_PSEL0;
 
-	myaddr = LLADDR(ifp->if_sadl);
+	/*
+	 * Update our private copy of the Ethernet address.
+	 * We NEED the copy so we can ensure its alignment!
+	 */
+	bcopy(LLADDR(ifp->if_sadl), sc->sc_enaddr, 6);
+	myaddr = sc->sc_enaddr;
+
 	init.init_padr[0] = (myaddr[1] << 8) | myaddr[0];
 	init.init_padr[1] = (myaddr[3] << 8) | myaddr[2];
 	init.init_padr[2] = (myaddr[5] << 8) | myaddr[4];
@@ -554,7 +593,7 @@ am7990_read(sc, boff, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, LLADDR(ifp->if_sadl))) {
+		    ETHER_CMP(eh->ether_dhost, sc->sc_enaddr)) {
 			m_freem(m);
 			return;
 		}
@@ -570,8 +609,8 @@ am7990_read(sc, boff, len)
 	 * destination address (garbage will usually not match).
 	 * Of course, this precludes multicast support...
 	 */
-	if (ETHER_CMP(eh->ether_dhost, LLADDR(ifp->if_sadl)) &&
-	    ETHER_CMP(eh->ether_dhost, etherbroadcastaddr)) {
+	if (ETHER_CMP(eh->ether_dhost, sc->sc_enaddr) &&
+	    ETHER_CMP(eh->ether_dhost, bcast_enaddr)) {
 		m_freem(m);
 		return;
 	}
