@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.62 1999/03/04 02:38:19 mjacob Exp $	*/
+/*	$NetBSD: ccd.c,v 1.62.2.1 1999/11/05 07:39:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -624,8 +624,6 @@ ccdstrategy(bp)
 	s = splbio();
 	ccdstart(cs, bp);
 	splx(s);
-	if (bp->b_flags & B_ERROR)
-		goto done;
 	return;
 done:
 	biodone(bp);
@@ -677,6 +675,7 @@ ccdstart(cs, bp)
 			/* Notify the upper layer we are out of memory. */
 			bp->b_error = ENOMEM;
 			bp->b_flags |= B_ERROR;
+			biodone(bp);
 			disk_unbusy(&cs->sc_dkdev, 0);
 			return;
 		}
