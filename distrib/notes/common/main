@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.41 2001/07/29 19:02:16 he Exp $
+.\"	$NetBSD: main,v 1.61.2.42 2001/08/16 17:22:29 tv Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -352,18 +352,18 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
-.Ss Upgrade path to NetBSD 1.5.1
+.Ss Upgrade path to NetBSD 1.5.2
 If you are not installing your system ``from scratch'' but instead
 are going to upgrade an existing system already running
 .Nx
 you need to know which versions you can upgrade with
 .Nx
-1.5.1.
+1.5.2.
 .Pp
 .Nx
-1.5.1 is an upgrade of
+1.5.2 is an upgrade of
 .Nx
-1.5 and earlier major and patch releases of
+1.5, 1.5.1, and earlier major and patch releases of
 .Nx .
 .Pp
 The intermediate development versions of code available on the main trunk
@@ -375,31 +375,31 @@ These identifiers do not designate releases, but indicate major changes
 in internal kernel APIs.
 Note that the kernel from
 .Nx
-1.5.1 can
+1.5.2 can
 .Em not
 be used to upgrade a system running one of those intermediate development
 versions.
 Trying to use the
 .Nx
-1.5.1 kernel on such a system
+1.5.2 kernel on such a system
 .Em will
 probably result in problems.
 .Pp
 Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions mentioned
-above and 1.5.1 to determine if a given feature is present or absent
-in 1.5.1.  The development of 1.5 and the subsequent ``point'' releases
+above and 1.5.2 to determine if a given feature is present or absent
+in 1.5.2.  The development of 1.5 and the subsequent ``point'' releases
 is done on a separate branch in the CVS repository. The branch was created when
 the release cycle for 1.5 was started, and during the release cycle of
 1.5 and its patch releases, selected fixes and enhancements have been
 imported from the main development trunk.
-So, there are features in 1.5.1 which were not in, e.g. 1.5B, and vice
+So, there are features in 1.5.2 which were not in, e.g. 1.5B, and vice
 versa.
-.Ss Major Changes Between 1.5 and 1.5.1
+.Ss Major Changes Between 1.5 and 1.5.2
 The complete list of changes between
 .Nx
-1.5 and 1.5.1 can be found in the file CHANGES-1.5.1 in the top directory
-of the source tree.
+1.5 and 1.5.2 can be found in the files CHANGES-1.5.1 and CHANGES-1.5.2
+in the top directory of the source tree.
 The following are highlights only:
 .Bl -bullet
 .It
@@ -525,7 +525,7 @@ and Cirrus Logic CrystalClear PCI Audio CS4281 (see
 In addition, many bugs have been fixed\(emmore than 95 problems
 reported through our problem tracking system have been fixed,
 and some other non-reported problems have also been found and fixed.
-See the CHANGES-1.5.1 file for the complete list.
+See the CHANGES-1.5.1 and CHANGES-1.5.2 files for the complete list.
 .Pp
 The NetBSD Packages Collection (pkgsrc) which is used to maintain,
 build, track dependencies, and maintain NetBSD-specific fixes to
@@ -535,9 +535,7 @@ Some highlights are:
 .It
 Many new packages were added to the collection, which now includes
 about 2100 packages.  Many of them are also available as pre-compiled
-binaries on ftp.netbsd.org and its mirrors.  All packages have been
-verified on a release candidate of 1.5.1/i386, and have been found to
-compile, install and de-install cleanly.  Many packages have been
+binaries on ftp.netbsd.org and its mirrors.  Many packages have been
 modified and enhanced to compile and function properly on big-endian
 (m68k, sparc), and LP64 architectures (alpha, sparc64).
 .It
