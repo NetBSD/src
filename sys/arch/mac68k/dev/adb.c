@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.14 1997/04/08 03:19:04 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.15 1997/06/16 06:35:26 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -330,6 +330,13 @@ adb_processevent(event)
 			/* MicroSpeed mouse */
 			if (max_byte == 4)
 				buttons = (~event->bytes[2]) & 0xff;
+			else
+				buttons = (event->bytes[0] & 0x80) ? 0 : 1;
+			break;
+		case ADBMS_MSA3:
+			/* Mouse Systems A3 mouse */
+			if (max_byte == 3)
+				buttons = (~event->bytes[2]) & 0x07;
 			else
 				buttons = (event->bytes[0] & 0x80) ? 0 : 1;
 			break;
