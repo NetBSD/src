@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2002/03/17 14:06:38 uch Exp $	*/
+/*	$NetBSD: userret.h,v 1.2 2002/04/28 12:51:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,11 @@
 static __inline void
 userret(struct proc *p)
 {
+	int sig;
+
+	/* Take pending signals. */
+	while ((sig = CURSIG(p)) != 0)
+		postsig(sig);
 
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
