@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.12 1999/07/08 01:18:59 wrstuden Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.13 1999/08/03 20:19:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,7 @@
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
 
@@ -120,6 +121,25 @@ genfs_abortop(v)
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
 	return (0);
+}
+
+int
+genfs_fcntl(v)
+	void *v;
+{
+	struct vop_fcntl_args /* {
+		struct vnode *a_vp;
+		u_int a_command;
+		caddr_t a_data;
+		int a_fflag;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	if (ap->a_command == F_SETFL)
+		return (0);
+	else
+		return (EOPNOTSUPP);
 }
 
 /*ARGSUSED*/

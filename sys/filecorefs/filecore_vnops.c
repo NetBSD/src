@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.7 1999/07/08 01:06:00 wrstuden Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.8 1999/08/03 20:19:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -507,6 +507,7 @@ int	lease_check	__P((void *));
 #else
 #define	filecore_lease_check	genfs_nullop
 #endif
+#define	filecore_fcntl	genfs_fcntl
 #define	filecore_ioctl	genfs_enoioctl
 #define	filecore_fsync	genfs_nullop
 #define	filecore_remove	genfs_eopnotsupp
@@ -539,6 +540,7 @@ struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_read_desc, filecore_read },		/* read */
 	{ &vop_write_desc, filecore_write },		/* write */
 	{ &vop_lease_desc, filecore_lease_check },	/* lease */
+	{ &vop_fcntl_desc, filecore_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, filecore_ioctl },		/* ioctl */
 	{ &vop_poll_desc, filecore_poll },		/* poll */
 	{ &vop_revoke_desc, filecore_revoke },		/* revoke */

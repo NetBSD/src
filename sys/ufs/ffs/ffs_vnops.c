@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.18 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.19 1999/08/03 20:19:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -83,6 +83,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_write_desc, ffs_write },			/* write */
 	{ &vop_lease_desc, ufs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
+	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
@@ -134,6 +135,7 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_write_desc, ufsspec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
+	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
@@ -185,6 +187,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_write_desc, ufsfifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
+	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
 	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
