@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.1 2002/04/08 23:30:46 hubertf Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.2 2002/04/09 19:48:20 hubertf Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.5 2001/11/29 32:21:02 thorpej Exp */
 
