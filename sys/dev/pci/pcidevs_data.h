@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.43 1997/10/14 20:52:38 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.43.2.1 1997/10/27 23:31:02 thorpej Exp 
  */
 
 /*
@@ -1970,10 +1970,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "W83769F",
 	},
 	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_NEXXX,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
 	    0,
 	    "Winbond Electronics",
-	    "NEXXX",
+	    "W89C940F",
 	},
 	{
 	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
