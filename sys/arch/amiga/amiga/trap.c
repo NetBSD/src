@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.90 2003/04/01 21:26:27 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.91 2003/05/12 09:35:01 jandberg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 #include "opt_compat_sunos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2003/04/01 21:26:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2003/05/12 09:35:01 jandberg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,6 +724,9 @@ trap(type, code, v, frame)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
+		if (want_resched)
+			preempt(NULL);
+
 		userret(l, frame.f_pc, sticks);
 		return;
 	/*
