@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.29 2004/07/09 16:34:29 mycroft Exp $	*/
+/*	$NetBSD: compile.c,v 1.30 2004/07/09 23:43:07 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.29 2004/07/09 16:34:29 mycroft Exp $");
+__RCSID("$NetBSD: compile.c,v 1.30 2004/07/09 23:43:07 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -694,7 +694,7 @@ compile_text(void)
 		}
 		if (asize - size < _POSIX2_LINE_MAX + 1) {
 			asize *= 2;
-			text = xmalloc(asize);
+			text = xrealloc(text, asize);
 		}
 	}
 	return (xrealloc(text, size + 1));
