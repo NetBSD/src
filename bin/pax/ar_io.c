@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.32 2003/02/09 18:27:10 grant Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.33 2003/02/25 13:36:59 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.32 2003/02/09 18:27:10 grant Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.33 2003/02/25 13:36:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1536,8 +1536,9 @@ ar_next(void)
 
 /*
  * ar_start_gzip()
- * starts the gzip compression/decompression process as a child, using magic
- * to keep the fd the same in the calling function (parent).
+ * starts the compression/decompression process as a child, using magic
+ * to keep the fd the same in the calling function (parent). possible
+ * programs are GZIP_CMD, BZIP2_CMD, and COMPRESS_CMD.
  */
 void
 ar_start_gzip(int fd, const char *gzp, int wr)
