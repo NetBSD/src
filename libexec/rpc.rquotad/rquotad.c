@@ -1,4 +1,4 @@
-/*	$NetBSD: rquotad.c,v 1.15 2000/06/03 20:52:18 fvdl Exp $	*/
+/*	$NetBSD: rquotad.c,v 1.16 2000/06/03 20:57:40 fvdl Exp $	*/
 
 /*
  * by Manuel Bouyer (bouyer@ensta.fr)
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rquotad.c,v 1.15 2000/06/03 20:52:18 fvdl Exp $");
+__RCSID("$NetBSD: rquotad.c,v 1.16 2000/06/03 20:57:40 fvdl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	if (!from_inetd) {
 		daemon(0, 0);
 
-		(void) pmap_unset(RQUOTAPROG, RQUOTAVERS);
+		(void) rpcb_unset(RQUOTAPROG, RQUOTAVERS, NULL);
 
 		(void) signal(SIGINT, cleanup);
 		(void) signal(SIGTERM, cleanup);
