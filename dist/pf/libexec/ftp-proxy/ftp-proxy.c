@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.4 2004/07/01 15:44:54 darrenr Exp $	*/
+/*	$NetBSD: ftp-proxy.c,v 1.5 2004/07/09 08:27:38 enami Exp $	*/
 /*	$OpenBSD: ftp-proxy.c,v 1.35 2004/03/14 21:51:44 dhartmei Exp $ */
 
 /*
@@ -228,12 +228,12 @@ drop_privs(void)
 		gid = gr->gr_gid;
 	}
 
-	if (gid != 0 && (setegid(gid) == -1 || setgid(gid) == -1)) {
+	if (gid != 0 && setgid(gid) == -1) {
 		syslog(LOG_ERR, "cannot drop group privs (%m)");
 		exit(EX_CONFIG);
 	}
 
-	if (uid != 0 && (seteuid(uid) == -1 || setuid(uid) == -1)) {
+	if (uid != 0 && setuid(uid) == -1) {
 		syslog(LOG_ERR, "cannot drop root privs (%m)");
 		exit(EX_CONFIG);
 	}
