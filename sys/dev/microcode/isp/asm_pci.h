@@ -1,5 +1,5 @@
-/* $NetBSD: asm_pci.h,v 1.16 1999/03/17 05:11:13 mjacob Exp $ */
-/* release_03_16_99 */
+/* $NetBSD: asm_pci.h,v 1.17 1999/03/25 19:41:47 mjacob Exp $ */
+/* release_03_25_99 */
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 by Qlogic Corporation
  */
