@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.14 1999/02/01 19:56:18 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.14.2.1 1999/09/21 04:58:04 cgd Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
@@ -772,7 +772,7 @@
 /* does ufs_ars_t have ufs_pgthresh field? */
 /* #undef HAVE_FIELD_UFS_ARGS_T_UFS_PGTHRESH */
 
-/* does struct fhstatus have an fhs_fh field? */
+/* does struct fhstatus have a fhs_fh field? */
 /* #undef HAVE_FIELD_STRUCT_FHSTATUS_FHS_FH */
 
 /* does struct statfs have an f_fstypename field? */
@@ -784,14 +784,20 @@
 /* does struct nfs_args have an acregmin field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_ACREGMIN */
 
+/* does struct nfs_args have a bsize field? */
+/* #undef HAVE_FIELD_NFS_ARGS_T_BSIZE */
+
 /* does struct nfs_args have an fh_len field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_FH_LEN */
 
 /* does struct nfs_args have an fhsize field? */
 #define HAVE_FIELD_NFS_ARGS_T_FHSIZE 1
 
-/* does struct nfs_args have an gfs_flags field? */
+/* does struct nfs_args have a gfs_flags field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_GFS_FLAGS */
+
+/* does struct nfs_args have a namlen field? */
+/* #undef HAVE_FIELD_NFS_ARGS_T_NAMLEN */
 
 /* does struct nfs_args have an optstr field? */
 /* #undef HAVE_FIELD_NFS_ARGS_T_OPTSTR */
@@ -834,8 +840,15 @@
 /* #undef _ALL_SOURCE */
 #endif
 
+/* Define if using alloca.c.  */
+/* #undef C_ALLOCA */
+
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
+
+/* Define to one of _getb67, GETB67, getb67 for Cray-2 and Cray-YMP systems.
+   This function is required for alloca.c support on those systems.  */
+/* #undef CRAY_STACKSEG_END */
 
 /* Define to the type of elements in the array set by `getgroups'.
    Usually this is either `int' or `gid_t'.  */
@@ -843,6 +856,12 @@
 
 /* Define to `int' if <sys/types.h> doesn't define.  */
 /* #undef gid_t */
+
+/* Define if you have alloca, as a function or macro.  */
+#define HAVE_ALLOCA 1
+
+/* Define if you have <alloca.h> and it should be used (not on Ultrix).  */
+/* #undef HAVE_ALLOCA_H */
 
 /* Define if you support file names longer than 14 characters.  */
 #define HAVE_LONG_FILE_NAMES 1
@@ -884,6 +903,15 @@
 /* Define to `unsigned' if <sys/types.h> doesn't define.  */
 /* #undef size_t */
 
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at run-time.
+ STACK_DIRECTION > 0 => grows toward higher addresses
+ STACK_DIRECTION < 0 => grows toward lower addresses
+ STACK_DIRECTION = 0 => direction of growth unknown
+ */
+/* #undef STACK_DIRECTION */
+
 /* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
 /* #undef STAT_MACROS_BROKEN */
 
@@ -904,10 +932,6 @@
 
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
-#include <sys/types.h>
-#if BYTE_ORDER == BIG_ENDIAN
-#define WORDS_BIGENDIAN 
-#endif
 /* #undef WORDS_BIGENDIAN */
 
 /* Define if lex declares yytext as a char * by default, not a char[].  */
@@ -926,7 +950,7 @@
 #define PACKAGE "am-utils"
 
 /* Define version of package (must be defined by configure.in) */
-#define VERSION "6.0.1s3"
+#define VERSION "6.0.1s11"
 
 /* Define name of host machine's cpu (eg. sparc) */
 #define HOST_CPU MACHINE
@@ -956,7 +980,7 @@
 #define am_nfs_fh3 nfs_fh3
 
 /* define name of am-utils' NFS protocol header */
-#define AMU_NFS_PROTOCOL_HEADER "./conf/nfs_prot/nfs_prot_netbsd1_3.h"
+#define AMU_NFS_PROTOCOL_HEADER "./conf/nfs_prot/nfs_prot_netbsd1_4.h"
 
 /* Define a type for the nfs_args structure */
 #define nfs_args_t struct nfs_args
@@ -1112,6 +1136,9 @@
 
 /* Define if you have the gethostname function.  */
 #define HAVE_GETHOSTNAME 1
+
+/* Define if you have the getifaddrs function.  */
+/* #undef HAVE_GETIFADDRS */
 
 /* Define if you have the getmntinfo function.  */
 #define HAVE_GETMNTINFO 1
@@ -1440,6 +1467,9 @@
 /* Define if you have the <ctype.h> header file.  */
 #define HAVE_CTYPE_H 1
 
+/* Define if you have the <db1/ndbm.h> header file.  */
+/* #undef HAVE_DB1_NDBM_H */
+
 /* Define if you have the <dirent.h> header file.  */
 #define HAVE_DIRENT_H 1
 
@@ -1457,6 +1487,12 @@
 
 /* Define if you have the <hsfs/hsfs.h> header file.  */
 /* #undef HAVE_HSFS_HSFS_H */
+
+/* Define if you have the <ifaddrs.h> header file.  */
+/* #undef HAVE_IFADDRS_H */
+
+/* Define if you have the <irs.h> header file.  */
+/* #undef HAVE_IRS_H */
 
 /* Define if you have the <isofs/cd9660/cd9660_mount.h> header file.  */
 #define HAVE_ISOFS_CD9660_CD9660_MOUNT_H 1
@@ -1849,7 +1885,7 @@
 #define PACKAGE "am-utils"
 
 /* Version number of package */
-#define VERSION "6.0.1s3"
+#define VERSION "6.0.1s11"
 
 
 /**************************************************************************/
