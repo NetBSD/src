@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.6 1998/05/01 15:32:55 mark Exp $	*/
+/*	$NetBSD: cpus.h,v 1.7 2001/02/19 13:29:41 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,17 +45,9 @@
 #include <sys/param.h>
 #endif
 
-/* If hydra is defined then we take into consideration the slave CPU's available */
-
-#ifdef HYDRA
-#define MAX_CPUS		6
-#define MAX_SLAVE_CPUS		4
-#define MAX_FOREIGN_CPUS	1
-#else
 #define MAX_CPUS		2
 #define MAX_SLAVE_CPUS		0
 #define MAX_FOREIGN_CPUS	1
-#endif
 
 #define CPU_MASTER	0
 #define CPU_486		1
@@ -68,7 +60,6 @@
 
 #define CPU_HOST_NONE		0	/* No host */
 #define CPU_HOST_MAINBUS	1	/* Hosted via motherboard */
-#define CPU_HOST_HYDRA		2	/* Hosted via hydra multiprocessor board */
 
 #define CPU_FLAG_PRESENT	0x01
 #define CPU_FLAG_HALTED		0x02
@@ -152,4 +143,4 @@ extern cpu_t cpus[MAX_CPUS];
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 
-/* End of hydra.h */
+/* End of cpus.h */
