@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2001/02/07 05:49:17 briggs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2001/05/15 14:48:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -286,7 +286,7 @@ pci_intr_disestablish(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
-	return intr_disestablish(cookie);
+	intr_disestablish(cookie);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2000/12/28 22:59:10 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 2001/05/15 14:48:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -416,5 +416,5 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 
-	return isa_intr_disestablish(NULL, cookie);
+	isa_intr_disestablish(NULL, cookie);
 }
