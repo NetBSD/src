@@ -1,4 +1,4 @@
-/*	$NetBSD: libintl_local.h,v 1.2 2000/10/31 15:23:04 itojun Exp $	*/
+/*	$NetBSD: libintl_local.h,v 1.3 2000/10/31 16:02:52 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -46,12 +46,12 @@ struct mo {
 	u_int32_t mo_ttable;	/* T: translated text table offset */
 	u_int32_t mo_hsize;	/* S: size of hashing table */
 	u_int32_t mo_hoffset;	/* H: offset of hashing table */
-};
+} __attribute__((__packed__));
 
 struct moentry {
 	u_int32_t len;		/* strlen(str), so region will be len + 1 */
 	u_int32_t off;		/* offset of \0-terminated string */
-};
+} __attribute__((__packed__));
 
 /* libintl internal data format */
 struct moentry_h {
