@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.36 1996/10/27 21:55:20 gwr Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.37 1996/11/13 06:06:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -77,12 +77,18 @@
 #define TOTTY	0x02
 #define TOLOG	0x04
 
+/*
+ * This is the size of the buffer that should be passed to ksnprintn().
+ * It's the length of a long in base 8, plus NULL.
+ */
+#define KSNPRINTN_BUFSIZE	(sizeof(long) * NBBY / 3 + 2)
+
 struct	tty *constty;			/* pointer to console "window" tty */
 
 void	(*v_putc) __P((int)) = cnputc;	/* routine to putc on virtual console */
 
 static void putchar __P((int, int, struct tty *));
-static char *ksprintn __P((u_long, int, int *));
+static char *ksnprintn __P((u_long, int, int *, char *, size_t));
 void kprintf __P((const char *, int, struct tty *, va_list));
 
 int consintr = 1;			/* Ok to handle console interrupts? */
@@ -284,9 +290,11 @@ logpri(level)
 {
 	register int ch;
 	register char *p;
+	char snbuf[KSNPRINTN_BUFSIZE];
 
 	putchar('<', TOLOG, NULL);
-	for (p = ksprintn((u_long)level, 10, NULL); (ch = *p--) != 0;)
+	for (p = ksnprintn((u_long)level, 10, NULL, snbuf, sizeof(snbuf));
+	    (ch = *p--) != 0;)
 		putchar(ch, TOLOG, NULL);
 	putchar('>', TOLOG, NULL);
 }
@@ -385,7 +393,7 @@ kprintf(fmt, flags, tp, ap)
 	register int ch, n;
 	u_long ul;
 	int base, lflag, tmp, width;
-	char padc;
+	char padc, snbuf[KSNPRINTN_BUFSIZE];
 
 	for (;;) {
 		padc = ' ';
@@ -416,7 +424,8 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case 'b':
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
-			for (q = ksprintn(ul, *p++, NULL); (ch = *q--) != 0;)
+			for (q = ksnprintn(ul, *p++, NULL, snbuf,
+			    sizeof(snbuf)); (ch = *q--) != 0;)
 				putchar(ch, flags, tp);
 
 			if (!ul)
@@ -473,7 +482,7 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case 'x':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 16;
-number:			p = ksprintn(ul, base, &tmp);
+number:			p = ksnprintn(ul, base, &tmp, snbuf, sizeof(snbuf));
 			if (width && (width -= tmp) > 0)
 				while (width--)
 					putchar(padc, flags, tp);
@@ -548,7 +557,7 @@ sprintf(buf, cfmt, va_alist)
 	u_long ul;
 	int lflag, tmp, width;
 	va_list ap;
-	char padc;
+	char padc, snbuf[KSNPRINTN_BUFSIZE];
 
 	va_start(ap, cfmt);
 	for (bp = buf; ; ) {
@@ -614,7 +623,7 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case 'x':
 			ul = lflag ? va_arg(ap, u_long) : va_arg(ap, u_int);
 			base = 16;
-number:			p = ksprintn(ul, base, &tmp);
+number:			p = ksnprintn(ul, base, &tmp, snbuf, sizeof(snbuf));
 			if (width && (width -= tmp) > 0)
 				while (width--)
 					*bp++ = padc;
@@ -639,18 +648,100 @@ number:			p = ksprintn(ul, base, &tmp);
  * buffer.
  */
 static char *
-ksprintn(ul, base, lenp)
+ksnprintn(ul, base, lenp, buf, buflen)
 	register u_long ul;
 	register int base, *lenp;
-{					/* A long in base 8, plus NULL. */
-	static char buf[sizeof(long) * NBBY / 3 + 2];
+	char *buf;
+	size_t buflen;
+{
 	register char *p;
 
 	p = buf;
+	*p = '\0';			/* ensure NULL `termination' */
+
+	/*
+	 * Don't even bother of the buffer's not big enough.  No
+	 * value at all is better than a wrong value, and we
+	 * have a lot of control over the buffer that's passed
+	 * to this function, since it's not exported.
+	 */
+	if (buflen < KSNPRINTN_BUFSIZE)
+		return (p);
+
 	do {
 		*++p = "0123456789abcdef"[ul % base];
 	} while (ul /= base);
 	if (lenp)
 		*lenp = p - buf;
 	return (p);
+}
+
+/*
+ * Print a bitmask into the provided buffer, and return a pointer
+ * to that buffer.
+ */
+char *
+bitmask_snprintf(ul, p, buf, buflen)
+	u_long ul;
+	const char *p;
+	char *buf;
+	size_t buflen;
+{
+	char *bp, *q;
+	size_t left;
+	register int n;
+	int ch, tmp;
+	char snbuf[KSNPRINTN_BUFSIZE];
+
+	bp = buf;
+	bzero(buf, buflen);
+
+	/*
+	 * Always leave room for the trailing NULL.
+	 */
+	left = buflen - 1;
+
+	/*
+	 * Print the value into the buffer.  Abort if there's not
+	 * enough room.
+	 */
+	if (buflen < KSNPRINTN_BUFSIZE)
+		return (buf);
+
+	for (q = ksnprintn(ul, *p++, NULL, snbuf, sizeof(snbuf));
+	    (ch = *q--) != 0;) {
+		*bp++ = ch;
+		left--;
+	}
+
+	/*
+	 * If the value we printed was 0, or if we don't have room for
+	 * "<x>", we're done.
+	 */
+	if (ul == 0 || left < 3)
+		return (buf);
+
+#define PUTBYTE(b, c, l)	\
+	*(b)++ = (c);		\
+	if (--(l) == 0)		\
+		goto out;
+
+	for (tmp = 0; (n = *p++) != 0;) {
+		if (ul & (1 << (n - 1))) {
+			PUTBYTE(bp, tmp ? ',' : '<', left);
+				for (; (n = *p) > ' '; ++p) {
+					PUTBYTE(bp, n, left);
+				}
+				tmp = 1;
+		} else
+			for (; *p > ' '; ++p)
+				continue;
+	}
+	if (tmp)
+		*bp = '>';
+
+#undef PUTBYTE
+
+ out:
+	return (buf);
 }
