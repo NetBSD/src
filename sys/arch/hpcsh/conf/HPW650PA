@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.10 2002/06/17 05:14:12 lukem Exp $
+#	$NetBSD: HPW650PA,v 1.11 2002/07/22 15:25:13 tsutsui Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -28,6 +28,9 @@ options 	KTRACE			# system call tracing support
 
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+
+# Compatibility options
+#options 	BSDDISKLABEL_EI	# endian independent disklabel support
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
