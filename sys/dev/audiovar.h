@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.28 2003/05/03 18:11:09 wiz Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.29 2003/10/02 07:15:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
 #define AUMINNOBLK 3
 struct audio_ringbuffer {
 	size_t	bufsize;	/* allocated memory */
-	int	blksize;	/* I/O block size */
+	int	blksize;	/* I/O block size (bytes) */
 	int	maxblks;	/* no of blocks in ring */
 	u_char	*start;		/* start of buffer area */
 	u_char	*end;		/* end of buffer area */
