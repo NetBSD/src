@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 2001/01/10 05:23:43 jmc Exp $	*/
+/*	$NetBSD: util.c,v 1.6 2001/04/22 21:43:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -144,15 +144,30 @@ addrmerge(struct netbuf *caller, char *serv_uaddr, char *clnt_uaddr,
 	serv_sa = (struct sockaddr *)serv_nbp->buf;
 	if (clnt_uaddr != NULL) {
 		clnt_nbp = uaddr2taddr(nconf, clnt_uaddr);
+		if (clnt_nbp == NULL) {
+			free(serv_nbp);
+			return NULL;
+		}
 		clnt_sa = (struct sockaddr *)clnt_nbp->buf;
+		if (clnt_sa->sa_family == AF_LOCAL) {
+			free(serv_nbp);
+			free(clnt_nbp);
+			free(clnt_sa);
+			return strdup(clnt_uaddr);
+		}
 	} else {
 		clnt_sa = (struct sockaddr *)
 		    malloc(sizeof (struct sockaddr_storage));
 		memcpy(clnt_sa, clnt, clnt->sa_len);
 	}
 
-	if (getifaddrs(&ifp) < 0)
+	if (getifaddrs(&ifp) < 0) {
+		free(serv_nbp);
+		free(clnt_sa);
+		if (clnt_nbp != NULL)
+			free(clnt_nbp);
 		return 0;
+	}
 
 	/*
 	 * Loop through all interfaces. For each interface, see if the
