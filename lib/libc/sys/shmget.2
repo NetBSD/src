@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmget.2,v 1.18 2004/05/13 01:39:14 kleink Exp $
+.\"	$NetBSD: shmget.2,v 1.19 2004/05/13 01:43:13 kleink Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -62,7 +62,9 @@ bit and the
 .Dv IPC_EXCL
 bit are set in
 .Fa shmflg ,
-does have a shared memory segment identifier associated with it already,
+and
+.Fa key
+has a shared memory segment identifier associated with it already,
 the operation will fail.
 .Pp
 If a new shared memory segment is created, the data structure
