@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.23 1999/08/04 18:07:39 wrstuden Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.24 1999/08/04 18:14:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -615,7 +615,7 @@ found:
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if (error = vn_lock(pdp, LK_EXCLUSIVE))) {
+			if (error = vn_lock(pdp, LK_EXCLUSIVE)) {
 				vput(tdp);
 				return (error);
 			}
