@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.7.2.2 2002/07/15 10:35:11 gehenna Exp $	*/
+/*	$NetBSD: acpi.c,v 1.7.2.3 2002/07/20 11:35:06 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.7.2.2 2002/07/15 10:35:11 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.7.2.3 2002/07/20 11:35:06 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,6 +762,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		}
 		if (state==ACPI_STATE_S1) {
 			/* just enter the state */
+			acpi_md_OsDisableInterrupt();
 			AcpiEnterSleepState((UINT8)state);
 			AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
 		} else {
@@ -782,6 +783,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		break;
 	case ACPI_STATE_S5:
 		AcpiEnterSleepStatePrep(ACPI_STATE_S5);
+		acpi_md_OsDisableInterrupt();
 		AcpiEnterSleepState(ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.38 2002/03/04 02:25:24 simonb Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.38.6.1 2002/07/20 11:35:15 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.38 2002/03/04 02:25:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.38.6.1 2002/07/20 11:35:15 gehenna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -169,7 +169,8 @@ mfs_mountroot()
 	mfsp->mfs_size = mfs_rootsize;
 	mfsp->mfs_vnode = rootvp;
 	mfsp->mfs_proc = NULL;		/* indicate kernel space */
-	BUFQ_INIT(&mfsp->mfs_buflist);
+	mfsp->mfs_shutdown = 0;
+	bufq_init(&mfsp->mfs_buflist, BUFQ_FCFS);
 	if ((error = ffs_mountfs(rootvp, mp, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
@@ -281,9 +282,10 @@ mfs_mount(mp, path, data, ndp, p)
 	mfsp->mfs_size = args.size;
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_proc = p;
-	BUFQ_INIT(&mfsp->mfs_buflist);
+	mfsp->mfs_shutdown = 0;
+	bufq_init(&mfsp->mfs_buflist, BUFQ_FCFS);
 	if ((error = ffs_mountfs(devvp, mp, p)) != 0) {
-		BUFQ_FIRST(&mfsp->mfs_buflist) = (struct buf *) -1;
+		mfsp->mfs_shutdown = 1;
 		vrele(devvp);
 		return (error);
 	}
@@ -322,9 +324,8 @@ mfs_start(mp, flags, p)
 	int sleepreturn = 0;
 
 	base = mfsp->mfs_baseoff;
-	while (BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1) {
-		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
-			BUFQ_REMOVE(&mfsp->mfs_buflist, bp);
+	while (mfsp->mfs_shutdown != 1) {
+		while ((bp = BUFQ_GET(&mfsp->mfs_buflist)) != NULL) {
 			mfs_doio(bp, base);
 			wakeup((caddr_t)bp);
 		}
@@ -351,6 +352,7 @@ mfs_start(mp, flags, p)
 
 		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
 	}
+	KASSERT(BUFQ_PEEK(&mfsp->mfs_buflist) == NULL);
 	return (sleepreturn);
 }
 

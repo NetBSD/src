@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.h,v 1.3 2001/06/05 05:12:18 thorpej Exp $	*/
+/*	$NetBSD: altq_cbq.h,v 1.3.14.1 2002/07/20 11:35:06 gehenna Exp $	*/
 /*	$KAME: altq_cbq.h,v 1.5 2000/12/02 13:44:40 kjc Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ typedef struct cbq_class_spec {
 	int		flags;
 } cbq_class_spec_t;
 
-/* class flags shoud be same as class flags in rm_class.h */
+/* class flags should be same as class flags in rm_class.h */
 #define	CBQCLF_RED		0x0001	/* use RED */
 #define	CBQCLF_ECN		0x0002  /* use RED/ECN */
 #define	CBQCLF_RIO		0x0004  /* use RIO */
