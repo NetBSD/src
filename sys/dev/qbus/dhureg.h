@@ -1,4 +1,4 @@
-/*	$NetBSD: dhureg.h,v 1.3 1999/05/28 18:56:57 ragge Exp $	*/
+/*	$NetBSD: dhureg.h,v 1.4 1999/05/28 20:17:29 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  */
 
+#ifdef notdef
 union w_b
 {
 	u_short word;
@@ -58,6 +59,18 @@ struct DHUregs
 #define dhu_csr_hi	u_csr.bytes.byte_hi
 
 typedef struct DHUregs dhuregs;
+#endif
+
+#define	DHU_UBA_CSR	0
+#define	DHU_UBA_CSR_HI	1
+#define	DHU_UBA_RBUF	2
+#define	DHU_UBA_TXCHAR	2
+#define	DHU_UBA_LPR	4
+#define	DHU_UBA_STAT	6
+#define	DHU_UBA_LNCTRL	8
+#define	DHU_UBA_TBUFAD1	10
+#define	DHU_UBA_TBUFAD2	12
+#define	DHU_UBA_TBUFCNT	14
 
 /* CSR bits */
 
