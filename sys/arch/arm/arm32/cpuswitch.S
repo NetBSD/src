@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.17 2002/08/12 20:34:50 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.18 2002/08/12 20:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -233,6 +233,10 @@ Lblock_userspace_access:
  */
 /* LINTSTUB: Ignore */
 ASENTRY_NP(idle)
+
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
 	/* Enable interrupts */
 	IRQenable
 
@@ -245,6 +249,9 @@ Lidle_slept:
 
 	/* Disable interrupts while we check for an active queue */
 	IRQdisable
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 	ldr	r7, Lwhichqs
 	ldr	r3, [r7]
 	teq	r3, #0x00000000
@@ -289,6 +296,11 @@ ENTRY(cpu_switch)
 	/* stash the old proc while we call functions */
 	mov	r5, r1
 
+#if defined(LOCKDEBUG)
+	/* release the sched_lock before handling interrupts */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
 	/* Lower the spl level to spl0 and get the current spl level. */
 #ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
@@ -311,6 +323,9 @@ ENTRY(cpu_switch)
 
 Lswitch_search:
 	IRQdisable
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 	/* Do we have any active queues  */
 	ldr	r7, Lwhichqs
@@ -407,6 +422,15 @@ Lidle_ret:
 	 * the head of the queue. The new lwp is isolated now.
 	 */
 	str	r0, [r6, #(L_BACK)]
+
+#if defined(LOCKDEBUG)
+	/*
+	 * unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	mov	r7, r1
+	bl	_C_LABEL(sched_unlock_idle)
+	mov	r1, r7
+#endif
 
 switch_resume:
 	/* l->l_cpu initialized in fork1() for single-processor */
@@ -611,6 +635,11 @@ ENTRY(cpu_preempt)
 	mov	r6, r0		/* save old lwp */
 	mov	r5, r1		/* save new lwp */
 
+#if defined(LOCKDEBUG)
+	/* release the sched_lock before handling interrupts */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
 #ifdef __NEWINTR
 	mov	r0, #(IPL_NONE)
 	bl	_C_LABEL(_spllower)
@@ -627,6 +656,9 @@ ENTRY(cpu_preempt)
 	str	r0, [sp, #-0x0004]!
 
 	IRQdisable
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
 
 	/* Do we have any active queues? */
 	ldr	r7, Lwhichqs
@@ -682,7 +714,13 @@ ENTRY(cpu_preempt)
 	 * new process).
 	 */
 	mov	r6, r1			/* r6 = new lwp */
+#if defined(LOCKDEBUG)
+	mov	r5, r0			/* preserve old lwp */
+	bl	_C_LABEL(sched_unlock_idle)
+	mov	r1, r5			/* r1 = old lwp */
+#else
 	mov	r1, r0			/* r1 = old lwp */
+#endif
 	b	switch_resume
 
 preempt_noqueues:
