@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.8 1999/03/15 01:15:06 mrg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.9 1999/06/05 01:56:31 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -24,7 +24,9 @@
 .include "/etc/mk.conf"
 
 CC?=	cc
+.if exists(/usr/ccs/bin/ld)
 LD?=	/usr/ccs/bin/ld #Need to use Solaris ld to use the solaris loader
+.endif
 MKDEP?=	mkdep
 STRIP?=	strip
 SIZE?=	size
@@ -40,10 +42,14 @@ TSORT?=tsort
 OS!=uname -s
 .if (${OS} == "NetBSD")
 USE_GENASSYM?=	no
-SVR4=
 .else
 USE_GENASSYM?=	yes
+.endif
+
+.if exists(/usr/ccs/bin/ld)
 SVR4=-U__SVR4 -U__svr4__ -D__NetBSD__
+.else
+SVR4=
 .endif
 
 # source tree is located via $S relative to the compilation directory
@@ -180,7 +186,9 @@ depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC64}/sparc64/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+.if (${SFILES} != "")
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+.endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
 	  ${CPPFLAGS} < ${SPARC64}/sparc64/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
