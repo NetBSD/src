@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_core.c,v 1.7 2000/06/30 08:12:10 veego Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.8 2000/07/01 01:39:01 wiz Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.106 2000/04/16 07:50:08 roger Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.109 2000/06/28 15:09:12 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -110,9 +110,14 @@
     || (defined(__NetBSD__))                                     \
     )
 
+
+/*******************/
+/* *** FreeBSD *** */
+/*******************/
+#ifdef __FreeBSD__
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
@@ -161,13 +166,10 @@
 #include "iicbus_if.h"
 #endif
 
-char *
+const char *
 bktr_name(bktr_ptr_t bktr)
 {
-        char buf[10];                                                          
-       
-        snprintf(buf, sizeof(buf), "bktr%d", bktr->sc_dev.dv_unit);            
-        return buf;                                                            
+  return bktr->bktr_xname;
 }
 
 
@@ -189,6 +191,21 @@ typedef unsigned int uintptr_t;
 /**************************/
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/signalvar.h>
+#include <sys/vnode.h>
+
+#ifdef __NetBSD__
+#include <uvm/uvm_extern.h>
+#else
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/pmap.h>
+#include <vm/vm_extern.h>
+#endif
+
 #include <sys/inttypes.h>		/* uintptr_t */
 #include <dev/ic/bt8xx.h>
 #include <dev/pci/bktr/bktr_reg.h>
@@ -200,7 +217,7 @@ typedef unsigned int uintptr_t;
 
 static int bt848_format = -1;
 
-char *
+const char *
 bktr_name(bktr_ptr_t bktr)
 {
         return (bktr->bktr_dev.dv_xname);
