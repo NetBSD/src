@@ -24,13 +24,15 @@
 -D__sparc__ -D__sparc -D__NetBSD__ -D__ELF__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(sparc) -Amachine(sparc)"
 
+#include <sparc/netbsd-elf-common.h>
+
 #undef LINK_SPEC
 #define LINK_SPEC \
  "-m elf32_sparc \
   %{assert*} %{R*} \
   %{shared:-shared} \
   %{!shared: \
-    -dc -dp \
+    -dy -dc -dp \
     %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
     %{!static: \
       %{rdynamic:-export-dynamic} \
@@ -40,5 +42,3 @@
 /* Name the port. */
 #undef TARGET_NAME
 #define TARGET_NAME     "sparc-netbsdelf"
-
-#include <sparc/netbsd-elf-common.h>
