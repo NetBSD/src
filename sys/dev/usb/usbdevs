@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.320 2003/05/08 04:38:23 enami Exp $
+$NetBSD: usbdevs,v 1.321 2003/05/08 15:19:46 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1042,6 +1042,7 @@ product MUSTEK MDC800		0xa800	MDC-800 digital camera
 
 /* M-Systems products */
 product MSYSTEMS DISKONKEY	0x0010	DiskOnKey
+product MSYSTEMS DISKONKEY2	0x0011	DiskOnKey
 
 /* National Instruments */
 product NI GPIB_USB_A		0xc920	GPIB-USB-A
