@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.3 1995/04/10 05:45:27 mycroft Exp $	*/
+/*	$NetBSD: cg2.c,v 1.4 1995/04/10 07:05:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,7 +108,7 @@ static int	cg2getcmap __P((struct fbdevice *, struct fbcmap *));
 static int	cg2putcmap __P((struct fbdevice *, struct fbcmap *));
 
 static struct fbdriver cg2fbdriver = {
-	cg2open, cg2close, cg2map, cg2gattr,
+	cg2open, cg2close, cg2mmap, cg2gattr,
 	cg2gvideo, cg2svideo,
 	cg2getcmap, cg2putcmap };
 
@@ -237,7 +237,7 @@ cg2mmap(dev, off, prot)
 	int realoff;
 
 	if (off & PGOFSET)
-		panic("cg2map");
+		panic("cg2mmap");
 
 	if ((unsigned)off >= CG2_MAPPED_SIZE)
 		return (-1);

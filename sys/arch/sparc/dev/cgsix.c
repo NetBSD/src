@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.12 1995/02/16 21:50:41 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.13 1995/04/10 07:04:21 mycroft Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -621,7 +621,7 @@ struct mmo {
  * XXX	needs testing against `demanding' applications (e.g., aviator)
  */
 int
-cgsixmap(dev, off, prot)
+cgsixmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
@@ -644,7 +644,7 @@ cgsixmap(dev, off, prot)
 #define NMMO (sizeof mmo / sizeof *mmo)
 
 	if (off & PGOFSET)
-		panic("cgsixmap");
+		panic("cgsixmmap");
 
 	/*
 	 * Entries with size 0 map video RAM (i.e., the size in fb data).
@@ -665,7 +665,7 @@ cgsixmap(dev, off, prot)
 #ifdef DEBUG
 	{
 	  register struct proc *p = curproc;	/* XXX */
-	  log(LOG_NOTICE, "cgsixmap(%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
+	  log(LOG_NOTICE, "cgsixmmap(%x) (%s[%d])\n", off, p->p_comm, p->p_pid);
 	}
 #endif
 	return (-1);	/* not a user-map offset */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.8 1995/02/17 09:47:36 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.9 1995/04/10 07:04:20 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -287,14 +287,14 @@ bwtwounblank(dev)
  * offset, allowing for the given protection, or return -1 for error.
  */
 int
-bwtwomap(dev, off, prot)
+bwtwommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
 	register struct bwtwo_softc *sc = bwtwocd.cd_devs[minor(dev)];
 
 	if (off & PGOFSET)
-		panic("bwtwomap");
+		panic("bwtwommap");
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 	/*

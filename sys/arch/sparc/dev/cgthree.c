@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.12 1994/11/23 07:02:07 deraadt Exp $ */
+/*	$NetBSD: cgthree.c,v 1.13 1995/04/10 07:04:22 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -377,7 +377,7 @@ cgthreeloadcmap(sc, start, ncolors)
  * mapped in flat mode without the cg4 emulation.
  */
 int
-cgthreemap(dev, off, prot)
+cgthreemmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
@@ -386,7 +386,7 @@ cgthreemap(dev, off, prot)
 #define NOOVERLAY	(0x04000000)
 
 	if (off & PGOFSET)
-		panic("cgthreemap");
+		panic("cgthreemmap");
 	if ((u_int)off >= NOOVERLAY)
 		off -= NOOVERLAY;
 	else if ((u_int)off >= START)
