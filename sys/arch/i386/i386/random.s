@@ -1,6 +1,7 @@
-/*	$NetBSD: random.s,v 1.4 1994/10/27 04:15:44 cgd Exp $	*/
+/*	$NetBSD: random.s,v 1.5 1995/01/15 23:20:33 mycroft Exp $	*/
 
 /*
+ * Copyright (c) 1995 Charles Hannum.
  * Copyright (c) 1990,1993 The Regents of the University of California.
  * All rights reserved.
  *
@@ -49,11 +50,8 @@ randseed:
 ENTRY(random)
 	movl	$16807,%eax
 	imull	randseed
-	shll	$1,%edx
-	movl	%eax,%ecx
+	shld	$1,%eax,%edx
 	andl	$0x7fffffff,%eax
-	shrl	$31,%ecx
-	orl	%ecx,%edx
 	addl	%edx,%eax
 	js	1f
 	movl	%eax,randseed
