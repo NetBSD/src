@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.41 2000/06/16 03:51:00 simonb Exp $	*/
+/*	$NetBSD: ps.c,v 1.42 2001/06/14 19:04:49 cyber Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.41 2000/06/16 03:51:00 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.42 2001/06/14 19:04:49 cyber Exp $");
 #endif
 #endif /* not lint */
 
@@ -391,7 +391,7 @@ main(argc, argv)
 	}
 	if (nentries == 0) {
 		printheader();
-		exit(0);
+		exit(1);
 	}
 	/*
 	 * sort proc list
