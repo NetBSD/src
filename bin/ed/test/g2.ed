@@ -1,7 +1,0 @@
-#!/bin/sh -
-../ed - <<\EOT
-r \g2.d
-g/[2-4]/-1,+1c\
-hello world
-w \g2.o
-EOT

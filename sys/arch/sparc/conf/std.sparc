@@ -1,9 +1,0 @@
-# from:	@(#)std.sparc	8.1 (Berkeley) 6/11/93
-# $Id: std.sparc,v 1.4 1994/10/15 06:01:23 deraadt Exp $
-# standard SPARCstation information.
-
-machine	sparc
-
-mainbus0 at root
-
-cpu0	at mainbus0
