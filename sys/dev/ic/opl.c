@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.12 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: opl.c,v 1.13 2001/09/29 13:56:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,7 +169,21 @@ opl_attach(sc)
 
 	printf(": model OPL%d\n", sc->model);
 
-	midi_attach_mi(&midisyn_hw_if, &sc->syn, &sc->mididev.dev);
+	sc->sc_mididev =
+	    midi_attach_mi(&midisyn_hw_if, &sc->syn, &sc->mididev.dev);
+}
+
+int
+opl_detach(sc, flags)
+	struct opl_softc *sc;
+	int flags;
+{
+	int rv = 0;
+
+	if (sc->sc_mididev != NULL)
+		rv = config_detach(sc->sc_mididev, flags);
+
+	return(rv);
 }
 
 static void
