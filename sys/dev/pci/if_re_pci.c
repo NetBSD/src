@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.6 2005/02/13 09:10:54 jdolecek Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.7 2005/02/23 09:18:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -155,12 +155,21 @@ re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 			 * Temporarily map the I/O space
 			 * so we can read the chip ID register.
 			 */
+#ifdef RE_USEIOSPACE
 			if (pci_mapreg_map(pa, RTK_PCI_LOIO,
 			    PCI_MAPREG_TYPE_IO, 0, &rtk_btag,
 			    &rtk_bhandle, NULL, &bsize)) {
 				aprint_error("can't map i/o space\n");
 				return 0;
 			}
+#else
+			if (pci_mapreg_map(pa, RTK_PCI_LOMEM,
+			    PCI_MAPREG_TYPE_MEM, 0, &rtk_btag,
+			    &rtk_bhandle, NULL, &bsize)) {
+				aprint_error("can't map mem space\n");
+				return 0;
+			}
+#endif
 			hwrev = bus_space_read_4(rtk_btag, rtk_bhandle,
 			    RTK_TXCFG) & RTK_TXCFG_HWREV;
 			bus_space_unmap(rtk_btag, rtk_bhandle, bsize);
