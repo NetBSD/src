@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.68 1999/01/06 05:54:39 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.69 1999/02/20 09:57:35 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -456,7 +456,7 @@ slot_noint(client_data)
 }
 
 void
-via_shutdown()
+via_powerdown()
 {
 	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirB) |= 0x04;  /* Set write for bit 2 */
