@@ -1,5 +1,5 @@
 
-/*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
+/*	$NetBSD: mount.h,v 1.49 1996/10/23 22:53:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -120,7 +120,7 @@ struct mount {
 };
 
 /*
- * Mount flags.
+ * Mount flags.  XXX BEWARE: these are not in numerical order!
  *
  * Unmount uses MNT_FORCE flag.
  */
@@ -131,6 +131,7 @@ struct mount {
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
+#define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 
 /*
  * exported mount flags.
