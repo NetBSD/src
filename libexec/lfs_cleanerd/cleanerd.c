@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.3 1997/10/08 00:59:18 enami Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.4 1997/10/20 02:04:03 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)cleanerd.c	8.2 (Berkeley) 1/13/94";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.3 1997/10/08 00:59:18 enami Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.4 1997/10/20 02:04:03 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,6 @@ main(argc, argv)
 	int nodaemon;
 	int opt, cmd_err;
 	char *fs_name;			/* name of filesystem to clean */
-	extern int optind;
 
 	cmd_err = nodaemon = 0;
 	while ((opt = getopt(argc, argv, "smd")) != -1) {
