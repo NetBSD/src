@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.232 2000/06/12 21:12:30 bouyer Exp $
+$NetBSD: pcidevs,v 1.233 2000/06/12 21:25:01 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1421,7 +1421,7 @@ product TRIDENT	TGUI_9682	0x9682	TGUI 9682
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */
-product TRIONES HPT366          0x0004  HPT366/370 UDMA/66 Controller
+product TRIONES HPT366          0x0004  HPT366/370 IDE Controller
 
 /* TriTech Microelectronics products*/
 product TRITECH	TR25202		0xfc02	Pyramid3D TR25202
