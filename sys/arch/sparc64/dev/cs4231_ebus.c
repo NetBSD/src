@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.2 2000/04/05 14:23:45 mrg Exp $	*/
+/*	$NetBSD: cs4231_ebus.c,v 1.3 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ cs4231_attach_ebus(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (ea->ea_naddrs) {
+	if (ea->ea_nvaddrs) {
 		bh = (bus_space_handle_t)ea->ea_vaddrs[0];
 	} else {
 		if (ebus_bus_map(ea->ea_bustag, 0,

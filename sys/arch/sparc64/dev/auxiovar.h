@@ -1,4 +1,4 @@
-/*	$NetBSD: auxiovar.h,v 1.3 2000/04/13 09:53:49 mrg Exp $	*/
+/*	$NetBSD: auxiovar.h,v 1.4 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -28,20 +28,46 @@
  * SUCH DAMAGE.
  */
 
-struct auxio_phys {
-	u_int32_t hi;
-	u_int32_t lo;
-};
+/*
+ * on sun4u, auxio exists with one register (LED) on the sbus, and 5
+ * registers on the ebus2 (pci) (LED, PCIMODE, FREQUENCY, SCSI
+ * OSCILLATOR, and TEMP SENSE.
+ *
+ * clients of the auxio registers (eg, blinken lights, or the sbus
+ * floppy) should search in auxio_cd for their matching auxio register
+ * (to deal with multiple auxio's that may appear.)
+ */
 
 struct auxio_registers {
-	struct auxio_phys	auxio_fd;
-	struct auxio_phys	auxio_audio;
-	struct auxio_phys	auxio_power;
-	struct auxio_phys	auxio_led;
-	struct auxio_phys	auxio_pci;
-	struct auxio_phys	auxio_freq;
-	struct auxio_phys	auxio_scsi;
-	struct auxio_phys	auxio_temp;
+#if 0	/* these do not exist on the Ebus2 */
+	volatile u_int32_t *auxio_fd;
+	volatile u_int32_t *auxio_audio;
+	volatile u_int32_t *auxio_power;
+#endif
+	volatile u_int32_t *auxio_led;
+	volatile u_int32_t *auxio_pci;
+	volatile u_int32_t *auxio_freq;
+	volatile u_int32_t *auxio_scsi;
+	volatile u_int32_t *auxio_temp;
 };
 
-extern struct auxio_registers auxio_registers;
+struct auxio_softc {
+	struct device		sc_dev;
+	struct auxio_registers	sc_registers;
+	int			sc_flags;
+#define	AUXIO_LEDONLY		0x1
+#define	AUXIO_EBUS		0x2
+#define	AUXIO_SBUS		0x4
+};
+
+/*
+ * XXX: old interfaces.  we set auxio_reg the first auxio we attach.
+ */
+#ifndef _LOCORE
+/*
+ * Copy of AUXIO_REG for the benefit of assembler modules (eg. trap handlers)
+ * as AUXREG_VA depends on NBPG which is not a constant.
+ */
+volatile u_char *auxio_reg;
+unsigned int auxregbisc __P((int, int));
+#endif
