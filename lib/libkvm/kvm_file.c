@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.13 1999/07/02 15:28:50 simonb Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.14 1999/08/19 05:42:56 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.13 1999/07/02 15:28:50 simonb Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.14 1999/08/19 05:42:56 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,15 +98,15 @@ kvm_deadfiles(kd, op, arg, ofhead, nfiles)
 	/*
 	 * first copyout filehead
 	 */
-	if (buflen > sizeof(fhead)) {
-		if (KREAD(kd, ofhead, &fhead)) {
-			_kvm_err(kd, kd->program, "can't read filehead");
-			return (0);
-		}
-		buflen -= sizeof(fhead);
-		where -= sizeof(fhead);
-		(void)memcpy(kd->argspc, &fhead, sizeof(fhead));
+	if (buflen < sizeof(fhead) ||
+	    KREAD(kd, ofhead, &fhead)) {
+		_kvm_err(kd, kd->program, "can't read filehead");
+		return (0);
 	}
+	buflen -= sizeof(fhead);
+	where += sizeof(fhead);
+	(void)memcpy(kd->argspc, &fhead, sizeof(fhead));
+
 	/*
 	 * followed by an array of file structures
 	 */
@@ -118,7 +118,7 @@ kvm_deadfiles(kd, op, arg, ofhead, nfiles)
 			}
 			buflen -= sizeof(struct file);
 			fp = (struct file *)(void *)where;
-			where -= sizeof(struct file);
+			where += sizeof(struct file);
 			n++;
 		}
 	}
@@ -171,8 +171,8 @@ kvm_getfiles(kd, op, arg, cnt)
 	} else {
 		struct nlist nl[3], *p;
 
-		nl[0].n_name = "_filehead";
-		nl[1].n_name = "_numfiles";
+		nl[0].n_name = "_nfiles";
+		nl[1].n_name = "_filehead";
 		nl[2].n_name = 0;
 
 		if (kvm_nlist(kd, nl) != 0) {
