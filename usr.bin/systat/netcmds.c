@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.9 1999/12/20 03:45:02 jwise Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.10 1999/12/20 04:06:25 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.9 1999/12/20 03:45:02 jwise Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.10 1999/12/20 04:06:25 jwise Exp $");
 #endif /* not lint */
 
 /*
@@ -117,11 +117,11 @@ netstat_show (args)
 		showports();
 		return;
 	}
-	if (prefix(args, "protos"))
+	if (strstr(args, "protos") == args)
 		showprotos();
-	else if (prefix(args, "hosts"))
+	else if (strstr(args, "hosts") == args)
 		showhosts();
-	else if (prefix(args, "ports"))
+	else if (strstr(args, "ports") == args)
 		showports();
 	else
 		addstr("show what?");
