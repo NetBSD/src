@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.474 2002/03/04 13:24:10 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.475 2002/03/19 15:10:21 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.474 $"
+#ident 		"GENERIC-$Revision: 1.475 $"
 
 maxusers	32		# estimated number of users
 
@@ -792,19 +792,21 @@ aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
-# Prolofic PL2301/PL2302 host-to-host adapter
+# Prolific PL2301/PL2302 host-to-host adapter
 upl*	at uhub? port ?
 
 # Serial adapters
-# FTDI FT8U100AX serial adapter
-uftdi*	at uhub? port ?
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
 
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ?
 
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
+uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
