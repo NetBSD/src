@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.2 2000/03/21 20:47:34 augustss Exp $
+.\" $NetBSD: pcibios.4,v 1.3 2000/04/28 19:15:15 uch Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,8 +44,10 @@
 .Cd "options   PCIBIOS"
 .Cd "#options  PCIBIOSVERBOSE"
 .Cd "options   PCIBIOS_INTR_FIXUP"
+.Cd "#options 	PCIBIOS_IRQS_HINT=""0x0a00"" #IRQ 9,11"
 .Cd "#options  PCIINTR_DEBUG"
 .Cd "options   PCIBIOS_BUS_FIXUP"
+.Cd "options   PCIBIOS_ADDR_FIXUP"
 .Pp
 .Sh INTRODUCTION
 .Nx
@@ -67,15 +69,19 @@ turn on the PCI BIOS support.
 make the setup procedure verbose.
 .It Nm PCIBIOS_INTR_FIXUP
 fixup PCI interrupt routing.
+.It Nm PCIBIOS_IRQS_HINT
+user can give the hint of IRQs. when PCI BIOS support can't 
+guess adequeate IRQ for the device, it is used.
 .It Nm PCIINTR_DEBUG
 super-verbose PCI interrupt fixup.
 .It Nm PCIBIOS_BUS_FIXUP
 fixup PCI bus numbering; needed for many 
 .Xr cardbus 4
 bridges.
+.It Nm PCIBIOS_ADDR_FIXUP
+fixup PCI I/O and memory addresses.
 .El
 .Sh BUGS
-The PCI BIOS support does not yet assign I/O and memory addresses.
 .Sh SEE ALSO
 .Xr cardbus 4 ,
 .Xr pci 4
