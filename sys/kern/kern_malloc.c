@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.50 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.51 2000/05/08 20:02:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -227,7 +227,7 @@ malloc(size, type, flags)
 #ifdef KMEMSTATS
 	struct kmemstats *ksp = &kmemstats[type];
 
-	if (((unsigned long)type) > M_LAST)
+	if (__predict_false(((unsigned long)type) > M_LAST))
 		panic("malloc - bogus type");
 #endif
 	indx = BUCKETINDX(size);
@@ -258,7 +258,7 @@ malloc(size, type, flags)
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 				(vsize_t)ctob(npg), 
 				(flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0);
-		if (va == NULL) {
+		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
 			 * wait, if there is no map space avaiable, because
@@ -334,8 +334,7 @@ malloc(size, type, flags)
 				       VM_PROT_WRITE);
 		vm_map_unlock(kmem_map);
 
-		if (!rv)
-								{
+		if (__predict_false(rv == 0)) {
 			printf(
 		    "%s %ld of object %p size %ld %s %s (invalid addr %p)\n",
 			    "Data modified on freelist: word", 
@@ -363,7 +362,7 @@ malloc(size, type, flags)
 	/* and check that the data hasn't been modified. */
 	end = (int32_t *)&va[copysize];
 	for (lp = (int32_t *)va; lp < end; lp++) {
-		if (*lp == WEIRD_ADDR)
+		if (__predict_true(*lp == WEIRD_ADDR))
 			continue;
 		printf("%s %ld of object %p size %ld %s %s (0x%x != 0x%x)\n",
 		    "Data modified on freelist: word",
@@ -439,8 +438,8 @@ free(addr, type)
 	 * have allocated in the first place.  That is, check
 	 * to see that the address is within kmem_map.
 	 */
-	if ((vaddr_t)addr < kmem_map->header.start ||
-	    (vaddr_t)addr >= kmem_map->header.end)
+	if (__predict_false((vaddr_t)addr < kmem_map->header.start ||
+			    (vaddr_t)addr >= kmem_map->header.end))
 		panic("free: addr %p not within kmem_map", addr);
 #endif
 
@@ -486,7 +485,7 @@ free(addr, type)
 	 * Check for multiple frees. Use a quick check to see if
 	 * it looks free before laboriously searching the freelist.
 	 */
-	if (freep->spare0 == WEIRD_ADDR) {
+	if (__predict_false(freep->spare0 == WEIRD_ADDR)) {
 		for (cp = kbp->kb_next; cp;
 		    cp = ((struct freelist *)cp)->next) {
 			if (addr != cp)
@@ -605,7 +604,7 @@ realloc(curaddr, newsize, type, flags)
 	 * Allocate a new one and copy the data.
 	 */
 	newaddr = malloc(newsize, type, flags);
-	if (newaddr == NULL) {
+	if (__predict_false(newaddr == NULL)) {
 		/*
 		 * Malloc() failed, because flags included M_NOWAIT.
 		 * Return NULL to indicate that failure.  The old
