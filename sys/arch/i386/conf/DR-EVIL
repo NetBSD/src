@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.28 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: DR-EVIL,v 1.29 2001/07/09 15:05:23 soren Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -384,7 +384,6 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI (experimental)
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
