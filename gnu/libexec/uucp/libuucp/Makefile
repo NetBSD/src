@@ -1,5 +1,5 @@
 # This is the Makefile for the libuucp subdirectory of Taylor UUCP
-# $Id: Makefile,v 1.4 1993/10/28 05:00:23 cgd Exp $
+# $Id: Makefile,v 1.5 1997/05/07 16:20:29 mycroft Exp $
 
 LIB=		uucp
 SRCS=		buffer.c crc.c debug.c escape.c getopt.c getop1.c parse.c \
@@ -10,6 +10,7 @@ NOMAN=		noman
 NOPROFILE=	noprofile
 NOPIC=		nopic
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
