@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.26 2003/06/24 09:41:34 martin Exp $	*/
+/*	$NetBSD: apmd.c,v 1.27 2004/01/06 13:29:55 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@
 #include "pathnames.h"
 #include "apm-proto.h"
 
-#define MAX(a,b) (a > b ? a : b)
 #define TRUE 1
 #define FALSE 0
 
