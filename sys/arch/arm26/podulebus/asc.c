@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.2 2001/01/07 15:56:02 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.3 2001/01/23 22:07:59 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -187,9 +187,11 @@ ascattach(pdp, dp, auxp)
 	sbicinit(sbic);
 
 	if (!asc_poll) {
+		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		    dp->dv_xname, "intr");
 		sc->sc_ih =
 		    podulebus_irq_establish(sc->sc_softc.sc_dev.dv_parent,
-		    pa->pa_slotnum, IPL_BIO, asc_intr, sc, dp->dv_xname);
+		    pa->pa_slotnum, IPL_BIO, asc_intr, sc, &sc->sc_intrcnt);
 		irq_enable(sc->sc_ih);
 	}
 

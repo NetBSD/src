@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.3 2001/01/11 14:56:07 bjh21 Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.4 2001/01/23 22:07:59 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: upc_iobus.c,v 1.3 2001/01/11 14:56:07 bjh21 Exp $");
+__RCSID("$NetBSD: upc_iobus.c,v 1.4 2001/01/23 22:07:59 bjh21 Exp $");
 
 #include <sys/device.h>
 
@@ -51,6 +51,10 @@ static void upc_iobus_attach(struct device *, struct device *, void *);
 
 struct upc_iobus_softc {
 	struct upc_softc	sc_upc;
+	struct evcnt		sc_intrcnt4;
+	struct evcnt		sc_intrcntw;
+	struct evcnt		sc_intrcntf;
+	struct evcnt		sc_intrcntp;
 };
 
 struct cfattach upc_iobus_ca = {
@@ -91,13 +95,33 @@ upc_iobus_attach(struct device *parent, struct device *self, void *aux)
 		      &upc->sc_ioh);
 	upc_attach(upc);
 
-	irq_establish(IOC_IRQ_IL2, upc->sc_irq4.uih_level,
-	    upc->sc_irq4.uih_func, upc->sc_irq4.uih_arg, "upc(irq4)");
-	irq_establish(IOC_IRQ_IL3, upc->sc_wintr.uih_level,
-	    upc->sc_wintr.uih_func, upc->sc_wintr.uih_arg, "upc(wintr)");
-	irq_establish(IOC_IRQ_IL4, upc->sc_fintr.uih_level,
-	    upc->sc_fintr.uih_func, upc->sc_fintr.uih_arg, "upc(fintr)");
-	irq_establish(IOC_IRQ_IL6, upc->sc_pintr.uih_level,
-	    upc->sc_pintr.uih_func, upc->sc_pintr.uih_arg, "upc(pintr)");
+	if (upc->sc_irq4.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcnt4, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "irq4");
+		irq_establish(IOC_IRQ_IL2, upc->sc_irq4.uih_level,
+		    upc->sc_irq4.uih_func, upc->sc_irq4.uih_arg,
+		    &sc->sc_intrcnt4);
+	}
+	if (upc->sc_wintr.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcntw, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "wdc intr");
+		irq_establish(IOC_IRQ_IL3, upc->sc_wintr.uih_level,
+		    upc->sc_wintr.uih_func, upc->sc_wintr.uih_arg,
+		    &sc->sc_intrcntw);
+	}
+	if (upc->sc_fintr.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcntf, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "fdc intr");
+		irq_establish(IOC_IRQ_IL4, upc->sc_fintr.uih_level,
+		    upc->sc_fintr.uih_func, upc->sc_fintr.uih_arg,
+		    &sc->sc_intrcntf);
+	}
+	if (upc->sc_pintr.uih_func != NULL) {
+		evcnt_attach_dynamic(&sc->sc_intrcntp, EVCNT_TYPE_INTR, NULL,
+		    self->dv_xname, "lpt intr");
+		irq_establish(IOC_IRQ_IL6, upc->sc_pintr.uih_level,
+		    upc->sc_pintr.uih_func, upc->sc_pintr.uih_arg,
+		    &sc->sc_intrcntp);
+	}
 	/* IRQ3 on the 82C71x is not connected */
 }
