@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.140 2004/04/07 23:15:02 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.141 2004/04/08 02:52:28 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2554,3 +2554,12 @@ gnu/usr.bin/send-pr/send-pr.sh			patch
 
 	Make tempfile w. mktemp. PR#21840
 	[reed, ticket #135]
+
+sys/miscfs/fifofs/fifo_vnops.c			patch
+
+	Handle the case of fifo_close() getting called from vclean(). In that
+	case, we tear down the node-specific storage as if there were no more 
+	open users. As vclean() will VT_NON the vnode before anyone else will 
+	get access to the vnode, this is our last chance.
+	Fixes memory leak in revoke(2) path.
+	[wrstuden, ticket #125]
