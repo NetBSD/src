@@ -1,4 +1,4 @@
-$NetBSD: am-utils.info-1,v 1.1.1.4 1998/08/08 22:05:40 christos Exp $
+$NetBSD: am-utils.info-1,v 1.1.1.5 1999/02/01 18:47:01 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
@@ -109,7 +109,7 @@ network version 2 distribution
    Revision 6.0 was made independently by Erez Zadok
 <ezk@cs.columbia.edu> at the Computer Science Department (http://www.cs.columbia.edu/) of Columbia University (http://www.columbia.edu/),
 as part of his
-PhD thesis work (http://www.cs.columbia.edu/~ezk/research/tp/thesis_proposal.html). *Note History:: for more details.
+PhD thesis work (http://www.cs.columbia.edu/~ezk/research/tp/thesis_proposal.html). *Note History::, for more details.
 
 Bug Reports
 ===========
@@ -535,57 +535,76 @@ am-utils, not all systems listed here have been verified working for all
 features.
 
 Auto-Configured System Name  Config  Compile  Amd  NFS3  Shlib  Hlfsd  
-alpha-dec-osf2.1             yes     yes      yes                      
-alpha-dec-osf4.0             yes     yes      yes  yes                 
-alphaev5-unknown-linux-gnu   yes     yes      yes  n/a   yes           
-hppa1.0-hp-hpux11.00         yes     yes      yes  no                  
-hppa1.1-hp-hpux10.10         yes     yes      yes  n/a   no            
-hppa1.1-hp-hpux10.20         yes     yes      yes  n/a   no            
-hppa1.1-hp-hpux9.01          yes     yes      yes  n/a                 
-hppa1.1-hp-hpux9.05          yes     yes      yes  n/a                 
-hppa1.1-hp-hpux9.07          yes     yes      yes  n/a                 
-i386-pc-bsdi2.1              yes     yes      yes  n/a                 
-i386-pc-bsdi3.0              yes     yes      yes  n/a                 
-i386-pc-bsdi3.1              yes     yes      yes  n/a                 
+alpha-dec-osf2.1             yes     yes      yes  ?     no     ?      
+alpha-dec-osf4.0             yes     yes      yes  yes   yes    ?      
+alphaev5-unknown-linux-gnu   yes     yes      yes  n/a   yes    ?      
+hppa1.0-hp-hpux11.00         yes     yes      yes  no    yes    ?      
+hppa1.1-hp-hpux10.10         yes     yes      yes  n/a   no     ?      
+hppa1.1-hp-hpux10.20         yes     yes      yes  n/a   no     ?      
+hppa1.1-hp-hpux9.01          yes     yes      yes  n/a   yes    ?      
+hppa1.1-hp-hpux9.05          yes     yes      yes  n/a   yes    ?      
+hppa1.1-hp-hpux9.07          yes     yes      yes  n/a   yes    ?      
+hppa2.0w-hp-hpux11.00        yes     yes      yes  n/a   yes    ?      
+i386-pc-bsdi2.1              yes     yes      yes  n/a   no     ?      
+i386-pc-bsdi3.0              yes     yes      yes  yes   no     ?      
+i386-pc-bsdi3.1              yes     yes      yes  yes   no     ?      
+i386-pc-bsdi4.0              yes     yes      yes  yes   yes    ?      
 i386-pc-solaris2.5.1         yes     yes      yes  yes   yes    yes    
 i386-pc-solaris2.6           yes     yes      yes  yes   yes    yes    
-i386-unknown-freebsd2.1.0    yes     yes      yes  n/a                 
-i386-unknown-freebsd2.2.1    yes     yes      yes  n/a   yes           
-i386-unknown-freebsd3.0      yes     yes      yes  yes   yes           
-i386-unknown-netbsd1.2.1     yes     yes      yes  yes   yes           
-i386-unknown-netbsd1.3       yes     yes      yes  yes   yes           
-i386-unknown-netbsd1.3.1     yes     yes      yes  yes   yes           
-i386-unknown-openbsd2.1      yes     yes      yes  yes   yes           
-i486-ncr-sysv4.3.03          yes     yes           yes                 
-i486-pc-linux-gnulibc1       yes     yes      yes  n/a   yes           
-i586-pc-linux-gnulinc1       yes     yes      yes  n/a   yes           
-i686-pc-linux-gnu            yes     yes      yes  n/a   yes           
-m68k-hp-hpux9.00             yes     yes      yes  n/a                 
-m68k-sun-sunos4.1.1          yes     yes      yes  n/a                 
-m68k-next-nextstep3          yes     yes      yes  n/a                 
-mips-dec-ultrix4.3           yes     yes      yes  n/a                 
-mips-sgi-irix5.2                                                       
-mips-sgi-irix5.3             yes     yes      yes  yes                 
-mips-sgi-irix6.2             yes     yes      yes  yes                 
-mips-sgi-irix6.4             yes     yes      yes  yes   yes           
-powerpc-ibm-aix4.1.5.0       yes     yes      yes  n/a                 
-powerpc-ibm-aix4.2.1.0       yes     yes      yes  yes                 
-rs6000-ibm-aix3.2            yes     yes      yes  n/a                 
-rs6000-ibm-aix3.2.5          yes     yes      yes  n/a                 
-rs6000-ibm-aix4.1.4.0        yes     yes      yes  n/a                 
-rs6000-ibm-aix4.1.5.0        yes     yes      yes  n/a                 
-sparc-sun-solaris2.3         yes     yes      yes  n/a                 
-sparc-sun-solaris2.4         yes     yes      yes  n/a   yes           
-sparc-sun-solaris2.5         yes     yes      yes  yes   yes           
+i386-pc-solaris2.7           yes     yes      yes  yes   yes    yes    
+i386-unknown-freebsd2.1.0    yes     yes      yes  n/a   ?      ?      
+i386-unknown-freebsd2.2.1    yes     yes      yes  n/a   yes    ?      
+i386-unknown-freebsd2.2.6    yes     yes      yes  n/a   yes    ?      
+i386-unknown-freebsd2.2.7    yes     yes      yes  n/a   yes    ?      
+i386-unknown-freebsd2.2.8    yes     yes      yes  n/a   yes    ?      
+i386-unknown-freebsd3.0      yes     yes      yes  yes   yes    ?      
+i386-unknown-netbsd1.2.1     yes     yes      yes  yes   yes    ?      
+i386-unknown-netbsd1.3       yes     yes      yes  yes   yes    ?      
+i386-unknown-netbsd1.3.1     yes     yes      yes  yes   yes    ?      
+i386-unknown-netbsd1.3.2     yes     yes      yes  yes   yes    ?      
+i386-unknown-netbsd1.3.3     yes     yes      yes  yes   yes    ?      
+i386-unknown-openbsd2.1      yes     yes      yes  yes   yes    ?      
+i386-unknown-openbsd2.2      yes     yes      yes  yes   yes    ?      
+i386-unknown-openbsd2.3      yes     yes      yes  yes   yes    ?      
+i386-unknown-openbsd2.4      yes     yes      yes  yes   yes    ?      
+i486-ncr-sysv4.3.03          yes     yes      ?    yes   yes    ?      
+i486-pc-linux-gnulibc1       yes     yes      yes  n/a   yes    ?      
+i486-pc-linux-gnuoldld       yes     yes      yes  n/a   yes    ?      
+i586-pc-linux-gnu            yes     yes      yes  n/a   yes    ?      
+i586-pc-linux-gnulibc1       yes     yes      yes  n/a   yes    ?      
+i686-pc-linux-gnu            yes     yes      yes  n/a   yes    ?      
+i686-pc-linux-gnulibc1       yes     yes      yes  n/a   yes    ?      
+m68k-hp-hpux9.00             yes     yes      yes  n/a   ?      ?      
+m68k-sun-sunos4.1.1          yes     yes      yes  n/a   no     ?      
+m68k-next-nextstep3          yes     yes      yes  n/a   no     ?      
+mips-dec-ultrix4.3           yes     yes      yes  n/a   ?      ?      
+mips-sgi-irix5.2             ?       ?        ?    ?     ?      ?      
+mips-sgi-irix5.3             yes     yes      yes  yes   yes    ?      
+mips-sgi-irix6.2             yes     yes      yes  yes   yes    ?      
+mips-sgi-irix6.4             yes     yes      yes  yes   yes    ?      
+mips-sgi-irix6.5             yes     yes      ?    yes   yes    ?      
+powerpc-ibm-aix4.1.5.0       yes     yes      yes  n/a   no/broken?      
+powerpc-ibm-aix4.2.1.0       yes     yes      yes  yes   no/broken?      
+powerpc-ibm-aix4.3.1.0       yes     yes      ?    yes   ?      ?      
+rs6000-ibm-aix3.2            yes     yes      yes  n/a   ?      ?      
+rs6000-ibm-aix3.2.5          yes     yes      yes  n/a   ?      ?      
+rs6000-ibm-aix4.1.4.0        yes     yes      yes  n/a   no/broken?      
+rs6000-ibm-aix4.1.5.0        yes     yes      yes  n/a   no/broken?      
+sparc-sun-solaris2.3         yes     yes      yes  n/a   yes    ?      
+sparc-sun-solaris2.4         yes     yes      yes  n/a   yes    ?      
+sparc-sun-solaris2.5         yes     yes      yes  yes   yes    ?      
 sparc-sun-solaris2.5.1       yes     yes      yes  yes   yes    yes    
 sparc-sun-solaris2.6         yes     yes      yes  yes   yes    yes    
-sparc-sun-sunos4.1.1         yes     yes      yes  n/a   yes           
-sparc-sun-sunos4.1.3         yes     yes      yes  n/a   yes           
-sparc-sun-sunos4.1.3C        yes     yes      yes  n/a   yes           
-sparc-sun-sunos4.1.3_U1      yes     yes      yes  n/a   yes           
-sparc-sun-sunos4.1.4         yes     yes      yes  n/a   yes           
-sparc-unknown-linux-gnulibc1 yes     yes      yes  n/a   yes           
-sparc-unknown-netbsd1.2E     yes     yes      yes                      
+sparc-sun-solaris2.7         yes     yes      yes  yes   yes    yes    
+sparc-sun-sunos4.1.1         yes     yes      yes  n/a   yes    ?      
+sparc-sun-sunos4.1.3         yes     yes      yes  n/a   yes    ?      
+sparc-sun-sunos4.1.3C        yes     yes      yes  n/a   yes    ?      
+sparc-sun-sunos4.1.3_U1      yes     yes      yes  n/a   yes    ?      
+sparc-sun-sunos4.1.4         yes     yes      yes  n/a   yes    ?      
+sparc-unknown-linux-gnulibc1 yes     yes      yes  n/a   yes    ?      
+sparc-unknown-netbsd1.2E     yes     yes      yes  ?     ?      ?      
+sparc-unknown-netbsd1.2G     yes     yes      yes  ?     ?      ?      
+sparc64-unknown-linux-gnu    yes     yes      yes  n/a   yes    ?      
 
    See the `INSTALL' in the distribution for more specific details on
 building and/or configuring for some systems.
@@ -1172,41 +1191,4 @@ domain Selector Variable
 
    The local domain name as specified by the `-d' command line option.
 *Note host Selector Variable::.
-
-
-File: am-utils.info,  Node: host Selector Variable,  Next: hostd Selector Variable,  Prev: domain Selector Variable,  Up: Selectors
-
-host Selector Variable
-......................
-
-   The local hostname as determined by gethostname(2).  If no domain
-name was specified on the command line and the hostname contains a
-period `.' then the string before the period is used as the host name,
-and the string after the period is assigned to `${domain}'.  For
-example, if the hostname is `styx.doc.ic.ac.uk' then `host' would be
-`styx' and `domain' would be `doc.ic.ac.uk'.  `hostd' would be
-`styx.doc.ic.ac.uk'.
-
-
-File: am-utils.info,  Node: hostd Selector Variable,  Next: karch Selector Variable,  Prev: host Selector Variable,  Up: Selectors
-
-hostd Selector Variable
-.......................
-
-   This resolves to the `${host}' and `${domain}' concatenated with a
-`.' inserted between them if required.  If `${domain}' is an empty
-string then `${host}' and `${hostd}' will be identical.
-
-
-File: am-utils.info,  Node: karch Selector Variable,  Next: os Selector Variable,  Prev: hostd Selector Variable,  Up: Selectors
-
-karch Selector Variable
-.......................
-
-   This is provided as a hook for the kernel architecture.  This is
-used on SunOS 4 and SunOS 5, for example, to distinguish between
-different `/usr/kvm' volumes.  `${karch}' defaults to the "machine"
-value gotten from uname(2).  If the uname(2) system call is not
-available, the value of `${karch}' defaults to that of `${arch}'.
-Finally, a different value can be set with the `-k' command line option.
 

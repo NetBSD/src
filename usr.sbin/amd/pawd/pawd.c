@@ -1,7 +1,7 @@
-/*	$NetBSD: pawd.c,v 1.1.1.1 1998/08/08 22:05:39 christos Exp $	*/
+/*	$NetBSD: pawd.c,v 1.1.1.2 1999/02/01 18:46:57 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: pawd.c,v 5.2.2.1 1992/02/09 15:09:16 jsp beta 
+ * Id: pawd.c,v 1.3 1999/01/10 21:54:00 ezk Exp 
  *
  */
 
@@ -61,11 +61,14 @@
 #include <amq.h>
 
 /* dummy variables */
+#if 0
 char *progname;
 char hostname[MAXHOSTNAMELEN];
-int orig_umask, foreground, debug_flags;
 pid_t mypid;
 serv_state amd_state;
+int foreground, orig_umask;
+int debug_flags;
+#endif
 
 /* statics */
 static char *localhost="localhost";
@@ -295,4 +298,3 @@ main(int argc, char *argv[])
   }
   exit(0);
 }
-

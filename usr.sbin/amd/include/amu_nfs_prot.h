@@ -1,7 +1,5 @@
-/*	$NetBSD: amu_nfs_prot.h,v 1.1.1.3 1998/08/08 22:05:26 christos Exp $	*/
-
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +17,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_netbsd.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
+ * $Id: amu_nfs_prot.h,v 1.1.1.4 1999/02/01 18:45:53 christos Exp $
  *
  */
 
@@ -71,10 +69,8 @@
 /* this is RIGHT for 1.2G and 1.2.1 */
 typedef int (*ypall_callback_fxn_t)(u_long, char *, int, char *, int, void *);
 #endif
-#if 1
-/* this is right for 1.3beta */
+/* this is right for 1.3beta and newer */
 typedef int (*ypall_callback_fxn_t)(int, char *, int, char *, int, char *);
-#endif
 #endif /* DEFINED_YPALL_CALLBACK_FXN_T */
 
 
@@ -161,11 +157,10 @@ typedef statfsres nfsstatfsres;
 typedef symlinkargs nfssymlinkargs;
 typedef writeargs nfswriteargs;
 
-
 /*
  *
  * NetBSD 1.2 has NFS V3, but it is undefined in the header files.
- * so I define everything that's neede for NFS V3 here.
+ * so I define everything that's needed for NFS V3 here.
  */
 #ifdef NFSMNT_NFSV3
 

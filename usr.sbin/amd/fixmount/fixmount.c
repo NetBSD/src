@@ -1,7 +1,7 @@
-/*	$NetBSD: fixmount.c,v 1.1.1.4 1998/08/08 22:05:38 christos Exp $	*/
+/*	$NetBSD: fixmount.c,v 1.1.1.5 1999/02/01 18:46:51 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fixmount.c,v 5.2.2.2 1992/05/31 16:35:45 jsp Exp 
+ * Id: fixmount.c,v 1.3 1999/01/10 21:54:26 ezk Exp 
  *
  */
 
@@ -70,7 +70,7 @@ extern int fixmount_check_mount(char *host, struct in_addr hostaddr, char *path)
 
 static char dir_path[NFS_MAXPATHLEN];
 static char localhost[] = "localhost";
-static char thishost[MAXHOSTNAMELEN] = "";
+static char thishost[MAXHOSTNAMELEN + 1] = "";
 static exports mntexports;
 static int quiet = 0;
 static int type = 0;
@@ -89,11 +89,14 @@ void print_dump(mountlist);
 void usage(void);
 
 /* dummy variables */
+#if 0
 char *progname;
 char hostname[MAXHOSTNAMELEN];
-int orig_umask, foreground, debug_flags;
 pid_t mypid;
 serv_state amd_state;
+int foreground, orig_umask;
+int debug_flags;
+#endif
 
 void
 usage(void)
@@ -290,7 +293,7 @@ main(int argc, char *argv[])
   register int rpcs = 0;
   struct timeval tv;
 
-  while ((ch = getopt(argc, argv, "adervAqfh:")) != EOF)
+  while ((ch = getopt(argc, argv, "adervAqfh:")) != -1)
     switch ((char) ch) {
 
     case 'a':
@@ -356,6 +359,7 @@ main(int argc, char *argv[])
       perror("gethostname");
       exit(1);
     }
+    thishost[sizeof(thishost) - 1] = '\0';
 
     /*
      * We need the hostname as it appears to the other side's
