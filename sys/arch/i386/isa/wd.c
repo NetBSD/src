@@ -35,10 +35,9 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.61 1994/03/06 17:19:19 mycroft Exp $
+ *	$Id: wd.c,v 1.62 1994/03/07 03:18:35 mycroft Exp $
  */
 
-#define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
 
 #include "wd.h"
@@ -120,7 +119,6 @@ struct	disk {
 	u_long  dk_openpart;    /* all units open on this drive */
 	short	dk_wlabel;	/* label writable? */
 	short	dk_flags;	/* drive characteistics found */
-#define	DKFL_QUIET	0x00002	 /* report errors back, but don't complain */
 #define	DKFL_SINGLE	0x00004	 /* sector at a time mode */
 #define	DKFL_ERROR	0x00008	 /* processing a disk error */
 #define	DKFL_BSDLABEL	0x00010	 /* has a BSD disk label */
@@ -638,8 +636,13 @@ wdintr(ctrlr)
 	/* is it not a transfer, but a control operation? */
 	if (du->dk_state < OPEN) {
 		wdtab[ctrlr].b_active = 0;
-		if (wdcontrol(bp))
+		switch (wdcontrol(bp)) {
+		case -1:
+			goto done;
+		case 1:
 			wdstart(ctrlr);
+			break;
+		}
 		return;
 	}
     
@@ -668,21 +671,18 @@ wdintr(ctrlr)
 			if (++wdtab[ctrlr].b_errcnt < WDIORETRIES)
 				wdtab[ctrlr].b_active = 0;
 			else {
-				if ((du->dk_flags & DKFL_QUIET) == 0) {
-					diskerr(bp, "wd", "hard error",
-					    LOG_PRINTF, du->dk_skip,
-					    &du->dk_dd);
+				diskerr(bp, "wd", "hard error", LOG_PRINTF,
+				    du->dk_skip, &du->dk_dd);
 #ifdef WDDEBUG
-					printf("stat %b error %b\n", stat,
-					    WDCS_BITS, inb(wdc+wd_error),
-					    WDERR_BITS);
+				printf("wd%d: stat %b error %b\n", du->dk_lunit,
+				    stat, WDCS_BITS, inb(wdc+wd_error),
+				    WDERR_BITS);
 #endif
-				}
 				bp->b_error = EIO;
 				bp->b_flags |= B_ERROR;	/* flag the error */
 			}
-		} else if ((du->dk_flags & DKFL_QUIET) == 0)
-			diskerr(bp, "wd", "soft ecc", 0, du->dk_skip,
+		} else
+			diskerr(bp, "wd", "soft error", 0, du->dk_skip,
 			    &du->dk_dd);
 	}
     
@@ -722,8 +722,7 @@ outt:
 		if ((bp->b_flags & B_ERROR) == 0) {
 			du->dk_skip++;	/* Add to succ. sect */
 			du->dk_skipm++;	/* Add to succ. sect for multitransfer */
-			if (wdtab[ctrlr].b_errcnt &&
-			    (du->dk_flags & DKFL_QUIET) == 0)
+			if (wdtab[ctrlr].b_errcnt)
 				diskerr(bp, "wd", "soft error", 0, du->dk_skip,
 				    &du->dk_dd);
 			wdtab[ctrlr].b_errcnt = 0;
@@ -744,7 +743,7 @@ outt:
 			}
 		}
 
-done:
+	done:
 		/* done with this transfer, with or without error */
 		du->dk_flags &= ~DKFL_SINGLE;
 		wdtab[ctrlr].b_errcnt = 0;
@@ -796,15 +795,6 @@ wdopen(dev, flag, fmt, p)
 	if (du == 0)
 		return ENXIO;
     
-#ifdef QUIETWORKS
-	if (part == WDRAW)
-		du->dk_flags |= DKFL_QUIET;
-	else
-		du->dk_flags &= ~DKFL_QUIET;
-#else
-	du->dk_flags &= ~DKFL_QUIET;
-#endif
-	
 	if ((du->dk_flags & DKFL_BSDLABEL) == 0) {
 		du->dk_flags |= DKFL_WRITEPROT;
 		wdutab[lunit].b_actf = NULL;
@@ -832,12 +822,10 @@ wdopen(dev, flag, fmt, p)
 #endif
 		if (msg = readdisklabel(makewddev(major(dev), WDUNIT(dev),
 		    WDRAW), wdstrategy, &du->dk_dd, &du->dk_cpd)) {
-			if ((du->dk_flags & DKFL_QUIET) == 0) {
-				log(LOG_WARNING,
-				    "wd%d: cannot find label (%s)\n",
-				    lunit, msg);
+			log(LOG_WARNING, "wd%d: cannot find label (%s)\n",
+			    lunit, msg);
+			if (part != WDRAW)
 				return EINVAL;	/* XXX needs translation */
-			}
 		} else {
 			wdsetctlr(du);
 			du->dk_flags |= DKFL_BSDLABEL;
@@ -929,17 +917,15 @@ wdcontrol(bp)
 	case RECAL:
 		stat = inb(wdc+wd_altsts);
 		if (stat & WDCS_ERR || wdsetctlr(du) < 0) {
-			if ((du->dk_flags & DKFL_QUIET) == 0) {
-				printf("wd%d: recal failed: stat %b error %b\n",
-				    du->dk_lunit, stat, WDCS_BITS,
-				    inb(wdc+wd_error), WDERR_BITS);
-			}
+			printf("wd%d: recal failed: stat %b error %b\n",
+			    du->dk_lunit, stat, WDCS_BITS, inb(wdc+wd_error),
+			    WDERR_BITS);
 			du->dk_state = WANTOPEN;
 			if (++wdtab[ctrlr].b_errcnt < WDIORETRIES)
 				goto tryagainrecal;
 			bp->b_error = ENXIO;	/* XXX needs translation */
 			bp->b_flags |= B_ERROR;
-			return 1;
+			return -1;
 		}
 		wdtab[ctrlr].b_errcnt = 0;
 		du->dk_state = OPEN;
