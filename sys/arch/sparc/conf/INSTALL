@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.14 2000/05/31 17:35:59 matt Exp $
+#	$NetBSD: INSTALL,v 1.15 2000/07/08 11:33:24 pk Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -148,7 +148,7 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
-file-system	KERNFS		# kernel data-structure filesystem
+#file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
