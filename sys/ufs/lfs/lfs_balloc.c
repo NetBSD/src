@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.25 2000/09/09 04:49:54 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.26 2000/11/17 19:14:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -344,6 +344,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	int error;
 	extern long locked_queue_bytes;
 	struct buf *ibp;
+	size_t obufsize;
 	SEGUSE *sup;
 
 	ip = VTOI(vp);
@@ -355,6 +356,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	 * Get the seglock so we don't enlarge blocks or change the segment
 	 * accounting information while a segment is being written.
 	 */
+    top:
 	lfs_seglock(fs, SEGM_PROT);
 
 	if (!ISSPACE(fs, bb, curproc->p_ucred)) {
@@ -372,23 +374,47 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	}
 #endif
 	/*
+	 * Adjust accounting for lfs_avail.  If there's not enough room,
+	 * we will have to wait for the cleaner, which we can't do while
+	 * holding a block busy or while holding the seglock.  In that case,
+	 * release both and start over after waiting.
+	 */
+	if ((*bpp)->b_flags & B_DELWRI) {
+		if (!lfs_fits(fs, bb)) {
+			brelse(*bpp);
+#ifdef QUOTA
+			chkdq(ip, -bb, curproc->p_ucred, 0);
+#endif
+			lfs_segunlock(fs);
+			lfs_availwait(fs, bb);
+			goto top;
+		}
+		fs->lfs_avail -= bb;
+	}
+
+	/*
  	 * Fix the allocation for this fragment so that it looks like the
          * source segment contained a block of the new size.  This overcounts;
 	 * but the overcount only lasts until the block in question
 	 * is written, so the on-disk live bytes count is always correct.
 	 */
 	if ((*bpp)->b_blkno > 0) {
-		LFS_SEGENTRY(sup, fs, datosn(fs,(*bpp)->b_blkno), ibp);
-		sup->su_nbytes += (nsize-osize);
+		LFS_SEGENTRY(sup, fs, datosn(fs, (*bpp)->b_blkno), ibp);
+		sup->su_nbytes += (nsize - osize);
 		VOP_BWRITE(ibp);
 		ip->i_ffs_blocks += bb;
 	}
 	fs->lfs_bfree -= bb;
 	ip->i_lfs_effnblks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if((*bpp)->b_flags & B_LOCKED)
-		locked_queue_bytes += (nsize - osize);
+
+	obufsize = (*bpp)->b_bufsize;
 	allocbuf(*bpp, nsize);
+
+	/* Adjust locked-list accounting */
+	if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
+		locked_queue_bytes += btodb((*bpp)->b_bufsize - obufsize);
+
 	bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
 
     out:
