@@ -72,14 +72,12 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.4 1993/12/04 03:49:01 briggs Exp $
+ *	$Id: param.h,v 1.5 1993/12/06 04:09:28 briggs Exp $
  */
 
 #ifndef PSL_IPL
 #include "machine/psl.h"
 #endif /* PSL_IPL */
-
-#include "machine/exec.h"
 
 /*
  * Machine dependent constants for Macintosh II series.
@@ -93,6 +91,7 @@
  */
 #define	MACHINE		"mac68k"
 #define	MACHINE_ARCH	"m68k"
+#define	MACHINE_MID	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
