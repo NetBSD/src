@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.23 1996/09/12 01:22:59 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.24 1996/09/12 18:54:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -696,7 +696,7 @@ hilpoll(dev, events, p)
 
 	revents = events & (POLLOUT | POLLWRNORM);
 
-	/* Attempt to safe some work. */
+	/* Attempt to save some work. */
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 
