@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.4 1994/10/26 05:44:58 cgd Exp $	*/
+/*	$NetBSD: printf.c,v 1.5 1995/02/21 06:33:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -178,4 +178,13 @@ kprintn(ul, base)
 	do {
 		putchar(*--p);
 	} while (p > buf);
+}
+
+void
+twiddle()
+{
+	static int pos;
+
+	putchar("|/-\\"[pos++ & 3]);
+	putchar('\b');
 }

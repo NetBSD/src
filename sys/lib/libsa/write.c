@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.3 1994/10/26 05:45:11 cgd Exp $	*/
+/*	$NetBSD: write.c,v 1.4 1995/02/21 06:33:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -80,6 +80,7 @@ write(fd, dest, bcount)
 		return (-1);
 	}
 	if (f->f_flags & F_RAW) {
+		twiddle();
 		errno = (f->f_dev->dv_strategy)(f->f_devdata, F_WRITE,
 			(daddr_t)0, bcount, dest, &resid);
 		if (errno)

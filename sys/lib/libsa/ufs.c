@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.10 1995/01/07 20:53:31 ws Exp $	*/
+/*	$NetBSD: ufs.c,v 1.11 1995/02/21 06:33:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -118,6 +118,7 @@ read_inode(inumber, f)
 	 * Read inode and save it.
 	 */
 	buf = alloc(fs->fs_bsize);
+	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 		fsbtodb(fs, ino_to_fsba(fs, inumber)), fs->fs_bsize, buf, &rsize);
 	if (rc)
@@ -226,6 +227,7 @@ block_map(f, file_block, disk_block_p)
 			if (fp->f_blk[level] == (char *)0)
 				fp->f_blk[level] =
 					alloc(fs->fs_bsize);
+			twiddle();
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 				fsbtodb(fp->f_fs, ind_block_num),
 				fs->fs_bsize,
@@ -288,6 +290,7 @@ buf_read_file(f, buf_p, size_p)
 			bzero(fp->f_buf, block_size);
 			fp->f_buf_size = block_size;
 		} else {
+			twiddle();
 			rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 				fsbtodb(fs, disk_block),
 				block_size, fp->f_buf, &fp->f_buf_size);
@@ -393,6 +396,7 @@ ufs_open(path, f)
 	/* allocate space and read super block */
 	fs = alloc(SBSIZE);
 	fp->f_fs = fs;
+	twiddle();
 	rc = (f->f_dev->dv_strategy)(f->f_devdata, F_READ,
 		SBLOCK, SBSIZE, (char *)fs, &buf_size);
 	if (rc)
@@ -512,6 +516,7 @@ ufs_open(path, f)
 				if (rc)
 					goto out;
 				
+				twiddle();
 				rc = (f->f_dev->dv_strategy)(f->f_devdata,
 					F_READ, fsbtodb(fs, disk_block),
 					fs->fs_bsize, buf, &buf_size);
