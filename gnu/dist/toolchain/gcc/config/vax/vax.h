@@ -82,6 +82,7 @@ extern int target_flags;
     {"d-float", -MASK_G_FLOAT, "Generate DFLOAT double precision code"}, \
     {"indirect",  MASK_INDIRECT, "Allow indirect memory references in PIC code"}, \
     {"no-indirect",  -MASK_INDIRECT, "Disallow indirect memory references in PIC code"}, \
+    {"no-asm-pic", 0, "Don't assemble as PIC code"}, \
     { "", TARGET_DEFAULT, 0}}
 
 /* Default target_flags if no switches specified.  */
