@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.61 1997/03/24 18:28:40 scottr Exp $
+#	$NetBSD: GENERIC,v 1.62 1997/04/08 03:00:37 scottr Exp $
 #
 # GENERIC
 
@@ -71,6 +71,7 @@ options 	FPSP
 options 	FPU_EMULATE
 options 	ZS_CONSOLE_ABORT
 options 	DISABLE_EXT_CACHE # Don't use IIci external cache
+options 	MRG_ADB		# Use ROM-based ADB driver
 
 config		netbsd	root on ? type ?
 
