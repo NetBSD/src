@@ -3472,10 +3472,7 @@
 (define_split
   [(set (match_operand:TF 0 "register_operand" "")
         (match_operand:TF 1 "register_operand" ""))]
-  "reload_completed
-   && (! TARGET_ARCH64
-       || (TARGET_FPU
-           && ! TARGET_HARD_QUAD))"
+  "reload_completed"
   [(clobber (const_int 0))]
   "
 {
