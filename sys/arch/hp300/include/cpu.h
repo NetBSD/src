@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2002/10/20 02:37:27 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2002/11/02 20:03:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -264,5 +264,23 @@ int	kvtop __P((caddr_t));
 
 #define	MMU_FAULT	(MMU_PTF|MMU_PF|MMU_WPF|MMU_BERR)
 #define	MMU_ENAB	(MMU_UMEN|MMU_SMEN|MMU_IEN|MMU_FPE)
+
+#if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
+#define M68K_CACHEOPS_MACHDEP
+#endif
+
+#ifdef CACHE_HAVE_PAC
+#define M68K_CACHEOPS_MACHDEP_PCIA
+#endif
+
+#ifdef CACHE_HAVE_VAC
+#define M68K_CACHEOPS_MACHDEP_DCIA
+#define M68K_CACHEOPS_MACHDEP_DCIS
+#define M68K_CACHEOPS_MACHDEP_DCIU
+#define M68K_CACHEOPS_MACHDEP_TBIA
+#define M68K_CACHEOPS_MACHDEP_TBIS
+#define M68K_CACHEOPS_MACHDEP_TBIAS
+#define M68K_CACHEOPS_MACHDEP_TBIAU
+#endif
 
 #endif /* _HP300_CPU_H_ */
