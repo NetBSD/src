@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.16 1999/08/26 22:44:29 thorpej Exp $ */
+/*	 $NetBSD: rasops.c,v 1.17 1999/09/17 00:09:34 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.16 1999/08/26 22:44:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.17 1999/09/17 00:09:34 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -359,18 +359,17 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 #ifdef RASOPS_CLIPPING
 	fg &= 7;
 	bg &= 7;
-	flg &= 255;
 #endif
-	if (flg & WSATTR_BLINK)
+	if ((flg & WSATTR_BLINK) != 0)
 		return (EINVAL);
 		
-	if (flg & WSATTR_REVERSE) {
+	if ((flg & WSATTR_REVERSE) != 0) {
 		swap = fg;
 		fg = bg;
 		bg = swap;
 	}
 
-	if (flg & WSATTR_HILIT)
+	if ((flg & WSATTR_HILIT) != 0)
 		fg += 8;
 		
 	flg = ((flg & WSATTR_UNDERLINE) ? 1 : 0);
@@ -382,7 +381,7 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 		flg |= 4;
 
 	*attr = (bg << 16) | (fg << 24) | flg;
-	return 0;
+	return (0);
 }
 
 
@@ -397,23 +396,20 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 {
 	int swap;
 
-#ifdef RASOPS_CLIPPING
-	flg &= 255;
-#endif
 	fg = (fg == WSCOL_BLACK ? 0 : 1);
 	bg = (bg == WSCOL_BLACK ? 0 : 1);
 	
-	if (flg & WSATTR_BLINK)
+	if ((flg & (WSATTR_BLINK | WSATTR_HILIT)) != 0)
 		return (EINVAL);
 		
-	if (flg & WSATTR_REVERSE) {
+	if ((flg & WSATTR_REVERSE) != 0) {
 		swap = fg;
 		fg = bg;
 		bg = swap;
 	}
 
 	*attr = (bg << 16) | (fg << 24) | ((flg & WSATTR_UNDERLINE) ? 7 : 6);
-	return 0;
+	return (0);
 }
 
 
