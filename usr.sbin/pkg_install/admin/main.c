@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.40 2003/09/13 05:48:50 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2003/09/18 09:56:21 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.40 2003/09/13 05:48:50 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2003/09/18 09:56:21 agc Exp $");
 #endif
 
 /*
@@ -49,14 +49,34 @@ __RCSID("$NetBSD: main.c,v 1.40 2003/09/13 05:48:50 jlam Exp $");
 
 #define DEFAULT_SFX	".t[bg]z"	/* default suffix for ls{all,best} */
 
-static const char Options[] = "bd:K:s:V";
-
-void    usage(void);
+static const char Options[] = "K:SVbd:s:";
 
 int     filecnt;
 int     pkgcnt;
 
 static int checkpattern_fn(const char *, void *);
+
+/* print usage message and exit */
+static void 
+usage(const char *prog)
+{
+	(void) fprintf(stderr, "usage: %s [-b] [-d lsdir] [-V] [-s sfx] command args ...\n"
+	    "Where 'commands' and 'args' are:\n"
+	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
+	    " check [pkg ...]             - check md5 checksum of installed files\n"
+	    " add pkg ...                 - add pkg files to database\n"
+	    " delete pkg ...              - delete file entries for pkg in database\n"
+#ifdef PKGDB_DEBUG
+	    " addkey key value            - add key and value\n"
+	    " delkey key                  - delete reference to key\n"
+#endif
+	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
+	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
+	    " dump                        - dump database\n"
+	    " pmatch pattern pkg          - returns true if pkg matches pattern, otherwise false\n",
+	    prog);
+	exit(EXIT_FAILURE);
+}
 
 /*
  * Assumes CWD is in /var/db/pkg/<pkg>!
@@ -377,20 +397,34 @@ lsbasepattern_fn(const char *pkg, void *vp)
 int 
 main(int argc, char *argv[])
 {
-	int	ch;
-	char	lsdir[FILENAME_MAX];
-	char   *lsdirp = NULL;
-	char	sfx[FILENAME_MAX];
-	Boolean	use_default_sfx = TRUE;
-	Boolean show_basename_only = FALSE;
+	const char	*prog;
+	Boolean		 use_default_sfx = TRUE;
+	Boolean 	 show_basename_only = FALSE;
+	char		 lsdir[FILENAME_MAX];
+	char		 sfx[FILENAME_MAX];
+	char		*lsdirp = NULL;
+	int		 ch;
 
-	setprogname(argv[0]);
+	setprogname(prog = argv[0]);
 
 	if (argc < 2)
-		usage();
+		usage(prog);
 
 	while ((ch = getopt(argc, argv, Options)) != -1)
 		switch (ch) {
+		case 'K':
+			_pkgdb_setPKGDB_DIR(optarg);
+			break;
+
+		case 'S':
+			sfx[0] = 0x0;
+			use_default_sfx = FALSE;
+			break;
+
+		case 'V':
+			show_version();
+			/* NOTREACHED */
+
 		case 'b':
 			show_basename_only = TRUE;
 			break;
@@ -400,25 +434,22 @@ main(int argc, char *argv[])
 			lsdirp = lsdir;
 			break;
 
-		case 'K':
-			_pkgdb_setPKGDB_DIR(optarg);
-			break;
-
 		case 's':
 			(void) strlcpy(sfx, optarg, sizeof(sfx));
 			use_default_sfx = FALSE;
 			break;
 
-		case 'V':
-			show_version();
-			/* NOTREACHED */
-
 		default:
-			usage();
+			usage(prog);
 			/* NOTREACHED */
 		}
+
 	argc -= optind;
 	argv += optind;
+
+	if (argc <= 0) {
+		usage(prog);
+	}
 
 	if (use_default_sfx)
 		(void) snprintf(sfx, sizeof(sfx), "%s", DEFAULT_SFX);
@@ -433,7 +464,7 @@ main(int argc, char *argv[])
 		pkg = argv[1];
 
 		if (pattern == NULL || pkg == NULL) {
-			usage();
+			usage(prog);
 		}
 
 		if (pmatch(pattern, pkg)){
@@ -648,34 +679,13 @@ main(int argc, char *argv[])
 	}
 #endif
 	else {
-		usage();
+		usage(prog);
 	}
 
 	return 0;
 }
 
-void 
-usage(void)
-{
-	printf("usage: pkg_admin [-b] [-d lsdir] [-V] [-s sfx] command args ...\n"
-	    "Where 'commands' and 'args' are:\n"
-	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
-	    " check [pkg ...]             - check md5 checksum of installed files\n"
-	    " add pkg ...                 - add pkg files to database\n"
-	    " delete pkg ...              - delete file entries for pkg in database\n"
-#ifdef PKGDB_DEBUG
-	    " addkey key value            - add key and value\n"
-	    " delkey key                  - delete reference to key\n"
-#endif
-	    " lsall /path/to/pkgpattern   - list all pkgs matching the pattern\n"
-	    " lsbest /path/to/pkgpattern  - list pkgs matching the pattern best\n"
-	    " dump                        - dump database\n"
-	    " pmatch pattern pkg          - returns true if pkg matches pattern, otherwise false\n");
-	exit(EXIT_FAILURE);
-}
-
 void
 cleanup(int signo)
 {
-	;
 }
