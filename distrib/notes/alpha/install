@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26 2003/07/26 17:06:54 salo Exp $
+.\"	$NetBSD: install,v 1.27 2003/11/01 03:02:59 grant Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,9 +40,9 @@ the port-\*M mailing list by mailing a line saying
 .Dl subscribe port-\*M
 .Pp
 to
-.Mt majordomo@netsbd.org .
+.Mt majordomo@NetBSD.org .
 Also, see
-.Lk http://www.NetBSD.org
+.Lk http://www.NetBSD.org/
 for more information.
 .Pp
 If you encounter any problems, please report them via the mailing list or the
@@ -369,8 +369,9 @@ Many older systems will not be able to use the newer 2.0 stepping
 of the 21140, however.
 If your system appears not to be receiving packets, this may be the problem.
 (You may or may not be able to update your firmware to fix this; see
-the \*M port pages on www.NetBSD.org for more information on
-this.)
+the \*M port pages on
+.Lk http://www.NetBSD.org/
+for more information on this.)
 In general, 10 Mb cards from manufacturers other than
 .Tn DEC
 will work, and 100 Mb cards not from

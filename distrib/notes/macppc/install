@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.29 2003/10/11 00:03:08 mbw Exp $
+.\"	$NetBSD: install,v 1.30 2003/11/01 03:02:59 grant Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -392,7 +392,7 @@ You may need to keep trying higher partition numbers until you find the one
 that has your bootloader.  You can use
 .Ic pdisk
 to print out your partition map:
-.Lk http://www.netbsd.org/Ports/macppc/partitioning.html#pdisk
+.Lk http://www.NetBSD.org/Ports/macppc/partitioning.html#pdisk
 .Pp
 You should use the Open Firmware
 .Ic dir
@@ -951,7 +951,7 @@ path to your device.  See the
 .Nx*M 
 .Ic nvedit
 HOW-TO for more help:
-.Lk http://www.netbsd.org/Ports/macppc/nvedit.html
+.Lk http://www.NetBSD.org/Ports/macppc/nvedit.html
 .Pp
 .(disp
 .No 0 \*> Ic "printenv boot-device"
@@ -1050,5 +1050,5 @@ See the FAQ for some vague information on how to use the Linux
 .Ic yaboot
 system to boot
 .Nx .
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#yaboot
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#yaboot
 .bullet)
