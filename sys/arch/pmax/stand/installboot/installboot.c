@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.1 1999/11/28 00:32:29 simonb Exp $ */
+/* $NetBSD: installboot.c,v 1.2 2000/06/11 23:28:39 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -146,7 +146,7 @@ main(int argc, char **argv)
 		fprintf(stderr, "bootstrap: %s\n",
 		    bootstrap != NULL ? bootstrap : "to be cleared");
 	}
-	if (sizeof (struct boot_block) != BOOT_BLOCK_BLOCKSIZE)
+	if (sizeof (struct pmax_boot_block) != PMAX_BOOT_BLOCK_BLOCKSIZE)
 		errx(EXIT_FAILURE,
 		    "boot_block structure badly sized (build error)");
 
@@ -169,14 +169,14 @@ main(int argc, char **argv)
 static void
 clr_bootstrap(const char *disk)
 {
-	struct boot_block bb;
+	struct pmax_boot_block bb;
 	ssize_t rv;
 	int diskfd;
 
 	if ((diskfd = open(disk, nowrite ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "open %s", disk);
 
-	rv = pread(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pread(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "read %s", disk);
 	else if (rv != sizeof bb)
@@ -206,7 +206,7 @@ clr_bootstrap(const char *disk)
 	if (verbose)
 		fprintf(stderr, "writing\n");
 	
-	rv = pwrite(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pwrite(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != sizeof bb)
@@ -220,7 +220,7 @@ static void
 set_bootstrap(const char *disk, const char *bootstrap)
 {
 	struct stat bootstrapsb;
-	struct boot_block bb;
+	struct pmax_boot_block bb;
 	int diskfd, startblock;
 	char *bootstrapbuf;
 	size_t bootstrapsize;
@@ -238,7 +238,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	if ((diskfd = open(disk, nowrite ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "open %s", disk);
 
-	rv = pread(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pread(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "read %s", disk);
 	else if (rv != sizeof bb)
@@ -246,15 +246,15 @@ set_bootstrap(const char *disk, const char *bootstrap)
 
 	/* fill in the updated boot block fields */
 	if (append) {
-		startblock = howmany(disksb.st_size, BOOT_BLOCK_BLOCKSIZE);
+		startblock = howmany(disksb.st_size, PMAX_BOOT_BLOCK_BLOCKSIZE);
 	} else if (isoblock) {
-		startblock = isoblock * (ISO_DEFAULT_BLOCK_SIZE / BOOT_BLOCK_BLOCKSIZE);
+		startblock = isoblock * (ISO_DEFAULT_BLOCK_SIZE / PMAX_BOOT_BLOCK_BLOCKSIZE);
 	} else {
-		startblock = BOOT_BLOCK_OFFSET / BOOT_BLOCK_BLOCKSIZE + 1;
+		startblock = PMAX_BOOT_BLOCK_OFFSET / PMAX_BOOT_BLOCK_BLOCKSIZE + 1;
 	}
 
 	bb.map[0].start_block = startblock;
-	bb.map[0].num_blocks = howmany(bootstrapsize, BOOT_BLOCK_BLOCKSIZE);
+	bb.map[0].num_blocks = howmany(bootstrapsize, PMAX_BOOT_BLOCK_BLOCKSIZE);
 	bb.magic = DEC_BOOT_MAGIC;
 	bb.load_addr = bootstrapload;
 	bb.exec_addr = bootstrapexec;
@@ -281,7 +281,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 		fprintf(stderr, "writing bootstrap\n");
 
 	rv = pwrite(diskfd, bootstrapbuf, bootstrapsize,
-	     startblock * BOOT_BLOCK_BLOCKSIZE);
+	     startblock * PMAX_BOOT_BLOCK_BLOCKSIZE);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != bootstrapsize)
@@ -290,7 +290,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	if (verbose)
 		fprintf(stderr, "writing boot block\n");
 
-	rv = pwrite(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
+	rv = pwrite(diskfd, &bb, sizeof bb, PMAX_BOOT_BLOCK_OFFSET);
 	if (rv == -1)
 		err(EXIT_FAILURE, "write %s", disk);
 	else if (rv != sizeof bb)
