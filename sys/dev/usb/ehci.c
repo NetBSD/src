@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.25 2001/11/22 04:20:49 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.26 2001/11/23 01:16:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.25 2001/11/22 04:20:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.26 2001/11/23 01:16:27 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,8 +377,7 @@ ehci_init(ehci_softc_t *sc)
 	/* Fill the overlay qTD */
 	sqh->qh.qh_qtd.qtd_next = EHCI_NULL;
 	sqh->qh.qh_qtd.qtd_altnext = EHCI_NULL;
-	sqh->qh.qh_qtd.qtd_status =
-	    htole32(EHCI_QTD_SET_STATUS(EHCI_QTD_HALTED));
+	sqh->qh.qh_qtd.qtd_status = htole32(EHCI_QTD_HALTED);
 	sqh->sqtd = NULL;
 #ifdef EHCI_DEBUG
 	if (ehcidebug) {
@@ -699,7 +698,8 @@ ehci_idone(struct ehci_xfer *ex)
 
 	/* If there are left over TDs we need to update the toggle. */
 	if (sqtd != NULL) {
-		printf("ehci_idone: need toggle update\n");
+		if (!(xfer->rqflags & URQ_REQUEST))
+			printf("ehci_idone: need toggle update\n");
 #if 0
 		epipe->nexttoggle = EHCI_TD_GET_DT(le32toh(std->td.td_token));
 #endif
@@ -2042,7 +2042,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	dataphys = DMAADDR(dma);
 	dataphyslastpage = EHCI_PAGE(dataphys + len - 1);
 	qtdstatus = htole32(
-	    EHCI_QTD_SET_STATUS(EHCI_QTD_ACTIVE) |
+	    EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(rd ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
 	    EHCI_QTD_SET_CERR(3)
 	    /* IOC set below */
@@ -2056,9 +2056,9 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		goto nomem;
 	for (;;) {
 		dataphyspage = EHCI_PAGE(dataphys);
-		/* The EHCI hardware can handle at most 4 page crossings. */
+		/* The EHCI hardware can handle at most 5 pages. */
 		if (dataphyslastpage - dataphyspage < 
-		    (EHCI_QTD_NBUFFERS-1) * EHCI_PAGE_SIZE) {
+		    EHCI_QTD_NBUFFERS * EHCI_PAGE_SIZE) {
 			/* we can handle it in this QTD */
 			curlen = len;
 		} else {
@@ -2067,8 +2067,12 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 				 EHCI_PAGE_OFFSET(dataphys);
 #ifdef DIAGNOSTIC
 			if (curlen > len) {
-				printf("ehci_alloc_sqtd_chain: curlen=%d "
-				       "len=%d\n", curlen, len);
+				printf("ehci_alloc_sqtd_chain: curlen=0x%x "
+				       "len=0x%x offs=0x%x\n", curlen, len,
+				       EHCI_PAGE_OFFSET(dataphys));
+				printf("lastpage=0x%x page=0x%x phys=0x%x\n",
+				       dataphyslastpage, dataphyspage,
+				       dataphys);
 				curlen = len;
 			}
 #endif
@@ -2178,13 +2182,20 @@ ehci_close_pipe(usbd_pipe_handle pipe, ehci_soft_qh_t *head)
  * have happened since the hardware runs concurrently.
  * If the transaction has already happened we rely on the ordinary
  * interrupt processing to process it.
+ * XXX This is most probably wrong.
  */
 void
 ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 {
+#define exfer EXFER(xfer)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	ehci_softc_t *sc = (ehci_softc_t *)epipe->pipe.device->bus;
+	ehci_soft_qh_t *sqh = epipe->sqh;
+	ehci_soft_qtd_t *sqtd;
+	ehci_physaddr_t cur;
+	u_int32_t qhstatus;
 	int s;
+	int hit;
 
 	DPRINTF(("ehci_abort_xfer: xfer=%p pipe=%p\n", xfer, epipe));
 
@@ -2207,15 +2218,21 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	s = splusb();
 	xfer->status = status;	/* make software ignore it */
 	usb_uncallout(xfer->timeout_handle, ehci_timeout, xfer);
+	qhstatus = sqh->qh.qh_qtd.qtd_status;
+	sqh->qh.qh_qtd.qtd_status = qhstatus | htole32(EHCI_QTD_HALTED);
+	for (sqtd = exfer->sqtdstart; ; sqtd = sqtd->nextqtd) {
+		sqtd->qtd.qtd_status |= htole32(EHCI_QTD_HALTED);
+		if (sqtd == exfer->sqtdend)
+			break;
+	}
 	splx(s);
-	/* XXX */
 
 	/* 
 	 * Step 2: Wait until we know hardware has finished any possible
 	 * use of the xfer.  Also make sure the soft interrupt routine
 	 * has run.
 	 */
-	usb_delay_ms(epipe->pipe.device->bus, 1); /* Hardware finishes in 1ms */
+	ehci_sync_hc(sc);
 	/* XXX should have some communication with softintr() to know
 	   when it's done */
 	usb_delay_ms(epipe->pipe.device->bus, 250);
@@ -2228,22 +2245,33 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 * any of them.
 	 */
 	s = splusb();		/* XXX why? */
-	/* XXX */
+	cur = EHCI_LINK_ADDR(le32toh(sqh->qh.qh_curqtd));
+	hit = 0;
+	for (sqtd = exfer->sqtdstart; ; sqtd = sqtd->nextqtd) {
+		hit |= cur == sqtd->physaddr;
+		if (sqtd == exfer->sqtdend)
+			break;
+	}
+	sqtd = sqtd->nextqtd;
+	/* Zap curqtd register if hardware pointed inside the xfer. */
+	if (hit && sqtd != NULL) {
+		DPRINTFN(1,("ehci_abort_xfer: cur=0x%08x\n", sqtd->physaddr));
+		sqh->qh.qh_curqtd = htole32(sqtd->physaddr); /* unlink qTDs */
+		sqh->qh.qh_qtd.qtd_status = qhstatus;
+	} else {
+		DPRINTFN(1,("ehci_abort_xfer: no hit\n"));
+	}
 
 	/*
-	 * Step 4: Turn on hardware again.
-	 */
-	/* XXX */
-
-	/*
-	 * Step 5: Execute callback.
+	 * Step 4: Execute callback.
 	 */
 #ifdef DIAGNOSTIC
-	EXFER(xfer)->isdone = 1;
+	exfer->isdone = 1;
 #endif
 	usb_transfer_complete(xfer);
 
 	splx(s);
+#undef exfer
 }
 
 void
@@ -2255,7 +2283,7 @@ ehci_timeout(void *addr)
 
 	DPRINTF(("ehci_timeout: exfer=%p\n", exfer));
 #ifdef USB_DEBUG
-	if (ehcidebug)
+	if (ehcidebug > 1)
 		usbd_dump_pipe(exfer->xfer.pipe);
 #endif
 
@@ -2446,7 +2474,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	memcpy(KERNADDR(&epipe->u.ctl.reqdma), req, sizeof *req);
 
 	setup->qtd.qtd_status = htole32(
-	    EHCI_QTD_SET_STATUS(EHCI_QTD_ACTIVE) |
+	    EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(EHCI_QTD_PID_SETUP) |
 	    EHCI_QTD_SET_CERR(3) |
 	    EHCI_QTD_SET_BYTES(sizeof *req)
@@ -2458,7 +2486,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	setup->len = sizeof *req;
 
 	stat->qtd.qtd_status = htole32(
-	    EHCI_QTD_SET_STATUS(EHCI_QTD_ACTIVE) |
+	    EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(isread ? EHCI_QTD_PID_OUT : EHCI_QTD_PID_IN) |
 	    EHCI_QTD_SET_CERR(3) |
 	    EHCI_QTD_IOC
