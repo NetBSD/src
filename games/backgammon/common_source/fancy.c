@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.8 1999/02/10 12:29:47 hubertf Exp $	*/
+/*	$NetBSD: fancy.c,v 1.9 1999/02/10 17:08:06 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.8 1999/02/10 12:29:47 hubertf Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.9 1999/02/10 17:08:06 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -698,7 +698,7 @@ getcaps(s)
 	char   *bufp;		/* pointer to cap buffer */
 	char    tentry[1024];	/* temporary uncoded caps buffer */
 
-	tgetent(tentry, (char *)s);	/* get uncoded termcap entry */
+	tgetent(tentry, s);	/* get uncoded termcap entry */
 
 	LI = tgetnum("li");	/* get number of lines */
 	if (LI == -1)
