@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: com.c,v 1.2 1996/05/21 15:31:55 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -117,6 +117,7 @@ int comintr __P((void *));
 void compoll __P((void *));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
+void cominit __P((int, int));
 
 struct cfattach com_ca = {
 	sizeof(struct com_softc), comprobe, comattach,
@@ -357,7 +358,7 @@ comattach(parent, dev, aux)
 		if (comconsole == unit)
 			kgdb_dev = -1;	/* can't debug over console port */
 		else {
-			(void) cominit(unit, kgdb_rate);
+			cominit(unit, kgdb_rate);
 			if (kgdb_debug_init) {
 				/*
 				 * Print prefix of device name,
@@ -1141,6 +1142,7 @@ comcninit(cp)
 	comconsinit = 0;
 }
 
+void
 cominit(unit, rate)
 	int unit, rate;
 {
@@ -1159,6 +1161,7 @@ cominit(unit, rate)
 	splx(s);
 }
 
+int
 comcngetc(dev)
 	dev_t dev;
 {
