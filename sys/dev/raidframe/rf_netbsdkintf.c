@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.106 2001/06/21 03:07:04 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.107 2001/07/16 15:50:27 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -636,6 +636,18 @@ raidclose(dev, flags, fmt, p)
 #endif
 		rf_update_component_labels(raidPtrs[unit],
 						 RF_FINAL_COMPONENT_UPDATE);
+		if (doing_shutdown) {
+			/* last one, and we're going down, so
+			   lights out for this RAID set too. */
+			error = rf_Shutdown(raidPtrs[unit]);
+			pool_destroy(&rs->sc_cbufpool);
+			
+			/* It's no longer initialized... */
+			rs->sc_flags &= ~RAIDF_INITED;
+			
+			/* Detach the disk. */
+			disk_detach(&rs->sc_dkdev);
+		}
 	}
 
 	raidunlock(rs);
