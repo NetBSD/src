@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.117 2004/04/23 19:44:47 jmc Exp $
+$NetBSD: UPDATING,v 1.118 2004/04/25 21:16:57 dbj Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,18 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20040425:
+	The ffs superblock issues listed below under 20040109 and 20030402
+	are now automatically addressed by the /etc/rc.d/fixsb script or by
+	sysinst when it checks a a filesystem. The manual fsck_ffs -b16 -c4
+	invocation mentioned below will continue to work and is now
+	automated by those scripts.  Note that under certain circumstances,
+	affected filesystems upgraded to a -current kernel first before
+	upgrading their userland with the fixsb and fsck_ffs fixes may
+	encounter a 'freeing free inode' panic when writing to the affected
+	filesystem, so it is a good idea to repair the filesystem as soon as
+	possible.  For more details on the fixsb script, see pr install/25138.
 
 20040418:
 	Statfs(2) and friends have been replaced with statvfs(2). Before
