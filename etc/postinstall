@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76 2004/05/16 11:19:28 lukem Exp $
+# $NetBSD: postinstall,v 1.77 2004/06/30 11:25:22 tron Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -439,12 +439,12 @@ do_rc()
 		kdc ldconfig lkm1 lkm2 lkm3 local lpd mopd motd \
 		mountall mountcritlocal mountcritremote mountd moused \
 		mrouted mixerctl named ndbootd network newsyslog nfsd \
-		nfslocking ntpd ntpdate poffd postfix powerd ppp pwcheck \
-		quota racoon rpcbind raidframe raidframeparity rarpd rbootd \
-		root route6d routed rtadvd rtclocaltime rtsold rwho savecore \
-		screenblank sendmail securelevel smmsp sshd staticroute \
-		swap1 swap2 sysdb sysctl syslogd timed ttys veriexec virecover \
-		wdogctl wscons wsmoused \
+		nfslocking ntpd ntpdate pf pflogd poffd postfix powerd ppp \
+		pwcheck quota racoon rpcbind raidframe raidframeparity rarpd \
+		rbootd root route6d routed rtadvd rtclocaltime rtsold rwho \
+		savecore screenblank sendmail securelevel smmsp sshd \
+		staticroute swap1 swap2 sysdb sysctl syslogd timed ttys \
+		veriexec virecover wdogctl wscons wsmoused \
 		xdm xfs ypbind yppasswdd ypserv
 	failed=$(( ${failed} + $? ))
 
