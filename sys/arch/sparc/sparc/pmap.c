@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 1997/09/26 22:15:37 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.101 1997/09/27 17:58:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -319,6 +319,9 @@ char	*ctxbusyvector;		/* [4m] tells what contexts are busy (XXX)*/
 #endif
 
 caddr_t	vpage[2];		/* two reserved MD virtual pages */
+#if defined(SUN4M)
+int	*vpage_pte[2];		/* pte location of vpage[] */
+#endif
 caddr_t	vmmap;			/* one reserved MI vpage for /dev/mem */
 caddr_t	vdumppages;		/* 32KB worth of reserved dump pages */
 
@@ -3284,6 +3287,15 @@ pmap_bootstrap4m(void)
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
+	/* Find PTE locations of vpage[] to optimize zero_fill() et.al. */
+	for (i = 0; i < 2; i++) {
+		struct regmap *rp;
+		struct segmap *sp;
+		rp = &pmap_kernel()->pm_regmap[VA_VREG(vpage[i])];
+		sp = &rp->rg_segmap[VA_VSEG(vpage[i])];
+		vpage_pte[i] = &sp->sg_pte[VA_SUN4M_VPG(vpage[i])];
+	}
+
 	/*
 	 * Allocate virtual memory for pv_table[], which will be mapped
 	 * sparsely in pmap_init().
@@ -6215,7 +6227,6 @@ pmap_zero_page4m(pa)
 {
 	register caddr_t va;
 	register int pte;
-	int ctx;
 
 	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && managed(pa)) {
 		/*
@@ -6233,14 +6244,12 @@ pmap_zero_page4m(pa)
 	else
 		pte &= ~SRMMU_PG_C;
 
-	/* XXX - must use context 0 or else setpte4m() will fail */
-	ctx = getcontext4m();
-	setcontext4m(0);
 	va = vpage[0];
-	setpte4m((vm_offset_t) va, pte);
+	*vpage_pte[0] = pte;
 	qzero(va, NBPG);
-	setpte4m((vm_offset_t) va, SRMMU_TEINVALID);
-	setcontext4m(ctx);
+	/* Remove temporary mapping */
+	tlb_flush_page((int)va);
+	*vpage_pte[0] = SRMMU_TEINVALID;
 }
 
 /*
@@ -6258,7 +6267,6 @@ pmap_copy_page4m(src, dst)
 {
 	register caddr_t sva, dva;
 	register int spte, dpte;
-	int ctx;
 
 	if (managed(src)) {
 		if (CACHEINFO.c_vactype == VAC_WRITEBACK)
@@ -6279,18 +6287,16 @@ pmap_copy_page4m(src, dst)
 	else
 		dpte &= ~SRMMU_PG_C;
 
-	/* XXX - must use context 0 or else setpte4m() will fail */
-	ctx = getcontext4m();
-	setcontext4m(0);
 	sva = vpage[0];
 	dva = vpage[1];
-	setpte4m((vm_offset_t) sva, spte);
-	setpte4m((vm_offset_t) dva, dpte);
+	*vpage_pte[0] = spte;
+	*vpage_pte[1] = dpte;
 	qcopy(sva, dva, NBPG);	/* loads cache, so we must ... */
 	cache_flush_page((int)sva);
-	setpte4m((vm_offset_t) sva, SRMMU_TEINVALID);
-	setpte4m((vm_offset_t) dva, SRMMU_TEINVALID);
-	setcontext4m(ctx);
+	*vpage_pte[0] = SRMMU_TEINVALID;
+	*vpage_pte[1] = SRMMU_TEINVALID;
+	tlb_flush_page((int)sva);
+	tlb_flush_page((int)dva);
 }
 #endif /* Sun4M */
 
@@ -6429,19 +6435,6 @@ void
 pmap_redzone()
 {
 	pmap_remove(pmap_kernel(), KERNBASE, KERNBASE+NBPG);
-	return;
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		setpte4m(KERNBASE, 0);
-		return;
-	}
-#endif
-#if defined(SUN4) || defined(SUN4C)
-	if (CPU_ISSUN4OR4C) {
-		setpte4(KERNBASE, 0);
-		return;
-	}
-#endif
 }
 
 #ifdef DEBUG
