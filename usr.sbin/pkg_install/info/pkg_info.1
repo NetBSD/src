@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.17 1999/03/22 18:44:04 garbled Exp $
+.\" $NetBSD: pkg_info.1,v 1.17.2.1 1999/08/22 18:05:17 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -47,10 +47,11 @@ command.
 .Pp
 The
 .Ar pkg-name
-may be the name of an installed package, a pattern matching several
-installed packages (see the
+may be the name of an installed package (with our without version), a
+pattern matching several installed packages (see the
 .Fl e
-switch for a description of possible patterns), the pathname to a
+switch for a description of possible patterns),
+the pathname to a
 package distribution file, a filename belonging to an installed
 package (if
 .Fl F
