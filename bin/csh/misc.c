@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.10 1998/07/28 02:23:39 mycroft Exp $	*/
+/*	$NetBSD: misc.c,v 1.11 1998/07/28 02:47:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.10 1998/07/28 02:23:39 mycroft Exp $");
+__RCSID("$NetBSD: misc.c,v 1.11 1998/07/28 02:47:20 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,17 +67,6 @@ any(s, c)
 	if (*s++ == c)
 	    return (1);
     return (0);
-}
-
-void
-setzero(cp, i)
-    char   *cp;
-    int     i;
-{
-    if (i != 0)
-	do
-	    *cp++ = 0;
-	while (--i);
 }
 
 char   *

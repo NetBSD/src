@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.12 1998/07/28 02:23:39 mycroft Exp $	*/
+/*	$NetBSD: sem.c,v 1.13 1998/07/28 02:47:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sem.c,v 1.12 1998/07/28 02:23:39 mycroft Exp $");
+__RCSID("$NetBSD: sem.c,v 1.13 1998/07/28 02:47:21 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,14 +217,14 @@ execute(t, wanttty, pipein, pipeout)
 		 */
 		if (wanttty >= 0 && !nosigchld) {
 		    sigemptyset(&sigset);
-		    sigaddset(&sigset, SIGCHLD);
-		    sigprocmask(SIG_BLOCK, &sigset, &csigset);
+		    (void) sigaddset(&sigset, SIGCHLD);
+		    (void) sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
 
 		pid = pfork(t, wanttty);
 		if (pid == 0 && nosigchld) {
-		    sigprocmask(SIG_SETMASK, &csigset, NULL);
+		    (void) sigprocmask(SIG_SETMASK, &csigset, NULL);
 		    nosigchld = 0;
 		}
 		else if (pid != 0 && (t->t_dflg & F_AMPERSAND))
@@ -246,14 +246,14 @@ execute(t, wanttty, pipein, pipeout)
 		 */
 		if (wanttty >= 0 && !nosigchld && !noexec) {
 		    sigemptyset(&sigset);
-		    sigaddset(&sigset, SIGCHLD);
-		    sigprocmask(SIG_BLOCK, &sigset, &csigset);
+		    (void) sigaddset(&sigset, SIGCHLD);
+		    (void) sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
 		sigemptyset(&sigset);
-		sigaddset(&sigset, SIGCHLD);
-		sigaddset(&sigset, SIGINT);
-		sigprocmask(SIG_BLOCK, &sigset, &osigset);
+		(void) sigaddset(&sigset, SIGCHLD);
+		(void) sigaddset(&sigset, SIGINT);
+		(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
 		ochild = child;
 		osetintr = setintr;
 		ohaderr = haderr;
@@ -271,7 +271,7 @@ execute(t, wanttty, pipein, pipeout)
 		pid = vfork();
 
 		if (pid < 0) {
-		    sigprocmask(SIG_SETMASK, &osigset, NULL);
+		    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
 		    stderror(ERR_NOPROC);
 		    /* NOTREACHED */
 		}
@@ -299,7 +299,7 @@ execute(t, wanttty, pipein, pipeout)
 		    Vt = 0;
 		    /* this is from pfork() */
 		    palloc(pid, t);
-		    sigprocmask(SIG_SETMASK, &osigset, NULL);
+		    (void) sigprocmask(SIG_SETMASK, &osigset, NULL);
 		}
 		else {		/* child */
 		    /* this is from pfork() */
@@ -307,7 +307,7 @@ execute(t, wanttty, pipein, pipeout)
 		    bool    ignint = 0;
 
 		    if (nosigchld) {
-		        sigprocmask(SIG_SETMASK, &csigset, NULL);
+		        (void) sigprocmask(SIG_SETMASK, &csigset, NULL);
 			nosigchld = 0;
 		    }
 
@@ -364,7 +364,7 @@ execute(t, wanttty, pipein, pipeout)
 	    }
 	    if ((t->t_dflg & F_PIPEOUT) == 0) {
 		if (nosigchld) {
-		    sigprocmask(SIG_SETMASK, &csigset, NULL);
+		    (void) sigprocmask(SIG_SETMASK, &csigset, NULL);
 		    nosigchld = 0;
 		}
 		if ((t->t_dflg & F_AMPERSAND) == 0)
