@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2001/01/09 08:52:59 enami Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2001/08/08 14:59:26 wiz Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${.CURDIR}/../common -I${DIST}/texinfo/lib \
 DPADD+=		${LIBCOMMONDIR}/libcommon.a
 LDADD+=		-L${LIBCOMMONDIR} -lcommon
 
-# libintl-less bulid should comment the following 3 lines out
+# libintl-less build should comment the following 3 lines out
 DPADD+=		${LIBINTL}
 LDADD+=		-lintl
 CPPFLAGS+=	-DENABLE_NLS=1 -DHAVE_GETTEXT=1 -DHAVE_LIBINTL_H=1
