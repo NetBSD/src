@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.3 2001/11/20 03:18:44 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.4 2001/11/20 22:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -64,34 +64,39 @@
  */
 
 #ifdef __APCS_26__
-#define	SAVE_FLAGS(reg, tmp)		/* nothing; in r15 */
-#define	RESTORE_FLAGS(reg, tmp)		/* nothing; in r15 */
+#define	SAVE_FLAGS(reg)			/* nothing; in r15 */
+#define	RESTORE_FLAGS(reg)		/* nothing; in r15 */
 #else
-#define	SAVE_FLAGS(reg, tmp)						\
-	mrs	tmp, cpsr					;	\
-	str	tmp, [reg, #(_REG_CPSR)]
+#define	SAVE_FLAGS(reg)							\
+	mrs	r2, cpsr					;	\
+	str	r2, [reg, #(_REG_CPSR)]
 
-#define	RESTORE_FLAGS(reg, tmp)						\
-	ldr	tmp, [reg, #(_REG_CPSR)]			;	\
-	msr	cpsr, tmp
+#define	RESTORE_FLAGS							\
+	msr	cpsr, r3
 #endif /* __APCS_26__ */
 
-#define	GETC(reg, tmp)							\
+/*
+ * NOTE: Clobbers r2.
+ */
+#define	GETC(reg)							\
 	/*								\
 	 * We're only saving the callee-saved registers, here,		\
 	 * so make a note of it for SETC() later.			\
 	 *								\
 	 * Make sure to save the flags first, since ORR changes them.	\
 	 */								\
-	SAVE_FLAGS(reg, tmp)					;	\
-	ldr	tmp, [reg, #(UC_FLAGS)]				;	\
-	orr	tmp, tmp, #(_UC_USER)				;	\
-	orr	tmp, tmp, #(_UC_CPU)				;	\
-	str	tmp, [reg, #(UC_FLAGS)]				;	\
+	SAVE_FLAGS(reg)						;	\
+	ldr	r2, [reg, #(UC_FLAGS)]				;	\
+	orr	r2, r2, #(_UC_USER)				;	\
+	orr	r2, r2, #(_UC_CPU)				;	\
+	str	r2, [reg, #(UC_FLAGS)]				;	\
 	add	reg, reg, #(_REG_R4)				;	\
 	stmia	reg, {r4-r15}
 
-#define	SETC(reg, tmp)							\
+/*
+ * NOTE: Clobbers r2, r3.
+ */
+#define	SETC(reg)							\
 	/*								\
 	 * If _UC_USER is set, we only need to restore the		\
 	 * callee-saved registers (i.e. we were saved by		\
@@ -101,24 +106,26 @@
 	 * Restore flags after we fixup the pointer, since		\
 	 * ADD changes them.						\
 	 */								\
-	ldr	tmp, [reg, #(UC_FLAGS)]				;	\
-	tst	tmp, #(_UC_USER)				;	\
+	ldr	r2, [reg, #(UC_FLAGS)]				;	\
+	tst	r2, #(_UC_USER)					;	\
 	beq	1f						;	\
 									\
 	/* _UC_USER case */					;	\
+	ldr	r3, [reg, #(_REG_CPSR)]				;	\
 	add	reg, reg, #(_REG_R4)				;	\
-	RESTORE_FLAGS(reg, tmp)					;	\
+	RESTORE_FLAGS						;	\
 	ldmia	reg, {r4-r15}					;	\
 	/* NOTREACHED */						\
 									\
 	/* ! _UC_USER case */						\
-1:	add	reg, reg, #(_REG_R0)				;	\
-	RESTORE_FLAGS(reg, tmp)					;	\
+1:	ldr	r3, [reg, #(_REG_CPSR)]				;	\
+	add	reg, reg, #(_REG_R0)				;	\
+	RESTORE_FLAGS						;	\
 	ldmia	reg, {r0-r15}					;	\
 	/* NOTREACHED */
 
 ENTRY(_getcontext_u)
-	GETC(r0, r1)
+	GETC(r0)
 	mov	r0, #0x00000000
 #ifdef __APCS_26__
 	movs	pc, lr
@@ -127,8 +134,8 @@ ENTRY(_getcontext_u)
 #endif
 
 ENTRY(_setcontext_u)
-	SETC(r0, r1)
+	SETC(r0)
 
 ENTRY(_swapcontext_u)
-	GETC(r0, r2)
-	SETC(r1, r2)
+	GETC(r0)
+	SETC(r1)
