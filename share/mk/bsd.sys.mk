@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.3 1996/05/15 19:46:51 scottr Exp $
+#	$NetBSD: bsd.sys.mk,v 1.4 1997/04/17 06:43:32 thorpej Exp $
 #
 # Overrides used for NetBSD source tree builds.
 
@@ -7,6 +7,20 @@ CFLAGS+= -Werror
 .if defined(DESTDIR)
 CFLAGS+= -nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
+
+# Helpers for cross-compiling
+HOST_CC?=	cc
+HOST_CFLAGS?=	-O
+HOST_COMPILE.c?=${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} -c
+HOST_LINK.c?=	${HOST_CC} ${HOST_CFLAGS} ${HOST_CPPFLAGS} ${HOST_LDFLAGS}
+
+HOST_CPP?=	cpp
+HOST_CPPFLAGS?=
+
+HOST_LD?=	ld
+HOST_LDFLAGS?=
+
+NM?=		nm
 
 .if defined(PARALLEL)
 # Lex
