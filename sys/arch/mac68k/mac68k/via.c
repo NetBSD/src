@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.21 1995/06/20 05:13:19 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.22 1995/07/01 16:35:16 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -39,10 +39,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include "via.h"
-#include <sys/kernel.h>
 
 static int	scsi_drq_intr(void), scsi_irq_intr(void);
 
@@ -128,14 +129,14 @@ void VIA_initialize()
 			via_reg(VIA1, vBufB) |= (0x40);
 			via_reg(VIA1, vDirB) |= (0x40);
 		}
-#if 1
+
 		/*
 		 * unlock nubus
 		 */
 		via_reg(VIA2, vPCR)   = 0x06;
 		via_reg(VIA2, vBufB) |= 0x02;
 		via_reg(VIA2, vDirB) |= 0x02;
-#endif
+
 		real_via2_intr = via2_intr;
 		via2itab[1] = via2_nubus_intr;
 
@@ -203,7 +204,8 @@ via2_intr(struct frame *fp)
 	}
 }
 
-void rbv_intr(struct frame *fp)
+void
+rbv_intr(struct frame *fp)
 {
 	register unsigned char	intbits;
 	register char		bitnum, bitmsk;
@@ -225,13 +227,15 @@ void rbv_intr(struct frame *fp)
 	}
 }
 
-long via1_noint(int bitnum)
+long
+via1_noint(int bitnum)
 {
   /* printf("via1_noint(%d)\n", bitnum); */
   return 1;
 }
 
-long via2_noint(int bitnum)
+long
+via2_noint(int bitnum)
 {
   /* printf("via2_noint(%d)\n", bitnum); */
   return 1;
@@ -345,7 +349,8 @@ via_shutdown()
 	}
 }
 
-int rbv_vidstatus(void)
+int
+rbv_vidstatus(void)
 {
 	int montype;
 
@@ -362,23 +367,31 @@ int rbv_vidstatus(void)
 static int
 scsi_irq_intr(void)
 {
+#if NNCR96SCSI
 	if (mac68k_machine.scsi96) {
 		if (ncr53c96_irq_intr()) return 1;
 	}
+#endif
+#if NNCRSCSI
 	if (mac68k_machine.scsi80) {
 		if (ncr5380_irq_intr()) return 1;
 	}
+#endif
 	return 0;
 }
 
 static int
 scsi_drq_intr(void)
 {
+#if NNCR96SCSI
 	if (mac68k_machine.scsi96) {
 		if (ncr53c96_drq_intr()) return 1;
 	}
+#endif
+#if NNCRSCSI
 	if (mac68k_machine.scsi80) {
 		if (ncr5380_drq_intr()) return 1;
 	}
+#endif
 	return 0;
 }
