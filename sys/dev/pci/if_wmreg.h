@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.6 2003/10/21 04:39:32 thorpej Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.7 2003/10/21 05:07:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -196,7 +196,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_VME	(1U << 30)	/* VLAN Mode Enable */
 #define	CTRL_PHY_RESET	(1U << 31)	/* PHY reset (Cordova) */
 
-#define	CTRL_SHADOW	0x0004	/* Device Control Register (shadow) */
+#define	WMREG_CTRL_SHADOW 0x0004	/* Device Control Register (shadow) */
 
 #define	WMREG_STATUS	0x0008	/* Device Status Register */
 #define	STATUS_FD	(1U << 0)	/* full duplex */
