@@ -1,7 +1,7 @@
 #
 # DUALITY (mycroft's hp370 test machine)
 #
-#	$Id: DUALITY,v 1.9 1994/05/20 18:22:44 mycroft Exp $
+#	$Id: DUALITY,v 1.10 1994/05/23 05:51:01 mycroft Exp $
 #
 machine		"hp300"
 cpu		"HP320"
@@ -83,5 +83,3 @@ pseudo-device	ite
 pseudo-device	pty	32
 pseudo-device	loop
 pseudo-device	ether
-
-pseudo-device	clock
