@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.10 1994/12/13 22:33:27 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.11 1994/12/14 13:42:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -50,7 +50,6 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/file.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
