@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.11 1994/10/13 14:26:15 mycroft Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.12 1994/10/14 16:01:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -472,7 +472,7 @@ tcp_disconnect(tp)
 {
 	struct socket *so = tp->t_inpcb->inp_socket;
 
-	if (tp->t_state < TCPS_ESTABLISHED)
+	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		tp = tcp_close(tp);
 	else if ((so->so_options & SO_LINGER) && so->so_linger == 0)
 		tp = tcp_drop(tp, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.11 1994/06/29 06:38:46 cgd Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.12 1994/10/14 16:01:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -397,8 +397,8 @@ tcp_notify(inp, error)
 	     (error == EHOSTUNREACH || error == ENETUNREACH ||
 	      error == EHOSTDOWN)) {
 		return;
-	} else if (tp->t_state < TCPS_ESTABLISHED && tp->t_rxtshift > 3 &&
-	    tp->t_softerror)
+	} else if (TCPS_HAVEESTABLISHED(tp->t_state) == 0 &&
+	    tp->t_rxtshift > 3 && tp->t_softerror)
 		so->so_error = error;
 	else 
 		tp->t_softerror = error;
