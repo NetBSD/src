@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/09/25 22:22:36 matt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.3 2004/04/04 17:10:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/09/25 22:22:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2004/04/04 17:10:32 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -87,6 +87,9 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 	utf->ctr  = tf->ctr;
 	utf->srr0 = tf->srr0;
 	utf->srr1 = tf->srr1;
+#ifdef PPC_HAVE_FPU
+	utf->srr1 |= l->l_addr->u_pcb.pcb_flags & (PCB_FE0|PCB_FE1);
+#endif
 #ifdef PPC_OEA
 	utf->vrsave = tf->tf_xtra[TF_VRSAVE];
 	utf->mq = tf->tf_xtra[TF_MQ];
@@ -188,6 +191,10 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	tf->ctr  = utf->ctr;
 	tf->srr0 = utf->srr0;
 	tf->srr1 = utf->srr1;
+#ifdef PPC_HAVE_FPU
+	l->l_addr->u_pcb.pcb_flags &= ~(PCB_FE0|PCB_FE1);
+	l->l_addr->u_pcb.pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
+#endif
 #ifdef PPC_OEA
 	tf->tf_xtra[TF_VRSAVE] = utf->vrsave;
 	tf->tf_xtra[TF_MQ] = utf->mq;
