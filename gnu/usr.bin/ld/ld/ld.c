@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.57 1998/09/03 19:17:10 matt Exp $	*/
+/*	$NetBSD: ld.c,v 1.58 1998/09/04 09:43:29 pk Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -1465,14 +1465,14 @@ enter_global_ref(lsp, name, entry)
 				sp->common_size = nzp->nz_value;
 			}
 		} else if (type != (N_UNDF | N_EXT) && !oldref) {
-			/*
-			 * This is an ex common...
-			 */
-			if (com)
+			if (com) {
+				/*
+				 * This is an ex-common...
+				 */
 				common_defined_global_count--;
-			sp->common_size = 0;
-			if (sp != dynamic_symbol)
+				sp->common_size = 0;
 				sp->defined = 0;
+			}
 		}
 
 		/*
@@ -1509,11 +1509,7 @@ enter_global_ref(lsp, name, entry)
 
 	sp->flags |= GS_REFERENCED;
 
-	if (sp == dynamic_symbol || sp == got_symbol
-#if 0
-	    || (sp == plt_symbol && plt_symbol != NULL)
-#endif
-	    ) {
+	if (sp == dynamic_symbol || sp == got_symbol || sp == plt_symbol) {
 		if (type != (N_UNDF | N_EXT) && !(entry->flags & E_JUST_SYMS))
 			errx(1,"Linker reserved symbol %s defined as type %x ",	
 				name, type);
@@ -1844,10 +1840,8 @@ printf("set_sect_start = %#x, set_sect_size = %#x\n",
 	if (got_symbol->flags & GS_REFERENCED)
 		global_sym_count++;
 
-#if 0
-	if (plt_symbol != NULL && plt_symbol->flags & GS_REFERENCED)
+	if (plt_symbol->flags & GS_REFERENCED)
 		global_sym_count++;
-#endif
 
 	if (relocatable_output || building_shared_object) {
 		/* For each alias we write out two struct nlists */
@@ -1888,7 +1882,7 @@ digest_pass1()
 	 *
 	 * Then check the shared object symbol chain for any remaining
 	 * undefined symbols. Set the `so_defined' field for any
-	 * definition find this way.
+	 * definition found this way.
 	 */
 	FOR_EACH_SYMBOL(i, sp) {
 		symbol *spsave;
@@ -1915,11 +1909,8 @@ digest_pass1()
 			/* Already examined; must have been an alias */
 			continue;
 
-		if (sp == got_symbol || sp == dynamic_symbol
-#if 0
-		    || (sp == plt_symbol && plt_symbol != NULL)
-#endif
-		    )
+		if (sp == got_symbol || sp == dynamic_symbol ||
+		    sp == plt_symbol )
 			continue;
 
 		for (lsp = sp->refs; lsp; lsp = lsp->next) {

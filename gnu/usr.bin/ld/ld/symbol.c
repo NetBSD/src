@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.13 1998/09/03 19:17:11 matt Exp $	*/
+/*	$NetBSD: symbol.c,v 1.14 1998/09/04 09:43:29 pk Exp $	*/
 
 /*
  *	- symbol table routines
@@ -41,15 +41,11 @@ symtab_init(relocatable_output)
 	got_symbol = getsym(GOT_SYM);
 	got_symbol->defined = N_DATA | N_EXT;
 
+	plt_symbol = getsym(PLT_SYM);
+	plt_symbol->defined = N_DATA | N_EXT;
+
 	if (relocatable_output)
 		return;
-
-#if 0
-	if (link_mode & SHAREABLE) {
-		plt_symbol = getsym(PLT_SYM);
-		plt_symbol->defined = N_DATA | N_EXT;
-	}
-#endif
 
 	etext_symbol = getsym(ETEXT_SYM);
 	edata_symbol = getsym(EDATA_SYM);
