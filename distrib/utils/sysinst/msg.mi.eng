@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.41 1999/05/02 13:07:15 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.42 1999/06/18 23:14:01 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -441,12 +441,12 @@ returned to the previous menu.
 
 message asknetdev
 {I have found the following network interfaces: %s
-\nWhich device shall I use? }
+\nWhich device shall I use?}
 
 message badnet
 {You did not choose one of the listed network devices.  Please try again.
 The following network devices are available: %s
-\nWhich device shall I use? }
+\nWhich device shall I use?}
 
 message netinfo
 {To be able to use the network, we need answers to the following:
@@ -454,25 +454,25 @@ message netinfo
 }
 
 message net_domain
-{Your domain }
+{Your domain}
 
 message net_host
-{Your host name }
+{Your host name}
 
 message net_ip
-{Your IP number }
+{Your IP number}
 
 message net_mask
-{Netmask }
+{Netmask}
 
 message net_namesrv
-{IP of your name server }
+{IP of your name server}
 
 message net_defroute
-{IP of your gateway }
+{IP of your gateway}
 
 message net_media
-{Network media type }
+{Network media type}
 
 message netok
 {The following are the values you entered.  Are they OK?
