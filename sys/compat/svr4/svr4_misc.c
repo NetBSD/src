@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.103 2003/04/01 01:55:09 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.104 2003/05/16 14:36:35 itojun Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.103 2003/04/01 01:55:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.104 2003/05/16 14:36:35 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ again:
 		idb.d_ino = (svr4_ino64_t)bdp->d_fileno;
 		idb.d_off = (svr4_off64_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
-		strcpy(idb.d_name, bdp->d_name);
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */
@@ -469,7 +469,7 @@ again:
 		idb.d_ino = (svr4_ino_t)bdp->d_fileno;
 		idb.d_off = (svr4_off_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
-		strcpy(idb.d_name, bdp->d_name);
+		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
 		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */

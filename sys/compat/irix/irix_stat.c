@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.7 2003/01/22 12:58:23 rafal Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.8 2003/05/16 14:36:32 itojun Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.7 2003/01/22 12:58:23 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.8 2003/05/16 14:36:32 itojun Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -90,7 +90,7 @@ bsd_to_irix_stat(bsp, isp)
 	isp->ist_size = bsp->st_size;
 	isp->ist_blocks = bsp->st_blocks;
 	isp->ist_blksize = bsp->st_blksize;
-	strcpy(isp->ist_fstype, "unknown");
+	strlcpy(isp->ist_fstype, "unknown", sizeof(isp->ist_fstype));
 
 	return;
 }
@@ -122,7 +122,7 @@ bsd_to_irix_stat64(bsp, isp)
 	isp->ist_size = bsp->st_size;
 	isp->ist_blocks = bsp->st_blocks;
 	isp->ist_blksize = bsp->st_blksize;
-	strcpy(isp->ist_fstype, "unknown");
+	strlcpy(isp->ist_fstype, "unknown", sizeof(isp->ist_fstype));
 
 	return;
 }
