@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/02/01 21:55:32 he Exp $
+#	$NetBSD: Makefile,v 1.2 1999/02/17 12:27:16 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -9,7 +9,7 @@ KERN=	${.CURDIR}/../../../../sys/arch/i386/compile/INSTALL/netbsd
 
 # This Makefile builds a boot image on a 2.88M-sized image.
 #
-# Since NetBSD currently can't write 2.88M diskettes, it's oly
+# Since NetBSD currently can't write 2.88M diskettes, it's only
 # use is as a boot image for El Torito bootable CD-ROM images.
 #
 # To prepare a CD, do the following steps:
