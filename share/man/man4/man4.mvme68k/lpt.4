@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.4 2001/06/05 12:30:47 wiz Exp $
+.\" $NetBSD: lpt.4,v 1.5 2003/07/01 10:28:31 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -46,7 +46,7 @@ This driver provides access to parallel ports.  The bits in the minor
 number select various features of the driver.
 .Pp
 .Bl -column "Minor Bit" "Functionxxxxxxxxxxxxxxxxxxxxxxxxxxxx" -offset indent
-.It Sy Pa "Minor Bit"	Function
+.It Sy "Minor Bit"	Function
 .It 128	Use the interruptless driver. (polling)
 .It  64	Do not initialize the device on the port.
 .It  32	Automatic LF on CR.
