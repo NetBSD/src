@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pio.h,v 1.4 1993/12/20 09:07:22 mycroft Exp $
+ *	$Id: pio.h,v 1.5 1993/12/30 05:16:43 deraadt Exp $
  */
 
 /*
@@ -46,7 +46,7 @@ static __inline void
 insb(u_short port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trep\n\tinsb" :
-			 : "d" (port), "D" (addr), "c" (cnt) : "D", "c");
+			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
 static __inline u_short
@@ -61,7 +61,7 @@ static __inline void
 insw(u_short port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trep\n\tinsw" :
-			 : "d" (port), "D" (addr), "c" (cnt) : "D", "c");
+			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
 static __inline u_int
@@ -76,7 +76,7 @@ static __inline void
 insl(u_short port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trep\n\tinsl" :
-			 : "d" (port), "D" (addr), "c" (cnt) : "D", "c");
+			 : "d" (port), "D" (addr), "c" (cnt) : "%edi", "%ecx", "memory");
 }
 
 static __inline void
@@ -89,7 +89,7 @@ static __inline void
 outsb(u_short port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trep\n\toutsb" :
-			 : "d" (port), "S" (addr), "c" (cnt) : "S", "c");
+			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
 }
 
 static __inline void
@@ -102,7 +102,7 @@ static __inline void
 outsw(u_short port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trep\n\toutsw" :
-			 : "d" (port), "S" (addr), "c" (cnt) : "S", "c");
+			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
 }
 
 static __inline void
@@ -115,5 +115,5 @@ static __inline void
 outsl(u_short port, void *addr, int cnt)
 {
 	__asm __volatile("cld\n\trep\n\toutsl" :
-			 : "d" (port), "S" (addr), "c" (cnt) : "S", "c");
+			 : "d" (port), "S" (addr), "c" (cnt) : "%esi", "%ecx");
 }
