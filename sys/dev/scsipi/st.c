@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: st.c,v 1.25 1994/04/05 22:39:37 mycroft Exp $
+ *	$Id: st.c,v 1.26 1994/04/10 00:07:02 mycroft Exp $
  */
 
 /*
@@ -131,7 +131,7 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
     },
     /*
      * At least -005 and -007 need this.  I'll assume they all do unless I
-     * hear otherwise.  - mycroft, 31MAR94
+     * hear otherwise.  - mycroft, 31MAR1994
      */
     {"ARCHIVE ", "VIPER 2525 25462", "????",
 	0,
@@ -142,17 +142,10 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	    {0, 0, QIC_120}				/* minor 12-15 */
 	}
     },
-#if 0
-    /* One of these is probably fine. */
-    {"SANKYO  ", "CP525", "????",
-	0,
-	{
-	    {0, ST_Q_SNS_HLP, 0},			/* minor 0-3 */
-	    {0, ST_Q_SNS_HLP, QIC_525},			/* minor 4-7 */
-	    {0, 0, QIC_150},				/* minor 8-11 */
-	    {0, 0, QIC_120}				/* minor 12-15 */
-	}
-    },
+    /*
+     * One user reports that this works for her tape drive.  It probably
+     * needs more work.  - mycroft, 09APR1994
+     */
     {"SANKYO  ", "CP525", "????",
 	0,
 	{
@@ -162,7 +155,6 @@ static struct rogues gallery[] =	/* ends with an all-null entry */
 	    {0, 0, QIC_120}				/* minor 12-15 */
 	}
     },
-#endif
     {"ARCHIVE ", "VIPER 150", "????",
 	ST_Q_NEEDS_PAGE_0,
 	{
