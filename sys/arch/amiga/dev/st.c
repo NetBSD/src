@@ -284,6 +284,13 @@ int st_extti = 0x01;		/* bitmask of unit numbers, do extra */
 #endif
 
 int st_pretend_tobe_mt = 0;	/* patchable to force an unknown tape */
+int st_ignore_inqfail = 0;	/* XXX ignore inq command failure and supply a default. */
+				/* XXX by setting this, any device that doesn't */
+				/* XXX respond to inq will cofig as a tape!! */
+				/* XXX ugly stuff to support old TEAC drives. */
+				/* XXX BE SURE YOU KNOW WHAT YOU ARE DOING! */
+
+int st_add_delay = 100000;       /* amount of delay to add. */
 
 #ifndef MT_ISGENERIC		/* XXX define Generic tape */
 #define MT_ISGENERIC	0
@@ -292,6 +299,7 @@ int st_pretend_tobe_mt = 0;	/* patchable to force an unknown tape */
 /* XXX don't want to change for all of netbsd right now. */
 /* should go in /sys/sys/mtio.h */
 #define MT_ISTZ30	0x15		/* DEC TZ30 */
+#define MT_ISTEAC1	0x16		/* TEAC SCSI I, most minimal drive ever created. */
 
 struct st_tape_parm {
 	char	*venid;		/* vendor ID */
@@ -312,7 +320,9 @@ struct st_tape_parm {
 	{"5150ES",	6,	MT_ISWANGTEK,	14, 36, 12, 12},
 	{"CP150",	5,	MT_ISCALIPER,	14, 36, 12, 12},
 	{"5099ES",	6,	MT_ISWTEK5099,	14, 36, 12, 12},
-	{"TZ30",	4,	MT_ISTZ30,	14, 36, 14, 14}
+	{"TZ30",	4,	MT_ISTZ30,	14, 36, 14, 14},
+	{"TEAC SCSI-I", 11,     MT_ISTEAC1,     14,  0,  0,  0}
+	    
 };
 #define	NST_TYPES (sizeof(st_tape_table)/sizeof(struct st_tape_parm))
 
@@ -374,21 +384,32 @@ stident(sc, ad)
 	/* do twice as first command on some scsi tapes always fails */
 	stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &st_inq, 
 				  (u_char *)&st_inqbuf, inqlen, B_READ);
-	if (stat == -1)
+	if (stat == -1) {
+	    goto failed;
+	} else if (stat == STS_CHECKCOND && st_ignore_inqfail) {
+	    register struct st_xsense *xp = &st_xsense[ad->amiga_unit];
+	    
+	    (ad->amiga_cdriver->d_rqs)(ctlr, slave, unit, (u_char *) xp, 14);
+	    if (xp->sc_xsense.key != XSK_ILLREQ) {
 		goto failed;
-
-	if (st_inqbuf.inqbuf.type != 0x01 ||  /* sequential access device */
-	    (st_inqbuf.inqbuf.qual & 0x80) == 0 ||  /* removable media */
-	    (st_inqbuf.inqbuf.version != 0x01 && /* current ANSI SCSI spec */
-	     st_inqbuf.inqbuf.version != 0x02))  /* 0x02 is for HP DAT */
-		goto failed;
+	    }
+	    st_inqbuf.inqbuf.len = 0;
+	    printf("st%d: ignoring sense ILLREQ from innquiry.\n", ad->amiga_unit);
+	} else if (st_inqbuf.inqbuf.type != 0x01 ||        /* sequential access device */
+		   (st_inqbuf.inqbuf.qual & 0x80) == 0 ||  /* removable media */
+		   (st_inqbuf.inqbuf.version != 0x01 &&    /* current ANSI SCSI spec */
+		    st_inqbuf.inqbuf.version != 0x02))  {  /* 0x02 is for HP DAT */
+	    goto failed;
+	}
 
 	/* now get additonal info */
 	inqlen = 0x05 + st_inqbuf.inqbuf.len;
 	st_inq.cdb[4] = inqlen;
-	bzero(&st_inqbuf, sizeof(st_inqbuf));
-	stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &st_inq, 
-				  (u_char *)&st_inqbuf, inqlen, B_READ);
+	if (st_inqbuf.inqbuf.len) {
+		bzero(&st_inqbuf, sizeof(st_inqbuf));
+		stat = (ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &st_inq, 
+						     (u_char *)&st_inqbuf, inqlen, B_READ);
+	} 
 
 	if (st_inqbuf.inqbuf.len >= 28) {
 		bcopy((caddr_t)&st_inqbuf.inqbuf.vendor_id, (caddr_t)idstr, 28);
@@ -406,12 +427,21 @@ stident(sc, ad)
 		idstr[i+1] = 0;
 		printf("st%d: %s %s rev %s\n", ad->amiga_unit, idstr, &idstr[8],
 		       &idstr[24]);
-	} else if (inqlen == 5)
+	} else if (inqlen == 5) {
+	    if (stat == STS_CHECKCOND) {
+		/* if we got here we are ignoring failed inq commands. */
+		/* set us up as a TEAC SCSI I */
+		idstr[0] = '\0';
+		bcopy ("TEAC SCSI-I", &idstr[8], 12);
+		printf("st%d: %s\n", ad->amiga_unit, &idstr[8]);
+	    } else {
 		/* great it's a stupid device, doesn't know it's own name */
 		idstr[0] = idstr[8] = '\0';
-	else
-		idstr[8] = '\0';
-
+	    }
+	} else {
+	    idstr[8] = '\0';
+	}
+	
 	if (stat == 0xff) { 
 		printf("st%d: Cant handle this tape drive\n", ad->amiga_unit);
 		goto failed;
@@ -443,25 +473,10 @@ stident(sc, ad)
 		stat = (ad->amiga_cdriver->d_tur)(ctlr, slave, unit);
 	}
 	if (sc->sc_tapeid <= 0) {
-		if (idstr[8] == '\0')
-			printf("st%d: No ID, using GENERIC\n", ad->amiga_unit);
-		else
-			printf("st%d: Unsupported tape device, using GENERIC\n", ad->amiga_unit);
-#if 0
-#if 0
-		sc->sc_tapeid = MT_ISAR;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 8;
-		sc->sc_datalen[CMD_INQUIRY] = 5;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-#else
-		sc->sc_tapeid = MT_ISWANGTEK;
-		sc->sc_datalen[CMD_REQUEST_SENSE] = 14;
-		sc->sc_datalen[CMD_INQUIRY] = 36;
-		sc->sc_datalen[CMD_MODE_SELECT] = 12;
-		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-#endif
-#endif
+	    if (idstr[8] == '\0')
+		printf("st%d: No ID, using GENERIC\n", ad->amiga_unit);
+	    else
+		printf("st%d: Unsupported tape device, using GENERIC\n", ad->amiga_unit);
 	}
 
 	sc->sc_filepos = 0;
@@ -474,7 +489,7 @@ stident(sc, ad)
 	/* XXX if we have a tape, we must up the delays in the HA driver */
 	if (havest != ad->amiga_cdriver) {
 		havest = ad->amiga_cdriver;
-		(ad->amiga_cdriver->d_delay)(20000);
+		(ad->amiga_cdriver->d_delay)(st_add_delay);
 	}
 #endif
 	return(st_inqbuf.inqbuf.type);
@@ -523,19 +538,22 @@ stopen(dev, flag, type, p)
 	/* do a mode sense to get current */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
-				  (u_char *)&mode, modlen, B_READ);
+	if (modlen) {
+	    stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
+							(u_char *)&mode, modlen, B_READ);
+	    
+	    /* do a mode sense to get current */
+	    modlen = sc->sc_datalen[CMD_MODE_SENSE];
+	    modsense.cdb[4] = modlen;
+	    stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
+							(u_char *)&mode, modlen, B_READ);
+#ifdef DEBUG
+	    printf("st: stat = %d, blklen = %d\n", stat, 
+		   (mode.md.blklen2 << 16 | mode.md.blklen1 << 8 | mode.md.blklen0));
+	}
+#endif
 
-	/* do a mode sense to get current */
-	modlen = sc->sc_datalen[CMD_MODE_SENSE];
-	modsense.cdb[4] = modlen;
-	stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
-				  (u_char *)&mode, modlen, B_READ);
-
-printf("st: stat = %d, blklen = %d\n", stat, 
-       (mode.md.blklen2 << 16 | mode.md.blklen1 << 8 | mode.md.blklen0));
-
-/* XXX - use tape table data? */
+	/* XXX - use tape table data? */
 	/* set record length */
 	switch (sc->sc_tapeid) {
 	case MT_ISAR:
@@ -579,6 +597,11 @@ printf("st: stat = %d, blklen = %d\n", stat,
 			sc->sc_blklen = 512;
 		else
 			sc->sc_blklen = st_exblklen;
+		break;
+	case MT_ISTEAC1:
+		sc->sc_numblks = 60*1024*2; /* 60M of 512 byte blocks */
+		skip_modsel = 1;
+		sc->sc_blklen = 512;
 		break;
 	default:
 		if ((mode.md.blklen2 << 16 |
@@ -769,6 +792,7 @@ mode_selected:
 		case MT_ISWANGTEK:
 		case MT_ISWTEK5099:
 		case MT_ISGENERIC:
+		case MT_ISTEAC1:
 			if (xsense->sc_xsense.key == XSK_UNTATTEN)
 				stat = (sc->sc_ad->amiga_cdriver->d_tur)(ctlr, slave, unit);
 			if (stat == STS_CHECKCOND) {
@@ -789,33 +813,36 @@ mode_selected:
 	/* mode sense */
 	modlen = sc->sc_datalen[CMD_MODE_SENSE];
 	modsense.cdb[4] = modlen;
-	stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
-				  (u_char *)&mode, modlen, B_READ);
+	if (modlen) {
+	    stat = (sc->sc_ad->amiga_cdriver->d_immcmd)(ctlr, slave, unit, &modsense,
+							(u_char *)&mode, modlen, B_READ);
 #ifdef DEBUG
-	if (st_debug & ST_OPENSTAT)
+	    if (st_debug & ST_OPENSTAT)
 		prtmodstat(&mode);
 #endif
-
-	if (stat == STS_CHECKCOND) {
+	    
+	    if (stat == STS_CHECKCOND) {
 		stxsense(ctlr, slave, unit, sc);
 #ifdef DEBUG
 		if (st_debug & ST_OPEN)
-			dumpxsense(xsense, sc);
+		    dumpxsense(xsense, sc);
 #endif
-	}
-	if (stat)
+	    }
+	    if (stat)
 		return(EIO);
-
-	if ((flag & FWRITE) && mode.md.wp) {
+	
+	    if ((flag & FWRITE) && mode.md.wp) {
 		uprintf("st:%d write protected\n", UNIT(dev));
 		return(EACCES);
+	    }
+	    
+	    /* save total number of blocks on tape */
+	    sc->sc_numblks = mode.md.numblk2 << 16 |
+		             mode.md.numblk1 << 8 |
+		             mode.md.numblk0;
 	}
 
 	sc->sc_ctty = tprintf_open(p);
-	/* save total number of blocks on tape */
-	sc->sc_numblks = mode.md.numblk2 << 16 |
-			 mode.md.numblk1 << 8 |
-			 mode.md.numblk0;
 
 	if (xsense->sc_xsense.eom && !(sc->sc_flags & STF_LEOT))
 		sc->sc_filepos = 0;
