@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: exec.c,v 1.2 1997/03/22 01:48:33 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,8 +39,8 @@
  * 	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-/* starts NetBSD a.out kernel
- needs lowlevel startup from startprog.S
+/*
+ * starts NetBSD a.out kernel needs lowlevel startup from startprog.S
  */
 
 #include <sys/param.h>
@@ -56,42 +56,43 @@
 #ifdef COMPAT_OLDBOOT
 static int
 dev2major(devname, major)
-char *devname;
-int *major;
+	char           *devname;
+	int            *major;
 {
-    static char *devices[] = {"wd", "", "fd", "", "sd"};
+	static char    *devices[] = {"wd", "", "fd", "", "sd"};
 #define NUMDEVICES (sizeof(devices)/sizeof(char *))
-    int i;
+	int             i;
 
-    for(i = 0; i < NUMDEVICES; i++)
-	if(!strcmp(devname, devices[i])) {
-	    *major = i;
-	    return(0);
-	}
-	return(-1);
+	for (i = 0; i < NUMDEVICES; i++)
+		if (!strcmp(devname, devices[i])) {
+			*major = i;
+			return (0);
+		}
+	return (-1);
 }
 #endif
 
-int exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
-const char	*file;
-physaddr_t	loadaddr;
-int	boothowto;
-char	*bootdev, *consdev; /* passed to kernel */
+int 
+exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
+	const char     *file;
+	physaddr_t      loadaddr;
+	int             boothowto;
+	char           *bootdev, *consdev;	/* passed to kernel */
 {
-	register int io;
-	struct exec x;
-	int cc, magic;
-	physaddr_t entry;
+	register int    io;
+	struct exec     x;
+	int             cc, magic;
+	physaddr_t      entry;
 	register physaddr_t cp;
-	u_long boot_argv[6];
+	u_long          boot_argv[6];
 
 #ifdef COMPAT_OLDBOOT
-	char *fsname, *devname;
-	int unit, part;
-	const char *filename;
-	int bootdevnr;
+	char           *fsname, *devname;
+	int             unit, part;
+	const char     *filename;
+	int             bootdevnr;
 #else
-	u_long xbootinfo[2];
+	u_long          xbootinfo[2];
 #endif
 
 #ifdef	DEBUG
@@ -99,26 +100,26 @@ char	*bootdev, *consdev; /* passed to kernel */
 #endif
 	io = open(file, 0);
 	if (io < 0)
-		return(-1);
+		return (-1);
 
 	/*
 	 * Read in the exec header, and validate it.
 	 */
-	if (read(io, (char *)&x, sizeof(x)) != sizeof(x))
-	  goto shread;
+	if (read(io, (char *) &x, sizeof(x)) != sizeof(x))
+		goto shread;
 	magic = N_GETMAGIC(x);
 
-	if ((magic != ZMAGIC) || (N_GETMID(x) != MID_MACHINE)){
+	if ((magic != ZMAGIC) || (N_GETMID(x) != MID_MACHINE)) {
 #ifdef DEBUG
-	  printf("invalid NetBSD kernel (%o/%ld)\n", magic, N_GETMID(x));
+		printf("invalid NetBSD kernel (%o/%ld)\n", magic, N_GETMID(x));
 #endif
-	  errno = EFTYPE;
-	  goto closeout;
+		errno = EFTYPE;
+		goto closeout;
 	}
-
 	entry = x.a_entry & 0xffffff;
 
-	if(!loadaddr) loadaddr = (entry & 0x100000);
+	if (!loadaddr)
+		loadaddr = (entry & 0x100000);
 
 	cp = loadaddr;
 
@@ -137,7 +138,7 @@ char	*bootdev, *consdev; /* passed to kernel */
 
 	if (pread(io, cp, x.a_text - sizeof(x)) != x.a_text - sizeof(x))
 		goto shread;
-	cp += x.a_text-sizeof(x);
+	cp += x.a_text - sizeof(x);
 
 	/*
 	 * Read in the data segment.
@@ -193,7 +194,7 @@ char	*bootdev, *consdev; /* passed to kernel */
 			goto shread;
 		cp += cc;
 	}
-	boot_argv[3] = (((u_int)cp + sizeof(int) - 1)) & (-sizeof(int));
+	boot_argv[3] = (((u_int) cp + sizeof(int) - 1)) & (-sizeof(int));
 
 	printf("=0x%lx\n", cp - loadaddr);
 
@@ -201,39 +202,38 @@ char	*bootdev, *consdev; /* passed to kernel */
 
 #ifdef COMPAT_OLDBOOT
 	/* prepare boot device information for kernel */
-	if(parsebootfile(file, &fsname, &devname, &unit, &part, &filename)
-	   || strcmp(fsname, "ufs"))
-	    bootdevnr = 0; /* XXX error out if parse error??? */
+	if (parsebootfile(file, &fsname, &devname, &unit, &part, &filename)
+	    || strcmp(fsname, "ufs"))
+		bootdevnr = 0;	/* XXX error out if parse error??? */
 	else {
-	    int major;
+		int             major;
 
-	    if(!strcmp(devname, "hd")) {
-		/* generic BIOS disk, have to guess type */
-		struct open_file *f = &files[io]; /* XXX */
+		if (!strcmp(devname, "hd")) {
+			/* generic BIOS disk, have to guess type */
+			struct open_file *f = &files[io];	/* XXX */
 
-		if(biosdisk_gettype(f) == DTYPE_SCSI)
-		    devname = "sd";
+			if (biosdisk_gettype(f) == DTYPE_SCSI)
+				devname = "sd";
+			else
+				devname = "wd";
+		}
+		if (dev2major(devname, &major))
+			bootdevnr = 0;	/* XXX error out??? */
 		else
-		    devname = "wd";
-	    }
-
-	    if(dev2major(devname, &major))
-		bootdevnr = 0; /* XXX error out??? */
-	    else
-		bootdevnr = MAKEBOOTDEV(major, 0, 0, unit, part);
+			bootdevnr = MAKEBOOTDEV(major, 0, 0, unit, part);
 	}
 
 	boot_argv[1] = bootdevnr;
-	boot_argv[2] = 0; /* cyl offset, unused */
-#else /* XXX to be specified */
+	boot_argv[2] = 0;	/* cyl offset, unused */
+#else				/* XXX to be specified */
 	xbootinfo[0] = vtophys(bootdev);
 	xbootinfo[1] = vtophys(consdev);
 	boot_argv[1] = 0;
-	boot_argv[2] = vtophys(xbootinfo); /* XXX cyl offset */
+	boot_argv[2] = vtophys(xbootinfo);	/* XXX cyl offset */
 #endif
-/*
-	boot_argv[3] = end (set above)
-*/
+	/*
+	 * boot_argv[3] = end (set above)
+	 */
 	boot_argv[4] = getextmem();
 	boot_argv[5] = getbasemem();
 
@@ -251,5 +251,5 @@ shread:
 	errno = EIO;
 closeout:
 	close(io);
-	return(-1);
+	return (-1);
 }

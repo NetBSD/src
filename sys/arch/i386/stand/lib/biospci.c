@@ -1,4 +1,4 @@
-/*	$NetBSD: biospci.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: biospci.c,v 1.2 1997/03/22 01:48:27 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -32,75 +32,79 @@
  *
  */
 
-/* basic PCI functions for libsa
- needs lowlevel parts from bios_pci.S
+/*
+ * basic PCI functions for libsa needs lowlevel parts from bios_pci.S
  */
 
 #include <lib/libsa/stand.h>
 
 #include "pcivar.h"
 
-extern int pcibios_present __P((int*));
-extern int pcibios_finddev __P((int, int, int, unsigned int*));
-extern int pcibios_cfgread __P((unsigned int, int, int*));
+extern int pcibios_present __P((int *));
+extern int pcibios_finddev __P((int, int, int, unsigned int *));
+extern int pcibios_cfgread __P((unsigned int, int, int *));
 extern int pcibios_cfgwrite __P((unsigned int, int, int));
 
 #define PCISIG ('P' | ('C' << 8) | ('I' << 16) | (' ' << 24))
 
-int pcicheck()
+int 
+pcicheck()
 {
-  int ret, sig;
+	int             ret, sig;
 
-  ret = pcibios_present(&sig);
+	ret = pcibios_present(&sig);
 
-  if((ret & 0xff00) || (sig != PCISIG))
-    return(-1);
+	if ((ret & 0xff00) || (sig != PCISIG))
+		return (-1);
 
-  return(0);
+	return (0);
 }
 
-int pcifinddev(vid, did, handle)
-int vid, did;
-pcihdl_t *handle;
+int 
+pcifinddev(vid, did, handle)
+	int             vid, did;
+	pcihdl_t       *handle;
 {
-  int ret;
+	int             ret;
 
-  *handle = 0;
+	*handle = 0;
 
-  ret = pcibios_finddev(vid, did, 0, handle);
+	ret = pcibios_finddev(vid, did, 0, handle);
 
-  if(ret)
-    return(-1);
+	if (ret)
+		return (-1);
 
-  return(0);
+	return (0);
 }
 
-int pcicfgread(handle, off, val)
-pcihdl_t *handle;
-int off;
-int *val;
+int 
+pcicfgread(handle, off, val)
+	pcihdl_t       *handle;
+	int             off;
+	int            *val;
 {
-  int ret;
+	int             ret;
 
-  ret = pcibios_cfgread(*handle, off, val);
+	ret = pcibios_cfgread(*handle, off, val);
 
-  if(ret)
-    return(-1);
+	if (ret)
+		return (-1);
 
-  return(0);
+	return (0);
 }
 
-int pcicfgwrite(handle, off, val)
-pcihdl_t *handle;
-int off;
-int val;
+int 
+pcicfgwrite(handle, off, val)
+	pcihdl_t       *handle;
+	int             off;
+	int             val;
 {
-  int ret;
+	int             ret;
 
-  ret = pcibios_cfgwrite(*handle, off, val);
+	ret = pcibios_cfgwrite(*handle, off, val);
 
-  if(ret)
-    return(-1);
+	if (ret)
+		return (-1);
 
-  return(0);
+	return (0);
 }
