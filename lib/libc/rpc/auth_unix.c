@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.13 1998/11/15 17:24:07 christos Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.14 1999/01/20 11:37:34 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.13 1998/11/15 17:24:07 christos Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.14 1999/01/20 11:37:34 lukem Exp $");
 #endif
 #endif
 
@@ -125,24 +125,26 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	/*
 	 * Allocate and set up auth handle
 	 */
+	au = NULL;
 	auth = (AUTH *)mem_alloc(sizeof(*auth));
 #ifndef KERNEL
 	if (auth == NULL) {
 		warnx("authunix_create: out of memory");
-		return (NULL);
+		goto cleanup_authunix_create;
 	}
 #endif
 	au = (struct audata *)mem_alloc(sizeof(*au));
 #ifndef KERNEL
 	if (au == NULL) {
 		warnx("authunix_create: out of memory");
-		return (NULL);
+		goto cleanup_authunix_create;
 	}
 #endif
 	auth->ah_ops = &auth_unix_ops;
 	auth->ah_private = au;
 	auth->ah_verf = au->au_shcred = _null_auth;
 	au->au_shfaults = 0;
+	au->au_origcred.oa_base = NULL;
 
 	/*
 	 * fill in param struct from the given params
@@ -168,7 +170,7 @@ authunix_create(machname, uid, gid, len, aup_gids)
 #else
 	if ((au->au_origcred.oa_base = mem_alloc((u_int) len)) == NULL) {
 		warnx("authunix_create: out of memory");
-		return (NULL);
+		goto cleanup_authunix_create;
 	}
 #endif
 	memmove(au->au_origcred.oa_base, mymem, (size_t)len);
@@ -179,6 +181,17 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	auth->ah_cred = au->au_origcred;
 	marshal_new_auth(auth);
 	return (auth);
+#ifndef KERNEL
+ cleanup_authunix_create:
+	if (auth)
+		mem_free(auth, sizeof(*auth));
+	if (au) {
+		if (au->au_origcred.oa_base)
+			mem_free(au->au_origcred.oa_base, (u_int)len);
+		mem_free(au, sizeof(*au));
+	}
+	return (NULL);
+#endif
 }
 
 /*
@@ -238,7 +251,8 @@ authunix_validate(auth, verf)
 
 	if (verf->oa_flavor == AUTH_SHORT) {
 		au = AUTH_PRIVATE(auth);
-		xdrmem_create(&xdrs, verf->oa_base, verf->oa_length, XDR_DECODE);
+		xdrmem_create(&xdrs, verf->oa_base, verf->oa_length,
+		    XDR_DECODE);
 
 		if (au->au_shcred.oa_base != NULL) {
 			mem_free(au->au_shcred.oa_base,

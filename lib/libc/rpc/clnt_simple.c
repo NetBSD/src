@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.14 1998/11/15 17:25:39 christos Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.15 1999/01/20 11:37:35 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.14 1998/11/15 17:25:39 christos Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.15 1999/01/20 11:37:35 lukem Exp $");
 #endif
 #endif
 
@@ -94,12 +94,13 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		crp->oldhost[0] = 0;
 		crp->socket = RPC_ANYSOCK;
 	}
-	if (crp->valid && crp->oldprognum == prognum && crp->oldversnum == versnum
-		&& strcmp(crp->oldhost, host) == 0) {
+	if (crp->valid && crp->oldprognum == prognum
+	    && crp->oldversnum == versnum && strcmp(crp->oldhost, host) == 0) {
 		/* reuse old client */		
 	} else {
 		crp->valid = 0;
-		(void)close(crp->socket);
+		if (crp->socket != -1)
+			(void)close(crp->socket);
 		crp->socket = RPC_ANYSOCK;
 		if (crp->client) {
 			clnt_destroy(crp->client);
