@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.27 2004/03/17 10:48:21 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.28 2004/03/17 11:00:19 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.27 2004/03/17 10:48:21 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.28 2004/03/17 11:00:19 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -69,34 +69,34 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.27 2004/03/17 10:48:21 pk Exp $");
 
 #define obpvec ((struct promvec *)romp)
 
-static void	notimplemented __P((void));
-static void	obp_v0_fortheval __P((char *));
-static void	obp_set_callback __P((void (*)__P((void))));
-static int	obp_v0_read __P((int, void *, int));
-static int	obp_v0_write __P((int, void *, int));
-static int	obp_v2_getchar __P((void));
-static int	obp_v2_peekchar __P((void));
-static void	obp_v2_putchar __P((int));
-static void	obp_v2_putstr __P((char *, int));
-static int	obp_v2_seek __P((int, u_quad_t));
-static char	*parse_bootfile __P((char *));
-static char	*parse_bootargs __P((char *));
-static char	*obp_v0_getbootpath __P((void));
-static char	*obp_v0_getbootfile __P((void));
-static char	*obp_v0_getbootargs __P((void));
-static char	*obp_v2_getbootpath __P((void));
-static char	*obp_v2_getbootfile __P((void));
-static char	*obp_v2_getbootargs __P((void));
-static int	obp_v2_finddevice __P((char *));
-static int	obp_ticks __P((void));
+static void	notimplemented(void);
+static void	obp_v0_fortheval(char *);
+static void	obp_set_callback(void (*)(void));
+static int	obp_v0_read(int, void *, int);
+static int	obp_v0_write(int, void *, int);
+static int	obp_v2_getchar(void);
+static int	obp_v2_peekchar(void);
+static void	obp_v2_putchar(int);
+static void	obp_v2_putstr(char *, int);
+static int	obp_v2_seek(int, u_quad_t);
+static char	*parse_bootfile(char *);
+static char	*parse_bootargs(char *);
+static char	*obp_v0_getbootpath(void);
+static char	*obp_v0_getbootfile(void);
+static char	*obp_v0_getbootargs(void);
+static char	*obp_v2_getbootpath(void);
+static char	*obp_v2_getbootfile(void);
+static char	*obp_v2_getbootargs(void);
+static int	obp_v2_finddevice(char *);
+static int	obp_ticks(void);
 
-static int	findchosen __P((void));
-static char	*opf_getbootpath __P((void));
-static char	*opf_getbootfile __P((void));
-static char	*opf_getbootargs __P((void));
-static int	opf_finddevice __P((char *));
-static int	opf_instance_to_package __P((int));
-static char	*opf_nextprop __P((int, char *));
+static int	findchosen(void);
+static char	*opf_getbootpath(void);
+static char	*opf_getbootfile(void);
+static char	*opf_getbootargs(void);
+static int	opf_finddevice(char *);
+static int	opf_instance_to_package(int);
+static char	*opf_nextprop(int, char *);
 
 
 /*
@@ -764,7 +764,7 @@ obp_v2_putstr(str, len)
 
 void
 obp_set_callback(f)
-	void (*f)__P((void));
+	void (*f)(void);
 {
 	*obpvec->pv_synchook = f;
 }
@@ -1064,15 +1064,15 @@ read_idprom:
 	memcpy(cp, idp->id_ether, 6);
 }
 
-static void prom_init_oldmon __P((void));
-static void prom_init_obp __P((void));
-static void prom_init_opf __P((void));
+static void prom_init_oldmon(void);
+static void prom_init_obp(void);
+static void prom_init_opf(void);
 
 static __inline__ void
 prom_init_oldmon()
 {
 	struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
-	extern void sparc_noop __P((void));
+	extern void sparc_noop(void);
 
 	promops.po_version = PROM_OLDMON;
 	promops.po_revision = oldpvec->monId[0];	/*XXX*/
@@ -1100,7 +1100,7 @@ prom_init_oldmon()
 #ifdef SUN4
 #ifndef _STANDALONE
 	if (oldpvec->romvecVersion >= 2) {
-		extern void oldmon_w_cmd __P((u_long, char *));
+		extern void oldmon_w_cmd(u_long, char *);
 		*oldpvec->vector_cmd = oldmon_w_cmd;
 	}
 #endif
