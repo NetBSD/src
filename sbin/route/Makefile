@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.6 (Berkeley) 6/27/91
-#
-#	$Header: /cvsroot/src/sbin/route/Makefile,v 1.5 1993/04/25 07:50:56 mycroft Exp $
+#	from: @(#)Makefile	5.6 (Berkeley) 6/27/91
+#	$Id: Makefile,v 1.6 1993/08/01 05:26:30 mycroft Exp $
 
 PROG=	route
 MAN8=	route.0

@@ -1,6 +1,5 @@
-#	@(#)Makefile	5.6 (Berkeley) 6/29/90
-#
-#	$Header: /cvsroot/src/sbin/reboot/Makefile,v 1.3 1993/03/23 00:29:51 cgd Exp $
+#	from: @(#)Makefile	5.6 (Berkeley) 6/29/90
+#	$Id: Makefile,v 1.4 1993/08/01 05:26:50 mycroft Exp $
 
 PROG=	reboot
 DPADD=	${LIBUTIL}
