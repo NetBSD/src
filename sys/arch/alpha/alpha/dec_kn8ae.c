@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.22 1999/02/13 02:41:41 thorpej Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.23 1999/04/15 22:13:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.22 1999/02/13 02:41:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.23 1999/04/15 22:13:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.22 1999/02/13 02:41:41 thorpej Exp $
 
 
 void dec_kn8ae_init __P((void));
+void dec_kn8ae_cons_init __P((void));
 static void dec_kn8ae_device_register __P((struct device *, void *));
 
 static void dec_kn8ae_mcheck_handler
@@ -91,19 +92,25 @@ dec_kn8ae_init()
 	}
 
 	platform.iobus = "tlsb";
+	platform.cons_init = dec_kn8ae_cons_init;
 	platform.device_register = dec_kn8ae_device_register;
 	platform.mcheck_handler = dec_kn8ae_mcheck_handler;
 }
 
-/*
- * dec_kn8ae_cons_init- not needed right now.
- *
- * Info to retain:
- *
- *	The AXP 8X00 seems to encode the
- *	type of console in the ctb_type field,
- *	not the ctb_term_type field.
- */
+void
+dec_kn8ae_cons_init()
+{
+
+	/*
+	 * Info to retain:
+	 *
+	 *	The AXP 8X00 seems to encode the
+	 *	type of console in the ctb_type field,
+	 *	not the ctb_term_type field.
+	 *
+	 *	XXX Not Type 4 CTB?
+	 */
+}
 
 /* #define	BDEBUG	1 */
 static void
