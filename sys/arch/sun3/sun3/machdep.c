@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.35 1994/07/13 18:04:46 gwr Exp $
+ *	$Id: machdep.c,v 1.36 1994/07/27 04:52:00 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -276,7 +276,10 @@ void cpu_startup()
      */
     nofault = NULL;
     configure();
-    
+
+	swapconf();
+	dumpconf();
+
     cold = 0;
 }
 
@@ -1099,7 +1102,7 @@ void boot(howto)
 	sun3_rom_halt();
     } else {
 	if (howto & RB_DUMP) {
-	    printf("dumping not supported yet :)\n");
+		dumpsys();
 	}
     }
     sun3_rom_reboot();
@@ -1107,7 +1110,51 @@ void boot(howto)
     /*NOTREACHED*/
 }
 
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
+int	dumpsize = 0;		/* also for savecore */
+long	dumplo = 0;
 
+dumpconf()
+{
+	int nblks;
+
+	dumpsize = physmem;
+
+	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
+		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+		/*
+		 * Don't dump on the first CLBYTES (why CLBYTES?)
+		 * in case the dump device includes a disk label.
+		 */
+		if (dumplo < btodb(CLBYTES))
+			dumplo = btodb(CLBYTES);
+
+		/*
+		 * If dumpsize is too big for the partition, truncate it.
+		 * Otherwise, put the dump at the end of the partition
+		 * by making dumplo as large as possible.
+		 */
+		if (dumpsize > btoc(dbtob(nblks - dumplo)))
+			dumpsize = btoc(dbtob(nblks - dumplo));
+		else if (dumplo + ctod(dumpsize) > nblks)
+			dumplo = nblks - ctod(dumpsize);
+	}
+}
+
+/*
+ * Write a crash dump.
+ */
+dumpsys()
+{
+    printf("dumping not supported yet :)\n");
+}
+
+/*
+ * Print a register and stack dump.
+ */
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
