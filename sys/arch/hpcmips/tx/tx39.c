@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.22 2001/06/13 19:09:08 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.23 2001/06/14 11:09:55 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -130,14 +130,14 @@ tx_init()
 
 	switch (model) {
 	default:
-		 /* Unknown TOSHIBA TX39-series */
+		/* Unknown TOSHIBA TX39-series */
 		sprintf(cpu_name, "Unknown TOSHIBA TX39-series %x", model);
 		break;
 	case TMPR3912:
 		tx39clock_cpuspeed(&cpuclock, &cpuspeed);
 
 		sprintf(cpu_name, "TOSHIBA TMPR3912 %d.%02d MHz",
-			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
+		    cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		tc->tc_chipset = __TX391X;
 		break;
 	case TMPR3922:
@@ -145,8 +145,8 @@ tx_init()
 		rev = tx_conf_read(tc, TX3922_REVISION_REG);
 
 		sprintf(cpu_name, "TOSHIBA TMPR3922 rev. %x.%x "
-			"%d.%02d MHz", (rev >> 4) & 0xf, rev & 0xf, 
-			cpuclock / 1000000, (cpuclock % 1000000) / 10000);
+		    "%d.%02d MHz", (rev >> 4) & 0xf, rev & 0xf, 
+		    cpuclock / 1000000, (cpuclock % 1000000) / 10000);
 		tc->tc_chipset = __TX392X;
 		break;
 	}
@@ -178,7 +178,7 @@ tx_fb_init(kernend)
 	paddr_t fb_end;
 
 	fb_end = MIPS_KSEG0_TO_PHYS(mem_clusters[0].start + 
-				    mem_clusters[0].size - 1);
+	    mem_clusters[0].size - 1);
 	tx3912video_init(MIPS_KSEG0_TO_PHYS(*kernend), &fb_end);
 			 
 	/* Skip V-RAM area */
@@ -210,7 +210,7 @@ tx_mem_init(kernend)
 	 *  (For reboot Windows CE clearly)
 	 */
 	memset((void *)(KERNBASE + 0x400), 0, KERNTEXTOFF - 
-	       (KERNBASE + 0x800));
+	    (KERNBASE + 0x800));
 }
 
 void
@@ -295,31 +295,30 @@ tx_cons_init()
 	slot = TX39_UARTA;
 #endif
 	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
-		if(txcom_cnattach(slot, CONSPEED,
-				  (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | 
-				  CS8)) {
+		if(txcom_cnattach(slot, CONSPEED, 
+		    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8)) {
 			panic("tx_cons_init: can't attach serial console.");
 		}
 	} else {
 #if NM38813C > 0
 		if(CONSPLATIDMATCH(VICTOR_INTERLINK) &&
-		   m38813c_cnattach(TX39_SYSADDR_CARD1)) {
+		    m38813c_cnattach(TX39_SYSADDR_CARD1)) {
 			goto panic;
 		}
 #endif
 #if NTC5165BUF > 0
 		if(CONSPLATIDMATCH(COMPAQ_C) &&
-		   tc5165buf_cnattach(TX39_SYSADDR_CS3)) {
+		    tc5165buf_cnattach(TX39_SYSADDR_CS3)) {
 			goto panic;
 		}
 
 		if(CONSPLATIDMATCH(SHARP_TELIOS) &&
-		   tc5165buf_cnattach(TX39_SYSADDR_CS1)) {
+		    tc5165buf_cnattach(TX39_SYSADDR_CS1)) {
 			goto panic;
 		}
 		
 		if(CONSPLATIDMATCH(SHARP_MOBILON) &&
-		   tc5165buf_cnattach(TX39_SYSADDR_MCS0)) {
+		    tc5165buf_cnattach(TX39_SYSADDR_MCS0)) {
 			goto panic;
 		}
 #endif
@@ -400,5 +399,5 @@ __is_set_print(reg, mask, name)
 
 	printf("%s[%c] ", name, onoff[ret]);
 
-	return ret;
+	return (ret);
 }

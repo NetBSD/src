@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.8 2001/06/13 19:09:08 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.9 2001/06/14 11:09:56 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ static void __print_port_status(struct tx39io_port_status *, int);
 int
 tx39io_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return ATTACH_FIRST; /* 1st attach group of txsim */
+	return (ATTACH_FIRST); /* 1st attach group of txsim */
 }
 
 void
@@ -248,7 +248,7 @@ mfio_in(hpcio_chip_t arg, int port)
 	struct tx39io_softc *sc __attribute__((__unused__)) = arg->hc_sc ;
 
 	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
-	return tx_conf_read(sc->sc_tc, TX39_IOMFIODATAIN_REG) & (1 << port);
+	return (tx_conf_read(sc->sc_tc, TX39_IOMFIODATAIN_REG) & (1 << port));
 }
 
 static int
@@ -294,7 +294,7 @@ tx391x_io_in(hpcio_chip_t arg, int port)
 	txreg_t reg = tx_conf_read(sc->sc_tc, TX39_IOCTRL_REG);
 
 	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
-	return  TX391X_IOCTRL_IODIN(reg) & (1 << port);
+	return  (TX391X_IOCTRL_IODIN(reg) & (1 << port));
 }
 
 void
@@ -379,7 +379,7 @@ tx392x_io_in(hpcio_chip_t arg, int port)
 
 	DPRINTF(("%s: port #%d\n", __FUNCTION__, port));
 	
-	return TX392X_IODATAINOUT_DIN(reg) & (1 << port);
+	return (TX392X_IODATAINOUT_DIN(reg) & (1 << port));
 }
 
 void
