@@ -1,4 +1,4 @@
-/*	$NetBSD: eventvar.h,v 1.1.1.1.2.1 2001/07/10 13:20:22 lukem Exp $	*/
+/*	$NetBSD: eventvar.h,v 1.1.1.1.2.2 2001/09/08 02:33:53 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -41,8 +41,7 @@ struct kqueue {
 	struct selinfo	kq_sel;	
 	struct filedesc *kq_fdp;
 	int		kq_state;
-#define	KQ_SEL		0x01
-#define	KQ_SLEEP	0x02
+#define	KQ_SLEEP	0x01
 	struct kevent	kq_kev[KQ_NEVENTS];
 };
 

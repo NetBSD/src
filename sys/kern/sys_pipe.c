@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5.2.2 2001/09/07 22:14:49 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5.2.3 2001/09/08 02:33:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -507,17 +507,19 @@ static __inline void
 pipeselwakeup(selp, sigp)
 	struct pipe *selp, *sigp;
 {
+
+#ifdef __FreeBSD__
 	if (selp->pipe_state & PIPE_SEL) {
 		selp->pipe_state &= ~PIPE_SEL;
 		selwakeup(&selp->pipe_sel);
 	}
-#ifdef __FreeBSD__
 	if (sigp && (sigp->pipe_state & PIPE_ASYNC) && sigp->pipe_sigio)
 		pgsigio(sigp->pipe_sigio, SIGIO, 0);
 	KNOTE(&selp->pipe_sel.si_note, 0);
 #endif
 
 #ifdef __NetBSD__
+	selnotify(&selp->pipe_sel, 0);
 	if (sigp && (sigp->pipe_state & PIPE_ASYNC) &&
 	    sigp->pipe_pgid != NO_PID) {
 		struct proc *p;
@@ -528,7 +530,6 @@ pipeselwakeup(selp, sigp)
 			 (p = pfind(sigp->pipe_pgid)) != NULL)
 			psignal(p, SIGIO);
 	}
-	KNOTE(&selp->pipe_sel.si_klist, 0);
 #endif /* NetBSD */
 }
 
@@ -1520,12 +1521,16 @@ pipe_poll(fp, events, p)
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM)) {
 			selrecord(p, &rpipe->pipe_sel);
+#ifdef __FreeBSD__
 			rpipe->pipe_state |= PIPE_SEL;
+#endif
 		}
 
 		if (events & (POLLOUT | POLLWRNORM)) {
 			selrecord(p, &wpipe->pipe_sel);
+#ifdef __FreeBSD__
 			wpipe->pipe_state |= PIPE_SEL;
+#endif
 		}
 	}
 

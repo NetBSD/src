@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.39.2.3 2001/08/25 06:16:48 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.39.2.4 2001/09/08 02:33:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -298,7 +298,7 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 {
 	struct proc	*p;
 
-	selwakeup(&sb->sb_sel);
+	selnotify(&sb->sb_sel, 0);
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;
@@ -312,7 +312,6 @@ sowakeup(struct socket *so, struct sockbuf *sb)
 	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
-	KNOTE(&sb->sb_sel.si_klist, 0);
 }
 
 /*

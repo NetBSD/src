@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.11.4.2 2001/09/07 22:26:05 thorpej Exp $	*/
+/*	$NetBSD: select.h,v 1.11.4.3 2001/09/08 02:33:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,6 +56,15 @@ struct proc;
 
 void	selrecord(struct proc *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
+
+static __inline void
+selnotify(struct selinfo *sip, long knhint)
+{
+
+	if (sip->si_pid != 0)
+		selwakeup(sip);
+	KNOTE(&sip->si_klist, knhint);
+}
 #endif
 
 #endif /* !_SYS_SELECT_H_ */
