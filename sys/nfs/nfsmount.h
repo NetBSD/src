@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.23 2003/04/09 14:21:24 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.24 2003/05/03 16:28:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -115,6 +115,7 @@ struct nfs_args {
 #define	NFSMNT_WANTAUTH		0x00001000  /* Wants an authenticator */
 #define	NFSMNT_AUTHERR		0x00002000  /* Authentication error */
 #define NFSMNT_SWAPCOOKIE	0x00004000  /* XDR encode dir cookies */
+#define NFSMNT_STALEWRITEVERF	0x00008000  /* Write verifier is changing */
 
 #ifdef _KERNEL
 /*
@@ -123,6 +124,7 @@ struct nfs_args {
  * Holds NFS specific information for mount.
  */
 struct	nfsmount {
+	struct simplelock nm_slock;	/* Lock for this structure */
 	int	nm_flag;		/* Flags for soft/hard... */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
 	int	nm_numgrps;		/* Max. size of groupslist */
@@ -153,6 +155,7 @@ struct	nfsmount {
 	char	*nm_authstr;		/* Authenticator string */
 	char	*nm_verfstr;		/* and the verifier */
 	int	nm_verflen;
+	struct lock nm_writeverflock;	/* lock for below */
 	u_char	nm_writeverf[NFSX_V3WRITEVERF]; /* V3 write verifier */
 	NFSKERBKEY_T nm_key;		/* and the session key */
 	int	nm_numuids;		/* Number of nfsuid mappings */
