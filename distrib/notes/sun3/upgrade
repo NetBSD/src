@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.5 1999/01/13 07:30:09 ross Exp $	
+.\"	$NetBSD: upgrade,v 1.6 1999/01/25 23:34:23 garbled Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,13 +104,7 @@ are actually stored on disk.
 Make sure you are in the root filesystem and extract
 the `base' binary set:
 .D1 Ic cd /
-.D1 Ic tar --unlink -zxvpf Ar /path/to/base.tar.gz
-.(Note
-The
-.Cm --unlink
-option is
-.Em very No important!
-.Note)
+.D1 Ic pax -zrvpe -f Ar /path/to/base.tar.gz
 .It
 Install a new boot block:
 (assuming root is on /dev/rsd0a)
@@ -127,7 +121,7 @@ you may have placed on local filesystems, or you may
 wish to extract additional sets at a later time.
 To extract these sets, use the following commands:
 .D1 Ic cd /
-.D1 Ic tar --unlink -zxvpf Ar "path to set
+.D1 Ic pax -zrvpe -f Ar "path to set
 .El
 .(Note
 .No You Em should not

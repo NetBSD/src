@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.32 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: util.c,v 1.33 1999/01/25 23:34:24 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -473,11 +473,7 @@ extract_file(path)
 
 	/* now extract set files files into "./". */
 	(void)printf(msg_string(MSG_extracting), path);
-#ifdef __sparc__	/* XXX make all ports use pax! XXX */
 	tarexit = run_prog(0, 1, "pax -zr%spe -f %s", verbose ? "v" : "", path);
-#else
-	tarexit = run_prog(0, 1, "/usr/bin/tar -xpz%s -f %s", verbose ? "v":"", path);
-#endif
 
 	/* Check tarexit for errors and give warning. */
 	if (tarexit) {

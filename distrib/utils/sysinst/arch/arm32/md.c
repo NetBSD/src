@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 1999/01/23 06:19:17 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.11 1999/01/25 23:34:24 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -264,7 +264,7 @@ void	md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf("%s", msg_string(MSG_dotar));
-	run_prog(0, 1, "pax -X -r -w / /mnt");
+	run_prog(0, 1, "pax -X -r -w -pe / /mnt");
 
 	/* Copy next-stage install profile into target /.profile. */
 	cp_to_target("/tmp/.hdprofile", "/.profile");
@@ -473,13 +473,14 @@ md_cleanup_install(void)
 #ifndef DEBUG
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
+	char sedcmd[STRSIZE];
 
 	strncpy(realfrom, target_expand("/etc/rc.conf"), STRSIZE);
 	strncpy(realto, target_expand("/etc/rc.conf.install"), STRSIZE);
 
-	run_prog(1, 0,
-	    "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
+	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
+	do_system(sedcmd);
 	run_prog(1, 0, "mv -f %s %s", realto, realfrom);
 	run_prog(0, 0, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, 0, "rm -f %s", target_expand("/.termcap"));

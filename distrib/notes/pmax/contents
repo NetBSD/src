@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.7 1998/01/09 18:47:09 perry Exp $	
+	$NetBSD: contents,v 1.8 1999/01/25 23:34:23 garbled Exp $	
 
 The pmax-specific portion of the NetBSD _VER release is found in the
 "pmax" subdirectory of the distribution.  That subdirectory is laid
@@ -171,7 +171,4 @@ well for the binary sets, but it is worth noting that if you use that
 method, the files are extracted "below" the current directory.  That
 is, if you want to extract the binaries "into" your system, i.e.
 replace the system binaries with them, you have to run the "tar xvfp"
-from /.  Also note that if you upgrade or install this way, those
-programs that you are using at the time will NOT be replaced.  If you
-follow the normal installation or upgrade procedures, this will be
-taken care of for you.
+from /.

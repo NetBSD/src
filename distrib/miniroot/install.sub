@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.24 1997/11/12 01:13:54 pk Exp $
+#	$NetBSD: install.sub,v 1.25 1999/01/25 23:34:21 garbled Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -723,7 +723,7 @@ __install_ftp_2
 		echo -n "File name [$_next]? "
 		getresp "$_next"
 		if isin $resp $_sets; then
-			echo "get $resp |\"tar --unlink -zxvpf -\"" >> \
+			echo "get $resp |\"pax -zrvpe\"" >> \
 					/tmp/ftp-script.sh
 			_setsdone="$resp $_setsdone"
 		else
@@ -836,7 +836,7 @@ install_from_mounted_fs() {
 		fi
 
 		# Extract file
-		cat $_filename | (cd /mnt; tar --unlink -zxvpf -)
+		cat $_filename | (cd /mnt; pax -zrvpe)
 		echo "Extraction complete."
 		_setsdone="$_f $_setsdone"
 
@@ -1165,11 +1165,11 @@ __install_tape_2
 		getresp "1"
 		case "$resp" in
 		1)
-			_xcmd="tar --unlink -zxvpf -"
+			_xcmd="pax -zrvpe"
 			;;
 
 		2)
-			_xcmd="tar --unlink -xvpf -"
+			_xcmd="tar -rvpe"
 			;;
 
 		*)

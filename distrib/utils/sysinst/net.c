@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.36 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: net.c,v 1.37 1999/01/25 23:34:24 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -333,10 +333,10 @@ get_via_ftp()
 		(void)snprintf(filename, SSTRSIZE, "%s%s", list->name,
 		    dist_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog(0, 1, "/usr/bin/ftp -a 'ftp://%s/%s/%s'",
+			ret = run_prog(0, 1, "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host, ftp_dir, filename);
 		else
-			ret = run_prog(0, 1, "/usr/bin/ftp 'ftp://%s:%s@%s/%s/%s'",
+			ret = run_prog(0, 1, "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    ftp_user, ftp_pass, ftp_host, ftp_dir, filename);
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
