@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.13 2002/06/17 05:14:19 lukem Exp $
+# $NetBSD: SLAB,v 1.14 2002/07/11 17:56:31 mycroft Exp $
 #
 # deberg's development machine
 #
@@ -155,7 +155,7 @@ zsc0	at intio? ipl 5
 
 xe*	at intio? ipl 3			# ethernet
 
-#esp0	at intio? ipl 3	flags 0xff00	# Turn off sync negotiation
+esp0	at intio? ipl 3	flags 0xff00	# Turn off sync negotiation
 
 #
 # Serial ports
