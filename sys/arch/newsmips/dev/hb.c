@@ -1,3 +1,4 @@
+/*	$NetBSD: hb.c,v 1.2 1998/06/05 14:19:22 tsubai Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8,6 +9,7 @@
 
 static int	hb_match __P((struct device *, struct cfdata *, void *));
 static void	hb_attach __P((struct device *, struct device *, void *));
+static int	hb_search __P((struct device *, struct cfdata *, void *));
 static int	hb_print __P((void *, const char *));
 
 struct cfattach hb_ca = {
@@ -55,9 +57,25 @@ hb_attach(parent, self, aux)
 
 	while (*p) {
 		ca.ca_name = *p;
-		config_found(self, &ca, hb_print);
+		config_search(hb_search, self, &ca);
 		p++;
 	}
+}
+
+static int
+hb_search(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct confargs *ca = aux;
+
+	ca->ca_addr = cf->cf_addr;
+
+	if ((*cf->cf_attach->ca_match)(parent, cf, ca) != 0)
+		config_attach(parent, cf, ca, hb_print);
+
+	return 0;
 }
 
 /*
@@ -69,18 +87,14 @@ hb_print(args, name)
 	void *args;
 	const char *name;
 {
-#if 0
 	struct confargs *ca = args;
-#endif
 
 	/* Be quiet about empty HB locations. */
 	if (name)
 		return(QUIET);
 
-#if 0
 	if (ca->ca_addr != -1)
 		printf(" addr 0x%x", ca->ca_addr);
-#endif
 
 	return(UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 1998/02/18 13:48:14 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 1998/06/05 14:19:22 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -86,7 +86,8 @@ int zs_major = 1;
 /*
  * The news3400 provides a 4.9152 MHz clock to the ZS chips.
  */
-#define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
+#define PCLK1	(9600 * 512)	/* PCLK pin input clock rate */
+#define PCLK2	(7200 * 512)
 
 /*
  * Define interrupt levels.
@@ -106,23 +107,13 @@ struct zsdevice {
 	struct	zschan zs_chan_a;
 };
 
-
-/* Saved PROM mappings */
-static struct zsdevice *zsaddr[NZS] = {
-	(void *)SCCPORT0B,
-	(void *)SCCPORT1B,
-};
+static struct zsdevice *zsaddr[NZS];
 
 /* Flags from cninit() */
 static int zs_hwflags[NZS][2];
 
-/* Default speed for each channel */
-static int zs_defspeed[NZS][2] = {
-	{ 9600, 	/* tty00 */
-	  9600 },	/* tty01 */
-	{ 9600, 	/* tty10 */
-	  9600 },	/* tty11 */
-};
+/* Default speed for all channels */
+static int zs_defspeed = 9600;
 
 static u_char zs_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
@@ -201,10 +192,9 @@ zs_match(parent, cf, aux)
 	if (strcmp(ca->ca_name, "zsc"))
 		return 0;
 
-	/* Make sure zs_init() found mappings. */
 	va = zsaddr[unit];
 	if (va == NULL)
-		return 0;
+		va = zsaddr[unit] = (void *)cf->cf_addr;
 
 	/* This returns -1 on a fault (bus error). */
 	if (badaddr(va, 1))
@@ -249,7 +239,10 @@ zs_attach(parent, self, aux)
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
-		cs->cs_brg_clk = PCLK / 16;
+		if (zs_unit == 0)
+			cs->cs_brg_clk = PCLK1 / 16;
+		else
+			cs->cs_brg_clk = PCLK2 / 16;
 
 		zc = zs_get_chan_addr(zs_unit, channel);
 		cs->cs_reg_csr  = &zc->zc_csr;
@@ -263,7 +256,7 @@ zs_attach(parent, self, aux)
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
 			cs->cs_defspeed = zs_get_speed(cs);
 		else
-			cs->cs_defspeed = zs_defspeed[zs_unit][channel];
+			cs->cs_defspeed = zs_defspeed;
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -364,7 +357,7 @@ zshard(arg)
 	/* We are at splzs here, so no need to lock. */
 	if (softreq && (zssoftpending == 0)) {
 		zssoftpending = 1;
-		timeout(zssoft, arg, 1); /*isr_soft_request(ZSSOFT_PRI);*/
+		zssoft(arg);	/*isr_soft_request(ZSSOFT_PRI);*/
 	}
 	return;
 }
@@ -564,6 +557,7 @@ void
 zs_abort(cs)
 	struct zs_chanstate *cs;
 {
+	Debugger();
 }
 
 /*
