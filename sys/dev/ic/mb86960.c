@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.35 1999/09/13 10:31:35 itojun Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.36 2000/02/02 09:34:52 enami Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1106,7 +1106,8 @@ mb86960_intr(arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char tstat, rstat;
 
-	if (sc->sc_enabled == 0)
+	if (sc->sc_enabled == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 #if FE_DEBUG >= 4
@@ -1812,6 +1813,11 @@ mb86960_disable(sc)
 	}
 }
 
+/*
+ * mbe_activate:
+ *
+ *	Handle device activation/deactivation requests.
+ */
 int
 mb86960_activate(self, act)
 	struct device *self;
@@ -1827,17 +1833,35 @@ mb86960_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->sc_ec.ec_if);
-#endif
-
-		/* Now disable the interface. */
-		mb86960_disable(sc);
+		if_deactivate(&sc->sc_ec.ec_if);
 		break;
 	}
 	splx(s);
 	return (rv);
+}
+
+/*
+ * mb86960_detach:
+ *
+ *	Detach a MB86960 interface.
+ */
+int
+mb86960_detach(sc)
+	struct mb86960_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+
+	/* Delete all media. */
+	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	mb86960_disable(sc);
+	return (0);
 }
 
 #if FE_DEBUG >= 1
