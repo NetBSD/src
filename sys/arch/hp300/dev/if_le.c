@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.5 1994/02/05 05:06:54 mycroft Exp $
+ *	$Id: if_le.c,v 1.6 1994/02/05 06:58:08 mycroft Exp $
  */
 
 #include "le.h"
@@ -111,14 +111,19 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;	/* LANCE registers */
 	struct	lereg2 *sc_r2;	/* dual-port RAM */
 	int	sc_rmd;		/* predicted next rmd to process */
+	int	sc_tmd;		/* next available tmd */
+	int	sc_txcnt;	/* # of transmit buffers in use */
+	/* stats */
 	int	sc_runt;
 	int	sc_jab;
 	int	sc_merr;
 	int	sc_babl;
 	int	sc_cerr;
 	int	sc_miss;
+	int	sc_rown;
 	int	sc_xint;
 	int	sc_xown;
+	int	sc_xown2;
 	int	sc_uflo;
 	int	sc_rxlen;
 	int	sc_rxoff;
@@ -180,12 +185,6 @@ leattach(hd)
 	 * Setup for transmit/receive
 	 */
 	ler2->ler2_mode = LE_MODE;
-	ler2->ler2_padr[0] = sc->sc_addr[1];
-	ler2->ler2_padr[1] = sc->sc_addr[0];
-	ler2->ler2_padr[2] = sc->sc_addr[3];
-	ler2->ler2_padr[3] = sc->sc_addr[2];
-	ler2->ler2_padr[4] = sc->sc_addr[5];
-	ler2->ler2_padr[5] = sc->sc_addr[4];
 	ler2->ler2_rlen = LE_RLEN;
 	ler2->ler2_rdra = (int)lemem->ler2_rmd;
 	ler2->ler2_tlen = LE_TLEN;
@@ -206,26 +205,6 @@ leattach(hd)
 #endif
 	if_attach(ifp);
 	return (1);
-}
-
-ledrinit(ler2)
-	register struct lereg2 *ler2;
-{
-	register struct lereg2 *lemem = 0;
-	register int i;
-
-	for (i = 0; i < LERBUF; i++) {
-		ler2->ler2_rmd[i].rmd0 = (int)lemem->ler2_rbuf[i];
-		ler2->ler2_rmd[i].rmd1 = LE_OWN;
-		ler2->ler2_rmd[i].rmd2 = -LEMTU;
-		ler2->ler2_rmd[i].rmd3 = 0;
-	}
-	for (i = 0; i < LETBUF; i++) {
-		ler2->ler2_tmd[i].tmd0 = (int)lemem->ler2_tbuf[i];
-		ler2->ler2_tmd[i].tmd1 = 0;
-		ler2->ler2_tmd[i].tmd2 = 0;
-		ler2->ler2_tmd[i].tmd3 = 0;
-	}
 }
 
 /*
@@ -303,6 +282,26 @@ lesetladrf(sc)
 	}
 }
 
+ledrinit(ler2)
+	register struct lereg2 *ler2;
+{
+	register struct lereg2 *lemem = 0;
+	register int i;
+
+	for (i = 0; i < LERBUF; i++) {
+		ler2->ler2_rmd[i].rmd0 = (int)lemem->ler2_rbuf[i];
+		ler2->ler2_rmd[i].rmd1 = LE_OWN;
+		ler2->ler2_rmd[i].rmd2 = -LEMTU;
+		ler2->ler2_rmd[i].rmd3 = 0;
+	}
+	for (i = 0; i < LETBUF; i++) {
+		ler2->ler2_tmd[i].tmd0 = (int)lemem->ler2_tbuf[i];
+		ler2->ler2_tmd[i].tmd1 = 0;
+		ler2->ler2_tmd[i].tmd2 = 0;
+		ler2->ler2_tmd[i].tmd3 = 0;
+	}
+}
+
 lereset(sc)
 	register struct le_softc *sc;
 {
@@ -322,9 +321,15 @@ lereset(sc)
 	LERDWR(ler0, LE_CSR0, ler1->ler1_rap);
 	LERDWR(ler0, LE_STOP, ler1->ler1_rdp);
 
+	ler2->ler2_padr[0] = sc->sc_addr[1];
+	ler2->ler2_padr[1] = sc->sc_addr[0];
+	ler2->ler2_padr[2] = sc->sc_addr[3];
+	ler2->ler2_padr[3] = sc->sc_addr[2];
+	ler2->ler2_padr[4] = sc->sc_addr[5];
+	ler2->ler2_padr[5] = sc->sc_addr[4];
 	lesetladrf(sc);
 	ledrinit(ler2);
-	sc->sc_rmd = 0;
+	sc->sc_rmd = sc->sc_tmd = 0;
 
 	LERDWR(ler0, LE_CSR1, ler1->ler1_rap);
 	LERDWR(ler0, (int)&lemem->ler2_mode, ler1->ler1_rdp);
@@ -374,6 +379,9 @@ leinit(unit)
 	}
 }
 
+#define	LENEXTTMP \
+	if (++bix == LETBUF) bix = 0, tmd = sc->sc_r2->ler2_tmd; else ++tmd
+
 /*
  * Start output on interface.  Get another datagram to send
  * off of the interface queue, and copy it to the interface
@@ -383,28 +391,46 @@ lestart(ifp)
 	struct ifnet *ifp;
 {
 	register struct le_softc *sc = &le_softc[ifp->if_unit];
+	register int bix;
 	register struct letmd *tmd;
 	register struct mbuf *m;
-	int len;
+	int len, gotone = 0;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return (0);
-	IF_DEQUEUE(&sc->sc_if.if_snd, m);
-	if (m == 0)
-		return (0);
-	len = leput(sc->sc_r2->ler2_tbuf[0], m);
+	bix = sc->sc_tmd;
+	tmd = &sc->sc_r2->ler2_tmd[bix];
+	do {
+		if (tmd->tmd1 & LE_OWN) {
+			if (gotone)
+				break;
+			sc->sc_xown2++;
+			return (0);
+		}
+		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		if (m == 0) {
+			if (gotone)
+				break;
+			return (0);
+		}
+		len = leput(sc->sc_r2->ler2_tbuf[bix], m);
 #if NBPFILTER > 0
-	/*
-	 * If bpf is listening on this interface, let it
-	 * see the packet before we commit it to the wire.
-	 */
-	if (sc->sc_bpf)
-		bpf_tap(sc->sc_bpf, sc->sc_r2->ler2_tbuf[0], len);
+		/*
+		 * If bpf is listening on this interface, let it
+		 * see the packet before we commit it to the wire.
+		 */
+		if (sc->sc_bpf)
+			bpf_tap(sc->sc_bpf, sc->sc_r2->ler2_tbuf[bix], len);
 #endif
-	tmd = sc->sc_r2->ler2_tmd;
-	tmd->tmd3 = 0;
-	tmd->tmd2 = -len;
-	tmd->tmd1 = LE_OWN | LE_STP | LE_ENP;
+		tmd->tmd3 = 0;
+		tmd->tmd2 = -len;
+		tmd->tmd1 = LE_OWN | LE_STP | LE_ENP;
+		LENEXTTMP;
+		gotone++;
+	} while (++sc->sc_txcnt < LETBUF);
+	/* transmit as soon as possible */
+	LERDWR(sc->sc_r0, LE_INEA|LE_TDMD, sc->sc_r1->ler1_rdp);
+	sc->sc_tmd = bix;
 	sc->sc_if.if_flags |= IFF_OACTIVE;
 	return (0);
 }
@@ -424,7 +450,6 @@ leintr(unit)
 		lereset(sc);
 		return(1);
 	}
-
 	ler1 = sc->sc_r1;
 	LERDWR(ler0, ler1->ler1_rdp, stat);
 	if (stat & LE_SERR) {
@@ -452,14 +477,10 @@ leintr(unit)
 		lereset(sc);
 		return(1);
 	}
-	if (stat & LE_RINT) {
-		/* interrupt is cleared in lerint */
+	if (stat & LE_RINT)
 		lerint(sc);
-	}
-	if (stat & LE_TINT) {
-		LERDWR(ler0, LE_TINT|LE_INEA, ler1->ler1_rdp);
+	if (stat & LE_TINT)
 		lexint(sc);
-	}
 	return(1);
 }
 
@@ -470,38 +491,48 @@ leintr(unit)
 lexint(sc)
 	register struct le_softc *sc;
 {
-	register struct letmd *tmd = sc->sc_r2->ler2_tmd;
+	register struct letmd *tmd;
+	int i, gotone = 0;
 
 	if ((sc->sc_if.if_flags & IFF_OACTIVE) == 0) {
 		sc->sc_xint++;
 		return;
 	}
-	if (tmd->tmd1 & LE_OWN) {
-		sc->sc_xown++;
-		return;
-	}
-	if (tmd->tmd1 & LE_ERR) {
-err:
-		lexerror(sc);
-		sc->sc_if.if_oerrors++;
-		if (tmd->tmd3 & (LE_TBUFF|LE_UFLO)) {
-			sc->sc_uflo++;
-			lereset(sc);
-		} else if (tmd->tmd3 & LE_LCOL)
-			sc->sc_if.if_collisions++;
-		else if (tmd->tmd3 & LE_RTRY)
-			sc->sc_if.if_collisions += 16;
-	}
-	else if (tmd->tmd3 & LE_TBUFF)
+	do {
+		if ((i = sc->sc_tmd - sc->sc_txcnt) < 0)
+			i += LETBUF;
+		tmd = &sc->sc_r2->ler2_tmd[i];
+		if (tmd->tmd1 & LE_OWN) {
+			if (gotone)
+				break;
+			sc->sc_xown++;
+			return;
+		}
+
+		/* clear interrupt */
+		LERDWR(sc->sc_r0, LE_TINT|LE_INEA, sc->sc_r1->ler1_rdp);
+
 		/* XXX documentation says BUFF not included in ERR */
-		goto err;
-	else if (tmd->tmd1 & LE_ONE)
-		sc->sc_if.if_collisions++;
-	else if (tmd->tmd1 & LE_MORE)
-		/* what is the real number? */
-		sc->sc_if.if_collisions += 2;
-	else
-		sc->sc_if.if_opackets++;
+		if ((tmd->tmd1 & LE_ERR) || (tmd->tmd3 & LE_TBUFF)) {
+			lexerror(sc);
+			sc->sc_if.if_oerrors++;
+			if (tmd->tmd3 & (LE_TBUFF|LE_UFLO)) {
+				sc->sc_uflo++;
+				lereset(sc);
+			} else if (tmd->tmd3 & LE_LCOL)
+				sc->sc_if.if_collisions++;
+			else if (tmd->tmd3 & LE_RTRY)
+				sc->sc_if.if_collisions += 16;
+		}
+		else if (tmd->tmd1 & LE_ONE)
+			sc->sc_if.if_collisions++;
+		else if (tmd->tmd1 & LE_MORE)
+			/* what is the real number? */
+			sc->sc_if.if_collisions += 2;
+		else
+			sc->sc_if.if_opackets++;
+		gotone++;
+	} while (--sc->sc_txcnt > 0);
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
 	(void) lestart(&sc->sc_if);
 }
@@ -525,6 +556,7 @@ lerint(sc)
 	 * Out of sync with hardware, should never happen?
 	 */
 	if (rmd->rmd1 & LE_OWN) {
+		sc->sc_rown++;
 		do {
 			LENEXTRMP;
 		} while ((rmd->rmd1 & LE_OWN) && bix != sc->sc_rmd);
@@ -768,6 +800,7 @@ leioctl(ifp, cmd, data)
 				 * so reset everything
 				 */
 				ifp->if_flags &= ~IFF_RUNNING; 
+				LERDWR(sc->sc_r0, LE_STOP, ler1->ler1_rdp);
 				bcopy((caddr_t)ina->x_host.c_host,
 				    (caddr_t)sc->sc_addr, sizeof(sc->sc_addr));
 			}
@@ -785,8 +818,8 @@ leioctl(ifp, cmd, data)
 		ler1 = sc->sc_r1;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    ifp->if_flags & IFF_RUNNING) {
-			LERDWR(sc->sc_r0, LE_STOP, ler1->ler1_rdp);
 			ifp->if_flags &= ~IFF_RUNNING;
+			LERDWR(sc->sc_r0, LE_STOP, ler1->ler1_rdp);
 		} else if (ifp->if_flags & IFF_UP &&
 		    (ifp->if_flags & IFF_RUNNING) == 0)
 			leinit(ifp->if_unit);
@@ -830,6 +863,7 @@ leerror(sc, stat)
 	register struct le_softc *sc;
 	int stat;
 {
+
 	if (!ledebug)
 		return;
 
