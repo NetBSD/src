@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.26 2004/07/11 16:04:58 uch Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.27 2004/07/14 14:33:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.26 2004/07/11 16:04:58 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.27 2004/07/14 14:33:23 uch Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -214,10 +214,8 @@ STATIC int hd64461pcmcia_channel0_intr(void *);
 STATIC int hd64461pcmcia_channel1_intr(void *);
 /* card status */
 STATIC enum hd64461pcmcia_event_type detect_card(enum controller_channel);
-STATIC void hd64461pcmcia_power_off(enum controller_channel)
-	__attribute__((__unused__));
-STATIC void hd64461pcmcia_power_on(enum controller_channel)
-	__attribute__((__unused__));
+STATIC void hd64461pcmcia_power_off(enum controller_channel);
+STATIC void hd64461pcmcia_power_on(enum controller_channel);
 /* memory window access ops */
 STATIC void hd64461pcmcia_memory_window_mode(enum controller_channel,
     enum memory_window_mode)__attribute__((__unused__));
@@ -365,25 +363,10 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	struct hd64461pcmcia_channel *ch = &sc->sc_ch[channel];
 	struct pcmciabus_attach_args paa;
 	bus_addr_t membase;
-	bus_addr_t gcr;
-	uint8_t r;
 	int i;
 
 	ch->ch_parent = sc;
 	ch->ch_channel = channel;
-
-	/*
-	 * DRV (external buffer) high level
-	 *
-	 * XXX: This hack makes pcmcia cards "being used" at the boot
-	 * time (by WinCE or NetBSD) correctly detected.
-	 */
-	gcr = HD64461_PCCGCR(channel);
-	r = hd64461_reg_read_1(gcr);
-	if (r & HD64461_PCCGCR_DRVE) {
-		r &= ~HD64461_PCCGCR_DRVE;
-		hd64461_reg_write_1(gcr, r);
-	}
 
 	/*
 	 * Continuous 16-MB Area Mode
@@ -770,7 +753,7 @@ hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 	int channel = ch->ch_channel;
 	bus_addr_t isr, gcr;
 	u_int8_t r;
-	int cardtype;
+	int i, cardtype;
 
 	DPRINTF("enable channel %d\n", channel);
 	isr = HD64461_PCCISR(channel);
@@ -778,39 +761,37 @@ hd64461pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 
 	hd64461pcmcia_power_off(channel);
 	hd64461pcmcia_power_on(channel);
-#if notyet
-	{
-		int i;
-		/* assert reset */
-		r = hd64461_reg_read_1(gcr);
-		r |= HD64461_PCCGCR_PCCR;
-		hd64461_reg_write_1(gcr, r);
 
-		/*
-		 * hold RESET at least 10us.
-		 */
-		DELAY_MS(20);
 
-		/* clear the reset flag */
-		r &= ~HD64461_PCCGCR_PCCR;
-		hd64461_reg_write_1(gcr, r);
-		DELAY_MS(2000);
+	/* assert reset */
+	r = hd64461_reg_read_1(gcr);
+	r |= HD64461_PCCGCR_PCCR;
+	hd64461_reg_write_1(gcr, r);
 
-		/* wait for the chip to finish initializing */
-		for (i = 0; i < 10000; i++) {
-			if ((hd64461_reg_read_1(isr) & HD64461_PCCISR_READY))
-				goto reset_ok;
-			DELAY_MS(500);
+	/*
+	 * hold RESET at least 10us.
+	 */
+	DELAY_MS(20);
 
-			if ((i > 5000) && (i % 100 == 99))
-				printf(".");
-		}
-		printf("reset failed.\n");
-		hd64461pcmcia_power_off(channel);
-		return;
-	reset_ok:
+	/* clear the reset flag */
+	r &= ~HD64461_PCCGCR_PCCR;
+	hd64461_reg_write_1(gcr, r);
+	DELAY_MS(2000);
+
+	/* wait for the chip to finish initializing */
+	for (i = 0; i < 10000; i++) {
+		if ((hd64461_reg_read_1(isr) & HD64461_PCCISR_READY))
+			goto reset_ok;
+		DELAY_MS(500);
+
+		if ((i > 5000) && (i % 100 == 99))
+			printf(".");
 	}
-#endif /* notyet */
+	printf("reset failed.\n");
+	hd64461pcmcia_power_off(channel);
+	return;
+
+ reset_ok:
 	/* set Continuous 16-MB Area Mode */
 	ch->ch_memory_window_mode = MEMWIN_16M_MODE;
 	hd64461pcmcia_memory_window_mode(channel, ch->ch_memory_window_mode);
@@ -857,7 +838,6 @@ hd64461pcmcia_chip_socket_disable(pcmcia_chipset_handle_t pch)
 void
 hd64461pcmcia_power_off(enum controller_channel channel)
 {
-#if notyet
 	u_int8_t r;
 	u_int16_t r16;
 	bus_addr_t scr, gcr;
@@ -888,15 +868,6 @@ hd64461pcmcia_power_off(enum controller_channel channel)
 	r16 |= (channel == CHANNEL_0 ? HD64461_SYSSTBCR_SPC0ST :
 	    HD64461_SYSSTBCR_SPC1ST);
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
-
-	if (channel == CHANNEL_0) {
-		/* GPIO Port A XXX Jornada690 specific? */
-		r16 = hd64461_reg_read_2(HD64461_GPADR_REG16);
-		r16 |= 0xf;
-		hd64461_reg_write_2(HD64461_GPADR_REG16, r16);
-	}
-
-#endif /* notyet */
 }
 
 void
@@ -922,7 +893,9 @@ hd64461pcmcia_power_on(enum controller_channel channel)
 	}
 
 	if (channel == CHANNEL_1) {
-		/* GPIO Port C, Port D XXX HP620LX specific? */
+		/* GPIO Port C, Port D -> PCC1 pin
+		 *  I assume SYSCR[1:0] == 0
+		 */
 		hd64461_reg_write_2(HD64461_GPCCR_REG16, 0xa800);
 		hd64461_reg_write_2(HD64461_GPDCR_REG16, 0xaa0a);
 	}
