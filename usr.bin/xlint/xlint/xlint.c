@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.33 2003/10/27 00:12:44 lukem Exp $ */
+/* $NetBSD: xlint.c,v 1.34 2004/01/26 21:51:11 dsl Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.33 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.34 2004/01/26 21:51:11 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -363,7 +363,7 @@ main(int argc, char *argv[])
 	(void)signal(SIGINT, terminate);
 	(void)signal(SIGQUIT, terminate);
 	(void)signal(SIGTERM, terminate);
-	while ((c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:SU:VX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcd:eghil:no:prstuvwxzB:C:D:FHI:L:M:SU:VX:")) != -1) {
 		switch (c) {
 
 		case 'a':
@@ -473,6 +473,7 @@ main(int argc, char *argv[])
 
 		case 'D':
 		case 'I':
+		case 'M':
 		case 'U':
 			(void)sprintf(flgbuf, "-%c", c);
 			appstrg(&cflags, concat2(flgbuf, optarg));
