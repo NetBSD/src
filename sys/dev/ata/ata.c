@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.7 1999/03/10 13:11:43 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.8 1999/04/14 22:23:15 jonathan Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -89,7 +89,7 @@ ata_get_params(drvp, flags, prms)
 		return CMD_ERR;
 	}
 	wdc_c.flags = AT_READ | flags;
-	wdc_c.timeout = 1000; /* 1s */
+	wdc_c.timeout = 10000; /* 10s */
 	wdc_c.data = tb;
 	wdc_c.bcount = DEV_BSIZE;
 	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
