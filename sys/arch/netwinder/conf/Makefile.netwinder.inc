@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.netwinder.inc,v 1.6 2002/11/03 21:43:32 chris Exp $
+#	$NetBSD: Makefile.netwinder.inc,v 1.7 2003/01/03 02:34:49 thorpej Exp $
+
+CPPFLAGS+=	-D${MACHINE}
 
 SYSTEM_LD_TAIL_EXTRA=; \
 	echo "${DBSYM} $@ || true"; \
