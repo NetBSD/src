@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.1 2000/08/20 14:00:43 pk Exp $ */
+/*	$NetBSD: fbvar.h,v 1.2 2000/08/20 14:30:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,12 +57,12 @@
 
 struct fbdriver {
 	/* device unblank function (force kernel output to display) */
-	void	(*fbd_unblank) __P((struct device *));
-	int	(*fbd_open) __P((dev_t, int, int, struct proc *));
-	int	(*fbd_close) __P((dev_t, int, int, struct proc *));
-	int	(*fbd_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
-	int	(*fbd_poll) __P((dev_t, int, struct proc *));
-	paddr_t	(*fbd_mmap) __P((dev_t, off_t, int));
+	void	(*fbd_unblank)(struct device *);
+	int	(*fbd_open)(dev_t, int, int, struct proc *);
+	int	(*fbd_close)(dev_t, int, int, struct proc *);
+	int	(*fbd_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
+	int	(*fbd_poll)(dev_t, int, struct proc *);
+	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
 #ifdef notyet
 	/* 
 	 * XXX redundant idea? these can hook into rasops on a per-device 
@@ -97,16 +97,16 @@ struct fbdevice {
 #endif
 };
 
-void	fb_attach __P((struct fbdevice *, int));
-void	fb_setsize_obp __P((struct fbdevice *, int, int, int, int));
-void	fb_setsize_eeprom __P((struct fbdevice *, int, int, int));
-int	fb_is_console __P((int));
+void	fb_attach(struct fbdevice *, int);
+void	fb_setsize_obp(struct fbdevice *, int, int, int, int);
+void	fb_setsize_eeprom(struct fbdevice *, int, int, int);
+int	fb_is_console(int);
 #ifdef RASTERCONSOLE
-void	fbrcons_init __P((struct fbdevice *));
-int	fbrcons_rows __P((void));
-int	fbrcons_cols __P((void));
+void	fbrcons_init(struct fbdevice *);
+int	fbrcons_rows(void);
+int	fbrcons_cols(void);
 #endif
 
-int	fb_pfour_id __P((volatile void *));
-int	fb_pfour_get_video __P((struct fbdevice *));
-void	fb_pfour_set_video __P((struct fbdevice *, int));
+int	fb_pfour_id(volatile void *);
+int	fb_pfour_get_video(struct fbdevice *);
+void	fb_pfour_set_video(struct fbdevice *, int);
