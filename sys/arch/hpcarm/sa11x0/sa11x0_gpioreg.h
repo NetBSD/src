@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.5 2001/03/11 07:27:36 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.6 2001/03/31 12:36:53 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -138,41 +138,3 @@ Extended GPIO
 
 #define JORNADA720_KBD_IRQ	GPIO (0)
 #define JORNADA720_MOUSE_IRQ	GPIO (9)
-
-/* 
- * IRQ Number of GPIO(x)
- * GPIO(0..10)  -> IRQ(0..10)
- * GPIO(11..27) -> IRQ(32..48)
- */
-#define IRQ_GPIO1(x)		(0 + x)
-#define IRQ_GPIO2(x)		(32 * (x) - 11)
-
-#define IRQ_GPIO0	IRQ_GPIO1(0)
-#define IRQ_GPIO1	IRQ_GPIO1(1)
-#define IRQ_GPIO2	IRQ_GPIO1(2)
-#define IRQ_GPIO3	IRQ_GPIO1(3)
-#define IRQ_GPIO4	IRQ_GPIO1(4)
-#define IRQ_GPIO5	IRQ_GPIO1(5)
-#define IRQ_GPIO6	IRQ_GPIO1(6)
-#define IRQ_GPIO7	IRQ_GPIO1(7)
-#define IRQ_GPIO8	IRQ_GPIO1(8)
-#define IRQ_GPIO9	IRQ_GPIO1(9)
-#define IRQ_GPIO10	IRQ_GPIO1(10)
-#define IRQ_GPIO11	IRQ_GPIO2(11)
-#define IRQ_GPIO12	IRQ_GPIO2(12)
-#define IRQ_GPIO13	IRQ_GPIO2(13)
-#define IRQ_GPIO14	IRQ_GPIO2(14)
-#define IRQ_GPIO15	IRQ_GPIO2(15)
-#define IRQ_GPIO16	IRQ_GPIO2(16)
-#define IRQ_GPIO17	IRQ_GPIO2(17)
-#define IRQ_GPIO18	IRQ_GPIO2(18)
-#define IRQ_GPIO19	IRQ_GPIO2(19)
-#define IRQ_GPIO20	IRQ_GPIO2(20)
-#define IRQ_GPIO21	IRQ_GPIO2(21)
-#define IRQ_GPIO22	IRQ_GPIO2(22)
-#define IRQ_GPIO23	IRQ_GPIO2(23)
-#define IRQ_GPIO24	IRQ_GPIO2(24)
-#define IRQ_GPIO25	IRQ_GPIO2(25)
-#define IRQ_GPIO26	IRQ_GPIO2(26)
-#define IRQ_GPIO27	IRQ_GPIO2(27)
-
