@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.265 2002/10/05 21:20:00 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.266 2002/10/23 00:58:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -106,6 +106,7 @@
 #include <machine/i82489reg.h>
 #endif
 
+/* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <sys/systm.h> */
 /* LINTSTUB: include <machine/cpu.h> */
 
