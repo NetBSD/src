@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.88 1999/10/22 21:14:34 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.89 1999/10/27 16:38:54 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -306,8 +306,6 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
-	extern int smgprobe(void), smgcninit(void);
-
 	/*
 	 * Init I/O memory resource map. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
@@ -316,20 +314,12 @@ consinit()
 #ifdef DEBUG
 	iospace_inited = 1;
 #endif
-
 	cninit();
-#if NSMG
-	/* XXX - do this probe after everything else due to wscons trouble */
-	if (smgprobe())
-		smgcninit();
-#endif
 #ifdef DDB
 	{
 		extern int end; /* Contains pointer to symsize also */
 		extern int *esym;
 
-//		extern void ksym_init(int *, int *);
-//		ksym_init(&end, esym);
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #ifdef DEBUG
