@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 2002/03/16 16:55:55 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 2002/03/23 03:18:52 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,6 +75,13 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
 	bdev_disk_init(NRAID,raid),	/* 9: RAIDframe disk driver */
+
+	bdev_lkm_dummy(),		/* 10 */
+	bdev_lkm_dummy(),		/* 11 */
+	bdev_lkm_dummy(),		/* 12 */
+	bdev_lkm_dummy(),		/* 13 */
+	bdev_lkm_dummy(),		/* 14 */
+	bdev_lkm_dummy(),		/* 15 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -240,6 +247,7 @@ struct cdevsw	cdevsw[] =
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 44: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 45: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 46: clockctl pseudo device */
+	cdev_lkm_init(NLKM,lkm),	/* 47: loadable module driver */
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
