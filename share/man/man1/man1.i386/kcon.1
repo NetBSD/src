@@ -1,4 +1,4 @@
-.\"	$NetBSD: kcon.1,v 1.4 1998/01/09 08:04:16 perry Exp $
+.\"	$NetBSD: kcon.1,v 1.5 1999/03/10 09:31:16 erh Exp $
 .\"
 .\" Copyright (c) 1992, 1995 Hellmuth Michaelis
 .\"
@@ -94,12 +94,14 @@ Switches display of control codes to hexadecimal in the listing of the current m
 To be used in conjunction with the
 .Fl l
 option. This is the default behaviour.
+.El
 .Sh FILES
 .Bl -tag -width /usr/share/misc/keycap -compact
 .It Pa /usr/share/misc/keycap
 Keyboard capabilities data base file if nothing else was chosen during installation.
 .It Pa /dev/console
 Keyboard raw device.
+.El
 .Sh SEE ALSO
 .Xr keycap 3 ,
 .Xr keycap 5
