@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.11 1996/03/14 19:45:24 christos Exp $	*/
+/*	$NetBSD: xy.c,v 1.12 1996/03/16 23:28:40 christos Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.11 1996/03/14 19:45:24 christos Exp $
+ * id: $NetBSD: xy.c,v 1.12 1996/03/16 23:28:40 christos Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -292,7 +292,7 @@ int xycmatch(parent, match, aux)
 
 	if (CPU_ISSUN4) {
 		xyc = (struct xyc *) ra->ra_vaddr;
-		if (probeget(&xyc->xyc_rsetup, 1) == -1)
+		if (probeget((caddr_t) &xyc->xyc_rsetup, 1) == -1)
 			return (0);
 		if (xyc_unbusy(xyc, XYC_RESETUSEC) == XY_ERR_FAIL)
 			return(0);
