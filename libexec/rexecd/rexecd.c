@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.21 2005/02/23 01:25:50 christos Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.22 2005/03/30 01:07:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,12 +36,12 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.21 2005/02/23 01:25:50 christos Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.22 2005/03/30 01:07:47 christos Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: rexecd.c,v 1.21 2005/02/23 01:25:50 christos Exp $");
 #include <errno.h>
 #include <netdb.h>
 #include <paths.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -59,7 +60,6 @@ __RCSID("$NetBSD: rexecd.c,v 1.21 2005/02/23 01:25:50 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <poll.h>
 
 #ifdef USE_PAM
 #include <security/pam_appl.h>
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: rexecd.c,v 1.21 2005/02/23 01:25:50 christos Exp $");
 int main(int, char *[]);
 static void rexecd_errx(int, const char *, ...)
      __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
-static void doit(struct sockaddr *);
+static void doit(struct sockaddr *) __attribute__((__noreturn__));
 static void getstr(char *, int, const char *);
 static void usage(void) __attribute__((__noreturn__));
 
@@ -84,8 +84,8 @@ static int pam_err;
 #define pam_ok(err) ((pam_err = (err)) == PAM_SUCCESS)
 #endif
 
-char	**environ;
-int	dolog;
+extern char	**environ;
+static int	dolog;
 #ifndef USE_PAM
 static char	username[32 + 1] = "USER=";
 static char	logname[32 + 3 + 1] = "LOGNAME=";
@@ -119,9 +119,9 @@ main(int argc, char *argv[])
 			usage();
 		}
 
-	fromlen = sizeof (from);
+	fromlen = sizeof(from);
 	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0)
-		err(1, "getpeername");
+		err(EXIT_FAILURE, "getpeername");
 
 	if (((struct sockaddr *)&from)->sa_family == AF_INET6 &&
 	    IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)&from)->sin6_addr)) {
@@ -134,12 +134,10 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR,
 			    "malformed \"from\" address (v4 mapped, %s)",
 			    hbuf);
-		return 1;
+		return EXIT_FAILURE;
 	}
 
 	doit((struct sockaddr *)&from);
-	/* NOTREACHED */
-	return 1;
 }
 
 void
@@ -150,7 +148,7 @@ doit(struct sockaddr *fromp)
 	const char *cp;
 	char user[16], pass[16];
 	char buf[BUFSIZ], sig;
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	int s = -1; /* XXX gcc */
 	int pv[2], pid, cc;
 	int one = 1;
@@ -161,6 +159,7 @@ doit(struct sockaddr *fromp)
 #ifndef USE_PAM
 	char *namep;
 #endif
+	char pwbuf[1024];
 
 	(void)signal(SIGINT, SIG_DFL);
 	(void)signal(SIGQUIT, SIG_DFL);
@@ -173,7 +172,7 @@ doit(struct sockaddr *fromp)
 		if (dolog)
 			syslog(LOG_ERR, "malformed \"from\" address (af %d)",
 			       fromp->sa_family);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	(void)alarm(60);
@@ -183,7 +182,7 @@ doit(struct sockaddr *fromp)
 		if (read(STDIN_FILENO, &c, 1) != 1) {
 			if (dolog)
 				syslog(LOG_ERR, "initial read failed");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		if (c == 0)
 			break;
@@ -194,7 +193,7 @@ doit(struct sockaddr *fromp)
 		if (s < 0) {
 			if (dolog)
 				syslog(LOG_ERR, "socket: %m");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		(void)alarm(60);
 		switch (fromp->sa_family) {
@@ -206,12 +205,12 @@ doit(struct sockaddr *fromp)
 			break;
 		default:
 			syslog(LOG_ERR, "unsupported address family");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		if (connect(s, (struct sockaddr *)fromp, fromp->sa_len) < 0) {
 			if (dolog)
 				syslog(LOG_ERR, "connect: %m");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		(void)alarm(0);
 	}
@@ -220,14 +219,11 @@ doit(struct sockaddr *fromp)
 	getstr(pass, sizeof(pass), "password");
 	getstr(cmdbuf, sizeof(cmdbuf), "command");
 	(void)alarm(0);
-	setpwent();
-	pwd = getpwnam(user);
-	if (pwd == NULL) {
+	if (getpwnam_r(user, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0) {
 		if (dolog)
 			syslog(LOG_ERR, "no such user %s", user);
-		rexecd_errx(1, "Login incorrect.");
+		rexecd_errx(EXIT_FAILURE, "Login incorrect.");
 	}
-	endpwent();
 #ifdef USE_PAM
 	if (!pam_ok(pam_start("rexecd", user, &pamc, &pamh)) ||
 	    !pam_ok(pam_set_item(pamh, PAM_RHOST, hostname)) ||
@@ -235,14 +231,14 @@ doit(struct sockaddr *fromp)
 		if (dolog)
 			syslog(LOG_ERR, "PAM ERROR %s@%s (%s)", user,
 			   hostname, pam_strerror(pamh, pam_err));
-		rexecd_errx(1, "Try again.");
+		rexecd_errx(EXIT_FAILURE, "Try again.");
 	}
 	if (!pam_ok(pam_authenticate(pamh, pam_flags)) ||
 	    !pam_ok(pam_acct_mgmt(pamh, pam_flags))) {
 		if (dolog)
 			syslog(LOG_ERR, "LOGIN REFUSED for %s@%s (%s)", user,
 			   hostname, pam_strerror(pamh, pam_err));
-		rexecd_errx(1, "Password incorrect.");
+		rexecd_errx(EXIT_FAILURE, "Password incorrect.");
 	}
 #else
 	if (*pwd->pw_passwd != '\0') {
@@ -251,7 +247,8 @@ doit(struct sockaddr *fromp)
 			if (dolog)
 				syslog(LOG_ERR, "incorrect password for %s",
 				    user);
-			rexecd_errx(1, "Password incorrect.");/* XXX: wrong! */
+			rexecd_errx(EXIT_FAILURE,
+				    "Password incorrect.");/* XXX: wrong! */
 		}
 	} else
 		(void)crypt("dummy password", "PA");    /* must always crypt */
@@ -260,7 +257,7 @@ doit(struct sockaddr *fromp)
 		if (dolog)
 			syslog(LOG_ERR, "%s does not exist for %s", pwd->pw_dir,
 			       user);
-		rexecd_errx(1, "No remote directory.");
+		rexecd_errx(EXIT_FAILURE, "No remote directory.");
 	}
 
 	if (dolog)
@@ -271,7 +268,7 @@ doit(struct sockaddr *fromp)
 			if (dolog)
 				syslog(LOG_ERR,"pipe or fork failed for %s: %m",
 				    user);
-			rexecd_errx(1, "Try again.");
+			rexecd_errx(EXIT_FAILURE, "Try again.");
 		}
 		if (pid) {
 			/* parent */
@@ -290,20 +287,20 @@ doit(struct sockaddr *fromp)
 			/* should set s nbio! */
 			do {
 				if (poll(fds, 2, 0) < 0) {
-					close(s);
-					close(pv[0]);
+					(void)close(s);
+					(void)close(pv[0]);
 					_exit(1);
 				}
 				if (fds[0].revents & POLLIN) {
 					if (read(s, &sig, 1) <= 0)
 						fds[0].events = 0;
 					else
-						killpg(pid, sig);
+						(void)killpg(pid, sig);
 				}
 				if (fds[1].revents & POLLIN) {
 					cc = read(pv[0], buf, sizeof (buf));
 					if (cc <= 0) {
-						shutdown(s, 1+1);
+						(void)shutdown(s, SHUT_RDWR);
 						fds[1].events = 0;
 					} else
 						(void)write(s, buf, cc);
@@ -317,7 +314,7 @@ doit(struct sockaddr *fromp)
 		if (dup2(pv[1], STDERR_FILENO) < 0) {
 			if (dolog)
 				syslog(LOG_ERR, "dup2 failed for %s", user);
-			rexecd_errx(1, "Try again.");
+			rexecd_errx(EXIT_FAILURE, "Try again.");
 		}
 	}
 	if (*pwd->pw_shell == '\0')
@@ -331,11 +328,11 @@ doit(struct sockaddr *fromp)
 	    setgid((gid_t)pwd->pw_gid) < 0 ||
 	    setuid((uid_t)pwd->pw_uid) < 0) {
 #endif
-		rexecd_errx(1, "Try again.");
+		rexecd_errx(EXIT_FAILURE, "Try again.");
 		if (dolog)
 			syslog(LOG_ERR, "could not set permissions for %s: %m",
 			    user);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 #ifdef USE_PAM
 	if (!pam_ok(pam_setcred(pamh, PAM_ESTABLISH_CRED)))
@@ -352,7 +349,7 @@ doit(struct sockaddr *fromp)
                 if (dolog)
                         syslog(LOG_ERR, "could not set uid for %s: %m",
                             user);
-                rexecd_errx(1, "Try again.");
+                rexecd_errx(EXIT_FAILURE, "Try again.");
         }
 #else
 	(void)strlcat(path, _PATH_DEFPATH, sizeof(path));
@@ -373,7 +370,7 @@ doit(struct sockaddr *fromp)
 	(void)execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
 	if (dolog)
 		syslog(LOG_ERR, "execl failed for %s: %m", user);
-	err(1, "%s", pwd->pw_shell);
+	err(EXIT_FAILURE, "%s", pwd->pw_shell);
 }
 
 void
@@ -399,10 +396,10 @@ getstr(char *buf, int cnt, const char *emsg)
 
 	do {
 		if (read(STDIN_FILENO, &c, 1) != 1)
-			exit(1);
+			exit(EXIT_FAILURE);
 		*buf++ = c;
 		if (--cnt == 0)
-			rexecd_errx(1, "%s too long", emsg);
+			rexecd_errx(EXIT_FAILURE, "%s too long", emsg);
 	} while (c != 0);
 }
 
@@ -410,5 +407,5 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "Usage: %s [-l]\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
