@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.12 2002/04/22 23:39:38 bjh21 Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.13 2002/04/22 23:40:10 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -349,6 +349,12 @@ void *setmode(const char *);
 #define _BSD_VA_LIST_ va_list
 #endif
 
+/* <stdint.h> */
+
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xffffffffU
+#endif
+
 /* <sys/endian.h> */
 
 #ifndef HAVE_SYS_ENDIAN_H
@@ -373,12 +379,6 @@ void *setmode(const char *);
 #define le16toh(x)	htole16(x)
 #define le32toh(x)	htole32(x)
 #define le64toh(x)	htole64(x)
-#endif
-
-/* <stdint.h> */
-
-#ifndef UINT32_MAX
-#define UINT32_MAX 0xffffffffU
 #endif
 
 /* <sys/mman.h> */
