@@ -1,4 +1,4 @@
-#/* Copyright 1988,1990,1993 by Paul Vixie
+#/* Copyright 1988,1990,1993,1994 by Paul Vixie
 # * All rights reserved
 # *
 # * Distribute freely, except: don't remove my name from the source or
@@ -17,7 +17,7 @@
 
 # Makefile for vixie's cron
 #
-# $Id: Makefile,v 1.1.1.1 1994/01/05 20:40:12 jtc Exp $
+# $Id: Makefile,v 1.1.1.2 1994/01/12 18:34:45 jtc Exp $
 #
 # vix 03mar88 [moved to RCS, rest of log is in there]
 # vix 30mar87 [goodbye, time.c; hello, getopt]
