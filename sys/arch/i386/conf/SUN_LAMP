@@ -1,7 +1,7 @@
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
-#	$Id: SUN_LAMP,v 1.36 1994/02/17 01:10:38 cgd Exp $
+#	$Id: SUN_LAMP,v 1.37 1994/02/19 05:03:51 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -40,7 +40,7 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 #device		com3	at isa? port 0x2b0 tty irq 4 flags 0x401 vector comintr
 #device		com4	at isa? port 0x2b8 tty irq 4 flags 0x401 vector comintr
 
-controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
+controller	ahb0	at isa? bio irq 11 vector ahbintr
 disk		sd0	at ahb0 flags 0 drive 000
 disk		sd1	at ahb0 flags 0 drive 010
 disk		sd2	at ahb0 flags 0 drive 020
