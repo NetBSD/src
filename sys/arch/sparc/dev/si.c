@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.10 1996/01/09 02:06:50 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.11 1996/01/09 02:36:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -330,15 +330,17 @@ si_attach(parent, self, args)
 	int i;
 
 	/* Pull in the options flags. */
-	sc->sc_options =
+	if (ca->ca_bustype == BUS_OBIO) {
+		/*
+		 * XXX Interrupts and reselect don't work on the "sw".
+		 * I don't know why (yet).  Disable DMA by default, too.
+		 * It's still a little dangerous.
+		 */
+		sc->sc_options = ncr_sc->sc_dev.dv_cfdata->cf_flags &
+		    SI_OPTIONS_MASK;
+	} else
+		sc->sc_options =
 	 ((ncr_sc->sc_dev.dv_cfdata->cf_flags | si_options) & SI_OPTIONS_MASK);
-
-	/*
-	 * XXX Interrupts and reselect don't work on the "sw".
-	 * I don't know why (yet).  -- thorpej
-	 */
-	if (ca->ca_bustype == BUS_OBIO)
-		sc->sc_options &= ~(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT);
 
 	/* Map the controller registers. */
 	regs = (struct si_regs *)mapiodev(ra->ra_reg, 0,
