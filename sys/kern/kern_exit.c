@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.122 2003/09/11 01:32:09 cl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.123 2003/09/13 15:32:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.122 2003/09/11 01:32:09 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.123 2003/09/13 15:32:40 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -128,6 +128,38 @@ int debug_exit = 0;
 #endif
 
 static void lwp_exit_hook(struct lwp *, void *);
+static void exit_psignal(struct proc *, struct proc *);
+
+/*
+ * Fill in the appropriate signal information, and kill the parent.
+ */
+static void
+exit_psignal(struct proc *p, struct proc *pp)
+{
+	ksiginfo_t ksi;
+
+	(void)memset(&ksi, 0, sizeof(ksi));
+	if ((ksi.ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
+		if (WIFSIGNALED(p->p_xstat)) {
+			if (WCOREDUMP(p->p_xstat))
+				ksi.ksi_code = CLD_DUMPED;
+			else
+				ksi.ksi_code = CLD_KILLED;
+		} else {
+			ksi.ksi_code = CLD_EXITED;
+		}
+	}
+	/*
+	 * we fill those in, even for non-SIGCHLD.
+	 */
+	ksi.ksi_pid = p->p_pid;
+	ksi.ksi_uid = p->p_ucred->cr_uid;
+	ksi.ksi_status = p->p_xstat;
+	/* XXX: is this still valid? */
+	ksi.ksi_utime = p->p_ru->ru_utime.tv_sec;
+	ksi.ksi_stime = p->p_ru->ru_stime.tv_sec;
+	kpsignal(pp, &ksi, NULL);
+}
 
 /*
  * exit --
@@ -601,7 +633,7 @@ reaper(void *arg)
 			
 			/* Wake up the parent so it can get exit status. */
 			if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
-				psignal(p->p_pptr, P_EXITSIG(p));
+				exit_psignal(p, p->p_pptr);
 			KERNEL_PROC_UNLOCK(curlwp);
 			wakeup((caddr_t)p->p_pptr);
 		}
@@ -751,7 +783,7 @@ proc_free(struct proc *p)
 		p->p_opptr = NULL;
 		p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 		if (p->p_exitsig != 0)
-			psignal(parent, P_EXITSIG(p));
+			exit_psignal(p, parent);
 		wakeup((caddr_t)parent);
 		return;
 	}
