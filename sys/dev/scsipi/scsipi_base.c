@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.26.2.15 2001/04/22 16:40:29 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26.2.16 2001/04/23 01:03:34 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -555,6 +555,16 @@ scsipi_channel_thaw(chan, count)
 
 	s = splbio();
 	chan->chan_qfreeze -= count;
+	/*
+	 * Don't let the freeze count go negative.
+	 *
+	 * Presumably the adapter driver could keep track of this,
+	 * but it might just be easier to do this here so as to allow
+	 * multiple callers, including those outside the adapter driver.
+	 */
+	if (chan->chan_qfreeze < 0) {
+		chan->chan_qfreeze = 0;
+	}
 	splx(s);
 }
 
@@ -1597,6 +1607,11 @@ scsipi_run_queue(chan)
 					/* We'll panic shortly... */
 				}
 				splx(s);
+				
+				/*
+				 * XXX: We should be able to note that
+				 * XXX: that resources are needed here!
+				 */
 				return;
 			}
 			/*
@@ -1758,6 +1773,7 @@ scsipi_execute_xs(xs)
 	/*
 	 * Not an asynchronous command; wait for it to complete.
 	 */
+	s = splbio();
 	while ((xs->xs_status & XS_STS_DONE) == 0) {
 		if (poll) {
 			scsipi_printaddr(periph);
@@ -1766,6 +1782,7 @@ scsipi_execute_xs(xs)
 		}
 		(void) tsleep(xs, PRIBIO, "xscmd", 0);
 	}
+	splx(s);
 
 	/*
 	 * Command is complete.  scsipi_done() has awakened us to perform
