@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.60 2000/03/06 21:36:12 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.61 2001/05/28 20:52:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -219,15 +219,20 @@ zs_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	int unit = cf->cf_unit;
+	int unit;
 	void *va;
 
 	/*
 	 * This driver only supports its wired-in mappings,
 	 * because the console support depends on those.
 	 */
-	if (ca->ca_paddr != zs_physaddr[unit])
+	if (ca->ca_paddr == zs_physaddr[0]) {
+		unit = 0;
+	} else if (ca->ca_paddr == zs_physaddr[1]) {
+		unit = 1;
+	} else {
 		return (0);
+	}
 
 	/* Make sure zs_init() found mappings. */
 	va = zsaddr[unit];
