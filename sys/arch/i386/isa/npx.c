@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.60 1997/10/16 03:22:54 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.60.2.1 1998/01/29 11:59:56 mellon Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -501,7 +501,7 @@ int
 npxdna(p)
 	struct proc *p;
 {
-	static u_short control = __INITIAL_NPXCW__;
+	u_short cw;
 
 	if (npx_type == NPX_NONE) {
 		IPRINTF(("Emul"));
@@ -517,8 +517,8 @@ npxdna(p)
 	clts();
 
 	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		p->p_md.md_flags |= MDP_USEDFPU;
 		IPRINTF(("Init"));
+		cw = p->p_addr->u_pcb.pcb_savefpu.sv_env.en_cw;
 		if (npxproc != 0 && npxproc != p)
 			npxsave1();
 		else {
@@ -528,7 +528,8 @@ npxdna(p)
 			npx_nointr = 0;
 		}
 		npxproc = p;
-		fldcw(&control);
+		fldcw(&cw);
+		p->p_md.md_flags |= MDP_USEDFPU;
 	} else {
 		if (npxproc != 0) {
 #ifdef DIAGNOSTIC
