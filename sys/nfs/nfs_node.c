@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.17 1996/09/01 23:49:00 mycroft Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.17.4.1 1997/03/12 21:24:52 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,16 +173,42 @@ nfs_inactive(v)
 	np = VTONFS(ap->a_vp);
 	if (prtactive && ap->a_vp->v_usecount != 0)
 		vprint("nfs_inactive: pushing active", ap->a_vp);
-	if (ap->a_vp->v_type != VDIR)
+	if (ap->a_vp->v_type != VDIR) {
 		sp = np->n_sillyrename;
-	else
+		np->n_sillyrename = (struct sillyrename *)0;
+	} else
 		sp = (struct sillyrename *)0;
-	np->n_sillyrename = (struct sillyrename *)0;
+#ifdef Lite2_integrated
+	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+#else
+	VOP_UNLOCK(ap->a_vp);
+#endif
 	if (sp) {
+		/*
+		 * If the usecount is greater than zero, then we are
+		 * being inactivated by a forcible unmount and do not
+		 * have to get our own reference. In the normal case,
+		 * we need a reference to keep the vnode from being
+		 * recycled by getnewvnode while we do the I/O
+		 * associated with discarding the buffers.
+		 */
+		if (ap->a_vp->v_usecount > 0)
+			(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
+#ifdef Lite2_integrated
+		else if (vget(ap->a_vp, 0, p))
+#else
+		else if (vget(ap->a_vp, 0))
+#endif
+                        panic("nfs_inactive: lost vnode");
+		else {
+			(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
+			vrele(ap->a_vp);
+		}
+
+
 		/*
 		 * Remove the silly file that was rename'd earlier
 		 */
-		(void) nfs_vinvalbuf(ap->a_vp, 0, sp->s_cred, p, 1);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
 		vrele(sp->s_dvp);
@@ -190,9 +216,6 @@ nfs_inactive(v)
 	}
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
-#ifdef Lite2_integrated
-	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
-#endif
 	return (0);
 }
 

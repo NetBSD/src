@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.19 1997/01/03 18:03:22 mrg Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.19.6.1 1997/03/12 21:26:54 is Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -122,37 +122,37 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 /*
  *	Recovery actions
  */
-#define	FREE_PAGE(m)	{				\
-	PAGE_WAKEUP(m);					\
-	vm_page_lock_queues();				\
-	vm_page_free(m);				\
-	vm_page_unlock_queues();			\
+#define	FREE_PAGE(m)	{					\
+	PAGE_WAKEUP(m);						\
+	vm_page_lock_queues();					\
+	vm_page_free(m);					\
+	vm_page_unlock_queues();				\
 }
 
-#define	RELEASE_PAGE(m)	{				\
-	PAGE_WAKEUP(m);					\
-	vm_page_lock_queues();				\
-	vm_page_activate(m);				\
-	vm_page_unlock_queues();			\
+#define	RELEASE_PAGE(m)	{					\
+	PAGE_WAKEUP(m);						\
+	vm_page_lock_queues();					\
+	vm_page_activate(m);					\
+	vm_page_unlock_queues();				\
 }
 
-#define	UNLOCK_MAP	{				\
-	if (lookup_still_valid) {			\
-		vm_map_lookup_done(map, entry);		\
-		lookup_still_valid = FALSE;		\
-	}						\
+#define	UNLOCK_MAP	{					\
+	if (lookup_still_valid) {				\
+		vm_map_lookup_done(map, entry);			\
+		lookup_still_valid = FALSE;			\
+	}							\
 }
 
-#define	UNLOCK_THINGS	{				\
-	object->paging_in_progress--;			\
-	vm_object_unlock(object);			\
-	if (object != first_object) {			\
-		vm_object_lock(first_object);		\
-		FREE_PAGE(first_m);			\
-		first_object->paging_in_progress--;	\
-		vm_object_unlock(first_object);		\
-	}						\
-	UNLOCK_MAP;					\
+#define	UNLOCK_THINGS	{					\
+	vm_object_paging_end(object);				\
+	vm_object_unlock(object);				\
+	if (object != first_object) {				\
+		vm_object_lock(first_object);			\
+		FREE_PAGE(first_m);				\
+		vm_object_paging_end(first_object);		\
+		vm_object_unlock(first_object);			\
+	}							\
+	UNLOCK_MAP;						\
 }
 
 #define	UNLOCK_AND_DEALLOCATE	{			\
@@ -190,11 +190,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_object_lock(first_object);
 
 	first_object->ref_count++;
-#ifdef DIAGNOSTIC
-	if (first_object->paging_in_progress == 0xdead)
-		panic("vm_fault: first_object deallocated");
-#endif
-	first_object->paging_in_progress++;
+	vm_object_paging_begin(first_object);
 
 	/*
 	 *	INVARIANTS (through entire routine):
@@ -407,7 +403,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 *	in the top object with zeros.
 			 */
 			if (object != first_object) {
-				object->paging_in_progress--;
+				vm_object_paging_end(object);
 				vm_object_unlock(object);
 
 				object = first_object;
@@ -425,14 +421,10 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 		else {
 			vm_object_lock(next_object);
 			if (object != first_object)
-				object->paging_in_progress--;
+				vm_object_paging_end(object);
 			vm_object_unlock(object);
 			object = next_object;
-#ifdef DIAGNOSTIC
-			if (object->paging_in_progress == 0xdead)
-				panic("vm_fault: object deallocated (1)");
-#endif
-			object->paging_in_progress++;
+			vm_object_paging_begin(object);
 		}
 	}
 
@@ -508,7 +500,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 *	We no longer need the old page or object.
 			 */
 			PAGE_WAKEUP(m);
-			object->paging_in_progress--;
+			vm_object_paging_end(object);
 			vm_object_unlock(object);
 
 			/*
@@ -529,13 +521,9 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 *	But we have to play ugly games with
 			 *	paging_in_progress to do that...
 			 */
-			object->paging_in_progress--;
+			vm_object_paging_end(object);
 			vm_object_collapse(object);
-#ifdef DIAGNOSTIC
-			if (object->paging_in_progress == 0xdead)
-				panic("vm_fault: object deallocated (2)");
-#endif
-			object->paging_in_progress++;
+			vm_object_paging_begin(object);
 		}
 		else {
 		    	prot &= ~VM_PROT_WRITE;

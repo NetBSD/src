@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.11 1996/12/22 10:10:45 cgd Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.11.6.1 1997/03/12 21:26:34 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -275,24 +275,24 @@ mfs_start(mp, flags, p)
 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_buflist != (struct buf *)-1) {
-#define	DOIO() \
-		while ((bp = mfsp->mfs_buflist) != NULL) {	\
-			mfsp->mfs_buflist = bp->b_actf;		\
-			mfs_doio(bp, base);			\
-			wakeup((caddr_t)bp);			\
+		while ((bp = mfsp->mfs_buflist) != NULL) {
+			mfsp->mfs_buflist = bp->b_actf;
+			mfs_doio(bp, base);
+			wakeup((caddr_t)bp);
 		}
-		DOIO();
 		/*
 		 * If a non-ignored signal is received, try to unmount.
 		 * If that fails, clear the signal (it has been "processed"),
 		 * otherwise we will loop here, as tsleep will always return
 		 * EINTR/ERESTART.
 		 */
-		if ((error = tsleep((caddr_t)vp, mfs_pri, "mfsidl", 0)) != 0) {
-			DOIO();
-			if (dounmount(mp, 0, p) != 0)
+		if (error == EINTR || error == ERESTART) {
+			if (vfs_busy(mp) == 0 && dounmount(mp, 0, p) != 0)
 				CLRSIG(p, CURSIG(p));
+			error = 0;
+			continue;
 		}
+		error = tsleep((caddr_t)vp, mfs_pri, "mfsidl", 0);
 	}
 	return (error);
 }
