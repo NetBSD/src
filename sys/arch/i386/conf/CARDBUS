@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.63 2002/08/02 05:26:44 ichiro Exp $
+#	$NetBSD: CARDBUS,v 1.64 2002/08/12 03:28:52 thorpej Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.63 $"
+#ident		"CARDBUS-$Revision: 1.64 $"
 
 maxusers	32		# estimated number of users
 
@@ -260,6 +260,9 @@ options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+
+# System Controllers
+elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
