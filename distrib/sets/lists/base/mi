@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.234 2001/03/13 18:13:24 itojun Exp $
+# $NetBSD: mi,v 1.235 2001/03/14 13:40:36 kleink Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1592,6 +1592,7 @@
 ./usr/share/zoneinfo/America/Rankin_Inlet		base-sys-share
 ./usr/share/zoneinfo/America/Recife		base-sys-share
 ./usr/share/zoneinfo/America/Regina		base-sys-share
+./usr/share/zoneinfo/America/Rio_Branco		base-sys-share
 ./usr/share/zoneinfo/America/Rosario		base-sys-share
 ./usr/share/zoneinfo/America/Santiago		base-sys-share
 ./usr/share/zoneinfo/America/Santo_Domingo		base-sys-share
@@ -1624,6 +1625,7 @@
 ./usr/share/zoneinfo/Antarctica/Palmer		base-sys-share
 ./usr/share/zoneinfo/Antarctica/South_Pole		base-sys-share
 ./usr/share/zoneinfo/Antarctica/Syowa		base-sys-share
+./usr/share/zoneinfo/Antarctica/Vostok		base-sys-share
 ./usr/share/zoneinfo/Arctic		base-sys-share
 ./usr/share/zoneinfo/Arctic/Longyearbyen		base-sys-share
 ./usr/share/zoneinfo/Asia		base-sys-share
