@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2000/01/28 15:08:37 takemura Exp $
+#	$NetBSD: genassym.cf,v 1.15 2000/03/24 02:02:03 nisimura Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -199,7 +199,7 @@ define	TF_REG_MULHI	offsetof(struct trapframe, tf_mulhi)
 define	TF_REG_EPC	offsetof(struct trapframe, tf_epc)
 
 define	CTXSWFRAME_SIZ	sizeof(mips_reg_t) * 12
-define	SF_REG_ST	sizeof(mips_reg_t) * 11
+define	SF_REG_SR	sizeof(mips_reg_t) * 11
 define	SF_REG_RA	sizeof(mips_reg_t) * 10
 define	SF_REG_S0	sizeof(mips_reg_t) * 0
 define	SF_REG_S1	sizeof(mips_reg_t) * 1
