@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.4,v 1.5 2000/02/12 09:47:03 fair Exp $
+.\"	$NetBSD: tr.4,v 1.6 2000/05/26 19:01:51 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .Cd "tr0 at isa? port 0xa20 iomem 0xd800 irq ?"
 .Cd "tr* at isa? port ? irq ?"
 .Cd "tr* at isapnp?"
+.Cd "tr* at mca? slot ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -75,6 +76,12 @@ Auto 16/4 Token-Ring ISA Adapter
 Setting IFF_LINK0 enables Token-Ring source routing.  Setting
 IFF_LINK1 uses all-routes broadcasts otherwise single-route broadcasts
 are used.
+.Sh "NOTES"
+The MCA attachment has been only tested on
+IBM Token Ring 16/4 Adapter/A so far.
+It doesn't support 
+.Xr ifmedia 4
+yet, too.
 .\".Sh MEDIA SELECTION
 .\".Sh DIAGNOSTICS
 .Sh SEE ALSO
