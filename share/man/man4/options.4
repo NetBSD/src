@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.147 2001/09/22 01:44:55 wiz Exp $
+.\"	$NetBSD: options.4,v 1.148 2001/09/22 05:38:30 chs Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -297,7 +297,7 @@ for details.
 If this is non-zero, enable history editing in the kernel debugger
 and set the size of the history to this value.
 .It Cd options DDB_ONPANIC
-If set to non-zero, the DDB will be entered upon kernel panic.
+If set to non-zero, DDB will be entered upon kernel panic.
 The default if not specified is "1".
 Note that this sets the value of the
 .Em ddb.onpanic
@@ -388,6 +388,20 @@ problems.
 .It Cd options MALLOCLOGSIZE=integer
 Defines the number of entries in the malloc log.
 Default is 100000 entries.
+.It Cd options UVMHIST
+Enables the UVM history logs, which create in-memory traces of 
+various UVM activities. These logs can be displayed be calling
+.Fn uvmhist_dump
+or
+.Fn uvm_hist
+with appropriate arguments from DDB.
+See the kernel source file sys/uvm/uvm_stat.c for details.
+.It Cd options UVMHIST_PRINT
+Prints the UVM history logs on the system console as entries are added.
+Note that the output is
+.Em extremely
+voluminous, so this option is really only useful for debugging
+the very earliest parts of kernel initialization.
 .El
 .Ss File Systems
 .Bl -ohang
