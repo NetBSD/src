@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.52 1996/12/01 12:10:07 veego Exp $
+#	$NetBSD: Makefile.amiga,v 1.53 1997/01/31 10:16:07 veego Exp $
 
 # Makefile for NetBSD
 #
@@ -142,7 +142,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean::
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
@@ -165,7 +166,7 @@ links:
 
 SRCS=	${AMIGA}/amiga/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend:: .depend
+depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
