@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 1997/01/22 22:49:06 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 1997/01/22 23:20:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -44,15 +44,15 @@
 
 #ifdef NLIST_AOUT
 int	check_aout(int, const char *);
-void	hide_aout(int, const char *);
+int	hide_aout(int, const char *);
 #endif
 #ifdef NLIST_ELF32
 int	check_elf32(int, const char *);
-void	hide_elf32(int, const char *);
+int	hide_elf32(int, const char *);
 #endif
 #ifdef NLIST_ELF64
 int	check_elf64(int, const char *);
-void	hide_elf64(int, const char *);
+int	hide_elf64(int, const char *);
 #endif
 
 int	in_keep_list(const char *symbol);
