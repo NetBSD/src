@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1997/09/11 23:01:55 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 1997/09/12 07:00:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -388,13 +388,26 @@ setregs(p, pack, stack)
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 	
 	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = stack;
+	frame->f_regs[D0] = 0;
+	frame->f_regs[D1] = 0;
+	frame->f_regs[D2] = 0;
+	frame->f_regs[D3] = 0;
+	frame->f_regs[D4] = 0;
+	frame->f_regs[D5] = 0;
+	frame->f_regs[D6] = 0;
+	frame->f_regs[D7] = 0;
+	frame->f_regs[A0] = 0;
+	frame->f_regs[A1] = 0;
 	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A3] = 0;
+	frame->f_regs[A4] = 0;
+	frame->f_regs[A5] = 0;
+	frame->f_regs[A6] = 0;
+	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-
-	if(fputype)
+	if (fputype)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 }
 
