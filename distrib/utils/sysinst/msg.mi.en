@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.118 2003/08/05 13:35:28 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.119 2003/08/09 21:36:27 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,6 +151,9 @@ message heads
 message sectors
 {sectors}
 
+message fs_isize
+{average file size (bytes)}
+
 message mountpoint
 {mount point (or 'none')}
 
@@ -291,6 +294,11 @@ message bsize_fmt
 
 message fsize_fmt
 { fragment size: %9d bytes}
+
+message isize_fmt
+{ Avg file size: %9d bytes}
+message isize_fmt_dflt
+{ Avg file size:         4 fragments}
 
 message newfs_fmt
 {         newfs: %9s}

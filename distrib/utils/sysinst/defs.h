@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.101 2003/08/05 13:35:26 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.102 2003/08/09 21:36:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,6 +141,7 @@ typedef struct _partinfo {
 #define pi_frag		pi_partition.p_frag
 #define pi_cpg		pi_partition.p_cpg
 	char	pi_mount[20];
+	uint	pi_isize;		/* bytes per inode */
 	uint	pi_flags;
 #define PIF_NEWFS	0x001		/* need to 'newfs' partition */
 #define PIF_MOUNT	0x002		/* need to mount partition */
