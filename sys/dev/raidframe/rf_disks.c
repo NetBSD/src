@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.12 1999/08/13 03:41:56 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.13 1999/08/14 03:10:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -377,7 +377,7 @@ rf_ConfigureDisk(raidPtr, buf, diskPtr, row, col)
 	}
 	(void) strcpy(diskPtr->devname, p);
 
-	proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
+	proc = raidPtr->engine_thread;
 
 	/* Let's start by claiming the component is fine and well... */
 	diskPtr->status = rf_ds_optimal;

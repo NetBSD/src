@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.14 1999/08/13 03:41:58 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.15 1999/08/14 03:10:03 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -331,7 +331,7 @@ rf_UnconfigureVnodes( raidPtr )
 
 	/* We take this opportunity to close the vnodes like we should.. */
 
-	p = raidPtr->proc;	/* XXX */
+	p = raidPtr->engine_thread;
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
@@ -417,7 +417,6 @@ rf_Configure(raidPtr, cfgPtr)
 	RF_RowCol_t row, col;
 	int     i, rc;
 	int     unit;
-	struct proc *p;
 
 	if (raidPtr->valid) {
 		RF_ERRORMSG("RAIDframe configuration not shut down.  Aborting configure.\n");
@@ -475,10 +474,8 @@ rf_Configure(raidPtr, cfgPtr)
 	/* XXX this clearing should be moved UP to outside of here.... that,
 	 * or rf_Configure() needs to take more arguments... XXX */
 	unit = raidPtr->raidid;
-	p = raidPtr->proc;	/* XXX save these... */
 	bzero((char *) raidPtr, sizeof(RF_Raid_t));
 	raidPtr->raidid = unit;
-	raidPtr->proc = p;	/* XXX and then recover them.. */
 	DO_RAID_MUTEX(&raidPtr->mutex);
 	/* set up the cleanup list.  Do this after ConfigureDebug so that
 	 * value of memDebug will be set */

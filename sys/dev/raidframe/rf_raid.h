@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.6 1999/07/08 00:45:24 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.7 1999/08/14 03:10:04 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -222,7 +222,6 @@ struct RF_Raid_s {
 	int     keep_acc_totals;
 
 	struct raidcinfo **raid_cinfo;	/* array of component info */
-	struct proc *proc;	/* XXX shouldn't be needed here.. :-p */
 
 	int     terminate_disk_queues;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.7 1999/08/13 03:41:57 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.8 1999/08/14 03:10:04 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -491,7 +491,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 
 		badDisk = &raidPtr->Disks[row][col];
 
-		proc = raidPtr->proc;	/* XXX Yes, this is not nice.. */
+		proc = raidPtr->engine_thread;
 
 		/* This device may have been opened successfully the 
 		   first time. Close it before trying to open it again.. */
