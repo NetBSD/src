@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.29 1999/02/16 23:27:43 cjs Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.30 1999/02/17 07:17:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.29 1999/02/16 23:27:43 cjs Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.30 1999/02/17 07:17:28 christos Exp $");
 #endif
 #endif
 
@@ -471,7 +471,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'w':
-			waittime = str2val(optarg, "wait time", 2, -1);
+			waittime = str2val(optarg, "wait time", 2, 24 * 3600);
 			break;
 
 		case 'P':
