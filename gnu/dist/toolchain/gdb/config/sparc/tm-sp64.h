@@ -358,11 +358,17 @@ extern CORE_ADDR sparc64_read_sp ();
 extern CORE_ADDR sparc64_read_fp ();
 extern void sparc64_write_sp PARAMS ((CORE_ADDR));
 extern void sparc64_write_fp PARAMS ((CORE_ADDR));
+extern CORE_ADDR sparc64_frame_address PARAMS ((struct frame_info *fi));
 
 #define TARGET_READ_SP() (sparc64_read_sp ())
 #define TARGET_READ_FP() (sparc64_read_fp ())
 #define TARGET_WRITE_SP(X) (sparc64_write_sp (X))
 #define TARGET_WRITE_FP(X) (sparc64_write_fp (X))
+
+#undef FRAME_LOCALS_ADDRESS     
+#undef FRAME_ARGS_ADDRESS
+#define FRAME_LOCALS_ADDRESS(X) (sparc64_frame_address (X))
+#define FRAME_ARGS_ADDRESS(X) (sparc64_frame_address (X))
 
 #undef TM_PRINT_INSN_MACH
 #define TM_PRINT_INSN_MACH bfd_mach_sparc_v9a
