@@ -1,4 +1,4 @@
-/*	$KAME: pfkey_dump.c,v 1.35 2001/11/13 12:38:47 jinmei Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.44 2003/07/25 09:35:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -78,9 +78,9 @@
 do { \
 	if (sizeof((str)[0]) == 0 \
 	 || num >= sizeof(str)/sizeof((str)[0])) \
-		printf("%d ", (num)); \
+		printf("%u ", (num)); \
 	else if (strlen((str)[(num)]) == 0) \
-		printf("%d ", (num)); \
+		printf("%u ", (num)); \
 	else \
 		printf("%s ", (str)[(num)]); \
 } while (0)
@@ -95,7 +95,7 @@ do { \
 	if (p && p->str) \
 		printf("%s ", p->str); \
 	else \
-		printf("%d ", (num)); \
+		printf("%u ", (num)); \
 } while (0)
 
 static char *str_ipaddr __P((struct sockaddr *));
@@ -154,6 +154,12 @@ static struct val2str str_alg_auth[] = {
 #ifdef SADB_X_AALG_SHA2_512
 	{ SADB_X_AALG_SHA2_512, "hmac-sha2-512", },
 #endif
+#ifdef SADB_X_AALG_RIPEMD160HMAC
+	{ SADB_X_AALG_RIPEMD160HMAC, "hmac-ripemd160", },
+#endif
+#ifdef SADB_X_AALG_AES_XCBC_MAC
+	{ SADB_X_AALG_AES_XCBC_MAC, "aes-xcbc-mac", },
+#endif
 	{ -1, NULL, },
 };
 
@@ -172,6 +178,9 @@ static struct val2str str_alg_enc[] = {
 #endif
 #ifdef SADB_X_EALG_TWOFISHCBC
 	{ SADB_X_EALG_TWOFISHCBC, "twofish-cbc", },
+#endif
+#ifdef SADB_X_EALG_AESCTR
+	{ SADB_X_EALG_AESCTR, "aes-ctr", },
 #endif
 	{ -1, NULL, },
 };
@@ -353,6 +362,9 @@ pfkey_spdump(m)
 	char pbuf[NI_MAXSERV];
 	caddr_t mhp[SADB_EXT_MAX + 1];
 	struct sadb_address *m_saddr, *m_daddr;
+#ifdef SADB_X_EXT_TAG
+	struct sadb_x_tag *m_tag;
+#endif
 	struct sadb_x_policy *m_xpl;
 	struct sadb_lifetime *m_lftc = NULL, *m_lfth = NULL;
 	struct sockaddr *sa;
@@ -370,64 +382,67 @@ pfkey_spdump(m)
 
 	m_saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	m_daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
+#ifdef SADB_X_EXT_TAG
+	m_tag = (struct sadb_x_tag *)mhp[SADB_X_EXT_TAG];
+#endif
 	m_xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
 	m_lftc = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_CURRENT];
 	m_lfth = (struct sadb_lifetime *)mhp[SADB_EXT_LIFETIME_HARD];
 
-	/* source address */
-	if (m_saddr == NULL) {
-		printf("no ADDRESS_SRC extension.\n");
-		return;
-	}
-	sa = (struct sockaddr *)(m_saddr + 1);
-	switch (sa->sa_family) {
-	case AF_INET:
-	case AF_INET6:
-		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
-		    NI_NUMERICSERV) != 0)
-			sport = 0;	/*XXX*/
-		else
-			sport = atoi(pbuf);
-		printf("%s%s ", str_ipaddr(sa),
-			str_prefport(sa->sa_family,
-			    m_saddr->sadb_address_prefixlen, sport,
-			    m_saddr->sadb_address_proto));
-		break;
-	default:
-		printf("unknown-af ");
-		break;
+	if (m_saddr && m_daddr) {
+		/* source address */
+		sa = (struct sockaddr *)(m_saddr + 1);
+		switch (sa->sa_family) {
+		case AF_INET:
+		case AF_INET6:
+			if (getnameinfo(sa, sa->sa_len, NULL, 0,
+			    pbuf, sizeof(pbuf), NI_NUMERICSERV) != 0)
+				sport = 0;	/*XXX*/
+			else
+				sport = atoi(pbuf);
+			printf("%s%s ", str_ipaddr(sa),
+				str_prefport(sa->sa_family,
+				    m_saddr->sadb_address_prefixlen, sport,
+				    m_saddr->sadb_address_proto));
+			break;
+		default:
+			printf("unknown-af ");
+			break;
+		}
+
+		/* destination address */
+		sa = (struct sockaddr *)(m_daddr + 1);
+		switch (sa->sa_family) {
+		case AF_INET:
+		case AF_INET6:
+			if (getnameinfo(sa, sa->sa_len, NULL, 0,
+			    pbuf, sizeof(pbuf), NI_NUMERICSERV) != 0)
+				dport = 0;	/*XXX*/
+			else
+				dport = atoi(pbuf);
+			printf("%s%s ", str_ipaddr(sa),
+				str_prefport(sa->sa_family,
+				    m_daddr->sadb_address_prefixlen, dport,
+				    m_saddr->sadb_address_proto));
+			break;
+		default:
+			printf("unknown-af ");
+			break;
+		}
+
+		/* upper layer protocol */
+		if (m_saddr->sadb_address_proto !=
+		    m_daddr->sadb_address_proto) {
+			printf("upper layer protocol mismatched.\n");
+			return;
+		}
+		str_upperspec(m_saddr->sadb_address_proto, sport, dport);
 	}
 
-	/* destination address */
-	if (m_daddr == NULL) {
-		printf("no ADDRESS_DST extension.\n");
-		return;
-	}
-	sa = (struct sockaddr *)(m_daddr + 1);
-	switch (sa->sa_family) {
-	case AF_INET:
-	case AF_INET6:
-		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
-		    NI_NUMERICSERV) != 0)
-			dport = 0;	/*XXX*/
-		else
-			dport = atoi(pbuf);
-		printf("%s%s ", str_ipaddr(sa),
-			str_prefport(sa->sa_family,
-			    m_daddr->sadb_address_prefixlen, dport,
-			    m_saddr->sadb_address_proto));
-		break;
-	default:
-		printf("unknown-af ");
-		break;
-	}
-
-	/* upper layer protocol */
-	if (m_saddr->sadb_address_proto != m_daddr->sadb_address_proto) {
-		printf("upper layer protocol mismatched.\n");
-		return;
-	}
-	str_upperspec(m_saddr->sadb_address_proto, sport, dport);
+#ifdef SADB_X_EXT_TAG
+	if (m_tag)
+		printf("tagged \"%s\" ", m_tag->sadb_x_tag_name);
+#endif
 
 	/* policy */
     {
@@ -446,15 +461,15 @@ pfkey_spdump(m)
 
 	/* lifetime */
 	if (m_lftc) {
-		printf("\tcreated:%s ",
+		printf("\tcreated: %s  ",
 			str_time(m_lftc->sadb_lifetime_addtime));
-		printf("lastused:%s\n",
+		printf("lastused: %s\n",
 			str_time(m_lftc->sadb_lifetime_usetime));
 	}
 	if (m_lfth) {
-		printf("\tlifetime:%lu(s) ",
+		printf("\tlifetime: %lu(s) ",
 			(u_long)m_lfth->sadb_lifetime_addtime);
-		printf("validtime:%lu(s)\n",
+		printf("validtime: %lu(s)\n",
 			(u_long)m_lfth->sadb_lifetime_usetime);
 	}
 
@@ -496,8 +511,8 @@ str_prefport(family, pref, port, ulp)
 	u_int family, pref, port, ulp;
 {
 	static char buf[128];
-	char prefbuf[10];
-	char portbuf[10];
+	char prefbuf[128];
+	char portbuf[128];
 	int plen;
 
 	switch (family) {
@@ -518,10 +533,12 @@ str_prefport(family, pref, port, ulp)
 
 	if (ulp == IPPROTO_ICMPV6)
 		memset(portbuf, 0, sizeof(portbuf));
-	else if (ulp != IPPROTO_ICMPV6 && port == IPSEC_PORT_ANY)
-		snprintf(portbuf, sizeof(portbuf), "[%s]", "any");
-	else
-		snprintf(portbuf, sizeof(portbuf), "[%u]", port);
+	else {
+		if (port == IPSEC_PORT_ANY)
+			snprintf(portbuf, sizeof(portbuf), "[%s]", "any");
+		else
+			snprintf(portbuf, sizeof(portbuf), "[%u]", port);
+	}
 
 	snprintf(buf, sizeof(buf), "%s%s", prefbuf, portbuf);
 
@@ -537,7 +554,7 @@ str_upperspec(ulp, p1, p2)
 	else if (ulp == IPPROTO_ICMPV6) {
 		printf("icmp6");
 		if (!(p1 == IPSEC_PORT_ANY && p2 == IPSEC_PORT_ANY))
-			printf(" %d,%d", p1, p2);
+			printf(" %u,%u", p1, p2);
 	} else {
 		struct protoent *ent;
 
@@ -550,7 +567,7 @@ str_upperspec(ulp, p1, p2)
 			if (ent)
 				printf("%s", ent->p_name);
 			else
-				printf("%d", ulp);
+				printf("%u", ulp);
 
 			endprotoent();
 			break;
