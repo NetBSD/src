@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.14 2002/05/02 16:34:57 uch Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2002/05/19 08:31:24 gehenna Exp $
 
 KDIR=	/sys/arch/mmeye/include
 INCSDIR= /usr/include/mmeye
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
-	cdefs.h coff_machdep.h conf.h cpu.h cputypes.h \
+	cdefs.h coff_machdep.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \

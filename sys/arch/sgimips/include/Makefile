@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2001/11/28 20:13:34 manu Exp $
+#	$NetBSD: Makefile,v 1.9.8.1 2002/05/19 08:31:28 gehenna Exp $
 
 KDIR=	/sys/arch/sgimips/include
 INCSDIR= /usr/include/sgimips
 
 INCS=	asm.h ansi.h aout_machdep.h autoconf.h \
 	bsd-aout.h bswap.h \
-	cdefs.h conf.h cpu.h \
+	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \
