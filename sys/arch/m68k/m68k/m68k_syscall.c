@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.13 2003/10/31 03:28:13 simonb Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.14 2004/08/28 22:06:28 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.13 2003/10/31 03:28:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.14 2004/08/28 22:06:28 thorpej Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -163,9 +163,7 @@ static void syscall_fancy(register_t, struct lwp *, struct frame *);
  * Process a system call.
  */
 void
-syscall(code, frame)
-	register_t code;
-	struct frame frame;
+syscall(register_t code, struct frame frame)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -472,8 +470,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 #endif /* KTRACE || SYSTRACE */
 
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 	/* See cpu_fork() */
@@ -494,8 +491,7 @@ child_return(arg)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
@@ -521,8 +517,7 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(l)
-	struct lwp *l;
+upcallret(struct lwp *l)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
