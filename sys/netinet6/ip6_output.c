@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.11 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.12 2000/01/26 17:06:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1266,6 +1266,31 @@ ip6_ctloutput(op, so, level, optname, mp)
 				error =	ip6_setmoptions(optname, &in6p->in6p_moptions, m);
 				break;
 
+			case IPV6_PORTRANGE:
+				optval = *mtod(m, int *);
+
+				switch (optval) {
+				case IPV6_PORTRANGE_DEFAULT:
+					in6p->in6p_flags &= ~(IN6P_LOWPORT);
+					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
+					break;
+
+				case IPV6_PORTRANGE_HIGH:
+					in6p->in6p_flags &= ~(IN6P_LOWPORT);
+					in6p->in6p_flags |= IN6P_HIGHPORT;
+					break;
+
+				case IPV6_PORTRANGE_LOW:
+					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
+					in6p->in6p_flags |= IN6P_LOWPORT;
+					break;
+
+				default:
+					error = EINVAL;
+					break;
+				}
+				break;
+
 #ifdef IPSEC
 			case IPV6_IPSEC_POLICY:
 			    {
@@ -1336,6 +1361,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RECVOPTS:
 			case IPV6_RECVRETOPTS:
 			case IPV6_RECVDSTADDR:
+			case IPV6_PORTRANGE:
 			case IPV6_PKTINFO:
 			case IPV6_HOPLIMIT:
 			case IPV6_RTHDR:
@@ -1365,6 +1391,19 @@ ip6_ctloutput(op, so, level, optname, mp)
 				case IPV6_RECVDSTADDR:
 					optval = OPTBIT(IN6P_RECVDSTADDR);
 					break;
+
+				case IPV6_PORTRANGE:
+				    {
+					int flags;
+					flags = in6p->in6p_flags;
+					if (flags & IN6P_HIGHPORT)
+						optval = IPV6_PORTRANGE_HIGH;
+					else if (flags & IN6P_LOWPORT)
+						optval = IPV6_PORTRANGE_LOW;
+					else
+						optval = 0;
+					break;
+				    }
 
 				case IPV6_PKTINFO:
 					optval = OPTBIT(IN6P_PKTINFO);
