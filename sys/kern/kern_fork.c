@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.2 2001/08/24 00:11:28 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.3 2001/11/05 19:59:03 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -516,11 +516,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 void
 proc_trampoline_mp(void)
 {
-	struct proc *p;
+	struct lwp *l;
 
-	p = curproc;
+	l = curproc;
 
 	SCHED_ASSERT_UNLOCKED();
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 }
 #endif

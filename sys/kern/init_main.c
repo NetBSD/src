@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.4 2001/08/24 00:11:24 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.5 2001/11/05 19:59:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -354,7 +354,7 @@ main(void)
 	ubc_init();		/* must be after autoconfig */
 
 	/* Lock the kernel on behalf of proc0. */
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -681,7 +681,7 @@ start_init(void *arg)
 		 */
 		error = sys_execve(LIST_FIRST(&p->p_lwps), &args, retval);
 		if (error == 0 || error == EJUSTRETURN) {
-			KERNEL_PROC_UNLOCK(p);
+			KERNEL_PROC_UNLOCK(l);
 			return;
 		}
 		if (error != ENOENT)

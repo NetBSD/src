@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.5 2001/08/24 00:11:31 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.6 2001/11/05 19:59:03 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1296,7 +1296,7 @@ postsig(int signum)
 		panic("postsig");
 #endif
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 	sigdelset(&p->p_sigctx.ps_siglist, signum);
 	action = SIGACTION_PS(ps, signum).sa_handler;
@@ -1357,7 +1357,7 @@ postsig(int signum)
 		(void) spl0();		/* XXXSMP */
 	}
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 }
 
 /*
