@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.20 1996/05/15 09:21:51 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.21 1996/07/05 19:35:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -180,7 +180,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 		show_request(reqp, "DONE");
 #endif
 #ifdef DBG_ERR_RET
-	if (reqp->xs->error != 0)
+	if ((dbg_target_mask & (1 << reqp->targ_id)) && (reqp->xs->error != 0))
 		show_request(reqp, "ERR_RET");
 #endif
 	/*
@@ -599,6 +599,7 @@ connected:
 	    }
 	}
 	/* NEVER TO REACH HERE */
+	show_phase(NULL, 0);	/* XXX: Get rid of not used warning */
 	panic("ncr5380-SCSI: not designed to come here");
 
 main_exit:
@@ -640,7 +641,6 @@ main_exit:
 		}
 	}
 	reconsider_dma();
-
 	main_running = 0;
 	splx(sps);
 	PID("scsi_main5");
@@ -685,6 +685,9 @@ ncr_ctrl_intr(sc)
 struct ncr_softc *sc;
 {
 	int	itype;
+
+	if (main_running)
+		return; /* scsi_main() should handle this one */
 
 	while (scsi_ipending()) {
 		scsi_idisable();
@@ -1020,7 +1023,10 @@ struct ncr_softc *sc;
 	phase = (tmp >> 2) & 7;
 	if (phase != reqp->phase) {
 		reqp->phase = phase;
-		DBG_INFPRINT(show_phase, reqp, phase);
+#ifdef DBG_INF
+		if (dbg_target_mask & (1 << reqp->targ_id))
+			DBG_INFPRINT(show_phase, reqp, phase);
+#endif
 	}
 	else {
 		/*
@@ -1030,6 +1036,7 @@ struct ncr_softc *sc;
 		     && ((phase == PH_DATAOUT) || (phase == PH_DATAIN))) {
 			busy     &= ~(1 << reqp->targ_id);
 			connected = NULL;
+			reqp->xs->error = XS_TIMEOUT;
 			finish_req(reqp);
 			scsi_reset_verbose(sc, "Failure to abort command");
 			return (0);
@@ -1387,11 +1394,11 @@ int	dont_drop_ack;
 	SET_5380_REG(NCR5380_TCOM, ph);
 	do {
 	    if (!wait_req_true()) {
-		DBG_PIOPRINT ("SCSI: transfer_pio: missing REQ\n", 0, 0);
+	    	DBG_PIOPRINT ("SCSI: transfer_pio: missing REQ\n", 0, 0);
 		break;
 	    }
 	    if (((GET_5380_REG(NCR5380_IDSTAT) >> 2) & 7) != ph) {
-		DBG_PIOPRINT ("SCSI: transfer_pio: phase mismatch\n", 0, 0);
+	    	DBG_PIOPRINT ("SCSI: transfer_pio: phase mismatch\n", 0, 0);
 		break;
 	    }
 	    if (PH_IN(ph)) {
@@ -1442,6 +1449,7 @@ int	dont_drop_ack;
 }
 
 #ifdef REAL_DMA
+
 /*
  * Start a DMA-transfer on the device using the current pointers.
  * If 'poll' is true, the function busy-waits until DMA has completed.
@@ -1704,6 +1712,7 @@ u_long		 len;
 		}
 		else {
 			SET_5380_REG(NCR5380_DATA, 0);
+			SET_5380_REG(NCR5380_ICOM, SC_ADTB|SC_A_ATN);
 			SET_5380_REG(NCR5380_ICOM, SC_ADTB|SC_A_ACK|SC_A_ATN);
 		}
 		if (!wait_req_false())
@@ -1718,6 +1727,9 @@ u_long		 len;
 					"%ld bytes.\n", len - n);
 			return (0);
 		}
+		ncr_aprint(sc, "Phase now: %d after %ld bytes.\n", phase,
+								   len - n);
+		
 	}
 	return (-1);
 }
@@ -1805,9 +1817,9 @@ struct ncr_softc *sc;
 			return (INTR_DMA);
 		}
 	}
-	scsi_clr_ipend();
 	printf("-->");
 	scsi_show();
+	scsi_clr_ipend();
 	ncr_aprint(sc, "Spurious interrupt.\n");
 	return (INTR_SPURIOUS);
 }
@@ -1961,6 +1973,19 @@ ncr_aprint(struct ncr_softc *sc, char *fmt, ...)
 /****************************************************************************
  *		Start Debugging Functions				    *
  ****************************************************************************/
+static char *phase_names[] = {
+	"DATA_OUT", "DATA_IN", "COMMAND", "STATUS", "NONE", "NONE", "MSG_OUT",
+	"MSG_IN"
+};
+
+static void
+show_phase(reqp, phase)
+SC_REQ	*reqp;
+int	phase;
+{
+	printf("INFTRANS: %d Phase = %s\n", reqp->targ_id, phase_names[phase]);
+}
+
 static void
 show_data_sense(xs)
 struct scsi_xfer	*xs;
@@ -2038,9 +2063,12 @@ scsi_show()
 		show_request(tmp, "DISCONNECTED");
 	if (connected)
 		show_request(connected, "CONNECTED");
-	idstat = GET_5380_REG(NCR5380_IDSTAT);
-	dmstat = GET_5380_REG(NCR5380_DMSTAT);
-	show_signals(dmstat, idstat);
+	if (can_access_5380()) {
+		idstat = GET_5380_REG(NCR5380_IDSTAT);
+		dmstat = GET_5380_REG(NCR5380_DMSTAT);
+		show_signals(dmstat, idstat);
+	}
+
 	if (connected)
 		printf("phase = %d, ", connected->phase);
 	printf("busy:%x, spl:%04x\n", busy, sps);
