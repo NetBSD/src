@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.43 1997/11/28 23:42:36 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.44 1997/12/28 04:28:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.43 1997/11/28 23:42:36 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.44 1997/12/28 04:28:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -603,7 +603,7 @@ pass(passwd)
 {
 	int rval;
 	FILE *fd;
-	char *cp, *shell;
+	char *cp, *shell, *home;
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -714,6 +714,7 @@ skip:
 	else
 		parse_conf(CLASS_REAL);
 
+	home = "/";
 	if (guest) {
 		/*
 		 * We MUST do a chdir() after the chroot. Otherwise
@@ -737,11 +738,15 @@ skip:
 			goto bad;
 		} else
 			lreply(230, "No directory! Logging in with home=/");
-	}
+	} else
+		home = pw->pw_dir;
 	if (seteuid((uid_t)pw->pw_uid) < 0) {
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
+	setenv("HOME", home, 1);
+
+
 	/*
 	 * Display a login message, if it exists.
 	 * N.B. reply(230,) must follow the message.
