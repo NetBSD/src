@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.317 1999/09/25 17:49:27 is Exp $
+#	$NetBSD: files,v 1.318 1999/09/27 23:44:27 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -184,6 +184,10 @@ defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE
 			AHC_SCBPAGING_ENABLE
 device	ahc: scsi
 file	dev/ic/aic7xxx.c		ahc
+
+# DPT EATA SCSI controllers
+device	dpt: scsi
+file	dev/ic/dpt.c			dpt
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi

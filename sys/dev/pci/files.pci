@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.62 1999/09/01 11:54:32 drochner Exp $
+#	$NetBSD: files.pci,v 1.63 1999/09/27 23:44:28 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -18,6 +18,10 @@ file	dev/pci/pci_subr.c		pci
 attach	ahc at pci with ahc_pci
 file	dev/pci/ahc_pci.c		ahc_pci
 file	dev/ic/smc93cx6.c		ahc_pci
+
+# DPT EATA SCSI controllers
+attach	dpt at pci with dpt_pci
+file	dev/pci/dpt_pci.c		dpt_pci
 
 # AdvanSys 1200A, 1200B, and ULTRA SCSI controllers
 # device declaration in sys/conf/files
