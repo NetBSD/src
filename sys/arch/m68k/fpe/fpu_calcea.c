@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.6 1996/10/13 03:19:10 christos Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.7 1996/10/16 06:27:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -48,8 +48,6 @@ static int fetch_immed __P((struct frame *frame, struct instruction *insn,
 static int fetch_disp __P((struct frame *frame, struct instruction *insn,
 			   int size, int *res));
 static int calc_ea __P((struct insn_ea *ea, char *ptr, char **eaddr));
-
-int fusword __P((void *));
 
 /*
  * Helper routines for dealing with "effective address" values.
