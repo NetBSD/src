@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.8 2003/01/24 04:53:14 thorpej Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.9 2003/03/14 22:46:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -58,6 +58,9 @@ struct pciide_softc {
 	/* For Cypress */
 	const struct cy82c693_handle *sc_cy_handle;
 	int sc_cy_compatchan;
+
+	/* for SiS */
+	u_int8_t sis_type;
 
 	/* Vendor info (for interpreting Chip description) */
 	uint32_t sc_pci_vendor;
