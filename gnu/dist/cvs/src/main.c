@@ -350,6 +350,10 @@ main_cleanup (sig)
 #ifndef DONT_USE_SIGNALS
     const char *name;
     char temp[10];
+    static int reenter = 0;
+
+    if (reenter++)
+	_exit(1);
 
     switch (sig)
     {
