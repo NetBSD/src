@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.67 1999/03/30 14:27:56 soda Exp $	*/
+/*	$NetBSD: locore.S,v 1.68 1999/03/30 17:34:55 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1117,7 +1117,7 @@ END(savefpregs)
  *----------------------------------------------------------------------------
  */
 NESTED(MachFPInterrupt, CALLFRAME_SIZ, ra)
-XLEAF(MachFPTrap)
+XNESTED(MachFPTrap)
 	.mask	0x80000000, -4
 	subu	sp, sp, CALLFRAME_SIZ
 	mfc0	t0, MIPS_COP_0_STATUS
