@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.248.2.8 2001/11/17 21:38:23 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.248.2.9 2001/12/17 21:00:23 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.8 2001/11/17 21:38:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.248.2.9 2001/12/17 21:00:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1393,7 +1393,7 @@ err:
 
 void
 frametoreg(framep, regp)
-	struct trapframe *framep;
+	const struct trapframe *framep;
 	struct reg *regp;
 {
 
@@ -1433,7 +1433,7 @@ frametoreg(framep, regp)
 
 void
 regtoframe(regp, framep)
-	struct reg *regp;
+	const struct reg *regp;
 	struct trapframe *framep;
 {
 
@@ -1661,122 +1661,24 @@ cpu_stashcontext(struct lwp *l)
 }
 
 void 
-cpu_upcall(struct lwp *l)
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct proc *p = l->l_proc;
-	
-	struct sadata *sd = p->p_sa;
-	struct sa_t **sapp, *sap;
-	struct sa_t self_sa, e_sa, int_sa;
-	struct sa_t *sas[3];
-	struct sadata_upcall *sau;
-	struct trapframe *tf;
-	void *stack;
-	void *ap;
-	ucontext_t u, *up;
-	int i, nsas, nevents, nint;
+       	struct trapframe *tf;
 
 	extern char sigcode[], upcallcode[];
 
-
 	tf = l->l_md.md_tf;
-
-	KDASSERT(LIST_EMPTY(&sd->sa_upcalls) == 0);
-
-	sau = LIST_FIRST(&sd->sa_upcalls);
-
-	stack = (char *)sau->sau_stack.ss_sp + sau->sau_stack.ss_size;
-
-	self_sa.sa_id = l->l_lid;
-	self_sa.sa_cpu = 0; /* XXX l->l_cpu; */
-	sas[0] = &self_sa;
-	nsas = 1;
-
-	nevents = 0;
-	if (sau->sau_event) {
-		e_sa.sa_context = cpu_stashcontext(sau->sau_event);
-		e_sa.sa_id = sau->sau_event->l_lid;
-		e_sa.sa_cpu = 0; /* XXX event->l_cpu; */
-		sas[nsas++] = &e_sa;
-		nevents = 1;
-	}
-
-	nint = 0;
-	if (sau->sau_interrupted) {
-		int_sa.sa_context = cpu_stashcontext(sau->sau_interrupted);
-		int_sa.sa_id = sau->sau_interrupted->l_lid;
-		int_sa.sa_cpu = 0; /* XXX interrupted->l_cpu; */
-		sas[nsas++] = &int_sa;
-		nint = 1;
-	}
-
-	LIST_REMOVE(sau, sau_next);
-	if (LIST_EMPTY(&sd->sa_upcalls))
-		l->l_flag &= ~L_SA_UPCALL;
-
-	/* Copy out the activation's ucontext */
-	u.uc_stack = sau->sau_stack;
-	u.uc_flags = _UC_STACK;
-	up = stack;
-	up--;
-	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		sadata_upcall_free(sau);
-#ifdef DIAGNOSTIC
-		printf("cpu_upcall: couldn't copyout activation ucontext" 
-		    " for %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-	sas[0]->sa_context = up;
-
-	/* Next, copy out the sa_t's and pointers to them. */
-	sap = (struct sa_t *) up;
-	sapp = (struct sa_t **) (sap - nsas);
-	for (i = nsas - 1; i >= 0; i--) {
-		sap--;
-		sapp--;
-		if ((copyout(sas[i], sap, sizeof(struct sa_t)) != 0) ||
-		    (copyout(&sap, sapp, sizeof(struct sa_t *)) != 0)) {
-			/* Copying onto the stack didn't work. Die. */
-			sadata_upcall_free(sau);
-#ifdef DIAGNOSTIC
-		printf("cpu_upcall: couldn't copyout sa_t %d for %d.%d\n",
-		    i, l->l_proc->p_pid, l->l_lid);
-#endif
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
-		}
-	}
-
-	/* Copy out the arg, if any */
-	/* xxx assume alignment works out; everything so far has been
-	 * a structure, so...
-	 */
-	if (sau->sau_arg) {
-		ap = (char *)sapp - sau->sau_argsize;
-		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
-			/* Copying onto the stack didn't work. Die. */
-			sadata_upcall_free(sau);
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
-		}
-	} else {
-		ap = 0;
-	}
 
 	tf->tf_regs[FRAME_PC] = ((u_int64_t)p->p_sigctx.ps_sigcode) +
 	    ((u_int64_t)upcallcode - (u_int64_t)sigcode);
-	tf->tf_regs[FRAME_A0] = sau->sau_type;
-	tf->tf_regs[FRAME_A1] = (u_int64_t)sapp;
+	tf->tf_regs[FRAME_A0] = type;
+	tf->tf_regs[FRAME_A1] = (u_int64_t)sas;
 	tf->tf_regs[FRAME_A2] = nevents;
-	tf->tf_regs[FRAME_A3] = nint;
+	tf->tf_regs[FRAME_A3] = ninterrupted;
 	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
-	tf->tf_regs[FRAME_T12] = (u_int64_t)sd->sa_upcall;  /* t12 is pv */
-	alpha_pal_wrusp((unsigned long)sapp);
-
-	sadata_upcall_free(sau);
+	tf->tf_regs[FRAME_T12] = (u_int64_t)upcall;  /* t12 is pv */
+	alpha_pal_wrusp((unsigned long)sp);
 }
 
 /*
@@ -2251,37 +2153,30 @@ cpu_getmcontext(l, mcp, flags)
 	unsigned int *flags;
 {
 	struct trapframe *frame = l->l_md.md_tf;
+	__greg_t *gr = mcp->__gregs;
 
-	mcp->sc_pc = frame->tf_regs[FRAME_PC];
-	mcp->sc_ps = frame->tf_regs[FRAME_PS];
-	frametoreg(frame, (struct reg *)mcp->sc_regs);
+	/* Save register context. */
+	frametoreg(frame, (struct reg *)gr);
 	/* XXX if there's a better, general way to get the USP of
 	 * an LWP that might or might not be curproc, I'd like to know
 	 * about it.
 	 */
 	if (l == curproc)
-		mcp->sc_regs[R_SP] = alpha_pal_rdusp();
+		gr[_REG_SP] = alpha_pal_rdusp();
 	else
-		mcp->sc_regs[R_SP] = l->l_addr->u_pcb.pcb_hw.apcb_usp;
+		gr[_REG_SP] = l->l_addr->u_pcb.pcb_hw.apcb_usp;
+	gr[_REG_PC] = frame->tf_regs[FRAME_PC];
+	gr[_REG_PS] = frame->tf_regs[FRAME_PS];
 	*flags |= _UC_CPU;
 
- 	/* save the floating-point state, if necessary, then copy it. */
-	mcp->sc_ownedfp = l->l_md.md_flags & MDP_FPUSED;
+	/* Save floating point register context, if any, and copy it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
 		fpusave_proc(l, 1);
-
-		memcpy((struct fpreg *)mcp->sc_fpregs, 
-		    &l->l_addr->u_pcb.pcb_fp, sizeof(struct fpreg));
-		mcp->sc_fp_control = alpha_read_fp_c(l);
-
+		(void)memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fp,
+		    sizeof (mcp->__fpregs));
+		mcp->__fpregs.__fp_fpcr = alpha_read_fp_c(l);
 		*flags |= _UC_FPU;
 	}
-
-	/* XXX are these needed for mcontext/ucontext? */
-
-	memset(mcp->sc_reserved, 0, sizeof mcp->sc_reserved); /* XXX */
-	memset(mcp->sc_xxx, 0, sizeof mcp->sc_xxx);	      /* XXX */
-
 }
 
 
@@ -2291,22 +2186,33 @@ cpu_setmcontext(l, mcp, flags)
 	const mcontext_t *mcp;
 	unsigned int flags;
 {
-	
+	struct trapframe *frame = l->l_md.md_tf;
+	const __greg_t *gr = mcp->__gregs;
+
+	/* Restore register context, if any. */
 	if (flags & _UC_CPU) {
-		regtoframe((struct reg *)mcp->sc_regs, l->l_md.md_tf);
-		alpha_pal_wrusp(mcp->sc_regs[R_SP]);
-		l->l_md.md_tf->tf_regs[FRAME_PC] = mcp->sc_pc;
-		l->l_md.md_tf->tf_regs[FRAME_PS] =
-		    (mcp->sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
+		/* Check for security violations first. */
+		if ((gr[_REG_PS] & ALPHA_PSL_USERSET) != ALPHA_PSL_USERSET ||
+		    (gr[_REG_PS] & ALPHA_PSL_USERCLR) != 0)
+			return (EINVAL);
+
+		regtoframe((struct reg *)gr, l->l_md.md_tf);
+		if (l == curproc)
+			alpha_pal_wrusp(gr[_REG_SP]);
+		else
+			l->l_addr->u_pcb.pcb_hw.apcb_usp = gr[_REG_SP];
+		frame->tf_regs[FRAME_PC] = gr[_REG_PC];
+		frame->tf_regs[FRAME_PS] = gr[_REG_PS];
 	}
 
+	/* Restore floating point register context, if any. */
 	if (flags & _UC_FPU) {
+		/* If we have an FP register context, get rid of it. */
 		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 			fpusave_proc(l, 0);
-		memcpy(&l->l_addr->u_pcb.pcb_fp, 
-		    (struct fpreg *)mcp->sc_fpregs, sizeof(struct fpreg));
-		l->l_addr->u_pcb.pcb_fp.fpr_cr = mcp->sc_fpcr;
-		l->l_md.md_flags = mcp->sc_fp_control & MDP_FP_C;
+		(void)memcpy(&l->l_addr->u_pcb.pcb_fp, &mcp->__fpregs,
+		    sizeof (l->l_addr->u_pcb.pcb_fp));
+		l->l_md.md_flags = mcp->__fpregs.__fp_fpcr & MDP_FP_C;
 	}
 
 	return (0);
