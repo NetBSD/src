@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.101 2000/06/30 07:44:06 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.102 2000/07/06 09:51:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -131,6 +131,7 @@
 #endif
 #ifndef NVNODE
 #define	NVNODE (NPROC + NTEXT + 100)
+#define	NVNODE_IMPLICIT
 #endif
 #endif /* _KERNEL */
 
