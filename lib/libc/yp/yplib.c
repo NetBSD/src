@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.38 2002/11/11 22:53:19 thorpej Exp $	 */
+/*	$NetBSD: yplib.c,v 1.39 2002/11/17 01:51:26 itojun Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.38 2002/11/11 22:53:19 thorpej Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.39 2002/11/17 01:51:26 itojun Exp $");
 #endif
 
 #include "namespace.h"
@@ -233,7 +233,7 @@ trynet:
 			bn->ypbind_binding_port;
 gotit:
 		ysd->dom_vers = YPVERS;
-		(void)strncpy(ysd->dom_domain, dom, sizeof(ysd->dom_domain)-1);
+		(void)strlcpy(ysd->dom_domain, dom, sizeof(ysd->dom_domain));
 	}
 	if (ysd->dom_client)
 		clnt_destroy(ysd->dom_client);

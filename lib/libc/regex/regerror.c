@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $	*/
+/*	$NetBSD: regerror.c,v 1.17 2002/11/17 01:51:25 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.16 2000/01/22 22:19:17 mycroft Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.17 2002/11/17 01:51:25 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,8 +151,7 @@ size_t errbuf_size;
 	
 		if (errcode & REG_ITOA) {
 			if (r->code != 0) {
-				(void)strncpy(convbuf, r->name, sizeof convbuf);
-				convbuf[sizeof(convbuf) - 1] = '\0';
+				(void)strlcpy(convbuf, r->name, sizeof convbuf);
 			} else
 				(void)snprintf(convbuf, sizeof convbuf,
 				    "REG_0x%x", target);
@@ -162,10 +161,8 @@ size_t errbuf_size;
 	}
 
 	len = strlen(s) + 1;
-	if (errbuf_size > 0) {
-		(void)strncpy(errbuf, s, errbuf_size - 1);
-		errbuf[errbuf_size-1] = '\0';
-	}
+	if (errbuf_size > 0)
+		(void)strlcpy(errbuf, s, errbuf_size);
 
 	return(len);
 }
