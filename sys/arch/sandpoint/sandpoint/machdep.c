@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2001/09/10 21:19:32 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2002/03/05 19:06:38 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -249,7 +249,8 @@ printf("availmemr[0].size %x\n", (unsigned) availmemr[0].size);
 	 * This includes the PCI/ISA 16M I/O space, PCI configuration
 	 * registers, etc.
 	 */
-	battable[1].batl = BATL(SANDPOINT_BUS_SPACE_EUMB, BAT_I, BAT_PP_RW);
+	battable[1].batl = BATL(SANDPOINT_BUS_SPACE_EUMB, BAT_I|BAT_G,
+				BAT_PP_RW);
 	battable[1].batu = BATU(SANDPOINT_BUS_SPACE_EUMB, BAT_BL_64M, BAT_Vs);
 	eumb_base = (unsigned char *) SANDPOINT_BUS_SPACE_EUMB;
 
