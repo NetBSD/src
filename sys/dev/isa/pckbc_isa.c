@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.6 2002/01/07 21:47:12 thorpej Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.7 2002/01/12 16:21:07 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.6 2002/01/07 21:47:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.7 2002/01/12 16:21:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,8 @@ pckbc_isa_attach(parent, self, aux)
 		    bus_space_map(iot, IO_KBD + KBCMDP, 1, 0, &ioh_c))
 			panic("pckbc_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		memset(t, 0, sizeof(struct pckbc_internal));
+		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
+		    M_WAITOK|M_ZERO);
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
