@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130 1999/10/11 15:28:57 hwr Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.131 1999/10/20 15:22:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ scsibusattach(parent, self, aux)
 	sc_link_proto->scsipi_cmd = scsi_scsipi_cmd;
 	sc_link_proto->scsipi_interpret_sense = scsipi_interpret_sense;
 	sc_link_proto->sc_print_addr = scsi_print_addr;
+	sc_link_proto->scsipi_kill_pending = scsi_kill_pending;
 
 	sb->adapter_link = sc_link_proto;
 	sb->sc_maxtarget = sc_link_proto->scsipi_scsi.max_target;

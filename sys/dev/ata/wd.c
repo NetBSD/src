@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.196 1999/09/23 11:04:29 enami Exp $ */
+/*	$NetBSD: wd.c,v 1.197 1999/10/20 15:22:25 enami Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -601,6 +601,11 @@ retry:		/* Just reset and retry. Can we do more ? */
 noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
 			printf("%s: soft error (corrected)\n",
 			    wd->sc_dev.dv_xname);
+		break;
+	case ERR_NODEV:
+		bp->b_flags |= B_ERROR;
+		bp->b_error = EIO;
+		break;
 	}
 	disk_unbusy(&wd->sc_dk, (bp->b_bcount - bp->b_resid));
 #if NRND > 0
