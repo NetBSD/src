@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.55 2002/12/28 05:08:27 uebayasi Exp $
+.\"	$NetBSD: sh.1,v 1.56 2003/01/22 20:36:04 dsl Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd February 25, 2002
+.Dd January 19, 2003
 .Os
 .Dt SH 1
 .Sh NAME
@@ -43,10 +43,43 @@
 .Nd command interpreter (shell)
 .Sh SYNOPSIS
 .Nm
-.Op Fl /+aCefnuvxIimqsVEbc
-.Op Fl o Ar longname
 .Bk -words
-.Op Ar target ...
+.Op Fl aCefnuvxIimqVEb
+.Op Cm +aCefnuvxIimqVEb
+.Ek
+.Bk -words
+.Op Fl o Ar option_name
+.Op Cm +o Ar option_name
+.Ek
+.Bk -words
+.Op Ar command_file Oo Ar argument ... Oc
+.Ek
+.Nm ""
+.Fl c
+.Bk -words
+.Op Fl aCefnuvxIimqVEb
+.Op Cm +aCefnuvxIimqVEb
+.Ek
+.Bk -words
+.Op Fl o Ar option_name
+.Op Cm +o Ar option_name
+.Ek
+.Bk -words
+.Ar command_string
+.Op Ar command_name Oo Ar argument ... Oc
+.Ek
+.Nm ""
+.Fl s
+.Bk -words
+.Op Fl aCefnuvxIimqVEb
+.Op Cm +aCefnuvxIimqVEb
+.Ek
+.Bk -words
+.Op Fl o Ar option_name
+.Op Cm +o Ar option_name
+.Ek
+.Bk -words
+.Op Ar argument ...
 .Ek
 .Sh DESCRIPTION
 .Nm
@@ -186,8 +219,11 @@ builtin (described later).
 .It Fl a Em allexport
 Export all variables assigned to.
 .It Fl c
-Read commands from the command line.
-No commands will be read from the standard input.
+Read commands from the command_string operand instead of
+from the standard input.
+Special parameter 0 will be set from the command_name operand
+and the positional parameters ($1, $2 etc)
+set from the remaining argument operands.
 .It Fl C Em noclobber
 Don't overwrite existing files with
 .Dq \*[Gt] .
@@ -509,6 +545,10 @@ The man page for each command
 should indicate the various exit codes and what they mean.
 Additionally, the builtin commands return exit codes, as does
 an executed shell function.
+.Pp
+If a command consists entirely of variable assignments then the
+exit status of the command is that of the last command substitution
+(if any) otherwise 0.
 .Ss Complex Commands
 Complex commands are combinations of simple commands with control
 operators or reserved words, together creating a larger complex command.
@@ -1109,10 +1149,31 @@ names and values of all defined aliases (see
 .It bg [ Ar job ] ...
 Continue the specified jobs (or the current job if no
 jobs are given) in the background.
-.It command Ar command Ar arg ...
-Execute the specified builtin command.
+.It Xo command
+.Op Fl p
+.Op Fl v
+.Op Fl V
+.Ar command
+.Op Ar arg ...
+.Xc
+Execute the specified command but ignore shell functions when searching
+for it.
 (This is useful when you
 have a shell function with the same name as a builtin command.)
+.Bl -tag -width 5n
+.It Fl p
+search for command using a
+.Ev PATH
+that guarantees to find all the standard utilities.
+.It Fl V
+Do not execute the command but
+search for the command and print the resolution of the
+command search.  This is the same as the type builtin.
+.It Fl v
+Do not execute the command but
+search for the command and print the absolute pathname
+of utilities, the name for builtins or the expansion of aliases.
+.El
 .It cd Op Ar directory
 Switch to the specified directory (default
 .Ev $HOME ) .
@@ -1725,6 +1786,10 @@ unless you are the superuser, in which case it defaults to
 .It Ev PS2
 The secondary prompt string, which defaults to
 .Dq \*[Gt] \  .
+.It Ev PS4
+Output before each line when execution trace (set -x) in enabled,
+defaults to
+.Dq + \  .
 .It Ev IFS
 Input Field Separators.
 This is normally set to
@@ -1751,9 +1816,11 @@ The number of lines in the history buffer for the shell.
 .El
 .Sh SEE ALSO
 .Xr csh 1 ,
+.Xr echo 1 ,
 .Xr getopt 1 ,
 .Xr ksh 1 ,
 .Xr login 1 ,
+.Xr printf 1 ,
 .Xr test 1 ,
 .Xr getopt 3 ,
 .Xr passwd 5 ,
@@ -1769,3 +1836,6 @@ It was, however, unmaintainable so we wrote this one.
 .Sh BUGS
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.
+.Pp
+PS1, PS2 and PS4 should be subject to parameter expansion before
+being displayed.

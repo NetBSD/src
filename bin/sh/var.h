@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.20 2002/11/24 22:35:43 christos Exp $	*/
+/*	$NetBSD: var.h,v 1.21 2003/01/22 20:36:04 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -82,6 +82,7 @@ extern struct var vmpath;
 extern struct var vpath;
 extern struct var vps1;
 extern struct var vps2;
+extern struct var vps4;
 #ifndef SMALL
 extern struct var vterm;
 extern struct var vtermcap;
@@ -101,6 +102,7 @@ extern struct var vhistsize;
 #define pathval()	(vpath.text + 5)
 #define ps1val()	(vps1.text + 4)
 #define ps2val()	(vps2.text + 4)
+#define ps4val()	(vps4.text + 4)
 #define optindval()	(voptind.text + 7)
 #ifndef SMALL
 #define histsizeval()	(vhistsize.text + 9)
@@ -124,7 +126,8 @@ void shprocvar(void);
 int showvars(const char *, int, int);
 int exportcmd(int, char **);
 int localcmd(int, char **);
-void mklocal(char *, int);
+void mklocal(const char *, int);
+void listmklocal(struct strlist *, int);
 void poplocalvars(void);
 int setvarcmd(int, char **);
 int unsetcmd(int, char **);
