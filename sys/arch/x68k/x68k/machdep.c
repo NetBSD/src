@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2003/09/27 20:01:59 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2003/11/01 11:50:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2003/09/27 20:01:59 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2003/11/01 11:50:53 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1162,10 +1162,10 @@ mem_exists(mem, basemax)
 	u_long basemax;
 {
 	/* most variables must be register! */
-	register volatile unsigned char *m, *b;
-	register unsigned char save_m, save_b;
-	register int baseismem;
-	register int exists = 0;
+	volatile unsigned char *m, *b;
+	unsigned char save_m, save_b;
+	int baseismem;
+	int exists = 0;
 	caddr_t base;
 	caddr_t begin_check, end_check;
 	label_t	faultbuf;
@@ -1284,7 +1284,7 @@ setmemrange(void)
 	base_v = mem_v + PAGE_SIZE;	/* shadow */
 
 	{	/* Turn off the processor cache. */
-		register int cacr;
+		int cacr;
 		PCIA();		/* cpusha dc */
 		switch (cputype) {
 		case CPU_68030:
@@ -1328,7 +1328,7 @@ setmemrange(void)
 	}
 
 	{	/* Re-enable the processor cache. */
-		register int cacr;
+		int cacr;
 		ICIA();
 		switch (cputype) {
 		case CPU_68030:
