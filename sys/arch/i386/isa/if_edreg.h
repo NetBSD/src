@@ -1,7 +1,13 @@
 /*
- * National Semiconductor DS8390 NIC register definitions 
+ * National Semiconductor DS8390 NIC register definitions.
  *
- * $Id: if_edreg.h,v 1.9 1994/04/14 03:54:14 mycroft Exp $
+ * Copyright (C) 1993, David Greenman.  This software may be used, modified,
+ * copied, distributed, and sold, in both source and binary form provided that
+ * the above copyright and these terms are retained.  Under no circumstances is
+ * the author responsible for the proper functioning of this software, nor does
+ * the author assume any responsibility for damages incurred with its use.
+ *
+ *	$Id: if_edreg.h,v 1.10 1994/10/01 07:13:35 mycroft Exp $
  */
 
 /*
@@ -519,19 +525,12 @@
  * the interface card is chopped up into 256 bytes blocks.  A contiguous
  * portion of those blocks are marked for receive packets by setting start and
  * end block #'s in the NIC.  For each packet that is put into the receive
- * ring, one of these headers (4 bytes each) is tacked onto the front.
+ * ring, one of these headers (4 bytes each) is tacked onto the front.   The
+ * first byte is a copy of the receiver status register at the time the packet
+ * was received.
  */
 struct ed_ring	{
-	struct edr_status {		/* received packet status */
-	    u_char rs_prx:1,		/* packet received intack */
-		   rs_crc:1,		/* crc error */
-	           rs_fae:1,		/* frame alignment error */
-	           rs_fo:1,		/* fifo overrun */
-	           rs_mpa:1,		/* packet received intack */
-	           rs_phy:1,		/* packet received intack */
-	           rs_dis:1,		/* packet received intack */
-	           rs_dfr:1;		/* packet received intack */
-	} ed_rcv_status;		/* received packet status */
+	u_char	rsr;			/* receiver status */
 	u_char	next_packet;		/* pointer to next packet */
 	u_short	count;			/* bytes in packet (length + 4) */
 };
@@ -559,7 +558,7 @@ struct ed_ring	{
 
 /*
  * This forces the board to be used in 8/16-bit mode even if it autoconfigs
- * differently
+ * differently.
  */
 #define ED_FLAGS_FORCE_8BIT_MODE	0x0002
 #define ED_FLAGS_FORCE_16BIT_MODE	0x0004
