@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36.2.3 2003/07/15 20:59:39 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.4 2003/07/23 23:03:00 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36.2.3 2003/07/15 20:59:39 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.4 2003/07/23 23:03:00 jlam Exp $");
 #endif
 #endif
 
@@ -162,6 +162,94 @@ undepend(const char *deppkgname, void *vp)
 		warnx("error renaming `%s' to `%s'", ftmp, fname);
 	remove(ftmp);		/* just in case */
 
+	return 0;
+}
+
+/*
+ * Remove the current view's PKG_DBDIR from the +VIEWS file of the
+ * depoted package named by pkgname.
+ */
+static int
+unview(const char *pkgname)
+{
+	char  fname[FILENAME_MAX], ftmp[FILENAME_MAX];
+	char  fbuf[FILENAME_MAX];
+	char  dbdir[FILENAME_MAX];
+	FILE *fp, *fpwr;
+	char *tmp;
+	int  s;
+	int  cc;
+
+	(void) snprintf(dbdir, sizeof(dbdir), "%s",
+	    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR);
+
+	/* Get the depot directory. */
+	(void) snprintf(fname, sizeof(fname), "%s/%s/%s",
+	    dbdir, pkgname, DEPOT_FNAME);
+	if ((fp = fopen(fname, "r")) == NULL) {
+		warnx("unable to open `%s' file", fname);
+		return -1;
+	}
+	if (fgets(fbuf, sizeof(fbuf), fp) == NULL) {
+		(void) fclose(fp);
+		warnx("empty depot file `%s'", fname);
+		return -1;
+	}
+	if (fbuf[cc = strlen(fbuf) - 1] == '\n') {
+		fbuf[cc] = 0;
+	}
+	fclose(fp);
+
+	/*
+	 * Copy the contents of the +VIEWS file into a temp file, but
+	 * skip copying the name of the current view's PKG_DBDIR.
+	 */
+	(void) snprintf(fname, sizeof(fname), "%s/%s", fbuf, VIEWS_FNAME);
+	if ((fp = fopen(fname, "r")) == NULL) {
+		warnx("unable to open `%s' file", fname);
+		return -1;
+	}
+	(void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
+	if ((s = mkstemp(ftmp)) == -1) {
+		(void) fclose(fp);
+		warnx("unable to open `%s' temp file", ftmp);
+		return -1;
+	}
+	if ((fpwr = fdopen(s, "w")) == NULL) {
+		(void) close(s);
+		(void) remove(ftmp);
+		(void) fclose(fp);
+		warnx("unable to fdopen `%s' temp file", ftmp);
+		return -1;
+	}
+	while (fgets(fbuf, sizeof(fbuf), fp) != NULL) {
+		if (fbuf[cc = strlen(fbuf) - 1] == '\n') {
+			fbuf[cc] = 0;
+		}
+		if (strcmp(fbuf, dbdir) != 0) {
+			(void) fputs(fbuf, fpwr);
+			(void) putc('\n', fpwr);
+		}
+	}
+	(void) fclose(fp);
+	if (fchmod(s, 0644) == FAIL) {
+		(void) fclose(fpwr);
+		(void) remove(ftmp);
+		warnx("unable to change permissions of `%s' temp file", ftmp);
+		return -1;
+	}
+	if (fclose(fpwr) == EOF) {
+		(void) remove(ftmp);
+		warnx("unable to close `%s' temp file", ftmp);
+		return -1;
+	}
+
+	/* Rename the temp file to the +VIEWS file */
+	if (rename(ftmp, fname) == -1) {
+		(void) remove(ftmp);
+		warnx("unable to rename `%s' to `%s'", ftmp, fname);
+		return -1;
+	}
 	return 0;
 }
 
@@ -645,6 +733,9 @@ pkg_do(char *pkg)
 			warnx(
 		"couldn't entirely delete package `%s'\n"
 		"(perhaps the packing list is incorrectly specified?)", pkg);
+	}
+	if (!isemptyfile(DEPOT_FNAME)) {
+		(void) unview(pkg);
 	}
 	/* Remove this package from the +REQUIRED_BY list of the packages this depends on */
 	for (p = Plist.head; p; p = p->next) {
