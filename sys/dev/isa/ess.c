@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.52 2000/06/26 04:56:20 simonb Exp $	*/
+/*	$NetBSD: ess.c,v 1.53 2001/01/06 22:50:02 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -156,7 +156,6 @@ int	ess_1888_get_props __P((void *));
 void	ess_speaker_on __P((struct ess_softc *));
 void	ess_speaker_off __P((struct ess_softc *));
 
-int	ess_config_addr __P((struct ess_softc *));
 void	ess_config_irq __P((struct ess_softc *));
 void	ess_config_drq __P((struct ess_softc *));
 void	ess_setup __P((struct ess_softc *));
@@ -806,10 +805,6 @@ essmatch(sc)
 		printf("ess: configured iobase 0x%x invalid\n", sc->sc_iobase);
 		return (0);
 	}
-
-	/* Configure the ESS chip for the desired audio base address. */
-	if (ess_config_addr(sc))
-		return (0);
 
 	if (ess_setup_sc(sc, 1)) 
 		return (0);
