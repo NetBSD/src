@@ -1,0 +1,355 @@
+/*	$NetBSD: db_interface.c,v 1.30.2.2 2000/08/18 13:28:28 sommerfeld Exp $	*/
+
+/* 
+ * Mach Operating System
+ * Copyright (c) 1991,1990 Carnegie Mellon University
+ * All Rights Reserved.
+ * 
+ * Permission to use, copy, modify and distribute this software and its
+ * documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ * 
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ * 
+ * Carnegie Mellon requests users of this software to return to
+ * 
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ * 
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ *
+ *	db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
+ */
+
+/*
+ * Interface to new debugger.
+ */
+#include "opt_ddb.h"
+
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <dev/cons.h>
+
+#include <machine/cpufunc.h>
+#include <machine/db_machdep.h>
+#include <machine/cpuvar.h>
+#include <machine/i82093var.h>
+#include <machine/atomic.h>
+
+#include <ddb/db_sym.h>
+#include <ddb/db_command.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_access.h>
+#include <ddb/db_output.h>
+#include <ddb/ddbvar.h>
+
+extern label_t	*db_recover;
+extern char *trap_type[];
+extern int trap_types;
+
+int	db_active = 0;
+
+#if 0
+void db_mach_kick (db_expr_t, int, db_expr_t, char *);
+void db_mach_unkick (db_expr_t, int, db_expr_t, char *);
+#endif
+void db_mach_cpu (db_expr_t, int, db_expr_t, char *);
+
+struct db_command db_machine_cmds[] = {
+#if 0
+	{ "kick",	db_mach_kick,	0,	0 },
+	{ "unkick",	db_mach_unkick,	0,	0 },
+#endif
+	{ "cpu",	db_mach_cpu,	0,	0 },		
+	{ (char *)0, },
+};
+
+void kdbprinttrap __P((int, int));
+#ifdef MULTIPROCESSOR
+int ddb_vec;
+#endif
+
+db_regs_t *ddb_regp = 0;
+
+typedef void (vector) __P((void));
+extern vector Xintrddbipi;
+
+void
+db_machine_init()
+{
+	db_machine_commands_install(db_machine_cmds);
+
+#ifdef MULTIPROCESSOR
+	ddb_vec = idt_vec_alloc(0xf0, 0xff);
+	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddbipi, 0,
+	    SDT_SYS386IGT, SEL_KPL);
+#endif
+}
+
+#ifdef MULTIPROCESSOR
+
+__cpu_simple_lock_t db_lock;
+
+static void
+db_suspend_others(void)
+{
+	if (ddb_vec == 0)
+		return;
+	
+	if (!__cpu_simple_lock_try(&db_lock)) {
+		db_printf("cpu%d lost race\n", cpu_number());
+		__cpu_simple_lock(&db_lock);
+	}
+	db_printf("ddb: cpu%d won race\n", cpu_number());
+	i386_ipi (ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+}
+
+static void
+db_resume_others(void)
+{
+	int i;
+
+	__cpu_simple_unlock(&db_lock);
+
+	for (i=0; i<I386_MAXPROCS; i++) {
+		struct cpu_info *ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		if (ci->ci_flags & CPUF_PAUSE)
+			i386_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
+	}
+
+}
+
+#endif
+
+
+
+/*
+ * Print trap reason.
+ */
+void
+kdbprinttrap(type, code)
+	int type, code;
+{
+	db_printf("kernel: ");
+	if (type >= trap_types || type < 0)
+		db_printf("type %d", type);
+	else
+		db_printf("%s", trap_type[type]);
+	db_printf(" trap, code=%x\n", code);
+}
+
+/*
+ *  kdb_trap - field a TRACE or BPT trap
+ */
+int
+kdb_trap(type, code, regs)
+	int type, code;
+	db_regs_t *regs;
+{
+	int s;
+	db_regs_t dbreg;
+	
+	switch (type) {
+	case T_BPTFLT:	/* breakpoint */
+	case T_TRCTRAP:	/* single_step */
+	case T_NMI:	/* NMI */
+	case -1:	/* keyboard interrupt */
+		break;
+	default:
+		if (!db_onpanic && db_recover==0)
+			return (0);
+
+		kdbprinttrap(type, code);
+		if (db_recover != 0) {
+			db_error("Faulted in DDB; continuing...\n");
+			/*NOTREACHED*/
+		}
+	}
+
+#ifdef MULTIPROCESSOR
+	curcpu()->ci_ddb_regs = &dbreg;
+	ddb_regp = &dbreg;
+	db_suspend_others();
+#endif
+	/* XXX Should switch to kdb's own stack here. */
+	ddb_regs = *regs;
+	if (KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+		/*
+		 * Kernel mode - esp and ss not saved
+		 */
+		ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
+		asm("movw %%ss,%w0" : "=r" (ddb_regs.tf_ss));
+	}
+
+	s = splhigh();
+	db_active++;
+	cnpollc(TRUE);
+	db_trap(type, code);
+	cnpollc(FALSE);
+	db_active--;
+	splx(s);
+#ifdef MULTIPROCESSOR
+	db_resume_others();
+#endif
+	ddb_regp = &dbreg;
+
+	regs->tf_es     = ddb_regs.tf_es;
+	regs->tf_ds     = ddb_regs.tf_ds;
+	regs->tf_edi    = ddb_regs.tf_edi;
+	regs->tf_esi    = ddb_regs.tf_esi;
+	regs->tf_ebp    = ddb_regs.tf_ebp;
+	regs->tf_ebx    = ddb_regs.tf_ebx;
+	regs->tf_edx    = ddb_regs.tf_edx;
+	regs->tf_ecx    = ddb_regs.tf_ecx;
+	regs->tf_eax    = ddb_regs.tf_eax;
+	regs->tf_eip    = ddb_regs.tf_eip;
+	regs->tf_cs     = ddb_regs.tf_cs;
+	regs->tf_eflags = ddb_regs.tf_eflags;
+	if (!KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
+		/* ring transit - saved esp and ss valid */
+		regs->tf_esp    = ddb_regs.tf_esp;
+		regs->tf_ss     = ddb_regs.tf_ss;
+	}
+
+	return (1);
+}
+
+void
+cpu_Debugger()
+{
+	breakpoint();
+}
+
+#ifdef MULTIPROCESSOR
+
+extern void ddb_ipi(int, struct trapframe);
+
+/*
+ * Called when we receive a debugger IPI (inter-processor interrupt).
+ * As with trap() in trap.c, this function is called from an assembly
+ * language IDT gate entry routine which prepares a suitable stack frame,
+ * and restores this frame after the exception has been processed. Note
+ * that the effect is as if the arguments were passed call by reference.
+ */
+void
+ddb_ipi(int cpl, struct trapframe frame)
+{
+	volatile struct cpu_info *ci = curcpu();
+	db_regs_t regs;
+
+	regs = frame;
+	if (KERNELMODE(regs.tf_cs, regs.tf_eflags)) {
+		/*
+		 * Kernel mode - esp and ss not saved
+		 */
+		regs.tf_esp = (int)&frame.tf_esp; /* kernel stack pointer */
+		asm("movw %%ss,%w0" : "=r" (regs.tf_ss));
+	}
+
+	ci->ci_ddb_regs = &regs;
+
+	i386_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
+
+	db_printf("cpu%d waiting; cpl was %x\n", cpu_number(), cpl);
+	while (ci->ci_flags & CPUF_PAUSE)
+		;
+	ci->ci_ddb_regs = 0;
+	db_printf("cpu%d running\n", cpu_number());	
+}
+
+#if 0
+
+void
+db_mach_kick(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+#if 0
+	if (ddb_vec == 0)
+		return;
+	
+	if (!__cpu_simple_lock_try(&db_lock)) {
+		db_printf("cpu%d lost race\n", cpu_number());
+		__cpu_simple_lock(&db_lock);
+	}
+	db_printf("ddb: cpu%d won race\n", cpu_number());
+#endif
+	i386_ipi (ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
+}
+
+void
+db_mach_unkick(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	int i;
+	struct cpu_info *ci = curcpu();
+	
+	for (i=0; i<I386_MAXPROCS; i++) {
+		struct cpu_info *ci = cpu_info[i];
+		if (ci == NULL)
+			continue;
+		if (ci->ci_flags & CPUF_PAUSE)
+			i386_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
+	}
+}
+#endif
+
+extern void cpu_debug_dump(void); /* XXX */
+
+void
+db_mach_cpu(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	struct cpu_info *ci;
+	if (!have_addr) {
+		cpu_debug_dump();
+		return;
+	}
+	
+	if ((addr < 0) || (addr >= I386_MAXPROCS)) {
+		db_printf("%ld: cpu out of range\n", addr);
+		return;
+	}
+	ci = cpu_info[addr];
+	if (ci == NULL) {
+		db_printf("cpu %ld not configured\n", addr);
+		return;
+	}
+	if (ci != curcpu()) {
+		if (!(ci->ci_flags & CPUF_PAUSE)) {
+			db_printf("cpu %ld not paused\n", addr);
+			return;
+		}
+	}
+	if (ci->ci_ddb_regs == 0) {
+		db_printf("cpu %ld has no saved regs\n", addr);
+		return;
+	}
+	db_printf("using cpu %ld", addr);
+	ddb_regp = ci->ci_ddb_regs;
+}
+
+
+#endif
