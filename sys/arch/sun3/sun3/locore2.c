@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.36 1995/03/26 19:37:41 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.37 1995/04/07 04:44:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -304,18 +304,17 @@ void sun3_vm_init()
 
 	/*
 	 * Message buffer page (msgbuf).
-	 * XXX - Should put this in physical page zero.
-	 * Also unmap a page at KERNBASE for redzone?
+	 * This is put in physical page zero so it
+	 * is always in the same place after reboot.
 	 */
-	msgbufp = (struct msgbuf *) virtual_avail;
-	virtual_avail += NBPG;
-	avail_start += NBPG;
-	msgbufmapped = 1;
+	va = KERNBASE;
 	/* Make it non-cached. */
-	va = (vm_offset_t) msgbufp;
 	pte = get_pte(va);
 	pte |= PG_NC;
 	set_pte(va, pte);
+	/* offset by half a page to avoid PROM scribbles */
+	msgbufp = (struct msgbuf *)(va + 0x1000);
+	msgbufmapped = 1;
 
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)
@@ -444,14 +443,17 @@ void sun3_vm_init()
 	if (u_area_va != UADDR)
 		mon_panic("sun3_vm_init: u-area vaddr taken?\n");
 
+	/*
+	 * Must initialize p_addr before autoconfig or
+	 * the fault handler will get a NULL reference.
+	 */
+	proc0.p_addr = proc0paddr;
+
 	/* Initialize cached PTEs for u-area mapping. */
 	save_u_area(&proc0, proc0paddr);
 
 	/* map proc0's u-area at the standard address */
-#ifdef	DIAGNOSTIC
-	if (curproc != &proc0)
-		panic("sun3_vm_init: bad curproc");
-#endif
+	curproc = &proc0;
 	load_u_area();
 
 	/* Initialize the "u-area" pages. */
