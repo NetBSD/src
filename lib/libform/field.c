@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.13 2001/06/28 11:38:19 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.14 2001/07/08 12:15:06 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -448,6 +448,18 @@ set_field_back(FIELD *field, chtype attribute)
 }
 
 /*
+ * Get the background character attribute for the given field.
+ */
+chtype
+field_back(FIELD *field)
+{
+	if (field == NULL)
+		return _formi_default_field.back;
+	else
+		return field->back;
+}
+
+/*
  * Set the pad character for the given field.
  */
 int
@@ -561,10 +573,10 @@ int
 field_index(FIELD *field)
 {
 	if (field == NULL)
-		return -1;
+		return E_BAD_ARGUMENT;
 
 	if (field->parent == NULL)
-		return -1;
+		return E_NOT_CONNECTED;
 
 	return field->index;
 }
@@ -663,7 +675,8 @@ dup_field(FIELD *field, int frow, int fcol)
 	
 	if (field == NULL)
 		return NULL;
-	
+
+	  /* XXXX this right???? */
 	if ((new = _formi_create_field(field, (int) field->rows,
 				       (int ) field->cols,
 				       frow, fcol, (int) field->nrows,
