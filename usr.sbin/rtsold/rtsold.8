@@ -25,8 +25,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: rtsold.8,v 1.5 1999/12/10 11:05:10 itojun Exp $
-.\"	KAME Id: rtsold.8,v 1.4 1999/09/30 00:57:15 jinmei Exp
+.\"	$NetBSD: rtsold.8,v 1.6 1999/12/16 05:55:52 itojun Exp $
+.\"	KAME Id: rtsold.8,v 1.6 1999/12/16 05:40:08 jinmei Exp
 .\"
 .Dd May 17, 1998
 .Dt RTSOLD 8
@@ -103,7 +103,7 @@ Upon receipt of signal
 .Dv SIGUSR1 ,
 .Nm
 will dump the current internal state into
-.Pa /var/tmp/rtsold.dump.
+.Pa /var/run/rtsold.dump.
 .\"
 .Sh OPTIONS
 .Bl -tag -width indent
@@ -154,7 +154,7 @@ The program exits with 0 on success, non-zero on failures.
 .It Pa /var/run/rtsold.pid
 the pid of the currently running
 .Nm rtsold .
-.It Pa /var/tmp/rtsold.dump
+.It Pa /var/run/rtsold.dump
 dumps internal state on.
 .El
 .\"
