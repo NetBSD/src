@@ -1,3 +1,5 @@
+/*	$NetBSD: if_de.c,v 1.48 1997/08/25 19:03:44 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
  * All rights reserved.
@@ -5092,7 +5094,7 @@ tulip_pci_attach(
 	bus_space_handle_t ioh, memh;
 	u_int32_t cfcs = PCI_CONF_READ(PCI_CFCS);
 
-	cfcs &= ~(PCI_COMMAND_IO_ENABLE||PCI_COMMAND_IO_ENABLE);
+	cfcs &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 	if (!pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 			    &iot, &ioh, NULL, NULL)) {
 	    cfcs |= PCI_COMMAND_IO_ENABLE;
@@ -5102,7 +5104,7 @@ tulip_pci_attach(
 			    0, &memt, &memh, NULL, NULL) == 0) {
 	    cfcs |= PCI_COMMAND_MEM_ENABLE;
 	}
-	if ((cfcs & (PCI_COMMAND_IO_ENABLE||PCI_COMMAND_IO_ENABLE)) == 0) {
+	if ((cfcs & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE)) == 0) {
 	    printf(": unable to map device registers\n");
 	    return;
 	}
