@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.17 2004/01/10 00:56:28 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.18 2004/02/29 23:03:30 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.17 2004/01/10 00:56:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.18 2004/02/29 23:03:30 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -370,8 +370,12 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 #endif
 	RF_LOCK_MUTEX(mcpair->mutex);
 	mcpair->flag = 0;
+	RF_UNLOCK_MUTEX(mcpair->mutex);
+
 	rf_DispatchDAG(rd_dag_h, (void (*) (void *)) rf_MCPairWakeupFunc,
 	    (void *) mcpair);
+
+	RF_LOCK_MUTEX(mcpair->mutex);
 	while (mcpair->flag == 0) {
 		RF_WAIT_MCPAIR(mcpair);
 	}
