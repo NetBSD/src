@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.1 1999/12/09 14:53:06 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.2 2000/01/19 16:13:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+
+#include <machine/cpu.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
