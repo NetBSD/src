@@ -1,7 +1,7 @@
 #
 # Everthing sans OSI (need to get an ACCUNET connection -wfj)
 #
-#	$Id: LARGE,v 1.10 1993/06/03 01:30:31 cgd Exp $
+#	$Id: LARGE,v 1.11 1993/06/06 22:20:08 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -21,10 +21,6 @@ controller	isa0
 controller	wdc0	at isa? port "IO_WD1" bio irq 14 vector wdintr
 disk		dk0	at wdc0 drive 0
 disk		dk1	at wdc0 drive 1
-
-controller	as0	at isa? port 0x330 bio irq 11 drq 5 vector asintr
-disk		dk2	at as0 drive 0
-disk		dk3	at as0 drive 1
 
 controller	fdc0	at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
 disk		dk4	at fdc0 drive 0
