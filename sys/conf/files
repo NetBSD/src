@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.217 1998/07/05 07:20:27 jonathan Exp $
+#	$NetBSD: files,v 1.218 1998/07/05 17:47:54 tv Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -35,6 +35,12 @@ defopt	COMPAT_OSF1
 defopt	COMPAT_SUNOS
 defopt	COMPAT_SVR4
 defopt	COMPAT_ULTRIX
+defopt	opt_compat_netbsd.h	COMPAT_NOMID
+defopt	opt_compat_netbsd.h	COMPAT_09
+defopt	opt_compat_netbsd.h	COMPAT_10
+defopt	opt_compat_netbsd.h	COMPAT_11
+defopt	opt_compat_netbsd.h	COMPAT_12
+defopt	opt_compat_netbsd.h	COMPAT_13
 
 # networking protocols
 defopt	INET
