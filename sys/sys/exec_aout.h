@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.31.2.3 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.31.2.4 2004/09/21 13:38:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -189,7 +189,7 @@ struct exec {
 #ifdef _KERNEL
 
 /* the "a.out" format's entry in the exec switch */
-int	exec_aout_makecmds __P((struct proc *, struct exec_package *));
+int	exec_aout_makecmds __P((struct lwp *, struct exec_package *));
 
 /* functions which prepare various a.out executable types */
 /*
@@ -207,7 +207,7 @@ int	exec_aout_prep_oldomagic __P((struct proc *, struct exec_package *));
 /*
  * MD portion
  */
-int	cpu_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+int	cpu_exec_aout_makecmds __P((struct lwp *, struct exec_package *));
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.12.4.3 2004/09/18 14:50:39 skrll Exp $ */
+/* $NetBSD: lpt.c,v 1.12.4.4 2004/09/21 13:32:37 skrll Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.12.4.3 2004/09/18 14:50:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.12.4.4 2004/09/21 13:32:37 skrll Exp $");
 
 #include "opt_ppbus_lpt.h"
 

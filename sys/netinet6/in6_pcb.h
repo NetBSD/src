@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.21.6.2 2004/09/18 14:55:14 skrll Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.21.6.3 2004/09/21 13:37:33 skrll Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_aesxcbcmac.h,v 1.1.4.3 2004/09/18 14:55:14 skrll Exp $	*/
+/*	$NetBSD: ah_aesxcbcmac.h,v 1.1.4.4 2004/09/21 13:37:31 skrll Exp $	*/
 /*	$KAME: ah_aesxcbcmac.h,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*

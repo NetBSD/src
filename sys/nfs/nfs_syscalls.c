@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.69.2.3 2004/09/18 14:56:20 skrll Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.69.2.4 2004/09/21 13:38:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.69.2.3 2004/09/18 14:56:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.69.2.4 2004/09/21 13:38:39 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.69.2.3 2004/09/18 14:56:20 skrll 
 /* Global defs. */
 extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 						struct nfssvc_sock *,
-						struct proc *, struct mbuf **));
+						struct lwp *, struct mbuf **));
 extern time_t nqnfsstarttime;
 extern int nfsrvw_procrastinate;
 
@@ -204,7 +204,7 @@ sys_nfssvc(l, v, retval)
 		if (error)
 			return (error);
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-			ncd.ncd_dirp, p);
+			ncd.ncd_dirp, l);
 		error = namei(&nd);
 		if (error)
 			return (error);
@@ -697,11 +697,11 @@ nfssvc_nfsd(nsd, argp, l)
 				     nd->nd_procnum == NFSPROC_WRITE &&
 				     nfsrvw_procrastinate > 0 && !notstarted))
 					error = nfsrv_writegather(&nd, slp,
-					    nfsd->nfsd_procp, &mreq);
+					    l, &mreq);
 				else
 					error =
 					    (*(nfsrv3_procs[nd->nd_procnum]))
-					    (nd, slp, nfsd->nfsd_procp, &mreq);
+					    (nd, slp, l, &mreq);
 #ifdef DIAGNOSTIC
 				if (l->l_locks != lockcount) {
 					/*
@@ -761,7 +761,7 @@ nfssvc_nfsd(nsd, argp, l)
 					(void) nfs_sndlock(solockp, NULL);
 				if (slp->ns_flag & SLP_VALID) {
 					error =
-					    nfs_send(so, nd->nd_nam2, m, NULL, p);
+					    nfs_send(so, nd->nd_nam2, m, NULL, l);
 				} else {
 					error = EPIPE;
 					m_freem(m);
@@ -873,7 +873,7 @@ nfsrv_zapsock(slp)
 	so->so_upcallarg = NULL;
 	so->so_rcv.sb_flags &= ~SB_UPCALL;
 	soshutdown(so, SHUT_RDWR);
-	closef(fp, (struct proc *)0);
+	closef(fp, (struct lwp *)0);
 
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);
@@ -1035,7 +1035,7 @@ nfssvc_iod(l)
 	struct nfs_iod *myiod;
 	struct nfsmount *nmp;
 	int error = 0;
-	struct proc *p = l->l_proc;
+	struct proc *p = l ? l->l_proc : NULL;
 
 	/*
 	 * Assign my position or return error if too many already running
@@ -1183,7 +1183,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 		nmp->nm_iflag |= NFSMNT_WANTAUTH;
 		(void) tsleep((caddr_t)&nmp->nm_authtype, PSOCK,
 			"nfsauth1", 2 * hz);
-		error = nfs_sigintr(nmp, rep, rep->r_procp);
+		error = nfs_sigintr(nmp, rep, rep->r_lwp);
 		if (error) {
 			nmp->nm_iflag &= ~NFSMNT_WANTAUTH;
 			return (error);
@@ -1203,7 +1203,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	while ((nmp->nm_iflag & NFSMNT_HASAUTH) == 0 && error == 0) {
 		(void) tsleep((caddr_t)&nmp->nm_authlen, PSOCK,
 			"nfsauth2", 2 * hz);
-		error = nfs_sigintr(nmp, rep, rep->r_procp);
+		error = nfs_sigintr(nmp, rep, rep->r_lwp);
 	}
 	if (nmp->nm_iflag & NFSMNT_AUTHERR) {
 		nmp->nm_iflag &= ~NFSMNT_AUTHERR;

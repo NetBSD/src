@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticvar.h,v 1.13.2.2 2004/09/18 14:51:45 skrll Exp $	*/
+/* 	$NetBSD: sticvar.h,v 1.13.2.3 2004/09/21 13:33:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.69.6.2 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.69.6.3 2004/09/21 13:33:49 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*

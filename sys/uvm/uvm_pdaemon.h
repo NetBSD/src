@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.9.22.2 2004/09/18 14:57:12 skrll Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.9.22.3 2004/09/21 13:39:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.

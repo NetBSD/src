@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.48.2.2 2004/09/18 14:54:02 skrll Exp $	*/
+/*	$NetBSD: stand.h,v 1.48.2.3 2004/09/21 13:36:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

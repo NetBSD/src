@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.64.2.3 2004/09/18 14:56:59 skrll Exp $	*/
+/*	$NetBSD: lfs.h,v 1.64.2.4 2004/09/21 13:39:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.

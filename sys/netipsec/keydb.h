@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.1.4.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: keydb.h,v 1.1.4.4 2004/09/21 13:37:48 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ashrdi3.c,v 1.8.6.2 2004/09/18 14:53:41 skrll Exp $	*/
+/*	$NetBSD: ashrdi3.c,v 1.8.6.3 2004/09/21 13:35:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ashrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ashrdi3.c,v 1.8.6.2 2004/09/18 14:53:41 skrll Exp $");
+__RCSID("$NetBSD: ashrdi3.c,v 1.8.6.3 2004/09/21 13:35:53 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

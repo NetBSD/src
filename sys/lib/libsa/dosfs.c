@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.5.2.2 2004/09/18 14:54:01 skrll Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.5.2.3 2004/09/21 13:36:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier

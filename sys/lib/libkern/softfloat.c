@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.2.6.2 2004/09/18 14:53:41 skrll Exp $ */
+/* $NetBSD: softfloat.c,v 1.2.6.3 2004/09/21 13:35:54 skrll Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -49,7 +49,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.2.6.2 2004/09/18 14:53:41 skrll Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.2.6.3 2004/09/21 13:35:54 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC

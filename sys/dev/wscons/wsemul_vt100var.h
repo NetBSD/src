@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.7.2.2 2004/09/18 14:52:24 skrll Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.7.2.3 2004/09/21 13:34:29 skrll Exp $ */
 
 /*
  * Copyright (c) 1998

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.7.28.2 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: if_token.h,v 1.7.28.3 2004/09/21 13:36:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

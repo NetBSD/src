@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.5 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.6 2004/09/21 13:38:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -190,6 +190,22 @@ struct ktr_mool {
 };
 
 /*
+ * KTR_SAUPCALL - schedular activiated upcall.
+ */
+#define	KTR_SAUPCALL	13
+struct ktr_saupcall {
+	int ktr_type;
+	int ktr_nevent;
+	int ktr_nint;
+	void *ktr_sas;
+	void *ktr_ap;
+	/*
+	 * followed by nevent sa_t's from sas[]
+	 */
+};
+
+
+/*
  * kernel trace points (in p_traceflag)
  */
 #define KTRFAC_MASK	0x00ffffff
@@ -205,7 +221,7 @@ struct ktr_mool {
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define KTRFAC_MOOL	(1<<KTR_MOOL)
-
+#define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 /*
  * trace flags (also in p_traceflags)
  */
@@ -226,18 +242,19 @@ __END_DECLS
 
 #else
 
-int ktrcsw(struct proc *, int, int);
-int ktremul(struct proc *);
-int ktrgenio(struct proc *, int, enum uio_rw, struct iovec *, int, int);
-int ktrnamei(struct proc *, char *);
-int ktrpsig(struct proc *, int, sig_t, const sigset_t *, const ksiginfo_t *);
-int ktrsyscall(struct proc *, register_t, register_t, 
+int ktrcsw(struct lwp *, int, int);
+int ktremul(struct lwp *);
+int ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
+int ktrnamei(struct lwp *, char *);
+int ktrpsig(struct lwp *, int, sig_t, const sigset_t *, const ksiginfo_t *);
+int ktrsyscall(struct lwp *, register_t, register_t, 
     const struct sysent *, register_t []);
-int ktrsysret(struct proc *, register_t, int, register_t *);
-int ktruser(struct proc *, const char *, void *, size_t, int);
-int ktrmmsg(struct proc *, const void *, size_t);
-int ktrkmem(struct proc *, int, const void *, size_t);
-int ktrmool(struct proc *, const void *, size_t, const void *);
+int ktrsysret(struct lwp *, register_t, int, register_t *);
+int ktruser(struct lwp *, const char *, void *, size_t, int);
+int ktrmmsg(struct lwp *, const void *, size_t);
+int ktrkmem(struct lwp *, int, const void *, size_t);
+int ktrmool(struct lwp *, const void *, size_t, const void *);
+int ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);

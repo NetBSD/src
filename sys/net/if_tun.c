@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.63.2.4 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.63.2.5 2004/09/21 13:36:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.63.2.4 2004/09/18 14:54:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.63.2.5 2004/09/21 13:36:41 skrll Exp $");
 
 #include "tun.h"
 
@@ -278,11 +278,12 @@ tun_clone_destroy(ifp)
  * configured in
  */
 int
-tunopen(dev, flag, mode, p)
+tunopen(dev, flag, mode, l)
 	dev_t	dev;
 	int	flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc 	*p = l->l_proc;
 	struct ifnet	*ifp;
 	struct tun_softc *tp;
 	int	s, error;
@@ -325,11 +326,11 @@ out_nolock:
  * routing info
  */
 int
-tunclose(dev, flag, mode, p)
+tunclose(dev, flag, mode, l)
 	dev_t	dev;
 	int	flag;
 	int	mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int	s;
 	struct tun_softc *tp;
@@ -575,12 +576,12 @@ out:
  * the cdevsw interface is now pretty minimal.
  */
 int
-tunioctl(dev, cmd, data, flag, p)
+tunioctl(dev, cmd, data, flag, l)
 	dev_t		dev;
 	u_long		cmd;
 	caddr_t		data;
 	int		flag;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	struct tun_softc *tp;
 	int s, error = 0;
@@ -651,12 +652,12 @@ tunioctl(dev, cmd, data, flag, p)
 
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		error = fsetown(p, &tp->tun_pgid, cmd, data);
+		error = fsetown(l->l_proc, &tp->tun_pgid, cmd, data);
 		break;
 
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		error = fgetown(p, tp->tun_pgid, cmd, data);
+		error = fgetown(l->l_proc, tp->tun_pgid, cmd, data);
 		break;
 
 	default:
@@ -946,10 +947,10 @@ tunstart(ifp)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunpoll(dev, events, p)
+tunpoll(dev, events, l)
 	dev_t		dev;
 	int		events;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
@@ -973,7 +974,7 @@ tunpoll(dev, events, p)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			TUNDEBUG("%s: tunpoll waiting\n", ifp->if_xname);
-			selrecord(p, &tp->tun_rsel);
+			selrecord(l, &tp->tun_rsel);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.27.2.2 2004/09/18 14:56:20 skrll Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.27.2.3 2004/09/21 13:38:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.27.2.2 2004/09/18 14:56:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.27.2.3 2004/09/21 13:38:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,11 +131,11 @@ static int krpccheck __P((struct mbuf*, void*));
  * Returns non-zero error on failure.
  */
 int
-krpc_portmap(sin,  prog, vers, proto, portp, p)
+krpc_portmap(sin,  prog, vers, proto, portp, l)
 	struct sockaddr_in *sin;		/* server address */
 	u_int prog, vers, proto;	/* host order */
 	u_int16_t *portp;	/* network order */
-	struct proc *p;
+	struct lwp *l;
 {
 	struct sdata {
 		u_int32_t prog;		/* call program */
@@ -168,7 +168,7 @@ krpc_portmap(sin,  prog, vers, proto, portp, p)
 
 	sin->sin_port = htons(PMAPPORT);
 	error = krpc_call(sin, PMAPPROG, PMAPVERS,
-					  PMAPPROC_GETPORT, &m, NULL, p);
+					  PMAPPROC_GETPORT, &m, NULL, l);
 	if (error) 
 		return error;
 
@@ -216,12 +216,12 @@ void *context;
  * the address from whence the response came is saved there.
  */
 int
-krpc_call(sa, prog, vers, func, data, from_p, p)
+krpc_call(sa, prog, vers, func, data, from_p, l)
 	struct sockaddr_in *sa;
 	u_int prog, vers, func;
 	struct mbuf **data;	/* input/output */
 	struct mbuf **from_p;	/* output */
-	struct proc *p;
+	struct lwp *l;
 {
 	struct socket *so;
 	struct sockaddr_in *sin;
@@ -246,7 +246,7 @@ krpc_call(sa, prog, vers, func, data, from_p, p)
 	/*
 	 * Create socket and set its receive timeout.
 	 */
-	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, p)))
+	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, l)))
 		goto out;
 
 	if ((error = nfs_boot_setrecvtimo(so)))
@@ -268,7 +268,7 @@ krpc_call(sa, prog, vers, func, data, from_p, p)
 	tport = IPPORT_RESERVED;
 	do {
 		tport--;
-		error = nfs_boot_sobind_ipport(so, tport, p);
+		error = nfs_boot_sobind_ipport(so, tport, l);
 	} while (error == EADDRINUSE &&
 			 tport > IPPORT_RESERVED / 2);
 	if (error) {
@@ -320,7 +320,7 @@ krpc_call(sa, prog, vers, func, data, from_p, p)
 	mhead->m_pkthdr.rcvif = NULL;
 
 	error = nfs_boot_sendrecv(so, nam, 0, mhead, krpccheck, &m, &from,
-	    &xid, p);
+	    &xid, l);
 	if (error)
 		goto out;
 

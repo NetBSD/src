@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.23.2.3 2004/09/18 14:56:20 skrll Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.23.2.4 2004/09/21 13:38:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.23.2.3 2004/09/18 14:56:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.23.2.4 2004/09/21 13:38:36 skrll Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -94,9 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.23.2.3 2004/09/18 14:56:20 skrll
 
 /* bootparam RPC */
 static int bp_whoami __P((struct sockaddr_in *bpsin,
-	struct in_addr *my_ip, struct in_addr *gw_ip, struct proc *p));
+	struct in_addr *my_ip, struct in_addr *gw_ip, struct lwp *l));
 static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
-	struct nfs_dlmount *ndm, struct proc *p));
+	struct nfs_dlmount *ndm, struct lwp *l));
 
 
 /*
@@ -110,9 +110,9 @@ static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
  * is used for all subsequent booptaram RPCs.
  */
 int
-nfs_bootparam(nd, procp)
+nfs_bootparam(nd, lwp)
 	struct nfs_diskless *nd;
-	struct proc *procp;
+	struct lwp *lwp;
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	struct in_addr my_ip, arps_ip, gw_ip;
@@ -128,7 +128,7 @@ nfs_bootparam(nd, procp)
 	/*
 	 * Bring up the interface. (just set the "up" flag)
 	 */
-	error = nfs_boot_ifupdown(ifp, procp, 1);
+	error = nfs_boot_ifupdown(ifp, lwp, 1);
 	if (error) {
 		printf("nfs_boot: SIFFLAGS, error=%d\n", error);
 		return (error);
@@ -158,7 +158,7 @@ nfs_bootparam(nd, procp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  (just set the address)
 	 */
-	error = nfs_boot_setaddress(ifp, procp, my_ip.s_addr,
+	error = nfs_boot_setaddress(ifp, lwp, my_ip.s_addr,
 				    INADDR_ANY, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifaddr, error=%d\n", error);
@@ -180,7 +180,7 @@ nfs_bootparam(nd, procp)
 	sin->sin_addr.s_addr = INADDR_BROADCAST;
 
 	/* Do the RPC/bootparam/whoami. */
-	error = bp_whoami(sin, &my_ip, &gw_ip, procp);
+	error = bp_whoami(sin, &my_ip, &gw_ip, lwp);
 	if (error) {
 		printf("nfs_boot: bootparam whoami, error=%d\n", error);
 		goto delout;
@@ -192,7 +192,7 @@ nfs_bootparam(nd, procp)
 	 * Now fetch the server:pathname strings and server IP
 	 * for root and swap.  Missing swap is not fatal.
 	 */
-	error = bp_getfile(sin, "root", &nd->nd_root, procp);
+	error = bp_getfile(sin, "root", &nd->nd_root, lwp);
 	if (error) {
 		printf("nfs_boot: bootparam get root: %d\n", error);
 		goto delout;
@@ -201,7 +201,7 @@ nfs_bootparam(nd, procp)
 #ifndef NFS_BOOTPARAM_NOGATEWAY
 	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
 	memset((caddr_t)gw_ndm, 0, sizeof(*gw_ndm));
-	error = bp_getfile(sin, "gateway", gw_ndm, procp);
+	error = bp_getfile(sin, "gateway", gw_ndm, lwp);
 	if (error) {
 		/* No gateway supplied. No error, but try fallback. */
 		error = 0;
@@ -229,8 +229,8 @@ nfs_bootparam(nd, procp)
 	/* Have a netmask too!  Save it; update the I/F. */
 	nd->nd_mask.s_addr = mask;
 	printf("nfs_boot: my_mask=%s\n", inet_ntoa(nd->nd_mask));
-	(void)  nfs_boot_deladdress(ifp, procp, my_ip.s_addr);
-	error = nfs_boot_setaddress(ifp, procp, my_ip.s_addr,
+	(void)  nfs_boot_deladdress(ifp, lwp, my_ip.s_addr);
+	error = nfs_boot_setaddress(ifp, lwp, my_ip.s_addr,
 				    mask, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifmask, error=%d\n", error);
@@ -260,10 +260,10 @@ nogwrepl:
 
 delout:
 	if (error)
-		(void) nfs_boot_deladdress(ifp, procp, my_ip.s_addr);
+		(void) nfs_boot_deladdress(ifp, lwp, my_ip.s_addr);
 out:
 	if (error) {
-		(void) nfs_boot_ifupdown(ifp, procp, 0);
+		(void) nfs_boot_ifupdown(ifp, lwp, 0);
 		nfs_boot_flushrt(ifp);
 	}
 #ifndef NFS_BOOTPARAM_NOGATEWAY
@@ -291,11 +291,11 @@ gwok:
  * know about us (don't want to broadcast a getport call).
  */
 static int
-bp_whoami(bpsin, my_ip, gw_ip, p)
+bp_whoami(bpsin, my_ip, gw_ip, l)
 	struct sockaddr_in *bpsin;
 	struct in_addr *my_ip;
 	struct in_addr *gw_ip;
-	struct proc *p;
+	struct lwp *l;
 {
 	/* RPC structures for PMAPPROC_CALLIT */
 	struct whoami_call {
@@ -335,7 +335,7 @@ bp_whoami(bpsin, my_ip, gw_ip, p)
 	bpsin->sin_port = htons(PMAPPORT);
 	from = NULL;
 	error = krpc_call(bpsin, PMAPPROG, PMAPVERS,
-			PMAPPROC_CALLIT, &m, &from, p);
+			PMAPPROC_CALLIT, &m, &from, l);
 	if (error)
 		return error;
 
@@ -399,11 +399,11 @@ out:
  *	server pathname
  */
 static int
-bp_getfile(bpsin, key, ndm, p)
+bp_getfile(bpsin, key, ndm, l)
 	struct sockaddr_in *bpsin;
 	char *key;
 	struct nfs_dlmount *ndm;
-	struct proc *p;
+	struct lwp *l;
 {
 	char pathname[MNAMELEN];
 	struct in_addr inaddr;
@@ -428,7 +428,7 @@ bp_getfile(bpsin, key, ndm, p)
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call(bpsin, BOOTPARAM_PROG, BOOTPARAM_VERS,
-	                  BOOTPARAM_GETFILE, &m, NULL, p);
+	                  BOOTPARAM_GETFILE, &m, NULL, l);
 	if (error)
 		return error;
 

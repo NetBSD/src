@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.4.4.3 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.4.4.4 2004/09/21 13:35:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.4.4.3 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.4.4.4 2004/09/21 13:35:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -39,7 +39,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinuminterrupt.c,v 1.2.4.3 2004/09/18 14:52:13 skrll Exp $
+ * $Id: vinuminterrupt.c,v 1.2.4.4 2004/09/21 13:34:15 skrll Exp $
  * $FreeBSD$
  */
 

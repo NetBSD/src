@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.14.16.3 2004/09/18 14:51:24 skrll Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.14.16.4 2004/09/21 13:33:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.

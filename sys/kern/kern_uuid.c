@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.1.4.4 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.1.4.5 2004/09/21 13:35:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.1.4.4 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.1.4.5 2004/09/21 13:35:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>

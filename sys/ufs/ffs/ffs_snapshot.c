@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.4 2004/09/18 14:56:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.5 2004/09/21 13:39:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

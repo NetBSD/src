@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.27.2.3 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: lkm.h,v 1.27.2.4 2004/09/21 13:38:47 skrll Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module

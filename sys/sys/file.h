@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.43.2.4 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: file.h,v 1.43.2.5 2004/09/21 13:38:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,6 +46,7 @@ MALLOC_DECLARE(M_FILE);
 MALLOC_DECLARE(M_IOCTLOPS);
 
 struct proc;
+struct lwp;
 struct uio;
 struct iovec;
 struct stat;
@@ -76,13 +77,13 @@ struct file {
 		int	(*fo_write)	(struct file *, off_t *, struct uio *,
 					    struct ucred *, int);
 		int	(*fo_ioctl)	(struct file *, u_long, void *,
-					    struct proc *);
+					    struct lwp *);
 		int	(*fo_fcntl)	(struct file *, u_int, void *,
-					    struct proc *);
-		int	(*fo_poll)	(struct file *, int, struct proc *);
+					    struct lwp *);
+		int	(*fo_poll)	(struct file *, int, struct lwp *);
 		int	(*fo_stat)	(struct file *, struct stat *,
-					    struct proc *);
-		int	(*fo_close)	(struct file *, struct proc *);
+					    struct lwp *);
+		int	(*fo_close)	(struct file *, struct lwp *);
 		int	(*fo_kqfilter)	(struct file *, struct knote *);
 	} *f_ops;
 	off_t		f_offset;
@@ -153,14 +154,14 @@ extern int		nfiles;		/* actual number of open files */
 
 extern struct fileops	vnops;		/* vnode operations for files */
 
-int	dofileread(struct proc *, int, struct file *, void *, size_t,
+int	dofileread(struct lwp *, int, struct file *, void *, size_t,
 	    off_t *, int, register_t *);
-int	dofilewrite(struct proc *, int, struct file *, const void *,
+int	dofilewrite(struct lwp *, int, struct file *, const void *,
 	    size_t, off_t *, int, register_t *);
 
-int	dofilereadv(struct proc *, int, struct file *,
+int	dofilereadv(struct lwp *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
-int	dofilewritev(struct proc *, int, struct file *,
+int	dofilewritev(struct lwp *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *);
 
 int	fsetown(struct proc *, pid_t *, int, const void *);

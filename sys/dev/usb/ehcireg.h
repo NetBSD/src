@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.13.16.2 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.13.16.3 2004/09/21 13:33:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

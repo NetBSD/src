@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.6.2.3 2004/09/18 14:51:34 skrll Exp $ */
+/*	$NetBSD: fbvar.h,v 1.6.2.4 2004/09/21 13:33:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,10 +56,10 @@
 struct fbdriver {
 	/* device unblank function (force kernel output to display) */
 	void	(*fbd_unblank)(struct device *);
-	int	(*fbd_open)(dev_t, int, int, struct proc *);
-	int	(*fbd_close)(dev_t, int, int, struct proc *);
-	int	(*fbd_ioctl)(dev_t, u_long, caddr_t, int, struct proc *);
-	int	(*fbd_poll)(dev_t, int, struct proc *);
+	int	(*fbd_open)(dev_t, int, int, struct lwp *);
+	int	(*fbd_close)(dev_t, int, int, struct lwp *);
+	int	(*fbd_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
+	int	(*fbd_poll)(dev_t, int, struct lwp *);
 	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
 	int	(*fbd_kqfilter)(dev_t, struct knote *);
 #ifdef notyet

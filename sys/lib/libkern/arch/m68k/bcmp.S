@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.8.22.2 2004/09/18 14:53:54 skrll Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.8.22.3 2004/09/21 13:36:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s 5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.8.22.2 2004/09/18 14:53:54 skrll Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.8.22.3 2004/09/21 13:36:07 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

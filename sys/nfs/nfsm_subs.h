@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.30.2.3 2004/09/18 14:56:20 skrll Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.30.2.4 2004/09/21 13:38:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -156,7 +156,7 @@
  * f: (OUT) true if we got valid filehandle.  always true for nfsv2.
  */
 
-#define nfsm_mtofh(d, v, v3, f) \
+#define nfsm_mtofh(d, v, v3, f, l) \
 		{ struct nfsnode *ttnp; nfsfh_t *ttfhp; int ttfhsize; \
 		int hasattr = 0; \
 		if (v3) { \
@@ -169,7 +169,7 @@
 		if (f) { \
 			nfsm_getfh(ttfhp, ttfhsize, (v3)); \
 			if ((t1 = nfs_nget((d)->v_mount, ttfhp, ttfhsize, \
-				&ttnp)) != 0) { \
+				&ttnp, l)) != 0) { \
 				error = t1; \
 				m_freem(mrep); \
 				goto nfsmout; \

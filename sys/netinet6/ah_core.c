@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.29.2.2 2004/09/18 14:55:14 skrll Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.29.2.3 2004/09/21 13:37:31 skrll Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.29.2.2 2004/09/18 14:55:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.29.2.3 2004/09/21 13:37:31 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

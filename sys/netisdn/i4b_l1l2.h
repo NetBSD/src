@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.7.8.2 2004/09/18 14:55:33 skrll Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.7.8.3 2004/09/21 13:37:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.3.2.3 2004/09/18 14:52:37 skrll Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.3.2.4 2004/09/21 13:34:43 skrll Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.11 2003/12/31 11:18:25 cedric Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),

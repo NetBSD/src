@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.4.30.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: null.h,v 1.4.30.3 2004/09/21 13:38:48 skrll Exp $	*/
 
 #ifndef	NULL
 #if !defined(__GNUG__) || __GNUG__ < 2 || (__GNUG__ == 2 && __GNUC_MINOR__ < 90)

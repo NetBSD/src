@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.17.2.5 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.17.2.6 2004/09/21 13:36:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.17.2.5 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.17.2.6 2004/09/21 13:36:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.17.2.5 2004/09/18 14:54:15 skrl
 #include <miscfs/genfs/layer_extern.h>
 
 int	ov_mount __P((struct mount *, const char *, void *,
-			  struct nameidata *, struct proc *));
-int	ov_unmount __P((struct mount *, int, struct proc *));
+			  struct nameidata *, struct lwp *));
+int	ov_unmount __P((struct mount *, int, struct lwp *));
 
 #define	NOVERLAYNODECACHE	16
 
@@ -98,12 +98,12 @@ int	ov_unmount __P((struct mount *, int, struct proc *));
  * Mount overlay layer
  */
 int
-ov_mount(mp, path, data, ndp, p)
+ov_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	struct overlay_args args;
@@ -202,7 +202,7 @@ ov_mount(mp, path, data, ndp, p)
 	nmp->ovm_rootvp = vp;
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args.la.target,
-	    UIO_USERSPACE, mp, p);
+	    UIO_USERSPACE, mp, l);
 #ifdef OVERLAYFS_DIAGNOSTIC
 	printf("ov_mount: lower %s, alias at %s\n",
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
@@ -214,10 +214,10 @@ ov_mount(mp, path, data, ndp, p)
  * Free reference to overlay layer
  */
 int
-ov_unmount(mp, mntflags, p)
+ov_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vnode *overlay_rootvp = MOUNTTOOVERLAYMOUNT(mp)->ovm_rootvp;
 	int error;

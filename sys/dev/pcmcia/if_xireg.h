@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xireg.h,v 1.3.22.4 2004/09/18 14:50:23 skrll Exp $	*/
+/*	$NetBSD: if_xireg.h,v 1.3.22.5 2004/09/21 13:32:21 skrll Exp $	*/
 /*	OpenBSD: if_xereg.h,v 1.1 1999/05/18 19:18:21 niklas Exp	*/
 
 /*

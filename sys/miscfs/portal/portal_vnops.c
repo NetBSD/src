@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.47.2.3 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.47.2.4 2004/09/21 13:36:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.3 2004/09/18 14:54:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.4 2004/09/21 13:36:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,11 +304,11 @@ portal_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct socket *so = 0;
 	struct portalnode *pt;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
 	int s;
 	struct uio auio;
@@ -345,7 +345,7 @@ portal_open(v)
 	/*
 	 * Create a new socket.
 	 */
-	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, p);
+	error = socreate(AF_LOCAL, &so, SOCK_STREAM, 0, l);
 	if (error)
 		goto bad;
 
@@ -415,12 +415,12 @@ portal_open(v)
 	auio.uio_iovcnt = 2;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_offset = 0;
 	auio.uio_resid = aiov[0].iov_len + aiov[1].iov_len;
 
 	error = (*so->so_send)(so, (struct mbuf *) 0, &auio,
-			(struct mbuf *) 0, (struct mbuf *) 0, 0, p);
+			(struct mbuf *) 0, (struct mbuf *) 0, 0, l);
 	if (error)
 		goto bad;
 
@@ -492,7 +492,7 @@ portal_open(v)
 		int i;
 		printf("portal_open: %d extra fds\n", newfds - 1);
 		for (i = 1; i < newfds; i++) {
-			portal_closefd(curlwp, *ip); /* XXXNJWLWP */
+			portal_closefd(l, *ip); /* XXXNJWLWP */
 			ip++;
 		}
 	}
@@ -501,9 +501,9 @@ portal_open(v)
 	 * Check that the mode the file is being opened for is a subset 
 	 * of the mode of the existing descriptor.
 	 */
- 	fp = p->p_fd->fd_ofiles[fd];
+ 	fp = l->l_proc->p_fd->fd_ofiles[fd];
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
-		portal_closefd(curlwp, fd); /* XXXNJWLWP */
+		portal_closefd(l, fd); /* XXXNJWLWP */
 		error = EACCES;
 		goto bad;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.23.2.2 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.23.2.3 2004/09/21 13:35:06 skrll Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.23.2.2 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.23.2.3 2004/09/21 13:35:06 skrll Exp $");
 
 #include "opt_ntp.h"
 

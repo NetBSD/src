@@ -1,4 +1,4 @@
-/* $NetBSD: drvctlio.h,v 1.1.2.3 2004/09/18 14:56:30 skrll Exp $ */
+/* $NetBSD: drvctlio.h,v 1.1.2.4 2004/09/21 13:38:45 skrll Exp $ */
 
 /* This interface is experimental and may change. */
 

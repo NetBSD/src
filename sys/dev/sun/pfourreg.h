@@ -1,4 +1,4 @@
-/*	$NetBSD: pfourreg.h,v 1.1.26.2 2004/09/18 14:51:34 skrll Exp $	*/
+/*	$NetBSD: pfourreg.h,v 1.1.26.3 2004/09/21 13:33:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

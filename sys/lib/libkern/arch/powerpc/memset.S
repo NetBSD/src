@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3.4.3 2004/09/18 14:54:01 skrll Exp $ */
+/*	$NetBSD: memset.S,v 1.3.4.4 2004/09/21 13:36:13 skrll Exp $ */
 
 /*-
  * Copyright (C) 2003	Matt Thomas <matt@3am-software.com>

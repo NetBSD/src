@@ -1,4 +1,4 @@
-/*	$NetBSD: memmove.S,v 1.2.28.2 2004/09/18 14:54:01 skrll Exp $ */
+/*	$NetBSD: memmove.S,v 1.2.28.3 2004/09/21 13:36:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -30,7 +30,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memmove.S,v 1.2.28.2 2004/09/18 14:54:01 skrll Exp $")
+	RCSID("$NetBSD: memmove.S,v 1.2.28.3 2004/09/21 13:36:13 skrll Exp $")
 #endif
 
 

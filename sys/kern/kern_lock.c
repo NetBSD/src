@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.71.2.3 2004/09/18 14:53:02 skrll Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.71.2.4 2004/09/21 13:35:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.71.2.3 2004/09/18 14:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.71.2.4 2004/09/21 13:35:04 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"

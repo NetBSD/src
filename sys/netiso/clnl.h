@@ -1,4 +1,4 @@
-/*	$NetBSD: clnl.h,v 1.6.64.2 2004/09/18 14:55:52 skrll Exp $	*/
+/*	$NetBSD: clnl.h,v 1.6.64.3 2004/09/21 13:38:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

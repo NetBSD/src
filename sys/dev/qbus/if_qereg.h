@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qereg.h,v 1.6.22.2 2004/09/18 14:50:40 skrll Exp $ */
+/*	$NetBSD: if_qereg.h,v 1.6.22.3 2004/09/21 13:32:38 skrll Exp $ */
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

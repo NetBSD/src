@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l4mgmt.c,v 1.10.6.2 2004/09/18 14:55:33 skrll Exp $	*/
+/*	$NetBSD: i4b_l4mgmt.c,v 1.10.6.3 2004/09/21 13:37:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.10.6.2 2004/09/18 14:55:33 skrll Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.10.6.3 2004/09/21 13:37:59 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.10.6.2 2004/09/18 14:55:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.10.6.3 2004/09/21 13:37:59 skrll Exp $");
 
 #include "isdn.h"
 

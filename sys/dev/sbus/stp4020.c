@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.34.2.3 2004/09/18 14:51:16 skrll Exp $ */
+/*	$NetBSD: stp4020.c,v 1.34.2.4 2004/09/21 13:33:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34.2.3 2004/09/18 14:51:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34.2.4 2004/09/21 13:33:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.9.6.4 2004/09/18 14:51:25 skrll Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.9.6.5 2004/09/21 13:33:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.4.4.3 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.4.4.4 2004/09/21 13:38:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

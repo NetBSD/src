@@ -1,4 +1,4 @@
-/*	$NetBSD: ubtbcmfw.c,v 1.6.2.3 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: ubtbcmfw.c,v 1.6.2.4 2004/09/21 13:33:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6.2.3 2004/09/18 14:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubtbcmfw.c,v 1.6.2.4 2004/09/21 13:33:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ ubtbcmfw_load_file(usbd_device_handle dev, usbd_pipe_handle out,
 	char buf[1024];
 	struct timeval delta;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename, curlwp);
 	/* Loop until we are well passed boot */
 	for (;;) {
 		error = vn_open(&nd, FREAD, 0);

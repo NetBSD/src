@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.6.6.2 2004/09/18 14:50:40 skrll Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.6.6.3 2004/09/21 13:32:38 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.6.6.2 2004/09/18 14:50:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.6.6.3 2004/09/21 13:32:38 skrll Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 

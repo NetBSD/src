@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xivar.h,v 1.1.2.4 2004/09/18 14:50:23 skrll Exp $	*/
+/*	$NetBSD: if_xivar.h,v 1.1.2.5 2004/09/21 13:32:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.1.2.4 2004/09/18 14:50:23 skrll Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.1.2.5 2004/09/21 13:32:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.1.2.4 2004/09/18 14:50:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.1.2.5 2004/09/21 13:32:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

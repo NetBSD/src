@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.53.2.2 2004/09/18 14:53:03 skrll Exp $
+#	$NetBSD: makesyscalls.sh,v 1.53.2.3 2004/09/21 13:35:11 skrll Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.

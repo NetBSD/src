@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.h,v 1.4.18.2 2004/09/18 14:50:53 skrll Exp $	*/
+/*	$NetBSD: rf_copyback.h,v 1.4.18.3 2004/09/21 13:32:51 skrll Exp $	*/
 /*
  * rf_copyback.h
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.17.2.2 2004/09/18 14:56:59 skrll Exp $	*/
+/*	$NetBSD: dinode.h,v 1.17.2.3 2004/09/21 13:39:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.

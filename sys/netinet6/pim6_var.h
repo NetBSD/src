@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_var.h,v 1.10.6.1 2004/09/18 14:55:15 skrll Exp $	*/
+/*	$NetBSD: pim6_var.h,v 1.10.6.2 2004/09/21 13:37:36 skrll Exp $	*/
 /*	$KAME: pim6_var.h,v 1.8 2000/06/06 08:07:43 jinmei Exp $	*/
 
 /*

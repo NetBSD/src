@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.12.22.2 2004/09/18 14:56:06 skrll Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.12.22.3 2004/09/21 13:38:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.

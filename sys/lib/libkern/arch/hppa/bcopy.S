@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1.10.2 2004/09/18 14:53:53 skrll Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <machine/frame.h>
  
 #if defined(LIBC_SCCS) && !defined(lint) 
-RCSID("$NetBSD: bcopy.S,v 1.1.10.2 2004/09/18 14:53:53 skrll Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.1.10.3 2004/09/21 13:36:07 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.26.6.3 2004/09/18 14:50:40 skrll Exp $	*/
+/*	$NetBSD: dl.c,v 1.26.6.4 2004/09/21 13:32:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.26.6.3 2004/09/18 14:50:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.26.6.4 2004/09/21 13:32:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,8 +323,9 @@ dlxint(void *arg)
 }
 
 int
-dlopen(dev_t dev, int flag, int mode, struct proc *p)
+dlopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct tty *tp;
 	struct dl_softc *sc;
 	int unit;
@@ -362,7 +363,7 @@ dlopen(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-dlclose(dev_t dev, int flag, int mode, struct proc *p)
+dlclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -394,27 +395,27 @@ dlwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-dlpoll(dev_t dev, int events, struct proc *p)
+dlpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct proc *p)
+dlioctl(dev_t dev, unsigned long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct dl_softc *sc = dl_cd.cd_devs[minor(dev)];
         struct tty *tp = sc->sc_tty;
         int error;
 
 
-        error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+        error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
         if (error != EPASSTHROUGH)
                 return (error);
 
-        error = ttioctl(tp, cmd, data, flag, p);
+        error = ttioctl(tp, cmd, data, flag, l);
         if (error != EPASSTHROUGH)
                 return (error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.3.2.3 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.3.2.4 2004/09/21 13:33:43 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3.2.3 2004/09/18 14:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.3.2.4 2004/09/21 13:33:43 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

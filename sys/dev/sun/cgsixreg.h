@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.4.24.2 2004/09/18 14:51:34 skrll Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.4.24.3 2004/09/21 13:33:26 skrll Exp $ */
 
 /*
  * Copyright (c) 1993

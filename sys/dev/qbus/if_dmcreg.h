@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmcreg.h,v 1.1.24.2 2004/09/18 14:50:40 skrll Exp $	*/
+/*	$NetBSD: if_dmcreg.h,v 1.1.24.3 2004/09/21 13:32:38 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.97.2.3 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: exec.h,v 1.97.2.4 2004/09/21 13:38:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -137,13 +137,13 @@ struct exec_package;
 struct vnode;
 struct ucred;
 
-typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
+typedef int (*exec_makecmds_fcn) __P((struct lwp *, struct exec_package *));
 
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
 	exec_makecmds_fcn es_makecmds;	/* function to setup vmcmds */
 	union {				/* probe function */
-		int (*elf_probe_func) __P((struct proc *,
+		int (*elf_probe_func) __P((struct lwp *,
 			struct exec_package *, void *, char *, vaddr_t *));
 		int (*ecoff_probe_func) __P((struct proc *,
 			struct exec_package *));
@@ -153,7 +153,7 @@ struct execsw {
 	int	es_prio;		/* entry priority */
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
-	int	(*es_copyargs) __P((struct proc *, struct exec_package *,
+	int	(*es_copyargs) __P((struct lwp *, struct exec_package *,
 			struct ps_strings *, char **, void *));
 					/* Set registers before execution */
 	void	(*es_setregs) __P((struct lwp *, struct exec_package *,
@@ -212,7 +212,7 @@ struct exec_package {
 #define	EXEC_HASES	0x0040		/* don't update exec switch pointer */
 
 struct exec_vmcmd {
-	int	(*ev_proc) __P((struct proc *, struct exec_vmcmd *));
+	int	(*ev_proc) __P((struct lwp *, struct exec_vmcmd *));
 				/* procedure to run for region of vmspace */
 	u_long	ev_len;		/* length of the segment to map */
 	u_long	ev_addr;	/* address in the vmspace to place it at */
@@ -235,15 +235,15 @@ MALLOC_DECLARE(M_EXEC);
  * hooks.
  */
 void	kill_vmcmd		__P((struct exec_vmcmd **));
-int	exec_makecmds		__P((struct proc *, struct exec_package *));
+int	exec_makecmds		__P((struct lwp *, struct exec_package *));
 int	exec_runcmds		__P((struct proc *, struct exec_package *));
 void	vmcmdset_extend		__P((struct exec_vmcmd_set *));
 void	kill_vmcmds		__P((struct exec_vmcmd_set *));
-int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
-int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
-int	copyargs		__P((struct proc *, struct exec_package *,
+int	vmcmd_map_pagedvn	__P((struct lwp *, struct exec_vmcmd *));
+int	vmcmd_map_readvn	__P((struct lwp *, struct exec_vmcmd *));
+int	vmcmd_readvn		__P((struct lwp *, struct exec_vmcmd *));
+int	vmcmd_map_zero		__P((struct lwp *, struct exec_vmcmd *));
+int	copyargs		__P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
 void	setregs			__P((struct lwp *, struct exec_package *,
 				     u_long));
@@ -253,10 +253,10 @@ int	check_veriexec		__P((struct proc *, struct vnode *,
 int	check_exec		__P((struct proc *, struct exec_package *,
 				     int));
 #else
-int	check_exec		__P((struct proc *, struct exec_package *));
+int	check_exec		__P((struct lwp *, struct exec_package *));
 #endif
 int	exec_init		__P((int));
-int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
+int	exec_read_from		__P((struct lwp *, struct vnode *, u_long off,
     void *, size_t));
 int	exec_setup_stack	__P((struct proc *, struct exec_package *));
 
@@ -271,7 +271,7 @@ int	exec_remove		__P((const struct execsw *));
 #endif /* LKM */
 
 void	new_vmcmd __P((struct exec_vmcmd_set *,
-		    int (*) __P((struct proc *, struct exec_vmcmd *)),
+		    int (*) __P((struct lwp *, struct exec_vmcmd *)),
 		    u_long, u_long, struct vnode *, u_long, u_int, int));
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)

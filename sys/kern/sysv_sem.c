@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.47.2.5 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.47.2.6 2004/09/21 13:35:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47.2.5 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.47.2.6 2004/09/21 13:35:15 skrll Exp $");
 
 #define SYSVSEM
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.10.2.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.10.2.4 2004/09/21 13:37:48 skrll Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 

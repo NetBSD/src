@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.64.2.2 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.64.2.3 2004/09/21 13:33:46 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64.2.2 2004/09/18 14:51:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.64.2.3 2004/09/21 13:33:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

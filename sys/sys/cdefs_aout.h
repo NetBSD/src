@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.13.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.13.2.3 2004/09/21 13:38:45 skrll Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.

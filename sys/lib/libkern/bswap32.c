@@ -1,4 +1,4 @@
-/*  $NetBSD: bswap32.c,v 1.2.42.2 2004/09/18 14:53:41 skrll Exp $    */
+/*  $NetBSD: bswap32.c,v 1.2.42.3 2004/09/21 13:35:53 skrll Exp $    */
 
 /*
  * Written by Manuel Bouyer <bouyer@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bswap32.c,v 1.2.42.2 2004/09/18 14:53:41 skrll Exp $");
+__RCSID("$NetBSD: bswap32.c,v 1.2.42.3 2004/09/21 13:35:53 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

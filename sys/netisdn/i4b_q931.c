@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.14.6.2 2004/09/18 14:55:33 skrll Exp $ 
+ *	$Id: i4b_q931.c,v 1.14.6.3 2004/09/21 13:38:00 skrll Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.14.6.2 2004/09/18 14:55:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.14.6.3 2004/09/21 13:38:00 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"

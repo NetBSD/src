@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.17.42.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: cdio.h,v 1.17.42.3 2004/09/21 13:38:45 skrll Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_

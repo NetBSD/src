@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.24.2.2 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: ip.h,v 1.24.2.3 2004/09/21 13:37:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

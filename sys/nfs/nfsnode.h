@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.40.2.3 2004/09/18 14:56:20 skrll Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.40.2.4 2004/09/21 13:38:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993

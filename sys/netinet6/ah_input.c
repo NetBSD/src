@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.38.2.2 2004/09/18 14:55:14 skrll Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.38.2.3 2004/09/21 13:37:31 skrll Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38.2.2 2004/09/18 14:55:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.38.2.3 2004/09/21 13:37:31 skrll Exp $");
 
 #include "opt_inet.h"
 

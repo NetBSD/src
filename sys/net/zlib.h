@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.6.12.2 2004/09/18 14:54:16 skrll Exp $ */
+/* $NetBSD: zlib.h,v 1.6.12.3 2004/09/21 13:36:43 skrll Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -43,7 +43,7 @@
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) $Id: zlib.h,v 1.6.12.2 2004/09/18 14:54:16 skrll Exp $ */
+/* @(#) $Id: zlib.h,v 1.6.12.3 2004/09/21 13:36:43 skrll Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H

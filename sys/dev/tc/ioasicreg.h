@@ -1,4 +1,4 @@
-/* $NetBSD: ioasicreg.h,v 1.6.24.2 2004/09/18 14:51:45 skrll Exp $ */
+/* $NetBSD: ioasicreg.h,v 1.6.24.3 2004/09/21 13:33:42 skrll Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University

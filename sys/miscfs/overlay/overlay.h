@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.h,v 1.3.22.2 2004/09/18 14:54:15 skrll Exp $	*/
+/*	$NetBSD: overlay.h,v 1.3.22.3 2004/09/21 13:36:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration

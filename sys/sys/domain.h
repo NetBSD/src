@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.14.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: domain.h,v 1.14.2.3 2004/09/21 13:38:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,7 +52,7 @@ struct	domain {
 	void	(*dom_init)		/* initialize domain data structures */
 			(void);
 	int	(*dom_externalize)	/* externalize access rights */
-			(struct mbuf *, struct proc *);
+			(struct mbuf *, struct lwp *);
 	void	(*dom_dispose)		/* dispose of internalized rights */
 			(struct mbuf *);
 	const struct protosw *dom_protosw, *dom_protoswNPROTOSW;

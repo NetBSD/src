@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.109.2.4 2004/09/18 14:56:59 skrll Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.109.2.5 2004/09/21 13:39:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.4 2004/09/18 14:56:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109.2.5 2004/09/21 13:39:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ lfs_fsync(void *v)
 		int a_flags;
 		off_t offlo;
 		off_t offhi;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int error, wait;
@@ -331,7 +331,7 @@ lfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	KASSERT(VTOI(ap->a_vp)->i_nlink == VTOI(ap->a_vp)->i_ffs_effnlink);
@@ -522,6 +522,7 @@ lfs_mknod(void *v)
 		} */ *ap = v;
 	struct vattr *vap = ap->a_vap;
 	struct vnode **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
 	struct inode *ip;
 	int error;
 	struct mount	*mp;	
@@ -533,7 +534,7 @@ lfs_mknod(void *v)
 	}
 	MARK_VNODE(ap->a_dvp);
 	error = ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-	    ap->a_dvp, vpp, ap->a_cnp);
+	    ap->a_dvp, vpp, cnp);
 	UNMARK_VNODE(ap->a_dvp);
 	if (*(ap->a_vpp))
 		UNMARK_VNODE(*(ap->a_vpp));
@@ -569,7 +570,7 @@ lfs_mknod(void *v)
 	 * Can this ever happen (barring hardware failure)?
 	 */
 	if ((error = VOP_FSYNC(*vpp, NOCRED, FSYNC_WAIT, 0, 0, 
-	    curproc)) != 0) {
+	    cnp->cn_lwp)) != 0) {
 		printf("Couldn't fsync in mknod (ino %d)---what do I do?\n",
 		       VTOI(*vpp)->i_number);
 		return (error);
@@ -838,7 +839,7 @@ lfs_getattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -887,7 +888,7 @@ lfs_setattr(void *v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -910,7 +911,7 @@ lfs_close(void *v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -939,7 +940,7 @@ lfsspec_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct proc	*a_p;
+		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -966,7 +967,7 @@ lfsfifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct proc	*a_p;
+		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct inode	*ip;
@@ -990,7 +991,7 @@ lfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
@@ -999,7 +1000,7 @@ lfs_reclaim(void *v)
 	KASSERT(ip->i_nlink == ip->i_ffs_effnlink);
 
 	LFS_CLR_UINO(ip, IN_ALLMOD);
-	if ((error = ufs_reclaim(vp, ap->a_p)))
+	if ((error = ufs_reclaim(vp, ap->a_l)))
 		return (error);
 	pool_put(&lfs_dinode_pool, VTOI(vp)->i_din.ffs1_din);
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
@@ -1202,13 +1203,14 @@ lfs_fcntl(void *v)
                 caddr_t  a_data;
                 int  a_fflag;
                 struct ucred *a_cred;
-                struct proc *a_p;
+                struct lwp *a_l;
         } */ *ap = v;
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
 	CLEANERINFO *cip;
 	int blkcnt, error, oclean;
 	struct lfs_fcntl_markv blkvp;
+	struct proc *p;
 	fsid_t *fsidp;
 	struct lfs *fs;
 	struct buf *bp;
@@ -1225,6 +1227,7 @@ lfs_fcntl(void *v)
 		return ESHUTDOWN;
 	}
 
+	p = ap->a_l->l_proc;
 	fs = VTOI(ap->a_vp)->i_lfs;
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
@@ -1250,7 +1253,7 @@ lfs_fcntl(void *v)
 
 	    case LFCNBMAPV:
 	    case LFCNMARKV:
-		if ((error = suser(ap->a_p->p_ucred, &ap->a_p->p_acflag)) != 0)
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
 		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
 
@@ -1269,9 +1272,9 @@ lfs_fcntl(void *v)
 		simple_unlock(&fs->lfs_interlock);
 		VOP_UNLOCK(ap->a_vp, 0);
 		if (ap->a_command == LFCNBMAPV)
-			error = lfs_bmapv(ap->a_p, fsidp, blkiov, blkcnt);
+			error = lfs_bmapv(ap->a_l, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
-			error = lfs_markv(ap->a_p, fsidp, blkiov, blkcnt);
+			error = lfs_markv(p, fsidp, blkiov, blkcnt);
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
@@ -1947,7 +1950,7 @@ lfs_mmap(void *v)
 		struct vnode *a_vp;
 		int a_fflags;
 		struct ucred *a_cred;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 
 	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM)

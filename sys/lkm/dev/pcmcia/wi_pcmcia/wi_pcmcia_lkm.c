@@ -1,4 +1,4 @@
-/* $NetBSD: wi_pcmcia_lkm.c,v 1.1.2.3 2004/09/18 14:54:09 skrll Exp $ */
+/* $NetBSD: wi_pcmcia_lkm.c,v 1.1.2.4 2004/09/21 13:36:24 skrll Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

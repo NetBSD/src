@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64.6.4 2004/09/18 14:56:30 skrll Exp $ */
+/* $NetBSD: device.h,v 1.64.6.5 2004/09/21 13:38:45 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.1.4.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: xform.h,v 1.1.4.4 2004/09/21 13:37:48 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipsp.h,v 1.119 2002/03/14 01:27:11 millert Exp $	*/
 /*

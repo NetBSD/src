@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.4.28.2 2004/09/18 14:53:41 skrll Exp $	*/
+/*	$NetBSD: random.c,v 1.4.28.3 2004/09/21 13:35:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

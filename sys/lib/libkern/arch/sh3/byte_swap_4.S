@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.2.24.2 2004/09/18 14:54:01 skrll Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2.24.3 2004/09/21 13:36:13 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.

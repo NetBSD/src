@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.16.2 2004/09/18 14:54:14 skrll Exp $
+#	$NetBSD: Makefile,v 1.15.16.3 2004/09/21 13:36:24 skrll Exp $
 
 .include "../Makefile.inc"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.34.2.4 2004/09/18 14:56:52 skrll Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.34.2.5 2004/09/21 13:39:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.34.2.4 2004/09/18 14:56:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.34.2.5 2004/09/21 13:39:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,12 +100,12 @@ ext2fs_inactive(v)
 {   
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct mount *mp;
-	struct proc *p = ap->a_p;
+	struct lwp *l = ap->a_l;
 	struct timespec ts;
 	int error = 0;
 	
@@ -139,7 +139,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	if (ip->i_e2fs_dtime != 0)
-		vrecycle(vp, NULL, p);
+		vrecycle(vp, NULL, l);
 	return (error);
 }   
 
@@ -275,7 +275,7 @@ ext2fs_truncate(v)
 		    ioflag & IO_SYNC ? B_SYNC : 0);
 		if (error) {
 			(void) VOP_TRUNCATE(ovp, osize, ioflag & IO_SYNC,
-			    ap->a_cred, ap->a_p);
+			    ap->a_cred, ap->a_l);
 			return (error);
 		}
 		uvm_vnp_setsize(ovp, length);

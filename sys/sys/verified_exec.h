@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.3.2.3 2004/09/18 14:56:31 skrll Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.3.2.4 2004/09/21 13:38:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -67,9 +67,9 @@ struct verified_exec_params  {
 
 #ifdef _KERNEL
 void	verifiedexecattach __P((struct device *, struct device *, void *));
-int     verifiedexecopen __P((dev_t, int, int, struct proc *));
-int     verifiedexecclose __P((dev_t, int, int, struct proc *));
-int     verifiedexecioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+int     verifiedexecopen __P((dev_t, int, int, struct lwp *));
+int     verifiedexecclose __P((dev_t, int, int, struct lwp *));
+int     verifiedexecioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
 /*
  * list structure definitions - needed in kern_exec.c
  */
@@ -95,7 +95,7 @@ struct veriexec_inode_list
 struct veriexec_inode_list *get_veriexec_inode(struct veriexec_devhead *,
 	    long, long, char *);
 int evaluate_fingerprint(struct vnode *, struct veriexec_inode_list *,
-	    struct proc *, u_quad_t, char *);
+	    struct lwp *, u_quad_t, char *);
 int fingerprintcmp(struct veriexec_inode_list *, unsigned char *);
 
 #endif

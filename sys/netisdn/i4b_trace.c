@@ -27,7 +27,7 @@
  *	i4btrc - device driver for trace data read device
  *	---------------------------------------------------
  *
- *	$Id: i4b_trace.c,v 1.12.6.2 2004/09/18 14:55:33 skrll Exp $
+ *	$Id: i4b_trace.c,v 1.12.6.3 2004/09/21 13:38:00 skrll Exp $
  *
  *	last edit-date: [Fri Jan  5 11:33:47 2001]
  *
@@ -35,7 +35,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.12.6.2 2004/09/18 14:55:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_trace.c,v 1.12.6.3 2004/09/21 13:38:00 skrll Exp $");
 
 #include "isdntrc.h"
 

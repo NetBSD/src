@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.5.2.2 2004/09/18 14:54:02 skrll Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.5.2.3 2004/09/21 13:36:19 skrll Exp $	 */
 
 /*
  * Copyright (c) 1993

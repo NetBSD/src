@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.18.2.2 2004/09/18 14:57:11 skrll Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.18.2.3 2004/09/21 13:39:26 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.18.2.2 2004/09/18 14:57:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.18.2.3 2004/09/21 13:39:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

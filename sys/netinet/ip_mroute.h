@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.21.2.2 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.21.2.3 2004/09/21 13:37:12 skrll Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_

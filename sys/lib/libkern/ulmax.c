@@ -1,4 +1,4 @@
-/*	$NetBSD: ulmax.c,v 1.3.64.2 2004/09/18 14:53:41 skrll Exp $	*/
+/*	$NetBSD: ulmax.c,v 1.3.64.3 2004/09/21 13:35:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.33.2.3 2004/09/18 14:50:40 skrll Exp $	*/
+/*	$NetBSD: dhu.c,v 1.33.2.4 2004/09/21 13:32:37 skrll Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.33.2.3 2004/09/18 14:50:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.33.2.4 2004/09/21 13:32:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,10 +416,10 @@ dhuxint(arg)
 }
 
 int
-dhuopen(dev, flag, mode, p)
+dhuopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit, line;
@@ -489,10 +489,10 @@ dhuopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-dhuclose(dev, flag, mode, p)
+dhuclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	int unit, line;
@@ -551,10 +551,10 @@ dhuwrite(dev, uio, flag)
 }
 
 int
-dhupoll(dev, events, p)
+dhupoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
@@ -562,17 +562,17 @@ dhupoll(dev, events, p)
 	sc = dhu_cd.cd_devs[DHU_M2U(minor(dev))];
 
 	tp = sc->sc_dhu[DHU_LINE(minor(dev))].dhu_tty;
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*ARGSUSED*/
 int
-dhuioctl(dev, cmd, data, flag, p)
+dhuioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct dhu_softc *sc;
 	struct tty *tp;
@@ -584,11 +584,11 @@ dhuioctl(dev, cmd, data, flag, p)
 	sc = dhu_cd.cd_devs[unit];
 	tp = sc->sc_dhu[line].dhu_tty;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
 

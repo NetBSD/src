@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.3.2.2 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.3.2.3 2004/09/21 13:35:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.3.2.2 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.3.2.3 2004/09/21 13:35:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h> 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9.8.2 2004/09/18 14:56:06 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.9.8.3 2004/09/21 13:38:23 skrll Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9.8.2 2004/09/18 14:56:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9.8.3 2004/09/21 13:38:23 skrll Exp $");
 
 #include <stdio.h>
 #include <strings.h>

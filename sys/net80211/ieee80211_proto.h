@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.5.2.3 2004/09/18 14:54:39 skrll Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.5.2.4 2004/09/21 13:36:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting

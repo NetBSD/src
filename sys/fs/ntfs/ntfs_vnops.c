@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12.2.5 2004/09/18 14:52:50 skrll Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.12.2.6 2004/09/21 13:35:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.5 2004/09/18 14:52:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.6 2004/09/21 13:35:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -739,7 +739,7 @@ ntfs_lookup(ap)
 		(int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
 		dip->i_number, lockparent, wantparent));
 
-	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_proc);
+	error = VOP_ACCESS(dvp, VEXEC, cred, cnp->cn_lwp);
 	if(error)
 		return (error);
 

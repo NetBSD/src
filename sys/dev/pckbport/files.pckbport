@@ -1,4 +1,4 @@
-# $NetBSD: files.pckbport,v 1.1.4.3 2004/09/18 14:50:23 skrll Exp $
+# $NetBSD: files.pckbport,v 1.1.4.4 2004/09/21 13:32:19 skrll Exp $
 # devices attached at pckbport, for use with wscons
 
 file	dev/pckbport/pckbport.c		pckbport | pckbport_machdep_cnattach

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.14.2.2 2004/09/18 14:50:54 skrll Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.14.2.3 2004/09/21 13:32:54 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.14.2.2 2004/09/18 14:50:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.14.2.3 2004/09/21 13:32:54 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 

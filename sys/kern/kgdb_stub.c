@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.14.2.2 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.14.2.3 2004/09/21 13:35:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14.2.2 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.14.2.3 2004/09/21 13:35:11 skrll Exp $");
 
 #include "opt_kgdb.h"
 

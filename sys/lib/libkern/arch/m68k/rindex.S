@@ -1,4 +1,4 @@
-/*	$NetBSD: rindex.S,v 1.2.28.2 2004/09/18 14:53:54 skrll Exp $	*/
+/*	$NetBSD: rindex.S,v 1.2.28.3 2004/09/21 13:36:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)rindex.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: rindex.S,v 1.2.28.2 2004/09/18 14:53:54 skrll Exp $")
+	RCSID("$NetBSD: rindex.S,v 1.2.28.3 2004/09/21 13:36:07 skrll Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

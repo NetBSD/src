@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.23.2.3 2004/09/18 14:52:24 skrll Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.23.2.4 2004/09/21 13:34:29 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.23.2.3 2004/09/18 14:52:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.23.2.4 2004/09/21 13:34:29 skrll Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -281,7 +281,7 @@ usl_attachtimeout(void *arg)
 
 int
 wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-		     int flag, struct proc *p)
+		     int flag, struct lwp *l)
 {
 	int idx, maxidx;
 
@@ -343,8 +343,9 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 
 int
 wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
-		     u_long cmd, caddr_t data, int flag, struct proc *p)
+		     u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	int intarg, res;
 	u_long req;
 	void *arg;
@@ -497,7 +498,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 #endif
 	}
 
-	res = wsdisplay_internal_ioctl(sc, scr, req, arg, flag, p);
+	res = wsdisplay_internal_ioctl(sc, scr, req, arg, flag, l);
 	if (res != EPASSTHROUGH)
 		return (res);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.10.16.1 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.10.16.2 2004/09/21 13:33:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

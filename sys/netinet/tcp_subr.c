@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.142.2.2 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.142.2.3 2004/09/21 13:37:13 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.2 2004/09/18 14:54:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.3 2004/09/21 13:37:13 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

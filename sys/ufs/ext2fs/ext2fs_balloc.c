@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.19.2.2 2004/09/18 14:56:52 skrll Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.19.2.3 2004/09/21 13:39:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.19.2.2 2004/09/18 14:56:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.19.2.3 2004/09/21 13:39:07 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"

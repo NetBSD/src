@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pool.c,v 1.4.2.4 2004/09/18 14:54:54 skrll Exp $	*/
+/*	$NetBSD: ip_pool.c,v 1.4.2.5 2004/09/21 13:37:12 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.

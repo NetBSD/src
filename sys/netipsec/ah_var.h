@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_var.h,v 1.2.2.3 2004/09/18 14:55:32 skrll Exp $	*/
+/*	$NetBSD: ah_var.h,v 1.2.2.4 2004/09/21 13:37:48 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ah_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ah.h,v 1.29 2002/06/09 16:26:10 itojun Exp $	*/
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: softdep.h,v 1.7.2.2 2004/09/18 14:56:52 skrll Exp $	*/
+/*	$NetBSD: softdep.h,v 1.7.2.3 2004/09/21 13:39:10 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.

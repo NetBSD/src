@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydefaults.h,v 1.12.6.2 2004/09/18 14:56:31 skrll Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.12.6.3 2004/09/21 13:38:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993

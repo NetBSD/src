@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.8.18.2 2004/09/18 14:52:24 skrll Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.8.18.3 2004/09/21 13:34:29 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.

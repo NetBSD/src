@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.3.6.1 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.3.6.2 2004/09/21 13:33:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.14.2.4 2004/09/18 14:54:14 skrll Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.14.2.5 2004/09/21 13:36:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

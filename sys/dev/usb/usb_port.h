@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.62.2.1 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.62.2.2 2004/09/21 13:33:50 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*

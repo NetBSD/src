@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.3.2.5 2004/09/18 14:52:37 skrll Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.3.2.6 2004/09/21 13:34:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.3.2.5 2004/09/18 14:52:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.3.2.6 2004/09/21 13:34:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ adosfs_lookup(v)
 	/* 
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_lwp)) != 0)
 		return (error);
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -177,7 +177,8 @@ adosfs_lookup(v)
 	bn = adp->tab[hval];
 	i = min(adp->tabi[hval], 0);
 	while (bn != 0) {
-		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp)) != 0) {
+		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp
+				      )) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[aget] %d)", error);
 #endif
@@ -215,7 +216,7 @@ adosfs_lookup(v)
 		if (vdp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 
-		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_lwp)) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[VOP_ACCESS] %d)", error);
 #endif
@@ -240,7 +241,7 @@ adosfs_lookup(v)
 
 found:
 	if (nameiop == DELETE && last)  {
-		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_lwp)) != 0) {
 			if (vdp != *vpp)
 				vput(*vpp);
 			*vpp = NULL;
@@ -251,7 +252,7 @@ found:
 	if (nameiop == RENAME && wantp && last) {
 		if (vdp == *vpp)
 			return(EISDIR);
-		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_proc)) != 0) {
+		if ((error = VOP_ACCESS(vdp, VWRITE, ucp, cnp->cn_lwp)) != 0) {
 			vput(*vpp);
 			*vpp = NULL;
 			return (error);

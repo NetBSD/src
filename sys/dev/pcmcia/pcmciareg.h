@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.7.46.3 2004/09/18 14:50:23 skrll Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.7.46.4 2004/09/21 13:32:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsrtt.h,v 1.6.10.2 2004/09/18 14:56:20 skrll Exp $	*/
+/*	$NetBSD: nfsrtt.h,v 1.6.10.3 2004/09/21 13:38:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

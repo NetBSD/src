@@ -1,4 +1,4 @@
-/* $NetBSD: kcont.h,v 1.3.4.3 2004/09/18 14:56:30 skrll Exp $ */
+/* $NetBSD: kcont.h,v 1.3.4.4 2004/09/21 13:38:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.5.6.2 2004/09/18 14:51:46 skrll Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.5.6.3 2004/09/21 13:33:48 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.51.2.2 2004/09/18 14:52:13 skrll Exp $	*/
+/*	$NetBSD: xd.c,v 1.51.2.3 2004/09/21 13:34:15 skrll Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.2.2 2004/09/18 14:52:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.51.2.3 2004/09/21 13:34:15 skrll Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */

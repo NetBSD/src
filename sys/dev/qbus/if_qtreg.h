@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qtreg.h,v 1.3.4.3 2004/09/18 14:50:40 skrll Exp $	*/
+/*	$NetBSD: if_qtreg.h,v 1.3.4.4 2004/09/21 13:32:38 skrll Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.

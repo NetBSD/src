@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.163.2.4 2004/09/18 14:56:31 skrll Exp $	*/
+/*	$NetBSD: systm.h,v 1.163.2.5 2004/09/21 13:38:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -175,7 +175,7 @@ struct malloc_type;
 void	*hashinit __P((u_int, enum hashtype, struct malloc_type *,
 	    int, u_long *));
 void	hashdone __P((void *, struct malloc_type *));
-int	seltrue __P((dev_t, int, struct proc *));
+int	seltrue __P((dev_t, int, struct lwp *));
 int	sys_nosys __P((struct lwp *, void *, register_t *));
 
 

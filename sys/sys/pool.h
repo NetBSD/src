@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.39.2.2 2004/09/18 14:56:30 skrll Exp $	*/
+/*	$NetBSD: pool.h,v 1.39.2.3 2004/09/21 13:38:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.1.8.2 2004/09/18 14:54:53 skrll Exp $
+#	$NetBSD: files.netinet,v 1.1.8.3 2004/09/21 13:37:10 skrll Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG

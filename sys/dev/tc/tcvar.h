@@ -1,4 +1,4 @@
-/* $NetBSD: tcvar.h,v 1.17.26.3 2004/09/18 14:51:45 skrll Exp $ */
+/* $NetBSD: tcvar.h,v 1.17.26.4 2004/09/21 13:33:42 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

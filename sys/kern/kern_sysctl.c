@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.137.2.4 2004/09/18 14:53:03 skrll Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.137.2.5 2004/09/21 13:35:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.137.2.4 2004/09/18 14:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.137.2.5 2004/09/21 13:35:08 skrll Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: tablet.h,v 1.11.48.2 2004/09/18 14:56:31 skrll Exp $	*/
+/*	$NetBSD: tablet.h,v 1.11.48.3 2004/09/21 13:38:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1993

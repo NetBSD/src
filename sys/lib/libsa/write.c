@@ -1,4 +1,4 @@
-/*	$NetBSD: write.c,v 1.9.28.2 2004/09/18 14:54:02 skrll Exp $	*/
+/*	$NetBSD: write.c,v 1.9.28.3 2004/09/21 13:36:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993

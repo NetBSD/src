@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.123.2.4 2004/09/18 14:54:16 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.123.2.5 2004/09/21 13:36:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.4 2004/09/18 14:54:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.5 2004/09/21 13:36:35 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -623,7 +623,7 @@ if_detach(ifp)
 			if (pr->pr_usrreq != NULL) {
 				(void) (*pr->pr_usrreq)(&so,
 				    PRU_PURGEIF, NULL, NULL,
-				    (struct mbuf *) ifp, curproc);
+				    (struct mbuf *) ifp, curlwp);
 				purged = 1;
 			}
 		}
@@ -1334,11 +1334,11 @@ ifunit(name)
  * Interface ioctls.
  */
 int
-ifioctl(so, cmd, data, p)
+ifioctl(so, cmd, data, l)
 	struct socket *so;
 	u_long cmd;
 	caddr_t data;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
@@ -1346,6 +1346,7 @@ ifioctl(so, cmd, data, p)
 	struct ifdatareq *ifdr;
 	int s, error = 0;
 	short oif_flags;
+	struct proc *p = l->l_proc;
 	int prived_error;
 
 	if (p)
@@ -1557,9 +1558,9 @@ ifioctl(so, cmd, data, p)
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
 #if !defined(COMPAT_43) && !defined(COMPAT_LINUX) && !defined(COMPAT_SVR4) && !defined(COMPAT_ULTRIX) && !defined(LKM)
-		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+		error = ((*so->so_proto->pr_usrreq))(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, p));
+		    (struct mbuf *)ifp, l);
 #else
 	    {
 		int ocmd = cmd;
@@ -1600,7 +1601,7 @@ ifioctl(so, cmd, data, p)
 
 		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, p));
+		    (struct mbuf *)ifp, l));
 
 		switch (ocmd) {
 		case OSIOCGIFADDR:
