@@ -1,4 +1,4 @@
-.\"	$NetBSD: re.4,v 1.1 2004/05/31 13:46:29 toshii Exp $
+.\"	$NetBSD: re.4,v 1.2 2004/06/01 11:04:40 wiz Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -37,14 +37,14 @@
 .Os
 .Sh NAME
 .Nm re
-.Nd "RealTek 8139C+/8169/8169S/8110S PCI ethernet adapter driver"
+.Nd "RealTek 8139C+/8169/8169S/8110S PCI Ethernet adapter driver"
 .Sh SYNOPSIS
 .Cd "re* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for various NICs based on the RealTek RTL8139C+,
-RTL8169, RTL8169S and RTL8110S PCI ethernet controllers, including
+RTL8169, RTL8169S, and RTL8110S PCI Ethernet controllers, including
 the following:
 .Pp
 .Bl -bullet -compact
@@ -60,25 +60,27 @@ PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 Xterasys XN-152 10/100/1000 NIC (8169)
 .El
 .Pp
-NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over CAT5
-cable. NICs based on the 8169, 8169S and 8110S are capable of 10, 100 and
+NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over
+CAT5 cable.
+NICs based on the 8169, 8169S, and 8110S are capable of 10, 100, and
 1000Mbps operation.
 .Pp
 All NICs supported by the
 .Nm
 driver have TCP/IP checksum offload and hardware VLAN tagging/insertion
-features, and use a descriptor-based DMA mechanism. They are also
-capable of TCP large send (TCP segmentation offload).
+features, and use a descriptor-based DMA mechanism.
+They are also capable of TCP large send (TCP segmentation offload).
 .Pp
 The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
 The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
 The 8169S and 8110S are single-chip devices containing both a 10/100/1000
-MAC and 10/100/1000 copper PHY. Standalone 10/100/1000 cards are available
-in both 32-bit PCI and 64-bit PCI models. The 8110S is designed for
-embedded LAN-on-motherboard applications.
+MAC and 10/100/1000 copper PHY.
+Standalone 10/100/1000 cards are available in both 32-bit PCI and
+64-bit PCI models.
+The 8110S is designed for embedded LAN-on-motherboard applications.
 .Pp
-The 8169, 8169S and 8110S also support jumbo frames, which can be configured
-via the interface MTU setting.
+The 8169, 8169S, and 8110S also support jumbo frames, which can be
+configured via the interface MTU setting.
 Selecting an MTU larger than 1500 bytes with the
 .Xr ifconfig 8
 utility configures the adapter to receive and transmit jumbo frames.
@@ -103,7 +105,7 @@ or
 .Cm half-duplex
 modes.
 .It Cm 100baseTX
-Set 100Mbps (fast ethernet) operation.
+Set 100Mbps (Fast Ethernet) operation.
 The
 .Xr ifconfig 8
 .Ic mediaopt
@@ -114,11 +116,11 @@ or
 modes.
 .It Cm 1000baseTX
 Set 1000baseTX operation over twisted pair.
-The RealTek gigE chips support 1000Mbps in
+The RealTek GigE chips support 1000Mbps in
 .Cm full-duplex
 mode only.
 .\" .It Cm 1000baseSX
-.\" Set 1000Mbps (gigabit ethernet) operation.
+.\" Set 1000Mbps (Gigabit Ethernet) operation.
 .\" Both
 .\" .Cm full-duplex
 .\" and
@@ -151,8 +153,7 @@ The driver failed to allocate memory for per-device instance information
 during initialization.
 .It "re%d: failed to enable memory mapping!"
 The driver failed to initialize PCI shared memory mapping.
-This might
-happen if the card is not in a bus-master slot.
+This might happen if the card is not in a bus-master slot.
 .It "re%d: no memory for jumbo buffers!"
 The driver failed to allocate memory for jumbo frames during
 initialization.
@@ -167,14 +168,15 @@ the network connection (cable).
 .Xr pci 4 ,
 .Xr ifconfig 8
 .Rs
-.%T RealTek Semiconductor RTL8139C+, RTL8169, RTL8169S and RTL8110S datasheets
+.%T RealTek Semiconductor RTL8139C+, RTL8169, RTL8169S, and RTL8110S datasheets
 .%O http://www.realtek.com.tw
 .Re
 .Sh HISTORY
 The
 .Nm
 device driver first appeared in
-.Fx 5.2 , and in
+.Fx 5.2
+and was ported to
 .Nx 3.0 .
 .Sh AUTHORS
 The
@@ -184,23 +186,26 @@ driver was written by
 .Sh BUGS
 The Xterasys XN-152 32-bit PCI NIC, which uses the RTL8169 MAC and
 Marvell 88E1000 PHY, has a defect that causes DMA corruption
-if the board is plugged into a 64-bit PCI slot. The defect
-lies in the board design, not the chip itself: the PCI REQ64# and ACK64#
-lines should be pulled high, but they are not. The result is that the
-8169 chip is tricked into performing 64-bit DMA transfers even though
-a 64-bit data path between the NIC and the bus does not actually exist.
+if the board is plugged into a 64-bit PCI slot.
+The defect lies in the board design, not the chip itself: the PCI
+REQ64# and ACK64# lines should be pulled high, but they are not.
+The result is that the 8169 chip is tricked into performing 64-bit
+DMA transfers even though a 64-bit data path between the NIC and
+the bus does not actually exist.
 .Pp
 Unfortunately, it is not possible to correct this problem in software,
-however it is possible to detect it. When the
+however it is possible to detect it.
+When the
 .Nm
 driver is loaded, it will run a diagnostic routine designed to
 validate DMA operation by placing the chip in digital loopback mode
-and initiating a packet transmission. If the card functions properly,
-the transmitted data will
-be echoed back unmodified. If the echoed data is corrupt, the driver
-will print an error message on the console and abort the device attach. The
-user should insure the NIC is installed in a 32-bit PCI slot to
+and initiating a packet transmission.
+If the card functions properly, the transmitted data will
+be echoed back unmodified.
+If the echoed data is corrupt, the driver
+will print an error message on the console and abort the device attach.
+The user should insure the NIC is installed in a 32-bit PCI slot to
 avoid this problem.
 .Pp
-The RealTek 8169, 8169S and 8110S chips appear to only be capable of
+The RealTek 8169, 8169S, and 8110S chips appear to only be capable of
 transmitting jumbo frames up to 7.5K in size.
