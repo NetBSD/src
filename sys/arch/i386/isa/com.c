@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.5 1993/10/07 14:48:45 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.6 1993/10/11 01:51:19 mycroft Exp $
  */
 
 /*
@@ -55,6 +55,7 @@
 #include "sys/device.h"
 
 #include "machine/cpu.h"
+#include "machine/pio.h"
 
 #include "i386/isa/isavar.h"
 #include "i386/isa/icu.h"

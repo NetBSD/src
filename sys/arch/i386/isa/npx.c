@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.4 1993/10/10 08:30:07 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.5 1993/10/11 01:51:36 mycroft Exp $
  */
 
 #include "param.h"
@@ -42,11 +42,14 @@
 #include "proc.h"
 #include "ioctl.h"
 #include "sys/device.h"
+
 #include "machine/cpu.h"
 #include "machine/cpufunc.h"
+#include "machine/pio.h"
 #include "machine/pcb.h"
 #include "machine/specialreg.h"
 #include "machine/trap.h"
+
 #include "i386/isa/isavar.h"
 #include "i386/isa/isa.h"
 #include "i386/isa/icu.h"
