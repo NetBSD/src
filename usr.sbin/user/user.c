@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.16 2000/03/31 04:09:04 soren Exp $ */
+/* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.16 2000/03/31 04:09:04 soren Exp $");
+__RCSID("$NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1002,9 +1002,6 @@ usermgmt_usage(char *prog)
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
-
-extern int	optind;
-extern char	*optarg;
 
 #ifdef EXTENSIONS
 #define ADD_OPT_EXTENSIONS	"p:r:v"
