@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.4 2003/07/29 08:44:42 sjg Exp $
+# $Id: Makefile,v 1.5 2003/07/31 00:46:15 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -14,7 +14,7 @@
 
 .MAIN: all
 
-all: mod-ts
+all: mod-ts varcmd
 
 LIST= one two three
 LIST+= four five six
@@ -40,6 +40,10 @@ mod-ts:
 	@echo 'FU_$@="${FU_${@:ts}:ts}"'
 	@echo 'FU_$@:ts:T="${FU_${@:ts}:ts:T}" == cool?'
 
+.PHONY: varcmd
+varcmd:
+	@${.MAKE} -f ${MAKEFILE:H}/varcmd
+
 clean:
 	rm -f *.out *.fail *.core
 
@@ -50,7 +54,7 @@ TEST_MAKE?= ${MAKE}
 # here is the driver
 test:
 	@echo "${TEST_MAKE} -f ${MAKEFILE} > ${.TARGET}.out 2>&1"
-	@${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
+	@cd ${.OBJDIR}; ${TEST_MAKE} -f ${MAKEFILE} 2>&1 | \
 	sed 's,^${TEST_MAKE:T}:,make:,' > ${.TARGET}.out || { \
 	tail ${.TARGET}.out; mv ${.TARGET}.out ${.TARGET}.fail; exit 1; }
 	diff -u ${.CURDIR}/${.TARGET}.exp ${.TARGET}.out
