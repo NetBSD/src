@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: pch.c,v 1.3 1996/09/19 06:27:14 thorpej Exp $";
+static char rcsid[] = "$NetBSD: pch.c,v 1.4 1997/07/29 19:49:35 phil Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -147,6 +147,7 @@ there_is_another_patch()
 	if (force || batch) {
 	    say1("No file to patch.  Skipping...\n");
 	    filearg[0] = savestr(bestguess);
+	    skip_rest_of_patch = TRUE;
 	    return TRUE;
 	}
 	ask1("File to patch: ");
