@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.35 2000/01/05 11:19:37 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.36 2000/01/22 15:09:00 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.35 2000/01/05 11:19:37 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.36 2000/01/22 15:09:00 drochner Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -626,7 +626,7 @@ wskbd_input(dev, type, value)
 void
 wskbd_rawinput(dev, buf, len)
 	struct device *dev;
-	char *buf;
+	u_char *buf;
 	int len;
 {
 #if NWSDISPLAY > 0
