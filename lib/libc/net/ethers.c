@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.7 1997/01/23 14:02:03 mrg Exp $	*/
+/*	$NetBSD: ethers.c,v 1.7.2.1 1997/03/11 19:02:40 is Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -10,8 +10,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <sys/param.h>
 #include <paths.h>
 #include <errno.h>
