@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2005/02/19 16:55:05 thorpej Exp $
+# $NetBSD: Makefile,v 1.5 2005/02/19 17:05:02 thorpej Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -22,17 +22,17 @@ SRCS=	main.c session.c isakmp.c handler.c 			\
 MAN=	racoon.8 racoon.conf.5
 
 DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
-CFLAGS+=-g
-CPPFLAGS+=	-I${DIST}/src/racoon -I${DIST}/src/libipsec	\
-		-I${NETBSDSRCDIR}/lib/libipsec -I.		\
-		-I${DIST}/src/racoon/missing			\
-		-DIPSEC_DEBUG -DHAVE_CONFIG_H 			\
-		-DADMINPORTDIR=\"/var/racoon\"			\
-		-DSYSCONFDIR=\"/etc/racoon\"
+CPPFLAGS+= -I${DIST}/src/racoon -I${DIST}/src/libipsec
+CPPFLAGS+= -I${NETBSDSRCDIR}/lib/libipsec -I.
+CPPFLAGS+= -I${DIST}/src/racoon/missing
+CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H
+CPPFLAGS+= -DADMINPORTDIR=\"/var/racoon\"
+CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
+
 LDADD+= -ll -ly -lipsec -lcrypto 
 DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO} ${LIBIPSEC}
-CLEANFILES+=	racoon.cat8         racoon.conf.cat5
-YHEADER=	cfparse.h
+
+YHEADER=cfparse.h
 
 .if (${USE_PAM} != "no")
 CPPFLAGS+=-DHAVE_LIBPAM
@@ -64,11 +64,7 @@ CPPFLAGS+=-DINET6
 prsa_tok.c: ${DIST}/src/racoon/prsa_tok.l
 	${LEX} -Pprsa -o${.TARGET} ${.ALLSRC}
 
-CLEANFILES+= prsa_tok.c
-
 prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 	${YACC} -pprsa -d -o ${.TARGET} ${.ALLSRC}
-
-CLEANFILES+= prsa_par.c prsa_par.y
 
 .include <bsd.prog.mk>
