@@ -30,34 +30,37 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)fish.6	6.2 (Berkeley) 1/18/91
-.\"	$Id: fish.6,v 1.2 1993/08/01 07:47:02 mycroft Exp $
+.\"	$Id: fish.6,v 1.3 1993/08/05 01:46:41 jtc Exp $
 .\"
-.TH FISH 6 "January 18, 1991"
-.UC 4
-.SH NAME
-fish \- play ``Go Fish''
-.SH SYNOPSIS
-.ft B
-fish [\-p]
-.ft R
-.SH DESCRIPTION
-.I Fish
+.Dd January 18, 1991
+.Dt FISH 6 
+.Os
+.Sh NAME
+.Nm fish 
+.Nd play ``Go Fish''
+.Sh SYNOPSIS
+.Nm fish 
+.Op Fl p
+.Sh DESCRIPTION
+.Nm Fish
 is the game
-.IR "Go Fish" ,
+.Dq Go Fish ,
 a traditional children's card game.
-.PP
+.Pp
 The computer deals the player and itself seven cards, and places
 the rest of the deck face-down (figuratively).
-The object of the game is to collect ``books'', or all of the members
-of a single rank.
-For example, collecting four 2's would give the player a ``book of
-2's''.
-.PP
+The object of the game is to collect 
+.Dq books ,
+or all of the members of a single rank.
+For example, collecting four 2's would give the player a 
+.Dq book of 2's .
+.Pp
 The options are as follows:
-.TP
-\-p
+.Bl -tag -width indent
+.It Fl p
 Professional mode.
-.PP
+.El
+.Pp
 The computer makes a random decision as to who gets to start the
 game, and then the computer and player take turns asking each other
 for cards of a specified rank.
@@ -66,20 +69,21 @@ them up to the asking player.
 A player must have at least one of the cards of the rank they request
 in their hand.
 When a player asks for a rank of which the other player has no
-cards, the asker is told to ``Go Fish!''.
+cards, the asker is told to 
+.Dq Go Fish! .
 Then, the asker draws a card from the non-dealt cards.
 If they draw the card they asked for, they continue their turn, asking
 for more ranks from the other player.
 Otherwise, the other player gets a turn.
-.PP
+.Pp
 When a player completes a book, either by getting cards from the
 other player or drawing from the deck, they set those cards aside and
 the rank is no longer in play.
-.PP
+.Pp
 The game ends when either player no longer has any cards in their hand.
 The player with the most books wins.
-.PP
-.I Fish
+.Pp
+.Nm Fish
 provides instructions as to what input it accepts.
-.SH BUGS
+.Sh BUGS
 The computer cheats only rarely.

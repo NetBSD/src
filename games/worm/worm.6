@@ -30,38 +30,37 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)worm.6	6.3 (Berkeley) 6/23/90
-.\"	$Id: worm.6,v 1.2 1993/08/01 07:46:00 mycroft Exp $
+.\"	$Id: worm.6,v 1.3 1993/08/05 01:47:14 jtc Exp $
 .\"
-.TH WORM 6 "June 23, 1990"
-.UC 4
-.SH NAME
-worm \- Play the growing worm game
-.SH SYNOPSIS
-.B worm
-[
-.I size
-]
-.SH DESCRIPTION
-.PP
+.Dd June 23, 1990
+.Dt WORM 6
+.Os
+.Sh NAME
+.Nm worm
+.Nd Play the growing worm game
+.Sh SYNOPSIS
+.Nm worm
+.Op Ar size
+.Sh DESCRIPTION
 In
-.I worm,
+.Nm worm,
 you are a little worm, your body is the "o"'s on the screen
 and your head is the "@".  You move with the hjkl keys (as in the game
 snake).  If you don't press any keys, you continue in the direction you
 last moved.  The upper case HJKL keys move you as if you had pressed
 several (9 for HL and 5 for JK) of the corresponding lower case key
 (unless you run into a digit, then it stops).
-.PP
+.Pp
 On the screen you will see a digit, if your worm eats the digit is will
 grow longer, the actual amount longer depends on which digit it was
 that you ate.  The object of the game is to see how long you can make
 the worm grow.
-.PP
+.Pp
 The game ends when the worm runs into either the sides of the screen,
 or itself.  The current score (how much the worm has grown) is kept in
 the upper left corner of the screen.
-.PP
+.Pp
 The optional argument, if present, is the initial length of the worm.
-.SH BUGS
+.Sh BUGS
 If the initial length of the worm is set to less than one or more
 than 75, various strange things happen.

@@ -30,85 +30,94 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)snake.6	6.4 (Berkeley) 6/23/90
-.\"	$Id: snake.6,v 1.2 1993/08/01 07:46:09 mycroft Exp $
+.\"	$Id: snake.6,v 1.3 1993/08/05 01:47:07 jtc Exp $
 .\"
-.TH SNAKE 6 "June 23, 1990"
-.UC 4
-.SH NAME
-snake, snscore \- display chase game
-.SH SYNOPSIS
-.B snake
-[
-.B -w width
-] [
-.B -l length
-]
+.Dd June 23, 1990
+.Dt SNAKE 6
+.Os
+.Sh NAME
+.Nm snake , 
+.Nm snscore
+.Nd display chase game
+.Sh SYNOPSIS
+.Nm snake
+.Op Fl w Ar width
+.Op Fl l Ar length
 .br
-.B snscore
-.SH DESCRIPTION
-Snake is a display-based game which must be played on a CRT terminal.
+.Nm snscore
+.Sh DESCRIPTION
+.Nm Snake 
+is a display-based game which must be played on a CRT terminal.
 The object of the game is to make as much money as possible without
 getting eaten by the snake.  The
-.B \-l
+.Fl l
 and
-.B \-w
+.Fl w
 options allow you to specify the length and width of the field.
 By default the entire screen (except for the last column) is used.
-.PP
+.Pp
 You are represented on the screen by an I.
 The snake is 6 squares long and is represented by S's.
 The money is $, and an exit is #.
 Your score is posted in the upper left hand corner.
-.PP
-You can move around using the same conventions as vi(1),
-the h, j, k, and l keys work, as do the arrow keys.
+.Pp
+You can move around using the same conventions as 
+.Xr vi 1 ,
+the
+.Ic h ,
+.Ic j ,
+.Ic k ,
+and
+.Ic l
+keys work, as do the arrow keys.
 Other possibilities include:
-.IP sefc
+.Bl -tag -width indent
+.It Ic sefc
 These keys are like hjkl but form a directed pad around the d key.
-.IP HJKL
+.It Ic HJKL
 These keys move you all the way in the indicated direction to the
-same row or column as the money.  This does
-.I not
+same row or column as the money.  This does 
+.Em not
 let you jump away from the snake, but rather saves you from having
 to type a key repeatedly.  The snake still gets all his turns.
-.IP SEFC
+.It Ic SEFC
 Likewise for the upper case versions on the left.
-.IP ATPB
+.It Ic ATPB
 These keys move you to the four edges of the screen.
 Their position on the keyboard is the mnemonic, e.g.
 P is at the far right of the keyboard.
-.IP x
+.It Ic x
 This lets you quit the game at any time.
-.IP p
+.It Ic p
 Points in a direction you might want to go.
-.IP w
+.It Ic w
 Space warp to get out of tight squeezes, at a price.
-.PP
+.El
+.Pp
 To earn money, move to the same square the money is on.
 A new $ will appear when you earn the current one.
 As you get richer, the snake gets hungrier.
 To leave the game, move to the exit (#).
-.PP
+.Pp
 A record is kept of the personal best score of each player.
 Scores are only counted if you leave at the exit,
 getting eaten by the snake is worth nothing.
-.PP
+.Pp
 As in pinball, matching the last digit of your score to the number
 which appears after the game is worth a bonus.
-.PP
+.Pp
 To see who wastes time playing snake, run
-.I snscore .
-.SH FILES
-.nf
-.ta \w'/usr/games/lib/snakerawscores 'u
-/usr/games/lib/snakerawscores	database of personal bests
-/usr/games/lib/snake.log	log of games played
-.DT
-.fi
-.SH BUGS
-.PP
+.Nm snscore .
+.Sh FILES
+.Bl -tag -width /usr/games/lib/snakerawscores -compact
+.It Pa /usr/games/lib/snakerawscores
+database of personal bests
+.It Pa /usr/games/lib/snake.log
+log of games played
+.El
+.Sh BUGS
 When playing on a small screen,
 it's hard to tell when you hit the edge of the screen.
-.PP
+.Pp
 The scoring function takes into account the size of the screen.
 A perfect function to do this equitably has not been devised.
