@@ -1,4 +1,5 @@
-/* $NetBSD: ffs_appleufs.c,v 1.2 2002/11/02 19:31:09 dbj Exp $ */
+/*	$NetBSD: ffs_appleufs.c,v 1.3 2003/10/13 17:07:55 thorpej Exp $	*/
+
 /*
  * Copyright (c) 2002 Darrin B. Jewell
  * All rights reserved.
@@ -29,9 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.2 2002/11/02 19:31:09 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_appleufs.c,v 1.3 2003/10/13 17:07:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
