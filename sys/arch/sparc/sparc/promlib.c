@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.17 2003/03/01 13:01:56 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.18 2003/06/28 01:03:57 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1191,10 +1191,10 @@ prom_init()
 	 * This process is actually started in srt0.S, which has discovered
 	 * the minimal set of machine specific parameters for the 1st-level
 	 * boot program (bootxx) to run. The page size has already been set
-	 * and the CPU type is either CPU_SUN4 or CPU_SUN4C.
+	 * and the CPU type is either CPU_SUN4, CPU_SUN4C or CPU_SUN4M.
 	 */
 
-	if (cputyp == CPU_SUN4)
+	if (cputyp == CPU_SUN4 || cputyp == CPU_SUN4M)
 		return;
 
 	/*
