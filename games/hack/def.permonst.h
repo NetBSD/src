@@ -1,7 +1,7 @@
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  *
- *	$Id: def.permonst.h,v 1.2 1993/08/02 17:16:52 mycroft Exp $
+ *	$NetBSD: def.permonst.h,v 1.3 1995/03/23 08:29:37 cgd Exp $
  */
 
 struct permonst {

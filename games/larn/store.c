@@ -1,3 +1,5 @@
+/*	$NetBSD: store.c,v 1.4 1995/03/23 08:34:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)store.c	5.4 (Berkeley) 5/13/91";*/
-static char rcsid[] = "$Id: store.c,v 1.3 1994/10/21 21:26:14 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
+#else
+static char rcsid[] = "$NetBSD: store.c,v 1.4 1995/03/23 08:34:20 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*	store.c		Larn is copyrighted 1986 by Noah Morgan. */

@@ -1,37 +1,44 @@
-#	from: @(#)Makefile	5.2 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.10 1994/02/10 02:31:32 cgd Exp $
+#	$NetBSD: Makefile,v 1.11 1995/03/23 08:28:33 cgd Exp $
+#	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
-#
-# set `OBSCENE' to "real" to have obscene fortunes installed,
-# fake to have a note stating that they're not installed
-# isntalled in their place
-#
-OBSCENE=real
+SRCS=	fortunes fortunes2 startrek zippy
+BLDS=	fortunes.dat fortunes2.dat startrek.dat zippy.dat \
+	fortunes-o fortunes-o.dat
 
-NORMDAT= fortunes.dat startrek.dat zippy.dat
-OBSDAT=	fortunes-o.dat
-DATFILES= ${NORMDAT} ${OBSDAT}
+# TO INSTALL THE POTENTIALLY OFFENSIVE FORTUNES, UNCOMMENT THE THREE
+# LINES AND COMMENT OUT THE FOURTH LINE.
 
-CLEANFILES+=${DATFILES}
+# THE THREE LINES
+SRCS+=	fortunes2-o limerick
+BLDS+=	fortunes2-o.dat limerick.dat
+TYPE=	real
+
+# THE FOURTH LINE
+#TYPE=	fake
+
+CLEANFILES+=${BLDS}
 
 STRFILE!=cd $(.CURDIR)/../strfile; \
 	printf "xxx:\n\techo \$${.OBJDIR}/strfile\n" | ${MAKE} -r -s -f - xxx
 
-all: ${DATFILES}
+all: ${BLDS}
 
-install:
-	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${DATFILES} \
+install: ${SRCS} ${BLDS}
+	(cd ${.CURDIR} && install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    ${SRCS} ${DESTDIR}/usr/share/games/fortune)
+	install -o ${BINOWN} -g ${BINGRP} -m 444 ${BLDS} \
 	    ${DESTDIR}/usr/share/games/fortune
-	(cd ${.CURDIR} && install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-		${NORMDAT:R} ${DESTDIR}/usr/share/games/fortune)
-	(cd ${.CURDIR} && install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
-		${OBSDAT:R}.${OBSCENE}.rot13 \
-		${DESTDIR}/usr/share/games/fortune/${OBSDAT:R})
 
-fortunes-o.dat: ${.TARGET:R}.${OBSCENE}.rot13
-	${STRFILE} -rsx ${.CURDIR}/${.TARGET:R}.${OBSCENE}.rot13 ${.TARGET}
-
-fortunes.dat startrek.dat zippy.dat: ${.TARGET:R}
+fortunes.dat fortunes2.dat fortunes2-o.dat limerick.dat startrek.dat zippy.dat:
 	${STRFILE} -rs ${.CURDIR}/${.TARGET:R} ${.TARGET}
+
+fortunes-o.dat: fortunes-o
+	${STRFILE} -rsx fortunes-o ${.TARGET}
+
+#fortunes-o: fortunes-o.${TYPE}
+#	/usr/games/caesar 13 < ${.ALLSRC} > ${.TARGET}
+
+fortunes-o: fortunes-o.${TYPE}.rot13
+	cat < ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.prog.mk>

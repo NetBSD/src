@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: create.c,v 1.2 1993/08/02 17:19:57 mycroft Exp $";
+static char rcsid[] = "$NetBSD: create.c,v 1.3 1995/03/23 08:33:14 cgd Exp $";
 #endif /* not lint */
 
 /*	create.c		Larn is copyrighted 1986 by Noah Morgan. */

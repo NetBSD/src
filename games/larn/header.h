@@ -1,4 +1,4 @@
-/*	$Id: header.h,v 1.4 1994/10/21 21:26:08 mycroft Exp $ */
+/*	$NetBSD: header.h,v 1.5 1995/03/23 08:33:29 cgd Exp $	*/
 
 /*	header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -353,10 +353,11 @@ extern struct monst monster[];
 extern struct sphere *spheres;
 extern struct _itm itm[];
 
-char *fortune(),*malloc(),*getenv(),*getlogin(),*lgetw(),*lgetl(),*ctime();
+char *fortune(),*getenv(),*getlogin(),*lgetw(),*lgetl(),*ctime();
 char *tmcapcnv(),*tgetstr(),*tgoto();
 long paytaxes(),lgetc(),lrint(),time();
 unsigned long readnum();
+void *malloc();
 
 	/* macro to create scroll #'s with probability of occurrence */
 #define newscroll() (scprob[rund(81)])

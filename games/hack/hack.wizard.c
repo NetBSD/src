@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.wizard.c,v 1.2 1993/08/02 17:19:39 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.wizard.c,v 1.3 1995/03/23 08:32:09 cgd Exp $";
 #endif /* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */

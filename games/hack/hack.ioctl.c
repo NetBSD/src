@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hack.ioctl.c,v 1.3 1995/01/07 04:36:41 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.ioctl.c,v 1.4 1995/03/23 08:30:29 cgd Exp $";
 #endif /* not lint */
 
 /* This cannot be part of hack.tty.c (as it was earlier) since on some
