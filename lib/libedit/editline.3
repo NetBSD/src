@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.19 1999/11/26 18:38:27 lukem Exp $
+.\"	$NetBSD: editline.3,v 1.20 2000/02/28 17:41:05 chopps Exp $
 .\"
 .\" Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,7 +84,7 @@
 .Ft const LineInfo *
 .Fn el_line "EditLine *e"
 .Ft int
-.Fn el_insertstr "EditLine *e" "char *str"
+.Fn el_insertstr "EditLine *e" "const char *str"
 .Ft void
 .Fn el_deletestr "EditLine *e" "int count"
 .Ft History *

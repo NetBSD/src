@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.14 1999/11/12 01:05:07 lukem Exp $	*/
+/*	$NetBSD: histedit.h,v 1.15 2000/02/28 17:41:05 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -144,7 +144,7 @@ void		 el_resize	__P((EditLine *));
  * User-defined function interface.
  */
 const LineInfo	*el_line	__P((EditLine *));
-int   		 el_insertstr	__P((EditLine *, char *));
+int   		 el_insertstr	__P((EditLine *, const char *));
 void		 el_deletestr	__P((EditLine *, int));
 
 /*
