@@ -93,7 +93,7 @@ void flsc_led		 __P((struct sfas_softc *sc, int mode));
  * if we are an Advanced Systems & Software FastlaneZ3
  */
 int
-flscmatch(pdp, void, auxp)
+flscmatch(pdp, match, auxp)
 	struct device	*pdp;
 	void		*match, *auxp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.13 1996/03/17 01:17:20 thorpej Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.14 1996/03/17 05:58:41 mhitch Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -434,7 +434,7 @@ struct cfattach grful_ca = {
 	sizeof(struct grf_ul_softc), grfulmatch, grfulattach
 };
 
-struct cfdriver grfulcd = {
+struct cfdriver grful_cd = {
 	NULL, "grful", DV_DULL, NULL, 0
 };
 
