@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.4 1994/12/08 09:51:29 jtc Exp $	*/
+/*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tftp.c,v 1.4 1994/12/08 09:51:29 jtc Exp $";
+static char rcsid[] = "$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: tftp.c,v 1.4 1994/12/08 09:51:29 jtc Exp $";
 #include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "extern.h"
