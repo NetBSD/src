@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.54 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.55 2004/03/24 20:25:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.54 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.55 2004/03/24 20:25:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,9 +315,7 @@ pipe_create(pipep, allockva)
 	struct pipe *pipe;
 	int error;
 
-	pipe = *pipep = pool_get(&pipe_pool, M_WAITOK);
-	if (pipe == NULL)
-		return (ENOMEM);
+	pipe = *pipep = pool_get(&pipe_pool, PR_WAITOK);
 
 	/* Initialize */ 
 	memset(pipe, 0, sizeof(struct pipe));
@@ -1516,5 +1514,7 @@ SYSCTL_SETUP(sysctl_kern_pipe_setup, "sysctl kern.pipe subtree setup")
 void
 pipe_init(void)
 {
-	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl", NULL);
+
+	pool_init(&pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
+	    &pool_allocator_nointr);
 }
