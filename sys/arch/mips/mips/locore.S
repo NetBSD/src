@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.124 2001/10/16 16:31:36 uch Exp $	*/
+/*	$NetBSD: locore.S,v 1.124.2.1 2001/10/24 17:38:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1032,7 +1032,7 @@ LEAF(suiword)
 	sw	a1, 0(a0)			# store word
 	sw	zero, U_PCB_ONFAULT(v1)
 	move	v0, zero
-	lw	v1, _C_LABEL(mips_locore_jumpvec) + MIPSX_FLUSHICACHE
+	lw	v1, _C_LABEL(mips_cache_ops) + MIPSX_FLUSHICACHE
 	j	v1				# NOTE: must not clobber v0!
 	li	a1, 4				# size of word
 END(suiword)

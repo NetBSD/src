@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.21 2001/01/07 04:13:16 simonb Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.21.6.1 2001/10/24 17:38:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <mips/cache.h>
 #include <mips/sysarch.h>
 #include <mips/cachectl.h>
 #include <mips/locore.h>
@@ -118,7 +119,8 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
 
 #ifndef notyet
 	/* For now, just flush all of both caches. */
-	MachFlushCache();
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
 	return (0);
 
 #else
