@@ -63,9 +63,9 @@
 extern "C" {
 #endif
 
-#ifdef NO_MD2
-#error MD2 is disabled.
-#endif
+
+#include <sys/types.h>
+#define	MD2_INT	u_int32_t
 
 #define MD2_DIGEST_LENGTH	16
 #define MD2_BLOCK       	16
