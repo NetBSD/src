@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc105reg.h,v 1.1 2001/12/10 12:09:33 kleink Exp $	*/
+/*	$NetBSD: mpc105reg.h,v 1.2 2002/02/11 19:01:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,11 +75,13 @@
 #define	 MPC105_PICR1_PROC_TYPE_604	0x00060000
 #define	 MPC105_PICR1_XATS	 0x00010000	/* Address map 0:B, 1:A */
 #define	 MPC105_PICR1_MP_ID	 0x00008000	/* Multiprocessor identifier */
+#define	 MPC105_PICR1_RSVD0	 0x00004000
 #define	 MPC105_PICR1_LBA_EN	 0x00002000	/* Local bus slave enable */
 #define	 MPC105_PICR1_FLASHWR_EN 0x00001000	/* Flash writes enable */
 #define	 MPC105_PICR1_MCP_EN	 0x00000800	/* Machine check enable */
 #define	 MPC105_PICR1_TEA_EN	 0x00000400	/* Transfer error enable */
 #define	 MPC105_PICR1_DPARK	 0x00000200	/* Data bus park */
+#define	 MPC105_PICR1_RSVD1	 0x00000100
 #define	 MPC105_PICR1_NO_PORT_REGS 0x00000080	/* Implement ext. conf regs */
 #define	 MPC105_PICR1_ST_GATH_EN 0x00000040	/* Store gathering enable */
 #define	 MPC105_PICR1_LE_MODE	 0x00000020	/* 0:Big, 1:Little endian */
