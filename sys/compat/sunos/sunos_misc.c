@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sunos_misc.c,v 1.26 1994/06/08 11:19:04 mycroft Exp $
+ * $Id: sunos_misc.c,v 1.27 1994/06/10 09:26:18 pk Exp $
  */
 
 /*
@@ -55,8 +55,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
-#include <ufs/dir.h>
 #include <sys/proc.h>
+#include <sys/dir.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
@@ -81,6 +81,10 @@
 #include <netinet/in.h>
 
 #include <miscfs/specfs/specdev.h>
+
+#include <nfs/rpcv2.h>
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
 
 #include <vm/vm.h>
 
@@ -265,6 +269,20 @@ sun_mount(p, uap, retval)
 	return (mount(p, uap, retval));
 }
 
+async_daemon(p, uap, retval)
+	struct proc *p;
+	void *uap;
+	int *retval;
+{
+	struct nfssvc_args {
+		int flag;
+		caddr_t argp;
+	} args;
+
+	args.flag = NFSSVC_BIOD;
+	return nfssvc(p, &args, retval);
+}
+
 struct sun_sigpending_args {
 	int	*mask;
 };
@@ -277,14 +295,6 @@ sun_sigpending(p, uap, retval)
 
 	return (copyout((caddr_t)&mask, (caddr_t)uap->mask, sizeof(int)));
 }
-
-/* XXX: Temporary until sys/dir.h, include/dirent.h and sys/dirent.h are fixed */
-struct dirent {
-	u_long	d_fileno;		/* file number of entry */
-	u_short	d_reclen;		/* length of this record */
-	u_short	d_namlen;		/* length of string in d_name */
-	char	d_name[255 + 1];	/* name must be no longer than this */
-};
 
 /*
  * Here is the sun layout.  (Compare the BSD layout in <sys/dirent.h>.)
@@ -798,20 +808,16 @@ sun_statfs(p, uap, retval)
 	int *retval;
 {
 	register struct mount *mp;
-	register struct nameidata *ndp;
 	register struct statfs *sp;
 	int error;
 	struct nameidata nd;
 
-	ndp = &nd;
-	ndp->ni_nameiop = LOOKUP | FOLLOW;
-	ndp->ni_segflg = UIO_USERSPACE;
-	ndp->ni_dirp = uap->path;
-	if (error = namei(ndp, p))
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, uap->path, p);
+	if (error = namei(&nd))
 		return (error);
-	mp = ndp->ni_vp->v_mount;
+	mp = nd.ni_vp->v_mount;
 	sp = &mp->mnt_stat;
-	vrele(ndp->ni_vp);
+	vrele(nd.ni_vp);
 	if (error = VFS_STATFS(mp, sp, p))
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
