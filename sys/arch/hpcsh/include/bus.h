@@ -1,7 +1,7 @@
-/*	$NetBSD: bus.h,v 1.5 2001/07/19 15:32:13 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2002/02/11 17:32:36 uch Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -605,6 +605,11 @@ void bus_space_destroy(bus_space_tag_t);
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 
+/*
+ * Private flags stored in the DMA map.
+ */
+#define	HPCSH_DMAMAP_COHERENT	0x100	/* no cache flush necessary on sync */
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -629,6 +634,7 @@ typedef struct hpcsh_bus_dmamap		*bus_dmamap_t;
 struct hpcsh_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct hpcsh_bus_dma_segment	bus_dma_segment_t;
 
@@ -641,6 +647,10 @@ typedef struct hpcsh_bus_dma_segment	bus_dma_segment_t;
 
 struct hpcsh_bus_dma_tag {
 	void	*_cookie;		/* cookie used in the guts */
+
+	bus_addr_t _wbase;		/* DMA window base */
+	bus_addr_t _physbase;		/* physical base of the window */
+	bus_size_t _wsize;		/* size of the window */
 
 	/*
 	 * DMA mapping methods.
@@ -717,15 +727,55 @@ struct hpcsh_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
+	struct proc	*_dm_proc;	/* proc that owns the mapping */
 
-	void		*_dm_cookie;	/* cookie for bus-specific functions */
+	/*
+	 * Private cookie to be used by the DMA back-end.
+	 */
+	void		*_dm_cookie;
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
-	bus_size_t	dm_mapsize;	/* size of the mapping */
 };
+
+#ifdef _HPCSH_BUS_DMA_PRIVATE
+int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
+int	_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
+int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
+int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
+void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+
+int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs);
+int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, caddr_t *kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva,
+	    size_t size);
+paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags);
+
+int	_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
+	    bus_size_t alignment, bus_size_t boundary,
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
+	    vaddr_t low, vaddr_t high);
+
+extern struct playstation2_bus_dma_tag playstation2_default_bus_dma_tag;
+#endif /* _HPCSH_BUS_DMA_PRIVATE */
 
 #endif /* _HPCSH_BUS_H_ */

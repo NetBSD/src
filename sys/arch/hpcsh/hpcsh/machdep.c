@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 2002/02/07 17:06:00 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 2002/02/11 17:32:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 #include "opt_md.h"
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
 #include "fs_mfs.h"
 #include "fs_nfs.h"
@@ -55,7 +56,11 @@
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#ifdef DDB
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
+#if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -64,7 +69,7 @@
 #endif
 #define ELFSIZE		DB_ELFSIZE
 #include <sys/exec_elf.h>
-#endif
+#endif /* DDB || KGDB */
 
 #include <dev/cons.h> /* consdev */
 #include <dev/md.h>
@@ -76,6 +81,7 @@
 #include <machine/kloader.h>
 
 #include <hpcsh/hpcsh/clockvar.h>
+#include <hpcsh/dev/hd64465/hd64465var.h>
 
 #include <sh3/pclock.h>
 #include <sh3/intcreg.h>
@@ -196,9 +202,13 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	SHREG_IPRA = 0;
 	SHREG_IPRB = 0;
 	SHREG_IPRC = 0;
+#if defined(SH7709) || defined(SH7709A) //XXX
 	SHREG_IPRD = 0;
 	SHREG_IPRE = 0;
-
+#endif
+#if defined(SH4) //XXX
+	hd64465_intr_disable();
+#endif
 	/* start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
 
@@ -250,8 +260,8 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	/* serial console requires PCLOCK. estimate here */
 	clock_init();
-	sh3_pclock = clock_get_pclock();
 
+	sh3_pclock = clock_get_pclock();
 	if (bootinfo->magic == BOOTINFO_MAGIC) {
 		platid.dw.dw0 = bootinfo->platid_cpu;
 		platid.dw.dw1 = bootinfo->platid_machine;
@@ -263,7 +273,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 
 	uvm_setpagesize(); /* default page size (4KB) */
 
-	/* find memory cluster */
+	/* find memory cluster (# of pages) */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));
 	nkpde = ptoa(physmem) >> (PDSHIFT - 1);
 	DPRINTF(("physmem= %d, nkpde = %d\n", physmem, nkpde));
@@ -334,10 +344,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	if (symbolsize) {
 		ddb_init(symbolsize, &end, end + symbolsize);
 		DPRINTF(("symbol size = %d byte\n", symbolsize));
-		if (boothowto & RB_KDB)
-			Debugger();
 	}
-#endif	
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif /* DDB */
+#ifdef KGDB
+	if (boothowto & RB_KDB) {
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+	}
+#endif /* KGDB */
 
 	/* setup proc0 stack */
 	proc0_sp = (vaddr_t)p + NBPG + USPACE - 16 - sizeof(struct trapframe);
@@ -369,23 +385,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 void
 cpu_startup()
 {
+	platid_t cpu;
 	int cpuclock;
 
 	cpuclock = clock_get_cpuclock();
 
 	sh3_startup();
-#define CPUIDMATCH(p)							\
-	platid_match(&platid, &platid_mask_CPU_##p)
 
-	if (CPUIDMATCH(SH_3_7709))
-		sprintf(cpu_model, "%s Hitachi SH7709",
-		    platid_name(&platid));
-	else if (CPUIDMATCH(SH_3_7709A))
-		sprintf(cpu_model, "%s Hitachi SH7709A",
-		    platid_name(&platid));
-	else
-		sprintf(cpu_model, "%s Hitachi SH product unknown",
-		    platid_name(&platid));
+	memcpy(&cpu, &platid, sizeof(platid_t));
+	cpu.dw.dw1 = 0;	/* clear platform */
+	sprintf(cpu_model, "[%s] %s", platid_name(&platid), platid_name(&cpu));
 
 #define MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
 	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
@@ -476,6 +485,9 @@ cpu_reboot(int howto, char *bootstr)
 #endif
 	}
 
+#ifdef SH4 //XXX	
+	hd64465_intr_reboot();
+#endif
 	goto *(u_int32_t *)0xa0000000;
 	while (1)
 		;
@@ -560,7 +572,7 @@ mem_cluster_load()
 		DPRINTF(("loading 0x%lx,0x%lx\n", start, size));
 		start = SH3_PHYS_TO_P1SEG(start);
 		memset((void *)start, 0, size);
-		cacheflush();
+		sh_dcache_wbinv_all();
 		end = atop(start + size);
 		start = atop(start);
 		uvm_page_physload(start, end, start, end, VM_FREELIST_DEFAULT);
@@ -574,7 +586,6 @@ mem_cluster_load()
 	start = SH3_PHYS_TO_P1SEG(start);
 	end = start + size;
 	memset((void *)start, 0, size);
-	cacheflush();
 
 	avail_start = start;
 	avail_end = end;
