@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.80 2003/11/08 23:14:45 lukem Exp $
+#	$NetBSD: sys.mk,v 1.81 2003/12/07 12:53:58 simonb Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -26,6 +26,7 @@ CC?=		cc
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
+    ${MACHINE_ARCH} == "ns32k" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sh5el" || ${MACHINE_ARCH} == "sh5eb" || \
     ${MACHINE_ARCH} == "sparc" || \
