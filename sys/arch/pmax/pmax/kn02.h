@@ -1,4 +1,4 @@
-/*	$NetBSD: kn02.h,v 1.5 1998/08/29 16:24:03 mrg Exp $	*/
+/*	$NetBSD: kn02.h,v 1.6 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,21 +39,21 @@
  *	@(#)kn02.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -69,20 +69,20 @@
  * Log:	kn02.h,v
  * Revision 2.5  91/05/14  17:23:30  mrt
  * 	Correcting copyright
- * 
+ *
  * Revision 2.4  91/02/05  17:42:03  mrt
  * 	Added author notices
  * 	[91/02/04  11:14:23  mrt]
- * 
+ *
  * 	Changed to use new Mach copyright
  * 	[91/02/02  12:12:58  mrt]
- * 
+ *
  * Revision 2.3  90/12/05  23:32:04  af
- * 
- * 
+ *
+ *
  * Revision 2.1.1.2  90/11/01  02:48:10  af
  * 	Reworked a bit, made reentrant.
- * 
+ *
  * Revision 2.1.1.1  90/10/03  11:48:22  af
  * 	Created, from the DEC specs:
  * 	"DECstation 5000/200 KN02 System Module Functional Specification"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kn01.h,v 1.4 1994/10/26 21:10:27 cgd Exp $	*/
+/*	$NetBSD: kn01.h,v 1.5 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,21 +39,21 @@
  *	@(#)kn01.h	8.1 (Berkeley) 6/10/93
  */
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -69,18 +69,18 @@
  * Log:	kn01.h,v
  * Revision 2.5  91/05/14  17:23:14  mrt
  * 	Correcting copyright
- * 
+ *
  * Revision 2.4  91/02/05  17:41:54  mrt
  * 	Added author notices
  * 	[91/02/04  11:14:12  mrt]
- * 
+ *
  * 	Changed to use new Mach copyright
  * 	[91/02/02  12:12:45  mrt]
- * 
+ *
  * Revision 2.3  90/12/05  23:31:50  af
  * 	Cleanups.
  * 	[90/12/04  16:38:21  af]
- * 
+ *
  * 	Created, from the DEC specs:
  * 	"DECstation 3100 Desktop Workstation Functional Specification"
  * 	Workstation Systems Engineering, Palo Alto, CA. Aug 28, 1990.
@@ -185,7 +185,7 @@
 #define KN01_CSR_CRSRTST	0x1000		/* ro */
 						/* Cursor test output */
 #define KN01_CSR_PARDIS		0x2000		/* rw */
-						/* Disable mem parity chks */ 
+						/* Disable mem parity chks */
 #define KN01_CSR_SELFTEST	0x4000		/* rw */
 						/* Self-test ok pinout */
 #define KN01_CSR_MNFMOD		0x8000		/* ro */

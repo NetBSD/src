@@ -1,9 +1,9 @@
-/*	$NetBSD: kn230.h,v 1.1 1998/04/19 01:27:03 jonathan Exp $	*/
+/*	$NetBSD: kn230.h,v 1.2 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Jonathan Stone.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -35,7 +35,7 @@
 
 /*
  * Physical addresses of baseboard devices and registers on the
- * the DECstation 5100 motherboard (also known as the kn230). 
+ * the DECstation 5100 motherboard (also known as the kn230).
  *
  * The only options on the kn230 are two slots for daughterboards.
  * Each slot can contain an extra four-port dc708x DZ11 clone chip.
@@ -88,7 +88,7 @@
 #define KN230_CSR_INTR_DZ0     	0x00000100	/* baseboard DZ */
 
 /*
- * kn230 LED control  register. 
+ * kn230 LED control  register.
  * Writing a 1 bit to any bit turns off the corresponding LED.
  * low bits are or'ed to control registers which have side effects.
  *
@@ -109,7 +109,7 @@
 
 #define KN230_LED2		0x00000400	/* Turns off led 2.
 						 * 0:  forces DZ to run at
-						 * 38.4  when 19.2 is selected 
+						 * 38.4  when 19.2 is selected
 						 * 1:  is 19.2 means 19.2.
 						 */
 
@@ -133,7 +133,7 @@
  */
 #define KN230_SYS_WEAR		0x17000000	/* Write-error address reg */
 #define KN230_WEAR_OPTIONMASK	0x00000001	/* 1 if no card present */
-#define KN230_WEAR_OPTION_FALSE	KN230_WEAR_OPTIONMASK 
+#define KN230_WEAR_OPTION_FALSE	KN230_WEAR_OPTIONMASK
 #define KN230_WEAR_OPTION_TRUE	0
 
 #define KN230_WEAR_SECUREMASK	0x00000002      /* "1": system is insecure */
@@ -155,7 +155,7 @@
 #define KN230_SYS_PASSWD    	0x1f000244      /* password location */
 
 /*
- * NVRAM state defintions.  
+ * NVRAM state defintions.
  * Used under Ultrix for  PrestoServe.
  */
 #define KN230_SYS_NVRAM_DIAG	0x1f000300	/* NVRAM diagnostic register */
@@ -182,6 +182,6 @@
 /*
  * To enable the battery,  write 0x00  to each nvram control reg.
  * To disable the battery, write the sequence
- *    0x01, 0x01,  0x00, 0x00,  0x01 
+ *    0x01, 0x01,  0x00, 0x00,  0x01
  * to both per-bank control registers (do banks in parallel, not in sequence).
  */
