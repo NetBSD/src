@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/10/28 06:18:07 itojun Exp $
+#	$NetBSD: Makefile,v 1.18 2000/10/31 10:50:46 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -13,10 +13,9 @@ CPPFLAGS+=	-DHAVE_CONFIG_H
 CLEANFILES+=    ${PROG}.1 ${PROG}.info ${PROG}.cat1
 
 .if ${MKNLS} != "no"
-SRCS+=		bindtextdom.c dcgettext.c dgettext.c gettext.c finddomain.c \
-		loadmsgcat.c localealias.c textdomain.c l10nflist.c \
-		explodename.c intl-compat.c
-CPPFLAGS+=	-I${DIST}/grep/src -I${DIST}/grep/intl -I${.CURDIR}
+LDADD+=		-lintl
+DPADD+=		${LIBINTL}
+CPPFLAGS+=	-I${DIST}/grep/src -I${.CURDIR}
 CPPFLAGS+=	-DENABLE_NLS -DHAVE_LIBINTL_H=1 \
 		-DGNULOCALEDIR=\"/usr/share/locale\" \
 		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\" \
