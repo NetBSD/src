@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.396 2000/09/06 22:23:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.397 2000/09/13 08:04:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -225,6 +225,50 @@ void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((paddr_t));
 
+const struct i386_cache_info *cpu_itlb_info, *cpu_dtlb_info, *cpu_icache_info,
+    *cpu_dcache_info, *cpu_l2cache_info;
+
+const struct i386_cache_info {
+	u_int8_t	cai_desc;
+	const struct i386_cache_info **cai_var;
+	const char	*cai_string;
+	u_int		cai_totalsize;
+	u_int		cai_linesize;
+} i386_cache_info[] = {
+	{ 0x01,		&cpu_itlb_info,		"32 4K entries 4-way",
+	  32,		4 * 1024 },
+	{ 0x02,		&cpu_itlb_info,		"2 4M entries",
+	  2,		4 * 1024 * 1024 },
+	{ 0x03,		&cpu_dtlb_info,		"64 4K entries 4-way",
+	  64,		4 * 1024 },
+	{ 0x04,		&cpu_dtlb_info,		"8 4M entries 4-way",
+	  8,		4 * 1024 * 1024 },
+	{ 0x06,		&cpu_icache_info,	"8K 32b/line 4-way",
+	  8 * 1024,	32 },
+	{ 0x08,		&cpu_icache_info,	"16K 32b/line 4-way",
+	  16 * 1024,	32 },
+	{ 0x0a,		&cpu_dcache_info,	"8K 32b/line 2-way",
+	  8 * 1024,	32 },
+	{ 0x0c,		&cpu_dcache_info,	"16K 32b/line 2/4-way",
+	  16 * 1024,	32 },
+	{ 0x40,		&cpu_l2cache_info,	"not present",
+	  0,		0 },
+	{ 0x41,		&cpu_l2cache_info,	"128K 32b/line 4-way",
+	  128 * 1024,	32 },
+	{ 0x42,		&cpu_l2cache_info,	"256K 32b/line 4-way",
+	  256 * 1024,	32 },
+	{ 0x43,		&cpu_l2cache_info,	"512K 32b/line 4-way",
+	  512 * 1024,	32 },
+	{ 0x44,		&cpu_l2cache_info,	"1M 32b/line 4-way",
+	  1 * 1024 * 1024, 32 },
+	{ 0x45,		&cpu_l2cache_info,	"2M 32b/line 4-way",
+	  2 * 1024 * 1024, 32 },
+
+	{ 0,		NULL,		NULL,	0,	0 },
+};
+
+const struct i386_cache_info *i386_cache_info_lookup __P((u_int8_t));
+
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
@@ -279,6 +323,18 @@ cpu_startup()
 	printf("%s", version);
 
 	printf("cpu0: %s\n", cpu_model);
+	if (cpu_icache_info != NULL || cpu_dcache_info != NULL) {
+		printf("cpu0:");
+		if (cpu_icache_info)
+			printf(" I-cache %s", cpu_icache_info->cai_string);
+		if (cpu_dcache_info)
+			printf("%sD-cache %s",
+			    (cpu_icache_info != NULL) ? ", " : " ",
+			    cpu_dcache_info->cai_string);
+		printf("\n");
+	}
+	if (cpu_l2cache_info)
+		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
 	if (cpu_feature) {
 		char buf[1024];
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
@@ -459,6 +515,19 @@ i386_bufinit()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+}
+
+const struct i386_cache_info *
+i386_cache_info_lookup(u_int8_t desc)
+{
+	const struct i386_cache_info *cai;
+
+	for (cai = i386_cache_info; cai->cai_string != NULL; cai++) {
+		if (cai->cai_desc == desc)
+			return (cai);
+	}
+
+	return (NULL);
 }
 
 /*  
@@ -694,6 +763,22 @@ winchip_cpu_setup()
 #endif
 }
 
+static void
+do_cpuid(u_int which, u_int *rv)
+{
+	register u_int eax __asm("%eax") = which;
+
+	__asm __volatile(
+	"	cpuid			;"
+	"	movl	%%eax,0(%2)	;"
+	"	movl	%%ebx,4(%2)	;"
+	"	movl	%%ecx,8(%2)	;"
+	"	movl	%%edx,12(%2)	"
+	: "=a" (eax)
+	: "0" (eax), "S" (rv)
+	: "ebx", "ecx", "edx");
+}
+
 void
 identifycpu()
 {
@@ -772,6 +857,33 @@ identifycpu()
 		classnames[class]);
 
 	cpu_class = class;
+
+	/*
+	 * Parse the cache info from `cpuid', if we have it.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+	if (cpuid_level != -1) {
+		const struct i386_cache_info *cai;
+		u_int descs[4];
+		int iterations, j;
+		u_int8_t desc;
+
+		do {
+			do_cpuid(2, descs);
+			iterations = descs[0] & 0xff;
+
+			for (i = 0; i < 4; i++) {
+				if (descs[i] & 0x80000000)
+					continue;
+				for (j = 0; j < 4; j++) {
+					desc = (descs[i] >> (j * 8)) & 0xff;
+					cai = i386_cache_info_lookup(desc);
+					if (cai != NULL)
+						*cai->cai_var = cai;
+				}
+			}
+		} while (--iterations != 0);
+	}
 
 	/*
 	 * Now that we have told the user what they have,
