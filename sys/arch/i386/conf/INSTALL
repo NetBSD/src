@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.41.2.3 1997/09/01 20:10:01 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.41.2.4 1997/10/14 09:05:45 thorpej Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -14,12 +14,16 @@ options 	I486_CPU
 options 	I586_CPU
 options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# Virtual 8086 emulation
+#options 	VM86		# virtual 8086 emulation
+#options 	USER_LDT	# user-settable LDT; used by WINE
 
-# Some BIOSes don't get the size of extended memory right.  If you
-# have a broken BIOS, uncomment the following and set the value
-# properly for your system.
-#options 	BIOSEXTMEM=...	# size of extended memory
+# The following options override the memory sizes passed in from the boot
+# block.  Use them *only* if the boot block is unable to determine the correct
+# values.  Note that the BIOS may *correctly* report less that 640k of base
+# memory if the extended BIOS data area is located at the top of base memory
+# (as is the case on most recent systems).
+#options 	REALBASEMEM=...	# size of base memory
+#options 	REALEXTMEM=...	# size of extended memory
 
 #options 	DUMMY_NOPS	# speed hack; recommended
 #options 	XSERVER,UCONSOLE
@@ -64,11 +68,10 @@ options 	COMPAT_12	# NetBSD 1.2,
 
 #options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 
-#options 	USER_LDT	# user-settable LDT; used by WINE
 options 	LKM		# loadable kernel modules
 
 file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
@@ -206,7 +209,7 @@ cd* at atapibus? drive ?
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
+ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC and 3C503
 ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
 ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
@@ -217,6 +220,9 @@ ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
+ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+ne1	at isa? port 0x250 irq 9
+ne2	at isa? port 0x300 irq 10
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
@@ -224,6 +230,7 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
+ne*	at pci? dev ? function ?		# NE2000-compatible PCI cards
 
 #pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
