@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.16 1999/07/25 00:15:22 itojun Exp $	*/
+/*	$NetBSD: gencode.c,v 1.17 1999/07/25 05:52:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.16 1999/07/25 00:15:22 itojun Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.17 1999/07/25 05:52:16 itojun Exp $");
 #endif
 #endif
 
@@ -622,6 +622,11 @@ gen_linktype(proto)
 	/* If we're not using encapsulation and checking for IP, we're done */
 	if (off_linktype == -1 && proto == ETHERTYPE_IP)
 		return gen_true();
+#ifdef INET6
+	/* this isn't the right thing to do, but sometimes necessary */
+	if (off_linktype == -1 && proto == ETHERTYPE_IPV6)
+		return gen_true();
+#endif
 
 	switch (linktype) {
 
@@ -629,8 +634,9 @@ gen_linktype(proto)
 		return gen_false();
 
 	case DLT_PPP:
+	case DLT_PPP_SERIAL:
 		if (proto == ETHERTYPE_IP)
-			proto = PPP_IP;			/* XXX was 0x21 */
+			proto = PPP_IP;
 #ifdef INET6
 		else if (proto == ETHERTYPE_IPV6)
 			proto = PPP_IPV6;
