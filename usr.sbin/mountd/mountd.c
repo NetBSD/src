@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.74 2000/07/16 08:13:34 itojun Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.75 2000/07/16 14:07:39 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.74 2000/07/16 08:13:34 itojun Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.75 2000/07/16 14:07:39 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -245,6 +245,11 @@ static struct ucred def_anon = {
 
 static int      opt_flags;
 static int	have_v6 = 1;
+#ifdef NI_WITHSCOPEID
+static const int ninumeric = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+static const int ninumeric = NI_NUMERICHOST;
+#endif
 
 /* Bits for above */
 #define	OP_MAPROOT	0x001
@@ -481,8 +486,9 @@ mntsrv(rqstp, transp)
 	}
 	lookup_failed = getnameinfo(saddr, saddr->sa_len, host, sizeof host, 
 	    NULL, 0, 0);
-	getnameinfo(saddr, saddr->sa_len, numerichost,
-	    sizeof numerichost, NULL, 0, NI_NUMERICHOST);
+	if (getnameinfo(saddr, saddr->sa_len, numerichost,
+	    sizeof numerichost, NULL, 0, ninumeric) != 0)
+		strlcpy(numerichost, "?", sizeof(numerichost));
 	ai = NULL;
 #ifdef KERBEROS
 	kuidreset();
@@ -1812,8 +1818,9 @@ get_host(line, lineno, cp, grp)
 	grp->gr_ptr.gt_addrinfo = ai;
 	while (ai != NULL) {
 		if (ai->ai_canonname == NULL) {
-			getnameinfo(ai->ai_addr, ai->ai_addrlen, host,
-			    sizeof host, NULL, 0, NI_NUMERICHOST);
+			if (getnameinfo(ai->ai_addr, ai->ai_addrlen, host,
+			    sizeof host, NULL, 0, ninumeric) != 0)
+				strlcpy(host, "?", sizeof(host));
 			ai->ai_canonname = estrdup(host);
 			ai->ai_flags |= AI_CANONNAME;
 		} else
@@ -2152,7 +2159,7 @@ get_net(cp, net, maskflg)
 		goto fail;
 
 	ecode = getnameinfo(sa, sa->sa_len, netname, sizeof netname,
-	    NULL, 0, NI_NUMERICHOST);
+	    NULL, 0, ninumeric);
 	if (ecode != 0)
 		goto fail;
 
@@ -2170,8 +2177,9 @@ get_net(cp, net, maskflg)
 		if (np)
 			name = np->n_name;
 		else {
-			getnameinfo(sa, sa->sa_len, netname, sizeof netname,
-			    NULL, 0, NI_NUMERICHOST);
+			if (getnameinfo(sa, sa->sa_len, netname, sizeof netname,
+			    NULL, 0, ninumeric) != 0)
+				strlcpy(netname, "?", sizeof(netname));
 			name = netname;
 		}
 		net->nt_name = estrdup(name);
@@ -2349,21 +2357,34 @@ del_mlist(hostp, dirp, saddr)
 {
 	struct mountlist *mlp, **mlpp;
 	struct mountlist *mlp2;
-	struct sockaddr_in *sin = (struct sockaddr_in *)saddr;
+	u_short sport;
 	FILE *mlfile;
 	int fnd = 0, ret = 0;
+	char host[NI_MAXHOST];
 
+	switch (saddr->sa_family) {
+	case AF_INET6:
+		sport = ntohs(((struct sockaddr_in6 *)saddr)->sin6_port);
+		break;
+	case AF_INET:
+		sport = ntohs(((struct sockaddr_in *)saddr)->sin_port);
+		break;
+	default:
+		return -1;
+	}
 	mlpp = &mlhead;
 	mlp = mlhead;
 	while (mlp) {
 		if (!strcmp(mlp->ml_host, hostp) &&
 		    (!dirp || !strcmp(mlp->ml_dirp, dirp))) {
 			if (!(mlp->ml_flag & DP_NORESMNT) &&
-			    ntohs(sin->sin_port) >= IPPORT_RESERVED) {
+			    sport >= IPPORT_RESERVED) {
+				if (getnameinfo(saddr, saddr->sa_len, host,
+				    sizeof host, NULL, 0, ninumeric) != 0)
+					strlcpy(host, "?", sizeof(host));
 				syslog(LOG_NOTICE,
 				"Umount request for %s:%s from %s refused\n",
-				    mlp->ml_host, mlp->ml_dirp,
-				    inet_ntoa(sin->sin_addr));
+				    mlp->ml_host, mlp->ml_dirp, host);
 				ret = -1;
 				goto cont;
 			}
