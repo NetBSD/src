@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.65 2002/02/15 11:18:26 simonb Exp $	*/
+/*	$NetBSD: db_command.c,v 1.66 2002/08/26 11:34:28 scw Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.65 2002/02/15 11:18:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.66 2002/08/26 11:34:28 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -484,9 +484,9 @@ db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		full = TRUE;
 
 	if (have_addr == FALSE)
-		addr = (db_expr_t) kernel_map;
+		addr = (db_expr_t)(intptr_t) kernel_map;
 
-	uvm_map_printit((struct vm_map *) addr, full, db_printf);
+	uvm_map_printit((struct vm_map *)(intptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -513,7 +513,8 @@ db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	uvm_object_printit((struct uvm_object *) addr, full, db_printf);
+	uvm_object_printit((struct uvm_object *)(intptr_t) addr, full,
+	    db_printf);
 }
 
 /*ARGSUSED*/
@@ -525,7 +526,7 @@ db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	uvm_page_printit((struct vm_page *) addr, full, db_printf);
+	uvm_page_printit((struct vm_page *)(intptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -537,7 +538,7 @@ db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	vfs_buf_print((struct buf *)addr, full, db_printf);
+	vfs_buf_print((struct buf *)(intptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -561,7 +562,7 @@ db_vnode_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	if (modif[0] == 'f')
 		full = TRUE;
 
-	vfs_vnode_print((struct vnode *)addr, full, db_printf);
+	vfs_vnode_print((struct vnode *)(intptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -569,7 +570,7 @@ static void
 db_pool_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 
-	pool_printit((struct pool *)addr, modif, db_printf);
+	pool_printit((struct pool *)(intptr_t) addr, modif, db_printf);
 }
 
 /*ARGSUSED*/
@@ -578,7 +579,7 @@ db_namecache_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
 {
 
-	namecache_print((struct vnode *)addr, db_printf);
+	namecache_print((struct vnode *)(intptr_t) addr, db_printf);
 }
 
 /*ARGSUSED*/
@@ -610,7 +611,7 @@ db_fncall(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		db_flush_lex();
 		return;
 	}
-	func = (db_expr_t (*)(db_expr_t, ...)) fn_addr;
+	func = (db_expr_t (*)(db_expr_t, ...))(intptr_t) fn_addr;
 
 	t = db_read_token();
 	if (t == tLPAREN) {

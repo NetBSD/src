@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.16 2002/02/15 07:33:54 simonb Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.17 2002/08/26 11:34:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.16 2002/02/15 07:33:54 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.17 2002/08/26 11:34:29 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,8 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 				}
 				if (p->p_wchan && p->p_wmesg) {
 					db_printf(" %-12s", p->p_wmesg);
-					db_printsym((db_expr_t)p->p_wchan,
+					db_printsym(
+					    (db_expr_t)(intptr_t)p->p_wchan,
 					    DB_STGY_XTRN, db_printf);
 				}
 				db_printf("\n");
