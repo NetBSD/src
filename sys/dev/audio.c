@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.73 1997/10/11 11:16:28 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.74 1997/10/14 18:43:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -209,8 +209,6 @@ audioattach(parent, self, aux)
 	    hwp->start_input == 0 ||
 	    hwp->halt_output == 0 ||
 	    hwp->halt_input == 0 ||
-	    hwp->cont_output == 0 ||
-	    hwp->cont_input == 0 ||
 	    hwp->getdev == 0 ||
 	    hwp->set_port == 0 ||
 	    hwp->get_port == 0 ||
