@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.26.6.4 1998/10/29 19:16:56 cgd Exp $	*/
+/*	$NetBSD: dtop.c,v 1.26.6.5 1998/11/22 07:28:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.4 1998/10/29 19:16:56 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.5 1998/11/22 07:28:29 cgd Exp $");
 
 #include "rasterconsole.h"
 
@@ -192,14 +192,24 @@ void dtopstart		__P((struct tty *));
  * lk201 keyboard divisions and up/down mode key bitmap.
  */
 #define NUMDIVS 14
-static u_char divbeg[NUMDIVS] = {0xbf, 0x91, 0xbc, 0xbd, 0xb0, 0xad, 0xa6,
+/*
+ * NOTE:  the right shift key was included in division 8 with the up/down
+ *        arrow keys for some odd reason.  This causes a problem for
+ *        the X11R5 server code, as it controls the key modes by divisions.
+ *        The fix is to adjust the division table by changing the start
+ *        of division 6 (which includes the shift and control keys) to
+ *        include the right shift [0xab] and changing the end of division
+ *        8 to be the the up arrow [0xaa].  The initial key mode is also
+ *        modified to include the right shift key as up/down.
+ */
+static u_char divbeg[NUMDIVS] = {0xbf, 0x91, 0xbc, 0xbd, 0xb0, 0xab, 0xa6,
 				 0xa9, 0x88, 0x56, 0x63, 0x6f, 0x7b, 0x7e};
 static u_char divend[NUMDIVS] = {0xff, 0xa5, 0xbc, 0xbe, 0xb2, 0xaf, 0xa8,
-				 0xac, 0x90, 0x62, 0x6e, 0x7a, 0x7d, 0x87};
+				 0xaa, 0x90, 0x62, 0x6e, 0x7a, 0x7d, 0x87};
 /*
  * Initial defaults, groups 5 and 6 are up/down
  */
-static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e000, 0, 0};
+static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e800, 0, 0};
 
 
 
