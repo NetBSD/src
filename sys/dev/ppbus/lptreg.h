@@ -1,4 +1,4 @@
-/* $NetBSD: lptreg.h,v 1.3 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: lptreg.h,v 1.4 2004/01/28 17:11:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,4 +75,4 @@
 #define LPS_MASK        (LPS_NBSY | LPS_NACK | LPS_OUT | LPS_SEL | LPS_NERR)
 #define NOT_READY(ppbus) ((ppbus_rstr(ppbus)^LPS_INVERT)&LPS_MASK)
 
-#endif
+#endif /* __DEV_PPBUS_LPTREG_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_io.h,v 1.3 2004/01/25 00:28:01 bjh21 Exp $ */
+/* $NetBSD: ppbus_io.h,v 1.4 2004/01/28 17:11:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 Nicolas Souchu
@@ -54,8 +54,6 @@
 #define PPBUS_WECR      19
 #define PPBUS_WFIFO     20
 
-
-#ifdef _KERNEL
 
 /*
  * Set of ppbus i/o routines callable from ppbus device drivers
@@ -121,6 +119,4 @@
 #define ppbus_wctr(dev,byte) \
 		ppbus_io((dev), PPBUS_WCTR, NULL, 0, (byte))
 			
-#endif /* _KERNEL */
-
 #endif /* __PPBUS_IO_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: lptvar.h,v 1.2 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: lptvar.h,v 1.3 2004/01/28 17:11:48 jdolecek Exp $ */
 
 #ifndef __DEV_PPBUS_LPTVAR_H
 #define __DEV_PPBUS_LPTVAR_H
@@ -70,8 +70,6 @@ struct lpt_softc {
 #define MAX_SLEEP       (hz*5)  /* Timeout while waiting for device ready */
 #define MAX_SPIN        20      /* Max delay for device ready in usecs */
 
-#ifdef _KERNEL
-
 #ifdef LPT_DEBUG
 static volatile int lptdebug = 1;
 #ifndef LPT_DPRINTF
@@ -96,5 +94,4 @@ static volatile int lptverbose = 1;
 #define LPT_VPRINTF(arg)
 #endif /* LPT_VERBOSE */
 
-#endif /* _KERNEL */
-#endif
+#endif /* __DEV_PPBUS_LPTVAR_H */
