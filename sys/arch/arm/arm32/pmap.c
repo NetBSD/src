@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2002/02/06 17:41:42 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2002/02/20 00:10:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2002/02/06 17:41:42 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2002/02/20 00:10:17 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3720,4 +3720,22 @@ pmap_alloc_ptp(struct pmap *pmap, vaddr_t va, boolean_t just_try)
 	return (ptp);
 }
 
-/* End of pmap.c */
+/************************ Bootstrapping routines ****************************/
+
+/*
+ * pmap_map_section:
+ *
+ *	Create a single section mapping.
+ */
+void
+pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
+{
+	pd_entry_t *pde = (pd_entry_t *) l1pt;
+
+	KASSERT(((va | pa) & (L1_SEC_SIZE - 1)) == 0);
+
+	/* XXXJRT Always creates r/w mappings for now */
+
+	pde[va >> PDSHIFT] = L1_SEC(pa & PD_MASK,
+	    cache == PTE_CACHE ? pte_cache_mode : 0);
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.16 2002/02/18 13:53:29 bjh21 Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.17 2002/02/20 00:10:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rpc_machdep.c,v 1.16 2002/02/18 13:53:29 bjh21 Exp $");
+__RCSID("$NetBSD: rpc_machdep.c,v 1.17 2002/02/20 00:10:15 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -186,8 +186,6 @@ static vaddr_t sa110_cc_base;
 void physcon_display_base	__P((u_int addr));
 extern void consinit		__P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-			     int cacheable));
 void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
@@ -384,18 +382,25 @@ struct l1_sec_map {
 	vm_offset_t	va;
 	vm_offset_t	pa;
 	vm_size_t	size;
-	int		flags;
+	vm_prot_t	prot;
+	int		cache;
 } l1_sec_table[] = {
 	/* Map 1Mb section for VIDC20 */
 	{ VIDC_BASE,		VIDC_HW_BASE,
-	    ONE_MB,		0 },
+	    ONE_MB,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
 	/* Map 1Mb section from IOMD */
 	{ IOMD_BASE,		IOMD_HW_BASE,
-	    ONE_MB,		0 },
+	    ONE_MB,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
 	/* Map 1Mb of COMBO (and module space) */
 	{ IO_BASE,		IO_HW_BASE,
-	    ONE_MB,		0 },
-	{ 0, 0, 0, 0 }
+	    ONE_MB,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+
+	{ 0, 0, 0, 0, 0 }
 };
 
 
@@ -811,9 +816,11 @@ initarm(void *cookie)
 			l1_sec_table[loop].va);
 #endif
 		for (sz = 0; sz < l1_sec_table[loop].size; sz += L1_SEC_SIZE)
-			map_section(l1pagetable, l1_sec_table[loop].va + sz,
-				l1_sec_table[loop].pa + sz,
-				l1_sec_table[loop].flags);
+			pmap_map_section(l1pagetable,
+			    l1_sec_table[loop].va + sz,
+			    l1_sec_table[loop].pa + sz,
+			    l1_sec_table[loop].prot,
+			    l1_sec_table[loop].cache);
 		++loop;
 	}
 
