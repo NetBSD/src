@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.221 2001/01/28 07:55:44 jwise Exp $
+# $NetBSD: mi,v 1.222 2001/01/30 10:10:45 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -536,6 +536,14 @@
 ./usr/libexec/uucp/uuxqt	base-uucp-bin
 ./usr/libexec/uucpd		base-uucp-bin
 ./usr/libexec/uugetty		base-uucp-bin
+./usr/lib/runemodule		base-rune-root
+./usr/lib/runemodule/libBIG5.a	base-rune-BIG5
+./usr/lib/runemodule/libEUC.a	base-rune-EUC
+./usr/lib/runemodule/libEUCTW.a	base-rune-EUCTW
+./usr/lib/runemodule/libISO2022.a	base-rune-ISO2022
+./usr/lib/runemodule/libMSKanji.a	base-rune-MSKanji
+./usr/lib/runemodule/libUTF2.a	base-rune-UTF2
+./usr/lib/runemodule/libUTF8.a	base-rune-UTF8
 ./usr/lkm			base-sys-usr
 ./usr/local			base-sys-usr
 ./usr/local/bin			base-sys-usr
