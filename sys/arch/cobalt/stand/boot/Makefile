@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.3 2003/10/26 07:25:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/12/14 11:58:38 tsutsui Exp $
 
+NOMAN= # defined
+
+.include <bsd.own.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
 COBALT=	${S}/arch/cobalt
-PROG=	${BOOTPROG}
 
 # .PATH:	${.CURDIR}/../common
 
@@ -80,7 +82,7 @@ SA_AS=		library
 SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 .include "${S}/lib/libsa/Makefile.inc"
 
-LIBS=		${KERNLIB} ${SALIB} ${ZLIB} ${KERNLIB}
+LIBS=		${KERNLIB} ${SALIB} ${ZLIB}
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
@@ -92,7 +94,6 @@ ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	gzip -c9 ${PROG} > ${PROG}.gz
 	@${SIZE} ${PROG}
 
-MAN=
 CLEANFILES+=	${PROG}.map ${PROG}.elf ${PROG}.gz
 
 cleandir distclean: cleanlibdir
@@ -101,6 +102,3 @@ cleanlibdir:
 	rm -rf lib
 
 .include <bsd.prog.mk>
-
-/usr/lib/crt0.o:
-	true
