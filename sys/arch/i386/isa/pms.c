@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.32 1996/10/13 03:20:09 christos Exp $	*/
+/*	$NetBSD: pms.c,v 1.33 1997/07/17 01:06:29 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -190,7 +190,7 @@ pmsprobe(parent, match, aux)
 		return (0);
 
 	/* Can't wildcard IRQ. */
-	if (cf->cf_loc[0] == -1)
+	if (cf->cf_loc[PCKBDCF_IRQ] == PCKBDCF_IRQ_DEFAULT)
 		return (0);
 
 	pms_dev_cmd(PMS_RESET);
@@ -210,7 +210,7 @@ pmsattach(parent, self, aux)
 	void *aux;
 {
 	struct pms_softc *sc = (void *)self;
-	int irq = self->dv_cfdata->cf_loc[0];
+	int irq = self->dv_cfdata->cf_loc[PCKBDCF_IRQ];
 	isa_chipset_tag_t ic = aux;			/* XXX */
 
 	printf(" irq %d\n", irq);
