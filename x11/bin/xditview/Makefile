@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/05 13:08:57 rtr Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/04/29 06:08:20 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,8 @@ PROG=	xditview
 SRCS=	xditview.c Dvi.c draw.c font.c lex.c page.c parse.c \
 	XFontName.c DviChar.c
 
-CPPFLAGS+=-DHAS_MKSTEMP -DUSE_XFT -I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-DHAS_MKSTEMP
+CPPFLAGS+=	-DUSE_XFT -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 
 APPDEFS=Xditview.ad Xditview-chrtr.ad
 
