@@ -1,4 +1,4 @@
-/*	$NetBSD: vrledreg.h,v 1.2 2000/10/03 03:13:05 sato Exp $	*/
+/*	$NetBSD: vrledreg.h,v 1.3 2001/06/11 10:04:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 SATO Kazumi. All rights reserved.
@@ -27,7 +27,8 @@
 
 /*
  *	LED (LED CONTROL Unit) Registers definitions.
- *		start 0xB000240
+ *		start 0x0B000240 (??????)
+ *		start 0x0F000180 (vr4122)
  */
 
 #define LEDHTS_REG_W		0x0	/* LED H Time Set register */
