@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.12 2000/12/18 19:52:11 thorpej Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.13 2000/12/18 20:58:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_inet.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +69,10 @@
 #include <netinet/ip_encap.h>
 #else
 #error IPIP without INET?
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
 #endif
 
 #include <machine/stdarg.h>
