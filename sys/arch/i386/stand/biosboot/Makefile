@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1999/03/14 00:04:22 fvdl Exp $
+#	$NetBSD: Makefile,v 1.20 1999/04/14 11:45:40 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -30,11 +30,7 @@ CPPFLAGS+= -DPASS_BIOSGEOM
 #CPPFLAGS+= -DPRIM_LOADSZ=9
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
-CFLAGS+= -Wall
-
-# XXX should go into library
-SRCS+= ls.c
-.PATH: ${.CURDIR}/../libsa
+CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no

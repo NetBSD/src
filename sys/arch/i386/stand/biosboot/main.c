@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 1999/02/12 05:14:22 cjs Exp $	*/
+/*	$NetBSD: main.c,v 1.16 1999/04/14 11:45:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -41,12 +41,11 @@
 #include <sys/reboot.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/ufs.h>
 #include <lib/libkern/libkern.h>
 
 #include <libi386.h>
-
-extern void ls __P((char*));
-extern int bios2dev __P((int, char**, int*));
+#include "devopen.h"
 
 int errno;
 extern int boot_biosdev;
@@ -73,6 +72,11 @@ char *names[] = {
 static char *default_devname;
 static int default_unit, default_partition;
 static char *default_filename;
+
+char *sprint_bootsel __P((const char *));
+void bootit __P((const char *, int, int));
+void print_banner __P((void));
+void main __P((void));
 
 void	command_help __P((char *));
 void	command_ls __P((char *));
@@ -161,8 +165,9 @@ parsebootfile(fname, fsname, devname, unit, partition, file)
 	return(0);
 }
 
-char *sprint_bootsel(filename)
-const char *filename;
+char *
+sprint_bootsel(filename)
+	const char *filename;
 {
 	char *fsname, *devname;
 	int unit, partition;
@@ -198,7 +203,7 @@ bootit(filename, howto, tell)
 }
 
 void
-print_banner(void)
+print_banner()
 {
 
 	printf("\n");
@@ -217,7 +222,7 @@ print_banner(void)
  * note: normally, void main() wouldn't be legal, but this isn't a
  * hosted environment...
  */
-int
+void
 main()
 {
 	int currname;
@@ -265,8 +270,6 @@ main()
 		/* since it failed, try switching bootfile. */
 		currname = ++currname % NUMNAMES;
 	}
-
-	return (0);
 }
 
 /* ARGSUSED */
@@ -291,7 +294,7 @@ command_ls(arg)
 	char *save = default_filename;
 
 	default_filename = "/";
-	ls(arg);
+	ufs_ls(arg);
 	default_filename = save;
 }
 
