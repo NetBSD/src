@@ -1,4 +1,4 @@
-/*	$NetBSD: n_support.S,v 1.1 1995/10/10 23:40:30 ragge Exp $	*/
+/*	$NetBSD: n_support.S,v 1.2 1999/07/02 15:37:35 simonb Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -148,7 +148,7 @@ ret1:	ret
 	.align	1
 _drem:
 	.word	0xffc
-	subl2	$12,sp	
+	subl2	$12,sp
 	movq	4(ap),r0		#r0=x
 	movq	12(ap),r2		#r2=y
 	jeql	Rop			#if y=0 then generate reserved op fault
@@ -160,7 +160,7 @@ _drem:
 	jeql	Ret			#if y is Rop then return Rop
 	bicw2	$0x8000,r2		#y  := |y|
 	movw	$0,-4(fp)		#-4(fp) = nx := 0
-	cmpw	r2,$0x1c80		#yexp ? 57 
+	cmpw	r2,$0x1c80		#yexp ? 57
 	bgtr	C1			#if yexp > 57 goto C1
 	addw2	$0x1c80,r2		#scale up y by 2**57
 	movw	$0x1c80,-4(fp)		#nx := 57 (exponent field)
@@ -181,7 +181,7 @@ loop:
 	subw2	r9,r8			#xexp-yexp
 	subw2	$0x0c80,r8		#k=xexp-yexp-25(exponent bit field)
 	blss	C2			#if k<0 goto C2
-	addw2	r8,r4			#t +=k	
+	addw2	r8,r4			#t +=k
 	addw2	r8,r6			#t1+=k, scale up t and t1
 C2:
 	divd3	r4,r0,r8		#x/t

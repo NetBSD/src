@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.7 1999/04/13 20:45:25 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.8 1999/07/02 15:38:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ _oss_ioctl(int fd, unsigned long com, void *argp)
 static int
 audio_ioctl(int fd, unsigned long com, void *argp)
 {
-	       
+
 	struct audio_info tmpinfo;
 	struct audio_offset tmpoffs;
 	struct audio_buf_info bufinfo;
@@ -280,8 +280,8 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		INTARG = idat;
 		break;
 	case SNDCTL_DSP_GETFMTS:
-		for(idat = 0, tmpenc.index = 0; 
-		    ioctl(fd, AUDIO_GETENC, &tmpenc) == 0; 
+		for(idat = 0, tmpenc.index = 0;
+		    ioctl(fd, AUDIO_GETENC, &tmpenc) == 0;
 		    tmpenc.index++) {
 			if (tmpenc.flags & AUDIO_ENCODINGFLAG_EMULATED)
 				continue; /* Don't report emulated modes */
@@ -430,13 +430,13 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 struct audiodevinfo {
 	int done;
 	dev_t dev;
-	int16_t devmap[SOUND_MIXER_NRDEVICES], 
+	int16_t devmap[SOUND_MIXER_NRDEVICES],
 	        rdevmap[NETBSD_MAXDEVS];
         u_long devmask, recmask, stereomask;
 	u_long caps, source;
 };
 
-/* 
+/*
  * Collect the audio device information to allow faster
  * emulation of the Linux mixer ioctls.  Cache the information
  * to eliminate the overhead of repeating all the ioctls needed
@@ -542,7 +542,7 @@ getdevinfo(int fd)
 
 int
 mixer_ioctl(int fd, unsigned long com, void *argp)
-{	       
+{
 	struct audiodevinfo *di;
 	mixer_ctrl_t mc;
 	int idat;
@@ -680,7 +680,7 @@ mixer_ioctl(int fd, unsigned long com, void *argp)
  * Check that the blocksize is a power of 2 as OSS wants.
  * If not, set it to be.
  */
-static void 
+static void
 setblocksize(int fd, struct audio_info *info)
 {
 	struct audio_info set;

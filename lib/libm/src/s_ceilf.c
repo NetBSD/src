@@ -8,14 +8,14 @@
  *
  * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
- * software is freely granted, provided that this notice 
+ * software is freely granted, provided that this notice
  * is preserved.
  * ====================================================
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ceilf.c,v 1.5 1997/10/09 11:31:19 lukem Exp $");
+__RCSID("$NetBSD: s_ceilf.c,v 1.6 1999/07/02 15:37:42 simonb Exp $");
 #endif
 
 #include "math.h"
@@ -42,7 +42,7 @@ static float huge = 1.0e30;
 	if(j0<23) {
 	    if(j0<0) { 	/* raise inexact if x != 0 */
 		if(huge+x>(float)0.0) {/* return 0*sign(x) if |x|<1 */
-		    if(i0<0) {i0=0x80000000;} 
+		    if(i0<0) {i0=0x80000000;}
 		    else if(i0!=0) { i0=0x3f800000;}
 		}
 	    } else {

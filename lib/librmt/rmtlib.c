@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.10 1998/03/08 23:36:46 mrg Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.11 1999/07/02 15:41:46 simonb Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -19,7 +19,7 @@
  *	Redone as a library that can replace open, read, write, etc, by
  *	Fred Fish, with some additional work by Arnold Robbins.
  */
- 
+
 /*
  *	MAXUNIT --- Maximum number of remote tape file units
  *
@@ -337,8 +337,8 @@ _rmt_open(path, oflag, mode)
 	*dev = '\0';
 
 #ifdef USE_REXEC
-/* 
- *	Execute the remote command using rexec 
+/*
+ *	Execute the remote command using rexec
  */
 	READ(i) = WRITE(i) = _rmt_rexec(system, login);
 	if (READ(i) < 0)
@@ -366,14 +366,14 @@ _rmt_open(path, oflag, mode)
 		close(Ctp[i][0]); close(Ctp[i][1]);
 		(void) setuid (getuid ());
 		(void) setgid (getgid ());
-		
+
 		if ((rshpath = getenv("RCMD_CMD")) == NULL)
 			rshpath = _PATH_RSH;
 		if ((rsh = strrchr(rshpath, '/')) == NULL)
 			rsh = rshpath;
 		else
 			rsh++;
-		
+
 		if (*login)
 		{
 			execl(rshpath, rsh, system, "-l", login,
@@ -642,7 +642,7 @@ _rmt_ioctl(fildes, op, arg)
  *	is any string that contains ":/dev/".  Returns 1 if remote,
  *	0 otherwise.
  */
- 
+
 static int
 remdev(path)
 	const char *path;
@@ -662,7 +662,7 @@ remdev(path)
  *	Open a local or remote file.  Looks just like open(2) to
  *	caller.
  */
- 
+
 int
 #ifdef __STDC__
 rmtopen(const char *path, int oflag, ...)
@@ -704,7 +704,7 @@ rmtopen(va_alist)
  *	Test pathname for specified access.  Looks just like access(2)
  *	to caller.
  */
- 
+
 int
 rmtaccess(path, amode)
 	const char *path;
@@ -736,7 +736,7 @@ isrmt(fd)
 /*
  *	Read from stream.  Looks just like read(2) to caller.
  */
-  
+
 ssize_t
 rmtread(fildes, buf, nbyte)
 	int fildes;
@@ -757,7 +757,7 @@ rmtread(fildes, buf, nbyte)
 /*
  *	Write to stream.  Looks just like write(2) to caller.
  */
- 
+
 ssize_t
 rmtwrite(fildes, buf, nbyte)
 	int fildes;
@@ -798,7 +798,7 @@ rmtlseek(fildes, offset, whence)
 /*
  *	Close a file.  Looks just like close(2) to caller.
  */
- 
+
 int
 rmtclose(fildes)
 	int fildes;
@@ -816,7 +816,7 @@ rmtclose(fildes)
 /*
  *	Do ioctl on file.  Looks just like ioctl(2) to caller.
  */
- 
+
 int
 #ifdef __STDC__
 rmtioctl(int fildes, unsigned long request, ...)
@@ -861,7 +861,7 @@ rmtioctl(va_alist)
  *	Duplicate an open file descriptor.  Looks just like dup(2)
  *	to caller.
  */
- 
+
 int
 rmtdup(fildes)
 	int fildes;
@@ -880,7 +880,7 @@ rmtdup(fildes)
 /*
  *	Get file status.  Looks just like fstat(2) to caller.
  */
- 
+
 int
 rmtfstat(fildes, buf)
 	int fildes;
@@ -901,7 +901,7 @@ rmtfstat(fildes, buf)
 /*
  *	Get file status.  Looks just like stat(2) to caller.
  */
- 
+
 int
 rmtstat(path, buf)
 	const char *path;
@@ -995,7 +995,7 @@ rmtisatty(fd)
 /*
  *	Get file status, even if symlink.  Looks just like lstat(2) to caller.
  */
- 
+
 int
 rmtlstat(path, buf)
 	const char *path;

@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_cos.S,v 1.5 1995/05/08 23:54:00 jtc Exp $")
+RCSID("$NetBSD: s_cos.S,v 1.6 1999/07/02 15:37:34 simonb Exp $")
 
 ENTRY(cos)
 	fldl	4(%esp)
@@ -13,7 +13,7 @@ ENTRY(cos)
 	fnstsw	%ax
 	andw	$0x400,%ax
 	jnz	1f
-	ret	
+	ret
 1:	fldpi
 	fadd	%st(0)
 	fxch	%st(1)

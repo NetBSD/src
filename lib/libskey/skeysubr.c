@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.13 1998/07/26 21:58:46 mycroft Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.14 1999/07/02 15:45:23 simonb Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -7,7 +7,7 @@
  *          Philip R. Karn <karn@chicago.qualcomm.com>
  *          John S. Walden <jsw@thumper.bellcore.com>
  *
- * Modifications: 
+ * Modifications:
  *          Scott Chasin <chasin@crimelab.com>
  *
  * S/KEY misc routines.
@@ -43,7 +43,7 @@ const char *passwd;	/* Password, any length */
 	MD4_CTX md;
 	unsigned int buflen;
 	u_int32_t hash[4];
-	
+
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
 		return -1;
@@ -135,12 +135,12 @@ readskey(buf, n)
 }
 
 static void
-set_term() 
+set_term()
 {
 	fflush(stdout);
 	tcgetattr(fileno(stdin), &newtty);
 	tcgetattr(fileno(stdin), &oldtty);
- 
+
 	signal (SIGINT, trapped);
 }
 
@@ -278,7 +278,7 @@ char *buf;
  *
  * Make sure line is all seven bits.
  */
- 
+
 void
 sevenbit(s)
 	char *s;
