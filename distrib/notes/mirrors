@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of September 15, 1998.
+The following sites mirror NetBSD as of October 14, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -40,7 +40,7 @@ Denmark
 Finland
 
 * ftp.fi.netbsd.org
-  Center for Scientific Computing, Espoo, Finland
+  The Finnish University and Research Network, Espoo
   ftp://ftp.fi.netbsd.org/pub/NetBSD
 
 France
@@ -235,7 +235,7 @@ Austria
 Finland
 
 * www.fi.netbsd.org
-  Technology Centre Kareltek, Lappeenranta, Finland
+  Global Wire Oy, Lappeenranta
   http://www.fi.netbsd.org/
 
 France
