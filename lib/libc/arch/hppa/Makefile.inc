@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2003/10/06 05:30:21 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2004/07/01 06:50:04 skrll Exp $
 
 #	$OpenBSD: Makefile.inc,v 1.3 1999/12/25 06:02:10 mickey Exp $
 
@@ -10,10 +10,6 @@ SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S
 #SRCS+=	memmove.S
 #CLEANFILES+=	memmove.S
 SRCS+= bcopy.c
-CLEANFILES+=	cerror.S
-
-cerror.S:
-	@echo > cerror.S
 
 #memmove.S:	${.CURDIR}/arch/hppa/string/bcopy.m4
 #	@echo 'building ${.TARGET} from ${.ALLSRC}'

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.4 2004/07/01 06:50:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,13 +39,10 @@
 #include <sys/errno.h>
 #include "SYS.h"
 
-	.import errno, data
+	.import __cerror, code
 
 /* XXX - this is unimplemented at this time. */
 ENTRY(ptrace, 0)
 	ldi	EINVAL, %t1
-	__SYSCALL_ERRNO
-        ldi     -1, %ret0
-        bv      %r0(%rp)
-        ldi     -1, %ret1
+	b,n	__cerror
 EXIT(ptrace)
