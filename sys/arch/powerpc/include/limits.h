@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.7 2000/08/08 22:31:14 tshiozak Exp $	*/
+/*	$NetBSD: limits.h,v 1.8 2001/05/04 15:12:32 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,21 +38,21 @@
 #define	MB_LEN_MAX	32		/* no multibyte characters	*/
 #define	CHAR_MIN	0		/* min value in char		*/
 #define	CHAR_MAX	0xff		/* max value in char		*/
-#define	UCHAR_MAX	0xff		/* max value in unsigned char	*/
+#define	UCHAR_MAX	0xffU		/* max value in unsigned char	*/
 #define	SCHAR_MIN	(-0x7f-1)	/* min value for a signed char	*/
 #define	SCHAR_MAX	0x7f		/* max value for a signed char	*/
 
 #define	SHRT_MIN	(-0x7fff-1)	/* min value in short		*/
 #define	SHRT_MAX	0x7fff		/* max value in short		*/
-#define	USHRT_MAX	0xffff		/* max value in unsigned short	*/
+#define	USHRT_MAX	0xffffU		/* max value in unsigned short	*/
 
 #define	INT_MIN		(-0x7fffffff-1)	/* min value in int		*/
 #define	INT_MAX		0x7fffffff	/* max value in int		*/
-#define	UINT_MAX	0xffffffff	/* max value in unsigned int	*/
+#define	UINT_MAX	0xffffffffU	/* max value in unsigned int	*/
 
-#define	LONG_MIN	(-0x7fffffff-1)	/* min value in long		*/
-#define	LONG_MAX	0x7fffffff	/* max value in long		*/
-#define	ULONG_MAX	0xffffffff	/* max value in unsigned long	*/
+#define	LONG_MIN	(-0x7fffffffL-1) /* min value in long		*/
+#define	LONG_MAX	0x7fffffffL	/* max value in long		*/
+#define	ULONG_MAX	0xffffffffUL	/* max value in unsigned long	*/
 
 #if !defined(_ANSI_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
