@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.9 1996/11/23 03:53:48 mark Exp $ */
+/*	$NetBSD: cpu.c,v 1.10 1997/01/28 04:36:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -52,10 +52,11 @@
 #include <vm/vm_kern.h>
 #include <machine/bootconfig.h>
 #include <machine/io.h>
+#include <machine/conf.h>
 #include <machine/katelib.h>
 #include <machine/cpu.h>
-#include <machine/undefined.h>
 #include <machine/cpus.h>
+#include <machine/undefined.h>
 
 #include "cpu.h"
 #if NCPU != 1
@@ -499,7 +500,7 @@ cpuclose(dev, flag, mode, p)
 int
 cpuioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
