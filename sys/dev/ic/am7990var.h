@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.12 1997/03/17 03:14:04 thorpej Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.13 1997/03/27 21:01:50 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -78,6 +78,7 @@ struct am7990_softc {
 	 * Machine-dependent functions:
 	 *
 	 *	read/write CSR
+	 *	hardware reset hook - may be NULL
 	 *	hardware init hook - may be NULL
 	 *	no carrier hook - may be NULL
 	 *	media change hook - may be NULL
@@ -86,6 +87,7 @@ struct am7990_softc {
 		    __P((struct am7990_softc *, u_int16_t));
 	void	(*sc_wrcsr)
 		    __P((struct am7990_softc *, u_int16_t, u_int16_t));
+	void	(*sc_hwreset) __P((struct am7990_softc *));
 	void	(*sc_hwinit) __P((struct am7990_softc *));
 	void	(*sc_nocarrier) __P((struct am7990_softc *));
 	int	(*sc_mediachange) __P((struct am7990_softc *));
@@ -99,6 +101,9 @@ struct am7990_softc {
 	int	*sc_supmedia;
 	int	sc_nsupmedia;
 	int	sc_defaultmedia;
+
+	/* PCnet bit to use software selection of a port */
+	int	sc_initmodemedia;
 
 	int	sc_havecarrier;	/* carrier status */
 
