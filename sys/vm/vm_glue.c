@@ -331,7 +331,7 @@ noswap:
 	 * Nothing to do, back to sleep
 	 */
 	if ((p = pp) == NULL) {
-		sleep((caddr_t)&proc0, PVM);
+		tsleep((caddr_t)&proc0, PVM, "sched", 0);
 		goto loop;
 	}
 
@@ -511,7 +511,7 @@ thread_block()
 	int s = splhigh();
 
 	if (curproc->p_thread)
-		sleep((caddr_t)curproc->p_thread, PVM);
+		tsleep((caddr_t)curproc->p_thread, PVM, "thrd_block", 0);
 	splx(s);
 }
 
@@ -528,7 +528,7 @@ thread_sleep(event, lock, ruptible)
 	curproc->p_thread = event;
 	simple_unlock(lock);
 	if (curproc->p_thread)
-		sleep((caddr_t)event, PVM);
+		tsleep((caddr_t)event, PVM, "thrd_sleep", 0);
 	splx(s);
 }
 

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
+ *	from: @(#)scsi.c	7.5 (Berkeley) 5/4/91
+ *	$Id: scsi.c,v 1.2 1993/08/01 19:23:14 mycroft Exp $
  */
 
 /*
@@ -43,7 +44,7 @@
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.1.1.1 1993/07/05 19:19:44 mw Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.2 1993/08/01 19:23:14 mycroft Exp $";
 #endif
 
 #include "sys/param.h"

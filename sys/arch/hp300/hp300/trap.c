@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: trap.c 1.32 91/04/06$
- *
+ *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp $
+ *	$Id: trap.c,v 1.4 1993/08/01 19:24:48 mycroft Exp $
  */
 
 #include "param.h"

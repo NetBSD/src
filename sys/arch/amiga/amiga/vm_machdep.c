@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
- *
- *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
+ *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
+ *	$Id: vm_machdep.c,v 1.2 1993/08/01 19:22:55 mycroft Exp $
  */
 
 #include "param.h"

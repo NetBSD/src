@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: cdvar.h 1.1 90/07/09$
- *
- *	@(#)cdvar.h	7.2 (Berkeley) 11/4/90
+ *	from: Utah Hdr: cdvar.h 1.1 90/07/09
+ *	from: @(#)cdvar.h	7.2 (Berkeley) 11/4/90
+ *	$Id: cdvar.h,v 1.2 1993/08/01 19:23:53 mycroft Exp $
  */
 
 #define	NCDISKS	8			/* max # of component disks */

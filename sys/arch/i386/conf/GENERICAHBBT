@@ -1,7 +1,7 @@
 #
-# GENERICISA -- Generic ISA machine with aha1742 -- distribution floppy
+# GENERICAHBBT -- Generic machine w/ahb and bt drivers -- distribution floppy
 #
-#	$Id: GENERICAHBBT,v 1.17 1993/07/28 02:20:42 cgd Exp $
+#	$Id: GENERICAHBBT,v 1.18 1993/08/01 19:25:29 mycroft Exp $
 #
 
 machine		"i386"

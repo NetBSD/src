@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: grf_tc.c 1.18 91/04/02$
- *
- *	@(#)grf_tc.c	7.4 (Berkeley) 5/7/91
+ *	from: Utah Hdr: grf_tc.c 1.18 91/04/02
+ *	from: @(#)grf_tc.c	7.4 (Berkeley) 5/7/91
+ *	$Id: grf_tc.c,v 1.2 1993/08/01 19:24:16 mycroft Exp $
  */
 
 #include "grf.h"

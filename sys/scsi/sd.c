@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.17 1993/07/19 11:30:52 cgd Exp $
+ *	$Id: sd.c,v 1.18 1993/08/01 19:26:21 mycroft Exp $
  */
 
 #include "sd.h"
@@ -285,7 +285,7 @@ sd_get_xs(int unit, int flags)
 		s = SPLSD();
 		while (!(xs = sd->freexfer)) {
 			sd->blockwait++;  /* someone waiting! */
-			sleep((caddr_t)&sd->freexfer, PRIBIO+1);
+			tsleep((caddr_t)&sd->freexfer, PRIBIO+1, "sd_get_xs",0);
 			sd->blockwait--;
 		}
 		sd->freexfer = xs->next;
@@ -1083,7 +1083,7 @@ retry:
 	case SUCCESSFULLY_QUEUED:
 		s = splbio();
 		while(!(xs->flags & ITSDONE))
-			sleep((caddr_t)xs, PRIBIO+1);
+			tsleep((caddr_t)xs, PRIBIO+1, "sd_cmd", 0);
 		splx(s);
 	case HAD_ERROR:
 		/*printf("err = %d ", xs->error);*/

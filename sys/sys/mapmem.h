@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: mmap.h 1.4 89/08/14$
- *
+ *	from: Utah Hdr: mmap.h 1.4 89/08/14
  *	from: @(#)mapmem.h	7.2 (Berkeley) 6/6/90
- *	$Id: mapmem.h,v 1.3 1993/05/20 16:22:37 cgd Exp $
+ *	$Id: mapmem.h,v 1.4 1993/08/01 19:26:29 mycroft Exp $
  */
 
 #ifndef _SYS_MAPMEM_H_

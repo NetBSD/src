@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fhpibreg.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)fhpibreg.h	7.1 (Berkeley) 5/8/90
+ *	$Id: fhpibreg.h,v 1.2 1993/08/01 19:24:07 mycroft Exp $
  */
 
 #define	vu_char	volatile u_char

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dmareg.h
+ *	from: @(#)dmareg.h
+ *	$Id: dmareg.h,v 1.2 1993/08/01 19:23:03 mycroft Exp $
  */
 
 /* Hardware layout of the A3000/A2091 SDMAC. This also contains the

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)scsivar.h	7.1 (Berkeley) 5/8/90
+ *	from: @(#)scsivar.h	7.1 (Berkeley) 5/8/90
+ *	$Id: scsivar.h,v 1.2 1993/08/01 19:23:17 mycroft Exp $
  */
 
 struct	scsi_softc {

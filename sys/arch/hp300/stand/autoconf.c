@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: autoconf.c 1.13 91/01/21$
- *
+ *	from: Utah Hdr: autoconf.c 1.13 91/01/21
  *	from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.2 1993/05/22 07:58:43 cgd Exp $
+ *	$Id: autoconf.c,v 1.3 1993/08/01 19:25:11 mycroft Exp $
  */
 
 #include "samachdep.h"

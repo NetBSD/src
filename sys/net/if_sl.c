@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
- *
+ *	from: if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
  *	if_sl.c,v 1.8 1993/05/22 11:42:11 cgd Exp
  */

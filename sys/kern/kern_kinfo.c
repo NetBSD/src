@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_kinfo.c	7.17 (Berkeley) 6/26/91
- *	$Id: kern_kinfo.c,v 1.6 1993/07/13 22:13:21 cgd Exp $
+ *	$Id: kern_kinfo.c,v 1.7 1993/08/01 19:26:00 mycroft Exp $
  */
 
 #include "param.h"
@@ -103,7 +103,7 @@ getkerninfo(p, uap, retval)
 
 	while (kinfo_lock.kl_lock) {
 		kinfo_lock.kl_want++;
-		sleep((caddr_t)&kinfo_lock, PRIBIO+1);
+		tsleep((caddr_t)&kinfo_lock, PRIBIO+1, "ki_lock", 0);
 		kinfo_lock.kl_want--;
 		kinfo_lock.kl_locked++;
 	}

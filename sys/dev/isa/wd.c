@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.25 1993/07/28 02:21:37 cgd Exp $
+ *	$Id: wd.c,v 1.26 1993/08/01 19:25:45 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -258,6 +258,8 @@ wdattach(struct isa_device *dvp)
 				du->dk_dd.d_nsectors);
 		for (i=blank=0; i<sizeof(du->dk_params.wdp_model); i++) {
 			char c = du->dk_params.wdp_model[i];
+			if (!c)
+			    break;
 			if (blank && c == ' ')
 				continue;
 			if (blank && c != ' ') {
@@ -1130,7 +1132,7 @@ wdgetctlr(int u, struct disk *du)
 	x = splbio();		/* not called from intr level ... */
 	wdc = du->dk_port;
 #ifdef TIPCAT
-	for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {
+	for (timeout=0; (inb(wdc+wd_status) & WDCS_BUSY); ) {
 		DELAY(WDCDELAY);
 		if(++timeout > WDCNDELAY) {
 			splx(x);
@@ -1143,6 +1145,19 @@ wdgetctlr(int u, struct disk *du)
 #endif
 #endif
 	outb(wdc+wd_sdh, WDSD_IBM | (u << 4));
+#ifdef TIPCAT
+	for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {
+		DELAY(WDCDELAY);
+		if(++timeout > WDCNDELAY) {
+			splx(x);
+			return -1;
+		}
+	}
+#ifdef WDCNDELAY_DEBUG
+	if(timeout>WDCNDELAY_DEBUG)
+		printf("wdc%d: timeout took %dus\n", du->dk_ctrlr, WDCDELAY * timeout);
+#endif
+#endif
 	stat = wdcommand(du, WDCC_READP);
 #ifdef TIPCAT
 	for (timeout=0; (inb(wdc+wd_status) & WDCS_READY) == 0; ) {

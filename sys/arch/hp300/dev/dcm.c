@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: $Hdr: dcm.c 1.26 91/01/21$
- *
+ *	from: Utah Hdr: dcm.c 1.26 91/01/21
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.7 1993/07/12 11:38:07 mycroft Exp $
+ *	$Id: dcm.c,v 1.8 1993/08/01 19:23:58 mycroft Exp $
  */
 
 /*

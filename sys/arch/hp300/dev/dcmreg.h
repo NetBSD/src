@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: dcmreg.h 1.1 90/07/09$
- *
- *	@(#)dcmreg.h	7.4 (Berkeley) 11/4/90
+ *	from: Utah Hdr: dcmreg.h 1.1 90/07/09
+ *	from: @(#)dcmreg.h	7.4 (Berkeley) 11/4/90
+ *	$Id: dcmreg.h,v 1.2 1993/08/01 19:24:00 mycroft Exp $
  */
 
 struct dcmdevice {	   /* host address, only odd bytes addressed */

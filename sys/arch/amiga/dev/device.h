@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)device.h	7.3 (Berkeley) 5/7/91
+ *	from: @(#)device.h	7.3 (Berkeley) 5/7/91
+ *	$Id: device.h,v 1.2 1993/08/01 19:23:00 mycroft Exp $
  */
 
 struct driver {

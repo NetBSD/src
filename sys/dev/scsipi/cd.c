@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.15 1993/07/19 11:30:49 cgd Exp $
+ *	$Id: cd.c,v 1.16 1993/08/01 19:26:17 mycroft Exp $
  */
 
 #define SPLCD splbio
@@ -273,7 +273,8 @@ int	unit;
 		while (!(xs = cd_free_xfer[unit]))
 		{
 			cd_xfer_block_wait[unit]++;  /* someone waiting! */
-			sleep((caddr_t)&cd_free_xfer[unit], PRIBIO+1);
+			tsleep((caddr_t)&cd_free_xfer[unit], PRIBIO+1,
+			    "cd_get_xs", 0);
 			cd_xfer_block_wait[unit]--;
 		}
 		cd_free_xfer[unit] = xs->next;
@@ -1426,7 +1427,7 @@ retry:		xs->error	=	XS_NOERROR;
 		case	SUCCESSFULLY_QUEUED:
 			s = splbio();
 			while(!(xs->flags & ITSDONE))
-				sleep((caddr_t)xs,PRIBIO+1);
+				tsleep((caddr_t)xs,PRIBIO+1, "cd_cmd", 0);
 			splx(s);
 
 		case	HAD_ERROR:

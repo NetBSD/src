@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: vn.c 1.1 91/04/30$
- *
+ *	from: Utah Hdr: vn.c 1.1 91/04/30
  *	from: @(#)vn.c	7.6 (Berkeley) 6/21/91
- *	$Id: vn.c,v 1.2 1993/05/22 07:56:59 cgd Exp $
+ *	$Id: vn.c,v 1.3 1993/08/01 19:24:31 mycroft Exp $
  */
 
 /*

@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: hil.c 1.33 89/12/22$
- *
+ *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
-	$Id: hil.c,v 1.5 1993/07/12 11:38:11 mycroft Exp $
+ *	$Id: hil.c,v 1.6 1993/08/01 19:24:19 mycroft Exp $
  */
 
 #include "sys/param.h"
