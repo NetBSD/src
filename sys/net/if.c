@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.70 2000/09/29 00:37:37 mellon Exp $	*/
+/*	$NetBSD: if.c,v 1.71 2000/10/01 23:16:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -988,14 +988,15 @@ ifpromisc(ifp, pswitch)
 	flags = ifp->if_flags;
 	if (pswitch) {
 		/*
-		 * If the device is not configured up, we cannot put it in
-		 * promiscuous mode.
+		 * Allow the device to be "placed" into promiscuous
+		 * mode even if it is not configured up.  It will
+		 * consult IFF_PROMISC when it is is brought up.
 		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (ENETDOWN);
 		if (ifp->if_pcount++ != 0)
 			return (0);
 		ifp->if_flags |= IFF_PROMISC;
+		if ((ifp->if_flags & IFF_UP) == 0)
+			return (0);
 	} else {
 		if (--ifp->if_pcount > 0)
 			return (0);
