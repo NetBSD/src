@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.18.2.2.2.1 1999/06/21 01:31:07 thorpej Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.18.2.2.2.2 1999/07/11 05:43:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -161,7 +161,6 @@ lfs_valloc(v)
 		lfs_balloc(vp, 0, fs->lfs_bsize, blkno, &bp);
 		ip->i_ffs_size += fs->lfs_bsize;
 		uvm_vnp_setsize(vp, ip->i_ffs_size);
-		(void)uvm_vnp_uncache(vp);
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 			fs->lfs_ifpb;

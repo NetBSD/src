@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.28.4.1 1999/06/07 04:25:34 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28.4.2 1999/07/11 05:43:59 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -209,8 +209,6 @@ ffs_truncate(v)
 		bp = 0;
 		oip->i_ffs_size = length;
 		uvm_vnp_setsize(ovp, length);
-		(void) uvm_vnp_uncache(ovp);
-
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
@@ -239,7 +237,6 @@ ffs_truncate(v)
 #endif
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
-		(void) uvm_vnp_uncache(ovp);
 #if 1
 		uvm_vnp_zerorange(ovp, oip->i_ffs_size, size - offset);
 #else

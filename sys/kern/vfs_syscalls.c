@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.133.4.3 1999/07/02 18:54:10 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.133.4.4 1999/07/11 05:43:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1533,8 +1533,6 @@ sys_unlink(p, v, retval)
 		goto out;
 	}
 
-	(void)uvm_vnp_uncache(vp);
-
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
@@ -2749,7 +2747,6 @@ out:
 		if (fromnd.ni_dvp != tdvp)
 			VOP_LEASE(fromnd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 		if (tvp) {
-			(void)uvm_vnp_uncache(tvp);
 			VOP_LEASE(tvp, p, p->p_ucred, LEASE_WRITE);
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.57.4.1 1999/07/04 01:56:30 chs Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.57.4.2 1999/07/11 05:44:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -456,8 +456,6 @@ ufs_chmod(vp, mode, cred, p)
 	ip->i_ffs_mode &= ~ALLPERMS;
 	ip->i_ffs_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
-	if ((vp->v_flag & VTEXT) && (ip->i_ffs_mode & S_ISTXT) == 0)
-		(void) uvm_vnp_uncache(vp);
 	return (0);
 }
 

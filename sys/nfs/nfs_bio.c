@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45.4.2 1999/07/04 01:45:35 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.4.3 1999/07/11 05:43:57 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -662,11 +662,6 @@ nfs_write(v)
 		bp = 0;
 		n = bytelen;
 #endif
-
-		/*
-		 * XXX make sure we aren't cached in the VM page cache
-		 */
-		(void)uvm_vnp_uncache(vp);
 
 		/*
 		 * Check for a valid write lease.

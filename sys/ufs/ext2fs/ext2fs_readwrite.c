@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.10 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.10.4.1 1999/07/11 05:43:59 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -259,7 +259,6 @@ ext2fs_write(v)
 			ip->i_e2fs_size = uio->uio_offset + xfersize;
 			uvm_vnp_setsize(vp, ip->i_e2fs_size);
 		}
-		(void)uvm_vnp_uncache(vp);
 
 		size = fs->e2fs_bsize - bp->b_resid;
 		if (size < xfersize)

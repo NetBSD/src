@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.22.2.1.2.1 1999/06/21 01:31:10 thorpej Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.22.2.1.2.2 1999/07/11 05:44:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -308,7 +308,6 @@ lfs_truncate(v)
 			return (e1);
 		}
 		ip->i_ffs_size = length;
-		(void)uvm_vnp_uncache(vp);
 		newsize = blksize(fs, ip, lbn);
 		bzero((char *)bp->b_data + offset, (u_int)(newsize - offset));
 #ifdef DEBUG
