@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.21 2004/11/17 06:24:03 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.22 2004/11/17 06:45:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.21 2004/11/17 06:24:03 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.22 2004/11/17 06:45:12 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -752,8 +752,8 @@ printline(char *hname, char *msg)
 void
 printsys(char *msg)
 {
-	int c, n, pri, flags, is_printf;
-	char *p, *q, line[MAXLINE + 1];
+	int n, pri, flags, is_printf;
+	char *p, *q;
 
 	for (p = msg; *p != '\0'; ) {
 		flags = ISKERNEL | ADDDATE;
@@ -776,12 +776,12 @@ printsys(char *msg)
 		}
 		if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
 			pri = DEFSPRI;
-		q = line;
-		while (*p != '\0' && (c = *p++) != '\n' &&
-		    q < &line[MAXLINE])
-			*q++ = c;
-		*q = '\0';
-		logmsg(pri, line, LocalHostName, flags);
+		for (q = p; *q != '\0' && *q != '\n'; q++)
+			/* look for end of line */;
+		if (*q != '\0')
+			*q++ = '\0';
+		logmsg(pri, p, LocalHostName, flags);
+		p = q;
 	}
 }
 
