@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.3 2000/01/05 16:28:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.3 2000/01/05 16:28:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,6 @@ dpt_pci_attach(parent, self, aux)
 		return;	
 	}
 
-	/* Now attach to the bus-independant code */
+	/* Now attach to the bus-independent code */
 	dpt_init(sc, intrstr);
 }
