@@ -37,14 +37,14 @@
  *
  *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.5 1993/08/09 04:45:30 mycroft Exp $
+ *	$Id: param.h,v 1.6 1993/08/14 02:46:00 mycroft Exp $
  */
 
 /*
  * Machine dependent constants for HP9000 series 300.
  */
-#define	MACHINE "hp300"
-#define MID_MACHINE	MID_HP300
+#define	MACHINE		"hp300"
+#define MID_MACHINE	MID_M68K4K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
