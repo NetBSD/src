@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7 2002/09/18 01:45:04 chs Exp $	*/
+/*	$NetBSD: Locore.c,v 1.8 2002/10/25 18:19:43 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,7 +43,7 @@ static int openfirmware __P((void *));
 static void startup __P((void *, int, int (*)(void *), char *, int));
 static void setup __P((void));
 
-static int stack[1024];
+static int stack[8192/4 + 4];
 
 asm("
 	.text
@@ -60,8 +60,9 @@ _start:
 	sync
 	isync
 
-	lis	1,stack+4096-16@ha
-	addi	1,1,stack+4096-16@l
+	lis	1,stack@ha
+	addi	1,1,stack@l
+	addi	1,1,8192
 	b	startup
 ");
 
