@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 1996/10/25 19:58:43 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 1996/11/06 13:53:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -91,6 +91,7 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/iomap.h>
+#include <machine/bus.h>
 #include <dev/cons.h>
 
 static void bootsync __P((void));
@@ -1423,4 +1424,56 @@ cpu_exec_aout_makecmds(p, epp)
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 #endif
 	return(error);
+}
+
+int
+bus_mem_map(t, bpa, size, cachable, mhp)
+bus_chipset_tag_t	t;
+bus_mem_addr_t		bpa;
+bus_mem_size_t		size;
+int			cachable;
+bus_mem_handle_t	*mhp;
+{
+	vm_offset_t	va;
+	u_long		pa, endpa;
+
+	pa    = atari_trunc_page(bpa);
+	endpa = atari_round_page((bpa + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endpa <= pa)
+		panic("bus_mem_map: overflow");
+#endif
+
+	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+	if (va == 0)
+		return 1;
+	*mhp = (caddr_t)(va + (bpa & PGOFSET));
+
+	for(; pa < endpa; pa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), (vm_offset_t)va, pa,
+				VM_PROT_READ|VM_PROT_WRITE, TRUE);
+		if (!cachable)
+			pmap_changebit(pa, PG_CI, TRUE);
+	}
+	return (0);
+}
+
+void
+bus_mem_unmap(t, memh, size)
+bus_chipset_tag_t	t;
+bus_mem_handle_t	memh;
+bus_mem_size_t		size;
+{
+	vm_offset_t	va, endva;
+
+	va = atari_trunc_page(memh);
+	endva = atari_round_page((memh + size) - 1);
+
+#ifdef DIAGNOSTIC
+	if (endva < va)
+		panic("unmap_iospace: overflow");
+#endif
+
+	kmem_free(kernel_map, va, endva - va);
 }
