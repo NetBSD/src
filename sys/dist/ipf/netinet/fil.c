@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1 2004/10/01 15:25:59 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.2 2004/10/03 12:16:32 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,7 +135,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.1 2004/10/01 15:25:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.2 2004/10/03 12:16:32 jdolecek Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.25 2004/06/30 11:26:08 darrenr Exp";
@@ -3967,13 +3967,12 @@ caddr_t data;
 	frentry_t frd, *fp, *f, **fprev, **ftail;
 	int error = 0, in, v;
 	u_int *p, *pp;
-	frgroup_t *fg;
+	frgroup_t *fg = NULL;
 	char *group;
-	void *ptr;
+	void *ptr = NULL;
 
-	fg = NULL;
-	fp = &frd;
 	if (makecopy != 0) {
+		fp = &frd;
 		error = fr_inobj(data, fp, IPFOBJ_FRENTRY);
 		if (error)
 			return EFAULT;
@@ -4028,7 +4027,6 @@ caddr_t data;
 			return error;
 	}
 
-	ptr = NULL;
 	/*
 	 * Check that the group number does exist and that its use (in/out)
 	 * matches what the rule is.
