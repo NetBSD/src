@@ -1,4 +1,4 @@
-.\"	$NetBSD: man.conf.5,v 1.5 1998/01/09 08:06:05 perry Exp $
+.\"	$NetBSD: man.conf.5,v 1.5.2.1 2000/04/30 11:30:11 he Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,7 +94,7 @@ The possible keywords and their meanings are as follows:
 Man file names, regardless of their format, are expected to end in
 a ``.*'' pattern, i.e. a ``.'' followed by some suffix.
 The first field of a _build line lists a suffix which indicates
-files which need to be reformated or manipulated in some way before
+files which need to be reformatted or manipulated in some way before
 being displayed to the user.
 The suffix may contain the normal shell globbing characters (NOT
 including curly braces (``{}'')).
@@ -103,6 +103,12 @@ output of which is the manual page in a format which may be directly
 displayed to the user.
 Any occurrences of the string ``%s'' in the shell command line will
 be replaced by the name of the file which is being reformatted.
+.It _crunch
+The ``_crunch'' section is used by catman to know how to crunch cat pages
+which originally were compressed man pages: The first field lists a suffix
+which indicates what kind of compression were used to compress the man page.
+The rest of the line must be a shell command line, used to compress the
+formatted pages.
 .It _subdir
 The list (in search order) of subdirectories which will be searched in
 any directory named with a trailing slash (``/'') character.
