@@ -1,0 +1,2 @@
+@c	$NetBSD: version.texi,v 1.1 1999/02/12 12:56:27 tv Exp $
+@set VERSION 3.95
