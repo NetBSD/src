@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.4 1998/08/12 20:04:13 drochner Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.5 1999/01/10 00:28:21 augustss Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -68,15 +68,15 @@ wsemul_vt100_scrollup(edp, n)
 					  edp->scrreg_startrow,
 					  help);
 		if (edp->dblwid)
-			bcopy(&edp->dblwid[edp->scrreg_startrow + n],
-			      &edp->dblwid[edp->scrreg_startrow],
-			      help);
+			memmove(&edp->dblwid[edp->scrreg_startrow],
+				&edp->dblwid[edp->scrreg_startrow + n],
+				help);
 	}
 	(*edp->emulops->eraserows)(edp->emulcookie,
 				   edp->scrreg_startrow + help, n,
 				   edp->defattr);
 	if (edp->dblwid)
-		bzero(&edp->dblwid[edp->scrreg_startrow + help], n);
+		memset(&edp->dblwid[edp->scrreg_startrow + help], 0, n);
 	CHECK_DW;
 }
 
@@ -100,15 +100,15 @@ wsemul_vt100_scrolldown(edp, n)
 					  edp->scrreg_startrow + n,
 					  help);
 		if (edp->dblwid)
-			bcopy(&edp->dblwid[edp->scrreg_startrow],
-			      &edp->dblwid[edp->scrreg_startrow + n],
-			      help);
+			memmove(&edp->dblwid[edp->scrreg_startrow + n],
+				&edp->dblwid[edp->scrreg_startrow],
+				help);
 	}
 	(*edp->emulops->eraserows)(edp->emulcookie,
 				   edp->scrreg_startrow, n,
 				   edp->defattr);
 	if (edp->dblwid)
-		bzero(&edp->dblwid[edp->scrreg_startrow], n);
+		memset(&edp->dblwid[edp->scrreg_startrow], 0, n);
 	CHECK_DW;
 }
 
@@ -131,7 +131,7 @@ wsemul_vt100_ed(edp, arg)
 						   edp->crow + 1, n,
 						   edp->defattr);
 			if (edp->dblwid)
-				bzero(&edp->dblwid[edp->crow + 1], n);
+				memset(&edp->dblwid[edp->crow + 1], 0, n);
 		}
 		break;
 	    case 1: /* beginning to cursor */
@@ -140,7 +140,7 @@ wsemul_vt100_ed(edp, arg)
 						   0, edp->crow,
 						   edp->defattr);
 			if (edp->dblwid)
-				bzero(&edp->dblwid[0], edp->crow);
+				memset(&edp->dblwid[0], 0, edp->crow);
 		}
 		ERASECOLS(0, edp->ccol + 1, edp->defattr);
 		break;
@@ -149,7 +149,7 @@ wsemul_vt100_ed(edp, arg)
 					   0, edp->nrows,
 					   edp->defattr);
 		if (edp->dblwid)
-			bzero(&edp->dblwid[0], edp->nrows);
+			memset(&edp->dblwid[0], 0, edp->nrows);
 		break;
 	    default:
 #ifdef VT100_PRINTUNKNOWN
@@ -467,7 +467,7 @@ wsemul_vt100_handle_csi(edp, c)
 			edp->tabs[edp->ccol] = 0;
 			break;
 		    case 3:
-			bzero(edp->tabs, edp->ncols);
+			memset(edp->tabs, 0, edp->ncols);
 			break;
 		    default:
 #ifdef VT100_PRINTUNKNOWN
@@ -704,7 +704,7 @@ wsemul_vt100_handle_dcs(edp)
 		return;
 	    case DCSTYPE_TABRESTORE:
 		KASSERT(edp->tabs != 0);
-		bzero(edp->tabs, edp->ncols);
+		memset(edp->tabs, 0, edp->ncols);
 		pos = 0;
 		for (i = 0; i < edp->dcspos; i++) {
 			char c = edp->dcsarg[i];
