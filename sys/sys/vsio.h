@@ -1,4 +1,4 @@
-/*	$NetBSD: vsio.h,v 1.8 1997/01/22 07:09:35 mikel Exp $	*/
+/*	$NetBSD: vsio.h,v 1.9 1998/09/13 14:46:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #ifndef _SYS_VSIO_H_
 #define _SYS_VSIO_H_
 
- /****************************************************************************
+/****************************************************************************
  *									    *
  *  Copyright (c) 1983, 1984 by						    *
  *  DIGITAL EQUIPMENT CORPORATION, Maynard, Massachusetts.		    *

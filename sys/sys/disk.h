@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.14 1998/03/01 02:24:12 fvdl Exp $	*/
+/*	$NetBSD: disk.h,v 1.15 1998/09/13 14:46:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+ *	California, Lawrence Berkeley Laboratories.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

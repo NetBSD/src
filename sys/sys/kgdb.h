@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.4 1998/08/13 02:10:59 eeh Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.5 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -11,7 +11,7 @@
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+ *	California, Lawrence Berkeley Laboratories.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

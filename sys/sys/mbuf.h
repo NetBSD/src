@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.34 1998/08/01 01:47:24 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.35 1998/09/13 14:46:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -38,8 +38,7 @@
  */
 
 /*
- * Copyright (c) 1996
- *	Matt Thomas <matt@3am-software.com>.  All rights reserved.
+ * Copyright (c) 1996 Matt Thomas.  All rights reserved.
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
