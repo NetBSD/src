@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.53 1997/09/18 20:25:36 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.54 1997/09/27 18:01:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -183,9 +183,11 @@ struct cfdriver clock_cd = {
 static int	timermatch __P((struct device *, struct cfdata *, void *));
 static void	timerattach __P((struct device *, struct device *, void *));
 
-struct timer_4m	*timerreg_4m;	/* XXX - need more cleanup */
-struct counter_4m	*counterreg_4m;
-#define	timerreg4		((struct timerreg_4 *)TIMERREG_VA)
+/*struct counter_4m	*counterreg_4m;*/
+struct timer_4m		*timerreg4m;
+#define counterreg4m	cpuinfo.counterreg_4m
+
+#define	timerreg4	((struct timerreg_4 *)TIMERREG_VA)
 
 struct cfattach timer_ca = {
 	sizeof(struct device), timermatch, timerattach
@@ -490,18 +492,31 @@ timerattach(parent, self, aux)
 		/* XXX: must init to NULL to avoid stupid gcc -Wall warning */
 
 	if (CPU_ISSUN4M) {
+		int i;
+
+		/* Map the system timer */
 		(void)mapdev(&ra->ra_reg[ra->ra_nreg-1], TIMERREG_VA, 0,
 			     sizeof(struct timer_4m));
+		timerreg4m = (struct timer_4m *)TIMERREG_VA;
+
+		for (i = 0; i < ra->ra_nreg-1; i++) {
+			if (i != 0)
+				break;
+			cpuinfo.counterreg_4m = (struct counter_4m *)
+				mapdev(&ra->ra_reg[i], 0, 0,
+				       sizeof(struct counter_4m));
+		}
+#if 0
 		(void)mapdev(&ra->ra_reg[0], COUNTERREG_VA, 0,
 			     sizeof(struct counter_4m));
-		timerreg_4m = (struct timer_4m *)TIMERREG_VA;
-		counterreg_4m = (struct counter_4m *)COUNTERREG_VA;
+		counterreg4m = (struct counter_4m *)COUNTERREG_VA;
+#endif
 
 		/* Put processor counter in "timer" mode */
-		timerreg_4m->t_cfg = 0;
+		timerreg4m->t_cfg = 0;
 
-		cnt = &counterreg_4m->t_counter;
-		lim = &counterreg_4m->t_limit;
+		cnt = &counterreg4m->t_counter;
+		lim = &counterreg4m->t_limit;
 	}
 
 	if (CPU_ISSUN4OR4C) {
@@ -660,8 +675,8 @@ cpu_initclocks()
 		statvar >>= 1;
 
 	if (CPU_ISSUN4M) {
-		timerreg_4m->t_limit = tmr_ustolim4m(tick);
-		counterreg_4m->t_limit = tmr_ustolim4m(statint);
+		timerreg4m->t_limit = tmr_ustolim4m(tick);
+		counterreg4m->t_limit = tmr_ustolim4m(statint);
 	}
 
 	if (CPU_ISSUN4OR4C) {
@@ -723,7 +738,7 @@ clockintr(cap)
 #endif
 	/* read the limit register to clear the interrupt */
 	if (CPU_ISSUN4M) {
-		discard = timerreg_4m->t_limit;
+		discard = timerreg4m->t_limit;
 	}
 
 	if (CPU_ISSUN4OR4C) {
@@ -760,12 +775,12 @@ statintr(cap)
 
 	/* read the limit register to clear the interrupt */
 	if (CPU_ISSUN4M) {
-		discard = counterreg_4m->t_limit;
+		discard = counterreg4m->t_limit;
 		if (timerok == 0) {
 			/* Stop the clock */
 			printf("note: counter running!\n");
-			stopcounter(counterreg_4m);
-			timerreg_4m->t_cfg = TMR_CFG_USER;
+			stopcounter(counterreg4m);
+			timerreg4m->t_cfg = TMR_CFG_USER;
 			return 1;
 		}
 	}
@@ -787,7 +802,7 @@ statintr(cap)
 	newint = statmin + r;
 
 	if (CPU_ISSUN4M) {
-		counterreg_4m->t_limit = tmr_ustolim4m(newint);
+		counterreg4m->t_limit = tmr_ustolim4m(newint);
 	}
 
 	if (CPU_ISSUN4OR4C) {
