@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.10 1999/11/12 07:37:21 mark Exp $
+$NetBSD: podules,v 1.11 2000/05/09 21:56:04 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -57,6 +57,7 @@ manufacturer	ICUBED		0x0046	I-Cubed
 manufacturer	BRINI		0x0050	Brini
 manufacturer	ANT		0x0053	ANT
 manufacturer	CASTLE		0x0055	Castle Technology
+manufacturer	DTSOFT		0x0037	D.T. Software
 manufacturer	ALSYSTEMS	0x005b	Alsystems
 manufacturer	SIMTEC		0x005f	Simtec Electronics
 manufacturer	YES		0x0060	Yellowstone Educational Solutions
@@ -104,6 +105,8 @@ podule	OAK		SCSI		0x0058	16 bit SCSI interface
 podule	MORLEY		SCSI		0x0067	SCSI interface
 
 podule	VTI		SCSI		0x008d	SCSI interface
+
+podule	DTSOFT		IDE		0x00ae	IDE interface
 
 podule	CUMANA		SCSI2		0x003a	SCSI II interface
 podule	CUMANA		SCSI1		0x00a0	SCSI I interface
