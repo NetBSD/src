@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.68 2003/05/17 01:38:40 nakayama Exp $ */
+/*	$NetBSD: db_interface.c,v 1.69 2003/05/18 22:11:31 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -248,9 +248,9 @@ void db_dump_espcmd __P((db_expr_t, int, db_expr_t, char *));
 void db_watch __P((db_expr_t, int, db_expr_t, char *));
 void db_pm_extract __P((db_expr_t, int, db_expr_t, char *));
 
+#ifdef DDB
 static void db_dump_pmap __P((struct pmap*));
 static void db_print_trace_entry __P((struct traptrace *, int));
-
 
 /*
  * Received keyboard interrupt sequence.
@@ -367,6 +367,7 @@ kdb_trap(type, tf)
 
 	return (1);
 }
+#endif	/* DDB */
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -417,6 +418,7 @@ db_write_bytes(addr, size, data)
 
 }
 
+#ifdef DDB
 void
 Debugger()
 {
@@ -1144,6 +1146,8 @@ const struct db_command db_machine_command_table[] = {
 	{ "window",	db_dump_window,	0,	0 },
 	{ (char *)0, }
 };
+
+#endif	/* DDB */
 
 /*
  * support for SOFTWARE_SSTEP:
