@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.264 2003/04/11 22:02:28 nathanw Exp $ */
+/* $NetBSD: machdep.c,v 1.265 2003/04/17 00:15:19 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2003/04/11 22:02:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2003/04/17 00:15:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2114,7 +2114,7 @@ cpu_getmcontext(l, mcp, flags)
 	*flags |= _UC_CPU | _UC_UNIQUE;
 
 	/* Save floating point register context, if any, and copy it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
+	if (l->l_md.md_flags & MDP_FPUSED) {
 		fpusave_proc(l, 1);
 		(void)memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fp,
 		    sizeof (mcp->__fpregs));
