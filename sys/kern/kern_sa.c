@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.4 2003/02/01 06:23:43 thorpej Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.5 2003/02/03 23:31:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.4 2003/02/01 06:23:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.5 2003/02/03 23:31:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,9 +278,7 @@ sa_yield(struct lwp *l)
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
 	int s;
-
-	DPRINTFN(1,("sa_yield(%d.%d)\n", p->p_pid, l->l_lid));
-
+	
 	/*
 	 * If we're the last running LWP, stick around to recieve
 	 * signals.
@@ -303,13 +301,16 @@ sa_yield(struct lwp *l)
 		if (p->p_userret == NULL) {
 			sa->sa_idle = l;
 			l->l_flag &= ~L_SA;
-			tsleep((caddr_t) p, PUSER | PCATCH, "sawait", 0);
+			tsleep((caddr_t) sa->sa_idle, PUSER | PCATCH,
+			    "sawait", 0);
 			l->l_flag |= L_SA;
 			sa->sa_idle = NULL;
 			sa->sa_vp = l;
 		}
 		splx(s);
 	} else {
+		DPRINTFN(1,("sa_yield(%d.%d) stepping aside\n", p->p_pid, l->l_lid));
+	
 		SCHED_LOCK(s);
 		l2 = sa->sa_woken;
 		sa->sa_woken = NULL;
