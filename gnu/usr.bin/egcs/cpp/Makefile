@@ -1,5 +1,5 @@
 #	from: @{#}Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: Makefile,v 1.8 1998/10/04 18:43:30 tv Exp $
+#	$NetBSD: Makefile,v 1.9 1998/10/14 16:55:52 tv Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -20,5 +20,9 @@ FILESMODE=	${BINMODE}
 
 MAN=		cccp.1
 MLINKS=		cccp.1 cpp.1 cccp.1 gcpp.1
+
+.NOPATH: cexp.c
+.BEGIN:
+	@rm -f ${DIST}/cexp.c
 
 .include <bsd.prog.mk>
