@@ -1,4 +1,4 @@
-/*	$NetBSD: _getcontext.c,v 1.2 2003/01/18 11:32:59 thorpej Exp $	*/
+/*	$NetBSD: _getcontext.c,v 1.3 2003/01/21 19:15:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -33,15 +33,5 @@
 #ifdef __indr_reference
 __indr_reference(_getcontext, getcontext)
 #else
-
-#include <ucontext.h>
-int	_getcontext __P((ucontext_t *));	/* XXX */
-
-int
-getcontext(ucp)
-	ucontext_t *ucp;
-{
-
-	return _getcontext(ucp);
-}
+#error requires either weak aliases or indirect references!
 #endif
