@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cabs.c	5.6 (Berkeley) 10/9/90";*/
-static char rcsid[] = "$Id: cabs.c,v 1.3 1993/08/14 13:43:23 mycroft Exp $";
+static char rcsid[] = "$Id: cabs.c,v 1.4 1994/02/06 18:48:28 chopps Exp $";
 #endif /* not lint */
 
 /* HYPOT(X,Y)
@@ -171,16 +171,20 @@ double x, y;
  *	cabs(z) = hypot(x,y) .
  */
 
+struct abs_args {
+	double x, y;
+};
+
 double
 cabs(z)
-struct { double x, y;} z;
+struct abs_args z;
 {
 	return hypot(z.x,z.y);
 }
 
 double
 z_abs(z)
-struct { double x,y;} *z;
+struct abs_args *z;
 {
 	return hypot(z->x,z->y);
 }
