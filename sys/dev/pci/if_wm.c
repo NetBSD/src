@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.46 2003/10/20 05:56:17 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.47 2003/10/20 06:00:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.46 2003/10/20 05:56:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.47 2003/10/20 06:00:26 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -394,50 +394,50 @@ do {									\
 	CSR_WRITE((sc), (sc)->sc_rdt_reg, (x));				\
 } while (/*CONSTCOND*/0)
 
-void	wm_start(struct ifnet *);
-void	wm_watchdog(struct ifnet *);
-int	wm_ioctl(struct ifnet *, u_long, caddr_t);
-int	wm_init(struct ifnet *);
-void	wm_stop(struct ifnet *, int);
+static void	wm_start(struct ifnet *);
+static void	wm_watchdog(struct ifnet *);
+static int	wm_ioctl(struct ifnet *, u_long, caddr_t);
+static int	wm_init(struct ifnet *);
+static void	wm_stop(struct ifnet *, int);
 
-void	wm_shutdown(void *);
+static void	wm_shutdown(void *);
 
-void	wm_reset(struct wm_softc *);
-void	wm_rxdrain(struct wm_softc *);
-int	wm_add_rxbuf(struct wm_softc *, int);
-void	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
-void	wm_tick(void *);
+static void	wm_reset(struct wm_softc *);
+static void	wm_rxdrain(struct wm_softc *);
+static int	wm_add_rxbuf(struct wm_softc *, int);
+static void	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
+static void	wm_tick(void *);
 
-void	wm_set_filter(struct wm_softc *);
+static void	wm_set_filter(struct wm_softc *);
 
-int	wm_intr(void *);
-void	wm_txintr(struct wm_softc *);
-void	wm_rxintr(struct wm_softc *);
-void	wm_linkintr(struct wm_softc *, uint32_t);
+static int	wm_intr(void *);
+static void	wm_txintr(struct wm_softc *);
+static void	wm_rxintr(struct wm_softc *);
+static void	wm_linkintr(struct wm_softc *, uint32_t);
 
-void	wm_tbi_mediainit(struct wm_softc *);
-int	wm_tbi_mediachange(struct ifnet *);
-void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
+static void	wm_tbi_mediainit(struct wm_softc *);
+static int	wm_tbi_mediachange(struct ifnet *);
+static void	wm_tbi_mediastatus(struct ifnet *, struct ifmediareq *);
 
-void	wm_tbi_set_linkled(struct wm_softc *);
-void	wm_tbi_check_link(struct wm_softc *);
+static void	wm_tbi_set_linkled(struct wm_softc *);
+static void	wm_tbi_check_link(struct wm_softc *);
 
-void	wm_gmii_reset(struct wm_softc *);
+static void	wm_gmii_reset(struct wm_softc *);
 
-int	wm_gmii_i82543_readreg(struct device *, int, int);
-void	wm_gmii_i82543_writereg(struct device *, int, int, int);
+static int	wm_gmii_i82543_readreg(struct device *, int, int);
+static void	wm_gmii_i82543_writereg(struct device *, int, int, int);
 
-int	wm_gmii_i82544_readreg(struct device *, int, int);
-void	wm_gmii_i82544_writereg(struct device *, int, int, int);
+static int	wm_gmii_i82544_readreg(struct device *, int, int);
+static void	wm_gmii_i82544_writereg(struct device *, int, int, int);
 
-void	wm_gmii_statchg(struct device *);
+static void	wm_gmii_statchg(struct device *);
 
-void	wm_gmii_mediainit(struct wm_softc *);
-int	wm_gmii_mediachange(struct ifnet *);
-void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
+static void	wm_gmii_mediainit(struct wm_softc *);
+static int	wm_gmii_mediachange(struct ifnet *);
+static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int	wm_match(struct device *, struct cfdata *, void *);
-void	wm_attach(struct device *, struct device *, void *);
+static int	wm_match(struct device *, struct cfdata *, void *);
+static void	wm_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, NULL, NULL);
@@ -564,7 +564,7 @@ wm_lookup(const struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 wm_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -575,7 +575,7 @@ wm_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (0);
 }
 
-void
+static void
 wm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wm_softc *sc = (void *) self;
@@ -1014,7 +1014,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-void
+static void
 wm_shutdown(void *arg)
 {
 	struct wm_softc *sc = arg;
@@ -1157,7 +1157,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
  *
  *	Start packet transmission on the interface.
  */
-void
+static void
 wm_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -1410,7 +1410,7 @@ wm_start(struct ifnet *ifp)
  *
  *	Watchdog timer handler.
  */
-void
+static void
 wm_watchdog(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -1440,7 +1440,7 @@ wm_watchdog(struct ifnet *ifp)
  *
  *	Handle control requests from the operator.
  */
-int
+static int
 wm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -1479,7 +1479,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  *
  *	Interrupt service routine.
  */
-int
+static int
 wm_intr(void *arg)
 {
 	struct wm_softc *sc = arg;
@@ -1547,7 +1547,7 @@ wm_intr(void *arg)
  *
  *	Helper; handle transmit interrupts.
  */
-void
+static void
 wm_txintr(struct wm_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1634,7 +1634,7 @@ wm_txintr(struct wm_softc *sc)
  *
  *	Helper; handle receive interrupts.
  */
-void
+static void
 wm_rxintr(struct wm_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1839,7 +1839,7 @@ wm_rxintr(struct wm_softc *sc)
  *
  *	Helper; handle link interrupts.
  */
-void
+static void
 wm_linkintr(struct wm_softc *sc, uint32_t icr)
 {
 	uint32_t status;
@@ -1907,7 +1907,7 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
  *	One second timer, used to check link status, sweep up
  *	completed transmit jobs, etc.
  */
-void
+static void
 wm_tick(void *arg)
 {
 	struct wm_softc *sc = arg;
@@ -1930,7 +1930,7 @@ wm_tick(void *arg)
  *
  *	Reset the i82542 chip.
  */
-void
+static void
 wm_reset(struct wm_softc *sc)
 {
 	int i;
@@ -1954,7 +1954,7 @@ wm_reset(struct wm_softc *sc)
  *
  *	Initialize the interface.  Must be called at splnet().
  */
-int
+static int
 wm_init(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -2226,7 +2226,7 @@ wm_init(struct ifnet *ifp)
  *
  *	Drain the receive queue.
  */
-void
+static void
 wm_rxdrain(struct wm_softc *sc)
 {
 	struct wm_rxsoft *rxs;
@@ -2247,7 +2247,7 @@ wm_rxdrain(struct wm_softc *sc)
  *
  *	Stop transmission on the interface.
  */
-void
+static void
 wm_stop(struct ifnet *ifp, int disable)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -2370,7 +2370,7 @@ wm_eeprom_sendbits(struct wm_softc *sc, uint32_t bits, int nbits)
  *
  *	Read data from the serial EEPROM.
  */
-void
+static void
 wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	uint32_t reg;
@@ -2426,7 +2426,7 @@ wm_read_eeprom(struct wm_softc *sc, int word, int wordcnt, uint16_t *data)
  *
  *	Add a receive buffer to the indiciated descriptor.
  */
-int
+static int
 wm_add_rxbuf(struct wm_softc *sc, int idx)
 {
 	struct wm_rxsoft *rxs = &sc->sc_rxsoft[idx];
@@ -2520,7 +2520,7 @@ wm_mchash(struct wm_softc *sc, const uint8_t *enaddr)
  *
  *	Set up the receive filter.
  */
-void
+static void
 wm_set_filter(struct wm_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -2606,7 +2606,7 @@ wm_set_filter(struct wm_softc *sc)
  *
  *	Initialize media for use on 1000BASE-X devices.
  */
-void
+static void
 wm_tbi_mediainit(struct wm_softc *sc)
 {
 	const char *sep = "";
@@ -2653,7 +2653,7 @@ do {									\
  *
  *	Get the current interface media status on a 1000BASE-X device.
  */
-void
+static void
 wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -2677,7 +2677,7 @@ wm_tbi_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  *
  *	Set hardware to newly-selected media on a 1000BASE-X device.
  */
-int
+static int
 wm_tbi_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -2744,7 +2744,7 @@ wm_tbi_mediachange(struct ifnet *ifp)
  *
  *	Update the link LED on 1000BASE-X devices.
  */
-void
+static void
 wm_tbi_set_linkled(struct wm_softc *sc)
 {
 
@@ -2761,7 +2761,7 @@ wm_tbi_set_linkled(struct wm_softc *sc)
  *
  *	Check the link on 1000BASE-X devices.
  */
-void
+static void
 wm_tbi_check_link(struct wm_softc *sc)
 {
 	uint32_t rxcw, ctrl, status;
@@ -2809,7 +2809,7 @@ wm_tbi_check_link(struct wm_softc *sc)
  *
  *	Reset the PHY.
  */
-void
+static void
 wm_gmii_reset(struct wm_softc *sc)
 {
 	uint32_t reg;
@@ -2846,7 +2846,7 @@ wm_gmii_reset(struct wm_softc *sc)
  *
  *	Initialize media for use on 1000BASE-T devices.
  */
-void
+static void
 wm_gmii_mediainit(struct wm_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2894,7 +2894,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
  *
  *	Get the current interface media status on a 1000BASE-T device.
  */
-void
+static void
 wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -2909,7 +2909,7 @@ wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
  *
  *	Set hardware to newly-selected media on a 1000BASE-T device.
  */
-int
+static int
 wm_gmii_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
@@ -2989,7 +2989,7 @@ i82543_mii_recvbits(struct wm_softc *sc)
  *
  *	Read a PHY register on the GMII (i82543 version).
  */
-int
+static int
 wm_gmii_i82543_readreg(struct device *self, int phy, int reg)
 {
 	struct wm_softc *sc = (void *) self;
@@ -3012,7 +3012,7 @@ wm_gmii_i82543_readreg(struct device *self, int phy, int reg)
  *
  *	Write a PHY register on the GMII (i82543 version).
  */
-void
+static void
 wm_gmii_i82543_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = (void *) self;
@@ -3028,7 +3028,7 @@ wm_gmii_i82543_writereg(struct device *self, int phy, int reg, int val)
  *
  *	Read a PHY register on the GMII.
  */
-int
+static int
 wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
 {
 	struct wm_softc *sc = (void *) self;
@@ -3069,7 +3069,7 @@ wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
  *
  *	Write a PHY register on the GMII.
  */
-void
+static void
 wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = (void *) self;
@@ -3099,7 +3099,7 @@ wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
  *
  *	Callback from MII layer when media changes.
  */
-void
+static void
 wm_gmii_statchg(struct device *self)
 {
 	struct wm_softc *sc = (void *) self;
