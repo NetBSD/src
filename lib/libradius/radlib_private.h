@@ -1,4 +1,4 @@
-/* $NetBSD: radlib_private.h,v 1.2 2005/02/20 00:28:20 christos Exp $ */
+/* $NetBSD: radlib_private.h,v 1.3 2005/03/26 04:38:21 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -74,7 +74,7 @@ struct rad_server {
 struct rad_handle {
 	int		 fd;		/* Socket file descriptor */
 	struct rad_server servers[MAXSERVERS];	/* Servers to contact */
-	int		 num_servers;	/* Number of valid server entries */
+	size_t		 num_servers;	/* Number of valid server entries */
 	int		 ident;		/* Current identifier value */
 	char		 errmsg[ERRSIZE];	/* Most recent error message */
 	unsigned char	 request[MSGSIZE];	/* Request to send */
@@ -82,15 +82,15 @@ struct rad_handle {
 	size_t		 req_len;	/* Length of request */
 	char		 pass[PASSSIZE];	/* Cleartext password */
 	size_t		 pass_len;	/* Length of cleartext password */
-	int		 pass_pos;	/* Position of scrambled password */
+	size_t		 pass_pos;	/* Position of scrambled password */
 	char	 	 chap_pass;	/* Have we got a CHAP_PASSWORD ? */
-	int		 authentic_pos;	/* Position of message authenticator */
+	size_t		 authentic_pos;	/* Position of message authenticator */
 	char		 eap_msg;	/* Are we an EAP Proxy? */
 	unsigned char	 response[MSGSIZE];	/* Response received */
 	size_t		 resp_len;	/* Length of response */
-	int		 resp_pos;	/* Current position scanning attrs */
-	int		 total_tries;	/* How many requests we'll send */
-	int		 try;		/* How many requests we've sent */
+	size_t		 resp_pos;	/* Current position scanning attrs */
+	size_t		 total_tries;	/* How many requests we'll send */
+	size_t		 try;		/* How many requests we've sent */
 	int		 srv;		/* Server number we did last */
 	int		 type;		/* Handle type */
 };
