@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.82 2004/01/05 01:19:07 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.83 2004/01/14 15:10:55 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.82 2004/01/05 01:19:07 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.83 2004/01/14 15:10:55 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -461,6 +461,7 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc = pool_get(&rf_rad_pool, PR_WAITOK);
 	simple_lock_init(&desc->mutex);
 
+	RF_LOCK_MUTEX(rf_rad_pool_lock);
 	if (raidPtr->waitShutdown) {
 		/*
 	         * Actually, we're shutting the array down. Free the desc
@@ -506,6 +507,7 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 
 	rf_FreeAllocList(desc->cleanupList);
 	pool_put(&rf_rad_pool, desc);
+	RF_LOCK_MUTEX(rf_rad_pool_lock);
 	raidPtr->nAccOutstanding--;
 	if (raidPtr->waitShutdown) {
 		RF_SIGNAL_COND(raidPtr->outstandingCond);
