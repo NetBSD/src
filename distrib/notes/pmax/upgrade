@@ -1,91 +1,92 @@
-It may be possible to easily upgrade your existing NetBSD/pmax system
-using the upgrade program in the miniroot.
 
-	NOTE: this has not been tested and should be done with caution,
-	after backing up your system.
+The preferred upgrade path is to set up a diskless-boot host, unpack
+and boot boot 1.3 diskimage as for a network installation, and to use
+the sysinst tool to upgrade your system.   Please see the `Installation'
+section for  further information.
 
-If you wish to upgrade your system by this method, simply select
-the `upgrade' option once the miniroot has booted.  The upgrade program
-with then guide you through the procedure.  The upgrade program will:
 
-	* Enable the network based on your system's current
-	  network configuration.
+Upgrade via diskimage.
+----------------------
 
-	* Mount your existing filesystems.
+If you cannot netboot, the recommended path is to upgrade by booting a
+diskimage from your swap partition.  Pmaxes cannot boot out out of
+anything but the 'a' partition. However, you *can* boot an upgrade
+kernel off your 'a' partition and tell that kernel  to use your
+'b' partition as its root.  The steps to do this
+(after you've  fetched the diskimage) with a current root of rzX are:
 
-	* Extract binary sets from the media of your choice.
+	1) boot single-user from your current root, rzX.
+	    Be *sure* not to start swapping:
 
-	* Fixup your system's existing /etc/fstab, changing the
-	  occurrences of `ufs' to `ffs' and let you edit the
-	  resulting file.
+		>> boot -f rz(0,X,0)netbsd -s 		# 3100
+		>> boot 5/rzX/netbsd -s 		# 5000/200
+		>> boot 3/rzX/netbsd -s 		# others
 
-	* Make new device nodes in your root filesystem.
+	(NOTE: replace the X with the unit number of your disk:
+         boot 3/rz2/netbsd to boot drive 2 on a 5000/xxx.)
 
-	* Copy a new kernel onto your root partition.
-	  NOTE: the existing kernel WILL NOT be backed up; doing
-	  so would be pointless, since older NetBSD kernels will
-	  not work correctly with all NetBSD _VER executables.
+	2) When you get a single-user prompt,  remount the
+	   root filesystem read-write. (You wil need to update the
+	   kernel soon.)
 
-	* Install a new boot block.
+		# mount /
 
-	* Check your filesystems for integrity.
+	   Then mount the filesystem with the diskimage, and
+	   uncompress and dd the diskimage into swap (b) partition.
+	   You will also need /usr mounted to run gunzip:
 
-While using the miniroot's upgrade program is the preferred method
-of upgrading your system, it is possible to upgrade your system
-manually.  To do this, follow the following procedure:
+		# mount /usr
+		# gunzip -c diskimage.gz | dd bs=10240 of=/dev/rrzXb
 
-	* Place _at least_ the `base' binary set in a filesystem
-	  accessible to the target machine.  A local filesystem
-	  is preferred, since there may be incompatibilities
-	  between the NetBSD _VER kernel and older route(8)
-	  binaries.
+	3) Mount swap (b) partition readonly on /mnt:
+		# mount -r -t ffs /dev/rzXb /mnt
 
-	* Back up your pre-existing kernel and copy the _VER
-	  kernel into your root partition.
+	4) Copy  the kernel from the B partition to your root:
+		cp -p  /mnt/netbsd /netbsd-1.3
+	   (this is important; you want the kernel in / and  swap
+	   to be a release kernel, or the release binaries will not work.)
 
-	* Reboot with the _VER kernel into single-user mode.
+	5) halt:
+		# halt
 
-	* Check all filesystems:
+	6) Reboot with an argument of "n", telling the kernel to
+	   ask what device to use as  root:
 
-		/sbin/fsck -p
+		>> boot -f rz(0,X,0)netbsd-1.3 n 	# 3100
+		>> boot 5/rzX/netbsd-1.3 n	 	# 5000/200
+		>> boot 3/rzX/netbsd-1.3 n 		# others
 
-	* Mount all local filesystems:
+	(NOTE: the n after the kernel name is a literal "n",
+	 not the disk unit number or partition. 
+	 It is an argument telling the kernel to ask for a root device.
+	 NOTE: replace the X with the unit number of your disk:
+         boot 3/rz2/netbsd to boot drive 2 on a 5000/xxx.)
 
-		/sbin/mount -a -t nonfs
 
-	* If you keep /usr or /usr/share on an NFS server, you
-	  will want to mount those filesystems as well.  To do
-	  this, you will need to enable the network:
+	7) The "n" argument tells the kernel to prompt you for
+	   the  root device, dump device, and root fileysystem type.
+	     Enter when the kernel asks for
+		Root device:
 
-		sh /etc/netstart
+	Tell it rzXb, where X is the same disk unit as in step 6.
+	Here's an example, again assuming drive  2 as in step 6:
 
-	  NOTE: the route(8) commands may fail due to potential
-	  incompatibilities between route(8) and the NetBSD _VER
-	  kernel.  Once you have enabled the network, mount the
-	  NFS filesystems.  If you use amd(8), you may or may not
-	  have to mount these filesystems manually.  Your mileage
-	  may vary.
+	KN03-AA V5.2b    (PC: 0x80051f1c, SP: 0xffffdeb0)
+	>> boot 3/rz2/netbsd n
 
-	* Make sure you are in the root filesystem and extract
-	  the `base' binary set:
+		boot device: rz2
+	root device (default rz2a): 
+	        <<< enter `rz2b' >>>
+	dump device (default rz2b): 
+	        <<< enter `none' >>>
+	file system (default generic): 
+	        <<< enter `ffs' >>>
+	root on rz2b
 
-		cd /
-		tar --unlink -zxvpf /path/to/base13.tar.gz
 
-	  NOTE: the `--unlink' option is _very_ important!
+then continue from the ``Once you've booted the diskimage'' step of
+the Installation instructions.
 
-	* Sync the filesystems:
 
-		sync
 
-	* At this point you may extract any other binary sets
-	  you may have placed on local filesystems, or you may
-	  wish to extract additional sets at a later time.
-	  To extract these sets, use the following commands:
 
-		cd /
-		tar --unlink -zxvpf <path to set>
-
-NOTE: you SHOULD NOT extract the `etc' set if upgrading.  Instead, you
-should extract that set into another area and carefully merge the changes
-by hand.
