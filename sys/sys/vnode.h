@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.92 2001/09/15 20:36:41 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.93 2001/10/30 15:32:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -139,6 +139,7 @@ struct vnode {
 #define	VSYSTEM		0x0004	/* vnode being used by kernel */
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
+#define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VBWAIT		0x0400	/* waiting for output to complete */
@@ -533,7 +534,7 @@ void	vn_syncer_remove_from_worklist(struct vnode *vp);
 int	vn_write(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
 int	vn_writechk(struct vnode *vp);
-void	vn_marktext(struct vnode *vp);
+void	vn_markexec(struct vnode *vp);
 int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
 struct vnode *
 	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);
