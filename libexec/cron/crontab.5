@@ -15,7 +15,7 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\"
-.\" $Id: crontab.5,v 1.1.1.1 1994/01/05 20:40:14 jtc Exp $
+.\" $Id: crontab.5,v 1.1.1.2 1994/01/11 19:10:51 jtc Exp $
 .\" 
 .TH CRONTAB 5 "20 December 1993"
 .UC 4
@@ -57,17 +57,15 @@ leading or trailing blanks.
 Several environment variables are set up
 automatically by the
 .IR cron (8)
-daemon from the /etc/passwd line of the crontab's owner: USER, HOME, and SHELL.
-HOME and SHELL may be overridden by settings in the crontab; USER may not.
+daemon.
+SHELL is set to /bin/sh, and LOGNAME and HOME are set from the /etc/passwd 
+line of the crontab's owner.
+HOME and SHELL may be overridden by settings in the crontab; LOGNAME may not.
 .PP
-(Note: for UUCP, always set SHELL=/bin/sh, or
-.IR cron (8)
-will cheerfully try to execute your commands using /usr/lib/uucp/uucico.)
+(Another note: the LOGNAME variable is sometimes called USER on BSD systems...
+on these systems, USER will be set also.)
 .PP
-(Another note: the USER variable is sometimes called LOGNAME or worse on
-System V... on these systems, LOGNAME will be set rather than USER.)
-.PP
-In addition to USER, HOME, and SHELL,
+In addition to LOGNAME, HOME, and SHELL,
 .IR cron (8)
 will look at MAILTO if it has any reason to send mail as a result of running
 commands in ``this'' crontab.  If MAILTO is defined (and non-empty), mail is

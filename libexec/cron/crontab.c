@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: crontab.c,v 1.1.1.1 1994/01/05 20:40:14 jtc Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.1.1.2 1994/01/11 19:10:56 jtc Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -30,7 +30,6 @@ static char rcsid[] = "$Id: crontab.c,v 1.1.1.1 1994/01/05 20:40:14 jtc Exp $";
 
 #include "cron.h"
 #include "externs.h"
-#include <pwd.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -46,20 +45,21 @@ static char rcsid[] = "$Id: crontab.c,v 1.1.1.1 1994/01/05 20:40:14 jtc Exp $";
 #endif
 
 
-static	int	Pid;
-static	char	User[MAX_UNAME], RealUser[MAX_UNAME];
-static	char	Filename[MAX_FNAME];
-static	FILE	*NewCrontab;
-static	int	CheckErrorCount;
+static	int		Pid;
+static	char		User[MAX_UNAME], RealUser[MAX_UNAME];
+static	char		Filename[MAX_FNAME];
+static	FILE		*NewCrontab;
+static	int		CheckErrorCount;
 static	enum	{ opt_unknown, opt_list, opt_delete, opt_edit, opt_replace }
-		Option;
-static	void	list_cmd __P((void)),
-		delete_cmd __P((void)),
-		edit_cmd __P((void)),
-		replace_cmd __P((void)),
-		poke_daemon __P((void)),
-		check_error __P((char *)),
-		parse_args __P((int c, char *v[]));
+			Option;
+static	struct passwd	*pw;
+static	void		list_cmd __P((void)),
+			delete_cmd __P((void)),
+			edit_cmd __P((void)),
+			replace_cmd __P((void)),
+			poke_daemon __P((void)),
+			check_error __P((char *)),
+			parse_args __P((int c, char *v[]));
 
 
 #define NHEADER_LINES 3
@@ -132,7 +132,6 @@ parse_args(argc, argv)
 	int	argc;
 	char	*argv[];
 {
-	struct passwd	*pw;
 	int		argch;
 
 	if (!(pw = getpwuid(getuid()))) {
@@ -158,7 +157,7 @@ parse_args(argc, argv)
 					"must be privileged to use -u\n");
 				exit(ERROR_EXIT);
 			}
-			if ((struct passwd *)NULL == getpwnam(optarg))
+			if (!(pw = getpwnam(optarg)))
 			{
 				fprintf(stderr, "%s:  user `%s' unknown\n",
 					ProgramName, optarg);
@@ -450,6 +449,7 @@ replace_cmd() {
 	int	ch, eof;
 	entry	*e;
 	time_t	now = time(NULL);
+	char	**envp = env_init();
 
 	(void) sprintf(n, "tmp.%d", Pid);
 	(void) sprintf(tn, CRON_TAB(n));
@@ -497,8 +497,8 @@ replace_cmd() {
 			eof = TRUE;
 			break;
 		case FALSE:
-			e = load_entry(tmp, check_error, 0);
-			if (e) free((void*)e);
+			e = load_entry(tmp, check_error, pw, envp);
+			if (e) free(e);
 			break;
 		case TRUE:
 			break;

@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: user.c,v 1.1.1.1 1994/01/05 20:40:16 jtc Exp $";
+static char rcsid[] = "$Id: user.c,v 1.1.1.2 1994/01/11 19:11:32 jtc Exp $";
 #endif
 
 /* vix 26jan87 [log is in RCS file]
@@ -32,33 +32,28 @@ free_user(u)
 	user	*u;
 {
 	entry	*e, *ne;
-	char	**env;
 
+	free(u->name);
 	for (e = u->crontab;  e != NULL;  e = ne) {
 		ne = e->next;
 		free_entry(e);
 	}
-	for (env = u->envp;  *env;  env++)
-		(void) free(*env);
-	(void) free(u->envp);
-	(void) free(u);
+	free(u);
 }
 
 
 user *
-load_user(crontab_fd, name, uid, gid, dir, syscron)
-	int	crontab_fd;
-	char	*name;
-	int	uid;
-	int	gid;
-	char	*dir;
-	int	syscron;		/* system crontab file? */
+load_user(crontab_fd, pw, name)
+	int		crontab_fd;
+	struct passwd	*pw;		/* NULL implies syscrontab */
+	char		*name;
 {
 	char	envstr[MAX_ENVSTR];
 	FILE	*file;
 	user	*u;
 	entry	*e;
 	int	status;
+	char	**envp;
 
 	if (!(file = fdopen(crontab_fd, "r"))) {
 		perror("fdopen on crontab_fd in load_user");
@@ -70,50 +65,39 @@ load_user(crontab_fd, name, uid, gid, dir, syscron)
 	/* file is open.  build user entry, then read the crontab file.
 	 */
 	u = (user *) malloc(sizeof(user));
-	u->uid     = uid;
-	u->gid     = gid;
-	u->envp    = env_init();
+	u->name = strdup(name);
 	u->crontab = NULL;
 
-	/*
-	 * do auto env settings that the user could reset in the cron tab
+	/* 
+	 * init environment.  this will be copied/augmented for each entry.
 	 */
-	sprintf(envstr, "SHELL=%s", _PATH_BSHELL);
-	u->envp = env_set(u->envp, envstr);
+	envp = env_init();
 
-	sprintf(envstr, "HOME=%s", dir);
-	u->envp = env_set(u->envp, envstr);
-
-	/* load the crontab
+	/*
+	 * load the crontab
 	 */
 	while ((status = load_env(envstr, file)) >= OK) {
-		if (status == TRUE) {
-			u->envp = env_set(u->envp, envstr);
-		} else {
-			if (NULL != (e = load_entry(file, NULL, syscron))) {
+		switch (status) {
+		case ERR:
+			free_user(u);
+			u = NULL;
+			goto done;
+		case FALSE:
+			e = load_entry(file, NULL, pw, envp);
+			if (e) {
 				e->next = u->crontab;
 				u->crontab = e;
 			}
+			break;
+		case TRUE:
+			envp = env_set(envp, envstr);
+			break;
 		}
 	}
 
-	/*
-	 * do automatic env settings that should have precedence over any
-	 * set in the cron tab.
-	 */
-	sprintf(envstr, "%s=%s", "LOGNAME", name);
-	u->envp = env_set(u->envp, envstr);
-#if defined(BSD)
-	sprintf(envstr, "%s=%s", "USER", name);
-	u->envp = env_set(u->envp, envstr);
-#endif
-
-	/*
-	 * done. close file, return pointer to 'user' structure
-	 */
+ done:
+	env_free(envp);
 	fclose(file);
-
 	Debug(DPARS, ("...load_user() done\n"))
-
 	return u;
 }

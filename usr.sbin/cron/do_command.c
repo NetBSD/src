@@ -16,16 +16,13 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.1.1.1 1994/01/05 20:40:15 jtc Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.1.1.2 1994/01/11 19:11:07 jtc Exp $";
 #endif
 
 
 #include "cron.h"
 #include "externs.h"
-#include <pwd.h>
-#ifdef USE_SIGCHLD
-# include <sys/signal.h>
-#endif
+#include <sys/signal.h>
 #if defined(sequent)
 # include <sys/universe.h>
 #endif
@@ -44,7 +41,7 @@ do_command(e, u)
 	user	*u;
 {
 	Debug(DPROC, ("[%d] do_command(%s, (%s,%d,%d))\n",
-		getpid(), e->cmd, env_get("LOGNAME", u->envp), u->uid, u->gid))
+		getpid(), e->cmd, u->name, e->uid, e->gid))
 
 	/* fork to become asynchronous -- parent process is done immediately,
 	 * and continues to run the normal cron code, which means return to
@@ -78,10 +75,9 @@ child_process(e, u)
 	user	*u;
 {
 	int		stdin_pipe[2], stdout_pipe[2];
-	register char	*input_data, *usernm, *mailto;
-#ifdef USE_SIGCHLD
+	register char	*input_data;
+	char		*usernm, *mailto;
 	int		children = 0;
-#endif
 
 	Debug(DPROC, ("[%d] child_process('%s')\n", getpid(), e->cmd))
 
@@ -97,20 +93,22 @@ child_process(e, u)
 
 	/* discover some useful and important environment settings
 	 */
-	usernm = env_get("LOGNAME", u->envp);
-	mailto = env_get("MAILTO", u->envp);
+	usernm = env_get("LOGNAME", e->envp);
+	mailto = env_get("MAILTO", e->envp);
 
 #ifdef USE_SIGCHLD
 	/* our parent is watching for our death by catching SIGCHLD.  we
 	 * do not care to watch for our children's deaths this way -- we
 	 * use wait() explictly.  so we have to disable the signal (which
 	 * was inherited from the parent).
-	 *
-	 * this isn't needed for system V, since our parent is already
-	 * SIG_IGN on SIGCLD -- which, hopefully, will cause children to
-	 * simply vanish when they die.
 	 */
 	(void) signal(SIGCHLD, SIG_IGN);
+#else
+	/* on system-V systems, we are ignoring SIGCLD.  we have to stop
+	 * ignoring it now or the wait() in cron_pclose() won't work.
+	 * because of this, we have to wait() for our children here, as well.
+	 */
+	(void) signal(SIGCLD, SIG_DFL);
 #endif /*BSD*/
 
 	/* create some pipes to talk to our future child
@@ -146,11 +144,16 @@ child_process(e, u)
 		}
 	}
 
-	/* fork again, this time so we can exec the user's command.  Vfork()
-	 * is okay this time, since we are going to exec() pretty quickly.
+	/* fork again, this time so we can exec the user's command.
 	 */
-	if (vfork() == 0) {
-		Debug(DPROC, ("[%d] grandchild process Vfork()'ed\n", getpid()))
+	switch (vfork()) {
+	case -1:
+		log_it("CRON",getpid(),"error","can't vfork");
+		exit(ERROR_EXIT);
+		/*NOTREACHED*/
+	case 0:
+		Debug(DPROC, ("[%d] grandchild process Vfork()'ed\n",
+			      getpid()))
 
 		/* write a log message.  we've waited this long to do it
 		 * because it was not until now that we knew the PID that
@@ -204,25 +207,17 @@ child_process(e, u)
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privledges.
 		 */
-		setgid(u->gid);
+		setgid(e->gid);
 # if defined(BSD)
-		initgroups(env_get("LOGNAME", u->envp), u->gid);
+		initgroups(env_get("LOGNAME", e->envp), e->gid);
 # endif
-		/*
-		 * switch to specified user id.  exec_uid is only
-		 * valid for /etc/crontab, in other environments it
-		 * will be 0.  Note that it is overloaded for root
-		 * because if 0 it will still pickup u->uid which will
-		 * still be 0.
-		 */
-		setuid(e->exec_uid ? e->exec_uid : u->uid);
-		/* you aren't root after this... */
-		chdir(env_get("HOME", u->envp));
+		setuid(e->uid);		/* we aren't root after this... */
+		chdir(env_get("HOME", e->envp));
 
 		/* exec the command.
 		 */
 		{
-			char	*shell = env_get("SHELL", u->envp);
+			char	*shell = env_get("SHELL", e->envp);
 
 # if DEBUGGING
 			if (DebugFlags & DTEST) {
@@ -233,16 +228,18 @@ child_process(e, u)
 				_exit(OK_EXIT);
 			}
 # endif /*DEBUGGING*/
-			execle(shell, shell, "-c", e->cmd, (char *)0, u->envp);
+			execle(shell, shell, "-c", e->cmd, (char *)0, e->envp);
 			fprintf(stderr, "execl: couldn't exec `%s'\n", shell);
 			perror("execl");
 			_exit(ERROR_EXIT);
 		}
+		break;
+	default:
+		/* parent process */
+		break;
 	}
 
-#ifdef USE_SIGCHLD
 	children++;
-#endif
 
 	/* middle process, child of original cron, parent of process running
 	 * the user's command.
@@ -318,9 +315,7 @@ child_process(e, u)
 	 */
 	close(stdin_pipe[WRITE_PIPE]);
 
-#ifdef USE_SIGCHLD
 	children++;
-#endif
 
 	/*
 	 * read output from the grandchild.  it's stderr has been redirected to
@@ -387,7 +382,7 @@ child_process(e, u)
 				fprintf(mail, "Date: %s\n",
 					arpadate(&TargetTime));
 # endif /* MAIL_DATE */
-				for (env = u->envp;  *env;  env++)
+				for (env = e->envp;  *env;  env++)
 					fprintf(mail, "X-Cron-Env: <%s>\n",
 						*env);
 				fprintf(mail, "\n");
@@ -445,7 +440,6 @@ child_process(e, u)
 		fclose(in);	/* also closes stdout_pipe[READ_PIPE] */
 	}
 
-#ifdef USE_SIGCHLD
 	/* wait for children to die.
 	 */
 	for (;  children > 0;  children--)
@@ -467,7 +461,6 @@ child_process(e, u)
 			Debug(DPROC, (", dumped core"))
 		Debug(DPROC, ("\n"))
 	}
-#endif /*BSD*/
 }
 
 
@@ -480,14 +473,12 @@ do_univ(u)
  * the passed user structure into the ATT universe if
  * necessary.  We have to dig the gecos info out of
  * the user's password entry to see if the magic
- * "universe(att)" string is present.  If we do change
- * the universe, also set "LOGNAME".
+ * "universe(att)" string is present.
  */
 
 	struct	passwd	*p;
 	char	*s;
 	int	i;
-	char	envstr[MAX_ENVSTR], **env_set();
 
 	p = getpwuid(u->uid);
 	(void) endpwent();
@@ -505,9 +496,6 @@ do_univ(u)
 	}
 	if (strcmp(s, "universe(att)"))
 		return;
-
-	(void) sprintf(envstr, "LOGNAME=%s", p->pw_name);
-	u->envp = env_set(u->envp, envstr);
 
 	(void) universe(U_ATT);
 #endif

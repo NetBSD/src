@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.1.1.1 1994/01/05 20:40:15 jtc Exp $";
+static char rcsid[] = "$Id: env.c,v 1.1.1.2 1994/01/11 19:11:13 jtc Exp $";
 #endif
 
 
@@ -30,6 +30,35 @@ env_init()
 	register char	**p = (char **) malloc(sizeof(char **));
 
 	p[0] = NULL;
+	return p;
+}
+
+
+void
+env_free(envp)
+	char	**envp;
+{
+	char	**p;
+
+	for (p = envp;  *p;  p++)
+		free(*p);
+	free(envp);
+}
+
+
+char **
+env_copy(envp)
+	register char	**envp;
+{
+	register int	count, i;
+	register char	**p;
+
+	for (count = 0;  envp[count] != NULL;  count++)
+		;
+	p = (char **) malloc((count+1) * sizeof(char *));  /* 1 for the NULL */
+	for (i = 0;  i < count;  i++)
+		p[i] = strdup(envp[i]);
+	p[count] = NULL;
 	return p;
 }
 
@@ -51,8 +80,7 @@ env_set(envp, envstr)
 		if (!strcmp_until(envp[count], envstr, '='))
 			found = count;
 	}
-	count++;		/* for the null pointer
-				 */
+	count++;	/* for the NULL */
 
 	if (found != -1) {
 		/*
@@ -135,11 +163,13 @@ load_env(envstr, f)
 
 char *
 env_get(name, envp)
-	char	*name;
-	char	**envp;
+	register char	*name;
+	register char	**envp;
 {
-	for (;  *envp;  envp++)
-		if (!strcmp_until(*envp, name, '='))
-			return strchr(*envp, '=') + 1;
+	for (;  *envp;  envp++) {
+		register char	*p = strchr(*envp, '=');
+		if (p && !strncmp(*envp, name, p - *envp))
+			return p+1;
+	}
 	return NULL;
 }
