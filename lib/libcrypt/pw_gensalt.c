@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.3 2005/01/11 23:21:31 christos Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.4 2005/01/12 03:32:52 christos Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.3 2005/01/11 23:21:31 christos Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.4 2005/01/12 03:32:52 christos Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: pw_gensalt.c,v 1.3 2005/01/11 23:21:31 christos Exp $");
 
 static const struct pw_salt {
 	const char *name;
-	int (*gensalt)(char *, size_t, size_t);
+	int (*gensalt)(char *, size_t, const char *);
 } salts[] = {
 	{ "old", __gensalt_old },
 	{ "new", __gensalt_new },
@@ -68,9 +68,33 @@ static const struct pw_salt {
 	{ NULL, NULL }
 };
 
+static int
+getnum(const char *str, size_t *num)
+{
+	char *ep;
+	unsigned long rv;
+
+	if (str == NULL) {
+		*num = 0;
+		return 0;
+	}
+
+	rv = strtoul(next, &ep, 0);
+
+	if (next == ep || *ep) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (errno == ERANGE && rv == ULONG_MAX)
+		return -1;
+	*num = (size_t)rv;
+	return 0;
+}
+
 int
 /*ARGSUSED2*/
-__gensalt_old(char *salt, size_t saltsiz, size_t nrounds)
+__gensalt_old(char *salt, size_t saltsiz, const char *option)
 {
 	if (saltsiz < 3) {
 		errno = ENOSPC;
@@ -83,12 +107,18 @@ __gensalt_old(char *salt, size_t saltsiz, size_t nrounds)
 
 int
 /*ARGSUSED2*/
-__gensalt_new(char *salt, size_t saltsiz, size_t nrounds)
+__gensalt_new(char *salt, size_t saltsiz, const char* option)
 {
+	size_t nrounds;
+
 	if (saltsiz < 10) {
 		errno = ENOSPC;
 		return -1;
 	}
+
+	if (getnum(option, &nrounds) == -1)
+		return -1;
+
 	/* Check rounds, 24 bit is max */
 	if (nrounds < 7250)
 		nrounds = 7250;
@@ -103,7 +133,7 @@ __gensalt_new(char *salt, size_t saltsiz, size_t nrounds)
 
 int
 /*ARGSUSED2*/
-__gensalt_md5(char *salt, size_t saltsiz, size_t nrounds)
+__gensalt_md5(char *salt, size_t saltsiz, const char *option)
 {
 	if (saltsiz < 13) {  /* $1$8salt$\0 */
 		errno = ENOSPC;
@@ -120,10 +150,13 @@ __gensalt_md5(char *salt, size_t saltsiz, size_t nrounds)
 }
 
 int
-__gensalt_sha1(char *salt, size_t saltsiz, size_t nrounds)
+__gensalt_sha1(char *salt, size_t saltsiz, const char *option)
 {
 	int n;
+	size_t nrounds;
 
+	if (getnum(option, &nrounds) == -1)
+		return -1;
 	n = snprintf(salt, saltsiz, "%s%u$", SHA1_MAGIC,
 	    __crypt_sha1_iterations(nrounds));
 	/*
@@ -140,52 +173,11 @@ __gensalt_sha1(char *salt, size_t saltsiz, size_t nrounds)
 }
 
 int
-pw_gensalt(char *salt, size_t saltlen, const struct passwd *pwd, char type)
+pw_gensalt(char *salt, size_t saltlen, const char *type, const char *option)
 {
-	char option[LINE_MAX], *next, *now, *cipher, *ep, grpkey[LINE_MAX];
-	unsigned long rounds = 0;
-	struct group *grp;
-	const struct pw_salt *sp;
-
-	switch (type) {
-	case 'y':
-	        cipher = "ypcipher";
-		break;
-	case 'l':
-	default:
-	        cipher = "localcipher";
-		break;
-	}
-
-	pw_getconf(option, sizeof(option), pwd->pw_name, cipher);
-
-	/* Try to find an entry for the group */
-	if (*option == '\0') {
-		if ((grp = getgrgid(pwd->pw_gid)) != NULL) {
-			snprintf(grpkey, sizeof(grpkey), ":%s", grp->gr_name);
-			pw_getconf(option, sizeof(option), grpkey, cipher);
-		}
-		if (*option == '\0')
-		        pw_getconf(option, sizeof(option), "default", cipher);
-	}
-
-	next = option;
-	now = strsep(&next, ",");
-	if (next) {
-		rounds = strtoul(next, &ep, 0);
-
-		if (next == ep || *ep) {
-			errno = EINVAL;
-			return -1;
-		}
-
-		if (errno == ERANGE && rounds == ULONG_MAX)
-			return -1;
-	}
-
 	for (sp = salts; sp->name; sp++)
-		if (strcmp(sp->name, now) == 0)
-			return (*sp->gensalt)(salt, saltlen, (size_t)rounds);
+		if (strcmp(sp->name, type) == 0)
+			return (*sp->gensalt)(salt, saltlen, option);
 
 	errno = EINVAL;
 	return -1;
