@@ -1,4 +1,41 @@
-/* $NetBSD: pmap.old.c,v 1.32 1998/02/14 02:04:05 cgd Exp $ */
+/* $NetBSD: pmap.old.c,v 1.33 1998/02/16 03:59:56 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center and by Chris G. Demetriou.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.32 1998/02/14 02:04:05 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.33 1998/02/16 03:59:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +291,6 @@ vm_map_t	st_map, pt_map;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
-vm_size_t	mem_size;	/* memory size in bytes */
 vm_offset_t	virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vm_offset_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
@@ -274,15 +310,30 @@ pmap_attr_t	*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-vm_offset_t	vm_first_phys;	/* PA of first managed page */
-vm_offset_t	vm_last_phys;	/* PA just past last managed page */
+#define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
 
-#define	pa_index(pa)		atop(pa - vm_first_phys)
+static __inline struct pv_entry *pa_to_pvh __P((vm_offset_t));
+static __inline pmap_attr_t *pa_to_attribute __P((vm_offset_t));
 
-#define	pa_to_pvh(pa)		(&pv_table[pa_index(pa)])
-#define	pa_to_attribute(pa)	(&pmap_attributes[pa_index(pa)])
+static __inline struct pv_entry *
+pa_to_pvh(pa)
+	vm_offset_t pa;
+{
+	int bank, pg;
 
-#define	PAGE_IS_MANAGED(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
+	bank = vm_physseg_find(atop(pa), &pg);
+	return (&vm_physmem[bank].pmseg.pvent[pg]);
+}
+
+static __inline pmap_attr_t *
+pa_to_attribute(pa)
+	vm_offset_t pa;
+{
+	int bank, pg;
+
+	bank = vm_physseg_find(atop(pa), &pg);
+	return (&vm_physmem[bank].pmseg.attrs[pg]);
+}
 
 /*
  * Internal routines
@@ -326,30 +377,25 @@ _pmap_activate(pmap)
 
 /*
  * pmap_bootstrap:
- * Bootstrap the system to run with virtual memory.
- * firstaddr is the first unused kseg0 address (not page aligned).
+ *
+ *	Bootstrap the system to run with virtual memory.
  */
 void
-pmap_bootstrap(firstaddr, ptaddr)
-	vm_offset_t firstaddr;
+pmap_bootstrap(ptaddr)
 	vm_offset_t ptaddr;
 {
-	register int i;
-	vm_offset_t start;
 	pt_entry_t pte;
-	extern int firstusablepage, lastusablepage;
+	int i;
+	extern int physmem;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
-		printf("pmap_bootstrap(0x%lx, 0x%lx)\n", firstaddr, ptaddr);
+		printf("pmap_bootstrap(0x%lx)\n", ptaddr);
 #endif
 
-	/* must be page aligned */
-	start = firstaddr = alpha_round_page(firstaddr);
-
+	/* XXX change vallocs to direct calls to pmap_steal_memory (later) */
 #define valloc(name, type, num)					\
-	    (name) = (type *)firstaddr;				\
-	    firstaddr = ALIGN((vm_offset_t)((name)+(num)))
+	(name) = (type *)pmap_steal_memory(sizeof (type) * (num), NULL, NULL)
 
 	/*
 	 * Allocate an empty prototype segment map for processes.
@@ -398,28 +444,23 @@ pmap_bootstrap(firstaddr, ptaddr)
 	pmap_kernel()->pm_ptab = Sysmap;
 
 	/*
-	 * Allocate memory for page attributes.
-	 * allocates a few more entries than we need, but that's safe.
-	 */
-	valloc(pmap_attributes, pmap_attr_t,
-	    1 + lastusablepage - firstusablepage);
-
-	/*
-	 * Allocate memory for pv_table.
-	 * This will allocate more entries than we really need.
+	 * Allocate memory for page attributes and pv_table entries.
+	 * (A few more entries are allocated than are needed.)
+	 * They're allocated together to avoid wasting space (which
+	 * would be wasted by page rounding if they were allocated
+	 * separately).
+	 *
 	 * We could do this in pmap_init when we know the actual
-	 * phys_start and phys_end but its better to use kseg0 addresses
-	 * rather than kernel virtual addresses mapped through the TLB.
+	 * managed page pool size, but its better to use kseg0
+	 * addresses rather than kernel virtual addresses mapped
+	 * through the TLB.
 	 */
-	pv_table_npages = 1 + lastusablepage -
-	    alpha_btop(ALPHA_K0SEG_TO_PHYS(firstaddr));
-	valloc(pv_table, struct pv_entry, pv_table_npages);
-
-	/*
-	 * Clear allocated memory.
-	 */
-	firstaddr = alpha_round_page(firstaddr);
-	bzero((caddr_t)start, firstaddr - start);
+	pv_table_npages = physmem;
+	pmap_attributes = (pmap_attr_t *)pmap_steal_memory(
+	    ALIGN(physmem * sizeof (pmap_attr_t)) +
+	    pv_table_npages * sizeof (struct pv_entry), NULL, NULL);
+	pv_table = (struct pv_entry *)((char *)pmap_attributes +
+	    ALIGN(physmem * sizeof (pmap_attr_t)));
 
 	/*
 	 * Set up level 1 page table
@@ -477,32 +518,34 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 */
 	/* Nothing to do; it's already zero'd */
 
-	avail_start = ALPHA_K0SEG_TO_PHYS(firstaddr);
-#if 1
-	avail_end = alpha_ptob(lastusablepage + 1);
-	mem_size = avail_end - avail_start;
-#else
-	/* XXX why not lastusablepage + 1, & not include NBPG in mem_size? */
-	avail_end = alpha_ptob(lastusablepage);
-	mem_size = NBPG + avail_end - avail_start;
-#endif
-#if 0
-	printf("avail_start = 0x%lx\n", avail_start);
-	printf("avail_end = 0x%lx\n", avail_end);
-	printf("mem_size = 0x%lx\n", mem_size);
-#endif
-
+	/*
+	 * Initialize `FYI' variables.  Note we're relying on
+	 * the fact that BSEARCH sorts the vm_physmem[] array
+	 * for us.
+	 */
+	avail_start = ptoa(vm_physmem[0].start);
+	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 
-	simple_lock_init(&pmap_kernel()->pm_lock);
-	pmap_kernel()->pm_count = 1;
+#if 0
+	printf("avail_start = 0x%lx\n", avail_start);
+	printf("avail_end = 0x%lx\n", avail_end);
+	printf("virtual_avail = 0x%lx\n", virtual_avail);
+	printf("virtual_end = 0x%lx\n", virtual_end);
+#endif
 
 	/*
-	 * Set up curproc's (i.e. proc 0's) PCB such that the ptbr
-	 * points to the right place.
+	 * Initialize kernel pmap.
 	 */
-	curproc->p_addr->u_pcb.pcb_hw.apcb_ptbr = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
+	pmap_kernel()->pm_count = 1;
+	simple_lock_init(&pmap_kernel()->pm_lock);
+
+	/*
+	 * Set up proc0's PCB such that the ptbr points to the right place.
+	 */
+	proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr =
+	    ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
 }
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
@@ -517,37 +560,84 @@ pmap_uses_prom_console()
 #endif _PMAP_MAY_USE_PROM_CONSOLE
 
 /*
- * Bootstrap memory allocator. This function allows for early dynamic
- * memory allocation until the virtual memory system has been bootstrapped.
- * After that point, either kmem_alloc or malloc should be used. This
- * function works by stealing pages from the (to be) managed page pool,
- * stealing virtual address space, then implicitly mapping the pages 
- * (by using their k0seg addresses) and zeroing them.
+ * Bootstrap memory allocator (alternative to vm_bootstrap_steal_memory()).
+ * This function allows for early dynamic memory allocation until the virtual
+ * memory system has been bootstrapped.  After that point, either kmem_alloc
+ * or malloc should be used.  This function works by stealing pages from the
+ * (to be) managed page pool, then implicitly mapping the pages (by using
+ * their k0seg addresses) and zeroing them.
  *
- * It should be used from pmap_bootstrap till vm_page_startup, afterwards
- * it cannot be used, and will generate a panic if tried. Note that this
- * memory will never be freed, and in essence it is wired down.
+ * It may be used once the physical memory segments have been pre-loaded
+ * into the vm_physmem[] array.  Early memory allocation MUST use this
+ * interface!  This cannot be used after vm_page_startup(), and will
+ * generate a panic if tried.
+ *
+ * Note that this memory will never be freed, and in essence it is wired
+ * down.
  */
-void *
-pmap_bootstrap_alloc(size)
-	int size;
+vm_offset_t
+pmap_steal_memory(size, vstartp, vendp)
+	vm_size_t size;
+	vm_offset_t *vstartp, *vendp;
 {
-	vm_offset_t val;
-	extern boolean_t vm_page_startup_initialized;
+	int bank, npgs, x;
+	vm_offset_t pa, va;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
-		printf("pmap_bootstrap_alloc(%x)\n", size);
-#endif
-	if (vm_page_startup_initialized)
-		panic("pmap_bootstrap_alloc: called after startup initialized");
-
-	val = ALPHA_PHYS_TO_K0SEG(avail_start);
 	size = round_page(size);
-	avail_start += size;
+	npgs = atop(size);
 
-	bzero((caddr_t)val, size);
-	return ((void *)val);
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		if (vm_physmem[bank].pgs)
+			panic("pmap_steal_memory: called _after_ bootstrap");
+
+		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
+		    vm_physmem[bank].avail_start >= vm_physmem[bank].avail_end)
+			continue;
+
+		if ((vm_physmem[bank].avail_end - vm_physmem[bank].avail_start)
+		    < npgs)
+			continue;
+
+		/*
+		 * There are enough pages here; steal them!
+		 */
+		pa = ptoa(vm_physmem[bank].avail_start);
+		vm_physmem[bank].avail_start += npgs;
+		vm_physmem[bank].start += npgs;
+
+		/*
+		 * Have we used up this segment?
+		 */
+		if (vm_physmem[bank].avail_start == vm_physmem[bank].end) {
+			if (vm_nphysseg == 1)
+				panic("pmap_steal_memory: out of memory!");
+
+			/* Remove this segment from the list. */
+			vm_nphysseg--;
+			for (x = bank; x < vm_nphysseg; x++) {
+				/* structure copy */
+				vm_physmem[x] = vm_physmem[x + 1];
+			}
+		}
+
+		/*
+		 * Fill these in for the caller; we don't modify them,
+		 * but the upper layers still want to know.
+		 */
+		if (vstartp)
+			*vstartp = round_page(virtual_avail);
+		if (vendp)
+			*vendp = trunc_page(virtual_end);
+
+		va = ALPHA_PHYS_TO_K0SEG(pa);
+		bzero((caddr_t)va, size);
+		return (va);
+	}
+
+	/*
+	 * If we got here, this was no memory left.
+	 */
+	panic("pmap_steal_memory: no memory to steal");
 }
 
 /*
@@ -556,15 +646,17 @@ pmap_bootstrap_alloc(size)
  *	system needs to map virtual memory.
  */
 void
-pmap_init(phys_start, phys_end)
-	vm_offset_t	phys_start, phys_end;
+pmap_init()
 {
 	vm_offset_t	addr, addr2;
-        vm_size_t	s;
+	vm_size_t	s;
+	int		bank;
+	pv_entry_t	pv;
+	pmap_attr_t	*attr;
 
 #ifdef DEBUG
         if (pmapdebug & PDB_FOLLOW)
-                printf("pmap_init(%lx, %lx)\n", phys_start, phys_end);
+                printf("pmap_init()\n");
 #endif
 
 	/* initialize protection array */
@@ -583,21 +675,41 @@ pmap_init(phys_start, phys_end)
 	pt_map = kmem_suballoc(kernel_map, &addr, &addr2, s, TRUE);
 
 	/*
-	 * The pv_table has already been allocated.  Initialize
-	 * the pv_page free list.
+	 * Memory for the pv entry heads and page attributes has
+	 * already been allocated.  Initialize the physical memory
+	 * segments.
+	 */
+	pv = pv_table;
+	attr = pmap_attributes;
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		s = vm_physmem[bank].end - vm_physmem[bank].start;
+		vm_physmem[bank].pmseg.pvent = pv;
+		vm_physmem[bank].pmseg.attrs = attr;
+		pv += s;
+		attr += s;
+	}
+
+	/*
+	 * Intialize the pv_page free list.
 	 */
 	TAILQ_INIT(&pv_page_freelist);
 
 	/*
-	 * Now it is safe to enable pv_table recording.
+	 * Now it is safe to enable pv entry recording.
 	 */
-	vm_first_phys = phys_start;
-	vm_last_phys = phys_end;
-#if 0
-	printf("vm_first_phys = 0x%lx\n", vm_first_phys);
-	printf("vm_last_phys = 0x%lx\n", vm_last_phys);
-#endif
 	pmap_initialized = TRUE;
+
+#if 0
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		printf("bank %d\n", bank);
+		printf("\tstart = 0x%x\n", ptoa(vm_physmem[bank].start));
+		printf("\tend = 0x%x\n", ptoa(vm_physmem[bank].end));
+		printf("\tavail_start = 0x%x\n",
+		    ptoa(vm_physmem[bank].avail_start));
+		printf("\tavail_end = 0x%x\n",
+		    ptoa(vm_physmem[bank].avail_end));
+	}
+#endif
 }
 
 /*
@@ -1358,7 +1470,7 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-	int s;
+	int s, bank;
 
 	if (pmap != pmap_kernel())
 		return;
@@ -1371,7 +1483,9 @@ pmap_collect(pmap)
 	kpt_stats.collectscans++;
 #endif
 	s = splimp();
-	pmap_collect1(pmap, vm_first_phys, vm_last_phys);
+	for (bank = 0; bank < vm_nphysseg; bank++)
+		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
+		    ptoa(vm_physmem[bank].end));
 	splx(s);
 
 #ifdef notyet

@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.7 1998/02/10 03:52:06 thorpej Exp $ */
+/* $NetBSD: vmparam.h,v 1.8 1998/02/16 03:59:57 thorpej Exp $ */
 #ifndef	_ALPHA_VMPARAM_H
 #define	_ALPHA_VMPARAM_H
 /*
@@ -46,6 +46,7 @@
 /*
  * Machine dependent constants for Alpha.
  */
+
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
  * is the top (end) of the user stack.  Immediately above the user stack
@@ -153,4 +154,20 @@ extern u_int32_t vm_mbuf_size, vm_kmem_size, vm_phys_size;
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vm_offset_t)0xfffffffc00000000) /* Virt. pg table */
+
+/* Use new non-contiguous physical memory code. */
+#define	MACHINE_NEW_NONCONTIG
+
+#define	VM_PHYSSEG_MAX		16		/* XXX */
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD			/* no more after vm_mem_init */
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	int *attrs;			/* page attributes for this seg */
+};
+
 #endif	/* !_ALPHA_VMPARAM_H */

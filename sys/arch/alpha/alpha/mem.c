@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.18 1997/09/19 14:48:59 mjacob Exp $ */
+/* $NetBSD: mem.c,v 1.19 1998/02/16 03:59:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 1997/09/19 14:48:59 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19 1998/02/16 03:59:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.18 1997/09/19 14:48:59 mjacob Exp $");
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
+#include <sys/mman.h>
 
 #include <machine/cpu.h>
 #include <machine/conf.h>
@@ -100,7 +101,7 @@ mmrw(dev, uio, flags)
 	register vm_offset_t o, v;
 	register int c;
 	register struct iovec *iov;
-	int error = 0;
+	int error = 0, rw;
 
 	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
@@ -125,14 +126,14 @@ kmemphys:
 					break;
 				}
 			}
-#ifndef DEBUG
-			/* allow reads only in RAM (except for DEBUG) */
-			else if ((v < ctob(firstusablepage) ||
-			     v >= ctob(lastusablepage + 1))) {
+
+			/* Allow reads only in RAM. */
+			rw = (uio->uio_rw == UIO_READ) ? PROT_READ : PROT_WRITE;
+			if ((alpha_pa_access(v) & rw) != rw) {
 				error = EFAULT;
 				break;
 			}
-#endif
+
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error =
@@ -211,11 +212,11 @@ mmmmap(dev, off, prot)
 	 */
 	if (minor(dev) != 0)
 		return (-1);
+
 	/*
 	 * Allow access only in RAM.
 	 */
-	if (off < ctob(firstusablepage) ||
-	    off >= ctob(lastusablepage + 1))
+	if ((prot & alpha_pa_access(atop((vm_offset_t)off))) != prot)
 		return (-1);
 	return (alpha_btop(off));
 }
