@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.17 1994/06/16 05:45:35 mycroft Exp $
+ *	$Id: stdlib.h,v 1.18 1994/07/02 05:01:45 deraadt Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -125,6 +125,10 @@ int	 cgetnum __P((char *, char *, long *));
 int	 cgetset __P((char *));
 int	 cgetstr __P((char *, char *, char **));
 int	 cgetustr __P((char *, char *, char **));
+
+int	 daemon __P((int, int));
+char	*devname __P((int, int));
+int	 getloadavg __P((double [], int));
 
 long	 a64l __P((const char *));
 char	*l64a __P((long));
