@@ -8,6 +8,7 @@ DPADD=	${LIBCURSES} ${LIBTERM}
 LDADD=	-lcurses -ltermlib
 HIDEGAME=hidegame
 MANALL+= chess.6
+CLEANFILES += chess.6
 
 chess.6:
 	@if [ -d ${.CURDIR}/obj ]; then \
