@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from @(#) Header: bootp.c,v 1.4 93/09/11 03:13:51 leres Exp  (LBL)
- *    $Id: bootp.c,v 1.3 1993/10/16 07:57:40 cgd Exp $
+ *    $Id: bootp.c,v 1.4 1993/10/18 23:01:13 cgd Exp $
  */
 
 #include <sys/types.h>
@@ -139,7 +139,8 @@ bootpsend(d, pkt, len)
 
 #ifdef DEBUG
 	if (debug)
-	    printf("bootpsend: called\n");
+		printf("bootpsend: called.  we have 0x%x, and need 0x%x\n",
+		    have, need);
 #endif
 	bp = pkt;
 	bzero(bp->bp_file, sizeof(bp->bp_file));
@@ -175,28 +176,66 @@ bootprecv(d, pkt, len)
 	    printf("bootprecv: called\n");
 #endif
 	bp = (struct bootp *)checkudp(d, pkt, &len);
+#ifdef DEBUG
+	if (debug)
+		printf("bootprecv: checked.  bp = 0x%x, len = %d\n",
+		    (unsigned)bp, len);
+#endif
 	if (bp == NULL || len < sizeof(*bp) || bp->bp_xid != d->xid) {
+#ifdef DEBUG
+		if (debug) {
+			printf("bootprecv: not for us.\n");
+			if (bp == NULL)
+				printf("bootprecv: bp null\n");
+			else {
+				if (len < sizeof(*bp))
+					printf("bootprecv: expected %d bytes, got %d\n",
+					    sizeof(*bp), len);
+				if (bp->bp_xid != d->xid)
+					printf("bootprecv: expected xid 0x%x, got 0x%x\n",
+					    d->xid, bp->bp_xid);
+			}
+			delay(500);
+		}
+#endif
 		errno = 0;
 		return (-1);
 	}
 
+#ifdef DEBUG
+	if (debug)
+	    printf("bootprecv: got one!\n");
+	delay(500);
+#endif
 	/* Pick up our ip address (and natural netmask) */
-	if (bp->bp_yiaddr.s_addr != 0 && (have & BOOT_MYIP) == 0) {
+	if (ntohl(bp->bp_yiaddr.s_addr) != 0 && (have & BOOT_MYIP) == 0) {
 		have |= BOOT_MYIP;
-		d->myip = bp->bp_yiaddr.s_addr;
+		d->myip = ntohl(bp->bp_yiaddr.s_addr);
+#ifdef DEBUG
+		if (debug)
+			printf("our ip address is %s\n", intoa(d->myip));
+#endif
 		if (IN_CLASSA(d->myip))
 			nmask = IN_CLASSA_NET;
 		else if (IN_CLASSB(d->myip))
 			nmask = IN_CLASSB_NET;
 		else
 			nmask = IN_CLASSC_NET;
+#ifdef DEBUG
+		if (debug)
+			printf("'native netmask' is %s\n", intoa(nmask));
+#endif
 	}
 
 	/* Pick up root or swap server address and file spec */
 	if (bp->bp_giaddr.s_addr != 0 && bp->bp_file[0] != '\0') {
 		if ((have & BOOT_ROOT) == 0) {
 			have |= BOOT_ROOT;
-			rootip = bp->bp_giaddr.s_addr;
+			rootip = ntohl(bp->bp_giaddr.s_addr);
+#ifdef DEBUG
+			if (debug)
+				printf("root ip address is %s\n", intoa(rootip));
+#endif
 			strncpy(rootpath, (char *)bp->bp_file,
 			    sizeof(rootpath));
 			rootpath[sizeof(rootpath) - 1] = '\0';
@@ -205,7 +244,11 @@ bootprecv(d, pkt, len)
 			++d->xid;
 		} else if ((have & BOOT_SWAP) == 0) {
 			have |= BOOT_SWAP;
-			swapip = bp->bp_giaddr.s_addr;
+			swapip = ntohl(bp->bp_giaddr.s_addr);
+#ifdef DEBUG
+			if (debug)
+				printf("swap ip address is %s\n", intoa(swapip));
+#endif
 			strncpy(swappath, (char *)bp->bp_file,
 			    sizeof(swappath));
 			swappath[sizeof(swappath) - 1] = '\0';
@@ -225,6 +268,11 @@ bootprecv(d, pkt, len)
 		printf("bootprecv: unknown vendor 0x%x\n", ul);
 	}
 
+#ifdef DEBUG
+	if (debug)
+		delay(500);
+#endif
+
 	/* Nothing more to do if we don't know our ip address yet */
 	if ((have & BOOT_MYIP) == 0) {
 		errno = 0;
@@ -233,6 +281,10 @@ bootprecv(d, pkt, len)
 
 	/* Check subnet mask against net mask; toss if bogus */
 	if ((have & BOOT_SMASK) != 0 && (nmask & smask) != nmask) {
+#ifdef DEBUG
+		if (debug)
+			printf("subnet mask (%s) bad\n", intoa(smask));
+#endif
 		smask = 0;
 		have &= ~BOOT_SMASK;
 	}
@@ -241,18 +293,42 @@ bootprecv(d, pkt, len)
 	mask = nmask;
 	if ((have & BOOT_SMASK) != 0)
 		mask = smask;
+#ifdef DEBUG
+	if (debug)
+		printf("mask: %s\n", intoa(mask));
+#endif
 
 	/* We need a gateway if root or swap is on a different net */
-	if ((have & BOOT_ROOT) != 0 && !SAMENET(d->myip, rootip, mask))
+	if ((have & BOOT_ROOT) != 0 && !SAMENET(d->myip, rootip, mask)) {
+#ifdef DEBUG
+		if (debug)
+			printf("need gateway for root ip\n");
+#endif
 		need |= BOOT_GATEIP;
-	if ((have & BOOT_SWAP) != 0 && !SAMENET(d->myip, swapip, mask))
+	}
+	if ((have & BOOT_SWAP) != 0 && !SAMENET(d->myip, swapip, mask)) {
+#ifdef DEBUG
+		if (debug)
+			printf("need gateway for swap ip\n");
+#endif
 		need |= BOOT_GATEIP;
+	}
 
 	/* Toss gateway if on a different net */
 	if ((have & BOOT_GATEIP) != 0 && !SAMENET(d->myip, gateip, mask)) {
+#ifdef DEBUG
+		if (debug)
+			printf("gateway ip (%s) bad\n", intoa(gateip));
+#endif
 		gateip = 0;
 		have &= ~BOOT_GATEIP;
 	}
+#ifdef DEBUG
+	if (debug) {
+		printf("gateway ip: %s\n", intoa(gateip));
+		delay(500);
+	}
+#endif
 	return (0);
 }
 
@@ -266,11 +342,11 @@ vend_cmu(cp)
 
 	if (vp->v_smask.s_addr != 0 && (have & BOOT_SMASK) == 0) {
 		have |= BOOT_SMASK;
-		smask = vp->v_smask.s_addr;
+		smask = ntohl(vp->v_smask.s_addr);
 	}
 	if (vp->v_dgate.s_addr != 0 && (have & BOOT_GATEIP) == 0) {
 		have |= BOOT_GATEIP;
-		gateip = vp->v_dgate.s_addr;
+		gateip = ntohl(vp->v_dgate.s_addr);
 	}
 }
 
@@ -298,10 +374,12 @@ vend_rfc1048(cp, len)
 			if (tag == TAG_SUBNET_MASK) {
 				have |= BOOT_SMASK;
 				bcopy(cp, &smask, sizeof(smask));
+				smask = ntohl(smask);
 			}
 			if (tag == TAG_GATEWAY) {
 				have |= BOOT_GATEIP;
 				bcopy(cp, &gateip, sizeof(gateip));
+				gateip = ntohl(gateip);
 			}
 		}
 		cp += size;
