@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.37 2000/12/20 09:56:34 haya Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.38 2000/12/27 10:41:00 sato Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,6 +136,15 @@ struct wdc_pcmcia_product {
 	{ -1, -1, 0,
 	  PCMCIA_CIS_IODATA_CBIDE2,
 	  PCMCIA_STR_IODATA_CBIDE2
+	},
+
+	/* 
+	 * Novac PCMCIA-IDE Card for HD530P IDE Box, 
+	 * with neither vendor ID nor product ID
+	 */
+	{ -1, -1, 0,
+	  { "PCMCIA", "PnPIDE", NULL, NULL},
+	  "Novac PCCARD-IDE"
 	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }
