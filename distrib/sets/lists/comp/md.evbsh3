@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.8 2001/01/16 17:36:03 itojun Exp $
+# $NetBSD: md.evbsh3,v 1.9 2001/01/17 08:12:18 itojun Exp $
 ./usr/include/evbsh3	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
@@ -17,7 +17,6 @@
 ./usr/include/evbsh3/elf_machdep.h	comp-c-include
 ./usr/include/evbsh3/endian.h	comp-c-include
 ./usr/include/evbsh3/endian_machdep.h	comp-c-include
-./usr/include/evbsh3/exec_coff.h	comp-c-include
 ./usr/include/evbsh3/float.h	comp-c-include
 ./usr/include/evbsh3/frame.h	comp-c-include
 ./usr/include/evbsh3/ieee.h	comp-c-include
@@ -25,7 +24,6 @@
 ./usr/include/evbsh3/int_types.h	comp-c-include
 ./usr/include/evbsh3/intr.h	comp-c-include
 ./usr/include/evbsh3/limits.h	comp-c-include
-./usr/include/evbsh3/loadfile_machdep.h	comp-c-include
 ./usr/include/evbsh3/lock.h	comp-c-include
 ./usr/include/evbsh3/math.h	comp-c-include
 ./usr/include/evbsh3/param.h	comp-c-include
@@ -40,7 +38,6 @@
 ./usr/include/evbsh3/reg.h	comp-c-include
 ./usr/include/evbsh3/segments.h	comp-c-include
 ./usr/include/evbsh3/setjmp.h	comp-c-include
-./usr/include/evbsh3/sh3.h	comp-c-include
 ./usr/include/evbsh3/shbvar.h	comp-c-include
 ./usr/include/evbsh3/signal.h	comp-c-include
 ./usr/include/evbsh3/stdarg.h	comp-c-include
@@ -48,3 +45,4 @@
 ./usr/include/evbsh3/types.h	comp-c-include
 ./usr/include/evbsh3/varargs.h	comp-c-include
 ./usr/include/evbsh3/vmparam.h	comp-c-include
+./usr/include/evbsh3/_G_config.h	comp-c-include
