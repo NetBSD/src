@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2002/01/31 22:44:05 tv Exp $	*/
+/*	$NetBSD: extern.h,v 1.23 2002/02/08 18:15:12 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,6 +40,7 @@
 #if HAVE_CONFIG_H
 #include "config.h" 
 #else 
+#define HAVE_LCHMOD 1
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif
  
