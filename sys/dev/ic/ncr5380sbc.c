@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.4 1996/02/22 03:10:47 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.5 1996/02/22 04:06:03 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -1313,12 +1313,13 @@ ncr5380_select(sc, sr)
 	*(sc->sci_odata) = 0x80;	/* OUR_ID */
 	*(sc->sci_mode) = SCI_MODE_ARB;
 
-	/* Wait for ICMD_AIP. */
-	timo = 10;	/* 20 uSec is pleanty. */
+#define	WAIT_AIP_USEC	20	/* pleanty of time */
+	/* Wait for the AIP bit to turn on. */
+	timo = WAIT_AIP_USEC;
 	for (;;) {
 		if (*(sc->sci_icmd) & SCI_ICMD_AIP)
 			break;
-		if (--timo <= 0) {
+		if (timo <= 0) {
 			/*
 			 * Did not see any "bus free" period.
 			 * The usual reason is a reselection,
@@ -1327,10 +1328,11 @@ ncr5380_select(sc, sr)
 			NCR_TRACE("select: bus busy, rc=%d\n", XS_BUSY);
 			goto lost_arb;
 		}
+		timo -= 2;
 		delay(2);
 	}
-	NCR_TRACE("select: have AIP after %d loops\n",
-			  ncr5380_wait_req_timo - timo);
+	NCR_TRACE("select: have AIP after %d uSec.\n",
+			  WAIT_AIP_USEC - timo);
 
 	/* Got AIP.  Wait one arbitration delay (2.2 uS.) */
 	delay(3);
