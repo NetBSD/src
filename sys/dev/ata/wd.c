@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.153 1996/10/13 01:38:04 christos Exp $	*/
+/*	$NetBSD: wd.c,v 1.154 1996/11/07 05:23:07 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -588,7 +588,7 @@ loop:
 		daddr_t blkno;
 
 #ifdef WDDEBUG
-		printf("\n%s: wdcstart %s %d@%d; map ", wd->sc_dev.dv_xname,
+		printf("\n%s: wdcstart %s %ld@%d; map ", wd->sc_dev.dv_xname,
 		    (bp->b_flags & B_READ) ? "read" : "write", bp->b_bcount,
 		    bp->b_blkno);
 #endif
@@ -599,7 +599,7 @@ loop:
 		wd->sc_blkno = blkno / (lp->d_secsize / DEV_BSIZE);
 	} else {
 #ifdef WDDEBUG
-		printf(" %d)%x", wd->sc_skip, inb(wd->sc_iobase+wd_altsts));
+		printf(" %d)%x", wd->sc_skip, inb(wdc->sc_iobase+wd_altsts));
 #endif
 	}
 
@@ -712,8 +712,9 @@ loop:
 		}
 
 #ifdef WDDEBUG
-		printf("sector %d cylin %d head %d addr %x sts %x\n", sector,
-		    cylin, head, bp->b_data, inb(wd->sc_iobase+wd_altsts));
+		printf("sector %ld cylin %ld head %ld addr %p sts %x\n",
+		    sector, cylin, head, bp->b_data,
+		    inb(wdc->sc_iobase+wd_altsts));
 #endif
 	} else if (wd->sc_nblks > 1) {
 		/* The number of blocks in the last stretch may be smaller. */
@@ -773,7 +774,7 @@ wdcintr(arg)
 	bp = wd->sc_q.b_actf;
 
 #ifdef WDDEBUG
-	printf("I%d ", ctrlr);
+	printf("I%d ", wdc->sc_dev.dv_unit);
 #endif
 
 	if (wait_for_unbusy(wdc) < 0) {
