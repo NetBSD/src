@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.9 2001/01/25 08:33:56 jwise Exp $
+# $NetBSD: md.macppc,v 1.10 2001/01/27 23:48:33 jdolecek Exp $
 ./dev/audio			base-sys-devlinks
 ./dev/audioctl			base-sys-devlinks
 ./dev/mixer			base-sys-devlinks
@@ -8,6 +8,7 @@
 ./usr/lkm/coda.o		base-coda-lkm
 ./usr/lkm/ext2fs.o		base-ext2fs-lkm
 ./usr/lkm/fdesc.o		base-miscfs-lkm
+./usr/lkm/filecorefs.o		base-filecorefs-lkm
 ./usr/lkm/if_ipl.o		base-ipf-lkm
 ./usr/lkm/lfs.o			base-sys-lkm
 ./usr/lkm/kernfs.o		base-sys-lkm
