@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2000/07/07 13:22:06 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2000/07/08 07:23:17 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -107,6 +107,7 @@ cpumatch(parent, cf, aux)
 #define MPC603e		6
 #define MPC603ev	7
 #define MPC750		8
+#define MPC604ev	9
 #define MPC7400		12
 
 #define HID0_DOZE	0x00800000
@@ -121,7 +122,7 @@ cpuattach(parent, self, aux)
 {
 	struct confargs *ca = aux;
 	int id = ca->ca_reg[0];
-	int hid0, pvr;
+	int hid0, pvr, vers;
 	char model[80];
 
 	ncpus++;
@@ -129,31 +130,41 @@ cpuattach(parent, self, aux)
 	cpu_info[id].ci_cpuid = id;
 #endif
 
+	asm volatile ("mfpvr %0" : "=r"(pvr));
+	vers = pvr >> 16;
+
 	switch (id) {
 	case 0:
-#ifdef MULTIPROCESSOR
-		asm volatile ("mtspr 1023,%0" :: "r"(id));	/* PIR */
-#endif
+		/* load my cpu_number to PIR */
+		switch (vers) {
+		case MPC604:
+		case MPC604ev:
+		case MPC7400:
+			asm volatile ("mtspr 1023,%0" :: "r"(id));
+		}
 		identifycpu(model);
-		printf(": %s, ID %d (primary)", model, cpu_number());
+		printf(": %s, ID %d (primary)\n", model, cpu_number());
 		break;
-#ifdef MULTIPROCESSOR
 	case 1:
+#ifdef MULTIPROCESSOR
 		cpu_spinup();
-		printf("\n");
-		return;
+#else
+		printf(" not configured\n");
 #endif
+		return;
 	default:
 		printf(": more than 2 cpus?\n");
 		panic("cpuattach");
 	}
 
-	__asm __volatile ("mfpvr %0" : "=r"(pvr));
-	switch (pvr >> 16) {
+	/*
+	 * Configure power-saving mode.
+	 */
+	switch (vers) {
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
-		/* Select DOZE power-saving mode. */
+		/* Select DOZE mode. */
 		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -162,21 +173,27 @@ cpuattach(parent, self, aux)
 		break;
 	case MPC750:
 	case MPC7400:
-		/* Select NAP power-saving mode. */
+		/* Select NAP mode. */
 		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
 		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
 		powersave = 1;
 		break;
+	default:
+		/* No power-saving mode is available. */
 	}
 
-	if ((pvr >> 16) == MPC750 || (pvr >> 16) == MPC7400)
+	/*
+	 * Display cache configuration.
+	 */
+	if (vers == MPC750 || vers == MPC7400) {
+		printf("%s", self->dv_xname);
 		display_l2cr();
-	else if (OF_finddevice("/bandit/ohare") != -1)
+	} else if (OF_finddevice("/bandit/ohare") != -1) {
+		printf("%s", self->dv_xname);
 		ohare_init();
-	else
-		printf("\n");
+	}
 }
 
 struct cputab {
@@ -184,17 +201,17 @@ struct cputab {
 	char *name;
 };
 static struct cputab models[] = {
-	{  1, "601" },
-	{  3, "603" },
-	{  4, "604" },
-	{  5, "602" },
-	{  6, "603e" },
-	{  7, "603ev" },
-	{  8, "750" },
-	{  9, "604ev" },
-	{ 12, "7400" },
-	{ 20, "620" },
-	{  0, NULL }
+	{ MPC601,   "601" },
+	{ MPC603,   "603" },
+	{ MPC604,   "604" },
+	{ 5,	    "602" },
+	{ MPC603e,  "603e" },
+	{ MPC603ev, "603ev" },
+	{ MPC750,   "750" },
+	{ MPC604ev, "604ev" },
+	{ MPC7400,  "7400" },
+	{ 20,	    "620" },
+	{ 0,	    NULL }
 };
 
 void
@@ -345,7 +362,7 @@ cpu_spinup()
 	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(USPACE, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
 	if (error) {
-		printf(": unable to allocate idle stack");
+		printf(": unable to allocate idle stack\n");
 		return -1;
 	}
 
@@ -395,7 +412,7 @@ cpu_spinup()
 	delay(100000);		/* wait for secondary printf */
 
 	if (h->running == 0) {
-		printf(": secondary cpu didn't start");
+		printf(": secondary cpu didn't start\n");
 		return -1;
 	}
 
@@ -452,7 +469,7 @@ cpu_hatch()
 	h->running = 1;
 
 	identifycpu(model);
-	printf(": %s, ID %d", model, cpu_number());
+	printf(": %s, ID %d\n", model, cpu_number());
 
 	/* XXX Enter power-saving mode and never return. */
 	asm volatile ("
