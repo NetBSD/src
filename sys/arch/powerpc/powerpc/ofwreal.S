@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.4 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.5 2003/07/31 14:02:22 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -188,13 +188,13 @@ savemmu:
 	stwu	%r5,4(%r3)
 	bne	1b
 
-	mfsprg	%r4,0			/* save SPRGs */
+	mfsprg0	%r4			/* save SPRGs */
 	stw	%r4,4(%r3)
-	mfsprg	%r4,1
+	mfsprg1	%r4
 	stw	%r4,8(%r3)
-	mfsprg	%r4,2
+	mfsprg2	%r4
 	stw	%r4,12(%r3)
-	mfsprg	%r4,3
+	mfsprg3	%r4
 	stw	%r4,16(%r3)
 
 	mfsdr1	%r4			/* save SDR1 */
@@ -301,13 +301,13 @@ restoremmu:
 	bne	1b
 
 	lwz	%r4,4(%r3)
-	mtsprg	0,%r4			/* restore SPRGs */
+	mtsprg0	%r4			/* restore SPRGs */
 	lwz	%r4,8(%r3)
-	mtsprg	1,%r4
+	mtsprg1	%r4
 	lwz	%r4,12(%r3)
-	mtsprg	2,%r4
+	mtsprg2	%r4
 	lwz	%r4,16(%r3)
-	mtsprg	3,%r4
+	mtsprg3	%r4
 
 	sync				/* remove everything from tlb */
 	lis	%r4,0x40000@ha
