@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.17 2000/11/02 14:25:51 tsubai Exp $	*/
+/*	$NetBSD: ofb.c,v 1.18 2001/03/15 19:48:04 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -48,10 +48,17 @@
 
 #include <dev/ofw/ofw_pci.h>
 
+#include <machine/bat.h>
 #include <machine/bus.h>
 #include <machine/grfioctl.h>
 
 #include <macppc/dev/ofbvar.h>
+
+#if OFB_ENABLE_CACHE
+int ofb_enable_cache = 1;
+#else
+int ofb_enable_cache = 0;
+#endif
 
 int	ofbmatch __P((struct device *, struct cfdata *, void *));
 void	ofbattach __P((struct device *, struct device *, void *));
@@ -234,6 +241,14 @@ ofb_common_init(node, dc)
 	/* Make sure 0/0/0 is black and 255/255/255 is white. */
 	OF_call_method_1("color!", dc->dc_ih, 4, 0, 0, 0, 0);
 	OF_call_method_1("color!", dc->dc_ih, 4, 255, 255, 255, 255);
+
+	/* Enable write-through cache. */
+	if (ofb_enable_cache && battable[0xc].batu == 0) {
+		battable[0xc].batl = BATL(addr & 0xf0000000, BAT_W, BAT_PP_RW);
+		battable[0xc].batu = BATL(0xc0000000, BAT_BL_256M, BAT_Vs);
+		addr &= 0x0fffffff;
+		addr |= 0xc0000000;
+	}
 
 	/* initialize rasops */
 	ri->ri_width = width;
