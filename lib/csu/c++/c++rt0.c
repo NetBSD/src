@@ -1,4 +1,4 @@
-/*	$NetBSD: c++rt0.c,v 1.5 1996/10/18 05:36:49 thorpej Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -39,6 +39,18 @@
  * The tables are also null-terminated.
  */
 #include <stdlib.h>
+
+
+/*
+ * We make the __{C,D}TOR_LIST__ symbols appear as type `SETD' and
+ * include a dummy local function in the set. This keeps references
+ * to these symbols local to the shared object this module is linked to.
+ */
+static void dummy __P((void)) { return; }
+
+/* Note: this is "a.out" dependent. */
+__asm(".stabs \"___CTOR_LIST__\",22,0,0,_dummy");
+__asm(".stabs \"___DTOR_LIST__\",22,0,0,_dummy");
 
 void (*__CTOR_LIST__[0]) __P((void));
 void (*__DTOR_LIST__[0]) __P((void));
