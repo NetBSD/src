@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.64 2003/11/08 06:00:39 dbj Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.65 2003/11/08 07:13:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.64 2003/11/08 06:00:39 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.65 2003/11/08 07:13:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ ffs_fsync(v)
 	 * XXX no easy way to sync a range in a file with softdep.
 	 */
 	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp) ||
-			(vp->v_type != VREG))
+			(ap->a_vp->v_type != VREG))
 		return ffs_full_fsync(v);
 
 	vp = ap->a_vp;
