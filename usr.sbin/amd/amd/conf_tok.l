@@ -1,8 +1,8 @@
 %{
-/*	$NetBSD: conf_tok.l,v 1.1.1.2 1997/10/26 00:03:07 christos Exp $	*/
+/*	$NetBSD: conf_tok.l,v 1.1.1.3 1998/08/08 22:05:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -66,12 +66,19 @@
 #include <am_defs.h>
 #include <amd.h>
 #include <conf_parse.h>
+/* and once again undefine this, just in case */
+#ifdef ECHO
+# undef ECHO
+#endif /* ECHO */
 
 /*
  * There are some things that need to be defined only if useing GNU flex.
  * These must not be defined if using standard lex
  */
 #ifdef FLEX_SCANNER
+# ifndef ECHO
+#  define ECHO (void) fwrite( yytext, yyleng, 1, yyout )
+# endif /* not ECHO */
 int yylineno = 0;
 #endif /* FLEX_SCANNER */
 
@@ -120,19 +127,19 @@ NONQUOTE	[^\"]
 
 \[			{
 			dprintf("%8d: Left bracket \"%s\"\n", yytext);
-			yylval.strtype = strdup(yytext);
+			yylval.strtype = strdup((char *)yytext);
 			amu_return(LEFT_BRACKET);
 			}
 
 \]			{
 			dprintf("%8d: Right bracket \"%s\"\n", yytext);
-			yylval.strtype = strdup(yytext);
+			yylval.strtype = strdup((char *)yytext);
 			amu_return(RIGHT_BRACKET);
 			}
 
 =			{
 			dprintf("%8d: Equal \"%s\"\n", yytext);
-			yylval.strtype = strdup(yytext);
+			yylval.strtype = strdup((char *)yytext);
 			amu_return(EQUAL);
 			}
 
@@ -142,27 +149,27 @@ NONQUOTE	[^\"]
 "#"[^\n]*\n		{
 			/* a comment line includes the terminating \n */
 			yylineno++;
-			yytext[strlen(yytext)-1] = '\0';
+			yytext[strlen((char *)yytext)-1] = '\0';
 			dprintf("%8d: Comment \"%s\"\n", yytext);
 			}
 
 {NONWSCHAR}{NONWSCHAR}*	{
 			dprintf("%8d: Non-WS string \"%s\"\n", yytext);
-			yylval.strtype = strdup(yytext);
+			yylval.strtype = strdup((char *)yytext);
 			amu_return(NONWS_STRING);
 			}
 
 \"{NONQUOTE}{NONQUOTE}*\"	{
 			dprintf("%8d: QUOTED-Non-WS-EQ string \"%s\"\n", yytext);
 			/* must strip quotes */
-			yytext[strlen(yytext)-1] = '\0';
-			yylval.strtype = strdup(&yytext[1]);
+			yytext[strlen((char *)yytext)-1] = '\0';
+			yylval.strtype = strdup((char *)&yytext[1]);
 			amu_return(QUOTED_NONWSEQ_STRING);
 			}
 
 {NONWSEQCHAR}{NONWSEQCHAR}*	{
 			dprintf("%8d: Non-WS-EQ string \"%s\"\n", yytext);
-			yylval.strtype = strdup(yytext);
+			yylval.strtype = strdup((char *)yytext);
 			amu_return(NONWSEQ_STRING);
 			}
 

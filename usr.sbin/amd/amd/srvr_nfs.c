@@ -1,7 +1,7 @@
-/*	$NetBSD: srvr_nfs.c,v 1.1.1.4 1997/10/26 00:03:06 christos Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.1.1.5 1998/08/08 22:05:32 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,6 @@
 #include <am_defs.h>
 #include <amd.h>
 
-
 /*
  * Number of pings allowed to fail before host is declared down
  * - three-fifths of the allowed mount time...
@@ -95,8 +94,10 @@ static int np_xid;		/* For NFS pings */
 static int ping_len;
 static char ping_buf[sizeof(struct rpc_msg) + 32];
 
+#if defined(MNTTAB_OPT_PROTO) || defined(HAVE_FS_NFS3)
 /* protocols we know about, in order of preference */
 static char *protocols[] = { "tcp", "udp", NULL };
+#endif /* defined(MNTTAB_OPT_PROTO) || defined(HAVE_FS_NFS3) */
 
 /* forward definitions */
 static void nfs_keepalive(voidp);
@@ -653,7 +654,7 @@ find_nfs_srvr(mntfs *mf)
 
       for (p = protocols; *p; p ++)
 	if (proto_opt[0] == '=' &&
-	    strncmp(&proto_opt[1], *p, strlen(*p)) == 0) {
+	    NSTREQ(&proto_opt[1], *p, strlen(*p))) {
 	  nfs_proto = *p;
 	  break;
 	}
@@ -792,7 +793,7 @@ find_nfs_srvr(mntfs *mf)
       start_nfs_pings(fs, pingval);
       fs->fs_refc++;
       if (ip)
-	free(ip);
+	XFREE(ip);
       return fs;
     }
   }

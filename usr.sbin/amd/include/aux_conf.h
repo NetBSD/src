@@ -48,10 +48,10 @@
 
 /* $srcdir/conf/sa_dref/sa_dref_bsd44.h */
 #define	NFS_SA_DREF(dst, src) { \
-		(dst).addr = (struct sockaddr *) (src); \
-		(dst).addrlen = sizeof(*src); \
-		(dst).sotype = SOCK_DGRAM; \
-		(dst).proto = 0; \
+		(dst)->addr = (struct sockaddr *) (src); \
+		(dst)->addrlen = sizeof(*src); \
+		(dst)->sotype = SOCK_DGRAM; \
+		(dst)->proto = 0; \
 	}
 /* End of included NFS_SA_DREF macro definition file */
 

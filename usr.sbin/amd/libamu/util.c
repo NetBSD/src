@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.1.1.2 1997/10/26 00:02:18 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.3 1998/08/08 22:05:24 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -126,7 +126,7 @@ mkdirs(char *path, int mode)
 #endif /* DEBUG */
   }
 
-  free(p2);
+  XFREE(p2);
 
   return stat(path, &stb) == 0 &&
     (stb.st_mode & S_IFMT) == S_IFDIR ? 0 : error_so_far;
@@ -174,5 +174,5 @@ rmdirs(char *dir)
       *dp = '\0';
   } while (dp && dp > xdp);
 
-  free(xdp);
+  XFREE(xdp);
 }

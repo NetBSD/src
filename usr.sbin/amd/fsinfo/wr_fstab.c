@@ -1,7 +1,7 @@
-/*	$NetBSD: wr_fstab.c,v 1.1.1.4 1997/10/26 00:03:27 christos Exp $	*/
+/*	$NetBSD: wr_fstab.c,v 1.1.1.5 1998/08/08 22:05:37 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -119,7 +119,7 @@ write_aix1_dkfstab(FILE *ef, disk_fs *dp)
 	  dp->d_log,
 	  dp->d_mountpt,
 	  dp->d_opts);
-  free(hp);
+  XFREE(hp);
 }
 
 
@@ -143,8 +143,8 @@ write_aix1_dkrmount(FILE *ef, char *hn, fsmount *fp)
 	  fp->f_localname,
 	  fp->f_opts);
 
-  free(hp);
-  free(h);
+  XFREE(hp);
+  XFREE(h);
 }
 
 
@@ -157,7 +157,7 @@ static void
 write_aix3_dkfstab(FILE *ef, disk_fs *dp)
 {
   if (STREQ(dp->d_fstype, "jfs") &&
-      strncmp(dp->d_dev, "/dev/", 5) == 0 &&
+      NSTREQ(dp->d_dev, "/dev/", 5) &&
       !dp->d_log)
     error("aix 3 needs a log device for journalled filesystem (jfs) mounts");
 
@@ -187,7 +187,7 @@ write_aix3_dkrmount(FILE *ef, char *hn, fsmount *fp)
 	  fp->f_localname,
 	  fp->f_opts);
 
-  free(h);
+  XFREE(h);
 }
 
 
@@ -218,7 +218,7 @@ write_ultrix_dkrmount(FILE *ef, char *hn, fsmount *fp)
 	  fp->f_localname,
 	  fp->f_fstype,
 	  fp->f_opts);
-  free(h);
+  XFREE(h);
 }
 
 
@@ -257,7 +257,7 @@ write_generic_dkrmount(FILE *ef, char *hn, fsmount *fp)
 	  fp->f_localname,
 	  fp->f_fstype,
 	  fp->f_opts);
-  free(h);
+  XFREE(h);
 }
 
 

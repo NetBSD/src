@@ -1,7 +1,7 @@
-/*	$NetBSD: am_utils.h,v 1.1.1.4 1997/10/26 00:02:27 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.1.1.5 1998/08/08 22:05:26 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,9 +85,10 @@
 /*
  * String comparison macros
  */
-#define STREQ(s1, s2) (strcmp((s1), (s2)) == 0)
-#define STREQ(s1, s2) (strcmp((s1), (s2)) == 0)
-#define FSTREQ(s1, s2) ((*(s1) == *(s2)) && STREQ((s1),(s2)))
+#define STREQ(s1, s2)		(strcmp((s1), (s2)) == 0)
+#define STRCEQ(s1, s2)		(strcasecmp((s1), (s2)) == 0)
+#define NSTREQ(s1, s2, n)	(strncmp((s1), (s2), (n)) == 0)
+#define FSTREQ(s1, s2)		((*(s1) == *(s2)) && STREQ((s1),(s2)))
 
 /*
  * Logging options/flags
@@ -177,6 +178,9 @@ extern int umount_fs(char *fs_name, const char *mnttabname);
 #define	MFF_LOGDOWN	0x0040	/* Logged that this mount is down */
 #define	MFF_RSTKEEP	0x0080	/* Don't timeout this filesystem - restarted */
 #define	MFF_WANTTIMO	0x0100	/* Need a timeout call when not busy */
+#ifdef HAVE_AM_FS_NFSL
+# define MFF_NFSLINK	0x0200	/* nfsl type, and deemed a link */
+#endif /* HAVE_AM_FS_NFSL */
 
 /*
  * macros for struct am_node (map of auto-mount points).
@@ -194,12 +198,12 @@ extern int umount_fs(char *fs_name, const char *mnttabname);
 #define	AM_TTL			(5 * 60)	/* Default cache period */
 #define	AM_TTL_W		(2 * 60)	/* Default unmount interval */
 #define	AM_PINGER		30 /* NFS ping interval for live systems */
-#define	AFS_TIMEO		8	/* Default afs timeout - .8s */
+#define	AMFS_AUTO_TIMEO		8 /* Default amfs_auto timeout - .8s */
 
 /*
- * default afs retrans - 1/10th seconds
+ * default amfs_auto retrans - 1/10th seconds
  */
-#define	AFS_RETRANS		((ALLOWED_MOUNT_TIME*10+5*gopt.afs_timeo)/gopt.afs_timeo * 2)
+#define	AMFS_AUTO_RETRANS	((ALLOWED_MOUNT_TIME*10+5*gopt.amfs_auto_timeo)/gopt.amfs_auto_timeo * 2)
 
 /*
  * RPC-related macros.
@@ -300,6 +304,8 @@ struct am_opts {
   char *opt_unmount;
   char *opt_user;
   char *opt_maptype;		/* map type: file, nis, hesiod, etc. */
+  char *opt_cachedir;		/* cache directory */
+  char *opt_addopts;		/* options to add to opt_opts */
 };
 
 /*
@@ -377,8 +383,8 @@ struct am_ops {
   vlookuppn	lookuppn;	/* fxn: lookup path-name */
   vreaddir	readdir;	/* fxn: read directory */
   vreadlink	readlink;	/* fxn: read link */
-  vmounted	mounted;	/* fxn: (async callback?) */
-  vumounted	umounted;	/* fxn: (async callback?) */
+  vmounted	mounted;	/* fxn: after-mount extra actions */
+  vumounted	umounted;	/* fxn: after-umount extra actions */
   vffserver	ffserver;	/* fxn: find a file server */
   int		fs_flags;	/* filesystem flags FS_* */
 };
@@ -387,32 +393,6 @@ typedef int (*task_fun) (voidp);
 typedef void (*cb_fun) (int, int, voidp);
 typedef void (*fwd_fun) P((voidp, int, struct sockaddr_in *,
 			   struct sockaddr_in *, voidp, int));
-
-/*
- * Am-utils' internal mount entry structure
- * XXX: one day, nuke this thing. -Erez.
- */
-struct _am_utils_mntent_dontuse {
-  char		*mnt_fsname;    /* name of mounted file system */
-  char		*mnt_dir;       /* file system path prefix */
-  char		*mnt_type;      /* MOUNT_TYPE_* */
-  char		*mnt_opts;      /* MNTTAB_OPT* */
-  int		mnt_freq;       /* dump frequency, in days */
-  int		mnt_passno;     /* pass number on parallel fsck */
-#ifdef HAVE_FIELD_MNTENT_T_MNT_CNODE
-  int		mnt_cnode;	/* cluster node */
-#endif /* HAVE_FIELD_MNTENT_T_MNT_CNODE */
-#ifdef HAVE_FIELD_MNTENT_T_MNT_RO
-  int		mnt_ro;		/* read-only mount option */
-#endif /* HAVE_FIELD_MNTENT_T_MNT_RO */
-#ifdef HAVE_FIELD_MNTENT_T_MNT_TIME
-# ifdef HAVE_FIELD_MNTENT_T_MNT_TIME_STRING
-  char		*mnt_time;	/* time filesystem was mounted */
-# else /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
-  long		mnt_time;	/* time filesystem was mounted */
-# endif /* not HAVE_FIELD_MNTENT_T_MNT_TIME_STRING */
-#endif /* HAVE_FIELD_MNTENT_T_MNT_TIME */
-};
 
 /*
  * List of mount table entries
@@ -564,14 +544,13 @@ extern char **strsplit(char *, int, int);
 extern char *expand_key(char *);
 extern char *get_version_string(void);
 extern char *inet_dquad(char *, u_long);
+extern char *print_wires(void);
 extern char *str3cat(char *, char *, char *, char *);
 extern char *strealloc(char *, char *);
 extern char *strip_selectors(char *, char *);
 extern char *strnsave(const char *, int);
 extern fserver *dup_srvr(fserver *);
 extern int amu_close(int fd);
-extern int auto_fmount(am_node *mp);
-extern int auto_fumount(am_node *mp);
 extern int background(void);
 extern int bind_resv_port(int, u_short *);
 extern int cmdoption(char *, struct opt_tab *, int *);
@@ -615,6 +594,7 @@ extern void am_unmounted(am_node *);
 extern void amq_program_1(struct svc_req *rqstp, SVCXPRT * transp);
 extern void amu_get_myaddress(struct in_addr *iap);
 extern void amu_release_controlling_tty(void);
+extern void compute_automounter_nfs_args(nfs_args_t *nap, mntent_t *mntp);
 extern void deslashify(char *);
 extern void discard_mntlist(mntlist *mp);
 extern void do_task_notify(void);
@@ -627,7 +607,7 @@ extern void free_mntlist(mntlist *);
 extern void free_opts(am_opts *);
 extern void free_srvr(fserver *);
 extern void fwd_reply(void);
-extern void get_args(int, char *[]);
+extern void get_args(int argc, char *argv[]);
 extern void getwire(char **name1, char **number1);
 extern void going_down(int);
 extern void host_normalize(char **);
@@ -649,7 +629,6 @@ extern void normalize_slash(char *);
 extern void ops_showamfstypes(char *buf);
 extern void ops_showfstypes(char *outbuf);
 extern void plog(int, char *,...);
-extern void print_wires(char *buf);
 extern void rem_que(qelem *);
 extern void reschedule_timeout_mp(void);
 extern void restart(void);
@@ -670,6 +649,7 @@ extern void wakeup_srvr(fserver *);
 extern void wakeup_task(int, int, voidp);
 extern voidp xmalloc(int);
 extern voidp xrealloc(voidp, int);
+extern voidp xzalloc(int);
 extern u_long get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto);
 
 
@@ -684,14 +664,21 @@ extern int syslogging;
 #endif /* defined(HAVE_SYSLOG_H) || defined(HAVE_SYS_SYSLOG_H) */
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
+
+extern void compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig *nfsncp, struct sockaddr_in *ip_addr, u_long nfs_version, char *nfs_proto, am_nfs_handle_t *fhp, char *host_name, char *fs_name);
 extern int create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **udp_amqncpp, int *tcp_soAMQp, SVCXPRT **tcp_amqpp, struct netconfig **tcp_amqncpp);
 extern int create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp));
 extern int get_knetconfig(struct knetconfig **kncpp, struct netconfig *in_ncp, char *nc_protoname);
 extern struct netconfig *nfsncp;
 extern void free_knetconfig(struct knetconfig *kncp);
+
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
+
+extern void compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct sockaddr_in *ip_addr, u_long nfs_version, char *nfs_proto, am_nfs_handle_t *fhp, char *host_name, char *fs_name);
+extern enum clnt_stat pmap_ping(struct sockaddr_in *address);
 extern int create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, int *tcp_soAMQp, SVCXPRT **tcp_amqpp);
 extern int create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp));
+
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
 #ifndef HAVE_FIELD_STRUCT_FHSTATUS_FHS_FH
@@ -732,14 +719,26 @@ extern am_ops pcfs_ops;
 #endif /* HAVE_FS_PCFS */
 
 /*
+ * Caching File System (Solaris)
+ */
+#ifdef HAVE_FS_CACHEFS
+extern am_ops cachefs_ops;
+#endif /* HAVE_FS_CACHEFS */
+
+/*
  * Network File System
  * Good, slow, NFS V.2.
  */
 #ifdef HAVE_FS_NFS
 extern am_ops nfs_ops;		/* NFS */
-extern qelem nfs_srvr_list;
 extern fserver *find_nfs_srvr (mntfs *);
+extern int nfs_fmount(mntfs *mf);
+extern int nfs_fumount(mntfs *mf);
+extern int nfs_init(mntfs *mf);
+extern qelem nfs_srvr_list;
+extern void nfs_umounted(am_node *mp);
 #endif /* HAVE_FS_NFS */
+
 
 /*
  * Network File System: the new generation
@@ -767,87 +766,114 @@ extern am_ops ufs_ops;		/* Un*x file system */
 /*
  * Automount File System
  */
-#ifdef HAVE_AM_FS_AFS
-extern am_ops afs_ops;		/* Automount file system (this!) */
-extern am_ops toplvl_ops;	/* Top-level automount file system */
-extern am_ops root_ops;		/* Root file system */
-extern qelem afs_srvr_list;
-extern fserver *find_afs_srvr (mntfs *);
-#endif /* HAVE_AM_FS_AFS */
+#ifdef HAVE_AM_FS_AUTO
+extern am_ops amfs_auto_ops;	/* Automount file system (this!) */
+extern am_ops amfs_toplvl_ops;	/* Top-level automount file system */
+extern am_ops amfs_root_ops;	/* Root file system */
+extern qelem amfs_auto_srvr_list;
+extern am_node *amfs_auto_lookuppn(am_node *mp, char *fname, int *error_return, int op);
+extern am_node *next_nonerror_node(am_node *xp);
+extern char *amfs_auto_match(am_opts *fo);
+extern fserver *find_amfs_auto_srvr(mntfs *);
+extern int amfs_auto_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count);
+extern int amfs_auto_umount(am_node *mp);
+extern int amfs_auto_fmount(am_node *mp);
+extern int amfs_auto_fumount(am_node *mp);
+#endif /* HAVE_AM_FS_AUTO */
+
+/*
+ * Toplvl Automount File System
+ */
+#ifdef HAVE_AM_FS_TOPLVL
+extern am_ops amfs_toplvl_ops;	/* Toplvl Automount file system */
+extern int amfs_toplvl_mount(am_node *mp);
+extern int amfs_toplvl_umount(am_node *mp);
+extern void amfs_toplvl_mounted(mntfs *mf);
+#endif /* HAVE_AM_FS_TOPLVL */
 
 /*
  * Direct Automount File System
  */
-#ifdef HAVE_AM_FS_DFS
-extern am_ops dfs_ops;		/* Direct Automount file system (this too) */
-#endif /* HAVE_AM_FS_DFS */
+#ifdef HAVE_AM_FS_DIRECT
+extern am_ops amfs_direct_ops;	/* Direct Automount file system (this too) */
+#endif /* HAVE_AM_FS_DIRECT */
 
 /*
  * Error File System
  */
-#ifdef HAVE_AM_FS_EFS
-extern am_ops efs_ops;		/* Error file system */
-#endif /* HAVE_AM_FS_EFS */
+#ifdef HAVE_AM_FS_ERROR
+extern am_ops amfs_error_ops;	/* Error file system */
+extern am_node *amfs_error_lookuppn(am_node *mp, char *fname, int *error_return, int op);
+extern int amfs_error_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count);
+#endif /* HAVE_AM_FS_ERROR */
 
 /*
  * Inheritance File System
  */
-#ifdef HAVE_AM_FS_IFS
-extern am_ops ifs_ops;		/* Inheritance file system */
-#endif /* HAVE_AM_FS_IFS */
+#ifdef HAVE_AM_FS_INHERIT
+extern am_ops amfs_inherit_ops;	/* Inheritance file system */
+#endif /* HAVE_AM_FS_INHERIT */
+
+/*
+ * NFS mounts with local existence check.
+ */
+#ifdef HAVE_AM_FS_NFSL
+extern am_ops amfs_nfsl_ops;	/* NFSL */
+#endif /* HAVE_AM_FS_NFSL */
 
 /*
  * Multi-nfs mounts.
  */
 #ifdef HAVE_AM_FS_NFSX
-extern am_ops nfsx_ops;		/* NFS X */
+extern am_ops amfs_nfsx_ops;	/* NFSX */
 #endif /* HAVE_AM_FS_NFSX */
 
 /*
  * NFS host - a whole tree.
  */
 #ifdef HAVE_AM_FS_HOST
-extern am_ops host_ops;		/* NFS host */
+extern am_ops amfs_host_ops;	/* NFS host */
 #endif /* HAVE_AM_FS_HOST */
 
 /*
  * Program File System
  * This is useful for things like RVD.
  */
-#ifdef HAVE_AM_FS_PFS
-extern am_ops pfs_ops;		/* PFS */
-#endif /* HAVE_AM_FS_PFS */
+#ifdef HAVE_AM_FS_PROGRAM
+extern am_ops amfs_program_ops;	/* Program File System */
+#endif /* HAVE_AM_FS_PROGRAM */
 
 /*
  * Symbolic-link file system.
  * A "filesystem" which is just a symbol link.
  */
-#ifdef HAVE_AM_FS_SFS
-extern am_ops sfs_ops;		/* Symlink FS */
-#endif /* HAVE_AM_FS_SFS */
+#ifdef HAVE_AM_FS_LINK
+extern am_ops amfs_link_ops;	/* Symlink FS */
+extern int amfs_link_fmount(mntfs *mf);
+#endif /* HAVE_AM_FS_LINK */
 
 /*
  * Symbolic-link file syste, which also checks that the target of
  * the symlink exists.
  * A "filesystem" which is just a symbol link.
  */
-#ifdef HAVE_AM_FS_SFSX
-extern am_ops sfsx_ops;		/* Symlink FS with existence check */
-#endif /* HAVE_AM_FS_SFSX */
+#ifdef HAVE_AM_FS_LINKX
+extern am_ops amfs_linkx_ops;	/* Symlink FS with existence check */
+#endif /* HAVE_AM_FS_LINKX */
 
 /*
  * Union file system
  */
 #ifdef HAVE_AM_FS_UNION
-extern am_ops union_ops;	/* Union FS */
+extern am_ops amfs_union_ops;	/* Union FS */
 #endif /* HAVE_AM_FS_UNION */
 
 /*
  * Autofs file system
  */
-#ifdef HAVE_AM_FS_AUTOFS
-extern am_ops autofs_ops;	/* Autofs FS */
-#endif /* HAVE_AM_FS_AUTOFS */
+#ifdef HAVE_FS_AUTOFS
+extern am_ops autofs_ops;	/* (Sun) Autofs FS */
+#endif /* HAVE_FS_AUTOFS */
 
 
 /**************************************************************************/
@@ -870,6 +896,8 @@ extern am_ops autofs_ops;	/* Autofs FS */
 # define	D_MEM		0x0040	/* Trace memory allocations */
 #  endif /* DEBUG_MEM */
 # define	D_FORK		0x0080	/* Fork server */
+		/* info service specific debugging (hesiod, nis, etc) */
+# define	D_INFO		0x0100
 
 /*
  * Normally, don't enter daemon mode, and don't register amq
@@ -880,18 +908,43 @@ extern am_ops autofs_ops;	/* Autofs FS */
 # define	D_TEST	(~(D_DAEMON|D_STR))
 #  endif /* not DEBUG_MEM */
 
-# define	amuDebug(x) if (!(debug_flags & (x))) ; else
-# define	dlog amuDebug(D_FULL) dplog
-# define	amuDebugNo(x) if (debug_flags & (x)) ; else
+# define	amuDebug(x)	if (debug_flags & (x))
+# define	dlog		amuDebug(D_FULL) dplog
+# define	amuDebugNo(x)	if (!(debug_flags & (x)))
 
 /* debugging mount-table file to use */
 # ifndef DEBUG_MNTTAB
 #  define	DEBUG_MNTTAB	"./mnttab"
 # endif /* not DEBUG_MNTTAB */
+
 # ifdef DEBUG_MEM
-#  define	free(x) xfree(__FILE__,__LINE__,x)
-# endif /* DEBUG_MEM */
-#endif /* DEBUG */
+/*
+ * If debugging memory, then call a special freeing function that logs
+ * more info, and resets the pointer to NULL so it cannot be used again.
+ */
+#  define	XFREE(x) dxfree(__FILE__,__LINE__,x)
+extern void dxfree(char *file, int line, voidp ptr);
+extern void malloc_verify(void);
+# else /* not DEBUG_MEM */
+/*
+ * If regular debugging, then free the pointer and reset to NULL.
+ * This should remain so for as long as am-utils is in alpha/beta testing.
+ */
+#  define	XFREE(x) do { free((voidp)x); x = NULL;} while (0)
+# endif /* not DEBUG_MEM */
+
+/* functions that depend solely on debugging */
+extern void print_nfs_args(const nfs_args_t *nap, u_long nfs_version);
+
+#else /* not DEBUG */
+
+/*
+ * if not debugging, then simple perform free, and don't bother
+ * resetting the pointer.
+ */
+#  define	XFREE(x) free(x)
+
+#endif /* not DEBUG */
 
 extern int debug_flags;		/* Debug options */
 extern int debug_option (char *);

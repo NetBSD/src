@@ -1,7 +1,7 @@
-/*	$NetBSD: clock.c,v 1.1.1.4 1997/10/26 00:02:37 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.1.5 1998/08/08 22:05:28 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -111,7 +111,7 @@ static void
 free_callout(callout *cp)
 {
   if (nfree_callouts > CALLOUT_FREE_SLOP) {
-    free((voidp) cp);
+    XFREE(cp);
   } else {
     cp->c_next = free_callouts;
     free_callouts = cp;

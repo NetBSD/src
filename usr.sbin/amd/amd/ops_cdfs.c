@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_cdfs.c,v 1.1.1.4 1997/10/26 00:02:51 christos Exp $	*/
+/*	$NetBSD: ops_cdfs.c,v 1.1.1.5 1998/08/08 22:05:31 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,35 +54,29 @@
 #include <am_defs.h>
 #include <amd.h>
 
+/* forward declarations */
 static char *cdfs_match(am_opts *fo);
 static int cdfs_fmount(mntfs *mf);
 static int cdfs_fumount(mntfs *mf);
-
-am_node *efs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
-fserver *find_afs_srvr(mntfs *mf);
-int auto_fmount(am_node *mp);
-int auto_fumount(am_node *mp);
-int efs_readdir(am_node *mp, nfscookie cookie, nfsdirlist *dp, nfsentry *ep, int count);
-
 
 /*
  * Ops structure
  */
 am_ops cdfs_ops =
 {
-  MNTTAB_TYPE_CDFS,
+  "cdfs",
   cdfs_match,
   0,				/* cdfs_init */
-  auto_fmount,
+  amfs_auto_fmount,
   cdfs_fmount,
-  auto_fumount,
+  amfs_auto_fumount,
   cdfs_fumount,
-  efs_lookuppn,
-  efs_readdir,
+  amfs_error_lookuppn,
+  amfs_error_readdir,
   0,				/* cdfs_readlink */
   0,				/* cdfs_mounted */
   0,				/* cdfs_umounted */
-  find_afs_srvr,
+  find_amfs_auto_srvr,
   FS_MKMNT | FS_UBACKGROUND | FS_AMQINFO
 };
 
@@ -114,7 +108,7 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
 {
   cdfs_args_t cdfs_args;
   mntent_t mnt;
-  int flags;
+  int genflags, cdfs_flags;
 
   /*
    * Figure out the name of the file system type.
@@ -122,6 +116,7 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
   MTYPE_TYPE type = MOUNT_TYPE_CDFS;
 
   memset((voidp) &cdfs_args, 0, sizeof(cdfs_args)); /* Paranoid */
+  cdfs_flags = 0;
 
   /*
    * Fill in the mount structure
@@ -132,9 +127,47 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
   mnt.mnt_type = MNTTAB_TYPE_CDFS;
   mnt.mnt_opts = opts;
 
-  flags = compute_mount_flags(&mnt);
+#if defined(MNT2_CDFS_OPT_DEFPERM) && defined(MNTTAB_OPT_DEFPERM)
+  if (hasmntopt(&mnt, MNTTAB_OPT_DEFPERM))
+# ifdef MNT2_CDFS_OPT_DEFPERM
+    cdfs_flags |= MNT2_CDFS_OPT_DEFPERM;
+# else /* not MNT2_CDFS_OPT_DEFPERM */
+    cdfs_flags &= ~MNT2_CDFS_OPT_NODEFPERM;
+# endif /* not MNT2_CDFS_OPT_DEFPERM */
+#endif /* defined(MNT2_CDFS_OPT_DEFPERM) && defined(MNTTAB_OPT_DEFPERM) */
 
+#if defined(MNT2_CDFS_OPT_NODEFPERM) && defined(MNTTAB_OPT_NODEFPERM)
+  if (hasmntopt(&mnt, MNTTAB_OPT_NODEFPERM))
+    cdfs_flags |= MNT2_CDFS_OPT_NODEFPERM;
+#endif /* MNTTAB_OPT_NODEFPERM */
+
+#if defined(MNT2_CDFS_OPT_NOVERSION) && defined(MNTTAB_OPT_NOVERSION)
+  if (hasmntopt(&mnt, MNTTAB_OPT_NOVERSION))
+    cdfs_flags |= MNT2_CDFS_OPT_NOVERSION;
+#endif /* defined(MNT2_CDFS_OPT_NOVERSION) && defined(MNTTAB_OPT_NOVERSION) */
+
+#if defined(MNT2_CDFS_OPT_RRIP) && defined(MNTTAB_OPT_RRIP)
+  if (hasmntopt(&mnt, MNTTAB_OPT_RRIP))
+    cdfs_flags |= MNT2_CDFS_OPT_RRIP;
+#endif /* defined(MNT2_CDFS_OPT_RRIP) && defined(MNTTAB_OPT_RRIP) */
+
+  genflags = compute_mount_flags(&mnt);
+
+#ifdef HAVE_FIELD_CDFS_ARGS_T_FLAGS
+  cdfs_args.flags = cdfs_flags;
+#endif /* HAVE_FIELD_CDFS_ARGS_T_FLAGS */
+
+#ifdef HAVE_FIELD_CDFS_ARGS_T_ISO_FLAGS
+  cdfs_args.iso_flags = genflags | cdfs_flags;
+#endif /* HAVE_FIELD_CDFS_ARGS_T_ISO_FLAGS */
+
+#ifdef HAVE_FIELD_CDFS_ARGS_T_ISO_PGTHRESH
+  cdfs_args.iso_pgthresh = hasmntval(&mnt, MNTTAB_OPT_PGTHRESH);
+#endif /* HAVE_FIELD_CDFS_ARGS_T_ISO_PGTHRESH */
+
+#ifdef HAVE_FIELD_CDFS_ARGS_T_FSPEC
   cdfs_args.fspec = fs_name;
+#endif /* HAVE_FIELD_CDFS_ARGS_T_FSPEC */
 
 #ifdef HAVE_FIELD_CDFS_ARGS_T_NORRIP
   /* XXX: need to provide norrip mount opt */
@@ -142,13 +175,14 @@ mount_cdfs(char *dir, char *fs_name, char *opts)
 #endif /* HAVE_FIELD_CDFS_ARGS_T_NORRIP */
 
 #ifdef HAVE_FIELD_CDFS_ARGS_T_SSECTOR
+  /* XXX: need to provide ssector mount option */
   cdfs_args.ssector = 0;	/* use 1st session on disk */
 #endif /* HAVE_FIELD_CDFS_ARGS_T_SSECTOR */
 
   /*
    * Call generic mount routine
    */
-  return mount_fs(&mnt, flags, (caddr_t) &cdfs_args, 0, type, 0, NULL, mnttab_file_name);
+  return mount_fs(&mnt, genflags, (caddr_t) &cdfs_args, 0, type, 0, NULL, mnttab_file_name);
 }
 
 

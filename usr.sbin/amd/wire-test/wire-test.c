@@ -1,7 +1,7 @@
-/*	$NetBSD: wire-test.c,v 1.1.1.2 1997/10/26 00:03:37 christos Exp $	*/
+/*	$NetBSD: wire-test.c,v 1.1.1.3 1998/08/08 22:05:39 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,7 +62,7 @@ main(int argc, char **argv)
 {
   char *networkName1, *networkNumber1;
   struct in_addr myipaddr;	/* (An) IP address of this host */
-  char *testhost, *proto, tmpbuf[1024];
+  char *testhost, *proto, *tmp_buf;
   int nv, ret;
   struct sockaddr_in *ip;
   struct hostent *hp = 0;
@@ -78,8 +78,11 @@ main(int argc, char **argv)
 
   /* get list of networks */
   getwire(&networkName1, &networkNumber1);
-  print_wires(tmpbuf);
-  fprintf(stderr, "%s", tmpbuf);
+  tmp_buf = print_wires();
+  if (tmp_buf) {
+    fprintf(stderr, "%s", tmp_buf);
+    XFREE(tmp_buf);
+  }
 
   /* also print my IP address */
   amu_get_myaddress(&myipaddr);
@@ -99,7 +102,7 @@ main(int argc, char **argv)
     fprintf(stderr, "NFS vers/proto failed: no such hostname \"%s\"\n", testhost);
     exit(1);
   }
-  ip = (struct sockaddr_in *) malloc(sizeof(struct sockaddr_in));
+  ip = (struct sockaddr_in *) xmalloc(sizeof(struct sockaddr_in));
   memset((voidp) ip, 0, sizeof(*ip));
   ip->sin_family = AF_INET;
   memmove((voidp) &ip->sin_addr, (voidp) hp->h_addr, sizeof(ip->sin_addr));

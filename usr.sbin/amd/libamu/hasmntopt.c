@@ -1,7 +1,7 @@
-/*	$NetBSD: hasmntopt.c,v 1.1.1.2 1997/10/26 00:02:15 christos Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.1.1.3 1998/08/08 22:05:23 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,7 +114,7 @@ hasmntopt(mntent_t *mnt, char *opt)
   strcpy(t, mnt->mnt_opts);
 
   while (*(f = nextmntopt(&o)))
-    if (strncmp(opt, f, l) == 0)
+    if (NSTREQ(opt, f, l))
       return f - t + mnt->mnt_opts;
 
   return 0;

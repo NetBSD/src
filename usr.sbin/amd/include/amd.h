@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.h,v 1.1.1.3 1997/10/26 00:02:30 christos Exp $	*/
+/*	$NetBSD: amd.h,v 1.1.1.4 1998/08/08 22:05:26 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,7 +62,8 @@
 #define CFM_RESTART_EXISTING_MOUNTS	0x0040
 #define CFM_SHOW_STATFS_ENTRIES		0x0080
 #define CFM_FULLY_QUALIFIED_HOSTS	0x0100
-
+#define CFM_BROWSABLE_DIRS_FULL		0x0200 /* allow '/' in readdir() */
+#define CFM_UNMOUNT_ON_EXIT		0x0400 /* when amd finishing */
 
 /* some systems (SunOS 4.x) neglect to define the mount null message */
 #ifndef MOUNTPROC_NULL
@@ -71,6 +72,11 @@
 
 /* Hash table size */
 #define NKVHASH (1 << 2)        /* Power of two */
+
+/* interval between forced retries of a mount */
+#define RETRY_INTERVAL	2
+
+#define ereturn(x) { *error_return = x; return 0; }
 
 
 /*
@@ -85,6 +91,7 @@ typedef struct kv kv;
 typedef void add_fn(mnt_map *, char *, char *);
 typedef int init_fn(mnt_map *, char *, time_t *);
 typedef int mtime_fn(mnt_map *, char *, time_t *);
+typedef int isup_fn(mnt_map *, char *);
 typedef int reload_fn(mnt_map *, char *, add_fn *);
 typedef int search_fn(mnt_map *, char *, char *, char **, time_t *);
 
@@ -103,17 +110,21 @@ struct amu_global_options {
   char *logfile;		/* amd log file */
   char *op_sys;			/* operating system name */
   char *op_sys_ver;		/* OS version */
+  char *pid_file;		/* PID file */
   char *sub_domain;		/* local domain */
   char *map_options;		/* global map options */
   char *map_type;		/* global map type */
   char *search_path;		/* search path for maps */
   char *mount_type;		/* mount type for map */
   u_int flags;			/* various CFM_* flags */
-  int afs_retrans;		/* NFS retransmit counter */
-  int afs_timeo;		/* NFS retry interval */
+  int amfs_auto_retrans;	/* NFS retransmit counter */
+  int amfs_auto_timeo;		/* NFS retry interval */
   int am_timeo;			/* cache duration */
   int am_timeo_w;		/* dismount interval */
   int portmap_program;		/* amd RPC program number */
+#ifdef HAVE_MAP_HESIOD
+  char *hesiod_base;		/* Hesiod rhs */
+#endif /* HAVE_MAP_HESIOD */
 #ifdef HAVE_MAP_LDAP
   char *ldap_base;		/* LDAP base */
   char *ldap_hostports;		/* LDAP host ports */
@@ -157,14 +168,44 @@ struct mnt_map {
   char *map_name;               /* Name of this map */
   char *wildcard;               /* Wildcard value */
   reload_fn *reload;            /* Function to be used for reloads */
+  isup_fn *isup;		/* Is service up or not? (1=up, 0=down) */
   search_fn *search;            /* Function to be used for searching */
   mtime_fn *mtime;              /* Modify time function */
   kv *kvhash[NKVHASH];          /* Cached data */
   /* options available via amd conf file */
   char *cf_map_type;            /* file, hesiod, ndbm, nis, etc. */
   char *cf_search_path;         /* /etc/local:/etc/amdmaps:/misc/yp */
-  u_int cf_flags;               /*  browsable_dirs? mount_type? */
   void *map_data;               /* Map data black box */
+};
+
+/*
+ * Mounting a file system may take a significant period of time.  The
+ * problem is that if this is done in the main process thread then
+ * the entire automounter could be blocked, possibly hanging lots of
+ * processes on the system.  Instead we use a continuation scheme to
+ * allow mounts to be attempted in a sub-process.  When the sub-process
+ * exits we pick up the exit status (by convention a UN*X error number)
+ * and continue in a notifier.  The notifier gets handed a data structure
+ * and can then determine whether the mount was successful or not.  If
+ * not, it updates the data structure and tries again until there are no
+ * more ways to try the mount, or some other permanent error occurs.
+ * In the mean time no RPC reply is sent, even after the mount is succesful.
+ * We rely on the RPC retry mechanism to resend the lookup request which
+ * can then be handled.
+ */
+struct continuation {
+  char **ivec;			/* Current mount info */
+  am_node *mp;			/* Node we are trying to mount */
+  char *key;			/* Map key */
+  char *info;			/* Info string */
+  char **xivec;			/* Saved strsplit vector */
+  char *auto_opts;		/* Automount options */
+  am_opts fs_opts;		/* Filesystem options */
+  char *def_opts;		/* Default automount options */
+  int retry;			/* Try again? */
+  int tried;			/* Have we tried any yet? */
+  time_t start;			/* Time we started this mount */
+  int callout;			/* Callout identifier */
 };
 
 
@@ -172,7 +213,7 @@ struct mnt_map {
  * EXTERNALS:
  */
 
-/* amd global functions */
+/* Amq server global functions */
 extern amq_mount_info_list *amqproc_getmntfs_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_stats *amqproc_stats_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_tree_list *amqproc_export_1_svc(voidp argp, struct svc_req *rqstp);
@@ -184,32 +225,34 @@ extern int *amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp);
 extern voidp amqproc_null_1_svc(voidp argp, struct svc_req *rqstp);
 extern voidp amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp);
 
+/* other external definitions */
 extern am_nfs_fh *root_fh(char *dir);
 extern am_node * autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
 extern am_node *find_ap(char *);
 extern am_node *find_ap2(char *, am_node *);
 extern bool_t xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead);
 extern fserver *find_nfs_srvr(mntfs *mf);
+extern int auto_fmount(am_node *mp);
+extern int auto_fumount(am_node *mp);
 extern int mount_nfs_fh(am_nfs_handle_t *fhp, char *dir, char *fs_name, char *opts, mntfs *mf);
 extern int process_last_regular_map(void);
 extern int set_conf_kv(const char *section, const char *k, const char *v);
+extern int try_mount(voidp mvp);
 extern int yyparse (void);
-extern nfsentry *make_entry_chain(am_node *mp, const nfsentry *current_chain);
-extern void afs_mkcacheref(mntfs *mf);
+extern nfsentry *make_entry_chain(am_node *mp, const nfsentry *current_chain, int fully_browsable);
+extern void amfs_auto_cont(int rc, int term, voidp closure);
+extern void amfs_auto_mkcacheref(mntfs *mf);
+extern void amfs_auto_retry(int rc, int term, voidp closure);
+extern void assign_error_mntfs(am_node *mp);
 extern void flush_srvr_nfs_cache(void);
+extern void free_continuation(struct continuation *cp);
 extern void mf_mounted(mntfs *mf);
 extern void quick_reply(am_node *mp, int error);
 extern void root_newmap(const char *, const char *, const char *, const cf_map_t *);
 
-
 /* amd global variables */
 extern FILE *yyin;
 extern SVCXPRT *nfs_program_2_transp;	/* For quick_reply() */
-extern am_ops cdfs_ops;
-extern am_ops lofs_ops;
-extern am_ops nfs_ops;
-extern am_ops pcfs_ops;
-extern am_ops ufs_ops;
 extern char *conf_tag;
 extern int NumChild;
 extern int fwd_sock;
@@ -224,10 +267,14 @@ extern struct amu_global_options gopt;	/* where global options are stored */
 extern sigset_t masked_sigs;
 #endif /* HAVE_SIGACTION */
 
-#if defined(HAVE_AM_FS_SFS) || defined(HAVE_AM_FS_SFSX)
-extern char * sfs_match(am_opts *fo);
-extern int sfs_fumount(mntfs *mf);
-#endif /* defined(HAVE_AM_FS_SFS) || defined(HAVE_AM_FS_SFSX) */
+#if defined(HAVE_AM_FS_LINK) || defined(HAVE_AM_FS_LINKX)
+extern char *amfs_link_match(am_opts *fo);
+extern int amfs_link_fumount(mntfs *mf);
+#endif /* defined(HAVE_AM_FS_LINK) || defined(HAVE_AM_FS_LINKX) */
+
+#ifdef HAVE_AM_FS_NFSL
+extern char *nfs_match(am_opts *fo);
+#endif /* HAVE_AM_FS_NFSL */
 
 #if defined(HAVE_FS_NFS3) && !defined(HAVE_XDR_MOUNTRES3)
 extern bool_t xdr_mountres3(XDR *xdrs, mountres3 *objp);
@@ -244,5 +291,15 @@ extern int svc_create_local_service(void (*dispatch) (), u_long prognum, u_long 
 extern void autofs_mounted(mntfs *mf);
 extern void autofs_program_1(struct svc_req *rqstp, SVCXPRT *transp);
 #endif /* HAVE_FS_AUTOFS */
+
+/* Unix file system (irix) */
+#ifdef HAVE_FS_XFS
+extern am_ops xfs_ops;		/* Un*x file system */
+#endif /* HAVE_FS_XFS */
+
+/* Unix file system (irix) */
+#ifdef HAVE_FS_EFS
+extern am_ops efs_ops;		/* Un*x file system */
+#endif /* HAVE_FS_EFS */
 
 #endif /* not _AMD_H */

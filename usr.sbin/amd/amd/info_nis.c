@@ -1,7 +1,9 @@
-/*	$NetBSD: info_nis.c,v 1.1.1.5 1997/10/26 00:02:41 christos Exp $	*/
+/*	$NetBSD: info_nis.c,v 1.1.1.6 1998/08/08 22:05:29 christos Exp $	*/
+
+/*	$NetBSD: info_nis.c,v 1.1.1.6 1998/08/08 22:05:29 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -63,6 +65,7 @@ static int has_yp_order = FALSE;
 int nis_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *));
 int nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp);
 int nis_init(mnt_map *m, char *map, time_t *tp);
+int nis_isup(mnt_map *m, char *map);
 int nis_mtime(mnt_map *m, char *map, time_t *tp);
 
 /* typedefs */
@@ -91,7 +94,6 @@ static int
 determine_nis_domain(void)
 {
   static int nis_not_running = 0;
-
   char default_domain[YPMAXDOMAIN];
 
   if (nis_not_running)
@@ -179,7 +181,7 @@ nis_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
   /*
    * If you are using NIS and your yp_all function is "broken", you have to
    * get it fixed.  The bug in yp_all() is that it does not close a TCP
-   * connection to ypserv, and this ypserv runs out of open filedescriptors,
+   * connection to ypserv, and this ypserv runs out of open file descriptors,
    * getting into an infinite loop, thus all YP clients eventually unbind
    * and hang too.
    */
@@ -187,8 +189,41 @@ nis_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
 
   if (error)
     plog(XLOG_ERROR, "error grabbing nis map of %s: %s", map, yperr_string(ypprot_err(error)));
-
   return error;
+}
+
+
+/*
+ * Check if NIS is up, so we can determine if to clear the map or not.
+ * Test it by checking the yp order.
+ * Returns: 0 if NIS is down, 1 if it is up.
+ */
+int
+nis_isup(mnt_map *m, char *map)
+{
+  YP_ORDER_OUTORDER_TYPE order;
+  int error;
+  static int last_status = 1;	/* assume up by default */
+
+  if (has_yp_order) {
+    error = yp_order(gopt.nis_domain, map, &order);
+    if (error != 0) {
+      plog(XLOG_ERROR,
+	   "nis_isup: error getting the order of map of %s: %s",
+	   map, yperr_string(ypprot_err(error)));
+      last_status = 0;
+      return 0;			/* NIS is down */
+    }
+  }
+  if (last_status == 0) {	/* if was down before */
+    time_t dummy;
+    plog(XLOG_INFO, "nis_isup: NIS came back up for map %s", map);
+    /* XXX: do we really need to reinitialize nis? */
+    error = nis_init(m, map, &dummy);
+    if (!error)
+      last_status = 1;
+  }
+  return 1;			/* NIS is up */
 }
 
 
@@ -306,7 +341,7 @@ nis_init(mnt_map *m, char *map, time_t *tp)
 int
 nis_mtime(mnt_map *m, char *map, time_t *tp)
 {
-  return nis_init(m,map, tp);
+  return nis_init(m, map, tp);
 }
 
 

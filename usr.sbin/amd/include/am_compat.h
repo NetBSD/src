@@ -1,4 +1,4 @@
-/*	$NetBSD: am_compat.h,v 1.1.1.3 1997/10/26 00:02:25 christos Exp $	*/
+/*	$NetBSD: am_compat.h,v 1.1.1.4 1998/08/08 22:05:25 christos Exp $	*/
 
 /*
  * am_compat.h:
@@ -57,6 +57,10 @@
 # endif /* MNTTAB_OPT_CONN */
 #endif /* defined(MNT2_NFS_OPT_NOCONN) && !defined(MNTTAB_OPT_NOCONN) */
 
+#if defined(MNT2_NFS_OPT_PGTHRESH) && !defined(MNTTAB_OPT_PGTHRESH)
+# define MNTTAB_OPT_PGTHRESH "pgthresh"
+#endif /* defined(MNT2_NFS_OPT_PGTHRESH) && !defined(MNTTAB_OPT_PGTHRESH) */
+
 #if defined(MNT2_NFS_OPT_RETRANS) && !defined(MNTTAB_OPT_RETRANS)
 # define MNTTAB_OPT_RETRANS "retrans"
 #endif /* defined(MNT2_NFS_OPT_RETRANS) && !defined(MNTTAB_OPT_RETRANS) */
@@ -67,6 +71,9 @@
 
 #if defined(MNT2_NFS_OPT_SOFT) && !defined(MNTTAB_OPT_SOFT)
 # define MNTTAB_OPT_SOFT "soft"
+# ifndef MNTTAB_OPT_HARD
+#  define MNTTAB_OPT_HARD "hard"
+# endif /* not MNTTAB_OPT_HARD */
 #endif /* defined(MNT2_NFS_OPT_SOFT) && !defined(MNTTAB_OPT_SOFT) */
 
 #if defined(MNT2_NFS_OPT_TIMEO) && !defined(MNTTAB_OPT_TIMEO)
@@ -77,6 +84,35 @@
 # define MNTTAB_OPT_WSIZE "wsize"
 #endif /* defined(MNT2_NFS_OPT_WSIZE) && !defined(MNTTAB_OPT_WSIZE) */
 
+#if defined(MNT2_NFS_OPT_MAXGRPS) && !defined(MNTTAB_OPT_MAXGROUPS)
+# define MNTTAB_OPT_MAXGROUPS "maxgroups"
+#endif /* defined(MNT2_NFS_OPT_MAXGRPS) && !defined(MNTTAB_OPT_MAXGROUPS) */
+
+/*
+ * Complete MNTTAB_OPT_* options based on MNT2_CDFS_OPT_* mount options.
+ */
+#if defined(MNT2_CDFS_OPT_DEFPERM) && !defined(MNTTAB_OPT_DEFPERM)
+# define MNTTAB_OPT_DEFPERM "defperm"
+#endif /* defined(MNT2_CDFS_OPT_DEFPERM) && !defined(MNTTAB_OPT_DEFPERM) */
+
+#if defined(MNT2_CDFS_OPT_NODEFPERM) && !defined(MNTTAB_OPT_NODEFPERM)
+# define MNTTAB_OPT_NODEFPERM "nodefperm"
+/*
+ * DEC OSF/1 V3.x/Digital UNIX V4.0 have M_NODEFPERM only, but
+ * both mnttab ops.
+ */
+# ifndef MNTTAB_OPT_DEFPERM
+#  define MNTTAB_OPT_DEFPERM "defperm"
+# endif /* not MNTTAB_OPT_DEFPERM */
+#endif /* defined(MNT2_CDFS_OPT_NODEFPERM) && !defined(MNTTAB_OPT_NODEFPERM) */
+
+#if defined(MNT2_CDFS_OPT_NOVERSION) && !defined(MNTTAB_OPT_NOVERSION)
+# define MNTTAB_OPT_NOVERSION "noversion"
+#endif /* defined(MNT2_CDFS_OPT_NOVERSION) && !defined(MNTTAB_OPT_NOVERSION) */
+
+#if defined(MNT2_CDFS_OPT_RRIP) && !defined(MNTTAB_OPT_RRIP)
+# define MNTTAB_OPT_RRIP "rrip"
+#endif /* defined(MNT2_CDFS_OPT_RRIP) && !defined(MNTTAB_OPT_RRIP) */
 
 /*
  * Complete MNTTAB_OPT_* options based on MNT2_GEN_OPT_* mount options.
@@ -85,6 +121,10 @@
 # define MNTTAB_OPT_GRPID "grpid"
 #endif /* defined(MNT2_GEN_OPT_GRPID) && !defined(MNTTAB_OPT_GRPID) */
 
+#if defined(MNT2_GEN_OPT_NOCACHE) && !defined(MNTTAB_OPT_NOCACHE)
+# define MNTTAB_OPT_NOCACHE "nocache"
+#endif /* defined(MNT2_GEN_OPT_NOCACHE) && !defined(MNTTAB_OPT_NOCACHE) */
+
 #if defined(MNT2_GEN_OPT_NOSUID) && !defined(MNTTAB_OPT_NOSUID)
 # define MNTTAB_OPT_NOSUID "nosuid"
 #endif /* defined(MNT2_GEN_OPT_NOSUID) && !defined(MNTTAB_OPT_NOSUID) */
@@ -92,7 +132,6 @@
 #if defined(MNT2_GEN_OPT_OVERLAY) && !defined(MNTTAB_OPT_OVERLAY)
 # define MNTTAB_OPT_OVERLAY "overlay"
 #endif /* defined(MNT2_GEN_OPT_OVERLAY) && !defined(MNTTAB_OPT_OVERLAY) */
-
 
 /*
  * Complete MNTTAB_OPT_* options and their inverse based on MNT2_GEN_OPT_*
@@ -113,6 +152,14 @@
 #  define MNTTAB_OPT_EXEC "exec"
 # endif /* not MNTTAB_OPT_EXEC */
 #endif /* defined(MNT2_GEN_OPT_NOEXEC) && !defined(MNTTAB_OPT_NOEXEC) */
+
+#if defined(MNT2_GEN_OPT_QUOTA) && !defined(MNTTAB_OPT_QUOTA)
+# define MNTTAB_OPT_QUOTA "quota"
+#endif /* defined(MNT2_GEN_OPT_QUOTA) && !defined(MNTTAB_OPT_QUOTA) */
+
+#if defined(MNT2_GEN_OPT_SYNC) && !defined(MNTTAB_OPT_SYNC)
+# define MNTTAB_OPT_SYNC "sync"
+#endif /* defined(MNT2_GEN_OPT_SYNC) && !defined(MNTTAB_OPT_SYNC) */
 
 
 /*
@@ -149,10 +196,6 @@
 #ifndef MNTTAB_OPT_RW
 # define MNTTAB_OPT_RW "rw"
 #endif /* not MNTTAB_OPT_RW */
-
-#ifndef MNTTAB_OPT_RO
-# define MNTTAB_OPT_RO "ro"
-#endif /* not MNTTAB_OPT_RO */
 
 #ifndef MNTTAB_OPT_TIMEO
 # define MNTTAB_OPT_TIMEO "timeo"
@@ -202,5 +245,18 @@ struct hsfs_args {
 #if defined(HAVE_FS_AUTOFS) && defined(MOUNT_TYPE_AUTOFS) && !defined(MNTTYPE_AUTOFS)
 # define MNTTYPE_AUTOFS "autofs"
 #endif /* defined(HAVE_FS_AUTOFS) && defined(MOUNT_TYPE_AUTOFS) && !defined(MNTTYPE_AUTOFS) */
+
+/*
+ * If NFS3, then make sure that "proto" and "vers" mnttab options
+ * are available.
+ */
+#ifdef HAVE_FS_NFS3
+# ifndef MNTTAB_OPT_VERS
+#  define MNTTAB_OPT_VERS "vers"
+# endif /* not MNTTAB_OPT_VERS */
+# ifndef MNTTAB_OPT_PROTO
+#  define MNTTAB_OPT_PROTO "proto"
+# endif /* not MNTTAB_OPT_PROTO */
+#endif /* not HAVE_FS_NFS3 */
 
 #endif /* not _AM_COMPAT_H */

@@ -1,7 +1,7 @@
-/*	$NetBSD: am_defs.h,v 1.1.1.4 1997/10/26 00:02:26 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.1.1.5 1998/08/08 22:05:25 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,10 +135,17 @@ char *strchr(), *strrchr(), *strdup();
 
 /*
  * Variable length argument lists.
- * Use one of the two.
+ * Must use only one of the two!
  */
 #ifdef HAVE_STDARG_H
 # include <stdarg.h>
+/*
+ * On Solaris 2.6, <sys/varargs.h> is included in <sys/fs/autofs.h>
+ * So this ensures that only one is included.
+ */
+# ifndef _SYS_VARARGS_H
+#  define _SYS_VARARGS_H
+# endif /* not _SYS_VARARGS_H */
 #else /* not HAVE_STDARG_H */
 # ifdef HAVE_VARARGS_H
 #  include <varargs.h>
@@ -245,9 +252,10 @@ typedef bool_t (*xdrproc_t) __P ((XDR *, __ptr_t, ...));
 /*
  * Actions to take if <rpc/xdr.h> exists.
  */
-#ifdef HAVE_RPC_XDR_H
+/* Prevent multiple inclusion on Ultrix 4 */
+#if defined(HAVE_RPC_XDR_H) && !defined(__XDR_HEADER__)
 # include <rpc/xdr.h>
-#endif /* HAVE_RPC_XDR_H */
+#endif /* defined(HAVE_RPC_XDR_H) && !defined(__XDR_HEADER__) */
 
 /*
  * Actions to take if <malloc.h> exists.
@@ -459,8 +467,38 @@ extern int errno;
  * Actions to take if <linux/fs.h> exists.
  */
 #ifdef HAVE_LINUX_FS_H
+/*
+ * There's a conflict of definitions on redhat alpha linux between
+ * <netinet/in.h> and <linux/fs.h>.
+ */
+# ifdef HAVE_SOCKETBITS_H
+/* conflicts with <socketbits.h> */
+#  define _LINUX_SOCKET_H
+#  undef BLKFLSBUF
+#  undef BLKGETSIZE
+#  undef BLKRAGET
+#  undef BLKRASET
+#  undef BLKROGET
+#  undef BLKROSET
+#  undef BLKRRPART
+#  undef MS_MGC_VAL
+#  undef MS_RMT_MASK
+/* conflicts with <waitflags.h> */
+#  undef WNOHANG
+#  undef WUNTRACED
+/* conflicts with <statfsbuf.h> */
+#  define _SYS_STATFS_H
+# endif /* HAVE_SOCKETBITS_H */
 # include <linux/fs.h>
 #endif /* HAVE_LINUX_FS_H */
+
+#ifdef HAVE_CDFS_CDFS_MOUNT_H
+# include <cdfs/cdfs_mount.h>
+#endif /* HAVE_CDFS_CDFS_MOUNT_H */
+
+#ifdef HAVE_CDFS_CDFSMOUNT_H
+# include <cdfs/cdfsmount.h>
+#endif /* HAVE_CDFS_CDFSMOUNT_H */
 
 /*
  * Actions to take if <linux/auto_fs.h> exists.
@@ -524,8 +562,12 @@ extern int errno;
 # include <nfs/mount.h>
 #endif /* HAVE_NFS_MOUNT_H */
 #ifdef HAVE_NFS_NFS_MOUNT_H_off
+/* broken on netxtep3 (includes non-existing headers) */
 # include <nfs/nfs_mount.h>
 #endif /* HAVE_NFS_NFS_MOUNT_H */
+#ifdef HAVE_NFS_NFSMOUNT_H
+# include <nfs/nfsmount.h>
+#endif /* HAVE_NFS_NFSMOUNT_H */
 #ifdef HAVE_NFS_PATHCONF_H
 # include <nfs/pathconf.h>
 #endif /* HAVE_NFS_PATHCONF_H */
@@ -653,6 +695,13 @@ extern int errno;
 #endif /* HAVE_SYS_FS_EFS_CLNT_H */
 
 /*
+ * Actions to take if <sys/fs/xfs_clnt.h> exists.
+ */
+#ifdef HAVE_SYS_FS_XFS_CLNT_H
+# include <sys/fs/xfs_clnt.h>
+#endif /* HAVE_SYS_FS_XFS_CLNT_H */
+
+/*
  * Actions to take if <assert.h> exists.
  */
 #ifdef HAVE_ASSERT_H
@@ -700,6 +749,13 @@ extern int errno;
 #ifdef HAVE_HSFS_HSFS_H
 # include <hsfs/hsfs.h>
 #endif /* HAVE_HSFS_HSFS_H */
+
+/*
+ * Actions to take if <cdfs/cdfsmount.h> exists.
+ */
+#ifdef HAVE_CDFS_CDFSMOUNT_H
+# include <cdfs/cdfsmount.h>
+#endif /* HAVE_CDFS_CDFSMOUNT_H */
 
 /*
  * Actions to take if <isofs/cd9660/cd9660_mount.h> exists.
@@ -808,7 +864,13 @@ extern int errno;
  * Actions to take if <sys/fs_types.h> exists.
  */
 #ifdef HAVE_SYS_FS_TYPES_H
+/*
+ * Define KERNEL here to avoid multiple definitions of gt_names[] on
+ * Ultrix 4.3.
+ */
+# define KERNEL
 # include <sys/fs_types.h>
+# undef KERNEL
 #endif /* HAVE_SYS_FS_TYPES_H */
 
 /*
@@ -984,7 +1046,46 @@ extern char *nc_sperror(void);
  * ncr2.
  */
 #ifndef STAT_MACROS_BROKEN_notused
+/*
+ * RedHat Linux 4.2 (alpha) has a problem in the headers that causes
+ * dupicate definitions, and also some other nasty bugs.  Upgrade to Redhat
+ * 5.0!
+ */
 # ifdef HAVE_SYS_STAT_H
+/* avoid duplicates or conflicts with <linux/stat.h> (RedHat alpha linux) */
+#  if defined(S_IFREG) && defined(HAVE_STATBUF_H)
+#   include <statbuf.h>
+#   undef S_IFBLK
+#   undef S_IFCHR
+#   undef S_IFDIR
+#   undef S_IFIFO
+#   undef S_IFLNK
+#   undef S_IFMT
+#   undef S_IFREG
+#   undef S_IFSOCK
+#   undef S_IRGRP
+#   undef S_IROTH
+#   undef S_IRUSR
+#   undef S_IRWXG
+#   undef S_IRWXO
+#   undef S_IRWXU
+#   undef S_ISBLK
+#   undef S_ISCHR
+#   undef S_ISDIR
+#   undef S_ISFIFO
+#   undef S_ISGID
+#   undef S_ISLNK
+#   undef S_ISREG
+#   undef S_ISSOCK
+#   undef S_ISUID
+#   undef S_ISVTX
+#   undef S_IWGRP
+#   undef S_IWOTH
+#   undef S_IWUSR
+#   undef S_IXGRP
+#   undef S_IXOTH
+#   undef S_IXUSR
+#  endif /* defined(S_IFREG) && defined(HAVE_STATBUF_H) */
 #  include <sys/stat.h>
 # endif /* HAVE_SYS_STAT_H */
 #endif /* not STAT_MACROS_BROKEN_notused */
@@ -1070,6 +1171,11 @@ typedef struct mntent mntent_t;
 #else /* not HAVE_STRUCT_MNTENT */
 # ifdef HAVE_STRUCT_MNTTAB
 typedef struct mnttab mntent_t;
+/* map struct mnttab field names to struct mntent field names */
+#  define mnt_fsname	mnt_special
+#  define mnt_dir	mnt_mountp
+#  define mnt_opts	mnt_mntopts
+#  define mnt_type	mnt_fstype
 # else /* not HAVE_STRUCT_MNTTAB */
 #  ifdef MOUNT_TABLE_ON_FILE
 #   error Could not find definition for struct mntent or struct mnttab!
@@ -1077,8 +1183,8 @@ typedef struct mnttab mntent_t;
 typedef struct _am_mntent {
   char	*mnt_fsname;		/* name of mounted file system */
   char	*mnt_dir;		/* file system path prefix */
-  char	*mnt_type;		/* MNTTYPE_* */
-  char	*mnt_opts;		/* MNTOPT* */
+  char	*mnt_type;		/* MNTTAB_TYPE_* */
+  char	*mnt_opts;		/* MNTTAB_OPT_* */
   int	mnt_freq;		/* dump frequency, in days */
   int	mnt_passno;		/* pass number on parallel fsck */
 } mntent_t;
@@ -1104,6 +1210,10 @@ extern int optind;
 extern char *clnt_sperrno(const enum clnt_stat num);
 #endif /* defined(HAVE_CLNT_SPERRNO) && !defined(HAVE_EXTERN_CLNT_SPERRNO) */
 
+#ifndef HAVE_EXTERN_FREE
+extern void free(voidp);
+#endif /* not HAVE_EXTERN_FREE */
+
 #if defined(HAVE_GET_MYADDRESS) && !defined(HAVE_EXTERN_GET_MYADDRESS)
 extern void get_myaddress(struct sockaddr_in *addr);
 #endif /* defined(HAVE_GET_MYADDRESS) && !defined(HAVE_EXTERN_GET_MYADDRESS) */
@@ -1126,25 +1236,49 @@ extern int gethostname(char *name, int namelen);
 extern int getpagesize(void);
 #endif /* defined(HAVE_GETPAGESIZE) && !defined(HAVE_EXTERN_GETPAGESIZE) */
 
+#ifndef HAVE_EXTERN_GETWD
+extern char *getwd(char *s);
+#endif /* not HAVE_EXTERN_GETWD */
+
 #ifndef HAVE_EXTERN_INNETGR
 extern int innetgr(char *, char *, char *, char *);
 #endif /* not HAVE_EXTERN_INNETGR */
+
+#if defined(HAVE_MKSTEMP) && !defined(HAVE_EXTERN_MKSTEMP)
+extern int mkstemp(char *);
+#endif /* defined(HAVE_MKSTEMP) && !defined(HAVE_EXTERN_MKSTEMP) */
 
 #ifndef HAVE_EXTERN_SBRK
 extern caddr_t sbrk(int incr);
 #endif /* not HAVE_EXTERN_SBRK */
 
-#if defined(HAVE_STRDUP) && !defined(HAVE_EXTERN_STRDUP)
+#ifndef HAVE_EXTERN_STRCASECMP
+/*
+ * define this extern even if function does not exist, for it will
+ * be filled in by libamu/strcasecmp.c
+ */
+extern int strcasecmp(const char *s1, const char *s2);
+#endif /* not HAVE_EXTERN_STRCASECMP */
+
+#ifndef HAVE_EXTERN_STRDUP
+/*
+ * define this extern even if function does not exist, for it will
+ * be filled in by libamu/strdup.c
+ */
 extern char *strdup(const char *s);
-#endif /* defined(HAVE_STRDUP) && !defined(HAVE_EXTERN_STRDUP) */
+#endif /* not HAVE_EXTERN_STRDUP */
+
+#if defined(HAVE_STRSTR) && !defined(HAVE_EXTERN_STRSTR)
+extern char *strstr(const char *s1, const char *s2);
+#endif /* defined(HAVE_STRSTR) && !defined(HAVE_EXTERN_STRSTR) */
 
 #if defined(HAVE_USLEEP) && !defined(HAVE_EXTERN_USLEEP)
 extern int usleep(u_int useconds);
 #endif /* defined(HAVE_USLEEP) && !defined(HAVE_EXTERN_USLEEP) */
 
-#if defined(HAVE_UALARM) && !defined(HAVE_EXTERN_UALARM)
+#ifndef HAVE_EXTERN_UALARM
 extern u_int ualarm(u_int usecs, u_int interval);
-#endif /* defined(HAVE_UALARM) && !defined(HAVE_EXTERN_UALARM) */
+#endif /* not HAVE_EXTERN_UALARM */
 
 #if defined(HAVE_WAIT3) && !defined(HAVE_EXTERN_WAIT3)
 extern int wait3(int *statusp, int options, struct rusage *rusage);
@@ -1178,21 +1312,9 @@ extern char *getlogin(void);
  * and those are probably declared in any of the above headers.
  */
 
-#ifndef HAVE_CLNT_SPERRNO
-extern char *clnt_sperrno(enum clnt_stat stat);
-#endif /* not HAVE_CLNT_SPERRNO */
-
 #ifndef HAVE_HASMNTOPT
 extern char *hasmntopt(mntent_t *mnt, char *opt);
 #endif /* not HAVE_HASMNTOPT */
-
-#ifndef HAVE_STRDUP
-extern char *strdup(const char *s);
-#endif /* not HAVE_STRDUP */
-
-#ifndef HAVE_UALARM
-extern u_int ualarm(u_int usecs, u_int interval);
-#endif /* not HAVE_UALARM */
 
 /*
  * include definitions of all possible xdr functions that are otherwise

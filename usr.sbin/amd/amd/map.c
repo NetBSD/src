@@ -1,7 +1,7 @@
-/*	$NetBSD: map.c,v 1.1.1.5 1997/10/26 00:02:44 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.1.1.6 1998/08/08 22:05:29 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,8 +104,9 @@ static nfsfattr gen_fattr =
 };
 
 /* forward declarations */
-void remove_am(am_node *mp);
-void exported_ap_free(am_node *mp);
+static int unmount_node(am_node *mp);
+static void exported_ap_free(am_node *mp);
+static void remove_am(am_node *mp);
 
 
 /*
@@ -174,7 +175,7 @@ exported_ap_alloc(void)
 /*
  * Free a mount slot
  */
-void
+static void
 exported_ap_free(am_node *mp)
 {
   /*
@@ -201,7 +202,7 @@ exported_ap_free(am_node *mp)
   /*
    * Free the mount node
    */
-  free((voidp) mp);
+  XFREE(mp);
 }
 
 
@@ -235,7 +236,7 @@ insert_am(am_node *mp, am_node *p_mp)
 /*
  * Remove am from its place in the mount tree
  */
-void
+static void
 remove_am(am_node *mp)
 {
   /*
@@ -340,15 +341,15 @@ free_map(am_node *mp)
   remove_am(mp);
 
   if (mp->am_link)
-    free(mp->am_link);
+    XFREE(mp->am_link);
   if (mp->am_name)
-    free(mp->am_name);
+    XFREE(mp->am_name);
   if (mp->am_path)
-    free(mp->am_path);
+    XFREE(mp->am_path);
   if (mp->am_pref)
-    free(mp->am_pref);
+    XFREE(mp->am_pref);
   if (mp->am_transp)
-    free(mp->am_transp);
+    XFREE(mp->am_transp);
 
   if (mp->am_mnt)
     free_mntfs(mp->am_mnt);
@@ -677,7 +678,7 @@ mount_auto_node(char *dir, voidp arg)
 {
   int error = 0;
 
-  (void) afs_ops.lookuppn((am_node *) arg, dir, &error, VLOOK_CREATE);
+  (void) amfs_auto_ops.lookuppn((am_node *) arg, dir, &error, VLOOK_CREATE);
   if (error > 0) {
     errno = error;		/* XXX */
     plog(XLOG_ERROR, "Could not mount %s: %m", dir);
@@ -718,7 +719,7 @@ make_root_node(void)
   /*
    * Allocate a new mounted filesystem
    */
-  root_mnt = find_mntfs(&root_ops, (am_opts *) 0, "", rootmap, "", "", "");
+  root_mnt = find_mntfs(&amfs_root_ops, (am_opts *) 0, "", rootmap, "", "", "");
 
   /*
    * Replace the initial null reference
@@ -755,11 +756,9 @@ umount_exported(void)
       mntfs *mf = mp->am_mnt;
       if (mf->mf_flags & MFF_UNMOUNTING) {
 	/*
-	 * If this node is being unmounted then
-	 * just ignore it.  However, this could
-	 * prevent amd from finishing if the
-	 * unmount gets blocked since the am_node
-	 * will never be free'd.  am_unmounted needs
+	 * If this node is being unmounted then just ignore it.  However,
+	 * this could prevent amd from finishing if the unmount gets blocked
+	 * since the am_node will never be free'd.  am_unmounted needs
 	 * telling about this possibility. - XXX
 	 */
 	continue;
@@ -777,24 +776,24 @@ umount_exported(void)
       if ((--immediate_abort < 0 &&
 	   !(mp->am_flags & AMF_ROOT) && mp->am_parent) ||
 	  (mf->mf_flags & MFF_RESTART)) {
-	/*
-	 * Just throw this node away without
-	 * bothering to unmount it.  If the
-	 * server is not known to be up then
-	 * don't discard the mounted on directory
-	 * or Amd might hang...
-	 */
 
+	/*
+	 * Just throw this node away without bothering to unmount it.  If
+	 * the server is not known to be up then don't discard the mounted
+	 * on directory or Amd might hang...
+	 */
 	if (mf->mf_server &&
 	    (mf->mf_server->fs_flags & (FSF_DOWN | FSF_VALID)) != FSF_VALID)
 	  mf->mf_flags &= ~MFF_MKMNT;
+	if (gopt.flags & CFM_UNMOUNT_ON_EXIT) {
+	  plog(XLOG_INFO, "on-exit attempt to unmount %s", mf->mf_mount);
+	  unmount_node(mp);
+	}
 	am_unmounted(mp);
 
       } else {
-
 	/*
-	 * Any other node gets forcibly
-	 * timed out
+	 * Any other node gets forcibly timed out.
 	 */
 	mp->am_flags &= ~AMF_NOTIMEOUT;
 	mp->am_mnt->mf_flags &= ~MFF_RSTKEEP;
@@ -866,7 +865,7 @@ unmount_node_wrap(voidp vp)
    * cache is done.  Yes - yuck.
    *
    * This can all be removed (and the background
-   * unmount flag in sfs_ops) if/when the kernel does
+   * unmount flag in amfs_link_ops) if/when the kernel does
    * something smarter.
    *
    * If the unlink or rmdir failed then just log a warning,

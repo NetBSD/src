@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.1.1.3 1997/10/26 00:02:38 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.4 1998/08/08 22:05:28 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,6 +85,7 @@ static int gopt_cluster(const char *val);
 static int gopt_debug_options(const char *val);
 static int gopt_dismount_interval(const char *val);
 static int gopt_fully_qualified_hosts(const char *val);
+static int gopt_hesiod_base(const char *val);
 static int gopt_karch(const char *val);
 static int gopt_ldap_base(const char *val);
 static int gopt_ldap_cache_maxmem(const char *val);
@@ -96,6 +97,7 @@ static int gopt_log_options(const char *val);
 static int gopt_map_options(const char *val);
 static int gopt_map_type(const char *val);
 static int gopt_mount_type(const char *val);
+static int gopt_pid_file(const char *val);
 static int gopt_portmap_program(const char *val);
 static int gopt_nfs_retransmit_counter(const char *val);
 static int gopt_nfs_retry_interval(const char *val);
@@ -110,6 +112,7 @@ static int gopt_restart_mounts(const char *val);
 static int gopt_search_path(const char *val);
 static int gopt_selectors_on_default(const char *val);
 static int gopt_show_statfs_entries(const char *val);
+static int gopt_unmount_on_exit(const char *val);
 static int process_global_option(const char *key, const char *val);
 static int process_regular_map(cf_map_t *cfm);
 static int process_regular_option(const char *section, const char *key, const char *val, cf_map_t *cfm);
@@ -136,6 +139,7 @@ static struct _func_map glob_functable[] = {
   {"debug_options",		gopt_debug_options},
   {"dismount_interval",		gopt_dismount_interval},
   {"fully_qualified_hosts",	gopt_fully_qualified_hosts},
+  {"hesiod_base",		gopt_hesiod_base},
   {"karch",			gopt_karch},
   {"ldap_base",			gopt_ldap_base},
   {"ldap_cache_maxmem",		gopt_ldap_cache_maxmem},
@@ -147,6 +151,7 @@ static struct _func_map glob_functable[] = {
   {"map_options",		gopt_map_options},
   {"map_type",			gopt_map_type},
   {"mount_type",		gopt_mount_type},
+  {"pid_file",			gopt_pid_file},
   {"portmap_program",		gopt_portmap_program},
   {"nfs_retransmit_counter",	gopt_nfs_retransmit_counter},
   {"nfs_retry_interval",	gopt_nfs_retry_interval},
@@ -161,6 +166,7 @@ static struct _func_map glob_functable[] = {
   {"search_path",		gopt_search_path},
   {"selectors_on_default",	gopt_selectors_on_default},
   {"show_statfs_entries",	gopt_show_statfs_entries},
+  {"unmount_on_exit",		gopt_unmount_on_exit},
   {NULL, NULL}
 };
 
@@ -175,17 +181,17 @@ reset_cf_map(cf_map_t *cfm)
     return;
 
   if (cfm->cfm_dir) {
-    free(cfm->cfm_dir);
+    XFREE(cfm->cfm_dir);
     cfm->cfm_dir = NULL;
   }
 
   if (cfm->cfm_name) {
-    free(cfm->cfm_name);
+    XFREE(cfm->cfm_name);
     cfm->cfm_name = NULL;
   }
 
   if (cfm->cfm_tag) {
-    free(cfm->cfm_tag);
+    XFREE(cfm->cfm_tag);
     cfm->cfm_tag = NULL;
   }
 
@@ -203,23 +209,24 @@ reset_cf_map(cf_map_t *cfm)
 
   /* initialize map_type from [global] */
   if (cfm->cfm_type && cfm->cfm_type != gopt.map_type)
-    free(cfm->cfm_type);
+    XFREE(cfm->cfm_type);
   cfm->cfm_type = gopt.map_type;
 
   /* initialize map_opts from [global] */
   if (cfm->cfm_opts && cfm->cfm_opts != gopt.map_options)
-    free(cfm->cfm_opts);
+    XFREE(cfm->cfm_opts);
   cfm->cfm_opts = gopt.map_options;
 
   /* initialize search_path from [global] */
   if (cfm->cfm_search_path && cfm->cfm_search_path != gopt.search_path)
-    free(cfm->cfm_search_path);
+    XFREE(cfm->cfm_search_path);
   cfm->cfm_search_path = gopt.search_path;
 
   /*
    * Initialize flags that are common both to [global] and a local map.
    */
   cfm->cfm_flags = gopt.flags & (CFM_BROWSABLE_DIRS |
+				 CFM_BROWSABLE_DIRS_FULL |
 				 CFM_MOUNT_TYPE_AUTOFS |
 				 CFM_ENABLE_DEFAULT_SELECTORS);
 }
@@ -326,7 +333,10 @@ gopt_auto_dir(const char *val)
 static int
 gopt_browsable_dirs(const char *val)
 {
-  if (STREQ(val, "yes")) {
+  if (STREQ(val, "full")) {
+    gopt.flags |= CFM_BROWSABLE_DIRS_FULL;
+    return 0;
+  } else if (STREQ(val, "yes")) {
     gopt.flags |= CFM_BROWSABLE_DIRS;
     return 0;
   } else if (STREQ(val, "no")) {
@@ -398,9 +408,30 @@ gopt_fully_qualified_hosts(const char *val)
 
 
 static int
+gopt_hesiod_base(const char *val)
+{
+#ifdef HAVE_MAP_HESIOD
+  gopt.hesiod_base = strdup((char *)val);
+  return 0;
+#else /* not HAVE_MAP_HESIOD */
+  fprintf(stderr, "conf: hesiod_base option ignored.  No Hesiod support available.\n");
+  return 1;
+#endif /* not HAVE_MAP_HESIOD */
+}
+
+
+static int
 gopt_karch(const char *val)
 {
   gopt.karch = strdup((char *)val);
+  return 0;
+}
+
+
+static int
+gopt_pid_file(const char *val)
+{
+  gopt.pid_file = strdup((char *)val);
   return 0;
 }
 
@@ -555,7 +586,7 @@ gopt_portmap_program(const char *val)
 static int
 gopt_nfs_retransmit_counter(const char *val)
 {
-  gopt.afs_retrans = atoi(val);
+  gopt.amfs_auto_retrans = atoi(val);
   return 0;
 }
 
@@ -563,7 +594,7 @@ gopt_nfs_retransmit_counter(const char *val)
 static int
 gopt_nfs_retry_interval(const char *val)
 {
-  gopt.afs_timeo = atoi(val);
+  gopt.amfs_auto_timeo = atoi(val);
   return 0;
 }
 
@@ -716,6 +747,22 @@ gopt_show_statfs_entries(const char *val)
 }
 
 
+static int
+gopt_unmount_on_exit(const char *val)
+{
+  if (STREQ(val, "yes")) {
+    gopt.flags |= CFM_UNMOUNT_ON_EXIT;
+    return 0;
+  } else if (STREQ(val, "no")) {
+    gopt.flags &= ~CFM_UNMOUNT_ON_EXIT;
+    return 0;
+  }
+
+  fprintf(stderr, "conf: unknown value to unmount_on_exit \"%s\"\n", val);
+  return 1;			/* unknown value */
+}
+
+
 /*
  * Collect one entry for a regular map
  */
@@ -766,7 +813,10 @@ process_regular_option(const char *section, const char *key, const char *val, cf
 static int
 ropt_browsable_dirs(const char *val, cf_map_t *cfm)
 {
-  if (STREQ(val, "yes")) {
+  if (STREQ(val, "full")) {
+    cfm->cfm_flags |= CFM_BROWSABLE_DIRS_FULL;
+    return 0;
+  } else if (STREQ(val, "yes")) {
     cfm->cfm_flags |= CFM_BROWSABLE_DIRS;
     return 0;
   } else if (STREQ(val, "no")) {

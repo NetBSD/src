@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.c,v 1.1.1.5 1997/10/26 00:02:33 christos Exp $	*/
+/*	$NetBSD: amd.c,v 1.1.1.6 1998/08/08 22:05:27 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -178,10 +178,27 @@ daemon_mode(void)
   signal(SIGQUIT, SIG_DFL);
 #endif /* not HAVE_SIGACTION */
 
+  /*
+   * Record our pid to make it easier to kill the correct amd.
+   */
   if (gopt.flags & CFM_PRINT_PID) {
-    printf("%ld\n", (long) mypid);
-    fflush(stdout);
-    (void) fclose(stdout);
+    if (STREQ(gopt.pid_file, "/dev/stdout")) {
+      printf("%ld\n", (long) mypid);
+      fflush(stdout);
+      /* do not fclose stdout */
+    } else {
+      FILE *f;
+      mode_t prev_umask = umask(0022); /* set secure temporary umask */
+
+      f = fopen(gopt.pid_file, "w");
+      if (f) {
+	fprintf(f, "%ld\n", (long) mypid);
+	(void) fclose(f);
+      } else {
+	fprintf(stderr, "cannot open %s (errno=%d)\n", gopt.pid_file, errno);
+      }
+      umask(prev_umask);	/* restore umask */
+    }
   }
 
   /*
@@ -238,14 +255,17 @@ init_global_options(void)
   /* OS version */
   gopt.op_sys_ver = HOST_OS_VERSION;
 
+  /* pid file */
+  gopt.pid_file = "/dev/stdout";
+
   /* local domain */
   gopt.sub_domain = NULL;
 
   /* NFS retransmit counter */
-  gopt.afs_retrans = -1;
+  gopt.amfs_auto_retrans = -1;
 
   /* NFS retry interval */
-  gopt.afs_timeo = -1;
+  gopt.amfs_auto_timeo = -1;
 
   /* cache duration */
   gopt.am_timeo = AM_TTL;
@@ -258,6 +278,11 @@ init_global_options(void)
    * by default, only the "plock" option is on (if available).
    */
   gopt.flags = CFM_PROCESS_LOCK;
+
+#ifdef HAVE_MAP_HESIOD
+  /* Hesiod rhs zone */
+  gopt.hesiod_base = "automount";
+#endif /* HAVE_MAP_HESIOD */
 
 #ifdef HAVE_MAP_LDAP
   /* LDAP base */
@@ -453,6 +478,10 @@ main(int argc, char *argv[])
   amu_get_myaddress(&myipaddr);
   plog(XLOG_INFO, "My ip addr is 0x%x", htonl(myipaddr.s_addr));
 
+  /* avoid hanging on other NFS servers if started elsewhere */
+  if (chdir("/") < 0)
+    plog(XLOG_INFO, "cannot chdir to /: %m");
+
   /*
    * Now check we are root.
    */
@@ -465,12 +494,13 @@ main(int argc, char *argv[])
    * Lock process text and data segment in memory.
    */
 #ifdef HAVE_PLOCK
-  if (gopt.flags & CFM_PROCESS_LOCK)
+  if (gopt.flags & CFM_PROCESS_LOCK) {
     if (plock(PROCLOCK) != 0) {
       plog(XLOG_WARNING, "Couldn't lock process text and data segment in memory: %m");
     } else {
       plog(XLOG_INFO, "Locked process text and data segment in memory");
     }
+  }
 #endif /* HAVE_PLOCK */
 
 #ifdef HAVE_MAP_NIS

@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_start.c,v 1.1.1.4 1997/10/26 00:02:48 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.1.1.5 1998/08/08 22:05:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -266,10 +266,11 @@ run_rpc(void)
     if (tvv.tv_sec <= 0)
       tvv.tv_sec = SELECT_MAXWAIT;
 #ifdef DEBUG
-    if (tvv.tv_sec)
+    if (tvv.tv_sec) {
       dlog("Select waits for %ds", tvv.tv_sec);
-    else
+    } else {
       dlog("Select waits for Godot");
+    }
 #endif /* DEBUG */
 
     nsel = do_select(smask, FD_SETSIZE, &readfds, &tvv);

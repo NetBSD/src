@@ -1,7 +1,7 @@
-/*	$NetBSD: hlfsd.c,v 1.1.1.4 1997/10/26 00:03:10 christos Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.1.1.5 1998/08/08 22:05:33 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -90,7 +90,7 @@ char *slinkname = 0;
 char hostname[MAXHOSTNAMELEN] = "localhost";
 int cache_interval = DEFAULT_CACHE_INTERVAL;
 int foreground = 1;		/* This is the top-level server */
-int hlfs_gid = INVALIDID;
+gid_t hlfs_gid = (gid_t) INVALIDID;
 int masterpid = 0;
 int noverify = 0;
 int orig_umask;
@@ -141,15 +141,15 @@ main(int argc, char *argv[])
   char preopts[128];
   int forcecache = 0;
   int forcefast = 0;
-  int mntflags = 0;
+  int genflags = 0;
   int opt, ret;
   int opterrs = 0;
   int retry;
   int soNFS;			/* NFS socket */
   int s = -99;
-
   mntent_t mnt;
-  nfs_args_t mountargs;
+  nfs_args_t nfs_args;
+  am_nfs_handle_t anh;
   struct dirent *direntry;
   struct group *grp;
   struct stat stmodes;
@@ -344,6 +344,8 @@ main(int argc, char *argv[])
     exit(3);
   }
 
+  clock_valid = 0;		/* invalidate logging clock */
+
   if (!forcefast) {
     /* make sure mount point exists and is at least mode 555 */
     if (stat(dir_name, &stmodes) < 0)
@@ -363,12 +365,9 @@ main(int argc, char *argv[])
       fatalerror(dir_name);
 
     while ((direntry = readdir(mountdir)) != NULL) {
-      if (strncmp(".", direntry->d_name,
-		  NAMLEN(direntry)) &&
-	  strncmp("..", direntry->d_name,
-		  NAMLEN(direntry)) &&
-	  strncmp(slinkname, direntry->d_name,
-		  NAMLEN(direntry)))
+      if (!NSTREQ(".", direntry->d_name, NAMLEN(direntry)) &&
+	  !NSTREQ("..", direntry->d_name, NAMLEN(direntry)) &&
+	  !NSTREQ(slinkname, direntry->d_name, NAMLEN(direntry)))
 	break;
     }
 
@@ -500,8 +499,6 @@ main(int argc, char *argv[])
     mnt.mnt_opts = preopts;
   }
 
-  memset((char *) &mountargs, 0, sizeof(mountargs)); /* paranoid */
-
   /*
    * Make sure that amd's top-level NFS mounts are hidden by default
    * from df.
@@ -510,41 +507,12 @@ main(int argc, char *argv[])
    */
   mnt.mnt_type = HIDE_MOUNT_TYPE;
   /* some systems don't have a mount type, but a mount flag */
-#ifdef MNT2_NFS_OPT_AUTO
-  mountargs.flags |= MNT2_NFS_OPT_AUTO;
-#endif /* MNT2_NFS_OPT_AUTO */
 
-#ifdef HAVE_TRANSPORT_TYPE_TLI
-  mountargs.addr = &nfsxprt->xp_ltaddr;
-
-  /*
-   * set up knconf field.
-   * the allocated mountargs.knconf is not freed via free_knetconfig().
-   */
-  if (get_knetconfig(&mountargs.knconf, nfsncp, NULL) < 0) {
-    plog(XLOG_ERROR, "cannot fill knetconfig structure for mountargs");
-  }
-
-  /*
-   * set up syncaddr field
-   */
-  mountargs.syncaddr = (struct netbuf *) NULL;
-#else /* not HAVE_TRANSPORT_TYPE_TLI */
+#ifndef HAVE_TRANSPORT_TYPE_TLI
   amu_get_myaddress(&localsocket.sin_addr);
   localsocket.sin_family = AF_INET;
   localsocket.sin_port = htons(nfsxprt->xp_port);
-
-  NFS_SA_DREF(mountargs, &localsocket);
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
-
-  /*
-   * Update filehandle field
-   */
-  NFS_FH_DREF(mountargs.NFS_FH_FIELD, root_fhp);
-
-#ifdef HAVE_FIELD_NFS_ARGS_T_FHSIZE
-  mountargs.fhsize = FHSIZE;
-#endif /* HAVE_FIELD_NFS_ARGS_T_FHSIZE */
 
   /*
    * Update hostname field.
@@ -556,115 +524,54 @@ main(int argc, char *argv[])
   if ((int) strlen(progpid_fs) >= (int) MAXHOSTNAMELEN)
     strcpy(progpid_fs + MAXHOSTNAMELEN - 3, "..");
 
-  NFS_HN_DREF(mountargs.hostname, progpid_fs);
-
-  /*
-   * General mount options
-   */
-#ifdef HAVE_TRANSPORT_TYPE_TLI
-  mountargs.flags |= MNT2_NFS_OPT_KNCONF;
-#endif /* HAVE_TRANSPORT_TYPE_TLI */
-
-#ifdef MNT2_NFS_OPT_FSNAME
-  mountargs.fsname = hostpid_fs;
-  mountargs.flags |= MNT2_NFS_OPT_FSNAME;
-#endif /* MNT2_NFS_OPT_FSNAME */
-
-#ifdef MNT2_NFS_OPT_HOSTNAME
-  mountargs.flags |= MNT2_NFS_OPT_HOSTNAME;
-#endif /* MNT2_NFS_OPT_HOSTNAME */
-
-  mountargs.timeo = hasmntval(&mnt, MNTTAB_OPT_TIMEO);
-#ifdef MNT2_NFS_OPT_TIMEO
-  if (mountargs.timeo)
-    mountargs.flags |= MNT2_NFS_OPT_TIMEO;
-#endif /* MNT2_NFS_OPT_TIMEO */
-
-  mountargs.retrans = hasmntval(&mnt, MNTTAB_OPT_RETRANS);
-#ifdef MNT2_NFS_OPT_RETRANS
-  if (mountargs.retrans)
-    mountargs.flags |= MNT2_NFS_OPT_RETRANS;
-#endif /* MNT2_NFS_OPT_RETRANS */
-
-  if (hasmntopt(&mnt, MNTTAB_OPT_SOFT) != NULL)
-    mountargs.flags |= MNT2_NFS_OPT_SOFT;
-
-#ifdef MNTTAB_OPT_INT
-  if (hasmntopt(&mnt, MNTTAB_OPT_INTR) != NULL)
-    mountargs.flags |= MNT2_NFS_OPT_INT;
-#endif /* MNTTAB_OPT_INT */
-
-#ifdef MNT2_NFS_OPT_BIODS
-  if (mountargs.biods = hasmntval(&mnt, MNTTAB_OPT_BIODS))
-    mountargs.flags |= MNT2_NFS_OPT_BIODS;
-#endif /* MNT2_NFS_OPT_BIODS */
-
-#ifdef MNT2_NFS_OPT_DUMBTIMR
-  mountargs.flags |= MNT2_NFS_OPT_DUMBTIMR;
-#endif /* MNT2_NFS_OPT_DUMBTIMR */
-
-#ifdef MNT2_NFS_OPT_NOAC
-  plog(XLOG_INFO, "turning on NFS option noac");
-  mountargs.flags |= MNT2_NFS_OPT_NOAC;
-#endif /* MNT2_NFS_OPT_NOAC */
-
-#ifdef MNT2_NFS_OPT_ACREGMIN
-  plog(XLOG_INFO, "turning on NFS option acregmin");
-  mountargs.flags |= MNT2_NFS_OPT_ACREGMIN;
-#endif /* MNT2_NFS_OPT_ACREGMIN */
-#ifdef MNT2_NFS_OPT_ACREGMAX
-  plog(XLOG_INFO, "turning on NFS option acregmax");
-  mountargs.flags |= MNT2_NFS_OPT_ACREGMAX;
-#endif /* MNT2_NFS_OPT_ACREGMAX */
-#ifdef HAVE_FIELD_NFS_ARGS_T_ACREGMIN
-  plog(XLOG_INFO, "setting NFS acregmin/max to %d", SYMTTL_ATTR_CACHE_VALUE);
-  mountargs.acregmin = SYMTTL_ATTR_CACHE_VALUE;
-  mountargs.acregmax = SYMTTL_ATTR_CACHE_VALUE;
-#endif /* HAVE_FIELD_NFS_ARGS_T_ACREGMIN */
-
-#ifdef MNT2_NFS_OPT_ACDIRMIN
-  plog(XLOG_INFO, "turning on NFS option acdirmin");
-  mountargs.flags |= MNT2_NFS_OPT_ACDIRMIN;
-#endif /* MNT2_NFS_OPT_ACDIRMIN */
-#ifdef MNT2_NFS_OPT_ACDIRMAX
-  plog(XLOG_INFO, "turning on NFS option acdirmax");
-  mountargs.flags |= MNT2_NFS_OPT_ACDIRMAX;
-#endif /* MNT2_NFS_OPT_ACDIRMAX */
-#ifdef HAVE_FIELD_NFS_ARGS_T_ACDIRMIN
-  plog(XLOG_INFO, "setting NFS acdirmin/max to %d", SYMTTL_ATTR_CACHE_VALUE);
-  mountargs.acdirmin = SYMTTL_ATTR_CACHE_VALUE;
-  mountargs.acdirmax = SYMTTL_ATTR_CACHE_VALUE;
-#endif /* HAVE_FIELD_NFS_ARGS_T_ACDIRMIN */
-
-#ifdef MNT2_NFS_OPT_SYMTTL
-  plog(XLOG_INFO, "turning on NFS option symttl and setting value to %d", SYMTTL_ATTR_CACHE_VALUE);
-  mountargs.flags |= MNT2_NFS_OPT_SYMTTL;
-  mountargs.symttl = SYMTTL_ATTR_CACHE_VALUE;
-#endif /* MNT2_NFS_OPT_SYMTTL */
-
-#if defined(MNT2_NFS_OPT_POSIX) && defined(MNTTAB_OPT_POSIX)
-  if (hasmntopt(&mnt, MNTTAB_OPT_POSIX) != NULL) {
-    mountargs.flags |= MNT2_NFS_OPT_POSIX;
-    mountargs.pathconf = NULL;
-  }
-#endif /* MNT2_NFS_OPT_POSIX && MNTTAB_OPT_POSIX */
-
-  mntflags = compute_mount_flags(&mnt);
-
-#if defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY)
-  /*
-   * Overlay this amd mount (presumably on another amd which died
-   * before and left the machine hung).  This will allow a new amd or
-   * hlfsd to be remounted on top of another one.
-   *      -Erez Zadok <ezk@cs.columbia.edu>
-   */
-  if (hasmntopt(&mnt, MNTTAB_OPT_OVERLAY) != NULL) {
-    mntflags |= MNT2_GEN_OPT_OVERLAY;
-    plog(XLOG_INFO, "using and overlay mount");
-  }
-#endif /* defined(MNT2_GEN_OPT_OVERLAY) && defined(MNTTAB_OPT_OVERLAY) */
+  genflags = compute_mount_flags(&mnt);
 
   retry = hasmntval(&mnt, MNTTAB_OPT_RETRY);
+  if (retry <= 0)
+    retry = 1;			/* XXX */
+
+  memmove(&anh.v2.fhs_fh, root_fhp, sizeof(*root_fhp));
+#ifdef HAVE_TRANSPORT_TYPE_TLI
+  compute_nfs_args(&nfs_args,
+		   &mnt,
+		   genflags,
+		   nfsncp,
+		   NULL,	/* remote host IP addr is set below */
+		   NFS_VERSION,	/* version 2 */
+		   "udp",	/* XXX: shouldn't this be "udp"? */
+		   &anh,
+		   progpid_fs,	/* host name for kernel */
+		   hostpid_fs); /* filesystem name for kernel */
+  /*
+   * IMPORTANT: set the correct IP address AFTERWARDS.  It cannot
+   * be done using the normal mechanism of compute_nfs_args(), because
+   * that one will allocate a new address and use NFS_SA_DREF() to copy
+   * parts to it, while assuming that the ip_addr passed is always
+   * a "struct sockaddr_in".  That assumption is incorrect on TLI systems,
+   * because they define a special macro HOST_SELF which is DIFFERENT
+   * than localhost (127.0.0.1)!
+   */
+  nfs_args.addr = &nfsxprt->xp_ltaddr;
+#else /* not HAVE_TRANSPORT_TYPE_TLI */
+  compute_nfs_args(&nfs_args,
+		   &mnt,
+		   genflags,
+		   &localsocket,
+		   NFS_VERSION, /* version 2 */
+		   "udp",	/* XXX: shouldn't this be "udp"? */
+		   &anh,
+		   progpid_fs,	/* host name for kernel */
+		   hostpid_fs); /* filesystem name for kernel */
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
+
+  /*************************************************************************
+   * NOTE: while compute_nfs_args() works ok for regular NFS mounts	   *
+   * the toplvl one is not, and so some options must be corrected by hand  *
+   * more carefully, *after* compute_nfs_args() runs.			   *
+   *************************************************************************/
+  compute_automounter_nfs_args(&nfs_args, &mnt);
+
+  clock_valid = 0;		/* invalidate logging clock */
 
 /*
  * The following code could be cleverly ifdef-ed, but I duplicated the
@@ -682,20 +589,39 @@ main(int argc, char *argv[])
  *      -Erez Zadok.
  */
   if (debug_flags & D_DAEMON) {	/* asked for -D daemon */
-    if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 0, NULL, mnttab_file_name) < 0)
+    plog(XLOG_INFO, "parent NFS mounting hlfsd service points");
+    if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0)
       fatal("nfsmount: %m");
   } else {			/* asked for -D nodaemon */
     if (fork() == 0) {		/* child runs mount */
-      if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 0, NULL, mnttab_file_name) < 0) {
+      mypid = getpid();
+      foreground = 0;
+      plog(XLOG_INFO, "child NFS mounting hlfsd service points");
+      if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 0, NULL, mnttab_file_name) < 0) {
 	fatal("nfsmount: %m");
       }
       exit(0);			/* all went well */
+    } else { /* fork failed or parent running */
+      plog(XLOG_INFO, "parent waiting 1sec for mount...");
     }
   }
 #else /* not DEBUG */
-  if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 2, "udp", mnttab_file_name) < 0)
+  plog(XLOG_INFO, "normal NFS mounting hlfsd service points");
+  if (mount_fs(&mnt, genflags, (caddr_t) &nfs_args, retry, type, 2, "udp", mnttab_file_name) < 0)
     fatal("nfsmount: %m");
 #endif /* not DEBUG */
+
+#ifdef HAVE_TRANSPORT_TYPE_TLI
+  /*
+   * XXX: this free_knetconfig() was not done for hlfsd before,
+   * and apparently there was a reason for it, but why? -Erez
+   */
+  free_knetconfig(nfs_args.knconf);
+  /*
+   * local automounter mounts do not allocate a special address, so
+   * no need to XFREE(nfs_args.addr) under TLI.
+   */
+#endif /* HAVE_TRANSPORT_TYPE_TLI */
 
   if (printpid)
     printf("%d\n", masterpid);
@@ -724,6 +650,8 @@ hlfsd_init(void)
   struct sigaction sa;
 #endif /* HAVE_SIGACTION */
 
+  clock_valid = 0;		/* invalidate logging clock */
+
   /*
    * Initialize file handles.
    */
@@ -743,7 +671,7 @@ hlfsd_init(void)
 
   if (child != 0) {		/* parent process - save child pid */
     masterpid = child;
-    mypid = getpid();		/* for AMD routines */
+    mypid = getpid();		/* for logging routines */
     return;
   }
 
@@ -751,11 +679,12 @@ hlfsd_init(void)
    * CHILD CODE:
    * initialize server
    */
+
   plog(XLOG_INFO, "initializing home directory database");
-  init_homedir();
+  plt_init();			/* initialize database */
   plog(XLOG_INFO, "home directory database initialized");
 
-  masterpid = serverpid = mypid = getpid();
+  masterpid = serverpid = mypid = getpid(); /* for logging routines */
 
   /*
    * SIGALRM/SIGHUP: reload password database if timer expired
@@ -869,6 +798,8 @@ reload(int signum)
   int child;
   int status;
 
+  clock_valid = 0;		/* invalidate logging clock */
+
   if (getpid() != masterpid)
     return;
 
@@ -879,33 +810,38 @@ reload(int signum)
   if (signum == SIGHUP && logfile)
     switch_to_logfile(logfile);
 
+  /*
+   * parent performs the reload, while the child continues to serve
+   * clients accessing the home dir link.
+   */
   if ((child = fork()) > 0) {
-    serverpid = child;
+    serverpid = child;		/* parent runs here */
+    mypid = getpid();
 
-    init_homedir();
+    plt_init();
 
     if (kill(child, SIGKILL) < 0) {
       plog(XLOG_ERROR, "kill child: %m");
     } else {			/* wait for child to die before continue */
       if (wait(&status) != child) {
 	/*
-	 * I took out this line because it generates
-	 * annoying output.  It indicates a very
-	 * small bug in hlfsd which is totally
-	 * harmless.  It causes hlfsd to work a bit
-	 * harder than it should.  Nevertheless, I
-	 * intend on fixing it in a future release.
-	 * Erez Zadok <ezk@cs.columbia.edu>
+	 * I took out this line because it generates annoying output.  It
+	 * indicates a very small bug in hlfsd which is totally harmless.
+	 * It causes hlfsd to work a bit harder than it should.
+	 * Nevertheless, I intend on fixing it in a future release.
+	 * -Erez Zadok <ezk@cs.columbia.edu>
 	 */
 	/* plog(XLOG_ERROR, "unknown child"); */
       }
     }
-
     serverpid = masterpid;
   } else if (child < 0) {
     plog(XLOG_ERROR, "unable to fork: %m");
-  } else			/* let child handle requests while we reload */
+  } else {
+    /* let child handle requests while we reload */
     serverpid = getpid();
+    mypid = getpid();
+  }
 }
 
 
@@ -914,6 +850,8 @@ cleanup(int signum)
 {
   struct stat stbuf;
   int umount_result;
+
+  clock_valid = 0;		/* invalidate logging clock */
 
 #ifdef DEBUG
   amuDebug(D_DAEMON)
@@ -926,6 +864,7 @@ cleanup(int signum)
 #endif /* DEBUG */
     if (fork() != 0) {
     masterpid = 0;
+    mypid = getpid();
     return;
   }
   mypid = getpid();

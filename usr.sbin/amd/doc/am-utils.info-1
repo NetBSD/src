@@ -1,4 +1,4 @@
-$NetBSD: am-utils.info-1,v 1.1.1.3 1997/10/26 00:03:40 christos Exp $
+$NetBSD: am-utils.info-1,v 1.1.1.4 1998/08/08 22:05:40 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
@@ -9,12 +9,12 @@ END-INFO-DIR-ENTRY
 
 File: am-utils.info,  Node: Top,  Next: License,  Up: (DIR)
 
-   Am-utils - The 4.4 BSD Automounter Tool Suite
+   Am-utils - The 4.4BSD Automounter Tool Suite
 *********************************************
 
-   Am-utils is the 4.4 BSD Automounter Tool Suite, which includes the
-Amd automounter, the Amq query and control program, the Hlfsd daemon,
-and other tools.  This Info file describes how to use and understand the
+   Am-utils is the 4.4BSD Automounter Tool Suite, which includes the Amd
+automounter, the Amq query and control program, the Hlfsd daemon, and
+other tools.  This Info file describes how to use and understand the
 tools within Am-utils.
 
 * Menu:
@@ -92,29 +92,39 @@ File: am-utils.info,  Node: Distrib,  Next: Intro,  Prev: License,  Up: Top
 Source Distribution
 *******************
 
+   The Am-utils home page is located in
+     `http://www.cs.columbia.edu/~ezk/am-utils/'
+
    You can get the latest distribution version of Am-utils from
-     `ftp://ftp.cs.columbia.edu/pub/am-utils/am-utils.tar.gz'
+     `ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/am-utils.tar.gz'
 
    Alpha and beta distributions are available in
-     `ftp://shekel.mcl.cs.columbia.edu/private/am-utils/'.
+     `ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/'.
 
-   Revision 5.2 was part of the 4.3 BSD Reno distribution.
+   Revision 5.2 was part of the 4.3BSD Reno distribution.
 
    Revision 5.3bsdnet, a late alpha version of 5.3, was part of the BSD
 network version 2 distribution
 
-   Revision 6.0 was made independently by Erez Zadok at Columbia
-University, as part of his PhD thesis work. *Note History:: for more
-details.
+   Revision 6.0 was made independently by Erez Zadok
+<ezk@cs.columbia.edu> at the Computer Science Department (http://www.cs.columbia.edu/) of Columbia University (http://www.columbia.edu/),
+as part of his
+PhD thesis work (http://www.cs.columbia.edu/~ezk/research/tp/thesis_proposal.html). *Note History:: for more details.
 
 Bug Reports
 ===========
 
-   Send all bug reports to `amd-dev@majordomo.cs.columbia.edu' quoting
-the details of the release and your configuration.  These can be
-obtained by running the command `amd -v'.  It would greatly help if you
-could provide a reproducible procedure for detecting the bug you are
+   Before reporting a bug, see if it is a known one in the
+bugs (http://www.cs.columbia.edu/~ezk/am-utils/BUGS.txt) file.  Send
+all bug reports to <amd-dev@majordomo.cs.columbia.edu> quoting the
+details of the release and your configuration.  These can be obtained
+by running the command `amd -v'.  It would greatly help if you could
+provide a reproducible procedure for detecting the bug you are
 reporting.
+
+   Providing working patches is highly encouraged.  Every patch
+incorporated, however small, will get its author an honorable mention in
+the authors file (http://www.cs.columbia.edu/~ezk/am-utils/AUTHORS.txt).
 
 Mailing List
 ============
@@ -124,11 +134,11 @@ up-to-date with developments.
 
   1. The older list, `amd-workers' is for general "how to" questions and
      announcements.  To subscribe, send a note to
-     `amd-workers-request@majordomo.glue.umd.edu'.(1)  To post a
+     <amd-workers-request@majordomo.glue.umd.edu>.(1)  To post a
      message to this list, send mail to
-     `amd-workers@majordomo.glue.umd.edu'.
+     <amd-workers@majordomo.glue.umd.edu>.
 
-  2. The developers only  list, `amd-dev' is for
+  2. The developers only list, `amd-dev' is for
 
         - announcements of alpha and beta releases of am-utils
 
@@ -138,9 +148,10 @@ up-to-date with developments.
 
         - implementation and porting issues
 
-     To subscribe, send a note to `amd-dev@majordomo.cs.columbia.edu'.
-     To post a message to this list, send mail to
-     `amd-dev@majordomo.cs.columbia.edu'.  To avoid as much spam as
+     To subscribe, send a note to <majordomo@majordomo.cs.columbia.edu>
+     with the single body text line `subscribe amd-dev'.  To post a
+     message to this list, send mail to
+     <amd-dev@majordomo.cs.columbia.edu>.  To avoid as much spam as
      possible, only subscribers to this list may post to it.
 
      Subscribers of `amd-dev' are most suitable if they have the time
@@ -154,7 +165,7 @@ up-to-date with developments.
 
    ---------- Footnotes ----------
 
-   (1) Note that the older address, `amd-workers-request@acl.lanl.gov',
+   (1) Note that the older address, <amd-workers-request@acl.lanl.gov>,
 is defunct.
 
 
@@ -193,7 +204,7 @@ History
    The Amd package has been without an official maintainer since 1992.
 Several people have stepped in to maintain it unofficially.  Most
 notable were the `upl' (Unofficial Patch Level) releases of Amd,
-created by me (Erez Zadok), and available from
+created by me (Erez Zadok <ezk@cs.columbia.edu>), and available from
 `ftp://ftp.cs.columbia.edu/pub/amd/'.  The last such unofficial release
 was `upl102'.
 
@@ -209,7 +220,7 @@ January of 1996.  The new suite of tools is currently named "am-utils"
 (AutoMounter Utilities), in line with GNU naming conventions, befitting
 the contents of the package.  In October of 1996 I had received enough
 offers to help me with this task that I decided to make a mailing list
-for these group of people.  Around the same time, Amd had become a
+for this group of people.  Around the same time, Amd had become a
 necessary part of my PhD thesis work, resulting in more work performed
 on am-utils.
 
@@ -427,7 +438,7 @@ mapping is removed.  When the last reference to a filesystem is removed,
 that filesystem is unmounted.  If the unmount fails, for example the
 filesystem is still busy, the mapping is re-instated and its
 time-to-live interval is extended.  The global default for this grace
-period is controlled by the "-w" command-line option (*note -w: -w
+period is controlled by the `-w' command-line option (*note -w: -w
 Option.) or the amd.conf parameter `dismount_interval' (*note
 dismount_interval Parameter::.).  It is also possible to set this value
 on a per-mount basis (*note opts: opts Option.).
@@ -513,9 +524,9 @@ Supported Platforms
    Am-utils has been ported to a wide variety of machines and operating
 systems.  Am-utils's code works for little-endian and big-endian
 machines, as well as 32 bit and 64 bit architectures.  Furthermore, when
-am-utils to an Operating System on one architecture, it is generally
-readily portable to the same Operating System on all platforms on which
-it is available.
+Am-utils ports to an Operating System on one architecture, it is
+generally readily portable to the same Operating System on all
+platforms on which it is available.
 
    The table below lists those platforms supported by the latest
 release.  The listing is based on the standard output from GNU's
@@ -524,7 +535,10 @@ am-utils, not all systems listed here have been verified working for all
 features.
 
 Auto-Configured System Name  Config  Compile  Amd  NFS3  Shlib  Hlfsd  
+alpha-dec-osf2.1             yes     yes      yes                      
 alpha-dec-osf4.0             yes     yes      yes  yes                 
+alphaev5-unknown-linux-gnu   yes     yes      yes  n/a   yes           
+hppa1.0-hp-hpux11.00         yes     yes      yes  no                  
 hppa1.1-hp-hpux10.10         yes     yes      yes  n/a   no            
 hppa1.1-hp-hpux10.20         yes     yes      yes  n/a   no            
 hppa1.1-hp-hpux9.01          yes     yes      yes  n/a                 
@@ -532,26 +546,34 @@ hppa1.1-hp-hpux9.05          yes     yes      yes  n/a
 hppa1.1-hp-hpux9.07          yes     yes      yes  n/a                 
 i386-pc-bsdi2.1              yes     yes      yes  n/a                 
 i386-pc-bsdi3.0              yes     yes      yes  n/a                 
+i386-pc-bsdi3.1              yes     yes      yes  n/a                 
 i386-pc-solaris2.5.1         yes     yes      yes  yes   yes    yes    
+i386-pc-solaris2.6           yes     yes      yes  yes   yes    yes    
 i386-unknown-freebsd2.1.0    yes     yes      yes  n/a                 
 i386-unknown-freebsd2.2.1    yes     yes      yes  n/a   yes           
-i386-unknown-freebsd3.0      yes     yes      yes  yes   no            
+i386-unknown-freebsd3.0      yes     yes      yes  yes   yes           
 i386-unknown-netbsd1.2.1     yes     yes      yes  yes   yes           
+i386-unknown-netbsd1.3       yes     yes      yes  yes   yes           
+i386-unknown-netbsd1.3.1     yes     yes      yes  yes   yes           
 i386-unknown-openbsd2.1      yes     yes      yes  yes   yes           
 i486-ncr-sysv4.3.03          yes     yes           yes                 
-i486-pc-linux-gnu            yes     yes      yes  n/a   yes           
-i586-pc-linux-gnu            yes     yes      yes  n/a   yes           
+i486-pc-linux-gnulibc1       yes     yes      yes  n/a   yes           
+i586-pc-linux-gnulinc1       yes     yes      yes  n/a   yes           
 i686-pc-linux-gnu            yes     yes      yes  n/a   yes           
 m68k-hp-hpux9.00             yes     yes      yes  n/a                 
+m68k-sun-sunos4.1.1          yes     yes      yes  n/a                 
+m68k-next-nextstep3          yes     yes      yes  n/a                 
+mips-dec-ultrix4.3           yes     yes      yes  n/a                 
 mips-sgi-irix5.2                                                       
 mips-sgi-irix5.3             yes     yes      yes  yes                 
 mips-sgi-irix6.2             yes     yes      yes  yes                 
 mips-sgi-irix6.4             yes     yes      yes  yes   yes           
-powerpc-ibm-aix4.2.1.0       yes     yes      yes                      
+powerpc-ibm-aix4.1.5.0       yes     yes      yes  n/a                 
+powerpc-ibm-aix4.2.1.0       yes     yes      yes  yes                 
 rs6000-ibm-aix3.2            yes     yes      yes  n/a                 
 rs6000-ibm-aix3.2.5          yes     yes      yes  n/a                 
-rs6000-ibm-aix4.1.4.0        yes     yes      yes                      
-rs6000-ibm-aix4.1.5.0        yes     yes      yes                      
+rs6000-ibm-aix4.1.4.0        yes     yes      yes  n/a                 
+rs6000-ibm-aix4.1.5.0        yes     yes      yes  n/a                 
 sparc-sun-solaris2.3         yes     yes      yes  n/a                 
 sparc-sun-solaris2.4         yes     yes      yes  n/a   yes           
 sparc-sun-solaris2.5         yes     yes      yes  yes   yes           
@@ -559,9 +581,10 @@ sparc-sun-solaris2.5.1       yes     yes      yes  yes   yes    yes
 sparc-sun-solaris2.6         yes     yes      yes  yes   yes    yes    
 sparc-sun-sunos4.1.1         yes     yes      yes  n/a   yes           
 sparc-sun-sunos4.1.3         yes     yes      yes  n/a   yes           
+sparc-sun-sunos4.1.3C        yes     yes      yes  n/a   yes           
 sparc-sun-sunos4.1.3_U1      yes     yes      yes  n/a   yes           
 sparc-sun-sunos4.1.4         yes     yes      yes  n/a   yes           
-sparc-unknown-linux-gnu      yes     yes      yes  n/a   yes           
+sparc-unknown-linux-gnulibc1 yes     yes      yes  n/a   yes           
 sparc-unknown-netbsd1.2E     yes     yes      yes                      
 
    See the `INSTALL' in the distribution for more specific details on
@@ -761,7 +784,8 @@ Hesiod maps
    When the map name begins with the string `hesiod.' lookups are made
 using the "Hesiod" name server.  The string following the dot is used
 as a name qualifier and is prepended with the key being located.  The
-entire string is then resolved in the `automount' context.  For
+entire string is then resolved in the `automount' context, or the
+amd.conf parameter `hesiod_base' (*note hesiod_base Parameter::.).  For
 example, if the the key is `jsp' and map name is `hesiod.homes' then
 "Hesiod" is asked to resolve `jsp.homes.automount'.
 
@@ -788,7 +812,7 @@ usable map entry.
    Amd assumes the home directory has the format
 `/anydir/dom1/../domN/login'.  It breaks this string into a map entry
 where `${rfs}' has the value `/anydir/domN', `${rhost}' has the value
-`domN.....dom1', and `${sublink}' has the value `login'.
+`domN.....dom1', and `${sublink}' has the value login.
 
    Thus if the password file entry was
 
@@ -941,7 +965,7 @@ shown below.
 
    Note that unquoted whitespace is not allowed in a location
 description.  White space is only allowed, and is mandatory, where
-shown with non-terminal `white-space'.
+shown with non-terminal white-space.
 
    A "location-selection" is a list of possible volumes with which to
 satisfy the request.  "location-selection"s are separated by the `||'
@@ -1055,6 +1079,10 @@ location, architecture and operating system differences are hidden from
 the users.  A selector of the form `arch==sun3;os==sunos4' would only
 apply on Sun-3s running SunOS 4.x.
 
+   Selectors can be negated by using `!=' instead of `=='.  For example
+to select a location on all non-Vax machines the selector `arch!=vax'
+would be used.
+
    Selectors are evaluated left to right.  If a selector fails then that
 location is ignored.  Thus the selectors form a conjunction and the
 locations form a disjunction.  If all the locations are ignored or
@@ -1066,151 +1094,119 @@ at the end of each mount-map entry.
 overridden by an Amd command line switch or in an Amd configuration
 file.  *Note Amd Configuration File::.
 
-   The selectors currently implemented are:
-
-`arch'
-     the machine architecture which was automatically determined at
-     compile time.  The architecture type can be displayed by running
-     the command `amd -v'.  *Note Supported Platforms::.
-
-`autodir'
-     the default directory under which to mount filesystems.  This may
-     be changed by the "-a" command line option.  See the FS option.
-
-`byte'
-     the machine's byte ordering.  This is either `little', indicating
-     little-endian, or `big', indicating big-endian.  One possible use
-     is to share `rwho' databases (*note rwho servers::.).  Another is
-     to share ndbm databases, however this use can be considered a
-     courageous juggling act.
-
-`cluster'
-     is provided as a hook for the name of the local cluster.  This can
-     be used to decide which servers to use for copies of replicated
-     filesystems.  `${cluster}' defaults to the value of `${domain}'
-     unless a different value is set with the "-C" command line option.
-
-`domain'
-     the local domain name as specified by the "-d" command line option.
-     See `host'.
-
-`host'
-     the local hostname as determined by gethostname(2).  If no domain
-     name was specified on the command line and the hostname contains a
-     period `.' then the string before the period is used as the host
-     name, and the string after the period is assigned to `${domain}'.
-     For example, if the hostname is `styx.doc.ic.ac.uk' then `host'
-     would be `styx' and `domain' would be `doc.ic.ac.uk'.  `hostd'
-     would be `styx.doc.ic.ac.uk'.
-
-`hostd'
-     is `${host}' and `${domain}' concatenated with a `.' inserted
-     between them if required.  If `${domain}' is an empty string then
-     `${host}' and `${hostd}' will be identical.
-
-`karch'
-     is provided as a hook for the kernel architecture.  This is used on
-     SunOS 4 and SunOS 5, for example, to distinguish between different
-     `/usr/kvm' volumes.  `${karch}' defaults to the "machine" value
-     gotten from uname(2).  If the uname(2) system call is not
-     available, the value of `${karch}' defaults to that of `${arch}'.
-     Finally, a different value can be set with the "-k" command line
-     option.
-
-`os'
-     the operating system.  Like the machine architecture, this is
-     automatically determined at compile time.  The operating system
-     name can be displayed by running the command `amd -v'.  *Note
-     Supported Platforms::.
-
-`osver'
-     the operating system version.  Like the machine architecture, this
-     is automatically determined at compile time.  The operating system
-     name can be displayed by running the command `amd -v'.  *Note
-     Supported Platforms::.
-
-   The following selectors are also provided.  Unlike the other
-selectors, they vary for each lookup.  Note that when the name from the
-kernel is expanded prior to a map lookup, these selectors are all
-defined as empty strings.
-
-`key'
-     the name being resolved.  For example, if `/home' is an automount
-     point, then accessing `/home/foo' would set `${key}' to the string
-     `foo'.  The key is prefixed by the PREF option set in the parent
-     mount point.  The default prefix is an empty string.  If the
-     prefix was `blah/' then `${key}' would be set to `blah/foo'.
-
-`map'
-     the name of the mount map being used.
-
-`netnumber'
-     the number of the network to which the primary network interface is
-     attached.  This value is also output by the "-v" option.
-
-`network'
-`wire'
-     the name of the network to which the primary network interface is
-     attached.  If a symbolic name cannot be found in the networks or
-     hosts database then dotted IP address format is used.  This value
-     is also output by the "-v" option.
-
-`path'
-     the full pathname of the name being resolved.  For example
-     `/home/foo' in the example above.
-
-   Selectors can be negated by using `!=' instead of `=='.  For example
-to select a location on all non-Vax machines the selector `arch!=vax'
-would be used.
-
-   The following nomadic functions are selectors which take an argument.
-They return a value of true or false, and thus do not need to be
-compared with a value.
-
-`exists(ARG)'
-     If the file listed by ARG exists (via lstat(2)), this function
-     evaluates to true.  Otherwise it evaluates to false.
-
-`false(ARG)'
-     Always evaluates to false.  ARG is ignored.
-
-`netgrp(ARG)'
-     If the current host as determined by the value of `${host}' is a
-     member of the netgroup ARG, this selector evaluates to true.
-     Otherwise it evaluates to false.
-
-`in_network(ARG)'
-     If the current host has any network interface that is locally
-     attached to the network specified in ARG (either via name or
-     number), this selector evaluates to true.  Otherwise it evaluates
-     to false.
-
-`true(ARG)'
-     Always evaluates to true.  ARG is ignored.
-
-
-File: am-utils.info,  Node: Map Options,  Prev: Selectors,  Up: Location Format
-
-Map Options
------------
-
-   Options are parsed concurrently with selectors.  The difference is
-that when an option is seen the string following the `:=' is recorded
-for later use.  As a minimum the TYPE option must be specified.  Each
-filesystem type has other options which must also be specified.  *Note
-Filesystem Types::, for details on the filesystem specific options.
-
-   Superfluous option specifications are ignored and are not reported
-as errors.
-
-   The following options apply to more than one filesystem type.
+   These are the selectors currently implemented.
 
 * Menu:
 
-* delay Option::
-* fs Option::
-* opts Option::
-* remopts Option::
-* sublink Option::
-* type Option::
+* arch Selector Variable::
+* autodir Selector Variable::
+* byte Selector Variable::
+* cluster Selector Variable::
+* domain Selector Variable::
+* host Selector Variable::
+* hostd Selector Variable::
+* karch Selector Variable::
+* os Selector Variable::
+* osver Selector Variable::
+
+* key Selector Variable::
+* map Selector Variable::
+* netnumber Selector Variable::
+* network Selector Variable::
+* path Selector Variable::
+* wire Selector Variable::
+
+* exists Selector Function::
+* false Selector Function::
+* netgrp Selector Function::
+* in_network Selector Function::
+* true Selector Function::
+
+
+File: am-utils.info,  Node: arch Selector Variable,  Next: autodir Selector Variable,  Prev: Selectors,  Up: Selectors
+
+arch Selector Variable
+......................
+
+   The machine architecture which was automatically determined at
+compile time.  The architecture type can be displayed by running the
+command `amd -v'.  *Note Supported Platforms::.
+
+
+File: am-utils.info,  Node: autodir Selector Variable,  Next: byte Selector Variable,  Prev: arch Selector Variable,  Up: Selectors
+
+autodir Selector Variable
+.........................
+
+   The default directory under which to mount filesystems.  This may be
+changed by the `-a' command line option.  *Note fs Option::.
+
+
+File: am-utils.info,  Node: byte Selector Variable,  Next: cluster Selector Variable,  Prev: autodir Selector Variable,  Up: Selectors
+
+byte Selector Variable
+......................
+
+   The machine's byte ordering.  This is either `little', indicating
+little-endian, or `big', indicating big-endian.  One possible use is to
+share `rwho' databases (*note rwho servers::.).  Another is to share
+ndbm databases, however this use can be considered a courageous
+juggling act.
+
+
+File: am-utils.info,  Node: cluster Selector Variable,  Next: domain Selector Variable,  Prev: byte Selector Variable,  Up: Selectors
+
+cluster Selector Variable
+.........................
+
+   This is provided as a hook for the name of the local cluster.  This
+can be used to decide which servers to use for copies of replicated
+filesystems.  `${cluster}' defaults to the value of `${domain}' unless
+a different value is set with the `-C' command line option.
+
+
+File: am-utils.info,  Node: domain Selector Variable,  Next: host Selector Variable,  Prev: cluster Selector Variable,  Up: Selectors
+
+domain Selector Variable
+........................
+
+   The local domain name as specified by the `-d' command line option.
+*Note host Selector Variable::.
+
+
+File: am-utils.info,  Node: host Selector Variable,  Next: hostd Selector Variable,  Prev: domain Selector Variable,  Up: Selectors
+
+host Selector Variable
+......................
+
+   The local hostname as determined by gethostname(2).  If no domain
+name was specified on the command line and the hostname contains a
+period `.' then the string before the period is used as the host name,
+and the string after the period is assigned to `${domain}'.  For
+example, if the hostname is `styx.doc.ic.ac.uk' then `host' would be
+`styx' and `domain' would be `doc.ic.ac.uk'.  `hostd' would be
+`styx.doc.ic.ac.uk'.
+
+
+File: am-utils.info,  Node: hostd Selector Variable,  Next: karch Selector Variable,  Prev: host Selector Variable,  Up: Selectors
+
+hostd Selector Variable
+.......................
+
+   This resolves to the `${host}' and `${domain}' concatenated with a
+`.' inserted between them if required.  If `${domain}' is an empty
+string then `${host}' and `${hostd}' will be identical.
+
+
+File: am-utils.info,  Node: karch Selector Variable,  Next: os Selector Variable,  Prev: hostd Selector Variable,  Up: Selectors
+
+karch Selector Variable
+.......................
+
+   This is provided as a hook for the kernel architecture.  This is
+used on SunOS 4 and SunOS 5, for example, to distinguish between
+different `/usr/kvm' volumes.  `${karch}' defaults to the "machine"
+value gotten from uname(2).  If the uname(2) system call is not
+available, the value of `${karch}' defaults to that of `${arch}'.
+Finally, a different value can be set with the `-k' command line option.
 

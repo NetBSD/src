@@ -1,7 +1,7 @@
-/*	$NetBSD: fixmount.c,v 1.1.1.3 1997/10/26 00:03:32 christos Exp $	*/
+/*	$NetBSD: fixmount.c,v 1.1.1.4 1998/08/08 22:05:38 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,6 +69,7 @@
 extern int fixmount_check_mount(char *host, struct in_addr hostaddr, char *path);
 
 static char dir_path[NFS_MAXPATHLEN];
+static char localhost[] = "localhost";
 static char thishost[MAXHOSTNAMELEN] = "";
 static exports mntexports;
 static int quiet = 0;
@@ -490,10 +491,70 @@ create_timeout(int sig)
 }
 
 
-static CLIENT *
-clnt_create_timeout(char *host, struct timeval *to)
+#ifndef HAVE_TRANSPORT_TYPE_TLI
+/*
+ * inetresport creates a datagram socket and attempts to bind it to a
+ * secure port.
+ * returns: The bound socket, or -1 to indicate an error.
+ */
+static int
+inetresport(int ty)
 {
-  CLIENT *client;
+  int alport;
+  struct sockaddr_in addr;
+  int fd;
+
+  /* Use internet address family */
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = INADDR_ANY;
+  if ((fd = socket(AF_INET, ty, 0)) < 0)
+    return -1;
+
+  for (alport = IPPORT_RESERVED - 1; alport > IPPORT_RESERVED / 2 + 1; alport--) {
+    addr.sin_port = htons((u_short) alport);
+    if (bind(fd, (struct sockaddr *) &addr, sizeof(addr)) >= 0)
+      return fd;
+    if (errno != EADDRINUSE) {
+      close(fd);
+      return -1;
+    }
+  }
+  close(fd);
+  errno = EAGAIN;
+  return -1;
+}
+
+
+/*
+ * Privsock() calls inetresport() to attempt to bind a socket to a secure
+ * port.  If inetresport() fails, privsock returns a magic socket number which
+ * indicates to RPC that it should make its own socket.
+ * returns: A privileged socket # or RPC_ANYSOCK.
+ */
+static int
+privsock(int ty)
+{
+  int sock = inetresport(ty);
+
+  if (sock < 0) {
+    errno = 0;
+    /* Couldn't get a secure port, let RPC make an insecure one */
+    sock = RPC_ANYSOCK;
+  }
+  return sock;
+}
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
+
+
+static CLIENT *
+clnt_create_timeout(char *host, struct timeval *tvp)
+{
+  CLIENT *clnt;
+  struct sockaddr_in host_addr;
+  struct hostent *hp;
+#ifndef HAVE_TRANSPORT_TYPE_TLI
+  int s;
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
   if (setjmp(before_rpc)) {
     if (!quiet) {
@@ -505,13 +566,41 @@ clnt_create_timeout(char *host, struct timeval *to)
     return NULL;
   }
   signal(SIGALRM, create_timeout);
-  ualarm(to->tv_sec * 1000000 + to->tv_usec, 0);
+  ualarm(tvp->tv_sec * 1000000 + tvp->tv_usec, 0);
 
   /*
-   * Try TCP first (in case return data is large), then UDP
+   * Get address of host
    */
-  if (!(client = clnt_create(host, MOUNTPROG, MOUNTVERS, "tcp")) &&
-      ! (client = clnt_create(host, MOUNTPROG, MOUNTVERS, "udp"))) {
+  if ((hp = gethostbyname(host)) == 0 && !STREQ(host, localhost)) {
+    fprintf(stderr, "can't get address of %s\n", host);
+    return NULL;
+  }
+  memset(&host_addr, 0, sizeof host_addr);
+  host_addr.sin_family = AF_INET;
+  if (hp) {
+    memmove((voidp) &host_addr.sin_addr, (voidp) hp->h_addr,
+	    sizeof(host_addr.sin_addr));
+  } else {
+    /* fake "localhost" */
+    host_addr.sin_addr.s_addr = htonl(0x7f000001);
+  }
+
+#ifdef HAVE_TRANSPORT_TYPE_TLI
+  /* try TCP first (in case return data is large), then UDP */
+  clnt = clnt_create(host, MOUNTPROG, MOUNTVERS, "tcp");
+  if (!clnt)
+    clnt = clnt_create(host, MOUNTPROG, MOUNTVERS, "udp");
+#else /* not HAVE_TRANSPORT_TYPE_TLI */
+  s = RPC_ANYSOCK;
+  clnt = clnttcp_create(&host_addr, MOUNTPROG, MOUNTVERS, &s, 0, 0);
+  if (!clnt) {
+    /* XXX: do we need to close(s) ? */
+    s = privsock(SOCK_DGRAM);
+    clnt = clntudp_create(&host_addr, MOUNTPROG, MOUNTVERS, *tvp, &s);
+  }
+#endif /* not HAVE_TRANSPORT_TYPE_TLI */
+
+  if (!clnt) {
     ualarm(0, 0);
     if (!quiet) {
       clnt_pcreateerror(host);
@@ -519,6 +608,7 @@ clnt_create_timeout(char *host, struct timeval *to)
     }
     return NULL;
   }
+
   ualarm(0, 0);
-  return client;
+  return clnt;
 }
