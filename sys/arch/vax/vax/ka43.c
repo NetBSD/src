@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.26 2003/07/15 02:15:03 lukem Exp $ */
+/*	$NetBSD: ka43.c,v 1.27 2005/01/14 11:47:43 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.26 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.27 2005/01/14 11:47:43 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -362,26 +362,33 @@ ka43_steal_pages()
 static void
 ka43_clrf()
 {
-        struct ka43_clock *clk = (void *)clk_page;
+        volatile struct ka43_clock *clk = (void *)clk_page;
 
         /*
          * Clear restart and boot in progress flags in the CPMBX.
+	 * The cpmbx is split into two 4-bit fields.
+	 * One for the current restart/boot in progress flags, and
+	 * one for the permanent halt flag.
+	 * The restart/boot in progress flag is also used as the action request
+	 * for the CPU at a halt. /BQT
          */
-        clk->cpmbx = (clk->cpmbx & ~0xf0);
+        clk->req = 0;
 }
 
 static void
 ka43_halt()
 {
-        asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
-        asm("halt");
+	volatile struct ka43_clock *clk = (void *)clk_page;
+	clk->req = 3;		/* 3 is halt. */
+	asm("halt");
 }
 
 static void
 ka43_reboot(arg)
         int arg;
 {
-        asm("movl $0xc, (%0)"::"r"((int)clk_page + 0x38)); /* Don't ask */
-        asm("halt");
+	volatile struct ka43_clock *clk = (void *)clk_page;
+	clk->req = 2;		/* 2 is reboot. */
+	asm("halt");
 }
 
