@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: raidframe,v 1.3 2000/05/13 08:45:08 lukem Exp $
+# $NetBSD: raidframe,v 1.4 2000/05/16 16:54:33 oster Exp $
 #
 
 # PROVIDE: disks
@@ -20,6 +20,17 @@ raidframe_start()
 			raidctl -c /etc/raid$dev.conf raid$dev
 		fi
 	done
+
+	# Initiate parity/mirror reconstruction as needed.  
+	# Backgrounded, and sequentially ordered.
+	#
+	(
+		for dev in 0 1 2 3; do
+			if [ -f /etc/raid$dev.conf ]; then
+                        	raidctl -P raid$dev
+			fi
+        	done
+	) &
 }
 
 load_rc_config $name
