@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1998/07/16 07:08:26 phil Exp $
+#	$NetBSD: Makefile,v 1.10 1998/07/23 17:56:00 phil Exp $
 
 MENUC!=cd $(.CURDIR)/..; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/menuc\n" | ${MAKE} -s -f-
@@ -20,6 +20,6 @@ menu_defs.c menu_defs.h: menus.mc ${MENUC} ${.CURDIR}/../menu_sys.def
 	MENUDEF=${.CURDIR}/.. ${MENUC} ${.CURDIR}/menus.mc
 
 msg_defs.c msg_defs.h: menus.msg
-	msgc menus.msg
+	msgc ${.CURDIR}/menus.msg
 
 .include <bsd.prog.mk>
