@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.12 2003/03/08 21:09:37 dsl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.13 2003/04/16 12:45:10 dsl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -320,7 +320,6 @@ ENTRY(int13_getextinfo)
 
 	movb	8(%ebp), %dl	# device
 	movl	12(%ebp), %esi	# parameter block
-	movl	$0x01a, (%esi)	# length (v 1.x)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
