@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.63 2000/01/24 02:54:02 matt Exp $
+#       $NetBSD: files.vax,v 1.64 2000/02/14 21:42:54 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -337,6 +337,7 @@ file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/findcpu.c
 file	arch/vax/vax/autoconf.c
 file	arch/vax/vax/in_cksum.c		inet
+file	netinet/in4_cksum.c		inet
 file	arch/vax/vax/ns_cksum.c		ns
 file	arch/vax/vax/disksubr.c		disk | tape
 file	arch/vax/vax/db_machdep.c	ddb
