@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.12 1997/07/18 22:48:31 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.13 1997/09/13 07:53:10 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1087,7 +1087,7 @@ cfline(line, f)
 	case '/':
 		(void)strcpy(f->f_un.f_fname, p);
 		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
-			f->f_file = F_UNUSED;
+			f->f_type = F_UNUSED;
 			logerror(p);
 			break;
 		}
