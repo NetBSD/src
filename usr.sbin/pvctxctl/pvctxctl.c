@@ -1,4 +1,4 @@
-/*	$NetBSD: pvctxctl.c,v 1.2 1999/07/11 17:35:08 itojun Exp $	*/
+/*	$NetBSD: pvctxctl.c,v 1.3 2001/05/07 14:00:23 kleink Exp $	*/
 
 /*
  * Copyright (C) 1998
@@ -80,7 +80,7 @@ main(int argc, char **argv)
 		str2vc(argv[2], &vpi, &vci);
     
 	optind = 3;
-	while ((ch = getopt(argc, argv, "p:b:j:snv")) != EOF) {
+	while ((ch = getopt(argc, argv, "p:b:j:snv")) != -1) {
 		switch (ch) {
 		case 'p':
 			pcr = strtol(optarg, NULL, 0);

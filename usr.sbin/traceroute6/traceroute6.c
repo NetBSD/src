@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.16 2001/01/12 18:53:21 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.17 2001/05/07 14:00:23 kleink Exp $	*/
 /*	$KAME: traceroute6.c,v 1.39 2000/12/22 15:11:05 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.16 2001/01/12 18:53:21 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.17 2001/05/07 14:00:23 kleink Exp $");
 #endif
 #endif
 
@@ -426,7 +426,7 @@ main(argc, argv)
 
 	seq = 0;
 	
-	while ((ch = getopt(argc, argv, "df:g:lm:np:q:rs:w:v")) != EOF)
+	while ((ch = getopt(argc, argv, "df:g:lm:np:q:rs:w:v")) != -1)
 		switch(ch) {
 		case 'd':
 			options |= SO_DEBUG;

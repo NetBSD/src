@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.26 2001/04/06 11:13:51 wiz Exp $	*/
+/*	$NetBSD: route6d.c,v 1.27 2001/05/07 14:00:23 kleink Exp $	*/
 /*	$KAME: route6d.c,v 1.60 2001/03/08 02:15:42 onoe Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.26 2001/04/06 11:13:51 wiz Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.27 2001/05/07 14:00:23 kleink Exp $");
 #endif
 
 #include <stdio.h>
@@ -295,7 +295,7 @@ main(argc, argv)
 		progname = *argv;
 
 	pid = getpid();
-	while ((ch = getopt(argc, argv, "A:N:O:R:T:L:t:adDhlnqsS")) != EOF) {
+	while ((ch = getopt(argc, argv, "A:N:O:R:T:L:t:adDhlnqsS")) != -1) {
 		switch (ch) {
 		case 'A':
 		case 'N':
