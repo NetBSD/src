@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.240 2003/11/11 11:43:45 dsl Exp $
+#	$NetBSD: bsd.lib.mk,v 1.241 2003/11/13 05:56:30 matt Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -135,7 +135,7 @@ CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
 # XXX libraries often need the millicode functions in libgcc.a,
 # so we have to work around the -nostdlib:
-LDADD+= `${CC} -print-libgcc-file-name`
+LDADD+= -L${_GCC_LIBGCCDIR} -lgcc_pic
 
 .else
 
@@ -434,9 +434,9 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
-	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
+	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
 	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
-	ln -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
+	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
 	mv -f lib${LIB}.so.tmp lib${LIB}.so
 .endif
 
