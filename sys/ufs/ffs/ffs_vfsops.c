@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.7 1994/10/28 20:16:10 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.8 1994/10/28 20:20:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -481,6 +481,8 @@ ffs_oldfscompat(fs)
 	}							/* XXX */
 #ifndef KLUGE_BEGONE
 	{
+		u_int64_t maxfilesize;
+
 		maxfilesize = (u_int64_t)0x80000000 * fs->fs_bsize - 1;
 		if (fs->fs_maxfilesize > maxfilesize)
 			fs->fs_maxfilesize = maxfilesize;
