@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
  *

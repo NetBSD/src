@@ -1,8 +1,39 @@
 /*
+ * Copyright (c) 1993 Adam Glass
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Adam Glass.
+ * 4. The name of the Author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.9 1993/08/28 15:37:11 glass Exp $
+ */
+/*
  * machine-dependent clock routines; intersil7170
  *               by Adam Glass
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.8 1993/08/21 02:17:23 glass Exp $
  */
 
 #include "systm.h"
@@ -19,7 +50,7 @@
 #include "intersil7170.h"
 #include "interreg.h"
 
-#define intersil_clock ((struct intersil7170 *) intersil_softc->clock_va)
+#define intersil_clock ((volatile struct intersil7170 *) intersil_softc->clock_va)
 #define intersil_command(run, interrupt) \
     (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
      INTERSIL_CMD_NORMAL_MODE)
@@ -53,6 +84,7 @@ struct clock_softc {
 };
 
 struct clock_softc *intersil_softc = NULL;
+caddr_t intersil_va = NULL;
 
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
@@ -164,6 +196,8 @@ void clockattach(parent, self, args)
     struct obio_cf_loc *obio_loc = OBIO_LOC(self);
     caddr_t clock_addr;
     int clock_intr();
+    void level5intr_clock();
+    vm_offset_t pte;
 
     clock_addr = 
 	OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_CLOCK);
@@ -179,6 +213,9 @@ void clockattach(parent, self, args)
 	panic("clock");
     }
     intersil_softc = clock;
+    intersil_va = clock->clock_va;
+    pte = get_pte(intersil_va);
+    pte_print(pte);
     printf("intersil_clock_addr = %x\n", intersil_clock);
     printf("intersil_clock_counters = %x\n", &intersil_clock->counters);
     printf("intersil_clock_ram = %x\n", &intersil_clock->ram);
@@ -188,7 +225,7 @@ void clockattach(parent, self, args)
     printf("before clear level 7\n");
     set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
     printf("after clear level 7\n");
-    isr_add(clock->clock_level, clock_intr, 0);
+    isr_add_custom(clock->clock_level, level5intr_clock);
     printf("before enable level 5\n");
     set_clk_mode(IREG_CLOCK_ENAB_5, 0, 0);
     printf("after enable level 5\n");
@@ -197,22 +234,24 @@ void clockattach(parent, self, args)
 
 int clock_count = 0;
 
-int clock_intr(unit)
-     int unit;
+void clock_intr(vaddr, status_before, status_after, frame)
+     unsigned int vaddr;
+     unsigned int status_before;
+     unsigned int status_after;
+     clockframe frame;
 {
-    unsigned int level_code;
-    unsigned int regval;
-    extern char *interrupt_reg;
-
-    if (unit) panic("clock interrupt on non-zero unit\n");
-    level_code = (intersil_softc->clock_level == 5 ?
-		  IREG_CLOCK_ENAB_5 : IREG_CLOCK_ENAB_7);
+    printf("clock_intr: total of %d interrupts received\n",
+	   clock_count);
+    printf("clock_intr: frame pc %x sr %x\n", frame.pc, frame.ps);
+    printf("clock_intr: clk_interrupt_reg before %b\n",
+	   status_before, INTERSIL_INTER_BITS);
+    printf("clock_intr: clk_interrupt_reg after %b\n",
+	   status_after, INTERSIL_INTER_BITS);
+    printf("clock_intr: vaddr %x\n", vaddr);
     clock_count++;
-    regval = *interrupt_reg;
-    regval &= ~(level_code);
-    *interrupt_reg = regval;
-    *interrupt_reg |= level_code;
-    return 1;
+    if (clock_count == 30)
+	sun3_stop();
+    hardclock(frame);
 }
 
 
@@ -235,6 +274,8 @@ int clock_intr(unit)
  */
 void startrtclock()
 {
+    char dummy;
+
     printf("startrtclock(): begin\n");
     if (!intersil_softc)
 	panic("clock: not initialized");
@@ -242,13 +283,18 @@ void startrtclock()
     intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
 						   INTERSIL_CMD_IDISABLE);
+    dummy = intersil_clear();
     printf("startrtclock(): end\n");
 }
 
 void enablertclock()
 {
+    unsigned char dummy;
 	/* make sure irq5/7 stuff is resolved :) */
 
+    dummy = intersil_clear();
+    dummy++;
+    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
 						   INTERSIL_CMD_IENABLE);
 }
@@ -320,6 +366,7 @@ void inittodr(base)
     long diff_time;
     void resettodr();
 
+    printf("inittodr: called\n");
     clock_time = intersil_to_timeval();
 
     if (!clock_time.tv_sec && (base <= 0)) goto set_time;
@@ -376,6 +423,7 @@ void resettodr()
 {
     struct intersil_map hdw_format;
 
+    printf("inittodr: called\n");
     timeval_to_intersil(time, &hdw_format);
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_STOP,
 						   INTERSIL_CMD_IDISABLE);
@@ -401,6 +449,7 @@ void microtime(tvp)
 
     /* as yet...... this makes little sense*/
     
+    printf("microtime: called\n");
     *tvp = time;
     if (tvp->tv_sec == lasttime.tv_sec &&
 	tvp->tv_usec <= lasttime.tv_usec &&
