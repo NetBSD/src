@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.24 2003/12/03 18:41:35 christos Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.25 2004/08/26 20:51:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  * null-terminated.
  */
 
-#include <sys/param.h>		/* sysident.h requires `NetBSD' constant */
+#include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <stdlib.h>
