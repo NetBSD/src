@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.48 2000/08/28 21:07:52 sommerfeld Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.49 2000/11/20 20:04:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -130,6 +130,10 @@ do {									\
 #define COUNT_CPU(cpu_id, x)
 #endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
 
+#ifndef SPINLOCK_INTERLOCK_RELEASE_HOOK		/* from <machine/lock.h> */
+#define	SPINLOCK_INTERLOCK_RELEASE_HOOK		/* nothing */
+#endif
+
 #define	INTERLOCK_ACQUIRE(lkp, flags, s)				\
 do {									\
 	if ((flags) & LK_SPIN)						\
@@ -140,8 +144,10 @@ do {									\
 #define	INTERLOCK_RELEASE(lkp, flags, s)				\
 do {									\
 	simple_unlock(&(lkp)->lk_interlock);				\
-	if ((flags) & LK_SPIN)						\
+	if ((flags) & LK_SPIN) {					\
 		splx(s);						\
+		SPINLOCK_INTERLOCK_RELEASE_HOOK;			\
+	}								\
 } while (0)
 
 /*
