@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.17 2003/01/23 14:55:39 gehenna Exp $	*/
+/*	$NetBSD: files.c,v 1.18 2003/01/23 14:57:40 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -355,6 +355,13 @@ fixdevsw(void)
 				       "device-major '%s' is inconsistent: "
 				       "block %d, char %d", dm->dm_name,
 				       dm->dm_bmajor, dm->dm_cmajor);
+				return (1);
+			} else {
+				xerror(dm->dm_srcfile, dm->dm_srcline,
+				       "device-major '%s' is duplicated: "
+				       "block %d, char %d",
+				       dm->dm_name, dm->dm_bmajor,
+				       dm->dm_cmajor);
 				return (1);
 			}
 		} else {
