@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/07/21 06:01:03 eeh Exp $
+#	$NetBSD: Makefile,v 1.4 2001/08/23 17:14:40 eeh Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -117,17 +117,20 @@ ${CBIN}: libhack.o
 HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.o
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.cro *.c
+	/bin/rm -f *.core ${AUXCLEAN} ${IMAGE} netbsd.INSTALL ${CBIN} \
+		${CBIN}.mk ${CBIN}.cache *.o *.lo *.cro *.c
 
 .ifndef RELEASEDIR
 release:
 	@echo setenv RELEASEDIR first
 	@false
 .else
-release: $(IMAGE)
+release: $(IMAGE) netbsd.INSTALL
 	@mkdir -p $(RELEASEDIR)/installation/miniroot
 	gzip -c -9 < $(.OBJDIR)/miniroot.fs \
 		> $(RELEASEDIR)/installation/miniroot/miniroot.fs.gz
+	@mkdir -p $(RELEASEDIR)/binary/kernels
+	cp netbsd.INSTALL $(RELEASEDIR)/binary/kernels
 .endif	# RELEASEDIR check
 
 .include <bsd.own.mk>
