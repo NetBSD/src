@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.9 2002/03/15 07:06:24 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -91,11 +91,11 @@ lpt_ebus_attach(parent, self, aux)
 	 */
 	if (ea->ea_nvaddrs)
 		sc->sc_ioh = (bus_space_handle_t)ea->ea_vaddrs[0];
-	else if (ebus_bus_map(sc->sc_iot, 0,
+	else if (bus_space_map(sc->sc_iot,
 			      EBUS_ADDR_FROM_REG(&ea->ea_regs[0]),
 			      ea->ea_regs[0].size,
 			      BUS_SPACE_MAP_LINEAR,
-			      0, &sc->sc_ioh) != 0) {
+			      &sc->sc_ioh) != 0) {
 		printf(": can't map register space\n");
                 return;
 	}
