@@ -608,6 +608,7 @@ $textra" "$filename_input" >$filename_xtr
       exit 1
     fi
 
+
     # Decide if looping again is needed.
     finished=t
 
