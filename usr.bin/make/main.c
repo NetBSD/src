@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.38.2.1 1998/05/08 06:12:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.38.2.1 1998/05/08 06:12:07 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.38.2.1 1998/05/08 06:12:07 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -97,6 +97,7 @@ __RCSID("$NetBSD: main.c,v 1.38 1997/09/28 03:31:07 lukem Exp $");
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #ifdef __STDC__
 #include <stdarg.h>
 #else
@@ -177,7 +178,7 @@ MainParseArgs(argc, argv)
 #else
 # define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
 #endif
-rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
+rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
 		case 'D':
 			Var_Set(optarg, "1", VAR_GLOBAL);
@@ -377,6 +378,9 @@ Main_ParseArgLine(line)
 {
 	char **argv;			/* Manufactured argument vector */
 	int argc;			/* Number of arguments in argv */
+	char *args;			/* Space used by the args */
+	char *buf, *p1;
+	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
 
 	if (line == NULL)
 		return;
@@ -385,8 +389,16 @@ Main_ParseArgLine(line)
 	if (!*line)
 		return;
 
-	argv = brk_string(line, &argc, TRUE);
+	buf = emalloc(strlen(line) + strlen(argv0) + 2);
+	(void)sprintf(buf, "%s %s", argv0, line);
+	if (p1)
+		free(p1);
+
+	argv = brk_string(buf, &argc, TRUE, &args);
 	MainParseArgs(argc, argv);
+
+	free(args);
+	free(argv);
 }
 
 char *
@@ -599,7 +611,6 @@ main(argc, argv)
 				 * directories */
 	Var_Init();		/* As well as the lists of variables for
 				 * parsing arguments */
-	str_init();
 	Var_Set(".CURDIR", curdir, VAR_GLOBAL);
 	Var_Set(".OBJDIR", objdir, VAR_GLOBAL);
 
@@ -610,6 +621,7 @@ main(argc, argv)
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
 	Var_Set("MAKE", argv[0], VAR_GLOBAL);
+	Var_Set(".MAKE", argv[0], VAR_GLOBAL);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL);
 	Var_Set("MFLAGS", "", VAR_GLOBAL);
 	Var_Set("MACHINE", machine, VAR_GLOBAL);
@@ -820,10 +832,10 @@ main(argc, argv)
 	Suff_End();
         Targ_End();
 	Arch_End();
-	str_end();
 	Var_End();
 	Parse_End();
 	Dir_End();
+	Job_End();
 
 	if (queryFlag && outOfDate)
 		return(1);

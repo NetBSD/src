@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.22 1997/09/28 03:31:01 lukem Exp $	*/
+/*	$NetBSD: compat.c,v 1.22.2.1 1998/05/08 06:12:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.22 1997/09/28 03:31:01 lukem Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.22.2.1 1998/05/08 06:12:05 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.22 1997/09/28 03:31:01 lukem Exp $");
+__RCSID("$NetBSD: compat.c,v 1.22.2.1 1998/05/08 06:12:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -157,7 +157,7 @@ CompatRunCommand (cmdp, gnp)
     ClientData    gnp;    	/* Node from which the command came */
 {
     char    	  *cmdStart;	/* Start of expanded command */
-    register char *cp;
+    char 	  *cp, *bp;
     Boolean 	  silent,   	/* Don't print command */
 		  errCheck; 	/* Check errors */
     int 	  reason;   	/* Reason for child's death */
@@ -188,7 +188,7 @@ CompatRunCommand (cmdp, gnp)
     cmdStart = Var_Subst (NULL, cmd, gn, FALSE);
 
     /*
-     * brk_string will return an argv with a NULL in av[1], thus causing
+     * brk_string will return an argv with a NULL in av[0], thus causing
      * execvp to choke and die horribly. Besides, how can we execute a null
      * command? In any case, we warn the user that the command expanded to
      * nothing (is this the right thing to do?).
@@ -263,15 +263,13 @@ CompatRunCommand (cmdp, gnp)
 	shargv[3] = (char *)NULL;
 	av = shargv;
 	argc = 0;
+	bp = NULL;
     } else {
 	/*
 	 * No meta-characters, so no need to exec a shell. Break the command
 	 * into words to form an argument vector we can execute.
-	 * brk_string sticks our name in av[0], so we have to
-	 * skip over it...
 	 */
-	av = brk_string(cmd, &argc, TRUE);
-	av += 1;
+	av = brk_string(cmd, &argc, TRUE, &bp);
     }
 
     local = TRUE;
@@ -291,8 +289,10 @@ CompatRunCommand (cmdp, gnp)
 	} else {
 	    (void)execv(av[0], av);
 	}
-	exit(1);
+	_exit(1);
     }
+    if (bp)
+	    free(bp);
     free(cmdStart);
     Lst_Replace (cmdNode, (ClientData) NULL);
 

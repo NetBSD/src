@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.23 1997/09/28 03:31:14 lukem Exp $	*/
+/*	$NetBSD: var.c,v 1.23.2.1 1998/05/08 06:12:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.23 1997/09/28 03:31:14 lukem Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.23.2.1 1998/05/08 06:12:09 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.23 1997/09/28 03:31:14 lukem Exp $");
+__RCSID("$NetBSD: var.c,v 1.23.2.1 1998/05/08 06:12:09 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1255,15 +1255,19 @@ VarModify (str, modProc, datum)
 				     * buffer before adding the trimmed
 				     * word */
     char **av;			    /* word list [first word does not count] */
+    char *as;			    /* word list memory */
     int ac, i;
 
     buf = Buf_Init (0);
     addSpace = FALSE;
 
-    av = brk_string(str, &ac, FALSE);
+    av = brk_string(str, &ac, FALSE, &as);
 
-    for (i = 1; i < ac; i++)
+    for (i = 0; i < ac; i++)
 	addSpace = (*modProc)(av[i], addSpace, buf, datum);
+
+    free(as);
+    free(av);
 
     Buf_AddByte (buf, '\0');
     str = (char *)Buf_GetAll (buf, (int *)NULL);
@@ -1279,7 +1283,7 @@ VarModify (str, modProc, datum)
  *	uninterpreted) and 2) unescaped $'s that aren't before
  *	the delimiter (expand the variable substitution).
  *	Return the expanded string or NULL if the delimiter was missing
- *	If pattern is specified, handle escaped ampersants, and replace
+ *	If pattern is specified, handle escaped ampersands, and replace
  *	unescaped ampersands with the lhs of the pattern.
  *
  * Results:
@@ -1717,6 +1721,9 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      *  	  	    	each word
      *  	  :R	    	Substitute the root of each word
      *  	  	    	(pathname minus the suffix).
+     *		  :?<true-value>:<false-value>
+     *				If the variable evaluates to true, return
+     *				true value, else return the second value.
      *	    	  :lhs=rhs  	Like :S, but the rhs goes to the end of
      *	    	    	    	the invocation.
      */
@@ -1838,6 +1845,39 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		     */
 		    free(pattern.lhs);
 		    free(pattern.rhs);
+		    break;
+		}	
+		case '?':
+		{
+		    VarPattern 	pattern;
+		    Boolean	value;
+
+		    /* find ':', and then substitute accordingly */
+
+		    pattern.flags = 0;
+
+		    cp = ++tstr;
+		    delim = ':';
+		    if ((pattern.lhs = VarGetPattern(ctxt, err, &cp, delim,
+			NULL, &pattern.leftLen, NULL)) == NULL)
+			goto cleanup;
+
+		    delim = '}';
+		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, delim,
+			NULL, &pattern.rightLen, NULL)) == NULL)
+			goto cleanup;
+
+		    termc = *--cp;
+		    if (Cond_EvalExpression(1, str, &value) == COND_INVALID)
+			goto cleanup;
+
+		    if (value) {
+			newStr = pattern.lhs;
+			free(pattern.rhs);
+		    } else {
+			newStr = pattern.rhs;
+			free(pattern.lhs);
+		    }
 		    break;
 		}
 #ifndef MAKE_BOOTSTRAP
