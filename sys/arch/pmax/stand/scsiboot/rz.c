@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Van Jacobson of Lawrence Berkeley Laboratory and Ralph Campbell.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)rz.c	7.2 (Berkeley) 2/15/93
- * $Id: rz.c,v 1.1.1.1 1993/10/12 03:22:45 deraadt Exp $
+ *	from: @(#)rz.c	8.1 (Berkeley) 6/10/93
+ *      $Id: rz.c,v 1.2 1994/05/27 08:42:43 glass Exp $
  */
 
 #include <stand/stand.h>

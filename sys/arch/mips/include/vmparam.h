@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: vmparam.h 1.16 91/01/18
- * from: @(#)vmparam.h	7.2 (Berkeley) 2/4/93
- * $Id: vmparam.h,v 1.1.1.1 1993/10/12 03:22:42 deraadt Exp $
+ *
+ *	from: @(#)vmparam.h	8.2 (Berkeley) 4/22/94
+ *      $Id: vmparam.h,v 1.2 1994/05/27 08:41:20 glass Exp $
  */
 
 /*
@@ -50,12 +51,10 @@
  * beginning of the text and from the beginning of the P1 region to the
  * beginning of the stack respectively.
  */
-#define	USRTEXT		0x00400000
-#define	USRDATA		0x10000000
+#define	USRTEXT		0x00001000
 #define	USRSTACK	0x80000000	/* Start of user stack */
 #define	BTOPUSRSTACK	0x80000		/* btop(USRSTACK) */
-#define	LOWPAGES	0x00400
-#define	MIDPAGES	0x10000
+#define	LOWPAGES	0x00001
 #define	HIGHPAGES	0
 
 /*
@@ -192,14 +191,11 @@
  * Strategy of 1/19/85:
  *	lotsfree is 512k bytes, but at most 1/4 of memory
  *	desfree is 200k bytes, but at most 1/8 of memory
- *	minfree is 64k bytes, but at most 1/2 of desfree
  */
 #define	LOTSFREE	(512 * 1024)
 #define	LOTSFREEFRACT	4
 #define	DESFREE		(200 * 1024)
 #define	DESFREEFRACT	8
-#define	MINFREE		(64 * 1024)
-#define	MINFREEFRACT	2
 
 /*
  * There are two clock hands, initially separated by HANDSPREAD bytes

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: pte.h 1.11 89/09/03
- * from: @(#)pte.h	7.2 (Berkeley) 2/29/92
- * $Id: pte.h,v 1.1.1.1 1993/10/12 03:22:41 deraadt Exp $
+ *
+ *	from: @(#)pte.h	8.1 (Berkeley) 6/10/93
+ *      $Id: pte.h,v 1.2 1994/05/27 08:41:01 glass Exp $
  */
 
 /*
@@ -70,7 +71,7 @@ unsigned int	pg_prot:2,		/* SW: access control */
 #endif
 };
 
-typedef union {
+typedef union pt_entry {
 	unsigned int	pt_entry;	/* for copying, etc. */
 	struct pte	pt_pte;		/* for getting to bits by name */
 } pt_entry_t;	/* Mach page table entry */
@@ -91,12 +92,15 @@ typedef union {
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
+#if defined(KERNEL) && !defined(LOCORE)
 /*
  * Kernel virtual address to page table entry and visa versa.
  */
 #define	kvtopte(va) \
-	((pt_entry_t *)PMAP_HASH_KADDR + \
-	(((vm_offset_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
+	(Sysmap + (((vm_offset_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
 #define	ptetokv(pte) \
-	((((pt_entry_t *)(pte) - PMAP_HASH_KADDR) << PGSHIFT) + \
-	VM_MIN_KERNEL_ADDRESS)
+	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
+
+extern	pt_entry_t *Sysmap;		/* kernel pte table */
+extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
+#endif

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
- * from: @(#)autoconf.c	7.7 (Berkeley) 12/20/92
- * $Id: autoconf.c,v 1.1.1.1 1993/10/12 03:22:29 deraadt Exp $
+ *
+ *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
+ *      $Id: autoconf.c,v 1.2 1994/05/27 08:41:36 glass Exp $
  */
 
 /*
@@ -212,7 +213,7 @@ swapconf()
 	register struct swdevt *swp;
 	register int nblks;
 
-	for (swp = swdevt; swp->sw_dev; swp++)
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++)
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
 			nblks =
 			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
@@ -245,7 +246,6 @@ setroot()
 	dev_t temp, orootdev;
 	struct swdevt *swp;
 
-return;
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != B_DEVMAGIC)
 		return;
@@ -286,7 +286,7 @@ return;
 
 #ifdef DOSWAP
 	mindev &= ~PARTITIONMASK;
-	for (swp = swdevt; swp->sw_dev; swp++) {
+	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
 		    mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
 			temp = swdevt[0].sw_dev;
@@ -295,7 +295,7 @@ return;
 			break;
 		}
 	}
-	if (swp->sw_dev == 0)
+	if (swp->sw_dev == NODEV)
 		return;
 
 	/*
@@ -309,13 +309,34 @@ return;
 
 /*
  * Look at the string 'cp' and decode the boot device.
+ * Boot names can be something like 'rz(0,0,0)vmunix' or '5/rz0/vmunix'.
  */
 void
 makebootdev(cp)
 	register char *cp;
 {
-	int  majdev, unit, part, ctrl;
+	int majdev, unit, part, ctrl;
 
+	if (*cp >= '0' && *cp <= '9') {
+		/* XXX should be able to specify controller */
+		if (cp[1] != '/' || cp[4] < '0' || cp[4] > '9')
+			goto defdev;
+		unit = cp[4] - '0';
+		if (cp[5] >= 'a' && cp[5] <= 'h')
+			part = cp[5] - 'a';
+		else
+			part = 0;
+		cp += 2;
+		for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]);
+		    majdev++) {
+			if (cp[0] == devname[majdev][0] &&
+			    cp[1] == devname[majdev][1]) {
+				bootdev = MAKEBOOTDEV(majdev, 0, 0, unit, part);
+				return;
+			}
+		}
+		goto defdev;
+	}
 	for (majdev = 0; majdev < sizeof(devname)/sizeof(devname[0]); majdev++)
 		if (cp[0] == devname[majdev][0] &&
 		    cp[1] == devname[majdev][1] &&

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: hpux_compat.c 1.41 91/04/06
- * from: @(#)ultrix_compat.c	7.4 (Berkeley) 10/11/92
- * $Id: ultrix_compat.c,v 1.2 1994/05/05 03:31:07 cgd Exp $
+ *
+ *	from: @(#)ultrix_compat.c	8.1 (Berkeley) 6/10/93
+ *      $Id: ultrix_compat.c,v 1.3 1994/05/27 08:43:21 glass Exp $
  */
 
 /*
@@ -279,33 +280,4 @@ ultrixgetsysinfo(p, uap, retval)
 	return (0);
 }
 
-#define ULTRIX_RLIM_NLIMITS	6	/* ultrix only has _CPU -> _RSS */
-
-struct ultrix_getrlimit_args {
-	int	which;
-	struct	orlimit *rlp;
-};
-ultrixgetrlimit(p, uap, retval)
-	struct proc *p;
-	struct ultrix_getrlimit_args *uap;
-	int *retval;
-{
-	if (uap->which >= ULTRIX_RLIM_NLIMITS)
-		return EINVAL;
-	return ogetrlimit(p, uap, retval);
-}
-
-struct ultrix_setrlimit_args {
-	int	which;
-	struct	orlimit *rlp;
-};
-ultrixsetrlimit(p, uap, retval)
-	struct proc *p;
-	struct ultrix_getrlimit_args *uap;
-	int *retval;
-{
-	if (uap->which >= ULTRIX_RLIM_NLIMITS)
-		return EINVAL;
-	return osetrlimit(p, uap, retval);
-}
 #endif

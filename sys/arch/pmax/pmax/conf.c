@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,14 +33,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)conf.c	7.5 (Berkeley) 11/15/92
- * $Id: conf.c,v 1.1.1.1 1993/10/12 03:22:29 deraadt Exp $
+ *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
+ *      $Id: conf.c,v 1.2 1994/05/27 08:41:41 glass Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
 
@@ -216,10 +218,10 @@ dev_type_open(fdopen);
 cdev_decl(pm);
 #define	cdev_pm_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), \
-	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
+	(dev_type_read((*))) nullop, (dev_type_write((*))) nullop, \
 	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) enodev, 0, dev_init(c,n,select), \
-	(dev_type_map((*))) enodev, 0 }
+	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
+	dev_init(c,n,map), 0 }
 
 cdev_decl(rz);
 
@@ -298,3 +300,88 @@ int	mem_no = 2; 	/* major device number of memory special file */
  * provided as a character (raw) device.
  */
 dev_t	swapdev = makedev(1, 0);
+
+/*
+ * Routine that identifies /dev/mem and /dev/kmem.
+ *
+ * A minimal stub routine can always return 0.
+ */
+iskmemdev(dev)
+	dev_t dev;
+{
+
+	if (major(dev) == 2 && (minor(dev) == 0 || minor(dev) == 1))
+		return (1);
+	return (0);
+}
+
+iszerodev(dev)
+	dev_t dev;
+{
+	return (major(dev) == 2 && minor(dev) == 12);
+}
+
+/*
+ * Routine to determine if a device is a disk.
+ *
+ * A minimal stub routine can always return 0.
+ */
+isdisk(dev, type)
+	dev_t dev;
+	int type;
+{
+
+	switch (major(dev)) {
+	case 0:
+	case 2:
+		if (type == VBLK)
+			return (1);
+		return (0);
+	case 9:
+	case 11:
+		if (type == VCHR)
+			return (1);
+		/* FALLTHROUGH */
+	default:
+		return (0);
+	}
+	/* NOTREACHED */
+}
+
+#define MAXDEV	19
+static int chrtoblktbl[MAXDEV] =  {
+      /* VCHR */      /* VBLK */
+	/* 0 */		NODEV,
+	/* 1 */		NODEV,
+	/* 2 */		NODEV,
+	/* 3 */		NODEV,
+	/* 4 */		NODEV,
+	/* 5 */		NODEV,
+	/* 6 */		NODEV,
+	/* 7 */		NODEV,
+	/* 8 */		NODEV,
+	/* 9 */		0,
+	/* 10 */	NODEV,
+	/* 11 */	2,
+	/* 12 */	NODEV,
+	/* 13 */	NODEV,
+	/* 14 */	NODEV,
+	/* 15 */	NODEV,
+	/* 16 */	NODEV,
+	/* 17 */	NODEV,
+	/* 18 */	NODEV,
+};
+/*
+ * Routine to convert from character to block device number.
+ *
+ * A minimal stub routine can always return NODEV.
+ */
+chrtoblk(dev)
+	dev_t dev;
+{
+	int blkmaj;
+
+	if (major(dev) >= MAXDEV || (blkmaj = chrtoblktbl[major(dev)]) == NODEV)
+		return (NODEV);
+	return (makedev(blkmaj, minor(dev)));
+}

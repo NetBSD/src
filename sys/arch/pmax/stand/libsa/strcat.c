@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)strcat.c	7.1 (Berkeley) 11/15/92
- * $Id: strcat.c,v 1.1.1.1 1993/10/12 03:22:46 deraadt Exp $
+ *	from: @(#)strcat.c	8.1 (Berkeley) 6/10/93
+ *      $Id: strcat.c,v 1.2 1994/05/27 08:43:02 glass Exp $
  */
 
 #include <pmax/stand/dec_prom.h>

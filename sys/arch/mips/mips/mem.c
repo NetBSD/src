@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: mem.c 1.14 90/10/12
- * from: @(#)mem.c	7.6 (Berkeley) 10/11/92
- * $Id: mem.c,v 1.2 1994/01/16 00:42:16 deraadt Exp $
+ *
+ *	from: @(#)mem.c	8.2 (Berkeley) 3/28/94
+ *      $Id: mem.c,v 1.3 1994/05/27 08:42:13 glass Exp $
  */
 
 /*
@@ -55,7 +56,6 @@
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/vm_prot.h>
-#include <vm/vm_statistics.h>
 #include <vm/pmap.h>
 
 /*ARGSUSED*/
@@ -86,10 +86,11 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = (u_long)uio->uio_offset;
 			c = iov->iov_len;
-			if (v + c >= physmem)
+			if (v + c <= btoc(physmem))
+				v += MACH_CACHED_MEMORY_ADDR;
+			else
 				return (EFAULT);
-			error = uiomove((caddr_t)(MACH_CACHED_MEMORY_ADDR + v),
-				(int)c, uio);
+			error = uiomove((caddr_t)v, (int)c, uio);
 			continue;
 
 /* minor device 1 is kernel memory */

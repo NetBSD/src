@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University,
@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)maxine.h	7.1 (Berkeley) 11/15/92
- * $Id: maxine.h,v 1.1.1.1 1993/10/12 03:22:35 deraadt Exp $
+ *	from: @(#)maxine.h	8.1 (Berkeley) 6/10/93
+ *      $Id: maxine.h,v 1.2 1994/05/27 08:42:12 glass Exp $
  */
 
 /* 
@@ -65,7 +65,7 @@
  */
 /*
  * HISTORY
- * Log:	maxine.h,v 
+ * Log:	maxine.h,v
  * Revision 2.3  92/04/01  15:14:52  rpd
  * 	Defined pseudo slot for mappable timer.
  * 	[92/03/11  02:37:41  af]

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,11 +33,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: /sprite/src/boot/decprom/ds3100.md/RCS/start.s,
- *	v 1.1 90/02/16 16:19:39 shirriff Exp SPRITE (DECWRL)
- * from: @(#)start.s	7.5 (Berkeley) 2/15/93
- * $Id: start.s,v 1.1.1.1 1993/10/12 03:22:44 deraadt Exp $
- *
+ *	from: @(#)start.s	8.2 (Berkeley) 1/21/94
+ *      $Id: start.s,v 1.2 1994/05/27 08:42:45 glass Exp $
+ */
+
+/*
  * start.s -
  *
  *     Contains code that is the first executed at boot time.
@@ -49,6 +49,9 @@
  *	Digital Equipment Corporation makes no representations about the
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
+ *
+ * from: Header: /sprite/src/boot/decprom/ds3100.md/RCS/start.s,
+ *	v 1.1 90/02/16 16:19:39 shirriff Exp  SPRITE (DECWRL)
  */
 
 #include <machine/regdef.h>
@@ -64,21 +67,20 @@
 	.globl	start
 start:
 	.set	noreorder
-	li	v0, MACH_SR_BOOT_EXC_VEC
-	mtc0	v0, MACH_COP_0_STATUS_REG	# Disable interrupts
 	la	sp, start - START_FRAME
 	sw	zero, START_FRAME - 4(sp)	# Zero out old ra for debugger
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
-#ifdef DS3100
-	la	a3, callvec			# init call vector
-#endif
-	sw	a3, callv			# save call vector
 	move	s0, a0				# save argc
 	move	s1, a1				# save argv
+	beq	a3, 0x30464354, 1f		# jump if boot from DS5000
+	move	s3, a3				# save call vector
+	la	s3, callvec			# init call vector
+1:
 	la	a0, edata			# clear BSS
 	la	a1, end
 	jal	bzero				# bzero(edata, end - edata)
 	subu	a1, a1, a0
+	sw	s3, callv			# save call vector
 	move	a0, s0				# restore argc
 	jal	main				# main(argc, argv)
 	move	a1, s1				# restore argv

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University,
@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)asic.h	7.2 (Berkeley) 12/20/92
- * $Id: asic.h,v 1.1.1.1 1993/10/12 03:22:32 deraadt Exp $
+ *	from: @(#)asic.h	8.1 (Berkeley) 6/10/93
+ *      $Id: asic.h,v 1.2 1994/05/27 08:41:33 glass Exp $
  */
 
 /* 
@@ -65,7 +65,7 @@
  */
 /*
  * HISTORY
- * Log:	asic.h,v 
+ * Log:	asic.h,v
  * Revision 2.2  92/03/02  18:33:32  rpd
  * 	Created, from the DEC specs:
  * 	"IO Controller ASIC Functional Specifications"
@@ -239,4 +239,4 @@
  */
 #define	ASIC_SYS_ETHER_ADDRESS(base)	((base) + ASIC_SLOT_2_START)
 #define	ASIC_SYS_LANCE(base)		((base) + ASIC_SLOT_3_START)
-#endif	MIPS_ASIC_H
+#endif	/* MIPS_ASIC_H */

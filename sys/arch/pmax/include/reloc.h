@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,9 +30,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)reloc.h	7.2 (Berkeley) 2/4/93
+ *	from: @(#)reloc.h	8.1 (Berkeley) 6/10/93
+ *      $Id: reloc.h,v 1.2 1994/05/27 08:41:09 glass Exp $
+ *
  * from: Header: reloc.h,v 1.6 92/06/20 09:59:37 torek Exp
- * $Id: reloc.h,v 1.1.1.1 1993/10/12 03:22:41 deraadt Exp $
  */
 
 /*

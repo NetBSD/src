@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,6 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	from: @(#)pmioctl.h	8.1 (Berkeley) 6/10/93
+ *      $Id: pmioctl.h,v 1.2 1994/05/27 08:40:52 glass Exp $
  *
  * graphics.h --
  *
@@ -58,9 +60,9 @@
  * arising out of or in connection with the use or performance of this
  * software.
  *
- * from: SPRITE (DECWRL) Header: devSerialPmax.c, v 1.4 89/05/22 13:31:07 mnelson Exp
- * from: @(#)pmioctl.h	7.1 (Berkeley) 1/7/92
- * $Id: pmioctl.h,v 1.1.1.1 1993/10/12 03:22:41 deraadt Exp $
+ * from: Header: devSerialPmax.c,
+ *	v 1.4 89/05/22 13:31:07 mnelson Exp  SPRITE (DECWRL)
+ * $Id: pmioctl.h,v 1.2 1994/05/27 08:40:52 glass Exp $
  */
 
 #include <sys/ioctl.h>

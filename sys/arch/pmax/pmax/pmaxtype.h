@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University,
@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)pmaxtype.h	7.2 (Berkeley) 12/20/92
- * $Id: pmaxtype.h,v 1.1.1.1 1993/10/12 03:22:34 deraadt Exp $
+ *	from: @(#)pmaxtype.h	8.1 (Berkeley) 6/10/93
+ *      $Id: pmaxtype.h,v 1.2 1994/05/27 08:42:16 glass Exp $
  */
 
 /*

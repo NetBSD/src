@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,8 +36,9 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: trap.c 1.32 91/04/06
- * from: @(#)trap.c	7.14 (Berkeley) 3/8/93
- * $Id: pmax_trap.c,v 1.2 1994/01/16 00:49:47 deraadt Exp $
+ *
+ *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
+ *      $Id: pmax_trap.c,v 1.3 1994/05/27 08:42:21 glass Exp $
  */
 
 #include <sys/param.h>
@@ -79,19 +80,6 @@
 #include <sii.h>
 #include <le.h>
 #include <dc.h>
-
-/*
- * This is a kludge to allow X windows to work.
- */
-#define X_KLUGE
-
-#ifdef X_KLUGE
-#define USER_MAP_ADDR	0x4000
-#define NPTES 550
-static pt_entry_t UserMapPtes[NPTES];
-static unsigned nUserMapPtes;
-static pid_t UserMapPid;
-#endif
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
@@ -243,12 +231,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 		if ((int)vadr < 0) {
 			register pt_entry_t *pte;
 			register unsigned entry;
-#ifndef ATTR
 			register vm_offset_t pa;
-#endif
 
 			pte = kvtopte(vadr);
 			entry = pte->pt_entry;
+#ifdef DIAGNOSTIC
+			if (!(entry & PG_V) || (entry & PG_M))
+				panic("trap: ktlbmod: invalid pte");
+#endif
 			if (entry & PG_RO) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
@@ -256,15 +246,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 			}
 			entry |= PG_M;
 			pte->pt_entry = entry;
-			vadr &= PG_FRAME;
-			printf("trap: TLBupdate hi %x lo %x i %x\n", vadr,
-				entry, MachTLBUpdate(vadr, entry)); /* XXX */
-#ifdef ATTR
-			pmap_attributes[atop(entry - KERNBASE)] |= PMAP_ATTR_MOD;
-#else
+			vadr &= ~PGOFSET;
+			MachTLBUpdate(vadr, entry);
 			pa = entry & PG_FRAME;
+#ifdef ATTR
+			pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
+#else
 			if (!IS_VM_PHYSADDR(pa))
-				panic("trap: kmod");
+				panic("trap: ktlbmod: unmanaged page");
 			PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
 #endif
 			return (pc);
@@ -273,40 +262,35 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_TLB_MOD+T_USER:
 	    {
-		pmap_hash_t hp;
-#ifndef ATTR
-		vm_offset_t pa;
-#endif
-#ifdef DIAGNOSTIC
-		extern pmap_hash_t zero_pmap_hash;
-		extern pmap_t cur_pmap;
+		register pt_entry_t *pte;
+		register unsigned entry;
+		register vm_offset_t pa;
+		pmap_t pmap = &p->p_vmspace->vm_pmap;
 
-		if (cur_pmap->pm_hash == zero_pmap_hash ||
-		    cur_pmap->pm_hash == (pmap_hash_t)0)
-			panic("tlbmod");
+		if (!(pte = pmap_segmap(pmap, vadr)))
+			panic("trap: utlbmod: invalid segmap");
+		pte += (vadr >> PGSHIFT) & (NPTEPG - 1);
+		entry = pte->pt_entry;
+#ifdef DIAGNOSTIC
+		if (!(entry & PG_V) || (entry & PG_M))
+			panic("trap: utlbmod: invalid pte");
 #endif
-		hp = &((pmap_hash_t)PMAP_HASH_UADDR)[PMAP_HASH(vadr)];
-		if (((hp->pmh_pte[0].high ^ vadr) & ~PGOFSET) == 0)
-			i = 0;
-		else if (((hp->pmh_pte[1].high ^ vadr) & ~PGOFSET) == 0)
-			i = 1;
-		else
-			panic("trap: tlb umod not found");
-		if (hp->pmh_pte[i].low & PG_RO) {
+		if (entry & PG_RO) {
+			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto dofault;
 		}
-		hp->pmh_pte[i].low |= PG_M;
-		printf("trap: TLBupdate hi %x lo %x i %x\n",
-			hp->pmh_pte[i].high, hp->pmh_pte[i].low,
-			MachTLBUpdate(hp->pmh_pte[i].high, hp->pmh_pte[i].low)); /* XXX */
+		entry |= PG_M;
+		pte->pt_entry = entry;
+		vadr = (vadr & ~PGOFSET) |
+			(pmap->pm_tlbpid << VMMACH_TLB_PID_SHIFT);
+		MachTLBUpdate(vadr, entry);
+		pa = entry & PG_FRAME;
 #ifdef ATTR
-		pmap_attributes[atop(hp->pmh_pte[i].low - KERNBASE)] |=
-			PMAP_ATTR_MOD;
+		pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
 #else
-		pa = hp->pmh_pte[i].low & PG_FRAME;
 		if (!IS_VM_PHYSADDR(pa))
-			panic("trap: umod");
+			panic("trap: utlbmod: unmanaged page");
 		PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
 #endif
 		if (!USERMODE(statusReg))
@@ -353,34 +337,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 	dofault:
 	    {
 		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map = &vm->vm_map;
+		register struct vmspace *vm;
+		register vm_map_t map;
 		int rv;
 
-#ifdef X_KLUGE
-		if (p->p_pid == UserMapPid &&
-		    (va = pmax_btop(vadr - USER_MAP_ADDR)) < nUserMapPtes) {
-			register pt_entry_t *pte;
-
-			pte = &UserMapPtes[va];
-			MachTLBWriteRandom((vadr & PG_FRAME) |
-				(vm->vm_pmap.pm_tlbpid << VMMACH_TLB_PID_SHIFT),
-				pte->pt_entry);
-			return (pc);
-		}
-#endif
+		vm = p->p_vmspace;
+		map = &vm->vm_map;
 		va = trunc_page((vm_offset_t)vadr);
 		rv = vm_fault(map, va, ftype, FALSE);
-		if (rv != KERN_SUCCESS) {
-			printf("vm_fault(%x, %x, %x, 0) -> %x ADR %x PC %x RA %x\n",
-				map, va, ftype, rv, vadr, pc,
-				!USERMODE(statusReg) ? ((int *)&args)[19] :
-					p->p_md.md_regs[RA]); /* XXX */
-			printf("\tpid %d %s PC %x RA %x SP %x\n", p->p_pid,
-				p->p_comm, p->p_md.md_regs[PC],
-				p->p_md.md_regs[RA],
-				p->p_md.md_regs[SP]); /* XXX */
-		}
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -486,10 +450,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 			}
 			break;
 
-#if 0
 		case SYS___syscall:
 			/*
-			 * Like indir, but code is a quad, so as to maintain
+			 * Like syscall, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
 			code = locr0[A0 + _QUAD_LOWWORD];
@@ -517,7 +480,6 @@ trap(statusReg, causeReg, vadr, pc, args)
 				}
 			}
 			break;
-#endif
 
 		default:
 			if (code >= numsys)
@@ -616,6 +578,11 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 		/* read break instruction */
 		instr = fuiword((caddr_t)va);
+#if 0
+		printf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
+			p->p_comm, p->p_pid, instr, pc,
+			p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
+#endif
 #ifdef KADB
 		if (instr == MACH_BREAK_BRKPT || instr == MACH_BREAK_SSTEP)
 			goto err;
@@ -642,12 +609,12 @@ trap(statusReg, causeReg, vadr, pc, args)
 					FALSE);
 			}
 		}
-		if (i < 0) {
-			i = SIGTRAP;
-			break;
-		}
+		if (i < 0)
+			printf("Warning: can't restore instruction at %x: %x\n",
+				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
 		p->p_md.md_ss_addr = 0;
-		goto out;
+		i = SIGTRAP;
+		break;
 	    }
 
 	case T_RES_INST+T_USER:
@@ -722,8 +689,6 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		panic("trap");
 	}
-	printf("trap: pid %d %s sig %d adr %x pc %x ra %x\n", p->p_pid,
-		p->p_comm, i, vadr, pc, p->p_md.md_regs[RA]); /* XXX */
 	trapsignal(p, i, ucode);
 out:
 	/*
@@ -731,8 +696,8 @@ out:
 	 */
 	/* take pending signals */
 	while ((i = CURSIG(p)) != 0)
-		psig(i);
-	p->p_pri = p->p_usrpri;
+		postsig(i);
+	p->p_priority = p->p_usrpri;
 	astpending = 0;
 	if (want_resched) {
 		int s;
@@ -741,29 +706,29 @@ out:
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * If that happened after we put ourselves on the run queue
+		 * but before we switched, we might not be on the queue
+		 * indicated by our priority.
 		 */
 		s = splstatclock();
-		setrq(p);
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		splx(s);
 		while ((i = CURSIG(p)) != 0)
-			psig(i);
+			postsig(i);
 	}
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
 	 */
-	if (p->p_flag & SPROFIL) {
+	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
 		addupc_task(p, pc, (int)(p->p_sticks - sticks) * psratio);
 	}
 
-	curpri = p->p_pri;
+	curpriority = p->p_priority;
 	return (pc);
 }
 
@@ -793,6 +758,8 @@ interrupt(statusReg, causeReg, pc)
 
 	cnt.v_intr++;
 	mask = causeReg & statusReg;	/* pending interrupts & enable mask */
+	if (pmax_hardware_intr)
+		splx((*pmax_hardware_intr)(mask, pc, statusReg, causeReg));
 	if (mask & MACH_INT_MASK_5) {
 		if (!USERMODE(statusReg)) {
 #ifdef DEBUG
@@ -804,8 +771,6 @@ interrupt(statusReg, causeReg, pc)
 		} else
 			MachFPInterrupt(statusReg, causeReg, pc);
 	}
-	if (pmax_hardware_intr)
-		(*pmax_hardware_intr)(mask, pc, statusReg, causeReg);
 	if (mask & MACH_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		cnt.v_soft++;
@@ -817,12 +782,10 @@ interrupt(statusReg, causeReg, pc)
 		clearsoftnet();
 		cnt.v_soft++;
 #ifdef INET
-#ifdef NETISR_ARP
 		if (netisr & (1 << NETISR_ARP)) {
 			netisr &= ~(1 << NETISR_ARP);
 			arpintr();
 		}
-#endif
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
@@ -962,38 +925,37 @@ kmin_intr(mask, pc, statusReg, causeReg)
 {
 	register u_int intr;
 	register volatile struct chiptime *c = Mach_clock_addr;
-	register volatile u_int *imaskp =
+	volatile u_int *imaskp =
 		(volatile u_int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_IMSK);
-	register volatile u_int *intrp =
+	volatile u_int *intrp =
 		(volatile u_int *)MACH_PHYS_TO_UNCACHED(KMIN_REG_INTR);
 	unsigned int old_mask;
 	struct clockframe cf;
 	int temp;
 	static int user_warned = 0;
 
-	old_mask = (*imaskp & kmin_tc3_imask);
+	old_mask = *imaskp & kmin_tc3_imask;
+	*imaskp = old_mask;
 
 	if (mask & MACH_INT_MASK_4)
 		(*callv->halt)((int *)0, 0);
 	if (mask & MACH_INT_MASK_3) {
+		intr = *intrp;
 		/* masked interrupts are still observable */
-		intr = (*intrp & old_mask);
-		*intrp = 0;
-
-		/*
-		 * Set things up so that the asic
-		 * interrupts can be flipped on after being serviced.
-		 */
-		*imaskp = 0;
-		MachEmptyWriteBuffer();
-		splx(MACH_INT_MASK_3 | MACH_SR_INT_ENA_CUR);
-
+		intr &= old_mask;
+	
+		if (intr & KMIN_INTR_SCSI_PTR_LOAD) {
+			*intrp &= ~KMIN_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
-		if (intr & (KMIN_INTR_SCSI_PTR_LOAD |
-			KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E)) {
-			asc_dma_intr(intr);
-		}
+			asc_dma_intr();
 #endif
+		}
+	
+		if (intr & (KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E))
+			*intrp &= ~(KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E);
+
+		if (intr & KMIN_INTR_LANCE_READ_E)
+			*intrp &= ~KMIN_INTR_LANCE_READ_E;
 
 		if (intr & KMIN_INTR_TIMEOUT)
 			kn02ba_errintr();
@@ -1004,7 +966,6 @@ kmin_intr(mask, pc, statusReg, causeReg)
 			cf.sr = statusReg;
 			hardclock(&cf);
 		}
-		*imaskp = KMIN_INTR_CLOCK;	/* Re-enable clock */
 	
 		if ((intr & KMIN_INTR_SCC_0) &&
 			tc_slot_info[KMIN_SCC0_SLOT].intr)
@@ -1016,12 +977,6 @@ kmin_intr(mask, pc, statusReg, causeReg)
 			(*(tc_slot_info[KMIN_SCC1_SLOT].intr))
 			(tc_slot_info[KMIN_SCC1_SLOT].unit);
 	
-		/*
-		 * Re-enable serial ports, since they are sensitive to
-		 * interrupt latency.
-		 */
-		*imaskp = (KMIN_INTR_CLOCK | KMIN_INTR_SCC_0 | KMIN_INTR_SCC_1);
-
 		if ((intr & KMIN_INTR_SCSI) &&
 			tc_slot_info[KMIN_SCSI_SLOT].intr)
 			(*(tc_slot_info[KMIN_SCSI_SLOT].intr))
@@ -1047,12 +1002,7 @@ kmin_intr(mask, pc, statusReg, causeReg)
 		(*tc_slot_info[1].intr)(tc_slot_info[1].unit);
 	if ((mask & MACH_INT_MASK_2) && tc_slot_info[2].intr)
 		(*tc_slot_info[2].intr)(tc_slot_info[2].unit);
-
-	/*
-	 * Re-enable all asic interrupts.
-	 */
-	*imaskp = old_mask;
-	return ((statusReg & MACH_HARD_INT_MASK) |
+	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
 		MACH_SR_INT_ENA_CUR);
 }
 
@@ -1067,15 +1017,16 @@ xine_intr(mask, pc, statusReg, causeReg)
 {
 	register u_int intr;
 	register volatile struct chiptime *c = Mach_clock_addr;
-	register volatile u_int *imaskp = (volatile u_int *)
+	volatile u_int *imaskp = (volatile u_int *)
 		MACH_PHYS_TO_UNCACHED(XINE_REG_IMSK);
-	register volatile u_int *intrp = (volatile u_int *)
+	volatile u_int *intrp = (volatile u_int *)
 		MACH_PHYS_TO_UNCACHED(XINE_REG_INTR);
 	u_int old_mask;
 	struct clockframe cf;
 	int temp;
 
 	old_mask = *imaskp & xine_tc3_imask;
+	*imaskp = old_mask;
 
 	if (mask & MACH_INT_MASK_4)
 		(*callv->halt)((int *)0, 0);
@@ -1086,45 +1037,28 @@ xine_intr(mask, pc, statusReg, causeReg)
 		cf.pc = pc;
 		cf.sr = statusReg;
 		hardclock(&cf);
+		causeReg &= ~MACH_INT_MASK_1;
+		/* reenable clock interrupts */
+		splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
 	}
-
-	/*
-	 * And the profiling clock.
-	 */
-	if (mask & MACH_INT_MASK_0) {
-		*(volatile u_int *)MACH_PHYS_TO_UNCACHED(XINE_REG_MER) &=
-			~XINE_MER_10_1_MS_IP;
-		cf.pc = pc;
-		cf.sr = statusReg;
-		statclock(&cf);
-	}
-
-	if (mask & MACH_INT_MASK_2)
-		kn02ba_errintr();
-
-	/*
-	 * Service all I/O ASIC interrupts.
-	 */
 	if (mask & MACH_INT_MASK_3) {
+		intr = *intrp;
 		/* masked interrupts are still observable */
-		intr = (*intrp & old_mask);
-		*intrp = 0;
+		intr &= old_mask;
 
-		/*
-		 * Re-enable clock interrupts.
-		 */
-		*imaskp = 0;
-		MachEmptyWriteBuffer();
-		splx((statusReg & MACH_HARD_INT_MASK) |
-			MACH_SR_INT_ENA_CUR);
-
+		if (intr & XINE_INTR_SCSI_PTR_LOAD) {
+			*intrp &= ~XINE_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
-		if (intr & (XINE_INTR_SCSI_PTR_LOAD |
-			XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E)) {
-			asc_dma_intr(intr);
-		}
+			asc_dma_intr();
 #endif
+		}
 	
+		if (intr & (XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E))
+			*intrp &= ~(XINE_INTR_SCSI_OVRUN | XINE_INTR_SCSI_READ_E);
+
+		if (intr & XINE_INTR_LANCE_READ_E)
+			*intrp &= ~XINE_INTR_LANCE_READ_E;
+
 		if ((intr & XINE_INTR_SCC_0) &&
 			tc_slot_info[XINE_SCC0_SLOT].intr)
 			(*(tc_slot_info[XINE_SCC0_SLOT].intr))
@@ -1135,24 +1069,6 @@ xine_intr(mask, pc, statusReg, causeReg)
 			(*(tc_slot_info[XINE_DTOP_SLOT].intr))
 			(tc_slot_info[XINE_DTOP_SLOT].unit);
 	
-		/*
-		 * Re-enable the serial and desktop bus interrupts.
-		 */
-		*imaskp = (XINE_INTR_SCC_0 | XINE_INTR_DTOP_RX);
-
-		if ((intr & XINE_INTR_LANCE) &&
-			tc_slot_info[XINE_LANCE_SLOT].intr)
-			(*(tc_slot_info[XINE_LANCE_SLOT].intr))
-			(tc_slot_info[XINE_LANCE_SLOT].unit);
-	
-#ifdef notdef
-		/*
-		 * Re-enable the lance too.
-		 */
-		*imaskp = (XINE_INTR_SCC_0 | XINE_INTR_DTOP_RX |
-			XINE_INTR_LANCE);
-#endif
-
 		if ((intr & XINE_INTR_FLOPPY) &&
 			tc_slot_info[XINE_FLOPPY_SLOT].intr)
 			(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
@@ -1178,12 +1094,15 @@ xine_intr(mask, pc, statusReg, causeReg)
 			(*(tc_slot_info[XINE_SCSI_SLOT].intr))
 			(tc_slot_info[XINE_SCSI_SLOT].unit);
 	
-		/*
-		 * Turn the interrupts all back on.
-		 */
-		*imaskp = old_mask;
+		if ((intr & XINE_INTR_LANCE) &&
+			tc_slot_info[XINE_LANCE_SLOT].intr)
+			(*(tc_slot_info[XINE_LANCE_SLOT].intr))
+			(tc_slot_info[XINE_LANCE_SLOT].unit);
+	
 	}
-	return ((statusReg & MACH_HARD_INT_MASK) |
+	if (mask & MACH_INT_MASK_2)
+		kn02ba_errintr();
+	return ((statusReg & ~causeReg & MACH_HARD_INT_MASK) |
 		MACH_SR_INT_ENA_CUR);
 }
 
@@ -1307,11 +1226,11 @@ softintr(statusReg, pc)
 	cnt.v_soft++;
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
-		psig(sig);
-	p->p_pri = p->p_usrpri;
+		postsig(sig);
+	p->p_priority = p->p_usrpri;
 	astpending = 0;
-	if (p->p_flag & SOWEUPC) {
-		p->p_flag &= ~SOWEUPC;
+	if (p->p_flag & P_OWEUPC) {
+		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
 	if (want_resched) {
@@ -1321,19 +1240,19 @@ softintr(statusReg, pc)
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * If that happened after we put ourselves on the run queue
+		 * but before we switched, we might not be on the queue
+		 * indicated by our priority.
 		 */
 		s = splstatclock();
-		setrq(p);
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		splx(s);
 		while ((sig = CURSIG(p)) != 0)
-			psig(sig);
+			postsig(sig);
 	}
-	curpri = p->p_pri;
+	curpriority = p->p_priority;
 }
 
 #ifdef DEBUG
@@ -1361,53 +1280,6 @@ trapDump(msg)
 	bzero(trapdebug, sizeof(trapdebug));
 	trp = trapdebug;
 	splx(s);
-}
-#endif
-
-#ifdef X_KLUGE
-/*
- * This is a kludge to allow X windows to work.
- */
-caddr_t
-vmUserMap(size, pa)
-	int size;
-	unsigned pa;
-{
-	register caddr_t v;
-	unsigned off, entry;
-
-	if (nUserMapPtes == 0)
-		UserMapPid = curproc->p_pid;
-	else if (UserMapPid != curproc->p_pid)
-		return ((caddr_t)0);
-	off = pa & PGOFSET;
-	size = btoc(off + size);
-	if (nUserMapPtes + size > NPTES)
-		return ((caddr_t)0);
-	v = (caddr_t)(USER_MAP_ADDR + pmax_ptob(nUserMapPtes) + off);
-	entry = (pa & 0x9ffff000) | PG_V | PG_M;
-	if (pa >= MACH_UNCACHED_MEMORY_ADDR)
-		entry |= PG_N;
-	while (size > 0) {
-		UserMapPtes[nUserMapPtes].pt_entry = entry;
-		entry += NBPG;
-		nUserMapPtes++;
-		size--;
-	}
-	return (v);
-}
-
-vmUserUnmap()
-{
-	int id;
-
-	nUserMapPtes = 0;
-	if (UserMapPid == curproc->p_pid) {
-		id = curproc->p_vmspace->vm_pmap.pm_tlbpid;
-		if (id >= 0)
-			MachTLBFlushPID(id);
-	}
-	UserMapPid = 0;
 }
 #endif
 
@@ -1449,10 +1321,45 @@ pmax_errintr()
 static void
 kn02_errintr()
 {
+	u_int erradr, chksyn, physadr;
+	int i;
 
-	printf("erradr %x\n", *(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR));
-	*(unsigned *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR) = 0;
+	erradr = *(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR);
+	chksyn = *(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN);
+	*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_ERRADR) = 0;
 	MachEmptyWriteBuffer();
+
+	if (!(erradr & KN02_ERR_VALID))
+		return;
+	/* extract the physical word address and compensate for pipelining */
+	physadr = erradr & KN02_ERR_ADDRESS;
+	if (!(erradr & KN02_ERR_WRITE))
+		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
+	physadr <<= 2;
+	printf("%s memory %s %s error at 0x%x\n",
+		(erradr & KN02_ERR_CPU) ? "CPU" : "DMA",
+		(erradr & KN02_ERR_WRITE) ? "write" : "read",
+		(erradr & KN02_ERR_ECCERR) ? "ECC" : "timeout",
+		physadr);
+	if (erradr & KN02_ERR_ECCERR) {
+		*(u_int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CHKSYN) = 0;
+		MachEmptyWriteBuffer();
+		printf("ECC 0x%x\n", chksyn);
+
+		/* check for a corrected, single bit, read error */
+		if (!(erradr & KN02_ERR_WRITE)) {
+			if (physadr & 0x4) {
+				/* check high word */
+				if (chksyn & KN02_ECC_SNGHI)
+					return;
+			} else {
+				/* check low word */
+				if (chksyn & KN02_ECC_SNGLO)
+					return;
+			}
+		}
+	}
+	panic("Mem error interrupt");
 }
 
 #ifdef DS5000_240
@@ -1519,12 +1426,12 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	int condition;
 	extern unsigned GetBranchDest();
 
-#if 0
-	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
-		*instPC, fpcCSR);
-#endif
 
 	inst = *(InstFmt *)instPC;
+#if 0
+	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
+		inst.word, fpcCSR); /* XXX */
+#endif
 	switch ((int)inst.JType.op) {
 	case OP_SPECIAL:
 		switch ((int)inst.RType.func) {
@@ -1625,7 +1532,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 		retAddr = instPC + 4;
 	}
 #if 0
-	printf("Target addr=%x\n", retAddr);
+	printf("Target addr=%x\n", retAddr); /* XXX */
 #endif
 	return (retAddr);
 }
@@ -1650,7 +1557,7 @@ cpu_singlestep(p)
 	int i;
 
 	/* compute next address after current location */
-	va = MachEmulateBranch(locr0, locr0[PC], 0, 1);
+	va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], 1);
 	if (p->p_md.md_ss_addr || p->p_md.md_ss_addr == va ||
 	    !useracc((caddr_t)va, 4, B_READ)) {
 		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
@@ -1676,9 +1583,11 @@ cpu_singlestep(p)
 	}
 	if (i < 0)
 		return (EFAULT);
-	printf("SS %s (%d): breakpoint set at %x: %x (pc %x)\n",
+#if 0
+	printf("SS %s (%d): breakpoint set at %x: %x (pc %x) br %x\n",
 		p->p_comm, p->p_pid, p->p_md.md_ss_addr,
-		p->p_md.md_ss_instr, locr0[PC]); /* XXX */
+		p->p_md.md_ss_instr, locr0[PC], fuword((caddr_t)va)); /* XXX */
+#endif
 	return (0);
 }
 
@@ -1698,14 +1607,14 @@ kdbpeek(addr)
  * Print a stack backtrace.
  */
 void
-stacktrace()
+stacktrace(a0, a1, a2, a3)
+	int a0, a1, a2, a3;
 {
 	unsigned pc, sp, fp, ra, va, subr;
-	int a0, a1, a2, a3;
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
-	int regs[8];
+	int regs[3];
 	extern setsoftclock();
 	extern char start[], edata[];
 
@@ -1713,13 +1622,9 @@ stacktrace()
 
 	/* get initial values from the exception frame */
 	sp = regs[0];
-	pc = regs[2];
+	pc = regs[1];
 	ra = 0;
-	a0 = regs[3];
-	a1 = regs[4];
-	a2 = regs[5];
-	a3 = regs[6];
-	fp = regs[7];
+	fp = regs[2];
 
 loop:
 	/* check for current PC in the kernel interrupt handler code */

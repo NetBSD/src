@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,13 +33,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from:@(#)types.h	7.2 (Berkeley) 7/14/92
- * $Id: types.h,v 1.2 1994/03/14 02:12:06 cgd Exp $
+ *	from: @(#)types.h	8.3 (Berkeley) 1/5/94
+ *      $Id: types.h,v 1.3 1994/05/27 08:41:16 glass Exp $
  */
 
 #ifndef	_MACHTYPES_H_
 #define	_MACHTYPES_H_
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 typedef struct _physadr {
 	int r[1];
 } *physadr;
@@ -47,28 +48,16 @@ typedef struct _physadr {
 typedef struct label_t {
 	int val[12];
 } label_t;
-
-typedef	u_long	vm_offset_t;
-typedef	u_long	vm_size_t;
-
-#ifdef	__GNUC__	/* XXX SHOULD GO AWAY */
-typedef	char			s1byte_t;	/* Basic data types. */
-typedef	unsigned char		u1byte_t;
-typedef	short			s2byte_t;
-typedef	unsigned short		u2byte_t;
-typedef	long			s4byte_t;
-typedef	unsigned long		u4byte_t;
-typedef	long long		s8byte_t;
-typedef	unsigned long long	u8byte_t;
-typedef	float			f4byte_t;
-typedef	double			f8byte_t;
 #endif
+
+typedef	unsigned long	vm_offset_t;
+typedef	unsigned long	vm_size_t;
 
 /*
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
  */
-typedef	signed char		   int8_t;
+typedef	__signed char		   int8_t;
 typedef	unsigned char		 u_int8_t;
 typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;

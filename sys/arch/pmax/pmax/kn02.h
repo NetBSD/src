@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * The Mach Operating System project at Carnegie-Mellon University,
@@ -34,8 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)kn02.h	7.1 (Berkeley) 11/15/92
- * $Id: kn02.h,v 1.1.1.1 1993/10/12 03:22:35 deraadt Exp $
+ *	from: @(#)kn02.h	8.1 (Berkeley) 6/10/93
+ *      $Id: kn02.h,v 1.2 1994/05/27 08:42:01 glass Exp $
  */
 
 /* 
@@ -251,4 +251,4 @@
 #define KN02_ECC_VLDHI		0x80000000	/* info valid for  "	*/
 
 
-#endif	MIPS_KN02_H
+#endif	/* MIPS_KN02_H */

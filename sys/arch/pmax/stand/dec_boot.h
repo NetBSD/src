@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dec_boot.h	7.2 (Berkeley) 4/19/92
+ *	from: @(#)dec_boot.h	8.1 (Berkeley) 6/10/93
+ *      $Id: dec_boot.h,v 1.2 1994/05/27 08:42:34 glass Exp $
  *
  * devDiskLabel.h --
  *
@@ -43,8 +44,9 @@
  *      number of partitions.  Each partition is identified to the drive
  *      by a different unit number.
  *
- * from: $Header: /sprite/src/kernel/dev/RCS/devDiskLabel.h,
- *	v 9.4 90/03/01 12:22:36 jhh Exp $ SPRITE (Berkeley)
+ * from: Header: /sprite/src/kernel/dev/RCS/devDiskLabel.h,
+ *	v 9.4 90/03/01 12:22:36 jhh Exp  SPRITE (Berkeley)
+ * $Id: dec_boot.h,v 1.2 1994/05/27 08:42:34 glass Exp $
  */
 
 /*
@@ -72,5 +74,34 @@ struct Dec_DiskBoot {
 	struct	Dec_BootMap map[61];	/* boot program sections. */
 };
  
-#define DEC_BOOT_MAGIC	0x02757a
-#define DEC_BOOT_SECTOR	0
+#define DEC_BOOT_MAGIC		0x0002757a
+#define DEC_BOOT_SECTOR		0
+
+/*
+ * DEC_NUM_DISK_PARTS is the number of partitions that are recorded in
+ * the label information.  The size of the padding in the Dec_DiskLabel
+ * type is dependent on this number...
+ */
+#define DEC_NUM_DISK_PARTS	8
+
+/*
+ * A disk is divided into partitions and this type specifies where a
+ * partition starts and how many bytes it contains.
+ */
+typedef struct Dec_DiskMap {
+	int	numBlocks;	/* Number of 512 byte blocks in partition. */
+	int	startBlock;	/* Start of partition in blocks. */
+} Dec_DiskMap;
+
+/*
+ * Label information on the 31st (DEC_LABEL_SECTOR) sector.
+ */
+typedef struct Dec_DiskLabel {
+    char	pad0[440];		/* DIFFERENT from sprite!!! */
+    int		magic;			/* DEC_LABEL_MAGIC */
+    int		isPartitioned;		/* 1 if disk is partitioned. */
+    Dec_DiskMap map[DEC_NUM_DISK_PARTS]; /* Indicates disk partitions. */
+} Dec_DiskLabel;
+
+#define DEC_LABEL_MAGIC		0x00032957
+#define DEC_LABEL_SECTOR	31

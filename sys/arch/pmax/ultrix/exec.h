@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,10 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dec_exec.h	8.1 (Berkeley) 6/10/93
- *      $Id: dec_exec.h,v 1.2 1994/05/27 08:42:35 glass Exp $
+ *	from: @(#)exec.h	8.1 (Berkeley) 6/10/93
+ *      $Id: exec.h,v 1.1 1994/05/27 08:43:18 glass Exp $
  */
-
 
 /*
  * Portions of this file are subject to the following copyright notice:
@@ -52,11 +48,49 @@
 
 /*
  * /sprite/src/kernel/proc/ds3100.md/RCS/procMach.h,v 9.3 90/02/20 15:35:50
- * shirriff Exp  SPRITE (Berkeley)
+ * shirriff Exp SPRITE (Berkeley)
+ */
+
+/* Size of a page in an object file. */
+#define	__LDPGSZ	4096
+
+/* Valid magic number check. */
+#define	N_BADMAG(ex) \
+	((ex).a_magic != NMAGIC && (ex).a_magic != OMAGIC && \
+	    (ex).a_magic != ZMAGIC)
+
+/* Address of the bottom of the text segment. */
+#define N_TXTADDR(ex)	0x400000
+
+/* Address of the bottom of the data segment. */
+/* NOT DEFINED FOR THE MIPS. */
+
+/* Text segment offset. */
+#define	__N_TXTOFF_ROUND(ex) \
+	((ex).ex_aout.verStamp < 23 ? 7 : 15)
+#define	N_TXTOFF(ex) \
+	((ex).ex_aout.magic == ZMAGIC ? 0 : (sizeof(struct exec) + \
+	    (ex).ex_fhdr.numSections * sizeof(ProcSectionHeader) + \
+	    __N_TXTOFF_ROUND(ex)) & ~__N_TXTOFF_ROUND(ex))
+
+/* Data segment offset. */
+#define N_DATOFF(ex) \
+	(N_TXTOFF(ex) + (ex).ex_aout.codeSize)
+
+/* Symbol table offset. */
+/* NOT DEFINED FOR THE MIPS. */
+
+/* String table offset. */
+/* NOT DEFINED FOR THE MIPS. */
+
+/*
+ * XXX
+ * The ProcFileHeader structure and the ProcAOUTHeader structure should be
+ * folded together into a single struct exec.
  */
 
 /* Description of the COFF section. */
-struct coff_exec {
+typedef struct {
 #define	COFF_MAGIC	0x0162
 	u_short	magic;		/* The magic number. */
 
@@ -66,9 +100,14 @@ struct coff_exec {
 	long	numSyms;	/* Size of symbolic header. */
 	u_short	optHeader;	/* Size of optional header. */
 	u_short	flags;		/* Flags. */
+} ProcFileHeader;
 
 /* Description of the a.out section. */
-	short	aout_magic;	/* Magic number. */
+typedef struct {
+#define	OMAGIC	0407		/* old impure format */
+#define	NMAGIC	0410		/* read-only text */
+#define	ZMAGIC	0413		/* demand load format */
+	short	magic;		/* Magic number. */
 
 	short	verStamp;	/* Version stamp. */
 	long	codeSize;	/* Code size in bytes. */
@@ -81,7 +120,7 @@ struct coff_exec {
 	long	gprMask;	/* General purpose register mask. */
 	long	cprMask[4];	/* Co-processor register masks. */
 	long	gpValue;	/* The gp value for this object. */
-};
+} ProcAOUTHeader;
 
 /* Section header. */
 typedef struct {
@@ -96,3 +135,14 @@ typedef struct {
 	u_short	numLnno;	/* Numberof gp tables. */
 	long	flags;		/* Section flags. */
 } ProcSectionHeader;
+
+/* Description of the object file header. */
+struct exec {
+	ProcFileHeader	ex_fhdr;
+	ProcAOUTHeader	ex_aout;
+};
+#define a_magic	ex_aout.magic
+#define a_text	ex_aout.codeSize
+#define a_data	ex_aout.heapSize
+#define a_bss	ex_aout.bssSize
+#define a_entry	ex_aout.entry
