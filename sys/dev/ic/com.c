@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.115 1997/10/19 11:45:33 explorer Exp $	*/
+/*	$NetBSD: com.c,v 1.116 1997/10/19 14:26:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -70,6 +70,7 @@
 
 /*
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
+ * Supports automatic hardware flow control on StarTech ST16C650A UART
  */
 
 #include "rnd.h"
@@ -98,6 +99,7 @@
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #include <dev/ic/ns16550reg.h>
+#include <dev/ic/st16650reg.h>
 #ifdef COM_HAYESP
 #include <dev/ic/hayespreg.h>
 #endif
@@ -348,6 +350,7 @@ com_attach_subr(sc)
 	int iobase = sc->sc_iobase;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int8_t lcr;
 #ifdef COM_HAYESP
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
@@ -403,7 +406,6 @@ com_attach_subr(sc)
 	/* No ESP; look for other things. */
 	if (*hayespp == 0) {
 #endif
-
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
 	bus_space_write_1(iot, ioh, com_fifo,
@@ -414,8 +416,39 @@ com_attach_subr(sc)
 		if (ISSET(bus_space_read_1(iot, ioh, com_fifo), FIFO_TRIGGER_14)
 		    == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
-			printf(": ns16550a, working fifo\n");
-			sc->sc_fifolen = 16;
+
+			/*
+			 * IIR changes into the EFR if LCR is set to LCR_EERS
+			 * on 16650s. We also know IIR != 0 at this point.
+			 * Write 0 into the EFR, and read it. If the result
+			 * is 0, we have a 16650.
+			 *
+			 * Older 16650s were broken; the test to detect them
+			 * is taken from the Linux driver. Apparently
+			 * setting DLAB enable gives access to the EFR on
+			 * these chips.
+			 */
+			lcr = bus_space_read_1(iot, ioh, com_lcr);
+			bus_space_write_1(iot, ioh, com_lcr, LCR_EERS);
+			bus_space_write_1(iot, ioh, com_efr, 0);
+			if (bus_space_read_1(iot, ioh, com_efr) == 0) {
+				bus_space_write_1(iot, ioh, com_lcr,
+				    lcr | LCR_DLAB);
+				if (bus_space_read_1(iot, ioh, com_efr) == 0) {
+					CLR(sc->sc_hwflags, COM_HW_FIFO);
+					sc->sc_fifolen = 0;
+					printf(": st16650, broken fifo\n");
+				} else {
+					SET(sc->sc_hwflags, COM_HW_FLOW);
+					printf(": st16650a, working fifo\n");
+					sc->sc_fifolen = 32;
+				}
+			} else {
+				printf(": ns16550a, working fifo\n");
+				sc->sc_fifolen = 16;
+			}
+
+			bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
 		} else
 			printf(": ns16550, broken fifo\n");
 	else
@@ -950,6 +983,7 @@ comparam(tp, t)
 		sc->sc_msr_cts = MSR_CTS;
 		sc->sc_r_hiwat = RXHIWAT;
 		sc->sc_r_lowat = RXLOWAT;
+		sc->sc_efr = EFR_AUTORTS | EFR_AUTOCTS;
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
 		/*
 		 * For DTR/DCD flow control, make sure we don't toggle DTR for
@@ -960,6 +994,7 @@ comparam(tp, t)
 		sc->sc_msr_cts = MSR_DCD;
 		sc->sc_r_hiwat = RXHIWAT;
 		sc->sc_r_lowat = RXLOWAT;
+		sc->sc_efr = 0;
 	} else {
 		/*
 		 * If no flow control, then always set RTS.  This will make
@@ -971,6 +1006,7 @@ comparam(tp, t)
 		sc->sc_msr_cts = 0;
 		sc->sc_r_hiwat = 0;
 		sc->sc_r_lowat = 0;
+		sc->sc_efr = 0;
 		if (ISSET(sc->sc_mcr, MCR_DTR))
 			SET(sc->sc_mcr, MCR_RTS);
 		else
@@ -1082,6 +1118,10 @@ com_loadchannelregs(sc)
 
 	bus_space_write_1(iot, ioh, com_ier, 0);
 
+	if (ISSET(sc->sc_hwflags, COM_HW_FLOW)) {
+		bus_space_write_1(iot, ioh, com_lcr, LCR_EERS);
+		bus_space_write_1(iot, ioh, com_efr, sc->sc_efr);
+	}
 	bus_space_write_1(iot, ioh, com_lcr, sc->sc_lcr | LCR_DLAB);
 	bus_space_write_1(iot, ioh, com_dlbl, sc->sc_dlbl);
 	bus_space_write_1(iot, ioh, com_dlbh, sc->sc_dlbh);
@@ -1689,6 +1729,8 @@ cominit(iot, iobase, rate, frequency, cflag, iohp)
 	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		return (ENOMEM); /* ??? */
 
+	bus_space_write_1(iot, ioh, com_lcr, LCR_EERS);
+	bus_space_write_1(iot, ioh, com_efr, 0);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_DLAB);
 	rate = comspeed(rate, frequency);
 	bus_space_write_1(iot, ioh, com_dlbl, rate);
