@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.3 2002/03/24 18:21:24 uch Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.4 2002/05/15 17:09:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -57,6 +57,7 @@ void		gaps_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 int		gaps_bus_maxdevs(void *, int);
 pcitag_t	gaps_make_tag(void *, int, int, int);
+void		gaps_decompose_tag(void *, pcitag_t, int *, int *, int *);
 pcireg_t	gaps_conf_read(void *, pcitag_t, int);
 void		gaps_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -76,6 +77,7 @@ gaps_pci_init(struct gaps_softc *sc)
 	pc->pc_attach_hook = gaps_attach_hook;
 	pc->pc_bus_maxdevs = gaps_bus_maxdevs;
 	pc->pc_make_tag = gaps_make_tag;
+	pc->pc_decompose_tag = gaps_decompose_tag;
 	pc->pc_conf_read = gaps_conf_read;
 	pc->pc_conf_write = gaps_conf_write;
 	pc->pc_conf_v = sc;
@@ -124,6 +126,31 @@ gaps_make_tag(void *v, int bus, int dev, int func)
 		return (GAPS_PCITAG_MAGIC);
 
 	return (0);
+}
+
+void
+gaps_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
+{
+	int b, d, f;
+
+	if (tag == GAPS_PCITAG_MAGIC)
+		b = d = f = 0;
+	else {
+		/*
+		 * Invalid for GAPS.  These values ensure that a valid
+		 * tag cannot be built.
+		 */
+		b = 0xff;
+		d = 0x1f;
+		f = 0x7;
+	}
+
+	if (bp != NULL)
+		*bp = b;
+	if (dp != NULL)
+		*dp = d;
+	if (fp != NULL)
+		*fp = f;
 }
 
 pcireg_t
