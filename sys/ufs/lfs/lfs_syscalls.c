@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.81 2003/02/18 02:00:08 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.82 2003/02/20 04:27:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.81 2003/02/18 02:00:08 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.82 2003/02/20 04:27:25 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -213,19 +213,19 @@ sys_lfs_markv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_daddr     = blkiov15[i].bi_daddr;
 		blkiov[i].bi_segcreate = blkiov15[i].bi_segcreate;
 		blkiov[i].bi_version   = blkiov15[i].bi_version;
-		blkiov[i].bi_bp        = blkiov15[i].bi_bp;
+		blkiov[i].bi_bp	       = blkiov15[i].bi_bp;
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
 	if ((error = lfs_markv(l->l_proc, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
-			blkiov15[i].bi_inode     = blkiov[i].bi_inode;
-			blkiov15[i].bi_lbn       = blkiov[i].bi_lbn;
-			blkiov15[i].bi_daddr     = blkiov[i].bi_daddr;
+			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
+			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
+			blkiov15[i].bi_daddr	 = blkiov[i].bi_daddr;
 			blkiov15[i].bi_segcreate = blkiov[i].bi_segcreate;
-			blkiov15[i].bi_version   = blkiov[i].bi_version;
-			blkiov15[i].bi_bp        = blkiov[i].bi_bp;
-			blkiov15[i].bi_size      = blkiov[i].bi_size;
+			blkiov15[i].bi_version	 = blkiov[i].bi_version;
+			blkiov15[i].bi_bp	 = blkiov[i].bi_bp;
+			blkiov15[i].bi_size	 = blkiov[i].bi_size;
 		}
 		copyout(blkiov15, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO_15));
@@ -384,7 +384,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				 * Inode was locked.  This is
 				 * recoverable: just clean the rest of
 				 * this segment, and let the cleaner try
-				 * again with another.  (When the
+				 * again with another.	(When the
 				 * cleaner runs again, this segment will
 				 * sort high on the list, since it is
 				 * now almost entirely empty.) But, we
@@ -476,7 +476,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 * If we get to here, then we are keeping the block.  If
 		 * it is an indirect block, we want to actually put it
 		 * in the buffer cache so that it can be updated in the
-		 * finish_meta section.  If it's not, we need to
+		 * finish_meta section.	 If it's not, we need to
 		 * allocate a fake buffer so that writeseg can perform
 		 * the copyin and write the buffer.
 		 */
@@ -497,7 +497,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				/*
 				 * The block in question was not found
 				 * in the cache; i.e., the block that
-				 * getblk() returned is empty.  So, we
+				 * getblk() returned is empty.	So, we
 				 * can (and should) copy in the
 				 * contents, because we've already
 				 * determined that this was the right
@@ -685,19 +685,19 @@ sys_lfs_bmapv(struct lwp *l, void *v, register_t *retval)
 		blkiov[i].bi_daddr     = blkiov15[i].bi_daddr;
 		blkiov[i].bi_segcreate = blkiov15[i].bi_segcreate;
 		blkiov[i].bi_version   = blkiov15[i].bi_version;
-		blkiov[i].bi_bp        = blkiov15[i].bi_bp;
+		blkiov[i].bi_bp	       = blkiov15[i].bi_bp;
 		blkiov[i].bi_size      = blkiov15[i].bi_size;
 	}
 
 	if ((error = lfs_bmapv(p, &fsid, blkiov, blkcnt)) == 0) {
 		for (i = 0; i < blkcnt; i++) {
-			blkiov15[i].bi_inode     = blkiov[i].bi_inode;
-			blkiov15[i].bi_lbn       = blkiov[i].bi_lbn;
-			blkiov15[i].bi_daddr     = blkiov[i].bi_daddr;
+			blkiov15[i].bi_inode	 = blkiov[i].bi_inode;
+			blkiov15[i].bi_lbn	 = blkiov[i].bi_lbn;
+			blkiov15[i].bi_daddr	 = blkiov[i].bi_daddr;
 			blkiov15[i].bi_segcreate = blkiov[i].bi_segcreate;
-			blkiov15[i].bi_version   = blkiov[i].bi_version;
-			blkiov15[i].bi_bp        = blkiov[i].bi_bp;
-			blkiov15[i].bi_size      = blkiov[i].bi_size;
+			blkiov15[i].bi_version	 = blkiov[i].bi_version;
+			blkiov15[i].bi_bp	 = blkiov[i].bi_bp;
+			blkiov15[i].bi_size	 = blkiov[i].bi_size;
 		}
 		copyout(blkiov15, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO_15));
@@ -805,7 +805,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		} else if (v_daddr == LFS_UNUSED_DADDR) {
 			/*
 			 * This can only happen if the vnode is dead.
-			 * Keep going.  Note that we DO NOT set the
+			 * Keep going.	Note that we DO NOT set the
 			 * bi_addr to anything -- if we failed to get
 			 * the vnode, for example, we want to assume
 			 * conservatively that all of its blocks *are*
@@ -1082,7 +1082,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 
 	/*
 	 * Wait until the filesystem is fully mounted before allowing vget
-	 * to complete.  This prevents possible problems with roll-forward.
+	 * to complete.	 This prevents possible problems with roll-forward.
 	 */
 	while (fs->lfs_flags & LFS_NOTYET) {
 		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0);
