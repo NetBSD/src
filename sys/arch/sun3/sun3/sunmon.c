@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.6 1997/04/25 22:26:14 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.7 1997/07/29 06:43:58 fair Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -163,13 +163,13 @@ tracedump(x1)
 	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
 	u_int stackpage = ((u_int)fp) & ~PGOFSET;
 
-	mon_printf("Begin traceback...fp = %x\n", fp);
+	mon_printf("Begin traceback...fp = 0x%x\n", fp);
 	do {
 		if (fp == fp->fr_savfp) {
-			mon_printf("FP loop at %x", fp);
+			mon_printf("FP loop at 0x%x", fp);
 			break;
 		}
-		mon_printf("Called from %x, fp=%x, args=%x %x %x %x\n",
+		mon_printf("Called from 0x%x, fp=0x%x, args=0x%x 0x%x 0x%x 0x%x\n",
 				   fp->fr_savpc, fp->fr_savfp,
 				   fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3]);
 		fp = fp->fr_savfp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.12 1997/04/28 21:59:23 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.13 1997/07/29 06:43:53 fair Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -271,13 +271,13 @@ si_obio_dma_setup(ncr_sc)
 	data_pa = dvma_kvtopa(dh->dh_dvma, sc->sc_adapter_type);
 	data_pa += (ncr_sc->sc_dataptr - dh->dh_addr);
 	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%x", data_pa);
+		panic("si_dma_start: bad pa=0x%lx", data_pa);
 	xlen = ncr_sc->sc_datalen;
 	sc->sc_reqlen = xlen; 	/* XXX: or less? */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_setup: dh=%p, pa=0x%x, xlen=0x%x\n",
+		printf("si_dma_setup: dh=%p, pa=0x%lx, xlen=0x%x\n",
 			   dh, data_pa, xlen);
 	}
 #endif

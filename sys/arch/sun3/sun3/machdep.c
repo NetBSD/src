@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:48 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 1997/07/29 06:43:56 fair Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -425,7 +425,7 @@ identifycpu()
     /* Other stuff? (VAC, mc6888x version, etc.) */
 	sprintf(cpu_model, "Sun 3/%s", cpu_string);
 
-	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
+	printf("Model: %s (hostid 0x%x)\n", cpu_model, (int) hostid);
 }
 
 /*
@@ -671,7 +671,7 @@ dumpsys()
 		return;
 	}
 
-	printf("\ndumping to dev %x, offset %d\n",
+	printf("\ndumping to dev 0x%x, offset %d\n",
 		   (int) dumpdev, (int) dumplo);
 
 	/*
