@@ -56,6 +56,9 @@
 #define	NBPG		8192		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		13		/* LOG2(NBPG) */
+#define SEGSHIFT	17	        /* LOG2(NBSG) */
+#define SEGMAP_MASK     (NSEGMAP-1) 
+#define VA_SEGNUM(x)    ((x >> SEGSHIFT) & SEGMAP_MASK)
 
 #define KERNBASE        0x0E000000
 
@@ -123,6 +126,17 @@
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
+/*
+ * Mach derived conversion macros
+ */
+#define sun3_round_seg(x)	((((unsigned)(x)) + NBSG - 1) & ~(NBSG-1))
+#define sun3_trunc_seg(x)	((unsigned)(x) & ~(NBSG-1))
+#define sun3_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
+#define sun3_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
+#define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
+#define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
+#define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
+#define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 #include <machine/psl.h>
 
 /*
