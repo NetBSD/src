@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.13 2003/12/29 04:56:26 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.14 2003/12/29 05:01:14 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.13 2003/12/29 04:56:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.14 2003/12/29 05:01:14 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -50,7 +50,6 @@ mutex_destroyer(arg)
 	void   *arg;
 {
 
-	rf_mutex_destroy(arg);
 }
 
 static void 
@@ -79,7 +78,6 @@ RF_DECLARE_MUTEX(*m)
 	rc = _rf_ShutdownCreate(listp, mutex_destroyer, (void *) m, file, line);
 	if (rc) {
 		RF_ERRORMSG1("RAIDFRAME: Error %d adding shutdown entry\n", rc);
-		rf_mutex_destroy(m);
 	}
 	return (rc);
 }
@@ -158,7 +156,6 @@ _rf_destroy_threadgroup(g, file, line)
 {
 	int     rc1, rc2;
 
-	rc1 = rf_mutex_destroy(&g->mutex);
 	rc2 = rf_cond_destroy(&g->cond);
 	if (rc1)
 		return (rc1);
@@ -178,7 +175,6 @@ _rf_init_threadgroup(g, file, line)
 		return (rc);
 	rc = rf_cond_init(&g->cond);
 	if (rc) {
-		rf_mutex_destroy(&g->mutex);
 		return (rc);
 	}
 	g->created = g->running = g->shutdown = 0;
