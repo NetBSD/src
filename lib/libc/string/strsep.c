@@ -1,4 +1,4 @@
-/*	$NetBSD: strsep.c,v 1.7 1998/02/03 18:49:23 perry Exp $	*/
+/*	$NetBSD: strsep.c,v 1.8 1998/10/13 20:32:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,11 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)strsep.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strsep.c,v 1.7 1998/02/03 18:49:23 perry Exp $");
+__RCSID("$NetBSD: strsep.c,v 1.8 1998/10/13 20:32:09 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(strsep,_strsep);
+#endif
 
 /*
  * Get next token from string *stringp, where tokens are possibly-empty
