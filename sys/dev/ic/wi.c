@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17 2001/06/12 22:32:51 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.18 2001/06/27 22:22:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -95,9 +95,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <dev/pcmcia/pcmciareg.h>
-#include <dev/pcmcia/pcmciavar.h>
-#include <dev/pcmcia/pcmciadevs.h>
+#include <machine/bus.h>
 
 #include <dev/ic/wi_ieee.h>
 #include <dev/ic/wireg.h>
