@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.30 2001/12/11 11:18:18 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.31 2002/01/02 10:38:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.30 2001/12/11 11:18:18 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.31 2002/01/02 10:38:29 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		if (zap(screen) == ERR) /* Get terminal description.*/
 			return ERR;
 	}
-	
+
 	/* If we can't tab, we can't backtab, either. */
 	if (!screen->GT)
 		screen->tc_bt = NULL;
@@ -198,7 +198,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	 * as this is all we can use.
 	 */
 	screen->pad_char = screen->tc_pc ? screen->tc_pc[0] : 0; 
-	
+
 	if (unknown) {
 		strcpy(screen->ttytype, "dumb");
 	} else {
@@ -208,7 +208,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 			return ERR;
 		__longname(tc, screen->ttytype);
 	}
-	
+
 	/* If no scrolling commands, no quick change. */
 	screen->noqch =
   	    (screen->tc_cs == NULL || screen->tc_ho == NULL ||
@@ -305,7 +305,7 @@ _cursesi_resetterm(SCREEN *screen)
 	__CA = screen->CA;
 
 	PC = screen->pad_char;
-	
+
 	__noqch = screen->noqch;
 	__mask_op = screen->mask_op;
 	__mask_me = screen->mask_me;
@@ -358,7 +358,7 @@ zap(SCREEN *screen)
 	} while (*namp);
 
   	nampstr = "ABacaeAFALalasbcblbtcdceclcmcrcsdcDLdldmDOdoeAedeihoIcicimIpipk0k1k2k3k4k5k6k7k8k9kdkekhklkrkskuLEllmambmdmemhmkmmmompmrndnlocoppcrcRISbscseSFSfsfsospSRsrtatetiucueUPupusvbvevivs";
-	
+
 	namp = nampstr;
 	sp = &screen->tc_AB;
 	screen->str_count = 0;

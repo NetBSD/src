@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.22 2001/12/02 09:14:21 blymn Exp $	*/
+/*	$NetBSD: initscr.c,v 1.23 2002/01/02 10:38:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.22 2001/12/02 09:14:21 blymn Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.23 2002/01/02 10:38:28 blymn Exp $");
 #endif
 #endif	/* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: initscr.c,v 1.22 2001/12/02 09:14:21 blymn Exp $");
 /* Window list */
 struct __winlist	*__winlistp;
 
-	
+
 /*
  * initscr --
  *	Initialize the current and standard screen.
@@ -64,7 +64,7 @@ initscr(void)
 #ifdef DEBUG
 	__CTRACE("initscr\n");
 #endif
-	
+
 	/*
 	 * If My_term is set, or can't find a terminal in the environment,
 	 * use Def_term.
@@ -91,6 +91,6 @@ initscr(void)
 
 	set_term(_cursesi_screen);
 	wrefresh(curscr);
-	
+
 	return (stdscr);
 }

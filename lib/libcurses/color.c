@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.16 2001/12/11 11:18:17 blymn Exp $	*/
+/*	$NetBSD: color.c,v 1.17 2002/01/02 10:38:27 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.16 2001/12/11 11:18:17 blymn Exp $");
+__RCSID("$NetBSD: color.c,v 1.17 2002/01/02 10:38:27 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -110,7 +110,7 @@ start_color(void)
 
 	_cursesi_screen->COLORS = COLORS;
 	_cursesi_screen->COLOR_PAIRS = COLOR_PAIRS;
-	
+
 	/* Reset terminal colour and colour pairs. */
 	if (__tc_oc != NULL)
 		tputs(__tc_oc, 0, __cputchar);
@@ -149,7 +149,7 @@ start_color(void)
 		break;
 	}
 #endif
-	
+
 	/*
 	 * Attributes that cannot be used with color.
 	 * Store these in an attr_t for wattrset()/wattron().
@@ -377,7 +377,7 @@ __change_pair(short pair)
 	WINDOW			*win;
 	int			 y, x;
 
-	
+
 	for (wlp = __winlistp; wlp != NULL; wlp = wlp->nextp) {
 #ifdef DEBUG
 		__CTRACE("__change_pair: win = %0.2o\n", wlp->winp);
