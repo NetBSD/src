@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.38 2002/03/23 02:22:59 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.39 2002/03/23 02:54:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -370,7 +370,7 @@ initarm(argc, argv, bi)
 	 */
 	physical_start = bootconfig.dram[0].address;
 	physical_freestart = physical_start
-	    + (KERNEL_TEXT_BASE - KERNEL_SPACE_START) + kerneldatasize;
+	    + (KERNEL_TEXT_BASE - KERNEL_BASE) + kerneldatasize;
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address
 	    + bootconfig.dram[bootconfig.dramblocks - 1].pages * NBPG;
 	physical_freeend = physical_end;
@@ -498,7 +498,7 @@ initarm(argc, argv, bi)
 	/* Map the L2 pages tables in the L1 page table */
 	pmap_link_l2pt(l1pagetable, 0x00000000,
 	    &kernel_pt_table[KERNEL_PT_SYS]);
-	pmap_link_l2pt(l1pagetable, KERNEL_SPACE_START,
+	pmap_link_l2pt(l1pagetable, KERNEL_BASE,
 	    &kernel_pt_table[KERNEL_PT_KERNEL]);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
@@ -573,7 +573,7 @@ initarm(argc, argv, bi)
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PTE_BASE + (KERNEL_SPACE_START >> (PGSHIFT-2)),
+	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
