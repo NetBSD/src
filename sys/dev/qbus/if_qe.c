@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.44 2000/11/15 01:02:19 thorpej Exp $ */
+/*      $NetBSD: if_qe.c,v 1.45 2000/12/14 07:15:45 thorpej Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -359,6 +359,7 @@ qeattach(parent, self, aux)
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
 	ifp->if_watchdog = qetimeout;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Attach the interface.
@@ -487,7 +488,7 @@ qestart(ifp)
 			continue;
 		}
 		idx = sc->sc_nexttx;
-		IF_DEQUEUE(&sc->sc_if.if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == 0)
 			goto out;
 		/*
@@ -502,11 +503,12 @@ qestart(ifp)
 			panic("qestart");
 
 		if ((i + sc->sc_inq) >= (TXDESCS - 1)) {
-			IF_PREPEND(&sc->sc_if.if_snd, m);
 			ifp->if_flags |= IFF_OACTIVE;
 			goto out;
 		}
-		
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
