@@ -1,4 +1,4 @@
-/*	$NetBSD: asctime.c,v 1.8 1998/09/11 11:35:21 kleink Exp $	*/
+/*	$NetBSD: asctime.c,v 1.9 1998/10/08 12:18:18 kleink Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -11,13 +11,14 @@
 #if 0
 static char	elsieid[] = "@(#)asctime.c	7.9";
 #else
-__RCSID("$NetBSD: asctime.c,v 1.8 1998/09/11 11:35:21 kleink Exp $");
+__RCSID("$NetBSD: asctime.c,v 1.9 1998/10/08 12:18:18 kleink Exp $");
 #endif
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
 /*LINTLIBRARY*/
 
+#include "namespace.h"
 #include "private.h"
 #include "tzfile.h"
 
