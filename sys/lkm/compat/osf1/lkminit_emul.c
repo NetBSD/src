@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.2 2000/12/13 11:10:36 enami Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.3 2000/12/13 11:18:39 enami Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,5 +64,6 @@ compat_osf1_lkmentry(lkmtp, cmd, ver)
 	int cmd;
 	int ver;
 {
+
 	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
 }
