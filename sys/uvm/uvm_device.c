@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.10 1998/10/11 23:02:31 chuck Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.11 1998/11/19 05:23:26 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -402,7 +402,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct uvm_device *udv = (struct uvm_device *)uobj;
 	vaddr_t curr_offset, curr_va;
 	paddr_t paddr;
-	int lcv, retval;
+	int lcv, retval, mdpgno;
 	dev_t device;
 	int (*mapfn) __P((dev_t, int, int));
 	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
@@ -457,12 +457,12 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 		if (pps[lcv] == PGO_DONTCARE)
 			continue;
 
-		paddr = pmap_phys_address((*mapfn)(device, (int)curr_offset,
-		    access_type));
-		if (paddr == -1) {
+		mdpgno = (*mapfn)(device, (int)curr_offset, access_type);
+		if (mdpgno == -1) {
 			retval = VM_PAGER_ERROR;
 			break;
 		}
+		paddr = pmap_phys_address(mdpgno);
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
 		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);
