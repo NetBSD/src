@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.372 2004/04/07 18:11:07 matt Exp $
+$NetBSD: usbdevs,v 1.373 2004/04/08 05:36:00 matt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -660,6 +660,9 @@ product DAISY DMC		0x6901	PhotoClip USBMediaReader
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
 product DALLAS USB_FOB_IBUTTON	0x2490	USB-FOB/iBUTTON
+
+/* Dell products */
+product DELL BC02		0x8000	Dell BC02 Bluetooth USB Adapter
 
 /* Diamond products */
 product DIAMOND RIO500USB	0x0001	Rio 500 USB
