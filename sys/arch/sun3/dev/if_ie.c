@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.8 1996/03/17 02:03:50 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.9 1996/03/26 14:38:29 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -188,15 +188,11 @@ int     in_ierint = 0;
 int     in_ietint = 0;
 #endif
 
-void    ie_attach();
-
-struct cfattach ie_ca = {
-	sizeof(struct ie_softc), ie_md_match, ie_attach
-};
 
 struct cfdriver ie_cd = {
 	NULL, "ie", DV_IFNET
 };
+
 
 /*
  * address generation macros
@@ -266,21 +262,32 @@ ie_ack(sc, mask)
  * then modified beyond recognition...
  */
 void
-ie_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+ie_attach(sc)
+	struct ie_softc *sc;
 {
-	struct ie_softc *sc = (void *) self;
 	struct ifnet *ifp = &sc->sc_if;
+	int off;
 
-	/*
-	 * Do machine-dependent parts of attach.
-	 */
-	ie_md_attach(parent, self, aux);
+	/* MD code has done its part before calling this. */
 	printf(" hwaddr %s\n", ether_sprintf(sc->sc_addr));
 
+	/* Allocate from end of buffer space for ISCP, SCB */
+	off = sc->buf_area_sz;
+	off &= ~3;
+
+	/* Space for ISCP */
+	off -= sizeof(*sc->iscp);
+	sc->iscp = (volatile void *) (sc->buf_area + off);
+
+	/* Space for SCB */
+	off -= sizeof(*sc->scb);
+	sc->scb  = (volatile void *) (sc->buf_area + off);
+
+	/* Remainder is for buffers, etc. */
+	sc->buf_area_sz = off;
+
 	/*
-	 * Setup for transmit/receive
+	 * Setup RAM for transmit/receive
 	 */
 	if (ie_setupram(sc) == 0) {
 		printf(": RAM CONFIG FAILED!\n");
@@ -501,18 +508,26 @@ ietint(sc)
 /*
  * Compare two Ether/802 addresses for equality, inlined and
  * unrolled for speed.  I'd love to have an inline assembler
- * version of this...
+ * version of this...   XXX: Who wanted that? mycroft?
+ * I wrote one, but the following is just as efficient.
+ * This expands to 10 short m68k instructions! -gwr
+ * Note: use this like bcmp()
  */
-static inline int
-ether_equal(one, two)
+static inline u_short
+ether_cmp(one, two)
 	u_char *one, *two;
 {
+	register u_short *a = (u_short *) one;
+	register u_short *b = (u_short *) two;
+	register u_short diff;
 
-	if (one[0] != two[0] || one[1] != two[1] || one[2] != two[2] ||
-	    one[3] != two[3] || one[4] != two[4] || one[5] != two[5])
-		return 0;
-	return 1;
+	diff  = *a++ - *b++;
+	diff |= *a++ - *b++;
+	diff |= *a++ - *b++;
+
+	return (diff);
 }
+#define	ether_equal !ether_cmp
 
 /*
  * Check for a valid address.  to_bpf is filled in with one of the following:
