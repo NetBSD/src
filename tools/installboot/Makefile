@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/19 07:19:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/22 15:18:57 lukem Exp $
 
 HOSTPROGNAME=	nbinstallboot
 HOST_SRCDIR=	usr.sbin/installboot
-HOST_CPPFLAGS=	-I${.CURDIR} -I${.CURDIR}/../mips-elf2ecoff
+
+DPSRCS+=	ufs.stamp
+HOST_CPPFLAGS+=	-I. -I${.CURDIR} -I${.CURDIR}/../mips-elf2ecoff
+CLEANFILES+=	ufs
 
 .include "${.CURDIR}/../Makefile.host"
 
