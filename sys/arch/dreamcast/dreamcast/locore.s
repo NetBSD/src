@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.12 2002/02/19 17:21:19 uch Exp $	*/
+/*	$NetBSD: locore.s,v 1.13 2002/02/22 19:45:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -466,42 +466,6 @@ XLSYS_exit:
 	.long	SYS_exit
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
-
-/*****************************************************************************/
-
-ENTRY(setjmp)
-	add	#4*9, r4
-	mov.l	r8, @-r4
-	mov.l	r9, @-r4
-	mov.l	r10, @-r4
-	mov.l	r11, @-r4
-	mov.l	r12, @-r4
-	mov.l	r13, @-r4
-	mov.l	r14, @-r4
-	mov.l	r15, @-r4
-	sts.l	pr, @-r4
-	rts
-	xor	r0, r0
-
-ENTRY(longjmp)
-	lds.l	@r4+, pr
-	mov.l	@r4+, r15
-	mov.l	@r4+, r14
-	mov.l	@r4+, r13
-	mov.l	@r4+, r12
-	mov.l	@r4+, r11
-	mov.l	@r4+, r10
-	mov.l	@r4+, r9
-	mov.l	@r4+, r8
-	mov	r5, r0
-	tst	r0, r0
-	bf	.L0
-	add	#1, r0
-.L0:
-	rts
-	nop
-
-/*****************************************************************************/
 
 /*
  * The following primitives manipulate the run queues.
