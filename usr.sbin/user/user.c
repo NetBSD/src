@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.20 2000/05/16 20:23:28 agc Exp $ */
+/* $NetBSD: user.c,v 1.21 2000/09/20 19:28:40 agc Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -36,7 +36,7 @@
 __COPYRIGHT(
 	"@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.20 2000/05/16 20:23:28 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.21 2000/09/20 19:28:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -714,6 +714,11 @@ adduser(char *login, user_t *up)
 		} else {
 			expire = mktime(&tm);
 		}
+	}
+	if (lstat(home, &st) < 0 && !up->u_mkdir) {
+		warnx(
+"Warning: home directory `%s' doesn't exist, and -m was not specified",
+			home);
 	}
 	password[PasswordLength] = '\0';
 	if (up->u_password != NULL &&
