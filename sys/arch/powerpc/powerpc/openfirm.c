@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.7 2001/06/08 00:21:45 matt Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.8 2001/06/10 15:05:44 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,8 +32,6 @@
  */
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <lib/libkern/libkern.h>
 
 #include <machine/psl.h>
 #include <machine/stdarg.h>
