@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.29 2000/10/26 14:15:33 abs Exp $
+#	$NetBSD: RISCPC,v 1.30 2000/11/03 10:18:56 abs Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -66,6 +66,10 @@ options 	NFSSERVER
 
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
