@@ -1,4 +1,5 @@
-/*	$NetBSD: printjob.c,v 1.13 1997/07/10 06:28:58 mikel Exp $	*/
+/*	$NetBSD: printjob.c,v 1.14 1997/07/17 05:51:18 mikel Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,17 +34,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD";
+__RCSID("$NetBSD: printjob.c,v 1.14 1997/07/17 05:51:18 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +133,6 @@ static char      *scnline __P((int, char *, int));
 static int        sendfile __P((int, char *));
 static int        sendit __P((char *));
 static void       sendmail __P((char *, int));
-static void       set_ttyflags __P((struct termios *));
 static void       setty __P((void));
 
 void
@@ -888,7 +889,6 @@ banner(name1, name2)
 	char *name1, *name2;
 {
 	time_t tvec;
-	extern char *ctime();
 
 	time(&tvec);
 	if (!SF && !tof)
