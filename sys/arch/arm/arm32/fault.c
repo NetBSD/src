@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.44 2003/11/18 22:39:05 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.45 2003/11/20 14:44:36 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.44 2003/11/18 22:39:05 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.45 2003/11/20 14:44:36 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,12 +396,15 @@ data_abort_handler(trapframe_t *tf)
 		goto out;
 	}
 
-#ifdef DIAGNOSTIC
 	if (__predict_false(current_intr_depth > 0)) {
+		if (pcb->pcb_onfault) {
+			tf->tf_r0 = EINVAL;
+			tf->tf_pc = (register_t)(intptr_t) pcb->pcb_onfault;
+			return;
+		}
 		printf("\nNon-emulated page fault with intr_depth > 0\n");
 		dab_fatal(tf, fsr, far, l, NULL);
 	}
-#endif
 
 	onfault = pcb->pcb_onfault;
 	pcb->pcb_onfault = NULL;
