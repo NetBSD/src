@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 2000/06/26 04:55:49 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 2000/12/21 23:17:32 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -359,27 +359,31 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
  */
 
 #define bus_space_write_multi_1(t, h, o, a, c) do {			\
-		outsb(__BA(t, h, o), (a), (c));				\
+		outs8(__BA(t, h, o), (a), (c));				\
 	} while (0)
 
 #define bus_space_write_multi_2(t, h, o, a, c) do {			\
-		outsw(__BA(t, h, o), (a), (c));				\
+		outs16rb(__BA(t, h, o), (a), (c));				\
 	} while (0)
 
 #define bus_space_write_multi_4(t, h, o, a, c) do {			\
-		outsl(__BA(t, h, o), (a), (c));				\
+		outs32rb(__BA(t, h, o), (a), (c));				\
 	} while (0)
 
 #if 0
 #define bus_space_write_multi_8		!!! unimplemented !!!
 #endif
 
+#define bus_space_write_multi_stream_1(t, h, o, a, c) do {		\
+		outs8(__BA(t, h, o), (a), (c));				\
+	} while (0)
+
 #define bus_space_write_multi_stream_2(t, h, o, a, c) do {		\
-		outsw(__BA(t, h, o), (a), (c));				\
+		outs16(__BA(t, h, o), (a), (c));				\
 	} while (0)
 
 #define bus_space_write_multi_stream_4(t, h, o, a, c) do {		\
-		outsl(__BA(t, h, o), (a), (c));				\
+		outs32(__BA(t, h, o), (a), (c));				\
 	} while (0)
 
 #if 0
