@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.3 2000/10/03 13:52:39 tsutsui Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.4 2000/10/04 17:00:45 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -168,11 +168,11 @@ mk48txx_gettime(handle, tv)
 	bus_space_write_1(bt, bh, clkoff + MK48TXX_ICSR, csr);
 	todr_wenable(handle, 0);
 
-#if 0
 	/* simple sanity checks */
-	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31)
-		return (0);
-#endif
+	if (dt.dt_mon > 12 || dt.dt_day > 31 || dt.dt_hour > 24 ||
+	    dt.dt_min > 60 || dt.dt_sec > 60)
+		return (1);
+
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
 	tv->tv_usec = 0;
 	return (0);
