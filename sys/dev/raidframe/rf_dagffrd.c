@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.8 2002/09/21 00:40:18 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.9 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.8 2002/09/21 00:40:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.9 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -182,7 +182,7 @@ rf_CreateNonredundantDAG(
          */
 	RF_ASSERT(n > 0);
 	totalNumNodes = n + 3;
-	RF_CallocAndAdd(nodes, totalNumNodes, sizeof(RF_DagNode_t),
+	RF_MallocAndAdd(nodes, totalNumNodes * sizeof(RF_DagNode_t),
 	    (RF_DagNode_t *), allocList);
 	i = 0;
 	diskNodes = &nodes[i];
@@ -342,7 +342,7 @@ CreateMirrorReadDAG(
          */
 	RF_ASSERT(n > 0);
 	totalNumNodes = n + 3;
-	RF_CallocAndAdd(nodes, totalNumNodes, sizeof(RF_DagNode_t),
+	RF_MallocAndAdd(nodes, totalNumNodes * sizeof(RF_DagNode_t),
 	    (RF_DagNode_t *), allocList);
 	i = 0;
 	readNodes = &nodes[i];

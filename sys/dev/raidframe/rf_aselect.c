@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.8 2003/07/01 22:05:39 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.9 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.8 2003/07/01 22:05:39 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.9 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -154,7 +154,7 @@ rf_SelectAlgorithm(desc, flags)
 	if (asm_h->numStripes <= MAXNSTRIPES)
 		stripeFuncs = normalStripeFuncs;
 	else
-		RF_Calloc(stripeFuncs, asm_h->numStripes, sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
+		RF_Malloc(stripeFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
 
 	/* walk through the asm list once collecting information */
 	/* attempt to find a single creation function for each stripe */
@@ -174,12 +174,12 @@ rf_SelectAlgorithm(desc, flags)
 				RF_Malloc(asmh_u, sizeof(RF_AccessStripeMapHeader_t **) * asm_h->numStripes, (RF_AccessStripeMapHeader_t ***));
 				/* create an array of ptrs to arrays of
 				 * stripeFuncs */
-				RF_Calloc(stripeUnitFuncs, asm_h->numStripes, sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr **));
+				RF_Malloc(stripeUnitFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr **));
 			}
 			/* create an array of creation funcs (called
 			 * stripeFuncs) for this stripe */
 			numStripeUnits = asm_p->numStripeUnitsAccessed;
-			RF_Calloc(stripeUnitFuncs[numStripesBailed], numStripeUnits, sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
+			RF_Malloc(stripeUnitFuncs[numStripesBailed], numStripeUnits * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
 			RF_Malloc(asmh_u[numStripesBailed], numStripeUnits * sizeof(RF_AccessStripeMapHeader_t *), (RF_AccessStripeMapHeader_t **));
 
 			/* lookup array of stripeUnitFuncs for this stripe */
@@ -209,14 +209,14 @@ rf_SelectAlgorithm(desc, flags)
 						RF_Malloc(asmh_b, sizeof(RF_AccessStripeMapHeader_t **) * asm_h->numStripes * raidPtr->Layout.numDataCol, (RF_AccessStripeMapHeader_t ***));
 						/* create an array of ptrs to
 						 * arrays of blockFuncs */
-						RF_Calloc(blockFuncs, asm_h->numStripes * raidPtr->Layout.numDataCol, sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr **));
+						RF_Malloc(blockFuncs, asm_h->numStripes * raidPtr->Layout.numDataCol * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr **));
 					}
 					/* create an array of creation funcs
 					 * (called blockFuncs) for this stripe
 					 * unit */
 					numBlocks = physPtr->numSector;
 					numBlockDags += numBlocks;
-					RF_Calloc(blockFuncs[numStripeUnitsBailed], numBlocks, sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
+					RF_Malloc(blockFuncs[numStripeUnitsBailed], numBlocks * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
 					RF_Malloc(asmh_b[numStripeUnitsBailed], numBlocks * sizeof(RF_AccessStripeMapHeader_t *), (RF_AccessStripeMapHeader_t **));
 
 					/* lookup array of blockFuncs for this
@@ -277,7 +277,7 @@ rf_SelectAlgorithm(desc, flags)
 		stripeUnitNum = 0;
 
 		/* create an array of dagLists and fill them in */
-		RF_CallocAndAdd(desc->dagArray, desc->numStripes, sizeof(RF_DagList_t), (RF_DagList_t *), desc->cleanupList);
+		RF_MallocAndAdd(desc->dagArray, desc->numStripes * sizeof(RF_DagList_t), (RF_DagList_t *), desc->cleanupList);
 
 		for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 			/* grab dag header for this stripe */

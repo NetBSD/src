@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.14 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.15 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.14 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.15 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -139,7 +139,7 @@ rf_CreateRaidOneDegradedReadDAG(
 		useMirror = RF_TRUE;
 
 	/* total number of nodes = 1 + (block + commit + terminator) */
-	RF_CallocAndAdd(nodes, 4, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, 4 * sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
 	i = 0;
 	rdNode = &nodes[i];
 	i++;
@@ -293,7 +293,7 @@ rf_CreateDegradedReadDAG(
          */
 
 	/* overlappingPDAs array must be zero'd */
-	RF_Calloc(overlappingPDAs, asmap->numStripeUnitsAccessed, sizeof(char), (char *));
+	RF_Malloc(overlappingPDAs, asmap->numStripeUnitsAccessed * sizeof(char), (char *));
 	rf_GenerateFailedAccessASMs(raidPtr, asmap, failedPDA, dag_h, new_asm_h, &nXorBufs,
 	    &rpBuf, overlappingPDAs, allocList);
 
@@ -307,7 +307,7 @@ rf_CreateDegradedReadDAG(
 	    ((new_asm_h[1]) ? new_asm_h[1]->stripeMap->numStripeUnitsAccessed : 0);
 	nNodes = 5 + nRudNodes + nRrdNodes;	/* lock, unlock, xor, Rp, Rud,
 						 * Rrd */
-	RF_CallocAndAdd(nodes, nNodes, sizeof(RF_DagNode_t), (RF_DagNode_t *),
+	RF_MallocAndAdd(nodes, nNodes * sizeof(RF_DagNode_t), (RF_DagNode_t *),
 	    allocList);
 	i = 0;
 	blockNode = &nodes[i];
@@ -560,7 +560,7 @@ rf_CreateRaidCDegradedReadDAG(
 		useMirror = RF_TRUE;
 
 	/* total number of nodes = 1 + (block + commit + terminator) */
-	RF_CallocAndAdd(nodes, 4, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, 4 * sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
 	i = 0;
 	rdNode = &nodes[i];
 	i++;
@@ -778,7 +778,8 @@ rf_DD_GenerateFailedAccessASMs(
 
 	/* allocate up our list of pda's */
 
-	RF_CallocAndAdd(pda_p, napdas, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t), 
+			(RF_PhysDiskAddr_t *), allocList);
 	*pdap = pda_p;
 
 	/* linkem together */
@@ -1017,7 +1018,7 @@ rf_DoubleDegRead(
 	nReadNodes = nRrdNodes + nRudNodes + 2 * nPQNodes;
 	nNodes = 4 /* block, unblock, recovery, term */ + nReadNodes;
 
-	RF_CallocAndAdd(nodes, nNodes, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, nNodes * sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
 	i = 0;
 	blockNode = &nodes[i];
 	i += 1;

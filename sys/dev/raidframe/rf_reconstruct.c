@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.57 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.58 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.57 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.58 2003/12/29 03:33:48 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.57 2003/12/29 02:38:18 oster Ex
 #include "rf_desc.h"
 #include "rf_debugprint.h"
 #include "rf_general.h"
-#include "rf_freelist.h"
 #include "rf_driver.h"
 #include "rf_utils.h"
 #include "rf_shutdown.h"
@@ -96,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.57 2003/12/29 02:38:18 oster Ex
 #endif /* RF_DEBUG_RECON */
 
 
-static RF_FreeList_t *rf_recond_freelist;
+static struct pool rf_recond_pool;
 #define RF_MAX_FREE_RECOND  4
 #define RF_RECOND_INC       1
 
@@ -139,10 +138,6 @@ struct RF_ReconDoneProc_s {
 	RF_ReconDoneProc_t *next;
 };
 
-static RF_FreeList_t *rf_rdp_freelist;
-#define RF_MAX_FREE_RDP 4
-#define RF_RDP_INC      1
-
 static void 
 SignalReconDone(RF_Raid_t * raidPtr)
 {
@@ -168,8 +163,7 @@ static void
 rf_ShutdownReconstruction(ignored)
 	void   *ignored;
 {
-	RF_FREELIST_DESTROY(rf_recond_freelist, next, (RF_RaidReconDesc_t *));
-	RF_FREELIST_DESTROY(rf_rdp_freelist, next, (RF_ReconDoneProc_t *));
+	pool_destroy(&rf_recond_pool);
 }
 
 int 
@@ -178,16 +172,8 @@ rf_ConfigureReconstruction(listp)
 {
 	int     rc;
 
-	RF_FREELIST_CREATE(rf_recond_freelist, RF_MAX_FREE_RECOND,
-	    RF_RECOND_INC, sizeof(RF_RaidReconDesc_t));
-	if (rf_recond_freelist == NULL)
-		return (ENOMEM);
-	RF_FREELIST_CREATE(rf_rdp_freelist, RF_MAX_FREE_RDP,
-	    RF_RDP_INC, sizeof(RF_ReconDoneProc_t));
-	if (rf_rdp_freelist == NULL) {
-		RF_FREELIST_DESTROY(rf_recond_freelist, next, (RF_RaidReconDesc_t *));
-		return (ENOMEM);
-	}
+	pool_init(&rf_recond_pool, sizeof(RF_RaidReconDesc_t), 0, 0, 0,
+		  "rf_recond_pl", NULL);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
@@ -208,7 +194,7 @@ AllocRaidReconDesc(raidPtr, col, spareDiskPtr, numDisksDone, scol)
 
 	RF_RaidReconDesc_t *reconDesc;
 
-	RF_FREELIST_GET(rf_recond_freelist, reconDesc, next, (RF_RaidReconDesc_t *));
+	reconDesc = pool_get(&rf_recond_pool, PR_WAITOK); /* XXX WAITOK?? */
 
 	reconDesc->raidPtr = raidPtr;
 	reconDesc->col = col;
@@ -237,7 +223,7 @@ FreeReconDesc(reconDesc)
 #if (RF_RECON_STATS > 0) || defined(KERNEL)
 	printf("\n");
 #endif				/* (RF_RECON_STATS > 0) || KERNEL */
-	RF_FREELIST_FREE(rf_recond_freelist, reconDesc, next);
+	pool_put(&rf_recond_pool, reconDesc);
 }
 
 
