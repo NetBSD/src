@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.24 2003/09/10 19:49:22 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.25 2003/09/25 22:01:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ struct saframe {
 void *getframe(struct lwp *, int, int *);
 void buildcontext(struct lwp *, int, void *, void *);
 #ifdef COMPAT_16
-void sendsig_sigcontext(ksiginfo_t *, sigset_t *);
+void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #endif
 #endif
 
