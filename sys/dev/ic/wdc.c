@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.56 1999/02/08 15:22:28 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.57 1999/02/15 18:47:59 bouyer Exp $ */
 
 
 /*
@@ -249,7 +249,12 @@ wdcprobe(chp)
 		    "cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
-		if (sc == 0x01 && sn == 0x01 && cl == 0x14 && ch == 0xeb) {
+		/*
+		 * sc is supposted to be 0x1 for ATAPI but at last one drive
+		 * set it to 0x0.
+		 */
+		if ((sc == 0x00 || sc == 0x01) && sn == 0x01 &&
+		    cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 		}
 	}
