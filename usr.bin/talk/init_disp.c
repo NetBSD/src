@@ -1,4 +1,4 @@
-/*	$NetBSD: init_disp.c,v 1.7 1997/10/20 00:23:21 lukem Exp $	*/
+/*	$NetBSD: init_disp.c,v 1.8 1998/12/19 22:36:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init_disp.c	8.2 (Berkeley) 2/16/94";
 #endif
-__RCSID("$NetBSD: init_disp.c,v 1.7 1997/10/20 00:23:21 lukem Exp $");
+__RCSID("$NetBSD: init_disp.c,v 1.8 1998/12/19 22:36:11 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -61,13 +61,13 @@ __RCSID("$NetBSD: init_disp.c,v 1.7 1997/10/20 00:23:21 lukem Exp $");
 void
 init_display()
 {
-	struct sigvec sigv;
+	struct sigaction sa;
 
 	if (initscr() == NULL)
 		errx(1, "Terminal type unset or lacking necessary features.");
-	(void) sigvec(SIGTSTP, (struct sigvec *)0, &sigv);
-	sigv.sv_mask |= sigmask(SIGALRM);
-	(void) sigvec(SIGTSTP, &sigv, (struct sigvec *)0);
+	(void)sigaction(SIGTSTP, NULL, &sa);
+	sigaddset(&sa.sa_mask, SIGALRM);
+	(void)sigaction(SIGTSTP, &sa, NULL);
 	curses_initialized = 1;
 	clear();
 	refresh();
