@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.26 1997/09/02 20:15:37 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.27 1997/10/17 18:48:07 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 1997/09/02 20:15:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27 1997/10/17 18:48:07 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,12 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26 1997/09/02 20:15:37 thorpej Exp 
 #include <sys/core.h>
 #include <sys/exec.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
 #include <machine/cpu.h>
 #include <machine/pmap.h>
 #include <machine/reg.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 /*
  * Dump the machine specific header information at the start of a core dump.

@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.17 1997/09/02 20:15:36 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.18 1997/10/17 18:47:50 mjacob Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,17 +27,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.17 1997/09/02 20:15:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.18 1997/10/17 18:47:50 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <vm/vm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
 #ifdef NEW_PMAP
-#include <vm/vm.h>
 #include <vm/pmap.h>
 #endif
 
