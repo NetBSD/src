@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.5 2000/01/14 19:20:32 msaitoh Exp $
+#	$NetBSD: files.sh3,v 1.6 2000/01/14 19:41:36 msaitoh Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -30,6 +30,7 @@ file	arch/sh3/sh3/sys_machdep.c
 file	arch/sh3/sh3/trap.c
 file	arch/sh3/sh3/vm_machdep.c
 file	arch/sh3/sh3/clock.c
+file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c
 major	{vnd = 14}

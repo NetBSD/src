@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1999/12/08 20:39:45 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2000/01/14 19:41:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -97,6 +97,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <dev/clock_subr.h>
+
 #include <sh3/rtcreg.h>
 #include <sh3/tmureg.h>
 #include <machine/cpu.h>
@@ -111,15 +113,8 @@ int	gettick __P((void));
 void	sysbeepstop __P((void *));
 void	sysbeep __P((int, int));
 void	rtcinit __P((void));
-static int yeartoday __P((int));
-int 	hexdectodec __P((int));
-int	dectohexdec __P((int));
 
-
-#define	SECMIN	((unsigned)60)			/* seconds per minute */
-#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
-#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
-#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
+int timer0speed;
 
 /*
  * microtime() makes use of the following globals.  Note that isa_timer_tick
@@ -231,9 +226,9 @@ delay(n)
 	 * Read the counter first, so that the rest of the setup overhead is
 	 * counted.
 	 */
-#if 1
-	n *= 2;
-#endif
+
+	n *= timer0speed;
+
 	otick = gettick();
 	limit = 0xffffffff;
 
@@ -273,13 +268,13 @@ findcpuspeed()
 	int i;
 	unsigned int remainder;
 
-#if 0
+	/* using clock = Internal RTC */
+	SHREG_TOCR = 0x01;
+
 	/* disable Under Flow int,up rising edge, 1/4 Cys */
 	SHREG_TCR0 = 0;
-#else
-	/* disable Under Flow int,up rising edge, 1/16 Cys */
-	SHREG_TCR0 = 0;
-#endif
+
+	timer0speed = PCLOCK / 1000000 / 4 + 1;
 
 	/* set counter */
 	SHREG_TCNT0 = 0xffffffff;
@@ -301,6 +296,7 @@ findcpuspeed()
 void
 cpu_initclocks()
 {
+
 #ifdef USE_RTCCLK
         /* enable under flow interrupt, up rising edge, RTCCLK */
 	/* RTCCLK == 16kHz */
@@ -331,33 +327,6 @@ rtcinit()
 
 }
 
-
-static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-static int
-yeartoday(year)
-	int year;
-{
-
-	return ((year % 4) ? 365 : 366);
-}
-
-int
-hexdectodec(n)
-	int n;
-{
-
-	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
-}
-
-int
-dectohexdec(n)
-	int n;
-{
-
-	return ((u_char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
-}
-
 static int timeset;
 
 /*
@@ -368,9 +337,8 @@ void
 inittodr(base)
 	time_t base;
 {
-	time_t n;
-	int sec, min, hr, dom, mon, yr;
-	int i, days = 0;
+	struct clock_ymdhms dt;
+	int doreset = 0;
 
 	/*
 	 * We mostly ignore the suggested time and go for the RTC clock time
@@ -386,32 +354,46 @@ inittodr(base)
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
 
-	sec = hexdectodec(SHREG_RSECCNT);
-	min = hexdectodec(SHREG_RMINCNT);
-	hr = hexdectodec(SHREG_RHRCNT);
-	dom = hexdectodec(SHREG_RDAYCNT);
-	mon = hexdectodec(SHREG_RMONCNT);
-	yr = hexdectodec(SHREG_RYRCNT);
-	yr = (yr < 70) ? yr+100 : yr;
+	dt.dt_year = 1900 + FROMBCD(SHREG_RYRCNT);
+	dt.dt_mon = FROMBCD(SHREG_RMONCNT);
+	dt.dt_day = FROMBCD(SHREG_RDAYCNT);
+	dt.dt_wday = FROMBCD(SHREG_RWKCNT);
+	dt.dt_hour = FROMBCD(SHREG_RHRCNT);
+	dt.dt_min = FROMBCD(SHREG_RMINCNT);
+	dt.dt_sec = FROMBCD(SHREG_RSECCNT);
 
-	n = sec + 60 * min + 3600 * hr;
-	n += (dom - 1) * 3600 * 24;
+#ifdef DEBUG
+	printf("readclock: %d/%d/%d/%d/%d/%d(%d)\n", dt.dt_year - 1900,
+	       dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
+	       dt.dt_wday);
+#endif
 
-	if (yeartoday(yr) == 366)
-		month[1] = 29;
-	for (i = mon - 2; i >= 0; i--)
-		days += month[i];
-	month[1] = 28;
-	for (i = 70; i < yr; i++)
-		days += yeartoday(i);
-	n += days * 3600 * 24;
 
-	n += rtc_offset * 60;
+	if (dt.dt_year < 1970)
+		dt.dt_year += 100;
+
+	if (dt.dt_mon < 1 || dt.dt_mon > 12)
+		doreset = 1;
+	if (dt.dt_day < 1 || dt.dt_day > 31)
+		doreset = 1;
+	if (dt.dt_hour > 23)
+		doreset = 1;
+	if (dt.dt_min > 59)
+		doreset = 1;
+	if (dt.dt_sec > 59)
+		doreset = 1;
+
+	if (doreset == 1) {
+		printf("WARNING: clock time is invalid.\n");
+		printf("WARNING: reset to epoch time!\n");
+		time.tv_sec = 0;
+	} else
+		time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 
 #ifndef INITTODR_ALWAYS_USE_RTC
-	if (base < n - 5*SECYR)
+	if (base < time.tv_sec - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
-	else if (base > n + 5*SECYR) {
+	else if (base > time.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
 		printf("WARNING: using file system time\n");
 		goto fstime;
@@ -419,7 +401,6 @@ inittodr(base)
 #endif
 
 	timeset = 1;
-	time.tv_sec = n;
 	time.tv_usec = 0;
 
 	return;
@@ -439,8 +420,7 @@ fstime:
 void
 resettodr()
 {
-	time_t n;
-	int diff, i, j;
+	struct clock_ymdhms dt;
 	int s;
 
 	/*
@@ -453,37 +433,29 @@ resettodr()
 
 	s = splclock();
 
-	diff = rtc_offset * 60;
-	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
+	clock_secs_to_ymdhms(time.tv_sec - rtc_offset * 60, &dt);
 
 	/* stop RTC */
 	SHREG_RCR2 = SHREG_RCR2_RESET|SHREG_RCR2_ENABLE;
 
-	SHREG_RSECCNT = dectohexdec(n % 60);
-	n /= 60;
-	SHREG_RMINCNT = dectohexdec(n % 60);
-	SHREG_RHRCNT = dectohexdec(n / 60);
-
-	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
-	SHREG_RWKCNT = (n + 4) % 7;  /* 1/1/70 is Thursday */
-
-	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
-		n -= i;
-
-	SHREG_RYRCNT = dectohexdec(j - 1900);
-
-	if (i == 366)
-		month[1] = 29;
-	for (i = 0; n >= month[i]; i++)
-		n -= month[i];
-	month[1] = 28;
-	SHREG_RMONCNT = dectohexdec(++i);
-	SHREG_RDAYCNT = dectohexdec(++n);
+	SHREG_RSECCNT = TOBCD(dt.dt_sec);
+	SHREG_RMINCNT = TOBCD(dt.dt_min);
+	SHREG_RHRCNT = TOBCD(dt.dt_hour);
+	SHREG_RWKCNT = TOBCD(dt.dt_wday);
+	SHREG_RDAYCNT = TOBCD(dt.dt_day);
+	SHREG_RMONCNT = TOBCD(dt.dt_mon);
+	SHREG_RYRCNT = TOBCD(dt.dt_year % 100);
 
 	/* start RTC */
 	SHREG_RCR2 = SHREG_RCR2_RESET|SHREG_RCR2_ENABLE|SHREG_RCR2_START;
 
 	splx(s);
+
+#ifdef DEBUG
+        printf("setclock: %d/%d/%d/%d/%d/%d(%d)\n", dt.dt_year % 100,
+	       dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
+	       dt.dt_wday);
+#endif
 }
 
 void
