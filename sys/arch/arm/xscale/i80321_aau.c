@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.2 2002/08/02 00:36:39 thorpej Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.3 2002/08/02 06:52:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.2 2002/08/02 00:36:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.3 2002/08/02 06:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -80,8 +80,8 @@ static struct iopaau_function aau321_func_fill8 = {
 	iopaau_desc_4_free,
 };
 
-static struct iopaau_function aau321_func_copy = {
-	iopaau_func_copy_setup,
+static struct iopaau_function aau321_func_xor_1_4 = {
+	iopaau_func_xor_1_4_setup,
 	iopaau_desc_4_free,
 };
 
@@ -98,8 +98,23 @@ static const struct dmover_algdesc aau321_algdescs[] = {
 	},
 	{
 	  DMOVER_FUNC_COPY,
-	  &aau321_func_copy,
+	  &aau321_func_xor_1_4,
 	  1
+	},
+	{
+	  DMOVER_FUNC_XOR2,
+	  &aau321_func_xor_1_4,
+	  2
+	},
+	{
+	  DMOVER_FUNC_XOR3,
+	  &aau321_func_xor_1_4,
+	  3
+	},
+	{
+	  DMOVER_FUNC_XOR4,
+	  &aau321_func_xor_1_4,
+	  4
 	},
 };
 #define	AAU321_ALGDESC_COUNT \
