@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	7.19 (Berkeley) 4/16/91
- *	$Id: nfs_bio.c,v 1.5 1993/07/13 10:04:26 cgd Exp $
+ *	$Id: nfs_bio.c,v 1.6 1993/07/13 10:50:04 cgd Exp $
  */
 
 #include "param.h"
@@ -260,11 +260,6 @@ nfs_write(vp, uio, ioflag, cred)
 		bn = lbn*(biosize/DEV_BSIZE);
 again:
 		bp = getblk(vp, bn, biosize);
-		if (bp->b_flags&B_ERROR) {
-			error = bp->b_error;
-			brelse(bp);
-			return error;
-		}
 		if (bp->b_wcred == NOCRED && cred != NOCRED) {
 			crhold(cred);
 			bp->b_wcred = cred;
