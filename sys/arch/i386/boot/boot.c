@@ -29,7 +29,13 @@
 /*
  * HISTORY
  * $Log: boot.c,v $
- * Revision 1.7  1993/06/18 06:50:52  cgd
+ * Revision 1.8  1993/07/11 12:02:21  andrew
+ * Fixes from bde, including support for loading @ any MB boundary (e.g. a
+ * kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
+ * buffering to speed booting from floppies.  Also works with aha174x
+ * controllers in enhanced mode.
+ *
+ * Revision 1.7  1993/06/18  06:50:52  cgd
  * convert magic numbers to network byte order, and attendent changes
  *
  * Revision 1.6  1993/06/14  00:47:08  deraadt
@@ -58,6 +64,13 @@
  * after 0.2.2 "stable" patches applied
  *
  * Revision 2.2  92/04/04  11:34:37  rpd
+ *
+ * 93/07/03  bde
+ *	Write first 4096 bytes to load address, not always to address 0.
+ *
+ * 93/06/29  bde
+ *	Don't clobber BIOS variables.
+ *
  * 	Change date in banner.
  * 	[92/04/03  16:51:14  rvb]
  * 
@@ -117,7 +130,7 @@ int drive;
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
-		"$Revision: 1.7 $");
+		"$Revision: 1.8 $");
 	printf("use options hd(1,...... to boot sd0 when wd0 is also installed\n");
 	gateA20();
 loadstart:
@@ -149,6 +162,7 @@ loadprog(howto)
 {
 	long int startaddr;
 	long int addr;	/* physical address.. not directly useable */
+	long int addr0;
 	int i;
 	static int (*x_entry)() = 0;
 	unsigned char	tmpbuf[4096]; /* we need to load the first 4k here */
@@ -167,6 +181,7 @@ loadprog(howto)
 
 	startaddr = (int)head.a_entry;
 	addr = (startaddr & 0x00f00000); /* some MEG boundary */
+	addr0 = addr;
 	printf("Booting %s(%d,%c)%s @ 0x%x\n"
 			, devs[maj]
 			, unit
@@ -195,7 +210,7 @@ loadprog(howto)
 			printf("loader overlaps bss, kernel must bzero\n");
 		}
 	}
-	printf("text=0x%x", head.a_text);
+	printf("text=0x%x ", head.a_text);
 	/********************************************************/
 	/* LOAD THE TEXT SEGMENT				*/
 	/* don't clobber the first 4k yet (BIOS NEEDS IT) 	*/
@@ -211,7 +226,7 @@ loadprog(howto)
 	while (addr & CLOFSET)
                 *(char *)addr++ = 0;
 
-	printf(" data=0x%x", head.a_data);
+	printf("data=0x%x ", head.a_data);
 	xread(addr, head.a_data);
 	addr += head.a_data;
 
@@ -219,7 +234,7 @@ loadprog(howto)
 	/* Skip over the uninitialised data			*/
 	/* (but clear it)					*/
 	/********************************************************/
-	printf(" bss=0x%x", head.a_bss);
+	printf("bss=0x%x ", head.a_bss);
 	if( (addr < ouraddr) && ((addr + head.a_bss) > ouraddr))
 	{
 		pbzero(addr,ouraddr - (int)addr);
@@ -242,7 +257,7 @@ loadprog(howto)
 		/********************************************************/
 		/* READ in the symbol table				*/
 		/********************************************************/
-		printf(" symbols=[+0x%x", head.a_syms);
+		printf("symbols=[+0x%x", head.a_syms);
 		xread(addr, head.a_syms);
 		addr += head.a_syms;
 	
@@ -259,7 +274,7 @@ loadprog(howto)
 		/********************************************************/
 		/* and that many bytes of (debug symbols?)		*/
 		/********************************************************/
-		printf("+0x%x]", i);
+		printf("+0x%x] ", i);
 		xread(addr, i);
 		addr += i;
 	}
@@ -269,7 +284,7 @@ loadprog(howto)
 	/********************************************************/
 
 	argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
-	printf(" total=0x%x",argv[4]);
+	printf("total=0x%x ",argv[4]);
 
 
 	/*
@@ -300,8 +315,10 @@ loadprog(howto)
 	/****************************************************************/
 	/* copy that first page and overwrite any BIOS variables	*/
 	/****************************************************************/
-	printf(" entry point=0x%x \n" ,((int)startaddr) & 0xffffff);
-	pcpy(tmpbuf, 0, 4096);
+	printf("entry point=0x%x\n" ,((int)startaddr) & 0xffffff);
+	/* Under no circumstances overwrite precious BIOS variables! */
+	pcpy(tmpbuf, addr0, 0x400);
+	pcpy(tmpbuf + 0x500, addr0 + 0x500, 4096 - 0x500);
 	startprog(((int)startaddr & 0xffffff),argv);
 }
 

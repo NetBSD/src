@@ -25,7 +25,13 @@
 #
 # HISTORY
 # $Log: Makefile,v $
-# Revision 1.5  1993/07/04 14:03:03  cgd
+# Revision 1.6  1993/07/11 12:02:17  andrew
+# Fixes from bde, including support for loading @ any MB boundary (e.g. a
+# kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
+# buffering to speed booting from floppies.  Also works with aha174x
+# controllers in enhanced mode.
+#
+# Revision 1.5  1993/07/04  14:03:03  cgd
 # do the right thing, so things aren't built in /usr/src/sys
 #
 # Revision 1.4  1993/06/18  08:03:14  cgd
@@ -40,14 +46,38 @@
 # Revision 1.1  1993/03/21  18:08:11  cgd
 # after 0.2.2 "stable" patches applied
 #
-# Revision 2.2	92/04/04  11:33:46  rpd
-#	Fabricated for MACH 3.0
-#	[92/03/30	     mg32]
+# 
+# 93/06/30  bde
+#	fd boot is now fast enough.
+#	(Safe) target fd0 and (unsafe) target wd0 to temporarily avoid
+#	updating /use/mdec.
+#
+# 93/06/29  bde
+#	Deleted weirdness for not-really-separate code and data segments.
+#	It is not necessary now that the GDT is dynamically initialized.
+#	table.o doesn't need to be early any more.  boot.sed is not used
+#	any more (delete it).  The shell commands that failed with status
+#	0 no longer exist so the 93/06/28 fixes got deleted.
+#
+#	Use .S extension for asm files to get (g)cc to preprocess them
+#	automatically.
+#
+# 93/06/28  bde
+#	Don't exit 0 from failing shell commands.
 #
 # Thu Sep 10 22:40:23 PDT 1992
 # Ported to 386BSD by Julian Elischer
 # julian@tfs.com
 #
+# Revision 2.2	92/04/04  11:33:46  rpd
+#	Fabricated for MACH 3.0
+#	[92/03/30	     mg32]
+#
+wd0:
+	dd if=boot of=biosboot count=1
+	dd if=boot of=bootbios skip=1
+	disklabel -r -w wd0 nec5655 newboot biosboot bootbios
+	rm biosboot bootbios
 
 NOPROG=	noprog
 NOMAN=	noman
@@ -56,34 +86,18 @@ CFLAGS	= -O -DDO_BAD144 -I${.CURDIR}
 LIBS= -lc
 INC= -I${.CURDIR}/../..
 
-# start.o should be first, table.o should be second
+# start.o should be first
 OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o
 
-.SUFFIXES: .s .c .o
+.SUFFIXES: .S .c .o
 
-# These are wierd because we don't want separate code and data segments.. ok?
 .c.o:
-	@echo $(CC) -c $(CFLAGS) $(INC) $*.c
-	-@trap "/bin/rm -f $*.i $*.s; exit 0" 0 1 2 3 10 15; \
-	$(CC)  $(CFLAGS) $(INC) -S $<;	\
-	if [ $$? != 0 ]; then :; else \
-		sed -f ${.CURDIR}/boot.sed $*.s > $*.i;	\
-		$(AS) $*.i -o $@; \
-	fi
+	$(CC)  $(CFLAGS) $(INC) -c $<
 
-.s.o:
-	@echo $(AS) -o $*.o $<
-	-@trap "/bin/rm -f $*.i X$*.c; exit 0" 0 1 2 3 10 15; \
-	/bin/rm -f X$*.c;	\
-	ln -s $< X$*.c;	\
-	$(CC) -E $(CFLAGS) X$*.c > $*.i;	\
-	if [ $$? != 0 ]; then :;	\
-	else \
-		$(AS) $*.i -o $@;	\
-	fi
+.S.o:
+	$(CC)  $(CFLAGS) -c $<
 
-
-boot: boot.sed $(OBJS)
+boot: $(OBJS)
 	$(LD) -N -T 0 -o boot $(OBJS) $(LIBS)
 	cp boot boot.sym
 	@strip boot
@@ -125,7 +139,12 @@ fd:	/usr/mdec/bootfd /usr/mdec/fdboot
 
 all: biosboot bootbios
 
-# Beware: the floppy boot block is *slow*...
+fd0:
+	dd if=boot of=biosboot count=1
+	dd if=boot of=bootbios skip=1
+	disklabel -r -w fd0 floppy bootflpy biosboot bootbios
+	rm biosboot bootbios
+
 install: wd sd fd
 
 clean cleandir:
