@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.29 1994/10/20 04:46:28 cgd Exp $
+ * $Id: machdep.c,v 1.30 1994/10/26 07:14:29 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -919,8 +919,8 @@ cpu_exec_aout_makecmds(p, epp)
 	int error = ENOEXEC;
 
 #ifdef COMPAT_SUNOS
-	extern sun_exec_aout_makecmds __P((struct proc *, struct exec_package *));
-	if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
+	extern sunos_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 		return 0;
 #endif
 	return error;
