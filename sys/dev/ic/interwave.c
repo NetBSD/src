@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.18 2003/05/03 18:11:19 wiz Exp $	*/
+/*	$NetBSD: interwave.c,v 1.19 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.18 2003/05/03 18:11:19 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.19 2003/10/30 01:58:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1047,7 +1047,6 @@ iw_start_output(addr, p, cc, intr, arg)
 	void	*arg;
 {
 	struct	iw_softc *sc = addr;
-	int	counter;
 
 #ifdef AUDIO_DEBUG
 	if (sc->sc_playlocked) {
@@ -1068,8 +1067,6 @@ iw_start_output(addr, p, cc, intr, arg)
 	sc->sc_playarg = arg;
 	sc->sc_dma_flags |= DMAMODE_WRITE;
 	sc->sc_playdma_bp = p;
-
-	counter = 0;
 
 	isa_dmastart(sc->sc_ic, sc->sc_playdrq, sc->sc_playdma_bp,
 		     cc, NULL, DMAMODE_WRITE, BUS_DMA_NOWAIT);
@@ -1112,7 +1109,6 @@ iw_start_input(addr, p, cc, intr, arg)
 	void	*arg;
 {
 	struct	iw_softc *sc = addr;
-	int	counter;
 
 #if AUDIO_DEBUG
 	if (sc->sc_reclocked) {
@@ -1134,8 +1130,6 @@ iw_start_input(addr, p, cc, intr, arg)
 	sc->sc_recarg = arg;
 	sc->sc_dma_flags |= DMAMODE_READ;
 	sc->sc_recdma_bp = p;
-
-	counter = 0;
 
 	isa_dmastart(sc->sc_ic, sc->sc_recdrq, sc->sc_recdma_bp,
 		     cc, NULL, DMAMODE_READ, BUS_DMA_NOWAIT);

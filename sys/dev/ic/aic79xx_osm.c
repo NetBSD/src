@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.6 2003/09/02 21:02:57 fvdl Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.7 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.6 2003/09/02 21:02:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.7 2003/10/30 01:58:17 simonb Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic7xxx_cam.h>
@@ -153,7 +153,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 {
 	struct scsipi_xfer	*xs;
 	struct scsipi_periph	*periph;
-	int			target;
 	int			s;
 
 	LIST_REMOVE(scb, pending_links);
@@ -162,8 +161,6 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	periph = xs->xs_periph;
 
 	callout_stop(&scb->xs->xs_callout);
-
-	target = periph->periph_target;
 
 	if (xs->datalen) {
 		int op;
@@ -690,9 +687,6 @@ ahd_timeout(void *arg)
 	struct	ahd_softc *ahd;
 	ahd_mode_state	   saved_modes;
 	int		   s;
-	int		   target;
-	int		   lun;
-	char		   channel;
 
 	scb = (struct scb *)arg; 
 	ahd = (struct ahd_softc *)scb->ahd_softc;
@@ -719,10 +713,6 @@ ahd_timeout(void *arg)
 		ahd_unlock(ahd, &s);
 		return;
 	}
-
-	target = SCB_GET_TARGET(ahd, scb);
-	channel = SCB_GET_CHANNEL(ahd, scb);
-	lun = SCB_GET_LUN(scb);
 
 	ahd_print_path(ahd, scb);
 	printf("SCB 0x%x - timed out\n", SCB_GET_TAG(scb));
@@ -780,11 +770,10 @@ void
 ahd_platform_set_tags(struct ahd_softc *ahd,
 		      struct ahd_devinfo *devinfo, ahd_queue_alg alg)
 {
-	struct ahd_initiator_tinfo *tinfo;
         struct ahd_tmode_tstate *tstate;
 
-        tinfo = ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
-                                    devinfo->target, &tstate);
+        ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
+                            devinfo->target, &tstate);
 
         if (alg != AHD_QUEUE_NONE)
                 tstate->tagenable |= devinfo->target_mask;

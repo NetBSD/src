@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.8 2003/06/29 22:30:51 fvdl Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.9 2003/10/30 01:58:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.8 2003/06/29 22:30:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.9 2003/10/30 01:58:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -114,7 +114,7 @@ int
 sysmonclose_wdog(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct sysmon_wdog *smw;
-	int omode, s, error = 0;
+	int s, error = 0;
 
 	/*
 	 * If this is the last close, and there is a watchdog
@@ -125,7 +125,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode, struct proc *p)
 	 */
 	SYSMON_WDOG_LOCK(s);
 	if ((smw = sysmon_armed_wdog) != NULL) {
-		if ((omode = smw->smw_mode) == WDOG_MODE_UTICKLE) {
+		if (smw->smw_mode == WDOG_MODE_UTICKLE) {
 			error = sysmon_wdog_setmode(smw,
 			    WDOG_MODE_DISARMED, smw->smw_period);
 			if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.32 2003/09/14 14:48:17 jmmv Exp $	*/
+/*	$NetBSD: auvia.c,v 1.33 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.32 2003/09/14 14:48:17 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.33 2003/10/30 01:58:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -941,13 +941,12 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 {
 	struct auvia_dma_op *op;
 	struct auvia_dma *dp;
-	bus_addr_t s, e;
+	bus_addr_t s;
 	size_t l;
 	int segs;
 
 	s = p->map->dm_segs[0].ds_addr;
 	l = ((char *)end - (char *)start);
-	e = s + l;
 	segs = (l + blksize - 1) / blksize;
 
 	if (segs > (ch->sc_dma_op_count)) {

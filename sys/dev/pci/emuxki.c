@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.28 2003/10/25 21:31:43 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.29 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.28 2003/10/25 21:31:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.29 2003/10/30 01:58:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -437,10 +437,9 @@ static int
 emuxki_detach(struct device *self, int flags)
 {
 	struct emuxki_softc *sc = (struct emuxki_softc *) self;
-	int             err = 0;
 
         if (sc->sc_audev != NULL) /* Test in case audio didn't attach */
-	        err = config_detach(sc->sc_audev, 0);
+	        config_detach(sc->sc_audev, 0);
 
 	/* All voices should be stopped now but add some code here if not */
 
@@ -1021,10 +1020,8 @@ static void
 emuxki_channel_set_bufparms(struct emuxki_channel *chan,
 			     u_int32_t start, u_int32_t end)
 {
-	u_int8_t        shift;
 	struct emuxki_voice *voice = chan->voice;
 
-	shift = voice->stereo + voice->b16;
 	chan->loop.start = start & EMU_CHAN_PSST_LOOPSTARTADDR_MASK;
 	chan->loop.end = end & EMU_CHAN_DSL_LOOPENDADDR_MASK;
 }
@@ -2130,9 +2127,7 @@ emuxki_mappage(void *addr, void *ptr, off_t off, int prot)
 {
 	struct emuxki_softc *sc = addr;
 	struct emuxki_mem *mem;
-	u_int32_t      *ptb;
 
-	ptb = KERNADDR(sc->ptb);
 	LIST_FOREACH(mem, &sc->mem, next) {
 		if (KERNADDR(mem->dmamem) == ptr) {
 			struct dmamem *dm = mem->dmamem;

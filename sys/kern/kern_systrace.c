@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.32 2003/09/13 08:32:14 jdolecek Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.33 2003/10/30 01:58:18 simonb Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.32 2003/09/13 08:32:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.33 2003/10/30 01:58:18 simonb Exp $");
 
 #include "opt_systrace.h"
 
@@ -695,7 +695,7 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	struct str_policy *strpolicy;
 	struct fsystrace *fst;
 	struct pcred *pc;
-	int policy, error = 0, report = 0, maycontrol = 0, issuser = 0;
+	int policy, error = 0, maycontrol = 0, issuser = 0;
 
 	systrace_lock();
 	strp = p->p_systrace;
@@ -772,7 +772,6 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 #ifndef __NetBSD__
 				CLR(strp->flags, STR_PROC_SYSCALLRES);
 #endif
-				report = 1;
 			}
 			/* Replace the arguments if necessary */
 			if (strp->replace != NULL) {

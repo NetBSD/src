@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.149 2003/10/29 22:09:41 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.150 2003/10/30 01:58:17 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.149 2003/10/29 22:09:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.150 2003/10/30 01:58:17 simonb Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -317,7 +317,7 @@ atabusconfig(atabus_sc)
 	struct atabus_softc *atabus_sc;
 {
 	struct channel_softc *chp = atabus_sc->sc_chan;
-	int ctrl_flags, i, error, need_delref = 0;
+	int i, error, need_delref = 0;
 	struct ataparams params;
 	struct atabus_initq *atabus_initq = NULL;
 	u_int8_t st0 = 0, st1 = 0;
@@ -458,7 +458,6 @@ atabusconfig(atabus_sc)
 			}
 		}
 	}
-	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
 
 	WDCDEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),

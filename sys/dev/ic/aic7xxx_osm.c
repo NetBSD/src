@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.12 2003/10/01 18:01:06 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.13 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.12 2003/10/01 18:01:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.13 2003/10/30 01:58:17 simonb Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -994,11 +994,10 @@ void
 ahc_platform_set_tags(struct ahc_softc *ahc,
 		      struct ahc_devinfo *devinfo, int enable)
 {
-	struct ahc_initiator_tinfo *tinfo;
         struct ahc_tmode_tstate *tstate;
 
-        tinfo = ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
-                                    devinfo->target, &tstate);
+        ahc_fetch_transinfo(ahc, devinfo->channel, devinfo->our_scsiid,
+                            devinfo->target, &tstate);
 
         if (enable)
                 tstate->tagenable |= devinfo->target_mask;

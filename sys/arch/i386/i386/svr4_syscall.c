@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.22 2003/10/27 14:11:47 junyoung Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.23 2003/10/30 02:07:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.22 2003/10/27 14:11:47 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.23 2003/10/30 02:07:37 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -191,14 +191,12 @@ svr4_syscall_fancy(frame)
 	register caddr_t params;
 	register const struct sysent *callp;
 	register struct lwp *l;
-	struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
 	l = curlwp;
-	p = l->l_proc;
 
 	code = frame->tf_eax;
 	callp = svr4_sysent;

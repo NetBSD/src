@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.29 2003/10/25 12:08:45 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.30 2003/10/30 01:58:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.29 2003/10/25 12:08:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.30 2003/10/30 01:58:18 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1554,9 +1554,7 @@ debug_print_sa(struct proc *p)
 int
 debug_print_lwp(struct lwp *l)
 {
-	struct proc *p;
 
-	p = l->l_proc;
 	printf("LWP %d address %p ", l->l_lid, l);
 	printf("state %d flags %x ", l->l_stat, l->l_flag);
 	if (l->l_wchan)

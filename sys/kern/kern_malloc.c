@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.88 2003/09/27 23:10:47 mycroft Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.89 2003/10/30 01:58:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.88 2003/09/27 23:10:47 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.89 2003/10/30 01:58:18 simonb Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -267,7 +267,6 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #ifdef DIAGNOSTIC
 	uint32_t *end, *lp;
 	int copysize;
-	const char *savedtype;
 #endif
 
 #ifdef LOCKDEBUG
@@ -377,7 +376,6 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #ifdef DIAGNOSTIC
 	freep = (struct freelist *)va;
 	/* XXX potential to get garbage pointer here. */
-	savedtype = freep->type->ks_shortdesc;
 	if (kbp->kb_next) {
 		int rv;
 		vaddr_t addr = (vaddr_t)kbp->kb_next;

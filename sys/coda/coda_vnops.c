@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.37 2003/08/27 17:49:49 drochner Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.38 2003/10/30 02:07:38 simonb Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.37 2003/08/27 17:49:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.38 2003/10/30 02:07:38 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -395,7 +395,6 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 /* locals */
     struct cnode *cp = VTOC(vp);
     struct vnode *cfvp = cp->c_ovp;
-    int igot_internally = 0;
     int opened_internally = 0;
     int error = 0;
 
@@ -428,7 +427,6 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 	 * it's completely written.
 	 */
 	if (cp->c_inode != 0 && !(p && (p->p_acflag & ACORE))) { 
-	    igot_internally = 1;
 	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp);
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);

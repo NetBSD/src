@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_card.c,v 1.3 2003/03/11 23:11:21 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_card.c,v 1.15 2003/03/12 00:14:40 wiz Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.16 2003/10/30 01:58:17 simonb Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.15 2003/03/12 00:14:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.16 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -919,10 +919,9 @@ checkTuner:
 	    /* Determine the model number from the eeprom */
 	    if (bktr->card.eepromAddr != 0) {
 	        /* eeprom data block structure */
-	        unsigned char *block_1, *block_2, *block_3, *block_4;
+	        unsigned char *block_1, *block_2, *block_3;
 	        int block_1_data_size,  block_2_data_size, block_3_data_size;
 	        int block_1_total_size, block_2_total_size, block_3_total_size;
-		int block_4_header_size;
 
 		unsigned int model,revision;
 		unsigned char tuner_code;
@@ -942,9 +941,6 @@ checkTuner:
 	        block_3 = &eeprom[block_1_total_size + block_2_total_size];
 	        block_3_data_size = (block_3[0] &0x07);
 	        block_3_total_size = block_3_data_size + 1; /* Header size */
-
-	        block_4 = &eeprom[block_1_total_size +block_2_total_size +block_3_total_size];
-	        block_4_header_size = 1;
 
 		model    = (block_1[12] << 8  | block_1[11]);
 		revision = (block_1[15] << 16 | block_1[14] << 8 | block_1[13]);

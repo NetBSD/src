@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.7 2003/10/30 02:07:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7 2003/10/30 02:07:37 simonb Exp $");
 
 #include "opt_cputype.h"
 
@@ -1044,7 +1044,7 @@ identifycpu(struct cpu_info *ci)
 {
 	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
-	int modif, family, model, step;
+	int modif, family, model;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	char *cpuname = ci->ci_dev->dv_xname;
@@ -1071,7 +1071,6 @@ identifycpu(struct cpu_info *ci)
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
-		step = CPUID2STEPPING(ci->ci_signature);
 
 		for (i = 0; i < max; i++) {
 			if (!strncmp((char *)ci->ci_vendor,

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.51 2003/09/25 22:26:40 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.52 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.51 2003/09/25 22:26:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.52 2003/10/30 01:58:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1647,7 +1647,6 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct twe_usercommand *tu;
 	struct twe_paramcommand *tp;
 	struct twe_drivecommand *td;
-	union twe_statrequest *ts;
 	void *pdata = NULL;
 	int s, error = 0;
 	u_int8_t cmdid;
@@ -1659,7 +1658,6 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	tu = (struct twe_usercommand *)data;
 	tp = (struct twe_paramcommand *)data;
 	td = (struct twe_drivecommand *)data;
-	ts = (union twe_statrequest *)data;
 
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {

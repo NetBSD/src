@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.41 2003/10/19 01:49:03 simonb Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.42 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.41 2003/10/19 01:49:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.42 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -3335,7 +3335,6 @@ eshstop(sc)
 	struct ifnet *ifp = &sc->sc_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct rr_ring_ctl *ring;
 	u_int32_t misc_host_ctl;
 	int i;
 
@@ -3353,7 +3352,6 @@ eshstop(sc)
 	sc->sc_flags = 0;
 	ifp->if_timer = 0;  /* turn off watchdog timer */
 
-	ring = sc->sc_recv_ring_table + HIPPI_ULP_802;
 	while (sc->sc_snap_recv.ec_consumer 
                != sc->sc_snap_recv.ec_producer) {
 		struct mbuf *m0;
@@ -3406,7 +3404,6 @@ eshstop(sc)
 
 	/* XXX:  doesn't clear bufs being sent */
 
-	ring = &sc->sc_gen_info->ri_send_ring_ctl;
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_send.ec_dma);
 	if (sc->sc_send.ec_cur_mbuf) {
 		m_freem(sc->sc_send.ec_cur_mbuf);

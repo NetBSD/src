@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.55 2003/10/15 07:18:17 simonb Exp $	*/
+/*	$NetBSD: awi.c,v 1.56 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.55 2003/10/15 07:18:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.56 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -397,7 +397,7 @@ awi_intr(void *arg)
 {
 	struct awi_softc *sc = arg;
 	u_int16_t status;
-	int error, handled = 0, ocansleep;
+	int handled = 0, ocansleep;
 #ifdef AWI_DEBUG
 	static const char *intname[] = {
 	    "CMD", "RX", "TX", "SCAN_CMPLT",
@@ -417,7 +417,7 @@ awi_intr(void *arg)
 	sc->sc_cansleep = 0;
 
 	for (;;) {
-		if ((error = awi_intr_lock(sc)) != 0)
+		if (awi_intr_lock(sc) != 0)
 			break;
 		status = awi_read_1(sc, AWI_INTSTAT);
 		awi_write_1(sc, AWI_INTSTAT, 0);

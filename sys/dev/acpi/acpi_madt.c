@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.6 2003/07/14 15:47:00 lukem Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.7 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.6 2003/07/14 15:47:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.7 2003/10/30 01:58:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -192,9 +192,7 @@ acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *, void *), void *aux)
 {
 	char *madtend, *where;
 	APIC_HEADER *hdrp;
-	APIC_TABLE *ap;
 
-	ap = (APIC_TABLE *)AcpiGbl_MADT;
 	madtend = (char *)AcpiGbl_MADT + AcpiGbl_MADT->Length;
 	where = (char *)AcpiGbl_MADT + sizeof (APIC_TABLE);
 	while (where < madtend) {

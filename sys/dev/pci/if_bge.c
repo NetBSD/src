@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.52 2003/10/23 20:36:36 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.53 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.52 2003/10/23 20:36:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.53 2003/10/30 01:58:17 simonb Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -435,12 +435,9 @@ bge_miibus_readreg(dev, phy, reg)
 	int phy, reg;
 {
 	struct bge_softc *sc = (struct bge_softc *)dev;
-	struct ifnet *ifp;
 	u_int32_t val;
 	u_int32_t saved_autopoll;
 	int i;
-
-	ifp = &sc->ethercom.ec_if;
 
 	/*
 	 * Several chips with builtin PHYs will incorrectly answer to

@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.40 2003/10/25 20:26:25 mycroft Exp $	*/
+/*	$NetBSD: iop.c,v 1.41 2003/10/30 01:58:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.40 2003/10/25 20:26:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.41 2003/10/30 01:58:17 simonb Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -1798,10 +1798,8 @@ static void
 iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
-	struct iop_softc *sc;
 	u_int event;
 
-	sc = (struct iop_softc *)dv;
 	rb = reply;
 
 	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0)
