@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.3 2002/06/11 14:00:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.4 2002/06/11 14:15:14 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1490,7 +1490,6 @@ void parse_pool_statement (cfile, group, type)
 
 	/* See if there's already a pool into which we can merge this one. */
 	for (pp = pool -> shared_network -> pools; pp; pp = pp -> next) {
-		struct lease *l;
 
 		if (pp -> group -> statements != pool -> group -> statements)
 			continue;
