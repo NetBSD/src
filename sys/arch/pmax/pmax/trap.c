@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 1996/03/25 03:18:15 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 1996/03/25 05:55:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+/* XXX */
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
@@ -117,28 +118,28 @@ void (*machExceptionTable[]) __P((void)) = {
 	MachKernGenException,		/* reserved instruction */
 	MachKernGenException,		/* coprocessor unusable */
 	MachKernGenException,		/* arithmetic overflow */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
+	MachKernGenException,		/* r4k trap exception, r3k reserved */
+	MachKernGenException,		/* r4k virt coherence, r3k reserved */
+	MachKernGenException,		/* r4k FP exception, r3k reserved */
 /*
  * The user exception handlers.
  */
-	MachUserIntr,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
-	MachUserGenException,
+	MachUserIntr,		        /*  0 */
+	MachUserGenException,	        /*  1 */
+	MachUserGenException,	        /*  2 */
+	MachUserGenException,	        /*  3 */
+	MachUserGenException,	        /*  4 */
+	MachUserGenException,	        /*  5 */
+	MachUserGenException,	        /*  6 */
+	MachUserGenException,	        /*  7 */
+	MachUserGenException,	        /*  8 */
+	MachUserGenException,	        /*  9 */
+	MachUserGenException,	        /* 10 */
+	MachUserGenException,	        /* 11 */
+	MachUserGenException,	        /* 12 */
+	MachUserGenException,	        /* 13 */
+	MachUserGenException,	        /* 14 */
+	MachUserGenException,	        /* 15 */
 };
 
 char	*trap_type[] = {
@@ -155,9 +156,25 @@ char	*trap_type[] = {
 	"reserved instruction",
 	"coprocessor unusable",
 	"arithmetic overflow",
-	"reserved 13",
-	"reserved 14",
-	"reserved 15",
+	"r4k trap/r3k reserved 13",
+	"r4k virtual coherency instruction/r3k reserved 14",
+	"r4k floating point/ r3k reserved 15",
+	"reserved 16",
+	"reserved 17",
+	"reserved 18",
+	"reserved 19",
+	"reserved 20",
+	"reserved 21",
+	"reserved 22",
+	"r4k watch",
+	"reserved 24",
+	"reserved 25",
+	"reserved 26",
+	"reserved 27",
+	"reserved 28",
+	"reserved 29",
+	"reserved 30",
+	"r4k virtual coherency data",
 };
 
 #ifdef DEBUG
@@ -168,6 +185,7 @@ struct trapdebug {		/* trap history buffer for debugging */
 	u_int	vadr;
 	u_int	pc;
 	u_int	ra;
+	u_int	sp;
 	u_int	code;
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
@@ -288,6 +306,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 	trp->pc = pc;
 	trp->ra = !USERMODE(statusReg) ? ((int *)&args)[19] :
 		p->p_md.md_regs[RA];
+	trp->sp = (int)&args;
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
@@ -625,6 +644,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		trp->vadr = locr0[SP];
 		trp->pc = locr0[PC];
 		trp->ra = locr0[RA];
+		/*trp->sp = (int)&args;*/
 		trp->code = -code;
 		if (++trp == &trapdebug[TRAPSIZE])
 			trp = trapdebug;
@@ -724,6 +744,19 @@ trap(statusReg, causeReg, vadr, pc, args)
 		machFPCurProcPtr = p;
 		p->p_md.md_regs[PS] |= MACH_SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
+		goto out;
+
+	case T_FPE:
+#ifdef DEBUG
+		trapDump("fpintr");
+#else
+		printf("FPU Trap: PC %x CR %x SR %x\n",
+			pc, causeReg, statusReg);
+		goto err;
+#endif
+
+	case T_FPE+T_USER:
+		MachFPTrap(statusReg, causeReg, pc);
 		goto out;
 
 	case T_OVFLOW+T_USER:
@@ -850,6 +883,7 @@ interrupt(statusReg, causeReg, pc)
 	trp->vadr = 0;
 	trp->pc = pc;
 	trp->ra = 0;
+	trp->sp = (int)&args;
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
@@ -1544,7 +1578,7 @@ trapDump(msg)
 			trap_type[(trp->cause & MACH_CR_EXC_CODE) >>
 				MACH_CR_EXC_CODE_SHIFT],
 			trp->vadr, trp->pc, trp->cause, trp->status);
-		printf("   RA %x code %d\n", trp-> ra, trp->code);
+		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
 	bzero(trapdebug, sizeof(trapdebug));
 	trp = trapdebug;
@@ -1738,9 +1772,13 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	unsigned retAddr;
 	int condition;
 
+#ifdef notyet	/*  Compute desination of r4000 squashed branches */
+#define GetBranchDest(InstPtr, inst) \
+	((unsigned)InstPtr + 4 + ((short)inst.IType.imm << 2))
+
 	inst.word = (instPC < MACH_CACHED_MEMORY_ADDR) ?
 		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
-		
+#endif
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
@@ -1872,6 +1910,7 @@ cpu_singlestep(p)
 	register int *locr0 = p->p_md.md_regs;
 	int i;
 
+#if notanymore
 	/* compute next address after current location */
 	va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], 1);
 	if (p->p_md.md_ss_addr || p->p_md.md_ss_addr == va ||
@@ -1897,6 +1936,69 @@ cpu_singlestep(p)
 				sa, ea, VM_PROT_READ|VM_PROT_EXECUTE, FALSE);
 		}
 	}
+#endif
+	int bpinstr = MACH_BREAK_SSTEP;
+	int curinstr;
+	struct uio uio;
+	struct iovec iov;
+
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&curinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)locr0[PC];
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
+
+	/* compute next address after current location */
+	if(curinstr != 0) {
+		va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
+	}
+	else {
+		va = locr0[PC] + 4;
+	}
+	if (p->p_md.md_ss_addr) {
+		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
+			p->p_comm, p->p_pid, p->p_md.md_ss_addr, va); /* XXX */
+		return (EFAULT);
+	}
+	p->p_md.md_ss_addr = va;
+
+	/*
+	 * Fetch what's at the current location.
+	 */
+	iov.iov_base = (caddr_t)&p->p_md.md_ss_instr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_READ;
+	uio.uio_procp = curproc;
+	procfs_domem(curproc, p, NULL, &uio);
+
+	/*
+	 * Store breakpoint instruction at the "next" location now.
+	 */
+	iov.iov_base = (caddr_t)&bpinstr;
+	iov.iov_len = sizeof(int); 
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1; 
+	uio.uio_offset = (off_t)va;
+	uio.uio_resid = sizeof(int);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_rw = UIO_WRITE;
+	uio.uio_procp = curproc;
+	i = procfs_domem(curproc, p, NULL, &uio);
+	machFlushCache(); /* XXX memory barrier followed by flush icache? */
+
 	if (i < 0)
 		return (EFAULT);
 #if 0
