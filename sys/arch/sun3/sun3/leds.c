@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.2 1997/05/16 05:33:48 jeremy Exp $	*/
+/*	$NetBSD: leds.c,v 1.3 1997/08/12 16:52:11 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,8 @@
 
 /*
  * Functions to flash the LEDs with some pattern.
- * (LED = Light Emitting Diode)
+ * All Sun3 machines have an 8-position LED array
+ * in which some pattern is animated.
  */
 
 #include <sys/param.h>
@@ -62,8 +63,8 @@ static struct led_patterns ledpat = {
 	8,	/* divisor */
 	8,	/* patlen */
 	{	/* patterns */
+		0x0F, 0x1E, 0x3C, 0x78,
 		0xF0, 0xE1, 0xC3, 0x87,
-		0x0F, 0x1E, 0x3C, 0x78
 	}
 };
 
