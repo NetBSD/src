@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24.2.2 2000/11/22 16:00:30 bouyer Exp $
+#	$NetBSD: Makefile,v 1.24.2.3 2001/04/21 17:53:54 bouyer Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -60,7 +60,8 @@ CPPFLAGS+= -DPASS_MEMMAP
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
 SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x50000
-SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
+SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
+SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
 .if (${BASE} == "biosboot")
 VERSIONFILE= ${.CURDIR}/version

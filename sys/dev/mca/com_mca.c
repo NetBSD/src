@@ -1,7 +1,7 @@
-/*	$NetBSD: com_mca.c,v 1.1.2.2 2001/03/27 15:32:05 bouyer Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.1.2.3 2001/04/21 17:48:50 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

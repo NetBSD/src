@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.2.5 2001/03/27 15:31:10 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.2.6 2001/04/21 17:54:00 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -912,6 +912,16 @@ cninit_kd()
 		akbd_cnattach();
 		goto kbd_found;
 	}
+#endif
+
+#if NUKBD > 0
+	/*
+	 * XXX Old firmware does not have `usb-kbd-ihandles method.  Assume
+	 * XXX USB keyboard anyway.
+	 */
+	printf("console keyboard type: USB\n");
+	ukbd_cnattach();
+	goto kbd_found;
 #endif
 
 	/*

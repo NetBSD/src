@@ -1,3 +1,5 @@
+/*        $NetBSD: ieee1212reg.h,v 1.1.6.3 2001/04/21 17:49:49 bouyer Exp $ */
+
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -113,9 +115,13 @@
  */
 #define	P1212_ROMFMT_GET_CRCLEN(quadlet)	(((quadlet) >> 16) & 0xff)
 
-/*	size_t P1212_ROMGET_GET_INFOLEN(uint32_t quadlet);
+/*	size_t P1212_ROMGET_GET_CRC(uint32_t quadlet);
  */
 #define	P1212_ROMFMT_GET_CRC(quadlet)		((uint16_t)(quadlet))
+
+/*      uint8_t      P1212_DIRENT_GET_KEY(uint32_t quadlet);
+ */
+#define P1212_DIRENT_GET_KEY(quadlet)           (((quadlet) >> 24) & 0xff)
 
 /*	unsigned int P1212_DIRENT_GET_KEYTYPE(uint32_t quadlet);
  */
@@ -125,17 +131,21 @@
  */
 #define	P1212_DIRENT_GET_KEYVALUE(quadlet)	(((quadlet) >> 24) & 0x3f)
 
-/*	unsigned int P1212_DIRECT_GET_OFFSET(uint32_t quadlet);
+/*	unsigned int P1212_DIRENT_GET_OFFSET(uint32_t quadlet);
  */
 #define	P1212_DIRENT_GET_OFFSET(quadlet)	((quadlet) & 0xffffff)
 
-/*	unsigned int P1212_DIRECT_GET_OFFSET(uint32_t quadlet);
- */
-#define	P1212_DIRENT_GET_OFFSET(quadlet)	((quadlet) & 0xffffff)
-
-/*	unsigned int P1212_DIRECT_GET_VALUE(uint32_t quadlet);
+/*	unsigned int P1212_DIRENT_GET_VALUE(uint32_t quadlet);
  */
 #define	P1212_DIRENT_GET_VALUE(quadlet)		((quadlet) & 0xffffff)
+
+/*      u_int16_t P1212_DIRENT_GET_LEN(quadlet);
+ */
+#define P1212_DIRENT_GET_LEN(quadlet)           (((quadlet) >> 16) & 0xffff)
+
+/*      u_int16_t P1212_DIRENT_GET_CRC(quadlet);
+ */
+#define P1212_DIRENT_GET_CRC(quadlet)           ((uint16_t)(quadlet))
 
 /* Key Types are stored in bits 31-30 of a directory entry.
  */

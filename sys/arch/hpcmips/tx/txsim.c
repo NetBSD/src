@@ -1,4 +1,4 @@
-/*	$NetBSD: txsim.c,v 1.3.2.2 2000/11/20 20:47:44 bouyer Exp $ */
+/*	$NetBSD: txsim.c,v 1.3.2.3 2001/04/21 17:53:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
 /*
  * TX System Internal Module.
  */
@@ -47,6 +49,8 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/txsnd.h>
@@ -70,6 +74,11 @@ txsim_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
     
+#ifdef VR41XX
+	if (!platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
+	    && !platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
+		return 1;
+#endif /* !TX39XX */
 	if (strcmp(ma->ma_name, match->cf_driver->cd_name))
 		return 0;
 	return 1;

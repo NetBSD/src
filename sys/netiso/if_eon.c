@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.26.2.3 2001/02/11 19:17:33 bouyer Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.26.2.4 2001/04/21 17:46:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -191,7 +191,7 @@ eonioctl(ifp, cmd, data)
 	u_long          cmd;
 	caddr_t data;
 {
-	int             s = splimp();
+	int             s = splnet();
 	int    error = 0;
 
 #ifdef ARGO_DEBUG
@@ -566,7 +566,7 @@ eoninput(m, va_alist)
 		}
 #endif
 		ifq = &clnlintrq;
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(ifq)) {
 			IF_DROP(ifq);
 			m_freem(m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.9.14.4 2001/01/05 17:36:53 bouyer Exp $	*/
+/*	$NetBSD: pfil.h,v 1.9.14.5 2001/04/21 17:46:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -33,6 +33,7 @@
 
 #include <sys/queue.h>
 #include <net/dlt.h>
+#include <sys/null.h>
 
 struct mbuf;
 struct ifnet;

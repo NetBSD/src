@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.11.2.3 2001/03/27 15:32:19 bouyer Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.11.2.4 2001/04/21 17:50:06 bouyer Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,6 +152,8 @@ static const struct uplcom_product {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
 	/* I/O DATA USB-RSAQ */
 	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
+	/* PLANEX USB-RS232 URS-03 */
+	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 
 	{ 0, 0 }
 };
@@ -648,13 +650,13 @@ uplcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTF(("%s: uplcom status = %02x\n", USBDEVNAME(sc->sc_dev), buf[8]));
 
-		sc->sc_lsr = sc->sc_msr = 0;
-		pstatus = buf[8];
-		if (ISSET(pstatus, RSAQ_STATUS_DSR))
-			sc->sc_msr |= UMSR_DSR;
-		if (ISSET(pstatus, RSAQ_STATUS_DCD))
-			sc->sc_msr |= UMSR_DCD;
-		ucom_status_change((struct ucom_softc *) sc->sc_subdev);
+	sc->sc_lsr = sc->sc_msr = 0;
+	pstatus = buf[8];
+	if (ISSET(pstatus, RSAQ_STATUS_DSR))
+		sc->sc_msr |= UMSR_DSR;
+	if (ISSET(pstatus, RSAQ_STATUS_DCD))
+		sc->sc_msr |= UMSR_DCD;
+	ucom_status_change((struct ucom_softc *) sc->sc_subdev);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.16.14.5 2001/01/18 09:23:53 bouyer Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.16.14.6 2001/04/21 17:46:41 bouyer Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -445,7 +445,7 @@ stripopen(dev, tp)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if (tp->t_linesw && (tp->t_linesw->l_no == STRIPDISC))
+	if (tp->t_linesw->l_no == STRIPDISC)
 		return (0);
 
 	for (nstrip = NSTRIP, sc = strip_softc; --nstrip >= 0; sc++) {
@@ -903,7 +903,7 @@ stripstart(tp)
 	softintr_schedule(sc->sc_si);
 #else
     {
-	int s = splimp();
+	int s = splhigh();
 	schednetisr(NETISR_STRIP);
 	splx(s);
     }
@@ -1045,7 +1045,7 @@ stripinput(c, tp)
 	softintr_schedule(sc->sc_si);
 #else
     {
-	int s = splimp();
+	int s = splhigh();
 	schednetisr(NETISR_STRIP);
 	splx(s);
     }
@@ -1302,7 +1302,7 @@ stripintr(void *arg)
 		sc->sc_if.if_ipackets++;
 		sc->sc_if.if_lastchange = time;
 
-		s = splimp();
+		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
 			IF_DROP(&ipintrq);
 			sc->sc_if.if_ierrors++;

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.21.2.1 2000/11/22 16:02:52 bouyer Exp $ */
+/* $NetBSD: osf1.h,v 1.21.2.2 2001/04/21 17:46:22 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -71,6 +71,8 @@ typedef void		*osf1_data_ptr;	/* XXX hard to fix size */
 typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
 typedef	osf1_int	osf1_key_t;
 typedef	osf1_int	osf1_pid_t;
+typedef u_int64_t	osf1_blksize_t;
+typedef u_int64_t	osf1_blkcnt_t;
 
 struct osf1_timeval {				/* time.h */
 	osf1_time_t	tv_sec;
@@ -502,6 +504,39 @@ struct osf1_stat {
 	osf1_uint_t	st_gen;
 };
 
+struct osf1_stat2 {
+	osf1_dev_t	st_dev;
+	osf1_int	st_dead1;	/* was st_ino */
+	osf1_mode_t	st_mode;
+	osf1_nlink_t	st_nlink;
+	osf1_short	st_dead2;	/* something to do with nlink? */
+	osf1_uid_t	st_uid;
+	osf1_gid_t	st_gid;
+	osf1_dev_t	st_rdev;
+	osf1_dev_t	st_rdev2;
+	osf1_off_t	st_size;
+	osf1_time_t	st_dead3;
+	osf1_int	st_uatime;
+	osf1_time_t	st_dead4;
+	osf1_int	st_umtime;
+	osf1_time_t	st_dead5;
+	osf1_int	st_uctime;
+	osf1_int	st_dead6;
+	osf1_int	st_dead7;
+	osf1_uint_t	st_flags;
+	osf1_uint_t	st_generation;
+	osf1_long	st_unused1[4];
+	osf1_ino_t	st_ino;
+	osf1_int	st_unused;
+	osf1_time_t	st_atime_sec;
+	osf1_int	st_unused2;
+	osf1_time_t	st_mtime_sec;
+	osf1_int	st_unused3;
+	osf1_time_t	st_ctime_sec;
+	osf1_int	st_unused4;
+	osf1_blksize_t	st_blocksize;
+	osf1_blkcnt_t	st_blocks;
+};
 
 /* systeminfo.h */
 

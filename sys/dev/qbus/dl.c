@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.10.4.2 2000/11/22 16:04:43 bouyer Exp $	*/
+/*	$NetBSD: dl.c,v 1.10.4.3 2001/04/21 17:49:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -279,10 +279,7 @@ dlxint(void *arg)
 	struct tty *tp = sc->sc_tty;
 
 	tp->t_state &= ~(TS_BUSY | TS_FLUSH);
-	if (tp->t_linesw)
-		(*tp->t_linesw->l_start)(tp);
-	else
-		dlstart(tp);
+	(*tp->t_linesw->l_start)(tp);
        
 	return;
 }

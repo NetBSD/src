@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.1.2.3 2001/03/12 13:27:17 bouyer Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.1.2.4 2001/04/21 17:53:09 bouyer Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -342,15 +342,18 @@ jazzio_intr_establish(slot, handler, val)
 		break;
 
 	case NEC_R94:
+	case NEC_R96:
+		out16(RD94_SYS_LB_IE2, local_int_mask);
+		break;
+
 	case NEC_RAx94:
 	case NEC_RD94:
-	case NEC_R96:
 	case NEC_JC94:
 		/* XXX: I don't know why, but firmware does. */
 		if (in32(0xe0000560) != 0)
-			out16(RD94_SYS_LB_IE+2, local_int_mask);
+			out16(RD94_SYS_LB_IE2, local_int_mask);
 		else
-			out16(RD94_SYS_LB_IE, local_int_mask);
+			out16(RD94_SYS_LB_IE1, local_int_mask);
 		break;
 	}
 }

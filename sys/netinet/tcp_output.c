@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.52.2.4 2001/03/27 15:32:35 bouyer Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.52.2.5 2001/04/21 17:46:52 bouyer Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -227,7 +227,7 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	else if (ifp->if_flags & IFF_LOOPBACK)
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 #ifdef INET
-	else if (ip_mtudisc)
+	else if (inp && ip_mtudisc)
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	else if (inp && in_localaddr(inp->inp_faddr))
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
@@ -239,13 +239,16 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 			/* mapped addr case */
 			struct in_addr d;
 			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
-			if (in_localaddr(d))
+			if (ip_mtudisc || in_localaddr(d))
 				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		} else
 #endif
 		{
-			if (in6_localaddr(&in6p->in6p_faddr))
-				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+			/*
+			 * for IPv6, path MTU discovery is always turned on,
+			 * or the node must use packet size <= 1280.
+			 */
+			size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		}
 	}
 #endif

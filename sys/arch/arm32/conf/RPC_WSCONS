@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.1.2.2 2001/03/27 15:30:27 bouyer Exp $
+#	$NetBSD: RPC_WSCONS,v 1.1.2.3 2001/04/21 17:53:15 bouyer Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -128,7 +128,10 @@ options 	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ? type ?
-#options 	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
+
+# serial console ... the conaddr is hardcoded as the pioc address + 4*com offset
+# this really be fixed some day
+#options 	COMCONSOLE,CONADDR="0x210000+4*0x3f8",CONUNIT=0,CONSPEED=9600
 
 # The main bus device
 mainbus0 at root
@@ -141,9 +144,6 @@ iomd0	at mainbus?
 
 # system clock via IOMD
 clock*	at iomd?
-
-# quadrature mouse via IOMD
-qms*	at iomd?
 
 # IIC bus device
 iic*	at iomd?
@@ -181,6 +181,9 @@ wsdisplay*      at vidcvideo? console ?  # display itself
 rpckbd*         at iomd?                 # based on old `kbd' driver
 wskbd*          at rpckbd?               # wskbd on RiscPC keyboard
 
+wsqms*		at iomd?		 # ws quadmouse driver
+wsmouse*	at wsqms?		 # wsmouse on ws quadmouse
+
 pseudo-device	wsmux	2		 # why 2 ?
 
 
@@ -189,7 +192,8 @@ pseudo-device	wsmux	2		 # why 2 ?
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0   at vidc?                 # display + vt100 emulation
 #kbd*           at iomd?                 # PS/2 keyboard for vidcconsole
-#opms*          at iomd?                 # RiscPC mouse for vidcconsole
+#qms*		at iomd?		 # RiscPC mouse for vidcconsole
+#opms*          at iomd?                 # A7000/NC? mouse for vidcconsole
 
 # generic VT console device
 #vt0     at vidc?

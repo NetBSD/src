@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.20.2.2 2000/11/20 20:47:12 bouyer Exp $ */
+/*	$NetBSD: tx39.c,v 1.20.2.3 2001/04/21 17:53:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ tx_os_init()
 	splvec.splbio = MIPS_SPL_2_4;
 	splvec.splnet = MIPS_SPL_2_4;
 	splvec.spltty = MIPS_SPL_2_4;
-	splvec.splimp = MIPS_SPL_2_4;
+	splvec.splvm = MIPS_SPL_2_4;
 	splvec.splclock = MIPS_SPL_2_4;
 	splvec.splstatclock = MIPS_SPL_2_4;
 	

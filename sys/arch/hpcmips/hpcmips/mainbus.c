@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.1.1.2.1 2000/11/20 20:46:38 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.1.1.2.2 2001/04/21 17:53:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,7 +34,7 @@
  *
  */
 
-#include "opt_vr41x1.h"
+#include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 
 #include <sys/param.h>
@@ -43,6 +43,8 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -115,14 +117,34 @@ mbattach(parent, self, aux)
 	ma.ma_name = "cpu";
 	config_found(mb, &ma, mbprint);
 
-#if defined VR41X1 && defined TX39XX
+
+#if defined TX39XX && defined VR41XX
+/* XXX: currently, the case defined TX39XX && defined VR41XX don't work */
 #error misconfiguration
-#elif defined VR41X1
-	if (!system_bus_iot) 
-	    mb_bus_space_init();
-	hpcmips_init_bus_space_extent(system_bus_iot); /* Now prepare extent */
-	ma.ma_iot = system_bus_iot;
-#endif
+#endif /* defined TX39XX && defined VR41XX */
+
+	/* Platform Specific Function Hooks */
+#ifdef VR41XX
+#ifdef TX39XX
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
+#endif /* TX39XX */
+	{
+		if (!system_bus_iot) 
+		    mb_bus_space_init();
+		/* Now prepare extent */
+		hpcmips_init_bus_space_extent(system_bus_iot);
+		ma.ma_iot = system_bus_iot;
+	}
+#endif /* VR41XX */
+#ifdef TX39XX
+#ifdef VR41XX
+	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
+	    || platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
+#endif /* VR41XX */
+	{
+		; /* do nothing.. */
+	}
+#endif /* TX39XX */
 
 	/* Attach devices */
 	for (i = 0; i < sizeof(devnames)/sizeof(*devnames); i++) {

@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.11.2.3 2000/11/22 16:05:01 bouyer Exp $ */
+/* $NetBSD: xcfb.c,v 1.11.2.4 2001/04/21 17:49:50 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.11.2.3 2000/11/22 16:05:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.11.2.4 2001/04/21 17:49:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,9 @@ struct xcfb_softc {
 	struct fb_devconfig *sc_dc;	/* device configuration */
 	struct hwcmap256 sc_cmap;	/* software copy of colormap */
 	struct hwcursor64 sc_cursor;	/* software copy of cursor */
-	/* XXX MAXINE can take PMAG-DV virtical retrace interrupt XXX */
+	/* XXX MAXINE can take PMAG-DV vertical retrace interrupt XXX */
 	int nscreens;
-	/* cursor coordiate is located at upper-left corner */
+	/* cursor coordinate is located at upper-left corner */
 	int sc_csr;			/* software copy of IMS332 CSR A */
 };
 
@@ -736,7 +736,7 @@ ims332_load_curshape(sc)
 	mp = (u_int8_t *)(sc->sc_cursor.cc_image+CURSOR_MAX_SIZE);
 
 	i = 0;
-	/* 64 pixel scan line is consisted with 8 halfward cursor ram */
+	/* 64 pixel scan line is consisted with 8 halfword cursor ram */
 	while (i < sc->sc_cursor.cc_size.y * 8) {
 		/* pad right half 32 pixel when smaller than 33 */
 		if ((i & 0x4) && sc->sc_cursor.cc_size.x < 33)

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.28.2.5 2001/02/11 19:17:02 bouyer Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.28.2.6 2001/04/21 17:46:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -156,6 +156,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 		break;
 
 	case Pmap:	/* /proc/N/map = -r--r--r-- */
+	case Pmaps:	/* /proc/N/maps = -r--r--r-- */
 	case Pstatus:	/* /proc/N/status = -r--r--r-- */
 	case Pcmdline:	/* /proc/N/cmdline = -r--r--r-- */
 	case Pmeminfo:	/* /proc/meminfo = -r--r--r-- */
@@ -238,7 +239,10 @@ procfs_rw(v)
 		return (procfs_dostatus(curp, p, pfs, uio));
 
 	case Pmap:
-		return (procfs_domap(curp, p, pfs, uio));
+		return (procfs_domap(curp, p, pfs, uio, 0));
+
+	case Pmaps:
+		return (procfs_domap(curp, p, pfs, uio, 1));
 
 	case Pmem:
 		return (procfs_domem(curp, p, pfs, uio));

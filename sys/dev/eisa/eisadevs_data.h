@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs_data.h,v 1.19.2.2 2001/02/11 19:15:21 bouyer Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.19.2.3 2001/04/21 17:48:20 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.21 2000/10/19 15:28:50 ad Exp 
+ *	NetBSD: eisadevs,v 1.22 2001/04/17 14:29:47 ad Exp 
  */
 
 /*
@@ -98,6 +98,11 @@ const struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "BUS4202",
 	    EISA_PRODUCT_BUS4202,
+	},
+	{
+	    0,
+	    "BUS6001",
+	    EISA_PRODUCT_BUS6001,
 	},
 	{
 	    0,

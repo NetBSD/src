@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.1.12.2 2001/01/18 09:23:08 bouyer Exp $	*/
+/* 	$NetBSD: intr.h,v 1.1.12.3 2001/04/21 17:55:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -115,7 +115,6 @@ do {								\
 #define splbio()	_splraise(IPL_BIO)		/* IPL15 */
 #define splnet()	_splraise(IPL_NET)		/* IPL15 */
 #define spltty()	_splraise(IPL_TTY)		/* IPL15 */
-#define splimp()	_splraise(IPL_IMP)		/* IPL17 */
 #define splvm()		_splraise(IPL_IMP)		/* IPL17 */
 #define splclock()	_splraise(IPL_CLOCK)		/* IPL18 */
 #define splhigh()	_splraise(IPL_HIGH)		/* IPL1F */
@@ -125,6 +124,7 @@ do {								\
 #define	spllock()	splhigh()
 
 /* These are better to use when playing with VAX buses */
+#define	spluba()	_splraise(IPL_UBA)		/* IPL17 */
 #define spl4()		splx(0x14)
 #define spl5()		splx(0x15)
 #define spl6()		splx(0x16)

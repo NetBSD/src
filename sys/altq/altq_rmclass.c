@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.2.2.2 2001/01/05 17:39:37 bouyer Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.2.2.3 2001/04/21 17:46:12 bouyer Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.9 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ rmc_newclass(pri, ifd, nsecPerByte, action, maxq, parent, borrow,
 	/*
 	 * put the class into the class tree
 	 */
-	s = splimp();
+	s = splnet();
 	if ((peer = ifd->active_[pri]) != NULL) {
 		/* find the last class at this pri */
 		cl->peer_ = peer;
@@ -365,7 +365,7 @@ rmc_modclass(cl, nsecPerByte, maxq, maxidle, minidle, offtime, pktsize)
 	ifd = cl->ifdat_;
 	old_allotment = cl->allotment_;
 
-	s = splimp();
+	s = splnet();
 	cl->allotment_ = RM_NS_PER_SEC / nsecPerByte; /* Bytes per sec */
 	cl->qthresh_ = 0;
 	cl->ns_per_byte_ = nsecPerByte;
@@ -565,7 +565,7 @@ rmc_delete_class(ifd, cl)
 	if (cl->sleeping_)
 		CALLOUT_STOP(&cl->callout_);
 	
-	s = splimp();
+	s = splnet();
 	/*
 	 * Free packets in the packet queue.
 	 * XXX - this may not be a desired behavior.  Packets should be
@@ -1582,7 +1582,7 @@ rmc_delay_action(cl, borrow)
  *	responsible for locking but this is the only routine that is not
  *	called directly or indirectly from the interface driver so it has
  *	know about system locking conventions.  Under bsd, locking is done
- *	by raising IPL to splimp so that's what's implemented here.  On a
+ *	by raising IPL to splnet so that's what's implemented here.  On a
  *	different system this would probably need to be changed.
  *
  *	Returns:	NONE
@@ -1595,7 +1595,7 @@ rmc_restart(cl)
 	struct rm_ifdat *ifd = cl->ifdat_;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	if (cl->sleeping_) {
 		cl->sleeping_ = 0;
 		cl->undertime_.tv_sec = 0;
@@ -1781,6 +1781,7 @@ _getq(q)
 		qtail(q) = NULL;
 	}
 	qlen(q)--;
+	m0->m_nextpkt = NULL;
 	return (m0); 
 }
 
@@ -1804,6 +1805,7 @@ _getq_tail(q)
 	} else
 		qtail(q) = prev;
 	qlen(q)--;
+	m->m_nextpkt = NULL;
 	return (m);
 }
 
@@ -1833,6 +1835,7 @@ _getq_random(q)
 			qtail(q) = prev;
 	}
 	qlen(q)--;
+	m->m_nextpkt = NULL;
 	return (m);
 }
 

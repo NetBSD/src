@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.7.2.3 2001/03/12 13:32:02 bouyer Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.7.2.4 2001/04/21 17:47:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -327,13 +327,12 @@ typedef int (vop_t) __P((void *));
 #endif /* NetBSD */
 
 #if defined(NTFS_DEBUG)
-#define dprintf(a) printf a
-#if NTFS_DEBUG > 1
-#define ddprintf(a) printf a
-#else
-#define ddprintf(a)
-#endif
-#else
+extern int ntfs_debug;
+#define DPRINTF(X, Y) do { if(ntfs_debug >= (X)) printf Y; } while(0)
+#define dprintf(a) DPRINTF(1, a)
+#define ddprintf(a) DPRINTF(2, a)
+#else /* NTFS_DEBUG */
+#define DPRINTF(X, Y)
 #define dprintf(a)
 #define ddprintf(a)
 #endif

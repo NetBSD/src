@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.39.2.3 2001/01/05 17:35:43 bouyer Exp $	*/
+/*	$NetBSD: midway.c,v 1.39.2.4 2001/04/21 17:48:36 bouyer Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -3727,7 +3727,7 @@ en_pvcattach(ifp)
 	pvc_ifp->if_flags = (IFF_POINTOPOINT|IFF_MULTICAST) |
 		(ifp->if_flags & (IFF_RUNNING|IFF_SIMPLEX|IFF_NOTRAILERS));
 
-	s = splimp();
+	s = splnet();
 	LIST_INSERT_HEAD(&sc->sif_list, (struct pvcsif *)pvc_ifp, sif_links);
 	if_attach(pvc_ifp);
 	atm_ifattach(pvc_ifp); 
@@ -3805,7 +3805,7 @@ static int en_txctl(sc, vci, joint_vci, pcr)
 	else
 		txspeed = 0;
 
-	s = splimp();
+	s = splnet();
 	txchan = sc->txvc2slot[vci];
 	sc->txslot[txchan].nref--;
     

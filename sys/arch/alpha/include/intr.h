@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.21.2.4 2001/01/18 09:22:07 bouyer Exp $ */
+/* $NetBSD: intr.h,v 1.21.2.5 2001/04/21 17:53:05 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,12 +114,16 @@
 
 #ifdef	_KERNEL
 
+/* Simulated software interrupt register. */
+extern __volatile unsigned long ssir;
+
 /* IPL-lowering/restoring macros */
 void	spl0(void);
+
 static __inline void
 splx(int s)
 {
-	if (s == ALPHA_PSL_IPL_0)
+	if (s == ALPHA_PSL_IPL_0 && ssir != 0)
 		spl0();
 	else
 		alpha_pal_swpipl(s);
@@ -139,7 +143,6 @@ _splraise(int s)
 #define splsoftnet()		splsoft()
 #define splnet()		_splraise(ALPHA_PSL_IPL_IO)
 #define splbio()		_splraise(ALPHA_PSL_IPL_IO)
-#define splimp()		_splraise(ALPHA_PSL_IPL_IO)
 #define splvm()			_splraise(ALPHA_PSL_IPL_IO)
 #define spltty()		_splraise(ALPHA_PSL_IPL_IO)
 #define splserial()		_splraise(ALPHA_PSL_IPL_IO)
@@ -205,15 +208,10 @@ struct alpha_shared_intr {
 	((asi)[num].intr_maxstrays != 0 &&				\
 	 (asi)[num].intr_nstrays == (asi)[num].intr_maxstrays)
 
-/*
- * simulated software interrupt register
- */
-extern u_int64_t ssir;
-
 #define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
 struct alpha_soft_intrhand {
-	LIST_ENTRY(alpha_soft_intrhand)
+	TAILQ_ENTRY(alpha_soft_intrhand)
 		sih_q;
 	struct alpha_soft_intr *sih_intrhead;
 	void	(*sih_fn)(void *);
@@ -222,7 +220,7 @@ struct alpha_soft_intrhand {
 };
 
 struct alpha_soft_intr {
-	LIST_HEAD(, alpha_soft_intrhand)
+	TAILQ_HEAD(, alpha_soft_intrhand)
 		softintr_q;
 	struct evcnt softintr_evcnt;
 	struct simplelock softintr_slock;
@@ -237,8 +235,18 @@ void	softintr_dispatch(void);
 #define	softintr_schedule(arg)						\
 do {									\
 	struct alpha_soft_intrhand *__sih = (arg);			\
-	__sih->sih_pending = 1;						\
-	setsoft(__sih->sih_intrhead->softintr_ipl);			\
+	struct alpha_soft_intr *__si = __sih->sih_intrhead;		\
+	int __s;							\
+									\
+	__s = splhigh();						\
+	simple_lock(&__si->softintr_slock);				\
+	if (__sih->sih_pending == 0) {					\
+		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
+		__sih->sih_pending = 1;					\
+		setsoft(__si->softintr_ipl);				\
+	}								\
+	simple_unlock(&__si->softintr_slock);				\
+	splx(__s);							\
 } while (0)
 
 /* XXX For legacy software interrupts. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15.2.3 2001/03/27 15:30:19 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.2.4 2001/04/21 17:53:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
-#include <machine/bootconfig.h>
 #include <machine/io.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
@@ -58,6 +57,7 @@
 #include <machine/undefined.h>
 
 #ifdef ARMFPE
+#include <machine/bootconfig.h> /* For boot_args */
 #include <arm32/fpe-arm/armfpe.h>
 #endif	/* ARMFPE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3.8.2 2001/02/11 19:11:36 bouyer Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.3.8.3 2001/04/21 17:54:32 bouyer Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -97,6 +97,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	char *symname;
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;
+	boolean_t full = FALSE;
 
 	{
 		register char *cp = modif;
@@ -107,11 +108,15 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				trace_thread = TRUE;
 			if (c == 'u')
 				kernel_only = FALSE;
+			if (c == 'f')
+				full = TRUE;
 		}
 	}
 
 	frame = (db_addr_t)ddb_regs.r[1];
 	while ((frame = *(db_addr_t *)frame) && count--) {
+		db_addr_t *args = (db_addr_t *)(frame + 8);
+
 		lr = *(db_addr_t *)(frame + 4) - 4;
 		if (lr & 3) {
 			(*pr)("saved LR(0x%x) is invalid.", lr);
@@ -120,12 +125,19 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if ((caller = (db_addr_t)vtophys(lr)) == 0)
 			caller = lr;
 
+		if (full)
+			/* Print all the args stored in that stackframe. */
+			printf("(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx) %lx ",
+				args[0], args[1], args[2], args[3],
+				args[4], args[5], args[6], args[7], frame);
+
 		diff = 0;
 		symname = NULL;
 		sym = db_search_symbol(caller, DB_STGY_ANY, &diff);
 		db_symbol_values(sym, &symname, 0);
 		if (symname == NULL)
-			symname = "?";
-		(*pr)("at %s+%x\n", symname, diff);
+			(*pr)("at %p\n", caller);
+		else
+			(*pr)("at %s+%x\n", symname, diff);
 	}
 }

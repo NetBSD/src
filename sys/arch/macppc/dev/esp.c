@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.9.10.2 2001/03/29 10:17:50 bouyer Exp $	*/
+/*	$NetBSD: esp.c,v 1.9.10.3 2001/04/21 17:53:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ espattach(parent, self, aux)
 	ncr53c9x_attach(sc);
 
 	/* Turn on target selection using the `dma' method */
-	ncr53c9x_dmaselect = 1;
+	sc->sc_features |= NCR_F_DMASELECT;
 }
 
 /*

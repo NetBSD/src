@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:22:59 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.14.1 2001/04/21 17:50:13 bouyer Exp $
 
 INCSDIR= /usr/include/dev/vme
 
-INCS=	vmevar.h xdreg.h xdvar.h xio.h xyreg.h xyvar.h
+# Only install includes which are used by userland
+INCS=	xio.h
 
 .include <bsd.kinc.mk>

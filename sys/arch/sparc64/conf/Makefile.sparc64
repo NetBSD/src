@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.12.2.4 2001/03/12 13:29:27 bouyer Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.12.2.5 2001/04/21 17:54:41 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -57,7 +57,7 @@ S!=	cd ../../../..; pwd
 SPARC64=	$S/arch/sparc64
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL ${SVR4}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dsparc64 ${SVR4}
 #CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wno-main -Werror
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith -Wno-main

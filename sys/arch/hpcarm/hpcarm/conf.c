@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2.4.2 2001/03/12 13:28:19 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.4.3 2001/04/21 17:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -416,9 +416,6 @@ cons_decl(com);
 cons_decl(sacom);
 
 struct consdev constab[] = {
-#if (NCOM > 0)
-	cons_init(com),
-#endif
 #if (NSACOM > 0)
 	cons_init(sacom),
 #endif

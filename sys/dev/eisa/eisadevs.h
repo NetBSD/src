@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs.h,v 1.19.2.1 2000/11/20 11:39:57 bouyer Exp $	*/
+/*	$NetBSD: eisadevs.h,v 1.19.2.2 2001/04/21 17:48:20 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.21 2000/10/19 15:28:50 ad Exp 
+ *	NetBSD: eisadevs,v 1.22 2001/04/17 14:29:47 ad Exp 
  */
 
 /*
@@ -61,6 +61,7 @@
 /* BusLogic products */
 #define	EISA_PRODUCT_BUS4201	"BusLogic Bt74xB SCSI"
 #define	EISA_PRODUCT_BUS4202	"BusLogic Bt74xC SCSI"
+#define	EISA_PRODUCT_BUS6001	"BusLogic Bt760 Ethernet"
 #define	EISA_PRODUCT_BUS6301	"BusLogic Bt763E Ethernet"
 
 /* Compaq products */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.12.2.2 2000/12/08 09:08:10 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.12.2.3 2001/04/21 17:46:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -227,24 +227,18 @@ compat_43_sys_fstat(p, v, retval)
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
-	switch (fp->f_type) {
 
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
+	FILE_USE(fp);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FILE_UNUSE(fp, p);
 
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
-		break;
-
-	default:
-		panic("ofstat");
-		/*NOTREACHED*/
-	}
-	cvtstat(&ub, &oub);
-	if (error == 0)
+	if (error == 0) {
+		cvtstat(&ub, &oub);
 		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
 		    sizeof (oub));
+	}
+
+	
 	return (error);
 }
 

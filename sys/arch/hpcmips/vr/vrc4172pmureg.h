@@ -1,4 +1,5 @@
-/* $NetBSD: vrc4172pmureg.h,v 1.1.2.2 2000/11/22 16:00:13 bouyer Exp $ */
+/*	$NetBSD: vrc4172pmureg.h,v 1.1.2.3 2001/04/21 17:53:46 bouyer Exp $	*/
+
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
  *

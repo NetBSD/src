@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.324.2.9 2001/03/27 15:31:49 bouyer Exp $
+#	$NetBSD: files,v 1.324.2.10 2001/04/21 17:46:25 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -30,6 +30,8 @@ defopt	opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
 defopt	opt_pool.h	POOL_DIAGNOSTIC
 defopt	opt_poollog.h	POOL_LOGSIZE
+
+defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
 defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
 
@@ -529,6 +531,10 @@ file	dev/ic/dl10019.c		dl10019
 device	we: ether, ifnet, arp, dp8390nic
 file	dev/ic/we.c			we
 
+# Allied-Telesis Ethernet driver based on Fujitsu MB8696xA controllers
+device	ate: arp, ether, ifnet, mb86960
+file	dev/ic/ate_subr.c		ate
+
 # Definitions for wscons
 # device attributes: display, display with emulator, keyboard, and mouse
 define	wsdisplaydev { }
@@ -621,6 +627,7 @@ defpseudo ppp: ifnet, bpf_filter
 defpseudo sppp: ifnet
 defpseudo tun: ifnet
 defpseudo vlan: ifnet, ether
+defpseudo bridge: ifnet, ether
 defpseudo bpfilter: ifnet, bpf_filter
 defpseudo strip: ifnet
 defpseudo ipfilter: ifnet
@@ -904,6 +911,8 @@ file	net/bsd-comp.c			ppp & ppp_bsdcomp
 file	net/if.c
 file	net/if_arcsubr.c		arc			needs-flag
 file	net/if_atmsubr.c		atm
+file	net/if_bridge.c			bridge			needs-flag
+file	net/bridgestp.c			bridge
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan | vlan
 file	net/if_faith.c			faith			needs-flag

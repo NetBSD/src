@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.23.2.1 2000/11/20 18:11:35 bouyer Exp $	*/
+/*	$NetBSD: shm.h,v 1.23.2.2 2001/04/21 17:47:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -126,6 +126,13 @@ struct shmid_ds14 {
 #endif /* _XOPEN_SOURCE */
 
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+/*
+ * Permission definitions used in shmflag arguments to shmat(2) and shmget(2).
+ * Provided for source compatibility only; do not use in new code!
+ */
+#define	SHM_R		0000400	/* S_IRUSR, R for owner */
+#define	SHM_W		0000200	/* S_IWUSR, W for owner */
+
 /*
  * System 5 style catch-all structure for shared memory constants that
  * might be of interest to user programs.  Do we really want/need this?

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.63.2.4 2001/03/27 15:30:35 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.63.2.5 2001/04/21 17:53:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,7 @@
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
 #include "opt_lockdebug.h"
+#include "opt_mbtype.h"
 #include "kbd.h"
 #include "ncrscsi.h"
 #include "zs.h"
@@ -628,6 +629,7 @@ ASENTRY_NOPROFILE(sccint)
 	jra	_ASM_LABEL(rei)
 #endif /* NZS > 0 */
 
+#ifdef _ATARIHW_
 	/* Level 1 (Software) interrupt handler */
 ENTRY_NOPROFILE(lev1intr)
 	moveml	%d0-%d1/%a0-%a1,%sp@-
@@ -660,6 +662,8 @@ ENTRY_NOPROFILE(lev7intr)
 #endif
 	addql	#1,_C_LABEL(intrcnt)+28	|  add another nmi interrupt
 	rte				|  all done
+
+#endif /* _ATARIHW_ */
 
 
 /*
@@ -1691,9 +1695,9 @@ L60bpe:		.long	0
 #endif
 #ifdef DEBUG
 
-GLOBAL(fulltflush)
+ASLOCAL(fulltflush)
 	.long	0
-GLOBAL(fullcflush)
+ASLOCAL(fullcflush)
 	.long	0
 GLOBAL(timebomb)
 	.long	0

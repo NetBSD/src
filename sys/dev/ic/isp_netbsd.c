@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.14 2001/04/06 07:27:58 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.15 2001/04/21 17:48:32 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -220,6 +220,65 @@ ispioctl(struct scsipi_channel *chan, u_long cmd, caddr_t addr, int flag,
 			retval = 0;
 		(void) splx(s);
 		break;
+	case ISP_SDBLEV:
+	{
+		int olddblev = isp->isp_dblev;
+		isp->isp_dblev = *(int *)addr;
+		*(int *)addr = olddblev;
+		retval = 0;
+		break;
+	}
+	case ISP_RESETHBA:
+		ISP_LOCK(isp);
+		isp_reinit(isp);
+		ISP_UNLOCK(isp);
+		retval = 0;
+		break;
+	case ISP_FC_RESCAN:
+		if (IS_FC(isp)) {
+			ISP_LOCK(isp);
+			if (isp_fc_runstate(isp, 5 * 1000000)) {
+				retval = EIO;
+			} else {
+				retval = 0;
+			}
+			ISP_UNLOCK(isp);
+		}
+		break;
+	case ISP_FC_LIP:
+		if (IS_FC(isp)) {
+			ISP_LOCK(isp);
+			if (isp_control(isp, ISPCTL_SEND_LIP, 0)) {
+				retval = EIO;
+			} else {
+				retval = 0;
+			}
+			ISP_UNLOCK(isp);
+		}
+		break;
+	case ISP_FC_GETDINFO:
+	{
+		struct isp_fc_device *ifc = (struct isp_fc_device *) addr;
+		struct lportdb *lp;
+
+		if (ifc->loopid < 0 || ifc->loopid >= MAX_FC_TARG) {
+			retval = EINVAL;
+			break;
+		}
+		ISP_LOCK(isp);
+		lp = &FCPARAM(isp)->portdb[ifc->loopid];
+		if (lp->valid) {
+			ifc->loopid = lp->loopid;
+			ifc->portid = lp->portid;
+			ifc->node_wwn = lp->node_wwn;
+			ifc->port_wwn = lp->port_wwn;
+			retval = 0;
+		} else {
+			retval = ENODEV;
+		}
+		ISP_UNLOCK(isp);
+		break;
+	}
 	default:
 		break;
 	}

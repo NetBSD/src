@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61.2.1 2000/11/20 20:09:31 bouyer Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.2.2 2001/04/21 17:53:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,10 +138,11 @@ IDTVEC(doreti)
 IDTVEC(softserial)
 	movl	_C_LABEL(imask) + IPL_SOFTSERIAL * 4,%eax
 	movl	%eax,_C_LABEL(cpl)
-#include "com.h"
-#if NCOM > 0
-	call	_C_LABEL(comsoft)
-#endif
+
+	pushl	$I386_SOFTINTR_SOFTSERIAL
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
+
 	movl	%ebx,_C_LABEL(cpl)
 	jmp	%esi
 
@@ -151,6 +152,7 @@ IDTVEC(softnet)
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
 
+	/* XXX Do the legacy netisrs here for now. */
 #define DONETISR(s, c) \
 	.globl  _C_LABEL(c)	;\
 	testl	$(1 << s),%edi	;\
@@ -162,12 +164,20 @@ IDTVEC(softnet)
 
 #undef DONETISR
 
+	pushl	$I386_SOFTINTR_SOFTNET
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
+
 	movl	%ebx,_C_LABEL(cpl)
 	jmp	%esi
 
 IDTVEC(softclock)
 	movl	_C_LABEL(imask) + IPL_SOFTCLOCK * 4,%eax
 	movl	%eax,_C_LABEL(cpl)
-	call	_C_LABEL(softclock)
+
+	pushl	$I386_SOFTINTR_SOFTCLOCK
+	call	_C_LABEL(softintr_dispatch)
+	addl	$4,%esp
+
 	movl	%ebx,_C_LABEL(cpl)
 	jmp	%esi

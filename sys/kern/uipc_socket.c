@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.48.2.5 2001/03/27 15:32:25 bouyer Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.48.2.6 2001/04/21 17:46:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -863,7 +863,7 @@ sorflush(struct socket *so)
 	pr = so->so_proto;
 	sb->sb_flags |= SB_NOINTR;
 	(void) sblock(sb, M_WAITOK);
-	s = splimp();
+	s = splnet();
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;

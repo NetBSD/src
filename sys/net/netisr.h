@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.18.2.2 2001/01/18 09:23:54 bouyer Exp $ */
+/* $NetBSD: netisr.h,v 1.18.2.3 2001/04/21 17:46:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -61,6 +61,7 @@
 #include "opt_natm.h" 
 #include "arp.h"
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include "bridge.h"
 #include "sl.h"
 #include "strip.h"
 #include "ppp.h"
@@ -119,6 +120,9 @@ extern void stripnetisr(void);
 #if NPPP > 0
 extern void pppnetisr(void);
 #endif
+#if NBRIDGE > 0
+extern void bridgenetisr(void);
+#endif
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
 #endif /* !defined(_LOCORE) */
@@ -131,6 +135,9 @@ extern void pppnetisr(void);
  * interrupt used for scheduling the network code to calls
  * on the lowest level routine of each protocol.
  */
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+#define	NETISR_BRIDGE	0		/* for bridge processing */
+#endif
 #define	NETISR_IP	2		/* same as AF_INET */
 #define	NETISR_NS	6		/* same as AF_NS */
 #define	NETISR_ISO	7		/* same as AF_ISO */

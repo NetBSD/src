@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.31.2.7 2001/03/29 16:44:45 bouyer Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.31.2.8 2001/04/21 17:48:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -1341,7 +1341,7 @@ ncr5380_select(sc, sr)
 	 * after we enter arbitration up until we assert SEL.
 	 * Avoid long interrupts during this period.
 	 */
-	s = splimp();	/* XXX: Begin time-critical section */
+	s = splvm();	/* XXX: Begin time-critical section */
 
 	NCR5380_WRITE(sc, sci_odata, 0x80);	/* OUR_ID */
 	NCR5380_WRITE(sc, sci_mode, SCI_MODE_ARB);

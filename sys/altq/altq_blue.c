@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.2.2.2 2001/01/05 17:39:35 bouyer Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.2.2.3 2001/04/21 17:46:11 bouyer Exp $	*/
 /*	$KAME: altq_blue.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ mark_ecn(m, pktattr, flags)
 
 /*
  * dequeue routine:
- *	must be called in splimp.
+ *	must be called in splnet.
  *
  *	returns: mbuf dequeued.
  *		 NULL when no packet is available in the queue.

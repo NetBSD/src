@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.8.2.6 2001/03/12 13:31:47 bouyer Exp $ */
+/*	$NetBSD: if_gre.c,v 1.8.2.7 2001/04/21 17:46:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -359,7 +359,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	error = 0;
 
-	s = splimp();
+	s = splnet();
 	switch(cmd) {
 	case SIOCSIFADDR:		
 	case SIOCSIFDSTADDR: 	

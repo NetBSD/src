@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.2.2.2 2001/01/05 17:39:35 bouyer Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.2.2.3 2001/04/21 17:46:11 bouyer Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -703,7 +703,7 @@ cbq_ifdetach(ifacep)
  *	layer (e.g. ether_output).  cbq_enqueue queues the given packet
  *	to the cbq, then invokes the driver's start routine.
  *
- *	Assumptions:	called in splimp
+ *	Assumptions:	called in splnet
  *	Returns:	0 if the queueing is successful.
  *			ENOBUFS if a packet dropping occured as a result of
  *			the queueing.
@@ -760,7 +760,7 @@ cbq_dequeue(ifq, op)
 /*
  * void
  * cbqrestart(queue_t *) - Restart sending of data.
- * called from rmc_restart in splimp via timeout after waking up
+ * called from rmc_restart in splnet via timeout after waking up
  * a suspended class.
  *	Returns:	NONE
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_output.c,v 1.11.12.1 2000/11/20 18:10:14 bouyer Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.11.12.2 2001/04/21 17:46:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -220,7 +220,7 @@ hd_ifoutput(m, va_alist)
 {
 	struct hdcb *hdp;
 	struct ifnet *ifp;
-	int             s = splimp();
+	int             s = splnet();
 	va_list	ap;
 
 	va_start(ap, m);

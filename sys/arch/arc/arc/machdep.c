@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.2.7 2001/03/27 15:30:17 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.2.8 2001/04/21 17:53:08 bouyer Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -151,6 +151,7 @@
 #define COMCONSOLE	0
 #endif
 
+#if NCOM > 0
 #ifndef COM_FREQ_MAGNUM
 #if 0
 #define COM_FREQ_MAGNUM	4233600 /* 4.2336MHz - ARC? */
@@ -159,7 +160,6 @@
 #endif
 #endif /* COM_FREQ_MAGNUM */
 
-#if NCOM > 0
 #ifndef CONSPEED
 #define CONSPEED TTYDEF_SPEED
 #endif
@@ -196,11 +196,13 @@ vaddr_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */
 struct arc_bus_space arc_bus_mem;/* Bus tag for bus.h macros */
 struct arc_bus_space pica_bus;	/* picabus for com.c/com_lbus.c */
+#if NCOM > 0
 int	com_freq = COM_FREQ;	/* unusual clock frequency of dev/ic/com.c */
 int	com_console_address;	/* Well, ain't it just plain stupid... */
 bus_space_tag_t comconstag = &arc_bus_io;	/* com console bus */
-int	com_console = COMCONSOLE;
 struct arc_bus_space *arc_bus_com = &arc_bus_io; /* com bus */
+#endif
+int	com_console = COMCONSOLE;
 char   **environment;		/* On some arches, pointer to environment */
 char	eth_hw_addr[6];		/* HW ether addr not stored elsewhere */
 
@@ -240,7 +242,7 @@ struct splvec	splvec = {			/* XXX will go XXX */
 	MIPS_INT_MASK_SPLHIGH, /* splbio */
 	MIPS_INT_MASK_SPLHIGH, /* splnet */
 	MIPS_INT_MASK_SPLHIGH, /* spltty */
-	MIPS_INT_MASK_SPLHIGH, /* splimp */
+	MIPS_INT_MASK_SPLHIGH, /* splvm */
 	MIPS_INT_MASK_SPLHIGH, /* splclock */
 	MIPS_INT_MASK_SPLHIGH, /* splstatclock */
 };
@@ -297,7 +299,9 @@ mach_init(argc, argv, envv)
 			break;
 		case MAGNUM:
 			strcpy(cpu_model, "MIPS Magnum");
+#if NCOM > 0
 			com_freq = COM_FREQ_MAGNUM;
+#endif
 			break;
 		}
 
@@ -309,16 +313,18 @@ mach_init(argc, argv, envv)
 		arc_bus_space_init(&arc_bus_mem, "picaisamem",
 		    PICA_P_ISA_MEM, PICA_V_ISA_MEM, 0, PICA_S_ISA_MEM);
 
+#if NCOM > 0
 		arc_bus_com = &pica_bus;
 		comconstag = &pica_bus;
 		com_console_address = PICA_SYS_COM1;
+#endif
 
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
 		splvec.splnet = MIPS_INT_MASK_SPL3;
 		splvec.splbio = MIPS_INT_MASK_SPL3;
-		splvec.splimp = MIPS_INT_MASK_SPL3;
+		splvec.splvm = MIPS_INT_MASK_SPL3;
 		splvec.spltty = MIPS_INT_MASK_SPL3;
 		splvec.splclock = MIPS_INT_MASK_SPL5;
 		splvec.splstatclock = MIPS_INT_MASK_SPL5;
@@ -389,16 +395,18 @@ mach_init(argc, argv, envv)
 			break;
 		}
 
+#if NCOM > 0
 		arc_bus_com = &pica_bus;
 		comconstag = &pica_bus;
 		com_console_address = RD94_SYS_COM1;
+#endif
 
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
 		splvec.splnet = MIPS_INT_MASK_SPL2;
 		splvec.splbio = MIPS_INT_MASK_SPL2;
-		splvec.splimp = MIPS_INT_MASK_SPL2;
+		splvec.splvm = MIPS_INT_MASK_SPL2;
 		splvec.spltty = MIPS_INT_MASK_SPL2;
 		splvec.splclock = MIPS_INT_MASK_SPL5;
 		splvec.splstatclock = MIPS_INT_MASK_SPL5;
@@ -412,7 +420,9 @@ mach_init(argc, argv, envv)
 		arc_bus_space_init(&arc_bus_mem, "rpc44isamem",
 		    RPC44_P_ISA_MEM, RPC44_V_ISA_MEM, 0, RPC44_S_ISA_MEM);
 
+#if NCOM > 0
 		com_console_address = 0; /* Don't screew the mouse... */
+#endif
 
 		/*
 		 * XXX
@@ -431,7 +441,9 @@ mach_init(argc, argv, envv)
 		arc_bus_space_init(&arc_bus_mem, "tyneisamem",
 		    TYNE_P_ISA_MEM, TYNE_V_ISA_MEM, 0, TYNE_S_ISA_MEM);
 
+#if NCOM > 0
 		com_console_address = 0; /* Don't screew the mouse... */
+#endif
 
 		/*
 		 * XXX
@@ -450,7 +462,9 @@ mach_init(argc, argv, envv)
 		arc_bus_space_init(&arc_bus_mem, "rm200isamem",
 		    RM200_P_ISA_MEM, RM200_V_ISA_MEM, 0, RM200_S_ISA_MEM);
 #endif
+#if NCOM > 0
 		com_console_address = 0; /* Don't screew the mouse... */
+#endif
 		break;
 
 	case -1:	/* Not identified as an ARC system. We have a couple */
@@ -466,14 +480,18 @@ mach_init(argc, argv, envv)
 		    MIPS_KSEG1_START, MIPS_KSEG2_START - MIPS_KSEG1_START);
 		/* stride: (1 << 2) == 4 byte alignment */
 		arc_bus_space_set_aligned_stride(&arc_bus_io, 2);
+#if NCOM > 0
 		com_console_address = P4032_COM1;
+#endif
 #else
 		cputype = ALGOR_P5064;
 		strcpy(cpu_model, "Algorithmics P-5064");
 		arc_bus_space_init(&arc_bus_io, "p5064bus",
 		    0LL, MIPS_KSEG1_START,
 		    MIPS_KSEG1_START, MIPS_KSEG2_START - MIPS_KSEG1_START);
+#if NCOM > 0
 		com_console_address = P5064_COM1;
+#endif
 #endif
 
 		mem_clusters[0].start = 0;
@@ -1326,7 +1344,8 @@ initcpu()
 	case NEC_RD94:
 	case NEC_R96:
 	case NEC_JC94:
-		out32(RD94_SYS_LB_IE, 0);
+		out16(RD94_SYS_LB_IE1, 0);
+		out16(RD94_SYS_LB_IE2, 0);
 		out32(RD94_SYS_EXT_IMASK, 0);
 		break;
 	}

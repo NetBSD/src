@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45.8.7 2001/03/12 13:32:00 bouyer Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.8.8 2001/04/21 17:47:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -228,6 +228,9 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		nfsstats.biocache_reads++;
 
 		error = 0;
+		if (uio->uio_offset >= np->n_size) {
+			break;
+		}
 		while (uio->uio_resid > 0) {
 			void *win;
 			vsize_t bytelen = MIN(np->n_size - uio->uio_offset,
@@ -333,7 +336,7 @@ diragain:
 		en = ndp->dc_entry;
 
 		pdp = dp = (struct dirent *)bp->b_data;
-		edp = bp->b_data + bp->b_bcount;
+		edp = bp->b_data + bp->b_bcount - bp->b_resid;
 		enn = 0;
 		while (enn < en && (caddr_t)dp < edp) {
 			pdp = dp;
@@ -377,11 +380,11 @@ diragain:
 			enn++;
 		}
 
-		if (uio->uio_resid < (bp->b_bcount - on)) {
+		if (uio->uio_resid < (bp->b_bcount - bp->b_resid - on)) {
 			n = uio->uio_resid;
 			enough = 1;
 		} else
-			n = bp->b_bcount - on;
+			n = bp->b_bcount - bp->b_resid - on;
 
 		ep = bp->b_data + on + n;
 
@@ -411,7 +414,7 @@ diragain:
 		 * set of the offset to it.
 		 */
 
-		if ((on + n) < bp->b_bcount) {
+		if ((on + n) < bp->b_bcount - bp->b_resid) {
 			curoff = NFS_GETCOOKIE(pdp);
 			nndp = nfs_enterdircache(vp, curoff, ndp->dc_blkcookie,
 			    enn, bp->b_lblkno);

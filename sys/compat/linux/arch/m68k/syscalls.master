@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.9.2.6 2001/02/11 19:13:48 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.9.2.7 2001/04/21 17:46:18 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -54,7 +54,7 @@
 
 %%
 
-0	NOARGS		{ int sys_nosys(void); } syscall
+0	NOARGS		{ int linux_sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
@@ -373,3 +373,6 @@
 215	STD		{ int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS		{ int linux_sys_getfsuid(void); }
 217	UNIMPL		pivot_root
+218	UNIMPL		/* unused ? */
+219	UNIMPL		/* unused ? */
+220	UNIMPL		getdents64

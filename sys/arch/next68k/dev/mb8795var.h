@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.1.1.1.14.1 2000/11/20 20:18:13 bouyer Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.1.1.1.14.2 2001/04/21 17:54:23 bouyer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -39,24 +39,6 @@
 struct mb8795_softc {
 	struct	device sc_dev;		/* base device glue */
 	struct	ethercom sc_ethercom;	/* Ethernet common part */
-
-#if 0
-	struct	ifmedia sc_media;	/* our supported media */
-
-	int	(*sc_mediachange) __P((struct mb8795_softc *));
-	void	(*sc_mediastatus) __P((struct mb8795_softc *,
-		    struct ifmediareq *));
-
-	/*
-	 * Media-supported by this interface.  If this is NULL,
-	 * the only supported media is assumed to be "manual".
-	 */
-	int	*sc_supmedia;
-	int	sc_nsupmedia;
-	int	sc_defaultmedia;
-
-	int	sc_havecarrier;	/* carrier status */
-#endif
 
 	void	*sc_sh;		/* shutdownhook cookie */
 

@@ -1,5 +1,5 @@
-/*	$NetBSD: in6.h,v 1.6.2.3 2001/03/12 13:31:54 bouyer Exp $	*/
-/*	$KAME: in6.h,v 1.81 2001/03/02 04:54:45 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.6.2.4 2001/04/21 17:46:55 bouyer Exp $	*/
+/*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #ifndef __KAME_NETINET_IN_H_INCLUDED_
-#error "do not include netinet6/in6.h directly, include netinet/in.h"
+#error "do not include netinet6/in6.h directly, include netinet/in.h.  see RFC2553"
 #endif
 
 #ifndef _NETINET6_IN6_H_
@@ -242,37 +242,37 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
  * Unspecified
  */
 #define IN6_IS_ADDR_UNSPECIFIED(a)	\
-	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) == 0))
+	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) == 0))
 
 /*
  * Loopback
  */
 #define IN6_IS_ADDR_LOOPBACK(a)		\
-	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) == ntohl(1)))
+	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) == ntohl(1)))
 
 /*
  * IPv4 compatible
  */
 #define IN6_IS_ADDR_V4COMPAT(a)		\
-	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) != 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) != ntohl(1)))
+	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) != 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[12]) != ntohl(1)))
 
 /*
  * Mapped
  */
 #define IN6_IS_ADDR_V4MAPPED(a)		      \
-	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
+	((*(const u_int32_t *)(const void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(const u_int32_t *)(const void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
 
 /*
  * KAME Scope Values

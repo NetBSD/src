@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.h,v 1.36.2.3 2000/12/13 15:49:53 bouyer Exp $ */
+/* $NetBSD: osf1_syscall.h,v 1.36.2.4 2001/04/21 17:46:23 bouyer Exp $ */
 
 /*
  * System call numbers.
@@ -369,6 +369,15 @@
 
 /* syscall: "shmget" ret: "int" args: "osf1_key_t" "size_t" "int" */
 #define	OSF1_SYS_shmget	212
+
+/* syscall: "stat2" ret: "int" args: "const char *" "struct osf1_stat2 *" */
+#define	OSF1_SYS_stat2	224
+
+/* syscall: "lstat2" ret: "int" args: "const char *" "struct osf1_stat2 *" */
+#define	OSF1_SYS_lstat2	225
+
+/* syscall: "fstat2" ret: "int" args: "int" "struct osf1_stat2 *" */
+#define	OSF1_SYS_fstat2	226
 
 /* syscall: "getsid" ret: "pid_t" args: "pid_t" */
 #define	OSF1_SYS_getsid	234

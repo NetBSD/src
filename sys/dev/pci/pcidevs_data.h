@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.8 2001/03/27 15:32:11 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.9 2001/04/21 17:49:21 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.312 2001/03/21 18:10:13 soren Exp 
+ *	NetBSD: pcidevs,v 1.317 2001/04/13 19:00:31 hubertf Exp 
  */
 
 /*
@@ -1726,6 +1726,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "USB Controller",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB_MEDIAGX,
+	    0,
+	    "Compaq",
+	    "USB Controller",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P,
 	    0,
 	    "Compaq",
@@ -1892,6 +1898,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyclades",
 	    "Cyclom-Z above 1M",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_MEDIAGX_PCHB,
+	    0,
+	    "Cyrix Corporation",
+	    "MediaGX Built-in PCI Host Controller",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5520_PCIB,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5520 I/O Companion",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_PCIB,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion Multi-Function South Bridge",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_SMI,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (SMI Status and ACPI Timer)",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_IDE,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (IDE Controller)",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_AUDIO,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (XpressAUDIO)",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO,
+	    0,
+	    "Cyrix Corporation",
+	    "Cx5530 I/O Companion (Video Controller)",
 	},
 	{
 	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
@@ -3094,10 +3142,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SSI",
 	},
 	{
-	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_T1,
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS1,
 	    0,
 	    "LAN Media Corporation",
-	    "T1 Interface",
+	    "DS1",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
@@ -4096,12 +4144,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Trio32/64",
 	},
 	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE,
-	    0,
-	    "Trident Microsystems",
-	    "CyberBlade",
-	},
-	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_AURORA64P,
 	    0,
 	    "S3",
@@ -4642,6 +4684,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "UltraSPARC IIi PCI",
 	},
 	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIe,
+	    0,
+	    "Sun Microsystems",
+	    "UltraSPARC IIe PCI",
+	},
+	{
 	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201,
 	    0,
 	    "Sundance Technology",
@@ -4700,6 +4748,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Tekram Technology (2nd PCI Vendor ID)",
 	    "DC-690C",
+	},
+	{
+	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC315,
+	    0,
+	    "Tekram Technology (2nd PCI Vendor ID)",
+	    "DC-315/DC-395",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TLAN,
@@ -5012,6 +5066,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9682",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE,
+	    0,
+	    "Trident Microsystems",
+	    "CyberBlade",
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,

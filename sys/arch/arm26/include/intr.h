@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.2.3 2001/01/18 09:22:16 bouyer Exp $ */
+/* $NetBSD: intr.h,v 1.4.2.4 2001/04/21 17:53:12 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -69,7 +69,6 @@
 #define splnet()	raisespl(IPL_NET)
 #define spltty()	raisespl(IPL_TTY)
 #define spllpt()	raisespl(IPL_LPT)
-#define splimp()	raisespl(IPL_IMP)
 #define splvm()		raisespl(IPL_IMP)
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splserial()	raisespl(IPL_SERIAL)

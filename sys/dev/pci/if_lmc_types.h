@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_types.h,v 1.2 1999/03/25 04:09:33 explorer Exp $	*/
+/*	$NetBSD: if_lmc_types.h,v 1.2.8.1 2001/04/21 17:49:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -58,11 +58,7 @@
 #if defined(__NetBSD__)
 typedef bus_addr_t lmc_csrptr_t;
 #else
-#ifdef LMC_IOMAPPED
-typedef u_int16_t lmc_csrptr_t;
-#else
 typedef volatile u_int32_t *lmc_csrptr_t;
-#endif
 #endif
 
 #if defined(__NetBSD__)

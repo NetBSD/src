@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd.c,v 1.5.14.3 2001/03/27 15:30:29 bouyer Exp $	*/
+/*	$NetBSD: iomd.c,v 1.5.14.4 2001/04/21 17:53:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -294,7 +294,7 @@ iomdattach(parent, self, aux)
 		break;
 #endif	/* CPU_ARM7500 */
 	case RPC600_IOMD_ID:
-		/* Attach qms device */
+		/* Attach (ws)qms device */
 
 		if (bus_space_subregion(iot, ioh, IOMD_MOUSEX, 8, &ia.ia_qms.qa_ioh))
 			panic("%s: Cannot map qms registers\n", self->dv_xname);
@@ -304,6 +304,9 @@ iomdattach(parent, self, aux)
 		ia.ia_qms.qa_name = "qms";
 		ia.ia_qms.qa_iot = iot;
 		ia.ia_qms.qa_irq = IRQ_VSYNC;
+		config_found(self, &ia, iomdprint);
+
+		ia.ia_qms.qa_name = "wsqms";
 		config_found(self, &ia, iomdprint);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.3.2.2 2001/02/11 19:15:50 bouyer Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.3.2.3 2001/04/21 17:49:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -95,9 +95,9 @@ void    cs4281_reset_codec(void *);
 
 /* Internal functions */
 u_int8_t cs4281_sr2regval(int);
-void	 cs4281_set_dac_rate(struct cs428x_softc *, int );
-void	 cs4281_set_adc_rate(struct cs428x_softc *, int );
-int      cs4281_init(struct cs428x_softc *);
+void	 cs4281_set_dac_rate(struct cs428x_softc *, int);
+void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
+int      cs4281_init(struct cs428x_softc *, int);
 
 /* Power Management */
 void cs4281_power(int, void *);
@@ -262,7 +262,7 @@ cs4281_attach(parent, self, aux)
 	/*
 	 * Sound System start-up
 	 */
-	if (cs4281_init(sc) != 0)
+	if (cs4281_init(sc,1) != 0)
 		return;
 
 	sc->type = TYPE_CS4281;
@@ -509,9 +509,7 @@ cs4281_halt_output(addr)
 	struct cs428x_softc *sc = addr;
 	
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
-#ifdef DIAGNOSTIC
 	sc->sc_prun = 0;
-#endif
 	return 0;
 }
 
@@ -522,9 +520,7 @@ cs4281_halt_input(addr)
 	struct cs428x_softc *sc = addr;
 
 	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
-#ifdef DIAGNOSTIC
 	sc->sc_rrun = 0;
-#endif
 	return 0;
 }
 
@@ -554,8 +550,8 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 #ifdef DIAGNOSTIC
 	if (sc->sc_prun)
 		printf("cs4281_trigger_output: already running\n");
-	sc->sc_prun = 1;
 #endif
+	sc->sc_prun = 1;
 
 	DPRINTF(("cs4281_trigger_output: sc=%p start=%p end=%p "
 		 "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
@@ -617,20 +613,13 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	BA0WRITE4(sc, CS4281_DMR0, fmt);
 
 	/* set sample rate */
+	sc->sc_prate = param->sample_rate;
 	cs4281_set_dac_rate(sc, param->sample_rate);
 
 	/* start DMA */
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) & ~DCRn_MSK);
 	/* Enable interrupts */
 	BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
-
-#if 1
-	/* XXX 
-	 * I think these BA0WRITE4 should not be here
-	 */
-	BA0WRITE4(sc, CS4281_PPRVC, 7);
-	BA0WRITE4(sc, CS4281_PPLVC, 7);
-#endif
 
 	DPRINTF(("HICR =0x%08x(expected 0x00000001)\n", BA0READ4(sc, CS4281_HICR)));
 	DPRINTF(("HIMR =0x%08x(expected 0x00f0fc3f)\n", BA0READ4(sc, CS4281_HIMR)));
@@ -664,8 +653,8 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4281_trigger_input: already running\n");
-	sc->sc_rrun = 1;
 #endif
+	sc->sc_rrun = 1;
 	DPRINTF(("cs4281_trigger_input: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
 	sc->sc_rintr = intr;
@@ -715,6 +704,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	BA0WRITE4(sc, CS4281_DMR1, fmt);
 
 	/* set sample rate */
+	sc->sc_rrate = param->sample_rate;
 	cs4281_set_adc_rate(sc, param->sample_rate);
 
 	/* Start DMA */
@@ -737,6 +727,8 @@ cs4281_power(why, v)
 	void *v;
 {
 	struct cs428x_softc *sc = (struct cs428x_softc *)v;
+	static u_int32_t dba0 = 0, dbc0 = 0, dmr0 = 0, dcr0 = 0;
+	static u_int32_t dba1 = 0, dbc1 = 0, dmr1 = 0, dcr1 = 0;
 
 	DPRINTF(("%s: cs4281_power why=%d\n", sc->sc_dev.dv_xname, why));
 	switch (why) {
@@ -744,10 +736,24 @@ cs4281_power(why, v)
 	case PWR_STANDBY:
 		sc->sc_suspend = why;
 
-		cs4281_halt_output(sc);
-		cs4281_halt_input(sc);
-		/* should I powerdown here ? */
-		cs428x_write_codec(sc, AC97_REG_POWER, CS4281_POWER_DOWN_ALL);
+		/* save current playback status */
+		if (sc->sc_prun) {
+			dcr0 = BA0READ4(sc, CS4281_DCR0);
+			dmr0 = BA0READ4(sc, CS4281_DMR0);
+			dbc0 = BA0READ4(sc, CS4281_DBC0);
+			dba0 = BA0READ4(sc, CS4281_DBA0);
+		}
+
+		/* save current capture status */
+		if (sc->sc_rrun) {
+			dcr1 = BA0READ4(sc, CS4281_DCR1);
+			dmr1 = BA0READ4(sc, CS4281_DMR1);
+			dbc1 = BA0READ4(sc, CS4281_DBC1);
+			dba1 = BA0READ4(sc, CS4281_DBA1);
+		}
+		/* Stop DMA */
+		BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
+		BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
 		break;
 	case PWR_RESUME:
 		if (sc->sc_suspend == PWR_RESUME) {
@@ -756,10 +762,30 @@ cs4281_power(why, v)
 			return;
 		}
 		sc->sc_suspend = why;
-		cs4281_init(sc);
+		cs4281_init(sc,0);
 		cs4281_reset_codec(sc);
 
+		/* restore ac97 registers */
 		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+
+		/* restore DMA related status */
+		if (sc->sc_prun) {
+			cs4281_set_dac_rate(sc, sc->sc_prate);
+			BA0WRITE4(sc, CS4281_DBA0, dba0);
+			BA0WRITE4(sc, CS4281_DBC0, dbc0);
+			BA0WRITE4(sc, CS4281_DMR0, dmr0);
+			BA0WRITE4(sc, CS4281_DCR0, dcr0);
+		}
+		if (sc->sc_rrun) {
+			cs4281_set_adc_rate(sc, sc->sc_rrate);
+			BA0WRITE4(sc, CS4281_DBA1, dba1);
+			BA0WRITE4(sc, CS4281_DBC1, dbc1);
+			BA0WRITE4(sc, CS4281_DMR1, dmr1);
+			BA0WRITE4(sc, CS4281_DCR1, dcr1);
+		}
+		/* enable intterupts */
+		if (sc->sc_prun || sc->sc_rrun)
+			BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
 		break;
 	case PWR_SOFTSUSPEND:
 	case PWR_SOFTSTANDBY:
@@ -924,8 +950,9 @@ cs4281_set_dac_rate(sc, rate)
 }
 
 int
-cs4281_init(sc)
+cs4281_init(sc, init)
      struct cs428x_softc *sc;
+     int init;
 {
 	int n;
 	u_int16_t data;
@@ -1219,5 +1246,16 @@ cs4281_init(sc)
 	dat32 = ~HIMR_DMAIM & ~HIMR_D1IM & ~HIMR_D0IM;
 	BA0WRITE4(sc, CS4281_HIMR,
 		  BA0READ4(sc, CS4281_HIMR) & dat32);
+
+	/* set current status */
+	if (init != 0) {
+		sc->sc_prun = 0;
+		sc->sc_rrun = 0;
+	}
+
+	/* setup playback volume */
+	BA0WRITE4(sc, CS4281_PPRVC, 7);
+	BA0WRITE4(sc, CS4281_PPLVC, 7);
+
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.4.2 2001/03/12 13:28:22 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.4.3 2001/04/21 17:53:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -41,6 +41,7 @@
 #include "assym.h"
 #include <machine/psl.h>
 #include <machine/asm.h>
+#include <machine/cpu.h>
 
 	.text
 	.align	0
@@ -55,11 +56,17 @@ Lspl_mask:
 	.word	_C_LABEL(spl_mask)
 
 ENTRY(raisespl)
+	stmfd	sp!, {r4}
+	/* Disable interrupts */
+	mrs	r4, cpsr_all
+	orr	r1, r4,  #(I32_bit)
+	msr	cpsr_all, r1
+
 	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
 	cmp	r3, r0
-	movle	pc, lr
+	ble	raisespl_exit
 
 	str	r3, [r1]		/* Store the new spl level */
 
@@ -71,14 +78,24 @@ ENTRY(raisespl)
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
-	ldmfd	sp!, {r0, pc}		/* Exit */
+	ldmfd	sp!, {r0, lr}
+raisespl_exit:
+	msr	cpsr_all, r4
+	ldmfd	sp!, {r4}
+	mov	pc, lr
 
 ENTRY(lowerspl)
+	stmfd	sp!, {r4}
+	/* Disable interrupts */
+	mrs	r4, cpsr_all
+	orr	r1, r4,  #(I32_bit)
+	msr	cpsr_all, r1
+
 	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
 	cmp	r3, r0
-	movge	pc, lr
+	bge	lowerspl_exit
 
 	str	r3, [r1]		/* Store the new spl level */
 
@@ -90,15 +107,28 @@ ENTRY(lowerspl)
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+	msr	cpsr_all, r4
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
-	ldmfd	sp!, {r0, pc}		/* Exit */
+	ldmfd	sp!, {r0, lr}
+	ldmfd	sp!, {r4}
+	mov	pc, lr
+lowerspl_exit:
+	msr	cpsr_all, r4
+	ldmfd	sp!, {r4}
+	mov	pc, lr
 
 ENTRY(splx)
+	stmfd	sp!, {r4}
+	/* Disable interrupts */
+	mrs	r4, cpsr_all
+	orr	r1, r4,  #(I32_bit)
+	msr	cpsr_all, r1
+
 	mov	r3, r0			/* Save the new value */
 	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
 	ldr	r0, [r1]
 	cmp	r3, r0
-	moveq	pc, lr
+	beq	splx_exit
 
 	str	r3, [r1]		/* Store the new spl level */
 
@@ -110,5 +140,12 @@ ENTRY(splx)
 
 	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+	msr	cpsr_all, r4
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
-	ldmfd	sp!, {r0, pc}		/* Exit */
+	ldmfd	sp!, {r0, lr}
+	ldmfd	sp!, {r4}
+	mov	pc, lr
+splx_exit:
+	msr	cpsr_all, r4
+	ldmfd	sp!, {r4}
+	mov	pc, lr

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmareg.h,v 1.6 1999/08/28 09:42:44 dbj Exp $	*/
+/*	$NetBSD: nextdmareg.h,v 1.6.2.1 2001/04/21 17:54:24 bouyer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -56,6 +56,7 @@
 #define	DMA_BEGINALIGNED(addr)	(((unsigned)(addr)&(DMA_BEGINALIGNMENT-1))==0)
 #define	DMA_ENDALIGNED(addr)	(((unsigned)(addr)&(DMA_ENDALIGNMENT-1))==0)
 
+#if 0
 struct dma_dev {		/* format of dma device registers */
 	int dd_csr;		/* control & status register */
 	char dd_pad[0x3fec];	/* csr not contiguous with next */
@@ -70,6 +71,7 @@ struct dma_dev {		/* format of dma device registers */
 	char dd_pad2[0x1f0];
 	char *dd_next_initbuf;	/* next register that inits dma buffering */
 };
+#endif
 
 #define DD_CSR          0
 #define DD_SAVED_NEXT   (DD_CSR         +sizeof(int) + 0x3fec)
@@ -82,6 +84,7 @@ struct dma_dev {		/* format of dma device registers */
 #define DD_STOP         (DD_START       +sizeof(char *))
 #define DD_NEXT_INITBUF (DD_STOP        +sizeof(char *) + 0x1f0)
 
+#define DD_SIZE         (DD_NEXT_INITBUF+sizeof(char *))
 /*
  * bits in dd_csr
  */

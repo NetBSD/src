@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.3.8.1 2000/11/20 20:18:13 bouyer Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.3.8.2 2001/04/21 17:54:23 bouyer Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -115,7 +115,7 @@ xe_attach(parent, self, aux)
   sc->sc_bst = NEXT68K_INTIO_BUS_SPACE;
 
   if (bus_space_map(sc->sc_bst, NEXT_P_ENET,
-                    sizeof(struct xe_regs), 0, &sc->sc_bsh)) {
+                    XE_SIZE, 0, &sc->sc_bsh)) {
     printf("\n%s: can't map mb8795 registers\n",
            sc->sc_dev.dv_xname);
     return;
@@ -125,7 +125,7 @@ xe_attach(parent, self, aux)
 	xe_sc->sc_rxdma.nd_bst = NEXT68K_INTIO_BUS_SPACE;
 
 	if (bus_space_map(xe_sc->sc_rxdma.nd_bst, NEXT_P_ENETR_CSR,
-			sizeof(struct dma_dev), BUS_SPACE_MAP_LINEAR, &xe_sc->sc_rxdma.nd_bsh)) {
+			DD_SIZE, 0, &xe_sc->sc_rxdma.nd_bsh)) {
 		printf("\n%s: can't map ethernet receive DMA registers\n",
 				sc->sc_dev.dv_xname);
 		return;
@@ -133,6 +133,7 @@ xe_attach(parent, self, aux)
   xe_sc->sc_rxdma.nd_intr = NEXT_I_ENETR_DMA;
 	xe_sc->sc_rxdma.nd_continue_cb = NULL;
 	xe_sc->sc_rxdma.nd_completed_cb = NULL;
+	xe_sc->sc_rxdma.nd_shutdown_cb = NULL;
 	xe_sc->sc_rxdma.nd_cb_arg = NULL;
   sc->sc_rx_dmat = &(xe_sc->sc_rxdma._nd_dmat);
 	sc->sc_rx_nd = &(xe_sc->sc_rxdma);
@@ -140,7 +141,7 @@ xe_attach(parent, self, aux)
 
 	xe_sc->sc_txdma.nd_bst = NEXT68K_INTIO_BUS_SPACE;
 	if (bus_space_map(xe_sc->sc_txdma.nd_bst, NEXT_P_ENETX_CSR,
-			sizeof(struct dma_dev), BUS_SPACE_MAP_LINEAR, &xe_sc->sc_txdma.nd_bsh)) {
+			DD_SIZE, 0, &xe_sc->sc_txdma.nd_bsh)) {
 		printf("\n%s: can't map ethernet transmit DMA registers\n",
 				sc->sc_dev.dv_xname);
 		return;
@@ -148,6 +149,7 @@ xe_attach(parent, self, aux)
   xe_sc->sc_txdma.nd_intr = NEXT_I_ENETX_DMA;
 	xe_sc->sc_txdma.nd_continue_cb = NULL;
 	xe_sc->sc_txdma.nd_completed_cb = NULL;
+	xe_sc->sc_txdma.nd_shutdown_cb = NULL;
 	xe_sc->sc_txdma.nd_cb_arg = NULL;
   sc->sc_tx_dmat = &(xe_sc->sc_txdma._nd_dmat);
 	sc->sc_tx_nd = &(xe_sc->sc_txdma);

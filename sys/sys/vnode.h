@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.65.2.4 2001/03/12 13:32:05 bouyer Exp $	*/
+/*	$NetBSD: vnode.h,v 1.65.2.5 2001/04/21 17:47:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -534,7 +534,7 @@ int	vn_read(struct file *fp, off_t *offset, struct uio *uio,
 int	vn_readdir(struct file *fp, char *buf, int segflg, u_int count,
 	    int *done, struct proc *p, off_t **cookies, int *ncookies);
 int	vn_poll(struct file *fp, int events, struct proc *p);
-int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
+int	vn_stat(void *fdata, struct stat *sb, struct proc *p);
 void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
 void	vn_syncer_remove_from_worklist(struct vnode *vp);
 int	vn_write(struct file *fp, off_t *offset, struct uio *uio,

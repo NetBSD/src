@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd.c,v 1.1.2.2 2001/03/27 15:30:27 bouyer Exp $	*/
+/*	$NetBSD: rpckbd.c,v 1.1.2.3 2001/04/21 17:53:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,9 +116,10 @@
 
 /* Flags used to decode the raw keys */
 
-#define FLAG_KEYUP      0x01
-#define FLAG_E0         0x02
-#define FLAG_E1         0x04
+#define FLAG_KEYUP        0x01
+#define FLAG_E0           0x02
+#define FLAG_E1           0x04
+#define FLAG_BREAKPRELUDE 0x08
 
 
 /* Declaration of datatypes and their associated function pointers */
@@ -495,22 +496,21 @@ rpckbd_decode(struct rpckbd_softc *id, int datain, u_int *type, int *dataout)
 		key |= 0x100;
 	};
 
-#if 0
 	/*              
-	 * process BREAK key (EXT1 1D 45  EXT1 9D C5):
+	 * process BREAK key (EXT1 0x14 0x77):
 	 * map to (unused) code 7F
-	 */     
-	if (id->t_extended1 == 2 && (datain == 0x1d || datain == 0x9d)) {
-		id->t_extended1 = 1;
+	 */
+	if ((id->t_flags & FLAG_E1) && (datain == 0x14)) {
+		id->t_flags |= FLAG_BREAKPRELUDE;
 		return(0);
-	} else if (id->t_extended1 == 1 &&
-		   (datain == 0x45 || datain == 0xc5)) {
-		id->t_extended1 = 0;
+	} else if ((id->t_flags & FLAG_BREAKPRELUDE) &&
+		   (datain == 0x77)) {
+		id->t_flags &= ~(FLAG_E1 | FLAG_BREAKPRELUDE);
 		key = 0x7f;
-	} else if (id->t_extended1 > 0) {
-		id->t_extended1 = 0;
+	} else if (id->t_flags & FLAG_E1) {
+		id->t_flags &= ~FLAG_E1;
 	}
-#endif
+
 
 	if (id->t_flags & FLAG_KEYUP) {
 		id->t_flags &= ~FLAG_KEYUP;

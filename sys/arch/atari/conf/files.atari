@@ -1,9 +1,11 @@
 #
-#	$NetBSD: files.atari,v 1.66.2.5 2001/03/27 15:30:37 bouyer Exp $
+#	$NetBSD: files.atari,v 1.66.2.6 2001/04/21 17:53:23 bouyer Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
+
+defopt	opt_mbtype.h			_MILANHW_ _ATARIHW_
 
 device	mainbus {}
 attach	mainbus at root
@@ -13,6 +15,10 @@ attach	cpu at mainbus
 
 define	event {}
 file	arch/atari/dev/event.c		event
+
+# Mainbus shared DMA
+define	mbdma
+file	arch/atari/dev/dma.c		mbdma
 
 device	clock
 attach	clock at mainbus
@@ -55,10 +61,9 @@ device	fdc { unit = -1 }
 attach	fdc at mainbus
 
 # TT/Falcon floppy driver
-device	fd: disk
+device	fd: disk, mbdma
 attach	fd at fdc
 file	arch/atari/dev/fd.c		fd needs-flag
-file	arch/atari/dev/dma.c
 major	{fd = 2}
 
 # Hades floppy driver
@@ -158,16 +163,22 @@ include "dev/ata/files.ata"
 
 # Milan floppy driver - uses 'generic' isa version of fd.c
 device  fdcisa  {drive = -1}: isadma
-file    arch/atari/isa/fdcisa.c
+file    arch/atari/isa/fdcisa.c		fdcisa
 attach  fdcisa at isa
 device  fdisa: disk
 attach  fdisa at fdcisa
-file    dev/isa/fd.c
+file    dev/isa/fd.c			fdisa needs-flag
 major   {fdisa = 2}
 
-attach	wdc at mainbus with wdc_mb
+attach	wdc at mainbus with wdc_mb: mbdma
 file	arch/atari/dev/wdc_mb.c		wdc_mb
 major	{wd = 14}
+
+# Milan wdc driver - uses the 'generic' isa version except for a bit
+# if trickery in the multi_stream methods setup in the attachment.
+device	wdcisa: ata, atapi, wdc_base
+attach	wdcisa at isa
+file	arch/atari/dev/wdc_isa.c	wdcisa
 
 # ISA Plug 'n Play devices
 file	arch/atari/isa/isapnp_machdep.c	isapnp
@@ -177,7 +188,7 @@ major   {sd = 4}
 major   {cd = 6}
 
 # ncr 5380 controller
-device	ncrscsi: scsi
+device	ncrscsi: scsi, mbdma
 attach	ncrscsi at mainbus
 file	arch/atari/dev/atari5380.c	ncrscsi needs-flag
 
@@ -203,7 +214,7 @@ file	arch/atari/atari/stalloc.c
 file	arch/atari/atari/vm_machdep.c
 file	arch/atari/atari/db_memrw.c		ddb
 file	arch/atari/atari/fpu.c
-file	arch/atari/dev/ym2149.c
+file	arch/atari/dev/ym2149.c			_atarihw_
 file	arch/atari/atari/intr.c
 file	arch/m68k/m68k/cacheops.c
 

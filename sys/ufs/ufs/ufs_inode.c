@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.13.8.4 2001/03/12 13:32:07 bouyer Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.13.8.5 2001/04/21 17:47:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -288,9 +288,10 @@ out:
 		 * We need to flush pages to the new disk locations.
 		 */
 
-		(uobj->pgops->pgo_flush)(uobj, oldeof & ~(bsize - 1),
-		    MIN((oldeof + bsize) & ~(bsize - 1), neweof),
-		    PGO_CLEANIT | ((flags & B_SYNC) ? PGO_SYNCIO : 0));
+		if ((flags & B_SYNC) != 0)
+			(*uobj->pgops->pgo_flush)(uobj, oldeof & ~(bsize - 1),
+			    MIN((oldeof + bsize) & ~(bsize - 1), neweof),
+			    PGO_CLEANIT | PGO_SYNCIO);
 	}
 	if (pgs2[0] != NULL) {
 		uvm_page_unbusy(pgs2, npages2);

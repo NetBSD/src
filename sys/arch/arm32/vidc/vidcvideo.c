@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.1.2.2 2001/03/27 15:30:33 bouyer Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.1.2.3 2001/04/21 17:53:20 bouyer Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.1.2.2 2001/03/27 15:30:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.1.2.3 2001/04/21 17:53:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.1.2.2 2001/03/27 15:30:33 bouyer Exp
 /* for vidc_mode ... needs to be MI indepenent one day */
 #include <machine/vidc.h>
 #include <arm32/vidc/vidc20config.h>
+#include <machine/bootconfig.h>
+extern videomemory_t videomemory;
 
 #define machine_btop(x) arm_byte_to_page(x)
 #define MACHINE_KSEG0_TO_PHYS(x) vtophys(x)
@@ -189,6 +191,10 @@ static void vidcvideo_getdevconfig __P((vaddr_t, struct fb_devconfig *));
 
 static int  vidcvideointr __P((void *));
 
+/* Acceleration function prototypes */
+static void vv_copyrows __P((void *, int, int, int));
+static void vv_eraserows __P((void *, int, int, long));
+
 
 static int
 vidcvideo_match(parent, match, aux)
@@ -249,12 +255,13 @@ vidcvideo_getdevconfig(dense_addr, dc)
 	/* initialize colormap and cursor resource */
 	vidcvideo_colourmap_and_cursor_init(dc);
 
-	dc->rinfo.ri_flg    = RI_CENTER;
+	dc->rinfo.ri_flg    = 0; /* RI_CENTER; */
 	dc->rinfo.ri_depth  = dc->dc_depth;
 	dc->rinfo.ri_bits   = (void *) dc->dc_videobase;
 	dc->rinfo.ri_width  = dc->dc_wid;
 	dc->rinfo.ri_height = dc->dc_ht;
 	dc->rinfo.ri_stride = dc->dc_rowbytes;
+	dc->rinfo.ri_hw	    = NULL;
 }
 
 
@@ -290,6 +297,10 @@ vidcvideo_config_wscons(dc)
 		dc->rinfo.ri_width / dc->rinfo.ri_font->fontwidth
 	);
 
+	/* XXX add our accelerated functions */
+	dc->rinfo.ri_ops.eraserows = vv_eraserows;
+	dc->rinfo.ri_ops.copyrows  = vv_copyrows;
+
 	/* XXX shouldn't be global */
 	vidcvideo_stdscreen.nrows = dc->rinfo.ri_rows;
 	vidcvideo_stdscreen.ncols = dc->rinfo.ri_cols;
@@ -313,30 +324,29 @@ vidcvideo_attach(parent, self, aux)
 	const u_int8_t *p;
 	int index;
 
-	if (vidcvideo_is_console) {
-		if (sc->nscreens == 0) {
+	if (sc->nscreens == 0) {
+		if (vidcvideo_is_console) {
 			sc->sc_dc = &vidcvideo_console_dc;
-			sc->nscreens = 1;
 		} else {
-			printf(": vidcvideo is console ; can't cope with extra attachment\n");
+			printf(" : non console vidcvideo fb ... can't cope with this\n");
 			return;
+			/*
+			 * sc->sc_dc = (struct fb_devconfig *)
+			 *	   malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
+			 * vidcvideo_getdevconfig(videomemory.vidm_vbase, sc->sc_dc);
+			 */
 		};
-	}
-	else {
-		printf(" : can't handle non console vidcvideo fb's yet\n");
-		return;
-		/*
-		 *	struct mainbus_attach_args *mb = aux;
-		 *	sc->sc_dc = (struct fb_devconfig *)
-		 *	   malloc(sizeof(struct fb_devconfig), M_DEVBUF, M_WAITOK);
-		 *	vidcvideo_getdevconfig(mb->mb_aux, mb->mb_iobase, sc->sc_dc);
-		 */
-	}
+		sc->nscreens = 1;
+	} else {
+			printf(": allready attached ... can't cope with this\n");
+			return;
+	};
 
 	vidcvideo_printdetails();
 	printf(": using %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
+	/* initialise rasops */
 	cm = &sc->sc_cmap;
 	p = rasops_cmap;
 	for (index = 0; index < CMAP_SIZE; index++, p += 3) {
@@ -349,7 +359,11 @@ vidcvideo_attach(parent, self, aux)
 	sc->sc_cursor.cc_magic.x = CX_MAGIC_X;
 	sc->sc_cursor.cc_magic.y = CX_MAGIC_Y;
 
+	/* set up interrupt flags */
 	sc->sc_changed |= WSDISPLAY_CMAP_DOLUT;
+
+	/* set up a link in the rasops structure to our softc for acceleration stuff */
+	sc->sc_dc->rinfo.ri_hw = sc;
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
 	intr_claim(IRQ_FLYBACK, IPL_TTY, "vblank", vidcvideointr, sc);
@@ -429,6 +443,18 @@ vidcvideoioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
+
+#if 0
+	/* XXX There are no way to know framebuffer pa from a user program. */
+	/* XXX imported from macppc fb buffer for X support... dunno if this works yet */
+	case GRFIOCGINFO:
+		gm = (void *)data;
+		bzero(gm, sizeof(struct grfinfo));
+		gm->gd_fbaddr = (caddr_t)dc->dc_paddr;
+		gm->gd_fbrowbytes = dc->dc_ri.ri_stride;
+		return 0;
+#endif
+
 	}
 	return ENOTTY;
 }
@@ -630,17 +656,6 @@ vidcvideointr(arg)
 			bcnt += 2;
 		}
 	}
-	if (v & WSDISPLAY_CMAP_DOLUT) {
-		struct hwcmap256 *cm = &sc->sc_cmap;
-		int index;
-
-		SELECT(vdac, 0);
-		for (index = 0; index < CMAP_SIZE; index++) {
-			REG(vdac, bt_cmap) = cm->r[index];	tc_wmb();
-			REG(vdac, bt_cmap) = cm->g[index];	tc_wmb();
-			REG(vdac, bt_cmap) = cm->b[index];	tc_wmb();
-		}
-	}
 #endif /* XXX snip XXX */
 
 	sc->sc_changed = 0;
@@ -831,5 +846,63 @@ set_curpos(sc, curpos)
 		x = dc->dc_wid;
 	sc->sc_cursor.cc_pos.x = x;
 	sc->sc_cursor.cc_pos.y = y;
+}
+
+
+static void vv_copyrows(id, srcrow, dstrow, nrows)
+	void *id;
+	int srcrow, dstrow, nrows;
+{
+	struct rasops_info *ri = id;
+	int height, offset, size;
+	int scrollup, scrolldown;
+	unsigned char *src, *dst;
+
+	/* All movements are done in multiples of character heigths */
+	height = ri->ri_font->fontheight * nrows;
+	offset = (srcrow - dstrow) * ri->ri_yscale;
+	size   = height * ri->ri_stride;
+
+	/* check if we are full screen scrolling */
+	scrollup   = (srcrow + nrows >= ri->ri_rows);
+	scrolldown = (dstrow + nrows >= ri->ri_rows);
+
+	if ((scrollup || scrolldown) && (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM)) {
+		ri->ri_bits = vidcvideo_hwscroll(offset);
+		vidcvideo_progr_scroll();	/* sadistic ; shouldnt this be on vsync? */
+
+		/* wipe out remains of the screen if nessisary */
+		if (ri->ri_emuheight != ri->ri_height) vv_eraserows(id, ri->ri_rows, 1, NULL);
+		return;
+	};
+
+	/* Else we just copy the area : we're braindead for now 
+	 * Note: we can't use hardware scrolling when the softc isnt known yet...
+	 * if its not known we dont have interrupts and we can't change the display
+	 * address reliable other than in a Vsync
+	 */
+
+	src = ri->ri_bits + srcrow * ri->ri_font->fontheight * ri->ri_stride;
+	dst = ri->ri_bits + dstrow * ri->ri_font->fontheight * ri->ri_stride;
+
+	bcopy(src, dst, size);
+}
+
+
+static void vv_eraserows(id, startrow, nrows, attr)
+	void *id;
+	int startrow, nrows;
+	long attr;
+{
+	struct rasops_info *ri = id;
+	int height;
+	unsigned char *src;
+
+	/* we're braindead for now */
+	height = ri->ri_font->fontheight * nrows * ri->ri_stride;
+
+	src = ri->ri_bits + startrow * ri->ri_font->fontheight * ri->ri_stride;
+
+	bzero(src, height);
 }
 

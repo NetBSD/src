@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40.2.4 2001/03/27 15:30:34 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.40.2.5 2001/04/21 17:53:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -58,9 +58,13 @@
 bdev_decl(vnd);
 #include "md.h"
 bdev_decl(md);
+
 #include "fd.h"
 #include "hdfd.h"
+#include "fdisa.h"
+#define	NFLOPPY		(NFD+NHDFD+NFDISA)
 bdev_decl(fd);
+
 bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
@@ -79,7 +83,7 @@ struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NVND,vnd),	/* 0: vnode disk driver */
 	bdev_md_init(NMD,md),		/* 1: memory disk - for install disk */
-	bdev_disk_init(NFD+NHDFD,fd),	/* 2: floppy disk */
+	bdev_disk_init(NFLOPPY,fd),	/* 2: floppy disk */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */

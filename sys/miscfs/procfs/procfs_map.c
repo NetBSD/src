@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.5.2.3 2001/01/18 09:23:48 bouyer Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.5.2.4 2001/04/21 17:46:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -45,6 +45,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/malloc.h>
+#include <sys/namei.h>
 #include <miscfs/procfs/procfs.h>
 
 #include <sys/lock.h>
@@ -52,6 +54,12 @@
 #include <uvm/uvm.h>
 
 #define MEBUFFERSIZE 256
+
+extern int getcwd_common __P((struct vnode *, struct vnode *,
+			      char **, char *, int, int, struct proc *));
+
+static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
+				struct proc *curp, struct proc *p);
 
 /*
  * The map entries can *almost* be read with programs like cat.  However,
@@ -64,17 +72,19 @@
  * can try a bigger buffer.
  */
 int
-procfs_domap(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
-	struct pfsnode *pfs;
-	struct uio *uio;
+procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
+	     struct uio *uio, int linuxmode)
 {
 	int len;
-	int error;
+	int error, buf_full;
 	vm_map_t map = &p->p_vmspace->vm_map;
 	vm_map_entry_t entry;
 	char mebuffer[MEBUFFERSIZE];
+	char *path;
+	struct vnode *vp;
+	struct vattr va;
+	dev_t dev;
+	long fileid;
 
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
@@ -83,6 +93,7 @@ procfs_domap(curp, p, pfs, uio)
 		return (0);
 	
 	error = 0;
+	buf_full = 0;
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_lock_read(map);
 	for (entry = map->header.next;
@@ -92,18 +103,57 @@ procfs_domap(curp, p, pfs, uio)
 		if (UVM_ET_ISSUBMAP(entry))
 			continue;
 
-		snprintf(mebuffer, sizeof(mebuffer),
-		    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
-		    entry->start, entry->end,
-		    (entry->protection & VM_PROT_READ) ? 'r' : '-',
-		    (entry->protection & VM_PROT_WRITE) ? 'w' : '-',
-		    (entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
-		    (entry->max_protection & VM_PROT_READ) ? 'r' : '-',
-		    (entry->max_protection & VM_PROT_WRITE) ? 'w' : '-',
-		    (entry->max_protection & VM_PROT_EXECUTE) ? 'x' : '-',
-		    (entry->etype & UVM_ET_COPYONWRITE) ? "COW" : "NCOW",
-		    (entry->etype & UVM_ET_NEEDSCOPY) ? "NC" : "NNC",
-		    entry->inheritance, entry->wired_count, entry->advice);
+		if (linuxmode != 0) {
+			path = (char *)malloc(MAXPATHLEN * 4, M_TEMP, M_WAITOK);
+			if (path == NULL) {
+				error = ENOMEM;
+				break;
+			}
+			*path = 0;
+
+			dev = (dev_t)0;
+			fileid = 0;
+			if (UVM_ET_ISOBJ(entry) &&
+			    UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
+				vp = (struct vnode *)entry->object.uvm_obj;
+				error = VOP_GETATTR(vp, &va, curp->p_ucred,
+				    curp);
+				if (error == 0 && vp != pfs->pfs_vnode) {
+					fileid = va.va_fileid;
+					dev = va.va_fsid;
+					error = procfs_vnode_to_path(vp, path,	
+					    MAXPATHLEN * 4, curp, p);
+				}
+			}
+			snprintf(mebuffer, sizeof(mebuffer),
+			    "%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %ld     %s\n",
+			    (int)sizeof(void *) * 2,(unsigned long)entry->start,
+			    (int)sizeof(void *) * 2,(unsigned long)entry->end,
+			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
+			    (entry->protection & VM_PROT_WRITE) ? 'w' : '-',
+			    (entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
+			    (entry->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
+			    (int)sizeof(void *) * 2,
+			    (unsigned long)entry->offset,
+			    major(dev), minor(dev), fileid, path);
+			free(path, M_TEMP);
+		} else {
+			snprintf(mebuffer, sizeof(mebuffer),
+			    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
+			    entry->start, entry->end,
+			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
+			    (entry->protection & VM_PROT_WRITE) ? 'w' : '-',
+			    (entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
+			    (entry->max_protection & VM_PROT_READ) ? 'r' : '-',
+			    (entry->max_protection & VM_PROT_WRITE) ? 'w' : '-',
+			    (entry->max_protection & VM_PROT_EXECUTE) ?
+				'x' : '-',
+			    (entry->etype & UVM_ET_COPYONWRITE) ?
+				"COW" : "NCOW",
+			    (entry->etype & UVM_ET_NEEDSCOPY) ? "NC" : "NNC",
+			    entry->inheritance, entry->wired_count,
+			    entry->advice);
+		}
 
 		len = strlen(mebuffer);
 		if (len > uio->uio_resid) {
@@ -120,9 +170,56 @@ procfs_domap(curp, p, pfs, uio)
 }
 
 int
-procfs_validmap(p, mp)
-	struct proc *p;
-	struct mount *mp;
+procfs_validmap(struct proc *p, struct mount *mp)
 {
 	return ((p->p_flag & P_SYSTEM) == 0);
+}
+
+/*
+ * Try to find a pathname for a vnode. Since there is no mapping
+ * vnode -> parent directory, this needs the NAMECACHE_ENTER_REVERSE
+ * option to work (to make cache_revlookup succeed).
+ */
+static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
+				struct proc *curp, struct proc *p)
+{
+	int error, lenused, elen;
+	char *bp, *bend;
+	struct vnode *dvp;
+
+	bp = bend = &path[len];
+	*(--bp) = '\0';
+
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0)
+		return error;
+	error = cache_revlookup(vp, &dvp, &bp, path);
+	vput(vp);
+	if (error != 0)
+		return (error == -1 ? ENOENT : error);
+
+	error = vget(dvp, 0);
+	if (error != 0)
+		return error;
+	*(--bp) = '/';
+	/* XXX GETCWD_CHECK_ACCESS == 0x0001 */
+	error = getcwd_common(dvp, NULL, &bp, path, len / 2, 1, curp);
+
+	/*
+	 * Strip off emulation path for emulated processes looking at
+	 * the maps file of a process of the same emulation. (Won't
+	 * work if /emul/xxx is a symlink..)
+	 */
+	if (curp->p_emul == p->p_emul && curp->p_emul->e_path != NULL) {
+		elen = strlen(curp->p_emul->e_path);
+		if (!strncmp(bp, curp->p_emul->e_path, elen))
+			bp = &bp[elen];
+	}
+
+	lenused = bend - bp;
+
+	memcpy(path, bp, lenused);
+	path[lenused] = 0;
+
+	return 0;
 }

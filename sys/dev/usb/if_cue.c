@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.26.2.5 2001/02/11 19:16:22 bouyer Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.26.2.6 2001/04/21 17:49:53 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -555,7 +555,7 @@ USB_ATTACH(cue)
 	 */
 	cue_getmac(sc, &eaddr);
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * A CATC chip was detected. Inform the world.
@@ -611,6 +611,7 @@ USB_DETACH(cue)
 	 * in the same thread as detach.
 	 */
 	usb_rem_task(sc->cue_udev, &sc->cue_tick_task);
+	usb_rem_task(sc->cue_udev, &sc->cue_stop_task);
 
 	if (!sc->cue_attached) {
 		/* Detached before attached finished, so just bail out. */
@@ -822,7 +823,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	m->m_pkthdr.rcvif = ifp;
 
-	s = splimp();
+	s = splnet();
 
 	/* XXX ugly */
 	if (cue_newbuf(sc, c, NULL) == ENOBUFS) {
@@ -873,7 +874,7 @@ cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (sc->cue_dying)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->cue_dev),
 		    __FUNCTION__, status));
@@ -1046,7 +1047,7 @@ cue_init(void *xsc)
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
@@ -1167,7 +1168,7 @@ cue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	if (sc->cue_dying)
 		return (EIO);
 
-	s = splimp();
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFADDR:

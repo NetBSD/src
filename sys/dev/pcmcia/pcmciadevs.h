@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.52.2.8 2001/03/27 15:32:15 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.52.2.9 2001/04/21 17:49:36 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.122 2001/03/18 21:11:30 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -441,6 +441,9 @@
 #define	PCMCIA_CIS_AIRONET_PC4800	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_AIRONET_PC4800	0x0007
 #define	PCMCIA_STR_AIRONET_PC4800	"Aironet PC4800 Wireless LAN Adapter"
+#define	PCMCIA_CIS_AIRONET_350	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AIRONET_350	0x000a
+#define	PCMCIA_STR_AIRONET_350	"Aironet 350 Wireless LAN Adapter"
 
 /* Bay Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }

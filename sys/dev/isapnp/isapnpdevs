@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.28.2.4 2001/03/12 13:30:42 bouyer Exp $
+$NetBSD: isapnpdevs,v 1.28.2.5 2001/04/21 17:48:48 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ devlogic	ess	ESS1869		0	ESS1869
  * joy
  */
 devlogic	joy	AZT0003		0	Aztech AZT2320 GAME PORT
+devlogic	joy	AZT3001		0	Aztech GAME PORT
 devlogic	joy	CSC0001		0	CS4235
 devlogic	joy	CSCA801		0	Terratec EWS64XL
 devlogic	joy	CTL7001		0	Creative Awe64
@@ -144,6 +145,7 @@ devlogic	le	ATK1500		0	Lance Ethernet on Allied Telesyn board
  * mpu
  */
 devlogic	mpu	AZT0002		0	Aztech AZT2320 MPU401 MIDI
+devlogic	mpu	AZT2001		0	Aztech MPU401 MIDI
 devlogic	mpu	CSC0003		0	CS4235 MPU401 MIDI
 
 /*
@@ -164,16 +166,18 @@ devlogic	pcic	AEI0218		0	Actiontec PnP PCMCIA Adapter
  */
 devlogic	sb	ADS7150		0	AD1815
 devlogic	sb	ADS7180		0	AD1816
+devlogic	sb	AZT1008		0	Aztech 1008
 devlogic	sb	CTL0001		0	SB
 devlogic	sb	CTL0031		0	SB AWE32
 devlogic	sb	CTL0041		0	SB16 PnP (CT4131)
-devlogic	sb	CTL0043		0	SB16 PnP (CT4170)
 devlogic	sb	CTL0042		0	SB AWE64 Value
+devlogic	sb	CTL0043		0	SB16 PnP (CT4170)
 devlogic	sb	CTL0044		0	SB AWE64 Gold
 devlogic	sb	CTL0045		0	SB AWE64 Value
 devlogic	sb	OPT9250		0	Televideo card, Opti
 devlogic	sb	@X@0001		0	CMI8330. Audio Adapter
 devlogic	sb	@@@1001		0	Avance Logic ALS100+
+devlogic	sb	@@@2001		0	Avance Logic ALS120
 devcompat	sb	PNPB000		0	Generic SB 1.5
 devcompat	sb	PNPB001		0	Generic SB 2.0
 devcompat	sb	PNPB002		0	Generic SB Pro
@@ -189,6 +193,7 @@ devlogic	tr	TCM3190		0	3Com TokenLink Velocity ISA
  * wdc
  */
 devlogic	wdc	AZT0000		0	Aztech AZT2320 IDE CDROM
+devlogic	wdc	AZT0500		0	Aztech IDE CDROM
 devlogic	wdc	OPT0007		0	OPTi Audio 16 IDE controller
 devlogic	wdc	ESS0002		0	ES1868 IDE Controller
 devcompat	wdc	PNP0600		0	Western Digital Compatible Controller

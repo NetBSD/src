@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.1.2.2 2001/03/27 15:32:06 bouyer Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.1.2.3 2001/04/21 17:48:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@
 #include <net/if_media.h>
 
 #include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_common.c,v 1.1.8.1 2000/11/20 11:42:22 bouyer Exp $	*/
+/*	$NetBSD: if_lmc_common.c,v 1.1.8.2 2001/04/21 17:49:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -230,8 +230,7 @@ lmc_reset(lmc_softc_t * const sc)
 	/*
 	 * busy wait for the chip to reset
 	 */
-	while ((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_DP) == 0)
-		;
+	while ((LMC_CSR_READ(sc, csr_gp) & LMC_GEP_DP) == 0);
 
 	/*
 	 * Call media specific init routine

@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.5.4.3 2001/01/18 09:23:33 bouyer Exp $	*/
+/*	$NetBSD: rl.c,v 1.5.4.4 2001/04/21 17:49:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -364,7 +364,7 @@ rlstrategy(struct buf *bp)
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
 	sc = (struct rlc_softc *)rc->rc_dev.dv_parent;
 
-	s = splimp();
+	s = splbio();
 	disksort_cylinder(&sc->sc_q, bp);
 	rlcstart(sc, 0);
 	splx(s);

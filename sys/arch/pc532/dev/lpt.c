@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.30.2.3 2001/03/27 15:31:18 bouyer Exp $	*/
+/*	$NetBSD: lpt.c,v 1.30.2.4 2001/04/21 17:54:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -825,7 +825,7 @@ plipinput(sc)
 	}
 	i8255->port_b = 0x00;
 
-	s = splimp();
+	s = splnet();
 	if ((m = m_devget(sc->sc_ifbuf, len, 0, ifp, NULL)) != NULL) {
 		/* We assume that the header fit entirely in one mbuf. */
 		eh = mtod(m, struct ether_header *);
@@ -986,7 +986,7 @@ plipoutput(arg)
 		callout_stop(&sc->sc_plipout_ch);
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		splx(s);
 		if (!m0)
@@ -1061,7 +1061,7 @@ retry:
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == (IFF_RUNNING | IFF_UP)
 	    && sc->sc_ifoerrs < PLIPMXRETRY) {
-		s = splimp();
+		s = splnet();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
 		callout_reset(&sc->sc_plipout_ch, PLIPRETRY, plipoutput, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.18.2.2 2001/03/12 13:31:57 bouyer Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.18.2.3 2001/04/21 17:46:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -171,7 +171,7 @@ clnlintr()
 	 *	Get next datagram off clnl input queue
 	 */
 next:
-	s = splimp();
+	s = splnet();
 	/* IF_DEQUEUESNPAHDR(&clnlintrq, m, sh); */
 	IF_DEQUEUE(&clnlintrq, m);
 	splx(s);

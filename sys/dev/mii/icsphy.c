@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.10.2.1 2000/11/20 11:42:10 bouyer Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.10.2.2 2001/04/21 17:48:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ icsphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxICS &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxICS_1890)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_ICS &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_ICS_1890)
 		return (10);
 
 	return (0);
@@ -127,7 +127,7 @@ icsphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_xxICS_1890,
+	printf(": %s, rev. %d\n", MII_STR_ICS_1890,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;

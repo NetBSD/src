@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_afmap.c,v 1.2.2.2 2001/01/05 17:39:35 bouyer Exp $	*/
+/*	$NetBSD: altq_afmap.c,v 1.2.2.3 2001/04/21 17:46:11 bouyer Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -298,7 +298,7 @@ afm_match6(head, fp)
 }
 #endif
 
-/* should be called in splimp() */
+/* should be called in splnet() */
 struct afm *
 afm_match(ifp, flow)
 	struct ifnet *ifp;

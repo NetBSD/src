@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.3 1998/09/21 21:26:52 pk Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.3.12.1 2001/04/21 17:48:35 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ struct lsi64854_softc {
 	int	(*sc_intrchain) __P((void *));	/* next handler in intr chain */
 	void	*sc_intrchainarg;		/* arg for next intr handler */
 
+	u_int 			sc_dmactl;
 };
 
 #define L64854_GCSR(sc)	\

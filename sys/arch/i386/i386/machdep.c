@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366.2.8 2001/03/27 15:31:02 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.9 2001/04/21 17:53:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -233,6 +233,10 @@ u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
 void	identifycpu __P((void));
 void	init386 __P((paddr_t));
+
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
+#endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 const struct i386_cache_info *cpu_itlb_info, *cpu_dtlb_info, *cpu_icache_info,
     *cpu_dcache_info, *cpu_l2cache_info;
@@ -1789,6 +1793,77 @@ extern vector IDTVEC(svr4_fasttrap);
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+void
+add_mem_cluster(seg_start, seg_end, type)
+	u_int64_t seg_start, seg_end;
+	u_int32_t type;
+{
+	extern struct extent *iomem_ex;
+
+	if (seg_end > 0x100000000ULL) {
+		printf("WARNING: skipping large "
+		    "memory map entry: "
+		    "0x%qx/0x%qx/0x%x\n",
+		    seg_start,
+		    (seg_end - seg_start),
+		    type);
+		return;
+	}
+
+	/*
+	 * XXX Chop the last page off the size so that
+	 * XXX it can fit in avail_end.
+	 */
+	if (seg_end == 0x100000000ULL)
+		seg_end -= PAGE_SIZE;
+
+	if (seg_end <= seg_start)
+		return;
+
+	/*
+	 * Allocate the physical addresses used by RAM
+	 * from the iomem extent map.  This is done before
+	 * the addresses are page rounded just to make
+	 * sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, seg_start,
+	    seg_end - seg_start, EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE "
+		    "MEMORY SEGMENT "
+		    "(0x%qx/0x%qx/0x%x) FROM "
+		    "IOMEM EXTENT MAP!\n",
+		    seg_start, seg_end - seg_start, type);
+	}
+
+	/*
+	 * If it's not free memory, skip it.
+	 */
+	if (type != BIM_Memory)
+		return;
+
+	/* XXX XXX XXX */
+	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
+		panic("init386: too many memory segments");
+
+	seg_start = round_page(seg_start);
+	seg_end = trunc_page(seg_end);
+
+	if (seg_start == seg_end)
+		return;
+
+	mem_clusters[mem_cluster_cnt].start = seg_start;
+	mem_clusters[mem_cluster_cnt].size =
+	    seg_end - seg_start;
+
+	if (avail_end < seg_end)
+		avail_end = seg_end;
+	physmem += atop(mem_clusters[mem_cluster_cnt].size);
+	mem_cluster_cnt++;
+}
+#endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
+
 void
 init386(first_avail)
 	vaddr_t first_avail;
@@ -1874,67 +1949,29 @@ init386(first_avail)
 			seg_start = bim->entry[x].addr;
 			seg_end = bim->entry[x].addr + bim->entry[x].size;
 
-			if (seg_end > 0x100000000ULL) {
-				printf("WARNING: skipping large "
-				    "memory map entry: "
-				    "0x%qx/0x%qx/0x%x\n",
-				    bim->entry[x].addr,
-				    bim->entry[x].size,
+			/*
+			 *   Avoid Compatibility Holes.
+			 * XXX  Holes within memory space that allow access
+			 * XXX to be directed to the PC-compatible frame buffer
+			 * XXX (0xa0000-0xbffff),to adapter ROM space 
+			 * XXX (0xc0000-0xdffff), and to system BIOS space
+			 * XXX (0xe0000-0xfffff).
+			 * XXX  Some laptop(for example,Toshiba Satellite2550X)
+			 * XXX report this area and occurred problems,
+			 * XXX so we avoid this area.
+			 */
+			if (seg_start < 0x100000 && seg_end > 0xa0000) {
+				printf("WARNING: memory map entry overlaps "
+				    "with ``Compatibility Holes'': "
+				    "0x%qx/0x%qx/0x%x\n", seg_start,
+				    seg_end - seg_start, bim->entry[x].type);
+				add_mem_cluster(seg_start, 0xa0000,
 				    bim->entry[x].type);
-				continue;
-			}
-
-			/*
-			 * XXX Chop the last page off the size so that
-			 * XXX it can fit in avail_end.
-			 */
-			if (seg_end == 0x100000000ULL) {
-				seg_end -= PAGE_SIZE;
-				if (seg_end <= seg_start)
-					continue;
-			}
-
-			/*
-			 * Allocate the physical addresses used by RAM
-			 * from the iomem extent map.  This is done before
-			 * the addresses are page rounded just to make
-			 * sure we get them all.
-			 */
-			if (extent_alloc_region(iomem_ex, seg_start,
-			    seg_end - seg_start, EX_NOWAIT)) {
-				/* XXX What should we do? */
-				printf("WARNING: CAN'T ALLOCATE "
-				    "MEMORY SEGMENT %d "
-				    "(0x%qx/0x%qx/0x%x) FROM "
-				    "IOMEM EXTENT MAP!\n",
-				    x, seg_start, seg_end - seg_start,
+				add_mem_cluster(0x100000, seg_end,
 				    bim->entry[x].type);
-			}
-
-			/*
-			 * If it's not free memory, skip it.
-			 */
-			if (bim->entry[x].type != BIM_Memory)
-				continue;
-
-			/* XXX XXX XXX */
-			if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
-				panic("init386: too many memory segments");
-
-			seg_start = round_page(seg_start);
-			seg_end = trunc_page(seg_end);
-
-			if (seg_start == seg_end)
-				continue;
-
-			mem_clusters[mem_cluster_cnt].start = seg_start;
-			mem_clusters[mem_cluster_cnt].size =
-			    seg_end - seg_start;
-
-			if (avail_end < seg_end)
-				avail_end = seg_end;
-			physmem += atop(mem_clusters[mem_cluster_cnt].size);
-			mem_cluster_cnt++;
+			} else
+				add_mem_cluster(seg_start, seg_end,
+				    bim->entry[x].type);
 		}
 	}
 #endif /* ! REALBASEMEM && ! REALEXTMEM */
@@ -2263,6 +2300,9 @@ init386(first_avail)
 #if NISA > 0
 	isa_defaultirq();
 #endif
+
+	/* Initialize software interrupts. */
+	softintr_init();
 
 	splraise(-1);
 	enable_intr();

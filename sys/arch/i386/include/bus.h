@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.24.2.2 2001/03/12 13:28:57 bouyer Exp $	*/
+/*	$NetBSD: bus.h,v 1.24.2.3 2001/04/21 17:53:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -254,14 +254,15 @@ do {									\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
-		int __x __asm__("%eax");				\
+		void *dummy3;						\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movb (%1),%%al				;	\
+		1:	movb (%2),%%al				;	\
 			stosb					;	\
 			loop 1b"				: 	\
-		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
-		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
+		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
 		    "memory");						\
 	}								\
 } while (0)
@@ -275,14 +276,15 @@ do {									\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
-		int __x __asm__("%eax");				\
+		void *dummy3;						\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movw (%1),%%ax				;	\
+		1:	movw (%2),%%ax				;	\
 			stosw					;	\
 			loop 1b"				:	\
-		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
-		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
+		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
 		    "memory");						\
 	}								\
 } while (0)
@@ -296,14 +298,15 @@ do {									\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
-		int __x __asm__("%eax");				\
+		void *dummy3;						\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movl (%1),%%eax				;	\
+		1:	movl (%2),%%eax				;	\
 			stosl					;	\
 			loop 1b"				:	\
-		    "=&a" (__x), "=D" (dummy1), "=c" (dummy2)	:	\
-		    "r" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
+		    "=D" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
+		    "0" ((a)), "1" ((c)), "2" ((h) + (o))       :       \
 		    "memory");						\
 	}								\
 } while (0)
@@ -334,7 +337,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		int __x __asm__("%eax");				\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	inb %w1,%%al				;	\
@@ -367,7 +370,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		int __x __asm__("%eax");				\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	inw %w1,%%ax				;	\
@@ -400,7 +403,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		int __x __asm__("%eax");				\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	inl %w1,%%eax				;	\
@@ -421,7 +424,7 @@ do {									\
 			movsl"					:	\
 		    "=S" (dummy1), "=D" (dummy2), "=c" (dummy3)	:	\
 		    "0" ((h) + (o)), "1" ((a)), "2" ((c))	:	\
-		    "%esi", "%edi", "%ecx", "memory");			\
+		    "memory");						\
 	}								\
 } while (0)
 
@@ -496,14 +499,15 @@ do {									\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
-		int __x __asm__("%eax");				\
+		void *dummy3;						\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
-			movb %%al,(%1)				;	\
+			movb %%al,(%2)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
-		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
+		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
+		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
 	}								\
 } while (0)
 
@@ -516,14 +520,15 @@ do {									\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
-		int __x __asm__("%eax");				\
+		void *dummy3;						\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
-			movw %%ax,(%1)				;	\
+			movw %%ax,(%2)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
-		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
+		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
+		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
 	}								\
 } while (0)
 
@@ -536,14 +541,15 @@ do {									\
 	} else {							\
 		void *dummy1;						\
 		int dummy2;						\
-		int __x __asm__("%eax");				\
+		void *dummy3;						\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
-			movl %%eax,(%1)				;	\
+			movl %%eax,(%2)				;	\
 			loop 1b"				: 	\
-		    "=&a" (__x), "=S" (dummy1), "=c" (dummy2)	:	\
-		    "r" ((h) + (o)), "1" ((a)), "2" ((c)));		\
+		    "=S" (dummy1), "=c" (dummy2), "=r" (dummy3), "=&a" (__x) : \
+		    "0" ((a)), "1" ((c)), "2" ((h) + (o)));		\
 	}								\
 } while (0)
 
@@ -573,7 +579,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		int __x __asm__("%eax");				\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
@@ -606,7 +612,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		int __x __asm__("%eax");				\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
@@ -639,7 +645,7 @@ do {									\
 		int dummy1;						\
 		void *dummy2;						\
 		int dummy3;						\
-		int __x __asm__("%eax");				\
+		int __x;						\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsl					;	\

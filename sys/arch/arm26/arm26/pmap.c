@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7.2.6 2001/03/27 15:30:21 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.7.2.7 2001/04/21 17:53:11 bouyer Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -105,7 +105,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.6 2001/03/27 15:30:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.7 2001/04/21 17:53:11 bouyer Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -633,7 +633,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
 	else if (flags & (VM_PROT_ALL))
 		ppv->pv_pflags |= PV_REFERENCED;
-	pv_update(pv);
+	pmap_update_page(ppn);
 	pmap->pm_entries[lpn] = pv;
 	splx(s);
 	/* Poke the MEMC */
@@ -808,19 +808,10 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 		return FALSE;
 	ppn = pv->pv_ppn;
 	ppv = &pv_table[ppn];
-	if (pmap == pmap_kernel()) {
-		/*
-		 * If we allow the kernel to access the page, we can't
-		 * stop it writing to it as well, so we have to handle
-		 * referenced and modified bits together.
-		 */
-		if ((ppv->pv_pflags & PV_REFERENCED) == 0 ||
-		    (ppv->pv_pflags & PV_MODIFIED) == 0) {
-			ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
-			pmap_update_page(ppn);
-			return TRUE;
-		}
-	} else {
+	UVMHIST_LOG(pmaphist,
+	    "pmap = %p, lpn = %d, ppn = %d, atype = 0x%x",
+	    pmap, lpn, ppn, atype);
+	if (pmap != pmap_kernel()) {
 		if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
 			ppv->pv_pflags |= PV_REFERENCED;
 			pmap_update_page(ppn);
@@ -839,9 +830,6 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 	 * the mapping back into the MEMC.
 	 */
 	if ((atype & ~pv->pv_prot) == 0) {
-		UVMHIST_LOG(pmaphist,
-		    "MEMC miss; pmap = %p, lpn = %d, ppn = %d",
-		    pmap, lpn, ppn, 0);
 		MEMC_WRITE(pv->pv_activate);
 		/*
 		 * If the new mapping is writeable, we should flush the cache
@@ -976,22 +964,30 @@ pmap_find(paddr_t pa)
 void
 pmap_zero_page(paddr_t pa)
 {
+	int ppn;
 	UVMHIST_FUNC("pmap_zero_page");
 
 	UVMHIST_CALLED(pmaphist);
 	bzero(pmap_find(pa), PAGE_SIZE);
-	pv_table[atop(pa)].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
+	ppn = atop(pa);
+	pv_table[ppn].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
+	pmap_update_page(ppn);
 }
 
 void
 pmap_copy_page(paddr_t src, paddr_t dest)
 {
+	int sppn, dppn;
 	UVMHIST_FUNC("pmap_copy_page");
 
 	UVMHIST_CALLED(pmaphist);
 	memcpy(pmap_find(dest), pmap_find(src), PAGE_SIZE);
-	pv_table[atop(src)].pv_pflags |= PV_REFERENCED;
-	pv_table[atop(dest)].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
+	sppn = atop(src);
+	dppn = atop(dest);
+	pv_table[sppn].pv_pflags |= PV_REFERENCED;
+	pmap_update_page(sppn);
+	pv_table[dppn].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
+	pmap_update_page(dppn);
 }
 
 /*

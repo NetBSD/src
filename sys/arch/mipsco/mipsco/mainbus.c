@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.2.2 2000/11/20 20:14:10 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.3 2001/04/21 17:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -80,6 +80,11 @@ mbattach(parent, self, aux)
 	nca.ca_name = "obio";
 	nca.ca_addr = 0;
 	config_found(self, &nca, NULL);
+
+	nca.ca_name = "isabus";		/* XXX */
+	nca.ca_addr = 0;
+	config_found(self, &nca, NULL);
+
 }
 
 static int

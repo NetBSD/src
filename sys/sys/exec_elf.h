@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.25.2.3 2001/03/27 15:32:45 bouyer Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.25.2.4 2001/04/21 17:47:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ typedef	__int64_t	Elf64_Sword;
 #define	ELF64_FSZ_SWORD	8
 typedef	__uint64_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	8
-#endif
+#endif /* __sparc_v9__ */
 typedef	__int64_t	Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
 typedef	__uint64_t	Elf64_Xword;
@@ -304,18 +304,18 @@ typedef struct {
 } Elf64_Shdr;
 
 /* sh_type */
-#define	SHT_NULL	0
-#define	SHT_PROGBITS	1
-#define	SHT_SYMTAB	2
-#define	SHT_STRTAB	3
-#define	SHT_RELA	4
-#define	SHT_HASH	5
-#define	SHT_DYNAMIC	6
-#define	SHT_NOTE	7
-#define	SHT_NOBITS	8
-#define	SHT_REL		9
-#define	SHT_SHLIB	10
-#define	SHT_DYNSYM	11
+#define	SHT_NULL	0		/* Section header table entry unused */
+#define	SHT_PROGBITS	1		/* Program information */
+#define	SHT_SYMTAB	2		/* Symbol table */
+#define	SHT_STRTAB	3		/* String table */
+#define	SHT_RELA	4		/* Absolute relocation information */
+#define	SHT_HASH	5		/* Symbol hash table */
+#define	SHT_DYNAMIC	6		/* Dynamic linking information */
+#define	SHT_NOTE	7		/* Auxiliary information */
+#define	SHT_NOBITS	8		/* No space allocated in file image */
+#define	SHT_REL		9		/* Relative relocation information */
+#define	SHT_SHLIB	10		/* Reserved, unspecified semantics */
+#define	SHT_DYNSYM	11		/* Symbol table for dynamic linker */
 #define	SHT_NUM		12
 
 #define	SHT_LOOS	0x60000000	/* Operating system specific range */

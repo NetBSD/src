@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.37.8.1 2000/11/20 20:09:29 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.37.8.2 2001/04/21 17:53:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,6 +124,13 @@
 #else
 #define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
+#endif
+
+#ifndef NFS_RSIZE
+#define NFS_RSIZE	32768
+#endif
+#ifndef NFS_WSIZE
+#define NFS_WSIZE	32768
 #endif
 
 /*

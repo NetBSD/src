@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.8.8.1 2000/11/20 18:09:33 bouyer Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.8.8.2 2001/04/21 17:46:34 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -73,16 +73,8 @@ struct ptable_ent {
 
 #define	cdb2devb(bno)	((bno) * ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE)
 
-static int	toupper __P((int));
 static int	pnmatch __P((char *, struct ptable_ent *));
 static int	dirmatch __P((char *, struct iso_directory_record *));
-
-static int
-toupper(c)
-	int c;
-{
-	return c >= 'a' && c <= 'z' ? c - 'a' + 'A' : c;
-}
 
 static int
 pnmatch(path, pp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.27.12.2 2001/03/12 13:27:35 bouyer Exp $	*/
+/*	$NetBSD: stubs.c,v 1.27.12.3 2001/04/21 17:53:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -244,7 +244,7 @@ dumpsys()
 /* This is interrupt / SPL related */
 
 int current_spl_level = _SPL_HIGH;
-u_int spl_masks[_SPL_LEVELS];
+u_int spl_masks[_SPL_LEVELS + 1];
 u_int spl_smasks[_SPL_LEVELS];
 int safepri = _SPL_0;
 
@@ -267,6 +267,7 @@ set_spl_masks()
 	spl_masks[_SPL_CLOCK]	   = irqmasks[IPL_CLOCK];
 	spl_masks[_SPL_HIGH]	   = irqmasks[IPL_HIGH];
 	spl_masks[_SPL_SERIAL]	   = irqmasks[IPL_SERIAL];
+	spl_masks[_SPL_LEVELS]	   = 0;
 
 	spl_smasks[_SPL_0] = 0xffffffff;
 	for (loop = 0; loop < _SPL_SOFTSERIAL; ++loop)

@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.9.2.7 2001/03/12 13:29:27 bouyer Exp $
+# 	$NetBSD: GENERIC32,v 1.9.2.8 2001/04/21 17:54:41 bouyer Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.9.2.7 $"
+#ident 		"GENERIC-$Revision: 1.9.2.8 $"
 
 maxusers	64
 
@@ -254,16 +254,15 @@ ms0	at com?					# mouse
 dma*	at sbus? slot ? offset ?		# SBus
 esp*	at dma? flags 0x0000			# SBus
 
+## FAS supported by esp driver
+esp*	at sbus? slot ? offset ?
+
 scsibus* at esp?
 
 ## Qlogic ISP SBus or PCI SCSI Card
 isp*	at sbus? slot ? offset ?
 isp*	at pci?
 scsibus* at isp?
-
-## FAS support missing
-#fas*	at sbus? slot ? offset ?
-#scsibus* at fas?
 
 ## GLM support
 siop*	at pci?					# 53C875 "glm" compatible

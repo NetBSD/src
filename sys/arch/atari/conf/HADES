@@ -1,60 +1,104 @@
 #
-#	$NetBSD: HADES,v 1.20.2.1 2000/11/20 20:05:24 bouyer Exp $
+# $NetBSD: HADES,v 1.20.2.2 2001/04/21 17:53:22 bouyer Exp $
 #
-# Medusa-Hades
+# This file was automatically created. Changes will be
+# lost when running makeconf in this directory.
 #
-# This configuration file is for a multiple disk/multiple tape Medusa-Hades
-#
+# Created from: 
+#		NetBSD: HADES.in,v 1.4 2001/04/10 06:28:38 leo Exp $
+#		NetBSD: GENERIC.in,v 1.2 2001/04/10 06:46:01 leo Exp $
 
-include "arch/atari/conf/std.atari"
-#
-# Add support for about 16 users. This variable is used to size
-# various kernel structures.
-#
+#This configuration file is for a generic Medusa-Hades
+
+#Generic atari
+
+include "arch/atari/conf/std.hades"
+
+#ident  		"GENERIC-$Revision: 1.20.2.2 $"
+
+#Add support for about 16 users. This variable is used to size
+#various kernel structures.
+
 maxusers	16
-
-#
-# processors this kernel should support
-#
-options 	M68040		# support for 040
-options 	M68060		# support for 060
 
 options 	HZ=64		# Set the clock-rate (48/64/96)
 
+#X11R6 related options
+
+options 	UCONSOLE	# Allow xconsole to work
+
+#Standard system options
+options 	INSECURE	# disable kernel security levels
+#options 	NTP		# NTP phase/frequency locked loop
+
+#(Co)processors this kernel should support
+
+options 	M68040		# support for 040
+options 	M68060		# support for 060
 options 	FPSP		# 68040 Floatingpoint support
 options 	M060SP		# MC68060 software support (Required for 060)
 
-#
-# X11R6 related options
-#
-options 	UCONSOLE	# Allow xconsole to work
+#Networking options
 
-#
-# Networking options
-#
-options 	INET		# Basic networking support
+options 	INET            # IP + ICMP + TCP + UDP
 
-# File systems
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options 	GATEWAY         # packet forwarding
+#options 	MROUTING        # IP multicast routing
+options 	NS              # XNS
+#options 	NSIP            # XNS tunneling over IP
+options 	ISO,TPIP        # OSI
+#options 	EON             # OSI tunneling over IP
+options 	CCITT,LLC,HDLC  # X.25
+options 	NETATALK        # AppleTalk networking protocols
+
+options 	PPP_BSDCOMP     # BSD-Compress compression support for PPP
+options 	PPP_DEFLATE     # Deflate compression support for PPP
+options 	PPP_FILTER      # Active filter support for PPP (requires bpf)
+
+options 	PFIL_HOOKS      # pfil(9) packet filter hooks
+options 	IPFILTER_LOG    # ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+
+#File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
-#file-system	NFS		# Network File System client side code
-file-system 	PROCFS		# Process filesystem
 file-system 	KERNFS		# Kernel parameter filesystem
-file-system 	NULLFS		# Loopback filesystem
-file-system 	UNION		# union file system
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 
-#
-# Misc. debugging options
-#
+file-system 	NFS		# Network File System client side code
+file-system 	PROCFS		# Process filesystem
+file-system 	FDESC		# /dev/fd
+file-system 	NULLFS		# Loopback filesystem
+file-system 	OVERLAY		# overlay filesystem
+file-system 	UNION		# union file system
+file-system 	UMAPFS		# null file system (with uid & gid remapping)
+file-system 	PORTAL		# portal file system
+file-system 	EXT2FS		# second extended file system (linux)
+file-system 	LFS		# log-structured file system
+
+#File system options
+options 	QUOTA		# Disk quotas for local disks
+#options 	FFS_EI		# FFS Endian Independant support
+options 	SOFTDEP         # FFS soft updates support.
+options 	NFSSERVER	# Network File System server side code
+#options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
+				#immutable) behave as system flags.
+
+#Misc. debugging options
+
 options 	PANICWAIT	# Require keystroke to dump/reboot
 options 	DDB		# Kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 
-#
-# Compatability options for various existing systems
-#
+options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	DEBUG		# expensive debugging checks/support
+
+#Compatability options for various existing systems
+
 options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
 options 	COMPAT_10	# Compatibility to NetBSD1.0
 options 	COMPAT_11	# Compatibility to NetBSD1.1
@@ -62,67 +106,125 @@ options 	COMPAT_12	# Compatibility to NetBSD1.2
 options 	COMPAT_13	# Compatibility to NetBSD1.3
 options 	COMPAT_14	# Compatibility to NetBSD1.4
 
-#
-# Support for System V IPC facilities.
-#
-#options 	SYSVSHM		# System V shared memory
-#options 	SYSVMSG		# System V messages
-#options 	SYSVSEM		# System V semaphores
+#options 	COMPAT_09	# has no meaning on the atari
+#options 	COMPAT_SUNOS	# Support to run Sun-3 executables
+#options 	COMPAT_SVR4	# Support to run SVR4 executables
+#options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
+#options 	COMPAT_LINUX	# Support to run Linux/m68k executables
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
-#
-# Support for various kernel options
-#
+#Support for System V IPC facilities.
+
+options 	SYSVSHM			# System V shared memory
+options 	SYSVMSG			# System V messages
+options 	SYSVSEM			# System V semaphores
+
+#Support for various kernel options
+
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
 
-#
-# Atari specific kernel options:
-#
-options 	TT_SCSI			# SCSI-support for TT/Hades only
-options 	STATCLOCK		# Separate {stat,prof}clock
+#These options enable verbose messages for several subsystems.
+#Warning, these may compile large string tables into the kernel!
+
+options 	SCSIVERBOSE		# human readable SCSI error messages
+
+options 	PCIVERBOSE		# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
+
+#Atari specific options
+
+#options 	KFONT_8x8		# Use 8x8 font instead of 8x16
+options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
+
+options 	TT_SCSI			# SCSI-support for TT
+options 	TT_VIDEO		# Graphics support for TT
+
 options 	MEMORY_DISK_HOOKS	# Boot RAM-disk
 options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
-#
-# Build one kernel that can boot from any disk.
-#
+options 	SERCONSOLE		# modem1 console support
+options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
+options 	STATCLOCK		# Separate {stat,prof}clock
+
+#Try linked commands on all targets
+options 	TRY_SCSI_LINKED_COMMANDS=0x7f
+
+#Build one kernel that can boot from any disk.
+
 config		netbsd root on ? type ?
 
-pseudo-device	mouse	1	# mouse
+pseudo-device	sl			# Slip
+pseudo-device	ppp			# ppp
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	loop			# Loopback network
+pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
+pseudo-device	md		2	# Boot memory disk
+
+pseudo-device	bpfilter	2	# berkeley packet filters
+pseudo-device	tun		2	# network tunnel
+#pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	ccd		4	# concatenating disk driver
+#pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	ipfilter		# IP filtering device
+pseudo-device	rnd			# /dev/random and in-kernel generator
+
+#Hardware options for GENERIC are in the various machine type specific files
+
 pseudo-device	view	4	# View (graphics mapping)
-pseudo-device	sl		# Slip
-pseudo-device	ppp		# ppp
-pseudo-device	pty		# pseudo-terminals
-pseudo-device	loop		# Loopback network
-pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
-pseudo-device	md	2	# Boot memory disk
+pseudo-device	mouse	1	# mouse
 
-#
-# The following sections describe various hardware options.
-#
-hdfd0	at fdc0 unit 0		# builtin Hades-type floppy drive
-hdfd1	at fdc0 unit 1		# 2nd Hades-type floppy drive
-zs0	at mainbus0		# Serial support through 8530
-nvr0	at mainbus0		# nvram driver
-lp0	at mainbus0		# centronics printer
-grfbus0	at mainbus0		# bitmapped display's
-grfet0	at grfbus0		# et4000/et6000/et6100 consoles
-ite0	at grfet0
-grfet1	at grfbus0
-ite1	at grfet1
-grfet2	at grfbus0
-ite2	at grfet2
-pcibus0	at mainbus0		# PCI-bus
-pci0	at pcibus0
-avmebus0 at mainbus0		# VME bus
-vme0	at avmebus0
-isabus0	at mainbus0		# ISA-bus
-isa0	at isabus0
-wdc0	at mainbus0		# IDE-bus
-wd*	at wdc? channel ? drive ?
- # ATAPI bus support
-atapibus* at wdc? channel ?
+#The following sections describe various hardware options.
 
-# ATAPI devices
-cd*    at atapibus? drive ?	# ATAPI CD-ROM drives
+ncrscsi0	at mainbus0	# NCR5380 SCSI driver
+scsibus0	at ncrscsi0	# SCSI bus
+zs0		at mainbus0	# Serial support through 8530
+nvr0		at mainbus0	# nvram driver
+lp0		at mainbus0	# centronics printer
+ser0		at mainbus0	# UART on first 68901 (ttyB0)
+grfbus0		at mainbus0	# bitmapped display's
+grfet0		at grfbus0	# et4000/et6000/et6100 consoles
+ite0		at grfet0
+grfet1		at grfbus0
+ite1		at grfet1
+grfet2		at grfbus0
+ite2		at grfet2
+pcibus0		at mainbus0	# PCI-bus
+pci0		at pcibus0
+avmebus0	at mainbus0	# VME bus
+vme0		at avmebus0
+le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
+le0		at vme0 irq 4	# Lance ethernet (BVME410).
+et0		at vme0		# Crazy Dots II
+isabus0		at mainbus0	# ISA-bus
+isa0		at isabus0
+wdc0		at mainbus0	# IDE-bus
+wd*		at wdc? channel ? drive ?
+#ATAPI bus support
+atapibus*	at wdc? channel ?
+
+#ATAPI devices
+cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
+
+#SCSI devices
+sd* 	at scsibus? target ? lun ?	# SCSI disk drives
+st* 	at scsibus? target ? lun ?	# SCSI tape drives
+cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+
+ch* 	at scsibus? target ? lun ?	# SCSI autochangers
+ss* 	at scsibus? target ? lun ?	# SCSI scanners
+se* 	at scsibus? target ? lun ?	# SCSI ethernet
+uk* 	at scsibus? target ? lun ?	# SCSI unknown
+
+ne0	at isa0 port 0x300 irq 5	# NE2000 ethernet
+ep*	at pci0 dev ? function 0	# 3Com 3c59x/3c90x Ethernet
+
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+audio*	at eso?
+

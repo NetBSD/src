@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.22.14.2 2001/01/18 09:24:01 bouyer Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.22.14.3 2001/04/21 17:47:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -254,7 +254,7 @@ idpip_input(va_alist)
 	/*
 	 * Deliver to NS
 	 */
-	s = splimp();
+	s = splnet();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
 		m_freem(m);

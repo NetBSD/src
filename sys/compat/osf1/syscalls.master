@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30.2.3 2000/12/13 15:49:54 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.30.2.4 2001/04/21 17:46:24 bouyer Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -340,12 +340,15 @@
 221	UNIMPL
 222	UNIMPL		security
 223	UNIMPL		kloadcall
-224	UNIMPL
-225	UNIMPL
-226	UNIMPL
-227	UNIMPL
-228	UNIMPL
-229	UNIMPL
+224	STD		{ int osf1_sys_stat2(const char *path, \
+			    struct osf1_stat2 *ub); }
+225	STD		{ int osf1_sys_lstat2(const char *path, \
+			    struct osf1_stat2 *ub); }
+226	STD		{ int osf1_sys_fstat2(int fd, \
+			    struct osf1_stat2 *sb); }
+227	UNIMPL		statfs2
+228	UNIMPL		fstatfs2
+229	UNIMPL		getfsstat2
 230	UNIMPL
 231	UNIMPL
 232	UNIMPL

@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.3.8.2 2000/11/20 20:09:37 bouyer Exp $ */
+/* $NetBSD: sb_pnpbios.c,v 1.3.8.3 2001/04/21 17:53:53 bouyer Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -65,7 +65,8 @@ sb_pnpbios_match(parent, match, aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
-	if (strcmp(aa->idstr, "NMX2210"))
+	if (strcmp(aa->idstr, "NMX2210") &&
+	    strcmp(aa->idstr, "CRX0002"))	/* Cyrix XpressAudio */
 		return (0);
 
 	return (1);

@@ -1,0 +1,11 @@
+#	$NetBSD: std.netwinder,v 1.2.2.2 2001/04/21 17:54:10 bouyer Exp $
+#
+# standard NetBSD/netwinder options
+
+machine	netwinder arm
+
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+
+# To support easy transit to ../arch/arm/arm32
+options ARM32

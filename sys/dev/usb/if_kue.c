@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.32.2.6 2001/02/11 19:16:22 bouyer Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.32.2.7 2001/04/21 17:49:54 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -152,6 +152,7 @@ Static const struct kue_type kue_devs[] = {
 	{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_EA101 },
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET },
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET2 },
+	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET3 },
 	{ USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_E45 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C19250 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C460 },
@@ -492,7 +493,7 @@ USB_ATTACH(kue)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	s = splimp();
+	s = splnet();
 
 	/*
 	 * A KLSI chip was detected. Inform the world.
@@ -759,7 +760,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	m->m_pkthdr.rcvif = ifp;
 
-	s = splimp();
+	s = splnet();
 
 	/* XXX ugly */
 	if (kue_newbuf(sc, c, NULL) == ENOBUFS) {
@@ -812,7 +813,7 @@ kue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	if (sc->kue_dying)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 	DPRINTFN(10,("%s: %s: enter status=%d\n", USBDEVNAME(sc->kue_dev),
 		    __FUNCTION__, status));
@@ -944,7 +945,7 @@ kue_init(void *xsc)
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
 
-	s = splimp();
+	s = splnet();
 
 #if defined(__NetBSD__)
 	eaddr = LLADDR(ifp->if_sadl);
@@ -1063,7 +1064,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	}
 #endif
 
-	s = splimp();
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFADDR:

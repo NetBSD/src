@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7.2.2 2001/01/18 09:22:30 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.2.3 2001/04/21 17:53:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ extern unsigned short hp300_ipls[];
 #define	splbio()	_splraise(hp300_ipls[HP300_IPL_BIO])
 #define	splnet()	_splraise(hp300_ipls[HP300_IPL_NET])
 #define	spltty()	_splraise(hp300_ipls[HP300_IPL_TTY])
-#define	splimp()	_splraise(hp300_ipls[HP300_IPL_IMP])
 #define	splvm()		_splraise(hp300_ipls[HP300_IPL_IMP])
 #define	splclock()	spl6()
 #define	splstatclock()	splclock()

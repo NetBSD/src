@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.8.2.4 2001/03/27 15:32:38 bouyer Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.8.2.5 2001/04/21 17:46:56 bouyer Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -793,17 +793,10 @@ skip_ipsec2:;
 	}
 	else
 		origifp = ifp;
-#ifndef FAKE_LOOPBACK_IF
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-#else
-	if (1)
-#endif
-	{
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = 0;
-	}
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] = 0;
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] = 0;
 
 	/*
 	 * If the outgoing packet contains a hop-by-hop options header,
@@ -2017,10 +2010,12 @@ ip6_setpktoptions(control, opt, priv)
 
 			/*
 			 * Check if the requested source address is indeed a
-			 * unicast address assigned to the node.
+			 * unicast address assigned to the node, and can be
+			 * used as the packet's source address.
 			 */
 			if (!IN6_IS_ADDR_UNSPECIFIED(&opt->ip6po_pktinfo->ipi6_addr)) {
 				struct ifaddr *ia;
+				struct in6_ifaddr *ia6;
 				struct sockaddr_in6 sin6;
 
 				bzero(&sin6, sizeof(sin6));
@@ -2035,6 +2030,11 @@ ip6_setpktoptions(control, opt, priv)
 				      opt->ip6po_pktinfo->ipi6_ifindex))) {
 					return(EADDRNOTAVAIL);
 				}
+				ia6 = (struct in6_ifaddr *)ia;
+				if ((ia6->ia6_flags & (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) != 0) {
+					return(EADDRNOTAVAIL);
+				}
+
 				/*
 				 * Check if the requested source address is
 				 * indeed a unicast address assigned to the
@@ -2168,18 +2168,11 @@ ip6_mloopback(ifp, m, dst)
 	}
 #endif
 
-#ifndef FAKE_LOOPBACK_IF
-	if ((ifp->if_flags & IFF_LOOPBACK) == 0)
-#else
-	if (1)
-#endif
-	{
-		ip6 = mtod(copym, struct ip6_hdr *);
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
-			ip6->ip6_src.s6_addr16[1] = 0;
-		if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
-			ip6->ip6_dst.s6_addr16[1] = 0;
-	}
+	ip6 = mtod(copym, struct ip6_hdr *);
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] = 0;
+	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] = 0;
 
 	(void)looutput(ifp, copym, (struct sockaddr *)dst, NULL);
 }

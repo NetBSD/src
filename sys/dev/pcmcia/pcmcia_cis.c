@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.12.2.2 2001/02/11 19:16:12 bouyer Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.12.2.3 2001/04/21 17:49:34 bouyer Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -128,9 +128,6 @@ pcmcia_scan_cis(dev, fct, arg)
 #endif
 		return -1;
 	}
-	tuple.memt = pcmh.memt;
-	tuple.memh = pcmh.memh;
-
 	/* initialize state for the primary tuple chain */
 	if (pcmcia_chip_mem_map(pct, pch, PCMCIA_MEM_ATTR, 0,
 	    PCMCIA_CIS_SIZE, &pcmh, &tuple.ptr, &window)) {
@@ -141,6 +138,9 @@ pcmcia_scan_cis(dev, fct, arg)
 #endif
 		return -1;
 	}
+	tuple.memt = pcmh.memt;
+	tuple.memh = pcmh.memh;
+
 	DPRINTF(("cis mem map %x\n", (unsigned int) tuple.memh));
 
 	tuple.mult = 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.33.2.1 2000/11/20 18:09:37 bouyer Exp $	*/
+/*	$NetBSD: stand.h,v 1.33.2.2 2001/04/21 17:46:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -207,11 +207,6 @@ extern struct open_file files[];
 #define	F_RAW		0x0004	/* raw device open - no file system */
 #endif
 #define F_NODEV		0x0008	/* network open - no device */
-
-#define isupper(c)	((c) >= 'A' && (c) <= 'Z')
-#define tolower(c)	((c) - 'A' + 'a')
-#define isspace(c)	((c) == ' ' || (c) == '\t')
-#define isdigit(c)	((c) >= '0' && (c) <= '9')
 
 int	devopen __P((struct open_file *, const char *, char **));
 #ifdef HEAP_VARIABLE

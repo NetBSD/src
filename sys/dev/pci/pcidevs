@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.159.2.8 2001/03/27 15:32:09 bouyer Exp $
+$NetBSD: pcidevs,v 1.159.2.9 2001/04/21 17:49:18 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -937,6 +937,8 @@ product	COMPAQ QVISION_1280P	0x3033	QVision 1280/p
 product	COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
 product COMPAQ USB		0x7020	USB Controller
+/* MediaGX Cx55x0 built-in OHCI seems to have this ID */
+product COMPAQ USB_MEDIAGX	0xa0f8	USB Controller
 product COMPAQ SMART2P		0xae10	SMART2P RAID
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
 product COMPAQ N10T		0xae34	Netelligent 10 T
@@ -977,6 +979,15 @@ product CYCLADES CYCLOM8Y_1	0x0104	Cyclom-8Y below 1M
 product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
+
+/* Cyrix (now National) products */
+product CYRIX MEDIAGX_PCHB	0x0001	MediaGX Built-in PCI Host Controller
+product CYRIX CX5520_PCIB	0x0002	Cx5520 I/O Companion
+product CYRIX CX5530_PCIB	0x0100	Cx5530 I/O Companion Multi-Function South Bridge
+product CYRIX CX5530_SMI	0x0101	Cx5530 I/O Companion (SMI Status and ACPI Timer)
+product CYRIX CX5530_IDE	0x0102	Cx5530 I/O Companion (IDE Controller)
+product CYRIX CX5530_AUDIO	0x0103	Cx5530 I/O Companion (XpressAUDIO)
+product CYRIX CX5530_VIDEO	0x0104	Cx5530 I/O Companion (Video Controller)
 
 /* Davicom Semiconductor products */
 product DAVICOM DM9102	0x9102	Davicom DM9102 10/100 Ethernet
@@ -1246,7 +1257,7 @@ product KTI NE2KETHER	0x3000	Ethernet
 product	LMC HSSI	0x0003	HSSI Interface
 product	LMC DS3		0x0004	DS3 Interface
 product	LMC SSI		0x0005	SSI
-product	LMC T1		0x0006	T1 Interface
+product	LMC DS1		0x0006	DS1
 
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
@@ -1493,7 +1504,6 @@ product RNS FDDI	0x2200	2200 FDDI
 product S3 VIRGE	0x5631	ViRGE
 product S3 TRIO32	0x8810	Trio32
 product S3 TRIO64	0x8811	Trio32/64
-product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 product S3 AURORA64P	0x8812	Aurora64V+
 product S3 TRIO64UVP	0x8814	Trio64UV+
 product S3 VIRGE_VX	0x883d	ViRGE/VX
@@ -1608,6 +1618,7 @@ product SUN SIMBA	0x5000	Simba PCI bridge
 product SUN PSYCHO	0x8000	psycho PCI controller
 product SUN MS_IIep	0x9000	microSPARC IIep PCI
 product SUN US_IIi	0xa000	UltraSPARC IIi PCI
+product SUN US_IIe	0xa001	UltraSPARC IIe PCI
 
 /* Sundance Technology products */
 product SUNDANCETI ST201	0x0201	ST201 10/100 Ethernet
@@ -1630,6 +1641,7 @@ product TEKRAM DC290		0xdc29	DC-290(M)
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
 product TEKRAM2	DC690C		0x690c	DC-690C
+product	TEKRAM2	DC315		0x0391	DC-315/DC-395
 
 /* Texas Instruments products */
 product	TI	TLAN		0x0500	TLAN
@@ -1692,6 +1704,7 @@ product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
 product TRIDENT	TGUI_9680	0x9680	TGUI 9680
 product TRIDENT	TGUI_9682	0x9682	TGUI 9682
+product TRIDENT	CYBERBLADE	0x9910	CyberBlade
 
 /* Triones Technologies products */
 /* The 366 and 370 controllers have the same product ID */

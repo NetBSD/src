@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.1.2.3 2001/03/12 13:29:18 bouyer Exp $	*/
+/*	$NetBSD: asm.h,v 1.1.2.4 2001/04/21 17:54:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,7 @@
 	.text ;\
 	_ALIGN_TEXT; \
 	.globl x; \
+	.type x,@function; \
 	x:
 
 # define _PROF_PROLOGUE
@@ -83,6 +84,7 @@
 	_PROF_PROLOGUE
 
 #define	ALTENTRY(name)	.globl _C_LABEL(name); \
+	.type _C_LABEL(name),@function; \
 	_C_LABEL(name):
 
 #define	ASMSTR		.asciz

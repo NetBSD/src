@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Intermediate_Dir "WMIPSRel"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /O2 /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /Yu"stdafx.h" /QMRWCE /c
-# ADD CPP /nologo /MT /W3 /O2 /I "." /I "../../../../sys" /I "../../../.." /I "../include" /I "..\libsa" /I "..\libz" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /D "__signed=signed" /D "LIBSA_RENAME_PRINTF" /D "__COMPILER_INT64__=__int64" /QMRWCE /c
+# ADD CPP /nologo /MT /W3 /O2 /I "." /I "../../../../sys" /I "../../../.." /I "../include" /I "..\libsa" /I "..\libz" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D _STANDALONE /D __STDC__ /D __signed=signed /D LIBSA_RENAME_PRINTF /D __COMPILER_INT64__=__int64 /D __COMPILER_UINT64__="unsigned __int64" /QMRWCE /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /D "hpcmips" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "NDEBUG"
 # ADD RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /D "hpcmips" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "NDEBUG"
@@ -75,7 +75,7 @@ PFILE=pfile.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MTd /W3 /Zi /Od /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /Yu"stdafx.h" /QMRWCE /c
-# ADD CPP /nologo /MLd /W3 /Zi /Od /I "." /I "../../../../sys" /I "../../../.." /I "../include" /I "..\libsa" /I "..\libz" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /D "__signed=signed" /D "LIBSA_RENAME_PRINTF" /D "__COMPILER_INT64__=__int64" /QMRWCE /c
+# ADD CPP /nologo /MLd /W3 /Zi /Od /I "." /I "../../../../sys" /I "../../../.." /I "../include" /I "..\libsa" /I "..\libz" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D "hpcmips" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D _STANDALONE /D __STDC__ /D __signed=signed /D LIBSA_RENAME_PRINTF /D __COMPILER_INT64__=__int64 /D __COMPILER_UINT64__="unsigned __int64" /QMRWCE /c
 # SUBTRACT CPP /YX
 # ADD BASE RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /D "hpcmips" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "DEBUG"
 # ADD RSC /l 0x411 /r /d "MIPS" /d "_MIPS_" /D "hpcmips" /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "$(CEConfigName)" /d "UNICODE" /d "DEBUG"

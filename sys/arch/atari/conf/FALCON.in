@@ -1,0 +1,57 @@
+#
+#	$NetBSD: FALCON.in,v 1.4.2.2 2001/04/21 17:53:22 bouyer Exp $
+#
+# ATARI-FALCON
+#
+# This configuration file is for a generic ATARI-Falcon
+#
+# Define 'INSTALL_KERNEL' or 'INSTALLX_KERNEL' to generate a BOOT or
+# BOOTX kernel respectively.
+#
+
+#include "GENERIC.in"
+
+pseudo-device	view	4	# View (graphics mapping)
+#ifndef INSTALL_KERNEL
+pseudo-device	mouse	1	# mouse
+#endif
+
+#
+# The following sections describe various hardware options.
+#
+ncrscsi0	at mainbus0	# NCR5380 SCSI driver
+scsibus0	at ncrscsi0	# SCSI bus
+zs0		at mainbus0	# Serial support through 8530
+grfbus0		at mainbus0	# bitmapped display's
+grfcc0		at grfbus0	# graphics driver
+ite0		at grfcc0	# console
+nvr0		at mainbus0	# nvram driver
+
+#if !defined(INSTALL_KERNEL) || defined(INSTALLX_KERNEL)
+grfcc1		at grfbus0	# 2nd graphics driver
+ite1		at grfcc1	# 2nd tty
+grfcc2		at grfbus0	# 3rd graphics driver
+ite2		at grfcc2	# 3rd tty
+lp0		at mainbus0	# centronics printer
+ser0		at mainbus0	# UART on first 68901 (ttyB0)
+#endif
+
+wdc0		at mainbus0	# IDE-bus
+wd*		at wdc? channel ? drive ?
+
+ # ATAPI bus support
+atapibus* at wdc? channel ?
+
+# ATAPI devices
+cd*    at atapibus? drive ?	# ATAPI CD-ROM drives
+
+# SCSI devices
+sd* 	at scsibus? target ? lun ?	# SCSI disk drives
+st* 	at scsibus? target ? lun ?	# SCSI tape drives
+cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ifndef INSTALL_KERNEL
+ch* 	at scsibus? target ? lun ?	# SCSI autochangers
+ss* 	at scsibus? target ? lun ?	# SCSI scanners
+se* 	at scsibus? target ? lun ?	# SCSI ethernet
+uk* 	at scsibus? target ? lun ?	# SCSI unknown
+#endif

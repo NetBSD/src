@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.2.2.3 2001/01/18 09:23:54 bouyer Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.2.2.4 2001/04/21 17:46:42 bouyer Exp $ */
 
 /*
  * netisr_dispatch: This file is included by the 
@@ -48,12 +48,15 @@
 #ifdef NATM
 	DONETISR(NETISR_NATM,natmintr);
 #endif
-#if NSL > 0
+#if NSL > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 	DONETISR(NETISR_SLIP,slnetisr);
 #endif
-#if NSTRIP > 0
+#if NSTRIP > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 	DONETISR(NETISR_STRIP,stripnetisr);
 #endif
-#if NPPP > 0
+#if NPPP > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
 	DONETISR(NETISR_PPP,pppnetisr);
+#endif
+#if NBRIDGE > 0 && !defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
+	DONETISR(NETISR_BRIDGE,bridgenetisr);
 #endif

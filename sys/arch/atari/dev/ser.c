@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.9.2.2 2000/11/22 16:00:05 bouyer Exp $	*/
+/*	$NetBSD: ser.c,v 1.9.2.3 2001/04/21 17:53:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_mbtype.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,8 +126,24 @@
 #include <machine/iomap.h>
 #include <machine/mfp.h>
 #include <atari/atari/intr.h>
-#include <atari/dev/ym2149reg.h>
 #include <atari/dev/serreg.h>
+
+#if !defined(_MILANHW_)
+#include <atari/dev/ym2149reg.h>
+#else
+	/* MILAN has no ym2149 */
+#define ym2149_dtr(set) {					\
+	if (set)						\
+		single_inst_bset_b(MFP->mf_gpip, 0x08);		\
+	else single_inst_bclr_b(MFP->mf_gpip, 0x08);		\
+}
+
+#define ym2149_rts(set) {					\
+	if (set)						\
+		single_inst_bset_b(MFP->mf_gpip, 0x01);		\
+	else single_inst_bclr_b(MFP->mf_gpip, 0x01);		\
+}
+#endif /* _MILANHW_ */
 
 /* #define SER_DEBUG */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.55.2.3 2000/12/13 15:50:21 bouyer Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.55.2.4 2001/04/21 17:46:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -683,12 +683,9 @@ void
 crfree(cr)
 	struct ucred *cr;
 {
-	int s;
 
-	s = splimp();				/* ??? */
 	if (--cr->cr_ref == 0)
 		FREE((caddr_t)cr, M_CRED);
-	(void) splx(s);
 }
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.sh,v 1.3.2.3 2001/01/05 17:34:21 bouyer Exp $
+# $NetBSD: do_subst.sh,v 1.3.2.4 2001/04/21 17:53:39 bouyer Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -72,7 +72,9 @@ BEGIN {
 		if (CPPDEFS != "") {
 			CPPDEFS=CPPDEFS " "
 		}
-		CPPDEFS=CPPDEFS "/D \"" a[i] "\""
+		a[i] = gensub("([^\\\\]|^)#", "\\1 ", "g", a[i])
+		a[i] = gensub("\\\\#", "#", "g", a[i])
+		CPPDEFS=CPPDEFS "/D " a[i]
 	}
 	sz = split(ENVIRON["CPPDEF_LIST"], a, "[ \t\n]+");
 	for (i = 1; i <= sz; i++) {
@@ -82,7 +84,9 @@ BEGIN {
 		if (CPPDEFS != "") {
 			CPPDEFS=CPPDEFS " "
 		}
-		CPPDEFS=CPPDEFS "/D \"" a[i] "\""
+		a[i] = gensub("([^\\\\]|^)#", "\\1 ", "g", a[i])
+		a[i] = gensub("\\\\#", "#", "g", a[i])
+		CPPDEFS=CPPDEFS "/D " a[i]
 	}
 
 	INCDIRS=""

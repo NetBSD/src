@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.5.14.1 2000/12/08 09:28:36 bouyer Exp $	*/
+/*	$NetBSD: prom.h,v 1.5.14.2 2001/04/21 17:54:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -146,10 +146,10 @@ struct mvmeprom_args {
         u_int	ctrl_addr;
         u_int	entry;
         u_int	conf_blk;
-        char	*arg_start;
-        char	*arg_end;
 	char	*nbarg_start;
 	char	*nbarg_end;
+        char	*arg_start;
+        char	*arg_end;
 	u_int	cputyp;
 };
 

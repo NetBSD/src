@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.2.3 2001/01/18 09:22:27 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.2.4 2001/04/21 17:53:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -78,7 +78,6 @@ extern void		_clrsoftintr(int);
 #define splnet()        _splraise(SPLNET)
 #define spltty()        _splraise(SPLTTY)
 #define splclock()      _splraise(SPLCLOCK)
-#define splimp()	splclock()
 #define splvm()		splclock()
 #define splstatclock()  splclock()
 #define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)

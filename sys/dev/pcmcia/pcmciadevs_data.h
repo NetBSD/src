@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.8 2001/03/27 15:32:15 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.9 2001/04/21 17:49:37 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.122 2001/03/18 21:11:30 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.123 2001/04/06 09:26:29 onoe Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -667,6 +667,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Aironet Wireless Communications",
 	    "Aironet PC4800 Wireless LAN Adapter"	},
+	},
+	{
+	    PCMCIA_VENDOR_AIRONET, PCMCIA_PRODUCT_AIRONET_350,
+	    PCMCIA_CIS_AIRONET_350,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet 350 Wireless LAN Adapter"	},
 	},
 	{
 	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.1.2.2 2001/03/12 13:28:34 bouyer Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.1.2.3 2001/04/21 17:53:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,9 +67,9 @@ struct sapcic_tag {
 #define SAPCIC_STATUS_CARD		0
 #define		SAPCIC_CARD_VALID	1
 #define		SAPCIC_CARD_INVALID	0
-#define SAPCIC_STATUS_VOLTAGESENSE	1
-#define		SAPCIC_VS_3V		1
-#define		SAPCIC_VS_5V		2
+#define SAPCIC_STATUS_VS1		1
+#define SAPCIC_STATUS_VS2		2
+#define SAPCIC_STATUS_READY		3
 
 #define SAPCIC_CONTROL_RESET		8	/* assert RESET */
 #define SAPCIC_CONTROL_LINEENABLE	9	/* enable control lines */

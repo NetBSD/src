@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.5.28.1 2000/11/20 20:33:15 bouyer Exp $ */
+/*	$NetBSD: ctu.c,v 1.5.28.2 2001/04/21 17:55:00 bouyer Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -184,7 +184,7 @@ ctustrategy(bp)
 		return;
 	}
 	bp->b_rawblkno = bp->b_blkno;
-	s = splimp();
+	s = splbio();
 	disksort_blkno(&tu_sc.sc_q, bp); /* Why not use disksort? */
 	if (tu_sc.sc_state == SC_READY)
 		ctustart(bp);

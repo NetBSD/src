@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.61.2.2 2001/03/12 13:31:35 bouyer Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.61.2.3 2001/04/21 17:46:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -487,24 +487,12 @@ sys___fstat13(struct proc *p, void *v, register_t *retval)
 		return (EBADF);
 
 	FILE_USE(fp);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FILE_UNUSE(fp, p);
 
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &ub);
-		break;
-
-	default:
-		panic("fstat");
-		/*NOTREACHED*/
-	}
 	if (error == 0)
 		error = copyout(&ub, SCARG(uap, sb), sizeof(ub));
-	FILE_UNUSE(fp, p);
+
 	return (error);
 }
 

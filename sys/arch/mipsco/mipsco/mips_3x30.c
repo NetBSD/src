@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_3x30.c,v 1.3.2.3 2000/12/08 09:28:25 bouyer Exp $	*/
+/*	$NetBSD: mips_3x30.c,v 1.3.2.4 2001/04/21 17:54:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@ int  pizazz_level0_intr (void *);
 void pizazz_level5_intr (int, int, int);
 void pizazz_intr_establish  (int, int (*)(void *), void *);
 
+#define INT_MASK_FPU MIPS_INT_MASK_3
+
 void
 pizazz_init(void)
 {
@@ -116,11 +118,10 @@ pizazz_intr(status, cause, pc, ipending)
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	/* FPU nofiticaition */
-	if (ipending & MIPS_INT_MASK_3) {
+	if (ipending & INT_MASK_FPU) {
 		if (!USERMODE(status))
 			panic("kernel used FPU: PC %x, CR %x, SR %x",
 			      pc, cause, status);
-		/* dealfpu(status, cause, pc); */
 		MachFPInterrupt(status, cause, pc, curproc->p_md.md_regs);
 	}
 }
@@ -139,6 +140,9 @@ pizazz_level0_intr(arg)
 
 	/* stat register is active low */
 	stat = ~*(volatile u_char *)INTREG_0;
+
+	if (stat & INT_ExpSlot)
+		CALL_INTR(SYS_INTR_ATBUS);
 
 	if (stat & INT_Lance)
 		CALL_INTR(SYS_INTR_ETHER);
@@ -176,12 +180,9 @@ pizazz_intr_establish(level, func, arg)
 	if (level < 0 || level >= MAX_INTR_COOKIES)
 		panic("invalid interrupt level");
 
-	if (intrtab[level].func != NULL)
+	if (intrtab[level].ih_fun != NULL)
 		panic("cannot share interrupt %d", level);
 
-	intrtab[level].func = func;
-	intrtab[level].arg = arg;
+	intrtab[level].ih_fun = func;
+	intrtab[level].ih_arg = arg;
 }
-
-
-

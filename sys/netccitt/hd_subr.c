@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.10.12.1 2000/11/20 18:10:14 bouyer Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.10.12.2 2001/04/21 17:46:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -364,7 +364,7 @@ hd_flush(ifp)
 	int    s;
 
 	while (1) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 		if (m == 0)

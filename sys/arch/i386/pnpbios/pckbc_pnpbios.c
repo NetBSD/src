@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.1.8.2 2000/11/20 20:09:36 bouyer Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.1.8.3 2001/04/21 17:53:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,8 +99,9 @@ pckbc_pnpbios_match(struct device *parent,
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
-	if (strcmp(aa->idstr, "PNP0303") == 0)
-		return (1);
+	if (strcmp(aa->idstr, "PNP0303") == 0 ||
+	    strcmp(aa->idstr, "PNP0320") == 0)	/* Japanese 106 */
+		return (1);			/* plus more? */
 	if (strcmp(aa->idstr, "PNP0F13") == 0)
 		return (1);
 
@@ -121,7 +122,7 @@ pckbc_pnpbios_attach(struct device *parent,
 	pckbc_slot_t peer;
 	int iobase, i;
 
-	if (strcmp(aa->idstr, "PNP0303") == 0) {
+	if (strncmp(aa->idstr, "PNP03", 5) == 0) {
 		psc->sc_slot = PCKBC_KBD_SLOT;
 		peer = PCKBC_AUX_SLOT;
 	} else if (strcmp(aa->idstr, "PNP0F13") == 0) {

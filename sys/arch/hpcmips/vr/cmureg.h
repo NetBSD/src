@@ -1,4 +1,4 @@
-/*	$NetBSD: cmureg.h,v 1.1.1.1 1999/09/16 12:23:31 takemura Exp $	*/
+/*	$NetBSD: cmureg.h,v 1.1.1.1.2.1 2001/04/21 17:53:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 SATO Kazumi. All rights reserved.
@@ -38,7 +38,6 @@
  *	CMU (CLock MASK UNIT) Registers.
  *		start 0x0B000060 
  */
-#define VRIP_CMU_ADDR 0x0b000060
 
 #define	CMUCLKMASK		0x000	/* CMU Clock Mask Register */
 #define		CMUMSKFFIR		(1<<10)		/* 1 supply 48MHz to FIR */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.12.20.1 2000/11/20 18:11:13 bouyer Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.12.20.2 2001/04/21 17:47:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -296,7 +296,7 @@ ns_pcbnotify(dst, errno, notify, param)
 	void (*notify) __P((struct nspcb *));
 {
 	struct nspcb *nsp, *oinp;
-	int s = splimp();
+	int s = splnet();
 
 	for (nsp = (&nspcb)->nsp_next; nsp != (&nspcb);) {
 		if (!ns_hosteq(*dst,nsp->nsp_faddr)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.13.12.2 2001/03/27 15:30:36 bouyer Exp $	*/
+/*	$NetBSD: vectors.s,v 1.13.12.3 2001/04/21 17:53:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -64,13 +64,21 @@ GLOBAL(vectab)
 	VECTOR(spurintr)	| 24: spurious interrupt
 
 GLOBAL(autovects)
+#ifdef _ATARIHW_
 	VECTOR(lev1intr)	| 25: level 1 interrupt autovector
+#else
+	VECTOR(badtrap)		| 25: Not supported by hardware
+#endif
 	VECTOR(lev2intr)	| 26: level 2 interrupt autovector
 	VECTOR(lev3intr)	| 27: level 3 interrupt autovector
 	VECTOR(lev4intr)	| 28: level 4 interrupt autovector
 	VECTOR(lev5intr)	| 29: level 5 interrupt autovector
 	VECTOR(lev6intr)	| 30: level 6 interrupt autovector
+#ifdef _ATARIHW_
 	VECTOR(lev7intr)	| 31: level 7 interrupt autovector
+#else
+	VECTOR(badtrap)		| 31: Not supported by hardware
+#endif
 	VECTOR(trap0)		| 32: syscalls
 #ifdef COMPAT_13
 	VECTOR(trap1)		| 33: compat_13_sigreturn

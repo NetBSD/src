@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.2 2001/01/18 09:23:10 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.3 2001/04/21 17:55:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@ void	spl0 __P((void));
 #define splnet()        _splraise(PSL_S|PSL_IPL4) /* disallow network */
 #define splbio()        _splraise(PSL_S|PSL_IPL3) /* disallow block I/O */
 #define spltty()        _splraise(PSL_S|PSL_IPL4) /* disallow tty interrupts */
-#define splimp()        _splraise(PSL_S|PSL_IPL4) /* disallow vm */
 #define splvm()         _splraise(PSL_S|PSL_IPL4) /* disallow vm */
 #define splzs()         splraise5()	/* disallow serial interrupts */
 #define splclock()      splraise6()	/* disallow clock interrupt */

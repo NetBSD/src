@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.40.2.4 2001/02/11 19:17:08 bouyer Exp $	*/
+/*	$NetBSD: if.h,v 1.40.2.5 2001/04/21 17:46:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 
 #include <sys/queue.h>
 #include <net/dlt.h>
+#include <net/pfil.h>
 
 /*
  * Always include ALTQ glue here -- we use the ALTQ interface queue
@@ -275,6 +276,7 @@ struct ifnet {				/* and the entries */
 	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
+	struct pfil_head if_pfil;	/* filtering point */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -406,7 +408,7 @@ struct ifaddr {
 	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
 };
-#define	IFA_ROUTE	RTF_UP		/* route installed */
+#define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
 
 /*
  * The prefix structure contains information about one prefix
@@ -711,8 +713,6 @@ struct ifnet loif[];
 #endif
 extern int if_index;
 
-void	ether_ifattach __P((struct ifnet *, const u_int8_t *));
-void	ether_ifdetach __P((struct ifnet *));
 char	*ether_sprintf __P((const u_char *));
 
 void	if_alloc_sadl __P((struct ifnet *));

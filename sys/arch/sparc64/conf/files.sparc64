@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.23.2.4 2001/02/11 19:12:29 bouyer Exp $
+#	$NetBSD: files.sparc64,v 1.23.2.5 2001/04/21 17:54:42 bouyer Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -227,6 +227,11 @@ file	arch/sparc64/sparc64/db_disasm.c	ddb
 #
 include "dev/rcons/files.rcons"
 include "dev/wsfont/files.wsfont"
+
+# USB Support
+include "dev/usb/files.usb"
+# IEEE1394 Support
+include "dev/ieee1394/files.ieee1394"
 
 #
 # Compatibility modules

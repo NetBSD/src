@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.3 2001/01/18 09:22:59 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.4 2001/04/21 17:54:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -86,7 +86,6 @@ extern u_int32_t 	clockmask;
 #define splbio()        _splraise(biomask)
 #define splnet()        _splraise(netmask)
 #define spltty()        _splraise(ttymask)
-#define splimp()        spltty()
 #define splvm()         spltty()
 #define splclock()      _splraise(clockmask)
 #define splstatclock()  splclock()

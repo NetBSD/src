@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.93.2.7 2001/03/27 15:32:31 bouyer Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.93.2.8 2001/04/21 17:46:48 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -212,7 +212,7 @@ struct pfil_head inet_pfil_hook;
 struct ipqhead ipq;
 int	ipq_locked;
 int	ip_nfragpackets = 0;
-int	ip_maxfragpackets = -1;
+int	ip_maxfragpackets = 200;
 
 static __inline int ipq_lock_try __P((void));
 static __inline void ipq_unlock __P((void));
@@ -222,7 +222,11 @@ ipq_lock_try()
 {
 	int s;
 
-	s = splimp();
+	/*
+	 * Use splvm() -- we're bloking things that would cause
+	 * mbuf allocation.
+	 */
+	s = splvm();
 	if (ipq_locked) {
 		splx(s);
 		return (0);
@@ -237,7 +241,7 @@ ipq_unlock()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	ipq_locked = 0;
 	splx(s);
 }
@@ -343,7 +347,7 @@ ipintr()
 	struct mbuf *m;
 
 	while (1) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&ipintrq, m);
 		splx(s);
 		if (m == 0)

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.3.2.2 2001/03/12 13:29:11 bouyer Exp $ */
+/* $NetBSD: bus_dma.h,v 1.3.2.3 2001/04/21 17:54:24 bouyer Exp $ */
 
 /*
  * This file was extracted from from alpha/include/bus.h
@@ -116,9 +116,6 @@ typedef struct next68k_bus_dmamap *bus_dmamap_t;
 struct next68k_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-
-	/* Machine dependant fields: */
-	bus_size_t  ds_xfer_len;			/* length of successful transfer */
 };
 typedef struct next68k_bus_dma_segment	bus_dma_segment_t;
 
@@ -214,12 +211,16 @@ struct next68k_bus_dmamap {
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
 
+	/* Machine dependant fields: */
+	bus_size_t  dm_xfer_len;			/* length of successful transfer */
+
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
+
 };
 
 #ifdef _NEXT68K_BUS_DMA_PRIVATE

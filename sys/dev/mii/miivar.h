@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.9.2.1 2000/11/20 11:42:11 bouyer Exp $	*/
+/*	$NetBSD: miivar.h,v 1.9.2.2 2001/04/21 17:49:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,8 +142,11 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
 #define	MIIF_NOLOOP	0x0004		/* no loopback capability */
 #define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
+#define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not callout() */
 
-#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP)
+/* XXX ununsed
+#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
+*/
 
 /*
  * Special `locators' passed to mii_attach().  If one of these is not
@@ -162,7 +165,7 @@ struct mii_attach_args {
 	int mii_id1;			/* PHY ID register 1 */
 	int mii_id2;			/* PHY ID register 2 */
 	int mii_capmask;		/* capability mask from BMSR */
-	int mii_flags;			/* flags from parent */
+	/*int mii_flags; XXX ununsed */	/* flags from parent */
 };
 typedef struct mii_attach_args mii_attach_args_t;
 
@@ -229,6 +232,12 @@ void	mii_phy_update __P((struct mii_softc *, int));
 void	mii_phy_statusmsg __P((struct mii_softc *));
 
 void	ukphy_status __P((struct mii_softc *));
+
+int mii_oui __P((int, int));
+#define	MII_OUI(id1, id2)	mii_oui(id1, id2)
+#define	MII_MODEL(id2)		(((id2) & IDR2_MODEL) >> 4)
+#define	MII_REV(id2)		((id2) & IDR2_REV)
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_MII_MIIVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.4.16.1 2000/11/20 20:15:24 bouyer Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.4.16.2 2001/04/21 17:54:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ struct clock_attach_args {
 	bus_space_tag_t		ca_bust;
 	bus_space_handle_t	ca_bush;
 	void			(*ca_initfunc) __P((void *, int, int));
+	long			(*ca_microtime) __P((void *));
 	void			*ca_arg;
 };
 
