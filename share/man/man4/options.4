@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.236 2004/04/03 16:08:54 wiz Exp $
+.\"	$NetBSD: options.4,v 1.237 2004/04/27 03:11:14 atatat Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1724,6 +1724,39 @@ This additional information can be viewed with
 .Xr netstat 1 :
 .Dl Ic netstat Fl mssv
 Not all devices or protocols support this option.
+.El
+.Ss Sysctl Related Options
+.Bl -ohang
+.It Cd options SYSCTL_DISALLOW_CREATE
+Disallows the creation or deletion of nodes from the sysctl tree, as
+well as the assigning of descriptions to nodes that lack them, by any
+process.
+These operations are still available to kernel sub-systems, including
+loadable kernel modules.
+.It Cd options SYSCTL_DISALLOW_KWRITE
+Prevents processes from adding nodes to the sysctl tree that make
+existing kernel memory areas writeable.
+Sections of kernel memory can still be read and new nodes that own
+their own data may still be be writeable.
+.It Cd options SYSCTL_DEBUG_SETUP
+Causes the SYSCTL_SETUP routines to print a brief message when they
+are invoked.
+This is merely meant as an aid in determining the order in which
+sections of the tree are created.
+.It Cd options SYSCTL_DEBUG_CREATE
+Prints a message each time
+.Fn sysctl_create ,
+the function that adds nodes to the tree, is called.
+.It Cd options SYSCTL_INCLUDE_DESCR
+Causes the kernel to include short, human readable descriptions for
+nodes in the sysctl tree.
+The descriptions can be retrieved programmatically (see
+.Xr sysctl 3 ) ,
+or by the sysctl binary itself (see
+.Xr sysctl 8 ) .
+The descriptions are meant to give an indication of the purpose and/or
+effects of a given node's value, not replace the documentation for the
+given subsystem as a whole.
 .El
 .Ss System V IPC Options
 .Bl -ohang
