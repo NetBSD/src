@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Winning Strategies, Inc.
+ * Copyright (c) 1993,94 Winning Strategies, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: strcpy.S,v 1.2 1994/01/28 23:48:02 jtc Exp $
+ *	$Id: strcpy.S,v 1.3 1994/02/15 13:42:33 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcpy.S,v 1.2 1994/01/28 23:48:02 jtc Exp $"
+	.asciz "$Id: strcpy.S,v 1.3 1994/02/15 13:42:33 mycroft Exp $"
 #endif
 
 #include "DEFS.h"
@@ -48,7 +48,7 @@
 /*
  * I've unrolled the loop eight times: large enough to make a
  * significant difference, and small enough not to totally trash the
- * cashe.
+ * cache.
  */
 
 ENTRY(strcpy)
@@ -60,36 +60,36 @@ ENTRY(strcpy)
 L1:	movb	(%edx),%al		/* unroll loop, but not too much */
 	movb	%al,(%ecx)
 	testb	%al,%al
-	je	L2
+	jz	L2
 	movb	1(%edx),%al
 	movb	%al,1(%ecx)
 	testb	%al,%al
-	je	L2
+	jz	L2
 	movb	2(%edx),%al
 	movb	%al,2(%ecx)
 	testb	%al,%al
-	je	L2
+	jz	L2
 	movb	3(%edx),%al
 	movb	%al,3(%ecx)
 	testb	%al,%al
-	je	L2
+	jz	L2
 	movb	4(%edx),%al
 	movb	%al,4(%ecx)
 	testb	%al,%al
-	je	L2
+	jz	L2
 	movb	5(%edx),%al
 	movb	%al,5(%ecx)
 	testb	%al,%al
-	je	L2
+	jz	L2
 	movb	6(%edx),%al
 	movb	%al,6(%ecx)
 	testb	%al,%al
-	je	L2
+	jz	L2
 	movb	7(%edx),%al
 	movb	%al,7(%ecx)
 	addl	$8,%edx
 	addl	$8,%ecx
 	testb	%al,%al
-	jne	L1
+	jnz	L1
 L2:	popl	%eax			/* pop dst address */
 	ret
