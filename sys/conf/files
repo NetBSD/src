@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.355 2000/03/16 14:52:23 ad Exp $
+#	$NetBSD: files,v 1.356 2000/03/20 11:03:42 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -287,6 +287,7 @@ file	dev/ic/tropic.c			tr
 # NCR 5380 SCSI Bus Controller
 define	ncr5380sbc
 file	dev/ic/ncr5380sbc.c		ncr5380sbc
+device	nca: scsi, ncr5380sbc
 
 # DEC FDDI Chipset
 define	pdq
