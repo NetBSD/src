@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.17 1996/03/17 01:17:35 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.18 1996/04/18 00:25:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -140,11 +140,11 @@ le_zbus_attach(parent, self, aux)
 	sc->sc_r1 = (struct lereg1 *)(lestd[1] + (int)zap->va);
 	sc->sc_mem = (void *)(lestd[2] + (int)zap->va);
 
-	sc->sc_copytodesc = copytobuf_contig;
-	sc->sc_copyfromdesc = copyfrombuf_contig;
-	sc->sc_copytobuf = copytobuf_contig;
-	sc->sc_copyfrombuf = copyfrombuf_contig;
-	sc->sc_zerobuf = zerobuf_contig;
+	sc->sc_copytodesc = am7990_copytobuf_contig;
+	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+	sc->sc_copytobuf = am7990_copytobuf_contig;
+	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+	sc->sc_zerobuf = am7990_zerobuf_contig;
 
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = 0x8000;

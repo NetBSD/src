@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1996/03/17 01:35:00 thorpej Exp $ */
+/*	$NetBSD: if_le.c,v 1.5 1996/04/18 00:25:18 cgd Exp $ */
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -141,11 +141,11 @@ leattach(parent, self, aux)
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 
-	sc->sc_copytodesc = copytobuf_contig;
-	sc->sc_copyfromdesc = copyfrombuf_contig;
-	sc->sc_copytobuf = copytobuf_contig;
-	sc->sc_copyfrombuf = copyfrombuf_contig;
-	sc->sc_zerobuf = zerobuf_contig;
+	sc->sc_copytodesc = am7990_copytobuf_contig;
+	sc->sc_copyfromdesc = am7990_copyfrombuf_contig;
+	sc->sc_copytobuf = am7990_copytobuf_contig;
+	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
+	sc->sc_zerobuf = am7990_zerobuf_contig;
 
 	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
