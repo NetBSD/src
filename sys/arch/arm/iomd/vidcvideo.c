@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.10 2002/03/24 03:37:24 thorpej Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.11 2002/04/03 16:03:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.10 2002/03/24 03:37:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.11 2002/04/03 16:03:50 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,14 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.10 2002/03/24 03:37:24 thorpej Exp $
 #include <arm/iomd/vidcvideo.h>
 #include <machine/bootconfig.h>
 
-extern videomemory_t videomemory;
-
-#define machine_btop(x) arm_btop(x)
-#define MACHINE_KSEG0_TO_PHYS(x) vtophys(x)
-
 /* FOR DEBUG */
 extern videomemory_t videomemory;
-
 
 struct hwcmap256 {
 #define	CMAP_SIZE	256	/* 256 R/G/B entries */
@@ -97,27 +91,27 @@ struct hwcursor32 {
 
 
 struct fb_devconfig {
-	vaddr_t dc_vaddr;			/* memory space virtual base address */
-	paddr_t dc_paddr;			/* memory space physical base address */
-	vsize_t dc_size;			/* size of slot memory */
-	int	dc_wid;				/* width of frame buffer */
-	int	dc_ht;				/* height of frame buffer */
-	int	dc_log2_depth;			/* log2 of bits per pixel */
-	int	dc_depth;			/* depth, bits per pixel */
-	int	dc_rowbytes;			/* bytes in a FB scan line */
-	vaddr_t	dc_videobase;			/* base of flat frame buffer */
-	int	dc_blanked;			/* currently has video disabled */
-	void   *dc_hwscroll_cookie;		/* cookie for hardware scroll */
+	vaddr_t dc_vaddr;		/* memory space virtual base address */
+	paddr_t dc_paddr;		/* memory space physical base address */
+	vsize_t dc_size;		/* size of slot memory */
+	int	dc_wid;			/* width of frame buffer */
+	int	dc_ht;			/* height of frame buffer */
+	int	dc_log2_depth;		/* log2 of bits per pixel */
+	int	dc_depth;		/* depth, bits per pixel */
+	int	dc_rowbytes;		/* bytes in a FB scan line */
+	vaddr_t	dc_videobase;		/* base of flat frame buffer */
+	int	dc_blanked;		/* currently has video disabled */
+	void   *dc_hwscroll_cookie;	/* cookie for hardware scroll */
 
-	int	dc_curenb;			/* is cursor sprite enabled ?	*/
-	int	dc_changed;			/* need update of hardware	*/
-	int	dc_writeback_delay;		/* Screenarea write back vsync counter */
+	int	dc_curenb;		/* is cursor sprite enabled ?	*/
+	int	dc_changed;		/* need update of hardware	*/
+	int	dc_writeback_delay;	/* Screenarea write back vsync counter */
 #define	WSDISPLAY_CMAP_DOLUT	0x20
 #define WSDISPLAY_VIDEO_ONOFF	0x40
 #define WSDISPLAY_WB_COUNTER	0x80
 
-	struct hwcmap256	dc_cmap;	/* software copy of colormap	*/
-	struct hwcursor32	dc_cursor;	/* software copy of cursor	*/
+	struct hwcmap256	dc_cmap;/* software copy of colormap	*/
+	struct hwcursor32	dc_cursor;/* software copy of cursor	*/
 
 	struct vidc_mode	mode_info;
 	struct rasops_info	rinfo;
@@ -230,7 +224,7 @@ vidcvideo_getdevconfig(dense_addr, dc)
 	struct fb_devconfig *dc;
 {
 	dc->dc_vaddr = dense_addr;
-	dc->dc_paddr = MACHINE_KSEG0_TO_PHYS(dc->dc_vaddr);
+	(void) pmap_extract(pmap_kernel(), dc->dc_vaddr, &(dc->dc_paddr));
 
 	vidcvideo_getmode(&dc->mode_info);
 
@@ -486,6 +480,7 @@ vidcvideoioctl(v, cmd, data, flag, p)
 			vidcvideo_hwscroll_back(dc->dc_hwscroll_cookie);
 		};
 		vidcvideo_progr_scroll();
+
 		return (0);
 	}
 	return EPASSTHROUGH;
@@ -502,7 +497,8 @@ vidcvideommap(v, offset, prot)
 
 	if (offset >= sc->sc_dc->dc_size || offset < 0)
 		return (-1);
-	return machine_btop(sc->sc_dc->dc_paddr + offset);
+
+	return arm_btop(sc->sc_dc->dc_paddr + offset);
 }
 
 
@@ -968,4 +964,3 @@ static void vv_putchar(id, row, col, uc, attr)
 	/* just delegate */
 	dc->orig_ri_ops.putchar(id, row, col, uc, attr);
 }
-
