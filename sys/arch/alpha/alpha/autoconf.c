@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 1996/06/12 01:57:17 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 1996/06/13 04:53:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,15 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/prom.h>
+
+struct device		*booted_device;
+int			booted_partition;
+struct bootdev_data	*bootdev_data;
+char			boot_dev[128];
+
+void	parse_prom_bootdev __P((void));
+int	atoi __P((char *));
 
 struct device *parsedisk __P((char *str, int len, int defpart, dev_t *devp));
 static struct device *getdisk __P((char *str, int len, int defpart,
@@ -69,11 +78,16 @@ configure()
 {
 	extern int cold;
 
+	parse_prom_bootdev();
+
 	(void)splhigh();
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
 
+	if (booted_device == NULL)
+		printf("WARNING: can't figure what device matches \"%s\"\n",
+		    boot_dev);
 	setroot();
 	swapconf();
 	cold = 0;
@@ -213,7 +227,7 @@ setroot()
 	extern int (*mountroot) __P((void *));
 	dev_t temp;
 	struct device *bootdv, *rootdv, *swapdv;
-	int bootpartition;				/* XXX */
+	int bootpartition;
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 	extern int nfs_mountroot __P((void *));
@@ -222,8 +236,8 @@ setroot()
 	extern int ffs_mountroot __P((void *));
 #endif
 
-	bootdv = NULL;					/* XXX */
-	bootpartition = 0;				/* XXX */
+	bootdv = booted_device;
+	bootpartition = booted_partition;
 
 	/*
 	 * If 'swap generic' and we couldn't determine root device,
@@ -436,4 +450,108 @@ getstr(cp, size)
 			*lp++ = c;
 		}
 	}
+}
+
+void
+parse_prom_bootdev()
+{
+	static char hacked_boot_dev[128];
+	static struct bootdev_data bd;
+	char *cp, *scp, *boot_fields[8];
+	int i, done;
+
+	booted_device = NULL;
+	booted_partition = 0;
+	bootdev_data = NULL;
+
+        prom_getenv(PROM_E_BOOTED_DEV, boot_dev, sizeof(boot_dev));
+	bcopy(boot_dev, hacked_boot_dev, sizeof hacked_boot_dev);
+#if 0
+	printf("parse_prom_bootdev: boot dev = \"%s\"\n", boot_dev);
+#endif
+
+	i = 0;
+	scp = cp = hacked_boot_dev;
+	for (done = 0; !done; cp++) {
+		if (*cp != ' ' && *cp != '\0')
+			continue;
+		if (*cp == '\0')
+			done = 1;
+
+		*cp = '\0';
+		boot_fields[i++] = scp;
+		scp = cp + 1;
+		if (i == 8)
+			done = 1;
+	}
+	if (i != 8)
+		return;		/* doesn't look like anything we know! */
+
+#if 0
+	printf("i = %d, done = %d\n", i, done);
+	for (i--; i >= 0; i--)
+		printf("%d = %s\n", i, boot_fields[i]);
+#endif
+
+	bd.protocol = boot_fields[0];
+	bd.bus = atoi(boot_fields[1]);
+	bd.slot = atoi(boot_fields[2]);
+	bd.channel = atoi(boot_fields[3]);
+	bd.remote_address = boot_fields[4];
+	bd.unit = atoi(boot_fields[5]);
+	bd.boot_dev_type = atoi(boot_fields[6]);
+	bd.ctrl_dev_type = boot_fields[7];
+
+#if 0
+	printf("parsed: proto = %s, bus = %d, slot = %d, channel = %d,\n",
+	    bd.protocol, bd.bus, bd.slot, bd.channel);
+	printf("\tremote = %s, unit = %d, dev_type = %d, ctrl_type = %s\n",
+	    bd.remote_address, bd.unit, bd.boot_dev_type, bd.ctrl_dev_type);
+#endif
+
+	bootdev_data = &bd;
+}
+
+int
+atoi(s)
+	char *s;
+{
+	int n, neg;
+	char c;
+
+	n = 0;
+	neg = 0;
+
+	while (*s == '-') {
+		s++;
+		neg = !neg;
+	}
+
+	while (*s != '\0') {
+		if (*s < '0' && *s > '9')
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return (neg ? -n : n);
+}
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	extern void (*cpu_device_register) __P((struct device *dev, void *aux));
+
+	if (bootdev_data == NULL) {
+		/*
+		 * There is no hope.
+		 */
+
+		return;
+	}
+
+	(*cpu_device_register)(dev, aux);
 }

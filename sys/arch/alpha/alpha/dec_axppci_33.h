@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.h,v 1.3 1996/06/12 22:06:48 cgd Exp $	*/
+/*	$NetBSD: dec_axppci_33.h,v 1.4 1996/06/13 04:53:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,3 +29,4 @@
 
 char	*dec_axppci_33_modelname __P((void));
 void	dec_axppci_33_consinit __P((void));
+void	dec_axppci_33_device_register __P((struct device *, void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_2100_a50.h,v 1.4 1996/06/12 22:06:41 cgd Exp $	*/
+/*	$NetBSD: dec_2100_a50.h,v 1.5 1996/06/13 04:53:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -29,3 +29,4 @@
 
 char	*dec_2100_a50_modelname __P((void));
 void	dec_2100_a50_consinit __P((void));
+void	dec_2100_a50_device_register __P((struct device *, void *));
