@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.7 2002/10/02 15:45:14 thorpej Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.8 2002/10/05 17:16:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -62,13 +62,8 @@
 
 #include <machine/cpu.h>
 #include <machine/param.h>
-/*#include <machine/katelib.h>*/
-/*#include <machine/cpu.h>*/
-/*#include <machine/bootconfig.h>*/
-/*#include <machine/iomd.h>*/
-/*#include <machine/intr.h>*/
-/*#include <machine/pmap.h>*/
 #include <arm/iomd/vidc.h>
+#include <arm/iomd/console/console.h>
 #include <machine/vconsole.h>
 
 extern const struct cdevsw physcon_cdevsw;
@@ -76,7 +71,8 @@ extern struct vconsole *vconsole_default;
 extern videomemory_t videomemory;
 extern struct render_engine vidcrender;
 
-struct vconsole *vconsole_spawn_re	__P((dev_t dev, struct vconsole *vc));
+int	vidcconsole_probe(struct device *, struct cfdata *, void *);
+void	vidcconsole_attach(struct device *, struct device *, void *);
 
 struct vidcconsole_softc {
 	struct device device;

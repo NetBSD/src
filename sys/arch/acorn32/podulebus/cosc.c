@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.9 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.10 2002/10/05 17:16:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -59,25 +59,25 @@
 #include <acorn32/podulebus/coscvar.h>
 #include <dev/podulebus/podules.h>
 
-void coscattach	__P((struct device *, struct device *, void *));
-int coscmatch	__P((struct device *, struct cfdata *, void *));
+void coscattach(struct device *, struct device *, void *);
+int coscmatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(cosc, sizeof(struct cosc_softc),
     coscmatch, coscattach, NULL, NULL);
 
-int cosc_intr		 __P((void *arg));
-int cosc_setup_dma	 __P((struct esc_softc *sc, void *ptr, int len,
-			      int mode));
-int cosc_build_dma_chain __P((struct esc_softc *sc,
-			      struct esc_dma_chain *chain, void *p, int l));
-int cosc_need_bump	 __P((struct esc_softc *sc, void *ptr, int len));
-
-void cosc_led		 __P((struct esc_softc *sc, int mode));
+int cosc_intr(void *);
+int cosc_setup_dma(struct esc_softc *, void *, int, int);
+int cosc_build_dma_chain(struct esc_softc *, struct esc_dma_chain *, void *,
+			 int);
+int cosc_need_bump(struct esc_softc *, void *, int);
+void cosc_led(struct esc_softc *, int);
+void cosc_set_dma_adr(struct esc_softc *, void *);
+void cosc_set_dma_tc(struct esc_softc *, unsigned int);
+void cosc_set_dma_mode(struct esc_softc *, int);
 
 #if COSC_POLL > 0
 int cosc_poll = 1;
 #endif
-
 
 int
 coscmatch(pdp, cf, auxp)

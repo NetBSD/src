@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn26,v 1.2 2002/06/24 07:15:24 jdolecek Exp $
+#	$NetBSD: Makefile.acorn26,v 1.3 2002/10/05 17:16:33 chs Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,6 @@ GENASSYM=	${ACORN26}/acorn26/genassym.cf
 ##
 CPPFLAGS+=	-Dacorn26
 CWARNFLAGS+=	-Wcomment
-LOOSE_PROTOTYPES= yes
 # We'd like GCC to leave R14 alone as much as possible (so page faults in the
 # kernel are safer).
 CFLAGS+=	-ffixed-r14

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumb.c,v 1.1 2001/10/05 22:27:45 reinoud Exp $	*/
+/*	$NetBSD: dumb.c,v 1.2 2002/10/05 17:16:36 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -51,6 +51,11 @@
 
 #define TERMTYPE_PUTSTRING	dumb_putstring
 #define TERMTYPE_INIT		dumb_init
+
+int dumb_init(struct vconsole *);
+static void do_scrollup(struct vconsole *);
+static int do_render(char, struct vconsole *);
+int dumb_putstring(char *, int, struct vconsole *);
 
 int
 TERMTYPE_INIT(vc)

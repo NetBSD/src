@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.6 2002/10/02 03:31:59 thorpej Exp $	*/
+/*	$NetBSD: amps.c,v 1.7 2002/10/05 17:16:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,12 +90,14 @@ struct amps_softc {
 	bus_space_tag_t		sc_iot;			/* Bus tag */
 };
 
-int	amps_probe	__P((struct device *, struct cfdata *, void *));
-void	amps_attach	__P((struct device *, struct device *, void *));
-void	amps_shutdown	__P((void *arg));
+int	amps_probe(struct device *, struct cfdata *, void *);
+void	amps_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(amps, sizeof(struct amps_softc),
     amps_probe, amps_attach, NULL, NULL);
+
+int	amps_print(void *, const char *);
+void	amps_shutdown(void *);
 
 /*
  * Attach arguments for child devices.

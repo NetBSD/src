@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.1 2001/10/05 22:27:59 reinoud Exp $ */
+/* $NetBSD: sfasvar.h,v 1.2 2002/10/05 17:16:35 chs Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -55,7 +55,7 @@
  * adress.
  */
 struct	sfas_dma_chain {
-	vm_offset_t	ptr;
+	void		*ptr;
 	u_short		len;
 	short		flg;
 };
@@ -91,10 +91,10 @@ struct nexus {
 	u_char			*buf;		/* Virtual adress of data */
 	int			 len;		/* Bytes left to transfer */
 
-	vm_offset_t		 dma_buf;	/* Current DMA adress */
+	void			*dma_buf;	/* Current DMA adress */
 	int			 dma_len;	/* Current DMA length */
 
-	vm_offset_t		 dma_blk_ptr;	/* Current chain adress */
+	void			*dma_blk_ptr;	/* Current chain adress */
 	int			 dma_blk_len;	/* Current chain length */
 	u_char			 dma_blk_flg;	/* Current chain flags */
 
@@ -164,7 +164,7 @@ struct	sfas_softc {
 	void			*sc_spec;	/* Board-specific data */
 
 	u_char			*sc_bump_va;	/* Bumpbuf virtual adr */
-	vm_offset_t		 sc_bump_pa;	/* Bumpbuf physical adr */
+	void			*sc_bump_pa;	/* Bumpbuf physical adr */
 	int			 sc_bump_sz;	/* Bumpbuf size */
 
 /* Configuration registers, must be set BEFORE sfasinitialize */
@@ -174,16 +174,17 @@ struct	sfas_softc {
 	u_char			 sc_config_flags;
 
 /* Generic DMA functions */
-	int		       (*sc_setup_dma)();
-	int		       (*sc_build_dma_chain)();
-	int		       (*sc_need_bump)();
+	int		       (*sc_setup_dma)(void *, void *, int, int);
+	int		       (*sc_build_dma_chain)(void *, void *, void *,
+						     int);
+	int		       (*sc_need_bump)(void *, void *, int);
 
 /* Optional replacement ixfer */
-	void		       (*sc_ixfer)();
+	void		       (*sc_ixfer)(void *, int);
 
 /* Generic Led data */
 	int			 sc_led_status;
-	void		       (*sc_led)();
+	void		       (*sc_led)(void *, int);
 
 /* Nexus list */
 	struct nexus		 sc_nexus[8];
@@ -194,9 +195,9 @@ struct	sfas_softc {
 	u_char			*sc_buf;	/* va */
 	int			 sc_len;
 
-	vm_offset_t		 sc_dma_buf;	/* pa */
+	void			*sc_dma_buf;	/* pa */
 	int			 sc_dma_len;
-	vm_offset_t		 sc_dma_blk_ptr;
+	void			*sc_dma_blk_ptr;
 	int			 sc_dma_blk_len;
 	short			 sc_dma_blk_flg;
 
