@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.14 2003/03/24 14:24:14 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.15 2003/03/24 15:03:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -31,14 +31,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * FreeBSD: src/sys/netsmb/smb_smb.c,v 1.6 2002/09/16 10:18:34 bp Exp
+ * FreeBSD: src/sys/netsmb/smb_smb.c,v 1.7 2002/09/16 10:50:38 bp Exp
  */
 /*
  * various SMB requests. Most of the routines merely packs data into mbufs.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.14 2003/03/24 14:24:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.15 2003/03/24 15:03:58 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,11 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	const smb_unichar *unipp;
 	smb_uniptr ntencpass = NULL;
 	char *pp, *up, *pbuf, *encpass;
-	int error, plen, uniplen, ulen;
+	int error, plen, uniplen, ulen, upper;
+
+	upper = 0;
+
+again:
 
 	vcp->vc_smbuid = SMB_UID_UNKNOWN;
 
@@ -286,13 +290,34 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	pbuf = malloc(SMB_MAXPASSWORDLEN + 1, M_SMBTEMP, M_WAITOK);
 	encpass = malloc(24, M_SMBTEMP, M_WAITOK);
 	if (vcp->vc_sopt.sv_sm & SMB_SM_USER) {
-		iconv_convstr(vcp->vc_toupper, pbuf, smb_vc_getpass(vcp));
-		iconv_convstr(vcp->vc_toserver, pbuf, pbuf);
+		/*
+		 * We try w/o uppercasing first so Samba mixed case
+		 * passwords work.  If that fails we come back and try
+		 * uppercasing to satisfy OS/2 and Windows for Workgroups.
+		 */
+		if (upper) {
+			iconv_convstr(vcp->vc_toupper, pbuf,
+				      smb_vc_getpass(vcp)/*, SMB_MAXPASSWORDLEN*/);
+		} else {
+			strncpy(pbuf, smb_vc_getpass(vcp), SMB_MAXPASSWORDLEN);
+			pbuf[SMB_MAXPASSWORDLEN] = '\0';
+		}
+		if (!SMB_UNICODE_STRINGS(vcp))
+			iconv_convstr(vcp->vc_toserver, pbuf, pbuf/*,
+				      SMB_MAXPASSWORDLEN*/);
+
 		if (vcp->vc_sopt.sv_sm & SMB_SM_ENCRYPT) {
 			uniplen = plen = 24;
 			smb_encrypt(pbuf, vcp->vc_ch, encpass);
 			ntencpass = malloc(uniplen, M_SMBTEMP, M_WAITOK);
-			iconv_convstr(vcp->vc_toserver, pbuf, smb_vc_getpass(vcp));
+			if (SMB_UNICODE_STRINGS(vcp)) {
+				strncpy(pbuf, smb_vc_getpass(vcp),
+					SMB_MAXPASSWORDLEN);
+				pbuf[SMB_MAXPASSWORDLEN] = '\0';
+			} else
+				iconv_convstr(vcp->vc_toserver, pbuf,
+					      smb_vc_getpass(vcp)/*,
+					      SMB_MAXPASSWORDLEN*/);
 			smb_ntencrypt(pbuf, vcp->vc_ch, (u_char*)ntencpass);
 			pp = encpass;
 			unipp = ntencpass;
@@ -327,6 +352,12 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	mbp = &rqp->sr_rq;
 	up = vcp->vc_username;
 	ulen = strlen(up) + 1;
+	/*
+	 * If userid is null we are attempting anonymous browse login
+	 * so passwords must be zero length.
+	 */
+	if (ulen == 1)
+		plen = uniplen = 0;
 	mb_put_uint8(mbp, 0xff);
 	mb_put_uint8(mbp, 0);
 	mb_put_uint16le(mbp, 0);
@@ -370,6 +401,10 @@ bad:
 	free(encpass, M_SMBTEMP);
 	free(pbuf, M_SMBTEMP);
 	smb_rq_done(rqp);
+	if (error && !upper && vcp->vc_sopt.sv_sm & SMB_SM_USER) {
+		upper = 1;
+		goto again;
+	}
 	return error;
 }
 
@@ -438,7 +473,29 @@ smb_smb_treeconnect(struct smb_share *ssp, struct smb_cred *scred)
 	struct mbchain *mbp;
 	const char *pp;
 	char *pbuf, *encpass;
-	int error, plen, caseopt;
+	int error, plen, caseopt, upper;
+
+	upper = 0;
+
+again:
+
+#if 0
+	/* Disable Unicode for SMB_COM_TREE_CONNECT_ANDX requests */
+	if (SSTOVC(ssp)->vc_hflags2 & SMB_FLAGS2_UNICODE) {
+		vcp = SSTOVC(ssp);
+		if (vcp->vc_toserver) {
+			iconv_close(vcp->vc_toserver);
+			/* Use NULL until UTF-8 -> ASCII works */
+			vcp->vc_toserver = NULL;
+		}
+		if (vcp->vc_tolocal) {
+			iconv_close(vcp->vc_tolocal);
+			/* Use NULL until ASCII -> UTF-8 works*/
+			vcp->vc_tolocal = NULL;
+		}
+		vcp->vc_hflags2 &= ~SMB_FLAGS2_UNICODE;
+	}
+#endif
 
 	ssp->ss_tid = SMB_TID_UNKNOWN;
 	error = smb_rq_alloc(SSTOCP(ssp), SMB_COM_TREE_CONNECT_ANDX, scred, &rqp);
@@ -454,8 +511,20 @@ smb_smb_treeconnect(struct smb_share *ssp, struct smb_cred *scred)
 	} else {
 		pbuf = malloc(SMB_MAXPASSWORDLEN + 1, M_SMBTEMP, M_WAITOK);
 		encpass = malloc(24, M_SMBTEMP, M_WAITOK);
-		iconv_convstr(vcp->vc_toupper, pbuf, smb_share_getpass(ssp));
-		iconv_convstr(vcp->vc_toserver, pbuf, pbuf);
+		/*
+		 * We try w/o uppercasing first so Samba mixed case
+		 * passwords work.  If that fails we come back and try
+		 * uppercasing to satisfy OS/2 and Windows for Workgroups.
+		 */
+		if (upper) {
+			iconv_convstr(vcp->vc_toupper, pbuf,
+				      smb_share_getpass(ssp)/*,
+				      SMB_MAXPASSWORDLEN*/);
+		} else {
+			strncpy(pbuf, smb_share_getpass(ssp),
+				SMB_MAXPASSWORDLEN);
+			pbuf[SMB_MAXPASSWORDLEN] = '\0';
+		}
 		if (vcp->vc_sopt.sv_sm & SMB_SM_ENCRYPT) {
 			plen = 24;
 			smb_encrypt(pbuf, vcp->vc_ch, encpass);
@@ -497,6 +566,10 @@ bad:
 	if (pbuf)
 		free(pbuf, M_SMBTEMP);
 	smb_rq_done(rqp);
+	if (error && !upper) {
+		upper = 1;
+		goto again;
+	}
 	return error;
 }
 
