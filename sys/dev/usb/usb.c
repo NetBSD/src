@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.28 1999/10/13 08:10:57 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.29 1999/11/12 00:34:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,22 +131,23 @@ struct cdevsw usb_cdevsw = {
 };
 #endif
 
-usbd_status usb_discover __P((struct usb_softc *));
-void	usb_create_event_thread __P((void *));
-void	usb_event_thread __P((void *));
+static usbd_status usb_discover __P((struct usb_softc *));
+static void	usb_create_event_thread __P((void *));
+static void	usb_event_thread __P((void *));
 
 #define USB_MAX_EVENTS 50
 struct usb_event_q {
 	struct usb_event ue;
 	SIMPLEQ_ENTRY(usb_event_q) next;
 };
-SIMPLEQ_HEAD(, usb_event_q) usb_events = SIMPLEQ_HEAD_INITIALIZER(usb_events);
-int usb_nevents = 0;
-struct selinfo usb_selevent;
-struct proc *usb_async_proc;  /* process who wants USB SIGIO */
-int usb_dev_open = 0;
+static SIMPLEQ_HEAD(, usb_event_q) usb_events = 
+	SIMPLEQ_HEAD_INITIALIZER(usb_events);
+static int usb_nevents = 0;
+static struct selinfo usb_selevent;
+static struct proc *usb_async_proc;  /* process who wants USB SIGIO */
+static int usb_dev_open = 0;
 
-int usb_get_next_event __P((struct usb_event *));
+static int usb_get_next_event __P((struct usb_event *));
 
 /* Flag to see if we are in the cold boot process. */
 extern int cold;
@@ -168,7 +169,7 @@ USB_ATTACH(usb)
 	void *aux = device_get_ivars(self);
 #endif
 	usbd_device_handle dev;
-	usbd_status r;
+	usbd_status err;
 	
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	printf("\n");
@@ -181,12 +182,12 @@ USB_ATTACH(usb)
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = sc;
 	sc->sc_port.power = USB_MAX_POWER;
-	r = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
-			    &sc->sc_port);
+	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, 0, 0,
+		  &sc->sc_port);
 
-	if (r == USBD_NORMAL_COMPLETION) {
+	if (!err) {
 		dev = sc->sc_port.device;
-		if (!dev->hub) {
+		if (dev->hub == NULL) {
 			sc->sc_dying = 1;
 			printf("%s: root device is not a hub\n", 
 			       USBDEVNAME(sc->sc_dev));
@@ -207,7 +208,7 @@ USB_ATTACH(usb)
 #endif
 	} else {
 		printf("%s: root hub problem, error=%d\n", 
-		       USBDEVNAME(sc->sc_dev), r); 
+		       USBDEVNAME(sc->sc_dev), err); 
 		sc->sc_dying = 1;
 	}
 
@@ -407,7 +408,7 @@ usbioctl(devt, cmd, data, flag, p)
 		struct uio uio;
 		void *ptr = 0;
 		int addr = ur->addr;
-		usbd_status r;
+		usbd_status err;
 		int error = 0;
 
 		DPRINTF(("usbioctl: USB_REQUEST addr=%d len=%d\n", addr, len));
@@ -435,10 +436,9 @@ usbioctl(devt, cmd, data, flag, p)
 					goto ret;
 			}
 		}
-		r = usbd_do_request_flags(sc->sc_bus->devices[addr],
-					  &ur->request, ptr, 
-					  ur->flags, &ur->actlen);
-		if (r != USBD_NORMAL_COMPLETION) {
+		err = usbd_do_request_flags(sc->sc_bus->devices[addr],
+			  &ur->request, ptr, ur->flags, &ur->actlen);
+		if (err) {
 			error = EIO;
 			goto ret;
 		}
@@ -569,7 +569,7 @@ usbd_add_event(type, devh)
 	}
 	/* Don't want to wait here inside splusb() */
 	ueq = malloc(sizeof *ueq, M_USBDEV, M_NOWAIT);
-	if (ueq == 0) {
+	if (ueq == NULL) {
 		printf("usb: no memory, event dropped\n");
 		splx(s);
 		return;
@@ -582,7 +582,7 @@ usbd_add_event(type, devh)
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
 	wakeup(&usb_events);
 	selwakeup(&usb_selevent);
-	if (usb_async_proc)
+	if (usb_async_proc != NULL)
 		psignal(usb_async_proc, SIGIO);
 	splx(s);
 }
