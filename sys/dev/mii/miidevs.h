@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.3 1998/11/05 03:43:57 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.4 1999/02/05 20:20:04 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp 
+ *	NetBSD: miidevs,v 1.4 1999/02/05 20:19:44 thorpej Exp 
  */
 
 /*-
@@ -49,6 +49,7 @@
  */
 
 #define	MII_OUI_AMD	0x00606e	/* Advanced Micro Devices */
+#define	MII_OUI_DAVICOM	0x006040	/* Davicom Semiconductor */
 #define	MII_OUI_ICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x1e0400	/* Level 1 */
@@ -64,6 +65,10 @@
 /* Advanced Micro Devices PHYs */
 #define	MII_MODEL_AMD_79C873	0x0000
 #define	MII_STR_AMD_79C873	"Am79C873 10/100 media interface"
+
+/* Davicom Semiconductor PHYs */
+#define	MII_MODEL_DAVICOM_DM9101	0x0000
+#define	MII_STR_DAVICOM_DM9101	"DM9101 10/100 media interface"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1890	0x0002
