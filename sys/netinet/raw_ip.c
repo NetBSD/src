@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.40 1998/01/12 03:02:53 scottr Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.41 1998/04/03 07:49:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -137,6 +137,7 @@ rip_input(m, va_alist)
 						m_freem(opts);
 				} else
 					sorwakeup(last->inp_socket);
+				opts = NULL;
 			}
 		}
 		last = inp;
