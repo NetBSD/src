@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.1 1999/11/14 18:34:15 explorer Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.2 1999/12/03 06:36:55 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -11,7 +11,8 @@
  *    notice, this list of conditions and the following disclaimer.
  * 2. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by Michael Graff.
+ *        This product includes software developed by Michael Graff
+ *	  for the NetBSD Project, http://www.netbsd.org/
  * 3. Neither the name of the author nor the names of contributors may be
  *    used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -19,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
