@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 2003/10/08 19:58:54 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 2003/10/21 00:46:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.12 2003/10/08 19:58:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13 2003/10/21 00:46:09 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -370,7 +370,7 @@ copyfault:
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched)
-			preempt(NULL);
+			preempt(0);
 		goto out;
 
 	case T_DNA|T_USER: {
