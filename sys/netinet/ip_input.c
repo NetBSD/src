@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.73 1998/10/08 01:41:46 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.74 1998/11/13 03:24:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -514,6 +514,7 @@ found:
 				goto next;
 			ipstat.ips_reassembled++;
 			ip = mtod(m, struct ip *);
+			hlen = ip->ip_hl << 2;
 		} else
 			if (fp)
 				ip_freef(fp);
