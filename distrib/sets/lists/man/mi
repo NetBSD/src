@@ -272,6 +272,7 @@
 ./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
+./usr/share/man/cat4/ahc.0
 ./usr/share/man/cat4/arp.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/bpf.0
