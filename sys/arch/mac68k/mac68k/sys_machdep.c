@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18 2000/12/13 18:13:08 jdolecek Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18.8.1 2001/11/18 18:12:03 scw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,6 +74,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -227,8 +228,8 @@ cachectl1(req, addr, len, p)
 	return(error);
 }
 
-int sys_sysarch(p, v, retval)
-	struct proc *p;
+int sys_sysarch(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
