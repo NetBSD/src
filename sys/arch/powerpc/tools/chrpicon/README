@@ -1,0 +1,10 @@
+
+$NetBSD: README,v 1.1.1.1 1999/11/19 00:43:20 lonhyn Exp $
+
+Routines for converting back and forth between CHRP boot icons
+in an SGML type ASCII format and PPM files.
+
+These two programs depend on PPM support being installed. This is
+most easily accomplished by installing the graphics/netpbm package.
+
+The makefiles as written expect to find PBM under /usr/pkg
