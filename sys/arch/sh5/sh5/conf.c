@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2002/07/12 20:43:12 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2002/07/19 18:53:15 scw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -195,7 +195,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 51 */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
 #ifdef SYSTRACE
-        cdev_systrace_init(1, systrace),/* 53: system call tracing */
+        cdev_clonemisc_init(1, systrace),/* 53: system call tracing */
 #else
 	cdev_notdef(),			/* 53: system call tracing */
 #endif
