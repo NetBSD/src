@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2003/10/27 13:43:48 junyoung Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2004/01/14 11:31:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@
 #define _X86_BUS_H_
 
 #include <machine/pio.h>
+#include <machine/cpufunc.h>	/* for x86_lfence */
 
 #ifdef BUS_SPACE_DEBUG
 #include <sys/systm.h> /* for printf() prototype */
@@ -1109,6 +1110,9 @@ struct x86_bus_dma_tag {
 		    int, off_t, int, int);
 };
 
+static __inline void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+    bus_addr_t, bus_size_t, int) __attribute__((__unused__));
+
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
 	(*(t)->_dmamap_create)((t), (s), (n), (m), (b), (f), (p))
 #define	bus_dmamap_destroy(t, p)				\
@@ -1123,9 +1127,15 @@ struct x86_bus_dma_tag {
 	(*(t)->_dmamap_load_raw)((t), (m), (sg), (n), (s), (f))
 #define	bus_dmamap_unload(t, p)					\
 	(*(t)->_dmamap_unload)((t), (p))
-#define	bus_dmamap_sync(t, p, o, l, ops)			\
-	(void)((t)->_dmamap_sync ?				\
-	    (*(t)->_dmamap_sync)((t), (p), (o), (l), (ops)) : (void)0)
+static __inline void
+bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
+    int ops)
+{
+	if (ops & BUS_DMASYNC_POSTREAD)
+		x86_lfence();
+	if (t->_dmamap_sync)
+		(*t->_dmamap_sync)(t, p, o, l, ops);
+}
 
 #define	bus_dmamem_alloc(t, s, a, b, sg, n, r, f)		\
 	(*(t)->_dmamem_alloc)((t), (s), (a), (b), (sg), (n), (r), (f))
