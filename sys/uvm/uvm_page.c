@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.8 1998/03/31 03:04:59 chuck Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.9 1998/04/16 03:54:35 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -420,7 +420,7 @@ uvm_pageboot_alloc(size)
 	addr = virtual_space_start;
 	virtual_space_start += size;
 
-		/*
+	/*
 	 * allocate and mapin physical pages to back new virtual pages
 	 */
 
