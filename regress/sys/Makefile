@@ -1,6 +1,9 @@
-#	$Id: Makefile,v 1.2 1994/01/14 05:22:36 cgd Exp $
+#	$Id: Makefile,v 1.3 1994/02/09 07:51:44 cgd Exp $
 
-SUBDIR+= arch/${MACHINE} kern
+SUBDIR+= kern
+.if exists(arch/${MACHINE})
+SUBDIR+= arch/${MACHINE}
+.endif
 
 regress: _SUBDIRUSE
 
