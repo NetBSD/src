@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.10 1994/12/15 19:49:44 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.11 1995/01/18 06:19:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -116,8 +116,7 @@ ffs_mountroot()
 		free(mp, M_MOUNT);
 		return (error);
 	}
-	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_flag |= MNT_ROOTFS;
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
@@ -540,11 +539,8 @@ ffs_unmount(mp, mntflags, p)
 	int error, flags;
 
 	flags = 0;
-	if (mntflags & MNT_FORCE) {
-		if (mp->mnt_flag & MNT_ROOTFS)
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 	if (error = ffs_flushfiles(mp, flags, p))
 		return (error);
 	ump = VFSTOUFS(mp);
