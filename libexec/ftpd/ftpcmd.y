@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.43 1999/12/21 12:52:18 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.44 2000/01/12 22:39:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.43 1999/12/21 12:52:18 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.44 2000/01/12 22:39:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,16 +116,12 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.43 1999/12/21 12:52:18 lukem Exp $");
 
 #include "extern.h"
 
-off_t	restart_point;
-
 static	int cmd_type;
 static	int cmd_form;
 static	int cmd_bytesz;
+
 char	cbuf[512];
 char	*fromname;
-int	hasyyerrored;
-
-extern	jmp_buf		errcatch;
 
 %}
 

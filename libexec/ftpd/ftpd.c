@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.83 2000/01/08 11:14:36 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.84 2000/01/12 22:39:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.83 2000/01/08 11:14:36 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.84 2000/01/12 22:39:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,6 +160,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.83 2000/01/08 11:14:36 lukem Exp $");
 #include <krb5/krb5.h>
 #endif
 
+#define	GLOBAL
 #include "extern.h"
 #include "pathnames.h"
 #include "version.h"
@@ -248,7 +249,7 @@ char	proctitle[BUFSIZ];	/* initial part of title */
 			"<unknown>"
 
 static void	 ack __P((const char *));
-static void	 myoob __P((int));
+static int	 bind_pasv_addr __P((void));
 static int	 checkuser __P((const char *, const char *, int, int, char **));
 static int	 checkaccess __P((const char *));
 static FILE	*dataconn __P((const char *, off_t, const char *));
@@ -257,6 +258,7 @@ static void	 end_login __P((void));
 static FILE	*getdatasock __P((const char *));
 static char	*gunique __P((const char *));
 static void	 lostconn __P((int));
+static void	 myoob __P((int));
 static int	 receive_data __P((FILE *, FILE *));
 static void	 replydirname __P((const char *, const char *));
 static int	 send_data __P((FILE *, FILE *, off_t, int));
@@ -2228,6 +2230,43 @@ myoob(signo)
 	}
 }
 
+static int
+bind_pasv_addr()
+{
+	static int passiveport;
+	int port, len;
+
+	len = pasv_addr.su_len;
+	if (curclass.portmin == 0 && curclass.portmax == 0) {
+		pasv_addr.su_port = 0;
+		return (bind(pdata, (struct sockaddr *)&pasv_addr, len));
+	}
+
+	if (passiveport == 0) {
+		srand(getpid());
+		passiveport = rand() % (curclass.portmax - curclass.portmin)
+		    + curclass.portmin;
+	}
+
+	port = passiveport;
+	while (1) {
+		port++;
+		if (port > curclass.portmax)
+			port = curclass.portmin;
+		else if (port == passiveport) {
+			errno = EAGAIN;
+			return (-1);
+		}
+		pasv_addr.su_port = htons(port);
+		if (bind(pdata, (struct sockaddr *)&pasv_addr, len) == 0)
+			break;
+		if (errno != EADDRINUSE)
+			return (-1);
+	}
+	passiveport = port;
+	return (0);
+}
+
 /*
  * Note: a response of 425 is not mentioned as a possible response to
  *	the PASV command in RFC959. However, it has been blessed as
@@ -2248,11 +2287,10 @@ passive()
 		return;
 	}
 	pasv_addr = ctrl_addr;
-	pasv_addr.su_port = 0;
-	len = pasv_addr.su_len;
-	if (bind(pdata, (struct sockaddr *)&pasv_addr, len) < 0) {
+
+	if (bind_pasv_addr() < 0)
 		goto pasv_error;
-	}
+	len = pasv_addr.su_len;
 	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
 		goto pasv_error;
 	if (listen(pdata, 1) < 0)
@@ -2281,7 +2319,7 @@ void
 long_passive(char *cmd, int pf)
 {
 	int len;
-	register char *p, *a;
+	char *p, *a;
 
 	if (!logged_in) {
 		syslog(LOG_NOTICE, "long passive but not logged in");
@@ -2324,10 +2362,8 @@ long_passive(char *cmd, int pf)
 		return;
 	}
 	pasv_addr = ctrl_addr;
-	pasv_addr.su_port = 0;
-	if (bind(pdata, (struct sockaddr *) &pasv_addr, pasv_addr.su_len) < 0) {
+	if (bind_pasv_addr() < 0)
 		goto pasv_error;
-	}
 	len = pasv_addr.su_len;
 	if (getsockname(pdata, (struct sockaddr *) &pasv_addr, &len) < 0)
 		goto pasv_error;
