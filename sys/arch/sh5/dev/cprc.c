@@ -1,4 +1,4 @@
-/*	$NetBSD: cprc.c,v 1.4 2002/10/02 15:52:35 thorpej Exp $	*/
+/*	$NetBSD: cprc.c,v 1.5 2003/01/01 02:11:57 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -136,7 +136,7 @@ cprcprint(void *arg, const char *cp)
 {
 
 	if (cp)
-		printf("%s at %s", (const char *)arg, cp);
+		aprint_normal("%s at %s", (const char *)arg, cp);
 
 	return (UNCONF);
 }

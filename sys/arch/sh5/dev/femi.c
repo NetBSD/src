@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.7 2002/10/24 13:48:44 scw Exp $	*/
+/*	$NetBSD: femi.c,v 1.8 2003/01/01 02:11:57 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -133,7 +133,7 @@ femiprint(void *arg, const char *cp)
 {
 	struct femi_attach_args *fa = arg;
 
-	printf(" offset 0x%x", fa->fa_offset - fa->_fa_base);
+	aprint_normal(" offset 0x%x", fa->fa_offset - fa->_fa_base);
 
 	return (UNCONF);
 }
