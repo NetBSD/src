@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.76 2001/01/09 10:44:19 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.77 2001/01/10 04:47:10 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -1049,6 +1049,7 @@ ffs_vget(mp, ino, vpp)
 	ip->i_fs = fs = ump->um_fs;
 	ip->i_dev = dev;
 	ip->i_number = ino;
+	LIST_INIT(&ip->i_pcbufhd);
 #ifdef QUOTA
 	{
 		int i;
