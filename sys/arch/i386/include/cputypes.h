@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.10.2.1 1998/10/16 17:39:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -54,6 +54,7 @@
 #define CPU_K5		9	/* AMD K5 */
 #define CPU_K6		10	/* NexGen 686 aka AMD K6 */
 #define CPU_686		11	/* Intel Pentium Pro */
+#define CPU_C6		12	/* IDT WinChip C6 */
 
 /*
  * CPU vendors
@@ -64,6 +65,7 @@
 #define CPUVENDOR_CYRIX		1
 #define CPUVENDOR_NEXGEN	2
 #define CPUVENDOR_AMD		3
+#define CPUVENDOR_IDT		4
 
 /*
  * Some other defines, dealing with values returned by cpuid.
