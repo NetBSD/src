@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.42 2001/01/18 14:14:05 itojun Exp $
+.\"	$NetBSD: doc-common,v 1.43 2001/04/07 19:11:19 jhawk Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)doc-common	8.1 (Berkeley) 6/8/93
 .\"
-.\" This version has had comments stripped; an unstripped version is available.
+.\"     %beginstrip%
 .nr %A 1
 .nr %J 1
 .nr %N 1
@@ -117,6 +117,7 @@
 .ds hV \&\ \&
 .ds iV \& \&
 .ds tV \&\\t\&
+.\" Punctuation values (3 = closing punctuation, 4 = opening)
 .nr z. 3
 .nr z, 3
 .nr z: 3
@@ -125,9 +126,11 @@
 .nr z) 3
 .nr z[ 4
 .nr z] 3
+.\" Matching pairs
 .ds z( z)
 .ds z[ z]
 .ds z< z>
+.\" This is disgusting, troff not parse ``if'' stmt properly
 .nr z0 0
 .nr z1 0
 .nr z2 0
@@ -142,6 +145,7 @@
 .\" initializations added so all groff warnings can be enabled
 .	ds dD
 .\" warning initializations end
+.\" Header assembly macros
 .de Dt
 .ds dT UNTITLED
 .ds vT LOCAL
@@ -149,6 +153,7 @@
 .if !"\\$1"" .ds dT \\$1
 .if !"\\$2"" \{\
 .	ds cH \\$2
+.\" .	if "\\$3"" \{\
 .		if \\$2>=1 .if \\$2<=9 \{\
 .			ds vT NetBSD
 .			if "\\$3"alpha"    .as vT /\\$3\ 
@@ -198,6 +203,7 @@
 .		if "\\$2"unass"  .ds vT DRAFT
 .		if "\\$2"draft"  .ds vT DRAFT
 .		if "\\$2"paper"  .ds vT UNTITLED
+.\" .	\}
 .\}
 .if !"\\$3"" \{\
 .	if "\\$3"USD"   .ds vT NetBSD User's Supplementary Documents
@@ -208,10 +214,18 @@
 .	if "\\$3"PRM"   .ds vT NetBSD Programmers's Manual
 .	if "\\$3"KM"    .ds vT NetBSD Kernel Manual
 .	if "\\$3"IND"   .ds vT NetBSD Manual Master Index
+.\" .	if "\\$3"CON"   .ds vT NetBSD Contributed Software Manual
+.\" .	if "\\$3"IMP"	.ds vT NetBSD Implementation Notes
+.\" .	if "\\$3"HOW"	.ds vT NetBSD How Pocket Manual
 .	if "\\$3"LOCAL" .ds vT NetBSD Local Manual
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
+.\" NS Os macro - Operating System (behaviour changes after first call)
+.\" .	ds vT \f(CODRAFT\fP\ \ \-\-\ \ \\*(vT\ \ \-\-\ \ \f(CODRAFT
+.\" .	ds dD \f(CODRAFT\fP\ \ \-\-\ \ \\*(dD\ \ \-\-\ \ \f(CODRAFT
+.\" .ds vT \s+4\f(CODRAFT\fP\s-4\ \ \-\-\ \ \\*(vT\ \ \-\-\ \ \s+4\f(CODRAFT\s-4
+.\" .ds dD \s+4\f(CODRAFT\fP\s-4\ \ \-\-\ \ \\*(dD\ \ \-\-\ \ \s+4\f(CODRAFT\s-4
 .de Os
 .ds oS Null
 .if "\\$1"" \{\
