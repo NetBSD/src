@@ -1,6 +1,7 @@
-#	$Id: files.i386,v 1.46 1994/05/22 10:06:01 deraadt Exp $
+#	$Id: files.i386,v 1.47 1994/05/24 03:28:31 deraadt Exp $
 #
 arch/i386/i386/autoconf.c	standard
+arch/i386/i386/conf.c		standard
 arch/i386/i386/db_disasm.c	optional ddb
 arch/i386/i386/db_interface.c	optional ddb
 arch/i386/i386/db_trace.c	optional ddb
