@@ -1,7 +1,7 @@
-/* $NetBSD: auixpvar.h,v 1.1 2005/01/12 00:05:43 reinoud Exp $*/
+/* $NetBSD: auixpvar.h,v 1.2 2005/01/12 00:28:03 reinoud Exp $*/
 
 /*
- * Copyright (c) 2004 Reinoud Zandijk <reinoud@netbsd.org>
+ * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
