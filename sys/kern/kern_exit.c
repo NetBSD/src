@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.83 2000/08/12 22:26:01 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.84 2000/08/12 22:41:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ exit2(struct proc *p)
  * a zombie, and the parent is allowed to read the undead's status.
  */
 void
-reaper(void)
+reaper(void *arg)
 {
 	struct proc *p;
 
