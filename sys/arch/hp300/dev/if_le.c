@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.25 1995/12/30 21:03:02 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.26 1996/01/02 21:56:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -62,11 +62,6 @@
 
 #ifdef USELEDS
 #include <hp300/hp300/led.h>
-/*
- * Enable the transmit and receive hooks.
- */
-#define LE_TINT_HOOK
-#define LE_RINT_HOOK
 #endif
 
 #include <hp300/dev/device.h>
@@ -81,11 +76,11 @@ struct	le_softc le_softc[NLE];
 
 #define	LE_SOFTC(unit)	&le_softc[unit]
 #define	LE_DELAY(x)	DELAY(x)
-#define	LEINTR_UNIT
 
 int	lematch __P((struct hp_device *));
 void	leattach __P((struct hp_device *));
-int	leintr __P((int));
+int	leintr __P((void *));
+static	int hp300_leintr __P((int));	/* machine-dependent wrapper */
 
 struct	driver ledriver = {
 	lematch, leattach, "le",
@@ -126,30 +121,6 @@ lerdcsr(sc, port)
 		val = ler1->ler1_rdp;
 	} while ((ler0->ler0_status & LE_ACK) == 0);
 	return (val);
-}
-
-/* ARGSUSED */
-static void
-hp300_le_tint_hook(sc)
-	struct le_softc *sc;
-{
-
-#ifdef USELEDS
-	if (inledcontrol == 0)
-		ledcontrol(0, 0, LED_LANXMT);
-#endif
-}
-
-/* ARGSUSED */
-static void
-hp300_le_rint_hook(sc)
-	struct le_softc *sc;
-{
-
-#ifdef USELEDS
-	if (inledcontrol == 0)
-		ledcontrol(0, 0, LED_LANRCV);
-#endif
 }
 
 int
@@ -214,21 +185,39 @@ leattach(hd)
 	sc->sc_copyfrombuf = copyfrombuf_contig;
 	sc->sc_zerobuf = zerobuf_contig;
 
-#ifdef LE_TINT_HOOK
-	sc->sc_tint_hook = hp300_le_tint_hook;
-#endif
-#ifdef LE_RINT_HOOK
-	sc->sc_rint_hook = hp300_le_rint_hook;
-#endif
-
 	sc->sc_arpcom.ac_if.if_name = ledriver.d_name;
 	leconfig(sc);
 
-	sc->sc_isr.isr_intr = leintr;
+	sc->sc_isr.isr_intr = hp300_leintr;
 	sc->sc_isr.isr_arg = hd->hp_unit;
 	sc->sc_isr.isr_ipl = hd->hp_ipl;
 	isrlink(&sc->sc_isr);
 	ler0->ler0_status = LE_IE;
 }
 
+static int
+hp300_leintr(unit)
+	int unit;
+{
+	struct le_softc *sc = LE_SOFTC(unit);
+	u_int16_t isr;
+
+#ifdef USELEDS
+	isr = lerdcsr(sc, LE_CSR0);
+
+	if ((isr & LE_C0_INTR) == 0)
+		return (0);
+
+	if (isr & LE_C0_RINT)
+		if (inledcontrol == 0)
+			ledcontrol(0, 0, LED_LANRCV);
+
+	if (isr & LE_C0_TINT)
+		if (inledcontrol == 0)
+			ledcontrol(0, 0, LED_LANXMT);
+#endif /* USELEDS */
+
+	return (leintr(sc));
+}
+		
 #include <dev/ic/am7990.c>

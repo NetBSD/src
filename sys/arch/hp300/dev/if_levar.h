@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.2 1995/12/30 21:03:03 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.3 1996/01/02 21:56:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -56,14 +56,6 @@ struct	le_softc {
 	void	(*sc_copytobuf)();	/* Copy to buffer */
 	void	(*sc_copyfrombuf)();	/* Copy from buffer */
 	void	(*sc_zerobuf)();	/* and Zero bytes in buffer */
-
-	/*
-	 * Hooks exectuted at the top of letint() and lerint() respectively.
-	 * Calls to these functions are enabled by #define'ing the CPP
-	 * symbols LE_TINT_HOOK and LE_RINT_HOOK.
-	 */
-	void	(*sc_tint_hook) __P((struct le_softc *));
-	void	(*sc_rint_hook) __P((struct le_softc *));
 
 	u_int16_t sc_conf3;		/* CSR3 value */
 
