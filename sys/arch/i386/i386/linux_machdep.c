@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.18 1995/09/08 07:57:15 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.19 1995/09/19 22:56:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -191,13 +191,14 @@ linux_sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-linux_sigreturn(p, uap, retval)
+linux_sigreturn(p, v, retval)
 	struct proc *p;
-	struct linux_sigreturn_args /* {
-		syscallarg(struct linux_sigcontext *) scp;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct linux_sigreturn_args /* {
+		syscallarg(struct linux_sigcontext *) scp;
+	} */ *uap = v;
 	struct linux_sigcontext *scp, context;
 	register struct trapframe *tf;
 
@@ -363,15 +364,16 @@ linux_write_ldt(p, uap, retval)
 #endif /* USER_LDT */
 
 int
-linux_modify_ldt(p, uap, retval)
+linux_modify_ldt(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_modify_ldt_args /* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
 		syscallarg(size_t) bytecount;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 
 	switch (SCARG(uap, func)) {
 #ifdef USER_LDT
@@ -406,15 +408,16 @@ linux_fakedev(dev)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(p, uap, retval)
+linux_machdepioctl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct ioctl_args bia, tmparg;
 	u_long com;
 #if NVT > 0
@@ -514,13 +517,14 @@ linux_machdepioctl(p, uap, retval)
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_iopl(p, uap, retval)
+linux_iopl(p, v, retval)
 	struct proc *p;
-	struct linux_iopl_args /* {
-		syscallarg(int) level;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct linux_iopl_args /* {
+		syscallarg(int) level;
+	} */ *uap = v;
 	struct trapframe *fp = p->p_md.md_regs;
 
 	if (suser(p->p_ucred, &p->p_acflag) != 0)
@@ -535,15 +539,16 @@ linux_iopl(p, uap, retval)
  * just let it have the whole range.
  */
 int
-linux_ioperm(p, uap, retval)
+linux_ioperm(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct linux_ioperm_args /* {
 		syscallarg(unsigned int) lo;
 		syscallarg(unsigned int) hi;
 		syscallarg(int) val;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct trapframe *fp = p->p_md.md_regs;
 
 	if (suser(p->p_ucred, &p->p_acflag) != 0)

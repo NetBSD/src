@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.16 1995/09/01 20:06:31 mycroft Exp $  */
+/* $NetBSD: machdep.c,v 1.17 1995/09/19 23:18:26 thorpej Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -81,6 +81,8 @@
 #include "machine/../vax/gencons.h"
 #include "vm/vm_kern.h"
 #include "net/netisr.h"
+
+#include <sys/syscallargs.h>
 
 #include "ppp.h"	/* For NERISR_PPP */
 
@@ -353,11 +355,12 @@ struct sigretargs {
 	struct sigcontext *cntxp;
 };
 
-sigreturn(p, uap, retval)
+sigreturn(p, v, retval)
 	struct proc    *p;
-	struct sigretargs *uap;
+	void *v;
 	int            *retval;
 {
+	struct sigretargs *uap = v;
 	struct trapframe *scf;
 	struct sigcontext *cntx;
 
