@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.6 1999/02/17 03:41:01 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.7 1999/02/28 17:10:53 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -290,7 +290,7 @@ lance_config(sc)
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET);
+			  RND_TYPE_NET, 0);
 #endif
 }
 

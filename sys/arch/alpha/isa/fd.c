@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1999/02/22 02:52:24 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1999/02/28 17:11:24 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -574,7 +574,8 @@ fdattach(parent, self, aux)
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
 
 #if NRND > 0
-	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname, RND_TYPE_DISK);
+	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
 #endif
 }
 

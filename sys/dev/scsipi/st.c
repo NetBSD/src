@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.109 1999/02/10 12:29:51 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.110 1999/02/28 17:14:57 explorer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -483,7 +483,8 @@ stattach(parent, self, aux)
 	st->buf_queue.b_actb = &st->buf_queue.b_actf;
 
 #if NRND > 0
-	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname, RND_TYPE_TAPE);
+	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
+			  RND_TYPE_TAPE, 0);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.55 1998/12/12 16:58:11 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.56 1999/02/28 17:09:26 explorer Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -257,7 +257,8 @@ elattach(parent, self, aux)
 
 #if NRND > 0
 	DPRINTF(("Attaching to random...\n"));
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 
 	DPRINTF(("elattach() finished.\n"));
