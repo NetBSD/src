@@ -55,7 +55,9 @@ static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #include "error.h"
 #include "alias.h"
 #include "parser.h"
+#ifndef NO_HISTORY
 #include "myhistedit.h"
+#endif
 
 #define EOF_NLEFT -99		/* value of parsenleft when EOF pushed back */
 
@@ -96,7 +98,9 @@ int pushednleft;		/* copy of parsenleft when text pushed back */
 int init_editline = 0;		/* editline library initialized? */
 int whichprompt;		/* 1 == PS1, 2 == PS2 */
 
+#ifndef NO_HISTORY
 EditLine *el;			/* cookie for editline package */
+#endif
 
 #ifdef __STDC__
 STATIC void pushfile(void);

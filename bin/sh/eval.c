@@ -60,7 +60,9 @@ static char sccsid[] = "@(#)eval.c	8.1 (Berkeley) 5/31/93";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#ifndef NO_HISTORY
 #include "myhistedit.h"
+#endif
 #include <signal.h>
 #include <unistd.h>
 
