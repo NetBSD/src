@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.85 2004/12/09 04:42:54 jmc Exp $
+# $NetBSD: postinstall,v 1.86 2005/01/09 07:27:14 christos Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -603,6 +603,25 @@ do_rc()
 		fi
 		shift 2
 	done
+
+	return ${failed}
+}
+
+#
+#	pam
+#
+additem pam "/etc/pam.d being up to date"
+do_pam()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_pam  fix|check"
+	op=$1
+	failed=0
+
+	compare_dir ${op} ${SRC_DIR}/etc/pam.d ${DEST_DIR}/etc/pam.d 644 \
+		README ftpd gdm imap kde login other passwd \
+		pop3 rexecd rsh sshd su system telnetd xdm
+
+	failed=$(( ${failed} + $? ))
 
 	return ${failed}
 }
