@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.12 2002/03/17 20:54:05 martin Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.13 2002/03/22 09:54:17 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.12 2002/03/17 20:54:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.13 2002/03/22 09:54:17 martin Exp $");
 
 #include "isdn.h"
 
@@ -699,7 +699,6 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		
 		/* Download request */
-#if 0	/* XXX */
 		case I4B_CTRL_DOWNLOAD:
 		{
 			struct isdn_dr_prot *prots = NULL, *prots2 = NULL;
@@ -741,7 +740,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 
 			error = ctrl_desc[r->controller].N_DOWNLOAD(
-						ctrl_desc[r->controller].unit,
+						ctrl_desc[r->controller].l1_token,
 						r->numprotos, prots2);
 
 download_done:
@@ -817,7 +816,7 @@ download_done:
 				}
 			}
 			
-			error = ctrl_desc[r->controller].N_DIAGNOSTICS(r->controller, &req);
+			error = ctrl_desc[r->controller].N_DIAGNOSTICS(ctrl_desc[r->controller].l1_token, &req);
 
 			if(!error && req.out_param_len)
 				error = copyout(req.out_param, r->out_param, req.out_param_len);
@@ -831,7 +830,6 @@ diag_done:
 
 			break;
 		}
-#endif
 
 		/* default */
 		
