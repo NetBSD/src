@@ -1,4 +1,4 @@
-.\"	$NetBSD: connect.2,v 1.13 1999/03/22 19:45:02 garbled Exp $
+.\"	$NetBSD: connect.2,v 1.13.2.1 1999/08/22 16:53:01 he Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,7 +113,15 @@ It is possible to
 .Xr select 2
 or
 .Xr poll 2
-for completion by selecting or polling the socket for writing.
+for completion by selecting or polling the socket for writing.  The success or
+failure of the connect operation may be determined by using
+.Xr getsockopt 2
+to read the socket error status with the
+.Dv SO_ERROR
+option at the
+.Dv SOL_SOCKET
+level.  The returned socket error status is zero on success, or one of the
+error codes listed here on failure.
 .It Bq Er EALREADY
 The socket is non-blocking
 and a previous connection attempt
@@ -149,7 +157,8 @@ Too many symbolic links were encountered in translating the pathname.
 .Xr poll 2 ,
 .Xr select 2 ,
 .Xr socket 2 ,
-.Xr getsockname 2
+.Xr getsockname 2 ,
+.Xr getsockopt 2
 .Sh HISTORY
 The
 .Fn connect
