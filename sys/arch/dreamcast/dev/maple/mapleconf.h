@@ -1,4 +1,4 @@
-/* $NetBSD: mapleconf.h,v 1.2 2001/01/21 22:45:58 marcus Exp $ */
+/* $NetBSD: mapleconf.h,v 1.3 2001/05/26 19:04:39 marcus Exp $ */
 /*-
  * Copyright (c) 2001 Marcus Comstedt
  * All rights reserved.
@@ -33,5 +33,6 @@
 
 struct maple_attach_args {
   int ma_port, ma_subunit;
+  u_int32_t ma_function;
   struct maple_devinfo *ma_devinfo;
 };

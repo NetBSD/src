@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.7 2001/03/02 00:25:06 marcus Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.8 2001/05/26 19:04:40 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -106,7 +106,7 @@ mkbdmatch(parent, cf, aux)
 {
 	struct maple_attach_args *ma = aux;
 
-	return (ma->ma_devinfo->di_func & MAPLE_FUNC_KEYBOARD) != 0;
+	return (ma->ma_function & MAPLE_FUNC_KEYBOARD) != 0;
 }
 
 static void

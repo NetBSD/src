@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.6 2001/03/16 19:57:49 marcus Exp $	*/
+/*	$NetBSD: maple.c,v 1.7 2001/05/26 19:04:39 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -53,9 +53,16 @@
 #include <dreamcast/dev/maple/mapleconf.h>
 #include <dreamcast/dev/maple/maplevar.h>
 #include <dreamcast/dev/maple/maplereg.h>
+#include <dreamcast/dev/maple/mapleio.h>
 
+
+/* Internal macros, functions, and variables. */
 
 #define MAPLE_CALLOUT_TICKS 2
+
+#define MAPLEBUSUNIT(dev)  (minor(dev)>>5)
+#define MAPLEPORT(dev)     ((minor(dev) & 0x18) >> 3)
+#define MAPLESUBUNIT(dev)  (minor(dev) & 0x7)
 
 /*
  * Function declarations.
@@ -77,6 +84,12 @@ static void	maple_check_responses __P((struct maple_softc *));
 int maple_alloc_dma __P((size_t, vaddr_t *, paddr_t *));
 void maple_free_dma __P((paddr_t, size_t));
 
+int	mapleopen __P((dev_t, int, int, struct proc *));
+int	mapleclose __P((dev_t, int, int, struct proc *));
+int	maple_internal_ioctl __P((struct maple_softc *,  int, int, u_long, caddr_t, int, struct proc *));
+int	mapleioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+
+
 
 /*
  * Global variables.
@@ -89,6 +102,8 @@ int	maple_polling = 0;	/* Are we polling?  (Debugger mode) */
 struct cfattach maple_ca = {
 	sizeof(struct maple_softc), maplematch, mapleattach
 };
+
+extern struct cfdriver maple_cd;
 
 static int
 maplematch(parent, cf, aux)
@@ -112,12 +127,27 @@ maple_attach_dev(sc, port, subunit)
 	int subunit;
 {
 	struct maple_attach_args ma;
-
+	u_int32_t func;
+	int f;
+	char oldxname[16];
+	
 	ma.ma_port = port;
 	ma.ma_subunit = subunit;
 	ma.ma_devinfo = &sc->sc_unit[port][subunit].devinfo;
+	ma.ma_function = 1;
+	func = ma.ma_devinfo->di_func;
 
-	(void) config_found_sm(&sc->sc_dev, &ma, mapleprint, maplesubmatch);
+	mapleprint(&ma, sc->sc_dev.dv_xname);
+	printf("\n");
+	strcpy(oldxname, sc->sc_dev.dv_xname);
+	sprintf(sc->sc_dev.dv_xname, "maple%c", port+'A');
+	if(subunit)
+	  sprintf(sc->sc_dev.dv_xname+6, "%d", subunit);
+	for(f=0; f<32; f++, ma.ma_function<<=1)
+		if(func & ma.ma_function)
+			(void) config_found_sm(&sc->sc_dev, &ma,
+					       NULL, maplesubmatch);
+	strcpy(sc->sc_dev.dv_xname, oldxname);
 }
 
 static void
@@ -263,6 +293,9 @@ maple_scanbus(sc)
 
 		    printf("%s: no response from port %d subunit %d\n",
 			   sc->sc_dev.dv_xname, p, s);
+
+		    sc->sc_port_units[p] &= ~(1<<s);
+
 		  }
 		}
 	    
@@ -497,17 +530,23 @@ mapleprint(aux, pnp)
 {
 	struct maple_attach_args *ma = aux;
 
-	if (pnp != NULL)
-		printf("%.*s at %s",
-		    (int)sizeof(ma->ma_devinfo->di_product_name),
-		    ma->ma_devinfo->di_product_name, pnp);
+	if (pnp != NULL) {
+		printf("maple%c", 'A'+ma->ma_port);
+		if (ma->ma_subunit != 0)
+			printf("%d", ma->ma_subunit);
+		printf(" at %s", pnp);
+	}
 
 	printf(" port %d", ma->ma_port);
 
 	if (ma->ma_subunit != 0)
 		printf(" subunit %d", ma->ma_subunit);
 
-	return (UNCONF);
+	printf(": %.*s",
+	       (int)sizeof(ma->ma_devinfo->di_product_name),
+	       ma->ma_devinfo->di_product_name);
+
+	return (0);
 }
 
 static int
@@ -544,4 +583,87 @@ maple_get_function_data(devinfo, function_code)
 	      if (++p >= 3)
 		break;
 	return (0);
+}
+
+/* Generic maple device interface */
+
+int
+mapleopen(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
+{
+	struct maple_softc *sc;
+
+	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+	if (sc == NULL)			/* make sure it was attached */
+		return (ENXIO);
+
+	if (MAPLEPORT(dev) >= MAPLE_PORTS)
+		return (ENXIO);
+	
+	if (MAPLESUBUNIT(dev) >= MAPLE_SUBUNITS)
+		return (ENXIO);
+
+	if(!(sc->sc_port_units[MAPLEPORT(dev)] & (1<<MAPLESUBUNIT(dev))))
+		return (ENXIO);
+
+	sc->sc_port_units_open[MAPLEPORT(dev)] |= 1<<MAPLESUBUNIT(dev);
+
+	return (0);
+}
+
+int
+mapleclose(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
+{
+	struct maple_softc *sc;
+
+	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+
+	sc->sc_port_units_open[MAPLEPORT(dev)] &= ~(1<<MAPLESUBUNIT(dev));
+
+	return (0);
+}
+
+int
+maple_internal_ioctl(sc, port, subunit, cmd, data, flag, p)
+	struct maple_softc *sc;
+	int port;
+	int subunit;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	struct maple_unit *u = &sc->sc_unit[port][subunit];
+
+	if(!(sc->sc_port_units[port] & (1<<subunit)))
+		return (ENXIO);
+
+	switch(cmd) {
+	case MAPLEIO_GDEVINFO:
+		bcopy(&u->devinfo, data, sizeof(struct maple_devinfo));
+		return (0);
+	default:
+		return (EINVAL);
+	}
+}
+
+int
+mapleioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	struct maple_softc *sc;
+
+	sc = device_lookup(&maple_cd, MAPLEBUSUNIT(dev));
+
+	return maple_internal_ioctl(sc, MAPLEPORT(dev), MAPLESUBUNIT(dev),
+				    cmd, data, flag, p);
 }
