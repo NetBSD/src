@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_irqhandler.c,v 1.2 1996/03/08 20:35:08 mark Exp $ */
+/* $NetBSD: iomd_irqhandler.c,v 1.3 1996/03/27 20:16:30 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -187,6 +187,18 @@ irq_claim(irq, handler)
  */
  
 	handler->ih_num = irq;
+
+/* If this is the first interrupt to be attached make a not of any name */
+
+#ifdef IRQSTATS
+	if (handler->ih_next == NULL && handler->ih_name) {
+		extern char *_intrnames;
+		char *ptr = _intrnames + (irq * 14);
+/*		printf("intrnames=%08x ptr=%08x irq=%d\n", (u_int)_intrnames, (u_int)ptr, irq);*/
+		strcpy(ptr, "             ");
+		strncpy(ptr, handler->ih_name, min(strlen(handler->ih_name), 13));
+	}
+#endif
 
 /*
  * Update the irq masks.
