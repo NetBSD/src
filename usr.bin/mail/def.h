@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)def.h	8.2 (Berkeley) 3/21/94
+ *	@(#)def.h	8.4 (Berkeley) 4/20/95
  */
 
 /*
@@ -44,7 +44,7 @@
 #include <sys/time.h>
 
 #include <signal.h>
-#include <sgtty.h>
+#include <termios.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -68,10 +68,10 @@
 
 struct message {
 	short	m_flag;			/* flags, see below */
-	short	m_block;		/* block number of this message */
 	short	m_offset;		/* offset in block of message */
+	long	m_block;		/* block number of this message */
 	long	m_size;			/* Bytes in the message */
-	short	m_lines;		/* Lines in the message */
+	long	m_lines;		/* Lines in the message */
 };
 
 /*

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cmd1.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #endif /* not lint */
 
 #include "rcv.h"
@@ -447,5 +447,27 @@ folders()
 	if ((cmd = value("LISTER")) == NOSTR)
 		cmd = "ls";
 	(void) run_command(cmd, 0, -1, -1, dirname, NOSTR, NOSTR);
+	return 0;
+}
+
+/*
+ * Update the mail file with any new messages that have
+ * come in since we started reading mail.
+ */
+inc()
+{
+	int nmsg, mdot;
+
+	nmsg = incfile();
+
+	if (nmsg == 0) {
+		printf("No new mail.\n");
+	} else if (nmsg > 0) {
+		mdot = newfileinfo(msgCount - nmsg);
+		dot = &message[mdot - 1];
+	} else {
+		printf("\"inc\" command failed...\n");
+	}
+
 	return 0;
 }

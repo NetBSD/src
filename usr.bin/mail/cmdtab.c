@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #endif /* not lint */
 
 #include "def.h"
@@ -113,5 +113,6 @@ struct cmd cmdtab[] = {
 	"core",		core,		M|NOLIST,	0,	0,
 	"#",		null,		M|NOLIST,	0,	0,
 	"clobber",	clobber,	M|RAWLIST,	0,	1,
+	"inc",		inc,		T|NOLIST,	0,	0,
 	0,		0,		0,		0,	0
 };
