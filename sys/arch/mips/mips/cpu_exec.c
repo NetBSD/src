@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.11 1996/10/13 03:29:07 christos Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.12 1996/11/11 20:23:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
 
 #include <machine/elf.h>
 /*XXX*/
-int	exec_elf_makecmds __P((struct proc *, struct exec_package *));
+int	exec_elf_mips32_makecmds __P((struct proc *, struct exec_package *));
 
 
 /*
@@ -80,20 +80,13 @@ cpu_exec_aout_makecmds(p, epp)
 	struct bsd_aouthdr *hdr = (struct bsd_aouthdr *)epp -> ep_hdr;
 
 	/* Only handle paged files (laziness). */
-	if (hdr -> a_magic != BSD_ZMAGIC) {
+	if (hdr -> a_magic != BSD_ZMAGIC)
 #endif
-		/* If it's not a.out, maybe it's ELF.  (This wants to
-		   be moved up to the machine independent code as soon
-		   as possible.)  XXX */
-		error = exec_elf_makecmds (p, epp);
-
+	{
 		/* If that failed, try old NetBSD-1.1 elf format */
-		if (error != 0)
-			error = mips_elf_makecmds (p, epp);
+		error = mips_elf_makecmds (p, epp);
 		return error;
-#ifdef COMPAT_09
 	}
-#endif
 
 
 
