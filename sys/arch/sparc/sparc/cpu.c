@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.83 1998/10/13 13:37:14 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.84 1998/10/13 21:08:48 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -296,9 +296,8 @@ static	int cpu_number;
 	cpi->mid = mid;
 	cpi->node = node;
 
-	if (ncpu != 0) {
+	if (ncpu > 1)
 		printf(": mid %d", mid);
-	}
 
 	getcpuinfo(cpi, node);
 
