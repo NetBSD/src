@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.13 1996/10/10 23:21:52 christos Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.14 1996/10/13 02:04:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -123,12 +123,12 @@ clnp_init()
 	 * CLNP protox initialization
 	 */
 	if ((pr = pffindproto(PF_ISO, ISOPROTO_RAW, SOCK_RAW)) == 0)
-		kprintf("clnl_init: no raw CLNP\n");
+		printf("clnl_init: no raw CLNP\n");
 	else
 		clnp_protox[ISOPROTO_RAW] = pr - isosw;
 
 	if ((pr = pffindproto(PF_ISO, ISOPROTO_TP, SOCK_SEQPACKET)) == 0)
-		kprintf("clnl_init: no tp/clnp\n");
+		printf("clnl_init: no tp/clnp\n");
 	else
 		clnp_protox[ISOPROTO_TP] = pr - isosw;
 
@@ -215,15 +215,15 @@ next:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
 		int             i;
-		kprintf("clnlintr: src:");
+		printf("clnlintr: src:");
 		for (i = 0; i < 6; i++)
-			kprintf("%x%c", sh.snh_shost[i] & 0xff,
+			printf("%x%c", sh.snh_shost[i] & 0xff,
 			    (i < 5) ? ':' : ' ');
-		kprintf(" dst:");
+		printf(" dst:");
 		for (i = 0; i < 6; i++)
-			kprintf("%x%c", sh.snh_dhost[i] & 0xff,
+			printf("%x%c", sh.snh_dhost[i] & 0xff,
 			    (i < 5) ? ':' : ' ');
-		kprintf("\n");
+		printf("\n");
 	}
 #endif
 
@@ -322,7 +322,7 @@ clnp_input(m, va_alist)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
-		kprintf(
+		printf(
 		    "clnp_input: proccessing dg; First mbuf m_len %d, m_type x%x, %s\n",
 		    m->m_len, m->m_type, IS_CLUSTER(m) ? "cluster" : "normal");
 	}
@@ -344,14 +344,14 @@ clnp_input(m, va_alist)
 	if (argo_debug[D_DUMPIN]) {
 		struct mbuf    *mhead;
 		int             total_len = 0;
-		kprintf("clnp_input: clnp header:\n");
+		printf("clnp_input: clnp header:\n");
 		dump_buf(mtod(m, caddr_t), clnp->cnf_hdr_len);
-		kprintf("clnp_input: mbuf chain:\n");
+		printf("clnp_input: mbuf chain:\n");
 		for (mhead = m; mhead != NULL; mhead = mhead->m_next) {
-			kprintf("m %p, len %d\n", mhead, mhead->m_len);
+			printf("m %p, len %d\n", mhead, mhead->m_len);
 			total_len += mhead->m_len;
 		}
-		kprintf("clnp_input: total length of mbuf chain %d:\n",
+		printf("clnp_input: total length of mbuf chain %d:\n",
 		total_len);
 	}
 #endif
@@ -399,8 +399,8 @@ clnp_input(m, va_alist)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_INPUT]) {
-		kprintf("clnp_input: from %s", clnp_iso_addrp(&src));
-		kprintf(" to %s\n", clnp_iso_addrp(&dst));
+		printf("clnp_input: from %s", clnp_iso_addrp(&src));
+		printf(" to %s\n", clnp_iso_addrp(&dst));
 	}
 #endif
 
@@ -463,7 +463,7 @@ clnp_input(m, va_alist)
 			clnp_discard(m, (char) errcode);
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_INPUT]) {
-				kprintf(
+				printf(
 				    "clnp_input: dropped (err x%x) due to bad options\n",
 				    errcode);
 			}
@@ -477,7 +477,7 @@ clnp_input(m, va_alist)
 	if (clnp_ours(&dst) == 0) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_INPUT]) {
-			kprintf("clnp_input: forwarding packet not for us\n");
+			printf("clnp_input: forwarding packet not for us\n");
 		}
 #endif
 		clnp_forward(m, seg_len, &dst, oidxp, seg_off, shp);
@@ -546,7 +546,7 @@ clnp_input(m, va_alist)
 	case CLNP_ECR:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_INPUT]) {
-			kprintf("clnp_input: raw input of %d bytes\n",
+			printf("clnp_input: raw input of %d bytes\n",
 			    clnp->cnf_type & CNF_SEG_OK ?
 			    seg_part.cng_tot_len : seg_len);
 		}
@@ -559,7 +559,7 @@ clnp_input(m, va_alist)
 	case CLNP_EC:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_INPUT]) {
-			kprintf("clnp_input: echoing packet\n");
+			printf("clnp_input: echoing packet\n");
 		}
 #endif
 		(void) clnp_echoreply(m, (clnp->cnf_type & CNF_SEG_OK ?
@@ -568,7 +568,7 @@ clnp_input(m, va_alist)
 		break;
 
 	default:
-		kprintf("clnp_input: unknown clnp pkt type %d\n",
+		printf("clnp_input: unknown clnp pkt type %d\n",
 		    clnp->cnf_type & CNF_TYPE);
 		clnp_stat.cns_delivered--;
 		clnp_stat.cns_noproto++;

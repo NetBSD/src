@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.33 1996/10/10 23:12:50 christos Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.34 1996/10/13 02:03:06 christos Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -557,7 +557,7 @@ add_vif(m)
 		/* Create a fake encapsulation interface. */
 		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
 		bzero(ifp, sizeof(*ifp));
-		ksprintf(ifp->if_xname, "mdecap%d", vifcp->vifc_vifi);
+		sprintf(ifp->if_xname, "mdecap%d", vifcp->vifc_vifi);
 
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
@@ -984,7 +984,7 @@ ip_mforward(m, ifp)
 	    ip->ip_ttl++;	/* compensate for -1 in *_send routines */
 	if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
 	    vifp = viftable + vifi;
-	    kprintf("Sending IPPROTO_RSVP from %x to %x on vif %d (%s%s)\n",
+	    printf("Sending IPPROTO_RSVP from %x to %x on vif %d (%s%s)\n",
 		ntohl(ip->ip_src), ntohl(ip->ip_dst), vifi,
 		(vifp->v_flags & VIFF_TUNNEL) ? "tunnel on " : "",
 		vifp->v_ifp->if_xname);
@@ -992,7 +992,7 @@ ip_mforward(m, ifp)
 	return (ip_mdq(m, ifp, (struct mfc *)0, vifi));
     }
     if (rsvpdebug && ip->ip_p == IPPROTO_RSVP) {
-	kprintf("Warning: IPPROTO_RSVP from %x to %x without vif option\n",
+	printf("Warning: IPPROTO_RSVP from %x to %x without vif option\n",
 	    ntohl(ip->ip_src), ntohl(ip->ip_dst));
     }
 #endif /* RSVP_ISI */
@@ -1797,7 +1797,7 @@ ip_rsvp_vif_init(so, m)
     register int s;
 
     if (rsvpdebug)
-	kprintf("ip_rsvp_vif_init: so_type = %d, pr_protocol = %d\n",
+	printf("ip_rsvp_vif_init: so_type = %d, pr_protocol = %d\n",
 	    so->so_type, so->so_proto->pr_protocol);
 
     if (so->so_type != SOCK_RAW || so->so_proto->pr_protocol != IPPROTO_RSVP)
@@ -1810,7 +1810,7 @@ ip_rsvp_vif_init(so, m)
     i = *(mtod(m, int *));
 
     if (rsvpdebug)
-	kprintf("ip_rsvp_vif_init: vif = %d rsvp_on = %d\n",i,rsvp_on);
+	printf("ip_rsvp_vif_init: vif = %d rsvp_on = %d\n",i,rsvp_on);
 
     s = splsoftnet();
 
@@ -1848,7 +1848,7 @@ ip_rsvp_vif_done(so, m)
     register int s;
 
     if (rsvpdebug)
-	kprintf("ip_rsvp_vif_done: so_type = %d, pr_protocol = %d\n",
+	printf("ip_rsvp_vif_done: so_type = %d, pr_protocol = %d\n",
 	       so->so_type, so->so_proto->pr_protocol);
 
     if (so->so_type != SOCK_RAW || so->so_proto->pr_protocol != IPPROTO_RSVP)
@@ -1869,7 +1869,7 @@ ip_rsvp_vif_done(so, m)
     }
 
     if (rsvpdebug)
-	kprintf("ip_rsvp_vif_done: v_rsvpd = %x so = %x\n",
+	printf("ip_rsvp_vif_done: v_rsvpd = %x so = %x\n",
 	    viftable[i].v_rsvpd, so);
 
     viftable[i].v_rsvpd = 0;
@@ -1929,7 +1929,7 @@ rsvp_input(m, ifp)
     register int s;
 
     if (rsvpdebug)
-	kprintf("rsvp_input: rsvp_on %d\n",rsvp_on);
+	printf("rsvp_input: rsvp_on %d\n",rsvp_on);
 
     /* Can still get packets with rsvp_on = 0 if there is a local member
      * of the group to which the RSVP packet is addressed.  But in this
@@ -1945,7 +1945,7 @@ rsvp_input(m, ifp)
      */
     if (ip_rsvpd != 0) {
 	if (rsvpdebug)
-	    kprintf("rsvp_input: Sending packet up old-style socket\n");
+	    printf("rsvp_input: Sending packet up old-style socket\n");
 	rip_input(m);
 	return;
     }
@@ -1953,7 +1953,7 @@ rsvp_input(m, ifp)
     s = splsoftnet();
 
     if (rsvpdebug)
-	kprintf("rsvp_input: check vifs\n");
+	printf("rsvp_input: check vifs\n");
 
     /* Find which vif the packet arrived on. */
     for (vifi = 0; vifi < numvifs; vifi++) {
@@ -1964,20 +1964,20 @@ rsvp_input(m, ifp)
     if (vifi == numvifs) {
 	/* Can't find vif packet arrived on. Drop packet. */
 	if (rsvpdebug)
-	    kprintf("rsvp_input: Can't find vif for packet...dropping it.\n");
+	    printf("rsvp_input: Can't find vif for packet...dropping it.\n");
 	m_freem(m);
 	splx(s);
 	return;
     }
 
     if (rsvpdebug)
-	kprintf("rsvp_input: check socket\n");
+	printf("rsvp_input: check socket\n");
 
     if (viftable[vifi].v_rsvpd == 0) {
 	/* drop packet, since there is no specific socket for this
 	 * interface */
 	if (rsvpdebug)
-	    kprintf("rsvp_input: No socket defined for vif %d\n",vifi);
+	    printf("rsvp_input: No socket defined for vif %d\n",vifi);
 	m_freem(m);
 	splx(s);
 	return;
@@ -1986,15 +1986,15 @@ rsvp_input(m, ifp)
     rsvp_src.sin_addr = ip->ip_src;
 
     if (rsvpdebug && m)
-	kprintf("rsvp_input: m->m_len = %d, sbspace() = %d\n",
+	printf("rsvp_input: m->m_len = %d, sbspace() = %d\n",
 	       m->m_len,sbspace(&viftable[vifi].v_rsvpd->so_rcv));
 
     if (socket_send(viftable[vifi].v_rsvpd, m, &rsvp_src) < 0)
 	if (rsvpdebug)
-	    kprintf("rsvp_input: Failed to append to socket\n");
+	    printf("rsvp_input: Failed to append to socket\n");
     else
 	if (rsvpdebug)
-	    kprintf("rsvp_input: send packet up\n");
+	    printf("rsvp_input: send packet up\n");
     
     splx(s);
 }

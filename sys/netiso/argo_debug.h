@@ -1,4 +1,4 @@
-/*	$NetBSD: argo_debug.h,v 1.8 1996/10/10 23:21:48 christos Exp $	*/
+/*	$NetBSD: argo_debug.h,v 1.9 1996/10/13 02:04:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -97,7 +97,7 @@ unsigned char   argo_debug[128];
 
 #ifndef lint
 #define ASSERT(phrase) \
-if( !(phrase) ) kprintf("ASSERTION NOT VALID at line %d file %s\n",__LINE__,__FILE__)
+if( !(phrase) ) printf("ASSERTION NOT VALID at line %d file %s\n",__LINE__,__FILE__)
 #else				/* lint */
 #define ASSERT(phrase)		/* phrase */
 #endif				/* lint */

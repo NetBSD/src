@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.12 1996/10/10 23:22:17 christos Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.13 1996/10/13 02:04:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -151,7 +151,7 @@ tp_local_credit(tpcb)
 	LOCAL_CREDIT(tpcb);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CREDIT]) {
-		kprintf("ref 0x%x lcdt 0x%x l_tpdusize 0x%x decbit 0x%x cong_win 0x%lx\n",
+		printf("ref 0x%x lcdt 0x%x l_tpdusize 0x%x decbit 0x%x cong_win 0x%lx\n",
 		       tpcb->tp_lref,
 		       tpcb->tp_lcredit,
 		       tpcb->tp_l_tpdusize,
@@ -191,7 +191,7 @@ tp_protocol_error(e, tpcb)
 	struct tp_event *e;
 	struct tp_pcb  *tpcb;
 {
-	kprintf("TP PROTOCOL ERROR! tpcb %p event 0x%x, state 0x%x\n",
+	printf("TP PROTOCOL ERROR! tpcb %p event 0x%x, state 0x%x\n",
 	       tpcb, e->ev_number, tpcb->tp_state);
 #ifdef TPPT
 	if (tp_traceflags[D_DRIVER]) {
@@ -249,7 +249,7 @@ tp_indicate(ind, tpcb, error)
 		ls = tpcb->tp_lsuffix,
 			fs = tpcb->tp_fsuffix,
 
-			kprintf(
+			printf(
 			       "indicate 0x%x lsuf 0x%02x%02x fsuf 0x%02x%02x err 0x%x  noind 0x%x ref 0x%x\n",
 			       ind,
 			       *ls, *(ls + 1), *fs, *(fs + 1),
@@ -386,9 +386,9 @@ tp_quench(ipcb, cmd)
 	struct tp_pcb  *tpcb = (struct tp_pcb *) ipcb;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_QUENCH]) {
-		kprintf("tp_quench tpcb %p ref 0x%x sufx 0x%x\n",
+		printf("tp_quench tpcb %p ref 0x%x sufx 0x%x\n",
 		       tpcb, tpcb->tp_lref, *(u_short *) (tpcb->tp_lsuffix));
-		kprintf("cong_win 0x%lx decbit 0x%x \n",
+		printf("cong_win 0x%lx decbit 0x%x \n",
 		       tpcb->tp_cong_win, tpcb->tp_decbit);
 	}
 #endif
@@ -453,11 +453,11 @@ tp_netcmd(tpcb, cmd)
 		break;
 
 	default:
-		kprintf("tp_netcmd(0x%x, 0x%x) NOT IMPLEMENTED\n", tpcb, cmd);
+		printf("tp_netcmd(0x%x, 0x%x) NOT IMPLEMENTED\n", tpcb, cmd);
 		break;
 	}
 #else				/* TPCONS */
-	kprintf("tp_netcmd(): X25 NOT CONFIGURED!!\n");
+	printf("tp_netcmd(): X25 NOT CONFIGURED!!\n");
 #endif
 }
 
@@ -479,7 +479,7 @@ tp_mask_to_num(x)
 	}
 	ASSERT((j == 4) || (j == 0));	/* for now */
 	if ((j != 4) && (j != 0)) {
-		kprintf("ASSERTION ERROR: tp_mask_to_num: x 0x%x j %d\n",
+		printf("ASSERTION ERROR: tp_mask_to_num: x 0x%x j %d\n",
 		       x, j);
 	}
 #ifdef TPPT
@@ -489,7 +489,7 @@ tp_mask_to_num(x)
 #endif
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {
-		kprintf("tp_mask_to_num(0x%x) returns 0x%x\n", x, j);
+		printf("tp_mask_to_num(0x%x) returns 0x%x\n", x, j);
 	}
 #endif
 	return j;
@@ -669,9 +669,9 @@ tp_route_to(m, tpcb, channel)
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-		kprintf("tp_route_to( m %p, channel %p, tpcb %p netserv 0x%x)\n",
+		printf("tp_route_to( m %p, channel %p, tpcb %p netserv 0x%x)\n",
 		       m, channel, tpcb, tpcb->tp_netservice);
-		kprintf("m->mlen x%x, m->m_data:\n", m->m_len);
+		printf("m->mlen x%x, m->m_data:\n", m->m_len);
 		dump_buf(mtod(m, caddr_t), m->m_len);
 	}
 #endif
@@ -723,7 +723,7 @@ tp_route_to(m, tpcb, channel)
 		if (tpcb->tp_nlproto->nlp_afamily != siso->siso_family) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CONN]) {
-				kprintf("tp_route_to( CHANGING nlproto old 0x%x new 0x%x)\n",
+				printf("tp_route_to( CHANGING nlproto old 0x%x new 0x%x)\n",
 				       save_netservice, tpcb->tp_netservice);
 			}
 #endif
@@ -732,7 +732,7 @@ tp_route_to(m, tpcb, channel)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-			kprintf("tp_route_to  calling nlp_pcbconn, netserv %d\n",
+			printf("tp_route_to  calling nlp_pcbconn, netserv %d\n",
 			       tpcb->tp_netservice);
 		}
 #endif
@@ -747,7 +747,7 @@ tp_route_to(m, tpcb, channel)
 done:
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_CONN]) {
-		kprintf("tp_route_to  returns 0x%x\n", error);
+		printf("tp_route_to  returns 0x%x\n", error);
 	}
 #endif
 #ifdef TPPT
@@ -789,7 +789,7 @@ tp0_stash(tpcb, e)
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_STASH]) {
-		kprintf("stash EQ: seq 0x%x datalen 0x%x eot 0x%x",
+		printf("stash EQ: seq 0x%x datalen 0x%x eot 0x%x",
 		       E.e_seq, E.e_datalen, E.e_eot);
 	}
 #endif
@@ -813,7 +813,7 @@ tp0_stash(tpcb, e)
 	}
 #endif
 	if (tpcb->tp_netservice != ISO_CONS)
-		kprintf("tp0_stash: tp running over something wierd\n");
+		printf("tp0_stash: tp running over something wierd\n");
 	else {
 		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		pk_flowcontrol(lcp, sbspace(sb) <= 0, 1);
@@ -826,7 +826,7 @@ tp0_openflow(tpcb)
 {
 	register struct isopcb *isop = (struct isopcb *) tpcb->tp_npcb;
 	if (tpcb->tp_netservice != ISO_CONS)
-		kprintf("tp0_openflow: tp running over something wierd\n");
+		printf("tp0_openflow: tp running over something wierd\n");
 	else {
 		register struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
 		if (lcp->lcd_rxrnr_condition)
@@ -856,7 +856,7 @@ tp_setup_perf(tpcb)
 		bzero((caddr_t)tpcb->tp_p_meas, sizeof(struct tp_pmeas));
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_PERF_MEAS]) {
-			kprintf(
+			printf(
 			       "tpcb 0x%x so 0x%x ref 0x%x tp_p_meas 0x%x tp_perf_on 0x%x\n",
 			       tpcb, tpcb->tp_sock, tpcb->tp_lref,
 			       tpcb->tp_p_meas, tpcb->tp_perf_on);
@@ -883,7 +883,7 @@ dump_addr(addr)
 		break;
 #endif				/* ISO */
 	default:
-		kprintf("BAD AF: 0x%x\n", addr->sa_family);
+		printf("BAD AF: 0x%x\n", addr->sa_family);
 		break;
 	}
 }
@@ -903,26 +903,26 @@ Dump_buf(buf, len)
 {
 	int             i, j;
 #define Buf ((u_char *)buf)
-	kprintf("Dump buf %p len 0x%x\n", buf, len);
+	printf("Dump buf %p len 0x%x\n", buf, len);
 	for (i = 0; i < len; i += MAX_COLUMNS) {
-		kprintf("+%d:\t", i);
+		printf("+%d:\t", i);
 		for (j = 0; j < MAX_COLUMNS; j++) {
 			if (i + j < len) {
-				kprintf("%x/%d\t", Buf[i + j], Buf[i + j]);
+				printf("%x/%d\t", Buf[i + j], Buf[i + j]);
 			} else {
-				kprintf("	");
+				printf("	");
 			}
 		}
 
 		for (j = 0; j < MAX_COLUMNS; j++) {
 			if (i + j < len) {
 				if (((Buf[i + j]) > 31) && ((Buf[i + j]) < 128))
-					kprintf("%c", Buf[i + j]);
+					printf("%c", Buf[i + j]);
 				else
-					kprintf(".");
+					printf(".");
 			}
 		}
-		kprintf("\n");
+		printf("\n");
 	}
 }
 #endif /* ARGO_DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.14 1996/10/10 23:22:12 christos Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.15 1996/10/13 02:04:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -132,7 +132,7 @@ tp_consistency(tpcb, cmd, param)
 #endif
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SETPARAMS]) {
-		kprintf("tp_consistency %s %s\n",
+		printf("tp_consistency %s %s\n",
 		       cmd & TP_FORCE ? "TP_FORCE" : "",
 		       cmd & TP_STRICT ? "TP_STRICT" : "");
 	}
@@ -165,7 +165,7 @@ tp_consistency(tpcb, cmd, param)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SETPARAMS]) {
-		kprintf("p_class 0x%x, class_to_use 0x%x\n", param->p_class,
+		printf("p_class 0x%x, class_to_use 0x%x\n", param->p_class,
 		       class_to_use);
 	}
 #endif
@@ -179,7 +179,7 @@ tp_consistency(tpcb, cmd, param)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SETPARAMS]) {
-		kprintf("Nretrans 0x%x\n", param->p_Nretrans);
+		printf("Nretrans 0x%x\n", param->p_Nretrans);
 	}
 #endif
 	if ((param->p_Nretrans < 1) ||
@@ -193,11 +193,11 @@ tp_consistency(tpcb, cmd, param)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_SETPARAMS]) {
-		kprintf("use_csum 0x%x\n", param->p_use_checksum);
-		kprintf("xtd_format 0x%x\n", param->p_xtd_format);
-		kprintf("xpd_service 0x%x\n", param->p_xpd_service);
-		kprintf("tpdusize 0x%x\n", param->p_tpdusize);
-		kprintf("tpcb->flags 0x%x\n", tpcb->tp_flags);
+		printf("use_csum 0x%x\n", param->p_use_checksum);
+		printf("xtd_format 0x%x\n", param->p_xtd_format);
+		printf("xpd_service 0x%x\n", param->p_xpd_service);
+		printf("tpdusize 0x%x\n", param->p_tpdusize);
+		printf("tpcb->flags 0x%x\n", tpcb->tp_flags);
 	}
 #endif
 	switch (class_to_use) {
@@ -245,13 +245,13 @@ tp_consistency(tpcb, cmd, param)
 	case 4:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_SETPARAMS]) {
-			kprintf("dt_ticks 0x%x\n", param->p_dt_ticks);
-			kprintf("x_ticks 0x%x\n", param->p_x_ticks);
-			kprintf("dr_ticks 0x%x\n", param->p_dr_ticks);
-			kprintf("keepalive 0x%x\n", param->p_keepalive_ticks);
-			kprintf("sendack 0x%x\n", param->p_sendack_ticks);
-			kprintf("inact 0x%x\n", param->p_inact_ticks);
-			kprintf("ref 0x%x\n", param->p_ref_ticks);
+			printf("dt_ticks 0x%x\n", param->p_dt_ticks);
+			printf("x_ticks 0x%x\n", param->p_x_ticks);
+			printf("dr_ticks 0x%x\n", param->p_dr_ticks);
+			printf("keepalive 0x%x\n", param->p_keepalive_ticks);
+			printf("sendack 0x%x\n", param->p_sendack_ticks);
+			printf("inact 0x%x\n", param->p_inact_ticks);
+			printf("ref 0x%x\n", param->p_ref_ticks);
 		}
 #endif
 		if ((param->p_class & TP_CLASS_4) && (
@@ -264,7 +264,7 @@ tp_consistency(tpcb, cmd, param)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_SETPARAMS]) {
-			kprintf("rx_strat 0x%x\n", param->p_rx_strat);
+			printf("rx_strat 0x%x\n", param->p_rx_strat);
 		}
 #endif
 		if (param->p_rx_strat >
@@ -278,7 +278,7 @@ tp_consistency(tpcb, cmd, param)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_SETPARAMS]) {
-			kprintf("ack_strat 0x%x\n", param->p_ack_strat);
+			printf("ack_strat 0x%x\n", param->p_ack_strat);
 		}
 #endif
 		if ((param->p_ack_strat != 0) && (param->p_ack_strat != 1)) {
@@ -341,7 +341,7 @@ done:
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_CONN]) {
-		kprintf(
+		printf(
 		  "tp_consist rtns 0x%x class 0x%x xtd_fmt 0x%x cmd 0x%x\n",
 		       error, tpcb->tp_class, tpcb->tp_xtd_format, cmd);
 	}
@@ -406,7 +406,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 #endif
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
-		kprintf(
+		printf(
 		       "tp_ctloutput so %p cmd 0x%x optname 0x%x, mp %p *mp %p tpcb %p\n",
 		       so, cmd, optname, mp, mp ? *mp : 0, tpcb);
 	}
@@ -549,7 +549,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			(*mp)->m_len = tpcb->tp_lsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
-				kprintf("val_len 0x%x (*mp)->m_len %p\n",
+				printf("val_len 0x%x (*mp)->m_len %p\n",
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
@@ -566,7 +566,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 			(*mp)->m_len = tpcb->tp_fsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
-				kprintf("val_len 0x%x (*mp)->m_len %p\n",
+				printf("val_len 0x%x (*mp)->m_len %p\n",
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
@@ -579,7 +579,7 @@ tp_ctloutput(cmd, so, level, optname, mp)
 	case TPOPT_FLAGS:
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			kprintf("%s TPOPT_FLAGS value %p *value 0x%x, flags 0x%x \n",
+			printf("%s TPOPT_FLAGS value %p *value 0x%x, flags 0x%x \n",
 			       cmd == PRCO_GETOPT ? "GET" : "SET",
 			       value,
 			       *value,
@@ -605,13 +605,13 @@ tp_ctloutput(cmd, so, level, optname, mp)
 		 */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_SETPARAMS]) {
-			kprintf("TPOPT_PARAMS value %p, cmd %s \n", value,
+			printf("TPOPT_PARAMS value %p, cmd %s \n", value,
 			       cmd == PRCO_GETOPT ? "GET" : "SET");
 		}
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			kprintf("TPOPT_PARAMS value %p, cmd %s \n", value,
+			printf("TPOPT_PARAMS value %p, cmd %s \n", value,
 			       cmd == PRCO_GETOPT ? "GET" : "SET");
 		}
 #endif
@@ -677,8 +677,8 @@ tp_ctloutput(cmd, so, level, optname, mp)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_REQUEST]) {
-			kprintf("%s\n", optname == TPOPT_DISC_DATA ? "DISC data" : "CONN data");
-			kprintf("m_len 0x%x, vallen 0x%x so_snd.cc 0x%lx\n",
+			printf("%s\n", optname == TPOPT_DISC_DATA ? "DISC data" : "CONN data");
+			printf("m_len 0x%x, vallen 0x%x so_snd.cc 0x%lx\n",
 			       (*mp)->m_len, val_len, so->so_snd.sb_cc);
 			dump_mbuf(so->so_snd.sb_mb, "tp_ctloutput: sosnd ");
 		}

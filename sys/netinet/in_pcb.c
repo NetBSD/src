@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.34 1996/10/10 23:12:47 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.35 1996/10/13 02:03:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -561,7 +561,7 @@ in_pcblookup_connect(table, faddr, fport_arg, laddr, lport_arg)
 	}
 #ifdef DIAGNOSTIC
 	if (in_pcbnotifymiss) {
-		kprintf("in_pcblookup_connect: faddr=%08x fport=%d laddr=%08x lport=%d\n",
+		printf("in_pcblookup_connect: faddr=%08x fport=%d laddr=%08x lport=%d\n",
 		    ntohl(faddr.s_addr), ntohs(fport),
 		    ntohl(laddr.s_addr), ntohs(lport));
 	}
@@ -601,7 +601,7 @@ in_pcblookup_bind(table, laddr, lport_arg)
 	}
 #ifdef DIAGNOSTIC
 	if (in_pcbnotifymiss) {
-		kprintf("in_pcblookup_bind: laddr=%08x lport=%d\n",
+		printf("in_pcblookup_bind: laddr=%08x lport=%d\n",
 		    ntohl(laddr.s_addr), ntohs(lport));
 	}
 #endif

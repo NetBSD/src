@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.9 1996/10/10 23:22:08 christos Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.10 1996/10/13 02:04:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -183,7 +183,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 	 */
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		kprintf(
+		printf(
 		       "tp_emit dutype 0x%x, tpcb %p, eot 0x%x, seq 0x%x, data %p",
 		       dutype, tpcb, eot, seq, data);
 	}
@@ -229,7 +229,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			ADDOPTION(TPP_checksum, hdr, 2, eot /* dummy arg */ );
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_CHKSUM]) {
-				kprintf(
+				printf(
 				       "tp_emit: csum_offset 0x%x, hdr->tpdu_li 0x%x\n",
 				       csum_offset, hdr->tpdu_li);
 			}
@@ -426,7 +426,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 #if 0
 				 if (data->m_len <= 16 && 
 				     data->m_off < (MLEN-18)) {
-					kprintf("Sending too much data on XPD: 18 bytes\n");
+					printf("Sending too much data on XPD: 18 bytes\n");
 					data->m_len = 18; 
 				}
 #endif
@@ -457,7 +457,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			} else if (tpcb->tp_class == TP_CLASS_0) {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_EMIT]) {
-					kprintf("DT tpdu: class 0 m %p hdr %p\n", m, hdr);
+					printf("DT tpdu: class 0 m %p hdr %p\n", m, hdr);
 					dump_buf(hdr, hdr->tpdu_li + 1);
 				}
 #endif
@@ -465,7 +465,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 				((struct tp0du *) hdr)->tp0du_mbz = 0;
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_EMIT]) {
-					kprintf("DT 2 tpdu: class 0 m %p hdr %p\n", m, hdr);
+					printf("DT 2 tpdu: class 0 m %p hdr %p\n", m, hdr);
 					dump_buf(hdr, hdr->tpdu_li + 1);
 				}
 #endif
@@ -600,7 +600,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 				 */
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_RENEG]) {
-					kprintf("Adding subseq 0x%x\n", tpcb->tp_s_subseq);
+					printf("Adding subseq 0x%x\n", tpcb->tp_s_subseq);
 				}
 #endif
 				tpcb->tp_s_subseq++;
@@ -669,7 +669,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ACKSEND]) {
-					kprintf("Calling ADDOPTION 0x%x, %p, 0x%x,0x%x\n",
+					printf("Calling ADDOPTION 0x%x, %p, 0x%x,0x%x\n",
 					       TPP_flow_cntl_conf,
 					       hdr, sizeof(bogus), bogus[0]);
 				}
@@ -677,9 +677,9 @@ tp_emit(dutype, tpcb, seq, eot, data)
 				ADDOPTION(TPP_flow_cntl_conf, hdr, sizeof(bogus), bogus[0]);
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ACKSEND]) {
-					kprintf("after ADDOPTION hdr %p hdr->tpdu_li 0x%x\n",
+					printf("after ADDOPTION hdr %p hdr->tpdu_li 0x%x\n",
 					       hdr, hdr->tpdu_li);
-					kprintf(
+					printf(
 					       "after ADDOPTION csum_offset 0x%x, hdr->tpdu_li 0x%x\n",
 					       csum_offset, hdr->tpdu_li);
 				}
@@ -700,7 +700,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			IncPStat(tpcb, tps_AK_sent);
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ACKSEND]) {
-				kprintf(
+				printf(
 				       "2 after rADDOPTION csum_offset 0x%x, hdr->tpdu_li 0x%x\n",
 				       csum_offset, hdr->tpdu_li);
 			}
@@ -734,18 +734,18 @@ tp_emit(dutype, tpcb, seq, eot, data)
 						 * here for the time being */
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ACKSEND]) {
-		kprintf(
+		printf(
 		 "4 after rADDOPTION csum_offset 0x%x, hdr->tpdu_li 0x%x\n",
 		       csum_offset, hdr->tpdu_li);
 	}
 #endif
 	if (datalen > tpcb->tp_l_tpdusize) {
-		kprintf("data len 0x%x tpcb->tp_l_tpdusize 0x%x\n",
+		printf("data len 0x%x tpcb->tp_l_tpdusize 0x%x\n",
 		       datalen, tpcb->tp_l_tpdusize);
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		kprintf(
+		printf(
 		       "tp_emit before gen_csum m_len 0x%x, csum_offset 0x%x, datalen 0x%x\n",
 		       m->m_len, csum_offset, datalen);
 	}
@@ -756,7 +756,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		kprintf("tp_emit before tpxxx_output tpcb %p, dutype 0x%x, datalen 0x%x\n",
+		printf("tp_emit before tpxxx_output tpcb %p, dutype 0x%x, datalen 0x%x\n",
 		       tpcb, dutype, datalen);
 		dump_buf(mtod(m, caddr_t), datalen);
 	}
@@ -780,7 +780,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 #endif
 #ifdef ARGO_DEBUG
 	    if (argo_debug[D_EMIT]) {
-		kprintf("OUTPUT: tpcb %p, isop %p, so %p\n",
+		printf("OUTPUT: tpcb %p, isop %p, so %p\n",
 		       tpcb, tpcb->tp_npcb, tpcb->tp_sock);
 	}
 #endif
@@ -800,7 +800,7 @@ tp_emit(dutype, tpcb, seq, eot, data)
 						!tpcb->tp_use_checksum);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EMIT]) {
-		kprintf("OUTPUT: returned 0x%x\n", error);
+		printf("OUTPUT: returned 0x%x\n", error);
 	}
 #endif
 #ifdef TPPT
@@ -872,7 +872,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 #endif
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ERROR_EMIT]) {
-		kprintf(
+		printf(
 		       "tp_error_emit error 0x%x sref %lx tpcb %p erlen 0x%x chan %p\n",
 		       error, sref, tpcb, erlen, cons_channel);
 	}
@@ -889,7 +889,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ERROR_EMIT]) {
-		kprintf("[error 0x%x] [error&0xff  0x%x] [(char)error 0x%x]\n",
+		printf("[error 0x%x] [error&0xff  0x%x] [(char)error 0x%x]\n",
 		       error, error & 0xff, (char) error);
 	}
 #endif
@@ -916,7 +916,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		hdr->tpdu_DCsref = tpcb ? htons(tpcb->tp_lref) : 0;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("DC case:\n");
+			printf("DC case:\n");
 			dump_buf(hdr, 6);
 		}
 #endif
@@ -931,7 +931,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		hdr->tpdu_DRreason = (char) error;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("DR case:\n");
+			printf("DR case:\n");
 			dump_buf(hdr, 7);
 		}
 #endif
@@ -947,7 +947,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 
 	default:
 		ASSERT(0);
-		kprintf("TP PANIC: bad dutype 0x%x\n", dutype);
+		printf("TP PANIC: bad dutype 0x%x\n", dutype);
 	}
 
 	if (tpcb)
@@ -969,7 +969,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 #endif
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("error_emit ER len 0x%x tpduli 0x%x\n", erlen, hdr->tpdu_li);
+			printf("error_emit ER len 0x%x tpduli 0x%x\n", erlen, hdr->tpdu_li);
 		}
 #endif
 
@@ -1001,7 +1001,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	} else {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("error_emit DR error %d tpduli %x\n", error, hdr->tpdu_li);
+			printf("error_emit DR error %d tpduli %x\n", error, hdr->tpdu_li);
 			dump_buf((char *) hdr, hdr->tpdu_li);
 		}
 #endif
@@ -1026,7 +1026,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 #endif
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ERROR_EMIT]) {
-				kprintf("before gen csum datalen 0x%x, csum_offset 0x%x\n",
+				printf("before gen csum datalen 0x%x, csum_offset 0x%x\n",
 				       datalen, csum_offset);
 			}
 #endif
@@ -1035,7 +1035,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("OUTPUT: tpcb %p, isop %p, so %p\n",
+			printf("OUTPUT: tpcb %p, isop %p, so %p\n",
 			       tpcb, tpcb->tp_npcb, tpcb->tp_sock);
 		}
 #endif
@@ -1058,12 +1058,12 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 		lcp->lcd_flags |= X25_DG_CIRCUIT;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("OUTPUT: dutype 0x%x channel 0x%x\n",
+			printf("OUTPUT: dutype 0x%x channel 0x%x\n",
 			       dutype, cons_channel);
 		}
 #endif
 #else
-		kprintf("TP panic! cons channel %p but not cons configured\n",
+		printf("TP panic! cons channel %p but not cons configured\n",
 		       cons_channel);
 #endif
 		return 0;
@@ -1071,9 +1071,9 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("tp_error_emit 1 sending DG: Laddr\n");
+			printf("tp_error_emit 1 sending DG: Laddr\n");
 			dump_addr(sisotosa(laddr));
-			kprintf("Faddr\n");
+			printf("Faddr\n");
 			dump_addr(sisotosa(faddr));
 		}
 #endif
@@ -1084,9 +1084,9 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	} else if (dgout_routine) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("tp_error_emit sending DG: Laddr\n");
+			printf("tp_error_emit sending DG: Laddr\n");
 			dump_addr(sisotosa(laddr));
-			kprintf("Faddr\n");
+			printf("Faddr\n");
 			dump_addr(sisotosa(faddr));
 		}
 #endif
@@ -1095,7 +1095,7 @@ tp_error_emit(error, sref, faddr, laddr, erdata, erlen, tpcb, cons_channel,
 	} else {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
-			kprintf("tp_error_emit DROPPING %p\n", m);
+			printf("tp_error_emit DROPPING %p\n", m);
 		}
 #endif
 		IncStat(ts_send_drop);

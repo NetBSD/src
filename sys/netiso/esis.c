@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.17 1996/10/10 23:21:58 christos Exp $	*/
+/*	$NetBSD: esis.c,v 1.18 1996/10/13 02:04:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -370,12 +370,12 @@ esis_rdoutput(inbound_shp, inbound_m, inbound_oidx, rd_dstnsap, rt)
 	esis_stat.es_rdsent++;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISOUTPUT]) {
-		kprintf(
+		printf(
 		    "esis_rdoutput: ifp %p (%s), ht %d, m %p, oidx %p\n",
 		    ifp, ifp->if_xname, esis_holding_time,
 		    inbound_m, inbound_oidx);
-		kprintf("\tdestination: %s\n", clnp_iso_addrp(rd_dstnsap));
-		kprintf("\tredirected toward:%s\n", clnp_iso_addrp(rd_gwnsap));
+		printf("\tdestination: %s\n", clnp_iso_addrp(rd_dstnsap));
+		printf("\tredirected toward:%s\n", clnp_iso_addrp(rd_gwnsap));
 	}
 #endif
 
@@ -416,7 +416,7 @@ esis_rdoutput(inbound_shp, inbound_m, inbound_oidx, rd_dstnsap, rt)
 #if 0
 		/* this should not happen: */
 		if ((nhop_sc->sc_flags & SNPA_IS) == 0) {
-			kprintf(
+			printf(
 		    "esis_rdoutput: next hop is not dst and not an IS\n");
 			m_freem(m0);
 			return;
@@ -582,7 +582,7 @@ esis_eshinput(m, shp)
 			}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ESISINPUT]) {
-			kprintf(
+			printf(
 			"esis_eshinput: esh: ht %d, naddr %d nsellength %d\n",
 			       ht, naddr, nsellength);
 		}
@@ -600,10 +600,10 @@ esis_eshinput(m, shp)
 					ESIS_EXTRACT_ADDR(nsap2, buf2);
 #ifdef ARGO_DEBUG
 					if (argo_debug[D_ESISINPUT]) {
-						kprintf(
+						printf(
 						"esis_eshinput: comparing %s ",
 						       clnp_iso_addrp(nsap));
-						kprintf("and %s\n",
+						printf("and %s\n",
 						       clnp_iso_addrp(nsap2));
 					}
 #endif
@@ -622,7 +622,7 @@ esis_eshinput(m, shp)
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISINPUT]) {
-		kprintf("esis_eshinput: nsap %s is %s\n",
+		printf("esis_eshinput: nsap %s is %s\n",
 		       clnp_iso_addrp(nsap), new_entry ? "new" : "old");
 	}
 #endif
@@ -661,7 +661,7 @@ esis_ishinput(m, shp)
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISINPUT]) {
-		kprintf("esis_ishinput: ish: ht %d\n", ht);
+		printf("esis_ishinput: ish: ht %d\n", ht);
 	}
 #endif
 	if (ESHonly)
@@ -685,7 +685,7 @@ esis_ishinput(m, shp)
 			break;
 
 		default:
-			kprintf("Unknown ISH option: %x\n", *buf);
+			printf("Unknown ISH option: %x\n", *buf);
 		}
 		ESIS_NEXT_OPTION(buf);
 	}
@@ -693,7 +693,7 @@ esis_ishinput(m, shp)
 			      ht, 0);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISINPUT]) {
-		kprintf("esis_ishinput: nsap %s is %s\n",
+		printf("esis_ishinput: nsap %s is %s\n",
 		   clnp_iso_addrp(nsap), new_entry ? "new" : "old");
 	}
 #endif
@@ -770,17 +770,17 @@ esis_rdinput(m0, shp)
 			break;
 
 		default:
-			kprintf("Unknown option in ESIS RD (0x%x)\n", buf[-1]);
+			printf("Unknown option in ESIS RD (0x%x)\n", buf[-1]);
 		}
 		ESIS_NEXT_OPTION(buf);
 	}
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISINPUT]) {
-		kprintf("esis_rdinput: rd: ht %d, da %s\n", ht,
+		printf("esis_rdinput: rd: ht %d, da %s\n", ht,
 		    clnp_iso_addrp(da));
 		if (net)
-			kprintf("\t: net %s\n", clnp_iso_addrp(net));
+			printf("\t: net %s\n", clnp_iso_addrp(net));
 	}
 #endif
 	/*
@@ -889,21 +889,21 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 	else if (type == ESIS_ISH)
 		esis_stat.es_ishsent++;
 	else {
-		kprintf("esis_shoutput: bad pdu type\n");
+		printf("esis_shoutput: bad pdu type\n");
 		return;
 	}
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ESISOUTPUT]) {
 		int             i;
-		kprintf("esis_shoutput: ifp %p (%s), %s, ht %d, to: [%d] ",
+		printf("esis_shoutput: ifp %p (%s), %s, ht %d, to: [%d] ",
 		    ifp, ifp->if_xname,
 		    type == ESIS_ESH ? "esh" : "ish",
 		    ht, sn_len);
 		for (i = 0; i < sn_len; i++)
-			kprintf("%x%c", *(sn_addr + i),
+			printf("%x%c", *(sn_addr + i),
 			    i < (sn_len - 1) ? ':' : ' ');
-		kprintf("\n");
+		printf("\n");
 	}
 #endif
 
@@ -965,7 +965,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 		}
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ESISOUTPUT]) {
-			kprintf("esis_shoutput: adding NSAP %s\n",
+			printf("esis_shoutput: adding NSAP %s\n",
 			    clnp_iso_addrp(&ia->ia_addr.siso_addr));
 		}
 #endif
@@ -984,7 +984,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 	else {
 		/* add suggested es config timer option to ISH */
 		if (M_TRAILINGSPACE(m) < 4) {
-			kprintf("esis_shoutput: extending packet\n");
+			printf("esis_shoutput: extending packet\n");
 			EXTEND_PACKET(m, m0, cp);
 		}
 		*cp++ = ESISOVAL_ESCT;
@@ -994,7 +994,7 @@ esis_shoutput(ifp, type, ht, sn_addr, sn_len, isoa)
 		m->m_len += 4;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ESISOUTPUT]) {
-			kprintf("m0 %p, m %p, data %p, len %d, cp %p\n",
+			printf("m0 %p, m %p, data %p, len %d, cp %p\n",
 			    m0, m, m->m_data, m->m_len, cp);
 		}
 #endif
@@ -1047,16 +1047,16 @@ isis_input(m0, va_alist)
 	if (argo_debug[D_ISISINPUT]) {
 		int             i;
 
-		kprintf("isis_input: pkt on ifp %p (%s): from:",
+		printf("isis_input: pkt on ifp %p (%s): from:",
 		    ifp, ifp->if_xname);
 		for (i = 0; i < 6; i++)
-			kprintf("%x%c", shp->snh_shost[i] & 0xff,
+			printf("%x%c", shp->snh_shost[i] & 0xff,
 			    (i < 5) ? ':' : ' ');
-		kprintf(" to:");
+		printf(" to:");
 		for (i = 0; i < 6; i++)
-			kprintf("%x%c", shp->snh_dhost[i] & 0xff, 
+			printf("%x%c", shp->snh_dhost[i] & 0xff, 
 			    (i < 5) ? ':' : ' ');
-		kprintf("\n");
+		printf("\n");
 	}
 #endif
 	esis_dl.sdl_alen = ifp->if_addrlen;
@@ -1076,7 +1076,7 @@ isis_input(m0, va_alist)
 			} else {
 #ifdef ARGO_DEBUG
 				if (argo_debug[D_ISISINPUT]) {
-					kprintf(
+					printf(
 				    "Error in sbappenaddr, mm = %p\n", mm);
 				}
 #endif
@@ -1117,7 +1117,7 @@ isis_output(m, va_alist)
 	if (ifa == 0) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISISOUTPUT]) {
-			kprintf("isis_output: interface not found\n");
+			printf("isis_output: interface not found\n");
 		}
 #endif
 		error = EINVAL;
@@ -1128,13 +1128,13 @@ isis_output(m, va_alist)
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISISOUTPUT]) {
 		u_char *cp = (u_char *) LLADDR(sdl), *cplim = cp + sn_len;
-		kprintf("isis_output: ifp %p (%s), to: ",
+		printf("isis_output: ifp %p (%s), to: ",
 		    ifp, ifp->if_xname);
 		while (cp < cplim) {
-			kprintf("%x", *cp++);
-			kprintf("%c", (cp < cplim) ? ':' : ' ');
+			printf("%x", *cp++);
+			printf("%c", (cp < cplim) ? ':' : ' ');
 		}
-		kprintf("\n");
+		printf("\n");
 	}
 #endif
 	bzero((caddr_t) & siso, sizeof(siso));
@@ -1147,7 +1147,7 @@ isis_output(m, va_alist)
 	if (error) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISISOUTPUT]) {
-			kprintf("isis_output: error from ether_output is %d\n",
+			printf("isis_output: error from ether_output is %d\n",
 			    error);
 		}
 #endif
