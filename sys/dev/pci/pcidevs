@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.297 2001/02/02 03:51:52 hubertf Exp $
+$NetBSD: pcidevs,v 1.298 2001/02/04 18:16:20 briggs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1306,6 +1306,7 @@ product MATROX G100_AGP		0x1001	MGA G100 AGP
 /* Motorola products */
 product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
+product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 
 /* Mylex products */
 product MYLEX RAID_V2	0x0001	DAC960 RAID (v2 interface)
