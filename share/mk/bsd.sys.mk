@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.64 2001/11/17 22:55:24 thorpej Exp $
+#	$NetBSD: bsd.sys.mk,v 1.65 2001/11/26 06:11:20 jmc Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -28,7 +28,10 @@ CFLAGS+=	-Wnetbsd-format-audit -Wno-format-extra-args
 .endif
 
 CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
-CFLAGS+=	${NOGCCERROR:U-Werror} ${CWARNFLAGS}
+.if !defined(NOGCCERROR)
+CFLAGS+= -Werror
+.endif
+CFLAGS+=	${CWARNFLAGS}
 LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}/usr/include}
 
 .if defined(MKSOFTFLOAT) && (${MKSOFTFLOAT} != "no")
