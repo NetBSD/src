@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.46 2002/12/19 10:30:39 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.47 2002/12/23 00:42:37 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -223,7 +223,7 @@ kdb_kbd_trap(tf)
 
 static int db_suspend_others(void);
 static void db_resume_others(void);
-static void ddb_suspend(struct trapframe *tf);
+void ddb_suspend(struct trapframe *tf);
 
 __cpu_simple_lock_t db_lock;
 db_regs_t *ddb_regp = 0;
@@ -261,7 +261,7 @@ db_resume_others(void)
 	__cpu_simple_unlock(&db_lock);
 }
 
-static void
+void
 ddb_suspend(struct trapframe *tf)
 {
 	volatile db_regs_t regs;
@@ -307,8 +307,9 @@ kdb_trap(type, tf)
 #ifdef MULTIPROCESSOR
 	if (!db_suspend_others()) {
 		ddb_suspend(tf);
-	} else {
-		curcpu()->ci_ddb_regs = ddb_regp = &dbreg;
+		return 1;
+	}
+	curcpu()->ci_ddb_regs = ddb_regp = &dbreg;
 #endif
 
 	/* Should switch to kdb`s own stack here. */
@@ -324,13 +325,14 @@ kdb_trap(type, tf)
 	db_active--;
 	splx(s);
 
+#ifdef MULTIPROCESSOR
+	*(struct frame *)tf->tf_out[6] = dbreg.db_fr;
+	*tf = dbreg.db_tf;
+	curcpu()->ci_ddb_regs = ddb_regp = 0;
+	db_resume_others();
+#else
 	*(struct frame *)tf->tf_out[6] = ddb_regs.db_fr;
 	*tf = ddb_regs.db_tf;
-
-#ifdef MULTIPROCESSOR
-		db_resume_others();
-		curcpu()->ci_ddb_regs = ddb_regp = 0;
-	}
 #endif
 
 	return (1);
