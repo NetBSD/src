@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.13 2000/10/04 06:20:05 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.14 2000/10/04 06:51:12 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 
 	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAITOK);
 	memset(ifv, 0, sizeof(struct ifvlan));
-	ifp = &ifv->ifv_ec.ec_if;
+	ifp = &ifv->ifv_if;
 	LIST_INIT(&ifv->ifv_mc_listhead);
 
 	s = splnet();
@@ -640,12 +640,10 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 static void
 vlan_start(struct ifnet *ifp)
 {
-	struct ifvlan *ifv;
-	struct ifnet *p;
+	struct ifvlan *ifv = ifp->if_softc;
+	struct ifnet *p = ifv->ifv_p;
 	struct mbuf *m;
 
-	ifv = ifp->if_softc;
-	p = ifv->ifv_p;
 	ifp->if_flags |= IFF_OACTIVE;
 
 	for (;;) {
@@ -718,7 +716,7 @@ vlan_start(struct ifnet *ifp)
 	
 		IF_ENQUEUE(&p->if_snd, m);
 		if ((p->if_flags & IFF_OACTIVE) == 0) {
-			p->if_start(p);
+			(*p->if_start)(p);
 			ifp->if_opackets++;
 		}
 	}
@@ -779,7 +777,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	    (ifv->ifv_if.if_flags & (IFF_UP|IFF_RUNNING)) !=
 	     (IFF_UP|IFF_RUNNING)) {
 		m_free(m);
-		ifp->if_data.ifi_noproto++;
+		ifp->if_noproto++;
 		return;
 	}
 
