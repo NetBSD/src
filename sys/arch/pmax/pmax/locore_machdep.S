@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.7 1998/08/25 01:55:40 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.8 1998/09/11 16:46:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -430,6 +430,8 @@ ALEAF(_splx)
 	nop					# 3 ins to disable
 	j	ra
 	nop
+	.globl	_C_LABEL(splx_end)
+_C_LABEL(splx_end):
 END(splx)
 /*
  * Interrupt counters for vmstat.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1998/05/19 19:00:16 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1998/09/11 16:46:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 1998/05/19 19:00:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.41 1998/09/11 16:46:33 jonathan Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1493,7 +1493,7 @@ pmap_zero_page(phys)
 #endif
 	
 #if defined(MIPS3) && defined(MIPS3_FLUSH)
-	if (CPUISMIPS3) {
+	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache();*/
 		MachFlushDCache(phys, NBPG);
@@ -1534,7 +1534,7 @@ pmap_zero_page(phys)
 	 * XXX  Do we need to also invalidate any cache lines matching
 	 *      the destination as well?
 	 */
-	if (CPUISMIPS3) {
+	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache();*/
 		MachFlushDCache(phys, NBPG);
@@ -1576,7 +1576,7 @@ pmap_copy_page(src, dst)
 	 * XXX invalidate any cached lines of the destination PA
 	 *     here also?
 	 */
-	if (CPUISMIPS3) {
+	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache(); */
 		MachFlushDCache(src, NBPG);
@@ -1855,7 +1855,8 @@ pmap_enter_pv(pmap, va, pa, npte)
 					/*
 					 * Check cache aliasing incompatibility
 					 */
-					if((npv->pv_va & mips_CacheAliasMask) != (va & mips_CacheAliasMask)) {
+					if ((npv->pv_va & mips_CacheAliasMask)
+					    != (va & mips_CacheAliasMask)) {
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
 						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
