@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.45 2003/01/15 21:54:02 bouyer Exp $	*/
+/*	$NetBSD: i82586.c,v 1.46 2003/01/27 10:35:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,12 +144,12 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.45 2003/01/15 21:54:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.46 2003/01/27 10:35:08 bouyer Exp $");
 
 #include "bpfilter.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.45 2003/01/15 21:54:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.46 2003/01/27 10:35:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1229,11 +1229,12 @@ i82586_start(ifp)
 			(sc->memcopyout)(sc, mtod(m,caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 		}
-		if (len < ETHER_MIN_LEN) {
+		len = m0->m_pkthdr.len;
+		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {
 			(sc->memcopyout)(sc, padbuf, buffer,
-			    ETHER_MIN_LEN - len);
-			buffer += ETHER_MIN_LEN - len;
-			len = ETHER_MIN_LEN;
+			    ETHER_MIN_LEN - ETHER_CRC_LEN - len);
+			buffer += ETHER_MIN_LEN -ETHER_CRC_LEN - len;
+			len = ETHER_MIN_LEN - ETHER_CRC_LEN;
 		}
 		m_freem(m0);
 
