@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2003/02/01 14:48:17 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2003/05/09 00:16:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -271,14 +271,14 @@ main(void)
 		/* don't print "booting..." again */
 		bootit(names[currname], 0, 0);
 		/* since it failed, try switching bootfile. */
-		currname = ++currname % NUMNAMES;
+		currname = (currname + 1) % NUMNAMES;
 
 		/* now try the second of a pair, presumably the .gz
 		   version. */
 		/* XXX duped code sucks. */
 		bootit(names[currname], 0, 1);
 		/* since it failed, try switching bootfile. */
-		currname = ++currname % NUMNAMES;
+		currname = (currname + 1) % NUMNAMES;
 	}
 }
 
