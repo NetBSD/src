@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 2001/02/14 17:57:31 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 2001/05/15 08:54:56 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -802,8 +802,7 @@ sw1:	mov	#1, r1
 
 1:	mov.l	XLqs, r0
 	mov	r2, r13
-	shll	r2
-	shll	r2
+	shll2	r2
 	shll	r2
 	add	r2, r0		/* r0 = &qs[i] */
 
