@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.14 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.sparc,v 1.15 2003/12/07 19:12:31 christos Exp $
 #
 # Device majors for sparc
 #
@@ -11,24 +11,24 @@ device-major	ctty		char 2
 device-major	mem		char 3
 device-major	ses		char 4			ses
 
-device-major	swap		char 7   block 4
+device-major	swap		char 7	 block 4
 
-device-major	xy		char 9   block 3	xy
+device-major	xy		char 9	 block 3	xy
 
 device-major	zstty		char 12			zstty
 device-major	ms		char 13			ms
 
 device-major	log		char 16
-device-major	sd		char 17  block 7	sd
-device-major	st		char 18  block 11	st
+device-major	sd		char 17	 block 7	sd
+device-major	st		char 18	 block 11	st
 device-major	ch		char 19			ch
 device-major	pts		char 20			pty
 device-major	ptc		char 21			pty
 device-major	fb		char 22			fb
-device-major	ccd		char 23  block 9	ccd
+device-major	ccd		char 23	 block 9	ccd
 device-major	filedesc	char 24
 device-major	ipl		char 25			ipfilter
-# sparc64: device-major	wd	char 26  block 12	wd
+# sparc64: device-major wd	char 26	 block 12	wd
 device-major	bwtwo		char 27			bwtwo
 
 device-major	kbd		char 29			kbd
@@ -40,23 +40,22 @@ device-major	lpt		char 37			lpt
 
 device-major	cgfour		char 39			cgfour
 
-device-major	xd		char 42  block 10	xd
+device-major	xd		char 42	 block 10	xd
 device-major	svr4_net	char 43			compat_svr4
 
 device-major	vcoda		char 47			vcoda
 
-device-major	fd		char 54  block 16	fd
+device-major	fd		char 54	 block 16	fd
 device-major	cgthree		char 55			cgthree
 
-device-major	cd		char 58  block 18	cd
+device-major	cd		char 58	 block 18	cd
 device-major	ss		char 59			ss
 device-major	uk		char 60			uk
-device-major	md		char 61  block 5	md
+device-major	md		char 61	 block 5	md
 
 device-major	cgeight		char 64			cgeight
 
 device-major	cgsix		char 67			cgsix
-
 device-major	audio		char 69			audio
 device-major	openprom	char 70
 device-major	tctrl		char 71			tctrl
