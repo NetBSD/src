@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.106 2003/03/18 07:53:56 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.107 2003/03/20 14:11:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.106 2003/03/18 07:53:56 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.107 2003/03/20 14:11:47 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1510,7 +1510,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct ufsmount *ump;
 	daddr_t daddr;
 	dev_t dev;
-	int i, error, retries;
+	int error, retries;
 	struct timespec ts;
 
 	ump = VFSTOUFS(mp);
@@ -1638,42 +1638,18 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		goto again;
 	}
 	ip->i_din.ffs_din = *dip;
+	brelse(bp);
 
-	ip->i_ffs_effnlink = ip->i_ffs_nlink;
-	ip->i_lfs_effnblks = ip->i_ffs_blocks;
-	ip->i_lfs_osize = ip->i_ffs_size;
 	if (fs->lfs_version > 1) {
 		ip->i_ffs_atime = ts.tv_sec;
 		ip->i_ffs_atimensec = ts.tv_nsec;
 	}
-	brelse(bp);
 
-	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
-	for (i = 0; i < NDADDR; i++)
-		if (ip->i_ffs_db[i] != 0)
-			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
+	lfs_vinit(mp, vp);
 
-	/*
-	 * Initialize the vnode from the inode, check for aliases.  In all
-	 * cases re-init ip, the underlying vnode/inode may have changed.
-	 */
-	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
-#ifdef DIAGNOSTIC
-	if (vp->v_type == VNON) {
-		panic("lfs_vget: ino %d is type VNON! (ifmt %o)",
-		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
-	}
-#endif
-	/*
-	 * Finish inode initialization now that aliasing has been resolved.
-	 */
-
-	genfs_node_init(vp, &lfs_genfsops);
-	ip->i_devvp = ump->um_devvp;
-	VREF(ip->i_devvp);
 	*vpp = vp;
 
-	uvm_vnp_setsize(vp, ip->i_ffs_size);
+	KASSERT(VOP_ISLOCKED(vp));
 
 	return (0);
 }
@@ -1998,4 +1974,70 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	}
 	UVMHIST_LOG(ubchist, "returning 0", 0,0,0,0);
 	return (0);
+}
+
+/*
+ * finish vnode/inode initialization.
+ * used by lfs_vget and lfs_fastvget.
+ */
+void
+lfs_vinit(struct mount *mp, struct vnode *vp)
+{
+	struct inode *ip = VTOI(vp);
+	struct ufsmount *ump = VFSTOUFS(mp);
+	int i;
+
+	ip->i_ffs_effnlink = ip->i_ffs_nlink;
+	ip->i_lfs_effnblks = ip->i_ffs_blocks;
+	ip->i_lfs_osize = ip->i_ffs_size;
+
+	/*
+	 * Initialize the vnode from the inode, check for aliases.  In all
+	 * cases re-init ip, the underlying vnode/inode may have changed.
+	 */
+	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
+
+	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
+	if (vp->v_type != VLNK ||
+	    VTOI(vp)->i_ffs_size >= vp->v_mount->mnt_maxsymlinklen) {
+		struct lfs *fs = ump->um_lfs;
+#ifdef DIAGNOSTIC
+		for (i = (ip->i_ffs_size + fs->lfs_bsize - 1) >> fs->lfs_bshift;
+		    i < NDADDR; i++) {
+			if (ip->i_ffs_db[i] != 0) {
+inconsistent:
+				lfs_dump_dinode(&ip->i_din.ffs_din);
+				panic("inconsistent inode");
+			}
+		}
+		for ( ; i < NDADDR + NIADDR; i++) {
+			if (ip->i_ffs_ib[i - NDADDR] != 0) {
+				goto inconsistent;
+			}
+		}
+#endif /* DIAGNOSTIC */
+		for (i = 0; i < NDADDR; i++)
+			if (ip->i_ffs_db[i] != 0)
+				ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
+	}
+
+#ifdef DIAGNOSTIC
+	if (vp->v_type == VNON) {
+		printf("lfs_vinit: ino %d is type VNON! (ifmt=%o)\n",
+		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
+		lfs_dump_dinode(&ip->i_din.ffs_din);
+#ifdef DDB
+		Debugger();
+#endif /* DDB */
+	}
+#endif /* DIAGNOSTIC */
+
+	/*
+	 * Finish inode initialization now that aliasing has been resolved.
+	 */
+
+	ip->i_devvp = ump->um_devvp;
+	VREF(ip->i_devvp);
+	genfs_node_init(vp, &lfs_genfsops);
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
 }
