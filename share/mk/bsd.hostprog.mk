@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.7 2000/03/07 20:55:05 veego Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.8 2000/10/31 10:49:02 itojun Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -28,6 +28,7 @@ LIBDES?=	/usr/lib/libdes.a
 LIBEDIT?=	/usr/lib/libedit.a
 LIBGCC?=	/usr/lib/libgcc.a
 LIBGNUMALLOC?=	/usr/lib/libgnumalloc.a
+LIBINTL?=	/usr/lib/libintl.a
 LIBIPSEC?=	/usr/lib/libipsec.a
 LIBKDB?=	/usr/lib/libkdb.a
 LIBKRB?=	/usr/lib/libkrb.a
