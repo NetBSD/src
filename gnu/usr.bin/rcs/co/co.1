@@ -1,4 +1,4 @@
-.\"	$NetBSD: co.1,v 1.4 1996/10/15 06:59:56 veego Exp $
+.\"	$NetBSD: co.1,v 1.5 2002/02/08 01:26:50 ross Exp $
 .\"
 .de Id
 .ds Rv \\$3
@@ -397,7 +397,7 @@ and
 are the ends of two branches that have
 .I rev2
 as a common ancestor.  If
-.IR rev1 < rev2 < rev3
+.IR rev1 \*[Lt] rev2 \*[Lt] rev3
 on the same branch,
 joining generates a new revision which is like
 .I rev3,
@@ -724,7 +724,7 @@ rcsfile(5)
 .br
 Walter F. Tichy,
 \*r\*-A System for Version Control,
-.I "Software\*-Practice & Experience"
+.I "Software\*-Practice \*[Am] Experience"
 .BR 15 ,
 7 (July 1985), 637-654.
 .SH LIMITS
@@ -733,6 +733,6 @@ Links to the \*r and working files are not preserved.
 There is no way to selectively suppress the expansion of keywords, except
 by writing them differently.  In nroff and troff, this is done by embedding the
 null-character
-.B \e&
+.B \e\*[Am]
 into the keyword.
 .br

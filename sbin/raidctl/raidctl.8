@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.28 2002/01/21 11:40:20 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.29 2002/02/08 01:30:45 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1311,7 +1311,7 @@ raidctl -i raid0
 .It
 Get the default label for the RAID set:
 .Bd -literal -offset indent
-disklabel raid0 > /tmp/label
+disklabel raid0 \*[Gt] /tmp/label
 .Ed
 .Pp
 .It

@@ -1,4 +1,4 @@
-.\"	$NetBSD: utrace.2,v 1.6 2001/09/16 02:13:32 wiz Exp $
+.\"	$NetBSD: utrace.2,v 1.7 2002/02/08 01:28:23 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,11 +42,11 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/param.h>
-.Fd #include <sys/time.h>
-.Fd #include <sys/uio.h>
-.Fd #include <sys/ktrace.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]sys/time.h\*[Gt]
+.Fd #include \*[Lt]sys/uio.h\*[Gt]
+.Fd #include \*[Lt]sys/ktrace.h\*[Gt]
 .Ft int
 .Fn utrace "const char *label" "void *addr" "size_t len"
 .Sh DESCRIPTION

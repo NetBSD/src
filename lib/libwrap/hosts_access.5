@@ -334,7 +334,7 @@ in.tftpd: LOCAL, .my.domain
 .in +3
 .nf
 in.tftpd: ALL: spawn (/some/where/safe_finger -l @%h | \\
-	/usr/ucb/mail -s %d-%h root) &
+	/usr/ucb/mail -s %d-%h root) \*[Am]
 .fi
 .PP
 (The safe_finger command can be gotten from the tcp_wrappers package and
@@ -358,7 +358,7 @@ tftp example. The result is an excellent early-warning system.
 An error is reported when a syntax error is found in a host access
 control rule; when the length of an access control rule exceeds the
 capacity of an internal buffer; when an access control rule is not
-terminated by a newline character; when the result of %<letter>
+terminated by a newline character; when the result of %\*[Lt]letter\*[Gt]
 expansion would overflow an internal buffer; when a system call fails
 that shouldn\'t.  All problems are reported via the syslog daemon.
 .SH FILES
@@ -390,4 +390,4 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513,
 5600 MB Eindhoven, The Netherlands
 \" @(#) hosts_access.5 1.20 95/01/30 19:51:46
-\"	$NetBSD: hosts_access.5,v 1.11 2002/01/15 02:54:31 wiz Exp $
+\"	$NetBSD: hosts_access.5,v 1.12 2002/02/08 01:28:25 ross Exp $
