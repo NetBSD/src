@@ -74,8 +74,8 @@ struct fwohci_pkt {
 	int	fp_hlen;
 	int	fp_dlen;
 	u_int32_t fp_hdr[4];
-	int	fp_iovcnt;
-	struct iovec fp_iov[8];
+	struct uio fp_uio;
+	struct iovec fp_iov[6];
 	u_int32_t *fp_trail;
 	struct mbuf *fp_m;
 	void (*fp_callback)(struct device *, struct mbuf *);
@@ -93,10 +93,10 @@ struct fwohci_handler {
 
 struct fwohci_ctx {
 	int	fc_ctx;
-	int	fc_ppbmode;	/* packet per buffer */
+	int	fc_isoch;
 	int	fc_bufcnt;
 	u_int32_t	*fc_branch;
-	TAILQ_HEAD(fwohci_buf_s, fwohci_buf) fc_buf, fc_busy;
+	TAILQ_HEAD(fwohci_buf_s, fwohci_buf) fc_buf;
 	LIST_HEAD(, fwohci_handler) fc_handler;
 };
 
@@ -127,13 +127,14 @@ struct fwohci_softc {
 	int sc_dnseg;
 	bus_dmamap_t sc_ddmamap;
 	struct fwohci_desc *sc_desc;
-	struct fwohci_desc *sc_descfree;
+	u_int8_t *sc_descmap;
 	int sc_descsize;
 	int sc_isoctx;
 
 	void *sc_shutdownhook;
 	void *sc_powerhook;
 	struct callout sc_selfid_callout;
+	int sc_selfid_fail;
 
 	struct fwohci_ctx *sc_ctx_arrq;
 	struct fwohci_ctx *sc_ctx_arrs;

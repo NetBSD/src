@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394.h,v 1.2 2000/11/14 11:14:56 onoe Exp $	*/
+/*	$NetBSD: if_ieee1394.h,v 1.3 2000/11/20 12:12:19 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
 
 /* hardware address information for arp / nd */
 struct ieee1394_hwaddr {
-	u_int8_t	iha_uid[8];
-	u_int8_t	iha_maxrec;
-	u_int8_t	iha_speed;
-	u_int8_t	iha_offset[6];
+	u_int8_t	iha_uid[8];		/* node unique ID */
+	u_int8_t	iha_maxrec;		/* max_rec in the config ROM */
+	u_int8_t	iha_speed;		/* min of link/PHY speed */
+	u_int8_t	iha_offset[6];		/* unicast FIFO address */
 };
 
 /* pseudo header */
@@ -57,15 +57,16 @@ struct ieee1394_header {
 
 /* unfragment encapsulation header */
 struct ieee1394_unfraghdr {
-	u_int16_t	iuh_ft;
-	u_int16_t	iuh_etype;
+	u_int16_t	iuh_ft;			/* fragment type == 0 */
+	u_int16_t	iuh_etype;		/* ether_type */
 };
 
 /* fragmented encapsulation header */
 struct ieee1394_fraghdr {
-	u_int16_t	ifh_ft_size;
-	u_int16_t	ifh_etype_off;
-	u_int16_t	ifh_dgl;
+	u_int16_t	ifh_ft_size;		/* fragment type, data size-1 */
+	u_int16_t	ifh_etype_off;		/* etype for first fragment */
+						/* offset for subseq frag */
+	u_int16_t	ifh_dgl;		/* datagram label */
 	u_int16_t	ifh_reserved;
 };
 
@@ -87,6 +88,7 @@ struct ieee1394_reass_pkt {
 	u_int16_t	rp_off;
 	u_int16_t	rp_dgl;
 	u_int16_t	rp_len;
+	u_int16_t	rp_ttl;
 };
 
 struct ieee1394_reassq {
@@ -107,5 +109,7 @@ void ieee1394_ifattach(struct ifnet *, const struct ieee1394_hwaddr *);
 void ieee1394_ifdetach(struct ifnet *);
 int  ieee1394_ioctl(struct ifnet *, u_long, caddr_t);
 struct mbuf * ieee1394_fragment(struct ifnet *, struct mbuf *, int, u_int16_t);
+void ieee1394_drain(struct ifnet *);
+void ieee1394_watchdog(struct ifnet *);
 
 #endif /* _NET_IF_IEEE1394_H_ */
