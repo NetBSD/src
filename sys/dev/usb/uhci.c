@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.130 2000/12/18 15:55:30 tsutsui Exp $	*/
+/*	$NetBSD: uhci.c,v 1.131 2000/12/29 01:24:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,8 +42,8 @@
  * USB Universal Host Controller driver.
  * Handles e.g. PIIX3 and PIIX4.
  *
- * UHCI spec: http://www.intel.com/design/usb/uhci11d.pdf
- * USB spec: http://www.usb.org/developers/data/usb11.pdf
+ * UHCI spec: http://developer.intel.com/design/USB/UHCI11D.htm
+ * USB spec: http://www.usb.org/developers/data/usbspec.zip
  * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
  *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
