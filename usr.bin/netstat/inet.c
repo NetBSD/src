@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.59 2003/09/04 09:23:38 itojun Exp $	*/
+/*	$NetBSD: inet.c,v 1.60 2003/10/17 22:28:11 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.59 2003/09/04 09:23:38 itojun Exp $");
+__RCSID("$NetBSD: inet.c,v 1.60 2003/10/17 22:28:11 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,6 +384,7 @@ ip_stats(off, name)
 	ps(ips_badvers, "\t%llu with incorrect version number\n");
 	p(ips_fragments, "\t%llu fragment%s received\n");
 	p(ips_fragdropped, "\t%llu fragment%s dropped (dup or out of space)\n");
+	p(ips_rcvmemdrop, "\t%llu fragment%s dropped (out of ipqent)\n");
 	p(ips_badfrags, "\t%llu malformed fragment%s dropped\n");
 	p(ips_fragtimeout, "\t%llu fragment%s dropped after timeout\n");
 	p(ips_reassembled, "\t%llu packet%s reassembled ok\n");
@@ -395,6 +396,7 @@ ip_stats(off, name)
 		putchar('\n');
 	p(ips_cantforward, "\t%llu packet%s not forwardable\n");
 	p(ips_redirectsent, "\t%llu redirect%s sent\n");
+	p(ips_nogif, "\t%llu packet%s no matching gif found\n");
 	p(ips_localout, "\t%llu packet%s sent from this host\n");
 	p(ips_rawout, "\t%llu packet%s sent with fabricated ip header\n");
 	p(ips_odropped, "\t%llu output packet%s dropped due to no bufs, etc.\n");
