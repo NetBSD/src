@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.3 1999/01/15 22:26:43 castor Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.4 1999/01/16 08:45:53 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 #include "opt_ddb.h"
 #include <mips/asm.h>
-#include <mips/cpuarch.h>
+#include <mips/cpuregs.h>
 #include <machine/param.h>
 
 #include "assym.h"
@@ -168,6 +168,7 @@ mips1_SlowFault:
  *
  * trapframe is now pointed by 5th arg {
  *  	register_t cf_args[4 + 1];
+ *	register_t cf_pad;
  *  	register_t cf_sp;
  *  	register_t cf_ra;
  *  	mips_reg_t tf_regs[17];		- trapframe begins here
@@ -179,8 +180,11 @@ mips1_SlowFault:
  */
 NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	.set	noat
+	.mask	0x80000000, -4
+	subu	sp, sp, KERNFRAME_SIZ
 #ifdef DDB
 	la	k0, _C_LABEL(kdbaux)
+	addu	k1, sp, KERNFRAME_SIZ	# Avoid violating conventions
 	sw	s0, SF_REG_S0(k0)
 	sw	s1, SF_REG_S1(k0)
 	sw	s2, SF_REG_S2(k0)
@@ -189,12 +193,10 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	sw	s5, SF_REG_S5(k0)
 	sw	s6, SF_REG_S6(k0)
 	sw	s7, SF_REG_S7(k0)
-	sw	sp, SF_REG_SP(k0)
+	sw	k1, SF_REG_SP(k0)
 	sw	s8, SF_REG_S8(k0)
 	sw	gp, SF_REG_RA(k0)
 #endif
-	.mask	0x80000000, (CALLFRAME_RA - KERNFRAME_SIZ)
-	subu	sp, sp, KERNFRAME_SIZ
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8, sp and gp because
@@ -1077,27 +1079,27 @@ END(mips1_TLBFlushAddr)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBUpdate)
-	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	mfc0	t0, MIPS_COP_0_TLB_HI		# Save current PID
-	nop				# 2 cycles before intr disabled
+	nop					# 2 cycles before intr disabled
 	mtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	nop
-	tlbp				# Probe for the entry.
+	tlbp					# Probe for the entry.
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
 	mtc0	a1, MIPS_COP_0_TLB_LOW		# init low reg.
-	bltz	v0, 1f			# index < 0 => !found
+	bltz	v0, 1f				# index < 0 => !found
 	sra	v0, v0, MIPS1_TLB_INDEX_SHIFT	# convert index to regular num
 	b	2f
-	tlbwi				# update slot found
+	tlbwi					# update slot found
 1:
 	mtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	nop
-	tlbwr				# enter into a random slot
+	tlbwr					# enter into a random slot
 2:
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBUpdate)
 
 /*--------------------------------------------------------------------------
@@ -1117,18 +1119,18 @@ END(mips1_TLBUpdate)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBFind)
-	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 	nop
 	mtc0	a0, MIPS_COP_0_TLB_HI		# Set up entry high.
 	nop
-	tlbp				# Probe for the entry.
+	tlbp					# Probe for the entry.
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# See what we got
 	nop
-	bltz	v0, 1f			# not found
+	bltz	v0, 1f				# not found
 	nop
-	tlbr				# read TLB
+	tlbr					# read TLB
 	mfc0	t1, MIPS_COP_0_TLB_HI		# See what we got
 	mfc0	t2, MIPS_COP_0_TLB_LOW		# See what we got
 	sw	t1, 0(a1)
@@ -1137,7 +1139,7 @@ LEAF(mips1_TLBFind)
 1:
 	mtc0	t0, MIPS_COP_0_TLB_HI		# Restore current PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBFind)
 
 /*--------------------------------------------------------------------------
@@ -1156,14 +1158,14 @@ END(mips1_TLBFind)
  *--------------------------------------------------------------------------
  */
 LEAF(mips1_TLBRead)
-	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
+	mfc0	v1, MIPS_COP_0_STATUS		# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	mfc0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 
 	sll	a0, a0, MIPS1_TLB_INDEX_SHIFT
 	mtc0	a0, MIPS_COP_0_TLB_INDEX	# Set the index register
 	nop
-	tlbr				# Read from the TLB
+	tlbr					# Read from the TLB
 	mfc0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	mfc0	t3, MIPS_COP_0_TLB_LOW		# fetch the low entry
 	sw	t2, 0(a1)
@@ -1171,7 +1173,7 @@ LEAF(mips1_TLBRead)
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS	# Restore the status register
+	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
 END(mips1_TLBRead)
 
 #if 0
@@ -1573,13 +1575,11 @@ LEAF(mips1_proc_trampoline)
 	jal	ra, s0
 	move	a0, s1
 	.set	noat
-	lw	a1, _C_LABEL(curpcb)
-	nop
-	addiu	a1, a1, USPACE - FRAME_SIZ
+	addiu	a1, sp, CALLFRAME_SIZ	# a1 points exception frame
 	lw	a0, FRAME_SR(a1)
 	lw	t0, FRAME_MULLO(a1)
 	lw	t1, FRAME_MULHI(a1)
-	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
+	mtc0	a0, MIPS_COP_0_STATUS	# this should disable interrupts
 	mtlo	t0
 	mthi	t1
 	nop
@@ -1636,7 +1636,7 @@ END(mips1_proc_trampoline)
  */
 LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	li	s0, MIPS_KSEG2_START
-	blt	a0, s0, 9f			# don't brother proc0/nullproc
+	blt	a0, s0, 9f			# don't bother proc0
 	sll	a3, a3, MIPS1_TLB_PID_SHIFT	# a3 = aligned PID
 
 	ori	a1, MIPS1_PG_G			# PG_G Global
@@ -1647,12 +1647,12 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	tlbp					# probe for entry
 	mfc0	s0, MIPS_COP_0_TLB_INDEX	# see if we found it
 	nop
-	bltz	s0, 1f				# not found
-	li	s0, MIPS_KSEG0_START
+	bltz	s0, 1f
+	li	s0, MIPS_KSEG0_START		# found, then
 	mtc0	s0, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
-	tlbwi
+	tlbwi					# purge it out of TLB
 	nop
 	mtc0	a0, MIPS_COP_0_TLB_HI		# set 1st VPN again
 1:
@@ -1667,8 +1667,8 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	tlbp					# probe for entry
 	mfc0	s0, MIPS_COP_0_TLB_INDEX	# see if we found it
 	nop
-	bltz	s0, 1f				# not found
-	li	s0, MIPS_KSEG0_START
+	bltz	s0, 1f	
+	li	s0, MIPS_KSEG0_START		# found, then
 	mtc0	s0, MIPS_COP_0_TLB_HI
 	mtc0	zero, MIPS_COP_0_TLB_LOW
 	nop
@@ -1682,24 +1682,10 @@ LEAF_NOPROFILE(mips1_cpu_switch_resume)
 	nop
 	tlbwi					# set TLB entry #1
 9:
-	mtc0	a3, MIPS_COP_0_TLB_HI		# set PID
+	mtc0	a3, MIPS_COP_0_TLB_HI		# set the new PID
 
-	lw	v0, U_PCB_CONTEXT+SF_REG_ST(a0)
-	lw	ra, U_PCB_CONTEXT+SF_REG_RA(a0)
-	lw	s0, U_PCB_CONTEXT+SF_REG_S0(a0)
-	lw	s1, U_PCB_CONTEXT+SF_REG_S1(a0)
-	lw	s2, U_PCB_CONTEXT+SF_REG_S2(a0)
-	lw	s3, U_PCB_CONTEXT+SF_REG_S3(a0)
-	lw	s4, U_PCB_CONTEXT+SF_REG_S4(a0)
-	lw	s5, U_PCB_CONTEXT+SF_REG_S5(a0)
-	lw	s6, U_PCB_CONTEXT+SF_REG_S6(a0)
-	lw	s7, U_PCB_CONTEXT+SF_REG_S7(a0)
-	lw	sp, U_PCB_CONTEXT+SF_REG_SP(a0)
-	lw	s8, U_PCB_CONTEXT+SF_REG_S8(a0)
-	nop
-	mtc0	v0, MIPS_COP_0_STATUS
 	j	ra
-	li	v0, 1				# possible return to 'savectx()'
+	nop
 END(mips1_cpu_switch_resume)
 
 	.data
@@ -1723,22 +1709,22 @@ mips1_excausesw:
 	.word _C_LABEL(mips1_KernGenException)	# 13 r3k reserved
 	.word _C_LABEL(mips1_KernGenException)	# 14 r3k reserved
 	.word _C_LABEL(mips1_KernGenException)	# 15 r3k reserved
-	.word _C_LABEL(mips1_KernGenException)	# 16 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 17 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 18 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 19 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 20 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 21 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 22 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 23 watch exception
-	.word _C_LABEL(mips1_KernGenException)	# 24 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 25 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 26 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 27 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 28 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 29 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 30 reserved
-	.word _C_LABEL(mips1_KernGenException)	# 31 v. coherence exception data
+	.word _C_LABEL(mips1_KernGenException)	# 16 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 17 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 18 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 19 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 20 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 21 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 22 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 23 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 24 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 25 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 26 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 27 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 28 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 29 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 30 never happens w/ MIPS1
+	.word _C_LABEL(mips1_KernGenException)	# 31 never happens w/ MIPS1
 	#####
 	##### The user exception handlers.
 	#####
