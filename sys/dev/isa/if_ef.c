@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.7 2000/06/28 16:27:54 mrg Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.8 2001/01/22 22:28:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -502,6 +502,8 @@ ef_attach(parent, self, aux)
 	sc->hwreset = ef_reset;
 	sc->chan_attn = ef_atten;
 	sc->intrhook = ef_intrhook;
+
+	sc->ie_bus_barrier = NULL;
 
 	sc->memcopyin = ef_copyin;
 	sc->memcopyout = ef_copyout;

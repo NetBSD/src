@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.17 2000/07/09 20:57:47 pk Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.18 2001/01/22 22:28:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -297,6 +297,8 @@ extern	void myetheraddr(u_char *);	/* should be elsewhere */
 	sc->hwinit = ie_obrun;
 	sc->memcopyout = ie_obio_memcopyout;
 	sc->memcopyin = ie_obio_memcopyin;
+
+	sc->ie_bus_barrier = NULL;
 	sc->ie_bus_read16 = ie_obio_read16;
 	sc->ie_bus_write16 = ie_obio_write16;
 	sc->ie_bus_write24 = ie_obio_write24;
