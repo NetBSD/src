@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.196 2000/02/22 15:43:54 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.197 2000/02/26 00:17:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2000/02/22 15:43:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2000/02/26 00:17:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2072,7 +2072,15 @@ alpha_pa_access(pa)
 			continue;
 		return (mem_clusters[i].size & PAGE_MASK);	/* prot */
 	}
-	return (PROT_NONE);
+
+	/*
+	 * Address is not a memory address.  If we're secure, disallow
+	 * access.  Otherwise, grant read/write.
+	 */
+	if (securelevel > 0)
+		return (PROT_NONE);
+	else
+		return (PROT_READ | PROT_WRITE);
 }
 
 /* XXX XXX BEGIN XXX XXX */
