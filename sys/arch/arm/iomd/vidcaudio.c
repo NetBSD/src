@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.4 2001/11/27 01:03:53 thorpej Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.5 2002/02/18 12:55:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -37,6 +37,9 @@
  */
 
 #include <sys/param.h>	/* proc.h */
+
+__RCSID("$NetBSD: vidcaudio.c,v 1.5 2002/02/18 12:55:47 bjh21 Exp $");
+
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
 #include <sys/proc.h>	/* device calls */
@@ -51,6 +54,7 @@
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 
+#include <arm/iomd/vidcaudiovar.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
 #include <arm/iomd/vidc.h>
@@ -66,12 +70,12 @@ struct audio_general {
 	vm_offset_t silence;
 	irqhandler_t ih;
 
-	void (*intr) ();
+	void (*intr) (void *);
 	void *arg;
 
 	vm_offset_t next_cur;
 	vm_offset_t next_end;
-	void (*next_intr) ();
+	void (*next_intr) (void *);
 	void *next_arg;
 
 	int buffer;
@@ -93,7 +97,7 @@ int  vidcaudio_open	__P((void *addr, int flags));
 void vidcaudio_close	__P((void *addr));
 
 int vidcaudio_intr	__P((void *arg));
-int vidcaudio_dma_program	__P((vm_offset_t cur, vm_offset_t end, void (*intr)(), void *arg));
+int vidcaudio_dma_program	__P((vm_offset_t cur, vm_offset_t end, void (*intr)(void *), void *arg));
 void vidcaudio_dummy_routine	__P((void *arg));
 int vidcaudio_stereo	__P((int channel, int position));
 int vidcaudio_rate	__P((int rate));
@@ -108,8 +112,10 @@ struct cfattach vidcaudio_ca = {
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
 int    vidcaudio_set_params	 __P((void *, int, int, struct audio_params *, struct audio_params *));
 int    vidcaudio_round_blocksize __P((void *, int));
-int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
-int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
+int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(void *),
+					 void *));
+int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(void *),
+					 void *));
 int    vidcaudio_halt_output	 __P((void *));
 int    vidcaudio_halt_input 	 __P((void *));
 int    vidcaudio_speaker_ctl	 __P((void *, int));
@@ -354,7 +360,7 @@ vidcaudio_start_output(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr)();
+	void (*intr)(void *);
 	void *arg;
 {
 	/* I can only DMA inside 1 page */
@@ -400,7 +406,7 @@ vidcaudio_start_input(addr, p, cc, intr, arg)
 	void *addr;
 	void *p;
 	int cc;
-	void (*intr)();
+	void (*intr)(void *);
 	void *arg;
 {
 	return EIO;
@@ -519,7 +525,7 @@ int
 vidcaudio_dma_program(cur, end, intr, arg)
 	vm_offset_t cur;
 	vm_offset_t end;
-	void (*intr)();
+	void (*intr)(void *);
 	void *arg;
 {
 	paddr_t pa1, pa2;
@@ -603,9 +609,9 @@ vidcaudio_intr(arg)
 	void *arg;
 {
 	int status = IOMD_READ_BYTE(IOMD_SD0ST);
-	void (*nintr)();
+	void (*nintr)(void *);
 	void *narg;
-	void (*xintr)();
+	void (*xintr)(void *);
 	void *xarg;
 	int xcur, xend;
 	IOMD_WRITE_WORD(IOMD_DMARQ, 0x10);
