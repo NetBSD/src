@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.72 2004/01/16 00:36:39 matt Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.73 2004/01/27 03:31:48 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -140,7 +140,7 @@ cleankmod:
 ##### Custom rules
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
+	${LINT} ${LINTFLAGS} ${LDFLAGS:C/-L[  ]*/-L/Wg:M-L*} ${LOBJS} ${LDADD}
 .endif
 
 .if !target(load)

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.110 2003/11/16 16:10:50 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.111 2004/01/27 03:31:48 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -146,7 +146,10 @@ TOOL_ZIC?=		zic
 	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 .c.ln:
 	${_MKTARGET_COMPILE}
-	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${CPPFLAGS.${.IMPSRC:T}:M-[IDU]*} -i ${.IMPSRC}
+	${LINT} ${LINTFLAGS} \
+	    ${CPPFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS.${.IMPSRC:T}:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    -i ${.IMPSRC}
 
 # C++
 .cc.o .cpp.o .cxx.o .C.o:
