@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.h,v 1.7 2001/06/18 06:28:59 lukem Exp $	*/
+/*	$NetBSD: fsutil.h,v 1.8 2003/03/28 08:12:38 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdarg.h>
+
 void errexit(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
 void pfatal(const char *, ...)
@@ -37,6 +39,8 @@ void pwarn(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));  
 void panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));  
+void vmsg(int, const char *, va_list)
+     __attribute((__format__(__printf__,2,0)));
 const char *rawname(const char *);
 const char *unrawname(const char *);
 const char *blockcheck(const char *);
