@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.inc,v 1.5 1998/01/22 20:05:20 cgd Exp $
+
 .PATH: ${.CURDIR}/arch/arm32/fplib
 
 SRCS+=fplib_glue.S fplib_libc.c softfloat.c
