@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.57 1995/01/25 04:48:16 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.58 1995/01/26 06:23:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -82,17 +82,17 @@ int	lkmenodev();
 #define	bdev_swap_init() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	swstrategy, (dev_type_ioctl((*))) enodev, \
-	(dev_type_dump((*))) enodev, 0, 0 }
+	(dev_type_dump((*))) enodev, 0 }
 
 #define	bdev_lkm_dummy() { \
 	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) enodev, \
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
-	(dev_type_dump((*))) enodev, 0, 0 }
+	(dev_type_dump((*))) enodev, 0 }
 
 #define	bdev_notdef() { \
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	(dev_type_strategy((*))) enodev, (dev_type_ioctl((*))) enodev, \
-	(dev_type_dump((*))) enodev, 0, 0 }
+	(dev_type_dump((*))) enodev, 0 }
 
 #include "wdc.h"
 #include "fdc.h"
@@ -130,12 +130,12 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
 	bdev_disk_init(NMCD,mcd),	/* 7: Mitsumi CD-ROM */
-	bdev_lkm_dummy(), /* 8 */
-	bdev_lkm_dummy(), /* 9 */
-	bdev_lkm_dummy(), /* 10 */
-	bdev_lkm_dummy(), /* 11 */
-	bdev_lkm_dummy(), /* 12 */
-	bdev_lkm_dummy(), /* 13 */
+	bdev_lkm_dummy(),		/* 8 */
+	bdev_lkm_dummy(),		/* 9 */
+	bdev_lkm_dummy(),		/* 10 */
+	bdev_lkm_dummy(),		/* 11 */
+	bdev_lkm_dummy(),		/* 12 */
+	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14: vnode disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -264,18 +264,11 @@ cdev_decl(fd);
 	(dev_type_mmap((*))) enodev, 0 }
 
 #include "bpfilter.h"
-cdev_decl(bpf);
-/* open, close, read, write, ioctl, select -- XXX should be generic device */
-#define cdev_bpf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
-	(dev_type_mmap((*))) enodev, 0 }
-
 #include "tun.h"
+cdev_decl(bpf);
 cdev_decl(tun);
 /* open, close, read, write, ioctl, select -- XXX should be generic device */
-#define cdev_tun_init(c,n) { \
+#define cdev_bpftun_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
@@ -312,16 +305,6 @@ cdev_decl(cd);
 cdev_decl(mcd);
 cdev_decl(vnd);
 
-#include "pc.h"
-#include "vt.h"
-cdev_decl(pc);
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_pc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	(dev_type_reset((*))) nullop, dev_tty_init(c,n), ttselect, \
-	dev_init(c,n,mmap), 0 }
-
 #include "lpt.h"
 cdev_decl(lpt);
 /* open, close, write, ioctl */
@@ -349,12 +332,15 @@ cdev_decl(audio);
 	(dev_type_reset((*))) nullop, 0, dev_init(c,n,select), \
 	(dev_type_mmap((*))) enodev, 0 }
 
+#include "pc.h"
+#include "vt.h"
 #include "com.h"
 #include "cy.h"
 #include "mms.h"
 #include "lms.h"
 #include "pms.h"
 
+cdev_decl(pc);
 cdev_decl(com);
 cdev_decl(cy);
 cdev_decl(mms);
@@ -389,7 +375,7 @@ struct cdevsw	cdevsw[] =
 #undef	fdclose
 	cdev_tape_init(NWT,wt),		/* 10: QIC-02/QIC-36 tape */
 	cdev_notdef(),			/* 11: unused */
-	cdev_pc_init(NPC + NVT,pc),	/* 12: PC console */
+	cdev_tty_init(NPC + NVT,pc),	/* 12: PC console */
 	cdev_disk_init(NSD,sd),		/* 13: SCSI disk */
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
@@ -400,24 +386,24 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 20: unused */
 	cdev_notdef(),			/* 21: unused */
 	cdev_fd_init(1,fd),		/* 22: file descriptor pseudo-device */
-	cdev_bpf_init(NBPFILTER,bpf),	/* 23: Berkeley packet filter */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24: unused */
 	cdev_notdef(),			/* 25: unused */
 	cdev_notdef(),			/* 26: unused */
 	cdev_spkr_init(NSPEAKER,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
-	cdev_lkm_dummy(), /* 29 */
-	cdev_lkm_dummy(), /* 30 */
-	cdev_lkm_dummy(), /* 31 */
-	cdev_lkm_dummy(), /* 32 */
-	cdev_lkm_dummy(), /* 33 */
-	cdev_lkm_dummy(), /* 34 */
+	cdev_lkm_dummy(),		/* 29 */
+	cdev_lkm_dummy(),		/* 30 */
+	cdev_lkm_dummy(),		/* 31 */
+	cdev_lkm_dummy(),		/* 32 */
+	cdev_lkm_dummy(),		/* 33 */
+	cdev_lkm_dummy(),		/* 34 */
 	cdev_mouse_init(NMMS,mms),	/* 35: Microsoft mouse */
 	cdev_mouse_init(NLMS,lms),	/* 36: Logitech mouse */
 	cdev_mouse_init(NPMS,pms),	/* 37: PS/2 mouse */
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
-	cdev_tun_init(NTUN,tun),	/* 40: network tunnel */
+	cdev_bpftun_init(NTUN,tun),	/* 40: network tunnel */
 	cdev_disk_init(NVND,vnd),	/* 41: vnode disk driver */
 	cdev_audio_init(NAUDIO,audio),	/* 42: generic audio I/O */
 #ifdef COMPAT_SVR4
