@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 1999/06/17 18:21:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 1999/06/17 19:23:20 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -118,7 +118,7 @@ __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
 void		 pmap_activate __P((struct proc *));
 void		 pmap_deactivate __P((struct proc *));
-void		 pmap_change_wiring __P((pmap_t, vaddr_t, boolean_t));
+void		 pmap_unwire __P((pmap_t, vaddr_t));
 
 #if defined(PMAP_NEW)
 #if !defined(pmap_clear_modify)
