@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.28 1997/07/17 01:06:30 jtk Exp $	*/
+/*	$NetBSD: spkr.c,v 1.29 1997/12/07 16:06:21 thorpej Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -20,7 +20,7 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/buf.h>
+#include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
 
@@ -426,7 +426,7 @@ playstring(cp, slen)
  */
 
 static int spkr_active;	/* exclusion flag */
-static struct buf *spkr_inbuf; /* incoming buf */
+static void *spkr_inbuf;
 
 int
 spkrprobe (parent, match, aux)
@@ -480,7 +480,7 @@ spkropen(dev, flags, mode, p)
     else
     {
 	playinit();
-	spkr_inbuf = geteblk(DEV_BSIZE);
+	spkr_inbuf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
 	spkr_active = 1;
     }
     return(0);
@@ -493,7 +493,6 @@ spkrwrite(dev, uio, flags)
     int flags;
 {
     register int n;
-    char *cp;
     int error;
 #ifdef DEBUG
     printf("spkrwrite: entering with dev = %x, count = %d\n",
@@ -505,10 +504,9 @@ spkrwrite(dev, uio, flags)
     else
     {
 	n = min(DEV_BSIZE, uio->uio_resid);
-	cp = spkr_inbuf->b_data;
-	error = uiomove(cp, n, uio);
+	error = uiomove(spkr_inbuf, n, uio);
 	if (!error)
-		playstring(cp, n);
+		playstring((char *)spkr_inbuf, n);
 	return(error);
     }
 }
@@ -528,7 +526,7 @@ int spkrclose(dev, flags, mode, p)
     else
     {
 	endtone(NULL);
-	brelse(spkr_inbuf);
+	free(spkr_inbuf, M_DEVBUF);
 	spkr_active = 0;
     }
     return(0);
