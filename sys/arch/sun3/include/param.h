@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.32 1996/02/16 18:08:21 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.33 1996/03/01 23:30:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -48,9 +48,9 @@
 /*
  * Machine dependent constants for the Sun3 series.
  */
-#define	MACHINE     "sun3"
+#define	MACHINE		"sun3"
 #define	MACHINE_ARCH	"m68k"
-#define MID_MACHINE MID_M68K
+#define	MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

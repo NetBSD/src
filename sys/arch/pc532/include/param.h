@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.13 1996/02/01 00:03:30 phil Exp $	*/
+/*	$NetBSD: param.h,v 1.14 1996/03/01 23:30:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -52,9 +52,9 @@
 #include <machine/cpu.h>
 #endif
 
-#define MACHINE 	"pc532"
-#define MACHINE_ARCH	"ns32k"
-#define MID_MACHINE	MID_NS32532
+#define	MACHINE		"pc532"
+#define	MACHINE_ARCH	"ns32k"
+#define	MID_MACHINE	MID_NS32532
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

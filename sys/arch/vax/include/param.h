@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.16 1996/02/11 13:45:37 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.17 1996/03/01 23:30:57 cgd Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -47,9 +47,9 @@
  * Machine dependent constants for VAX.
  */
 
-#define MACHINE		"vax"
+#define	MACHINE		"vax"
 #define	MACHINE_ARCH	"vax"
-#define MID_MACHINE	MID_VAX
+#define	MID_MACHINE	MID_VAX
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.3 1996/02/22 22:21:55 mark Exp $ */
+/* $NetBSD: param.h,v 1.4 1996/03/01 23:30:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: param.h,v 1.3 1996/02/22 22:21:55 mark Exp $
+ *	$Id: param.h,v 1.4 1996/03/01 23:30:15 cgd Exp $
  */
 
 #ifndef	_ARM32_PARAM_H_
@@ -46,9 +46,9 @@
  */
 /*#define	ovbcopy	bcopy	*/	/* XXX should probably have long gone by now */
 
-#define MACHINE		"arm32"
-#define MACHINE_ARCH	"arm32"
-#define MID_MACHINE	MID_ARM6
+#define	MACHINE		"arm32"
+#define	MACHINE_ARCH	"arm32"
+#define	MID_MACHINE	MID_ARM6
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

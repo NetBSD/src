@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 1996/02/01 22:30:47 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.28 1996/03/01 23:30:24 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,9 +50,9 @@
 #endif
 #endif
 
-#define MACHINE		"i386"
-#define MACHINE_ARCH	"i386"
-#define MID_MACHINE	MID_I386
+#define	MACHINE		"i386"
+#define	MACHINE_ARCH	"i386"
+#define	MID_MACHINE	MID_I386
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
