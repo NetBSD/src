@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.7 2001/11/17 21:41:00 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.8 2001/12/17 21:31:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.7 2001/11/17 21:41:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.8 2001/12/17 21:31:25 nathanw Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -194,142 +194,42 @@ cpu_stashcontext(struct lwp *l)
  *
  *	Send an an upcall to userland.
  */
-void
-cpu_upcall(struct lwp *l)
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct proc *p = l->l_proc;
-	struct sadata *sd = p->p_sa;
-	struct saframe *sf, frame;
-	struct sa_t **sapp, *sap;
-	struct sa_t self_sa, e_sa, int_sa;
-	struct sa_t *sas[3];
-	struct sadata_upcall *sau;
 	struct trapframe *tf;
-	void *stack, *ap;
-	ucontext_t u, *up;
-	int i, nsas, nevents, nint;
-	int x, y;
-
+	struct saframe *sf, frame;
 	extern char sigcode[], upcallcode[];
 
 	tf = process_frame(l);
 
-	KDASSERT(LIST_EMPTY(&sd->sa_upcalls) == 0);
-
-	sau = LIST_FIRST(&sd->sa_upcalls);
-
-	stack = (char *)sau->sau_stack.ss_sp + sau->sau_stack.ss_size;
-
-	self_sa.sa_id = l->l_lid;
-	self_sa.sa_cpu = 0; /* XXX l->l_cpu; */
-	sas[0] = &self_sa;
-	nsas = 1;
-
-	nevents = 0;
-	if (sau->sau_event) {
-		e_sa.sa_context = cpu_stashcontext(sau->sau_event);
-		e_sa.sa_id = sau->sau_event->l_lid;
-		e_sa.sa_cpu = 0; /* XXX event->l_cpu; */
-		sas[nsas++] = &e_sa;
-		nevents = 1;
-	}
-
-	nint = 0;
-	if (sau->sau_interrupted) {
-		int_sa.sa_context = cpu_stashcontext(sau->sau_interrupted);
-		int_sa.sa_id = sau->sau_interrupted->l_lid;
-		int_sa.sa_cpu = 0; /* XXX interrupted->l_cpu; */
-		sas[nsas++] = &int_sa;
-		nint = 1;
-	}
-
-	LIST_REMOVE(sau, sau_next);
-	if (LIST_EMPTY(&sd->sa_upcalls))
-		l->l_flag &= ~L_SA_UPCALL;
-
-	/* Copy out the activation's ucontext */
-	u.uc_stack = sau->sau_stack;
-	u.uc_flags = _UC_STACK;
-	up = stack;
-	up--;
-	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		sadata_upcall_free(sau);
-#ifdef DIAGNOSTIC
-		printf("cpu_upcall: couldn't copyout activation ucontext"
-		    " for %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-	sas[0]->sa_context = up;
-
-	/* Next, copy out the sa_t's and pointers to them. */
-	sap = (struct sa_t *) up;
-	sapp = (struct sa_t **) (sap - nsas);
-	for (i = nsas - 1; i >= 0; i--) {
-		sap--;
-		sapp--;
-		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
-		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
-			/* Copy onto the stack didn't work.  Die. */
-			sadata_upcall_free(sau);
-#ifdef DIAGNOSTIC
-			printf("cpu_upcall: couldn't copyout sa_t %d"
-			    " for %d.%d (x=%d, y=%d)\n",
-			    i, l->l_proc->p_pid, l->l_lid, x, y);
-#endif
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
-		}
-	}
-
-	/*
-	 * Copy out the arg, if any.
-	 * XXX Assume alignment works out; everything so far has been
-	 * a structure, so...
-	 */
-	if (sau->sau_arg) {
-		ap = (char *)sapp - sau->sau_argsize;
-		sf = (struct saframe *)ap - 1;
-		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
-			/* Copying onto the stack didn't work. Die. */
-			sadata_upcall_free(sau);
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
-		}
-	} else {
-		ap = NULL;
-		sf = (struct saframe *)sapp - 1;
-	}
-
 	/* Finally, copy out the rest of the frame. */
 #if 0 /* First 4 args in regs (see below). */
-	frame.sa_type = sau->sau_type;
-	frame.sa_sas = sapp;
+	frame.sa_type = type;
+	frame.sa_sas = sas;
 	frame.sa_events = nevents;
-	frame.sa_interrupted = nint;
+	frame.sa_interrupted = ninterrupted;
 #endif
 	frame.sa_arg = ap;
-	frame.sa_upcall = sd->sa_upcall;
+	frame.sa_upcall = upcall;
 
+	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
-		sadata_upcall_free(sau);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
-	tf->tf_r0 = sau->sau_type;
-	tf->tf_r1 = (int) sapp;
+	tf->tf_r0 = type;
+	tf->tf_r1 = (int) sas;
 	tf->tf_r2 = nevents;
-	tf->tf_r3 = nint;
+	tf->tf_r3 = ninterrupted;
 	tf->tf_usr_sp = (int) sf;
 	tf->tf_pc = (int) ((caddr_t)p->p_sigctx.ps_sigcode + (
 	    (caddr_t)upcallcode - (caddr_t)sigcode));
 #ifndef arm26
 	cpu_cache_syncI();	/* XXX really necessary? */
 #endif
-
-	sadata_upcall_free(sau);
 }

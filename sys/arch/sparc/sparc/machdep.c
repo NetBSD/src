@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.2 2001/11/20 16:31:56 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.3 2001/12/17 21:31:26 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -693,20 +693,12 @@ cpu_stashcontext(struct lwp *l)
  *
  *	Send an an upcall to userland.
  */
-void
-cpu_upcall(struct lwp *l)
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct proc *p = l->l_proc;
-	struct sadata *sd = p->p_sa;
 	struct saframe *sf, frame;
-	struct sa_t **sapp, *sap;
-	struct sa_t self_sa, e_sa, int_sa;
-	struct sa_t *sas[3];
-	struct sadata_upcall *sau;
 	struct trapframe *tf;
-	void *stack;
-	ucontext_t u, *up;
-	int i, nsas, nevents, nint;
 	int addr, newsp, oldsp;
 	/*
 	 * note: sf,sapp,stack,up,oldsp,newsp,addr are user space addresses
@@ -716,89 +708,14 @@ cpu_upcall(struct lwp *l)
 	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
 
-	KDASSERT(!LIST_EMPTY(&sd->sa_upcalls));
-
-	sau = LIST_FIRST(&sd->sa_upcalls);
-
-	/* Setup aligned stack pointer */
-	stack = (char *)sau->sau_stack.ss_sp + sau->sau_stack.ss_size;
-	stack = (void *)((u_int)stack & ~7);
-
-	self_sa.sa_id = l->l_lid;
-	self_sa.sa_cpu = 0; /* XXX l->l_cpu; */
-	sas[0] = &self_sa;
-	nsas = 1;
-
-	nevents = 0;
-	if (sau->sau_event) {
-		e_sa.sa_context = cpu_stashcontext(sau->sau_event);
-		e_sa.sa_id = sau->sau_event->l_lid;
-		e_sa.sa_cpu = 0; /* XXX event->l_cpu; */
-		sas[nsas++] = &e_sa;
-		nevents = 1;
-	}
-
-	nint = 0;
-	if (sau->sau_interrupted) {
-		int_sa.sa_context = cpu_stashcontext(sau->sau_interrupted);
-		int_sa.sa_id = sau->sau_interrupted->l_lid;
-		int_sa.sa_cpu = 0; /* XXX interrupted->l_cpu; */
-		sas[nsas++] = &int_sa;
-		nint = 1;
-	}
-
-	LIST_REMOVE(sau, sau_next);
-	if (LIST_EMPTY(&sd->sa_upcalls))
-		l->l_flag &= ~L_SA_UPCALL;
-
-	/* Copy out the activation's ucontext */
-	u.uc_stack = sau->sau_stack;
-	u.uc_flags = _UC_STACK;
-	up = stack;
-	up--;
-	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		pool_put(&saupcall_pool, sau);
-#ifdef DIAGNOSTIC
-		printf("cpu_upcall: couldn't copyout activation ucontext"
-		    " for %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-	sas[0]->sa_context = up;
-
-	/* Next, copy out the sa_t's and pointers to them. */
-	sap = (struct sa_t *) up;
-	sapp = (struct sa_t **) (sap - nsas);
-	for (i = nsas - 1; i >= 0; i--) {
-		int x, y;
-		sap--;
-		sapp--;
-		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
-		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
-			/* Copy onto the stack didn't work.  Die. */
-			pool_put(&saupcall_pool, sau);
-#ifdef DIAGNOSTIC
-			printf("cpu_upcall: couldn't copyout sa_t %d"
-			    " for %d.%d (x=%d, y=%d)\n",
-			    i, l->l_proc->p_pid, l->l_lid, x, y);
-#endif
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
-		}
-	}
-
 	/* Finally, copy out the rest of the frame. */
-	sf = (struct saframe *)sapp - 1;
+	sf = (struct saframe *)sp - 1;
 
-	frame.sa_type = sau->sau_type;
-	frame.sa_sas = sapp;
+	frame.sa_type = type;
+	frame.sa_sas = sas;
 	frame.sa_events = nevents;
-	frame.sa_interrupted = nint;
-	frame.sa_arg = sau->sau_arg;
-
-	pool_put(&saupcall_pool, sau);
+	frame.sa_interrupted = ninterrupted;
+	frame.sa_arg = ap;
 
 	newsp = (int)sf - sizeof(struct rwindow);
 	write_user_windows();
@@ -816,7 +733,7 @@ cpu_upcall(struct lwp *l)
 	 */
 	addr = (int) ((caddr_t)p->p_sigctx.ps_sigcode +
 			((caddr_t)upcallcode - (caddr_t)sigcode));
-	tf->tf_global[1] = (int)sd->sa_upcall;
+	tf->tf_global[1] = (int)upcall;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (int)newsp;
