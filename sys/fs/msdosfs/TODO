@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.6 2000/08/06 20:11:31 jdolecek Exp $
+# $NetBSD: TODO,v 1.1 2002/12/26 12:31:32 jdolecek Exp $
 
 - use the dirty flag introduced by Win95 OSR2, as noted in bin/5638
 - the fat cache (see msdosfs_fat.c, denode->de_fc[]) should probably

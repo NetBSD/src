@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.34 2001/09/15 20:36:39 chs Exp $	*/
+/*	$NetBSD: denode.h,v 1.1 2002/12/26 12:31:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.

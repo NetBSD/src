@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.84 2002/09/21 18:13:25 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.84 2002/09/21 18:13:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.1 2002/12/26 12:31:35 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -73,12 +73,12 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.84 2002/09/21 18:13:25 christos
 #include <sys/stat.h>
 #include <sys/conf.h>
 
-#include <msdosfs/bpb.h>
-#include <msdosfs/bootsect.h>
-#include <msdosfs/direntry.h>
-#include <msdosfs/denode.h>
-#include <msdosfs/msdosfsmount.h>
-#include <msdosfs/fat.h>
+#include <fs/msdosfs/bpb.h>
+#include <fs/msdosfs/bootsect.h>
+#include <fs/msdosfs/direntry.h>
+#include <fs/msdosfs/denode.h>
+#include <fs/msdosfs/msdosfsmount.h>
+#include <fs/msdosfs/fat.h>
 
 int msdosfs_mountroot __P((void));
 int msdosfs_mount __P((struct mount *, const char *, void *,
