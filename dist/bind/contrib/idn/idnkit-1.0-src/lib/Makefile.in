@@ -1,4 +1,4 @@
-# Id: Makefile.in,v 1.1.1.1 2003/06/04 00:25:47 marka Exp
+# Id: Makefile.in,v 1.1.1.1.32.1 2004/07/20 07:01:55 marka Exp
 # Copyright (c) 2000, 2002 Japan Network Information Center.
 # All rights reserved.
 #  
@@ -189,7 +189,7 @@ SAMPLES = idn.conf.sample idnalias.conf.sample
 	$(LIBTOOL) --mode=compile $(CC) $(CFLAGS) -c $<
 
 .c.to:
-	$(CC) -o $@ -DTEST $(CFLAGS) -c $<
+	$(CC) -o $@ -DTEST $(CFLAGS) $(LDFLAGS) -c $<
 
 all: all-localdir all-subdirs
 @LITEONLY_TRUE@all-localdir: $(LITELIB).la $(SAMPLES)

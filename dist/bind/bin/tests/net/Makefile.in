@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.9.12.5 2004/03/08 04:04:30 marka Exp
+# Id: Makefile.in,v 1.9.12.6 2004/07/20 07:01:52 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -43,7 +43,7 @@ OBJS =		driver.@O@ netaddr_multicast.@O@ sockaddr_multicast.@O@
 @BIND9_MAKE_RULES@
 
 t_net@EXEEXT@: ${OBJS} ${DEPLIBS} ${TLIB}
-	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} -o $@ ${OBJS} ${TLIB} ${LIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ ${OBJS} ${TLIB} ${LIBS}
 
 test: t_net@EXEEXT@
 	-@./t_net@EXEEXT@

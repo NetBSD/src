@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2004/05/17 23:45:02 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2004/11/06 23:55:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.70.2.8.2.10 2004/04/10 04:31:40 marka Exp */
+/* Id: log.c,v 1.70.2.8.2.12 2004/06/11 00:35:38 marka Exp */
 
 /* Principal Authors: DCL */
 
@@ -1142,6 +1142,10 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	unsigned int basenamelen;
 	isc_dir_t dir;
 	isc_result_t result;
+	char sep = '/';
+#ifdef _WIN32
+	char *basename2;
+#endif
 
 	REQUIRE(channel->type == ISC_LOG_TOFILE);
 
@@ -1149,7 +1153,15 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	 * It is safe to DE_CONST the file.name because it was copied
 	 * with isc_mem_strdup in isc_log_createchannel.
 	 */
-	basename = strrchr(FILE_NAME(channel), '/');
+	basename = strrchr(FILE_NAME(channel), sep);
+#ifdef _WIN32
+	basename2 = strrchr(FILE_NAME(channel), '\\');
+	if ((basename != NULL && basename2 != NULL && basename2 > basename) ||
+	    (basename == NULL && basename2 != NULL)) {
+		basename = basename2;
+		sep = '\\';
+	}
+#endif
 	if (basename != NULL) {
 		*basename++ = '\0';
 		dirname = FILE_NAME(channel);
@@ -1166,7 +1178,7 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	 * Replace the file separator if it was taken out.
 	 */
 	if (basename != FILE_NAME(channel))
-		*(basename - 1) = '/';
+		*(basename - 1) = sep;
 
 	/*
 	 * Return if the directory open failed.
@@ -1319,8 +1331,11 @@ isc_log_open(isc_logchannel_t *channel) {
 	if (stat(path, &statbuf) == 0) {
 		regular_file = S_ISREG(statbuf.st_mode) ? ISC_TRUE : ISC_FALSE;
 		/* XXXDCL if not regular_file complain? */
-		roll = ISC_TF(regular_file && FILE_MAXSIZE(channel) > 0 &&
-			      statbuf.st_size >= FILE_MAXSIZE(channel));
+		if ((FILE_MAXSIZE(channel) == 0 &&
+		     FILE_VERSIONS(channel) != ISC_LOG_ROLLNEVER) ||
+		    (FILE_MAXSIZE(channel) > 0 &&
+		     statbuf.st_size >= FILE_MAXSIZE(channel)))
+			roll = regular_file;
 	} else if (errno == ENOENT)
 		regular_file = ISC_TRUE;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.1.1.1 2004/05/17 23:44:54 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.2 2004/11/06 23:55:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: result.c,v 1.90.2.9.2.12 2004/04/15 23:56:30 marka Exp */
+/* Id: result.c,v 1.90.2.9.2.13 2004/05/14 05:06:39 marka Exp */
 
 #include <config.h>
 
@@ -152,7 +152,8 @@ static const char *text[DNS_R_NRESULTS] = {
 	"dynamic zone",			       /* 98 DNS_R_DYNAMIC	     */
 	"unknown command",		       /* 99 DNS_R_UNKNOWNCOMMAND    */
 
-	"must-be-secure"		       /* 100 DNS_R_MUSTBESECURE     */
+	"must-be-secure",		       /* 100 DNS_R_MUSTBESECURE     */
+	"covering NSEC record returned"	       /* 101 DNS_R_COVERINGNSEC     */
 };
 
 static const char *rcode_text[DNS_R_NRCODERESULTS] = {

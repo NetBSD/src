@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.1.1.1 2004/05/17 23:45:08 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.1.1.2 2004/11/06 23:55:59 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cc.c,v 1.4.2.3.2.4 2004/03/06 08:15:19 marka Exp */
+/* Id: cc.c,v 1.4.2.3.2.5 2004/08/28 06:25:23 marka Exp */
 
 #include <config.h>
 
@@ -28,6 +28,7 @@
 
 #include <isc/assertions.h>
 #include <isc/hmacmd5.h>
+#include <isc/print.h>
 #include <isc/stdlib.h>
 
 #include <isccc/alist.h>

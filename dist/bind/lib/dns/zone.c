@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.1 2004/05/17 23:44:56 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.1.1.2 2004/11/06 23:55:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.c,v 1.333.2.23.2.45 2004/04/29 01:45:23 marka Exp */
+/* Id: zone.c,v 1.333.2.23.2.50 2004/08/28 05:53:37 marka Exp */
 
 #include <config.h>
 
@@ -2351,8 +2351,10 @@ dump_done(void *arg, isc_result_t result) {
 
 		tresult = dns_db_getsoaserial(db, version, &serial);
 		if (tresult == ISC_R_SUCCESS) {
-			tresult = dns_journal_compact(zone->mctx, zone->journal,
-						     serial, zone->journalsize);
+			tresult = dns_journal_compact(zone->mctx,
+						      zone->journal,
+						      serial,
+						      zone->journalsize);
 			switch (tresult) {
 			case ISC_R_SUCCESS:
 			case ISC_R_NOSPACE:
@@ -3620,7 +3622,12 @@ refresh_callback(isc_task_t *task, isc_event_t *event) {
 			dns_message_destroy(&msg);
 	} else if (isc_serial_eq(soa.serial, zone->serial)) {
 		if (zone->masterfile != NULL) {
-			result = isc_file_settime(zone->masterfile, &now);
+			result = ISC_R_FAILURE;
+			if (zone->journal != NULL)
+				result = isc_file_settime(zone->journal, &now);
+			if (result != ISC_R_SUCCESS)
+				result = isc_file_settime(zone->masterfile,
+							  &now);
 			/* Someone removed the file from underneath us! */
 			if (result == ISC_R_FILENOTFOUND) {
 				LOCK_ZONE(zone);
@@ -3988,6 +3995,8 @@ soa_query(isc_task_t *task, isc_event_t *event) {
 	return;
 
  skip_master:
+	if (key != NULL)
+		dns_tsigkey_detach(&key);
 	zone->curmaster++;
 	if (zone->curmaster < zone->masterscnt)
 		goto again;
@@ -4251,14 +4260,17 @@ zone_shutdown(isc_task_t *task, isc_event_t *event) {
 	if (zone->readio != NULL)
 		zonemgr_cancelio(zone->readio);
 
-	if (zone->writeio != NULL)
-		zonemgr_cancelio(zone->writeio);
-
 	if (zone->lctx != NULL)
 		dns_loadctx_cancel(zone->lctx);
 
-	if (zone->dctx != NULL)
-		dns_dumpctx_cancel(zone->dctx);
+	if (!DNS_ZONE_FLAG(zone, DNS_ZONEFLG_FLUSH) ||
+	    !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_DUMPING)) {
+		if (zone->writeio != NULL)
+			zonemgr_cancelio(zone->writeio);
+
+		if (zone->dctx != NULL) 
+			dns_dumpctx_cancel(zone->dctx);
+	}
 
 	notify_cancel(zone);
 
@@ -5166,9 +5178,8 @@ notify_done(isc_task_t *task, isc_event_t *event) {
 	 * the soa if we see a formerr and had sent a SOA.
 	 */
 	isc_event_free(&event);
-	if ((result == ISC_R_TIMEDOUT ||
-	     (message != NULL && message->rcode == dns_rcode_formerr &&
-	      (notify->flags & DNS_NOTIFY_NOSOA) == 0))) {
+	if (message != NULL && message->rcode == dns_rcode_formerr &&
+	    (notify->flags & DNS_NOTIFY_NOSOA) == 0) {
 		notify->flags |= DNS_NOTIFY_NOSOA;
 		dns_request_destroy(&notify->request);
 		result = notify_send_queue(notify);
@@ -5226,6 +5237,31 @@ zone_replacedb(dns_zone_t *zone, dns_db_t *db, isc_boolean_t dump) {
 			goto fail;
 		if (dump)
 			zone_needdump(zone, DNS_DUMP_DELAY);
+		else if (zone->journalsize != -1) {
+			isc_uint32_t serial;
+
+			result = dns_db_getsoaserial(db, ver, &serial);
+			if (result == ISC_R_SUCCESS) {
+				result = dns_journal_compact(zone->mctx,
+							     zone->journal,
+							     serial,
+							     zone->journalsize);
+				switch (result) {
+				case ISC_R_SUCCESS:
+				case ISC_R_NOSPACE:
+				case ISC_R_NOTFOUND:
+					dns_zone_log(zone, ISC_LOG_DEBUG(3),
+						     "dns_journal_compact: %s",
+						     dns_result_totext(result));
+					break;
+				default:
+					dns_zone_log(zone, ISC_LOG_ERROR,
+					     "dns_journal_compact failed: %s",
+						     dns_result_totext(result));
+					break;
+				}
+			}
+		}
 	} else {
 		if (dump && zone->masterfile != NULL) {
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,

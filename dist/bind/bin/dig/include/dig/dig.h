@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.h,v 1.1.1.1 2004/05/17 23:43:20 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.1.1.2 2004/11/06 23:53:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dig.h,v 1.71.2.6.2.5 2004/04/13 03:00:07 marka Exp */
+/* Id: dig.h,v 1.71.2.6.2.6 2004/06/19 02:30:12 sra Exp */
 
 #ifndef DIG_H
 #define DIG_H
@@ -75,6 +75,19 @@
  * XXXMWS -- trace mode is currently semi-broken, and this number *MUST*
  * be 1.
  */
+
+/*
+ * Defaults for the sigchase suboptions.  Consolidated here because
+ * these control the layout of dig_lookup_t (among other things).
+ */
+#ifdef DIG_SIGCHASE
+#ifndef DIG_SIGCHASE_BU
+#define DIG_SIGCHASE_BU 1
+#endif
+#ifndef DIG_SIGCHASE_TD
+#define DIG_SIGCHASE_TD 1
+#endif
+#endif
 
 ISC_LANG_BEGINDECLS
 

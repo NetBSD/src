@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1.1.1 2004/05/17 23:43:23 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.2 2004/11/06 23:53:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.c,v 1.339.2.15.2.53 2004/04/20 14:12:08 marka Exp */
+/* Id: server.c,v 1.339.2.15.2.56 2004/06/18 04:39:48 marka Exp */
 
 #include <config.h>
 
@@ -1173,14 +1173,42 @@ configure_view(dns_view_t *view, cfg_obj_t *config, cfg_obj_t *vconfig,
 	obj = NULL;
 	result = ns_config_get(maps, "dnssec-lookaside", &obj);
 	if (result == ISC_R_SUCCESS) {
-		const char *dlv;
-		isc_buffer_t b;
-		dlv = cfg_obj_asstring(obj);
-		isc_buffer_init(&b, dlv, strlen(dlv));
-		isc_buffer_add(&b, strlen(dlv));
-		CHECK(dns_name_fromtext(dns_fixedname_name(&view->dlv_fixed),
-					&b, dns_rootname, ISC_TRUE, NULL));
-		view->dlv = dns_fixedname_name(&view->dlv_fixed);
+		for (element = cfg_list_first(obj);
+		     element != NULL;
+		     element = cfg_list_next(element))
+		{
+			const char *str;
+			isc_buffer_t b;
+			dns_name_t *dlv;
+
+			obj = cfg_listelt_value(element);
+#if 0
+			dns_fixedname_t fixed;
+			dns_name_t *name;
+
+			/*
+			 * When we support multiple dnssec-lookaside
+			 * entries this is how to find the domain to be
+			 * checked. XXXMPA
+			 */
+			dns_fixedname_init(&fixed);
+			name = dns_fixedname_name(&fixed);
+			str = cfg_obj_asstring(cfg_tuple_get(obj,
+							     "domain"));
+			isc_buffer_init(&b, str, strlen(str));
+			isc_buffer_add(&b, strlen(str));
+			CHECK(dns_name_fromtext(name, &b, dns_rootname,
+						ISC_TRUE, NULL));
+#endif
+			str = cfg_obj_asstring(cfg_tuple_get(obj,
+							     "trust-anchor"));
+			isc_buffer_init(&b, str, strlen(str));
+			isc_buffer_add(&b, strlen(str));
+			dlv = dns_fixedname_name(&view->dlv_fixed);
+			CHECK(dns_name_fromtext(dlv, &b, dns_rootname,
+						ISC_TRUE, NULL));
+			view->dlv = dns_fixedname_name(&view->dlv_fixed);
+		}
 	} else
 		view->dlv = NULL;
 
@@ -1342,7 +1370,7 @@ configure_alternates(cfg_obj_t *config, dns_view_t *view,
 			CHECK(dns_name_fromtext(name, &buffer, dns_rootname,
 						ISC_FALSE, NULL));
 
-			portobj = cfg_tuple_get(alternates, "port");
+			portobj = cfg_tuple_get(alternate, "port");
 			if (cfg_obj_isuint32(portobj)) {
 				isc_uint32_t val = cfg_obj_asuint32(portobj);
 				if (val > ISC_UINT16_MAX) {
@@ -2879,6 +2907,8 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
 	if (server->blackholeacl != NULL)
 		dns_acl_detach(&server->blackholeacl);
 
+	dns_db_detach(&server->in_roothints);
+
 	isc_task_endexclusive(server->task);
 
 	isc_task_detach(&server->task);
@@ -3029,8 +3059,6 @@ ns_server_destroy(ns_server_t **serverp) {
 	isc_event_free(&server->reload_event);
 
 	INSIST(ISC_LIST_EMPTY(server->viewlist));
-
-	dns_db_detach(&server->in_roothints);
 
 	dns_aclenv_destroy(&server->aclenv);
 

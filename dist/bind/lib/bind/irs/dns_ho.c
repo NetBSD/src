@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_ho.c,v 1.1.1.1 2004/05/17 23:44:42 christos Exp $	*/
+/*	$NetBSD: dns_ho.c,v 1.1.1.2 2004/11/06 23:55:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993
@@ -54,7 +54,7 @@
 /* BIND Id: gethnamaddr.c,v 8.15 1996/05/22 04:56:30 vixie Exp $ */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns_ho.c,v 1.5.2.7.4.3 2004/03/17 01:13:34 marka Exp";
+static const char rcsid[] = "Id: dns_ho.c,v 1.5.2.7.4.5 2004/08/24 00:32:15 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 /* Imports. */
@@ -416,38 +416,44 @@ ho_byaddr(struct irs_ho *this, const void *addr, int len, int af)
 		break;
 	case AF_INET6:
 		if (q->action != RESTGT_IGNORE) {
+			const char *nibsuff = res_get_nibblesuffix(pvt->res);
 			qp = q->qname;
 			for (n = IN6ADDRSZ - 1; n >= 0; n--) {
 				i = SPRINTF((qp, "%x.%x.",
 					       uaddr[n] & 0xf,
 					       (uaddr[n] >> 4) & 0xf));
-				if (i < 0)
+				if (i != 4)
 					abort();
 				qp += i;
 			}
-#ifdef HAVE_STRLCAT
-			strlcat(q->qname, res_get_nibblesuffix(pvt->res),
-			    sizeof(q->qname));
-#else
-			strcpy(qp, res_get_nibblesuffix(pvt->res));
-#endif
+			if (strlen(q->qname) + strlen(nibsuff) + 1 >
+			    sizeof q->qname) {
+				errno = ENAMETOOLONG;
+				RES_SET_H_ERRNO(pvt->res, NETDB_INTERNAL);
+				hp = NULL;
+				goto cleanup;
+			}
+			strcpy(qp, nibsuff);	/* (checked) */
 		}
 		if (q2->action != RESTGT_IGNORE) {
+			const char *nibsuff2 = res_get_nibblesuffix2(pvt->res);
 			qp = q2->qname;
 			for (n = IN6ADDRSZ - 1; n >= 0; n--) {
 				i = SPRINTF((qp, "%x.%x.",
 					       uaddr[n] & 0xf,
 					       (uaddr[n] >> 4) & 0xf));
-				if (i < 0)
+				if (i != 4)
 					abort();
 				qp += i;
 			}
-#ifdef HAVE_STRLCAT
-			strlcat(q->qname, res_get_nibblesuffix2(pvt->res),
-			    sizeof(q->qname));
-#else
-			strcpy(qp, res_get_nibblesuffix2(pvt->res));
-#endif
+			if (strlen(q2->qname) + strlen(nibsuff2) + 1 >
+			    sizeof q2->qname) {
+				errno = ENAMETOOLONG;
+				RES_SET_H_ERRNO(pvt->res, NETDB_INTERNAL);
+				hp = NULL;
+				goto cleanup;
+			}
+			strcpy(qp, nibsuff2);	/* (checked) */
 		}
 		break;
 	default:
@@ -822,11 +828,7 @@ gethostans(struct irs_ho *this,
 				had_error++;
 				continue;
 			}
-#ifdef HAVE_STRLCPY
-			strlcpy(bp, tbuf, ep - bp);
-#else
-			strcpy(bp, tbuf);
-#endif
+			strcpy(bp, tbuf);	/* (checked) */
 			pvt->host.h_name = bp;
 			hname = bp;
 			bp += n;
@@ -858,11 +860,7 @@ gethostans(struct irs_ho *this,
 				had_error++;
 				continue;
 			}
-#ifdef HAVE_STRLCPY
-			strlcpy(bp, tbuf, ep - bp);
-#else
-			strcpy(bp, tbuf);
-#endif
+			strcpy(bp, tbuf);	/* (checked) */
 			tname = bp;
 			bp += n;
 			continue;
@@ -998,11 +996,7 @@ gethostans(struct irs_ho *this,
 				n = strlen(qname) + 1;	/* for the \0 */
 				if (n > (ep - bp) || n >= MAXHOSTNAMELEN)
 					goto no_recovery;
-#ifdef HAVE_STRLCPY
-				strlcpy(bp, qname, ep - bp);
-#else
-				strcpy(bp, qname);
-#endif
+				strcpy(bp, qname);	/* (checked) */
 				pvt->host.h_name = bp;
 				bp += n;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.1 2004/05/17 23:44:43 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.2 2004/11/06 23:55:27 christos Exp $	*/
 
 /*
  * Issues to be discussed:
@@ -156,7 +156,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 
 	switch (sa->sa_family) {
 	case AF_INET:
-		if (ntohl(*(const u_long *)addr) >> IN_CLASSA_NSHIFT == 0)
+		if (ntohl(*(const u_int32_t *)addr) >> IN_CLASSA_NSHIFT == 0)
 			flags |= NI_NUMERICHOST;			
 		break;
 	case AF_INET6:
