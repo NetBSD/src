@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.32 1997/01/14 23:20:37 cgd Exp $
+#	$NetBSD: ALPHA,v 1.33 1997/01/15 01:28:28 perry Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -14,10 +14,6 @@ options		DEC_KN20AA	# KN20AA:	AlphaStation 600
 options		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 options		DEC_EB164	# EB164:	AlphaPC 164
 #options	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
-
-# needs to be set per system
-options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
-options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging

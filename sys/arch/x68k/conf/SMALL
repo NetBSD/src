@@ -1,4 +1,4 @@
-#	$NetBSD: SMALL,v 1.2 1996/08/26 23:41:38 mrg Exp $
+#	$NetBSD: SMALL,v 1.3 1997/01/15 01:29:22 perry Exp $
 
 #
 #	SMALL
@@ -13,9 +13,8 @@ maxusers	8
 #options 	"M68030"
 options		"M68040"
 
-# time zone RTC is expected to be set in; REQUIRED
-options 	TIMEZONE=-540	# Set the timezone that the kernel will use
-options 	DST=0		# Set the timezone that the kernel will use
+# set to indicate RTC is offset from GMT
+options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 # standard options
 options		GENERIC			# historical

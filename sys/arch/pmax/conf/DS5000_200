@@ -1,7 +1,7 @@
 #
 # DECstation 5000/200 (KN02 motherboard, codname 3MAX) kernel config
 #
-# 	$NetBSD: DS5000_200,v 1.3 1996/11/16 23:10:57 jonathan Exp $
+# 	$NetBSD: DS5000_200,v 1.4 1997/01/15 01:29:01 perry Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -18,13 +18,6 @@ options		MIPS1			# R2000/R3000 support (new)
 options 	DS5000_200		# 3MAX (kn02) support
 #options 	DS5000_240		# 3MAXPLUS (kn03) support
 
-
-
-
-# You need to set this locally, but it doesn't do much outside the kernel.
-# Set up /etc/localtime instead.
-options		TIMEZONE=0
-options		DST=0			# use daylight savings rules
 
 # Standard system options
 #options	DIAGNOSTIC		# extra kernel debugging checks

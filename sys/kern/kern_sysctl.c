@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.20 1997/01/09 05:37:41 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.21 1997/01/15 01:37:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -299,6 +299,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (autoniceval > PRIO_MAX)
 			autoniceval = PRIO_MAX;
 		return (error);
+	case KERN_RTC_OFFSET:
+		return (sysctl_rdint(oldp, oldlenp, newp, rtc_offset));
 	default:
 		return (EOPNOTSUPP);
 	}

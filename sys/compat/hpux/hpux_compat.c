@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.27 1996/10/14 06:53:23 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.28 1997/01/15 01:37:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1277,8 +1277,9 @@ hpux_sys_ftime_6x(p, v, retval)
 	tb.time = time.tv_sec;
 	tb.millitm = time.tv_usec / 1000;
 	splx(s);
-	tb.timezone = tz.tz_minuteswest;
-	tb.dstflag = tz.tz_dsttime;
+	/* NetBSD has no kernel notion of timezone -- fake it. */
+	tb.timezone = 0;
+	tb.dstflag = 0;
 	return (copyout((caddr_t)&tb, (caddr_t)SCARG(uap, tp), sizeof (tb)));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.2 1997/01/15 01:29:25 perry Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -42,6 +42,7 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/file.h>
+#include <sys/kernel.h>
 
 #include <x68k/dev/rtclock_var.h>
 #include <x68k/x68k/iodevice.h>
@@ -114,7 +115,7 @@ rtgettod()
   
 	tmp += (day - 1);
 
-	tmp = ((tmp * 24 + hour) * 60 + min + TIMEZONE) * 60 + sec;
+	tmp = ((tmp * 24 + hour) * 60 + min + rtc_offset) * 60 + sec;
   
 	return tmp;
 }
@@ -144,7 +145,7 @@ rtsettod (tim)
 	if (!rtc_addr)
 		return 0;
 
-	tim -= (TIMEZONE * 60);
+	tim -= (rtc_offset * 60);
 
 	/* prepare values to be written to clock */
 	day = tim / SECDAY;

@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.70 1996/11/16 01:16:38 fvdl Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.71 1997/01/15 01:28:43 perry Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -11,8 +11,7 @@ options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE
 
 maxusers	10		# estimated number of users
-options		TIMEZONE=480	# time zone to adjust RTC time by
-options		DST=1		# daylight savings time used by RTC
+options		RTC_OFFSET=480	# hardware clock is this many mins. west of GMT
 
 options		DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)

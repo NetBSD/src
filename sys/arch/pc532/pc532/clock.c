@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 1996/12/23 08:36:00 matthias Exp $	*/
+/*	$NetBSD: clock.c,v 1.18 1997/01/15 01:28:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -207,9 +207,7 @@ inittodr(base)
 		days += yeartoday(i);
 	n += days * 3600 * 24;
 
-	n += tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		n -= 3600;
+	n += rtc_offset * 60;
 	s = splclock();
 	time.tv_sec = n;
 	time.tv_usec = csec * 10000;
@@ -234,9 +232,7 @@ resettodr()
 	if (!timeset)
 		return;
 
-	diff = tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		diff -= 3600;
+	diff = rtc_offset * 60;
 
 	s = splclock();
 	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */

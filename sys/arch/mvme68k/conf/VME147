@@ -1,4 +1,4 @@
-#	$NetBSD: VME147,v 1.11 1996/12/28 23:23:19 pk Exp $
+#	$NetBSD: VME147,v 1.12 1997/01/15 01:28:55 perry Exp $
 
 machine		mvme68k m68k
 
@@ -8,9 +8,6 @@ options		MVME147
 options		FPCOPROC	# Support for MC6888[12] (Required)
 
 maxusers	2
-
-# obsolete timezone spec
-options		TIMEZONE=0, DST=0
 
 options		DIAGNOSTIC, DEBUG
 options		FFS

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.67 1997/01/07 11:35:04 mrg Exp $
+#	$NetBSD: GENERIC,v 1.68 1997/01/15 01:28:34 perry Exp $
 
 #
 # GENERIC AMIGA
@@ -9,7 +9,7 @@
 include "arch/amiga/conf/std.amiga"
 
 maxusers	8
-options		TIMEZONE=300, DST=1
+options		RTC_OFFSET=300
 
 #
 # mainboards to support (in addition to Amiga)

@@ -1,4 +1,4 @@
-#	$NetBSD: BUNNY,v 1.12 1996/11/25 04:16:15 cgd Exp $
+#	$NetBSD: BUNNY,v 1.13 1997/01/15 01:28:29 perry Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -14,10 +14,6 @@ options		BUFPAGES=2048	# 16M of buffer cache
 
 # CPU Support
 options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
-
-# needs to be set per system
-options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
-options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
 options		DEBUG, DIAGNOSTIC	# Extra kernel debugging

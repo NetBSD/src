@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1996/10/27 08:52:05 oki Exp $
+#	$NetBSD: GENERIC,v 1.7 1997/01/15 01:29:17 perry Exp $
 
 #
 #	GENERIC
@@ -14,9 +14,8 @@ options		EXEC_AOUT		# a.out format executables
 options		M68030
 options		M68040
 
-# time zone RTC is expected to be set in; REQUIRED
-options 	TIMEZONE=-540	# Set the timezone that the kernel will use
-options 	DST=0		# Set the timezone that the kernel will use
+# set to indicate RTC is offset from GMT
+options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 # estimated number of users
 maxusers	8

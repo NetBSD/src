@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.8 1996/12/07 00:26:08 thorpej Exp $
+#	$NetBSD: HOMEWORLD,v 1.9 1997/01/15 01:28:46 perry Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -21,8 +21,7 @@ options		XSERVER,UCONSOLE
 #options	INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users
-options		TIMEZONE=0	# time zone to adjust RTC time by
-options		DST=0		# daylight savings time used by RTC
+options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options	NTP		# NTP phase/frequency locked loop
 
 #options 	DDB		# in-kernel debugger

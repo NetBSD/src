@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.18 1996/10/02 18:05:02 ws Exp $	*/
+/*	$NetBSD: param.c,v 1.19 1997/01/15 01:37:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -72,14 +72,17 @@
  * the kernel; it should be modified there to suit local taste
  * if necessary.
  *
- * Compiled with -DHZ=xx -DTIMEZONE=x -DDST=x -DMAXUSERS=xx
+ * Compiled with -DHZ=xx -DRTC_OFFSET=x -DMAXUSERS=xx
  */
 
-#ifndef TIMEZONE
-# define TIMEZONE 0
+#ifdef TIMEZONE
+#error TIMEZONE is an obsolete kernel option.
 #endif
-#ifndef DST
-# define DST 0
+#ifdef DST
+#error DST is an obsolete kernel option.
+#endif
+#ifndef RTC_OFFSET
+#define RTC_OFFSET 0
 #endif
 #ifndef HZ
 #define	HZ 100
@@ -87,7 +90,7 @@
 int	hz = HZ;
 int	tick = 1000000 / HZ;
 int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
-struct	timezone tz = { TIMEZONE, DST };
+int	rtc_offset = RTC_OFFSET;
 #define	NPROC (20 + 16 * MAXUSERS)
 int	maxproc = NPROC;
 #define	NTEXT (80 + NPROC / 8)			/* actually the object cache */
