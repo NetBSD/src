@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.1 1996/11/09 22:52:22 pk Exp $	*/
+/*	$NetBSD: kcore.h,v 1.2 1997/09/20 18:23:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,16 +41,20 @@
  *	a `struct kcore_seg' of type CORE_CPU
  *	a `struct cpu_kcore_hdr'
  *	an array of `cpu_kcore_hdr.nmemseg' phys_ram_seg_t's
+ *	an array of `cpu_kcore_hdr.nsegmap' segmap structures
  *	an array of `cpu_kcore_hdr.npmegs' PTEs (zero of these on sun4ms).
  */
 
 typedef struct cpu_kcore_hdr {
 	int	cputype;		/* CPU type associated with this dump */
+	u_long	kernbase;		/* copy of KERNBASE goes here */
 	int	nmemseg;		/* # of physical memory segments */
-	int	memsegoffset;		/* start of memseg array (relative */
+	u_long	memsegoffset;		/* start of memseg array (relative */
+					/*  to the start of this header) */
+	int	nsegmap;		/* # of segmaps following */
+	u_long	segmapoffset;		/* start of segmap array (relative */
 					/*  to the start of this header) */
 	int	npmeg;			/* # of PMEGs; [sun4/sun4c] only */
-	int	pmegoffset;		/* start of pmeg array (relative */
+	u_long	pmegoffset;		/* start of pmeg array (relative */
 					/*  to the start of this header) */
-	struct	segmap segmap_store[NKREG*NSEGRG];	/* MMU data... */
 } cpu_kcore_hdr_t;
