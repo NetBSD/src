@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.9 1993/10/15 03:18:03 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.10 1993/10/15 09:43:38 mycroft Exp $
  */
 
 /*
@@ -178,11 +178,7 @@ test_ASTs:
 	jnc	test_resched
 	COUNT_EVENT(_intrcnt_spl, 9)
 	FASTSPL($ASTMASK)
-	pushl   $0		# previous cpl (not used)
-	movl	%esp,%eax	# pointer to frame
-	pushl	%eax
 	call	_softclock
-	addl	$8,%esp		# discard dummies
 	FASTSPL($0)
 test_resched:
 	btrl	$NETISR_AST,_netisr
