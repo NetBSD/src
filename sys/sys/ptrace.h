@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.26 2003/01/18 09:53:20 thorpej Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.27 2003/01/23 17:35:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -48,6 +48,7 @@
 #define	PT_ATTACH	9	/* attach to running process */
 #define	PT_DETACH	10	/* detach from running process */
 #define	PT_IO		11	/* do I/O to/from the stopped process */
+#define	PT_DUMPCORE	12	/* make the child generate a core dump */
 
 #define	PT_FIRSTMACH	32	/* for machine-specific requests */
 #include <machine/ptrace.h>	/* machine-specific requests, if any */
