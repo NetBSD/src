@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.3 1999/02/20 16:23:39 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.4 1999/02/21 14:01:50 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -938,30 +938,60 @@ clmpcc_set_params(ch)
 	struct clmpcc_chan *ch;
 {
 	struct clmpcc_softc *sc = ch->ch_sc;
-	u_char cor;
+	u_char r1;
+	u_char r2;
 
 	if ( ch->ch_tcor && ch->ch_tbpr ) {
-		clmpcc_wrreg(sc, CLMPCC_REG_TCOR, ch->ch_tcor);
-		clmpcc_wrreg(sc, CLMPCC_REG_TBPR, ch->ch_tbpr);
+		r1 = clmpcc_rdreg(sc, CLMPCC_REG_TCOR);
+		r2 = clmpcc_rdreg(sc, CLMPCC_REG_TBPR);
+		/* Only write Tx rate if it really has changed */
+		if ( ch->ch_tcor != r1 || ch->ch_tbpr != r2 ) {
+			clmpcc_wrreg(sc, CLMPCC_REG_TCOR, ch->ch_tcor);
+			clmpcc_wrreg(sc, CLMPCC_REG_TBPR, ch->ch_tbpr);
+		}
 	}
 
 	if ( ch->ch_rcor && ch->ch_rbpr ) {
-		clmpcc_wrreg(sc, CLMPCC_REG_RCOR, ch->ch_rcor);
-		clmpcc_wrreg(sc, CLMPCC_REG_RBPR, ch->ch_rbpr);
+		r1 = clmpcc_rdreg(sc, CLMPCC_REG_RCOR);
+		r2 = clmpcc_rdreg(sc, CLMPCC_REG_RBPR);
+		/* Only write Rx rate if it really has changed */
+		if ( ch->ch_rcor != r1 || ch->ch_rbpr != r2 ) {
+			clmpcc_wrreg(sc, CLMPCC_REG_RCOR, ch->ch_rcor);
+			clmpcc_wrreg(sc, CLMPCC_REG_RBPR, ch->ch_rbpr);
+		}
 	}
 
-	clmpcc_wrreg(sc, CLMPCC_REG_COR1, ch->ch_cor1);
-	clmpcc_wrreg(sc, CLMPCC_REG_COR2, ch->ch_cor2);
-	clmpcc_wrreg(sc, CLMPCC_REG_COR3, ch->ch_cor3);
+	if ( clmpcc_rdreg(sc, CLMPCC_REG_COR1) != ch->ch_cor1 ) {
+		clmpcc_wrreg(sc, CLMPCC_REG_COR1, ch->ch_cor1);
+		/* Any change to COR1 requires an INIT command */
+		SET(ch->ch_flags, CLMPCC_FLG_NEED_INIT);
+	}
 
-	cor = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
-	clmpcc_wrreg(sc, CLMPCC_REG_COR4, cor & CLMPCC_COR4_FIFO_MASK);
-	cor = clmpcc_rdreg(sc, CLMPCC_REG_IER);
-	clmpcc_wrreg(sc, CLMPCC_REG_IER, cor & ~CLMPCC_IER_RET);
-	SET(ch->ch_flags, CLMPCC_FLG_FIFO_CLEAR);
+	if ( clmpcc_rdreg(sc, CLMPCC_REG_COR2) != ch->ch_cor2 )
+		clmpcc_wrreg(sc, CLMPCC_REG_COR2, ch->ch_cor2);
 
-	cor = clmpcc_rdreg(sc, CLMPCC_REG_COR5) & ~CLMPCC_COR5_FLOW_MASK;
-	clmpcc_wrreg(sc, CLMPCC_REG_COR5, cor | ch->ch_cor5);
+	if ( clmpcc_rdreg(sc, CLMPCC_REG_COR3) != ch->ch_cor3 )
+		clmpcc_wrreg(sc, CLMPCC_REG_COR3, ch->ch_cor3);
+
+	r1 = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
+	if ( ch->ch_cor4 != (r1 & CLMPCC_COR4_FIFO_MASK) ) {
+		/*
+		 * Note: If the Rx FIFO has changed, we always set it to
+		 * zero here and disable the Receive Timeout interrupt.
+		 * It's up to the Rx Interrupt handler to pick the
+		 * appropriate moment to write the Rx FIFO length.
+		 */
+		clmpcc_wrreg(sc, CLMPCC_REG_COR4, r1 & ~CLMPCC_COR4_FIFO_MASK);
+		r1 = clmpcc_rdreg(sc, CLMPCC_REG_IER);
+		clmpcc_wrreg(sc, CLMPCC_REG_IER, r1 & ~CLMPCC_IER_RET);
+		SET(ch->ch_flags, CLMPCC_FLG_FIFO_CLEAR);
+	}
+
+	r1 = clmpcc_rdreg(sc, CLMPCC_REG_COR5);
+	if ( ch->ch_cor5 != (r1 & CLMPCC_COR5_FLOW_MASK) ) {
+		r1 &= ~CLMPCC_COR5_FLOW_MASK;
+		clmpcc_wrreg(sc, CLMPCC_REG_COR5, r1 | ch->ch_cor5);
+	}
 }
 
 static void
@@ -1212,7 +1242,6 @@ clmpcc_txintr(arg)
 	if ( ISSET(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS) ) {
 		clmpcc_set_params(ch);
 		CLR(ch->ch_flags, CLMPCC_FLG_UPDATE_PARMS);
-		SET(ch->ch_flags, CLMPCC_FLG_NEED_INIT);
 		SET(ch->ch_flags, CLMPCC_FLG_START);
 		goto tx_done;
 	}
@@ -1362,6 +1391,14 @@ clmpcc_softintr(arg)
 			CLR(ch->ch_flags, CLMPCC_FLG_NEED_INIT);
 
 			/*
+			 * Allow time for the channel to initialise.
+			 * (Empirically derived duration; the must be
+			 * another way to determine the command
+			 * has completed without busy-waiting...)
+			 */
+			delay(800);
+
+			/*
 			 * Update the tty layer's idea of the carrier bit,
 			 * in case we changed CLOCAL or MDMBUF. We don't
 			 * hang up here; we only do that by explicit request.
@@ -1412,6 +1449,7 @@ clmpcc_common_getc(sc, chan)
 
 	s = splhigh();
 
+	/* Save the currently active channel */
 	old_chan = clmpcc_select_channel(sc, chan);
 
 	/*
@@ -1461,6 +1499,7 @@ clmpcc_common_getc(sc, chan)
 		}
 	}
 
+	/* Restore the original IER and CAR register contents */
 	clmpcc_wrreg(sc, CLMPCC_REG_IER, old_ier);
 	clmpcc_select_channel(sc, old_chan);
 
@@ -1478,17 +1517,32 @@ clmpcc_common_putc(sc, chan, c)
 	u_char old_chan;
 	int s = splhigh();
 
+	/* Save the currently active channel */
 	old_chan = clmpcc_select_channel(sc, chan);
 
+	/*
+	 * We wait here until the Tx FIFO is empty, and
+	 * the chip signifies that the Tx output is idle.
+	 */
+	while ((clmpcc_rdreg(sc,CLMPCC_REG_TISR) & CLMPCC_TISR_TX_EMPTY) ==0 &&
+	       (clmpcc_rdreg(sc,CLMPCC_REG_TFTC) & CLMPCC_TFTC_MASK) != 0 )
+		; /* Do nothing */
+
+	/*
+	 * Since we can only access the Tx Data register from within
+	 * the interrupt handler, the easiest way to get console data
+	 * onto the wire is using one of the Special Transmit Character
+	 * registers.
+	 */
 	clmpcc_wrreg(sc, CLMPCC_REG_SCHR4, c);
 	clmpcc_wrreg(sc, CLMPCC_REG_STCR, CLMPCC_STCR_SSPC(4) |
 					  CLMPCC_STCR_SND_SPC);
 
+	/* Wait until the "Send Special Character" command is accepted */
 	while ( clmpcc_rdreg(sc, CLMPCC_REG_STCR) != 0 )
 		;
 
-	delay(5);
-
+	/* Restore the previous channel selected */
 	clmpcc_select_channel(sc, old_chan);
 
 	splx(s);
