@@ -27,7 +27,7 @@
  *	isdntelctl - i4b set telephone interface options
  *	------------------------------------------------
  *
- *	$Id: main.c,v 1.4 2003/10/06 04:19:41 itojun Exp $
+ *	$Id: main.c,v 1.5 2003/10/06 09:43:27 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -76,38 +76,38 @@ main(int argc, char **argv)
 	
 	while ((c = getopt(argc, argv, "cgu:AUN")) != -1)
 	{
-		switch(c)
+		switch (c)
 		{
-			case 'c':
-				opt_C = 1;
-				break;
+		case 'c':
+			opt_C = 1;
+			break;
 
-			case 'g':
-				opt_get = 1;
-				break;
+		case 'g':
+			opt_get = 1;
+			break;
 
-			case 'u':
-				opt_unit = atoi(optarg);
-				if (opt_unit < 0 || opt_unit > 9)
-					usage();
-				break;
-
-			case 'A':
-				opt_A = 1;
-				break;
-
-			case 'U':
-				opt_U = 1;
-				break;
-
-			case 'N':
-				opt_N = 1;
-				break;
-
-			case '?':
-			default:
+		case 'u':
+			opt_unit = atoi(optarg);
+			if (opt_unit < 0 || opt_unit > 9)
 				usage();
-				break;
+			break;
+
+		case 'A':
+			opt_A = 1;
+			break;
+
+		case 'U':
+			opt_U = 1;
+			break;
+
+		case 'N':
+			opt_N = 1;
+			break;
+
+		case '?':
+		default:
+			usage();
+			break;
 		}
 	}
 

@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.7 2003/10/06 09:18:41 itojun Exp $
+ *	$Id: curses.c,v 1.8 2003/10/06 09:43:27 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -62,7 +62,7 @@ init_screen(void)
 	initscr();			/* curses init */
 	ncontroller = count_ctrl_states();
 
-	if((COLS < 80) || (LINES < 24))
+	if ((COLS < 80) || (LINES < 24))
 	{
 		logit(LL_ERR, "ERROR, minimal screensize must be 80x24, is %dx%d, terminating!",COLS, LINES);
 		do_exit(1);
@@ -74,19 +74,19 @@ init_screen(void)
 	uheight = ncontroller * 2; /* cards * b-channels */
 	lheight = LINES - uheight - 6 + 1; /* rest of display */
 
-	if((upper_w = newwin(uheight, COLS, UPPER_B, 0)) == NULL)
+	if ((upper_w = newwin(uheight, COLS, UPPER_B, 0)) == NULL)
 	{
 		logit(LL_ERR, "ERROR, curses init upper window, terminating!");
 		exit(1);
 	}
 
-	if((mid_w = newwin(1, COLS, UPPER_B+uheight+1, 0)) == NULL)
+	if ((mid_w = newwin(1, COLS, UPPER_B+uheight+1, 0)) == NULL)
 	{
 		logit(LL_ERR, "ERROR, curses init mid window, terminating!");
 		exit(1);
 	}
 
-	if((lower_w = newwin(lheight, COLS, UPPER_B+uheight+3, 0)) == NULL)
+	if ((lower_w = newwin(lheight, COLS, UPPER_B+uheight+3, 0)) == NULL)
 	{
 		logit(LL_ERR, "ERROR, curses init lower window, LINES = %d, lheight = %d, uheight = %d, terminating!", LINES, lheight, uheight);
 		exit(1);
@@ -176,7 +176,7 @@ do_menu(void)
 
 	/* create a new window in the lower screen area */
 
-	if((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
+	if ((menu_w = newwin(WMENU_HGT, WMENU_LEN, WMENU_POSLN, WMENU_POSCO )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init menu window!");
 		return;
@@ -194,7 +194,7 @@ do_menu(void)
 
 	/* fill the window with the menu options */
 
-	for(mpos=0; mpos <= (WMITEMS-1); mpos++)
+	for (mpos=0; mpos <= (WMITEMS-1); mpos++)
 		mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
 
 	/* highlight the first menu option */
@@ -208,102 +208,102 @@ do_menu(void)
 
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
-	for(;;)
+	for (;;)
 	{
 		wrefresh(menu_w);
 
 		/* if no char is available within timeout, exit menu*/
 
-		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
+		if ((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			goto mexit;
 
 		c = wgetch(menu_w);
 
-		switch(c)
+		switch (c)
 		{
-			case ' ':
-			case '\t':	/* hilite next option */
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				mpos++;
-				if(mpos >= WMITEMS)
-					mpos = 0;
-				wstandout(menu_w);
-				mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
-				wstandend(menu_w);
+		case ' ':
+		case '\t':	/* hilite next option */
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			mpos++;
+			if (mpos >= WMITEMS)
+				mpos = 0;
+			wstandout(menu_w);
+			mvwaddstr(menu_w, mpos + 2, 2, menu[mpos]);
+			wstandend(menu_w);
+			break;
+
+		case ('0'+WBUDGET+1):	/* display budget info */
+		case 'B':
+		case 'b':
+			display_budget();
+			goto mexit;
+
+		case ('0'+WREFRESH+1):	/* display refresh */
+		case 'D':
+		case 'd':
+			wrefresh(curscr);
+			goto mexit;
+
+		case ('0'+WQUIT+1):	/* quit program */
+		case 'Q':
+		case 'q':
+			menuexit(menu_w);
+			do_exit(0);
+			goto mexit;
+
+		case ('0'+WHANGUP+1):	/* hangup connection */
+		case 'H':
+		case 'h':
+			display_chans();
+			goto mexit;
+
+		case ('0'+WREREAD+1):	/* reread config file */
+		case 'R':
+		case 'r':
+			rereadconfig(42);
+			goto mexit;
+
+		case ('0'+WSHOW+1):	/* reread config file */
+		case 'S':
+		case 's':
+			display_cards();
+			goto mexit;
+
+		case '\n':
+		case '\r':	/* exec highlighted option */
+			switch (mpos)
+			{
+			case WREFRESH:
+				wrefresh(curscr);
 				break;
 
-			case ('0'+WBUDGET+1):	/* display budget info */
-			case 'B':
-			case 'b':
-				display_budget();
-				goto mexit;
-
-			case ('0'+WREFRESH+1):	/* display refresh */
-			case 'D':
-			case 'd':
-				wrefresh(curscr);
-				goto mexit;
-
-			case ('0'+WQUIT+1):	/* quit program */
-			case 'Q':
-			case 'q':
+			case WQUIT:
 				menuexit(menu_w);
 				do_exit(0);
-				goto mexit;
+				break;
 
-			case ('0'+WHANGUP+1):	/* hangup connection */
-			case 'H':
-			case 'h':
+			case WHANGUP:
 				display_chans();
-				goto mexit;
+				break;
 
-			case ('0'+WREREAD+1):	/* reread config file */
-			case 'R':
-			case 'r':
+			case WREREAD:
 				rereadconfig(42);
-				goto mexit;
+				break;
 
-			case ('0'+WSHOW+1):	/* reread config file */
-			case 'S':
-			case 's':
+			case WBUDGET:
+				display_budget();
+				break;
+
+			case WSHOW:
 				display_cards();
-				goto mexit;
-
-			case '\n':
-			case '\r':	/* exec highlighted option */
-				switch(mpos)
-				{
-					case WREFRESH:
-						wrefresh(curscr);
-						break;
-
-					case WQUIT:
-						menuexit(menu_w);
-						do_exit(0);
-						break;
-
-					case WHANGUP:
-						display_chans();
-						break;
-
-					case WREREAD:
-						rereadconfig(42);
-						break;
-
-					case WBUDGET:
-						display_budget();
-						break;
-
-					case WSHOW:
-						display_cards();
-						break;
-				}
-				goto mexit;
 				break;
+			}
+			goto mexit;
+			break;
 
-			default:
-				goto mexit;
-				break;
+		default:
+			goto mexit;
+			break;
 		}
 	}
 
@@ -402,16 +402,16 @@ display_connect(struct cfg_entry *cep)
 
 	/* remote telephone number */
 
-	if(aliasing)
+	if (aliasing)
 	{
-		if(cep->direction == DIR_IN)
+		if (cep->direction == DIR_IN)
 			snprintf(buffer, sizeof(buffer), "%s", get_alias(cep->real_phone_incoming));
 		else
 			snprintf(buffer, sizeof(buffer), "%s", get_alias(cep->remote_phone_dialout));
 	}
 	else
 	{
-		if(cep->direction == DIR_IN)
+		if (cep->direction == DIR_IN)
 			snprintf(buffer, sizeof(buffer), "%s/%s", cep->name, cep->real_phone_incoming);
 		else
 			snprintf(buffer, sizeof(buffer), "%s/%s", cep->name, cep->remote_phone_dialout);
@@ -434,7 +434,7 @@ display_connect(struct cfg_entry *cep)
 	mvwprintw(upper_w, CHPOS(cep), H_IN,     "-");
 	mvwprintw(upper_w, CHPOS(cep), H_INBPS,  "-");
 
-	if(do_bell)
+	if (do_bell)
 		display_bell();
 
 	wrefresh(upper_w);
@@ -451,7 +451,7 @@ display_disconnect(struct cfg_entry *cep)
 	wclrtoeol(upper_w);
 	wrefresh(upper_w);
 
-	if(do_bell)
+	if (do_bell)
 		display_bell();
 
 }
@@ -462,7 +462,7 @@ display_disconnect(struct cfg_entry *cep)
 void
 display_updown(struct cfg_entry *cep, int updown)
 {
-	if(updown)
+	if (updown)
 		wstandend(mid_w);
 	else
 		wstandout(mid_w);
@@ -480,26 +480,26 @@ display_updown(struct cfg_entry *cep, int updown)
 void
 display_l12stat(int controller, int layer, int state)
 {
-	if(controller > ncontroller)
+	if (controller > ncontroller)
 		return;
-	if(!(layer == 1 || layer == 2))
+	if (!(layer == 1 || layer == 2))
 		return;
 
-	if(state)
+	if (state)
 		wstandout(upper_w);
 	else
 		wstandend(upper_w);
 
-	if(layer == 1)
+	if (layer == 1)
 	{
 		mvwprintw(upper_w, (controller*2)+1, H_TEI+1, "1");
-		if(!state)
+		if (!state)
 			mvwprintw(upper_w, (controller*2)+1, H_TEI+2, "2");
 	}
-	else if(layer == 2)
+	else if (layer == 2)
 	{
 		mvwprintw(upper_w, (controller*2)+1, H_TEI+2, "2");
-		if(state)
+		if (state)
 			mvwprintw(upper_w, (controller*2)+1, H_TEI+1, "1");
 	}
 
@@ -513,10 +513,10 @@ display_l12stat(int controller, int layer, int state)
 void
 display_tei(int controller, int tei)
 {
-	if(controller > ncontroller)
+	if (controller > ncontroller)
 		return;
 
-	if(tei == -1)
+	if (tei == -1)
 		mvwprintw(upper_w, controller*2, H_TEI, "---");
 	else
 		mvwprintw(upper_w, controller*2, H_TEI, "%3d", tei);
@@ -555,15 +555,15 @@ display_chans(void)
 	} *cc = NULL;
 
 	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
-		if((get_controller_state(ctrl)) != CTRL_UP)
+		if ((get_controller_state(ctrl)) != CTRL_UP)
 			continue;
-		if((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
+		if ((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
 			cnt++;
-		if((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
+		if ((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
 			cnt++;
 	}
 
-	if(cnt > 0)
+	if (cnt > 0)
 	{
 		if ((cc = (struct ctlr_chan *)malloc (cnt *
 			sizeof (struct ctlr_chan))) == NULL)
@@ -584,7 +584,7 @@ display_chans(void)
 
 	/* create a new window in the lower screen area */
 
-	if((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
+	if ((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init channel window!");
 		if (cnt > 0)
@@ -619,10 +619,10 @@ display_chans(void)
 	ncols = 1;
 
 	for (ctrl = get_first_ctrl_state(), i = 0; ctrl; ctrl = NEXT_CTRL(ctrl), i++) {
-		if((get_controller_state(ctrl)) != CTRL_UP)
+		if ((get_controller_state(ctrl)) != CTRL_UP)
 			continue;
 
-		if((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
+		if ((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
 		{
 			snprintf(buffer, sizeof(buffer), "%d - Controller %d channel %s", ncols, i, "B1");
 			mvwaddstr(chan_w, nlines, 2, buffer);
@@ -631,7 +631,7 @@ display_chans(void)
 			nlines++;
 			ncols++;
 		}
-		if((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
+		if ((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
 		{
 			snprintf(buffer, sizeof(buffer), "%d - Controller %d channel %s", ncols, i, "B2");
 			mvwaddstr(chan_w, nlines, 2, buffer);
@@ -644,13 +644,13 @@ display_chans(void)
 
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
-	for(;;)
+	for (;;)
 	{
 		wrefresh(chan_w);
 
 		/* if no char is available within timeout, exit menu*/
 
-		if((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
+		if ((poll(set, 1, WMTIMEOUT * 1000)) <= 0)
 			break;
 
 		ncols = wgetch(chan_w);
@@ -669,7 +669,7 @@ display_chans(void)
 			continue;
 		}
 
-		if((cep = get_cep_by_cc(cc[nlines-1].cntl, cc[nlines-1].chn))
+		if ((cep = get_cep_by_cc(cc[nlines-1].cntl, cc[nlines-1].chn))
 			!= NULL)
 		{
 			logit(LL_CHD, "%05d %s manual disconnect (fullscreen menu)", cep->cdid, cep->name);
@@ -704,7 +704,7 @@ display_cards(void)
 
 	/* create a new window in the lower screen area */
 
-	if((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
+	if ((chan_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init channel window!");
 		return;
@@ -734,7 +734,7 @@ display_cards(void)
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
 
-	if((poll(set, 1, WMTIMEOUT*2 * 1000)) <= 0)
+	if ((poll(set, 1, WMTIMEOUT*2 * 1000)) <= 0)
 	{
 		delwin(chan_w);
 		return;
@@ -767,20 +767,20 @@ display_budget(void)
 	pos_x = WMENU_POSCO-3;
 
 	for (cep = get_first_cfg_entry(), j=0; cep; cep = NEXT_CFE(cep)) {
-		if(cep->budget_callbackperiod && cep->budget_callbackncalls)
+		if (cep->budget_callbackperiod && cep->budget_callbackncalls)
 			nlines++;
-		if(cep->budget_calloutperiod && cep->budget_calloutncalls)
+		if (cep->budget_calloutperiod && cep->budget_calloutncalls)
 			nlines++;
 	}
 
-	if(nlines == 0)
+	if (nlines == 0)
 		return;
 
 	nlines += 6;
 
 	/* create a new window in the lower screen area */
 
-	if((bud_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
+	if ((bud_w = newwin(nlines, ncols, pos_y, pos_x )) == NULL)
 	{
 		logit(LL_WRN, "ERROR, curses init budget window!");
 		return;
@@ -817,7 +817,7 @@ display_budget(void)
 	mvwprintw(bud_w, 3, 2, "-------- - ------ ------ ----- ----- ----- ---- ----- ---- ----- ----");
 
 	for (cep = get_first_cfg_entry(), j=4; cep; cep = NEXT_CFE(cep)) {
-		if(cep->budget_calloutperiod && cep->budget_calloutncalls)
+		if (cep->budget_calloutperiod && cep->budget_calloutncalls)
 		{
 			mvwprintw(bud_w, j, 2, "%-8s %c %-6d %-6ld %-5d %-5d %-5d %-4.1f %-5d %-4.1f %-5d %-4.1f",
 				cep->name,
@@ -834,7 +834,7 @@ display_budget(void)
 				(double)cep->budget_callout_rej / uptime);
 			j++;
 		}
-		if(cep->budget_callbackperiod && cep->budget_callbackncalls)
+		if (cep->budget_callbackperiod && cep->budget_callbackncalls)
 		{
 			mvwprintw(bud_w, j, 2, "%-8s %c %-6d %-6ld %-5d %-5d %-5d %-4.1f %-5d %-4.1f %-5d %-4.1f",
 				(cep->budget_calloutperiod && cep->budget_calloutncalls) ? "" : cep->name,
@@ -858,7 +858,7 @@ display_budget(void)
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
 
-	if((poll(set, 1, WMTIMEOUT*3 * 1000)) <= 0)
+	if ((poll(set, 1, WMTIMEOUT*3 * 1000)) <= 0)
 	{
 		delwin(bud_w);
 		return;

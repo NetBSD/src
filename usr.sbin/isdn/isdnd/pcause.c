@@ -27,7 +27,7 @@
  *	printing cause values
  *	---------------------
  *
- *	$Id: pcause.c,v 1.3 2003/10/06 09:18:41 itojun Exp $
+ *	$Id: pcause.c,v 1.4 2003/10/06 09:43:27 itojun Exp $
  *
  * $FreeBSD$
  *
@@ -200,32 +200,32 @@ print_i4b_cause(cause_t code)
 
 	snprintf(error_message, sizeof(error_message), "%d: ", GET_CAUSE_VAL(code));
 
-	switch(GET_CAUSE_TYPE(code))
+	switch (GET_CAUSE_TYPE(code))
 	{
-		case CAUSET_Q850:
-			strlcat(error_message,
-			    cause_q850_tab[GET_CAUSE_VAL(code)],
-			    sizeof(error_message));
-			strlcat(error_message, " (Q.850)",
-			    sizeof(error_message));
-			break;
+	case CAUSET_Q850:
+		strlcat(error_message,
+		    cause_q850_tab[GET_CAUSE_VAL(code)],
+		    sizeof(error_message));
+		strlcat(error_message, " (Q.850)",
+		    sizeof(error_message));
+		break;
 
-		case CAUSET_I4B:
-			if((GET_CAUSE_VAL(code) < CAUSE_I4B_NORMAL) ||
-			   (GET_CAUSE_VAL(code) >= CAUSE_I4B_MAX))
-			{
-				SET_CAUSE_VAL(code, CAUSE_I4B_MAX);
-			}
-			strlcat(error_message,
-			    cause_i4b_tab[GET_CAUSE_VAL(code)],
-			    sizeof(error_message));
-			strlcat(error_message, " (I4B)", sizeof(error_message));
-			break;
+	case CAUSET_I4B:
+		if ((GET_CAUSE_VAL(code) < CAUSE_I4B_NORMAL) ||
+		    (GET_CAUSE_VAL(code) >= CAUSE_I4B_MAX))
+		{
+			SET_CAUSE_VAL(code, CAUSE_I4B_MAX);
+		}
+		strlcat(error_message,
+		    cause_i4b_tab[GET_CAUSE_VAL(code)],
+		    sizeof(error_message));
+		strlcat(error_message, " (I4B)", sizeof(error_message));
+		break;
 
-		default:
-			strlcat(error_message, "ERROR: unknown cause type!",
-			    sizeof(error_message));
-			break;
+	default:
+		strlcat(error_message, "ERROR: unknown cause type!",
+		    sizeof(error_message));
+		break;
 	}
 	return(error_message);
 }
