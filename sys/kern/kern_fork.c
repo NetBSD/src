@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.20 1994/08/30 03:05:35 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.21 1994/08/30 06:16:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -98,6 +98,7 @@ fork1(p1, isvfork, retval)
 		tablefull("proc");
 		return (EAGAIN);
 	}
+
 	/*
 	 * Increment the count of procs running with this uid. Don't allow
 	 * a nonprivileged user to exceed their current limit.
@@ -157,7 +158,6 @@ again:
 		}
 	}
 
-
 	nprocs++;
 	p2 = newproc;
 	p2->p_stat = SIDL;			/* protect against others */
@@ -182,6 +182,7 @@ again:
 	 * The p_stats and p_sigacts substructs are set in vm_fork.
 	 */
 	p2->p_flag = P_INMEM;
+	p2->p_emul = p1->p_emul;
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 	MALLOC(p2->p_cred, struct pcred *, sizeof(struct pcred),
