@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.32.2.3 2002/06/10 16:49:42 tv Exp $
+.\"	$NetBSD: sysinst,v 1.32.2.4 2002/06/18 23:38:54 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -246,7 +246,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \n[acorn26]:\n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[sgimips]:\n[x68k]
+.\} \" ! \n[acorn26]:\n[atari]:\n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[sgimips]:\n[x68k]
 .It
 .To 2 General
 .Em General
@@ -288,6 +288,10 @@ The distribution sets (in this example, they are on CD).
 .ie r_alpha Two floppy disks.
 .el .ie r_i386 Two 1.44 MB 3.5" floppy disks.
 .el .ie \n[acorn26]:\n[macppc]:\n[sparc] Some form of bootable media, described above.
+.el .ie r_atari \{\
+A floppy disk containing a suitable boot.fs and a floppy with the
+sysinst.fs image. See the "prepare" section about obtaining those.
+.\} \" r_atari
 .el One 1.44 MB 3.5" floppy.
 .\} \" ! r_pmax
 .if r_i386 \{\
@@ -296,11 +300,12 @@ A PC with a 386 or newer processor.
 .\} \" r_i386
 .It
 A CD-ROM drive
-.ie \n[acorn26]:\n[alpha]:\n[i386]:\n[macppc] (SCSI or ATAPI),
+.ie \n[acorn26]:\n[atari]:\n[alpha]:\n[i386]:\n[macppc] (SCSI or ATAPI),
 .el (SCSI),
 a harddisk and a minimum of
 .if r_acorn26 8 MB
 .if r_alpha 32 MB
+.if r_atari 4 MB (TT030/Falcon) or 16 Mb (Hades/Milan)
 .if r_i386 4 MB
 .if r_macppc 8 MB
 .if r_mvme68k 4 MB
@@ -313,6 +318,7 @@ of memory installed.
 The harddisk should have at least
 .if r_acorn26 200
 .if r_alpha 200
+.if r_atari 120
 .if r_i386 70
 .if r_macppc 200
 .if r_mvme68k 100
@@ -379,6 +385,10 @@ should be at the
 .Ic sysinst
 main menu.
 .\} \" \n[macppc]:\n[pmax]:\n[sgimips]:\n[sparc]
+.ie r_atari \{\
+Boot the system as described in the "Booting the installer" section above.
+The main menu will be displayed.
+.\}
 .el \{\
 Insert the
 .ie r_i386 first
@@ -432,6 +442,10 @@ Choose
 You will be guided through some steps regarding the
 setup of your disk, and the selection of distributed components
 to install. When in doubt, refer to the rest of this document for details.
+.if r_atari \{\
+WARNING: If you want your disk to retain an AHDI compatible partitioning,
+make sure to use the 'existing' disk layout.
+.\}
 .It
 After your disk has been prepared, choose
 .if r_sgimips \{\
@@ -496,7 +510,7 @@ Further information can be found on
 .Em Booting NetBSD
 .
 .
-.if !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
@@ -543,6 +557,10 @@ the second, etc.
 .
 .
 .Pp
+.if r_atari \{\
+Boot the system as described in the "Booting the installer" section above.
+.\}
+.el \{\
 Boot your machine. The boot loader will
 start, and will print a countdown and begin booting.
 .Pp
@@ -550,6 +568,7 @@ If the boot loader messages do not appear in a reasonable
 amount of time, you either have a bad boot floppy or a
 hardware problem. Try writing the install floppy image to
 a different disk, and using that.
+.\}
 .if r_i386 \{\
 .Pp
 If that doesn't work, try booting after disabling your CPU's
@@ -568,7 +587,7 @@ will be displayed. This may take a little while also, as
 .Nx
 will be probing your system to discover which hardware devices are
 installed.
-.if r_i386 \{\
+.if \n[atari]:\n[i386]  \{\
 You may want to read the
 boot messages, to notice your disk's name and geometry. Its name
 will be something like
@@ -597,8 +616,10 @@ is your first SCSI disk,
 .Li sd1
 the second, etc.
 .Pp
+.if !r_atari \{\
 Note that once the system has finished booting, you need not
 leave the floppy in the disk drive.
+.\}
 .if r_i386 \{\
 Earlier version of
 the
@@ -620,7 +641,7 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[acorn26]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
+.if !\n[acorn26]:\n[atari]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
@@ -865,6 +886,44 @@ the FAQ entry
 .It
 .To 2 "Partitioning the disk"
 .Em Partitioning the disk
+.if r_atari \{\
+.(bullet
+Preparing a disk which will be used for
+.Tn GEM
+and
+.Nx .
+.Pp
+You will be prompted if you want an AHDI compatible partitioning on your disk.
+If you are installing
+.Nx
+on a dedicated drive, just answer 'no' and skip to the next section.
+.Pp
+If you answer 'yes', the
+.Ic ahdilabel
+program is started. You can now change the AHDI partition ID's on your root
+disk. Because NetBSD imposes a special ordering in disk partitions it uses
+for / (root) and swap. And because it wants to guard you against an unwanted
+demolition of partitions used by other systems, you have to tell it what
+partitions it is allowed to use. You have to mark the partition you want
+to use as swap SWP or (depricated!) NBS and the other partitions as NBD.
+Note that all the changes you make to the ID's are reversable as long as
+you remember the original value.  As of NetBSD 1.5 ahdilabel is capable of
+creating or changing an AHDI compatible partioning on the disk! In the
+partition-ID editor, the partitions are shown in the order that AHDI
+created them.  When you leave this editor and continue with
+.Ic sysinst,
+your changes to the ID's do have consequences to the partition order!
+They will show up as follows:
+.(tag 13n -offset indent
+.It Li a
+the first NBD partition
+.It Li b
+the first SWP (or NBS) partition
+.It Li d (and up)
+the rest of the partitions in AHDI order
+.tag)
+.bullet)
+.\} \" r_atari
 .if r_macppc \{\
 .Pp
 You can skip a few steps, down to 
@@ -876,7 +935,7 @@ if you are installing onto a drive that will be used with
 from the main menu).
 .\}
 .(bullet
-.if !r_macppc \{\
+.if !\n[atari]:\n[macppc] \{\
 Which portion of the disk to use.
 .Pp
 You will be asked if you want to use the entire disk or
@@ -931,7 +990,7 @@ disklabel.
 .Pp
 .\}
 .It
-.\} \" !r_macppc
+.\} \" !\n[atari]:\n[macppc]
 .Em Editing the NetBSD disklabel
 .Pp
 The partition table of the
@@ -956,17 +1015,26 @@ disklabels on \*M are compatible with the boot ROMs, and with
 and
 .Tn Solaris .
 .\}
-There are 3 layouts for the
+There are 4 layouts for the
 .Nx
 part of the disk that you can pick from:
-.Ic Standard, Standard with X
+.Ic Standard, Standard with X, Custom
 and
-.Ic Custom .
+.Ic Use Existing .
 The first two use a set of default
 values (that you can change) suitable for a normal
-installation, possibly including X. The last option
-lets you specify everything yourself.
+installation, possibly including X. With the
+.Ic Custom
+option you can specify everything yourself. The last option uses
+the partition info already present on the disk.
 .Pp
+.if r_atari \{\
+If you want to use
+.Nx
+on an AHDI partitioned disk, you will have to use:
+.Ic Use Existing .
+.Pp
+.\}
 You will be presented with the current layout of the
 .Nx
 disklabel, and given a chance to change it.
@@ -1024,6 +1092,9 @@ The entire disk.
 .ie r_macppc \{\
 .It Li d-h
 .\}
+.ie r_atari \{\
+.It Li d-p
+.\}
 .el \{\
 .It Li \*[usrpart]-h
 .\}
@@ -1050,12 +1121,24 @@ need to remember this name.
 .Em Preparing your hard disk
 .Pp
 .Em "You are now at the point of no return".
+.if r_atari \{\
+Apart from the changes you made with
+.Ic ahdilabel
+nothing has been modified on your disk yet. If you confirm that you want to
+install
+.Nx ,
+the partitions now assigned to
+.Nx
+will be actually written to.
+.\}
+.if !r_atari \{\ \" Why does .el not work???
 Nothing has been
 written to your disk yet, but if you confirm that you want to
 install
 .Nx ,
-your hard drive will be modified. If you are
-sure you want to proceed, enter
+your hard drive will be modified.
+.\}
+If you are sure you want to proceed, enter
 .Li yes
 at the prompt.
 .Pp
