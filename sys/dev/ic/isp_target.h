@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.9 2000/12/23 01:38:00 wiz Exp $ */
+/* $NetBSD: isp_target.h,v 1.10 2000/12/28 08:23:48 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -297,6 +297,9 @@ typedef struct {
 	u_int16_t	at_scsi_status;
 	u_int8_t	at_sense[QLTM_SENSELEN];
 } at2_entry_t;
+
+#define	ATIO2_WWPN_OFFSET	0x2A
+#define	ATIO2_OXID_OFFSET	0x3E
 
 #define	ATIO2_TC_ATTR_MASK	0x7
 #define	ATIO2_TC_ATTR_SIMPLEQ	0
