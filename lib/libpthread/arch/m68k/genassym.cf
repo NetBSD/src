@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2001/11/18 23:35:20 scw Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2001/11/19 20:13:09 scw Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,12 +59,16 @@ define STACKSPACE		STACKSPACE
 
 define _UC_CPU		_UC_CPU
 
+define _REG_D0		_REG_D0
+define _REG_D1		_REG_D1
 define _REG_D2		_REG_D2
 define _REG_D3		_REG_D3
 define _REG_D4		_REG_D4
 define _REG_D5		_REG_D5
 define _REG_D6		_REG_D6
 define _REG_D7		_REG_D7
+define _REG_A0		_REG_A0
+define _REG_A1		_REG_A1
 define _REG_A2		_REG_A2
 define _REG_A3		_REG_A3
 define _REG_A4		_REG_A4

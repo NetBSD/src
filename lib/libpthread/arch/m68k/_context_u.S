@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.1 2001/11/18 23:35:20 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/11/19 20:13:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,32 +39,48 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-
+/*
+ * Save the current context into the ucontext_t structure pointed to
+ * by %a0. The value of %pc to save is passed in %a1.
+ *
+ * We only need to save the `callee' saved registers. In fact, saving
+ * the %ccr here is probably overkill, but might as well put a sane
+ * value in there...
+ */
 #define	GETC	\
+	movw	%cc,%a0@(UC_REGS + (_REG_PS * 4) + 2)	;	\
 	moveml	%d2-%d7,%a0@(UC_REGS + (_REG_D2 * 4))	;	\
-	moveml	%a2-%a6,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
-	movw	%cc,%d0					;	\
-	movw	%d0,%a0@(UC_REGS + (_REG_PS * 4) + 2)	;	\
-	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))	;	\
-	lea	%sp@(4),%a1				;	\
-	movl	%a1,%a0@(UC_REGS + (_REG_SP * 4))
+	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
+	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))
 
+/*
+ * Restore the complete context from the ucontext_t structure pointed
+ * to by %a0. We can't short-cut caller saved registers here. In fact,
+ * we have to do some gymnastics to avoid restoring the saved %sp until
+ * all other saved registers have been read out. This is because there's
+ * a chance the ucontext_t structure is allocated at the base of the new
+ * context's stack.
+ */
 #define	SETC	\
-	moveml	%a0@(UC_REGS + (_REG_D2 * 4)),%d2-%d7	;	\
+	moveml	%a0@(UC_REGS + (_REG_D0 * 4)),%d0-%d7	;	\
 	moveml	%a0@(UC_REGS + (_REG_A2 * 4)),%a2-%a6	;	\
-	movw	%a0@(UC_REGS + (_REG_PS * 4) + 2),%d0	;	\
-	movw	%d0,%cc					;	\
-	movl	%a0@(UC_REGS + (_REG_PC * 4)),%a1	;	\
-	movl	%a0@(UC_REGS + (_REG_SP * 4)),%sp	;	\
-	jmp	%a1@
+	movl	%a0@(UC_REGS + (_REG_SP * 4)),%a1	;	\
+	movl	%a0@(UC_REGS + (_REG_PC * 4)),%a1@-	;	\
+	movl	%a0@(UC_REGS + (_REG_A1 * 4)),%a1@-	;	\
+	movw	%a0@(UC_REGS + (_REG_PS * 4) + 2),%a1@-	;	\
+	movl	%a0@(UC_REGS + (_REG_A0 * 4)),%a0	;	\
+	movw	%a1@+,%cc				;	\
+	movl	%a1,%sp					;	\
+	movl	%sp@+,%a1				;	\
+	rts
 
 /*
  * int _getcontext_u(ucontext_t *ctx)
  *	Store the current context in the provided ctx structure.
  */
 ENTRY_NOPROFILE(_getcontext_u)
-	movl	%sp@(4),%a0
-	movl	%sp@,%a1
+	movl	%sp@+,%a1
+	movl	%sp@,%a0
 	GETC
 	moveql	#0,%d0
 	rts
@@ -83,8 +99,8 @@ ENTRY_NOPROFILE(_setcontext_u)
  *	new context in `to'.
  */
 ENTRY_NOPROFILE(_swapcontext_u)
-	movl	%sp@(4),%a0
-	movl	%sp@,%a1
+	movl	%sp@+,%a1
+	movl	%sp@,%a0
 	GETC
-	movl	%sp@(8),%a0
+	movl	%sp@(4),%a0
 	SETC
