@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: util.c,v 8.225 2000/03/28 21:55:22 ca Exp";
+static char id[] = "@(#)Id: util.c,v 8.225.4.1 2000/05/27 19:56:01 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -1856,17 +1856,29 @@ prog_open(argv, pfd, e)
 	{
 		expand(ProgMailer->m_rootdir, buf, sizeof buf, e);
 		if (chroot(buf) < 0)
+		{
 			syserr("prog_open: cannot chroot(%s)", buf);
+			exit(EX_TEMPFAIL);
+		}
 		if (chdir("/") < 0)
+		{
 			syserr("prog_open: cannot chdir(/)");
+			exit(EX_TEMPFAIL);
+		}
 	}
 
 	/* run as default user */
 	endpwent();
 	if (setgid(DefGid) < 0 && geteuid() == 0)
+	{
 		syserr("prog_open: setgid(%ld) failed", (long) DefGid);
+		exit(EX_TEMPFAIL);
+	}
 	if (setuid(DefUid) < 0 && geteuid() == 0)
+	{
 		syserr("prog_open: setuid(%ld) failed", (long) DefUid);
+		exit(EX_TEMPFAIL);
+	}
 
 	/* run in some directory */
 	if (ProgMailer != NULL)
