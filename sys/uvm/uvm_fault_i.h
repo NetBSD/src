@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.4 1998/02/10 02:34:35 perry Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.5 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -49,19 +49,19 @@
  * uvmfault_unlockmaps: unlock the maps
  */
 
-static __inline void uvmfault_unlockmaps(ufi, write_locked)
-
-struct uvm_faultinfo *ufi;
-boolean_t write_locked;
-
+static __inline void
+uvmfault_unlockmaps(ufi, write_locked)
+	struct uvm_faultinfo *ufi;
+	boolean_t write_locked;
 {
-  if (write_locked) {
-    vm_map_unlock(ufi->map);
-    if (ufi->parent_map) vm_map_unlock(ufi->parent_map);
-  } else {
-    vm_map_unlock_read(ufi->map);
-    if (ufi->parent_map) vm_map_unlock_read(ufi->parent_map);
-  }
+
+	if (write_locked) {
+		vm_map_unlock(ufi->map);
+		if (ufi->parent_map) vm_map_unlock(ufi->parent_map);
+	} else {
+		vm_map_unlock_read(ufi->map);
+		if (ufi->parent_map) vm_map_unlock_read(ufi->parent_map);
+	}
 }
 
 /*
@@ -70,21 +70,21 @@ boolean_t write_locked;
  * => maps must be read-locked (not write-locked).
  */
 
-static __inline void uvmfault_unlockall(ufi, amap, uobj, anon)
-
-struct uvm_faultinfo *ufi;
-struct vm_amap *amap;
-struct uvm_object *uobj;
-struct vm_anon *anon;
-
+static __inline void
+uvmfault_unlockall(ufi, amap, uobj, anon)
+	struct uvm_faultinfo *ufi;
+	struct vm_amap *amap;
+	struct uvm_object *uobj;
+	struct vm_anon *anon;
 {
-  if (anon)
-    simple_unlock(&anon->an_lock);
-  if (uobj)
-    simple_unlock(&uobj->vmobjlock);
-  if (amap)
-    simple_unlock(&amap->am_l);
-  uvmfault_unlockmaps(ufi, FALSE);
+
+	if (anon)
+		simple_unlock(&anon->an_lock);
+	if (uobj)
+		simple_unlock(&uobj->vmobjlock);
+	if (amap)
+		simple_unlock(&amap->am_l);
+	uvmfault_unlockmaps(ufi, FALSE);
 }
 
 /*
@@ -110,97 +110,100 @@ struct vm_anon *anon;
  *	and move rvaddr to orig_rvaddr.
  */
 
-static __inline boolean_t uvmfault_lookup(ufi, write_lock)
-
-struct uvm_faultinfo *ufi;
-boolean_t write_lock;
-
+static __inline boolean_t
+uvmfault_lookup(ufi, write_lock)
+	struct uvm_faultinfo *ufi;
+	boolean_t write_lock;
 {
-  vm_map_t tmpmap;
+	vm_map_t tmpmap;
 
-  /*
-   * init ufi values for lookup.
-   */
+	/*
+	 * init ufi values for lookup.
+	 */
 
-  ufi->map = ufi->orig_map;
-  ufi->rvaddr = ufi->orig_rvaddr;
-  ufi->parent_map = NULL;
-  ufi->size = ufi->orig_size;
+	ufi->map = ufi->orig_map;
+	ufi->rvaddr = ufi->orig_rvaddr;
+	ufi->parent_map = NULL;
+	ufi->size = ufi->orig_size;
 
-  /*
-   * keep going down levels until we are done.   note that there can
-   * only be two levels so we won't loop very long.
-   */
+	/*
+	 * keep going down levels until we are done.   note that there can
+	 * only be two levels so we won't loop very long.
+	 */
 
-  while (1) {
+	while (1) {
 
-    /*
-     * lock map
-     */
-    if (write_lock) {
-      vm_map_lock(ufi->map);
-    } else {
-      vm_map_lock_read(ufi->map);
-    }
+		/*
+		 * lock map
+		 */
+		if (write_lock) {
+			vm_map_lock(ufi->map);
+		} else {
+			vm_map_lock_read(ufi->map);
+		}
 
-    /*
-     * lookup
-     */
-    if (!uvm_map_lookup_entry(ufi->map, ufi->rvaddr, &ufi->entry)) {
-      uvmfault_unlockmaps(ufi, write_lock);
-      return(FALSE);
-    }
+		/*
+		 * lookup
+		 */
+		if (!uvm_map_lookup_entry(ufi->map, ufi->rvaddr, &ufi->entry)) {
+			uvmfault_unlockmaps(ufi, write_lock);
+			return(FALSE);
+		}
 
-    /*
-     * reduce size if necessary
-     */
-    if (ufi->entry->end - ufi->rvaddr < ufi->size)
-      ufi->size = ufi->entry->end - ufi->rvaddr;
+		/*
+		 * reduce size if necessary
+		 */
+		if (ufi->entry->end - ufi->rvaddr < ufi->size)
+			ufi->size = ufi->entry->end - ufi->rvaddr;
 
-    /*
-     * submap?    replace map with the submap and lookup again.
-     * note: VAs in submaps must match VAs in main map.
-     */
-    if (UVM_ET_ISSUBMAP(ufi->entry)) {
-      if (ufi->parent_map)
-	panic("uvmfault_lookup: submap inside a sharemap (illegal)");
-      tmpmap = ufi->entry->object.sub_map;
-      if (write_lock) {
-	vm_map_unlock(ufi->map);
-      } else {
-	vm_map_unlock_read(ufi->map);
-      }
-      ufi->map = tmpmap;
-      continue;
-    }
+		/*
+		 * submap?    replace map with the submap and lookup again.
+		 * note: VAs in submaps must match VAs in main map.
+		 */
+		if (UVM_ET_ISSUBMAP(ufi->entry)) {
+			if (ufi->parent_map)
+				panic("uvmfault_lookup: submap inside a "
+				    "sharemap (illegal)");
+			tmpmap = ufi->entry->object.sub_map;
+			if (write_lock) {
+				vm_map_unlock(ufi->map);
+			} else {
+				vm_map_unlock_read(ufi->map);
+			}
+			ufi->map = tmpmap;
+			continue;
+		}
 
-    /*
-     * share map?  drop down a level.   already taken care of submap case.
-     */
-    if (UVM_ET_ISMAP(ufi->entry)) {
-      if (ufi->parent_map)
-	panic("uvmfault_lookup: sharemap inside a sharemap (illegal)");
-      ufi->parent_map = ufi->map;
-      ufi->parentv = ufi->parent_map->timestamp;
-      ufi->map = ufi->entry->object.share_map;
+		/*
+		 * share map?  drop down a level.   already taken care of
+		 * submap case.
+		 */
+		if (UVM_ET_ISMAP(ufi->entry)) {
+			if (ufi->parent_map)
+				panic("uvmfault_lookup: sharemap inside a "
+				    "sharemap (illegal)");
+			ufi->parent_map = ufi->map;
+			ufi->parentv = ufi->parent_map->timestamp;
+			ufi->map = ufi->entry->object.share_map;
 #ifdef DIAGNOSTIC
-      /* see note above */
-      if (ufi->entry->offset != ufi->entry->start)
-	panic("uvmfault_lookup: sharemap VA != mainmap VA (not supported)");
+			/* see note above */
+			if (ufi->entry->offset != ufi->entry->start)
+				panic("uvmfault_lookup: sharemap VA != "
+				    "mainmap VA (not supported)");
 #endif
-      continue;
-    }
-    
-    /*
-     * got it!
-     */
+			continue;
+		}
+		
+		/*
+		 * got it!
+		 */
 
-    ufi->mapv = ufi->map->timestamp;
-    return(TRUE);
+		ufi->mapv = ufi->map->timestamp;
+		return(TRUE);
 
-  }	/* while loop */
+	}	/* while loop */
 
-  /*NOTREACHED*/
+	/*NOTREACHED*/
 }
 
 /*
@@ -210,35 +213,35 @@ boolean_t write_lock;
  * => if a success (TRUE) maps will be locked after call.
  */
 
-static __inline boolean_t uvmfault_relock(ufi)
-
-struct uvm_faultinfo *ufi;
-
+static __inline boolean_t
+uvmfault_relock(ufi)
+	struct uvm_faultinfo *ufi;
 {
-  uvmexp.fltrelck++;
-  /*
-   * simply relock parent (if any) then map in order.   fail if version
-   * mismatch (in which case nothing gets locked).
-   */
 
-  if (ufi->parent_map) {
-    vm_map_lock_read(ufi->parent_map);
-    if (ufi->parentv != ufi->parent_map->timestamp) {
-      vm_map_unlock_read(ufi->parent_map);
-      return(FALSE);
-    }
-  }
+	uvmexp.fltrelck++;
+	/*
+	 * simply relock parent (if any) then map in order.   fail if version
+	 * mismatch (in which case nothing gets locked).
+	 */
 
-  vm_map_lock_read(ufi->map);
-  if (ufi->mapv != ufi->map->timestamp) {
-    if (ufi->parent_map)
-      vm_map_unlock_read(ufi->parent_map);
-    vm_map_unlock_read(ufi->map);
-    return(FALSE);
-  }
+	if (ufi->parent_map) {
+		vm_map_lock_read(ufi->parent_map);
+		if (ufi->parentv != ufi->parent_map->timestamp) {
+			vm_map_unlock_read(ufi->parent_map);
+			return(FALSE);
+		}
+	}
 
-  uvmexp.fltrelckok++;
-  return(TRUE);		/* got it! */
+	vm_map_lock_read(ufi->map);
+	if (ufi->mapv != ufi->map->timestamp) {
+		if (ufi->parent_map)
+			vm_map_unlock_read(ufi->parent_map);
+		vm_map_unlock_read(ufi->map);
+		return(FALSE);
+	}
+
+	uvmexp.fltrelckok++;
+	return(TRUE);		/* got it! */
 }
 
 #endif /* _UVM_UVM_FAULT_I_H_ */

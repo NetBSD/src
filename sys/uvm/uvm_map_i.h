@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.5 1998/02/10 14:12:20 mrg Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.6 1998/03/09 00:58:57 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -89,19 +89,18 @@
  * uvm_map_create: create map
  */
 
-MAP_INLINE vm_map_t uvm_map_create(pmap, min, max, pageable)
-
-pmap_t pmap;
-vm_offset_t min, max;
-boolean_t pageable;
-
+MAP_INLINE vm_map_t
+uvm_map_create(pmap, min, max, pageable)
+	pmap_t pmap;
+	vm_offset_t min, max;
+	boolean_t pageable;
 {
-  vm_map_t result;
+	vm_map_t result;
 
-  MALLOC(result, vm_map_t, sizeof(struct vm_map), M_VMMAP, M_WAITOK);
-  uvm_map_setup(result, min, max, pageable);
-  result->pmap = pmap;
-  return(result);
+	MALLOC(result, vm_map_t, sizeof(struct vm_map), M_VMMAP, M_WAITOK);
+	uvm_map_setup(result, min, max, pageable);
+	result->pmap = pmap;
+	return(result);
 }
 
 /*
@@ -110,27 +109,27 @@ boolean_t pageable;
  * => map must not be in service yet.
  */
 
-MAP_INLINE void uvm_map_setup(map, min, max, pageable)
-
-vm_map_t map;
-vm_offset_t min, max;
-boolean_t pageable;
-
+MAP_INLINE void
+uvm_map_setup(map, min, max, pageable)
+	vm_map_t map;
+	vm_offset_t min, max;
+	boolean_t pageable;
 {
-  map->header.next = map->header.prev = &map->header;
-  map->nentries = 0;
-  map->size = 0;
-  map->ref_count = 1;
-  map->is_main_map = TRUE; 
-  map->min_offset = min;
-  map->max_offset = max;
-  map->entries_pageable = pageable;
-  map->first_free = &map->header;
-  map->hint = &map->header;
-  map->timestamp = 0;
-  lockinit(&map->lock, PVM, "thrd_sleep", 0, 0);
-  simple_lock_init(&map->ref_lock);
-  simple_lock_init(&map->hint_lock);
+
+	map->header.next = map->header.prev = &map->header;
+	map->nentries = 0;
+	map->size = 0;
+	map->ref_count = 1;
+	map->is_main_map = TRUE; 
+	map->min_offset = min;
+	map->max_offset = max;
+	map->entries_pageable = pageable;
+	map->first_free = &map->header;
+	map->hint = &map->header;
+	map->timestamp = 0;
+	lockinit(&map->lock, PVM, "thrd_sleep", 0, 0);
+	simple_lock_init(&map->ref_lock);
+	simple_lock_init(&map->hint_lock);
 }
 
 
@@ -149,32 +148,31 @@ boolean_t pageable;
  *    (e.g. the "exit" system call would want to set "mainonly").
  */
 
-MAP_INLINE int uvm_unmap(map, start, end, mainonly)
-
-vm_map_t map;
-vm_offset_t start,end;
-boolean_t mainonly;
-
+MAP_INLINE int
+uvm_unmap(map, start, end, mainonly)
+	vm_map_t map;
+	vm_offset_t start,end;
+	boolean_t mainonly;
 {
-  int result;
-  vm_map_entry_t dead_entries;
-  UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
+	int result;
+	vm_map_entry_t dead_entries;
+	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
-  UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x, mainonly=%d)",
+	UVMHIST_LOG(maphist, "  (map=0x%x, start=0x%x, end=0x%x, mainonly=%d)",
 	map, start, end, mainonly);
-  /*
-   * work now done by helper functions.   wipe the pmap's and then
-   * detach from the dead entries...
-   */
-  vm_map_lock(map);
-  result = uvm_unmap_remove(map, start, end, mainonly, &dead_entries);
-  vm_map_unlock(map);
+	/*
+	 * work now done by helper functions.   wipe the pmap's and then
+	 * detach from the dead entries...
+	 */
+	vm_map_lock(map);
+	result = uvm_unmap_remove(map, start, end, mainonly, &dead_entries);
+	vm_map_unlock(map);
 
-  if (dead_entries != NULL)
-    uvm_unmap_detach(dead_entries, 0);
+	if (dead_entries != NULL)
+		uvm_unmap_detach(dead_entries, 0);
 
-  UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
-  return(result);
+	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
+	return(result);
 }
 
 
@@ -184,24 +182,23 @@ boolean_t mainonly;
  * => map need not be locked (we use ref_lock).
  */
 
-MAP_INLINE void uvm_map_reference(map)
-
-vm_map_t map;
-
+MAP_INLINE void
+uvm_map_reference(map)
+	vm_map_t map;
 {
-  if (map == NULL) {
+	if (map == NULL) {
 #ifdef DIAGNOSTIC
-    printf("uvm_map_reference: reference to NULL map\n");
+		printf("uvm_map_reference: reference to NULL map\n");
 #ifdef DDB
-    Debugger();
+		Debugger();
 #endif
 #endif
-    return;
-  }
+		return;
+	}
 
-  simple_lock(&map->ref_lock);
-  map->ref_count++; 
-  simple_unlock(&map->ref_lock);
+	simple_lock(&map->ref_lock);
+	map->ref_count++; 
+	simple_unlock(&map->ref_lock);
 }
 
 /*
@@ -211,39 +208,38 @@ vm_map_t map;
  * => we will zap map if ref count goes to zero
  */
 
-MAP_INLINE void uvm_map_deallocate(map)
-
-vm_map_t map;
-
+MAP_INLINE void
+uvm_map_deallocate(map)
+	vm_map_t map;
 {
-  int c;
+	int c;
 
-  if (map == NULL) {
+	if (map == NULL) {
 #ifdef DIAGNOSTIC
-    printf("uvm_map_deallocate: reference to NULL map\n");
+		printf("uvm_map_deallocate: reference to NULL map\n");
 #ifdef DDB
-    Debugger();
+		Debugger();
 #endif
 #endif
-    return;
-  }
+		return;
+	}
 
-  simple_lock(&map->ref_lock);
-  c = --map->ref_count;
-  simple_unlock(&map->ref_lock);
+	simple_lock(&map->ref_lock);
+	c = --map->ref_count;
+	simple_unlock(&map->ref_lock);
 
-  if (c > 0) {
-    return;
-  }
+	if (c > 0) {
+		return;
+	}
 
-  /*
-   * all references gone.   unmap and free.
-   */
+	/*
+	 * all references gone.   unmap and free.
+	 */
 
-  uvm_unmap(map, map->min_offset, map->max_offset, TRUE);
-  pmap_destroy(map->pmap);
+	uvm_unmap(map, map->min_offset, map->max_offset, TRUE);
+	pmap_destroy(map->pmap);
 
-  FREE(map, M_VMMAP);
+	FREE(map, M_VMMAP);
 }
 
 #endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.5 1998/02/08 22:23:33 mrg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.6 1998/03/09 00:58:58 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -180,7 +180,7 @@ uvm_total(totalp)
 		switch (p->p_stat) {
 		case 0:
 			continue;
-      
+
 		case SSLEEP:
 		case SSTOP:
 			if (p->p_flag & P_INMEM) {
@@ -193,7 +193,7 @@ uvm_total(totalp)
 			if (p->p_slptime >= maxslp)
 				continue;
 			break;
-      
+
 		case SRUN:
 		case SIDL:
 			if (p->p_flag & P_INMEM)

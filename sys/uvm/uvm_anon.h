@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.6 1998/03/01 02:25:28 fvdl Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.7 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -128,7 +128,7 @@ struct vm_amap {
  *
  * note that am_slots is always contig-packed.
  */
-  
+
 /*
  * processes reference anonymous virtual memory maps with an anonymous 
  * reference structure:

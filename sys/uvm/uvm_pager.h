@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.5 1998/02/10 14:12:26 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.6 1998/03/09 00:58:58 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -52,12 +52,12 @@
 TAILQ_HEAD(uvm_aiohead, uvm_aiodesc);
 
 struct uvm_aiodesc {
-  void (*aiodone) __P((struct uvm_aiodesc *));
-					/* aio done function */
-  vm_offset_t kva;			/* KVA of mapped page(s) */
-  int npages;				/* # of pages in I/O req */
-  void *pd_ptr;				/* pager-dependent pointer */
-  TAILQ_ENTRY(uvm_aiodesc) aioq;	/* linked list of aio's */
+	void (*aiodone) __P((struct uvm_aiodesc *));
+						/* aio done function */
+	vm_offset_t kva;			/* KVA of mapped page(s) */
+	int npages;				/* # of pages in I/O req */
+	void *pd_ptr;				/* pager-dependent pointer */
+	TAILQ_ENTRY(uvm_aiodesc) aioq;		/* linked list of aio's */
 };
 
 /*
@@ -65,41 +65,41 @@ struct uvm_aiodesc {
  */
 
 struct uvm_pagerops {
-  void			(*pgo_init) __P((void));	/* init pager */
-  struct uvm_object *	(*pgo_attach) 		/* get uvm_object */
-			    __P((void *, vm_prot_t));	
-  void			(*pgo_reference)	/* add reference to obj */
-			    __P((struct uvm_object *));		
-  void			(*pgo_detach)		/* drop reference to obj */
-			    __P((struct uvm_object *));
-  int			(*pgo_fault)		/* special nonstd fault fn */
-  			    __P((struct uvm_faultinfo *, vm_offset_t,
+	void		(*pgo_init) __P((void));/* init pager */
+	struct uvm_object * (*pgo_attach)	/* get uvm_object */
+			__P((void *, vm_prot_t));
+	void		(*pgo_reference)	/* add reference to obj */
+			 __P((struct uvm_object *));		
+	void			(*pgo_detach)	/* drop reference to obj */
+			 __P((struct uvm_object *));
+	int			(*pgo_fault)	/* special nonstd fault fn */
+			 __P((struct uvm_faultinfo *, vm_offset_t,
 				 vm_page_t *, int, int, vm_fault_t,
 				 vm_prot_t, int));
-  boolean_t		(*pgo_flush)		/* flush pages out of obj */
-			    __P((struct uvm_object *, vm_offset_t, 
+	boolean_t		(*pgo_flush)	/* flush pages out of obj */
+			 __P((struct uvm_object *, vm_offset_t, 
 				vm_offset_t, int));
-  int			(*pgo_get)		/* get/read page */
-			    __P((struct uvm_object *, vm_offset_t, 
+	int			(*pgo_get)	/* get/read page */
+			 __P((struct uvm_object *, vm_offset_t, 
 				 vm_page_t *, int *, int, vm_prot_t, int, int));
-  int			(*pgo_asyncget)		/* start async get */
-       			    __P((struct uvm_object *, vm_offset_t, int));
-  int			(*pgo_put)		/* put/write page */
-       			    __P((struct uvm_object *, vm_page_t *, 
+	int			(*pgo_asyncget)	/* start async get */
+			 __P((struct uvm_object *, vm_offset_t, int));
+	int			(*pgo_put)	/* put/write page */
+			 __P((struct uvm_object *, vm_page_t *, 
 				 int, boolean_t));
-  void			(*pgo_cluster)          /* return range of cluster */
-                            __P((struct uvm_object *, vm_offset_t,
-                                 vm_offset_t *, vm_offset_t *));
-  struct vm_page **	(*pgo_mk_pcluster)	/* make "put" cluster */
-       			    __P((struct uvm_object *, struct vm_page **,
+	void			(*pgo_cluster)	/* return range of cluster */
+			__P((struct uvm_object *, vm_offset_t, vm_offset_t *,
+				vm_offset_t *));
+	struct vm_page **	(*pgo_mk_pcluster)	/* make "put" cluster */
+			 __P((struct uvm_object *, struct vm_page **,
 				 int *, struct vm_page *, int, vm_offset_t,
 				 vm_offset_t));
-  void			(*pgo_shareprot)	/* share protect */
-			    __P((vm_map_entry_t, vm_prot_t));
-  void			(*pgo_aiodone)		/* async iodone */
-			    __P((struct uvm_aiodesc *));
-  boolean_t		(*pgo_releasepg)	/* release page */
-			    __P((struct vm_page *, struct vm_page **));
+	void			(*pgo_shareprot)	/* share protect */
+			 __P((vm_map_entry_t, vm_prot_t));
+	void			(*pgo_aiodone)		/* async iodone */
+			 __P((struct uvm_aiodesc *));
+	boolean_t		(*pgo_releasepg)	/* release page */
+			 __P((struct vm_page *, struct vm_page **));
 };
 
 /* pager flags [mostly for flush] */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.h,v 1.4 1998/02/10 02:34:33 perry Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.5 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -60,16 +60,16 @@
 
 
 struct uvm_faultinfo {
-  vm_map_t orig_map;		/* original map (IN) */
-  vm_offset_t orig_rvaddr;	/* original rounded virtual address (IN) */
-  vm_size_t orig_size;		/* original size of interest (IN) */
-  vm_offset_t rvaddr;		/* rounded virtual address */
-  vm_map_t parent_map;		/* parent map */
-  unsigned int parentv;		/* parent map version number */
-  vm_map_t map;			/* map */
-  unsigned int mapv;		/* map version number */
-  vm_map_entry_t entry;		/* map entry of rvaddr */
-  vm_size_t size;		/* size of interest */
+	vm_map_t orig_map;		/* original map (IN) */
+	vm_offset_t orig_rvaddr;	/* original rounded VA (IN) */
+	vm_size_t orig_size;		/* original size of interest (IN) */
+	vm_offset_t rvaddr;		/* rounded virtual address */
+	vm_map_t parent_map;		/* parent map */
+	unsigned int parentv;		/* parent map version number */
+	vm_map_t map;			/* map */
+	unsigned int mapv;		/* map version number */
+	vm_map_entry_t entry;		/* map entry of rvaddr */
+	vm_size_t size;			/* size of interest */
 };
 
 /*
@@ -78,7 +78,7 @@ struct uvm_faultinfo {
 
 
 int uvmfault_anonget __P((struct uvm_faultinfo *, struct vm_amap *,
-                          struct vm_anon *));
+													struct vm_anon *));
 static boolean_t uvmfault_lookup __P((struct uvm_faultinfo *, boolean_t));
 static boolean_t uvmfault_relock __P((struct uvm_faultinfo *));
 static void uvmfault_unlockall __P((struct uvm_faultinfo *, struct vm_amap *,

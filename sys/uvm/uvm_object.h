@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.4 1998/02/10 02:34:50 perry Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.5 1998/03/09 00:58:58 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -50,11 +50,11 @@
  */
 
 struct uvm_object {
-  simple_lock_data_t	vmobjlock;	/* lock on memq */
-  struct uvm_pagerops	*pgops;		/* pager ops */
-  struct pglist		memq;		/* pages in this object */
-  int			uo_npages;	/* # of pages in memq */
-  int                   uo_refs;	/* reference count */
+	simple_lock_data_t	vmobjlock;	/* lock on memq */
+	struct uvm_pagerops	*pgops;		/* pager ops */
+	struct pglist		memq;		/* pages in this object */
+	int			uo_npages;	/* # of pages in memq */
+	int			uo_refs;	/* reference count */
 };
 
 /*
