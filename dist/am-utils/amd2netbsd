@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: amd2netbsd,v 1.1.1.1 2003/03/09 01:13:04 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.2 2003/03/09 01:38:38 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.

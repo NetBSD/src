@@ -1,7 +1,7 @@
 \input texinfo          @c -*-texinfo-*-
-@c $NetBSD: am-utils.texi,v 1.4 2002/11/29 23:06:24 christos Exp $
+@c $NetBSD: am-utils.texi,v 1.5 2003/03/09 01:38:43 christos Exp $
 @c
-@c Copyright (c) 1997-2002 Erez Zadok
+@c Copyright (c) 1997-2003 Erez Zadok
 @c Copyright (c) 1989 Jan-Simon Pendry
 @c Copyright (c) 1989 Imperial College of Science, Technology & Medicine
 @c Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 @c
 @c      %W% (Berkeley) %G%
 @c
-@c Id: am-utils.texi,v 1.49 2002/06/23 00:57:38 ezk Exp
+@c Id: am-utils.texi,v 1.56 2003/01/25 01:39:41 ib42 Exp
 @c
 @setfilename am-utils.info
 
@@ -62,7 +62,7 @@
 (Originally by Jan-Simon Pendry and Nick Williams)
 
 @page
-Copyright @copyright{} 1997-2002 Erez Zadok
+Copyright @copyright{} 1997-2003 Erez Zadok
 @*
 Copyright @copyright{} 1989 Jan-Simon Pendry
 @*
@@ -640,9 +640,6 @@ Although this action does not protect user files, which are unique on
 the network, or processes which do not access files via @i{Amd} or
 already have open files on the hung filesystem, it can prevent most new
 processes from hanging.
-
-By default, fileserver state is not maintained for NFS/TCP mounts.  The
-remote fileserver is always assumed to be up.
 @c
 @c With a suitable combination of filesystem management and mount-maps,
 @c machines can be protected against most server downtime.  This can be
@@ -2381,16 +2378,6 @@ Allow keyboard interrupts on hard mounts.
 @cindex Mount flags; lock
 Use the NFS locking protocol (default)
 
-@item loop
-@cindex Mount flags; loop
-Support loop device mounts for CDFS (currently only on Linux).  With
-this option, you can mount ISO-9660 files as if they were normal
-CD-ROMs:
-
-@example
-sw71   type:=cdfs;addopts:=loop;dev:=/misc/rh71cd.iso;rfs:=/mnt/RPMS
-@end example
-
 @item multi
 @cindex Mount flags; multi
 Perform multi-component lookup on files.
@@ -2600,19 +2587,32 @@ never expire.  This is also the default for some filesystem types.
 The interval, in seconds, between keep-alive pings.  When four
 consecutive pings have failed the mount point is marked as hung.  This
 interval defaults to 30 seconds.  If the ping interval is less than zero,
-no pings are sent and the host is assumed to be always
-up.  By default, pings are not sent for an NFS/TCP mount.
+no pings are sent and the host is assumed to be always up, which can
+cause umounts to hang. See the @i{softlookup} option for a better alternative.
 
 @item retry=@var{n}
 @cindex Mount flags; retry=@var{n}
 The number of times to retry the mount system call.
+
+@item softlookup
+@cindex Mount flags; softlookup
+Configures amd's behavior with respect to already-mounted shares from
+NFS fileservers that are unreachable. If softlookup is specified,
+trying to access such a share will result in an error (EIO, which is
+changed from the ENOENT 6.0 used to return). If it is not specified, a
+regular symlink is provided and the access will probably hang during
+in the NFS filesystem.
+
+The default behavior depends on whether the mount is 'soft' or 'hard';
+softlookup can be used to change this default. This is changed from 6.0
+which always behaved as if softlookup was specified.
 
 @item utimeout=@var{n}
 @cindex Mount flags; utimeout=@var{n}
 The interval, in seconds, by which the mount's
 time-to-live is extended after an unmount attempt
 has failed.  In fact the interval is extended before the unmount is
-attempted to avoid thrashing.  The default value is 120 seconds (two
+attempted, to avoid thrashing.  The default value is 120 seconds (two
 minutes) or as set by the @code{-w} command line option.
 
 @item xlatecookie
@@ -2704,7 +2704,7 @@ forks into the background.
 Note: Even if @i{Amd} has been built with @samp{-DDEBUG} (via
 @code{configure --enable-debug}), it will still background itself and
 disassociate itself from the controlling terminal.  To use a debugger it
-is necessary to specify @samp{-D nodaemon} on the command line.
+is necessary to specify @samp{-D daemon} on the command line.
 However, even with all of this, mounts and unmounts are performed in the
 background, and @i{Amd} will always fork before doing them.  Therefore,
 debugging what happens closely during un/mounts is more challenging.
@@ -2925,7 +2925,7 @@ amd -p > /var/run/amd.pid ...
 @end example
 
 This option only has an affect if @i{Amd} is running in daemon mode.
-If @i{Amd} is started with the @code{-D nodaemon} debug flag, this
+If @i{Amd} is started with the @code{-D daemon} debug flag, this
 option is ignored.
 
 @c ----------------------------------------------------------------
@@ -3161,11 +3161,11 @@ can be prefixed with @samp{no} to turn it off.
 @item all
 all options
 @item amq
-register for amq
+do not register for amq
 @item daemon
-enter daemon mode
+do not enter daemon mode
 @item fork
-fork server
+do not fork server
 @item full
 program trace
 @item hrtime
@@ -4393,6 +4393,7 @@ The following parameters are applicable to the @samp{[global]} section only.
 * ldap_cache_maxmem Parameter::
 * ldap_cache_seconds Parameter::
 * ldap_hostports Parameter::
+* ldap_proto_version Parameter::
 * local_domain Parameter::
 * log_file Parameter::
 * log_options Parameter::
@@ -4583,7 +4584,7 @@ should use to cache LDAP entries.
 entries in the cache.
 
 @c ----------------------------------------------------------------
-@node ldap_hostports Parameter, local_domain Parameter, ldap_cache_seconds Parameter, Global Parameters
+@node ldap_hostports Parameter, ldap_proto_version Parameter, ldap_cache_seconds Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{ldap_hostports} Parameter
 @cindex ldap_hostports Parameter
@@ -4592,7 +4593,16 @@ entries in the cache.
 Specify the LDAP host and port values.
 
 @c ----------------------------------------------------------------
-@node local_domain Parameter, log_file Parameter, ldap_hostports Parameter, Global Parameters
+@node ldap_proto_version Parameter, local_domain Parameter, ldap_hostports Parameter, Global Parameters
+@comment  node-name,  next,  previous,  up
+@subsection @t{ldap_proto_version} Parameter
+@cindex ldap_proto_version Parameter
+
+(type=numeric, default=2).  Specify the LDAP protocol version to use.
+With a value of 3 will use LDAPv3 protocol.
+
+@c ----------------------------------------------------------------
+@node local_domain Parameter, log_file Parameter, ldap_proto_version Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{local_domain} Parameter
 @cindex local_domain Parameter

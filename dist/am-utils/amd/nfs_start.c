@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_start.c,v 1.2 2002/11/29 23:10:40 christos Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.3 2003/03/09 01:38:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_start.c,v 1.16 2002/06/23 01:46:59 ezk Exp
+ * Id: nfs_start.c,v 1.18 2002/12/27 22:43:50 ezk Exp
  *
  */
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: srvr_nfs.c,v 1.7 2003/01/06 13:26:24 wiz Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.8 2003/03/09 01:38:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: srvr_nfs.c,v 1.18 2002/06/23 01:05:39 ib42 Exp
+ * Id: srvr_nfs.c,v 1.23 2002/12/29 01:51:26 ib42 Exp
  *
  */
 
@@ -394,21 +394,21 @@ nfs_timed_out(voidp v)
    * Another ping has failed
    */
   np->np_ping++;
+  if (np->np_ping > 1)
+    srvrlog(fs, "not responding");
 
   /*
    * Not known to be up any longer
    */
-  if (FSRV_ISUP(fs)) {
+  if (FSRV_ISUP(fs))
     fs->fs_flags &= ~FSF_VALID;
-    if (np->np_ping > 1)
-      srvrlog(fs, "not responding");
-  }
 
   /*
    * If ttl has expired then guess that it is dead
    */
   if (np->np_ttl < clocktime()) {
     int oflags = fs->fs_flags;
+    dlog("ttl has expired");
     if ((fs->fs_flags & FSF_DOWN) == 0) {
       /*
        * Server was up, but is now down.
@@ -432,10 +432,20 @@ nfs_timed_out(voidp v)
     }
     if (oflags != fs->fs_flags && (fs->fs_flags & FSF_WANT))
       wakeup_srvr(fs);
+    /*
+     * Reset failed ping count
+     */
+    np->np_ping = 0;
   } else {
     if (np->np_ping > 1)
       dlog("%d pings to %s failed - at most %d allowed", np->np_ping, fs->fs_host, MAX_ALLOWED_PINGS);
   }
+
+  /*
+   * New RPC xid, so any late responses to the previous ping
+   * get ignored...
+   */
+  np->np_xid = NPXID_ALLOC(struct );
 
   /*
    * Run keepalive again
@@ -569,19 +579,20 @@ nfs_srvr_port(fserver *fs, u_short *port, voidp wchan)
 static void
 start_nfs_pings(fserver *fs, int pingval)
 {
-  if (!(fs->fs_flags & FSF_PINGING)) {
-    fs->fs_flags |= FSF_PINGING;
-    if (fs->fs_cid)
-      untimeout(fs->fs_cid);
-    if (pingval < 0) {
-      srvrlog(fs, "wired up");
-      fs->fs_flags |= FSF_VALID;
-      fs->fs_flags &= ~FSF_DOWN;
-    } else {
-      nfs_keepalive(fs);
-    }
-  } else {
+  if (fs->fs_flags & FSF_PINGING) {
     dlog("Already running pings to %s", fs->fs_host);
+    return;
+  }
+
+  if (fs->fs_cid)
+    untimeout(fs->fs_cid);
+  if (pingval < 0) {
+    srvrlog(fs, "wired up (pings disabled)");
+    fs->fs_flags |= FSF_VALID;
+    fs->fs_flags &= ~FSF_DOWN;
+  } else {
+    fs->fs_flags |= FSF_PINGING;
+    nfs_keepalive(fs);
   }
 }
 
@@ -593,7 +604,6 @@ fserver *
 find_nfs_srvr(mntfs *mf)
 {
   char *host = mf->mf_fo->opt_rhost;
-  char *nfs_proto = NULL;
   fserver *fs;
   int pingval;
   mntent_t mnt;
@@ -601,9 +611,7 @@ find_nfs_srvr(mntfs *mf)
   struct hostent *hp = 0;
   struct sockaddr_in *ip;
   u_long nfs_version = 0;	/* default is no version specified */
-#ifdef MNTTAB_OPT_PROTO
-  char *rfsname = mf->mf_fo->opt_rfs;
-#endif /* MNTTAB_OPT_PROTO */
+  char *nfs_proto = NULL;	/* no IP protocol either */
 
   /*
    * Get ping interval from mount options.
@@ -643,21 +651,21 @@ find_nfs_srvr(mntfs *mf)
 	  }
 	if (*p == NULL)
 	  plog(XLOG_WARNING, "ignoring unknown protocol option for %s:%s",
-	       host, rfsname);
+	       host, mf->mf_fo->opt_rfs);
       }
     }
 #endif /* MNTTAB_OPT_PROTO */
 
 #ifdef HAVE_NFS_NFSV2_H
     /* allow overriding if nfsv2 option is specified in mount options */
-    if (hasmntopt(&mnt, "nfsv2")) {
+    if (amu_hasmntopt(&mnt, "nfsv2")) {
       nfs_version = (u_long) 2;	/* nullify any ``vers=X'' statements */
       nfs_proto = "udp";	/* nullify any ``proto=tcp'' statements */
       plog(XLOG_WARNING, "found compatibility option \"nfsv2\": set options vers=2,proto=udp for host %s", host);
     }
 #endif /* HAVE_NFS_NFSV2_H */
 
-    /* check if we globally overridden the NFS version/protocol */
+    /* check if we've globally overridden the NFS version/protocol */
     if (gopt.nfs_vers) {
       nfs_version = gopt.nfs_vers;
       plog(XLOG_INFO, "find_nfs_srvr: force NFS version to %d",
@@ -702,6 +710,22 @@ find_nfs_srvr(mntfs *mf)
   } else {
     plog(XLOG_USER, "Unknown host: %s", host);
     ip = 0;
+  }
+
+  /*
+   * This may not be the best way to do things, but it really doesn't make
+   * sense to query a file server which is marked as 'down' for any
+   * version/proto combination.
+   */
+  ITER(fs, fserver, &nfs_srvr_list) {
+    if (FSRV_ISDOWN(fs) &&
+	STREQ(host, fs->fs_host)) {
+      plog(XLOG_WARNING, "fileserver %s is already hung - not running NFS proto/version discovery", host);
+      fs->fs_refc++;
+      if (ip)
+	XFREE(ip);
+      return fs;
+    }
   }
 
   /*
@@ -766,6 +790,15 @@ find_nfs_srvr(mntfs *mf)
  	nfs_version == fs->fs_version &&
 	STREQ(nfs_proto, fs->fs_proto)) {
       /*
+       * fill in the IP address -- this is only needed
+       * if there is a chance an IP address will change
+       * between mounts.
+       * Mike Mitchell, mcm@unx.sas.com, 09/08/93
+       */
+      if (hp && fs->fs_ip)
+	memmove((voidp) &fs->fs_ip->sin_addr, (voidp) hp->h_addr, sizeof(fs->fs_ip->sin_addr));
+
+      /*
        * following if statement from Mike Mitchell
        * <mcm@unx.sas.com>
        * Initialize the ping data if we aren't pinging
@@ -784,17 +817,9 @@ find_nfs_srvr(mntfs *mf)
 	 * have failed.
 	 */
 	np->np_ttl = MAX_ALLOWED_PINGS * FAST_NFS_PING + clocktime() - 1;
+	start_nfs_pings(fs, pingval);
       }
-      /*
-       * fill in the IP address -- this is only needed
-       * if there is a chance an IP address will change
-       * between mounts.
-       * Mike Mitchell, mcm@unx.sas.com, 09/08/93
-       */
-      if (hp && fs->fs_ip)
-	memmove((voidp) &fs->fs_ip->sin_addr, (voidp) hp->h_addr, sizeof(fs->fs_ip->sin_addr));
 
-      start_nfs_pings(fs, pingval);
       fs->fs_refc++;
       if (ip)
 	XFREE(ip);

@@ -1,7 +1,7 @@
-/*	$NetBSD: hasmntopt.c,v 1.3 2002/11/29 23:06:26 christos Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.4 2003/03/09 01:38:49 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@ n * modification, are permitted provided that the following conditions
  * SUCH DAMAGE.
  *
  *
- * Id: hasmntopt.c,v 1.6 2002/02/02 20:59:04 ezk Exp
+ * Id: hasmntopt.c,v 1.9 2002/12/27 22:44:10 ezk Exp
  *
  */
 
@@ -70,7 +70,7 @@ nextmntopt(char **p)
   /*
    * Skip past white space
    */
-  while (*cp && isspace(*cp))
+  while (*cp && isspace((int) *cp))
     cp++;
 
   /*
@@ -103,7 +103,7 @@ nextmntopt(char **p)
  * replacement for hasmntopt if the system does not have it.
  */
 char *
-hasmntopt(mntent_t *mnt, char *opt)
+amu_hasmntopt(mntent_t *mnt, char *opt)
 {
   char t[MNTMAXSTR];
   char *f;

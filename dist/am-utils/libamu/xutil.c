@@ -1,7 +1,7 @@
-/*	$NetBSD: xutil.c,v 1.6 2002/11/29 23:06:26 christos Exp $	*/
+/*	$NetBSD: xutil.c,v 1.7 2003/03/09 01:38:50 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: xutil.c,v 1.23 2002/06/23 01:05:41 ib42 Exp
+ * Id: xutil.c,v 1.29 2002/12/28 22:28:57 ib42 Exp
  *
  */
 
@@ -90,23 +90,21 @@ static void real_plog(int lvl, const char *fmt, va_list vargs)
  */
 struct opt_tab dbg_opt[] =
 {
-  {"all", D_ALL},		/* All */
-  {"amq", D_AMQ},		/* Register for AMQ program */
-  {"daemon", D_DAEMON},		/* Enter daemon mode */
-  {"fork", D_FORK},		/* Fork server (nofork = don't fork) */
+  {"all", D_ALL},		/* All non-disruptive options */
+  {"amq", D_AMQ},		/* Don't register for AMQ program */
+  {"daemon", D_DAEMON},		/* Don't enter daemon mode */
+  {"fork", D_FORK},		/* Don't fork server */
   {"full", D_FULL},		/* Program trace */
 #ifdef HAVE_CLOCK_GETTIME
   {"hrtime", D_HRTIME},		/* Print high resolution time stamps */
 #endif /* HAVE_CLOCK_GETTIME */
   /* info service specific debugging (hesiod, nis, etc) */
   {"info", D_INFO},
-# ifdef DEBUG_MEM
   {"mem", D_MEM},		/* Trace memory allocations */
-# endif /* DEBUG_MEM */
   {"mtab", D_MTAB},		/* Use local mtab file */
-  {"readdir", D_READDIR},	/* check on browsable_dirs progress */
+  {"readdir", D_READDIR},	/* Check on browsable_dirs progress */
   {"str", D_STR},		/* Debug string munging */
-  {"test", D_TEST},		/* Full debug - but no daemon */
+  {"test", D_TEST},		/* Full debug - no daemon, no amq, local mtab */
   {"trace", D_TRACE},		/* Protocol trace */
   {"xdrtrace", D_XDRTRACE},	/* Trace xdr routines */
   {0, 0}
@@ -186,10 +184,8 @@ xmalloc(int len)
   do {
     p = (voidp) malloc((unsigned) len);
     if (p) {
-#if defined(DEBUG) && defined(DEBUG_MEM)
-      amuDebug(D_MEM)
-	plog(XLOG_DEBUG, "Allocated size %d; block %#x", len, p);
-#endif /* defined(DEBUG) && defined(DEBUG_MEM) */
+      if (amuDebug(D_MEM))
+	plog(XLOG_DEBUG, "Allocated size %d; block %p", len, p);
       return p;
     }
     if (retries > 0) {
@@ -222,10 +218,8 @@ xzalloc(int len)
 voidp
 xrealloc(voidp ptr, int len)
 {
-#if defined(DEBUG) && defined(DEBUG_MEM)
-  amuDebug(D_MEM)
-    plog(XLOG_DEBUG, "Reallocated size %d; block %#x", len, ptr);
-#endif /* defined(DEBUG) && defined(DEBUG_MEM) */
+  if (amuDebug(D_MEM))
+    plog(XLOG_DEBUG, "Reallocated size %d; block %p", len, ptr);
 
   if (len == 0)
     len = 1;
@@ -244,20 +238,18 @@ xrealloc(voidp ptr, int len)
 }
 
 
-#if defined(DEBUG) && defined(DEBUG_MEM)
+#ifdef DEBUG_MEM
 void
 dxfree(char *file, int line, voidp ptr)
 {
-  amuDebug(D_MEM)
+  if (amuDebug(D_MEM))
     plog(XLOG_DEBUG, "Free in %s:%d: block %#x", file, line, ptr);
   /* this is the only place that must NOT use XFREE()!!! */
   free(ptr);
   ptr = NULL;			/* paranoid */
 }
-#endif /* defined(DEBUG) && defined(DEBUG_MEM) */
 
 
-#ifdef DEBUG_MEM
 static void
 checkup_mem(void)
 {
@@ -291,15 +283,6 @@ checkup_mem(void)
 static const char *
 expand_error(const char *f, char *e, int maxlen)
 {
-#ifndef HAVE_STRERROR
-  /*
-   * XXX: we are assuming that if a system doesn't has strerror,
-   * then it has sys_nerr.  If this assumption turns out to be wrong on
-   * some systems, we'll have to write a separate test to detect if
-   * a system has sys_nerr.  -Erez
-   */
-  extern int sys_nerr;
-#endif /* not HAVE_STRERROR */
   const char *p;
   char *q;
   int error = errno;
@@ -307,23 +290,7 @@ expand_error(const char *f, char *e, int maxlen)
 
   for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
-      const char *errstr;
-#ifdef HAVE_STRERROR
-      if (error < 0)
-#else /* not HAVE_STRERROR */
-      if (error < 0 || error >= sys_nerr)
-#endif /* not HAVE_STRERROR */
-	errstr = NULL;
-      else
-#ifdef HAVE_STRERROR
-	errstr = strerror(error);
-#else /* not HAVE_STRERROR */
-        errstr = sys_errlist[error];
-#endif /* not HAVE_STRERROR */
-      if (errstr)
-	strcpy(q, errstr);
-      else
-	sprintf(q, "Error %d", error);
+      strcpy(q, strerror(error));
       len += strlen(q) - 1;
       q += strlen(q) - 1;
       p++;
@@ -356,7 +323,7 @@ show_time_host_and_name(int lvl)
    */
   if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
     t = ts.tv_sec;
-    amuDebug(D_HRTIME)
+    if (amuDebug(D_HRTIME))
       sprintf(nsecs, ".%09ld", ts.tv_nsec);
   }
   else
@@ -853,9 +820,7 @@ switch_to_logfile(char *logfile, int old_umask)
 void
 unregister_amq(void)
 {
-#ifdef DEBUG
-  amuDebug(D_AMQ)
-#endif /* DEBUG */
+  if (!amuDebug(D_AMQ))
     /* find which instance of amd to unregister */
     pmap_unset(get_amd_program_number(), AMQ_VERSION);
 }
@@ -915,24 +880,14 @@ amu_release_controlling_tty(void)
 #endif /* TIOCNOTTY */
   int tempfd;
 
-#ifdef HAVE_SETSID
-  /* XXX: one day maybe use vhangup(2) */
-  if (setsid() < 0) {
-    plog(XLOG_WARNING, "Could not release controlling tty using setsid(): %m");
-  } else {
-    plog(XLOG_INFO, "released controlling tty using setsid()");
-    return;
-  }
-#endif /* HAVE_SETSID */
-
   /*
    * In daemon mode, leaving open file descriptors to terminals or pipes
    * can be a really bad idea.
    * Case in point: the redhat startup script calls us through their 'initlog'
-   * program, which exits as soon as the original amd process exits. If, at some
-   * point, a misbehaved library function decides to print something to the screen,
-   * we get a SIGPIPE and die.
-   * More precisely: NIS libc functions will attempt to print to stderr
+   * program, which exits as soon as the original amd process exits. If,
+   * at some point, a misbehaved library function decides to print something
+   * to the screen, we get a SIGPIPE and die.
+   * And guess what: NIS glibc functions will attempt to print to stderr
    * "YPBINDPROC_DOMAIN: Domain not bound" if ypbind is running but can't find
    * a ypserver.
    *
@@ -946,6 +901,16 @@ amu_release_controlling_tty(void)
   fflush(stdout); close(1); dup2(tempfd, 1);
   fflush(stderr); close(2); dup2(tempfd, 2);
   close(tempfd);
+
+#ifdef HAVE_SETSID
+  /* XXX: one day maybe use vhangup(2) */
+  if (setsid() < 0) {
+    plog(XLOG_WARNING, "Could not release controlling tty using setsid(): %m");
+  } else {
+    plog(XLOG_INFO, "released controlling tty using setsid()");
+    return;
+  }
+#endif /* HAVE_SETSID */
 
 #ifdef TIOCNOTTY
   fd = open("/dev/tty", O_RDWR);

@@ -1,7 +1,7 @@
-/*	$NetBSD: am_defs.h,v 1.3 2002/11/29 23:06:25 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.4 2003/03/09 01:38:48 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_defs.h,v 1.30 2002/06/23 01:05:40 ib42 Exp
+ * Id: am_defs.h,v 1.37 2003/01/23 21:24:29 ib42 Exp
  *
  */
 
@@ -106,6 +106,15 @@ char *strchr(), *strrchr(), *strdup();
  */
 #if TIME_WITH_SYS_TIME
 # include <sys/time.h>
+# ifdef _ALL_SOURCE
+/*
+ * AIX 5.2 needs struct sigevent from signal.h to be defined, but I
+ * don't want to move the inclusion of signal.h this early into this
+ * file.  Luckily, amd doesn't need the size of this structure in any
+ * other structure that it uses.  So we sidestep it for now.
+ */
+struct sigevent;
+# endif /* _ALL_SOURCE */
 # include <time.h>
 #else /* not TIME_WITH_SYS_TIME */
 # if HAVE_SYS_TIME_H
@@ -358,6 +367,13 @@ extern int errno;
 #endif /* HAVE_NET_ERRNO_H */
 
 /*
+ * Actions to take if <net/if.h> exists.
+ */
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif /* HAVE_NET_IF_H */
+
+/*
  * Actions to take if <net/route.h> exists.
  */
 #ifdef HAVE_NET_ROUTE_H
@@ -389,13 +405,6 @@ extern int errno;
 #  undef MFREE
 # endif /* MFREE */
 #endif /* HAVE_SYS_MBUF_H */
-
-/*
- * Actions to take if <net/if.h> exists.
- */
-#ifdef HAVE_NET_IF_H
-# include <net/if.h>
-#endif /* HAVE_NET_IF_H */
 
 /*
  * Actions to take if <sys/mman.h> exists.
@@ -1467,8 +1476,14 @@ extern bool_t xdr_opaque_auth(XDR *xdrs, struct opaque_auth *auth);
  * and those are probably declared in any of the above headers.
  */
 
-#ifndef HAVE_HASMNTOPT
-extern char *hasmntopt(mntent_t *mnt, char *opt);
+#ifdef HAVE_HASMNTOPT
+# ifdef HAVE_BAD_HASMNTOPT
+extern char *amu_hasmntopt(mntent_t *mnt, char *opt);
+# else /* not HAVE_BAD_HASMNTOPT */
+#  define amu_hasmntopt hasmntopt
+# endif /* not HAVE_BAD_HASMNTOPT */
+#else /* not HAVE_HASMNTOPT */
+extern char *amu_hasmntopt(mntent_t *mnt, char *opt);
 #endif /* not HAVE_HASMNTOPT */
 
 /*

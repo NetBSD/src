@@ -1,4 +1,4 @@
-.\"	$NetBSD: expn.1,v 1.2 2002/07/11 10:53:20 wiz Exp $
+.\"	$NetBSD: expn.1,v 1.3 2003/03/09 01:38:51 christos Exp $
 .\"
 #!@PERL@
 'di ';
@@ -18,7 +18,7 @@ $sockaddr = 'S n a4 x8';
 # system requirements:
 # 	must have 'nslookup' and 'hostname' programs.
 
-# Header: /proj/bank/cvsroot/am-utils/scripts/expn.1,v 1.1.1.1 1998/11/05 02:04:58 ezk Exp
+# Header: /proj/bank/cvsroot/am-utils/scripts/expn.1,v 1.2 2002/07/11 14:28:20 ezk Exp
 
 # TODO:
 #	less magic should apply to command-line addresses
@@ -62,7 +62,7 @@ $sockaddr = 'S n a4 x8';
 #  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 #  SUCH DAMAGE.
 #
-# This copyright notice derrived from material copyrighted by the Regents
+# This copyright notice derived from material copyrighted by the Regents
 # of the University of California.
 #
 # Contributions accepted.
@@ -260,7 +260,7 @@ while (@hosts) {
 			# on the results of our query until we have looked
 			# at the complete output.  @toFinal stores expansions
 			# that will be final if we take them.  @toExpn stores
-			# expnansions that are not final.  @isValid keeps
+			# expansions that are not final.  @isValid keeps
 			# track of our ability to send mail to each of the
 			# expansions.
 			#
@@ -786,7 +786,7 @@ sub domainify
 	}
 
 	# 
-	# There are several weird situtations that need to be 
+	# There are several weird situations that need to be 
 	# accounted for.  They have to do with domain relay hosts.
 	#
 	# Examples: 
@@ -957,7 +957,7 @@ sub mxredirect
 	return undef;
 }
 # follow mx records, return a hostname
-# also follow temporary redirections comming from &domainify and
+# also follow temporary redirections coming from &domainify and
 # &mxlookup
 sub mx
 {
@@ -1035,7 +1035,7 @@ sub mxlookup
 		}
 		if (/Non-existent domain/) {
 			#
-			# These addresss are hosed.  Kaput!  Dead! 
+			# These addresses are hosed.  Kaput!  Dead! 
 			# However, if we created the address in the
 			# first place then there is a chance of 
 			# salvation.
@@ -1094,7 +1094,7 @@ sub mxunroll
 	print "looking for mxbacktrace{$addr *** $host}\n"
 		if ($debug > 1);
 	while (defined $mxbacktrace{"$addr *** $host"}) {
-		print "Unrolling MX expnasion: \@$host:$addr -> " 
+		print "Unrolling MX expansion: \@$host:$addr -> " 
 			if ($debug || $verbose);
 		$host = $mxbacktrace{"$addr *** $host"};
 		print "\@$host:$addr\n" 
