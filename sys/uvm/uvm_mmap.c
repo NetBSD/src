@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.10 1998/05/30 22:21:03 kleink Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.11 1998/07/07 23:22:13 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -302,8 +302,9 @@ sys_mmap(p, v, retval)
 			return (ENODEV);		/* only mmap vnodes! */
 		vp = (struct vnode *)fp->f_data;	/* convert to vnode */
 
-		if (vp->v_type != VREG && vp->v_type != VCHR)
-			return (ENODEV);	/* only REG/CHR support mmap */
+		if (vp->v_type != VREG && vp->v_type != VCHR &&
+		    vp->v_type != VBLK)
+			return (ENODEV);  /* only REG/CHR/BLK support mmap */
 
 		/* special case: catch SunOS style /dev/zero */
 		if (vp->v_type == VCHR && iszerodev(vp->v_rdev)) {
@@ -907,7 +908,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 		}
 		
 		if (uobj == NULL)
-			return((vp->v_type == VCHR) ? EINVAL : ENOMEM);
+			return((vp->v_type == VREG) ? ENOMEM : EINVAL);
 
 		if ((flags & MAP_SHARED) == 0)
 			uvmflag |= UVM_FLAG_COPYONW;
