@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.6 (Berkeley) 3/12/91
-#	$Id: Makefile,v 1.5 1993/11/11 01:30:28 jtc Exp $
+#	$Id: Makefile,v 1.6 1994/04/16 08:14:50 andrew Exp $
 
 PROG=	more
-CFLAGS+=-I${.CURDIR} -DREGEX 
+CFLAGS+=-I${.CURDIR} -DREGEX -DTERMIOS
 SRCS=	ch.c command.c decode.c filename.c help.c input.c line.c \
 	linenum.c main.c option.c os.c output.c position.c prim.c \
 	screen.c signal.c tags.c ttyin.c 
