@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.4 2000/03/09 04:13:58 groo Exp $ */
+/* $NetBSD: envsys.h,v 1.5 2000/06/24 19:50:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _SYS_ENVSYS_H_
 #define _SYS_ENVSYS_H_
+
+#include <sys/ioccom.h>
 
 /* Returns API Version * 1000 */
 
@@ -82,8 +84,14 @@ typedef struct envsys_tre_data envsys_tre_data_t;
 
 /* type of sensor for units */
 enum envsys_units {
-	ENVSYS_STEMP, ENVSYS_SFANRPM, ENVSYS_SVOLTS_AC, ENVSYS_SVOLTS_DC,
-	ENVSYS_SOHMS, ENVSYS_SWATTS, ENVSYS_SAMPS
+	ENVSYS_STEMP		= 0,
+	ENVSYS_SFANRPM,
+	ENVSYS_SVOLTS_AC,
+	ENVSYS_SVOLTS_DC,
+	ENVSYS_SOHMS,
+	ENVSYS_SWATTS,
+	ENVSYS_SAMPS,
+	ENVSYS_NSENSORS,
 };
 
 /* flags for validflags */
