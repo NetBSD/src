@@ -104,6 +104,7 @@ main()
 #endif
 	printf("#define\tUSRSTACK %d\n", USRSTACK);
 	printf("#define\tKERNBASE %d\n", KERNBASE);
+	printf("#define\tKERNSIZE %d\n", KERNSIZE);
 	printf("#define\tMSGBUFPTECNT %d\n", btoc(sizeof (struct msgbuf)));
 	printf("#define\tNMBCLUSTERS %d\n", NMBCLUSTERS);
 	printf("#define\tMCLBYTES %d\n", MCLBYTES);
