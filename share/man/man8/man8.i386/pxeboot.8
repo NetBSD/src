@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.2 2003/03/21 10:05:58 wiz Exp $
+.\"	$NetBSD: pxeboot.8,v 1.3 2003/03/27 12:30:07 drochner Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -141,6 +141,48 @@ Leave the
 .Nm
 program.
 .El
+.Sh EXAMPLES
+The following
+.Pa dhcpd.conf
+entry shows how the PXE ROM can be told to load the
+.Nx
+.Nm
+program and how different kernels can be loaded depending on
+the user's input on the
+.Nm
+command line.
+It is assumed that the TFTP server is the same as the DHCP server
+(unless a
+.Em next-server
+is specified somewhere else in
+.Pa dhcpd.conf ),
+and that the NFS server for the root file system is
+.Em mynfsserver .
+(Note that
+.Em swap-server:root-path
+is only used in the NFS case and by the
+.Nx
+kernel to mount the root file system.)
+.Bd -literal
+host myhost {
+    hardware ethernet 00:00:00:00:00:00;
+    fixed-address myhost;
+    option host-name "myhost";
+    if substring (option vendor-class-identifier, 0, 9) = "PXEClient" {
+        filename "pxeboot_ia32.bin";
+    } elsif filename = "tftp" {
+        filename "tftp:netbsd.myhost";
+    } else {
+        option swap-server mynfsserver;
+        option root-path "/export/myhost";
+        if filename = "generic" {
+            filename "gennetbsd";
+        } else {
+            filename "netbsd";
+        }
+    }
+}
+.Ed
 .Sh SEE ALSO
 .Xr boot 8 ,
 .Xr dhcpd 8
