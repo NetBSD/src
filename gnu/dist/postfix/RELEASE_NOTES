@@ -12,6 +12,17 @@ snapshot release).  Patches change the patchlevel and the release
 date. Snapshots change only the release date, unless they include
 the same bugfix as a patch release.
 
+Incompatible changes with Postfix version 1.1.3 (released 20020201)
+===================================================================
+
+In Postfix SMTPD access tables, Postfix now uses <> as the default
+lookup key for the null address, in order to work around bugs in
+some Berkeley DB implementations. This behavior is controlled with
+the smtpd_null_access_lookup_key configuration parameter.
+
+On SCO #.2 UNIX, the input rate flow control is now turned off by
+default, because of limitations in the SCO UNIX kernel.
+
 Incompatible changes with Postfix version 1.1.2 (released 20020125)
 ===================================================================
 
