@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.2 2003/08/07 16:31:37 agc Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.3 2004/03/27 04:43:43 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.2 2003/08/07 16:31:37 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.3 2004/03/27 04:43:43 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,9 @@ extern int prtactive;	/* 1 => print out reclaim of active vnodes */
 void
 filecore_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_FILECOREMNT);
+#endif
 	filecorehashtbl = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT,
 	    M_WAITOK, &filecorehash);
 	simple_lock_init(&filecore_ihash_slock);
@@ -150,6 +153,9 @@ filecore_done()
 {
 	pool_destroy(&filecore_node_pool);
 	hashdone(filecorehashtbl, M_FILECOREMNT);
+#ifdef _LKM
+	malloc_type_detach(M_FILECOREMNT);
+#endif
 }
 
 /*
