@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.270 2003/12/14 05:33:29 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.271 2003/12/14 05:37:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.270 2003/12/14 05:33:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.271 2003/12/14 05:37:25 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.270 2003/12/14 05:33:29 thorpej Exp $");
 
 #include <machine/intr.h>
 #include <machine/bus.h>
-
-#define	__ATA_DISK_PRIVATE
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
