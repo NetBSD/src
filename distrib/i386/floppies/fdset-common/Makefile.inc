@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2000/10/09 12:36:26 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2001/10/04 04:11:26 jmc Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -14,6 +14,7 @@ MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE?=	${MDEC}/biosboot.sym
 #BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
+MOUNT_POINT?=	/mnt
 
 DISKTYPE?=	floppy3
 DISKSIZE?=	2880
@@ -21,7 +22,7 @@ BLOCK8K?=	179
 
 CLEANFILES+=	netbsd boot ustar.tmp
 
-realall:	netbsd boot
+realall:	unconfig netbsd boot
 	tar cvf ${FSTMP} boot netbsd
 	@echo
 	@echo Making disk number one
@@ -95,9 +96,14 @@ release:
 		gzip <$$f >$$f.gz; \
 	done
 	
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND_DEV}
+
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+
