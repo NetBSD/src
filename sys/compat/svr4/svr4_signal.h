@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.11 1995/08/14 01:12:49 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.12 1995/08/14 02:08:00 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -118,5 +118,7 @@ struct svr4_sigaltstack {
 /* ss_flags */
 #define SVR4_SS_ONSTACK		0x00000001
 #define SVR4_SS_DISABLE		0x00000002
+
+extern int bsd_to_svr4_sig[];
 
 #endif /* !_SVR4_SIGNAL_H_ */

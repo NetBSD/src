@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.6 1995/08/14 01:17:34 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.7 1995/08/14 02:11:24 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -221,7 +221,7 @@ svr4_getsiginfo(si, sig, code, addr)
 	u_long			 code;
 	caddr_t			 addr;
 {
-	si->si_signo = bsd_to_svr4_signum(sig);
+	si->si_signo = bsd_to_svr4_sig[sig];
 	si->si_errno = 0;
 	si->si_addr  = addr;
 	/*
