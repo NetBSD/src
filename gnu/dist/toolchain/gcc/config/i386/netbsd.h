@@ -85,3 +85,17 @@
    and initialization stuff better.  */
 #define DWARF2_UNWIND_INFO 0
 
+
+/* Put relocations in the constant pool in the writable data section.  */
+#undef SELECT_RTX_SECTION
+#define SELECT_RTX_SECTION(MODE,RTX)					\
+{									\
+  if (flag_pic && symbolic_operand (RTX))				\
+    data_section ();							\
+  else									\
+    readonly_data_section ();						\
+}
+
+/* NetBSD's linker cannot align greater than 8 bytes anyway. */
+#undef DATA_ALIGNMENT
+#undef CONSTANT_ALIGNMENT
