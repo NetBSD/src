@@ -1,0 +1,63 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+cc -o conftest conftest.c
+cc -E
+cc -o conftest conftest.c -ltermlib -lcrypt
+cc -E -I$(srcdir)/curses
+cc -E -I$(srcdir)/curses
+cc -E -I$(srcdir)/curses
+cc -E -I$(srcdir)/curses
+cc -E -I$(srcdir)/curses
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -E -I$(srcdir)/curses
+cc -c -I$(srcdir)/curses conftest.c
+cc -c -I$(srcdir)/curses conftest.c
+cc -c -I$(srcdir)/curses conftest.c
+cc -c -I$(srcdir)/curses conftest.c
+cc -E -I$(srcdir)/curses
+cc -E -I$(srcdir)/curses
+cc -E -I$(srcdir)/curses
+cc -E -I$(srcdir)/curses
+cc -c -I$(srcdir)/curses conftest.c
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -E -I$(srcdir)/curses
+configure:3238: vfork.h: No such file or directory
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+/var/tmp/cc0180311.o: Undefined symbol `_tigetstr' referenced from text segment
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+/var/tmp/cc0180461.o: Undefined symbol `_setupterm' referenced from text segment
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+/var/tmp/cc0180681.o: Undefined symbol `_grantpt' referenced from text segment
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -o conftest -I$(srcdir)/curses conftest.c -ltermlib -lcrypt
+cc -c -I$(srcdir)/regex -I$(srcdir)/db/include -I$(srcdir)/curses conftest.c
+cc -c -I$(srcdir)/regex -I$(srcdir)/db/include -I$(srcdir)/curses conftest.c
+cc -c -I$(srcdir)/regex -I$(srcdir)/db/include -I$(srcdir)/curses conftest.c
+cc -c -I$(srcdir)/regex -I$(srcdir)/db/include -I$(srcdir)/curses conftest.c
+cc -c -I$(srcdir)/regex -I$(srcdir)/db/include -I$(srcdir)/curses conftest.c
