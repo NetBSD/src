@@ -1,4 +1,4 @@
-/*	$NetBSD: securepath.c,v 1.3 2000/07/05 11:46:42 ad Exp $	*/
+/*	$NetBSD: securepath.c,v 1.4 2000/09/18 16:36:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: securepath.c,v 1.3 2000/07/05 11:46:42 ad Exp $");
+__RCSID("$NetBSD: securepath.c,v 1.4 2000/09/18 16:36:33 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: securepath.c,v 1.3 2000/07/05 11:46:42 ad Exp $");
 #include <syslog.h>
 
 int
-secure_path(char *path)
+secure_path(const char *path)
 {
 	struct stat sb;
 
@@ -54,18 +54,16 @@ secure_path(char *path)
 	 * If not a regular file, or is owned/writeable by someone
 	 * other than root, quit.
 	 */
-	if (lstat(path, &sb) < 0) {
-		/* syslog(LOG_ERR, "cannot stat %s: %m", path); */
-		return (-1);
-	} else if (!S_ISREG(sb.st_mode)) {
+	if (lstat(path, &sb) < 0)
+		/* syslog(LOG_ERR, "cannot stat %s: %m", path) */;
+	else if (!S_ISREG(sb.st_mode))
 		syslog(LOG_ERR, "%s: not a regular file", path);
-		return (-1);
-	} else if (sb.st_uid != 0) {
+	else if (sb.st_uid != 0)
 		syslog(LOG_ERR, "%s: not owned by root", path);
-		return (-1);
-	} else if (sb.st_mode & (S_IWGRP | S_IWOTH)) {
+	else if ((sb.st_mode & (S_IWGRP | S_IWOTH)) != 0)
 		syslog(LOG_ERR, "%s: writeable by non-root", path);
-		return (-1);
-	}
-	return (0);
+	else
+		return (0);
+
+	return (-1);
 }
