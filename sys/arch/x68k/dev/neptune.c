@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.1.2.1 1998/12/23 16:47:31 minoura Exp $	*/
+/*	$NetBSD: neptune.c,v 1.1.2.2 1998/12/27 14:13:04 minoura Exp $	*/
 
 /*
  *
@@ -160,6 +160,9 @@ neptune_match(parent, cf, aux)
 	void *aux;
 {
 	struct intio_attach_args *ia = aux;
+
+	if (strcmp(ia->ia_name, "neptune") != 0)
+		return 0;
 
 	ia->ia_size = 0x400;
 	if (intio_map_allocate_region (parent, ia, INTIO_MAP_TESTONLY))

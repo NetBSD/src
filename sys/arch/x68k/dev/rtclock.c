@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.3.10.1 1998/12/23 16:47:31 minoura Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.3.10.2 1998/12/27 14:13:04 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -68,6 +68,8 @@ rtc_match(parent, cf, aux)
 {
 	struct intio_attach_args *ia = aux;
 
+	if (strcmp (ia->ia_name, "rtc") != 0)
+		return (0);
 	if (cf->cf_unit != 0)
 		return (0);
 

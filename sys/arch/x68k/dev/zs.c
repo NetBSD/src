@@ -1,4 +1,4 @@
-/*    $NetBSD: zs.c,v 1.12.6.1 1998/12/23 16:47:31 minoura Exp $  */
+/*    $NetBSD: zs.c,v 1.12.6.2 1998/12/27 14:13:04 minoura Exp $  */
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -156,13 +156,15 @@ zs_match(parent, cf, aux)
 	struct zsdevice *zsaddr = (void*) ia->ia_addr;
 	int i;
 
+	if (strcmp (ia->ia_name, "zsc") != 0)
+		return 0;
+
 	for (i = 0; i < ZS_MAXDEV; i++)
 		if (zsaddr == (void*) zs_physaddr[i]) /* XXX */
 			break;
 
 	if (zsaddr != (void*) zs_physaddr[i])
 		return 0;
-
 	if (badaddr(INTIO_ADDR(zsaddr)))
 		return 0;
 

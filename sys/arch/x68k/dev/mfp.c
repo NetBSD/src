@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.1.2.1 1998/12/23 16:47:30 minoura Exp $	*/
+/*	$NetBSD: mfp.c,v 1.1.2.2 1998/12/27 14:13:04 minoura Exp $	*/
 
 /*
  *
@@ -72,6 +72,9 @@ mfp_match(parent, cf, aux)
 {
 	struct intio_attach_args *ia = aux;
 
+	/* mfp0 */
+	if (strcmp (ia->ia_name, "mfp") != 0)
+		return 0;
 	if (cf->cf_unit != 0)
 		return (0);
 
