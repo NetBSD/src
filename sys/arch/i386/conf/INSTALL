@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.229 2003/10/31 06:49:58 nisimura Exp $
+#	$NetBSD: INSTALL,v 1.230 2003/11/04 16:57:57 mycroft Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -412,6 +412,7 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers

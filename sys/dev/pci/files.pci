@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.200 2003/10/31 06:49:58 nisimura Exp $
+#	$NetBSD: files.pci,v 1.201 2003/11/04 16:57:57 mycroft Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -239,6 +239,11 @@ file	dev/pci/piixide.c		piixide
 device	pdcide {[channel = -1]}: ata, pciide_common
 attach	pdcide at pci
 file	dev/pci/pdcide.c		pdcide
+
+# ServerWorks IDE controllers
+device	rccide {[channel = -1]}: ata, pciide_common
+attach	rccide at pci
+file	dev/pci/rccide.c		rccide
 
 # SiS IDE controllers
 device	siside {[channel = -1]}: ata, pciide_common
