@@ -29,9 +29,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: setproctitle.c,v 1.1 1994/04/14 03:13:43 cgd Exp $";
+static char *rcsid = "$Id: setproctitle.c,v 1.2 1994/05/24 08:17:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/exec.h>
 #include <vm/vm.h>
