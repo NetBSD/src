@@ -1,7 +1,7 @@
-/*	$NetBSD: transp_sockets.c,v 1.4 2002/11/29 23:18:25 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.5 2003/03/09 01:38:42 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_sockets.c,v 1.15 2002/06/23 01:05:39 ib42 Exp
+ * Id: transp_sockets.c,v 1.21 2002/12/27 22:44:03 ezk Exp
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -55,17 +55,40 @@
 #define RPC_MAXDATASIZE 9000
 #endif
 
+/* provide a definition for systems that don't have this */
+#ifndef INADDR_LOOPBACK
+# define INADDR_LOOPBACK	0x7f000001
+#endif /* not INADDR_LOOPBACK */
+
+
 /*
  * find the IP address that can be used to connect to the local host
  */
 void
 amu_get_myaddress(struct in_addr *iap)
 {
+
+#ifdef DEBUG
   struct sockaddr_in sin;
 
+  /*
+   * Most modern systems should use 127.0.0.1 as the localhost address over
+   * which you can do NFS mounts.  In the past we found that some NFS
+   * clients may not allow mounts from localhost.  So we used
+   * get_myaddress() and that seemed to work.  Alas, on some other systems,
+   * get_myaddress() may return one of the interface addresses at random,
+   * and thus use a less efficient IP address than 127.0.0.1.  The solution
+   * is to hard-code 127.0.0.1, but still check if get_myaddress() returns a
+   * different value and warn about it.
+   */
   memset((char *) &sin, 0, sizeof(sin));
   get_myaddress(&sin);
-  iap->s_addr = sin.sin_addr.s_addr;
+  if (sin.sin_addr.s_addr != htonl(INADDR_LOOPBACK))
+    dlog("amu_get_myaddress: myaddress conflict (0x%x vs. 0x%lx)",
+	 sin.sin_addr.s_addr, (u_long) htonl(INADDR_LOOPBACK));
+#endif /* DEBUG */
+
+  iap->s_addr = htonl(INADDR_LOOPBACK);
 }
 
 
@@ -185,7 +208,9 @@ amu_svc_getcaller(SVCXPRT *xprt)
  * register an RPC server
  */
 int
-amu_svc_register(SVCXPRT *xprt, u_long prognum, u_long versnum, void (*dispatch)(struct svc_req *rqstp, SVCXPRT *transp), u_long protocol, struct netconfig *dummy)
+amu_svc_register(SVCXPRT *xprt, u_long prognum, u_long versnum,
+		 void (*dispatch)(struct svc_req *rqstp, SVCXPRT *transp),
+		 u_long protocol, struct netconfig *dummy)
 {
   return svc_register(xprt, prognum, versnum, dispatch, protocol);
 }
@@ -226,7 +251,9 @@ create_nfs_service(int *soNFSp, u_short *nfs_portp, SVCXPRT **nfs_xprtp, void (*
  * Create the amq service for amd (both TCP and UDP)
  */
 int
-create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp, struct netconfig **dummy1, int *tcp_soAMQp, SVCXPRT **tcp_amqpp, struct netconfig **dummy2)
+create_amq_service(int *udp_soAMQp, SVCXPRT **udp_amqpp,
+		   struct netconfig **dummy1, int *tcp_soAMQp,
+		   SVCXPRT **tcp_amqpp, struct netconfig **dummy2)
 {
   int maxrec = RPC_MAXDATASIZE;
 
@@ -387,3 +414,45 @@ try_again:
        (int) nfs_version, proto, host);
   return nfs_version;
 }
+
+
+#if defined(HAVE_FS_AUTOFS) && defined(AUTOFS_PROG)
+/*
+ * Register the autofs service for amd
+ */
+int
+register_autofs_service(char *autofs_conftype, void (*autofs_dispatch)(struct svc_req *rqstp, SVCXPRT *transp))
+{
+  int autofs_socket;
+
+  autofs_socket = socket(AF_INET, SOCK_DGRAM, 0);
+
+  if (autofs_socket < 0 || bind_resv_port(autofs_socket, NULL) < 0) {
+    plog(XLOG_FATAL, "Can't create privileged autofs port (socket)");
+    return 1;
+  }
+  if ((autofs_xprt = svcudp_create(autofs_socket)) == NULL) {
+    plog(XLOG_FATAL, "Can't create autofs rpc/udp service");
+    return 2;
+  }
+  if (autofs_xprt->xp_port >= IPPORT_RESERVED) {
+    plog(XLOG_FATAL, "Can't create privileged autofs port");
+    return 1;
+  }
+  if (!svc_register(autofs_xprt, AUTOFS_PROG, AUTOFS_VERS, autofs_dispatch, 0)) {
+    plog(XLOG_FATAL, "unable to register (%ld, %ld, 0)",
+	 (u_long) AUTOFS_PROG, (u_long) AUTOFS_VERS);
+    return 3;
+  }
+
+  return 0;			/* all is well */
+}
+
+
+int
+unregister_autofs_service(char *autofs_conftype)
+{
+  svc_unregister(AUTOFS_PROG, AUTOFS_VERS);
+  return 0;
+}
+#endif /* HAVE_FS_AUTOFS && AUTOFS_PROG */

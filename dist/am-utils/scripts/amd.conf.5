@@ -1,7 +1,7 @@
-.\"	$NetBSD: amd.conf.5,v 1.6 2002/11/29 23:06:27 christos Exp $
+.\"	$NetBSD: amd.conf.5,v 1.7 2003/03/09 01:38:51 christos Exp $
 .\"
 .\"
-.\" Copyright (c) 1997-2002 Erez Zadok
+.\" Copyright (c) 1997-2003 Erez Zadok
 .\" Copyright (c) 1990 Jan-Simon Pendry
 .\" Copyright (c) 1990 Imperial College of Science, Technology & Medicine
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 .\"
 .\"	%W% (Berkeley) %G%
 .\"
-.\" Id: amd.conf.5,v 1.15 2002/06/22 20:52:45 ezk Exp
+.\" Id: amd.conf.5,v 1.17 2002/12/27 22:44:12 ezk Exp
 .\"
 .TH AMD.CONF 5 "7 August 1997"
 .SH NAME
@@ -281,6 +281,10 @@ Specify the number of seconds to keep entries in the cache.
 .TP
 .BR ldap_hostports " (string, default not set)"
 Specify the LDAP host and port values.
+
+.TP
+.BR ldap_proto_version " (numeric, default=2)"
+Specify the version of the LDAP protocol to use.
 
 .TP
 .BR local_domain " (string, default no sub-domain)"
