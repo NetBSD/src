@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.40 1998/07/26 12:58:16 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.41 1998/08/03 01:49:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.40 1998/07/26 12:58:16 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.41 1998/08/03 01:49:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2272,8 +2272,7 @@ page(argc, argv)
 	p = getenv("PAGER");
 	if (p == NULL)
 		p = PAGER;
-	if ((pager = malloc(strlen(p) + 2)) == NULL)
-		errx(1, "Can't allocate memory for $PAGER");
+	pager = xmalloc(strlen(p) + 2);
 	(void)sprintf(pager, "|%s", p);
 
 	ohash = hash;

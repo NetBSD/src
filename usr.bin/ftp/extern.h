@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.23 1998/07/26 21:47:47 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.24 1998/08/03 01:49:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -170,6 +170,8 @@ void	usage __P((void));
 void	user __P((int, char **));
 int	xconnect __P((int, const struct sockaddr *, int));
 int	xlisten __P((int, int));
+void   *xmalloc __P((size_t));
+char   *xstrdup __P((const char *));
 
 extern struct	cmd cmdtab[];
 extern FILE    *cout;

@@ -1,7 +1,9 @@
-.\" 	$NetBSD: ftp.1,v 1.27 1998/07/26 12:58:18 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.28 1998/08/03 01:49:25 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
+.\" Portions Copyright (c) 1997, 1998
+.\"	The NetBSD Foundation, Inc.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -33,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd July 26, 1998
+.Dd August 2, 1998
 .Dt FTP 1
 .Os BSD 4.2
 .Sh NAME
@@ -1376,6 +1378,10 @@ By default, this is bound to the TAB key.
 .Nm
 uses the following environment variables.
 .Bl -tag -width "FTPSERVERPORT"
+.It Ev FTPANONPASS
+Password to send in an anonymous ftp transfer.
+Defaults to
+.Dq `whoami`@`hostname` .
 .It Ev FTPMODE
 Overrides the default operation mode.
 Support values are:
@@ -1416,6 +1422,11 @@ URL of FTP proxy to use when making FTP URL requests
 (if not defined, use the standard ftp protocol).
 .It Ev http_proxy
 URL of HTTP proxy to use when making HTTP URL requests.
+.It Ev no_proxy
+A space or comma separated list of hosts (or domains) for which
+proxying is not to be used.
+Each entry may have an optional trailing ":port", which restricts
+the matching to connections to that port.
 .El
 .Sh SEE ALSO
 .Xr getservbyname 3 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.14 1998/06/04 08:28:35 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.15 1998/08/03 01:49:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.14 1998/06/04 08:28:35 lukem Exp $");
+__RCSID("$NetBSD: complete.c,v 1.15 1998/08/03 01:49:25 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -216,9 +216,7 @@ complete_local(word, list)
 		if (strncmp(file, dp->d_name, len) == 0) {
 			char *tcp;
 
-			tcp = strdup(dp->d_name);
-			if (tcp == NULL)
-				errx(1, "Can't allocate memory for local dir");
+			tcp = xstrdup(dp->d_name);
 			sl_add(words, tcp);
 		}
 	}
@@ -297,9 +295,7 @@ complete_remote(word, list)
 				tcp++;
 			else
 				tcp = cp;
-			tcp = strdup(tcp);
-			if (tcp == NULL)
-				errx(1, "Can't allocate memory for remote dir");
+			tcp = xstrdup(tcp);
 			sl_add(dirlist, tcp);
 		}
 		if (emesg != NULL) {
