@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.1 1998/11/04 00:29:29 fvdl Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.2 1998/11/29 01:40:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,6 +134,46 @@ u_int16_t ex_mii_readbit __P((void *, u_int16_t));
 int ex_mii_readreg __P((struct device *, int, int));
 void ex_mii_writereg __P((struct device *, int, int, int));
 void ex_mii_statchg __P((struct device *));
+
+void ex_probemedia __P((struct ex_softc *));
+
+/*
+ * Structure to map media-present bits in boards to ifmedia codes and
+ * printable media names.  Used for table-driven ifmedia initialization.
+ */
+struct ex_media {
+	int	exm_mpbit;		/* media present bit */
+	const char *exm_name;		/* name of medium */
+	int	exm_ifmedia;		/* ifmedia word for medium */
+	int	exm_epmedia;		/* ELINKMEDIA_* constant */
+};
+
+/*
+ * Media table for 3c90x chips.  Note that chips with MII have no
+ * `native' media.
+ */
+struct ex_media ex_native_media[] = {
+	{ ELINK_PCI_10BASE_T,	"10baseT",	IFM_ETHER|IFM_10_T,
+	  ELINKMEDIA_10BASE_T },
+	{ ELINK_PCI_10BASE_T,	"10baseT-FDX",	IFM_ETHER|IFM_10_T|IFM_FDX,
+	  ELINKMEDIA_10BASE_T },
+	{ ELINK_PCI_AUI,	"10base5",	IFM_ETHER|IFM_10_5,
+	  ELINKMEDIA_AUI },
+	{ ELINK_PCI_BNC,	"10base2",	IFM_ETHER|IFM_10_2,
+	  ELINKMEDIA_10BASE_2 },
+	{ ELINK_PCI_100BASE_TX,	"100baseTX",	IFM_ETHER|IFM_100_TX,
+	  ELINKMEDIA_100BASE_TX },
+	{ ELINK_PCI_100BASE_TX,	"100baseTX-FDX",IFM_ETHER|IFM_100_TX|IFM_FDX,
+	  ELINKMEDIA_100BASE_TX },
+	{ ELINK_PCI_100BASE_FX,	"100baseFX",	IFM_ETHER|IFM_100_FX,
+	  ELINKMEDIA_100BASE_FX },
+	{ ELINK_PCI_100BASE_MII,"manual",	IFM_ETHER|IFM_MANUAL,
+	  ELINKMEDIA_MII },
+	{ ELINK_PCI_100BASE_T4,	"100baseT4",	IFM_ETHER|IFM_100_T4,
+	  ELINKMEDIA_100BASE_T4 },
+	{ 0,			NULL,		0,
+	  0 },
+};
 
 /*
  * Back-end attach and configure.
@@ -321,16 +361,21 @@ ex_config(sc)
 
 	ifp = &sc->sc_ethercom.ec_if;
 
+	/*
+	 * Initialize our media structures and MII info.  We'll
+	 * probe the MII if we discover that we have one.
+	 */
+	sc->ex_mii.mii_ifp = ifp;
+	sc->ex_mii.mii_readreg = ex_mii_readreg;
+	sc->ex_mii.mii_writereg = ex_mii_writereg;
+	sc->ex_mii.mii_statchg = ex_mii_statchg;
+	ifmedia_init(&sc->ex_mii.mii_media, 0, ex_media_chg,
+	    ex_media_stat);
+
 	if (sc->ex_conf & EX_CONF_MII) {
 		/*
 		 * Find PHY, extract media information from it.
 		 */
-		sc->ex_mii.mii_ifp = ifp;
-		sc->ex_mii.mii_readreg = ex_mii_readreg;
-		sc->ex_mii.mii_writereg = ex_mii_writereg;
-		sc->ex_mii.mii_statchg = ex_mii_statchg;
-		ifmedia_init(&sc->ex_mii.mii_media, 0, ex_media_chg,
-		    ex_media_stat);
 		mii_phy_probe(&sc->sc_dev, &sc->ex_mii, 0xffffffff);
 		if (LIST_FIRST(&sc->ex_mii.mii_phys) == NULL) {
 			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER|IFM_NONE,
@@ -339,42 +384,8 @@ ex_config(sc)
 		} else {
 			ifmedia_set(&sc->ex_mii.mii_media, IFM_ETHER|IFM_AUTO);
 		}
-	} else {
-		ifmedia_init(&sc->ex_mii.mii_media, IFM_FDX, ex_media_chg,
-		    ex_media_stat);
-		/*
-		 * Extract media information from registers.
-		 */
-		if (val & ELINK_MEDIACAP_100BASET4)
-			ifmedia_add(&sc->ex_mii.mii_media,
-			    IFM_ETHER | IFM_100_T4, ELINKMEDIA_100BASE_T4,
-			    NULL);
-		else if (val & ELINK_MEDIACAP_100BASETX)
-			ifmedia_add(&sc->ex_mii.mii_media,
-			    IFM_ETHER | IFM_100_TX, ELINKMEDIA_100BASE_TX,
-			    NULL);
-		else if (val & ELINK_MEDIACAP_100BASEFX)
-			ifmedia_add(&sc->ex_mii.mii_media,
-			    IFM_ETHER | IFM_100_FX, ELINKMEDIA_100BASE_FX,
-			    NULL);
-		else if (val & ELINK_MEDIACAP_10BASET)
-			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER | IFM_10_T,
-			    ELINKMEDIA_10BASE_T, NULL);
-		else if (val & ELINK_MEDIACAP_10BASE2)
-			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER | IFM_10_2,
-			    ELINKMEDIA_10BASE_2, NULL);
-		else if (val & ELINK_MEDIACAP_10BASE5)
-			ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER | IFM_10_5,
-			    ELINKMEDIA_AUI, NULL);
-#ifdef notyet
-		else if (val & ELINK_MEDIACAP_10BASEFL)
-			ifmedia_add(&sc->ex_mii.mii_media,
-			    IFM_ETHER | IFM_10_FL, 0, NULL);
-#endif
-		ifmedia_add(&sc->ex_mii.mii_media, IFM_ETHER | IFM_NONE, 0,
-		    NULL);
-		ifmedia_set(&sc->ex_mii.mii_media, IFM_ETHER | IFM_NONE);
-	}
+	} else
+		ex_probemedia(sc);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -471,6 +482,75 @@ ex_config(sc)
 		break;
 	}
 
+}
+
+/*
+ * Find the media present on non-MII chips.
+ */
+void
+ex_probemedia(sc)
+	struct ex_softc *sc;
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	struct ifmedia *ifm = &sc->ex_mii.mii_media;
+	struct ex_media *exm;
+	u_int16_t config1, reset_options, default_media;
+	int defmedia = 0;
+	const char *sep = "", *defmedianame = NULL;
+
+	GO_WINDOW(3);
+	config1 = bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2);
+	reset_options = bus_space_read_1(iot, ioh, ELINK_W3_RESET_OPTIONS);
+	GO_WINDOW(0);
+
+	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
+
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+	/* Sanity check that there are any media! */
+	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
+		printf("no media present!\n");
+		ifmedia_add(ifm, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER|IFM_NONE);
+		return;
+	}
+
+#define	PRINT(s)	printf("%s%s", sep, s); sep = ", "
+
+	for (exm = ex_native_media; exm->exm_name != NULL; exm++) {
+		if (reset_options & exm->exm_mpbit) {
+			/*
+			 * Default media is a little complicated.  We
+			 * support full-duplex which uses the same
+			 * reset options bit.
+			 *
+			 * XXX Check EEPROM for default to FDX?
+			 */
+			if (exm->exm_epmedia == default_media) {
+				if ((exm->exm_ifmedia & IFM_FDX) == 0) {
+					defmedia = exm->exm_ifmedia;
+					defmedianame = exm->exm_name;
+				}
+			} else if (defmedia == 0) {
+				defmedia = exm->exm_ifmedia;
+				defmedianame = exm->exm_name;
+			}
+			ifmedia_add(ifm, exm->exm_ifmedia, exm->exm_epmedia,
+			    NULL);
+			PRINT(exm->exm_name);
+		}
+	}
+
+#undef PRINT
+
+#ifdef DIAGNOSTIC
+	if (defmedia == 0)
+		panic("ex_probemedia: impossible");
+#endif
+
+	printf(", default %s\n", defmedianame);
+	ifmedia_set(ifm, defmedia);
 }
 
 /*
