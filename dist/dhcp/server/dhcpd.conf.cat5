@@ -1,0 +1,1716 @@
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+NNAAMMEE
+       dhcpd.conf - dhcpd configuration file
+
+DDEESSCCRRIIPPTTIIOONN
+       The dhcpd.conf file contains configuration information for
+       _d_h_c_p_d_, the Internet Software Consortium DHCP Server.
+
+       The dhcpd.conf file is a free-form ASCII text  file.    It
+       is  parsed  by  the  recursive-descent  parser  built into
+       dhcpd.   The file may contain extra tabs and newlines  for
+       formatting purposes.  Keywords in the file are case-insen­
+       sitive.   Comments may be placed anywhere within the  file
+       (except  within quotes).   Comments begin with the # char­
+       acter and end at the end of the line.
+
+       The file essentially consists of  a  list  of  statements.
+       Statements fall into two broad categories - parameters and
+       declarations.
+
+       Parameter statements either say how to do something (e.g.,
+       how long a lease to offer), whether to do something (e.g.,
+       should dhcpd provide addresses  to  unknown  clients),  or
+       what  parameters to provide to the client (e.g., use gate­
+       way 220.177.244.7).
+
+       Declarations are used to describe the topology of the net­
+       work,  to  describe  clients  on  the  network, to provide
+       addresses that can be assigned to clients, or to  apply  a
+       group  of  parameters to a group of declarations.   In any
+       group of parameters and declarations, all parameters  must
+       be specified before any declarations which depend on those
+       parameters may be specified.
+
+       Declarations about network topology include the
+        _s_h_a_r_e_d_-_n_e_t_w_o_r_k and the _s_u_b_n_e_t declarations.   If  clients
+       on  a  subnet  are to be assigned addresses dynamically, a
+       _r_a_n_g_e declaration must appear within the  _s_u_b_n_e_t  declara­
+       tion.   For clients with statically assigned addresses, or
+       for installations where only known clients will be served,
+       each such client must have a _h_o_s_t declaration.   If param­
+       eters are to be applied to a group of  declarations  which
+       are  not related strictly on a per-subnet basis, the _g_r_o_u_p
+       declaration can be used.
+
+       For every subnet which will be served, and for every  sub­
+       net  to  which the dhcp server is connected, there must be
+       one _s_u_b_n_e_t declaration, which tells dhcpd how to recognize
+       that  an  address is on that subnet.  A _s_u_b_n_e_t declaration
+       is required for each subnet even if no addresses  will  be
+       dynamically allocated on that subnet.
+
+       Some  installations  have  physical networks on which more
+       than one IP subnet operates.   For example, if there is  a
+       site-wide requirement that 8-bit subnet masks be used, but
+
+
+
+                                                                1
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       a department  with  a  single  physical  ethernet  network
+       expands  to the point where it has more than 254 nodes, it
+       may be necessary to run two 8-bit subnets on the same eth­
+       ernet  until  such  time  as a new physical network can be
+       added.   In this case, the _s_u_b_n_e_t declarations  for  these
+       two  networks may be enclosed in a _s_h_a_r_e_d_-_n_e_t_w_o_r_k declara­
+       tion.
+
+       Some sites may have departments which have clients on more
+       than  one  subnet,  but it may be desirable to offer those
+       clients a uniform set of parameters  which  are  different
+       than  what  would be offered to clients from other depart­
+       ments on the same subnet.    For  clients  which  will  be
+       declared explicitly with _h_o_s_t declarations, these declara­
+       tions can be enclosed in a _g_r_o_u_p  declaration  along  with
+       the  parameters which are common to that department.   For
+       clients whose  addresses  will  be  dynamically  assigned,
+       class  declarations  and  conditional  declarations may be
+       used to group parameter assignments based  on  information
+       the client sends.
+
+       When  a  client  is  to be booted, its boot parameters are
+       determined by consulting that  client's  _h_o_s_t  declaration
+       (if  any),  and then consulting the any _c_l_a_s_s declarations
+       matching the client, followed  by  the  _p_o_o_l,  _s_u_b_n_e_t  and
+       _s_h_a_r_e_d_-_n_e_t_w_o_r_k declarations for the IP address assigned to
+       the client.   Each of these  declarations  itself  appears
+       within  a lexical scope, and all declarations at less spe­
+       cific lexical scopes are also consulted for client  option
+       declarations as well.   Scopes are never considered twice,
+       and if parameters are declared in more than one scope, the
+       parameter  declared  in the most specific scope is the one
+       that is used.
+
+       When dhcpd tries to find a _h_o_s_t declaration for a  client,
+       it  first  looks for a _h_o_s_t declaration which has a _f_i_x_e_d_-
+       _a_d_d_r_e_s_s parameter which matches the subnet or shared  net­
+       work  on which the client is booting.   If it doesn't find
+       any such entry, it then tries to find an entry  which  has
+       no  _f_i_x_e_d_-_a_d_d_r_e_s_s  parameter.   If no such entry is found,
+       then dhcpd acts as if there is no entry in the  dhcpd.conf
+       file  for  that client, even if there is an entry for that
+       client on a different subnet or shared network.
+
+EEXXAAMMPPLLEESS
+       A typical dhcpd.conf file will look something like this:
+
+       _g_l_o_b_a_l _p_a_r_a_m_e_t_e_r_s_._._.
+
+       subnet 204.254.239.0 netmask 255.255.255.224 {
+         _s_u_b_n_e_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+         range 204.254.239.10 204.254.239.30;
+       }
+
+
+
+
+                                                                2
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       subnet 204.254.239.32 netmask 255.255.255.224 {
+         _s_u_b_n_e_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+         range 204.254.239.42 204.254.239.62;
+       }
+
+       subnet 204.254.239.64 netmask 255.255.255.224 {
+         _s_u_b_n_e_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+         range 204.254.239.74 204.254.239.94;
+       }
+
+       group {
+         _g_r_o_u_p_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+         host zappo.test.isc.org {
+           _h_o_s_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+         }
+         host beppo.test.isc.org {
+           _h_o_s_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+         }
+         host harpo.test.isc.org {
+           _h_o_s_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+         }
+       }
+
+                                Figure 1
+
+
+       Notice that at the beginning of the file, there's a  place
+       for  global  parameters.    These might be things like the
+       organization's domain name,  the  addresses  of  the  name
+       servers  (if  they are common to the entire organization),
+       and so on.   So, for example:
+
+            option domain-name "isc.org";
+            option domain-name-servers ns1.isc.org, ns2.isc.org;
+
+                                Figure 2
+
+       As you can see in Figure 2, you can specify host addresses
+       in  parameters  using their domain names rather than their
+       numeric IP addresses.  If a  given  hostname  resolves  to
+       more  than  one  IP address (for example, if that host has
+       two  ethernet  interfaces),  then  where  possible,   both
+       addresses are supplied to the client.
+
+       The most obvious reason for having subnet-specific parame­
+       ters as shown in Figure 1 is that each subnet,  of  neces­
+       sity,  has  its own router.   So for the first subnet, for
+       example, there should be something like:
+
+            option routers 204.254.239.1;
+
+       Note that  the  address  here  is  specified  numerically.
+       This is not required - if you have a different domain name
+       for  each  interface  on  your  router,   it's   perfectly
+
+
+
+                                                                3
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       legitimate  to  use  the  domain  name  for that interface
+       instead of the numeric address.   However, in  many  cases
+       there may be only one domain name for all of a router's IP
+       addresses, and it would not be  appropriate  to  use  that
+       name here.
+
+       In  Figure  1  there is also a _g_r_o_u_p statement, which pro­
+       vides common parameters for a set of three hosts -  zappo,
+       beppo  and  harpo.  As you can see, these hosts are all in
+       the test.isc.org domain, so it  might  make  sense  for  a
+       group-specific  parameter to override the domain name sup­
+       plied to these hosts:
+
+            option domain-name "test.isc.org";
+
+       Also, given the domain they're in, these are probably test
+       machines.   If  we  wanted to test the DHCP leasing mecha­
+       nism, we might set the lease timeout somewhat shorter than
+       the default:
+
+            max-lease-time 120;
+            default-lease-time 120;
+
+       You may have noticed that while some parameters start with
+       the _o_p_t_i_o_n keyword, some  do  not.    Parameters  starting
+       with the _o_p_t_i_o_n keyword correspond to actual DHCP options,
+       while parameters that do not start with the option keyword
+       either control the behaviour of the DHCP server (e.g., how
+       long a lease dhcpd  will  give  out),  or  specify  client
+       parameters that are not optional in the DHCP protocol (for
+       example, server-name and filename).
+
+       In Figure  1,  each  host  had  _h_o_s_t_-_s_p_e_c_i_f_i_c  _p_a_r_a_m_e_t_e_r_s.
+       These  could  include  such things as the _h_o_s_t_n_a_m_e option,
+       the name of a file to upload (the _f_i_l_e_n_a_m_e _p_a_r_a_m_e_t_e_r_)  _a_n_d
+       _t_h_e  _a_d_d_r_e_s_s  _o_f  _t_h_e _s_e_r_v_e_r _f_r_o_m _w_h_i_c_h _t_o _u_p_l_o_a_d _t_h_e _f_i_l_e
+       _(_t_h_e _n_e_x_t_-_s_e_r_v_e_r parameter).   In general,  any  parameter
+       can  appear anywhere that parameters are allowed, and will
+       be applied according to the scope in which  the  parameter
+       appears.
+
+       Imagine  that  you  have a site with a lot of NCD X-Termi­
+       nals.   These terminals come in a variety of  models,  and
+       you  want to specify the boot files for each models.   One
+       way to do this would be to have host declarations for each
+       server and group them by model:
+
+       group {
+         filename "Xncd19r";
+         next-server ncd-booter;
+
+         host ncd1 { hardware ethernet 0:c0:c3:49:2b:57; }
+         host ncd4 { hardware ethernet 0:c0:c3:80:fc:32; }
+         host ncd8 { hardware ethernet 0:c0:c3:22:46:81; }
+
+
+
+                                                                4
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       }
+
+       group {
+         filename "Xncd19c";
+         next-server ncd-booter;
+
+         host ncd2 { hardware ethernet 0:c0:c3:88:2d:81; }
+         host ncd3 { hardware ethernet 0:c0:c3:00:14:11; }
+       }
+
+       group {
+         filename "XncdHMX";
+         next-server ncd-booter;
+
+         host ncd1 { hardware ethernet 0:c0:c3:11:90:23; }
+         host ncd4 { hardware ethernet 0:c0:c3:91:a7:8; }
+         host ncd8 { hardware ethernet 0:c0:c3:cc:a:8f; }
+       }
+
+AADDDDRREESSSS PPOOOOLLSS
+       The  ppooooll  declaration  can  be  used to specify a pool of
+       addresses that will be treated  differently  than  another
+       pool  of  addresses,  even  on the same network segment or
+       subnet.   For example, you may want to provide a large set
+       of addresses that can be assigned to DHCP clients that are
+       registered to your DHCP server, while providing a  smaller
+       set  of  addresses,  possibly with short lease times, that
+       are available for unknown clients.   If you have  a  fire­
+       wall,  you  may  be able to arrange for addresses from one
+       pool to be allowed access to the Internet, while addresses
+       in  another pool are not, thus encouraging users to regis­
+       ter their DHCP clients.   To do this, you would set  up  a
+       pair of pool declarations:
+
+       subnet 10.0.0.0 netmask 255.255.255.0 {
+         option routers 10.0.0.254;
+
+         # Unknown clients get this pool.
+         pool {
+           option domain-name-servers bogus.example.com;
+           max-lease-time 300;
+           range 10.0.0.200 10.0.0.253;
+           allow unknown clients;
+         }
+
+         # Known clients get this pool.
+         pool {
+           option domain-name-servers ns1.example.com, ns2.example.com;
+           max-lease-time 28800;
+           range 10.0.0.5 10.0.0.199;
+           deny unknown clients;
+         }
+       }
+
+
+
+
+                                                                5
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       It  is  also possible to set up entirely different subnets
+       for known and unknown clients - address pools exist at the
+       level  of  shared  networks, so address ranges within pool
+       declarations can be on different subnets.
+
+       As you can see in the preceding example,  pools  can  have
+       permit lists that control which clients are allowed access
+       to the pool and which aren't.  Each entry in a pool's per­
+       mit  list  is  introduced  with the _a_l_l_o_w or _d_e_n_y keyword.
+       If a pool has a permit list, then only those clients  that
+       match specific entries on the permit list will be elegible
+       to be assigned addresses from the pool.   If a pool has  a
+       deny  list,  then only those clients that do not match any
+       entries on the deny list will be elegible.    If both per­
+       mit  and  deny  lists  exist for a pool, then only clients
+       that match the permit list and do not match the deny  list
+       will be allowed access.
+
+AADDDDRREESSSS AALLLLOOCCAATTIIOONN
+       Address  allocation is actually only done when a client is
+       in the INIT state and has sent a DHCPDISCOVER message.  If
+       the client thinks it has a valid lease and sends a DHCPRE­
+       QUEST to initiate or renew that lease, the server has only
+       three  choices  -  it  can  ignore the DHCPREQUEST, send a
+       DHCPNAK to tell  the  client  it  should  stop  using  the
+       address, or send a DHCPACK, telling the client to go ahead
+       and use the address for a while.  If the server finds  the
+       address  the  client  is  requesting,  and that address is
+       available to the client, the server will send  a  DHCPACK.
+       If the address is no longer available, or the client isn't
+       permitted to have it, the server will send a DHCPNAK.   If
+       the server knows nothing about the, it will remain silent,
+       unless the address is incorrect for the network segment to
+       which  the  client  has  been  attached  and the server is
+       authoritative for that network segment, in which case  the
+       server  will  send  a  DHCPNAK even though it doesn't know
+       about the address.
+
+       When the DHCP server allocates a new address for a  client
+       (remember,  this  only  happens  if  the client has sent a
+       DHCPDISCOVER), it first looks to see if the client already
+       has  a valid lease on an IP address, or if there is an old
+       IP address the client had  before  that  hasn't  yet  been
+       reassigned.   In  that  case,  the  server  will take that
+       address and check it to see if the client is still permit­
+       ted  to  use  it.  If the client is no longer permitted to
+       use it, the lease is freed if the server  thought  it  was
+       still  in  use  -  the  fact  that  the  client has sent a
+       DHCPDISCOVER proves to the server that the  client  is  no
+       longer using the lease.
+
+       If no existing lease is found, or if the client is forbid­
+       den to receive the existing lease, then  the  server  will
+       look  in the list of address pools for the network segment
+
+
+
+                                                                6
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       to which the client is attached for a lease that is not in
+       use  and  that the client is permitted to have.   It looks
+       through each pool declaration in sequence (all _r_a_n_g_e  dec­
+       larations  that  appear  outside  of pool declarations are
+       grouped into a single pool with no permit list).   If  the
+       permit list for the pool allows the client to be allocated
+       an address from that pool, the pool is examined to see  if
+       there is an address available.   If so, then the client is
+       tentatively assigned that address.   Otherwise,  the  next
+       pool  is  tested.    If no addresses are found that can be
+       assigned to the client, no response is sent to the client.
+
+       If  an  address  is  found that the client is permitted to
+       have, and that has  never  been  assigned  to  any  client
+       before,  the  address  is  immediately  allocated  to  the
+       client.   If the address is available for  allocation  but
+       has  been  previously  assigned to a different client, the
+       server will keep looking in hopes of  finding  an  address
+       that has never before been assigned to a client.
+
+CCLLIIEENNTT CCLLAASSSSIINNGG
+       Clients can be seperated into classes, and treated differ­
+       ently depending on what class they are in.   This  sepera­
+       tion  can  be done either with a conditional statement, or
+       with a match statement within the class declaration.    It
+       is  possible  to  specify  a  limit on the total number of
+       clients within a particular class  or  subclass  that  may
+       hold  leases  at  one  time, and it is possible to specify
+       automatic subclassing based on the contents of the  client
+       packet.
+
+       To add clients to classes based on conditional evaluation,
+       you would write an  conditional  statement  to  match  the
+       clients  you  wanted  in  the  class,  and then put an aadddd
+       statement in the conditional's list of statements:
+
+       if substring (option dhcp-client-identifier, 0, 3) = "RAS" {
+         add "ras-clients";
+       }
+
+       A nearly equivalent way to do this is  to  simply  specify
+       the conditional expression as a matching expression in the
+       class statement:
+
+       class "ras-clients" {
+         match if substring (option dhcp-client-identifier, 0, 3) = "RAS";
+       }
+       Note that whether you  use  matching  expressions  or  add
+       statements  (or both) to classify clients, you must always
+       write a class declaration for any class that you use.   If
+       there  will  be  no match statement and no in-scope state­
+       ments for a class, the declaration should look like this:
+       class "ras-clients" {
+       }
+
+
+
+                                                                7
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       Also, the aadddd statement adds the client to  the  class  as
+       the  client's  scopes  are  being  evaluated  -  after any
+       address assignment decision has been  made.    This  means
+       that  a  client  that's  a member of a class due to an add
+       statement will not be affected by pool permits related  to
+       that  class  -  when the pool permit list is computed, the
+       client will not yet be a member of the pool.   This is  an
+       inconsistency  that  will  probably  be addressed in later
+       versions of the DHCP server, but it important to be  aware
+       of it at lease for the time being.
+
+SSUUBBCCLLAASSSSEESS
+       In  addition  to  classes,  it is possible to declare sub­
+       classes.   A subclass is a class with the same name  as  a
+       regular  class,  but  with  a specific submatch expression
+       which is hashed for quick matching.  This is essentially a
+       speed hack - the main difference between five classes with
+       match expressions and one class with  five  subclasses  is
+       that  it  will  be  quicker to find the subclasses.   Sub­
+       classes work as follows:
+
+       class "allocation-class-1" {
+         match pick-first-value (option dhcp-client-identifier, hardware);
+       }
+
+       class "allocation-class-2" {
+         match pick-first-value (option dhcp-client-identifier, hardware);
+       }
+
+       subclass "allocation-class-1" 1:8:0:2b:4c:39:ad;
+       subclass "allocation-class-2" 1:8:0:2b:a9:cc:e3;
+       subclass "allocation-class-1" 1:0:0:c4:aa:29:44;
+
+       subnet 10.0.0.0 netmask 255.255.255.0 {
+         pool {
+           allow members of "allocation-class-1";
+           range 10.0.0.11 10.0.0.50;
+         }
+         pool {
+           allow members of "allocation-class-2";
+           range 10.0.0.51 10.0.0.100;
+         }
+       }
+
+       The data following the class name in the subclass declara­
+       tion  is  a  constant  value  to use in matching the match
+       expression for the class.  When class  matching  is  done,
+       the  server  will  evaluate  the match expression and then
+       look the result up in the hash  table.    If  it  finds  a
+       match, the client is considered a member of both the class
+       and the subclass.
+
+       Subclasses can be declared with or without scope.   In the
+       above  example,  the  sole  purpose  of the subclass is to
+
+
+
+                                                                8
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       allow some clients access to one address pool, while other
+       clients  are given access to the other pool, so these sub­
+       classes are declared without scopes.   If part of the pur­
+       pose  of  the  subclass were to define different parameter
+       values for some clients, you might want  to  declare  some
+       subclasses with scopes.
+
+       In  the  above  example,  if  you had a single client that
+       needed some configuration parameters, while  most  didn't,
+       you  might  write  the  following subclass declaration for
+       that client:
+
+       subclass "allocation-class-2" 1:08:00:2b:a1:11:31 {
+         option root-path "samsara:/var/diskless/alphapc";
+         filename "/tftpboot/netbsd.alphapc-diskless";
+       }
+
+       In this example, we've used subclassing as a way  to  con­
+       trol  address  allocation on a per-client basis.  However,
+       it's also possible to use subclassing in ways that are not
+       specific to clients - for example, to use the value of the
+       vendor-class-identifier option to determine what values to
+       send  in the vendor-encapsulated-options option.  An exam­
+       ple of this is shown under the VENDOR ENCAPSULATED OPTIONS
+       head later on in this document.
+
+PPEERR--CCLLAASSSS LLIIMMIITTSS OONN DDYYNNAAMMIICC AADDDDRREESSSS AALLLLOOCCAATTIIOONN
+       You  may  specify  a  limit  to the number of clients in a
+       class that can be assigned leases.   The  effect  of  this
+       will  be  to make it difficult for a new client in a class
+       to get an address.   Once a class with such  a  limit  has
+       reached its limit, the only way a new client in that class
+       can get a lease is for an existing  client  to  relinquish
+       its  lease,  either  by letting it expire, or by sending a
+       DHCPRELEASE packet.   Classes with lease limits are speci­
+       fied as follows:
+
+       class "limited-1" {
+         lease limit 4;
+       }
+
+       This  will produce a class in which a maximum of four mem­
+       bers may hold a lease at one time.
+
+SSPPAAWWNNIINNGG CCLLAASSSSEESS
+       It is possible to declare a _s_p_a_w_n_i_n_g  _c_l_a_s_s.   A  spawning
+       class  is  a  class that automatically produces subclasses
+       based on what the client sends.   The reason that spawning
+       classes  were  created  was  to make it possible to create
+       lease-limited classes on the fly.   The envisioned  appli­
+       cation  is  a cable-modem environment where the ISP wishes
+       to provide clients at a particular site with more than one
+       IP address, but does not wish to provide such clients with
+       their own subnet, nor give them an unlimited number of  IP
+
+
+
+                                                                9
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       addresses  from the network segment to which they are con­
+       nected.
+
+       Many cable modem head-end systems can be configured to add
+       a  Relay  Agent  Information  option  to DHCP packets when
+       relaying them to the DHCP server.    These  systems  typi­
+       cally  add  a circuit ID or remote ID option that uniquely
+       identifies the customer site.   To take advantage of this,
+       you can write a class declaration as follows:
+
+       class "customer" {
+         spawn with option agent.circuit-id;
+         lease limit 4;
+       }
+
+       Now  whenever a request comes in from a customer site, the
+       circuit ID option will be checked against the class's hash
+       table.    If  a subclass is found that matches the circuit
+       ID, the client will be classified  in  that  subclass  and
+       treated  accordingly.    If  no subclass is found matching
+       the circuit ID, a new one will be created  and  logged  in
+       the  ddhhccppdd..lleeaasseess  file, and the client will be classified
+       in this new class.   Once the client has been  classified,
+       it  will  be  treated according to the rules of the class,
+       including, in this case, being  subject  to  the  per-site
+       limit of four leases.
+
+       The   use  of  the  subclass  spawning  mechanism  is  not
+       restricted to relay agent options - this particular  exam­
+       ple  is  given only because it is a fairly straightforward
+       one.
+
+DDYYNNAAMMIICC DDNNSS UUPPDDAATTEESS
+       The DHCP server has the ability to dynamically update  the
+       Domain  Name  System.  Within the configuration files, you
+       can define how you want  the  Domain  Name  System  to  be
+       updated.   These updates are RFC 2136 compliant so any DNS
+       server supporting  RFC  2136  should  be  able  to  accept
+       updates  from the DHCP server.   The DHCP server will only
+       perform DNS updates if it has been built with DNS  updates
+       enabled  as  described  in the README file that comes with
+       the DHCP distribution.
+
+       The Dynamic DNS update scheme implemented in this  version
+       of the ISC DHCP server is an interim implementation, which
+       does not implement any of the standard update methods that
+       have  been  discussed  in  the  working  group, but rather
+       implements some very basic, yet useful,  update  capabili­
+       ties.
+
+       There  are  three  parameters, which may vary according to
+       the scope, that control how DDNS  updates  will  be  done.
+       The first two are the _d_d_n_s_-_d_o_m_a_i_n_n_a_m_e and _d_d_n_s_-_r_e_v_-_d_o_m_a_i_n_­
+       _n_a_m_e statements.   The _d_d_n_s_-_d_o_m_a_i_n_n_a_m_e parameter sets  the
+
+
+
+                                                               10
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       domain name that will be appended to the client's hostname
+       to form a fully-qualified domain-name (FQDN).   For  exam­
+       ple,  if  the  client's hostname is "hutson" and the _d_d_n_s_-
+       _d_o_m_a_i_n_n_a_m_e is set to "sneedville.edu", then  the  client's
+       FQDN will be "hutson.sneedville.edu".
+
+       The  _d_d_n_s_-_r_e_v_-_d_o_m_a_i_n_n_a_m_e  parameter  sets  the domain name
+       that will be appended to the client's reversed IP  address
+       to  produce  a  name  for  use in the client's PTR record.
+       Normally, you would set this to "in-addr.arpa",  but  this
+       is not required.
+
+       A  third  parameter,  _d_d_n_s_-_h_o_s_t_n_a_m_e can be used to specify
+       the hostname that will be used as the  client's  hostname.
+       If no ddns-hostname is specified in scope, then the server
+       will use a host-name option sent by the client.    If  the
+       client did not send a host-name option, then if there is a
+       host declaration that applies to the client, the name from
+       that  declaration will be used.  If none of these applies,
+       the server will not have a hostname for  the  client,  and
+       will not be able to do a DDNS update.
+
+HHOOWW DDNNSS UUPPDDAATTEESS WWOORRKK
+       The  client's  FQDN, derived as we have described, is used
+       as the name on which an "A" record will be stored.   The A
+       record  will  contain  the  IP address that the client was
+       assigned in its lease.   If there is already an  A  record
+       with  the same name in the DNS server, no update of either
+       the A or PTR records will occur - this prevents  a  client
+       from  claiming  that its hostname is the name of some net­
+       work server.   For  example,  if  you  have  a  fileserver
+       called  "fs.sneedville.edu",  and  the  client  claims its
+       hostname is "fs", no DNS update  will  be  done  for  that
+       client, and an error message will be logged.
+
+       If  the  A record update succeeds, a PTR record update for
+       the assigned IP address will be done, pointing  to  the  A
+       record.    This  update is unconditional - it will be done
+       even if another  PTR  record  of  the  same  name  exists.
+       Since the IP address has been assigned to the DHCP server,
+       this should be safe.
+
+       Please  note  that  the  current  implementation   assumes
+       clients  only  have a single network interface.   A client
+       with  two  network  interfaces  will   see   unpredictable
+       behaviour.    This  is considered a bug, and will be fixed
+       in a later release.   It may be helpful to enable the _o_n_e_-
+       _l_e_a_s_e_-_p_e_r_-_c_l_i_e_n_t  parameter so that roaming clients do not
+       trigger this same behavior.
+
+       The DHCP protocol normally involves a four-packet exchange
+       -  first the client sends a DHCPDISCOVER message, then the
+       server sends a DHCPOFFER, then the client sends a  DHCPRE­
+       QUEST,  then  the server sends a DHCPACK.   In the current
+
+
+
+                                                               11
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       version of the server, the server will  do  a  DNS  update
+       after  it  has received the DHCPREQUEST, and before it has
+       sent the DHCPOFFER.   It only sends the DNS update  if  it
+       has not sent one for the client's address before, in order
+       to minimize the impact on the DHCP server.
+
+       When the client's lease expires, the DHCP server (if it is
+       operating  at  the  time,  or  when next it operates) will
+       remove the  client's  A  and  PTR  records  from  the  DNS
+       database.    If the client releases its lease by sending a
+       DHCPRELEASE message, the server will likewise remove the A
+       and PTR records.
+
+DDYYNNAAMMIICC DDNNSS UUPPDDAATTEE SSEECCUURRIITTYY
+       Support  for  TSIG  and DNSSEC is not yet available.  When
+       you set your DNS server up to allow updates from the  DHCP
+       server,  you  may  be exposing it to unauthorized updates.
+       To avoid this, the best you can do right now is to use  IP
+       address-based  packet  filtering  to  prevent unauthorized
+       hosts from submitting update requests.
+
+       The DNS server must be configured to allow updates for any
+       zone  that the DHCP server will be updating.  For example,
+       let us say that clients in the sneedville.edu domain  will
+       be  assigned  addresses  on  the 10.10.17.0/24 subnet.  In
+       that case, assuming you are using ISC BIND 8.2.1 or later,
+       you  would need to have the following declarations in your
+       /etc/named.conf file:
+
+       zone "sneedville.edu" {
+            type master;
+            file "sneedville.edu.db";
+            allow-update { localhost; };
+       };
+
+       zone "17.10.10.in-addr.arpa" {
+            type master;
+            file "10.10.17.db";
+            allow-update { localhost; };
+       };
+
+       This assumes that your DHCP server and  your  name  server
+       will  be  running  on  the same computer - the "localhost"
+       name is taken in the DNS server as an  alias  for  all  of
+       that  host's  IP  addresses, and updates from any of those
+       addresses will be accepted.
+
+       You may wish to enable logging of DNS transactions on your
+       DNS server.  To do so, you might write a logging statement
+       like the following:
+
+       logging {
+            channel update_debug {
+                 file "/var/log/update-debug.log";
+
+
+
+                                                               12
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+                 severity  debug 3;
+                 print-category yes;
+                 print-severity yes;
+                 print-time     yes;
+            };
+            channel security_info    {
+                 file "/var/log/named-auth.info";
+                 severity  info;
+                 print-category yes;
+                 print-severity yes;
+                 print-time     yes;
+            };
+
+            category update { update_debug; };
+            category security { security_info; };
+       };
+
+       You   must   create   the   /var/log/named-auth.info   and
+       /var/log/update-debug.log  files  before starting the name
+       server.   For more information on  configuring  ISC  BIND,
+       consult the documentation that accompanies it.
+
+RREEFFEERREENNCCEE:: EEVVEENNTTSS
+       There  are three kinds of events that can happen regarding
+       a lease, and it is possible  to  declare  statements  that
+       occur  when any of these events happen.   These events are
+       the commit event, when the server has made a commitment of
+       a  certain  lease to a client, the release event, when the
+       client has released the server from  its  commitment,  and
+       the expiry event, when the commitment expires.
+
+       To  declare  a  set of statements to execute when an event
+       happens, you must use the oonn statement,  followed  by  the
+       name  of  the event, followed by a series of statements to
+       execute  when  the  event  happens,  enclosed  in  braces.
+       Events  are  used to implement dynamic DNS updates, so you
+       should not define your own event handlers if you are using
+       the built-in dynamic DNS update mechanism.
+
+RREEFFEERREENNCCEE:: DDEECCLLAARRAATTIIOONNSS
+       TThhee _s_h_a_r_e_d_-_n_e_t_w_o_r_k ssttaatteemmeenntt
+
+        sshhaarreedd--nneettwwoorrkk _n_a_m_e {{
+          [ _p_a_r_a_m_e_t_e_r_s ]
+          [ _d_e_c_l_a_r_a_t_i_o_n_s ]
+        }}
+
+       The  _s_h_a_r_e_d_-_n_e_t_w_o_r_k  statement  is used to inform the DHCP
+       server that some IP subnets actually share the same physi­
+       cal  network.   Any  subnets in a shared network should be
+       declared within a  _s_h_a_r_e_d_-_n_e_t_w_o_r_k  statement.   Parameters
+       specified  in  the  _s_h_a_r_e_d_-_n_e_t_w_o_r_k  statement will be used
+       when booting clients on those  subnets  unless  parameters
+       provided  at  the  subnet or host level override them.  If
+
+
+
+                                                               13
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       any subnet in a shared network has addresses available for
+       dynamic  allocation,  those addresses are collected into a
+       common pool  for  that  shared  network  and  assigned  to
+       clients  as  needed.   There  is  no way to distinguish on
+       which subnet of a shared network a client should boot.
+
+       _N_a_m_e should be the name of the shared network.   This name
+       is  used when printing debugging messages, so it should be
+       descriptive for the shared network.   The  name  may  have
+       the  syntax of a valid domain name (although it will never
+       be used as  such),  or  it  may  be  any  arbitrary  name,
+       enclosed in quotes.
+
+       TThhee _s_u_b_n_e_t ssttaatteemmeenntt
+
+        ssuubbnneett _s_u_b_n_e_t_-_n_u_m_b_e_r nneettmmaasskk _n_e_t_m_a_s_k {{
+          [ _p_a_r_a_m_e_t_e_r_s ]
+          [ _d_e_c_l_a_r_a_t_i_o_n_s ]
+        }}
+
+       The  _s_u_b_n_e_t statement is used to provide dhcpd with enough
+       information to tell whether or not an  IP  address  is  on
+       that  subnet.   It may also be used to provide subnet-spe­
+       cific parameters and to  specify  what  addresses  may  be
+       dynamically  allocated  to clients booting on that subnet.
+       Such addresses are specified using the _r_a_n_g_e  declaration.
+
+       The  _s_u_b_n_e_t_-_n_u_m_b_e_r  should be an IP address or domain name
+       which resolves to the subnet number of  the  subnet  being
+       described.   The _n_e_t_m_a_s_k should be an IP address or domain
+       name which resolves to the subnet mask of the subnet being
+       described.   The subnet number, together with the netmask,
+       are sufficient to determine whether any given  IP  address
+       is on the specified subnet.
+
+       Although  a netmask must be given with every subnet decla­
+       ration, it is recommended that if there is any variance in
+       subnet  masks at a site, a subnet-mask option statement be
+       used in each subnet declaration to set the desired  subnet
+       mask, since any subnet-mask option statement will override
+       the subnet mask declared in the subnet statement.
+
+       TThhee _r_a_n_g_e ssttaatteemmeenntt
+
+       rraannggee [ ddyynnaammiicc--bboooottpp ] _l_o_w_-_a_d_d_r_e_s_s [ _h_i_g_h_-_a_d_d_r_e_s_s];;
+
+       For any subnet on which addresses will be assigned dynami­
+       cally,  there  must be at least one _r_a_n_g_e statement.   The
+       range statement gives the lowest and highest IP  addresses
+       in  a  range.   All IP addresses in the range should be in
+       the subnet in which the _r_a_n_g_e statement is declared.   The
+       _d_y_n_a_m_i_c_-_b_o_o_t_p  flag  may  be specified if addresses in the
+       specified range  may  be  dynamically  assigned  to  BOOTP
+       clients  as  well  as  DHCP  clients.    When specifying a
+
+
+
+                                                               14
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       single address, _h_i_g_h_-_a_d_d_r_e_s_s can be omitted.
+
+       TThhee _h_o_s_t ssttaatteemmeenntt
+
+        hhoosstt _h_o_s_t_n_a_m_e {
+          [ _p_a_r_a_m_e_t_e_r_s ]
+          [ _d_e_c_l_a_r_a_t_i_o_n_s ]
+        }}
+
+       There must be at least one hhoosstt statement for every  BOOTP
+       client  that is to be served.  hhoosstt statements may also be
+       specified for DHCP clients, although this is not  required
+       unless booting is only enabled for known hosts.
+
+       If  it  is  desirable  to  be able to boot a DHCP or BOOTP
+       client on more than one subnet with fixed addresses,  more
+       than  one  address  may  be specified in the _f_i_x_e_d_-_a_d_d_r_e_s_s
+       parameter, or more than one hhoosstt statement may  be  speci­
+       fied.
+
+       If  client-specific  boot  parameters must change based on
+       the network to which the client is attached, then multiple
+       hhoosstt statements should be used.
+
+       If  a client is to be booted using a fixed address if it's
+       possible, but should be allocated a dynamic address other­
+       wise,  then  a  hhoosstt statement must be specified without a
+       ffiixxeedd--aaddddrreessss clause.  _h_o_s_t_n_a_m_e should be a name identify­
+       ing  the  host.  If a _h_o_s_t_n_a_m_e option is not specified for
+       the host, _h_o_s_t_n_a_m_e is used.
+
+       _H_o_s_t declarations are matched  to  actual  DHCP  or  BOOTP
+       clients  by  matching  the  dhcp-client-identifier  option
+       specified in the _h_o_s_t declaration to the one  supplied  by
+       the client, or, if the _h_o_s_t declaration or the client does
+       not provide a dhcp-client-identifier option,  by  matching
+       the _h_a_r_d_w_a_r_e parameter in the _h_o_s_t declaration to the net­
+       work hardware address  supplied  by  the  client.    BOOTP
+       clients  do not normally provide a _d_h_c_p_-_c_l_i_e_n_t_-_i_d_e_n_t_i_f_i_e_r,
+       so the hardware address must be used for all clients  that
+       may boot using the BOOTP protocol.
+
+       TThhee _g_r_o_u_p ssttaatteemmeenntt
+
+        ggrroouupp {
+          [ _p_a_r_a_m_e_t_e_r_s ]
+          [ _d_e_c_l_a_r_a_t_i_o_n_s ]
+        }}
+
+       The  group  statement  is used simply to apply one or more
+       parameters to a group of declarations.   It can be used to
+       group  hosts,  shared  networks,  subnets,  or  even other
+       groups.
+
+
+
+
+                                                               15
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+RREEFFEERREENNCCEE:: AALLLLOOWW AANNDD DDEENNYY
+       The _a_l_l_o_w and _d_e_n_y statements can be used to  control  the
+       response  of the DHCP server to various sorts of requests.
+       The allow and deny keywords actually have different  mean­
+       ings  depending  on the context.  In a pool context, these
+       keywords can be used to set up access  lists  for  address
+       allocation  pools.  In other contexts, the keywords simply
+       control general server behaviour with respect  to  clients
+       based  on  scope.   In a non-pool context, the _i_g_n_o_r_e key­
+       word can be used in place of the _d_e_n_y keyword  to  prevent
+       logging of denied requests.
+
+
+AALLLLOOWW DDEENNYY AANNDD IIGGNNOORREE IINN SSCCOOPPEE
+       The  following  usages  of allow and deny will work in any
+       scope, although it is not recommended that they be used in
+       pool declarations.
+
+       TThhee _u_n_k_n_o_w_n_-_c_l_i_e_n_t_s kkeeyywwoorrdd
+
+        aallllooww uunnkknnoowwnn--cclliieennttss;;
+        ddeennyy uunnkknnoowwnn--cclliieennttss;;
+        iiggnnoorree uunnkknnoowwnn--cclliieennttss;;
+
+       The  uunnkknnoowwnn--cclliieennttss flag is used to tell dhcpd whether or
+       not to dynamically assign addresses  to  unknown  clients.
+       Dynamic  address  assignment to unknown clients is aalllloowwed
+       by default.
+
+       TThhee _b_o_o_t_p kkeeyywwoorrdd
+
+        aallllooww bboooottpp;;
+        ddeennyy bboooottpp;;
+        iiggnnoorree bboooottpp;;
+
+       The bboooottpp flag is used to tell dhcpd  whether  or  not  to
+       respond  to  bootp  queries.  Bootp queries are aalllloowwed by
+       default.
+
+       TThhee _b_o_o_t_i_n_g kkeeyywwoorrdd
+
+        aallllooww bboooottiinngg;;
+        ddeennyy bboooottiinngg;;
+        iiggnnoorree bboooottiinngg;;
+
+       The bboooottiinngg flag is used to tell dhcpd whether or  not  to
+       respond to queries from a particular client.  This keyword
+       only has meaning when it appears in  a  host  declaration.
+       By  default, booting is aalllloowwed, but if it is disabled for
+       a particular client, then that client will not be able  to
+       get and address from the DHCP server.  TThhee _d_u_p_l_i_c_a_t_e_s kkeeyy­­
+       wwoorrdd
+
+        aallllooww dduupplliiccaatteess;;
+
+
+
+                                                               16
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+        ddeennyy dduupplliiccaatteess;;
+
+       Host declarations can match client messages based  on  the
+       DHCP Client Identifer option or based on the client's net­
+       work hardware type and MAC address.   If the  MAC  address
+       is  used,  the host declaration will match any client with
+       that MAC address -  even  clients  with  different  client
+       identifiers.   This doesn't normally happen, but is possi­
+       ble when one computer has more than one  operating  system
+       installed  on  it  -  for  example,  Microsoft Windows and
+       NetBSD or Linux.
+
+       The dduupplliiccaatteess flag  tells  the  DHCP  server  that  if  a
+       request  is  received  from  a client that matches the MAC
+       address of a host declaration, any other  leases  matching
+       that  MAC  address should be discarded by the server, even
+       if the UID is not the same.   This is a violation  of  the
+       DHCP  protocol, but can prevent clients whose client iden­
+       tifiers change regularly from holding many leases  at  the
+       same  time.   By  default,  duplicates  are  aalllloowwed.  TThhee
+       _d_e_c_l_i_n_e_s kkeeyywwoorrdd
+
+        aallllooww ddeecclliinneess;;
+        ddeennyy ddeecclliinneess;;
+        iiggnnoorree ddeecclliinneess;;
+
+       The DHCPDECLINE message is used by DHCP clients  to  indi­
+       cate  that  the lease the server has offered is not valid.
+       When the server receives a DHCPDECLINE  for  a  particular
+       address,  it normally abandons that address, assuming that
+       some unauthorized system is using  it.   Unfortunately,  a
+       malicious or buggy client can, using DHCPDECLINE messages,
+       completely exhaust  the  DHCP  server's  allocation  pool.
+       The server will reclaim these leases, but while the client
+       is running through the pool, it may cause serious  thrash­
+       ing  in the DNS, and it will also cause the DHCP server to
+       forget old DHCP client address allocations.
+
+       The ddeecclliinneess flag tells the DHCP server whether or not  to
+       honor  DHCPDECLINE  messages.    If  it  is set to ddeennyy or
+       iiggnnoorree in a particular scope, the  DHCP  server  will  not
+       respond to DHCPDECLINE messages.
+
+AALLLLOOWW AANNDD DDEENNYY WWIITTHHIINN PPOOOOLL DDEECCLLAARRAATTIIOONNSS
+       The uses of the allow and deny keyword shown in the previ­
+       ous section work pretty much  the  same  way  whether  the
+       client  is sending a DHCPDISCOVER or a DHCPREQUEST message
+       - an address will be allocated to the client  (either  the
+       old  address  it's  requesting, or a new address) and then
+       that address will be tested to see if it's okay to let the
+       client have it.   If the client requested it, and it's not
+       okay, the server will send a DHCPNAK message.   Otherwise,
+       the  server will simply not respond to the client.   If it
+       is okay to give the address to the client, the server will
+
+
+
+                                                               17
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       send a DHCPACK message.
+
+       The primary motivation behind pool declarations is to have
+       address allocation pools  whose  allocation  policies  are
+       different.    A  client  may be denied access to one pool,
+       but allowed access to another pool  on  the  same  network
+       segment.    In  order for this to work, access control has
+       to be done during address allocation,  not  after  address
+       allocation is done.
+
+       When  a  DHCPREQUEST message is processed, address alloca­
+       tion simply consists of looking up the address the  client
+       is  requesting  and seeing if it's still available for the
+       client.  If it is, then the DHCP server  checks  both  the
+       address  pool permit lists and the relevant in-scope allow
+       and deny statements to see if it's okay to give the  lease
+       to the client.  In the case of a DHCPDISCOVER message, the
+       allocation process is done as described previously in  the
+       ADDRESS ALLOCATION section.
+
+       When  declaring permit lists for address allocation pools,
+       the following syntaxes are recognized following the  allow
+       or deny keyword:
+
+        kknnoowwnn cclliieennttss;;
+
+       If  specified,  this  statement  either allows or prevents
+       allocation from this pool to any client that  has  a  host
+       declaration (i.e., is known).  A client is known if it has
+       a host declaration in _a_n_y  scope,  not  just  the  current
+       scope.
+
+        uunnkknnoowwnn cclliieennttss;;
+
+       If  specified,  this  statement  either allows or prevents
+       allocation from this pool to any client that has  no  host
+       declaration (i.e., is not known).
+
+        mmeemmbbeerrss ooff ""class"";;
+
+       If  specified,  this  statement  either allows or prevents
+       allocation from this pool to any client that is  a  member
+       of the named class.
+
+        ddyynnaammiicc bboooottpp cclliieennttss;;
+
+       If  specified,  this  statement  either allows or prevents
+       allocation from this pool to any bootp client.
+
+        aauutthheennttiiccaatteedd cclliieennttss;;
+
+       If specified, this statement  either  allows  or  prevents
+       allocation  from  this  pool  to  any client that has been
+       authenticated  using  the  DHCP  authentication  protocol.
+
+
+
+                                                               18
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       This is not yet supported.
+
+        uunnaauutthheennttiiccaatteedd cclliieennttss;;
+
+       If  specified,  this  statement  either allows or prevents
+       allocation from this pool to any client that has not  been
+       authenticated  using  the  DHCP  authentication  protocol.
+       This is not yet supported.
+
+        aallll cclliieennttss;;
+
+       If specified, this statement  either  allows  or  prevents
+       allocation  from  this  pool to all clients.   This can be
+       used when you want to write a pool  declaration  for  some
+       reason, but hold it in reserve, or when you want to renum­
+       ber your network quickly, and  thus  want  the  server  to
+       force  all clients that have been allocated addresses from
+       this pool to obtain new addresses  immediately  when  they
+       next renew.
+
+RREEFFEERREENNCCEE:: PPAARRAAMMEETTEERRSS
+       TThhee _l_e_a_s_e_-_f_i_l_e_-_n_a_m_e ssttaatteemmeenntt
+
+       lleeaassee--ffiillee--nnaammee _n_a_m_e;;
+
+       _N_a_m_e  should  be the name of the DHCP server's lease file.
+       By default, this is /var/db/dhcpd.leases.   This statement
+       mmuusstt appear in the outer scope of the configuration file -
+       if it appears in some other scope, it will have no effect.
+
+       TThhee _p_i_d_-_f_i_l_e_-_n_a_m_e ssttaatteemmeenntt
+
+       ppiidd--ffiillee--nnaammee _n_a_m_e;;
+
+       _N_a_m_e  should  be  the name of the DHCP server's process ID
+       file.   This is the file in which the DHCP  server's  pro­
+       cess  ID  is  stored when the server starts.   By default,
+       this is  /var/run/dhcpd.pid.    Like  the  lease-file-name
+       statement,  this  statement must appear in the outer scope
+       of the configuration file.
+
+       TThhee _d_e_f_a_u_l_t_-_l_e_a_s_e_-_t_i_m_e ssttaatteemmeenntt
+
+        ddeeffaauulltt--lleeaassee--ttiimmee _t_i_m_e;;
+
+       _T_i_m_e should be the length in seconds that will be assigned
+       to a lease if the client requesting the lease does not ask
+       for a specific expiration time.
+
+       TThhee _m_a_x_-_l_e_a_s_e_-_t_i_m_e ssttaatteemmeenntt
+
+        mmaaxx--lleeaassee--ttiimmee _t_i_m_e;;
+
+       _T_i_m_e should be the maximum length in seconds that will  be
+
+
+
+                                                               19
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       assigned  to a lease.   The only exception to this is that
+       Dynamic BOOTP lease lengths, which are  not  specified  by
+       the client, are not limited by this maximum.
+
+       TThhee _m_i_n_-_l_e_a_s_e_-_t_i_m_e ssttaatteemmeenntt
+
+        mmiinn--lleeaassee--ttiimmee _t_i_m_e;;
+
+       _T_i_m_e  should be the minimum length in seconds that will be
+       assigned to a lease.
+
+       TThhee _m_i_n_-_s_e_c_s ssttaatteemmeenntt
+
+        mmiinn--sseeccss _s_e_c_o_n_d_s;;
+
+       _S_e_c_o_n_d_s should be the minimum number of  seconds  since  a
+       client began trying to acquire a new lease before the DHCP
+       server will respond to its request.  The number of seconds
+       is based on what the client reports, and the maximum value
+       that the client can report is  255  seconds.    Generally,
+       setting  this  to  one  will result in the DHCP server not
+       responding to  the  client's  first  request,  but  always
+       responding to its second request.
+
+       This  can  be used to set up a secondary DHCP server which
+       never offers an address to  a  client  until  the  primary
+       server  has been given a chance to do so.   If the primary
+       server is down, the client  will  bind  to  the  secondary
+       server,  but  otherwise  clients should always bind to the
+       primary.   Note that this does not, by  itself,  permit  a
+       primary  server  and a secondary server to share a pool of
+       dynamically-allocatable addresses.
+
+       TThhee _h_a_r_d_w_a_r_e ssttaatteemmeenntt
+
+        hhaarrddwwaarree _h_a_r_d_w_a_r_e_-_t_y_p_e _h_a_r_d_w_a_r_e_-_a_d_d_r_e_s_s;;
+
+       In order for a BOOTP client to be recognized, its  network
+       hardware  address must be declared using a _h_a_r_d_w_a_r_e clause
+       in the _h_o_s_t statement.  _h_a_r_d_w_a_r_e_-_t_y_p_e must be the name  of
+       a  physical hardware interface type.   Currently, only the
+       eetthheerrnneett and ttookkeenn--rriinngg  types  are  recognized,  although
+       support  for  a ffddddii hardware type (and others) would also
+       be desirable.  The _h_a_r_d_w_a_r_e_-_a_d_d_r_e_s_s should  be  a  set  of
+       hexadecimal  octets  (numbers from 0 through ff) seperated
+       by colons.   The _h_a_r_d_w_a_r_e statement may also be  used  for
+       DHCP clients.
+
+       TThhee _f_i_l_e_n_a_m_e ssttaatteemmeenntt
+
+        ffiilleennaammee ""_f_i_l_e_n_a_m_e"";;
+
+       The  _f_i_l_e_n_a_m_e statement can be used to specify the name of
+       the initial boot file which is to be loaded by  a  client.
+
+
+
+                                                               20
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       The _f_i_l_e_n_a_m_e should be a filename recognizable to whatever
+       file transfer protocol the client can be expected  to  use
+       to load the file.
+
+       TThhee _s_e_r_v_e_r_-_n_a_m_e ssttaatteemmeenntt
+
+        sseerrvveerr--nnaammee ""_n_a_m_e"";;
+
+       The _s_e_r_v_e_r_-_n_a_m_e statement can be used to inform the client
+       of the name of the server from which it is booting.   _N_a_m_e
+       should be the name that will be provided to the client.
+
+       TThhee _n_e_x_t_-_s_e_r_v_e_r ssttaatteemmeenntt
+
+        nneexxtt--sseerrvveerr _s_e_r_v_e_r_-_n_a_m_e;;
+
+       The  _n_e_x_t_-_s_e_r_v_e_r  statement  is  used  to specify the host
+       address of the server from which  the  initial  boot  file
+       (specified  in  the  _f_i_l_e_n_a_m_e  statement) is to be loaded.
+       _S_e_r_v_e_r_-_n_a_m_e should be a numeric IP  address  or  a  domain
+       name.    If  no  _n_e_x_t_-_s_e_r_v_e_r  parameter applies to a given
+       client, the DHCP server's IP address is used.
+
+       TThhee _f_i_x_e_d_-_a_d_d_r_e_s_s ssttaatteemmeenntt
+
+        ffiixxeedd--aaddddrreessss _a_d_d_r_e_s_s [,, _a_d_d_r_e_s_s ... ];;
+
+       The _f_i_x_e_d_-_a_d_d_r_e_s_s statement is used to assign one or  more
+       fixed  IP addresses to a client.  It should only appear in
+       a _h_o_s_t declaration.  If more than one address is supplied,
+       then  when  the  client  boots,  it  will  be assigned the
+       address which corresponds to the network on  which  it  is
+       booting.   If  none  of the addresses in the _f_i_x_e_d_-_a_d_d_r_e_s_s
+       statement are on the network on which the client is  boot­
+       ing,  that client will not match the _h_o_s_t declaration con­
+       taining that _f_i_x_e_d_-_a_d_d_r_e_s_s statement.  Each _a_d_d_r_e_s_s should
+       be either an IP address or a domain name which resolves to
+       one or more IP addresses.
+
+       TThhee _d_y_n_a_m_i_c_-_b_o_o_t_p_-_l_e_a_s_e_-_c_u_t_o_f_f ssttaatteemmeenntt
+
+        ddyynnaammiicc--bboooottpp--lleeaassee--ccuuttooffff _d_a_t_e;;
+
+       The _d_y_n_a_m_i_c_-_b_o_o_t_p_-_l_e_a_s_e_-_c_u_t_o_f_f statement sets  the  ending
+       time for all leases assigned dynamically to BOOTP clients.
+       Because BOOTP clients do not  have  any  way  of  renewing
+       leases,  and don't know that their leases could expire, by
+       default  dhcpd  assignes  infinite  leases  to  all  BOOTP
+       clients.  However, it may make sense in some situations to
+       set a cutoff date for all BOOTP leases - for example,  the
+       end of a school term, or the time at night when a facility
+       is closed and all machines are required to be powered off.
+
+       _D_a_t_e should be the date on which all assigned BOOTP leases
+
+
+
+                                                               21
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       will end.  The date is specified in the form:
+
+                         W YYYY/MM/DD HH:MM:SS
+
+       W is the day of the week expressed as a number  from  zero
+       (Sunday)  to  six (Saturday).  YYYY is the year, including
+       the century.  MM is the month expressed as a number from 1
+       to  12.   DD is the day of the month, counting from 1.  HH
+       is the hour, from zero to 23.  MM is the minute and SS  is
+       the  second.   The  time  is always in Greenwich Mean Time
+       (GMT), not local time.
+
+       TThhee _d_y_n_a_m_i_c_-_b_o_o_t_p_-_l_e_a_s_e_-_l_e_n_g_t_h ssttaatteemmeenntt
+
+        ddyynnaammiicc--bboooottpp--lleeaassee--lleennggtthh _l_e_n_g_t_h;;
+
+       The _d_y_n_a_m_i_c_-_b_o_o_t_p_-_l_e_a_s_e_-_l_e_n_g_t_h statement is  used  to  set
+       the   length  of  leases  dynamically  assigned  to  BOOTP
+       clients.   At some sites, it may  be  possible  to  assume
+       that  a  lease  is  no longer in use if its holder has not
+       used BOOTP or DHCP to get its  address  within  a  certain
+       time period.   The period is specified in _l_e_n_g_t_h as a num­
+       ber of seconds.   If a client reboots using  BOOTP  during
+       the timeout period, the lease duration is reset to _l_e_n_g_t_h,
+       so a BOOTP client that boots frequently enough will  never
+       lose its lease.  Needless to say, this parameter should be
+       adjusted with extreme caution.
+
+       TThhee _g_e_t_-_l_e_a_s_e_-_h_o_s_t_n_a_m_e_s ssttaatteemmeenntt
+
+        ggeett--lleeaassee--hhoossttnnaammeess _f_l_a_g;;
+
+       The _g_e_t_-_l_e_a_s_e_-_h_o_s_t_n_a_m_e_s statement is used  to  tell  dhcpd
+       whether or not to look up the domain name corresponding to
+       the IP address of each address in the lease pool  and  use
+       that  address  for  the  DHCP _h_o_s_t_n_a_m_e option.  If _f_l_a_g is
+       true, then this lookup is done for all  addresses  in  the
+       current  scope.    By  default,  or  if  _f_l_a_g is false, no
+       lookups are done.
+
+       TThhee _u_s_e_-_h_o_s_t_-_d_e_c_l_-_n_a_m_e_s ssttaatteemmeenntt
+
+        uussee--hhoosstt--ddeeccll--nnaammeess _f_l_a_g;;
+
+       If the _u_s_e_-_h_o_s_t_-_d_e_c_l_-_n_a_m_e_s parameter is true  in  a  given
+       scope,  then for every host declaration within that scope,
+       the name provided for the host declaration  will  be  sup­
+       plied to the client as its hostname.   So, for example,
+
+           group {
+             use-host-decl-names on;
+
+             host joe {
+            hardware ethernet 08:00:2b:4c:29:32;
+
+
+
+                                                               22
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+            fixed-address joe.fugue.com;
+             }
+           }
+
+       is equivalent to
+
+             host joe {
+            hardware ethernet 08:00:2b:4c:29:32;
+            fixed-address joe.fugue.com;
+               option host-name "joe";
+             }
+
+       An  _o_p_t_i_o_n  _h_o_s_t_-_n_a_m_e  statement within a host declaration
+       will override the use of the name in the host declaration.
+
+       TThhee _a_u_t_h_o_r_i_t_a_t_i_v_e ssttaatteemmeenntt
+
+        aauutthhoorriittaattiivvee;;
+
+        nnoott aauutthhoorriittaattiivvee;;
+
+       The  DHCP  server will normally assume that the configura­
+       tion information about a  given  network  segment  is  not
+       known  to be correct and is not authoritative.  This is so
+       that if a naive user installs  a  DHCP  server  not  fully
+       understanding how to configure it, it does not send spuri­
+       ous  DHCPNAK  messages  to  clients  that  have   obtained
+       addresses from a legitimate DHCP server on the network.
+
+       Network   administrators  setting  up  authoritative  DHCP
+       servers for their networks should always write  aauutthhoorriittaa­­
+       ttiivvee;;  at  the top of their configuration file to indicate
+       that the DHCP server _s_h_o_u_l_d send DHCPNAK messages to  mis­
+       configured clients.   If this is not done, clients will be
+       unable to get a correct IP address after changing  subnets
+       until  their old lease has expired, which could take quite
+       a long time.
+
+       Usually, writing aauutthhoorriittaattiivvee;; at the top  level  of  the
+       file  should be sufficient.   However, if a DHCP server is
+       to be set up so that it is  aware  of  some  networks  for
+       which  it  is authoritative and some networks for which it
+       is not, it may be more appropriate to declare authority on
+       a per-network-segment basis.
+
+       Note that the most specific scope for which the concept of
+       authority makes any sense is the physical network  segment
+       -  either a shared-network statement or a subnet statement
+       that is not contained within a  shared-network  statement.
+       It is not meaningful to specify that the server is author­
+       itative for some subnets within a shared network, but  not
+       authoritative  for others, nor is it meaningful to specify
+       that the server is authoritative for  some  host  declara­
+       tions and not others.
+
+
+
+                                                               23
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       TThhee _a_l_w_a_y_s_-_r_e_p_l_y_-_r_f_c_1_0_4_8 ssttaatteemmeenntt
+
+        aallwwaayyss--rreeppllyy--rrffcc11004488 _f_l_a_g;;
+
+       Some  BOOTP clients expect RFC1048-style responses, but do
+       not follow RFC1048 when sending their requests.   You  can
+       tell  that  a  client  is having this problem if it is not
+       getting the options you have configured for it and if  you
+       see  in the server log the message "(non-rfc1048)" printed
+       with each BOOTREQUEST that is logged.
+
+       If you want to send rfc1048 options to such a client,  you
+       can  set  the aallwwaayyss--rreeppllyy--rrffcc11004488 option in that client's
+       host declaration, and the DHCP server will respond with an
+       RFC-1048-style  vendor  options  field.   This flag can be
+       set in any scope, and will affect all clients  covered  by
+       that scope.
+
+       TThhee _a_l_w_a_y_s_-_b_r_o_a_d_c_a_s_t ssttaatteemmeenntt
+
+        aallwwaayyss--bbrrooaaddccaasstt _f_l_a_g;;
+
+       The  DHCP  and BOOTP protocols both require DHCP and BOOTP
+       clients to set the broadcast bit in the flags field of the
+       BOOTP  message header.  Unfortunately, some DHCP and BOOTP
+       clients do not do this,  and  therefore  may  not  receive
+       responses  from  the DHCP server.   The DHCP server can be
+       made to always broadcast its responses to clients by  set­
+       ting  this flag to 'on' for the relevant scope.   To avoid
+       creating excess broadcast traffic on your network, we rec­
+       ommend  that you restrict the use of this option to as few
+       clients as possible.   For  example,  the  Microsoft  DHCP
+       client is known not to have this problem, as are the Open­
+       Transport and ISC DHCP clients.
+
+       TThhee _o_n_e_-_l_e_a_s_e_-_p_e_r_-_c_l_i_e_n_t ssttaatteemmeenntt
+
+        oonnee--lleeaassee--ppeerr--cclliieenntt _f_l_a_g;;
+
+       If this flag is enabled, whenever a client sends a DHCPRE­
+       QUEST  for  a  particular lease, the server will automati­
+       cally free any other leases the client holds.   This  pre­
+       sumes  that  when  the  client sends a DHCPREQUEST, it has
+       forgotten any lease not mentioned  in  the  DHCPREQUEST  -
+       i.e.,  the  client has only a single network interface _a_n_d
+       it does not remember leases it's holding  on  networks  to
+       which  it  is  not  currently attached.   Neither of these
+       assumptions are guaranteed or provable, so we urge caution
+       in the use of this statement.
+
+       TThhee _u_s_e_-_l_e_a_s_e_-_a_d_d_r_-_f_o_r_-_d_e_f_a_u_l_t_-_r_o_u_t_e ssttaatteemmeenntt
+
+        uussee--lleeaassee--aaddddrr--ffoorr--ddeeffaauulltt--rroouuttee _f_l_a_g;;
+
+
+
+
+                                                               24
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+       If  the _u_s_e_-_l_e_a_s_e_-_a_d_d_r_-_f_o_r_-_d_e_f_a_u_l_t_-_r_o_u_t_e parameter is true
+       in a given scope, then instead of sending the value speci­
+       fied  in  the routers option (or sending no value at all),
+       the IP address of the lease being assigned is sent to  the
+       client.   This supposedly causes Win95 machines to ARP for
+       all IP addresses, which can be helpful if your  router  is
+       configured for proxy ARP.
+
+       TThhee _s_e_r_v_e_r_-_i_d_e_n_t_i_f_i_e_r ssttaatteemmeenntt
+
+        sseerrvveerr--iiddeennttiiffiieerr _h_o_s_t_n_a_m_e;;
+
+       The  server-identifier statement can be used to define the
+       value that is sent in the DHCP  Server  Identifier  option
+       for  a  given  scope.    The value specified mmuusstt be an IP
+       address for the DHCP server, and must be reachable by  all
+       clients served by a particular scope.
+
+       The  use  of the server-identifier statement is not recom­
+       mended - the only reason to use it is  to  force  a  value
+       other than the default value to be sent on occasions where
+       the default value would be incorrect.   The default  value
+       is  the first IP address associated with the physical net­
+       work interface on which the request arrived.
+
+       The usual case where the _s_e_r_v_e_r_-_i_d_e_n_t_i_f_i_e_r statement needs
+       to  be sent is when a physical interface has more than one
+       IP address, and the one being sent by default isn't appro­
+       priate  for  some or all clients served by that interface.
+       Another common case is when an alias is  defined  for  the
+       purpose  of  having  a  consistent IP address for the DHCP
+       server, and it is desired that the  clients  use  this  IP
+       address when contacting the server.
+
+       Supplying a value for the dhcp-server-identifier option is
+       equivalent to using the server-identifier statement.
+
+       TThhee _d_d_n_s_-_u_p_d_a_t_e_s ssttaatteemmeenntt
+
+        ddddnnss--uuppddaatteess _f_l_a_g;;
+
+       The _d_d_n_s_-_u_p_d_a_t_e_s parameter controls  whether  or  not  the
+       server  will  attempt  to do a ddns update when a lease is
+       confirmed.   Set this to _o_f_f  if  the  server  should  not
+       attempt  to  do updates within a certain scope.  The _d_d_n_s_-
+       _u_p_d_a_t_e_s parameter is on by default.
+
+RREEFFEERREENNCCEE:: OOPPTTIIOONN SSTTAATTEEMMEENNTTSS
+       DHCP  option  statements  are  documented  in  the   ddhhccpp--
+       ooppttiioonnss((55)) manual page.
+
+SSEEEE AALLSSOO
+       dhcpd.conf(5), dhcpd.leases(5), RFC2132, RFC2131.
+
+
+
+
+                                                               25
+
+
+
+
+
+dhcpd.conf(5)                                       dhcpd.conf(5)
+
+
+AAUUTTHHOORR
+       ddhhccppdd((88)) was written by Ted Lemon <mellon@vix.com> under a
+       contract with Vixie Labs.   Funding for this  project  was
+       provided by the Internet Software Consortium.  Information
+       about the Internet Software Consortium  can  be  found  at
+       hhttttpp::////wwwwww..iisscc..oorrgg//iisscc..
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                                               26
+
+
