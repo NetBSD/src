@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.6 1996/08/19 17:22:14 oki Exp $	*/
+/*	$NetBSD: locore.s,v 1.7 1996/09/03 02:07:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -212,7 +212,6 @@ Lmightnotbemerr:
 	andw	#0xc0,d0		| write protect is set on page:
 	cmpw	#0x40,d0		| was it read cycle?
 	jeq	Lisberr1		| yes, was not WPE, must be bus err
-	jra	Lismerr			| no, must be mem err
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
 	jra	Ltrapnstkadj		| and deal with it
