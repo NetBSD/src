@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.26 2001/12/19 14:53:26 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.27 2001/12/27 02:23:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -458,12 +458,12 @@ mha_init(sc)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(sc->sc_acb));
+		memset(acb, 0, sizeof(sc->sc_acb));
 		for (r = 0; r < sizeof(sc->sc_acb) / sizeof(*acb); r++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
-		bzero(&sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		memset(&sc->sc_tinfo, 0, sizeof(sc->sc_tinfo));
 
 		r = bus_dmamem_alloc(sc->sc_dmat, MAXBSIZE, 0, 0,
 				     sc->sc_dmaseg, 1, &sc->sc_ndmasegs,
@@ -597,7 +597,7 @@ mhaselect(sc, target, lun, cmd, clen)
 	  }
 	SPC_MISC(("], target=%d\n", target));
 #else
-	bcopy(cmd, sc->sc_pcx, clen);
+	memcpy(sc->sc_pcx, cmd, clen);
 #endif
 	if (NSR & 0x80)
 		panic("scsistart: already selected...");
@@ -737,7 +737,7 @@ mha_scsi_request(chan, req, arg)
 
 		/* Initialize acb */
 		acb->xs = xs;
-		bcopy(xs->cmd, &acb->cmd, xs->cmdlen);
+		memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->daddr = xs->data;
 		acb->dleft = xs->datalen;

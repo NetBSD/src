@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2001/11/24 16:08:25 minoura Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 2001/12/27 02:23:26 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -156,8 +156,8 @@ dodospart:
 
 	/* XXX how do we check veracity/bounds of this? */
 	if (dp)
-		bcopy(bp->b_data + sizeof(*dp) /*DOSPARTOFF*/, dp,
-		      NDOSPART * sizeof(*dp));
+		memcpy(dp, bp->b_data + sizeof(*dp) /*DOSPARTOFF*/,
+		    NDOSPART * sizeof(*dp));
 	else
 		dp = (void*) (bp->b_data + sizeof(*dp) /*DOSPARTOFF*/);
 
@@ -183,13 +183,16 @@ dodospart:
 					fstype = FS_UNUSED;
 				else
 #endif
-				if (!bcmp(dp->dp_typname, "Human68k", 8))
+				if (!memcmp(dp->dp_typname, "Human68k", 8))
 					fstype = FS_MSDOS;
-				else if (!bcmp(dp->dp_typname, "BSD ffs ", 8))
+				else if (!memcmp(dp->dp_typname,
+					     "BSD ffs ", 8))
 					fstype = FS_BSDFFS;
-				else if (!bcmp(dp->dp_typname, "BSD lfs ", 8))
+				else if (!memcmp(dp->dp_typname,
+					     "BSD lfs ", 8))
 					fstype = FS_BSDLFS;
-				else if (!bcmp(dp->dp_typname, "BSD swap", 8))
+				else if (!memcmp(dp->dp_typname,
+					     "BSD swap", 8))
 					fstype = FS_SWAP;
 #ifndef COMPAT_14
 				else if (part == 1)
@@ -376,7 +379,7 @@ dodospart:
 		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
-		if ((error = biowait(bp)) || bcmp(bp->b_data, "X68SCSI1", 8))
+		if ((error = biowait(bp)) || memcmp(bp->b_data, "X68SCSI1", 8))
 			printf("warning: disk not marked for x68k");
 #endif
 
@@ -441,7 +444,7 @@ dodospart:
 					/* XXX OS-9, MINIX etc. */
 					continue;
 				}
-				bcopy(np, dp->dp_typname, 8);
+				memcpy(dp->dp_typname, np, 8);
 				dp->dp_start = start;
 				dp->dp_size = size;
 			}
