@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.53 2001/03/10 01:46:08 cgd Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.54 2001/03/21 22:42:28 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -125,18 +125,18 @@ void	 qsort __P((void *, size_t, size_t,
 int	 rand __P((void));
 void	*realloc __P((void *, size_t));
 void	 srand __P((unsigned));
-double	 strtod __P((const char *, char **));
-long	 strtol __P((const char *, char **, int));
+double	 strtod __P((const char * __restrict, char ** __restrict));
+long	 strtol __P((const char * __restrict, char ** __restrict, int));
 unsigned long
-	 strtoul __P((const char *, char **, int));
+	 strtoul __P((const char * __restrict, char ** __restrict, int));
 int	 system __P((const char *));
 
 /* These are currently just stubs. */
 int	 mblen __P((const char *, size_t));
-size_t	 mbstowcs __P((wchar_t *, const char *, size_t));
+size_t	 mbstowcs __P((wchar_t * __restrict, const char * __restrict, size_t));
 int	 wctomb __P((char *, wchar_t));
-int	 mbtowc __P((wchar_t *, const char *, size_t));
-size_t	 wcstombs __P((char *, const wchar_t *, size_t));
+int	 mbtowc __P((wchar_t * __restrict, const char * __restrict, size_t));
+size_t	 wcstombs __P((char * __restrict, const wchar_t * __restrict, size_t));
 
 #if !defined(_ANSI_SOURCE)
 
@@ -212,9 +212,11 @@ long long int	llabs __P((long long int));
 /* LONGLONG */
 lldiv_t		lldiv __P((long long int, long long int));
 /* LONGLONG */
-long long int	strtoll __P((const char *, char **, int));
+long long int	strtoll __P((const char * __restrict, char ** __restrict, int));
 /* LONGLONG */
-unsigned long long int	strtoull __P((const char *, char **, int));
+unsigned long long int
+		strtoull __P((const char * __restrict, char ** __restrict,
+		    int));
 #endif
 
 /*
@@ -263,8 +265,8 @@ void	setprogname __P((const char *));
 
 quad_t	 qabs __P((quad_t));
 qdiv_t	 qdiv __P((quad_t, quad_t));
-quad_t	 strtoq __P((const char *, char **, int));
-u_quad_t strtouq __P((const char *, char **, int));
+quad_t	 strtoq __P((const char * __restrict, char ** __restrict, int));
+u_quad_t strtouq __P((const char * __restrict, char ** __restrict, int));
 
 int	 l64a_r __P((long, char *, int));
 
