@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.8 2002/06/17 16:32:58 christos Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.9 2002/06/18 18:30:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.8 2002/06/17 16:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.9 2002/06/18 18:30:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,17 +137,17 @@ osf1_syscall_intern(struct proc *p)
 {
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = osf1_syscall_fancy;
 		return;
 	}
 #endif
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = osf1_syscall_fancy;
 		return;
 	} 
 #endif
-	p->p_md.md_syscall = syscall_plain;
+	p->p_md.md_syscall = osf1_syscall_plain;
 }
 
 /*
