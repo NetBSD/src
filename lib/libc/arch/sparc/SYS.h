@@ -37,9 +37,10 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$Id: SYS.h,v 1.2 1994/01/15 20:19:43 pk Exp $
+ *	$Id: SYS.h,v 1.3 1994/02/10 20:15:31 pk Exp $
  */
 
+#include <machine/asm.h>
 #include <sys/syscall.h>
 #include <machine/trap.h>
 
@@ -49,22 +50,18 @@
 #define _CAT(x,y) x/**/y
 #endif
 
-#ifdef PROF
-#define	ENTRY(x) \
-	.align 4; .globl _CAT(_,x); .proc 1; _CAT(_,x):; .data; .align 4; 1: .long 0; \
-	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
-	or %o0,%lo(1b),%o0; restore
-#else
-#define	ENTRY(x) \
-	.align 4; .globl _CAT(_,x); .proc 1; _CAT(_,x):
-#endif
-
 /*
  * ERROR branches to cerror.  This is done with a macro so that I can
  * change it to be position independent later, if need be.
  */
+#ifdef PIC
+#define	ERROR() \
+	PIC_PROLOGUE(%g1,%g2); \
+	ld [%g1+cerror],%g2; jmp %g2; nop
+#else
 #define	ERROR() \
 	sethi %hi(cerror),%g1; or %lo(cerror),%g1,%g1; jmp %g1; nop
+#endif
 
 /*
  * SYSCALL is used when further action must be taken before returning.
@@ -89,7 +86,5 @@
 #define	PSEUDO(x,y) \
 	ENTRY(x); mov (_CAT(SYS_,y))|SYSCALL_G2RFLAG,%g1; add %o7,8,%g2; \
 	t ST_SYSCALL; ERROR()
-
-#define	ASMSTR		.asciz
 
 	.globl	cerror
