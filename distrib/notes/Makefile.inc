@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1999/12/07 22:56:57 soren Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1999/12/08 03:57:29 lukem Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -9,7 +9,7 @@ V_S!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh -s
 MAIN=	${.CURDIR}/../common/main ${EXTRA}
 TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
-SRCS=	${MAIN} mirrors whatis contents hardware xfer prep install\
+SRCS=	${MAIN} whatis contents hardware xfer prep install\
 	upgrade donations legal.common legal postinstall ../Makefile.inc\
 	${MERGED_SRCS}
 ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
