@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.35 2000/09/24 15:59:36 jdolecek Exp $
+# 	$NetBSD: INSTALL,v 1.36 2000/09/25 11:46:39 abs Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -10,8 +10,10 @@
 #
 include		"arch/pmax/conf/std.pmax"
 
-# don't inline, save space
-makeoptions	COPTS="-Os -mmemcpy"
+# Saving space
+makeoptions	COPTS="-Os -mmemcpy"	# Optimise for space. Implies -O2
+#options	VNODE_OP_NOINLINE	# Don't inline vnode op calls
+#options	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code
 
 maxusers	8
 
