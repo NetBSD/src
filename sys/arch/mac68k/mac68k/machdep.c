@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.258 2000/09/13 15:00:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.259 2000/12/05 21:38:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2249,7 +2249,9 @@ void
 mac68k_set_io_offsets(base)
 	vaddr_t base;
 {
+#if NZSC > 0
 	extern volatile u_char *sccA;
+#endif
 
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
