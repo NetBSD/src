@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.74 2004/05/11 17:12:26 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.75 2004/06/19 02:27:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.74 2004/05/11 17:12:26 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.75 2004/06/19 02:27:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -175,6 +175,11 @@ FSUB fsub[] = {
 int ford[] = {F_USTAR, F_TAR, F_SV4CRC, F_SV4CPIO, F_CPIO, F_BCPIO, -1};
 
 /*
+ * filename record separator
+ */
+int sep = '\n';
+
+/*
  * options()
  *	figure out if we are pax, tar or cpio. Call the appropriate options
  *	parser
@@ -229,9 +234,12 @@ pax_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getopt_long(argc, argv,
-	    "ab:cdf:ijklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ",
+	    "0ab:cdf:ijklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ",
 	    pax_longopts, NULL)) != -1) {
 		switch (c) {
+		case '0':
+			sep = '\0';
+			break;
 		case 'a':
 			/*
 			 * append

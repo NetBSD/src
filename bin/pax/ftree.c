@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.29 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.30 2004/06/19 02:27:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.29 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.30 2004/06/19 02:27:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ static int ftree_arg(void);
  */
 
 int
-ftree_start(void)
+ftree_start()
 {
 
 #ifndef SMALL
@@ -342,8 +342,6 @@ ftree_chk(void)
 static int
 ftree_arg(void)
 {
-	char *pt;
-
 	/*
 	 * close off the current file tree
 	 */
@@ -358,14 +356,25 @@ ftree_arg(void)
 	 */
 	for(;;) {
 		if (fthead == NULL) {
+			int i, c = EOF;
 			/*
 			 * the user didn't supply any args, get the file trees
 			 * to process from stdin;
 			 */
-			if (fgets(farray[0], PAXPATHLEN+1, stdin) == NULL)
-				return(-1);
-			if ((pt = strchr(farray[0], '\n')) != NULL)
-				*pt = '\0';
+			for (i = 0; i < PAXPATHLEN + 2; i++) {
+				c = getchar();
+				if (c == EOF)
+					break;
+				else if (c == sep) {
+					if (i != 0)
+						break;
+				} else
+					farray[0][i] = c;
+			}
+			if (i == 0)
+				return -1;
+			farray[0][i] = '\0';
+			fprintf(stderr, ">%s<\n", farray[0]);
 		} else {
 			/*
 			 * the user supplied the file args as arguements to pax
