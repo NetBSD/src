@@ -1,3 +1,4 @@
+#	$NetBSD: DEFAULT,v 1.6 1996/10/23 07:49:49 matthias Exp $
 #
 # DEFAULT: default install kernel
 #	Only has scn0-5 are configured.
@@ -29,6 +30,9 @@ options 	COMPAT_12
 options 	COMPAT_43		# and 4.3BSD
 #options 	TCP_COMPAT_42		# TCP bug compatibility with 4.2BSD
 
+options		EXEC_SCRIPT	# #! scripts
+options		EXEC_AOUT	# a.out executables (native, BSD/OS, Linux, FreeBSD)
+
 # file system options
 #options	QUOTA			# file system quotas
 options		FFS			# Berkeley fast file system
@@ -53,9 +57,11 @@ options		INET			# IP + ICMP + TCP + UDP
 #options	ISO,TPIP		# OSI
 #options	EON			# OSI tunneling over IP
 #options	CCITT,LLC,HDLC		# X.25
+options		PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
-#options	COMDEF_SPEED=B19200	# default baud on the scn chips
+options		CONSOLE_SPEED=B9600	# default console baud rate
+options		SCNDEF_CFLAG="CREAD+CS8+HUPCL"
 options		PLIP			# PLIP driver in dev/lpt.c
 options		DEV_RTC			# RTC driver in pc532/mem.c
 options		NO_INLINE_SPLX		# don't inline splx calls
@@ -67,7 +73,7 @@ membus0 at root
 
 ncr0 at membus?
 
-scsibus0 at scsi?
+scsibus0 at ncr0
 
 sd* at scsibus? target ? lun ?			# SCSI disks
 st* at scsibus? target ? lun ?			# SCSI tapes
