@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.11 1997/03/13 01:10:34 cgd Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.12 1997/05/08 04:39:35 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -519,14 +519,8 @@ ahc_eisa_attach(parent, self, aux)
 	 * The IRQMS bit enables level sensitive interrupts only allow
 	 * IRQ sharing if its set.
 	 */
-#ifdef __OpenBSD__
-	ahc->sc_ih = eisa_intr_establish(ec, ih,
-	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc,
-	    ahc->sc_dev.dv_xname);
-#else
 	ahc->sc_ih = eisa_intr_establish(ec, ih,
 	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc);
-#endif
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    ahc->sc_dev.dv_xname);
