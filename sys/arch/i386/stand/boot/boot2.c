@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.1 2003/04/16 22:36:14 dsl Exp $	*/
+/*	$NetBSD: boot2.c,v 1.2 2003/07/27 07:04:46 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -263,7 +263,7 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 		/* since it failed, try compressed bootfile. */
 		bootit(names[currname][1], 0, 1);
 		/* since it failed, try switching bootfile. */
-		currname = ++currname % NUMNAMES;
+		currname = (currname + 1) % NUMNAMES;
 	}
 }
 
