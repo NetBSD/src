@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.62 2003/08/23 00:14:29 dogcow Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.63 2003/10/17 16:00:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.62 2003/08/23 00:14:29 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.63 2003/10/17 16:00:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1423,7 +1423,7 @@ vr_attach(parent, self, aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
 	struct vr_type *vrt;
-	u_int32_t command;
+	u_int32_t pmreg, reg;
 	struct ifnet *ifp;
 	u_char eaddr[ETHER_ADDR_LEN];
 	int i, rseg, error;
@@ -1445,38 +1445,39 @@ vr_attach(parent, self, aux)
 	 * Handle power management nonsense.
 	 */
 
-	command = PCI_CONF_READ(VR_PCI_CAPID) & 0x000000FF;
-	if (command == 0x01) {
-		command = PCI_CONF_READ(VR_PCI_PWRMGMTCTRL);
-		if (command & VR_PSTATE_MASK) {
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag,
+	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = PCI_CONF_READ(pmreg + PCI_PMCSR);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
 			u_int32_t iobase, membase, irq;
 
 			/* Save important PCI config data. */
 			iobase = PCI_CONF_READ(VR_PCI_LOIO);
 			membase = PCI_CONF_READ(VR_PCI_LOMEM);
-			irq = PCI_CONF_READ(VR_PCI_INTLINE);
+			irq = PCI_CONF_READ(PCI_INTERRUPT_REG);
 
 			/* Reset the power state. */
 			printf("%s: chip is in D%d power mode "
-				"-- setting to D0\n",
-				sc->vr_dev.dv_xname, command & VR_PSTATE_MASK);
-			command &= 0xFFFFFFFC;
-			PCI_CONF_WRITE(VR_PCI_PWRMGMTCTRL, command);
+			    "-- setting to D0\n",
+			    sc->vr_dev.dv_xname, reg & PCI_PMCSR_STATE_MASK);
+			reg = (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0;
+			PCI_CONF_WRITE(pmreg + PCI_PMCSR, reg);
 
 			/* Restore PCI config data. */
 			PCI_CONF_WRITE(VR_PCI_LOIO, iobase);
 			PCI_CONF_WRITE(VR_PCI_LOMEM, membase);
-			PCI_CONF_WRITE(VR_PCI_INTLINE, irq);
+			PCI_CONF_WRITE(PCI_INTERRUPT_REG, irq);
 		}
 	}
 
 	/* Make sure bus mastering is enabled. */
-	command = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_MASTER_ENABLE;
-	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, command);
+	reg = PCI_CONF_READ(PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE;
+	PCI_CONF_WRITE(PCI_COMMAND_STATUS_REG, reg);
 
 	/* Get revision */
-	sc->vr_revid = PCI_CONF_READ(VR_PCI_REVID) & 0x000000FF;
+	sc->vr_revid = PCI_REVISION(pa->pa_class);
 	
 	/*
 	 * Map control/status registers.
