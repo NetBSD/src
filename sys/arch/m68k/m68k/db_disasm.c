@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.25 1999/09/27 04:18:45 itohy Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.26 2001/12/24 18:20:50 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,6 +63,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
 
