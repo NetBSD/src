@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.4 2002/07/31 06:48:58 simonb Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.5 2002/10/06 09:48:29 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.4 2002/07/31 06:48:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.5 2002/10/06 09:48:29 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -117,7 +117,7 @@ int
 sysmonclose_wdog(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct sysmon_wdog *smw;
-	int omode, s, error;
+	int omode, s, error = 0;
 
 	/*
 	 * If this is the last close, and there is a watchdog
