@@ -33,11 +33,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	5.33 (Berkeley) 2/22/91";*/
-static char rcsid[] = "$Id: setup.c,v 1.7 1994/04/14 03:25:01 cgd Exp $";
+static char rcsid[] = "$Id: setup.c,v 1.8 1994/04/25 18:29:04 cgd Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
 #include <sys/param.h>
+#include <sys/time.h>
 #include <ufs/dinode.h>
 #include <ufs/fs.h>
 #include <sys/stat.h>
