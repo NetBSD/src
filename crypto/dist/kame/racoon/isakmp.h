@@ -1,4 +1,4 @@
-/*	$KAME: isakmp.h,v 1.18 2001/03/26 17:27:40 thorpej Exp $	*/
+/*	$KAME: isakmp.h,v 1.19 2001/04/11 06:11:55 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -242,6 +242,11 @@ struct isakmp_pl_cert {
 #define ISAKMP_CERT_ARL		8
 #define ISAKMP_CERT_SPKI	9
 #define ISAKMP_CERT_X509ATTR	10
+
+/* the method to get peers certificate */
+#define ISAKMP_GETCERT_PAYLOAD		1
+#define ISAKMP_GETCERT_LOCALFILE	2
+#define ISAKMP_GETCERT_DNS		3
 
 /* 3.10 Certificate Request Payload */
 struct isakmp_pl_cr {

@@ -1,4 +1,4 @@
-/*	$KAME: var.h,v 1.10 2001/04/03 16:56:46 itojun Exp $	*/
+/*	$KAME: var.h,v 1.11 2001/07/14 05:48:33 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,6 +56,9 @@
 #define TRUE 1
 #endif
 
+#ifdef ENABLE_STATS
+#include <sys/time.h>
+#endif
 #include <sys/socket.h>
 
 /*

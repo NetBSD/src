@@ -1,4 +1,4 @@
-/*	$KAME: proposal.h,v 1.14 2001/02/21 05:19:11 sakane Exp $	*/
+/*	$KAME: proposal.h,v 1.15 2001/04/06 14:23:48 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -201,3 +201,4 @@ extern void print_proppair0 __P((int, struct prop_pair *, int));
 extern void print_proppair __P((int, struct prop_pair *));
 extern int set_proposal_from_policy __P((struct ph2handle *,
 	struct secpolicy *, struct secpolicy *));
+extern int set_proposal_from_proposal __P((struct ph2handle *));

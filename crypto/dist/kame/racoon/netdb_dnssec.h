@@ -1,4 +1,4 @@
-/*	$KAME: strnames.h,v 1.11 2001/07/14 14:06:40 sakane Exp $	*/
+/*	$KAME: netdb_dnssec.h,v 1.2 2001/04/11 09:52:00 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,36 +29,39 @@
  * SUCH DAMAGE.
  */
 
-extern char * s_isakmp_state __P((int, int, int));
-extern char *s_isakmp_certtype __P((int));
-extern char *s_isakmp_etype __P((int));
-extern char *s_isakmp_notify_msg __P((int));
-extern char *s_isakmp_nptype __P((int));
-extern char *s_ipsecdoi_proto __P((int));
-extern char *s_ipsecdoi_trns_isakmp __P((int));
-extern char *s_ipsecdoi_trns_ah __P((int));
-extern char *s_ipsecdoi_trns_esp __P((int));
-extern char *s_ipsecdoi_trns_ipcomp __P((int));
-extern char *s_ipsecdoi_trns __P((int, int));
-extern char *s_ipsecdoi_attr __P((int));
-extern char *s_ipsecdoi_ltype __P((int));
-extern char *s_ipsecdoi_encmode __P((int));
-extern char *s_ipsecdoi_auth __P((int));
-extern char *s_ipsecdoi_attr_v __P((int, int));
-extern char *s_ipsecdoi_ident __P((int));
-extern char *s_oakley_attr __P((int));
-extern char *s_attr_isakmp_enc __P((int));
-extern char *s_attr_isakmp_hash __P((int));
-extern char *s_oakley_attr_method __P((int));
-extern char *s_attr_isakmp_desc __P((int));
-extern char *s_attr_isakmp_group __P((int));
-extern char *s_attr_isakmp_ltype __P((int));
-extern char *s_oakley_attr_v __P((int, int));
-extern char *s_ipsec_level __P((int));
-extern char *s_algstrength __P((int));
-extern char *s_algclass __P((int));
-extern char *s_algtype __P((int, int));
-extern char *s_pfkey_type __P((int));
-extern char *s_pfkey_satype __P((int));
-extern char *s_direction __P((int));
-extern char *s_proto __P((int));
+#ifndef T_CERT
+#define T_CERT	37		/* defined by RFC2538 section 2 */
+#endif
+
+/* RFC2538 section 2.1 */
+#define DNSSEC_TYPE_PKIX	1
+#define DNSSEC_TYPE_SPKI	2
+#define DNSSEC_TYPE_PGP		3
+#define DNSSEC_TYPE_URI		4
+#define DNSSEC_TYPE_OID		5
+
+/* RFC2535 section 3.2 */
+#define DNSSEC_ALG_RSAMD5	1
+#define DNSSEC_ALG_DH		2
+#define DNSSEC_ALG_DSA		3
+#define DNSSEC_ALG_ECC		4
+#define DNSSEC_ALG_PRIVATEDNS	5
+#define DNSSEC_ALG_PRIVATEOID	6
+
+/*
+ * Structures returned by network data base library.  All addresses are
+ * supplied in host order, and returned in network order (suitable for
+ * use in system calls).
+ */
+struct certinfo {
+	int ci_type;			/* certificate type */
+	int ci_keytag;			/* keytag */
+	int ci_algorithm;		/* algorithm */
+	int ci_flags;			/* currently, 1:valid or 0:uncertain */
+	size_t ci_certlen;		/* length of certificate */
+	char *ci_cert;			/* certificate */
+	struct certinfo *ci_next;	/* next structure */
+};
+
+extern void freecertinfo __P((struct certinfo *));
+extern int getcertsbyname __P((char *, struct certinfo **));

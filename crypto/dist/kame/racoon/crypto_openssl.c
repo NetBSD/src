@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.50 2001/04/03 15:51:54 thorpej Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.55 2001/07/11 13:22:03 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,6 +62,7 @@
 #include <openssl/dh.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <openssl/hmac.h>
 #include <openssl/des.h>
 #include <openssl/crypto.h>
 #ifdef HAVE_OPENSSL_IDEA_H
@@ -91,7 +92,11 @@
 static int cb_check_cert __P((int, X509_STORE_CTX *));
 static void eay_setgentype __P((char *, int *));
 static X509 *mem2x509 __P((vchar_t *));
+#endif
 
+static caddr_t eay_hmac_init __P((vchar_t *, const EVP_MD *));
+
+#ifdef HAVE_SIGNING_C
 /* X509 Certificate */
 /*
  * convert the string of the subject name into DER
@@ -375,12 +380,12 @@ eay_get_x509asn1subjectname(cert)
 			vfree(name);
 			name = NULL;
 		}
+	}
 #ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
 #else
 		printf("%s\n", eay_strerror());
 #endif
-	}
 	if (x509)
 		X509_free(x509);
 
@@ -1284,68 +1289,19 @@ eay_cast_weakkey(key)
 }
 
 /*
- * HMAC-SHA1
+ * HMAC functions
  */
-vchar_t *
-eay_hmacsha1_oneX(key, data, data2)
-	vchar_t *key, *data, *data2;
+static caddr_t
+eay_hmac_init(key, md)
+	vchar_t *key;
+	const EVP_MD *md;
 {
-	vchar_t *res;
-	SHA_CTX c;
-	u_char k_ipad[65], k_opad[65];
-	u_char *nkey;
-	int nkeylen;
-	int i;
-	u_char tk[SHA_DIGEST_LENGTH];
+	HMAC_CTX *c = racoon_malloc(sizeof(*c));
 
-	/* initialize */
-	if ((res = vmalloc(SHA_DIGEST_LENGTH)) == 0)
-		return(0);
+	HMAC_Init(c, key->v, key->l, md);
 
-	/* if key is longer than 64 bytes reset it to key=SHA1(key) */
-	nkey = key->v;
-	nkeylen = key->l;
-
-	if (nkeylen > 64) {
-		SHA_CTX      ctx;
-
-		SHA1_Init(&ctx);
-		SHA1_Update(&ctx, nkey, nkeylen);
-		SHA1_Final(tk, &ctx);
-
-		nkey = tk;
-		nkeylen = SHA_DIGEST_LENGTH;
-	}
-
-	/* start out by string key in pads */
-	memset(k_ipad, 0, sizeof(k_ipad));
-	memset(k_opad, 0, sizeof(k_opad));
-	memcpy(k_ipad, nkey, nkeylen);
-	memcpy(k_opad, nkey, nkeylen);
-
-	/* XOR key with ipad and opad values */
-	for (i=0; i<64; i++) {
-		k_ipad[i] ^= 0x36;
-		k_opad[i] ^= 0x5c;
-	}
-
-	/* key */
-	SHA1_Init(&c);
-	SHA1_Update(&c, k_ipad, 64);
-
-	/* finish up 1st pass */
-	SHA1_Update(&c, data->v, data->l);
-	SHA1_Update(&c, data2->v, data2->l);
-	SHA1_Final(res->v, &c);
-
-	/* perform outer SHA1 */
-	SHA1_Init(&c);
-	SHA1_Update(&c, k_opad, 64);
-	SHA1_Update(&c, res->v, SHA_DIGEST_LENGTH);
-	SHA1_Final(res->v, &c);
-
-	return(res);
-};
+	return (caddr_t)c;
+}
 
 /*
  * HMAC SHA1
@@ -1355,60 +1311,55 @@ eay_hmacsha1_one(key, data)
 	vchar_t *key, *data;
 {
 	vchar_t *res;
-	SHA_CTX c;
-	u_char k_ipad[65], k_opad[65];
-	u_char *nkey;
-	int nkeylen;
-	int i;
-	u_char tk[SHA_DIGEST_LENGTH];
+	caddr_t ctx;
 
-	/* initialize */
-	if ((res = vmalloc(SHA_DIGEST_LENGTH)) == 0)
-		return(0);
-
-	/* if key is longer than 64 bytes reset it to key=SHA1(key) */
-	nkey = key->v;
-	nkeylen = key->l;
-
-	if (nkeylen > 64) {
-		SHA_CTX      ctx;
-
-		SHA1_Init(&ctx);
-		SHA1_Update(&ctx, nkey, nkeylen);
-		SHA1_Final(tk, &ctx);
-
-		nkey = tk;
-		nkeylen = SHA_DIGEST_LENGTH;
-	}
-
-	/* start out by string key in pads */
-	memset(k_ipad, 0, sizeof(k_ipad));
-	memset(k_opad, 0, sizeof(k_opad));
-	memcpy(k_ipad, nkey, nkeylen);
-	memcpy(k_opad, nkey, nkeylen);
-
-	/* XOR key with ipad and opad values */
-	for (i=0; i<64; i++) {
-		k_ipad[i] ^= 0x36;
-		k_opad[i] ^= 0x5c;
-	}
-
-	/* key */
-	SHA1_Init(&c);
-	SHA1_Update(&c, k_ipad, 64);
-
-	/* finish up 1st pass */
-	SHA1_Update(&c, data->v, data->l);
-	SHA1_Final(res->v, &c);
-
-	/* perform outer SHA1 */
-	SHA1_Init(&c);
-	SHA1_Update(&c, k_opad, 64);
-	SHA1_Update(&c, res->v, SHA_DIGEST_LENGTH);
-	SHA1_Final(res->v, &c);
+	ctx = eay_hmacsha1_init(key);
+	eay_hmacsha1_update(ctx, data);
+	res = eay_hmacsha1_final(ctx);
 
 	return(res);
-};
+}
+
+caddr_t
+eay_hmacsha1_init(key)
+	vchar_t *key;
+{
+	return eay_hmac_init(key, EVP_sha1());
+}
+
+void
+eay_hmacsha1_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	HMAC_Update((HMAC_CTX *)c, data->v, data->l);
+}
+
+vchar_t *
+eay_hmacsha1_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+
+	if ((res = vmalloc(SHA_DIGEST_LENGTH)) == 0)
+		return NULL;
+
+	HMAC_Final((HMAC_CTX *)c, res->v, &res->l);
+	(void)racoon_free(c);
+
+	if (SHA_DIGEST_LENGTH != res->l) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL,
+			"hmac sha1 length mismatch %d.\n", res->l);
+#else
+		printf("hmac sha1 length mismatch %d.\n", res->l);
+#endif
+		vfree(res);
+		return NULL;
+	}
+
+	return(res);
+}
 
 /*
  * HMAC MD5
@@ -1418,60 +1369,55 @@ eay_hmacmd5_one(key, data)
 	vchar_t *key, *data;
 {
 	vchar_t *res;
-	MD5_CTX c;
-	u_char k_ipad[65], k_opad[65];
-	u_char *nkey;
-	int nkeylen;
-	int i;
-	u_char tk[MD5_DIGEST_LENGTH];
+	caddr_t ctx;
 
-	/* initialize */
-	if ((res = vmalloc(MD5_DIGEST_LENGTH)) == 0)
-		return(0);
-
-	/* if key is longer than 64 bytes reset it to key=MD5(key) */
-	nkey = key->v;
-	nkeylen = key->l;
-
-	if (nkeylen > 64) {
-		MD5_CTX      ctx;
-
-		MD5_Init(&ctx);
-		MD5_Update(&ctx, nkey, nkeylen);
-		MD5_Final(tk, &ctx);
-
-		nkey = tk;
-		nkeylen = MD5_DIGEST_LENGTH;
-	}
-
-	/* start out by string key in pads */
-	memset(k_ipad, 0, sizeof(k_ipad));
-	memset(k_opad, 0, sizeof(k_opad));
-	memcpy(k_ipad, nkey, nkeylen);
-	memcpy(k_opad, nkey, nkeylen);
-
-	/* XOR key with ipad and opad values */
-	for (i=0; i<64; i++) {
-		k_ipad[i] ^= 0x36;
-		k_opad[i] ^= 0x5c;
-	}
-
-	/* key */
-	MD5_Init(&c);
-	MD5_Update(&c, k_ipad, 64);
-
-	/* finish up 1st pass */
-	MD5_Update(&c, data->v, data->l);
-	MD5_Final(res->v, &c);
-
-	/* perform outer MD5 */
-	MD5_Init(&c);
-	MD5_Update(&c, k_opad, 64);
-	MD5_Update(&c, res->v, MD5_DIGEST_LENGTH);
-	MD5_Final(res->v, &c);
+	ctx = eay_hmacmd5_init(key);
+	eay_hmacmd5_update(ctx, data);
+	res = eay_hmacmd5_final(ctx);
 
 	return(res);
-};
+}
+
+caddr_t
+eay_hmacmd5_init(key)
+	vchar_t *key;
+{
+	return eay_hmac_init(key, EVP_md5());
+}
+
+void
+eay_hmacmd5_update(c, data)
+	caddr_t c;
+	vchar_t *data;
+{
+	HMAC_Update((HMAC_CTX *)c, data->v, data->l);
+}
+
+vchar_t *
+eay_hmacmd5_final(c)
+	caddr_t c;
+{
+	vchar_t *res;
+
+	if ((res = vmalloc(MD5_DIGEST_LENGTH)) == 0)
+		return NULL;
+
+	HMAC_Final((HMAC_CTX *)c, res->v, &res->l);
+	(void)racoon_free(c);
+
+	if (MD5_DIGEST_LENGTH != res->l) {
+#ifndef EAYDEBUG
+		plog(LLV_ERROR, LOCATION, NULL,
+			"hmac md5 length mismatch %d.\n", res->l);
+#else
+		printf("hmac md5 length mismatch %d.\n", res->l);
+#endif
+		vfree(res);
+		return NULL;
+	}
+
+	return(res);
+}
 
 /*
  * SHA functions
@@ -1782,4 +1728,10 @@ eay_bn2v(var, bn)
 	(*var)->l = BN_bn2bin(bn, (*var)->v);
 
 	return 0;
+}
+
+const char *
+eay_version()
+{
+	return SSLeay_version(SSLEAY_VERSION);
 }
