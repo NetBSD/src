@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.21 1997/04/13 10:56:20 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.22 1997/04/14 01:38:26 mrg Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.20 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.21 1997/04/13 10:56:20 mrg Exp $";
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.22 1997/04/14 01:38:26 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -558,7 +558,7 @@ gethostbyname2(name, af)
 				dprintf("res_search failed (%d)\n", n);
 				break;
 			}
-			hp = getanswer(&buf, n, 0, type);
+			hp = getanswer(&buf, n, name, type);
 			break;
 		case 'f':
 			hp = _gethtbyname(name);
@@ -652,7 +652,7 @@ gethostbyaddr(addr, len, af)
 				dprintf("res_query failed (%d)\n", n);
 				break;
 			}
-			hp = getanswer(&buf, n, 1, T_PTR);
+			hp = getanswer(&buf, n, qbuf, T_PTR);
 			if (hp == NULL)
 				break;
 			hp->h_addrtype = af;
