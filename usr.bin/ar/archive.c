@@ -1,4 +1,4 @@
-/*	$NetBSD: archive.c,v 1.10 1997/04/24 06:16:45 mycroft Exp $	*/
+/*	$NetBSD: archive.c,v 1.11 1997/07/19 22:19:35 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)archive.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$NetBSD: archive.c,v 1.10 1997/04/24 06:16:45 mycroft Exp $";
+static char rcsid[] = "$NetBSD: archive.c,v 1.11 1997/07/19 22:19:35 perry Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,15 +228,16 @@ put_arobj(cfp, sb)
 		lname = strlen(name);
 		uid = sb->st_uid;
 		gid = sb->st_gid;
-		if (uid > USHRT_MAX) {
+#define UINT16_MAX 0xffffU    /* someday, USHRT might be > 16 bits. */
+		if (uid > UINT16_MAX) {
 			warnx("warning: uid %d truncated to %d", uid,
-			    USHRT_MAX);
-			uid = USHRT_MAX;
+			    UINT16_MAX);
+			uid = UINT16_MAX;
 		}
-		if (gid > USHRT_MAX) {
+		if (gid > UINT16_MAX) {
 			warnx("warning: gid %d truncated to %d", gid,
-			    USHRT_MAX);
-			gid = USHRT_MAX;
+			    UINT16_MAX);
+			gid = UINT16_MAX;
 		}
 		if (options & AR_TR) {
 			if (lname > OLDARMAXNAME) {
