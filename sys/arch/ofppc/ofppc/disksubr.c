@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2000/11/20 08:24:19 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2001/06/12 17:23:13 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -369,41 +369,4 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return 0;
-}
-
-/*
- * This is called by main to set dumplo and dumpsize.
- */
-void
-cpu_dumpconf()
-{
-	int nblks;		/* size of dump device */
-	int skip;
-	int maj;
-
-	if (dumpdev == NODEV)
-		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
-		return;
-
-	dumpsize = physmem;
-
-	/* Skip enough blocks at start of disk to preserve an eventual disklabel. */
-	skip = LABELSECTOR + 1;
-	skip += ctod(1) - 1;
-	skip = ctod(dtoc(skip));
-	if (dumplo < skip)
-		dumplo = skip;
-
-	/* Put dump at end of partition */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
 }
