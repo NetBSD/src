@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/03/12 12:52:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/03/24 22:56:58 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -18,7 +18,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DESTDIR}/usr/mdec/installboot ${DESTDIR}/usr/mdec/uboot.lif \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
-		${_SRC_TOP_}/etc/services ${DESTDIR}/usr/mdec/uboot.lif
+		${_SRC_TOP_}/etc/services
 
 
 realall: ${IMAGE}
