@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2002/07/18 22:51:58 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 2002/07/25 23:33:04 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1166,11 +1166,11 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			failed = 1;
 		}
 		if (((pvo->pvo_pte.pte_lo ^ pt->pte_lo) &
-		    (PTE_PP|PTE_W|PTE_I|PTE_G|PTE_RPGN)) != 0) {
+		    (PTE_PP|PTE_WIMG|PTE_RPGN)) != 0) {
 			printf("pmap_pvo_check: pvo %p: pte_lo differ: %#x/%#x\n",
 			    pvo,
-			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_W|PTE_I|PTE_G|PTE_RPGN),
-			    pt->pte_lo & (PTE_PP|PTE_W|PTE_I|PTE_G|PTE_RPGN));
+			    pvo->pvo_pte.pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN),
+			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
 			failed = 1;
 		}
 		if (pmap_pte_to_va(pt) != PVO_VADDR(pvo)) {
@@ -1408,26 +1408,21 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * If this is a managed page, and it's the first reference to the
 	 * page clear the execness of the page.  Otherwise fetch the execness.
 	 */
-	if (pg != NULL) {
-		if (LIST_EMPTY(pvo_head)) {
-			pmap_attr_clear(pg, PTE_EXEC);
-			DPRINTFN(ENTER, (" first"));
-		} else {
-			was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
-		}
-	}
+	if (pg != NULL)
+		was_exec = pmap_attr_fetch(pg) & PTE_EXEC;
 
 	DPRINTFN(ENTER, (" was_exec=%d", was_exec));
 
 	/*
 	 * Assume the page is cache inhibited and access is guarded unless
-	 * it's in our available memory array.
+	 * it's in our available memory array.  If it is in the memory array,
+	 * asssume it's in memory coherent memory.
 	 */
-	pte_lo = PTE_I | PTE_G;
+	pte_lo = PTE_IG;
 	if ((flags & PMAP_NC) == 0) {
 		for (mp = mem; mp->size; mp++) {
 			if (pa >= mp->start && pa < mp->start + mp->size) {
-				pte_lo &= ~(PTE_I | PTE_G);
+				pte_lo = PTE_M;
 				break;
 			}
 		}
@@ -1498,10 +1493,15 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	DPRINTFN(KENTER,
 	    ("pmap_kenter_pa(%#lx,%#lx,%#x)\n", va, pa, prot));
 
-	pte_lo = PTE_I | PTE_G;
+	/*
+	 * Assume the page is cache inhibited and access is guarded unless
+	 * it's in our available memory array.  If it is in the memory array,
+	 * asssume it's in memory coherent memory.
+	 */
+	pte_lo = PTE_IG;
 	for (mp = mem; mp->size; mp++) {
 		if (pa >= mp->start && pa < mp->start + mp->size) {
-			pte_lo &= ~(PTE_I | PTE_G);
+			pte_lo = PTE_M;
 			break;
 		}
 	}
@@ -1523,9 +1523,15 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	/* 
 	 * Flush the real memory from the instruction cache.
+	 * If it's writeable, clear the PTE_EXEC attribute.
 	 */
-	if ((prot & VM_PROT_EXECUTE) && (pte_lo & (PTE_I|PTE_G)) == 0) {
-		pmap_syncicache(pa, NBPG);
+	if (prot & VM_PROT_EXECUTE) {
+		if ((pte_lo & (PTE_IG)) == 0)
+			pmap_syncicache(pa, NBPG);
+	} else if (prot & VM_PROT_WRITE) {
+		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+		if (pg != NULL)
+			pmap_attr_clear(pg, PTE_EXEC);
 	}
 }
 
@@ -1714,6 +1720,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 	s = splvm();
 	msr = pmap_interrupts_off();
+
+	/*
+	 * When UVM reuses a page, it does a pmap_page_protect with
+	 * VM_PROT_NONE.  At that point, we can clear the exec flag
+	 * since we know the page will have different contents.
+	 */
+	if ((prot & VM_PROT_READ) == 0)
+		pmap_attr_clear(pg, PTE_EXEC);
 
 	pvo_head = vm_page_to_pvoh(pg);
 	for (pvo = LIST_FIRST(pvo_head); pvo != NULL; pvo = next_pvo) {
