@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 1998/01/22 00:04:10 mark Exp $	*/
+/*	$NetBSD: intr.c,v 1.4 1998/02/21 23:21:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -104,36 +104,6 @@ need_resched(void)
 	want_resched = 1;
 	setsoftast();
 }
-
-
-
-u_int
-disable_interrupts(mask)
-	u_int mask;
-{
-	register u_int cpsr;
-
-	cpsr = SetCPSR(mask, mask);
-	return(cpsr);
-}
-
-
-u_int
-restore_interrupts(old_cpsr)
-	u_int old_cpsr;
-{
-	register int mask = I32_bit | F32_bit;
-	return(SetCPSR(mask, old_cpsr & mask));
-}
-
-
-u_int
-enable_interrupts(mask)
-	u_int mask;
-{
-	return(SetCPSR(mask, 0));
-}
-
 
 /* Handle software interrupts */
 
