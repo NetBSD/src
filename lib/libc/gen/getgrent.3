@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1991 The Regents of the University of California.
-.\"  All rights reserved.
+.\" Copyright (c) 1989, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)getgrent.3	6.8 (Berkeley) 4/20/91
+.\"     @(#)getgrent.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 20, 1991
+.Dd April 19, 1994
 .Dt GETGRENT 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 .Ft struct group *
 .Fn getgrent void
 .Ft struct group *
-.Fn getgrname "const char *name"
+.Fn getgrnam "const char *name"
 .Ft struct group *
 .Fn getgrgid "gid_t gid"
 .Ft struct group *
@@ -96,7 +96,7 @@ function
 sequentially reads the group database and is intended for programs
 that wish to step through the complete list of groups.
 .Pp
-All three routines will open the group file for reading, if necesssary.
+All three routines will open the group file for reading, if necessary.
 .Pp
 The
 .Fn setgroupent

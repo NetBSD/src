@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +32,21 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)fstab.c	5.15 (Berkeley) 2/23/91";
+static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/errno.h>
+#include <errno.h>
 #include <fstab.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static FILE *_fs_fp;
 static struct fstab _fs_fstab;
-static error();
+
+static error __P((int));
+static fstabscan __P((void));
 
 static
 fstabscan()
@@ -193,6 +195,7 @@ error(err)
 
 	(void)write(STDERR_FILENO, "fstab: ", 7);
 	(void)write(STDERR_FILENO, _PATH_FSTAB, sizeof(_PATH_FSTAB) - 1);
+	(void)write(STDERR_FILENO, ": ", 1);
 	p = strerror(err);
 	(void)write(STDERR_FILENO, p, strlen(p));
 	(void)write(STDERR_FILENO, "\n", 1);
