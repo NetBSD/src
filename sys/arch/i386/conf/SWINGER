@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.3 2000/04/19 08:44:33 haya Exp $
+#	$NetBSD: SWINGER,v 1.4 2000/05/28 21:49:02 thorpej Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"SWINGER-$Revision: 1.3 $"
+#ident 		"SWINGER-$Revision: 1.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -359,7 +359,8 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+#ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 #pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
@@ -410,7 +411,8 @@ scsibus* at bha?
 #scsibus* at esp?
 #scsibus* at isp?
 ##scsibus* at nca?
-scsibus* at ncr?
+#scsibus* at ncr?
+scsibus* at siop?
 #scsibus* at pcscp?
 #scsibus* at sea?
 #scsibus* at uha?
@@ -661,22 +663,22 @@ ugen*	at uhub? port ?
 
 # Plug-and-Play BIOS and attached devices
 
-pnpbios0 at mainbus0
+pnpbios* at mainbus?
 
 # mainboard audio chips
-#ess*	at pnpbios0 index ?	# ESS AudioDrive
-#sb*	at pnpbios0 index ?	# NeoMagic 256AV in sb mode
-#wss*	at pnpbios0 index ?	# NeoMagic 256AV in wss mode
-#ym*	at pnpbios0 index ?	# OPL3-SA3
+#ess*	at pnpbios? index ?	# ESS AudioDrive
+#sb*	at pnpbios? index ?	# NeoMagic 256AV in sb mode
+#wss*	at pnpbios? index ?	# NeoMagic 256AV in wss mode
+#ym*	at pnpbios? index ?	# OPL3-SA3
 
 # com port
-com*	at pnpbios0 index ?
+com*	at pnpbios? index ?
 
 # parallel port
-lpt*	at pnpbios0 index ?
+lpt*	at pnpbios? index ?
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios0 index ?
+#pciide* at pnpbios? index ?
 
 
 # Audio Devices
