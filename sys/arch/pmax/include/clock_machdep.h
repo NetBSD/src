@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.h,v 1.2 1997/06/22 22:41:33 jonathan Exp $	*/
+/*	$NetBSD: clock_machdep.h,v 1.2.8.1 1998/11/23 06:56:18 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 */
 
 #define	DEC_DAY_OFFSET	0	/* maybe 1 */
-#define	DEC_YR_OFFSET	25	/* good until Dec 31, 1998 */
+#define	DEC_YR_OFFSET	26	/* good until Dec 31, 1999 */
 
 /*
  * convert RTC time to system time.
