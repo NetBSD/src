@@ -29,7 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: mac68k_init.c,v 1.1 1994/06/26 13:20:19 briggs Exp $
+ * $Id: mac68k_init.c,v 1.2 1994/06/29 04:59:05 briggs Exp $
  *
  */
 
@@ -60,10 +60,30 @@ unsigned long		IOBase    = INTIOBASE;
 int			has5380scsi = 0;	/* Set in setmachdep() */
 int			has53c96scsi = 0;	/* Set in setmachdep() */
 
+static u_int	Sysseg1_pa;
+
 extern volatile unsigned char	*sccA;
 extern unsigned char		*ASCBase;
 extern unsigned long		videoaddr;
 
+static void
+debug_translate(u_int val)
+{
+	u_int	*p, f;
+
+	strprintf("translate", val);
+	p = (u_int *) Sysseg1_pa;
+	f = (val&SG_IMASK1) >> SG_ISHIFT1;
+	p = (u_int *) (p[f] & ~0xf);
+	f = (val&SG_IMASK2) >> SG_040ISHIFT;
+	if (p[f]) {
+		p = (u_int *) (p[f] & ~0xf);
+		strprintf("     into", *p);
+	} else {
+		strprintf("     into nothing", 0);
+	}
+}
+	
 /*
  * We only have a minimal stack when this is called.  Assuming that
  * we're dealing with what I will call a Quadra 700-class machine,
@@ -82,11 +102,12 @@ map040(void)
 {
 extern void	etext(); /* Okaaaaay... */
 	u_int	vstart, vend, pstart, pend, avail;
-	u_int	Sysseg_pa, Sysseg1_pa, Sysptmap_pa, umap_pa;
+	u_int	Sysseg_pa, /*Sysseg1_pa,*/ Sysptmap_pa, umap_pa;
 	u_int	pt, ptpa, ptextra, ptsize;
 	u_int	p0_ptpa, p0_u_area_pa, i;
 	u_int	sg_proto, pg_proto;
 	u_int	*sg, *pg, *pg2;
+	u_int	foo;
 
 	/* init "tracking" values */
 	vend   = get_top_of_ram();
@@ -98,7 +119,6 @@ strprintf("vstart", vstart);
 strprintf("vend", vend);
 strprintf("pstart", pstart);
 strprintf("pend", pend);
-strprintf("avail", avail);
 	avail -= vstart;
 strprintf("avail", avail);
 
@@ -107,47 +127,51 @@ strprintf("avail", avail);
 	 */
 	Sysseg1_pa = pstart;
 	Sysseg1 = vstart;
+strprintf("Sysseg1", Sysseg1);
 	vstart += NBPG;
 	pstart += NBPG;
 	avail  -= NBPG;
-strprintf("avail", avail);
 
 	/*
 	 * Allocate the kernel segment table.
 	 */
 	Sysseg_pa = pstart;
 	Sysseg = vstart;
+strprintf("Sysseg", Sysseg);
 	vstart += NBPG * 16; /* Amiga used 8 instead of 16 */
 	pstart += NBPG * 16; /* Amiga used 8 instead of 16 */
 	avail  -= NBPG * 16; /* Amiga used 8 instead of 16 */
-strprintf("avail", avail);
 
 	/*
 	 * Allocate initial page table pages.
 	 */
 	pt = vstart;
+strprintf("pt", pt);
 	ptpa = pstart;
+strprintf("ptpa", ptpa);
 	ptextra = IIOMAPSIZE + NBMAPSIZE;
+strprintf("ptextra", ptextra);
 	ptsize = (Sysptsize + howmany(ptextra, NPTEPG)) << PGSHIFT;
+strprintf("ptsize", ptsize);
 	vstart += ptsize;
 	pstart += ptsize;
 	avail  -= ptsize;
-strprintf("avail", avail);
 
 	/*
 	 * Allocate kernel page table map.
 	 */
 	Sysptmap = vstart;
 	Sysptmap_pa = pstart;
-	vstart += NBPG*Sysptsize;
-	pstart += NBPG*Sysptsize;
-	avail  -= NBPG*Sysptsize;
-strprintf("avail", avail);
+strprintf("Sysptmap_pa", Sysptmap_pa);
+	vstart += NBPG;
+	pstart += NBPG;
+	avail  -= NBPG;
 
 	/*
 	 * Set Sysmap; mapped after page table pages.
 	 */
-???????	Sysmap = (struct pte *) (ptsize << 11);
+	Sysmap = (struct pte *) (ptsize << (12));
+strprintf("Sysmap (ptsize << 12)", Sysmap);
 
 	/*
 	 * Initialize segment table and page table map.
@@ -167,7 +191,6 @@ strprintf("avail", avail);
 	/*
 	 * Map so many segs.
 	 */
-strprintf("avail", avail);
 	sg = (u_int *) Sysseg_pa;
 	pg = (u_int *) Sysptmap_pa;
 	while (sg_proto < pstart) {
@@ -176,7 +199,7 @@ strprintf("avail", avail);
 			*pg++ = pg_proto;
 		else if (pg < (u_int *) (Sysptmap_pa + NBPG))
 			*pg++ = PG_NV;
-		sg_proto += MAC_040PTSIZE;
+		sg_proto += MAC_040STSIZE;
 		pg_proto += NBPG;
 	}
 	/*
@@ -188,12 +211,10 @@ strprintf("avail", avail);
 			*pg++ = PG_NV;
 	} while (sg < (u_int *) (Sysseg_pa + NBPG * 16)); /* amiga had 8 */
 
-strprintf("avail", avail);
 	/*
 	 * The end of the last segment (0xFFFC 0000) of KVA space is
 	 * used to map the u-area of the current process (u + kernel stack)
 	 */
-	umap_pa = pstart;
 	/*
 	 * Use next available slot.
 	 */
@@ -224,7 +245,6 @@ strprintf("avail", avail);
 	vstart += NBPG;
 	pstart += NBPG;
 	avail  -= NBPG;
-strprintf("Record... avail", avail);
 
 	/*
 	 * Record KVA at which to access current u-area PTE(s).
@@ -255,26 +275,55 @@ strprintf("Record... avail", avail);
 	 */
 	while (pg < (u_int *) (ptpa + ptsize))
 		*pg++ = PG_NV;
+	debug_translate(Sysseg1);
 	
-strprintf("iospace... avail", avail);
 	/*
 	 * Go back and validate I/O space.
 	 */
 	pg      -= ptextra;
+	pg2      = pg;
+strprintf("IOBASE: pg", pg);
 	pg_proto = INTIOBASE | PG_RW | PG_CI | PG_V;
+strprintf("IOBASE: pg_proto", pg_proto);
 	while (pg_proto < INTIOTOP) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
 	}
 
-strprintf("Nubus... avail", avail);
 	/*
 	 * Go validate NuBus space.
 	 */
+strprintf("NBBASE: pg", pg);
 	pg_proto = NBBASE | PG_RW | PG_CI | PG_V; /* Need CI, here? (akb) */
+strprintf("NBBASE: pg_proto", pg_proto);
 	while (pg_proto < NBTOP) {
 		*pg++     = pg_proto;
 		pg_proto += NBPG;
+	}
+
+	/*
+	 * Record base KVA of I/O and NuBus spaces.
+	 */
+	IOBase = (u_int) Sysmap - ptextra * NBPG;
+	NuBusBase = IOBase + IIOMAPSIZE * NBPG;
+strprintf("IOBase", IOBase);
+strprintf("NuBusBase", NuBusBase);
+	foo = videoaddr - NBBASE + NuBusBase;
+
+	/*
+	 * Make proper segment table entries for these, now.
+	 */
+	sg_proto = ((u_int)pg2) | SG_RW | SG_V;
+	i =(((u_int) IOBase) & SG_IMASK1) >> SG_ISHIFT1;
+strprintf("i", i);
+	sg = (u_int *) ((((u_int *) Sysseg1)[i]) & ~0x7f);
+	sg += (((u_int) IOBase) & SG_IMASK2) >> SG_040ISHIFT;
+strprintf("*sigh* sg", sg);
+strprintf("*sigh* sg_proto", sg_proto);
+strprintf("*sigh* pg", pg);
+	while (sg_proto < (u_int) pg) {
+		*sg++ = sg_proto;
+		sg_proto += MAC_040PTSIZE;
 	}
 
 	/*
@@ -289,7 +338,7 @@ strprintf("Nubus... avail", avail);
 	vstart += NBPG;
 	pstart += NBPG;
 	avail  -= NBPG;
-strprintf("p0_u_area... avail", avail);
+strprintf("p0_ptpa", p0_ptpa);
 
 	p0_u_area_pa = pstart;	/* Base of u-area and end of PT */
 
@@ -312,7 +361,6 @@ strprintf("p0_u_area... avail", avail);
 	}
 	bzero ((u_char *) p0_u_area_pa, UPAGES * NBPG);
 
-strprintf("save kva... avail", avail);
 	/*
 	 * Save KVA of proc0 u-area.
 	 */
@@ -325,23 +373,19 @@ strprintf("save kva... avail", avail);
 	 * Init mem sizes.
 	 */
 	maxmem  = pend >> PGSHIFT;
-strprintf("maxmem", maxmem);
 	physmem = (mach_memsize*1024*1024) >> PGSHIFT;
-strprintf("physmem", physmem);
 
 	/*
 	 * Get the pmap module in sync with reality.
 	 */
 	pmap_bootstrap(pstart, load_addr);
 
-	/*
-	 * Record base KVA of I/O and NuBus spaces.
-	 */
-	IOBase = (u_int) Sysmap - ptextra * NBPG;
-	NuBusBase = IOBase + IIOMAPSIZE * NBPG;
-strprintf("IOBase", IOBase);
-strprintf("NuBusBase", NuBusBase);
-	
+	debug_translate(IOBase);
+	debug_translate(NuBusBase);
+	debug_translate(Sysseg1);
+	debug_translate(0);
+	debug_translate((u_int) etext);
+
 	/*
 	 * Prepare to enable the MMU.
 	 * [Amiga copies kernel over right before this.  This might be
@@ -359,10 +403,8 @@ strprintf("NuBusBase", NuBusBase);
 			: : "a" (Sysseg1_pa));
 	asm volatile (".word 0xf518" : : );
 	asm volatile ("movel #0x8000,d0; .word 0x4e7b,0x0003" : : );
-
-	videoaddr = videoaddr - NBBASE + NuBusBase;
-	NewScreenAddress();
-strprintf("videoaddr", videoaddr);
+	for (i = 0 ; i < 1152*16 ; i++)
+		*((u_int *) foo)++ = 0xa;
 
 	/*
 	 * (akb) I think that this is
@@ -379,4 +421,7 @@ strprintf("videoaddr", videoaddr);
 	Via1Base = (volatile unsigned char *)
 			((u_int) Via1Base - INTIOBASE + IOBase);
 	ASCBase  = (unsigned char *) ((u_int) ASCBase - INTIOBASE + IOBase);
+	videoaddr = videoaddr - NBBASE + NuBusBase;
+	NewScreenAddress();
+strprintf("videoaddr", videoaddr);
 }
