@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.152 2004/05/25 14:55:46 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.153 2004/05/30 20:45:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.152 2004/05/25 14:55:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.153 2004/05/30 20:45:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1812,8 +1812,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	UVMHIST_FUNC("lfs_gop_write"); UVMHIST_CALLED(ubchist);
 
 	/* The Ifile lives in the buffer cache */
-	if (vp == fs->lfs_ivnode)
-		return genfs_compat_gop_write(vp, pgs, npages, flags);
+	KASSERT(vp != fs->lfs_ivnode);
 
 	/*
 	 * Sometimes things slip past the filters in lfs_putpages,
