@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.138 2002/06/17 16:23:58 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.139 2002/07/02 20:27:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -45,6 +45,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
+#include "opt_kstack.h"
 #endif
 
 #if defined(_KERNEL)
@@ -472,6 +473,24 @@ void	p_sugid(struct proc*);
 
 #if defined(MULTIPROCESSOR)
 void	proc_trampoline_mp(void);	/* XXX */
+#endif
+
+#ifdef KSTACK_CHECK_MAGIC
+void kstack_setup_magic(const struct proc *);
+void kstack_check_magic(const struct proc *);
+#endif
+
+/*
+ * kernel stack paramaters
+ * XXX require sizeof(struct user)
+ */
+/* the lowest address of kernel stack */
+#ifndef KSTACK_LOWEST_ADDR
+#define	KSTACK_LOWEST_ADDR(p)	((caddr_t)ALIGN((p)->p_addr + 1))
+#endif
+/* size of kernel stack */
+#ifndef KSTACK_SIZE
+#define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
 
 #endif	/* _KERNEL */

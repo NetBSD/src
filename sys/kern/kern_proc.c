@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.47 2002/04/12 17:02:33 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.48 2002/07/02 20:27:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.47 2002/04/12 17:02:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.48 2002/07/02 20:27:46 yamt Exp $");
+
+#include "opt_kstack.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,3 +573,78 @@ pgrpdump()
 	}
 }
 #endif /* DEBUG */
+
+#ifdef KSTACK_CHECK_MAGIC
+#include <sys/user.h>
+
+#define	KSTACK_MAGIC	0xdeadbeaf
+
+/* XXX should be per process basis? */
+int kstackleftmin = KSTACK_SIZE;
+int kstackleftthres = KSTACK_SIZE / 8; /* warn if remaining stack is less than this */
+
+void
+kstack_setup_magic(const struct proc *p)
+{
+	u_int32_t *ip;
+	u_int32_t const *end;
+
+	KASSERT(p != 0);
+	KASSERT(p != &proc0);
+
+	/*
+	 * fill all the stack with magic number
+	 * so that later modification on it can be detected.
+	 */
+	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	for (; ip < end; ip++) {
+		*ip = KSTACK_MAGIC;
+	}
+}
+
+void
+kstack_check_magic(const struct proc *p)
+{
+	u_int32_t const *ip, *end;
+	int stackleft;
+
+	KASSERT(p != 0);
+
+	/* don't check proc0 */ /*XXX*/
+	if (p == &proc0)
+		return;
+
+#ifdef __MACHINE_STACK_GROWS_UP
+	/* stack grows upwards (eg. hppa) */
+	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	end = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
+	for (ip--; ip >= end; ip--)
+		if (*ip != KSTACK_MAGIC)
+			break;
+		
+	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE - (caddr_t)ip;
+#else /* __MACHINE_STACK_GROWS_UP */
+	/* stack grows downwards (eg. i386) */
+	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(p);
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(p) + KSTACK_SIZE); 
+	for (; ip < end; ip++)
+		if (*ip != KSTACK_MAGIC)
+			break;
+
+	stackleft = (caddr_t)ip - KSTACK_LOWEST_ADDR(p);
+#endif /* __MACHINE_STACK_GROWS_UP */
+
+	if (kstackleftmin > stackleft) {
+		kstackleftmin = stackleft;
+		if (stackleft < kstackleftthres)
+			printf("warning: kernel stack left %d bytes(pid %u)\n",
+				stackleft, p->p_pid);
+	}
+
+	if (stackleft <= 0) {
+		panic("magic on the top of kernel stack changed for pid %u: "
+		    "maybe kernel stack overflow\n", p->p_pid);
+	}
+}
+#endif /*KSTACK_CHECK_MAGIC*/
