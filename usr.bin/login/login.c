@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.82 2005/02/28 16:13:02 christos Exp $       */
+/*     $NetBSD: login.c,v 1.83 2005/03/20 13:20:07 tron Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.82 2005/02/28 16:13:02 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.83 2005/03/20 13:20:07 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -439,7 +439,7 @@ main(int argc, char *argv[])
 			const char *skinfo = skey_keyinfo(username);
 				
 			(void)snprintf(skprompt, sizeof(skprompt),
-			    "Password [%s]:",
+			    "Password [ %s ]:",
 			    skinfo ? skinfo : "error getting challenge");
 			pwprompt = skprompt;
 		} else
