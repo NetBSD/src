@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.12 1999/05/23 23:03:44 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.13 1999/08/03 19:53:23 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,10 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/param.h>
+#ifndef _VAX_PTE_H_
+#define _VAX_PTE_H_
 
 #ifndef _LOCORE
-
 /*
  * VAX page table entries
  */
@@ -89,3 +89,5 @@ extern pt_entry_t *Sysmap;
 	(((unsigned)va < 0x40000000) ? \
 	&((pcb->P0BR)[PG_PFNUM(va)]) : \
 	&((pcb->P1BR)[PG_PFNUM(va)]))
+
+#endif
