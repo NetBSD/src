@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.27 1998/02/05 21:09:46 ross Exp $	*/
+/*	$NetBSD: route.c,v 1.28 1998/04/01 15:14:25 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.27 1998/02/05 21:09:46 ross Exp $");
+__RCSID("$NetBSD: route.c,v 1.28 1998/04/01 15:14:25 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: route.c,v 1.27 1998/02/05 21:09:46 ross Exp $");
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <paths.h>
 #include <err.h>
 
