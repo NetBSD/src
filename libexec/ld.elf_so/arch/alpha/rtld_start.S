@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.15 2002/10/05 11:59:05 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.16 2004/02/18 23:04:49 enami Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -48,6 +48,9 @@ LEAF_NOPROFILE(_rtld_start, 0)
 	subq	s2, s3, a1	/* relocbase */
 	lda	t5, _DYNAMIC
 	addq	a1, t5, a0	/* &_DYNAMIC */
+
+	/* Squirrel away ps_strings. */
+	mov	a3, s0
 
 	bsr	ra, _rtld_relocate_nonplt_self
 	LDGP(ra)
