@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2000/07/26 00:11:48 lukem Exp $
+# $NetBSD: Makefile,v 1.9 2000/07/31 20:39:41 jwise Exp $
 
 FILES=	DAEMON LOGIN NETWORK SERVERS accounting amd apmd bootparams \
 	bootconf.sh ccd cleartmp cron dhclient dhcpd dhcrelay dmesg fsck.sh \
@@ -11,6 +11,10 @@ FILES=	DAEMON LOGIN NETWORK SERVERS accounting amd apmd bootparams \
 	ttys virecover wscons xdm xfs ypbind yppasswdd ypserv
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
+
+.if defined(SSHDIST)
+FILES+=	sshd
+.endif
 
 NOPROG= noprog
 
