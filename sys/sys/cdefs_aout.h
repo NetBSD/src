@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.3 1999/12/11 22:29:32 explorer Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.4 1999/12/13 08:25:16 itohy Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -9,6 +9,13 @@
 #define	_SYS_CDEFS_AOUT_H_
 
 #define	_C_LABEL(x)	__CONCAT(_,x)
+
+#ifdef __STDC__
+#define	___RENAME(x)	__asm__(___STRING(_C_LABEL(x)))
+#else
+#define	___RENAME(x)	____RENAME(_/**/x)
+#define	____RENAME(x)	__asm__(___STRING(x))
+#endif
 
 #ifdef __GNUC__
 #ifdef __STDC__
