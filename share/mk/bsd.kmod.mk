@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.8 1997/03/13 02:45:59 perry Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.9 1997/03/22 22:33:56 perry Exp $
 
 S!=	cd ${.CURDIR}/..;pwd
 
@@ -89,7 +89,7 @@ install: maninstall _SUBDIRUSE
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 	@set ${SYMLINKS}; \
 	while test $$# -ge 2; do \
-		l=${DESTDIR}$$1; \
+		l=$$1; \
 		shift; \
 		t=${DESTDIR}$$1; \
 		shift; \
