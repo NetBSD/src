@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.81 2004/02/14 16:40:22 dsl Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.82 2004/03/24 07:47:33 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.81 2004/02/14 16:40:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.82 2004/03/24 07:47:33 junyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -339,7 +339,7 @@ sys_mmap(l, v, retval)
 	/*
 	 * if we're going to wire the mapping, restrict it to superuser.
 	 */
-	
+
 	if ((flags & MAP_WIRED) != 0 &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);

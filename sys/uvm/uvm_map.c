@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.163 2004/03/17 23:58:12 mycroft Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.164 2004/03/24 07:47:33 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.163 2004/03/17 23:58:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.164 2004/03/24 07:47:33 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -219,7 +219,7 @@ uvm_compare(const struct vm_map_entry *a, const struct vm_map_entry *b)
 		return (-1);
 	else if (a->start > b->start)
 		return (1);
-	
+
 	return (0);
 }
 
@@ -1512,7 +1512,7 @@ nextgap:
 	}
 
 	if (tmp != NULL && tmp->start < hint && hint < tmp->next->start) {
-		/* 
+		/*
 		 * Check if the entry that we found satifies the
 		 * space requirement
 		 */
@@ -1555,7 +1555,7 @@ nextgap:
 	}
 	if (prev->ownspace >= length)
 		goto listsearch;
-	
+
 	if (topdown)
 		tmp = RB_LEFT(prev, rb_entry);
 	else
@@ -1577,7 +1577,7 @@ nextgap:
 		else
 			tmp = RB_RIGHT(tmp, rb_entry);
 	}
-	
+
 	if (topdown) {
 		KASSERT(orig_hint >= tmp->next->start - length ||
 		    tmp->next->start - length > tmp->next->start);
@@ -1595,7 +1595,7 @@ nextgap:
 		goto wraparound;
 	}
 
-	/* 
+	/*
 	 * The tree fails to find an entry because of offset or alignment
 	 * restrictions.  Search the list instead.
 	 */
