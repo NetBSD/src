@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.41 2002/08/21 01:27:58 thorpej Exp $	*/
+/*	$NetBSD: libkern.h,v 1.42 2002/08/23 08:45:27 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -286,10 +286,15 @@ int	 strncmp __P((const char *, const char *, size_t));
 char	*strchr __P((const char *, int));
 char	*strrchr __P((const char *, int));
 
+/*
+ * ffs is an instruction on vax.
+ */
+#if !defined(__vax__)
 int	 ffs __P((int));
 #if __GNUC_PREREQ__(2, 95)
 #define	ffs(x)			__builtin_ffs(x)
 #endif
+#endif /* !defined(__vax__) */
 
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
