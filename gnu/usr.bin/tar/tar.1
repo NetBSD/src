@@ -3,9 +3,9 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$NetBSD: tar.1,v 1.18 2000/07/05 11:57:57 ad Exp $
+.\"	$NetBSD: tar.1,v 1.19 2001/04/09 12:14:03 wiz Exp $
 .\"
-.Dd 6 August 1994
+.Dd August 6, 1994
 .Os
 .Dt TAR 1
 .Sh NAME
@@ -25,7 +25,7 @@ archive files
 .Op Fl C Ar directory-name
 .Sh DESCRIPTION
 .Nm
-is short for 
+is short for
 .Dq tape archiver,
 so named for historical reasons; the
 .Nm
@@ -70,7 +70,7 @@ to the end of the archive (erasing the old end-of-archive block).
 This has the effect of adding the files contained in the named file to
 the first archive, rather than adding the second archive as an element
 of the first.
-.Em Note:
+.Em Note :
 This option requires a rewritable tarfile,
 and therefore does not work on quarter-inch cartridge tapes.
 .It Fl c
@@ -222,7 +222,7 @@ Extract files to standard output.
 Extract all protection information.
 .It Fl -preserve
 Has the effect of
-.Fl p s.
+.Fl p s .
 .It Fl P
 .It Fl -absolute-paths
 Don't strip leading `/'s from file names.
@@ -301,7 +301,7 @@ Filter the archive through
 (which must accept
 .Fl d
 to mean
-.Do decompress Dc Ns ).
+.Do decompress Dc Ns ) .
 .It Fl -block-compress
 Block the output of compression program for tapes or floppies
 (otherwise writes will be of odd length, which device drivers may reject).
@@ -375,7 +375,7 @@ The
 program examines the following environment variables:
 .Bl -tag -width "POSIXLY-CORRECT"
 .It Ev POSIXLY-CORRECT
-Normally, 
+Normally,
 .Nm
 will process flag arguments that appear in the file list.
 If set in the environment, this flag causes
