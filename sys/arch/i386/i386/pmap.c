@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2000/09/21 17:46:05 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2000/09/21 21:43:24 thorpej Exp $	*/
 
 /*
  *
@@ -2191,6 +2191,9 @@ boolean_t
 pmap_zero_page_uncached(pa)
 	paddr_t pa;
 {
+	boolean_t rv = TRUE;
+	int i, *ptr;
+
 	simple_lock(&pmap_zero_page_lock);
 #ifdef DIAGNOSTIC
 	if (*zero_pte)
@@ -2199,11 +2202,24 @@ pmap_zero_page_uncached(pa)
 
 	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
 	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
-	memset(zerop, 0, NBPG);				/* zero */
+	for (i = 0, ptr = (int *) zerop; i < NBPG / sizeof(int); i++) {
+		if (sched_whichqs != 0) {
+			/*
+			 * A process has become ready.  Abort now,
+			 * so we don't keep it waiting while we
+			 * do slow memory access to finish this
+			 * page.
+			 */
+			rv = FALSE;
+			break;
+		}
+		*ptr++ = 0;
+	}
 	*zero_pte = 0;					/* zap! */
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 	simple_unlock(&pmap_zero_page_lock);
-	return (TRUE);
+
+	return (rv);
 }
 
 /*
