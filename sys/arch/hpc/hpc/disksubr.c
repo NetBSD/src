@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2001/02/21 16:34:00 uch Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 2001/09/27 16:31:23 uch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -52,7 +52,7 @@ int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 #define NO_MBR_SIGNATURE ((struct mbr_partition *) -1)
 
 static struct mbr_partition *
-mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
+mbr_findslice(struct mbr_partition* dp, struct buf *bp);
 
 /* 
  * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
@@ -61,9 +61,7 @@ mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
  */
 static
 struct mbr_partition *
-mbr_findslice(dp, bp)
-	struct mbr_partition *dp;
-	struct buf *bp;
+mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 {
 	struct mbr_partition *ourdp = NULL;
 	u_int16_t *mbrmagicp;
@@ -124,11 +122,8 @@ mbr_findslice(dp, bp)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -319,10 +314,8 @@ done:
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *osdep)
 {
 	int i;
 	struct partition *opp, *npp;
@@ -375,11 +368,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat) __P((struct buf *));
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct mbr_partition *dp;
 	struct buf *bp;
@@ -466,10 +456,7 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(bp, lp, wlabel)
-	struct buf *bp;
-	struct disklabel *lp;
-	int wlabel;
+bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
 	int labelsector = lp->d_partitions[2].p_offset + LABELSECTOR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.h,v 1.2 2001/02/04 05:19:15 takemura Exp $	*/
+/*	$NetBSD: platid_gen.h,v 1.3 2001/09/27 16:31:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@ typedef struct node_s {
 
 extern node_t*	def_tree;
 
-node_t*	new_node __P((int, int, const void*, const void*, node_t*));
-void*	mem_alloc __P((int size));
-void	dump_node __P((char *prefix, node_t* n));
-char*	touppers __P((char*));
+node_t *new_node(int, int, const void *, const void *, node_t *);
+void *mem_alloc(int);
+void *dump_node(char *, node_t *);
+char *touppers(char*);

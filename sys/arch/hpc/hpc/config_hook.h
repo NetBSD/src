@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.3 2001/07/19 11:38:01 sato Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.4 2001/09/27 16:31:23 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -45,12 +45,11 @@ enum config_hook_mode {
 
 typedef void *config_hook_tag;
 
-void	config_hook_init __P((void));
-config_hook_tag	config_hook __P((int type, long id, enum config_hook_mode mode,
-				 int (*func) __P((void*, int, long, void*)), 
-				 void *ctx));
-void	config_unhook __P((config_hook_tag));
-int	config_hook_call __P((int type, long id, void *msg));
+void	config_hook_init(void);
+config_hook_tag config_hook(int, long, enum config_hook_mode,
+    int (*func)(void *, int, long, void *), void *);
+void	config_unhook(config_hook_tag);
+int	config_hook_call(int, long, void *);
 
 /*
  * hook types and IDs
@@ -310,7 +309,8 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CONFIG_HOOK_BATT_NO_SYSTEM_BATTERY	14
 
 #define CONFIG_HOOK_MAXVALUE	14	/* max value, check in this file */
-#define CONFIG_HOOK_VALUEP(p)	((int)(p)>= 0 && (int)(p)<= CONFIG_HOOK_MAXVALUE)
+#define CONFIG_HOOK_VALUEP(p)						\
+	((int)(p) >=  0 && (int)(p) <= CONFIG_HOOK_MAXVALUE)
 #define CONFIG_HOOK_PTRP(p)	(!CONFIG_HOOK_VALUEP(p))
 
 #endif /* _CONFIG_HOOK_H_ */
