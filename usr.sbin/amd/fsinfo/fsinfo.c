@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.10 1999/02/01 19:05:12 christos Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.10.2.1 1999/09/21 04:57:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: fsinfo.c,v 1.3 1999/01/10 21:54:29 ezk Exp 
+ * Id: fsinfo.c,v 1.4 1999/02/04 07:24:44 ezk Exp 
  *
  */
 
@@ -80,14 +80,6 @@ char *dumpset_pref;
 char *exportfs_pref;
 char *fstab_pref;
 char *mount_pref;
-
-/* dummy variables */
-#if 0
-pid_t mypid;
-serv_state amd_state;
-int foreground, orig_umask;
-int debug_flags;
-#endif
 
 
 /*
