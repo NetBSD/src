@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.45 2000/03/23 07:03:28 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.46 2000/03/24 22:40:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.45 2000/03/23 07:03:28 thorpej Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.46 2000/03/24 22:40:11 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp";
@@ -166,6 +166,7 @@ int	fr_running = 0;
 #endif
 
 #if defined(__NetBSD__)
+#include <sys/callout.h>
 struct callout ipfr_slowtimer_ch;
 #endif
 #if (__FreeBSD_version >= 300000) && defined(_KERNEL)
