@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 1997/10/06 00:07:19 mark Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.4 1998/09/29 20:23:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@ ENTRY(sigprocmask)
 	moveq	r0, #0x00000001
 	moveq	r1, #0x00000000
 	ldrne	r1, [r1]
-	swi	SYS_sigprocmask
+	swi	SYS_compat_13_sigprocmask13
 	bcs	cerror
 	teq	r2, #0x00000000
 	strne	r0, [r2]

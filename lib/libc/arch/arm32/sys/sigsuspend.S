@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.3 1997/10/06 00:07:21 mark Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.4 1998/09/29 20:23:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 ENTRY(sigsuspend)
 	ldr	r0, [r0]
-	swi	SYS_sigsuspend
+	swi	SYS_compat_13_sigsuspend13
 	bcs	cerror
 	mov	r0, #0x00000000
 	mov	r15, r14
