@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.181 2004/02/05 22:26:52 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.182 2004/02/06 08:02:59 junyoung Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.181 2004/02/05 22:26:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.182 2004/02/06 08:02:59 junyoung Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -294,12 +294,12 @@ check_exec(struct proc *p, struct exec_package *epp)
 		int newerror;
 
 		epp->ep_esch = execsw[i];
-		newerror = (*execsw[i]->es_check)(p, epp);
+		newerror = (*execsw[i]->es_makecmds)(p, epp);
 		/* make sure the first "interesting" error code is saved. */
 		if (!newerror || error == ENOEXEC)
 			error = newerror;
 
-		/* if es_check call was successful, update epp->ep_es */
+		/* if es_makecmds call was successful, update epp->ep_es */
 		if (!newerror && (epp->ep_flags & EXEC_HASES) == 0)
 			epp->ep_es = execsw[i];
 
@@ -1062,7 +1062,7 @@ exec_add(struct execsw *esp, const char *e_name)
 
 	LIST_FOREACH(it, &ex_head, ex_list) {
 		/* assume tuple (makecmds, probe_func, emulation) is unique */
-		if (it->es->es_check == esp->es_check
+		if (it->es->es_makecmds == esp->es_makecmds
 		    && it->es->u.elf_probe_func == esp->u.elf_probe_func
 		    && it->es->es_emul == esp->es_emul) {
 			error = EEXIST;
@@ -1098,7 +1098,7 @@ exec_remove(const struct execsw *esp)
 
 	LIST_FOREACH(it, &ex_head, ex_list) {
 		/* assume tuple (makecmds, probe_func, emulation) is unique */
-		if (it->es->es_check == esp->es_check
+		if (it->es->es_makecmds == esp->es_makecmds
 		    && it->es->u.elf_probe_func == esp->u.elf_probe_func
 		    && it->es->es_emul == esp->es_emul)
 			break;
