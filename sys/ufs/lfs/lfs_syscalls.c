@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.87 2003/03/15 06:58:50 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.88 2003/03/20 14:11:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.87 2003/03/15 06:58:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.88 2003/03/20 14:11:46 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1074,7 +1074,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 	struct vnode *vp;
 	struct ufsmount *ump;
 	dev_t dev;
-	int i, error, retries;
+	int error, retries;
 	struct buf *bp;
 	struct lfs *fs;
 	
@@ -1183,42 +1183,13 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 		ip->i_din.ffs_din = *dip;
 		brelse(bp);
 	}
-	ip->i_ffs_effnlink = ip->i_ffs_nlink;
-	ip->i_lfs_effnblks = ip->i_ffs_blocks;
-	ip->i_lfs_osize = ip->i_ffs_size;
 
-	memset(ip->i_lfs_fragsize, 0, NDADDR * sizeof(*ip->i_lfs_fragsize));
-	for (i = 0; i < NDADDR; i++)
-		if (ip->i_ffs_db[i] != 0)
-			ip->i_lfs_fragsize[i] = blksize(fs, ip, i);
+	lfs_vinit(mp, vp);
 
-	/*
-	 * Initialize the vnode from the inode, check for aliases.  In all
-	 * cases re-init ip, the underlying vnode/inode may have changed.
-	 */
-	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
-#ifdef DEBUG_LFS
-	if (vp->v_type == VNON) {
-		printf("lfs_fastvget: ino %d is type VNON! (ifmt=%o, dinp=%p)\n",
-		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12, dinp);
-		lfs_dump_dinode(&ip->i_din.ffs_din);
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif /* DEBUG_LFS */
-	/*
-	 * Finish inode initialization now that aliasing has been resolved.
-	 */
-
-	genfs_node_init(vp, &lfs_genfsops);
-	ip->i_devvp = ump->um_devvp;
-	VREF(ip->i_devvp);
 	*vpp = vp;
+
 	KASSERT(VOP_ISLOCKED(vp));
 	VOP_UNLOCK(vp, 0);
-
-	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	return (0);
 }

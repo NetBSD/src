@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.45 2003/03/08 02:55:48 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.46 2003/03/20 14:11:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -212,6 +212,7 @@ int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int lfs_vptofh(struct vnode *, struct fid *);
 int lfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+void lfs_vinit(struct mount *mp, struct vnode *);
 
 /* lfs_vnops.c */
 void lfs_unmark_vnode(struct vnode *);
