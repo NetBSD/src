@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.5 1994/11/26 04:18:46 mycroft Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.6 1994/12/13 09:13:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -137,7 +137,7 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 		trace(TR_BREADHIT, pack(vp, size), lblkno);
 		flags |= B_ASYNC;
 		ioblkno = lblkno + (vp->v_ralen ? vp->v_ralen : 1);
-		alreadyincore = (long)incore(vp, ioblkno);
+		alreadyincore = incore(vp, ioblkno) != NULL;
 		bp = NULL;
 	} else {
 		/* Block wasn't in cache, case 3, 4, 5. */
