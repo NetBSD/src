@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.6 1998/01/18 00:05:33 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.7 1998/01/21 22:34:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.6 1998/01/18 00:05:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.7 1998/01/21 22:34:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ alpha_sgmap_init(t, sgmap, name, wbase, sgvabase, sgvasize, ptesize, ptva,
 	 * Create the extent map used to manage the virtual address
 	 * space.
 	 */
-	sgmap->aps_ex = extent_create((char *)name, sgvabase, sgvasize - 1,
+	sgmap->aps_ex = extent_create(name, sgvabase, sgvasize - 1,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT|EX_NOCOALESCE);
 	if (sgmap->aps_ex == NULL)
 		panic("alpha_sgmap_init: can't create extent map");
