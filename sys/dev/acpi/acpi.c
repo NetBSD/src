@@ -1,7 +1,7 @@
-/*	$NetBSD: acpi.c,v 1.33 2003/03/05 23:00:56 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.34 2003/04/17 01:22:21 thorpej Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2001, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.33 2003/03/05 23:00:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.34 2003/04/17 01:22:21 thorpej Exp $");
 
 #include "opt_acpi.h"
 
@@ -60,15 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.33 2003/03/05 23:00:56 christos Exp $");
 #include <dev/acpi/acpidevs_data.h>
 #endif
 
-#ifndef ACPI_PCI_FIXUP
-#define ACPI_PCI_FIXUP 1
-#endif
-
 #ifndef ACPI_ACTIVATE_DEV
 #define ACPI_ACTIVATE_DEV 0
 #endif
 
-#if ACPI_PCI_FIXUP
+#ifdef ACPI_PCI_FIXUP
 #include <dev/acpi/acpica/Subsystem/acnamesp.h> /* AcpiNsGetNodeByPath() */
 #include <dev/pci/pcidevs.h>
 #endif
@@ -125,10 +121,10 @@ void		acpi_build_tree(struct acpi_softc *);
 ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
 void		acpi_enable_fixed_events(struct acpi_softc *);
-#if ACPI_PCI_FIXUP
+#ifdef ACPI_PCI_FIXUP
 void		acpi_pci_fixup(struct acpi_softc *);
 #endif
-#if ACPI_PCI_FIXUP || ACPI_ACTIVATE_DEV
+#if defined(ACPI_PCI_FIXUP) || ACPI_ACTIVATE_DEV
 ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
 #endif
 
@@ -291,14 +287,6 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 	acpi_active = 1;
 
-	/*
-	 * Set up the default sleep state to enter when various
-	 * switches are activated.
-	 */
-	sc->sc_switch_sleep[ACPI_SWITCH_POWERBUTTON] = ACPI_STATE_S5;
-	sc->sc_switch_sleep[ACPI_SWITCH_SLEEPBUTTON] = ACPI_STATE_S1;
-	sc->sc_switch_sleep[ACPI_SWITCH_LID]	     = ACPI_STATE_S1;
-
 	/* Our current state is "awake". */
 	sc->sc_sleepstate = ACPI_STATE_S0;
 
@@ -314,7 +302,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Fix up PCI devices.
 	 */
-#if ACPI_PCI_FIXUP
+#ifdef ACPI_PCI_FIXUP
 	acpi_pci_fixup(sc);
 #endif
  
@@ -640,8 +628,8 @@ acpi_print(void *aux, const char *pnp)
  * ACPI fixed-hardware feature handlers
  *****************************************************************************/
 
-UINT32		acpi_fixed_power_button_handler(void *);
-UINT32		acpi_fixed_sleep_button_handler(void *);
+UINT32		acpi_fixed_button_handler(void *);
+void		acpi_fixed_button_pressed(void *);
 
 /*
  * acpi_enable_fixed_events:
@@ -654,67 +642,94 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	static int beenhere;
 	ACPI_STATUS rv;
 
+	KASSERT(beenhere == 0);
+	beenhere = 1;
+
 	/*
 	 * Check for fixed-hardware buttons.
 	 */
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->PwrButton == 0) {
-		if (beenhere == 0)
-			printf("%s: fixed-feature power button present\n",
-			    sc->sc_dev.dv_xname);
-		rv = AcpiInstallFixedEventHandler(ACPI_EVENT_POWER_BUTTON,
-		    acpi_fixed_power_button_handler, sc);
-		if (rv != AE_OK)
-			printf("%s: unable to install handler for fixed "
-			    "power button: %d\n", sc->sc_dev.dv_xname, rv);
+		printf("%s: fixed-feature power button present\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_smpsw_power.smpsw_name = sc->sc_dev.dv_xname;
+		sc->sc_smpsw_power.smpsw_type = SMPSW_TYPE_POWER;
+		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
+			printf("%s: unable to register fixed power button "
+			    "with sysmon\n", sc->sc_dev.dv_xname);
+		} else {
+			rv = AcpiInstallFixedEventHandler(
+			    ACPI_EVENT_POWER_BUTTON,
+			    acpi_fixed_button_handler, &sc->sc_smpsw_power);
+			if (rv != AE_OK) {
+				printf("%s: unable to install handler for "
+				    "fixed power button: %d\n",
+				    sc->sc_dev.dv_xname, rv);
+			}
+		}
 	}
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->SleepButton == 0) {
-		if (beenhere == 0)
-			printf("%s: fixed-feature sleep button present\n",
-			    sc->sc_dev.dv_xname);
-		rv = AcpiInstallFixedEventHandler(ACPI_EVENT_SLEEP_BUTTON,
-		    acpi_fixed_sleep_button_handler, sc);
-		if (rv != AE_OK)
-			printf("%s: unable to install handler for fixed "
-			    "power button: %d\n", sc->sc_dev.dv_xname, rv);
+		printf("%s: fixed-feature sleep button present\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_smpsw_sleep.smpsw_name = sc->sc_dev.dv_xname;
+		sc->sc_smpsw_sleep.smpsw_type = SMPSW_TYPE_SLEEP;
+		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
+			printf("%s: unable to register fixed sleep button "
+			    "with sysmon\n", sc->sc_dev.dv_xname);
+		} else {
+			rv = AcpiInstallFixedEventHandler(
+			    ACPI_EVENT_SLEEP_BUTTON,
+			    acpi_fixed_button_handler, &sc->sc_smpsw_sleep);
+			if (rv != AE_OK) {
+				printf("%s: unable to install handler for "
+				    "fixed sleep button: %d\n",
+				    sc->sc_dev.dv_xname, rv);
+			}
+		}
 	}
-
-	beenhere = 1;
 }
 
 /*
- * acpi_fixed_power_button_handler:
+ * acpi_fixed_button_handler:
  *
- *	Fixed event handler for the power button.
+ *	Event handler for the fixed buttons.
  */
 UINT32
-acpi_fixed_power_button_handler(void *context)
+acpi_fixed_button_handler(void *context)
 {
-	struct acpi_softc *sc = context;
+	struct sysmon_pswitch *smpsw = context;
+	int rv;
 
-	/* XXX XXX XXX */
+#ifdef ACPI_BUT_DEBUG
+	printf("%s: fixed button handler\n", smpsw->smpsw_name);
+#endif
 
-	printf("%s: fixed power button pressed\n", sc->sc_dev.dv_xname);
+	rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+	    acpi_fixed_button_pressed, smpsw);
+	if (rv != AE_OK)
+		printf("%s: WARNING: unable to queue fixed button pressed "
+		    "callback: %d\n", smpsw->smpsw_name, rv);
 
 	return (ACPI_INTERRUPT_HANDLED);
 }
 
 /*
- * acpi_fixed_sleep_button_handler:
+ * acpi_fixed_button_pressed:
  *
- *	Fixed event handler for the sleep button.
+ *	Deal with a fixed button being pressed.
  */
-UINT32
-acpi_fixed_sleep_button_handler(void *context)
+void
+acpi_fixed_button_pressed(void *context)
 {
-	struct acpi_softc *sc = context;
+	struct sysmon_pswitch *smpsw = context;
 
-	/* XXX XXX XXX */
+#ifdef ACPI_BUT_DEBUG
+	printf("%s: fixed button pressed, calling sysmon\n",
+	    smpsw->smpsw_name);
+#endif
 
-	printf("%s: fixed sleep button pressed\n", sc->sc_dev.dv_xname);
-
-	return (ACPI_INTERRUPT_HANDLED);
+	sysmon_pswitch_event(smpsw, SMPSW_EVENT_PRESSED);
 }
 
 /*****************************************************************************
@@ -986,7 +1001,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	return (ret);
 }
 
-#if ACPI_PCI_FIXUP
+#ifdef ACPI_PCI_FIXUP
 ACPI_STATUS acpi_pci_fixup_bus(ACPI_HANDLE, UINT32, void *, void **);
 /*
  * acpi_pci_fixup:
@@ -1193,7 +1208,7 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 }
 #endif /* ACPI_PCI_FIXUP */
 
-#if ACPI_PCI_FIXUP || ACPI_ACTIVATE_DEV
+#if defined(ACPI_PCI_FIXUP) || ACPI_ACTIVATE_DEV
 /* XXX This very incomplete */
 ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
