@@ -1,4 +1,4 @@
-.\" $NetBSD: boot.8,v 1.10 2003/05/20 08:18:23 wiz Exp $
+.\" $NetBSD: boot.8,v 1.11 2003/05/30 05:34:46 fair Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -70,7 +70,7 @@
 .\"
 .\"     @(#)boot_hp300.8        8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 20, 2003
+.Dd May 29, 2003
 .Dt BOOT 8 alpha
 .Os
 .Sh NAME
@@ -90,10 +90,10 @@ systems have both in their flash
 .Tn RAM
 and can switch between them on command.
 .Tn ARC
-is used to boot Microsoft Windows NT for
+is used to bootstrap Microsoft Windows NT for
 .Tn Alpha .
 .Tn SRM
-is used to boot
+is used to bootstrap
 .Tn OpenVMS
 and
 .Tn Ultrix .
@@ -102,7 +102,7 @@ requires
 .Tn SRM .
 .Pp
 .Tn SRM
-can boot from supported local storage devices, e.g.,
+can bootstrap from supported local storage devices, e.g.,
 .Tn IDE
 disks or
 .Tn CD-ROM
@@ -112,7 +112,7 @@ disks or
 .Tn CD-ROM
 drives, and floppy drives.
 .Tn SRM
-can also netboot via supported
+can also network bootstrap via supported
 .Tn Ethernet
 interfaces, using
 .Tn BOOTP
@@ -159,7 +159,7 @@ is
 .Qq boot
 then
 .Tn SRM
-will automatically boot the operating system specified by
+will automatically bootstrap the operating system specified by
 various non-volatile environment variables.
 .Pp
 .Tn SRM
@@ -184,7 +184,7 @@ The
 .Ic show device
 command will list all the devices that
 .Tn SRM
-can boot from.
+can bootstrap from.
 .Ss SRM Commands
 .Tn SRM
 is somewhat
@@ -217,11 +217,11 @@ environment variables:
 .Pp
 .Bl -tag -compact -width "boot_osflags" -offset indent
 .It Ev boot_file
-filename to boot.
+file name to bootstrap.
 .It Ev boot_osflags
-flags to pass to the secondary bootstrap.
+flags to pass to the secondary bootstrap program.
 .It Ev bootdef_dev
-default boot device.
+default bootstrap device.
 .El
 .\" .It Ic help Op Ar command
 .Pp
@@ -232,7 +232,15 @@ Invoke the
 help system.
 .\" .It Ic set Ar variable Ar value
 .Pp
-.Ic set Ar variable Ar value
+.Ic init
+.Pp
+Reset the
+.Tn SRM
+console, and take actions as specified by
+.Tn SRM
+variables.
+.Pp
+.Ic set Ar variable Ar value Op Fl default
 .Pp
 Set an
 .Tn SRM
@@ -242,6 +250,10 @@ set auto_action boot
 set bootdef_dev dka0
 set ewa0_mode auto
 .Ed
+.Pp
+If the
+.Fl default
+flag is used, the variable will be set to its default value.
 .\" .It Ic show Ar variable or subsystem
 .Pp
 .Ic show Ar variable or subsystem
@@ -254,6 +266,10 @@ If a wildcard is used, then all matching
 variables are shown, e.g.,
 .Pp
 .Bl -tag -width "show device" -compact -offset indent
+.It Ic show \&*
+will display all
+.Tn SRM
+variables.
 .It Ic show b*
 will display all variables whose names begin with
 .Em b .
@@ -261,6 +277,8 @@ will display all variables whose names begin with
 will display the complete system configuration.
 .It Ic show device
 will display all bootable devices.
+.It Ic show memory
+will display the system's memory configuration.
 .El
 .\" .El
 .Ss SRM Variables
@@ -271,10 +289,10 @@ What
 will do at system startup or reset:
 .Bl -tag -width boot
 .It Ar boot
-automatically boot the operating system.
+automatically bootstrap the operating system.
 .It Ar halt
 after
-.Tn POST
+.Tn POST ,
 prompt the user on the console for commands to execute.
 .El
 .Pp
@@ -290,7 +308,7 @@ to stop after
 .Tn POST
 and prompt the user for commands to execute.
 .It Ev bootdef_dev
-The default boot device, e.g.,
+The default bootstrap device, e.g.,
 .Sy dka0 ,
 .Sy dqa0 ,
 .Sy ewa0 .
@@ -298,21 +316,61 @@ The
 .Ic show device
 command will list the available and recognized bootable devices.
 .It Ev boot_file
-The file to boot from, i.e., netbsd.
+The file to bootstrap from; this is a null string by default.
 .It Ev boot_osflags
-The flag passed to the bootstrap software:
+The flag passed to the secondary bootstrap program, and the
+.Nx
+kernel:
 .Bl -tag -width "XXXX"
 .It Sy a
-multi-user mode boot.
+.Pq automatic
+multi-user mode bootstrap.
+.It Sy c
+crash dump immediately after
+.Xr autoconf 4 ,
+if the
+.Nx
+kernel is compiled with
+.Dv DEBUG ;
+See
+.Xr options 4 .
+.It Sy d
+break into the debugger ASAP, if the
+.Nx
+kernel is compiled with
+.Dv DDB
+or
+.Dv KGDB ;
+See
+.Xr options 4 .
+.It Sy h
+on a reboot request from the
+.Nx
+kernel, halt the system instead of rebooting.
 .It Sy i
 the
 .Nx
-secondary boot program will stop and prompt for the file to boot.
+secondary bootstrap program will stop and prompt for the
+.Nx
+kernel file name to bootstrap.
+.It Sy n
+the
+.Nx
+kernel will ask for the root file system's device, the kernel core
+dump device, and the path to
+.Xr init 8 .
 .It Sy q
-boot quietly.
+bootstrap quietly.
 .It Sy s
-single-user mode boot.
+single-user mode bootstrap.
+.It Sy v
+bootstrap verbosely.
 .El
+.Pp
+These may be used in combinations that are not mutually exclusive.
+These options are case-insensitive to be compatible with
+.Tn DEC
+operating systems.
 .It Ev console
 What type of console device
 .Tn SRM
@@ -338,7 +396,7 @@ keyboard plugged into the keyboard port, even if
 is set to
 .Qq graphics .
 .It Ev ew*0_mode
-the media and speed for
+The media and speed for
 .Tn DEC
 .Qq tulip
 Ethernet interfaces
@@ -361,7 +419,7 @@ negotiation
 .Ic FastFD
 .Pq Fast Full Duplex .
 .It Ev ew*0_protocols
-the protocol to use when netbooting, i.e.,
+The protocol to use when netbooting, i.e.,
 .Tn MOP
 .Pq Maintenance Operations Protocol ,
 or
@@ -385,8 +443,24 @@ directive in the section for netbooting
 .Tn Alpha
 systems.
 .It Ev os_type
-This should be set to
-.Qq Ux .
+This determines which system firmware will be used after the next
+power-cycle, if both
+.Tn ARC
+and
+.Tn SRM
+are present in
+.Tn Flash RAM .
+This should be set to any of
+.Qq Ux ,
+.Qq osf ,
+or
+.Qq vms
+to select the
+.Tn SRM
+console required for
+.Nx .
+.Tn OSF
+refers to the Open Software Foundation.
 .El
 .Ss After bootstrap
 Once the
@@ -410,13 +484,13 @@ If the crash occurred during normal operation and the debugger
 is not present or is exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
-during the next boot cycle), and after the dump is complete (successful
+during the next bootstrap cycle), and after the dump is complete (successful
 or not) the kernel will attempt a reboot.
 .Sh FILES
 .Bl -tag -width /usr/mdec/bootxx_cd9660 -compact
 .It Pa /boot
 .Nx
-secondary bootstrap
+secondary bootstrap program
 .Pq installed
 .It Pa /netbsd
 default
