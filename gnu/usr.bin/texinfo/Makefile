@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/01/17 16:04:15 wiz Exp $
+#	$NetBSD: Makefile,v 1.15 2003/01/17 21:52:10 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ DIST=		${NETBSDSRCDIR}/gnu/dist
 IDIST=		${DIST}/texinfo
 INFOFLAGS=	-I${IDIST}/doc
 
-.PATH: ${IDIST} ${IDIST}/doc ${IDIST}/po
+.PATH: ${IDIST} ${IDIST}/doc ${IDIST}/makeinfo ${IDIST}/po
 
 .include <bsd.info.mk>
 .include <bsd.prog.mk>
