@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.276 1999/11/15 19:10:47 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.277 1999/11/15 20:03:50 dante Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -328,6 +328,9 @@ lpt2	at isa? port 0x3bc
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
+#options 	ADW_WDTR_DISABLE	# 	disable Wide Data Tranfer
+#options 	ADW_SDTR_DISABLE	# 	disable Syncronous Data Transfer
+#options 	ADW_TAGQ_DISABLE	# 	disable Tag Queuing
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
