@@ -30,25 +30,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: adbsys.c,v 1.2 1994/07/09 17:21:13 briggs Exp $
+ * $Id: adbsys.c,v 1.3 1994/07/21 06:36:51 lkestel Exp $
  *
  */
 
 /*
  * $Log: adbsys.c,v $
- * Revision 1.2  1994/07/09 17:21:13  briggs
- * Cleanup a printf, raise the probe timeout, and notice if the probe
- * does time out.
- *
- * Revision 1.1  1994/07/08  07:55:49  lkestel
- * 6x10.h: shifted font over by two pixels.
- * keyboard.h: added constants for commonly used keys and reformatted
- *   array so that gcc would be happy.
- * adbsys.c: new adb system.
- * bounds.h: bound-checking macros.
- * ite.c: new built-in mini-console.
- * 8x14.h: no longer used by built-in console.
- * adb.c: replaced by adbsys.c
+ * Revision 1.3  1994/07/21 06:36:51  lkestel
+ * Fixed a few bugs in the key-repeat function and disabled key-repeat
+ * when /dev/adb is closed to avoid infinite repeat problem.  Brad claims
+ * that he's got this solved in his version...
  *
  * 
  * 12/22/93 ~10PM I wrote a new ADB system.
@@ -163,9 +154,9 @@ static struct selinfo adb_selinfo;	/* select() info */
 static struct proc *adb_ioproc = NULL;	/* process to wakeup */
 
 
-static int adb_rptdelay = 13;		/* ticks before auto-repeat */
-static int adb_rptinterval = 3;		/* ticks between auto-repeat */
-static int adb_repeating = 0;		/* key that is auto-repeating */
+static int adb_rptdelay = 20;		/* ticks before auto-repeat */
+static int adb_rptinterval = 6;		/* ticks between auto-repeat */
+static int adb_repeating = -1;		/* key that is auto-repeating */
 static adb_event_t adb_rptevent;	/* event to auto-repeat */
 
 
@@ -268,7 +259,7 @@ void adb_send(
 int adb_where[2000], adb_index = 0;
 #if ADB_DEBUG	/* then define debug stuff */
 
-#define W(w)	((adb_index < 2000) ? (adb_where[adb_index++] = w) : 0)
+#define W(w)	((adb_index < 2000) ? (adb_where[adb_index++] = (w)) : 0)
 #define W_backup()	(adb_index--)
 
 #else /* ! ADB_DEBUG */
@@ -424,8 +415,8 @@ void adb_finish_xaction_PB(){};
  */
 
 
-long adb_intr_SI(void){return(1);}
-void adb_init_SI(void){};
+long adb_intr_SI(void){return(adb_intr_II());}		/* BARF */
+void adb_init_SI(void){adb_init_II();}			/* BARF */
 void adb_start_xaction_SI(int cmd, int sys_state){};
 void adb_finish_xaction_SI(){};
 
@@ -520,6 +511,8 @@ void adb_init_II()
 	for(hey = 0; hey < ADB_MAX_DEVS; hey++) /* 0 & 1 reserved, however */
 		adb_devs[hey].handler_id = -1;	/* there is no device there. */
 
+#if 1	/* This doesn't work on the Quadra 700?? */
+	/* Not really necessary, anyway. */
 	/* begin peeking! */
 	adb_start_xaction_II(ADB_MKCMD(2, ADB_CMD_TALK, 3), ADB_SYS_RESTART);
 
@@ -527,6 +520,7 @@ void adb_init_II()
 	while((adb_sys_state == ADB_SYS_RESTART) && (hey < 6000000))
 		hey++;
 	if (hey >= 6000000) printf("adb_init(): timed out!!!!!\n");
+#endif
 
 #if 1	/* only kept around for old DESKTOP code */
 	for(hey = 2; hey < ADB_MAX_DEVS; hey++)
@@ -541,7 +535,7 @@ void adb_init_II()
 	adb_make_idle_II();
 
 	are_devs = 0;
-#if 1	/* only kept around for old desktop code */
+#if 0	/* only kept around for old desktop code */
 	for(hey = 2; hey < ADB_MAX_DEVS; hey++){
 		if(adb_devs[hey].handler_id != -1){
 			printf("adb: ");
@@ -643,10 +637,14 @@ void adb_handoff(
 	}
 }
 
-
 void adb_autorepeat(
 	void *key)
 {
+	int s;
+
+	if (!adb_isopen) {
+		return;
+	}
 	adb_rptevent.bytes[0] |= 0x80;
 	microtime(&adb_rptevent.timestamp);
 	adb_handoff(&adb_rptevent);	/* do key up */
@@ -654,41 +652,49 @@ void adb_autorepeat(
 	adb_rptevent.bytes[0] &= 0x7f;
 	microtime(&adb_rptevent.timestamp);
 	adb_handoff(&adb_rptevent);	/* do key down */
-	
-	if(adb_repeating){
+
+	s = splhigh();
+	/*
+	 * XXX LK: I don't like this "if" -- if false, then shouldn't
+	 * hit key down above either.
+	 */
+	if(adb_repeating != -1){
 		timeout(adb_autorepeat, (caddr_t)key,
 			adb_rptinterval);
 	}
+	splx(s);
 }
-
 
 void adb_mungesend(
 	adb_event_t *event)
 {
-	int adb_key; 
+	int adb_key, s;
 
-
-	if(event->def_addr == 2){
-		if(!(event->u.k.key & 0x80) &&
-			keyboard[event->u.k.key & 0x7f][0] != 0){
-			/* ignore shift & control */
-			if(adb_repeating){
-				adb_repeating = 0;
-				untimeout(adb_autorepeat,
-					(caddr_t)adb_rptevent.u.k.key);
+	if(event->def_addr == 2 && adb_isopen){
+		adb_key = event->u.k.key;
+		if (keyboard[adb_key & 0x7f][0] != 0){
+			if((adb_key & 0x80) == 0){
+				/* ignore shift & control */
+				if(adb_repeating != -1){
+					s = splhigh();
+					adb_repeating = -1;
+					untimeout(adb_autorepeat,
+						(caddr_t)adb_rptevent.u.k.key);
+					splx(s);
+				}
+				adb_rptevent = *event;
+				timeout(adb_autorepeat,
+					(caddr_t)adb_key, adb_rptdelay);
+				adb_repeating = adb_key;
+			}else{
+				if(adb_repeating != -1){
+					adb_key = adb_repeating;
+					adb_repeating = -1;
+					untimeout(adb_autorepeat,
+						(caddr_t)adb_key);
+				}
+				adb_rptevent = *event;
 			}
-			adb_key = event->u.k.key & 0x7f;
-			adb_rptevent = *event;
-			timeout(adb_autorepeat,
-				(caddr_t)adb_key, adb_rptdelay);
-			adb_repeating = 1;
-		}else{
-			if(adb_repeating){
-				adb_repeating = 0;
-				untimeout(adb_autorepeat,
-					(caddr_t)adb_rptevent.u.k.key);
-			}
-			adb_rptevent = *event;
 		}
 	}
 	adb_handoff(event);
@@ -1046,7 +1052,7 @@ adbattach(parent, dev, aux)
 	struct device	*parent, *dev;
 	void		*aux;
 {
-	printf(" adb event device.\n");
+	printf(" (adb event device)\n");
 	/* adb_init();  -- called from autoconf... In case ddb needs it?  */
 }
 
@@ -1079,16 +1085,15 @@ int adbopen(
 		return(ENXIO);
 	
 	s = splhigh();
-	if (adb_isopen && p->p_ucred->cr_uid != 0)
-	{
+	if (adb_isopen) {
 		splx(s);
 		return(EBUSY);
 	}
-	splx(s);
 	adb_evq_tail = 0;
 	adb_evq_len = 0;
 	adb_isopen = 1;
 	adb_ioproc = p;
+	splx(s);
 
 	return (error);
 }
