@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.1.1.1 1997/01/14 20:57:02 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.2 1997/01/17 03:42:15 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ le_attach(parent, self, aux)
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
 	sc->sc_hwinit = NULL;
-	sc->sc_conf3 = LE_C3_BSWP;
+	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 
 	am7990_config(sc);
 
