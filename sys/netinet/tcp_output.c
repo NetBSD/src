@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_output.c	7.22 (Berkeley) 8/31/90
- *	$Id: tcp_output.c,v 1.7 1994/01/10 20:14:30 mycroft Exp $
+ *	$Id: tcp_output.c,v 1.8 1994/04/12 18:09:47 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -344,7 +344,10 @@ send:
 	if (flags & TH_FIN && tp->t_flags & TF_SENTFIN &&
 	    tp->snd_nxt == tp->snd_max)
 		tp->snd_nxt--;
-	ti->ti_seq = htonl(tp->snd_nxt);
+	if (len || (flags & (TH_SYN|TH_FIN)) || tp->t_timer[TCPT_PERSIST])
+		ti->ti_seq = htonl(tp->snd_nxt);
+	else
+		ti->ti_seq = htonl(tp->snd_max);
 	ti->ti_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
 		bcopy((caddr_t)opt, (caddr_t)(ti + 1), optlen);
