@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.17 2000/09/22 08:19:57 jsm Exp $	*/
+/*	$NetBSD: cypher.c,v 1.18 2000/09/24 09:41:53 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.17 2000/09/22 08:19:57 jsm Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.18 2000/09/24 09:41:53 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -312,7 +312,8 @@ cypher()
 					if (testbit(inven, n))
 						printf("\t%s\n", objsht[n]);
 				printf("\n= %d kilogram%s (%d%%)\n", carrying, (carrying == 1 ? "." : "s."), (WEIGHT ? carrying * 100 / WEIGHT : -1));
-				printf("Your arms are %d%% full.\n", encumber * 100 / CUMBER);
+				printf("Your arms are %d%% full.\n",
+				    (CUMBER ? encumber * 100 / CUMBER : -1));
 			} else
 				puts("You aren't carrying anything.");
 
