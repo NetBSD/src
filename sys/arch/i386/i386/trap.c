@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.34 1994/04/02 08:42:59 cgd Exp $
+ *	$Id: trap.c,v 1.35 1994/04/02 21:32:54 mycroft Exp $
  */
 
 /*
@@ -76,7 +76,7 @@ extern int cpl;
  */
 static inline void
 userret(p, pc, oticks)
-	struct proc *p;
+	register struct proc *p;
 	int pc;
 	struct timeval oticks;
 {
@@ -196,10 +196,9 @@ trap(frame)
 		return;
 	}
 
-	sticks = p->p_stime;
-
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
+		sticks = p->p_stime;
 		p->p_regs = (int *)&frame;
 	}
 
@@ -457,25 +456,22 @@ syscall(frame)
 	volatile struct trapframe frame;
 {
 	register caddr_t params;
-	register int i;
 	register struct sysent *callp;
-	register struct proc *p = curproc;
-	struct timeval sticks;
+	register struct proc *p;
 	int error, opc;
 	int args[8], rval[2];
 	int code;
-
-	if (ISPL(frame.tf_cs) != SEL_UPL)
-		panic("syscall");
+	struct timeval sticks;
 
 	cnt.v_syscall++;
-
+	if (ISPL(frame.tf_cs) != SEL_UPL)
+		panic("syscall");
+	p = curproc;
 	sticks = p->p_stime;
-	code = frame.tf_eax;
 	p->p_regs = (int *)&frame;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
 	opc = frame.tf_eip;
-
+	code = frame.tf_eax;
+	params = (caddr_t)frame.tf_esp + sizeof(int);
 	switch (code) {
 	case SYS_syscall:
 		code = fuword(params);
@@ -495,8 +491,8 @@ syscall(frame)
 		callp = &sysent[0];		/* illegal */
 	else
 		callp = &sysent[code];
-	if ((i = callp->sy_narg * sizeof(int)) &&
-	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
+	argsize = callp->sy_narg * sizeof(int);
+	if (argsize && (error = copyin(params, (caddr_t)args, argsize))) {
 #ifdef SYSCALL_DEBUG
 		scdebug_call(p, code, callp->sy_narg, args);
 #endif
@@ -504,7 +500,7 @@ syscall(frame)
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
 #endif
-		goto lose;
+		goto bad;
 	}
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, callp->sy_narg, args);
@@ -518,10 +514,16 @@ syscall(frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
+		/*
+		 * Reinitialize proc pointer `p' as it may be different
+		 * if this is a child returning from fork syscall.
+		 */
+		p = curproc;
 		frame.tf_eax = rval[0];
 		frame.tf_edx = rval[1];
 		frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
+
 	case ERESTART:
 		/*
 		 * Reconstruct pc, assuming lcall $X,y is 7 bytes, as it is
@@ -529,20 +531,18 @@ syscall(frame)
 		 */
 		frame.tf_eip = opc - 7;
 		break;
+
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
+
 	default:
-	lose:
+	bad:
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
-	/*
-	 * Reinitialize proc pointer `p' as it may be different
-	 * if this is a child returning from fork syscall.
-	 */
-	p = curproc;
+
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval[0]);
 #endif
