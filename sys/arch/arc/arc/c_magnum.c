@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.2 2002/12/09 13:36:27 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.3 2003/04/27 11:33:36 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ timer_magnum_init(interval)
 	int interval; /* milliseconds */
 {
 	if (interval <= 0)
-		panic("timer_nec_jazz_init: invalid interval %d", interval);
+		panic("timer_magnum_init: invalid interval %d", interval);
 
 	out32(R4030_SYS_IT_VALUE, interval - 1);
 
