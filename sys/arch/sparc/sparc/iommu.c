@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.19 1998/07/31 22:23:30 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.20 1998/08/20 20:49:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -610,8 +610,9 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if (error != 0)
 		return (error);
 
-	if (extent_alloc(iommu_dvmamap, size, NBPG, EX_NOBOUNDARY,
-            EX_NOWAIT, (u_long *)&dvmaddr) != 0)
+	if (extent_alloc(iommu_dvmamap, size, NBPG, boundary,
+			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
+			 (u_long *)&dvmaddr) != 0)
 		return (ENOMEM);
 
 	/*
