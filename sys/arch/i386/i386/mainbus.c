@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.22 1998/01/12 18:59:10 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.23 1998/02/06 07:52:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -79,6 +79,11 @@ union mainbus_attach_args {
 int	isa_has_been_seen;
 
 /*
+ * Same as above, but for EISA.
+ */
+int	eisa_has_been_seen;
+
+/*
  * Probe for the mainbus; always succeeds.
  */
 int
@@ -121,7 +126,8 @@ mainbus_attach(parent, self, aux)
 	}
 #endif
 
-	if (!bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN)) {
+	if (bcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
+	    eisa_has_been_seen == 0) {
 		mba.mba_eba.eba_busname = "eisa";
 		mba.mba_eba.eba_iot = I386_BUS_SPACE_IO;
 		mba.mba_eba.eba_memt = I386_BUS_SPACE_MEM;
@@ -157,7 +163,7 @@ mainbus_print(aux, pnp)
 
 	if (pnp)
 		printf("%s at %s", mba->mba_busname, pnp);
-	if (!strcmp(mba->mba_busname, "pci"))
+	if (strcmp(mba->mba_busname, "pci") == 0)
 		printf(" bus %d", mba->mba_pba.pba_bus);
 	return (UNCONF);
 }
