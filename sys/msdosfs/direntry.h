@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.10 1995/10/15 15:34:20 ws Exp $	*/
+/*	$NetBSD: direntry.h,v 1.11 1995/11/29 15:08:34 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -64,9 +64,13 @@ struct direntry {
 #define	ATTR_VOLUME	0x08		/* entry is a volume label */
 #define	ATTR_DIRECTORY	0x10		/* entry is a directory name */
 #define	ATTR_ARCHIVE	0x20		/* file is new or modified */
-	u_int8_t	deReserved[10];	/* reserved */
-	u_int8_t	deTime[2];	/* create/last update time */
-	u_int8_t	deDate[2];	/* create/last update date */
+	u_int8_t	deReserved[2];	/* reserved */
+	u_int8_t	deCTime[2];	/* create time */
+	u_int8_t	deCDate[2];	/* create date */
+	u_int8_t	deADate[2];	/* access date */
+	u_int8_t	deATime[2];	/* access time */
+	u_int8_t	deMTime[2];	/* last update time */
+	u_int8_t	deMDate[2];	/* last update date */
 	u_int8_t	deStartCluster[2]; /* starting cluster of file */
 	u_int8_t	deFileSize[4];	/* size of file in bytes */
 };
@@ -116,7 +120,7 @@ struct winentry {
 #ifdef _KERNEL
 void unix2dostime __P((struct timespec *tsp, u_int16_t *ddp, u_int16_t *dtp));
 void dos2unixtime __P((u_int dd, u_int dt, struct timespec *tsp));
-int dos2unixfn __P((u_char dn[11], u_char *un));
+int dos2unixfn __P((u_char dn[11], u_char *un, int lower));
 int unix2dosfn __P((u_char *un, u_char dn[12], int unlen, u_int gen));
 int unix2winfn __P((u_char *un, int unlen, struct winentry *wep, int cnt, int chksum));
 int winChkName __P((u_char *un, int unlen, struct winentry *wep, int chksum));

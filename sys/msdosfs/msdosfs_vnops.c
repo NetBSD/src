@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.40 1995/11/05 18:48:02 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.41 1995/11/29 15:08:42 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -133,7 +133,6 @@ msdosfs_create(ap)
 		panic("msdosfs_create: no name");
 #endif
 	bzero(&ndirent, sizeof(ndirent));
-	unix2dostime(NULL, &ndirent.de_Date, &ndirent.de_Time);
 	if (error = uniqdosname(pdep, cnp, ndirent.de_Name))
 		goto bad;
 		
@@ -143,6 +142,8 @@ msdosfs_create(ap)
 	ndirent.de_FileSize = 0;
 	ndirent.de_dev = pdep->de_dev;
 	ndirent.de_devvp = pdep->de_devvp;
+	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
+	DE_TIMES(&ndirent);
 	if (error = createde(&ndirent, pdep, &dep, cnp))
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
@@ -277,13 +278,14 @@ msdosfs_getattr(ap)
 	vap->va_uid = dep->de_pmp->pm_uid;
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
-	dos2unixtime(dep->de_Date, dep->de_Time, &vap->va_atime);
-	vap->va_mtime = vap->va_atime;
-#ifndef MSDOSFS_NODIRMOD
-	if (vap->va_mode & S_IFDIR)
-		TIMEVAL_TO_TIMESPEC(&time, &vap->va_mtime);
-#endif
-	vap->va_ctime = vap->va_atime;
+	dos2unixtime(dep->de_MDate, dep->de_MTime, &vap->va_mtime);
+	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
+		dos2unixtime(dep->de_ADate, dep->de_ATime, &vap->va_atime);
+		dos2unixtime(dep->de_CDate, dep->de_CTime, &vap->va_ctime);
+	} else {
+		vap->va_atime = vap->va_mtime;
+		vap->va_ctime = vap->va_mtime;
+	}
 	vap->va_flags = 0;
 	if ((dep->de_Attributes & ATTR_ARCHIVE) == 0)
 		vap->va_flags |= SF_ARCHIVED;
@@ -329,6 +331,9 @@ msdosfs_setattr(ap)
 #endif
 		return (EINVAL);
 	}
+	/*
+	 * Directories must not ever get their attributes modified
+	 */
 	if (ap->a_vp->v_type == VDIR)
 		return EISDIR;
 
@@ -336,13 +341,17 @@ msdosfs_setattr(ap)
 		if (error = detrunc(dep, (u_long)vap->va_size, 0, cred, ap->a_p))
 			return (error);
 	}
-	if (vap->va_mtime.ts_sec != VNOVAL) {
+	if (vap->va_atime.ts_sec != VNOVAL || vap->va_mtime.ts_sec != VNOVAL) {
 		if (cred->cr_uid != dep->de_pmp->pm_uid &&
 		    (error = suser(cred, &ap->a_p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
-		unix2dostime(&vap->va_mtime, &dep->de_Date, &dep->de_Time);
+		if (!(dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)
+		    && vap->va_atime.ts_sec != VNOVAL)
+			unix2dostime(&vap->va_atime, &dep->de_ADate, &dep->de_ATime);
+		if (vap->va_mtime.ts_sec != VNOVAL)
+			unix2dostime(&vap->va_mtime, &dep->de_MDate, &dep->de_MTime);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
 	}
@@ -375,7 +384,7 @@ msdosfs_setattr(ap)
 			dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
 	}
-	return (0);
+	return (deupdat(dep, 1));
 }
 
 int
@@ -450,6 +459,8 @@ msdosfs_read(ap)
 			return (error);
 		}
 		error = uiomove(bp->b_data + on, (int) n, uio);
+		if (!isadir)
+			dep->de_flag |= DE_ACCESS;
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 	return (error);
@@ -491,12 +502,17 @@ msdosfs_write(ap)
 	       dep->de_diroffset, dep->de_dirclust, dep->de_StartCluster);
 #endif
 
-	if (vp->v_type == VREG) {
+	switch (vp->v_type) {
+	case VREG:
 		if (ioflag & IO_APPEND)
 			uio->uio_offset = dep->de_FileSize;
 		thisvp = vp;
-	} else
+		break;
+	case VDIR:
+		return EISDIR;
+	default:
 		panic("msdosfs_write(): bad file type");
+	}
 
 	if (uio->uio_offset < 0)
 		return (EINVAL);
@@ -507,21 +523,12 @@ msdosfs_write(ap)
 	/*
 	 * If they've exceeded their filesize limit, tell them about it.
 	 */
-	if (vp->v_type == VREG && p &&
+	if (p &&
 	    ((uio->uio_offset + uio->uio_resid) >
-		p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
+	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
 	}
-
-	/*
-	 * If attempting to write beyond the end of the root directory we
-	 * stop that here because the root directory can not grow.
-	 */
-	if ((dep->de_Attributes & ATTR_DIRECTORY) &&
-	    dep->de_StartCluster == MSDOSFSROOT &&
-	    (uio->uio_offset + uio->uio_resid) > dep->de_FileSize)
-		return (ENOSPC);
 
 	/*
 	 * If the offset we are starting the write at is beyond the end of
@@ -645,7 +652,7 @@ errexit:
 			if (uio->uio_resid != resid)
 				error = 0;
 		}
-	} else
+	} else if (ioflag & IO_SYNC)
 		error = deupdat(dep, 1);
 	return (error);
 }
@@ -1179,7 +1186,11 @@ msdosfs_mkdir(ap)
 		goto bad2;
 
 	bzero(&ndirent, sizeof(ndirent));
-	unix2dostime(NULL, &ndirent.de_Date, &ndirent.de_Time);
+	if (!(pmp->pm_flags & MSDOSFSMNT_NOWIN95)) {
+		unix2dostime(NULL, &ndirent.de_CDate, &ndirent.de_CTime);
+		unix2dostime(NULL, &ndirent.de_ADate, &ndirent.de_ATime);
+	}
+	unix2dostime(NULL, &ndirent.de_MDate, &ndirent.de_MTime);
 
 	/*
 	 * Now fill the cluster with the "." and ".." entries. And write
@@ -1193,11 +1204,19 @@ msdosfs_mkdir(ap)
 	bcopy(&dosdirtemplate, bp->b_data, sizeof dosdirtemplate);
 	denp = (struct direntry *)bp->b_data;
 	putushort(denp[0].deStartCluster, newcluster);
-	putushort(denp[0].deDate, ndirent.de_Date);
-	putushort(denp[0].deTime, ndirent.de_Time);
+	putushort(denp[0].deCDate, ndirent.de_CDate);
+	putushort(denp[0].deCTime, ndirent.de_CTime);
+	putushort(denp[0].deADate, ndirent.de_ADate);
+	putushort(denp[0].deATime, ndirent.de_ATime);
+	putushort(denp[0].deMDate, ndirent.de_MDate);
+	putushort(denp[0].deMTime, ndirent.de_MTime);
 	putushort(denp[1].deStartCluster, pdep->de_StartCluster);
-	putushort(denp[1].deDate, ndirent.de_Date);
-	putushort(denp[1].deTime, ndirent.de_Time);
+	putushort(denp[1].deCDate, ndirent.de_CDate);
+	putushort(denp[1].deCTime, ndirent.de_CTime);
+	putushort(denp[1].deADate, ndirent.de_ADate);
+	putushort(denp[1].deATime, ndirent.de_ATime);
+	putushort(denp[1].deMDate, ndirent.de_MDate);
+	putushort(denp[1].deMTime, ndirent.de_MTime);
 	if (error = bwrite(bp))
 		goto bad;
 
@@ -1517,7 +1536,8 @@ msdosfs_readdir(ap)
 			    (dentp->deAttributes & ATTR_DIRECTORY) ? DT_DIR : DT_REG;
 			if (chksum != winChksum(dentp->deName))
 				dirbuf.d_namlen = dos2unixfn(dentp->deName,
-							     (u_char *)dirbuf.d_name);
+				    (u_char *)dirbuf.d_name,
+				    pmp->pm_flags & MSDOSFSMNT_SHORTNAME);
 			else
 				dirbuf.d_name[dirbuf.d_namlen] = 0;
 			chksum = -1;
@@ -1797,13 +1817,14 @@ msdosfs_pathconf(ap)
 		register_t *a_retval;
 	} */ *ap;
 {
+	struct msdosfsmount *pmp = VTODE(ap->a_vp)->de_pmp;
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NAME_MAX:
-		*ap->a_retval = 12;
+		*ap->a_retval = pmp->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12;
 		return (0);
 	case _PC_PATH_MAX:
 		*ap->a_retval = PATH_MAX;
