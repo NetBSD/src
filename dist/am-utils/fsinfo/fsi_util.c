@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_util.c,v 1.3 2001/05/13 18:06:59 veego Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.4 2002/05/09 02:09:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -465,7 +465,7 @@ set_ether_if(ether_if *ep, int k, char *v)
 
   case EF_INADDR:{
       ep->e_inaddr.s_addr = inet_addr(v);
-      if (ep->e_inaddr.s_addr == (u_long) - 1)
+      if (ep->e_inaddr.s_addr == INADDR_NONE)
 	yyerror("malformed IP dotted quad: %s", v);
       XFREE(v);
     }
