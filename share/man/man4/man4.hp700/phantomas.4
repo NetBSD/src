@@ -1,0 +1,87 @@
+.\"	$NetBSD: phantomas.4,v 1.1 2004/09/22 16:38:26 jkunz Exp $
+.\"
+.\"	$OpenBSD: phantomas.4,v 1.6 2003/09/02 21:11:50 jmc Exp $
+.\"
+.\" Copyright (c) 2002 Michael Shalayeff
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+.\" USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 18, 2002
+.Dt PHANTOMAS 4 hp700
+.Os
+.Sh NAME
+.Nm phantomas
+.Nd Phantom PseudoBC GSC+ Port
+.Sh SYNOPSIS
+.Cd "phantomas* at mainbus0"
+.Cd "sti*       at phantomas?"
+.Cd "lasi*      at phantomas?"
+.Cd "dino*      at phantomas?"
+.Sh DESCRIPTION
+Phantom bus convertor used to connect a
+.Xr sti 4
+graphics, a
+.Xr lasi 4
+bus host adapter for
+.Xr gsc 4
+and a PCI bridge
+.Xr dino 4
+to the system bus, where
+.Xr cpu 4
+and memory are located.
+.Sh MACHINES
+The Phantom bus convertor is used in conjunction with the
+.Tn PA7300LC
+CPU in this machines:
+.Pp
+.Bl -bullet -compact
+.It
+744/*
+.It
+748/*
+.It
+A180[C]
+.It
+B132L[+], B160L, B180L+
+.It
+C132L, C160L
+.It
+D220, D230, D320, D330
+.It
+RDI PrecisionBook
+.El
+.Sh SEE ALSO
+.Xr cpu 4 ,
+.Xr dino 4 ,
+.Xr gsc 4 ,
+.Xr intro 4 ,
+.Xr lasi 4 ,
+.Xr sti 4
+.Sh HISTORY
+The
+.Nm
+driver
+appeared in
+.Ox 3.3 .
+It was ported to
+.Nx 2.0
+by Jochen Kunz.

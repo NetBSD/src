@@ -1,0 +1,77 @@
+.\"	$NetBSD: gsckbc.4,v 1.1 2004/09/22 16:38:26 jkunz Exp $
+.\"
+.\" Copyright (c) 2002 Jochen Kunz.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of Jochen Kunz may not be used to endorse or promote
+.\"    products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY JOCHEN KUNZ
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL JOCHEN KUNZ
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.Dd August 20, 2004
+.Dt GSCKBC 4 hp700
+.Os
+.Sh NAME
+.Nm gsckbc
+.Nd GSC PS/2 keyboard and mouse interface
+.Sh SYNOPSIS
+.Cd "gsckbc* at gsc?"
+.Cd "pckbd*  at gsckbc?"
+.Cd "pms*    at gsckbc?"
+.Sh DESCRIPTION
+The
+.Nm
+device is a machine dependent front end to the
+.Xr pckbport 9
+interface.
+It attaches to the GSC PS/2 keyboard and mouse interface found in LASI chips.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "gsckbc_attach: can't map I/O space"
+The driver was not able to map the device registers during attachment.
+The device will not be usable.
+.It "can't find master device"
+An error occured during attachment of the keyboard port so the mouse port
+can't be attached too.
+.El
+.Sh SEE ALSO
+.Xr gsc 4 ,
+.Xr intro 4 ,
+.Xr io 4 ,
+.Xr lasi 4 ,
+.Xr pckbport 9
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Nx 2.0 .
+.Sh AUTHORS
+.An Jochen Kunz
+.Sh BUGS
+Actually the two PS/2 ports are a single device and share a single interrupt.
+The firmware lists them as individual devices in the firmware device tree.
+This illusion is kept to map the firmware device tree as close as possible
+to the kernel device tree.
+The first device is caled master, gets the interrupt and the other is the
+slave.
+Assumption: Master attaches first, gets the interrupt and has lower HPA.
+So it is important that the master device, usually the keyboard port,
+attaches first to make the slave, usually the mouse port, usable.
