@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_update.c,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: ns_update.c,v 1.2 2000/10/08 19:41:19 is Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ns_update.c,v 8.68 1999/11/05 04:40:58 vixie Exp";
@@ -958,7 +958,7 @@ process_updates(const ns_updque *updlist, int *rcodep,
 
 		ns_debug(ns_log_update, 3,
 "process_update: record section=%s, dname=%s, \
-class=%s, type=%s, ttl=%d, dp=0x%0x",
+class=%s, type=%s, ttl=%d, dp=%p",
 			 p_section(section, ns_o_update), dname,
 			 p_class(class), p_type(type), ttl, rdp);
 
@@ -1029,8 +1029,7 @@ class=%s, type=%s, ttl=%d, dp=0x%0x",
 					 n);
 			} else {
 				ns_debug(ns_log_update, 3,
-				      "process_updates: added databuf 0x%0x",
-					 dp);
+				      "process_updates: added databuf %p", dp);
 				dp->d_mark = D_MARK_ADDED;
 				numupdated++;
 				if (dp->d_type == T_SOA)
@@ -1371,7 +1370,7 @@ free_rrecp(ns_updque *updlist, int rcode, struct sockaddr_in from) {
 		first_rrecp = TAIL(*updlist);
 		msg = "free_rrecp: update transaction aborted, rolling back";
 	}
-	ns_debug(ns_log_update, 1, msg);
+	ns_debug(ns_log_update, 1, "%s", msg);
 	for (rrecp = first_rrecp; rrecp != NULL; rrecp = next_rrecp) {
 		if (rcode == NOERROR)
 			next_rrecp = NEXT(rrecp, r_link);
@@ -1403,7 +1402,7 @@ free_rrecp(ns_updque *updlist, int rcode, struct sockaddr_in from) {
 						 dname, p_type(dp->d_type));
 				} else {
 					ns_debug(ns_log_update, 3,
-				         "free_rrecp: deleted databuf 0x%0x",
+				         "free_rrecp: deleted databuf %p",
 						 dp);
 					/* 
 					 * XXXRTH 
@@ -1434,7 +1433,7 @@ free_rrecp(ns_updque *updlist, int rcode, struct sockaddr_in from) {
 			if (rcode == NOERROR) {
 				if (tmpdp->d_rcnt)
 					ns_debug(ns_log_update, 1,
-					   "free_rrecp: type = %d, rcnt = %d",
+					   "free_rrecp: type = %s, rcnt = %d",
 						 p_type(tmpdp->d_type),
 						 tmpdp->d_rcnt);
 				else {
@@ -1451,7 +1450,7 @@ free_rrecp(ns_updque *updlist, int rcode, struct sockaddr_in from) {
 						 dname, p_type(tmpdp->d_type));
 				} else {
 					ns_debug(ns_log_update, 3,
-				      "free_rrecp: added back databuf 0x%0x",
+				      "free_rrecp: added back databuf %p",
 						 tmpdp);
 				}
 			}
@@ -1771,7 +1770,7 @@ rdata_dump(struct databuf *dp, FILE *fp) {
 			if ((n = *cp++) != '\0') {
 				for (j = n; j > 0 && cp < end; j--)
 					if ((*cp < ' ') || (*cp > '~')) {
-						fprintf(fp, "\\%03.3d", *cp++);
+						fprintf(fp, "\\%3.3d", *cp++);
 					} else if (*cp == '\\' || *cp =='"') {
 						putc('\\', fp);
 						putc(*cp++, fp);
@@ -1920,7 +1919,7 @@ findzone(const char *dname, int class, int depth, int *zonelist, int maxzones){
 	int escaped, found, done;
 
 	ns_debug(ns_log_update, 4, "findzone(dname=%s, class=%d, depth=%d, \
-zonelist=0x%x, maxzones=%d)",
+zonelist=%p, maxzones=%d)",
 		 dname, class, depth, zonelist, maxzones);
 #ifdef DEBUG
 	if (debug >= 5) {
@@ -2832,7 +2831,7 @@ zonedump(struct zoneinfo *zp, int mode) {
 			}
 		} else {
 			if (movefile(tmp_name, zp->z_source) < 0) {
-                                ns_error(ns_log_update, "movefile(%s,%s) failed: % s :6", tmp_name, zp->z_source, strerror(errno));
+                                ns_error(ns_log_update, "movefile(%s,%s) failed: %s :6", tmp_name, zp->z_source, strerror(errno));
                                 return (-1);
                         }
 		}
