@@ -90,7 +90,7 @@ struct vifctl {
 };
 
 #define	VIFF_TUNNEL	0x1		/* vif represents a tunnel end-point */
-#define VIFF_SRCRT	0x2		/* tunnel uses IP src routing */
+#define	VIFF_SRCRT	0x2		/* tunnel uses IP src routing */
 
 
 /*

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip.h	7.10 (Berkeley) 6/28/90
- *	$Id: ip.h,v 1.3 1993/05/20 03:50:15 cgd Exp $
+ *	$Id: ip.h,v 1.4 1994/01/08 21:21:44 mycroft Exp $
  */
 
 #ifndef _NETINET_IP_H_
@@ -51,11 +51,11 @@
  * against negative integers quite easily, and fail in subtle ways.
  */
 struct ip {
-#if BYTE_ORDER == LITTLE_ENDIAN 
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_char	ip_hl:4,		/* header length */
 		ip_v:4;			/* version */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
+#if BYTE_ORDER == BIG_ENDIAN
 	u_char	ip_v:4,			/* version */
 		ip_hl:4;		/* header length */
 #endif
@@ -119,7 +119,7 @@ struct ip {
  */
 #define	IPOPT_OPTVAL		0		/* option ID */
 #define	IPOPT_OLEN		1		/* option length */
-#define IPOPT_OFFSET		2		/* offset within option */
+#define	IPOPT_OFFSET		2		/* offset within option */
 #define	IPOPT_MINOFF		4		/* min value of above */
 
 /*
@@ -129,11 +129,11 @@ struct	ip_timestamp {
 	u_char	ipt_code;		/* IPOPT_TS */
 	u_char	ipt_len;		/* size of structure (variable) */
 	u_char	ipt_ptr;		/* index of current entry */
-#if BYTE_ORDER == LITTLE_ENDIAN 
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_char	ipt_flg:4,		/* flags, see below */
 		ipt_oflw:4;		/* overflow counter */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
+#if BYTE_ORDER == BIG_ENDIAN
 	u_char	ipt_oflw:4,		/* overflow counter */
 		ipt_flg:4;		/* flags, see below */
 #endif

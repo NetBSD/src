@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.h	7.6 (Berkeley) 6/28/90
- *	$Id: in_pcb.h,v 1.4 1993/12/08 23:46:31 hpeyerl Exp $
+ *	$Id: in_pcb.h,v 1.5 1994/01/08 21:21:41 mycroft Exp $
  */
 
 #ifndef _NETINET_IN_PCB_H_
@@ -59,7 +59,7 @@ struct inpcb {
 	int	inp_flags;		/* generic IP/datagram flags */
 	struct	ip inp_ip;		/* header prototype; should have more */
 	struct	mbuf *inp_options;	/* IP options */
-	struct ip_moptions *inp_moptions; /* IP multicast options */
+	struct	ip_moptions *inp_moptions; /* IP multicast options */
 };
 
 /* flags in inp_flags: */

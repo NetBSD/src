@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp.h	7.7 (Berkeley) 6/28/90
- *	$Id: tcp.h,v 1.3 1993/05/20 03:50:31 cgd Exp $
+ *	$Id: tcp.h,v 1.4 1994/01/08 21:21:56 mycroft Exp $
  */
 
 #ifndef _NETINET_TCP_H_
@@ -47,11 +47,11 @@ struct tcphdr {
 	u_short	th_dport;		/* destination port */
 	tcp_seq	th_seq;			/* sequence number */
 	tcp_seq	th_ack;			/* acknowledgement number */
-#if BYTE_ORDER == LITTLE_ENDIAN 
+#if BYTE_ORDER == LITTLE_ENDIAN
 	u_char	th_x2:4,		/* (unused) */
 		th_off:4;		/* data offset */
 #endif
-#if BYTE_ORDER == BIG_ENDIAN 
+#if BYTE_ORDER == BIG_ENDIAN
 	u_char	th_off:4,		/* data offset */
 		th_x2:4;		/* (unused) */
 #endif
