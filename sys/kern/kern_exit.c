@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.128 2003/11/12 21:07:38 dsl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.129 2003/11/17 22:52:09 cl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.128 2003/11/12 21:07:38 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.129 2003/11/17 22:52:09 cl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -858,13 +858,9 @@ proc_free(struct proc *p)
 	if (p->p_textvp)
 		vrele(p->p_textvp);
 
-	/*
-	 * Release any SA state
-	 */
-	if (p->p_sa) {
-		free(p->p_sa->sa_stacks, M_SA);
-		pool_put(&sadata_pool, p->p_sa);
-	}
+	/* Release any SA state. */
+	if (p->p_sa)
+		sa_release(p);
 
 	/* Free proc structure and let pid be reallocated */
 	proc_free_mem(p);

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.13 2003/11/03 22:34:51 cl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.14 2003/11/17 22:52:09 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct	lwp {
 	int	l_holdcnt;	/* If non-zero, don't swap. */
 	void	*l_ctxlink;	/* uc_link {get,set}context */
 	int	l_dupfd;	/* Sideways return value from cloning devices XXX */
-	void	*l_upcallstack;	/* Upcall stack used during blocking upcall */
+	struct sastack	*l_upcallstack;	/* Upcall stack used during blocking upcall */
 
 #define l_endzero l_priority
 
