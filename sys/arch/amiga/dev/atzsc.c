@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: atzsc.c,v 1.5 1994/07/02 21:15:10 chopps Exp $
+ *	$Id: atzsc.c,v 1.6 1994/07/16 19:45:44 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,18 @@ atzscattach(pdp, dp, auxp)
 	 */
 	sc->sc_flags |= SBICF_BADDMA;
 	sc->sc_dmamask = ~0x00ffffff;
+	/* 
+	 * If the users kva space is not ztwo try and allocate a bounce buffer. 
+	 * XXX this needs to change if we move to multiple memory segments.
+	 */
+	if (kvtop(sc) & sc->sc_dmamask) {
+		sc->sc_dmabuffer = (char *)alloc_z2mem(MAXPHYS);
+		if (isztwomem(sc->sc_dmabuffer))
+			printf(" bounce pa 0x%x", ztwopa(sc->sc_dmabuffer));
+		else if (sc->sc_dmabuffer)
+			printf(" bounce pa 0x%x",
+			    PREP_DMA_MEM(sc->sc_dmabuffer));
+	}
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x91);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 77;
 	
