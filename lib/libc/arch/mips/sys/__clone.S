@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.1 2001/07/17 02:01:40 thorpej Exp $	*/
+/*	$NetBSD: __clone.S,v 1.2 2001/07/17 02:05:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,4 +95,4 @@ LEAF(__clone)
 8:	j	ra
 
 9:	PIC_CALL(__cerror, t9)
-	END(__clone)
+END(__clone)
