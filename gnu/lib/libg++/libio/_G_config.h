@@ -2,17 +2,17 @@
 #ifndef _G_config_h
 #define _G_config_h
 #define _G_LIB_VERSION "2.7.2"
-#ifndef __alpha__
+#if ! defined(__alpha__) && !defined(__mips)	/* ELF */
 #define _G_NAMES_HAVE_UNDERSCORE 1
-#else /* __alpha__ */
+#else /* ELF */
 #define _G_NAMES_HAVE_UNDERSCORE 0
-#endif /* __alpha__ */
+#endif /* ELF */
 #define _G_VTABLE_LABEL_HAS_LENGTH 1
-#ifndef __alpha__
+#if ! defined(__alpha__) && !defined(__mips)	/* ELF */
 #define _G_VTABLE_LABEL_PREFIX "__vt$"
-#else /* __alpha__ */
+#else 	/* ELF */
 #define _G_VTABLE_LABEL_PREFIX "_vt$"
-#endif /* __alpha__ */
+#endif 	/* ELF */
 #define _G_HAVE_ST_BLKSIZE 1
 #ifndef __alpha__
 typedef unsigned long _G_clock_t;
