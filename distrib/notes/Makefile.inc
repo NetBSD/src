@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2001/01/14 21:45:01 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2001/11/26 00:19:56 jhawk Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -12,6 +12,8 @@ V_S!=	/bin/sh ${.CURDIR}/../../../sys/conf/osrelease.sh -s
 MAIN=	${.CURDIR}/../common/main ${.CURDIR}/../common/macros ${EXTRA}
 TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
+TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
+	${TARG}.more.toc
 SRCS=	${MAIN} whatis contents hardware xfer prep install\
 	upgrade donations legal.common legal postinstall ../Makefile.inc\
 	${MERGED_SRCS}
@@ -55,6 +57,27 @@ ${TARG}.html: ${SRCS}
 ${TARG}.more: ${SRCS}
 	groff ${ARGS_MORE} -mdoc      ${MAIN} > $@
 
+tocs: ${TOCS}
+
+TOCPROC=	   2>&1 >/dev/null |\
+           sed -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
+
+${TARG}.PostScript.toc: .PHONY
+	groff -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
+
+${TARG}.ASCII.toc: .PHONY
+	groff -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
+
+${TARG}.HTML.toc: .PHONY
+	groff -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
+
+${TARG}.more.toc: .PHONY
+	groff -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	mv -f $@.tmp $@
+
 echosrcs! ${SRCS}
 	@echo ${.ALLSRC}
 
@@ -73,6 +96,6 @@ release:
 .PATH: ${.CURDIR}/../common
 
 cleannotes:
-	rm -f [Ee]rrs mklog core *.core ${TARGS}
+	rm -f [Ee]rrs mklog core *.core ${TARGS} ${TOCS}
 
 clean cleandir distclean: cleannotes

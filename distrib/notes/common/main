@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.144 2001/11/23 16:30:54 bjh21 Exp $
+.\"	$NetBSD: main,v 1.145 2001/11/26 00:19:57 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,8 @@
 .Nm INSTALL
 .Nd Installation procedure for
 .Nx*M .
+.Sh CONTENTS
+.Tc
 .Sh DESCRIPTION
 .
 .Ss About this Document

@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.11 2001/07/24 17:46:07 nra Exp $
+.\"	$NetBSD: macros,v 1.12 2001/11/26 00:19:57 jhawk Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,7 +176,7 @@
 .\" support for more than two pages, nor for right-margins.
 .\" Usage:
 .\"   .Bc [ncol]
-.\" Dependances:
+.\" Dependancies:
 .\"  macro CF   page trap macro for bottom of column
 .\"  macro CZ   code duplication; handling of diversion interpolation.
 .\"  macro CC   diversion trap macro for subdividing into pages.
@@ -303,6 +303,44 @@
 ..
 .als Ec Ed
 .\}
+.
+.\" Macros to support Table of Contents
+.\" TOC is set (from the command line) if we're generating the TOC file;
+.\" the TOC file is read from groff's stderr.
+.\" Usage:
+.\"   .Sh  			section header
+.\"   .Ss			subsection header
+.\"   .Ss2			sub2section header
+.\" XXX: Do we want .Te [explicit toc entry, not based on other markup]?
+.\"   .Tc			import the TOC
+.\"   .Ti depth page "item"	(internal) output an entry
+.if dTOC \{
+.rn Sh Sh-toc
+.de Sh
+.Sh-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+\.tm .Ti 0 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+..
+.rn Ss Ss-toc
+.de Ss
+.Ss-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+\.tm .Ti 1 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+..
+.rn Ss2 Ss2-toc
+.de Ss2
+.Ss2-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+\.tm .Ti 2 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+..
+.\}
+.de Ti
+\h'3n*\\$1u' \\$3\a\\$2
+..
+.de Tc
+.Bd -literal
+.ta (\n(.lu)R
+\.so INSTALL.\*[format].toc
+.Ed
+..
+.
 .
 .\"	--------------------  MISC  --------------------
 .
