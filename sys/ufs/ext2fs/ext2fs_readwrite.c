@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.2 1997/07/04 20:22:14 drochner Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.3 1997/10/23 11:41:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -85,11 +85,9 @@ ext2fs_read(v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
-	u_short mode;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
-	mode = ip->i_e2fs_mode;
 	uio = ap->a_uio;
 
 #ifdef DIAGNOSTIC
