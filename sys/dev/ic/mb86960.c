@@ -213,14 +213,17 @@ void	fe_watchdog	__P((struct ifnet *));
 int	fe_probe_fmv	__P((struct fe_softc *, struct isa_attach_args *));
 int	fe_probe_ati	__P((struct fe_softc *, struct isa_attach_args *));
 int	fe_probe_mbh	__P((struct fe_softc *, struct isa_attach_args *));
+void	fe_read_eeprom	__P((struct fe_softc *, u_char *));
 void	fe_init_mbh	__P((struct fe_softc *));
 int	fe_get_packet	__P((struct fe_softc *, int));
 void	fe_stop		__P((struct fe_softc *));
-void	fe_tint		__P((/*struct fe_softc *, u_char*/));
-void	fe_rint		__P((/*struct fe_softc *, u_char*/));
+void	fe_tint		__P((struct fe_softc *, u_char));
+void	fe_rint		__P((struct fe_softc *, u_char));
 static inline
 void	fe_xmit		__P((struct fe_softc *));
 void	fe_write_mbufs	__P((struct fe_softc *, struct mbuf *));
+static inline
+void	fe_droppacket	__P((struct fe_softc *));
 void	fe_getmcaf	__P((struct arpcom *, u_char *));
 void	fe_setmode	__P((struct fe_softc *));
 void	fe_loadmar	__P((struct fe_softc *));
@@ -2139,10 +2142,12 @@ fe_write_mbufs(sc, m)
 	struct mbuf *m;
 {
 	int bmpr8 = sc->sc_iobase + FE_BMPR8;
-	struct mbuf *mp;
 	u_char *data;
 	u_short savebyte;	/* WARNING: Architecture dependent! */
 	int totlen, len, wantbyte;
+
+	/* XXX thorpej 960116 - quiet bogus compiler warning. */
+	savebyte = 0;
 
 #if FE_DELAYED_PADDING
 	/* Do the "delayed padding." */
