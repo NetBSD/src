@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.12 2003/04/16 08:07:51 itojun Exp $	*/
+/*	$NetBSD: policy.c,v 1.13 2003/06/01 00:12:34 provos Exp $	*/
 /*	$OpenBSD: policy.c,v 1.15 2002/08/07 00:34:17 vincent Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: policy.c,v 1.12 2003/04/16 08:07:51 itojun Exp $");
+__RCSID("$NetBSD: policy.c,v 1.13 2003/06/01 00:12:34 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,7 +203,7 @@ systrace_newpolicynr(int fd, struct policy *tmp)
 		return (-1);
 
 	if ((tmp->policynr = intercept_newpolicy(fd)) == -1) {
-		free(tmp);
+		/* XXX - maybe free policy structure here */
 		return (-1);
 	}
 
