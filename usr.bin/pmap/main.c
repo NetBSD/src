@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2003/01/09 13:05:12 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.3 2003/01/16 15:34:18 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.2 2003/01/09 13:05:12 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2003/01/16 15:34:18 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -351,7 +351,7 @@ load_symbols(kvm_t *kd)
 	if (rc != 0) {
 		for (i = 0; ksyms[i].n_name != NULL; i++)
 			if (ksyms[i].n_value == 0)
-				warnx("symbol %p: not found", ksyms[i].n_name);
+				warnx("symbol %s: not found", ksyms[i].n_name);
 		exit(1);
 	}
 
