@@ -113,9 +113,9 @@ int peek(void)
 int gettok(char **pbuf, int *psz)	/* get next input token */
 {
 	int c, retc;
-	char *buf = *pbuf;
+	uschar *buf = (uschar *) *pbuf;
 	int sz = *psz;
-	char *bp = buf;
+	uschar *bp = buf;
 
 	c = input();
 	if (c == 0)
@@ -159,7 +159,7 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 		*bp = 0;
 		strtod(buf, &rem);	/* parse the number */
 		unputstr(rem);		/* put rest back for later */
-		if (rem == buf) {	/* it wasn't a valid number at all */
+		if (rem == (char*)buf){	/* it wasn't a valid number at all */
 			buf[1] = 0;	/* so return one character as token */
 			retc = buf[0];	/* character is its own type */
 		} else {	/* some prefix was a number */
@@ -368,8 +368,8 @@ int yylex(void)
 int string(void)
 {
 	int c, n;
-	char *s, *bp;
-	static char *buf = 0;
+	uschar *s, *bp;
+	static uschar *buf = 0;
 	static int bufsz = 500;
 
 	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
@@ -514,9 +514,9 @@ void startreg(void)	/* next call to yylex will return a regular expression */
 int regexpr(void)
 {
 	int c;
-	static char *buf = 0;
+	static uschar *buf = 0;
 	static int bufsz = 500;
-	char *bp;
+	uschar *bp;
 
 	if (buf == 0 && (buf = (char *) malloc(bufsz)) == NULL)
 		FATAL("out of space for rex expr");

@@ -91,7 +91,7 @@ static Cell	tempcell	={ OCELL, CTEMP, 0, "", 0.0, NUM|STR|DONTFREE };
 Node	*curnode = NULL;	/* the node being executed, for debugging */
 
 /* buffer memory management */
-int adjbuf(char **pbuf, int *psiz, int minlen, int quantum, char **pbptr,
+int adjbuf(uschar **pbuf, int *psiz, int minlen, int quantum, uschar **pbptr,
 	const char *whatrtn)
 /* pbuf:    address of pointer to buffer being managed
  * psiz:    address of buffer size variable
@@ -383,7 +383,7 @@ Cell *getline(Node **a, int n)	/* get next line from specific input */
 	Cell *r, *x;
 	extern Cell **fldtab;
 	FILE *fp;
-	char *buf;
+	uschar *buf;
 	int bufsize = recsize;
 	int mode;
 
@@ -443,7 +443,7 @@ Cell *array(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts */
 	Cell *x, *y, *z;
 	char *s;
 	Node *np;
-	char *buf;
+	uschar *buf;
 	int bufsz = recsize;
 	int nsub = strlen(*SUBSEP);
 
@@ -482,7 +482,7 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 {
 	Cell *x, *y;
 	Node *np;
-	char *s;
+	uschar *s;
 	int nsub = strlen(*SUBSEP);
 
 	x = execute(a[0]);	/* Cell* for symbol table */
@@ -495,8 +495,8 @@ Cell *awkdelete(Node **a, int n)	/* a[0] is symtab, a[1] is list of subscripts *
 		x->sval = (char *) makesymtab(NSYMTAB);
 	} else {
 		int bufsz = recsize;
-		char *buf;
-		if ((buf = (char *) malloc(bufsz)) == NULL)
+		uschar *buf;
+		if ((buf = malloc(bufsz)) == NULL)
 			FATAL("out of memory in adelete");
 		buf[0] = 0;
 		for (np = a[1]; np; np = np->nnext) {
@@ -520,7 +520,7 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 {
 	Cell *x, *ap, *k;
 	Node *p;
-	char *buf;
+	uschar *buf;
 	char *s;
 	int bufsz = recsize;
 	int nsub = strlen(*SUBSEP);
@@ -534,7 +534,7 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 		ap->tval |= ARR;
 		ap->sval = (char *) makesymtab(NSYMTAB);
 	}
-	if ((buf = (char *) malloc(bufsz)) == NULL) {
+	if ((buf = malloc(bufsz)) == NULL) {
 		FATAL("out of memory in intest");
 	}
 	buf[0] = 0;
@@ -561,7 +561,8 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 Cell *matchop(Node **a, int n)	/* ~ and match() */
 {
 	Cell *x, *y;
-	char *s, *t;
+	uschar *s;
+	char *t;
 	int i;
 	fa *pfa;
 	int (*mf)(fa *, const char *) = match, mode = 0;
@@ -792,14 +793,13 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 
 int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like conversions */
 {
-	char *fmt;
-	char *p, *t;
+	uschar *fmt, *p, *t;
 	const char *os;
 	Cell *x;
 	int flag = 0, n;
 	int fmtwd; /* format width */
 	int fmtsz = recsize;
-	char *buf = *pbuf;
+	uschar *buf = *pbuf;
 	int bufsize = *pbufsize;
 
 	os = s;
@@ -1751,13 +1751,14 @@ void flush_all(void)
 			fflush(files[i].fp);
 }
 
-void backsub(char **pb_ptr, char **sptr_ptr);
+void backsub(uschar **pb_ptr, const uschar **sptr_ptr);
 
 Cell *sub(Node **a, int nnn)	/* substitute command */
 {
-	char *sptr, *pb, *q;
+	const uschar *sptr;
+	uschar *q;
 	Cell *x, *y, *result;
-	char *t, *buf;
+	uschar *t, *buf, *pb;
 	fa *pfa;
 	int bufsz = recsize;
 
@@ -1816,8 +1817,10 @@ Cell *sub(Node **a, int nnn)	/* substitute command */
 Cell *gsub(Node **a, int nnn)	/* global substitute */
 {
 	Cell *x, *y;
-	char *rptr, *sptr, *t, *pb, *q;
-	char *buf;
+	const char *rptr;
+	const uschar *sptr;
+	uschar *t, *q;
+	uschar *pb, *buf;
 	fa *pfa;
 	int mflag, tempstat, num;
 	int bufsz = recsize;
@@ -1917,8 +1920,9 @@ Cell *gensub(Node **a, int nnn)	/* global selective substitute */
 	/* XXX incomplete - doesn't support backreferences \0 ... \9 */
 {
 	Cell *x, *y, *res, *h;
-	char *rptr, *sptr, *t, *pb, *q;
-	char *buf;
+	char *rptr;
+	const uschar *sptr;
+	uschar *q, *pb, *t, *buf;
 	fa *pfa;
 	int mflag, tempstat, num, whichm;
 	int bufsz = recsize;
@@ -2031,9 +2035,10 @@ Cell *gensub(Node **a, int nnn)	/* global selective substitute */
 	return(res);
 }
 
-void backsub(char **pb_ptr, char **sptr_ptr)	/* handle \\& variations */
+void backsub(uschar **pb_ptr, const uschar **sptr_ptr)/* handle \\& variations */
 {						/* sptr[0] == '\\' */
-	char *pb = *pb_ptr, *sptr = *sptr_ptr;
+	uschar *pb = *pb_ptr;
+	const uschar *sptr = *sptr_ptr;
 
 	if (sptr[1] == '\\') {
 		if (sptr[2] == '\\' && sptr[3] == '&') { /* \\\& -> \& */
