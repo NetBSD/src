@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.10 2002/05/07 12:06:06 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.11 2002/05/15 09:44:54 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,10 +61,10 @@ struct open_file	io;
  * (typically `/boot'): filesystem block size, # of filesystem
  * blocks and the block numbers themselves.
  */
-struct sparc_bbinfo bbinfo = {
+struct shared_bbinfo bbinfo = {
 	{ SPARC_BBINFO_MAGIC },
 	0,
-	SPARC_BBINFO_MAXBLOCKS,
+	SHARED_BBINFO_MAXBLOCKS,
 	{ 0 }
 };
 
