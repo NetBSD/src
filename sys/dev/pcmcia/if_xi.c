@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.27 2002/10/23 02:06:11 perry Exp $ */
+/*	$NetBSD: if_xi.c,v 1.28 2002/12/10 21:50:32 bouyer Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.27 2002/10/23 02:06:11 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.28 2002/12/10 21:50:32 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1506,9 +1506,7 @@ xi_set_address(sc)
 	bus_space_handle_t bsh = sc->sc_bsh;
 	bus_addr_t offset = sc->sc_offset;
 	struct ethercom *ether = &sc->sc_ethercom;
-#if 0
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-#endif
 #if WORKING_MULTICAST
 	struct ether_multistep step;
 	struct ether_multi *enm;
@@ -1534,6 +1532,7 @@ xi_set_address(sc)
 			bus_space_write_1(sc->sc_bst, sc->sc_bsh,
 			    sc->sc_offset + SWC1,
 			    SWC1_PROMISC | SWC1_MCAST_PROM);
+			ifp->if_flags |= IFF_PROMISC;
 			return;
 		}
 
