@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.25 2005/01/13 23:02:28 ginsbach Exp $	*/
+/*	$NetBSD: rsh.c,v 1.26 2005/03/11 02:45:24 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.25 2005/01/13 23:02:28 ginsbach Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.26 2005/03/11 02:45:24 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,6 +111,7 @@ main(int argc, char **argv)
 	char	*locuser = 0, *loop;
 #endif /* IN_RCMD */
 	int argoff, asrsh, ch, dflag, nflag, one, rem, i;
+	int family = AF_UNSPEC;
 	pid_t pid;
 	uid_t uid;
 	char *args, *host, *p, *user, *name;
@@ -148,24 +149,24 @@ main(int argc, char **argv)
 
 # ifdef KERBEROS
 #  ifdef CRYPT
-#   define	OPTIONS	"8KLdek:l:np:u:wx"
+#   define	OPTIONS	"468KLdek:l:np:u:wx"
 #  else
-#   define	OPTIONS	"8KLdek:l:np:u:w"
+#   define	OPTIONS	"468KLdek:l:np:u:w"
 #  endif
 # else
-#  define	OPTIONS	"8KLdel:np:u:w"
+#  define	OPTIONS	"468KLdel:np:u:w"
 # endif
 
 #else /* IN_RCMD */
 
 # ifdef KERBEROS
 #  ifdef CRYPT
-#   define	OPTIONS	"8KLdek:l:np:wx"
+#   define	OPTIONS	"468KLdek:l:np:wx"
 #  else
-#   define	OPTIONS	"8KLdek:l:np:w"
+#   define	OPTIONS	"468KLdek:l:np:w"
 #  endif
 # else
-#  define	OPTIONS	"8KLdel:np:w"
+#  define	OPTIONS	"468KLdel:np:w"
 # endif
 
 #endif /* IN_RCMD */
@@ -177,6 +178,12 @@ main(int argc, char **argv)
 		err(1, "malloc");
 	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
+		case '4':
+			family = AF_INET;
+			break;
+		case '6':
+			family = AF_INET6;
+			break;
 		case 'K':
 #ifdef KERBEROS
 			use_kerberos = 0;
@@ -331,7 +338,7 @@ try_connect:
 		rem = rcmd_af(&host, sp->s_port,
 #endif
 		    name,
-		    user, args, &remerr, PF_UNSPEC);
+		    user, args, &remerr, family);
 	}
 #else /* KERBEROS */
 
@@ -340,7 +347,7 @@ try_connect:
 #else
 	rem = rcmd_af(&host, sp->s_port,
 #endif
-	    name, user, args, &remerr, PF_UNSPEC);
+	    name, user, args, &remerr, family);
 #endif /* KERBEROS */
 	(void)free(name);
 
