@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.7 2003/02/01 14:48:18 dsl Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.8 2003/08/18 15:47:41 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -43,7 +43,7 @@
 #include "diskbuf.h"
 #include "dosfile.h"
 
-extern int dosopen __P((char *));
+extern int dosopen __P((const char *));
 extern void dosclose __P((int));
 extern int dosread __P((int, char *, int));
 extern int dosseek __P((int, int, int));
@@ -80,7 +80,7 @@ dos2errno()
 
 int 
 dos_open(path, f)
-	char           *path;
+	const char           *path;
 	struct open_file *f;
 {
 	struct dosfile *df;
