@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.24 2004/08/15 07:19:54 mycroft Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.25 2004/09/13 19:25:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.24 2004/08/15 07:19:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.25 2004/09/13 19:25:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,6 +620,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_NTFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = NTFS_MAXFILENAME;
 #endif
 	mp->mnt_flag |= MNT_LOCAL;
 	devvp->v_specmountpoint = mp;
