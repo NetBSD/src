@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.h,v 1.14 2000/10/10 16:26:43 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.23 2000/10/10 15:35:45 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.15 2000/10/18 21:14:12 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.24 2000/10/18 19:24:24 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -536,6 +536,7 @@ struct icmp6stat {
 #define icp6s_oparamprob_option icp6s_outerrhist.icp6errs_paramprob_option
 #define icp6s_oredirect icp6s_outerrhist.icp6errs_redirect
 #define icp6s_ounknown icp6s_outerrhist.icp6errs_unknown
+	u_quad_t icp6s_pmtuchg;		/* path MTU changes */
 };
 
 /*
@@ -595,6 +596,10 @@ void	icmp6_prepare __P((struct mbuf *));
 void	icmp6_redirect_input __P((struct mbuf *, int));
 void	icmp6_redirect_output __P((struct mbuf *, struct rtentry *));
 int	icmp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+
+struct	ip6ctlparam;
+void	icmp6_mtudisc_update __P((struct ip6ctlparam *));
+void	icmp6_mtudisc_callback_register __P((void (*)(struct in6_addr *)));
 
 /* XXX: is this the right place for these macros? */
 #define icmp6_ifstat_inc(ifp, tag) \
