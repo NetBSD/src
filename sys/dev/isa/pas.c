@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.41 1998/06/09 07:25:04 thorpej Exp $	*/
+/*	$NetBSD: pas.c,v 1.42 1998/06/22 17:21:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -45,6 +45,16 @@
  * 	- look at other PAS drivers (for PAS native suport)
  * 	- use common sb.c once emulation is setup
  */
+/*
+ * jfw 6/21/98 - WARNING:  the PAS native IO ports are scattered all around
+ * IO port space (0x0388, 0x738B, 0xBF88, 0x2789, ...) which will make proper
+ * reservation a real pain, so I'm not going to do it (while fixing the
+ * current reservation code to "work").  As a sanity check, I reserve the
+ * 0x0388 base address, but you probably shouldn't even think of trying this
+ * driver unless you're certain you have the hardware installed and it doesn't
+ * conflict with other hardware...
+ */
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +104,7 @@ int	pasdebug = 0;
  */
 struct pas_softc {
 	struct sbdsp_softc sc_sbdsp;	/* base device, &c. */
+        bus_space_handle_t pas_port_handle;    /* the pas-specific port */
 
 	int model;
 	int rev;
@@ -238,7 +249,10 @@ pasconf(model, sbbase, sbirq, sbdrq)
 int	pasprobe __P((struct device *, struct cfdata *, void *));
 void	pasattach __P((struct device *, struct device *, void *));
 static	int pasfind __P((struct device *, struct pas_softc *, 
-			struct isa_attach_args *));
+			struct isa_attach_args *, int));
+/* argument to pasfind */
+#define PASPROBE  1
+#define PASATTACH 0
 
 struct cfattach pas_ca = {
 	sizeof(struct pas_softc), pasprobe, pasattach
@@ -259,24 +273,33 @@ pasprobe(parent, match, aux)
 	bzero(sc, sizeof *sc);
 	sc->sc_sbdsp.sc_dev.dv_cfdata = match;
 	strcpy(sc->sc_sbdsp.sc_dev.dv_xname, "pas");
-	return pasfind(parent, sc, aux);
+	return pasfind(parent, sc, aux, PASPROBE);
 }
 
 /*
  * Probe for the soundblaster hardware.
  */
 static int
-pasfind(parent, sc, ia)
+pasfind(parent, sc, ia, probing)
 	struct device *parent;
 	struct pas_softc *sc;
 	struct isa_attach_args *ia;
+	int probing;
 {
 	int iobase;
 	u_char id, t;
+	int rc = 0;  /* failure */
 
         /* ensure we can set this up as a sound blaster */
        	if (!SB_BASE_VALID(ia->ia_iobase)) {
 		printf("pas: configured SB iobase 0x%x invalid\n", ia->ia_iobase);
+		return 0;
+	}
+
+	if (bus_space_map(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1, 0,
+                          &sc->pas_port_handle)) {
+		printf("pas: can't map base register %x in probe\n",
+		       PAS_DEFAULT_BASE);
 		return 0;
 	}
 
@@ -311,7 +334,7 @@ pasfind(parent, sc, ia)
 	if (id == 0xff || id == 0xfe) {
 		/* sanity */
 		DPRINTF(("pas: bogus card id\n"));
-		return 0;
+		goto unmap1;
 	}
 	/*
 	 * We probably have a PAS-series board, now check for a
@@ -327,7 +350,7 @@ pasfind(parent, sc, ia)
 	if (t != id) {
 		/* Not a PAS2 */
 		printf("pas: detected card but PAS2 test failed\n");
-		return 0;
+		goto unmap1;
 	}
 	/*XXX*/
 	t = pasread(OPERATION_MODE_1) & 0xf;
@@ -337,18 +360,18 @@ pasfind(parent, sc, ia)
 	}
 	else {
 		DPRINTF(("pas: bogus model id\n"));
-		return 0;
+		goto unmap1;
 	}
 
         if (sc->model >= 0) {
                 if (ia->ia_irq == IRQUNK) {
                         printf("pas: sb emulation requires known irq\n");
-                        return (0);
+			goto unmap1;
                 } 
                 pasconf(sc->model, ia->ia_iobase, ia->ia_irq, 1);
         } else {
                 DPRINTF(("pas: could not probe pas\n"));
-                return (0);
+		goto unmap1;
         }
 
 	/* Now a SoundBlaster, so set up proper bus-space hooks
@@ -363,7 +386,7 @@ pasfind(parent, sc, ia)
 	    &sc->sc_sbdsp.sc_ioh)) {
 		printf("pas: can't map i/o space 0x%x/%d in probe\n",
 		    ia->ia_iobase, SBP_NPORT);
-		return 0;
+		goto unmap;
 	}
 
 	if (sbdsp_reset(&sc->sc_sbdsp) < 0) {
@@ -405,12 +428,16 @@ pasfind(parent, sc, ia)
 		goto unmap;
 	}
 
+	rc = 1;
 	ia->ia_iosize = SB_NPORT;
-	return 1;
 
  unmap:
-	bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh, SBP_NPORT);
-	return 0;
+	if (rc == 0 || probing)
+	        bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh, SBP_NPORT);
+ unmap1:
+	if (rc == 0 || probing)
+	        bus_space_unmap(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1);
+	return rc;
 }
 
 #ifdef NEWCONFIG
@@ -454,7 +481,7 @@ pasattach(parent, self, aux)
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
 	int iobase = ia->ia_iobase;
 	
-	if (!pasfind(parent, sc, ia)) {
+	if (!pasfind(parent, sc, ia, PASATTACH)) {
 		printf("%s: pasfind failed\n", sc->sc_sbdsp.sc_dev.dv_xname);
 		return;
 	}
