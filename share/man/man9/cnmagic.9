@@ -1,8 +1,8 @@
-.\" $NetBSD: cnmagic.9,v 1.1 2000/11/08 22:41:59 eeh Exp $
+.\" $NetBSD: cnmagic.9,v 1.2 2001/04/09 17:09:58 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -18,7 +18,7 @@
 .\"          information about NetBSD.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -29,10 +29,10 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd Nov 11, 2000
+.Dd November 11, 2000
 .Dt CNMAGIC
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@
 .Nd console magic key sequence management
 .Sh SYNOPSIS
 .Fd #include <sys/systm.h>
-.Va typedef struct cnm_state cnm_state_t; 
+.Va typedef struct cnm_state cnm_state_t;
 .Ft void
 .Fn cn_trap
 .Ft int
@@ -70,7 +70,7 @@ devices and break into the debugger or rom monitor with a minimum of interrupt
 latency.
 .Pp
 Drivers that generate console input should make use of these routines.  A
-different 
+different
 .Va cnm_state_t
 should be used for each separate input stream.  Multiple devices that share
 the same input stream, such as USB keyboards can share the same
@@ -78,8 +78,8 @@ the same input stream, such as USB keyboards can share the same
 Once a
 .Va cnm_state_t
 is allocated, it should be initialized with
-.Fn cn_init_magic 
-so it can be used by 
+.Fn cn_init_magic
+so it can be used by
 .Fn cn_check_magic .
 If a driver thinks it might be the console input device it can set the
 magic sequence with
@@ -135,8 +135,8 @@ through the state machine.  If the state machine completes a match
 of the current console magic sequence
 .Fn cn_trap
 is called.  Some input may need to be translated to state machine
-values such as the serial line 
-.Li BREAK 
+values such as the serial line
+.Li BREAK
 sequence.
 .It Fn "void cn_destroy_magic" "cnm_state_t *cnms"
 .Pp
@@ -145,8 +145,8 @@ This should be called once what
 points to is no longer needed.
 .It Fn "int cn_set_magic" "char *magic"
 .Fn cn_set_magic
-encodes a 
-.Li nul 
+encodes a
+.Li nul
 terminated string arbitrary string into values that can be used by
 the state machine and installs it as the global magic sequence.  The
 escape sequence is character value
@@ -190,6 +190,6 @@ Eduardo Horvath <eeh@netbsd.org>
 .Sh HISTORY
 The
 .Nx
-console magic key sequence management framework 
-first appeared in 
+console magic key sequence management framework
+first appeared in
 .Nx 1.6 .
