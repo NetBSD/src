@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.29 2003/05/14 06:47:39 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.30 2003/07/04 00:49:18 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.29 2003/05/14 06:47:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.30 2003/07/04 00:49:18 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -330,8 +330,8 @@ noreplaycheck:
 	nxt = esptail.esp_nxt;
 	taillen = esptail.esp_padlen + sizeof(esptail);
 
-	if (m->m_pkthdr.len < taillen
-	 || m->m_pkthdr.len - taillen < hlen) {	/* ? */
+	if (m->m_pkthdr.len < taillen ||
+	    m->m_pkthdr.len - taillen < off + esplen + ivlen + sizeof(esptail)) {
 		ipseclog((LOG_WARNING,
 		    "bad pad length in IPv4 ESP input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
