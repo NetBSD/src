@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1997/03/26 22:39:01 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 1997/09/20 14:15:54 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,9 +55,13 @@
 #include <sys/dmap.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/vnode.h>
+#include <sys/fcntl.h>
+#include <sys/dkio.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/bootinfo.h>
 
 void findroot __P((struct device **, int *));
 
@@ -113,6 +117,7 @@ cpu_rootconf()
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
+struct device *booted_device;
 
 /*
  * Attempt to find the device from which we were booted.
@@ -124,8 +129,11 @@ findroot(devpp, partp)
 	struct device **devpp;
 	int *partp;
 {
-	int i, majdev, unit, part;
+#ifdef notyet
+	struct btinfo_bootdisk *bid;
+#endif
 	struct device *dv;
+	int i, majdev, unit, part;
 	char buf[32];
 
 	/*
@@ -133,6 +141,123 @@ findroot(devpp, partp)
 	 */
 	*devpp = NULL;
 	*partp = 0;
+
+	if(booted_device) {
+		*devpp = booted_device;
+		return;
+	}
+	if(lookup_bootinfo(BTINFO_NETIF)) {
+		/*
+		 * We got netboot interface information, but
+		 * "device_register()" couldn't match it to a configured
+		 * device. Bootdisk information cannot be present at the
+		 * same time, so give up.
+		 */
+		printf("findroot: netboot interface not found\n");
+		return;
+	}
+
+#ifdef notyet
+	bid = lookup_bootinfo(BTINFO_BOOTDISK);
+	if(bid) {
+		/*
+		 * Scan all disk devices for ones that match the passed data.
+		 * Don't break if one is found, to get possible multiple
+		 * matches - for problem tracking. Use the first match anyway
+		 * because lower device numbers are more likely to be the
+		 * boot device.
+		 */
+		for (dv = alldevs.tqh_first; dv != NULL;
+		dv = dv->dv_list.tqe_next) {
+			if(dv->dv_class != DV_DISK)
+				continue;
+
+			if(!strcmp(dv->dv_cfdata->cf_driver->cd_name, "fd")) {
+				/* Assume the configured unit number matches the
+				 BIOS device number. (This is the old behaviour.)
+				 Needs some ideas how to handle BIOS's "swap floppy
+				 drive" options. */
+				if((bid->biosdev & 0x80) ||
+				   dv->dv_unit != bid->biosdev)
+					continue;
+
+				goto found;
+			}
+
+			if(!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
+			   !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+				struct devnametobdevmaj *i;
+				struct vnode *tmpvn;
+				int error;
+				struct disklabel label;
+				int found = 0;
+
+				if(!(bid->biosdev & 0x80) || bid->labelsector == -1)
+					continue;
+				/* A disklabel is required here. The bootblocks don't
+				 refuse to boot from a disk without label, but this is
+				 normally not wanted. */
+
+				i = i386_nam2blk;
+				while(i->d_name &&
+				      strcmp(i->d_name, dv->dv_cfdata->cf_driver->cd_name))
+					i++;
+				if(!i->d_name)
+					continue; /* XXX panic() ??? */
+
+				/* Fake a temporary vnode for the disk, open it and read
+				 the disklabel for comparision. */
+				if(bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition),
+					  &tmpvn))
+					panic("findroot can't alloc vnode");
+				error = VOP_OPEN(tmpvn, FREAD, FSCRED, 0);
+				if(error) {
+					printf("findroot: can't open dev %s (%d)\n",
+					       dv->dv_xname, error);
+					continue;
+				}
+				error = VOP_IOCTL(tmpvn, DIOCGDINFO, (caddr_t)&label,
+						  FREAD, NOCRED, 0);
+				if(error) {
+					/* XXX can't happen - open() would have errored
+					 out (or faked up one) */
+					printf("can't get label for dev %s (%d)\n",
+					       dv->dv_xname, error);
+					goto closeout;
+				}
+
+				/* compare with our data */
+				if(label.d_type == bid->label.type &&
+				   label.d_checksum == bid->label.checksum &&
+				   !strncmp(label.d_packname, bid->label.packname, 16))
+					found = 1;
+
+closeout:
+				VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
+				vrele(tmpvn);
+
+				if(found)
+					goto found;
+				continue;
+			}
+
+			/* no "fd", "wd" or "sd" */
+			continue;
+
+found:
+			if(*devpp) {
+				printf("warning: double match for boot device (%s, %s)\n",
+				       (*devpp)->dv_xname, dv->dv_xname);
+				continue;
+			}
+			*devpp = dv;
+			*partp = bid->partition;
+		}
+
+		if(*devpp)
+			return;
+	}
+#endif /* notyet */
 
 #if 0
 	printf("howto %x bootdev %x ", boothowto, bootdev);
@@ -160,4 +285,58 @@ findroot(devpp, partp)
 			return;
 		}
 	}
+}
+
+#include <dev/isa/isavar.h>
+#include <dev/pci/pcivar.h>
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	/*
+	 * Handle network interfaces here, the attachment information is
+	 * not available driver independantly later.
+	 * For disks, there is nothing useful available at attach time.
+	 */
+	if(dev->dv_class == DV_IFNET) {
+		struct btinfo_netif *bin = lookup_bootinfo(BTINFO_NETIF);
+		if(!bin)
+			return;
+
+		/* check driver name */
+		if(strcmp(bin->ifname, dev->dv_cfdata->cf_driver->cd_name))
+			return;
+
+		if(bin->bus == BI_BUS_ISA &&
+		   !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name, "isa")) {
+			struct isa_attach_args *iaa = aux;
+
+			/* compare IO base address */
+			if(bin->addr.iobase == iaa->ia_iobase)
+				goto found;;
+		}
+		if(bin->bus == BI_BUS_PCI &&
+		   !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name, "pci")) {
+			struct pci_attach_args *paa = aux;
+			int b, d, f;
+
+			/* calculate BIOS representation of (bus,device,function)
+			 and compare */
+			pci_decompose_tag(paa->pa_pc, paa->pa_tag, &b, &d, &f);
+			if(bin->addr.tag == ((b << 8) | (d << 3) | f))
+				goto found;
+		}
+	}
+	return;
+
+found:
+	if(booted_device) {
+		/* XXX should be a "panic()" */
+		printf("warning: double match for boot device (%s, %s)\n",
+		       booted_device->dv_xname, dev->dv_xname);
+		return;
+	}
+	booted_device = dev;
 }
