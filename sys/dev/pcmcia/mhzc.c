@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.18 2004/08/08 09:23:01 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.19 2004/08/08 15:12:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.18 2004/08/08 09:23:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.19 2004/08/08 15:12:20 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -781,7 +781,7 @@ sm_mhzc_attach(parent, self, aux)
 
 	aprint_normal("\n");
 
-	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_IO16, 0,
+	if (pcmcia_io_map(msc->sc_pf, PCMCIA_WIDTH_AUTO, 0,
 	    msc->sc_ethernet_pcioh.size, &msc->sc_ethernet_pcioh,
 	    &msc->sc_ethernet_io_window)) {
 		aprint_error("%s: unable to map I/O space\n",
