@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.18 1997/02/11 08:40:44 mrg Exp $	*/
+/*	$NetBSD: fstat.c,v 1.19 1997/03/03 22:47:17 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -40,8 +40,8 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)fstat.c	8.3 (Berkeley) 5/2/95;*/
-static char *rcsid = "$NetBSD: fstat.c,v 1.18 1997/02/11 08:40:44 mrg Exp $";
+/*static char sccsid[] = "from: @(#)fstat.c	8.3 (Berkeley) 5/2/95";*/
+static char *rcsid = "$NetBSD: fstat.c,v 1.19 1997/03/03 22:47:17 explorer Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
