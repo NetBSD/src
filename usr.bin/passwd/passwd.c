@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.14 1999/08/26 07:33:16 marc Exp $	*/
+/*	$NetBSD: passwd.c,v 1.15 2000/01/26 01:18:48 aidan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.14 1999/08/26 07:33:16 marc Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.15 2000/01/26 01:18:48 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,9 +83,14 @@ main(argc, argv)
 	extern int optind;
 	int ch;
 	char *username;
+#if defined(KERBEROS)
+	char *iflag = 0, *rflag = 0;
+#endif
 #if defined(KERBEROS) || defined(KERBEROS5)
-	char *iflag = 0, *rflag = 0, *uflag = 0;
+	char *uflag = 0;
+#endif
 
+#if defined(KERBEROS) || defined(KERBEROS5)
 	if (strcmp(__progname, "kpasswd") == 0)
 		use_kerberos = 1;
 	else
@@ -121,6 +126,8 @@ main(argc, argv)
 		case 'r':
 			rflag = optarg;
 			break;
+#endif
+#if defined(KERBEROS) || defined(KERBEROS5)
 		case 'u':
 			uflag = optarg;
 			break;	
@@ -136,8 +143,11 @@ main(argc, argv)
 #ifndef KERBEROS
 		case 'i':
 		case 'r':
-		case 'u':
 			errx(1, "Kerberos4 support not compiled in.");
+#endif
+#if !defined(KERBEROS) && !defined(KERBEROS5)
+		case 'u':
+			errx(1, "Kerberos support not compiled in.");
 #endif
 		case 'y':		/* change YP password */
 #ifdef	YP
@@ -182,17 +192,15 @@ main(argc, argv)
 		exit(1);
 	}
 
-#if defined(KERBEROS) || defined(KERBEROS5)
+#if defined(KERBEROS5)
+	if (use_kerberos)
+		exit(kadm5_passwd(username));
+#elif defined(KERBEROS)
 	if (uflag && (iflag || rflag))
 		errx(1, "-u cannot be used with -r or -i");
 
 	if (use_kerberos)
 		exit(kadm_passwd(username, iflag, rflag, uflag));
-#else
-#ifdef KERBEROS5
-	if (use_kerberos)
-		exit(krb_passwd());
-#endif
 #endif
 #ifdef	YP
 	if (use_yp)
