@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.8 1999/11/12 18:14:20 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.9 1999/11/21 15:01:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -279,7 +279,10 @@ beattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= qec->sc_burst;
 
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0, beintr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr)
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri,
+					 0, beintr, sc);
 
 	myetheraddr(sc->sc_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
