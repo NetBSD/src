@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.3 2003/04/28 23:16:14 bjh21 Exp $	*/
+/*	$NetBSD: sched.h,v 1.4 2003/07/08 05:41:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,14 +53,13 @@ __BEGIN_DECLS
  * These are permitted to fail and return ENOSYS if
  * _POSIX_PRIORITY_SCHEDULING is not defined.
  */
-int	sched_setparam(pid_t pid, const struct sched_param *param);
-int	sched_getparam(pid_t pid, struct sched_param *param);
-int	sched_setscheduler(pid_t pid, int policy,
-	    const struct sched_param *param);
-int	sched_getscheduler(pid_t pid);
-int	sched_get_priority_max(int policy);
-int	sched_get_priority_min(int policy);
-int	sched_rr_get_interval(pid_t pid, struct timespec *interval);
+int	sched_setparam(pid_t, const struct sched_param *);
+int	sched_getparam(pid_t, struct sched_param *);
+int	sched_setscheduler(pid_t, int, const struct sched_param *);
+int	sched_getscheduler(pid_t);
+int	sched_get_priority_max(int);
+int	sched_get_priority_min(int);
+int	sched_rr_get_interval(pid_t, struct timespec *);
 
 
 /* Not optional in the presence of _POSIX_THREADS */
