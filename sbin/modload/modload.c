@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.14 1996/01/17 02:30:44 jtc Exp $	*/
+/*	$NetBSD: modload.c,v 1.15 1997/09/15 03:55:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -32,26 +32,29 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: modload.c,v 1.15 1997/09/15 03:55:29 lukem Exp $");
+#endif /* not lint */
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/lkm.h>
 #include <sys/file.h>
-#include <errno.h>
 #include <a.out.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 #include <unistd.h>
 #include "pathnames.h"
 
 #ifndef DFLT_ENTRY
 #define	DFLT_ENTRY	"xxxinit"
 #endif	/* !DFLT_ENTRY */
-
-#define	min(a, b)	((a) < (b) ? (a) : (b))
 
 /*
  * Expected linker options:
@@ -63,6 +66,11 @@
  * <target>	object file
  */
 #define	LINKCMD		"ld -A %s -e _%s -o %s -T %x %s"
+
+void	cleanup __P((void));
+int	linkcmd __P((char *, char *, char *, u_int, char *));
+int	main __P((int, char *[]));
+void	usage __P((void));
 
 int debug = 0;
 int verbose = 0;
@@ -160,7 +168,7 @@ main(argc, argv)
 	int sz, bytesleft;
 	char buf[MODIOBUF];
 
-	while ((c = getopt(argc, argv, "dvA:e:p:o:")) != EOF) {
+	while ((c = getopt(argc, argv, "dvA:e:p:o:")) != -1) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -269,8 +277,8 @@ main(argc, argv)
 	 * Relink at kernel load address
 	 */
 	if (linkcmd(kname, entry, out, resrv.addr, modobj))
-		errx(1, "can't link `%s' creating `%s' bound to 0x%08x",
-		    modobj, out, resrv.addr);
+		errx(1, "can't link `%s' creating `%s' bound to 0x%08lx",
+		    modobj, out, (long) resrv.addr);
 
 	/*
 	 * Open the relinked module to load it...
@@ -304,7 +312,7 @@ main(argc, argv)
 	for (bytesleft = info_buf.a_text + info_buf.a_data;
 	    bytesleft > 0;
 	    bytesleft -= sz) {
-		sz = min(bytesleft, MODIOBUF);
+		sz = MIN(bytesleft, MODIOBUF);
 		read(modfd, buf, sz);
 		ldbuf.cnt = sz;
 		ldbuf.data = buf;
@@ -344,7 +352,7 @@ main(argc, argv)
 			err(15, "error fetching module stats for post-install");
 		sprintf(id, "%d", sbuf.id);
 		sprintf(type, "0x%x", sbuf.type);
-		sprintf(offset, "%d", sbuf.offset);
+		sprintf(offset, "%ld", (long)sbuf.offset);
 		/*
 		 * XXX
 		 * The modload docs say that drivers can install bdevsw &
