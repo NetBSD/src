@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68.2.1 2000/06/30 16:27:42 simonb Exp $ */
+/*	$NetBSD: machdep.c,v 1.68.2.2 2000/07/18 16:23:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,6 +113,14 @@
 #include <uvm/uvm.h>	/* XXX: not _extern ... need vm_map_create */
 
 #include <sys/sysctl.h>
+#ifndef	ELFSIZE
+#ifdef __arch64__
+#define	ELFSIZE	64
+#else
+#define	ELFSIZE	32
+#endif
+#endif
+#include <sys/exec_elf.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
@@ -122,10 +130,8 @@
 #include <machine/pmap.h>
 #include <machine/openfirm.h>
 #include <machine/sparc64.h>
-#include <machine/ctlreg.h>
 
 #include <sparc64/sparc64/cache.h>
-#include <sparc64/sparc64/vaddrs.h>
 
 /* #include "fb.h" */
 
@@ -213,7 +219,7 @@ cpu_startup()
 	 */
 	printf(version);
 	/*identifycpu();*/
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob((u_int64_t)physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
@@ -328,6 +334,8 @@ setregs(p, pack, stack)
 	register struct trapframe64 *tf = p->p_md.md_tf;
 	register struct fpstate64 *fs;
 	register int64_t tstate;
+	int pstate = PSTATE_USER;
+	Elf_Ehdr *eh = pack->ep_hdr;
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -339,8 +347,34 @@ setregs(p, pack, stack)
 	 *	%g1: address of PS_STRINGS (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
+#ifdef __arch64__
+	/* Check what memory model is requested */
+#define	EF_SPARCV9_MM		0x3
+#define	EF_SPARCV9_TSO		0x0
+#define	EF_SPARCV9_PSO		0x1
+#define	EF_SPARCV9_RMO		0x2
+#define	EF_SPARC_SUN_US1	0x000200
+#define	EF_SPARC_HAL_R1		0x000400
+#define	EF_SPARC_SUN_US3	0x000800
+
+	switch ((eh->e_flags & EF_SPARCV9_MM)) {
+	default:
+		printf("Unknown memory model %d\n", 
+		       (eh->e_flags & EF_SPARCV9_MM));
+		/* FALLTHROUGH */
+	case EF_SPARCV9_TSO:
+		pstate = PSTATE_MM_TSO|PSTATE_IE;
+		break;
+	case EF_SPARCV9_PSO:
+		pstate = PSTATE_MM_PSO|PSTATE_IE;
+		break;
+	case EF_SPARCV9_RMO:
+		pstate = PSTATE_MM_RMO|PSTATE_IE;
+		break;
+	}
+#endif
 	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-		((PSTATE_USER)<<TSTATE_PSTATE_SHIFT) | 
+		((pstate)<<TSTATE_PSTATE_SHIFT) | 
 		(tf->tf_tstate & TSTATE_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
 		/*
@@ -829,7 +863,7 @@ cpu_dumpconf()
 	dumpsize = physmem;
 }
 
-#define	BYTES_PER_DUMP	(8 * 1024)	/* must be a multiple of pagesize */
+#define	BYTES_PER_DUMP	(NBPG)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
 
 caddr_t
@@ -898,6 +932,9 @@ dumpsys()
 			i += NBPG;
 			blkno += btodb(NBPG);
 		}
+#if 0
+printf("dumping segment at %llx\n", maddr);
+#endif
 
 		for (; i < mp->size; i += n) {
 			n = mp->size - i;
@@ -907,11 +944,16 @@ dumpsys()
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
 				printf("%d ", i / (1024*1024));
-
 			(void) pmap_enter(pmap_kernel(), dumpspace, maddr,
 					VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+#if 0
+printf("calling dump of %llx\n", maddr);
+#endif
 			error = (*dump)(dumpdev, blkno,
 					(caddr_t)dumpspace, (int)n);
+#if 0
+printf("%llx done\n", maddr);
+#endif
 			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
 			if (error)
 				break;
@@ -983,7 +1025,7 @@ stackdump()
 		if( ((long)fp) & 1 ) {
 			fp64 = (struct frame64*)(((char*)fp)+BIAS);
 			/* 64-bit frame */
-			printf("%x(%llx,%llx,%llx,%llx,%llx,%llx,%llx)sp=%p",
+			printf("%x(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %p\n",
 			       fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
 			       fp64->fr_arg[3], fp64->fr_arg[4], fp64->fr_arg[5], fp64->fr_arg[6],
 			       fp64->fr_fp);
@@ -1050,7 +1092,8 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_NOWRITE|BUS_DMA_NOCACHE);
+	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT|BUS_DMA_COHERENT|
+				   BUS_DMA_NOWRITE|BUS_DMA_NOCACHE);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -1268,6 +1311,16 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		return (ENOMEM);
 
 	/*
+	 * If the bus uses DVMA then ignore boundary and alignment.
+	 */
+	segs[0]._ds_boundary = boundary;
+	segs[0]._ds_align = alignment;
+	if (flags & BUS_DMA_DVMA) {
+		boundary = 0;
+		alignment = 0;
+	}
+
+	/*
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(mlist);
@@ -1282,7 +1335,6 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 */
 	segs[0].ds_addr = NULL; /* UPA does not map things */
 	segs[0].ds_len = size;
-	segs[0]._ds_boundary = boundary;
 	*rsegs = 1;
 
 	/*
@@ -1442,7 +1494,7 @@ static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
 static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
 				    bus_addr_t, int, bus_space_handle_t *));
 static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
-						   int (*) __P((void *)),
+						   int, int (*) __P((void *)),
 						   void *));
 static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
 					bus_size_t, bus_size_t, int));
@@ -1585,8 +1637,9 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 
 
 void *
-sparc_mainbus_intr_establish(t, level, flags, handler, arg)
+sparc_mainbus_intr_establish(t, pil, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int	pil;
 	int	level;
 	int	flags;
 	int	(*handler)__P((void *));
@@ -1601,7 +1654,7 @@ sparc_mainbus_intr_establish(t, level, flags, handler, arg)
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(level, ih);
+	intr_establish(pil, ih);
 	return (ih);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.11 2000/06/12 22:36:59 eeh Exp $	*/
+/*	$NetBSD: ebus.c,v 1.11.2.1 2000/07/18 16:23:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -105,7 +105,7 @@ static int ebus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 static int _ebus_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
 				bus_space_handle_t *));
-static void *ebus_intr_establish __P((bus_space_tag_t, int, int,
+static void *ebus_intr_establish __P((bus_space_tag_t, int, int, int,
 				int (*) __P((void *)), void *));
 
 static int ebus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
@@ -129,7 +129,7 @@ ebus_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
-	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN && 
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_EBUS &&
 	    ebus_find_node(pa))
 		return (1);
@@ -150,7 +150,7 @@ ebus_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct ebus_attach_args eba;
 	struct ebus_interrupt_map_mask *immp;
-	int node, nmapmask, rv;
+	int node, nmapmask, error;
 	char devinfo[256];
 
 	printf("\n");
@@ -175,24 +175,31 @@ ebus_attach(parent, self, aux)
 	 */
 	sc->sc_intmap = NULL;
 	sc->sc_range = NULL;
-	rv = getprop(node, "interrupt-map", sizeof(struct ebus_interrupt_map),
-	    &sc->sc_nintmap, (void **)&sc->sc_intmap);
-	if (rv)
-		panic("could not get ebus interrupt-map");
+	error = getprop(node, "interrupt-map",
+			sizeof(struct ebus_interrupt_map),
+			&sc->sc_nintmap, (void **)&sc->sc_intmap);
+	switch (error) {
+	case 0:
+		immp = &sc->sc_intmapmask;
+		error = getprop(node, "interrupt-map-mask",
+			    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
+			    (void **)&immp);
+		if (error)
+			panic("could not get ebus interrupt-map-mask");
+		if (nmapmask != 1)
+			panic("ebus interrupt-map-mask is broken");
+		break;
+	case ENOENT:
+		break;
+	default:
+		panic("ebus interrupt-map: error %d", error);
+		break;
+	}
 
-	immp = &sc->sc_intmapmask;
-	rv = getprop(node, "interrupt-map-mask",
-	    sizeof(struct ebus_interrupt_map_mask), &nmapmask,
-	    (void **)&immp);
-	if (rv)
-		panic("could not get ebus interrupt-map-mask");
-	if (nmapmask != 1)
-		panic("ebus interrupt-map-mask is broken");
-
-	rv = getprop(node, "ranges", sizeof(struct ebus_ranges),
+	error = getprop(node, "ranges", sizeof(struct ebus_ranges),
 	    &sc->sc_nrange, (void **)&sc->sc_range);
-	if (rv)
-		panic("could not get ebus ranges");
+	if (error)
+		panic("ebus ranges: error %d", error);
 
 	/*
 	 * now attach all our children
@@ -250,7 +257,7 @@ ebus_setup_attach_args(sc, node, ea)
 	if (getprop(node, "interrupts", sizeof(u_int32_t), &ea->ea_nintrs,
 	    (void **)&ea->ea_intrs))
 		ea->ea_nintrs = 0;
-	else 
+	else
 		ebus_find_ino(sc, ea);
 
 	return (0);
@@ -306,8 +313,19 @@ ebus_find_ino(sc, ea)
 	u_int32_t hi, lo, intr;
 	int i, j, k;
 
+	if (sc->sc_nintmap == 0) {
+		/*
+		 * If there is no interrupt map in the ebus node,
+		 * assume that the child's `interrupt' property is
+		 * already in a format suitable for the parent bus.
+		 */
+		return;
+	}
+
 	DPRINTF(EDB_INTRMAP, ("ebus_find_ino: searching %d interrupts", ea->ea_nintrs));
+
 	for (j = 0; j < ea->ea_nintrs; j++) {
+
 		intr = ea->ea_intrs[j] & sc->sc_intmapmask.intr;
 
 		DPRINTF(EDB_INTRMAP, ("; intr %x masked to %x", ea->ea_intrs[j], intr));
@@ -321,7 +339,8 @@ ebus_find_ino(sc, ea)
 				if (hi == sc->sc_intmap[k].hi &&
 				    lo == sc->sc_intmap[k].lo &&
 				    intr == sc->sc_intmap[k].intr) {
-					ea->ea_intrs[j] = sc->sc_intmap[k].cintr;
+					ea->ea_intrs[j] =
+						sc->sc_intmap[k].cintr|INTMAP_OBIO;
 					DPRINTF(EDB_INTRMAP, ("; FOUND IT! changing to %d\n", sc->sc_intmap[k].cintr));
 					goto next_intr;
 				}
@@ -518,16 +537,15 @@ ebus_bus_mmap(t, btype, paddr, flags, hp)
  * install an interrupt handler for a PCI device
  */
 void *
-ebus_intr_establish(t, level, flags, handler, arg)
+ebus_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
 	void *arg;
 {
-
-	/* XXX */
-	return (0);
+	return (bus_intr_establish(t->parent, pri, level, flags, handler, arg));
 }
 
 /*

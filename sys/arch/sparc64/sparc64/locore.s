@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.62 2000/06/19 23:30:35 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.62.2.1 2000/07/18 16:23:27 mrg Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -53,9 +53,11 @@
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
+#define	DIAGNOSTIC
 
+#undef	PHYS_CLEAR
 #undef	NO_VCACHE		/* Map w/D$ disabled */
-#undef	TRAPTRACE		/* Keep history of all traps (unsafe) */
+#define	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
 #define	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
@@ -66,7 +68,7 @@
 #define	NEW_FPSTATE
 #define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
 #define	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
-#define	NO_TSB			/* Don't use TSB */
+#undef	NO_TSB			/* Don't use TSB */
 #undef	TICK_IS_TIME		/* Keep %tick synchronized with time */
 #undef	SCHED_DEBUG
 	
@@ -80,7 +82,6 @@
 #include <machine/param.h>
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
-#include <sparc64/sparc64/vaddrs.h>
 #include <machine/ctlreg.h>
 #include <machine/psl.h>
 #include <machine/signal.h>
@@ -99,13 +100,17 @@
 #endif
 #include <machine/asm.h>
 
-#ifndef MULTIPROCESSOR
 #undef	CURPROC
 #undef	CPCB
 #undef	FPPROC
+#ifndef MULTIPROCESSOR
 #define	CURPROC	_C_LABEL(curproc)
 #define CPCB	_C_LABEL(cpcb)
 #define	FPPROC	_C_LABEL(fpproc)
+#else
+#define	CURPROC	(CPUINFO_VA+CI_CURPROC)
+#define CPCB	(CPUINFO_VA+CI_CPCB)
+#define	FPPROC	(CPUINFO_VA+CI_FPPROC)
 #endif
 
 /* Let us use same syntax as C code */
@@ -241,25 +246,34 @@
 	mov	%l6, %g6; \
 	mov	%l7, %g7
 
+/* Load strings address into register; NOTE: hidden local label 99 */
+#define LOAD_ASCIZ(reg, s)	\
+	set	99f, reg ;	\
+	.data ;			\
+99:	.asciz	s ;		\
+	_ALIGN ;		\
+	.text
+
 /*
  * Handy stack conversion macros.
  * They correctly switch to requested stack type
  * regardless of the current stack.
  */
 
-#define TO_STACK64(size) \
-	andcc	%sp, 1, %g0; /* 64-bit stack? */ \
-	save	%sp, size, %sp; \
-	beq,a	9f; \
-	 add	%sp, -BIAS, %sp; /* Convert to 64-bits */ \
-9:	
+#ifdef _LP64
+#define STACKFRAME(size)					\
+	andcc	%sp, 1, %g0; /* 64-bit stack? */		\
+	save	%sp, size, %sp;					\
+	add	%sp, -BIAS, %o0; /* Convert to 64-bits */	\
+	movz	%icc, %o0, %sp
+#else
+#define STACKFRAME(size)					\
+	andcc	%sp, 1, %g0; /* 64-bit stack? */		\
+	save	%sp, size, %sp;					\
+	add	%sp, +BIAS, %o0; /* Convert to 32-bits */	\
+	movnz	%icc, %o0, %sp
+#endif
 
-#define TO_STACK32(size) \
-	andcc	%sp, 1, %g0; /* 64-bit stack? */ \
-	save	%sp, size, %sp; \
-	bne,a	9f; \
-	 add	%sp, +BIAS, %sp; /* Convert to 32-bits */ \
-9:	
 
 	.data
 	.globl	_C_LABEL(data_start)
@@ -721,28 +735,40 @@ _C_LABEL(trapbase):
 	VTRAP(T_FP_IEEE_754, fp_exception)		! 021 = ieee 754 exception
 	VTRAP(T_FP_OTHER, fp_exception)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
-	TRACEWIN			! DEBUG
-	clr	%l0
-!	set	0xbadcafe, %l0		! DEBUG
-	mov %l0,%l1; mov %l0,%l2	! 024-027 = clean window trap
-	rdpr %cleanwin, %o7		!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done	
-	inc %o7; mov %l0,%l3; mov %l0,%l4	!	This handler is in-lined and cannot fault
+	TRACEWIN			! DEBUG -- 4 insns
+	rdpr %cleanwin, %o7		! 024-027 = clean window trap
+	inc %o7				!	This handler is in-lined and cannot fault
 	wrpr %g0, %o7, %cleanwin	!       Nucleus (trap&IRQ) code does not need clean windows
 	
-	mov %l0,%l5
-#ifdef NOT_DEBUG
+	clr	%l0
+!	set	0xbadcafe, %l0		! DEBUG
+	mov %l0,%l1; mov %l0,%l2	!	Clear out %l0-%l8 and %o0-%o8 and inc %cleanwin and done	
+	mov %l0,%l3; mov %l0,%l4
+#if 0
+#ifdef DIAGNOSTIC
 	!! 
 	!! Check the sp redzone
 	!!
-	rdpr	%wstate, t1	! User stack?
-	cmp	t1, WSTATE_KERN
-	bne,pt	%icc, 7f
-	 sethi	%hi(_C_LABEL(redzone)), t1
-	ldx	[t1 + %lo(_C_LABEL(redzone))], t2
-	cmp	%sp, t2			! if sp >= t2, not in red zone
-	blu	panic_red		! and can continue normally
-7:
+	!! Since we can't spill the current window, we'll just keep
+	!! track of the frame pointer.  Problems occur when the routine
+	!! allocates and uses stack storage.
+	!! 
+!	rdpr	%wstate, %l5	! User stack?
+!	cmp	%l5, WSTATE_KERN
+!	bne,pt	%icc, 7f
+	 sethi	%hi(CPCB), %l5
+	LDPTR	[%l5 + %lo(CPCB)], %l5	! If pcb < fp < pcb+sizeof(pcb)
+	inc	PCB_SIZE, %l5		! then we have a stack overflow
+	btst	%fp, 1			! 64-bit stack?
+	sub	%fp, %l5, %l7
+	bnz,a,pt	%icc, 1f
+	 inc	BIAS, %l7		! Remove BIAS
+1:	
+	cmp	%l7, PCB_SIZE		
+	blu	%xcc, cleanwin_overflow
 #endif
+#endif
+	mov %l0, %l5
 	mov %l0, %l6; mov %l0, %l7; mov %l0, %o0; mov %l0, %o1
 	
 	mov %l0, %o2; mov %l0, %o3; mov %l0, %o4; mov %l0, %o5; 
@@ -1232,6 +1258,32 @@ TABLE/**/syscall:
 	UTRAP(0x1f0); UTRAP(0x1f1); UTRAP(0x1f2); UTRAP(0x1f3); UTRAP(0x1f4); UTRAP(0x1f5); UTRAP(0x1f6); UTRAP(0x1f7)
 	UTRAP(0x1f8); UTRAP(0x1f9); UTRAP(0x1fa); UTRAP(0x1fb); UTRAP(0x1fc); UTRAP(0x1fd); UTRAP(0x1fe); UTRAP(0x1ff)
 
+/*
+ * If the cleanwin trap handler detects an overfow we come here.
+ * We need to fix up the window registers, switch to the interrupt
+ * stack, and then trap to the debugger.
+ */
+cleanwin_overflow:
+	!! We've already incremented %cleanwin
+	!! So restore %cwp
+	rdpr	%cwp, %l0
+	dec	%l0
+	wrpr	%l0, %g0, %cwp
+	set	EINTSTACK-STKB-CC64FSZ, %l0
+	save	%l0, 0, %sp
+	
+	ta	1		! Enter debugger
+	sethi	%hi(1f), %o0
+	call	_C_LABEL(panic)
+	 or	%o0, %lo(1f), %o0
+	restore
+	retry
+	.data
+1:
+	.asciz	"Kernel stack overflow!"
+	_ALIGN
+	.text
+	
 #ifdef DEBUG
 #define CHKREG(r) \
 	ldx	[%o0 + 8*1], %o1; \
@@ -1965,6 +2017,7 @@ asmptechk:
 	add	%g4, %g5, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	DLFLUSH2(%g5)
 	brz,pn	%g4, 1f					! NULL entry? check somewhere else
 	
 	 srlx	%g3, PDSHIFT, %g5
@@ -1973,6 +2026,7 @@ asmptechk:
 	add	%g4, %g5, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
+	DLFLUSH2(%g5)
 	brz,pn	%g4, 1f					! NULL entry? check somewhere else
 	
 	 srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
@@ -1981,6 +2035,7 @@ asmptechk:
 	add	%g4, %g5, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g6
+	DLFLUSH2(%g5)
 	brgez,pn %g6, 1f				! Entry invalid?  Punt
 	 srlx	%g6, 32, %o0	
 	retl
@@ -2030,6 +2085,7 @@ dmmu_write_fault:
 	add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
@@ -2038,14 +2094,16 @@ dmmu_write_fault:
 	 add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
 	 brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	add	%g5, %g4, %g6
-	DLFLUSH(%g6,%g4)
+	DLFLUSH(%g6,%g5)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
 	bz,pn	%xcc, winfix				! No -- really fault
@@ -2149,7 +2207,7 @@ data_miss:
 	/* This should not be necessary */
 	brnz,pt	%g6, Ludata_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
-	set	0x0400000, %g6				! 4MB
+	set	0x0800000, %g6				! 8MB
 	sub	%g3, %g5, %g5
 	cmp	%g5, %g6
 	sethi	%hi(DATA_START), %g7
@@ -2176,6 +2234,7 @@ Ludata_miss:
 	add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
@@ -2184,18 +2243,20 @@ Ludata_miss:
 	 add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
-	DLFLUSH(%g6,%g4)
+	DLFLUSH(%g6,%g5)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 bset	TTE_ACCESS, %g4				! Update the modified bit
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and write it out
-	DLFLUSH(%g6, %g6)
+	DLFLUSH(%g6, %g5)
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
 #ifdef DEBUG
@@ -2271,7 +2332,7 @@ winfix:
 	rdpr	%tstate, %g4				! Try to restore prev %cwp if we were executing a restore
 	andn	%g7, 0x3f, %g5				!   window fill traps are all 0b 0000 11xx xxxx
 
-#if 0
+#if 1
 	cmp	%g7, 0x68				! If we took a datafault just before this trap
 	bne,pt	%icc, winfixfill			! our stack's probably bad so we need to switch somewhere else
 	 nop
@@ -2281,7 +2342,9 @@ winfix:
 	!!
 	set	EINTSTACK+1024-STKB, %sp		! Set the stack pointer to the middle of the idle stack
 	wrpr	%g0, 15, %pil				! Disable interrupts, too
-	ta	1
+	wrpr	%g0, %g0, %canrestore			! Our stack is hozed and our PCB
+	wrpr	%g0, 7, %cansave			!  probably is too, so blow away
+	ta	1					!  all our register windows.
 #endif
 	
 winfixfill:
@@ -2509,6 +2572,7 @@ winfixspill:
 	add	%g7, %g1, %g1
 	DLFLUSH(%g1,%g7)
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
+	DLFLUSH2(%g7)
 	
 	srlx	%g6, PDSHIFT, %g7			! Do page directory
 	and	%g7, PDMASK, %g7
@@ -2517,6 +2581,7 @@ winfixspill:
 	 add	%g7, %g1, %g1
 	DLFLUSH(%g1,%g7)
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1
+	DLFLUSH2(%g7)
 	
 	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
 	and	%g7, PTMASK, %g7
@@ -2525,6 +2590,7 @@ winfixspill:
 	add	%g1, %g7, %g7
 	DLFLUSH(%g7,%g1)
 	ldxa	[%g7] ASI_PHYS_CACHED, %g7		! This one is not
+	DLFLUSH2(%g1)
 	brgez	%g7, 0f
 	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
 	sll	%g6, 32-PGSHIFT, %g6			! And offset
@@ -2540,8 +2606,9 @@ winfixspill:
 	 */
 #ifdef NOTDEF_DEBUG
 	add	%g6, PCB_NSAVED, %g7
-	DLFLUSH(%g6,%g7)	
+	DLFLUSH(%g7,%g5)	
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! make sure that pcb_nsaved
+	DLFLUSH2(%g5)
 	brz,pt	%g7, 1f					! is zero, else
 	 nop
 	wrpr	%g0, 4, %tl
@@ -2564,6 +2631,7 @@ winfixspill:
 	add	%g6, PCB_NSAVED, %g7
 	DLFLUSH(%g7,%g5)
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Start incrementing pcb_nsaved
+	DLFLUSH2(%g5)
 
 #ifdef DEBUG
 	wrpr	%g0, 5, %tl
@@ -3082,7 +3150,7 @@ instr_miss:
 	brnz,pt	%g6, Lutext_miss			! If user context continue miss
 	sethi	%hi(KERNBASE), %g5			! Don't need %lo
 	sethi	%hi(DATA_START), %g7
-	set	0x0400000, %g6				! 4MB
+	set	0x0800000, %g6				! 8MB
 	add	%g7, 16, %g7
 	sub	%g3, %g5, %g5
 	cmp	%g5, %g6
@@ -3110,6 +3178,7 @@ Lutext_miss:
 	add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 
 	srlx	%g3, PDSHIFT, %g5
 	and	%g5, PDMASK, %g5
@@ -3118,18 +3187,20 @@ Lutext_miss:
 	 add	%g5, %g4, %g4
 	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
 	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
-	DLFLUSH(%g6,%g4)
+	DLFLUSH(%g6,%g5)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
+	DLFLUSH2(%g5)
 	brgez,pn %g4, textfault			
 	 bset	TTE_ACCESS, %g4				! Update accessed bit
 	stxa	%g4, [%g6] ASI_PHYS_CACHED		!  and store it
-	DLFLUSH(%g6,%g6)
+	DLFLUSH(%g6,%g5)
 	stx	%g1, [%g2]				! Update TSB entry tag
 	stx	%g4, [%g2+8]				! Update TSB entry data
 #ifdef DEBUG
@@ -3814,7 +3885,7 @@ intrpending:
 #define INTRDEBUG_FUNC		0x4
 #define INTRDEBUG_SPUR		0x8
 	.globl	_C_LABEL(intrdebug)
-_C_LABEL(intrdebug):	.word 0
+_C_LABEL(intrdebug):	.word 0x0
 #endif
 	.text
 interrupt_vector:
@@ -3832,19 +3903,25 @@ interrupt_vector:
 	mov	IRDR_0H, %g2
 	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
 #if NOT_DEBUG
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	mov	%g1, %o1
 	mov	%g2, %o2
-	set	7f, %o0
+
+	LOAD_ASCIZ(%o0, "interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n")
 	GLOBTOLOC
-	clr	%g4
 	call	prom_printf
-	 nop
+	 clr	%g4
 	LOCTOGLOB
+	restore
+	 nop
 #endif
 	btst	IRSR_BUSY, %g1
 	set	_C_LABEL(intrlev), %g3
 	bz,pn	%icc, 3f		! spurious interrupt
 	 cmp	%g2, MAXINTNUM
+	
+	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
+	membar	#Sync			! Should not be needed due to retry
 #ifdef DEBUG
 	tgeu	55
 #endif
@@ -3853,6 +3930,7 @@ interrupt_vector:
 	add	%g3, %g5, %g5
 	DLFLUSH(%g5, %g6)
 	LDPTR	[%g5], %g5		! We have a pointer to the handler
+	DLFLUSH2(%g6)
 #ifdef DEBUG
 	tst	%g5
 	tz	56
@@ -3860,23 +3938,86 @@ interrupt_vector:
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
 	 nop
 setup_sparcintr:
-	add	%g5, IH_PIL, %g6
-	DLFLUSH(%g6, %g6)
-	lduh	[%g5+IH_PIL], %g6	! Read interrupt mask
+	add	%g5, IH_PEND, %g6
+	DLFLUSH(%g6, %g7)
+	ldstub	[%g5+IH_PEND], %g6	! Read interrupt mask
+	DLFLUSH2(%g7)
+	brnz,pn	%g6, 5f			! Skip it if it's running
+	 add	%g5, IH_PIL, %g6
+	DLFLUSH(%g6, %g7)
+	ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
+	DLFLUSH2(%g7)
+#ifdef	VECTORED_INTERRUPTS
+	set	intrpending, %g1
+	mov	8, %g7			! Number of slots to search
+	sll	%g6, PTRSHFT+3, %g3	! Find start of table for this IPL
+	add	%g1, %g3, %g1
+2:
+#if 1
+	DLFLUSH(%g1, %g3)
+	mov	%g5, %g3
+	CASPTR	[%g1] ASI_N, %g0, %g3	! Try a slot -- MPU safe
+	brz,pt	%g3, 5f			! Available?
+#else
+	DLFLUSH(%g1, %g3)
+	LDPTR	[%g1], %g3		! Try a slot
+	brz,a	%g3, 5f			! Available?
+	 STPTR	%g5, [%g1]		! Grab it
+#endif
+#ifdef DEBUG
+	cmp	%g5, %g3		! if these are the same
+	bne,pt	%icc, 1f		! then we aleady have the
+	 nop				! interrupt registered
+	set	_C_LABEL(intrdebug), %g4
+	ld	[%g4], %g4
+	btst	INTRDEBUG_VECTOR, %g4
+	bz,pt	%icc, 1f
+	 nop
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "interrupt_vector: duplicate handler %p\r\n")
+	GLOBTOLOC
+	clr	%g4
+	call	prom_printf
+	 mov	%g3, %o1
+	LOCTOGLOB
+	ba	1f
+	 restore
+1:
+#endif
+	 dec	%g7
+	brgz,pt	%g7, 2b
+	 inc	PTRSZ, %g1		! Next slot
+	
+	!! If we get here we have a problem.
+	!! There were no available slots and the interrupt was lost.
+	!! We'll resort to polling in this case.
+#ifdef DIAGNOSTIC
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "interrupt_vector: level %d out of slots\r\n")
+	mov	%g6, %o1
+	GLOBTOLOC
+	clr	%g4
+	call	prom_printf
+	 rdpr	%pil, %o2
+	LOCTOGLOB
+	ba	5f
+	 restore
+#endif	
+5:
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
 	btst	INTRDEBUG_VECTOR, %g7
 	bz,pt	%icc, 1f
 	 nop
-#ifdef _LP64
-	TO_STACK64(-CC64FSZ)		! Get a clean register window
-#else
-	TO_STACK32(-CC64FSZ)		! Get a clean register window
-#endif
-	set	4f, %o0
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0,\
+	    "interrupt_vector: number %lx softint mask %lx pil %lu slot %p\r\n")
 	mov	%g2, %o1
 	rdpr	%pil, %o3
+	mov	%g1, %o4
 	GLOBTOLOC
 	clr	%g4
 	call	prom_printf
@@ -3886,37 +4027,10 @@ setup_sparcintr:
 	 restore
 1:
 #endif
-#ifdef	VECTORED_INTERRUPTS
-	set	intrpending, %g1
-	mov	8, %g7			! Number of slots to search
-	sll	%g6, PTRSHFT+3, %g2	! Find start of table for this IPL
-	add	%g1, %g2, %g1
-2:
-#if 1
-	DLFLUSH(%g1, %g2)
-	mov	%g5, %g2
-	CASPTR	[%g1] ASI_N, %g0, %g2	! Try a slot -- MPU safe
-	brz,pt	%g2, 5f			! Available?
-#else
-	DLFLUSH(%g1, %g2)
-	LDPTR	[%g1], %g2		! Try a slog
-	brz,a	%g2, 5f			! Available?
-	 STPTR	%g5, [%g1]		! Grab it
-#endif
-	 dec	%g7
-	brgz,pt	%g7, 2b
-	 inc	PTRSZ, %g1		! Next slot
-	
-	!! If we get here we have a problem.
-	!! There were no available slots and the interrupt was lost.
-	!! We'll resort to polling in this case.
-5:
-	 DLFLUSH(%g1, %g1)		! Prevent D$ pollution
-#endif
+	 DLFLUSH(%g1, %g3)		! Prevent D$ pollution
+#endif	/* VECTORED_INTERRUPTS */
 	set	1, %g7
-	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	sll	%g7, %g6, %g6
-	membar	#Sync			! Should not be needed due to retry
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
 5:	
 	CLRTT
@@ -3930,12 +4044,9 @@ setup_sparcintr:
 	btst	INTRDEBUG_SPUR, %g7
 	bz,pt	%icc, 5b
 	 nop
-#ifdef _LP64
-	TO_STACK64(-CC64FSZ)		! Get a clean register window
-#else
-	TO_STACK32(-CC64FSZ)		! Get a clean register window
-#endif
-	set	6f, %o0
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
 	mov	%g2, %o1
 	GLOBTOLOC
 	clr	%g4
@@ -3947,14 +4058,7 @@ setup_sparcintr:
 #endif
 	ba	5b
 	 nop
-	.data
-4:	.asciz	"interrupt_vector: number %lx softint mask %lx pil %lu\r\n"
-6:	.asciz	"interrupt_vector: spurious vector %lx at pil %d\r\n"
-#ifdef NOT_DEBUG
-7:	.asciz	"interrupt_vector: ASI_IRSR %lx ASI_IRDR(0x40) %lx\r\n"
-#endif
-	_ALIGN
-	.text
+
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
  * on a soft interrupt, is we should check which bits in ASR_SOFTINT(0x16)
@@ -4016,7 +4120,7 @@ setup_sparcintr:
  */
 
 	.comm	_C_LABEL(intrhand), 15 * PTRSZ	! intrhand[0..14]; 0 => error
-	.globl _C_LABEL(sparc_interrupt)		! This is for interrupt debugging
+	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
@@ -4030,8 +4134,11 @@ _C_LABEL(sparc_interrupt):
 	 set	_C_LABEL(intrlev), %g3
 	wr	%g0, 1, CLEAR_SOFTINT
 	DLFLUSH(%g3, %g2)
+#ifndef TICK_IS_TIME
+	wrpr	%g0, 0, %tick	! Reset %tick so we'll get another interrupt
+#endif
 	ba,pt	%icc, setup_sparcintr
-	 LDPTR	[%g3 + PTRSZ], %g5
+	 LDPTR	[%g3 + PTRSZ], %g5	! intrlev[1] is reserved for %tick intr.
 0:	
 #ifdef TRAPSTATS
 	set	_C_LABEL(kintrcnt), %g1
@@ -4059,7 +4166,8 @@ _C_LABEL(sparc_interrupt):
 1:	
 #endif
 	INTR_SETUP(-CC64FSZ-TF_SIZE)
-	wrpr	%g0, PSTATE_KERN, %pstate		! Switch to normal globals so we can save them
+	! Switch to normal globals so we can save them
+	wrpr	%g0, PSTATE_KERN, %pstate
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
@@ -4067,21 +4175,25 @@ _C_LABEL(sparc_interrupt):
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-	
-	!! In the medium anywhere model %g4 points to the start of the data segment.
-	!! In our case we need to clear it before calling any C-code
+
+	/*
+	 * In the medium anywhere model %g4 points to the start of the
+	 * data segment.  In our case we need to clear it before calling
+	 * any C-code.
+	 */
 	clr	%g4
 
 #ifdef DEBUG
 	flushw			! DEBUG
 #endif
 	rd	%y, %l6
-	INCR(_C_LABEL(uvmexp)+V_INTR)		! cnt.v_intr++; (clobbers %o0,%o1)
-	rdpr	%tt, %l5			! Find out our current IPL
+	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	rdpr	%tt, %l5		! Find out our current IPL
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
 	rdpr	%tnpc, %l2
-	rdpr	%tl, %l3			! Dump our trap frame now we have taken the IRQ
+	rdpr	%tl, %l3		! Dump our trap frame now we have taken the IRQ
+	stw	%l6, [%sp + CC64FSZ + STKB + TF_Y]	! Silly, but we need to save this for rft
 	dec	%l3
 	CHKPT(%l4,%l7,0x26)
 	wrpr	%g0, %l3, %tl
@@ -4095,27 +4207,30 @@ _C_LABEL(sparc_interrupt):
 
 !	call	_C_LABEL(blast_vcache)		! Clear out our D$ if from user mode
 1:	
-	 sub	%l5, 0x40, %l5			! Convert to interrupt level
-	mov	1, %l3				! Ack softint
-	 sll	%l3, %l5, %l3			! Generate IRQ mask
-	wr	%l3, 0, CLEAR_SOFTINT		! (don't clear possible %tick IRQ)
+	 sub	%l5, 0x40, %l6			! Convert to interrupt level
 
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
-	stb	%l5, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
+	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l5, PTRSHFT, %l3
+	sll	%l6, PTRSHFT, %l3
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
 	ld	[%l4 + %l3], %o0
 	inc	%o0
 	st	%o0, [%l4 + %l3]
-	wrpr	%l5, %pil
-#ifdef VECTORED_INTERRUPTS
+	wrpr	%l6, %pil
+	
+	clr	%l5			! Zero handled count
+	mov	1, %l3			! Ack softint
+	sll	%l3, %l6, %l3		! Generate IRQ mask
+
+sparc_intr_retry:	
+	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
+#ifdef	VECTORED_INTERRUPTS
 	set	intrpending, %l4
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
-	sll	%l5, PTRSHFT+3, %l2
+	sll	%l6, PTRSHFT+3, %l2
 	add	%l2, %l4, %l4
 	mov	8, %l7
-	clr	%l5			! Handled?
 3:	
 !	DLFLUSH(%l4, %l2)
 	LDPTR	[%l4], %l2		! Check a slot
@@ -4128,13 +4243,14 @@ _C_LABEL(sparc_interrupt):
 	 nop				! XXX Spitfire bug
 1:
 !	DLFLUSH(%l2, %o3)
-	LDPTR	[%l2 + IH_CLR], %o3
+#ifdef PHYS_CLEAR
+	ldx	[%l2 + IH_CLR], %l1
+#else
+	LDPTR	[%l2 + IH_CLR], %l1
+#endif
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
-	LDPTR	[%l2 + IH_FUN], %o1	! ih->ih_fun
-	brz,pn	%o3, 0f
-	 LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
-	stx	%g0, [%o3]		! Clear intr source
-0:
+	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
+	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o3
 	ld	[%o3], %o3
@@ -4142,36 +4258,74 @@ _C_LABEL(sparc_interrupt):
 	bz,a,pt	%icc, 0f
 	 nop
 	
-	save	%sp, -CC64FSZ, %sp
-	set	9f, %o0
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  calling %lx(%lx) sp = %p\r\n")
 	mov	%i0, %o2		! arg
 	mov	%i6, %o3		! sp
 	GLOBTOLOC
 	call	prom_printf
-	 mov	%i1, %o1		! fun
+	 mov	%i4, %o1		! fun
 	LOCTOGLOB
 	restore
 0:	
 #endif
-	jmpl	%o1, %o7		! handled = (*ih->ih_fun)(...)
+	mov	%l4, %o1	! XXXXXXX DEBUGGGGGG!
+	STPTR	%g0, [%l4]		! Clear the slot
+	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
-	inc	%l5
+	clrb	[%l2 + IH_PEND]		! Clear pending flag
+#ifdef DEBUG
+	set	_C_LABEL(intrdebug), %o3
+	ld	[%o3], %o3
+	btst	INTRDEBUG_FUNC, %o3
+	bz,a,pt	%icc, 0f
+	 nop
+#if 0
+	brnz,pt	%l1, 0f
+	 nop
+#endif
+
+	mov	%l4, %o5
+	mov	%l1, %o3
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	mov	%i5, %o1
+	mov	%i3, %o3
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  ih %p fun %p has %p clear\r\n")
+	GLOBTOLOC
+	call	prom_printf
+	 mov	%i4, %o2		! fun
+	LOCTOGLOB
+	restore
+0:	
+#endif
+	brz,pn	%l1, 0f
+	 add	%l5, %o0, %l5
+#ifdef PHYS_CLEAR
+	stxa	%g0, [%l1] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
+	stx	%g0, [%l1]		! Clear intr source
+#endif
+	membar	#Sync			! Should not be needed
+0:
 	brnz,pt	%o0, 3b			! Handle any others
-	 STPTR	%g0, [%l4]		! Clear the slot
+	 nop
 	mov	1, %o1
 	call	_C_LABEL(strayintr)	! strayintr(&intrframe, 1)
 	 add	%sp, CC64FSZ + STKB, %o0
 	ba,a,pt	%icc, 3b		! Try another
 2:
+	ba,a,pt	%icc, intrcmplt		! Only handle vectors -- don't poll XXXX
+	 nop
 	brnz,pt	%l5, intrcmplt		! Finish up
 	 nop
-#endif
+#endif	/* VECTORED_INTERRUPTS */
 #ifdef TRAPSTATS
 	set	_C_LABEL(intrpoll), %l4
 	ld	[%l4], %o0
 	inc	%o0			! Increment non-vectored interrupts.
 	st	%o0, [%l4]
 #endif
+	sll	%l6, PTRSHFT, %l3
 	set	_C_LABEL(intrhand), %l4		! %l4 = intrhand[intlev];
 	add	%l4, %l3, %l4
 !	DLFLUSH(%l4, %o6)	! Not really needed
@@ -4190,27 +4344,25 @@ _C_LABEL(sparc_interrupt):
 	set	EINTSTACK, %o2
 	cmp	%sp, %o2
 	bleu	0f
-	 set	7f, %o0
+
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  stack %p eintstack %p\r\n")
 	call	prom_printf
 	 mov	%sp, %o1
 	ta	1; nop
 0:	
-	set	_C_LABEL(intrdebug), %o0			! Check intrdebug
+	set	_C_LABEL(intrdebug), %o0	! Check intrdebug
 	ld	[%o0], %o0
 	btst	INTRDEBUG_LEVEL, %o0
 	bz,a,pt	%icc, 3f
 	 clr	%l5
-	set	8f, %o0
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  got lev %ld\r\n")
 	call	prom_printf
-	 mov	%l5, %o1
+	 mov	%l6, %o1
 #endif
 	b	3f
 	 clr	%l5
 #ifdef DEBUG
 	.data
-7:	.asciz	"sparc_interrupt: stack %p eintstack %p\r\n"
-8:	.asciz	"sparc_interrupt: got lev %ld\r\n"
-9:	.asciz	"sparc_interrupt:            calling %llx(%llx) sp = %p\r\n"
 	_ALIGN
 	.text
 #endif	
@@ -4220,14 +4372,16 @@ _C_LABEL(sparc_interrupt):
 	LDPTR	[%l4 + IH_FUN], %o1	! do {
 	LDPTR	[%l4 + IH_ARG], %o0
 #ifdef DEBUG
+#ifndef	VECTORED_INTERRUPTS
 	set	_C_LABEL(intrdebug), %o2
 	ld	[%o2], %o2
 	btst	INTRDEBUG_FUNC, %o2
-	bz,a,pt	%icc, 7f
+	bz,a,pt	%icc, 7f			! Always print this
 	 nop
+#endif
 	
-	save	%sp, -CC64FSZ, %sp
-	set	9b, %o0
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "sparc_interrupt(2):      calling %lx(%lx) sp = %p\r\n")
 	mov	%i0, %o2		! arg
 	mov	%i6, %o3		! sp
 	GLOBTOLOC
@@ -4235,17 +4389,29 @@ _C_LABEL(sparc_interrupt):
 	 mov	%i1, %o1		! fun
 	LOCTOGLOB
 	restore
+	ta	1
 7:	
 #endif
 #if 0
-	LDPTR	[%l4 + IH_CLR], %l3	!		load up the clrintr ptr for later
-	add	%sp, CC64FSZ + STKB, %o2		!	tf = %sp + CC64FSZ + STKB
-	brnz,a,pt	%l3, 5f		!		Clear this intr?
-	 stx	%g0, [%l3]		!		Yes
-5:	
+#ifdef PHYS_CLEAR
+	ldx	[%l4 + IH_CLR], %l3
+#else
+	LDPTR	[%l4 + IH_CLR], %l3
+#endif
+	add	%sp, CC64FSZ + STKB, %o2	! tf = %sp + CC64FSZ + STKB
+	brnz,a,pt	%l3, 5f			! Clear this intr?
+
+#ifdef PHYS_CLEAR
+	 stxa	%g0, [%l3] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
+	 stx	%g0, [%l3]		! Clear intr source
+#endif
+5:
+	membar	#Sync				! Should not be needed
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		!	arg = (arg == 0) ? arg : tf
 	movrnz	%o0, %o0, %l5		! Store the success somewhere
+	clrb	[%l4 + IH_PEND]		! Clear the pending bit
 	LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! } while (ih)
 	 clr	%l3			! Make sure we don't have a valid pointer
@@ -4259,9 +4425,20 @@ _C_LABEL(sparc_interrupt):
 	add	%sp, CC64FSZ + STKB, %o2
 	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0
+	clrb	[%l4 + IH_PEND]		! Clear the pending bit
+#ifdef PHYS_CLEAR
+	ldx	[%l4 + IH_CLR], %l3
+#else
 	LDPTR	[%l4 + IH_CLR], %l3
-	brnz,a,pt	%l3, 5f		! Clear intr?
-	 stx	%g0, [%l3]		! Yes
+#endif
+	brz,pn	%l3, 5f			! Clear intr?
+	 nop
+#ifdef PHYS_CLEAR
+	stxa	%g0, [%l3] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
+	stx	%g0, [%l3]		! Clear intr source
+#endif
+	membar	#Sync				! Should not be needed
 5:	brnz,pn	%o0, intrcmplt		! if (handled) break
 	 LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! while (ih)
@@ -4272,31 +4449,55 @@ _C_LABEL(sparc_interrupt):
 	/* all done: restore registers and go return */
 #endif
 intrcmplt:
+#ifdef VECTORED_INTERRUPTS
+	rd	SOFTINT, %l7		! %l5 contains #intr handled.
+	mov	1, %l3			! Ack softint
+	sll	%l3, %l6, %l3		! Generate IRQ mask
+	btst	%l3, %l7		! leave mask in %l3 for retry code
+	bnz,pn	%icc, sparc_intr_retry
+	 mov	1, %l5
+#endif
+#ifdef DEBUG
+	set	_C_LABEL(intrdebug), %o2
+	ld	[%o2], %o2
+	btst	INTRDEBUG_FUNC, %o2
+	bz,a,pt	%icc, 7f
+	 nop
+	
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "sparc_interrupt:  done\r\n")
+	GLOBTOLOC
+	call	prom_printf
+	 nop
+	LOCTOGLOB
+	restore
+
+7:	
+#endif
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts	
-	stw	%l6, [%sp + CC64FSZ + STKB + TF_Y]	! Silly, but we need to save this for rft
 	wrpr	%l3, 0, %pil
 	
 	CHKPT(%o1,%o2,5)
 	ba,a,pt	%icc, return_from_trap
 	 nop
 
-
+#if 0
 /*
  * Level 10 %tick interrupt
  */
 tickhndlr:
-	mov	14, %l5
+	mov	14, %l6
 	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
-	wr	%g0, 1, CLEAR_SOFTINT
-	stb	%l5, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
+	stb	%l6, [%sp + CC64FSZ + STKB + TF_PIL]	! set up intrframe/clockframe
 	rdpr	%pil, %o1
-	sll	%l5, PTRSHFT, %l3
+	sll	%l6, PTRSHFT, %l3
 	stb	%o1, [%sp + CC64FSZ + STKB + TF_OLDPIL]	! old %pil
 	ld	[%l4 + %l3], %o0
 	inc	%o0
 	st	%o0, [%l4 + %l3]
-	wrpr	%l5, %pil
+	wr	%g0, 1, CLEAR_SOFTINT
+	wrpr	%l6, %pil
 	set	_C_LABEL(intrlev), %l3
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	LDPTR	[%l3 + PTRSZ], %l2		! %tick uses vector 1
@@ -4305,8 +4506,10 @@ tickhndlr:
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
 	jmpl	%o1, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+	clr	%l6
 	ba,a,pt	%icc, intrcmplt
 	 nop					! spitfire bug
+#endif
 	
 #ifdef notyet
 /*
@@ -5232,6 +5435,15 @@ _C_LABEL(cpu_initialize):
 	 *	%g2 = TLB Data for data segment w/low bits
 	 *	%g3 = DATA_START
 	 */
+
+#ifdef	NO_VCACHE
+	!! Turn off D$ in LSU
+	ldxa	[%g0] ASI_LSU_CONTROL_REGISTER, %g1
+	bclr	MCCR_DCACHE_EN, %g1
+	stxa	%g1, [%g0] ASI_LSU_CONTROL_REGISTER
+	membar	#Sync
+#endif
+	
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 	sethi	%hi(KERNBASE), %l0		! Find our xlation
 	sethi	%hi(DATA_START), %g3
@@ -5599,12 +5811,15 @@ _C_LABEL(cpu_initialize):
 _C_LABEL(openfirmware):
 	andcc	%sp, 1, %g0
 	bz,pt	%icc, 1f
+
 	 sethi	%hi(romp), %l7
-	
 	LDPTR	[%l7+%lo(romp)], %o4		! v9 stack, just load the addr and callit
 	save	%sp, -CC64FSZ, %sp
-	rdpr	%pil, %i2
-	wrpr	%g0, PIL_IMP, %pil
+	rdpr	%pil, %i2	! s = splx(level)
+	cmp	%i2, PIL_IMP
+	blu,a,pt	%icc, 0f
+	 wrpr	%g0, PIL_IMP, %pil
+0:
 #if 0
 !!!
 !!! Since prom addresses overlap user addresses
@@ -5652,14 +5867,14 @@ _C_LABEL(openfirmware):
 	ret
 	 restore	%o0, %g0, %o0
 
-1:						! v8 -- need to screw with stack & params
+1:	! v8 -- need to screw with stack & params
 #ifdef NOTDEF_DEBUG
 	mov	%o7, %o5
 	call	globreg_check
 	 nop
 	mov	%o5, %o7
 #endif
-	save	%sp, -CC64FSZ, %sp			! Get a new 64-bit stack frame
+	save	%sp, -CC64FSZ, %sp		! Get a new 64-bit stack frame
 #if 0
 	call	_C_LABEL(blast_vcache)
 	 nop
@@ -5669,21 +5884,26 @@ _C_LABEL(openfirmware):
 	rdpr	%pstate, %l0
 	LDPTR	[%o1+%lo(romp)], %o1		! Do the actual call
 	srl	%sp, 0, %sp
-	rdpr	%pil, %i2
+	rdpr	%pil, %i2	! s = splx(level)
 	mov	%i0, %o0
 	mov	%g1, %l1
 	mov	%g2, %l2
 	mov	%g3, %l3
-	wrpr	%g0, PIL_IMP, %pil
+
+	cmp	%i2, PIL_IMP
+	blu,a,pt	%icc, 0f
+	 wrpr	%g0, PIL_IMP, %pil
+0:
 	mov	%g4, %l4
 	mov	%g5, %l5
 	mov	%g6, %l6
 	mov	%g7, %l7
 	jmpl	%o1, %o7
+	! Enable 64-bit addresses for the prom
 #if !defined(_LP64) || defined(TRAPTRACE)
-	 wrpr	%g0, PSTATE_PROM, %pstate		! Enable 64-bit addresses for the prom
+	 wrpr	%g0, PSTATE_PROM, %pstate
 #else
-	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate	! Enable 64-bit addresses for the prom
+	 wrpr	%g0, PSTATE_PROM|PSTATE_IE, %pstate
 #endif
 	wrpr	%l0, 0, %pstate
 	wrpr	%i2, 0, %pil
@@ -7954,37 +8174,67 @@ ENTRY(probeget)
 	mov	%o2, %o1
 	mov	%o3, %o2
 #endif
-	! %o0 = asi, %o1 = addr, %o2 = (1,2,4)
-	sethi	%hi(CPCB), %o3
-	LDPTR	[%o3 + %lo(CPCB)], %o3	! cpcb->pcb_onfault = Lfserr;
-	set	_C_LABEL(Lfsbail), %o5
-	STPTR	%o5, [%o3 + PCB_ONFAULT]
-	btst	1, %o2
-	wr	%o0, 0, %asi
+	mov	%o2, %o4
+	! %o0 = asi, %o1 = addr, %o4 = (1,2,4)
+	sethi	%hi(CPCB), %o2
+	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
+	set	_C_LABEL(Lfsprobe), %o5
+	STPTR	%o5, [%o2 + PCB_ONFAULT]
+	or	%o0, 9, %o3		! if (PHYS_ASI(asi)) {
+	sub	%o3, 0x1d, %o3
+	brz,a	%o3, 0f
+	 mov	%g0, %o5
+	DLFLUSH(%o0,%o5)		!	flush cache line
+					! }
+0:
+#ifndef _LP64
+	rdpr	%pstate, %g1
+	wrpr	%g1, PSTATE_AM, %pstate
+#endif
+	btst	1, %o4
+	wr	%o1, 0, %asi
 	membar	#Sync
 	bz	0f			! if (len & 1)
-	 btst	2, %o2
+	 btst	2, %o4
 	ba,pt	%icc, 1f
-	 lduba	[%o1] %asi, %o0		!	value = *(char *)addr;
+	 lduba	[%o0] %asi, %o0		!	value = *(char *)addr;
 0:	
 	bz	0f			! if (len & 2)
-	 btst	4, %o2
+	 btst	4, %o4
 	ba,pt	%icc, 1f
-	 lduha	[%o1] %asi, %o0		!	value = *(short *)addr;
+	 lduha	[%o0] %asi, %o0		!	value = *(short *)addr;
 0:	
 	bz	0f			! if (len & 4)
-	 btst	8, %o2
+	 btst	8, %o4
 	ba,pt	%icc, 1f
-	 lda	[%o1] %asi, %o0		!	value = *(int *)addr;
+	 lda	[%o0] %asi, %o0		!	value = *(int *)addr;
 0:
-	ldxa	[%o1] %asi, %o0		!	value = *(long *)addr;
+	ldxa	[%o0] %asi, %o0		!	value = *(long *)addr;
 #ifndef _LP64
 	srl	%o0, 0, %o1		! Split the result again
 	srlx	%o0, 32, %o0
 #endif
 1:	membar	#Sync
+#ifndef _LP64
+	wrpr	%g1, 0, %pstate
+#endif
+	brz	%o5, 1f			! if (cache flush addr != 0)
+	 nop
+	DLFLUSH2(%o5)			!	flush cache line again
+1:
 	retl				! made it, clear onfault and return
-	 STPTR	%g0, [%o3 + PCB_ONFAULT]
+	 STPTR	%g0, [%o2 + PCB_ONFAULT]
+
+	/*
+	 * Fault handler for probeget
+	 */
+_C_LABEL(Lfsprobe):
+#ifndef _LP64
+	wrpr	%g1, 0, %pstate
+#endif
+	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
+	retl				! and return error indicator
+	 mov	-1, %o0
 
 /*
  * probeset(addr, asi, size, val)
@@ -8005,36 +8255,37 @@ ENTRY(probeset)
 	sllx	%o4, 32, %o3
 	or	%o3, %o5, %o3
 #endif
-	! %o0 = asi, %o1 = addr, %o2 = (1,2,4), %o3 = val
-	sethi	%hi(CPCB), %o4
-	LDPTR	[%o4 + %lo(CPCB)], %o4	! cpcb->pcb_onfault = Lfserr;
+	mov	%o2, %o4
+	! %o0 = addr, %o1 = asi, %o4 = (1,2,4), %o3 = val
+	sethi	%hi(CPCB), %o2		! Lfserr requires CPCB in %o2
+	LDPTR	[%o2 + %lo(CPCB)], %o2	! cpcb->pcb_onfault = Lfserr;
 	set	_C_LABEL(Lfsbail), %o5
-	STPTR	%o5, [%o4 + PCB_ONFAULT]
-	btst	1, %o2
-	wr	%o0, 0, %asi
+	STPTR	%o5, [%o2 + PCB_ONFAULT]
+	btst	1, %o4
+	wr	%o1, 0, %asi
 	membar	#Sync
 	bz	0f			! if (len & 1)
-	 btst	2, %o2
+	 btst	2, %o4
 	ba,pt	%icc, 1f
-	 stba	%o3, [%o1] %asi		!	*(char *)addr = value;
+	 stba	%o3, [%o0] %asi		!	*(char *)addr = value;
 0:	
 	bz	0f			! if (len & 2)
-	 btst	4, %o2
+	 btst	4, %o4
 	ba,pt	%icc, 1f
-	 stha	%o3, [%o1] %asi		!	*(short *)addr = value;
+	 stha	%o3, [%o0] %asi		!	*(short *)addr = value;
 0:	
 	bz	0f			! if (len & 4)
-	 btst	8, %o2
+	 btst	8, %o4
 	ba,pt	%icc, 1f
-	 sta	%o3, [%o1] %asi		!	*(int *)addr = value;
+	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
 0:
 	bz	Lfserr			! if (len & 8)
 	ba,pt	%icc, 1f
-	 sta	%o3, [%o1] %asi		!	*(int *)addr = value;
+	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
 1:	membar	#Sync
 	clr	%o0			! made it, clear onfault and return 0
 	retl
-	 STPTR	%g0, [%o4 + PCB_ONFAULT]
+	 STPTR	%g0, [%o2 + PCB_ONFAULT]
 
 /*
  * Insert entry into doubly-linked queue.
@@ -8288,8 +8539,9 @@ ENTRY(pmap_zero_page)
 	!! 
 	set	NBPG, %o4
 1:	
-	DLFLUSH(%o0,%o1)
+	DLFLUSH(%o0,%o2)
 	ldxa	[%o0] ASI_PHYS_CACHED, %o1
+	DLFLUSH2(%o2)
 	dec	8, %o4
 	tst	%o1
 	tnz	%icc, 1
@@ -8630,10 +8882,12 @@ ENTRY(pmap_copy_page)
 	set	NBPG, %o3
 	
 1:	
-	DLFLUSH(%o0,%o4)
+	DLFLUSH(%o0,%o2)
 	ldxa	[%o0] ASI_PHYS_CACHED, %o4
-	DLFLUSH(%o1,%o5)
+	DLFLUSH2(%o2)	
+	DLFLUSH(%o1,%o2)
 	ldxa	[%o1] ASI_PHYS_CACHED, %o5
+	DLFLUSH2(%o2)
 	dec	8, %o3
 	cmp	%o4, %o5
 	tne	%icc, 1
@@ -8825,6 +9079,7 @@ ENTRY(pseg_get)
 	add	%o2, %o3, %o2
 	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page directory pointer
+	DLFLUSH2(%o3)
 
 	srlx	%o1, PDSHIFT, %o3
 	and	%o3, PDMASK, %o3
@@ -8833,14 +9088,16 @@ ENTRY(pseg_get)
 	 add	%o2, %o3, %o2
 	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page table pointer
+	DLFLUSH2(%o3)
 
 	srlx	%o1, PTSHIFT, %o3			! Convert to ptab offset
 	and	%o3, PTMASK, %o3
 	sll	%o3, 3, %o3
 	brz,pn	%o2, 1f					! NULL entry? check somewhere else
 	 add	%o2, %o3, %o2
-	DLFLUSH(%o2,%o0)
+	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o0
+	DLFLUSH2(%o3)
 	brgez,pn %o0, 1f				! Entry invalid?  Punt
 	 btst	1, %sp
 	bz,pn	%icc, 0f				! 64-bit mode?
@@ -8848,14 +9105,16 @@ ENTRY(pseg_get)
 	retl						! Yes, return full value
 	 nop
 0:
-#if 0
+#if 1
 	srl	%o0, 0, %o1
 	retl						! No, generate a %o0:%o1 double
 	 srlx	%o0, 32, %o0
 #else
-	DLFLUSH(%o2,%o0)
+	DLFLUSH(%o2,%o3)
+	ldda	[%o2] ASI_PHYS_CACHED, %o0
+	DLFLUSH2(%o3)
 	retl						! No, generate a %o0:%o1 double
-	 ldda	[%o2] ASI_PHYS_CACHED, %o0
+	 nop
 #endif
 1:
 	clr	%o1
@@ -8927,8 +9186,9 @@ ENTRY(pseg_set)
 	and	%o5, STMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-	DLFLUSH(%o4,%o5)
+	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
+	DLFLUSH2(%g1)
 	
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -8943,8 +9203,9 @@ ENTRY(pseg_set)
 	and	%o5, PDMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
-	DLFLUSH(%o4,%o5)
+	DLFLUSH(%o4,%g1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
+	DLFLUSH2(%g1)
 	
 	brnz,a,pt	%o5, 0f				! Null pointer?
 	 mov	%o5, %o4
@@ -10206,11 +10467,19 @@ ENTRY(ienab_bic)
  *	enable the softint, causing a spurious interrupt.
  */
 ENTRY(send_softint)
+	rdpr	%pil, %g1	! s = splx(level)
+	cmp	%g1, %o1
+	bge,pt	%icc, 1f
+	 nop
+	wrpr	%o1, 0, %pil
+1:
 #ifdef	VECTORED_INTERRUPTS
 	brz,pn	%o2, 1f
 	 set	intrpending, %o3
+	ldstub	[%o2 + IH_PEND], %o5
 	mov	8, %o4			! Number of slots to search
-	sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
+	brnz	%o5, 1f
+	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 2:
 #if 1
@@ -10234,11 +10503,12 @@ ENTRY(send_softint)
 4:
 	 DLFLUSH(%o3, %o3)		! Prevent D$ pollution
 1:	
-#endif
+#endif	/* VECTORED_INTERRUPTS */
 	mov	1, %o3			! Change from level to bitmask
 	sllx	%o3, %o1, %o3
+	wr	%o3, 0, SET_SOFTINT	! SET_SOFTINT
 	retl
-	 wr	%o3, 0, SET_SOFTINT	! CLEAR_SOFTINT
+	 wrpr	%g1, 0, %pil		! restore IPL
 	
 /*
  * Here is a very good random number generator.  This implementation is
@@ -10646,7 +10916,40 @@ ENTRY(longjmp)
 	flush	%o2
 	retl
 	 nop
+
+#ifndef _LP64
+	/*
+	 * Convert to 32-bit stack then call OF_sym2val()
+	 */
+	ENTRY(_C_LABEL(OF_sym2val32))
+	save	%sp, -CC64FSZ, %sp
+	btst	7, %i0
+	bnz,pn	%icc, 1f
+	 add	%sp, BIAS, %o1
+	btst	1, %sp
+	movnz	%icc, %o1, %sp
+	call	_C_LABEL(OF_sym2val)
+	 mov	%i0, %o0
+1:	
+	ret
+	 restore	%o0, 0, %o0
 	
+	/*
+	 * Convert to 32-bit stack then call OF_val2sym()
+	 */
+	ENTRY(_C_LABEL(OF_val2sym32))
+	save	%sp, -CC64FSZ, %sp
+	btst	7, %i0
+	bnz,pn	%icc, 1f
+	 add	%sp, BIAS, %o1
+	btst	1, %sp
+	movnz	%icc, %o1, %sp
+	call	_C_LABEL(OF_val2sym)
+	 mov	%i0, %o0
+1:	
+	ret
+	 restore	%o0, 0, %o0
+#endif /* _LP64 */
 #endif /* DDB */
 		
 	.data
