@@ -1,4 +1,4 @@
-/*	$NetBSD: psignal.c,v 1.13 1998/02/27 18:28:02 perry Exp $	*/
+/*	$NetBSD: psignal.c,v 1.14 1998/07/28 12:21:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,19 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: psignal.c,v 1.13 1998/02/27 18:28:02 perry Exp $");
+__RCSID("$NetBSD: psignal.c,v 1.14 1998/07/28 12:21:07 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-/*
- * Print the name of the signal indicated
- * along with the supplied message.
- */
 #include "namespace.h"
+
+#include <sys/types.h>
+#include <sys/uio.h>
+
+#include <limits.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
+
 #include "extern.h"
 
 #ifdef __weak_alias
@@ -62,16 +63,23 @@ psignal(sig, s)
 	unsigned int sig;
 	const char *s;
 {
+	struct iovec *v;
+	struct iovec iov[4];
 	static char buf[NL_TEXTMAX];
-	const char *c;
-	size_t n;
 
-	c = __strsignal((int)sig, buf, NL_TEXTMAX);
+	v = iov;
 	if (s && *s) {
-		n = strlen(s);
-		(void)write(STDERR_FILENO, s, n);
-		(void)write(STDERR_FILENO, ": ", 2);
+		v->iov_base = (void *)s;
+		v->iov_len = strlen(s);
+		v++;
+		v->iov_base = ": ";
+		v->iov_len = 2;
+		v++;
 	}
-	(void)write(STDERR_FILENO, c, strlen(c));
-	(void)write(STDERR_FILENO, "\n", 1);
+	v->iov_base = (void *)__strsignal(sig, buf, sizeof(buf));
+	v->iov_len = strlen(v->iov_base);
+	v++;
+	v->iov_base = "\n";
+	v->iov_len = 1;
+	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
 }
