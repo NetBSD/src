@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.169 2001/10/08 02:48:49 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.170 2001/10/11 07:21:07 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -583,6 +583,17 @@
 ./var/at/jobs			mode=0700
 ./var/at/spool			mode=0700
 ./var/backups
+./var/chroot
+./var/chroot/named
+./var/chroot/named/dev
+./var/chroot/named/etc
+./var/chroot/named/etc/namedb
+./var/chroot/named/etc/namedb/cache	mode=0775 uname=named gname=named
+./var/chroot/named/usr
+./var/chroot/named/usr/libexec
+./var/chroot/named/var
+./var/chroot/named/var/run	mode=0775 gname=named
+./var/chroot/named/var/tmp	mode=01775 gname=named
 ./var/crash			mode=0770
 ./var/cron
 ./var/cron/tabs			mode=0700
@@ -599,16 +610,6 @@
 ./var/log/rdist
 ./var/mail			mode=1777
 ./var/msgs			uname=daemon
-./var/named
-./var/named/dev
-./var/named/etc
-./var/named/etc/namedb
-./var/named/etc/namedb/cache	mode=0775 uname=named gname=named
-./var/named/usr
-./var/named/usr/libexec
-./var/named/var
-./var/named/var/run		mode=0775 gname=named
-./var/named/var/tmp		mode=01775 gname=named
 ./var/preserve
 ./var/quotas			gname=operator mode=0750
 ./var/run
