@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.27 1996/11/19 04:43:55 cgd Exp $
+#	$NetBSD: ALPHA,v 1.28 1996/11/25 04:16:15 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -82,6 +82,7 @@ options		LKM
 
 # Misc. options
 options		EISAVERBOSE		# recognize "unknown" EISA devices
+#options	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options		FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
 options		PCIVERBOSE		# recognize "unknown" PCI devices
 options		TCVERBOSE		# recognize "unknown" TC devices
@@ -101,8 +102,8 @@ tcasic*	at	mainbus0
 tc*	at	tcasic?
 
 # TurboChannel devices
-ioasic0	at	tc? slot ? offset ?
-mcclock0 at	ioasic? offset ?
+ioasic*	at	tc? slot ? offset ?
+mcclock* at	ioasic? offset ?
 le*	at	ioasic? offset ?
 scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
@@ -145,15 +146,15 @@ eisa*	at	pceb?
 isa*	at	sio?
 
 # ISA devices
-mcclock0 at	isa? port 0x70
-pckbd0	at	isa? port 0x60 irq 1		# PC-ish ISA keyboard
-pms0	at	isa? port 0x60 irq 12		# PS/2 auxiliary
-com0	at	isa? port 0x3f8 irq 4		# standard serial ports
-com1	at	isa? port 0x2f8 irq 3
-lpt0	at	isa? port 0x3bc irq 7		# standard parallel port
-# VGA ON ISA CANNOT BE USED IN THE PRESENCE OF PCI VGA CARDS + VGA ON PCI.
-#vga0	at	isa?				# ISA (EISA: XXX) VGA
-#wss0	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+mcclock* at	isa? port 0x70
+pcppi*	at	isa?				# PC prog. periph. interface
+pckbd*	at	pcppi?				# PC keyboard (kbd port)
+pms*	at	pcppi?				# PS/2-style mouse (aux port)
+com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+com*	at	isa? port 0x2f8 irq 3
+lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
+vga*	at	isa?				# ISA (EISA: XXX) VGA
+#wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 
 # EISA devices
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI cards
