@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1998/10/01 16:49:10 minoura Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1998/10/04 14:45:23 minoura Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -40,10 +40,12 @@ all:	netbsd.ram.gz
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
+	umount ${MOUNT_POINT}
 	@echo ""
 	@echo "installing new bootblocks"
 	${MDEC}/writefdboot ${MDEC}/fdboot ${VND_CRDEV}
 	vnconfig -u ${VND_CDEV}
+	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
