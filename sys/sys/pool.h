@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.15 1999/05/10 21:13:05 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.16 1999/08/05 04:00:03 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ struct pool {
 #define PR_URGENT	32
 #define PR_PHINPAGE	64
 #define PR_LOGGING	128
+#define PR_LIMITFAIL	256	/* even if waiting, fail if we hit limit */
 
 	/*
 	 * `pr_slock' protects the pool's data structures when removing
