@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 1998/02/25 23:26:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 1998/07/24 22:03:33 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -41,6 +41,8 @@
 
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
+
+#include <mips/cpuregs.h>	/* for KSEG0 below */
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -133,6 +135,12 @@ void	pmap_prefer __P((vm_offset_t, vm_offset_t *));
 #endif /* MIPS3 */
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
+
+/*
+ * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
+ */
+#define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
+#define	PMAP_UNMAP_POOLPAGE(pa)	MIPS_KSEG0_TO_PHYS((va))
 
 /*
  * Kernel cache operations for the user-space API 
