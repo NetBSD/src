@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc.c	2.4 88/08/11 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc.c,v 1.1 1993/10/07 07:30:14 cgd Exp $";
+static char *rcsid = "$Id: svc.c,v 1.2 1994/08/20 00:55:32 deraadt Exp $";
 #endif
 
 /*
@@ -49,16 +49,12 @@ static char *rcsid = "$Id: svc.c,v 1.1 1993/10/07 07:30:14 cgd Exp $";
 
 extern int errno;
 
-#ifdef FD_SETSIZE
 static SVCXPRT **xports;
-#else
-#define NOFILE 32
-
-static SVCXPRT *xports[NOFILE];
-#endif /* def FD_SETSIZE */
 
 #define NULL_SVC ((struct svc_callout *)0)
 #define	RQCRED_SIZE	400		/* this size is excessive */
+
+#define max(a, b) (a > b ? a : b)
 
 /*
  * The services list
@@ -86,22 +82,15 @@ xprt_register(xprt)
 {
 	register int sock = xprt->xp_sock;
 
-#ifdef FD_SETSIZE
 	if (xports == NULL) {
 		xports = (SVCXPRT **)
 			mem_alloc(FD_SETSIZE * sizeof(SVCXPRT *));
 	}
-	if (sock < _rpc_dtablesize()) {
+	if (sock < FD_SETSIZE) {
 		xports[sock] = xprt;
 		FD_SET(sock, &svc_fdset);
+		svc_maxfd = max(svc_maxfd, sock);
 	}
-#else
-	if (sock < NOFILE) {
-		xports[sock] = xprt;
-		svc_fds |= (1 << sock);
-	}
-#endif /* def FD_SETSIZE */
-
 }
 
 /*
@@ -113,17 +102,13 @@ xprt_unregister(xprt)
 { 
 	register int sock = xprt->xp_sock;
 
-#ifdef FD_SETSIZE
-	if ((sock < _rpc_dtablesize()) && (xports[sock] == xprt)) {
+	if ((sock < FD_SETSIZE) && (xports[sock] == xprt)) {
 		xports[sock] = (SVCXPRT *)0;
 		FD_CLR(sock, &svc_fdset);
+		for (svc_maxfd--; svc_maxfd; svc_maxfd--)
+			if (xports[svc_maxfd])
+				break;
 	}
-#else
-	if ((sock < NOFILE) && (xports[sock] == xprt)) {
-		xports[sock] = (SVCXPRT *)0;
-		svc_fds &= ~(1 << sock);
-	}
-#endif /* def FD_SETSIZE */
 }
 
 
@@ -370,29 +355,17 @@ void
 svc_getreq(rdfds)
 	int rdfds;
 {
-#ifdef FD_SETSIZE
 	fd_set readfds;
 
 	FD_ZERO(&readfds);
 	readfds.fds_bits[0] = rdfds;
 	svc_getreqset(&readfds);
-#else
-	int readfds = rdfds & svc_fds;
-
-	svc_getreqset(&readfds);
-#endif /* def FD_SETSIZE */
 }
 
 void
 svc_getreqset(readfds)
-#ifdef FD_SETSIZE
 	fd_set *readfds;
 {
-#else
-	int *readfds;
-{
-    int readfds_local = *readfds;
-#endif /* def FD_SETSIZE */
 	enum xprt_stat stat;
 	struct rpc_msg msg;
 	int prog_found;
@@ -403,7 +376,6 @@ svc_getreqset(readfds)
 	register u_long mask;
 	register int bit;
 	register u_long *maskp;
-	register int setsize;
 	register int sock;
 	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
 	msg.rm_call.cb_cred.oa_base = cred_area;
@@ -411,19 +383,11 @@ svc_getreqset(readfds)
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
 
-#ifdef FD_SETSIZE
-	setsize = _rpc_dtablesize();	
 	maskp = (u_long *)readfds->fds_bits;
-	for (sock = 0; sock < setsize; sock += NFDBITS) {
+	for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS) {
 	    for (mask = *maskp++; bit = ffs(mask); mask ^= (1 << (bit - 1))) {
 		/* sock has input waiting */
 		xprt = xports[sock + bit - 1];
-#else
-	for (sock = 0; readfds_local != 0; sock++, readfds_local >>= 1) {
-	    if ((readfds_local & 1) != 0) {
-		/* sock has input waiting */
-		xprt = xports[sock];
-#endif /* def FD_SETSIZE */
 		/* now receive msgs from xprtprt (support batch calls) */
 		do {
 			if (SVC_RECV(xprt, &msg)) {
