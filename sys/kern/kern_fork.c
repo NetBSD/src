@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.69 2000/07/04 15:33:30 jdolecek Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.70 2000/08/01 04:57:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -69,10 +69,7 @@ int	nprocs = 1;		/* process 0 */
 
 /*ARGSUSED*/
 int
-sys_fork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_fork(struct proc *p, void *v, register_t *retval)
 {
 
 	return (fork1(p, 0, SIGCHLD, NULL, 0, NULL, NULL, retval, NULL));
@@ -84,10 +81,7 @@ sys_fork(p, v, retval)
  */
 /*ARGSUSED*/
 int
-sys_vfork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_vfork(struct proc *p, void *v, register_t *retval)
 {
 
 	return (fork1(p, FORK_PPWAIT, SIGCHLD, NULL, 0, NULL, NULL,
@@ -100,10 +94,7 @@ sys_vfork(p, v, retval)
  */
 /*ARGSUSED*/
 int
-sys___vfork14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___vfork14(struct proc *p, void *v, register_t *retval)
 {
 
 	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, SIGCHLD, NULL, 0,
@@ -111,16 +102,9 @@ sys___vfork14(p, v, retval)
 }
 
 int
-fork1(p1, flags, exitsig, stack, stacksize, func, arg, retval, rnewprocp)
-	struct proc *p1;
-	int flags;
-	int exitsig;
-	void *stack;
-	size_t stacksize;
-	void (*func) __P((void *));
-	void *arg;
-	register_t *retval;
-	struct proc **rnewprocp;
+fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
+    void (*func)(void *), void *arg, register_t *retval,
+    struct proc **rnewprocp)
 {
 	struct proc *p2;
 	uid_t uid;

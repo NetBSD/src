@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.10 2000/06/27 17:41:10 mrg Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.11 2000/08/01 04:57:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -78,9 +78,7 @@
  */
 
 int
-exec_elf_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_elf_setup_stack(struct proc *p, struct exec_package *epp)
 {
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;

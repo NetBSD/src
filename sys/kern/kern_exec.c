@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.117 2000/07/27 13:45:59 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.118 2000/08/01 04:57:29 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -86,9 +86,7 @@
  *			exec header unmodified.
  */
 int
-check_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+check_exec(struct proc *p, struct exec_package *epp)
 {
 	int error, i;
 	struct vnode *vp;
@@ -201,10 +199,7 @@ bad1:
  */
 /* ARGSUSED */
 int
-sys_execve(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_execve(struct proc *p, void *v, register_t *retval)
 {
 	struct sys_execve_args /* {
 		syscallarg(const char *) path;
@@ -583,11 +578,8 @@ exec_abort:
 
 
 void *
-copyargs(pack, arginfo, stack, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	void *stack;
-	void *argp;
+copyargs(struct exec_package *pack, struct ps_strings *arginfo,
+    void *stack, void *argp)
 {
 	char **cpp = stack;
 	char *dp, *sp;

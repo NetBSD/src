@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.12 2000/06/27 17:41:08 mrg Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.13 2000/08/01 04:57:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -54,9 +54,7 @@
  * package.
  */
 int
-exec_ecoff_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	struct ecoff_exechdr *execp = epp->ep_hdr;
@@ -121,9 +119,7 @@ exec_ecoff_makecmds(p, epp)
  * stack setup functions.  They might have errors to return.
  */
 int
-exec_ecoff_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_ecoff_setup_stack(struct proc *p, struct exec_package *epp)
 {
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
@@ -155,11 +151,8 @@ exec_ecoff_setup_stack(p, epp)
  * exec_ecoff_prep_omagic(): Prepare a ECOFF OMAGIC binary's exec package
  */
 int
-exec_ecoff_prep_omagic(p, epp, execp, vp)
-	struct proc *p;
-	struct exec_package *epp;
-	struct ecoff_exechdr *execp;
-	struct vnode *vp;
+exec_ecoff_prep_omagic(struct proc *p, struct exec_package *epp,
+    struct ecoff_exechdr *execp, struct vnode *vp)
 {
 	struct ecoff_aouthdr *eap = &execp->a;
 
@@ -189,11 +182,8 @@ exec_ecoff_prep_omagic(p, epp, execp, vp)
  *                           package.
  */
 int
-exec_ecoff_prep_nmagic(p, epp, execp, vp)
-	struct proc *p;
-	struct exec_package *epp;
-	struct ecoff_exechdr *execp;
-	struct vnode *vp;
+exec_ecoff_prep_nmagic(struct proc *p, struct exec_package *epp,
+    struct ecoff_exechdr *execp, struct vnode *vp)
 {
 	struct ecoff_aouthdr *eap = &execp->a;
 
@@ -232,11 +222,8 @@ exec_ecoff_prep_nmagic(p, epp, execp, vp)
  * text, data, bss, and stack segments.
  */
 int
-exec_ecoff_prep_zmagic(p, epp, execp, vp)
-	struct proc *p;
-	struct exec_package *epp;
-	struct ecoff_exechdr *execp;
-	struct vnode *vp;
+exec_ecoff_prep_zmagic(struct proc *p, struct exec_package *epp,
+    struct ecoff_exechdr *execp, struct vnode *vp)
 {
 	struct ecoff_aouthdr *eap = &execp->a;
 

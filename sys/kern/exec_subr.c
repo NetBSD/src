@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.21 2000/07/13 09:34:23 mjacob Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.22 2000/08/01 04:57:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -57,15 +57,10 @@
  */
 
 void
-new_vmcmd(evsp, proc, len, addr, vp, offset, prot, flags)
-	struct	exec_vmcmd_set *evsp;
-	int	(*proc) __P((struct proc * p, struct exec_vmcmd *));
-	u_long	len;
-	u_long	addr;
-	struct	vnode *vp;
-	u_long	offset;
-	u_int	prot;
-	int	flags;
+new_vmcmd(struct exec_vmcmd_set *evsp,
+    int (*proc)(struct proc * p, struct exec_vmcmd *),
+    u_long len, u_long addr, struct vnode *vp, u_long offset,
+    u_int prot, int flags)
 {
 	struct exec_vmcmd    *vcp;
 
@@ -84,8 +79,7 @@ new_vmcmd(evsp, proc, len, addr, vp, offset, prot, flags)
 #endif /* DEBUG */
 
 void
-vmcmdset_extend(evsp)
-	struct	exec_vmcmd_set *evsp;
+vmcmdset_extend(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *nvcp;
 	u_int ocnt;
@@ -112,8 +106,7 @@ vmcmdset_extend(evsp)
 }
 
 void
-kill_vmcmds(evsp)
-	struct	exec_vmcmd_set *evsp;
+kill_vmcmds(struct exec_vmcmd_set *evsp)
 {
 	struct exec_vmcmd *vcp;
 	int i;
@@ -137,9 +130,7 @@ kill_vmcmds(evsp)
  */
 
 int
-vmcmd_map_pagedvn(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	/*
 	 * note that if you're going to map part of an process as being
@@ -203,9 +194,7 @@ vmcmd_map_pagedvn(p, cmd)
  *	objects (a la OMAGIC and NMAGIC).
  */
 int
-vmcmd_map_readvn(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 	long diff;
@@ -231,9 +220,7 @@ vmcmd_map_readvn(p, cmd)
 }
 
 int
-vmcmd_readvn(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_readvn(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 
@@ -266,9 +253,7 @@ vmcmd_readvn(p, cmd)
  */
 
 int
-vmcmd_map_zero(p, cmd)
-	struct proc *p;
-	struct exec_vmcmd *cmd;
+vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 {
 	int error;
 	long diff;
