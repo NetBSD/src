@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.81 2000/01/31 16:01:06 soda Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.82 2000/05/25 21:23:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.81 2000/01/31 16:01:06 soda Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.82 2000/05/25 21:23:37 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,8 +483,12 @@ writelabel(f, boot, lp)
 		 * wants to convert the drive for dedicated use.
 		 */
 		if (dosdp) {
-			if (dosdp->mbrp_start != pp->p_offset)
+			if (dosdp->mbrp_start != pp->p_offset) {
+				printf("NetBSD slice at %u, "
+				    "partition C at %u\n", dosdp->mbrp_start,
+				    pp->p_offset);
 				confirm("Write outside MBR partition");
+			}
 		        sectoffset = (off_t)pp->p_offset * lp->d_secsize;
 		} else {
 			if (mbrpt_nobsd)
