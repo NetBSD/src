@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
- *   $Id: rpc.c,v 1.3 1993/10/16 07:57:47 cgd Exp $
+ *   $Id: rpc.c,v 1.4 1994/06/14 00:31:51 glass Exp $
  */
 
 #include <sys/param.h>
@@ -351,13 +351,13 @@ getnfsinfo(d, tp, sp, fp)
 		panic("getnfsinfo: %m");
 
 	if (tp) {
-		*tp = ntohl(rdata.fa.fa_mtime.tv_sec);
-		t = ntohl(rdata.fa.fa_atime.tv_sec);
+		*tp = ntohl(rdata.fa.fa_nfsmtime.nfs_sec);
+		t = ntohl(rdata.fa.fa_nfsatime.nfs_sec);
 		if (*tp < t)
 			*tp = t;
 	}
 	if (sp)
-		*sp = ntohl(rdata.fa.fa_size);
+		*sp = ntohl(rdata.fa.fa_nfssize);
 	if (fp)
 		*fp = ntohl(rdata.fa.fa_type);
 }
@@ -412,9 +412,9 @@ lookupfh(d, name, fhp, tp, sp, fp)
 
 	bcopy(rdata.fh, fhp, sizeof(rdata.fh));
 	if (tp)
-		*tp = ntohl(rdata.fa.fa_ctime.tv_sec);
+		*tp = ntohl(rdata.fa.fa_nfsctime.nfs_sec);
 	if (sp)
-		*sp = ntohl(rdata.fa.fa_size);
+		*sp = ntohl(rdata.fa.fa_nfssize);
 	if (fp)
 		*fp = ntohl(rdata.fa.fa_type);
 	return (0);
