@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.20 2004/04/01 02:44:55 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.21 2004/04/01 05:23:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -201,3 +201,8 @@ sys/netinet/ip_compat.h				1.37
 
 	Only #define COPYIN copyin, et cetera, in the kernel.
 	[mrg, ticket #34]
+
+sys/dev/pci/auvia.c				1.37
+
+	Don't allow block sizes < 288 bytes on VT823x chips. PR#22788
+	[jmcneill, ticket #36]
