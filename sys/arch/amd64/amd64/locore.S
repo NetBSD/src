@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2004/03/01 12:10:41 drochner Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 2004/03/23 19:39:42 drochner Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -116,6 +116,10 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_realmem.h"
+
+#include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
+#include "opt_compat_ibcs2.h"
 
 #include "assym.h"
 #include "lapic.h"
@@ -1272,10 +1276,13 @@ NENTRY(child_trampoline)
 	call	*%r12
 	jmp	syscall_return
 
+#if defined(COMPAT_16) || defined(COMPAT_IBCS2) || defined(COMPAT_NETBSD32)
+
 	.globl  _C_LABEL(osyscall_return)
 
+#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 /*
- * Old call gate entry for syscall. XXXfvdl: only needed if we're
+ * Old call gate entry for syscall. only needed if we're
  * going to support running old NetBSD or ibcs2 binaries, etc,
  * on NetBSD/amd64.
  */
@@ -1285,6 +1292,8 @@ IDTVEC(oosyscall)
 	popq	8(%rsp)
 	pushq	$7		# size of instruction for restart
 	jmp	osyscall1
+
+#endif
 
 /*
  * Trap gate entry for int $80 syscall, also used by sigreturn.
@@ -1312,6 +1321,9 @@ _C_LABEL(osyscall_return):
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	2b
+
+#endif
+
 iret_return:
 #ifndef DIAGNOSTIC
 1:	INTRFASTEXIT
