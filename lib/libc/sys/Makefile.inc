@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.90 1999/02/24 15:05:21 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.91 1999/03/22 17:56:42 sommerfe Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -33,8 +33,9 @@ SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	chmod.o chown.o chroot.o clock_getres.o clock_gettime.o \
 	clock_settime.o close.o connect.o dup.o dup2.o execve.o \
-	fchdir.o fchflags.o fchmod.o fchown.o fcntl.o fdatasync.o fktrace.o \
-	flock.o fpathconf.o __fstat13.o fstatfs.o fsync.o futimes.o \
+	fchdir.o fchflags.o fchmod.o fchown.o fchroot.o fcntl.o \
+	fdatasync.o fktrace.o flock.o fpathconf.o __fstat13.o fstatfs.o \
+	fsync.o futimes.o __getcwd.o \
 	getdents.o getfh.o getfsstat.o getgroups.o getitimer.o \
 	__getlogin.o getpeername.o getpgid.o getpgrp.o \
 	getpriority.o getrlimit.o getrusage.o getsid.o getsockname.o \
