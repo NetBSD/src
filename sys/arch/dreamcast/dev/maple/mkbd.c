@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.9 2001/07/22 15:46:42 wiz Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.10 2001/09/06 20:04:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -60,12 +60,12 @@
 /*
  * Function declarations.
  */
-static int	mkbdmatch __P((struct device *, struct cfdata *, void *));
-static void	mkbdattach __P((struct device *, struct device *, void *));
+static	int mkbdmatch __P((struct device *, struct cfdata *, void *));
+static	void mkbdattach __P((struct device *, struct device *, void *));
 
-int mkbd_enable __P((void *, int));
-void mkbd_set_leds __P((void *, int));
-int mkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int	mkbd_enable __P((void *, int));
+void	mkbd_set_leds __P((void *, int));
+int	mkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
 struct wskbd_accessops mkbd_accessops = {
 	mkbd_enable,
@@ -73,11 +73,11 @@ struct wskbd_accessops mkbd_accessops = {
 	mkbd_ioctl,
 };
 
-static void	mkbd_intr __P((struct mkbd_softc *, struct mkbd_condition *, int));
+static void mkbd_intr __P((struct mkbd_softc *, struct mkbd_condition *, int));
 
-void mkbd_cngetc __P((void *, u_int *, int *));
-void mkbd_cnpollc __P((void *, int));
-int mkbd_cnattach __P((void));
+void	mkbd_cngetc __P((void *, u_int *, int *));
+void	mkbd_cnpollc __P((void *, int));
+int	mkbd_cnattach __P((void));
 
 struct wskbd_consops mkbd_consops = {
 	mkbd_cngetc,
@@ -102,7 +102,7 @@ static int
 mkbdmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-	void   *aux;
+	void *aux;
 {
 	struct maple_attach_args *ma = aux;
 
@@ -112,9 +112,9 @@ mkbdmatch(parent, cf, aux)
 static void
 mkbdattach(parent, self, aux)
 	struct device *parent, *self;
-	void   *aux;
+	void *aux;
 {
-	struct mkbd_softc *sc = (struct mkbd_softc *)self;
+	struct mkbd_softc *sc = (struct mkbd_softc *) self;
 	struct maple_attach_args *ma = aux;
 #if NWSKBD > 0
 	struct wskbddev_attach_args a;
@@ -127,11 +127,11 @@ mkbdattach(parent, self, aux)
 
 	kbdtype = maple_get_function_data(ma->ma_devinfo,
 	    MAPLE_FUNC_KEYBOARD) >> 24;
-	switch(kbdtype) {
- 	case 1:
- 		printf(": Japanese keyboard");
+	switch (kbdtype) {
+	case 1:
+		printf(": Japanese keyboard");
 		mkbd_keymapdata.layout = KB_JP;
- 		break;
+		break;
 	case 2:
 		printf(": US keyboard");
 		mkbd_keymapdata.layout = KB_US;
@@ -147,19 +147,19 @@ mkbdattach(parent, self, aux)
 
 #if NWSKBD > 0
 	a.console = ((sc->sc_dev.dv_unit == 0) && (mkbd_console_initted == 1))
-		? 1 : 0;
+	    ? 1 : 0;
 	a.keymap = &mkbd_keymapdata;
 	a.accessops = &mkbd_accessops;
 	a.accesscookie = sc;
 	if (a.console)
-	  mkbd_console_softc = sc;
+		mkbd_console_softc = sc;
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 #endif
 
 	maple_set_condition_callback(parent, sc->sc_port, sc->sc_subunit,
-				     MAPLE_FUNC_KEYBOARD,
-				     (void (*)(void *, void *, int))mkbd_intr,
-				     sc);
+	    MAPLE_FUNC_KEYBOARD,
+	    (void (*) (void *, void *, int)) mkbd_intr,
+	    sc);
 }
 
 
@@ -190,14 +190,13 @@ mkbd_ioctl(v, cmd, data, flag, p)
 {
 
 	switch (cmd) {
-
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_USB;		/* XXX */
+		*(int *) data = WSKBD_TYPE_USB;	/* XXX */
 		return 0;
 	case WSKBDIO_SETLEDS:
 		return 0;
 	case WSKBDIO_GETLEDS:
-		*(int *)data = 0;
+		*(int *) data = 0;
 		return 0;
 	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
@@ -226,15 +225,15 @@ extern int maple_polling;
 
 #define KEY_UP(n) \
 	if (maple_polling) \
-	  polledkey = (n)|UP_KEYCODE_FLAG; \
+		polledkey = (n)|UP_KEYCODE_FLAG; \
 	else \
-	  wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP, (n))
+		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_UP, (n))
 
 #define KEY_DOWN(n) \
 	if (maple_polling) \
-	  polledkey = (n); \
+		polledkey = (n); \
 	else \
-	  wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_DOWN, (n))
+		wskbd_input(sc->sc_wskbddev, WSCONS_EVENT_KEY_DOWN, (n))
 
 #define SHIFT_UP(n) KEY_UP((n)|SHIFT_KEYCODE_BASE)
 #define SHIFT_DOWN(n) KEY_DOWN((n)|SHIFT_KEYCODE_BASE)
@@ -247,35 +246,36 @@ mkbd_intr(sc, kbddata, sz)
 {
 
 	if (sz >= sizeof(struct mkbd_condition)) {
-	  int i, j, v;
+		int i, j, v;
 
-	  v = sc->sc_condition.shift & ~kbddata->shift;
-	  if (v)
-	    for (i=0; i<8; i++)
-	      if (v & (1<<i))
-		SHIFT_UP(i);
+		v = sc->sc_condition.shift & ~kbddata->shift;
+		if (v)
+			for (i = 0; i < 8; i++)
+				if (v & (1 << i))
+					SHIFT_UP(i);
 
-	  v = kbddata->shift & ~sc->sc_condition.shift;
-	  if (v)
-	    for (i=0; i<8; i++)
-	      if (v & (1<<i))
-		SHIFT_DOWN(i);
+		v = kbddata->shift & ~sc->sc_condition.shift;
+		if (v)
+			for (i = 0; i < 8; i++)
+				if (v & (1 << i))
+					SHIFT_DOWN(i);
 
-	  for (i=0, j=0; i<6; i++)
-	    if (sc->sc_condition.key[i] < 4)
-	      break;
-	    else if(sc->sc_condition.key[i] == kbddata->key[j])
-	      j++;
-	    else
-	      KEY_UP(sc->sc_condition.key[i]);
+		for (i = 0, j = 0; i < 6; i++)
+			if (sc->sc_condition.key[i] < 4)
+				break;
+			else if (sc->sc_condition.key[i] == kbddata->key[j])
+				j++;
+			else
+				KEY_UP(sc->sc_condition.key[i]);
 
-	  for (; j<6; j++)
-	    if (kbddata->key[j] < 4)
-	      break;
-	    else
-	      KEY_DOWN(kbddata->key[j]);
+		for (; j < 6; j++)
+			if (kbddata->key[j] < 4)
+				break;
+			else
+				KEY_DOWN(kbddata->key[j]);
 
-	  memcpy(&sc->sc_condition, kbddata, sizeof(struct mkbd_condition));
+		memcpy(&sc->sc_condition, kbddata,
+		    sizeof(struct mkbd_condition));
 	}
 }
 
@@ -289,19 +289,20 @@ mkbd_cngetc(v, type, data)
 
 	polledkey = -1;
 	maple_polling = 1;
-	while (polledkey == -1)
-	  if (mkbd_console_softc != NULL ||
-	      mkbd_console_softc->sc_parent != NULL) {
-	    int t;
-	    for(t=0; t<1000000; t++);
-	    maple_run_polling(mkbd_console_softc->sc_parent);
-	  }
+	while (polledkey == -1) {
+		if (mkbd_console_softc != NULL ||
+		    mkbd_console_softc->sc_parent != NULL) {
+			int t;
+			for (t = 0; t < 1000000; t++);
+			maple_run_polling(mkbd_console_softc->sc_parent);
+		}
+	}
 	maple_polling = 0;
 	key = polledkey;
 
 	*data = key & ~UP_KEYCODE_FLAG;
-	*type = (key & UP_KEYCODE_FLAG)?
-	  WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+	*type = (key & UP_KEYCODE_FLAG) ?
+	    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 }
 
 void
