@@ -1,7 +1,7 @@
 #
 #	CLIENT -- an NFS client machine
 #
-#	$Id: CLIENT,v 1.9 1993/06/06 22:20:05 cgd Exp $
+#	$Id: CLIENT,v 1.10 1993/08/29 01:54:25 mycroft Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -36,7 +36,7 @@ pseudo-device	loop
 pseudo-device	ether
 #pseudo-device	sl	2
 pseudo-device	log
-pseudo-device	pty	4
+pseudo-device	pty	32
 
 
 pseudo-device	swappager
