@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.h,v 1.4 2004/01/25 00:41:02 bjh21 Exp $ */
+/* $NetBSD: ppbus_1284.h,v 1.5 2004/01/28 17:11:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -110,8 +110,6 @@
 #define PPBUS_PERIPHERAL_TRANSFER		13
 #define PPBUS_PERIPHERAL_TERMINATION	14
 
-#ifdef _KERNEL
-
 /* Function prototypes */
 
 /* Host functions */
@@ -125,7 +123,5 @@ int ppbus_1284_set_state(struct device *, int state);
 int ppbus_peripheral_terminate(struct device *, int);
 int ppbus_peripheral_negotiate(struct device *, int, int);
 int byte_peripheral_write(struct device *, char *, int, int *);
-
-#endif /*_KERNEL*/
 
 #endif /* __PPBUS_1284_H */

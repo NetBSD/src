@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.3 2004/01/25 00:41:02 bjh21 Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.4 2004/01/28 17:11:48 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -132,4 +132,4 @@ struct ppbus_softc {
 	PARPORT_REMOVE_HANDLER_T ppbus_remove_handler;
 };
 
-#endif
+#endif /* __PPBUS_CONF_H */
