@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.16 1995/03/22 00:56:55 jtc Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.17 1995/05/02 19:52:41 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -162,7 +162,7 @@ vfprintf(fp, fmt0, ap)
 {
 	register char *fmt;	/* format string */
 	register int ch;	/* character from fmt */
-	register int n;		/* handy integer (short term usage) */
+	register int n, m;	/* handy integers (short term usage) */
 	register char *cp;	/* handy char pointer (short term usage) */
 	register struct __siov *iovp;/* for PRINT macro */
 	register int flags;	/* flags as above */
@@ -170,6 +170,7 @@ vfprintf(fp, fmt0, ap)
 	int width;		/* width from format (%8d), or 0 */
 	int prec;		/* precision from format (%.3d), or -1 */
 	char sign;		/* sign prefix (' ', '+', '-', or \0) */
+	wchar_t wc;
 #ifdef FLOATING_POINT
 	char *decimal_point = localeconv()->decimal_point;
 	char softsign;		/* temporary negative sign for floats */
@@ -272,13 +273,19 @@ vfprintf(fp, fmt0, ap)
 	 * Scan the format for conversions (`%' character).
 	 */
 	for (;;) {
-		for (cp = fmt; (ch = *fmt) != '\0' && ch != '%'; fmt++)
-			/* void */;
-		if ((n = fmt - cp) != 0) {
-			PRINT(cp, n);
-			ret += n;
+		cp = fmt;
+		while ((n = mbtowc(&wc, fmt, MB_CUR_MAX)) > 0) {
+			fmt += n;
+			if (wc == '%') {
+				fmt--;
+				break;
+			}
 		}
-		if (ch == '\0')
+		if ((m = fmt - cp) != 0) {
+			PRINT(cp, m);
+			ret += m;
+		}
+		if (n <= 0)
 			goto done;
 		fmt++;		/* skip over '%' */
 
