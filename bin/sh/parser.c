@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.30 1996/10/16 14:53:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.30 1996/10/16 14:53:23 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ static char rcsid[] = "$NetBSD: parser.c,v 1.29 1996/05/09 19:40:08 christos Exp
 #define EOFMARKLEN 79
 
 /* values returned by readtoken */
-#include "token.def"
+#include "token.h"
 
 
 
@@ -122,7 +122,7 @@ STATIC int readtoken1 __P((int, char const *, char *, int));
 STATIC int noexpand __P((char *));
 STATIC void synexpect __P((int));
 STATIC void synerror __P((char *));
-STATIC void setprompt __P((int)); 
+STATIC void setprompt __P((int));
 
 
 /*
@@ -131,7 +131,7 @@ STATIC void setprompt __P((int));
  */
 
 union node *
-parsecmd(interact) 
+parsecmd(interact)
 	int interact;
 {
 	int t;
@@ -153,7 +153,7 @@ parsecmd(interact)
 
 
 STATIC union node *
-list(nlflag) 
+list(nlflag)
 	int nlflag;
 {
 	union node *n1, *n2, *n3;
@@ -473,6 +473,8 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		 */
 		if (!redir)
 			synexpect(-1);
+	case TAND:
+	case TOR:
 	case TNL:
 	case TEOF:
 	case TWORD:
@@ -505,12 +507,12 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 
 
 STATIC union node *
-simplecmd(rpp, redir) 
+simplecmd(rpp, redir)
 	union node **rpp, *redir;
 	{
 	union node *args, **app;
 	union node **orig_rpp = rpp;
-	union node *n;
+	union node *n = NULL;
 
 	/* If we don't have any redirections already, then we must reset */
 	/* rpp to be the address of the local redir variable.  */
@@ -519,10 +521,10 @@ simplecmd(rpp, redir)
 
 	args = NULL;
 	app = &args;
-	/* 
+	/*
 	 * We save the incoming value, because we need this for shell
 	 * functions.  There can not be a redirect or an argument between
-	 * the function name and the open parenthesis.  
+	 * the function name and the open parenthesis.
 	 */
 	orig_rpp = rpp;
 
@@ -591,7 +593,7 @@ void fixredir(n, text, err)
 	else if (text[0] == '-' && text[1] == '\0')
 		n->ndup.dupfd = -1;
 	else {
-		
+
 		if (err)
 			synerror("Bad fd number");
 		else
@@ -683,7 +685,7 @@ readtoken() {
 #ifdef DEBUG
 	int alreadyseen = tokpushback;
 #endif
-	
+
 	top:
 	t = xxreadtoken();
 
@@ -702,12 +704,12 @@ readtoken() {
 		/*
 		 * check for keywords and aliases
 		 */
-		if (t == TWORD && !quoteflag) 
+		if (t == TWORD && !quoteflag)
 		{
 			register char * const *pp;
 
 			for (pp = (char **)parsekwd; *pp; pp++) {
-				if (**pp == *wordtext && equal(*pp, wordtext)) 
+				if (**pp == *wordtext && equal(*pp, wordtext))
 				{
 					lasttoken = t = pp - parsekwd + KWDOFFSET;
 					TRACE(("keyword %s recognized\n", tokname[t]));
@@ -986,7 +988,7 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 						} else
 							USTPUTC(')', out);
 					} else {
-						/* 
+						/*
 						 * unbalanced parens
 						 *  (don't 2nd guess - no error)
 						 */
@@ -1192,7 +1194,7 @@ badsub:				synerror("Bad substitution");
 				subtype = p - types + VSNORMAL;
 				break;
 			case '%':
-			case '#': 
+			case '#':
 				{
 					int cc = c;
 					subtype = c == '#' ? VSTRIMLEFT :
@@ -1262,7 +1264,7 @@ parsebackq: {
                 int savelen;
                 char *str;
 
- 
+
                 STARTSTACKSTR(out);
 		for (;;) {
 			if (needprompt) {
@@ -1297,6 +1299,11 @@ parsebackq: {
 				plinno++;
 				needprompt = doprompt;
 				break;
+
+			case PEOF:
+			        startlinno = plinno;
+				synerror("EOF in backquote substitution");
+ 				break;
 
 			default:
 				break;
@@ -1447,7 +1454,7 @@ goodname(name)
  */
 
 STATIC void
-synexpect(token) 
+synexpect(token)
 	int token;
 {
 	char msg[64];
