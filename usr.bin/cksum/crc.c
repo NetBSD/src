@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.15 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: crc.c,v 1.16 2005/01/12 17:04:35 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 6/17/93";
 #else
-__RCSID("$NetBSD: crc.c,v 1.15 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: crc.c,v 1.16 2005/01/12 17:04:35 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,10 +112,7 @@ static const u_int32_t crctab[] = {
  * success and 1 on failure.  Errno is set on failure.
  */
 int
-crc(fd, cval, clen)
-	register int fd;
-	u_int32_t *cval;
-	off_t *clen;
+crc(register int fd, u_int32_t *cval, off_t *clen)
 {
 	register u_char *p;
 	register int nr;
@@ -132,7 +129,7 @@ crc(fd, cval, clen)
 			COMPUTE(thecrc, *p);
 		}
 	if (nr < 0)
-		return (1);
+		return 1;
 
 	*clen = len;
 
@@ -142,5 +139,5 @@ crc(fd, cval, clen)
 	}
 
 	*cval = ~thecrc;
-	return (0);
+	return 0;
 }

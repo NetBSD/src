@@ -1,4 +1,4 @@
-/*	$NetBSD: md5.c,v 1.5 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: md5.c,v 1.6 2005/01/12 17:04:35 xtraeme Exp $	*/
 
 /*
  * MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: md5.c,v 1.5 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: md5.c,v 1.6 2005/01/12 17:04:35 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -34,10 +34,10 @@ __RCSID("$NetBSD: md5.c,v 1.5 2004/06/20 22:20:15 jmc Exp $");
 #include <string.h>
 #include <time.h>
 
-void	MD5Filter __P((int));
-void	MD5String __P((const char *));
-void	MD5TestSuite __P((void));
-void	MD5TimeTrial __P((void));
+void	MD5Filter (int);
+void	MD5String (const char *);
+void	MD5TestSuite (void);
+void	MD5TimeTrial (void);
 
 #ifndef HASHTYPE
 #define HASHTYPE "MD5"
@@ -57,8 +57,7 @@ void	MD5TimeTrial __P((void));
  * Digests a string and prints the result.
  */
 void
-MD5String(string)
-	const char *string;
+MD5String(const char *string)
 {
 	unsigned int len = strlen(string);
 	char buf[HASHLEN + 1];
@@ -71,7 +70,7 @@ MD5String(string)
  * Measures the time to digest TEST_BLOCK_COUNT TEST_BLOCK_LEN-byte blocks.
  */
 void
-MD5TimeTrial()
+MD5TimeTrial(void)
 {
 	MD5_CTX context;
 	time_t endTime, startTime;
@@ -116,7 +115,7 @@ MD5TimeTrial()
  * Digests a reference suite of strings and prints the results.
  */
 void
-MD5TestSuite()
+MD5TestSuite(void)
 {
 	printf("%s test suite:\n", HASHTYPE);
 
