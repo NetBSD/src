@@ -1,5 +1,5 @@
 #
-#	$NetBSD: std.hpcmips.vr41,v 1.2 2002/01/27 14:18:11 takemura Exp $
+#	$NetBSD: std.hpcmips.vr41,v 1.3 2002/02/11 04:33:22 takemura Exp $
 #	VR41XX common configuration.
 #
 options 	MIPS3			# R4000/R4400/R4600 CPUs
@@ -20,6 +20,8 @@ vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 unit VRPMU # power switch
 vrdsu*	at vrip? addr 0x0b0000e0 size 0x08
 vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 unit VRPIU
 vrled*	at vrip? addr 0x0b000240 size 0x10 unit VRLED
+vrdmaau* at vrip? addr 0x0b000020 size 0x10 unit VRDMAAU
+vrdcu*	at vrip? addr 0x0b000040 size 0x10 unit VRDCU
 
 # VR-specific debug options.
 
