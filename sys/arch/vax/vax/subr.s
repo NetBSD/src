@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.18 1997/03/22 23:02:13 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.19 1997/11/03 20:00:21 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,17 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
+#include <machine/asm.h>
 
-#include <sys/syscall.h>
-#include <sys/errno.h>
+#include "assym.h"
 
-#include <machine/mtpr.h>
-#include <machine/vmparam.h>
-#include <machine/pte.h>
-#include <machine/nexus.h>
-
+#define	JSBENTRY(x)	.globl x ; .align 2 ; x :
 
 		.text
 
@@ -84,10 +78,7 @@ _fubyte:        .word 0x0
                 movzbl	(r0),r0
                 ret
 
-
-		.globl _badaddr
-_badaddr:	.word	0x0
-					# Called with addr,b/w/l
+ENTRY(badaddr,0)			# Called with addr,b/w/l
 		mfpr	$0x12,r0
 		mtpr	$0x1f,$0x12
 		movl	4(ap),r2 	# First argument, the address
@@ -218,30 +209,21 @@ cs:	ret
 	movl	$ENAMETOOLONG, r0
 	ret
 
-
-_loswtch:	.globl	_loswtch
-	mtpr	_curpcb,$PR_PCBB
-	svpctx
-	mtpr	_nypcb,$PR_PCBB
-	ldpctx
-	rei
-
 	.data
 
 _memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
 
 # Have bcopy and bzero here to be sure that system files that not gets
 # macros.h included will not complain.
-_bcopy:	.globl _bcopy
-	.word	0x0
+
+ENTRY(bcopy,0)
 	movl	4(ap), r0
 	movl	8(ap), r1
 	movl	0xc(ap), r2
 	movc3	r2, (r0), (r1)
 	ret
 
-_bzero:	.globl	_bzero
-	.word	0x0
+ENTRY(bzero,0)
 	movl	4(ap), r0
 	movl	8(ap), r1
 	movc5	$0, (r0), $0, r1, (r0)
@@ -269,3 +251,133 @@ _longjmp:.word	0
 	movl	12(r1), sp
 	jmp	*8(r1)
 #endif 
+
+#
+# setrunqueue/remrunqueue fast variants.
+#
+
+JSBENTRY(Setrq)
+#ifdef DIAGNOSTIC
+	tstl	4(r0)	# Check that process actually are off the queue
+	beql	1f
+	pushab	setrq
+	calls	$1,_panic
+setrq:	.asciz	"setrunqueue"
+#endif
+1:	extzv	$2,$6,P_PRIORITY(r0),r1	# get priority
+	movaq	_qs[r1],r2		# get address of queue
+	insque	(r0),*4(r2)		# put proc last in queue
+	bbss	r1,_whichqs,1f		# set queue bit.
+1:	rsb
+
+JSBENTRY(Remrq)
+	extzv	$2,$6,P_PRIORITY(r0),r1
+#ifdef DIAGNOSTIC
+	bbs	r1,_whichqs,1f
+	pushab	remrq
+	calls	$1,_panic
+remrq:	.asciz	"remrunqueue"
+#endif
+1:	remque	(r0),r2
+	bneq	1f		# Not last process on queue
+	bbsc	r1,_whichqs,1f
+1:	clrl	4(r0)		# saftey belt
+	rsb
+
+#
+# Idle loop. Here we could do something fun, maybe, like calculating
+# pi or something.
+#
+idle:	mtpr	$0,$PR_IPL		# Enable all types of interrupts
+1:	tstl	_whichqs		# Anything ready to run?
+	beql	1b			# no, continue to loop
+	brb	Swtch			# Yes, goto switch again.
+
+#
+# cpu_switch, cpu_exit and the idle loop implemented in assembler 
+# for efficiency. r0 contains pointer to last process.
+#
+_pcbvirt:	.long 0
+noque:		.asciz	"swtch"
+
+JSBENTRY(Swtch)
+	clrl	_curproc		# Stop process accounting
+	mtpr	$0x1f,$PR_IPL		# block all interrupts
+	ffs	$0,$32,_whichqs,r3	# Search for bit set
+	beql	idle			# no bit set, go to idle loop
+
+	movaq	_qs[r3],r1		# get address of queue head
+	remque	*(r1),r2		# remove proc pointed to by queue head
+#ifdef DIAGNOSTIC
+	bvc	1f			# check if something on queue
+	pushab	noque
+	calls	$1,_panic
+#endif
+1:	bneq	2f			# more processes on queue?
+	bbsc	r3,_whichqs,2f		# no, clear bit in whichqs
+2:	clrl	4(r2)			# clear proc backpointer
+	clrl	_want_resched		# we are now changing process
+	movl	r2,_curproc		# set new process running
+	cmpl	r0,r2			# Same process?
+	bneq	1f			# No, continue
+	rsb
+1:	movl	P_ADDR(r2),r0		# Get pointer to new pcb.
+	movl	r0,_pcbvirt		# Save for copy* functions.
+
+#
+# Nice routine to get physical from virtual adresses.
+#
+	extzv	$9,$21,r0,r1		# extract offset
+	movl	*_Sysmap[r1],r2		# get pte
+	ashl	$9,r2,r3		# shift to get phys address.
+
+#
+# Do the actual process switch. pc + psl are already on stack, from
+# the calling routine.
+#
+	svpctx
+	mtpr	r3,$PR_PCBB
+	ldpctx
+	rei
+
+#
+# the last routine called by a process.
+#
+
+ENTRY(cpu_exit,0)
+	movl	4(ap),r6	# Process pointer in r0
+	pushl	P_VMSPACE(r6)	# free current vm space
+	calls	$1,_vmspace_free
+	mtpr	$0x18,$PR_IPL	# Block almost everything
+	addl3	$512,_scratch,sp # Change stack, we will free it now
+	pushl	$USPACE		# stack size
+	pushl	P_ADDR(r6)	# pointer to stack space
+	pushl	_kernel_map	# the correct vm map
+	calls	$3,_kmem_free
+	clrl	r0		# No process to switch from
+	bicl3	$0xc0000000,_scratch,r1
+	mtpr	r1,$PR_PCBB
+	brw	Swtch
+
+
+#ifdef notyet
+
+#
+# They both are the same.
+#
+	.globl	_copyin, _copyout
+_copyout:
+_copyin:.word 0x40	# save r6
+	mfpr	$PR_PCBB, r6
+	addl2	0x80000064, r6
+	moval	1f, (r6)
+	movl	4(ap), r1
+	movl	8(ap), r2
+	movc3	12(ap), (r1), (r2)
+1:	clrl	(r6)
+	ret
+
+Idealet inline:
+	movl _curpcb,r6;moval 1f,64(r6);movc3 %1,(%2),(%3);clrl (r6);movl r0,%0
+
+#endif

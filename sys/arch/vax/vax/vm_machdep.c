@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.34 1997/11/02 14:25:26 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.35 1997/11/03 20:00:17 ragge Exp $       */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,8 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +80,6 @@ pagemove(from, to, size)
 	bzero(fpte, stor);
 	mtpr(0, PR_TBIA);
 }
-
-#define VIRT2PHYS(x) \
-	(((*(int *)((((((int)x) & 0x7fffffff) >> 9) * 4) + \
-		(unsigned int)Sysmap)) & 0x1fffff) << 9)
 
 /*
  * cpu_fork() copies parent process trapframe directly into child PCB
@@ -177,118 +171,6 @@ cpu_set_kpc(p, pc)
 	nyproc->AP = (unsigned)&kc->cf.ca_argno;
 	nyproc->FP = nyproc->KSP = (unsigned)kc;
 	nyproc->PC = (unsigned)pc + 2;
-}
-
-/*
- * Put in a process on the correct run queue based on it's priority
- * and set the bit corresponding to the run queue.
- */
-void 
-setrunqueue(p)
-	struct proc *p;
-{
-	struct	prochd *q;
-	int	knummer;
-
-	if (p->p_back) 
-		panic("sket sig i setrunqueue");
-
-	knummer = (p->p_priority >> 2);
-	bitset(knummer, whichqs);
-	q = &qs[knummer];
-
-	_insque(p, q);
-
-	return;
-}
-
-/*
- * Remove a process from the run queue. If this is the last process
- * on that queue, clear the queue bit in whichqs.
- */
-void
-remrunqueue(p)
-	struct proc *p;
-{
-	struct	proc *qp;
-	int	bitnr;
-
-	bitnr = (p->p_priority >> 2);
-	if (bitisclear(bitnr, whichqs))
-		panic("remrunqueue: Process not in queue");
-
-	_remque(p);
-
-	qp = (struct proc *)&qs[bitnr];
-	if (qp->p_forw == qp)
-		bitclear(bitnr, whichqs);
-}
-
-volatile caddr_t curpcb, nypcb;
-
-/*
- * Machine dependent part of switch function. Find the next process 
- * with the highest priority to run. If the process queues are empty,
- * sleep waiting for something to happen. The idle loop resides here.
- */
-void
-cpu_switch(pp)
-	struct proc *pp;
-{
-	int	i,s;
-	struct	proc *p, *q;
-	extern	unsigned int scratch;
-
-again:	
-	/* First: Search for a queue. */
-	s = splhigh();
-	if ((i = ffs(whichqs) -1 ) < 0)
-		goto idle;
-
-	/*
-	 * A queue with runnable processes found.
-	 * Get first process from queue. 
-	 */
-	asm(".data;savpsl:	.long	0;.text;movpsl savpsl");
-	q = (struct proc *)&qs[i];
-	if (q->p_forw == q)
-		panic("swtch: no process queued");
-
-	/* Remove process from queue */
-	bitclear(i, whichqs);
-	p = q->p_forw;
-	_remque(p);
-
-	if (q->p_forw != q)
-		bitset(i, whichqs);
-	if (curproc)
-		(u_int)curpcb = VIRT2PHYS(&curproc->p_addr->u_pcb);
-	else
-		(u_int)curpcb = scratch & 0x7fffffff;
-	(u_int)nypcb = VIRT2PHYS(&p->p_addr->u_pcb);
-
-	if (p == 0)
-		panic("switch: null proc pointer");
-	want_resched = 0;
-	curproc = p;
-
-	/* Don't change process if it's the same that we'r already running */
-	if (curpcb == nypcb)
-		return;
-
-	asm("pushl savpsl");
-	asm("jsb _loswtch");
-
-	return; /* New process! */
-
-idle:	
-	p = curproc;
-	curproc = NULL;		/* This is nice. /BQT */
-	spl0();
-	while (whichqs == 0)
-		;
-	curproc = p;
-	goto again;
 }
 
 /* Should check that values is in bounds XXX */
@@ -438,24 +320,6 @@ reno_zmagic(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return exec_aout_setup_stack(p, epp);
-}
-
-void
-cpu_exit(p)
-	struct	proc *p;
-{
-	extern	unsigned int scratch;
-
-	if (p == 0)
-		panic("cpu_exit from null process");
-	vmspace_free(p->p_vmspace);
-
-	(void) splimp();
-	/* Must change kernel stack before freeing */
-	mtpr(scratch + NBPG, PR_KSP);
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
-	cpu_switch(0);
-	/* NOTREACHED */
 }
 
 int
