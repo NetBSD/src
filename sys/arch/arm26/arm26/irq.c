@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.14 2001/02/11 14:46:11 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.15 2001/04/14 19:58:58 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.14 2001/02/11 14:46:11 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.15 2001/04/14 19:58:58 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -137,7 +137,7 @@ irq_handler(struct irqframe *irqf)
 	for (h = irq_list_head.lh_first;
 	     h != NULL && h->ipl > s;
 	     h = h->link.le_next)
-		if (h->enabled && ((status & h->mask) != 0)) {
+		if (h->enabled && ((status & h->mask) == h->mask)) {
 			splx(h->ipl);
 #if 0
 			printf("IRQ %d...", h->irqnum);
