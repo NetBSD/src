@@ -1,4 +1,4 @@
-/*	$NetBSD: itime.c,v 1.13 2001/12/25 12:06:26 lukem Exp $	*/
+/*	$NetBSD: itime.c,v 1.14 2002/11/16 14:15:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: itime.c,v 1.13 2001/12/25 12:06:26 lukem Exp $");
+__RCSID("$NetBSD: itime.c,v 1.14 2002/11/16 14:15:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ putdumptime(void)
 		(struct dumpdates *)xcalloc(1, sizeof (struct dumpdates));
 	nddates += 1;
   found:
-	(void) strncpy(dtwalk->dd_name, fname, sizeof (dtwalk->dd_name));
+	(void) strlcpy(dtwalk->dd_name, fname, sizeof(dtwalk->dd_name));
 	dtwalk->dd_level = level;
 	dtwalk->dd_ddate = iswap32(spcl.c_date);
 	dtfound = dtwalk;
