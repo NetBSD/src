@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.110 2000/05/01 09:44:54 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.111 2000/05/01 10:35:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.110 2000/05/01 09:44:54 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.111 2000/05/01 10:35:17 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -79,17 +79,15 @@ typedef enum {
 	CLASSIC_URL_T
 } url_t;
 
-void		aborthttp __P((int));
-static int	auth_url __P((const char *, char **, const char *,
-				const char *));
-static void	base64_encode __P((const char *, size_t, char *));
-static int	go_fetch __P((const char *));
-static int	fetch_ftp __P((const char *));
-static int	fetch_url __P((const char *, const char *, char *, char *));
-static int	parse_url __P((const char *, const char *, url_t *, char **,
-				char **, char **, char **, in_port_t *,
-				char **));
-static void	url_decode __P((char *));
+void		aborthttp(int);
+static int	auth_url(const char *, char **, const char *, const char *);
+static void	base64_encode(const char *, size_t, char *);
+static int	go_fetch(const char *);
+static int	fetch_ftp(const char *);
+static int	fetch_url(const char *, const char *, char *, char *);
+static int	parse_url(const char *, const char *, url_t *, char **,
+			    char **, char **, char **, in_port_t *, char **);
+static void	url_decode(char *);
 
 static int	redirect_loop;
 
@@ -106,11 +104,8 @@ static int	redirect_loop;
  * Sets response to a malloc(3)ed string; caller should free.
  */
 static int
-auth_url(challenge, response, guser, gpass)
-	const char	 *challenge;
-	char		**response;
-	const char	 *guser;
-	const char	 *gpass;
+auth_url(const char *challenge, char **response, const char *guser,
+	const char *gpass)
 {
 	char		*cp, *ep, *clear, *line, *realm, *scheme;
 	char		 user[BUFSIZ], *pass;
@@ -199,10 +194,7 @@ cleanup_auth_url:
  * which should be at least ((len + 2) * 4 / 3 + 1) in size.
  */
 void
-base64_encode(clear, len, encoded)
-	const char	*clear;
-	size_t		 len;
-	char		*encoded;
+base64_encode(const char *clear, size_t len, char *encoded)
 {
 	static const char enc[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -227,8 +219,7 @@ base64_encode(clear, len, encoded)
  * Decode %xx escapes in given string, `in-place'.
  */
 static void
-url_decode(url)
-	char *url;
+url_decode(char *url)
 {
 	unsigned char *p, *q;
 
@@ -282,16 +273,9 @@ url_decode(url)
  *	"ftp://host//dir/file"		"/dir/file"
  */
 static int
-parse_url(url, desc, type, user, pass, host, port, portnum, path)
-	const char	 *url;
-	const char	 *desc;
-	url_t		 *type;
-	char		**user;
-	char		**pass;
-	char		**host;
-	char		**port;
-	in_port_t	 *portnum;
-	char		**path;
+parse_url(const char *url, const char *desc, url_t *type,
+		char **user, char **pass, char **host, char **port,
+		in_port_t *portnum, char **path)
 {
 	const char	*origurl;
 	char		*cp, *ep, *thost, *tport;
@@ -446,11 +430,7 @@ sigjmp_buf	httpabort;
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-fetch_url(url, proxyenv, proxyauth, wwwauth)
-	const char	*url;
-	const char	*proxyenv;
-	char		*proxyauth;
-	char		*wwwauth;
+fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 {
 #if defined(NI_NUMERICHOST) && defined(INET6)
 	struct addrinfo		hints, *res, *res0 = NULL;
@@ -472,7 +452,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	char			*user, *pass, *host, *port, *path, *decodedpath;
 	char			*puser, *ppass;
 	off_t			hashbytes, rangestart, rangeend, entitylen;
-	int			 (*closefunc) __P((FILE *));
+	int			 (*closefunc)(FILE *);
 	FILE			*fin, *fout;
 	time_t			mtime;
 	url_t			urltype;
@@ -1345,8 +1325,7 @@ cleanup_fetch_url:
  * Abort a HTTP retrieval
  */
 void
-aborthttp(notused)
-	int notused;
+aborthttp(int notused)
 {
 	char msgbuf[100];
 	int len;
@@ -1363,8 +1342,7 @@ aborthttp(notused)
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-fetch_ftp(url)
-	const char *url;
+fetch_ftp(const char *url)
 {
 	char		*cp, *xargv[5], rempath[MAXPATHLEN];
 	char		*host, *path, *dir, *file, *user, *pass;
@@ -1694,8 +1672,7 @@ cleanup_fetch_ftp:
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-go_fetch(url)
-	const char *url;
+go_fetch(const char *url)
 {
 	char *proxy;
 
@@ -1759,9 +1736,7 @@ go_fetch(url)
  * Otherwise, 0 is returned if all files retrieved successfully.
  */
 int
-auto_fetch(argc, argv)
-	int argc;
-	char *argv[];
+auto_fetch(int argc, char *argv[])
 {
 	volatile int	argpos;
 	int		rval;
