@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.4 2002/10/01 13:40:29 wiz Exp $
+.\"	$NetBSD: dkctl.8,v 1.5 2003/04/15 18:27:28 darrenr Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -101,6 +101,21 @@ the disk device.
 is specified, drop if
 .Ar no
 is specified.)
+.Pp
+.Nm badsector
+.Ar flush | list | retry
+.Pp
+Used for managing the kernel's bad sector list for wd* devices.
+.Bl -tag -width indent
+.It flush
+Clears the in kernel list of bad sectors.
+.It list
+Prints out the list of bad sector ranges recorded by the kernel.
+.It retry
+Flushes the in kernel list and then retries all of the previously recorded
+bad sectors, causing the list to self update.
+.El
+.Pp
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr sd 4 ,
