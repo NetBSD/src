@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1997/06/22 07:43:02 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 1997/07/23 05:41:17 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -1275,7 +1275,22 @@ pmap_zero_page(phys)
 		p[1] = 0;
 		p[2] = 0;
 		p[3] = 0;
-		p += 4;
+
+		p[4] = 0;
+		p[5] = 0;
+		p[6] = 0;
+		p[7] = 0;
+
+		p[8] = 0;
+		p[9] = 0;
+		p[10] = 0;
+		p[11] = 0;
+
+		p[12] = 0;
+		p[13] = 0;
+		p[14] = 0;
+		p[15] = 0;
+		p += 16;
 	} while (p != end);
 #ifdef MIPS3
 	if (CPUISMIPS3) {
@@ -1296,6 +1311,7 @@ pmap_copy_page(src, dst)
 {
 	register int *s, *d, *end;
 	register int tmp0, tmp1, tmp2, tmp3;
+	register int tmp4, tmp5, tmp6, tmp7;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -1320,8 +1336,36 @@ pmap_copy_page(src, dst)
 		d[1] = tmp1;
 		d[2] = tmp2;
 		d[3] = tmp3;
-		s += 4;
-		d += 4;
+
+		tmp4 = s[4];
+		tmp5 = s[5];
+		tmp6 = s[6];
+		tmp7 = s[7];
+		d[4] = tmp4;
+		d[5] = tmp5;
+		d[6] = tmp6;
+		d[7] = tmp7;
+
+		tmp0 = s[8];
+		tmp1 = s[9];
+		tmp2 = s[10];
+		tmp3 = s[11];
+		d[8] = tmp0;
+		d[9] = tmp1;
+		d[10] = tmp2;
+		d[11] = tmp3;
+
+		tmp4 = s[12];
+		tmp5 = s[13];
+		tmp6 = s[14];
+		tmp7 = s[15];
+		d[12] = tmp4;
+		d[13] = tmp5;
+		d[14] = tmp6;
+		d[15] = tmp7;
+
+		s += 16;
+		d += 16;
 	} while (s != end);
 #ifdef MIPS3
 	if (CPUISMIPS3) {
