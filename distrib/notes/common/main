@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.10 2004/11/29 06:03:09 jmc Exp $
+.\"	$NetBSD: main,v 1.253.2.11 2005/02/17 04:23:33 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -424,11 +424,66 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 1.6 and 2.0 Releases
+.Ss Changes Between The NetBSD 2.0 and 2.0.1 Releases
 .Pp
 The
-.Nx 2.0
+.Nx 2.0.1
 release
+is the first security/critical update release of the NetBSD 2.0
+release branch. This represents a selected subset of fixes deemed
+critical in nature for stability or security reasons. All of these fixes
+will also appear on future
+.Nx
+releases from the NetBSD 2.0 release branch as well.
+.
+Specific updates are as follows:
+.
+.Ss2 Kernel
+.
+.(bullet
+Prevent panics on powerpc with DIAGNOSTIC kernels and trap handling.
+.It
+Make the macppc INSTALL kernel bootable again by moving the load address
+to the correct location.
+.It
+Fix a major issue with sparc64 pmap to prevent crashes under heavy load.
+.It
+Fix major performance issue with xen port so idle loop doesn't consume 100%
+of cpu time.
+.It
+Fix xen port so it can reboot cleanly instead of hanging.
+.It
+MMU fixes for sh3 based ports to prevent reboots under heavy load.
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+Fix major performance issues with the i82547 Gig-E chip which improves
+performance with
+.Xr wm 4
+..
+.It
+Fix problems with
+.Xr sk 4
+performance on ASUS A8V motherboards.
+.It
+Prevent panics in ipf when receiving IPv6 packets.
+.It
+NFS fixes to address incorrect atimes updates and cache coherancy issues.
+.bullet)
+.
+.Ss2 System administration and user tools
+.
+.(bullet
+Fix
+.Xr swapcontext 3
+for amd64 so that it works correctly.
+.bullet)
+.Ss2 \*M specific
+.Ss Changes Between The NetBSD 1.6 and 2.0 Releases
+.Pp
+The NetBSD 2.0 release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many user-land enhancements.
