@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_input.c,v 1.3 2000/07/23 05:23:04 itojun Exp $	*/
-/*	$KAME: esp_input.c,v 1.27 2000/07/20 17:41:01 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.4 2000/07/30 04:33:34 itojun Exp $	*/
+/*	$KAME: esp_input.c,v 1.28 2000/07/30 04:28:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -289,7 +289,8 @@ noreplaycheck:
 	}
 
 	/*
-	 * XXX pre-compute and cache intermediate key
+	 * pre-compute and cache intermediate key
+	 * XXX should improve code sharing
 	 */
 	if (!sav->sched && sav->schedlen == 0) {
 		if (algo->schedule && algo->schedlen) {
@@ -650,7 +651,8 @@ noreplaycheck:
 	ip6 = mtod(m, struct ip6_hdr *);	/*set it again just in case*/
 
 	/*
-	 * XXX pre-compute and cache intermediate key
+	 * pre-compute and cache intermediate key
+	 * XXX should improve code sharing
 	 */
 	if (!sav->sched && sav->schedlen == 0) {
 		if (algo->schedule && algo->schedlen) {
