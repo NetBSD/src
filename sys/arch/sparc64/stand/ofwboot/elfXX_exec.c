@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.1 1998/08/16 23:30:00 eeh Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.2 1998/08/23 02:48:28 eeh Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -85,25 +85,25 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 			continue;
 
 		/* Read in segment. */
-		printf("%s%lu@0x%lx", first ? "" : "+", phdr.p_filesz,
+		printf("%s%lu@0x%lx", first ? "" : "+", (u_long)phdr.p_filesz,
 		    (u_long)phdr.p_vaddr);
 		(void)lseek(fd, phdr.p_offset, SEEK_SET);
 /* NB need to do 4MB allocs here */
-		if (OF_claim((void *)(int)phdr.p_vaddr, phdr.p_memsz, phdr.p_align) ==
+		if (OF_claim((void *)(long)phdr.p_vaddr, phdr.p_memsz, phdr.p_align) ==
 		    (void *)-1)
 			panic("cannot claim memory");
-		if (read(fd, (void *)(int)phdr.p_vaddr, phdr.p_filesz) !=
+		if (read(fd, (void *)(long)phdr.p_vaddr, phdr.p_filesz) !=
 		    phdr.p_filesz) {
 			printf("read segment: %s\n", strerror(errno));
 			return (1);
 		}
-		syncicache((void *)(int)phdr.p_vaddr, phdr.p_filesz);
+		syncicache((void *)(long)phdr.p_vaddr, phdr.p_filesz);
 
 		/* Zero BSS. */
 		if (phdr.p_filesz < phdr.p_memsz) {
-			printf("+%lu@0x%lx", phdr.p_memsz - phdr.p_filesz,
+			printf("+%lu@0x%lx", (u_long)phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			bzero((void*)(int)phdr.p_vaddr + phdr.p_filesz,
+			bzero((void*)(long)phdr.p_vaddr + phdr.p_filesz,
 			    phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;
@@ -149,7 +149,8 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 	elf->e_phentsize = 0;
 	elf->e_phnum = 0;
 	bcopy(elf, addr, sizeof(CAT3(Elf,ELFSIZE,_Ehdr)));
-	bcopy(shp, addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr)), elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
+	bcopy(shp, addr + sizeof(CAT3(Elf,ELFSIZE,_Ehdr)), 
+	      elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
 	free(shp, elf->e_shnum * sizeof(CAT3(Elf,ELFSIZE,_Shdr)));
 	*ssymp = addr;
 
@@ -164,7 +165,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 		    || shp->sh_type == Elf_sht_strtab) {
 			if (first)
 				printf("symbols @ 0x%lx ", (u_long)addr);
-			printf("%s%d", first ? "" : "+", shp->sh_size);
+			printf("%s%d", first ? "" : "+", (int)shp->sh_size);
 			(void)lseek(fd, shp->sh_offset, SEEK_SET);
 			if (read(fd, addr, shp->sh_size) != shp->sh_size) {
 				printf("read symbols: %s\n", strerror(errno));
