@@ -14,8 +14,8 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 /*
- * Copyright (c) 1999 Theo de Raadt. All rights reserved.
- * Copyright (c) 1999 Aaron Campbell. All rights reserved.
+ * Copyright (c) 1999 Theo de Raadt.  All rights reserved.
+ * Copyright (c) 1999 Aaron Campbell.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.59 2001/02/19 10:36:25 deraadt Exp $");
+RCSID("$OpenBSD: scp.c,v 1.61 2001/03/15 15:05:59 markus Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -528,9 +528,9 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 				goto next;
 		}
 #define	FILEMODEMASK	(S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO)
-		snprintf(buf, sizeof buf, "C%04o %lu %s\n",
+		snprintf(buf, sizeof buf, "C%04o %lld %s\n",
 		    (u_int) (stb.st_mode & FILEMODEMASK),
-		    (u_long) stb.st_size, last);
+		    stb.st_size, last);
 		if (verbose_mode) {
 			fprintf(stderr, "Sending file modes: %s", buf);
 			fflush(stderr);

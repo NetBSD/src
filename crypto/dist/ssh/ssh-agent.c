@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh-agent.c,v 1.50 2001/02/08 19:30:52 itojun Exp $	*/
+/*	$OpenBSD: ssh-agent.c,v 1.52 2001/03/06 00:33:04 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,7 +13,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  * SSH2 implementation,
- * Copyright (c) 2000 Markus Friedl. All rights reserved.
+ * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-agent.c,v 1.50 2001/02/08 19:30:52 itojun Exp $");
+RCSID("$OpenBSD: ssh-agent.c,v 1.52 2001/03/06 00:33:04 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/md5.h>
@@ -631,9 +631,15 @@ after_select(fd_set *readset, fd_set *writeset)
 		case AUTH_CONNECTION:
 			if (buffer_len(&sockets[i].output) > 0 &&
 			    FD_ISSET(sockets[i].fd, writeset)) {
-				len = write(sockets[i].fd,
-				    buffer_ptr(&sockets[i].output),
-				    buffer_len(&sockets[i].output));
+				do {
+					len = write(sockets[i].fd,
+					    buffer_ptr(&sockets[i].output),
+					    buffer_len(&sockets[i].output));
+					if (len == -1 && (errno == EAGAIN ||
+					    errno == EINTR))
+						continue;
+					break;
+				} while (1);
 				if (len <= 0) {
 					shutdown(sockets[i].fd, SHUT_RDWR);
 					close(sockets[i].fd);
@@ -645,7 +651,13 @@ after_select(fd_set *readset, fd_set *writeset)
 				buffer_consume(&sockets[i].output, len);
 			}
 			if (FD_ISSET(sockets[i].fd, readset)) {
-				len = read(sockets[i].fd, buf, sizeof(buf));
+				do {
+					len = read(sockets[i].fd, buf, sizeof(buf));
+					if (len == -1 && (errno == EAGAIN ||
+					    errno == EINTR))
+						continue;
+					break;
+				} while (1);
 				if (len <= 0) {
 					shutdown(sockets[i].fd, SHUT_RDWR);
 					close(sockets[i].fd);

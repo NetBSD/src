@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.51 2001/02/12 22:56:09 deraadt Exp $");
+RCSID("$OpenBSD: packet.c,v 1.56 2001/03/03 21:41:07 millert Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -389,7 +389,7 @@ packet_start2(int type)
 void
 packet_start(int type)
 {
-	DBG(debug("packet_start[%d]",type));
+	DBG(debug("packet_start[%d]", type));
 	if (use_ssh2_packet_format)
 		packet_start2(type);
 	else
@@ -586,7 +586,7 @@ packet_send2(void)
 			if (i % 4 == 0)
 				rand = arc4random();
 			cp[i] = rand & 0xff;
-			rand <<= 8;
+			rand >>= 8;
 		}
 	} else {
 		/* clear padding */
@@ -660,9 +660,12 @@ int
 packet_read(int *payload_len_ptr)
 {
 	int type, len;
-	fd_set set;
+	fd_set *setp;
 	char buf[8192];
 	DBG(debug("packet_read()"));
+
+	setp = (fd_set *)xmalloc(howmany(connection_in+1, NFDBITS) *
+	    sizeof(fd_mask));
 
 	/* Since we are blocking, ensure that all written packets have been sent. */
 	packet_write_wait();
@@ -678,17 +681,20 @@ packet_read(int *payload_len_ptr)
 		    || type == SSH_CMSG_EXIT_CONFIRMATION))
 			packet_integrity_check(*payload_len_ptr, 0, type);
 		/* If we got a packet, return it. */
-		if (type != SSH_MSG_NONE)
+		if (type != SSH_MSG_NONE) {
+			xfree(setp);
 			return type;
+		}
 		/*
 		 * Otherwise, wait for some data to arrive, add it to the
 		 * buffer, and try again.
 		 */
-		FD_ZERO(&set);
-		FD_SET(connection_in, &set);
+		memset(setp, 0, howmany(connection_in + 1, NFDBITS) *
+		    sizeof(fd_mask));
+		FD_SET(connection_in, setp);
 
 		/* Wait for some data to arrive. */
-		while (select(connection_in + 1, &set, NULL, NULL, NULL) == -1 &&
+		while (select(connection_in + 1, setp, NULL, NULL, NULL) == -1 &&
 		    (errno == EAGAIN || errno == EINTR))
 			;
 
@@ -942,7 +948,7 @@ packet_read_poll2(int *payload_len_ptr)
 	}
 
 #ifdef PACKET_DEBUG
-	fprintf(stderr, "read/plain[%d]:\r\n",type);
+	fprintf(stderr, "read/plain[%d]:\r\n", type);
 	buffer_dump(&incoming_packet);
 #endif
 	return (u_char)type;
@@ -1194,17 +1200,21 @@ packet_write_poll()
 void
 packet_write_wait()
 {
+	fd_set *setp;
+
+	setp = (fd_set *)xmalloc(howmany(connection_out + 1, NFDBITS) *
+	    sizeof(fd_mask));
 	packet_write_poll();
 	while (packet_have_data_to_write()) {
-		fd_set set;
-
-		FD_ZERO(&set);
-		FD_SET(connection_out, &set);
-		while (select(connection_out + 1, NULL, &set, NULL, NULL) == -1 &&
+		memset(setp, 0, howmany(connection_out + 1, NFDBITS) *
+		    sizeof(fd_mask));
+		FD_SET(connection_out, setp);
+		while (select(connection_out + 1, NULL, setp, NULL, NULL) == -1 &&
 		    (errno == EAGAIN || errno == EINTR))
 			;
 		packet_write_poll();
 	}
+	xfree(setp);
 }
 
 /* Returns true if there is buffered data to write to the connection. */
@@ -1298,4 +1308,66 @@ packet_set_maxsize(int s)
 	log("packet_set_maxsize: setting to %d", s);
 	max_packet_size = s;
 	return s;
+}
+
+/*
+ * 9.2.  Ignored Data Message
+ * 
+ *   byte      SSH_MSG_IGNORE
+ *   string    data
+ * 
+ * All implementations MUST understand (and ignore) this message at any
+ * time (after receiving the protocol version). No implementation is
+ * required to send them. This message can be used as an additional
+ * protection measure against advanced traffic analysis techniques.
+ */
+/* size of current + ignore message should be n*sumlen bytes (w/o mac) */
+void
+packet_inject_ignore(int sumlen)
+{
+	int blocksize, padlen, have, need, nb, mini, nbytes;
+	Enc *enc = NULL;
+
+	if (use_ssh2_packet_format == 0)
+		return;
+
+	have = buffer_len(&outgoing_packet);
+	debug2("packet_inject_ignore: current %d", have);
+	if (kex != NULL)
+	enc  = &kex->enc[MODE_OUT];
+	blocksize = enc ? enc->cipher->block_size : 8;
+	padlen = blocksize - (have % blocksize);
+	if (padlen < 4)
+		padlen += blocksize;
+	have += padlen;
+	have /= blocksize;	/* # of blocks for current message */
+
+	nb   = roundup(sumlen,  blocksize) / blocksize;	/* blocks for both */
+	mini = roundup(5+1+4+4, blocksize) / blocksize; /* minsize ignore msg */
+	need = nb - (have % nb);			/* blocks for ignore */
+	if (need <= mini)
+		need += nb;
+	nbytes = (need - mini) * blocksize;	/* size of ignore payload */
+	debug2("packet_inject_ignore: block %d have %d nb %d mini %d need %d",
+	    blocksize, have, nb, mini, need);
+
+	/* enqueue current message and append a ignore message */
+	packet_send();
+	packet_send_ignore(nbytes);
+}
+
+void
+packet_send_ignore(int nbytes)
+{
+	u_int32_t rand = 0;
+	int i;
+
+	packet_start(compat20 ? SSH2_MSG_IGNORE : SSH_MSG_IGNORE);
+	packet_put_int(nbytes);
+	for(i = 0; i < nbytes; i++) {
+		if (i % 4 == 0)
+			rand = arc4random();
+		packet_put_char(rand & 0xff);
+		rand >>= 8;
+	}
 }

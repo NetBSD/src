@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.96 2001/02/17 23:28:58 deraadt Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.104 2001/03/08 21:42:32 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -153,7 +153,8 @@ usage(void)
 #endif				/* AFS */
 	fprintf(stderr, "  -X          Enable X11 connection forwarding.\n");
 	fprintf(stderr, "  -x          Disable X11 connection forwarding.\n");
-	fprintf(stderr, "  -i file     Identity for RSA authentication (default: ~/.ssh/identity).\n");
+	fprintf(stderr, "  -i file     Identity for public key authentication "
+	    "(default: ~/.ssh/identity)\n");
 	fprintf(stderr, "  -t          Tty; allocate a tty even if command is given.\n");
 	fprintf(stderr, "  -T          Do not allocate a tty.\n");
 	fprintf(stderr, "  -v          Verbose; display verbose debugging messages.\n");
@@ -165,8 +166,8 @@ usage(void)
 	fprintf(stderr, "  -e char     Set escape character; ``none'' = disable (default: ~).\n");
 
 	fprintf(stderr, "  -c cipher   Select encryption algorithm: "
-			"``3des'', "
-			"``blowfish''\n");
+	    "``3des'', ``blowfish''\n");
+	fprintf(stderr, "  -m macs     Specify MAC algorithms for protocol version 2.\n");
 	fprintf(stderr, "  -p port     Connect to this port.  Server must be on the same port.\n");
 	fprintf(stderr, "  -L listen-port:host:port   Forward local port to remote address\n");
 	fprintf(stderr, "  -R listen-port:host:port   Forward remote port to local address\n");
@@ -224,7 +225,7 @@ rsh_connect(char *host, char *user, Buffer * command)
 
 int	ssh_session(void);
 int	ssh_session2(void);
-int	guess_identity_file_type(const char *filename);
+void	load_public_identity_files(void);
 
 /*
  * Main program for the ssh client.
@@ -236,7 +237,7 @@ main(int ac, char **av)
 	u_short fwd_port, fwd_host_port;
 	char *optarg, *cp, buf[256];
 	struct stat st;
-	struct passwd *pw, pwcopy;
+	struct passwd *pw;
 	int dummy;
 	uid_t original_effective_uid;
 
@@ -374,7 +375,7 @@ main(int ac, char **av)
 				options.log_level++;
 				break;
 			} else {
-				fatal("Too high debugging level.\n");
+				fatal("Too high debugging level.");
 			}
 			/* fallthrough */
 		case 'V':
@@ -530,30 +531,24 @@ main(int ac, char **av)
 	/* Do not allocate a tty if stdin is not a tty. */
 	if (!isatty(fileno(stdin)) && !force_tty_flag) {
 		if (tty_flag)
-			log("Pseudo-terminal will not be allocated because stdin is not a terminal.\n");
+			log("Pseudo-terminal will not be allocated because stdin is not a terminal.");
 		tty_flag = 0;
 	}
 
 	/* Get user data. */
 	pw = getpwuid(original_real_uid);
 	if (!pw) {
-		log("You don't exist, go away!\n");
+		log("You don't exist, go away!");
 		exit(1);
 	}
 	/* Take a copy of the returned structure. */
-	memset(&pwcopy, 0, sizeof(pwcopy));
-	pwcopy.pw_name = xstrdup(pw->pw_name);
-	pwcopy.pw_passwd = xstrdup(pw->pw_passwd);
-	pwcopy.pw_uid = pw->pw_uid;
-	pwcopy.pw_gid = pw->pw_gid;
-	pwcopy.pw_class = xstrdup(pw->pw_class);
-	pwcopy.pw_dir = xstrdup(pw->pw_dir);
-	pwcopy.pw_shell = xstrdup(pw->pw_shell);
-	pw = &pwcopy;
+	pw = pwcopy(pw);
 
-	/* Initialize "log" output.  Since we are the client all output
-	   actually goes to the terminal. */
-	log_init(av[0], options.log_level, SYSLOG_FACILITY_USER, 0);
+	/*
+	 * Initialize "log" output.  Since we are the client all output
+	 * actually goes to stderr.
+	 */
+	log_init(av[0], SYSLOG_LEVEL_INFO, SYSLOG_FACILITY_USER, 1);
 
 	/* Read per-user configuration file. */
 	snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, _PATH_SSH_USER_CONFFILE);
@@ -566,7 +561,7 @@ main(int ac, char **av)
 	fill_default_options(&options);
 
 	/* reinit */
-	log_init(av[0], options.log_level, SYSLOG_FACILITY_USER, 0);
+	log_init(av[0], options.log_level, SYSLOG_FACILITY_USER, 1);
 
 	if (options.user == NULL)
 		options.user = xstrdup(pw->pw_name);
@@ -665,15 +660,11 @@ main(int ac, char **av)
 		}
 		exit(1);
 	}
-	/* Expand ~ in options.identity_files, known host file names. */
-	/* XXX mem-leaks */
-	for (i = 0; i < options.num_identity_files; i++) {
-		options.identity_files[i] =
-		    tilde_expand_filename(options.identity_files[i], original_real_uid);
-		options.identity_files_type[i] = guess_identity_file_type(options.identity_files[i]);
-		debug("identity file %s type %d", options.identity_files[i],
-		    options.identity_files_type[i]);
-	}
+	/* load options.identity_files */
+	load_public_identity_files();
+
+	/* Expand ~ in known host file names. */
+	/* XXX mem-leaks: */
 	options.system_hostfile =
 	    tilde_expand_filename(options.system_hostfile, original_real_uid);
 	options.user_hostfile =
@@ -926,7 +917,8 @@ client_subsystem_reply(int type, int plen, void *ctxt)
 
 	id = packet_get_int();
 	len = buffer_len(&command);
-	len = MAX(len, 900);
+	if (len > 900)
+		len = 900;
 	packet_done();
 	if (type == SSH2_MSG_CHANNEL_FAILURE)
 		fatal("Request for subsystem '%.*s' failed on channel %d",
@@ -999,7 +991,7 @@ ssh_session2_callback(int id, void *arg)
 			debug("Sending command: %.*s", len, buffer_ptr(&command));
 			channel_request_start(id, "exec", 0);
 		}
-		packet_put_string(buffer_ptr(&command), len);
+		packet_put_string(buffer_ptr(&command), buffer_len(&command));
 		packet_send();
 	} else {
 		channel_request(id, "shell", 0);
@@ -1062,6 +1054,7 @@ ssh_session2(void)
 	return client_loop(tty_flag, tty_flag ? options.escape_char : -1, id);
 }
 
+#if 0
 int
 guess_identity_file_type(const char *filename)
 {
@@ -1080,4 +1073,33 @@ guess_identity_file_type(const char *filename)
 	}
 	key_free(public);
 	return type;
+}
+#endif
+
+void
+load_public_identity_files(void)
+{
+	char *filename;
+	Key *public;
+	int i;
+
+	for (i = 0; i < options.num_identity_files; i++) {
+		filename = tilde_expand_filename(options.identity_files[i],
+		    original_real_uid);
+		public = key_new(KEY_RSA1);
+		if (!load_public_key(filename, public, NULL)) {
+			key_free(public);
+			public = key_new(KEY_UNSPEC);
+			if (!try_load_public_key(filename, public, NULL)) {
+				debug("unknown identity file %s", filename);
+				key_free(public);
+				public = NULL;
+			}
+		}
+		debug("identity file %s type %d", filename,
+		    public ? public->type : -1);
+		xfree(options.identity_files[i]);
+		options.identity_files[i] = filename;
+		options.identity_keys[i] = public;
+	}
 }

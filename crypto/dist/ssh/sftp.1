@@ -27,7 +27,7 @@
 .Os
 .Sh NAME
 .Nm sftp
-.Nd Secure file transfer program
+.Nd Secure file tranfer program
 .Sh SYNOPSIS
 .Nm sftp
 .Op Fl vC
@@ -45,7 +45,7 @@ It may also use many features of ssh, such as public key authentication and
 compression.
 .Nm
 connects and logs into the specified
-.Ar hostname ,
+.Ar hostname
 then enters an interactive command mode.
 .Pp
 The options are as follows:
@@ -67,6 +67,8 @@ and
 Enables compression (via ssh's 
 .Fl C
 flag)
+.It Fl v
+Raise logging level. This option is also passed to ssh.
 .It Fl o Ar ssh_option
 Specify an option to be directly passed to
 .Xr ssh 1 .
@@ -78,8 +80,7 @@ Once in interactive mode,
 .Nm
 understands a set of commands similar to those of 
 .Xr ftp 1 .
-Commands are case insensitive and pathnames may be enclosed in quotes if they
-contain spaces.
+Commands are case insensitive.
 .Bl -tag -width Ds
 .It Ic cd Ar path
 Change remote directory to 
@@ -89,20 +90,17 @@ Change local directory to
 .Ar path .
 .It Ic chgrp Ar grp Ar path
 Change group of file 
-.Ar path
-to
+.Ar path to 
 .Ar grp .
 .Ar grp
-must be a numeric GID.
+must be numeric.
 .It Ic chmod Ar mode Ar path
 Change permissions of file 
-.Ar path
-to
+.Ar path to 
 .Ar mode .
 .It Ic chown Ar own Ar path
 Change owner of file 
-.Ar path
-to
+.Ar path to 
 .Ar own .
 .Ar own
 must be a numeric UID.
@@ -114,7 +112,7 @@ Quit sftp.
 .Op Ar local-path
 .Xc
 Retrieve the
-.Ar remote-path
+.Ar remote-file
 and store it on the local machine.
 If the local
 path name is not specified, it is given the same name it has on the 
@@ -129,7 +127,7 @@ Display local directory listing of either
 .Ar path
 or current directory if
 .Ar path
-is not specified.
+was not specified.
 .It Ic lmkdir Ar path
 Create local directory specified by
 .Ar path .
@@ -143,20 +141,15 @@ Print local working directory.
 .It Ic ls Op Ar path
 Display remote directory listing of either
 .Ar path
-or current directory if
-.Ar path
-is not specified.
+or current directory, is
+.Ar path not specified.
 .It Ic lumask Ar umask
 Set local umask to 
 .Ar umask .
 .It Ic mkdir Ar path
 Create remote directory specified by
 .Ar path .
-.It Xo Ic put
-.Op Ar flags
-.Ar local-path
-.Op Ar local-path
-.Xc
+.It Ic put Ar local-file Op Ar remote-file
 Upload
 .Ar local-path
 and store it on the remote machine. If the remote path name is not 
@@ -191,7 +184,7 @@ in local shell.
 .It Ic !
 Escape to local shell.
 .It Ic ?
-Synonym for help.
+A synonym for help.
 .El
 .Sh AUTHORS
 Damien Miller <djm@mindrot.org>

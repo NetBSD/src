@@ -9,7 +9,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  * SSH2 support by Markus Friedl.
- * Copyright (c) 2000 Markus Friedl. All rights reserved.
+ * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,13 +33,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.56 2001/02/16 14:03:43 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.61 2001/03/16 19:06:30 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
 #include "ssh2.h"
 #include "xmalloc.h"
-#include "pty.h"
+#include "sshpty.h"
 #include "packet.h"
 #include "buffer.h"
 #include "mpaux.h"
@@ -53,7 +53,7 @@ RCSID("$OpenBSD: session.c,v 1.56 2001/02/16 14:03:43 markus Exp $");
 #include "pathnames.h"
 #include "log.h"
 #include "servconf.h"
-#include "login.h"
+#include "sshlogin.h"
 #include "serverloop.h"
 #include "canohost.h"
 #include "session.h"
@@ -96,11 +96,7 @@ void	session_proctitle(Session *s);
 void	do_exec_pty(Session *s, const char *command, struct passwd * pw);
 void	do_exec_no_pty(Session *s, const char *command, struct passwd * pw);
 void	do_login(Session *s, const char *command);
-
-void
-do_child(const char *command, struct passwd * pw, const char *term,
-    const char *display, const char *auth_proto,
-    const char *auth_data, const char *ttyname);
+void	do_child(Session *s, const char *command);
 
 /* import */
 extern ServerOptions options;
@@ -184,6 +180,7 @@ do_authenticated(struct passwd * pw)
 	int n_bytes;
 	int plen;
 	u_int proto_len, data_len, dlen;
+	int screen_flag;
 
 	/*
 	 * Cancel the alarm we set to limit the time taken for
@@ -195,18 +192,11 @@ do_authenticated(struct passwd * pw)
 		startup_pipe = -1;
 	}
 
-	/*
-	 * Inform the channel mechanism that we are the server side and that
-	 * the client may request to connect to any port at all. (The user
-	 * could do it anyway, and we wouldn\'t know what is permitted except
-	 * by the client telling us, so we can equally well trust the client
-	 * not to request anything bogus.)
-	 */
-	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
-		channel_permit_all_opens();
-
 	s = session_new();
 	s->pw = pw;
+
+	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
+		channel_permit_all_opens();
 
 #ifdef HAVE_LOGIN_CAP
 	if ((lc = login_getclass(pw->pw_class)) == NULL) {
@@ -308,13 +298,18 @@ do_authenticated(struct passwd * pw)
 			s->auth_proto = packet_get_string(&proto_len);
 			s->auth_data = packet_get_string(&data_len);
 
-			if (packet_get_protocol_flags() & SSH_PROTOFLAG_SCREEN_NUMBER) {
-				debug2("SSH_PROTOFLAG_SCREEN_NUMBER == true");
+			screen_flag = packet_get_protocol_flags() &
+			    SSH_PROTOFLAG_SCREEN_NUMBER;
+			debug2("SSH_PROTOFLAG_SCREEN_NUMBER: %d", screen_flag);
+
+			if (packet_remaining() == 4) {
+				if (!screen_flag)
+					debug2("Buggy client: "
+					    "X11 screen flag missing");
 				packet_integrity_check(plen,
 				    4 + proto_len + 4 + data_len + 4, type);
 				s->screen = packet_get_int();
 			} else {
-				debug2("SSH_PROTOFLAG_SCREEN_NUMBER == false");
 				packet_integrity_check(plen,
 				    4 + proto_len + 4 + data_len, type);
 				s->screen = 0;
@@ -499,7 +494,7 @@ do_exec_no_pty(Session *s, const char *command, struct passwd * pw)
 #endif /* USE_PIPES */
 
 		/* Do processing for the child (exec command etc). */
-		do_child(command, pw, NULL, s->display, s->auth_proto, s->auth_data, NULL);
+		do_child(s, command);
 		/* NOTREACHED */
 	}
 	if (pid < 0)
@@ -586,8 +581,7 @@ do_exec_pty(Session *s, const char *command, struct passwd * pw)
 			do_login(s, command);
 
 		/* Do common processing for the child, such as execing the command. */
-		do_child(command, pw, s->term, s->display, s->auth_proto,
-		    s->auth_data, s->tty);
+		do_child(s, command);
 		/* NOTREACHED */
 	}
 	if (pid < 0)
@@ -792,11 +786,10 @@ read_environment_file(char ***env, u_int *envsize,
  * ids, and executing the command or shell.
  */
 void
-do_child(const char *command, struct passwd * pw, const char *term,
-	 const char *display, const char *auth_proto,
-	 const char *auth_data, const char *ttyname)
+do_child(Session *s, const char *command)
 {
 	const char *shell, *hostname = NULL, *cp = NULL;
+	struct passwd * pw = s->pw;
 	char buf[256];
 	char cmd[1024];
 	FILE *f = NULL;
@@ -805,6 +798,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	extern char **environ;
 	struct stat st;
 	char *argv[10];
+	int do_xauth = s->auth_proto != NULL && s->auth_data != NULL;
 
 	/* login(1) is only called if we execute the login shell */
 	if (options.use_login && command != NULL)
@@ -927,12 +921,12 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		 get_remote_ipaddr(), get_remote_port(), get_local_port());
 	child_set_env(&env, &envsize, "SSH_CLIENT", buf);
 
-	if (ttyname)
-		child_set_env(&env, &envsize, "SSH_TTY", ttyname);
-	if (term)
-		child_set_env(&env, &envsize, "TERM", term);
-	if (display)
-		child_set_env(&env, &envsize, "DISPLAY", display);
+	if (s->ttyfd != -1)
+		child_set_env(&env, &envsize, "SSH_TTY", s->tty);
+	if (s->term)
+		child_set_env(&env, &envsize, "TERM", s->term);
+	if (s->display)
+		child_set_env(&env, &envsize, "DISPLAY", s->display);
 	if (original_command)
 		child_set_env(&env, &envsize, "SSH_ORIGINAL_COMMAND",
 		    original_command);
@@ -1025,56 +1019,63 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	if (!options.use_login) {
 		if (stat(_PATH_SSH_USER_RC, &st) >= 0) {
 			if (debug_flag)
-				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, _PATH_SSH_USER_RC);
-
+				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL,
+				    _PATH_SSH_USER_RC);
 			f = popen(_PATH_BSHELL " " _PATH_SSH_USER_RC, "w");
 			if (f) {
-				if (auth_proto != NULL && auth_data != NULL)
-					fprintf(f, "%s %s\n", auth_proto, auth_data);
+				if (do_xauth)
+					fprintf(f, "%s %s\n", s->auth_proto,
+					    s->auth_data);
 				pclose(f);
 			} else
-				fprintf(stderr, "Could not run %s\n", _PATH_SSH_USER_RC);
+				fprintf(stderr, "Could not run %s\n",
+				    _PATH_SSH_USER_RC);
 		} else if (stat(_PATH_SSH_SYSTEM_RC, &st) >= 0) {
 			if (debug_flag)
-				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL, _PATH_SSH_SYSTEM_RC);
-
+				fprintf(stderr, "Running %s %s\n", _PATH_BSHELL,
+				    _PATH_SSH_SYSTEM_RC);
 			f = popen(_PATH_BSHELL " " _PATH_SSH_SYSTEM_RC, "w");
 			if (f) {
-				if (auth_proto != NULL && auth_data != NULL)
-					fprintf(f, "%s %s\n", auth_proto, auth_data);
+				if (do_xauth)
+					fprintf(f, "%s %s\n", s->auth_proto,
+					    s->auth_data);
 				pclose(f);
 			} else
-				fprintf(stderr, "Could not run %s\n", _PATH_SSH_SYSTEM_RC);
-		} else if (options.xauth_location != NULL) {
+				fprintf(stderr, "Could not run %s\n",
+				    _PATH_SSH_SYSTEM_RC);
+		} else if (do_xauth && options.xauth_location != NULL) {
 			/* Add authority data to .Xauthority if appropriate. */
-			if (auth_proto != NULL && auth_data != NULL) {
-				char *screen = strchr(display, ':');
-				if (debug_flag) {
+			char *screen = strchr(s->display, ':');
+
+			if (debug_flag) {
+				fprintf(stderr,
+				    "Running %.100s add "
+				    "%.100s %.100s %.100s\n",
+				    options.xauth_location, s->display,
+				    s->auth_proto, s->auth_data);
+				if (screen != NULL)
 					fprintf(stderr,
-					    "Running %.100s add %.100s %.100s %.100s\n",
-					    options.xauth_location, display,
-					    auth_proto, auth_data);
-					if (screen != NULL)
-						fprintf(stderr,
-						    "Adding %.*s/unix%s %s %s\n",
-						    (int)(screen-display), display,
-						    screen, auth_proto, auth_data);
-				}
-				snprintf(cmd, sizeof cmd, "%s -q -",
-				    options.xauth_location);
-				f = popen(cmd, "w");
-				if (f) {
-					fprintf(f, "add %s %s %s\n", display,
-					    auth_proto, auth_data);
-					if (screen != NULL)
-						fprintf(f, "add %.*s/unix%s %s %s\n",
-						    (int)(screen-display), display,
-						    screen, auth_proto, auth_data);
-					pclose(f);
-				} else {
-					fprintf(stderr, "Could not run %s\n",
-					    cmd);
-				}
+					    "Adding %.*s/unix%s %s %s\n",
+					    (int)(screen - s->display),
+					    s->display, screen,
+					    s->auth_proto, s->auth_data);
+			}
+			snprintf(cmd, sizeof cmd, "%s -q -",
+			    options.xauth_location);
+			f = popen(cmd, "w");
+			if (f) {
+				fprintf(f, "add %s %s %s\n", s->display,
+				    s->auth_proto, s->auth_data);
+				if (screen != NULL)
+					fprintf(f, "add %.*s/unix%s %s %s\n",
+					    (int)(screen - s->display),
+					    s->display, screen,
+					    s->auth_proto,
+					    s->auth_data);
+				pclose(f);
+			} else {
+				fprintf(stderr, "Could not run %s\n",
+				    cmd);
 			}
 		}
 		/* Get the last component of the shell name. */
@@ -1097,9 +1098,10 @@ do_child(const char *command, struct passwd * pw, const char *term,
 			 * Check for mail if we have a tty and it was enabled
 			 * in server options.
 			 */
-			if (ttyname && options.check_mail) {
+			if (s->ttyfd != -1 && options.check_mail) {
 				char *mailbox;
 				struct stat mailstat;
+
 				mailbox = getenv("MAIL");
 				if (mailbox != NULL) {
 					if (stat(mailbox, &mailstat) != 0 ||
@@ -1691,6 +1693,8 @@ do_authenticated2(Authctxt *authctxt)
 		close(startup_pipe);
 		startup_pipe = -1;
 	}
+	if (!no_port_forwarding_flag && options.allow_tcp_forwarding)
+		channel_permit_all_opens();
 #ifdef HAVE_LOGIN_CAP
 	if ((lc = login_getclass(authctxt->pw->pw_class)) == NULL) {
 		error("unable to get login class");

@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.19 2001/02/07 18:01:18 itojun Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.24 2001/03/14 22:50:25 deraadt Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -43,6 +43,9 @@ RCSID("$OpenBSD: sftp-server.c,v 1.19 2001/02/07 18:01:18 itojun Exp $");
 Buffer iqueue;
 Buffer oqueue;
 
+/* Version of client */
+int version;
+
 /* portable attibutes, etc. */
 
 typedef struct Stat Stat;
@@ -57,6 +60,7 @@ static int
 errno_to_portable(int unixerrno)
 {
 	int ret = 0;
+
 	switch (unixerrno) {
 	case 0:
 		ret = SSH2_FX_OK;
@@ -87,8 +91,9 @@ static int
 flags_from_portable(int pflags)
 {
 	int flags = 0;
-	if (pflags & SSH2_FXF_READ &&
-	    pflags & SSH2_FXF_WRITE) {
+
+	if ((pflags & SSH2_FXF_READ) &&
+	    (pflags & SSH2_FXF_WRITE)) {
 		flags = O_RDWR;
 	} else if (pflags & SSH2_FXF_READ) {
 		flags = O_RDONLY;
@@ -119,17 +124,20 @@ struct Handle {
 	int fd;
 	char *name;
 };
+
 enum {
 	HANDLE_UNUSED,
 	HANDLE_DIR,
 	HANDLE_FILE
 };
+
 Handle	handles[100];
 
 static void
 handle_init(void)
 {
 	int i;
+
 	for(i = 0; i < sizeof(handles)/sizeof(Handle); i++)
 		handles[i].use = HANDLE_UNUSED;
 }
@@ -138,6 +146,7 @@ static int
 handle_new(int use, char *name, int fd, DIR *dirp)
 {
 	int i;
+
 	for(i = 0; i < sizeof(handles)/sizeof(Handle); i++) {
 		if (handles[i].use == HANDLE_UNUSED) {
 			handles[i].use = use;
@@ -172,6 +181,7 @@ static int
 handle_from_string(char *handle, u_int hlen)
 {
 	int val;
+
 	if (hlen != sizeof(int32_t))
 		return -1;
 	val = GET_32BIT(handle);
@@ -210,6 +220,7 @@ static int
 handle_close(int handle)
 {
 	int ret = -1;
+
 	if (handle_is_ok(handle, HANDLE_FILE)) {
 		ret = close(handles[handle].fd);
 		handles[handle].use = HANDLE_UNUSED;
@@ -228,6 +239,7 @@ get_handle(void)
 	char *handle;
 	int val = -1;
 	u_int hlen;
+
 	handle = get_string(&hlen);
 	if (hlen < 256)
 		val = handle_from_string(handle, hlen);
@@ -241,6 +253,7 @@ static void
 send_msg(Buffer *m)
 {
 	int mlen = buffer_len(m);
+
 	buffer_put_int(&oqueue, mlen);
 	buffer_append(&oqueue, buffer_ptr(m), mlen);
 	buffer_consume(m, mlen);
@@ -250,11 +263,29 @@ static void
 send_status(u_int32_t id, u_int32_t error)
 {
 	Buffer msg;
+	const char *status_messages[] = {
+		"Success",			/* SSH_FX_OK */
+		"End of file",			/* SSH_FX_EOF */
+		"No such file",			/* SSH_FX_NO_SUCH_FILE */
+		"Permission denied",		/* SSH_FX_PERMISSION_DENIED */
+		"Failure",			/* SSH_FX_FAILURE */
+		"Bad message",			/* SSH_FX_BAD_MESSAGE */
+		"No connection",		/* SSH_FX_NO_CONNECTION */
+		"Connection lost",		/* SSH_FX_CONNECTION_LOST */
+		"Operation unsupported",	/* SSH_FX_OP_UNSUPPORTED */
+		"Unknown error"			/* Others */
+	};
+
 	TRACE("sent status id %d error %d", id, error);
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH2_FXP_STATUS);
 	buffer_put_int(&msg, id);
 	buffer_put_int(&msg, error);
+	if (version >= 3) {
+		buffer_put_cstring(&msg, 
+		    status_messages[MIN(error,SSH2_FX_MAX)]);
+		buffer_put_cstring(&msg, "");
+	}
 	send_msg(&msg);
 	buffer_free(&msg);
 }
@@ -262,6 +293,7 @@ static void
 send_data_or_handle(char type, u_int32_t id, char *data, int dlen)
 {
 	Buffer msg;
+
 	buffer_init(&msg);
 	buffer_put_char(&msg, type);
 	buffer_put_int(&msg, id);
@@ -282,6 +314,7 @@ send_handle(u_int32_t id, int handle)
 {
 	char *string;
 	int hlen;
+
 	handle_to_string(handle, &string, &hlen);
 	TRACE("sent handle id %d handle %d", id, handle);
 	send_data_or_handle(SSH2_FXP_HANDLE, id, string, hlen);
@@ -293,6 +326,7 @@ send_names(u_int32_t id, int count, Stat *stats)
 {
 	Buffer msg;
 	int i;
+
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH2_FXP_NAME);
 	buffer_put_int(&msg, id);
@@ -311,6 +345,7 @@ static void
 send_attrib(u_int32_t id, Attrib *a)
 {
 	Buffer msg;
+
 	TRACE("sent attrib id %d have 0x%x", id, a->flags);
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH2_FXP_ATTRS);
@@ -326,8 +361,8 @@ static void
 process_init(void)
 {
 	Buffer msg;
-	int version = buffer_get_int(&iqueue);
 
+	version = buffer_get_int(&iqueue);
 	TRACE("client version %d", version);
 	buffer_init(&msg);
 	buffer_put_char(&msg, SSH2_FXP_VERSION);
@@ -527,6 +562,7 @@ static struct timeval *
 attrib_to_tv(Attrib *a)
 {
 	static struct timeval tv[2];
+
 	tv[0].tv_sec = a->atime;
 	tv[0].tv_usec = 0;
 	tv[1].tv_sec = a->mtime;
@@ -824,6 +860,51 @@ process_rename(void)
 }
 
 static void
+process_readlink(void)
+{
+	u_int32_t id;
+	char link[MAXPATHLEN];
+	char *path;
+
+	id = get_int();
+	path = get_string(NULL);
+	TRACE("readlink id %d path %s", id, path);
+	if (readlink(path, link, sizeof(link) - 1) == -1)
+		send_status(id, errno_to_portable(errno));
+	else {
+		Stat s;
+		
+		link[sizeof(link) - 1] = '\0';
+		attrib_clear(&s.attrib);
+		s.name = s.long_name = link;
+		send_names(id, 1, &s);
+	}
+	xfree(path);
+}
+
+static void
+process_symlink(void)
+{
+	u_int32_t id;
+	struct stat st;
+	char *oldpath, *newpath;
+	int ret, status = SSH2_FX_FAILURE;
+
+	id = get_int();
+	oldpath = get_string(NULL);
+	newpath = get_string(NULL);
+	TRACE("symlink id %d old %s new %s", id, oldpath, newpath);
+	/* fail if 'newpath' exists */
+	if (stat(newpath, &st) == -1) {
+		ret = symlink(oldpath, newpath);
+		status = (ret == -1) ? errno_to_portable(errno) : SSH2_FX_OK;
+	}
+	send_status(id, status);
+	xfree(oldpath);
+	xfree(newpath);
+}
+
+static void
 process_extended(void)
 {
 	u_int32_t id;
@@ -908,6 +989,12 @@ process(void)
 	case SSH2_FXP_RENAME:
 		process_rename();
 		break;
+	case SSH2_FXP_READLINK:
+		process_readlink();
+		break;
+	case SSH2_FXP_SYMLINK:
+		process_symlink();
+		break;
 	case SSH2_FXP_EXTENDED:
 		process_extended();
 		break;
@@ -920,9 +1007,11 @@ process(void)
 int
 main(int ac, char **av)
 {
-	fd_set rset, wset;
+	fd_set *rset, *wset;
 	int in, out, max;
-	ssize_t len, olen;
+	ssize_t len, olen, set_size;
+
+	/* XXX should use getopt */
 
 	handle_init();
 
@@ -942,23 +1031,27 @@ main(int ac, char **av)
 	buffer_init(&iqueue);
 	buffer_init(&oqueue);
 
-	for (;;) {
-		FD_ZERO(&rset);
-		FD_ZERO(&wset);
+	set_size = howmany(max + 1, NFDBITS) * sizeof(fd_mask);
+	rset = (fd_set *)xmalloc(set_size);
+	wset = (fd_set *)xmalloc(set_size);
 
-		FD_SET(in, &rset);
+	for (;;) {
+		memset(rset, 0, set_size);
+		memset(wset, 0, set_size);
+
+		FD_SET(in, rset);
 		olen = buffer_len(&oqueue);
 		if (olen > 0)
-			FD_SET(out, &wset);
+			FD_SET(out, wset);
 
-		if (select(max+1, &rset, &wset, NULL, NULL) < 0) {
+		if (select(max+1, rset, wset, NULL, NULL) < 0) {
 			if (errno == EINTR)
 				continue;
 			exit(2);
 		}
 
 		/* copy stdin to iqueue */
-		if (FD_ISSET(in, &rset)) {
+		if (FD_ISSET(in, rset)) {
 			char buf[4*4096];
 			len = read(in, buf, sizeof buf);
 			if (len == 0) {
@@ -972,7 +1065,7 @@ main(int ac, char **av)
 			}
 		}
 		/* send oqueue to stdout */
-		if (FD_ISSET(out, &wset)) {
+		if (FD_ISSET(out, wset)) {
 			len = write(out, buffer_ptr(&oqueue), olen);
 			if (len < 0) {
 				error("write error");

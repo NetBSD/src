@@ -11,7 +11,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  * SSH2 support by Markus Friedl.
- * Copyright (c) 2000 Markus Friedl. All rights reserved.
+ * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,14 +35,14 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.50 2001/02/19 09:53:32 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.55 2001/03/16 19:06:29 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
 #include "buffer.h"
 #include "log.h"
 #include "servconf.h"
-#include "pty.h"
+#include "sshpty.h"
 #include "channels.h"
 #include "compat.h"
 #include "ssh1.h"
@@ -245,7 +245,7 @@ retry_select:
 		tvp = &tv;
 	}
 	if (tvp!=NULL)
-		debug2("tvp!=NULL kid %d mili %d", child_terminated, max_time_milliseconds);
+		debug3("tvp!=NULL kid %d mili %d", child_terminated, max_time_milliseconds);
 
 	/* Wait for something to happen, or the timeout to expire. */
 	ret = select((*maxfdp)+1, *readsetp, *writesetp, NULL, tvp);
@@ -345,9 +345,7 @@ process_output(fd_set * writeset)
 				 * Simulate echo to reduce the impact of
 				 * traffic analysis
 				 */
-				packet_start(SSH_MSG_IGNORE);
-				memset(buffer_ptr(&stdin_buffer), 0, len);
-				packet_put_string(buffer_ptr(&stdin_buffer), len);
+				packet_send_ignore(len);
 				packet_send();
 			}
 			/* Consume the data from the buffer. */
@@ -756,11 +754,6 @@ server_request_direct_tcpip(char *ctype)
 	   originator, originator_port, target, target_port);
 
 	/* XXX check permission */
-	if (no_port_forwarding_flag || !options.allow_tcp_forwarding) {
-		xfree(target);
-		xfree(originator);
-		return NULL;
-	}
 	sock = channel_connect_to(target, target_port);
 	xfree(target);
 	xfree(originator);
@@ -858,6 +851,7 @@ server_input_global_request(int type, int plen, void *ctxt)
 	want_reply = packet_get_char();
 	debug("server_input_global_request: rtype %s want_reply %d", rtype, want_reply);
 
+	/* -R style forwarding */
 	if (strcmp(rtype, "tcpip-forward") == 0) {
 		struct passwd *pw;
 		char *listen_address;

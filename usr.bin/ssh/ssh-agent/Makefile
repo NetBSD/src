@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2000/07/25 16:32:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/03/19 20:03:25 itojun Exp $
 
 .include <bsd.own.mk>
 
 PROG=	ssh-agent
 
-SRCS=	ssh-agent.c log-client.c
+SRCS=	ssh-agent.c
 
 .include <bsd.prog.mk>
 

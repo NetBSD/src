@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.62 2001/02/11 12:59:25 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.68 2001/03/19 17:07:23 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -112,7 +112,8 @@ typedef enum {
 	oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts,
 	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol, oMacs,
 	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
-	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias
+	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
+	oPreferredAuthentications
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -177,6 +178,7 @@ static struct {
 	{ "keepalive", oKeepAlives },
 	{ "numberofpasswordprompts", oNumberOfPasswordPrompts },
 	{ "loglevel", oLogLevel },
+	{ "preferredauthentications", oPreferredAuthentications },
 	{ NULL, 0 }
 };
 
@@ -192,7 +194,7 @@ add_local_forward(Options *options, u_short port, const char *host,
 	Forward *fwd;
 	extern uid_t original_real_uid;
 	if (port < IPPORT_RESERVED && original_real_uid != 0)
-		fatal("Privileged ports can only be forwarded by root.\n");
+		fatal("Privileged ports can only be forwarded by root.");
 	if (options->num_local_forwards >= SSH_MAX_FORWARDS_PER_DIRECTION)
 		fatal("Too many local forwards (max %d).", SSH_MAX_FORWARDS_PER_DIRECTION);
 	fwd = &options->local_forwards[options->num_local_forwards++];
@@ -456,6 +458,10 @@ parse_string:
 		charptr = &options->host_key_alias;
 		goto parse_string;
 
+	case oPreferredAuthentications:
+		charptr = &options->preferred_authentications;
+		goto parse_string;
+
 	case oProxyCommand:
 		charptr = &options->proxy_command;
 		string = xstrdup("");
@@ -544,7 +550,7 @@ parse_int:
 		arg = strdelim(&s);
 		value = log_level_number(arg);
 		if (value == (LogLevel) - 1)
-			fatal("%.200s line %d: unsupported log level '%s'\n",
+			fatal("%.200s line %d: unsupported log level '%s'",
 			      filename, linenum, arg ? arg : "<NONE>");
 		if (*activep && (LogLevel) * intptr == -1)
 			*intptr = (LogLevel) value;
@@ -669,7 +675,7 @@ read_config_file(const char *filename, const char *host, Options *options)
 	}
 	fclose(f);
 	if (bad_options > 0)
-		fatal("%s: terminating, %d bad configuration options\n",
+		fatal("%s: terminating, %d bad configuration options",
 		      filename, bad_options);
 }
 
@@ -735,6 +741,7 @@ initialize_options(Options * options)
 	options->num_local_forwards = 0;
 	options->num_remote_forwards = 0;
 	options->log_level = (LogLevel) - 1;
+	options->preferred_authentications = NULL;
 }
 
 /*
@@ -758,7 +765,7 @@ fill_default_options(Options * options)
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->use_privileged_port == -1)
-		options->use_privileged_port = 1;
+		options->use_privileged_port = 0;
 	if (options->rhosts_authentication == -1)
 		options->rhosts_authentication = 1;
 	if (options->rsa_authentication == -1)
@@ -825,6 +832,12 @@ fill_default_options(Options * options)
 			    len, "~/%.100s", _PATH_SSH_CLIENT_IDENTITY);
 		}
 		if (options->protocol & SSH_PROTO_2) {
+			len = 2 + strlen(_PATH_SSH_CLIENT_ID_RSA) + 1;
+			options->identity_files[options->num_identity_files] =
+			    xmalloc(len);
+			snprintf(options->identity_files[options->num_identity_files++],
+			    len, "~/%.100s", _PATH_SSH_CLIENT_ID_RSA);
+
 			len = 2 + strlen(_PATH_SSH_CLIENT_ID_DSA) + 1;
 			options->identity_files[options->num_identity_files] =
 			    xmalloc(len);
@@ -848,4 +861,5 @@ fill_default_options(Options * options)
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */
 	/* options->host_key_alias should not be set by default */
+	/* options->preferred_authentications will be set in ssh */
 }

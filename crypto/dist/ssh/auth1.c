@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.17 2001/02/13 22:49:40 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.19 2001/03/08 18:47:12 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -23,6 +23,7 @@ RCSID("$OpenBSD: auth1.c,v 1.17 2001/02/13 22:49:40 markus Exp $");
 #include "compat.h"
 #include "auth.h"
 #include "session.h"
+#include "misc.h"
 
 #ifdef KRB5
 extern krb5_context ssh_context;
@@ -32,7 +33,6 @@ Also is used as an indication of succesful krb5 authentization. */
 
 /* import */
 extern ServerOptions options;
-extern char *forced_command;
 
 /*
  * convert ssh auth msg type into description

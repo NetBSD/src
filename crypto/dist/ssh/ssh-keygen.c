@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keygen.c,v 1.43 2001/02/12 16:16:23 markus Exp $");
+RCSID("$OpenBSD: ssh-keygen.c,v 1.50 2001/03/12 22:02:02 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/pem.h>
@@ -46,6 +46,7 @@ int quiet = 0;
 
 /* Flag indicating that we just want to see the key fingerprint */
 int print_fingerprint = 0;
+int print_bubblebabble = 0;
 
 /* The identity file name, given on the command line or entered by the user. */
 char identity_file[1024];
@@ -321,12 +322,14 @@ do_print_public(struct passwd *pw)
 static void
 do_fingerprint(struct passwd *pw)
 {
-
 	FILE *f;
 	Key *public;
-	char *comment = NULL, *cp, *ep, line[16*1024];
-	int i, skip = 0, num = 1, invalid = 1, success = 0;
+	char *comment = NULL, *cp, *ep, line[16*1024], *fp;
+	int i, skip = 0, num = 1, invalid = 1, success = 0, rep, type;
 	struct stat st;
+
+	type = print_bubblebabble ? SSH_FP_SHA1 : SSH_FP_MD5;
+	rep =  print_bubblebabble ? SSH_FP_BUBBLEBABBLE : SSH_FP_HEX;
 
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
@@ -346,9 +349,12 @@ do_fingerprint(struct passwd *pw)
 			debug("try_load_public_key KEY_UNSPEC failed");
 	}
 	if (success) {
-		printf("%d %s %s\n", key_size(public), key_fingerprint(public), comment);
+		fp = key_fingerprint(public, type, rep);
+		printf("%d %s %s\n", key_size(public),
+		    fp, comment);
 		key_free(public);
 		xfree(comment);
+		xfree(fp);
 		exit(0);
 	}
 
@@ -399,9 +405,10 @@ do_fingerprint(struct passwd *pw)
 				}
 			}
 			comment = *cp ? cp : comment;
-			printf("%d %s %s\n", key_size(public),
-			    key_fingerprint(public),
+			fp = key_fingerprint(public, type, rep);
+			printf("%d %s %s\n", key_size(public), fp,
 			    comment ? comment : "no comment");
+			xfree(fp);
 			invalid = 0;
 		}
 		fclose(f);
@@ -508,12 +515,11 @@ do_change_passphrase(struct passwd *pw)
 static void
 do_change_comment(struct passwd *pw)
 {
-	char new_comment[1024], *comment;
-	Key *private;
-	Key *public;
-	char *passphrase;
+	char new_comment[1024], *comment, *passphrase;
+	Key *private, *public;
 	struct stat st;
 	FILE *f;
+	int fd;
 
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
@@ -581,9 +587,14 @@ do_change_comment(struct passwd *pw)
 	key_free(private);
 
 	strlcat(identity_file, ".pub", sizeof(identity_file));
-	f = fopen(identity_file, "w");
-	if (!f) {
+	fd = open(identity_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (fd == -1) {
 		printf("Could not save your public key in %s\n", identity_file);
+		exit(1);
+	}
+	f = fdopen(fd, "w");
+	if (f == NULL) {
+		printf("fdopen %s failed", identity_file);
 		exit(1);
 	}
 	if (!key_write(public, f))
@@ -601,7 +612,8 @@ do_change_comment(struct passwd *pw)
 static void
 usage(void)
 {
-	printf("Usage: %s [-lpqxXyc] [-t type] [-b bits] [-f file] [-C comment] [-N new-pass] [-P pass]\n", __progname);
+	printf("Usage: %s [-lpqxXyc] [-t type] [-b bits] [-f file] [-C comment] "
+	    "[-N new-pass] [-P pass]\n", __progname);
 	exit(1);
 }
 
@@ -612,12 +624,11 @@ int
 main(int ac, char **av)
 {
 	char dotsshdir[16 * 1024], comment[1024], *passphrase1, *passphrase2;
+	Key *private, *public;
 	struct passwd *pw;
-	int opt, type;
+	int opt, type, fd;
 	struct stat st;
 	FILE *f;
-	Key *private;
-	Key *public;
 
 	extern int optind;
 	extern char *optarg;
@@ -635,7 +646,7 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	while ((opt = getopt(ac, av, "dqpclRxXyb:f:t:P:N:C:")) != -1) {
+	while ((opt = getopt(ac, av, "dqpclBRxXyb:f:t:P:N:C:")) != -1) {
 		switch (opt) {
 		case 'b':
 			bits = atoi(optarg);
@@ -647,6 +658,10 @@ main(int ac, char **av)
 
 		case 'l':
 			print_fingerprint = 1;
+			break;
+
+		case 'B':
+			print_bubblebabble = 1;
 			break;
 
 		case 'p':
@@ -716,7 +731,7 @@ main(int ac, char **av)
 		printf("Can only have one of -p and -c.\n");
 		usage();
 	}
-	if (print_fingerprint)
+	if (print_fingerprint || print_bubblebabble)
 		do_fingerprint(pw);
 	if (change_passphrase)
 		do_change_passphrase(pw);
@@ -819,9 +834,14 @@ passphrase_again:
 		printf("Your identification has been saved in %s.\n", identity_file);
 
 	strlcat(identity_file, ".pub", sizeof(identity_file));
-	f = fopen(identity_file, "w");
-	if (!f) {
+	fd = open(identity_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (fd == -1) {
 		printf("Could not save your public key in %s\n", identity_file);
+		exit(1);
+	}
+	f = fdopen(fd, "w");
+	if (f == NULL) {
+		printf("fdopen %s failed", identity_file);
 		exit(1);
 	}
 	if (!key_write(public, f))
@@ -830,10 +850,12 @@ passphrase_again:
 	fclose(f);
 
 	if (!quiet) {
+		char *fp = key_fingerprint(public, SSH_FP_MD5, SSH_FP_HEX);
 		printf("Your public key has been saved in %s.\n",
 		    identity_file);
 		printf("The key fingerprint is:\n");
-		printf("%s %s\n", key_fingerprint(public), comment);
+		printf("%s %s\n", fp, comment);
+		xfree(fp);
 	}
 
 	key_free(public);

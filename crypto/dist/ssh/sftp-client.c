@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.10 2001/02/14 09:46:03 djm Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.15 2001/03/19 10:52:51 djm Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -77,7 +77,9 @@ get_msg(int fd, Buffer *m)
 	unsigned char buf[4096];
 
 	len = atomic_read(fd, buf, 4);
-	if (len != 4)
+	if (len == 0)
+		fatal("Connection closed");
+	else if (len == -1)
 		fatal("Couldn't read packet: %s", strerror(errno));
 
 	msg_len = GET_32BIT(buf);
@@ -86,7 +88,9 @@ get_msg(int fd, Buffer *m)
 
 	while (msg_len) {
 		len = atomic_read(fd, buf, MIN(msg_len, sizeof(buf)));
-		if (len <= 0)
+		if (len == 0)
+			fatal("Connection closed");
+		else if (len == -1)
 			fatal("Couldn't read packet: %s", strerror(errno));
 
 		msg_len -= len;
@@ -180,7 +184,7 @@ get_handle(int fd, u_int expected_id, u_int *len)
 }
 
 static Attrib *
-get_decode_stat(int fd, u_int expected_id)
+get_decode_stat(int fd, u_int expected_id, int quiet)
 {
 	Buffer msg;
 	u_int type, id;
@@ -198,7 +202,10 @@ get_decode_stat(int fd, u_int expected_id)
 	if (type == SSH2_FXP_STATUS) {
 		int status = buffer_get_int(&msg);
 
-		error("Couldn't stat remote file: %s", fx2txt(status));
+		if (quiet)
+			debug("Couldn't stat remote file: %s", fx2txt(status));
+		else
+			error("Couldn't stat remote file: %s", fx2txt(status));
 		return(NULL);
 	} else if (type != SSH2_FXP_ATTRS) {
 		fatal("Expected SSH2_FXP_ATTRS(%d) packet, got %d",
@@ -247,7 +254,8 @@ do_init(int fd_in, int fd_out)
 	}
 
 	buffer_free(&msg);
-	return(0);
+
+	return(version);
 }
 
 int
@@ -274,11 +282,13 @@ do_close(int fd_in, int fd_out, char *handle, u_int handle_len)
 	return(status);
 }
 
-int
-do_ls(int fd_in, int fd_out, char *path)
+
+static int
+do_lsreaddir(int fd_in, int fd_out, char *path, int printflag, 
+    SFTP_DIRENT ***dir)
 {
 	Buffer msg;
-	u_int type, id, handle_len, i, expected_id;
+	u_int type, id, handle_len, i, expected_id, ents = 0;
 	char *handle;
 
 	id = msg_id++;
@@ -294,6 +304,13 @@ do_ls(int fd_in, int fd_out, char *path)
 	handle = get_handle(fd_in, id, &handle_len);
 	if (handle == NULL)
 		return(-1);
+
+	if (dir) {
+		ents = 0;
+		*dir = xmalloc(sizeof(**dir));
+		(*dir)[0] = NULL;
+	}
+	
 
 	for(;;) {
 		int count;
@@ -349,7 +366,18 @@ do_ls(int fd_in, int fd_out, char *path)
 			longname = buffer_get_string(&msg, NULL);
 			a = decode_attrib(&msg);
 
-			printf("%s\n", longname);
+			if (printflag)
+				printf("%s\n", longname);
+
+			if (dir) {
+				*dir = xrealloc(*dir, sizeof(**dir) * 
+				    (ents + 2));
+				(*dir)[ents] = xmalloc(sizeof(***dir));
+				(*dir)[ents]->filename = xstrdup(filename);
+				(*dir)[ents]->longname = xstrdup(longname);
+				memcpy(&(*dir)[ents]->a, a, sizeof(*a));
+				(*dir)[++ents] = NULL;
+			}
 
 			xfree(filename);
 			xfree(longname);
@@ -361,6 +389,30 @@ do_ls(int fd_in, int fd_out, char *path)
 	xfree(handle);
 
 	return(0);
+}
+
+int
+do_ls(int fd_in, int fd_out, char *path)
+{
+	return(do_lsreaddir(fd_in, fd_out, path, 1, NULL));
+}
+
+int
+do_readdir(int fd_in, int fd_out, char *path, SFTP_DIRENT ***dir)
+{
+	return(do_lsreaddir(fd_in, fd_out, path, 0, dir));
+}
+
+void free_sftp_dirents(SFTP_DIRENT **s)
+{
+	int i;
+	
+	for(i = 0; s[i]; i++) {
+		xfree(s[i]->filename);
+		xfree(s[i]->longname);
+		xfree(s[i]);
+	}
+	xfree(s);
 }
 
 int
@@ -410,34 +462,33 @@ do_rmdir(int fd_in, int fd_out, char *path)
 }
 
 Attrib *
-do_stat(int fd_in, int fd_out, char *path)
+do_stat(int fd_in, int fd_out, char *path, int quiet)
 {
 	u_int id;
 
 	id = msg_id++;
 	send_string_request(fd_out, id, SSH2_FXP_STAT, path, strlen(path));
-	return(get_decode_stat(fd_in, id));
+	return(get_decode_stat(fd_in, id, quiet));
 }
 
 Attrib *
-do_lstat(int fd_in, int fd_out, char *path)
+do_lstat(int fd_in, int fd_out, char *path, int quiet)
 {
 	u_int id;
 
 	id = msg_id++;
 	send_string_request(fd_out, id, SSH2_FXP_LSTAT, path, strlen(path));
-	return(get_decode_stat(fd_in, id));
+	return(get_decode_stat(fd_in, id, quiet));
 }
 
 Attrib *
-do_fstat(int fd_in, int fd_out, char *handle,
-    u_int handle_len)
+do_fstat(int fd_in, int fd_out, char *handle, u_int handle_len, int quiet)
 {
 	u_int id;
 
 	id = msg_id++;
 	send_string_request(fd_out, id, SSH2_FXP_FSTAT, handle, handle_len);
-	return(get_decode_stat(fd_in, id));
+	return(get_decode_stat(fd_in, id, quiet));
 }
 
 int
@@ -483,8 +534,7 @@ do_realpath(int fd_in, int fd_out, char *path)
 	Attrib *a;
 
 	expected_id = id = msg_id++;
-	send_string_request(fd_out, id, SSH2_FXP_REALPATH, path,
-	    strlen(path));
+	send_string_request(fd_out, id, SSH2_FXP_REALPATH, path, strlen(path));
 
 	buffer_init(&msg);
 
@@ -549,6 +599,79 @@ do_rename(int fd_in, int fd_out, char *oldpath, char *newpath)
 }
 
 int
+do_symlink(int fd_in, int fd_out, char *oldpath, char *newpath)
+{
+	Buffer msg;
+	u_int status, id;
+
+	buffer_init(&msg);
+
+	/* Send rename request */
+	id = msg_id++;
+	buffer_put_char(&msg, SSH2_FXP_SYMLINK);
+	buffer_put_int(&msg, id);
+	buffer_put_cstring(&msg, oldpath);
+	buffer_put_cstring(&msg, newpath);
+	send_msg(fd_out, &msg);
+	debug3("Sent message SSH2_FXP_SYMLINK \"%s\" -> \"%s\"", oldpath,
+	    newpath);
+	buffer_free(&msg);
+
+	status = get_status(fd_in, id);
+	if (status != SSH2_FX_OK)
+		error("Couldn't rename file \"%s\" to \"%s\": %s", oldpath, newpath,
+		    fx2txt(status));
+
+	return(status);
+}
+
+char *
+do_readlink(int fd_in, int fd_out, char *path)
+{
+	Buffer msg;
+	u_int type, expected_id, count, id;
+	char *filename, *longname;
+	Attrib *a;
+
+	expected_id = id = msg_id++;
+	send_string_request(fd_out, id, SSH2_FXP_READLINK, path, strlen(path));
+
+	buffer_init(&msg);
+
+	get_msg(fd_in, &msg);
+	type = buffer_get_char(&msg);
+	id = buffer_get_int(&msg);
+
+	if (id != expected_id)
+		fatal("ID mismatch (%d != %d)", id, expected_id);
+
+	if (type == SSH2_FXP_STATUS) {
+		u_int status = buffer_get_int(&msg);
+
+		error("Couldn't readlink: %s", fx2txt(status));
+		return(NULL);
+	} else if (type != SSH2_FXP_NAME)
+		fatal("Expected SSH2_FXP_NAME(%d) packet, got %d",
+		    SSH2_FXP_NAME, type);
+
+	count = buffer_get_int(&msg);
+	if (count != 1)
+		fatal("Got multiple names (%d) from SSH_FXP_READLINK", count);
+
+	filename = buffer_get_string(&msg, NULL);
+	longname = buffer_get_string(&msg, NULL);
+	a = decode_attrib(&msg);
+
+	debug3("SSH_FXP_READLINK %s -> %s", path, filename);
+
+	xfree(longname);
+
+	buffer_free(&msg);
+
+	return(filename);
+}
+
+int
 do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
     int pflag)
 {
@@ -560,7 +683,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 	Attrib junk, *a;
 	int status;
 
-	a = do_stat(fd_in, fd_out, remote_path);
+	a = do_stat(fd_in, fd_out, remote_path, 0);
 	if (a == NULL)
 		return(-1);
 
@@ -570,11 +693,17 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 	else
 		mode = 0666;
 
+	if ((a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) &&
+	    (a->perm & S_IFDIR)) {
+		error("Cannot download a directory: %s", remote_path);
+		return(-1);
+	}
+
 	local_fd = open(local_path, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	if (local_fd == -1) {
 		error("Couldn't open local file \"%s\" for writing: %s",
 		    local_path, strerror(errno));
-		return(errno);
+		return(-1);
 	}
 
 	buffer_init(&msg);
@@ -798,3 +927,4 @@ done:
 	buffer_free(&msg);
 	return status;
 }
+

@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.16 2001/02/12 22:56:10 deraadt Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.22 2001/03/06 06:11:18 deraadt Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -22,6 +22,7 @@ RCSID("$OpenBSD: ssh-keyscan.c,v 1.16 2001/02/12 22:56:10 deraadt Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 #include "log.h"
+#include "atomicio.h"
 
 static int argno = 1;		/* Number of argument currently being parsed */
 
@@ -33,10 +34,11 @@ int family = AF_UNSPEC;		/* IPv4, IPv6 or both */
 int timeout = 5;
 
 int maxfd;
-#define maxcon (maxfd - 10)
+#define MAXCON (maxfd - 10)
 
 extern char *__progname;
-fd_set read_wait;
+fd_set *read_wait;
+size_t read_wait_size;
 int ncon;
 
 /*
@@ -81,7 +83,7 @@ typedef struct {
 	void (*errfun) (const char *,...);
 } Linebuf;
 
-static inline Linebuf *
+static Linebuf *
 Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 {
 	Linebuf *lb;
@@ -115,7 +117,7 @@ Linebuf_alloc(const char *filename, void (*errfun) (const char *,...))
 	return (lb);
 }
 
-static inline void
+static void
 Linebuf_free(Linebuf * lb)
 {
 	fclose(lb->stream);
@@ -123,21 +125,25 @@ Linebuf_free(Linebuf * lb)
 	xfree(lb);
 }
 
-static inline void
+#if 0
+static void
 Linebuf_restart(Linebuf * lb)
 {
 	clearerr(lb->stream);
 	rewind(lb->stream);
 	lb->lineno = 0;
 }
+#endif
 
-static inline int
+#if 0
+static int
 Linebuf_lineno(Linebuf * lb)
 {
 	return (lb->lineno);
 }
+#endif
 
-static inline char *
+static char *
 Linebuf_getline(Linebuf * lb)
 {
 	int n = 0;
@@ -147,7 +153,8 @@ Linebuf_getline(Linebuf * lb)
 		/* Read a line */
 		if (!fgets(&lb->buf[n], lb->size - n, lb->stream)) {
 			if (ferror(lb->stream) && lb->errfun)
-				(*lb->errfun) ("%s: %s\n", lb->filename, strerror(errno));
+				(*lb->errfun) ("%s: %s\n", lb->filename,
+				    strerror(errno));
 			return (NULL);
 		}
 		n = strlen(lb->buf);
@@ -159,13 +166,15 @@ Linebuf_getline(Linebuf * lb)
 		}
 		if (n != lb->size - 1) {
 			if (lb->errfun)
-				(*lb->errfun) ("%s: skipping incomplete last line\n", lb->filename);
+				(*lb->errfun) ("%s: skipping incomplete last line\n",
+				    lb->filename);
 			return (NULL);
 		}
 		/* Double the buffer if we need more space */
 		if (!(lb->buf = realloc(lb->buf, (lb->size *= 2)))) {
 			if (lb->errfun)
-				(*lb->errfun) ("linebuf (%s): realloc failed\n", lb->filename);
+				(*lb->errfun) ("linebuf (%s): realloc failed\n",
+				    lb->filename);
 			return (NULL);
 		}
 	}
@@ -175,6 +184,7 @@ static int
 fdlim_get(int hard)
 {
 	struct rlimit rlfd;
+
 	if (getrlimit(RLIMIT_NOFILE, &rlfd) < 0)
 		return (-1);
 	if ((hard ? rlfd.rlim_max : rlfd.rlim_cur) == RLIM_INFINITY)
@@ -202,7 +212,7 @@ fdlim_set(int lim)
  * separators.  This is the same as the 4.4BSD strsep, but different from the
  * one in the GNU libc.
  */
-static inline char *
+static char *
 xstrsep(char **str, const char *delim)
 {
 	char *s, *e;
@@ -336,7 +346,7 @@ conalloc(char *iname, char *oname)
 	gettimeofday(&fdcon[s].c_tv, NULL);
 	fdcon[s].c_tv.tv_sec += timeout;
 	TAILQ_INSERT_TAIL(&tq, &fdcon[s], c_link);
-	FD_SET(s, &read_wait);
+	FD_SET(s, read_wait);
 	ncon++;
 	return (s);
 }
@@ -344,16 +354,16 @@ conalloc(char *iname, char *oname)
 static void
 confree(int s)
 {
-	close(s);
 	if (s >= maxfd || fdcon[s].c_status == CS_UNUSED)
 		fatal("confree: attempt to free bad fdno %d", s);
+	close(s);
 	xfree(fdcon[s].c_namebase);
 	xfree(fdcon[s].c_output_name);
 	if (fdcon[s].c_status == CS_KEYS)
 		xfree(fdcon[s].c_data);
 	fdcon[s].c_status = CS_UNUSED;
 	TAILQ_REMOVE(&tq, &fdcon[s], c_link);
-	FD_CLR(s, &read_wait);
+	FD_CLR(s, read_wait);
 	ncon--;
 }
 
@@ -385,26 +395,30 @@ conrecycle(int s)
 static void
 congreet(int s)
 {
-	char buf[80];
-	int n;
+	char buf[80], *cp;
+	size_t bufsiz;
+	int n = 0;
 	con *c = &fdcon[s];
 
-	n = read(s, buf, sizeof(buf));
+	bufsiz = sizeof(buf);
+	cp = buf;
+	while (bufsiz-- && (n = read(s, cp, 1)) == 1 && *cp != '\n' && *cp != '\r')
+		cp++;
 	if (n < 0) {
 		if (errno != ECONNREFUSED)
 			error("read (%s): %s", c->c_name, strerror(errno));
 		conrecycle(s);
 		return;
 	}
-	if (buf[n - 1] != '\n') {
+	if (*cp != '\n' && *cp != '\r') {
 		error("%s: bad greeting", c->c_name);
 		confree(s);
 		return;
 	}
-	buf[n - 1] = '\0';
+	*cp = '\0';
 	fprintf(stderr, "# %s %s\n", c->c_name, buf);
 	n = snprintf(buf, sizeof buf, "SSH-1.5-OpenSSH-keyscan\r\n");
-	if (write(s, buf, n) != n) {
+	if (atomic_write(s, buf, n) != n) {
 		error("write (%s): %s", c->c_name, strerror(errno));
 		confree(s);
 		return;
@@ -456,7 +470,7 @@ conread(int s)
 static void
 conloop(void)
 {
-	fd_set r, e;
+	fd_set *r, *e;
 	struct timeval seltime, now;
 	int i;
 	con *c;
@@ -464,9 +478,8 @@ conloop(void)
 	gettimeofday(&now, NULL);
 	c = tq.tqh_first;
 
-	if (c &&
-	    (c->c_tv.tv_sec > now.tv_sec ||
-	     (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec > now.tv_usec))) {
+	if (c && (c->c_tv.tv_sec > now.tv_sec ||
+	    (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec > now.tv_usec))) {
 		seltime = c->c_tv;
 		seltime.tv_sec -= now.tv_sec;
 		seltime.tv_usec -= now.tv_usec;
@@ -477,23 +490,30 @@ conloop(void)
 	} else
 		seltime.tv_sec = seltime.tv_usec = 0;
 
-	r = e = read_wait;
-	while (select(maxfd, &r, NULL, &e, &seltime) == -1 &&
+	r = xmalloc(read_wait_size);
+	memcpy(r, read_wait, read_wait_size);
+	e = xmalloc(read_wait_size);
+	memcpy(e, read_wait, read_wait_size);
+
+	while (select(maxfd, r, NULL, e, &seltime) == -1 &&
 	    (errno == EAGAIN || errno == EINTR))
 		;
 
-	for (i = 0; i < maxfd; i++)
-		if (FD_ISSET(i, &e)) {
+	for (i = 0; i < maxfd; i++) {
+		if (FD_ISSET(i, e)) {
 			error("%s: exception!", fdcon[i].c_name);
 			confree(i);
-		} else if (FD_ISSET(i, &r))
+		} else if (FD_ISSET(i, r))
 			conread(i);
+	}
+	xfree(r);
+	xfree(e);
 
 	c = tq.tqh_first;
-	while (c &&
-	       (c->c_tv.tv_sec < now.tv_sec ||
-		(c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
+	while (c && (c->c_tv.tv_sec < now.tv_sec ||
+	    (c->c_tv.tv_sec == now.tv_sec && c->c_tv.tv_usec < now.tv_usec))) {
 		int s = c->c_fd;
+
 		c = c->c_link.tqe_next;
 		conrecycle(s);
 	}
@@ -516,6 +536,7 @@ nexthost(int argc, char **argv)
 				return (argv[argno++]);
 			} else if (!strncmp(argv[argno], "-f", 2)) {
 				char *fname;
+
 				if (argv[argno][2])
 					fname = &argv[argno++][2];
 				else if (++argno >= argc) {
@@ -527,9 +548,11 @@ nexthost(int argc, char **argv)
 					fname = NULL;
 				lb = Linebuf_alloc(fname, error);
 			} else
-				error("ignoring invalid/misplaced option `%s'", argv[argno++]);
+				error("ignoring invalid/misplaced option `%s'",
+				    argv[argno++]);
 		} else {
 			char *line;
+
 			line = Linebuf_getline(lb);
 			if (line)
 				return (line);
@@ -576,15 +599,19 @@ main(int argc, char **argv)
 		fatal("%s: fdlim_get: bad value", __progname);
 	if (maxfd > MAXMAXFD)
 		maxfd = MAXMAXFD;
-	if (maxcon <= 0)
+	if (MAXCON <= 0)
 		fatal("%s: not enough file descriptors", __progname);
 	if (maxfd > fdlim_get(0))
 		fdlim_set(maxfd);
 	fdcon = xmalloc(maxfd * sizeof(con));
 	memset(fdcon, 0, maxfd * sizeof(con));
 
+	read_wait_size = howmany(maxfd, NFDBITS) * sizeof(fd_mask);
+	read_wait = xmalloc(read_wait_size);
+	memset(read_wait, 0, read_wait_size);
+
 	do {
-		while (ncon < maxcon) {
+		while (ncon < MAXCON) {
 			char *name;
 
 			host = nexthost(argc, argv);
