@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.1 1999/01/13 17:15:44 drochner Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.2 1999/03/13 17:25:55 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -107,7 +107,7 @@ main(argc, argv)
 
 	wsfd = open(wsdev, O_RDWR, 0);
 	if (wsfd < 0)
-		err(2, "open ws");
+		err(2, wsdev);
 
 	if (delete) {
 		dsd.idx = idx;
