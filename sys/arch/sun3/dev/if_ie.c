@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.4 1995/04/09 05:08:33 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.5 1995/04/11 06:05:11 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -292,22 +292,17 @@ ie_attach(parent, self, aux)
 	 */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = iecd.cd_name;
-	ifp->if_output = ether_output;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef IFF_NOTRAILERS
-	/* XXX still compile when the blasted things are gone... */
-	ifp->if_flags |= IFF_NOTRAILERS;
-#endif
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 }
 
@@ -1566,14 +1561,7 @@ ieioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			ieinit(sc);
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
-			 */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
