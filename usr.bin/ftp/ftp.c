@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.54 1999/07/11 20:37:39 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.55 1999/07/13 21:43:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.54 1999/07/11 20:37:39 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.55 1999/07/13 21:43:31 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1287,13 +1287,31 @@ reinit:
 		result = COMPLETE + 1;
 		switch (data_addr.su_family) {
 		case AF_INET:
-			if (epsv4)
+			if (epsv4) {
 				result = command(pasvcmd = "EPSV");
+				/*
+				 * this code is to be friendly with broken
+				 * BSDI ftpd
+				 */
+				if (code != 229) {
+					fputs(
+"wrong server: return code must be 229\n",
+						ttyout);
+					result = COMPLETE + 1;
+				}
+			}
 			if (result != COMPLETE)
 				result = command(pasvcmd = "PASV");
 			break;
 		case AF_INET6:
 			result = command(pasvcmd = "EPSV");
+			/* this code is to be friendly with broken BSDI ftpd */
+			if (code != 229) {
+				fputs(
+"wrong server: return code must be 229\n",
+					ttyout);
+				result = COMPLETE + 1;
+			}
 			if (result != COMPLETE)
 				result = command(pasvcmd = "LPSV");
 			break;
@@ -1322,14 +1340,56 @@ reinit:
 		 * What we've got at this point is a string of comma separated
 		 * one-byte unsigned integer values, separated by commas.
 		 */
-		if (strcmp(pasvcmd, "PASV") == 0
-		 || strcmp(pasvcmd, "LPSV") == 0) {
+		if (strcmp(pasvcmd, "PASV") == 0) {
+			if (data_addr.su_family != AF_INET) {
+				fputs(
+"Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
+				error = 1;
+				goto bad;
+			}
+			if (code != 227) {
+				fputs("wrong server: return code must be 227\n",
+					ttyout);
+				error = 1;
+				goto bad;
+			}
+			error = sscanf(pasv, "%u,%u,%u,%u,%u,%u",
+					&addr[0], &addr[1], &addr[2], &addr[3],
+					&port[0], &port[1]);
+			if (error != 6) {
+				fputs(
+"Passive mode address scan failure. Shouldn't happen!\n", ttyout);
+				error = 1;
+				goto bad;
+			}
+			error = 0;
+			memset(&data_addr, 0, sizeof(data_addr));
+			data_addr.su_family = AF_INET;
+			data_addr.su_len = sizeof(struct sockaddr_in);
+			data_addr.su_sin.sin_addr.s_addr =
+				htonl(pack4(addr, 0));
+			data_addr.su_port = htons(pack2(port, 0));
+		} else if (strcmp(pasvcmd, "LPSV") == 0) {
+			if (code != 228) {
+				fputs("wrong server: return code must be 228\n",
+					ttyout);
+				error = 1;
+				goto bad;
+			}
 			switch (data_addr.su_family) {
 			case AF_INET:
-				error = sscanf(pasv, "%u,%u,%u,%u,%u,%u",
-						&addr[0], &addr[1], &addr[2], &addr[3],
-						&port[0], &port[1]);
-				if (error != 6) {
+				error = sscanf(pasv,
+"%u,%u,%u,%u,%u,%u,%u,%u,%u",
+					&af, &hal, 
+					&addr[0], &addr[1], &addr[2], &addr[3],
+					&pal, &port[0], &port[1]);
+				if (af != 4 || hal != 4 || pal != 2) {
+					fputs(
+"Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
+					error = 1;
+					goto bad;
+				}
+				if (error != 9) {
 					fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
 					error = 1;
@@ -1353,8 +1413,6 @@ reinit:
 					&addr[11], &addr[12], &addr[13],
 					&addr[14], &addr[15],
 					&pal, &port[0], &port[1]);
-				fprintf(ttyout, "%c%c%c%c\n",
-					pasv[0], pasv[1], pasv[2], pasv[3]);
 				if (af != 6 || hal != 16 || pal != 2) {
 					fputs(
 "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
@@ -1389,15 +1447,25 @@ reinit:
 			char delim[4];
 
 			port[0] = 0;
+			if (code != 229) {
+				fputs("wrong server: return code must be 229\n",
+					ttyout);
+				error = 1;
+				goto bad;
+			}
 			if (sscanf(pasv, "%c%c%c%d%c", &delim[0],
 					&delim[1], &delim[2], &port[1],
 					&delim[3]) != 5) {
-				fputs("parse error!\n", ttyout);
+				fputs("parse error 1!\n", ttyout);
+				fputs(pasv, ttyout);
+				fputs("\n", ttyout);
 				goto bad;
 			}
 			if (delim[0] != delim[1] || delim[0] != delim[2]
 			 || delim[0] != delim[3]) {
-				fputs("parse error!\n", ttyout);
+				fputs("parse error 2!\n", ttyout);
+				fputs(pasv, ttyout);
+				fputs("\n", ttyout);
 				goto bad;
 			}
 			data_addr = hisctladdr;
