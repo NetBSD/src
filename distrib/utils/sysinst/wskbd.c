@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.3 2005/01/20 22:15:46 dsl Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.4 2005/01/28 23:02:09 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.3 2005/01/20 22:15:46 dsl Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.4 2005/01/28 23:02:09 dsl Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -56,42 +56,43 @@ static int kb_default = 0;
 
 struct kb_types {
 	kbd_t		kb_encoding;
+	const char	*kb_enc_txt;
 	const char	*kb_name;
 };
 
-/* Types and names of keyboards, maybethe names should be translated... */
-static struct kb_types kb_types[] = {
+/* Types and names of keyboards, maybe the names should be translated... */
+static const struct kb_types kb_types[] = {
     /* KB_ENCTAB - except that it is too terse, and variants need to be set */
-    { KB_US,		"US-English" },
-    { KB_UK,		"UK-English" },
-    { KB_BE,		"Belgian" },
-    { KB_DK,		"Danish" },
-    { KB_SV,		"Finish" },
-    { KB_FR,		"French" },
-    { KB_DE | KB_NODEAD,"German" },
-    { KB_HU,		"Hungarian" },
-    { KB_IT,		"Italian" },
-    { KB_JP,		"Japanese" },
-    { KB_NO,		"Norwegian" },
-    { KB_PL,		"Polish" },
-    { KB_PT,		"Portugese" },
-    { KB_RU,		"Russian" },
-    { KB_ES,		"Spanish" },
-    { KB_SV,		"Swedish" },
-    { KB_SF,		"Swiss French" },
-    { KB_SG,		"Swiss German" },
-    { KB_UA,		"Ukrainian" },
+    { KB_US,		"us",	"US-English" },
+    { KB_UK,		"uk",	"UK-English" },
+    { KB_BE,		"be",	"Belgian" },
+    { KB_DK,		"dk",	"Danish" },
+    { KB_SV,		"sv",	"Finish" },
+    { KB_FR,		"fr",	"French" },
+    { KB_DE | KB_NODEAD,"de.nodead",	"German" },
+    { KB_HU,		"hu",	"Hungarian" },
+    { KB_IT,		"it",	"Italian" },
+    { KB_JP,		"jp",	"Japanese" },
+    { KB_NO,		"no",	"Norwegian" },
+    { KB_PL,		"pl",	"Polish" },
+    { KB_PT,		"pt",	"Portugese" },
+    { KB_RU,		"ru",	"Russian" },
+    { KB_ES,		"es",	"Spanish" },
+    { KB_SV,		"sv",	"Swedish" },
+    { KB_SF,		"sf",	"Swiss French" },
+    { KB_SG,		"sg",	"Swiss German" },
+    { KB_UA,		"ua",	"Ukrainian" },
 };
 
 static int
 set_kb_encoding(menudesc *m, void *arg)
 {
 	int fd = *(int *)arg;
-	struct kb_types *kbt = kb_types + m->cursel;
+	const struct kb_types *kbt = kb_types + m->cursel;
 
 	if (kbt->kb_encoding != KB_USER) {
 		ioctl(fd, WSKBDIO_SETENCODING, &kbt->kb_encoding);
-		kbd_name = kbt->kb_name;
+		kbd_name = kbt->kb_enc_txt;
 	}
 	return 1;
 }
@@ -153,7 +154,7 @@ save_kb_encoding(void)
 	 * 1) replace an exiting line
 	 * 2) replace a commented out line
 	 * or
-	 * 3) add a line to the end of teh file
+	 * 3) add a line to the end of the file
 	 */
 	run_program(0, "sed -an -e 'H;$!d;g'"
 	    " -e 's/\\nencoding [a-zA-Z0-9.]*\\n/\\\nencoding %s\\\n/; t done'"
