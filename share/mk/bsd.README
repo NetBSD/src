@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.123 2003/07/20 14:36:12 lukem Exp $
+#	$NetBSD: bsd.README,v 1.124 2003/07/22 04:23:28 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -397,7 +397,23 @@ they use the same default owners etc. as the rest of the tree.
 =-=-=-=-=   bsd.files.mk   =-=-=-=-=
 
 The include file <bsd.files.mk> handles the FILES variables and is included
-from bsd.lib.mk and bsd.prog.mk.
+from bsd.lib.mk and bsd.prog.mk, and uses the following variables:
+
+FILES		The list of files to install.
+
+FILESOWN	File owner.  [${BINOWN}]
+
+FILESGRP	File group.  [${BINGRP}]
+
+FILESMODE	File mode.  [${BINMODE}]
+
+FILESDIR	The location to install the files.
+
+FILESNAME	Optional name to install each file as.
+
+FILESDIR.<fn>	The location to install the specific file <fn>.
+
+FILESNAME.<fn>	Optional name to install <fn> as.
 
 
 =-=-=-=-=   bsd.gcc.mk   =-=-=-=-=
@@ -432,7 +448,7 @@ _GCC_LIBGCCDIR	The directory where libgcc.a is located.
 The include file <bsd.inc.mk> defines the includes target and uses two
 variables:
 
-INCS		The list of include files
+INCS		The list of include files.
 
 INCSDIR		The location to install the include files.
 
@@ -463,13 +479,13 @@ The include file <bsd.kernobj.mk> defines variables related to the
 location of kernel sources and object directories.
 
 KERNSRCDIR	Is the location of the top of the kernel src.
-		It defaults to ${_SRC_TOP_}/sys
+		[${_SRC_TOP_}/sys]
 
-KERNARCHDIR	Is the location of the machine dependent kernel
-		sources.  It defaults to arch/${MACHINE}
+KERNARCHDIR	Is the location of the machine dependent kernel sources.
+		[arch/${MACHINE}]
 
-KERNCONFDIR	Is where the configuration files for kernels are
-		found; default is ${KERNSRCDIR}/${KERNARCHDIR}/conf.
+KERNCONFDIR	Is where the configuration files for kernels are found.
+		[${KERNSRCDIR}/${KERNARCHDIR}/conf]
 
 KERNOBJDIR	Is the kernel build directory.  The kernel GENERIC for
 		instance will be compiled in ${KERNOBJDIR}/GENERIC.
@@ -687,7 +703,7 @@ COPTS		Additional flags to the compiler when creating C objects.
 CPUFLAGS	Additional flags to the compiler/assembler to select
 		CPU instruction set options, CPU tuning options, etc.
 
-CPPFLAGS	Additional flags to the C pre-processor
+CPPFLAGS	Additional flags to the C pre-processor.
 
 GDBINIT		List of GDB initialization files to add to "source"
 		directives in the .gdbinit file that is created in the
@@ -823,9 +839,7 @@ SCRIPTSNAME	The name that the above program will be installed as, if
 		different from ${SCRIPTS}. These can be further specialized
 		by setting SCRIPTSNAME_<script>.
 
-FILES		A list of files to install. The installation is controlled
-		by the FILESNAME, FILESOWN, FILESGRP, FILESMODE, FILESDIR
-		variables that can be further specialized by FILES<VAR>_<file>
+FILES		See description of <bsd.files.mk>.
 
 SHLINKDIR	Target directory for shared linker.  See description of
 		<bsd.own.mk> for additional information about this variable.
