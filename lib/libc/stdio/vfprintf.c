@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.46 2004/03/03 11:19:05 drochner Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.47 2004/07/02 03:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.46 2004/03/03 11:19:05 drochner Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.47 2004/07/02 03:00:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,19 +151,6 @@ static int exponent __P((char *, int, int));
 #define	BUF		40
 
 #endif /* FLOATING_POINT */
-
-#ifdef lint
-static __inline void *__UNCONST __P((const void *));
-static __inline void *
-__UNCONST(v)
-	const void *v;
-{
-	/* LINTED */
-	return (void *) v;
-}
-#else
-#define __UNCONST(v)	(void *)(v)
-#endif
 
 /*
  * Macros for converting digits to letters and vice versa
