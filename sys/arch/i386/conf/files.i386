@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.113.2.5 1998/07/27 19:02:46 bouyer Exp $
+#	$NetBSD: files.i386,v 1.113.2.6 1998/08/13 14:37:52 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -206,9 +206,6 @@ include "dev/eisa/files.eisa"
 file	arch/i386/eisa/eisa_machdep.c	eisa
 
 # ISA Plug 'n Play devices
-# IT IS IMPORTANT THAT THIS IS INCLUDED AFTER ALL ISA DEVICES!
-# DO NOT MOVE IT!  (Thanks, The Mgmt.)
-include "dev/isapnp/files.isapnp"
 file	arch/i386/isa/isapnp_machdep.c	isapnp
 
 attach	joy at isapnp with joy_isapnp

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.1.2.3 1998/06/23 08:07:28 leo Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.1.2.4 1998/08/13 14:37:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -83,18 +83,9 @@ wdc_mb_probe(parent, cfp, aux)
 	struct cfdata *cfp;
 	void *aux;
 {
-#if 0 /* XXX memset */
 	struct channel_softc ch = { 0 };
-#else /* XXX memset */
-	struct channel_softc ch;
-#endif /* XXX memset */
 	int	result = 0;
 	u_char	sv_ierb;
-
-#if 0 /* XXX memset */
-#else /* XXX memset */
-	bzero(&ch, sizeof ch);
-#endif /* XXX memset */
 
 	if ((machineid & ATARI_TT) || strcmp("wdc", aux) || cfp->cf_unit != 0)
 		return 0;
