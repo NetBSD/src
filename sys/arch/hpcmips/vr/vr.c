@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.2 1999/10/16 12:27:55 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -188,7 +188,7 @@ vr_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	printf("%s(%d): vr_bus_reset() not implemented.\n",
+	printf("%s(%d): vr_device_register() not implemented.\n",
 	       __FILE__, __LINE__);
 	panic("abort");
 }
