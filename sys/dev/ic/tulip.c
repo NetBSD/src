@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.57 2000/04/02 17:23:33 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.58 2000/04/02 19:02:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -3089,8 +3089,16 @@ tlp_mii_setmedia(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	if (ifp->if_flags & IFF_UP) {
-		/* Disable the internal Nway engine. */
-		TULIP_WRITE(sc, CSR_SIATXRX, 0);
+		switch (sc->sc_chip) {
+		case TULIP_CHIP_21142:
+		case TULIP_CHIP_21143:
+			/* Disable the internal Nway engine. */
+			TULIP_WRITE(sc, CSR_SIATXRX, 0);
+			break;
+
+		default:
+			/* Nothing. */
+		}
 		mii_mediachg(&sc->sc_mii);
 	}
 	return (0);
