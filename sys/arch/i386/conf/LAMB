@@ -1,13 +1,11 @@
-#	$NetBSD: LAMB,v 1.14 2001/11/20 12:56:30 lukem Exp $
+#	$NetBSD: LAMB,v 1.15 2001/11/30 02:40:57 itojun Exp $
 #
-#	LAMB -- for "LAMB" router, http://www.wildlab.com/
-#	Be sure to check pkgsrc/sysutils/lambd as well.
+#	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-# based on:
-#ident 		"GENERIC-Revision: 1.414"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 maxusers	32		# estimated number of users
 
@@ -23,6 +21,8 @@ options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
+
+options 	MTRR		# memory-type range register syscall support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -233,7 +233,7 @@ mainbus0 at root
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
 # ISA bus support
-isa*	at mainbus?
+isa0	at mainbus?
 
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
@@ -358,6 +358,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -373,3 +374,4 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
