@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.47 1998/08/04 04:03:11 perry Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.48 2000/03/10 01:13:18 enami Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,6 +49,9 @@
 #include <sys/file.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
+#include <sys/kthread.h>
+#include <sys/lock.h>
+#include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
 #include <sys/acct.h>
@@ -70,18 +73,42 @@
  */
 
 /*
+ * The global accounting state and related data.  Gain the lock before
+ * accessing these variables.
+ */
+enum {
+	ACCT_STOP,
+	ACCT_ACTIVE,
+	ACCT_SUSPENDED
+} acct_state;				/* The current accounting state. */
+struct vnode *acct_vp;			/* Accounting vnode pointer. */
+struct ucred *acct_ucred;		/* Credential of accounting file
+					   owner (i.e root).  Used when
+ 					   accounting file i/o.  */
+struct proc *acct_dkwatcher;		/* Free disk space checker. */
+
+/*
+ * Lock to serialize system calls and kernel threads.
+ */
+struct	lock acct_lock;
+#define	ACCT_LOCK()						\
+do {								\
+	(void) lockmgr(&acct_lock, LK_EXCLUSIVE, NULL);		\
+} while (/* CONSTCOND */0)
+#define	ACCT_UNLOCK()						\
+do {								\
+	(void) lockmgr(&acct_lock, LK_RELEASE, NULL);		\
+} while (/* CONSTCOND */0)
+
+/*
  * Internal accounting functions.
  * The former's operation is described in Leffler, et al., and the latter
  * was provided by UCB with the 4.4BSD-Lite release
  */
 comp_t	encode_comp_t __P((u_long, u_long));
 void	acctwatch __P((void *));
-
-/*
- * Accounting vnode pointer, and saved vnode pointer.
- */
-struct	vnode *acctp;
-struct	vnode *savacctp;
+void	acct_stop __P((void));
+int	acct_chkfree __P((void));
 
 /*
  * Values associated with enabling and disabling accounting
@@ -89,6 +116,66 @@ struct	vnode *savacctp;
 int	acctsuspend = 2;	/* stop accounting when < 2% free space left */
 int	acctresume = 4;		/* resume when free space risen to > 4% */
 int	acctchkfreq = 15;	/* frequency (in seconds) to check space */
+
+void
+acct_init()
+{
+
+	acct_state = ACCT_STOP;
+	acct_vp = NULLVP;
+	acct_ucred = NULL;
+	lockinit(&acct_lock, PWAIT, "acctlk", 0, 0);
+}
+
+void
+acct_stop()
+{
+	int error;
+
+	if (acct_vp != NULLVP && acct_vp->v_type != VBAD) {
+		error = vn_close(acct_vp, FWRITE, acct_ucred, NULL);
+#ifdef DIAGNOSTIC
+		if (error != 0)
+			printf("acct_stop: failed to close, errno = %d\n",
+			    error);
+#endif
+		acct_vp = NULLVP;
+	}
+	if (acct_ucred != NULL) {
+		crfree(acct_ucred);
+		acct_ucred = NULL;
+	}
+	acct_state = ACCT_STOP;
+}
+
+int
+acct_chkfree()
+{
+	int error;
+	struct statfs sb;
+
+	error = VFS_STATFS(acct_vp->v_mount, &sb, NULL);
+	if (error != 0)
+		return (error);
+
+	switch (acct_state) {
+	case ACCT_SUSPENDED:
+		if (sb.f_bavail > acctresume * sb.f_blocks / 100) {
+			acct_state = ACCT_ACTIVE;
+			log(LOG_NOTICE, "Accounting resumed\n");
+		}
+		break;
+	case ACCT_ACTIVE:
+		if (sb.f_bavail <= acctsuspend * sb.f_blocks / 100) {
+			acct_state = ACCT_SUSPENDED;
+			log(LOG_NOTICE, "Accounting suspended\n");
+		}
+		break;
+	case ACCT_STOP:
+		break;
+	}
+	return (0);
+}
 
 /*
  * Accounting system call.  Written based on the specification and
@@ -126,25 +213,41 @@ sys_acct(p, v, retval)
 		}
 	}
 
-	/*
-	 * If accounting was previously enabled, kill the old space-watcher,
-	 * close the file, and (if no new file was specified, leave).
-	 */
-	if (acctp != NULLVP || savacctp != NULLVP) {
-		untimeout(acctwatch, NULL);
-		error = vn_close((acctp != NULLVP ? acctp : savacctp), FWRITE,
-		    p->p_ucred, p);
-		acctp = savacctp = NULLVP;
-	}
-	if (SCARG(uap, path) == NULL)
-		return (error);
+	ACCT_LOCK();
 
 	/*
-	 * Save the new accounting file vnode, and schedule the new
-	 * free space watcher.
+	 * If accounting was previously enabled, kill the old space-watcher,
+	 * free credential for accounting file i/o,
+	 * ... (and, if no new file was specified, leave).
 	 */
-	acctp = nd.ni_vp;
-	acctwatch(NULL);
+	acct_stop();
+	if (SCARG(uap, path) == NULL)
+		goto out;
+
+	/*
+	 * Save the new accounting file vnode and credential,
+	 * and schedule the new free space watcher.
+	 */
+	acct_state = ACCT_ACTIVE;
+	acct_vp = nd.ni_vp;
+	acct_ucred = p->p_ucred;
+	crhold(acct_ucred);
+
+	error = acct_chkfree();		/* Initial guess. */
+	if (error != 0) {
+		acct_stop();
+		goto out;
+	}
+
+	if (acct_dkwatcher == NULL) {
+		error = kthread_create1(acctwatch, NULL, &acct_dkwatcher,
+		    "acctwatch");
+		if (error != 0)
+			acct_stop();
+	}
+
+ out:
+	ACCT_UNLOCK();
 	return (error);
 }
 
@@ -161,13 +264,13 @@ acct_process(p)
 	struct acct acct;
 	struct rusage *r;
 	struct timeval ut, st, tmp;
-	int s, t;
-	struct vnode *vp;
+	int s, t, error = 0;
+
+	ACCT_LOCK();
 
 	/* If accounting isn't enabled, don't bother */
-	vp = acctp;
-	if (vp == NULLVP)
-		return (0);
+	if (acct_state != ACCT_ACTIVE)
+		goto out;
 
 	/*
 	 * Get process accounting information.
@@ -216,10 +319,16 @@ acct_process(p)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)&acct, sizeof(acct),
-	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred,
-	    NULL, p));
+	VOP_LEASE(acct_vp, p, p->p_ucred, LEASE_WRITE);
+	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
+	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
+	    acct_ucred, NULL, p);
+	if (error != 0)
+		log(LOG_ERR, "Accounting: write failed %d\n", error);
+
+ out:
+	ACCT_UNLOCK();
+	return (error);
 }
 
 /*
@@ -267,38 +376,38 @@ encode_comp_t(s, us)
  * has been vgone()'d out from underneath us, e.g. when the file
  * system containing the accounting file has been forcibly unmounted.
  */
-/* ARGSUSED */
 void
-acctwatch(a)
-	void *a;
+acctwatch(arg)
+	void *arg;
 {
-	struct statfs sb;
+	int error;
 
-	if (savacctp != NULLVP) {
-		if (savacctp->v_type == VBAD) {
-			(void) vn_close(savacctp, FWRITE, NOCRED, NULL);
-			savacctp = NULLVP;
-			return;
+	log(LOG_NOTICE, "Accounting started\n");
+	ACCT_LOCK();
+	while (acct_state != ACCT_STOP) {
+		if (acct_vp->v_type == VBAD) {
+			log(LOG_NOTICE, "Accounting terminated\n");
+			acct_stop();
+			continue;
 		}
-		(void)VFS_STATFS(savacctp->v_mount, &sb, (struct proc *)0);
-		if (sb.f_bavail > acctresume * sb.f_blocks / 100) {
-			acctp = savacctp;
-			savacctp = NULLVP;
-			log(LOG_NOTICE, "Accounting resumed\n");
-		}
-	} else if (acctp != NULLVP) {
-		if (acctp->v_type == VBAD) {
-			(void) vn_close(acctp, FWRITE, NOCRED, NULL);
-			acctp = NULLVP;
-			return;
-		}
-		(void)VFS_STATFS(acctp->v_mount, &sb, (struct proc *)0);
-		if (sb.f_bavail <= acctsuspend * sb.f_blocks / 100) {
-			savacctp = acctp;
-			acctp = NULLVP;
-			log(LOG_NOTICE, "Accounting suspended\n");
-		}
-	} else
-		return;
-	timeout(acctwatch, NULL, acctchkfreq * hz);
+
+		error = acct_chkfree();
+#ifdef DIAGNOSTIC
+		if (error != 0)
+			printf("acctwatch: failed to statfs, error = %d\n",
+			    error);
+#endif
+
+		ACCT_UNLOCK();
+		error = tsleep(acctwatch, PSWP, "actwat", acctchkfreq * hz);
+		ACCT_LOCK();
+#ifdef DIAGNOSTIC
+		if (error != 0 && error != EWOULDBLOCK)
+			printf("acctwatch: sleep error %d\n", error);
+#endif
+	}
+	acct_dkwatcher = NULL;
+	ACCT_UNLOCK();
+
+	kthread_exit(0);
 }
