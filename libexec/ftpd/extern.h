@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.47 2003/02/23 13:04:37 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.48 2003/06/30 03:06:06 tacha Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -187,6 +187,13 @@ struct utmp;
 void	ftpd_logwtmp(const char *, const char *, const char *);
 void	ftpd_login(const struct utmp *ut);
 int	ftpd_logout(const char *line);
+#endif
+
+#ifdef SUPPORT_UTMPX
+struct utmpx;
+
+void	ftpd_loginx(const struct utmpx *);
+void	ftpd_logwtmpx(const char *, const char *, const char *, int, int);
 #endif
 
 #include <netinet/in.h>
