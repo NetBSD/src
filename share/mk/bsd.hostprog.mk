@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.12 2001/09/13 23:23:26 thorpej Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.13 2001/09/25 02:19:26 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -92,7 +92,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS}
+.NOPATH: ${OBJS} ${HOSTPROG}
 
 ${HOSTPROG}: ${DPSRCS} ${OBJS} ${LIBC} ${DPADD}
 	${HOST_LINK.c} ${HOST_LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
