@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.c,v 1.12 2002/10/04 23:49:35 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.c,v 1.13 2002/10/05 16:10:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  *************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.12 2002/10/04 23:49:35 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.13 2002/10/05 16:10:41 oster Exp $");
 
 #include "rf_raid.h"
 #include <sys/time.h>
@@ -50,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconmap.c,v 1.12 2002/10/04 23:49:35 oster Exp $
  */
 #define RU_ALL      ((RF_ReconMapListElem_t *) -1)
 #define RU_NOTHING  ((RF_ReconMapListElem_t *) 0)
-
-/* used to mark the end of the list */
-#define RU_NIL      ((RF_ReconMapListElem_t *) 0)
-
 
 static void 
 compact_stat_entry(RF_Raid_t * raidPtr, RF_ReconMap_t * mapPtr,
