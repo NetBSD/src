@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.81 2002/05/12 23:06:27 matt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.81.2.1 2002/05/16 04:12:26 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -51,7 +51,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.81 2002/05/12 23:06:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.81.2.1 2002/05/16 04:12:26 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,16 +396,18 @@ bdwrite(bp)
 	struct buf *bp;
 {
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	const struct bdevsw *bdev;
 	int s;
 
 	/* If this is a tape block, write the block now. */
 	/* XXX NOTE: the memory filesystem usurpes major device */
-	/* XXX       number 255, which is a bad idea.		*/
-	if (bp->b_dev != NODEV &&
-	    major(bp->b_dev) != 255 &&	/* XXX - MFS buffers! */
-	    bdevsw[major(bp->b_dev)].d_type == D_TAPE) {
-		bawrite(bp);
-		return;
+	/* XXX       number 4095, which is a bad idea.		*/
+	if (bp->b_dev != NODEV && major(bp->b_dev) != 4095) {
+		bdev = bdevsw_lookup(bp->b_dev);
+		if (bdev != NULL && bdev->d_type == D_TAPE) {
+			bawrite(bp);
+			return;
+		}
 	}
 
 	/*
