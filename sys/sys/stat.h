@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.18 1996/02/01 00:10:34 jtc Exp $	*/
+/*	$NetBSD: stat.h,v 1.19 1996/05/14 13:26:49 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,7 +45,7 @@
 
 #include <sys/time.h>
 
-#ifndef _POSIX_SOURCE
+#ifdef _KERNEL
 struct ostat {
 	u_int16_t st_dev;		/* inode's device */
 	ino_t	  st_ino;		/* inode's number */
