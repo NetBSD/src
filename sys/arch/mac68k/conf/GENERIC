@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.29 1995/10/03 20:19:01 briggs Exp $
+#	$NetBSD: GENERIC,v 1.30 1995/10/04 03:42:18 briggs Exp $
 #
 # GENERIC
 
@@ -64,7 +64,7 @@ options		MACHINE_NONCONTIG
 config		netbsd	swap generic
 options		GENERIC
 
-ae0	at nubus0	slot -1   id ?   claimed 0
+ae*	at nubus0	slot -1   id ?   claimed 0
 
 ncrscsi0	at mainbus?		# SCSI NCR 5380
 ncr96scsi0	at mainbus?		# SCSI NCR 53C96
@@ -77,6 +77,7 @@ ch*	at scsibus? target ? lun ?
 
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
+pseudo-device	vnd		2
 pseudo-device	loop
 pseudo-device	ppp
 pseudo-device	sl
