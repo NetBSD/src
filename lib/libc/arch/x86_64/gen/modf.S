@@ -1,4 +1,4 @@
-/*	$NetBSD: modf.S,v 1.2 2003/08/07 16:42:36 agc Exp $	*/
+/*	$NetBSD: modf.S,v 1.3 2003/08/16 21:45:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: modf.S,v 1.2 2003/08/07 16:42:36 agc Exp $")
+	RCSID("$NetBSD: modf.S,v 1.3 2003/08/16 21:45:50 fvdl Exp $")
 #endif
 
 /*
@@ -86,7 +86,8 @@ ENTRY(modf)
 	 */
 	fldl	-24(%rbp)
 	fsubl	-8(%rbp)
-	movsd   -8(%rbp),%xmm0
+	fstpl	-24(%rbp)
+	movsd   -24(%rbp),%xmm0
 
 	leave
 	ret
