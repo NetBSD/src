@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.87 1998/08/07 10:26:38 drochner Exp $
+# $NetBSD: files.alpha,v 1.88 1998/08/11 18:52:52 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -52,6 +52,11 @@ device	cpu { }				# not really optional
 attach	cpu at mainbus
 file	arch/alpha/alpha/cpu.c		cpu
 
+#
+# Machine-independent MII/PHY drivers.
+#
+
+include "dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers
