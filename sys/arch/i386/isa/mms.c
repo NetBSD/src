@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.14 1994/10/30 21:44:10 cgd Exp $	*/
+/*	$NetBSD: mms.c,v 1.15 1994/11/03 23:17:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -64,8 +64,8 @@ struct mms_softc {		/* driver status information */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
 
-int mmsprobe();
-void mmsattach();
+int mmsprobe __P((struct device *, void *, void *));
+void mmsattach __P((struct device *, struct device *, void *));
 int mmsintr __P((struct mms_softc *));
 
 struct cfdriver mmscd = {
@@ -75,9 +75,9 @@ struct cfdriver mmscd = {
 #define	MMSUNIT(dev)	(minor(dev))
 
 int
-mmsprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mmsprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.14 1994/10/30 21:44:01 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15 1994/11/03 23:15:03 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -112,12 +112,12 @@ void xmit_print __P((struct le_softc *, int));
 #endif
 void lesetladrf __P((struct arpcom *, u_long *));
 
-int leprobe();
+int leprobe __P((struct device *, void *, void *));
 int depca_probe __P((struct le_softc *, struct isa_attach_args *));
 int ne2100_probe __P((struct le_softc *, struct isa_attach_args *));
 int bicc_probe __P((struct le_softc *, struct isa_attach_args *));
 int lance_probe __P((struct le_softc *));
-void leattach();
+void leattach __P((struct device *, struct device *, void *));
 
 struct cfdriver lecd = {
 	NULL, "le", leprobe, leattach, DV_IFNET, sizeof(struct le_softc)
@@ -145,11 +145,11 @@ lerdcsr(sc, port)
 } 
 
 int
-leprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct le_softc *sc = (void *)self;
+	struct le_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 
 	if (bicc_probe(sc, ia))

@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.15 1994/10/30 21:44:16 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.16 1994/11/03 23:17:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -102,8 +102,8 @@ struct pms_softc {		/* driver status information */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
 };
 
-int pmsprobe();
-void pmsattach();
+int pmsprobe __P((struct device *, void *, void *));
+void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((struct pms_softc *));
 
 struct cfdriver pmscd = {\
@@ -158,9 +158,9 @@ pms_pit_cmd(iobase, value)
 }
 
 int
-pmsprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pmsprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
 	u_short iobase = ia->ia_iobase;

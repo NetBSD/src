@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.9 1994/10/27 04:16:48 cgd Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.10 1994/11/03 23:08:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.
@@ -630,7 +630,7 @@ int aic_debug = 0; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRAC; /**/
 #define AIC_START(str)
 #endif
 
-int	aicprobe	__P((struct device *, struct device *, void *));
+int	aicprobe	__P((struct device *, void *, void *));
 void	aicattach	__P((struct device *, struct device *, void *));
 void	aic_minphys	__P((struct buf *));
 u_int	aic_adapter_info __P((struct aic_softc *));
@@ -683,11 +683,11 @@ struct scsi_device aic_dev = {
  * returns non-zero value if a controller is found.
  */
 int 
-aicprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+aicprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct aic_softc *aic = (void *)self;
+	struct aic_softc *aic = match;
 	struct isa_attach_args *ia = aux;
 	int i, len, ic;
 	
