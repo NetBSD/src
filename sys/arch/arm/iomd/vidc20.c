@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.1 2001/10/05 22:27:43 reinoud Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.2 2002/06/06 21:03:28 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -183,15 +183,22 @@ vidcattach(parent, self, aux)
 
 	sc->sc_iot = mb->mb_iot;
 
-	printf(": vidc20\n");
-
+	/*
+	 * Since the VIDC is write-only, infer the type of VIDC from the
+	 * type of IOMD.
+	 */
 	switch (IOMD_ID) {
 	case ARM7500_IOC_ID:
+		printf(": ARM7500 video and sound macrocell\n");
+		vidc_fref = 32000000;
+		break;
 	case ARM7500FE_IOC_ID:
+		printf(": ARM7500FE video and sound macrocell\n");
 		vidc_fref = 32000000;
 		break;
 	default:				/* XXX default? */
 	case RPC600_IOMD_ID:
+		printf(": VIDC20\n");
 		vidc_fref = 24000000;
 		break;
 	};
