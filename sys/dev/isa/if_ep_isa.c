@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.11 1997/03/30 22:47:06 jonathan Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.12 1997/04/18 00:50:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -79,7 +79,11 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/elink.h>
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int ep_isa_probe __P((struct device *, void *, void *));
+#else
+int ep_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void ep_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ep_isa_ca = {
@@ -137,7 +141,12 @@ epaddcard(bus, iobase, irq)
 int
 ep_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
