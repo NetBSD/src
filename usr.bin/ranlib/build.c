@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: build.c,v 1.5 1994/06/14 22:52:51 chopps Exp $";
+static char rcsid[] = "$Id: build.c,v 1.6 1994/06/18 07:28:47 chopps Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,7 +101,7 @@ build()
 	/* Copy the saved objects into the archive. */
 	size = lseek(tfd, (off_t)0, SEEK_CUR);
 	(void)lseek(tfd, (off_t)0, SEEK_SET);
-	SETCF(tfd, tname, afd, archive, 0);
+	SETCF(tfd, tname, afd, archive, NOPAD);
 	copy_ar(&cf, size);
 	(void)ftruncate(afd, lseek(afd, (off_t)0, SEEK_CUR));
 	(void)close(tfd);
