@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.12 2001/07/13 20:30:23 perseant Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.13 2001/10/26 05:56:09 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
