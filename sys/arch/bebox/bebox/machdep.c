@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 1998/10/06 03:48:12 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 1998/10/19 22:09:19 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,7 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_uvm.h"
+#include "opt_sysv.h"
 #include "ipkdb.h"
 
 #include <sys/param.h>

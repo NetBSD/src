@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.64 1998/10/06 20:46:01 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.65 1998/10/19 22:09:18 tron Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -51,6 +51,7 @@
 #include "opt_ns.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 1998/10/01 19:08:05 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 1998/10/19 22:09:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -45,6 +45,7 @@
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
