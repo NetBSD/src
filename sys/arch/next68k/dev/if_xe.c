@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.5 2001/03/31 06:56:54 dbj Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.5.16.1 2002/07/16 12:58:56 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -63,6 +63,7 @@
 
 #include <next68k/dev/if_xevar.h>
 
+#include <next68k/dev/bmapreg.h>
 
 int	xe_match __P((struct device *, struct cfdata *, void *));
 void	xe_attach __P((struct device *, struct device *, void *));
@@ -72,6 +73,13 @@ int	xe_rint __P((void *));
 struct cfattach xe_ca = {
 	sizeof(struct xe_softc), xe_match, xe_attach
 };
+
+static int mb8795_medias[] = {
+	IFM_ETHER|IFM_AUTO,
+	IFM_ETHER|IFM_10_T,
+	IFM_ETHER|IFM_10_2,
+};
+static int nmb8795_medias = (sizeof(mb8795_medias)/sizeof(mb8795_medias[0]));
 
 int
 xe_match(parent, match, aux)
@@ -121,6 +129,14 @@ xe_attach(parent, self, aux)
     return;
   }
 
+  sc->sc_bmap_bst = NEXT68K_INTIO_BUS_SPACE;
+  if (bus_space_map(sc->sc_bmap_bst, NEXT_P_BMAP,
+		    BMAP_SIZE, 0, &sc->sc_bmap_bsh)) {
+	  printf("\n%s: can't map bmap registers\n",
+		 sc->sc_dev.dv_xname);
+	  return;
+  }
+
   /* initialize rx and tx dma channels */
 	xe_sc->sc_rxdma.nd_bst = NEXT68K_INTIO_BUS_SPACE;
 
@@ -155,14 +171,12 @@ xe_attach(parent, self, aux)
 	sc->sc_tx_nd = &(xe_sc->sc_txdma);
 	nextdma_config(sc->sc_tx_nd);
 
-  mb8795_config(sc);
+  mb8795_config(sc, mb8795_medias, nmb8795_medias, mb8795_medias[0]);
 
   isrlink_autovec(xe_tint, sc, NEXT_I_IPL(NEXT_I_ENETX), 1);
   INTR_ENABLE(NEXT_I_ENETX);
   isrlink_autovec(xe_rint, sc, NEXT_I_IPL(NEXT_I_ENETR), 1);
   INTR_ENABLE(NEXT_I_ENETR);
-
-  booted_device = &(sc->sc_dev);
 }
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.17 2002/04/25 15:06:32 atatat Exp $
+#	$NetBSD: RAMDISK,v 1.17.2.1 2002/07/16 12:51:23 gehenna Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -6,7 +6,7 @@
 # a NetBSD/mvme68k installation, and install
 # the miniroot in a swap partition.
 #
-# It is not designed to be used in a production enviroment
+# It is not designed to be used in a production environment
 # due to its cut-down nature.
 #
 

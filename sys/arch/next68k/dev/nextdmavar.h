@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.9 1999/08/29 05:56:26 dbj Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.9.28.1 2002/07/16 12:58:57 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -52,6 +52,9 @@ struct nextdma_config {
 	int          _nd_idx;					/* idx of segment currently in dd_next */
 	bus_dmamap_t _nd_map_cont;    /* map needed to continue DMA */
 	int          _nd_idx_cont;		/* segment index to continue DMA */
+
+	unsigned int	dm_xfer_len;
+	int		dm_xfer_exception;
 };
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.29 2001/06/16 09:18:46 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.29.16.1 2002/07/16 12:58:57 gehenna Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -57,12 +57,19 @@
 #define ND_DEBUG
 #endif
 
+/* #define panic		__asm __volatile("trap  #15"); printf */
+
+#define NEXTDMA_DEBUG nd->nd_continue_cb == esp_dmacb_continue && nextdma_debug
 #if defined(ND_DEBUG)
 int nextdma_debug = 0;
-#define DPRINTF(x) if (nextdma_debug) printf x;
+bus_dmamap_t esp_dmacb_continue __P((void *));
+#define DPRINTF(x) if (NEXTDMA_DEBUG) printf x;
 #else
 #define DPRINTF(x)
 #endif
+#define PRINTF printf
+extern char *esplogp, *esplog;
+#define ESPLOGIF (10 && nd->nd_intr == NEXT_I_SCSI_DMA && esplogp < (esplog + 8192))
 
 #if defined(ND_DEBUG)
 int nextdma_debug_enetr_idx = 0;
@@ -181,10 +188,11 @@ nextdma_config(nd)
 		nd->nd_dmat = t;
 	}
 
-	nextdma_init(nd);
-
 	isrlink_autovec(nextdma_intr, nd, NEXT_I_IPL(nd->nd_intr), 10);
 	INTR_ENABLE(nd->nd_intr);
+
+	nextdma_init(nd);
+
 }
 
 void
@@ -192,7 +200,7 @@ nextdma_init(nd)
 	struct nextdma_config *nd;
 {
 #ifdef ND_DEBUG
-	if (nextdma_debug) {
+	if (NEXTDMA_DEBUG) {
 		char sbuf[256];
 
 		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
@@ -248,15 +256,27 @@ nextdma_reset(nd)
 	DPRINTF(("DMA reset\n"));
 
 #if (defined(ND_DEBUG))
-	if (nextdma_debug) next_dma_print(nd);
+	if (NEXTDMA_DEBUG) next_dma_print(nd);
 #endif
 
+	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE | DMACSR_RESET);
 	if ((nd->_nd_map) || (nd->_nd_map_cont)) {
 		/* @@@ clean up dma maps */
-		panic("DMA abort not implemented\n");
+		/* panic("DMA abort not implemented\n"); */
+		if (nd->_nd_map_cont) {
+			DPRINTF(("DMA: resetting with non null continue map\n"));
+			if (nd->nd_completed_cb) 
+				(*nd->nd_completed_cb)(nd->_nd_map_cont, nd->nd_cb_arg);
+			
+			nd->_nd_map_cont = 0;
+			nd->_nd_idx_cont = 0;
+		}
+		if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
+		nd->_nd_map = 0;
+		nd->_nd_idx = 0;
 	}
 
-	nextdma_init(nd);
+	/* nextdma_init(nd); */
 	splx(s);
 }
 
@@ -271,6 +291,7 @@ next_dma_rotate(nd)
 	struct nextdma_config *nd;
 {
 
+	if (ESPLOGIF) *esplogp++ = 'r';
 	DPRINTF(("DMA next_dma_rotate()\n"));
 
 	/* Rotate the continue map into the current map */
@@ -316,6 +337,7 @@ next_dma_setup_cont_regs(nd)
 	bus_addr_t dd_saved_start;
 	bus_addr_t dd_saved_stop;
 
+	if (ESPLOGIF) *esplogp++ = 'c';
 	DPRINTF(("DMA next_dma_setup_regs()\n"));
 
 	if (nd->_nd_map_cont) {
@@ -334,6 +356,11 @@ next_dma_setup_cont_regs(nd)
 
 	dd_saved_start = dd_start;
 	dd_saved_stop  = dd_stop;
+
+	if (nd->_nd_map_cont && ESPLOGIF) {
+		sprintf (esplogp, "%ld", nd->_nd_map_cont->dm_segs[nd->_nd_idx_cont].ds_len);
+		esplogp += strlen (esplogp);
+	}
 
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START, dd_start);
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP, dd_stop);
@@ -361,6 +388,7 @@ next_dma_setup_curr_regs(nd)
 	bus_addr_t dd_saved_next;
 	bus_addr_t dd_saved_limit;
 
+	if (ESPLOGIF) *esplogp++ = 'C';
 	DPRINTF(("DMA next_dma_setup_curr_regs()\n"));
 
 
@@ -380,6 +408,11 @@ next_dma_setup_curr_regs(nd)
 
 	dd_saved_next = dd_next;
 	dd_saved_limit = dd_limit;
+
+	if (nd->_nd_map && ESPLOGIF) {
+		sprintf (esplogp, "%ld", nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
+		esplogp += strlen (esplogp);
+	}
 
 	if (nd->nd_intr == NEXT_I_ENETX_DMA) {
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF, dd_next);
@@ -530,8 +563,16 @@ nextdma_intr(arg)
   if (!INTR_OCCURRED(nd->nd_intr)) return 0;
   /* Handle dma interrupts */
 
+#if 01
+  if (nd->nd_intr == NEXT_I_SCSI_DMA) {
+	  int esp_dma_int __P((void *));
+	  return esp_dma_int (nd->nd_cb_arg);
+  }
+#endif
+
+  if (ESPLOGIF) *esplogp++ = 'D';
 #ifdef ND_DEBUG
-	if (nextdma_debug) {
+	if (NEXTDMA_DEBUG) {
 		char sbuf[256];
 
 		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
@@ -669,7 +710,7 @@ nextdma_intr(arg)
 #endif
 
 #if (defined(ND_DEBUG))
-			if (nextdma_debug > 2) next_dma_print(nd);
+			if (NEXTDMA_DEBUG > 2) next_dma_print(nd);
 #endif
 
 			nd->_nd_map->dm_xfer_len += slimit-onext;
@@ -688,6 +729,11 @@ nextdma_intr(arg)
 			nd->_nd_idx = 0;
 		}
 
+		if (NEXTDMA_DEBUG) {
+			char sbuf[256];
+			bitmask_snprintf(state, DMACSR_BITS, sbuf, sizeof(sbuf));
+			printf("CLNDMAP: dd->dd_csr          = 0x%s\n",   sbuf);
+		}
 		if (state & DMACSR_ENABLE) {
 
 			next_dma_rotate(nd);
@@ -706,9 +752,11 @@ nextdma_intr(arg)
 					KASSERT(nd->_nd_idx+1 == nd->_nd_map->dm_nsegs);
 					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
 							DMACSR_CLRCOMPLETE | dmadir);
+					if (ESPLOGIF) *esplogp++ = 'g';
 				} else {
 					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
 							DMACSR_CLRCOMPLETE | dmadir | DMACSR_SETSUPDATE);
+					if (ESPLOGIF) *esplogp++ = 'G';
 				}
 			}
 			
@@ -762,9 +810,9 @@ nextdma_intr(arg)
 			if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
 		}
 	}
-
+	
 #ifdef ND_DEBUG
-	if (nextdma_debug) {
+	if (NEXTDMA_DEBUG) {
 		char sbuf[256];
 
 		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
@@ -797,6 +845,7 @@ nextdma_start(nd, dmadir)
 	u_long dmadir;								/* 	DMACSR_SETREAD or DMACSR_SETWRITE */
 {
 
+	if (ESPLOGIF) *esplogp++ = 'n';
 #ifdef DIAGNOSTIC
 	if (!nextdma_finished(nd)) {
 		char sbuf[256];
@@ -808,7 +857,7 @@ nextdma_start(nd, dmadir)
 #endif
 
 #ifdef ND_DEBUG
-	if (nextdma_debug) {
+	if (NEXTDMA_DEBUG) {
 		char sbuf[256];
 
 		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
@@ -851,7 +900,7 @@ nextdma_start(nd, dmadir)
 	next_dma_rotate(nd);
 
 #ifdef ND_DEBUG
-	if (nextdma_debug) {
+	if (NEXTDMA_DEBUG) {
 		char sbuf[256];
 
 		bitmask_snprintf(NEXT_I_BIT(nd->nd_intr), NEXT_INTR_BITS,
@@ -869,7 +918,7 @@ nextdma_start(nd, dmadir)
 	next_dma_setup_cont_regs(nd);
 
 #if (defined(ND_DEBUG))
-	if (nextdma_debug > 2) next_dma_print(nd);
+	if (NEXTDMA_DEBUG > 2) next_dma_print(nd);
 #endif
 
 	if (nd->_nd_map_cont == NULL) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.h,v 1.1.10.1 2002/07/16 12:52:47 gehenna Exp $	*/
+/*	$NetBSD: bmapreg.h,v 1.1.2.2 2002/07/16 12:58:55 gehenna Exp $	*/
 
-/*-
- * Copyright (C) 1998	Internet Research Institute, Inc.
+/* 
+ * Copyright (c) 2002 Christian Limpach
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,10 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by
- *	Internet Research Institute, Inc.
+ *      This product includes software developed by Christian Limpach
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,22 +26,17 @@
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct confargs {
-	char *ca_name;
-	u_int ca_node;
-	int ca_nreg;
-	u_int *ca_reg;
-	int ca_nintr;
-	int *ca_intr;
 
-	u_int ca_baseaddr;
-	/* bus_space_tag_t ca_tag; */
-};
+#define BMAP_DDIR (12 * 4)
+#define BMAP_DDIR_UTPENABLE_MASK 0x80|0x10
 
-void *mapiodev __P((paddr_t, psize_t));
-paddr_t kvtop __P((caddr_t));
-void *intr_establish __P((int, int, int, int (*)(void *), void *));
+#define BMAP_DATA (13 * 4)
+#define BMAP_DATA_UTPCARRIER_MASK 0x20
+#define BMAP_DATA_UTPENABLE 0x80|0x10
+
+/* Size of register area to be mapped */
+#define BMAP_SIZE 14 * 4
