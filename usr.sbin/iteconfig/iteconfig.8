@@ -27,101 +27,136 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: iteconfig.8,v 1.1 1994/04/05 01:56:45 chopps Exp $
+.\"	$Id: iteconfig.8,v 1.2 1994/04/05 03:56:37 cgd Exp $
 .\"
 .Dd February 3, 1994
 .Dt ITECONFIG 8 amiga
 .Os 
 .Sh NAME
 .Nm iteconfig 
-.Nd modify bitmaped console attributes at run time.
+.Nd modify console attributes at run time
 .Sh SYNOPSIS
 .Nm iteconfig
 .Op Fl i
 .Op Fl v Ar volume
-.Op Fl t Ar count
 .Op Fl p Ar period
+.Op Fl t Ar count
 .Op Fl w Ar width
 .Op Fl h Ar height
 .Op Fl d Ar depth
 .Op Fl x Ar offset
 .Op Fl y Ar offset
-.Op Ar color0 ...
+.Op Ar color ...
 .Sh DESCRIPTION
-.Nm iteconfig
-is used to modify or examine the amiga's bitmaped console.  There are
-two areas in the console, the speaker and the display.
-.Pp
-With the display flags and values, you can set the
-.Ar width
-,
-.Ar height
-and
-.Ar depth
-of the console display.  You can also move the display around on the
-monitor with a horizontal and vertical
-.Ar offset .
-Finally the remaining arguments to
-.Nm iteconfig
-are used as color values for the view, beginning with color 0.
-.Pp
-The speaker options allow you to set the
-.Ar volume
-,
-.Ar period
-and 
-.Ar count
-of a console beep.
+.Nm Iteconfig
+is used to modify or examine the attributes of the
+.Tn Amiga's
+console bell and bitmapped console display.
+The console bell's volume, period, and count may be
+specified, as well as
+the bitmapped display's width, height, horizontal and
+vertical offset, pixel depth, and color map.
 .Pp
 The following flags are interpreted by
-.Nm iteconfig
+.Nm iteconfig :
 .Bl -tag -width indent
 .It Fl i
-Print information about the console's current state after
-.Nm iteconfig
-finishes processing all other arguments.
+After processing all other arguments,
+print information about the console's state.
 .It Fl v
-Set the volume of the console beep to
-.Ar volume
-(0 to 63).
+Set the volume of the console bell to
+.Ar volume ,
+which must be between 0 and 63, inclusive.
 .It Fl p
-Set the period of the console beep to
-.Ar period
+Set the period of the console bell to
+.Ar period .
 .It Fl t
-Set the number of repititions of the console beep sample to
-.Ar count
+Set the number of repititions of the console bell sample to
+.Ar count .
 .It Fl w
 Set the width of the console display to
 .Ar width
-pixel columns. (positive integer)
+pixel columns.
+.Ar Width
+must be a positive integer.
 .It Fl h
 Set the height of the console display to
 .Ar height
-pixels rows (
-.Ar height
-should be an even positive integer).
+pixel rows.
+.Ar Height 
+must be a positive integer.
 .It Fl d
-Set the number of bitplanes the console should use to
+Set the number of bitplanes the console view should use to
 .Ar depth .
-Therefore if
+For example, if
 .Ar depth
-is 3 then the number of color will be 8.
+is 3 then 8 colors will be used.
 .It Fl x
-Set the horizontal offset of the console view on the monitor in
+Set the horizontal offset of the console view on the monitor to
 .Ar offset
-pixel columns. (positive or negative integer)
+pixel columns.  The horizontal offset may be a positive or a
+negative integer, positive being an offset to the right, negative
+to the left.
 .It Fl y
-Set the vertical offset of the console view on the monitor in
+Set the vertical offset of the console view on the monitor to
 .Ar offset
-pixel rows. (positive or negative integer)
-.Sh BUGS
-.Ar period
+pixel rows.  The vertical offset may be a positive or a negative
+integer, positive being an offset down, negative up.
+.El
+.Pp
+Any additional arguments will be interpreted as colors and will
+be used to supply the color values for the console view's
+color map, starting with the first entry in the map.  (See the
+.Sx COLOR SPECIFICATION
+section of this manual page for information on how to specify
+colors.)
+If more colors are supplied than are usable by the console
+view, a warning is printed and the extra colors are ignored.
+.Sh COLOR SPECIFICATION
+Colors are hexidecimal numbers which have one of the following
+formats:
+.Bl -tag -width "0xRRGGBB"
+.It Ar 0xRRGGBB
+.Ar RR ,
+.Ar GG ,
 and
-.Ar cound
+.Ar BB
+are taken to be eight-bit values specifying the
+intensities of the red, green and blue components, respectively,
+of the color to be used.  For example, 
+.Li 0xff0000
+is bright red,
+.Li 0xffffff
+is white, and
+.Li 0x008080
+is dark cyan.
+.It Ar 0xGG
+.Ar GG
+is taken to be an eight-bit value specifying the intensity
+of grey to be used.  A value of
+.Li 0x00
+is black, a value of
+.Li 0xff
+is white, and a value of
+.Li 0x80
+is a grey
+approximately half way in between.
+.It Ar 0xM
+.Ar M
+is taken to be the one-bit monochrome value to be used.
+A value of
+.Li 0x1
+is black, and a value of
+.Li 0x0
+is white.
+.El
+.Sh BUGS
+.Ar Period
+and
+.Ar count
 are something users should never deal with.  These should be changed
 to 
 .Ar pitch
 and
-.Ar time
-where time is 100's of a second.
-
+.Ar time ,
+where time is in hundredths of a second.
