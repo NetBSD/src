@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.32 2003/08/07 09:46:49 agc Exp $	*/
+/*	$NetBSD: rshd.c,v 1.33 2004/11/16 06:04:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.32 2003/08/07 09:46:49 agc Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.33 2004/11/16 06:04:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,11 +245,7 @@ doit(struct sockaddr *fromp)
 	u_int16_t *portp;
 	struct addrinfo hints, *res, *res0;
 	int gaierror;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST | NI_NUMERICSERV;
-#endif
 
 	(void) signal(SIGINT, SIG_DFL);
 	(void) signal(SIGQUIT, SIG_DFL);
