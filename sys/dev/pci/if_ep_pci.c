@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.30 1998/11/07 23:06:26 fvdl Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.31 1998/11/09 23:12:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,26 +150,32 @@ struct ep_pci_product {
 	  0,				"3c595-T4" },
 	{ PCI_PRODUCT_3COM_3C595MII,	ELINK_CHIPSET_VORTEX,
 	  0,				"3c595-MII" },
+
 	{ PCI_PRODUCT_3COM_3C900TPO,	ELINK_CHIPSET_BOOMERANG,
 	  0,				"3c900-TPO" },
 	{ PCI_PRODUCT_3COM_3C900COMBO,	ELINK_CHIPSET_BOOMERANG,
 	  0,				"3c900-COMBO" },
+
 	{ PCI_PRODUCT_3COM_3C905TX,	ELINK_CHIPSET_BOOMERANG,
-	  ELINK_FLAGS_MII,			"3c905-TX" },
+	  ELINK_FLAGS_MII,		"3c905-TX" },
 	{ PCI_PRODUCT_3COM_3C905T4,	ELINK_CHIPSET_BOOMERANG,
-	  ELINK_FLAGS_MII,			"3c905-T4" },
+	  ELINK_FLAGS_MII,		"3c905-T4" },
 
 	{ 0,				0,
 	  0,				NULL },
 };
 
-struct ep_pci_product *ep_pci_lookup __P((struct pci_attach_args *));
+const struct ep_pci_product *ep_pci_lookup
+    __P((const struct pci_attach_args *));
 
-struct ep_pci_product *
+const struct ep_pci_product *
 ep_pci_lookup(pa)
-	struct pci_attach_args *pa;
+	const struct pci_attach_args *pa;
 {
 	struct ep_pci_product *epp;
+
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
+		return (NULL);
 
 	for (epp = ep_pci_products; epp->epp_name != NULL; epp++)
 		if (PCI_PRODUCT(pa->pa_id) == epp->epp_prodid)
@@ -186,9 +192,6 @@ ep_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_3COM)
-		return (0);
-
 	if (ep_pci_lookup(pa) != NULL)
 		return (1);
 
@@ -204,7 +207,7 @@ ep_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
-	struct ep_pci_product *epp;
+	const struct ep_pci_product *epp;
 	const char *intrstr = NULL;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.13 1998/10/31 00:45:49 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.14 1998/11/09 23:14:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,11 +144,12 @@ const struct ne_pci_product {
 	  NULL },
 };
 
-const struct ne_pci_product *ne_pci_lookup __P((struct pci_attach_args *));
+const struct ne_pci_product *ne_pci_lookup
+    __P((const struct pci_attach_args *));
 
 const struct ne_pci_product *
 ne_pci_lookup(pa)
-	struct pci_attach_args *pa;
+	const struct pci_attach_args *pa;
 {
 	const struct ne_pci_product *npp;
 
