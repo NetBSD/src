@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.4 2001/11/12 15:25:12 lukem Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.5 2001/11/17 03:50:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.4 2001/11/12 15:25:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.5 2001/11/17 03:50:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -154,6 +154,8 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 	 * ends. roundup to get decent alignment.
 	 */
 	*addr = (void *)(md->md_va + PAGE_SIZE - roundup(size, sizeof(long)));
+	if (*addr != NULL && (flags & M_ZERO))
+		memset(*addr, 0, size);
 	return (1);
 }
 
