@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 2002/06/05 01:04:23 fredette Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2002/08/11 22:29:09 fredette Exp $	*/
 
 /*	$OpenBSD: pte.h,v 1.8 2001/01/12 23:37:49 mickey Exp $	*/
 
@@ -30,8 +30,8 @@
 #define	_HPPA_PTE_H_
 
 /* TLB access/protection values */
-#define TLB_REF		0x80000000	/* software only */
-#define	TLB_ALIGNED	0x40000000	/* software only */
+#define TLB_REF		0x80000000	/* software/HPT only */
+#define TLB_NO_RW_ALIAS	0x40000000	/* software only */
 #define TLB_TRAP	0x20000000
 #define TLB_DIRTY	0x10000000
 #define TLB_BREAK	0x08000000
@@ -45,25 +45,22 @@
 #define		TLB_AR_URW	0x01f00000
 #define		TLB_AR_URX	0x02f00000
 #define		TLB_AR_URWX	0x03f00000
+#define		TLB_AR_WRITABLE(x) (((x) & 0x05000000) == 0x01000000)
 #define TLB_UNCACHEABLE	0x00080000
-#define TLB_ICACHE	0x00040000	/* software only */
-#define TLB_NOTUSED	0x00020000      /* software only */
-#define TLB_DCACHE	0x00010000      /* software only */
+#define TLB_UNMANAGED	0x00040000	/* software only */
 #define TLB_PID_MASK	0x0000fffe
 #define TLB_WIRED	0x00000001	/* software only */
 
 #define	TLB_BITS	"\020\024U\031W\032X\033N\034B\035D\036T\037A\040R"
 
-#define TLB_REF_POS	0
-#define TLB_ALIGNED_POS	1
-#define TLB_TRAP_POS	2
-#define TLB_DIRTY_POS	3
-#define TLB_BREAK_POS	4
-#define TLB_ITLB_POS    12
-#define TLB_ICACHE_POS  13
-#define TLB_DTLB_POS    14
-#define TLB_DCACHE_POS  15
-#define TLB_WIRED_POS	31
+#define TLB_REF_POS		0
+#define TLB_NO_RW_ALIAS_POS	1
+#define TLB_TRAP_POS		2
+#define TLB_DIRTY_POS		3
+#define TLB_BREAK_POS		4
+#define TLB_UNCACHEABLE_POS	12
+#define TLB_UNMANAGED_POS	13
+#define TLB_WIRED_POS		31
 
 /* protection for a gateway page */
 #define TLB_GATE_PROT	0x04c00000
