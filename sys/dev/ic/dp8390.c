@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.3.4.2 1997/10/14 00:59:07 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.3.4.3 1997/10/14 01:59:11 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -66,6 +66,9 @@ static __inline__ int	dp8390_write_mbuf __P((struct dp8390_softc *,
 			    struct mbuf *, int));
 
 static int		dp8390_test_mem __P((struct dp8390_softc *));
+
+int	dp8390_enable __P((struct dp8390_softc *));
+void	dp8390_disable __P((struct dp8390_softc *));
 
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
@@ -556,6 +559,9 @@ dp8390_intr(arg)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	u_char isr;
 
+	if (sc->sc_enabled == 0)
+		return (0);
+
 	/* Set NIC to page 0 registers. */
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
@@ -743,6 +749,8 @@ dp8390_ioctl(ifp, cmd, data)
 	switch (cmd) {
 
 	case SIOCSIFADDR:
+		if ((error = dp8390_enable(sc)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -784,14 +792,17 @@ dp8390_ioctl(ifp, cmd, data)
 			 */
 			dp8390_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
+			dp8390_disable(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0 &&
 		    (ifp->if_flags & IFF_RUNNING) == 0) {
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
+			if ((error = dp8390_enable(sc)) != 0)
+				break;
 			dp8390_init(sc);
-		} else {
+		} else if (sc->sc_enabled) {
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
@@ -803,6 +814,11 @@ dp8390_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (sc->sc_enabled == 0) {
+			error = EIO;
+			break;
+		}
+
 		/* Update our multicast list. */
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ec) :
@@ -1129,4 +1145,38 @@ dp8390_write_mbuf(sc, m, buf)
 	}
 
 	return (totlen);
+}
+
+/*
+ * Enable power on the interface.
+ */
+int
+dp8390_enable(sc)
+	struct dp8390_softc *sc;
+{
+
+	if (sc->sc_enabled == 0 && sc->sc_enable != NULL) {
+		if ((*sc->sc_enable)(sc) != 0) {
+			printf("%s: device enable failed\n",
+			    sc->sc_dev.dv_xname);
+			return (EIO);
+		}
+	}
+
+	sc->sc_enabled = 1;
+	return (0);
+}
+
+/*
+ * Disable power on the interface.
+ */
+void
+dp8390_disable(sc)
+	struct dp8390_softc *sc;
+{
+
+	if (sc->sc_enabled != 0 && sc->sc_disable != NULL)
+		(*sc->sc_disable)(sc);
+
+	sc->sc_enabled = 0;
 }
