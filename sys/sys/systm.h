@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.34 1995/03/09 15:47:44 mycroft Exp $	*/
+/*	$NetBSD: systm.h,v 1.35 1995/05/31 20:41:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -165,7 +165,15 @@ void	initclocks __P((void));
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
 void	setstatclockrate __P((int hzrate));
-  
+
+/*
+ * Shutdown hooks.  Functions to be run with all interrupts disabled
+ * immediately before the system is halted or rebooted.
+ */
+void	*shutdownhook_establish __P((void (*)(void *), void *));
+void	shutdownhook_disestablish __P((void *));
+void	doshutdownhooks __P((void));
+
 #include <lib/libkern/libkern.h>
 
 #ifdef DDB

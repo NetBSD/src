@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.13 1995/02/08 15:06:48 mycroft Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.14 1995/05/31 20:41:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -204,4 +204,73 @@ hashinit(elements, type, hashmask)
 		LIST_INIT(&hashtbl[i]);
 	*hashmask = hashsize - 1;
 	return (hashtbl);
+}
+
+/*
+ * "Shutdown hook" types, functions, and variables.
+ */
+
+struct shutdownhook_desc {
+	LIST_ENTRY(shutdownhook_desc) sfd_list;
+	void	(*sfd_fn) __P((void *));
+	void	*sfd_arg;
+};
+
+LIST_HEAD(, shutdownhook_desc) shutdownhook_list;
+
+int shutdownhooks_done;
+
+void *
+shutdownhook_establish(fn, arg)
+	void (*fn) __P((void *));
+	void *arg;
+{
+	struct shutdownhook_desc *ndp;
+
+	ndp = (struct shutdownhook_desc *)
+	    malloc(sizeof (*ndp), M_DEVBUF, M_NOWAIT);
+	if (ndp == NULL)
+		return NULL;
+
+	ndp->sfd_fn = fn;
+	ndp->sfd_arg = arg;
+	LIST_INSERT_HEAD(&shutdownhook_list, ndp, sfd_list);
+
+	return (ndp);
+}
+
+void
+shutdownhook_disestablish(vhook)
+	void *vhook;
+{
+#ifdef DIAGNOSTIC
+	struct shutdownhook_desc *dp;
+
+	for (dp = shutdownhook_list.lh_first; dp != NULL;
+	    dp = dp->sfd_list.le_next)
+                if (dp == vhook)
+			break;
+	if (dp == NULL)
+		panic("shutdownhook_disestablish: hook not established");
+#endif
+
+	LIST_REMOVE((struct shutdownhook_desc *)vhook, sfd_list);
+}
+
+/*
+ * Run shutdown hooks.  Should be invoked immediately before the
+ * system is halted or rebooted, i.e. after file systems unmounted,
+ * after crash dump done, etc.
+ */
+void
+doshutdownhooks()
+{
+	struct shutdownhook_desc *dp;
+
+	if (shutdownhooks_done)
+		return;
+
+	for (dp = shutdownhook_list.lh_first; dp != NULL; dp =
+	    dp->sfd_list.le_next)
+		(*dp->sfd_fn)(dp->sfd_arg);
 }
