@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.60 2003/09/23 14:23:54 wiz Exp $ */
+/* $NetBSD: lib.h,v 1.61 2003/09/23 14:54:53 wiz Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -249,6 +249,7 @@ Boolean make_preserve_name(char *, size_t, char *, char *);
 void    write_file(char *, char *);
 void    copy_file(char *, char *, char *);
 void    move_file(char *, char *, char *);
+void    remove_files(const char *, const char *);
 int     delete_hierarchy(char *, Boolean, Boolean);
 int     unpack(const char *, const char *, const char *);
 void    format_cmd(char *, size_t, char *, char *, char *);
