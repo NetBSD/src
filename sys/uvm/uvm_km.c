@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.43 2001/03/15 06:10:57 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.44 2001/04/12 21:08:25 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -489,6 +489,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 {
 	vaddr_t kva, loopva;
 	vaddr_t offset;
+	vsize_t loopsize;
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_km_kmemalloc"); UVMHIST_CALLED(maphist);
 
@@ -537,7 +538,8 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	 */
 
 	loopva = kva;
-	while (size) {
+	loopsize = size;
+	while (loopsize) {
 		simple_lock(&obj->vmobjlock);
 		pg = uvm_pagealloc(obj, offset, NULL, 0);
 		if (pg) {
@@ -578,7 +580,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 		}
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
-		size -= PAGE_SIZE;
+		loopsize -= PAGE_SIZE;
 	}
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);
