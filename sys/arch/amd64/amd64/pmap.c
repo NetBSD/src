@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2004/08/08 09:38:50 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2004/08/10 18:57:09 drochner Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2004/08/08 09:38:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2004/08/10 18:57:09 drochner Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -3168,10 +3168,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
-	/* sanity check: totally out of range? */
-	if (va >= VM_MAX_KERNEL_ADDRESS)
-		panic("pmap_enter: too big");
-
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
 		panic("pmap_enter: trying to map over PDP/APDP!");
 
@@ -3179,7 +3175,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (va >= VM_MIN_KERNEL_ADDRESS &&
 	    !pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]))
 		panic("pmap_enter: missing kernel PTP for va %lx!", va);
-
 #endif
 
 	/* get lock */
