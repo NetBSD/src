@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.20 2002/11/22 12:23:28 wiz Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.21 2002/12/08 21:33:56 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
+#		NetBSD: MILAN.in,v 1.11 2002/12/08 21:31:37 leo Exp $
 #		NetBSD: GENERIC.in,v 1.29 2002/11/22 12:21:00 wiz Exp $
 
 #This configuration file is for a generic Milan
@@ -251,10 +251,10 @@ options 	PCDISPLAY_SOFTCURSOR
 
 #The following sections describe various hardware options.
 
-isabus0 	at mainbus0			# ISA-bus
-isa0 		at isabus0
-pcibus0 	at mainbus0			# PCI-bus
-pci0 		at pcibus0
+isab0 		at mainbus0			# ISA-bus
+isa0 		at isab0
+pcib0 		at mainbus0			# PCI-bus
+pci0 		at pcib0
 nvr0 		at mainbus0			# nvram driver
 ser0 		at mainbus0
 fdcisa0 	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy contr.
