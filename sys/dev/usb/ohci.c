@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.151 2004/07/17 20:24:15 mycroft Exp $	*/
+/*	$NetBSD: ohci.c,v 1.152 2004/10/26 20:46:16 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.151 2004/07/17 20:24:15 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.152 2004/10/26 20:46:16 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2432,6 +2432,9 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			*(u_int8_t *)buf = 0;
 			totlen = 1;
 			switch (value & 0xff) {
+			case 0: /* Language table */
+				totlen = ohci_str(buf, len, "\001");
+				break;
 			case 1: /* Vendor */
 				totlen = ohci_str(buf, len, sc->sc_vendor);
 				break;
