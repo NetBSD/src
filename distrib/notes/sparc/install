@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.38 2000/11/22 21:14:25 abs Exp $
+.\"	$NetBSD: install,v 1.39 2000/11/23 16:06:10 abs Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -204,7 +204,7 @@ Insert the first floppy and run the following commands:
 .Pp
 Insert the second floppy and run the following commands:
 .Pp
-.Dl # Ic "dd if=disk2 of=/dev/rfd0a conv=osync"
+.Dl # Ic "dd if=disk2 of=/dev/rfd0a bs=36k conv=sync"
 .Dl # Ic "eject floppy"
 .Pp
 Be sure to label your floppies so you can later identify them.
