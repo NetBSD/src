@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.48 1999/11/04 01:02:38 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.49 1999/11/04 19:11:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.48 1999/11/04 01:02:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.49 1999/11/04 19:11:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,6 +324,8 @@ ciaattach(parent, self, aux)
 		printf("%s: WARNING: Pyxis pass 1 DMA bug; no bets...\n",
 		    self->dv_xname);
 
+		ccp->cc_flags |= CCF_PYXISBUG;
+
 		alpha_mb();
 		ctrl = REGVAL(CIA_CSR_CTRL);
 		ctrl &= ~(CTRL_RD_TYPE|CTRL_RL_TYPE|CTRL_RM_TYPE);
@@ -378,8 +380,10 @@ ciaattach(parent, self, aux)
 	    alphabus_dma_get_tag(&ccp->cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &ccp->cc_pc;
 	pba.pba_bus = 0;
-	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
-	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
+	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
+	if ((ccp->cc_flags & CCF_PYXISBUG) == 0)
+		pba.pba_flags |= PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
+		    PCI_FLAGS_MWI_OKAY;
 	config_found(self, &pba, ciaprint);
 }
 
