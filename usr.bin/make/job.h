@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.6 1998/03/26 19:20:37 christos Exp $	*/
+/*	$NetBSD: job.h,v 1.7 2000/05/04 18:29:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -201,7 +201,7 @@ typedef struct Shell {
     char          *exit;	/* exit on error */
 }               Shell;
 
-
+#ifdef REMOTE
 extern char 	*targFmt;   	/* Format string for banner that separates
 				 * output from multiple jobs. Contains a
 				 * single %s where the name of the node being
@@ -216,7 +216,7 @@ extern Lst  	jobs;	    	/* List of active job descriptors */
 extern Lst  	stoppedJobs;	/* List of jobs that are stopped or didn't
 				 * quite get started */
 extern Boolean	jobFull;    	/* Non-zero if no more jobs should/will start*/
-
+#endif
 
 void Job_Touch __P((GNode *, Boolean));
 Boolean Job_CheckCommands __P((GNode *, void (*abortProc )(char *, ...)));
