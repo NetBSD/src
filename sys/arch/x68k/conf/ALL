@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.29.2.1 1999/04/19 04:55:17 cjs Exp $
+#	$NetBSD: ALL,v 1.29.2.2 1999/04/19 05:07:27 cjs Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -21,7 +21,7 @@ options 	M68060
 #### System options specific to the x68k port
 
 options 	EXTENDED_MEMORY		# support for >16MB memory
-options 	FPU_EMULATE		# software fpu emulation for MC68030
+#options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
 options 	JUPITER			# support for "Jupiter-X" accelerator
