@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.48 1998/01/12 09:23:29 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.49 1998/02/02 22:55:03 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -107,6 +107,8 @@ lpt_attach_subr(sc)
 	ioh = sc->sc_ioh;
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
+
+	sc->sc_dev_ok = 1;
 }
 
 /*
@@ -131,7 +133,7 @@ lptopen(dev, flag, mode, p)
 	if (unit >= lpt_cd.cd_ndevs)
 		return ENXIO;
 	sc = lpt_cd.cd_devs[unit];
-	if (!sc)
+	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
 
 #if 0	/* XXX what to do? */
