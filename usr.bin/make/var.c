@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.68 2002/02/06 16:26:12 pk Exp $	*/
+/*	$NetBSD: var.c,v 1.69 2002/03/21 01:24:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.68 2002/02/06 16:26:12 pk Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.69 2002/03/21 01:24:44 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.68 2002/02/06 16:26:12 pk Exp $");
+__RCSID("$NetBSD: var.c,v 1.69 2002/03/21 01:24:44 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2604,7 +2604,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    } else
 #endif
 		    {
-			Error ("Unknown modifier '%c'\n", *tstr);
+			Error ("Unknown modifier '%c'", *tstr);
 			for (cp = tstr+1;
 			     *cp != ':' && *cp != endc && *cp != '\0';
 			     cp++)
