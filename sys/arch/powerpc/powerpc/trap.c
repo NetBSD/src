@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1998/11/22 21:21:32 ws Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 1998/11/26 20:48:45 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -461,16 +461,17 @@ kcopy(src, dst, len)
 	void *dst;
 	size_t len;
 {
-	faultbuf env;
+	faultbuf env, *oldfault;
 
+	oldfault = curpcb->pcb_onfault;
 	if (setfault(env)) {
-		curpcb->pcb_onfault = 0;
+		curpcb->pcb_onfault = oldfault;
 		return EFAULT;
 	}
 
 	bcopy(src, dst, len);
 
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = oldfault;
 	return 0;
 }
 #endif
