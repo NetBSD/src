@@ -1,4 +1,4 @@
-.\"	$NetBSD: portmap.8,v 1.7 1999/03/22 18:44:04 garbled Exp $
+.\"	$NetBSD: portmap.8,v 1.7.2.1 2000/01/23 11:17:24 he Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991, 1993
@@ -101,7 +101,7 @@ of requests.  This prevents clients from using
 .Nm
 to circumvent host-based services in individual services.
 .Pp
-Option available:
+Available options:
 .Bl -tag -width Ds
 .It Fl d
 prevents
@@ -111,7 +111,7 @@ and causes errors and debugging information
 to be printed to the standard error output.
 .It Fl i
 .Dq insecure
-mode. Allows to call PMAPPROC_SET and PMAPPROC_UNSET from any host. Normally
+mode. Allows calls to PMAPPROC_SET and PMAPPROC_UNSET from any host. Normally
 .Nm
 accepts these requests only from the loopback interface for security reasons.
 This change is necessary for programs that were compiled with earlier
@@ -135,8 +135,8 @@ to connect to services from a privileged port.
 .Xr rpcinfo 8 ,
 .Xr inetd 8 ,
 .Xr syslog 3 ,
-.Xr hosts_access 3 ,
-.Xr hosts_options 3
+.Xr hosts_access 5 ,
+.Xr hosts_options 5
 .Sh BUGS
 If
 .Nm
