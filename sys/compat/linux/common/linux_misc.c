@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.86 2001/03/16 07:46:57 manu Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.87 2001/03/30 17:16:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1404,4 +1404,18 @@ linux_sys_sysinfo(p, v, retval)
 	si.mem_unit = 1;
 
 	return (copyout(&si, SCARG(uap, arg), sizeof si));
+}
+
+/*
+ * This gets called for unsupported syscalls. The difference to sys_nosys()
+ * is that process does not get SIGSYS, the call just returns with ENOSYS.
+ * This is the way Linux does it and glibc depends on this behaviour.
+ */
+int
+linux_sys_nosys(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return (ENOSYS);
 }
