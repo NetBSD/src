@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.30 1997/06/16 23:41:49 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.31 1997/06/18 04:07:06 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -624,6 +624,7 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	sw	v0, U_PCB_REGS+(MULLO * 4)(k1)
 	sw	v1, U_PCB_REGS+(MULHI * 4)(k1)
 	li	sp, KERNELSTACK - STAND_FRAME_SIZE	# switch to kernel SP
+	sw	a2, U_PCB_REGS+(PC * 4)(k1)
 	sw	a2, STAND_RA_OFFSET(sp)		# for debugging
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
@@ -658,7 +659,7 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	sw	s7, U_PCB_REGS+(S7 * 4)(a1)
 	sw	s8, U_PCB_REGS+(S8 * 4)(a1)
 
-	lw	a0, STAND_RA_OFFSET(sp)		# argment is interrupted PC
+	lw	a0, U_PCB_REGS+(PC * 4)(a1)	# argument is interrupted PC
 	li	t0, MACH_HARD_INT_MASK | MIPS_SR_INT_IE
 	jal	_C_LABEL(ast)
 	mtc0	t0, MACH_COP_0_STATUS_REG	# enable interrupts (spl0)
@@ -682,7 +683,7 @@ NNON_LEAF(mips1_UserIntr, STAND_FRAME_SIZE, ra)
 	lw	v1, U_PCB_REGS+(MULHI * 4)(k1)
 	mtlo	v0
 	mthi	v1
-	lw	k0, STAND_RA_OFFSET(sp)		# interrupted PC
+	lw	k0, U_PCB_REGS+(PC * 4)(k1)	# interrupted PC
 	move	k1, a1
 	lw	AT, U_PCB_REGS+(AST * 4)(k1)
 	lw	v0, U_PCB_REGS+(V0 * 4)(k1)
