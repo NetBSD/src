@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.1.1.3 2003/10/27 16:14:22 pooka Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.2 2004/11/13 10:18:50 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -67,7 +67,7 @@
 #if 0
 FILE_RCSID("@(#)Id: fsmagic.c,v 1.43 2003/10/14 19:29:55 christos Exp")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.1.1.3 2003/10/27 16:14:22 pooka Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.2 2004/11/13 10:18:50 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -100,7 +100,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 			file_error(ms, errno, "cannot stat `%s'", fn);
 			return -1;
 		}
-		if (file_printf(ms, "cannot open (%s)",
+		if (file_printf(ms, "cannot open `%s' (%s)",
 		    fn, strerror(errno)) == -1)
 			return -1;
 		return 1;
