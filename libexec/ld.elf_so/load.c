@@ -1,8 +1,9 @@
-/*	$NetBSD: load.c,v 1.15 2001/11/02 15:28:36 skrll Exp $	 */
+/*	$NetBSD: load.c,v 1.15.2.1 2004/05/28 08:31:22 tron Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,16 +55,17 @@
 #include "debug.h"
 #include "rtld.h"
 
-static bool _rtld_load_by_name __P((const char *, Obj_Entry *, Needed_Entry **,
-    int, bool));
+static bool _rtld_load_by_name(const char *, Obj_Entry *, Needed_Entry **,
+    int);
 
+#ifdef RTLD_LOADER
+Objlist _rtld_list_main =	/* Objects loaded at program startup */
+  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
 
 void
-_rtld_objlist_add(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
+_rtld_objlist_add(Objlist *list, Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
 
@@ -83,6 +85,7 @@ _rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
 	}
 	return NULL;
 }
+#endif
 
 /*
  * Load a shared object into memory, if it is not already loaded.  The
@@ -93,17 +96,15 @@ _rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
  * on failure.
  */
 Obj_Entry *
-_rtld_load_object(filepath, mode, dodebug)
-	char *filepath;
-	int mode;
-	bool dodebug;
+_rtld_load_object(char *filepath, int mode)
 {
 	Obj_Entry *obj;
 	int fd = -1;
 	struct stat sb;
+	size_t pathlen = strlen(filepath);
 
 	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
-		if (strcmp(obj->path, filepath) == 0)
+		if (pathlen == obj->pathlen && !strcmp(obj->path, filepath)) 
 			break;
 
 	/*
@@ -139,7 +140,6 @@ _rtld_load_object(filepath, mode, dodebug)
 			free(filepath);
 			return NULL;
 		}
-		obj->path = filepath;
 		_rtld_digest_dynamic(obj);
 
 		*_rtld_objtail = obj;
@@ -147,43 +147,42 @@ _rtld_load_object(filepath, mode, dodebug)
 #ifdef RTLD_LOADER
 		_rtld_linkmap_add(obj);	/* for GDB */
 #endif
-		if (dodebug) {
-			dbg(("  %p .. %p: %s", obj->mapbase,
-			    obj->mapbase + obj->mapsize - 1, obj->path));
-			if (obj->textrel)
-				dbg(("  WARNING: %s has impure text",
-				    obj->path));
-		}
+		dbg(("  %p .. %p: %s", obj->mapbase,
+		    obj->mapbase + obj->mapsize - 1, obj->path));
+		if (obj->textrel)
+			dbg(("  WARNING: %s has impure text", obj->path));
 	} else
 		free(filepath);
 
 	++obj->refcount;
-	if ((mode & RTLD_GLOBAL) &&
-	    _rtld_objlist_find(&_rtld_list_global, obj) == NULL)
+#ifdef RTLD_LOADER
+	if (mode & RTLD_MAIN && !obj->mainref) {
+		obj->mainref = 1;
+		rdbg(("adding %p (%s) to _rtld_list_main", obj, obj->path));
+		_rtld_objlist_add(&_rtld_list_main, obj);
+	}
+	if (mode & RTLD_GLOBAL && !obj->globalref) {
+		obj->globalref = 1;
+		rdbg(("adding %p (%s) to _rtld_list_global", obj, obj->path));
 		_rtld_objlist_add(&_rtld_list_global, obj);
+	}
+#endif
 	return obj;
 }
 
 static bool
-_rtld_load_by_name(name, obj, needed, mode, dodebug)
-	const char *name;
-	Obj_Entry *obj;
-	Needed_Entry **needed;
-	int mode;
-	bool dodebug;
+_rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed, int mode)
 {
 	Library_Xform *x = _rtld_xforms;
 	Obj_Entry *o = NULL;
 	size_t i, j;
-	char *libpath;
 	bool got = false;
 	union {
 		int i;
 		char s[16];
 	} val;
 
-	if (dodebug)
-		dbg(("load by name %s %p", name, x));
+	dbg(("load by name %s %p", name, x));
 	for (; x; x = x->next) {
 		if (strcmp(x->name, name) != 0)
 			continue;
@@ -191,7 +190,7 @@ _rtld_load_by_name(name, obj, needed, mode, dodebug)
 		i = sizeof(val);
 
 		if (sysctl(x->ctl, x->ctlmax, &val, &i, NULL, 0) == -1) {
-			xwarnx("sysctl");
+			xwarnx(_PATH_LD_HINTS ": unknown sysctl for %s", name);
 			break;
 		}
 
@@ -207,13 +206,11 @@ _rtld_load_by_name(name, obj, needed, mode, dodebug)
 			break;
 		}
 
-		if (dodebug)
-			dbg(("sysctl returns %s", val.s));
+		dbg(("sysctl returns %s", val.s));
 
 		for (i = 0; i < RTLD_MAX_ENTRY && x->entry[i].value != NULL;
 		    i++) {
-			if (dodebug)
-				dbg(("entry %ld", (unsigned long)i));
+			dbg(("entry %ld", (unsigned long)i));
 			if (strcmp(x->entry[i].value, val.s) == 0)
 				break;
 		}
@@ -227,16 +224,13 @@ _rtld_load_by_name(name, obj, needed, mode, dodebug)
 		 * what we loaded in the needed objects */
 		for (j = 0; j < RTLD_MAX_LIBRARY &&
 		    x->entry[i].library[j] != NULL; j++) {
-			libpath = _rtld_find_library(
-			    x->entry[i].library[j], obj);
-			if (libpath == NULL) {
+			o = _rtld_load_library(x->entry[i].library[j], obj,
+			    mode);
+			if (o == NULL) {
 				xwarnx("could not load %s for %s",
 				    x->entry[i].library[j], name);
 				continue;
 			}
-			o = _rtld_load_object(libpath, mode, true);
-			if (o == NULL)
-				continue;
 			got = true;
 			if (j == 0)
 				(*needed)->obj = o;
@@ -257,10 +251,7 @@ _rtld_load_by_name(name, obj, needed, mode, dodebug)
 	if (got)
 		return true;
 
-	libpath = _rtld_find_library(name, obj);
-	if (libpath == NULL)
-		return false;
-	return ((*needed)->obj = _rtld_load_object(libpath, mode, true)) != NULL;
+	return ((*needed)->obj = _rtld_load_library(name, obj, mode)) != NULL;
 }
 
 
@@ -270,10 +261,7 @@ _rtld_load_by_name(name, obj, needed, mode, dodebug)
  * returns -1 on failure.
  */
 int
-_rtld_load_needed_objects(first, mode, dodebug)
-	Obj_Entry *first;
-	int mode;
-	bool dodebug;
+_rtld_load_needed_objects(Obj_Entry *first, int mode)
 {
 	Obj_Entry *obj;
 	int status = 0;
@@ -284,8 +272,7 @@ _rtld_load_needed_objects(first, mode, dodebug)
 		for (needed = obj->needed; needed != NULL;
 		    needed = needed->next) {
 			const char *name = obj->strtab + needed->name;
-			if (!_rtld_load_by_name(name, obj, &needed, mode,
-			    dodebug))
+			if (!_rtld_load_by_name(name, obj, &needed, mode))
 				status = -1;	/* FIXME - cleanup */
 #ifdef RTLD_LOADER
 			if (status == -1)
@@ -299,21 +286,18 @@ _rtld_load_needed_objects(first, mode, dodebug)
 
 #ifdef RTLD_LOADER
 int
-_rtld_preload(preload_path, dodebug)
-	const char *preload_path;
-	bool dodebug;
+_rtld_preload(const char *preload_path)
 {
 	const char *path;
 	char *cp, *buf;
 	int status = 0;
 
-	if (preload_path != NULL) {
+	if (preload_path != NULL && *preload_path != '\0') {
 		cp = buf = xstrdup(preload_path);
 		while ((path = strsep(&cp, " :")) != NULL && status == 0) {
-			if (_rtld_load_object(xstrdup(path), RTLD_GLOBAL,
-			    dodebug) == NULL)
+			if (!_rtld_load_object(xstrdup(path), RTLD_MAIN))
 				status = -1;
-			else if (dodebug)
+			else
 				dbg((" preloaded \"%s\"", path));
 		}
 		free(buf);

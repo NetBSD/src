@@ -1,17 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.9 2001/12/20 19:20:03 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9.2.1 2004/05/28 08:31:22 tron Exp $
 
-SRCS+=	rtld_start.S mips_reloc.c
+SRCS+=		rtld_start.S mips_reloc.c
 
 # XXX Should not be in CPPFLAGS!
-CPPFLAGS+= -mabicalls -G0 -fPIC
+CPPFLAGS+=	-mabicalls -G0 -fPIC
 
-CPPFLAGS+= -DELFSIZE=32 -I${.CURDIR}
-CPPFLAGS+= -DRTLD_INHIBIT_COPY_RELOCS
+CPPFLAGS+=	-DELFSIZE=32
+CPPFLAGS+=	-DRTLD_INHIBIT_COPY_RELOCS
 
-.if (${MACHINE_ARCH} == "mipseb")
-# UGH!  ld.so.script specifies little-endian; need to override that here
-LDFLAGS+= -EB
-.endif
-
-LDFLAGS+= -Bshareable -Bsymbolic -e .rtld_start
-LDFLAGS+= --script ${.CURDIR}/arch/mips/ld.so.script
+LDFLAGS+=	-Bshareable -Bsymbolic -e .rtld_start

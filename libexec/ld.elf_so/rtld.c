@@ -1,8 +1,9 @@
-/*	$NetBSD: rtld.c,v 1.48.2.1 2003/09/05 19:15:01 tron Exp $	 */
+/*	$NetBSD: rtld.c,v 1.48.2.2 2004/05/28 08:31:22 tron Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,21 +60,13 @@
 #include "sysident.h"
 #endif
 
-#define END_SYM		"_end"
-
-/*
- * Debugging support.
- */
-
-typedef void    (*funcptr) __P((void));
-
 /*
  * Function declarations.
  */
-static void     _rtld_init __P((caddr_t, int));
-static void     _rtld_exit __P((void));
+static void     _rtld_init(caddr_t, caddr_t);
+static void     _rtld_exit(void);
 
-Elf_Addr        _rtld __P((Elf_Addr *));
+Elf_Addr        _rtld(Elf_Addr *, Elf_Addr);
 
 
 /*
@@ -87,14 +80,9 @@ Obj_Entry      *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
-char            _rtld_path[] = _PATH_RTLD;
+char           *_rtld_path = _PATH_RTLD;
 Elf_Sym         _rtld_sym_zero;	/* For resolving undefined weak refs. */
-#ifdef	VARPSZ
 int		_rtld_pagesz;	/* Page size, as provided by kernel */
-#endif
-
-Objlist _rtld_list_main =	/* Objects loaded at program startup */
-  SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 
 Search_Path    *_rtld_default_paths;
 Search_Path    *_rtld_paths;
@@ -110,19 +98,18 @@ char          **environ;
 extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
 extern Elf_Dyn  _DYNAMIC;
 
-static void _rtld_call_fini_functions __P((Obj_Entry *));
-static void _rtld_call_init_functions __P((Obj_Entry *));
-static Obj_Entry *_rtld_dlcheck __P((void *));
-static void _rtld_init_dag __P((Obj_Entry *));
-static void _rtld_init_dag1 __P((Obj_Entry *, Obj_Entry *));
-static void _rtld_objlist_remove __P((Objlist *, Obj_Entry *));
-static void _rtld_unload_object __P((Obj_Entry *, bool));
-static void _rtld_unref_dag __P((Obj_Entry *));
-static Obj_Entry *_rtld_obj_from_addr __P((const void *));
+static void _rtld_call_fini_functions(Obj_Entry *);
+static void _rtld_call_init_functions(Obj_Entry *);
+static Obj_Entry *_rtld_dlcheck(void *);
+static void _rtld_init_dag(Obj_Entry *);
+static void _rtld_init_dag1(Obj_Entry *, Obj_Entry *);
+static void _rtld_objlist_remove(Objlist *, Obj_Entry *);
+static void _rtld_unload_object(Obj_Entry *, bool);
+static void _rtld_unref_dag(Obj_Entry *);
+static Obj_Entry *_rtld_obj_from_addr(const void *);
 
 static void
-_rtld_call_fini_functions(first)
-	Obj_Entry *first;
+_rtld_call_fini_functions(Obj_Entry *first)
 {
 	Obj_Entry *obj;
 
@@ -132,9 +119,9 @@ _rtld_call_fini_functions(first)
 }
 
 static void
-_rtld_call_init_functions(first)
-	Obj_Entry *first;
+_rtld_call_init_functions(Obj_Entry *first)
 {
+
 	if (first != NULL) {
 		_rtld_call_init_functions(first->next);
 		if (first->init != NULL)
@@ -145,88 +132,34 @@ _rtld_call_init_functions(first)
 /*
  * Initialize the dynamic linker.  The argument is the address at which
  * the dynamic linker has been mapped into memory.  The primary task of
- * this function is to relocate the dynamic linker.
+ * this function is to create an Obj_Entry for the dynamic linker and
+ * to resolve the PLT relocation for platforms that need it (those that
+ * define __HAVE_FUNCTION_DESCRIPTORS
  */
 static void
-_rtld_init(mapbase, pagesz)
-	caddr_t mapbase;
-	int pagesz;
+_rtld_init(caddr_t mapbase, caddr_t relocbase)
 {
-	Obj_Entry objself;/* The dynamic linker shared object */
-	const Elf_Ehdr *hdr = (Elf_Ehdr *) mapbase;
-#ifdef RTLD_RELOCATE_SELF
-	int dodebug = false;
-#else
-	int dodebug = true;
-#endif
-	int i;
-
-	memset(&objself, 0, sizeof objself);
 
 	/* Conjure up an Obj_Entry structure for the dynamic linker. */
-	objself.path = NULL;
-	objself.rtld = true;
-	objself.mapbase = mapbase;
-	objself.phdr = (Elf_Phdr *) (mapbase + hdr->e_phoff);
-	for (i = 0; i < hdr->e_phnum; i++) {
-		if (objself.phdr[i].p_type == PT_LOAD) {
-#ifdef	VARPSZ
-			/* We can't touch _rtld_pagesz yet so we can't use round_*() */
-#define	_rnd_down(x)	((x) & ~((long)pagesz-1))
-#define	_rnd_up(x)	_rnd_down((x) + pagesz - 1)
-			objself.textsize = _rnd_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - _rnd_down(objself.phdr[i].p_vaddr);
-#undef	_rnd_down
-#undef	_rnd_up
-#else
-			objself.textsize = round_up(objself.phdr[i].p_vaddr + objself.phdr[i].p_memsz) - round_down(objself.phdr[i].p_vaddr);
-#endif
-			break;
-		}
-	}
-
-#if defined(__mips__)
-	/*
-	* mips and ld.so currently linked at load address,
-	* so no relocation needed
-	*/
-	objself.relocbase = 0;
-#else
-	objself.relocbase = mapbase;
-#endif
-
-	objself.pltgot = NULL;
-
-	objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
-
-#ifdef RTLD_RELOCATE_SELF
-	/* We have not been relocated yet, so fix the dynamic address */
-	objself.dynamic = (Elf_Dyn *)
-		((u_long) mapbase + (char *) objself.dynamic);
-#endif				/* RTLD_RELOCATE_SELF */
-
-	_rtld_digest_dynamic(&objself);
-
-#ifdef __alpha__
-	/* XXX XXX XXX */
-	objself.pltgot = NULL;
-#endif
-	assert(objself.needed == NULL);
-
-#if !defined(__arm__) && !defined(__mips__) && !defined(__i386__) && \
-    !defined(__sh__) && !defined(__vax__)
-	/* no relocation for mips/i386 */
-	assert(!objself.textrel);
-#endif
-
-	_rtld_relocate_objects(&objself, true, dodebug);
-
-	/*
-	 * Now that we relocated ourselves, we can use globals.
-	 */
-	_rtld_objself = objself;
-
 	_rtld_objself.path = _rtld_path;
-	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
+	_rtld_objself.pathlen = strlen(_rtld_path);
+	_rtld_objself.rtld = true;
+	_rtld_objself.mapbase = mapbase;
+	_rtld_objself.relocbase = relocbase;
+	_rtld_objself.dynamic = (Elf_Dyn *) &_DYNAMIC;
+
+	_rtld_digest_dynamic(&_rtld_objself);
+	assert(!_rtld_objself.needed);
+	assert(!_rtld_objself.pltrel && !_rtld_objself.pltrela);
+#if !defined(__mips__)
+	assert(!_rtld_objself.pltgot);
+#endif
+#if !defined(__arm__) && !defined(__mips__) && !defined(__sh__)
+	/* ARM, MIPS and SH{3,5} have a bogus DT_TEXTREL. */
+	assert(!_rtld_objself.textrel);
+#endif
+
+	_rtld_add_paths(&_rtld_default_paths, RTLD_DEFAULT_LIBRARY_PATH);
 
 	/*
 	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
@@ -246,8 +179,9 @@ _rtld_init(mapbase, pagesz)
  * before the process exits.
  */
 static void
-_rtld_exit()
+_rtld_exit(void)
 {
+
 	dbg(("rtld_exit()"));
 
 	_rtld_call_fini_functions(_rtld_objlist->next);
@@ -268,14 +202,12 @@ _rtld_exit()
  * sp[1].
  */
 Elf_Addr
-_rtld(sp)
-	Elf_Addr *sp;
+_rtld(Elf_Addr *sp, Elf_Addr relocbase)
 {
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
-	               *pAUX_phent, *pAUX_phnum;
-#ifdef	VARPSZ
+	               *pAUX_phent, *pAUX_phnum, *pAUX_euid, *pAUX_egid,
+		       *pAUX_ruid, *pAUX_rgid;
 	const AuxInfo  *pAUX_pagesz;
-#endif
 	char          **env;
 	const AuxInfo  *aux;
 	const AuxInfo  *auxp;
@@ -284,11 +216,10 @@ _rtld(sp)
 	const char     *ld_bind_now;
 	const char    **argv;
 	long		argc;
-	Obj_Entry	*obj;
 	const char **real___progname;
 	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
-#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
+#if defined(RTLD_DEBUG)
 	int             i = 0;
 #endif
 
@@ -300,66 +231,34 @@ _rtld(sp)
          */
 	/* Find the auxiliary vector on the stack. */
 	/* first Elf_Word reserved to address of exit routine */
-#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
-	dbg(("sp = %p, argc = %ld, argv = %p <%s>\n", sp, (long)sp[2],
-	     &sp[3], (char *) sp[3]));
-	dbg(("got is at %p, dynamic is at %p\n",
-	    _GLOBAL_OFFSET_TABLE_, &_DYNAMIC));
+#if defined(RTLD_DEBUG)
 	debug = 1;
-	dbg(("_ctype_ is %p\n", _ctype_));
+	dbg(("sp = %p, argc = %ld, argv = %p <%s> relocbase %p", sp,
+	    (long)sp[2], &sp[3], (char *) sp[3], (void *)relocbase));
+	dbg(("got is at %p, dynamic is at %p", _GLOBAL_OFFSET_TABLE_,
+	    &_DYNAMIC));
+	dbg(("_ctype_ is %p", _ctype_));
 #endif
 
 	sp += 2;		/* skip over return argument space */
 	argv = (const char **) &sp[1];
 	argc = *(long *)sp;
-#ifdef __sparc_v9__
-	/* XXX Temporary hack for argc format conversion. */
-	argc = (argc >> 32) | (argc & 0xffffffff);
-#endif
 	sp += 2 + argc;		/* Skip over argc, arguments, and NULL
 				 * terminator */
 	env = (char **) sp;
 	while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
-#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
-		dbg(("env[%d] = %p %s\n", i++, (void *)sp[-1], (char *)sp[-1]));
+#if defined(RTLD_DEBUG)
+		dbg(("env[%d] = %p %s", i++, (void *)sp[-1], (char *)sp[-1]));
 #endif
 	}
 	aux = (const AuxInfo *) sp;
 
 	pAUX_base = pAUX_entry = pAUX_execfd = NULL;
 	pAUX_phdr = pAUX_phent = pAUX_phnum = NULL;
-#ifdef	VARPSZ
+	pAUX_euid = pAUX_ruid = pAUX_egid = pAUX_rgid = NULL;
 	pAUX_pagesz = NULL;
-#endif
-	/*
-	 * First pass through the the auxiliary vector, avoiding the use
-	 * of a `switch() {}' statement at this stage. A `switch()' may
-	 * be translated into code utilizing a jump table approach which
-	 * references the equivalent of a global variable. This must be
-	 * avoided until _rtld_init() has done its job.
-	 * 
-	 * _rtld_init() only needs `pAUX_base' and possibly `pAUX_pagesz',
-	 * so we look for just those in this pass.
-	 */
-	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
-		if (auxp->a_type == AT_BASE)
-			pAUX_base = auxp;
-#ifdef	VARPSZ
-		if (auxp->a_type == AT_PAGESZ)
-			pAUX_pagesz = auxp;
-#endif
-	}
 
-	/* Initialize and relocate ourselves. */
-	assert(pAUX_base != NULL);
-#ifdef	VARPSZ
-	assert(pAUX_pagesz != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
-#else
-	_rtld_init((caddr_t) pAUX_base->a_v, 0);
-#endif
-
-	/* Digest the auxiliary vector (full pass now that we can afford it). */
+	/* Digest the auxiliary vector. */
 	for (auxp = aux; auxp->a_type != AT_NULL; ++auxp) {
 		switch (auxp->a_type) {
 		case AT_BASE:
@@ -380,26 +279,42 @@ _rtld(sp)
 		case AT_PHNUM:
 			pAUX_phnum = auxp;
 			break;
-#ifdef	VARPSZ
+#ifdef AT_EUID
+		case AT_EUID:
+			pAUX_euid = auxp;
+			break;
+		case AT_RUID:
+			pAUX_ruid = auxp;
+			break;
+		case AT_EGID:
+			pAUX_egid = auxp;
+			break;
+		case AT_RGID:
+			pAUX_rgid = auxp;
+			break;
+#endif
 		case AT_PAGESZ:
 			pAUX_pagesz = auxp;
 			break;
-#endif
 		}
 	}
 
-#ifdef	VARPSZ
+	/* Initialize and relocate ourselves. */
+	if (pAUX_base == NULL) {
+		_rtld_error("Bad pAUX_base");
+		_rtld_die();
+	}
+	assert(pAUX_pagesz != NULL);
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
-#endif
-
-#ifdef RTLD_DEBUG
-	dbg(("_ctype_ is %p\n", _ctype_));
-#endif
+	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase);
 
 	__progname = _rtld_objself.path;
 	environ = env;
 
-	_rtld_trust = geteuid() == getuid() && getegid() == getgid();
+	_rtld_trust = ((pAUX_euid ? (uid_t)pAUX_euid->a_v : geteuid()) ==
+	    (pAUX_ruid ? (uid_t)pAUX_ruid->a_v : getuid())) &&
+	    ((pAUX_egid ? (gid_t)pAUX_egid->a_v : getegid()) ==
+	    (pAUX_rgid ? (gid_t)pAUX_rgid->a_v : getgid()));
 
 	ld_bind_now = getenv("LD_BIND_NOW");
 	if (ld_bind_now != NULL && *ld_bind_now != '\0')
@@ -407,14 +322,17 @@ _rtld(sp)
 	if (_rtld_trust) {
 #ifdef DEBUG
 		const char     *ld_debug = getenv("LD_DEBUG");
+#ifdef RTLD_DEBUG
+		debug = 0;
+#endif
 		if (ld_debug != NULL && *ld_debug != '\0')
 			debug = 1;
 #endif
-		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
+		_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
 	}
-	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS, true);
-	dbg(("%s is initialized, base address = %p", __progname,
-	     (void *) pAUX_base->a_v));
+	_rtld_process_hints(&_rtld_paths, &_rtld_xforms, _PATH_LD_HINTS);
+	dbg(("dynamic linker is initialized, mapbase=%p, relocbase=%p",
+	     _rtld_objself.mapbase, _rtld_objself.relocbase));
 
 	/*
          * Load the main program, or process its program header if it is
@@ -423,7 +341,8 @@ _rtld(sp)
 	if (pAUX_execfd != NULL) {	/* Load the main program. */
 		int             fd = pAUX_execfd->a_v;
 		dbg(("loading main program"));
-		_rtld_objmain = _rtld_map_object(argv[0], fd, NULL);
+		_rtld_objmain = _rtld_map_object(xstrdup(argv[0] ? argv[0] :
+		    "main program"), fd, NULL);
 		close(fd);
 		if (_rtld_objmain == NULL)
 			_rtld_die();
@@ -442,12 +361,11 @@ _rtld(sp)
 		assert(pAUX_entry != NULL);
 		entry = (caddr_t) pAUX_entry->a_v;
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
+		_rtld_objmain->path = xstrdup(argv[0] ? argv[0] :
+		    "main program");
+		_rtld_objmain->pathlen = strlen(_rtld_objmain->path);
 	}
 
-	if (argv[0] != NULL)
-		_rtld_objmain->path = xstrdup(argv[0]);
-	else
-		_rtld_objmain->path = xstrdup("main program");
 	_rtld_objmain->mainprog = true;
 	
 	/*
@@ -457,20 +375,22 @@ _rtld(sp)
 	 * one is being used.
 	 */
 	if (_rtld_objmain->interp != NULL &&
-	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0) {
-		free(_rtld_objself.path);
+	    strcmp(_rtld_objmain->interp, _rtld_objself.path) != 0)
 		_rtld_objself.path = xstrdup(_rtld_objmain->interp);
-	}
+	dbg(("actual dynamic linker is %s", _rtld_objself.path));
 	
 	_rtld_digest_dynamic(_rtld_objmain);
-
-	_rtld_linkmap_add(_rtld_objmain);
-	_rtld_linkmap_add(&_rtld_objself);
 
 	/* Link the main program into the list of objects. */
 	*_rtld_objtail = _rtld_objmain;
 	_rtld_objtail = &_rtld_objmain->next;
+
+	_rtld_linkmap_add(_rtld_objmain);
+	_rtld_linkmap_add(&_rtld_objself);
+
 	++_rtld_objmain->refcount;
+	_rtld_objmain->mainref = 1;
+	_rtld_objlist_add(&_rtld_list_main, _rtld_objmain);
 
 	/* Initialize a fake symbol for resolving undefined weak references. */
 	_rtld_sym_zero.st_info = ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE);
@@ -481,22 +401,19 @@ _rtld(sp)
 	 * any shared object dependencies.
 	 */
 	dbg(("preloading objects"));
-	if (_rtld_trust && _rtld_preload(getenv("LD_PRELOAD"), true) == -1)
+	if (_rtld_trust && _rtld_preload(getenv("LD_PRELOAD")) == -1)
 		_rtld_die();
 
 	dbg(("loading needed objects"));
-	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_GLOBAL, true) == -1)
+	if (_rtld_load_needed_objects(_rtld_objmain, RTLD_MAIN) == -1)
 		_rtld_die();
 
-	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next)
-		_rtld_objlist_add(&_rtld_list_main, obj);
-
 	dbg(("relocating objects"));
-	if (_rtld_relocate_objects(_rtld_objmain, bind_now, true) == -1)
+	if (_rtld_relocate_objects(_rtld_objmain, bind_now) == -1)
 		_rtld_die();
 
 	dbg(("doing copy relocations"));
-	if (_rtld_do_copy_relocations(_rtld_objmain, true) == -1)
+	if (_rtld_do_copy_relocations(_rtld_objmain) == -1)
 		_rtld_die();
 
 	/*
@@ -505,14 +422,21 @@ _rtld(sp)
 	 */
 	real___progname = _rtld_objmain_sym("__progname");
 	if (real___progname) {
-		if ((*real___progname = strrchr(argv[0], '/')) == NULL)
-			(*real___progname) = argv[0];
-		else
-			(*real___progname)++;
+		if (argv[0] != NULL) {
+			if ((*real___progname = strrchr(argv[0], '/')) == NULL)
+				(*real___progname) = argv[0];
+			else
+				(*real___progname)++;
+		} else {
+			(*real___progname) = NULL;
+		}
 	}
 	real_environ = _rtld_objmain_sym("environ");
 	if (real_environ)
 		*real_environ = environ;
+	/*
+	 * Set __mainprog_obj for old binaries.
+	 */
 	real___mainprog_obj = _rtld_objmain_sym("__mainprog_obj");
 	if (real___mainprog_obj)
 		*real___mainprog_obj = _rtld_objmain;
@@ -536,18 +460,17 @@ _rtld(sp)
 }
 
 void
-_rtld_die()
+_rtld_die(void)
 {
-	const char *msg = _rtld_dlerror();
+	const char *msg = dlerror();
 
 	if (msg == NULL)
 		msg = "Fatal error";
-	xerrx(1, "%s\n", msg);
+	xerrx(1, "%s", msg);
 }
 
 static Obj_Entry *
-_rtld_dlcheck(handle)
-	void *handle;
+_rtld_dlcheck(void *handle)
 {
 	Obj_Entry *obj;
 
@@ -563,21 +486,25 @@ _rtld_dlcheck(handle)
 }
 
 static void
-_rtld_init_dag(root)
-	Obj_Entry *root;
+_rtld_init_dag(Obj_Entry *root)
 {
+
 	_rtld_init_dag1(root, root);
 }
 
 static void
-_rtld_init_dag1(root, obj)
-	Obj_Entry *root;
-	Obj_Entry *obj;
+_rtld_init_dag1(Obj_Entry *root, Obj_Entry *obj)
 {
 	const Needed_Entry *needed;
 
-	_rtld_objlist_add(&obj->dldags, root);
-	_rtld_objlist_add(&root->dagmembers, obj);
+	if (!obj->mainref) {
+		if (_rtld_objlist_find(&obj->dldags, root))
+			return;
+		rdbg(("add %p (%s) to %p (%s) DAG", obj, obj->path, root,
+		    root->path));
+		_rtld_objlist_add(&obj->dldags, root);
+		_rtld_objlist_add(&root->dagmembers, obj);
+	}
 	for (needed = obj->needed; needed != NULL; needed = needed->next)
 		if (needed->obj != NULL)
 			_rtld_init_dag1(root, needed->obj);
@@ -587,10 +514,9 @@ _rtld_init_dag1(root, obj)
  * Note, this is called only for objects loaded by dlopen().
  */
 static void
-_rtld_unload_object(root, do_fini_funcs)
-	Obj_Entry *root;
-	bool do_fini_funcs;
+_rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
 {
+
 	_rtld_unref_dag(root);
 	if (root->refcount == 0) { /* We are finished with some objects. */
 		Obj_Entry *obj;
@@ -608,7 +534,10 @@ _rtld_unload_object(root, do_fini_funcs)
 			_rtld_objlist_remove(&elm->obj->dldags, root);
 
 		/* Remove the DAG from the RTLD_GLOBAL list. */
-		_rtld_objlist_remove(&_rtld_list_global, root);
+		if (root->globalref) {
+			root->globalref = 0;
+			_rtld_objlist_remove(&_rtld_list_global, root);
+		}
 
 		/* Unmap all objects that are no longer referenced. */
 		linkp = &_rtld_objlist->next;
@@ -630,9 +559,9 @@ _rtld_unload_object(root, do_fini_funcs)
 }
 
 static void
-_rtld_unref_dag(root)
-	Obj_Entry *root;
+_rtld_unref_dag(Obj_Entry *root)
 {
+
 	assert(root);
 	assert(root->refcount != 0);
 	--root->refcount;
@@ -648,8 +577,7 @@ _rtld_unref_dag(root)
 }
 
 int
-_rtld_dlclose(handle)
-	void *handle;
+dlclose(void *handle)
 {
 	Obj_Entry *root = _rtld_dlcheck(handle);
 
@@ -669,17 +597,16 @@ _rtld_dlclose(handle)
 }
 
 char *
-_rtld_dlerror()
+dlerror(void)
 {
 	char *msg = error_message;
+
 	error_message = NULL;
 	return msg;
 }
 
 void *
-_rtld_dlopen(name, mode)
-	const char *name;
-	int mode;
+dlopen(const char *name, int mode)
 {
 	Obj_Entry **old_obj_tail = _rtld_objtail;
 	Obj_Entry *obj = NULL;
@@ -690,21 +617,18 @@ _rtld_dlopen(name, mode)
 	if (name == NULL) {
 		obj = _rtld_objmain;
 		obj->refcount++;
-	} else {
-		char *path = _rtld_find_library(name, _rtld_objmain);
-		if (path != NULL)
-			obj = _rtld_load_object(path, mode, true);
-	}
+	} else
+		obj = _rtld_load_library(name, _rtld_objmain, mode);
 
 	if (obj != NULL) {
 		++obj->dl_refcount;
 		if (*old_obj_tail != NULL) {	/* We loaded something new. */
 			assert(*old_obj_tail == obj);
 
-			if (_rtld_load_needed_objects(obj, mode, true) == -1 ||
+			if (_rtld_load_needed_objects(obj, mode) == -1 ||
 			    (_rtld_init_dag(obj),
 			    _rtld_relocate_objects(obj,
-			    ((mode & 3) == RTLD_NOW), true)) == -1) {
+			    ((mode & 3) == RTLD_NOW))) == -1) {
 				_rtld_unload_object(obj, false);
 				obj->dl_refcount--;
 				obj = NULL;
@@ -722,8 +646,7 @@ _rtld_dlopen(name, mode)
  * Find a symbol in the main program.
  */
 void *
-_rtld_objmain_sym(name)
-	const char *name;
+_rtld_objmain_sym(const char *name)
 {
 	unsigned long hash;
 	const Elf_Sym *def;
@@ -732,7 +655,7 @@ _rtld_objmain_sym(name)
 	hash = _rtld_elf_hash(name);
 	obj = _rtld_objmain;
 
-	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, true);
+	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, false);
 
 	if (def != NULL)
 		return obj->relocbase + def->st_value;
@@ -740,76 +663,103 @@ _rtld_objmain_sym(name)
 }
 
 void *
-_rtld_dlsym(handle, name)
-	void *handle;
-	const char *name;
+dlsym(void *handle, const char *name)
 {
 	const Obj_Entry *obj;
 	unsigned long hash;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
+	void *retaddr;
 	
 	hash = _rtld_elf_hash(name);
 	def = NULL;
 	defobj = NULL;
 	
-	if (handle == NULL
-#if 0
-	    || handle == RTLD_NEXT
-#endif
-	) {
-		void *retaddr;
-
+	switch ((intptr_t)handle) {
+	case (intptr_t)NULL:
+	case (intptr_t)RTLD_NEXT:
+	case (intptr_t)RTLD_DEFAULT:
+	case (intptr_t)RTLD_SELF:
 		retaddr = __builtin_return_address(0); /* __GNUC__ only */
 		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
 			_rtld_error("Cannot determine caller's shared object");
 			return NULL;
 		}
-		if (handle == NULL) { /* Just the caller's shared object. */
-			def = _rtld_symlook_obj(name, hash, obj, true);
+
+		switch ((intptr_t)handle) {
+		case (intptr_t)NULL:	 /* Just the caller's shared object. */
+			def = _rtld_symlook_obj(name, hash, obj, false);
 			defobj = obj;
-		} else { /* All the shared objects after the caller's */
-			while ((obj = obj->next) != NULL) {
-				if ((def = _rtld_symlook_obj(name, hash, obj, true)) != NULL) {
+			break;
+
+		case (intptr_t)RTLD_NEXT:	/* Objects after callers */
+			obj = obj->next;
+			/*FALLTHROUGH*/
+
+		case (intptr_t)RTLD_SELF:	/* Caller included */
+			for (; obj; obj = obj->next) {
+				if ((def = _rtld_symlook_obj(name, hash, obj,
+				    false)) != NULL) {
 					defobj = obj;
 					break;
 				}
 			}
+			break;
+
+		case (intptr_t)RTLD_DEFAULT:
+			def = _rtld_symlook_default(name, hash, obj, &defobj,
+			    false);
+			break;
+
+		default:
+			abort();
 		}
-	} else {
+		break;
+
+	default:
 		if ((obj = _rtld_dlcheck(handle)) == NULL)
 			return NULL;
 		
 		if (obj->mainprog) {
-			/* Search main program and all libraries loaded by it. */
-			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, true);
+			/* Search main program and all libraries loaded by it */
+			def = _rtld_symlook_list(name, hash, &_rtld_list_main,
+			    &defobj, false);
 		} else {
 			/*
-			 * XXX - This isn't correct.  The search should include the whole
-			 * DAG rooted at the given object.
+			 * XXX - This isn't correct.  The search should include
+			 * the whole DAG rooted at the given object.
 			 */
-			def = _rtld_symlook_obj(name, hash, obj, true);
+			def = _rtld_symlook_obj(name, hash, obj, false);
 			defobj = obj;
 		}
+		break;
 	}
 	
-	if (def != NULL)
+	if (def != NULL) {
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+		if (ELF_ST_TYPE(def->st_info) == STT_FUNC)
+			return (void *)_rtld_function_descriptor_alloc(defobj, 
+			    def, 0);
+#endif /* __HAVE_FUNCTION_DESCRIPTORS */
 		return defobj->relocbase + def->st_value;
+	}
 	
 	_rtld_error("Undefined symbol \"%s\"", name);
 	return NULL;
 }
 
 int
-_rtld_dladdr(addr, info)
-	const void *addr;
-	Dl_info *info;
+dladdr(const void *addr, Dl_info *info)
 {
 	const Obj_Entry *obj;
-	const Elf_Sym *def;
+	const Elf_Sym *def, *best_def;
 	void *symbol_addr;
 	unsigned long symoffset;
 	
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+	addr = _rtld_function_descriptor_function(addr);
+#endif /* __HAVE_FUNCTION_DESCRIPTORS */
+
 	obj = _rtld_obj_from_addr(addr);
 	if (obj == NULL) {
 		_rtld_error("No shared object contains address");
@@ -824,6 +774,7 @@ _rtld_dladdr(addr, info)
 	 * Walk the symbol list looking for the symbol whose address is
 	 * closest to the address sent in.
 	 */
+	best_def = NULL;
 	for (symoffset = 0; symoffset < obj->nchains; symoffset++) {
 		def = obj->symtab + symoffset;
 
@@ -846,11 +797,19 @@ _rtld_dladdr(addr, info)
 		/* Update our idea of the nearest symbol. */
 		info->dli_sname = obj->strtab + def->st_name;
 		info->dli_saddr = symbol_addr;
+		best_def = def;
 
 		/* Exact match? */
 		if (info->dli_saddr == addr)
 			break;
 	}
+
+#ifdef __HAVE_FUNCTION_DESCRIPTORS
+	if (best_def != NULL && ELF_ST_TYPE(best_def->st_info) == STT_FUNC)
+		info->dli_saddr = (void *)_rtld_function_descriptor_alloc(obj, 
+		    best_def, 0);
+#endif /* __HAVE_FUNCTION_DESCRIPTORS */
+
 	return 1;
 }
 
@@ -860,51 +819,36 @@ _rtld_dladdr(addr, info)
  * will return the message.
  */
 void
-#ifdef __STDC__
 _rtld_error(const char *fmt,...)
-#else
-_rtld_error(va_alist)
-	va_dcl
-#endif
 {
 	static char     buf[512];
 	va_list         ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	xvsnprintf(buf, sizeof buf, fmt, ap);
 	error_message = buf;
 	va_end(ap);
 }
 
 void
-_rtld_debug_state()
+_rtld_debug_state(void)
 {
+
 	/* do nothing */
 }
 
 void
-_rtld_linkmap_add(obj)
-	Obj_Entry *obj;
+_rtld_linkmap_add(Obj_Entry *obj)
 {
 	struct link_map *l = &obj->linkmap;
 	struct link_map *prev;
 
 	obj->linkmap.l_name = obj->path;
-	obj->linkmap.l_addr = obj->mapbase;
+	obj->linkmap.l_addr = obj->relocbase;
 	obj->linkmap.l_ld = obj->dynamic;
 #ifdef __mips__
-	/* GDB needs load offset on MIPS to use the symbols */
+	/* XXX This field is not standard and will be removed eventually. */
 	obj->linkmap.l_offs = obj->relocbase;
-#endif
-#ifdef __vax__
-	/* VAX shared libaries don't start at a vaddr of 0 */
-	obj->linkmap.l_addr -= obj->vaddrbase;
 #endif
 
 	if (_rtld_debug.r_map == NULL) {
@@ -918,8 +862,7 @@ _rtld_linkmap_add(obj)
 }
 
 void
-_rtld_linkmap_delete(obj)
-	Obj_Entry *obj;
+_rtld_linkmap_delete(Obj_Entry *obj)
 {
 	struct link_map *l = &obj->linkmap;
 
@@ -935,27 +878,19 @@ _rtld_linkmap_delete(obj)
 static Obj_Entry *
 _rtld_obj_from_addr(const void *addr)
 {
-	unsigned long endhash;
 	Obj_Entry *obj;
 	
-	endhash = _rtld_elf_hash(END_SYM);
 	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
-		const Elf_Sym *endsym;
-
 		if (addr < (void *) obj->mapbase)
 			continue;
-		if ((endsym = _rtld_symlook_obj(END_SYM, endhash, obj, true)) == NULL)
-			continue; /* No "end" symbol?! */
-		if (addr < (void *) (obj->relocbase + endsym->st_value))
+		if (addr < (void *) (obj->mapbase + obj->mapsize))
 			return obj;
 	}
 	return NULL;
 }
 
 static void
-_rtld_objlist_remove(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
+_rtld_objlist_remove(Objlist *list, Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
 	

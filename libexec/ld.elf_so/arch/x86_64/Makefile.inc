@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.3 2001/12/20 19:20:04 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3.2.1 2004/05/28 08:31:23 tron Exp $
 
-SRCS+=	rtld_start.S mdreloc.c
+SRCS+=		rtld_start.S mdreloc.c
 
 # XXX Should not be in CPPFLAGS!
-CPPFLAGS+= -fpic
+CPPFLAGS+=	-fPIC
 
-CPPFLAGS+= -DELFSIZE=64 -DRTLD_RELOCATE_SELF
+CPPFLAGS+=	-DELFSIZE=64
 
-LDFLAGS+= -Bshareable -Bsymbolic -e .rtld_start
+LDFLAGS+=	-Bshareable -Bsymbolic -e .rtld_start

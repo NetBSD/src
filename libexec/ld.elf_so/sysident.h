@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.9 2001/06/19 12:07:21 fvdl Exp $ */
+/* $NetBSD: sysident.h,v 1.9.2.1 2004/05/28 08:31:22 tron Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -47,7 +47,7 @@
  *	string		OS name
  *
  * OSVERSION notes also have:
- *	long		OS version (NetBSD constant from param.h)
+ *	long		OS version (__NetBSD_Version__ constant from param.h)
  *
  * The DATUM fields should be padded out such that their actual (not
  * declared) sizes % 4 == 0.
@@ -63,14 +63,14 @@
 
 #define	__S(x)	__STRING(x)
 __asm(
-	".section \".note.netbsd.ident\", \"a\"\n"
-	"\t.p2align 2\n\n"
+	".section\t\".note.netbsd.ident\", \"a\"\n"
+	"\t.p2align\t2\n\n"
 
-	"\t.long   7\n"
-	"\t.long   4\n"
-	"\t.long   " __S(ELF_NOTE_TYPE_NETBSD_TAG) "\n"
-	"\t.ascii \"NetBSD\\0\\0\"\n"
-	"\t.long   " __S(NetBSD) "\n\n"
+	"\t.long\t" __S(ELF_NOTE_NETBSD_NAMESZ) "\n"
+	"\t.long\t" __S(ELF_NOTE_NETBSD_DESCSZ) "\n"
+	"\t.long\t" __S(ELF_NOTE_TYPE_NETBSD_TAG) "\n"
+	"\t.ascii\t" __S(ELF_NOTE_NETBSD_NAME) "\n"
+	"\t.long\t" __S(__NetBSD_Version__) "\n\n"
 
-	"\t.p2align 2\n"
+	"\t.p2align\t2\n"
 );

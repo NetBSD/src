@@ -1,7 +1,8 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2001/09/26 04:06:43 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4.2.1 2004/05/28 08:31:22 tron Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
+ * Portions copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,103 +36,90 @@
 	.text
 
 _rtld_start:
-	stwu	1,-48(1)
-	stw	3,12(1)			# argc
-	stw	4,16(1)			# argv
-	stw	5,20(1)			# envp
-/*	stw	6,24(1)			# obj		(always 0) */
-/*	stw	7,28(1)			# cleanup	(always 0) */
-	stw	8,32(1)			# ps_strings
+	stwu	%r1,-48(%r1)
+	stw	%r3,12(%r1)		# argc
+	stw	%r4,16(%r1)		# argv
+	stw	%r5,20(%r1)		# envp
+/*	stw	%r6,24(%r1)		# obj		(always 0) */
+/*	stw	%r7,28(%r1)		# cleanup	(always 0) */
+	stw	%r8,32(%r1)		# ps_strings
 
-	bl	1f
-	.long	_GLOBAL_OFFSET_TABLE_-.-4
-1:
-	mflr	3
-	lwz	4,0(3)
-	add	3,3,4			# r3 = _GLOBAL_OFFSET_TABLE_ - 4
+	bl	_GLOBAL_OFFSET_TABLE_-4@local
+	mflr	%r31			# r31 = (real) GOT
+	lwz	%r28,0(%r31)		# base-relative &_DYNAMIC
 
-	dcbst	0,3			# sync i-cache with d-cache
-	sync
-	icbi	0,3
-	isync
+	bl	0f			# lr = next instruction
+	b	_DYNAMIC@local
+0:	mflr	%r30
+	lwz	%r29,0(%r30)		# load instruction contents
+	rlwinm	%r29,%r29,0,6,29	# extract PC offset
+	add	%r3,%r29,%r30		# r3 = &_DYNAMIC
+	sub	%r28,%r3,%r28
+	mr	%r4,%r28		# r4 = relocbase
+	bl	_rtld_relocate_nonplt_self@plt
 
-	addi	11,3,4			# r11 = (real) GOT
-	lwz	10,_GLOBAL_OFFSET_TABLE_@got(11)
-					# the linker thought GOT were ...
-	subf	9,10,11			# r9 = displacement
+	lwz	%r3,16(%r1)
+	addi	%r3,%r3,-12		# sp = &argv[-3]	/* XXX */
+	mr	%r4,%r28		# r4 = relocbase
+	bl	_rtld@plt		# _start = _rtld(sp, relocbase)
+	mtlr	%r3
 
-	lwz	8,_GOT_END_@got(11)
-	add	8,8,9			# add the displacement
+	lwz	%r3,12(%r1)		# argc
+	lwz	%r4,16(%r1)		# argv
+	lwz	%r5,20(%r1)		# envp
+	lwz	%r6,-8(%r4)		# obj = sp[1] (== argv[-2])
+	lwz	%r7,-12(%r4)		# cleanup = sp[0] (== argv[-3])
+	lwz	%r8,32(%r1)		# ps_strings
 
-1:	lwz	3,0(11)
-	add	3,3,9			# add the displacement
-	stw	3,0(11)
-	addi	11,11,4			# r11++
-	cmpl	0,11,8			# done?
-	blt	1b
-
-	lwz	4,16(1)
-	addi	3,4,-12			# sp = &argv[-3]	/* XXX */
-
-	bl	_rtld@plt		# _start = _rtld(sp)
-	mtlr	3
-
-	lwz	3,12(1)			# argc
-	lwz	4,16(1)			# argv
-	lwz	5,20(1)			# envp
-	lwz	6,-8(4)			# obj = sp[1] (== argv[-2])
-	lwz	7,-12(4)		# cleanup = sp[0] (== argv[-3])
-	lwz	8,32(1)			# ps_strings
-
-	addi	1,1,48
+	addi	%r1,%r1,48
 	blrl		# _start(argc, argv, envp, obj, cleanup, ps_strings)
 
-	li	0,1			# _exit()
+	li	%r0,1			# _exit()
 	sc
 
 
 	.globl	_rtld_bind_start
-	.globl	_rtld_bind_powerpc
+	.globl	_rtld_bind
 
 _rtld_bind_start:
-	stwu	1,-160(1)
+	stwu	%r1,-160(%r1)
 
-	stw	0,20(1)
-	mflr	0
-	stw	0,16(1)			# save lr
-	mfcr	0
-	stw	0,12(1)			# save cr
-	stmw	3,24(1)			# save r3-r31
+	stw	%r0,20(%r1)
+	mflr	%r0
+	stw	%r0,16(%r1)		# save lr
+	mfcr	%r0
+	stw	%r0,12(%r1)		# save cr
+	stmw	%r3,24(%r1)		# save r3-r31
 
-	mr	3,12			# obj
-	mr	4,11			# reloff
-	bl	_rtld_bind_powerpc@plt	# _rtld_bind(obj, reloff)
-	mtctr	3
+	mr	%r3,%r12		# obj
+	mr	%r4,%r11		# reloff
+	bl	_rtld_bind@plt		# _rtld_bind(obj, reloff)
+	mtctr	%r3
 
-	lmw	3,24(1)			# load r3-r31
-	lwz	0,12(1)			# restore cr
-	mtcr	0
-	lwz	0,16(1)			# restore lr
-	mtlr	0
-	lwz	0,20(1)
+	lmw	%r3,24(%r1)		# load r3-r31
+	lwz	%r0,12(%r1)		# restore cr
+	mtcr	%r0
+	lwz	%r0,16(%r1)		# restore lr
+	mtlr	%r0
+	lwz	%r0,20(%r1)
 
-	addi	1,1,160
+	addi	%r1,%r1,160
 	bctr
 
 	.globl	_rtld_powerpc_pltcall
 	.globl	_rtld_powerpc_pltresolve
 
 _rtld_powerpc_pltcall:
-	slwi	11,11,2
-	addis	11,11,0			# addis	11,11,jmptab@ha
-	lwz	11,0(11)		# lwz	11,jmptab@l(11)
-	mtctr	11
+	slwi	%r11,%r11,2
+	addis	%r11,%r11,0		# addis	11,11,jmptab@ha
+	lwz	%r11,0(%r11)		# lwz	11,jmptab@l(11)
+	mtctr	%r11
 	bctr
 
 _rtld_powerpc_pltresolve:
-	lis	12,0			# lis	12,_rtld_bind_start@ha
-	addi	12,12,0			# addi	12,12,_rtld_bind_start@l
-	mtctr	12
-	lis	12,0			# lis	12,obj@ha
-	addi	12,12,0			# addi	12,12,obj@l
+	lis	%r12,0			# lis	12,_rtld_bind_start@ha
+	addi	%r12,%r12,0		# addi	12,12,_rtld_bind_start@l
+	mtctr	%r12
+	lis	%r12,0			# lis	12,obj@ha
+	addi	%r12,%r12,0		# addi	12,12,obj@l
 	bctr

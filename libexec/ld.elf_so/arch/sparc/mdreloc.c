@@ -1,11 +1,11 @@
-/*	$NetBSD: mdreloc.c,v 1.10 2001/04/25 12:24:51 kleink Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.10.2.1 2004/05/28 08:31:22 tron Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,7 +68,7 @@
 #define _RF_B		0x08000000		/* Load address relative */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	( (s) & 0xff)		/* right shift */
-static int reloc_target_flags[] = {
+static const int reloc_target_flags[] = {
 	0,							/* NONE */
 	_RF_S|_RF_A|		_RF_SZ(8)  | _RF_RS(0),		/* RELOC_8 */
 	_RF_S|_RF_A|		_RF_SZ(16) | _RF_RS(0),		/* RELOC_16 */
@@ -135,7 +135,7 @@ static const char *reloc_names[] = {
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
 
-static int reloc_target_bitmask[] = {
+static const int reloc_target_bitmask[] = {
 #define _BM(x)	(~(-(1ULL << (x))))
 	0,				/* NONE */
 	_BM(8), _BM(16), _BM(32),	/* RELOC_8, _16, _32 */
@@ -160,138 +160,188 @@ static int reloc_target_bitmask[] = {
 };
 #define RELOC_VALUE_BITMASK(t)	(reloc_target_bitmask[t])
 
-int
-_rtld_relocate_nonplt_object(obj, rela, dodebug)
-	Obj_Entry *obj;
-	const Elf_Rela *rela;
-	bool dodebug;
+void _rtld_bind_start(void);
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
+caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+
+void
+_rtld_setup_pltgot(const Obj_Entry *obj)
 {
-	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
-	Elf_Word type, value, mask;
-	const Elf_Sym *def = NULL;
-	const Obj_Entry *defobj = NULL;
-
-	type = ELF_R_TYPE(rela->r_info);
-	if (type == R_TYPE(NONE))
-		return (0);
-
-	/* We do JMP_SLOTs in relocate_plt_object() below */
-	if (type == R_TYPE(JMP_SLOT))
-		return (0);
-
-	/* COPY relocs are also handled elsewhere */
-	if (type == R_TYPE(COPY))
-		return (0);
-
 	/*
-	 * We use the fact that relocation types are an `enum'
-	 * Note: R_SPARC_6 is currently numerically largest.
+	 * PLTGOT is the PLT on the sparc.
+	 * The first entry holds the call the dynamic linker.
+	 * We construct a `call' sequence that transfers
+	 * to `_rtld_bind_start()'.
+	 * The second entry holds the object identification.
+	 * Note: each PLT entry is three words long.
 	 */
-	if (type > R_TYPE(6))
-		return (-1);
+#define SAVE	0x9de3bfa0	/* i.e. `save %sp,-96,%sp' */
+#define CALL	0x40000000
+#define NOP	0x01000000
+	obj->pltgot[0] = SAVE;
+	obj->pltgot[1] = CALL |
+	    ((Elf_Addr) &_rtld_bind_start - (Elf_Addr) &obj->pltgot[1]) >> 2;
+	obj->pltgot[2] = NOP;
+	obj->pltgot[3] = (Elf_Addr) obj;
+}
 
-	value = rela->r_addend;
+void
+_rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
+{
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
 
-	/*
-	 * Handle relative relocs here, because we might not
-	 * be able to access globals yet.
-	 */
-	if (!dodebug && type == R_TYPE(RELATIVE)) {
-		*where += (Elf_Addr)(obj->relocbase + value);
-		return (0);
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
 	}
+	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		*where += (Elf_Addr)(relocbase + rela->r_addend);
+	}
+}
 
-	if (RELOC_RESOLVE_SYMBOL(type)) {
+int
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
+{
+	const Elf_Rela *rela;
 
-		/* Find the symbol */
-		def = _rtld_find_symdef(_rtld_objlist, rela->r_info,
-					NULL, obj, &defobj, false);
-		if (def == NULL)
+	for (rela = obj->rela; rela < obj->relalim; rela++) {
+		Elf_Addr *where;
+		Elf_Word type, value, mask;
+		const Elf_Sym *def = NULL;
+		const Obj_Entry *defobj = NULL;
+		unsigned long	 symnum;
+
+		where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
+		symnum = ELF_R_SYM(rela->r_info);
+
+		type = ELF_R_TYPE(rela->r_info);
+		if (type == R_TYPE(NONE))
+			continue;
+
+		/* We do JMP_SLOTs in _rtld_bind() below */
+		if (type == R_TYPE(JMP_SLOT))
+			continue;
+
+		/* COPY relocs are also handled elsewhere */
+		if (type == R_TYPE(COPY))
+			continue;
+
+		/*
+		 * We use the fact that relocation types are an `enum'
+		 * Note: R_SPARC_6 is currently numerically largest.
+		 */
+		if (type > R_TYPE(6))
 			return (-1);
 
-		/* Add in the symbol's absolute address */
-		value += (Elf_Word)(defobj->relocbase + def->st_value);
-	}
+		value = rela->r_addend;
 
-	if (RELOC_PC_RELATIVE(type)) {
-		value -= (Elf_Word)where;
-	}
-
-	if (RELOC_BASE_RELATIVE(type)) {
 		/*
-		 * Note that even though sparcs use `Elf_rela' exclusively
-		 * we still need the implicit memory addend in relocations
-		 * referring to GOT entries. Undoubtedly, someone f*cked
-		 * this up in the distant past, and now we're stuck with
-		 * it in the name of compatibility for all eternity..
-		 *
-		 * In any case, the implicit and explicit should be mutually
-		 * exclusive. We provide a check for that here.
+		 * Handle relative relocs here, as an optimization.
 		 */
+		if (type == R_TYPE(RELATIVE)) {
+			*where += (Elf_Addr)(obj->relocbase + value);
+			rdbg(("RELATIVE in %s --> %p", obj->path,
+			    (void *)*where));
+			continue;
+		}
+
+		if (RELOC_RESOLVE_SYMBOL(type)) {
+
+			/* Find the symbol */
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return (-1);
+
+			/* Add in the symbol's absolute address */
+			value += (Elf_Word)(defobj->relocbase + def->st_value);
+		}
+
+		if (RELOC_PC_RELATIVE(type)) {
+			value -= (Elf_Word)where;
+		}
+
+		if (RELOC_BASE_RELATIVE(type)) {
+			/*
+			 * Note that even though sparcs use `Elf_rela'
+			 * exclusively we still need the implicit memory addend
+			 * in relocations referring to GOT entries.
+			 * Undoubtedly, someone f*cked this up in the distant
+			 * past, and now we're stuck with it in the name of
+			 * compatibility for all eternity..
+			 *
+			 * In any case, the implicit and explicit should be
+			 * mutually exclusive. We provide a check for that
+			 * here.
+			 */
 #define DIAGNOSTIC
 #ifdef DIAGNOSTIC
-		if (value != 0 && *where != 0) {
-			xprintf("BASE_REL(%s): where=%p, *where 0x%x, "
-				"addend=0x%x, base %p\n",
-				obj->path, where, *where,
-				rela->r_addend, obj->relocbase);
+			if (value != 0 && *where != 0) {
+				xprintf("BASE_REL(%s): where=%p, *where 0x%x, "
+					"addend=0x%x, base %p\n",
+					obj->path, where, *where,
+					rela->r_addend, obj->relocbase);
+			}
+#endif
+			value += (Elf_Word)(obj->relocbase + *where);
+		}
+
+		mask = RELOC_VALUE_BITMASK(type);
+		value >>= RELOC_VALUE_RIGHTSHIFT(type);
+		value &= mask;
+
+		/* We ignore alignment restrictions here */
+		*where &= ~mask;
+		*where |= value;
+#ifdef RTLD_DEBUG_RELOC
+		if (RELOC_RESOLVE_SYMBOL(type)) {
+			rdbg(("%s %s in %s --> %p in %s", reloc_names[type],
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
+		} else {
+			rdbg(("%s in %s --> %p", reloc_names[type],
+			    obj->path, (void *)*where));
 		}
 #endif
-		value += (Elf_Word)(obj->relocbase + *where);
 	}
-
-	mask = RELOC_VALUE_BITMASK(type);
-	value >>= RELOC_VALUE_RIGHTSHIFT(type);
-	value &= mask;
-
-	/* We ignore alignment restrictions here */
-	*where &= ~mask;
-	*where |= value;
-#ifdef RTLD_DEBUG_RELOC
-	if (RELOC_RESOLVE_SYMBOL(type)) {
-		rdbg(dodebug, ("%s %s in %s --> %p %s", 
-		    reloc_names[type],
-		    defobj->strtab + def->st_name, obj->path,
-		    (void *)*where, defobj->path));
-	}
-	else {
-		rdbg(dodebug, ("%s --> %p", reloc_names[type],
-		    (void *)*where));
-	}
-#endif
 	return (0);
 }
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
-	Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
-	bool bind_now;
-	bool dodebug;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
+	return (0);
+}
+
+caddr_t
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+{
+	const Elf_Rela *rela = (const Elf_Rela *)((caddr_t)obj->pltrela + reloff);
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
-	Elf_Addr *where = (Elf_Addr *) (obj->relocbase + rela->r_offset);
+	Elf_Word *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr value;
-
-	if (bind_now == 0 && obj->pltgot != NULL)
-		return (0);
 
 	/* Fully resolve procedure addresses now */
 
 	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
 
-	def = _rtld_find_symdef(_rtld_objlist, rela->r_info,
-				NULL, obj, &defobj, true);
+	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
-		return (-1);
+		_rtld_die();
 
-	value = (Elf_Addr) (defobj->relocbase + def->st_value);
-
-	rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p", 
-	    (int)bind_now, defobj->strtab + def->st_name,
-	    (void *)*where, (void *)value));
+	value = (Elf_Addr)(defobj->relocbase + def->st_value);
+	rdbg(("bind now/fixup in %s --> new=%p", 
+	    defobj->strtab + def->st_name, (void *)value));
 
 	/*
 	 * At the PLT entry pointed at by `where', we now construct
@@ -315,8 +365,5 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	__asm __volatile("iflush %0+8" : : "r" (where));
 	__asm __volatile("iflush %0+4" : : "r" (where));
 
-	if (addrp != NULL)
-		*addrp = (caddr_t)value;
-
-	return (0);
+	return (caddr_t)value;
 }
