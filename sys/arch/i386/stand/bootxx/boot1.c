@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.2 2003/07/25 21:16:02 dsl Exp $	*/
+/*	$NetBSD: boot1.c,v 1.3 2003/08/12 10:03:03 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.2 2003/07/25 21:16:02 dsl Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.3 2003/08/12 10:03:03 dsl Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: boot1.c,v 1.2 2003/07/25 21:16:02 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/bootblock.h>
+#include <dev/raidframe/raidframevar.h>	/* For RF_PROTECTED_SECTORS */
 
 #define XSTR(x) #x
 #define STR(x) XSTR(x)
@@ -73,6 +74,16 @@ boot1(uint32_t biosdev, uint32_t sector)
 		return "set_geometry\r\n";
 
 	fd = open("boot", 0);
+	if (fd == -1) {
+		/*
+		 * Maybe the filesystem is enclosed in a raid set.
+		 * add in size of raidframe header and try again.
+		 * (Maybe this should only be done if the filesystem
+		 * magic number os absent.)
+		 */
+		 bios_sector += RF_PROTECTED_SECTORS;
+		 fd = open("boot", 0);
+	}
 	if (fd == -1 || fstat(fd, &sb) == -1)
 		return "Can't open /boot.\r\n";
 
