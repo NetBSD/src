@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.3 1999/12/09 15:08:33 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.4 1999/12/16 05:55:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ int main __P((int argc, char *argv[]));
 /* static variables and functions */
 static int mobile_node = 0;
 static int do_dump;
-static char *dumpfilename = "/var/tmp/rtsold.dump"; /* XXX: should be configurable */
+static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
 static char *pidfilename = "/var/run/rtsold.pid"; /* should be configurable */
 
 static int ifconfig __P((char *ifname));
@@ -161,8 +161,10 @@ main(argc, argv)
 			setlogmask(LOG_UPTO(log_upto));
 	}
 
+#ifndef HAVE_ARC4RANDOM
 	/* random value initilization */
 	srandom((u_long)time(NULL));
+#endif
 
 	/* warn if accept_rtadv is down */
 	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
@@ -506,7 +508,11 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 			ifinfo->timer = tm_max;	/* stop timer(valid?) */
 		break;
 	case IFS_DELAY:
+#ifndef HAVE_ARC4RANDOM
 		interval = random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
+#else
+		interval = arc4random() % (MAX_RTR_SOLICITATION_DELAY * MILLION);
+#endif
 		ifinfo->timer.tv_sec = interval / MILLION;
 		ifinfo->timer.tv_usec = interval % MILLION;
 		break;
