@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.93 2003/05/24 06:21:21 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.94 2003/08/01 01:18:47 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.93 $"
+#ident 		"GENERIC-$Revision: 1.94 $"
 
 maxusers	32		# estimated number of users
 
@@ -218,11 +218,15 @@ ct*		at hpibbus? slave ? punit ?	# HP-IB cartridge tapes
 mt*		at hpibbus? slave ? punit ?	# HP-IB 9-track tape
 ppi0		at hpibbus0 slave 5 punit 0	# HP-IB plotter
 
-oscsi*		at dio? scode ?		# Old HP SCSI
+spc*		at dio? scode ?			# HP 98265A SCSI
+scsibus*	at spc?
 
-sd*		at oscsi? target ? lun ?	# SCSI disks
-st*		at oscsi? target ? lun ?	# SCSI tapes
-ac*		at oscsi? target ? lun ?	# SCSI changers
+sd*		at scsibus? target ? lun ?	# SCSI disks
+st*		at scsibus? target ? lun ?	# SCSI tapes
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+ch*		at scsibus? target ? lun ?	# SCSI changer devices
+ss*		at scsibus? target ? lun ?	# SCSI scanners
+uk*		at scsibus? target ? lun ?	# unknown SCSI devices
 
 #
 # Pseudo-devices

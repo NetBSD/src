@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.67 2003/07/27 01:19:25 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.68 2003/08/01 01:18:47 tsutsui Exp $
 #
 # hp300-specific configuration info
 
@@ -169,24 +169,13 @@ device	ppi
 attach	ppi at hpibbus
 file	arch/hp300/dev/ppi.c		ppi needs-flag
 
-# Old HP SCSI layer
-device	oscsi { target = -1, lun = -1 }
-attach	oscsi at dio
-file	arch/hp300/dev/scsi.c		oscsi
+# MI SCSI
+include "dev/scsipi/files.scsipi"
 
-# Old HP SCSI devices
-device	sd: disk
-attach	sd at oscsi
-file	arch/hp300/dev/sd.c		sd needs-flag
-file	arch/hp300/dev/sd_compat.c	sd		# XXX
-
-device	st: tape
-attach	st at oscsi
-file	arch/hp300/dev/st.c		st needs-flag
-
-device	ac
-attach	ac at oscsi
-file	arch/hp300/dev/ac.c		ac needs-flag
+device	spc: scsi
+attach	spc at dio
+file	arch/hp300/dev/spc.c		spc needs-flag
+file	dev/ic/mb89352.c		spc
 
 # Memory Disk for ramdisk
 file	dev/md_root.c			memory_disk_hooks

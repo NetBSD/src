@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 2003/08/01 00:23:18 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.65 2003/08/01 01:18:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2003/08/01 00:23:18 tsutsui Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2003/08/01 01:18:48 tsutsui Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -131,6 +131,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2003/08/01 00:23:18 tsutsui Exp $"
 
 #include <dev/cons.h>
 
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
@@ -149,7 +153,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2003/08/01 00:23:18 tsutsui Exp $"
 #include <hp300/dev/hilvar.h>
 
 #include <hp300/dev/hpibvar.h>
-#include <hp300/dev/scsivar.h>
 
 
 /* should go away with a cleanup */
@@ -434,7 +437,7 @@ device_register(dev, aux)
 
 	if (memcmp(dev->dv_xname, "fhpib", 5) == 0 ||
 	    memcmp(dev->dv_xname, "nhpib", 5) == 0 ||
-	    memcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	    memcmp(dev->dv_xname, "spc", 3) == 0) {
 		struct dio_attach_args *da = aux;
 
 		dd->dd_scode = da->da_scode;
@@ -450,10 +453,10 @@ device_register(dev, aux)
 	}
 
 	if (memcmp(dev->dv_xname, "sd", 2) == 0) {
-		struct oscsi_attach_args *osa = aux;
+		struct scsipibus_attach_args *sa = aux;
 
-		dd->dd_slave = osa->osa_target;
-		dd->dd_punit = osa->osa_lun;
+		dd->dd_slave = sa->sa_periph->periph_target;
+		dd->dd_punit = sa->sa_periph->periph_lun;
 		goto linkup;
 	}
 
@@ -472,7 +475,7 @@ device_register(dev, aux)
 		return;
 	}
 
-	if (memcmp(dev->dv_xname, "oscsi", 5) == 0) {
+	if (memcmp(dev->dv_xname, "spc", 3) == 0) {
 		dev_data_insert(dd, &dev_data_list_scsi);
 		return;
 	}
@@ -602,23 +605,11 @@ findbootdev_slave(ddlist, ctlr, slave, punit)
 	for (dd = dev_data_list.lh_first; dd != NULL;
 	    dd = dd->dd_list.le_next) {
 		/*
-		 * XXX We don't yet have the extra bus indirection
-		 * XXX for SCSI, so we have to do a little bit of
-		 * XXX extra work.
+		 * "sd" -> "scsibus" -> "spc"
+		 * "rd" -> "hpibbus" -> "fhpib"
 		 */
-		if (memcmp(dd->dd_dev->dv_xname, "sd", 2) == 0) {
-			/*
-			 * "sd" -> "oscsi"
-			 */
-			if (dd->dd_dev->dv_parent != cdd->dd_dev)
-				continue;
-		} else {
-			/*
-			 * "rd" -> "hpibbus" -> "fhpib"
-			 */
-			if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
-				continue;
-		}
+		if (dd->dd_dev->dv_parent->dv_parent != cdd->dd_dev)
+			continue;
 
 		if (dd->dd_slave == slave &&
 		    dd->dd_punit == punit) {
@@ -685,31 +676,15 @@ setbootdev()
 	 * Get parent's info.
 	 */
 	switch (type) {
-	case 2:
+	case 2: /* rd */
+	case 4: /* sd */
 		/*
 		 * "rd" -> "hpibbus" -> "fhpib"
+		 * "sd" -> "scsibus" -> "spc"
 		 */
 		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
 		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
 			if (cdd->dd_dev == root_device->dv_parent->dv_parent) {
-				/*
-				 * Found it!
-				 */
-				bootdev = MAKEBOOTDEV(type,
-				    ctlr, dd->dd_slave, dd->dd_punit,
-				    DISKPART(rootdev));
-				break;
-			}
-		}
-		break;
-
-	case 4:
-		/*
-		 * "sd" -> "oscsi"
-		 */
-		for (cdd = dev_data_list_scsi.lh_first, ctlr = 0;
-		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) { 
-			if (cdd->dd_dev == root_device->dv_parent) {
 				/*
 				 * Found it!
 				 */
