@@ -1,4 +1,4 @@
-/*	$NetBSD: inffast.c,v 1.1 1997/01/16 00:21:47 cgd Exp $	*/
+/*	$NetBSD: inffast.c,v 1.2 1997/05/20 14:41:59 gwr Exp $	*/
 
 /* inffast.c -- process literals and length/distance pairs fast
  * Copyright (C) 1995-1996 Mark Adler
