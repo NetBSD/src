@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.21.2.4 2003/07/29 01:37:44 jlam Exp $	*/
+/*	$NetBSD: main.c,v 1.21.2.5 2003/08/21 22:13:07 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.21.2.4 2003/07/29 01:37:44 jlam Exp $");
+__RCSID("$NetBSD: main.c,v 1.21.2.5 2003/08/21 22:13:07 jlam Exp $");
 #endif
 #endif
 
@@ -24,7 +24,7 @@ __RCSID("$NetBSD: main.c,v 1.21.2.4 2003/07/29 01:37:44 jlam Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "B:C:D:EFI:L:OP:RS:UVX:b:c:d:f:hi:k:lm:n:p:r:s:t:v";
+static const char Options[] = "B:C:D:EFI:K:L:OP:RS:UVX:b:c:d:f:hi:k:lm:n:p:r:s:t:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -128,6 +128,10 @@ main(int argc, char **argv)
 
 		case 'i':
 			Install = optarg;
+			break;
+
+		case 'K':
+			_pkgdb_setPKGDB_DIR(optarg);
 			break;
 
 		case 'k':

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36.2.9 2003/08/20 01:52:40 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.10 2003/08/21 22:13:08 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36.2.9 2003/08/20 01:52:40 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.10 2003/08/21 22:13:08 jlam Exp $");
 #endif
 #endif
 
@@ -677,7 +677,7 @@ pkg_do(char *pkg)
 			if (Verbose) {
 				printf("Deleting package %s instance from `%s' view\n", pkg, view);
 			}
-			if (vsystem("env %s=%s %s %s", PKG_DBDIR, view, ProgramPath, pkg) != 0) {
+			if (vsystem("%s -K %s %s", ProgramPath, view, pkg) != 0) {
 				warnx("unable to delete package %s from view %s", pkg, view);
 				(void) fclose(fp);
 				return 1;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.16.4.2 2003/07/31 19:17:37 jlam Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.16.4.3 2003/08/21 22:13:07 jlam Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -38,6 +38,9 @@
 .Nm
 .Op Fl V
 .Bk -words
+.Op Fl K Ar pkg_dbdir
+.Ek
+.Bk -words
 .Op Fl s Ar sfx_pattern
 .Ek
 .Ar command Op args ...
@@ -48,6 +51,15 @@ Packages System.
 Available commands are:
 .Pp
 .Bl -tag -width check
+.It Fl K Ar pkg_dbdir
+Set
+.Ar pkg_dbdir
+as the package database directory.
+If this option isn't specified, then the package database directory is
+taken from the value of the environment variable
+.Ev PKG_DBDIR ,
+otherwise it defaults to
+.Pa /var/db/pkg .
 .It Fl V
 Print version number and exit.
 .It Fl s Ar sfx_pattern
@@ -132,7 +144,11 @@ Needs to be run as root.
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DBDIR -compact
 .It Ev PKG_DBDIR
-Where to register packages instead of
+If the
+.Fl K
+flag isn't given, then
+.Ev PKG_DBDIR
+notes where to register packages instead of
 .Pa /var/db/pkg .
 .El
 .Sh FILES
