@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.3 1999/05/01 10:23:42 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,33 +113,21 @@ wdc_obio_attach(parent, self, aux)
 	struct wdc_obio_softc *sc = (void *)self;
 	struct confargs *ca = aux;
 	struct channel_softc *chp = &sc->wdc_channel;
-	int piointr, dmaintr;
+	int intr;
 	int use_dma = 0;
-
-	piointr = dmaintr = -1;
 
 	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_DMA) {
 		if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
 			use_dma = 1;	/* XXX Don't work yet. */
 	}
 
-	if (ca->ca_nintr == -1) {
-		piointr = WDC_DEFAULT_PIO_IRQ;
-		dmaintr = WDC_DEFAULT_DMA_IRQ;
-		printf(" irq property not found; using %d,%d",
-			piointr, dmaintr);
-	}
-
 	if (ca->ca_nintr >= 4 && ca->ca_nreg >= 8) {
-		piointr = ca->ca_intr[0];
-		printf(" irq %d", piointr);
-	}
-	if (ca->ca_nintr >= 8 && use_dma) {
-		dmaintr = ca->ca_intr[1];
-		printf(",%d", dmaintr);
-	}
-
-	if (piointr == -1) {
+		intr = ca->ca_intr[0];
+		printf(" irq %d", intr);
+	} else if (ca->ca_nintr == -1) {
+		intr = WDC_DEFAULT_PIO_IRQ;
+		printf(" irq property not found; using %d", intr);
+	} else {
 		printf(": couldn't get irq property\n");
 		return;
 	}
@@ -164,13 +152,9 @@ wdc_obio_attach(parent, self, aux)
 	chp->data32ioh = chp->cmd_ioh;
 #endif
 
-	intr_establish(piointr, IST_LEVEL, IPL_BIO, wdcintr, chp);
+	intr_establish(intr, IST_LEVEL, IPL_BIO, wdcintr, chp);
 
 	if (use_dma) {
-		if (dmaintr != -1)
-			intr_establish(dmaintr, IST_LEVEL, IPL_BIO,
-				       wdcintr, chp);
-
 		sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
 					 ca->ca_reg[3]);
@@ -208,17 +192,28 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 	struct wdc_obio_softc *sc = v;
 	vaddr_t va = (vaddr_t)databuf;
 	dbdma_command_t *cmdp;
-	u_int cmd;
-
-#ifdef DIAGNOSTIC
-	if (va & PGOFSET)
-		panic("wdc_obio: databuf not page aligned");
-	if (datalen > 65536)
-		panic("wdc_obio: datalen too large");
-#endif
+	u_int cmd, offset;
 
 	cmdp = sc->sc_dmacmd;
 	cmd = read ? DBDMA_CMD_IN_MORE : DBDMA_CMD_OUT_MORE;
+
+	offset = va & PGOFSET;
+
+	/* if va is not page-aligned, setup the first page */
+	if (offset != 0) {
+		int rest = NBPG - offset;	/* the rest of the page */
+
+		if (datalen > rest) {		/* if continues to next page */
+			DBDMA_BUILD(cmdp, cmd, 0, rest, vtophys(va),
+				DBDMA_INT_NEVER, DBDMA_WAIT_NEVER,
+				DBDMA_BRANCH_NEVER);
+			datalen -= rest;
+			va += rest;
+			cmdp++;
+		}
+	}
+
+	/* now va is page-aligned */
 	while (datalen > NBPG) {
 		DBDMA_BUILD(cmdp, cmd, 0, NBPG, vtophys(va),
 			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
@@ -230,7 +225,7 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 	/* the last page (datalen <= NBPG here) */
 	cmd = read ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
 	DBDMA_BUILD(cmdp, cmd, 0, datalen, vtophys(va),
-		DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	cmdp++;
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
@@ -255,6 +250,8 @@ wdc_obio_dma_finish(v, channel, drive, read)
 	int channel, drive;
 	int read;
 {
-	/* nothing to do */
+	struct wdc_obio_softc *sc = v;
+
+	dbdma_stop(sc->sc_dmareg);
 	return 0;
 }
