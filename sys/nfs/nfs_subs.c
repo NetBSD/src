@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.125.2.2 2004/08/03 10:56:17 skrll Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.125.2.3 2004/08/24 17:57:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.2 2004/08/03 10:56:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.125.2.3 2004/08/24 17:57:41 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1952,7 +1952,7 @@ nfs_namei(ndp, fhp, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	 * Extract and set starting directory.
 	 */
 	error = nfsrv_fhtovp(fhp, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
-	    nam, &rdonly, kerbflag, pubflag, l);
+	    nam, &rdonly, kerbflag, pubflag);
 	if (error)
 		goto out;
 	if (dp->v_type != VDIR) {
@@ -2319,7 +2319,7 @@ nfsm_srvfattr(nfsd, vap, fp)
  *	- if not lockflag unlock it with VOP_UNLOCK()
  */
 int
-nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag, l)
+nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag)
 	fhandle_t *fhp;
 	int lockflag;
 	struct vnode **vpp;
@@ -2328,7 +2328,6 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag, l)
 	struct mbuf *nam;
 	int *rdonlyp;
 	int kerbflag;
-	struct lwp *l;
 {
 	struct mount *mp;
 	int i;
@@ -2350,7 +2349,7 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp, kerbflag, pubflag, l)
 	error = VFS_CHECKEXP(mp, nam, &exflags, &credanon);
 	if (error)
 		return (error);
-	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp, l);
+	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp);
 	if (error)
 		return (error);
 

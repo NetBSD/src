@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.8.2.2 2004/08/03 10:54:05 skrll Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.8.2.3 2004/08/24 17:57:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -83,13 +83,13 @@ struct vnode *
 
 /* vfs routines */
 int	layerfs_start __P((struct mount *, int, struct lwp *));
-int	layerfs_root __P((struct mount *, struct vnode **, struct lwp *));
+int	layerfs_root __P((struct mount *, struct vnode **));
 int	layerfs_quotactl __P((struct mount *, int, uid_t, void *,
 			     struct lwp *));
 int	layerfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int	layerfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int	layerfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int	layerfs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
+int	layerfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	layerfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	layerfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	layerfs_vptofh __P((struct vnode *, struct fid *));

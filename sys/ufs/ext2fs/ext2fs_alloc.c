@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.19.2.2 2004/08/03 10:56:48 skrll Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.19.2.3 2004/08/24 17:57:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19.2.2 2004/08/03 10:56:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19.2.3 2004/08/24 17:57:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ ext2fs_valloc(v)
 	ino = (ino_t)ext2fs_hashalloc(pip, cg, (long)ipref, mode, ext2fs_nodealloccg);
 	if (ino == 0)
 		goto noinodes;
-	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp, curlwp);
+	error = VFS_VGET(pvp->v_mount, ino, ap->a_vpp);
 	if (error) {
 		VOP_VFREE(pvp, ino, mode);
 		return (error);

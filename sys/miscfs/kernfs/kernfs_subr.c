@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.6.2.2 2004/08/03 10:54:05 skrll Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.6.2.3 2004/08/24 17:57:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6.2.2 2004/08/03 10:54:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.6.2.3 2004/08/24 17:57:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -143,13 +143,12 @@ static struct simplelock kfs_hash_slock;
  * the vnode free list.
  */
 int
-kernfs_allocvp(mp, vpp, kfs_type, kt, value, l)
+kernfs_allocvp(mp, vpp, kfs_type, kt, value)
 	struct mount *mp;
 	struct vnode **vpp;
 	kfstype kfs_type;
 	const struct kern_target *kt;
 	u_int32_t value;
-	struct lwp *l;
 {
 	struct kernfs_node *kfs = NULL, *kfsp;
 	struct vnode *vp = NULL;
@@ -178,7 +177,7 @@ kernfs_allocvp(mp, vpp, kfs_type, kt, value, l)
 			return (ENOENT);
 		}
 		vp = fvp;
-		if (vget(fvp, LK_EXCLUSIVE, l))
+		if (vget(fvp, LK_EXCLUSIVE))
 			goto loop;
 		*vpp = vp;
 		lockmgr(&kfs_hashlock, LK_RELEASE, NULL);
@@ -323,7 +322,7 @@ loop:
 		    pp->kfs_kt == kt && pp->kfs_value == value) {
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&kfs_hash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, curlwp)) /* XXX curlwp */
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}

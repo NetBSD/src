@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.h,v 1.6.2.2 2004/08/03 10:43:19 skrll Exp $	*/
+/*	$NetBSD: coda_venus.h,v 1.6.2.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * 
@@ -33,7 +33,7 @@
 
 int
 venus_root(void *mdp,
-	struct ucred *cred, struct lwp *l,
+	struct ucred *cred, struct proc *p,
 /*out*/	CodaFid *VFid);
 
 int
@@ -133,5 +133,5 @@ venus_statfs(void *mdp, struct ucred *cred, struct lwp *l,
 
 int
 venus_fhtovp(void *mdp, CodaFid *fid,
-	struct ucred *cred, struct lwp *l,
+	struct ucred *cred, struct proc *p,
 /*out*/	CodaFid *VFid, int *vtype);

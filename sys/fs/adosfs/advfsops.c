@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.8.2.5 2004/08/13 10:20:08 skrll Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.8.2.6 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.5 2004/08/13 10:20:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.8.2.6 2004/08/24 17:57:36 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -68,9 +68,8 @@ int adosfs_root __P((struct mount *, struct vnode **, struct lwp *));
 int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct lwp *));
 int adosfs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int adosfs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **,
-		       struct lwp *));
+int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
+int adosfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int adosfs_checkexp __P((struct mount *, struct mbuf *, int *,
 		       struct ucred **));
 int adosfs_vptofh __P((struct vnode *, struct fid *));
@@ -278,7 +277,7 @@ adosfs_mountfs(devvp, mp, l)
 	/*
 	 * get the root anode, if not a valid fs this will fail.
 	 */
-	if ((error = VFS_ROOT(mp, &rvp, l)) != 0)
+	if ((error = VFS_ROOT(mp, &rvp)) != 0)
 		goto fail;
 	/* allocate and load bitmap, set free space */
 	amp->bitmap = malloc(((amp->numblks + 31) / 32) * sizeof(*amp->bitmap),
@@ -354,7 +353,7 @@ adosfs_root(mp, vpp, l)
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp, l)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp)) != 0)
 		return (error);
 	/* XXX verify it's a root block? */
 	*vpp = nvp;
@@ -390,11 +389,10 @@ adosfs_statvfs(mp, sbp, l)
  * return locked and referenced al la vget(vp, 1);
  */
 int
-adosfs_vget(mp, an, vpp, l)
+adosfs_vget(mp, an, vpp)
 	struct mount *mp;
 	ino_t an;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct adosfsmount *amp;
 	struct vnode *vp;
@@ -410,7 +408,7 @@ adosfs_vget(mp, an, vpp, l)
 	/* 
 	 * check hash table. we are done if found
 	 */
-	if ((*vpp = adosfs_ahashget(mp, an, l)) != NULL)
+	if ((*vpp = adosfs_ahashget(mp, an)) != NULL)
 		return (0);
 
 	error = getnewvnode(VT_ADOSFS, mp, adosfs_vnodeop_p, &vp);
@@ -711,11 +709,10 @@ struct ifid {
 };
 
 int
-adosfs_fhtovp(mp, fhp, vpp, l)
+adosfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 #if 0
@@ -728,7 +725,7 @@ adosfs_fhtovp(mp, fhp, vpp, l)
 	printf("adfhtovp(%x, %x, %x)\n", mp, fhp, vpp);
 #endif
 	
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp, l)) != 0) {
+	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}

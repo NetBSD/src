@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.106.2.2 2004/08/03 10:54:07 skrll Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.106.2.3 2004/08/24 17:57:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.106.2.2 2004/08/03 10:54:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.106.2.3 2004/08/24 17:57:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -877,7 +877,7 @@ procfs_lookup(v)
 		if (cnp->cn_flags & ISDOTDOT) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
-			error = procfs_root(dvp->v_mount, vpp, cnp->cn_lwp);
+			error = procfs_root(dvp->v_mount, vpp);
 			if ((error == 0) && (wantpunlock == 0) &&
 				    ((error = vn_lock(dvp, LK_EXCLUSIVE)) == 0))
 				cnp->cn_flags &= ~PDIRUNLOCK;

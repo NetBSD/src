@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.27.2.2 2004/08/03 10:57:00 skrll Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.27.2.3 2004/08/24 17:57:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.2 2004/08/03 10:57:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.27.2.3 2004/08/24 17:57:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -414,7 +414,7 @@ again:
 		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON ||vp->v_writecount == 0)
 			continue;
-		if (vget(vp, LK_EXCLUSIVE, l))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto again;
 		if ((error = getinoquota(VTOI(vp))) != 0) {
 			vput(vp);
@@ -458,7 +458,7 @@ again:
 		nextvp = LIST_NEXT(vp, v_mntvnodes);
 		if (vp->v_type == VNON)
 			continue;
-		if (vget(vp, LK_EXCLUSIVE, l))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto again;
 		ip = VTOI(vp);
 		dq = ip->i_dquot[type];
@@ -646,7 +646,7 @@ again:
 			continue;
 		simple_lock(&vp->v_interlock);
 		simple_unlock(&mntvnode_slock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK, l);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
 			simple_lock(&mntvnode_slock);
 			if (error == ENOENT)

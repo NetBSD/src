@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.221.2.2 2004/08/03 10:52:43 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.221.2.3 2004/08/24 17:57:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.2 2004/08/03 10:52:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.221.2.3 2004/08/24 17:57:37 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -537,7 +537,7 @@ main(void)
 	 * Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to
 	 * reference it.
 	 */
-	if (VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode, l))
+	if (VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode))
 		panic("cannot find root vnode");
 	cwdi0.cwdi_cdir = rootvnode;
 	VREF(cwdi0.cwdi_cdir);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.50.2.2 2004/08/03 10:56:49 skrll Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.50.2.3 2004/08/24 17:57:42 skrll Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.2 2004/08/03 10:56:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.50.2.3 2004/08/24 17:57:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3276,7 +3276,7 @@ handle_workitem_remove(dirrem)
 	int error;
 
 	if ((error = VFS_VGET(dirrem->dm_mnt, dirrem->dm_oldinum,
-	    &vp, curlwp)) != 0) {
+	    &vp)) != 0) {
 		softdep_error("handle_workitem_remove: vget", error);
 		return;
 	}
@@ -4752,7 +4752,7 @@ softdep_fsync(vp)
 		 */
 		FREE_LOCK(&lk);
 		VOP_UNLOCK(vp, 0);
-		error = VFS_VGET(mnt, parentino, &pvp, curlwp);
+		error = VFS_VGET(mnt, parentino, &pvp);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)
 			return (error);
@@ -5299,7 +5299,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		if (dap->da_state & MKDIR_BODY) {
 			FREE_LOCK(&lk);
 			ipflag = vn_setrecurse(pvp);	/* XXX */
-			if ((error = VFS_VGET(mp, inum, &vp, l)) != 0)
+			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
 				break;
 			if ((error = VOP_FSYNC(vp, l->l_proc->p_ucred,
 					       0, 0, 0, l)) ||
@@ -5490,7 +5490,7 @@ clear_remove(l)
 			if (vn_start_write(NULL, &mp, V_NOWAIT) != 0)
 				continue;
 			FREE_LOCK(&lk);
-			if ((error = VFS_VGET(mp, ino, &vp, l)) != 0) {
+			if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 				softdep_error("clear_remove: vget", error);
 				vn_finished_write(mp, 0);
 				return;
@@ -5563,7 +5563,7 @@ clear_inodedeps(l)
 		if (vn_start_write(NULL, &mp, V_NOWAIT) != 0)
 			continue;
 		FREE_LOCK(&lk);
-		if ((error = VFS_VGET(mp, ino, &vp, l)) != 0) {
+		if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 			softdep_error("clear_inodedeps: vget", error);
 			vn_finished_write(mp, 0);
 			return;

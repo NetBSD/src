@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.18.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.18.2.3 2004/08/24 17:57:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18.2.2 2004/08/03 10:52:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18.2.3 2004/08/24 17:57:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(dvp)->n_parent->n_vnode;
-		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY, curlwp)) == 0)
+		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
 			*vpp = vp;
 		return (error);
 	}
@@ -138,7 +138,7 @@ loop:
 		vp = SMBTOV(np);
 		simple_lock(&(vp)->v_interlock);
 		smbfs_hash_unlock(smp);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, curlwp) != 0)
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;
 		*vpp = vp;
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.47.2.2 2004/08/03 10:57:00 skrll Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.47.2.3 2004/08/24 17:57:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.47.2.2 2004/08/03 10:57:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.47.2.3 2004/08/24 17:57:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,7 @@ found:
 		}
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
@@ -537,7 +537,7 @@ found:
 			return (EISDIR);
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
@@ -574,7 +574,7 @@ found:
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -592,7 +592,7 @@ found:
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = VFS_VGET(vdp->v_mount, foundino, &tdp, cnp->cn_lwp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
@@ -1223,7 +1223,7 @@ ufs_checkpath(source, target, cred, l)
 			break;
 		vput(vp);
 		error = VFS_VGET(vp->v_mount,
-		    ufs_rw32(dirbuf.dotdot_ino, needswap), &vp, l);
+		    ufs_rw32(dirbuf.dotdot_ino, needswap), &vp);
 		if (error) {
 			vp = NULL;
 			break;

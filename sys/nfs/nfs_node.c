@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.68.2.2 2004/08/03 10:56:17 skrll Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.68.2.3 2004/08/24 17:57:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68.2.2 2004/08/03 10:56:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68.2.3 2004/08/24 17:57:41 skrll Exp $");
 
 #include "opt_nfs.h"
 
@@ -167,7 +167,7 @@ loop:
 		    memcmp(fhp, np->n_fhp, fhsize))
 			continue;
 		vp = NFSTOV(np);
-		error = vget(vp, LK_EXCLUSIVE | lkflags, l);
+		error = vget(vp, LK_EXCLUSIVE | lkflags);
 		if (error == EBUSY)
 			return error;
 		if (error)

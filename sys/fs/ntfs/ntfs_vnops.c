@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.12.2.3 2004/08/12 11:42:19 skrll Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.12.2.4 2004/08/24 17:57:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.3 2004/08/12 11:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.12.2.4 2004/08/24 17:57:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,8 +784,7 @@ ntfs_lookup(ap)
 		dprintf(("ntfs_lookup: parentdir: %d\n",
 			 vap->va_a_name->n_pnumber));
 		error = VFS_VGET(ntmp->ntm_mountp,
-				 vap->va_a_name->n_pnumber,ap->a_vpp,
-				 cnp->cn_lwp); 
+				 vap->va_a_name->n_pnumber,ap->a_vpp); 
 		ntfs_ntvattrrele(vap);
 		if (error) {
 			if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)

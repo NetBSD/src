@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.36.2.2 2004/08/03 10:43:19 skrll Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.36.2.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.36.2.2 2004/08/03 10:43:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.36.2.3 2004/08/24 17:57:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1877,7 +1877,7 @@ coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp, struct lwp *l)
     }
 
     /* XXX - ensure that nonzero-return means failure */
-    error = VFS_VGET(mp, ino, vpp, l);
+    error = VFS_VGET(mp, ino, vpp);
     if (error) {
 	myprintf(("coda_grab_vnode: iget/vget(%d, %d) returns %p, err %d\n", 
 		  dev, ino, *vpp, error));

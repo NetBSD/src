@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.18.2.2 2004/08/03 10:56:49 skrll Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.18.2.3 2004/08/24 17:57:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -145,8 +145,8 @@ int ext2fs_unmount __P((struct mount *, int, struct lwp *));
 int ext2fs_flushfiles __P((struct mount *, int, struct lwp *));
 int ext2fs_statvfs __P((struct mount *, struct statvfs *, struct lwp *));
 int ext2fs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
-int ext2fs_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
-int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **, struct lwp *));
+int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
+int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_cgupdate __P((struct ufsmount *, int));

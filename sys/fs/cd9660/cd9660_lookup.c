@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.5.2.2 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.5.2.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.5.2.2 2004/08/03 10:52:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.5.2.3 2004/08/24 17:57:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -386,7 +386,7 @@ found:
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep, cnp->cn_lwp);
+					     dp->i_ino != ino, ep);
 		brelse(bp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
@@ -407,7 +407,7 @@ found:
 		*vpp = vdp;
 	} else {
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, ep, cnp->cn_lwp);
+					     dp->i_ino != ino, ep);
 		brelse(bp);
 		if (error)
 			return (error);

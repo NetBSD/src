@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.3.2.2 2004/08/03 10:43:29 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.3.2.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3.2.2 2004/08/03 10:43:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.3.2.3 2004/08/24 17:57:36 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -302,7 +302,7 @@ compat_20_sys_fhstatfs(l, v, retval)
 
 	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
 		return (ESTALE);
-	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp, l)))
+	if ((error = VFS_FHTOVP(mp, &fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
 	vput(vp);

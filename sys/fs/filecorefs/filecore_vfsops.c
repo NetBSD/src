@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.5.2.3 2004/08/03 10:52:24 skrll Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.5.2.4 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.3 2004/08/03 10:52:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.5.2.4 2004/08/24 17:57:36 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -470,7 +470,7 @@ filecore_root(mp, vpp, l)
 	struct vnode *nvp;
         int error;
 
-        if ((error = VFS_VGET(mp, FILECORE_ROOTINO, &nvp, l)) != 0)
+        if ((error = VFS_VGET(mp, FILECORE_ROOTINO, &nvp)) != 0)
                 return (error);
         *vpp = nvp;
         return (0);
@@ -547,18 +547,17 @@ struct ifid {
 
 /* ARGSUSED */
 int
-filecore_fhtovp(mp, fhp, vpp, l)
+filecore_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct ifid *ifhp = (struct ifid *)fhp;
 	struct vnode *nvp;
 	struct filecore_node *ip;
 	int error;
 	
-	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp, l)) != 0) {
+	if ((error = VFS_VGET(mp, ifhp->ifid_ino, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -604,11 +603,10 @@ filecore_checkexp(mp, nam, exflagsp, credanonp)
  */
 
 int
-filecore_vget(mp, ino, vpp, l)
+filecore_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct filecore_mnt *fcmp;
 	struct filecore_node *ip;
@@ -619,7 +617,7 @@ filecore_vget(mp, ino, vpp, l)
 
 	fcmp = VFSTOFILECORE(mp);
 	dev = fcmp->fc_dev;
-	if ((*vpp = filecore_ihashget(dev, ino, l)) != NULLVP)
+	if ((*vpp = filecore_ihashget(dev, ino)) != NULLVP)
 		return (0);
 
 	/* Allocate a new vnode/filecore_node. */

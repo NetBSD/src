@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.41.2.3 2004/08/18 10:19:08 skrll Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.41.2.4 2004/08/24 17:57:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ void nfsm_srvfattr __P((struct nfsrv_descript *, struct vattr *,
 			struct nfs_fattr *));
 int nfsrv_fhtovp __P((fhandle_t *, int, struct vnode **, struct ucred *,
 		      struct nfssvc_sock *, struct mbuf *, int *, int,
-		      int, struct lwp *));
+		      int));
 int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
 			   struct export_args *));
 int nfs_ispublicfh __P((fhandle_t *));

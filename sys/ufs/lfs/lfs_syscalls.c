@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.93.2.2 2004/08/03 10:56:57 skrll Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.93.2.3 2004/08/24 17:57:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.93.2.2 2004/08/03 10:56:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.93.2.3 2004/08/24 17:57:53 skrll Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -759,7 +759,7 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				}
 				numrefed++;
 			} else {
-				error = VFS_VGET(mntp, blkp->bi_inode, &vp, l);
+				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
 				if (error) {
 #ifdef DEBUG_LFS
 					printf("lfs_bmapv: vget of ino %d failed with %d",blkp->bi_inode,error);

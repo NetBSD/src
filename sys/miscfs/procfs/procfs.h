@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.47.2.3 2004/08/18 10:19:08 skrll Exp $	*/
+/*	$NetBSD: procfs.h,v 1.47.2.4 2004/08/24 17:57:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -224,7 +224,7 @@ int procfs_getcpuinfstr __P((char *, int *));
 extern int (**procfs_vnodeop_p) __P((void *));
 extern struct vfsops procfs_vfsops;
 
-int	procfs_root __P((struct mount *, struct vnode **, struct lwp *));
+int	procfs_root __P((struct mount *, struct vnode **));
 
 #ifdef __HAVE_PROCFS_MACHDEP
 struct vattr;

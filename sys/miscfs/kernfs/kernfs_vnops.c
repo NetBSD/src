@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.88.2.2 2004/08/03 10:54:06 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.88.2.3 2004/08/24 17:57:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -616,7 +616,7 @@ kernfs_lookup(v)
 		break;
 
 	found:
-		error = kernfs_allocvp(dvp->v_mount, vpp, kt->kt_tag, kt, 0, curlwp); /* XXX curlwp */
+		error = kernfs_allocvp(dvp->v_mount, vpp, kt->kt_tag, kt, 0);
 		if ((error == 0) && wantpunlock) {
 			VOP_UNLOCK(dvp, 0);
 			cnp->cn_flags |= PDIRUNLOCK;
@@ -1036,7 +1036,7 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 	int error;
 
 	if ((error = kernfs_allocvp(ap->a_vp->v_mount, &vp, kt->kt_tag, kt,
-	    value, curlwp)) != 0) /* XXX curlwp */
+	    value)) != 0)
 		return error;
 	if (kt->kt_tag == KFSdevice) {
 		struct vattr va;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.109.2.3 2004/08/24 17:36:00 skrll Exp $	*/
+/*	$NetBSD: mount.h,v 1.109.2.4 2004/08/24 17:57:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -227,16 +227,16 @@ struct vfsops {
 				    struct nameidata *, struct lwp *));
 	int	(*vfs_start)	__P((struct mount *, int, struct lwp *));
 	int	(*vfs_unmount)	__P((struct mount *, int, struct lwp *));
-	int	(*vfs_root)	__P((struct mount *, struct vnode **, struct lwp *));
+	int	(*vfs_root)	__P((struct mount *, struct vnode **));
 	int	(*vfs_quotactl)	__P((struct mount *, int, uid_t, void *,
 				    struct lwp *));
 	int	(*vfs_statvfs)	__P((struct mount *, struct statvfs *,
 				    struct lwp *));
 	int	(*vfs_sync)	__P((struct mount *, int, struct ucred *,
 				    struct lwp *));
-	int	(*vfs_vget)	__P((struct mount *, ino_t, struct vnode **, struct lwp *));
+	int	(*vfs_vget)	__P((struct mount *, ino_t, struct vnode **));
 	int	(*vfs_fhtovp)	__P((struct mount *, struct fid *,
-				    struct vnode **, struct lwp *));
+				    struct vnode **));
 	int	(*vfs_vptofh)	__P((struct vnode *, struct fid *));
 	void	(*vfs_init)	__P((void));
 	void	(*vfs_reinit)	__P((void));
@@ -254,14 +254,14 @@ struct vfsops {
 
 #define VFS_MOUNT(MP, PATH, DATA, NDP, L) \
 	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, L)
-#define VFS_START(MP, FLAGS, P)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, P)
-#define VFS_UNMOUNT(MP, FORCE, P) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, P)
-#define VFS_ROOT(MP, VPP, P)	  (*(MP)->mnt_op->vfs_root)(MP, VPP, P)
-#define VFS_QUOTACTL(MP,C,U,A,P)  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A, P)
-#define VFS_STATVFS(MP, SBP, P)	  (*(MP)->mnt_op->vfs_statvfs)(MP, SBP, P)
-#define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
-#define VFS_VGET(MP, INO, VPP, P) (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP, P)
-#define VFS_FHTOVP(MP, FIDP, VPP, P) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP, P)
+#define VFS_START(MP, FLAGS, L)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, L)
+#define VFS_UNMOUNT(MP, FORCE, L) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, L)
+#define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
+#define VFS_QUOTACTL(MP,C,U,A,L)  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A, L)
+#define VFS_STATVFS(MP, SBP, L)	  (*(MP)->mnt_op->vfs_statvfs)(MP, SBP, L)
+#define VFS_SYNC(MP, WAIT, C, L)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, L)
+#define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+#define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
 #define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)

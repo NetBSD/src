@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.6.2.2 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: advnops.c,v 1.6.2.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.2 2004/08/03 10:52:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.3 2004/08/24 17:57:36 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -699,8 +699,7 @@ adosfs_readdir(v)
 		 */
 		ap = NULL;
 		do {
-			error = VFS_VGET(amp->mp, (ino_t)nextbn, &vp,
-					 curlwp);	/* XXX */
+			error = VFS_VGET(amp->mp, (ino_t)nextbn, &vp);
 			if (error)
 				goto reterr;
 			ap = VTOA(vp);

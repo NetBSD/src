@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.131.2.2 2004/08/03 10:56:19 skrll Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.131.2.3 2004/08/24 17:57:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.131.2.2 2004/08/03 10:56:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.131.2.3 2004/08/24 17:57:41 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -845,7 +845,7 @@ nfs_unmount(mp, mntflags, l)
 	 * has done vput on this vnode, otherwise we would get deadlock!
 	 */
 	vp = nmp->nm_vnode;
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY, l);
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
 
@@ -896,10 +896,9 @@ nfs_unmount(mp, mntflags, l)
  * Return root of a filesystem
  */
 int
-nfs_root(mp, vpp, l)
+nfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 	struct vnode *vp;
 	struct nfsmount *nmp;
@@ -907,7 +906,7 @@ nfs_root(mp, vpp, l)
 
 	nmp = VFSTONFS(mp);
 	vp = nmp->nm_vnode;
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY, l);
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
 	if (vp->v_type == VNON)
@@ -948,7 +947,7 @@ loop:
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 			continue;
-		if (vget(vp, LK_EXCLUSIVE, l))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, l);
@@ -965,11 +964,10 @@ loop:
  */
 /* ARGSUSED */
 int
-nfs_vget(mp, ino, vpp, l)
+nfs_vget(mp, ino, vpp)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -1031,11 +1029,10 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
  */
 /* ARGSUSED */
 int
-nfs_fhtovp(mp, fhp, vpp, l)
+nfs_fhtovp(mp, fhp, vpp)
 	struct mount *mp;
 	struct fid *fhp;
 	struct vnode **vpp;
-	struct lwp *l;
 {
 
 	return (EINVAL);

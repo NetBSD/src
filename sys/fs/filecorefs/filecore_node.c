@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.1.4.2 2004/08/03 10:52:24 skrll Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.1.4.3 2004/08/24 17:57:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.1.4.2 2004/08/03 10:52:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.1.4.3 2004/08/24 17:57:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,10 +164,9 @@ filecore_done()
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-filecore_ihashget(dev, inum, l)
+filecore_ihashget(dev, inum)
 	dev_t dev;
 	ino_t inum;
-	struct lwp *l;
 {
 	struct filecore_node *ip;
 	struct vnode *vp;
@@ -179,7 +178,7 @@ loop:
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&filecore_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}

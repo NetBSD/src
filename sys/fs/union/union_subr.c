@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.6.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.6.2.3 2004/08/24 17:57:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.6.2.2 2004/08/03 10:52:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.6.2.3 2004/08/24 17:57:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,7 +329,7 @@ union_newsize(vp, uppersz, lowersz)
  * the vnode free list.
  */
 int
-union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache, l)
+union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache)
 	struct vnode **vpp;
 	struct mount *mp;
 	struct vnode *undvp;		/* parent union vnode */
@@ -338,7 +338,6 @@ union_allocvp(vpp, mp, undvp, dvp, cnp, uppervp, lowervp, docache, l)
 	struct vnode *uppervp;		/* may be null */
 	struct vnode *lowervp;		/* may be null */
 	int docache;
-	struct lwp *l;
 {
 	int error;
 	struct union_node *un = NULL;
@@ -402,7 +401,7 @@ loop:
 			    (un->un_uppervp == uppervp ||
 			     un->un_uppervp == NULLVP) &&
 			    (UNIONTOV(un)->v_mount == mp)) {
-				if (vget(UNIONTOV(un), 0, l)) {
+				if (vget(UNIONTOV(un), 0)) {
 					union_list_unlock(hash);
 					goto loop;
 				}
@@ -1183,7 +1182,7 @@ union_dircache(vp, l)
 
 	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 	VREF(*vpp);
-	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0, l);
+	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
 	if (!error) {
 		VTOUNION(vp)->un_dircache = 0;
 		VTOUNION(nvp)->un_dircache = dircache;

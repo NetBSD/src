@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.h,v 1.3.2.2 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: ntfs_vfsops.h,v 1.3.2.3 2004/08/24 17:57:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -35,7 +35,7 @@
 #define	VG_EXT		0x0004	/* This is not main record */
 
 int ntfs_vgetex(struct mount *, ino_t, u_int32_t, char *, u_long, u_long,
-		struct lwp *, struct vnode **);
+		struct vnode **);
 int ntfs_calccfree(struct ntfsmount *, cn_t *);
 
 #ifdef SYSCTL_SETUP_PROTO

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.19.2.2 2004/08/03 10:54:07 skrll Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.19.2.3 2004/08/24 17:57:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.19.2.2 2004/08/03 10:54:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.19.2.3 2004/08/24 17:57:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
 	bp = bend = &path[len];
 	*(--bp) = '\0';
 
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY, curl);
+	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
 	error = cache_revlookup(vp, &dvp, &bp, path);
@@ -235,7 +235,7 @@ static int procfs_vnode_to_path(struct vnode *vp, char *path, int len,
 	if (error != 0)
 		return (error == -1 ? ENOENT : error);
 
-	error = vget(dvp, 0, curl);
+	error = vget(dvp, 0);
 	if (error != 0)
 		return error;
 	*(--bp) = '/';
