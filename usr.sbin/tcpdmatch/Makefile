@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1998/01/09 08:11:50 perry Exp $
+#	$NetBSD: Makefile,v 1.8 1998/03/05 18:23:31 christos Exp $
 #
 
-WARNS?=	0
 PROG=	tcpdmatch
 SRCS=	tcpdmatch.c fakelog.c inetcf.c scaffold.c percent_m.c
 MAN=	tcpdmatch.8
