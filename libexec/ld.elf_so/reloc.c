@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.76 2002/11/22 04:39:37 junyoung Exp $	 */
+/*	$NetBSD: reloc.c,v 1.77 2002/11/25 19:49:25 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -153,6 +153,7 @@ _rtld_relocate_objects(first, bind_now)
 	bool bind_now;
 {
 	Obj_Entry *obj;
+	int ok = 1;
 
 	for (obj = first; obj != NULL; obj = obj->next) {
 		if (obj->nbuckets == 0 || obj->nchains == 0 ||
@@ -183,7 +184,7 @@ _rtld_relocate_objects(first, bind_now)
 		}
 		dbg(("doing non-PLT relocations"));
 		if (_rtld_relocate_nonplt_objects(obj) < 0)
-			return -1;
+			ok = 0;
 		if (obj->textrel) {	/* Re-protected the text segment. */
 			if (mprotect(obj->mapbase, obj->textsize,
 				     PROT_READ | PROT_EXEC) == -1) {
@@ -194,12 +195,15 @@ _rtld_relocate_objects(first, bind_now)
 		}
 		dbg(("doing lazy PLT binding"));
 		if (_rtld_relocate_plt_lazy(obj) < 0)
-			return -1;
+			ok = 0;
 #if defined(__i386__)
 		if (bind_now)
 			if (_rtld_relocate_plt_objects(obj) < 0)
-				return -1;
+				ok = 0;
 #endif
+		if (!ok)
+			return -1;
+
 
 		/* Set some sanity-checking numbers in the Obj_Entry. */
 		obj->magic = RTLD_MAGIC;
