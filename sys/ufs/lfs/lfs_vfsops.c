@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.1 1999/04/13 21:33:57 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.2 1999/10/19 16:34:04 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -458,7 +458,9 @@ out:
 		brelse(bp);
 	if (abp)
 		brelse(abp);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
+	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump->um_lfs, M_UFSMNT);
 		free(ump, M_UFSMNT);
@@ -516,9 +518,10 @@ lfs_unmount(mp, mntflags, p)
 
 	ronly = !fs->lfs_ronly;
 	ump->um_devvp->v_specflags &= ~SI_MOUNTEDON;
+	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ump->um_devvp,
 	    ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	vrele(ump->um_devvp);
+	vput(ump->um_devvp);
 
 	/* XXX KS - wake up the cleaner so it can die */
 	wakeup(&fs->lfs_nextseg);
