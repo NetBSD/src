@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1995/07/04 07:16:04 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 1996/02/24 00:55:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -280,16 +280,46 @@ chrtoblk(dev)
  */
 #include <dev/cons.h>
 
-#define	itecnpollc	nullcnpollc
-cons_decl(ite);
-#define	dcacnpollc	nullcnpollc
+#define dvboxcngetc		itecngetc
+#define dvboxcnputc		itecnputc
+#define dvboxcnpollc		nullcnpollc
+cons_decl(dvbox);
+
+#define gboxcngetc		itecngetc
+#define gboxcnputc		itecnputc
+#define gboxcnpollc		nullcnpollc
+cons_decl(gbox);
+
+#define hypercngetc		itecngetc
+#define hypercnputc		itecnputc
+#define hypercnpollc		nullcnpollc
+cons_decl(hyper);
+
+#define rboxcngetc		itecngetc
+#define rboxcnputc		itecnputc
+#define rboxcnpollc		nullcnpollc
+cons_decl(rbox);
+
+#define topcatcngetc		itecngetc
+#define topcatcnputc		itecnputc
+#define topcatcnpollc		nullcnpollc
+cons_decl(topcat);
+
+#define	dcacnpollc		nullcnpollc
 cons_decl(dca);
-#define	dcmcnpollc	nullcnpollc
+
+#define	dcmcnpollc		nullcnpollc
 cons_decl(dcm);
 
 struct	consdev constab[] = {
 #if NITE > 0
-	cons_init(ite),
+#if NGRF > 0			/* XXX */
+	cons_init(dvbox),
+	cons_init(gbox),
+	cons_init(hyper),
+	cons_init(rbox),
+	cons_init(topcat),
+#endif
 #endif
 #if NDCA > 0
 	cons_init(dca),
