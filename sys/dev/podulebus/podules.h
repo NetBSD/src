@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.5 2002/03/09 13:45:13 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.6 2002/03/29 00:18:24 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.7 2002/03/09 13:44:09 bjh21 Exp 
+ *	NetBSD: podules,v 1.8 2002/03/29 00:16:51 bjh21 Exp 
  */
 
 /*
@@ -81,7 +81,7 @@
 #define	PODULE_ACORN_ETHER3XXX	0x0000		/* Ether3 (NOROM) */
 #define	PODULE_ACORN_SCSI	0x0002		/* SCSI 1 interface */
 #define	PODULE_ACORN_ETHER1	0x0003		/* ether 1 interface */
-#define	PODULE_ACORN_RAMROM	0x0005		/* RAM/ROM podule */
+#define	PODULE_ACORN_ROMRAM	0x0005		/* ROM/RAM podule */
 #define	PODULE_ACORN_BBCIO	0x0006		/* BBC IO interface */
 #define	PODULE_ACORN_ST506	0x000b		/* ST506 HD interface */
 #define	PODULE_ACORN_MIDI	0x0013		/* MIDI interface */
@@ -89,6 +89,7 @@
 #define	PODULE_ACORN_ETHER2	0x0061		/* ether 2 interface */
 #define	PODULE_ACORN_ETHERI	0x0139		/* EtherI interface */
 
+#define	PODULE_CCONCEPTS_ROMRAM	0x0005		/* ROM/RAM podule */
 #define	PODULE_CCONCEPTS_LASERDIRECT	0x0014		/* laser direct (Canon LBP-4) */
 
 #define	PODULE_ARMADILLO_A448	0x0016		/* A448 sound sampler */
