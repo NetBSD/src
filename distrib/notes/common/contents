@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.29 2000/11/03 23:23:47 lukem Exp $
+.\"	$NetBSD: contents,v 1.30 2000/11/13 01:22:39 hubertf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,14 +44,15 @@ subdirectory of the distribution:
 .	It Pa INSTALL.ps
 .	It Pa INSTALL.txt
 .	It Pa INSTALL.more
-Installation notes; this file. The
+Installation notes in various file formats, including this file.
+The
 .Pa \&.more No file contains underlined text using the
 .Xr more 1
 conventions for indicating italic and bold display.
 .	It Pa binary/
 .	(tag instkernel/ -compact
 .		It Pa kernel/
-.		(tag netbsd.INSTALL_TINY.gz -compact
+.		(tag netbsd.INSTALL_LAPTOP.gz -compact
 .			It Pa netbsd.GENERIC.gz
 A gzipped
 .Nx
@@ -74,12 +75,30 @@ A kernel for TX3922 machines.
 .\}
 .
 .if r_i386 \{\
+.			It Pa netbsd.GENERIC_LAPTOP.gz
+A version of 
+.Li GENERIC
+that has USB, PCMCIA and Cardbus enabled to allow
+installing on Laptop machine.
+.			It Pa netbsd.GENERIC_TINY.gz
+A version of
+.Li GENERIC
+intended to run on machines with less than 8 MB.
 .			It Pa netbsd.INSTALL.gz
 The install kernel.
 .			It Pa netbsd.INSTALL_TINY.gz
 A version of
 .Li INSTALL
 intended to run on machines with less than 8 MB.
+.			It Pa netbsd.INSTALL_SMALL.gz
+A version of
+.Li INSTALL
+intended to fit on a 5.25"/1.2 MB diskette.
+.			It Pa netbsd.INSTALL_LAPTOP.gz
+A version of 
+.Li INSTALL
+that has USB, PCMCIA and Cardbus enabled to allow
+installing on Laptop machine.
 .\}
 .
 .if r_mvme68k \{\
