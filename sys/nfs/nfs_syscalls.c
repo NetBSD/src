@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.26 1997/06/24 23:38:10 fvdl Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.26.4.1 1997/10/14 15:58:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -223,10 +223,10 @@ sys_nfssvc(p, v, retval)
 		vput(nd.ni_vp);
 		if (error)
 			return (error);
-		if ((nmp->nm_flag & NFSMNT_MNTD) &&
+		if ((nmp->nm_iflag & NFSMNT_MNTD) &&
 			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
 			return (0);
-		nmp->nm_flag |= NFSMNT_MNTD;
+		nmp->nm_iflag |= NFSMNT_MNTD;
 		error = nqnfs_clientd(nmp, p->p_ucred, &ncd, SCARG(uap, flag),
 			SCARG(uap, argp), p);
 #endif /* NFS */
@@ -973,17 +973,17 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 {
 	int error = 0;
 
-	while ((nmp->nm_flag & NFSMNT_WAITAUTH) == 0) {
-		nmp->nm_flag |= NFSMNT_WANTAUTH;
+	while ((nmp->nm_iflag & NFSMNT_WAITAUTH) == 0) {
+		nmp->nm_iflag |= NFSMNT_WANTAUTH;
 		(void) tsleep((caddr_t)&nmp->nm_authtype, PSOCK,
 			"nfsauth1", 2 * hz);
 		error = nfs_sigintr(nmp, rep, rep->r_procp);
 		if (error) {
-			nmp->nm_flag &= ~NFSMNT_WANTAUTH;
+			nmp->nm_iflag &= ~NFSMNT_WANTAUTH;
 			return (error);
 		}
 	}
-	nmp->nm_flag &= ~(NFSMNT_WAITAUTH | NFSMNT_WANTAUTH);
+	nmp->nm_iflag &= ~(NFSMNT_WAITAUTH | NFSMNT_WANTAUTH);
 	nmp->nm_authstr = *auth_str = (char *)malloc(RPCAUTH_MAXSIZ, M_TEMP, M_WAITOK);
 	nmp->nm_authlen = RPCAUTH_MAXSIZ;
 	nmp->nm_verfstr = verf_str;
@@ -994,13 +994,13 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	/*
 	 * And wait for mount_nfs to do its stuff.
 	 */
-	while ((nmp->nm_flag & NFSMNT_HASAUTH) == 0 && error == 0) {
+	while ((nmp->nm_iflag & NFSMNT_HASAUTH) == 0 && error == 0) {
 		(void) tsleep((caddr_t)&nmp->nm_authlen, PSOCK,
 			"nfsauth2", 2 * hz);
 		error = nfs_sigintr(nmp, rep, rep->r_procp);
 	}
-	if (nmp->nm_flag & NFSMNT_AUTHERR) {
-		nmp->nm_flag &= ~NFSMNT_AUTHERR;
+	if (nmp->nm_iflag & NFSMNT_AUTHERR) {
+		nmp->nm_iflag &= ~NFSMNT_AUTHERR;
 		error = EAUTH;
 	}
 	if (error)
@@ -1010,10 +1010,10 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 		*verf_len = nmp->nm_verflen;
 		bcopy((caddr_t)nmp->nm_key, (caddr_t)key, sizeof (key));
 	}
-	nmp->nm_flag &= ~NFSMNT_HASAUTH;
-	nmp->nm_flag |= NFSMNT_WAITAUTH;
-	if (nmp->nm_flag & NFSMNT_WANTAUTH) {
-		nmp->nm_flag &= ~NFSMNT_WANTAUTH;
+	nmp->nm_iflag &= ~NFSMNT_HASAUTH;
+	nmp->nm_iflag |= NFSMNT_WAITAUTH;
+	if (nmp->nm_iflag & NFSMNT_WANTAUTH) {
+		nmp->nm_iflag &= ~NFSMNT_WANTAUTH;
 		wakeup((caddr_t)&nmp->nm_authtype);
 	}
 	return (error);

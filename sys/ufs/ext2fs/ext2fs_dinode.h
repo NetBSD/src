@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.1 1997/06/11 09:33:48 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.1.4.1 1997/10/14 16:06:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -130,3 +130,13 @@ struct ext2fs_dinode {
 
 #define e2di_rdev		e2di_blocks[0]
 #define e2di_shortlink	e2di_blocks
+
+/* e2fs needs byte swapping on big-endian systems */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#	define e2fs_iload(old, new) bcopy((old),(new),sizeof(struct ext2fs_dinode))
+#	define e2fs_isave(old, new) bcopy((old),(new),sizeof(struct ext2fs_dinode))
+#else
+void e2fs_i_bswap __P((struct ext2fs_dinode *, struct ext2fs_dinode *));
+#	define e2fs_iload(old, new) e2fs_i_bswap((old), (new))
+#	define e2fs_isave(old, new) e2fs_i_bswap((old), (new))
+#endif

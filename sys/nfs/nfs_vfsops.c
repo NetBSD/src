@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.62.2.2 1997/09/16 03:51:25 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.62.2.3 1997/10/14 15:58:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -102,9 +102,8 @@ struct vfsops nfs_vfsops = {
 extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 
-static int
-nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
-    struct mount **, struct vnode **));
+static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
+    struct mount **, struct vnode **, struct proc *));
 
 #define TRUE	1
 #define	FALSE	0
@@ -140,7 +139,7 @@ nfs_statfs(mp, sbp, p)
 	vp = NFSTOV(np);
 	cred = crget();
 	cred->cr_ngroups = 0;
-	if (v3 && (nmp->nm_flag & NFSMNT_GOTFSINFO) == 0)
+	if (v3 && (nmp->nm_iflag & NFSMNT_GOTFSINFO) == 0)
 		(void)nfs_fsinfo(nmp, vp, cred, p);
 	nfsstats.rpccnt[NFSPROC_FSSTAT]++;
 	nfsm_reqhead(vp, NFSPROC_FSSTAT, NFSX_FH(v3));
@@ -239,11 +238,11 @@ nfs_fsinfo(nmp, vp, cred, p)
 				nmp->nm_rsize = max;
 		}
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_dtpref);
-		if (pref < nmp->nm_readdirsize && pref >= NFS_DIRBLKSIZ)
-			nmp->nm_readdirsize = (pref + NFS_DIRBLKSIZ - 1) &
-				~(NFS_DIRBLKSIZ - 1);
+		if (pref < nmp->nm_readdirsize && pref >= NFS_DIRFRAGSIZ)
+			nmp->nm_readdirsize = (pref + NFS_DIRFRAGSIZ - 1) &
+				~(NFS_DIRFRAGSIZ - 1);
 		if (max < nmp->nm_readdirsize && max > 0) {
-			nmp->nm_readdirsize = max & ~(NFS_DIRBLKSIZ - 1);
+			nmp->nm_readdirsize = max & ~(NFS_DIRFRAGSIZ - 1);
 			if (nmp->nm_readdirsize == 0)
 				nmp->nm_readdirsize = max;
 		}
@@ -252,7 +251,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 		fxdr_hyper(&fsp->fs_maxfilesize, &maxfsize);
 		if (maxfsize > 0 && maxfsize < nmp->nm_maxfilesize)
 			nmp->nm_maxfilesize = maxfsize;
-		nmp->nm_flag |= NFSMNT_GOTFSINFO;
+		nmp->nm_iflag |= NFSMNT_GOTFSINFO;
 	}
 	nfsm_reqdone;
 	return (error);
@@ -301,7 +300,7 @@ nfs_mountroot()
 	/*
 	 * Create the root mount point.
 	 */
-	error = nfs_mount_diskless(&nd->nd_root, "/", &mp, &vp);
+	error = nfs_mount_diskless(&nd->nd_root, "/", &mp, &vp, procp);
 	if (error)
 		goto out;
 	printf("root on %s\n", nd->nd_root.ndm_host);
@@ -370,7 +369,7 @@ nfs_mountroot()
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
 	 */
-	error = nfs_mount_diskless(&nd->nd_swap, "/swap", &mp, &vp);
+	error = nfs_mount_diskless(&nd->nd_swap, "/swap", &mp, &vp, procp);
 	if (error) {
 		printf("nfs_boot: warning: mount(swap), error=%d\n", error);
 		error = 0;
@@ -413,11 +412,12 @@ out:
  * (once for root and once for swap)
  */
 static int
-nfs_mount_diskless(ndmntp, mntname, mpp, vpp)
+nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	struct nfs_dlmount *ndmntp;
 	const char *mntname;	/* mount point name */
 	struct mount **mpp;
 	struct vnode **vpp;
+	struct proc *p;
 {
 	struct mount *mp;
 	struct mbuf *m;
@@ -442,7 +442,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp)
 	      (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
-			 ndmntp->ndm_args.hostname, vpp);
+			 ndmntp->ndm_args.hostname, vpp, p);
 	if (error) {
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);
@@ -479,8 +479,7 @@ nfs_decode_args(nmp, argp)
 		    (argp->flags & NFSMNT_NOCONN));
 
 	/* Update flags atomically.  Don't change the lock bits. */
-	nmp->nm_flag =
-	    (argp->flags & ~NFSMNT_INTERNAL) | (nmp->nm_flag & NFSMNT_INTERNAL);
+	nmp->nm_flag = argp->flags | nmp->nm_flag;
 	splx(s);
 
 	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
@@ -535,9 +534,12 @@ nfs_decode_args(nmp, argp)
 
 	if ((argp->flags & NFSMNT_READDIRSIZE) && argp->readdirsize > 0) {
 		nmp->nm_readdirsize = argp->readdirsize;
-		/* Round down to multiple of blocksize */
-		nmp->nm_readdirsize &= ~(NFS_DIRBLKSIZ - 1);
-		if (nmp->nm_readdirsize < NFS_DIRBLKSIZ)
+		/* Round down to multiple of minimum blocksize */
+		nmp->nm_readdirsize &= ~(NFS_DIRFRAGSIZ - 1);
+		if (nmp->nm_readdirsize < NFS_DIRFRAGSIZ)
+			nmp->nm_readdirsize = NFS_DIRFRAGSIZ;
+		/* Bigger than buffer size makes no sense */
+		if (nmp->nm_readdirsize > NFS_DIRBLKSIZ)
 			nmp->nm_readdirsize = NFS_DIRBLKSIZ;
 	} else if (argp->flags & NFSMNT_RSIZE)
 		nmp->nm_readdirsize = nmp->nm_rsize;
@@ -635,7 +637,7 @@ nfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 	args.fh = nfh;
-	error = mountnfs(&args, mp, nam, pth, hst, &vp);
+	error = mountnfs(&args, mp, nam, pth, hst, &vp, p);
 	return (error);
 }
 
@@ -643,17 +645,19 @@ nfs_mount(mp, path, data, ndp, p)
  * Common code for mount and mountroot
  */
 int
-mountnfs(argp, mp, nam, pth, hst, vpp)
+mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	register struct nfs_args *argp;
 	register struct mount *mp;
 	struct mbuf *nam;
 	const char *pth, *hst;
 	struct vnode **vpp;
+	struct proc *p;
 {
 	register struct nfsmount *nmp;
 	struct nfsnode *np;
 	int error;
 	struct vattr attrs;
+	struct ucred *cr;
 
 	if (mp->mnt_flag & MNT_UPDATE) {
 		nmp = VFSTONFS(mp);
@@ -747,7 +751,15 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	if (error)
 		goto bad;
 	*vpp = NFSTOV(np);
-	VOP_GETATTR(*vpp, &attrs, curproc->p_ucred, curproc); /* XXX */
+	VOP_GETATTR(*vpp, &attrs, p->p_ucred, p);
+	if (nmp->nm_flag & NFSMNT_NFSV3) {
+		cr = crget();
+		cr->cr_uid = attrs.va_uid;
+		cr->cr_gid = attrs.va_gid;
+		cr->cr_ngroups = 0;
+		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, p, cr);
+		crfree(cr);
+	}
 
 	return (0);
 bad:
@@ -800,13 +812,13 @@ nfs_unmount(mp, mntflags, p)
 	/*
 	 * Must handshake with nqnfs_clientd() if it is active.
 	 */
-	nmp->nm_flag |= NFSMNT_DISMINPROG;
+	nmp->nm_iflag |= NFSMNT_DISMINPROG;
 	while (nmp->nm_inprog != NULLVP)
 		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfsdism", 0);
 	error = vflush(mp, vp, flags);
 	if (error) {
 		vput(vp);
-		nmp->nm_flag &= ~NFSMNT_DISMINPROG;
+		nmp->nm_iflag &= ~NFSMNT_DISMINPROG;
 		return (error);
 	}
 
@@ -815,7 +827,7 @@ nfs_unmount(mp, mntflags, p)
 	 * For NQNFS, let the server daemon free the nfsmount structure.
 	 */
 	if (nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB))
-		nmp->nm_flag |= NFSMNT_DISMNT;
+		nmp->nm_iflag |= NFSMNT_DISMNT;
 
 	/*
 	 * There are two reference counts to get rid of here.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.38 1997/05/22 18:20:06 gwr Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.38.4.1 1997/10/14 15:58:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -442,7 +442,7 @@ nfs_receive(rep, aname, mp)
 	 * until we have an entire rpc request/reply.
 	 */
 	if (sotype != SOCK_DGRAM) {
-		error = nfs_sndlock(&rep->r_nmp->nm_flag, rep);
+		error = nfs_sndlock(&rep->r_nmp->nm_iflag, rep);
 		if (error)
 			return (error);
 tryagain:
@@ -456,14 +456,14 @@ tryagain:
 		 * mount point.
 		 */
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM)) {
-			nfs_sndunlock(&rep->r_nmp->nm_flag);
+			nfs_sndunlock(&rep->r_nmp->nm_iflag);
 			return (EINTR);
 		}
 		so = rep->r_nmp->nm_so;
 		if (!so) {
 			error = nfs_reconnect(rep); 
 			if (error) {
-				nfs_sndunlock(&rep->r_nmp->nm_flag);
+				nfs_sndunlock(&rep->r_nmp->nm_iflag);
 				return (error);
 			}
 			goto tryagain;
@@ -475,13 +475,13 @@ tryagain:
 			if (error) {
 				if (error == EINTR || error == ERESTART ||
 				    (error = nfs_reconnect(rep)) != 0) {
-					nfs_sndunlock(&rep->r_nmp->nm_flag);
+					nfs_sndunlock(&rep->r_nmp->nm_iflag);
 					return (error);
 				}
 				goto tryagain;
 			}
 		}
-		nfs_sndunlock(&rep->r_nmp->nm_flag);
+		nfs_sndunlock(&rep->r_nmp->nm_iflag);
 		if (sotype == SOCK_STREAM) {
 			aio.iov_base = (caddr_t) &len;
 			aio.iov_len = sizeof(u_int32_t);
@@ -576,13 +576,13 @@ errout:
 				    "receive error %d from nfs server %s\n",
 				    error,
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
-			error = nfs_sndlock(&rep->r_nmp->nm_flag, rep);
+			error = nfs_sndlock(&rep->r_nmp->nm_iflag, rep);
 			if (!error)
 				error = nfs_reconnect(rep);
 			if (!error)
 				goto tryagain;
 			else
-				nfs_sndunlock(&rep->r_nmp->nm_flag);
+				nfs_sndunlock(&rep->r_nmp->nm_iflag);
 		}
 	} else {
 		if ((so = rep->r_nmp->nm_so) == NULL)
@@ -647,7 +647,7 @@ nfs_reply(myrep)
 		 * Get the next Rpc reply off the socket
 		 */
 		error = nfs_receive(myrep, &nam, &mrep);
-		nfs_rcvunlock(&nmp->nm_flag);
+		nfs_rcvunlock(&nmp->nm_iflag);
 		if (error) {
 
 			/*
@@ -913,12 +913,12 @@ tryagain:
 		nmp->nm_sent < nmp->nm_cwnd)) {
 		splx(s);
 		if (nmp->nm_soflags & PR_CONNREQUIRED)
-			error = nfs_sndlock(&nmp->nm_flag, rep);
+			error = nfs_sndlock(&nmp->nm_iflag, rep);
 		if (!error) {
 			m = m_copym(m, 0, M_COPYALL, M_WAIT);
 			error = nfs_send(nmp->nm_so, nmp->nm_nam, m, rep);
 			if (nmp->nm_soflags & PR_CONNREQUIRED)
-				nfs_sndunlock(&nmp->nm_flag);
+				nfs_sndunlock(&nmp->nm_iflag);
 		}
 		if (!error && (rep->r_flags & R_MUSTRESEND) == 0) {
 			nmp->nm_sent += NFS_CWNDSCALE;
@@ -1443,7 +1443,7 @@ int
 nfs_rcvlock(rep)
 	register struct nfsreq *rep;
 {
-	register int *flagp = &rep->r_nmp->nm_flag;
+	register int *flagp = &rep->r_nmp->nm_iflag;
 	int slpflag, slptimeo = 0;
 
 	if (*flagp & NFSMNT_INT)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.20 1997/04/11 21:52:07 kleink Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.20.4.1 1997/10/14 15:58:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,20 +58,33 @@ struct sillyrename {
 };
 
 /*
- * This structure is used to save the logical directory offset to
- * NFS cookie mappings.
- * The mappings are stored in a list headed
- * by n_cookies, as required.
- * There is one mapping for each NFS_DIRBLKSIZ bytes of directory information
- * stored in increasing logical offset byte order.
+ * Definitions for the directory cache. Because directory cookies
+ * are an opaque 64 bit entity, we need to provide some sort of
+ * mapping between cookies and logical blocknumbers. Also,
+ * we should store the cookies from the server somewhere,
+ * to be able to satisfy VOP_READDIR requests for cookies.
+ * We can't store the cookies in the dirent structure, as some
+ * other systems.
+ *
+ * Each offset is hashed into a per-nfsnode hashtable. An entry
+ * found therein contains information about the (faked up)
+ * logical blocknumber, and also a pointer to a buffer where
+ * the cookies are stored.
  */
-#define NFSNUMCOOKIES		31
 
-struct nfsdmap {
-	LIST_ENTRY(nfsdmap)	ndm_list;
-	int			ndm_eocookie;
-	nfsuint64		ndm_cookies[NFSNUMCOOKIES];
+extern u_long nfsdirhashmask;
+
+LIST_HEAD(nfsdirhashhead, nfsdircache);
+TAILQ_HEAD(nfsdirchainhead, nfsdircache);
+
+struct nfsdircache {
+	LIST_ENTRY(nfsdircache) dc_hash;
+	TAILQ_ENTRY(nfsdircache) dc_chain;
+	off_t	dc_cookie;
+	daddr_t	dc_blkno;
+	int	dc_entry;
 };
+
 
 /*
  * The nfsnode is the nfs equivalent to ufs's inode. Any similarity
@@ -96,6 +109,7 @@ struct nfsnode {
 	time_t			n_attrstamp;	/* Attr. cache timestamp */
 	time_t			n_mtime;	/* Prev modify time. */
 	time_t			n_ctime;	/* Prev create time. */
+	time_t			n_nctime;	/* Last neg cache entry (dir) */
 	time_t			n_expiry;	/* Lease expiry time */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
 	struct vnode		*n_vnode;	/* associated vnode */
@@ -111,11 +125,14 @@ struct nfsnode {
 	} n_un2;
 	union {
 		struct sillyrename *nf_silly;	/* Ptr to silly rename struct */
-		LIST_HEAD(, nfsdmap) nd_cook;	/* cookies */
+		struct nfsdirhashhead *nd_dircache;
 	} n_un3;
 	short			n_fhsize;	/* size in bytes, of fh */
 	short			n_flag;		/* Flag for locking.. */
 	nfsfh_t			n_fh;		/* Small File Handle */
+	daddr_t			n_dblkno;	/* To keep faked dir blkno */
+	unsigned		n_dircachesize;	/* Size of dir cookie cache */
+	struct nfsdirchainhead	n_dirchain;	/* Chain of dir cookies */
 };
 
 #define n_atim		n_un1.nf_atim
@@ -123,7 +140,7 @@ struct nfsnode {
 #define n_sillyrename	n_un3.nf_silly
 #define n_cookieverf	n_un1.nd_cookieverf
 #define n_direofoffset	n_un2.nd_direof
-#define n_cookies	n_un3.nd_cook
+#define n_dircache	n_un3.nd_dircache
 
 /*
  * Flags for n_flag

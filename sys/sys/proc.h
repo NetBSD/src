@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.50.2.1 1997/09/16 03:51:30 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.50.2.2 1997/10/14 16:03:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -144,7 +144,7 @@ struct	proc {
 	int	p_cpticks;	 /* Ticks of cpu time. */
 	fixpt_t	p_pctcpu;	 /* %cpu for this process during p_swtime */
 	void	*p_wchan;	 /* Sleep address. */
-	char	*p_wmesg;	 /* Reason for sleep. */
+	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
 
@@ -283,7 +283,7 @@ extern int nprocs, maxproc;		/* Current and max number of procs. */
 LIST_HEAD(proclist, proc);
 extern struct proclist allproc;		/* List of all processes. */
 extern struct proclist zombproc;	/* List of zombie processes. */
-struct proc *initproc, *pageproc;	/* Process slots for init, pager. */
+struct proc *initproc;			/* Process slots for init, pager. */
 
 #define	NQS	32			/* 32 run queues. */
 int	whichqs;			/* Bit mask summary of non-empty Q's. */
@@ -309,7 +309,7 @@ void	setrunnable __P((struct proc *));
 void	setrunqueue __P((struct proc *));
 void	sleep __P((void *chan, int pri));
 void	swapin __P((struct proc *));
-int	tsleep __P((void *chan, int pri, char *wmesg, int timo));
+int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
 void	exit1 __P((struct proc *, int));

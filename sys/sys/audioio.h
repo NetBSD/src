@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.12.2.1 1997/08/28 00:23:49 thorpej Exp $	*/
+/*	$NetBSD: audioio.h,v 1.12.2.2 1997/10/14 16:03:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -232,8 +232,8 @@ typedef struct mixer_ctrl {
  */
 #define AudioNmicrophone	"mic"
 #define AudioNline	"line"
-#define AudioNcd	"CD"
-#define AudioNdac	"DAC"
+#define AudioNcd	"cd"
+#define AudioNdac	"dac"
 #define AudioNrecord	"record"
 #define AudioNvolume	"volume"
 #define AudioNmonitor	"monitor"
@@ -263,18 +263,18 @@ typedef struct mixer_ctrl {
 
 #define AudioEmulaw "mulaw"
 #define AudioEalaw "alaw"
-#define AudioEadpcm "ADPCM"
-#define AudioElinear "linear"
-#define AudioElinear_le "linear_le"
-#define AudioElinear_be "linear_be"
+#define AudioEadpcm "adpcm"
+#define AudioEslinear "slinear"
+#define AudioEslinear_le "slinear_le"
+#define AudioEslinear_be "slinear_be"
 #define AudioEulinear "ulinear"
 #define AudioEulinear_le "ulinear_le"
 #define AudioEulinear_be "ulinear_be"
 
-#define AudioCInputs	"Inputs"
-#define AudioCOutputs	"Outputs"
-#define AudioCRecord	"Record"
-#define AudioCMonitor	"Monitor"
-#define AudioCEqualization	"Equalization"
+#define AudioCinputs	"inputs"
+#define AudioCoutputs	"outputs"
+#define AudioCrecord	"record"
+#define AudioCmonitor	"monitor"
+#define AudioCequalization	"equalization"
 
 #endif /* !_SYS_AUDIOIO_H_ */

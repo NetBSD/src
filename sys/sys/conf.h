@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.49 1997/03/18 05:55:37 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.49.4.1 1997/10/14 16:03:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -293,6 +293,14 @@ extern struct cdevsw cdevsw[];
 #define	cdev_uk_init(c,n)	cdev__oci_init(c,n)
 #define	cdev_se_init(c,n)	cdev__oci_init(c,n)
 
+/* open, close, read, write, ioctl, poll */
+#define cdev__ocrwip_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+#define cdev_rnd_init(c,n)	cdev__ocrwip_init(c,n)
+
 /* open, close, ioctl, poll, mmap */
 #define	cdev_fb_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -321,8 +329,8 @@ extern struct cdevsw cdevsw[];
 	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
 /* symbolic sleep message strings */
-extern char devopn[], devio[], devwait[], devin[], devout[];
-extern char devioc[], devcls[];
+extern	const char devopn[], devio[], devwait[], devin[], devout[];
+extern	const char devioc[], devcls[];
 
 #endif /* _KERNEL */
 
@@ -448,6 +456,8 @@ cdev_decl(filedesc);
 cdev_decl(lkm);
 
 cdev_decl(log);
+
+cdev_decl(rnd);
 
 #endif /* _KERNEL */
 

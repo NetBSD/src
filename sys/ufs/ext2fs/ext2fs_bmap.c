@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.2 1997/07/24 17:18:03 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.2.2.1 1997/10/14 16:06:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -57,6 +57,7 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
 static int ext2fs_bmaparray __P((struct vnode *, daddr_t, daddr_t *,
@@ -151,20 +152,20 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 	num = *nump;
 	if (num == 0) {
-		*bnp = blkptrtodb(ump, ip->i_e2fs_blocks[bn]);
+		*bnp = blkptrtodb(ump, fs2h32(ip->i_e2fs_blocks[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
 			for (++bn; bn < NDADDR && *runp < maxrun &&
-				is_sequential(ump, ip->i_e2fs_blocks[bn - 1],
-							  ip->i_e2fs_blocks[bn]);
+				is_sequential(ump, fs2h32(ip->i_e2fs_blocks[bn - 1]),
+							  fs2h32(ip->i_e2fs_blocks[bn]));
 				++bn, ++*runp);
 		return (0);
 	}
 
 
 	/* Get disk address out of indirect block array */
-	daddr = ip->i_e2fs_blocks[NDADDR + xap->in_off];
+	daddr = fs2h32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
 
 	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 
@@ -212,7 +213,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			}
 		}
 
-		daddr = ((daddr_t *)bp->b_data)[xap->in_off];
+		daddr = fs2h32(((daddr_t *)bp->b_data)[xap->in_off]);
 		if (num == 1 && daddr && runp)
 			for (bn = xap->in_off + 1;
 				bn < MNINDIR(ump) && *runp < maxrun &&
