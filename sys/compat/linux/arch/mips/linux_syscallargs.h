@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.11 2002/04/10 18:19:09 christos Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.11.4.1 2003/10/22 04:03:00 jmc Exp $ */
 
 /*
  * System call argument lists.
@@ -711,6 +711,7 @@ int	linux_sys_pwrite(struct proc *, void *, register_t *);
 int	linux_sys_chown(struct proc *, void *, register_t *);
 int	sys___getcwd(struct proc *, void *, register_t *);
 int	linux_sys_sigaltstack(struct proc *, void *, register_t *);
+int	linux_sys_mmap2(struct proc *, void *, register_t *);
 int	linux_sys_truncate64(struct proc *, void *, register_t *);
 int	linux_sys_stat64(struct proc *, void *, register_t *);
 int	linux_sys_lstat64(struct proc *, void *, register_t *);

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.44 2002/04/10 18:19:07 christos Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.44.4.1 2003/10/22 04:03:00 jmc Exp $ */
 
 /*
  * System call numbers.
@@ -482,8 +482,8 @@
 /* syscall: "ugetrlimit" ret: "int" args: "int" "struct orlimit *" */
 #define	LINUX_SYS_ugetrlimit	191
 
-/* syscall: "mmap" ret: "linux_off_t" args: "unsigned long" "size_t" "int" "int" "int" "linux_off_t" */
-#define	LINUX_SYS_mmap	192
+/* syscall: "mmap2" ret: "linux_off_t" args: "unsigned long" "size_t" "int" "int" "int" "linux_off_t" */
+#define	LINUX_SYS_mmap2	192
 
 /* syscall: "truncate64" ret: "int" args: "const char *" "off_t" */
 #define	LINUX_SYS_truncate64	193
