@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsv2.h	7.8 (Berkeley) 6/28/90
- *	$Id: nfsv2.h,v 1.5 1994/03/09 21:24:43 ws Exp $
+ *	$Id: nfsv2.h,v 1.6 1994/03/10 16:56:29 ws Exp $
  */
 
 #ifndef _NFS_NFSV2_H_
@@ -115,8 +115,9 @@
 typedef enum { NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 } nfstype;
 
 /* Conversion macros */
-extern nfstype nfs_type[];
-#define	vtonfs_mode(t,m) txdr_unsigned((int)(nfs_type[(long)(t)] | (m)))
+extern nfstype	nfs_type[];
+extern int	vttoif_tab[];
+#define	vtonfs_mode(t,m) txdr_unsigned((int)(vttoif_tab[(int)(t)] | (m)))
 #define	nfstov_mode(a)	(fxdr_unsigned(u_short, (a))&07777)
 #define	vtonfs_type(a)	txdr_unsigned(nfs_type[(long)(a)])
 #define	nfstov_type(a)	ntov_type[fxdr_unsigned(u_long,(a))&0x7]

@@ -258,7 +258,7 @@ file ufs/ufs_subr.c		ffs
 file ufs/ufs_tables.c		ffs
 file ufs/ufs_vfsops.c		ffs
 file ufs/ufs_vnops.c		ffs
-file ufs/ufs_vtab.c		ffs nfsserver
+file ufs/ufs_vtab.c		ffs nfsserver nfsclient
 file vm/device_pager.c	 	devpager
 file vm/kern_lock.c		
 file vm/swap_pager.c		swappager

@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.40 1994/03/09 21:23:26 ws Exp $
+#	$Id: files.oldconf,v 1.41 1994/03/10 16:56:14 ws Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -220,7 +220,7 @@ ufs/ufs_subr.c		optional ffs
 ufs/ufs_tables.c	optional ffs
 ufs/ufs_vfsops.c	optional ffs
 ufs/ufs_vnops.c		optional ffs
-ufs/ufs_vtab.c		optional ffs or nfsserver
+ufs/ufs_vtab.c		optional ffs or nfsserver or nfsclient
 vm/device_pager.c	optional devpager
 vm/kern_lock.c		standard
 vm/swap_pager.c		optional swappager
