@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.22 2001/04/04 09:44:35 wiz Exp $
+.\"	$NetBSD: su.1,v 1.23 2001/12/08 19:17:03 wiz Exp $
 .\"
 .Dd March 7, 2001
 .Dt SU 1
@@ -187,34 +187,6 @@ By default (unless the prompt is reset by a startup file) the super-user
 prompt is set to
 .Dq Sy \&#
 to remind one of its awesome power.
-.Sh EXAMPLES
-To become user username and use the same environment as in original shell, execute:
-.Bd -literal -offset indent
-su username
-.Ed
-
-To become user username and use environment as if full login would be performed,
-execute:
-.Bd -literal -offset indent
-su -l username
-.Ed
-
-To execute arbitrary command with privileges of user username, execute:
-.Bd -literal -offset indent
-su username -c "command args"
-.Ed
-.Sh SEE ALSO
-.Xr csh 1 ,
-.Xr kinit 1 ,
-.Xr login 1 ,
-.Xr sh 1 ,
-.Xr skey 1 ,
-.Xr setusercontext 3 ,
-.Xr login.conf 5 ,
-.Xr passwd 5 ,
-.Xr group 5 ,
-.Xr environ 7 ,
-.Xr kerberos 8
 .Sh ENVIRONMENT
 Environment variables used by
 .Nm "" :
@@ -232,6 +204,34 @@ The user ID is always the effective ID (the target user ID) after an
 .Nm
 unless the user ID is 0 (root).
 .El
+.Sh EXAMPLES
+To become user username and use the same environment as in original shell, execute:
+.Bd -literal -offset indent
+su username
+.Ed
+.Pp
+To become user username and use environment as if full login would be performed,
+execute:
+.Bd -literal -offset indent
+su -l username
+.Ed
+.Pp
+To execute arbitrary command with privileges of user username, execute:
+.Bd -literal -offset indent
+su username -c "command args"
+.Ed
+.Sh SEE ALSO
+.Xr csh 1 ,
+.Xr kinit 1 ,
+.Xr login 1 ,
+.Xr sh 1 ,
+.Xr skey 1 ,
+.Xr setusercontext 3 ,
+.Xr group 5 ,
+.Xr login.conf 5 ,
+.Xr passwd 5 ,
+.Xr environ 7 ,
+.Xr kerberos 8
 .Sh HISTORY
 A
 .Nm
