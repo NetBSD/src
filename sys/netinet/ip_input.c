@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.53 1997/10/18 21:18:31 kml Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.53.2.1 1998/05/09 03:33:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -86,6 +86,10 @@
 #ifndef IPMTUDISC
 #define IPMTUDISC	0
 #endif
+#ifndef IPMTUDISCTIMEOUT
+#define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
+#endif
+
 
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -105,9 +109,12 @@ int	ip_forwsrcrt = IPFORWSRCRT;
 int	ip_directedbcast = IPDIRECTEDBCAST;
 int	ip_allowsrcrt = IPALLOWSRCRT;
 int	ip_mtudisc = IPMTUDISC;
+u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
+
+struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
 
 extern	struct domain inetdomain;
 extern	struct protosw inetsw[];
@@ -157,6 +164,10 @@ ip_init()
 	ip_id = time.tv_sec & 0xffff;
 	ipintrq.ifq_maxlen = ipqmaxlen;
 	TAILQ_INIT(&in_ifaddr);
+
+	if (ip_mtudisc != 0)
+		ip_mtudisc_timeout_q = 
+		    rt_timer_queue_create(ip_mtudisc_timeout);
 }
 
 struct	sockaddr_in ipaddr = { sizeof(ipaddr), AF_INET };
@@ -1248,6 +1259,7 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	size_t newlen;
 {
 	extern int subnetsarelocal;
+	int error;
 
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
@@ -1283,8 +1295,23 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &subnetsarelocal));
 	case IPCTL_MTUDISC:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, 
-		    &ip_mtudisc));
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ip_mtudisc);
+		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
+			ip_mtudisc_timeout_q = 
+			    rt_timer_queue_create(ip_mtudisc_timeout);
+		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
+			rt_timer_queue_destroy(ip_mtudisc_timeout_q, TRUE);
+			ip_mtudisc_timeout_q = NULL;
+		}
+		return error;
+	case IPCTL_MTUDISCTIMEOUT:
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+		   &ip_mtudisc_timeout);
+		if (ip_mtudisc_timeout_q != NULL)
+			rt_timer_queue_change(ip_mtudisc_timeout_q, 
+					      ip_mtudisc_timeout);
+  		return (error);
 	default:
 		return (EOPNOTSUPP);
 	}

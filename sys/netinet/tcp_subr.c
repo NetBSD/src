@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.32.2.7 1998/05/05 23:01:58 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.32.2.8 1998/05/09 03:33:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -72,6 +72,7 @@ int 	tcp_mssdflt = TCP_MSS;
 int 	tcp_rttdflt = TCPTV_SRTTDFLT / PR_SLOWHZ;
 int	tcp_do_rfc1323 = 1;
 int	tcp_init_win = 1;
+int	tcp_mss_ifmtu = 0;
 
 #ifndef TCBHASHSIZE
 #define	TCBHASHSIZE	128
@@ -546,32 +547,43 @@ tcp_mtudisc(inp, errno)
 /*
  * Compute the MSS to advertise to the peer.  Called only during
  * the 3-way handshake.  If we are the server (peer initiated
- * connection), we are called with the TCPCB for the listen
- * socket.  If we are the client (we initiated connection), we
- * are called witht he TCPCB for the actual connection.
+ * connection), we are called with a pointer to the interface
+ * on which the SYN packet arrived.  If we are the client (we 
+ * initiated connection), we are called with a pointer to the
+ * interface out which this connection should go.
  */
-int
-tcp_mss_to_advertise(tp)
-	const struct tcpcb *tp;
+u_long
+tcp_mss_to_advertise(ifp)
+	const struct ifnet *ifp;
 {
 	extern u_long in_maxmtu;
-	struct inpcb *inp;
-	struct socket *so;
-	int mss;
-
-	inp = tp->t_inpcb;
-	so = inp->inp_socket;
+	u_long mss = 0;
 
 	/*
 	 * In order to avoid defeating path MTU discovery on the peer,
 	 * we advertise the max MTU of all attached networks as our MSS,
 	 * per RFC 1191, section 3.1.
 	 *
-	 * XXX Should we allow room for the timestamp option if
-	 * XXX rfc1323 is enabled?
+	 * We provide the option to advertise just the MTU of
+	 * the interface on which we hope this connection will
+	 * be receiving.  If we are responding to a SYN, we
+	 * will have a pretty good idea about this, but when
+	 * initiating a connection there is a bit more doubt.
+	 *
+	 * We also need to ensure that loopback has a large enough
+	 * MSS, as the loopback MTU is never included in in_maxmtu.
 	 */
-	mss = in_maxmtu - sizeof(struct tcpiphdr);
 
+	if (ifp != NULL)
+		mss = ifp->if_mtu;
+
+	if (tcp_mss_ifmtu == 0)
+		mss = max(in_maxmtu, mss);
+
+	if (mss > sizeof(struct tcpiphdr))
+		mss -= sizeof(struct tcpiphdr);
+
+	mss = max(tcp_mssdflt, mss);
 	return (mss);
 }
 
@@ -606,7 +618,8 @@ tcp_mss_from_peer(tp, offer)
 	if (offer)
 		mss = offer;
 	mss = max(mss, 32);		/* sanity */
-	mss -= tcp_optlen(tp);
+	tp->t_peermss = mss;
+	mss -= (tcp_optlen(tp) + ip_optlen(tp->t_inpcb));
 
 	/*
 	 * If there's a pipesize, change the socket buffer to that size.
@@ -628,7 +641,6 @@ tcp_mss_from_peer(tp, offer)
 			bufsize = sb_max;
 		(void) sbreserve(&so->so_snd, bufsize);
 	}
-	tp->t_peermss = mss;
 	tp->t_segsz = mss;
 
 	/* Initialize the initial congestion window. */
