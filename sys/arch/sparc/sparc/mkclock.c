@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.4 2002/10/02 16:02:11 thorpej Exp $ */
+/*	$NetBSD: mkclock.c,v 1.5 2003/02/26 17:39:07 pk Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
+#include <machine/promlib.h>
 #include <machine/cpu.h>
-#include <machine/idprom.h>
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
@@ -80,7 +80,6 @@ CFATTACH_DECL(clock_obio, sizeof(struct device),
 /* Imported from clock.c: */
 extern todr_chip_handle_t todr_handle;
 extern int (*eeprom_nvram_wenable)(int);
-void establish_hostid(struct idprom *);
 
 
 /*
@@ -210,7 +209,6 @@ clockattach(node, bt, bh)
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
 {
-	struct idprom *idp;
 	char *model;
 
 	if (CPU_ISSUN4)
@@ -225,6 +223,8 @@ clockattach(node, bt, bh)
 	if (todr_handle == NULL)
 		panic("Cannot attach %s tod clock", model);
 
+	printf("\n");
+
 	/*
 	 * Store NVRAM base address and size in globals for use
 	 * by mk_nvram_wenable().
@@ -238,25 +238,13 @@ clockattach(node, bt, bh)
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
-		extern struct idprom sun4_idprom_store;
-		idp = &sun4_idprom_store;
 		if (cpuinfo.cpu_type == CPUTYP_4_300 ||
 		    cpuinfo.cpu_type == CPUTYP_4_400) {
 			eeprom_va = bus_space_vaddr(bt, bh);
 			eeprom_nvram_wenable = mk_nvram_wenable;
 		}
-	} else
-#endif
-	{
-	/*
-	 * Location of IDPROM relative to the end of the NVRAM area
-	 */
-#define MK48TXX_IDPROM_OFFSET (mk_nvram_size - 40)
-
-		idp = (struct idprom *)((u_long)bh + MK48TXX_IDPROM_OFFSET);
 	}
-
-	establish_hostid(idp);
+#endif
 }
 
 /*

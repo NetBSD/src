@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.173 2003/01/23 19:54:35 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.174 2003/02/26 17:39:07 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -65,6 +65,7 @@
 
 #include <uvm/uvm.h>
 
+#include <machine/promlib.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -72,9 +73,6 @@
 #include <machine/trap.h>
 #include <machine/pcb.h>
 #include <machine/pmap.h>
-
-#include <machine/oldmon.h>
-#include <machine/idprom.h>
 
 #if defined(MULTIPROCESSOR) && defined(DDB)
 #include <machine/db_machdep.h>
@@ -1111,24 +1109,15 @@ getcacheinfo_sun4(sc, node)
 	}
 }
 
-struct	idprom sun4_idprom_store;
-void	getidprom __P((struct idprom *, int size));
-
 void
 cpumatch_sun4(sc, mp, node)
 	struct cpu_info *sc;
 	struct module_info *mp;
 	int	node;
 {
-	extern struct idprom *idprom;
-	/*
-	 * XXX - for e.g. myetheraddr(), which in sun4 can be called
-	 *	 before the clock attaches.
-	 */
-	idprom = &sun4_idprom_store;
+	struct idprom *idp = prom_getidprom();
 
-	getidprom(&sun4_idprom_store, sizeof(struct idprom));
-	switch (sun4_idprom_store.id_machine) {
+	switch (idp->id_machine) {
 	case ID_SUN4_100:
 		sc->cpu_type = CPUTYP_4_100;
 		sc->classlvl = 100;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2002/12/10 13:44:51 pk Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.7 2003/02/26 17:39:07 pk Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -63,7 +63,6 @@ int sparc_pci_debug = 0;
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/openfirm.h>
 
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
