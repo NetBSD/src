@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.127 2003/05/20 01:29:35 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.128 2003/05/22 06:34:45 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.127 2003/05/20 01:29:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.128 2003/05/22 06:34:45 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -492,7 +492,7 @@ wi_intr(void *arg)
 	int i;
 	struct wi_softc	*sc = arg;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
-	u_int16_t status, raw_status, last_status;
+	u_int16_t status;
 
 	if (sc->sc_enabled == 0 ||
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
@@ -505,8 +505,12 @@ wi_intr(void *arg)
 		return 1;
 	}
 
+	/* This is superfluous on Prism, but Lucent breaks if we
+	 * do not disable interrupts.
+	 */
+	CSR_WRITE_2(sc, WI_INT_EN, 0);
+
 	/* maximum 10 loops per interrupt */
-	last_status = 0;
 	for (i = 0; i < 10; i++) {
 		/*
 		 * Only believe a status bit when we enter wi_intr, or when
@@ -515,11 +519,9 @@ wi_intr(void *arg)
 		 * can re-read the event status register more quickly than
 		 * it is updated.
 		 */
-		raw_status = CSR_READ_2(sc, WI_EVENT_STAT);
-		status = raw_status & ~last_status;
+		status = CSR_READ_2(sc, WI_EVENT_STAT);
 		if ((status & WI_INTRS) == 0)
 			break;
-		last_status = raw_status;
 
 		if (status & WI_EV_RX)
 			wi_rx_intr(sc);
@@ -538,6 +540,9 @@ wi_intr(void *arg)
 		    !IFQ_IS_EMPTY(&ifp->if_snd))
 			wi_start(ifp);
 	}
+
+	/* re-enable interrupts */
+	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
 
 	return 1;
 }
