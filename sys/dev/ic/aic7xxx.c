@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.3 1999/10/20 20:40:51 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.4 1999/10/26 23:10:15 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -307,6 +307,8 @@ static void	ahc_construct_sdtr __P((struct ahc_data *ahc, int start_byte,
 					u_int8_t period, u_int8_t offset));  
 static void	ahc_construct_wdtr __P((struct ahc_data *ahc, int start_byte,
 					u_int8_t bus_width));
+static void	ahc_update_xfer_mode __P((struct ahc_data *ahc, int channel,
+		    int target));
 
 #if defined(__FreeBSD__)
 
@@ -550,7 +552,9 @@ ahc_scsirate(ahc, scsirate, period, offset, channel, target )
 					  | (*offset & 0x0f);
 				*period = ahc_syncrates[i].period;
 
-#if 0
+#if 1
+				ahc_update_xfer_mode(ahc, channel, target);
+#else
 				if(bootverbose) {
 					printf("%s: target %d synchronous at %sMHz,"
 					       " offset = 0x%x\n",
@@ -567,7 +571,9 @@ ahc_scsirate(ahc, scsirate, period, offset, channel, target )
 		*scsirate = 0;
 		*period = 0;
 		*offset = 0;
-#if 0
+#if 1
+		ahc_update_xfer_mode(ahc, channel, target);
+#else
 		if (bootverbose)
 			printf("%s: target %d using asynchronous transfers\n",
 			       ahc_name(ahc), target );
@@ -1393,7 +1399,10 @@ ahc_handle_seqint(ahc, intstat)
 					scratch &= 0x7f;
 					break;
 				case BUS_16_BIT:
-#if 0
+#if 1
+					ahc_update_xfer_mode(ahc,
+					    channel, target);
+#else
 					if(bootverbose)
 						printf("%s: target %d using "
 						       "16Bit transfers\n",
@@ -1427,7 +1436,10 @@ ahc_handle_seqint(ahc, intstat)
 					if(ahc->type & AHC_WIDE) {
 						/* Negotiate 16_BITS */
 						bus_width = BUS_16_BIT;
-#if 0
+#if 1
+						ahc_update_xfer_mode(ahc,
+						    channel, target);
+#else
 						if(bootverbose)
 							printf("%s: target %d "
 							       "using 16Bit "
@@ -2616,67 +2628,79 @@ ahc_scsipi_request(chan, req, arg)
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 	    {
+		struct scsipi_xfer_mode *xm = arg;
 		int tmask;
 
-		periph = arg;
-		tmask = 1 << periph->periph_target;
+		tmask = 1 << xm->xm_target;
 
-		if (periph->periph_cap & PERIPH_CAP_TQING)
+		if (xm->xm_mode & PERIPH_CAP_TQING)
 			ahc->tagenable |= tmask;
-		if ((periph->periph_cap & PERIPH_CAP_SYNC) != 0 &&
+		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
 		    (ahc->needsdtr_orig & tmask) != 0)
 			ahc->needsdtr |= tmask;
-		if ((periph->periph_cap & PERIPH_CAP_WIDE16) != 0 &&
+		if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0 &&
 		    (ahc->needwdtr_orig & tmask) != 0)
 			ahc->needwdtr |= tmask;
-		return;
-	    }
 
-	case ADAPTER_REQ_GET_XFER_MODE:
-	    {
-		u_int8_t target_scratch, scratch_offset, ultraenable;
-		int i, sxfr, tmask;
-
-		periph = arg;
-		tmask = 1 << (periph->periph_target & 7);
-		scratch_offset = periph->periph_target +
-		    (periph->periph_channel->chan_channel == 1) ? 8 : 0;
-
-		periph->periph_mode = 0;
-		periph->periph_period = 0;
-		periph->periph_offset = 0;
-
-		if (ahc->tagenable & (1 << periph->periph_target))
-			periph->periph_mode |= PERIPH_CAP_TQING;
-
-		target_scratch = AHC_INB(ahc, TARG_SCRATCH + scratch_offset);
-		sxfr = target_scratch & SXFR;
-
-		if (target_scratch & WIDEXFER)
-			periph->periph_mode |= PERIPH_CAP_WIDE16;
-
-		if ((sxfr & 0x0f) != 0) {
-			periph->periph_mode |= PERIPH_CAP_SYNC;
-			periph->periph_offset = sxfr & 0x0f;
-
-			if (scratch_offset < 8)
-				ultraenable = AHC_INB(ahc, ULTRA_ENB);
-			else
-				ultraenable = AHC_INB(ahc, ULTRA_ENB + 1);
-
-			if (ultraenable & tmask)
-				sxfr |= 0x100;
-
-			for (i = 0; i < ahc_num_syncrates; i++)
-				if (sxfr == ahc_syncrates[i].sxfr)
-					break;
-
-			periph->periph_period = ahc_syncrates[i].period;
-		}
-		periph->periph_flags |= PERIPH_MODE_VALID;
+		/*
+		 * If we're not going to negotiate, update the mode
+		 * now since it won't happen later.
+		 */
+		if (((ahc->needsdtr | ahc->needwdtr) & tmask) == 0)
+			ahc_update_xfer_mode(ahc, chan->chan_channel,
+			    xm->xm_target);
 		return;
 	    }
 	}
+}
+
+static void
+ahc_update_xfer_mode(ahc, channel, target)
+	struct ahc_data *ahc;
+	int channel, target;
+{
+	struct scsipi_xfer_mode xm;
+	u_int8_t target_scratch, scratch_offset, ultraenable;
+	int i, sxfr, tmask;
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	tmask = 1 << (target & 7);
+	scratch_offset = target + ((channel == 1) ? 8 : 0);
+
+	if (ahc->tagenable & (1 << target))
+		xm.xm_mode |= PERIPH_CAP_TQING;
+
+	target_scratch = AHC_INB(ahc, TARG_SCRATCH + scratch_offset);
+	sxfr = target_scratch & SXFR;
+
+	if (target_scratch & WIDEXFER)
+		xm.xm_mode |= PERIPH_CAP_WIDE16;
+
+	if ((sxfr & 0x0f) != 0) {
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+		xm.xm_offset = sxfr & 0x0f;
+
+		if (scratch_offset < 8)
+			ultraenable = AHC_INB(ahc, ULTRA_ENB);
+		else
+			ultraenable = AHC_INB(ahc, ULTRA_ENB + 1);
+
+		if (ultraenable & tmask)
+			sxfr |= 0x100;
+
+		for (i = 0; i < ahc_num_syncrates; i++)
+			if (sxfr == ahc_syncrates[i].sxfr)
+				break;
+
+		xm.xm_period = ahc_syncrates[i].period;
+	}
+
+	scsipi_async_event(&ahc->sc_channels[channel],
+	    ASYNC_EVENT_XFER_MODE, &xm);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.2 1999/10/19 23:20:53 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.3 1999/10/26 23:10:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ struct ncr53c9x_ecb *ncr53c9x_get_ecb	__P((struct ncr53c9x_softc *));
 static inline int ncr53c9x_stp2cpb	__P((struct ncr53c9x_softc *, int));
 static inline void ncr53c9x_setsync	__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_tinfo *));
+void	ncr53c9x_update_xfer_mode	__P((struct ncr53c9x_softc *, int));
 
 /*
  * Names for the NCR53c9x variants, correspnding to the variant tags
@@ -693,38 +694,52 @@ ncr53c9x_scsipi_request(chan, req, arg)
 	case ADAPTER_REQ_SET_XFER_MODE:
 	    {
 		struct ncr53c9x_tinfo *ti;
-		periph = arg;
-		ti = &sc->sc_tinfo[periph->periph_target];
-		if ((periph->periph_cap & PERIPH_CAP_SYNC) != 0 &&
+		struct scsipi_xfer_mode *xm = arg;
+
+		ti = &sc->sc_tinfo[xm->xm_target];
+		ti->flags &= ~(T_NEGOTIATE|T_SYNCMODE);
+		ti->period = 0;
+		ti->offset = 0;
+
+		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
 		    sc->sc_minsync != 0 &&
 		    (sc->sc_cfflags &
-		     (1 << (periph->periph_target + 8))) == 0) {
+		     (1 << (xm->xm_target + 8))) == 0) {
 			ti->flags |= T_NEGOTIATE;
 			ti->period = sc->sc_minsync;
-			ti->offset = 0;
 		}
-		return;
-	    }
 
-	case ADAPTER_REQ_GET_XFER_MODE:
-	    {
-		struct ncr53c9x_tinfo *ti;
-		periph = arg;
-		ti = &sc->sc_tinfo[periph->periph_target];
-
-		periph->periph_mode = 0;
-		periph->periph_period = 0;
-		periph->periph_offset = 0;
-
-		if (ti->flags & T_SYNCMODE) {
-			periph->periph_mode |= PERIPH_CAP_SYNC;
-			periph->periph_period = ti->period;
-			periph->periph_offset = ti->offset;
-		}
-		periph->periph_flags |= PERIPH_MODE_VALID;
+		/*
+		 * If we're not going to negotiate, send the notification
+		 * now, since it won't happen later.
+		 */
+		if ((ti->flags & T_NEGOTIATE) == 0)
+			ncr53c9x_update_xfer_mode(sc, xm->xm_target);
 		return;
 	    }
 	}
+}
+
+void
+ncr53c9x_update_xfer_mode(sc, target)
+	struct ncr53c9x_softc *sc;
+	int target;
+{
+	struct scsipi_xfer_mode xm;
+	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[target];
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	if (ti->flags & T_SYNCMODE) {
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+		xm.xm_period = ti->period;
+		xm.xm_offset = ti->offset;
+	}
+
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
 }
 
 /*
@@ -1209,6 +1224,8 @@ gotit:
 					} else {
 						/* we are async */
 						ti->flags &= ~T_SYNCMODE;
+						ncr53c9x_update_xfer_mode(sc,
+					    ecb->xs->xs_periph->periph_target);
 					}
 				} else {
 #if 0
@@ -1242,6 +1259,8 @@ gotit:
 					} else {
 						/* we are sync */
 						ti->flags |= T_SYNCMODE;
+						ncr53c9x_update_xfer_mode(sc,
+					    ecb->xs->xs_periph->periph_target);
 					}
 				}
 				sc->sc_flags &= ~NCR_SYNCHNEGO;

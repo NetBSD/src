@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21.2.1 1999/10/19 17:54:52 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.2 1999/10/26 23:10:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -924,7 +924,6 @@ umass_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-	case ADAPTER_REQ_GET_XFER_MODE:
 		/*
 		 * Nothing in the proctol for this.
 		 */

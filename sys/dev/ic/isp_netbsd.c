@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.4 1999/10/20 20:41:27 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.5 1999/10/26 23:10:16 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -297,61 +297,29 @@ isp_scsipi_request(chan, req, arg)
 	case ADAPTER_REQ_SET_XFER_MODE:
 		if (isp->isp_type & ISP_HA_SCSI) {
 			sdparam *sdp = isp->isp_param;
-			struct scsipi_periph *periph = arg;
+			struct scsipi_xfer_mode *xm = arg;
 			u_int16_t flags;
 
-			sdp = &sdp[periph->periph_channel->chan_channel];
+			sdp = &sdp[chan->chan_channel];
 
 			flags =
-			    sdp->isp_devparam[periph->periph_target].dev_flags;
+			    sdp->isp_devparam[xm->xm_target].dev_flags;
 			flags &= ~(DPARM_WIDE|DPARM_SYNC|DPARM_TQING);
 
-			if (periph->periph_cap & PERIPH_CAP_SYNC)
+			if (xm->xm_mode & PERIPH_CAP_SYNC)
 				flags |= DPARM_SYNC;
 
-			if (periph->periph_cap & PERIPH_CAP_WIDE16)
+			if (xm->xm_mode & PERIPH_CAP_WIDE16)
 				flags |= DPARM_WIDE;
 
-			if (periph->periph_cap & PERIPH_CAP_TQING)
+			if (xm->xm_mode & PERIPH_CAP_TQING)
 				flags |= DPARM_TQING;
 
-			sdp->isp_devparam[periph->periph_target].dev_flags =
+			sdp->isp_devparam[xm->xm_target].dev_flags =
 			    flags;
-			sdp->isp_devparam[periph->periph_target].dev_update = 1;
-			isp->isp_update |=
-			    (1 << periph->periph_channel->chan_channel);
+			sdp->isp_devparam[xm->xm_target].dev_update = 1;
+			isp->isp_update |= (1 << chan->chan_channel);
 			(void) isp_control(isp, ISPCTL_UPDATE_PARAMS, NULL);
-		}
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
-		if (isp->isp_type & ISP_HA_SCSI) {
-			sdparam *sdp = isp->isp_param;
-			struct scsipi_periph *periph = arg;
-			u_int16_t flags;
-
-			sdp = &sdp[periph->periph_channel->chan_channel];
-
-			periph->periph_mode = 0;
-			periph->periph_period = 0;
-			periph->periph_offset = 0;
-
-			flags =
-			    sdp->isp_devparam[periph->periph_target].cur_dflags;
-
-			if (flags & DPARM_SYNC) {
-				periph->periph_mode |= PERIPH_CAP_SYNC;
-				periph->periph_period =
-			    sdp->isp_devparam[periph->periph_target].cur_period;
-				periph->periph_offset =
-			    sdp->isp_devparam[periph->periph_target].cur_offset;
-			}
-			if (flags & DPARM_WIDE)
-				periph->periph_mode |= PERIPH_CAP_WIDE16;
-			if (flags & DPARM_TQING)
-				periph->periph_mode |= PERIPH_CAP_TQING;
-
-			periph->periph_flags |= PERIPH_MODE_VALID;
 		}
 		return;
 	}
@@ -477,14 +445,35 @@ isp_async(isp, cmd, arg)
 	int bus, tgt;
 	int s = splbio();
 	switch (cmd) {
-	case ISPASYNC_NEW_TGT_PARAMS: {
+	case ISPASYNC_NEW_TGT_PARAMS:
+	if (isp->isp_type & ISP_HA_SCSI) {
 		struct scsipi_xfer_mode xm;
+		sdparam *sdp = isp->isp_param;
+		u_int16_t flags;
 
 		tgt = *((int *) arg);
 		bus = (tgt >> 16) & 0xffff;
 		tgt &= 0xffff;
 
+		sdp = &sdp[bus];
+
 		xm.xm_target = tgt;
+		xm.xm_mode = 0;
+		xm.xm_period = 0;
+		xm.xm_offset = 0;
+
+		flags = sdp->isp_devparam[tgt].cur_dflags;
+
+		if (flags & DPARM_SYNC) {
+			xm.xm_mode |= PERIPH_CAP_SYNC;
+			xm.xm_period = sdp->isp_devparam[tgt].cur_period;
+			xm.xm_offset = sdp->isp_devparam[tgt].cur_offset;
+		}
+		if (flags & DPARM_WIDE)
+			xm.xm_mode |= PERIPH_CAP_WIDE16;
+		if (flags & DPARM_TQING)
+			xm.xm_mode |= PERIPH_CAP_TQING;
+
 		scsipi_async_event(&isp->isp_osinfo._channels[bus],
 		    ASYNC_EVENT_XFER_MODE, &xm);
 		break;

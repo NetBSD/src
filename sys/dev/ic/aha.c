@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.24.2.3 1999/10/20 20:40:51 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.24.2.4 1999/10/26 23:10:14 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -1291,11 +1291,9 @@ aha_scsipi_request(chan, req, arg)
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/*
 		 * Can't really do this on the Adaptec; it has
-		 * its own config mechanism.
+		 * its own config mechanism, but we do know how
+		 * to query what the firmware negotiated.
 		 */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
 		/* XXX XXX XXX */
 		return;
 	}

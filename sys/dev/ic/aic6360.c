@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.63.2.3 1999/10/20 22:06:14 thorpej Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.63.2.4 1999/10/26 23:10:15 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -175,6 +175,7 @@ void	aic_abort	__P((struct aic_softc *, struct aic_acb *));
 void	aic_msgout	__P((struct aic_softc *));
 int	aic_dataout_pio	__P((struct aic_softc *, u_char *, int));
 int	aic_datain_pio	__P((struct aic_softc *, u_char *, int));
+void	aic_update_xfer_mode __P((struct aic_softc *, int));
 #if AIC_DEBUG
 void	aic_print_acb	__P((struct aic_acb *));
 void	aic_dump_driver __P((struct aic_softc *));
@@ -595,53 +596,65 @@ aic_scsipi_request(chan, req, arg)
 	case ADAPTER_REQ_SET_XFER_MODE:
 	    {
 		struct aic_tinfo *ti;
-		periph = arg;
-		ti = &sc->sc_tinfo[periph->periph_target];
+		struct scsipi_xfer_mode *xm = arg;
+
+		ti = &sc->sc_tinfo[xm->xm_target];
+		ti->flags &= ~(DO_SYNC|DO_WIDE);
+		ti->period = 0;
+		ti->offset = 0;
+
 #if AIC_USE_SYNCHRONOUS
-		if (periph->periph_cap & PERIPH_CAP_SYNC) {
+		if (xm->xm_mode & PERIPH_CAP_SYNC) {
 			ti->flags |= DO_SYNC;
 			ti->period = sc->sc_minsync;
 			ti->offset = AIC_SYNC_REQ_ACK_OFS;
 		}
 #endif
 #if AIC_USE_WIDE
-		if (periph->periph_cap & PERIPH_CAP_WIDE16) {
+		if (xm->xm_mode & PERIPH_CAP_WIDE16) {
 			ti->flags |= DO_WIDE;
 			ti->width = AIC_MAX_WIDTH;
 		}
 #endif
+		/*
+		 * If we're not going to negotiate, send the notification
+		 * now, since it won't happen later.
+		 */
+		if ((ti->flags & (DO_SYNC|DO_WIDE)) == 0)
+			aic_update_xfer_mode(sc, xm->xm_target);
 		return;
 	    }
-
-	case ADAPTER_REQ_GET_XFER_MODE:
-	    {
-		struct aic_tinfo *ti;
-		periph = arg;
-		ti = &sc->sc_tinfo[periph->periph_target];
-
-		periph->periph_mode = 0;
-		periph->periph_period = 0;
-		periph->periph_offset = 0;
-
-		if (ti->offset != 0) {
-			periph->periph_mode |= PERIPH_CAP_SYNC;
-			periph->periph_period = ti->period;
-			periph->periph_offset = ti->offset;
-		}
-		switch (ti->width) {
-		case 2:
-			periph->periph_mode |= PERIPH_CAP_WIDE32;
-			break;
-		case 1:
-			periph->periph_mode |= PERIPH_CAP_WIDE16;
-			break;
-		}
-
-		periph->periph_flags |= PERIPH_MODE_VALID;
-		return;
-	    }
-	
 	}
+}
+
+void
+aic_update_xfer_mode(sc, target)
+	struct aic_softc *sc;
+	int target;
+{
+	struct scsipi_xfer_mode xm;
+	struct aic_tinfo *ti = &sc->sc_tinfo[target];
+
+	xm.xm_target = target;
+	xm.xm_mode = 0;
+	xm.xm_period = 0;
+	xm.xm_offset = 0;
+
+	if (ti->offset != 0) {
+		xm.xm_mode |= PERIPH_CAP_SYNC;
+		xm.xm_period = ti->period;
+		xm.xm_offset = ti->offset;
+	}
+	switch (ti->width) {
+	case 2:
+		xm.xm_mode |= PERIPH_CAP_WIDE32;
+		break;
+	case 1:
+		xm.xm_mode |= PERIPH_CAP_WIDE16;
+		break;
+	}
+
+	scsipi_async_event(&sc->sc_channel, ASYNC_EVENT_XFER_MODE, &xm);
 }
 
 /*
@@ -1137,12 +1150,16 @@ nextbyte:
 				ti->flags &= ~DO_SYNC;
 				ti->period = ti->offset = 0;
 				aic_setsync(sc, ti);
+				aic_update_xfer_mode(sc,
+				    acb->xs->xs_periph->periph_target);
 				break;
 #endif
 #if AIC_USE_WIDE
 			case SEND_WDTR:
 				ti->flags &= ~DO_WIDE;
 				ti->width = 0;
+				aic_update_xfer_mode(sc,
+				    acb->xs->xs_periph->periph_target);
 				break;
 #endif
 			case SEND_INIT_DET_ERR:
@@ -1187,10 +1204,8 @@ nextbyte:
 					ti->period = ti->offset = 0;
 					aic_sched_msgout(sc, SEND_SDTR);
 				} else {
-					scsipi_printaddr(acb->xs->xs_periph);
-					printf("sync, offset %d, "
-					    "period %dnsec\n",
-					    ti->offset, ti->period * 4);
+					aic_update_xfer_mode(sc,
+					    acb->xs->xs_periph->periph_target);
 				}
 				aic_setsync(sc, ti);
 				break;
@@ -1207,9 +1222,8 @@ nextbyte:
 					ti->width = 0;
 					aic_sched_msgout(sc, SEND_WDTR);
 				} else {
-					scsipi_printaddr(acb->xs->xs_periph);
-					printf("wide, width %d\n",
-					    1 << (3 + ti->width));
+					aic_update_xfer_mode(sc,
+					    acb->xs->xs_periph->periph_target);
 				}
 				break;
 #endif

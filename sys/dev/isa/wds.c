@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.39.2.2 1999/10/20 20:42:10 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.39.2.3 1999/10/26 23:10:17 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -1302,10 +1302,6 @@ wds_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX How do we do this? */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
 		/* XXX How do we do this? */
 		return;
 	}

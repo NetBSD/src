@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.22.2.3 1999/10/20 20:40:52 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.22.2.4 1999/10/26 23:10:17 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -575,11 +575,12 @@ uha_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX Not supported. */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
-		/* XXX How do we do this? */
+		/*
+		 * We can't really do this (the UltraStor controllers
+		 * have their own config).
+		 *
+		 * XXX How do we query the config?
+		 */
 		return;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.7 1999/10/20 22:31:06 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.8 1999/10/26 23:10:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.7 1999/10/20 22:31:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.8 1999/10/26 23:10:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,10 +1001,6 @@ dpt_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX Not supported. */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
 		/* XXX Not supported. */
 		return;
 	}

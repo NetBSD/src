@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.28.2.2 1999/10/20 20:42:42 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.28.2.3 1999/10/26 23:10:14 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -981,10 +981,6 @@ ahb_scsipi_request(chan, req, arg)
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
-		/* XXX How do we do this? */
-		return;
-
-	case ADAPTER_REQ_GET_XFER_MODE:
 		/* XXX How do we do this? */
 		return;
 	}
