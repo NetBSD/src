@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.234 2001/04/19 17:48:46 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.235 2001/04/20 00:10:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2001/04/19 17:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2001/04/20 00:10:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,6 +663,7 @@ nobootinfo:
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
 	proc0.p_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
+	simple_lock_init(&proc0paddr->u_pcb.pcb_fpcpu_slock);
 
 	/*
 	 * Initialize the primary CPU's idle PCB to proc0's.  In a
@@ -1794,9 +1795,13 @@ fpusave_cpu(struct cpu_info *ci, int save)
 
 	KDASSERT(ci == curcpu());
 
+#if defined(MULTIPROCESSOR)
+	atomic_setbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
+#endif
+
 	p = ci->ci_fpcurproc;
 	if (p == NULL)
-		return;
+		goto out;
 
 	if (save) {
 		alpha_pal_wrfen(1);
@@ -1805,15 +1810,18 @@ fpusave_cpu(struct cpu_info *ci, int save)
 
 	alpha_pal_wrfen(0);
 
-#if defined(MULTIPROCESSOR)
-	s = splhigh();
-#endif
+	FPCPU_LOCK(&p->p_addr->u_pcb, s);
+
 	p->p_addr->u_pcb.pcb_fpcpu = NULL;
 	ci->ci_fpcurproc = NULL;
+
+	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+
+ out:
 #if defined(MULTIPROCESSOR)
-	splx(s);
-	alpha_mb();
+	atomic_clearbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
 #endif
+	return;
 }
 
 /*
@@ -1824,32 +1832,59 @@ fpusave_proc(struct proc *p, int save)
 {
 	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
+#if defined(MULTIPROCESSOR)
+	u_long ipi = save ? ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU;
+	int s, spincount, hold_count;
+#endif
 
 	KDASSERT(p->p_addr != NULL);
 	KDASSERT(p->p_flag & P_INMEM);
 
+	FPCPU_LOCK(&p->p_addr->u_pcb, s);
+
 	oci = p->p_addr->u_pcb.pcb_fpcpu;
-	if (oci == NULL)
+	if (oci == NULL) {
+		FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 		return;
+	}
 
 #if defined(MULTIPROCESSOR)
 	if (oci == ci) {
-		int s;
 		KASSERT(ci->ci_fpcurproc == p);
-		s = splhigh();
+		FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 		fpusave_cpu(ci, save);
-		splx(s);
-	} else {
-		u_long ipi = save ? ALPHA_IPI_SYNCH_FPU :
-				    ALPHA_IPI_DISCARD_FPU;
-
-		KASSERT(oci->ci_fpcurproc == p);
-		do {
-			alpha_send_ipi(oci->ci_cpuid, ipi);
-		} while (p->p_addr->u_pcb.pcb_fpcpu != NULL);
+		return;
 	}
+
+	KASSERT(oci->ci_fpcurproc == p);
+	alpha_send_ipi(oci->ci_cpuid, ipi);
+	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+
+	/*
+	 * If we're holding the kernel lock, release it before
+	 * spinning.
+	 *
+	 * XXX Why do we have to do this?!  We shouldn't need to!
+	 */
+	if (p->p_flag & P_BIGLOCK)
+		hold_count = spinlock_release_all(&kernel_lock);
+
+	spincount = 0;
+	while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
+		spincount++;
+		delay(1000);	/* XXX */
+		if (spincount > 10000)
+			panic("fpsave ipi didn't");
+	}
+
+	/*
+	 * ...and reacquire it.
+	 */
+	if (p->p_flag & P_BIGLOCK)
+		spinlock_acquire_count(&kernel_lock, hold_count);
 #else
 	KASSERT(ci->ci_fpcurproc == p);
+	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
 }

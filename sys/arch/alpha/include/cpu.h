@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.52 2001/02/27 22:00:19 mjacob Exp $ */
+/* $NetBSD: cpu.h,v 1.53 2001/04/20 00:10:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -139,6 +139,7 @@ struct cpu_info {
 #define	CPUF_PRESENT	0x02		/* CPU is present */
 #define	CPUF_RUNNING	0x04		/* CPU is running */
 #define	CPUF_PAUSED	0x08		/* CPU is paused */
+#define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
 
 #if defined(MULTIPROCESSOR)
 extern	__volatile u_long cpus_running;
