@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.1 1998/11/13 04:20:29 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.2 1998/11/13 13:45:15 drochner Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -1466,7 +1466,7 @@ int rf_SetReconfiguredMode(raidPtr, row, col)
 }
 
 extern int fail_row, fail_col, fail_time;
-extern delayed_recon;
+extern int delayed_recon;
 
 int rf_FailDisk(
   RF_Raid_t  *raidPtr,
