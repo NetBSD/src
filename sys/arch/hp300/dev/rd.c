@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.11 1995/04/10 13:09:56 mycroft Exp $	*/
+/*	$NetBSD: rd.c,v 1.12 1995/08/04 08:12:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -909,6 +909,26 @@ rderror(unit)
 	printf("%s", hexstr(*(u_int *)&sp->c_raw[4], 8));
 	printf("%s\n", hexstr(*(u_short *)&sp->c_raw[8], 4));
 	return(1);
+}
+
+int
+rdread(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+
+	return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+rdwrite(dev, uio, flags)
+	dev_t dev;
+	struct uio *uio;
+	int flags;
+{
+
+	return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 int
