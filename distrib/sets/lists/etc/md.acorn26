@@ -1,0 +1,2 @@
+# $NetBSD: md.acorn26,v 1.1 2002/03/24 22:21:05 bjh21 Exp $
+./etc/fstab.nfs		etc-sys-etc
