@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.14 2000/03/23 07:01:45 thorpej Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.15 2000/03/24 13:08:28 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 /*
- * CATC USB-EL1201A USB to ethernet driver. Used in the CATC Netmate
+ * CATC USB-EL1210A USB to ethernet driver. Used in the CATC Netmate
  * adapters and others.
  *
  * Written by Bill Paul <wpaul@ee.columbia.edu>
@@ -43,7 +43,7 @@
  */
 
 /*
- * The CATC USB-EL1201A provides USB ethernet support at 10Mbps. The
+ * The CATC USB-EL1210A provides USB ethernet support at 10Mbps. The
  * RX filter uses a 512-bit multicast hash table, single perfect entry
  * for the station address, and promiscuous mode. Unlike the ADMtek
  * and KLSI chips, the CATC ASIC supports read and write combining
@@ -143,12 +143,15 @@ int	cuedebug = 0;
 static struct cue_type cue_devs[] = {
 	{ USB_VENDOR_CATC, USB_PRODUCT_CATC_NETMATE },
 	{ USB_VENDOR_CATC, USB_PRODUCT_CATC_NETMATE2 },
-	/*{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U111 },*/
+	/* Belkin F5U111 adapter covered by NETMATE entry */
 	{ 0, 0 }
 };
 
 USB_DECLARE_DRIVER(cue);
 
+#define static
+
+static int cue_open_pipes	__P((struct cue_softc *));
 static int cue_tx_list_init	__P((struct cue_softc *));
 static int cue_rx_list_init	__P((struct cue_softc *));
 static int cue_newbuf		__P((struct cue_softc *, struct cue_chain *,
@@ -169,11 +172,11 @@ static void cue_setmulti	__P((struct cue_softc *));
 static u_int32_t cue_crc	__P((caddr_t));
 static void cue_reset		__P((struct cue_softc *));
 
-static int csr_read_1		__P((struct cue_softc *, int));
-static int csr_write_1		__P((struct cue_softc *, int, int));
-static int csr_read_2		__P((struct cue_softc *, int));
+static int cue_csr_read_1	__P((struct cue_softc *, int));
+static int cue_csr_write_1	__P((struct cue_softc *, int, int));
+static int cue_csr_read_2	__P((struct cue_softc *, int));
 #ifdef notdef
-static int csr_write_2		__P((struct cue_softc *, int, int));
+static int cue_csr_write_2	__P((struct cue_softc *, int, int));
 #endif
 static int cue_mem		__P((struct cue_softc *, int,
 				    int, void *, int));
@@ -186,7 +189,7 @@ static const char rcsid[] =
 #endif
 
 static void cue_rxstart		__P((struct ifnet *));
-static void cue_shutdown		__P((device_t));
+static void cue_shutdown	__P((device_t));
 
 static struct usb_qdat cue_qdat;
 
@@ -212,16 +215,17 @@ DRIVER_MODULE(if_cue, uhub, cue_driver, cue_devclass, usbd_driver_load, 0);
 
 #endif /* defined(__FreeBSD__) */
 
+#define CUE_DO_REQUEST(dev, req, data)			\
+	usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
+
 #define CUE_SETBIT(sc, reg, x)				\
-	csr_write_1(sc, reg, csr_read_1(sc, reg) | (x))
+	cue_csr_write_1(sc, reg, cue_csr_read_1(sc, reg) | (x))
 
 #define CUE_CLRBIT(sc, reg, x)				\
-	csr_write_1(sc, reg, csr_read_1(sc, reg) & ~(x))
-
-#define CUE_DO_REQUEST(dev, req, data) usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
+	cue_csr_write_1(sc, reg, cue_csr_read_1(sc, reg) & ~(x))
 
 static int
-csr_read_1(sc, reg)
+cue_csr_read_1(sc, reg)
 	struct cue_softc	*sc;
 	int			reg;
 {
@@ -230,7 +234,8 @@ csr_read_1(sc, reg)
 	u_int8_t		val = 0;
 	int			s;
 
-	s = splusb();
+	if (sc->cue_dying)
+		return (0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = CUE_CMD_READREG;
@@ -238,27 +243,34 @@ csr_read_1(sc, reg)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 1);
 
+	s = splusb();
 	err = CUE_DO_REQUEST(sc->cue_udev, &req, &val);
-
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: cue_csr_read_1: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->cue_dev), reg, usbd_errstr(err)));
 		return (0);
+	}
+
+	DPRINTFN(10,("%s: cue_csr_read_1 reg=0x%x val=0x%x\n", 
+		     USBDEVNAME(sc->cue_dev), reg, val));
 
 	return (val);
 }
 
 static int
-csr_read_2(sc, reg)
+cue_csr_read_2(sc, reg)
 	struct cue_softc	*sc;
 	int			reg;
 {
 	usb_device_request_t	req;
 	usbd_status		err;
-	u_int16_t		val = 0;
+	uWord			val;
 	int			s;
 
-	s = splusb();
+	if (sc->cue_dying)
+		return (0);
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = CUE_CMD_READREG;
@@ -266,18 +278,24 @@ csr_read_2(sc, reg)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 2);
 
+	s = splusb();
 	err = CUE_DO_REQUEST(sc->cue_udev, &req, &val);
-
 	splx(s);
 
-	if (err)
-		return (0);
+	DPRINTFN(10,("%s: cue_csr_read_2 reg=0x%x val=0x%x\n", 
+		     USBDEVNAME(sc->cue_dev), reg, UGETW(val)));
 
-	return (val);
+	if (err) {
+		DPRINTF(("%s: cue_csr_read_2: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->cue_dev), reg, usbd_errstr(err)));
+		return (0);
+	}
+
+	return (UGETW(val));
 }
 
 static int
-csr_write_1(sc, reg, val)
+cue_csr_write_1(sc, reg, val)
 	struct cue_softc	*sc;
 	int			reg, val;
 {
@@ -285,7 +303,11 @@ csr_write_1(sc, reg, val)
 	usbd_status		err;
 	int			s;
 
-	s = splusb();
+	if (sc->cue_dying)
+		return (0);
+
+	DPRINTFN(10,("%s: cue_csr_write_1 reg=0x%x val=0x%x\n", 
+		     USBDEVNAME(sc->cue_dev), reg, val));
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = CUE_CMD_WRITEREG;
@@ -293,40 +315,55 @@ csr_write_1(sc, reg, val)
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 0);
 
+	s = splusb();
 	err = CUE_DO_REQUEST(sc->cue_udev, &req, NULL);
-
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: cue_csr_write_1: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->cue_dev), reg, usbd_errstr(err)));
 		return (-1);
+	}
+
+	DPRINTFN(20,("%s: cue_csr_write_1, after reg=0x%x val=0x%x\n", 
+		     USBDEVNAME(sc->cue_dev), reg, cue_csr_read_1(sc, reg)));
 
 	return (0);
 }
 
 #ifdef notdef
 static int
-csr_write_2(sc, reg, val)
+cue_csr_write_2(sc, reg, val)
 	struct cue_softc	*sc;
-	int			reg, val;
+	int			reg, aval;
 {
 	usb_device_request_t	req;
 	usbd_status		err;
+	uWord			val;
 	int			s;
 
-	s = splusb();
+	if (sc->cue_dying)
+		return (0);
 
+	DPRINTFN(10,("%s: cue_csr_write_2 reg=0x%x val=0x%x\n", 
+		     USBDEVNAME(sc->cue_dev), reg, aval));
+
+	USETW(val, aval);
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = CUE_CMD_WRITEREG;
 	USETW(req.wValue, val);
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 0);
 
+	s = splusb();
 	err = CUE_DO_REQUEST(sc->cue_udev, &req, NULL);
-
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: cue_csr_write_2: reg=0x%x err=%s\n",
+			 USBDEVNAME(sc->cue_dev), reg, usbd_errstr(err)));
 		return (-1);
+	}
 
 	return (0);
 }
@@ -344,7 +381,8 @@ cue_mem(sc, cmd, addr, buf, len)
 	usbd_status		err;
 	int			s;
 
-	s = splusb();
+	DPRINTFN(10,("%s: cue_mem cmd=0x%x addr=0x%x len=%d\n",
+		     USBDEVNAME(sc->cue_dev), cmd, addr, len));
 
 	if (cmd == CUE_CMD_READSRAM)
 		req.bmRequestType = UT_READ_VENDOR_DEVICE;
@@ -355,12 +393,15 @@ cue_mem(sc, cmd, addr, buf, len)
 	USETW(req.wIndex, addr);
 	USETW(req.wLength, len);
 
+	s = splusb();
 	err = CUE_DO_REQUEST(sc->cue_udev, &req, buf);
-
 	splx(s);
 
-	if (err)
+	if (err) {
+		DPRINTF(("%s: cue_csr_mem: addr=0x%x err=%s\n",
+			 USBDEVNAME(sc->cue_dev), addr, usbd_errstr(err)));
 		return (-1);
+	}
 
 	return (0);
 }
@@ -374,7 +415,7 @@ cue_getmac(sc, buf)
 	usbd_status		err;
 	int			s;
 
-	s = splusb();
+	DPRINTFN(10,("%s: cue_getmac\n", USBDEVNAME(sc->cue_dev)));
 
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = CUE_CMD_GET_MACADDR;
@@ -382,8 +423,8 @@ cue_getmac(sc, buf)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, ETHER_ADDR_LEN);
 
+	s = splusb();
 	err = CUE_DO_REQUEST(sc->cue_udev, &req, buf);
-
 	splx(s);
 
 	if (err) {
@@ -419,16 +460,24 @@ cue_setmulti(sc)
 	struct cue_softc	*sc;
 {
 	struct ifnet		*ifp;
-	//struct ifmultiaddr	*ifma;
-	u_int32_t		h = 0, i;
+#if defined(__FreeBSD__)
+	struct ifmultiaddr	*ifma;
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
+	u_int32_t		h, i;
 
 	ifp = GET_IFP(sc);
+
+	DPRINTFN(2,("%s: cue_setmulti if_flags=0x%x\n", 
+		    USBDEVNAME(sc->cue_dev), ifp->if_flags));
 
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		for (i = 0; i < CUE_MCAST_TABLE_LEN; i++)
 			sc->cue_mctab[i] = 0xFF;
-			cue_mem(sc, CUE_CMD_WRITESRAM, CUE_MCAST_TABLE_ADDR,
-			    &sc->cue_mctab, CUE_MCAST_TABLE_LEN);
+		cue_mem(sc, CUE_CMD_WRITESRAM, CUE_MCAST_TABLE_ADDR,
+		    &sc->cue_mctab, CUE_MCAST_TABLE_LEN);
 		return;
 	}
 
@@ -436,8 +485,8 @@ cue_setmulti(sc)
 	for (i = 0; i < CUE_MCAST_TABLE_LEN; i++)
 		sc->cue_mctab[i] = 0;
 
-#ifdef XXXX
 	/* now program new ones */
+#if defined(__FreeBSD__)
 	for (ifma = ifp->if_multiaddrs.lh_first; ifma != NULL;
 	    ifma = ifma->ifma_link.le_next) {
 		if (ifma->ifma_addr->sa_family != AF_LINK)
@@ -445,7 +494,22 @@ cue_setmulti(sc)
 		h = cue_crc(LLADDR((struct sockaddr_dl *)ifma->ifma_addr));
 		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);		
 	}
+#elif defined(__NetBSD__) || defined(__OpenBSD__)
+	ETHER_FIRST_MULTI(step, &sc->cue_ec, enm);
+	while (enm != NULL) {
+#if 0
+		if (memcmp(enm->enm_addrlo,
+			   enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			/* XXX what now? */
+			return;
+		}
 #endif
+		h = cue_crc(enm->enm_addrlo);
+		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);		
+		ETHER_NEXT_MULTI(step, enm);
+	}
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	/*
 	 * Also include the broadcast address in the filter
@@ -458,8 +522,6 @@ cue_setmulti(sc)
 
 	cue_mem(sc, CUE_CMD_WRITESRAM, CUE_MCAST_TABLE_ADDR,
 	    &sc->cue_mctab, CUE_MCAST_TABLE_LEN);
-
-	return;
 }
 
 static void
@@ -470,23 +532,26 @@ cue_reset(sc)
 	usbd_status		err;
 	int			s;
 
-	s = splusb();
+	DPRINTFN(2,("%s: cue_reset\n", USBDEVNAME(sc->cue_dev)));
+
+	if (sc->cue_dying)
+		return;
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 	req.bRequest = CUE_CMD_RESET;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 0);
-	err = CUE_DO_REQUEST(sc->cue_udev, &req, NULL);
 
+	s = splusb();
+	err = CUE_DO_REQUEST(sc->cue_udev, &req, NULL);
 	splx(s);
 
 	if (err)
 		printf("%s: reset failed\n", USBDEVNAME(sc->cue_dev));
 
 	/* Wait a little while for the chip to get its brains in order. */
-	DELAY(1000);
-	return;
+	delay(1000);		/* XXX */
 }
 
 /*
@@ -576,7 +641,7 @@ USB_ATTACH(cue)
 		}
 	}
 
-#ifdef notdef
+#if 0
 	/* Reset the adapter. */
 	cue_reset(sc);
 #endif
@@ -650,13 +715,13 @@ USB_ATTACH(cue)
 	    RND_TYPE_NET, 0);
 #endif
 
-#endif /* __NetBSD__ */
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	sc->cue_attached = 1;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cue_udev,
-			   USBDEV(sc->cue_dev));
+	    USBDEV(sc->cue_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -666,6 +731,8 @@ USB_DETACH(cue)
 	USB_DETACH_START(cue, sc);
 	struct ifnet		*ifp = GET_IFP(sc);
 	int			s;
+
+	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
 
 	s = splusb();
 
@@ -704,7 +771,7 @@ USB_DETACH(cue)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->cue_udev,
-			   USBDEV(sc->cue_dev));
+	    USBDEV(sc->cue_dev));
 
 	return (0);
 }
@@ -793,8 +860,10 @@ cue_rx_list_init(sc)
 			if (c->cue_xfer == NULL)
 				return (ENOBUFS);
 			c->cue_buf = usbd_alloc_buffer(c->cue_xfer, CUE_BUFSZ);
-			if (c->cue_buf == NULL)
-				return (ENOBUFS); /* XXX free xfer */
+			if (c->cue_buf == NULL) {
+				usbd_free_xfer(c->cue_xfer);
+				return (ENOBUFS);
+			}
 		}
 	}
 
@@ -820,8 +889,10 @@ cue_tx_list_init(sc)
 			if (c->cue_xfer == NULL)
 				return (ENOBUFS);
 			c->cue_buf = usbd_alloc_buffer(c->cue_xfer, CUE_BUFSZ);
-			if (c->cue_buf == NULL)
+			if (c->cue_buf == NULL) {
+				usbd_free_xfer(c->cue_xfer);
 				return (ENOBUFS);
+			}
 		}
 	}
 
@@ -849,8 +920,6 @@ cue_rxstart(ifp)
 	    c, c->cue_buf, CUE_BUFSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
 	    USBD_NO_TIMEOUT, cue_rxeof);
 	usbd_transfer(c->cue_xfer);
-
-	return;
 }
 #endif
 
@@ -976,7 +1045,6 @@ done:
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-
 static void
 cue_txeof(xfer, priv, status)
 	usbd_xfer_handle	xfer;
@@ -1044,15 +1112,17 @@ cue_tick(xsc)
 	if (sc->cue_dying)
 		return;
 
+	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
+
 	s = splimp();
 
 	ifp = GET_IFP(sc);
 
-	ifp->if_collisions += csr_read_2(sc, CUE_TX_SINGLECOLL);
-	ifp->if_collisions += csr_read_2(sc, CUE_TX_MULTICOLL);
-	ifp->if_collisions += csr_read_2(sc, CUE_TX_EXCESSCOLL);
+	ifp->if_collisions += cue_csr_read_2(sc, CUE_TX_SINGLECOLL);
+	ifp->if_collisions += cue_csr_read_2(sc, CUE_TX_MULTICOLL);
+	ifp->if_collisions += cue_csr_read_2(sc, CUE_TX_EXCESSCOLL);
 
-	if (csr_read_2(sc, CUE_RX_FRAMEERR))
+	if (cue_csr_read_2(sc, CUE_RX_FRAMEERR))
 		ifp->if_ierrors++;
 
 	usb_timeout(cue_tick, sc, hz, sc->cue_stat_ch);
@@ -1070,8 +1140,6 @@ cue_send(sc, m, idx)
 	struct cue_chain	*c;
 	usbd_status		err;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
-
 	c = &sc->cue_cdata.cue_tx_chain[idx];
 
 	/*
@@ -1083,10 +1151,14 @@ cue_send(sc, m, idx)
 
 	total_len = m->m_pkthdr.len + 2;
 
+	DPRINTFN(10,("%s: %s: total_len=%d\n",
+		     USBDEVNAME(sc->cue_dev), __FUNCTION__, total_len));
+
 	/* The first two bytes are the frame length */
 	c->cue_buf[0] = (u_int8_t)m->m_pkthdr.len;
 	c->cue_buf[1] = (u_int8_t)(m->m_pkthdr.len >> 8);
 
+	/* XXX 10000 */
 	usbd_setup_xfer(c->cue_xfer, sc->cue_ep[CUE_ENDPT_TX],
 	    c, c->cue_buf, total_len, USBD_NO_COPY, 10000, cue_txeof);
 
@@ -1111,6 +1183,8 @@ cue_start(ifp)
 
 	if (sc->cue_dying)
 		return;
+
+	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
 
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
@@ -1148,13 +1222,13 @@ cue_init(xsc)
 {
 	struct cue_softc	*sc = xsc;
 	struct ifnet		*ifp = GET_IFP(sc);
-	struct cue_chain	*c;
-	usbd_status		err;
-	int			i, s;
+	int			i, s, ctl;
 	u_char			*eaddr;
 
 	if (sc->cue_dying)
 		return;
+
+	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return;
@@ -1164,9 +1238,13 @@ cue_init(xsc)
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
-#ifdef foo
+#if 1
 	cue_reset(sc);
 #endif
+
+	/* Set advanced operation modes. */
+	cue_csr_write_1(sc, CUE_ADVANCED_OPMODES,
+	    CUE_AOP_EMBED_RXLEN | 0x03); /* 1 wait state */
 
 #if defined(__FreeBSD__)
 	eaddr = sc->arpcom.ac_enaddr;
@@ -1175,16 +1253,13 @@ cue_init(xsc)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 	/* Set MAC address */
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		csr_write_1(sc, CUE_PAR0 - i, eaddr[i]);
+		cue_csr_write_1(sc, CUE_PAR0 - i, eaddr[i]);
 
 	/* Enable RX logic. */
-	csr_write_1(sc, CUE_ETHCTL, CUE_ETHCTL_RX_ON|CUE_ETHCTL_MCAST_ON);
-
-	 /* If we want promiscuous mode, set the allframes bit. */
+	ctl = CUE_ETHCTL_RX_ON | CUE_ETHCTL_MCAST_ON;
 	if (ifp->if_flags & IFF_PROMISC)
-		CUE_SETBIT(sc, CUE_ETHCTL, CUE_ETHCTL_PROMISC);
-	else
-		CUE_CLRBIT(sc, CUE_ETHCTL, CUE_ETHCTL_PROMISC);
+		ctl |= CUE_ETHCTL_PROMISC;
+	cue_csr_write_1(sc, CUE_ETHCTL, ctl);
 
 	/* Init TX ring. */
 	if (cue_tx_list_init(sc) == ENOBUFS) {
@@ -1207,33 +1282,53 @@ cue_init(xsc)
 	 * Set the number of RX and TX buffers that we want
 	 * to reserve inside the ASIC.
 	 */
-	csr_write_1(sc, CUE_RX_BUFPKTS, CUE_RX_FRAMES);
-	csr_write_1(sc, CUE_TX_BUFPKTS, CUE_TX_FRAMES);
+	cue_csr_write_1(sc, CUE_RX_BUFPKTS, CUE_RX_FRAMES);
+	cue_csr_write_1(sc, CUE_TX_BUFPKTS, CUE_TX_FRAMES);
 
 	/* Set advanced operation modes. */
-	csr_write_1(sc, CUE_ADVANCED_OPMODES,
-	    CUE_AOP_EMBED_RXLEN|0x01); /* 1 wait state */
+	cue_csr_write_1(sc, CUE_ADVANCED_OPMODES,
+	    CUE_AOP_EMBED_RXLEN | 0x01); /* 1 wait state */
 
 	/* Program the LED operation. */
-	csr_write_1(sc, CUE_LEDCTL, CUE_LEDCTL_FOLLOW_LINK);
+	cue_csr_write_1(sc, CUE_LEDCTL, CUE_LEDCTL_FOLLOW_LINK);
 
 	if (sc->cue_ep[CUE_ENDPT_RX] == NULL) {
+		if (cue_open_pipes(sc)) {
+			splx(s);
+			return;
+		}
+	}
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	splx(s);
+
+	usb_timeout(cue_tick, sc, hz, sc->cue_stat_ch);
+}
+
+static int
+cue_open_pipes(sc)
+	struct cue_softc	*sc;
+{
+	struct cue_chain	*c;
+	usbd_status		err;
+	int			i;
+
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->cue_iface, sc->cue_ed[CUE_ENDPT_RX],
 	    USBD_EXCLUSIVE_USE, &sc->cue_ep[CUE_ENDPT_RX]);
 	if (err) {
 		printf("%s: open rx pipe failed: %s\n",
 		    USBDEVNAME(sc->cue_dev), usbd_errstr(err));
-		splx(s);
-		return;
+		return (EIO);
 	}
 	err = usbd_open_pipe(sc->cue_iface, sc->cue_ed[CUE_ENDPT_TX],
 	    USBD_EXCLUSIVE_USE, &sc->cue_ep[CUE_ENDPT_TX]);
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
 		    USBDEVNAME(sc->cue_dev), usbd_errstr(err));
-		splx(s);
-		return;
+		return (EIO);
 	}
 
 	/* Start up the receive pipe. */
@@ -1245,14 +1340,8 @@ cue_init(xsc)
 		    cue_rxeof);
 		usbd_transfer(c->cue_xfer);
 	}
-	}
 
-	ifp->if_flags |= IFF_RUNNING;
-	ifp->if_flags &= ~IFF_OACTIVE;
-
-	splx(s);
-
-	usb_timeout(cue_tick, sc, hz, sc->cue_stat_ch);
+	return (0);
 }
 
 static int
@@ -1395,10 +1484,12 @@ cue_stop(sc)
 	struct ifnet		*ifp;
 	int			i;
 
+	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
+
 	ifp = GET_IFP(sc);
 	ifp->if_timer = 0;
 
-	csr_write_1(sc, CUE_ETHCTL, 0);
+	cue_csr_write_1(sc, CUE_ETHCTL, 0);
 	cue_reset(sc);
 	usb_untimeout(cue_tick, sc, sc->cue_stat_ch);
 
@@ -1470,8 +1561,6 @@ cue_stop(sc)
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
-
-	return;
 }
 
 #ifdef __FreeBSD__
