@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.6 1998/03/25 04:13:02 mhitch Exp $	*/
+/*	$NetBSD: rtld.c,v 1.7 1998/06/16 03:24:13 mhitch Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -431,6 +431,8 @@ _rtld_dlclose(
 		}
 		_rtld_linkmap_delete(obj);
 		*linkp = obj->next;
+		if (obj->next == NULL)
+		    _rtld_objtail = linkp;
 		free(obj);
 	    } else
 		linkp = &obj->next;
