@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.172 2004/03/25 19:45:09 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.172.2.1 2004/05/29 14:05:54 tron Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172 2004/03/25 19:45:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.172.2.1 2004/05/29 14:05:54 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1699,6 +1699,7 @@ __wdccommand_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 		/* enable interrupts */
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT);
+		delay(10); /* some drives need a little delay here */
 	}
 	wdc_free_xfer(chp, xfer);
 	if (wdc_c->flags & AT_WAIT)
