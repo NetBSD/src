@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.54 2002/09/24 14:14:25 sommerfeld Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.55 2003/12/04 15:32:01 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.54 2002/09/24 14:14:25 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.55 2003/12/04 15:32:01 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.70 2002/08/28 12:45:48 darrenr Exp";
@@ -2960,11 +2960,10 @@ void nat_log(nat, type)
 struct nat *nat;
 u_int type;
 {
-	struct ipnat *np;
 	struct natlog natl;
 	void *items[1];
 	size_t sizes[1];
-	int rulen, types[1];
+	int types[1];
 
 	natl.nl_inip = nat->nat_inip;
 	natl.nl_outip = nat->nat_outip;
@@ -2979,6 +2978,8 @@ u_int type;
 	natl.nl_rule = -1;
 #ifndef LARGE_NAT
 	if (nat->nat_ptr != NULL) {
+		struct ipnat *np;
+		int rulen;
 		for (rulen = 0, np = nat_list; np; np = np->in_next, rulen++)
 			if (np == nat->nat_ptr) {
 				natl.nl_rule = rulen;
