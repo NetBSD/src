@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.71 2000/11/05 23:00:10 chs Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.72 2000/11/08 23:13:03 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -128,6 +128,7 @@
 #define	ZSTTY_RING_SIZE	2048
 #endif
 
+static struct cnm_state zstty_cnm_state;
 /*
  * Make this an option variable one can patch.
  * But be warned:  this must be a power of 2!
@@ -278,6 +279,7 @@ zstty_attach(parent, self, aux)
 	char *i, *o;
 
 	callout_init(&zst->zst_diag_ch);
+	cn_init_magic(&zstty_cnm_state);
 
 	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
@@ -302,10 +304,13 @@ zstty_attach(parent, self, aux)
 	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
 		i = "input";
 		if ((args->hwflags & ZS_HWFLAG_USE_CONSDEV) != 0) {
+			args->consdev->cn_dev = dev;
 			cn_tab->cn_pollc = args->consdev->cn_pollc;
 			cn_tab->cn_getc = args->consdev->cn_getc;
 		}
 		cn_tab->cn_dev = dev;
+		/* Set console magic to BREAK */
+		cn_set_magic("\047\001");
 	}
 	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
 		o = "output";
@@ -1383,6 +1388,7 @@ zstty_rxint(cs)
 			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 		}
 
+		cn_check_magic(zst->zst_tty->t_dev, c, zstty_cnm_state);
 		put[0] = c;
 		put[1] = rr1;
 		put += 2;
@@ -1492,11 +1498,8 @@ zstty_stint(cs, force)
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
-	if (ISSET(rr0, ZSRR0_BREAK) &&
-	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE_INPUT)) {
-		zs_abort(cs);
-		return;
-	}
+	if (ISSET(rr0, ZSRR0_BREAK))
+		cn_check_magic(zst->zst_tty->t_dev, CNC_BREAK, zstty_cnm_state);
 
 	if (!force)
 		delta = rr0 ^ cs->cs_rr0;
