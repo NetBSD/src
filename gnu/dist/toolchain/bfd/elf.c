@@ -5859,7 +5859,7 @@ elfcore_netbsd_get_lwpid (note, lwpidp)
   cp = strchr (note->namedata, '@');
   if (cp != NULL)
     {
-      *lwpidp = atoi(cp);
+      *lwpidp = atoi(cp + 1);
       return true;
     }
   return false;
