@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.228 2003/10/18 08:12:07 lukem Exp $
+#	$NetBSD: INSTALL,v 1.229 2003/10/31 06:49:58 nisimura Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -415,6 +415,7 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide* 		at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp?

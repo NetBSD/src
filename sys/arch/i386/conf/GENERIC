@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.577 2003/10/18 08:12:07 lukem Exp $
+# $NetBSD: GENERIC,v 1.578 2003/10/31 06:49:58 nisimura Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.577 $"
+#ident 		"GENERIC-$Revision: 1.578 $"
 
 maxusers	32		# estimated number of users
 
@@ -611,6 +611,7 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+stpcide*	at pci? dev ? function ?	# STMicro STPC IDE controllers
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp?
