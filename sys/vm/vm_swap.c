@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.21 1997/05/30 20:29:16 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.22 1997/05/30 20:45:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -229,11 +229,19 @@ sys_swapon(p, v, retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
 
-	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE, SCARG(uap, arg), p);
-	if ((error = namei(&nd)))
-		return (error);
+	if (SCARG(uap, arg) == NULL) {
+		/* XXX - interface - arg==NULL: miniroot */
+		vp = rootvp;
+		if (vget(vp, 1))
+			return (EBUSY);
+	} else {
+		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE,
+		       SCARG(uap, arg), p);
+		if ((error = namei(&nd)))
+			return (error);
 
-	vp = nd.ni_vp;
+		vp = nd.ni_vp;
+	}
 
 	switch(SCARG(uap, cmd)) {
 	case SWAP_CTL:
@@ -402,7 +410,6 @@ swap_on(p, sdp)
 	long addr;
 	char *storage;
 	int storagesize;
-#define SWAP_TO_FILES
 #ifdef SWAP_TO_FILES
 	struct vattr va;
 #endif
@@ -444,7 +451,7 @@ swap_on(p, sdp)
 		sdp->swd_bsize = vp->v_mount->mnt_stat.f_iosize;
 #ifdef NFS
 		if (vp->v_op == nfsv2_vnodeop_p)
-			sdp->swd_maxactive = 2 /* XXX */
+			sdp->swd_maxactive = 2; /* XXX */
 		else
 #endif /* NFS */
 			sdp->swd_maxactive = 8; /* XXX */
@@ -496,7 +503,6 @@ swap_on(p, sdp)
 	if (vp == rootvp) {
 		struct mount *mp;
 		struct statfs *sp;
-		long firstblk;
 		int rootblks;
 
 		/* Get size from root FS (mountroot did statfs) */
@@ -796,6 +802,7 @@ sw_reg_strategy(sdp, bp, bn)
 		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
 		if (doswvnlock) VOP_UNLOCK(sdp->swd_vp);
+
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
 
