@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.320 2001/04/09 11:52:27 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.321 2001/04/12 06:26:49 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.314 2001/04/09 11:51:30 ad Exp 
+ *	NetBSD: pcidevs,v 1.315 2001/04/12 06:26:20 matt Exp 
  */
 
 /*
@@ -1626,6 +1626,7 @@
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* psycho PCI controller */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
+#define	PCI_PRODUCT_SUN_US_IIe	0xa001		/* UltraSPARC IIe PCI */
 
 /* Sundance Technology products */
 #define	PCI_PRODUCT_SUNDANCETI_ST201	0x0201		/* ST201 10/100 Ethernet */

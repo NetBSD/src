@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.318 2001/04/09 11:52:28 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.319 2001/04/12 06:26:50 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.314 2001/04/09 11:51:30 ad Exp 
+ *	NetBSD: pcidevs,v 1.315 2001/04/12 06:26:20 matt Exp 
  */
 
 /*
@@ -4688,6 +4688,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems",
 	    "UltraSPARC IIi PCI",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIe,
+	    0,
+	    "Sun Microsystems",
+	    "UltraSPARC IIe PCI",
 	},
 	{
 	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201,
