@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.45 1999/04/13 06:45:36 mrg Exp $
+#	$NetBSD: MAKEDEV,v 1.46 1999/04/26 04:20:04 abs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,8 +99,13 @@ all)
 floppy)
 	sh -$- $0 std ttya ttyb ttyc ttyd pty0
 	sh -$- $0 sd0 sd1 sd2 sd3 sd4 sd5 md0
-	sh -$- $0 cd0 cd1 st0 st1 fd0
+	sh -$- $0 cd0 cd1 st0 st1 fd0 pty0
 	;;
+
+ramdisk)
+	sh $0 floppy md0
+	;;
+
 std)
 	rm -f console tty kmem mem null zero eeprom openprom drum klog \
 		stdin stdout stderr fd/* ttya ttyb fb mouse kbd
