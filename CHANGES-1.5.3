@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.7 2001/10/27 21:05:06 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.8 2001/11/12 23:56:02 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -379,3 +379,25 @@ sys/arch/i386/conf/files.i386			1.190 via patch
 
   Add support for ALi M1543 in pcibios as e.g. found in a Toshiba
   Portege 4000.
+
+sys/arch/vax/vax/pmap.c				patch
+
+  Handle remapping of pages entered by pmap_kenter_pa() properly.
+  Fixes PR#12231.
+
+sys/arch/hp300/hp300/clock.c			1.22 via patch
+sys/arch/hp300/hp300/clockreg.h			1.6 via patch
+
+  Fix two bugs, one Year 2000 bug, one Year 2001 bug, related
+  to usage of two-digit BCD year in TOD clock.
+
+sys/kern/vfs_cache.c				1.31
+
+  Safely handle cleanup of namecache entries in the event of multiple
+  threads ending up in the same section of code looking for the same
+  entry, possible because vget() can sleep.  Fixes PR#14042.
+
+usr.bin/ftp/fetch.c				1.127
+
+  If in a proxied environment and no_proxy is true, use fetch_ftp()
+  to fetch FTP type URLs.
