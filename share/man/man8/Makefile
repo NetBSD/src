@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.36 2000/04/29 00:29:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.36.4.1 2000/08/11 03:30:33 minoura Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
-MAN=	compat_freebsd.8 compat_ibcs2.8 compat_linux.8 \
-	compat_osf1.8 compat_sunos.8 compat_svr4.8 compat_ultrix.8 \
+MAN=	compat_freebsd.8 compat_ibcs2.8 compat_linux.8 compat_osf1.8 \
+	compat_pecoff.8 compat_sunos.8 compat_svr4.8 compat_ultrix.8 \
 	diskless.8 genassym.sh.8 intro.8 rc.8 sticky.8 yp.8
 MLINKS+=compat_svr4.8 compat_sco.8
 MLINKS+=compat_svr4.8 compat_solaris.8
