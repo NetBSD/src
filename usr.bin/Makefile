@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.102 1999/06/05 13:21:59 ad Exp $
+#	$NetBSD: Makefile,v 1.103 1999/06/09 02:58:57 simonb Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -7,7 +7,7 @@
 SUBDIR=	apply apropos asa at audio banner basename bdes biff \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay checknr chflags \
 	chpass cksum cmp col colcrt colrm column comm compress \
-	crontab crunch ctags cut dirname du eject env \
+	crontab crunch ctags cut dirname du eject elf2aout elf2ecoff env \
 	error expand false fdformat fgen file find finger fmt fold fpr \
 	from fsplit fstat ftp gencat getconf getopt gprof head hesinfo \
 	hexdump id indent innetgr ipcrm ipcs join jot kdump ktrace \
@@ -26,16 +26,5 @@ SUBDIR=	apply apropos asa at audio banner basename bdes biff \
 	wall wc what whatis whereis which who whois window \
 	write xargs xinstall xlint xstr yacc yes ypcat \
 	ypmatch ypwhich
-
-.if	make(obj) || make(clean) || make(cleandir) || make(distclean)
-SUBDIR+=elf2aout elf2ecoff telnet
-.else
-
-# Build ELF to {ecoff, aout} tools on mips, for old bootblocks/PROMs.
-.if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
-SUBDIR+= elf2aout elf2ecoff
-.endif
-
-.endif	# make(obj) || make(clean) || make(cleandir) || make(distclean)
 
 .include <bsd.subdir.mk>
