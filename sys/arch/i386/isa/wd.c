@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.26.2.3 1993/10/27 05:38:03 mycroft Exp $
+ *	$Id: wd.c,v 1.26.2.4 1993/12/13 10:35:10 cgd Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -134,15 +134,13 @@ struct wdc_softc {
 	u_short sc_iobase;
 };
 
-void bad144intern(struct wd_softc *);
-void wddisksort();
-
 struct	wdc_softc	wdcontroller[NWDC];
 struct	disk	*wddrives[NWD];		/* table of units */
 struct	buf	wdtab[NWDC];		/* various per-controller info */
 struct	buf	wdutab[NWD];		/* head of queue per drive */
 struct	buf	rwdbuf[NWD];		/* buffers for raw IO */
 long	wdxfer[NWD];			/* count of transfers */
+int	wdtostatus[NWD];		/* timeout counters */
 
 int wdprobe(), wdattach();
 
@@ -150,12 +148,15 @@ struct	isa_driver wdcdriver = {
 	wdprobe, wdattach, "wdc",
 };
 
-void wdustart(struct wd_softc *);
-void wdstart(int);
-int wdcommand(struct wd_softc *, int);
-int wdcontrol(struct buf *);
-int wdsetctlr(dev_t, struct wd_softc *);
-int wdgetctlr(int, struct wd_softc *);
+void wdustart	__P((struct wd_softc *));
+void wdstart	__P((int));
+int wdcommand	__P((struct wd_softc *, int));
+int wdcontrol	__P((struct buf *));
+int wdsetctlr	__P((dev_t, struct wd_softc *));
+int wdgetctlr	__P((int, struct wd_softc *));
+void bad144intern	__P((struct disk *));
+void wddisksort __P((void));
+int wdreset	__P((int, int, int));
 
 static int
 wdcprobe(parent, cf, aux)
@@ -250,6 +251,8 @@ wdattach(struct isa_device *dvp)
 	bzero(&wdutab[lunit], sizeof(struct buf));
 	bzero(&rwdbuf[lunit], sizeof(struct buf));
 	wdxfer[lunit] = 0;
+	wdtostatus[lunit] = 0;
+	wdtimeout(lunit);
 
 	du->sc_ctrlr = dvp->id_masunit;
 	du->sc_unit = unit;
@@ -621,8 +624,10 @@ retry:
 	}
     
 	/* if this is a read operation, just go away until it's done.	*/
-	if (bp->b_flags & B_READ)
+	if (bp->b_flags & B_READ) {
+		wdtostatus[lunit] = 2;
 		return;
+	}
     
 	/* ready to send data?	*/
 	for (timeout=0; (inb(wdc+wd_altsts) & WDCS_DRQ) == 0; ) {
@@ -643,6 +648,7 @@ outagain:
 		DEV_BSIZE/sizeof(short));
 	du->sc_bc -= DEV_BSIZE;
 	du->sc_bct -= DEV_BSIZE;
+	wdtimeoutstatus[lunit] = 2;
 }
 
 /* Interrupt routine for the controller.  Acknowledge the interrupt, check for
@@ -655,7 +661,7 @@ wdintr(struct intrframe wdif)
 {
 	register struct	disk *du;
 	register struct buf *bp, *dp;
-	int status, wdc, ctrlr;
+	int status, wdc, ctrlr, timeout;
     
 	ctrlr = wdif.if_vec;
 
@@ -733,8 +739,16 @@ outt:
 		chk = min(DEV_BSIZE / sizeof(short), du->sc_bc / sizeof(short));
 	
 		/* ready to receive data? */
-		while ((inb(wdc+wd_status) & WDCS_DRQ) == 0)
-			;
+		for (timeout = 0; (inb(wdc+wd_status) & WDCS_DRQ) == 0; ) {
+DELAY(WDCDELAY);
+			if (++timeout < WDCNDELAY/20)
+				continue;
+			wdstart(ctrlr);
+/* #ifdef WDDEBUG */
+			printf("wdc%d: timeout in wdintr WDCS_DRQ\n", ctrlr);
+/* #endif */
+			break;
+		}
 	
 		/* suck in data */
 		insw (wdc+wd_data,
@@ -1635,8 +1649,11 @@ insert:
 		dp->b_actl = bp;
 }
 
+int
 wdreset(ctrlr, wdc, err)
-int ctrlr;
+	int ctrlr;
+	int wdc;
+	int err;
 {
 	int stat, timeout;
 
@@ -1650,4 +1667,34 @@ int ctrlr;
 
 	if (!wait_idle(wdc))
 		printf("wdc%d: failed to reset controller\n", ctrlr);
+}
+
+static int
+wdtimeout(caddr_t arg)
+{
+	int x = splbio();
+	register int unit = (int) arg;
+
+	if (wdtostatus[unit]) {
+		if (--wdtostatus[unit] == 0) {
+			struct disk *du = wddrives[unit];
+			int wdc = du->dk_port;
+/* #ifdef WDDEBUG */
+			printf("wd%d: lost interrupt - status %x, error %x\n",
+			    unit, inb(wdc+wd_status), inb(wdc+wd_error));
+/* #endif */
+			outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
+			DELAY(1000);
+			outb(wdc+wd_ctlr, WDCTL_IDS);
+			DELAY(1000);
+			(void) inb(wdc+wd_error);
+			outb(wdc+wd_ctlr, WDCTL_4BIT);
+			du->dk_skip = 0;
+			du->dk_flags |= DKFL_SINGLE;
+			wdstart(du->dk_ctrlr);		/* start controller */
+		}
+	}
+	timeout((timeout_t)wdtimeout, (caddr_t)unit, 50);
+	splx(x);
+	return (0);
 }
