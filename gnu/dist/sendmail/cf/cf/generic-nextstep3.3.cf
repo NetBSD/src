@@ -16,7 +16,7 @@
 #####
 #####		SENDMAIL CONFIGURATION FILE
 #####
-##### built by gshapiro@horsey.gshapiro.net on Fri Dec 29 22:31:01 PST 2000
+##### built by gshapiro@horsey.gshapiro.net on Fri Dec 29 22:31:00 PST 2000
 ##### in /usr/local/src/sendmail/devel/8.11/OpenSource/sendmail-8.11.2/cf/cf
 ##### using ../ as configuration include directory
 #####
@@ -25,10 +25,9 @@
 
 #####  Id: cfhead.m4,v 8.76.4.13 2000/08/24 17:09:50 gshapiro Exp  #####
 #####  Id: cf.m4,v 8.32 1999/02/07 07:26:14 gshapiro Exp  #####
-#####  Id: generic-ultrix4.mc,v 8.11 1999/02/07 07:26:03 gshapiro Exp  #####
+#####  Id: generic-nextstep3.3.mc,v 8.10 1999/02/07 07:26:02 gshapiro Exp  #####
 
-#####  Id: ultrix4.m4,v 8.11 1999/02/07 07:26:24 gshapiro Exp  #####
-
+#####  Id: nextstep.m4,v 8.21 1999/10/21 00:31:40 gshapiro Exp  #####
 
 #####  Id: generic.m4,v 8.15 1999/04/04 00:51:09 ca Exp  #####
 
@@ -237,7 +236,7 @@ O PrivacyOptions=authwarnings
 #O QueueFactor=600000
 
 # queue directory
-O QueueDirectory=/var/spool/mqueue
+O QueueDirectory=/usr/spool/mqueue
 
 # timeouts (many of these)
 #O Timeout.initial=5m
@@ -1147,7 +1146,7 @@ SAddDomain=50
 Mlocal,		P=/bin/mail, F=lsDFMAw5:/|@qPrmn9, S=EnvFromL/HdrFromL, R=EnvToL/HdrToL,
 		T=DNS/RFC822/X-Unix,
 		A=mail -d $u
-Mprog,		P=/bin/sh, F=lsDFMoqeu9, S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=$z:/,
+Mprog,		P=/bin/sh, F=lsDFMoqeuP, S=EnvFromL/HdrFromL, R=EnvToL/HdrToL, D=$z:/,
 		T=X-Unix/X-Unix/X-Unix,
 		A=sh -c $u
 
