@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.1 1998/07/12 19:51:59 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.2 1998/07/24 20:57:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -389,19 +389,23 @@ hid_report_size(buf, len, k, idp)
 }
 
 int
-hid_locate(desc, size, u, k, loc)
+hid_locate(desc, size, u, k, loc, flags)
 	void *desc;
 	int size;
 	u_int32_t u;
 	enum hid_kind k;
 	struct hid_location *loc;
+	u_int32_t *flags;
 {
 	struct hid_data *d;
 	struct hid_item h;
 
 	for (d = hid_start_parse(desc, size, 1<<k); hid_get_item(d, &h); ) {
 		if (h.kind == k && !(h.flags & HIO_CONST) && h.usage == u) {
-			*loc = h.loc;
+			if (loc)
+				*loc = h.loc;
+			if (flags)
+				*flags = h.flags;
 			hid_end_parse(d);
 			return (1);
 		}
