@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.58 1999/06/17 00:24:10 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.59 1999/06/18 05:13:46 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1982,15 +1982,18 @@ uvm_map_advice(map, start, end, new_advice)
  *	for that, use uvm_fault_wire()/uvm_fault_unwire() (see uvm_vslock()).
  * => regions sepcified as not pageable require lock-down (wired) memory
  *	and page tables.
- * => map must not be locked.
+ * => map must never be read-locked
+ * => if islocked is TRUE, map is already write-locked
+ * => we always unlock the map, since we must downgrade to a read-lock
+ *	to call uvm_fault_wire()
  * => XXXCDC: check this and try and clean it up.
  */
 
 int
-uvm_map_pageable(map, start, end, new_pageable)
+uvm_map_pageable(map, start, end, new_pageable, islocked)
 	vm_map_t map;
 	vaddr_t start, end;
-	boolean_t new_pageable;
+	boolean_t new_pageable, islocked;
 {
 	vm_map_entry_t entry, start_entry, failed_entry;
 	int rv;
@@ -2003,7 +2006,8 @@ uvm_map_pageable(map, start, end, new_pageable)
 		panic("uvm_map_pageable: map %p not pageable", map);
 #endif
 
-	vm_map_lock(map);
+	if (islocked == FALSE)
+		vm_map_lock(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
 
 	/* 
