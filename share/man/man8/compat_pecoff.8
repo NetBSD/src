@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_pecoff.8,v 1.2 2000/07/28 10:27:53 minoura Exp $
+.\"	$NetBSD: compat_pecoff.8,v 1.3 2000/08/11 04:05:01 soren Exp $
 .\"
 .\" Copyright (c) 2000 The PEACE Project.
 .\" All rights reserved.
@@ -37,12 +37,12 @@ has partial support for running Win32 application.
 This manual page describes how to run Win32 (and hopefully WinCE
 in the future) applications on
 .Nx .
-Note that PE (Portable Executable) is Microsoft extention to COFF
+Note that PE (Portable Executable) is a Microsoft extention to the COFF
 executable file format.
 
 .Sh BRIEF INTRODUCTION TO WIN32 API
-Win32 API is an application program interface (API) for 32-bit
-applications for Microsoft Windows 9x/NT/2000.  Win32 API is provided
+The Win32 API is an application program interface (API) for 32-bit
+applications for Microsoft Windows 9x/NT/2000.  The Win32 API is provided
 via a set of core DLLs (Dynamically Linked Libraries), including KERNEL32.DLL,
 USER32.DLL and GDI32.DLL.  
 .Pp
@@ -65,33 +65,33 @@ COMCTL32.DLL and COMDLG.32.DLL are GUI components which are commonly
 used in many applications.  WSOCK32.DLL provides networking API.
 DDRAW.DLL is for DirectDraw.
 .Pp
-Most of other DLLs are compatible among all the implementations and
+Most other DLLs are compatible among all the implementations and
 therefore can be shared.
 
 .Sh NETBSD SUPPORT FOR WIN32 API
 .Nx
-support for Win32 application is developed by the PEACE Project, and is
+support for Win32 applications is developed by the PEACE Project, and is
 under active development.
 Currently it can run some console applications including Windows 2000
-CMD.EXE, and very few GUI applications.
+CMD.EXE as well as a small number of GUI applications.
 .Pp
-PEACE system consists of three parts; kernel part, dynamic loader and
+The PEACE system consists of three parts; kernel part, dynamic loader and
 core DLLs.
 .Pp
 The kernel part provides loading and executing PE/COFF format 
-executable binaries, i.e. it extends
+executable binaries, i.e. it extends the
 .Xr execve 2
 system call, just like other binary compatibility options.
-It is activated by enabling
+It is activated by enabling the
 .Dv COMPAT_PECOFF
 option.
 .Pp
-The dynamic loader is PE/COFF version of
+The dynamic loader is the PE/COFF version of
 .Xr ld.so 1 .
 It reads the file header of the executable binary, and
 loads required DLLs.  
 .Pp
-The core DLLs implement the actual Win32 API functions described in the
+The core DLLs implement the actual Win32 API functions as described in the
 previous section.  Since the kernel part does not provide
 any additional system calls and other kernel interface,
 all Win32 API functions are implemented on top of the existing
@@ -104,7 +104,7 @@ Development snapshots of the dynamic loader can be retrieved from
 where `*' is replaced with the snapshot date.
 Simply
 .Xr gunzip 1
-the file and copy the resultant as
+the file and copy the resulting file to
 .Pa /usr/libexec/ld.so.dll .
 .Pp
 The core DLLs can also be retrieved from
@@ -117,13 +117,13 @@ The dynamic loader searches required DLLs from the following directories;
 Directories listed in the environment variable DLLPATH (separated by
 colons)
 .It
-Same directory where the executable is located
+The directory where the executable is located
 .El
 The core DLLs are required to be installed into
 .Pa /usr/lib ,
 in order to use CMD.EXE (or another Win32 application) as the login shell.
 .Pp
-Other DLLs can be stored into arbitrary directories specified by the
+Other DLLs can be stored in arbitrary directories specified by the
 environment variable DLLPATH.  To use Windows NT/2000
 DLLs installed on a separate partition of the local disk directly
 for
@@ -155,12 +155,12 @@ in Win32/WinCE API.
 .Sh BUGS
 .Bl -hyphen -compact
 .It
-Currently only i386 platform is supported.
+Currently only the i386 platform is supported.
 .It
 Most functions in Win32 are missing.
 .It
 The dynamic loader and core DLLs are not provided in the standard
 distribution of
 .Nx .
-This is because the cross-compiler is required to build them.
+This is because a cross-compiler is required to build them.
 .El
