@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.73 2001/01/27 12:28:35 jdolecek Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.74 2001/02/04 10:20:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -645,7 +645,7 @@ kernfs_readdir(v)
 	for (kt = &kern_targets[i];
 	     uio->uio_resid >= UIO_MX && i < nkern_targets; kt++, i++) {
 #ifdef KERNFS_DIAGNOSTIC
-		printf("kernfs_readdir: i = %d\n", i);
+		printf("kernfs_readdir: i = %d\n", (int)i);
 #endif
 
 		if (kt->kt_tag == KTT_DEVICE) {
