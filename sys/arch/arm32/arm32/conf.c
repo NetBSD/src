@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1998/09/22 03:40:42 mark Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 1998/10/02 01:37:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -54,7 +54,7 @@
 
 #include <machine/conf.h>
 
-#include "wdc.h"
+#include "wd.h"
 #include "fdc.h"
 #include "md.h"
 #include "sd.h"
@@ -82,7 +82,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 13: */
 	bdev_lkm_dummy(),		/* 14: */
 	bdev_lkm_dummy(),		/* 15: */
-	bdev_disk_init(NWDC, wd),	/* 16: Internal IDE disk */
+	bdev_disk_init(NWD, wd),	/* 16: Internal IDE disk */
 	bdev_disk_init(NFDC, fd),	/* 17: floppy diskette */
 	bdev_disk_init(NMD, md),	/* 18: memory disk */
 	bdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
@@ -207,7 +207,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 13: */
 	cdev_lkm_dummy(),		/* 14: */
 	cdev_lkm_dummy(),		/* 15: */
-	cdev_disk_init(NWDC, wd),       /* 16: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD, wd),        /* 16: ST506/ESDI/IDE disk */
 	cdev_disk_init(NFDC, fd),       /* 17: floppy diskette */
 	cdev_disk_init(NMD, md),        /* 18: memory disk driver */
 	cdev_disk_init(NVND,vnd),       /* 19: vnode disk driver */
