@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $NetBSD: main.c,v 1.12 1998/02/22 12:08:35 christos Exp $ */
+/* $NetBSD: main.c,v 1.12.2.1 2000/10/19 16:31:38 he Exp $ */
 
 
 #include "flexdef.h"
@@ -109,11 +109,11 @@ int num_input_files;
 char *program_name = "flex";
 
 #ifndef SHORT_FILE_NAMES
-static char *outfile_template = "lex.%s.%s";
-static char *backing_name = "lex.backup";
+static const char outfile_template[] = "lex.%s.%s";
+static const char backing_name[] = "lex.backup";
 #else
-static char *outfile_template = "lex%s.%s";
-static char *backing_name = "lex.bck";
+static const char outfile_template[] = "lex%s.%s";
+static const char backing_name[] = "lex.bck";
 #endif
 
 #ifdef THINK_C
