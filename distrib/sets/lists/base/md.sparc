@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.57 2001/01/27 23:48:33 jdolecek Exp $
+# $NetBSD: md.sparc,v 1.58 2001/03/05 02:49:29 mrg Exp $
 ./dev/apm			base-sys-devlinks
 ./sbin/edlabel			base-sysutil-root
 ./sbin/ldconfig			base-sysutil-root
@@ -24,7 +24,10 @@
 ./usr/mdec/binstall		base-sysutil-bin
 ./usr/mdec/boot			base-sysutil-bin
 ./usr/mdec/boot.net		base-sysutil-bin
+./usr/mdec/bootblk		base-sysutil-bin
 ./usr/mdec/bootxx		base-sysutil-bin
+./usr/mdec/ofwboot		base-sysutil-bin
+./usr/mdec/ofwboot.net		base-sysutil-bin
 ./usr/mdec/installboot		base-sysutil-bin
 ./usr/sbin/apmd			base-sysutil-bin
 ./usr/sbin/eeprom		base-sysutil-bin
