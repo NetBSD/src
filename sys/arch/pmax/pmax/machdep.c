@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.2.19 1999/12/09 19:29:34 drochner Exp $ */
+/* $NetBSD: machdep.c,v 1.120.2.20 2000/02/03 09:34:46 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,57 +43,44 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.19 1999/12/09 19:29:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.20 2000/02/03 09:34:46 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
 
+#include "opt_dec_3min.h"
+#include "opt_dec_maxine.h"
+#include "opt_dec_3maxplus.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/map.h>
-#include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/exec.h>
-#include <sys/kcore.h>
-#include <sys/file.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
 #include <sys/reboot.h>
-#include <sys/msgbuf.h>
+#include <sys/user.h>
+#include <sys/mount.h>
+#include <sys/kcore.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
-#include <uvm/uvm_extern.h>
+#include <sys/sysctl.h>			/* XXX after <vm/vm.h> */
 
-#include <sys/sysctl.h>
 #include <dev/cons.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/pte.h>
 #include <machine/autoconf.h>
 #include <machine/dec_prom.h>
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
-#include <machine/locore.h>		/* XXX */
-#include <pmax/pmax/pmaxtype.h>
+#include <machine/locore.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
-#include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
 
@@ -110,7 +97,6 @@ vm_map_t phys_map = NULL;
 int	systype;		/* mother board type */
 char	*bootinfo = NULL;	/* pointer to bootinfo structure */
 int	cpuspeed = 30;		/* approx # of instructions per usec */
-int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int	mem_cluster_cnt;
@@ -139,12 +125,12 @@ extern void stacktrace __P((void)); /*XXX*/
 #endif
 
 /* Motherboard or system-specific initialization vector */
-void	unimpl_bus_reset __P((void));
-int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
-void	unimpl_cons_init __P((void));
-void	unimpl_device_register __P((struct device *, void *));
-int 	unimpl_iointr __P ((unsigned, unsigned, unsigned, unsigned));
-unsigned nullwork __P((void));
+static void	unimpl_bus_reset __P((void));
+static void	unimpl_cons_init __P((void));
+static void	unimpl_device_register __P((struct device *, void *));
+static int 	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+static int	unimpl_memsize __P((caddr_t));
+static unsigned	nullwork __P((void));
 
 struct platform platform = {
 	"iobus not set",
@@ -152,13 +138,13 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
-	0, /* memsize */
-	nullwork,
+	unimpl_memsize,
+	(void *)nullwork,
 };
 
-extern caddr_t esym;
-extern struct user *proc0paddr;
-extern struct consdev promcd;
+extern caddr_t esym;			/* XXX */
+extern struct user *proc0paddr;		/* XXX */
+extern struct consdev promcd;		/* XXX */
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -184,7 +170,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
 	int prom_systype __P((void));
-	extern char edata[], end[];
+	extern char edata[], end[];	/* XXX */
 
 	/* Set up bootinfo structure.  Note that we can't print messages yet! */
 	if (bim == BOOTINFO_MAGIC) {
@@ -357,38 +343,11 @@ mach_init(argc, argv, code, cv, bim, bip)
 		platform_not_supported();
 		/* NOTREACHED */
 	}
+
+	/* Machine specific initialisation */
 	(*sysinit[systype].init)();
-
-	/*
-	 * Find out how much memory is available.
-	 * Be careful to save and restore the original contents for msgbuf.
-	 */
-	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START);
-	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
-	while (cp < (char *)physmem_boardmax) {
-	  	int j;
-		if (badaddr(cp, 4))
-			break;
-		i = *(int *)cp;
-		j = ((int *)cp)[4];
-		*(int *)cp = 0xa5a5a5a5;
-		/*
-		 * Data will persist on the bus if we read it right away.
-		 * Have to be tricky here.
-		 */
-		((int *)cp)[4] = 0x5a5a5a5a;
-		wbflush();
-		if (*(int *)cp != 0xa5a5a5a5)
-			break;
-		*(int *)cp = i;
-		((int *)cp)[4] = j;
-		cp += NBPG;
-		physmem++;
-	}
-	/* clear any memory error conditions possibley caused by probe */
-	(*platform.bus_reset)();
-
-	maxmem = physmem;
+	/* Find out how much memory is available. */
+	physmem = (*platform.memsize)(kernend);
 
 	/*
 	 * Now that we know how much memory we have, initialize the
@@ -403,7 +362,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Put the first 8M of RAM onto a lower-priority free list, since
 	 * some TC boards (e.g. PixelStamp boards) are only able to DMA
 	 * into this region, and we want them to have a fighting chance of
-	 * allocating their DMA memory during autoconfiguratoin.
+	 * allocating their DMA memory during autoconfiguration.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
@@ -439,6 +398,12 @@ mach_init(argc, argv, code, cv, bim, bip)
 	pmap_bootstrap();
 }
 
+void	
+consinit()	
+{		
+			
+	(*platform.cons_init)();
+}
 
 /*
  * Machine-dependent startup code.
@@ -453,7 +418,7 @@ cpu_startup()
 	vsize_t size;
 	char pbuf[9];
 #ifdef DEBUG
-	extern int pmapdebug;
+	extern int pmapdebug;		/* XXX */
 	int opmapdebug = pmapdebug;
 
 	pmapdebug = 0;
@@ -531,14 +496,6 @@ cpu_startup()
 	 * map those pages.
 	 */
 
-	/*
-	 * Initialize callouts
-	 */
-	callfree = callout;
-	for (i = 1; i < ncallout; i++)
-		callout[i-1].c_next = &callout[i];
-	callout[i-1].c_next = NULL;
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
@@ -553,9 +510,8 @@ cpu_startup()
 	bufinit();
 }
 
-
 /*
- * machine dependent system variables.
+ * Machine dependent system variables.
  */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
@@ -588,6 +544,31 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+/*	
+ * Look up information in bootinfo of boot loader.
+ */	
+void *	
+lookup_bootinfo(type)	
+	int type;
+{    
+	struct btinfo_common *bt;
+	char *help = bootinfo;
+    
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type) 
+			return ((void *)help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return (NULL);
+}
+
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */ 
@@ -596,7 +577,6 @@ cpu_reboot(howto, bootstr)
 	volatile int howto;	/* XXX volatile to keep gcc happy */
 	char *bootstr;
 {
-	extern int cold;
 	void prom_halt __P((int, char *)) __attribute__((__noreturn__));
 
 	/* take a snap shot before clobbering any registers */
@@ -639,7 +619,7 @@ cpu_reboot(howto, bootstr)
 #if 0
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 #else
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 #endif
 		dumpsys();
 
@@ -649,40 +629,10 @@ haltsys:
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
 	/*NOTREACHED*/
 }
-
-/*
- * lookup_bootinfo:
- * Look up information in bootinfo of boot loader.
- */
-void *
-lookup_bootinfo(type)
-	int type;
-{
-	struct btinfo_common *bt;
-	char *help = bootinfo;
-
-	/* Check for a bootinfo record first. */
-	if (help == NULL)
-		return (NULL);
-
-	do {
-		bt = (struct btinfo_common *)help;
-		if (bt->type == type)
-			return ((void *)help);
-		help += bt->next;
-	} while (bt->next != 0 &&
-		(size_t)help < (size_t)bootinfo + BOOTINFO_SIZE);
-
-	return (NULL);
-}
-
-#include "opt_dec_3min.h"
-#include "opt_dec_maxine.h"
-#include "opt_dec_3maxplus.h"
 
 /*
  * Return the best possible estimate of the time in the timeval to
@@ -708,7 +658,7 @@ microtime(tvp)
 
 	if (tvp->tv_sec == lasttime.tv_sec &&
 	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) > 1000000) {
+	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
 		tvp->tv_sec++;
 		tvp->tv_usec -= 1000000;
 	}
@@ -726,38 +676,102 @@ delay(n)
         DELAY(n);
 }
 
-void
+/*
+ * Find out how much memory is available by testing memory.
+ * Be careful to save and restore the original contents for msgbuf.
+ */
+int
+memsize_scan(first)
+	caddr_t first;
+{
+	int i, mem;
+	char *cp;
+
+	mem = btoc((paddr_t)first - MIPS_KSEG0_START);
+	cp = (char *)MIPS_PHYS_TO_KSEG1(mem << PGSHIFT);
+	while (cp < (char *)physmem_boardmax) {
+		int j;
+		if (badaddr(cp, 4))
+			break;
+		i = *(int *)cp;
+		j = ((int *)cp)[4];
+		*(int *)cp = 0xa5a5a5a5;
+		/*
+		 * Data will persist on the bus if we read it right away.
+		 * Have to be tricky here.
+		 */
+		((int *)cp)[4] = 0x5a5a5a5a;
+		wbflush();
+		if (*(int *)cp != 0xa5a5a5a5)
+			break;
+		*(int *)cp = i;
+		((int *)cp)[4] = j;
+		cp += NBPG;
+		mem++;
+	}
+
+	/* clear any memory error conditions possibly caused by probe */
+	(*platform.bus_reset)();
+	return (mem);
+}
+
+/*
+ * Find out how much memory is available by using the PROM bitmap.
+ */
+int
+memsize_bitmap(first)
+	caddr_t first;
+{
+
+	panic("memsize_bitmap not implemented");
+}
+
+static void
 unimpl_bus_reset()
 {
-	panic("sysconf.init didnt set bus_reset");
+
+	panic("sysconf.init didn't set bus_reset");
 }
 
-void
+static void
 unimpl_cons_init()
 {
-	panic("sysconf.init didnt set cons_init");
+
+	panic("sysconf.init didn't set cons_init");
 }
 
-void
+static void
 unimpl_device_register(sc, arg)
 	struct device *sc;
 	void *arg;
 {
-	panic("sysconf.init didnt set device_register");
+
+	panic("sysconf.init didn't set device_register");
 }
 
-int
+static int
 unimpl_iointr(mask, pc, statusreg, causereg)
 	unsigned mask;
 	unsigned pc;
 	unsigned statusreg;
 	unsigned causereg;
 {
-	panic("sysconf.init didnt set iointr");
+
+	panic("sysconf.init didn't set iointr");
 }
 
-unsigned
+static int
+unimpl_memsize(first)
+caddr_t first;
+{
+
+	panic("sysconf.init didn't set memsize");
+}
+
+
+static unsigned
 nullwork()
 {
-	return 0;
+
+	return (0);
 }

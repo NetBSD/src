@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.6.2.15 1999/12/06 08:52:14 nisimura Exp $ */
+/* $NetBSD: dec_3max.c,v 1.6.2.16 2000/02/03 09:34:44 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.15 1999/12/06 08:52:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.16 2000/02/03 09:34:44 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ dec_3max_init()
 	platform.cons_init = dec_3max_cons_init;
 	platform.device_register = dec_3max_device_register;
 	platform.iointr = dec_3max_intr;
+	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
 	/* clear any memory errors */

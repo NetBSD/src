@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.2.4.16 1999/12/06 08:52:15 nisimura Exp $ */
+/* $NetBSD: dec_5100.c,v 1.2.4.17 2000/02/03 09:34:45 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.16 1999/12/06 08:52:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.2.4.17 2000/02/03 09:34:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ dec_5100_init()
 	platform.cons_init = dec_5100_cons_init;
 	platform.device_register = dec_5100_device_register;
 	platform.iointr = dec_5100_intr;
+	platform.memsize = memsize_scan;
 	/* no high resolution timer available */
 
 	/* set correct wbflush routine for this motherboard */
