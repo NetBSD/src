@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.11 1999/03/01 02:45:04 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.12 1999/03/02 00:22:42 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.11 1999/03/01 02:45:04 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.12 1999/03/02 00:22:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,18 +156,6 @@ void sfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
 struct fb_devconfig sfb_console_dc;
 tc_addr_t sfb_consaddr;
 
-#ifndef	SFB_ROPS
-struct wsdisplay_emulops sfb_emulops = {
-	rcons_cursor,			/* could use hardware cursor; punt */
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
-#else
 void	sfb_cursor __P((void *, int, int, int));
 int	sfb_mapchar __P((void *, int, unsigned int *));
 void	sfb_putchar __P((void *, int, int, u_int, long));
@@ -188,7 +176,6 @@ struct wsdisplay_emulops sfb_emulops = {
 	sfb_eraserows,
 	sfb_alloc_attr
 };
-#endif
 
 struct wsscreen_descr sfb_stdscreen = {
 	"std", 0, 0,
@@ -859,8 +846,6 @@ bt459_set_curpos(sc)
 	splx(s);
 }
 
-#ifdef SFB_ROPS
-
 #define	MODE_SIMPLE		0
 #define	MODE_OPAQUESTIPPLE	1
 #define	MODE_OPAQUELINE		2
@@ -1162,4 +1147,3 @@ sfb_alloc_attr(id, fg, bg, flags, attrp)
 		*attrp = 0;
 	return (0);
 }
-#endif
