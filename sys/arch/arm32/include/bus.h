@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.8 1998/02/04 05:12:48 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.9 1998/04/19 04:13:24 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,16 @@ typedef u_long bus_size_t;
  */
 typedef struct bus_space *bus_space_tag_t;
 typedef u_long bus_space_handle_t;
+
+/*
+ *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+ *
+ * Map a region of bus space.
+ */
+
+#define	BUS_SPACE_MAP_CACHEABLE		0x01
+#define	BUS_SPACE_MAP_LINEAR		0x02
 
 struct bus_space {
 	/* cookie */
@@ -615,9 +625,16 @@ typedef struct arm32_bus_dmamap		*bus_dmamap_t;
  *	are suitable for programming into DMA registers.
  */
 struct arm32_bus_dma_segment {
+	/*
+	 * PUBLIC MEMBERS: these are used by machine-independent code.
+	 */
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	ds_vaddr;	/* Virtual address */
+	/*
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
+	 */
+	bus_addr_t	ds_vaddr;	/* Virtual mapped address
+					 * Used by bus_dmamem_sync() */
 };
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
 
@@ -706,8 +723,6 @@ struct arm32_bus_dmamap {
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	int		_dm_flags;	/* misc. flags */
-
-	int		_dm_loadlen;	/* Currently loaded buffer lenght */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
