@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.72 2004/03/05 03:58:21 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.73 2004/03/07 02:46:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.72 2004/03/05 03:58:21 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.73 2004/03/07 02:46:58 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -96,8 +96,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.72 2004/03/05 03:58:21 oster Ex
 
 
 static struct pool rf_recond_pool;
-#define RF_MAX_FREE_RECOND  4
-#define RF_RECOND_INC       1
+#define RF_MAX_FREE_RECOND  10
+#define RF_MIN_FREE_RECOND  4
+
+struct pool rf_reconbuffer_pool;
+#define RF_MAX_FREE_RECONBUFFER 32
+#define RF_MIN_FREE_RECONBUFFER 16
 
 static RF_RaidReconDesc_t *AllocRaidReconDesc(RF_Raid_t *, RF_RowCol_t,
 					      RF_RaidDisk_t *, int, RF_RowCol_t);
@@ -150,6 +154,16 @@ rf_ConfigureReconstruction(RF_ShutdownList_t **listp)
 
 	pool_init(&rf_recond_pool, sizeof(RF_RaidReconDesc_t), 0, 0, 0,
 		  "rf_recond_pl", NULL);
+	pool_sethiwat(&rf_recond_pool,RF_MAX_FREE_RECOND);
+	pool_prime(&rf_recond_pool,RF_MIN_FREE_RECOND);
+	pool_sethiwat(&rf_recond_pool,RF_MIN_FREE_RECOND);
+
+	pool_init(&rf_reconbuffer_pool, sizeof(RF_ReconBuffer_t), 0, 0, 0,
+		  "rf_reconbuffer_pl", NULL);
+	pool_sethiwat(&rf_reconbuffer_pool,RF_MAX_FREE_RECONBUFFER);
+	pool_prime(&rf_reconbuffer_pool,RF_MIN_FREE_RECONBUFFER);
+	pool_sethiwat(&rf_reconbuffer_pool,RF_MIN_FREE_RECONBUFFER);
+
 	rf_ShutdownCreate(listp, rf_ShutdownReconstruction, NULL);
 
 	return (0);
