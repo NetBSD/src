@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.4 2003/01/27 21:01:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.5 2003/02/15 04:33:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@
 #define PTHREADD_COND_TIMEDWAIT	20
 #define PTHREADD_COND_SIGNAL	21
 #define PTHREADD_COND_BROADCAST	22
-#define PTHREADD_NCOUNTERS	23
+#define PTHREADD_COND_WOKEUP	23
+#define PTHREADD_NCOUNTERS	24
 
 #define PTHREADD_INITCOUNTERNAMES { \
 	"pthread_create()",	/*  0 CREATE */		\
@@ -88,6 +89,7 @@
 	"cond timedwait",      	/* 20 COND_TIMEDWAIT */	\
 	"cond broadcast",	/* 21 COND_BROADCAST */	\
 	"cond signal",		/* 22 COND_SIGNAL */	\
+	"cond wokeup",		/* 23 COND_WOKEUP */	\
 }
 
 #define PTHREAD__DEBUG_SHMKEY	(0x000f)
@@ -107,6 +109,15 @@ struct pthread_msgbuf* pthread__debuglog_init(int force);
 void pthread__debuglog_printf(const char *fmt, ...);
 
 #ifdef PTHREAD__DEBUG
+
+#undef	PTHREAD_ALARM_DEBUG
+#undef	PTHREAD_COND_DEBUG
+#define PTHREAD_MAIN_DEBUG
+#undef	PTHREAD_RUN_DEBUG
+#define PTHREAD_SA_DEBUG
+#undef	PTHREAD_SIG_DEBUG
+#define PTHREAD_SPIN_DEBUG
+#undef	PTHREAD_SPIN_DEBUG_PRINT
 
 extern int pthread__debug_counters[PTHREADD_NCOUNTERS];
 
