@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.2.2.3 1997/12/15 00:41:05 fvdl Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.2.2.4 1998/11/16 07:02:58 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -121,7 +121,7 @@ message badgeom
 }
 
 message realgeom
-{real geom: %d cyl, %d heads, %d sec\n}
+{real geom: %d cyl, %d heads, %d sec  (NB: for comparison only)\n}
 
 message biosgeom
 {BIOS geom: %d cyl, %d heads, %d sec\n}
