@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.100.4.1 2001/07/29 20:04:57 he Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.100.4.2 2001/07/30 13:32:43 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -336,7 +336,7 @@ execsigs(p)
 	int signum;
 	int prop;
 
-	sigactunshare(p);
+	sigactsunshare(p);
 
 	ps = p->p_sigacts;
 
