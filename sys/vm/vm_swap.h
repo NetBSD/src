@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.1.2.4.2.1 1997/05/04 15:20:25 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.1.2.4.2.2 1997/05/09 02:29:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Matthew R. Green
@@ -41,11 +41,6 @@ struct swapent {
 	int	se_flags;
 	int	se_nblks;
 	int	se_priority;
-};
-
-struct swapinfo {
-	int	si_num;
-	struct swapent si_ent[1];
 };
 
 #define SWAP_ON		1
