@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.10 2002/09/27 15:37:02 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.11 2002/11/29 22:14:16 fvdl Exp $	*/
 
 /*
  *
@@ -1080,7 +1080,7 @@ pmap_init()
 
 	/* now allocate attrs */
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
-		vm_physmem[lcv].pmseg.attrs = (char *) addr;
+		vm_physmem[lcv].pmseg.attrs = (unsigned char *)addr;
 		addr = (vaddr_t)(vm_physmem[lcv].pmseg.attrs +
 				 (vm_physmem[lcv].end - vm_physmem[lcv].start));
 	}
@@ -2559,9 +2559,6 @@ pmap_page_remove(pg)
 	struct pv_entry *pve, *npve, **prevptr, *killlist = NULL;
 	pt_entry_t *ptes, opte;
 	pd_entry_t **pdes;
-#if defined(I386_CPU)
-	boolean_t needs_update = FALSE;
-#endif
 #ifdef DIAGNOSTIC
 	pd_entry_t pde;
 #endif
@@ -2609,14 +2606,8 @@ pmap_page_remove(pg)
 			pve->pv_pmap->pm_stats.wired_count--;
 		pve->pv_pmap->pm_stats.resident_count--;
 
-		if (pmap_is_curpmap(pve->pv_pmap)) {
-#if defined(I386_CPU)
-			if (cpu_class == CPUCLASS_386)
-				needs_update = TRUE;
-			else
-#endif
+		if (pmap_is_curpmap(pve->pv_pmap))
 				pmap_update_pg(pve->pv_va);
-		}
 
 		/* sync R/M bits */
 		vm_physmem[bank].pmseg.attrs[off] |= (opte & (PG_U|PG_M));
@@ -2627,9 +2618,6 @@ pmap_page_remove(pg)
 			if (pve->pv_ptp->wire_count <= 1) {
 				pmap_free_ptp(pve->pv_pmap, pve->pv_ptp,
 					      pve->pv_va, ptes, pdes);
-#if defined(I386_CPU)
-				needs_update = FALSE;
-#endif
 			}
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
@@ -2641,10 +2629,6 @@ pmap_page_remove(pg)
 	pvh->pvh_list = NULL;
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
-#if defined(I386_CPU)
-	if (needs_update)
-		tlbflush();
-#endif
 }
 
 /*
@@ -2663,10 +2647,10 @@ pmap_page_remove(pg)
 boolean_t
 pmap_test_attrs(pg, testbits)
 	struct vm_page *pg;
-	int testbits;
+	unsigned testbits;
 {
 	int bank, off;
-	char *myattrs;
+	unsigned char *myattrs;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	pt_entry_t *ptes, pte;
@@ -2725,20 +2709,17 @@ pmap_test_attrs(pg, testbits)
  */
 
 boolean_t
-pmap_change_attrs(pg, setbits, clearbits)
+pmap_clear_attrs(pg, clearbits)
 	struct vm_page *pg;
-	int setbits, clearbits;
+	unsigned clearbits;
 {
-	u_int32_t result;
 	int bank, off;
+	unsigned result;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
-	pt_entry_t *ptes, npte;
+	pt_entry_t *ptes, opte;
 	pd_entry_t **pdes;
-	char *myattrs;
-#if defined(I386_CPU)
-	boolean_t needs_update = FALSE;
-#endif
+	unsigned char *myattrs;
 
 	/* XXX: vm_page should either contain pv_head or have a pointer to it */
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2754,7 +2735,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 
 	myattrs = &vm_physmem[bank].pmseg.attrs[off];
 	result = *myattrs & clearbits;
-	*myattrs = (*myattrs | setbits) & ~clearbits;
+	*myattrs &= ~clearbits;
 
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
 		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
@@ -2764,20 +2745,13 @@ pmap_change_attrs(pg, setbits, clearbits)
 			      "detected");
 #endif
 
-		npte = ptes[pl1_i(pve->pv_va)];
-		result |= (npte & clearbits);
-		npte = (npte | setbits) & ~clearbits;
-		if (ptes[pl1_i(pve->pv_va)] != npte) {
-			ptes[pl1_i(pve->pv_va)] = npte;	/* zap! */
+		opte = ptes[pl1_i(pve->pv_va)];
+		if (opte & clearbits) {
+			result |= (opte & clearbits);
+			ptes[pl1_i(pve->pv_va)] &= ~(opte & clearbits);
 
-			if (pmap_is_curpmap(pve->pv_pmap)) {
-#if defined(I386_CPU)
-				if (cpu_class == CPUCLASS_386)
-					needs_update = TRUE;
-				else
-#endif
-					pmap_update_pg(pve->pv_va);
-			}
+			if (pmap_is_curpmap(pve->pv_pmap))
+				pmap_update_pg(pve->pv_va);
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 	}
@@ -2785,11 +2759,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 	simple_unlock(&pvh->pvh_lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
-#if defined(I386_CPU)
-	if (needs_update)
-		tlbflush();
-#endif
-	return(result != 0);
+	return (result != 0);
 }
 
 /*
@@ -2827,7 +2797,6 @@ pmap_write_protect(pmap, sva, eva, prot)
 	pd_entry_t **pdes;
 	struct pmap_remove_record pmap_rr, *prr;
 	vaddr_t blockend, va;
-	u_int32_t md_prot;
 
 	pmap_map_ptes(pmap, &ptes, &pdes);		/* locks pmap */
 
@@ -2866,46 +2835,40 @@ pmap_write_protect(pmap, sva, eva, prot)
 		if (!pmap_pdes_valid(sva, pdes, NULL))
 			continue;
 
-		md_prot = protection_codes[prot];
-		if (sva < VM_MAXUSER_ADDRESS)
-			md_prot |= PG_u;
-		else if (sva < VM_MAX_ADDRESS)
-			/* XXX: write-prot our PTES? never! */
-			md_prot |= (PG_u | PG_RW);
+#ifdef DIAGNOSTIC
+		if (sva >= VM_MAXUSER_ADDRESS &&
+		    sva < VM_MAX_ADDRESS)
+			panic("pmap_write_protect: PTE space");
+#endif
 
 		spte = &ptes[pl1_i(sva)];
 		epte = &ptes[pl1_i(blockend)];
 
 		for (/*null */; spte < epte ; spte++) {
 
-			if (!pmap_valid_entry(*spte))	/* no mapping? */
+			if ((*spte & (PG_RW|PG_V)) != (PG_RW|PG_V))
 				continue;
 
-			npte = (*spte & ~PG_PROT) | md_prot;
+			*spte &= ~PG_RW;
 
-			if (npte != *spte) {
-				*spte = npte;		/* zap! */
-
-				if (prr) {    /* worried about tlb flushing? */
-					va = ptob(spte - ptes);
-					if (npte & PG_G) {
-						/* PG_G requires this */
-						pmap_update_pg(va);
+			if (prr) {    /* worried about tlb flushing? */
+				va = ptob(spte - ptes);
+				if (npte & PG_G) {
+					/* PG_G requires this */
+					pmap_update_pg(va);
+				} else {
+					if (prr->prr_npages <
+					    PMAP_RR_MAX) {
+						prr->prr_vas[
+						    prr->prr_npages++] =
+							va;
 					} else {
-						if (prr->prr_npages <
-						    PMAP_RR_MAX) {
-							prr->prr_vas[
-							    prr->prr_npages++] =
-								va;
-						} else {
-						    if (prr->prr_npages ==
-							PMAP_RR_MAX)
-							/* signal an overflow */
-							    prr->prr_npages++;
-						}
+					    if (prr->prr_npages == PMAP_RR_MAX)
+						/* signal an overflow */
+						    prr->prr_npages++;
 					}
-				}	/* if (prr) */
-			}	/* npte != *spte */
+				}
+			}	/* if (prr) */
 		}	/* for loop */
 	}
 
@@ -2914,21 +2877,12 @@ pmap_write_protect(pmap, sva, eva, prot)
 	 */
 
 	if (prr && prr->prr_npages) {
-#if defined(I386_CPU)
-		if (cpu_class == CPUCLASS_386) {
+		if (prr->prr_npages > PMAP_RR_MAX) {
 			tlbflush();
-		} else
-#endif
-		{ /* not I386 */
-			if (prr->prr_npages > PMAP_RR_MAX) {
-				tlbflush();
-			} else {
-				while (prr->prr_npages) {
-					pmap_update_pg(prr->prr_vas[
-						       --prr->prr_npages]);
-				}
-			}
-		} /* not I386 */
+		} else {
+			while (prr->prr_npages)
+				pmap_update_pg(prr->prr_vas[--prr->prr_npages]);
+		}
 	}
 	pmap_unmap_ptes(pmap);		/* unlocks pmap */
 }
