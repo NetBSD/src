@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.41 2000/10/11 14:59:52 onoe Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.42 2000/10/23 04:05:21 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -472,7 +472,7 @@ struct tulip_softc {
 #define	TULIPF_ATTACHED		0x00000800	/* attach has succeeded */
 #define	TULIPF_ENABLED		0x00001000	/* chip is enabled */
 #define	TULIPF_BLE		0x00002000	/* data is big endian */
-#define	TULIPF_DBO		0x00002000	/* descriptor is big endian */
+#define	TULIPF_DBO		0x00004000	/* descriptor is big endian */
 
 #define	TULIP_IS_ENABLED(sc)	((sc)->sc_flags & TULIPF_ENABLED)
 
