@@ -42,7 +42,7 @@
  *	@(#)ctlreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ctlreg.h,v 1.6 93/04/27 14:29:07 torek Exp 
- * $Id: ctlreg.h,v 1.2 1994/05/05 07:51:25 deraadt Exp $
+ * $Id: ctlreg.h,v 1.3 1994/07/04 21:36:10 deraadt Exp $
  */
 
 /*
@@ -62,6 +62,12 @@
 #endif
 #if defined(SUN4M) || defined(SUN4M)
 #define ASI_SRMMUFP	0x03	/* ref mmu flush/probe */
+#define ASI_SRMMUFP_L3	(0<<8)	/* probe L3	| flush L3 PTE */
+#define ASI_SRMMUFP_L2	(1<<8)	/* probe L2	| flush L2/L3 PTE/PTD's */
+#define ASI_SRMMUFP_L1	(2<<8)	/* probe L1	| flush L1/L2/L3 PTE/PTD's*/
+#define ASI_SRMMUFP_L0	(3<<8)	/* probe L0	| flush L0/L1/L2/L3 PTE/PTD's */
+#define ASI_SRMMUFP_LN	(4<<8)	/* probe all	| flush all levels */
+
 #define ASI_SRMMU	0x04	/* ref mmu registers */
 #define ASI_SRMMUDIAG	0x06
 #endif
