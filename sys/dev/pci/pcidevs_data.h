@@ -86,6 +86,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c905 100Base-T4",
 	},
 	{
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
+	    0,
+	    "ACC Microelectronics",
+	    "ACCM 2188 VL-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
 	    0,
 	    "Acer",
@@ -314,10 +320,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CL 6729",
 	},
 	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_7541,
+	    0,
+	    "Cirrus Logic",
+	    "CL 7541",
+	},
+	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_7542,
 	    0,
 	    "Cirrus Logic",
 	    "CL 7542",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_7543,
+	    0,
+	    "Cirrus Logic",
+	    "CL 7543",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640A,
