@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.2 1995/01/15 02:12:14 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.3 1995/02/01 01:39:43 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -51,6 +51,8 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#include <machine/sysarch.h>
+#include <machine/svr4_machdep.h>
 
 extern int _ucodesel, _udatasel;
 
@@ -94,15 +96,7 @@ svr4_getcontext(p, uc, mask, oonstack)
 	/*
 	 * Set the signal stack
 	 */
-	s->ss_sp  = sf->ss_base;
-	s->ss_size = sf->ss_size;
-	s->ss_flags = 0;
-
-	if (oonstack)
-	    s->ss_flags |= SVR4_SS_ONSTACK;
-
-	if (sf->ss_flags & SA_DISABLE)
-	    s->ss_flags |= SVR4_SS_DISABLE;
+	bsd_to_svr4_sigaltstack(sf, s);
 
 	/*
 	 * Set the signal mask
@@ -132,16 +126,17 @@ svr4_setcontext(p, uc)
 	struct svr4_ucontext *uc;
 {
 	struct sigcontext *scp, context;
+	struct sigacts *psp = p->p_sigacts;
 	register struct trapframe *tf;
 	svr4_greg_t* r = uc->uc_mcontext.greg;
 	svr4_stack_t *s = &uc->uc_stack;
+	struct sigaltstack *sf = &psp->ps_sigstk;
 	int mask;
 
 	/*
 	 * XXX:
 	 * Should we check the value of flags to determine what to restore?
 	 * What to do with uc_link?
-	 * Should we restore the sigaltstack struct completely?
 	 * What to do with floating point stuff?
 	 * Should we bother with the rest of the registers that we
 	 * set to 0 right now?
@@ -159,10 +154,7 @@ svr4_setcontext(p, uc)
 	/*
 	 * restore signal stack
 	 */
-	if (s->ss_flags & SVR4_SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+	svr4_to_bsd_sigaltstack(s, sf);
 
 	/*
 	 * restore signal mask
@@ -258,4 +250,102 @@ svr4_sendsig(catcher, sig, mask, code)
 	tf->tf_ds = _udatasel;
 	tf->tf_es = _udatasel;
 	tf->tf_ss = _udatasel;
+}
+
+
+/*
+ * sysi86
+ */
+int
+svr4_sysarch(p, uap, retval)
+	struct proc *p;
+	struct svr4_sysarch_args *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+	int error;
+	*retval = 0;	/* XXX: What to do */
+
+	printf("op %d, a1 %x\n", SCARG(uap, op), SCARG(uap, a1));
+
+	switch (SCARG(uap, op)) {
+	case SVR4_SYSARCH_FPHW:
+		return 0;
+
+	case SVR4_SYSARCH_DSCR:
+#ifdef USER_LDT
+		{
+			struct i386_set_ldt_args {
+				int start;
+				union descriptor *desc;
+				int num;
+			} sa, *sap;
+
+			struct sysarch_args ua;
+
+			struct svr4_ssd ssd;
+			union descriptor bsd;
+
+
+			if ((error = copyin(SCARG(uap, a1), &ssd,
+					    sizeof(ssd))) != 0) {
+				printf("Cannot copy arg1\n");
+				return error;
+			}
+
+			printf("s=%x, b=%x, l=%x, a1=%x a2=%x\n",
+			       ssd.selector, ssd.base, ssd.limit,
+			       ssd.access1, ssd.access2);
+
+			/* We can only set ldt's for now. */
+			if (!ISLDT(ssd.selector)) {
+				printf("Not an ldt\n");
+				return EPERM;
+			}
+
+			/* Oh, well we don't cleanup either */
+			if (ssd.access1 == 0)
+				return 0;
+
+			bsd.sd.sd_lobase = ssd.base & 0xffffff;
+			bsd.sd.sd_hibase = (ssd.base >> 24) & 0xff;
+
+			bsd.sd.sd_lolimit = ssd.limit & 0xffff;
+			bsd.sd.sd_hilimit = (ssd.limit >> 16) & 0xf;
+
+			bsd.sd.sd_type = ssd.access1 & 0x1f;
+			bsd.sd.sd_dpl =  (ssd.access1 >> 5) & 0x3;
+			bsd.sd.sd_p = (ssd.access1 >> 7) & 0x1;
+
+			bsd.sd.sd_xx = ssd.access2 & 0x3;
+			bsd.sd.sd_def32 = (ssd.access2 >> 2) & 0x1;
+			bsd.sd.sd_gran = (ssd.access2 >> 3)& 0x1;
+
+			sa.start = IDXSEL(ssd.selector);
+			sa.desc = stackgap_alloc(&sg, sizeof(union descriptor));
+			sa.num = 1;
+			sap = stackgap_alloc(&sg,
+					     sizeof(struct i386_set_ldt_args));
+
+			if ((error = copyout(&sa, sap, sizeof(sa))) != 0) {
+				printf("Cannot copyout args\n");
+				return error;
+			}
+
+			SCARG(&ua, op) = I386_SET_LDT;
+			SCARG(&ua, parms) = (char *) sap;
+
+			if ((error = copyout(&bsd, sa.desc, sizeof(bsd))) != 0) {
+				printf("Cannot copyout desc\n");
+				return error;
+			}
+
+			return sysarch(p, &ua, retval);
+		}
+#endif
+
+	default:
+		printf("svr4_sysarch(%d)\n", SCARG(uap, op));
+		return 0;
+	}
 }
