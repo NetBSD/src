@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 2002/06/19 15:00:05 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2002/06/30 23:31:59 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -105,6 +105,7 @@
 #	cfs*	Coda file system device
 #	wsmux*	wscons event multiplexor
 #	systrace syscall tracer
+#	kttcp	kernel ttcp helper
 #
 
 dialin=0
@@ -144,6 +145,7 @@ all)
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev systrace
+	makedev kttcp
 	;;
 
 ramdisk|floppy)
@@ -635,8 +637,14 @@ isdntrc*)
 
 systrace)
 	rm -f systrace
-	mknod systrace c 85 0
+	mknod systrace c 98 0
 	chmod 644 systrace
+	;;
+
+kttcp)
+	rm -f kttcp
+	mknod kttcp c 99 0
+	chmod 600 kttcp
 	;;
 
 local)
