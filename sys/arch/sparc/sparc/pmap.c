@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.151 1999/09/12 01:17:19 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.152 1999/10/04 19:18:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -57,6 +57,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +379,6 @@ int	npmemarr;		/* number of entries in pmemarr */
 /*static*/ vaddr_t	virtual_end;	/* last free virtual page number */
 
 static void pmap_page_upload __P((void));
-void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
 int mmu_has_hole;
@@ -1917,27 +1917,34 @@ ctx_alloc(pm)
 		/* Do any cache flush needed on context switch */
 		(*cpuinfo.pure_vcache_flush)();
 #ifdef DEBUG
-		if (pm->pm_reg_ptps_pa == 0)
+		if (pm->pm_reg_ptps_pa[0] == 0)
 			panic("ctx_alloc: no region table in current pmap");
 #endif
 		/*setcontext(0); * paranoia? can we modify curr. ctx? */
+
+		/*
+		 * The context allocated to a process is the same on all CPUs.
+		 * Here we install the per-CPU region table in each CPU's
+		 * context table slot.
+		 *
+		 * Note on multi-threaded processes: a context must remain
+		 * valid as long as any thread is still running on a cpu.
+		 */
 #if defined(MULTIPROCESSOR)
-		for (i = 0; i < ncpu; i++) {
+		for (i = 0; i < ncpu; i++)
+#else
+		i = 0;
+#endif
+		{
 			struct cpu_info *cpi = cpus[i];
+#if defined(MULTIPROCESSOR)
 			if (cpi == NULL)
 				continue;
-
+#endif
 			setpgt4m(&cpi->ctx_tbl[cnum],
-				 (pm->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) |
+				 (pm->pm_reg_ptps_pa[i] >> SRMMU_PPNPASHIFT) |
 					SRMMU_TEPTD);
 		}
-		/* Fixup CPUINFO_VA region table entry for current CPU */
-		setpgt4m(&pm->pm_reg_ptps[VA_VREG(CPUINFO_VA)],
-			 cpuinfo.cpu_seg_ptd);
-#else
-		setpgt4m(&cpuinfo.ctx_tbl[cnum],
-			(pm->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
-#endif
 
 		setcontext4m(cnum);
 		if (doflush)
@@ -3223,6 +3230,16 @@ pmap_bootstrap4m(void)
 #endif /* defined Sun4/Sun4c */
 
 	/*
+	 * p points to top of kernel mem
+	 */
+	p = end;
+#ifdef DDB
+	/* Skip over DDB symbols */
+	if (esym != 0)
+		p = esym;
+#endif
+
+	/*
 	 * Intialize the kernel pmap.
 	 */
 	/* kernel_pmap_store.pm_ctxnum = 0; */
@@ -3236,8 +3253,6 @@ pmap_bootstrap4m(void)
 	 * user regions in the same way
 	 */
 	kernel_pmap_store.pm_regmap = &kernel_regmap_store[-NUREG];
-	kernel_pmap_store.pm_reg_ptps = NULL;
-	kernel_pmap_store.pm_reg_ptps_pa = 0;
 	bzero(kernel_regmap_store, NKREG * sizeof(struct regmap));
 	bzero(kernel_segmap_store, NKREG * NSEGRG * sizeof(struct segmap));
 	for (i = NKREG; --i >= 0;) {
@@ -3248,12 +3263,14 @@ pmap_bootstrap4m(void)
 			kernel_segmap_store[i * NSEGRG + j].sg_pte = NULL;
 	}
 
-	p = end;		/* p points to top of kernel mem */
-#ifdef DDB
-	if (esym != 0)
-		p = esym;
-#endif
+	/* Allocate kernel region pointer tables */
+	pmap_kernel()->pm_reg_ptps = (int **)(q = p);
+	p += ncpu * sizeof(int **);
+	bzero(q, (u_int)p - (u_int)q);
 
+	pmap_kernel()->pm_reg_ptps_pa = (int *)(q = p);
+	p += ncpu * sizeof(int *);
+	bzero(q, (u_int)p - (u_int)q);
 
 	/* Allocate context administration */
 	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci = (union ctxinfo *)p;
@@ -3362,18 +3379,17 @@ pmap_bootstrap4m(void)
 	 * XXX WHY DO WE HAVE THIS CACHING PROBLEM WITH L1/L2 PTPS????? %%%
 	 */
 
-	pmap_kernel()->pm_reg_ptps = (int *) kernel_regtable_store;
-	pmap_kernel()->pm_reg_ptps_pa =
-		VA2PA((caddr_t)pmap_kernel()->pm_reg_ptps);
+	pmap_kernel()->pm_reg_ptps[0] = (int *) kernel_regtable_store;
+	pmap_kernel()->pm_reg_ptps_pa[0] =
+		VA2PA((caddr_t)pmap_kernel()->pm_reg_ptps[0]);
 
 	/* Install L1 table in context 0 */
 	setpgt4m(&cpuinfo.ctx_tbl[0],
-	    (pmap_kernel()->pm_reg_ptps_pa >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+	    (pmap_kernel()->pm_reg_ptps_pa[0] >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
 	for (reg = 0; reg < NKREG; reg++) {
 		struct regmap *rp;
 		caddr_t kphyssegtbl;
-		u_int ptd;
 
 		/*
 		 * Entering new region; install & build segtbl
@@ -3384,21 +3400,11 @@ pmap_bootstrap4m(void)
 		kphyssegtbl = (caddr_t)
 		    &kernel_segtable_store[reg * SRMMU_L2SIZE];
 
-		ptd = (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
-		setpgt4m(&pmap_kernel()->pm_reg_ptps[reg + VA_VREG(KERNBASE)],
-			 ptd);
+		setpgt4m(&pmap_kernel()->pm_reg_ptps[0][reg + VA_VREG(KERNBASE)],
+			 (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
 		rp->rg_seg_ptps = (int *)kphyssegtbl;
 
-		if (reg + VA_VREG(KERNBASE) == VA_VREG(CPUINFO_VA)) {
-			/*
-			 * Store the segment page table descriptor
-			 * corresponding to CPUINFO_VA, so we can install
-			 * this CPU-dependent translation into user pmaps
-			 * at context switch time.
-			 */
-			cpuinfo.cpu_seg_ptd = ptd;
-		}
 
 		if (rp->rg_segmap == NULL) {
 			printf("rp->rg_segmap == NULL!\n");
@@ -3651,19 +3657,12 @@ pmap_alloc_cpu(sc)
 	pagtable = segtable + SRMMU_L2SIZE;
 
 	/*
-	 * Store the segment page table descriptor corresponding
-	 * to CPUINFO_VA, so we can install this CPU-dependent
-	 * translation into user pmaps at context switch time.
-	 * Note that the region table we allocate here (`regtable')
-	 * is only used in context 0 on this CPU. Non-zero context
-	 * numbers always have a user pmap associated with it.
-	 * That pmap's region table is fixed up at context switch
-	 * time so that the entry corresponding to CPUINFO_VA points
-	 * at the correct CPU's segment table (and hence the per-CPU
-	 * page table).
+	 * Store the region table pointer (and its corresponding physical
+	 * address) in the CPU's slot in the kernel pmap region table
+	 * pointer table.
 	 */
-	sc->cpu_seg_ptd =
-		(VA2PA((caddr_t)segtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD;
+	pmap_kernel()->pm_reg_ptps[sc->cpu_no] = regtable;
+	pmap_kernel()->pm_reg_ptps_pa[sc->cpu_no] = VA2PA((caddr_t)regtable);
 
 	vr = VA_VREG(CPUINFO_VA);
 	vs = VA_VSEG(CPUINFO_VA);
@@ -3675,11 +3674,10 @@ pmap_alloc_cpu(sc)
 	 * Copy page tables, then modify entry for CPUINFO_VA so that
 	 * it points at the per-CPU pages.
 	 */
-
 	setpgt4m(&ctxtable[0],
-	    (VA2PA((caddr_t)regtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+		(VA2PA((caddr_t)regtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
-	qcopy(pmap_kernel()->pm_reg_ptps, regtable, SRMMU_L1SIZE * sizeof(int));
+	qcopy(pmap_kernel()->pm_reg_ptps[0], regtable, SRMMU_L1SIZE * sizeof(int));
 	setpgt4m(&regtable[vr],
 		(VA2PA((caddr_t)segtable) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
@@ -3700,6 +3698,7 @@ pmap_alloc_cpu(sc)
 void
 pmap_init()
 {
+	u_int sizeof_pmap;
 
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
@@ -3714,8 +3713,15 @@ pmap_init()
 	pool_init(&pv_pool, sizeof(struct pvlist), 0, 0, 0, "pvtable", 0,
 		  NULL, NULL, 0);
 
-	/* Setup a pool for pmap structures. */
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	/*
+	 * Setup a pool for pmap structures.
+	 * The pool size includes space for an array of per-cpu
+	 * region table pointers & physical addresses
+	 */
+	sizeof_pmap = ALIGN(sizeof(struct pmap)) +
+		      ncpu * sizeof(int *) +		/* pm_reg_ptps */
+		      ncpu * sizeof(int);		/* pm_reg_ptps_pa */
+	pool_init(&pmap_pmap_pool, sizeof_pmap, 0, 0, 0, "pmappl",
 		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
 
 #if defined(SUN4M)
@@ -3767,6 +3773,8 @@ struct pmap *
 pmap_create()
 {
 	struct pmap *pm;
+	u_long addr;
+	void *urp;
 
 	pm = pool_get(&pmap_pmap_pool, PR_WAITOK);
 #ifdef DEBUG
@@ -3774,30 +3782,20 @@ pmap_create()
 		printf("pmap_create: created %p\n", pm);
 #endif
 	bzero(pm, sizeof *pm);
-	pmap_pinit(pm);
-	return (pm);
-}
 
-/*
- * Initialize a preallocated and zeroed pmap structure,
- * such as one in a vmspace structure.
- */
-void
-pmap_pinit(pm)
-	struct pmap *pm;
-{
-	int size;
-	void *urp;
+	/*
+	 * `pmap_pool' entries include space for the per-CPU
+	 * region table pointer arrays.
+	 */
+	addr = (u_long)pm + ALIGN(sizeof(struct pmap));
+	pm->pm_reg_ptps = (int **)addr;
+	addr += ncpu * sizeof(int *);
+	pm->pm_reg_ptps_pa = (int *)addr;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_CREATE)
-		printf("pmap_pinit(%p)\n", pm);
-#endif
+	pm->pm_regstore = urp = malloc(NUREG * sizeof(struct regmap),
+					M_VMPMAP, M_WAITOK);
+	qzero((caddr_t)urp, NUREG * sizeof(struct regmap));
 
-	size = NUREG * sizeof(struct regmap);
-
-	pm->pm_regstore = urp = malloc(size, M_VMPMAP, M_WAITOK);
-	qzero((caddr_t)urp, size);
 	/* pm->pm_ctx = NULL; */
 	simple_lock_init(&pm->pm_lock);
 	pm->pm_refcount = 1;
@@ -3817,7 +3815,7 @@ pmap_pinit(pm)
 	}
 #if defined(SUN4M)
 	else {
-		int i;
+		int i, n;
 
 		/*
 		 * We must allocate and initialize hardware-readable (MMU)
@@ -3825,27 +3823,33 @@ pmap_pinit(pm)
 		 * pmap's pagetables, so that we can access the kernel from
 		 * this user context.
 		 *
-		 * Note: pm->pm_regmap's have been zeroed already, so we don't
-		 * need to explicitly mark them as invalid (a null
-		 * rg_seg_ptps pointer indicates invalid for the 4m)
 		 */
-		urp = pool_get(&L1_pool, PR_WAITOK);
-		pm->pm_reg_ptps = urp;
-		pm->pm_reg_ptps_pa = VA2PA(urp);
-		for (i = 0; i < NUREG; i++)
-			setpgt4m(&pm->pm_reg_ptps[i], SRMMU_TEINVALID);
+#if defined(MULTIPROCESSOR)
+		for (n = 0; n < ncpu; n++)
+#else
+		n = 0;
+#endif
+		{
+			int *upt, *kpt;
 
-		/* Copy kernel regions */
-		for (i = 0; i < NKREG; i++) {
-			int *kpt, *upt;
-			kpt = &pmap_kernel()->pm_reg_ptps[VA_VREG(KERNBASE)];
-			upt = &pm->pm_reg_ptps[VA_VREG(KERNBASE)];
-			setpgt4m(&upt[i], kpt[i]);
+			upt = pool_get(&L1_pool, PR_WAITOK);
+			pm->pm_reg_ptps[n] = upt;
+			pm->pm_reg_ptps_pa[n] = VA2PA((char *)upt);
+
+			/* Invalidate user space regions */
+			for (i = 0; i < NUREG; i++)
+				setpgt4m(upt++, SRMMU_TEINVALID);
+
+			/* Copy kernel regions */
+			kpt = &pmap_kernel()->pm_reg_ptps[n][VA_VREG(KERNBASE)];
+			for (i = 0; i < NKREG; i++) {
+				setpgt4m(upt++, kpt[i]);
+			}
 		}
 	}
 #endif
 
-	return;
+	return (pm);
 }
 
 /*
@@ -3906,14 +3910,22 @@ pmap_release(pm)
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M) {
+		int n;
 		if ((c = pm->pm_ctx) != NULL) {
 			if (pm->pm_ctxnum == 0)
 				panic("pmap_release: releasing kernel");
 			ctx_free(pm);
 		}
-		pool_put(&L1_pool, pm->pm_reg_ptps);
-		pm->pm_reg_ptps = NULL;
-		pm->pm_reg_ptps_pa = 0;
+#if defined(MULTIPROCESSOR)
+		for (n = 0; n < ncpu; n++)
+#else
+		n = 0;
+#endif
+		{
+			pool_put(&L1_pool, pm->pm_reg_ptps[n]);
+			pm->pm_reg_ptps[n] = NULL;
+			pm->pm_reg_ptps_pa[n] = 0;
+		}
 	}
 #endif
 	splx(s);
@@ -4541,9 +4553,19 @@ pmap_rmu4m(pm, va, endva, vr, vs)
 		sp->sg_pte = NULL;
 
 		if (--rp->rg_nsegmap == 0) {
+			int n;
+
 			if (pm->pm_ctx)
 				tlb_flush_region(vr); 	/* Paranoia? */
-			setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
+#ifdef MULTIPROCESSOR
+			for (n = 0; n < ncpu; n++)
+#else
+			n = 0;
+#endif
+			{
+				setpgt4m(&pm->pm_reg_ptps[n][vr],
+					 SRMMU_TEINVALID);
+			}
 			free(rp->rg_segmap, M_VMPMAP);
 			rp->rg_segmap = NULL;
 			pool_put(&L23_pool, rp->rg_seg_ptps);
@@ -5063,9 +5085,23 @@ pmap_page_protect4m(pg, prot)
 			sp->sg_pte = NULL;
 
 			if (--rp->rg_nsegmap == 0) {
+				int n;
 				if (pm->pm_ctx)
 					tlb_flush_region(vr);
-				setpgt4m(&pm->pm_reg_ptps[vr], SRMMU_TEINVALID);
+
+				/*
+				 * Replicate segment de-allocation in each
+				 * CPU's region table.
+				 */
+#ifdef MULTIPROCESSOR
+				for (n = 0; n < ncpu; n++)
+#else
+				n = 0;
+#endif
+				{
+					setpgt4m(&pm->pm_reg_ptps[n][vr],
+						 SRMMU_TEINVALID);
+				}
 				free(rp->rg_segmap, M_VMPMAP);
 				rp->rg_segmap = NULL;
 				pool_put(&L23_pool, rp->rg_seg_ptps);
@@ -5903,8 +5939,18 @@ printf("pmap_enu4m: bizarre segment table fill during sleep\n");
 		rp->rg_seg_ptps = ptd;
 		for (i = 0; i < SRMMU_L2SIZE; i++)
 			setpgt4m(&ptd[i], SRMMU_TEINVALID);
-		setpgt4m(&pm->pm_reg_ptps[vr],
-			 (VA2PA((caddr_t)ptd) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
+
+		/* Replicate segment allocation in each CPU's region table */
+#ifdef MULTIPROCESSOR
+		for (i = 0; i < ncpu; i++)
+#else
+		i = 0;
+#endif
+		{
+			setpgt4m(&pm->pm_reg_ptps[i][vr],
+				 (VA2PA((caddr_t)ptd) >> SRMMU_PPNPASHIFT) |
+					SRMMU_TEPTD);
+		}
 	}
 
 	sp = &rp->rg_segmap[vs];
@@ -6838,18 +6884,18 @@ pm_check_u(s, pm)
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M &&
-	    (pm->pm_reg_ptps == NULL ||
-	     pm->pm_reg_ptps_pa != VA2PA((caddr_t)pm->pm_reg_ptps)))
+	    (pm->pm_reg_ptps[0] == NULL ||
+	     pm->pm_reg_ptps_pa[0] != VA2PA((caddr_t)pm->pm_reg_ptps[0])))
 		panic("%s: CHK(pmap %p): no SRMMU region table or bad pa: "
 		      "tblva=%p, tblpa=0x%x",
-			s, pm, pm->pm_reg_ptps, pm->pm_reg_ptps_pa);
+			s, pm, pm->pm_reg_ptps[0], pm->pm_reg_ptps_pa[0]);
 
 	if (CPU_ISSUN4M && pm->pm_ctx != NULL &&
-	    (cpuinfo.ctx_tbl[pm->pm_ctxnum] != ((VA2PA((caddr_t)pm->pm_reg_ptps)
+	    (cpuinfo.ctx_tbl[pm->pm_ctxnum] != ((VA2PA((caddr_t)pm->pm_reg_ptps[0])
 					      >> SRMMU_PPNPASHIFT) |
 					     SRMMU_TEPTD)))
 	    panic("%s: CHK(pmap %p): SRMMU region table at 0x%x not installed "
-		  "for context %d", s, pm, pm->pm_reg_ptps_pa, pm->pm_ctxnum);
+		  "for context %d", s, pm, pm->pm_reg_ptps_pa[0], pm->pm_ctxnum);
 #endif
 
 	for (vr = 0; vr < NUREG; vr++) {
@@ -6864,7 +6910,7 @@ pm_check_u(s, pm)
 		    panic("%s: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, vr, rp->rg_nsegmap);
 		if (CPU_ISSUN4M &&
-		    pm->pm_reg_ptps[vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
+		    pm->pm_reg_ptps[0][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
 		    panic("%s: CHK(vr %d): SRMMU segtbl not installed",s,vr);
 #endif
@@ -6925,16 +6971,16 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 
 #if defined(SUN4M)
 	if (CPU_ISSUN4M &&
-	    (pm->pm_reg_ptps == NULL ||
-	     pm->pm_reg_ptps_pa != VA2PA((caddr_t)pm->pm_reg_ptps)))
+	    (pm->pm_reg_ptps[0] == NULL ||
+	     pm->pm_reg_ptps_pa[0] != VA2PA((caddr_t)pm->pm_reg_ptps[0])))
 	    panic("%s: CHK(pmap %p): no SRMMU region table or bad pa: tblva=%p, tblpa=0x%x",
-		  s, pm, pm->pm_reg_ptps, pm->pm_reg_ptps_pa);
+		  s, pm, pm->pm_reg_ptps[0], pm->pm_reg_ptps_pa[0]);
 
 	if (CPU_ISSUN4M &&
-	    (cpuinfo.ctx_tbl[0] != ((VA2PA((caddr_t)pm->pm_reg_ptps) >>
+	    (cpuinfo.ctx_tbl[0] != ((VA2PA((caddr_t)pm->pm_reg_ptps[0]) >>
 					     SRMMU_PPNPASHIFT) | SRMMU_TEPTD)))
 	    panic("%s: CHK(pmap %p): SRMMU region table at 0x%x not installed "
-		  "for context %d", s, pm, pm->pm_reg_ptps_pa, 0);
+		  "for context %d", s, pm, pm->pm_reg_ptps_pa[0], 0);
 #endif
 	for (vr = NUREG; vr < NUREG+NKREG; vr++) {
 		rp = &pm->pm_regmap[vr];
@@ -6948,7 +6994,7 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 		    panic("%s: CHK(vr %d): nsegmap=%d; no SRMMU segment table",
 			  s, vr, rp->rg_nsegmap);
 		if (CPU_ISSUN4M &&
-		    pm->pm_reg_ptps[vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps) >>
+		    pm->pm_reg_ptps[0][vr] != ((VA2PA((caddr_t)rp->rg_seg_ptps[0]) >>
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
 		    panic("%s: CHK(vr %d): SRMMU segtbl not installed",s,vr);
 #endif
@@ -7178,9 +7224,9 @@ debug_pagetables()
 	printf("Context table is at va 0x%x. Level 0 PTP: 0x%x\n",
 	       cpuinfo.ctx_tbl, cpuinfo.ctx_tbl[0]);
 	printf("Context 0 region table is at va 0x%x, pa 0x%x. Contents:\n",
-	       pmap_kernel()->pm_reg_ptps, pmap_kernel()->pm_reg_ptps_pa);
+	       pmap_kernel()->pm_reg_ptps[0], pmap_kernel()->pm_reg_ptps_pa[0]);
 
-	regtbl = pmap_kernel()->pm_reg_ptps;
+	regtbl = pmap_kernel()->pm_reg_ptps[0];
 
 	printf("PROM vector is at 0x%x\n",promvec);
 	printf("PROM reboot routine is at 0x%x\n",promvec->pv_reboot);
