@@ -1,7 +1,10 @@
 /* netboot
  *
  * $Log: main.c,v $
- * Revision 1.1  1993/07/08 16:04:02  brezak
+ * Revision 1.2  1993/07/09 15:24:12  brezak
+ * Cleanup warnings and add netbsd kernel name suffix.
+ *
+ * Revision 1.1  1993/07/08  16:04:02  brezak
  * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
  *
  * Revision 1.4  1993/06/30  20:14:13  mckim
@@ -322,6 +325,8 @@ static char name_set[][9] = {
 };
 
 static char *ext_set[] = {
+  ".netbsd",
+  ".netbsd.old",
   ".386bsd",
   ".386bsd.old",
   ".vmunix",
