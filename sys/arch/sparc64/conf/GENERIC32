@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.53 2002/10/18 01:59:27 grant Exp $
+# 	$NetBSD: GENERIC32,v 1.54 2002/10/18 15:11:15 junyoung Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 maxusers	64
 
@@ -59,6 +59,10 @@ options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
+# Enable experimental buffer queue strategy for better responsiness under 
+# high disk I/O load. Use it with caution - it's not proven to be stable yet.
+#options 	NEW_BUFQ_STRATEGY
 
 ## NFS boot options; tries DHCP/BOOTP then BOOTPARAM
 options 	NFS_BOOT_BOOTPARAM
