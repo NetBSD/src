@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1998/06/02 21:57:58 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1998/06/26 22:42:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -370,7 +370,7 @@ cpu_startup()
 	 * not be buffered).
 	 */
 	printf(version);
-	printf("real mem = %d (%d pages)\n", arm_page_to_byte(physmem), physmem);
+	printf("real mem  = %d\n", arm_page_to_byte(physmem));
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -407,8 +407,6 @@ cpu_startup()
 	    (vm_offset_t)0, &minaddr, bufsize, FALSE) != KERN_SUCCESS)
 		panic("cpu_startup: cannot allocate buffers");
 #endif
-
-	printf("cpu_startup: buffer VM base=%p size = %ld\n", buffers, bufsize);
 
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
 		/* don't want to alloc more physical mem than needed */
@@ -496,10 +494,9 @@ cpu_startup()
 		callout[loop - 1].c_next = &callout[loop];
 
 #if defined(UVM)
-	printf("Available memory = %ld\n", ptoa(uvmexp.free - bufpages));
+	printf("avail mem = %ld\n", ptoa(uvmexp.free - bufpages));
 #else
-	printf("avail mem = %ld (%ld pages)\n", ptoa(cnt.v_free_count),
-	    ptoa(cnt.v_free_count) / NBPG);
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count))
 #endif
 	printf("using %d buffers containing %d bytes of memory\n",
 	    nbuf, bufpages * CLBYTES);
