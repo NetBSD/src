@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.13 2003/09/25 18:42:18 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.14 2003/09/25 21:59:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.13 2003/09/25 18:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.14 2003/09/25 21:59:55 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -65,12 +65,14 @@ sendsig(ksiginfo_t *ksi, sigset_t *mask)
 	vaddr_t sp, sip, ucp;
 	int onstack;
 
-#ifdef COMPAT_16
 	if (sd->sd_vers < 2) {
+#ifdef COMPAT_16
 		sendsig_sigcontext(ksi->ksi_signo, mask, ksi->ksi_trap);
 		return;
-	}
+#else
+		goto nosupport;
 #endif
+	}
 
 	/* Do we need to jump onto the signal stack? */
 	onstack = (ss->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
@@ -104,7 +106,7 @@ sendsig(ksiginfo_t *ksi, sigset_t *mask)
 	    copyout(&uc, (caddr_t)ucp, sizeof(uc)) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
+		 * instruction to halt it in its tracks.
 		 */
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
@@ -116,24 +118,31 @@ sendsig(ksiginfo_t *ksi, sigset_t *mask)
 	 */
 	switch (sd->sd_vers) {
 	case 2:		/* siginfo sigtramp */
-		tf->fixreg[1] = (register_t)sp;
-		tf->lr        = (register_t)sd->sd_sigact.sa_handler;
-		tf->fixreg[3] = (register_t)ksi->_signo;
-		tf->fixreg[4] = (register_t)sip;
-		tf->fixreg[5] = (register_t)ucp;
-		tf->srr0      = (register_t)sd->sd_tramp;
+		tf->fixreg[1]  = (register_t)sp - CALLFRAMELEN;
+		tf->fixreg[3]  = (register_t)ksi->_signo;
+		tf->fixreg[4]  = (register_t)sip;
+		tf->fixreg[5]  = (register_t)ucp;
+		/* Preserve ucp across call to signal function */
+		tf->fixreg[30] = (register_t)ucp;
+		tf->lr         = (register_t)sd->sd_tramp;
+		tf->srr0       = (register_t)sd->sd_sigact.sa_handler;
 		break;
 
 	default:
-		/* Don't know what trampoline version; kill it. */
-		printf("sendsig_siginfo(sig %d): bad version %d\n",
-		    ksi->_signo, sd->sd_vers);
-		sigexit(l, SIGILL);
+		goto nosupport;
 	}
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		ss->ss_flags |= SS_ONSTACK;
+	return;
+
+ nosupport:
+	/* Don't know what trampoline version; kill it. */
+	printf("sendsig_siginfo(sig %d): bad version %d\n",
+	    ksi->_signo, sd->sd_vers);
+	sigexit(l, SIGILL);
+	/* NOTREACHED */
 }
 
 void
