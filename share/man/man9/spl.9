@@ -1,4 +1,4 @@
-.\"	$NetBSD: spl.9,v 1.5 1999/03/16 00:40:48 garbled Exp $
+.\"	$NetBSD: spl.9,v 1.6 2000/03/27 09:36:29 soda Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
 .\" Copyright (c) 1997 Jonathan Stone.
@@ -36,6 +36,7 @@
 .Nm splclock ,
 .Nm splhigh ,
 .Nm splimp ,
+.Nm spllowersoftclock ,
 .Nm splnet ,
 .Nm splsched ,
 .Nm splserial ,
@@ -72,6 +73,8 @@
 .Fn splsoftnet void
 .Ft int
 .Fn splsoftclock void
+.Ft int
+.Fn spllowersoftclock void
 .Ft int
 .Fn spl0 void
 .Ft void
@@ -144,11 +147,13 @@ blocks hard interrupts from network interfaces.
 blocks hard interrupts from disks and other mass-storage devices.
 .It Fn splsoftnet
 blocks soft network interrupts.
+.It Fn splsoftclock
+blocks soft clock interrupts.
 .El
 .Pp
 Two functions lower the system priority level.  They are:
-.Bl -tag -width splsoftclockXX
-.It Fn splsoftclock
+.Bl -tag -width spllowersoftclockXX
+.It Fn spllowersoftclock
 unblocks all interrupts but the soft clock interrupt.
 .It Fn spl0
 unblocks all interrupts.
@@ -161,3 +166,17 @@ function restores the system priority level to the one encoded in
 which must be a value previously returned by one of the other
 .Nm
 functions.
+.Pp
+.Sh HISTORY
+.Pp
+Originally,
+.Fn splsoftclock
+lowered the system priority level.
+During the
+.Nx 1.5
+development cycle,
+.Fn spllowersoftclock
+was introduced and the semantics of
+.Fn splsoftclock
+were changed.
+.Pp
