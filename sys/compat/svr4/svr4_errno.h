@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_errno.h,v 1.4 1998/10/23 04:06:00 erh Exp $	 */
+/*	$NetBSD: svr4_errno.h,v 1.5 1998/10/24 19:35:36 mrg Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -177,6 +177,6 @@
 #define	SVR4_EAUTH		SVR4_ENOSYS
 #define	SVR4_ENEEDAUTH		SVR4_ENOSYS
 
-int native_to_svr4_errno[];
+extern int native_to_svr4_errno[];
 
 #endif /* !_SVR4_ERRNO_H_ */
