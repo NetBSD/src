@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.10 2001/11/22 12:17:00 tsutsui Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.11 2003/03/21 04:35:02 tsutsui Exp $	*/
 /*	$OpenBSD: arcbios.c,v 1.3 1998/06/06 06:33:33 mickey Exp $	*/
 
 /*-
@@ -131,7 +131,8 @@ void biosputc __P((dev_t, int));
 
 /* this is to fake out the console routines, while booting. */
 struct consdev bioscons = {
-	NULL, NULL, biosgetc, biosputc, nullcnpollc, NULL, NODEV, CN_DEAD
+	NULL, NULL, biosgetc, biosputc, nullcnpollc, NULL, NULL,
+	    NULL, NODEV, CN_DEAD
 };
 
 int
