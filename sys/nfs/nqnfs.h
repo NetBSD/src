@@ -1,4 +1,4 @@
-/*	$NetBSD: nqnfs.h,v 1.9 2003/01/18 09:34:32 thorpej Exp $	*/
+/*	$NetBSD: nqnfs.h,v 1.10 2003/04/24 21:21:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,12 +173,12 @@ struct nqm {
    && (VTONFS(v)->n_flag & NQNFSNONCACHE) == 0 && \
    ((f) == ND_READ || (VTONFS(v)->n_flag & NQNFSWRITE)))
 
-#define	NQNFS_NEEDLEASE(v, p) \
-		(time.tv_sec > VTONFS(v)->n_expiry ? \
-		 ((VTONFS(v)->n_flag & NQNFSEVICTED) ? 0 : nqnfs_piggy[p]) : \
-		 (((time.tv_sec + NQ_RENEWAL) > VTONFS(v)->n_expiry && \
+#define	NQNFS_NEEDLEASE(n, p) \
+		(time.tv_sec > (n)->n_expiry ? \
+		 (((n)->n_flag & NQNFSEVICTED) ? 0 : nqnfs_piggy[p]) : \
+		 (((time.tv_sec + NQ_RENEWAL) > (n)->n_expiry && \
 		   nqnfs_piggy[p]) ? \
-		   ((VTONFS(v)->n_flag & NQNFSWRITE) ? \
+		   (((n)->n_flag & NQNFSWRITE) ? \
 		    ND_WRITE : nqnfs_piggy[p]) : 0))
 
 /*

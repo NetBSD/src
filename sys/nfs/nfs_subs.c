@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.114 2003/04/16 14:51:55 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.115 2003/04/24 21:21:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.114 2003/04/16 14:51:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.115 2003/04/24 21:21:05 drochner Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -592,16 +592,16 @@ int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
  * (just used to decide if a cluster is a good idea)
  */
 struct mbuf *
-nfsm_reqh(vp, procid, hsiz, bposp)
-	struct vnode *vp;
+nfsm_reqh(np, procid, hsiz, bposp)
+	struct nfsnode *np;
 	u_long procid;
 	int hsiz;
 	caddr_t *bposp;
 {
 	struct mbuf *mb;
 	caddr_t bpos;
-	struct nfsmount *nmp;
 #ifndef NFS_V2_ONLY
+	struct nfsmount *nmp;
 	u_int32_t *tl;
 	int nqflag;
 #endif
@@ -613,14 +613,14 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 	mb->m_len = 0;
 	bpos = mtod(mb, caddr_t);
 	
+#ifndef NFS_V2_ONLY
 	/*
 	 * For NQNFS, add lease request.
 	 */
-	if (vp) {
-		nmp = VFSTONFS(vp->v_mount);
-#ifndef NFS_V2_ONLY
+	if (np) {
+		nmp = VFSTONFS(np->n_vnode->v_mount);
 		if (nmp->nm_flag & NFSMNT_NQNFS) {
-			nqflag = NQNFS_NEEDLEASE(vp, procid);
+			nqflag = NQNFS_NEEDLEASE(np, procid);
 			if (nqflag) {
 				nfsm_build(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 				*tl++ = txdr_unsigned(nqflag);
@@ -630,8 +630,8 @@ nfsm_reqh(vp, procid, hsiz, bposp)
 				*tl = 0;
 			}
 		}
-#endif
 	}
+#endif
 	/* Finally, return values */
 	*bposp = bpos;
 	return (mb);

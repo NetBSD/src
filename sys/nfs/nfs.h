@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.35 2003/02/26 06:31:18 matt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.36 2003/04/24 21:21:04 drochner Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -302,7 +302,6 @@ struct nfsreq {
 	struct mbuf	*r_md;
 	caddr_t		r_dpos;
 	struct nfsmount *r_nmp;
-	struct vnode	*r_vp;
 	u_int32_t	r_xid;
 	int		r_flags;	/* flags on request, see below */
 	int		r_retry;	/* max retransmission count */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.29 2003/03/28 15:13:35 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.30 2003/04/24 21:21:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ int nfs_send __P((struct socket *, struct mbuf *, struct mbuf *,
 		  struct nfsreq *));
 int nfs_receive __P((struct nfsreq *, struct mbuf **, struct mbuf **));
 int nfs_reply __P((struct nfsreq *));
-int nfs_request __P((struct vnode *, struct mbuf *, int, struct proc *,
+int nfs_request __P((struct nfsnode *, struct mbuf *, int, struct proc *,
 		     struct ucred *, struct mbuf **, struct mbuf **,
 		     caddr_t *));
 int nfs_rephead __P((int, struct nfsrv_descript *, struct nfssvc_sock *,
@@ -243,7 +243,7 @@ void nfsrv_updatecache __P((struct nfsrv_descript *, int, struct mbuf *));
 void nfsrv_cleancache __P((void));
 
 /* nfs_subs.c */
-struct mbuf *nfsm_reqh __P((struct vnode *, u_long, int, caddr_t *));
+struct mbuf *nfsm_reqh __P((struct nfsnode *, u_long, int, caddr_t *));
 struct mbuf *nfsm_rpchead __P((struct ucred *, int, int, int, int, char *, int,
 			       char *, struct mbuf *, int, struct mbuf **,
 			       u_int32_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.46 2003/04/02 15:14:19 yamt Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.47 2003/04/24 21:21:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.46 2003/04/02 15:14:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.47 2003/04/24 21:21:04 drochner Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -517,7 +517,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 				solockp = &lph->lph_slp->ns_solock;
 			else
 				solockp = (int *)0;
-			nfsm_reqhead((struct vnode *)0, NQNFSPROC_EVICTED,
+			nfsm_reqhead((struct nfsnode *)0, NQNFSPROC_EVICTED,
 				NFSX_V3FH + NFSX_UNSIGNED);
 			fhp = &nfh.fh_generic;
 			memset((caddr_t)fhp, 0, sizeof(nfh));
@@ -869,15 +869,15 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	u_quad_t frev;
 
 	nfsstats.rpccnt[NQNFSPROC_GETLEASE]++;
-	mb = mreq = nfsm_reqh(vp, NQNFSPROC_GETLEASE, NFSX_V3FH+2*NFSX_UNSIGNED,
+	np = VTONFS(vp);
+	mb = mreq = nfsm_reqh(np, NQNFSPROC_GETLEASE, NFSX_V3FH+2*NFSX_UNSIGNED,
 		 &bpos);
-	nfsm_fhtom(vp, 1);
+	nfsm_fhtom(np, 1);
 	nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 	*tl++ = txdr_unsigned(rwflag);
 	*tl = txdr_unsigned(nmp->nm_leaseterm);
 	reqtime = time.tv_sec;
-	nfsm_request(vp, NQNFSPROC_GETLEASE, p, cred);
-	np = VTONFS(vp);
+	nfsm_request(np, NQNFSPROC_GETLEASE, p, cred);
 	nfsm_dissect(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
 	cachable = fxdr_unsigned(int, *tl++);
 	reqtime += fxdr_unsigned(int, *tl++);
@@ -910,11 +910,12 @@ nqnfs_vacated(vp, cred)
 	struct mbuf *mreq, *mb, *mheadend;
 	struct nfsmount *nmp;
 	struct nfsreq myrep;
+	struct nfsnode *np = VTONFS(vp);
 
 	nmp = VFSTONFS(vp->v_mount);
 	nfsstats.rpccnt[NQNFSPROC_VACATED]++;
-	nfsm_reqhead(vp, NQNFSPROC_VACATED, NFSX_FH(1));
-	nfsm_fhtom(vp, 1);
+	nfsm_reqhead(np, NQNFSPROC_VACATED, NFSX_FH(1));
+	nfsm_fhtom(np, 1);
 	m = mreq;
 	i = 0;
 	while (m) {

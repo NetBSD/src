@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.25 2003/03/28 13:05:48 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.26 2003/04/24 21:21:07 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -109,25 +109,25 @@
 			(a) = (c)cp2; \
 		} }
 
-#define nfsm_fhtom(v, v3) \
+#define nfsm_fhtom(n, v3) \
 	      { if (v3) { \
-			t2 = nfsm_rndup(VTONFS(v)->n_fhsize) + NFSX_UNSIGNED; \
+			t2 = nfsm_rndup((n)->n_fhsize) + NFSX_UNSIGNED; \
 			if (t2 <= M_TRAILINGSPACE(mb)) { \
 				nfsm_build(tl, u_int32_t *, t2); \
-				*tl++ = txdr_unsigned(VTONFS(v)->n_fhsize); \
+				*tl++ = txdr_unsigned((n)->n_fhsize); \
 				*(tl + ((t2>>2) - 2)) = 0; \
-				memcpy((caddr_t)tl,(caddr_t)VTONFS(v)->n_fhp, \
-					VTONFS(v)->n_fhsize); \
+				memcpy((caddr_t)tl,(caddr_t)(n)->n_fhp, \
+					(n)->n_fhsize); \
 			} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, \
-				(caddr_t)VTONFS(v)->n_fhp, \
-				  VTONFS(v)->n_fhsize)) != 0) { \
+				(caddr_t)(n)->n_fhp, \
+				  (n)->n_fhsize)) != 0) { \
 				error = t2; \
 				m_freem(mreq); \
 				goto nfsmout; \
 			} \
 		} else { \
 			nfsm_build(cp, caddr_t, NFSX_V2FH); \
-			memcpy(cp, (caddr_t)VTONFS(v)->n_fhp, NFSX_V2FH); \
+			memcpy(cp, (caddr_t)(n)->n_fhp, NFSX_V2FH); \
 		} }
 
 #define nfsm_srvfhtom(f, v3) \
@@ -333,8 +333,8 @@
 			goto nfsmout; \
 		}
 
-#define	nfsm_reqhead(v,a,s) \
-		mb = mreq = nfsm_reqh((v),(a),(s),&bpos)
+#define	nfsm_reqhead(n,a,s) \
+		mb = mreq = nfsm_reqh((n),(a),(s),&bpos)
 
 #define nfsm_reqdone	m_freem(mrep); \
 		nfsmout: 
