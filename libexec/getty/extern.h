@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.4 1996/07/31 20:40:26 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)extern.h	8.1 (Berkeley) 6/4/93
- *	$Id: extern.h,v 1.3 1996/05/15 23:46:50 jtc Exp $
  */
 
 struct delayval;

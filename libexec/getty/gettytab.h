@@ -1,3 +1,5 @@
+/*	$NetBSD: gettytab.h,v 1.8 1996/07/31 20:40:31 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gettytab.h	8.2 (Berkeley) 3/30/94
- *	$Id: gettytab.h,v 1.7 1994/08/17 20:10:34 pk Exp $
  */
 
 /*
