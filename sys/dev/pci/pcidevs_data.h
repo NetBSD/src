@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.504 2003/02/02 18:53:17 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.505 2003/02/03 11:00:53 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.503 2003/02/02 18:52:40 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.504 2003/02/03 11:00:26 joda Exp 
  */
 
 /*
@@ -6346,16 +6346,16 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "85C601",
 	},
 	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
-	    0,
-	    "Silicon Integrated System",
-	    "SiS 645 Host Bridge",
-	},
-	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_630,
 	    0,
 	    "Silicon Integrated System",
 	    "SiS 630 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 645 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
@@ -6412,6 +6412,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "530 GUI Accelerator+3D",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6325,
+	    0,
+	    "Silicon Integrated System",
+	    "6325 AGP VGA",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
 	    0,
 	    "Silicon Integrated System",
@@ -6422,6 +6428,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "5597/5598 USB host controller",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7002,
+	    0,
+	    "Silicon Integrated System",
+	    "7002 USB 2.0 host controller",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
