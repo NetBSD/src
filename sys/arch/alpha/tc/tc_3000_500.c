@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.8 1996/07/09 00:55:29 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.9 1996/07/14 04:06:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -45,7 +45,7 @@ void	tc_3000_500_intr_setup __P((void));
 void	tc_3000_500_intr_establish __P((struct device *, void *,
 	    tc_intrlevel_t, int (*)(void *), void *));
 void	tc_3000_500_intr_disestablish __P((struct device *, void *));
-void	tc_3000_500_iointr __P((void *, int));
+void	tc_3000_500_iointr __P((void *, unsigned long));
 
 int	tc_3000_500_intrnull __P((void *));
 
@@ -175,7 +175,7 @@ tc_3000_500_intrnull(val)
 void
 tc_3000_500_iointr(framep, vec)
         void *framep;
-        int vec;
+        unsigned long vec;
 {
         u_int32_t ir;
 	int ifound;
@@ -183,7 +183,7 @@ tc_3000_500_iointr(framep, vec)
 #ifdef DIAGNOSTIC
 	int s;
 	if (vec != 0x800)
-		panic("INVALID ASSUMPTION: vec %x, not 0x800", vec);
+		panic("INVALID ASSUMPTION: vec 0x%lx, not 0x800", vec);
 	s = splhigh();
 	if (s != ALPHA_PSL_IPL_IO)
 		panic("INVALID ASSUMPTION: IPL %d, not %d", s,
