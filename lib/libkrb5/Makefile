@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3.2.1 2001/04/05 23:25:36 he Exp $
+# $NetBSD: Makefile,v 1.3.2.2 2002/08/29 17:19:18 he Exp $
 
 .include <bsd.own.mk>
 
@@ -152,7 +152,6 @@ ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/krb5		\
-	 -I${DIST}/openssl/crypto/md4		\
 	 -I${DIST}/openssl/crypto/md5		\
 	 -I${DIST}/openssl/crypto/sha		\
 	 -I${DIST}/openssl/crypto/rc4		\
