@@ -1,0 +1,3 @@
+server:/export/client/root / nfs rw
+server:/export/client/swap none swap sw
+server:/export/netbsd.sun3/usr /usr nfs ro
