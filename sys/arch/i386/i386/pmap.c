@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2002/10/05 21:30:42 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.142 2002/10/08 20:19:16 fvdl Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2002/10/05 21:30:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2002/10/08 20:19:16 fvdl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1767,6 +1767,9 @@ pmap_destroy(pmap)
 		/*
 		 * no need to switch the LDT; this address space is gone,
 		 * nothing is using it.
+		 *
+		 * No need to lock the pmap for ldt_free (or anything else),
+		 * we're the last one to use it.
 		 */
 		ldt_free(pmap);
 		uvm_km_free(kernel_map, (vaddr_t)pmap->pm_ldt,
