@@ -1,4 +1,4 @@
-/*	$NetBSD: mknodes.c,v 1.21 2002/11/24 22:35:41 christos Exp $	*/
+/*	$NetBSD: mknodes.c,v 1.22 2003/07/13 08:31:14 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mknodes.c,v 1.21 2002/11/24 22:35:41 christos Exp $";
+    "$NetBSD: mknodes.c,v 1.22 2003/07/13 08:31:14 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,16 +189,16 @@ parsefield(void)
 	fp->name = savestr(name);
 	if (strcmp(type, "nodeptr") == 0) {
 		fp->type = T_NODE;
-		sprintf(decl, "union node *%s", name);
+		snprintf(decl, sizeof(decl), "union node *%s", name);
 	} else if (strcmp(type, "nodelist") == 0) {
 		fp->type = T_NODELIST;
-		sprintf(decl, "struct nodelist *%s", name);
+		snprintf(decl, sizeof(decl), "struct nodelist *%s", name);
 	} else if (strcmp(type, "string") == 0) {
 		fp->type = T_STRING;
-		sprintf(decl, "char *%s", name);
+		snprintf(decl, sizeof(decl), "char *%s", name);
 	} else if (strcmp(type, "int") == 0) {
 		fp->type = T_INT;
-		sprintf(decl, "int %s", name);
+		snprintf(decl, sizeof(decl), "int %s", name);
 	} else if (strcmp(type, "other") == 0) {
 		fp->type = T_OTHER;
 	} else if (strcmp(type, "temp") == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.29 2003/05/04 06:36:50 gmcgarry Exp $	*/
+/*	$NetBSD: histedit.c,v 1.30 2003/07/13 08:31:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.29 2003/05/04 06:36:50 gmcgarry Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.30 2003/07/13 08:31:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,7 +367,7 @@ histcmd(int argc, char **argv)
 	if (editor) {
 		int fd;
 		INTOFF;		/* easier */
-		sprintf(editfile, "%s_shXXXXXX", _PATH_TMP);
+		snprintf(editfile, sizeof(editfile), "%s_shXXXXXX", _PATH_TMP);
 		if ((fd = mkstemp(editfile)) < 0)
 			error("can't create temporary file %s", editfile);
 		if ((efp = fdopen(fd, "w")) == NULL) {

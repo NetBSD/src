@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.72 2003/01/23 14:58:07 agc Exp $	*/
+/*	$NetBSD: eval.c,v 1.73 2003/07/13 08:31:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.72 2003/01/23 14:58:07 agc Exp $");
+__RCSID("$NetBSD: eval.c,v 1.73 2003/07/13 08:31:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1176,7 +1176,7 @@ execcmd(int argc, char **argv)
 }
 
 static int
-conv_time(clock_t ticks, char *seconds)
+conv_time(clock_t ticks, char *seconds, size_t l)
 {
 	static clock_t tpm = 0;
 	clock_t mins;
@@ -1186,12 +1186,12 @@ conv_time(clock_t ticks, char *seconds)
 		tpm = sysconf(_SC_CLK_TCK) * 60;
 
 	mins = ticks / tpm;
-	sprintf(seconds, "%.4f", (ticks - mins * tpm) * 60.0 / tpm );
+	snprintf(seconds, l, "%.4f", (ticks - mins * tpm) * 60.0 / tpm );
 
 	if (seconds[0] == '6' && seconds[1] == '0') {
 		/* 59.99995 got rounded up... */
 		mins++;
-		strcpy(seconds, "0.0");
+		strlcpy(seconds, "0.0", l);
 		return mins;
 	}
 
@@ -1213,10 +1213,10 @@ timescmd(int argc, char **argv)
 
 	times(&tms);
 
-	u = conv_time( tms.tms_utime, us );
-	s = conv_time( tms.tms_stime, ss );
-	cu = conv_time( tms.tms_cutime, cus );
-	cs = conv_time( tms.tms_cstime, css );
+	u = conv_time(tms.tms_utime, us, sizeof(us));
+	s = conv_time(tms.tms_stime, ss, sizeof(ss));
+	cu = conv_time(tms.tms_cutime, cus, sizeof(cus));
+	cs = conv_time(tms.tms_cstime, css, sizeof(css));
 
 	outfmt(out1, "%dm%ss %dm%ss\n%dm%ss %dm%ss\n",
 		u, us, s, ss, cu, cus, cs, css);
