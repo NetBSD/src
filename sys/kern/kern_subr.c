@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.111 2004/04/21 20:31:50 matt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.112 2004/09/23 10:45:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.111 2004/04/21 20:31:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.112 2004/09/23 10:45:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -146,6 +146,16 @@ uiomove(buf, n, uio)
 	int error = 0;
 	char *cp = buf;
 	struct proc *p = uio->uio_procp;
+	int hold_count;
+
+	hold_count = KERNEL_LOCK_RELEASE_ALL();
+
+#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+	spinlock_switchcheck();
+#endif
+#ifdef LOCKDEBUG
+	simple_lock_only_held(NULL, "uiomove");
+#endif
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
@@ -182,7 +192,7 @@ uiomove(buf, n, uio)
 					    cp, cnt);
 			}
 			if (error)
-				return (error);
+				goto out;
 			break;
 
 		case UIO_SYSSPACE:
@@ -191,7 +201,7 @@ uiomove(buf, n, uio)
 			else
 				error = kcopy(iov->iov_base, cp, cnt);
 			if (error)
-				return (error);
+				goto out;
 			break;
 		}
 		iov->iov_base = (caddr_t)iov->iov_base + cnt;
@@ -202,6 +212,8 @@ uiomove(buf, n, uio)
 		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
+out:
+	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
 	return (error);
 }
 
