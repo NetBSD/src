@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.53 2000/11/21 00:11:38 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.54 2000/12/08 19:42:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -104,6 +104,7 @@ static int _lkm_dev __P((struct lkm_table *, int));
 static int _lkm_strmod __P((struct lkm_table *, int));
 #endif
 static int _lkm_exec __P((struct lkm_table *, int));
+static int _lkm_compat __P((struct lkm_table *, int));
 
 
 /*ARGSUSED*/
@@ -875,9 +876,7 @@ _lkm_exec(lkmtp, cmd)
 	struct lkm_table *lkmtp;
 	int cmd;
 {
-#if 0
 	struct lkm_exec *args = lkmtp->private.lkm_exec;
-	int i;
 	int error = 0;
 
 	switch(cmd) {
@@ -886,49 +885,13 @@ _lkm_exec(lkmtp, cmd)
 		if (lkmexists(lkmtp))
 			return (EEXIST);
 
-		if ((i = args->lkm_offset) == -1) {	/* auto */
-			/*
-			 * Search the table looking for a slot...
-			 */
-			for (i = 0; i < nexecs; i++)
-				if (execsw[i].es_check == NULL)
-					break;		/* found it! */
-			/* out of allocable slots? */
-			if (i == nexecs) {
-				error = ENFILE;
-				break;
-			}
-		} else {				/* assign */
-			if (i < 0 || i >= nexecs) {
-				error = EINVAL;
-				break;
-			}
-		}
-
-		/* save old */
-		memcpy(&args->lkm_oldexec, &execsw[i], sizeof(struct execsw));
-
-		/* replace with new */
-		memcpy(&execsw[i], args->lkm_exec, sizeof(struct execsw));
-
-		/* realize need to recompute max header size */
-		exec_maxhdrsz = 0;
-
-		/* done! */
-		args->lkm_offset = i;	/* slot in execsw[] */
-
+		/* this would also fill in the emulation pointer in
+		 * args->lkm_execsw */
+		error = exec_add(args->lkm_execsw, args->lkm_emul);
 		break;
 
 	case LKM_E_UNLOAD:
-		/* current slot... */
-		i = args->lkm_offset;
-
-		/* replace current slot contents with old contents */
-		memcpy(&execsw[i], &args->lkm_oldexec, sizeof(struct execsw));
-
-		/* realize need to recompute max header size */
-		exec_maxhdrsz = 0;
-
+		error = exec_remove(args->lkm_execsw);
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */
@@ -936,8 +899,38 @@ _lkm_exec(lkmtp, cmd)
 	}
 
 	return (error);
-#endif
-	return (0);
+}
+
+/*
+ * For the loadable compat/emulation class described by the structure pointed to
+ * by lkmtp, load/unload/stat it depending on the cmd requested.
+ */
+static int
+_lkm_compat(lkmtp, cmd)
+	struct lkm_table *lkmtp;
+	int cmd;
+{
+	struct lkm_compat *args = lkmtp->private.lkm_compat;
+	int error = 0;
+
+	switch(cmd) {
+	case LKM_E_LOAD:
+		/* don't load twice! */
+		if (lkmexists(lkmtp))
+			return (EEXIST);
+
+		error = emul_register(args->lkm_compat, 0);
+		break;
+
+	case LKM_E_UNLOAD:
+		error = emul_unregister(args->lkm_compat->e_name);
+		break;
+
+	case LKM_E_STAT:	/* no special handling... */
+		break;
+	}
+
+	return (error);
 }
 
 /*
@@ -981,6 +974,10 @@ lkmdispatch(lkmtp, cmd)
 
 	case LM_EXEC:
 		error = _lkm_exec(lkmtp, cmd);
+		break;
+
+	case LM_COMPAT:
+		error = _lkm_compat(lkmtp, cmd);
 		break;
 
 	case LM_MISC:	/* ignore content -- no "misc-specific" procedure */
