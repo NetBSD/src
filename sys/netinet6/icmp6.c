@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.c,v 1.23 2000/02/26 08:39:19 itojun Exp $	*/
-/*	$KAME: icmp6.c,v 1.70 2000/02/26 07:01:11 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.24 2000/02/28 13:48:51 itojun Exp $	*/
+/*	$KAME: icmp6.c,v 1.71 2000/02/28 09:25:42 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1187,6 +1187,16 @@ ni6_addrs(ni6, m, ifpp)
 			    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
 					       &ifa6->ia_addr.sin6_addr))
 				iffound = 1;
+
+			/*
+			 * IPv4-mapped addresses can only be returned by a
+			 * Node Information proxy, since they represent
+			 * addresses of IPv4-only nodes, which perforce do
+			 * not implement this protocol.
+			 * [icmp-name-lookups-05]
+			 * So we don't support NI_NODEADDR_FLAG_COMPAT in
+			 * this function at this moment.
+			 */
 
 			if (ifa6->ia6_flags & IN6_IFF_ANYCAST)
 				continue; /* we need only unicast addresses */
