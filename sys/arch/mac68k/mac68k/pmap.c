@@ -65,7 +65,7 @@
  */
 /* 
  *	from: @(#)pmap.c	7.5 (Berkeley) 5/10/91
- *	$Id: pmap.c,v 1.3 1993/12/15 03:28:01 briggs Exp $
+ *	$Id: pmap.c,v 1.4 1994/01/11 00:20:10 briggs Exp $
  */
 
 #define DEBUG
@@ -2163,9 +2163,6 @@ pmap_enter_ptpage(pmap, va)
 		    != KERN_SUCCESS)
 			panic("pmap_enter: vm_fault failed");
 		ptpa = pmap_extract(kernel_pmap, va);
-#ifdef DEBUG
-		PHYS_TO_VM_PAGE(ptpa)->ptpage = TRUE;
-#endif
 	}
 
 	/*
