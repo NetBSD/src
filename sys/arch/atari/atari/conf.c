@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.17 1996/09/25 15:15:07 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.18 1996/10/04 06:56:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -112,6 +112,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0}
 
+/* open, close, read, ioctl */
+#define	cdev_ss_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -131,6 +138,12 @@ cdev_decl(zs);
 cdev_decl(sd);
 cdev_decl(cd);
 cdev_decl(st);
+#include "ss.h"
+cdev_decl(ss);
+#include "uk.h"
+cdev_decl(uk);
+#include "ch.h"
+cdev_decl(ch);
 
 #include "grfcc.h"
 #include "grfet.h"
@@ -191,6 +204,9 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
 	cdev_lpt_init(1, lpt),		/* 29: Centronics */
+	cdev_ch_init(NCH,ch),		/* 30: SCSI autochanger	*/
+	cdev_uk_init(NUK,uk),		/* 31: SCSI unknown	*/
+	cdev_ss_init(NSS,ss),		/* 32: SCSI scanner	*/
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -283,6 +299,9 @@ static int chrtoblktab[] = {
 	/* 27 */	13,
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
+	/* 30 */	NODEV,
+	/* 31 */	NODEV,
+	/* 32 */	NODEV,
 };
 
 /*
