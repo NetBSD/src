@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.178 2000/09/22 14:46:38 eeh Exp $	*/
+/*	$NetBSD: com.c,v 1.179 2000/09/23 17:17:12 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -233,6 +233,18 @@ void	com_kgdb_putc __P((void *, int));
 #define	BW	BUS_SPACE_BARRIER_WRITE
 #define COM_BARRIER(t, h, f) bus_space_barrier((t), (h), 0, COM_NPORTS, (f))
 
+#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
+
+#define COM_LOCK(sc) simple_lock(&(sc)->sc_lock)
+#define COM_UNLOCK(sc) simple_unlock(&(sc)->sc_lock)
+
+#else
+
+#define COM_LOCK(sc)
+#define COM_UNLOCK(sc)
+
+#endif
+
 int
 comspeed(speed, frequency)
 	long speed, frequency;
@@ -379,10 +391,12 @@ com_enable_debugport(sc)
 
 	/* Turn on line break interrupt, set carrier. */
 	s = splserial();
+	COM_LOCK(sc);
 	sc->sc_ier = IER_ERXRDY;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
+	COM_UNLOCK(sc);
 	splx(s);
 }
 #endif
@@ -404,6 +418,9 @@ com_attach_subr(sc)
 #endif
 
 	callout_init(&sc->sc_diag_callout);
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	simple_lock_init(&sc->sc_lock);
+#endif
 
 	/* Disable interrupts before configuring the device. */
 	sc->sc_ier = 0;
@@ -672,6 +689,7 @@ com_activate(self, act)
 	int s, rv = 0;
 
 	s = splserial();
+	COM_LOCK(sc);
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
@@ -689,6 +707,8 @@ com_activate(self, act)
 		}
 		break;
 	}
+
+	COM_UNLOCK(sc);	
 	splx(s);
 	return (rv);
 }
@@ -701,6 +721,7 @@ com_shutdown(sc)
 	int s;
 
 	s = splserial();
+	COM_LOCK(sc);	
 
 	/* If we were asserting flow control, then deassert it. */
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -720,10 +741,12 @@ com_shutdown(sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		com_modem(sc, 0);
+		COM_UNLOCK(sc);
 		splx(s);
 		/* XXX tsleep will only timeout */
 		(void) tsleep(sc, TTIPRI, ttclos, hz);
 		s = splserial();
+		COM_LOCK(sc);	
 	}
 
 	/* Turn off interrupts. */
@@ -743,7 +766,7 @@ com_shutdown(sc)
 		(*sc->disable)(sc);
 		sc->enabled = 0;
 	}
-
+	COM_UNLOCK(sc);
 	splx(s);
 }
 
@@ -792,9 +815,11 @@ comopen(dev, flag, mode, p)
 		tp->t_dev = dev;
 
 		s2 = splserial();
+		COM_LOCK(sc);
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
+				COM_UNLOCK(sc);
 				splx(s2);
 				splx(s);
 				printf("%s: device enable failed\n",
@@ -816,6 +841,7 @@ comopen(dev, flag, mode, p)
 		sc->sc_ppsmask = 0;
 		sc->ppsparam.mode = 0;
 
+		COM_UNLOCK(sc);
 		splx(s2);
 
 		/*
@@ -846,6 +872,7 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		s2 = splserial();
+		COM_LOCK(sc);
 
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
@@ -868,6 +895,7 @@ comopen(dev, flag, mode, p)
 			comstatus(sc, "comopen  ");
 #endif
 
+		COM_UNLOCK(sc);
 		splx(s2);
 	}
 	
@@ -993,6 +1021,7 @@ comioctl(dev, cmd, data, flag, p)
 	error = 0;
 
 	s = splserial();
+	COM_LOCK(sc);	
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -1134,6 +1163,7 @@ comioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
+	COM_UNLOCK(sc);
 	splx(s);
 
 #ifdef COM_DEBUG
@@ -1351,6 +1381,7 @@ comparam(tp, t)
 	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
 
 	s = splserial();
+	COM_LOCK(sc);	
 
 	sc->sc_lcr = lcr;
 
@@ -1456,6 +1487,7 @@ comparam(tp, t)
 		sc->sc_r_lowat = com_rbuf_lowat;
 	}
 
+	COM_UNLOCK(sc);
 	splx(s);
 
 	/*
@@ -1552,6 +1584,8 @@ comhwiflow(tp, block)
 		return (0);
 
 	s = splserial();
+	COM_LOCK(sc);
+	
 	if (block) {
 		if (!ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
 			SET(sc->sc_rx_flags, RX_TTY_BLOCKED);
@@ -1567,6 +1601,8 @@ comhwiflow(tp, block)
 			com_hwiflow(sc);
 		}
 	}
+
+	COM_UNLOCK(sc);
 	splx(s);
 	return (1);
 }
@@ -1632,6 +1668,7 @@ comstart(tp)
 		tbc = ndqb(&tp->t_outq, 0);
 
 		(void)splserial();
+		COM_LOCK(sc);
 
 		sc->sc_tba = tba;
 		sc->sc_tbc = tbc;
@@ -1657,6 +1694,7 @@ comstart(tp)
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
 	}
+	COM_UNLOCK(sc);
 out:
 	splx(s);
 	return;
@@ -1674,6 +1712,7 @@ comstop(tp, flag)
 	int s;
 
 	s = splserial();
+	COM_LOCK(sc);
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
 		sc->sc_tbc = 0;
@@ -1681,6 +1720,7 @@ comstop(tp, flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
+	COM_UNLOCK(sc);	
 	splx(s);
 }
 
@@ -1693,11 +1733,13 @@ comdiag(arg)
 	int s;
 
 	s = splserial();
+	COM_LOCK(sc);
 	overflows = sc->sc_overflows;
 	sc->sc_overflows = 0;
 	floods = sc->sc_floods;
 	sc->sc_floods = 0;
 	sc->sc_errors = 0;
+	COM_UNLOCK(sc);
 	splx(s);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
@@ -1781,6 +1823,8 @@ com_rxsoft(sc, tp)
 	if (cc != scc) {
 		sc->sc_rbget = get;
 		s = splserial();
+		COM_LOCK(sc);
+		
 		cc = sc->sc_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= sc->sc_r_lowat) {
@@ -1794,6 +1838,7 @@ com_rxsoft(sc, tp)
 				com_hwiflow(sc);
 			}
 		}
+		COM_UNLOCK(sc);
 		splx(s);
 	}
 }
@@ -1821,9 +1866,11 @@ com_stsoft(sc, tp)
 	int s;
 
 	s = splserial();
+	COM_LOCK(sc);
 	msr = sc->sc_msr;
 	delta = sc->sc_msr_delta;
 	sc->sc_msr_delta = 0;
+	COM_UNLOCK(sc);	
 	splx(s);
 
 	if (ISSET(delta, sc->sc_msr_dcd)) {
@@ -1938,9 +1985,12 @@ comintr(arg)
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
 
+	COM_LOCK(sc);
 	iir = bus_space_read_1(iot, ioh, com_iir);
-	if (ISSET(iir, IIR_NOPEND))
+	if (ISSET(iir, IIR_NOPEND)) {
+		COM_UNLOCK(sc);
 		return (0);
+	}
 
 	end = sc->sc_ebuf;
 	put = sc->sc_rbput;
@@ -2145,6 +2195,7 @@ comintr(arg)
 			}
 		}
 	}
+	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
 #ifdef __GENERIC_SOFT_INTERRUPTS
