@@ -34,11 +34,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp (LBL)
- *	$Id: arp.c,v 1.2 1993/10/13 13:55:38 cgd Exp $
+ * from @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp  (LBL)
+ *     $Id: arp.c,v 1.3 1993/10/14 04:53:35 glass Exp $
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -49,10 +48,10 @@
 #include <netinet/in_systm.h>
 
 #include <errno.h>
+#include <string.h>
 
 #include "netboot.h"
 #include "bootbootp.h"
-
 
 /* Cache stuff */
 #define ARP_NUM 8			/* need at most 3 arp entries */
@@ -90,8 +89,8 @@ arpwhohas(d, addr)
 		} ru;
 	} rbuf;
 
-	if (debug)
-	    printf("arpwhohas: called\n");
+ 	if (debug)
+ 	    printf("arpwhohas: called\n");
 	/* Try for cached answer first */
 	for (i = 0, al = arp_list; i < arp_num; ++i, ++al)
 		if (addr == al->addr)
@@ -101,8 +100,8 @@ arpwhohas(d, addr)
 	if (arp_num > ARP_NUM - 1)
 		panic("arpwhohas: overflowed arp_list!");
 
-	if (debug)
-	    printf("arpwhohas: not cached\n");
+ 	if (debug)
+ 	    printf("arpwhohas: not cached\n");
 	ah = &wbuf.warp;
 	bzero(ah, sizeof(*ah));
 
@@ -135,8 +134,8 @@ arpsend(d, pkt, len)
 	register void *pkt;
 	register int len;
 {
-	if (debug)
-	    printf("arpsend: called\n");
+ 	if (debug)
+ 	    printf("arpsend: called\n");
 	return (sendether(d, pkt, len, bcea, ETHERTYPE_ARP));
 }
 
@@ -150,8 +149,8 @@ arprecv(d, pkt, len)
 	register struct ether_header *eh;
 	register struct ether_arp *ah;
 
-	if (debug)
-	    printf("arprecv: called\n");
+ 	if (debug)
+ 	    printf("arprecv: called\n");
 	if (len < sizeof(*eh) + sizeof(*ah)) {
 		errno = 0;
 		return (-1);

@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/in_cksum.c,v 1.1 1993/10/13 05:41:32 cgd Exp $ (LBL)
+ * from @(#) Header: in_cksum.c,v 1.1 92/09/11 01:15:55 leres Exp  (LBL)
+ *    $Id: in_cksum.c,v 1.2 1993/10/14 04:53:37 glass Exp $
  */
 
 #include <sys/types.h>
