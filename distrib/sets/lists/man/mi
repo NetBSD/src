@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.571 2003/04/29 09:55:53 bjh21 Exp $
+# $NetBSD: mi,v 1.572 2003/04/29 11:59:25 augustss Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -651,6 +651,7 @@
 ./usr/share/man/cat4/fmv.0			man-sys-catman
 ./usr/share/man/cat4/fpa.0			man-sys-catman
 ./usr/share/man/cat4/fta.0			man-sys-catman
+./usr/share/man/cat4/fwiso.0			man-sys-catman
 ./usr/share/man/cat4/fxp.0			man-sys-catman
 ./usr/share/man/cat4/gem.0			man-sys-catman
 ./usr/share/man/cat4/gentbi.0			man-sys-catman
@@ -760,6 +761,8 @@
 ./usr/share/man/cat4/ix.0			man-sys-catman
 ./usr/share/man/cat4/iy.0			man-sys-catman
 ./usr/share/man/cat4/joy.0			man-sys-catman
+./usr/share/man/cat4/ksyms.0			man-sys-catman
+./usr/share/man/cat4/kttcp.0			man-sys-catman
 ./usr/share/man/cat4/kue.0			man-sys-catman
 ./usr/share/man/cat4/lc.0			man-sys-catman
 ./usr/share/man/cat4/ld.0			man-sys-catman
@@ -827,9 +830,11 @@
 ./usr/share/man/cat4/ne.0			man-sys-catman
 ./usr/share/man/cat4/nele.0			man-sys-catman
 ./usr/share/man/cat4/neo.0			man-sys-catman
+./usr/share/man/cat4/netsmb.0			man-sys-catman
 ./usr/share/man/cat4/netintro.0			man-sys-catman
 ./usr/share/man/cat4/networking.0		man-sys-catman
 ./usr/share/man/cat4/ns.0			man-sys-catman
+./usr/share/man/cat4/nsmb.0			man-sys-catman
 ./usr/share/man/cat4/nsclpcsio.0		man-sys-catman
 ./usr/share/man/cat4/nsip.0			man-sys-catman
 ./usr/share/man/cat4/nsphy.0			man-sys-catman
@@ -1099,11 +1104,13 @@
 ./usr/share/man/cat4/vax/va.0			man-sys-catman
 ./usr/share/man/cat4/vax/vp.0			man-sys-catman
 ./usr/share/man/cat4/vax/vv.0			man-sys-catman
-./usr/share/man/cat4/veriexec.0			man-sys-catman
+./usr/share/man/cat4/verifiedexec.0		man-sys-catman
 ./usr/share/man/cat4/vga.0			man-sys-catman
 ./usr/share/man/cat4/viaenv.0			man-sys-catman
 ./usr/share/man/cat4/viapm.0			man-sys-catman
 ./usr/share/man/cat4/vlan.0			man-sys-catman
+./usr/share/man/cat4/vmmon.0			man-sys-catman
+./usr/share/man/cat4/vmnet.0			man-sys-catman
 ./usr/share/man/cat4/vnd.0			man-sys-catman
 ./usr/share/man/cat4/vr.0			man-sys-catman
 ./usr/share/man/cat4/wd.0			man-sys-catman
@@ -1114,6 +1121,7 @@
 ./usr/share/man/cat4/wm.0			man-sys-catman
 ./usr/share/man/cat4/wscons.0			man-sys-catman
 ./usr/share/man/cat4/wsdisplay.0		man-sys-catman
+./usr/share/man/cat4/wsfont.0			man-sys-catman
 ./usr/share/man/cat4/wskbd.0			man-sys-catman
 ./usr/share/man/cat4/wsmouse.0			man-sys-catman
 ./usr/share/man/cat4/wsmux.0			man-sys-catman
@@ -2445,6 +2453,7 @@
 ./usr/share/man/man4/fmv.4			man-sys-man
 ./usr/share/man/man4/fpa.4			man-sys-man
 ./usr/share/man/man4/fta.4			man-sys-man
+./usr/share/man/man4/fwiso.4			man-sys-man
 ./usr/share/man/man4/fxp.4			man-sys-man
 ./usr/share/man/man4/gem.4			man-sys-man
 ./usr/share/man/man4/gentbi.4			man-sys-man
@@ -2554,6 +2563,8 @@
 ./usr/share/man/man4/ix.4			man-sys-man
 ./usr/share/man/man4/iy.4			man-sys-man
 ./usr/share/man/man4/joy.4			man-sys-man
+./usr/share/man/man4/ksyms.4			man-sys-man
+./usr/share/man/man4/kttcp.4			man-sys-man
 ./usr/share/man/man4/kue.4			man-sys-man
 ./usr/share/man/man4/lc.4			man-sys-man
 ./usr/share/man/man4/ld.4			man-sys-man
@@ -2621,9 +2632,11 @@
 ./usr/share/man/man4/ne.4			man-sys-man
 ./usr/share/man/man4/nele.4			man-sys-man
 ./usr/share/man/man4/neo.4			man-sys-man
+./usr/share/man/man4/netsmb.4			man-sys-man
 ./usr/share/man/man4/netintro.4			man-sys-man
 ./usr/share/man/man4/networking.4		man-sys-man
 ./usr/share/man/man4/ns.4			man-sys-man
+./usr/share/man/man4/nsmb.4			man-sys-man
 ./usr/share/man/man4/nsclpcsio.4		man-sys-man
 ./usr/share/man/man4/nsip.4			man-sys-man
 ./usr/share/man/man4/nsphy.4			man-sys-man
@@ -2893,11 +2906,13 @@
 ./usr/share/man/man4/vax/va.4			man-sys-man
 ./usr/share/man/man4/vax/vp.4			man-sys-man
 ./usr/share/man/man4/vax/vv.4			man-sys-man
-./usr/share/man/man4/veriexec.4			man-sys-man
+./usr/share/man/man4/verifiedexec.4		man-sys-man
 ./usr/share/man/man4/vga.4			man-sys-man
 ./usr/share/man/man4/viaenv.4			man-sys-man
 ./usr/share/man/man4/viapm.4			man-sys-man
 ./usr/share/man/man4/vlan.4			man-sys-man
+./usr/share/man/man4/vmmon.4			man-sys-man
+./usr/share/man/man4/vmnet.4			man-sys-man
 ./usr/share/man/man4/vnd.4			man-sys-man
 ./usr/share/man/man4/vr.4			man-sys-man
 ./usr/share/man/man4/wd.4			man-sys-man
@@ -2908,6 +2923,7 @@
 ./usr/share/man/man4/wm.4			man-sys-man
 ./usr/share/man/man4/wscons.4			man-sys-man
 ./usr/share/man/man4/wsdisplay.4		man-sys-man
+./usr/share/man/man4/wsfont.4			man-sys-man
 ./usr/share/man/man4/wskbd.4			man-sys-man
 ./usr/share/man/man4/wsmouse.4			man-sys-man
 ./usr/share/man/man4/wsmux.4			man-sys-man
