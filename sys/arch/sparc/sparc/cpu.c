@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.106 2000/06/29 07:40:09 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.107 2000/09/10 11:32:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -600,6 +600,7 @@ cache_print(sc)
 void cpumatch_unknown __P((struct cpu_info *, struct module_info *, int));
 void cpumatch_sun4 __P((struct cpu_info *, struct module_info *, int));
 void cpumatch_sun4c __P((struct cpu_info *, struct module_info *, int));
+void cpumatch_ms1 __P((struct cpu_info *, struct module_info *, int));
 void cpumatch_viking __P((struct cpu_info *, struct module_info *, int));
 void cpumatch_hypersparc __P((struct cpu_info *, struct module_info *, int));
 void cpumatch_turbosparc __P((struct cpu_info *, struct module_info *, int));
@@ -982,7 +983,7 @@ getcacheinfo_obp(sc, node)
 struct module_info module_ms1 = {
 	CPUTYP_MS1,
 	VAC_NONE,
-	0,
+	cpumatch_ms1,
 	getcacheinfo_obp,
 	0,
 	ms1_mmu_enable,
@@ -1002,6 +1003,20 @@ struct module_info module_ms1 = {
 	pmap_zero_page4m,
 	pmap_copy_page4m
 };
+
+void
+cpumatch_ms1(sc, mp, node)
+	struct cpu_info *sc;
+	struct module_info *mp;
+	int	node;
+{
+
+	/*
+	 * Turn off page zeroing in the idle loop; an unidentified
+	 * bug causes (very sporadic) user process corruption.
+	 */
+	vm_page_zero_enable = 0;
+}
 
 void
 ms1_mmu_enable()
