@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.19 2003/09/23 23:08:54 thorpej Exp $	*/
+/*	$NetBSD: twevar.h,v 1.20 2003/09/23 23:50:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ struct twe_softc {
 #define	TWEF_OPEN	0x01	/* control device is opened */
 #define	TWEF_AENQ_WAIT	0x02	/* someone waiting for AENs */
 #define	TWEF_AEN	0x04	/* AEN fetch in progress */
+#define	TWEF_WAIT_CCB	0x08	/* someone waiting for a CCB */
 
 /* Optional per-command context. */
 struct twe_context {
@@ -122,7 +123,8 @@ struct twe_attach_args {
 
 #define	tweacf_unit	cf_loc[TWECF_UNIT]
 
-int	twe_ccb_alloc(struct twe_softc *, struct twe_ccb **, int);
+struct twe_ccb *twe_ccb_alloc(struct twe_softc *, int);
+struct twe_ccb *twe_ccb_alloc_wait(struct twe_softc *, int);
 void	twe_ccb_enqueue(struct twe_softc *sc, struct twe_ccb *ccb);
 void	twe_ccb_free(struct twe_softc *sc, struct twe_ccb *);
 int	twe_ccb_map(struct twe_softc *, struct twe_ccb *);

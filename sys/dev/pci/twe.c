@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.48 2003/09/23 23:10:53 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.49 2003/09/23 23:50:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.48 2003/09/23 23:10:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.49 2003/09/23 23:50:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,10 +834,9 @@ twe_aen_get(struct twe_softc *sc, uint16_t *aenp)
 	if (tp == NULL)
 		return (ENOMEM);
 
-	rv = twe_ccb_alloc(sc, &ccb,
+	ccb = twe_ccb_alloc(sc,
 	    TWE_CCB_AEN | TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
-	if (rv != 0)
-		goto done;
+	KASSERT(ccb != NULL);
 
 	ccb->ccb_data = tp;
 	ccb->ccb_datasize = TWE_SECTOR_SIZE;
@@ -1054,6 +1053,8 @@ twe_param_get_4(struct twe_softc *sc, int table_id, int param_id,
  * and a pointer to a buffer containing the data returned.
  *
  * The caller or callback is responsible for freeing the buffer.
+ *
+ * NOTE: We assume we can sleep here to wait for a CCB to become available.
  */
 int
 twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
@@ -1068,9 +1069,8 @@ twe_param_get(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	if (tp == NULL)
 		return ENOMEM;
 
-	rv = twe_ccb_alloc(sc, &ccb, TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
-	if (rv != 0)
-		goto done;
+	ccb = twe_ccb_alloc_wait(sc, TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
+	KASSERT(ccb != NULL);
 
 	ccb->ccb_data = tp;
 	ccb->ccb_datasize = TWE_SECTOR_SIZE;
@@ -1121,6 +1121,8 @@ done:
 
 /*
  * Execute a TWE_OP_SET_PARAM command.
+ *
+ * NOTE: We assume we can sleep here to wait for a CCB to become available.
  */
 static int
 twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
@@ -1135,9 +1137,8 @@ twe_param_set(struct twe_softc *sc, int table_id, int param_id, size_t size,
 	if (tp == NULL)
 		return ENOMEM;
 
-	rv = twe_ccb_alloc(sc, &ccb, TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
-	if (rv != 0)
-		goto done;
+	ccb = twe_ccb_alloc_wait(sc, TWE_CCB_DATA_IN | TWE_CCB_DATA_OUT);
+	KASSERT(ccb != NULL);
 
 	ccb->ccb_data = tp;
 	ccb->ccb_datasize = TWE_SECTOR_SIZE;
@@ -1187,8 +1188,8 @@ twe_init_connection(struct twe_softc *sc)
 	struct twe_cmd *tc;
 	int rv;
 
-	if ((rv = twe_ccb_alloc(sc, &ccb, 0)) != 0)
-		return (rv);
+	if ((ccb = twe_ccb_alloc(sc, 0)) == NULL)
+		return (EAGAIN);
 
 	/* Build the command. */
 	tc = ccb->ccb_cmd;
@@ -1301,24 +1302,36 @@ twe_status_check(struct twe_softc *sc, u_int status)
 /*
  * Allocate and initialise a CCB.
  */
-int
-twe_ccb_alloc(struct twe_softc *sc, struct twe_ccb **ccbp, int flags)
+static __inline void
+twe_ccb_init(struct twe_softc *sc, struct twe_ccb *ccb, int flags)
 {
 	struct twe_cmd *tc;
+
+	ccb->ccb_tx.tx_handler = NULL;
+	ccb->ccb_flags = flags;
+	tc = ccb->ccb_cmd;
+	tc->tc_status = 0;
+	tc->tc_flags = 0;
+	tc->tc_cmdid = ccb->ccb_cmdid;
+}
+
+struct twe_ccb *
+twe_ccb_alloc(struct twe_softc *sc, int flags)
+{
 	struct twe_ccb *ccb;
 	int s;
 
 	s = splbio();	
-	if ((flags & TWE_CCB_AEN) != 0) {
+	if (__predict_false((flags & TWE_CCB_AEN) != 0)) {
 		/* Use the reserved CCB. */
 		ccb = sc->sc_ccbs;
 	} else {
 		/* Allocate a CCB and command block. */
-		if (SLIST_FIRST(&sc->sc_ccb_freelist) == NULL) {
+		if (__predict_false((ccb =
+				SLIST_FIRST(&sc->sc_ccb_freelist)) == NULL)) {
 			splx(s);
-			return (EAGAIN);
+			return (NULL);
 		}
-		ccb = SLIST_FIRST(&sc->sc_ccb_freelist);
 		SLIST_REMOVE_HEAD(&sc->sc_ccb_freelist, ccb_chain.slist);
 	}
 #ifdef DIAGNOSTIC
@@ -1328,16 +1341,34 @@ twe_ccb_alloc(struct twe_softc *sc, struct twe_ccb **ccbp, int flags)
 #endif
 	splx(s);
 
-	/* Initialise some fields and return. */
-	ccb->ccb_tx.tx_handler = NULL;
-	ccb->ccb_flags = flags;
-	tc = ccb->ccb_cmd;
-	tc->tc_status = 0;
-	tc->tc_flags = 0;
-	tc->tc_cmdid = ccb->ccb_cmdid;
-	*ccbp = ccb;
+	twe_ccb_init(sc, ccb, flags);
+	return (ccb);
+}
 
-	return (0);
+struct twe_ccb *
+twe_ccb_alloc_wait(struct twe_softc *sc, int flags)
+{
+	struct twe_ccb *ccb;
+	int s;
+
+	KASSERT((flags & TWE_CCB_AEN) == 0);
+
+	s = splbio();
+	while (__predict_false((ccb =
+				SLIST_FIRST(&sc->sc_ccb_freelist)) == NULL)) {
+		sc->sc_flags |= TWEF_WAIT_CCB;
+		(void) tsleep(&sc->sc_ccb_freelist, PRIBIO, "tweccb", 0);
+	}
+	SLIST_REMOVE_HEAD(&sc->sc_ccb_freelist, ccb_chain.slist);
+#ifdef DIAGNOSTIC
+	if ((ccb->ccb_flags & TWE_CCB_ALLOCED) != 0)
+		panic("twe_ccb_alloc_wait: CCB already allocated");
+	flags |= TWE_CCB_ALLOCED;
+#endif
+	splx(s);
+
+	twe_ccb_init(sc, ccb, flags);
+	return (ccb);
 }
 
 /*
@@ -1349,9 +1380,14 @@ twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 	int s;
 
 	s = splbio();
-	if ((ccb->ccb_flags & TWE_CCB_AEN) == 0)
-		SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
 	ccb->ccb_flags = 0;
+	if ((ccb->ccb_flags & TWE_CCB_AEN) == 0) {
+		SLIST_INSERT_HEAD(&sc->sc_ccb_freelist, ccb, ccb_chain.slist);
+		if (__predict_false((sc->sc_flags & TWEF_WAIT_CCB) != 0)) {
+			sc->sc_flags &= ~TWEF_WAIT_CCB;
+			wakeup(&sc->sc_ccb_freelist);
+		}
+	}
 	splx(s);
 }
 
