@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $	*/
+/*	$NetBSD: tty.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -75,7 +75,7 @@
 #if 0
 #define RCSID	"Id: tty.c,v 1.22 2004/11/13 12:07:29 paulus Exp"
 #else
-__RCSID("$NetBSD: tty.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $");
+__RCSID("$NetBSD: tty.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -89,7 +89,6 @@ __RCSID("$NetBSD: tty.c,v 1.1.1.1 2005/02/20 10:28:53 cube Exp $");
 #include <fcntl.h>
 #include <syslog.h>
 #include <netdb.h>
-#include <utmp.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <sys/param.h>
@@ -219,14 +218,14 @@ option_t tty_options[] = {
       "Set alternate hardware (DTR/CTS) flow control",
       OPT_PRIOSUB | OPT_NOARG | OPT_VAL(2) },
     { "nocrtscts", o_int, &crtscts,
-      "Disable hardware flow control",
-      OPT_PRIOSUB | OPT_NOARG | OPT_VAL(-1) },
+      "Disable alternate hardware (DTR/CTS) flow control",
+      OPT_PRIOSUB | OPT_NOARG | OPT_VAL(2) },
     { "-crtscts", o_int, &crtscts,
-      "Disable hardware flow control",
-      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
+      "Disable alternate hardware (DTR/CTS) flow control",
+      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(2) },
     { "nocdtrcts", o_int, &crtscts,
-      "Disable hardware flow control",
-      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
+      "Disable alternate hardware (DTR/CTS) flow control",
+      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(2) },
     { "xonxoff", o_special_noarg, (void *)setxonxoff,
       "Set software (XON/XOFF) flow control", OPT_PRIOSUB },
 
@@ -849,7 +848,7 @@ finish_tty()
 #ifndef __linux__
 	if (tty_mode != (mode_t) -1) {
 		if (fchmod(real_ttyfd, tty_mode) != 0)
-			error("Couldn't restore tty permissions");
+			error("Couldn't restore tty permissions: %m");
 	}
 #endif /* __linux__ */
 
@@ -1106,17 +1105,29 @@ charshunt(ifd, ofd, record_file)
 	if (nibuf != 0) {
 	    if (ilevel >= max_level)
 		top = &tout;
-	    else
+	    else {
+		if (pty_master >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(pty_master, &writey);
-	} else if (stdin_readable)
+	    }
+	} else if (stdin_readable) {
+	    if (ifd >= FD_SETSIZE)
+		fatal("descriptor too big");
 	    FD_SET(ifd, &ready);
+	}
 	if (nobuf != 0) {
 	    if (olevel >= max_level)
 		top = &tout;
-	    else
+	    else {
+		if (ofd >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(ofd, &writey);
-	} else if (pty_readable)
+	    }
+	} else if (pty_readable) {
+	    if (pty_master >= FD_SETSIZE)
+		fatal("descriptor too big");
 	    FD_SET(pty_master, &ready);
+	}
 	if (select(nfds, &ready, &writey, NULL, top) < 0) {
 	    if (errno != EINTR)
 		fatal("select");
@@ -1154,6 +1165,8 @@ charshunt(ifd, ofd, record_file)
 		    if (!record_write(recordf, 4, NULL, 0, &lasttime))
 			recordf = NULL;
 	    } else {
+		if (pty_master >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(pty_master, &writey);
 		if (recordf)
 		    if (!record_write(recordf, 2, ibufp, nibuf, &lasttime))
@@ -1181,6 +1194,8 @@ charshunt(ifd, ofd, record_file)
 		    if (!record_write(recordf, 3, NULL, 0, &lasttime))
 			recordf = NULL;
 	    } else {
+		if (ofd >= FD_SETSIZE)
+		    fatal("descriptor too big");
 		FD_SET(ofd, &writey);
 		if (recordf)
 		    if (!record_write(recordf, 1, obufp, nobuf, &lasttime))

@@ -1,4 +1,4 @@
-/*	$NetBSD: pppcrypt.c,v 1.1.1.1 2005/02/20 10:28:52 cube Exp $	*/
+/*	$NetBSD: pppcrypt.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * pppcrypt.c - PPP/DES linkage for MS-CHAP and EAP SRP-SHA1
@@ -33,8 +33,13 @@
  */
 
 #include <errno.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "pppd.h"
 #include "pppcrypt.h"
+
+static u_char Get7Bits(u_char *, int);
+static void MakeKey(u_char *, u_char *);
 
 static u_char
 Get7Bits(input, startBit)
@@ -71,6 +76,9 @@ u_char *des_key;	/* OUT 64 bit DES key with parity bits added */
 }
 
 #ifdef USE_CRYPT
+static void Expand(u_char *, u_char *);
+static void Collapse(u_char *, u_char *);
+
 /*
  * in == 8-byte string (expanded version of the 56-bit key)
  * out == 64-byte string where each byte is either 1 or 0

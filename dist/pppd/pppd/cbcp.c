@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -40,7 +40,7 @@
 #if 0
 #define RCSID	"Id: cbcp.c,v 1.16 2004/10/28 00:15:36 paulus Exp"
 #else
-__RCSID("$NetBSD: cbcp.c,v 1.1.1.1 2005/02/20 10:28:36 cube Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -177,7 +177,7 @@ cbcp_input(unit, inpacket, pktlen)
 
     if (pktlen < CBCP_MINLEN) {
 	if (debug)
-	    dbglog("CBCP packet is too small");
+	    dbglog("CBCP: Packet too short (%d)", pktlen);
 	return;
     }
 
@@ -187,7 +187,7 @@ cbcp_input(unit, inpacket, pktlen)
 
     if (len > pktlen || len < CBCP_MINLEN) {
 	if (debug)
-	    dbglog("CBCP packet: invalid length %d", len);
+	    dbglog("CBCP: Invalid packet length (%d/%d)", len, pktlen);
         return;
     }
 
@@ -329,8 +329,11 @@ cbcp_recvreq(us, pckt, pcktlen)
 
 	GETCHAR(type, pckt);
 	GETCHAR(opt_len, pckt);
-	if (opt_len < 2 || opt_len > len)
+	if (opt_len < 2 || opt_len > len) {
+	    if (debug)
+		dbglog("CBCP: Malformed option length (%d/%d)", opt_len, len);
 	    break;
+	}
 
 	if (opt_len > 2)
 	    GETCHAR(delay, pckt);

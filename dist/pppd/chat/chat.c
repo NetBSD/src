@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.1.1.1 2005/02/20 10:28:55 cube Exp $	*/
+/*	$NetBSD: chat.c,v 1.2 2005/02/20 10:47:16 cube Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.30 2004/01/17 05:47:55 carlsonj Exp";
 #else
-__RCSID("$NetBSD: chat.c,v 1.1.1.1 2005/02/20 10:28:55 cube Exp $");
+__RCSID("$NetBSD: chat.c,v 1.2 2005/02/20 10:47:16 cube Exp $");
 #endif
 #endif
 
@@ -154,20 +154,9 @@ extern char *sys_errlist[];
 				 "unknown error")
 #endif
 
-/*************** Micro getopt() *********************************************/
-#define	OPTION(c,v)	(_O&2&&**v?*(*v)++:!c||_O&4?0:(!(_O&1)&& \
-				(--c,++v),_O=4,c&&**v=='-'&&v[0][1]?*++*v=='-'\
-				&&!v[0][1]?(--c,++v,0):(_O=2,*(*v)++):0))
-#define	OPTARG(c,v)	(_O&2?**v||(++v,--c)?(_O=1,--c,*v++): \
-				(_O=4,(char*)0):(char*)0)
-#define	OPTONLYARG(c,v)	(_O&2&&**v?(_O=1,--c,*v++):(char*)0)
-#define	ARG(c,v)	(c?(--c,*v++):(char*)0)
-
-static int _O = 0;		/* Internal state */
-/*************** Micro getopt() *********************************************/
-
 char *program_name;
 
+#define BUFFER_SIZE		256
 #define	MAX_ABORTS		50
 #define	MAX_REPORTS		50
 #define	DEFAULT_CHAT_TIMEOUT	45
@@ -205,12 +194,12 @@ struct termios saved_tty_parameters;
 #endif
 
 char *abort_string[MAX_ABORTS], *fail_reason = (char *)0,
-	fail_buffer[50];
+	fail_buffer[BUFFER_SIZE];
 int n_aborts = 0, abort_next = 0, timeout_next = 0, echo_next = 0;
 int clear_abort_next = 0;
 
 char *report_string[MAX_REPORTS] ;
-char  report_buffer[256] ;
+char  report_buffer[BUFFER_SIZE] ;
 int n_reports = 0, report_next = 0, report_gathering = 0 ; 
 int clear_report_next = 0;
 
@@ -296,12 +285,12 @@ main(argc, argv)
      char **argv;
 {
     int option;
-    char *arg;
+    int i;
 
     program_name = *argv;
     tzset();
 
-    while ((option = OPTION(argc, argv)) != 0) {
+    while ((option = getopt(argc, argv, ":eEvVf:t:r:sST:U:")) != -1) {
 	switch (option) {
 	case 'e':
 	    ++echo;
@@ -328,25 +317,24 @@ main(argc, argv)
 	    break;
 
 	case 'f':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		    chat_file = copy_of(arg);
+	    if (optarg != NULL)
+		    chat_file = copy_of(optarg);
 	    else
 		usage();
 	    break;
 
 	case 't':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		timeout = atoi(arg);
+	    if (optarg != NULL)
+		timeout = atoi(optarg);
 	    else
 		usage();
 	    break;
 
 	case 'r':
-	    arg = OPTARG (argc, argv);
-	    if (arg) {
+	    if (optarg) {
 		if (report_fp != NULL)
 		    fclose (report_fp);
-		report_file = copy_of (arg);
+		report_file = copy_of (optarg);
 		report_fp   = fopen (report_file, "a");
 		if (report_fp != NULL) {
 		    if (verbose)
@@ -358,15 +346,15 @@ main(argc, argv)
 	    break;
 
 	case 'T':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		phone_num = copy_of(arg);
+	    if (optarg != NULL)
+		phone_num = copy_of(optarg);
 	    else
 		usage();
 	    break;
 
 	case 'U':
-	    if ((arg = OPTARG(argc, argv)) != NULL)
-		phone_num2 = copy_of(arg);
+	    if (optarg != NULL)
+		phone_num2 = copy_of(optarg);
 	    else
 		usage();
 	    break;
@@ -376,6 +364,8 @@ main(argc, argv)
 	    break;
 	}
     }
+    argc -= optind;
+    argv += optind;
 /*
  * Default the report file to the stderr location
  */
@@ -398,17 +388,15 @@ main(argc, argv)
     init();
     
     if (chat_file != NULL) {
-	arg = ARG(argc, argv);
-	if (arg != NULL)
+	if (argc)
 	    usage();
 	else
 	    do_file (chat_file);
     } else {
-	while ((arg = ARG(argc, argv)) != NULL) {
-	    chat_expect(arg);
-
-	    if ((arg = ARG(argc, argv)) != NULL)
-		chat_send(arg);
+	for (i = 0; i < argc; i++) {
+	    chat_expect(argv[i]);
+	    if (++i < argc)
+		chat_send(argv[i]);
 	}
     }
 
@@ -515,6 +503,7 @@ void msgf __V((const char *fmt, ...))
 #endif
 
     vfmtmsg(line, sizeof(line), fmt, args);
+    va_end(args);
     if (to_log)
 	syslog(LOG_INFO, "%s", line);
     if (to_stderr)
@@ -540,6 +529,7 @@ void fatal __V((int code, const char *fmt, ...))
 #endif
 
     vfmtmsg(line, sizeof(line), fmt, args);
+    va_end(args);
     if (to_log)
 	syslog(LOG_ERR, "%s", line);
     if (to_stderr)
@@ -621,7 +611,7 @@ void set_tty_parameters()
     have_tty_parameters  = 1;
 
     t.c_iflag     |= IGNBRK | ISTRIP | IGNPAR;
-    t.c_oflag      = 0;
+    t.c_oflag     |= OPOST | ONLCR;
     t.c_lflag      = 0;
     t.c_cc[VERASE] =
     t.c_cc[VKILL]  = 0;
@@ -1029,11 +1019,11 @@ int c;
     c &= 0x7F;
 
     if (c < 32)
-	sprintf(string, "%s^%c", meta, (int)c + '@');
+	snprintf(string, sizeof(string), "%s^%c", meta, (int)c + '@');
     else if (c == 127)
-	sprintf(string, "%s^?", meta);
+	snprintf(string, sizeof(string), "%s^?", meta);
     else
-	sprintf(string, "%s%c", meta, c);
+	snprintf(string, sizeof(string), "%s%c", meta, c);
 
     return (string);
 }
@@ -1310,7 +1300,7 @@ register char *s;
 
     if (verbose) {
 	if (quiet)
-	    msgf("send (??????)");
+	    msgf("send (?????\?)");	/* backslash to avoid trigraph ??) */
 	else
 	    msgf("send (%v)", s);
     }
@@ -1453,6 +1443,8 @@ register char *string;
 
 		    strftime (report_buffer, 20, "%b %d %H:%M:%S ", tm_now);
 		    strcat (report_buffer, report_string[n]);
+		    strlcat(report_buffer, report_string[n],
+		      sizeof(report_buffer));
 
 		    report_string[n] = (char *) NULL;
 		    report_gathering = 1;
@@ -1498,7 +1490,8 @@ register char *string;
 		alarm(0);
 		alarmed = 0;
 		exit_code = n + 4;
-		strcpy(fail_reason = fail_buffer, abort_string[n]);
+		strlcpy(fail_buffer, abort_string[n], sizeof(fail_buffer));
+		fail_reason = fail_buffer;
 		return (0);
 	    }
 	}

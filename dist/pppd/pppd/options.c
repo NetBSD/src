@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.1.1.1 2005/02/20 10:28:50 cube Exp $	*/
+/*	$NetBSD: options.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.95 2004/11/09 22:33:35 paulus Exp"
 #else
-__RCSID("$NetBSD: options.c,v 1.1.1.1 2005/02/20 10:28:50 cube Exp $");
+__RCSID("$NetBSD: options.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -137,8 +137,13 @@ extern option_t auth_options[];
 extern struct stat devstat;
 
 #ifdef PPP_FILTER
-struct	bpf_program pass_filter;/* Filter program for packets to pass */
-struct	bpf_program active_filter; /* Filter program for link-active pkts */
+/* Filter program for packets to pass */
+struct	bpf_program pass_filter_in;
+struct	bpf_program pass_filter_out;
+
+/* Filter program for link-active packets */
+struct	bpf_program active_filter_in;
+struct	bpf_program active_filter_out;
 #endif
 
 char *current_option;		/* the name of the option being parsed */
@@ -165,18 +170,25 @@ static int loadplugin __P((char **));
 #endif
 
 #ifdef PPP_FILTER
-static int setpassfilter __P((char **));
-static int setactivefilter __P((char **));
+static int setpassfilter_in __P((char **));
+static int setpassfilter_out __P((char **));
+static int setactivefilter_in __P((char **));
+static int setactivefilter_out __P((char **));
 #endif
 
 #ifdef MAXOCTETS
 static int setmodir __P((char **));
 #endif
 
+static int match_option __P((const char *, option_t *, int));
 static option_t *find_option __P((const char *name));
 static int process_option __P((option_t *, char *, char **));
 static int n_arguments __P((option_t *));
 static int number_option __P((char *, u_int32_t *, int));
+static void print_option __P((option_t *, option_t *, void (*)(void *, char *,
+    ...), void *));
+static void print_option_list __P((option_t *, void (*)(void *, char *, ...),
+    void *));
 
 /*
  * Structure to store extra lists of options.
@@ -307,11 +319,15 @@ option_t general_options[] = {
 #endif
 
 #ifdef PPP_FILTER
-    { "pass-filter", 1, setpassfilter,
-      "set filter for packets to pass", OPT_PRIO },
+    { "pass-filter-in", 1, setpassfilter_in,
+      "set filter for packets to pass inwards", OPT_PRIO },
+    { "pass-filter-out", 1, setpassfilter_out,
+      "set filter for packets to pass outwards", OPT_PRIO },
 
-    { "active-filter", 1, setactivefilter,
-      "set filter for active pkts", OPT_PRIO },
+    { "active-filter-in", 1, setactivefilter_in,
+      "set filter for active pkts inwards", OPT_PRIO },
+    { "active-filter-out", 1, setactivefilter_out,
+      "set filter for active pkts outwards", OPT_PRIO },
 #endif
 
 #ifdef MAXOCTETS
@@ -334,7 +350,7 @@ option_t general_options[] = {
 #define IMPLEMENTATION ""
 #endif
 
-static char *usage_string = "\
+static const char *usage_string = "\
 pppd version %s\n\
 Usage: %s [ options ], where options are:\n\
 	<device>	Communicate over the named device\n\
@@ -345,6 +361,7 @@ Usage: %s [ options ], where options are:\n\
 	auth		Require authentication from peer\n\
         connect <p>     Invoke shell command <p> to set up the serial line\n\
 	crtscts		Use hardware RTS/CTS flow control\n\
+	cdtrcts		Use hardware DTR/CTS flow control (if supported)\n\
 	defaultroute	Add default route through interface\n\
 	file <f>	Take options from file <f>\n\
 	modem		Use modem control lines\n\
@@ -575,17 +592,17 @@ err:
  */
 static int
 match_option(name, opt, dowild)
-    char *name;
+    const char *name;
     option_t *opt;
     int dowild;
 {
-	int (*match) __P((char *, char **, int));
+	int (*match) __P((const char *, char **, int));
 
 	if (dowild != (opt->type == o_wild))
 		return 0;
 	if (!dowild)
 		return strcmp(name, opt->name) == 0;
-	match = (int (*) __P((char *, char **, int))) opt->addr;
+	match = (int (*) __P((const char *, char **, int))) opt->addr;
 	return (*match)(name, NULL, 0);
 }
 
@@ -777,7 +794,7 @@ process_option(opt, cmd, argv)
 
 	    ovp = malloc(sizeof(*ovp) + strlen(*argv));
 	    if (ovp != 0) {
-		strcpy(ovp->value, *argv);
+		strlcpy(ovp->value, *argv, sizeof(ovp->value));
 		ovp->source = option_source;
 		ovp->next = NULL;
 		pp = (struct option_value **) &opt->addr2;
@@ -920,7 +937,7 @@ print_option(opt, mainopt, printer, arg)
 
 	case o_string:
 		if (opt->flags & OPT_HIDE) {
-			p = "??????";
+			p = "\?\?\?\?\?\?";
 		} else {
 			p = (char *) opt->addr;
 			if ((opt->flags & OPT_STATIC) == 0)
@@ -1182,7 +1199,7 @@ getword(f, word, newlinep, filename)
 	/*
 	 * A non-whitespace character is the start of a word.
 	 */
-	if (!isspace(c))
+	if (!isspace((unsigned char)c))
 	    break;
     }
 
@@ -1236,12 +1253,12 @@ getword(f, word, newlinep, filename)
 		break;
 
 	    default:
-		if (isoctal(c)) {
+		if (isoctal((unsigned char)c)) {
 		    /*
 		     * \ddd octal sequence
 		     */
 		    value = 0;
-		    for (n = 0; n < 3 && isoctal(c); ++n) {
+		    for (n = 0; n < 3 && isoctal((unsigned char)c); ++n) {
 			value = (value << 3) + (c & 07);
 			c = getc(f);
 		    }
@@ -1255,7 +1272,7 @@ getword(f, word, newlinep, filename)
 		     */
 		    value = 0;
 		    c = getc(f);
-		    for (n = 0; n < 2 && isxdigit(c); ++n) {
+		    for (n = 0; n < 2 && isxdigit((unsigned char)c); ++n) {
 			digit = toupper(c) - '0';
 			if (digit > 10)
 			    digit += '0' + 10 - 'A';
@@ -1293,7 +1310,7 @@ getword(f, word, newlinep, filename)
 	    if (c == quoted)
 		break;
 	} else {
-	    if (isspace(c) || c == '#') {
+	    if (isspace((unsigned char)c) || c == '#') {
 		ungetc (c, f);
 		break;
 	    }
@@ -1451,18 +1468,18 @@ callfile(argv)
 
 #ifdef PPP_FILTER
 /*
- * setpassfilter - Set the pass filter for packets
+ * setpassfilter_in - Set the pass filter for incoming packets
  */
 static int
-setpassfilter(argv)
+setpassfilter_in(argv)
     char **argv;
 {
     pcap_t *pc;
     int ret = 0;
 
     pc = pcap_open_dead(DLT_PPP_WITH_DIRECTION, 65535);
-    if (pcap_compile(pc, &pass_filter, *argv, 1, netmask) == -1) {
-	option_error("error in pass-filter expression: %s\n",
+    if (pcap_compile(pc, &pass_filter_in, *argv, 1, netmask) == -1) {
+	option_error("error in pass-filter-in expression: %s\n",
 		     pcap_geterr(pc));
 	ret = 1;
     }
@@ -1472,18 +1489,60 @@ setpassfilter(argv)
 }
 
 /*
- * setactivefilter - Set the active filter for packets
+ * setpassfilter_out - Set the pass filter for outgoing packets
  */
 static int
-setactivefilter(argv)
+setpassfilter_out(argv)
     char **argv;
 {
     pcap_t *pc;
     int ret = 0;
 
     pc = pcap_open_dead(DLT_PPP_WITH_DIRECTION, 65535);
-    if (pcap_compile(pc, &active_filter, *argv, 1, netmask) == -1) {
-	option_error("error in active-filter expression: %s\n",
+    if (pcap_compile(pc, &pass_filter_out, *argv, 1, netmask) == -1) {
+	option_error("error in pass-filter-out expression: %s\n",
+		     pcap_geterr(pc));
+	ret = 1;
+    }
+    pcap_close(pc);
+
+    return ret;
+}
+
+/*
+ * setactivefilter_in - Set the active filter for incoming packets
+ */
+static int
+setactivefilter_in(argv)
+    char **argv;
+{
+    pcap_t *pc;
+    int ret = 0;
+
+    pc = pcap_open_dead(DLT_PPP_WITH_DIRECTION, 65535);
+    if (pcap_compile(pc, &active_filter_in, *argv, 1, netmask) == -1) {
+	option_error("error in active-filter-in expression: %s\n",
+		     pcap_geterr(pc));
+	ret = 1;
+    }
+    pcap_close(pc);
+
+    return ret;
+}
+
+/*
+ * setactivefilter_out - Set the active filter for outgoing packets
+ */
+static int
+setactivefilter_out(argv)
+    char **argv;
+{
+    pcap_t *pc;
+    int ret = 0;
+
+    pc = pcap_open_dead(DLT_PPP_WITH_DIRECTION, 65535);
+    if (pcap_compile(pc, &active_filter_out, *argv, 1, netmask) == -1) {
+	option_error("error in active-filter-out expression: %s\n",
 		     pcap_geterr(pc));
 	ret = 1;
     }
@@ -1500,14 +1559,13 @@ static int
 setdomain(argv)
     char **argv;
 {
-    gethostname(hostname, MAXNAMELEN);
+    gethostname(hostname, sizeof(hostname));
     if (**argv != 0) {
 	if (**argv != '.')
-	    strncat(hostname, ".", MAXNAMELEN - strlen(hostname));
+	    strlcat(hostname, ".", sizeof(hostname));
 	domain = hostname + strlen(hostname);
-	strncat(hostname, *argv, MAXNAMELEN - strlen(hostname));
+	strlcat(hostname, *argv, sizeof(hostname));
     }
-    hostname[MAXNAMELEN-1] = 0;
     return (1);
 }
 

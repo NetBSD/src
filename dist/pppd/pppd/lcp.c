@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.1.1.1 2005/02/20 10:28:48 cube Exp $	*/
+/*	$NetBSD: lcp.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: lcp.c,v 1.74 2004/11/13 02:28:15 paulus Exp"
 #else
-__RCSID("$NetBSD: lcp.c,v 1.1.1.1 2005/02/20 10:28:48 cube Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -203,6 +203,18 @@ lcp_options lcp_wantoptions[NUM_PPP];	/* Options that we want to request */
 lcp_options lcp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
 lcp_options lcp_allowoptions[NUM_PPP];	/* Options we allow peer to request */
 lcp_options lcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
+
+/* Hook for LCP up */
+void (*lcp_up_hook) __P((void)) = NULL;
+
+/* Hook for LCP down */
+void (*lcp_down_hook) __P((void)) = NULL;
+
+/* Hook for sending an LCP echo request, argument is pending count */
+void (*lcp_echo_hook) __P((int)) = NULL;
+
+/* Hook for receiving an LCP echo reply, argument is whether it's ours */
+void (*lcp_echoreply_hook) __P((int)) = NULL;
 
 static int lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
 static int lcp_echo_number   = 0;	/* ID number of next echo frame */
@@ -1918,6 +1930,8 @@ lcp_up(f)
     if (ho->neg_mru)
 	peer_mru[f->unit] = ho->mru;
 
+    if (lcp_up_hook) (*lcp_up_hook)();
+
     lcp_echo_lowerup(f->unit);  /* Enable echo messages */
 
     link_established(f->unit);
@@ -1938,6 +1952,8 @@ lcp_down(f)
     lcp_echo_lowerdown(f->unit);
 
     link_down(f->unit);
+
+    if (lcp_down_hook) (*lcp_down_hook)();
 
     ppp_send_config(f->unit, PPP_MRU, 0xffffffff, 0, 0);
     ppp_recv_config(f->unit, PPP_MRU,
@@ -2271,8 +2287,10 @@ lcp_received_echo_reply (f, id, inp, len)
     if (lcp_gotoptions[f->unit].neg_magicnumber
 	&& magic == lcp_gotoptions[f->unit].magicnumber) {
 	warn("appear to have received our own echo-reply!");
+	if (lcp_echoreply_hook) (*lcp_echoreply_hook)(1);
 	return;
     }
+    if (lcp_echoreply_hook) (*lcp_echoreply_hook)(0);
 
     /* Reset the number of outstanding echo frames */
     lcp_echos_pending = 0;
@@ -2289,6 +2307,9 @@ LcpSendEchoRequest (f)
     u_int32_t lcp_magic;
     u_char pkt[4], *pktp;
 
+    if (f->state != OPENED)
+	return;
+
     /*
      * Detect the failure of the peer at this point.
      */
@@ -2302,13 +2323,12 @@ LcpSendEchoRequest (f)
     /*
      * Make and send the echo request frame.
      */
-    if (f->state == OPENED) {
-        lcp_magic = lcp_gotoptions[f->unit].magicnumber;
-	pktp = pkt;
-	PUTLONG(lcp_magic, pktp);
-        fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
-	++lcp_echos_pending;
-    }
+    if (lcp_echo_hook) (*lcp_echo_hook)(lcp_echos_pending);
+    lcp_magic = lcp_gotoptions[f->unit].magicnumber;
+    pktp = pkt;
+    PUTLONG(lcp_magic, pktp);
+    fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+    ++lcp_echos_pending;
 }
 
 /*

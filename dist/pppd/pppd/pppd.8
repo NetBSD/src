@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppd.8,v 1.1.1.1 2005/02/20 10:28:52 cube Exp $
+.\"	$NetBSD: pppd.8,v 1.2 2005/02/20 10:47:17 cube Exp $
 .\"
 .\" manual page [] for pppd 2.4
 .\" Id: pppd.8,v 1.83 2004/11/13 12:22:49 paulus Exp
@@ -169,7 +169,7 @@ Note that for the IPv6 protocol, the MRU must be at least 1280.
 Set the MTU [Maximum Transmit Unit] value to \fIn\fR.  Unless the
 peer requests a smaller value via MRU negotiation, pppd will
 request that the kernel networking code send data packets of no more
-than \fIn\fR bytes through the PPP network interface.  Note that for 
+than \fIn\fR bytes through the PPP network interface.  Note that for
 the IPv6 protocol, the MTU must be at least 1280.
 .TP
 .B passive
@@ -179,11 +179,11 @@ peer, pppd will then just wait passively for a valid LCP packet from
 the peer, instead of exiting, as it would without this option.
 .SH OPTIONS
 .TP
-.I <local_IP_address>\fB:\fI<remote_IP_address>
+.I \*[Lt]local_IP_address\*[Gt]\fB:\fI\*[Lt]remote_IP_address\*[Gt]
 Set the local and/or remote interface IP addresses.  Either one may be
 omitted.  The IP addresses can be specified with a host name or in
 decimal dot notation (e.g. 150.234.56.78).  The default local
-address is the (first) IP address of the system (unless the
+address is the (first) IP address of the hostname of the system (unless the
 \fInoipdefault\fR
 option is given).  The remote address will be obtained from the peer
 if not specified in any option.  Thus, in simple cases, this option is
@@ -193,7 +193,7 @@ will not accept a different value from the peer in the IPCP
 negotiation, unless the \fIipcp\-accept\-local\fR and/or
 \fIipcp\-accept\-remote\fR options are given, respectively.
 .TP
-.B ipv6 \fI<local_interface_identifier>\fR,\fI<remote_interface_identifier>
+.B ipv6 \fI\*[Lt]local_interface_identifier\*[Gt]\fR,\fI\*[Lt]remote_interface_identifier\*[Gt]
 Set the local and/or remote 64-bit interface identifier. Either one may be
 omitted. The identifier must be specified in standard ascii notation of
 IPv6 addresses (e.g. ::dead:beef). If the
@@ -201,27 +201,26 @@ IPv6 addresses (e.g. ::dead:beef). If the
 option is given, the local identifier is the local IPv4 address (see above).
 On systems which supports a unique persistent id, such as EUI\-48 derived
 from the Ethernet MAC address, \fIipv6cp\-use\-persistent\fR option can be
-used to replace the \fIipv6 <local>,<remote>\fR option. Otherwise the 
+used to replace the \fIipv6 \*[Lt]local\*[Gt],\*[Lt]remote\*[Gt]\fR option. Otherwise the
 identifier is randomized.
 .TP
-.B active\-filter \fIfilter\-expression
-Specifies a packet filter to be applied to data packets to determine
-which packets are to be regarded as link activity, and therefore reset
-the idle timer, or cause the link to be brought up in demand-dialling
-mode.  This option is useful in conjunction with the
+.B active\-filter\-in \fIfilter\-expression
+.TP
+.B active\-filter\-out \fIfilter\-expression
+Specifies an incoming and outgoing packet filter to be applied to data
+packets to determine which packets are to be regarded as link activity,
+and therefore reset the idle timer, or cause the link to be brought up
+in demand-dialing mode.  This option is useful in conjunction with the
 \fBidle\fR option if there are packets being sent or received
 regularly over the link (for example, routing information packets)
 which would otherwise prevent the link from ever appearing to be idle.
-The \fIfilter\-expression\fR syntax is as described for tcpdump(1),
+The \fIfilter\-expression\fR syntax is as described for tcpdump(8),
 except that qualifiers which are inappropriate for a PPP link, such as
 \fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
 expression should be enclosed in single-quotes to prevent whitespace
 in the expression from being interpreted by the shell. This option
-is currently only available under Linux, and requires that the kernel
-was configured to include PPP filtering support (CONFIG_PPP_FILTER).
-Note that it
-is possible to apply different constraints to incoming and outgoing
-packets using the \fBinbound\fR and \fBoutbound\fR qualifiers.
+is currently only available under NetBSD, and then only
+if both the kernel and pppd were compiled with PPP_FILTER defined.
 .TP
 .B allow\-ip \fIaddress(es)
 Allow peers to use the given IP address or subnet without
@@ -244,6 +243,12 @@ consume more kernel memory for compression dictionaries.
 Alternatively, a value of 0 for \fInr\fR or \fInt\fR disables
 compression in the corresponding direction.  Use \fInobsdcomp\fR or
 \fIbsdcomp 0\fR to disable BSD-Compress compression entirely.
+.TP
+.B callback \fIphone_number
+Request a call-back to the \fIphone-number\fR. This only works if the peer
+is speaking the Call Back Configuration Protocol. Don't put this into the
+main options file if you sometimes connect to servers that don't support
+it.
 .TP
 .B cdtrcts
 Use a non-standard hardware flow control (i.e. DTR/CTS) to control
@@ -326,9 +331,9 @@ When this is completed, pppd will commence passing data packets
 (i.e., IP packets) across the link.
 
 The \fIdemand\fR option implies the \fIpersist\fR option.  If this
-behaviour is not desired, use the \fInopersist\fR option after the
+behavior is not desired, use the \fInopersist\fR option after the
 \fIdemand\fR option.  The \fIidle\fR and \fIholdoff\fR
-options are also useful in conjuction with the \fIdemand\fR option.
+options are also useful in conjunction with the \fIdemand\fR option.
 .TP
 .B domain \fId
 Append the domain name \fId\fR to the local host name for authentication
@@ -352,9 +357,9 @@ With the \fBdump\fR option, pppd will print out all the option values
 which have been set.  This option is like the \fBdryrun\fR option
 except that pppd proceeds as normal rather than exiting.
 .TP
-.B endpoint \fI<epdisc>
+.B endpoint \fI\*[Lt]epdisc\*[Gt]
 Sets the endpoint discriminator sent by the local machine to the peer
-during multilink negotiation to \fI<epdisc>\fR.  The default is to use
+during multilink negotiation to \fI\*[Lt]epdisc\*[Gt]\fR.  The default is to use
 the MAC address of the first ethernet interface on the system, if any,
 otherwise the IPv4 address corresponding to the hostname, if any,
 provided it is not in the multicast or locally-assigned IP address
@@ -405,8 +410,8 @@ Specifies that pppd should disconnect if the link is idle for \fIn\fR
 seconds.  The link is idle when no data packets (i.e. IP packets) are
 being sent or received.  Note: it is not advisable to use this option
 with the \fIpersist\fR option without the \fIdemand\fR option.
-If the \fBactive\-filter\fR
-option is given, data packets which are rejected by the specified
+If the \fBactive\-filter\-in\fR and/or \fBactive\-filter\-out\fR
+options are given, data packets which are rejected by the specified
 activity filter also count as the link being idle.
 .TP
 .B ipcp\-accept\-local
@@ -437,6 +442,23 @@ seconds (default 3).
 Provides an extra parameter to the ip\-up and ip\-down scripts.  If this
 option is given, the \fIstring\fR supplied is given as the 6th
 parameter to those scripts.
+.TP
+.B +ipv6
+Enable IPv6CP negotiation and IPv6 communication.
+It needs to be explicitly specified if you want IPv6CP.
+.TP
+.B \-ipv6
+Disable IPv6CP negotiation and IPv6 communication.
+.TP
+.B ipv6cp\-accept\-local
+With this option, pppd will accept the peer's idea of our local IPv6
+address, even if the local IPv6 address was specified in an option.
+.TP
+.B ipv6cp\-use\-ipaddr
+Use the local IPv4 address as the local interface address.
+.TP
+.B ipv6cp\-use\-persistent
+Use uniquely-available persistent value for link local address (Solaris 2 only).
 .TP
 .B ipv6cp\-max\-configure \fIn
 Set the maximum number of IPv6CP configure-request transmissions to
@@ -475,7 +497,7 @@ numbers on the ipx\-network must be unique. There is no valid
 default. If this option is not specified then the node numbers are
 obtained from the peer.
 .TP
-.B ipx\-router\-name \fI<string>
+.B ipx\-router\-name \fI\*[Lt]string\*[Gt]
 Set the name of the router. This is a string and is sent to the peer
 as information data.
 .TP
@@ -514,7 +536,7 @@ Set the maximum number of IPXCP NAK frames which the local system will
 send before it rejects the options. The default value is 3.
 .TP
 .B ipxcp\-max\-terminate \fIn
-Set the maximum nuber of IPXCP terminate request frames before the
+Set the maximum number of IPXCP terminate request frames before the
 local system considers that the peer is not listening to them. The
 default value is 3.
 .TP
@@ -528,7 +550,7 @@ bits: 1 to
 enable general debug messages, 2 to request that the contents of
 received packets be printed, and 4 to request that the contents of
 transmitted packets be printed.  On most systems, messages printed by
-the kernel are logged by syslog(1) to a file as directed in the
+the kernel are logged by syslogd(8) to a file as directed in the
 /etc/syslog.conf configuration file.
 .TP
 .B ktune
@@ -617,7 +639,7 @@ option, pppd will wait for the CD (Carrier Detect) signal from the
 modem to be asserted when opening the serial device (unless a connect
 script is specified), and it will drop the DTR (Data Terminal Ready)
 signal briefly when the connection is terminated and before executing
-the connect script.  On Ultrix, this option implies hardware flow
+the connect script.  On ULTRIX, this option implies hardware flow
 control, as for the \fIcrtscts\fR option.
 .TP
 .B mp
@@ -626,7 +648,7 @@ option.  This option is currently only available under Linux.
 .TP
 .B mppe\-stateful
 Allow MPPE to use stateful mode.  Stateless mode is still attempted first.
-The default is to disallow stateful mode.  
+The default is to disallow stateful mode.
 .TP
 .B mpshortseq
 Enables the use of short (12-bit) sequence numbers in multilink
@@ -641,7 +663,7 @@ analogous to the MRU for the individual links.  This option is
 currently only available under Linux, and only has any effect if
 multilink is enabled (see the multilink option).
 .TP
-.B ms\-dns \fI<addr>
+.B ms\-dns \fI\*[Lt]addr\*[Gt]
 If pppd is acting as a server for Microsoft Windows clients, this
 option allows pppd to supply one or two DNS (Domain Name Server)
 addresses to the clients.  The first instance of this option specifies
@@ -649,7 +671,7 @@ the primary DNS address; the second instance (if given) specifies the
 secondary DNS address.  (This option was present in some older
 versions of pppd under the name \fBdns\-addr\fR.)
 .TP
-.B ms\-wins \fI<addr>
+.B ms\-wins \fI\*[Lt]addr\*[Gt]
 If pppd is acting as a server for Microsoft Windows or "Samba"
 clients, this option allows pppd to supply one or two WINS (Windows
 Internet Name Services) server addresses to the clients.  The first
@@ -726,12 +748,11 @@ only be required if the peer is buggy and gets confused by requests
 from pppd for IPCP negotiation.
 .TP
 .B noipv6
-Disable IPv6CP negotiation and IPv6 communication. This option should
-only be required if the peer is buggy and gets confused by requests
-from pppd for IPv6CP negotiation.
+An alias for
+.B -ipv6.
 .TP
 .B noipdefault
-Disables the default behaviour when no local IP address is specified,
+Disables the default behavior when no local IP address is specified,
 which is to determine (if possible) the local IP address from the
 hostname.  With this option, the peer will have to supply the local IP
 address during IPCP negotiation (unless it specified explicitly on the
@@ -839,22 +860,22 @@ seconds (default 3).
 Set the maximum time that pppd will wait for the peer to authenticate
 itself with PAP to \fIn\fR seconds (0 means no limit).
 .TP
-.B pass\-filter \fIfilter\-expression
-Specifies a packet filter to applied to data packets being sent or
-received to determine which packets should be allowed to pass.
-Packets which are rejected by the filter are silently discarded.  This
-option can be used to prevent specific network daemons (such as
-routed) using up link bandwidth, or to provide a very basic firewall
+.B pass\-filter\-in \fIfilter\-expression
+.TP
+.B pass\-filter\-out \fIfilter\-expression
+Specifies an incoming and outgoing packet filter to applied to data
+packets being sent or received to determine which packets should be
+allowed to pass.  Packets which are rejected by the filter are silently
+discarded.  This option can be used to prevent specific network daemons
+(such as routed) using up link bandwidth, or to provide a basic firewall
 capability.
-The \fIfilter\-expression\fR syntax is as described for tcpdump(1),
+The \fIfilter\-expression\fR syntax is as described for tcpdump(8),
 except that qualifiers which are inappropriate for a PPP link, such as
 \fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
 expression should be enclosed in single-quotes to prevent whitespace
-in the expression from being interpreted by the shell.  Note that it
-is possible to apply different constraints to incoming and outgoing
-packets using the \fBinbound\fR and \fBoutbound\fR qualifiers. This
-option is currently only available under Linux, and requires that the
-kernel was configured to include PPP filtering support (CONFIG_PPP_FILTER).
+in the expression from being interpreted by the shell.  This option is
+currently only available under NetBSD, and then only if both the kernel
+and pppd were compiled with PPP_FILTER defined.
 .TP
 .B password \fIpassword\-string
 Specifies the password to use for authenticating to the peer.  Use
@@ -899,7 +920,7 @@ pseudo-tty master/slave pair and use the slave as its terminal
 device.  The \fIscript\fR will be run in a child process with the
 pseudo-tty master as its standard input and output.  An explicit
 device name may not be given if this option is used.  (Note: if the
-\fIrecord\fR option is used in conjuction with the \fIpty\fR option,
+\fIrecord\fR option is used in conjunction with the \fIpty\fR option,
 the child process will have pipes on its standard input and output.)
 .TP
 .B receive\-all
@@ -1291,7 +1312,7 @@ been able to negotiate the same addresses that it used to configure
 the interface (for example when the peer is an ISP that uses dynamic
 IP address assignment), pppd has to change the interface IP addresses
 to the negotiated addresses.  This may disrupt existing connections,
-and the use of demand dialling with peers that do dynamic IP address
+and the use of demand dialing with peers that do dynamic IP address
 assignment is not recommended.
 .SH MULTILINK
 Multilink PPP provides the capability to combine two or more PPP links
@@ -1358,7 +1379,7 @@ connect '/usr/sbin/chat \-v \-f /etc/ppp/chat\-isp'
 noauth
 .LP
 In this example, we are using chat to dial the ISP's modem and go
-through any logon sequence required.  The /etc/ppp/chat\-isp file
+through any log on sequence required.  The /etc/ppp/chat\-isp file
 contains the script used by chat; it could for example contain
 something like this:
 .IP
@@ -1376,7 +1397,7 @@ ABORT "Username/Password Incorrect"
 .br
 "" "at"
 .br
-OK "at&d0&c1"
+OK "at\*[Am]d0\*[Am]c1"
 .br
 OK "atdt2468135"
 .br
@@ -1619,7 +1640,7 @@ invoked in the same manner and with the same parameters as the ip\-up
 script.
 .TP
 .B /etc/ppp/ipv6\-up
-Like /etc/ppp/ip\-up, except that it is executed when the link is available 
+Like /etc/ppp/ip\-up, except that it is executed when the link is available
 for sending and receiving IPv6 packets. It is executed with the parameters
 .IP
 \fIinterface\-name tty\-device speed local\-link\-local\-address
@@ -1627,7 +1648,7 @@ remote\-link\-local\-address ipparam\fR
 .TP
 .B /etc/ppp/ipv6\-down
 Similar to /etc/ppp/ip\-down, but it is executed when IPv6 packets can no
-longer be transmitted on the link. It is executed with the same parameters 
+longer be transmitted on the link. It is executed with the same parameters
 as the ipv6\-up script.
 .TP
 .B /etc/ppp/ipx\-up
@@ -1637,7 +1658,7 @@ executed with the parameters
 .IP
 \fIinterface\-name tty\-device speed network\-number local\-IPX\-node\-address
 remote\-IPX\-node\-address local\-IPX\-routing\-protocol remote\-IPX\-routing\-protocol
-local\-IPX\-router\-name remote\-IPX\-router\-name ipparam pppd\-pid\fR 
+local\-IPX\-router\-name remote\-IPX\-router\-name ipparam pppd\-pid\fR
 .IP
 The local\-IPX\-routing\-protocol and remote\-IPX\-routing\-protocol field
 may be one of the following:
@@ -1788,7 +1809,6 @@ This signal causes pppd to renegotiate compression.  This can be
 useful to re-enable compression after it has been disabled as a result
 of a fatal decompression error.  (Fatal decompression errors generally
 indicate a bug in one or other implementation.)
-
 .SH AUTHORS
 Paul Mackerras (paulus@samba.org), based on earlier work by
 Drew Perkins,
@@ -1797,7 +1817,6 @@ Karl Fox,
 Greg Christy,
 and
 Brad Parker.
-
 .SH COPYRIGHT
 Pppd is copyrighted and made available under conditions which provide
 that it may be copied and used in source or binary forms provided that
@@ -1865,13 +1884,13 @@ are met:
     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
 .br
    "This product includes software developed by Paul Mackerras
-    <paulus@samba.org>".
+    \*[Lt]paulus@samba.org\*[Gt]".
 .br
    "This product includes software developed by Pedro Roque Marques
-    <pedro_m@yahoo.com>".
+    \*[Lt]pedro_m@yahoo.com\*[Gt]".
 .br
    "This product includes software developed by Tommi Komulainen
-    <Tommi.Komulainen@iki.fi>".
+    \*[Lt]Tommi.Komulainen@iki.fi\*[Gt]".
 .LP
 CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
 THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY

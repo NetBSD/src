@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.1.1.1 2005/02/20 10:28:42 cube Exp $	*/
+/*	$NetBSD: eap.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * eap.c - Extensible Authentication Protocol for PPP (RFC 2284)
@@ -50,7 +50,7 @@
 #if 0
 #define RCSID	"Id: eap.c,v 1.4 2004/11/09 22:39:25 paulus Exp"
 #else
-__RCSID("$NetBSD: eap.c,v 1.1.1.1 2005/02/20 10:28:42 cube Exp $");
+__RCSID("$NetBSD: eap.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -68,10 +68,10 @@ __RCSID("$NetBSD: eap.c,v 1.1.1.1 2005/02/20 10:28:42 cube Exp $");
 #include <fcntl.h>
 #include <assert.h>
 #include <errno.h>
+#include <md5.h>
 
 #include "pppd.h"
 #include "pathnames.h"
-#include "md5.h"
 #include "eap.h"
 
 #ifdef USE_SRP
@@ -190,6 +190,21 @@ static const u_char wkmodulus[] = {
 
 /* Local forward declarations. */
 static void eap_server_timeout __P((void *arg));
+static const char *eap_state_name __P((enum eap_state_code));
+static void eap_client_timeout __P((void *arg));
+static void eap_send_failure __P((eap_state *));
+static void eap_send_success __P((eap_state *));
+static void eap_figure_next_state __P((eap_state *, int));
+static void eap_send_request __P((eap_state *));
+static void eap_rechallenge __P((void *));
+static void srp_lwrechallenge __P((void *));
+static void eap_send_response __P((eap_state *, u_char, u_char, u_char *, int));
+static void eap_chap_response __P((eap_state *, u_char, u_char *, char *, int));
+static void eap_send_nak __P((eap_state *,u_char,u_char)); 
+static void eap_request __P((eap_state *, u_char *, int, int));
+static void eap_response __P((eap_state *, u_char *, int, int));
+static void eap_success __P((eap_state *, u_char *, int, int));
+static void eap_failure __P((eap_state *, u_char *, int, int));
 
 /*
  * Convert EAP state code to printable string for debug.
@@ -1456,13 +1471,13 @@ int len;
 			eap_send_nak(esp, id, EAPT_SRP);
 			break;
 		}
-		MD5_Init(&mdContext);
+		MD5Init(&mdContext);
 		typenum = id;
-		MD5_Update(&mdContext, &typenum, 1);
-		MD5_Update(&mdContext, secret, secret_len);
+		MD5Update(&mdContext, &typenum, 1);
+		MD5Update(&mdContext, secret, secret_len);
 		BZERO(secret, sizeof (secret));
-		MD5_Update(&mdContext, inp, vallen);
-		MD5_Final(hash, &mdContext);
+		MD5Update(&mdContext, inp, vallen);
+		MD5Final(hash, &mdContext);
 		eap_chap_response(esp, id, hash, esp->es_client.ea_name,
 		    esp->es_client.ea_namelen);
 		break;
@@ -1882,12 +1897,12 @@ int len;
 			eap_send_failure(esp);
 			break;
 		}
-		MD5_Init(&mdContext);
-		MD5_Update(&mdContext, &esp->es_server.ea_id, 1);
-		MD5_Update(&mdContext, secret, secret_len);
+		MD5Init(&mdContext);
+		MD5Update(&mdContext, &esp->es_server.ea_id, 1);
+		MD5Update(&mdContext, secret, secret_len);
 		BZERO(secret, sizeof (secret));
-		MD5_Update(&mdContext, esp->es_challenge, esp->es_challen);
-		MD5_Final(hash, &mdContext);
+		MD5Update(&mdContext, esp->es_challenge, esp->es_challen);
+		MD5Final(hash, &mdContext);
 		if (BCMP(hash, inp, MD5_SIGNATURE_SIZE) != 0) {
 			eap_send_failure(esp);
 			break;
