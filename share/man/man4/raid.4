@@ -1,4 +1,4 @@
-.\"     $NetBSD: raid.4,v 1.12 2000/02/26 19:43:07 oster Exp $
+.\"     $NetBSD: raid.4,v 1.13 2000/02/26 19:55:01 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -192,8 +192,9 @@ may be constructed out of the physical disks, or of other RAID devices).
 It is important that drives be hard-coded at their respective
 addresses (i.e. not left free-floating, where a drive with SCSI ID of
 4 can end up as /dev/sd0c) for well-behaved functioning of the RAID
-device.  For normal SCSI drives, for example, the following can be
-used to fix the device addresses:
+device.  This is true for all types of drives, including IDE, HP-IB,
+etc.  For normal SCSI drives, for example, the following can be used
+to fix the device addresses:
 .Bd -unfilled -offset indent
 sd0     at scsibus0 target 0 lun ?      # SCSI disk drives
 sd1     at scsibus0 target 1 lun ?      # SCSI disk drives
