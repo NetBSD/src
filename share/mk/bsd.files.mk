@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.35 2004/03/29 22:26:21 jmc Exp $
+#	$NetBSD: bsd.files.mk,v 1.36 2004/05/13 13:05:53 lukem Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -19,6 +19,8 @@ FILESMODE?=	${NONBINMODE}
 filesinstall::	# ensure existence
 .PHONY:		filesinstall
 
+configfilesinstall:: .PHONY
+
 __fileinstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} \
@@ -28,6 +30,7 @@ __fileinstall: .USE
 	    ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
 .endif # !target(__fileinstall)
+
 
 .for F in ${FILES:O:u}
 _FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
@@ -47,6 +50,33 @@ ${_F}:		.MADE					# no build at install
 .endif
 
 filesinstall::	${_F}
+.PRECIOUS: 	${_F}					# keep if install fails
+.endfor
+
+
+# 
+# CONFIGFILES
+#
+configinstall:	configfilesinstall
+
+.for F in ${CONFIGFILES:O:u}
+_FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
+_FNAME:=	${FILESNAME_${F}:U${FILESNAME:U${F:T}}}	# name override
+_F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
+
+.if ${MKUPDATE} == "no"
+${_F}!		${F} __fileinstall	# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}!		.MADE					# no build at install
+.endif
+.else
+${_F}:		${F} __fileinstall	# install rule
+.if !defined(BUILD) && !make(all) && !make(${F})
+${_F}:		.MADE					# no build at install
+.endif
+.endif
+
+configfilesinstall::	${_F}
 .PRECIOUS: 	${_F}					# keep if install fails
 .endfor
 
