@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.2 2001/04/22 11:32:49 jdolecek Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.3 2001/04/22 13:00:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -796,7 +796,7 @@ edc_dump_status_block(sc, devno, cmd, intr_id)
 		);
 	printf("%s: IntrId: %s\n", ed->sc_dev.dv_xname,
 		edc_cmd_status[intr_id]);
-	printf("%s: # left blocks: %d, last processed RBA: %d\n",
+	printf("%s: # left blocks: %u, last processed RBA: %u\n",
 		ed->sc_dev.dv_xname,
 		ed->sc_status_block[SB_RESBLKCNT_IDX],
 		(ed->sc_status_block[4] << 16) | ed->sc_status_block[5]);
