@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1997/11/23 20:56:35 veego Exp $
+#	$NetBSD: Makefile,v 1.6 1997/11/23 23:14:34 veego Exp $
 
-SUBDIR=		ipf ipfstat ipmon ipnat ipftest ipsend iptest rules
+SUBDIR=	ipf ipfstat ipftest ipmon ipnat ipresend ipsend iptest rules
 
 .include <bsd.subdir.mk>
