@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.1 2001/09/28 02:30:13 thorpej Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.2 2001/11/13 13:01:57 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * ACPI Button driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.2 2001/11/13 13:01:57 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

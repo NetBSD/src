@@ -115,6 +115,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nsxfobj.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
 
 #define __NSXFOBJ_C__
 

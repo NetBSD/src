@@ -114,6 +114,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rsio.c,v 1.2 2001/11/13 13:02:02 lukem Exp $");
+
 #define __RSIO_C__
 
 #include "acpi.h"

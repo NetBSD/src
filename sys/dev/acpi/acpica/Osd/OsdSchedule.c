@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.1 2001/09/28 01:06:59 thorpej Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.2 2001/11/13 13:01:58 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  *
  * 6.3: Scheduling services
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.2 2001/11/13 13:01:58 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

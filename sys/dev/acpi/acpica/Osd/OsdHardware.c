@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.1 2001/09/28 01:06:58 thorpej Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.2 2001/11/13 13:01:58 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,6 +42,9 @@
  * 6.8: Address Space Access: Memory and Memory Mapped I/O
  * 6.9: Address Space Access: PCI Configuration Space
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.2 2001/11/13 13:01:58 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

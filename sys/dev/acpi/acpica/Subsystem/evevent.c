@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evevent.c,v 1.2 2001/11/13 13:01:59 lukem Exp $");
+
 #include "acpi.h"
 #include "achware.h"
 #include "acevents.h"

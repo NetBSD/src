@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dbdisasm.c,v 1.3 2001/11/13 13:01:58 lukem Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exfield.c,v 1.2 2001/11/13 13:02:00 lukem Exp $");
 
 #define __EXFIELD_C__
 

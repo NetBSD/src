@@ -115,6 +115,9 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exutils.c,v 1.2 2001/11/13 13:02:00 lukem Exp $");
+
 #define __EXUTILS_C__
 
 /*

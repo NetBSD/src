@@ -114,6 +114,8 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evxfevnt.c,v 1.2 2001/11/13 13:01:59 lukem Exp $");
 
 #define __EVXFEVNT_C__
 
