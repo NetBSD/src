@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_dup.c,v 1.1 2003/09/09 22:01:56 itojun Exp $	*/
+/*	$NetBSD: pw_dup.c,v 1.2 2003/09/13 22:28:12 itojun Exp $	*/
 /*	$OpenBSD: pw_dup.c,v 1.5 2003/06/17 21:56:23 millert Exp $	*/
 
 /*
@@ -26,9 +26,11 @@
 #if 0
 static const char rcsid[] = "$OpenBSD: pw_dup.c,v 1.5 2003/06/17 21:56:23 millert Exp $";
 #else
-__RCSID("$NetBSD: pw_dup.c,v 1.1 2003/09/09 22:01:56 itojun Exp $");
+__RCSID("$NetBSD: pw_dup.c,v 1.2 2003/09/13 22:28:12 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <sys/types.h>
 
@@ -36,6 +38,10 @@ __RCSID("$NetBSD: pw_dup.c,v 1.1 2003/09/09 22:01:56 itojun Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(pw_dup,_pw_dup)
+#endif
 
 struct passwd *
 pw_dup(const struct passwd *pw)
