@@ -1,4 +1,4 @@
-/* $Id: pthread_int.h,v 1.1.2.1 2001/03/05 23:51:56 nathanw Exp $ */
+/* $Id: pthread_int.h,v 1.1.2.2 2001/07/13 02:09:31 nathanw Exp $ */
 /* Copyright */
 
 #ifndef _LIB_PTHREAD_INT_H
@@ -6,15 +6,11 @@
 
 #include <sa.h>
 #include <signal.h>
-#include <sys/queue.h>
-#include <machine/lock.h>
 
 #define PTHREAD__DEBUG
 
-typedef __cpu_simple_lock_t	pt_spin_t;
+#include "pthread_types.h"
 
-LIST_HEAD(pt_list_t, pthread_st);
-SIMPLEQ_HEAD(pt_queue_t, pthread_st);
 
 struct	pthread_st {
 	unsigned int	pt_magic;
@@ -25,11 +21,11 @@ struct	pthread_st {
 	int	pt_spinlocks;	/* Number of spinlocks held. */
 
 	/* Entry on the run queue */
-	SIMPLEQ_ENTRY(pthread_st)	pt_runq;
+	PTQ_ENTRY(pthread_st)	pt_runq;
 	/* Entry on the list of all threads */
-	LIST_ENTRY(pthread_st)	pt_allq;
+	PTQ_ENTRY(pthread_st)	pt_allq;
 	/* Entry on the sleep queue (xxx should be same as run queue?) */
-	SIMPLEQ_ENTRY(pthread_st)	pt_sleep;
+	PTQ_ENTRY(pthread_st)	pt_sleep;
 
 	stack_t		pt_stack;	/* Our stack */
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
@@ -77,12 +73,6 @@ struct	pthread_st {
 
 
 
-struct	pthread_attr_st {
-	unsigned int	pta_magic;
-
-	int	pta_flags;
-};
-
 /* Thread types */
 #define PT_THREAD_NORMAL	1
 #define PT_THREAD_UPCALL	2
@@ -101,7 +91,8 @@ struct	pthread_attr_st {
 #define PT_FLAG_IDLED		0x0002
 
 #define PT_MAGIC	0xBABCAAAA
-#define	PT_DEAD		0xDEADBEEF
+#define PT_DEAD		0xDEADBEEF
+
 #define PT_ATTR_MAGIC	0x5555FACE
 #define PT_ATTR_DEAD	0xFACEDEAD
 
@@ -153,6 +144,7 @@ void	pthread__switch(pthread_t self, pthread_t next, int locks);
 void	pthread__locked_switch(pthread_t self, pthread_t next, 
     pt_spin_t *lock);
 
+void	pthread_lockinit(pt_spin_t *lock);
 void	pthread_spinlock(pthread_t thread, pt_spin_t *lock);
 int	pthread_spintrylock(pthread_t thread, pt_spin_t *lock);
 void	pthread_spinunlock(pthread_t thread, pt_spin_t *lock);
