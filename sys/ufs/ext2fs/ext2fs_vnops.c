@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.11 1998/06/24 20:58:47 sommerfe Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.12 1998/07/28 20:37:33 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -932,7 +932,7 @@ abortit:
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
 				sizeof (struct ext2fs_dirtemplate), (off_t)0,
 				UIO_SYSSPACE, IO_NODELOCKED, 
-				tcnp->cn_cred, (int *)0, (struct proc *)0);
+				tcnp->cn_cred, (size_t *)0, (struct proc *)0);
 			if (error == 0) {
 					namlen = fs2h16(dirbuf.dotdot_namlen);
 				if (namlen != 2 ||
@@ -947,7 +947,7 @@ abortit:
 					    sizeof (struct dirtemplate),
 					    (off_t)0, UIO_SYSSPACE,
 					    IO_NODELOCKED|IO_SYNC,
-					    tcnp->cn_cred, (int *)0,
+					    tcnp->cn_cred, (size_t *)0,
 					    (struct proc *)0);
 					cache_purge(fdvp);
 				}
@@ -1056,7 +1056,7 @@ ext2fs_mkdir(v)
 	dirtemplate.dotdot_name[0] = dirtemplate.dotdot_name[1] = '.';
 	error = vn_rdwr(UIO_WRITE, tvp, (caddr_t)&dirtemplate,
 	    sizeof (dirtemplate), (off_t)0, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (int *)0, (struct proc *)0);
+	    IO_NODELOCKED|IO_SYNC, cnp->cn_cred, (size_t *)0, (struct proc *)0);
 	if (error) {
 		dp->i_e2fs_nlink--;
 		dp->i_flag |= IN_CHANGE;
@@ -1205,8 +1205,8 @@ ext2fs_symlink(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, (int *)0,
-		    (struct proc *)0);
+		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred,
+		    (size_t *)0, (struct proc *)0);
 	vput(vp);
 	return (error);
 }
