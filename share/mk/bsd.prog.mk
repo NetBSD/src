@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.142 2001/11/19 02:46:50 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.143 2001/11/28 04:38:29 tv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -10,6 +10,7 @@ clean:		cleanprog
 
 ##### Default values
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
+CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include/g++}
 CFLAGS+=	${COPTS}
 
 # ELF platforms depend on crtbegin.o and crtend.o

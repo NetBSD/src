@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.33 2001/11/02 05:21:49 tv Exp $
+#	$NetBSD: bsd.dep.mk,v 1.34 2001/11/28 04:38:29 tv Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -45,7 +45,7 @@ MKDEP?=		mkdep
 	  echo ${MKDEP} -a ${MKDEPFLAGS} \
 	    ${CXXFLAGS:M-[ID]*:Q} ${CPPFLAGS:Q} $$files; \
 	  ${MKDEP} -a ${MKDEPFLAGS} \
-	    ${CXXFLAGS:M-[ID]*} ${CPPFLAGS} $$files; \
+	    ${CXXFLAGS:M-[ID]*} ${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include/g++} ${CPPFLAGS} $$files; \
 	fi
 .endif # defined(SRCS)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.193 2001/11/24 21:23:38 perry Exp $
+#	$NetBSD: bsd.lib.mk,v 1.194 2001/11/28 04:38:29 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -10,6 +10,7 @@ clean:		cleanlib
 
 ##### Build and install rules
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
+CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include/g++}
 
 .if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
