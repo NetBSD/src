@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.39 1997/03/26 22:42:18 gwr Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.40 1997/04/17 00:06:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -123,7 +123,13 @@ panic(fmt, va_alist)
 		panicstr = fmt;
 
 	va_start(ap, fmt);
-	printf("panic: %:\n", fmt, ap);
+#ifdef __powerpc__				/* XXX */
+	printf("panic: ");			/* XXX */
+	vprintf(fmt, ap);			/* XXX */
+	printf("\n");				/* XXX */
+#else						/* XXX */
+	printf("panic: %:\n", fmt, ap);		/* XXX */
+#endif						/* XXX */
 	va_end(ap);
 
 #if NIPKDB > 0
@@ -347,6 +353,23 @@ printf(fmt, va_alist)
 	consintr = savintr;		/* reenable interrupts */
 }
 
+#ifdef __powerpc__			/* XXX XXX XXX */
+void
+vprintf(fmt, ap)
+	const char *fmt;
+	va_list ap;
+{
+	register int savintr;
+
+	savintr = consintr;		/* disable interrupts */
+	consintr = 0;
+	kprintf(fmt, TOCONS | TOLOG, NULL, ap);
+	if (!panicstr)
+		logwakeup();
+	consintr = savintr;		/* reenable interrupts */
+}
+#endif /* __powerpc__ */		/* XXX XXX XXX */
+
 /*
  * Scaled down version of printf(3).
  *
@@ -448,10 +471,12 @@ reswitch:	switch (ch = *(const u_char *)fmt++) {
 		case 'c':
 			putchar(va_arg(ap, int), flags, tp);
 			break;
+#ifndef __powerpc__			/* XXX XXX XXX */
 		case ':':
 			p = va_arg(ap, char *);
 			kprintf(p, flags, tp, va_arg(ap, va_list));
 			break;
+#endif /* __powerpc__ */		/* XXX XXX XXX */
 		case 's':
 			if ((p = va_arg(ap, char *)) == NULL)
 				p = "(null)";
