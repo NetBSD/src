@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.1 1999/11/20 19:56:31 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.2 1999/11/28 04:29:38 takemura Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -89,6 +89,7 @@ void	tx_cons_init __P((void));
 void	tx_device_register __P((struct device *, void *));
 void    tx_fb_init __P((caddr_t*));
 int     tx_mem_init __P((caddr_t));
+void	tx_reboot __P((int howto, char *bootstr));
 int	tx_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, u_int32_t causeReg));
 
 void
@@ -107,6 +108,7 @@ tx_init()
 	platform.device_register = tx_device_register;
 	platform.fb_init = tx_fb_init;
 	platform.mem_init = tx_mem_init;
+	platform.reboot = tx_reboot;
 
 	model = (cpu_id.cpu.cp_majrev << 4)| cpu_id.cpu.cp_minrev;
 
@@ -214,6 +216,14 @@ tx_mem_init(kernend)
 	memset((void*)(KERNBASE + 0x400), 0, KERNTEXTOFF - KERNBASE - 0x800); 
 	
 	return npage; /* Return bank0's memory only */
+}
+
+void
+tx_reboot(howto, bootstr)
+	int howto;
+	char *bootstr;
+{
+	goto *(u_int32_t *)MIPS_RESET_EXC_VEC;
 }
 
 int

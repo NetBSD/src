@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 1999/11/21 07:04:33 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 1999/11/28 04:29:38 takemura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 1999/11/21 07:04:33 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 1999/11/28 04:29:38 takemura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -165,6 +165,7 @@ void 	unimpl_iointr __P ((void *, u_long));
 void	unimpl_clockintr __P ((void *));
 void    unimpl_fb_init __P((caddr_t*));
 int     unimpl_mem_init __P((caddr_t));
+void	unimpl_reboot __P((int howto, char *bootstr));
 
 struct platform platform = {
 	"iobus not set",
@@ -175,7 +176,8 @@ struct platform platform = {
 	unimpl_iointr,
 	unimpl_clockintr,
 	unimpl_fb_init,
-	unimpl_mem_init
+	unimpl_mem_init,
+	unimpl_reboot
 };
 
 #ifdef VR41X1
@@ -615,9 +617,8 @@ haltsys:
 
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
-#ifdef TX39XX
-	goto *(u_int32_t *)MIPS_RESET_EXC_VEC;
-#endif
+	(*platform.reboot)(howto, bootstr);
+
 	while(1)
 		;
 	/*NOTREACHED*/
@@ -757,6 +758,14 @@ unimpl_fb_init(kernend)
 	caddr_t *kernend;
 {
 	panic("sysconf.init didnt set frame buffer");
+}
+
+void
+unimpl_reboot(howto, bootstr)
+	int howto;
+	char *bootstr;
+{
+	panic("sysconf.init didnt set reboot");
 }
 
 unsigned
