@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.1 2002/03/17 22:14:22 tshiozak Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.2 2002/03/27 15:01:17 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.1 2002/03/17 22:14:22 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.2 2002/03/27 15:01:17 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -127,7 +127,7 @@ typedef struct {
 #define _ENCODING_INFO			_EUCEncodingInfo
 #define _CTYPE_INFO			_EUCCTypeInfo
 #define _ENCODING_STATE			_EUCState
-#define _ENCODING_MB_CUR_MAX(_cl_)	_TO_EI(_cl_)->mb_cur_max
+#define _ENCODING_MB_CUR_MAX(_ei_)	(_ei_)->mb_cur_max
 #define _ENCODING_IS_STATE_DEPENDENT	0
 
 
