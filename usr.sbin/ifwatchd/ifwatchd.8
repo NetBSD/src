@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.17 2003/06/24 09:31:17 martin Exp $
+.\" $NetBSD: ifwatchd.8,v 1.18 2003/07/04 12:44:12 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nd "watch for addresses added to or deleted from interfaces and call up/down-scripts for them"
 .Sh SYNOPSIS
 .Nm
-.Op Fl hivq
+.Op Fl hiqv
 .Op Fl A Ar arrival-script
 .Op Fl D Ar departure-script
 .Op Fl d Ar down-script
@@ -76,13 +76,13 @@ The following options are available:
 .Bl -tag -width indent
 .It Fl A Ar arrival-script
 Specify the command to invoke on arrival of new interfaces (like PCMCIA cards).
+.It Fl D Ar departure-script
+Specify the command to invoke when an interface departs (for example
+a PCMCIA card is removed.)
 .It Fl d Ar down-script
 Specify the command to invoke on
 .Dq interface down
 events (or: deletion of an address from an interface).
-.It Fl D Ar departure-script
-Specify the command to invoke when an interface departs (for example
-a PCMCIA card is removed.)
 .It Fl h
 Show the synopsis.
 .It Fl i
@@ -97,6 +97,11 @@ of the monitored interfaces may already have come up when it finally starts,
 but their up-scripts have not been called. By default
 .Nm
 calls them on startup to account for this (and make the scripts easier.)
+.It Fl q
+Be quiet and don't log non-error messages to syslog.
+.It Ar ifname(s)
+The name of the interface to watch.  Multiple interfaces may be specified.
+Events for other interfaces are ignored.
 .It Fl u Ar up-script
 Specify the command to invoke on
 .Dq interface up
@@ -109,11 +114,6 @@ operation. Adding more
 increases the verbosity.
 .Em You do not want to use this option in
 .Pa /etc/rc.conf !
-.It Fl q
-Be quiet and don't log non-error messages to syslog.
-.It Ar ifname(s)
-The name of the interface to watch.  Multiple interfaces may be specified.
-Events for other interfaces are ignored.
 .El
 .Sh EXAMPLES
 .Bd -literal -offset indent
@@ -178,12 +178,6 @@ The program logs to the syslog daemon as facility
 For detailed debugging use the
 .Fl v
 (verbose) option.
-.Sh CAVEATS
-Due to the nature of the program a lot of stupid errors can not easily be
-catched in advance without removing the provided facility for advanced uses.
-For example typing errors in the interface name can not be detected by
-checking against the list of installed interfaces, because
-it is possible for a pcmcia card with the name given to be inserted later.
 .Sh SEE ALSO
 .Xr pppoe 4 ,
 .Xr route 4 ,
@@ -199,3 +193,9 @@ utility appeared in
 The program was written by
 .An Martin Husemann
 .Aq martin@NetBSD.org .
+.Sh CAVEATS
+Due to the nature of the program a lot of stupid errors can not easily be
+caught in advance without removing the provided facility for advanced uses.
+For example typing errors in the interface name can not be detected by
+checking against the list of installed interfaces, because
+it is possible for a pcmcia card with the name given to be inserted later.
