@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.68 2002/10/23 09:15:07 jdolecek Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.69 2002/11/24 08:23:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.68 2002/10/23 09:15:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.69 2002/11/24 08:23:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,7 +675,7 @@ lfs_rmdir(void *v)
 
 	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vrele(ap->a_dvp);
-		if (ap->a_vp->v_mountedhere != NULL)
+		if (ap->a_vp != ap->a_dvp)
 			VOP_UNLOCK(ap->a_dvp, 0);
 		vput(ap->a_vp);
 		return error;
