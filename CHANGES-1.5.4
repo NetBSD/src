@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.107 2003/08/10 19:51:40 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.108 2003/08/12 05:09:08 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2143,3 +2143,10 @@ lib/libc/gen/getcwd.c			1.29
 	Fix NetBSD SA 2003-011.
 	Fix off-by-one error in realpath().
 	[itojun, ticket #61]
+
+usr.bin/menuc/menuc.1			1.5
+usr.bin/menuc/menu_sys.def		1.25 via patch
+
+	Improve a parameter list, add the actual documentation for menuc.
+	To make sysinst compile.
+	[masanobu, ticket #65]

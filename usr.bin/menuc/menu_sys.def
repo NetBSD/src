@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.22.4.1 2000/08/15 02:09:29 hubertf Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.22.4.2 2003/08/12 05:09:10 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -750,7 +750,7 @@ double_menus (void)
 int
 new_menu (char * title, menu_ent * opts, int numopts, 
         int x, int y, int h, int w, int mopt,
-        void (*post_act)(void), void (*exit_act), char * help)
+        void (*post_act)(void), void (*exit_act)(void), char * help)
 {
 	int ix;
 
