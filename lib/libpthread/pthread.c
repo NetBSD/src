@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.8 2001/08/08 16:38:16 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.9 2001/08/08 19:07:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ static pthread_attr_t pthread_default_attr;
 
 pt_spin_t allqueue_lock;
 struct pt_queue_t allqueue;
-
+static int nthreads;
 
 pt_spin_t deadqueue_lock;
 struct pt_queue_t deadqueue;
@@ -124,6 +124,7 @@ pthread__start(void)
 		pthread__sched_idle(self, idle);
 	}
 
+	nthreads = 1;
 	/* Start up the SA subsystem */
 	pthread__sa_start();
 }
@@ -203,11 +204,13 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	makecontext(newthread->pt_uc, pthread__create_tramp, 2,
 	    startfunc, arg);
 
-	/* 4. Add to queues. */
+	/* 4. Add to list of all threads. */
 	pthread_spinlock(self, &allqueue_lock);
 	PTQ_INSERT_HEAD(&allqueue, newthread, pt_allq);
+	nthreads++;
 	pthread_spinunlock(self, &allqueue_lock);
-
+	
+	/* 5. Put on run queue. */
 	pthread__sched(self, newthread);
 	
 	*thread = newthread;
@@ -262,6 +265,7 @@ void
 pthread_exit(void *retval)
 {
 	pthread_t self, joiner;
+	int nt;
 
 	self = pthread__self();
 
@@ -276,15 +280,30 @@ pthread_exit(void *retval)
 
 		pthread_spinlock(self, &allqueue_lock);
 		PTQ_REMOVE(&allqueue, self, pt_allq);
+		nthreads--;
+		nt = nthreads;
 		pthread_spinunlock(self, &allqueue_lock); 
 
 		self->pt_state = PT_STATE_DEAD;
+		if (nt == 0) {
+			/* Whoah, we're the last one. Time to go. */
+			exit(0);
+		}
+
 		/* Yeah, yeah, doing work while we're dead is tacky. */
 		pthread_spinlock(self, &deadqueue_lock);
 		PTQ_INSERT_HEAD(&deadqueue, self, pt_allq);
 		pthread__block(self, &deadqueue_lock);
 	} else {
+		pthread_spinlock(self, &allqueue_lock);
+		nthreads--;
+		nt = nthreads;
+		pthread_spinunlock(self, &allqueue_lock); 
 		self->pt_state = PT_STATE_ZOMBIE;
+		if (nt == 0) {
+			/* Whoah, we're the last one. Time to go. */
+			exit(0);
+		}
 		/* Wake up all the potential joiners. Only one can win.
 		 * (Can you say "Thundering Herd"? I knew you could.)
 		 */
