@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.10 1997/10/18 20:03:48 christos Exp $	*/
+/*	$NetBSD: scores.c,v 1.11 2001/02/05 00:57:34 christos Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.10 1997/10/18 20:03:48 christos Exp $");
+__RCSID("$NetBSD: scores.c,v 1.11 2001/02/05 00:57:34 christos Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -668,9 +668,11 @@ invalid:
 				mod = "an";
 			else
 				mod = "a";
-			sprintf(logg.what, "killed by %s %s", mod, monster[x].name);
+			snprintf(logg.what, sizeof(logg.what),
+			    "killed by %s %s", mod, monster[x].name);
 		} else
-			sprintf(logg.what, "%s", whydead[x - 256]);
+			snprintf(logg.what, sizeof(logg.what),
+			    "%s", whydead[x - 256]);
 		logg.cavelev = level;
 		time(&zzz);	/* get cpu time -- write out score info */
 		logg.diedtime = zzz;
@@ -797,7 +799,7 @@ getplid(nam)
 	if (havepid != -1)
 		return (havepid);	/* already did it */
 	lflush();		/* flush any pending I/O */
-	sprintf(name, "%s\n", nam);	/* append a \n to name */
+	snprintf(name, sizeof(name), "%s\n", nam);/* append a \n to name */
 	if (lopen(playerids) < 0) {	/* no file, make it */
 		if ((fd7 = creat(playerids, 0666)) < 0)
 			return (-1);	/* can't make it */
