@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.10 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: ims332.c,v 1.11 1999/12/09 00:16:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.10 1999/09/05 11:34:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.11 1999/12/09 00:16:14 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ ims332InitColorMap(fi)
 int
 ims332LoadColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	const u_char *bits;
 	int index, count;
 {
 	u_char *cmap_bits;
@@ -261,7 +261,7 @@ ims332LoadColorMap(fi, bits, index, count)
 int
 ims332GetColorMap(fi, bits, index, count)
 	struct fbinfo *fi;
-	caddr_t bits;
+	u_char *bits;
 	int index, count;
 {
 	u_char *cmap_bits;
