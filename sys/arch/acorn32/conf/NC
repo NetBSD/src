@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.17 2003/09/30 00:35:31 thorpej Exp $
+#	$NetBSD: NC,v 1.18 2003/10/08 11:00:38 bouyer Exp $
 #
 #	NC - with vidcconsole
 #
@@ -174,8 +174,9 @@ pioc0	at mainbus? base 0x00210000
 # IDE disk controller
 #wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
-#wd*	at wdc? channel ? drive ?
-#atapibus* at wdc? channel ?
+#atabus* at wdc? channel ?
+#wd*	at atabus? drive ?
+#atapibus* at atabus?
 #cd*	at atapibus? drive ?
 #sd*	at atapibus? drive ?
 
@@ -237,16 +238,13 @@ podulebus0	at root
 #ss*	at scsibus? target ? lun ?	# SCSI scanner
 
 #icside*	at podulebus?			# ICS IDE card
-#wd*	at icside? channel ? drive ?
-#atapibus* at icside? channel ?
+#atabus* at icside? channel ?
 
 #rapide*	at podulebus?			# Yellowstone RapIDE card
-#wd*	at rapide? channel ? drive ?
-#atapibus* at rapide? channel ?
+#atabus* at rapide? channel ?
 
 #simide*	at podulebus?			# Simtec IDE card
-#wd*	at simide? channel ? drive ?
-#atapibus* at simide? channel ?
+#atabus* at simide? channel ?
 
 #amps*	at podulebus?			# Atomwide Multi-Port Serial card
 #com*	at amps?

@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.17 2002/10/06 13:05:39 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.18 2003/10/08 11:00:38 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -130,19 +130,19 @@ attach	csa at podulebus
 file	arch/acorn32/podulebus/csa.c		csa
 
 # ICS IDE driver
-device	icside {[channel = -1]}: wdc_base, ata, atapi
+device	icside {[channel = -1]}: wdc_base
 attach	icside at podulebus
 file	arch/acorn32/podulebus/icside.c		icside
 file	arch/acorn32/podulebus/icside_io_asm.S	icside
 
 # Yellowstone RapIDE driver
-device	rapide {[channel = -1]}: wdc_base, ata, atapi
+device	rapide {[channel = -1]}: wdc_base
 attach	rapide at podulebus
 file	arch/acorn32/podulebus/rapide.c		rapide
 file	arch/acorn32/podulebus/rapide_io_asm.S	rapide
 
 # Simtec IDE driver
-device	simide {[channel = -1]}: wdc_base, ata, atapi
+device	simide {[channel = -1]}: wdc_base
 attach	simide at podulebus
 file	arch/acorn32/podulebus/simide.c		simide
 file	arch/acorn32/podulebus/simide_io_asm.S	simide
