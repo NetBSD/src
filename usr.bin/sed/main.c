@@ -1,7 +1,7 @@
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Diomidis Spinellis of Imperial College, University of London.
@@ -36,14 +36,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.6 (Berkeley) 8/30/92";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1994/01/04 05:23:03 cgd Exp $";
+static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -287,15 +286,13 @@ mf_fgets(sp, spflag)
 	}
 
 	/*
-	 * Use fgetln so that we can handle essentially infinite input
-	 * data.  Can't use the pointer into the stdio buffer as the process
-	 * space because the ungetc() can cause it to move.
+	 * Use fgetln so that we can handle essentially infinite input data.
+	 * Can't use the pointer into the stdio buffer as the process space
+	 * because the ungetc() can cause it to move.
 	 */
 	p = fgetln(f, &len);
 	if (ferror(f))
 		err(FATAL, "%s: %s", fname, strerror(errno ? errno : EIO));
-	if (p[len-1] == '\n')
-		p[--len] = '\0';
 	cspace(sp, p, len, spflag);
 
 	linenum++;
