@@ -1,7 +1,7 @@
-/*	$NetBSD: in_cksum.s,v 1.9 1998/12/01 04:31:00 thorpej Exp $	*/
+/*	$NetBSD: in_cksum.s,v 1.9.22.1 2001/03/30 22:29:06 he Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -119,6 +119,48 @@
 	addw	%dx, %ax	; \
 	adcw	$0, %ax
 
+ENTRY(in4_cksum)
+	pushl	%ebp
+	pushl	%ebx
+	pushl	%esi
+
+	movl	16(%esp), %ebp
+	movzbl	20(%esp), %eax		/* sum = nxt */
+	movl	28(%esp), %esi
+	movl	M_DATA(%ebp), %ebx
+	addl	%esi, %eax		/* sum += len */
+	movl	24(%esp), %edx		/* %edx = off */
+	shll	$8, %eax		/* sum = htons(sum) */
+
+	ADD(IP_SRC)			/* sum += ip->ip_src */
+	ADC(IP_DST)			/* sum += ip->ip_dst */
+	MOP
+
+mbuf_loop_0:
+	testl	%ebp, %ebp
+	jz	out_of_mbufs
+
+	movl	M_DATA(%ebp), %ebx	/* %ebx = m_data */
+	movl	M_LEN(%ebp), %ecx	/* %ecx = m_len */
+	movl	M_NEXT(%ebp), %ebp
+
+	subl	%ecx, %edx		/* %edx = off - m_len */
+	jnb	mbuf_loop_0
+
+	addl	%edx, %ebx		/* %ebx = m_data + off - m_len */
+	negl	%edx			/* %edx = m_len - off */
+	addl	%ecx, %ebx		/* %ebx = m_data + off */
+	xorb	%cl, %cl
+
+	/*
+	 * The len == 0 case is handled really inefficiently, by going through
+	 * the whole short_mbuf path once to get back to mbuf_loop_1 -- but
+	 * this case never happens in practice, so it's sufficient that it
+	 * doesn't explode.
+	 */
+	jmp	in4_entry
+
+
 ENTRY(in_cksum)
 	pushl	%ebp
 	pushl	%ebx
@@ -141,6 +183,7 @@ mbuf_loop_2:
 	movl	M_LEN(%ebp), %edx
 	movl	M_NEXT(%ebp), %ebp
 
+in4_entry:
 	cmpl	%esi, %edx
 	jbe	1f
 	movl	%esi, %edx
