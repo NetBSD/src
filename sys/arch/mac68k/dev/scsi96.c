@@ -24,7 +24,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: scsi96.c,v 1.2 1994/07/08 11:38:48 briggs Exp $
+ * $Id: scsi96.c,v 1.3 1994/07/10 16:55:55 briggs Exp $
  *
  */
 
@@ -130,12 +130,11 @@ ncr96probe(parent, cf, aux)
 	struct cfdata	*cf;
 	void		*aux;
 {
-extern	int			has53c96scsi;
 static	int			probed = 0;
 	int			unit = cf->cf_unit;
 	struct ncr53c96_data	*ncr53c96;
 
-	if (!has53c96scsi) {
+	if (!mac68k_machine.scsi96) {
 		return 0;
 	}
 
@@ -401,16 +400,18 @@ do_send_cmd(struct scsi_xfer *xs)
 
 		stat = ncr->statreg;
 
-		if (stat&NCR96_STAT_PHASE == phase)
+		if ((stat&NCR96_STAT_PHASE) == phase)
 			cnt = 18;
 		else
 			cnt = ncr->fifostatereg & NCR96_CF_MASK;
 
-		while (cnt--)
+		while (cnt--) {
 			xs->data[i++] = ncr->fifo;
+			printf("0x%x,",xs->data[i-1]);
+		}
 
 		intr = ncr->instreg;
-		printf("in loop.  stat = 0x%x, intr = 0x%x, cnt = %d.  ",
+		printf("\nin loop.  stat = 0x%x, intr = 0x%x, cnt = %d.  ",
 			stat, intr, cnt);
 		printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
 	}
