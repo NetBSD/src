@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.3 1996/10/13 01:38:14 christos Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.4 1997/04/16 23:41:53 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -42,7 +42,7 @@ struct ofrtc_softc {
 	int sc_ihandle;
 };
 
-static int ofrtcprobe __P((struct device *, void *, void *));
+static int ofrtcprobe __P((struct device *, struct cfdata *, void *));
 static void ofrtcattach __P((struct device *, struct device *, void *));
 
 struct cfattach ofrtc_ca = {
@@ -56,7 +56,8 @@ struct cfdriver ofrtc_cd = {
 static int
 ofrtcprobe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct ofprobe *ofp = aux;
 	char type[8];
