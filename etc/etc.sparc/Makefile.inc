@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.37 2003/12/14 12:17:44 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2003/12/15 17:35:33 martin Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -29,7 +29,7 @@ snap_md_post:
 	# install boot images in netboot directory
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/boot.net \
 	    ${RELEASEDIR}/${MACHINE}/installation/netboot
-	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/bootjs.elf \
+	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/bootjs.net \
 	    ${RELEASEDIR}/${MACHINE}/installation/netboot
 
 	# install links to boot and installation utilities for various media
