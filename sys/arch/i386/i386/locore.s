@@ -1,5 +1,5 @@
 
-/*	$NetBSD: locore.s,v 1.172.2.2 1997/11/15 00:38:25 mellon Exp $	*/
+/*	$NetBSD: locore.s,v 1.172.2.3 1997/11/15 18:02:30 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -1972,29 +1972,13 @@ ENTRY(savectx)
 IDTVEC(trap00)
 	ZTRAP(T_DIVIDE)
 IDTVEC(trap01)
-	pushl	$0
-	pushl	$T_TRCTRAP
-	INTRENTRY
-#ifdef I586_CPU
-trap01_fixup:
-#endif
-	movl	%dr6,%eax
-	movl	%eax,TF_ERR(%esp)
-	andb	$~0xf,%al
-	movl	%eax,%dr6
-	jmp	calltrap
+	ZTRAP(T_TRCTRAP)
 IDTVEC(trap02)
 	ZTRAP(T_NMI)
 IDTVEC(trap03)
 	ZTRAP(T_BPTFLT)
 IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
-#ifdef I586_CPU
-trap03_fixup:
-trap04_fixup:
-	incl	TF_EIP(%esp)
-	jmp	calltrap
-#endif
 IDTVEC(trap05)
 	ZTRAP(T_BOUND)
 IDTVEC(trap06)
@@ -2043,6 +2027,13 @@ IDTVEC(trap0e_pentium)
 	movl	trap0e_table+4(%eax),%edx
 	movl	%ecx,TF_TRAPNO(%esp)
 	jmp	%edx
+	ALIGN_TEXT
+trap03_fixup:
+trap04_fixup:
+	incl	TF_EIP(%esp)
+trap01_fixup:
+	andl	$~PSL_RF,TF_EFLAGS(%esp)
+	jmp	calltrap
 	ALIGN_TEXT
 trap0e_table:
 	.long	T_DIVIDE,    calltrap
