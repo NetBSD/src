@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.287 2000/01/04 06:58:54 chopps Exp $
+#	$NetBSD: GENERIC,v 1.288 2000/01/09 17:31:56 joda Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -505,6 +505,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+#xe*	at pcmcia? function ?		# Xircom PCMCIA cards
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
