@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.9 1993/08/29 13:46:31 deraadt Exp $
+ *	$Id: dca.c,v 1.10 1994/02/06 00:44:32 mycroft Exp $
  */
 
 #include "dca.h"
@@ -632,7 +632,7 @@ dcamctl(dev, bits, how)
 /*
  * Following are all routines needed for DCA to act as console
  */
-#include "../hp300/cons.h"
+#include <dev/cons.h>
 
 dcacnprobe(cp)
 	struct consdev *cp;
