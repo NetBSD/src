@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.19 2003/09/20 05:12:46 itojun Exp $	*/
+/*	$NetBSD: keydb.h,v 1.20 2003/09/23 00:03:05 itojun Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -72,7 +72,6 @@ struct secashead {
 	} sa_u;
 #define sa_route sa_u.sau_route
 };
-
 
 /* Security Association */
 struct secasvar {
