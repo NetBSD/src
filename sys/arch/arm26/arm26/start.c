@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.5 2000/12/07 21:48:58 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.6 2000/12/23 12:57:55 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.5 2000/12/07 21:48:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.6 2000/12/23 12:57:55 bjh21 Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -82,7 +82,6 @@ void
 start(initbootconfig)
 	struct bootconfig *initbootconfig;
 {
-	extern char page0[], page0_end[];
 	size_t size;
 	caddr_t v;
 	char pbuf[9];
