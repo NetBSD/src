@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2001/05/28 20:56:54 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2001/05/28 21:54:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -292,15 +292,6 @@ cpu_startup()
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
-
-	/*
-	 * Tell the VM system that writing to kernel text isn't allowed.
-	 * If we don't, we might end up COW'ing the text segment!
-	 */
-	if (uvm_map_protect(kernel_map, (vm_offset_t) kernel_text,
-	    m68k_trunc_page((vm_offset_t) etext),
-	    UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
-		panic("can't protect kernel text");
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
