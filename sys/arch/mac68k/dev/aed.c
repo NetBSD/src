@@ -1,4 +1,4 @@
-/*	$Id: aed.c,v 1.6 1999/02/11 06:41:08 ender Exp $	*/
+/*	$NetBSD: aed.c,v 1.7 1999/02/16 01:08:16 ender Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
