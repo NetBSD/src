@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.59 1999/03/24 05:51:03 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.60 1999/03/26 22:52:15 ender Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/itevar.h>
