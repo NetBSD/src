@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.8 1994/05/25 02:49:38 cgd Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.9 1994/12/23 16:45:11 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -136,6 +136,7 @@ static char rcsid[] = "$Id: inetd.c,v 1.8 1994/05/25 02:49:38 cgd Exp $";
 #include <pwd.h>
 #include <grp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifdef RPC
 #include <rpc/rpc.h>
@@ -1105,7 +1106,7 @@ newstr(cp)
 	exit(-1);
 }
 
-setproctitle(a, s)
+inetd_setproctitle(a, s)
 	char *a;
 	int s;
 {
@@ -1183,7 +1184,7 @@ echo_stream(s, sep)		/* Echo service -- echo data back */
 	char buffer[BUFSIZE];
 	int i;
 
-	setproctitle(sep->se_service, s);
+	inetd_setproctitle(sep->se_service, s);
 	while ((i = read(s, buffer, sizeof(buffer))) > 0 &&
 	    write(s, buffer, i) > 0)
 		;
@@ -1212,7 +1213,7 @@ discard_stream(s, sep)		/* Discard service -- ignore data */
 {
 	char buffer[BUFSIZE];
 
-	setproctitle(sep->se_service, s);
+	inetd_setproctitle(sep->se_service, s);
 	while ((errno = 0, read(s, buffer, sizeof(buffer)) > 0) ||
 			errno == EINTR)
 		;
@@ -1254,7 +1255,7 @@ chargen_stream(s, sep)		/* Character generator */
 	int len;
 	char text[LINESIZ+2];
 
-	setproctitle(sep->se_service, s);
+	inetd_setproctitle(sep->se_service, s);
 
 	if (!endring) {
 		initring();
@@ -1402,17 +1403,17 @@ print_service(action, sep)
 {
 	if (isrpcservice(sep))
 		fprintf(stderr,
-		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%x server=%s\n",
+		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s\n",
 		    action, sep->se_service,
 		    sep->se_rpcprog, sep->se_rpcversh, sep->se_rpcversl, sep->se_proto,
 		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
-		    (int)sep->se_bi, sep->se_server);
+		    (long)sep->se_bi, sep->se_server);
 	else
 		fprintf(stderr,
-		    "%s: %s proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%x server=%s\n",
+		    "%s: %s proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s\n",
 		    action, sep->se_service, sep->se_proto,
 		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
-		    (int)sep->se_bi, sep->se_server);
+		    (long)sep->se_bi, sep->se_server);
 }
 
 #ifdef MULOG
