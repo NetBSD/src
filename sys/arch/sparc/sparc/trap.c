@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.9 1994/02/01 06:01:51 deraadt Exp $
+ * $Id: trap.c,v 1.10 1994/03/23 20:40:28 pk Exp $
  */
 
 #include <sys/param.h>
@@ -257,6 +257,15 @@ trap(type, psr, pc, tf)
 	 * handled early here.
 	 */
 	if (psr & PSR_PS) {
+#ifdef DDB
+		if (type == T_BREAKPOINT) {
+			write_all_windows();
+			if (kdb_trap(type, tf)) {
+				ADVANCE;
+				return;
+			}
+		}
+#endif
 		/*
 		 * Storing %fsr in cpu_attach will cause this trap
 		 * even though the fpu has been enabled, if and only
