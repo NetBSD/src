@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.20 2003/08/07 09:05:24 agc Exp $	*/
+/*	$NetBSD: nlist.c,v 1.21 2004/02/25 19:56:28 jrf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.20 2003/08/07 09:05:24 agc Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.21 2004/02/25 19:56:28 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,8 +189,8 @@ donlist_sysctl()
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_USPACE;
-	size = sizeof(maxslp);
-	if (sysctl(mib, 2, &maxslp, &size, NULL, 0) == -1)
+	size = sizeof(uspace);
+	if (sysctl(mib, 2, &uspace, &size, NULL, 0) == -1)
 #ifdef USPACE
 		uspace = USPACE;
 #else
