@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.26 2003/04/10 23:38:16 grant Exp $	*/
+/*	$NetBSD: pen.c,v 1.27 2003/07/14 06:17:56 itojun Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.26 2003/04/10 23:38:16 grant Exp $");
+__RCSID("$NetBSD: pen.c,v 1.27 2003/07/14 06:17:56 itojun Exp $");
 #endif
 #endif
 
@@ -65,11 +65,11 @@ void
 restore_dirs(char *c, char *p)
 {
 	CurrentSet = 0;		/* prevent from deleting */
-	strcpy(Current, c);
+	strlcpy(Current, c, sizeof(Current));
 	CurrentSet = 1;		/* rm -fr Current is safe now */
 	free(c);
 	
-	strcpy(Previous, p);
+	strlcpy(Previous, p, sizeof(Previous));
 	free(p);
 }
 #endif
@@ -96,11 +96,11 @@ find_play_pen(char *pen, size_t pensize, size_t sz)
 	else if ((cp = getenv("TMPDIR")) != NULL && stat(cp, &sb) != FAIL && (min_free(cp) >= sz))
 		(void) snprintf(pen, pensize, "%s/instmp.XXXXXX", cp);
 	else if (stat("/var/tmp", &sb) != FAIL && min_free("/var/tmp") >= sz)
-		strcpy(pen, "/var/tmp/instmp.XXXXXX");
+		strlcpy(pen, "/var/tmp/instmp.XXXXXX", pensize);
 	else if (stat("/tmp", &sb) != FAIL && min_free("/tmp") >= sz)
-		strcpy(pen, "/tmp/instmp.XXXXXX");
+		strlcpy(pen, "/tmp/instmp.XXXXXX", pensize);
 	else if (stat("/usr/tmp", &sb) != FAIL && min_free("/usr/tmp") >= sz)
-		strcpy(pen, "/usr/tmp/instmp.XXXXXX");
+		strlcpy(pen, "/usr/tmp/instmp.XXXXXX", pensize);
 	else {
 		cleanup(0);
 		errx(2,
@@ -153,7 +153,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		    "with more space and\ntry the command again", pen);
 	}
 	if (Current[0])
-		strcpy(Previous, Current);
+		strlcpy(Previous, Current, sizeof(Previous));
 	else if (!getcwd(Previous, FILENAME_MAX)) {
 		cleanup(0);
 		err(EXIT_FAILURE, "fatal error during execution: getcwd");
@@ -162,7 +162,7 @@ make_playpen(char *pen, size_t pensize, size_t sz)
 		cleanup(0);
 		errx(2, "can't chdir to '%s'", pen);
 	}
-	CurrentSet = 0; strcpy(Current, pen); CurrentSet = 1;
+	CurrentSet = 0; strlcpy(Current, pen, sizeof(Current)); CurrentSet = 1;
 	
 	return Previous;
 }
@@ -187,10 +187,10 @@ leave_playpen(char *save)
 		}
 		if (vsystem("rm -rf %s", Current))
 			warnx("couldn't remove temporary dir '%s'", Current);
-		strcpy(Current, Previous);
+		strlcpy(Current, Previous, sizeof(Current));
 	}
 	if (save)
-		strcpy(Previous, save);
+		strlcpy(Previous, save, sizeof(Previous));
 	else
 		Previous[0] = '\0';
 	signal(SIGINT, oldsig);
