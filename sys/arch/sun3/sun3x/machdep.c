@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 1998/10/19 22:09:18 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 1998/11/24 16:48:26 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,7 @@
 #include <sys/file.h>
 #include <sys/clist.h>
 #include <sys/callout.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
