@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.20 2002/11/22 15:23:48 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.21 2003/02/26 21:29:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,11 +97,11 @@
 /*
  * Types provided to machine-independent ISA code.
  */
-struct i386_isa_chipset {
+struct x86_isa_chipset {
 	struct isa_dma_state ic_dmastate;
 };
 
-typedef struct i386_isa_chipset *isa_chipset_tag_t;
+typedef struct x86_isa_chipset *isa_chipset_tag_t;
 
 struct device;			/* XXX */
 struct isabus_attach_args;	/* XXX */
@@ -174,7 +174,7 @@ void	isa_reinit_irq(void);
  * BY PORTABLE CODE.
  */
 
-extern struct i386_bus_dma_tag isa_bus_dma_tag;
+extern struct x86_bus_dma_tag isa_bus_dma_tag;
 
 /*
  * XXX Various seemingly PC-specific constants, some of which may be
