@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.30.8.2 1997/05/14 21:23:04 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.30.8.3 1997/05/17 00:06:25 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -1066,6 +1066,10 @@ u_long	vm_page_alloc_memory_npages;
  *		alignment	Allocation must be aligned to this
  *				power-of-two boundary.
  *
+ *		boundary	No segment in the allocation may
+ *				cross this power-of-two boundary
+ *				(relative to zero).
+ *
  *	The allocated pages are placed at the tail of `rlist'; `rlist'
  *	is assumed to be properly initialized by the caller.  The
  *	number of memory segments that the allocated memory may
@@ -1078,15 +1082,17 @@ u_long	vm_page_alloc_memory_npages;
  *	XXX allocates a single segment.
  */
 int
-vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
+vm_page_alloc_memory(size, low, high, alignment, boundary,
+    rlist, nsegs, waitok)
 	vm_size_t size;
-	vm_offset_t low, high, alignment;
+	vm_offset_t low, high, alignment, boundary;
 	struct pglist *rlist;
 	int nsegs, waitok;
 {
-	vm_offset_t try, idxpa;
+	vm_offset_t try, idxpa, lastidxpa;
 	int s, tryidx, idx, end, error;
 	vm_page_t m;
+	u_long pagemask;
 #ifdef DEBUG
 	vm_page_t tp;
 #endif
@@ -1094,6 +1100,9 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 #ifdef DIAGNOSTIC
 	if ((alignment & (alignment - 1)) != 0)
 		panic("vm_page_alloc_memory: alignment must be power of 2");
+
+	if ((boundary & (boundary - 1)) != 0)
+		panic("vm_page_alloc_memory: boundary must be power of 2");
 #endif
 
 	/*
@@ -1105,6 +1114,11 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 
 	size = round_page(size);
 	try = roundup(low, alignment);
+
+	if (boundary != 0 && boundary < size)
+		return (EINVAL);
+
+	pagemask = ~(boundary - 1);
 
 	/* Default to "lose". */
 	error = ENOMEM;
@@ -1146,26 +1160,41 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 		 * Found a suitable starting page.  See of the range
 		 * is free.
 		 */
-		for (idxpa = try; idx < end; idx++, idxpa += PAGE_SIZE) {
-			/*
-			 * Make sure this is a managed physical page.
-			 */
-			if (IS_VM_PHYSADDR(idxpa) == 0)
-				break;
-
+		for (; idx < end; idx++) {
 			if (VM_PAGE_IS_FREE(&vm_page_array[idx]) == 0) {
 				/*
 				 * Page not available.
 				 */
 				break;
 			}
-			if (idx > tryidx &&
-		    (VM_PAGE_TO_PHYS(&vm_page_array[idx - 1]) + PAGE_SIZE !=
-		     VM_PAGE_TO_PHYS(&vm_page_array[idx]))) {
-				/*
-				 * Region not contiguous.
-				 */
+
+			idxpa = VM_PAGE_TO_PHYS(&vm_page_array[idx]);
+
+			/*
+			 * Make sure this is a managed physical page.
+			 * XXX Necessary?  I guess only if there
+			 * XXX are holes in the vm_page_array[].
+			 */
+			if (IS_VM_PHYSADDR(idxpa) == 0)
 				break;
+
+			if (idx > tryidx) {
+				lastidxpa =
+				    VM_PAGE_TO_PHYS(&vm_page_array[idx - 1]);
+
+				if ((lastidxpa + PAGE_SIZE) != idxpa) {
+					/*
+					 * Region not contiguous.
+					 */
+					break;
+				}
+				if (boundary != 0 &&
+				    ((lastidxpa ^ idxpa) & pagemask) != 0) {
+					/*
+					 * Region crosses boundary.
+					 */
+					break;
+				}
 			}
 		}
 
