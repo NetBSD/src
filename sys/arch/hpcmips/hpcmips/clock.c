@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 2001/09/16 15:45:42 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 2001/09/18 17:37:26 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -70,103 +70,72 @@
  *
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
-#include "opt_vr41xx.h"
-#include "opt_tx39xx.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2001/09/16 15:45:42 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.15 2001/09/18 17:37:26 uch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/kernel.h>			/* hz */
 
 #include <dev/clock_subr.h>
-#include <machine/clock_machdep.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-#include <dev/dec/clockvar.h>
+#include <machine/sysconf.h>		/* platform */
 
-#define MINYEAR 2001 /* "today" */
-#define UNIX_YEAR_OFFSET 0
+#define MINYEAR			2001	/* "today" */
+#define UNIX_YEAR_OFFSET	0
 
-struct device *clockdev;
-const struct clockfns *clockfns;
-int clockinitted;
-
+/* 
+ * platform_clock_attach:
+ *
+ *	Register CPU(VR41XX or TX39XX) dependent clock routine to system.
+ */
 void
-clockattach(struct device *dev, const struct clockfns *fns)
+platform_clock_attach(void *ctx, struct platform_clock *clock)
 {
 
-	/*
-	 * Just bookkeeping.
-	 */
 	printf("\n");
 
-	if (clockfns != NULL)
-		panic("clockattach: multiple clocks");
-	clockdev = dev;
-	clockfns = fns;
-#ifdef EVCNT_COUNTERS
-	evcnt_attach_dynamic(&clock_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    dev->dv_xname, "intr");
-#endif
+	clock->self = ctx;
+	platform.clock = clock;
 }
 
 /*
- * Machine-dependent clock routines.
+ * cpu_initclocks:
  *
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c.
- *
- * Inittodr initializes the time of day hardware which provides
- * date functions.  Its primary function is to use some file
- * system information in case the hardare clock lost state.
- *
- * Resettodr restores the time of day hardware after a time change.
- */
-
-/*
- * Start the real-time and statistics clocks. Leave stathz 0 since there
- * are no other timers available.
+ *	starts periodic timer, which provides hardclock interrupts to
+ *	kern_clock.c.
+ *	Leave stathz 0 since there are no other timers available.
  */
 void
 cpu_initclocks()
 {
+	struct platform_clock *clock = platform.clock;
 
-	if (clockfns == NULL)
+	if (clock == NULL)
 		panic("cpu_initclocks: no clock attached");
-	/* 
-	 * VR41XX clock is not 100Hz but CLOCK_RATE,
-	 * TX3912/22 periodic timer is not CLOCK_RATE, it is 100Hz by default.
-	 */
-#if defined VR41XX
-#if defined TX39XX
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
-#endif /* defined TX39XX */
-	{
-		hz = CLOCK_RATE;	/* 128 Hz clock */
-		tick = 1000000 / hz;	
-		/* number of microseconds between interrupts */
-		tickfix = 1000000 - (hz * tick);
-		if (tickfix) {
-			int ftp;
 
-			ftp = min(ffs(tickfix), ffs(hz));
-			tickfix >>= (ftp - 1);
-			tickfixinterval = hz >> (ftp - 1);
-		}
+	hz = clock->hz;
+	tick = 1000000 / hz;	
+	/* number of microseconds between interrupts */
+	tickfix = 1000000 - (hz * tick);
+	if (tickfix) {
+		int ftp;
+		
+		ftp = min(ffs(tickfix), ffs(hz));
+		tickfix >>= (ftp - 1);
+		tickfixinterval = hz >> (ftp - 1);
 	}
-#endif /* !TX39XX */
-	/*
-	 * Get the clock started.
-	 */
-	(*clockfns->cf_init)(clockdev);
+
+	/* start periodic timer */
+	(*clock->init)(clock->self);
 }
 
 /*
- * We assume newhz is either stathz or profhz, and that neither will
- * change after being set up above.  Could recalculate intervals here
- * but that would be a drag.
+ * setstatclockrate:
+ *
+ *	We assume newhz is either stathz or profhz, and that neither will
+ *	change after being set up above.  Could recalculate intervals here
+ *	but that would be a drag.
  */
 void
 setstatclockrate(int newhz)
@@ -176,41 +145,50 @@ setstatclockrate(int newhz)
 }
 
 /*
- * Initialze the time of day register, based on the time base which is, e.g.
- * from a filesystem.  Base provides the time to within six months,
- * and the time of year clock (if any) provides the rest.
+ * inittodr:
+ *
+ *	initializes the time of day hardware which provides
+ *	date functions.  Its primary function is to use some file
+ *	system information in case the hardare clock lost state.
+ *
+ *	Initialze the time of day register, based on the time base which is,
+ *	e.g. from a filesystem.  Base provides the time to within six months,
+ *	and the time of year clock (if any) provides the rest.
  */
 void
 inittodr(time_t base)
 {
-	struct clocktime ct;
-	int year;
+	struct platform_clock *clock = platform.clock;
 	struct clock_ymdhms dt;
+	int year, badbase;
 	time_t deltat;
-	int badbase;
 
-	if (base < (MINYEAR-1970)*SECYR) {
+	if (clock == NULL)
+		panic("inittodr: no clock attached");		
+
+	if (base < (MINYEAR - 1970) * SECYR) {
 		printf("WARNING: preposterous time in file system");
 		/* read the system clock anyway */
-		base = (MINYEAR-1970)*SECYR;
+		base = (MINYEAR - 1970) * SECYR;
 		badbase = 1;
 	} else
 		badbase = 0;
 
-	(*clockfns->cf_get)(clockdev, base, &ct);
+	(*clock->rtc_get)(clock->self, base, &dt);
 #ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d", ct.year, ct.mon, ct.day,
-	    ct.hour, ct.min, ct.sec);
+	printf("readclock: %d/%d/%d/%d/%d/%d", dt.dt_year, dt.dt_mon, dt.dt_day,
+	    dt.dt_hour, dt.dt_min, dt.dt_sec);
 #endif
-	clockinitted = 1;
+	clock->start = 1;
 
-	year = 1900 + UNIX_YEAR_OFFSET + ct.year;
+	year = 1900 + UNIX_YEAR_OFFSET + dt.dt_year;
 	if (year < 1970)
 		year += 100;
 	/* simple sanity checks (2037 = time_t overflow) */
 	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
-	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
+	    dt.dt_mon < 1 || dt.dt_mon > 12 || dt.dt_day < 1 ||
+	    dt.dt_day > 31 || dt.dt_hour > 23 || dt.dt_min > 59 ||
+	    dt.dt_sec > 59) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -224,11 +202,6 @@ inittodr(time_t base)
 	}
 
 	dt.dt_year = year;
-	dt.dt_mon = ct.mon;
-	dt.dt_day = ct.day;
-	dt.dt_hour = ct.hour;
-	dt.dt_min = ct.min;
-	dt.dt_sec = ct.sec;
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 #ifdef DEBUG
 	printf("=>%ld (%ld)\n", time.tv_sec, base);
@@ -253,43 +226,46 @@ inittodr(time_t base)
 }
 
 /*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
- * to wrap the TODR around.
+ * resettodr:
+ *
+ *	restores the time of day hardware after a time change.
+ *
+ *	Reset the TODR based on the time value; used when the TODR
+ *	has a preposterous value and also when the time is reset
+ *	by the stime system call.  Also called when the TODR goes past
+ *	TODRZERO + 100*(SECYEAR+2*SECDAY) (e.g. on Jan 2 just after midnight)
+ *	to wrap the TODR around.
  */
 void
 resettodr()
 {
+	struct platform_clock *clock = platform.clock;
 	struct clock_ymdhms dt;
-	struct clocktime ct;
 
-	if (!clockinitted)
+	if (clock == NULL)
+		panic("inittodr: no clock attached");		
+
+	if (!clock->start)
 		return;
 
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 
-	/* rt clock wants 2 digits */
-	ct.year = (dt.dt_year - UNIX_YEAR_OFFSET) % 100;
-	ct.mon = dt.dt_mon;
-	ct.day = dt.dt_day;
-	ct.hour = dt.dt_hour;
-	ct.min = dt.dt_min;
-	ct.sec = dt.dt_sec;
-	ct.dow = dt.dt_wday;
+	/* rt clock wants 2 digits XXX */
+	dt.dt_year = (dt.dt_year - UNIX_YEAR_OFFSET) % 100;
 #ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
-	    ct.hour, ct.min, ct.sec);
+	printf("setclock: %d/%d/%d/%d/%d/%d\n", dt.dt_year, dt.dt_mon,
+	    dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
 #endif
 
-	(*clockfns->cf_set)(clockdev, &ct);
+	(*clock->rtc_set)(clock->self, &dt);
 }
 
 /*
- * Return the best possible estimate of the time in the timeval to
- * which tvp points.  We guarantee that the time will be greater than
- * the value obtained by a previous call.
+ * microtime:
+ *
+ *	Return the best possible estimate of the time in the timeval to
+ *	which tvp points.  We guarantee that the time will be greater than
+ *	the value obtained by a previous call.
  */
 void
 microtime(struct timeval *tvp)
@@ -315,7 +291,9 @@ microtime(struct timeval *tvp)
 }
 
 /*
- * Wait "n" microseconds.
+ * delay:
+ *
+ *	Wait at least "n" microseconds.
  */
 void
 delay(int n)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.3 2001/05/17 05:04:30 sato Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.4 2001/09/18 17:37:29 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -37,8 +37,6 @@
 
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
-#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
-#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
 
 #define	SEC2MIN	((unsigned)60/2)		/* 2seconds per minute */
 #define	SEC2HOUR ((unsigned)(60*SECMIN)/2)	/* 2seconds per hour */

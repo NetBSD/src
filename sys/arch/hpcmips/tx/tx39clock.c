@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39clock.c,v 1.9 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.10 2001/09/18 17:37:28 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,15 +39,12 @@
 #include "opt_tx39_debug.h"
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 
 #include <dev/clock_subr.h>
 
 #include <machine/bus.h>
-#include <machine/clock_machdep.h>
-#include <machine/cpu.h>
+#include <machine/sysconf.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39icureg.h>
@@ -55,22 +52,21 @@
 #include <hpcmips/tx/tx39clockreg.h>
 #include <hpcmips/tx/tx39timerreg.h>
 
-#include <dev/dec/clockvar.h>
-
 #ifdef TX39CLKDEBUG
 #define	DPRINTF(arg)	printf arg
 #else
 #define	DPRINTF(arg)	((void)0)
 #endif
 
-#define ISSETPRINT(r, m) __is_set_print(r, TX39_CLOCK_EN##m##CLK, #m)
+#define ISSETPRINT(r, m)	__is_set_print(r, TX39_CLOCK_EN ## m ## CLK, #m)
 
 void	tx39clock_init(struct device *);
-void	tx39clock_get(struct device *, time_t, struct clocktime *);
-void	tx39clock_set(struct device *, struct clocktime *);
+void	tx39clock_get(struct device *, time_t, struct clock_ymdhms *);
+void	tx39clock_set(struct device *, struct clock_ymdhms *);
 
-const struct clockfns tx39clockfns = {
-	tx39clock_init, tx39clock_get, tx39clock_set,
+struct platform_clock tx39_clock = {
+#define CLOCK_RATE	100
+	CLOCK_RATE, tx39clock_init, tx39clock_get, tx39clock_set,
 };
 
 struct txtime {
@@ -85,7 +81,7 @@ struct tx39clock_softc {
 	int sc_alarm;
 	int sc_enabled;
 	int sc_year;
-	struct clocktime sc_epoch;
+	struct clock_ymdhms sc_epoch;
 };
 
 int	tx39clock_match(struct device *, struct cfdata *, void *);
@@ -106,6 +102,7 @@ struct cfattach tx39clock_ca = {
 int
 tx39clock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	return (ATTACH_FIRST);
 }
 
@@ -136,7 +133,7 @@ tx39clock_attach(struct device *parent, struct device *self, void *aux)
 	 *    PERINT    ... INTR5 bit 29
 	 */
 
-	clockattach(self, &tx39clockfns);	
+	platform_clock_attach(self, &tx39_clock);
 
 #ifdef TX39CLKDEBUG
 	tx39clock_dump(tc);
@@ -255,7 +252,7 @@ tx39clock_init(struct device *dev)
 	/* 
 	 * Setup periodic timer (interrupting hz times per second.) 
 	 */
-	pcnt = TX39_TIMERCLK / hz - 1;
+	pcnt = TX39_TIMERCLK / CLOCK_RATE - 1;
 	reg = tx_conf_read(tc, TX39_TIMERPERIODIC_REG);
 	TX39_TIMERPERIODIC_PERVAL_CLR(reg);
 	reg = TX39_TIMERPERIODIC_PERVAL_SET(reg, pcnt);
@@ -267,18 +264,13 @@ tx39clock_init(struct device *dev)
 	reg = tx_conf_read(tc, TX39_INTRENABLE6_REG);
 	reg |= TX39_INTRPRI13_TIMER_PERIODIC_BIT; 	
 	tx_conf_write(tc, TX39_INTRENABLE6_REG, reg); 
-
-	/* 
-	 * number of microseconds between interrupts 
-	 */
-	tick = 1000000 / hz;
 }
 
 void
-tx39clock_get(struct device *dev, time_t base, struct clocktime *ct)
+tx39clock_get(struct device *dev, time_t base, struct clock_ymdhms *t)
 {
+	struct tx39clock_softc *sc = (void *)dev;
 	struct clock_ymdhms dt;
-	struct tx39clock_softc *sc = (void*)dev;
 	struct txtime tt;
 	time_t sec;
 
@@ -293,35 +285,35 @@ tx39clock_get(struct device *dev, time_t base, struct clocktime *ct)
 		base += sec;
 	} else {
 		dt.dt_year = sc->sc_year;
-		dt.dt_mon = sc->sc_epoch.mon;
-		dt.dt_day = sc->sc_epoch.day;
-		dt.dt_hour = sc->sc_epoch.hour;
-		dt.dt_min = sc->sc_epoch.min;
-		dt.dt_sec = sc->sc_epoch.sec;
-		dt.dt_wday = sc->sc_epoch.dow;
+		dt.dt_mon = sc->sc_epoch.dt_mon;
+		dt.dt_day = sc->sc_epoch.dt_day;
+		dt.dt_hour = sc->sc_epoch.dt_hour;
+		dt.dt_min = sc->sc_epoch.dt_min;
+		dt.dt_sec = sc->sc_epoch.dt_sec;
+		dt.dt_wday = sc->sc_epoch.dt_wday;
 		base = sec + clock_ymdhms_to_secs(&dt);
 	}
 
 	clock_secs_to_ymdhms(base, &dt);
-		
-	ct->year = dt.dt_year % 100;
-	ct->mon = dt.dt_mon;
-	ct->day = dt.dt_day;
-	ct->hour = dt.dt_hour;
-	ct->min = dt.dt_min;
-	ct->sec = dt.dt_sec;
-	ct->dow = dt.dt_wday;
+
+	t->dt_year = dt.dt_year % 100;
+	t->dt_mon = dt.dt_mon;
+	t->dt_day = dt.dt_day;
+	t->dt_hour = dt.dt_hour;
+	t->dt_min = dt.dt_min;
+	t->dt_sec = dt.dt_sec;
+	t->dt_wday = dt.dt_wday;
 
 	sc->sc_year = dt.dt_year;
 }
 
 void
-tx39clock_set(struct device *dev, struct clocktime *ct)
+tx39clock_set(struct device *dev, struct clock_ymdhms *dt)
 {
-	struct tx39clock_softc *sc = (void*)dev;
+	struct tx39clock_softc *sc = (void *)dev;
 
 	if (sc->sc_enabled) {
-		sc->sc_epoch = *ct;
+		sc->sc_epoch = *dt;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.12 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.13 2001/09/18 17:37:28 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -54,7 +54,6 @@
 #include <hpcmips/tx/tx39icureg.h>
 #include <hpcmips/tx/tx39clockvar.h>
 
-#include <machine/clock_machdep.h>
 #include <machine/cpu.h>
 #include <dev/dec/clockvar.h>
 

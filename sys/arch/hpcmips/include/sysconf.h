@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.9 2001/09/16 15:45:45 uch Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.10 2001/09/18 17:37:28 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -36,9 +36,6 @@
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
- * Additional reworking for pmaxes.
- * Since pmax mboard support different CPU daughterboards,
- * and others are mmultiprocessors, rename from cpu_* to sys_*.
  */
 
 /*
@@ -50,20 +47,20 @@
 
 #ifdef _KERNEL
 /*
- * Platform Specific Information and Function Hooks.
- *
- * The tags family and model information are strings describing the platform.
- *
+ * Platform(VR/TX) Specific Information and Function Hooks.
  */
+struct platform_clock;
+struct clock_ymdhms;
+
 extern struct platform {
 	/*
-	 * Platform Specific Function Hooks
 	 *	cpu_idle	-	CPU dependend idle routine.
 	 *	cons_init 	-	console initialization
 	 *	iointr		-	I/O interrupt handler
 	 *	fb_init         -       frame buffer initialization
 	 *      mem_init        -       Count available memory
 	 *	reboot		-	reboot or powerdown
+	 *	clock		-
 	 */
 	void	(*cpu_idle)(void);
 	void	(*cons_init)(void);
@@ -71,7 +68,19 @@ extern struct platform {
 	void	(*fb_init)(caddr_t*);
 	void	(*mem_init)(paddr_t);
 	void	(*reboot)(int, char *);
+	struct platform_clock *clock;
 } platform;
+
+struct platform_clock {
+	int	hz;
+	void	(*init)(struct device *);
+	void	(*rtc_get)(struct device *, time_t, struct clock_ymdhms *);
+	void	(*rtc_set)(struct device *, struct clock_ymdhms *);
+	void	*self;
+	int	start;
+};
+
+void platform_clock_attach(void *, struct platform_clock *);
 
 #endif /* _KERNEL */
 #endif /* !_HPCMIPS_SYSCONF_H_ */
