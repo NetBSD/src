@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.9 1997/01/23 14:02:17 mrg Exp $	*/
+/*	$NetBSD: perror.c,v 1.10 1997/07/13 20:15:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: perror.c,v 1.10 1997/07/13 20:15:17 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: perror.c,v 1.9 1997/01/23 14:02:17 mrg Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -47,13 +49,13 @@ static char rcsid[] = "$NetBSD: perror.c,v 1.9 1997/01/23 14:02:17 mrg Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include "extern.h"
+
 /*
  * Since perror() is not allowed to change the contents of strerror()'s
  * static buffer, both functions supply their own buffers to the
  * internal function __strerror().
  */
-
-extern char *__strerror __P((int , char *, int));
 
 void
 perror(s)

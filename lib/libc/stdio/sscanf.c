@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.7 1996/03/29 23:29:25 jtc Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.8 1997/07/13 20:15:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: sscanf.c,v 1.8 1997/07/13 20:15:29 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: sscanf.c,v 1.7 1996/03/29 23:29:25 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -51,6 +53,8 @@ static char rcsid[] = "$NetBSD: sscanf.c,v 1.7 1996/03/29 23:29:25 jtc Exp $";
 #include <varargs.h>
 #endif
 #include "local.h"
+
+static int eofread __P((void *, char *, int));
 
 /* ARGSUSED */
 static int

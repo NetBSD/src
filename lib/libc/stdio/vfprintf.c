@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.19 1997/05/03 09:01:50 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.20 1997/07/13 20:15:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,9 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$NetBSD: vfprintf.c,v 1.19 1997/05/03 09:01:50 kleink Exp $";
+#if 0
+static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
+#else
+__RCSID("$NetBSD: vfprintf.c,v 1.20 1997/07/13 20:15:34 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -62,6 +66,10 @@ static char *rcsid = "$NetBSD: vfprintf.c,v 1.19 1997/05/03 09:01:50 kleink Exp 
 
 #include "local.h"
 #include "fvwrite.h"
+#include "extern.h"
+
+static int __sprint __P((FILE *, struct __suio *));
+static int __sbprintf __P((FILE *, const char *, va_list));
 
 /*
  * Flush out all the vectors defined by the given uio,
@@ -177,9 +185,9 @@ vfprintf(fp, fmt0, ap)
 #ifdef FLOATING_POINT
 	char *decimal_point = localeconv()->decimal_point;
 	char softsign;		/* temporary negative sign for floats */
-	double _double;		/* double precision arguments %[eEfgG] */
+	double _double = 0;	/* double precision arguments %[eEfgG] */
 	int expt;		/* integer value of exponent */
-	int expsize;		/* character count for expstr */
+	int expsize = 0;	/* character count for expstr */
 	int ndig;		/* actual number of digits returned by cvt */
 	char expstr[7];		/* buffer for exponent string */
 #endif
@@ -194,7 +202,7 @@ vfprintf(fp, fmt0, ap)
 	int dprec;		/* a copy of prec if [diouxX], 0 otherwise */
 	int realsz;		/* field size expanded by dprec */
 	int size;		/* size of converted field or string */
-	char *xdigs;		/* digits for [xX] conversion */
+	char *xdigs = NULL;	/* digits for [xX] conversion */
 #define NIOV 8
 	struct __suio uio;	/* output information: summary */
 	struct __siov iov[NIOV];/* ... and individual io vectors */
@@ -677,7 +685,7 @@ number:			if ((dprec = prec) >= 0)
 					ox[0] = *cp++;
 					ox[1] = '.';
 					PRINT(ox, 2);
-					if (_double || flags & ALT == 0) {
+					if (_double || (flags & ALT) == 0) {
 						PRINT(cp, ndig-1);
 					} else	/* 0.[0..] */
 						/* __dtoa irregularity */
@@ -707,8 +715,6 @@ error:
 }
 
 #ifdef FLOATING_POINT
-
-extern char *__dtoa __P((double, int, int, int *, int *, char **));
 
 static char *
 cvt(value, ndigits, flags, sign, decpt, ch, length)

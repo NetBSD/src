@@ -1,4 +1,4 @@
-/*	$NetBSD: puts.c,v 1.5 1996/03/29 23:29:16 jtc Exp $	*/
+/*	$NetBSD: puts.c,v 1.6 1997/07/13 20:15:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,11 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)puts.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: puts.c,v 1.6 1997/07/13 20:15:20 christos Exp $");
 #endif
-static char rcsid[] = "$NetBSD: puts.c,v 1.5 1996/03/29 23:29:16 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
