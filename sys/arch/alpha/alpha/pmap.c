@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.88.2.3 1999/04/16 23:27:18 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.88.2.4 1999/06/18 16:49:45 perry Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.3 1999/04/16 23:27:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88.2.4 1999/06/18 16:49:45 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,6 +915,7 @@ pmap_bootstrap(ptaddr, maxasn, ncpuids)
 	 * references kernel_lev1map, it always has an invalid ASN
 	 * generation.
 	 */
+	memset(pmap_kernel(), 0, sizeof(struct pmap));
 	pmap_kernel()->pm_lev1map = kernel_lev1map;
 	pmap_kernel()->pm_count = 1;
 	pmap_kernel()->pm_asn = kernel_pmap_asn_store;
@@ -1846,6 +1847,7 @@ pmap_kenter_pa(va, pa, prot)
 	pt_entry_t *pte, npte;
 	long cpu_id = alpha_pal_whami();
 	boolean_t needisync = FALSE;
+	int s;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1862,6 +1864,20 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 
 	pte = PMAP_KERNEL_PTE(va);
+
+	/*
+	 * Update stats; must lock the kernel pmap to do this.
+	 */
+	s = splimp();
+	simple_lock(&pmap->pm_slock);
+
+	if (pmap_pte_v(pte) == 0)
+		pmap_kernel()->pm_stats.resident_count++;
+	if (pmap_pte_w(pte) == 0)
+		pmap_kernel()->pm_stats.wired_count++;
+
+	simple_unlock(&pmap->pm_slock);
+	splx(s);
 
 	if ((prot & VM_PROT_EXECUTE) != 0 || pmap_pte_exec(pte))
 		needisync = TRUE;
@@ -1939,6 +1955,7 @@ pmap_kremove(va, size)
 	pt_entry_t *pte;
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
+	int s;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1951,6 +1968,7 @@ pmap_kremove(va, size)
 		panic("pmap_kremove: user address");
 #endif
 
+	s = splimp();
 	PMAP_MAP_TO_HEAD_LOCK();
 	simple_lock(&pmap_kernel()->pm_slock);
 
@@ -1966,6 +1984,7 @@ pmap_kremove(va, size)
 
 	simple_unlock(&pmap_kernel()->pm_slock);
 	PMAP_MAP_TO_HEAD_UNLOCK();
+	splx(s);
 }
 
 /*
