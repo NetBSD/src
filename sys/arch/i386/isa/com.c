@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.3 1993/09/30 20:18:59 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.4 1993/10/06 12:08:38 mycroft Exp $
  */
 
 /*
@@ -165,6 +165,10 @@ comprobe(parent, cf, aux)
 			return 0;
 	}
 
+	/* disable interrupts */
+	outb(iobase + com_mcr, 0);
+	outb(iobase + com_ier, 0);
+
 	ia->ia_iosize = COM_NPORTS;
 	ia->ia_drq = DRQUNK;
 	ia->ia_msize = 0;
@@ -178,13 +182,28 @@ comforceintr(aux)
 	struct	isa_attach_args *ia = aux;
 	u_short	iobase = ia->ia_iobase;
 
-	outb(iobase + com_fifo, 0);
-	delay(100);
+#if 0
+	/*
+	 * As usual, the PC compatible world isn't.  We'd like to use the
+	 * loopback feature to generate an interrupt, but alas, some lame
+	 * clones don't support it.
+	 */
 	outb(iobase + com_mcr, MCR_IENABLE | MCR_LOOPBACK);
 	outb(iobase + com_ier, IER_EMSC);
 	outb(iobase + com_mcr, MCR_IENABLE | MCR_LOOPBACK | MCR_DRS);
 	outb(iobase + com_mcr, MCR_IENABLE | MCR_LOOPBACK);
+#else
+	/*
+	 * So instead we try to force the transmit buffer empty (though
+	 * it probably is already).
+	 */
+	outb(iobase + com_cfcr, CFCR_8BITS);	/* turn off DLAB */
 	outb(iobase + com_ier, 0);
+	outb(iobase + com_fifo, 0);
+	outb(iobase + com_lsr, LSR_TXRDY | LSR_TSRE);
+	outb(iobase + com_mcr, MCR_IENABLE);
+	outb(iobase + com_ier, IER_ETXRDY);
+#endif
 }
 
 static void
@@ -210,9 +229,9 @@ comattach(parent, self, aux)
 	delay(100);
 	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK) {
 		sc->sc_flags |= COM_FIFO;
-		printf(": NS16550\n");
+		printf(": ns16550\n");
 	} else
-		printf(": NS8250 or NS16450\n");
+		printf(": ns8250 or ns16450\n");
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 
 	sc->sc_ih.ih_fun = comintr;
