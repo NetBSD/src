@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.26 1999/03/22 22:36:49 bad Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.27 1999/03/29 21:36:00 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.23 1999/03/22 22:36:10 bad Exp 
+ *	NetBSD: isapnpdevs,v 1.24 1999/03/29 21:35:19 fvdl Exp 
  */
 
 /*-
@@ -109,8 +109,12 @@ const struct isapnp_devinfo isapnp_ep_devinfo = {
 };
 
 /* ESS Audio Drive */
+static const struct isapnp_matchinfo isapnp_ess_devlogic[] = {
+	{"ESS1868", 0},	/* ESS1868 */
+	{"ESS1869", 0},	/* ESS1869 */
+};
 const struct isapnp_devinfo isapnp_ess_devinfo = {
-	NULL, 0,
+	isapnp_ess_devlogic, 2,
 	NULL, 0,
 };
 
@@ -198,8 +202,6 @@ static const struct isapnp_matchinfo isapnp_sb_devlogic[] = {
 	{"CTL0045", 0},	/* SB AWE64 Value */
 	{"OPT9250", 0},	/* Televideo card, Opti */
 	{"@X@0001", 0},	/* CMI8330. Audio Adapter */
-	{"ESS1868", 0},	/* ESS1868 */
-	{"ESS1869", 0},	/* ESS1869 */
 };
 static const struct isapnp_matchinfo isapnp_sb_devcompat[] = {
 	{"PNPB000", 0},	/* Generic SB 1.5 */
@@ -208,7 +210,7 @@ static const struct isapnp_matchinfo isapnp_sb_devcompat[] = {
 	{"PNPB003", 0},	/* Generic SB 16 */
 };
 const struct isapnp_devinfo isapnp_sb_devinfo = {
-	isapnp_sb_devlogic, 13,
+	isapnp_sb_devlogic, 11,
 	isapnp_sb_devcompat, 4,
 };
 
