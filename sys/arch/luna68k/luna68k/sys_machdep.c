@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.3 2000/06/29 08:17:26 mrg Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.4 2000/12/13 18:13:07 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2000/06/29 08:17:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4 2000/12/13 18:13:07 jdolecek Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2000/06/29 08:17:26 mrg Exp $");
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
-#include <sys/trace.h>
 #include <sys/mount.h>
 
 #include <uvm/uvm_extern.h>
@@ -60,64 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3 2000/06/29 08:17:26 mrg Exp $");
 #include <machine/cpu.h>
 #include <m68k/cacheops_30.h>
 #include <m68k/cacheops_40.h>
-
-#ifdef TRACE
-int	nvualarm;
-
-sys_vtrace(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap = v;
-	int vdoualarm();
-
-	switch (SCARG(uap, request)) {
-
-	case VTR_DISABLE:		/* disable a trace point */
-	case VTR_ENABLE:		/* enable a trace point */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		traceflags[SCARG(uap, value)] = SCARG(uap, request);
-		break;
-
-	case VTR_VALUE:		/* return a trace point setting */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		break;
-
-	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
-		    nvualarm > 5)
-			return (EINVAL);
-		nvualarm++;
-		timeout(vdoualarm, (void *)p->p_pid, SCARG(uap, value));
-		break;
-
-	case VTR_STAMP:
-		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
-		break;
-	}
-	return (0);
-}
-
-vdoualarm(arg)
-	void *arg;
-{
-	int pid = (int)arg;
-	struct proc *p;
-
-	p = pfind(pid);
-	if (p)
-		psignal(p, 16);
-	nvualarm--;
-}
-#endif
 
 #include <machine/cpu.h>
 
