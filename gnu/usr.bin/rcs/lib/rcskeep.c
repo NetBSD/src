@@ -40,7 +40,7 @@ Report problems and direct all questions to:
 
 #include  "rcsbase.h"
 
-libId(keepId, "$Id: rcskeep.c,v 1.2 1993/08/02 17:47:24 mycroft Exp $")
+libId(keepId, "$Id: rcskeep.c,v 1.3 1994/06/29 05:26:38 mycroft Exp $")
 
 static int checknum P((char const*,int));
 static int getval P((RILE*,struct buf*,int));
@@ -130,6 +130,9 @@ getoldkeys(fp)
                 break;
             case Header:
             case Id:
+#ifdef NETBSD_DEVELOPMENT
+	    case NetBSDH:
+#endif
 		if (!(
 		      getval(fp, (struct buf*)nil, false) &&
 		      keeprev(fp) &&
