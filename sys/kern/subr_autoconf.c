@@ -1,4 +1,35 @@
-/* $NetBSD: subr_autoconf.c,v 1.52 2000/06/02 01:48:50 cgd Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.53 2000/06/04 19:15:19 cgd Exp $ */
+
+/*
+ * Copyright (c) 1996, 2000 Christopher G. Demetriou
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *      for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +79,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.52 2000/06/02 01:48:50 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.53 2000/06/04 19:15:19 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -678,23 +709,46 @@ config_pending_decr(void)
 }
 
 /*
- * Attach an event.  These must come from initially-zero space (see
- * commented-out assignments below), but that occurs naturally for
- * device instance variables.
+ * Attach a statically-initialized event.  The type and string pointers
+ * are already set up.
  */
 void
-evcnt_attach(struct device *dev, const char *name, struct evcnt *ev)
+evcnt_attach_static(struct evcnt *ev)
+{
+	int len;
+
+	len = strlen(ev->ev_group);
+#ifdef DIAGNOSTIC
+	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
+		panic("evcnt_attach_static: group length (%s)", ev->ev_group);
+#endif
+	ev->ev_grouplen = len;
+
+	len = strlen(ev->ev_name);
+#ifdef DIAGNOSTIC
+	if (len >= EVCNT_STRING_MAX)		/* ..._MAX includes NUL */
+		panic("evcnt_attach_static: name length (%s)", ev->ev_name);
+#endif
+	ev->ev_namelen = len;
+
+	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
+}
+
+/*
+ * Attach a dynamically-initialized event.  Zero it, set up the type
+ * and string pointers and then act like it was statically initialized.
+ */
+void
+evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
+    const char *group, const char *name)
 {
 
-#ifdef DIAGNOSTIC
-	if (strlen(name) >= sizeof(ev->ev_name))
-		panic("evcnt_attach");
-#endif
-	/* ev->ev_next = NULL; */
-	ev->ev_dev = dev;
-	/* ev->ev_count = 0; */
-	strcpy(ev->ev_name, name);
-	TAILQ_INSERT_TAIL(&allevents, ev, ev_list);
+	memset(ev, 0, sizeof *ev);
+	ev->ev_type = type;
+	ev->ev_parent = parent;
+	ev->ev_group = group;
+	ev->ev_name = name;
+	evcnt_attach_static(ev);
 }
 
 /*

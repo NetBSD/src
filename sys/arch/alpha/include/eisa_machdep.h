@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.h,v 1.4 2000/06/01 00:04:50 cgd Exp $ */
+/* $NetBSD: eisa_machdep.h,v 1.5 2000/06/04 19:14:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -41,6 +41,7 @@ struct alpha_eisa_chipset {
 	int	(*ec_maxslots)(void *);
 	int	(*ec_intr_map)(void *, u_int, eisa_intr_handle_t *);
 	const char *(*ec_intr_string)(void *, eisa_intr_handle_t);
+	const struct evcnt *(*ec_intr_evcnt)(void *, eisa_intr_handle_t);
 	void	*(*ec_intr_establish)(void *, eisa_intr_handle_t,
 		    int, int, int (*)(void *), void *);
 	void	(*ec_intr_disestablish)(void *, void *);
@@ -57,6 +58,8 @@ struct alpha_eisa_chipset {
     (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
 #define	eisa_intr_string(c, h)						\
     (*(c)->ec_intr_string)((c)->ec_v, (h))
+#define	eisa_intr_evcnt(c, h)						\
+    (*(c)->ec_intr_evcnt)((c)->ec_v, (h))
 #define	eisa_intr_establish(c, h, t, l, f, a)				\
     (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a))
 #define	eisa_intr_disestablish(c, h)					\

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.18 2000/02/10 07:45:43 mjacob Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.19 2000/06/04 19:14:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.18 2000/02/10 07:45:43 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.19 2000/06/04 19:14:24 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.18 2000/02/10 07:45:43 mjacob Exp $"
 int	dec_kn300_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_kn300_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_kn300_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_kn300_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_kn300_intr_disestablish __P((void *, void *));
@@ -111,6 +112,7 @@ pci_kn300_pickintr(ccp, first)
 	pc->pc_intr_v = ccp;
 	pc->pc_intr_map = dec_kn300_intr_map;
 	pc->pc_intr_string = dec_kn300_intr_string;
+	pc->pc_intr_evcnt = dec_kn300_intr_evcnt;
 	pc->pc_intr_establish = dec_kn300_intr_establish;
 	pc->pc_intr_disestablish = dec_kn300_intr_disestablish;
 
@@ -191,6 +193,16 @@ dec_kn300_intr_string(ccv, ih)
 
 	sprintf(irqstr, "kn300 irq %ld", ih & 0x3ff);
 	return (irqstr);
+}
+
+const struct evcnt *
+dec_kn300_intr_evcnt(ccv, ih)
+	void *ccv;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *
