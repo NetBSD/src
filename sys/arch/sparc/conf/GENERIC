@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.57 1998/01/23 22:47:20 pk Exp $
+# 	$NetBSD: GENERIC,v 1.58 1998/01/25 19:56:31 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -170,10 +170,10 @@ cpu0	at mainbus0
 
 sbus0	at mainbus0				# sun4c
 obio0	at mainbus0				# sun4 and sun4m
-vmes0	at mainbus0				# sun4
-vmel0	at mainbus0				# sun4
+vme0	at mainbus0				# sun4
 iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
+vme0	at iommu0				# sun4m
 
 #### Standard system devices -- all required for a given architecture
 
@@ -278,11 +278,11 @@ scsibus* at isp?
 ##	0x04		Allow disconnect/reselect
 ##
 ## E.g. the following would enable DMA, interrupts, and reselect:
-## si0	at vmes0 addr 0xff200000 level 3 vect 0x40 flags 0x07
+## si0	at vme0 addr 0x200000 level 3 vect 0x40 flags 0x07
 ##
 ## By default, DMA is enabled in the driver.
 
-si0	at vmes0 addr 0xff200000 level 3 vect 0x40
+si0	at vme0 addr 0x200000 pri 2 vec 0x40
 scsibus* at si?
 
 ## NCR5380-based "SCSI Weird" on-board SCSI interface found
@@ -306,16 +306,16 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 ## Xylogics 753 or 7053 VME SMD disk controllers and disks, found
 ## on sun4 systems.
-xdc0	at vmel0 addr 0xffffee80 level 3 vect 0x44
-xdc1	at vmel0 addr 0xffffee90 level 3 vect 0x45
-xdc2	at vmel0 addr 0xffffeea0 level 3 vect 0x46
-xdc3	at vmel0 addr 0xffffeeb0 level 3 vect 0x47
+xdc0	at vme0 addr 0xffee80 pri 3 vec 0x44
+xdc1	at vme0 addr 0xffee90 pri 3 vec 0x45
+xdc2	at vme0 addr 0xffeea0 pri 3 vec 0x46
+xdc3	at vme0 addr 0xffeeb0 pri 3 vec 0x47
 xd*	at xdc? drive ?
 
 ## Xylogics 451 or 451 VME SMD disk controllers and disks, found
 ## on sun4 systems.
-xyc0	at vmes0 addr 0xffffee40 level 3 vect 0x48
-xyc1	at vmes0 addr 0xffffee48 level 3 vect 0x49
+xyc0	at vme0 addr 0xffee40 pri 3 vec 0x48
+xyc1	at vme0 addr 0xffee48 pri 3 vec 0x49
 xy*	at xyc? drive ?
 
 
@@ -365,10 +365,10 @@ le*		at lebuffer?				# SBus
 ## or on a Multibus/VME card.
 ie0	at obio0 addr 0xf6000000 level 6		# sun4/200 on-board
 ie0	at obio0 addr 0x06000000 level 6		# sun4/100 on-board
-ie1	at vmes0 addr 0xffe88000 level 5 vect 0x75	# VME
-ie2	at vmel0 addr 0xff31ff02 level 5 vect 0x76	# VME
-ie3	at vmel0 addr 0xff35ff02 level 5 vect 0x77	# VME
-ie4	at vmel0 addr 0xff2dff02 level 5 vect 0x7c	# VME
+ie1	at vme0 addr 0xe88000 pri 3 vec 0x75		# VME
+ie2	at vme0 addr 0x31ff02 pri 3 vec 0x76		# VME
+ie3	at vme0 addr 0x35ff02 pri 3 vec 0x77		# VME
+ie4	at vme0 addr 0x2dff02 pri 3 vec 0x7c		# VME
 
 ## Loopback network interface; required
 pseudo-device	loop
@@ -417,7 +417,7 @@ bwtwo0		at obio0 addr 0xfb300000 level 4	# sun4/300 in P4 slot
 bwtwo0		at obio0 addr 0x0b300000 level 4	# sun4/100 in P4 slot
 
 ## Sun "cgtwo" VME color framebuffer
-cgtwo0	at vmes0 addr 0xff400000 level 4 vect 0xa8
+cgtwo0		at vme0 addr 0x400000 pri ? vec 0xa8
 
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?

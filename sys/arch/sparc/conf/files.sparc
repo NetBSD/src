@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.47 1998/01/12 20:23:38 thorpej Exp $
+#	$NetBSD: files.sparc,v 1.48 1998/01/25 19:56:30 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -18,14 +18,11 @@ device iommu class dull {}
 attach iommu at mainbus
 file	arch/sparc/sparc/iommu.c		iommu
 
-device vme class dull {}
-attach vme at iommu
+include "../../../dev/vme/files.vme"
+attach vme at iommu, mainbus
 
-device vmel class dull { [addr = -1], [level = -1], [vect = -1] }
-attach vmel at mainbus, vme
-device vmes class dull { [addr = -1], [level = -1], [vect = -1] }
-attach vmes at mainbus, vme
-file	arch/sparc/dev/obio.c		obio | vmel | vmes | vme
+file	arch/sparc/dev/obio.c		obio
+file	arch/sparc/dev/vme_machdep.c	vme
 
 device auxreg class dull
 attach auxreg at mainbus, obio
@@ -103,6 +100,8 @@ include "../../../dev/scsipi/files.scsipi"
 major { sd = 7 }
 major { vnd = 8 }
 major { cd = 18 }
+major { xd = 10 }
+major { xy = 3 }
 
 device dma class dull {}
 attach dma at sbus, obio
@@ -129,11 +128,11 @@ define bt_dac
 define fb
 
 device bwtwo class dull: fb
-attach bwtwo at sbus, obio, vmes, vmel
+attach bwtwo at sbus, obio, vme
 file	arch/sparc/dev/bwtwo.c		bwtwo needs-flag
 
 device cgtwo class dull: fb
-attach cgtwo at sbus, obio, vmes
+attach cgtwo at sbus, obio, vme
 file	arch/sparc/dev/cgtwo.c		cgtwo needs-flag
 
 device cgthree class dull: bt_dac, fb
@@ -167,26 +166,11 @@ file	arch/sparc/dev/fb.c		fb needs-flag
 attach le at sbus, ledma, lebuffer, obio
 file	arch/sparc/dev/if_le.c		le
 
-device ie class ifnet: ifnet, ether, arp
-attach ie at obio, vmes, vmel
-file	arch/sparc/dev/if_ie.c		ie
-
-device xdc class dull {drive = -1}
-attach xdc at vmel
-device xd class disk: disk
-attach xd at xdc
-file	arch/sparc/dev/xd.c		xd needs-flag
-major	{xd = 10}
-
-device xyc class dull {drive = -1}
-attach xyc at vmes
-device xy class disk: disk
-attach xy at xyc
-file	arch/sparc/dev/xy.c		xy needs-flag
-major	{xy = 3}
+attach ie at obio with ie_obio
+file	arch/sparc/dev/if_ie_obio.c	ie_obio
 
 device si class dull: scsi, ncr5380sbc
-attach si at vmes
+attach si at vme
 device sw class dull: scsi, ncr5380sbc
 attach sw at obio
 file	arch/sparc/dev/si.c		si | sw
