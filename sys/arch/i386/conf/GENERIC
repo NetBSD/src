@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.65 1997/01/07 08:01:32 veego Exp $
+#	$NetBSD: GENERIC,v 1.66 1997/01/07 11:35:14 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -81,7 +81,7 @@ options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
 #options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
-				# if you enable the pseudo-device ipl).
+				# if you enable the pseudo-device ipfilter)
 
 config		netbsd	swap generic
 options		GENERIC
@@ -215,7 +215,7 @@ pseudo-device	bpfilter 8		# packet filter
 pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
-#pseudo-device	ipl 			# ip filter
+#pseudo-device	ipfilter		# ip filter
 
 pseudo-device	pty	64		# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
