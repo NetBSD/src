@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.33 1998/07/26 06:45:19 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.34 2000/05/25 18:39:09 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -45,11 +45,11 @@
 #include <sys/syslog.h>
 #include <sys/signalvar.h>
 #include <dev/cons.h>
-#include <m68k/asm_single.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #ifdef DRACO
+#include <m68k/asm_single.h>
 #include <amiga/amiga/drcustom.h>
 #endif
 #include <amiga/amiga/cia.h>
