@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/04 20:15:30 $
- * $Revision: 1.2 $
+ * $Author: wiz $
+ * $Date: 2004/04/05 10:21:23 $
+ * $Revision: 1.3 $
  */
 
 char *GPasteBuffer = 0;
@@ -471,7 +471,8 @@ chtype *char2Chtype (char *string, int *to, int *align)
 	       }
 	       else if (string[from] == '\t')
 	       {
-		  for (x=0; x < 8; x++)
+		  int save = used;
+		  for (x=0; x < 8 - (save % 8); x++)
 		  {
 		     if (result != 0)
 			result[used] = ' ';
