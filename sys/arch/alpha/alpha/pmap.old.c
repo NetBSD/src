@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.52 1998/03/12 02:59:22 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.53 1998/03/12 06:27:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.52 1998/03/12 02:59:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.53 1998/03/12 06:27:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2459,11 +2459,14 @@ pmap_collect_pv()
 vm_offset_t
 pmap_alloc_physpage()
 {
-#if defined(UVM)
 	struct vm_page *pg;
 	vm_offset_t pa;
 
+#if defined(UVM)
 	if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL) {
+#else
+	if ((pg = vm_page_alloc1()) == NULL) {
+#endif
 		/*
 		 * XXX This is lame.  We can probably wait for the
 		 * XXX memory to become available, or steal a PT
@@ -2475,25 +2478,6 @@ pmap_alloc_physpage()
 	pa = VM_PAGE_TO_PHYS(pg);
 	pmap_zero_page(pa);
 	return (pa);
-#else
-	struct pglist mlist;
-	vm_offset_t pa;
-
-	TAILQ_INIT(&mlist);
-	if (vm_page_alloc_memory(PAGE_SIZE, avail_start, avail_end - PAGE_SIZE,
-	    PAGE_SIZE, 0, &mlist, 1, FALSE)) {
-		/*
-		 * XXX This is lame.  We can probably wait for the
-		 * XXX memory to become available, or steal a PT
-		 * XXX page from another pmap.
-		 */
-		panic("pmap_alloc_physpage: no pages available");
-	}
-
-	pa = VM_PAGE_TO_PHYS(mlist.tqh_first);
-	pmap_zero_page(pa);
-	return (pa);
-#endif /* UVM */
 }
 
 /*
@@ -2505,24 +2489,16 @@ void
 pmap_free_physpage(ptpage)
 	vm_offset_t ptpage;
 {
-#if defined(UVM)
 	struct vm_page *pg;
 
 	if ((pg = PHYS_TO_VM_PAGE(ptpage)) == NULL)
 		panic("pmap_free_physpage: bogus physical page address");
 
+#if defined(UVM)
 	uvm_pagefree(pg);
 #else
-	struct pglist mlist;
-	vm_page_t pg;
-
-	if ((pg = PHYS_TO_VM_PAGE(ptpage)) == NULL)
-		panic("pmap_free_physpage: bogus physical page address");
-
-	TAILQ_INIT(&mlist);
-	TAILQ_INSERT_TAIL(&mlist, pg, pageq);
-	vm_page_free_memory(&mlist);
-#endif /* UVM */
+	vm_page_free1(pg);
+#endif
 }
 
 /******************** page table page management ********************/
