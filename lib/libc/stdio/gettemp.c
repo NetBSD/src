@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.2 1998/07/27 16:05:07 mycroft Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.3 1999/03/19 12:56:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.2 1998/07/27 16:05:07 mycroft Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.3 1999/03/19 12:56:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -143,7 +143,7 @@ __gettemp(path, doopen, domkdir)
 			if (*trv == 'z')
 				*trv++ = 'a';
 			else {
-				if (isdigit(*trv))
+				if (isdigit((unsigned char)*trv))
 					*trv = 'a';
 				else
 					++*trv;

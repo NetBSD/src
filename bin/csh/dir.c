@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.14 1998/07/28 11:41:41 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.15 1999/03/19 12:56:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.14 1998/07/28 11:41:41 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.15 1999/03/19 12:56:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -679,12 +679,12 @@ dcanon(cp, p)
 		break;
 	    }
 
-	if (*sp == '\0')	/* if component is null */
+	if (*sp == '\0') {	/* if component is null */
 	    if (--sp == cp)	/* if path is one char (i.e. /) */
 		break;
 	    else
 		*sp = '\0';
-	else if (sp[0] == '.' && sp[1] == 0) {
+	} else if (sp[0] == '.' && sp[1] == 0) {
 	    if (slash) {
 		for (p1 = sp, p2 = p + 1; (*p1++ = *p2++) != '\0';)
 		    continue;
