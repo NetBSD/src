@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.17 2000/03/26 10:53:40 soren Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.18 2000/04/04 19:22:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,6 +102,17 @@
  *		- Not all registers have the pad word between them,
  *		  but luckily, there are all AL981-specific registers,
  *		  so this is easy to deal with.
+ *
+ *	- Xircom X3201-3
+ *
+ *	  CardBus 21143 clone, with a few differences:
+ *
+ *		- No MicroWire SROM; Ethernet address must come
+ *		  from CIS.
+ *		- Transmit buffers must also be 32-bit aligned.
+ *		- The BUSMODE_SWR bit is not self-clearing.
+ *		- SIA is not 21143-like, and all media attachments
+ *		  are MII-on-SIO.
  *
  * Some of the clone chips have different registers, and some have
  * different bits in the same registers.  These will be denoted by
@@ -397,6 +408,7 @@ struct tulip_desc {
 		/*
 		 * Transmit auto-polling not supported on:
 		 *	Winbond 89C040F
+		 *	Xircom X3201-3
 		 */
 #define	BUSMODE_TAP_NONE	0x00000000	/*     no auto-polling */
 #define	BUSMODE_TAP_200us	0x00020000	/*   200 uS */
@@ -495,6 +507,10 @@ struct tulip_desc {
 #define	STATUS_LC		0x08000000	/* 100baseTX link change
 						   (21142/PMAC) */
 #define	STATUS_PMAC_WKUPI	0x10000000	/* wake up event */
+#define	STATUS_X3201_PMEIS	0x10000000	/* power management event
+						   interrupt summary */
+#define	STATUS_X3201_SFIS	0x80000000	/* second function (Modem)
+						   interrupt status */
 
 
 /* CSR6 - Operation Mode */
@@ -1390,5 +1406,27 @@ struct tulip_desc {
 						   1 == 1.4 VPP */
 #define	ADM_100CTR_ANC		0x1000		/* autoneg completed */
 #define	ADM_100CTR_DISRER	0x2000		/* disable Rx error counter */
+
+/*
+ * Xircom X3201-3 registers
+ */
+
+/* Power Management Register */
+#define	CSR_X3201_PMR		TULIP_CSR16
+#define	X3201_PMR_EDINT		0x0000000f	/* energy detect interval */
+#define	X3201_PMR_EDEN		0x00000100	/* energy detect enable */
+#define	X3201_PMR_MPEN		0x00000200	/* magic packet enable */
+#define	X3201_PMR_WOLEN		0x00000400	/* Wake On Lan enable */
+#define	X3201_PMR_PMGP0EN	0x00001000	/* GP0 change enable */
+#define	X3201_PMR_PMLCEN	0x00002000	/* link change enable */
+#define	X3201_PMR_WOLTMEN	0x00008000	/* WOL template mem enable */
+#define	X3201_PMR_EP		0x00010000	/* energy present */
+#define	X3201_PMR_LP		0x00200000	/* link present */
+#define	X3201_PMR_EDES		0x01000000	/* ED event status */
+#define	X3201_PMR_MPES		0x02000000	/* MP event status */
+#define	X3201_PMR_WOLES		0x04000000	/* WOL event status */
+#define	X3201_PMR_WOLPS		0x08000000	/* WOL process status */
+#define	X3201_PMR_GP0ES		0x10000000	/* GP0 event status */
+#define	X3201_PMR_LCES		0x20000000	/* LC event status */
 
 #endif /* _DEV_IC_TULIPREG_H_ */
