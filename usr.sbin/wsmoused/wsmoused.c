@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.14 2004/01/05 10:56:02 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.15 2004/01/05 12:01:52 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.14 2004/01/05 10:56:02 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.15 2004/01/05 12:01:52 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: wsmoused.c,v 1.14 2004/01/05 10:56:02 jmmv Exp $");
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
@@ -291,11 +292,15 @@ event_loop(void)
 			if (res != sizeof(event))
 				log_warn("failed to read from mouse stat");
 
+			for (i = 0; i < MAX_MODES && Modes[i] != NULL; i++)
+				if (Modes[i]->mb_wscons_event != NULL)
+					Modes[i]->mb_wscons_event(event, true);
+
 			generic_wscons_event(event);
 
 			for (i = 0; i < MAX_MODES && Modes[i] != NULL; i++)
 				if (Modes[i]->mb_wscons_event != NULL)
-					Modes[i]->mb_wscons_event(event);
+					Modes[i]->mb_wscons_event(event, false);
 
 		} else if (fds[1].revents & POLLIN) {
 			res = read(Mouse.m_devfd, &event, sizeof(event));
