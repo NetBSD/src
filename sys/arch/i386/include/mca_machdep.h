@@ -1,7 +1,7 @@
-/*	$NetBSD: mca_machdep.h,v 1.7 2001/11/23 22:29:16 jdolecek Exp $	*/
+/*	$NetBSD: mca_machdep.h,v 1.8 2001/12/02 17:02:33 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * Copyright (c) 1999 Scott D. Telford.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,7 @@ struct mcabus_attach_args;
 void	mca_attach_hook(struct device *, struct device *,
 		struct mcabus_attach_args *);
 int	mca_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_dmamap_t *, int);
+void	mca_dma_set_ioport(int dma, u_int16_t port);
 const struct evcnt *mca_intr_evcnt(mca_chipset_tag_t, mca_intr_handle_t);
 void	*mca_intr_establish(mca_chipset_tag_t, mca_intr_handle_t,
 		int, int (*)(void *), void *);
@@ -68,6 +69,14 @@ void	mca_intr_disestablish(mca_chipset_tag_t, void *);
 int	mca_conf_read(mca_chipset_tag_t, int, int);
 void	mca_conf_write(mca_chipset_tag_t, int, int, int);
 void	mca_busprobe(void);
+
+/*
+ * Flags for DMA. Avoid BUS_DMA_BUS1, we share dmamap routines with ISA and
+ * that flag is used for different purpose within _isa_dmamap_*().
+ */
+#define MCABUS_DMA_IOPORT		BUS_DMA_BUS2	/* io-port based DMA */
+#define	MCABUS_DMA_16BIT		BUS_DMA_BUS3	/* 16bit DMA */
+#define	_MCABUS_DMA_USEDMACTRL		BUS_DMA_BUS4	/* internal flag */
 
 /*
  * These two are used to light disk busy LED on PS/2 during disk operations.
