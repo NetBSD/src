@@ -1,17 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/25 02:37:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2001/11/12 23:16:30 tv Exp $
 
-MDSETIMAGE_TARGET_PREFIX=${MACHINE_GNU_PLATFORM}-
+.include <bsd.own.mk>
 
-HOSTPROGNAME=	${MDSETIMAGE_TARGET_PREFIX}mdsetimage
+HOSTPROGNAME=	${MACHINE_GNU_PLATFORM}-mdsetimage
 HOST_SRCDIR=	gnu/usr.sbin/mdsetimage
 
-BFDDIR=	 ${TOOLCHAINOBJDIR}/toolchain/bfd
-IBERTYDIR= ${TOOLCHAINOBJDIR}/toolchain/libiberty
+TOOLCHAINOBJ!=	cd ${.CURDIR}/../toolchain && ${PRINTOBJDIR}
+BFDDIR=		${TOOLCHAINOBJ}/build/bfd
+IBERTYDIR=	${TOOLCHAINOBJ}/build/libiberty
 
 .include "${.CURDIR}/../Makefile.host"
-
-TOOLCHAINOBJDIR!= cd ${_CURDIR}/../toolchain && ${PRINTOBJDIR}
-
-HOST_CPPFLAGS+= -I${BFDDIR} -I${DIST}/include
-
-${TIMESTAMP}: ${SRCS}

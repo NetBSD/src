@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.53 2001/11/02 05:21:50 tv Exp $
+#	$NetBSD: bsd.doc.mk,v 1.54 2001/11/12 23:16:20 tv Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -9,14 +9,13 @@ clean:		cleandoc
 realinstall:	docinstall
 
 ##### Default values
-BIB?=		bib
 EQN?=		eqn
 GREMLIN?=	grn
 GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic
 REFER?=		refer
-ROFF?=		groff -Tps
+ROFF?=		${GROFF} -Tps
 SOELIM?=	soelim
 TBL?=		tbl
 
