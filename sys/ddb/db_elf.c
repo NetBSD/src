@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.11 2000/05/22 14:49:10 jhawk Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.12 2000/07/07 21:50:26 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	Elf_Ehdr *elf;
 	Elf_Shdr *shp;
 	Elf_Sym *symp, *symtab_start, *symtab_end;
-	char *strtab_start, *strtab_end;
+	char *shstrtab, *strtab_start, *strtab_end;
 	int i;
 
 	if (ALIGNED_POINTER(symtab, long) == 0) {
@@ -147,44 +147,24 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	}
 
 	/*
-	 * We need to avoid the section header string table (small string
-	 * table which names the sections).  We do this by assuming that
-	 * the following two conditions will be true:
-	 *
-	 *	(1) .shstrtab will be smaller than one page.
-	 *	(2) .strtab will be larger than one page.
-	 *
-	 * When we encounter what we think is the .shstrtab, we change
-	 * its section type Elf_sht_null so that it will be ignored
-	 * later.
+	 * Find the section header string table (.shstrtab), and look up
+	 * the symbol table (.symtab) and string table (.strtab) via their
+	 * names in shstrtab, rather than by table type.
+	 * This works in the presence of multiple string tables, such as
+	 * stabs data found when booting netbsd.gdb.
 	 */
 	shp = (Elf_Shdr *)((char *)symtab + elf->e_shoff);
+	shstrtab = (char*)symtab + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
-		switch (shp[i].sh_type) {
-		case SHT_STRTAB:
-			if (shp[i].sh_size < NBPG) {
-				shp[i].sh_type = SHT_NULL;
-				continue;
-			}
-			if (strtab_start != NULL)
-				goto multiple_strtab;
+		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0) {
 			strtab_start = (char *)symtab + shp[i].sh_offset;
 			strtab_end = (char *)symtab + shp[i].sh_offset +
 			    shp[i].sh_size;
-			break;
-		
-		case SHT_SYMTAB:
-			if (symtab_start != NULL)
-				goto multiple_symtab;
+		} else if (strcmp(".symtab", shstrtab+shp[i].sh_name) == 0) {
 			symtab_start = (Elf_Sym *)((char *)symtab + 
 			    shp[i].sh_offset);
 			symtab_end = (Elf_Sym *)((char *)symtab + 
 			    shp[i].sh_offset + shp[i].sh_size);
-			break;
-
-		default:
-			/* Ignore all other sections. */
-			break;
 		}
 	}
 
@@ -215,14 +195,6 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
  badheader:
 	printf("[ %s ELF symbol table not valid ]\n", name);
 	return (FALSE);
-
- multiple_strtab:
-	printf("[ %s has multiple ELF string tables ]\n", name);
-	return (FALSE);
-
- multiple_symtab:
-	printf("[ %s has multiple ELF symbol tables ]\n", name);
-	return (FALSE);
 }
 
 /*
@@ -235,11 +207,13 @@ db_elf_find_strtab(stab)
 {
 	Elf_Ehdr *elf = STAB_TO_EHDR(stab);
 	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
+	char *shstrtab;
 	int i;
 
+	shstrtab = (char*)elf + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
-		if (shp[i].sh_type == SHT_STRTAB)
-			return (stab->private + shp[i].sh_offset);
+		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0)
+			return ((char*)elf + shp[i].sh_offset);
 	}
 
 	return (NULL);
