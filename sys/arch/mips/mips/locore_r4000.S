@@ -1851,38 +1851,6 @@ ALEAF(mips3_VCEI)	/* XXXX */
 	mfc0	k0, MACH_COP_0_BAD_VADDR	# fault addr.
 	nop
 	nop
-#if 0	/* old code */
-	li	k1, -16
-	and	k0, k0, k1
-	nop
-	cache	1, 0(k0)
- #	and	k1, k0, 0x1fff			# 3fff for R4400
-	and	k1, k0, 0x3fff			# R4400
-	or	k1, 0x80000000
-	xor	k1, 0x1000
-	nop
-	cache	1, 0(k1)
-	xor	k1, 0x10
-	nop
-	cache	1, 0(k1)
-	xor	k1, 0x1000
-	nop
-	cache	1, 0(k1)
- # R4400
-	xor	k1, 0x2000
-	nop
-	cache	1, 0(k1)
-	xor	k1, 0x1000
-	nop
-	cache	1, 0(k1)
-	xor	k1, 0x10
-	nop
-	cache	1, 0(k1)
-	xor	k1, 0x1000
-	nop
-	cache	1, 0(k1)
- # end R4400
-#else	/* new code */
 	and	k0, -16
 	sw	k0, vce_savek0			# save virtual address
 	cache	1, 0(k0)			# writeback primary line
@@ -1902,14 +1870,13 @@ ALEAF(mips3_VCEI)	/* XXXX */
 	cache	1, 0(k0)			#   in the other half of the
 	xor	k0, 0x1000			#   R4400 primary cache
 	cache	1, 0(k0)
-	xor	k0, 0x01
+	xor	k0, 0x10
 	cache	1, 0(k0)
 	xor	k0, 0x1000
 	cache	1, 0(k0)
  # end R4400
 1:
 	lw	k0, vce_savek0			# get original address
-#endif /* new code */
 	cache	31, 0(k0)
 	nop
 #ifdef DEBUG
@@ -1929,7 +1896,7 @@ ALEAF(mips3_VCEI)	/* XXXX */
 	move	AT, k0
 	.set	at
 	eret
-	.word	0
+	.align	3			# needs to be aligned?
 vce_saveat:
 	.word	0
 	.word	0
