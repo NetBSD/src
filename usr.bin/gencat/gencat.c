@@ -748,7 +748,7 @@ MCDelSet(setId)
 		msg = set->msghead.lh_first;
 		while (msg) {
 			free(msg->str);
-			LIST_REMOVE(msg, entries)
+			LIST_REMOVE(msg, entries);
 		}
 
 		LIST_REMOVE(set, entries);
