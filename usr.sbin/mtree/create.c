@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.27 2000/10/15 12:27:25 is Exp $	*/
+/*	$NetBSD: create.c,v 1.28 2001/02/20 19:45:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.27 2000/10/15 12:27:25 is Exp $");
+__RCSID("$NetBSD: create.c,v 1.28 2001/02/20 19:45:51 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,21 +171,14 @@ statf(p)
 		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
 	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
 		output(&indent, "size=%lld", (long long)p->fts_statp->st_size);
-#ifndef __APPLE__
-# ifdef BSD4_4
+#ifdef BSD4_4
 	if (keys & F_TIME)
 		output(&indent, "time=%ld.%ld",
 		    (long)p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
-# else
+#else
 		output(&indent, "time=%ld.%ld",
 		    p->fts_statp->st_mtime, 0);
-# endif
-#else
-	if (keys & F_TIME)
-		output(&indent, "time=%ld.%ld",
-		    p->fts_statp->st_mtimespec.ts_sec,
-		    p->fts_statp->st_mtimespec.ts_nsec);
 #endif
 	if (keys & F_CKSUM && S_ISREG(p->fts_statp->st_mode)) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0 ||
