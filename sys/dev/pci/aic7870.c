@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7870.c,v 1.5 1995/12/28 08:58:19 thorpej Exp $	*/
+/*	$NetBSD: aic7870.c,v 1.6 1996/01/31 00:45:25 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -65,8 +65,8 @@ aic7870_probe(parent, match, aux)
 
 	switch (PCI_CHIPID(pa->pa_id)) {
 	case PCI_PRODUCT_ADP_AIC7870:
-	case PCI_PRODUCT_ADP_AIC2940:
-	case PCI_PRODUCT_ADP_AIC2940U:
+	case PCI_PRODUCT_ADP_2940:
+	case PCI_PRODUCT_ADP_2940U:
 		return 1;
 	default:
 		return 0;
@@ -87,8 +87,8 @@ aic7870_attach(parent, self, aux)
 		ahc->type = AHC_AIC7870;
 		break;
 
-	case PCI_PRODUCT_ADP_AIC2940:
-	case PCI_PRODUCT_ADP_AIC2940U:
+	case PCI_PRODUCT_ADP_2940:
+	case PCI_PRODUCT_ADP_2940U:
 		ahc->type = AHC_294;
 		break;
 	}
