@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.2 1993/08/02 17:47:54 mycroft Exp $
+#	$Id: Makefile,v 1.3 1994/12/22 09:45:36 cgd Exp $
 
-MAN1=	rcsfreeze.0
+MAN=	rcsfreeze.1
 
 afterinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
