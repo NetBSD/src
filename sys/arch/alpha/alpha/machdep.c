@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.102 1998/02/12 01:53:21 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.103 1998/02/12 02:54:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 1998/02/12 01:53:21 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 1998/02/12 02:54:02 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,11 +227,11 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	alpha_pal_imb();
 
 	/*
-	 * get address of the restart block, while we the bootstrap
-	 * mapping is still around.
+	 * get address of the restart parameter block, while the
+	 * bootstrap mapping is still around.
 	 */
 	hwrpb = (struct rpb *)ALPHA_PHYS_TO_K0SEG(
-	    (vm_offset_t)(*(struct rpb **)HWRPB_ADDR));
+	    ((struct rpb *)HWRPB_ADDR)->rpb_phys);
 
 	/*
 	 * Remember how many cycles there are per microsecond, 
