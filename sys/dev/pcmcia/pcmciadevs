@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.127 2001/05/18 06:05:52 jhawk Exp $
+$NetBSD: pcmciadevs,v 1.128 2001/05/20 09:15:54 ichiro Exp $
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
 /*-
@@ -54,6 +54,7 @@ vendor SOCKET			0x0104	Socket Communications
 vendor TDK			0x0105	TDK Corporation
 vendor XIRCOM			0x0105	Xircom
 vendor SMC			0x0108	Standard Microsystems Corporation
+vendor NI			0x010b	National Instruments
 vendor USROBOTICS		0x0115	US Robotics Corporation
 vendor MEGAHERTZ2		0x0128	Megahertz Corporation
 vendor OLICOM			0x0121	Olicom
@@ -187,6 +188,9 @@ product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK Ethernet Modem
 
 /* Melco Products */
 product MELCO LPC3_TX	 	0xc1ab Melco LPC3-TX
+
+/* National Instruments */
+product NI PCMCIA-GPIB	 	0x4882 National Instruments PCMCIA-GPIB
 
 /* Nokia Products */
 product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card
