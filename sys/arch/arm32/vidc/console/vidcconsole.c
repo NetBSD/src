@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.19 1998/11/19 15:38:21 mrg Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.20 1999/01/01 12:45:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -80,8 +80,6 @@
 #include <arm32/vidc/console/fonts/font_normal.h>
 #include <arm32/vidc/console/fonts/font_bold.h>
 #include <arm32/vidc/console/fonts/font_italic.h>
-
-#define BCOPY bcopy
 
 #ifndef DEBUGTERM
 #define dprintf(x)	;
@@ -888,7 +886,7 @@ vidcconsole_scrollup(vc, low, high)
 	    {
     	        start = (unsigned char *)oldstart;
     	        end=(unsigned char*)oldstart+((low+1) * R_DATA->bytes_per_line);
-    	        BCOPY ( start, start+R_DATA->bytes_per_line,
+    	        memcpy(start+R_DATA->bytes_per_line, start,
 		    end-start-R_DATA->bytes_per_line);
 	    }
 
@@ -896,7 +894,7 @@ vidcconsole_scrollup(vc, low, high)
 	    {
     	        start =(unsigned char *)dispstart+(high)*R_DATA->bytes_per_line;
     	        end=(unsigned char*)dispstart+((vc->ychars)*R_DATA->bytes_per_line);
-    	        BCOPY ( start, start+R_DATA->bytes_per_line,
+    	        memcpy(start+R_DATA->bytes_per_line, start,
 		    end-start-R_DATA->bytes_per_line);
 	    }
 	    high++;
@@ -913,7 +911,7 @@ vidcconsole_scrollup(vc, low, high)
 	    if (low>high) return;	/* yuck */
 	    start = (unsigned char *)dispstart + ((low)*R_DATA->bytes_per_line);
 	    end = (unsigned char *)dispstart +  ((high)*R_DATA->bytes_per_line);
-	    BCOPY ( start+R_DATA->bytes_per_line, start,
+	    memcpy(start, start+R_DATA->bytes_per_line,
 		(end-start)-R_DATA->bytes_per_line );
 	    R_DATA->scrollback_end = dispstart;
 	}
@@ -953,7 +951,7 @@ high--;
 	    {
 	        start =(unsigned char*)dispstart+((high+1)*R_DATA->bytes_per_line);
 	        end=(unsigned char*)dispstart+((vc->ychars)*R_DATA->bytes_per_line);
-  	        BCOPY ( start+R_DATA->bytes_per_line, start,
+  	        memcpy(start, start+R_DATA->bytes_per_line,
 	 	    (end-start)-R_DATA->bytes_per_line );
 	    }
 
@@ -966,8 +964,8 @@ high--;
    	    if (low!=0)
 	    {
 	        end = (unsigned char *)dispstart + ((low+1)*R_DATA->bytes_per_line);
-  	        BCOPY ( (char*)(dispstart+R_DATA->bytes_per_line),
-			(char *)dispstart,
+  	        memcpy((char *)dispstart,
+  	            (char *)(dispstart+R_DATA->bytes_per_line),
 		    (int)((end-dispstart)-R_DATA->bytes_per_line ));
 	    }
 	}
@@ -975,7 +973,8 @@ high--;
 	{
     	    start = (unsigned char *)dispstart + (low * R_DATA->bytes_per_line);
     	    end = (unsigned char *)dispstart  + ((high+1) * R_DATA->bytes_per_line);
-    	    BCOPY ( start, start+R_DATA->bytes_per_line, end-start-R_DATA->bytes_per_line);
+    	    memcpy(start+R_DATA->bytes_per_line, start,
+    	        end-start-R_DATA->bytes_per_line);
 	}
 
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.1 1998/07/08 04:58:03 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.2 1999/01/01 12:42:47 mark Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -212,7 +212,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 		error = ENOMEM;
 		goto out;
 	}
-	bzero(cookiestore, cookiesize);
+	memset(cookiestore, 0, cookiesize);
 	cookie = (struct arm32_isa_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->_dm_cookie = cookie;
@@ -507,16 +507,16 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 			/*
 			 * Copy the caller's buffer to the bounce buffer.
 			 */
-			bcopy(cookie->id_origbuf + offset,
-			    cookie->id_bouncebuf + offset, len);
+			memcpy(cookie->id_bouncebuf + offset,
+			    cookie->id_origbuf + offset, len);
 		}
 
 		if (ops & BUS_DMASYNC_POSTREAD) {
 			/*
 			 * Copy the bounce buffer to the caller's buffer.
 			 */
-			bcopy(cookie->id_bouncebuf + offset,
-			    cookie->id_origbuf + offset, len);
+			memcpy(cookie->id_origbuf + offset,
+			    cookie->id_bouncebuf + offset, len);
 		}
 
 		/*
@@ -561,8 +561,8 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				bcopy(cookie->id_bouncebuf + offset,
-				    mtod(m, caddr_t) + moff, minlen);
+				memcpy(mtod(m, caddr_t) + moff,
+				    cookie->id_bouncebuf + offset, minlen);
 
 				moff = 0;
 				len -= minlen;

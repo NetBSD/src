@@ -1,4 +1,4 @@
-/*	$NetBSD: vt220.c,v 1.12 1998/10/05 00:53:47 mark Exp $	*/
+/*	$NetBSD: vt220.c,v 1.13 1999/01/01 12:45:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -133,7 +133,7 @@ TERMTYPE_INIT(vc)
 
 	cdata = (struct vt220_info *)vc->data;
 
-	bzero((char *)cdata, sizeof (cdata));
+	memset((char *)cdata, 0, sizeof (cdata));
 
 #ifdef HARD_RESET_AT_INIT
 	vt_ris(vc);

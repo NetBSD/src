@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.14 1998/08/25 03:26:36 mark Exp $	*/
+/*	$NetBSD: console.c,v 1.15 1999/01/01 12:45:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -201,7 +201,7 @@ vconsole_spawn_re(dev, vc)
 	MALLOC(new, struct vconsole *, sizeof(struct vconsole),
 	    M_DEVBUF,M_NOWAIT );
 /*	printf("spawn_re:new=%08x\n", new);*/
-	bzero ( (char *)new, sizeof(struct vconsole) );
+	memset((char *)new, 0, sizeof(struct vconsole));
 	*new = *vc;
 	new->number = num;
 	new->next = vconsole_head;
@@ -238,7 +238,7 @@ vconsole_spawn(dev, vc)
 	    M_DEVBUF, M_NOWAIT );
 /*	printf("spawn:new=%08x\n", new);*/
 
-	bzero ( (char *)new, sizeof(struct vconsole) );
+	memset((char *)new, 0, sizeof(struct vconsole));
 	*new = *vc;
 	new->number = num;
 	new->next = vconsole_head;
