@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1999/11/27 03:08:31 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1999/11/27 06:45:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,12 +39,16 @@
  */
 
 #include <sys/types.h>
-#include <stand.h>
-#include <ufs.h>
+#include <netinet/in.h>
+#include <lib/libsa/stand.h>
+#include <lib/libsa/dev_net.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/lfs.h>
+#include <lib/libsa/nfs.h>
+#include <lib/libsa/cd9660.h>
+#include <lib/libsa/ustarfs.h>
 #include <machine/dec_prom.h>
-#include <rz.h>
-
-const	struct callback *callv = &callvec;
+#include "../common/rz.h"
 
 #ifndef LIBSA_SINGLE_DEVICE
 
@@ -59,7 +63,10 @@ const	struct callback *callv = &callvec;
 #endif
 
 struct devsw devsw[] = {
-	{ "rz",	rzstrategy,	rzopen,	rzclose,	rzioctl }, /*0*/
+	{ "rz", rzstrategy, rzopen, rzclose, rzioctl },			/* 0 */
+#ifdef BOOTNET
+	{ "tftp", net_strategy, net_open, net_close, net_ioctl },	/* 1 */
+#endif
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
@@ -69,14 +76,39 @@ int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 #ifndef LIBSA_SINGLE_FILESYSTEM
 #ifdef LIBSA_NO_FS_CLOSE
 #define ufs_close	0
+#define lfs_close	0
+#define cd9660_close	0
+#define ustarfs_close	0
+#define nfs_close	0
 #endif
 #ifdef LIBSA_NO_FS_WRITE
 #define ufs_write	0
+#define lfs_write	0
+#define cd9660_write	0
+#define ustarfs_write	0
+#define nfs_write	0
 #endif
 
 struct fs_ops file_system[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
+	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+	{ lfs_open, lfs_close, lfs_read, lfs_write, lfs_seek, lfs_stat },
+	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	    cd9660_stat },
+	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
+	    ustarfs_seek, ustarfs_stat },
+#ifdef BOOTNET
+	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+#endif
 };
 
 int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+#endif
+
+#ifdef BOOTNET
+extern struct netif_driver prom_netif_driver;
+
+struct netif_driver *netif_drivers[] = {
+	&prom_netif_driver,
+};
+int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
 #endif
