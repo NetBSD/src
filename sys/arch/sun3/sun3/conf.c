@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1995/04/10 05:42:34 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 1995/04/10 06:55:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -316,6 +316,7 @@ static int chrtoblktbl[] = {
 	/* 69 */	NODEV,
 	/* 70 */	NODEV,
 	/* 71 */	NODEV,
+};
 
 /*
  * Convert a character device number to a block device number.
