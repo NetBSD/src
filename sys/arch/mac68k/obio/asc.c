@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.42 2002/10/02 05:36:38 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.43 2002/10/10 22:33:16 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -70,7 +70,6 @@
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 #include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
@@ -117,12 +116,11 @@ dev_type_close(ascclose);
 dev_type_read(ascread);
 dev_type_write(ascwrite);
 dev_type_ioctl(ascioctl);
-dev_type_poll(ascpoll);
 dev_type_mmap(ascmmap);
 
 const struct cdevsw asc_cdevsw = {
 	ascopen, ascclose, ascread, ascwrite, ascioctl,
-	nostop, notty, ascpoll, ascmmap,
+	nostop, notty, nopoll, ascmmap,
 };
 
 static int
@@ -288,15 +286,6 @@ ascioctl(dev, cmd, data, flag, p)
 		break;
 	}
 	return (error);
-}
-
-int
-ascpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	return (events & (POLLOUT | POLLWRNORM));
 }
 
 paddr_t
