@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.32 2000/01/22 22:19:10 mycroft Exp $	*/
+/*	$NetBSD: getcap.c,v 1.33 2000/06/02 13:13:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.32 2000/01/22 22:19:10 mycroft Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.33 2000/06/02 13:13:07 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -249,7 +249,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	char *r_end, *rp = NULL, **db_p;	/* pacify gcc */
 	int myfd = 0, eof, foundit, retval;
 	size_t clen;
-	char *record, *cbuf;
+	char *record, *cbuf, *newrecord;
 	int tc_not_resolved;
 	char pbuf[_POSIX_PATH_MAX];
 	
@@ -435,13 +435,15 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 
 					pos = rp - record;
 					newsize = r_end - record + BFRAG;
-					record = realloc(record, newsize);
-					if (record == NULL) {
+					newrecord = realloc(record, newsize);
+					if (newrecord == NULL) {
+						free(record);
 						if (myfd)
 							(void)close(fd);
 						errno = ENOMEM;
 						return (-2);
 					}
+					record = newrecord;
 					r_end = record + newsize;
 					rp = record + pos;
 				}
@@ -577,14 +579,16 @@ tc_exp:	{
 				newsize = r_end - record + diff + BFRAG;
 				tcpos = tcstart - record;
 				tcposend = tcend - record;
-				record = realloc(record, newsize);
-				if (record == NULL) {
+				newrecord = realloc(record, newsize);
+				if (newrecord == NULL) {
+					free(record);
 					if (myfd)
 						(void)close(fd);
 					free(icap);
 					errno = ENOMEM;
 					return (-2);
 				}
+				record = newrecord;
 				r_end = record + newsize;
 				rp = record + pos;
 				tcstart = record + tcpos;
@@ -615,12 +619,15 @@ tc_exp:	{
 	if (myfd)
 		(void)close(fd);
 	*len = rp - record - 1;	/* don't count NUL */
-	if (r_end > rp)
-		if ((record = 
+	if (r_end > rp) {
+		if ((newrecord = 
 		     realloc(record, (size_t)(rp - record))) == NULL) {
+			free(record);
 			errno = ENOMEM;
 			return (-2);
 		}
+		record = newrecord;
+	}
 		
 	*cap = record;
 	if (tc_not_resolved)
@@ -887,7 +894,7 @@ cgetstr(buf, cap, str)
 	const char *bp;
 	char *mp;
 	int len;
-	char *mem;
+	char *mem, *newmem;
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(cap != NULL);
@@ -978,8 +985,11 @@ cgetstr(buf, cap, str)
 		if (m_room == 0) {
 			size_t size = mp - mem;
 
-			if ((mem = realloc(mem, size + SFRAG)) == NULL)
+			if ((newmem = realloc(mem, size + SFRAG)) == NULL) {
+				free(mem);
 				return (-2);
+			}
+			mem = newmem;
 			m_room = SFRAG;
 			mp = mem + size;
 		}
@@ -991,9 +1001,13 @@ cgetstr(buf, cap, str)
 	/*
 	 * Give back any extra memory and return value and success.
 	 */
-	if (m_room != 0)
-		if ((mem = realloc(mem, (size_t)(mp - mem))) == NULL)
+	if (m_room != 0) {
+		if ((newmem = realloc(mem, (size_t)(mp - mem))) == NULL) {
+			free(mem);
 			return (-2);
+		}
+		mem = newmem;
+	}
 	*str = mem;
 	return (len);
 }
@@ -1018,7 +1032,7 @@ cgetustr(buf, cap, str)
 	const char *bp;
 	char *mp;
 	int len;
-	char *mem;
+	char *mem, *newmem;
 
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(cap != NULL);
@@ -1058,8 +1072,11 @@ cgetustr(buf, cap, str)
 		if (m_room == 0) {
 			size_t size = mp - mem;
 
-			if ((mem = realloc(mem, size + SFRAG)) == NULL)
+			if ((newmem = realloc(mem, size + SFRAG)) == NULL) {
+				free(mem);
 				return (-2);
+			}
+			mem = newmem;
 			m_room = SFRAG;
 			mp = mem + size;
 		}
@@ -1071,9 +1088,13 @@ cgetustr(buf, cap, str)
 	/*
 	 * Give back any extra memory and return value and success.
 	 */
-	if (m_room != 0)
-		if ((mem = realloc(mem, (size_t)(mp - mem))) == NULL)
+	if (m_room != 0) {
+		if ((newmem = realloc(mem, (size_t)(mp - mem))) == NULL) {
+			free(mem);
 			return (-2);
+		}
+		mem = newmem;
+	}
 	*str = mem;
 	return (len);
 }
