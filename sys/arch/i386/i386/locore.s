@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.233.2.1 2001/03/05 22:49:12 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.233.2.2 2001/04/06 21:00:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1866,6 +1866,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	sti
 
 	/* Skip context switch if same process. */
+	movl	$1, %eax	
 	cmpl	%edi,%esi
 	je	switch_return
 
@@ -1964,7 +1965,7 @@ switch_restored:
 
 	/* Interrupts are okay again. */
 	sti
-
+	xor	%eax,%eax
 switch_return:
 	/*
 	 * Restore old cpl from stack.  Note that this is always an increase,
@@ -1972,7 +1973,6 @@ switch_return:
 	 */
 	popl	_C_LABEL(cpl)
 
-	movl	%edi,%eax		# return (p);
 	popl	%edi
 	popl	%esi
 	popl	%ebx
