@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 1995/04/10 16:49:17 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 1995/04/13 22:07:35 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -61,6 +61,7 @@
 #include <machine/reg.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
+#include "cache.h"
 
 extern int fpu_type;
 
@@ -97,7 +98,6 @@ cpu_fork(p1, p2)
 	 * that copies and updates the pcb+stack,
 	 * replacing the bcopy and savectx.
 	 *
-	 * XXX - Need to flush cache for kstack first?
 	 * XXX - Note that all proc->p_addr mappings are
 	 *       NON-CACHEABLE aliases of kstack...
 	 */
@@ -290,6 +290,11 @@ vmapbuf(bp)
 		    (vm_offset_t)addr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
+#ifdef	HAVECACHE
+		/* flush write-back on old mappings */
+		if (cache_size)
+			cache_flush_page((vm_offset_t)addr);
+#endif
 		pmap_enter(vm_map_pmap(phys_map), kva,
 			trunc_page(pa) | PMAP_NC,
 			VM_PROT_READ|VM_PROT_WRITE, TRUE);
@@ -299,8 +304,10 @@ vmapbuf(bp)
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Free the io map PTEs associated with this I/O operation.
+ * The mappings in the I/O map (phys_map) were non-cached,
+ * so there are no write-back modifications to flush.
+ * Also note, kmem_free_wakeup will remove the mappings.
  */
 vunmapbuf(bp)
 	register struct buf *bp;
@@ -319,9 +326,6 @@ vunmapbuf(bp)
 	kmem_free_wakeup(phys_map, pgva, ctob(npf));
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-#ifdef	HAVECACHE
-	cache_flush(bp->b_data, bp->b_bcount - bp->b_resid);
-#endif
 }
 
 /*
@@ -345,6 +349,7 @@ void pagemove(from, to, size)
 		if (pa == 0)
 			panic("pagemove 2");
 #endif
+		/* this does the cache flush work itself */
 		pmap_remove(pmap_kernel(),
 			(vm_offset_t)from, (vm_offset_t)from + NBPG);
 		pmap_enter(pmap_kernel(),
@@ -434,6 +439,11 @@ caddr_t dvma_remap(char *kva, int len)
 		phys = pmap_extract(pmap_kernel(), (vm_offset_t)kva);
 		if (phys == 0)
 			panic("dvma_remap: phys=0");
+#ifdef	HAVECACHE
+		/* flush write-back on old mappings */
+		if (cache_size)
+			cache_flush_page((vm_offset_t)kva);
+#endif
 
 		/* Duplicate the mapping */
 		pmap_enter(pmap_kernel(), dvma,
