@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.16 2001/11/19 04:46:07 perry Exp $
+#	$NetBSD: bsd.links.mk,v 1.17 2002/02/11 21:15:00 mycroft Exp $
 
 ##### Basic targets
 .PHONY:		linksinstall
@@ -32,8 +32,7 @@ linksinstall::
 		l=${DESTDIR}$$1; shift; \
 		t=${DESTDIR}$$1; shift; \
 		echo "realall: $$t"; \
-		echo ".PHONY: $$t"; \
-		echo "$$t:"; \
+		echo "$$t!"; \
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t; ${INSTALL_LINK} $$l $$t"; \
 	 done; \

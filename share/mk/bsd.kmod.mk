@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.47 2001/12/28 07:49:26 thorpej Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.48 2002/02/11 21:14:59 mycroft Exp $
 
 .include <bsd.init.mk>
 
@@ -43,16 +43,22 @@ machine-links:
 .if !target(kmodinstall)
 _PROG:=		${DESTDIR}${KMODDIR}/${PROG}		# installed path
 
+.if !defined(UPDATE)
+${_PROG}! ${PROG}					# install rule
+.if !defined(BUILD) && !make(all) && !make(${PROG})
+${_PROG}!	.MADE					# no build at install
+.endif
+.else
 ${_PROG}: ${PROG}					# install rule
+.if !defined(BUILD) && !make(all) && !make(${PROG})
+${_PROG}:	.MADE					# no build at install
+.endif
+.endif
 	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${.ALLSRC} ${.TARGET}
 
 kmodinstall::	${_PROG}
 .PRECIOUS:	${_PROG}				# keep if install fails
-.PHONY:		${UPDATE:D:U${_PROG}}			# clobber unless UPDATE
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${_PROG}:	.MADE					# no build at install
-.endif
 
 .undef _PROG
 .endif # !target(kmodinstall)

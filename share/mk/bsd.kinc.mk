@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.21 2001/11/28 20:19:08 tv Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.22 2002/02/11 21:14:59 mycroft Exp $
 
 # System configuration variables:
 #
@@ -80,10 +80,14 @@ __incinstall: .USE
 .for F in ${INCS:O:u} ${DEPINCS:O:u}
 _F:=		${DESTDIR}${INCSDIR}/${F}		# installed path
 
+.if !defined(UPDATE)
+${_F}!		${F} __incinstall			# install rule
+.else
 ${_F}:		${F} __incinstall			# install rule
+.endif
+
 incinstall::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .endfor
 
 .undef _F
