@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.8.2.5 1998/01/29 10:14:30 mellon Exp $	
+	$NetBSD: install,v 1.8.2.6 1998/05/29 04:16:48 mycroft Exp $	
 
 The installation can be broken down into three basic steps:
 	* Run Mkfs to build a filesystem or filesystems.
@@ -156,9 +156,9 @@ If you wish to save your preferences, choose "Save Options" from the
 "File" menu before Booting (your preferences will not be saved if you
 forget to do this).
 
-If the system does not come up, send mail to scottr@netbsd.org describing
-your software, your hardware, and as complete a description of the
-problem as you can.
+If the system does not come up, send mail to port-mac68k@netbsd.org
+describing your software, your hardware, and as complete a description of
+the problem as you can.
 
 If the system does come up, congratulations, you have successfully
 installed NetBSD _VER.  When you first boot into NetBSD, it will
