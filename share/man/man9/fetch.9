@@ -1,4 +1,4 @@
-.\"	$NetBSD: fetch.9,v 1.3 1996/06/19 22:50:22 pk Exp $
+.\"	$NetBSD: fetch.9,v 1.4 1996/10/17 14:27:06 gwr Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -76,6 +76,20 @@ Fetches a word of data from the user-space address
 The
 .Nm
 functions return the data fetched or -1 on failure.
+Note that these functions all do "unsigned" access, and
+therefore will never sign extend byte or short values.
+This prevents ambiguity with the error return value
+for all functions except
+.Fn fuword .
+.Sh BUGS
+.Pp
+The function
+.Fn fuword
+has no way to unambiguously signal an error, because the
+data it reads might legetimately be the same as the -1
+used to indicate an error.  The other functions do not
+have this problem because the unsigned values returned
+by those can never match the -1 error return value.
 .Sh SEE ALSO
 .Xr copy 9 ,
 .Xr store 9 .
