@@ -1,4 +1,4 @@
-;	$NetBSD: root.cache,v 1.7 1997/05/29 01:52:25 perry Exp $
+;	$NetBSD: root.cache,v 1.8 1997/08/24 15:50:47 perry Exp $
 ;
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
@@ -14,8 +14,8 @@
 ;              submenu          InterNIC Registration Archives
 ;           file                named.root
 ;
-;       last update:    May 19, 1997
-;       related version of root zone:   1997051700
+;       last update:    Aug 22, 1997
+;       related version of root zone:   1997082200
 ;
 ;
 ; formerly NS.INTERNIC.NET
@@ -78,8 +78,8 @@ K.ROOT-SERVERS.NET.      3600000      A     193.0.14.129
 .                        3600000      NS    L.ROOT-SERVERS.NET.
 L.ROOT-SERVERS.NET.      3600000      A     198.32.64.12
 ;
-; temporarily housed at ISI (IANA)
+; housed in Japan, operated by WIDE
 ;
 .                        3600000      NS    M.ROOT-SERVERS.NET.
-M.ROOT-SERVERS.NET.      3600000      A     198.32.65.12
+M.ROOT-SERVERS.NET.      3600000      A     202.12.27.33
 ; End of File
