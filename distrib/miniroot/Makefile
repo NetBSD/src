@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2002/03/16 01:32:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.52 2002/03/17 22:30:31 lukem Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 .include <bsd.own.mk>
@@ -11,6 +11,7 @@ LISTS=		${.CURDIR}/list ${ARCHDIR}/list
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGE=		miniroot.fs
 IMAGEDEPENDS=	${CRUNCHBIN} install.sub install.sh upgrade.sh \
+		${KERNSRCDIR}/conf/osrelease.sh \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
 		${_SRC_TOP_}/etc/services
