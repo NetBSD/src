@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.2 2003/02/26 21:05:23 jklos Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.3 2003/03/14 06:27:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -141,8 +141,8 @@ cpu_attach_common(struct device *self, int id)
 	 * and just bail out.
 	 */
 	if (id != 0) {
-		printf(": ID %d\n", id);
-		printf("%s: processor off-line; multiprocessor support "
+		aprint_normal(": ID %d\n", id);
+		aprint_normal("%s: processor off-line; multiprocessor support "
 		    "not present in kernel\n", self->dv_xname);
 		return (NULL);
 	}
@@ -172,11 +172,11 @@ cpu_attach_common(struct device *self, int id)
 		break;
 	default:
 		if (id >= CPU_MAXNUM) {
-			printf(": more than %d cpus?\n", CPU_MAXNUM);
+			aprint_normal(": more than %d cpus?\n", CPU_MAXNUM);
 			panic("cpuattach");
 		}
 #ifndef MULTIPROCESSOR
-		printf(" not configured\n");
+		aprint_normal(" not configured\n");
 		return NULL;
 #endif
 	}
@@ -196,7 +196,7 @@ cpu_setup(self, ci)
 	vers = (pvr >> 16) & 0xffff;
 
 	cpu_identify(model, sizeof(model));
-	printf(": %s, ID %d%s\n", model,  cpu_number(),
+	aprint_normal(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 
 	hid0 = mfspr(SPR_HID0);
@@ -279,16 +279,16 @@ cpu_setup(self, ci)
 		break;
 	}
 	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
-	printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
+	aprint_normal("%s: HID0 %s\n", self->dv_xname, hidbuf);
 
 	/*
 	 * Display speed and cache configuration.
 	 */
 	if (vers == MPC750 || vers == MPC7400 || vers == IBM750FX ||
 	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
-		printf("%s", self->dv_xname);
+		aprint_normal("%s", self->dv_xname);
 		cpu_print_speed();
-		printf("%s", self->dv_xname);
+		aprint_normal("%s", self->dv_xname);
 		cpu_config_l2cr(vers);
 	}
 
@@ -498,7 +498,7 @@ cpu_config_l2cr(int vers)
 		if (vers == MPC7450 || vers == MPC7455) {
 			u_int l3cr;
 
-			printf(": 256KB L2 cache");
+			aprint_normal(": 256KB L2 cache");
 
 			l3cr = mfspr(SPR_L3CR);
 
@@ -547,81 +547,88 @@ cpu_config_l2cr(int vers)
 			}
 			
 			if (l3cr & L3CR_L3E) {
-				printf(", %cMB L3 backside cache at ",
+				aprint_normal(", %cMB L3 backside cache at ",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
 				switch (l3cr & L3CR_L3CLK) {
 				case L3CLK_20:
-					printf("2:1 ratio");
+					aprint_normal("2:1 ratio");
 					break;
 				case L3CLK_25:
-					printf("2.5:1 ratio");
+					aprint_normal("2.5:1 ratio");
 					break;
 				case L3CLK_30:
-					printf("3:1 ratio");
+					aprint_normal("3:1 ratio");
 					break;
 				case L3CLK_35:
-					printf("3.5:1 ratio");
+					aprint_normal("3.5:1 ratio");
 					break;
 				case L3CLK_40:
-					printf("4:1 ratio");
+					aprint_normal("4:1 ratio");
 					break;
 				case L3CLK_50:
-					printf("5:1 ratio");
+					aprint_normal("5:1 ratio");
 					break;
 				case L3CLK_60:
-					printf("6:1 ratio");
+					aprint_normal("6:1 ratio");
 					break;
 				default:
-					printf("unknown ratio");
+					aprint_normal("unknown ratio");
 					break;
 				}
 			}
-			printf("\n");
+			aprint_normal("\n");
 			return;
 		}
 		if (vers == IBM750FX) {
-			printf(": 512KB L2 cache\n");
+			aprint_normal(": 512KB L2 cache\n");
 			return;
 		}
 		switch (l2cr & L2CR_L2SIZ) {
 		case L2SIZ_256K:
-			printf(": 256KB");
+			aprint_normal(": 256KB");
 			break;
 		case L2SIZ_512K:
-			printf(": 512KB");
+			aprint_normal(": 512KB");
 			break;
 		case L2SIZ_1M:
-			printf(": 1MB");
+			aprint_normal(": 1MB");
 			break;
+		case 0:
+			if (vers == MPC7410) {
+				aprint_normal(": 2MB");
+				break;
+			}
+			/* FALLTHROUGH */
 		default:
-			printf(": unknown size");
+			aprint_normal(": unknown size");
+			break;
 		}
 		if (l2cr & L2CR_L2WT) {
-			printf(" write-through");
+			aprint_normal(" write-through");
 		} else {
-			printf(" write-back");
+			aprint_normal(" write-back");
 		}
 		switch (l2cr & L2CR_L2RAM) {
 		case L2RAM_FLOWTHRU_BURST:
-			printf(" Flow-through synchronous burst SRAM");
+			aprint_normal(" Flow-through synchronous burst SRAM");
 			break;
 		case L2RAM_PIPELINE_BURST:
-			printf(" Pipelined synchronous burst SRAM");
+			aprint_normal(" Pipelined synchronous burst SRAM");
 			break;
 		case L2RAM_PIPELINE_LATE:
-			printf(" Pipelined synchronous late-write SRAM");
+			aprint_normal(" Pipelined synchronous late-write SRAM");
 			break;
 		default:
-			printf(" unknown type");
+			aprint_normal(" unknown type");
 		}
 
 		if (l2cr & L2CR_L2PE)
-			printf(" with parity");
-		printf(" backside cache");
+			aprint_normal(" with parity");
+		aprint_normal(" backside cache");
 	} else
-		printf(": L2 cache not enabled");
+		aprint_normal(": L2 cache not enabled");
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void
@@ -635,7 +642,7 @@ cpu_print_speed(void)
 	delay(100000);
 	cps = (mfspr(SPR_PMC1) * 10) + 4999;
 
-	printf(": %lld.%02lld MHz\n", cps / 1000000, (cps / 10000) % 100);
+	aprint_normal(": %lld.%02lld MHz\n", cps / 1000000, (cps / 10000) % 100);
 }
 
 #if NSYSMON_ENVSYS > 0
@@ -668,7 +675,7 @@ cpu_tau_setup(struct cpu_info *ci)
 	sme->sme_streinfo = cpu_tau_streinfo;
 
 	if ((error = sysmon_envsys_register(sme)) != 0)
-		printf("%s: unable to register with sysmon (%d)\n",
+		aprint_error("%s: unable to register with sysmon (%d)\n",
 		    ci->ci_dev->dv_xname, error);
 }
 
