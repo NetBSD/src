@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.23 2002/07/25 12:42:39 jdolecek Exp $       */
+/*      $NetBSD: scanform.c,v 1.24 2002/07/26 07:59:33 jdolecek Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1226,8 +1226,8 @@ gen_escript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 
 	p = fgetln(file, &len);
 	if (p != NULL) {
+		p[len - 1] = '\0';	/* strip newline & NUL terminate */
 		q = strdup(p);
-		q[len -1] = '\0';
 	} else
 		bailout("fgetln: %s", strerror(errno));
 
@@ -1337,8 +1337,8 @@ gen_iscript(FTREE_ENTRY *ftp, char *dir, int max, char **args)
 
 	p = fgetln(file, &len);
 	if (p != NULL) {
+		p[len - 1] = '\0';	/* strip newline & NUL terminate */
 		q = strdup(p);
-		q[len -1] = '\0';
 	} else
 		bailout("fgetln: %s", strerror(errno));
 
