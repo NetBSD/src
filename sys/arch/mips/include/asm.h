@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.26 2000/07/27 05:01:06 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.27 2000/08/09 22:52:36 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,12 +69,13 @@
 	.set	push;						\
 	.set	noreorder;					\
 	.set	noat;						\
-	sw	t9,-4(sp);					\
+	subu	sp,sp,16;					\
+	sw	t9,12(sp);					\
 	move	AT,ra;						\
 	lui	t9,%hi(_mcount); 				\
 	addiu	t9,t9,%lo(_mcount);				\
 	jalr	t9;						\
-	subu	sp,sp,16;					\
+	nop;							\
 	lw	t9,4(sp);					\
 	addiu	sp,sp,8;					\
 	addiu	t9,t9,36;					\
