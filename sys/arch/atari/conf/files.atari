@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.18 1996/03/17 13:21:16 cgd Exp $
+#	$NetBSD: files.atari,v 1.19 1996/03/27 10:31:17 leo Exp $
 #
 
 maxpartitions 16
@@ -29,9 +29,13 @@ device	zs:	tty
 attach	zs at mainbus
 file	arch/atari/dev/zs.c		zs needs-count
 
+# printer
+device lpt
+attach	lpt at mainbus
+file	arch/atari/dev/lpt.c		lpt
+
 #ramdisk
-device rd
-attach rd at mainbus
+pseudo-device rd
 file	dev/ramdisk.c			rd needs-count
 file	arch/atari/dev/rd_root.c	ramdisk_hooks
 
@@ -106,6 +110,7 @@ file	arch/atari/atari/misc.c
 file	arch/atari/atari/vm_machdep.c
 file	arch/atari/atari/db_memrw.c		ddb
 file	arch/atari/atari/fpu.c
+file	arch/atari/dev/ym2149.c
 file	arch/m68k/m68k/copy.s
 
 # Emulation modules

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: FALCON,v 1.7 1996/03/14 21:41:23 leo Exp $
+#	$NetBSD: FALCON,v 1.8 1996/03/27 10:31:14 leo Exp $
 #
 # ATARI-FALCON
 #
@@ -84,6 +84,7 @@ pseudo-device	ppp		# ppp
 pseudo-device	pty	16	# Pseudo-tty support
 pseudo-device	loop		# Loopback network
 pseudo-device	vnd	3	# 3 pseudo disks (see vnconfig)
+pseudo-device	rd	1	# Boot ramdisk
 
 #
 #The following sections describe various hardware options.
@@ -92,3 +93,4 @@ zs0	at mainbus0		# Serial support through 8530
 grf1	at grfbus0		# second graphics driver
 ite1	at grf1			# second tty
 nvr0	at mainbus0		# nvram driver
+lpt0	at mainbus0		# centronics printer
