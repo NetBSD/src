@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.29 2001/03/18 01:31:03 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.30 2001/03/18 15:56:05 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -215,8 +215,8 @@ ascattach(pdp, dp, auxp)
 	{
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    dp->dv_xname, "intr");
-		sc->sc_ih = podulebus_irq_establish(pdp, sc->sc_podule_number,
-		    IPL_BIO, asc_intr, sc, &sc->sc_intrcnt);
+		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+		    asc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)
 			panic("%s: Cannot claim podule IRQ\n", dp->dv_xname);
 	}
