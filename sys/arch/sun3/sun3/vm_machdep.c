@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61 2001/04/24 04:31:14 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.62 2001/07/29 23:51:40 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -340,9 +340,9 @@ pagemove(from, to, len)
 		if (pmap_extract(kpmap, tva, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
-		/* pmap_remove does the necessary cache flush.*/
-		pmap_remove(kpmap, fva, fva + NBPG);
-		pmap_enter(kpmap, tva, pa, prot, prot|PMAP_WIRED);
+		/* pmap_kremove does the necessary cache flush.*/
+		pmap_kremove(fva, NBPG);
+		pmap_kenter_pa(tva, pa, prot);
 		fva += NBPG;
 		tva += NBPG;
 		len -= NBPG;
