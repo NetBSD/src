@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.6 1994/11/17 07:39:43 jtc Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.7 1994/11/17 07:41:15 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -36,13 +36,12 @@
 char copyright[] =
 "@(#) Copyright (c) 1983, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: uuencode.c,v 1.6 1994/11/17 07:39:43 jtc Exp $";
+static char rcsid[] = "$NetBSD: uuencode.c,v 1.7 1994/11/17 07:41:15 jtc Exp $";
 #endif /* not lint */
 
 /*
