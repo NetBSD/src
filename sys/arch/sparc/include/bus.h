@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 1998/08/21 14:12:18 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 1998/11/22 21:52:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -334,16 +334,16 @@ int bus_space_probe __P((
  */
 
 #define	bus_space_read_1(t, h, o)					\
-	    (*(volatile u_int8_t *)((h) + (o)))
+	    ((void)t, *(volatile u_int8_t *)((h) + (o)))
 
 #define	bus_space_read_2(t, h, o)					\
-	    (*(volatile u_int16_t *)((h) + (o)))
+	    ((void)t, *(volatile u_int16_t *)((h) + (o)))
 
 #define	bus_space_read_4(t, h, o)					\
-	    (*(volatile u_int32_t *)((h) + (o)))
+	    ((void)t, *(volatile u_int32_t *)((h) + (o)))
 
 #define	bus_space_read_8(t, h, o)					\
-	    (*(volatile u_int64_t *)((h) + (o)))
+	    ((void)t, *(volatile u_int64_t *)((h) + (o)))
 
 /*
  *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
@@ -392,19 +392,19 @@ int bus_space_probe __P((
  */
 
 #define	bus_space_write_1(t, h, o, v)	do {				\
-	((void)(*(volatile u_int8_t *)((h) + (o)) = (v)));		\
+	((void)t, (void)(*(volatile u_int8_t *)((h) + (o)) = (v)));	\
 } while (0)
 
 #define	bus_space_write_2(t, h, o, v)	do {				\
-	((void)(*(volatile u_int16_t *)((h) + (o)) = (v)));		\
+	((void)t, (void)(*(volatile u_int16_t *)((h) + (o)) = (v)));	\
 } while (0)
 
 #define	bus_space_write_4(t, h, o, v)	do {				\
-	((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));		\
+	((void)t, (void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
 } while (0)
 
 #define	bus_space_write_8(t, h, o, v)	do {				\
-	((void)(*(volatile u_int64_t *)((h) + (o)) = (v)));		\
+	((void)t, (void)(*(volatile u_int64_t *)((h) + (o)) = (v)));	\
 } while (0)
 
 /*
