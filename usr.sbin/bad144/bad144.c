@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.17 2002/06/13 13:32:47 wiz Exp $	*/
+/*	$NetBSD: bad144.c,v 1.18 2002/06/13 13:49:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.17 2002/06/13 13:32:47 wiz Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.18 2002/06/13 13:49:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ int
 main(int argc, char *argv[])
 {
 	struct bt_bad *bt;
-	daddr_t	sn, bn[126];
+	daddr_t	sn, bn[NBT_BAD];
 	int i, f, nbad, new, bad, errs;
 	char diskname[MAXPATHLEN];
 
@@ -213,7 +213,7 @@ usage:
 			break;
 		}
 		bt = oldbad.bt_bad;
-		for (i = 0; i < 126; i++) {
+		for (i = 0; i < NBT_BAD; i++) {
 			bad = (bt->bt_cyl<<16) + bt->bt_trksec;
 			if (bad < 0)
 				break;
@@ -234,10 +234,11 @@ usage:
 		i = checkold();
 		if (verbose)
 			printf("Had %d bad sectors, adding %d\n", i, argc);
-		if (i + argc > 126) {
+		if (i + argc > NBT_BAD) {
 			printf("bad144: not enough room for %d more sectors\n",
 				argc);
-			printf("limited to 126 by information format\n");
+			printf("limited to %d by information format\n",
+			    NBT_BAD);
 			exit(1);
 		}
 		curbad = oldbad;
@@ -246,9 +247,10 @@ usage:
 		argc--;
 		curbad.bt_mbz = 0;
 		curbad.bt_flag = DKBAD_MAGIC;
-		if (argc > 126) {
+		if (argc > NBT_BAD) {
 			printf("bad144: too many bad sectors specified\n");
-			printf("limited to 126 by information format\n");
+			printf("limited to %d by information format\n",
+			    NBT_BAD);
 			exit(1);
 		}
 		i = 0;
@@ -274,7 +276,7 @@ usage:
 	if (errs)
 		exit(1);
 	nbad = i;
-	while (i < 126) {
+	while (i < NBT_BAD) {
 		curbad.bt_bad[i].bt_trksec = -1;
 		curbad.bt_bad[i].bt_cyl = -1;
 		i++;
@@ -376,7 +378,7 @@ checkold(void)
 		errors++;
 	}
 	bt = oldbad.bt_bad;
-	for (i = 0; i < 126; i++, bt++) {
+	for (i = 0; i < NBT_BAD; i++, bt++) {
 		if (bt->bt_cyl == 0xffff && bt->bt_trksec == 0xffff)
 			break;
 		if ((bt->bt_cyl >= dp->d_ncylinders) ||
@@ -482,11 +484,10 @@ blkcopy(int f, daddr_t s1, daddr_t s2)
 	return(1);
 }
 
-char *zbuf;
-
 void
 blkzero(int f, daddr_t sn)
 {
+	char *zbuf;
 
 	if (zbuf == (char *)NULL) {
 		zbuf = malloc((unsigned)dp->d_secsize);
@@ -548,7 +549,8 @@ struct hpuphdr {
 #define	HPUP_OKSECT	0xc000		/* this normally means sector is good */
 #define	HPUP_16BIT	0x1000		/* 1 == 16 bit format */
 };
-int rp06format(), hpupformat();
+int rp06format(struct formats *, struct disklabel *, daddr_t, char *, int);
+int hpupformat(struct formats *, struct disklabel *, daddr_t, char *, int);
 
 struct	formats {
 	char	*f_name;		/* disk name */
@@ -568,12 +570,8 @@ struct	formats {
 
 /*ARGSUSED*/
 int
-hpupformat(fp, dp, blk, buf, count)
-	struct formats *fp;
-	struct disklabel *dp;
-	daddr_t blk;
-	char *buf;
-	int count;
+hpupformat(struct formats *fp, struct disklabel *dp, daddr_t blk, char *buf,
+	   int count)
 {
 	struct hpuphdr *hdr = (struct hpuphdr *)buf;
 	int sect;
@@ -590,12 +588,8 @@ hpupformat(fp, dp, blk, buf, count)
 
 /*ARGSUSED*/
 int
-rp06format(fp, dp, blk, buf, count)
-	struct formats *fp;
-	struct disklabel *dp;
-	daddr_t blk;
-	char *buf;
-	int count;
+rp06format(struct formats *fp, struct disklabel *dp, daddr_t blk, char *buf,
+	   int count)
 {
 
 	if (count < sizeof(struct rp06hdr)) {
@@ -606,9 +600,7 @@ rp06format(fp, dp, blk, buf, count)
 }
 
 void
-format(fd, blk)
-	int fd;
-	daddr_t blk;
+format(int fd, daddr_t blk)
 {
 	struct formats *fp;
 	static char *buf;
