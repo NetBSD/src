@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.85 2004/03/25 19:36:27 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.86 2004/03/26 23:55:45 he Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.85 2004/03/25 19:36:27 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.86 2004/03/26 23:55:45 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ struct sysctlnode my_root = {
 	0
 #else /* defined(lint) */
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
-	.sysctl_size = sizeof(struct sysctlnode),
+	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 	.sysctl_num = 0,
 	.sysctl_name = "(prog_root)",
 #endif /* defined(lint) */
