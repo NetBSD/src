@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.25 2002/03/31 19:47:39 bouyer Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.25.4.1 2003/06/30 02:58:34 grant Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -148,7 +148,7 @@
 #define	WDCC_WRITEDMA_EXT	0x35	/* write 48-bit addressing with DMA */
 
 /* Subcommands for SET_FEATURES (features register) */
-#define	WDSF_EN_WR_CACHE	0x02
+#define	WDSF_WRITE_CACHE_EN	0x02
 #define	WDSF_SET_MODE		0x03
 #define	WDSF_REASSIGN_EN	0x04
 #define	WDSF_RETRY_DS		0x33
