@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.5 1998/12/15 19:31:40 itohy Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.5.18.1 2001/03/30 21:45:08 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,17 @@ struct linux_termios {
 #define	LINUX_N_AX25		5
 #define	LINUX_N_X25		6
 #define	LINUX_N_6PACK		7
+
+/* values passed to TIOCLINUX ioctl */
+#define LINUX_TIOCLINUX_COPY		 2
+#define LINUX_TIOCLINUX_PASTE		 3
+#define LINUX_TIOCLINUX_UNBLANK		 4
+#define LINUX_TIOCLINUX_LOADLUT		 5
+#define LINUX_TIOCLINUX_READSHIFT	 6
+#define LINUX_TIOCLINUX_READMOUSE	 7
+#define LINUX_TIOCLINUX_VESABLANK	10
+#define LINUX_TIOCLINUX_KERNMSG		11
+#define LINUX_TIOCLINUX_CURCONS		12
 
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_termios.h>
