@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 1997/10/20 03:24:49 jonathan Exp $	*/
+/*	$NetBSD: crt0.c,v 1.5.2.1 1998/11/07 00:16:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -79,8 +79,8 @@ char	*__progname = "";
 struct ps_strings *__ps_strings = 0;
 
 #ifndef ECOFF_COMPAT
-extern void	__init __P((void));
-extern void	__fini __P((void));
+extern void	_init __P((void));
+extern void	_fini __P((void));
 #endif /* ECOFF_COMPAT */
 
 #ifdef DYNAMIC
@@ -212,13 +212,11 @@ __start(sp, cleanup, obj, ps_strings)
 	monstartup((u_long)&_eprol, (u_long)&_etext);
 #endif
 
-	/* XXX __fini and __init are not yet  on a MIPS. */
-#if 0
 #ifndef ECOFF_COMPAT
-	atexit(__fini);
-	__init();
+	atexit(_fini);
+	_init();
 #endif /* ECOFF_COMPAT */
-#endif
+
 	exit(main(argc, argv, environ));
 }
 
@@ -227,7 +225,7 @@ __start(sp, cleanup, obj, ps_strings)
  *  is the entrypoint. (Only needed for old toolchains).
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 1997/10/20 03:24:49 jonathan Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.5.2.1 1998/11/07 00:16:14 cgd Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 
