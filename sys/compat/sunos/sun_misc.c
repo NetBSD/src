@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.24 1994/05/24 02:15:18 deraadt Exp $
+ * $Id: sun_misc.c,v 1.25 1994/06/06 06:57:59 deraadt Exp $
  */
 
 /*
@@ -89,6 +89,9 @@ struct sun_wait4_args {
 	int	*status;
 	int	options;
 	struct	rusage *rusage;
+#ifdef COMPAT_43
+	int	compat;		/* pseudo */
+#endif
 };
 sun_wait4(p, uap, retval)
 	struct proc *p;
