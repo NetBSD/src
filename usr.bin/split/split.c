@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.10 2003/06/10 16:32:54 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.11 2003/06/10 16:57:05 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.10 2003/06/10 16:32:54 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.11 2003/06/10 16:57:05 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ main(int argc, char *argv[])
 					    "%s: illegal line count.", optarg);
 			}
 			break;
-		case '-':		/* Undocumented: historic stdin flag. */
+		case '-':		/* stdin flag. */
 			if (ifd != -1)
 				usage();
 			ifd = 0;
@@ -130,7 +130,9 @@ main(int argc, char *argv[])
 
 	if (*argv != NULL)
 		if (ifd == -1) {		/* Input file. */
-			if ((ifd = open(*argv, O_RDONLY, 0)) < 0)
+			if (strcmp(*argv, "-") == 0)
+				ifd = STDIN_FILENO;
+			else if ((ifd = open(*argv, O_RDONLY, 0)) < 0)
 				err(1, "%s", *argv);
 			++argv;
 		}
