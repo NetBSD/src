@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.20 1998/03/25 00:44:34 thorpej Exp $ */
+/* $NetBSD: pte.h,v 1.21 1998/05/19 18:35:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ typedef	alpha_pt_entry_t	pt_entry_t;
 #endif /* _KERNEL || __KVM_ALPHA_PRIVATE */
 
 #ifdef _KERNEL
-extern	pt_entry_t *Lev1map;		/* kernel level 1 page table */
+extern	pt_entry_t *kernel_lev1map;	/* kernel level 1 page table */
 #endif /* _KERNEL */
 
 #endif /* ! _ALPHA_PTE_H_ */
