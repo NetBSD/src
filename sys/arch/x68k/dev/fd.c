@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1996/06/05 16:21:46 oki Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1996/07/08 16:32:12 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -38,9 +38,6 @@
  *
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
-
-#include "fd.h"
-#if NFD > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,6 +231,7 @@ void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
 static int fdgetdisklabel __P((struct fd_softc *, dev_t));
 static void fd_do_eject __P((int));
+void fd_mountroot_hook __P((struct device *));
 
 #define FDDI_EN	0x02
 #define FDCI_EN	0x04
@@ -520,6 +518,12 @@ fdattach(parent, self, aux)
 	fd->sc_dk.dk_name = fd->sc_dev.dv_xname;
 	fd->sc_dk.dk_driver = &fddkdriver;
 	disk_attach(&fd->sc_dk);
+
+	/*
+	 * Establish a mountroot_hook anyway in case we booted
+	 * with RB_ASKNAME and get selected as the boot device.
+	 */
+	mountroot_hook_establish(fd_mountroot_hook, &fd->sc_dev);
 }
 
 inline struct fd_type *
@@ -1532,4 +1536,20 @@ fdgetdisklabel(sc, dev)
 	return(0);
 }
 
-#endif
+/* ARGSUSED */
+void
+fd_mountroot_hook(dev)
+	struct device *dev;
+{
+	int c;
+
+	fd_do_eject(dev->dv_unit);
+	printf("Insert filesystem floppy and press return.");
+	for (;;) {
+		c = cngetc();
+		if ((c == '\r') || (c == '\n')) {
+			printf("\n");
+			return;
+		}
+	}
+}
