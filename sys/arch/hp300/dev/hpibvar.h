@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hpibvar.h	7.3 (Berkeley) 5/7/91
- *	$Id: hpibvar.h,v 1.2 1993/05/22 07:56:22 cgd Exp $
+ *	from: @(#)hpibvar.h	8.1 (Berkeley) 6/10/93
+ *	$Id: hpibvar.h,v 1.3 1994/05/23 05:58:58 mycroft Exp $
  */
 
 #define	HPIB_IPL(x)	((((x) >> 4) & 0x3) + 3)
@@ -83,4 +83,6 @@ extern	struct hpib_softc hpib_softc[];
 extern	caddr_t internalhpib;
 extern	int hpibtimeout;
 extern	int hpibdmathresh;
+void	fhpibppwatch __P((void *arg));
+void	nhpibppwatch __P((void *arg));
 #endif

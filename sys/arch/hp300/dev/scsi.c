@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Van Jacobson of Lawrence Berkeley Laboratory.
@@ -33,27 +33,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: scsi.c,v 1.2 1993/05/22 07:56:48 cgd Exp $
+ *	from: @(#)scsi.c	8.2 (Berkeley) 1/12/94
+ *	$Id: scsi.c,v 1.3 1994/05/23 05:59:18 mycroft Exp $
  */
 
+#ifndef DEBUG
+#define DEBUG
+#endif
 /*
  * HP9000/3xx 98658 SCSI host adaptor driver.
  */
 #include "scsi.h"
 #if NSCSI > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/buf.h"
-#include "device.h"
+#ifndef lint
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/scsi.c,v 1.3 1994/05/23 05:59:18 mycroft Exp $";
+#endif
 
-#include "scsivar.h"
-#include "scsireg.h"
-#include "dmavar.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
 
-#include "../include/cpu.h"
-#include "../hp300/isr.h"
+#include <machine/cpu.h>
+
+#include <hp300/dev/device.h>
+#include <hp300/dev/scsivar.h>
+#include <hp300/dev/scsireg.h>
+#include <hp300/dev/dmavar.h>
+
+#include <hp300/hp300/isr.h>
 
 /*
  * SCSI delays
@@ -113,6 +121,8 @@ scsiabort(hs, hd, where)
 	char *where;
 {
 	int len;
+	int maxtries;	/* XXX - kludge till I understand whats *supposed* to happen */
+	int startlen;	/* XXX - kludge till I understand whats *supposed* to happen */
 	u_char junk;
 
 	printf("scsi%d: abort from %s: phase=0x%x, ssts=0x%x, ints=0x%x\n",
@@ -129,13 +139,21 @@ scsiabort(hs, hd, where)
 	len = (hd->scsi_tch << 16) | (hd->scsi_tcm << 8) | hd->scsi_tcl;
 
 	/* for that many bus cycles, try to send an abort msg */
-	for (len += 1024; (hd->scsi_ssts & SSTS_INITIATOR) && --len >= 0; ) {
+	for (startlen = (len += 1024); (hd->scsi_ssts & SSTS_INITIATOR) && --len >= 0; ) {
 		hd->scsi_scmd = SCMD_SET_ATN;
+		maxtries = 1000;
 		while ((hd->scsi_psns & PSNS_REQ) == 0) {
 			if (! (hd->scsi_ssts & SSTS_INITIATOR))
 				goto out;
 			DELAY(1);
+			if (--maxtries == 0) {
+				printf("-- scsiabort gave up after 1000 tries (startlen = %d len = %d)\n",
+					startlen, len);
+				goto out2;
+			}
+
 		}
+out2:
 		if ((hd->scsi_psns & PHASE) == MESG_OUT_PHASE)
 			hd->scsi_scmd = SCMD_RST_ATN;
 		hd->scsi_pctl = hd->scsi_psns & PHASE;
@@ -223,6 +241,11 @@ scsiinit(hc)
 	scsi_isr[hc->hp_unit].isr_arg = hc->hp_unit;
 	isrlink(&scsi_isr[hc->hp_unit]);
 	scsireset(hc->hp_unit);
+	/*
+	 * XXX scale initialization wait according to CPU speed.
+	 * Should we do this for all wait?  Should we do this at all?
+	 */
+	scsi_init_wait *= cpuspeed;
 	return(1);
 }
 
@@ -721,6 +744,14 @@ finishxfer(hs, hd, target)
 	DELAY(1);
 	hd->scsi_sctl &=~ SCTL_CTRLRST;
 	hd->scsi_hconf = 0;
+	/*
+	 * The following delay is definitely needed when trying to
+	 * write on a write protected disk (in the optical jukebox anyways),
+	 * but we shall see if other unexplained machine freezeups
+	 * also stop occuring...  A value of 5 seems to work but
+	 * 10 seems safer considering the potential consequences.
+	 */
+	DELAY(10);
 	hs->sc_stat[0] = 0xff;
 	hs->sc_msg[0] = 0xff;
 	hd->scsi_csr = 0;
@@ -794,10 +825,10 @@ scsi_request_sense(ctlr, slave, unit, buf, len)
 
 int
 scsi_immed_command(ctlr, slave, unit, cdb, buf, len, rd)
-	int ctlr, slave, unit;
+	int ctlr, slave, unit, rd;
 	struct scsi_fmt_cdb *cdb;
 	u_char *buf;
-	unsigned len;
+	u_int len;
 {
 	register struct scsi_softc *hs = &scsi_softc[ctlr];
 
@@ -891,6 +922,7 @@ scsiustart(unit)
 	register struct scsi_softc *hs = &scsi_softc[unit];
 
 	hs->sc_dq.dq_ctlr = DMA0 | DMA1;
+	hs->sc_flags |= SCSI_HAVEDMA;
 	if (dmareq(&hs->sc_dq))
 		return(1);
 	return(0);
@@ -923,7 +955,10 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 
 	/* select the SCSI bus (it's an error if bus isn't free) */
 	if (issue_select(hd, slave, hs->sc_scsi_addr) || wait_for_select(hd)) {
-		dmafree(&hs->sc_dq);
+		if (hs->sc_flags & SCSI_HAVEDMA) {
+			hs->sc_flags &=~ SCSI_HAVEDMA;
+			dmafree(&hs->sc_dq);
+		}
 		return (1);
 	}
 	/*
@@ -1056,6 +1091,7 @@ out:
 	return (0);
 abort:
 	scsiabort(hs, hd, "go");
+	hs->sc_flags &=~ SCSI_HAVEDMA;
 	dmafree(&hs->sc_dq);
 	return (1);
 }
@@ -1069,7 +1105,7 @@ scsidone(unit)
 
 #ifdef DEBUG
 	if (scsi_debug)
-		printf("scsi%d: done called!\n");
+		printf("scsi%d: done called!\n", unit);
 #endif
 	/* dma operation is done -- turn off card dma */
 	hd->scsi_csr &=~ (CSR_DE1|CSR_DE0);
@@ -1104,7 +1140,7 @@ scsiintr(unit)
 #endif
 		dq = hs->sc_sq.dq_forw;
 		finishxfer(hs, hd, dq->dq_slave);
-		hs->sc_flags &=~ SCSI_IO;
+		hs->sc_flags &=~ (SCSI_IO|SCSI_HAVEDMA);
 		dmafree(&hs->sc_dq);
 		(dq->dq_driver->d_intr)(dq->dq_unit, hs->sc_stat[0]);
 	} else {
@@ -1114,7 +1150,7 @@ scsiintr(unit)
 		scsierror(hs, hd, ints);
 		scsiabort(hs, hd, "intr");
 		if (hs->sc_flags & SCSI_IO) {
-			hs->sc_flags &=~ SCSI_IO;
+			hs->sc_flags &=~ (SCSI_IO|SCSI_HAVEDMA);
 			dmafree(&hs->sc_dq);
 			dq = hs->sc_sq.dq_forw;
 			(dq->dq_driver->d_intr)(dq->dq_unit, -1);
@@ -1144,7 +1180,7 @@ scsifree(dq)
 #if NST > 0
 int
 scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
-	int ctlr, slave, unit, b_flags;
+	int ctlr, slave, unit, b_flags, freedma;
 	u_char *buf;
 	u_int len;
 {
@@ -1153,12 +1189,20 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	u_char iphase;
 	int stat;
 
+#ifdef DEBUG
+	if (freedma && (hs->sc_flags & SCSI_HAVEDMA) == 0 ||
+	    !freedma && (hs->sc_flags & SCSI_HAVEDMA))
+		printf("oddio: freedma (%d) inconsistency (flags=%x)\n",
+		       freedma, hs->sc_flags);
+#endif
 	/*
 	 * First free any DMA channel that was allocated.
 	 * We can't use DMA to do this transfer.
 	 */
-	if (freedma)
+	if (freedma) {
+		hs->sc_flags &=~ SCSI_HAVEDMA;
 		dmafree(hs->sc_dq);
+	}
 	/*
 	 * Initialize command block
 	 */
