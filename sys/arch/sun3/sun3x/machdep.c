@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1999/02/27 06:39:37 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1999/03/04 23:18:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,9 +104,11 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 
+#if defined(DDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#endif
 
 #include <sun3/sun3/machdep.h>
 
