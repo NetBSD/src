@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1999/08/25 20:07:33 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1999/11/28 04:38:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.21 1999/08/25 20:07:33 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.22 1999/11/28 04:38:41 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -332,6 +332,10 @@ show_chdir_messages(code)
 		/* Setup list for directory cache */
 	if (slist == NULL)
 		slist = sl_init();
+	if (slist == NULL) {
+		syslog(LOG_WARNING, "can't allocate memory for stringlist");
+		return;
+	}
 
 		/* Check if this directory has already been visited */
 	if (getcwd(cwd, sizeof(cwd) - 1) == NULL) {
@@ -346,7 +350,8 @@ show_chdir_messages(code)
 		syslog(LOG_WARNING, "can't strdup");
 		return;
 	}
-	sl_add(slist, cp);
+	if (sl_add(slist, cp) == -1)
+		syslog(LOG_WARNING, "can't add `%s' to stringlist", cp);
 
 		/* First check for a display file */
 	if (curclass.display != NULL && curclass.display[0] &&
