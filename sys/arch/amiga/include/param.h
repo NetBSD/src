@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 1996/04/21 21:13:20 veego Exp $	*/
+/*	$NetBSD: param.h,v 1.30 1996/09/28 15:54:04 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,12 +149,12 @@
  */
 #include <machine/psl.h>
 
+#ifdef _KERNEL
 /*
  * point to the custom.intenar and custom.intenaw respectively.
  */
 extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
-#ifdef _KERNEL
 #ifndef _LOCORE
 void delay __P((int));
 void DELAY __P((int));
