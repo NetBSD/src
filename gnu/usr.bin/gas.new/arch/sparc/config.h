@@ -1,17 +1,5 @@
-/*	$NetBSD: config.h,v 1.3 1998/09/29 05:32:23 jonathan Exp $
- *
- * Munged from actual 2.8.1 config.h file for machine independence.
- *
- * NOTE: Define BFD_ASSEMBLER, TARGET_ALIAS, TARGET_CPU, and
- * 	TARGET_CANONICAL must be defined elsewhere.
- */
-
-/* config.h.  Generated automatically by make.  */
-#ifndef GAS_VERSION
-#define GAS_VERSION "2.8.1"
-
-/* conf.  Generated automatically by configure.  */
-/* conf.in.  Generated automatically from configure.in by autoheader.  */
+/* config.h.  Generated automatically by configure.  */
+/* config.in.  Generated automatically from configure.in by autoheader.  */
 
 /* Define if using alloca.c.  */
 /* #undef C_ALLOCA */
@@ -38,8 +26,17 @@
  */
 /* #undef STACK_DIRECTION */
 
+/* Define if lex declares yytext as a char * by default, not a char[].  */
+#define YYTEXT_POINTER 1
+
+/* Name of package.  */
+#define PACKAGE "gas"
+
+/* Version of package.  */
+#define VERSION "2.9.1"
+
 /* Should gas use high-level BFD interfaces?  */
-/* #undef BFD_ASSEMBLER */
+#define BFD_ASSEMBLER 1
 
 /* Some assert/preprocessor combinations are incapable of handling
    certain kinds of constructs in the argument of assert.  For example,
@@ -51,12 +48,11 @@
 /* #undef CROSS_COMPILE */
 
 /* Some gas code wants to know these parameters.  */
-#if !defined(TARGET_ALIAS) || !defined(TARGET_CPU) || \
-    !defined(TARGET_CANONICAL)
-#error TARGET_ALIAS, TARGET_CPU, and TARGET_CANONICAL must all be defined
-#endif
+#define TARGET_ALIAS "sparc--netbsd"
+#define TARGET_CPU "sparc"
+#define TARGET_CANONICAL "sparc--netbsd"
 #define TARGET_OS "netbsd"
-#define TARGET_VENDOR "unknown"
+#define TARGET_VENDOR ""
 
 /* Sometimes the system header files don't declare strstr.  */
 /* #undef NEED_DECLARATION_STRSTR */
@@ -75,21 +71,14 @@
 
 /* #undef MANY_SEGMENTS */
 
-/* Needed only for sparc configuration.  */
-/* #undef SPARC_V9 */
-/* #undef SPARC_ARCH64 */
-
-/* Defined if using CGEN.  */
-/* #undef USING_CGEN */
+/* The configure script defines this for some targets based on the
+   target name used.  It is not always defined.  */
+/* #undef TARGET_BYTES_BIG_ENDIAN */
 
 /* Needed only for some configurations that can produce multiple output
    formats.  */
-#ifndef DEFAULT_EMULATION
-# define DEFAULT_EMULATION ""
-#endif
-#ifndef EMULATIONS
-# define EMULATIONS 
-#endif
+#define DEFAULT_EMULATION ""
+#define EMULATIONS 
 /* #undef USE_EMULATIONS */
 /* #undef OBJ_MAYBE_AOUT */
 /* #undef OBJ_MAYBE_BOUT */
@@ -107,6 +96,18 @@
 /* #undef I386COFF */
 /* #undef M68KCOFF */
 /* #undef M88KCOFF */
+
+/* Using cgen code?  */
+/* #undef USING_CGEN */
+
+/* Needed only for sparc configuration.  */
+#define DEFAULT_ARCH "sparclite"
+
+/* Needed only for PowerPC Solaris.  */
+/* #undef TARGET_SOLARIS_COMMENT */
+
+/* Needed only for SCO 5.  */
+/* #undef SCO_ELF */
 
 /* Define if you have the remove function.  */
 /* #undef HAVE_REMOVE */
@@ -143,4 +144,3 @@
 
 /* Define if you have the <varargs.h> header file.  */
 #define HAVE_VARARGS_H 1
-#endif /* GAS_VERSION */
