@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 2001/09/10 21:19:37 chris Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 2002/03/09 23:35:59 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -113,7 +113,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 
 	pcb->pcb_pm = p2->p_vmspace->vm_map.pmap;
-#ifdef NEWPMAP
+#ifndef OLDPMAP
 	pcb->pcb_pmreal = pcb->pcb_pm;		/* XXX */
 #else
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
@@ -171,7 +171,7 @@ cpu_swapin(p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-#ifdef NEWPMAP
+#ifndef OLDPMAP
 	pcb->pcb_pmreal = pcb->pcb_pm;		/* XXX */
 #else
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pcb->pcb_pm,
