@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.356 2001/09/04 15:37:30 pooka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.357 2001/09/04 21:06:08 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.352 2001/09/04 15:24:35 pooka Exp 
+ *	NetBSD: pcidevs,v 1.354 2001/09/04 20:51:44 thorpej Exp 
  */
 
 /*
@@ -2852,6 +2852,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82806AA PCI64 Hub Advanced Programmable Interrupt Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IXP1200,
+	    0,
+	    "Intel",
+	    "IXP1200 Network Processor",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.358 2001/09/04 15:37:30 pooka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.359 2001/09/04 21:06:07 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.352 2001/09/04 15:24:35 pooka Exp 
+ *	NetBSD: pcidevs,v 1.354 2001/09/04 20:51:44 thorpej Exp 
  */
 
 /*
@@ -1213,6 +1213,7 @@
 #define	PCI_PRODUCT_INTEL_82815_FULL_AGP	0x1131		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_FULL_GRAPH	0x1132		/* 82815 Graphics */
 #define	PCI_PRODUCT_INTEL_82806AA	0x1161		/* 82806AA PCI64 Hub Advanced Programmable Interrupt Controller */
+#define	PCI_PRODUCT_INTEL_IXP1200	0x1200		/* IXP1200 Network Processor */
 #define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
