@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.h,v 1.2 2000/09/04 22:23:34 wdk Exp $	*/
+/*	$NetBSD: prom.h,v 1.3 2000/09/16 08:27:58 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct mips_prom {
 	int	(*prom_open)		__P((char *, int, ...));
 	int	(*prom_read)		__P((int, void *, int));
 	int	(*prom_write)		__P((int, void *, int));
-	int	(*prom_ioctl)		__P((int));
+	int	(*prom_ioctl)		__P((int, long, ...));
 	int	(*prom_close)		__P((int));
 	int	(*prom_getchar)		__P((void));
 	int	(*prom_putchar)		__P((int c));
