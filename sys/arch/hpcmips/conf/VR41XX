@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.5 2002/02/28 18:26:05 uch Exp $
+# $NetBSD: VR41XX,v 1.6 2002/03/05 16:16:45 simonb Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	16
 
@@ -63,7 +63,6 @@ options 	NTP			# network time protocol
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
