@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111.2.18 2003/01/17 03:22:18 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.111.2.19 2003/01/17 03:33:15 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -130,7 +130,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	kill.2 kqueue.2 ktrace.2 \
 	lfs_bmapv.2 lfs_markv.2 lfs_segclean.2 lfs_segwait.2 \
 	link.2 listen.2 lseek.2 _lwp_create.2 _lwp_exit.2 _lwp_self.2 \
-	_lwp_suspend.2 _lwp_wakeup.2 _lwp_wait.2 mkdir.2 mkfifo.2 mknod.2 \
+	_lwp_suspend.2 _lwp_wakeup.2 _lwp_wait.2 _lwp_getprivate.2 \
+	mkdir.2 mkfifo.2 mknod.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 mount.2 \
 	mprotect.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
@@ -172,6 +173,7 @@ MLINKS+=kqueue.2 kevent.2
 MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
 MLINKS+=_lwp_suspend.2 _lwp_continue.2
+MLINKS+=_lwp_getprivate.2 _lwp_setprivate.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2
