@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.1 1998/06/12 15:42:02 drochner Exp $
+#	$NetBSD: NWSCONS,v 1.2 1998/06/15 13:10:18 drochner Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -143,6 +143,8 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
+# see dev/wscons/wskbdmap_mfii.h for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
