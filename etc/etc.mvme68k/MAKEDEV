@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.20 1999/02/27 17:57:31 scw Exp $
+#	$NetBSD: MAKEDEV,v 1.21 1999/09/18 00:23:37 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -22,6 +22,13 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	@(#)MAKEDEV	5.2 (Berkeley) 6/22/90
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
@@ -45,7 +52,7 @@
 #		On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3.
 #		On the mvme167, and '177: ttyC1, ttyC2 and ttyC3.
 #		Note that tty[CZ]0 is grabbed by the console device
-#		so is not created by default.
+#		so is not created by default
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
@@ -54,14 +61,12 @@
 #	lpt*	stock lp
 #	lpa*	interruptless lp
 #
-# Call units:
-#
 # Special purpose devices:
 #	fd	file descriptors
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.40 1999/08/27 14:13:33 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.41 1999/09/18 00:23:36 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -24,12 +24,20 @@
 #
 #	@(#)MAKEDEV	5.2 (Berkeley) 6/22/90
 #
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
+#       
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the 'standard' number of each type.
 #	floppy	devices to be put on install floppies
 #	std	standard devices
-#	local	configuration specific devices
+#	local	configuration specific devices which are created by running
+#		the MAKEDEV.local shell script with the argument "all".
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -78,8 +86,6 @@
 #	ugen*	Generic device
 #	ttyU*	Modem
 #
-# Call units:
-#
 # Special purpose devices:
 #	md	memory disk
 #	kbd	raw keyboard
@@ -87,13 +93,13 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	beep	riscpc speaker
-#	ipl	ip filter control
+#	ipl	IP filter control
 #	random	Random number generator
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	ch*	SCSI Auto changer
 #	uk*	SCSI Unknown device
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner device
 #	iic*	IIC bus device
 #	rtc*	RTC device

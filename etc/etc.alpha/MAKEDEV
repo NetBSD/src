@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.48 1999/08/27 14:13:32 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.49 1999/09/18 00:23:35 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -32,13 +32,24 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
+#
 # Device "make" file.  Valid arguments:
-#	all	makes all known devices, including local devices.
-#		Tries to make the 'standard' number of each type.
+#	all	Makes all known devices, including local devices.
+#		If units are expected for a device MAKEDEV supplies the
+#		standard numbers.
 #	minimal	A minimal set of devices for install disks, etc.
-#	std	standard devices
-#	local	configuration specific devices
-#	usbs	make USB devices
+#	std	The standard devices (console, drum, klog, kmem, mem,
+#		null, stderr, stdin, stdout, tty, zero).
+#	local	Configuration specific devices which are created by running
+#		the MAKEDEV.local shell script with the argument "all".
+#	usbs	All USB devices. If units are expected for a device
+#		MAKEDEV supplies the standard numbers.
 #
 # Tapes:
 #	st*	SCSI tape
@@ -46,12 +57,12 @@
 # Disks:
 #	ccd*	concatenated disk driver
 #	cd*	SCSI CD-ROM
-#	md*	"memory disk" pseudo-disks
+#	md*	memory pseudo-disks
 #	raid*	RAIDframe disk driver
-#	sd*	SCSI disks
-#	vnd*	"file" pseudo-disks
+#	sd*	ATAPI and SCSI disks
+#	vnd*	file pseudo-disks
 #	wd*	IDE disks
-#	fd*	PC-ish floppy disks
+#	fd*	PC-style floppy disks
 #
 # Terminals:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
@@ -62,28 +73,28 @@
 #	pty*	set of 16 master and slave pseudo terminals
 #
 # Printers:
-#	lpt*	stock lp
-#	lpa*	interruptless lp
+#	lpt*	PC parallel port driver ("lpt") units
+#	lpa*	polled PC parallel port driver ("lpt") units
 #
 # USB devices:
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
-#	ugen*	Generic device
+#	ugen*	Generic devices
 #	ttyU*	Modem
 #
 # Special purpose devices:
 #	audio*	audio devices
-#	bpf*	packet filter
+#	bpf*	Berkeley packet filter devices
 #	ch*	SCSI media changer
-#	fd	file descriptors
+#	fd	file descriptors (/dev/fd/*)
 #	ipl	IP filter
 #	kbd	keyboard (provides events, for X11)
 #	lkm	loadable kernel modules interface
 #	mouse	mouse (provides events, for X11)
 #	random	Random number generator
 #	satlink* PlanetConnect satellite receiver driver
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsictl(8), scsi(8)
 #	speaker	PC speaker (IBM BASIC playstring emulation)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver

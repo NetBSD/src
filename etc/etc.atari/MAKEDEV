@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.34 1999/04/30 19:05:47 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.35 1999/09/18 00:23:36 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -36,6 +36,13 @@
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -80,10 +87,10 @@
 #	kbd	Atari keyboard.
 #	view*	generic interface to graphic displays.
 #	aconf	autoconfig information (not yet)
-#	lkm	loadable kernel modules interface.
+#	lkm	loadable kernel modules interface
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch	SCSI changer
