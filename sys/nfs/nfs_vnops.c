@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.74 1997/05/08 16:20:38 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.75 1997/05/08 17:17:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,6 +59,7 @@
 #include <sys/dirent.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+#include <sys/stat.h>
 
 #include <vm/vm.h>
 
