@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 1997/05/09 07:50:27 mycroft Exp $
+# $NetBSD: Makefile,v 1.14 1997/09/06 14:07:58 drochner Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -16,7 +16,7 @@ HEADERSIZE_PROG = headersize
 
 AFLAGS += -DASSEMBLER
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../.. -DPRIMARY_BOOTBLOCK
-CFLAGS = -Werror -mno-fp-regs -g
+CFLAGS = -Wall -Werror -mno-fp-regs -g
 
 CLEANFILES+= ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 
