@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.9 1998/08/27 12:54:03 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.10 1998/08/27 20:11:31 ross Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.9 1998/08/27 12:54:03 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.10 1998/08/27 20:11:31 ross Exp $");
 #endif
 #endif
 
@@ -317,7 +317,7 @@ matchname(char *pkgspec, char *dbdir, int quiet)
 					cnt--;
 				}
 			}
-			(void) snprintf(alt, sizeof(buf) - (alt - buf), "%.*s%s", sep - cp, cp, last);
+			(void) snprintf(alt, sizeof(buf) - (alt - buf), "%.*s%s", (int)(sep - cp), cp, last);
 			if (matchname(buf, dbdir, quiet) == 0) {
 				ret = 0;
 			}
@@ -326,7 +326,7 @@ matchname(char *pkgspec, char *dbdir, int quiet)
 	}
 	if ((sep = strpbrk(pkgspec, "<>")) != (char *) NULL) {
 		/* perform relational dewey match on version number */
-		(void) snprintf(buf, sizeof(buf), "%.*s", sep - pkgspec, pkgspec);
+		(void) snprintf(buf, sizeof(buf), "%.*s", (int)(sep - pkgspec), pkgspec);
 		cnt = (*sep == '>') ? (*(sep + 1) == '=') ? GE : GT : (*(sep + 1) == '=') ? LE : LT;
 		cp = (cnt == GE || cnt == LE) ? sep + 2 : sep + 1;
 		return deweymatch(buf, cnt, cp, dbdir, quiet);
