@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.51 2003/01/12 12:53:51 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.52 2003/01/27 21:11:12 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.51 2003/01/12 12:53:51 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.52 2003/01/27 21:11:12 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -186,12 +186,19 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 			    wx <= *wlp->lastchp && wx < maxx &&
 			    x_off < screen->__virtscr->maxx; wx++, x_off++) {
 				vlp->line[x_off].attr = wlp->line[wx].attr;
+				/* Copy attributes */
 				if (wlp->line[wx].attr & __COLOR)
 					vlp->line[x_off].attr |=
 					    wlp->line[wx].battr & ~__COLOR;
 				else
 					vlp->line[x_off].attr |=
 					    wlp->line[wx].battr;
+				/* Check for nca conflict with colour */
+				if ((vlp->line[x_off].attr & __COLOR) &&
+				    (vlp->line[x_off].attr &
+				    _cursesi_screen->nca))
+					vlp->line[x_off].attr &= ~__COLOR;
+				/* Copy character */
 				if (wlp->line[wx].ch == ' ' &&
 				    wlp->line[wx].bch != ' ')
 					vlp->line[x_off].ch
