@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.19 1996/10/13 13:14:02 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.20 1996/10/22 23:15:10 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -241,7 +241,6 @@ old_siiattach(parent, self, aux)
 
 	sc->sc_regs = (SIIRegs *)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
 	sc->sc_flags = sc->sc_dev.dv_cfdata->cf_flags;
-	sc->sc_target = -1;	/* no command active */
 
 	siiattach(sc);
 
@@ -255,6 +254,8 @@ siiattach(sc)
 	register struct siisoftc *sc;
 {
 	register int i;
+
+	sc->sc_target = -1;	/* no command active */
 
 	/*
 	 * Give each target its own DMA buffer region.
