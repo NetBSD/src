@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 1999/04/02 03:20:00 cgd Exp $
+# $NetBSD: Makefile,v 1.19 1999/04/05 06:42:14 cgd Exp $
 
 PROG = netboot
 
@@ -11,7 +11,8 @@ BOOT_RELOC = ${UNIFIED_LOAD_ADDRESS}
 
 CLEANFILES+= vers.c vers.o ${PROG}.sym
 
-CPPFLAGS += ${UNIFIED_CPPFLAGS} -DSUPPORT_DHCP
+CPPFLAGS += ${UNIFIED_CPPFLAGS} -DSUPPORT_DHCP \
+		-DBOOT_TYPE_NAME='"Network"'
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
