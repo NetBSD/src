@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.25.2.2 2004/06/22 07:28:36 tron Exp $	*/
+/*	$NetBSD: ffs.c,v 1.25.2.3 2004/06/25 02:34:44 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.25.2.2 2004/06/22 07:28:36 tron Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.25.2.3 2004/06/25 02:34:44 jmc Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -308,7 +308,7 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		fsopts->optimization = DEFAULTOPT;
 	if (fsopts->maxcontig == -1)
 		fsopts->maxcontig =
-		    MAX(1, MIN(MAXPHYS, MAXBSIZE) / fsopts->bsize);
+		    MAX(1, MIN(MAXPHYS, FFS_MAXBSIZE) / fsopts->bsize);
 	/* XXX ondisk32 */
 	if (fsopts->maxbpg == -1)
 		fsopts->maxbpg = fsopts->bsize / sizeof(int32_t);
@@ -984,7 +984,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	struct fs	*fs;
 	int		cg, cgino, i;
 	daddr_t		d;
-	char		sbbuf[MAXBSIZE];
+	char		sbbuf[FFS_MAXBSIZE];
 	int32_t		initediblk;
 
 	assert (dp != NULL);
