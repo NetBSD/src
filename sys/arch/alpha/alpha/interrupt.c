@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.27 1998/07/13 00:14:52 ross Exp $ */
+/* $NetBSD: interrupt.c,v 1.28 1998/07/13 18:50:36 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.27 1998/07/13 00:14:52 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.28 1998/07/13 18:50:36 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,7 @@ machine_check(mces, framep, vector, param)
 	const char *type;
 	struct mchkinfo *mcp;
 
-	if ((mcp = mchkinfo) != NULL)
-		mcp += alpha_pal_whami();
+	mcp = cpu_mchkinfo();
 	/* Make sure it's an error we know about. */
 	if ((mces & (ALPHA_MCES_MIP|ALPHA_MCES_SCE|ALPHA_MCES_PCE)) == 0) {
 		type = "fatal machine check or error (unknown type)";
@@ -151,7 +150,7 @@ machine_check(mces, framep, vector, param)
 	/* Machine checks. */
 	if (mces & ALPHA_MCES_MIP) {
 		/* If we weren't expecting it, then we punt. */
-		if (mcp == NULL || !mcp->mc_expected) {
+		if (!mcp->mc_expected) {
 			type = "unexpected machine check";
 			goto fatal;
 		}
@@ -205,8 +204,8 @@ badaddr_read(addr, size, rptr)
 	size_t size;
 	void *rptr;
 {
-	struct mchkinfo *mcp = &mchkinfo[alpha_pal_whami()];
 	long rcpt;
+	struct mchkinfo *mcp = cpu_mchkinfo();
 
 	/* Get rid of any stale machine checks that have been waiting.  */
 	alpha_pal_draina();

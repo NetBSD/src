@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.19 1998/07/08 16:28:25 mjacob Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.20 1998/07/13 18:49:34 ross Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.19 1998/07/08 16:28:25 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.20 1998/07/13 18:49:34 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ kn8ae_mcheck(mces, type, logout, framep)
 	/*
 	 * If we expected a machine check, just go handle it in common code.
 	 */
-	mcp = &mchkinfo[alpha_pal_whami()];
+	mcp = cpu_mchkinfo();
 	if (mcp->mc_expected) {
 		machine_check(mces, framep, type, logout);
 		return;
