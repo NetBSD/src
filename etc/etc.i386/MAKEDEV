@@ -28,19 +28,17 @@
 #
 # Tapes:
 #	wt*	QIC-interfaced (e.g. not SCSI) 3M cartridge tape
-#	st*	"NEW type scsi tapes" (old driver uses the
-#		block devices of the disks to get access)
+#	st*	SCSI tapes
 #
 # Disks:
 #	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #	fd*	"floppy" disk drives (3 1/2", 5 1/4")
-#	as*	"SCSI" disk/tape/CDROM drives
-#	sd*	"NEW type scsi disks"
+#	sd*	SCSI disks
+#	cd*	SCSI CD-ROM
+#	mcd*	Mitsumi CD-ROM
 #
 # Console ports:
 #	vga	stock pccons vga (note it has no keyboard name or minor!)
-#	vgaco	codrv vga
-#	kbdco	codrv kbd
 #
 # Pointing devices:
 #	mms*	Microsoft bus mouse
@@ -75,7 +73,7 @@ case $i in
 
 all)
 	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 tty0 tty1 pty0 st0
-	sh MAKEDEV ch0 cd0 lpt0 lpt1 lpt2 lpa0 lpa1 lpa2 speaker lkm
+	sh MAKEDEV ch0 cd0 lpt0 lpt1 lpt2 lpa0 lpa1 lpa2 speaker lkm mcd0
 	;;
 
 std)
@@ -113,7 +111,6 @@ wt*)
 fd*|wd*|as*|sd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-#	as*) name=as; blk=4; chr=13;;
 	fd*) name=fd; blk=2; chr=9;;
 	sd*) name=sd; blk=4; chr=13;;
 	wd*) name=wd; blk=0; chr=3;;
@@ -234,10 +231,11 @@ ch*)
 	umask 77
 	;;
 
-cd*)
-	umask 2 ; unit=`expr $i : '..\(.*\)'`
+cd*|mcd*)
+	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 	case $i in
 	cd*) name=cd; blk=6; chr=15;;
+	mcd*) name=mcd; blk=7; chr=39;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -264,13 +262,11 @@ lpt*)
 	;;
 
 # Note: the stock pccons driver does not have a minor for the keyboard
-vga|vgaco|kbdco)
+vga)
 	chr=21
 	device=`expr ${i} : '\(.*\)co'`
 	case ${i} in
 	vga) name=vga; chr=12; minor=0;;
-	kbdco) name=kbdco; chr=21; minor=0;;
-	vgaco) name=vgaco; chr=21; minor=128;;
 	esac
 	rm -f ${name}
 	mknod ${name} c ${chr} ${minor}
