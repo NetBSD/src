@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169.2.25 2001/08/16 18:53:24 tv Exp $
+# $NetBSD: mi,v 1.169.2.26 2001/12/09 18:40:34 he Exp $
 .
 ./altroot
 ./bin
@@ -599,6 +599,7 @@
 ./usr/sbin/hprop
 ./usr/sbin/ifmcstat
 ./usr/sbin/inetd
+./usr/sbin/iopctl
 ./usr/sbin/iostat
 ./usr/sbin/ipfs
 ./usr/sbin/ipfstat
