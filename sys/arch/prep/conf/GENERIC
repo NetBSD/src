@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.32 2001/11/20 12:56:37 lukem Exp $
+#	$NetBSD: GENERIC,v 1.33 2001/11/21 22:40:45 soren Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.32 $"
+#ident		"GENERIC-$Revision: 1.33 $"
 
 maxusers	32
 
@@ -158,15 +158,6 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 isapnp0	at isa?
 
 # Console Devices
-
-# ISA console.
-#pc0	at isa? port 0x60 irq 1		# generic PC console device
-
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
