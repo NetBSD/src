@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.19 1999/12/28 03:15:16 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.20 2000/01/01 02:22:35 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -48,6 +48,7 @@ file-system 	MFS		# memory-based filesystem
 file-system 	NFS		# Sun NFS-compatible filesystem (client)
 #file-system	LFS		# Log-based filesystem (still experimental)
 #file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern (kernel informational filesystem)
 #file-system 	NULLFS		# loopback file system
@@ -92,8 +93,6 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 options 	NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
-config		sdnetbsd	root on sd0a type ffs
-config		nfsnetbsd	root on ? type nfs
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
