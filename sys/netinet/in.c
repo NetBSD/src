@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.81 2002/10/22 02:28:47 simonb Exp $	*/
+/*	$NetBSD: in.c,v 1.82 2002/11/07 07:18:12 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.81 2002/10/22 02:28:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.82 2002/11/07 07:18:12 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -132,8 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.81 2002/10/22 02:28:47 simonb Exp $");
 
 #ifdef INET
 
-static int in_mask2len __P((struct in_addr *));
-static void in_len2mask __P((struct in_addr *, int));
+static u_int in_mask2len __P((struct in_addr *));
+static void in_len2mask __P((struct in_addr *, u_int));
 static int in_lifaddr_ioctl __P((struct socket *, u_long, caddr_t,
 	struct ifnet *, struct proc *));
 
@@ -267,11 +267,11 @@ in_setmaxmtu()
 		in_maxmtu = maxmtu;
 }
 
-static int
+static u_int
 in_mask2len(mask)
 	struct in_addr *mask;
 {
-	int x, y;
+	u_int x, y;
 	u_char *p;
 
 	p = (u_char *)mask;
@@ -292,9 +292,9 @@ in_mask2len(mask)
 static void
 in_len2mask(mask, len)
 	struct in_addr *mask;
-	int len;
+	u_int len;
 {
-	int i;
+	u_int i;
 	u_char *p;
 
 	p = (u_char *)mask;
