@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.30.4.2 2001/07/08 05:15:17 gmcgarry Exp $	*/
+/*	$NetBSD: date.c,v 1.30.4.3 2001/07/08 05:21:15 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.30.4.2 2001/07/08 05:15:17 gmcgarry Exp $");
+__RCSID("$NetBSD: date.c,v 1.30.4.3 2001/07/08 05:21:15 gmcgarry Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ main(argc, argv)
 
 #define	ATOI2(s)	((s) += 2, ((s)[-2] - '0') * 10 + ((s)[-1] - '0'))
 
-static void
+void
 setthetime(p)
 	const char *p;
 {
