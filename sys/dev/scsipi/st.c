@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.77 1997/10/01 18:45:02 mjacob Exp $	*/
+/*	$NetBSD: st.c,v 1.78 1997/10/09 00:43:26 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -204,6 +204,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 	}}},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", "263H"}, {0, 5, {
+		{0, 0, 0},				/* minor 0-3 */
+		{0, 0, 0},				/* minor 4-7 */
+		{0, 0, 0},				/* minor 8-11 */
+		{0, 0, 0}				/* minor 12-15 */
+	}}},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "IBM",      "03590",            ""},     {ST_Q_IGNORE_LOADS, 0, {
 		{0, 0, 0},				/* minor 0-3 */
 		{0, 0, 0},				/* minor 4-7 */
 		{0, 0, 0},				/* minor 8-11 */
@@ -1878,7 +1885,7 @@ st_rdpos(st, hard, blkptr)
 
 	error = st->sc_link->scsipi_cmd(st->sc_link,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
-	    sizeof(posdata), ST_RETRIES, 30000, NULL, SCSI_DATA_IN);
+	    sizeof(posdata), ST_RETRIES, 30000, NULL, SCSI_SILENT|SCSI_DATA_IN);
 
 	if (error == 0) {
 #if	0
