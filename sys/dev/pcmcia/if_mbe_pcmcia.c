@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.13 2000/02/04 01:27:13 cgd Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.14 2000/02/04 03:38:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -159,6 +159,7 @@ mbe_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
+	psc->sc_io_window = -1;
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
@@ -173,7 +174,7 @@ mbe_pcmcia_attach(parent, self, aux)
 	    mpp->mpp_ioalign ? mpp->mpp_ioalign : cfe->iospace[0].length,
 	    &psc->sc_pcioh)) {
 		printf(": can't allocate i/o space\n");
-		return;
+		goto ioalloc_failed;
 	}
 
 	sc->sc_bst = psc->sc_pcioh.iot;
@@ -189,7 +190,7 @@ mbe_pcmcia_attach(parent, self, aux)
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_IO16, 0, cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
-		return;
+		goto iomap_failed;
 	}
 
 	printf(": %s\n", mpp->mpp_product.pp_name);
@@ -199,11 +200,11 @@ mbe_pcmcia_attach(parent, self, aux)
 	if (rv == -1) {
 		printf("%s: Couldn't read CIS to get ethernet address\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto no_enaddr;
 	} else if (rv == 0) {
 		printf("%s: Couldn't get ethernet address from CIS\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto no_enaddr;
 	}
 
 #ifdef DIAGNOSTIC
@@ -222,6 +223,18 @@ mbe_pcmcia_attach(parent, self, aux)
 	mb86960_config(sc, NULL, 0, 0);
 
 	pcmcia_function_disable(pa->pf);
+	return;
+
+ no_enaddr:
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+ iomap_failed:
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+ ioalloc_failed:
+	pcmcia_function_disable(pa->pf);
 }
 
 int
@@ -232,7 +245,11 @@ mbe_pcmcia_detach(self, flags)
 	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)self;
 	int error;
 
-	error =  mb86960_detach(&psc->sc_mb86960);
+	if (psc->sc_io_window == -1)
+		/* Nothing to detach since we've failed to attach.  */
+		return (0);
+
+	error = mb86960_detach(&psc->sc_mb86960);
 	if (error != 0)
 		return (error);
 
@@ -251,6 +268,13 @@ mbe_pcmcia_enable(sc)
 {
 	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)sc;
 
+#ifdef DIAGNOSTIC
+	if (psc->sc_ih != NULL) {
+		printf("%s: interrupt is already established\n",
+		    sc->sc_dev.dv_xname);
+		panic("mbe_pcmcia_enable");
+	}
+#endif
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, mb86960_intr,
 	    sc);
@@ -271,7 +295,9 @@ mbe_pcmcia_disable(sc)
 
 	pcmcia_function_disable(psc->sc_pf);
 
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	if (psc->sc_ih != NULL)
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = NULL;
 }
 
 int
