@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.32 1997/01/23 02:11:23 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.33 1997/02/26 22:29:11 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -410,8 +410,8 @@ si_attach(parent, self, args)
 	}
 
 	ncr_sc->sc_flags = 0;
-	if (sc->sc_options & SI_DO_RESELECT)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
+	if ((sc->sc_options & SI_DO_RESELECT) == 0)
+		ncr_sc->sc_no_disconnect = 0xFF;
 	if ((sc->sc_options & SI_DMA_INTR) == 0)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.7 1997/02/26 18:38:19 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.8 1997/02/26 22:29:12 gwr Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -422,8 +422,8 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_dma_stop  = si_dma_stop;
 
 	ncr_sc->sc_flags = 0;
-	if (si_options & SI_DO_RESELECT)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
+	if ((si_options & SI_DO_RESELECT) == 0)
+		ncr_sc->sc_no_disconnect = 0xff;
 	if ((si_options & SI_DMA_INTR) == 0)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;

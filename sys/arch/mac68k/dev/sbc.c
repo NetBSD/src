@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.19 1997/02/24 05:47:35 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.20 1997/02/26 22:29:08 gwr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -334,8 +334,6 @@ sbc_attach(parent, self, args)
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;
 
 	if (sc->sc_options & SBC_INTR) {
-		if (sc->sc_options & SBC_RESELECT)
-			ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
 		ncr_sc->sc_dma_alloc = sbc_dma_alloc;
 		ncr_sc->sc_dma_free  = sbc_dma_free;
 		ncr_sc->sc_dma_poll  = sbc_dma_poll;
@@ -347,6 +345,9 @@ sbc_attach(parent, self, args)
 		mac68k_register_scsi_irq(sbc_irq_intr, ncr_sc);
 	} else
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
+
+	if ((sc->sc_options & SBC_RESELECT) == 0)
+		ncr_sc->sc_no_disconnect = 0xff;
 
 	/*
 	 * Initialize fields used only here in the MD code.

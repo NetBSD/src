@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.33 1997/01/11 10:58:14 matthias Exp $	*/
+/*	$NetBSD: ncr.c,v 1.34 1997/02/26 22:29:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -170,10 +170,10 @@ ncr_attach(parent, self, aux)
 	/*
 	 * Copy options from cf_flags to sc_flags and sc_parity_disable.
 	 */
-	sc->sc_flags = ((flags & NCR_DISABLE_RESELECT) ?
-				0 : NCR5380_PERMIT_RESELECT) |
-		       ((flags & NCR_DISABLE_INTERRUPTS) ?
-				NCR5380_FORCE_POLLING : 0);
+	if (flags & NCR_DISABLE_RESELECT)
+		sc->sc_no_disconnect = 0xff;
+	if (flags & NCR_DISABLE_INTERRUPTS)
+		sc->sc_flags |= NCR5380_FORCE_POLLING;
 	sc->sc_parity_disable = flags >> 8;
 
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
