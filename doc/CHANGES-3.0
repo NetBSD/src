@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.4 2005/03/19 13:25:49 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.5 2005/03/19 18:02:58 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -54,4 +54,35 @@ sys/sys/select.h				1.23
 	Make sure to declare functions with C linkage; should fix PR bin/29730
 	from Juergen Hannken-Illjes.
 	[kleink, ticket #14]
+
+etc/pam.d/sshd					1.6-1.7
+
+	Make the SSH daemon work again if PAM is enabled.
+	[jwise, ticket #19]
+
+etc/pam.d/xserver				1.3
+
+	pam_self is "required" not just sufficient to authorize the Xserver.
+	[jwise, ticket #20]
+
+lib/libpam/modules/pam_unix/pam_unix.c		1.6
+
+	Clear the authorization token at the entry of each loop, so that
+	we get a chance to re-enter.
+	[christos, ticket #22]
+
+lib/libpam/modules/pam_ssh/pam_ssh.c		1.9
+
+	Remove debugging printf's.
+	[christos, ticket #23]
+
+libexec/getty/main.c				1.47
+
+	Print ptyfs ptys properly.
+	[christos, ticket #24]
+
+libexec/telnetd/utility.c			1.28
+
+	Handle printing ptyfs pty names.
+	[christos, ticket #25]
 
