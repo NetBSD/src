@@ -1,10 +1,9 @@
 #	from: @(#)Makefile	5.6 (Berkeley) 4/23/91
-#	$Id: Makefile,v 1.4 1994/11/15 07:21:40 glass Exp $
+#	$Id: Makefile,v 1.5 1995/08/02 01:27:08 paulus Exp $
 
 PROG=	slstats
-SRCS=	pppstats.c
-.PATH:	${.CURDIR}/../pppd/pppstats
-NOMAN=
+SRCS=	slstats.c
+MAN=	slstats.8
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 BINGRP=	kmem
