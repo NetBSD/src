@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.26 1999/04/13 19:02:38 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.27 1999/04/26 04:25:38 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,6 @@
 #include <sparc/dev/pfourreg.h>
 
 #include <dev/rasops/rasops.h>
-#include <dev/wsfont/wsfont.h>
 
 static struct fbdevice *devfb;
 
@@ -341,7 +340,7 @@ donesize:
 
 static void fb_bell __P((int));
 
-#if !(defined(RASTERCONS_FULLSCREEN) || defined(RASTERCONS_SMALLFONT))
+#if defined(RASTERCONS_FULLSCREEN)
 static int a2int __P((char *, int));
 
 static int
@@ -372,7 +371,7 @@ fbrcons_init(fb)
 {
 	struct rconsole	*rc = &fb->fb_rcons;
 	struct rasops_info *ri = &fb->fb_rinfo;
-	int maxrow, maxcol, cookie;
+	int maxrow, maxcol;
 
 	/* Set up what rasops needs to know about */
 	ri->ri_stride = fb->fb_linebytes;
@@ -385,20 +384,7 @@ fbrcons_init(fb)
 	maxrow = 0;
 	maxcol = 0;
 
-	/* Pick our default font. There is always a fallback */
-	wsfont_init();
-	
-	/* XXX leave font init to rasops until rasops1 is fixed */
-	if (ri->ri_depth != 1) 
-#ifdef RASTERCONS_SMALLFONT
-		if ((cookie = wsfont_find("Bold", 0, 0, 0)) >= 0)
-#else
-		if ((cookie = wsfont_find("Gallant", 0, 0, 0)) >= 0)
-#endif	
-			wsfont_lock(cookie, &ri->ri_font, WSFONT_LITTLE, 
-			    WSFONT_LITTLE);
-
-#if !defined(RASTERCONS_FULLSCREEN) && !defined(RASTERCONS_SMALLFONT)
+#if !defined(RASTERCONS_FULLSCREEN)
 #if defined(SUN4)
 	if (CPU_ISSUN4) {
 		struct eeprom *eep = (struct eeprom *)eeprom_va;
@@ -418,7 +404,7 @@ fbrcons_init(fb)
 		maxrow =
 		    a2int(getpropstring(optionsnode, "screen-#rows"), 34);
 	}
-#endif /* !RASTERCONS_FULLSCREEN && !RASTERCONS_SMALLFONT */
+#endif /* !RASTERCONS_FULLSCREEN */
 	/* 
 	 * XXX until somebody actually sets the colormap after a call to 
 	 * rasops_init() with ri->ri_cmap, we can only do mono..

@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.14 1999/04/13 18:45:41 ad Exp $
+# 	$NetBSD: GENERIC,v 1.15 1999/04/26 04:25:38 ad Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -20,9 +20,6 @@ options		__ELF__		# we use elf
 ## for headless (no framebuffer) machines.
 # XXX broken on sparc64
 #options 	RASTERCONSOLE		# fast rasterop console
-#options	RASOPS1			# 1-bit operations (XXX)
-#options	RASOPS8			# 8-bit operations (XXX)
-#options	FONT_LUCIDA16x29	# the console font
 
 #### System options that are the same for all ports
 
