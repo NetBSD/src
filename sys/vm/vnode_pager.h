@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1990 University of Utah.
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,12 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)vnode_pager.h	7.1 (Berkeley) 12/5/90
- *	$Id: vnode_pager.h,v 1.3 1993/05/20 03:59:54 cgd Exp $
+ *	from: @(#)vnode_pager.h	8.1 (Berkeley) 6/11/93
+ *	$Id: vnode_pager.h,v 1.4 1993/12/20 12:40:31 cgd Exp $
  */
 
-#ifndef _VM_VNODE_PAGER_H_
-#define _VM_VNODE_PAGER_H_
+#ifndef	_VNODE_PAGER_
+#define	_VNODE_PAGER_	1
 
 /*
  * VNODE pager private data.
@@ -57,23 +57,4 @@ typedef struct vnpager	*vn_pager_t;
 #define	VNP_PAGING	0x01		/* vnode used for pageout */
 #define VNP_CACHED	0x02		/* vnode is cached */
 
-#ifdef KERNEL
-
-void		vnode_pager_init();
-vm_pager_t	vnode_pager_alloc();
-void		vnode_pager_dealloc();
-int		vnode_pager_getpage(), vnode_pager_putpage();
-boolean_t	vnode_pager_haspage();
-
-struct pagerops vnodepagerops = {
-	vnode_pager_init,
-	vnode_pager_alloc,
-	vnode_pager_dealloc,
-	vnode_pager_getpage,
-	vnode_pager_putpage,
-	vnode_pager_haspage
-};
-
-#endif
-
-#endif /* !_VM_VNODE_PAGER_H_ */
+#endif	/* _VNODE_PAGER_ */

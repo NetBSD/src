@@ -1544,7 +1544,7 @@ vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
 		return;
 
 	if (dst_entry->object.vm_object != NULL &&
-	    !dst_entry->object.vm_object->internal)
+	    !(dst_entry->object.vm_object->flags & OBJ_INTERNAL))
 		printf("vm_map_copy_entry: copying over permanent data!\n");
 
 	/*

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_unix.c 1.1 89/11/07
  *	from: @(#)vm_unix.c	7.2 (Berkeley) 4/20/91
- *	$Id: vm_unix.c,v 1.6 1993/12/17 07:57:20 mycroft Exp $
+ *	$Id: vm_unix.c,v 1.7 1993/12/20 12:40:27 cgd Exp $
  */
 
 /*

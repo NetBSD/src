@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.8 1993/12/17 07:57:07 mycroft Exp $
+ *	$Id: vm_page.c,v 1.9 1993/12/20 12:40:18 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -73,6 +73,8 @@
 #include <vm/vm_map.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
+
+#include <machine/cpu.h>
 
 /*
  *	Associated with each page of user-allocatable memory is a
@@ -244,7 +246,7 @@ void vm_page_bootstrap(startp, endp)
 
 	/*
 	 *	Machine-dependent code allocates the resident page table.
-	 *	It uses vm_page_init to initialize the page frames.
+	 *	It uses VM_PAGE_INIT to initialize the page frames.
 	 *	The code also returns to us the virtual space available
 	 *	to the kernel.  We don't trust the pmap module
 	 *	to get the alignment right.
@@ -417,11 +419,8 @@ vm_offset_t vm_page_startup(start, end, vaddr)
 
 	pa = first_phys_addr;
 	while (npages--) {
-		m->copy_on_write = FALSE;
-		m->wanted = FALSE;
-		m->inactive = FALSE;
-		m->active = FALSE;
-		m->busy = FALSE;
+		m->flags &= ~(PG_COW | PG_WANTED | PG_INACTIVE | PG_ACTIVE |
+		    PG_BUSY);
 		m->object = NULL;
 		m->phys_addr = pa;
 		queue_enter(&vm_page_queue_free, m, vm_page_t, pageq);
@@ -528,7 +527,7 @@ void pmap_startup(startp, endp)
 		if (!pmap_next_page(&paddr))
 			break;
 		
-		vm_page_init(&vm_page_array[i], NULL, NULL);
+		VM_PAGE_INIT(&vm_page_array[i], NULL, NULL);
 		vm_page_array[i].phys_addr = paddr;
 		vm_page_free(&vm_page_array[i]);
 	}
@@ -572,7 +571,7 @@ void vm_page_insert(mem, object, offset)
 
 	VM_PAGE_CHECK(mem);
 
-	if (mem->tabled)
+	if (mem->flags & PG_TABLED)
 		panic("vm_page_insert: already inserted");
 
 	/*
@@ -598,7 +597,7 @@ void vm_page_insert(mem, object, offset)
 	 */
 
 	queue_enter(&object->memq, mem, vm_page_t, listq);
-	mem->tabled = TRUE;
+	mem->flags |= PG_TABLED;
 
 	/*
 	 *	And show that the object has one more resident
@@ -625,7 +624,7 @@ void vm_page_remove(mem)
 
 	VM_PAGE_CHECK(mem);
 
-	if (!mem->tabled)
+	if (!(mem->flags & PG_TABLED))
 		return;
 
 	/*
@@ -652,7 +651,7 @@ void vm_page_remove(mem)
 
 	mem->object->resident_page_count--;
 
-	mem->tabled = FALSE;
+	mem->flags &= ~PG_TABLED;
 }
 
 /*
@@ -712,95 +711,11 @@ void vm_page_rename(mem, new_object, new_offset)
 	if (mem->object == new_object)
 		return;
 
-	vm_page_lock_queues();	/* keep page from moving out from
+	VM_PAGE_LOCK_QUEUES();	/* keep page from moving out from
 				   under pageout daemon */
     	vm_page_remove(mem);
 	vm_page_insert(mem, new_object, new_offset);
-	vm_page_unlock_queues();
-}
-
-void		vm_page_init(mem, object, offset)
-	vm_page_t	mem;
-	vm_object_t	object;
-	vm_offset_t	offset;
-{
-#ifdef MACHINE_NONCONTIG
-#ifdef DEBUG
-#define	vm_page_init(mem, object, offset)  {\
-		(mem)->busy = TRUE; \
-		(mem)->tabled = FALSE; \
-		if (object) vm_page_insert((mem), (object), (offset)); \
-		else (mem)->object = NULL; \
-		(mem)->fictitious = FALSE; \
-		(mem)->page_lock = VM_PROT_NONE; \
-		(mem)->unlock_request = VM_PROT_NONE; \
-		(mem)->laundry = FALSE; \
-		(mem)->active = FALSE; \
-		(mem)->inactive = FALSE; \
-		(mem)->wire_count = 0; \
-		(mem)->clean = TRUE; \
-		(mem)->copy_on_write = FALSE; \
-		(mem)->fake = TRUE; \
-		(mem)->pagerowned = FALSE; \
-		(mem)->ptpage = FALSE; \
-	}
-#else	/* DEBUG */
-#define	vm_page_init(mem, object, offset)  {\
-		(mem)->busy = TRUE; \
-		(mem)->tabled = FALSE; \
-		if (object) vm_page_insert((mem), (object), (offset)); \
-		else (mem)->object = NULL; \
-		(mem)->fictitious = FALSE; \
-		(mem)->page_lock = VM_PROT_NONE; \
-		(mem)->unlock_request = VM_PROT_NONE; \
-		(mem)->laundry = FALSE; \
-		(mem)->active = FALSE; \
-		(mem)->inactive = FALSE; \
-		(mem)->wire_count = 0; \
-		(mem)->clean = TRUE; \
-		(mem)->copy_on_write = FALSE; \
-		(mem)->fake = TRUE; \
-	}
-#endif	/* DEBUG */
-#else	/* MACHINE_NONCONTIG */
-#ifdef DEBUG
-#define	vm_page_init(mem, object, offset)  {\
-		(mem)->busy = TRUE; \
-		(mem)->tabled = FALSE; \
-		vm_page_insert((mem), (object), (offset)); \
-		(mem)->fictitious = FALSE; \
-		(mem)->page_lock = VM_PROT_NONE; \
-		(mem)->unlock_request = VM_PROT_NONE; \
-		(mem)->laundry = FALSE; \
-		(mem)->active = FALSE; \
-		(mem)->inactive = FALSE; \
-		(mem)->wire_count = 0; \
-		(mem)->clean = TRUE; \
-		(mem)->copy_on_write = FALSE; \
-		(mem)->fake = TRUE; \
-		(mem)->pagerowned = FALSE; \
-		(mem)->ptpage = FALSE; \
-	}
-#else	/* DEBUG */
-#define	vm_page_init(mem, object, offset)  {\
-		(mem)->busy = TRUE; \
-		(mem)->tabled = FALSE; \
-		vm_page_insert((mem), (object), (offset)); \
-		(mem)->fictitious = FALSE; \
-		(mem)->page_lock = VM_PROT_NONE; \
-		(mem)->unlock_request = VM_PROT_NONE; \
-		(mem)->laundry = FALSE; \
-		(mem)->active = FALSE; \
-		(mem)->inactive = FALSE; \
-		(mem)->wire_count = 0; \
-		(mem)->clean = TRUE; \
-		(mem)->copy_on_write = FALSE; \
-		(mem)->fake = TRUE; \
-	}
-#endif	/* DEBUG */
-#endif	/* MACHINE_NONCONTIG */
-
-	vm_page_init(mem, object, offset);
+	VM_PAGE_UNLOCK_QUEUES();
 }
 
 /*
@@ -840,7 +755,7 @@ vm_page_t vm_page_alloc(object, offset)
 	simple_unlock(&vm_page_queue_free_lock);
 	splx(spl);
 
-	vm_page_init(mem, object, offset);
+	VM_PAGE_INIT(mem, object, offset);
 
 	/*
 	 *	Decide if we should poke the pageout daemon.
@@ -872,19 +787,19 @@ void vm_page_free(mem)
 	register vm_page_t	mem;
 {
 	vm_page_remove(mem);
-	if (mem->active) {
+	if (mem->flags & PG_ACTIVE) {
 		queue_remove(&vm_page_queue_active, mem, vm_page_t, pageq);
-		mem->active = FALSE;
+		mem->flags &= ~PG_ACTIVE;
 		vm_page_active_count--;
 	}
 
-	if (mem->inactive) {
+	if (mem->flags & PG_INACTIVE) {
 		queue_remove(&vm_page_queue_inactive, mem, vm_page_t, pageq);
-		mem->inactive = FALSE;
+		mem->flags &= ~PG_INACTIVE;
 		vm_page_inactive_count--;
 	}
 
-	if (!mem->fictitious) {
+	if (!(mem->flags & PG_FICTITIOUS)) {
 		int	spl;
 
 		spl = splimp();
@@ -912,17 +827,17 @@ void vm_page_wire(mem)
 	VM_PAGE_CHECK(mem);
 
 	if (mem->wire_count == 0) {
-		if (mem->active) {
+		if (mem->flags & PG_ACTIVE) {
 			queue_remove(&vm_page_queue_active, mem, vm_page_t,
 						pageq);
 			vm_page_active_count--;
-			mem->active = FALSE;
+			mem->flags &= ~PG_ACTIVE;
 		}
-		if (mem->inactive) {
+		if (mem->flags & PG_INACTIVE) {
 			queue_remove(&vm_page_queue_inactive, mem, vm_page_t,
 						pageq);
 			vm_page_inactive_count--;
-			mem->inactive = FALSE;
+			mem->flags &= ~PG_INACTIVE;
 		}
 		vm_page_wire_count++;
 	}
@@ -946,7 +861,7 @@ void vm_page_unwire(mem)
 	if (mem->wire_count == 0) {
 		queue_enter(&vm_page_queue_active, mem, vm_page_t, pageq);
 		vm_page_active_count++;
-		mem->active = TRUE;
+		mem->flags |= PG_ACTIVE;
 		vm_page_wire_count--;
 	}
 }
@@ -975,19 +890,22 @@ void vm_page_deactivate(m)
 	 *	Paul Mackerras (paulus@cs.anu.edu.au) 9-Jan-93.
 	 */
 
-	if (!m->inactive && m->wire_count == 0) {
+	if (!(m->flags & PG_INACTIVE) && m->wire_count == 0) {
 		pmap_clear_reference(VM_PAGE_TO_PHYS(m));
-		if (m->active) {
+		if (m->flags & PG_ACTIVE) {
 			queue_remove(&vm_page_queue_active, m, vm_page_t, pageq);
-			m->active = FALSE;
+			m->flags &= ~PG_ACTIVE;
 			vm_page_active_count--;
 		}
 		queue_enter(&vm_page_queue_inactive, m, vm_page_t, pageq);
-		m->inactive = TRUE;
+		m->flags |= PG_INACTIVE;
 		vm_page_inactive_count++;
 		if (pmap_is_modified(VM_PAGE_TO_PHYS(m)))
-			m->clean = FALSE;
-		m->laundry = !m->clean;
+			m->flags &= ~PG_CLEAN;
+		if (m->flags & PG_CLEAN)
+			m->flags &= ~PG_LAUNDRY;
+		else
+			m->flags |= PG_LAUNDRY;
 	}
 }
 
@@ -1004,18 +922,18 @@ void vm_page_activate(m)
 {
 	VM_PAGE_CHECK(m);
 
-	if (m->inactive) {
+	if (m->flags & PG_INACTIVE) {
 		queue_remove(&vm_page_queue_inactive, m, vm_page_t,
 						pageq);
 		vm_page_inactive_count--;
-		m->inactive = FALSE;
+		m->flags &= ~PG_INACTIVE;
 	}
 	if (m->wire_count == 0) {
-		if (m->active)
+		if (m->flags & PG_ACTIVE)
 			panic("vm_page_activate: already active");
 
 		queue_enter(&vm_page_queue_active, m, vm_page_t, pageq);
-		m->active = TRUE;
+		m->flags |= PG_ACTIVE;
 		vm_page_active_count++;
 	}
 }
