@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.52 2002/05/25 14:21:02 wiz Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.53 2002/05/25 14:46:01 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.52 2002/05/25 14:21:02 wiz Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.53 2002/05/25 14:46:01 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,37 +77,29 @@ __RCSID("$NetBSD: syslogd.c,v 1.52 2002/05/25 14:21:02 wiz Exp $");
 #define TTYMSGTIME	1		/* timeout passed to ttymsg */
 
 #include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
 #include <sys/socket.h>
-#include <sys/msgbuf.h>
-#include <sys/uio.h>
-#include <sys/poll.h>
-#include <sys/un.h>
-#include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/sysctl.h>
-
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <locale.h>
-#include <setjmp.h>
+#include <netdb.h>
+#include <poll.h>
+#include <pwd.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <utmp.h>
 #include <util.h>
-#include <pwd.h>
-#include <grp.h>
-#include <stdarg.h>
+#include <utmp.h>
+
 #include "pathnames.h"
 
 #define SYSLOG_NAMES
@@ -208,30 +200,28 @@ int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 
-void	cfline __P((char *, struct filed *));
-char   *cvthname __P((struct sockaddr_storage *));
-int	decode __P((const char *, CODE *));
-void	die __P((int));
-void	domark __P((int));
-void	fprintlog __P((struct filed *, int, char *));
-int	getmsgbufsize __P((void));
-int*	socksetup __P((int));
-void	init __P((int));
-void	logerror __P((const char *, ...));
-void	logmsg __P((int, char *, char *, int));
-void	printline __P((char *, char *));
-void	printsys __P((char *));
-void	reapchild __P((int));
-void	usage __P((void));
-void	wallmsg __P((struct filed *, struct iovec *));
-int	main __P((int, char *[]));
-void	logpath_add __P((char ***, int *, int *, char *));
-void	logpath_fileadd __P((char ***, int *, int *, char *));
+void	cfline(char *, struct filed *);
+char   *cvthname(struct sockaddr_storage *);
+int	decode(const char *, CODE *);
+void	die(int);
+void	domark(int);
+void	fprintlog(struct filed *, int, char *);
+int	getmsgbufsize(void);
+int*	socksetup(int);
+void	init(int);
+void	logerror(const char *, ...);
+void	logmsg(int, char *, char *, int);
+void	printline(char *, char *);
+void	printsys(char *);
+void	reapchild(int);
+void	usage(void);
+void	wallmsg(struct filed *, struct iovec *);
+int	main(int, char *[]);
+void	logpath_add(char ***, int *, int *, char *);
+void	logpath_fileadd(char ***, int *, int *, char *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, *funix, i, j, fklog, len, linesize;
 	int *nfinetix, nfklogix, nfunixbaseix, nfds;
@@ -254,26 +244,16 @@ main(argc, argv)
 
 	while ((ch = getopt(argc, argv, "dnsf:m:p:P:u:g:t:")) != -1)
 		switch(ch) {
-		case 'u':
-			user = optarg;
-			if (*user == '\0')
-				usage();
-			break;
-		case 'g':
-			group = optarg;
-			if (*group == '\0')
-				usage();
-			break;
-		case 't':
-			root = optarg;
-			if (*root == '\0')
-				usage();
-			break;
 		case 'd':		/* debug */
 			Debug++;
 			break;
 		case 'f':		/* configuration file */
 			ConfFile = optarg;
+			break;
+		case 'g':
+			group = optarg;
+			if (*group == '\0')
+				usage();
 			break;
 		case 'm':		/* mark interval */
 			MarkInterval = atoi(optarg) * 60;
@@ -291,6 +271,16 @@ main(argc, argv)
 			break;
 		case 's':		/* no network listen mode */
 			SecureMode++;
+			break;
+		case 't':
+			root = optarg;
+			if (*root == '\0')
+				usage();
+			break;
+		case 'u':
+			user = optarg;
+			if (*user == '\0')
+				usage();
 			break;
 		case '?':
 		default:
@@ -336,7 +326,7 @@ getgroup:
 	}
 
 	if (access (root, F_OK | R_OK)) {
-		logerror ("Cannot access `%s'", root);
+		logerror("Cannot access `%s'", root);
 		die (0);
 	}
 
@@ -434,19 +424,19 @@ getgroup:
 	/* 
 	 * All files are open, we can drop privileges and chroot
 	 */
-	dprintf ("Attempt to chroot to `%s'\n", root);  
-	if (chroot (root)) {
-		logerror ("Failed to chroot to `%s'", root);
+	dprintf("Attempt to chroot to `%s'\n", root);  
+	if (chroot(root)) {
+		logerror("Failed to chroot to `%s'", root);
 		die(0);
 	}
-	dprintf ("Attempt to set GID/EGID to `%d'\n", gid);  
-	if (setgid (gid) || setegid (gid)) {
-		logerror ("Failed to set gid to `%d'", gid);
+	dprintf("Attempt to set GID/EGID to `%d'\n", gid);  
+	if (setgid(gid) || setegid(gid)) {
+		logerror("Failed to set gid to `%d'", gid);
 		die(0);
 	}
-	dprintf ("Attempt to set UID/EUID to `%d'\n", uid);  
-	if (setuid (uid) || seteuid (uid)) {
-		logerror ("Failed to set uid to `%d'", uid);
+	dprintf("Attempt to set UID/EUID to `%d'\n", uid);  
+	if (setuid(uid) || seteuid(uid)) {
+		logerror("Failed to set uid to `%d'", uid);
 		die(0);
 	}
 
@@ -546,12 +536,13 @@ getgroup:
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
-"usage: %s [-dns] [-f config_file] [-g group] [-m mark_interval]\n\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n\t[-t chroot_dir] [-u user]\n",
-	    getprogname());
+	    "usage: %s [-dns] [-f config_file] [-g group] [-m mark_interval]\n"
+	    "\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n"
+	    "\t[-t chroot_dir] [-u user]\n", getprogname());
 	exit(1);
 }
 
@@ -561,11 +552,7 @@ usage()
  * it, update everything as necessary, possibly allocating a new array
  */
 void
-logpath_add(lp, szp, maxszp, new)
-	char ***lp;
-	int *szp;
-	int *maxszp;
-	char *new;
+logpath_add(char ***lp, int *szp, int *maxszp, char *new)
 {
 
 	dprintf("Adding `%s' to the %p logpath list\n", new, *lp);
@@ -590,11 +577,7 @@ logpath_add(lp, szp, maxszp, new)
 
 /* do a file of log sockets */
 void
-logpath_fileadd(lp, szp, maxszp, file)
-	char ***lp;
-	int *szp;
-	int *maxszp;
-	char *file;
+logpath_fileadd(char ***lp, int *szp, int *maxszp, char *file)
 {
 	FILE *fp;
 	char *line;
@@ -618,9 +601,7 @@ logpath_fileadd(lp, szp, maxszp, file)
  * on the appropriate log files.
  */
 void
-printline(hname, msg)
-	char *hname;
-	char *msg;
+printline(char *hname, char *msg)
 {
 	int c, pri;
 	char *p, *q, line[MAXLINE + 1];
@@ -668,8 +649,7 @@ printline(hname, msg)
  * Take a raw input line from /dev/klog, split and format similar to syslog().
  */
 void
-printsys(msg)
-	char *msg;
+printsys(char *msg)
 {
 	int c, pri, flags;
 	char *lp, *p, *q, line[MAXLINE + 1];
@@ -708,10 +688,7 @@ time_t	now;
  * the priority.
  */
 void
-logmsg(pri, msg, from, flags)
-	int pri;
-	char *msg, *from;
-	int flags;
+logmsg(int pri, char *msg, char *from, int flags)
 {
 	struct filed *f;
 	int fac, msglen, omask, prilev;
@@ -816,10 +793,7 @@ logmsg(pri, msg, from, flags)
 }
 
 void
-fprintlog(f, flags, msg)
-	struct filed *f;
-	int flags;
-	char *msg;
+fprintlog(struct filed *f, int flags, char *msg)
 {
 	struct iovec iov[6];
 	struct iovec *v;
@@ -974,9 +948,7 @@ fprintlog(f, flags, msg)
  *	world, or a list of approved users.
  */
 void
-wallmsg(f, iov)
-	struct filed *f;
-	struct iovec *iov;
+wallmsg(struct filed *f, struct iovec *iov)
 {
 	static int reenter;			/* avoid calling ourselves */
 	FILE *uf;
@@ -1025,8 +997,7 @@ wallmsg(f, iov)
 }
 
 void
-reapchild(signo)
-	int signo;
+reapchild(int signo)
 {
 	union wait status;
 
@@ -1038,8 +1009,7 @@ reapchild(signo)
  * Return a printable representation of a host address.
  */
 char *
-cvthname(f)
-	struct sockaddr_storage *f;
+cvthname(struct sockaddr_storage *f)
 {
 	int error;
 	char *p;
@@ -1075,8 +1045,7 @@ cvthname(f)
 }
 
 void
-domark(signo)
-	int signo;
+domark(int signo)
 {
 	struct filed *f;
 
@@ -1132,8 +1101,7 @@ logerror(const char *fmt, ...)
 }
 
 void
-die(signo)
-	int signo;
+die(int signo)
 {
 	struct filed *f;
 	char **p;
@@ -1157,8 +1125,7 @@ die(signo)
  *  INIT -- Initialize syslogd from configuration table
  */
 void
-init(signo)
-	int signo;
+init(int signo)
 {
 	int i;
 	FILE *cf;
@@ -1302,9 +1269,7 @@ init(signo)
  * Crack a configuration file line
  */
 void
-cfline(line, f)
-	char *line;
-	struct filed *f;
+cfline(char *line, struct filed *f)
 {
 	struct addrinfo hints, *res;
 	int    error, i, pri;
@@ -1492,9 +1457,7 @@ cfline(line, f)
  *  Decode a symbolic name to a numeric value
  */
 int
-decode(name, codetab)
-	const char *name;
-	CODE *codetab;
+decode(const char *name, CODE *codetab)
 {
 	CODE *c;
 	char *p, buf[40];
@@ -1520,7 +1483,7 @@ decode(name, codetab)
  * Retrieve the size of the kernel message buffer, via sysctl.
  */
 int
-getmsgbufsize()
+getmsgbufsize(void)
 {
 	int msgbufsize, mib[2];
 	size_t size;
@@ -1536,8 +1499,7 @@ getmsgbufsize()
 }
 
 int *
-socksetup(af)
-	int af;
+socksetup(int af)
 {
 	struct addrinfo hints, *res, *r;
 	int error, maxs, *s, *socks;
