@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_etreg.h,v 1.2 1996/06/09 13:21:11 veego Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.3 1997/03/05 22:50:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -77,6 +77,7 @@ struct grfettext_mode {
 #define SIERRA15025	1	/* Sierra 15025 TrueColor DAC */
 #define MUSICDAC	2	/* MUSIC TrueColor DAC */
 #define MERLINDAC	3	/* Merlin's BrookTree TrueColor DAC */
+#define ATT20C491	4	/* AT&T 20c491 TrueColor DAC */
 
 /* read VGA register */
 #define vgar(ba, reg) (*(((volatile unsigned char *)ba)+reg))
@@ -111,6 +112,7 @@ struct grfettext_mode {
 #define	GREG_COLORSELECT	0x03D9
 #define	GREG_ATNTMODECONTROL	0x03DE
 #define	GREG_SEGMENTSELECT	0x03CD
+#define	GREG_SEGMENTSELECT2	0x03CB
 
 /* ETW32 special */
 #define W32mappedRegs 0xfff00
@@ -215,7 +217,7 @@ struct grfettext_mode {
 #define	CRT_ID_SEGMENT_COMP	0x30
 #define	CRT_ID_GENERAL_PURPOSE	0x31
 #define	CRT_ID_RASCAS_CONFIG	0x32
-#define	CTR_ID_EXT_START	0x33
+#define	CRT_ID_EXT_START	0x33
 #define	CRT_ID_6845_COMPAT	0x34
 #define	CRT_ID_OVERFLOW_HIGH	0x35
 #define	CRT_ID_VIDEO_CONFIG1	0x36
@@ -273,21 +275,22 @@ struct grfettext_mode {
 	do { vgaw(ba, IMA_ADDRESS, idx); vgaw(ba, IMA_ADDRESS_W , val); } while (0)
 
 #define WAttr(ba, idx, val) \
-	do {	\
-		if(vgar(ba, GREG_STATUS1_R));\
-		vgaw(ba, ACT_ADDRESS_W, idx);\
-		vgaw(ba, ACT_ADDRESS_W, val);\
+	do { \
+		if(vgar(ba, GREG_STATUS1_R)); \
+		vgaw(ba, ACT_ADDRESS_W, idx); \
+		vgaw(ba, ACT_ADDRESS_W, val); \
 	} while (0)
 
 #define SetTextPlane(ba, m) \
 	do { \
-		WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 );\
-		WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3)));\
+		WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 ); \
+		WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); \
 	} while (0)
 
 #define setMerlinDACmode(ba, mode) \
 	do { \
-		vgaw(ba, VDAC_MASK,  mode | (vgar(ba, VDAC_MASK) & 0x0f));\
+		vgaw(ba, MERLIN_VDAC_DATA,  mode | \
+			(vgar(ba, MERLIN_VDAC_DATA) & 0x0f)); \
 	} while (0)
 
 /* Special wakeup/passthrough registers on graphics boards
@@ -377,9 +380,10 @@ static inline unsigned char RGfx(volatile void * ba, short idx) {
 	return vgar (ba, GCT_ADDRESS_R);
 }
 
-int et_mode __P((register struct grf_softc *gp, u_long cmd, void *arg, u_long a2, int a3));
-int et_load_mon __P((struct grf_softc *gp, struct grfettext_mode *gv)); 
-int grfet_cnprobe __P((void));
-void grfet_iteinit __P((struct grf_softc *gp));
+int	et_mode __P((register struct grf_softc *gp, u_long cmd, void *arg,
+		u_long a2, int a3));
+int	et_load_mon __P((struct grf_softc *gp, struct grfettext_mode *gv)); 
+int	grfet_cnprobe __P((void));
+void	grfet_iteinit __P((struct grf_softc *gp));
 
 #endif /* _GRF_ETREG_H */
