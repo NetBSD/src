@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2003/11/30 14:36:44 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2004/05/08 14:39:01 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,6 +57,7 @@
  * or upgrade.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
 
 #define MD_SETS_VALID (SET_KERNEL | SET_SYSTEM | (SET_X11 & ~SET_X11_SERVERS))
 
