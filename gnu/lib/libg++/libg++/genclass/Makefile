@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/03/09 00:01:12 phil Exp $
+#	$NetBSD: Makefile,v 1.2 1996/12/20 01:04:20 cgd Exp $
 # Makefile for g++ library genclass 
 
 PROG=		genclass
 SRCS=	genclass.sh 
 NOMAN=
+NOLINT=
 STRIP=
 
 SRCDIR=${.CURDIR}

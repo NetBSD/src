@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.13 1996/12/17 21:32:26 cgd Exp $
+#	$NetBSD: libg++2netbsd,v 1.14 1996/12/20 01:04:17 cgd Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -485,6 +485,7 @@ SUBDIR = src genclass
 PROG=		genclass
 %% srcs genclass
 NOMAN=
+NOLING=
 STRIP=
 
 SRCDIR=${.CURDIR}
@@ -514,6 +515,7 @@ LDADD=		${DESTDIR}/usr/lib/c++rt0.o -lcurses
 DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
 .endif
 NOMAN=		noman
+NOLINT=		nolint
 LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
 			$(MAKE) -r -s -f - xxx | grep curses
 
@@ -528,6 +530,7 @@ LIB=	io
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include 
 CFLAGS+=	-I$(.CURDIR)
 NOMAN=		noman
+NOLINT=		nolint
 
 .include <bsd.lib.mk>
 %% file libiostream/Makefile
@@ -541,6 +544,7 @@ CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include \
 		  -I$(.CURDIR)/../libio 
 CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio
 NOMAN=		noman
+NOLINT=		nolint
 
 .PATH: $(.CURDIR)/../libio
 
@@ -555,6 +559,7 @@ LIB=	stdc++
 CXXFLAGS+=  -nostdinc++ 
 CFLAGS+=    -I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
 NOMAN=	    noman
+NOLINT=	    nolint
 
 .PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
 
