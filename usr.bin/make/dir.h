@@ -1,6 +1,8 @@
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 by Berkeley Softworks
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -32,63 +34,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)dir.h	8.2 (Berkeley) 4/28/95
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)lstFindFrom.c	8.2 (Berkeley) 4/28/95";
-#endif /* not lint */
-
-/*-
- * LstFindFrom.c --
- *	Find a node on a list from a given starting point. Used by Lst_Find.
+/* dir.h --
  */
 
-#include	"lstInt.h"
+#ifndef	_DIR
+#define	_DIR
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_FindFrom --
- *	Search for a node starting and ending with the given one on the
- *	given list using the passed datum and comparison function to
- *	determine when it has been found.
- *
- * Results:
- *	The found node or NILLNODE
- *
- * Side Effects:
- *	None.
- *
- *-----------------------------------------------------------------------
- */
-LstNode
-Lst_FindFrom (l, ln, d, cProc)
-    Lst		      	l;
-    register LstNode    ln;
-    register ClientData d;
-    register int	(*cProc) __P((ClientData, ClientData));
-{
-    register ListNode	tln;
-    Boolean		found = FALSE;
-    
-    if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
-	return (NILLNODE);
-    }
-    
-    tln = (ListNode)ln;
-    
-    do {
-	if ((*cProc) (tln->datum, d) == 0) {
-	    found = TRUE;
-	    break;
-	} else {
-	    tln = tln->nextPtr;
-	}
-    } while (tln != (ListNode)ln && tln != NilListNode);
-    
-    if (found) {
-	return ((LstNode)tln);
-    } else {
-	return (NILLNODE);
-    }
-}
+typedef struct Path {
+    char         *name;	    	/* Name of directory */
+    int	    	  refCount; 	/* Number of paths with this directory */
+    int		  hits;	    	/* the number of times a file in this
+				 * directory has been found */
+    Hash_Table    files;    	/* Hash table of files in directory */
+} Path;
 
+void Dir_Init __P((void));
+void Dir_End __P((void));
+Boolean Dir_HasWildcards __P((char *));
+void Dir_Expand __P((char *, Lst, Lst));
+char *Dir_FindFile __P((char *, Lst));
+int Dir_MTime __P((GNode *));
+void Dir_AddDir __P((Lst, char *));
+char *Dir_MakeFlags __P((char *, Lst));
+void Dir_ClearPath __P((Lst));
+void Dir_Concat __P((Lst, Lst));
+void Dir_PrintDirectories __P((void));
+void Dir_PrintPath __P((Lst));
+void Dir_Destroy __P((ClientData));
+ClientData Dir_CopyDir __P((ClientData));
+
+#endif /* _DIR */

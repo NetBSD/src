@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -35,94 +35,106 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nonints.h	5.6 (Berkeley) 4/18/91
+ *	@(#)nonints.h	8.4 (Berkeley) 4/28/95
  */
 
-char **brk_string(), *emalloc(), *str_concat();
+/* arch.c */
+ReturnStatus Arch_ParseArchive __P((char **, Lst, GNode *));
+void Arch_Touch __P((GNode *));
+void Arch_TouchLib __P((GNode *));
+int Arch_MTime __P((GNode *));
+int Arch_MemMTime __P((GNode *));
+void Arch_FindLib __P((GNode *, Lst));
+Boolean Arch_LibOODate __P((GNode *));
+void Arch_Init __P((void));
+void Arch_End __P((void));
 
-ReturnStatus	Arch_ParseArchive ();
-void	Arch_Touch ();
-void	Arch_TouchLib ();
-int	Arch_MTime ();
-int	Arch_MemMTime ();
-void	Arch_FindLib ();
-Boolean	Arch_LibOODate ();
-void	Arch_Init ();
-void	Compat_Run();
-void	Dir_Init ();
-Boolean	Dir_HasWildcards ();
-void	Dir_Expand ();
-char *	Dir_FindFile ();
-int	Dir_MTime ();
-void	Dir_AddDir ();
-ClientData	Dir_CopyDir ();
-char *	Dir_MakeFlags ();
-void	Dir_Destroy ();
-void	Dir_ClearPath ();
-void	Dir_Concat ();
-int	Make_TimeStamp ();
-Boolean	Make_OODate ();
-int	Make_HandleUse ();
-void	Make_Update ();
-void	Make_DoAllVar ();
-Boolean	Make_Run ();
-void	Job_Touch ();
-Boolean	Job_CheckCommands ();
-void	Job_CatchChildren ();
-void	Job_CatchOutput ();
-void	Job_Make ();
-void	Job_Init ();
-Boolean	Job_Full ();
-Boolean	Job_Empty ();
-ReturnStatus	Job_ParseShell ();
-int	Job_End ();
-void	Job_Wait();
-void	Job_AbortAll ();
-void	Main_ParseArgLine ();
-void	Error ();
-void	Fatal ();
-void	Punt ();
-void	DieHorribly ();
-void	Finish ();
-void	Parse_Error ();
-Boolean	Parse_IsVar ();
-void	Parse_DoVar ();
-void	Parse_AddIncludeDir ();
-void	Parse_File();
-Lst	Parse_MainName();
-void	Suff_ClearSuffixes ();
-Boolean	Suff_IsTransform ();
-GNode *	Suff_AddTransform ();
-void	Suff_AddSuffix ();
-int	Suff_EndTransform ();
-Lst	Suff_GetPath ();
-void	Suff_DoPaths();
-void	Suff_AddInclude ();
-void	Suff_AddLib ();
-void	Suff_FindDeps ();
-void	Suff_SetNull();
-void	Suff_Init ();
-void	Targ_Init ();
-GNode *	Targ_NewGN ();
-GNode *	Targ_FindNode ();
-Lst	Targ_FindList ();
-Boolean	Targ_Ignore ();
-Boolean	Targ_Silent ();
-Boolean	Targ_Precious ();
-void	Targ_SetMain ();
-int	Targ_PrintCmd ();
-char *	Targ_FmtTime ();
-void	Targ_PrintType ();
-char *	Str_Concat ();
-int	Str_Match();
-void	Var_Delete();
-void	Var_Set ();
-void	Var_Append ();
-Boolean	Var_Exists();
-char *	Var_Value ();
-char *	Var_Parse ();
-char *	Var_Subst ();
-char *	Var_GetTail();
-char *	Var_GetHead();
-void	Var_Init ();
-char *	Str_FindSubstring();
+/* compat.c */
+void Compat_Run __P((Lst));
+
+/* cond.c */
+int Cond_Eval __P((char *));
+void Cond_End __P((void));
+
+/* for.c */
+int For_Eval __P((char *));
+void For_Run  __P((void));
+
+/* main.c */
+void Main_ParseArgLine __P((char *));
+int main __P((int, char **));
+void Error __P((char *, ...));
+void Fatal __P((char *, ...));
+void Punt __P((char *, ...));
+void DieHorribly __P((void));
+int PrintAddr __P((ClientData, ClientData));
+void Finish __P((int));
+char *emalloc __P((size_t));
+void enomem __P((void));
+
+/* parse.c */
+void Parse_Error __P((int, char *, ...));
+Boolean Parse_AnyExport __P((void));
+Boolean Parse_IsVar __P((char *));
+void Parse_DoVar __P((char *, GNode *));
+void Parse_AddIncludeDir __P((char *));
+void Parse_File __P((char *, FILE *));
+void Parse_Init __P((void));
+void Parse_End __P((void));
+void Parse_FromString __P((char *));
+Lst Parse_MainName __P((void));
+
+/* str.c */
+void str_init __P((void));
+void str_end __P((void));
+char *str_concat __P((char *, char *, int));
+char **brk_string __P((char *, int *, Boolean));
+char *Str_FindSubstring __P((char *, char *));
+int Str_Match __P((char *, char *));
+char *Str_SYSVMatch __P((char *, char *, int *len));
+void Str_SYSVSubst __P((Buffer, char *, char *, int));
+
+/* suff.c */
+void Suff_ClearSuffixes __P((void));
+Boolean Suff_IsTransform __P((char *));
+GNode *Suff_AddTransform __P((char *));
+int Suff_EndTransform __P((ClientData, ClientData));
+void Suff_AddSuffix __P((char *));
+Lst Suff_GetPath __P((char *));
+void Suff_DoPaths __P((void));
+void Suff_AddInclude __P((char *));
+void Suff_AddLib __P((char *));
+void Suff_FindDeps __P((GNode *));
+void Suff_SetNull __P((char *));
+void Suff_Init __P((void));
+void Suff_End __P((void));
+void Suff_PrintAll __P((void));
+
+/* targ.c */
+void Targ_Init __P((void));
+void Targ_End __P((void));
+GNode *Targ_NewGN __P((char *));
+GNode *Targ_FindNode __P((char *, int));
+Lst Targ_FindList __P((Lst, int));
+Boolean Targ_Ignore __P((GNode *));
+Boolean Targ_Silent __P((GNode *));
+Boolean Targ_Precious __P((GNode *));
+void Targ_SetMain __P((GNode *));
+int Targ_PrintCmd __P((ClientData, ClientData));
+char *Targ_FmtTime __P((time_t));
+void Targ_PrintType __P((int));
+void Targ_PrintGraph __P((int));
+
+/* var.c */
+void Var_Delete __P((char *, GNode *));
+void Var_Set __P((char *, char *, GNode *));
+void Var_Append __P((char *, char *, GNode *));
+Boolean Var_Exists __P((char *, GNode *));
+char *Var_Value __P((char *, GNode *, char **));
+char *Var_Parse __P((char *, GNode *, Boolean, int *, Boolean *));
+char *Var_Subst __P((char *, char *, GNode *, Boolean));
+char *Var_GetTail __P((char *));
+char *Var_GetHead __P((char *));
+void Var_Init __P((void));
+void Var_End __P((void));
+void Var_Dump __P((GNode *));

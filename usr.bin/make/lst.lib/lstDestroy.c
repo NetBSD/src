@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lstDestroy.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstDestroy.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*-
@@ -63,7 +63,7 @@ static char sccsid[] = "@(#)lstDestroy.c	5.3 (Berkeley) 6/1/90";
 void
 Lst_Destroy (l, freeProc)
     Lst	    	  	l;
-    register void	(*freeProc)();
+    register void	(*freeProc) __P((ClientData));
 {
     register ListNode	ln;
     register ListNode	tln = NilListNode;
@@ -76,21 +76,25 @@ Lst_Destroy (l, freeProc)
 	 */
 	return;
     }
-    
+
+    /* To ease scanning */
+    if (list->lastPtr != NilListNode)
+	list->lastPtr->nextPtr = NilListNode;
+    else {
+	free ((Address)l);
+	return;
+    }
+
     if (freeProc) {
-	for (ln = list->firstPtr;
-	     ln != NilListNode && tln != list->firstPtr;
-	     ln = tln) {
-		 tln = ln->nextPtr;
-		 (*freeProc) (ln->datum);
-		 free ((Address)ln);
+	for (ln = list->firstPtr; ln != NilListNode; ln = tln) {
+	     tln = ln->nextPtr;
+	     (*freeProc) (ln->datum);
+	     free ((Address)ln);
 	}
     } else {
-	for (ln = list->firstPtr;
-	     ln != NilListNode && tln != list->firstPtr;
-	     ln = tln) {
-		 tln = ln->nextPtr;
-		 free ((Address)ln);
+	for (ln = list->firstPtr; ln != NilListNode; ln = tln) {
+	     tln = ln->nextPtr;
+	     free ((Address)ln);
 	}
     }
     

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam de Boor.
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lstDupl.c	5.3 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)lstDupl.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*-
@@ -62,7 +62,8 @@ static char sccsid[] = "@(#)lstDupl.c	5.3 (Berkeley) 6/1/90";
 Lst
 Lst_Duplicate (l, copyProc)
     Lst     	  l;	    	 /* the list to duplicate */
-    ClientData	  (*copyProc)(); /* A function to duplicate each ClientData */
+    /* A function to duplicate each ClientData */
+    ClientData	  (*copyProc) __P((ClientData));
 {
     register Lst 	nl;
     register ListNode  	ln;

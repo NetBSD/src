@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)make.h	5.13 (Berkeley) 3/1/91
+ *	@(#)make.h	8.3 (Berkeley) 6/13/95
  */
 
 /*-
@@ -47,11 +47,26 @@
 #define _MAKE_H_
 
 #include <sys/types.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#ifndef MAKE_BOOTSTRAP
+#include <sys/cdefs.h>
+#else
+#if defined(__STDC__) || defined(__cplusplus)
+#define	__P(protos)	protos		/* full-blown ANSI C */
+#else
+#define	__P(protos)	()		/* traditional C preprocessor */    
+#endif
+#endif
+#if __STDC__
+#include <stdlib.h>
+#include <unistd.h>
+#endif
 #include "sprite.h"
 #include "lst.h"
 #include "config.h"
+#include "buf.h"
 
 /*-
  * The structure for an individual graph node. Each node has several
@@ -177,6 +192,7 @@ typedef struct GNode {
 				     * local variables. */
 #define OP_NOTMAIN	0x00008000  /* The node is exempt from normal 'main
 				     * target' processing in parse.c */
+#define OP_PHONY	0x00010000  /* Not a file target; run always */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
@@ -214,7 +230,7 @@ typedef struct GNode {
  * case, it ought to be a power of two simply because most storage allocation
  * schemes allocate in powers of two. 
  */
-#define BSIZE		256	/* starting size for expandable buffers */
+#define MAKE_BSIZE		256	/* starting size for expandable buffers */
 
 /*
  * These constants are all used by the Str_Concat function to decide how the
@@ -271,6 +287,7 @@ extern Lst  	create;	    	/* The list of target names specified on the
 extern Lst     	dirSearchPath; 	/* The list of directories to search when
 				 * looking for targets */
 
+extern Boolean	compatMake;	/* True if we are make compatible */
 extern Boolean	ignoreErrors;  	/* True if should ignore all errors */
 extern Boolean  beSilent;    	/* True if should print no commands */
 extern Boolean  noExecute;    	/* True if should execute nothing */
@@ -322,6 +339,7 @@ extern int debug;
 #define	DEBUG_SUFF	0x0080
 #define	DEBUG_TARG	0x0100
 #define	DEBUG_VAR	0x0200
+#define DEBUG_FOR	0x0400
 
 #ifdef __STDC__
 #define CONCAT(a,b)	a##b
@@ -338,4 +356,11 @@ extern int debug;
  */
 #include "nonints.h"
 
-#endif _MAKE_H_
+int Make_TimeStamp __P((GNode *, GNode *));
+Boolean Make_OODate __P((GNode *));
+int Make_HandleUse __P((GNode *, GNode *));
+void Make_Update __P((GNode *));
+void Make_DoAllVar __P((GNode *));
+Boolean Make_Run __P((Lst));
+
+#endif /* _MAKE_H_ */

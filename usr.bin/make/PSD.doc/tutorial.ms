@@ -34,7 +34,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)tutorial.ms	8.1 (Berkeley) 8/18/93
+.\"	@(#)tutorial.ms	8.4 (Berkeley) 4/28/95
 .\"
 .EH 'PSD:12-%''PMake \*- A Tutorial'
 .OH 'PMake \*- A Tutorial''PSD:12-%'
@@ -43,7 +43,7 @@
 .\" is numeric, it is taken as the depth for numbering (as for .NH), else
 .\" the default (1) is assumed.
 .\"
-.\" $Id: tutorial.ms,v 1.1.1.1 1994/06/19 02:33:16 cgd Exp $
+.\" $Id: tutorial.ms,v 1.1.1.2 1996/12/28 04:41:23 tls Exp $
 .\"
 .\" @P The initial paragraph distance.
 .\" @Q The piece of section number to increment (or 0 if none given)

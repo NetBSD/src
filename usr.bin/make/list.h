@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
- * Copyright (c) 1988, 1989 by Adam de Boor
+ * Copyright (c) 1988, 1989, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * Copyright (c) 1989 by Berkeley Softworks
  * All rights reserved.
  *
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)list.h	5.3 (Berkeley) 6/1/90
+ *	@(#)list.h	8.2 (Berkeley) 4/28/95
  */
 
 /*
@@ -295,4 +295,4 @@ void 	List_Move();    /* move an element elsewhere in a list */
 
 #define LIST_ATREAR(headerPtr) (((List_Links *) headerPtr)->prevPtr)
 
-#endif _LIST
+#endif /* _LIST */
