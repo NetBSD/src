@@ -16,7 +16,7 @@
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
  *
- *	$Id: wd7000.c,v 1.6 1993/05/22 08:01:45 cgd Exp $
+ *	$Id: wd7000.c,v 1.7 1993/06/10 04:50:42 deraadt Exp $
  */
 #include "wds.h"
 #if NWDS > 0
@@ -581,10 +581,14 @@ int
 wdsattach(struct isa_device *dev)
 {
 	int masunit = dev->id_masunit;
+	static u_long versprobe		/* max 32 controllers */
 	int r;
 
-	if(wds_getvers(masunit)==-1)
-		printf("wds%d: getvers failed\n", masunit);
+	if( !(versprobe & (1<<masunit))) {
+		versprobe |= (1<<masunit);
+		if(wds_getvers(masunit)==-1)
+			printf("wds%d: getvers failed\n", masunit);
+	}
 
 	r = scsi_attach(masunit, wds[masunit].devs, &wds_switch,
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
