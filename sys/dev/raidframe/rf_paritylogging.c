@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.19 2003/12/29 05:22:16 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.20 2003/12/29 05:36:19 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.19 2003/12/29 05:22:16 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.20 2003/12/29 05:36:19 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -310,11 +310,7 @@ rf_ConfigureParityLogging(
 		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (ENOMEM);
 	}
-	rc = rf_cond_init(&raidPtr->regionBufferPool.cond);
-	if (rc) {
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		return (ENOMEM);
-	}
+	raidPtr->regionBufferPool.cond = 0;
 	raidPtr->regionBufferPool.bufferSize = raidPtr->regionLogCapacity * 
 		raidPtr->bytesPerSector;
 	printf("regionBufferPool.bufferSize %d\n", 
@@ -334,7 +330,6 @@ rf_ConfigureParityLogging(
 		  raidPtr->regionBufferPool.totalBuffers * sizeof(caddr_t), 
 		  (caddr_t *));
 	if (raidPtr->regionBufferPool.buffers == NULL) {
-		rf_cond_destroy(&raidPtr->regionBufferPool.cond);
 		return (ENOMEM);
 	}
 	for (i = 0; i < raidPtr->regionBufferPool.totalBuffers; i++) {
@@ -345,7 +340,6 @@ rf_ConfigureParityLogging(
 			  raidPtr->regionBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
 		if (raidPtr->regionBufferPool.buffers[i] == NULL) {
-			rf_cond_destroy(&raidPtr->regionBufferPool.cond);
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->regionBufferPool.buffers[i], 
 					raidPtr->regionBufferPool.bufferSize *
@@ -375,11 +369,7 @@ rf_ConfigureParityLogging(
 		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
-	rc = rf_cond_init(&raidPtr->parityBufferPool.cond);
-	if (rc) {
-		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
-		return (ENOMEM);
-	}
+	raidPtr->parityBufferPool.cond = 0;
 	raidPtr->parityBufferPool.bufferSize = parityBufferCapacity * 
 		raidPtr->bytesPerSector;
 	printf("parityBufferPool.bufferSize %d\n", 
@@ -400,7 +390,6 @@ rf_ConfigureParityLogging(
 		  raidPtr->parityBufferPool.totalBuffers * sizeof(caddr_t), 
 		  (caddr_t *));
 	if (raidPtr->parityBufferPool.buffers == NULL) {
-		rf_cond_destroy(&raidPtr->parityBufferPool.cond);
 		return (ENOMEM);
 	}
 	for (i = 0; i < raidPtr->parityBufferPool.totalBuffers; i++) {
@@ -411,7 +400,6 @@ rf_ConfigureParityLogging(
 			  raidPtr->parityBufferPool.bufferSize * sizeof(char),
 			  (caddr_t));
 		if (raidPtr->parityBufferPool.buffers == NULL) {
-			rf_cond_destroy(&raidPtr->parityBufferPool.cond);
 			for (j = 0; j < i; j++) {
 				RF_Free(raidPtr->parityBufferPool.buffers[i], 
 					raidPtr->regionBufferPool.bufferSize * 
