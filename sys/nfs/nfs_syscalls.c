@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.24 1997/01/31 02:58:54 thorpej Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.25 1997/03/24 21:50:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -137,7 +137,7 @@ sys_getfh(p, v, retval)
 	 * Must be super user
 	 */
 	error = suser(p->p_ucred, &p->p_acflag);
-	if(error)
+	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, fname), p);
