@@ -1,4 +1,4 @@
-.\"     $NetBSD: tmac.e,v 1.3.2.1 1997/11/18 01:07:12 mellon Exp $
+.\"     $NetBSD: tmac.e,v 1.3.2.2 1998/05/05 08:13:59 mycroft Exp $
 .\"
 .nr _0 \n(.c
 .\" Copyright (c) 1988, 1993
@@ -961,7 +961,14 @@
 .\}
 .nr ?C 1
 .nr $f 1 1
-.ds * \\*[1\\*]\k*
+.ie \n(.g \{\
+.ie \n(.C \
+.	ds * \\*{1\\*}\k*
+.el \
+.	ds * \\*{[]1\\*}\k*
+.\}
+.el \
+.	ds * \\*{1\\*}\k*
 .if \\n(?R \
 .	pn 1
 .bp
@@ -1084,8 +1091,8 @@
 .if \n(dw=5 .ds dw Thursday
 .if \n(dw=6 .ds dw Friday
 .if \n(dw=7 .ds dw Saturday
-.nr *year \n(yr+1900
-.ds td \*(mo \n(dy, \n[*year]
+.nr *y \n(yr+1900
+.ds td \*(mo \n(dy, \n(*y
 .\"		*** PARAMETRIC INITIALIZATIONS ***
 .if (1m<0.1i)&(\nx!=0) \
 .	vs 9p			\" for 12-pitch DTC terminals
@@ -1110,15 +1117,15 @@
 .nr $s 4n			\" column separation
 .bd S B 3
 .\"		*** OTHER INITIALIZATION ***
-.ds [ \u\x'-0.25v'
-.ds ] \d
+.ds { \u\x'-0.25v'
+.ds } \d
 .ds < \d\x'0.25v'
 .ds > \u
 .ds - --
 .if t \
 \{\
-.	ds [ \v'-0.4m'\x'-0.2m'\s-3
-.	ds ] \s0\v'0.4m'
+.	ds { \v'-0.4m'\x'-0.2m'\s-3
+.	ds } \s0\v'0.4m'
 .	ds < \v'0.4m'\x'0.2m'\s-3
 .	ds > \s0\v'-0.4m'
 .	ds - \(em
