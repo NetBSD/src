@@ -33,7 +33,7 @@ install:
         else \
                 true ; \
         fi
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
+	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
 
 depend lint tags:

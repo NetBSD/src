@@ -1,6 +1,6 @@
 #	@(#)Makefile	5.6 (Berkeley) 4/1/91
 #
-#	$Header: /cvsroot/src/sbin/disklabel/Makefile,v 1.5 1993/04/25 06:58:16 mycroft Exp $
+#	$Header: /cvsroot/src/sbin/disklabel/Makefile,v 1.6 1993/07/18 19:18:29 mycroft Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c
@@ -23,7 +23,7 @@ beforeinstall:
                 true ; \
         fi
 .if !defined(NOMAN)
-	install -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} disklabel.5.0 \
+	install ${COPY} -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} disklabel.5.0 \
 	    ${DESTDIR}${MANDIR}5/disklabel.0
 .endif
 
