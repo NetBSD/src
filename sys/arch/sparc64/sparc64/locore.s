@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 2000/07/18 12:52:56 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 2000/07/18 19:25:26 pk Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -3940,9 +3940,9 @@ interrupt_vector:
 setup_sparcintr:
 	add	%g5, IH_PEND, %g6
 	DLFLUSH(%g6, %g7)
-	ldstub	[%g5+IH_PEND], %g6	! Read interrupt mask
+	ldstub	[%g5+IH_PEND], %g6	! Read pending flag
 	DLFLUSH2(%g7)
-	brnz,pn	%g6, 5f			! Skip it if it's running
+	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 	 add	%g5, IH_PIL, %g6
 	DLFLUSH(%g6, %g7)
 	ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
@@ -4001,7 +4001,6 @@ setup_sparcintr:
 	call	prom_printf
 	 rdpr	%pil, %o2
 	LOCTOGLOB
-	ba	5f
 	 restore
 #endif	
 5:
@@ -4032,7 +4031,8 @@ setup_sparcintr:
 	set	1, %g7
 	sll	%g7, %g6, %g6
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
-5:	
+
+ret_from_intr_vector:
 	CLRTT
 	retry
 	NOTREACHED
@@ -4042,7 +4042,7 @@ setup_sparcintr:
 	set	_C_LABEL(intrdebug), %g7
 	ld	[%g7], %g7
 	btst	INTRDEBUG_SPUR, %g7
-	bz,pt	%icc, 5b
+	bz,pt	%icc, ret_from_intr_vector
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
@@ -4053,11 +4053,9 @@ setup_sparcintr:
 	call	prom_printf
 	 rdpr	%pil, %o2
 	LOCTOGLOB
-	ba	5b
+	ba	ret_from_intr_vector
 	 restore
 #endif
-	ba	5b
-	 nop
 
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
@@ -5795,7 +5793,7 @@ _C_LABEL(cpu_initialize):
 	.asciz	"main() returned\r\n"
 	_ALIGN
 	.text
-	
+
 /*
  * openfirmware(cell* param);
  *
