@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.59 2000/02/25 02:42:30 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.60 2000/02/25 19:56:56 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -295,8 +295,6 @@ int rf_auto_config_set __P((RF_ConfigSet_t *, int *));
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place */
-/* XXX ugly hack. */
-const char *raid_rooty = "raid0";
 extern struct device *booted_device;
 
 void
@@ -408,15 +406,6 @@ if (raidautoconfig) {
 #if 0
 	mountroothook_establish(rf_mountroot_hook, &raidrootdev[0]);
 #endif
-	if (boothowto & RB_ASKNAME) {
-		/* We don't auto-config... */
-	} else {
-		/* They didn't ask, and we found something bootable... */
-		/* XXX pretend for now.. */
-#if 0
- 		booted_device = &raidrootdev[0]; 
-#endif
-	}
 }
 
 }
@@ -2300,7 +2289,10 @@ rf_update_component_labels( raidPtr )
 				/* make sure status is noted */
 				clabel.status = rf_ds_optimal;
 				/* bump the counter */
+#if 0				
 				clabel.mod_counter++;
+#endif
+				clabel.mod_counter = raidPtr->mod_counter;
 #if 0
 				/* note where this set was configured last */
 				clabel.last_unit = raidPtr->raidid;
@@ -2769,13 +2761,21 @@ rf_does_it_fit(cset, ac)
 	/* If this one matches the *first* one in the set, that's good
 	   enough, since the other members of the set would have been
 	   through here too... */
-	/* note that we are not checking partitionSize here.. */
+	/* note that we are not checking partitionSize here..
+
+	   Note that we are also not checking the mod_counters here.
+	   If everything else matches execpt the mod_counter, that's 
+	   good enough for this test.  We will deal with the mod_counters
+	   a little later in the autoconfiguration process.  
+
+	    (clabel1->mod_counter == clabel2->mod_counter) &&
+
+	*/
 
 	clabel1 = cset->ac->clabel;
 	clabel2 = ac->clabel;
 	if ((clabel1->version == clabel2->version) &&
 	    (clabel1->serial_number == clabel2->serial_number) &&
-	    (clabel1->mod_counter == clabel2->mod_counter) &&
 	    (clabel1->num_rows == clabel2->num_rows) &&
 	    (clabel1->num_columns == clabel2->num_columns) &&
 	    (clabel1->sectPerSU == clabel2->sectPerSU) &&
