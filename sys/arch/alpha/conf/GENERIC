@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.240.2.4 2004/07/15 20:21:57 he Exp $
+# $NetBSD: GENERIC,v 1.240.2.4.2.1 2005/02/06 08:28:40 jmc Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.240.2.4 $"
+#ident 		"GENERIC-$Revision: 1.240.2.4.2.1 $"
 
 maxusers 32
 
@@ -62,6 +62,7 @@ options 	NTP			# kernel PLL for NTP
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
 
@@ -79,6 +80,7 @@ file-system	NTFS		# Windows/NT file system (experimental)
 file-system	NFS		# Sun NFS-compatible file system client
 file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -167,6 +169,7 @@ options 	PCIVERBOSE		# recognize "unknown" PCI devices
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
+options		USBVERBOSE		# verbose USB device autoconfig messages
 options 	TCVERBOSE		# recognize "unknown" TC devices
 #options 	PCMCIAVERBOSE
 options 	USERCONF		# userconf(4) support
@@ -232,7 +235,6 @@ le*	at	ioasic? offset ?
 zsc0	at	ioasic? offset 0x100000
 zsc1	at	ioasic? offset 0x180000
 bba0	at	ioasic? offset ?
-audio*	at	bba?
 tcds*	at	tc? slot ? offset ?
 asc*	at	tcds? chip ?
 asc*	at	tc? slot ? offset ?
@@ -321,21 +323,22 @@ mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
 mpt*	at	pci? dev ? function ?		# LSI Fusion SCSI/FC
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
+ehci*	at	pci? dev ? function ?		# USB-2 Host controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
-pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide*at pci? dev ? function ?		# Acard IDE controllers
-aceride* at pci? dev ? function ?		# Acer Lab IDE controllers
-artsata* at pci? dev ? function ?		# Intel i31244 SATA controller
-cmdide* at pci? dev ? function ?		# CMD tech IDE controllers
-cypide* at pci? dev ? function ?		# Cypress IDE controllers
-hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
-optiide* at pci? dev ? function ?		# Opti IDE controllers
-piixide* at pci? dev ? function ?		# Intel IDE controllers
-pdcide* at pci? dev ? function ?		# Promise IDE controllers
-satalink* at pci? dev ? function ?		# SiI SATALink controllers
-siside* at pci? dev ? function ?		# SiS IDE controllers
-slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
-viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
+pciide* at	pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at	pci? dev ? function ?		# Acard IDE controllers
+aceride* at	pci? dev ? function ?		# Acer Lab IDE controllers
+artsata* at	pci? dev ? function ?		# Intel i31244 SATA controller
+cmdide* at	pci? dev ? function ?		# CMD tech IDE controllers
+cypide* at	pci? dev ? function ?		# Cypress IDE controllers
+hptide* at	pci? dev ? function ?		# Triones/HighPoint IDE controllers
+optiide* at	pci? dev ? function ?		# Opti IDE controllers
+piixide* at	pci? dev ? function ?		# Intel IDE controllers
+pdcide* at	pci? dev ? function ?		# Promise IDE controllers
+satalink* at	pci? dev ? function ?		# SiI SATALink controllers
+siside* at	pci? dev ? function ?		# SiS IDE controllers
+slide*  at	pci? dev ? function ?		# Symphony Labs IDE controllers
+viaide* at	pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
 pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 rtk*	at	pci? dev ? function ?		# Realtek 8129/8139 Ethernet
@@ -353,25 +356,14 @@ vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 wi*	at	pci? dev ? function ?		# Lucent/Intersil WaveLAN/IEEE
 yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
-audio*	at	cmpci?
-audio*	at	eap?
-audio*	at	eso?
-audio*	at	sv?
-audio*	at	yds?
-audio*	at	ess?
-
 opl*	at	cmpci? flags 1
 opl*	at	eso?
 #opl*	at	sv?
 opl*	at	yds?
 
-midi*	at	opl?
-
 mpu*	at	cmpci?
 mpu*	at	eso?
 mpu*	at	yds?
-
-midi*	at	mpu?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -401,7 +393,6 @@ pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
-midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
@@ -425,13 +416,10 @@ we0	at	isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 #wss*	at	isapnp?
-#audio*	at	wss?
-#midi*	at	wss?
 
 ess0	at	isa? port 0x220 irq 5 drq 1 drq2 5   # ESS 18XX
 sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #sb*	at	isapnp?
-audio*	at	sb?
 #adv*	at	isa? port ? irq ? drq ?		# AdvanSys APB-514[02]
 aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
@@ -497,6 +485,7 @@ ld*	at	mlx? unit ?
 # USB bus support
 usb*	at uhci?
 usb*	at ohci?
+usb*	at ehci?
 
 # USB Hubs
 uhub*	at usb?
@@ -512,6 +501,7 @@ wsmouse*	at ums?
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
+options         WSDISPLAY_COMPAT_RAWKBD
 
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
@@ -527,6 +517,21 @@ ucom*	at umodem?
 umass*	at uhub? port ? configuration ? interface ?
 atapibus* at umass?
 scsibus* at umass? channel ?
+
+# USB audio
+uaudio*	at uhub? port ? configuration ?  
+
+# USB MIDI      
+umidi*	at uhub? port ? configuration ?
+
+# USB IrDA
+# USB-IrDA bridge spec
+uirda*	at uhub? port ? configuration ? interface ?
+irframe* at uirda? 
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir*	at uhub? port ?  
+irframe* at ustir?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -553,6 +558,11 @@ radio* at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
+# Audio support
+audio*	at audiobus?
+midi*	at midibus?
+midi*	at pcppi?
 
 # Workstation Console attachments
 wsdisplay*	at	cfb?
@@ -604,4 +614,8 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsfont
+pseudo-device	wsmux			# mouse and keyboad multiplexing
 pseudo-device	ksyms			# /dev/ksyms
+# a pseudo device needed for SMBFS
+#pseudo-device   nsmb                    # experimental - SMB requester
+
