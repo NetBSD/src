@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.15 1997/06/28 04:24:15 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.16 1997/06/28 07:54:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -2146,9 +2146,6 @@ syn_cache_add(so, m, optp, optlen, oi)
 	struct syn_cache *sc, **sc_prev;
 	struct syn_cache_head *scp;
 	extern int tcp_do_rfc1323;
-
-	if (tcp_syn_cache_limit == 0)		/* see if it is disabled */
-		return (0);
 
 	ti = mtod(m, struct tcpiphdr *);
 
