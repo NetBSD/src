@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.9 2005/01/06 15:10:45 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.10 2005/04/01 13:11:12 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -87,6 +87,7 @@ __weak_alias(getgroupmembership,_getgroupmembership)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static FILE		*_gr_fp;
 static struct group	_gr_group;
