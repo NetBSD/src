@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.216 2005/01/19 16:22:19 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.217 2005/01/21 14:31:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.216 2005/01/19 16:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.217 2005/01/21 14:31:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -336,7 +336,7 @@ nfs_access(v)
 	struct nfsnode *np = VTONFS(vp);
 
 	cachevalid = (np->n_accstamp != -1 &&
-	    (time.tv_sec - np->n_accstamp) < NFS_ATTRTIMEO(np) &&
+	    (mono_time.tv_sec - np->n_accstamp) < NFS_ATTRTIMEO(np) &&
 	    np->n_accuid == ap->a_cred->cr_uid);
 
 	/*
@@ -430,7 +430,7 @@ nfs_access(v)
 			else if ((np->n_accmode & ap->a_mode) == ap->a_mode)
 				np->n_accmode = ap->a_mode;
 		} else {
-			np->n_accstamp = time.tv_sec;
+			np->n_accstamp = mono_time.tv_sec;
 			np->n_accuid = ap->a_cred->cr_uid;
 			np->n_accmode = ap->a_mode;
 			np->n_accerror = error;

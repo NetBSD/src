@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.141 2005/01/19 16:22:19 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.142 2005/01/21 14:31:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.141 2005/01/19 16:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.142 2005/01/21 14:31:29 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1832,7 +1832,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			}
 		}
 	}
-	np->n_attrstamp = time.tv_sec;
+	np->n_attrstamp = mono_time.tv_sec;
 	if (vaper != NULL) {
 		memcpy((caddr_t)vaper, (caddr_t)vap, sizeof(*vap));
 		if (np->n_flag & NCHG) {
@@ -1859,7 +1859,7 @@ nfs_getattrcache(vp, vaper)
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
+	    (mono_time.tv_sec - np->n_attrstamp) >= NFS_ATTRTIMEO(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
