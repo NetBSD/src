@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.25 2005/02/06 06:13:12 perry Exp $	 */
+/* $NetBSD: inode.c,v 1.26 2005/03/25 20:16:37 perseant Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -249,7 +249,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 	if (chkrange(idesc->id_blkno, fragstofsb(fs, idesc->id_numfrags)))
 		return (SKIP);
 
-	devvp = fs->lfs_unlockvp;
+	devvp = fs->lfs_devvp;
 	bread(devvp, fsbtodb(fs, idesc->id_blkno), fs->lfs_bsize, NOCRED, &bp);
 	ilevel--;
 	for (sizepb = fs->lfs_bsize, i = 0; i < ilevel; i++)
