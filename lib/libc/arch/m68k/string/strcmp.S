@@ -1,11 +1,11 @@
-/*	$NetBSD: strcmp.S,v 1.13 1999/10/25 23:48:15 thorpej Exp $	*/
+/*	$NetBSD: strcmp.S,v 1.14 1999/10/27 09:10:27 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Hiroshi Horitomo <horimoto@cs-aoi.cs.sist.ac.jp> and
+ * by Hiroshi Horimoto <horimoto@cs-aoi.cs.sist.ac.jp> and
  * by J.T. Conklin <jtc@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strcmp.S,v 1.13 1999/10/25 23:48:15 thorpej Exp $")
+	RCSID("$NetBSD: strcmp.S,v 1.14 1999/10/27 09:10:27 is Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 ENTRY(strcmp)
