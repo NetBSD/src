@@ -1,7 +1,7 @@
-/*	$NetBSD: qsphy.c,v 1.20 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: qsphy.c,v 1.20.4.1 2000/07/04 04:11:13 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,8 +96,12 @@ struct cfattach qsphy_ca = {
 };
 
 int	qsphy_service __P((struct mii_softc *, struct mii_data *, int));
-void	qsphy_reset __P((struct mii_softc *));
 void	qsphy_status __P((struct mii_softc *));
+void	qsphy_reset __P((struct mii_softc *));
+
+const struct mii_phy_funcs qsphy_funcs = {
+	qsphy_service, qsphy_status, qsphy_reset,
+};
 
 int
 qsphymatch(parent, match, aux)
@@ -128,12 +132,11 @@ qsphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = qsphy_service;
-	sc->mii_status = qsphy_status;
+	sc->mii_funcs = &qsphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	qsphy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
