@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.10 2001/01/28 02:58:19 uch Exp $
+#	$NetBSD: Makefile,v 1.11 2001/06/12 18:16:31 matt Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
-# to the location of the machine includes.
+# to the location of the machine includes (usually).
 #
 # Eventually, we should install everything.
 
@@ -19,11 +19,23 @@ SUBDIR+= sparc64
 SUBDIR+= hpc
 .endif
 
+.if ${ARCHSUBDIR} == arm && ${MACHINE} != arm32 && ${MACHINE} != arm26
+SUBDIR+= cats dnard netwinder
+.endif
+
 #SUBDIR= alpha amiga arc arm32 atari bebox evbsh3 hp300 hpcmips i386 luna68k \
 #	m68k mac68k macppc mips mmeye mvme68k news68k newsmips next68k ofppc \
 #	pc532 pmax powerpc sh3 sparc sparc64 sun3 vax x68k
 
+#
+# For true arm ports, we point machine at the architecure directory
+# since all the user include are there and are common.
+#
+.if ${ARCHSUBDIR} == arm && ${MACHINE} != arm32 && ${MACHINE} != arm26
+SYMLINKS= ${ARCHSUBDIR} /usr/include/machine
+.else
 SYMLINKS= ${MACHINE} /usr/include/machine
+.endif
 
 SYMLINKS+= machine/float.h /usr/include/float.h \
 	machine/frame.h /usr/include/frame.h \
