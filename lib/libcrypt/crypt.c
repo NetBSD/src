@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $	*/
+/*	$NetBSD: crypt.c,v 1.19 2002/05/24 04:02:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.18 2001/03/01 14:37:35 wiz Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.19 2002/05/24 04:02:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -472,6 +472,8 @@ static C_block	constdatablock;			/* encryption constant */
 static char	cryptresult[1+4+4+11+1];	/* encrypted result */
 
 extern char *__md5crypt(const char *, const char *);	/* XXX */
+extern char *__bcrypt(const char *, const char *);	/* XXX */
+
 
 /*
  * Return a pointer to static data consisting of the "setting"
@@ -492,10 +494,8 @@ crypt(key, setting)
 	/* Non-DES encryption schemes hook in here. */
 	if (setting[0] == _PASSWORD_NONDES) {
 		switch (setting[1]) {
-#ifdef notyet
 		case '2':
 			return (__bcrypt(key, setting));
-#endif
 		case '1':
 		default:
 			return (__md5crypt(key, setting));
