@@ -1,6 +1,7 @@
-/*	$NetBSD: hcsc.c,v 1.1 2001/05/26 23:01:19 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.2 2001/05/28 22:54:10 bjh21 Exp $	*/
 
 /*
+ * Copyright (c) 2001 Ben Harris
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -35,6 +36,35 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+/*
+ * Copyright (c) 1996, 1997 Matthias Pfaller.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Matthias Pfaller.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * HCCS 8-bit SCSI driver using the generic NCR5380 driver
@@ -42,7 +72,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.1 2001/05/26 23:01:19 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.2 2001/05/28 22:54:10 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -63,6 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.1 2001/05/26 23:01:19 bjh21 Exp $");
 void hcsc_attach (struct device *, struct device *, void *);
 int  hcsc_match  (struct device *, struct cfdata *, void *);
 
+static int hcsc_pdma_in(struct ncr5380_softc *, int, int, u_char *);
+static int hcsc_pdma_out(struct ncr5380_softc *, int, int, u_char *);
+
+
 /*
  * HCCS 8-bit SCSI softc structure.
  *
@@ -72,6 +106,8 @@ int  hcsc_match  (struct device *, struct cfdata *, void *);
 
 struct hcsc_softc {
 	struct ncr5380_softc	sc_ncr5380;
+	bus_space_tag_t		sc_pdmat;
+	bus_space_handle_t	sc_pdmah;
 	void		*sc_ih;
 	struct evcnt	sc_intrcnt;
 };
@@ -147,11 +183,13 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ncr5380.sci_r6 = iobase + 24;
 	sc->sc_ncr5380.sci_r7 = iobase + 28;
 #endif
+	sc->sc_pdmat = pa->pa_mod_t;
+	bus_space_map(sc->sc_pdmat, pa->pa_mod_base, 1, 0, &sc->sc_pdmah);
 
 	sc->sc_ncr5380.sc_rev = NCR_VARIANT_DP8490;
 
-	sc->sc_ncr5380.sc_pio_in = ncr5380_pio_in;
-	sc->sc_ncr5380.sc_pio_out = ncr5380_pio_out;
+	sc->sc_ncr5380.sc_pio_in = hcsc_pdma_in;
+	sc->sc_ncr5380.sc_pio_out = hcsc_pdma_out;
 
 	/* Provide an override for the host id */
 	sc->sc_ncr5380.sc_channel.chan_id = 7;
@@ -160,8 +198,7 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_channel.chan_id);
 	sc->sc_ncr5380.sc_adapter.adapt_minphys = minphys;
 
-	printf(": host=%d, using 8 bit PIO\n",
-	    sc->sc_ncr5380.sc_channel.chan_id);
+	printf(": host ID %d\n", sc->sc_ncr5380.sc_channel.chan_id);
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    self->dv_xname, "intr");
@@ -169,4 +206,161 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 	    sc, &sc->sc_intrcnt);
 
 	ncr5380_attach(&sc->sc_ncr5380);
+}
+
+#ifndef HCSC_TSIZE_OUT
+#define HCSC_TSIZE_OUT	512
+#endif
+
+#ifndef HCSC_TSIZE_IN
+#define HCSC_TSIZE_IN	512
+#endif
+
+#define TIMEOUT 1000000
+
+static __inline int
+hcsc_ready(struct ncr5380_softc *sc)
+{
+	int i;
+
+	for (i = TIMEOUT; i > 0; i--) {
+		if ((NCR5380_READ(sc,sci_csr) &
+		    (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH)) ==
+		    (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH))
+		    	return(1);
+
+		if ((NCR5380_READ(sc, sci_csr) & SCI_CSR_PHASE_MATCH) == 0 ||
+		    SCI_BUSY(sc) == 0)
+			return(0);
+	}
+	printf("%s: ready timeout\n", sc->sc_dev.dv_xname);
+	return(0);
+}
+
+
+
+/* Return zero on success. */
+static __inline void hcsc_wait_not_req(struct ncr5380_softc *sc)
+{
+	int timo;
+	for (timo = TIMEOUT; timo; timo--) {
+		if ((NCR5380_READ(sc, sci_bus_csr) & SCI_BUS_REQ) == 0 ||
+		    (NCR5380_READ(sc, sci_csr) & SCI_CSR_PHASE_MATCH) == 0 ||
+		    SCI_BUSY(sc) == 0) {
+			return;
+		}
+	}
+	printf("%s: pdma not_req timeout\n", sc->sc_dev.dv_xname);
+}
+
+static int
+hcsc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen,
+    u_char *data)
+{
+	struct hcsc_softc *sc = (void *)ncr_sc;
+	bus_space_tag_t pdmat = sc->sc_pdmat;
+	bus_space_handle_t pdmah = sc->sc_pdmah;
+	int s, resid, len;
+
+	s = splbio();
+
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) | SCI_MODE_DMA);
+	NCR5380_WRITE(ncr_sc, sci_irecv, 0);
+
+	resid = datalen;
+	while (resid > 0) {
+		len = min(resid, HCSC_TSIZE_IN);
+		if (hcsc_ready(ncr_sc) == 0)
+			goto interrupt;
+		bus_space_read_multi_1(pdmat, pdmah, 0, data, len);
+		data += len;
+		resid -= len;
+	}
+
+	hcsc_wait_not_req(ncr_sc);
+
+interrupt:
+	SCI_CLR_INTR(ncr_sc);
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) & ~SCI_MODE_DMA);
+	splx(s);
+	return datalen - resid;
+}
+
+static int
+hcsc_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
+    u_char *data)
+{
+	struct hcsc_softc *sc = (void *)ncr_sc;
+	bus_space_tag_t pdmat = sc->sc_pdmat;
+	bus_space_handle_t pdmah = sc->sc_pdmah;
+	int i, s, icmd, resid;
+
+	s = splbio();
+	icmd = NCR5380_READ(ncr_sc, sci_icmd) & SCI_ICMD_RMASK;
+	NCR5380_WRITE(ncr_sc, sci_icmd, icmd | SCI_ICMD_DATA);
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) | SCI_MODE_DMA);
+	NCR5380_WRITE(ncr_sc, sci_dma_send, 0);
+
+	resid = datalen;
+	if (hcsc_ready(ncr_sc) == 0)
+		goto interrupt;
+
+	if (resid > HCSC_TSIZE_OUT) {
+		/*
+		 * Because of the chips DMA prefetch, phase changes
+		 * etc, won't be detected until we have written at
+		 * least one byte more. We pre-write 4 bytes so
+		 * subsequent transfers will be aligned to a 4 byte
+		 * boundary. Assuming disconects will only occur on
+		 * block boundaries, we then correct for the pre-write
+		 * when and if we get a phase change. If the chip had
+		 * DMA byte counting hardware, the assumption would not
+		 * be necessary.
+		 */
+		bus_space_write_multi_1(pdmat, pdmah, 0, data, 4);
+		data += 4;
+		resid -= 4;
+		
+		for (; resid >= HCSC_TSIZE_OUT; resid -= HCSC_TSIZE_OUT) {
+			if (hcsc_ready(ncr_sc) == 0) {
+				resid += 4; /* Overshot */
+				goto interrupt;
+			}
+			bus_space_write_multi_1(pdmat, pdmah, 0, data,
+			    HCSC_TSIZE_OUT);
+			data += HCSC_TSIZE_OUT;
+		}
+		if (hcsc_ready(ncr_sc) == 0) {
+			resid += 4; /* Overshot */
+			goto interrupt;
+		}
+	}
+
+	if (resid) {
+		bus_space_write_multi_1(pdmat, pdmah, 0, data, resid);
+		resid = 0;
+	}
+	for (i = TIMEOUT; i > 0; i--) {
+		if ((NCR5380_READ(ncr_sc, sci_csr)
+		    & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
+		    != SCI_CSR_DREQ)
+			break;
+	}
+	if (i != 0)
+		bus_space_write_1(pdmat, pdmah, 0, 0);
+	else
+		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
+			ncr_sc->sc_dev.dv_xname);
+
+	hcsc_wait_not_req(ncr_sc);
+interrupt:
+	SCI_CLR_INTR(ncr_sc);
+	NCR5380_WRITE(ncr_sc, sci_mode,
+	    NCR5380_READ(ncr_sc, sci_mode) & ~SCI_MODE_DMA);
+	NCR5380_WRITE(ncr_sc, sci_icmd, icmd);
+	splx(s);
+	return(datalen - resid);
 }
