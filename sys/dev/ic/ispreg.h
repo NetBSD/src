@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.16 1999/07/05 20:31:36 mjacob Exp $ */
+/* $NetBSD: ispreg.h,v 1.17 1999/10/17 01:37:12 mjacob Exp $ */
 /* release_6_5_99 */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
@@ -223,6 +223,8 @@
 #define	BIU2100_ISR_RXDMA_INT_PENDING	0x0002	/* Global interrupt pending */
 #define	BIU2100_ISR_TXDMA_INT_PENDING	0x0001	/* Global interrupt pending */
 
+#define	INT_PENDING(isp, isr)	(IS_FC(isp)? \
+	((isr & BIU2100_ISR_RISC_INT) != 0) : ((isr & BIU_ISR_RISC_INT) != 0))
 
 /* BUS SEMAPHORE REGISTER */
 #define	BIU_SEMA_STATUS		0x0002	/* Semaphore Status Bit */
