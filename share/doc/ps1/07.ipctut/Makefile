@@ -12,4 +12,4 @@ EXTRA=	accept.grn dgramread.c dgramsend.c gremlins pipe.c pipe.grn \
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS} ${EXTRA}
-	${TBL} ${SRCS} | ${GREMLIN} | ${ROFF} > ${.TARGET}
+	( cd ${.CURDIR ; ${TBL} ${SRCS} ) | ${GREMLIN} | ${ROFF} > ${.TARGET}

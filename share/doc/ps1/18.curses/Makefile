@@ -12,7 +12,7 @@ CLEANFILES+=win_st.gr twinkle1.gr twinkle2.gr life.gr intro.2.tbl appen.A.tbl
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${ROFF} ${SRCS} > ${.TARGET}
+	( cd ${.CURDIR} ; ${ROFF} ${SRCS} ) > ${.TARGET}
 
 .SUFFIXES:
 .SUFFIXES: .c .gr
@@ -26,14 +26,16 @@ ${DOC}.${PRINTER}: ${SRCS}
 # Don't re-run vgrind unless you want to patch the output files.
 VFONT=	/usr/libexec/vfontedpr
 .c.gr:
-	${VFONT} $*.c | grep -v "^'wh" > $*.gr
+	( cd ${.CURDIR} ; ${VFONT} $*.c ) | grep -v "^'wh" > $*.gr
+
+.VPATH:	${CURDIR}/obj
 
 intro.5: doc.I doc.II doc.III doc.IV
 appen.B: win_st.gr
 appen.C: twinkle1.gr life.gr twinkle2.gr
 
 intro.2.tbl: intro.2
-	${TBL} intro.2 > intro.2.tbl
+	( cd ${.CURDIR} ; ${TBL} intro.2 ) > intro.2.tbl
 
 appen.A.tbl: appen.A
-	${TBL} appen.A > appen.A.tbl
+	( cd ${.CURDIR} ; ${TBL} appen.A ) > appen.A.tbl

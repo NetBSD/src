@@ -12,4 +12,4 @@ NROFF=	nroff -rb3
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${ROFF} > ${.TARGET}

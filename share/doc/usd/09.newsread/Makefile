@@ -8,4 +8,4 @@ SRCS=	../../smm/10.newsop/tmac.n howto.mn
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${ROFF} ${SRCS} > ${.TARGET}
+	( cd ${.CURDIR} ; ${ROFF} ${SRCS} ) > ${.TARGET}

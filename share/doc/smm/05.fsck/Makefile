@@ -9,4 +9,4 @@ TROFF=	ditroff
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${ROFF} ${SRCS} > ${.TARGET}
+	( cd ${.CURDIR} ; ${ROFF} ${SRCS} ) > ${.TARGET}

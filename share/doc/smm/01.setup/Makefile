@@ -12,4 +12,4 @@ SRCS+=	c.t
 .include <bsd.doc.mk>
 
 ${DOC}.${PRINTER}: ${SRCS}
-	${EQN} ${.ALLSRC} | ${TBL} | ${ROFF} > ${.TARGET}
+	( cd ${.CURDIR} ; ${EQN} ${.ALLSRC} ) | ${TBL} | ${ROFF} > ${.TARGET}
