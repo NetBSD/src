@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/4/93
- *	      $Id: defs.h,v 1.2 1994/01/11 16:41:29 brezak Exp $
+ *	      $Id: defs.h,v 1.3 1995/08/21 16:57:56 thorpej Exp $
  *
  * From: Utah Hdr: defs.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
@@ -127,7 +127,6 @@ typedef struct rmpconn_s {
 /*
  *  All these variables are defined in "conf.c".
  */
-extern	char	*ProgName;		/* path-stripped argv[0] */
 extern	char	MyHost[];		/* this hosts' name */
 extern	int	MyPid;			/* this processes' ID */
 extern	int	DebugFlg;		/* set true if debugging */
