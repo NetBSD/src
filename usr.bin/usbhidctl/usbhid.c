@@ -1,7 +1,7 @@
-/*      $NetBSD: usbhid.c,v 1.17 2001/03/28 03:17:42 simonb Exp $ */
+/*      $NetBSD: usbhid.c,v 1.18 2001/10/22 22:03:49 augustss Exp $ */
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,10 +57,6 @@
 #define DELIM_PAGE ':'
 #define DELIM_SET '='
 
-/* Zero if not in a verbose mode.  Greater levels of verbosity are
-   indicated by values larger than one. */
-static unsigned int verbose;
-
 struct Susbvar {
 	/* Variable name, not NUL terminated */
 	char const *variable;
@@ -76,6 +72,7 @@ struct Susbvar {
 #define MATCH_SHOWPAGENAME	(1 << 5)
 #define MATCH_SHOWNUMERIC	(1 << 6)
 #define MATCH_WRITABLE		(1 << 7)
+#define MATCH_SHOWVALUES	(1 << 8)
 	unsigned int mflags;
 
 	/* Workspace for hidmatch() */
@@ -107,11 +104,183 @@ static struct {
 #define REPORT_MAXVAL 2
 };
 
+/*
+ * Extract 16-bit unsigned usage ID from a numeric string.  Returns -1
+ * if string failed to parse correctly.
+ */
+static int
+strtousage(const char *nptr, size_t nlen)
+{
+	char *endptr;
+	long result;
+	char numstr[16];
+
+	if (nlen >= sizeof(numstr) || !isdigit((unsigned char)*nptr))
+		return -1;
+
+	/*
+	 * We use strtol() here, but unfortunately strtol() requires a
+	 * NUL terminated string - which we don't have - at least not
+	 * officially.
+	 */
+	memcpy(numstr, nptr, nlen);
+	numstr[nlen] = '\0';
+
+	result = strtol(numstr, &endptr, 0);
+
+	if (result < 0 || result > 0xffff || endptr != &numstr[nlen])
+		return -1;
+
+	return result;
+}
+
+struct usagedata {
+	char const *page_name;
+	char const *usage_name;
+	size_t page_len;
+	size_t usage_len;
+	int isfinal;
+	u_int32_t usage_id;
+};
+
+/*
+ * Test a rule against the current usage data.  Returns -1 on no
+ * match, 0 on partial match and 1 on complete match.
+ */
+static int
+hidtestrule(struct Susbvar *var, struct usagedata *cache)
+{
+	char const *varname;
+	ssize_t matchindex, pagesplit;
+	size_t strind, varlen;
+	int numusage;
+	u_int32_t usage_id;
+
+	matchindex = var->matchindex;
+	varname = var->variable;
+	varlen = var->varlen;
+
+	usage_id = cache->usage_id;
+
+	/*
+	 * Parse the current variable name, locating the end of the
+	 * current 'usage', and possibly where the usage page name
+	 * ends.
+	 */
+	pagesplit = -1;
+	for (strind = matchindex; strind < varlen; strind++) {
+		if (varname[strind] == DELIM_USAGE)
+			break;
+		if (varname[strind] == DELIM_PAGE)
+			pagesplit = strind;
+	}
+
+	if (cache->isfinal && strind != varlen)
+		/*
+		 * Variable name is too long (hit delimiter instead of
+		 * end-of-variable).
+		 */
+		return -1;
+
+	if (pagesplit >= 0) {
+		/*
+		 * Page name was specified, determine whether it was
+		 * symbolic or numeric.  
+		 */
+		char const *strstart;
+		int numpage;
+
+		strstart = &varname[matchindex];
+
+		numpage = strtousage(strstart, pagesplit - matchindex);
+
+		if (numpage >= 0) {
+			/* Valid numeric */
+
+			if (numpage != HID_PAGE(usage_id))
+				/* Numeric didn't match page ID */
+				return -1;
+		} else {
+			/* Not a valid numeric */
+
+			/*
+			 * Load and cache the page name if and only if
+			 * it hasn't already been loaded (it's a
+			 * fairly expensive operation).
+			 */
+			if (cache->page_name == NULL) {
+				cache->page_name = hid_usage_page(HID_PAGE(usage_id));
+				cache->page_len = strlen(cache->page_name);
+			}
+
+			/*
+			 * Compare specified page name to actual page
+			 * name.
+			 */
+			if (cache->page_len !=
+			    (size_t)(pagesplit - matchindex) ||
+			    memcmp(cache->page_name,
+				   &varname[matchindex],
+				   cache->page_len) != 0)
+				/* Mismatch, page name wrong */
+				return -1;
+		}
+
+		/* Page matches, discard page name */
+		matchindex = pagesplit + 1;
+	}
+
+	numusage = strtousage(&varname[matchindex], strind - matchindex);
+
+	if (numusage >= 0) {
+		/* Valid numeric */
+
+		if (numusage != HID_USAGE(usage_id))
+			/* Numeric didn't match usage ID */
+			return -1;
+	} else {
+		/* Not a valid numeric */
+
+		/* Load and cache the usage name */
+		if (cache->usage_name == NULL) {
+			cache->usage_name = hid_usage_in_page(usage_id);
+			cache->usage_len = strlen(cache->usage_name);
+		}
+
+		/*
+		 * Compare specified usage name to actual usage name
+		 */
+		if (cache->usage_len != (size_t)(strind - matchindex) ||
+		    memcmp(cache->usage_name, &varname[matchindex],
+			   cache->usage_len) != 0)
+			/* Mismatch, usage name wrong */
+			return -1;
+	}
+
+	if (cache->isfinal)
+		/* Match */
+		return 1;
+
+	/*
+	 * Partial match: Move index past this usage string +
+	 * delimiter
+	 */
+	var->matchindex = strind + 1;
+
+	return 0;
+}
+
+/*
+ * hidmatch() determines whether the item specified in 'item', and
+ * nested within a heirarchy of collections specified in 'collist'
+ * matches any of the rules in the list 'varlist'.  Returns the
+ * matching rule on success, or NULL on no match.
+ */
 static struct Susbvar*
 hidmatch(u_int32_t const *collist, size_t collen, struct hid_item *item,
 	 struct Susbvar *varlist, size_t vlsize)
 {
-	size_t vlind, colind, vlactive;
+	size_t colind, vlactive, vlind;
 	int iscollection;
 
 	/*
@@ -160,96 +329,52 @@ hidmatch(u_int32_t const *collist, size_t collen, struct hid_item *item,
 		}
 	}
 
+	/*
+	 * Loop through each usage in the collection list, including
+	 * the 'item' itself on the final iteration.  For each usage,
+	 * test which variables named in the rule list are still
+	 * applicable - if any.
+	 */
 	for (colind = 0; vlactive > 0 && colind <= collen; colind++) {
-		char const *usage_name, *page_name;
-		size_t usage_len, page_len;
-		int final;
-		u_int32_t usage_id;
+		struct usagedata cache;
 
-		final = (colind == collen);
-
-		if (final)
-			usage_id = item->usage;
+		cache.isfinal = (colind == collen);
+		if (cache.isfinal)
+			cache.usage_id = item->usage;
 		else
-			usage_id = collist[colind];
+			cache.usage_id = collist[colind];
 
-		usage_name = hid_usage_in_page(usage_id);
-		usage_len = strlen(usage_name);
+		cache.usage_name = NULL;
+		cache.page_name = NULL;
 
-		page_name = NULL;
-
+		/*
+		 * Loop through each rule, testing whether the rule is
+		 * still applicable or not.  For each rule,
+		 * 'matchindex' retains the current match state as an
+		 * index into the variable name string, or -1 if this
+		 * rule has been proven not to match.
+		 */
 		for (vlind = 0; vlind < vlsize; vlind++) {
-			ssize_t matchindex, pagesplit;
-			size_t varlen, strind;
-			char const *varname;
 			struct Susbvar *var;
+			int matchres;
 
 			var = &varlist[vlind];
 
-			matchindex = var->matchindex;
-			varname = var->variable;
-			varlen = var->varlen;
-
-			if (matchindex < 0)
+			if (var->matchindex < 0)
 				/* Mismatch at a previous level */
 				continue;
 
-			pagesplit = -1;
-			for (strind = matchindex; strind < varlen; strind++) {
-				if (varname[strind] == DELIM_USAGE)
-					break;
-				if (varname[strind] == DELIM_PAGE)
-					pagesplit = strind;
-			}
+			matchres = hidtestrule(var, &cache);
 
-			if (final && strind != varlen) {
-				/*
-				 * Variable name is too long (hit
-				 * delimiter instead of
-				 * end-of-variable)
-				 */
+			if (matchres < 0) {
+				/* Bad match */
 				var->matchindex = -1;
 				vlactive--;
 				continue;
-			}
-
-			if (pagesplit >= 0) {
-				if (page_name == NULL) {
-					page_name = hid_usage_page(HID_PAGE(usage_id));
-					page_len = strlen(page_name);
-				}
-				if (page_len !=
-				    (size_t)(pagesplit - matchindex) ||
-				    memcmp(page_name, &varname[matchindex],
-					   page_len) != 0) {
-					/* Mismatch, page name wrong */
-					var->matchindex = -1;
-					vlactive--;
-					continue;
-				}
-
-				/* Page matches, discard page name */
-				matchindex = pagesplit + 1;
-			}
-
-			if (usage_len != strind - matchindex ||
-			    memcmp(usage_name, &varname[matchindex],
-				   usage_len) != 0) {
-				/* Mismatch, usage name wrong */
-				var->matchindex = -1;
-				vlactive--;
-				continue;
-			}
-
-			if (final)
-				/* Match */
+			} else if (matchres > 0) {
+				/* Complete match */
 				return var;
-
-			/*
-			 * Partial match: Move index past this usage
-			 * string + delimiter
-			 */
-			var->matchindex = matchindex + usage_len + 1;
+			}
 		}
 	}
 
@@ -361,12 +486,8 @@ varop_modify(struct hid_item *item, struct Susbvar *var,
 
 	hid_set_data(buf, item, dataval);
 
-	if (verbose >= 1)
-		/*
-		 * Allow displaying of set value in verbose mode.
-		 * This isn't particularly useful though, so don't
-		 * bother documenting it.
-		 */
+	if (var->mflags & MATCH_SHOWVALUES)
+		/* Display set value */
 		varop_display(item, var, collist, collen, buf);
 
 	return 1;
@@ -381,7 +502,7 @@ reportitem(char const *label, struct hid_item const *item, unsigned int mflags)
 	       hid_usage_in_page(item->usage),
 	       item->flags & HIO_CONST ? " Const" : "");
 	if (mflags & MATCH_SHOWNUMERIC)
-		printf(" (%u/0x%x)",
+		printf(" (%u:0x%x)",
 		       HID_PAGE(item->usage), HID_USAGE(item->usage));
 	printf(", logical range %d..%d",
 	       item->logical_minimum, item->logical_maximum);
@@ -401,9 +522,14 @@ varop_report(struct hid_item *item, struct Susbvar *var,
 {
 	switch (item->kind) {
 	case hid_collection:
-		printf("Collection page=%s usage=%s\n",
+		printf("Collection page=%s usage=%s",
 		       hid_usage_page(HID_PAGE(item->usage)),
 		       hid_usage_in_page(item->usage));
+		if (var->mflags & MATCH_SHOWNUMERIC)
+			printf(" (%u:0x%x)\n",
+			       HID_PAGE(item->usage), HID_USAGE(item->usage));
+		else
+			printf("\n");
 		break;
 	case hid_endcollection:
 		printf("End collection\n");
@@ -425,13 +551,12 @@ varop_report(struct hid_item *item, struct Susbvar *var,
 static void
 devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 {
+	u_char *dbuf;
 	struct hid_data *hdata;
+	size_t collind, dlen;
 	struct hid_item hitem;
 	u_int32_t colls[128];
 	struct Sreport inreport;
-	size_t dlen;
-	u_char *dbuf;
-	size_t collind;
 
 	allocreport(&inreport, rd, REPORT_INPUT);
 
@@ -494,10 +619,9 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 	int kindset)
 {
 	struct hid_data *hdata;
+	size_t collind, repind, vlind;
 	struct hid_item hitem;
 	u_int32_t colls[128];
-	size_t collind, repind, vlind;
-
 	struct Sreport reports[REPORT_MAXVAL + 1];
 
 
@@ -608,14 +732,20 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int hidfd;
+	char const *dev;
+	char const *table;
+	size_t varnum;
+	int aflag, lflag, nflag, rflag, wflag;
+	int ch, hidfd;
 	report_desc_t repdesc;
 	char devnamebuf[PATH_MAX];
-	char const *dev;
-	int ch, wflag, aflag, nflag, rflag, lflag;
-	size_t varnum;
-	char const *table;
 	struct Susbvar variables[128];
+
+	/*
+	 * Zero if not in a verbose mode.  Greater levels of verbosity
+	 * are indicated by values larger than one.
+	 */
+	unsigned int verbose;
 
 	wflag = aflag = nflag = verbose = rflag = lflag = 0;
 	dev = NULL;
@@ -697,6 +827,14 @@ main(int argc, char **argv)
 			if (!wflag)
 				errx(2, "Must specify -w to set variables");
 			svar->mflags |= MATCH_WRITABLE;
+			if (verbose >= 1)
+				/*
+				 * Allow displaying of set value in
+				 * verbose mode.  This isn't
+				 * particularly useful though, so
+				 * don't bother documenting it.
+				 */
+				svar->mflags |= MATCH_SHOWVALUES;
 			svar->varlen = valuesep - name;
 			svar->value = valuesep + 1;
 			svar->opfunc = varop_modify;
