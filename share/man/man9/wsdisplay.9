@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.2 2001/10/22 08:21:33 wiz Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.3 2002/02/12 16:14:13 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -197,7 +197,7 @@ There is a
 cookie provided by the display driver associated with these
 functions, which is passed to them when they are invoked.
 .It Fa struct wsscreen_descr
-A structure passwd to wscons by the display driver to describe a
+A structure passed to wscons by the display driver to describe a
 screen.  All displays which can operate as a console must provide this
 structure and pass it to the
 .Xr wsdisplay 4
@@ -235,7 +235,7 @@ capabilities.  It contains the following members:
 	const struct wsscreen_descr **screens;
 .Ed
 .It Fa struct wscons_syncops
-A structure passwd to wscons by the display driver describing the
+A structure passed to wscons by the display driver describing the
 interface for external screend switching/process synchronisation.
 This structure is optional and only required by displays operating
 with terminal emulation and intending to support multiple screens.  It
