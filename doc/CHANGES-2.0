@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.173 2004/04/30 03:53:36 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.174 2004/04/30 03:58:14 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1740,3 +1740,9 @@ sys/opencrypto/crypto.c				1.9
 	will be hardware-accelerated. Avoids copyin()/copyout() overhead and
 	spending exceessive tie inside the kernel.
 	[jonathan, ticket #234]
+
+sys/netipsec/key.c				1.14
+
+	Update sys/netipsec/key.c to check for attempts to add IPv6-related
+	SPDs, and to warn about and reject any such attempts.
+	[jonathan, ticket #235]
