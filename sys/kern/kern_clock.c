@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.55 2000/03/30 09:27:11 augustss Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.56 2000/05/29 14:58:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -687,7 +687,7 @@ hardclock(frame)
 		 */
 		switch (hz) {
 		case 96:
-			/* A factor of 1.0101010101 gives about .025% error. */
+			/* A factor of 1.0101010101 gives about 244ppm error. */
 			if (time_adj < 0) {
 				time_adj -= (-time_adj >> 2);
 				time_adj -= (-time_adj >> 4) + (-time_adj >> 8);
@@ -698,15 +698,19 @@ hardclock(frame)
 			break;
 
 		case 100:
-			/* A factor of 1.01001 gives about .1% error. */
-			if (time_adj < 0)
+			/* A factor of 1.010001111010111 gives about 1ppm
+			   error. */
+			if (time_adj < 0) {
 				time_adj -= (-time_adj >> 2) + (-time_adj >> 5);
-			else
+				time_adj += (-time_adj >> 10);
+			} else {
 				time_adj += (time_adj >> 2) + (time_adj >> 5);
+				time_adj -= (time_adj >> 10);
+			}
 			break;
 
 		case 60:
-			/* A factor of 1.00010001 gives about .025% error. */
+			/* A factor of 1.00010001 gives about 244ppm error. */
 			if (time_adj < 0)
 				time_adj -= (-time_adj >> 4) + (-time_adj >> 8);
 			else
@@ -714,11 +718,27 @@ hardclock(frame)
 			break;
 
 		case 1000:
-			 /* A factor of 1.0000011 gives about .055% error. */
-			if (time_adj < 0)
-				time_adj -= (-time_adj >> 6) + (-time_adj >> 7);
-			else
-				time_adj += (time_adj >> 6) + (time_adj >> 7);
+			/* A factor of 1.000001100010100001 gives about 50ppm
+			   error. */
+			if (time_adj < 0) {
+				time_adj -= (-time_adj >> 6) + (-time_adj >> 11);
+				time_adj -= (-time_adj >> 7);
+			} else {
+				time_adj += (time_adj >> 6) + (time_adj >> 11);
+				time_adj += (time_adj >> 7);
+			}
+			break;
+
+		case 1200:
+			/* A factor of 1.1011010011100001 gives about 64ppm
+			   error. */
+			if (time_adj < 0) {
+				time_adj -= (-time_adj >> 1) + (-time_adj >> 6);
+				time_adj -= (-time_adj >> 3) + (-time_adj >> 10);
+			} else {
+				time_adj += (time_adj >> 1) + (time_adj >> 6);
+				time_adj += (time_adj >> 3) + (time_adj >> 10);
+			}
 			break;
 		}
 
