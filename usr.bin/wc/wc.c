@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.13 1997/10/20 02:40:26 mrg Exp $	*/
+/*	$NetBSD: wc.c,v 1.14 1998/10/13 17:03:39 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.13 1997/10/20 02:40:26 mrg Exp $");
+__RCSID("$NetBSD: wc.c,v 1.14 1998/10/13 17:03:39 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,9 +68,9 @@ __RCSID("$NetBSD: wc.c,v 1.13 1997/10/20 02:40:26 mrg Exp $");
 #include <unistd.h>
 #include <err.h>
 
-static ulong	tlinect, twordct, tcharct;
-static int	doline, doword, dochar;
-static int 	rval = 0;
+static unsigned long	tlinect, twordct, tcharct;
+static int		doline, doword, dochar;
+static int 		rval = 0;
 
 static void	cnt __P((char *));
 static void	print_counts __P((long, long, long, char *));
