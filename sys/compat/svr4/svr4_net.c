@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.2 1994/11/18 02:53:53 christos Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.3 1994/12/14 20:08:30 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -87,22 +87,22 @@ svr4_netattach(n)
 
 
 int
-svr4_netopen(dev, flag, mode, p, fp)
+svr4_netopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
 	struct proc *p;
-	struct file *fp;
 {
-	int type;
-	int protocol;
+	int type, protocol;
+	int fd;
+	struct file *fp;
 	struct socket *so;
 	int error;
 	struct svr4_strm *st;
 
 	DPRINTF(("netopen("));
 
-	if (fp == NULL)
+	if (p->p_dupfd >= 0)
 		return ENODEV;
 
 	switch (minor(dev)) {
@@ -135,9 +135,12 @@ svr4_netopen(dev, flag, mode, p, fp)
 		return EOPNOTSUPP;
 	}
 
+	if ((error = falloc(p, &fp, &fd)) != 0)
+		return (error);
 
 	if ((error = socreate(AF_INET, &so, type, protocol)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
+		ffree(fp);
 		return error;
 	}
 
@@ -152,7 +155,8 @@ svr4_netopen(dev, flag, mode, p, fp)
 	fp->f_data = (caddr_t)so;
 	DPRINTF(("ok);\n"));
 
-	return 0;
+	p->p_dupfd = fd;
+	return ENXIO;
 }
 
 static int
