@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/08/22 14:26:04 leo Exp $
+#	$NetBSD: Makefile,v 1.3 2001/02/25 14:31:53 jdc Exp $
 
 PROG=	ahdilabel
 SRCS=	ahdilabel.c build.c check.c cksum.c magic.c openraw.c read.c write.c \
@@ -10,5 +10,8 @@ BINDIR=	/sbin
 
 WARNS=	1
 
+.if defined(DEBUG)
 CFLAGS += -g
+CPPFLAGS+=-DDEBUG
+.endif
 .include <bsd.prog.mk>
