@@ -1,4 +1,4 @@
-# $NetBSD: TODO.i18n,v 1.1 2003/06/18 05:32:17 tshiozak Exp $
+# $NetBSD: TODO.i18n,v 1.2 2003/07/04 06:07:48 tshiozak Exp $
 
 NetBSD I18N support status / TODO
 
@@ -7,9 +7,9 @@ NetBSD I18N support status / TODO
 
 iconv.h
              status     spec            remarks
-iconv_open     -        XPG4		coming soon
-iconv          -        XPG4		coming soon
-iconv_close    -        XPG4		coming soon
+iconv_open     sm       XPG4
+iconv          sm       XPG4
+iconv_close    sm       XPG4
 
 
 langinfo.h
@@ -124,7 +124,9 @@ wcstoumax      s
 
 user tools
              status     spec            remarks
+iconv          s        SUSv3
 localedef      -        SUSv3
+locale         sm       SUSv3
 
 
 misc TODO:
