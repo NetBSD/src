@@ -1,0 +1,1 @@
+#include "sparc/netbsd.h"

@@ -1,0 +1,10 @@
+# XXX need these files generated.
+
+../tconfig.h
+config.h
+hconfig.h
+insn-codes.h
+insn-config.h
+insn-flags.h
+multilib.h
+specs.h
