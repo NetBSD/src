@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)init.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: init.c,v 1.2 1993/08/01 18:54:02 mycroft Exp $";
+static char rcsid[] = "$Id: init.c,v 1.3 1994/01/13 01:19:58 mycroft Exp $";
 #endif /* not lint */
 
 # include	"mille.h"
@@ -197,8 +197,8 @@ newscore() {
 		for (i = 0; i < SCORE_Y; i++)
 			mvaddch(i, 0, '|');
 		move(SCORE_Y - 1, 1);
-		while (addch('_') != ERR)
-			continue;
+		for (i = 0; i < SCORE_X - 1; i++)
+			addch('_');
 		for (pp = Player; pp <= &Player[COMP]; pp++) {
 			pp->sh_hand_tot = -1;
 			pp->sh_total = -1;
