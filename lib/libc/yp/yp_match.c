@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.7 1997/07/07 02:00:37 lukem Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.8 1997/07/13 20:28:14 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -31,8 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_match.c,v 1.7 1997/07/07 02:00:37 lukem Exp $";
+__RCSID("$NetBSD: yp_match.c,v 1.8 1997/07/13 20:28:14 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -40,6 +41,7 @@ static char rcsid[] = "$NetBSD: yp_match.c,v 1.7 1997/07/07 02:00:37 lukem Exp $
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
+#include "local.h"
 
 #define YPMATCHCACHE
 
@@ -57,6 +59,10 @@ static struct ypmatch_ent {
 	int             	 keylen, vallen;
 	time_t          	 expire_t;
 } *ypmc;
+
+static bool_t ypmatch_add __P((const char *, const char *, int, char *, int));
+static bool_t ypmatch_find __P((const char *, const char *, int, const char **,
+    int *));
 
 static bool_t
 ypmatch_add(map, key, keylen, val, vallen)
