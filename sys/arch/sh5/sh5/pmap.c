@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2002/09/04 15:30:12 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2002/09/06 16:20:49 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -122,12 +122,24 @@
 #include <machine/memregion.h>
 #include <machine/cacheops.h>
 
+
+#define PMAP_DIAG
+#ifdef PMAP_DIAG
+#ifndef DDB
+#define pmap_debugger()	panic("")
+#else
+#include <machine/db_machdep.h>
+#define	pmap_debugger() cpu_Debugger();
+#endif
+#endif
+
 #ifdef DEBUG
 static int pmap_debug = 0;
 #define	PMPRINTF(x)	do { if (pmap_debug) printf x; } while (0)
 #else
 #define	PMPRINTF(x)
 #endif
+
 
 /*
  * The basic SH5 MMU is just about as simple as these things can be,
@@ -915,6 +927,8 @@ pmap_init(void)
 	pmap_asid_max = 255;
 	pmap_initialized = 1;
 
+	pmap_pinit(pmap_kernel());
+
 	splx(s);
 }
 
@@ -1110,6 +1124,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	if (!pmap_initialized)
 		panic("pmap_copy_page: pmap_initialized is false!");
 
+	PMPRINTF(("pmap_copy_page: copying 0x%08lx -> 0x%08lx\n", src, dst));
+
 	pmap_pa_map_kva(pmap_copy_page_src_kva, src);
 	pmap_pa_map_kva(pmap_copy_page_dst_kva, dst);
 
@@ -1164,11 +1180,12 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *ptegidx_p)
 
 	va &= SH5_PTEH_EPN_MASK;
 
-	if (pm != pmap_kernel()) {
+	if (va < SH5_KSEG0_BASE) {
 		idx = va_to_pteg(pm->pm_vsid, va);
 		pvo_head = &pmap_upvo_table[idx];
 	} else {
-		idx = kva_to_iptidx(va);
+		if ((idx = kva_to_iptidx(va)) < 0)
+			return (NULL);
 		pvo_head = &pmap_kpvo_table[idx];
 	}
 
@@ -1258,6 +1275,13 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 
 	va &= SH5_PTEH_EPN_MASK;
 
+#ifdef PMAP_DIAG
+	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
+		printf("pmap_pvo_enter: pmap_kernel() with va 0x%lx!!\n", va);
+		pmap_debugger();
+	}
+#endif
+
 	if (pm != pmap_kernel()) {
 		idx = va_to_pteg(pm->pm_vsid, va);
 		pvo_table_head = &pmap_upvo_table[idx];
@@ -1330,14 +1354,17 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 		 * We hope this succeeds but it isn't required.
 		 */
 		i = pmap_pteg_insert(&pmap_pteg_table[idx], pvo);
-		PMPRINTF(("pmap_pvo_enter: va 0x%x into group 0x%x (rv = %d)\n",
-		    (u_int)va, idx, i));
-		PMPRINTF(("pmap_pvo_enter: group addr = %p, vsid = 0x%x\n",
-		    &pmap_pteg_table[idx], pm->pm_vsid));
+		PMPRINTF((
+		  "pmap_pvo_enter: va 0x%lx, ptel 0x%lx, group 0x%x (idx %d)\n",
+		    va, (u_long)ptel, idx, i));
 		if (i >= 0)
 			PVO_PTEGIDX_SET(pvo, i);
-	} else
+	} else {
 		pmap_kernel_ipt[idx] = ptel;
+		PMPRINTF((
+		    "pmap_pvo_enter: va 0x%lx, ptel 0x%lx, kipt (idx %d)\n",
+		    va, (u_long)ptel, idx));
+	}
 
 	splx(s);
 
@@ -1347,6 +1374,7 @@ pmap_pvo_enter(pmap_t pm, struct pvo_head *pvo_head,
 static void
 pmap_pvo_remove(struct pvo_entry *pvo, int ptegidx)
 {
+
 	if (pvo->pvo_pmap != pmap_kernel()) {
 		volatile pte_t *pt;
 
@@ -1360,9 +1388,17 @@ pmap_pvo_remove(struct pvo_entry *pvo, int ptegidx)
 			pmap_pteg_unset(pt, pvo);
 			PVO_PTEGIDX_CLR(pvo);
 		}
-	} else
+	} else {
+#ifdef PMAP_DIAG
+		if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+			printf("pmap_pvo_remove: pmap_kernel() va 0x%lx!!\n",
+			    PVO_VADDR(pvo));
+			pmap_debugger();
+		}
+#endif
 		pvo->pvo_ptel |=
 		    pmap_pa_unmap_kva(pvo->pvo_vaddr) & PVO_REFMOD_MASK;
+	}
 
 	/*
 	 * Update our statistics
@@ -1406,13 +1442,16 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	ptel_t ptel;
 	int error;
 
-#ifdef DEBUG
-	if (pm == pmap_kernel())
-		PMPRINTF(("pmap_enter: pmap_kernel(): "));
-	else
-		PMPRINTF(("pmap_enter: %p: ", pm));
-	PMPRINTF(("va=0x%08x, pa=0x%08x, prot=0x%08x, flags=0x%08x\n",
-	    (u_int)va, (u_int)pa, (u_int)prot, (u_int)flags));
+	PMPRINTF((
+	    "pmap_enter: %p: va=0x%lx, pa=0x%lx, prot=0x%x, flags=0x%x\n",
+	    pm, va, pa, (u_int)prot, (u_int)flags));
+
+#ifdef PMAP_DIAG
+	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
+		printf("pmap_enter: pmap_kernel() with va 0x%08x!!\n",
+		    (u_int)va);
+		pmap_debugger();
+	}
 #endif
 
 	pvo_head = pa_to_pvoh(pa, &pg);
@@ -1433,19 +1472,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 	}
 
-#ifdef DEBUG
-	if (ptel == SH5_PTEL_CB_DEVICE)
-		PMPRINTF(("pmap_enter: device memory\n"));
-	else
-		PMPRINTF(("pmap_enter: managed memory\n"));
-#endif
-
 	/* Pages are always readable */
 	ptel |= SH5_PTEL_PR_R;
 
 	if (pg) {
 		/* Only managed pages can be user-accessible */
-		PMPRINTF(("pmap_enter: managed page: %p\n", pg));
 		if (va <= VM_MAXUSER_ADDRESS)
 			ptel |= SH5_PTEL_PR_U;
 
@@ -1500,12 +1531,12 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	ptel |= SH5_PTEL_PR_R | SH5_PTEL_PR_W | (pa & SH5_PTEL_PPN_MASK);
 
+	PMPRINTF(("pmap_kenter_pa: va 0x%lx, pa 0x%lx, prot 0x%x, idx %d\n",
+	    va, pa, (u_int)prot, idx));
+
 	KDASSERT(pmap_kernel_ipt[idx] == 0);
 
 	pmap_kernel_ipt[idx] = ptel;
-
-	PMPRINTF(("pmap_kenter_pa: va=0x%08x, pa=0x%08x, prot=0x%08x\n",
-	    (u_int)va, (u_int)pa, (u_int)prot));
 
 	/* XXX: Cache */
 }
@@ -1518,8 +1549,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	if (va < pmap_kva_avail_start)
 		panic("pmap_kremove: Entering non-kernel VA: 0x%lx", va);
 
-	PMPRINTF(("pmap_kremove: va=0x%08x, len=0x%x\n", (u_int)va,
-	    (u_int)len));
+	PMPRINTF(("pmap_kremove: va=0x%lx, len=0x%lx\n", va, len));
 
 	for (ptelp = &pmap_kernel_ipt[kva_to_iptidx(va)]; len;
 	    len -= NBPG, va += NBPG) {
@@ -1542,12 +1572,14 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	int ptegidx;
 	int s;
 
-#ifdef DEBUG
-	if (pm == pmap_kernel())
-		PMPRINTF(("pmap_remove: pmap_kernel(): "));
-	else
-		PMPRINTF(("pmap_remove: %p: ", pm));
-	PMPRINTF(("va=0x%08x, endva=0x%08x\n", (u_int)va, (u_int)endva));
+	PMPRINTF(("pmap_remove: %p: va=0x%lx, endva=0x%lx\n", pm, va, endva));
+
+#ifdef PMAP_DIAG
+	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
+		printf("pmap_remove: pmap_kernel() with va 0x%08x!!\n",
+		    (u_int)va);
+		pmap_debugger();
+	}
 #endif
 
 	for (; va < endva; va += PAGE_SIZE) {
@@ -1578,35 +1610,39 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	int s, idx;
 	boolean_t found = FALSE;
 
-#ifdef DEBUG
-	if (pm == pmap_kernel())
-		PMPRINTF(("pmap_extract: pmap_kernel(): va 0x%08x\n",
-		    (u_int)va));
-	else
-		PMPRINTF(("pmap_extract: %p: va 0x%08x\n", pm, (u_int)va));
+	PMPRINTF(("pmap_extract: %p: va 0x%lx - ", pm, va));
+
+#ifdef PMAP_DIAG
+	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
+		printf("pmap_extract: pmap_kernel() with va 0x%lx!!\n", va);
+		pmap_debugger();
+	}
 #endif
 
 	s = splhigh();
-	pvo = pmap_pvo_find_va(pm, va & SH5_PTEH_EPN_MASK, NULL);
+	pvo = pmap_pvo_find_va(pm, va, NULL);
 	if (pvo != NULL) {
 		*pap = (pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
 		    (va & ~SH5_PTEH_EPN_MASK);
 		found = TRUE;
-		PMPRINTF(("pmap_extract: managed pvo. pa=0x%08x\n",
-		    (u_int)*pap));
+		PMPRINTF(("managed pvo. pa 0x%lx\n", *pap));
 	} else
 	if (pm == pmap_kernel()) {
 		idx = kva_to_iptidx(va);
-		if (pmap_kernel_ipt[idx]) {
+		if (idx >= 0 && pmap_kernel_ipt[idx]) {
 			*pap = (pmap_kernel_ipt[idx] & SH5_PTEL_PPN_MASK) |
 			    (va & ~SH5_PTEH_EPN_MASK);
 			found = TRUE;
-			PMPRINTF(("pmap_extract: no pvo, but found in kipt: 0x%08x\n", (u_int)*pap));
-		} else
-			PMPRINTF(("pmap_extract: no pvo, and not in kipt\n"));
-	} else
-		PMPRINTF(("pmap_extract: no pvo for non-kernel pmap\n"));
+			PMPRINTF(("no pvo, but kipt pa 0x%lx\n", *pap));
+		}
+	}
 	splx(s);
+
+#ifdef DEBUG
+	if (!found)
+		PMPRINTF(("not found.\n"));
+#endif
+
 	return (found);
 }
 
@@ -1621,16 +1657,19 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
+	ptel_t clrbits;
 	int ptegidx;
 	int s;
 
-	if (pm == pmap_kernel())
-		PMPRINTF(("pmap_protect: pmap_kernel(): va 0x%08x\n",
-		    (u_int)va));
-	else
-		PMPRINTF(("pmap_protect: %p: va 0x%08x\n", pm, (u_int)va));
-	PMPRINTF(("va=0x%08x, endva=0x%08x, prot=0x%x\n",
-	    (u_int)va, (u_int)endva, (u_int)prot));
+	PMPRINTF(("pmap_protect: %p: va=0x%lx, endva=0x%lx, prot=0x%x\n",
+	    pm, va, endva, (u_int)prot));
+
+#ifdef PMAP_DIAG
+	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
+		printf("pmap_protect: pmap_kernel() with va 0x%lx!!\n", va);
+		pmap_debugger();
+	}
+#endif
 
 	/*
 	 * If there is no protection, this is equivalent to
@@ -1651,6 +1690,11 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		return;
 	}
 
+	if ((prot & VM_PROT_EXECUTE) == 0)
+		clrbits = SH5_PTEL_PR_W | SH5_PTEL_PR_X;
+	else
+		clrbits = SH5_PTEL_PR_W;
+
 	/*
 	 * We're doing a write-protect or execute-revoke operation.
 	 */
@@ -1663,33 +1707,22 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		s = splhigh();
 
 		/*
-		 * Grab the PTE pointer before we diddle with
-		 * the cached PTE copy.
-		 */
-		pt = pmap_pvo_to_pte(pvo, ptegidx);
-
-		/*
-		 * Revoke executable if asked to do so.
-		 */
-		if ((prot & VM_PROT_EXECUTE) == 0)
-			pvo->pvo_ptel &= ~SH5_PTEL_PR_X;
-
-		/*
 		 * Change the protection of the page.
 		 */
-		pvo->pvo_ptel &= ~SH5_PTEL_PR_W;
+		pvo->pvo_ptel &= ~clrbits;
+		pvo->pvo_vaddr &= ~PVO_WRITABLE;
 
-		/*
-		 * If the PVO is in the page table, update
-		 * that pte at well.
-		 */
-		if (pt != NULL)
-			pmap_pteg_change(pt, pvo);
+		if (pm != pmap_kernel()) {
+			pt = pmap_pvo_to_pte(pvo, ptegidx);
+			if (pt != NULL)
+				pmap_pteg_change(pt, pvo);
+		} else {
+			if (ptegidx >=0 && pmap_kernel_ipt[ptegidx] & clrbits)
+				pmap_kpte_clear_bit(ptegidx, pvo, clrbits);
+		}
 
 		splx(s);
 	}
-
-	PMPRINTF(("pmap_protect: done\n"));
 }
 
 void
@@ -1698,11 +1731,14 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	struct pvo_entry *pvo;
 	int s;
 
-	if (pm == pmap_kernel())
-		PMPRINTF(("pmap_unwire: pmap_kernel(): va 0x%08x\n",
-		    (u_int)va));
-	else
-		PMPRINTF(("pmap_unwire: %p: va 0x%08x\n", pm, (u_int)va));
+	PMPRINTF(("pmap_unwire: %p: va 0x%lx\n", pm, va));
+
+#ifdef PMAP_DIAG
+	if (pm == pmap_kernel() && va < SH5_KSEG1_BASE) {
+		printf("pmap_unwire: pmap_kernel() with va 0x%lx!!\n", va);
+		pmap_debugger();
+	}
+#endif
 
 	s = splvm();
 
@@ -1715,8 +1751,6 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	}
 
 	splx(s);
-
-	PMPRINTF(("pmap_unwire: done\n"));
 }
 
 /*
@@ -1731,8 +1765,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	struct pvo_head *pvo_head;
 	struct pvo_entry *pvo, *next_pvo;
 	volatile pte_t *pt;
-	ptel_t execmask;
-	int s;
+	ptel_t clrbits;
+	int idx, s;
 
 	PMPRINTF(("pmap_page_protect: %p prot=%x: ", pg, prot));
 
@@ -1746,6 +1780,11 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		PMPRINTF(("maximum requested. all done.\n"));
 		return;
 	}
+
+	if ((prot & VM_PROT_EXECUTE) == 0)
+		clrbits = SH5_PTEL_PR_W | SH5_PTEL_PR_X;
+	else
+		clrbits = SH5_PTEL_PR_W;
 
 	s = splvm();
 
@@ -1761,11 +1800,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			continue;
 		} 
 
-		if ((prot & VM_PROT_EXECUTE) == 0)
-			execmask = SH5_PTEL_PR_X;
-		else
-			execmask = 0;
+		pvo->pvo_vaddr &= ~PVO_WRITABLE;
+		pvo->pvo_ptel &= ~clrbits;
 
+#if 0
 		/*
 		 * If this entry is already RO, don't diddle with the
 		 * page table.
@@ -1773,16 +1811,27 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		if ((pvo->pvo_ptel & SH5_PTEL_PR_MASK) ==
 		    (execmask | SH5_PTEL_PR_R))
 			continue;
+#endif
 
-		/*
-		 * Grab the PTE before the we diddle the bits so
-		 * pvo_to_pte can verify the pte contents are as
-		 * expected.
-		 */
-		pt = pmap_pvo_to_pte(pvo, -1);
-		pvo->pvo_ptel &= ~(SH5_PTEL_PR_W | execmask);
-		if (pt != NULL)
-			pmap_pteg_change(pt, pvo);
+		if (pvo->pvo_pmap != pmap_kernel()) {
+			pt = pmap_pvo_to_pte(pvo, -1);
+			if (pt != NULL)
+				pmap_pteg_change(pt, pvo);
+		} else {
+
+#ifdef PMAP_DIAG
+			if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+				printf(
+				 "pmap_page_protect: pmap_kernel() va 0x%lx!\n",
+				    PVO_VADDR(pvo));
+				pmap_debugger();
+			}
+#endif
+
+			idx = kva_to_iptidx(PVO_VADDR(pvo));
+			if (idx >= 0 && pmap_kernel_ipt[idx] & clrbits)
+				pmap_kpte_clear_bit(idx, pvo, clrbits);
+		}
 	}
 
 	splx(s);
@@ -1823,8 +1872,13 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	volatile pte_t *pt;
 	int s, idx;
 
-	if (pmap_attr_fetch(pg) & ptebit)
+	PMPRINTF(("pmap_query_bit: pa 0x%0lx %s? - ", pg->phys_addr,
+	    (ptebit == SH5_PTEL_M) ? "modified" : "referenced"));
+
+	if (pmap_attr_fetch(pg) & ptebit) {
+		PMPRINTF(("yes. Cached in pg attr.\n"));
 		return (TRUE);
+	}
 
 	s = splhigh();
 
@@ -1836,6 +1890,8 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 		if (pvo->pvo_ptel & ptebit) {
 			pmap_attr_save(pg, ptebit);
 			splx(s);
+			PMPRINTF(("yes. Cached in pvo for 0x%lx.\n",
+			    PVO_VADDR(pvo)));
 			return (TRUE);
 		}
 	}
@@ -1858,21 +1914,38 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 				if (pvo->pvo_ptel & ptebit) {
 					pmap_attr_save(pg, ptebit);
 					splx(s);
+					PMPRINTF((
+					    "yes. Cached in ptel for 0x%lx.\n",
+					    PVO_VADDR(pvo)));
 					return (TRUE);
 				}
 			}
 		} else {
+
+#ifdef PMAP_DIAG
+			if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+				printf(
+				    "pmap_query_bit: pmap_kernel() va 0x%lx!\n",
+				    PVO_VADDR(pvo));
+				pmap_debugger();
+			}
+#endif
+
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
 			if (idx >= 0 && pmap_kernel_ipt[idx] & ptebit) {
 				pmap_pteg_synch(pmap_kernel_ipt[idx], pvo);
 				pmap_attr_save(pg, ptebit);
 				splx(s);
+				PMPRINTF(("yes. Cached in kipt for 0x%lx.\n",
+				    PVO_VADDR(pvo)));
 				return (TRUE);
 			}
 		}
 	}
 
 	splx(s);
+
+	PMPRINTF(("no.\n"));
 
 	return (FALSE);
 }
@@ -1885,6 +1958,9 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	int rv = 0;
 	int s, idx;
 
+	PMPRINTF(("pmap_clear_bit: pa 0x%lx %s - ", pg->phys_addr,
+	    (ptebit == SH5_PTEL_M) ? "modified" : "referenced"));
+
 	s = splhigh();
 
 	/*
@@ -1892,6 +1968,14 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	 */
 	rv |= pmap_attr_fetch(pg);
 	pmap_attr_clear(pg, ptebit);
+
+	/*
+	 * If clearing the Modified bit, make sure to clear the
+	 * writable bit in the PTEL/TLB so we can track future
+	 * modifications to the page via pmap_write_trap().
+	 */
+	if (ptebit & SH5_PTEL_M)
+		ptebit |= SH5_PTEL_PR_W;
 
 	/*
 	 * For each pvo entry, clear pvo's ptebit.  If this pvo has a
@@ -1906,6 +1990,16 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 					pmap_pteg_clear_bit(pt, pvo, ptebit);
 			}
 		} else {
+
+#ifdef PMAP_DIAG
+			if (PVO_VADDR(pvo) < SH5_KSEG1_BASE) {
+				printf(
+				    "pmap_clear_bit: pmap_kernel() va 0x%lx!\n",
+				    PVO_VADDR(pvo));
+				pmap_debugger();
+			}
+#endif
+
 			idx = kva_to_iptidx(PVO_VADDR(pvo));
 			if (idx >= 0 && pmap_kernel_ipt[idx] != 0) {
 				pmap_pteg_synch(pmap_kernel_ipt[idx], pvo);
@@ -1919,6 +2013,9 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	}
 
 	splx(s);
+
+	ptebit &= ~SH5_PTEL_PR_W;
+	PMPRINTF(("was %s.\n", (rv & ptebit) ? "cleared" : "not set"));
 
 	return ((rv & ptebit) != 0);
 }
@@ -1954,19 +2051,24 @@ pmap_write_trap(int usermode, vaddr_t va)
 	pmap_t pm;
 	int ptegidx;
 
-	if (usermode && curproc)
+	if (curproc)
 		pm = curproc->p_vmspace->vm_map.pmap;
-	else
+	else {
+		KDASSERT(usermode == 0);
 		pm = pmap_kernel();
+	}
+
+	PMPRINTF(("pmap_write_trap: %p: %smode va 0x%lx - ",
+	    pm, usermode ? "user" : "kernel", va));
 
 	pvo = pmap_pvo_find_va(pm, va, &ptegidx);
-	if (pvo == NULL)
-		panic("pmap_write_trap: unmanaged %s-mode address (%p)!",
-		    usermode ? "user" : "kernel", (void *)va);
+	if (pvo == NULL) {
+		PMPRINTF(("page has no pvo.\n"));
+		return (0);
+	}
 
 	if (!PVO_ISWRITABLE(pvo)) {
-		PMPRINTF(("pmap_write_trap: unwritable page: 0x%08x\n",
-		    (u_int)va));
+		PMPRINTF(("page is read-only.\n"));
 		return (0);
 	}
 
@@ -1982,17 +2084,22 @@ pmap_write_trap(int usermode, vaddr_t va)
 			    pvo->pvo_pmap->pm_asid << SH5_PTEH_ASID_SHIFT,
 			    SH5_PTEH_TLB_COOKIE(pt->pteh));
 		}	
-#if 0
-		__cpu_tlbupdate((va & SH5_PTEH_EPN_MASK) |
-		    pm->pm_asid << SH5_PTEH_ASID_SHIFT, pt->ptel);
-#endif
 	} else {
-		pmap_kernel_ipt[ptegidx] = pvo->pvo_ptel;
-#if 0
-		__cpu_tlbupdate((va & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
-		    pmap_kernel_ipt[ptegidx]);
+
+#ifdef PMAP_DIAG
+		if (va < SH5_KSEG1_BASE) {
+			printf("pmap_write_trap: pmap_kernel() va 0x%lx!\n",
+			    va);
+			pmap_debugger();
+		}
 #endif
+
+		pmap_kernel_ipt[ptegidx] = pvo->pvo_ptel;
+		__cpu_tlbinv((PVO_VADDR(pvo) & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
+		    SH5_PTEH_EPN_MASK | SH5_PTEH_SH);
 	}
+
+	PMPRINTF((" page made writable.\n"));
 
 	return (1);
 }
@@ -2052,7 +2159,7 @@ dump_kipt(void)
 	for (pt = &pmap_kernel_ipt[0], va = SH5_KSEG1_BASE;
 	    pt != &pmap_kernel_ipt[KERNEL_IPT_SIZE]; pt++, va += NBPG) {
 		if (*pt && *pt < 0x80000000u)
-			printf("KVA: 0x%08x -> PTEL: 0x%08x\n", va, (u_int)*pt);
+			printf("KVA: 0x%lx -> PTEL: 0x%lx\n", va, (u_long)*pt);
 	}
 
 	printf("\n");
