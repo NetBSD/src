@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 1997/10/04 17:03:09 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.40.2.1 1998/07/21 00:14:43 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -282,15 +282,16 @@ configure()
 	LIST_INIT(&dev_data_list_scsi);
 
 	/*
-	 * XXX Enable interrupts.  We have to do this now so that the
-	 * XXX HIL configures.
-	 */
-	(void)spl0();
-
-	/*
-	 * XXX: these should be consolidated into some kind of table
+	 * XXX In order for the HIL to configure, interrupts need to be
+	 * XXX enabled.  However, we need to initialize the HIL driver's
+	 * XXX software state prior to that, since a pending might cause
+	 * XXX the HIL's interrupt handler to be run in an uninitialized
+	 * XXX environment otherwise.
+	 *
+	 * XXX These should be consolidated into some kind of table.
 	 */
 	hilsoftinit(0, HILADDR);
+	(void)spl0();
 	hilinit(0, HILADDR);
 
 	(void)splhigh();
