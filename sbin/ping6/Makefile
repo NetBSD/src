@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 1999/12/13 15:25:59 itojun Exp $
+# $NetBSD: Makefile,v 1.5.4.1 2000/10/18 17:04:38 tv Exp $
 
 PROG=	ping6
 MAN=	ping6.8
@@ -9,8 +9,8 @@ BINMODE=4555
 CPPFLAGS+=-DINET6
 CPPFLAGS+=-DIPSEC
 
-LDADD+=	-lipsec
-DPADD+=	${LIBIPSEC}
+LDADD+=	-lipsec -lm
+DPADD+=	${LIBIPSEC} ${LIBM}
 
 # KAME scope id hack
 CPPFLAGS+=-DKAME_SCOPEID

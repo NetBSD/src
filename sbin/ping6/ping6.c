@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.15.2.2 2000/10/16 23:31:30 tv Exp $	*/
-/*	$KAME: ping6.c,v 1.55 2000/06/12 16:18:32 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.15.2.3 2000/10/18 17:04:38 tv Exp $	*/
+/*	$KAME: ping6.c,v 1.91 2000/10/07 06:23:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.15.2.2 2000/10/16 23:31:30 tv Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.15.2.3 2000/10/18 17:04:38 tv Exp $");
 #endif
 #endif
 
@@ -116,19 +116,20 @@ __RCSID("$NetBSD: ping6.c,v 1.15.2.2 2000/10/16 23:31:30 tv Exp $");
 #include <net/if.h>
 #include <net/route.h>
 
-#include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/ip6.h>
 #include <netinet/icmp6.h>
 #include <arpa/inet.h>
+#include <arpa/nameser.h>
 #include <netdb.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+#include <math.h>
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,14 +141,19 @@ __RCSID("$NetBSD: ping6.c,v 1.15.2.2 2000/10/16 23:31:30 tv Exp $");
 #include <netinet6/ipsec.h>
 #endif
 
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <md5.h>
+#else
+#include "md5.h"
+#endif
 
 #define MAXPACKETLEN	131072
 #define	IP6LEN		40
 #define ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
 #define ICMP6ECHOTMLEN sizeof(struct timeval)
 #define ICMP6_NIQLEN	(ICMP6ECHOLEN + 8)
-#define ICMP6_NIRLEN	(ICMP6ECHOLEN + 12) /* 64 bits of nonce + 32 bits ttl */
+/* FQDN case, 64 bits of nonce + 32 bits ttl */
+#define ICMP6_NIRLEN	(ICMP6ECHOLEN + 12)
 #define	EXTRA		256	/* for AH and various other headers. weird. */
 #define	DEFDATALEN	ICMP6ECHOTMLEN
 #define MAXDATALEN	MAXPACKETLEN - IP6LEN - ICMP6ECHOLEN
@@ -185,6 +191,8 @@ __RCSID("$NetBSD: ping6.c,v 1.15.2.2 2000/10/16 23:31:30 tv Exp $");
 #define F_HOSTNAME	0x10000
 #define F_FQDNOLD	0x20000
 #define F_NIGROUP	0x40000
+#define F_SUPTYPES	0x80000
+#define F_NOUSERDATA	(F_NODEADDR | F_FQDN | F_FQDNOLD | F_SUPTYPES)
 u_int options;
 
 #define IN6LEN		sizeof(struct in6_addr)
@@ -212,6 +220,7 @@ char BSPACE = '\b';		/* characters written for flood */
 char DOT = '.';
 char *hostname;
 int ident;			/* process id to identify our packets */
+u_int8_t nonce[8];		/* nonce field for node information */
 struct in6_addr srcaddr;
 
 /* counters */
@@ -219,7 +228,7 @@ long npackets;			/* max packets to transmit */
 long nreceived;			/* # of packets we got back */
 long nrepeats;			/* number of duplicates */
 long ntransmitted;		/* sequence # for outbound packets = #sent */
-int interval = 1;		/* interval between packets */
+struct timeval interval = {1, 0}; /* interval between packets */
 int hoplimit = -1;		/* hoplimit */
 
 /* timing */
@@ -227,6 +236,9 @@ int timing;			/* flag to do timing */
 double tmin = 999999999.0;	/* minimum round trip time */
 double tmax = 0.0;		/* maximum round trip time */
 double tsum = 0.0;		/* sum of all times, for doing average */
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+double tsumsq = 0.0;		/* sum of all times squared, for std. dev. */
+#endif
 
 /* for node addresses */
 u_short naflags;
@@ -248,6 +260,10 @@ const char *pr_addr __P((struct sockaddr_in6 *));
 void	 pr_icmph __P((struct icmp6_hdr *, u_char *));
 void	 pr_iph __P((struct ip6_hdr *));
 void	 pr_nodeaddr __P((struct icmp6_nodeinfo *, int));
+int	 myechoreply __P((const struct icmp6_hdr *));
+int	 mynireply __P((const struct icmp6_nodeinfo *));
+char *dnsdecode __P((const u_char **, const u_char *, const u_char *,
+	u_char *, size_t));
 void	 pr_pack __P((u_char *, int, struct msghdr *));
 void	 pr_exthdrs __P((struct msghdr *));
 void	 pr_ip6opt __P((void *));
@@ -268,7 +284,8 @@ main(argc, argv)
 	struct sockaddr_in6 from;
 	struct timeval timeout;
 	struct addrinfo hints;
-	fd_set fdset;
+	fd_set *fdmaskp;
+	int fdmasks;
 	register int cc, i;
 	int ch, fromlen, hold, packlen, preload, optval, ret_ga;
 	u_char *datap, *packet;
@@ -281,10 +298,14 @@ main(argc, argv)
 #ifdef USE_RFC2292BIS
 	struct ip6_rthdr *rthdr = NULL;
 #endif
+#ifndef __OpenBSD__
+	struct timeval tv;
+#endif
 #ifdef IPSEC_POLICY_IPSEC
 	char *policy_in = NULL;
 	char *policy_out = NULL;
 #endif
+	double intval;
 	size_t rthlen;
 
 	/* just to be sure */
@@ -294,54 +315,54 @@ main(argc, argv)
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
 #ifndef IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwW")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW")) != EOF)
 #else
 #ifdef IPSEC_POLICY_IPSEC
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwWP:")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwWP:")) != EOF)
 #else
-	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:vwWAE")) != EOF)
+	while ((ch = getopt(argc, argv, "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwWAE")) != EOF)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	{
-		switch(ch) {
-		 case 'a':
-		 {
-			 char *cp;
+		switch (ch) {
+		case 'a':
+		{
+			char *cp;
 
-			 options |= F_NODEADDR;
-			 datalen = 2048; /* XXX: enough? */
-			 for (cp = optarg; *cp != '\0'; cp++) {
-				 switch(*cp) {
-				 case 'a':
-					 naflags |= NI_NODEADDR_FLAG_ALL;
-					 break;
-				 case 'c':
-				 case 'C':
-					 naflags |= NI_NODEADDR_FLAG_COMPAT;
-					 break;
-				 case 'l':
-				 case 'L':
-					 naflags |= NI_NODEADDR_FLAG_LINKLOCAL;
-					 break;
-				 case 's':
-				 case 'S':
-					 naflags |= NI_NODEADDR_FLAG_SITELOCAL;
-					 break;
-				 case 'g':
-				 case 'G':
-					 naflags |= NI_NODEADDR_FLAG_GLOBAL;
-					 break;
-				 case 'A': /* experimental. not in the spec */
-					 naflags |= NI_NODEADDR_FLAG_ANYCAST;
-					 break;
-				 default:
-					 usage();
-					 /*NOTREACHED*/
-				 }
-			 }
-			 break;
-		 }
-		 case 'b':
+			options &= ~F_NOUSERDATA;
+			options |= F_NODEADDR;
+			for (cp = optarg; *cp != '\0'; cp++) {
+				switch (*cp) {
+				case 'a':
+					naflags |= NI_NODEADDR_FLAG_ALL;
+					break;
+				case 'c':
+				case 'C':
+					naflags |= NI_NODEADDR_FLAG_COMPAT;
+					break;
+				case 'l':
+				case 'L':
+					naflags |= NI_NODEADDR_FLAG_LINKLOCAL;
+					break;
+				case 's':
+				case 'S':
+					naflags |= NI_NODEADDR_FLAG_SITELOCAL;
+					break;
+				case 'g':
+				case 'G':
+					naflags |= NI_NODEADDR_FLAG_GLOBAL;
+					break;
+				case 'A': /* experimental. not in the spec */
+					naflags |= NI_NODEADDR_FLAG_ANYCAST;
+					break;
+				default:
+					usage();
+					/*NOTREACHED*/
+				}
+			}
+			break;
+		}
+		case 'b':
 #if defined(SO_SNDBUF) && defined(SO_RCVBUF)
 			sockbufsize = atoi(optarg);
 #else
@@ -383,10 +404,23 @@ main(argc, argv)
 #endif
 			break;
 		case 'i':		/* wait between sending packets */
-			interval = strtol(optarg, &e, 10);
-			if (interval <= 0 || *optarg == '\0' || *e != '\0')
-				errx(1,
-				    "illegal timing interval -- %s", optarg);
+			intval = strtod(optarg, &e);
+			if (*optarg == '\0' || *e != '\0')
+				errx(1, "illegal timing interval %s", optarg);
+			if (intval < 1 && getuid()) {
+				errx(1, "%s: only root may use interval < 1s",
+				    strerror(EPERM));
+			}
+			interval.tv_sec = (long)intval;
+			interval.tv_usec =
+			    (long)((intval - interval.tv_sec) * 1000000);
+			if (interval.tv_sec < 0)
+				errx(1, "illegal timing interval %s", optarg);
+			/* less than 1/hz does not make sense */
+			if (interval.tv_sec == 0 && interval.tv_usec < 10000) {
+				warnx("too small interval, raised to 0.01");
+				interval.tv_usec = 10000;
+			}
 			options |= F_INTERVAL;
 			break;
 		case 'l':
@@ -429,18 +463,25 @@ main(argc, argv)
 			datalen = strtol(optarg, &e, 10);
 			if (datalen <= 0 || *optarg == '\0' || *e != '\0')
 				errx(1, "illegal datalen value -- %s", optarg);
-			if (datalen > MAXDATALEN)
+			if (datalen > MAXDATALEN) {
 				errx(1,
 				    "datalen value too large, maximum is %d",
 				    MAXDATALEN);
+			}
+			break;
+		case 't':
+			options &= ~F_NOUSERDATA;
+			options |= F_SUPTYPES;
 			break;
 		case 'v':
 			options |= F_VERBOSE;
 			break;
 		case 'w':
+			options &= ~F_NOUSERDATA;
 			options |= F_FQDN;
 			break;
 		case 'W':
+			options &= ~F_NOUSERDATA;
 			options |= F_FQDNOLD;
 			break;
 #ifdef IPSEC
@@ -525,19 +566,37 @@ main(argc, argv)
 	if (options & F_FLOOD && options & F_INTERVAL)
 		errx(1, "-f and -i incompatible options");
 
-	if (datalen >= sizeof(struct timeval))	/* can we time transfer */
+	if ((options & F_NOUSERDATA) == 0 &&
+	    datalen >= sizeof(struct timeval)) {
+		/* can we time transfer */
 		timing = 1;
+	} else {
+		/* suppress timing for node information query */
+		timing = 0;
+		datalen = 2048;
+	}
 	packlen = datalen + IP6LEN + ICMP6ECHOLEN + EXTRA;
 	if (!(packet = (u_char *)malloc((u_int)packlen)))
 		err(1, "Unable to allocate packet");
 	if (!(options & F_PINGFILLED))
-		for (i = 8; i < datalen; ++i)
+		for (i = ICMP6ECHOLEN; i < packlen; ++i)
 			*datap++ = i;
 
 	ident = getpid() & 0xFFFF;
+#ifndef __OpenBSD__
+	gettimeofday(&tv, NULL);
+	srand((unsigned int)(tv.tv_sec ^ tv.tv_usec ^ (long)ident));
+	memset(nonce, 0, sizeof(nonce));
+	for (i = 0; i < sizeof(nonce); i += sizeof(int))
+		*((int *)&nonce[i]) = rand();
+#else
+	memset(nonce, 0, sizeof(nonce));
+	for (i = 0; i < sizeof(nonce); i += sizeof(u_int32_t))
+		*((u_int32_t *)&nonce[i]) = arc4random();
+#endif
 
 	if ((s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
-	  err(1, "socket");
+		err(1, "socket");
 
 	hold = 1;
 
@@ -586,7 +645,7 @@ main(argc, argv)
 	if (!(options & F_VERBOSE)) {
 		ICMP6_FILTER_SETBLOCKALL(&filt);
 		if ((options & F_FQDN) || (options & F_FQDNOLD) ||
-		    (options & F_NODEADDR))
+		    (options & F_NODEADDR) || (options & F_SUPTYPES))
 			ICMP6_FILTER_SETPASS(ICMP6_NI_REPLY, &filt);
 		else
 			ICMP6_FILTER_SETPASS(ICMP6_ECHO_REPLY, &filt);
@@ -626,7 +685,7 @@ main(argc, argv)
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVDSTOPTS, &opton,
 			       sizeof(opton)))
 			err(1, "setsockopt(IPV6_RECVDSTOPTS)");
-#else  /* olad adv. API */
+#else  /* old adv. API */
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_DSTOPTS, &opton,
 			       sizeof(opton)))
 			err(1, "setsockopt(IPV6_DSTOPTS)");
@@ -734,8 +793,8 @@ main(argc, argv)
 			struct addrinfo *iaip;
 
 			if ((error = getaddrinfo(argv[hops], NULL, &hints, &iaip)))
-				errx(1, gai_strerror(error));
-			if (SIN6(res->ai_addr)->sin6_family != AF_INET6)
+				errx(1, "%s", gai_strerror(error));
+			if (SIN6(iaip->ai_addr)->sin6_family != AF_INET6)
 				errx(1,
 				     "bad addr family of an intermediate addr");
 
@@ -749,6 +808,7 @@ main(argc, argv)
 					    IPV6_RTHDR_LOOSE))
 				errx(1, "can't add an intermediate node");
 #endif /* USE_RFC2292BIS */
+			freeaddrinfo(iaip);
 		}
 
 #ifndef USE_RFC2292BIS
@@ -866,20 +926,22 @@ main(argc, argv)
 		pinger();
 
 	(void)signal(SIGINT, onint);
+#ifdef SIGINFO
 	(void)signal(SIGINFO, oninfo);
+#endif
 
 	if ((options & F_FLOOD) == 0) {
 		(void)signal(SIGALRM, onalrm);
-		itimer.it_interval.tv_sec = interval;
-		itimer.it_interval.tv_usec = 0;
+		itimer.it_interval = interval;
 		itimer.it_value.tv_sec = 0;
 		itimer.it_value.tv_usec = 1;
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
 	}
 
-	FD_ZERO(&fdset);
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 10000;
+	fdmasks = howmany(s+1, NFDBITS);
+	if ((fdmaskp = malloc(fdmasks)) == NULL)
+		err(1, "malloc");
+
 	for (;;) {
 		struct msghdr m;
 		struct cmsghdr *cm;
@@ -888,8 +950,11 @@ main(argc, argv)
 
 		if (options & F_FLOOD) {
 			pinger();
-			FD_SET(s, &fdset);
-			if (select(s + 1, &fdset, NULL, NULL, &timeout) < 1)
+			timeout.tv_sec = 0;
+			timeout.tv_usec = 10000;
+			memset(fdmaskp, 0, fdmasks);
+			FD_SET(s, fdmaskp);
+			if (select(s + 1, fdmaskp, NULL, NULL, &timeout) < 1)
 				continue;
 		}
 		fromlen = sizeof(from);
@@ -970,26 +1035,25 @@ pinger()
 	struct icmp6_hdr *icp;
 	struct iovec iov[2];
 	int i, cc;
+	struct icmp6_nodeinfo *nip;
+	int seq;
 
 	icp = (struct icmp6_hdr *)outpack;
+	nip = (struct icmp6_nodeinfo *)outpack;
 	memset(icp, 0, sizeof(*icp));
-	icp->icmp6_code = 0;
 	icp->icmp6_cksum = 0;
-	icp->icmp6_seq = ntransmitted++;		/* htons later */
-	icp->icmp6_id = htons(ident);			/* ID */
-
-	CLR(icp->icmp6_seq % mx_dup_ck);
-	icp->icmp6_seq = htons(icp->icmp6_seq);
+	seq = ntransmitted++;
+	CLR(seq % mx_dup_ck);
 
 	if (options & F_FQDN) {
 		icp->icmp6_type = ICMP6_NI_QUERY;
 		icp->icmp6_code = ICMP6_NI_SUBJ_IPV6;
-		/* XXX: overwrite icmp6_id */
-		((struct icmp6_nodeinfo *)icp)->ni_qtype = htons(NI_QTYPE_FQDN);
-		((struct icmp6_nodeinfo *)icp)->ni_flags = htons(0);
-		if (timing)
-			(void)gettimeofday((struct timeval *)
-					   &outpack[ICMP6ECHOLEN], NULL);
+		nip->ni_qtype = htons(NI_QTYPE_FQDN);
+		nip->ni_flags = htons(0);
+
+		memcpy(nip->icmp6_ni_nonce, nonce, sizeof(nip->icmp6_ni_nonce));
+		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+
 		memcpy(&outpack[ICMP6_NIQLEN], &dst.sin6_addr,
 		    sizeof(dst.sin6_addr));
 		cc = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
@@ -997,33 +1061,43 @@ pinger()
 	} else if (options & F_FQDNOLD) {
 		/* packet format in 03 draft - no Subject data on queries */
 		icp->icmp6_type = ICMP6_NI_QUERY;
-		/* code field is always 0 */
-		/* XXX: overwrite icmp6_id */
-		((struct icmp6_nodeinfo *)icp)->ni_qtype = htons(NI_QTYPE_FQDN);
-		((struct icmp6_nodeinfo *)icp)->ni_flags = htons(0);
-		if (timing)
-			(void)gettimeofday((struct timeval *)
-					   &outpack[ICMP6ECHOLEN], NULL);
+		icp->icmp6_code = 0;	/* code field is always 0 */
+		nip->ni_qtype = htons(NI_QTYPE_FQDN);
+		nip->ni_flags = htons(0);
+
+		memcpy(nip->icmp6_ni_nonce, nonce, sizeof(nip->icmp6_ni_nonce));
+		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+
 		cc = ICMP6_NIQLEN;
 		datalen = 0;
 	} else if (options & F_NODEADDR) {
 		icp->icmp6_type = ICMP6_NI_QUERY;
 		icp->icmp6_code = ICMP6_NI_SUBJ_IPV6;
-		/* XXX: overwrite icmp6_id */
-		((struct icmp6_nodeinfo *)icp)->ni_qtype =
-		    htons(NI_QTYPE_NODEADDR);
-		((struct icmp6_nodeinfo *)icp)->ni_flags = htons(0);
-		if (timing)
-			(void)gettimeofday((struct timeval *)
-					   &outpack[ICMP6ECHOLEN], NULL);
+		nip->ni_qtype = htons(NI_QTYPE_NODEADDR);
+		nip->ni_flags = naflags;
+
+		memcpy(nip->icmp6_ni_nonce, nonce, sizeof(nip->icmp6_ni_nonce));
+		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+
 		memcpy(&outpack[ICMP6_NIQLEN], &dst.sin6_addr,
 		    sizeof(dst.sin6_addr));
 		cc = ICMP6_NIQLEN + sizeof(dst.sin6_addr);
 		datalen = 0;
-		((struct icmp6_nodeinfo *)icp)->ni_flags = naflags;
-	}
-	else {
+	} else if (options & F_SUPTYPES) {
+		icp->icmp6_type = ICMP6_NI_QUERY;
+		icp->icmp6_code = ICMP6_NI_SUBJ_FQDN;	/*empty*/
+		nip->ni_qtype = htons(NI_QTYPE_SUPTYPES);
+		nip->ni_flags = 0;	/* do not support compressed bitmap */
+
+		memcpy(nip->icmp6_ni_nonce, nonce, sizeof(nip->icmp6_ni_nonce));
+		*(u_int16_t *)nip->icmp6_ni_nonce = ntohs(seq);
+		cc = ICMP6_NIQLEN;
+		datalen = 0;
+	} else {
 		icp->icmp6_type = ICMP6_ECHO_REQUEST;
+		icp->icmp6_code = 0;
+		icp->icmp6_id = htons(ident);
+		icp->icmp6_seq = ntohs(seq);
 		if (timing)
 			(void)gettimeofday((struct timeval *)
 					   &outpack[ICMP6ECHOLEN], NULL);
@@ -1050,6 +1124,98 @@ pinger()
 		(void)write(STDOUT_FILENO, &DOT, 1);
 }
 
+int
+myechoreply(icp)
+	const struct icmp6_hdr *icp;
+{
+	if (ntohs(icp->icmp6_id) == ident)
+		return 1;
+	else
+		return 0;
+}
+
+int
+mynireply(nip)
+	const struct icmp6_nodeinfo *nip;
+{
+	if (memcmp(nip->icmp6_ni_nonce + sizeof(u_int16_t),
+	    nonce + sizeof(u_int16_t),
+	    sizeof(nonce) - sizeof(u_int16_t)) == 0)
+		return 1;
+	else
+		return 0;
+}
+
+char *
+dnsdecode(sp, ep, base, buf, bufsiz)
+	const u_char **sp;
+	const u_char *ep;
+	const u_char *base;	/*base for compressed name*/
+	u_char *buf;
+	size_t bufsiz;
+{
+	int i, l;
+	const u_char *cp;
+	char *q;
+	const char *eq;
+	char cresult[MAXDNAME + 1];
+	const u_char *comp;
+
+	cp = *sp;
+	q = buf;
+	eq = buf + bufsiz;
+
+	if (cp >= ep)
+		return NULL;
+	while (cp < ep) {
+		i = *cp;
+		if (i == 0 || cp != *sp) {
+			if (q >= eq - 1)
+				return NULL;	/*result overrun*/
+			*q++ = '.';
+		}
+		if (i == 0)
+			break;
+		cp++;
+
+		if ((i & 0xc0) == 0xc0 && cp - base > (i & 0x3f)) {
+			/* DNS compression */
+			if (!base)
+				return NULL;
+
+			comp = base + (i & 0x3f);
+			if (dnsdecode(&comp, cp, base, cresult,
+			    sizeof(cresult)) == NULL)
+				return NULL;
+			if (eq - q < strlen(cresult) + 1)
+				return NULL;	/*result overrun*/
+			strcpy(q, cresult);	/*XXX should be strlcpy*/
+			q += strlen(q);
+			break;
+		} else if ((i & 0x3f) == i) {
+			if (i > ep - cp)
+				return NULL;	/*source overrun*/
+			while (i-- > 0 && cp < ep) {
+				if (eq - q < (isprint(*cp) ? 2 : 5))
+					return NULL;	/*result overrun*/
+				l = snprintf(q, eq - q,
+				    isprint(*cp) ? "%c" : "\\%03o", *cp & 0xff);
+				cp++;
+				q += l;
+			}
+		} else
+			return NULL;	/*invalid label*/
+	}
+	if (q >= eq)
+		return NULL;	/*result overrun*/
+	if (i != 0)
+		return NULL;	/*not terminated*/
+	cp++;
+	*q = '\0';
+	*sp = cp;
+	return buf;
+}
+
 /*
  * pr_pack --
  *	Print out the packet, if it came from us.  This logic is necessary
@@ -1065,6 +1231,7 @@ pr_pack(buf, cc, mhdr)
 {
 #define safeputc(c)	printf((isprint((c)) ? "%c" : "\\%03o"), c)
 	struct icmp6_hdr *icp;
+	struct icmp6_nodeinfo *ni;
 	int i;
 	int hoplim;
 	struct sockaddr_in6 *from = (struct sockaddr_in6 *)mhdr->msg_name;
@@ -1075,6 +1242,8 @@ pr_pack(buf, cc, mhdr)
 	int dupflag;
 	size_t off;
 	int oldfqdn;
+	u_int16_t seq;
+	char dnsname[MAXDNAME + 1];
 
 	(void)gettimeofday(&tv, NULL);
 
@@ -1085,6 +1254,7 @@ pr_pack(buf, cc, mhdr)
 		return;
 	}
 	icp = (struct icmp6_hdr *)buf;
+	ni = (struct icmp6_nodeinfo *)buf;
 	off = 0;
 
 	if ((hoplim = get_hoplim(mhdr)) == -1) {
@@ -1096,11 +1266,8 @@ pr_pack(buf, cc, mhdr)
 		return;
 	}
 
-	if (icp->icmp6_type == ICMP6_ECHO_REPLY) {
-		/* XXX the following line overwrites the original packet */
-		icp->icmp6_seq = ntohs(icp->icmp6_seq);
-		if (ntohs(icp->icmp6_id) != ident)
-			return;			/* It was not our ECHO */
+	if (icp->icmp6_type == ICMP6_ECHO_REPLY && myechoreply(icp)) {
+		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
 			tp = (struct timeval *)(icp + 1);
@@ -1108,18 +1275,21 @@ pr_pack(buf, cc, mhdr)
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
 			tsum += triptime;
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+			tsumsq += triptime * triptime;
+#endif
 			if (triptime < tmin)
 				tmin = triptime;
 			if (triptime > tmax)
 				tmax = triptime;
 		}
 
-		if (TST(icp->icmp6_seq % mx_dup_ck)) {
+		if (TST(seq % mx_dup_ck)) {
 			++nrepeats;
 			--nreceived;
 			dupflag = 1;
 		} else {
-			SET(icp->icmp6_seq % mx_dup_ck);
+			SET(seq % mx_dup_ck);
 			dupflag = 0;
 		}
 
@@ -1130,8 +1300,7 @@ pr_pack(buf, cc, mhdr)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
 			(void)printf("%d bytes from %s, icmp_seq=%u", cc,
-				     pr_addr(from),
-				     icp->icmp6_seq);
+			    pr_addr(from), seq);
 			(void)printf(" hlim=%d", hoplim);
 			if ((options & F_VERBOSE) != 0) {
 				struct sockaddr_in6 dstsa;
@@ -1157,24 +1326,70 @@ pr_pack(buf, cc, mhdr)
 				}
 			}
 		}
-	} else if (icp->icmp6_type == ICMP6_NI_REPLY) { /* ICMP6_NI_REPLY */
-		struct icmp6_nodeinfo *ni = (struct icmp6_nodeinfo *)(buf + off);
+	} else if (icp->icmp6_type == ICMP6_NI_REPLY && mynireply(ni)) {
+		seq = ntohs(*(u_int16_t *)ni->icmp6_ni_nonce);
+		++nreceived;
+		if (TST(seq % mx_dup_ck)) {
+			++nrepeats;
+			--nreceived;
+			dupflag = 1;
+		} else {
+			SET(seq % mx_dup_ck);
+			dupflag = 0;
+		}
 
-		(void)printf("%d bytes from %s: ", cc,
-			     pr_addr(from));
+		if (options & F_QUIET)
+			return;
 
-		switch(ntohs(ni->ni_qtype)) {
-		 case NI_QTYPE_NOOP:
-			 printf("NodeInfo NOOP");
-			 break;
-		 case NI_QTYPE_SUPTYPES:
-			 printf("NodeInfo Supported Qtypes");
-			 break;
-		 case NI_QTYPE_NODEADDR:
-			 pr_nodeaddr(ni, end - (u_char *)ni);
-			 break;
-		 case NI_QTYPE_FQDN:
-		 default:	/* XXX: for backward compatibility */
+		(void)printf("%d bytes from %s: ", cc, pr_addr(from));
+
+		switch (ntohs(ni->ni_code)) {
+		case ICMP6_NI_SUCCESS:
+			break;
+		case ICMP6_NI_REFUSED:
+			printf("refused, type 0x%x", ntohs(ni->ni_type));
+			goto fqdnend;
+		case ICMP6_NI_UNKNOWN:
+			printf("unknown, type 0x%x", ntohs(ni->ni_type));
+			goto fqdnend;
+		default:
+			printf("unknown code 0x%x, type 0x%x",
+			    ntohs(ni->ni_code), ntohs(ni->ni_type));
+			goto fqdnend;
+		}
+
+		switch (ntohs(ni->ni_qtype)) {
+		case NI_QTYPE_NOOP:
+			printf("NodeInfo NOOP");
+			break;
+		case NI_QTYPE_SUPTYPES:
+			printf("NodeInfo Supported Qtypes");
+			if ((ni->ni_flags & NI_SUPTYPE_FLAG_COMPRESS) != 0) {
+				printf(", compressed bitmap");
+				break;
+			} else {
+				size_t clen;
+				u_int32_t v;
+				cp = (u_char *)(ni + 1);
+				clen = (size_t)(end - cp);
+				if (clen == 0 || clen > 8192 || clen % 4) {
+					printf(", invalid length(%lu)",
+					    (u_long)clen);
+					break;
+				}
+				printf(", bitmap = 0x");
+				for (dp = end - 4; dp >= cp; dp -= 4) {
+					memcpy(&v, dp, sizeof(v));
+					v = (u_int32_t)ntohl(v);
+					printf("%08x", v);
+				}
+			}
+			break;
+		case NI_QTYPE_NODEADDR:
+			pr_nodeaddr(ni, end - (u_char *)ni);
+			break;
+		case NI_QTYPE_FQDN:
+		default:	/* XXX: for backward compatibility */
 			cp = (u_char *)ni + ICMP6_NIRLEN;
 			if (buf[off + ICMP6_NIRLEN] ==
 			    cc - off - ICMP6_NIRLEN - 1)
@@ -1182,38 +1397,31 @@ pr_pack(buf, cc, mhdr)
 			else
 				oldfqdn = 0;
 			if (oldfqdn) {
-				cp++;
+				cp++;	/* skip length */
 				while (cp < end) {
 					safeputc(*cp & 0xff);
 					cp++;
 				}
 			} else {
+				i = 0;
 				while (cp < end) {
-					i = *cp++;
-					if (i) {
-						if (i > end - cp) {
-							printf("???");
-							break;
-						}
-						while (i-- && cp < end) {
-							safeputc(*cp & 0xff);
-							cp++;
-						}
-						if (cp + 1 < end && *cp)
-							printf(".");
-					} else {
-						if (cp == end) {
-							/* FQDN */
-							printf(".");
-						} else if (cp + 1 == end &&
-							   *cp == '\0') {
-							/* truncated */
-						} else {
-							/* invalid */
-							printf("???");
-						}
+					if (dnsdecode((const u_char **)&cp, end,
+					    (const u_char *)(ni + 1), dnsname,
+					    sizeof(dnsname)) == NULL) {
+						printf("???");
 						break;
 					}
+					/*
+					 * name-lookup special handling for
+					 * truncated name
+					 */
+					if (cp + 1 <= end && !*cp &&
+					    strlen(dnsname) > 0) {
+						dnsname[strlen(dnsname) - 1] = '\0';
+						cp++;
+					}
+					printf("%s%s", i > 0 ? "," : "",
+					    dnsname);
 				}
 			}
 			if (options & F_VERBOSE) {
@@ -1222,7 +1430,7 @@ pr_pack(buf, cc, mhdr)
 
 				(void)printf(" (");	/*)*/
 
-				switch(ni->ni_code) {
+				switch (ni->ni_code) {
 				case ICMP6_NI_REFUSED:
 					(void)printf("refused");
 					comma++;
@@ -1234,19 +1442,21 @@ pr_pack(buf, cc, mhdr)
 				}
 
 				if ((end - (u_char *)ni) < ICMP6_NIRLEN) {
-					/* case of refusion, unkown */
+					/* case of refusion, unknown */
+					/*(*/
+					putchar(')');
 					goto fqdnend;
 				}
 				ttl = (int32_t)ntohl(*(u_long *)&buf[off+ICMP6ECHOLEN+8]);
 				if (comma)
 					printf(",");
-				if (!(ni->ni_flags & NI_FQDN_FLAG_VALIDTTL))
+				if (!(ni->ni_flags & NI_FQDN_FLAG_VALIDTTL)) {
 					(void)printf("TTL=%d:meaningless",
-						     (int)ttl);
-				else {
+					    (int)ttl);
+				} else {
 					if (ttl < 0) {
 						(void)printf("TTL=%d:invalid",
-						    ttl);
+						   ttl);
 					} else
 						(void)printf("TTL=%d", ttl);
 				}
@@ -1272,22 +1482,21 @@ pr_pack(buf, cc, mhdr)
 					if (comma)
 						printf(",");
 					(void)printf("invalid namelen:%d/%lu",
-						     buf[off + ICMP6_NIRLEN],
-						     (u_long)cc - off - ICMP6_NIRLEN - 1);
+					    buf[off + ICMP6_NIRLEN],
+					    (u_long)cc - off - ICMP6_NIRLEN - 1);
 					comma++;
 				}
 				/*(*/
 				putchar(')');
 			}
-		 fqdnend:
+		fqdnend:
 			;
 		}
 	} else {
 		/* We've got something other than an ECHOREPLY */
 		if (!(options & F_VERBOSE))
 			return;
-		(void)printf("%d bytes from %s: ", cc,
-			     pr_addr(from));
+		(void)printf("%d bytes from %s: ", cc, pr_addr(from));
 		pr_icmph(icp, end);
 	}
 
@@ -1311,7 +1520,7 @@ pr_exthdrs(mhdr)
 		if (cm->cmsg_level != IPPROTO_IPV6)
 			continue;
 
-		switch(cm->cmsg_type) {
+		switch (cm->cmsg_type) {
 		case IPV6_HOPOPTS:
 			printf("  HbH Options: ");
 			pr_ip6opt(CMSG_DATA(cm));
@@ -1413,10 +1622,11 @@ pr_rthdr(void *extbuf)
 		in6 = inet6_rth_getaddr(extbuf, i);
 		if (in6 == NULL)
 			printf("   [%d]<NULL>\n", i);
-		else
-			printf("   [%d]%s\n", i,
-			       inet_ntop(AF_INET6, in6,
-					 ntopbuf, sizeof(ntopbuf)));
+		else {
+			if (!inet_ntop(AF_INET6, in6, ntopbuf, sizeof(ntopbuf)))
+				strncpy(ntopbuf, "?", sizeof(ntopbuf));
+			printf("   [%d]%s\n", i, ntopbuf);
+		}
 	}
 
 	return;
@@ -1444,15 +1654,15 @@ pr_nodeaddr(ni, nilen)
 	nilen -= sizeof(struct icmp6_nodeinfo);
 
 	if (options & F_VERBOSE) {
-		switch(ni->ni_code) {
-		 case ICMP6_NI_REFUSED:
-			 (void)printf("refused");
-			 break;
-		 case ICMP6_NI_UNKNOWN:
-			 (void)printf("unknown qtype");
-			 break;
+		switch (ni->ni_code) {
+		case ICMP6_NI_REFUSED:
+			(void)printf("refused");
+			break;
+		case ICMP6_NI_UNKNOWN:
+			(void)printf("unknown qtype");
+			break;
 		}
-		if (ni->ni_flags & NI_NODEADDR_FLAG_ALL)
+		if (ni->ni_flags & NI_NODEADDR_FLAG_TRUNCATE)
 			(void)printf(" truncated");
 	}
 	putchar('\n');
@@ -1551,7 +1761,6 @@ onint(notused)
 void
 summary()
 {
-	register int i;
 
 	(void)printf("\n--- %s ping6 statistics ---\n", hostname);
 	(void)printf("%ld packets transmitted, ", ntransmitted);
@@ -1569,28 +1778,34 @@ summary()
 	(void)putchar('\n');
 	if (nreceived && timing) {
 		/* Only display average to microseconds */
-		i = 1000.0 * tsum / (nreceived + nrepeats);
-		(void)printf("round-trip min/avg/max = %g/%g/%g ms\n",
-		    tmin, ((double)i) / 1000.0, tmax);
+		double num = nreceived + nrepeats;
+		double avg = tsum / num;
+#if defined(__OpenBSD__) || defined(__NetBSD__)
+		double dev = sqrt(tsumsq / num - avg * avg);
+		(void)printf(
+		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax, dev);
+#else
+		(void)printf(
+		    "round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
+		    tmin, avg, tmax);
+#endif
 		(void)fflush(stdout);
 	}
 }
 
-#ifdef notdef
-static char *ttab[] = {
-	"Echo Reply",		/* ip + seq + udata */
-	"Dest Unreachable",	/* net, host, proto, port, frag, sr + IP */
-	"Source Quench",	/* IP */
-	"Redirect",		/* redirect type, gateway, + IP  */
-	"Echo",
-	"Time Exceeded",	/* transit, frag reassem + IP */
-	"Parameter Problem",	/* pointer + IP */
-	"Timestamp",		/* id + seq + three timestamps */
-	"Timestamp Reply",	/* " */
-	"Info Request",		/* id + sq */
-	"Info Reply"		/* " */
+/*subject type*/
+static char *niqcode[] = {
+	"IPv6 address",
+	"DNS label",	/*or empty*/
+	"IPv4 address",
 };
-#endif
+
+/*result code*/
+static char *nircode[] = {
+	"Success", "Refused", "Unknown",
+};
+
 
 /*
  * pr_icmph --
@@ -1602,10 +1817,15 @@ pr_icmph(icp, end)
 	u_char *end;
 {
 	char ntop_buf[INET6_ADDRSTRLEN];
+	struct nd_redirect *red;
+	struct icmp6_nodeinfo *ni;
+	char dnsname[MAXDNAME + 1];
+	const u_char *cp;
+	size_t l;
 
-	switch(icp->icmp6_type) {
+	switch (icp->icmp6_type) {
 	case ICMP6_DST_UNREACH:
-		switch(icp->icmp6_code) {
+		switch (icp->icmp6_code) {
 		case ICMP6_DST_UNREACH_NOROUTE:
 			(void)printf("No Route to Destination\n");
 			break;
@@ -1636,7 +1856,7 @@ pr_icmph(icp, end)
 		pr_retip((struct ip6_hdr *)(icp + 1), end);
 		break;
 	case ICMP6_TIME_EXCEEDED:
-		switch(icp->icmp6_code) {
+		switch (icp->icmp6_code) {
 		case ICMP6_TIME_EXCEED_TRANSIT:
 			(void)printf("Time to live exceeded\n");
 			break;
@@ -1652,19 +1872,19 @@ pr_icmph(icp, end)
 		break;
 	case ICMP6_PARAM_PROB:
 		(void)printf("Parameter problem: ");
-		switch(icp->icmp6_code) {
-		 case ICMP6_PARAMPROB_HEADER:
-			 (void)printf("Erroneous Header ");
-			 break;
-		 case ICMP6_PARAMPROB_NEXTHEADER:
-			 (void)printf("Unknown Nextheader ");
-			 break;
-		 case ICMP6_PARAMPROB_OPTION:
-			 (void)printf("Unrecognized Option ");
-			 break;
-		 default:
-			 (void)printf("Bad code(%d) ", icp->icmp6_code);
-			 break;
+		switch (icp->icmp6_code) {
+		case ICMP6_PARAMPROB_HEADER:
+			(void)printf("Erroneous Header ");
+			break;
+		case ICMP6_PARAMPROB_NEXTHEADER:
+			(void)printf("Unknown Nextheader ");
+			break;
+		case ICMP6_PARAMPROB_OPTION:
+			(void)printf("Unrecognized Option ");
+			break;
+		default:
+			(void)printf("Bad code(%d) ", icp->icmp6_code);
+			break;
 		}
 		(void)printf("pointer = 0x%02x\n",
 			     (int)ntohl(icp->icmp6_pptr));
@@ -1700,25 +1920,116 @@ pr_icmph(icp, end)
 		(void)printf("Neighbor Advertisement");
 		break;
 	case ND_REDIRECT:
-	{
-		struct nd_redirect *red = (struct nd_redirect *)icp;
-
+		red = (struct nd_redirect *)icp;
 		(void)printf("Redirect\n");
-		(void)printf("Destination: %s",
-			     inet_ntop(AF_INET6, &red->nd_rd_dst,
-				       ntop_buf, sizeof(ntop_buf)));
-		(void)printf("New Target: %s",
-			     inet_ntop(AF_INET6, &red->nd_rd_target,
-				       ntop_buf, sizeof(ntop_buf)));
+		if (!inet_ntop(AF_INET6, &red->nd_rd_dst, ntop_buf,
+		    sizeof(ntop_buf)))
+			strncpy(ntop_buf, "?", sizeof(ntop_buf));
+		(void)printf("Destination: %s", ntop_buf);
+		if (!inet_ntop(AF_INET6, &red->nd_rd_target, ntop_buf,
+		    sizeof(ntop_buf)))
+			strncpy(ntop_buf, "?", sizeof(ntop_buf));
+		(void)printf("New Target: %s", ntop_buf);
 		break;
-	}
 	case ICMP6_NI_QUERY:
 		(void)printf("Node Information Query");
 		/* XXX ID + Seq + Data */
+		ni = (struct icmp6_nodeinfo *)icp;
+		l = end - (u_char *)(ni + 1);
+		printf(", ");
+		switch (ntohs(ni->ni_qtype)) {
+		case NI_QTYPE_NOOP:
+			(void)printf("NOOP");
+			break;
+		case NI_QTYPE_SUPTYPES:
+			(void)printf("Supported qtypes");
+			break;
+		case NI_QTYPE_FQDN:
+			(void)printf("DNS name");
+			break;
+		case NI_QTYPE_NODEADDR:
+			(void)printf("nodeaddr");
+			break;
+		case NI_QTYPE_IPV4ADDR:
+			(void)printf("IPv4 nodeaddr");
+			break;
+		default:
+			(void)printf("unknown qtype");
+			break;
+		}
+		if (options & F_VERBOSE) {
+			switch (ni->ni_code) {
+			case ICMP6_NI_SUBJ_IPV6:
+				if (l == sizeof(struct in6_addr) &&
+				    inet_ntop(AF_INET6, ni + 1, ntop_buf, sizeof(ntop_buf)) != NULL) {
+					(void)printf(", subject=%s(%s)",
+					    niqcode[ni->ni_code], ntop_buf);
+				} else {
+#if 1
+					/* backward compat to -W */
+					(void)printf(", oldfqdn");
+#else
+					(void)printf(", invalid");
+#endif
+				}
+				break;
+			case ICMP6_NI_SUBJ_FQDN:
+				if (end == (u_char *)(ni + 1)) {
+					(void)printf(", no subject");
+					break;
+				}
+				printf(", subject=%s", niqcode[ni->ni_code]);
+				cp = (const u_char *)(ni + 1);
+				if (dnsdecode(&cp, end, NULL, dnsname, sizeof(dnsname)) != NULL)
+					printf("(%s)", dnsname);
+				else
+					printf("(invalid)");
+				break;
+			case ICMP6_NI_SUBJ_IPV4:
+				if (l == sizeof(struct in_addr) &&
+				    inet_ntop(AF_INET, ni + 1, ntop_buf, sizeof(ntop_buf)) != NULL) {
+					(void)printf(", subject=%s(%s)",
+					    niqcode[ni->ni_code], ntop_buf);
+				} else
+					(void)printf(", invalid");
+				break;
+			default:
+				(void)printf(", invalid");
+				break;
+			}
+		}
 		break;
 	case ICMP6_NI_REPLY:
 		(void)printf("Node Information Reply");
 		/* XXX ID + Seq + Data */
+		ni = (struct icmp6_nodeinfo *)icp;
+		printf(", ");
+		switch (ntohs(ni->ni_qtype)) {
+		case NI_QTYPE_NOOP:
+			(void)printf("NOOP");
+			break;
+		case NI_QTYPE_SUPTYPES:
+			(void)printf("Supported qtypes");
+			break;
+		case NI_QTYPE_FQDN:
+			(void)printf("DNS name");
+			break;
+		case NI_QTYPE_NODEADDR:
+			(void)printf("nodeaddr");
+			break;
+		case NI_QTYPE_IPV4ADDR:
+			(void)printf("IPv4 nodeaddr");
+			break;
+		default:
+			(void)printf("unknown qtype");
+			break;
+		}
+		if (options & F_VERBOSE) {
+			if (ni->ni_code > sizeof(nircode) / sizeof(nircode[0]))
+				printf(", invalid");
+			else
+				printf(", %s", nircode[ni->ni_code]);
+		}
 		break;
 	default:
 		(void)printf("Bad ICMP type: %d", icp->icmp6_type);
@@ -1746,10 +2057,12 @@ pr_iph(ip6)
 	       (ip6->ip6_vfc & IPV6_VERSION_MASK) >> 4, tc, (int)ntohl(flow),
 	       ntohs(ip6->ip6_plen),
 	       ip6->ip6_nxt, ip6->ip6_hlim);
-	printf("%s->", inet_ntop(AF_INET6, &ip6->ip6_src,
-				  ntop_buf, sizeof(ntop_buf)));
-	printf("%s\n", inet_ntop(AF_INET6, &ip6->ip6_dst,
-				 ntop_buf, sizeof(ntop_buf)));
+	if (!inet_ntop(AF_INET6, &ip6->ip6_src, ntop_buf, sizeof(ntop_buf)))
+		strncpy(ntop_buf, "?", sizeof(ntop_buf));
+	printf("%s->", ntop_buf);
+	if (!inet_ntop(AF_INET6, &ip6->ip6_dst, ntop_buf, sizeof(ntop_buf)))
+		strncpy(ntop_buf, "?", sizeof(ntop_buf));
+	printf("%s\n", ntop_buf);
 }
 
 /*
@@ -1766,14 +2079,15 @@ pr_addr(addr)
 
 	if ((options & F_HOSTNAME) == 0)
 		flag |= NI_NUMERICHOST;
-#ifdef KAME_SCOPEID
+#ifdef NI_WITHSCOPEID
 	flag |= NI_WITHSCOPEID;
 #endif
 
-	getnameinfo((struct sockaddr *)addr, addr->sin6_len, buf, sizeof(buf),
-		NULL, 0, flag);
-
-	return (buf);
+	if (getnameinfo((struct sockaddr *)addr, addr->sin6_len,
+	    buf, sizeof(buf), NULL, 0, flag) == 0)
+		return (buf);
+	else
+		return "?";
 }
 
 /*
@@ -1799,53 +2113,52 @@ pr_retip(ip6, end)
 	cp += hlen;
 	while (end - cp >= 8) {
 		switch (nh) {
-		 case IPPROTO_HOPOPTS:
-			 printf("HBH ");
-			 hlen = (((struct ip6_hbh *)cp)->ip6h_len+1) << 3;
-			 nh = ((struct ip6_hbh *)cp)->ip6h_nxt;
-			 break;
-		 case IPPROTO_DSTOPTS:
-			 printf("DSTOPT ");
-			 hlen = (((struct ip6_dest *)cp)->ip6d_len+1) << 3;
-			 nh = ((struct ip6_dest *)cp)->ip6d_nxt;
-			 break;
-		 case IPPROTO_FRAGMENT:
-			 printf("FRAG ");
-			 hlen = sizeof(struct ip6_frag);
-			 nh = ((struct ip6_frag *)cp)->ip6f_nxt;
-			 break;
-		 case IPPROTO_ROUTING:
-			 printf("RTHDR ");
-			 hlen = (((struct ip6_rthdr *)cp)->ip6r_len+1) << 3;
-			 nh = ((struct ip6_rthdr *)cp)->ip6r_nxt;
-			 break;
+		case IPPROTO_HOPOPTS:
+			printf("HBH ");
+			hlen = (((struct ip6_hbh *)cp)->ip6h_len+1) << 3;
+			nh = ((struct ip6_hbh *)cp)->ip6h_nxt;
+			break;
+		case IPPROTO_DSTOPTS:
+			printf("DSTOPT ");
+			hlen = (((struct ip6_dest *)cp)->ip6d_len+1) << 3;
+			nh = ((struct ip6_dest *)cp)->ip6d_nxt;
+			break;
+		case IPPROTO_FRAGMENT:
+			printf("FRAG ");
+			hlen = sizeof(struct ip6_frag);
+			nh = ((struct ip6_frag *)cp)->ip6f_nxt;
+			break;
+		case IPPROTO_ROUTING:
+			printf("RTHDR ");
+			hlen = (((struct ip6_rthdr *)cp)->ip6r_len+1) << 3;
+			nh = ((struct ip6_rthdr *)cp)->ip6r_nxt;
+			break;
 #ifdef IPSEC
-		 case IPPROTO_AH:
-			 printf("AH ");
-			 hlen = (((struct ah *)cp)->ah_len+2) << 2;
-			 nh = ((struct ah *)cp)->ah_nxt;
-			 break;
+		case IPPROTO_AH:
+			printf("AH ");
+			hlen = (((struct ah *)cp)->ah_len+2) << 2;
+			nh = ((struct ah *)cp)->ah_nxt;
+			break;
 #endif
-		 case IPPROTO_ICMPV6:
-			 printf("ICMP6: type = %d, code = %d\n",
-				*cp, *(cp + 1));
-			 return;
-		 case IPPROTO_ESP:
-			 printf("ESP\n");
-			 return;
-		 case IPPROTO_TCP:
-			 printf("TCP: from port %u, to port %u (decimal)\n",
-				(*cp * 256 + *(cp + 1)),
-				(*(cp + 2) * 256 + *(cp + 3)));
-			 return;
-		 case IPPROTO_UDP:
-			 printf("UDP: from port %u, to port %u (decimal)\n",
-				(*cp * 256 + *(cp + 1)),
-				(*(cp + 2) * 256 + *(cp + 3)));
-			 return;
-		 default:
-			 printf("Unknown Header(%d)\n", nh);
-			 return;
+		case IPPROTO_ICMPV6:
+			printf("ICMP6: type = %d, code = %d\n", *cp, *(cp + 1));
+			return;
+		case IPPROTO_ESP:
+			printf("ESP\n");
+			return;
+		case IPPROTO_TCP:
+			printf("TCP: from port %u, to port %u (decimal)\n",
+			    (*cp * 256 + *(cp + 1)),
+			    (*(cp + 2) * 256 + *(cp + 3)));
+			return;
+		case IPPROTO_UDP:
+			printf("UDP: from port %u, to port %u (decimal)\n",
+			    (*cp * 256 + *(cp + 1)),
+			    (*(cp + 2) * 256 + *(cp + 3)));
+			return;
+		default:
+			printf("Unknown Header(%d)\n", nh);
+			return;
 		}
 
 		if ((cp += hlen) >= end)
@@ -1924,30 +2237,40 @@ nigroup(name)
 	char *name;
 {
 	char *p;
+	unsigned char *q;
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
 	char l;
 	char hbuf[NI_MAXHOST];
 	struct in6_addr in6;
 
-	p = name;
-	while (p && *p && *p != '.')
-		p++;
-	if (p - name > 63)
-		return NULL;	/*label too long*/
+	p = strchr(name, '.');
+	if (!p)
+		p = name + strlen(name);
 	l = p - name;
+	if (l > 63)
+		return NULL;	/*label too long*/
+#ifdef DIAGNOSTIC
+	if (sizeof(hbuf) - 1 > l)
+		return NULL;	/*label too long*/
+#endif
+	strncpy(hbuf, name, l);
+	hbuf[(int)l] = '\0';
+
+	for (q = name; *q; q++) {
+		if (isupper(*q))
+			*q = tolower(*q);
+	}
 
 	/* generate 8 bytes of pseudo-random value. */
 	bzero(&ctxt, sizeof(ctxt));
 	MD5Init(&ctxt);
 	MD5Update(&ctxt, &l, sizeof(l));
-	MD5Update(&ctxt, name, p - name);
+	MD5Update(&ctxt, name, l);
 	MD5Final(digest, &ctxt);
 
-	bzero(&in6, sizeof(in6));
-	in6.s6_addr[0] = 0xff;
-	in6.s6_addr[1] = 0x02;
-	in6.s6_addr[11] = 0x02;
+	if (inet_pton(AF_INET6, "ff02::2:0000:0000", &in6) != 1)
+		return NULL;	/*XXX*/
 	bcopy(digest, &in6.s6_addr[12], 4);
 
 	if (inet_ntop(AF_INET6, &in6, hbuf, sizeof(hbuf)) == NULL)
