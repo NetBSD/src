@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.3 1997/03/22 01:48:37 thorpej Exp $	 */
+/*	$NetBSD: pcio.c,v 1.4 1997/06/13 13:41:20 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -33,7 +33,8 @@
  */
 
 /*
- * console I/O needs lowlevel routines from conio.S and comio.S
+ * console I/O
+ * needs lowlevel routines from conio.S and comio.S
  */
 
 #include <lib/libsa/stand.h>
@@ -45,6 +46,7 @@ extern int congetc __P((void));
 extern int coniskey __P((void));
 
 #ifdef SUPPORT_SERIAL
+extern void cominit __P((int));
 extern int computc __P((int, int));
 extern int comgetc __P((int));
 extern int comstatus __P((int));
@@ -135,6 +137,7 @@ getchar()
 {
 #ifdef SUPPORT_SERIAL
 	switch (iodev) {
+		default: /* to make gcc -Wall happy... */
 		case CONSDEV_PC:
 #endif
 		return (congetc());
@@ -152,6 +155,7 @@ iskey()
 {
 #ifdef SUPPORT_SERIAL
 	switch (iodev) {
+		default: /* to make gcc -Wall happy... */
 		case CONSDEV_PC:
 #endif
 		return (coniskey());
