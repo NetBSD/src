@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 1996/05/10 21:54:24 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1996/08/10 22:31:19 explorer Exp $
 
 LIB=	pcap
 MAN=	pcap.3
 
-CFLAGS+=-I. -I${.CURDIR}
+CFLAGS+=-I. -I${.CURDIR} -DFDDI
 
 HDRS=	pcap.h pcap-namedb.h
 SRCS=	pcap.c inet.c gencode.c optimize.c nametoaddr.c etherent.c \
