@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.65 2004/01/09 19:12:31 dbj Exp $	*/
+/*	$NetBSD: setup.c,v 1.66 2004/01/09 22:23:18 dbj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.65 2004/01/09 19:12:31 dbj Exp $");
+__RCSID("$NetBSD: setup.c,v 1.66 2004/01/09 22:23:18 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,7 +292,7 @@ setup(dev)
 			}
 		}
 		if (sblock->fs_qbmask != ~sblock->fs_bmask) {
-			pwarn("INCORRECT QBMASK=%llx IN SUPERBLOCK",
+			pwarn("INCORRECT QBMASK=%#llx IN SUPERBLOCK",
 			    (unsigned long long)sblock->fs_qbmask);
 			sblock->fs_qbmask = ~sblock->fs_bmask;
 			if (preen)
@@ -303,7 +303,7 @@ setup(dev)
 			}
 		}
 		if (sblock->fs_qfmask != ~sblock->fs_fmask) {
-			pwarn("INCORRECT QFMASK=%llx IN SUPERBLOCK",
+			pwarn("INCORRECT QFMASK=%#llx IN SUPERBLOCK",
 			    (unsigned long long)sblock->fs_qfmask);
 			sblock->fs_qfmask = ~sblock->fs_fmask;
 			if (preen)
