@@ -1,4 +1,4 @@
-.\"	$NetBSD: aha.4,v 1.7 1999/12/17 16:23:20 abs Exp $
+.\"	$NetBSD: aha.4,v 1.8 2000/05/26 20:56:37 jdolecek Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -31,6 +31,7 @@
 .Sh SYNOPSIS
 .Cd "aha0 at isa? port 0x330 irq ? drq ?"
 .Cd "aha* at isapnp?"
+.Cd "aha* at mca? slot ?"
 .Cd "scsibus* at aha?"
 .Sh HARDWARE
 The
@@ -45,6 +46,7 @@ adapters:
 .It Tn Adaptec AHA-154xC
 .It Tn Adaptec AHA-154xCF
 .It Tn Buslogic BT-54x
+.It Tn Adaptec AHA-1640 (MCA)
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
