@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.3 1997/10/06 00:07:10 mark Exp $	*/
+/*	$NetBSD: brk.S,v 1.4 1998/12/04 09:52:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,24 +38,22 @@
 #include "SYS.h"
 
 	.globl	_end
-	.globl	minbrk
 	.globl	curbrk
 
-	/* The minimum allowable brk address */
 	.data
-minbrk:	.long	_end
-
-	.text
 	.align	0
+	.globl	minbrk
+	.type	minbrk,#object
+minbrk:
+	.word	_end
 
 /*
  * Change the data segment size
  */
-
 ENTRY(brk)
 #ifdef PIC
 	/* Setup the GOT */
-	ldr	r3, got
+	ldr	r3, Lgot
 	add	r3, pc, r3
 L1:
 	ldr	r1, Lminbrk
@@ -85,18 +83,16 @@ L1:
 	/* Store the new address in curbrk */
 	str	r2, [r1]
 
-	/* return 0 for sucess */
+	/* Return 0 for sucess */
 	mov	r0, #0x00000000
 	mov	r15, r14
 
-#ifdef PIC
 	.align	0
-got:
-	.word	__GLOBAL_OFFSET_TABLE_ + (. - (L1+4))
+#ifdef PIC
+Lgot:
+	.word	__GLOBAL_OFFSET_TABLE_+. - (L1+4)
 #endif
-
 Lminbrk:
 	.word	minbrk
-
 Lcurbrk:
 	.word	curbrk
