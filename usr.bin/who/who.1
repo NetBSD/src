@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)who.1	6.5 (Berkeley) 4/23/91
-.\"	$Id: who.1,v 1.2 1993/08/01 07:26:10 mycroft Exp $
+.\"	$Id: who.1,v 1.3 1994/04/08 08:10:33 deraadt Exp $
 .\"
 .Dd April 23, 1991
 .Dt WHO 1
@@ -63,9 +63,9 @@ gathers information from the file
 An alternate
 .Ar file
 may be specified which is usually
-.Pa /var/run/wtmp
+.Pa /var/log/wtmp
 (or
-.Pa /var/run/wtmp.[0-6]
+.Pa /var/log/wtmp.[0-6]
 depending on site policy as
 .Pa wtmp
 can grow quite large and daily versions may or may not

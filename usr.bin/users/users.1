@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)users.1	6.6 (Berkeley) 4/23/91
-.\"	$Id: users.1,v 1.2 1993/08/01 07:26:52 mycroft Exp $
+.\"	$Id: users.1,v 1.3 1994/04/08 08:09:14 deraadt Exp $
 .\"
 .Dd April 23, 1991
 .Dt USERS 1
@@ -45,8 +45,8 @@
 lists the login names of the users currently on the system,
 in sorted order, space separated, on a single line.
 .Sh FILES
-.Bl -tag -width /etc/utmp
-.It Pa /etc/utmp
+.Bl -tag -width /var/run/utmp
+.It Pa /var/run/utmp
 .El
 .Sh SEE ALSO
 .Xr finger 1 ,
