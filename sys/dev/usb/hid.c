@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.5 1998/12/26 12:53:00 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.6 1999/01/07 02:22:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ hid_start_parse(d, len, kindset)
 	s = malloc(sizeof *s, M_TEMP, M_WAITOK);
 	memset(s, 0, sizeof *s);
 	s->start = s->p = d;
-	s->end = d + len;
+	s->end = (char *)d + len;
 	s->kindset = kindset;
 	return (s);
 }
