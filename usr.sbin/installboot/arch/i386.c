@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.6 2003/05/08 20:33:44 petrov Exp $ */
+/* $NetBSD: i386.c,v 1.7 2003/07/04 07:45:06 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.6 2003/05/08 20:33:44 petrov Exp $");
+__RCSID("$NetBSD: i386.c,v 1.7 2003/07/04 07:45:06 dsl Exp $");
 #endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
@@ -112,9 +112,9 @@ i386_setboot(ib_params *params)
 	}
 
 	magic = *(uint32_t *)(bootstrapbuf + 512 * 2 + 4);
-	if (magic != X86_BOOT_MAGIC_1) {
+	if (magic != htole32(X86_BOOT_MAGIC_1)) {
 		warnx("Invalid magic in stage1 boostrap %x != %x",
-			magic, X86_BOOT_MAGIC_1);
+			magic, htole32(X86_BOOT_MAGIC_1));
 		goto done;
 	}
 
