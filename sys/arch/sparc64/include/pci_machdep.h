@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.6 2001/03/02 06:34:06 mrg Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -47,14 +47,29 @@ struct pci_attach_args;
  */
 
 typedef struct sparc_pci_chipset *pci_chipset_tag_t;
-typedef u_int pcitag_t;
 typedef u_int pci_intr_handle_t;
 
 struct sparc_pci_chipset {
 	void			*cookie;	/* psycho_pbm, but sssh! */
-	int			node;		/* OFW node */
-	int			busno;		/* PCI bus number */
+	int			rootnode;	/* PCI controller */
+	int			curnode;	/* Current OFW node */
 };
+
+/* 
+ * The stuuuuuuupid allegedly MI PCI code expects pcitag_t to be a
+ * scalar type.  But we really need to store both the OFW node and
+ * the bus/device/function info in it.  (We'd like to store more, 
+ * like all the ofw properties, but we don't need to.)  Luckily,
+ * both are 32-bit values, so we can squeeze them into a u_int64_t
+ * with a little help from some macros.
+ */
+
+#define	PCITAG_NODE(x)		(int)(((x)>>32)&0xffffffff)
+#define	PCITAG_OFFSET(x)	((x)&0xffffffff)
+#define	PCITAG_CREATE(n,b,d,f)	(((u_int64_t)(n)<<32)|((b)<<16)|((d)<<11)|((f)<<8))
+#define	PCITAG_SETNODE(t,n)	((x)&0xffffffff)|(((n)<<32)
+typedef u_int64_t pcitag_t; 
+
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
