@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.h,v 1.1 1998/08/10 14:33:33 ragge Exp $ */
+/*	$NetBSD: ka46.h,v 1.2 1998/08/11 17:52:58 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,3 +41,15 @@
 #define	PCTAG_PARITY	0x80000000
 #define	PCTAG_VALID		 1
 
+/* memory addresses of interest */
+#define	KA46_INVFLT	0x20200000
+#define	KA46_INVFLTSZ	32768
+#define	KA46_CCR	0x23000000
+#define	KA46_TAGST	0x2d000000
+#define	KA46_TAGSZ	32768
+
+#define	CCR_CENA	0x00000001
+#define	CCR_SPECIO	0x00000010
+
+#define	KA46_BWF0	0x20080014
+#define	BWF0_FEN	0x01000000

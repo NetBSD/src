@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.30 1998/07/05 06:49:10 jonathan Exp $   */
+/*	$NetBSD: intvec.s,v 1.31 1998/08/11 17:52:58 ragge Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -406,7 +406,13 @@ ENTRY(netint)
 		.globl	hardclock
 hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 		pushr	$0x3f
-		pushl	sp
+#ifdef VAX46
+		cmpl	_vax_boardtype,$VAX_BTYP_46
+		bneq	1f
+		movl	_vs_cpu,r0
+		clrl	0x1c(r0)
+#endif
+1:		pushl	sp
 		addl2	$24,(sp)
 		calls	$1,_hardclock
 		popr	$0x3f
