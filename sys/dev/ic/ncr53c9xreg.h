@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.5 1999/01/06 19:19:38 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.5.2.1 1999/12/04 19:34:50 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -165,6 +165,17 @@
 #define  NCRESPCFG3_FCLK	0x04	/*	Fast Clock (>25Mhz)	*/
 #define	 NCRESPCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
 #define	 NCRESPCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
+
+/* Config #3 also different on NCR53CF9x/FAS216 */
+#define	NCR_F9XCFG3		0x0c	/* RW - Configuration #3	*/
+#define  NCRF9XCFG3_IDM		0x80	/*	ID Message Res Check	*/
+#define  NCRF9XCFG3_QTE		0x40	/*	Queue Tag Enable	*/
+#define  NCRF9XCFG3_CDB		0x20	/*	CDB 10-bytes OK		*/
+#define  NCRF9XCFG3_FSCSI	0x10	/*	Fast SCSI		*/
+#define  NCRF9XCFG3_FCLK	0x08	/*	Fast Clock (>25Mhz)	*/
+#define  NCRF9XCFG3_SRESB	0x04	/*	Save Residual Byte	*/
+#define  NCRF9XCFG3_ADMA	0x02	/*	Alternate DMA Mode	*/
+#define  NCRF9XCFG3_T8M		0x01	/*	Threshold 8 Mode	*/
 
 /* Config #4 only on ESP406/FAS408 */
 #define	NCR_CFG4	0x0d		/* RW - Configuration #4	*/
