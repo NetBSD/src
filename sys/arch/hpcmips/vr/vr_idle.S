@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.3 2000/04/11 04:39:14 nisimura Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.4 2000/05/09 13:23:57 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,9 +64,16 @@ LEAF(vr_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
 	sw	zero, _C_LABEL(curproc)		# set curproc NULL for stats
+
+	/* Try to zero some free pages. */
+	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	nop
+	beq	t0, zero, 1f
+	nop
+	jal	_C_LABEL(uvm_pageidlezero)
+	nop
 1:
 	lw	t0, _C_LABEL(whichqs)		# look for non-empty queue
-	#nop					# -slip-
 	bne	t0, zero, 1f
 	nop
 	.word	VR_OPCODE_STANDBY
