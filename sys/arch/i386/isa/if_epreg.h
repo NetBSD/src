@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epreg.h,v 1.10 1994/10/27 04:17:32 cgd Exp $	*/
+/*	$NetBSD: if_epreg.h,v 1.11 1994/12/10 14:52:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl (hpeyerl@novatel.ca)
@@ -263,6 +263,45 @@
 #define TXS_UNDERRUN		0x10
 #define TXS_MAX_COLLISION	0x08
 #define TXS_STATUS_OVERFLOW	0x04
+
+/*
+ * FIFO Status (Window 4)
+ *
+ *   Supports FIFO diagnostics
+ *
+ *   Window 4/Port 0x04.1
+ *
+ *     15:	1=RX receiving (RO). Set when a packet is being received
+ *		into the RX FIFO.
+ *     14:	Reserved
+ *     13:	1=RX underrun (RO). Generates Adapter Failure interrupt.
+ *		Requires RX Reset or Global Reset command to recover.
+ *		It is generated when you read past the end of a packet -
+ *		reading past what has been received so far will give bad
+ *		data.
+ *     12:	1=RX status overrun (RO). Set when there are already 8
+ *		packets in the RX FIFO. While this bit is set, no additional
+ *		packets are received. Requires no action on the part of
+ *		the host. The condition is cleared once a packet has been
+ *		read out of the RX FIFO.
+ *     11:	1=RX overrun (RO). Set when the RX FIFO is full (there
+ *		may not be an overrun packet yet). While this bit is set,
+ *		no additional packets will be received (some additional
+ *		bytes can still be pending between the wire and the RX
+ *		FIFO). Requires no action on the part of the host. The
+ *		condition is cleared once a few bytes have been read out
+ *		from the RX FIFO.
+ *     10:	1=TX overrun (RO). Generates adapter failure interrupt.
+ *		Requires TX Reset or Global Reset command to recover.
+ *		Disables Transmitter.
+ *     9-8:	Unassigned.
+ *     7-0:	Built in self test bits for the RX and TX FIFO's.
+ */
+#define	FIFOS_RX_RECEIVING	(u_short) 0x8000
+#define	FIFOS_RX_UNDERRUN	(u_short) 0x2000
+#define	FIFOS_RX_STATUS_OVERRUN	(u_short) 0x1000
+#define	FIFOS_RX_OVERRUN	(u_short) 0x0800
+#define	FIFOS_TX_OVERRUN	(u_short) 0x0400
 
 /*
  * Misc defines for various things.
