@@ -1,4 +1,4 @@
-/* $NetBSD: bootoptions,v 1.2 1996/11/23 03:16:51 mark Exp $ */
+/* $NetBSD: bootoptions,v 1.3 1998/03/26 20:42:34 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -46,7 +46,7 @@ RiscPC Boot options
 
  Options for all kernels
 
-  nocache		Disable all processor caches (*)
+  nocache	Disable all processor caches (*)
   nowritebuf	Disable processor write buffer (*)
   fpaclk2	Clock FPA at half processor clock speed (*)
   single	Single user mode (*)
@@ -56,7 +56,6 @@ RiscPC Boot options
   videdram=	Specify video DRAM size in KB (*)
   nbuf=		Specify the number of buffers
   nowdreset	Skip the wd driver drive reset command
-  ehbug		Work around the EtherH driver attach bug.
   ascpoll	Use polling mode rather than interrupt mode for the asc
 		driver
   nbuf=		Specify the number of buffers to use.
