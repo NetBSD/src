@@ -22,7 +22,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: subsegs.c,v 1.4 1995/03/21 15:27:12 mycroft Exp $";
+static char rcsid[] = "$Id: subsegs.c,v 1.5 2002/07/20 16:51:44 mjl Exp $";
 #endif
 
 #include "as.h"
@@ -97,7 +97,7 @@ void
 	/* It won't be used=> is ok if obstack... */
 	/* pads the end of it for alignment. */
 	frag_now=(fragS *)obstack_alloc(&frags,SIZEOF_STRUCT_FRAG);
-	memset(frag_now,  SIZEOF_STRUCT_FRAG, 0); 
+	memset(frag_now, 0, SIZEOF_STRUCT_FRAG); 
 	/* This 1st frag will not be in any frchain. */
 	/* We simply give subseg_new somewhere to scribble. */
 	now_subseg = 42;		/* Lie for 1st call to subseg_new. */
@@ -254,7 +254,7 @@ register subsegT	subseg;
 				 * This should be the only code that creates a frchainS.
 				 */
 				newP=(frchainS *)obstack_alloc(&frags,sizeof(frchainS));
-				memset(newP, sizeof(frchainS), 0); 
+				memset(newP, 0, sizeof(frchainS)); 
 				/* This begines on a good boundary */
 				/* because a obstack_done() preceeded  it. */
 				/* It implies an obstack_done(), so we */
