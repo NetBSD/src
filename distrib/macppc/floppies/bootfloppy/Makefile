@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.1 2000/06/22 17:34:42 matt Exp $
+#	$NetBSD: Makefile,v 1.8.2.2 2000/11/10 03:35:41 tv Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -13,6 +13,7 @@ MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
+VND_RDEVC=	/dev/r${VND}c
 FD?=		fd0
 FD_RDEV=	/dev/r${FD}a
 MDEC=		${DESTDIR}/usr/mdec
@@ -53,7 +54,7 @@ all:	netbsd.ram.gz
 	-rm -f ${MOUNT_POINT}/boot
 	cp ${MDEC}/ofwboot ${MOUNT_POINT}/boot
 	sync
-	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_RDEV}
+	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_RDEVC}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
 
