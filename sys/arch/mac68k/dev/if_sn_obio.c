@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.1 1997/03/15 20:26:38 briggs Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.2 1997/03/16 13:41:16 is Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -39,10 +39,13 @@
 #include <sys/systm.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
+#if 0 /* XXX this shouldn't be necessary... else reinsert */
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#endif
 #endif
 
 #include <machine/bus.h>
@@ -59,7 +62,6 @@
 static int	sn_obio_match __P((struct device *, struct cfdata *, void *));
 static void	sn_obio_attach __P((struct device *, struct device *, void *));
 static void	sn_obio_getaddr __P((struct sn_softc *));
-void	snsetup __P((struct sn_softc *));
 
 struct cfattach sn_obio_ca = {
 	sizeof(struct sn_softc), sn_obio_match, sn_obio_attach
@@ -87,6 +89,7 @@ sn_obio_attach(parent, self, aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
         struct sn_softc *sc = (void *)self;
+	u_int8_t myaddr[ETHER_ADDR_LEN];
 
         sc->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 |
                     DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
@@ -116,17 +119,18 @@ sn_obio_attach(parent, self, aux)
 
 	sc->slotno = 9;
 
-	sn_obio_getaddr(sc);
+	sn_obio_getaddr(sc, myaddr);
 
-	snsetup(sc);
+	snsetup(sc, myaddr);
 }
 
 static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
 
 static void
-sn_obio_getaddr(sc)
+sn_obio_getaddr(sc, lladdr)
 	struct sn_softc	*sc;
+	u_int8_t *lladdr;
 {
 	bus_space_handle_t	bsh;
 	int			i, do_bbr;
@@ -145,11 +149,11 @@ sn_obio_getaddr(sc)
 	b = bus_space_read_1(sc->sc_regt, bsh, 0);
 	if (b == 0x10)
 		do_bbr = 1;
-	sc->sc_arpcom.ac_enaddr[0] = (do_bbr) ? bbr(b) : b;
+	lladdr[0] = (do_bbr) ? bbr(b) : b;
 
 	for (i = 1 ; i < ETHER_ADDR_LEN ; i++) {
 		b = bus_space_read_1(sc->sc_regt, bsh, i);
-		sc->sc_arpcom.ac_enaddr[i] = (do_bbr) ? bbr(b) : b;
+		lladdr[i] = (do_bbr) ? bbr(b) : b;
 	}
 
 	bus_space_unmap(sc->sc_regt, bsh, NBPG);
