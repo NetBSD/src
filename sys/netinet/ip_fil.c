@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.92 2003/06/29 22:31:55 fvdl Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.93 2003/06/30 00:15:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -124,7 +124,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.92 2003/06/29 22:31:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.93 2003/06/30 00:15:12 itojun Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
@@ -424,8 +424,8 @@ int iplattach()
 	else
 		error = 0;
 	if (error) {
-		pfil_remove_hook((void *)fr_check_wrapper6, NULL,
-				 PFIL_IN|PFIL_OUT, ph_inet6);
+		pfil_remove_hook((void *)fr_check, NULL,
+				 PFIL_IN|PFIL_OUT, ph_inet);
 #   else
 	error = pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT,
 			      &inet6sw[ip6_protox[IPPROTO_IPV6]].pr_pfh);
