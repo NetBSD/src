@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.61 2003/07/07 21:26:33 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.62 2003/07/08 17:38:57 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -880,6 +880,9 @@ Ceci signifie que certains fichiers n'ont pas étés extraits
 correctement et que votre système n'est pas complet.
 
 Voulez-vous continuer à extraire les composants ?}
+
+message must_be_one_root	/* XXX translate */
+{There must be a single partition marked to be mounted on '/'.}
 
 message partitions_overlap
 {Les partitions %c et %c se recouvrent.}
