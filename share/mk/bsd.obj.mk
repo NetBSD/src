@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.37 2001/11/27 05:42:24 jmc Exp $
+#	$NetBSD: bsd.obj.mk,v 1.38 2001/11/28 20:12:47 tv Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -39,10 +39,7 @@ PAWD?=		/bin/pwd
 __objdir=	obj${OBJMACHINE:D.${MACHINE}}
 
 __usrobjdir=	${BSDOBJDIR}${USR_OBJMACHINE:D.${MACHINE}}
-__usrobjdirpf=
-.if !defined(USR_OBJMACHINE)
-__usrobjdirpf=	${OBJMACHINE:D.${MACHINE}}
-.endif
+__usrobjdirpf=	${USR_OBJMACHINE:D:U${OBJMACHINE:D.${.MACHINE}}}
 
 .if defined(OBJHOSTMACHINE) && (${MKHOSTOBJ:Uno} != "no")
 # In case .CURDIR has been twiddled by a .mk file and is now relative,
