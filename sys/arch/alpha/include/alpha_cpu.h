@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_cpu.h,v 1.5 1996/07/14 20:00:37 cgd Exp $	*/
+/*	$NetBSD: alpha_cpu.h,v 1.6 1996/08/20 23:02:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -178,8 +178,8 @@ struct alpha_logout_area {
 #define	ALPHA_USEG_END		0x000003ffffffffff
 
 #define	ALPHA_K0SEG_BASE	0xfffffc0000000000	/* direct-mapped */
-#define	ALPHA_K0SEG_END		0xfffffe0000000000
-#define	ALPHA_K1SEG_BASE	ALPHA_K0SEG_END		/* virtual */
+#define	ALPHA_K0SEG_END		0xfffffdffffffffff
+#define	ALPHA_K1SEG_BASE	0xfffffe0000000000	/* virtual */
 #define	ALPHA_K1SEG_END		0xffffffffffffffff
 
 #define ALPHA_K0SEG_TO_PHYS(x)	((x) & 0x00000003ffffffff)
