@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.9 1995/05/05 03:42:15 cgd Exp $      */
+/*      $NetBSD: cpu.h,v 1.10 1995/05/05 10:53:53 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -38,8 +38,6 @@
 
 #define enablertclock()
 #define	cpu_swapin(p)
-#define cpu_set_init_frame(p,f)\
-	 {extern u_int scratch;p->p_addr->u_pcb.framep=scratch;}
 #define	cpu_wait(p)
 #define	BROKEN_SWAP
 #define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
