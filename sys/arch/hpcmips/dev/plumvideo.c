@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.14 2000/10/04 13:53:55 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.15 2000/10/22 10:33:01 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define PLUMVIDEODEBUG
+#undef PLUMVIDEODEBUG
 #include "opt_tx39_debug.h"
 #include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
 
@@ -85,6 +85,7 @@ struct plumvideo_softc {
 	plum_chipset_tag_t sc_pc;
 
 	void *sc_powerhook;	/* power management hook */
+	int sc_console;
 
 	/* control register */
 	bus_space_tag_t sc_regt;
@@ -154,6 +155,7 @@ plumvideo_attach(struct device *parent, struct device *self, void *aux)
 	struct hpcfb_attach_args ha;
 	int console, reverse_flag;
 
+	sc->sc_console = console = cn_tab ? 0 : 1;
 	sc->sc_pc	= pa->pa_pc;
 	sc->sc_regt	= pa->pa_regt;
 	sc->sc_fbiot = sc->sc_clutiot = sc->sc_bitbltt  = pa->pa_iot;
@@ -168,12 +170,8 @@ plumvideo_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* power control */
-#ifndef PLUMVIDEODEBUG
-	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL)
-		plumvideo_power(sc, 0, 0, (void *)PWR_SUSPEND);
-	else 
-#endif
-		plumvideo_power(sc, 0, 0, (void *)PWR_RESUME);
+	plumvideo_power(sc, 0, 0,
+			(void *)(console ? PWR_RESUME : PWR_SUSPEND));
 	/* Add a hard power hook to power saving */
 	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
 				       CONFIG_HOOK_PMEVENT_HARDPOWER,
@@ -197,14 +195,13 @@ plumvideo_attach(struct device *parent, struct device *self, void *aux)
 	plumvideo_hpcfbinit(sc, reverse_flag);
 
 #ifdef PLUMVIDEODEBUG
-	if (plumvideo_debug > 1)
+	if (plumvideo_debug > 0)
 		plumvideo_dump(sc);
 	/* attach debug draw routine (debugging use) */
 	video_attach_drawfunc(&sc->sc_chip);
 	tx_conf_register_video(sc->sc_pc->pc_tc, &sc->sc_chip);
 #endif /* PLUMVIDEODEBUG */
 
-	console = cn_tab ? 0 : 1;
 	if(console && hpcfb_cnattach(&sc->sc_fbconf) != 0) {
 		panic("plumvideo_attach: can't init fb console");
 	}
@@ -296,23 +293,14 @@ plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 int
 plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 {
-	struct {
-		int reverse, normal;
-	} ctype[] = {
-		{ BIFB_D2_M2L_3,	BIFB_D2_M2L_0	},
-		{ BIFB_D2_M2L_3x2,	BIFB_D2_M2L_0x2	},
-		{ BIFB_D8_FF,		BIFB_D8_00	},
-		{ BIFB_D16_FFFF,	BIFB_D16_0000,	},
-		{ -1, -1 } /* terminator */
-	}, *ctypep;
 	struct video_chip *chip = &sc->sc_chip;
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
 	plumreg_t reg;
 	size_t vram_size;
 	int bpp, width, height, vram_pitch;
-	u_int16_t fbtype;
 
+	*reverse = video_reverse_color();
 	chip->vc_v = sc->sc_pc->pc_tc;
 #if notyet
 	/* map BitBlt area */
@@ -326,24 +314,9 @@ plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 #endif
 	reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLGMD_REG);
 	
-	/* check reverse color */
-	fbtype = bootinfo->fb_type;
-	for (ctypep = ctype; ctypep->normal != -1 ;  ctypep++) {
-		if (fbtype == ctypep->normal) {
-			*reverse = 0;
-			goto fbtype_found;
-		} else if (fbtype == ctypep->reverse) {
-			*reverse = 1;
-			goto fbtype_found;
-		}
-	}
-	printf(": unknown frame buffer type 0x%04x. attach failed.\n", fbtype);
-	return (1);
- fbtype_found:
-
 	switch (reg & PLUM_VIDEO_PLGMD_GMODE_MASK) {
 	case PLUM_VIDEO_PLGMD_16BPP:		
-#if NPLUMOHCI > 0 /* reserve V-RAM for USB OHCI */
+#if NPLUMOHCI > 0 /* reserve V-RAM area for USB OHCI */
 		/* FALLTHROUGH */
 #else
 		bpp = 16;
@@ -729,6 +702,9 @@ plumvideo_power(void *ctx, int type, long id, void *msg)
 
 	switch (why) {
 	case PWR_RESUME:
+		if (!sc->sc_console)
+			return 0; /* serial console */
+
 		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
 		/* power on */
 		/* LCD power on and display on */

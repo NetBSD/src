@@ -1,7 +1,11 @@
-/*	$NetBSD: video_subr.c,v 1.2 2000/05/22 17:17:44 uch Exp $	*/
+/*	$NetBSD: video_subr.c,v 1.3 2000/10/22 10:33:01 uch Exp $	*/
 
 /*-
- * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,24 +15,32 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+
+#include <machine/bootinfo.h>
 
 #include <arch/hpcmips/dev/video_subr.h>
 
@@ -104,7 +116,7 @@
 })
 
 #define LINEFUNC(b)							\
-static void linebpp##b __P((struct video_chip *, int, int, int, int));	\
+static void linebpp##b (struct video_chip *, int, int, int, int);	\
 static void								\
 linebpp##b##(vc, x0, y0, x1, y1)					\
 	struct video_chip *vc;						\
@@ -124,7 +136,7 @@ linebpp##b##(vc, x0, y0, x1, y1)					\
 }
 
 #define DOTFUNC(b)							\
-static void dotbpp##b __P((struct video_chip *, int, int));		\
+static void dotbpp##b (struct video_chip *, int, int);			\
 static void								\
 dotbpp##b##(vc, x, y)							\
 	struct video_chip *vc;						\
@@ -142,14 +154,12 @@ LINEFUNC(8)
 DOTFUNC(2)
 DOTFUNC(4)
 DOTFUNC(8)
-static void linebpp_unimpl __P((struct video_chip *, int, int, int, int));
-static void dotbpp_unimpl __P((struct video_chip *, int, int));
+static void linebpp_unimpl(struct video_chip *, int, int, int, int);
+static void dotbpp_unimpl(struct video_chip *, int, int);
 
 int
-cmap_work_alloc(r, g, b, rgb, cnt)
-	u_int8_t **r, **g, **b;
-	u_int32_t **rgb;
-	int cnt;
+cmap_work_alloc(u_int8_t **r, u_int8_t **g, u_int8_t **b, u_int32_t **rgb,
+		int cnt)
 {
 	KASSERT(r && g && b && rgb && LEGAL_CLUT_INDEX(cnt - 1));
 
@@ -162,9 +172,7 @@ cmap_work_alloc(r, g, b, rgb, cnt)
 }
 
 void
-cmap_work_free(r, g, b, rgb)
-	u_int8_t *r, *g, *b;
-	u_int32_t *rgb;
+cmap_work_free(u_int8_t *r, u_int8_t *g, u_int8_t *b, u_int32_t *rgb)
 {
 	if (r)
 		free(r, M_DEVBUF);
@@ -177,10 +185,7 @@ cmap_work_free(r, g, b, rgb)
 }
 
 void
-rgb24_compose(rgb24, r, g, b, cnt)
-	u_int32_t *rgb24;
-	u_int8_t *r, *g, *b;
-	int cnt;
+rgb24_compose(u_int32_t *rgb24, u_int8_t *r, u_int8_t *g, u_int8_t *b, int cnt)
 {
 	int i;
 	KASSERT(rgb24 && r && g && b && LEGAL_CLUT_INDEX(cnt - 1));
@@ -191,10 +196,8 @@ rgb24_compose(rgb24, r, g, b, cnt)
 }
 
 void
-rgb24_decompose(rgb24, r, g, b, cnt)
-	u_int32_t *rgb24;
-	u_int8_t *r, *g, *b;
-	int cnt;
+rgb24_decompose(u_int32_t *rgb24, u_int8_t *r, u_int8_t *g, u_int8_t *b,
+		int cnt)
 {
 	int i;
 	KASSERT(rgb24 && r && g && b && LEGAL_CLUT_INDEX(cnt - 1));
@@ -211,8 +214,7 @@ rgb24_decompose(rgb24, r, g, b, cnt)
  * Debug routines.
  */
 void
-video_calibration_pattern(vc)
-	struct video_chip *vc;
+video_calibration_pattern(struct video_chip *vc)
 {
 	int x, y;
 
@@ -227,24 +229,19 @@ video_calibration_pattern(vc)
 }
 
 static void
-linebpp_unimpl(vc, x0, y0, x1, y1)
-	struct video_chip *vc;
-	int x0, y0, x1, y1;
+linebpp_unimpl(struct video_chip *vc, int x0, int y0, int x1, int y1)
 {
 	return;
 }
 
 static void
-dotbpp_unimpl(vc, x, y)
-	struct video_chip *vc;
-	int x, y;
+dotbpp_unimpl(struct video_chip *vc, int x, int y)
 {
 	return;
 }
 
 void
-video_attach_drawfunc(vc)
-	struct video_chip *vc;
+video_attach_drawfunc(struct video_chip *vc)
 {
 	switch (vc->vc_fbdepth) {
 	default:
@@ -267,19 +264,42 @@ video_attach_drawfunc(vc)
 }
 
 void
-video_line(vc, x0, y0, x1, y1)
-	struct video_chip *vc;
-	int x0, y0, x1, y1;
+video_line(struct video_chip *vc, int x0, int y0, int x1, int y1)
 {
 	if (vc->vc_drawline)
 		vc->vc_drawline(vc, x0, y0, x1, y1);
 }
 
 void
-video_dot(vc, x, y)
-	struct video_chip *vc;
-	int x, y;
+video_dot(struct video_chip *vc, int x, int y)
 {
 	if (vc->vc_drawdot)
 		vc->vc_drawdot(vc, x, y);
+}
+
+int
+video_reverse_color()
+{
+	struct {
+		int reverse, normal;
+	} ctype[] = {
+		{ BIFB_D2_M2L_3,	BIFB_D2_M2L_0	},
+		{ BIFB_D2_M2L_3x2,	BIFB_D2_M2L_0x2	},
+		{ BIFB_D8_FF,		BIFB_D8_00	},
+		{ BIFB_D16_FFFF,	BIFB_D16_0000,	},
+		{ -1, -1 } /* terminator */
+	}, *ctypep;
+	u_int16_t fbtype;
+	
+	/* check reverse color */
+	fbtype = bootinfo->fb_type;
+	for (ctypep = ctype; ctypep->normal != -1 ;  ctypep++) {
+		if (fbtype == ctypep->normal) {
+			return (0);
+		} else if (fbtype == ctypep->reverse) {
+			return (1);
+		}
+	}
+	printf(": WARNING unknown frame buffer type 0x%04x.\n", fbtype);
+	return (0);
 }
