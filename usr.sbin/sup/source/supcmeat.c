@@ -32,6 +32,23 @@
  *	across the network to save BandWidth
  *
  * $Log: supcmeat.c,v $
+ * Revision 1.7  1996/09/05 16:50:09  christos
+ * - for portability make sure that we never use "" as a pathname, always convert
+ *   it to "."
+ * - include sockio.h if needed to define SIOCGIFCONF (for svr4)
+ * - use POSIX signals and wait macros
+ * - add -S silent flag, so that the client does not print messages unless there
+ *   is something wrong
+ * - use flock or lockf as appropriate
+ * - use fstatfs or fstatvfs to find out if a filesystem is mounted over nfs,
+ *   don't depend on the major() = 255 hack; it only works on legacy systems.
+ * - use gzip -cf to make sure that gzip compresses the file even when the file
+ *   would expand.
+ * - punt on defining vsnprintf if _IOSTRG is not defined; use sprintf...
+ *
+ * To compile sup on systems other than NetBSD, you'll need a copy of daemon.c,
+ * vis.c, vis.h and sys/cdefs.h. Maybe we should keep those in the distribution?
+ *
  * Revision 1.6  1995/10/29 23:54:47  christos
  * - runio fails when result != 0 not only < 0
  * - print vis-encoded file in the scanner.
@@ -417,17 +434,33 @@ int login ()
 	(void) sprintf (buf,FILELOCK,collname);
 	f = open (buf,O_RDONLY,0);
 	if (f >= 0) {
-		if (flock (f,(LOCK_EX|LOCK_NB)) < 0) {
-			if (errno != EWOULDBLOCK)
+
+#if defined(LOCK_EX)
+# define TESTLOCK(f)	flock(f, LOCK_EX|LOCK_NB)
+# define SHARELOCK(f)	flock(f, LOCK_SH|LOCK_NB)
+# define WAITLOCK(f)	flock(f, LOCK_EX)
+#elif defined(F_LOCK)
+# define TESTLOCK(f)	lockf(f, F_TLOCK, 0)
+# define SHARELOCK(f)	1
+# define WAITLOCK(f)	lockf(f, F_LOCK, 0)
+#else
+# define TESTLOCK(f)	(close(f), f = -1, 1)
+# define SHARELOCK(f)	1
+# define WAITLOCK(f)	1
+#endif
+		if (TESTLOCK(f) < 0) {
+			if (errno != EWOULDBLOCK && errno != EAGAIN) {
+				(void) close(f);
 				goaway ("Can't lock collection %s",collname);
-			if (flock (f,(LOCK_SH|LOCK_NB)) < 0) {
+			}
+			if (SHARELOCK(f) < 0) {
 				(void) close (f);
-				if (errno == EWOULDBLOCK)
+				if (errno == EWOULDBLOCK  && errno != EAGAIN)
 					goaway ("Collection %s is locked by another sup",collname);
 				goaway ("Can't lock collection %s",collname);
 			}
 			vnotify ("SUP Waiting for exclusive access lock\n");
-			if (flock (f,LOCK_EX) < 0) {
+			if (WAITLOCK(f) < 0) {
 				(void) close (f);
 				goaway ("Can't lock collection %s",collname);
 			}
@@ -1054,7 +1087,7 @@ register char **fname;
 execone (t)			/* execute command for file */
 register TREE *t;
 {
-	union wait w;
+	int w;
 
 	if (thisC->Cflags&CFLIST) {
 		vnotify ("SUP Would execute %s\n",t->Tname);
@@ -1066,18 +1099,18 @@ register TREE *t;
 	}
 	vnotify ("SUP Executing %s\n",t->Tname);
 
-	w.w_status = system (t->Tname);
-	if (WIFEXITED(w) && w.w_retcode != 0) {
+	w = system (t->Tname);
+	if (WIFEXITED(w) && WEXITSTATUS(w) != 0) {
 		notify ("SUP: Execute command returned failure status %#o\n",
-			w.w_retcode);
+			WEXITSTATUS(w));
 		thisC->Cnogood = TRUE;
 	} else if (WIFSIGNALED(w)) {
 		notify ("SUP: Execute command killed by signal %d\n",
-			w.w_termsig);
+			WTERMSIG(w));
 		thisC->Cnogood = TRUE;
 	} else if (WIFSTOPPED(w)) {
 		notify ("SUP: Execute command stopped by signal %d\n",
-			w.w_stopsig);
+			WSTOPSIG(w));
 		thisC->Cnogood = TRUE;
 	}
 	return (SCMOK);
