@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 1997/05/13 17:25:54 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 1997/05/29 22:20:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1038,19 +1038,31 @@ ENTRY(ptest_addr)
  * Set processor priority level calls.  Most are implemented with
  * inline asm expansions.  However, we need one instantiation here
  * in case some non-optimized code makes external references.
- * Most places will use the inlined function param.h supplies.
+ * Most places will use the inlined functions param.h supplies.
  */
 
-ENTRY(_spl)
-	movl	sp@(4),d1
+ENTRY(_getsr)
 	clrl	d0
 	movw	sr,d0
+	rts
+
+ENTRY(_spl)
+	clrl	d0
+	movw	sr,d0
+	movl	sp@(4),d1
 	movw	d1,sr
 	rts
 
-ENTRY(getsr)
-	moveq	#0, d0
-	movw	sr, d0
+ENTRY(_splraise)
+	clrl	d0
+	movw	sr,d0
+	movl	d0,d1
+	andl	#PSL_HIGHIPL,d1 	| old &= PSL_HIGHIPL
+	cmpl	sp@(4),d1		| (old - new)
+	bge	Lsplr
+	movl	sp@(4),d1
+	movw	d1,sr
+Lsplr:
 	rts
 
 /*
