@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <stdio.h>
-#include <string.h>
 #include "gsp_ass.h"
 
 u_int16_t codes[5];
