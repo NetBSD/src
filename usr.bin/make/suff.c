@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.22 1998/11/01 03:05:03 itohy Exp $	*/
+/*	$NetBSD: suff.c,v 1.23 1998/11/01 03:07:34 itohy Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.22 1998/11/01 03:05:03 itohy Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.23 1998/11/01 03:07:34 itohy Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.22 1998/11/01 03:05:03 itohy Exp $");
+__RCSID("$NetBSD: suff.c,v 1.23 1998/11/01 03:07:34 itohy Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2110,6 +2110,7 @@ sfnd_abort:
 	 * children or commands) as the old pmake did.
 	 */
 	if ((gn->type & (OP_PHONY|OP_NOPATH)) == 0) {
+	    free(gn->path);
 	    gn->path = Dir_FindFile(gn->name,
 				    (targ == NULL ? dirSearchPath :
 				     targ->suff->searchPath));
