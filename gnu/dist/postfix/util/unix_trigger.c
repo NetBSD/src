@@ -57,7 +57,7 @@
 
 int     unix_trigger(const char *service, const char *buf, int len, int timeout)
 {
-    char   *myname = "unix_trigger";
+    const char *myname = "unix_trigger";
     int     fd;
 
     if (msg_verbose > 1)
