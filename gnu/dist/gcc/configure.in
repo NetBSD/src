@@ -2729,6 +2729,12 @@ for machine in $build $host $target; do
 		tm_file=sparc/sp64-elf.h
 		extra_parts="crtbegin.o crtend.o"
 		;;
+	sparc64-*-netbsd*)
+		tm_file=sparc/netbsd64.h
+		xm_file=sparc/xm-netbsd64.h
+		tmake_file=t-netbsd
+		fixincludes=Makefile.in
+		;;
 	sparc64-*-linux*)		# 64-bit Sparc's running GNU/Linux
 		tmake_file=sparc/t-sp64
 		xm_file="sparc/xm-sp64.h sparc/xm-linux.h"
