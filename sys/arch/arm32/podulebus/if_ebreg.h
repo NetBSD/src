@@ -1,4 +1,4 @@
-/* $NetBSD: if_ebreg.h,v 1.1 1996/01/31 23:25:47 mark Exp $ */
+/* $NetBSD: if_ebreg.h,v 1.2 1996/03/18 21:23:12 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -38,9 +38,6 @@
  * EtherB device driver
  *
  * Created      : 08/07/95
- * Last updated : 10/07/95
- *
- *    $Id: if_ebreg.h,v 1.1 1996/01/31 23:25:47 mark Exp $
  */
 
 /*

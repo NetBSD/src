@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.1 1996/01/31 23:26:24 mark Exp $ */
+/* $NetBSD: podulebus.h,v 1.2 1996/03/18 21:23:18 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * Podule bus header file
  *
  * Created      : 26/04/95
- * Last updated : 26/04/95
- *
- *    $Id: podulebus.h,v 1.1 1996/01/31 23:26:24 mark Exp $
  */
 
 #include <sys/param.h>

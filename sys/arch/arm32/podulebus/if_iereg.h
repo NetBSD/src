@@ -1,4 +1,4 @@
-/* $NetBSD: if_iereg.h,v 1.1 1996/01/31 23:26:01 mark Exp $ */
+/* $NetBSD: if_iereg.h,v 1.2 1996/03/18 21:23:16 mark Exp $ */
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -29,8 +29,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_iereg.h,v 1.1 1996/01/31 23:26:01 mark Exp $
  */
 
 #define	IE_PAGE		0

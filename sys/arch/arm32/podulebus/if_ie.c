@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.2 1996/03/17 01:24:49 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.3 1996/03/18 21:23:14 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -42,9 +42,6 @@
  * Ether 1 podule driver
  *
  * Created      : 26/06/95
- * Last updated : 26/06/95
- *
- *    $Id: if_ie.c,v 1.2 1996/03/17 01:24:49 thorpej Exp $
  */
 
 /*
