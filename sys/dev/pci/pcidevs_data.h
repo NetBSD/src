@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.533 2003/06/07 09:08:02 wiz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.534 2003/06/07 09:15:33 wiz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.534 2003/06/07 09:07:12 wiz Exp 
+ *	NetBSD: pcidevs,v 1.535 2003/06/07 09:15:00 wiz Exp 
  */
 
 /*
@@ -2174,6 +2174,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Brooktree",
 	    "Bt879 Video Capture",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT880,
+	    0,
+	    "Brooktree",
+	    "Bt880 Video Capture",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878A,
+	    0,
+	    "Brooktree",
+	    "Bt878 Video Capture (Audio Section)",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879A,
+	    0,
+	    "Brooktree",
+	    "Bt879 Video Capture (Audio Section)",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT880A,
+	    0,
+	    "Brooktree",
+	    "Bt880 Video Capture (Audio Section)",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT8474,
