@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.129 2001/11/25 11:41:09 yamt Exp $	*/
+/*	$NetBSD: fetch.c,v 1.130 2001/11/29 02:12:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.129 2001/11/25 11:41:09 yamt Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.130 2001/11/29 02:12:33 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -84,7 +84,7 @@ typedef enum {
 
 void		aborthttp(int);
 static int	auth_url(const char *, char **, const char *, const char *);
-static void	base64_encode(const char *, size_t, char *);
+static void	base64_encode(const u_char *, size_t, u_char *);
 static int	go_fetch(const char *);
 static int	fetch_ftp(const char *);
 static int	fetch_url(const char *, const char *, char *, char *);
@@ -197,11 +197,11 @@ auth_url(const char *challenge, char **response, const char *guser,
  * which should be at least ((len + 2) * 4 / 3 + 1) in size.
  */
 static void
-base64_encode(const char *clear, size_t len, char *encoded)
+base64_encode(const u_char *clear, size_t len, u_char *encoded)
 {
-	static const char enc[] =
+	static const u_char enc[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	char	*cp;
+	u_char	*cp;
 	int	 i;
 
 	cp = encoded;
