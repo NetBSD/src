@@ -39,13 +39,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.7 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: main.c,v 1.2 1993/08/01 18:50:18 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.3 1994/05/24 23:54:17 jtc Exp $";
 #endif /* not lint */
 
 # include	"trek.h"
 # include	<stdio.h>
-# include	<sgtty.h>
 # include	<setjmp.h>
+# include	<termios.h>
 
 # define	PRIO		00	/* default priority */
 
@@ -160,7 +160,7 @@ char	**argv;
 	int			prio;
 	register int		ac;
 	register char		**av;
-	struct	sgttyb		argp;
+	struct	termios		argp;
 
 	av = argv;
 	ac = argc;
@@ -169,11 +169,13 @@ char	**argv;
 	srand(vect);
 	opencode = 'w';
 	prio = PRIO;
-	if (gtty(1, &argp) == 0)
+
+	if (tcgetattr(1, &argp) == 0)
 	{
-		if ((argp.sg_ispeed ) < B1200)
+		if (cfgetispeed(&argp) < B1200)
 			Etc.fast++;
 	}
+
 	while (ac > 1 && av[0][0] == '-')
 	{
 		switch (av[0][1])
