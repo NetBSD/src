@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.4 2000/02/21 18:51:00 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.5 2000/02/21 19:32:32 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -296,44 +296,47 @@ lapic_calibrate_timer(ci)
 	   
 	printf("%s: apic clock running at %s\n", ci->ci_dev.dv_xname, tbuf);
 
-	/*
-	 * reprogram the apic timer to run in periodic mode.
-	 * XXX need to program timer on other cpu's, too.
-	 */
-	lapic_tval = (lapic_per_second * 2) / hz;
-	lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
+	if (lapic_per_second != 0) {
+		/*
+		 * reprogram the apic timer to run in periodic mode.
+		 * XXX need to program timer on other cpu's, too.
+		 */
+		lapic_tval = (lapic_per_second * 2) / hz;
+		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
 	
-	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M
-	    |LAPIC_TIMER_VECTOR);
-	i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg (LAPIC_ICR_TIMER, lapic_tval);
+		i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M
+		    |LAPIC_TIMER_VECTOR);
+		i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+		i82489_writereg (LAPIC_ICR_TIMER, lapic_tval);
 
-	/*
-	 * Compute fixed-point ratios between cycles and
-	 * microseconds to avoid having to do any division
-	 * in lapic_delay and lapic_microtime.
-	 */
+		/*
+		 * Compute fixed-point ratios between cycles and
+		 * microseconds to avoid having to do any division
+		 * in lapic_delay and lapic_microtime.
+		 */
 
-	tmp = (1000000 * (u_int64_t)1<<32) / lapic_per_second;
-	lapic_frac_usec_per_cycle = tmp;
-
-	tmp = (lapic_per_second * (u_int64_t)1<<32) / 1000000;
-
-	lapic_frac_cycle_per_usec = tmp;
+		tmp = (1000000 * (u_int64_t)1<<32) / lapic_per_second;
+		lapic_frac_usec_per_cycle = tmp;
+		
+		tmp = (lapic_per_second * (u_int64_t)1<<32) / 1000000;
+		
+		lapic_frac_cycle_per_usec = tmp;
 	
-	/*
-	 * Compute delay in cycles for likely short delays in usec.
-	 */
-	for (i=0; i<26; i++)
-		lapic_delaytab[i] = (lapic_frac_cycle_per_usec * i) >> 32;
+		/*
+		 * Compute delay in cycles for likely short delays in usec.
+		 */
+		for (i=0; i<26; i++)
+			lapic_delaytab[i] = (lapic_frac_cycle_per_usec * i) >>
+			    32;
 
-	/*
-	 * Now that the timer's calibrated, use the apic timer routines
-	 * for all our timing needs..
-	 */
-	delay_func = lapic_delay;
-	microtime_func = lapic_microtime;
-	initclock_func = lapic_initclocks;
+		/*
+		 * Now that the timer's calibrated, use the apic timer routines
+		 * for all our timing needs..
+		 */
+		delay_func = lapic_delay;
+		microtime_func = lapic_microtime;
+		initclock_func = lapic_initclocks;
+	}
 }
 
 /*
