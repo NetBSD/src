@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.21 2001/12/18 10:57:22 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.22 2001/12/23 08:53:46 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.21 2001/12/18 10:57:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.22 2001/12/23 08:53:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -452,18 +452,30 @@ softdep_free(struct worklist *item, int type)
 	panic("softdep_free: unknown type %d", type);
 }
 
-struct workhead softdep_tofree;
+struct workhead softdep_freequeue;
 
 static __inline void
-softdep_queuefree(struct worklist *item)
+softdep_freequeue_add(struct worklist *item)
 {
 	int s;
 
 	s = splbio();
-	LIST_INSERT_HEAD(&softdep_tofree, item , wk_list);
+	LIST_INSERT_HEAD(&softdep_freequeue, item , wk_list);
 	splx(s);
 }
 
+static __inline void
+softdep_freequeue_process(void)
+{
+	struct worklist *wk;
+
+	while ((wk = LIST_FIRST(&softdep_freequeue)) != NULL) {
+		LIST_REMOVE(wk, wk_list);
+		FREE_LOCK(&lk);
+		softdep_free(wk, wk->wk_type);
+		ACQUIRE_LOCK(&lk);
+	}
+}
 
 /*
  * Worklist queue management.
@@ -478,7 +490,7 @@ softdep_queuefree(struct worklist *item)
 	(item)->wk_state &= ~ONWORKLIST;	\
 	LIST_REMOVE(item, wk_list);		\
 } while (0)
-#define WORKITEM_FREE(item, type) softdep_queuefree(item, type)
+#define WORKITEM_FREE(item, type) softdep_freequeue_add(item, type)
 
 #else /* DEBUG */
 static	void worklist_insert __P((struct workhead *, struct worklist *));
@@ -524,7 +536,7 @@ workitem_free(item, type)
 
 	if (item->wk_state & ONWORKLIST)
 		panic("workitem_free: still on list");
-	softdep_queuefree(item);
+	softdep_freequeue_add(item);
 }
 #endif /* DEBUG */
 
@@ -608,17 +620,14 @@ softdep_process_worklist(matchmnt)
 	struct worklist *wk;
 	struct fs *matchfs;
 	int matchcnt;
-	int s;
 
 	/*
-	 * First process any items on the delay-free queue.
+	 * First process any items on the delayed-free queue.
 	 */
-	s = splbio();
-	while ((wk = LIST_FIRST(&softdep_tofree)) != NULL) {
-		LIST_REMOVE(wk, wk_list);
-		softdep_free(wk, wk->wk_type);
-	}
-	splx(s);
+
+	ACQUIRE_LOCK(&lk);
+	softdep_freequeue_process();
+	FREE_LOCK(&lk);
 
 	/*
 	 * Record the process identifier of our caller so that we can give
@@ -704,7 +713,13 @@ softdep_process_worklist(matchmnt)
 			req_clear_remove = 0;
 			wakeup(&proc_waiting);
 		}
+
+		/*
+		 * Process any new items on the delayed-free queue.
+		 */
+
 		ACQUIRE_LOCK(&lk);
+		softdep_freequeue_process();
 	}
 	FREE_LOCK(&lk);
 	return (matchcnt);
