@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.9 2000/01/07 23:01:02 kleink Exp $
+# $NetBSD: obsolete.mi,v 1.10 2000/01/10 17:18:04 kleink Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -272,6 +272,7 @@
 /usr/include/netinet/if_arc.h
 /usr/include/netiso/tuba_table.h
 /usr/include/nfs/nfsv2.h
+/usr/include/null.h
 /usr/include/objc/list.h
 /usr/include/sys/vcmd.h
 /usr/include/sys/vlimit.h
