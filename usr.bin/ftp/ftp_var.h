@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.50 1999/12/05 22:50:06 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.51 1999/12/05 22:54:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,13 +103,6 @@
 /*
  * FTP global variables.
  */
-
-#ifndef FTP_PRODUCT
-#define	FTP_PRODUCT	"NetBSD-ftp"
-#endif
-#ifndef FTP_VERSION
-#define	FTP_VERSION	"19991206"
-#endif
 
 #ifdef SMALL
 #undef	NO_EDITCOMPLETE
