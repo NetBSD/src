@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 1995/03/28 18:20:44 jtc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 1995/04/22 20:28:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -54,8 +54,6 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
-
 #define	cpu_exec(p) 	/* nothing */
 #define	cpu_wait(p) 	/* nothing */
 #define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.2 1995/04/10 04:47:47 mellon Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.3 1995/04/22 20:28:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,23 +120,21 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 #ifdef COMPAT_ULTRIX
-exec_setup_fcn cpu_exec_setup;	/* make sure  function has correct type */
+extern struct emul emul_ultrix;
 
-void cpu_exec_ecoff_setup(code, p, epp)
-	int code;
+void
+cpu_exec_ecoff_setregs(p, pack, stack, retval)
 	struct proc *p;
-	struct exec_package *epp;
+	struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
 {
 	struct ecoff_aouthdr *eap;
 
-	switch(code) {
-	case EXEC_SETUP_FINISH:
-		eap = (struct ecoff_aouthdr *)
-		    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
-		p->p_md.md_regs[GP] = eap->ea_gp_value;
-		break;
-	default:
-	}
+	setregs(p, pack, stack, retval);
+	eap = (struct ecoff_aouthdr *)
+	    ((caddr_t)epp->ep_hdr + sizeof(struct ecoff_filehdr));
+	p->p_md.md_regs[GP] = eap->ea_gp_value;
 }
 
 /*
@@ -153,8 +151,7 @@ cpu_exec_ecoff_hook(p, epp, eap)
 	struct ecoff_aouthdr *eap;
 {
 
-	epp->ep_emul = EMUL_ULTRIX;
-	epp->ep_setup = cpu_exec_ecoff_setup;
+	epp->ep_emul = &emul_ultrix;
 	return 0;
 }
 #endif

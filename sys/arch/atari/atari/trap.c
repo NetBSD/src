@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 1995/03/26 07:20:54 leo Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 1995/04/22 20:25:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,12 +65,6 @@
 #include <machine/reg.h>
 #include <machine/mtpr.h>
 #include <machine/pte.h>
-
-#ifdef COMPAT_SUNOS
-#include <compat/sunos/sunos_syscall.h>
-struct	sysent	sunos_sysent[];
-int	nsunos_sysent;
-#endif
 
 /*
  * XXX Hack until I can figure out what to do about this code's removal
@@ -461,6 +455,9 @@ trap(type, code, v, frame)
 	u_int ncode, ucode;
 	u_quad_t sticks;
 	int i, s;
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
 
 	p = curproc;
 	ucode = 0;
@@ -591,7 +588,7 @@ trap(type, code, v, frame)
 		 * fpu operations.  So far, just ignore it, but
 		 * DONT trap on it.. 
 		 */
-		if (p->p_emul == EMUL_SUNOS) {
+		if (p->p_emul == &emul_sunos) {
 			userret(p, frame.f_pc, sticks); 
 			return;
 		}
@@ -683,6 +680,12 @@ syscall(code, frame)
 	caddr_t params;
 	u_quad_t sticks;
 	struct proc *p;
+#ifdef COMPAT_SUNOS
+	extern struct emul emul_sunos;
+#endif
+#ifdef SYSCALL_DEBUG
+	extern struct emul emul_netbsd;
+#endif
 
 	if (USERMODE(frame.f_sr) == 0)
 		panic("syscall");
@@ -696,12 +699,11 @@ syscall(code, frame)
 	opc = frame.f_pc - 2;
 	error = 0;
 
-	switch (p->p_emul) {
-#ifdef COMPAT_SUNOS
-	case EMUL_SUNOS:
-		systab = sunos_sysent;
-		numsys = nsunos_sysent;
+	systab = p->p_emul->e_sysent;
+	numsys = p->p_emul->e_nsysent;
 
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == &emul_sunos) {
 		/*
 		 * SunOS passes the syscall-number on the stack, whereas
 		 * BSD passes it in D0. So, we have to get the real "code"
@@ -725,14 +727,8 @@ syscall(code, frame)
 			 */
 			p->p_md.md_flags |= MDP_STACKADJ;
 		}
-		break;
-#endif
-	case EMUL_NETBSD:
-	default:
-		systab = sysent;
-		numsys = nsysent;
-		break;
 	}
+#endif
 
 	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
 
@@ -756,7 +752,7 @@ syscall(code, frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (systab != sysent)
+		if (systab != p->p_emul->e_sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
@@ -769,7 +765,7 @@ syscall(code, frame)
 	if (code < numsys)
 		callp += code;
 	else
-		callp += SYS_syscall;		/* => nosys */
+		callp += p->p_emul->e_nosys;		/* => nosys */
 
 	i = callp->sy_argsize;
 	if (i != 0)
@@ -780,7 +776,7 @@ syscall(code, frame)
 		ktrsyscall(p->p_tracep, code, i, args);
 #endif
 #ifdef SYSCALL_DEBUG
-	if (p->p_emul == EMUL_NETBSD) /* XXX */
+	if (p->p_emul == &emul_netbsd) /* XXX */
 		scdebug_call(p, code, callp->sy_narg, i, args);
 #endif
 	if (error == 0) {
@@ -811,7 +807,7 @@ syscall(code, frame)
 	 */
 	p = curproc;
 #ifdef SYSCALL_DEBUG
-	if (p->p_emul == EMUL_NETBSD)			 /* XXX */
+	if (p->p_emul == &emul_netbsd)			 /* XXX */
 		scdebug_ret(p, code, error, rval[0]);
 #endif
 #ifdef COMPAT_SUNOS

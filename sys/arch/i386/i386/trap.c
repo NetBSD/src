@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 1995/04/14 23:30:54 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.80 1995/04/22 20:26:50 christos Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -496,19 +496,11 @@ syscall(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
-#ifdef COMPAT_SVR4
-	extern int nsvr4_sysent;
-	extern struct sysent svr4_sysent[];
-	extern int svr4_error[];
-#endif
 #ifdef COMPAT_IBCS2
-	extern int nibcs2_sysent;
-	extern struct sysent ibcs2_sysent[];
+	extern struct emul emul_ibcs2;
 #endif
 #ifdef COMPAT_LINUX
-	extern int nlinux_sysent;
-	extern struct sysent linux_sysent[];
-	extern int linux_error[];
+	extern struct emul emul_linux;
 #endif
 
 	cnt.v_syscall++;
@@ -520,44 +512,21 @@ syscall(frame)
 	opc = frame.tf_eip;
 	code = frame.tf_eax;
 
-	switch (p->p_emul) {
-	case EMUL_NETBSD:
-		nsys = nsysent;
-		callp = sysent;
-		break;
-#ifdef COMPAT_SVR4
-	case EMUL_SVR4:
-		nsys = nsvr4_sysent;
-		callp = svr4_sysent;
-		break;
-#endif
+	nsys = p->p_emul->e_nsysent;
+	callp = p->p_emul->e_sysent;
+
 #ifdef COMPAT_IBCS2
-	case EMUL_IBCS2:
-		nsys = nibcs2_sysent;
-		callp = ibcs2_sysent;
+	if (p->p_emul == &emul_ibcs2)
 		if (IBCS2_HIGH_SYSCALL(code))
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
-		break;
 #endif
-#ifdef COMPAT_LINUX
-	case EMUL_LINUX:
-		nsys = nlinux_sysent;
-		callp = linux_sysent;
-		break;
-#endif
-#ifdef DIAGNOSTIC
-	default:
-		panic("invalid p_emul %d", p->p_emul);
-#endif
-	}
-
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
 #ifdef COMPAT_LINUX
 		/* Linux has a special system setup call as number 0 */
-		if (p->p_emul == EMUL_LINUX)
+		if (p->p_emul == &emul_linux)
 			break;
 #endif
 		/*
@@ -571,7 +540,7 @@ syscall(frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent)
+		if (callp != p->p_emul->e_sysent)
 			break;
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
@@ -580,13 +549,13 @@ syscall(frame)
 		break;
 	}
 	if (code < 0 || code >= nsys)
-		callp = &callp[0];		/* illegal */
+		callp += p->p_emul->e_nosys;		/* illegal */
 	else
-		callp = &callp[code];
+		callp += code;
 	argsize = callp->sy_argsize;
 #ifdef COMPAT_LINUX
 	/* XXX extra if() for every emul type.. */
-	if (p->p_emul == EMUL_LINUX) {
+	if (p->p_emul == &emul_linux) {
 		/*
 		 * Linux passes the args in ebx, ecx, edx, esi, edi, in
 		 * increasing order.
@@ -653,26 +622,8 @@ syscall(frame)
 		break;
 	default:
 	bad:
-		switch(p->p_emul) {
-#ifdef COMPAT_SVR4
-		case EMUL_SVR4:
-			error = svr4_error[error];
-			break;
-#endif
-#ifdef COMPAT_LINUX
-		case EMUL_LINUX:
-			error = -linux_error[error];
-			break;
-#endif
-#ifdef COMPAT_IBCS2
-		case EMUL_IBCS2:
-			error = bsd2ibcs_errno[error];
-			break;
-#endif
-		default:
-			break;
-		}
-
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;

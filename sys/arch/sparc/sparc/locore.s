@@ -2865,6 +2865,10 @@ noplab:	 nop
  */
 	.globl	_sigcode
 	.globl	_esigcode
+#ifdef COMPAT_SVR4
+	.globl	_svr4_sigcode
+_svr4_sigcode:	! XXX: Until we write our own
+#endif
 _sigcode:
 	/*
 	 * XXX  the `save' and `restore' below are unnecessary: should
@@ -2957,6 +2961,10 @@ _sigcode:
 	mov	SYS_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
 _esigcode:
+#ifdef COMPAT_SVR4
+	.globl	_svr4_esigcode
+_svr4_esigcode:
+#endif
 
 /*
  * Primitives

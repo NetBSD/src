@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.8 1995/03/30 21:25:45 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.9 1995/04/22 20:29:09 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -327,21 +327,25 @@ if(p){
 		mfpr(PR_P0BR),mfpr(PR_P0LR),mfpr(PR_P1BR),mfpr(PR_P1LR));
 }
 
-setregs(p,pack,stack,retval)
+void
+setregs(p, pack, stack, retval)
         struct proc *p;
-        int pack,stack,retval[2]; /* Not all are ints... */
+        struct exec_package *pack;
+	u_long stack;
+	register_t *retval;
 {
 	struct trapframe *exptr;
 
-	exptr=p->p_addr->u_pcb.framep;
-	exptr->pc=pack+2;
-	mtpr(stack,PR_USP);
+	exptr = p->p_addr->u_pcb.framep;
+	exptr->pc = pack->ep_entry + 2;
+	mtpr(stack, PR_USP);
 }
 
 syscall(frame)
 	struct	trapframe *frame;
 {
 	struct sysent *callp;
+	int nsys;
 	int err,rval[2],args[8],sig;
 	struct trapframe *exptr;
 	struct proc *p=curproc;
@@ -351,6 +355,8 @@ if(startsysc)printf("trap syscall %s pc %x, psl %x, ap %x, pid %d\n",
 		curproc->p_pid);
 
 	p->p_addr->u_pcb.framep=frame;
+	callp = p->p_emul->e_sysent;
+	nsys = p->p_emul->e_nsysent;
 
 	if(frame->code==SYS___syscall){
 		int g=*(int *)(frame->ap);
@@ -364,10 +370,10 @@ if(startsysc){
 		}
 	}
 
-	if(frame->code<0||frame->code>=nsysent)
-		callp= &sysent[0];
+	if(frame->code<0||frame->code>=nsys)
+		callp += p->p_emul->e_nosys;
 	else
-		callp= &sysent[frame->code];
+		callp += frame->code;
 
 	rval[0]=0;
 	rval[1]=frame->r1;

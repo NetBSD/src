@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 1995/04/13 20:48:44 mycroft Exp $ */
+/*	$NetBSD: trap.c,v 1.30 1995/04/22 20:28:43 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -675,17 +675,7 @@ syscall(code, tf, pc)
 	} args;
 	register_t rval[2];
 	u_quad_t sticks;
-	extern int nsysent;
 	extern struct pcb *cpcb;
-#ifdef COMPAT_SUNOS
-	extern int nsunos_sysent;
-	extern struct sysent sunos_sysent[];
-#endif
-#ifdef COMPAT_SVR4
-	extern int nsvr4_sysent;
-	extern struct sysent svr4_sysent[];
-	extern int svr4_error[];
-#endif
 
 	cnt.v_syscall++;
 	p = curproc;
@@ -701,28 +691,9 @@ syscall(code, tf, pc)
 	p->p_md.md_tf = tf;
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
-	switch (p->p_emul) {
-	case EMUL_NETBSD:
-		callp = sysent;
-		nsys = nsysent;
-		break;
-#ifdef COMPAT_SUNOS
-	case EMUL_SUNOS:
-		callp = sunos_sysent;
-		nsys = nsunos_sysent;
-		break;
-#endif
-#ifdef COMPAT_SVR4
-	case EMUL_SVR4:
-		callp = svr4_sysent;
-		nsys = nsvr4_sysent;
-		break;
-#endif
-#ifdef DIAGNOSTIC
-	default:
-		panic("invalid p_emul %d", p->p_emul);
-#endif
-	}
+
+	callp = p->p_emul->e_sysent;
+	nsys = p->p_emul->e_nsysent;
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -744,7 +715,7 @@ syscall(code, tf, pc)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (callp != sysent)
+		if (callp != p->p_emul->e_sysent)
 			break;
 		code = ap[_QUAD_LOWWORD];
 		ap += 2;
@@ -752,8 +723,9 @@ syscall(code, tf, pc)
 		break;
 	}
 
-	/* Callp currently points to syscall, which returns ENOSYS. */
-	if (code < nsys) {
+	if (code < 0 || code >= nsys) 
+		callp += p->p_emul->e_nosys;
+	else {
 		callp += code;
 		i = callp->sy_argsize / sizeof(register_t);
 		if (i > nap) {	/* usually false */
@@ -817,14 +789,11 @@ bad:
 		i = tf->tf_npc;
 		tf->tf_pc = i;
 		tf->tf_npc = i + 4;
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
 	}
 	/* else if (error == ERESTART || error == EJUSTRETURN) */
 		/* nothing to do */
-
-#ifdef COMPAT_SVR4
-	if (p->p_emul == EMUL_SVR4)
-		error = svr4_error[error];
-#endif
 
 	userret(p, pc, sticks);
 #ifdef KTRACE
