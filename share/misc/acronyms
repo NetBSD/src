@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.33 1999/08/02 20:12:23 augustss Exp $
+$NetBSD: acronyms,v 1.34 1999/08/04 04:26:21 simonb Exp $
 
 AFAICT	as far as I can tell
 AFAICR	as far as I can recall
@@ -31,6 +31,7 @@ G	grin
 GMTA	great minds think alike
 HHIS	hanging head in shame
 HTH	hope this helps
+IIANM	if I am not mistaken
 IIRC	if I recall correctly
 IOW	in other words
 IMO	in my opinion
