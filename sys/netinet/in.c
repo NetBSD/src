@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.57 2000/03/18 02:41:58 itojun Exp $	*/
+/*	$NetBSD: in.c,v 1.58 2000/03/21 11:23:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -477,6 +477,13 @@ in_control(so, cmd, data, ifp, p)
 	case SIOCSIFADDR:
 		error = in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1);
 #if 0
+		/*
+		 * the code chokes if we are to assign multiple addresses with
+		 * the same address prefix (rtinit() will return EEXIST, which
+		 * is not fatal actually).  we will get memory leak if we
+		 * don't do it.
+		 * -> we may want to hide EEXIST from rtinit().
+		 */
   undo:
 		if (error && newifaddr) {
 			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
