@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.5 2001/11/13 05:32:49 lukem Exp $	*/
+/*	$NetBSD: auconv.c,v 1.6 2002/01/15 16:39:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,11 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.5 2001/11/13 05:32:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.6 2002/01/15 16:39:50 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
-#include <dev/auconv.h>
+
+#include "auconv.h"
 
 void
 change_sign8(void *v, u_char *p, int cc)
