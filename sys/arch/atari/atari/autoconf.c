@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1996/03/20 12:41:30 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1996/04/04 06:25:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -61,7 +61,7 @@ configure()
 	
 	atari_realconfig = 1;
 
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	
 #ifdef GENERIC
@@ -102,7 +102,7 @@ atari_config_found(pcfp, pdp, auxp, pfn)
 	extern int	atari_realconfig;
 
 	if (atari_realconfig)
-		return(config_found(pdp, auxp, pfn));
+		return(config_found(pdp, auxp, pfn) != NULL);
 
 	if (pdp == NULL)
 		pdp = &temp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1996/03/17 01:16:48 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 1996/04/04 06:25:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -61,7 +61,7 @@ configure()
 	amiga_realconfig = 1;
 	custom.intena = INTF_INTEN;
 
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	
 	custom.intena = INTF_SETCLR | INTF_INTEN;
@@ -120,7 +120,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
 	struct cfdata *cf;
 
 	if (amiga_realconfig)
-		return(config_found(pdp, auxp, pfn));
+		return(config_found(pdp, auxp, pfn) != NULL);
 
 	if (pdp == NULL)
 		pdp = &temp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1995/02/13 23:06:49 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1996/04/04 06:25:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -47,7 +47,7 @@ configure()
 	extern int cold;
 
 	(void)splhigh();
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 	(void)spl0();
 
