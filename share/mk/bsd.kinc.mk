@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.5 1999/02/04 11:58:30 christos Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.6 1999/08/21 06:17:46 simonb Exp $
 
 # System configuration variables:
 #
@@ -70,7 +70,8 @@ ${DESTDIR}${INCSDIR}:
 	@if [ ! -d ${.TARGET} ] || [ -L ${.TARGET} ] ; then \
 		echo creating ${.TARGET}; \
 		/bin/rm -rf ${.TARGET}; \
-		${INSTALL} -d -o ${BINOWN} -g ${BINGRP} -m 755 ${.TARGET}; \
+		${INSTALL} ${INSTPRIV} -d -o ${BINOWN} -g ${BINGRP} -m 755 \
+		    ${.TARGET}; \
 	fi
 
 incinstall:: ${DESTDIR}${INCSDIR}
@@ -85,10 +86,11 @@ incinstall:: ${DESTDIR}${INCSDIR}/$I
 .endif
 ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I 
 	@cmp -s ${.CURDIR}/$I ${.TARGET} > /dev/null 2>&1 || \
-	    (echo "${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} \
-		-g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET}" && \
-	     ${INSTALL} ${RENAME} ${PRESERVE} -c -o ${BINOWN} -g ${BINGRP} \
-		-m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET})
+	    (echo "${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c \
+		-o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I \
+		${.TARGET}" && \
+	     ${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${BINOWN} \
+		-g ${BINGRP} -m ${NONBINMODE} ${.CURDIR}/$I ${.TARGET})
 .endfor
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.101 1999/07/01 20:19:18 itojun Exp $
+#	$NetBSD: bsd.prog.mk,v 1.102 1999/08/21 06:17:46 simonb Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -143,8 +143,8 @@ ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 
 .PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
 ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} -o ${BINOWN} \
-	    -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
+	    -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
 .endif
 
 .if !target(proginstall)
@@ -177,8 +177,9 @@ ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: .MADE
 
 .PRECIOUS: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o ${SCRIPTSOWN_${S}} -g \
-	    ${SCRIPTSGRP_${S}} -m ${SCRIPTSMODE_${S}} ${.ALLSRC} ${.TARGET}
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
+	    -o ${SCRIPTSOWN_${S}} -g ${SCRIPTSGRP_${S}} -m ${SCRIPTSMODE_${S}} \
+	    ${.ALLSRC} ${.TARGET}
 .endfor
 .endif
 

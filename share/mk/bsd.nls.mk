@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.17 1999/02/12 12:38:45 lukem Exp $
+#	$NetBSD: bsd.nls.mk,v 1.18 1999/08/21 06:17:46 simonb Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -51,9 +51,9 @@ ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: .MADE
 
 .PRECIOUS: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
 ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F}
-	${INSTALL} -d ${.TARGET:H}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o ${NLSOWN} -g ${NLSGRP} \
-		-m ${NLSMODE} ${.ALLSRC} ${.TARGET}
+	${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${NLSOWN} \
+	    -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} ${.TARGET}
 .endfor
 .else
 cleannls:
