@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.16 2002/08/01 02:42:35 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.17 2002/08/02 09:26:12 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.16 2002/08/01 02:42:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.17 2002/08/02 09:26:12 gmcgarry Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -490,11 +490,11 @@ trap(status, cause, vaddr, opc, frame)
 		if ((cause & MIPS_CR_COP_ERR) == 0x10000000) {
 			struct frame *f;
 
-			f = (struct frame *)p->p_md.md_regs;
-			savefpregs(fpcurproc);  	/* yield FPA */
-			loadfpregs(p);          	/* load FPA */
-			fpcurproc = p;
-			p->p_md.md_flags |= MDP_FPUSED;
+			f = (struct frame *)l->l_md.md_regs;
+			savefpregs(fpcurlwp);	  	/* yield FPA */
+			loadfpregs(l);          	/* load FPA */
+			fpcurlwp = l;
+			l->l_md.md_flags |= MDP_FPUSED;
 			f->f_regs[SR] |= MIPS_SR_COP_1_BIT;
 		} else
 #endif
