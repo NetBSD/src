@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.17 1999/06/19 01:10:59 cgd Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.18 1999/06/20 01:23:32 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,7 @@ default x=20, y=12, no exit, scrollable;
 
 allow dynamic menus;
 
-menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
+menu netbsd, title "NetBSD-@@VERSION@@ Programme d'installation";
 	display action  { toplevel(); };
 	option "Installation de NetBSD sur disque dur",
 		action { do_install(); };
@@ -72,7 +72,7 @@ menu netbsd, title "  NetBSD-@@VERSION@@ Programme d'installation";
 	option "Menu utilitaire", sub menu utility;
 	option "Quitter le programme d'installation", exit;
 
-menu utility, title " Utilitaires NetBSD-@@VERSION@@", exit;
+menu utility, title "Utilitaires NetBSD-@@VERSION@@", exit;
 	/* option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
 	/* option "testfalse", action { run_prog(0, 0, "%s: kaput", "/bin/false"); }; */
 	option "Exécuter /bin/sh",
@@ -89,23 +89,23 @@ menu utility, title " Utilitaires NetBSD-@@VERSION@@", exit;
 	option "Arrêter le système", exit,
 		action (endwin) { run_prog(0, 0, NULL, "/sbin/halt"); };
 
-menu yesno, title "  oui ou non?  ";
+menu yesno, title "oui ou non?";
 	option "Oui", exit, action  {yesno = 1;};
 	option "Non",  exit, action  {yesno = 0;};
 
-menu noyes, title "  oui ou non?  ";
+menu noyes, title "oui ou non?";
 	option "Non",  exit, action  {yesno = 0;};
 	option "Oui", exit, action  {yesno = 1;};
 
-menu ok, title "  Presser entrée pour continuer ";
+menu ok, title "Presser entrée pour continuer";
 	option "ok", exit;
 
-menu layout, y=13, title  "  Choisissez votre type d'installation  ";
+menu layout, y=13, title  "Choisissez votre type d'installation";
 	option "Standard", 	  exit, action { layoutkind = 1; };
 	option "Standard avec X", exit, action { layoutkind = 2; };
 	option "Personnalisée", 	  exit, action { layoutkind = 3; };
 
-menu sizechoice, title  "  Choisissez votre unité d'espace disque";
+menu sizechoice, title  "Choisissez votre unité d'espace disque";
 	option "Megaoctets", exit, action 
 		{ sizemult = MEG / sectorsize;
 		  multname = msg_string(MSG_megname);
@@ -119,7 +119,7 @@ menu sizechoice, title  "  Choisissez votre unité d'espace disque";
 		  multname = msg_string(MSG_secname);
 		};
 
-menu fspartok, title "  Partitions ok?", y=15;
+menu fspartok, title "Partitions ok?", y=15;
 	display action  {
 		msg_display(MSG_fspart, multname);
 		disp_cur_fspart(-1, 0);
@@ -127,7 +127,7 @@ menu fspartok, title "  Partitions ok?", y=15;
 	option "Changer une partition", sub menu editfsparts;
 	option "Les Partitions sont ok", exit;
 
-menu edfspart, title "  Changer quoi? ", exit, y=15;
+menu edfspart, title "Changer quoi?", exit, y=15;
 	display action  {
 		msg_display (MSG_edfspart, 'a'+editpart);
 		disp_cur_fspart(editpart, 1);
@@ -169,7 +169,7 @@ menu edfspart, title "  Changer quoi? ", exit, y=15;
 			}
 		};
 
-menu selfskind, title "  Selection du type de système de fichier", y=15;
+menu selfskind, title "Selection du type de système de fichier", y=15;
 	option "4.2BSD", exit, action 
 			{ bsdlabel[editpart].pi_fstype = FS_BSDFFS;
 			  bsdlabel[editpart].pi_bsize  = 8192;
@@ -192,7 +192,7 @@ menu selfskind, title "  Selection du type de système de fichier", y=15;
 			};
 
 
-menu distmedium, title "  Sélection du media d'installation";
+menu distmedium, title "Sélection du media d'installation";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
 	option "ftp",  action   {
 				got_dist = get_via_ftp();
@@ -216,12 +216,12 @@ menu distmedium, title "  Sélection du media d'installation";
 				}, exit;
 	option "aucun",  action { nodist = 1; }, exit;
 
-menu distset, title " Sélection de la distribution";
+menu distset, title "Sélection de la distribution";
 	display action { msg_display (MSG_distset); };
 	option "Installation complète", exit;
 	option "Installation personnalisée", next menu md_distcustom;
 
-menu ftpsource, title "  Changer";
+menu ftpsource, title "Changer";
 	display action
 		{ msg_display (MSG_ftpsource, ftp_host, ftp_dir, ftp_user);
 		  if (strcmp(ftp_user, "ftp") == 0)
@@ -246,7 +246,7 @@ menu ftpsource, title "  Changer";
 		};
 	option "Récupérer la Distribution", exit;
 
-menu nfssource, title "  Changer";
+menu nfssource, title "Changer";
 	display action
 		{ msg_display (MSG_nfssource, nfs_host, nfs_dir); };
 	option "Serveur nfs", action
@@ -255,7 +255,7 @@ menu nfssource, title "  Changer";
 		{ msg_prompt (MSG_dir, NULL, nfs_dir, 255); };
 	option "Continuer", exit;
 
-menu nfsbadmount, title "  Que voulez vous faire?";
+menu nfsbadmount, title "Que voulez vous faire?";
 	option "Réessayer", exit, sub menu nfssource, action
 		{ yesno = 1; ignorerror = 0; };
 	option "Abandonner", exit, action
@@ -264,16 +264,16 @@ menu nfsbadmount, title "  Que voulez vous faire?";
 		{ yesno = 1; ignorerror = 1; };
 
 
-menu fdremount, title " Que voulez vous faire? ";
+menu fdremount, title "Que voulez vous faire?";
 	option "Réessayer", exit, action { yesno = 1; };
 	option "Annuler l'installation", exit, action { yesno = 0; };
 
-menu fdok, title "  Presser entrée pour continuer  ";
+menu fdok, title "Presser entrée pour continuer";
 	option "OK", exit, action { yesno = 1; };
 	option "Abandonner l'installation", exit, action { yesno = 0; };
 
 
-menu cdromsource, title "  Changer";
+menu cdromsource, title "Changer";
 	display action
 		{ msg_display (MSG_cdromsource, cdrom_dev, cdrom_dir); };
 	option "Device", action
@@ -282,7 +282,7 @@ menu cdromsource, title "  Changer";
 		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
 	option "Continuer", exit;
 
-menu cdrombadmount, title "  Que voulez-vous faire?";
+menu cdrombadmount, title "Que voulez-vous faire?";
 	option "Réessayer", exit, sub menu cdromsource, action
 		{ yesno = 1; ignorerror = 0; };
 	option "Abandonner", exit, action
@@ -290,7 +290,7 @@ menu cdrombadmount, title "  Que voulez-vous faire?";
 	option "Ignorer les erreurs, continuer quand même", exit, action
 		{ yesno = 1; ignorerror = 1; };
 
-menu localfssource, title "  Changer";
+menu localfssource, title "Changer";
 	display action
 		{ msg_display (MSG_localfssource, localfs_dev, localfs_fs, localfs_dir); };
 	option "Device", action
@@ -301,7 +301,7 @@ menu localfssource, title "  Changer";
 		{ msg_prompt (MSG_dir, localfs_dir, localfs_dir, STRSIZE); };
 	option "Continuer", exit;
 
-menu localfsbadmount, title "  Que voulez vous faire?";
+menu localfsbadmount, title "Que voulez vous faire?";
 	option "Réessayer", exit, sub menu localfssource, action
 		{ yesno = 1; ignorerror = 0; };
 	option "Abandonner", exit, action
@@ -317,7 +317,7 @@ menu localdirsource, title "Changer";
 		exit;
 	option "Continuer", exit;
 
-menu localdirbad, title "  Que voulez vous faire?";
+menu localdirbad, title "Que voulez vous faire?";
 	option "Changer le chemin d'accès",  action
 		{ yesno = 1;
 			msg_prompt(MSG_localdir, localfs_dir, localfs_dir, STRSIZE);
