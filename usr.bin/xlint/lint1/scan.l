@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.13 1998/12/20 19:05:19 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.14 2000/05/10 05:09:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.13 1998/12/20 19:05:19 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.14 2000/05/10 05:09:17 simonb Exp $");
 #endif
 
 #include <stdlib.h>
@@ -52,9 +52,6 @@ __RCSID("$NetBSD: scan.l,v 1.13 1998/12/20 19:05:19 christos Exp $");
 
 #define CHAR_MASK	(~(~0 << CHAR_BIT))
 #define YY_NO_UNPUT
-
-/* XXX declaration of strtouq() is missing in stdlib.h ? */
-extern	u_quad_t strtouq __P((const char *, char **, int));
 
 /* Current position (its also updated when an included file is parsed) */
 pos_t	curr_pos = { 1, "", 0 };
