@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcvar.h,v 1.5 2003/11/22 03:58:52 sekiya Exp $	*/
+/*	$NetBSD: hpcvar.h,v 1.6 2003/12/16 11:59:04 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -35,6 +35,73 @@
 #define HPCDEV_IP22		(1U << 2)	/* Indigo2 */
 #define HPCDEV_IP24		(1U << 3)	/* Indy */
 
+/* HPC 1.5/3 differ a bit, thus we need an abstraction layer */
+
+struct hpc_values {     
+	int		revision;
+        u_int32_t       scsi0_regs;
+        u_int32_t       scsi0_regs_size; 
+        u_int32_t       scsi0_cbp;
+        u_int32_t       scsi0_ndbp;
+        u_int32_t       scsi0_bc;
+        u_int32_t       scsi0_ctl;
+        u_int32_t       scsi0_gio;
+        u_int32_t       scsi0_dev;
+        u_int32_t       scsi0_dmacfg;
+        u_int32_t       scsi0_piocfg;
+        u_int32_t       scsi1_regs;
+        u_int32_t       scsi1_regs_size;
+        u_int32_t       scsi1_cbp;
+        u_int32_t       scsi1_ndbp;
+        u_int32_t       scsi1_bc;
+        u_int32_t       scsi1_ctl;
+        u_int32_t       scsi1_gio;
+        u_int32_t       scsi1_dev;
+        u_int32_t       scsi1_dmacfg;
+        u_int32_t       scsi1_piocfg;
+        u_int32_t       dmactl_dir;
+        u_int32_t       dmactl_flush;
+        u_int32_t       dmactl_active;
+        u_int32_t       dmactl_reset;
+        u_int32_t       enet_regs;
+        u_int32_t       enet_regs_size;
+        u_int32_t       enet_intdelay;
+        u_int32_t       enet_intdelayval;
+        u_int32_t       enetr_cbp;
+        u_int32_t       enetr_ndbp;
+        u_int32_t       enetr_bc;
+        u_int32_t       enetr_ctl;
+        u_int32_t       enetr_ctl_active;
+        u_int32_t       enetr_reset;
+        u_int32_t       enetr_dmacfg;
+        u_int32_t       enetr_piocfg;
+        u_int32_t       enetx_cbp;
+        u_int32_t       enetx_ndbp;
+        u_int32_t       enetx_bc;
+        u_int32_t       enetx_ctl;
+        u_int32_t       enetx_ctl_active;
+        u_int32_t       enetx_dev;
+        u_int32_t       enetr_fifo;
+        u_int32_t       enetr_fifo_size;
+        u_int32_t       enetx_fifo;
+        u_int32_t       enetx_fifo_size;
+        u_int32_t       scsi0_devregs_size;
+        u_int32_t       scsi1_devregs_size;
+        u_int32_t       enet_devregs;
+        u_int32_t       enet_devregs_size;
+        u_int32_t       pbus_fifo;
+        u_int32_t       pbus_fifo_size;
+        u_int32_t       pbus_bbram;
+	u_int32_t       scsi_dma_segs;
+        u_int32_t       scsi_dma_segs_size;
+        u_int32_t       clk_freq;
+        u_int32_t       dma_datain_cmd;
+        u_int32_t       dma_dataout_cmd;
+        u_int32_t       scsi_dmactl_flush;
+        u_int32_t       scsi_dmactl_active;
+        u_int32_t       scsi_dmactl_reset;
+};
+
 struct hpc_attach_args {
 	const char		*ha_name;	/* name of device */
 	bus_addr_t		ha_devoff;	/* offset of device */
@@ -44,6 +111,8 @@ struct hpc_attach_args {
 	bus_space_tag_t		ha_st;		/* HPC space tag */
 	bus_space_handle_t	ha_sh;		/* HPC space handle XXX */
 	bus_dma_tag_t		ha_dmat;	/* HPC DMA tag */
+
+	struct hpc_values	*hpc_regs;	/* HPC register definitions */
 };
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCVAR_H_ */
