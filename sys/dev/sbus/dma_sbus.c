@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.18 2002/12/10 13:44:47 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.19 2003/02/06 15:21:21 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.18 2002/12/10 13:44:47 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.19 2003/02/06 15:21:21 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.18 2002/12/10 13:44:47 pk Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
