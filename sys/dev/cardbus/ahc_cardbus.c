@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.9 2002/10/02 16:33:40 thorpej Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.10 2003/04/19 19:35:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.9 2002/10/02 16:33:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.10 2003/04/19 19:35:09 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.9 2002/10/02 16:33:40 thorpej Exp 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/cardbusdevs.h>
 
-#include <dev/ic/aic7xxxvar.h>
+#include <dev/ic/aic7xxx_osm.h>
+#include <dev/ic/aic7xxx_inline.h>
 
-#include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 
 #define	AHC_CARDBUS_IOBA	0x10
 #define	AHC_CARDBUS_MMBA	0x14
@@ -89,6 +89,7 @@ struct ahc_cardbus_softc {
 int	ahc_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	ahc_cardbus_attach __P((struct device *, struct device *, void *));
 int	ahc_cardbus_detach __P((struct device *, int));
+int	ahc_activate(struct device *self, enum devact act);
 
 CFATTACH_DECL(ahc_cardbus, sizeof(struct ahc_cardbus_softc),
     ahc_cardbus_match, ahc_cardbus_attach, ahc_cardbus_detach, ahc_activate);
@@ -123,9 +124,7 @@ ahc_cardbus_attach(parent, self, aux)
 	bus_space_handle_t bsh;
 	pcireg_t reg;
 	u_int sxfrctl1 = 0;
-	ahc_chip ahc_t = AHC_NONE;
-	ahc_feature ahc_fe = AHC_FENONE;
-	ahc_flag ahc_f = AHC_FNONE; 
+	u_char sblkctl;
 
 
 	csc->sc_ct = ct;
@@ -180,21 +179,20 @@ ahc_cardbus_attach(parent, self, aux)
 	/*
 	 * ADP-1480 is always an AIC-7860.
 	 */
-	ahc_t = AHC_AIC7860;
-	ahc_fe = AHC_AIC7860_FE;
+	ahc->chip = AHC_AIC7860 | AHC_PCI;
+	ahc->features = AHC_AIC7860_FE|AHC_REMOVABLE;
+	ahc->bugs |= AHC_TMODE_WIDEODD_BUG|AHC_CACHETHEN_BUG|AHC_PCI_MWI_BUG;
+	if (PCI_REVISION(ca->ca_class) >= 1)
+		ahc->bugs |= AHC_PCI_2_1_RETRY_BUG;
 
 	/*
 	 * On all CardBus adapters, we allow SCB paging.
 	 */
-	ahc_f = AHC_PAGESCBS;
-
-	if (ahc_alloc(ahc, bsh, bst, ca->ca_dmat, ahc_t | AHC_PCI /* XXX */,
-	    ahc_fe, ahc_f) < 0) {
-		printf("%s: unable to initialize softc\n", ahc_name(ahc));
-		return;
-	}
+	ahc->flags = AHC_PAGESCBS;
 
 	ahc->channel = 'A';
+
+	ahc_intr_enable(ahc, FALSE);
 
 	ahc_reset(ahc);
 
@@ -210,53 +208,30 @@ ahc_cardbus_attach(parent, self, aux)
 	}
 	printf("%s: interrupting at %d\n", ahc_name(ahc), ca->ca_intrline);
 
+	ahc_check_extport(ahc, &sxfrctl1);
 	/*
-	 * Do chip-specific initialization.
+	 * Take the LED out of diagnostic mode.
 	 */
-	{
-		u_char sblkctl;
-		const char *id_string;
+	sblkctl = ahc_inb(ahc, SBLKCTL);
+	ahc_outb(ahc, SBLKCTL, (sblkctl & ~(DIAGLEDEN|DIAGLEDON)));
 
-		switch (ahc->chip & AHC_CHIPID_MASK) {
-		case AHC_AIC7860:
-			id_string = "aic7860 ";
-			check_extport(ahc, &sxfrctl1);
-			break;
+	/*
+	 * I don't know where this is set in the SEEPROM or by the
+	 * BIOS, so we default to 100%.
+	 */
+	ahc_outb(ahc, DSPCISTATUS, DFTHRSH_100);
 
-		default:
-			printf("%s: unknown controller type\n", ahc_name(ahc));
-			ahc_free(ahc);
-			return;
-		}
-
+	if (ahc->flags & AHC_USEDEFAULTS) {
 		/*
-		 * Take the LED out of diagnostic mode.
+		 * We can't "use defaults", as we have no way
+		 * of knowing what default settings hould be.
 		 */
-		sblkctl = ahc_inb(ahc, SBLKCTL);
-		ahc_outb(ahc, SBLKCTL, (sblkctl & ~(DIAGLEDEN|DIAGLEDON)));
-
-		/*
-		 * I don't know where this is set in the SEEPROM or by the
-		 * BIOS, so we default to 100%.
-		 */
-		ahc_outb(ahc, DSPCISTATUS, DFTHRSH_100);
-
-		if (ahc->flags & AHC_USEDEFAULTS) {
-			/*
-			 * We can't "use defaults", as we have no way
-			 * of knowing what default settings hould be.
-			 */
-			printf("%s: CardBus device requires an SEEPROM\n",
-			    ahc_name(ahc));
-			return;
-		}
-
-		printf("%s: %s", ahc_name(ahc), id_string);
+		printf("%s: CardBus device requires an SEEPROM\n",
+		    ahc_name(ahc));
+		return;
 	}
 
-	/*
-	 * XXX does this card have external SRAM? - fvdl
-	 */
+	printf("%s: aic7860", ahc_name(ahc));
 
 	/*
 	 * Record our termination setting for the
@@ -283,7 +258,7 @@ ahc_cardbus_detach(self, flags)
 
 	int rv;
 
-	rv = ahc_detach(ahc, flags);
+	rv = ahc_detach((void *)ahc, flags);
 	if (rv)
 		return rv;
 
@@ -304,4 +279,28 @@ ahc_cardbus_detach(self, flags)
 	}
 
 	return (0);
+}
+
+
+int
+ahc_activate(struct device *self, enum devact act)
+{
+	struct ahc_cardbus_softc *csc = (void*)self;
+	struct ahc_softc *ahc = &csc->sc_ahc;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (ahc->sc_child != NULL)
+			rv = config_deactivate(ahc->sc_child);
+		break;
+	}
+	splx(s);
+
+	return (rv);
 }
