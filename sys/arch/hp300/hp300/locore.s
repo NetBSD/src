@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93.2.1.2.1 1999/06/21 00:49:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.93.2.1.2.2 1999/08/02 19:46:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -243,10 +243,14 @@ Lnot68030:
 	jeq	Lisa425
 	cmpb	#MMUID_425_S,d0		| how about 425s?
 	jeq	Lisa425
+	cmpb	#MMUID_425_E,d0		| or maybe a 425e?
+	jeq	Lisa425
 	cmpb	#MMUID_433_T,d0		| or a 433t?
 	jeq	Lisa433
-	cmpb	#MMUID_433_S,d0		| last chance...
+	cmpb	#MMUID_433_S,d0		| or a 433s?
 	jeq	Lisa433
+	cmpb	#MMUID_385,d0		| or a 385?
+	jeq	Lisa385
 	movl	#HP_380,a0@		| guess we're a 380
 	jra	Lstart1
 Lisa425:
@@ -254,6 +258,9 @@ Lisa425:
 	jra	Lstart1
 Lisa433:
 	movl	#HP_433,a0@
+	jra	Lstart1
+Lisa385:
+	movl	#HP_385,a0@
 	jra	Lstart1
 
 	/*
@@ -1791,6 +1798,16 @@ ENTRY_NOPROFILE(_delay)
 	movl	sp@(4),d0
 	| d1 = delay_divisor
 	movl	_C_LABEL(delay_divisor),d1
+	jra	L_delay			/* Jump into the loop! */
+
+	/*
+	 * Align the branch target of the loop to a half-line (8-byte)
+	 * boundary to minimize cache effects.  This guarantees both
+	 * that there will be no prefetch stalls due to cache line burst
+	 * operations and that the loop will run from a single cache
+	 * half-line.
+	 */
+	.align	8
 L_delay:
 	subl	d1,d0
 	jgt	L_delay

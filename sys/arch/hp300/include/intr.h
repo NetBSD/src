@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.4.10.1 1999/06/21 00:49:22 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.10.2 1999/08/02 19:46:12 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -127,31 +127,34 @@ struct isr {
 #define	spl7()	_spl(PSL_S|PSL_IPL7)
 
 /*
- * These four globals contain the appropriate PSL_S|PSL_IPL? values
+ * This array contains the appropriate PSL_S|PSL_IPL? values
  * to raise interrupt priority to the requested level.
  */
-extern	unsigned short hp300_bioipl;
-extern	unsigned short hp300_netipl;
-extern	unsigned short hp300_ttyipl;
-extern	unsigned short hp300_impipl;
+extern unsigned short hp300_ipls[];
+
+#define	HP300_IPL_SOFT		0
+#define	HP300_IPL_BIO		1
+#define	HP300_IPL_NET		2
+#define	HP300_IPL_TTY		3
+#define	HP300_IPL_IMP		4
+#define	HP300_IPL_CLOCK		5
+#define	HP300_IPL_HIGH		6
+#define	HP300_NIPLS		7
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splhil()	_splraise(PSL_S|PSL_IPL1)
 #define	splkbd()	splhil()
-#define	splsoft()	spl1()
 
 /* These spl calls are used by machine-independent code. */
-#define	splsoftclock()	splsoft()
-#define	splsoftnet()	splsoft()
-#define	splbio()	_splraise(hp300_bioipl)
-#define	splnet()	_splraise(hp300_netipl)
-#define	spltty()	_splraise(hp300_ttyipl)
-#define	splimp()	_splraise(hp300_impipl)
+#define	splsoftclock()	spl1()		/* will lower interrupt level */
+#define	splsoftnet()	_splraise(PSL_S|PSL_IPL1)
+#define	splbio()	_splraise(hp300_ipls[HP300_IPL_BIO])
+#define	splnet()	_splraise(hp300_ipls[HP300_IPL_NET])
+#define	spltty()	_splraise(hp300_ipls[HP300_IPL_TTY])
+#define	splimp()	_splraise(hp300_ipls[HP300_IPL_IMP])
 #define	splclock()	spl6()
-#define	splstatclock()	spl6()
-#define	splvm()		spl6()
+#define	splstatclock()	splclock()
 #define	splhigh()	spl7()
-#define	splsched()	spl7()
 
 /* watch out for side effects */
 #define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())

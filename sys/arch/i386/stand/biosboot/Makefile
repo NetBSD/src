@@ -1,17 +1,21 @@
-#	$NetBSD: Makefile,v 1.19.4.1 1999/06/21 00:50:02 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19.4.2 1999/08/02 19:50:36 thorpej Exp $
 
 S=	${.CURDIR}/../../../../
 
-BASE= biosboot
+BASE?= biosboot
 PROG= ${BASE}.sym
 MKMAN=	no
 NEWVERSWHAT=	"BIOS Boot"
+
+.if (${BASE} != "biosboot")
+.PATH: ${.CURDIR}/../biosboot/
+.endif
 
 SRCS= main.c devopen.c conf.c exec.c
 
 CLEANFILES+= ${BSSTART}
 
-CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART -DDEBUG
+CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART
 
 #Sample use of serial line debugger
 #CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0KBD
@@ -19,6 +23,10 @@ CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART -DDEBUG
 #CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_AUTO
 #	and maybe
 #CPPFLAGS+= -DDIRECT_SERIAL -DCOMCONS_KEYPRESS -DCONSPEED=57600
+
+.if (${BASE} == "biosboot_com0")
+CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0 -DDIRECT_SERIAL
+.endif
 
 CPPFLAGS+= -DPASS_BIOSGEOM
 #uncomment if there are problems with memory detection
@@ -35,6 +43,10 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 
+.if (${BASE} == "biosboot")
 VERSIONFILE= ${.CURDIR}/version
+.else
+VERSIONFILE= ${.CURDIR}/../biosboot/version
+.endif
 
 .include "../Makefile.booters"

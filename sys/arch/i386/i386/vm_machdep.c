@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75.2.1.2.1 1999/06/21 00:50:00 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75.2.1.2.2 1999/08/02 19:50:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -216,6 +216,20 @@ cpu_exit(p)
 }
 
 /*
+ * cpu_wait is called from reaper() to let machine-dependent
+ * code free machine-dependent resources that couldn't be freed
+ * in cpu_exit().
+ */
+void
+cpu_wait(p)
+	struct proc *p;
+{
+
+	/* Nuke the TSS. */
+	tss_free(&p->p_addr->u_pcb);
+}
+
+/*
  * Dump the machine specific segment at the start of a core dump.
  */     
 struct md_core {
@@ -335,12 +349,11 @@ int
 kvtop(addr)
 	register caddr_t addr;
 {
-	vaddr_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
-	if (va == 0)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -378,8 +391,8 @@ vmapbuf(bp, len)
 	 * mapping is removed).
 	 */
 	while (len) {
-		fpa = pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
-				   faddr);
+		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr, &fpa);
 		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE, 0);
 		faddr += PAGE_SIZE;
