@@ -1,4 +1,4 @@
-#	$NetBSD: rc.local,v 1.18 1997/02/25 07:37:19 mikel Exp $
+#	$NetBSD: rc.local,v 1.19 1997/03/12 19:23:32 mycroft Exp $
 #
 # site-specific startup actions, daemons
 #
@@ -19,7 +19,7 @@ rm -f $T
 echo -n 'starting local daemons:'
 
 # Kerberos runs ONLY on the Kerberos server machine
-if [ X${kerberos_server} = X"YES" ]; then
+if [ "$kerberos_server" = YES ]; then
 	echo -n ' kerberos';	kerberos >> /var/log/kerberos.log &
 	echo -n ' kadmind';	kadmind -n >> /var/log/kadmind.log &
 fi
