@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1998/03/31 05:29:21 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1998/08/13 17:41:10 rvb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -223,7 +223,11 @@ main()
 	int currname;
 	char c;
 
+#ifdef	SUPPORT_SERIAL
+	initio(SUPPORT_SERIAL);
+#else
 	initio(CONSDEV_PC);
+#endif
 	gateA20();
 
 	print_banner();
