@@ -25,7 +25,7 @@ Boston, MA 02111-1307, USA.  */
 /* No SDB debugging info.  */
 #undef SDB_DEBUGGING_INFO
 
-/* Undefine some macros defined in both sh.h and svr4.h.  */
+/* Undefine some macros defined in both sh.h and elfos.h.  */
 #undef IDENT_ASM_OP
 #undef ASM_FILE_END
 #undef ASM_OUTPUT_SOURCE_LINE
@@ -40,7 +40,8 @@ Boston, MA 02111-1307, USA.  */
 #undef MAX_OFILE_ALIGNMENT
 
 /* Be ELF-like.  */
-#include "svr4.h"
+#include <dbxelf.h>
+#include <elfos.h>
 
 /* Get generic NetBSD ELF definitions.  */
 #define NETBSD_ELF
@@ -75,6 +76,7 @@ Boston, MA 02111-1307, USA.  */
 %{mhitachi:-D__HITACHI__}"
 
 /* Let code know that this is ELF.  */
+#undef CPP_PREDEFINES
 #define CPP_PREDEFINES \
 "-D__sh__ -D__NetBSD__ -D__ELF__ -D__NO_LEADING_UNDERSCORES__ \
 -D__KPRINTF_ATTRIBUTE__ \
@@ -130,10 +132,6 @@ do {									\
   text_section ();							\
   fprintf ((FILE), "\t.stabs \"\",%d,0,0,Letext\nLetext:\n", N_SO);	\
 } while (0)
-
-/* HANDLE_SYSV_PRAGMA (defined by svr4.h) takes precedence over HANDLE_PRAGMA.
-   We want to use the HANDLE_PRAGMA from sh.h.  */
-#undef HANDLE_SYSV_PRAGMA
 
 /* XXX shouldn't use "1f"-style labels */
 #undef FUNCTION_PROFILER
