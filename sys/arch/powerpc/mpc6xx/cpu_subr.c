@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.10 2002/03/03 07:09:01 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.11 2002/03/03 07:31:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -45,7 +45,15 @@
 #include <powerpc/mpc6xx/hid_601.h>
 #include <powerpc/spr.h>
 
+#include <dev/sysmon/sysmonvar.h>
+
 static void cpu_config_l2cr(int);
+static void cpu_print_speed(void);
+static void cpu_tau_setup(struct cpu_info *);
+static int cpu_tau_gtredata __P((struct sysmon_envsys *,
+    struct envsys_tre_data *));
+static int cpu_tau_streinfo __P((struct sysmon_envsys *,
+    struct envsys_basic_info *));
 
 int cpu;
 int ncpus;
@@ -201,13 +209,24 @@ cpu_attach_common(struct device *self, int id)
 #endif
 
 	/*
-	 * Display cache configuration.
+	 * Display speed and cache configuration.
 	 */
 	if (vers == MPC750 || vers == MPC7400 ||
 	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
 		printf("%s", self->dv_xname);
+		cpu_print_speed();
+		printf("%s", self->dv_xname);
 		cpu_config_l2cr(vers);
 	}
+
+	/*
+	 * Attach MPC750 temperature sensor to the envsys subsystem.
+	 * XXX the 74xx series also has this sensor, but it is not
+	 * XXX supported by Motorola and may return values that are off by 
+	 * XXX 35-55 degrees C.
+	 */
+	if (vers == MPC750)
+		cpu_tau_setup(ci);
 
 	evcnt_attach_dynamic(&ci->ci_ev_traps, EVCNT_TYPE_TRAP,
 		NULL, self->dv_xname, "traps");
@@ -369,4 +388,122 @@ cpu_config_l2cr(int vers)
 		printf(": L2 cache not enabled");
 
 	printf("\n");
+}
+
+void
+cpu_print_speed(void)
+{
+	u_int64_t cps;
+
+	mtspr(SPR_MMCR0, SPR_MMCR0_FC);
+	mtspr(SPR_PMC1, 0);
+	mtspr(SPR_MMCR0, SPR_MMCR0_PMC1SEL(PMCN_CYCLES));
+	delay(100000);
+	cps = (mfspr(SPR_PMC1) * 10) + 4999;
+
+	printf(": %qd.%02qd MHz\n", cps / 1000000, (cps / 10000) % 100);
+}
+
+const struct envsys_range cpu_tau_ranges[] = {
+	{ 0, 0, ENVSYS_STEMP}
+};
+
+struct envsys_basic_info cpu_tau_info[] = {
+	{ 0, ENVSYS_STEMP, "CPU temp", 0, 0, ENVSYS_FVALID}
+};
+
+void
+cpu_tau_setup(struct cpu_info *ci)
+{
+	struct sysmon_envsys *sme;
+	int error;
+
+	sme = &ci->ci_sysmon;
+	sme->sme_nsensors = 1;
+	sme->sme_envsys_version = 1000;
+	sme->sme_ranges = cpu_tau_ranges;
+	sme->sme_sensor_info = cpu_tau_info;
+	sme->sme_sensor_data = &ci->ci_tau_info;
+	
+	sme->sme_sensor_data->sensor = 0;
+	sme->sme_sensor_data->warnflags = ENVSYS_WARN_OK;
+	sme->sme_sensor_data->validflags = ENVSYS_FVALID|ENVSYS_FCURVALID;
+	sme->sme_cookie = ci;
+	sme->sme_gtredata = cpu_tau_gtredata;
+	sme->sme_streinfo = cpu_tau_streinfo;
+
+	if ((error = sysmon_envsys_register(sme)) != 0)
+		printf("%s: unable to register with sysmon (%d)\n",
+		    ci->ci_dev->dv_xname, error);
+}
+
+
+/* Find the temperature of the CPU. */
+int
+cpu_tau_gtredata(sme, tred)
+	 struct sysmon_envsys *sme;
+	 struct envsys_tre_data *tred;
+{
+	struct cpu_info *ci;
+	int i, threshold, count;
+
+	if (tred->sensor != 0) {
+		tred->validflags = 0;
+		return 0;
+	}
+	
+	threshold = 64; /* Half of the 7-bit sensor range */
+	mtspr(SPR_THRM1, 0);
+	mtspr(SPR_THRM2, 0);
+	/* XXX This counter is supposed to be "at least 20 microseonds, in
+	 * XXX units of clock cycles". Since we don't have convenient
+	 * XXX access to the CPU speed, set it to a conservative value,
+	 * XXX that is, assuming a fast (1GHz) G3 CPU (As of February 2002,
+	 * XXX the fastest G3 processor is 700MHz) . The cost is that
+	 * XXX measuring the temperature takes a bit longer.
+	 */
+        mtspr(SPR_THRM3, SPR_THRM_TIMER(20000) | SPR_THRM_ENABLE); 
+
+	/* Successive-approximation code adapted from Motorola
+	 * application note AN1800/D, "Programming the Thermal Assist
+	 * Unit in the MPC750 Microprocessor".
+	 */
+	for (i = 4; i >= 0 ; i--) {
+		mtspr(SPR_THRM1, 
+		    SPR_THRM_THRESHOLD(threshold) | SPR_THRM_VALID);
+		count = 0;
+		while ((count < 100) && 
+		    ((mfspr(SPR_THRM1) & SPR_THRM_TIV) == 0)) {
+			count++;
+			delay(1);
+		}
+		if (mfspr(SPR_THRM1) & SPR_THRM_TIN) {
+			/* The interrupt bit was set, meaning the 
+			 * temperature was above the threshold 
+			 */
+			threshold += 2 << i;
+		} else {
+			/* Temperature was below the threshold */
+			threshold -= 2 << i;
+		}
+	}
+	threshold += 2;
+
+	ci = (struct cpu_info *)sme->sme_cookie;
+	/* Convert the temperature in degrees C to microkelvin */
+	ci->ci_tau_info.cur.data_us = (threshold * 1000000) + 273150000;
+	
+	*tred = ci->ci_tau_info;
+
+	return 0;
+}
+
+int
+cpu_tau_streinfo(sme, binfo)
+	 struct sysmon_envsys *sme;
+	 struct envsys_basic_info *binfo;
+{
+
+	/* There is nothing to set here. */
+	return (EINVAL);
 }
