@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.8 2003/07/22 12:10:20 simonb Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.9 2003/09/06 14:38:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.8 2003/07/22 12:10:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.9 2003/09/06 14:38:43 fvdl Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
@@ -223,6 +223,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		    (pin << APIC_INT_PIN_SHIFT);
 		mpi->bus_pin = isa_ovr->Source;
 		mpi->ioapic_pin = pin;
+		mpi->sflags |= MPI_OVR;
 		mpi->redir = 0;
 		switch (isa_ovr->Polarity) {
 		case MPS_INTPO_ACTHI:
@@ -637,7 +638,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 		panic("can't allocate mp_busses");
 
 	mp_intrs = malloc(sizeof(struct mp_intr_map) * mp_nintr, M_DEVBUF,
-	    M_NOWAIT|M_ZERO);
+	    M_NOWAIT | M_ZERO);
 	if (mp_intrs == NULL)
 		panic("can't allocate mp_intrs");
 
