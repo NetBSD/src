@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.10 2000/07/15 19:59:27 tron Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.11 2000/07/15 20:57:24 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@ epic_pci_attach(parent, self, aux)
 			return;
 		}
 		if (reg != 0) {
-			printf(": waking up from power state D%d\n%s: ",
+			printf(": waking up from power state D%d\n%s",
 			    reg, sc->sc_dev.dv_xname);
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
 		}
