@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1999/02/16 21:21:09 tv Exp $
+#	$NetBSD: Makefile,v 1.29 1999/03/13 10:57:38 drochner Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -99,10 +99,12 @@ init.o: ${OBJS:Ninit.o} Makefile
 
 ${OBJS}: nm.h tm.h xm.h
 
-nm.h: ${DIST}/gdb/config/${MACHINE_GNU_ARCH}/nm-nbsd.h
+ARCHSUBDIR= ${MACHINE_GNU_ARCH:C/mipse[bl]/mips/}
+
+nm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/nm-nbsd.h
 	@-rm -f $@
 	cp $> $@
 
-tm.h: ${DIST}/gdb/config/${MACHINE_GNU_ARCH}/tm-nbsd.h
+tm.h: ${DIST}/gdb/config/${ARCHSUBDIR}/tm-nbsd.h
 	@-rm -f $@
 	cp $> $@
