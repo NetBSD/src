@@ -31,17 +31,27 @@
  * SUCH DAMAGE.
  *
  *	@(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.10 1994/04/22 02:54:29 chopps Exp $
+ *	$Id: swapgeneric.c,v 1.11 1994/05/08 05:52:29 chopps Exp $
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
-#include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>		/* XXXX and all that uses it */
+#include <sys/proc.h>		/* XXXX and all that uses it */
+#include <sys/disk.h>
 
-#include <amiga/dev/device.h>
+#include "fd.h"
+#include "sd.h"
+#include "cd.h"
 
+/*
+ * Only boot on ufs. (XXX?)
+ */
 extern int ufs_mountroot();
 int (*mountroot)() = ufs_mountroot;
 
@@ -49,94 +59,143 @@ int (*mountroot)() = ufs_mountroot;
  * Generic configuration;  all in one
  */
 dev_t	rootdev = NODEV;
-dev_t	argdev = NODEV;
 dev_t	dumpdev = NODEV;
-int	nswap;
+
 struct	swdevt swdevt[] = {
-	{ -1,	1,	0 },
-	{ 0,	0,	0 },
+	{ NODEV,	1,	0 },
+	{ NODEV,	0,	0 },
+	{ 0,		0,	0 },
 };
-int	dmmin, dmmax, dmtext;
 
-extern	struct driver fddriver;
-extern	struct driver sddriver;
-extern struct amiga_ctlr amiga_cinit[];
-extern struct amiga_device amiga_dinit[];
+#if NFD > 0
+extern	struct cfdriver fdcd;
+#endif
+#if NSD > 0
+extern	struct cfdriver sdcd;
+#endif
+#if NCD > 0
+extern	struct cfdriver sdcd;
+#endif
 
-struct	genericconf {
-	caddr_t	gc_driver;
-	char	*gc_name;
-	dev_t	gc_root;
-} genericconf[] = {
-	{ (caddr_t)&fddriver,	"fd",	makedev(2, 0),	},
-	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
+struct genericconf {
+	struct cfdriver *gc_driver;
+	dev_t gc_root;
+};
+
+/*
+ * the system will assign rootdev to the first partition 'a' 
+ * found with FS_BSDFFS fstype. so these should be ordered
+ * in prefernece of boot. however it does walk units backwards
+ * to remain compatible with the old amiga method of picking
+ * the last root found.
+ */
+struct genericconf genericconf[] = {
+#if NFD > 0
+	{&fdcd,	makedev(2, 0)},
+#endif
+#if NSD > 0
+	{&sdcd,	makedev(4, 0)},
+#endif
+#if NCD > 0
+	{&cdcd,	makedev(6, 0)},
+#endif
 	{ 0 },
 };
 
+struct genericconf *
+getgenconf(bp)
+	char *bp;
+{
+	char *cp;
+	struct genericconf *gc;
+
+	for (;;) {
+		printf("root device> ");
+		gets(bp);
+		for (gc = genericconf; gc->gc_driver; gc++)
+			if (gc->gc_driver->cd_name[0] == bp[0] &&
+			    gc->gc_driver->cd_name[1] == bp[1])
+				break;
+		if (gc->gc_driver == NULL) {
+			printf("use one of:");
+			for (gc = genericconf; gc->gc_driver; gc++)
+				printf(" %s%%d", gc->gc_driver->cd_name);
+			printf("\n");
+			continue;
+		}
+		cp = bp + 2;
+		if (*cp >= '0' && *cp <= '9')
+			break;
+		printf("bad/missing unit number\n");
+	}
+	return(gc);
+}
+
 setconf()
 {
-	register struct amiga_ctlr *hc;
-	register struct amiga_device *hd;
-	register struct genericconf *gc;
-	register char *cp;
-	int unit, swaponroot = 0;
-
-#ifdef DEBUG
-	extern int acdebug;
-
-	if (acdebug > 1)
-	  printf ("setconf: rootdev = 0x%x, swaponroot = %d\n", rootdev, swaponroot);
-#endif
-
+	struct dkdevice *dkp;
+	struct partition *pp;
+	struct genericconf *gc;
+	struct bdevsw *bdp;
+	int unit, swaponroot;
+	char name[128];
+	char *cp;
+	
+	swaponroot = 0;
 
 	if (rootdev != NODEV)
-		goto doswap;
+		goto justdoswap;
+
 	unit = 0;
 	if (boothowto & RB_ASKNAME) {
-		char name[128];
-retry:
-		printf("root device? ");
-		gets(name);
-		for (gc = genericconf; gc->gc_driver; gc++)
-			if (gc->gc_name[0] == name[0] &&
-			    gc->gc_name[1] == name[1])
-				goto gotit;
-		printf("use one of:");
-		for (gc = genericconf; gc->gc_driver; gc++)
-			printf(" %s%%d", gc->gc_name);
-		printf("\n");
-		goto retry;
-gotit:
-		cp = name + 1;
-		if (*++cp < '0' || *cp > '9') {
-			printf("bad/missing unit number\n");
-			goto retry;
-		}
+		gc = getgenconf(name);
+		cp = name + 2;
 		while (*cp >= '0' && *cp <= '9')
 			unit = 10 * unit + *cp++ - '0';
 		if (*cp == '*')
-			swaponroot++;
+			swaponroot = 1;
+		unit &= 0x7;
 		goto found;
 	}
 	for (gc = genericconf; gc->gc_driver; gc++) {
-		for (hd = amiga_dinit; hd->amiga_driver; hd++) {
-			if (hd->amiga_alive == 0)
+		for (unit = gc->gc_driver->cd_ndevs - 1; unit >= 0; unit--) { 
+			if (gc->gc_driver->cd_devs[unit] == NULL)
 				continue;
-			if (hd->amiga_unit == 0 && hd->amiga_driver ==
-			    (struct driver *)gc->gc_driver) {
-				printf("root on %s0\n", hd->amiga_driver->d_name);
-				goto found;
-			}
+			/*
+			 * this is a hack these drivers should use
+			 * dk_dev and not another instance directly above.
+			 */
+			dkp = (struct dkdevice *)
+			   ((struct device *)gc->gc_driver->cd_devs[unit] + 1);
+			if (dkp->dk_driver == NULL ||
+			    dkp->dk_driver->d_strategy == NULL)
+				continue;
+			for (bdp = bdevsw; bdp < (bdevsw + nblkdev); bdp++)
+				if (bdp->d_strategy ==
+				    dkp->dk_driver->d_strategy)
+					break;
+			if (bdp->d_open(MAKEDISKDEV(major(gc->gc_root),
+			    unit, 3), FREAD | FNONBLOCK, 0, curproc))
+				continue;
+			bdp->d_close(MAKEDISKDEV(major(gc->gc_root), unit, 0),
+			    FREAD | FNONBLOCK, 0, curproc);
+			pp = &dkp->dk_label.d_partitions[0];
+			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
+				continue;
+			goto found;
 		}
 	}
 	printf("no suitable root\n");
 	asm("stop #0x2700");
+	/*NOTREACHED*/
 found:
-	gc->gc_root = makedev(major(gc->gc_root), unit*8);
+
+	gc->gc_root = MAKEDISKDEV(major(gc->gc_root), unit, 0);
 	rootdev = gc->gc_root;
-doswap:
-	swdevt[0].sw_dev = argdev = dumpdev =
-	    makedev(major(rootdev), minor(rootdev)+1);
+
+justdoswap:
+	swdevt[0].sw_dev = dumpdev = MAKEDISKDEV(major(rootdev), 
+	    DISKUNIT(rootdev), 1);
 	/* swap size and dumplo set during autoconfigure */
 	if (swaponroot)
 		rootdev = dumpdev;
@@ -154,7 +213,7 @@ gets(cp)
 		switch (c) {
 		case '\n':
 		case '\r':
-			*lp++ = '\0';
+			*lp = 0;
 			return;
 		case '\b':
 		case '\177':

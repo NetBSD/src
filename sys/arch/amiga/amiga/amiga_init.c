@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.12 1994/04/18 04:08:43 chopps Exp $
+ *	$Id: amiga_init.c,v 1.13 1994/05/08 05:52:11 chopps Exp $
  */
 
 
@@ -32,8 +32,9 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h> 
 
-#include <amiga/amiga/configdev.h>
+#include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/memlist.h>
+#include <amiga/dev/ztwobusvar.h>
 
 #ifdef DEBUG
 #include <amiga/amiga/color.h>
@@ -52,13 +53,7 @@ extern u_int	virtual_avail;
 /* virtual addresses specific to the AMIGA */
 u_int CIAADDR, CUSTOMADDR; /* SCSIADDR;*/
 
-/* virtual address space(s) allocated to boards */
-caddr_t ZORRO2ADDR;  /* add one for zorro3 if necessary */
-
 u_int CHIPMEMADDR;
-
-u_int Z2MEMADDR;			/* XXX */
-u_int Z2MEMSIZE;			/* XXX */
 
 /* some addresses used often, for performance */
 caddr_t	INTREQRaddr, INTREQWaddr;
@@ -73,9 +68,6 @@ void *chipmem_start = (void *)0x400, *chipmem_end;
 
 void *z2mem_start, *z2mem_end;		/* XXX */
 int use_z2_mem = 1;			/* XXX */
-
-int num_ConfigDev;
-struct ConfigDev *ConfigDev;
 
 /* Called by the console et al to steal chip memory during initialization */
 void *
@@ -177,13 +169,13 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
   /* the kernel ends at end(), plus the ConfigDev structures we placed 
      there in the loader. Correct for this now. */
   if (esym == NULL) {
-    num_ConfigDev = *(int *)end;
-    ConfigDev = (struct ConfigDev *) ((int)end + 4);
-    end_loaded = (u_int)end + 4 + num_ConfigDev * sizeof(struct ConfigDev);
+    ncfdev = *(int *)end;
+    cfdev = (struct cfdev *) ((int)end + 4);
+    end_loaded = (u_int)end + 4 + ncfdev * sizeof(struct cfdev);
   } else {
-    num_ConfigDev = *(int *)esym;
-    ConfigDev = (struct ConfigDev *) ((int)esym + 4);
-    end_loaded = (u_int)esym + 4 + num_ConfigDev * sizeof(struct ConfigDev);
+    ncfdev = *(int *)esym;
+    cfdev = (struct cfdev *) ((int)esym + 4);
+    end_loaded = (u_int)esym + 4 + ncfdev * sizeof(struct cfdev);
   }
 
   mem_list = (struct Mem_List *) end_loaded;
@@ -199,7 +191,7 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
       if (mem_list->mem_seg[i].mem_start == fastram_start)
         continue;
       z2mem_start = (void *)mem_list->mem_seg[i].mem_start;
-      Z2MEMSIZE = mem_list->mem_seg[i].mem_size;
+      ZTWOMEMSIZE = mem_list->mem_seg[i].mem_size;
       z2mem_end = z2mem_start + mem_list->mem_seg[i].mem_size;
       break;
     }
@@ -212,8 +204,6 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
     boothowto = RB_SINGLE;
   }
 #endif
-
-/*  printf ("numCD=%d, end=0x%x, end_loaded=0x%x\n", num_ConfigDev, end, end_loaded);*/
 
   /* update these as soon as possible! */
   PAGE_SIZE  = NBPG;
@@ -260,9 +250,9 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
 #if 0
   pagetable_extra = CHIPMEMSIZE + CIASIZE + CUSTOMSIZE + SCSISIZE;
 #else
-    pagetable_extra = CHIPMEMSIZE + CIASIZE + ZORRO2SIZE;
+    pagetable_extra = CHIPMEMSIZE + CIASIZE + ZTWOROMSIZE;
 #endif
-  pagetable_extra += (Z2MEMSIZE) / AMIGA_PAGE_SIZE; /* XXX */
+  pagetable_extra += (ZTWOMEMSIZE) / AMIGA_PAGE_SIZE; /* XXX */
   pagetable_size  = (Sysptsize + (pagetable_extra + NPTEPG-1)/NPTEPG) << PGSHIFT;
   vstart         += pagetable_size;
   pstart         += pagetable_size;
@@ -445,9 +435,9 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
       pg_proto += AMIGA_PAGE_SIZE;
     }
 #else
-  pg_proto  = ZORRO2BASE | PG_RW | PG_CI | PG_V;
+  pg_proto  = ZTWOROMBASE | PG_RW | PG_CI | PG_V;
   zorro2_pt = (u_int) pg;
-  while (pg_proto < ZORRO2TOP)
+  while (pg_proto < ZTWOROMTOP)
     {
       *pg++     = pg_proto;
       pg_proto += AMIGA_PAGE_SIZE;
@@ -502,17 +492,17 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
   /* record base KVA of IO spaces which are just before Sysmap */
   CHIPMEMADDR = (u_int)Sysmap - pagetable_extra * AMIGA_PAGE_SIZE;
   if (z2mem_end) {				/* XXX */
-    Z2MEMADDR = CHIPMEMADDR + CHIPMEMSIZE*AMIGA_PAGE_SIZE;
-    CIAADDR   = Z2MEMADDR + Z2MEMSIZE;
+    ZTWOMEMADDR = CHIPMEMADDR + CHIPMEMSIZE*AMIGA_PAGE_SIZE;
+    CIAADDR   = ZTWOMEMADDR + ZTWOMEMSIZE;
   }						/* XXX */
   else						/* XXX */
     CIAADDR     = CHIPMEMADDR + CHIPMEMSIZE*AMIGA_PAGE_SIZE;
-  ZORRO2ADDR  = (caddr_t) CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
+  ZTWOROMADDR  = (caddr_t) CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
   CIAADDR    += AMIGA_PAGE_SIZE/2; /* not on 8k boundery :-( */
 
   /* just setup the custom chips address, other addresses (like SCSI on
      A3000, clock, etc.) moved to device drivers where they belong */
-  CUSTOMADDR  = (u_int) ZORRO2ADDR - ZORRO2BASE + CUSTOMBASE;
+  CUSTOMADDR  = (u_int) ZTWOROMADDR - ZTWOROMBASE + CUSTOMBASE;
 
 #if 0
   CUSTOMADDR  = CIAADDR + CIASIZE*AMIGA_PAGE_SIZE;
@@ -565,8 +555,8 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
   chipmem_end   = (void *) (CHIPMEMADDR + (int) chipmem_end);
 
   if (z2mem_end) {				/* XXX */
-    z2mem_end = (void *) (Z2MEMADDR + Z2MEMSIZE);
-    z2mem_start = (void *) Z2MEMADDR;		/* XXX */
+    z2mem_end = (void *) (ZTWOMEMADDR + ZTWOMEMSIZE);
+    z2mem_start = (void *) ZTWOMEMADDR;		/* XXX */
   }						/* XXX */
 
   i = *(int *)proc0paddr;
@@ -595,7 +585,6 @@ start_c(id, fastram_start, fastram_size, chipram_size, esym_addr)
 }
 
 
-#ifdef DEBUG
 void
 rollcolor(color)
 	u_int color;
@@ -609,7 +598,7 @@ rollcolor(color)
   splx (s);
 }
 
-
+#ifdef DEBUG
 void
 dump_segtable(ste)
 	struct ste *ste;
@@ -666,13 +655,19 @@ vmtophys(ste, vm)
 /* This supports the /dev/reload device, major 2, minor 20,
    hooked into mem.c.  Author: Bryan Ford.  */
 
-/* This is called below to find out how much magic storage
-   will be needed after a kernel image to be reloaded.  */
+/*
+ * This is called below to find out how much magic storage
+ * will be needed after a kernel image to be reloaded.
+ */
 static int
 kernel_image_magic_size()
 {
-  return 4 + num_ConfigDev * sizeof(struct ConfigDev)
-    + mem_list->num_mem*sizeof(struct Mem_Seg) + 4;
+	int sz;
+
+	/* 4 + cfdev's + Mem_Seg's + 4 */
+	sz = 8 + ncfdev * sizeof(struct cfdev) 
+	    + mem_list->num_mem * sizeof(struct Mem_Seg);
+	return(sz);
 }
 
 /* This actually copies the magic information.  */
@@ -680,9 +675,9 @@ static void
 kernel_image_magic_copy(dest)
 	u_char *dest;
 {
-  *((int*)dest) = num_ConfigDev;
+  *((int*)dest) = ncfdev;
   dest += 4;
-  bcopy(ConfigDev, dest, num_ConfigDev * sizeof(struct ConfigDev)
+  bcopy(cfdev, dest, ncfdev * sizeof(struct cfdev)
     + mem_list->num_mem*sizeof(struct Mem_Seg) + 4);
 }
 
