@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)memcpy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: memcpy.3,v 1.6 2001/03/22 07:37:04 kleink Exp $
+.\"	$NetBSD: memcpy.3,v 1.7 2001/07/06 15:11:18 tv Exp $
 .\"
 .Dd June 4, 1993
 .Dt MEMCPY 3
@@ -75,12 +75,3 @@ The
 function
 conforms to
 .St -isoC99 .
-.Sh BUGS
-In this implementation
-.Fn memcpy
-is implemented using
-.Xr bcopy 3 ,
-and therefore the strings may overlap.
-On other systems, copying overlapping strings may produce surprises.
-A simpler solution is to not use
-.Fn memcpy .
