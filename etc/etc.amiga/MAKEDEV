@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.32 1997/08/18 21:23:14 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.33 1997/08/19 18:39:56 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -251,7 +251,7 @@ ss*)
 	mknod n$name$unit	c $chr $(($unit * 16 + 1))
 	mknod en$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit en$name$unit
-	chmod 640 $name$unit n$name$unit
+	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
 ch*|uk*)
