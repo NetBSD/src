@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.200 2004/04/25 16:42:42 simonb Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.201 2004/05/01 02:20:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.200 2004/04/25 16:42:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.201 2004/05/01 02:20:42 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -347,6 +347,10 @@ struct evcnt ip_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 
 #define	INET_CSUM_COUNTER_INCR(ev)	(ev)->ev_count++
 
+EVCNT_ATTACH_STATIC(ip_hwcsum_bad);
+EVCNT_ATTACH_STATIC(ip_hwcsum_ok);
+EVCNT_ATTACH_STATIC(ip_swcsum);
+
 #else
 
 #define	INET_CSUM_COUNTER_INCR(ev)	/* nothing */
@@ -433,12 +437,6 @@ ip_init()
 		printf("ip_init: WARNING: unable to register pfil hook, "
 		    "error %d\n", i);
 #endif /* PFIL_HOOKS */
-
-#ifdef INET_CSUM_COUNTERS
-	evcnt_attach_static(&ip_hwcsum_bad);
-	evcnt_attach_static(&ip_hwcsum_ok);
-	evcnt_attach_static(&ip_swcsum);
-#endif /* INET_CSUM_COUNTERS */
 
 #ifdef MBUFTRACE
 	MOWNER_ATTACH(&ip_tx_mowner);

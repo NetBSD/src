@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.170 2004/04/26 05:18:13 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.171 2004/05/01 02:20:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.170 2004/04/26 05:18:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.171 2004/05/01 02:20:43 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -242,7 +242,13 @@ struct evcnt tcp_hwcsum_data = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "hwcsum data");
 struct evcnt tcp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "swcsum");
+
+EVCNT_ATTACH_STATIC(tcp_hwcsum_bad);
+EVCNT_ATTACH_STATIC(tcp_hwcsum_ok);
+EVCNT_ATTACH_STATIC(tcp_hwcsum_data);
+EVCNT_ATTACH_STATIC(tcp_swcsum);
 #endif /* TCP_CSUM_COUNTERS */
+
 
 #ifdef TCP_OUTPUT_COUNTERS
 #include <sys/device.h>
@@ -259,6 +265,14 @@ struct evcnt tcp_output_copybig = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "output copy big");
 struct evcnt tcp_output_refbig = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "output reference big");
+
+EVCNT_ATTACH_STATIC(tcp_output_bigheader);
+EVCNT_ATTACH_STATIC(tcp_output_predict_hit);
+EVCNT_ATTACH_STATIC(tcp_output_predict_miss);
+EVCNT_ATTACH_STATIC(tcp_output_copysmall);
+EVCNT_ATTACH_STATIC(tcp_output_copybig);
+EVCNT_ATTACH_STATIC(tcp_output_refbig);
+
 #endif /* TCP_OUTPUT_COUNTERS */
 
 #ifdef TCP_REASS_COUNTERS
@@ -298,6 +312,27 @@ struct evcnt tcp_reass_segdup = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     &tcp_reass_, "tcp_reass", "duplicate segment");
 struct evcnt tcp_reass_fragdup = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     &tcp_reass_, "tcp_reass", "duplicate fragment");
+
+EVCNT_ATTACH_STATIC(tcp_reass_);
+EVCNT_ATTACH_STATIC(tcp_reass_empty);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 0);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 1);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 2);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 3);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 4);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 5);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 6);
+EVCNT_ATTACH_STATIC2(tcp_reass_iteration, 7);
+EVCNT_ATTACH_STATIC(tcp_reass_prependfirst);
+EVCNT_ATTACH_STATIC(tcp_reass_prepend);
+EVCNT_ATTACH_STATIC(tcp_reass_insert);
+EVCNT_ATTACH_STATIC(tcp_reass_inserttail);
+EVCNT_ATTACH_STATIC(tcp_reass_append);
+EVCNT_ATTACH_STATIC(tcp_reass_appendtail);
+EVCNT_ATTACH_STATIC(tcp_reass_overlaptail);
+EVCNT_ATTACH_STATIC(tcp_reass_overlapfront);
+EVCNT_ATTACH_STATIC(tcp_reass_segdup);
+EVCNT_ATTACH_STATIC(tcp_reass_fragdup);
 
 #endif /* TCP_REASS_COUNTERS */
 
@@ -342,45 +377,6 @@ tcp_init()
 
 	/* Initialize the compressed state engine. */
 	syn_cache_init();
-
-#ifdef TCP_CSUM_COUNTERS
-	evcnt_attach_static(&tcp_hwcsum_bad);
-	evcnt_attach_static(&tcp_hwcsum_ok);
-	evcnt_attach_static(&tcp_hwcsum_data);
-	evcnt_attach_static(&tcp_swcsum);
-#endif /* TCP_CSUM_COUNTERS */
-
-#ifdef TCP_OUTPUT_COUNTERS
-	evcnt_attach_static(&tcp_output_bigheader);
-	evcnt_attach_static(&tcp_output_predict_hit);
-	evcnt_attach_static(&tcp_output_predict_miss);
-	evcnt_attach_static(&tcp_output_copysmall);
-	evcnt_attach_static(&tcp_output_copybig);
-	evcnt_attach_static(&tcp_output_refbig);
-#endif /* TCP_OUTPUT_COUNTERS */
-
-#ifdef TCP_REASS_COUNTERS
-	evcnt_attach_static(&tcp_reass_);
-	evcnt_attach_static(&tcp_reass_empty);
-	evcnt_attach_static(&tcp_reass_iteration[0]);
-	evcnt_attach_static(&tcp_reass_iteration[1]);
-	evcnt_attach_static(&tcp_reass_iteration[2]);
-	evcnt_attach_static(&tcp_reass_iteration[3]);
-	evcnt_attach_static(&tcp_reass_iteration[4]);
-	evcnt_attach_static(&tcp_reass_iteration[5]);
-	evcnt_attach_static(&tcp_reass_iteration[6]);
-	evcnt_attach_static(&tcp_reass_iteration[7]);
-	evcnt_attach_static(&tcp_reass_prependfirst);
-	evcnt_attach_static(&tcp_reass_prepend);
-	evcnt_attach_static(&tcp_reass_insert);
-	evcnt_attach_static(&tcp_reass_inserttail);
-	evcnt_attach_static(&tcp_reass_append);
-	evcnt_attach_static(&tcp_reass_appendtail);
-	evcnt_attach_static(&tcp_reass_overlaptail);
-	evcnt_attach_static(&tcp_reass_overlapfront);
-	evcnt_attach_static(&tcp_reass_segdup);
-	evcnt_attach_static(&tcp_reass_fragdup);
-#endif /* TCP_REASS_COUNTERS */
 
 	MOWNER_ATTACH(&tcp_tx_mowner);
 	MOWNER_ATTACH(&tcp_rx_mowner);
