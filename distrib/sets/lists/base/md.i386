@@ -1,4 +1,8 @@
-# $NetBSD: md.i386,v 1.63 2000/05/06 06:22:21 mycroft Exp $
+# $NetBSD: md.i386,v 1.64 2000/05/06 06:27:42 mycroft Exp $
+./dev/audio
+./dev/audioctl
+./dev/mixer
+./dev/sound
 ./sbin/fdisk
 ./usr/bin/fdformat
 ./usr/bin/fontedit
