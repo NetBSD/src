@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.11 2001/01/03 15:13:15 bouyer Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.12 2001/01/04 08:43:21 veego Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -594,6 +594,37 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0x0,	0x0	},
 	    {
 		{ PUC_PORT_TYPE_COM,	0x14,	0x00	},
+	    },
+	},
+
+	/*
+	 * Boards with an Oxford Semiconductor chip.
+	 *
+	 * Oxford Semiconductor provides documentation for their chip at:
+	 * <URL:http://www.oxsemi.com/products/uarts/index.html>
+	 *
+	 * As sold by Kouwell <URL:http://www.kouwell.com/>.
+	 * I/O Flex PCI I/O Card Model-223 with 4 serial and 1 parallel ports.
+	 */
+
+	/* Oxford Semiconductor OX16PCI954 PCI UARTs */
+	{   "Qxford Semiconductor OX16PCI954 UARTs",
+	    {	0x1415,	0x9501,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, 0x00 },
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI954 PCI Parallel port */
+	{   "Qxford Semiconductor OX16PCI954 Parallel port",
+	    {	0x1415,	0x9513,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
 	    },
 	},
 
