@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.16 2001/03/27 21:43:13 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.17 2001/03/27 22:17:51 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -64,7 +64,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.16 2001/03/27 21:43:13 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.17 2001/03/27 22:17:51 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -1097,18 +1097,20 @@ ea_getpackets(struct seeq8005_softc *sc)
 			++ifp->if_ierrors;
 			/* XXX oversize packets may be OK */
 			log(LOG_WARNING,
-			    "%s: rx packet error (%02x) - dropping packet\n",
-			    sc->sc_dev.dv_xname, status & 0x0f);
+			    "%s: rx packet error at %04x (err=%02x)\n",
+			    sc->sc_dev.dv_xname, addr, status & 0x0f);
 			goto pktdone;
 		}
 		/*
 		 * Is the packet too big ? - this will probably be trapped
-		 * above as a receive error
+		 * above as a receive error.  If it's not, this is indicative
+		 * of buffer corruption.
 		 */
 		if (__predict_false(len > (ETHER_MAX_LEN - ETHER_CRC_LEN))) {
 			++ifp->if_ierrors;
-			log(LOG_WARNING, "%s: rx packet size error len=%d\n",
-			    sc->sc_dev.dv_xname, len);
+			log(LOG_ERR,
+			    "%s: rx packet size error at %04x (len=%d)\n",
+			    sc->sc_dev.dv_xname, addr, len);
 			sc->sc_config2 |= SEEQ_CFG2_OUTPUT;
 			bus_space_write_2(iot, ioh, SEEQ_CONFIG2,
 					  sc->sc_config2);
