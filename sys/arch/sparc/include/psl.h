@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.27 2001/04/23 14:40:03 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.28 2001/06/06 13:45:18 uwe Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -353,12 +353,11 @@ _SPLRAISE(splfdsoft, PIL_FDSOFT)
 /* Block devices */
 _SPLRAISE(splbio, 5)
 
-/* network hardware interrupts are at level 6 */
-_SPLRAISE(splnet, PIL_NET)
-
 /* tty input runs at software level 6 */
-#define	PIL_TTY	6
 _SPLRAISE(spltty, PIL_TTY)
+
+/* network hardware interrupts are at level 7 */
+_SPLRAISE(splnet, PIL_NET)
 
 /*
  * Memory allocation (must be as high as highest network, tty, or disk device)
@@ -374,7 +373,9 @@ _SPLRAISE(splts102, 11)
 
 /* zs hardware interrupts are at level 12 */
 _SPLRAISE(splzs, 12)
-_SPLRAISE(splserial, 12) /* XXX - other serial hardware might not be at lvl 12 */
+
+/* su (com) hardware interrupts are at level 13 (protects zs as well) */
+_SPLRAISE(splserial, 13)
 
 /* audio hardware interrupts are at level 13 */
 _SPLRAISE(splaudio, 13)
