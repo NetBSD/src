@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.25 2002/08/01 18:52:06 christos Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.26 2002/08/20 13:14:41 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.25 2002/08/01 18:52:06 christos Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.26 2002/08/20 13:14:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -605,8 +605,14 @@ cleanup(signo)
 	char *p, c;
 
 	p = line + sizeof(_PATH_DEV) - 1;
+#ifdef SUPPORT_UTMP
 	if (logout(p))
 		logwtmp(p, "", "");
+#endif
+#ifdef SUPPORT_UTMPX
+	if (logoutx(p, 0, DEAD_PROCESS))
+		logwtmpx(p, "", "", 0, DEAD_PROCESS);
+#endif
 	(void)chmod(line, 0666);
 	(void)chown(line, 0, 0);
 	c = *p; *p = 'p';
