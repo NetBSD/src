@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 1999/02/20 09:10:41 scottr Exp $
+#	$NetBSD: Makefile,v 1.93 1999/03/10 19:10:14 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -32,14 +32,14 @@ includes-gnu: includes-include includes-sys
 
 # Descend into the domestic tree if it exists AND
 #  1) the target is clean, cleandir, or obj, OR
-#  2) the the target is install or includes AND NOT
-#    a) compiling only "exportable" code OR
-#    b) doing it as part of build.
+#  2) the the target is install or includes AND
+#    NOT compiling only "exportable" code AND
+#    doing it as part of installing a distribution.
 
 .if exists(domestic) && \
     (make(clean) || make(cleandir) || make(obj) || \
     ((make(includes) || make(install)) && \
-    !(defined(EXPORTABLE_SYSTEM) || defined(_BUILD))))
+    !defined(EXPORTABLE_SYSTEM) && defined(_DISTRIB)))
 SUBDIR+= domestic
 .endif
 
@@ -95,7 +95,7 @@ build: beforeinstall
 	    ${MAKE} MKMAN=no install && ${MAKE} cleandir)
 .endif
 .endif
-	${MAKE} _BUILD= includes
+	${MAKE} includes
 	(cd ${.CURDIR}/lib/csu && \
 	    ${MAKE} depend && ${MAKE} ${_J} MKMAN=no && \
 	    ${MAKE} MKMAN=no install)
