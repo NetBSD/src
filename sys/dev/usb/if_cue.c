@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.28 2001/01/21 16:03:11 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.29 2001/01/21 16:06:48 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1260,6 +1260,9 @@ Static void
 cue_watchdog(struct ifnet *ifp)
 {
 	struct cue_softc	*sc = ifp->if_softc;
+	struct cue_chain	*c;
+	usbd_status		stat;
+	int			s;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev),__FUNCTION__));
 
@@ -1269,19 +1272,14 @@ cue_watchdog(struct ifnet *ifp)
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", USBDEVNAME(sc->cue_dev));
 
-	/*
-	 * The polling business is a kludge to avoid allowing the
-	 * USB code to call tsleep() in usbd_delay_ms(), which will
-	 * kill us since the watchdog routine is invoked from
-	 * interrupt context.
-	 */
-	usbd_set_polling(sc->cue_udev, 1);
-	cue_stop(sc);
-	cue_init(sc);
-	usbd_set_polling(sc->cue_udev, 0);
+	s = splusb();
+	c = &sc->cue_cdata.cue_tx_chain[0];
+	usbd_get_xfer_status(c->cue_xfer, NULL, NULL, NULL, &stat);
+	cue_txeof(c->cue_xfer, c, stat);
 
 	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		cue_start(ifp);
+	splx(s);
 }
 
 /*
