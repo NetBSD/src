@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.6 2000/09/06 19:51:44 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.7 2000/11/24 09:42:10 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,7 +50,8 @@
  */
 #define PCCTWO_REG_OFF	    0x00000	/* Offset of PCCChip2's own registers */
 #define PCCTWO_LPT_OFF	    0x00000	/* Offset of parallel port registers */
-#define PCCTWO_MEMC_OFF	    0x01000	/* Offset of Memory Controller's regs */
+#define PCCTWO_MEMC1_OFF    0x01000	/* Offset of Memory Controller #1 */
+#define PCCTWO_MEMC2_OFF    0x01100	/* Offset of Memory Controller #2 */
 #define PCCTWO_SCC_OFF      0x03000	/* Offset of CD2401 Serial Comms chip */
 #define PCCTWO_IE_OFF	    0x04000	/* Offset of 82596 LAN controller */
 #define PCCTWO_NCRSC_OFF    0x05000	/* Offset of NCR53C710 SCSI chip */
