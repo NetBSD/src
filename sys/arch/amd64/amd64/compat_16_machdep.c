@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1 2003/10/06 22:53:47 fvdl Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.2 2003/10/13 18:45:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2003/10/06 22:53:47 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2003/10/13 18:45:59 fvdl Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -85,7 +85,7 @@ compat_16_sys___sigreturn14(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
-	uint64_t rflags;
+	int error;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -100,15 +100,11 @@ compat_16_sys___sigreturn14(l, v, retval)
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
 	/*
-	 * Check for security violations.  If we're returning to
-	 * protected mode, the CPU will validate the segment registers
-	 * automatically and generate a trap on violations.  We handle
-	 * the trap, rather than doing all of the checking here.
+	 * Check for security violations.
 	 */
-	rflags = context.sc_mcontext.__gregs[_REG_RFL];
-	if (((rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_mcontext.__gregs[_REG_CS], rflags))
-		return EINVAL;
+	error = check_mcontext(&context.sc_mcontext, tf);
+	if (error != 0)
+		return error;
 
 	memcpy(tf, &context.sc_mcontext.__gregs, sizeof (*tf));
 

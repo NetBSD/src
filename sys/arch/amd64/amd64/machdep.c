@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/10/08 19:58:54 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/10/13 18:45:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2003/10/08 19:58:54 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2003/10/13 18:45:59 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1733,11 +1733,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
+	int error;
 	int64_t rflags;
 
 	if ((flags & _UC_CPU) != 0) {
-		if (!USERMODE(gr[_REG_CS], gr[_REG_EFL]))
-			return EINVAL;
+		error = check_mcontext(mcp, tf);
+		if (error != 0)
+			return error;
 		rflags = tf->tf_rflags;
 		memcpy(tf, gr, sizeof *tf);
 		rflags &= ~PSL_USER;
@@ -1756,6 +1758,28 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_CLRSTACK)
 		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
+	return 0;
+}
+
+int
+check_mcontext(const mcontext_t *mcp, struct trapframe *tf)
+{
+	const __greg_t *gr;
+
+	gr = mcp->__gregs;
+
+	if (((gr[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0)
+		return EINVAL;
+	if (gr[_REG_FS] != 0 && !VALID_USER_DSEL(gr[_REG_FS]))
+		return EINVAL;
+	if (gr[_REG_GS] != 0 && !VALID_USER_DSEL(gr[_REG_GS]))
+		return EINVAL;
+	if (gr[_REG_ES] != 0 && !VALID_USER_DSEL(gr[_REG_ES]))
+		return EINVAL;
+	if (!VALID_USER_DSEL(gr[_REG_DS]) || !VALID_USER_DSEL(gr[_REG_SS]))
+		return EINVAL;
+	if (gr[_REG_RIP] >= VM_MAXUSER_ADDRESS)
+		return EINVAL;
 	return 0;
 }
 
