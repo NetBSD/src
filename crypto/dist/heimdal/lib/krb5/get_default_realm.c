@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: get_default_realm.c,v 1.10 2001/07/19 16:55:27 assar Exp $"
-        "$NetBSD: get_default_realm.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: get_default_realm.c,v 1.2 2002/12/21 13:22:20 wiz Exp $");
 
 /*
  * Return a NULL-terminated list of default realms in `realms'.
@@ -57,7 +57,7 @@ krb5_get_default_realms (krb5_context context,
 }
 
 /*
- * Return the first default realm.  For compatability.
+ * Return the first default realm.  For compatibility.
  */
 
 krb5_error_code
