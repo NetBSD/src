@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.17 2000/11/13 00:30:48 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.18 2001/01/05 03:27:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.17 2000/11/13 00:30:48 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.18 2001/01/05 03:27:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -405,7 +405,7 @@ dump_dinode(dip)
 	mt = dip->di_mtime;
 	ct = dip->di_ctime;
 
-	(void)printf("%s%d\t%s%d\t%s%d\t%s%d\t%s%qu\n",
+	(void)printf("%s%d\t%s%d\t%s%d\t%s%d\t%s%llu\n",
 		"mode  ", dip->di_mode,
 		"nlink ", dip->di_nlink,
 		"uid   ", dip->di_uid,
@@ -598,19 +598,19 @@ dump_super(lfsp)
 		"cleansz  ", lfsp->lfs_cleansz,
 		"segtabsz ", lfsp->lfs_segtabsz);
 
-	(void)printf("%s0x%x\t%s%d\t%s0x%qX\t%s%d\n",
+	(void)printf("%s0x%x\t%s%d\t%s0x%llX\t%s%d\n",
 		"segmask  ", lfsp->lfs_segmask,
 		"segshift ", lfsp->lfs_segshift,
 		"bmask    ", (long long)lfsp->lfs_bmask,
 		"bshift   ", lfsp->lfs_bshift);
 
-	(void)printf("%s0x%qX\t\t%s%d\t%s0x%qX\t%s%u\n",
+	(void)printf("%s0x%llX\t\t%s%d\t%s0x%llX\t%s%u\n",
 		"ffmask   ", (long long)lfsp->lfs_ffmask,
 		"ffshift  ", lfsp->lfs_ffshift,
 		"fbmask   ", (long long)lfsp->lfs_fbmask,
 		"fbshift  ", lfsp->lfs_fbshift);
 
-	(void)printf("%s%d\t%s%d\t%s0x%x\t%s0x%qx\n",
+	(void)printf("%s%d\t%s%d\t%s0x%x\t%s0x%llx\n",
 		"sushift  ", lfsp->lfs_sushift,
 		"fsbtodb  ", lfsp->lfs_fsbtodb,
 		"cksum    ", lfsp->lfs_cksum,
