@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.117 2004/07/15 21:06:45 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.118 2004/07/17 10:55:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -183,10 +183,6 @@ int scripting;
 FILE *logfp;
 FILE *script;
 
-/* Hardware variables */
-unsigned long ramsize;
-unsigned int  rammb  ;
-
 /* Actual name of the disk. */
 char diskdev[SSTRSIZE];
 int no_mbr;				/* set for raid (etc) */
@@ -345,7 +341,7 @@ int	dir_exists_p(const char *);
 int	file_exists_p(const char *);
 int	file_mode_match(const char *, unsigned int);
 int	distribution_sets_exist_p(const char *);
-void	get_ramsize(void);
+uint	get_ramsize(void);
 void	ask_sizemult(int);
 void	run_makedev(void);
 int	get_via_floppy(void);

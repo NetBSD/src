@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.29 2004/07/12 22:33:21 christos Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.30 2004/07/17 10:55:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -431,7 +431,7 @@ get_ptn_sizes(int part_start, int sectors, int no_swap)
 		}
 
 		/* Add space for 2 system dumps to / (traditional) */
-		i = rammb * sm;
+		i = get_ramsize() * sm;
 		i = ROUNDUP(i, dlcylsize);
 		if (pi.free_space > i * 2)
 			i *= 2;

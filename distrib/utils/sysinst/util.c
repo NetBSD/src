@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.124 2004/07/16 21:35:44 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.125 2004/07/17 10:55:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -179,16 +179,17 @@ distribution_sets_exist_p(const char *path)
 }
 
 
-void
+uint
 get_ramsize(void)
 {
-	size_t len = sizeof(ramsize);
-	int mib[2] = {CTL_HW, HW_PHYSMEM};
+	uint64_t ramsize;
+	size_t len = sizeof ramsize;
+	int mib[2] = {CTL_HW, HW_PHYSMEM64};
 	
 	sysctl(mib, 2, &ramsize, &len, NULL, 0);
 
 	/* Find out how many Megs ... round up. */
-	rammb = ((unsigned int)ramsize + MEG - 1) / MEG;
+	return (ramsize + MEG - 1) / MEG;
 }
 
 void

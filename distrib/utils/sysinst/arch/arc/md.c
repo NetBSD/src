@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: md.c,v 1.23 2004/07/17 10:55:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,7 +85,7 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
-	if (rammb <= 32)
+	if (get_ramsize() <= 32)
 		set_swap(diskdev, bsdlabel);
 
 	/* Sector forwarding / badblocks ... */
@@ -127,7 +127,7 @@ md_check_partitions(void)
 int
 md_pre_update(void)
 {
-	if (rammb <= 8)
+	if (get_ramsize() <= 8)
 		set_swap(diskdev, NULL);
 	return 1;
 }
