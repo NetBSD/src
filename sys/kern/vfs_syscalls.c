@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.203 2004/02/22 09:56:26 jdolecek Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.204 2004/02/25 04:10:28 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.203 2004/02/22 09:56:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.204 2004/02/25 04:10:28 dbj Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -676,7 +676,7 @@ dostatfs(struct mount *mp, struct statfs *sp, struct proc *p, int flags,
 
 	/*
 	 * If MNT_NOWAIT or MNT_LAZY is specified, do not
-	 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
+	 * refresh the fsstat cache. MNT_WAIT or MNT_LAZY
 	 * overrides MNT_NOWAIT.
 	 */
 	if (flags == MNT_NOWAIT	|| flags == MNT_LAZY ||
