@@ -1,3 +1,5 @@
+/*	$NetBSD: unctrl.h,v 1.4 1995/03/24 05:02:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)unctrl.h	8.1 (Berkeley) 5/31/93
- *	$Id: unctrl.h,v 1.3 1994/05/12 17:39:44 jtc Exp $
+ *	@(#)unctrl.h	8.1 (Berkeley) 5/31/93
  */
 
 /*
