@@ -1,9 +1,9 @@
-/*	$NetBSD: mem.c,v 1.8 1995/04/10 05:57:41 briggs Exp $	*/
+/*	$NetBSD: mem.c,v 1.9 1995/04/10 11:54:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -36,11 +36,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */
-/*
- * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
- *	@(#)mem.c	7.5 (Berkeley) 5/7/91
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*
@@ -51,14 +48,14 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
 
-#include <vm/vm_param.h>
-#include <vm/lock.h>
-#include <vm/vm_prot.h>
-#include <vm/pmap.h>
+#include <vm/vm.h>
+
+caddr_t zeropage;
 
 /*ARGSUSED*/
 int
@@ -81,17 +78,29 @@ mmclose(dev, flag, mode)
 }
 
 /*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register int o;
-	register u_int c, v;
+	register vm_offset_t o, v;
+	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	caddr_t zbuf = NULL;
+	static int physlock;
 
+	if (minor(dev) == 0) {
+		/* lock against other uses of shared vmmap */
+		while (physlock > 0) {
+			physlock++;
+			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			    "mmrw", 0);
+			if (error)
+				return (error);
+		}
+		physlock = 1;
+	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -108,29 +117,29 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 #if !defined(DEBUG) && 0 /* BG -- serial test needs this. */
 			/* allow reads only in RAM (except for DEBUG) */
-			if (v >= 0x008FFFFC || v < 0)
-				return (EFAULT);
+			if (v >= 0x008FFFFC || v < 0) {
+				error = EFAULT;
+				goto unlock;
+			}
 #endif
-			pmap_enter(pmap_kernel(), (vm_offset_t) vmmap, \
-				trunc_page(v), uio->uio_rw == UIO_READ ?
-				   VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = (u_int)(NBPG - ((int)iov->iov_base & PGOFSET));
-			c = min(c, (u_int)(NBPG - o));
-			c = min(c, (u_int)iov->iov_len);
-			error = uiomove((caddr_t)&vmmap[o], (int)c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t) vmmap,
-				    (vm_offset_t) &vmmap[NBPG]);
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			    trunc_page(v), uio->uio_rw == UIO_READ ?
+			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			o = uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
+			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
 		case 1:
+			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!kernacc((caddr_t)(long)uio->uio_offset, c,
+			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)(long)uio->uio_offset,
-					(int)c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -145,13 +154,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zbuf == NULL) {
-				zbuf = (caddr_t)
+			if (zeropage == NULL) {
+				zeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zbuf, CLBYTES);
+				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zbuf, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
@@ -164,8 +173,12 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
-	if (zbuf)
-		free(zbuf, M_TEMP);
+	if (minor(dev) == 0) {
+unlock:
+		if (physlock > 1)
+			wakeup((caddr_t)&physlock);
+		physlock = 0;
+	}
 	return (error);
 }
 

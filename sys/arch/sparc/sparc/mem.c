@@ -1,17 +1,13 @@
-/*	$NetBSD: mem.c,v 1.7 1995/03/10 17:06:15 pk Exp $ */
+/*	$NetBSD: mem.c,v 1.8 1995/04/10 11:55:05 mycroft Exp $ */
 
 /*
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
- *
- * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Lawrence Berkeley Laboratory.
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.2 (Berkeley) 12/10/93
+ *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 /*
@@ -49,35 +45,55 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 #include <sys/malloc.h>
+
 #include <sparc/sparc/vaddrs.h>
 
 #include <vm/vm.h>
 
-caddr_t zeropage;
-
 extern vm_offset_t prom_vstart;
 extern vm_offset_t prom_vend;
+caddr_t zeropage;
 
 /*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register int o;
-	register u_int c, v;
+	register vm_offset_t o, v;
+	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	extern caddr_t vmempage;
 	static int physlock;
 
 	if (minor(dev) == 0) {
-		/* lock against other uses of shared vmempage */
+		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
 			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
@@ -105,14 +121,14 @@ mmrw(dev, uio, flags)
 				error = EFAULT;
 				goto unlock;
 			}
-			pmap_enter(kernel_pmap, (vm_offset_t)vmempage,
+			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (u_int)(NBPG - o));
-			error = uiomove((caddr_t)vmempage + o, (int)c, uio);
-			pmap_remove(kernel_pmap, (vm_offset_t)vmempage,
-			    (vm_offset_t)vmempage + NBPG);
+			o = uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
+			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
@@ -130,7 +146,7 @@ mmrw(dev, uio, flags)
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return (EFAULT);
 			}
-			error = uiomove(v, (int)c, uio);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -153,7 +169,7 @@ mmrw(dev, uio, flags)
 				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
@@ -173,4 +189,13 @@ unlock:
 		physlock = 0;
 	}
 	return (error);
+}
+
+int
+mmmmap(dev, off, prot)
+        dev_t dev;
+        int off, prot;
+{
+
+	return (EOPNOTSUPP);
 }
