@@ -42,7 +42,7 @@
  *	@(#)machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: machdep.c,v 1.41 93/05/27 04:39:05 torek Exp 
- * $Id: machdep.c,v 1.31 1994/11/02 04:57:25 deraadt Exp $
+ * $Id: machdep.c,v 1.32 1994/11/05 09:31:05 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -135,10 +135,13 @@ cpu_startup()
 #endif
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
+	extern struct user *proc0paddr;
 
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
+
+	proc0.p_addr = proc0paddr;
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
