@@ -42,7 +42,7 @@
  *	@(#)rcons_kern.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: rcons_kern.c,v 1.28 93/04/20 11:15:38 torek Exp 
- * $Id: rcons_kern.c,v 1.3 1993/10/18 11:49:16 deraadt Exp $
+ * $Id: rcons_kern.c,v 1.4 1994/05/05 09:55:46 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ rcons_output(tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
+		timeout(ttrstrt, tp, 1);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
@@ -146,7 +146,7 @@ rcons_bell(fb)
 		splx(s);
 		(void) kbd_docmd(KBD_CMD_BELL, 0);
 		/* XXX Chris doesn't like the following divide */
-		timeout((timeout_t)rcons_belltmr, (caddr_t)fb, hz/10);
+		timeout(rcons_belltmr, fb, hz/10);
 	}
 }
 
@@ -165,12 +165,12 @@ rcons_belltmr(p)
 		(void) kbd_docmd(KBD_CMD_NOBELL, 0);
 		if (i != 0)
 			/* XXX Chris doesn't like the following divide */
-			timeout((timeout_t)rcons_belltmr, (caddr_t)fb, hz/30);
+			timeout(rcons_belltmr, fb, hz/30);
 	} else {
 		fb->fb_ringing = 1;
 		splx(s);
 		(void) kbd_docmd(KBD_CMD_BELL, 0);
-		timeout((timeout_t)rcons_belltmr, (caddr_t)fb, hz/10);
+		timeout(rcons_belltmr, fb, hz/10);
 	}
 }
 
