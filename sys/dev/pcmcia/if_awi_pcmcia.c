@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.8 2000/02/01 10:00:41 enami Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.9 2000/02/01 10:12:04 enami Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -194,7 +194,8 @@ awi_pcmcia_find(psc, pa, cfe)
 	 * if not, try a different CIS string..
 	 */
 	if (pcmcia_io_alloc(psc->sc_pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, 0, &psc->sc_pcioh) != 0)
+	    cfe->iospace[0].length, cfe->iospace[0].length,
+	    &psc->sc_pcioh) != 0)
 		goto fail;
 
 	if (pcmcia_io_map(psc->sc_pf, PCMCIA_WIDTH_AUTO, 0, psc->sc_pcioh.size,
