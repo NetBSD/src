@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/07/13 14:27:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:16 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,6 @@
 FILES=	all.debug
 FILESDIR=/usr/share/examples/syslogd
 .endif
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include <bsd.prog.mk>

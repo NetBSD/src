@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/05 07:32:39 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:32 tv Exp $
 
 FILES=	form preform
 FILESDIR=${BINDIR}/sushi/users/deluser
 SCRIPTS= script script1 script2
 SCRIPTSDIR=${BINDIR}/sushi/users/deluser
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include "../../../Makefile.inc"
 .include <bsd.prog.mk>

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1999/07/08 14:32:29 drochner Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:44 tv Exp $
 
 PROG= genprom
-MKMAN=	no
+NOMAN=	# defined
 
 CFLAGS+= -Wall
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/03/13 23:18:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2001/12/12 01:49:00 tv Exp $
 #
 # This is the Makefile for the libuucp subdirectory of Taylor UUCP
 
@@ -7,10 +7,10 @@ SRCS=		buffer.c crc.c debug.c escape.c getopt.c getop1.c parse.c \
 		spool.c status.c xfree.c xmall.c xreall.c getlin.c
 CPPFLAGS+=	-I$(.CURDIR)/../common_sources
 
-MKLINT=		no
-MKMAN=		no
-MKPIC=		no
-MKPROFILE=	no
+NOLINT=		# defined
+NOMAN=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 # only needed during build
 libinstall::

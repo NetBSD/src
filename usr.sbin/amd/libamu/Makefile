@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.14 2001/01/04 14:21:09 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2001/12/12 01:48:48 tv Exp $
 
 LIB=	amu
 
-MKLINKLIB=	no
+NOLINKLIB=	# defined
 
 .include "${.CURDIR}/../Makefile.inc"
 

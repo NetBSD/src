@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/11/11 05:26:54 itojun Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:14 tv Exp $
 
 LIB=	util
 
@@ -33,9 +33,9 @@ SRCS=	argv.c argv_split.c attr.c basename.c binhash.c chroot_uid.c \
 # IPv6
 #SRCS+=	get_port.c
 
-MKLINT=		no
-MKPIC=		no
-MKPROFILE=	no
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 # only needed during build
 libinstall::

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.31 2001/12/11 23:43:04 thorpej Exp $
+#	$NetBSD: Makefile,v 1.32 2001/12/12 01:48:58 tv Exp $
 
 REQUIRETOOLS=	yes
 
 .include <bsd.own.mk>
 
 LIB=		gcc
-MKLINT=		no
+NOLINT=		# defined
 
 .cc: # disable .cc->NULL transform
 
@@ -69,8 +69,8 @@ ${OBJS} ${SOBJS} ${POBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 .if !empty(HAVE_GCC28)
-MKPIC=		no
-MKPROFILE=	no
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch

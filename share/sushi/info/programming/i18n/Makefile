@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2001/01/05 07:32:34 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:19 tv Exp $
 
 FILES=	help
 FILESDIR=${BINDIR}/sushi/info/programming/i18n
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include "../../../../Makefile.inc"
 .include <bsd.prog.mk>

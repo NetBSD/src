@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.48 2001/11/14 21:59:32 tv Exp $
+#	$NetBSD: Makefile,v 1.49 2001/12/12 01:50:05 tv Exp $
 
 LIB=	sa
-MKPIC=	no
-MKPROFILE=no
+NOPIC=	# defined
+NOPROFILE=# defined
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS

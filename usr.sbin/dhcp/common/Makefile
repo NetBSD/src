@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2001/08/03 14:14:01 drochner Exp $
+# $NetBSD: Makefile,v 1.20 2001/12/12 01:48:49 tv Exp $
 
 MAN    = dhcp-options.5 dhcp-eval.5
 LIB    = dhcp
@@ -9,9 +9,9 @@ SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 
 DHCPSRCDIR=	common
 
-MKLINT=	no
-MKPIC=	no
-MKPROFILE=no
+NOLINT=	# defined
+NOPIC=	# defined
+NOPROFILE=# defined
 
 # only needed during build
 libinstall::

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/01/03 22:48:32 hubertf Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:15 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,6 @@
 FILES=	script
 FILESDIR=/usr/share/examples/apm
 .endif
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include <bsd.prog.mk>

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2001/04/26 02:26:16 garbled Exp $
+#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:20 tv Exp $
 
 SUBDIR= info install system users procs util network
 
 FILES=	help index
 FILESDIR=${BINDIR}/sushi
-MKOBJ=	no
+NOOBJ=	# defined
 
 .include "../Makefile.inc"
 .include <bsd.prog.mk>

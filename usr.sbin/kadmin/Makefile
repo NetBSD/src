@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/09/17 12:34:45 assar Exp $
+# $NetBSD: Makefile,v 1.10 2001/12/12 01:48:51 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kadmin
 
 WARNS?=  1
-MKLINT= no
+NOLINT= # defined
 
 PROG= kadmin
 

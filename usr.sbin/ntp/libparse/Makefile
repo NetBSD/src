@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/04/19 17:48:19 drochner Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:48:54 tv Exp $
 
 LIB=	parse
 SRCS=	parse.c parse_conf.c clk_meinberg.c clk_schmid.c clk_rawdcf.c \
@@ -7,9 +7,9 @@ SRCS=	parse.c parse_conf.c clk_meinberg.c clk_schmid.c clk_rawdcf.c \
 	data_mbg.c info_trimble.c trim_info.c
 NTPSRCDIR=lib${LIB}
 
-MKLINKLIB=no
-MKMAN=	no
-MKPIC=	no
-MKLINT=	no	# XXX
+NOLINKLIB=# defined
+NOMAN=	# defined
+NOPIC=	# defined
+NOLINT=	# defined
 
 .include <bsd.lib.mk>

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2000/07/23 20:40:44 jdc Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:40 tv Exp $
 
 PROG=	sdb00t.ahdi
 SRCS=	sdb00t.ahdi.s
-MKMAN=	no
+NOMAN=	# defined
 LIBCRT0=
 INCL=	-I${.CURDIR} -I${.CURDIR}/..
 

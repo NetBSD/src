@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2000/01/20 19:06:15 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/12 01:50:17 tv Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/miscfs/overlay $S/miscfs/genfs ${.CURDIR}/../..
 
-MKMAN=	no
+NOMAN=	# defined
 
 KMOD=	overlay
 

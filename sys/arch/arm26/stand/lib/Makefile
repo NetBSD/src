@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2001/11/14 23:01:14 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/12 01:49:37 tv Exp $
 
 S?=	${.CURDIR}/../../../../
 
 LIB= riscos
-MKPIC=no
-MKPROFILE=no
+NOPIC=# defined
+NOPROFILE=# defined
 
 CPPFLAGS= -I$S/lib/libsa ${RISCOSCPPFLAGS} ${RISCOSMISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG

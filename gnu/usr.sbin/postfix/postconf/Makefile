@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/03/29 09:59:09 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 01:49:09 tv Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -26,7 +26,7 @@ CPPFLAGS+= -I${.OBJDIR}
 DPADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPUTIL}
 
-NOMAN=1
+NOMAN=# defined
 
 # XXX Note that there is no ${AWK} variable in our build system. This
 # is probably a deficiency.
