@@ -1,4 +1,4 @@
-.\"     $NetBSD: i386_get_mtrr.2,v 1.3 2001/11/10 19:06:54 fvdl Exp $
+.\"     $NetBSD: i386_get_mtrr.2,v 1.4 2001/11/10 22:57:02 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,8 @@ the integer pointed to by
 .Fa n
 will be updated to reflect the actual number of MTRRs successfully set.
 For
-.Fn i386_get_mtrr no more than
+.Fn i386_get_mtrr
+no more than
 .Fa n
 structures will be copied out, and the integer value pointed to by
 .Fa n
@@ -131,7 +132,7 @@ The
 member the PID of the user process which claims the mapping.  It is
 only valid if MTRR_PRIVATE is set in
 .Em flags .
-To clear/reset MTRRs, use a 
+To clear/reset MTRRs, use a
 .Em flags
 field without MTRR_VALID set.
 .Sh RETURN VALUES
