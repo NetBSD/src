@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.36 1997/11/01 13:59:00 drochner Exp $	*/
+/*	$NetBSD: mount.c,v 1.37 1997/11/01 14:21:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.36 1997/11/01 13:59:00 drochner Exp $");
+__RCSID("$NetBSD: mount.c,v 1.37 1997/11/01 14:21:53 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,7 +380,6 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		for (i = 0; i < argc; i++)
 			(void)printf(" %s", argv[i]);
 		(void)printf("\n");
-		return (0);
 	}
 
 	switch (pid = vfork()) {
