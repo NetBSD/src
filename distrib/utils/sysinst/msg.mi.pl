@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.24 2003/07/08 17:38:58 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.25 2003/07/11 15:29:00 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -126,14 +126,11 @@ message onedisk
 NetBSD wlasnie na nim.
 }
 
-message askdisk
-{Znalazlem nastepujace dyski: %s
-\nNa ktorym z nich chcesz zainstalowac NetBSD? }
+message ask_disk
+{Na ktorym z nich chcesz zainstalowac NetBSD? }
 
-message badname
-{Nie wybrales dysku z listy.  Sprobuj jeszcze raz.
-Nastepujace dyski sa dostepne: %s
-\nNa ktorym z nich chcesz zainstalowac NetBSD? }
+message Available_disks	/* XXX translate */
+{Available disks}
 
 message pleasemountroot
 {Glowny dysk nie jest zamountowany. Zamountuj go.

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2003/06/13 11:57:30 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.11 2003/07/11 15:29:02 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ md_get_info (void)
 #endif
 	int offset = 0;
 
-	if (strncmp(disk->dd_name, "wd", 2) == 0)
+	if (strncmp(diskdev, "wd", 2) == 0)
 		disktype = "ST506";
 	else
 		disktype = "SCSI";

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.112 2003/07/08 17:38:57 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.113 2003/07/11 15:28:59 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -123,14 +123,11 @@ message onedisk
 Therefore I assume you want to %s NetBSD on it.
 }
 
-message askdisk
-{I have found the following disks: %s
-\nOn which disk do you want to install NetBSD? }
+message ask_disk
+{On which disk do you want to install NetBSD? }
 
-message badname
-{You did not choose one of the listed disks.  Please try again.
-The following disks are available: %s
-\nOn which disk do you want to install NetBSD? }
+message Available_disks
+{Available disks}
 
 message pleasemountroot
 {The root device is not mounted.  Please mount it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36 2003/07/07 12:30:26 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.37 2003/07/11 15:29:03 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -740,12 +740,11 @@ md_get_info()
 	/*
 	 * Setup the disktype so /etc/disktab gets proper info
 	 */
-	if (strncmp (disk->dd_name, "sd", 2) == 0) {
-	    disktype = "SCSI";
-	    doessf = "sf:";
-	}
-	else
-	    disktype = "IDE";
+	if (strncmp(diskdev, "sd", 2) == 0) {
+		disktype = "SCSI";
+		doessf = "sf:";
+	} else
+		disktype = "IDE";
 
 	return edit_diskmap();
 }
