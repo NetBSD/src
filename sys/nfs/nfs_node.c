@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.33 2000/03/30 12:51:14 augustss Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.34 2000/08/03 06:15:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -165,7 +165,7 @@ loop:
 	 */
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	if (fhsize > NFS_SMALLFH) {
-		MALLOC(np->n_fhp, nfsfh_t *, fhsize, M_NFSBIGFH, M_WAITOK);
+		np->n_fhp = malloc(fhsize, M_NFSBIGFH, M_WAITOK);
 	} else
 		np->n_fhp = &np->n_fh;
 	memcpy((caddr_t)np->n_fhp, (caddr_t)fhp, fhsize);
@@ -269,7 +269,7 @@ nfs_reclaim(v)
 		FREE(np->n_dircache, M_NFSDIROFF);
 	}
 	if (np->n_fhsize > NFS_SMALLFH) {
-		FREE((caddr_t)np->n_fhp, M_NFSBIGFH);
+		free((caddr_t)np->n_fhp, M_NFSBIGFH);
 	}
 
 	pool_put(&nfs_vattr_pool, np->n_vattr);
