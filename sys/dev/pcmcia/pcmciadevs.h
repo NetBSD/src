@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.26 1998/12/18 22:07:00 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.27 1998/12/18 22:07:53 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.24 1998/12/18 22:04:48 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.25 1998/12/18 22:07:39 thorpej Exp 
  */
 
 /*-
@@ -63,7 +63,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
-vendir COMPEX			0x8a01	Compex Corporation
+#define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 
