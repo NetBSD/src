@@ -61,7 +61,7 @@
 #define TIMESIZE 50
 
 /* File scope variables */
-static char rcsid[] = "$Id: at.c,v 1.1 1993/12/05 11:36:38 cgd Exp $";
+static char rcsid[] = "$Id: at.c,v 1.2 1993/12/06 04:10:42 cgd Exp $";
 char *no_export[] =
 {
 	"TERM", "TERMCAP", "DISPLAY", "_"
@@ -184,8 +184,13 @@ writefile(runtimer, queue)
 
 	PRIV_START
 
-	    if ((lockdes = open(_PATH_LOCKFILE, O_WRONLY | O_CREAT)) < 0)
+	if ((lockdes = open(_PATH_LOCKFILE, O_WRONLY | O_CREAT, 0600)) < 0)
 		perr2("Cannot open lockfile ", _PATH_LOCKFILE);
+
+	lock.l_type = F_WRLCK;
+	lock.l_whence = SEEK_SET;
+	lock.l_start = 0;
+	lock.l_len = 0;
 
 	act.sa_handler = alarmc;
 	sigemptyset(&(act.sa_mask));
