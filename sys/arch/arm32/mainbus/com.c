@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.3 1996/03/17 01:24:25 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.4 1996/03/27 22:08:31 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -232,6 +232,7 @@ comattach(parent, self, aux)
  	sc->sc_ih.ih_func = comintr;
  	sc->sc_ih.ih_arg = sc;
  	sc->sc_ih.ih_level = IPL_TTY;
+ 	sc->sc_ih.ih_name = "serial";
  	if (mb->mb_irq != IRQUNK)
  		if (irq_claim(mb->mb_irq, &sc->sc_ih))
 			panic("Cannot claim IRQ %d for com%d\n", mb->mb_irq, sc->sc_dev.dv_unit);

@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.5 1996/03/17 01:24:32 thorpej Exp $ */
+/* $NetBSD: kbd.c,v 1.6 1996/03/27 22:08:37 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -634,6 +634,7 @@ kbdprobe(parent, match, aux)
 
 	switch (id) {
 	case RPC600_IOMD_ID:
+	case ARM7500_IOMD_ID:
 		return(1);
 		break;
 	default:
@@ -899,6 +900,7 @@ kbdinit(sc)
 	sc->sc_ih.ih_func = kbdintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_TTY;
+	sc->sc_ih.ih_name = "kbd rx";
 	if (irq_claim(IRQ_KBDRX, &sc->sc_ih))
 		panic("Cannot claim IRQ for kbd%d\n", sc->sc_device.dv_unit);
 
