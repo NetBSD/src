@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.3 2000/06/29 08:02:52 mrg Exp $	*/
+/*	$NetBSD: isr.c,v 1.4 2000/07/02 04:40:42 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,12 +44,6 @@
 /*
  * Link and dispatch interrupts.
  */
-
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,25 +303,6 @@ get_vector_entry(entry)
 		panic("get_vector_entry: setting vector too high or low\n");
 	return ((void *) vectab[entry]);
 }
-
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-
-/*
- * Declarations for the netisr functions...
- * They are in the header files, but that's not
- * really a good reason to drag all those in.
- */
-void netintr __P((void));
-void arpintr __P((void));
-void ipintr __P((void));
-void ip6intr __P((void));
-void atintr __P((void));
-void nsintr __P((void));
-void clnlintr __P((void));
-void ccittintr __P((void));
-void pppintr __P((void));
 
 void
 netintr()

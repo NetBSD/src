@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.62 2000/02/21 20:38:48 erh Exp $	*/
+/*	$NetBSD: icu.s,v 1.63 2000/07/02 04:40:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,11 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_vm86.h"
 
 #include <net/netisr.h>
@@ -163,7 +158,7 @@ IDTVEC(softnet)
 	call	_C_LABEL(c)	;\
 1:
 
-#include "net/netisr_dispatch.h"
+#include <net/netisr_dispatch.h>
 
 #undef DONETISR
 

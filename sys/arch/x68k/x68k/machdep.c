@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2000/06/29 07:07:55 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2000/07/02 04:40:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,11 +43,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 #include "opt_m680x0.h"
@@ -949,19 +944,6 @@ badbaddr(addr)
 	nofault = (int *) 0;
 	return(0);
 }
-
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	atintr __P((void));
-void	ipintr __P((void));
-void	ip6intr __P((void));
-void	nsintr __P((void));
-void	clnlintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
 
 void
 netintr()

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 2000/06/29 08:23:03 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.17 2000/07/02 04:40:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -39,12 +39,6 @@
 /*
  * Link and dispatch interrupts.
  */
-
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -295,19 +289,6 @@ intr_dispatch(evec)
 	else
 		printf("intr_dispatch: stray level %d interrupt\n", ipl);
 }
-
-/*
- * XXX Why on earth isn't this in a common file?!
- */
-void	netintr __P((void));
-void	arpintr __P((void));
-void	atintr __P((void));
-void	ipintr __P((void));
-void	ip6intr __P((void));
-void	nsintr __P((void));
-void	clnlintr __P((void));
-void	ccittintr __P((void));
-void	pppintr __P((void));
 
 void
 netintr()
