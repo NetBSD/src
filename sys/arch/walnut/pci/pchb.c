@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.7 2002/08/13 06:15:16 simonb Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8 2002/09/10 00:52:37 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 static int	pchbmatch(struct device *, struct cfdata *, void *);
 static void	pchbattach(struct device *, struct device *, void *);
-static int	phcbprint(void *, const char *);
+static int	pchbprint(void *, const char *);
 
 struct cfattach pchb_ca = {
 	sizeof(struct device), pchbmatch, pchbattach
@@ -165,12 +165,12 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
-	config_found(self, &pba, phcbprint);
+	config_found(self, &pba, pchbprint);
 }
 
 
 static int
-phcbprint(void *aux, const char *p)
+pchbprint(void *aux, const char *p)
 {
 
 	if (p == NULL)
