@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_overlay.8,v 1.1 2000/01/20 19:22:10 wrstuden Exp $
+.\"	$NetBSD: mount_overlay.8,v 1.2 2000/01/20 23:59:46 wrstuden Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,11 +68,13 @@ filesystem does not replicate the sub-tree, it places itself between
 the sub-tree and all future access.
 .Pp
 The overlay layer has two purposes.
-First, it serves as a demonstration of layering by proving a layer
-which does nothing.
+First, it serves as a demonstration of layering by providing a layer
+which does nothing other than insert itself over the over-mounted
+file system.
 Second, the overlay layer can serve as a prototype layer.
 Since it provides all necessary layer framework,
-new file system layers can be created very easily be starting
+new file system layers which need to block access to the overlayed
+file system can be created very easily be starting
 with an overlay layer.
 .Pp
 The internal operation of the overlay layer is identical to that of the
