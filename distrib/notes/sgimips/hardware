@@ -1,12 +1,66 @@
-.\"	$NetBSD: hardware,v 1.1 2002/05/18 17:31:43 pooka Exp $
+.\"	$NetBSD: hardware,v 1.1.2.1 2002/06/10 16:17:43 tv Exp $
 .
 .Nx*M
 is aimed to run on MIPS-based computers manufactured by SGI.
 .Ss2 Supported machines
-.(bullet -compact
-Indy
+.(bullet -offset indent
+.Tn SGI
+IP22 R4000/R4400/R4600 \- Challenge S, Indigo 2 and Indy
 .It
-Indigo2
+IP22 R5000 \- Indy
 .bullet)
-There is some initial support for the SGI O2, but it is known to currently
-have various problems.
+.
+.Ss2 Unsupported machines
+.(bullet -offset indent
+IP19 R4000 - Challenge Onyx
+.It
+IP20 R4000 - Indigo
+.It
+IP21 R8000 - Power Challenge / Power Onyx
+.It
+IP25 R1000 - Power Challenge 10000 / Power Onyx 10000
+.It
+IP26 R8000 - Indigo 2 R8000
+.It
+IP27 R10000/R12000 - O200 / Origin 2000 / Onyx2
+.It
+IP28 R1000 - Indigo 2 R10000
+.It
+IP30 R1000/R12000 - Octane
+.It
+IP32 R5000 - O2 (Support exists but is not stable)
+.It
+IP32 R10000/R12000 - O2
+.It
+IP35 R12000A - Origin 3000 / Onyx 3000
+.bullet)
+.
+.Ss2 Supported devices
+.(bullet -offset indent
+Serial ports
+.(bullet -compact
+On-board Zilog Z8530 Dual Uart
+.bullet)
+.It
+Ethernet
+.(bullet -compact
+On-board SGI Seeq 80c03 ethernet controller
+.Pq Em sq ,
+.bullet)
+.It
+SCSI
+.(bullet -compact
+On-board
+.Tn Western Digital
+.Em wdsc
+WD33C93 SCSI controller
+.bullet)
+.bullet)
+.Ss2 Unsupported devices
+.(bullet -offset indent
+Graphics adapters
+.It
+Audio hardware
+.It
+Video hardware
+.bullet)
