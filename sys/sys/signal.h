@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.13 1994/06/29 06:45:21 cgd Exp $	*/
+/*	$NetBSD: signal.h,v 1.14 1995/01/10 19:05:10 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -45,9 +45,7 @@
 
 #define NSIG	32		/* counting 0; could be 33 (mask is 1-32) */
 
-#ifndef _ANSI_SOURCE
 #include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
-#endif
 
 #define	SIGHUP	1	/* hangup */
 #define	SIGINT	2	/* interrupt */
