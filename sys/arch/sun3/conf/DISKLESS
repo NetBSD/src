@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.13 1996/08/26 23:41:03 mrg Exp $
+#	$NetBSD: DISKLESS,v 1.14 1996/10/08 18:01:47 jtc Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -6,7 +6,7 @@
 # Includes devices needed to run as an X-terminal
 #
 
-include "std.sun3"
+include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
