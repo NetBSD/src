@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.10 1997/07/10 04:14:32 mikel Exp $
+.\"	$NetBSD: route.8,v 1.11 1997/08/27 06:38:06 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@ system routing table management daemon such as
 should tend to this task.
 .Pp
 The
-.Nm route :
+.Nm route
 utility supports a limited number of general options,
 but a rich command language, enabling the user to specify
 any arbitrary request that could be delivered via the
@@ -69,15 +69,15 @@ Bypasses attempts to print host and network names symbolically
 when reporting actions.  (The process of translating between symbolic
 names and numerical equivalents can be quite time consuming, and
 may require correct operation of the network; thus it may be expedient
-to forgo this, especially when attempting to repair networking operations),
-.It Fl v
-(verbose) Print additional details.
+to forgo this, especially when attempting to repair networking operations).
 .It Fl q
 Suppress all output.
+.It Fl v
+(verbose) Print additional details.
 .El
 .Pp
 The
-.Nm route :
+.Nm route
 utility provides several commands:
 .Pp
 .Bl -tag -width Fl -compact
@@ -119,7 +119,7 @@ If the
 command is specified, 
 .Nm route
 will ``flush'' the routing tables of all gateway entries.
-When the address family may is specified by any of the
+When the address family is specified by any of the
 .Fl osi ,
 .Fl xns ,
 .Fl atalk ,
@@ -139,12 +139,13 @@ The other commands have the following syntax:
 .Pp
 where
 .Ar destination
-is the destination host or network,
+is the destination host or network, and
 .Ar gateway
 is the next-hop intermediary via which packets should be routed.
 Routes to a particular host may be distinguished from those to
 a network by interpreting the Internet address specified as the
-.Ar destination argument.
+.Ar destination
+argument.
 The optional modifiers
 .Fl net
 and
@@ -153,7 +154,7 @@ force the destination to be interpreted as a network or a host, respectively.
 Otherwise, if the 
 .Ar destination
 has a ``local address part'' of
-INADDR_ANY ,
+.Dv INADDR_ANY ,
 or if the
 .Ar destination
 is the symbolic name of a network, then the route is
@@ -211,7 +212,9 @@ netmasks different from that of the implied network interface
 (as would otherwise be communicated using the OSPF or ISIS routing protocols).
 One specifies an additional ensuing address parameter
 (to be interpreted as a network mask).
-The implicit network mask generated in the AF_INET case
+The implicit network mask generated in the
+.Dv AF_INET
+case
 can be overridden by making sure this option follows the destination parameter.
 .Pp
 Routes have associated flags which influence operation of the protocols
@@ -278,11 +281,11 @@ is then used to interpret the name as that of a network.
 .Pp
 .Nm Route
 uses a routing socket and the new message types
-RTM_ADD,
-RTM_DELETE,
-RTM_GET,
+.Dv RTM_ADD ,
+.Dv RTM_DELETE ,
+.Dv RTM_GET ,
 and
-RTM_CHANGE.
+.Dv RTM_CHANGE .
 As such, only the super-user may modify
 the routing tables.
 .Sh DIAGNOSTICS
