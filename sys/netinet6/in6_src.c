@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_src.c,v 1.1.2.1 2000/08/27 01:11:27 itojun Exp $	*/
-/*	$KAME: in6_src.c,v 1.27 2000/06/21 08:07:13 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.1.2.2 2000/08/27 01:25:08 itojun Exp $	*/
+/*	$KAME: in6_src.c,v 1.34 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -346,11 +346,11 @@ in6_pcbsetport(laddr, in6p)
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
 #endif
-		min = IPV6PORT_RESERVEDMIN;
-		max = IPV6PORT_RESERVEDMAX;
+		min = ip6_lowportmin;
+		max = ip6_lowportmax;
 	} else {
-		min = IPV6PORT_ANONMIN;
-		max = IPV6PORT_ANONMAX;
+		min = ip6_anonportmin;
+		max = ip6_anonportmax;
 	}
 
 	/* value out of range */

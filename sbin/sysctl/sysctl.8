@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.47.4.2 2000/08/27 00:51:11 itojun Exp $
+.\"	$NetBSD: sysctl.8,v 1.47.4.3 2000/08/27 01:25:08 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -255,6 +255,8 @@ privilege can change the value.
 .It net.inet6.icmp6.rediraccept	integer	yes
 .It net.inet6.icmp6.redirtimeout	integer	yes
 .It net.inet6.ip6.accept_rtadv	integer	yes
+.It net.inet6.ip6.anonportmax	integer	yes
+.It net.inet6.ip6.anonportmin	integer	yes
 .It net.inet6.ip6.auto_flowlabel	integer	yes
 .It net.inet6.ip6.bindv6only	integer	yes
 .It net.inet6.ip6.dad_count	integer	yes
@@ -266,6 +268,8 @@ privilege can change the value.
 .It net.inet6.ip6.kame_version	string	no
 .It net.inet6.ip6.keepfaith	integer	yes
 .It net.inet6.ip6.log_interval	integer	yes
+.It net.inet6.ip6.lowportmax	integer	yes
+.It net.inet6.ip6.lowportmin	integer	yes
 .It net.inet6.ip6.maxfragpackets	integer	yes
 .It net.inet6.ip6.redirect	integer	yes
 .It net.inet6.ip6.rr_prune	integer	yes
