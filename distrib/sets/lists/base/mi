@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.402 2003/04/18 05:00:25 thorpej Exp $
+# $NetBSD: mi,v 1.403 2003/04/18 05:15:48 thorpej Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -56,6 +56,8 @@
 ./etc/openssl/misc	base-crypto-root
 ./etc/openssl/private	base-crypto-root
 ./etc/postfix		base-postfix-bin
+./etc/powerd		base-sysutil-bin
+./etc/powerd/scripts	base-sysutil-bin
 ./etc/racoon		base-netutil-bin
 ./etc/rc.conf.d		base-sys-root
 ./etc/rc.d		base-sys-root
