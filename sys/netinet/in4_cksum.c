@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.4 2000/03/30 13:24:55 augustss Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.5 2001/05/19 00:13:53 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -109,20 +109,22 @@ in4_cksum(m, nxt, off, len)
 		u_int32_t l;
 	} l_util;
 
-	/* pseudo header */
-	if (off < sizeof(struct ipovly))
-		panic("in4_cksum: offset too short");
-	if (m->m_len < sizeof(struct ip))
-		panic("in4_cksum: bad mbuf chain");
-	bzero(&ipov, sizeof(ipov));
-	ipov.ih_len = htons(len);
-	ipov.ih_pr = nxt;
-	ipov.ih_src = mtod(m, struct ip *)->ip_src;
-	ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-	w = (u_int16_t *)&ipov;
-	/* assumes sizeof(ipov) == 20 */
-	sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
-	sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];
+	if (nxt == 0) {
+		/* pseudo header */
+		if (off < sizeof(struct ipovly))
+			panic("in4_cksum: offset too short");
+		if (m->m_len < sizeof(struct ip))
+			panic("in4_cksum: bad mbuf chain");
+		bzero(&ipov, sizeof(ipov));
+		ipov.ih_len = htons(len);
+		ipov.ih_pr = nxt;
+		ipov.ih_src = mtod(m, struct ip *)->ip_src;
+		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = (u_int16_t *)&ipov;
+		/* assumes sizeof(ipov) == 20 */
+		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
+		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];
+	}
 
 	/* skip unnecessary part */
 	while (m && off > 0) {
