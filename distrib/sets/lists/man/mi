@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.285 2000/11/08 19:54:12 ad Exp $
+# $NetBSD: mi,v 1.286 2000/11/22 00:40:09 bjh21 Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1034,6 +1034,8 @@
 ./usr/share/man/cat8/apmd.0
 ./usr/share/man/cat8/arc/MAKEDEV.0
 ./usr/share/man/cat8/arc/makedev.0
+./usr/share/man/cat8/arm26/BBBB.0
+./usr/share/man/cat8/arm26/bbbb.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
 ./usr/share/man/cat8/arp.0
@@ -2456,6 +2458,8 @@
 ./usr/share/man/man8/apmd.8
 ./usr/share/man/man8/arc/MAKEDEV.8
 ./usr/share/man/man8/arc/makedev.8
+./usr/share/man/man8/arm26/BBBB.8
+./usr/share/man/man8/arm26/bbbb.8
 ./usr/share/man/man8/arm32/MAKEDEV.8
 ./usr/share/man/man8/arm32/makedev.8
 ./usr/share/man/man8/arp.8
