@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.107 2000/01/23 13:57:42 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.108 2000/01/24 10:49:19 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -2938,3 +2938,12 @@ sys/arch/alpha/alpha/machdep.c			1.192
 etc/mtree/NetBSD.dist				1.94
 
   Create /usr/share/examples/usermgmt for "user" command.
+
+sys/arch/i386/stand/lib/comio_direct.c		1.4
+
+  Raise the serial carrier lines in console initialization, similar
+  to sys/dev/ic/com.c revision 1.165.
+
+distrib/utils/sysinst/run.c			1.29
+
+  Remove local declaration of errno, rely on <errno.h> instead.
