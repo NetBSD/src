@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 1995/12/26 04:22:33 jonathan Exp $
+	$NetBSD: syscalls.master,v 1.13 1995/12/26 04:46:08 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -145,8 +145,8 @@
 90	NOARGS		{ int sys_dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
 92	NOARGS		{ int sys_fcntl(int fd, int cmd, void *arg); }
-93	NOARGS		{ int ultrix_sys_select(u_int nd, fd_set *in, \
-			 fd_set *out, fd_set *ex, struct timeval *tv); }
+93	STD		{ int ultrix_sys_select(u_int nd, fd_set *in, fd_set *ou, \
+			    fd_set *ex, struct timeval *tv); }
 94	UNIMPL		setdopt
 95	NOARGS		{ int sys_fsync(int fd); }
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
