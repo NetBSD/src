@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.31 1998/11/09 23:12:48 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.32 1999/02/19 06:57:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,8 @@ struct ep_pci_product {
 	const char	*epp_name;	/* device name */
 } ep_pci_products[] = {
 	{ PCI_PRODUCT_3COM_3C590,	ELINK_CHIPSET_VORTEX,
-	  0,				"3c590" },
+	  0,
+	  "3c590 Ethernet" },
 
 	/*
 	 * Note: The 3c595-MII is an MII connector for an
@@ -145,21 +146,28 @@ struct ep_pci_product {
 	 * core driver.
 	 */
 	{ PCI_PRODUCT_3COM_3C595TX,	ELINK_CHIPSET_VORTEX,
-	  0,				"3c595-TX" },
+	  0,
+	  "3c595-TX 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C595T4,	ELINK_CHIPSET_VORTEX,
-	  0,				"3c595-T4" },
+	  0,
+	  "3c595-T4 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C595MII,	ELINK_CHIPSET_VORTEX,
-	  0,				"3c595-MII" },
+	  0,
+	  "3c595-MII 10/100 Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C900TPO,	ELINK_CHIPSET_BOOMERANG,
-	  0,				"3c900-TPO" },
+	  0,
+	  "3c900-TPO Ethernet" },
 	{ PCI_PRODUCT_3COM_3C900COMBO,	ELINK_CHIPSET_BOOMERANG,
-	  0,				"3c900-COMBO" },
+	  0,
+	  "3c900-COMBO Ethernet" },
 
 	{ PCI_PRODUCT_3COM_3C905TX,	ELINK_CHIPSET_BOOMERANG,
-	  ELINK_FLAGS_MII,		"3c905-TX" },
+	  ELINK_FLAGS_MII,
+	  "3c905-TX 10/100 Ethernet" },
 	{ PCI_PRODUCT_3COM_3C905T4,	ELINK_CHIPSET_BOOMERANG,
-	  ELINK_FLAGS_MII,		"3c905-T4" },
+	  ELINK_FLAGS_MII,
+	  "3c905-T4 10/100 Ethernet" },
 
 	{ 0,				0,
 	  0,				NULL },
@@ -222,7 +230,7 @@ ep_pci_attach(parent, self, aux)
 		panic("ep_pci_attach: impossible");
 	}
 
-	printf(": 3Com %s Ethernet\n", epp->epp_name);
+	printf(": 3Com %s\n", epp->epp_name);
 
 	sc->enable = NULL;
 	sc->disable = NULL;
