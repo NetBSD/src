@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.44 1994/02/23 18:42:04 mycroft Exp $
+ *	$Id: pccons.c,v 1.45 1994/02/23 20:15:28 mycroft Exp $
  */
 
 /*
@@ -300,22 +300,9 @@ async_update()
 }
 
 /*
- * Read response from keyboard
- */
-int kbd_response()
-{
-	unsigned timeo;
-
-	timeo = 500000; 	/* > 500 msec (KBR_RSTDONE requires 87) */
-	while ((inb(KBSTATP) & KBS_DIB) == 0)
-		if (--timeo == 0)
-			return (-1);
-	return ((u_char) inb(KBDATAP));
-}
-
-/*
  * these are both bad jokes
  */
+int
 pcprobe(dev)
 	struct isa_device *dev;
 {
@@ -337,6 +324,7 @@ pcprobe(dev)
 	return 16;
 }
 
+int
 pcattach(dev)
 	struct isa_device *dev;
 {
@@ -579,8 +567,6 @@ pccninit(cp)
 	 */
 	/* crtat = 0; */
 }
-
-static __color;
 
 /* ARGSUSED */
 pccnputc(dev, c)
