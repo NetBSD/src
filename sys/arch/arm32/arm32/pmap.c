@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 1999/03/26 22:00:25 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 1999/03/27 05:12:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -103,7 +103,9 @@ char *memhook;
 pt_entry_t msgbufpte;
 extern caddr_t msgbufaddr;
 
+#ifdef DIAGNOSTIC
 boolean_t pmap_initialized = FALSE;	/* Has pmap_init completed? */
+#endif
 
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 
@@ -163,7 +165,9 @@ struct l1pt *pmap_alloc_l1pt __P((void));
 static __inline void pmap_map_in_l1 __P((pmap_t pmap, vm_offset_t va,
      vm_offset_t l2pa));
 
+#ifdef MYCROFT_HACK
 int mycroft_hack = 0;
+#endif
 
 /* Function to set the debug level of the pmap code */
 
@@ -366,7 +370,7 @@ pmap_collect_pv()
 			} else
 				ppv = pv;
 		}
-		(void)splx(s);
+		splx(s);
 	}
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
@@ -430,7 +434,7 @@ pmap_enter_pv(pmap, va, pv, flags)
 	if (flags & PT_W)
 		++pmap->pm_stats.wired_count;
 
-	(void)splx(s);
+	splx(s);
 }
 
 
@@ -487,7 +491,7 @@ pmap_remove_pv(pmap, va, pv)
 	if (flags & PT_W)
 		--pmap->pm_stats.wired_count;
 
-	(void)splx(s);
+	splx(s);
 }
 
 /*
@@ -535,13 +539,13 @@ pmap_modify_pv(pmap, va, pv, bic_mask, eor_mask)
 					--pmap->pm_stats.wired_count;
 			}
 			PDEBUG(0, printf("done flags=%08x\n", flags));
-			(void)splx(s);
+			splx(s);
 			return (oflags);
 		}
 	}
 
 	PDEBUG(0, printf("done.\n"));
-	(void)splx(s);
+	splx(s);
 	return (0);
 }
 
@@ -810,10 +814,10 @@ pmap_init()
 #endif
 	TAILQ_INIT(&pv_page_freelist);
 
-	/*
-	 * Now it is safe to enable pv_entry recording.
-	 */
+#ifdef DIAGNOSTIC
+	/* Now it is safe to enable pv_entry recording. */
 	pmap_initialized = TRUE;
+#endif
     
 	/* Initialise our L1 page table queues and counters */
 	SIMPLEQ_INIT(&l1pt_static_queue);
@@ -1368,9 +1372,6 @@ pmap_clean_page(pv)
 	int cache_needs_cleaning = 0;
 	vm_offset_t page_to_clean = 0;
 
-	if (!pv)
-		return 0;
-
 	/* Go to splimp() so we get exclusive lock for a mo */
 	s = splimp();
 	if (pv->pv_pmap) {
@@ -1383,13 +1384,11 @@ pmap_clean_page(pv)
 	/* Do cache ops outside the splimp. */
 	if (page_to_clean)
 		cpu_cache_purgeID_rng(page_to_clean, NBPG);
-	else {
-		if (cache_needs_cleaning) {
-			cpu_cache_purgeID();
-			return 1;
-		}
+	else if (cache_needs_cleaning) {
+		cpu_cache_purgeID();
+		return (1);
 	}
-	return 0;
+	return (0);
 }
 
 /*
@@ -1402,17 +1401,18 @@ static __inline struct pv_entry *
 pmap_find_pv(phys)
 	vm_offset_t phys;
 {
-	struct pv_entry *pv = 0;
+	int bank, off;
+	struct pv_entry *pv;
 
-	if (pmap_initialized) {
-		int bank, off;
+#ifdef DIAGNOSTIC
+	if (!pmap_initialized)
+		panic("pmap_find_pv: !pmap_initialized");
+#endif
 
-		if ((bank = vm_physseg_find(atop(phys), &off)) == -1)
-			panic("pmap_find_pv: not a real page, phys=%lx\n",
-			    phys);
-		pv = &vm_physmem[bank].pmseg.pvent[off];
-	}
-	return pv;
+	if ((bank = vm_physseg_find(atop(phys), &off)) == -1)
+		panic("pmap_find_pv: not a real page, phys=%lx\n", phys);
+	pv = &vm_physmem[bank].pmseg.pvent[off];
+	return (pv);
 }
 
 /*
@@ -1751,23 +1751,18 @@ pmap_remove_all(pa)
 	struct pv_entry *ph, *pv, *npv;
 	pmap_t pmap;
 	pt_entry_t *pte;
-	int bank, off;
 	int s;
 
 	PDEBUG(0, printf("pmap_remove_all: pa=%lx ", pa));
 
-	bank = vm_physseg_find(atop(pa), &off);
-	if (bank == -1)
-		return;
-	pv = ph = &vm_physmem[bank].pmseg.pvent[off];
-
+	pv = ph = pmap_find_pv(pa);
 	pmap_clean_page(pv);
 
 	s = splimp();
 
 	if (ph->pv_pmap == NULL) {
 		PDEBUG(0, printf("free page\n"));
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 
@@ -1810,7 +1805,8 @@ reduce wiring count on page table pages as references drop
 			pmap_free_pv(pv);
 		pv = npv;
 	}
-	(void)splx(s);
+
+	splx(s);
 
 	PDEBUG(0, printf("done\n"));
 	cpu_tlb_flushID();
@@ -1952,9 +1948,13 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (pmap == NULL)
 		return;
 
+#ifdef DIAGNOSTIC
 	/* Valid address ? */
 	if (va >= (KERNEL_VM_BASE + KERNEL_VM_SIZE))
 		panic("pmap_enter: too big");
+	if (va >= VM_MAXUSER_ADDRESS && va < VM_MAX_ADDRESS)
+		panic("pmap_enter: entering PT page");
+#endif
 
 	/*
 	 * Get a pointer to the pte for this virtual address. If the
@@ -2082,34 +2082,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 
 	if (flags & PT_Us)
 		npte |= PT_AP(AP_U);
-	if (va >= VM_MAXUSER_ADDRESS && va < VM_MAX_ADDRESS) {
-#ifdef MYCROFT_HACK
-		printf("entering PT page\n");
-		//if (pmap_initialized)
-		//	console_debugger();
-#endif
-		/*
-		 * This is a page table page.
-		 * We don't track R/M information for page table pages, and
-		 * they can never be aliased, so we punt on some of the extra
-		 * handling below.
-		 */
-		if (~flags & PT_W)
-			panic("pmap_enter: bogon bravo");
-		if (!pv)
-			panic("pmap_enter: bogon charlie");
-		if (~prot & (VM_PROT_READ|VM_PROT_WRITE))
-			panic("pmap_enter: bogon delta");
-		pv = 0;
-	}
 
 	if (bank != -1) {
-#ifdef MYCROFT_HACK
-		if (~prot & access_type) {
-			printf("pmap_enter: bogon echo");
-			console_debugger();
-		}
-#endif
 		/*
 		 * An obvious question here is why a page would be entered in
 		 * response to a fault, but with permissions less than those
@@ -2137,11 +2111,9 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			npte |= L2_INVAL;
 	}
 
-#ifndef MYCROFT_HACK
+#ifdef MYCROFT_HACK
 	if (mycroft_hack)
 		printf("pmap_enter: pmap=%p va=%lx pa=%lx prot=%x wired=%d access_type=%x npte=%08x\n", pmap, va, pa, prot, wired, access_type, npte);
-	//if (pmap_initialized)
-	//	console_debugger();
 #endif
 
 	*pte = npte;
@@ -2404,9 +2376,6 @@ pmap_dump_pvlist(phys, m)
 	struct pv_entry *pv;
 	int bank, off;
 
-	if (!pmap_initialized)
-		return;
-
 	if ((bank = vm_physseg_find(atop(phys), &off)) == -1) {
 		printf("INVALID PA\n");
 		return;
@@ -2509,7 +2478,7 @@ pmap_changebit(pa, setbits, maskbits)
 		}
 		cpu_tlb_flushID();
 	}
-	(void)splx(s);
+	splx(s);
 }
 
 
