@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.1 2002/03/28 21:09:11 ichiro Exp $	*/
+/*	$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.1 2002/03/28 21:09:11 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -133,11 +133,10 @@ Static int url_csr_write_4(struct url_softc *, int, int);
 Static int url_mem(struct url_softc *, int, int, void *, int);
 
 /* Macros */
-#define URL_DEBUG 0
 #ifdef URL_DEBUG
-#define DPRINTF(x)	if (urldebug) printf x
-#define DPRINTFN(n,x)	if (urldebug>(n)) printf x
-int urldebug = URL_DEBUG;
+#define DPRINTF(x)	if (urldebug) logprintf x
+#define DPRINTFN(n,x)	if (urldebug >= (n)) logprintf x
+int urldebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -148,7 +147,6 @@ int urldebug = URL_DEBUG;
 
 #define	URL_SETBIT2(sc, reg, x)	\
 	url_csr_write_2(sc, reg, url_csr_read_2(sc, reg) | (x))
-
 
 #define	URL_CLRBIT(sc, reg, x)	\
 	url_csr_write_1(sc, reg, url_csr_read_1(sc, reg) & ~(x))
