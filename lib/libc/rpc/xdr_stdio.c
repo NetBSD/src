@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_stdio.c,v 1.6 1998/02/10 04:55:04 lukem Exp $	*/
+/*	$NetBSD: xdr_stdio.c,v 1.7 1998/02/11 11:53:01 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_stdio.c 1.16 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_stdio.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_stdio.c,v 1.6 1998/02/10 04:55:04 lukem Exp $");
+__RCSID("$NetBSD: xdr_stdio.c,v 1.7 1998/02/11 11:53:01 lukem Exp $");
 #endif
 #endif
 
@@ -63,11 +63,11 @@ __weak_alias(xdrstdio_create,_xdrstdio_create);
 static void xdrstdio_destroy __P((XDR *));
 static bool_t xdrstdio_getlong __P((XDR *, int32_t *));
 static bool_t xdrstdio_putlong __P((XDR *, int32_t *));
-static bool_t xdrstdio_getbytes __P((XDR *, caddr_t, size_t));
-static bool_t xdrstdio_putbytes __P((XDR *, caddr_t, size_t));
-static size_t xdrstdio_getpos __P((XDR *));
-static bool_t xdrstdio_setpos __P((XDR *, size_t));
-static int32_t *xdrstdio_inline __P((XDR *, size_t));
+static bool_t xdrstdio_getbytes __P((XDR *, caddr_t, u_int32_t));
+static bool_t xdrstdio_putbytes __P((XDR *, caddr_t, u_int32_t));
+static u_int32_t xdrstdio_getpos __P((XDR *));
+static bool_t xdrstdio_setpos __P((XDR *, u_int32_t));
+static int32_t *xdrstdio_inline __P((XDR *, u_int32_t));
 
 /*
  * Ops vector for stdio type XDR
@@ -144,7 +144,7 @@ static bool_t
 xdrstdio_getbytes(xdrs, addr, len)
 	XDR *xdrs;
 	caddr_t addr;
-	size_t len;
+	u_int32_t len;
 {
 
 	if ((len != 0) &&
@@ -157,7 +157,7 @@ static bool_t
 xdrstdio_putbytes(xdrs, addr, len)
 	XDR *xdrs;
 	caddr_t addr;
-	size_t len;
+	u_int32_t len;
 {
 
 	if ((len != 0) && (fwrite(addr, (int)len, 1, (FILE *)xdrs->x_private) != 1))
@@ -165,18 +165,18 @@ xdrstdio_putbytes(xdrs, addr, len)
 	return (TRUE);
 }
 
-static size_t
+static u_int32_t
 xdrstdio_getpos(xdrs)
 	XDR *xdrs;
 {
 
-	return ((size_t) ftell((FILE *)xdrs->x_private));
+	return ((u_int32_t) ftell((FILE *)xdrs->x_private));
 }
 
 static bool_t
 xdrstdio_setpos(xdrs, pos) 
 	XDR *xdrs;
-	size_t pos;
+	u_int32_t pos;
 { 
 
 	return ((fseek((FILE *)xdrs->x_private, (int32_t)pos, 0) < 0) ?
@@ -186,7 +186,7 @@ xdrstdio_setpos(xdrs, pos)
 static int32_t *
 xdrstdio_inline(xdrs, len)
 	XDR *xdrs;
-	size_t len;
+	u_int32_t len;
 {
 
 	/*

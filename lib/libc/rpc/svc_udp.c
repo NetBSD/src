@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.10 1998/02/10 04:54:56 lukem Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.11 1998/02/11 11:52:57 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_udp.c,v 1.10 1998/02/10 04:54:56 lukem Exp $");
+__RCSID("$NetBSD: svc_udp.c,v 1.11 1998/02/11 11:52:57 lukem Exp $");
 #endif
 #endif
 
@@ -92,7 +92,7 @@ static struct xp_ops svcudp_op = {
  * kept in xprt->xp_p2
  */
 struct svcudp_data {
-	size_t   	su_iosz;	/* byte size of send.recv buffer */
+	u_int32_t   	su_iosz;	/* byte size of send.recv buffer */
 	u_int32_t	su_xid;		/* transaction id */
 	XDR		su_xdrs;	/* XDR handle */
 	char		su_verfbody[MAX_AUTH_BYTES];	/* verifier body */
@@ -116,7 +116,7 @@ struct svcudp_data {
 SVCXPRT *
 svcudp_bufcreate(sock, sendsz, recvsz)
 	int sock;
-	size_t sendsz, recvsz;
+	u_int32_t sendsz, recvsz;
 {
 	bool_t madesock = FALSE;
 	SVCXPRT *xprt;
@@ -404,7 +404,7 @@ cache_set(xprt, replylen)
 	cache_ptr *vicp;
 	struct svcudp_data *su = su_data(xprt);
 	struct udp_cache *uc = (struct udp_cache *) su->su_cache;
-	size_t loc;
+	u_int32_t loc;
 	char *newbuf;
 
 	/*
@@ -467,7 +467,7 @@ cache_get(xprt, msg, replyp, replylenp)
 	char **replyp;
 	u_int32_t *replylenp;
 {
-	size_t loc;
+	u_int32_t loc;
 	cache_ptr ent;
 	struct svcudp_data *su = su_data(xprt);
 	struct udp_cache *uc = (struct udp_cache *) su->su_cache;
