@@ -1,3 +1,5 @@
-# $NetBSD: obsolete.mi,v 1.2 2000/08/06 22:34:00 wiz Exp $
-./etc/rc.d/systemfs
+# $NetBSD: obsolete.mi,v 1.3 2000/08/22 08:38:08 lukem Exp $
+./etc/rc.d/fsck.sh
 ./etc/rc.d/kerberos
+./etc/rc.d/systemfs
+./etc/rc.wscons
