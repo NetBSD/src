@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.37 2001/11/24 18:30:59 perry Exp $
+.\"	$NetBSD: disklabel.8,v 1.38 2001/12/14 23:36:25 fredette Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -416,7 +416,7 @@ the ``a'' partition on the tahoe,
 the ``d'' partition on i386 or hpcmips or arc, and
 the ``c'' partition on all others.
 .Pp
-On the sparc, sparc64 and sun3
+On the sparc, sparc64, sun2 and sun3
 .Nx
 systems, the size of each partition must be a multiple of the number
 of sectors per cylinder (i.e. each partition must be an integer
@@ -425,7 +425,8 @@ invalid and fail to boot the system.
 .Pp
 In addition, the
 .Fl r
-option should never be used on a sparc, sparc64 or sun3 system boot disk - the
+option should never be used on a sparc, sparc64, sun2 or sun3 system 
+boot disk - the
 .Nx
 kernel translates the
 .Nx
