@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.16 2001/07/07 07:51:38 scw Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.17 2001/07/18 17:21:49 scw Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2001/07/07 07:51:38 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2001/07/18 17:21:49 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,9 +486,7 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 		return;
 
 	/* Short-circuit for unsupported `ops' */
-	if ((ops & (BUS_DMASYNC_PREREAD  |
-		    BUS_DMASYNC_PREWRITE |
-		    BUS_DMASYNC_POSTREAD)) == 0)
+	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) == 0)
 		return;
 
 	for (i = 0; i < map->dm_nsegs && len > 0; i++) {
@@ -540,48 +538,34 @@ _bus_dmamap_sync_0460(t, map, offset, len, ops)
 		 * we may end up purging some legitimate data from the
 		 * start/end of the cache. In such a case, *flush* the
 		 * cachelines at the start and end of the required region.
-		 * We assume someone will do a `POSTREAD' afterwards to
-		 * ensure the cache is purged for the remainder of the region.
-		 *
-		 * Note: Even though the high-end MVME boards support bus-
-		 * snooping (well, the 060 isn't *quite* there), the osiop(4)
-		 * driver *ALWAYS* issues a `POSTREAD' EVEN IF NO DATA WAS
-		 * TRANSFERRED!
-		 *
-		 * This isn't necessarily a bug, since a SCSI target is free
-		 * to disconnect part way through a data-in phase anyway.
-		 * Thus, the CPU may never get to snoop the incoming data
-		 * before we purge the dmamap region.
-		 *
-		 * Note #2: All this is necessary on mvme68k because we
-		 * normally run the cache in Copy Back mode...
 		 */
 		if (ops & BUS_DMASYNC_PREREAD) {
 			if (ps & 0xf)
 				DCFL_40(ps);
 			if (pe & 0xf)
 				DCFL_40(pe);
-		}
 
-		if (ops & BUS_DMASYNC_POSTREAD) {
 			p = ps & ~0xf;
 			e = (pe + 15) & ~0xf;
 
 			/* purge cache line */
 			while((p < e) && (p % NBPG)) {
 				DCPL_40(p);
+				ICPL_40(p);
 				p += 16;
 			}
 
 			/* purge page */
 			while((p + NBPG) <= e) {
 				DCPP_40(p);
+				ICPP_40(p);
 				p += NBPG;
 			}
 
 			/* purge cache line */
 			while(p < e) {
 				DCPL_40(p);
+				ICPL_40(p);
 				p += 16;
 			}
 		}
