@@ -8,7 +8,6 @@ maxusers 2 8 64
 file	arch/bebox/bebox/Locore.c
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/bcopy.c
-file	arch/bebox/bebox/bus_machdep.c
 file	arch/bebox/bebox/clock.c
 file	arch/bebox/bebox/conf.c
 file	arch/bebox/bebox/copyinstr.c
@@ -39,9 +38,6 @@ file    arch/bebox/bebox/db_memrw.c                 ddb
 file    arch/bebox/bebox/db_disasm.c                ddb
 file    arch/bebox/bebox/db_interface.c             ddb
 file    arch/bebox/bebox/db_trace.c                 ddb
-
-# For now, hardwire soft interrupt handling
-file	arch/bebox/bebox/soft_spl.c
 
 major	{vnd = 14}
 
