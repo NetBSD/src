@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.48 2003/01/18 10:32:11 thorpej Exp $	*/
+/*	$NetBSD: stdio.h,v 1.49 2003/01/18 17:10:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -193,7 +193,10 @@ __END_DECLS
 #define	P_tmpdir	"/var/tmp/"
 #endif
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
-#define	TMP_MAX		308915776
+/* Always ensure that this is consistent with <limits.h> */
+#ifndef TMP_MAX
+#define TMP_MAX			308915776	/* Legacy */
+#endif
 
 /* Always ensure that these are consistent with <fcntl.h> and <unistd.h>! */
 #ifndef SEEK_SET
