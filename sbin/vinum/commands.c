@@ -1,4 +1,4 @@
-/* $NetBSD: commands.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $ */
+/* $NetBSD: commands.c,v 1.3 2003/10/21 02:33:34 fvdl Exp $ */
 
 /* commands.c: vinum interface program, main commands */
 /*-
@@ -38,13 +38,13 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: commands.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $
+ * $Id: commands.c,v 1.3 2003/10/21 02:33:34 fvdl Exp $
  * $FreeBSD$
  */
 
 #include "vext.h"
 
-__RCSID("$NetBSD: commands.c,v 1.2 2003/10/11 09:55:58 jdolecek Exp $");
+__RCSID("$NetBSD: commands.c,v 1.3 2003/10/21 02:33:34 fvdl Exp $");
 
 static void dorename(struct vinum_rename_msg *msg, const char *oldname, const char *name, int maxlen);
 
@@ -335,7 +335,7 @@ void
 initplex(int plexno, char *name)
 {
     int sdno;
-    int plexfh = NULL;					    /* file handle for plex */
+    int plexfh = 0;					    /* file handle for plex */
     pid_t pid;
     char filename[MAXPATHLEN];				    /* create a file name here */
 
