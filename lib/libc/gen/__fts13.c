@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.33 2001/06/05 17:05:11 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.34 2001/06/06 14:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.33 2001/06/05 17:05:11 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.34 2001/06/06 14:10:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -524,6 +524,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 			SET(FTS_STOP);
 			return (NULL);
 		}
+		(void)close(fd);
 	}
 	p->fts_info = p->fts_errno ? FTS_ERR : FTS_DP;
 	return (sp->fts_cur = p);
