@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.15 1995/11/01 04:59:03 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.16 1996/01/11 15:25:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -175,13 +175,14 @@ int	pdma_5380_dir = 0;
 u_char	*pending_5380_data;
 u_long	pending_5380_count;
 
-/* #define DEBUG 1 	Maybe we try with this off eventually. */
+#define DEBUG 1 	/* Maybe we try with this off eventually. */
 
 #if DEBUG
 int		pdma_5380_sends = 0;
 int		pdma_5380_bytes = 0;
 
-char	*pdma_5380_state="";
+char	*pdma_5380_state="", *pdma_5380_prev_state="";
+#define DBG_SET(x) {pdma_5380_prev_state=pdma_5380_state; pdma_5380_state=(x);}
 
 void
 pdma_stat()
@@ -192,7 +193,8 @@ pdma_stat()
 		pdma_5380_dir);
 	printf("datap = 0x%x, remainder = %d.\n",
 		pending_5380_data, pending_5380_count);
-	printf("pdma_5380_state = %s.\n", pdma_5380_state);
+	printf("state = %s\n", pdma_5380_state);
+	printf("last state = %s\n", pdma_5380_prev_state);
 }
 #endif
 
@@ -207,7 +209,7 @@ pdma_cleanup(void)
 	pdma_5380_dir = 0;
 
 #if DEBUG
-	pdma_5380_state = "in pdma_cleanup().";
+	DBG_SET("in pdma_cleanup().")
 	pdma_5380_sends++;
 	pdma_5380_bytes+=(reqp->xdata_len - pending_5380_count);
 #endif
@@ -241,7 +243,13 @@ pdma_cleanup(void)
 	/*
 	 * Back for more punishment.
 	 */
+#if DEBUG
+	pdma_5380_state = "pdma_cleanup() -- going back to run_main().";
+#endif
 	run_main(cur_softc);
+#if DEBUG
+	pdma_5380_state = "pdma_cleanup() -- back from run_main().";
+#endif
 }
 #endif
 
@@ -255,7 +263,7 @@ extern	u_char	ncr5380_no_parchk;
 
 	if (pdma_5380_dir) {
 #if DEBUG
-		pdma_5380_state = "got irq interrupt in xfer.";
+		DBG_SET("got irq interrupt in xfer.")
 #endif
 		/*
 		 * If Mr. IRQ isn't set one might wonder how we got
@@ -358,7 +366,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 		return;
 
 #if DEBUG
-	pdma_5380_state = "got drq interrupt.";
+	DBG_SET("got drq interrupt.")
 #endif
 
 	/*
@@ -371,7 +379,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 	if (setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
 #if DEBUG
-		pdma_5380_state = "buserr in xfer.";
+		DBG_SET("buserr in xfer.")
 #endif
 		count = (  (u_long) mac68k_buserr_addr
 			 - (u_long) ncr_5380_with_drq);
@@ -387,7 +395,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_count -= count;
 
 #if DEBUG
-		pdma_5380_state = "handled bus error in xfer.";
+		DBG_SET("handled bus error in xfer.")
 #endif
 		mac68k_buserr_addr = 0;
 		return;
@@ -430,7 +438,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 				pending_5380_data += (dcount - count);
 				pending_5380_count -= (dcount - count);
 #if DEBUG
-				pdma_5380_state = "drq low";
+				DBG_SET("drq low")
 #endif
 				return;
 			}
@@ -524,7 +532,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 	nofault = (int *) 0;
 
 #if DEBUG
-	pdma_5380_state = "done in xfer--waiting.";
+	DBG_SET("done in xfer--waiting.")
 #endif
 
 	/*
@@ -540,7 +548,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 	pending_5380_count = 0;
 
 #if DEBUG
-	pdma_5380_state = "done in xfer.";
+	DBG_SET("done in xfer.")
 #endif
 
 	pdma_cleanup();
@@ -567,7 +575,7 @@ transfer_pdma(phasep, data, count)
 			"pending.\n");
 	}
 #if DEBUG
-	pdma_5380_state = "in transfer_pdma.";
+	DBG_SET("in transfer_pdma.")
 #endif
 
 	/*
@@ -575,7 +583,7 @@ transfer_pdma(phasep, data, count)
  	 */
 	if (reqp->dr_flag & DRIVER_NOINT) {
 #if DEBUG
-		pdma_5380_state = "pdma, actually using transfer_pio.";
+		DBG_SET("pdma, actually using transfer_pio.")
 #endif
 		transfer_pio(phasep, data, count, 0);
 		return -1;
@@ -630,7 +638,7 @@ transfer_pdma(phasep, data, count)
 	pending_5380_count = len;
 
 #if DEBUG
-	pdma_5380_state = "wait for interrupt.";
+	DBG_SET("wait for interrupt.")
 #endif
 
 	/*
