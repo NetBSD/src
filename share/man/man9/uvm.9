@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.20 2001/04/25 02:19:50 simonb Exp $
+.\"	$NetBSD: uvm.9,v 1.21 2001/05/06 04:46:54 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -870,10 +870,6 @@ All structure and types whose names begin with
 .Dq vm_
 will be renamed to
 .Dq uvm_ .
-.Pp
-The
-.Xr pmap 9
-manual page is not yet written.
 .Sh HISTORY
 UVM is a new VM system developed at Washington University in St. Louis
 (Missouri).  UVM's roots lie partly in the Mach-based
@@ -908,4 +904,5 @@ UVM to support System V shared memory and process swapping.
 .Xr kvm 3 ,
 .Xr sysctl 3 ,
 .Xr ddb 4 ,
-.Xr options 4
+.Xr options 4 ,
+.Xr pmap 9 .
