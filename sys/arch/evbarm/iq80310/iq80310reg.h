@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310reg.h,v 1.1 2001/11/07 00:33:24 thorpej Exp $	*/
+/*	$NetBSD: iq80310reg.h,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,6 +71,13 @@
  *		    from Flash Bank 1
  * 0000 0000 ------------------------------
  */
+
+/*
+ * We map the CPLD registers VA==PA, so we go ahead and cheat
+ * with register access.
+ */
+#define	CPLD_READ(x)		*((__volatile uint8_t *)(x))
+#define	CPLD_WRITE(x, v)	*((__volatile uint8_t *)(x)) = (v)
 
 #define	IQ80310_OBIO_BASE	0xfe800000UL
 #define	IQ80310_OBIO_SIZE	0x00100000UL
