@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_eg.c,v 1.2 1994/08/23 23:40:55 mycroft Exp $
+ *	$Id: if_eg.c,v 1.3 1994/08/25 20:18:25 deraadt Exp $
  */
 
 /* To do:
@@ -79,9 +79,9 @@
 
 /* for debugging convenience */
 #ifdef EGDEBUG
-#define dlog(x) log x
+#define dprintf(x) printf x
 #else
-#define dlog(x)
+#define dprintf(x)
 #endif
 
 #define ETHER_MIN_LEN	64
@@ -140,7 +140,7 @@ egprintpcb(sc)
 	int i;
 	
 	for (i = 0; i < sc->eg_pcb[1] + 2; i++)
-		dlog((LOG_DEBUG, "pcb[%2d] = %x\n", sc->eg_pcb[i]));
+		dprintf(("pcb[%2d] = %x\n", i, sc->eg_pcb[i]));
 }
 
 
@@ -148,7 +148,7 @@ static inline void
 egprintstat(b)
 	u_char b;
 {
-	dlog((LOG_DEBUG, "%s %s %s %s %s %s %s\n", 
+	dprintf(("%s %s %s %s %s %s %s\n", 
 		 (b & EG_STAT_HCRE)?"HCRE":"",
 		 (b & EG_STAT_ACRF)?"ACRF":"",
 		 (b & EG_STAT_DIR )?"DIR ":"",
@@ -172,7 +172,7 @@ egoutPCB(sc, b)
 		}
 		delay(10);
 	}
-	dlog((LOG_DEBUG, "egoutPCB failed\n"));
+	dprintf(("egoutPCB failed\n"));
 	return 1;
 }
 	
@@ -204,7 +204,7 @@ egreadPCBready(sc)
 			return 0;
 		delay(5);
 	}
-	dlog((LOG_DEBUG, "PCB read not ready\n"));
+	dprintf(("PCB read not ready\n"));
 	return 1;
 }
 	
@@ -256,7 +256,7 @@ egreadPCB(sc)
 	sc->eg_pcb[1] = inb(sc->eg_cmd);
 
 	if (sc->eg_pcb[1] > 62) {
-		dlog((LOG_DEBUG, "len %d too large\n", sc->eg_pcb[1]));
+		dprintf(("len %d too large\n", sc->eg_pcb[1]));
 		return 1;
 	}
 	
@@ -270,7 +270,7 @@ egreadPCB(sc)
 	if (egreadPCBstat(sc, EG_PCB_DONE))
 		return 1;
 	if ((b = inb(sc->eg_cmd)) != sc->eg_pcb[1]+2) {
-		dlog((LOG_DEBUG, "%d != %d\n", b, sc->eg_pcb[1]+2));
+		dprintf(("%d != %d\n", b, sc->eg_pcb[1]+2));
 		return 1;
 	}
 	outb(sc->eg_ctl, EG_PCB_MASK(inb(sc->eg_ctl)) | EG_PCB_ACCEPT);
@@ -291,7 +291,7 @@ egprobe(parent, self, aux)
 	int i;
 
 	if (ia->ia_iobase & ~0x07f0 != 0) {
-		dlog((LOG_DEBUG, "Weird iobase %x\n", ia->ia_iobase));
+		dprintf(("Weird iobase %x\n", ia->ia_iobase));
 		return 0;
 	}
 	
@@ -309,7 +309,7 @@ egprobe(parent, self, aux)
 			break;
 	}
 	if (EG_PCB_STAT(inb(sc->eg_stat)) != 0) {
-		dlog((LOG_DEBUG, "eg: Reset failed\n"));
+		dprintf(("eg: Reset failed\n"));
 		return 0;
 	}
 	sc->eg_pcb[0] = EG_CMD_GETINFO; /* Get Adapter Info */
@@ -351,18 +351,18 @@ egattach(parent, self, aux)
 	sc->eg_pcb[0] = EG_CMD_GETEADDR; /* Get Station address */
 	sc->eg_pcb[1] = 0;
 	if (egwritePCB(sc) != 0) {
-		dlog((LOG_DEBUG, "write error\n"));
+		dprintf(("write error\n"));
 		return;
 	}	
 	if (egreadPCB(sc) != 0) {
-		dlog((LOG_DEBUG, "read error\n"));
+		dprintf(("read error\n"));
 		egprintpcb(sc);
 		return;
 	}
 
 	/* check Get station address response */
 	if (sc->eg_pcb[0] != EG_RSP_GETEADDR || sc->eg_pcb[1] != 0x06) { 
-		dlog((LOG_DEBUG, "parse error\n"));
+		dprintf(("parse error\n"));
 		egprintpcb(sc);
 		return;
 	}
@@ -374,17 +374,17 @@ egattach(parent, self, aux)
 
 	sc->eg_pcb[0] = EG_CMD_SETEADDR; /* Set station address */
 	if (egwritePCB(sc) != 0) {
-		dlog((LOG_DEBUG, "write error2\n"));
+		dprintf(("write error2\n"));
 		return;
 	}
 	if (egreadPCB(sc) != 0) {
-		dlog((LOG_DEBUG, "read error2\n"));
+		dprintf(("read error2\n"));
 		egprintpcb(sc);
 		return;
 	}
 	if (sc->eg_pcb[0] != EG_RSP_SETEADDR || sc->eg_pcb[1] != 0x02 ||
 	   sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0) {
-		dlog((LOG_DEBUG, "parse error2\n"));
+		dprintf(("parse error2\n"));
 		egprintpcb(sc);
 		return;
 	}
@@ -435,10 +435,10 @@ eginit(sc)
 	sc->eg_pcb[2] = 3; /* receive broadcast & multicast */
 	sc->eg_pcb[3] = 0;
 	if (egwritePCB(sc) != 0)
-		dlog((LOG_DEBUG, "write error3\n"));
+		dprintf(("write error3\n"));
 
 	if (egreadPCB(sc) != 0) {
-		dlog((LOG_DEBUG, "read error\n"));
+		dprintf(("read error\n"));
 		egprintpcb(sc);
 	} else if (sc->eg_pcb[2] != 0 || sc->eg_pcb[3] != 0)
 		printf("eg: configure card command failed.\n");
@@ -508,7 +508,7 @@ egstart(ifp)
 		if (m->m_len == 0)
 			continue;
 		if (len + m->m_len > EG_BUFLEN) {
-			dlog((LOG_DEBUG, "Packet too large to send\n"));
+			dprintf(("Packet too large to send\n"));
 			m_freem(m0);
 			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 			sc->sc_arpcom.ac_if.if_oerrors++;
@@ -544,7 +544,7 @@ egstart(ifp)
 				; /* XXX need timeout here */
 		}
 	} else {
-		dlog((LOG_DEBUG, "egwritePCB in egstart failed\n"));
+		dprintf(("egwritePCB in egstart failed\n"));
 		sc->sc_arpcom.ac_if.if_oerrors++;
 		sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 	}
@@ -581,7 +581,7 @@ egintr(sc)
 
 		case EG_RSP_SENDPACKET:
 			if (sc->eg_pcb[6] || sc->eg_pcb[7]) {
-				dlog((LOG_DEBUG, "packet dropped\n"));
+				dprintf(("packet dropped\n"));
 				sc->sc_arpcom.ac_if.if_oerrors++;
 			} else
 				sc->sc_arpcom.ac_if.if_opackets++;
@@ -591,13 +591,21 @@ egintr(sc)
 			break;
 
 		case EG_RSP_GETSTATS:
-			egprintpcb();
-			dlog((LOG_DEBUG, "Card Statistics\n"));
+			dprintf(("Card Statistics\n"));
+			bcopy(&sc->eg_pcb[2], &i, sizeof(i));
+			dprintf(("Receive Packets %d\n", i));
+			bcopy(&sc->eg_pcb[6], &i, sizeof(i));
+			dprintf(("Transmit Packets %d\n", i));
+			dprintf(("CRC errors %d\n", *(short*) &sc->eg_pcb[10]));
+			dprintf(("alignment errors %d\n", *(short*) &sc->eg_pcb[12]));
+			dprintf(("no resources errors %d\n", *(short*) &sc->eg_pcb[14]));
+			dprintf(("overrun errors %d\n", *(short*) &sc->eg_pcb[16]));
 			break;
 			
 		default:
-			dlog((LOG_DEBUG, "egintr: Unknown response %x??\n",
+			dprintf(("egintr: Unknown response %x??\n",
 			      sc->eg_pcb[0]));
+			egprintpcb(sc);
 			break;
 		}
 	}
@@ -620,7 +628,7 @@ egread(sc, buf, len)
 	
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
-		dlog((LOG_DEBUG, "Unacceptable packet size %d\n", len));
+		dprintf(("Unacceptable packet size %d\n", len));
 		sc->sc_arpcom.ac_if.if_ierrors++;
 		return;
 	}
@@ -629,7 +637,7 @@ egread(sc, buf, len)
 	ifp = &sc->sc_arpcom.ac_if;
 	m = egget(buf, len, ifp);
 	if (m == 0) {
-		dlog((LOG_DEBUG, "egget returned 0\n"));
+		dprintf(("egget returned 0\n"));
 		sc->sc_arpcom.ac_if.if_ierrors++;
 		return;
 	}
@@ -682,7 +690,7 @@ egget(buf, totlen, ifp)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0) {
-		dlog((LOG_DEBUG, "MGETHDR returns 0\n"));
+		dprintf(("MGETHDR returns 0\n"));
 		return 0;
 	}
 	m->m_pkthdr.rcvif = ifp;
@@ -696,7 +704,7 @@ egget(buf, totlen, ifp)
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				m_freem(top);
-				dlog((LOG_DEBUG, "MGET returns 0\n"));
+				dprintf(("MGET returns 0\n"));
 				return 0;
 			}
 			len = MLEN;
@@ -783,6 +791,10 @@ egioctl(ifp, command, data)
 			 */
 			eginit(sc);
 		} else {
+			sc->eg_pcb[0] = EG_CMD_GETSTATS;
+			sc->eg_pcb[1] = 0;
+			if (egwritePCB(sc) != 0)
+				dprintf(("write error\n"));
 			/*
 			 * XXX deal with flags changes:
 			 * IFF_MULTICAST, IFF_PROMISC,
@@ -805,7 +817,7 @@ egreset(sc)
 {
 	int s;
 
-	dlog((LOG_DEBUG, "egreset()\n"));
+	dprintf(("egreset()\n"));
 	s = splimp();
 	egstop(sc);
 	eginit(sc);
