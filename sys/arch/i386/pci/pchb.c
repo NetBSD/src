@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.50 2004/04/23 21:13:05 itojun Exp $	*/
+/*	$NetBSD: pchb.c,v 1.51 2004/07/04 04:55:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.50 2004/04/23 21:13:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.51 2004/07/04 04:55:18 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,16 +139,14 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		 * This host bridge has a second PCI bus.
 		 * Configure it.
 		 */
-		doattach = 1;
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_SERVERWORKS_XX5:
+		case PCI_PRODUCT_SERVERWORKS_CIOB20:
 		case PCI_PRODUCT_SERVERWORKS_CNB20HE:
 		case PCI_PRODUCT_SERVERWORKS_CNB20LE:
-		case PCI_PRODUCT_SERVERWORKS_CIOB20:
-		case PCI_PRODUCT_SERVERWORKS_CMIC_HE:
-		case PCI_PRODUCT_SERVERWORKS_CMIC_LE:
-		case PCI_PRODUCT_SERVERWORKS_CIOBX2:
 		case PCI_PRODUCT_SERVERWORKS_CIOB30:
+		case PCI_PRODUCT_SERVERWORKS_CIOBX2:
+			doattach = 1;
 			if ((attachflags &
 			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
 			    PCI_FLAGS_MEM_ENABLED)
