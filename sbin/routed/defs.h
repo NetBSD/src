@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.10 1995/03/21 14:05:01 mycroft Exp $	*/
+/*	$NetBSD: defs.h,v 1.11 1995/06/20 22:26:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -57,9 +57,9 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "table.h"
 #include "trace.h"
 #include "interface.h"
-#include "table.h"
 #include "af.h"
 
 /*
@@ -97,42 +97,41 @@ struct	rip *msg;
 char	**argv0;
 struct	servent *sp;
 
-struct	in_addr inet_makeaddr();
-int	sndmsg();
-int	supply();
-
-void addrouteforif __P((struct interface *));
-void bumploglevel();
-void dumppacket __P((FILE *, char *, struct sockaddr_in *, char *, 
-    int, struct timeval *));
-void gwkludge();
-void hup();
-void ifinit();
-#ifdef notdef /* XXX FUNCTION UNUSED */
-u_long inet_lnaof_subnet __P((struct in_addr));
-#endif
-int inet_maskof __P((u_long));
+/* inet.c */
+struct in_addr inet_makeaddr __P((u_long, u_long ));
 u_long inet_netof_subnet __P((struct in_addr));
-int inet_rtflags __P((struct sockaddr_in *));
-int inet_sendroute __P((struct rt_entry *, struct sockaddr_in *));
+u_long inet_lnaof_subnet __P((struct in_addr));
+int inet_maskof __P((u_long));
+int inet_rtflags __P((struct sockaddr *));
+int inet_sendroute __P((struct rt_entry *, struct sockaddr *));
+
+/* input.c */
 void rip_input __P((struct sockaddr *, struct rip *, int));
-void rtadd __P((struct sockaddr *, struct sockaddr *, int, int));
-void rtchange __P((struct rt_entry *, struct sockaddr *, short));
-void rtdefault();
-void rtdelete __P((struct rt_entry *));
-void rtdeleteall __P((int));
-void rtinit();
-int rtioctl __P((int, struct rtuentry *));
-void sigtrace __P((int));
-int sndmsg __P((struct sockaddr *, int, struct interface *, int));
-void timer();
-void toall __P((int (*)(), int, struct interface *));
-void traceoff();
-void traceon __P((char *));
-void trace __P((struct ifdebug *, struct sockaddr *, char *, int, int));
-void traceaction __P((FILE *, char *, struct rt_entry *));
-void traceinit __P((struct interface *));
-void tracenewmetric __P((FILE *, struct rt_entry *, int));
+
+/* main.c */
+int main __P((int, char *[]));
+void process __P((int));
+int getsocket __P((int, int , struct sockaddr_in *));
+
+/* output.c */
+void toall __P((void (*)(struct sockaddr *, int, struct interface *, int),
+	        int, struct interface *));
+void sndmsg __P((struct sockaddr *, int, struct interface *, int));
+void supply __P((struct sockaddr *, int, struct interface *, int));
+
+/* startup.c */
+void quit __P((char *));
+void rt_xaddrs __P((caddr_t, caddr_t , struct rt_addrinfo *));
+void ifinit __P((void));
+void addrouteforif __P((struct interface *));
+void add_ptopt_localrt __P((struct interface *));
+void gwkludge __P((void));
+int getnetorhostname __P((char *, char *, struct sockaddr_in *));
+int gethostnameornumber __P((char *, struct sockaddr_in *));
+
+/* timer.c */
+void timer __P((int));
+void hup __P((int));
 
 #define ADD 1
 #define DELETE 2

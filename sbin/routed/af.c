@@ -1,4 +1,4 @@
-/*	$NetBSD: af.c,v 1.9 1995/05/24 15:54:00 mycroft Exp $	*/
+/*	$NetBSD: af.c,v 1.10 1995/06/20 22:26:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)af.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: af.c,v 1.9 1995/05/24 15:54:00 mycroft Exp $";
+static char rcsid[] = "$NetBSD: af.c,v 1.10 1995/06/20 22:26:27 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,21 +46,23 @@ static char rcsid[] = "$NetBSD: af.c,v 1.9 1995/05/24 15:54:00 mycroft Exp $";
 /*
  * Address family support routines
  */
-int inet_canon __P((struct sockaddr_in *));
-int inet_checkhost __P((struct sockaddr_in *));
-char *inet_format __P((struct sockaddr_in *, char *, size_t));
-int inet_hash __P((struct sockaddr_in *, struct afhash *));
-int inet_netmatch __P((struct sockaddr_in *, struct sockaddr_in *));
-int inet_portcheck __P((struct sockaddr_in *));
-int inet_portmatch __P((struct sockaddr_in *));
-int inet_output __P((int, int, struct sockaddr_in *, int));
+static void inet_canon __P((struct sockaddr *));
+static int inet_checkhost __P((struct sockaddr *));
+static char *inet_format __P((struct sockaddr *, char *buf, size_t sz));
+static void inet_hash __P((struct sockaddr *, struct afhash *));
+static int inet_netmatch __P((struct sockaddr *, struct sockaddr *));
+static int inet_portcheck __P((struct sockaddr *));
+static int inet_portmatch __P((struct sockaddr *));
+static void inet_output __P((int, int, struct sockaddr *, int));
+static int inet_get __P((int, void *, struct sockaddr *));
+static void inet_put __P((void *, struct sockaddr *));
 
 #define NIL	{ 0 }
 #define	INET \
 	{ inet_hash,		inet_netmatch,		inet_output, \
 	  inet_portmatch,	inet_portcheck,		inet_checkhost, \
 	  inet_rtflags,		inet_sendroute,		inet_canon, \
-	  inet_format \
+	  inet_format,		inet_get,		inet_put \
 	}
 
 struct afswitch afswitch[AF_MAX] = {
@@ -77,11 +79,12 @@ struct sockaddr_in inet_default = {
 #endif
 	AF_INET, INADDR_ANY };
 
-int
-inet_hash(sin, hp)
-	register struct sockaddr_in *sin;
+static void
+inet_hash(sa, hp)
+	struct sockaddr *sa;
 	struct afhash *hp;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 	register u_long n;
 
 	n = inet_netof_subnet(sin->sin_addr);
@@ -93,22 +96,25 @@ inet_hash(sin, hp)
 	hp->afh_hosthash &= 0x7fffffff;
 }
 
-int
-inet_netmatch(sin1, sin2)
-	struct sockaddr_in *sin1, *sin2;
+static int
+inet_netmatch(sa1, sa2)
+	struct sockaddr *sa1, *sa2;
 {
+	struct sockaddr_in *sin1 = (struct sockaddr_in *) sa1;
+	struct sockaddr_in *sin2 = (struct sockaddr_in *) sa2;
 
 	return (inet_netof_subnet(sin1->sin_addr) ==
-	    inet_netof_subnet(sin2->sin_addr));
+		inet_netof_subnet(sin2->sin_addr));
 }
 
 /*
  * Verify the message is from the right port.
  */
-int
-inet_portmatch(sin)
-	register struct sockaddr_in *sin;
+static int
+inet_portmatch(sa)
+	struct sockaddr *sa;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 	
 	return (sin->sin_port == sp->s_port);
 }
@@ -116,10 +122,11 @@ inet_portmatch(sin)
 /*
  * Verify the message is from a "trusted" port.
  */
-int
-inet_portcheck(sin)
-	struct sockaddr_in *sin;
+static int
+inet_portcheck(sa)
+	struct sockaddr *sa;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 
 	return (ntohs(sin->sin_port) <= IPPORT_RESERVED);
 }
@@ -127,12 +134,13 @@ inet_portcheck(sin)
 /*
  * Internet output routine.
  */
-int
-inet_output(s, flags, sin, size)
+static void
+inet_output(s, flags, sa, size)
 	int s, flags;
-	struct sockaddr_in *sin;
+	struct sockaddr *sa;
 	int size;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 	struct sockaddr_in dst;
 
 	dst = *sin;
@@ -150,10 +158,11 @@ inet_output(s, flags, sin, size)
  * Return 1 if the address is believed
  * for an Internet host -- THIS IS A KLUDGE.
  */
-int
-inet_checkhost(sin)
-	struct sockaddr_in *sin;
+static int
+inet_checkhost(sa)
+	struct sockaddr *sa;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 	u_long i = ntohl(sin->sin_addr.s_addr);
 
 #ifndef IN_EXPERIMENTAL
@@ -170,23 +179,71 @@ inet_checkhost(sin)
 	return (1);
 }
 
-int
-inet_canon(sin)
-	struct sockaddr_in *sin;
+static void
+inet_canon(sa)
+	struct sockaddr *sa;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 
 	sin->sin_port = 0;
 	sin->sin_len = sizeof(*sin);
 }
 
-char *
-inet_format(sin, buf, sz)
-	struct sockaddr_in *sin;
-	char *buf;
-	size_t sz;
+static char *
+inet_format(sa, buf, sz)
+	struct sockaddr *sa;
+	char *buf; size_t sz;
 {
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 
 	strncpy(buf, inet_ntoa(sin->sin_addr), sz);
 	buf[sz - 1] = '\0';
-	return (buf);
+	return buf;
+}
+
+static int
+inet_get(what, pck, sa)
+	int what;
+	void *pck;
+	struct sockaddr *sa;
+{
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+	struct netinfo *n = pck;
+	/* XXX: Internet only */
+	memset(sin, 0, sizeof(*sin));
+	switch (what) {
+	case DESTINATION:
+		sin->sin_addr.s_addr = n->rip_dst;
+		break;
+	case NETMASK:
+		if (n->rip_netmask == 0)
+			return 0;
+		sin->sin_addr.s_addr = n->rip_netmask;
+		break;
+	case GATEWAY:
+		if (n->rip_router == 0)
+			return 0;
+		sin->sin_addr.s_addr = n->rip_router;
+		break;
+	default:
+		abort();
+		break;
+	}
+
+	sin->sin_family = n->rip_family;
+#if BSD >= 198810
+	sin->sin_len = sizeof(sin);
+#endif
+	return 1;
+}
+
+static void
+inet_put(pck, sa)
+	void *pck;
+	struct sockaddr *sa;
+{
+	struct netinfo *n = pck;
+	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+	n->rip_family = sin->sin_family;
+	n->rip_dst = sin->sin_addr.s_addr;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.7 1995/03/18 15:00:28 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.8 1995/06/20 22:27:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)if.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: if.c,v 1.7 1995/03/18 15:00:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: if.c,v 1.8 1995/06/20 22:27:21 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ if_ifwithnet(addr)
 {
 	register struct interface *ifp;
 	register int af = addr->sa_family;
-	register int (*netmatch)();
+	register int (*netmatch) __P((struct sockaddr *, struct sockaddr *));
 
 	if (af >= af_max)
 		return (0);
@@ -128,7 +128,7 @@ if_iflookup(addr)
 {
 	register struct interface *ifp, *maybe;
 	register int af = addr->sa_family;
-	register int (*netmatch)();
+	register int (*netmatch) __P((struct sockaddr *, struct sockaddr *));
 
 	if (af >= af_max)
 		return (0);
