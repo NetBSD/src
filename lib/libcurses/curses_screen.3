@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses_screen.3,v 1.9 2003/04/16 13:35:01 wiz Exp $
+.\"	$NetBSD: curses_screen.3,v 1.10 2004/03/16 19:26:18 snj Exp $
 .\"
 .\" Copyright (c) 2002
 .\"	Brett Lymn (blymn@NetBSD.org, brett_lymn@yahoo.com.au)
@@ -73,7 +73,7 @@ These functions initialize terminals and screens.
 .Pp
 The
 .Fn newterm
-function initialises the curses datastructures and pointers ready for
+function initialises the curses data structures and pointers ready for
 use by curses.
 The
 .Fa type
@@ -137,7 +137,7 @@ screen has occurred since the last call to
 The size of the screen may be changed  by calling
 .Fn resizeterm
 with the updated number of lines and columns.
-This will resize the curses internal data structures to accomodate the
+This will resize the curses internal data structures to accommodate the
 changed terminal geometry.
 The application must redraw the screen after a call to
 .Fn resizeterm .
