@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.33.2.1 2000/05/13 18:24:52 he Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.33.2.2 2000/06/01 17:15:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1420,13 +1420,16 @@ fxp_init(xsc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 	    0, sizeof(struct fxp_cb_config),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	i = 10000;
-	while (!(cbp->cb_status & FXP_CB_STATUS_C) && --i)
+	i = 1000;
+	while (!(cbp->cb_status & FXP_CB_STATUS_C) && --i) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 		    0, sizeof(struct fxp_cb_config),
 		    BUS_DMASYNC_POSTREAD);
+		DELAY(1);
+	}
 	if (i == 0) {
-		printf("%s: dmasync timeout\n", sc->sc_dev.dv_xname);
+		printf("%s at line %d: dmasync timeout\n",
+		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
 
@@ -1464,13 +1467,16 @@ fxp_init(xsc)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 	    0, sizeof(struct fxp_cb_ias),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-	i = 10000;
-	while (!(cb_ias->cb_status & FXP_CB_STATUS_C) && --i)
+	i = 1000;
+	while (!(cb_ias->cb_status & FXP_CB_STATUS_C) && --i) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_dmamaps[0],
 		    0, sizeof(struct fxp_cb_ias),
 		    BUS_DMASYNC_POSTREAD);
+		DELAY(1);
+	}
 	if (i == 0) {
-		printf("%s: dmasync timeout\n", sc->sc_dev.dv_xname);
+		printf("%s at line %d: dmasync timeout\n",
+		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
 
