@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.360 2001/07/30 19:59:05 ad Exp $
+#	$NetBSD: mi,v 1.361 2001/08/05 20:49:19 scw Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3320,6 +3320,8 @@
 ./usr/share/man/cat9/uao_create.0		comp-sys-catman
 ./usr/share/man/cat9/uao_detach.0		comp-sys-catman
 ./usr/share/man/cat9/uao_reference.0		comp-sys-catman
+./usr/share/man/cat9/ubc_alloc.0		comp-sys-catman
+./usr/share/man/cat9/ubc_release.0		comp-sys-catman
 ./usr/share/man/cat9/ucom.0		comp-sys-catman
 ./usr/share/man/cat9/uiomove.0		comp-sys-catman
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman
@@ -3365,8 +3367,6 @@
 ./usr/share/man/cat9/uvm_sysctl.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_useracc.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vnp_setsize.0		comp-sys-catman
-./usr/share/man/cat9/uvm_vnp_sync.0		comp-sys-catman
-./usr/share/man/cat9/uvm_vnp_terminate.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vslock.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vsunlock.0		comp-sys-catman
 ./usr/share/man/cat9/uvmspace_alloc.0		comp-sys-catman
@@ -3376,6 +3376,7 @@
 ./usr/share/man/cat9/uvmspace_share.0		comp-sys-catman
 ./usr/share/man/cat9/uvmspace_unshare.0		comp-sys-catman
 ./usr/share/man/cat9/uvn_attach.0		comp-sys-catman
+./usr/share/man/cat9/uvn_findpages.0		comp-sys-catman
 ./usr/share/man/cat9/vme.0		comp-sys-catman
 ./usr/share/man/cat9/vme_dmamap_create.0		comp-sys-catman
 ./usr/share/man/cat9/vme_dmamap_destroy.0		comp-sys-catman
@@ -5464,6 +5465,8 @@
 ./usr/share/man/man9/uao_create.9		comp-sys-man
 ./usr/share/man/man9/uao_detach.9		comp-sys-man
 ./usr/share/man/man9/uao_reference.9		comp-sys-man
+./usr/share/man/man9/ubc_alloc.9		comp-sys-man
+./usr/share/man/man9/ubc_release.9		comp-sys-man
 ./usr/share/man/man9/ucom.9		comp-sys-man
 ./usr/share/man/man9/uiomove.9		comp-sys-man
 ./usr/share/man/man9/untimeout.9		comp-sys-man
@@ -5509,8 +5512,6 @@
 ./usr/share/man/man9/uvm_sysctl.9		comp-sys-man
 ./usr/share/man/man9/uvm_useracc.9		comp-sys-man
 ./usr/share/man/man9/uvm_vnp_setsize.9		comp-sys-man
-./usr/share/man/man9/uvm_vnp_sync.9		comp-sys-man
-./usr/share/man/man9/uvm_vnp_terminate.9		comp-sys-man
 ./usr/share/man/man9/uvm_vslock.9		comp-sys-man
 ./usr/share/man/man9/uvm_vsunlock.9		comp-sys-man
 ./usr/share/man/man9/uvmspace_alloc.9		comp-sys-man
@@ -5520,6 +5521,7 @@
 ./usr/share/man/man9/uvmspace_share.9		comp-sys-man
 ./usr/share/man/man9/uvmspace_unshare.9		comp-sys-man
 ./usr/share/man/man9/uvn_attach.9		comp-sys-man
+./usr/share/man/man9/uvn_findpages.9		comp-sys-man
 ./usr/share/man/man9/vme.9		comp-sys-man
 ./usr/share/man/man9/vme_dmamap_create.9		comp-sys-man
 ./usr/share/man/man9/vme_dmamap_destroy.9		comp-sys-man
