@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.30 1998/06/30 05:33:11 thorpej Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.31 1998/08/02 04:53:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -224,6 +224,8 @@ struct	socket *sonewconn1 __P((struct socket *head, int connstatus));
 /* strings for sleep message: */
 extern	const char netio[], netcon[], netcls[];
 
+extern struct pool socket_pool;
+
 struct mbuf;
 struct sockaddr;
 struct proc;
@@ -263,6 +265,7 @@ void	sbrelease __P((struct sockbuf *sb));
 int	sbreserve __P((struct sockbuf *sb, u_long cc));
 int	sbwait __P((struct sockbuf *sb));
 int	sb_lock __P((struct sockbuf *sb));
+void	soinit __P((void));
 int	soabort __P((struct socket *so));
 int	soaccept __P((struct socket *so, struct mbuf *nam));
 int	sobind __P((struct socket *so, struct mbuf *nam));

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.127 1998/08/01 01:36:35 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.128 1998/08/02 04:53:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -67,6 +67,7 @@
 #include <sys/clist.h>
 #endif
 #include <sys/device.h>
+#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
@@ -207,6 +208,9 @@ main()
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
+
+	/* Initialize sockets. */
+	soinit();
 
 	disk_init();		/* must come before autoconfiguration */
 	tty_init();		/* initialise tty list */
