@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.15 2000/10/11 20:23:53 is Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.16 2000/10/12 06:11:40 augustss Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.15 2000/10/11 20:23:53 is Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.16 2000/10/12 06:11:40 augustss Exp $");
 #endif
 
 #include <sys/types.h>
@@ -168,11 +168,7 @@ void			check_vif_state __P((void));
 void			passive_mode __P((void));
 
 int			main __P((int argc, char *argv[]));
-#ifdef __STDC__
-void log(int severity, int syserr, char *format, ...)
-	__attribute__((__format__(__printf__, 3, 4)));
-#endif
-
+/* log() prototyped in defs.h */
 
 
 char   *
@@ -1714,7 +1710,7 @@ check_vif_state()
  */
 #ifdef __STDC__
 void
-log(int severity, int syserr, char *format, ...)
+log(int severity, int syserr, const char *format, ...)
 {
 	va_list ap;
 	char    fmt[100];
@@ -1725,7 +1721,7 @@ log(int severity, int syserr, char *format, ...)
 void 
 log(severity, syserr, format, va_alist)
 	int     severity, syserr;
-	char   *format;
+	const char   *format;
 	va_dcl
 {
 	va_list ap;
