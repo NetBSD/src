@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.14 1996/09/27 22:38:43 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-static char rcsid[] = "$NetBSD: preen.c,v 1.14 1996/09/27 22:38:43 christos Exp $";
+static char rcsid[] = "$NetBSD: preen.c,v 1.15 1996/09/28 19:21:42 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ struct partentry {
 	char		  	*p_devname;	/* device name */
 	char			*p_mntpt;	/* mount point */
 	char		  	*p_type;	/* filesystem type */
+	void			*p_auxarg;	/* auxiliary argument */
 };
 
 TAILQ_HEAD(part, partentry) badh;
@@ -77,21 +78,23 @@ TAILQ_HEAD(disk, diskentry) diskh;
 static int nrun = 0, ndisks = 0;
 
 static struct diskentry *finddisk __P((const char *));
-static void addpart __P((const char *, const char *, const char *));
+static void addpart __P((const char *, const char *, const char *, void *));
 static int startdisk __P((struct diskentry *, 
-    int (*)(const char *, const char *, const char *, void *)));
+    int (*)(const char *, const char *, const char *, void *, pid_t *)));
 static void printpart __P((void));
 
 int
-checkfstab(flags, maxrun, docheck, chkit)
+checkfstab(flags, maxrun, docheck, checkit)
 	int flags, maxrun;
 	void *(*docheck) __P((struct fstab *));
-	int (*chkit) __P((const char *, const char *, const char *, void *));
+	int (*checkit) __P((const char *, const char *, const char *, void *,
+	    pid_t *));
 {
 	struct fstab *fs;
 	struct diskentry *d, *nextdisk;
 	struct partentry *p;
 	int ret, pid, retcode, passno, sumstatus, status;
+	void *auxarg;
 	char *name;
 
 	TAILQ_INIT(&badh);
@@ -105,7 +108,7 @@ checkfstab(flags, maxrun, docheck, chkit)
 			return (8);
 		}
 		while ((fs = getfsent()) != 0) {
-			if ((*docheck)(fs) == NULL)
+			if ((auxarg = (*docheck)(fs)) == NULL)
 				continue;
 
 			name = blockcheck(fs->fs_spec);
@@ -120,8 +123,8 @@ checkfstab(flags, maxrun, docheck, chkit)
 					else
 						continue;
 				}
-				sumstatus = (*chkit)(fs->fs_vfstype,
-				    name, fs->fs_file, NULL);
+				sumstatus = (*checkit)(fs->fs_vfstype,
+				    name, fs->fs_file, auxarg, NULL);
 
 				if (sumstatus)
 					return (sumstatus);
@@ -132,7 +135,8 @@ checkfstab(flags, maxrun, docheck, chkit)
 					sumstatus |= 8;
 					continue;
 				}
-				addpart(fs->fs_vfstype, name, fs->fs_file);
+				addpart(fs->fs_vfstype, name, fs->fs_file,
+				    auxarg);
 			}
 		}
 		if ((flags & CHECK_PREEN) == 0)
@@ -149,7 +153,7 @@ checkfstab(flags, maxrun, docheck, chkit)
 			maxrun = ndisks;
 		nextdisk = diskh.tqh_first;
 		for (passno = 0; passno < maxrun; ++passno) {
-			if ((ret = startdisk(nextdisk, chkit)) != 0)
+			if ((ret = startdisk(nextdisk, checkit)) != 0)
 				return ret;
 			nextdisk = nextdisk->d_entries.tqe_next;
 		}
@@ -203,7 +207,7 @@ checkfstab(flags, maxrun, docheck, chkit)
 
 			if (nextdisk == NULL) {
 				if (d->d_part.tqh_first) {
-					if ((ret = startdisk(d, chkit)) != 0)
+					if ((ret = startdisk(d, checkit)) != 0)
 						return ret;
 				}
 			} else if (nrun < maxrun && nrun < ndisks) {
@@ -215,7 +219,7 @@ checkfstab(flags, maxrun, docheck, chkit)
 					    && nextdisk->d_pid == 0)
 						break;
 				}
-				if ((ret = startdisk(nextdisk, chkit)) != 0)
+				if ((ret = startdisk(nextdisk, checkit)) != 0)
 					return ret;
 			}
 		}
@@ -293,8 +297,9 @@ printpart()
 
 
 static void
-addpart(type, devname, mntpt)
+addpart(type, devname, mntpt, auxarg)
 	const char *type, *devname, *mntpt;
+	void *auxarg;
 {
 	struct diskentry *d = finddisk(devname);
 	struct partentry *p;
@@ -309,6 +314,7 @@ addpart(type, devname, mntpt)
 	p->p_devname = estrdup(devname);
 	p->p_mntpt = estrdup(mntpt);
 	p->p_type = estrdup(type);
+	p->p_auxarg = auxarg;
 
 	TAILQ_INSERT_TAIL(&d->d_part, p, p_entries);
 }
@@ -317,13 +323,14 @@ addpart(type, devname, mntpt)
 static int
 startdisk(d, checkit)
 	register struct diskentry *d;
-	int (*checkit) __P((const char *, const char *, const char *, void *));
+	int (*checkit) __P((const char *, const char *, const char *, void *,
+	    pid_t *));
 {
 	register struct partentry *p = d->d_part.tqh_first;
 	int rv;
 
 	while ((rv = (*checkit)(p->p_type, p->p_devname, p->p_mntpt,
-	    &d->d_pid)) != 0 && nrun > 0)
+	    p->p_auxarg, &d->d_pid)) != 0 && nrun > 0)
 		sleep(10);
 
 	if (rv == 0)
