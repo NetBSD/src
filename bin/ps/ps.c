@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.46.2.6 2002/04/24 04:29:59 nathanw Exp $	*/
+/*	$NetBSD: ps.c,v 1.46.2.7 2002/05/02 18:11:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.46.2.6 2002/04/24 04:29:59 nathanw Exp $");
+__RCSID("$NetBSD: ps.c,v 1.46.2.7 2002/05/02 18:11:35 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -394,6 +394,8 @@ main(argc, argv)
 
 			kl = kvm_getlwps(kd, ki->p_pid, ki->p_paddr,
 			    sizeof(struct kinfo_lwp), &nlwps);
+			if (kl == 0)
+				nlwps = 0;
 			if (showlwps == 0) {
 				l = pick_representative_lwp(ki, kl, nlwps);
 				for (vent = vhead; vent; vent = vent->next)
@@ -427,7 +429,8 @@ main(argc, argv)
 			continue;
 		kl = kvm_getlwps(kd, ki->p_pid, (u_long)ki->p_paddr,
 		    sizeof(struct kinfo_lwp), &nlwps);
-
+		if (kl == 0)
+			nlwps = 0;
 		if (showlwps == 0) {
 			l = pick_representative_lwp(ki, kl, nlwps);
 			for (vent = vhead; vent; vent = vent->next) {
@@ -468,7 +471,11 @@ pick_representative_lwp(ki, kl, nlwps)
 	int nlwps;
 {
 	int i, onproc, running, sleeping;
+	static struct kinfo_lwp zero_lwp;
 
+	if (kl == 0)
+		return &zero_lwp;
+		
 	/* Trivial case: only one LWP */
 	if (nlwps == 1)
 		return kl;
@@ -483,7 +490,7 @@ pick_representative_lwp(ki, kl, nlwps)
 		break;
 	case SACTIVE:
 		/* Pick the most live LWP */
-		onproc = running = sleeping = 0;
+		onproc = running = sleeping = -1;
 		for (i = 0; i < nlwps; i++) {
 			switch (kl[i].l_stat) {
 			case LSONPROC:
@@ -497,11 +504,11 @@ pick_representative_lwp(ki, kl, nlwps)
 				break;
 			}
 		}
-		if (onproc)
+		if (onproc != -1)
 			return &kl[onproc];
-		if (running)
+		if (running != -1)
 			return &kl[running];
-		if (sleeping)
+		if (sleeping != -1)
 			return &kl[sleeping];
 		break;
 	case SDEAD:
