@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.6 2003/09/21 06:28:37 matt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.7 2003/10/08 01:40:22 simonb Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -9,6 +9,12 @@ NOMAN=# defined
 BINDIR=/usr/mdec
 BINMODE=444
 FILESDIR=/usr/mdec
+
+# XXX SHOULD NOT NEED TO DEFINE THESE!
+LIBCRT0=
+LIBC=
+LIBCRTBEGIN=
+LIBCRTEND=
 
 RISCOSTYPE ?= ff8
 
