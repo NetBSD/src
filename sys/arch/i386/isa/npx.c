@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.64 1998/02/06 07:22:06 mrg Exp $	*/
+/*	$NetBSD: npx.c,v 1.65 1998/02/10 14:11:26 mrg Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -42,6 +42,8 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

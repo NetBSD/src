@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 1998/02/07 17:26:34 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.64 1998/02/10 14:11:46 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -47,6 +47,8 @@
  *
  *	@(#)trap.c	8.4 (Berkeley) 9/23/93
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

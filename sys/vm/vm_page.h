@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.23 1998/02/06 00:14:57 mrg Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.24 1998/02/10 14:09:03 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -69,6 +69,10 @@
  */
 #ifndef	_VM_PAGE_
 #define	_VM_PAGE_
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 /*
  *	Management of resident (logical) pages.

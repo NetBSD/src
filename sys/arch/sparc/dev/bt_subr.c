@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.6 1998/02/05 07:57:50 mrg Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.7 1998/02/10 14:11:30 mrg Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -43,6 +43,8 @@
  *
  *	@(#)bt_subr.c	8.2 (Berkeley) 1/21/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

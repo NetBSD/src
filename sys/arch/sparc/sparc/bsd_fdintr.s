@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.12 1998/02/05 07:57:55 mrg Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.13 1998/02/10 14:11:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -30,6 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include "opt_uvm.h"
 
 #ifndef FDC_C_HANDLER
 #include "assym.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.6 1998/02/05 08:00:31 mrg Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.7 1998/02/10 14:10:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -41,6 +41,8 @@
  *	@(#)ufs_vnops.c	8.14 (Berkeley) 10/26/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

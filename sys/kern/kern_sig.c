@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.69 1998/02/05 07:59:54 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.70 1998/02/10 14:09:41 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)kern_sig.c	8.7 (Berkeley) 4/18/94
  */
+
+#include "opt_uvm.h"
 
 #define	SIGPROP		/* include signal properties table */
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.41 1998/02/05 07:59:50 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.42 1998/02/10 14:09:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,6 +39,8 @@
  * blocked in, etc.  In the long term, a solution should be come up
  * with, but "not right now." -- cgd
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

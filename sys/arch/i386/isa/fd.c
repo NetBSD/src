@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.117 1998/02/06 07:22:05 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.118 1998/02/10 14:11:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -58,6 +58,7 @@
  */
 
 #include "rnd.h"
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

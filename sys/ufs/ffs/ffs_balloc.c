@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.6 1998/02/05 08:00:33 mrg Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.7 1998/02/10 14:10:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ffs_balloc.c	8.4 (Berkeley) 9/23/93
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

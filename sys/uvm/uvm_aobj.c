@@ -1,6 +1,9 @@
-/*	$NetBSD: uvm_aobj.c,v 1.5 1998/02/09 14:35:48 mrg Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.6 1998/02/10 14:12:06 mrg Exp $	*/
 
 /* copyright here */
+
+#include "opt_uvmhist.h"
+
 /*
  * from: Id: uvm_aobj.c,v 1.1.2.5 1998/02/06 05:14:38 chs Exp
  */

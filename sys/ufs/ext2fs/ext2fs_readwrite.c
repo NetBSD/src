@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.4 1998/02/05 08:00:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.5 1998/02/10 14:10:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,8 @@
  *	@(#)ufs_readwrite.c	8.8 (Berkeley) 8/4/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

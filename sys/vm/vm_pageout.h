@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.h,v 1.13 1998/02/06 00:14:59 mrg Exp $	*/
+/*	$NetBSD: vm_pageout.h,v 1.14 1998/02/10 14:09:04 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -63,6 +63,10 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_uvm.h"
+#endif
 
 /*
  *	Header file for pageout daemon.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.25 1998/02/05 08:00:07 mrg Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.26 1998/02/10 14:09:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)vfs_vnops.c	8.5 (Berkeley) 12/8/94
  */
+
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

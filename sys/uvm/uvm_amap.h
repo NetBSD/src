@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.4 1998/02/10 02:34:20 perry Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.5 1998/02/10 14:12:04 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -44,8 +44,6 @@
 /*
  * uvm_amap.h
  */
-
-UVMHIST_DECL(maphist);
 
 /*
  * defines for handling of large sparce amaps.
