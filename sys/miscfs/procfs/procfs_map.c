@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.11 2001/03/29 22:41:52 fvdl Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.12 2001/04/02 07:16:05 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -127,13 +127,13 @@ procfs_domap(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 			}
 			snprintf(mebuffer, sizeof(mebuffer),
 			    "%0*lx-%0*lx %c%c%c%c %0*lx %02x:%02x %ld     %s\n",
-			    sizeof (void *) * 2, (unsigned long)entry->start,
-			    sizeof (void *) * 2, (unsigned long)entry->end,
+			    (int)sizeof(void *) * 2,(unsigned long)entry->start,
+			    (int)sizeof(void *) * 2,(unsigned long)entry->end,
 			    (entry->protection & VM_PROT_READ) ? 'r' : '-',
 			    (entry->protection & VM_PROT_WRITE) ? 'w' : '-',
 			    (entry->protection & VM_PROT_EXECUTE) ? 'x' : '-',
 			    (entry->etype & UVM_ET_COPYONWRITE) ? 'p' : 's',
-			    sizeof (void *) * 2,
+			    (int)sizeof(void *) * 2,
 			    (unsigned long)entry->offset,
 			    major(dev), minor(dev), fileid, path);
 			free(path, M_TEMP);
