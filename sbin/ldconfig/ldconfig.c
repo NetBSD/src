@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.37 2004/01/05 23:23:33 jmmv Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.38 2004/10/28 20:17:19 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.37 2004/01/05 23:23:33 jmmv Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.38 2004/10/28 20:17:19 dsl Exp $");
 #endif
 
 
@@ -296,7 +296,7 @@ dodir(dir, silent, update_dir_list)
 			continue;
 
 		*cp = '\0';
-		if (!isdigit(*(cp+4)))
+		if (!isdigit((unsigned char)*(cp+4)))
 			continue;
 
 		memset(dewey, 0, sizeof(dewey));
