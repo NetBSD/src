@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.92 2004/08/16 14:47:31 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.93 2004/08/19 23:25:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.92 2004/08/16 14:47:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.93 2004/08/19 23:25:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -361,7 +361,7 @@ wdc_pcmcia_datain_memory(chp, flags, buf, len)
 	void *buf;
 	size_t len;
 {
-	struct wdc_regs *wdr = &chp->ch_wdc->regs[chp->ch_channel];
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
 	while (len > 0) {
 		size_t n;
@@ -385,7 +385,7 @@ wdc_pcmcia_dataout_memory(chp, flags, buf, len)
 	void *buf;
 	size_t len;
 {
-	struct wdc_regs *wdr = &chp->ch_wdc->regs[chp->ch_channel];
+	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
 	while (len > 0) {
 		size_t n;

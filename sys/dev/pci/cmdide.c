@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.14 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.15 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -363,8 +363,8 @@ cmd0643_9_setup_channel(struct ata_channel *chp)
 	u_int8_t tim;
 	u_int32_t idedma_ctl, udma_reg;
 	int drive;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	idedma_ctl = 0;
 	/* setup DMA if needed */
@@ -438,8 +438,7 @@ static void
 cmd646_9_irqack(struct ata_channel *chp)
 {
 	u_int32_t priirq, secirq;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	if (chp->ch_channel == 0) {
 		priirq = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CONF);
@@ -545,8 +544,8 @@ cmd680_setup_channel(struct ata_channel *chp)
 	u_int16_t val;
 	u_int32_t idedma_ctl;
 	int drive;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pcitag_t pa = sc->sc_tag;
 	static const u_int8_t udma2_tbl[] =

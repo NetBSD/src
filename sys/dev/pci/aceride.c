@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.10 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.11 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -176,7 +176,7 @@ acer_setup_channel(struct ata_channel *chp)
 	u_int32_t acer_fifo_udma;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	idedma_ctl = 0;
 	acer_fifo_udma = pci_conf_read(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA);
