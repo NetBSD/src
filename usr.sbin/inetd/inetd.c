@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.45 1999/01/20 04:42:17 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.46 1999/01/20 09:24:06 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.45 1999/01/20 04:42:17 mycroft Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.46 1999/01/20 09:24:06 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -535,9 +535,6 @@ main(argc, argv, envp)
 					    sep->se_service);
 				continue;
 			}
-			/* Set the socket to blocking mode. */
-			if (fcntl(ctrl, F_SETFL, 0) < 0)
-				syslog(LOG_ERR, "fcntl (F_SETFL, 0): %m");
 		} else
 			ctrl = sep->se_fd;
 		(void) sigblock(SIGBLOCK);
@@ -1007,9 +1004,7 @@ setup(sep)
 		    sep->se_service, sep->se_proto);
 		return;
 	}
-	/* Set all listening sockets to non-blocking and close-on-exec. */
-	if (fcntl(sep->se_fd, F_SETFL, O_NONBLOCK) < 0)
-		syslog(LOG_ERR, "fcntl (F_SETFL, O_NONBLOCK): %m");
+	/* Set all listening sockets to close-on-exec. */
 	if (fcntl(sep->se_fd, F_SETFD, FD_CLOEXEC) < 0)
 		syslog(LOG_ERR, "fcntl (F_SETFD, FD_CLOEXEC): %m");
 
