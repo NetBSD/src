@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.26.2.3 2002/04/24 21:42:30 nathanw Exp $	*/
+/*	$NetBSD: keyword.c,v 1.26.2.4 2002/11/12 20:31:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.26.2.3 2002/04/24 21:42:30 nathanw Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.26.2.4 2002/11/12 20:31:57 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,13 +93,13 @@ VAR var[] = {
 	{"blocked", "", "sigmask"},
 	{"caught", "", "sigcatch"},
 	{"command", "COMMAND", NULL, COMM|LJUST, command},
-	{"cpu", "CPU", NULL, 0, pvar, 0, POFF(p_estcpu), UINT, "d"},
+	{"cpu", "CPU", NULL, 0, pvar, 0, POFF(p_estcpu), UINT, "u"},
 	{"cputime", "", "time"},
 	{"f", "F", NULL, 0, pvar, 0, POFF(p_flag), INT, "x"},
 	{"flags", "", "f"},
 	{"holdcnt", "HOLDCNT", NULL, LWP, pvar, 0, LOFF(l_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
-	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), UINT64, "lld"},
+	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), UINT64, "llu"},
 	{"inblock", "", "inblk"},
 	{"jobc", "JOBC", NULL, 0, pvar, 0, POFF(p_jobc), SHORT, "d"},
 	{"ktrace", "KTRACE", NULL, 0, pvar, 0, POFF(p_traceflag), INT, "x"},
@@ -111,21 +111,21 @@ VAR var[] = {
 	{"logname", "", "login"},
 	{"lstart", "STARTED", NULL, LJUST, lstarted},
 	{"lstate", "STAT", NULL, LJUST|LWP, lstate},
-	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), UINT64, "lld"},
-	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), UINT64, "lld"},
-	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), UINT64, "lld"},
-	{"msgsnd", "MSGSND", NULL, 0, pvar, 0, POFF(p_uru_msgsnd), UINT64, "lld"},
+	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), UINT64, "llu"},
+	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), UINT64, "llu"},
+	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), UINT64, "llu"},
+	{"msgsnd", "MSGSND", NULL, 0, pvar, 0, POFF(p_uru_msgsnd), UINT64, "llu"},
 	{"ni", "", "nice"},
 	{"nice", "NI", NULL, 0, pnice},
-	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), UINT64, "lld"},
+	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), UINT64, "llu"},
 	{"nlwp", "NLWP", NULL, 0, pvar, 0, POFF(p_nlwps), UINT64, "lld"},
 	{"nsignals", "", "nsigs"},
-	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), UINT64, "lld"},
-	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), UINT64, "lld"},
-	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), UINT64, "lld"},
+	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), UINT64, "llu"},
+	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), UINT64, "llu"},
+	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), UINT64, "llu"},
 	/* XXX */
 	{"nwchan", "WCHAN", NULL, LWP, pvar, 0, LOFF(l_wchan), KPTR, "llx"},
-	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), UINT64, "lld"},
+	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), UINT64, "llu"},
 	{"oublock", "", "oublk"},
 	/* XXX */
 	{"p_ru", "P_RU", NULL, 0, pvar, 0, POFF(p_ru), KPTR, "llx"},
@@ -139,7 +139,7 @@ VAR var[] = {
 	{"pmem", "", "%mem"},
 	PID("ppid", "PPID", pvar, POFF(p_ppid)),
 	{"pri", "PRI", NULL, LWP, pri},
-	{"re", "RE", NULL, INF127|LWP, pvar, 0, LOFF(l_swtime), UINT, "d"},
+	{"re", "RE", NULL, INF127|LWP, pvar, 0, LOFF(l_swtime), UINT, "u"},
 	GID("rgid", "RGID", pvar, POFF(p_rgid)),
 	/* XXX */
 	{"rlink", "RLINK", NULL, LWP, pvar, 0, LOFF(l_back), KPTR, "llx"},
@@ -159,7 +159,7 @@ VAR var[] = {
 	    NULL, 0, pvar, 0, POFF(p_sigignore), SIGLIST, "s"},
 	{"sigmask", "BLOCKED",
 	    NULL, 0, pvar, 0, POFF(p_sigmask), SIGLIST, "s"},
-	{"sl", "SL", NULL, INF127|LWP, pvar, 0, LOFF(l_slptime), UINT, "d"},
+	{"sl", "SL", NULL, INF127|LWP, pvar, 0, LOFF(l_slptime), UINT, "u"},
 	{"start", "STARTED", NULL, 0, started},
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, LJUST, state},
@@ -174,7 +174,7 @@ VAR var[] = {
 	{"tty", "TTY", NULL, LJUST, longtname},
 	{"ucomm", "UCOMM", NULL, LJUST, ucomm},
 	UID("uid", "UID", pvar, POFF(p_uid)),
-	{"upr", "UPR", NULL, LWP, pvar, 0, LOFF(l_usrpri), UCHAR, "d"},
+	{"upr", "UPR", NULL, LWP, pvar, 0, LOFF(l_usrpri), UCHAR, "u"},
 	{"user", "USER", NULL, LJUST, uname},
 	{"usrpri", "", "upr"},
 	{"vsize", "", "vsz"},

@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.46.2.10 2002/10/24 23:36:41 nathanw Exp $	*/
+/*	$NetBSD: ps.c,v 1.46.2.11 2002/11/12 20:31:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.46.2.10 2002/10/24 23:36:41 nathanw Exp $");
+__RCSID("$NetBSD: ps.c,v 1.46.2.11 2002/11/12 20:31:58 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,6 +206,8 @@ main(argc, argv)
 			fmt = 1;
 			jfmt[0] = '\0';
 			break;
+		case 'K':
+			break;			/* no-op - was dontuseprocfs */
 		case 'L':
 			showkey();
 			exit(0);
@@ -370,7 +372,6 @@ main(argc, argv)
 	 */
 	if (!(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
 		err(1, "%s", kvm_geterr(kd));
-
 	if (nentries == 0) {
 		printheader();
 		exit(1);
@@ -641,7 +642,7 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-acCehjKlmrsSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
+	    "ps [-acCehjlmrsSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
 	    "[-M core] [-N system] [-W swap] [-U username]",
 	    "ps [-L]");
 	exit(1);
