@@ -1,4 +1,4 @@
-/*	$NetBSD: tmu.c,v 1.1 2002/07/05 13:31:55 scw Exp $	*/
+/*	$NetBSD: tmu.c,v 1.2 2002/08/26 10:48:17 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -164,7 +164,7 @@ tmu_start(void *arg, int which, u_int clkint)
 {
 	struct tmu_softc *sc = arg;
 	u_int32_t tcor;
-	u_int16_t tcr;
+	u_int8_t tstr;
 	int timer;
 
 	switch (which) {
@@ -192,12 +192,14 @@ tmu_start(void *arg, int which, u_int clkint)
 	 * If the timer is not yet enabled, set the TCNT register to
 	 * the same as TCOR, and enable underflow interrupts.
 	 */
-	tcr = bus_space_read_2(sc->sc_bust, sc->sc_bush, TMU_REG_TCR(timer));
-	if ((tcr & TMU_TCR_UNIE) == 0) {
+	tstr = bus_space_read_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR);
+	if ((tstr & TMU_TSTR(timer)) == 0) {
 		bus_space_write_4(sc->sc_bust, sc->sc_bush,
 		    TMU_REG_TCNT(timer), tcor);
 		bus_space_write_2(sc->sc_bust, sc->sc_bush, TMU_REG_TCR(timer),
 		    TMU_TCR_TPSC_PDIV4 | TMU_TCR_CKEG_RISING | TMU_TCR_UNIE);
+		bus_space_write_1(sc->sc_bust, sc->sc_bush, TMU_REG_TSTR,
+		    tstr | TMU_TSTR(timer));
 	}
 }
 
