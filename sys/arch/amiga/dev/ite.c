@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *      $Id: ite.c,v 1.11 1994/02/21 09:34:19 chopps Exp $
+ *      $Id: ite.c,v 1.12 1994/03/11 02:46:49 chopps Exp $
  */
 
 /*
@@ -68,10 +68,11 @@ struct itesw itesw[] =
 {
 	view_cnprobe,	view_init,	view_deinit,	0,
 	0,	 	0,	 	0,
+    retina_cnprobe, retina_init, retina_deinit, retina_clear,
+    retina_putc, retina_cursor, retina_scroll,
     tiga_cnprobe, tiga_init, tiga_deinit, tiga_clear,
     tiga_putc, tiga_cursor, tiga_scroll,
-    retina_cnprobe, retina_init, retina_deinit, retina_clear,
-    retina_putc, retina_cursor, retina_scroll
+
 };
 
 #undef NITE
