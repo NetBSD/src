@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.17 1994/07/20 01:40:11 paulus Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.18 1994/07/20 01:49:20 paulus Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -1346,12 +1346,15 @@ pppinput(c, tp)
      */
     if (sc->sc_ilen == 0) {
 	/* reset the first input mbuf */
-	m = sc->sc_m;
-	if (m == NULL) {
-	    if (sc->sc_flags & SC_DEBUG)
-		printf("ppp%d: no input mbufs!\n", sc->sc_if.if_unit);
-	    goto flush;
+	if (sc->sc_m == NULL) {
+	    pppgetm(sc);
+	    if (sc->sc_m == NULL) {
+		if (sc->sc_flags & SC_DEBUG)
+		    printf("ppp%d: no input mbufs!\n", sc->sc_if.if_unit);
+		goto flush;
+	    }
 	}
+	m = sc->sc_m;
 	m->m_len = 0;
 	m->m_data = M_DATASTART(sc->sc_m);
 	if (M_DATASIZE(sc->sc_m) >= HDROFF + PPP_HDRLEN)
@@ -1401,12 +1404,15 @@ pppinput(c, tp)
     /* is this mbuf full? */
     m = sc->sc_mc;
     if (M_TRAILINGSPACE(m) <= 0) {
-	sc->sc_mc = m = m->m_next;
-	if (m == NULL) {
-	    if (sc->sc_flags & SC_DEBUG)
-		printf("ppp%d: too few input mbufs!\n", sc->sc_if.if_unit);
-	    goto flush;
+	if (m->m_next == NULL) {
+	    pppgetm(sc);
+	    if (m->m_next == NULL) {
+		if (sc->sc_flags & SC_DEBUG)
+		    printf("ppp%d: too few input mbufs!\n", sc->sc_if.if_unit);
+		goto flush;
+	    }
 	}
+	sc->sc_mc = m = m->m_next;
 	m->m_len = 0;
 	m->m_data = M_DATASTART(m);
 	sc->sc_mp = mtod(m, char *);
