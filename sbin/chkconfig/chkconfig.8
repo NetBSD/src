@@ -1,4 +1,4 @@
-.\"	$NetBSD: chkconfig.8,v 1.4 2001/11/16 11:26:54 wiz Exp $
+.\"	$NetBSD: chkconfig.8,v 1.5 2002/10/01 13:40:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -99,12 +99,14 @@ keyword
 .Dq chkconfig
 present in the
 .Xr rc.d 8
-script for that service.  If a service's script does not contain
+script for that service.
+If a service's script does not contain
 this keyword, it may still be managed by
 .Nm
 using the
 .Fl f
-flag.  When this flag is used,
+flag.
+When this flag is used,
 .Nm
 will automatically add the
 .Dq chkconfig

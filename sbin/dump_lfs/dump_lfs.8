@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump_lfs.8,v 1.6 2002/01/21 18:15:08 wiz Exp $
+.\"	$NetBSD: dump_lfs.8,v 1.7 2002/10/01 13:40:28 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -173,7 +173,8 @@ so that incremental backups omit such files
 but full backups retain them.
 .It Fl k Ar read blocksize
 The size in kilobyte of the read buffers, rounded up to a multiple of the
-filesystem block size. Default is 32k.
+filesystem block size.
+Default is 32k.
 .It Fl L Ar label
 The user-supplied text string
 .Ar label
@@ -198,9 +199,11 @@ by means similar to a
 Use that many buffers for read cache operations.
 A value of zero disables the read cache altogether, higher values
 improve read performance by reading larger data blocks from the
-disk and maintaining them in an LRU cache. See the
+disk and maintaining them in an LRU cache.
+See the
 .Fl k
-option for the size of the buffers. Maximum is 512, the size of the cache is
+option for the size of the buffers.
+Maximum is 512, the size of the cache is
 limited to 15% of the avail RAM by default.
 .It Fl s Ar feet
 Attempt to calculate the amount of tape needed
@@ -280,7 +283,8 @@ flag
 .Pq Dv UF_NODUMP ,
 files with the
 .Qq nodump
-flag will not be backed up. If a directory has the
+flag will not be backed up.
+If a directory has the
 .Qq nodump
 flag, this directory and any file or directory under it will not be backed up.
 .Pp
@@ -409,7 +413,8 @@ on the remote machine.
 .Sh FILES
 .Bl -tag -width /etc/dumpdates -compact
 .It Pa /dev/nrst0
-default tape unit to use. Taken from
+default tape unit to use.
+Taken from
 .Dv _PATH_DEFTAPE
 in
 .Pa /usr/include/paths.h .
