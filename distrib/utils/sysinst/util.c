@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.25 1998/02/07 09:32:32 jonathan Exp $	*/
+/*	$NetBSD: util.c,v 1.26 1998/02/09 06:55:27 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -522,11 +522,14 @@ void get_and_unpack_sets(int success_msg, int failure_msg)
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void) mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IXOTH|S_IXOTH);
 
+	/* Find out which files to "get" if we get files. */
+	process_menu (MENU_distset);
+
 	/* Get the distribution files */
 	process_menu (MENU_distmedium);
+
 	if (nodist)
 		return;
-
 
 	if (got_dist) {
 
