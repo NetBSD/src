@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+#	$NetBSD: lp,v 1.2 1997/10/05 12:48:36 mrg Exp $
 #
 # Copyright (c) 1995 Joerg Wunsch
 #
@@ -36,7 +37,7 @@
 #
 # Posix 1003.2 compliant print spooler interface.
 #
-# $Id: lp,v 1.1.1.1 1997/10/05 12:40:42 mrg Exp $
+# from: Id: lp.sh,v 1.5 1997/02/22 16:06:14 peter Exp
 #
 
 ncopies=""
