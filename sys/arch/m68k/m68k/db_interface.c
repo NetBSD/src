@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 1994/10/26 07:51:08 cgd Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.10 1994/11/14 20:53:54 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -43,6 +43,7 @@
 extern jmp_buf	*db_recover;
 
 int	db_active = 0;
+int ddb_regs_ssp;	/* system stack pointer */
 
 /*
  * Received keyboard interrupt sequence.
@@ -78,16 +79,24 @@ kdb_trap(type, regs)
 		}
 	}
 
-	/* Should switch to kdb's own stack here. */
+	/* XXX - Should switch to kdb's own stack here. */
 
 	ddb_regs = *regs;
 
+	/* Get System Stack Pointer (SSP) */
+	ddb_regs_ssp = (int)(&regs[1]);
+
 	db_active++;
 	cnpollc(TRUE);
-/*	(void) setvideoenable(1);*/
+#if 0
+	/* XXX - Should do this in cnpollc() if needed. */
+	(void) setvideoenable(1);
+#endif
 	db_trap(type, 0);
 	cnpollc(FALSE);
 	db_active--;
+
+	/* Can't easily honor change in ssp.  Oh well. */
 
 	*regs = ddb_regs;
 
