@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.26 1998/08/12 01:10:29 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.27 1998/08/16 02:17:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -226,6 +226,8 @@ _curpcb:
 	.word	0x00000000
 	.text
 
+Lblock_userspace_access:
+	.word	_block_userspace_access
 
 /*
  * Idle loop, exercised while waiting for a process to wake up.
@@ -502,6 +504,12 @@ findqueue:
 	/* Third phase : restore saved context */
 
 switch_exited:
+	/* Don't allow user space access beween the purge and the switch */
+	ldr	r3, Lblock_userspace_access
+	ldr	r2, [r3]
+	orr	r0, r2, #1
+	str	r0, [r3]
+
 	stmfd	sp!, {r0-r3}
 	ldr	r0, Lcpufuncs
 	add	lr, pc, #Lcs_cache_purged - . - 8
@@ -512,6 +520,12 @@ Lcs_cache_purged:
 
 	/* At this point we need to kill IRQ's again. */
 	IRQdisable
+
+	/* Interrupts are disabled so we can allow user space accesses again
+	 * as none will occur until interrupts are re-enabled after the
+	 * switch.
+	 */
+	str	r2, [r3]
 
 	/* Get the user structure for the new process in r1 */
 	ldr	r1, [r6, #(P_ADDR)]
