@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.3 1998/01/09 03:15:12 perry Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.4 2003/11/01 14:26:29 nakayama Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
@@ -11,8 +11,8 @@
 static const int map[] = {
 	1,	/* round to nearest */
 	0,	/* round to zero */
-	3,	/* round to negative infinity */
-	2	/* round to positive infinity */
+	2,	/* round to positive infinity */
+	3	/* round to negative infinity */
 };
 
 int
