@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.62 2000/11/22 03:54:01 itojun Exp $ */
+/* $NetBSD: trap.c,v 1.63 2000/11/22 08:39:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.62 2000/11/22 03:54:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2000/11/22 08:39:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,29 +409,57 @@ trap(a0, a1, a2, entry, framep)
 			break;
 
 		case ALPHA_IF_CODE_FEN:
+		    {
+			struct cpu_info *ci = curcpu();
+#if defined(MULTIPROCESSOR)
+			int s;
+#endif
+
+#if defined(MULTIPROCESSOR)
+			/* Block IPIs while we clean house. */
+			s = splhigh();
+#endif
 			/*
 			 * on exit from the kernel, if proc == fpcurproc,
 			 * FP is enabled.
 			 */
-			if (fpcurproc == p) {
+			if (ci->ci_fpcurproc == p) {
 				printf("trap: fp disabled for fpcurproc == %p",
 				    p);
 				goto dopanic;
 			}
 	
-			if (fpcurproc != NULL)
-				release_fpu(1);
+			if (ci->ci_fpcurproc != NULL)
+				fpusave_cpu(ci, 1);
+#if defined(MULTIPROCESSOR)
+			splx(s);
+#endif
+			KDASSERT(ci->ci_fpcurproc == NULL);
+
+#if defined(MULTIPROCESSOR)
 			if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-				synchronize_fpstate(p, 1);
+				fpusave_proc(p, 1);
+#else
+			KDASSERT(p->p_addr->u_pcb.pcb_fpcpu == NULL);
+#endif
+
+#if defined(MULTIPROCESSOR)
+			s = splhigh();
+#endif
+			p->p_addr->u_pcb.pcb_fpcpu = ci;
+			ci->ci_fpcurproc = p;
+#if defined(MULTIPROCESSOR)
+			splx(s);
+			alpha_mb();
+#endif
 
 			alpha_pal_wrfen(1);
 			restorefpstate(&p->p_addr->u_pcb.pcb_fp);
-			p->p_addr->u_pcb.pcb_fpcpu = curcpu();
-			fpcurproc = p;
 			alpha_pal_wrfen(0);
 
 			p->p_md.md_flags |= MDP_FPUSED;
 			goto out;
+		    }
 
 		default:
 			printf("trap: unknown IF type 0x%lx\n", a0);
@@ -866,7 +894,7 @@ const static int reg_to_framereg[32] = {
 
 #define	dump_fp_regs()							\
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)				\
-		synchronize_fpstate(p, 1)
+		fpusave_proc(p, 1)
 
 #define	unaligned_load(storage, ptrf, mod)				\
 	if (copyin((caddr_t)va, &(storage), sizeof (storage)) != 0)	\

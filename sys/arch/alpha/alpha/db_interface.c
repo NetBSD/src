@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.11 2000/11/22 02:25:52 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.12 2000/11/22 08:39:47 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,10 +48,11 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2000/11/22 02:25:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12 2000/11/22 08:39:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2000/11/22 02:25:52 thorpej Ex
 
 #include <dev/cons.h>
 
+#include <machine/alpha.h>
 #include <machine/db_machdep.h>
 #include <machine/pal.h>
 #include <machine/prom.h>
@@ -88,12 +90,14 @@ int	db_active = 0;
 
 db_regs_t *ddb_regp;
 
-void	db_mach_halt __P((db_expr_t, int, db_expr_t, char *));
-void	db_mach_reboot __P((db_expr_t, int, db_expr_t, char *));
+#if defined(MULTIPROCESSOR)
+void	db_mach_cpu __P((db_expr_t, int, db_expr_t, char *));
+#endif
 
 struct db_command db_machine_cmds[] = {
-	{ "halt",	db_mach_halt,	0,	0 },
-	{ "reboot",	db_mach_reboot,	0,	0 },
+#if defined(MULTIPROCESSOR)
+	{ "cpu",	db_mach_cpu,	0,	0 },
+#endif
 	{ (char *)0, },
 };
 
@@ -168,6 +172,7 @@ ddb_trap(a0, a1, a2, entry, regs)
 	unsigned long a0, a1, a2, entry;
 	db_regs_t *regs;
 {
+	struct cpu_info *ci = curcpu();
 	int s;
 
 	if (entry != ALPHA_KENTRY_IF ||
@@ -190,7 +195,7 @@ ddb_trap(a0, a1, a2, entry, regs)
 	 */
 
 	/* Our register state is simply the trapframe. */
-	ddb_regp = regs;
+	ddb_regp = ci->ci_db_regs = regs;
 
 	s = splhigh();
 
@@ -204,7 +209,7 @@ ddb_trap(a0, a1, a2, entry, regs)
 
 	splx(s);
 
-	ddb_regp = NULL;
+	ddb_regp = ci->ci_db_regs = NULL;
 
 	/*
 	 * Tell caller "We HAVE handled the trap."
@@ -266,31 +271,52 @@ db_machine_init()
 /*
  * Alpha-specific ddb commands:
  *
- *	halt		set halt bit in rpb and halt
- *	reboot		set reboot bit in rpb and halt
+ *	cpu		tell DDB to use register state from the
+ *			CPU specified (MULTIPROCESSOR)
  */
 
+#if defined(MULTIPROCESSOR)
 void
-db_mach_halt(addr, have_addr, count, modif)
+db_mach_cpu(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
 	db_expr_t	count;
 	char *		modif;
 {
+	struct cpu_info *ci;
 
-	prom_halt(1);
+	if (have_addr == 0) {
+		cpu_debug_dump();
+		return;
+	}
+
+	if (addr < 0 || addr >= ALPHA_MAXPROCS) {
+		db_printf("CPU %ld out of range\n", addr);
+		return;
+	}
+
+	ci = &cpu_info[addr];
+	if (ci->ci_softc == NULL) {
+		db_printf("CPU %ld is not configured\n", addr);
+		return;
+	}
+
+	if (ci != curcpu()) {
+		if ((ci->ci_flags & CPUF_PAUSED) == 0) {
+			db_printf("CPU %ld not paused\n", addr);
+			return;
+		}
+	}
+
+	if (ci->ci_db_regs == NULL) {
+		db_printf("CPU %ld has no register state\n", addr);
+		return;
+	}
+
+	db_printf("Using CPU %ld\n", addr);
+	ddb_regp = ci->ci_db_regs;
 }
-
-void
-db_mach_reboot(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
-{
-
-	prom_halt(0);
-}
+#endif /* MULTIPROCESSOR */
 
 /*
  * Map Alpha register numbers to trapframe/db_regs_t offsets.
