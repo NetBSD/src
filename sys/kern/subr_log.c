@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.30 2003/09/07 09:30:20 jdolecek Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.31 2003/09/07 09:31:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.30 2003/09/07 09:30:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.31 2003/09/07 09:31:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ logopen(dev, flags, mode, p)
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
-	logsoftc.sc_pgid = -p->p_pid;		/* signal process only */
+	logsoftc.sc_pgid = p->p_pid;		/* signal process only */
 	/*
 	 * The message buffer is initialized during system configuration.
 	 * If it's been clobbered, note that and return an error.  (This
