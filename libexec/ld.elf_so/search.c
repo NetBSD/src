@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.2 1997/02/03 19:45:02 cgd Exp $	*/
+/*	$NetBSD: search.c,v 1.3 1997/02/17 19:32:05 cgd Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -62,46 +62,16 @@
  * Data declarations.
  */
 
-typedef struct {
-    const char *si_name;
-    const char *si_best_name;
-    char *si_best_fullpath;
-    const Search_Path *si_best_path;
-    size_t si_namelen;
-    int si_desired_major;
-    int si_desired_minor;
-    int si_best_major;
-    int si_best_minor;
-    unsigned si_exact : 1;
-} Search_Info;
-
-typedef enum {
-    Search_FoundNothing,
-    Search_FoundLower,
-    Search_FoundHigher,
-    Search_FoundExact
-} Search_Result; 
-
 static bool
 _rtld_check_library(
-    const Search_Path *sp,
-    const char *name,
-    size_t namelen,
-    char **fullpath_p)
+    const char *pathname)
 {
     struct stat mystat;
-    char *fullpath;
     Elf_Ehdr ehdr;
     int fd;
 
-    fullpath = xmalloc(sp->sp_pathlen + 1 + namelen + 1);
-    strncpy(fullpath, sp->sp_path, sp->sp_pathlen);
-    fullpath[sp->sp_pathlen] = '/';
-    strcpy(&fullpath[sp->sp_pathlen + 1], name);
-
-    dbg("  Trying \"%s\"", fullpath);
-    if (stat(fullpath, &mystat) >= 0 && S_ISREG(mystat.st_mode)) {
-	if ((fd = open(fullpath, O_RDONLY)) >= 0) {
+    if (stat(pathname, &mystat) >= 0 && S_ISREG(mystat.st_mode)) {
+	if ((fd = open(pathname, O_RDONLY)) >= 0) {
 	    if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr))
 		goto lose;
 
@@ -122,9 +92,6 @@ _rtld_check_library(
 	      ehdr.e_type != Elf_et_dyn)
 		goto lose;
 
-	    if (*fullpath_p != NULL)
-		free(*fullpath_p);
-	    *fullpath_p = fullpath;
 	    close(fd);
 	    return true;
 
@@ -133,177 +100,27 @@ lose:
 	}
     }
 
-    free(fullpath);
     return false;
 }
 
-static Search_Result
-_rtld_search_directory(
-    const Search_Path *sp,
-    Search_Info *si)
-{
-    struct dirent *entry;
-    DIR *dirp;
-    Search_Result result = Search_FoundNothing;
 
-dbg("_rtld_search_directory");
-    if (sp->sp_path == NULL || sp->sp_path[0] == '\0')
-	return result;
-
-dbg("_rtld_search_directory 2");
-    if ((dirp = opendir(sp->sp_path)) == NULL) {
-	dbg("_rtld_search_directory 2.1");
-	return result;
-    }
-
-dbg("_rtld_search_directory 3");
-    while ((entry = readdir(dirp)) != NULL) {
-	long major = -1;
-	long minor = -1;
-	if (strncmp(entry->d_name, si->si_name, si->si_namelen))
-	    continue;
-	/*
-	 * We are matching libfoo.so only (no more info).  Only take
-	 * it as a last resort.
-	 */
-	if (si->si_exact) {
-	    if (strcmp(entry->d_name, si->si_name))
-		continue;
-#ifdef notyet
-	} else if (entry->d_namlen == si->si_namelen) {
-	    if (si->si_best_path != NULL || si->si_best_major != -1)
-		continue;
-#endif
-	} else {
-	    char *cp;
-	    /*
-	     * We expect (demand!) that it be of the form
-	     * "libfoo.so.<something>"
-	     */
-	    if (entry->d_name[si->si_namelen] != '.')
-		continue;
-	    /*
-	     * This file has a least a major number (well, maybe not if it
-	     * has a name of "libfoo.so." but treat that as equivalent to 0.
-	     * It had better match what we are looking for.
-	     */
-	    major = strtol(&entry->d_name[si->si_namelen+1], &cp, 10);
-	    if (major < 0 || (cp[0] != '\0' && cp[0] != '.')
-		    || &entry->d_name[si->si_namelen+1] == cp)
-		continue;
-	    if (cp[0] == '.') {
-		char *cp2;
-		minor = strtol(&cp[1], &cp2, 10);
-		if (minor < 0 || cp2[0] != '\0' || cp == cp2)
-		    continue;
-	    } else {
-		minor = 0;
-	    }
-	    if (major != si->si_desired_major || minor <= si->si_best_minor)
-		continue;
-	}
-	/*
-	 * We have a better candidate...
-	 */
-	if (!_rtld_check_library(sp, entry->d_name, entry->d_namlen,
-			   &si->si_best_fullpath))
-	    continue;
-	    
-	si->si_best_name = &si->si_best_fullpath[sp->sp_pathlen + 1];
-	si->si_best_major = major;
-	si->si_best_minor = minor;
-	si->si_best_path = sp;
-
-	if (si->si_exact || si->si_best_minor == si->si_desired_minor)
-	    result = Search_FoundExact;
-	else if (si->si_best_minor > si->si_desired_minor)
-	    result = Search_FoundHigher;
-	else
-	    result = Search_FoundLower;
-
-	/*
-	 * We were looking for, and found, an exact match.  We're done.
-	 */
-	if (si->si_exact)
-	    break;
-    }
-
-    dbg("found %s (%d.%d) match for %s (%d.%d) -> %s",
-	result == Search_FoundNothing ? "no"
-	: result == Search_FoundLower ? "lower"
-	: result == Search_FoundExact ? "exact" : "higher",
-	si->si_best_major, si->si_best_minor,
-	si->si_name,
-	si->si_desired_major, si->si_desired_minor,
-	si->si_best_fullpath ? si->si_best_fullpath : sp->sp_path);
-
-    closedir(dirp);
-    return result;
-}
-
 static char *
-_rtld_search_library_paths(
-    const char *name,
-    Search_Path *paths,
-    const Search_Path *rpaths)
+_rtld_search_library_path(const char *name, int namelen, const char *dir, int dirlen)
 {
-    Search_Info info;
-    Search_Path *path;
-    const char *cp;
-    Search_Result result = Search_FoundNothing;
+	char *pathname;
 
-    memset(&info, 0, sizeof(info));
-    info.si_name = name;
-    info.si_desired_major = -1;
-    info.si_desired_minor = -1;
-    info.si_best_major = -1;
-    info.si_best_minor = -1;
+	pathname = xmalloc(dirlen + 1 + namelen + 1);
+	strncpy(pathname, dir, dirlen);
+	pathname[dirlen] = '/';
+	strcpy(pathname + dirlen + 1, name);
 
-    cp = strstr(name, ".so");
-    if (cp == NULL) {
-	info.si_exact = true;
-    } else {
-	cp += sizeof(".so") - 1;
-	info.si_namelen = cp - name;
-	if (cp[0] != '.') {
-	    info.si_exact = true;
-	} else {
-	    info.si_desired_major = atoi(&cp[1]);
-	    if ((cp = strchr(&cp[1], '.')) != NULL) {
-		info.si_desired_minor = atoi(&cp[1]);
-	    } else {
-		info.si_desired_minor = 0;
-	    }
-	}
-    }
+	dbg("  Trying \"%s\"", pathname);
+	if(_rtld_check_library(pathname))		/* We found it */
+		return pathname;
 
-    if (rpaths != NULL && result < Search_FoundHigher) {	/* Exact? */
-	dbg("  checking rpaths..");
-	for (; rpaths != NULL; rpaths = rpaths->sp_next) {
-	    dbg("   in \"%s\"", rpaths->sp_path);
-	    result = _rtld_search_directory(rpaths, &info);
-	    if (result >= Search_FoundHigher)	/* Exact? */
-		break;
-	}
-    }
-    if (result < Search_FoundHigher) {	/* Exact? */
-	dbg("  checking default paths..");
-	for (path = paths; path != NULL; path = path->sp_next) {
-	    dbg("   in \"%s\"", path->sp_path);
-	    result = _rtld_search_directory(path, &info);
-	    if (result >= Search_FoundHigher)	/* Exact? */
-		break;
-	}
-    }
-
-    if (result >= Search_FoundHigher)
-	return info.si_best_fullpath;
-
-    if (info.si_best_fullpath != NULL)
-	free(info.si_best_fullpath);
-    return NULL;
+	free(pathname);
+	return NULL;
 }
-
 /*
  * Find the library with the given name, and return its full pathname.
  * The returned string is dynamically allocated.  Generates an error
@@ -317,7 +134,9 @@ _rtld_find_library(
     const char *name,
     const Obj_Entry *refobj)
 {
+    Search_Path *sp;
     char *pathname;
+    int namelen;
 
     if (strchr(name, '/') != NULL) {	/* Hard coded pathname */
 	if (name[0] != '/' && !_rtld_trust) {
@@ -340,9 +159,31 @@ _rtld_find_library(
 
     dbg(" Searching for \"%s\" (%p)", name, refobj);
 
-    pathname = _rtld_search_library_paths(name, _rtld_paths, 
-					  refobj ? refobj->rpaths : NULL);
-    if (pathname == NULL)
-	_rtld_error("Shared object \"%s\" not found", name);
-    return pathname;
+	namelen = strlen(name);
+
+    if (refobj != NULL)
+	for (sp = refobj->rpaths; sp != NULL; sp = sp->sp_next)
+		if ((pathname = _rtld_search_library_path(name, namelen,
+		    sp->sp_path, sp->sp_pathlen)) != NULL)
+			return (pathname);
+
+	for (sp = _rtld_paths; sp != NULL; sp = sp->sp_next)
+		if ((pathname = _rtld_search_library_path(name, namelen,
+		    sp->sp_path, sp->sp_pathlen)) != NULL)
+			return (pathname);
+
+#if 0
+    if((refobj != NULL &&
+	(pathname = _rtld_search_library_path(name, refobj->rpath)) != NULL) ||
+        (pathname = _rtld_search_library_path(name, ld_library_path)) != NULL
+#ifdef SVR4_LIBDIR
+	LOSE!
+	|| (pathname = _rtld_search_library_path(name, SVR4_LIBDIR)) != NULL
+#endif
+	)
+		return pathname;
+#endif
+
+    _rtld_error("Shared object \"%s\" not found", name);
+    return NULL;
 }
