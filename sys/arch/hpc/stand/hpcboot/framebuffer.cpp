@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.7 2001/04/24 19:27:59 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.8 2001/06/20 17:36:00 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,12 @@ FrameBufferInfo::FrameBufferInfo(u_int32_t cpu, u_int32_t machine)
 {
 	struct framebuffer_info *tab = _table;
 	platid_mask_t target, entry;
+	framebuffer_info *alt = 0;
+
+	// get current bpp.
+	HDC hdc = GetDC(0);
+	int bpp = GetDeviceCaps(hdc, BITSPIXEL);
+	ReleaseDC(0, hdc);
 
 	target.dw.dw0 = cpu;
 	target.dw.dw1 = machine;
@@ -59,18 +65,28 @@ FrameBufferInfo::FrameBufferInfo(u_int32_t cpu, u_int32_t machine)
 		entry.dw.dw0 = tab->cpu;
 		entry.dw.dw1 = tab->machine;
 		if (platid_match(&target, &entry)) {
-			_fb = tab;
-			return;
+			if (tab->bpp == bpp) {
+				_fb = tab;
+				return;
+			} else {
+				alt = tab;
+			}
 		}
 	}
 
-	// fill default setting.
+	// use alternative framebuffer setting, if any.
+	if (alt) {
+		_fb = alt;
+		return;
+	}
+
+	// no apriori setting. fill default.
 	memset(&_default, 0, sizeof(struct framebuffer_info));
 
 	_default.cpu = cpu;
 	_default.machine = machine;
-	HDC hdc = GetDC(0);
-	_default.bpp = GetDeviceCaps(hdc, BITSPIXEL);
+	hdc = GetDC(0);
+	_default.bpp = bpp;
 	_default.width = GetDeviceCaps(hdc, HORZRES);
 	_default.height = GetDeviceCaps(hdc, VERTRES);
 	ReleaseDC(0, hdc);
