@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.139 2000/04/02 17:25:52 augustss Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.140 2000/04/19 04:49:50 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -668,7 +668,7 @@ scsi_probedev(scsi, target, lun)
 	int target, lun;
 {
 	struct scsipi_link *sc_link;
-	static struct scsipi_inquiry_data inqbuf;
+	struct scsipi_inquiry_data inqbuf;
 	struct scsi_quirk_inquiry_pattern *finger;
 	int checkdtype, priority, docontinue;
 	struct scsipibus_attach_args sa;
