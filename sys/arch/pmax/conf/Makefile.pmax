@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.16 1995/09/19 23:30:54 thorpej Exp $
+#	$NetBSD: Makefile.pmax,v 1.17 1995/11/25 05:55:38 mellon Exp $
 
 #	@(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
 #
@@ -54,6 +54,18 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
+TARGET_MACHINE = pmax
+TARGET_ARCH = mips
+.if (${MACHINE_ARCH} != pmax)
+CC=	/usr/local/mips-dec-netbsd/bin/gcc
+LD=	/usr/local/mips-dec-netbsd/bin/ld
+AS=	/usr/local/mips-dec-netbsd/bin/as
+AR=	/usr/local/mips-dec-netbsd/bin/ar
+NM=	/usr/local/mips-dec-netbsd/bin/nm
+LORDER=	NM=$(NM) sh ../../../../../../../usr.bin/lorder/lorder.sh.gnm
+RANLIB=	/usr/local/mips-dec-netbsd/bin/ranlib
+.endif
+
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
@@ -89,9 +101,9 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		else strip=-x; \
 		fi; \
 		echo ${LD} $$strip -N -o $@ -e start -Ttext 80030000 \
-			'$${SYSTEM_OBJ}' vers.o $(LIBKERN); \
+			'$${SYSTEM_OBJ}' vers.o ; \
 		${LD} $$strip -N -o $@ -e start -Ttext 80030000 \
-			${SYSTEM_OBJ} vers.o $(LIBKERN)
+			${SYSTEM_OBJ} vers.o
 #SYSTEM_LD_TAIL= @echo rearranging symbols;\
 #		symorder symbols.sort $@;\
 #SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
@@ -143,7 +155,7 @@ assym.h: genassym
 	./genassym >assym.h
 
 genassym: ${PMAX}/pmax/genassym.c
-	${CC} ${INCLUDES} ${IDENT} ${PARAM} -o genassym ${PMAX}/pmax/genassym.c
+	cc ${INCLUDES} ${IDENT} ${PARAM} -o genassym ${PMAX}/pmax/genassym.c
 
 depend: assym.h param.c vnode_if.h
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c
