@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.78 2000/11/11 00:52:39 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.79 2000/11/11 00:55:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -184,7 +184,7 @@ ip_output(m0, va_alist)
 	struct socket *so;
 	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
-	u_int16_t ip_len, ip_off;
+	u_int16_t ip_len;
 
 	va_start(ap, m0);
 	opt = va_arg(ap, struct mbuf *);
@@ -425,7 +425,6 @@ sendit:
 	 * network order.
 	 */
 	ip_len = ip->ip_len;
-	ip_off = ip->ip_off;
 
 	HTONS(ip->ip_len);
 	HTONS(ip->ip_off);
@@ -546,7 +545,6 @@ sendit:
 	hlen = ip->ip_hl << 2;
 #endif
 	ip_len = ntohs(ip->ip_len);
-	ip_off = ntohs(ip->ip_off);
 
 	if (ro->ro_rt == NULL) {
 		if ((flags & IP_ROUTETOIF) == 0) {
