@@ -173,14 +173,12 @@ char   *xfer_states[LMTP_STATE_LAST] = {
 
 int     lmtp_lhlo(LMTP_STATE *state)
 {
-    char   *myname = "lmtp_lhlo";
     LMTP_SESSION *session = state->session;
     LMTP_RESP *resp;
     int     except;
     char   *lines;
     char   *words;
     char   *word;
-    SOCKOPT_SIZE optlen = sizeof(state->sndbufsize);
 
     /*
      * Prepare for disaster.

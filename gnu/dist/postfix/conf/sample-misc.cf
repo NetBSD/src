@@ -99,7 +99,7 @@ hopcount_limit = 50
 # Specify a list of names separated by whitespace or comma.
 #
 # import_environment = MAIL_CONFIG TZ XAUTHORITY DISPLAY HOME PURIFYOPTIONS
-import_environment = MAIL_CONFIG TZ XAUTHORITY DISPLAY
+import_environment = MAIL_CONFIG MAIL_DEBUG TZ XAUTHORITY DISPLAY
 
 # The inet_interfaces parameter specifies the network interface
 # addresses that this mail system receives mail on.  By default,
