@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.24 1998/01/12 18:31:12 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.25 1998/05/17 17:09:55 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -309,7 +309,8 @@ stattach(parent, self, aux)
 		sc->sc_datalen[CMD_INQUIRY] = 36;
 		sc->sc_datalen[CMD_MODE_SELECT] = 12;
 		sc->sc_datalen[CMD_MODE_SENSE] = 12;
-	} else if (bcmp("HP35450A", product, 8) == 0) {
+	} else if (bcmp("HP35450A", product, 8) == 0 ||
+		   bcmp("HP35470A", product, 8) == 0) {
 		/* XXX "extra" stat makes the HP drive happy at boot time */
 		stat = scsi_test_unit_rdy(sc->sc_dev.dv_parent->dv_unit,
 		    sc->sc_target, sc->sc_lun);
