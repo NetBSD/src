@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.391 2000/09/19 17:04:50 bjh21 Exp $
+#	$NetBSD: files,v 1.392 2000/09/21 23:29:43 eeh Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -393,7 +393,7 @@ file	dev/ic/ne2000.c			ne | IPKDB_NE
 # 8250/16[45]50-based "com" ports
 # XXX In a perfect world, this would be done with attributes
 defopt	opt_com.h	COM16650 COM_HAYESP COM_DEBUG
-device	com: tty
+device	com { } : tty
 file	dev/ic/com.c			com needs-flag
 
 # PC-like keyboard controller
