@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.42 1998/08/05 02:45:09 perry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.43 1998/08/13 21:36:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -161,10 +161,10 @@ i386_user_cleanup(pcb)
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
 #if defined(UVM)
-	uvm_km_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+	uvm_km_free(kernel_map, (vaddr_t)pcb->pcb_ldt,
 	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
 #else
-	kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+	kmem_free(kernel_map, (vaddr_t)pcb->pcb_ldt,
 	    (pcb->pcb_ldt_len * sizeof(union descriptor))); 
 #endif
 	pcb->pcb_ldt = 0;
@@ -275,10 +275,10 @@ i386_set_ldt(p, args, retval)
 
 #if defined(UVM)
 		if (old_ldt != ldt)
-			uvm_km_free(kernel_map, (vm_offset_t)old_ldt, old_len);
+			uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len);
 #else
 		if (old_ldt != ldt)
-			kmem_free(kernel_map, (vm_offset_t)old_ldt, old_len);
+			kmem_free(kernel_map, (vaddr_t)old_ldt, old_len);
 #endif
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%p\n", p->p_pid, new_ldt);

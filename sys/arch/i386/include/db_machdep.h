@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 1997/06/26 01:26:57 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.13 1998/08/13 21:36:05 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,7 +37,7 @@
 #include <vm/vm.h>
 #include <machine/trap.h>
 
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
+typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
@@ -86,8 +86,8 @@ db_regs_t	ddb_regs;	/* register state */
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 #if 0
-boolean_t 	db_check_access __P((vm_offset_t, int, task_t));
-boolean_t	db_phys_eq __P((task_t, vm_offset_t, task_t, vm_offset_t));
+boolean_t 	db_check_access __P((vaddr_t, int, task_t));
+boolean_t	db_phys_eq __P((task_t, vaddr_t, task_t, vaddr_t));
 #endif
 
 /* macros for printing OS server dependent task name */

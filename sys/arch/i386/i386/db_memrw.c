@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 1998/02/10 14:11:20 mrg Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 1998/08/13 21:36:02 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -50,7 +50,7 @@
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -62,7 +62,7 @@ db_read_bytes(addr, size, data)
 }
 
 #if !defined(PMAP_NEW)
-pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 #endif
 
 /*
@@ -70,7 +70,7 @@ pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -78,13 +78,13 @@ db_write_bytes(addr, size, data)
 
 	register pt_entry_t *ptep0 = 0;
 	pt_entry_t	oldmap0 = { 0 };
-	vm_offset_t	addr1;
+	vaddr_t		addr1;
 	register pt_entry_t *ptep1 = 0;
 	pt_entry_t	oldmap1 = { 0 };
 	extern char	etext;
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr < (vm_offset_t)&etext) {
+	    addr < (vaddr_t)&etext) {
 #if defined(PMAP_NEW)
 		ptep0 = PTE_BASE + i386_btop(addr);
 #else

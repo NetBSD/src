@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119 1998/07/04 22:18:25 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.120 1998/08/13 21:36:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -385,7 +385,7 @@ trap(frame)
 		/* FALLTHROUGH */
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
-		register vm_offset_t va;
+		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
 		int rv;
@@ -393,7 +393,7 @@ trap(frame)
 		extern vm_map_t kernel_map;
 		unsigned nss;
 
-		va = trunc_page((vm_offset_t)rcr2());
+		va = trunc_page((vaddr_t)rcr2());
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. (type & T_USER) == 0  and
@@ -556,12 +556,12 @@ int
 trapwrite(addr)
 	unsigned addr;
 {
-	vm_offset_t va;
+	vaddr_t va;
 	unsigned nss;
 	struct proc *p;
 	struct vmspace *vm;
 
-	va = trunc_page((vm_offset_t)addr);
+	va = trunc_page((vaddr_t)addr);
 	if (va >= VM_MAXUSER_ADDRESS)
 		return 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.14 1998/08/05 02:45:08 perry Exp $	*/
+/*	$NetBSD: gdt.c,v 1.15 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -177,12 +177,12 @@ gdt_init()
 	old_gdt = gdt;
 #if defined(UVM)
 	gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
-	uvm_map_pageable(kernel_map, (vm_offset_t)gdt,
-	    (vm_offset_t)gdt + min_len, FALSE);
+	uvm_map_pageable(kernel_map, (vaddr_t)gdt,
+	    (vaddr_t)gdt + min_len, FALSE);
 #else
 	gdt = (union descriptor *)kmem_alloc_pageable(kernel_map, max_len);
-	vm_map_pageable(kernel_map, (vm_offset_t)gdt,
-	    (vm_offset_t)gdt + min_len, FALSE);
+	vm_map_pageable(kernel_map, (vaddr_t)gdt,
+	    (vaddr_t)gdt + min_len, FALSE);
 #endif
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 
@@ -200,11 +200,11 @@ gdt_grow()
 	new_len = old_len << 1;
 
 #if defined(UVM)
-	uvm_map_pageable(kernel_map, (vm_offset_t)gdt + old_len,
-	    (vm_offset_t)gdt + new_len, FALSE);
+	uvm_map_pageable(kernel_map, (vaddr_t)gdt + old_len,
+	    (vaddr_t)gdt + new_len, FALSE);
 #else
-	vm_map_pageable(kernel_map, (vm_offset_t)gdt + old_len,
-	    (vm_offset_t)gdt + new_len, FALSE);
+	vm_map_pageable(kernel_map, (vaddr_t)gdt + old_len,
+	    (vaddr_t)gdt + new_len, FALSE);
 #endif
 }
 
@@ -218,11 +218,11 @@ gdt_shrink()
 	new_len = old_len >> 1;
 
 #if defined(UVM)
-	uvm_map_pageable(kernel_map, (vm_offset_t)gdt + new_len,
-	    (vm_offset_t)gdt + old_len, TRUE);
+	uvm_map_pageable(kernel_map, (vaddr_t)gdt + new_len,
+	    (vaddr_t)gdt + old_len, TRUE);
 #else
-	vm_map_pageable(kernel_map, (vm_offset_t)gdt + new_len,
-	    (vm_offset_t)gdt + old_len, TRUE);
+	vm_map_pageable(kernel_map, (vaddr_t)gdt + new_len,
+	    (vaddr_t)gdt + old_len, TRUE);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.37 1998/08/05 16:34:36 augustss Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.38 1998/08/13 21:36:06 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -105,7 +105,7 @@
  */
 #define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
-extern	vm_offset_t avail_end;
+extern	paddr_t avail_end;
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 typedef void (vector) __P((void));
@@ -1058,7 +1058,7 @@ _isa_bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int *rsegs;
 	int flags;
 {
-	vm_offset_t high;
+	paddr_t high;
 
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)
 		high = trunc_page(ISA_DMA_BOUNCE_THRESHOLD);

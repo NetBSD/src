@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.70 1998/08/05 02:45:10 perry Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.71 1998/08/13 21:36:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -327,9 +327,9 @@ pagemove(from, to, size)
 #endif
 		{
 			if (otpte & PG_V)
-				pmap_update_pg((vm_offset_t) to);
+				pmap_update_pg((vaddr_t) to);
 			if (ofpte & PG_V)
-				pmap_update_pg((vm_offset_t) from);
+				pmap_update_pg((vaddr_t) from);
 		}
 		from += NBPG;
 		to += NBPG;
@@ -375,9 +375,9 @@ int
 kvtop(addr)
 	register caddr_t addr;
 {
-	vm_offset_t va;
+	vaddr_t va;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vaddr_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);
@@ -409,15 +409,16 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off, fpa;
+	vaddr_t faddr, taddr, off;
+	paddr_t fpa;
 	pt_entry_t *tpte;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 #if defined(UVM)
 	taddr= uvm_km_valloc_wait(phys_map, len);
@@ -453,16 +454,16 @@ vmapbuf(bp, len)
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off;
+	vaddr_t faddr, taddr, off;
 	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 #if defined(UVM)
 	taddr= uvm_km_valloc_wait(phys_map, len);
@@ -491,14 +492,14 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 #if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
