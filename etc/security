@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.44.4.2 2001/12/09 17:44:18 he Exp $
+#	$NetBSD: security,v 1.44.4.3 2002/09/04 01:02:37 itojun Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -83,7 +83,8 @@ if checkyesno check_passwd; then
 			printf "Login %s has more than "len" characters.\n", $1;
 		if ($2 == "")
 			printf "Login %s has no password.\n", $1;
-		if (length($2) != 13 && length($2) != 20 && $2 != "") {
+		if (length($2) != 13 && length($2) != 20 && $2 !~ /^\$1/ &&
+		    $2 !~ /^\$2/ && $2 != "") {
 			if ($10 == "" || shells[$10])
 		    printf "Login %s is off but still has a valid shell (%s)\n",
 				    $1, $10;
