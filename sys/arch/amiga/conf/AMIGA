@@ -1,10 +1,10 @@
-# $NetBSD: AMIGA,v 1.21 1999/07/29 10:37:14 augustss Exp $
+# $NetBSD: AMIGA,v 1.22 1999/10/15 21:54:43 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.127 1999/07/28 05:55:19 is Exp $
+#$ NetBSD: GENERIC,v 1.129 1999/10/15 21:50:34 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
@@ -19,6 +19,7 @@ options 	BB060STUPIDROM	# You need this, if you have a non-DraCo
 				# bootblock.
 				# You do not need this if you have a DraCo,
 				# have no 68060 or NEVER use the bootblock
+options		P5PPC68KBOARD	# Phase5 PPC/68K board support
 
 #processors this kernel should support
 
