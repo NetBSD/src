@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.1 1995/11/23 02:39:07 cgd Exp $	*/
+/*	$NetBSD: prom.c,v 1.2 1996/11/25 16:18:16 cgd Exp $	*/
 
 /*  
  * Mach Operating System
@@ -45,7 +45,7 @@ init_prom_calls()
 	c = (struct crb *)((u_int8_t *)r + r->rpb_crb_off);
 
 	prom_dispatch_v.routine_arg = c->crb_v_dispatch;
-	prom_dispatch_v.routine = c->crb_v_dispatch->code;
+	prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
 
 	/* Look for console tty. */
 	prom_getenv(PROM_E_TTY_DEV, buf, 4);
