@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.48 2002/04/23 05:55:23 gmcgarry Exp $
+.\"	$NetBSD: contents,v 1.49 2002/05/03 04:11:19 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -615,6 +615,11 @@ The Xmacppc
 server which supports 256 colors with man pages.
 .br
 .Em 1.7 MB gzipped, 4.6 MB uncompressed
+.\}
+.
+.if r_next68k \{\
+.It
+There is currently no X server for the \*M platform.
 .\}
 .
 .if r_pmax \{\
