@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.3 1994/06/30 08:05:58 cgd Exp $	*/
+/*	$NetBSD: inode.h,v 1.4 1994/10/20 04:21:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -51,49 +51,64 @@
 #define	doff_t	long
 
 /*
- * The inode is used to describe each active (or recently active)
- * file in the UFS filesystem. It is composed of two types of
- * information. The first part is the information that is needed
- * only while the file is active (such as the identity of the file
- * and linkage to speed its lookup). The second part is the 
- * permannent meta-data associated with the file which is read
- * in from the permanent dinode from long term storage when the
- * file becomes active, and is put back when the file is no longer
- * being used.
+ * The inode is used to describe each active (or recently active) file in
+ * the UFS filesystem. It is composed of two types of information. The
+ * first part is the information that is needed only while the file is
+ * active (such as the identity of the file and linkage to speed its
+ * lookup). The second part is the permannent meta-data associated with
+ * the file which is read in from the permanent dinode from long term
+ * storage when the file becomes active, and is put back when the file is
+ * no longer being used.
  */
 struct inode {
-	struct	inode *i_next;	/* Hash chain forward. */
-	struct	inode **i_prev;	/* Hash chain back. */
-	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
-	struct	vnode *i_devvp;	/* Vnode for block I/O. */
+	struct inode  *i_next;	/* Hash chain forward. */
+	struct inode **i_prev;	/* Hash chain back. */
+	struct vnode  *i_vnode; /* Vnode associated with this inode. */
+	struct vnode  *i_devvp; /* Vnode for block I/O. */
+
+#define	IN_ACCESS	0x0001	/* Access time update request. */
+#define	IN_CHANGE	0x0002	/* Inode change time update request. */
+#define	IN_EXLOCK	0x0004	/* File has exclusive lock. */
+#define	IN_LOCKED	0x0008	/* Inode lock. */
+#define	IN_LWAIT	0x0010	/* Process waiting on file lock. */
+#define	IN_MODIFIED	0x0020	/* Inode has been modified. */
+#define	IN_RENAME	0x0040	/* Inode is being renamed. */
+#define	IN_SHLOCK	0x0080	/* File has shared lock. */
+#define	IN_UPDATE	0x0100	/* Modification time update request. */
+#define	IN_WANTED	0x0200	/* Inode is wanted by a process. */
 	u_long	i_flag;		/* I* flags. */
+
 	dev_t	i_dev;		/* Device associated with the inode. */
 	ino_t	i_number;	/* The identity of the inode. */
+
 	union {			/* Associated filesystem. */
-		struct	fs *fs;		/* FFS */
-		struct	lfs *lfs;	/* LFS */
+		struct fs  *fs;		/* FFS */
+		struct lfs *lfs;	/* LFS */
 	} inode_u;
 #define	i_fs	inode_u.fs
 #define	i_lfs	inode_u.lfs
-	struct	dquot *i_dquot[MAXQUOTAS];	/* Dquot structures. */
-	u_quad_t i_modrev;	/* Revision level for lease. */
-	struct	lockf *i_lockf;	/* Head of byte-level lock list. */
+
+				/* Dquot structures. */
+	struct dquot *i_dquot[MAXQUOTAS];
+
+	u_quad_t i_modrev;	/* Revision level for NFS lease. */
+
+	struct lockf *i_lockf;	/* Head of byte-level lock list. */
 	pid_t	i_lockholder;	/* DEBUG: holder of inode lock. */
 	pid_t	i_lockwaiter;	/* DEBUG: latest blocked for inode lock. */
-	/*
-	 * Side effects; used during directory lookup.
-	 */
+
+	/* Side effects; used during directory lookup. */
 	long	i_count;	/* Size of free slot in directory. */
 	doff_t	i_endoff;	/* End of useful stuff in directory. */
 	doff_t	i_diroff;	/* Offset in dir, where we found last entry. */
 	doff_t	i_offset;	/* Offset of free space in directory. */
 	ino_t	i_ino;		/* Inode number of found directory. */
 	u_long	i_reclen;	/* Size of found directory entry. */
-	long	i_spare[11];	/* Spares to round up to 128 bytes. */
-	/*
-	 * The on-disk dinode itself.
-	 */
-	struct	dinode i_din;	/* 128 bytes of the on-disk dinode. */
+
+	/* Spares to round up to 128 bytes on a 32-bit machine. */
+	int32_t	i_spare[11];
+
+	struct	dinode i_din;	/* 128 bytes of on-disk dinode. */
 };
 
 #define	i_atime		i_din.di_atime
@@ -111,18 +126,6 @@ struct inode {
 #define	i_shortlink	i_din.di_shortlink
 #define	i_size		i_din.di_size
 #define	i_uid		i_din.di_uid
-
-/* These flags are kept in i_flag. */
-#define	IN_ACCESS	0x0001		/* Access time update request. */
-#define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_EXLOCK	0x0004		/* File has exclusive lock. */
-#define	IN_LOCKED	0x0008		/* Inode lock. */
-#define	IN_LWAIT	0x0010		/* Process waiting on file lock. */
-#define	IN_MODIFIED	0x0020		/* Inode has been modified. */
-#define	IN_RENAME	0x0040		/* Inode is being renamed. */
-#define	IN_SHLOCK	0x0080		/* File has shared lock. */
-#define	IN_UPDATE	0x0100		/* Modification time update request. */
-#define	IN_WANTED	0x0200		/* Inode is wanted by a process. */
 
 #ifdef KERNEL
 /*
@@ -159,6 +162,6 @@ struct ufid {
 	u_short	ufid_len;	/* Length of structure. */
 	u_short	ufid_pad;	/* Force long alignment. */
 	ino_t	ufid_ino;	/* File number (ino). */
-	long	ufid_gen;	/* Generation number. */
+	int32_t	ufid_gen;	/* Generation number. */
 };
 #endif /* KERNEL */

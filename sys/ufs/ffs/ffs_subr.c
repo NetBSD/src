@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.2 1994/06/29 06:46:34 cgd Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.3 1994/10/20 04:20:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -91,7 +91,7 @@ void
 ffs_fragacct(fs, fragmap, fraglist, cnt)
 	struct fs *fs;
 	int fragmap;
-	long fraglist[];
+	int32_t fraglist[];
 	int cnt;
 {
 	int inblk;
