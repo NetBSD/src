@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.8 2003/08/08 19:17:52 keihan Exp $
+$NetBSD: acronyms.comp,v 1.9 2003/08/09 01:35:16 keihan Exp $
 
 ABI	application binary interface
 API	application programming interface
@@ -7,15 +7,20 @@ ATA	advanced technology attachment
 BIOS	basic input/output system
 BLOB	binary large object
 BSD	berkeley software distribution
+CD	compact disc
 CHS	cylinder/head/sector
 CLI	command line interface
 CRLF	carriage return line feed
 CSS	cascading style sheets
 DMA	direct memory access
 DNS	domain name system
+DSL	digital subscriber line
 DTD	document type definition
+DVD	digital versatile disc
 EISA	extended industry standard architecture
+FLOPS	floating [point] operations per second
 FTP	file transfer protocol
+FQDN	fully qualified domain name
 GIF	graphics interchange format
 GNU	gnu's not unix
 GPL	gnu/general public license
@@ -24,25 +29,56 @@ HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
 I2O	intelligent input/output
 IANA	internet assigned number authority
+ICB	internet citizen's band
 IDE	integrated drive electronics
+IEEE	institute [of] electrical [and] electronics engineers
+IETF	internet engineering task force
+IESG	internet engineering steering group
 IO	input/output
+IOCTL	input/output control
 IP	internet protocol
+IPNG	internet protocol, next generation
+IPSEC	internet protocol security
+IRC	internet relay chat
+IRQ	interrupt request
+IRTF	internet research task force
 ISA	industry standard architecture
+ISDN	integrated services digital network
+ISOC	internet society
 ISP	internet service provider
 JPEG	joint photographic experts group
+LAN	local area network
+LBA	logical block addressing
+LUN	logical unit number
+MBR	master boot record
+MIPS	million instructions per second
 NAT	network address translation
 NUMA	non uniform memory access
 PCI	peripheral component interconnect
 PERL	practical extraction [and] report language
 PNG	portable network graphics
+PPP	point-to-point protocol
+PPPOE	point-to-point protocol over ethernet
 RAID	redundant array of inexpensive disks
+RAM	random access memory
 RFC	request for comments
+RISC	reduced instruction set computing
+ROM	read only memory
 RPM	revolutions per minute
+RTF	rich text format
+SATA	serial advanced technology attachment
 SCSI	small computer standard interface
 SMP	symmetric multiprocessing
 SMTP	simple mail transfer protocol
+SSH	secure shell
+SSL	secure sockets layer
+TCL	tool command language
+TTY	teletype
+TZ	time zone
 TCP	transmission control protocol
 UDP	user datagram protocol
+USB	universal serial bus
+VPN	virtual private network
 XML	extensible markup language
 XSL	extensible stylesheet language
 WWW	world wide web
