@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.36 1999/01/19 22:27:35 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.37 1999/03/22 07:52:56 mycroft Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -106,6 +106,7 @@ all)
 	sh $0 random satlink0 speaker local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 usbs
+	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	;;
 
 minimal)
@@ -375,6 +376,29 @@ audio*)
 	mknod $audioctl c $major $(($unit + 192))
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=49
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chown root.wheel $rmidi
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=50
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chown root.wheel $music $sequencer
+	chmod 666 $music $sequencer
 	;;
 
 lpt*|lpa*)
