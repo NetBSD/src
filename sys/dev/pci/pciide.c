@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.149 2002/04/12 18:02:04 mycroft Exp $	*/
+/*	$NetBSD: pciide.c,v 1.150 2002/04/14 16:55:08 bouyer Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.149 2002/04/12 18:02:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.150 2002/04/14 16:55:08 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1426,8 +1426,12 @@ next:
 			cp->hw_ok = 0;
 			bus_space_unmap(cp->wdc_channel.cmd_iot,
 			    cp->wdc_channel.cmd_ioh, cmdsize);
-			bus_space_unmap(cp->wdc_channel.ctl_iot,
-			    cp->wdc_channel.ctl_ioh, ctlsize);
+			if (interface & PCIIDE_INTERFACE_PCI(channel))
+				bus_space_unmap(cp->wdc_channel.ctl_iot,
+				    cp->ctl_baseioh, ctlsize);
+			else
+				bus_space_unmap(cp->wdc_channel.ctl_iot,
+				    cp->wdc_channel.ctl_ioh, ctlsize);
 		} else {
 			pciide_map_compat_intr(pa, cp, channel, interface);
 		}
