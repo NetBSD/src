@@ -1,4 +1,4 @@
-/* $NetBSD: bootconfig.h,v 1.2 1996/03/14 23:11:06 mark Exp $ */
+/* $NetBSD: bootconfig.h,v 1.3 1996/10/14 22:30:19 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -80,10 +80,15 @@ typedef struct _BootConfig {
 
 	u_int framerate;
 	u_char machine_id[4];
+	u_int magic;
+	u_int display_phys;
 } BootConfig;
+
+#define BOOTCONFIG_MAGIC 0x42301068
 
 #ifdef _KERNEL
 extern BootConfig bootconfig;
+extern char *boot_args;
 #endif
 
 /* End of bootconfig.h */
