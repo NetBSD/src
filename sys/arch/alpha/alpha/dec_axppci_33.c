@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.11 1996/10/10 23:50:25 christos Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.12 1996/10/13 02:59:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -59,7 +59,7 @@ dec_axppci_33_modelname()
 		return "Alpha PC AXPpci33 (\"NoName\")";
 		
 	default:
-		kprintf("unknown system variation %lx\n",
+		printf("unknown system variation %lx\n",
 		    hwrpb->rpb_variation & SV_ST_MASK);
 		return NULL;
 	}
@@ -118,8 +118,8 @@ dec_axppci_33_consinit()
 		break;
 
 	default:
-		kprintf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-		kprintf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
 		panic("consinit: unknown console type %d\n",
 		    ctb->ctb_term_type);
@@ -145,7 +145,7 @@ dec_axppci_33_device_register(dev, aux)
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
 		netboot = (strcmp(b->protocol, "BOOTP") == 0);
 #if 0
-		kprintf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif
 		initted =1;
 	}
@@ -161,7 +161,7 @@ dec_axppci_33_device_register(dev, aux)
 	
 			pcidev = dev;
 #if 0
-			kprintf("\npcidev = %s\n", pcidev->dv_xname);
+			printf("\npcidev = %s\n", pcidev->dv_xname);
 #endif
 			return;
 		}
@@ -180,7 +180,7 @@ dec_axppci_33_device_register(dev, aux)
 	
 			scsidev = dev;
 #if 0
-			kprintf("\nscsidev = %s\n", scsidev->dv_xname);
+			printf("\nscsidev = %s\n", scsidev->dv_xname);
 #endif
 			return;
 		}
@@ -217,7 +217,7 @@ dec_axppci_33_device_register(dev, aux)
 		/* we've found it! */
 		booted_device = dev;
 #if 0
-		kprintf("\nbooted_device = %s\n", booted_device->dv_xname);
+		printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 		found = 1;
 	}
@@ -235,7 +235,7 @@ dec_axppci_33_device_register(dev, aux)
 	
 			booted_device = dev;
 #if 0
-			kprintf("\nbooted_device = %s\n", booted_device->dv_xname);
+			printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 			found = 1;
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3000_300.c,v 1.8 1996/10/10 23:50:22 christos Exp $	*/
+/*	$NetBSD: dec_3000_300.c,v 1.9 1996/10/13 02:59:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -59,7 +59,7 @@ dec_3000_300_modelname()
 		return "DEC 3000/300LX (\"Pelica+\")";
 
 	default:
-		kprintf("unknown system variation %lx\n",
+		printf("unknown system variation %lx\n",
 		    hwrpb->rpb_variation & SV_ST_MASK);
 		return NULL;
 	}
@@ -90,7 +90,7 @@ dec_3000_300_device_register(dev, aux)
 		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
 		netboot = (strcmp(b->protocol, "BOOTP") == 0);
 #if 0
-		kprintf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
 #endif
 		initted =1;
 	}
@@ -104,7 +104,7 @@ dec_3000_300_device_register(dev, aux)
 			if (tcdsdev->tcdsda_slot == b->channel) {
 				scsidev = dev;
 #if 0
-				kprintf("\nscsidev = %s\n", dev->dv_xname);
+				printf("\nscsidev = %s\n", dev->dv_xname);
 #endif
 			}
 		}
@@ -144,7 +144,7 @@ dec_3000_300_device_register(dev, aux)
 		/* we've found it! */
 		booted_device = dev;
 #if 0
-		kprintf("\nbooted_device = %s\n", booted_device->dv_xname);
+		printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 		found = 1;
 	}
@@ -160,7 +160,7 @@ dec_3000_300_device_register(dev, aux)
 
 			booted_device = dev;
 #if 0
-			kprintf("\nbooted_device = %s\n", booted_device->dv_xname);
+			printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 			found = 1;
 			return;
