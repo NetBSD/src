@@ -97,7 +97,7 @@ struct	mbuf *neget();
 struct	ne_softc {
 	struct	arpcom ns_ac;		/* Ethernet common part */
 #define	ns_if	ns_ac.ac_if		/* network-visible interface */
-#define	ns_addr	ns_ac.ac_enaddr		/* hardware Ethernet address */
+#define	ns_addrp	ns_ac.ac_enaddr		/* hardware Ethernet address */
 	int	ns_flags;
 #define	DSF_LOCK	1		/* block re-entering enstart */
 	int	ns_oactive ;
@@ -227,7 +227,7 @@ word:
 	nefetch (ns, (caddr_t)boarddata, 0, sizeof(boarddata));
 
 	for(i=0; i < 6; i++)
-		ns->ns_addr[i] = boarddata[i];
+		ns->ns_addrp[i] = boarddata[i];
 	splx(s);
 	return (1);
 }
@@ -333,7 +333,7 @@ neattach(dvp)
 	ifp->if_unit = unit;
 	ifp->if_name = nedriver.name ;
 	ifp->if_mtu = ETHERMTU;
-	printf (" ethernet address %s", ether_sprintf(ns->ns_addr)) ;
+	printf (" ethernet address %s", ether_sprintf(ns->ns_addrp)) ;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_init = neinit;
 	ifp->if_output = ether_output;
@@ -364,7 +364,7 @@ neinit(unit)
 
 	/* set physical address on ethernet */
 	outb (nec+ds_cmd, DSCM_NODMA|DSCM_PG1|DSCM_STOP);
-	for (i=0 ; i < 6 ; i++) outb(nec+ds1_par0+i,ns->ns_addr[i]);
+	for (i=0 ; i < 6 ; i++) outb(nec+ds1_par0+i,ns->ns_addrp[i]);
 
 	/* clr logical address hash filter for now */
 	for (i=0 ; i < 8 ; i++) outb(nec+ds1_mar0+i,0xff);
@@ -808,7 +808,7 @@ neioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(ns->ns_addr);
+				ina->x_host = *(union ns_host *)(ns->ns_addrp);
 			else {
 				/* 
 				 * The manual says we can't change the address 
@@ -817,7 +817,7 @@ neioctl(ifp, cmd, data)
 				 */
 				ifp->if_flags &= ~IFF_RUNNING; 
 				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)ns->ns_addr, sizeof(ns->ns_addr));
+				    (caddr_t)ns->ns_addrp, sizeof(ns->ns_addrp));
 			}
 			neinit(ifp->if_unit); /* does ne_setaddr() */
 			break;
