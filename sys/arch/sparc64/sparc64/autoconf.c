@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 2001/05/10 23:11:53 petrov Exp $ */
+/*	$NetBSD: autoconf.c,v 1.46 2001/05/18 21:53:26 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1043,9 +1043,6 @@ static struct {
 	{ "simba",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
-	{ "vme",	BUSCLASS_VME },
-	{ "xdc",	BUSCLASS_XDC },
-	{ "xyc",	BUSCLASS_XYC },
 	{ "fdc",	BUSCLASS_FDC },
 };
 
@@ -1163,22 +1160,6 @@ instance_match(dev, aux, bp)
 		    bp->val[1] == pa->pa_function)
 			return (1);
 		break;
-#if 0
-	case BUSCLASS_XDC:
-	case BUSCLASS_XYC:
-		{
-		/*
-		 * XXX - x[dy]c attach args are not exported right now..
-		 * XXX   we happen to know they look like this:
-		 */
-		struct xxxx_attach_args { int driveno; } *aap = aux;
-
-		if (aap->driveno == bp->val[0])
-			return (1);
-
-		}
-		break;
-#endif
 	default:
 		break;
 	}
@@ -1259,7 +1240,7 @@ device_register(dev, aux)
 	} else if (strcmp(dvname, "le") == 0 ||
 		   strcmp(dvname, "hme") == 0) {
 		/*
-		 * ethernet devices: LANCE, Happy Meal Ethernet.
+		 * ethernet devices.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
@@ -1300,14 +1281,6 @@ device_register(dev, aux)
 		    periph->periph_lun == lun) {
 			nail_bootdev(dev, bp);
 			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
-			    dev->dv_xname));
-			return;
-		}
-	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
-		/* A Xylogic disk */
-		if (instance_match(dev, aux, bp) != 0) {
-			nail_bootdev(dev, bp);
-			DPRINTF(ACDB_BOOTDEV, ("\t-- found x[yd] disk %s\n",
 			    dev->dv_xname));
 			return;
 		}
