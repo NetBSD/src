@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.505 2002/12/07 15:18:08 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.506 2002/12/07 15:36:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.505 2002/12/07 15:18:08 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.506 2002/12/07 15:36:20 junyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -315,8 +315,17 @@ static const char * const i386_intel_brand[] = {
 	"Celeron",	    /* Intel (R) Celeron (TM) processor */
 	"Pentium III",      /* Intel (R) Pentium (R) III processor */
 	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
-	"", "", "",	    /* Reserved */
-	"Pentium 4"	    /* Intel (R) Pentium (R) 4 processor */
+	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"",		    /* Reserved */
+	"Mobile Pentium III", /* Mobile Intel (R) Pentium (R) III processor-M */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */    
+	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
+	"Pentium 4",	    /* Intel (R) Pentium (R) 4 processor */
+	"Celeron",	    /* Intel (R) Celeron (TM) processor */
+	"Xeon",		    /* Intel (R) Xeon (TM) processor */
+	"Xeon MP",	    /* Intel (R) Xeon (TM) processor MP */
+	"Mobile Pentium 4", /* Mobile Intel (R) Pentium (R) 4 processor-M */
+	"Mobile Celeron",   /* Mobile Intel (R) Celeron (R) processor */
 };
 
 /*
@@ -343,6 +352,8 @@ void transmeta_cpu_setup __P((struct cpu_info *));
 
 static void via_cpu_probe __P((struct cpu_info *));
 static void amd_family6_probe __P((struct cpu_info *));
+
+static const char *intel_family6_name __P((struct cpu_info *));
 
 static void transmeta_cpu_info __P((struct cpu_info *));
 static void amd_cpu_cacheinfo __P((struct cpu_info *));
@@ -742,7 +753,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III (Cascades)",
+				0, "Pentium III Xeon (Cascades)",
 				"Pentium III (Tualatin)", 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
@@ -1118,6 +1129,71 @@ via_cpu_probe(struct cpu_info *ci)
 		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
 		ci->ci_feature_flags = descs[3];
 	}
+}
+
+const char *
+intel_family6_name(struct cpu_info *ci)
+{
+	int model = CPUID2MODEL(ci->ci_signature);
+	const char *ret = NULL;
+	u_int l2cache = ci->ci_cinfo[CAI_L2CACHE].cai_totalsize;
+
+	if (model == 5) {
+		switch (l2cache) {
+		case 0:
+		case 128 * 1024:
+			ret = "Celeron (Covington)";
+			break;
+		case 256 * 1024:
+			ret = "Mobile Pentium II (Dixon)";
+			break;
+		case 512 * 1024:
+			ret = "Pentium II";
+			break;
+		case 1 * 1024 * 1024:
+		case 2 * 1024 * 1024:
+			ret = "Pentium II Xeon";
+			break;
+		}
+	} else if (model == 6) {
+		switch (l2cache) {
+		case 256 * 1024:
+		case 512 * 1024:
+			ret = "Mobile Pentium II";
+			break;
+		}
+	} else if (model == 7) {
+		switch (l2cache) {
+		case 512 * 1024:
+			ret = "Pentium III";
+			break;
+		case 1 * 1024 * 1024:
+		case 2 * 1024 * 1024:
+			ret = "Pentium III Xeon";
+			break;
+		}
+	} else if (model >= 8) {
+		if (ci->ci_brand_id && ci->ci_brand_id < 0x10) {
+			switch (ci->ci_brand_id) {
+			case 0x3:
+				if (ci->ci_signature == 0x6B1)
+					ret = "Celeron";
+				break;
+			case 0x08:
+				if (ci->ci_signature >= 0xF13)
+					ret = "genuine processor";
+				break;
+			case 0x0E:
+				if (ci->ci_signature < 0xF13)
+					ret = "Xeon";
+				break;
+			}
+			if (ret == NULL)
+				ret = i386_intel_brand[ci->ci_brand_id];
+		}
+	}
+
+	return ret;
 }
 
 static void
@@ -1711,7 +1787,7 @@ identifycpu(struct cpu_info *ci)
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
 		modif = (ci->ci_signature >> 12) & 0x3;
-		family = (ci->ci_signature >> 8) & 0xf;
+		family = CPUID2FAMILY(ci->ci_signature);
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
 		model = CPUID2MODEL(ci->ci_signature);
@@ -1755,15 +1831,13 @@ identifycpu(struct cpu_info *ci)
 			ci->cpu_setup = cpufam->cpu_setup;
 			ci->ci_info = cpufam->cpu_info;
 
-			/*
-			 * Intel processors family >= 6, model 8 allow to
-			 * recognize brand by Brand ID value.
-			 */
-			if (vendor == CPUVENDOR_INTEL && family >= 6 &&
-			    model >= 8 && ci->ci_brand_id &&
-			    ci->ci_brand_id < 8)
-				brand = i386_intel_brand[ci->ci_brand_id];
-			
+			if (vendor == CPUVENDOR_INTEL && family == 6 &&
+			    model >= 5) {
+				const char *tmp = intel_family6_name(ci);
+				if (tmp != NULL)
+					name = tmp;
+			}
+
 			if (vendor == CPUVENDOR_AMD && family == 6 &&
 			    model >= 6) {
 				if (ci->ci_brand_id == 1)
