@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.26 1999/03/16 18:13:45 christos Exp $	*/
+/*	$NetBSD: getcap.c,v 1.27 1999/03/22 03:28:09 abs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.26 1999/03/16 18:13:45 christos Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.27 1999/03/22 03:28:09 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,6 +97,9 @@ int
 cgetset(ent)
 	const char *ent;
 {
+	const char *source, *check;
+	char *dest;
+
 	if (ent == NULL) {
 		if (toprec)
 			free(toprec);
@@ -110,7 +113,25 @@ cgetset(ent)
                 return (-1);
 	}
 	gottoprec = 0;
-        (void)strcpy(toprec, ent);	/* XXX: strcpy is safe */
+
+	source=ent;
+	dest=toprec;
+	while (*source) { /* Strip whitespace */
+		*dest++ = *source++; /* Do not check first field */
+		while (*source == ':') {
+			check=source+1;
+			while (*check && isspace(*check) ||
+			    (*check=='\\' && isspace(check[1])))
+				++check;
+			if( *check == ':' )
+				source=check;
+			else
+				break;
+
+		}
+	}
+	*dest=0;
+
         return (0);
 }
 
