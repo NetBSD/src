@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.18 1998/08/09 20:15:40 perry Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.19 1998/09/08 08:37:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -659,7 +659,7 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 	else
 		namlen = ep->d_type;
 #else
-	if (dp->v_mount->mnt_maxsymlinklen == 0 && needswap != 0)
+	if (dp->v_mount->mnt_maxsymlinklen <= 0 && needswap != 0)
 		namlen = ep->d_type;
 	else
 		namlen = ep->d_namlen;
@@ -1025,7 +1025,7 @@ ufs_dirempty(ip, parentino, cred)
 		else
 			namlen = dp->d_type;
 #else
-		if (ITOV(ip)->v_mount->mnt_maxsymlinklen == 0 &&
+		if (ITOV(ip)->v_mount->mnt_maxsymlinklen <= 0 &&
 		    UFS_IPNEEDSWAP(ip) != 0)
 			namlen = dp->d_type;
 		else
@@ -1092,7 +1092,7 @@ ufs_checkpath(source, target, cred)
 		else
 			namlen = dirbuf.dotdot_type;
 #else
-		if (vp->v_mount->mnt_maxsymlinklen == 0 &&
+		if (vp->v_mount->mnt_maxsymlinklen <= 0 &&
 		    needswap != 0)
 			namlen = dirbuf.dotdot_type;
 		else
