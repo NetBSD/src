@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.2 2001/04/30 15:20:07 toshii Exp $	*/
+/* 	$NetBSD: intr.h,v 1.3 2001/05/15 16:15:22 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM32_INTR_H_
-#define _ARM32_INTR_H_
+#ifndef _HPCARM_INTR_H_
+#define _HPCARM_INTR_H_
 
 /* Define the various Interrupt Priority Levels */
 
@@ -69,4 +69,4 @@
 #include <machine/irqhandler.h>
 #include <machine/psl.h>
 
-#endif	/* _ARM32_INTR_H */
+#endif	/* _HPCARM_INTR_H */

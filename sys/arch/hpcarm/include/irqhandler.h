@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.1 2001/02/23 03:48:16 ichiro Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.2 2001/05/15 16:15:22 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -40,8 +40,8 @@
  * Created      : 30/09/94
  */
 
-#ifndef _ARM32_IRQHANDLER_H_
-#define _ARM32_IRQHANDLER_H_
+#ifndef _HPCARM_IRQHANDLER_H_
+#define _HPCARM_IRQHANDLER_H_
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_cputypes.h"
@@ -104,6 +104,6 @@ typedef struct fiqhandler {
 
 #endif	/* _LOCORE */
 
-#endif	/* _ARM32_IRQHANDLER_H_ */
+#endif	/* _HPCARM_IRQHANDLER_H_ */
 
 /* End of irqhandler.h */
