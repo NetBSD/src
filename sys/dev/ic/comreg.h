@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
+/*	$NetBSD: comreg.h,v 1.9 1996/09/06 05:06:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -116,5 +116,9 @@
  * WARNING: Serial console is assumed to be at COM1 address
  * and CONUNIT must be 0.
  */
+#ifndef CONADDR
 #define	CONADDR	(0x3f8)
+#endif
+#ifndef CONUNIT
 #define	CONUNIT	(0)
+#endif
