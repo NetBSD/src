@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.4 2001/10/23 03:31:26 thorpej Exp $	*/
+/*	$NetBSD: alloc.c,v 1.5 2003/06/26 20:45:29 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 
 #include <lib/libsa/stand.h>
 
+#include "alloc.h"
 #include "openfirm.h"
 
 /*
@@ -126,10 +127,9 @@ LIST_HEAD(, ml) allocatedlist = LIST_HEAD_INITIALIZER(allocatedlist);
 #define	OVERHEAD	ALIGN(sizeof (struct ml))	/* shorthand */
 
 void *
-alloc(size)
-	unsigned size;
+alloc(unsigned size)
 {
-	struct ml *f, *bestf;
+	struct ml *f, *bestf = NULL;
 #ifndef ALLOC_FIRST_FIT
 	unsigned bestsize = 0xffffffff;	/* greater than any real size */
 #endif
@@ -212,9 +212,7 @@ alloc(size)
 }
 
 void
-free(ptr, size)
-	void *ptr;
-	unsigned size;	/* only for consistenct check */
+free(void *ptr, unsigned size)
 {
 	register struct ml *a = (struct ml *)((char*)ptr - OVERHEAD);
 
@@ -233,7 +231,7 @@ free(ptr, size)
 }
 
 void
-freeall()
+freeall(void)
 {
 #ifdef __notyet__		/* Firmware bug ?! */
 	struct ml *m;
