@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.11 2002/03/30 19:13:46 martin Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.12 2002/04/08 12:20:51 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.11 2002/03/30 19:13:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.12 2002/04/08 12:20:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -286,7 +286,7 @@ isic_pcmcia_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		psc->sc_isic.sc_dying = 1;
+		psc->sc_isic.sc_intr_valid = ISIC_INTR_DYING;
 		if (psc->sc_isic.sc_l3token != NULL)
 			isic_detach_bri(&psc->sc_isic);
 		break;

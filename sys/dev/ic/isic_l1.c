@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.7 2002/04/01 12:14:27 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.8 2002/04/08 12:20:49 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.7 2002/04/01 12:14:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.8 2002/04/08 12:20:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -224,13 +224,13 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 	{
 		case CMR_DOPEN:		/* daemon running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DOPEN", sc->sc_dev.dv_xname);
-			sc->sc_enabled = 1;
+			sc->sc_intr_valid = ISIC_INTR_VALID;
 			pass_down = 1;
 			break;
 			
 		case CMR_DCLOSE:	/* daemon not running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DCLOSE", sc->sc_dev.dv_xname);
-			sc->sc_enabled = 0;
+			sc->sc_intr_valid = ISIC_INTR_DISABLED;
 			isic_enable_intr(sc, 0);
 			pass_down = 1;
 			break;
@@ -252,8 +252,11 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 	if (pass_down && sc->drv_command != NULL)
 		sc->drv_command(sc, command, parm);
 
-	if (command == CMR_DOPEN)
+	if (command == CMR_DOPEN) {
 		isic_enable_intr(sc, 1);
+		ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
+		ISACCMDRWRDELAY();
+	}
 
 	return(0);
 }
