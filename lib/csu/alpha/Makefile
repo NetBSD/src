@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 1996/09/12 16:59:01 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1996/10/08 00:29:48 cgd Exp $
 
-ECOFF_COMPAT= yes
+.include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
 
-CFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC
-CFLAGS+=	-I${.CURDIR}/../../libexec/rtld/include
+CFLAGS+=	-DLIBC_SCCS -DPIC -DDYNAMIC -DELFSIZE=64
+CFLAGS+=	-I${.CURDIR}/../../../libexec/elf_rtld/include
 
-.if defined(ECOFF_COMPAT)
+.if !defined(ELF_TOOLCHAIN)
 CFLAGS+=	-DECOFF_COMPAT
 .endif
 
