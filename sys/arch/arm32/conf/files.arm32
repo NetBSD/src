@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.91 2001/02/21 00:51:27 reinoud Exp $
+#	$NetBSD: files.arm32,v 1.92 2001/02/24 19:38:02 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -35,13 +35,13 @@ define todservice {}
 
 device	mainbus { [base = -1], [dack = -1], [irq = -1] }
 attach	mainbus at root
-file	arch/arm32/mainbus/mainbus.c		mainbus
-file	arch/arm32/mainbus/mainbus_io.c		mainbus
-file	arch/arm32/mainbus/mainbus_io_asm.S	mainbus
+file	arch/arm/mainbus/mainbus.c		mainbus arm32
+file	arch/arm/mainbus/mainbus_io.c		mainbus arm32
+file	arch/arm/mainbus/mainbus_io_asm.S	mainbus arm32
 
 device	cpu
 attach	cpu at mainbus
-file	arch/arm32/mainbus/cpu.c		cpu needs-flag
+file	arch/arm/mainbus/cpu.c			cpu needs-flag arm32
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.1 2001/02/23 03:48:08 ichiro Exp $
+#	$NetBSD: files.hpcarm,v 1.2 2001/02/24 19:38:03 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -25,13 +25,13 @@ define todservice {}
 
 device	mainbus { [base = -1], [dack = -1], [irq = -1] }
 attach	mainbus at root
-file	arch/hpcarm/mainbus/mainbus.c		mainbus
-file	arch/hpcarm/mainbus/mainbus_io.c		mainbus
-file	arch/hpcarm/mainbus/mainbus_io_asm.S	mainbus
+file	arch/arm/mainbus/mainbus.c		mainbus arm32
+file	arch/arm/mainbus/mainbus_io.c		mainbus arm32
+file	arch/arm/mainbus/mainbus_io_asm.S	mainbus arm32
 
 device	cpu
 attach	cpu at mainbus
-file	arch/hpcarm/mainbus/cpu.c		cpu needs-flag
+file	arch/arm/mainbus/cpu.c			cpu needs-flag arm32
 
 # Memory disk driver
 file	arch/hpcarm/dev/md_hooks.c		md & memory_disk_hooks
