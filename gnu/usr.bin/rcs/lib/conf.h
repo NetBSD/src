@@ -1,6 +1,6 @@
 /* RCS compile-time configuration */
 
-	/* $Id: conf.h,v 1.8 1995/02/24 02:44:22 mycroft Exp $ */
+	/* $Id: conf.h,v 1.9 1995/04/19 16:10:30 mycroft Exp $ */
 
 /*
  * This file is generated automatically.
@@ -246,7 +246,7 @@ typedef void *malloc_type; /* type returned by malloc() */
 #define SLASHSLASH_is_SLASH 1 /* Are // and / the same directory?  */
 #define ALL_ABSOLUTE 1 /* Do all subprograms satisfy ROOTPATH?  */
 #define DIFF_ABSOLUTE 1 /* Is ROOTPATH(DIFF) true?  */
-#define SENDMAIL "/bin/mail" /* how to send mail */
+#define SENDMAIL "/usr/bin/mail" /* how to send mail */
 #define TZ_must_be_set 0 /* Must TZ be set for gmtime() to work?  */
 
 
