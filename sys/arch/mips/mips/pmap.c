@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1997/07/28 20:41:58 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1997/07/29 01:41:46 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -168,11 +168,7 @@ int	pmap_remove_pv __P((pmap_t pmap, vm_offset_t va, vm_offset_t pa));
 int	pmap_alloc_tlbpid __P((register struct proc *p));
 void	pmap_zero_page __P((vm_offset_t phys));
 void pmap_zero_page __P((vm_offset_t));
-#ifdef MIPS3XXX		/* XXX - see comment in pmap_enter_pv() */
 void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t, u_int *));
-#else
-void pmap_enter_pv __P((pmap_t, vm_offset_t, vm_offset_t));
-#endif
 vm_page_t vm_page_alloc1 __P((void));
 void vm_page_free1 __P((vm_page_t));
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
@@ -370,9 +366,13 @@ pmap_pinit(pmap)
 		register struct segtab *stp;
 		vm_page_t mem;
 
-		mem = vm_page_alloc1();
-		if (mem == NULL)		/* XXX - fix this! */
-			panic("pmap_pinit: segtab alloc failed");
+		do {
+			mem = vm_page_alloc1();
+			if (mem == NULL) {
+				VM_WAIT;	/* XXX What else can we do */
+			}			/* XXX Deadlock situations? */
+		} while (mem == NULL);
+
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap->pm_segtab = stp = (struct segtab *)
 			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
@@ -946,11 +946,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 #ifdef DEBUG
 		enter_stats.managed++;
 #endif
-#ifdef MIPS3XXX
 		pmap_enter_pv(pmap, va, pa, &npte);
-#else
-		pmap_enter_pv(pmap, va, pa);
-#endif
 	} else {
 		/*
 		 * Assumption: if it is not part of our managed memory
@@ -1025,9 +1021,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 	}
 
 	if (!(pte = pmap_segmap(pmap, va))) {
-		mem = vm_page_alloc1();
-		if (mem == NULL)		/* XXX - fix this! */
-			panic("pmap_enter: segmap alloc failed");
+		do {
+			mem = vm_page_alloc1();
+			if (mem == NULL) {
+				VM_WAIT;	/* XXX What else can we do */
+			}			/* XXX Deadlock situations? */
+		} while (mem == NULL);
+
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));
 		pmap_segmap(pmap, va) = pte = (pt_entry_t *)
 			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
@@ -1064,6 +1064,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 	i = mipspagesperpage;
 	do {
+		if (!mips_pg_v(pte->pt_entry)) {
+			pmap->pm_stats.resident_count++;
+		}
 		pte->pt_entry = npte;
 		if (pmap->pm_tlbgen == tlbpid_gen)
 			MachTLBUpdate(va | (pmap->pm_tlbpid <<
@@ -1569,16 +1572,10 @@ pmap_alloc_tlbpid(p)
  * physical to virtual map table.
  */
 void
-#ifdef MIPS3XXX		/* XXX - see comment below */
 pmap_enter_pv(pmap, va, pa, npte)
-#else
-pmap_enter_pv(pmap, va, pa)
-#endif
 	pmap_t pmap;
 	vm_offset_t va, pa;
-#ifdef MIPS3XXX
 	u_int *npte;
-#endif
 {
 	register pv_entry_t pv, npv;
 	int s;
@@ -1605,12 +1602,8 @@ pmap_enter_pv(pmap, va, pa)
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
-#ifdef MIPS3XXX
-/*
- * This isn't needed with the DECstations - the virtual coherency exception
- * handler appears to be able to deal with this.  It may need to be enabled
- * for other R4K systems.
- */
+#ifdef MIPS3
+		if (CPUISMIPS3) {
 			if (!(pv->pv_flags & PV_UNCACHED)) {
 			/*
 			 * There is at least one other VA mapping this page.
@@ -1618,6 +1611,9 @@ pmap_enter_pv(pmap, va, pa)
 			 * remove all mappings, flush the cache and set page
 			 * to be mapped uncached. Caching will be restored
 			 * when pages are mapped compatible again.
+			 * XXX - caching is not currently being restored, but
+			 * XXX - I haven't seen the pages uncached since
+			 * XXX - using pmap_prefer().	mhitch
 			 */
 				for (npv = pv; npv; npv = npv->pv_next) {
 					/*
@@ -1627,6 +1623,9 @@ pmap_enter_pv(pmap, va, pa)
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
 						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
+#ifdef DEBUG
+						enter_stats.ci++;
+#endif
 						break;
 					}
 				}
@@ -1634,7 +1633,8 @@ pmap_enter_pv(pmap, va, pa)
 			else {
 				*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
 			}
-#endif
+		}
+#endif	/* MIPS3 */
 		/*
 		 * There is at least one other VA mapping this page.
 		 * Place this entry after the header.
@@ -1676,6 +1676,8 @@ pmap_enter_pv(pmap, va, pa)
 		/* can this cause us to recurse forever? */
 		npv = (pv_entry_t)
 			malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
+		if (npv == NULL)
+			panic("pmap_enter: new pv malloc() failed");
 		npv->pv_va = va;
 		npv->pv_pmap = pmap;
 		npv->pv_flags = pv->pv_flags;
