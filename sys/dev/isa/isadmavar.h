@@ -1,4 +1,4 @@
-/*	$NetBSD: isadmavar.h,v 1.13 1998/06/25 19:18:06 thorpej Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.14 1998/06/28 06:59:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,9 +42,10 @@
 
 #define MAX_ISADMA	65536
 
-#define	DMAMODE_WRITE	0
-#define	DMAMODE_READ	1
-#define	DMAMODE_LOOP	2
+#define	DMAMODE_WRITE		0x00
+#define	DMAMODE_READ		0x01
+#define	DMAMODE_LOOP		0x02
+#define	DMAMODE_LOOPDEMAND	0x04
 
 /*
  * ISA DMA state.  This structure is provided by the ISA chipset
