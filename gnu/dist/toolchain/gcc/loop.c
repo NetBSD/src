@@ -6952,10 +6952,17 @@ struct combine_givs_stats
   int total_benefit;
 };
 
+static int cmp_combine_givs_stats PROTO ((const PTR, const PTR));
+
 static int
-cmp_combine_givs_stats (x, y)
-     struct combine_givs_stats *x, *y;
+cmp_combine_givs_stats (xp, yp)
+     const PTR xp;
+     const PTR yp;
 {
+  const struct combine_givs_stats * const x =
+    (const struct combine_givs_stats *) xp;
+  const struct combine_givs_stats * const y =
+    (const struct combine_givs_stats *) yp;
   int d;
   d = y->total_benefit - x->total_benefit;
   /* Stabilize the sort.  */
