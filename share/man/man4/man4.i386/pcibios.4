@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.3 2000/04/28 19:15:15 uch Exp $
+.\" $NetBSD: pcibios.4,v 1.4 2000/06/11 01:13:44 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,8 +70,9 @@ make the setup procedure verbose.
 .It Nm PCIBIOS_INTR_FIXUP
 fixup PCI interrupt routing.
 .It Nm PCIBIOS_IRQS_HINT
-user can give the hint of IRQs. when PCI BIOS support can't 
-guess adequeate IRQ for the device, it is used.
+hint for IRQ use.
+When the PCI BIOS support cannot
+guess an adequate IRQ for a device the hint is used.
 .It Nm PCIINTR_DEBUG
 super-verbose PCI interrupt fixup.
 .It Nm PCIBIOS_BUS_FIXUP
@@ -81,7 +82,6 @@ bridges.
 .It Nm PCIBIOS_ADDR_FIXUP
 fixup PCI I/O and memory addresses.
 .El
-.Sh BUGS
 .Sh SEE ALSO
 .Xr cardbus 4 ,
 .Xr pci 4
