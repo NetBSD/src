@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.19 2004/06/27 06:55:12 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.20 2004/09/13 19:25:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.19 2004/06/27 06:55:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.20 2004/09/13 19:25:48 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -80,6 +80,9 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.19 2004/06/27 06:55:12 jdolecek
 #include <fs/msdosfs/denode.h>
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
+
+#define MSDOSFS_NAMEMAX(pmp) \
+	(pmp)->pm_flags & MSDOSFSMNT_LONGNAME ? WIN_MAXLEN : 12
 
 int msdosfs_mountroot __P((void));
 int msdosfs_mount __P((struct mount *, const char *, void *,
@@ -176,6 +179,9 @@ update_mp(mp, argp)
 			vput(rootvp);
 		}
 	}
+
+	mp->mnt_stat.f_namemax = MSDOSFS_NAMEMAX(pmp);
+
 	return 0;
 }
 
@@ -739,9 +745,10 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	else
 		pmp->pm_fmod = 1;
 	mp->mnt_data = pmp;
-        mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
-        mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_MSDOS);
-        mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_MSDOS);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = MSDOSFS_NAMEMAX(pmp);
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = pmp->pm_bnshift;
 	mp->mnt_fs_bshift = pmp->pm_cnshift;
