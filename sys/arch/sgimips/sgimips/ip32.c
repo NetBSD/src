@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.21 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: ip32.c,v 1.22 2003/12/14 05:23:12 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,11 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.21 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip32.c,v 1.22 2003/12/14 05:23:12 sekiya Exp $");
 
 #include "opt_machtypes.h"
 
-#ifdef IP32
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -273,4 +272,3 @@ ip32_intr_establish(int level, int ipl, int (*func)(void *), void *arg)
 	 */
 	(void) crime_intr_establish(level, IST_LEVEL, ipl, func, arg);
 }
-#endif	/* IP32 */
