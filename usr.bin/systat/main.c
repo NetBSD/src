@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1995/01/20 08:52:00 jtc Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1995/03/22 15:20:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.2 1995/01/20 08:52:00 jtc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/22 15:20:31 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,6 +93,11 @@ main(argc, argv)
 
 			p = lookup(&argv[0][1]);
 			if (p == (struct cmdtab *)-1) {
+				fprintf(stderr, "%s: ambiguous request\n",
+				    &argv[0][1]);
+				exit(1);
+			}
+			if (p == 0) {
 				fprintf(stderr, "%s: unknown request\n",
 				    &argv[0][1]);
 				exit(1);
