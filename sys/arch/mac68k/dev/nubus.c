@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.16 1996/03/17 01:33:35 thorpej Exp $	*/
+/*	$NetBSD: nubus.c,v 1.17 1996/04/01 01:35:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/devconf.h>
 
 #include <vm/vm.h>
 
@@ -46,8 +47,6 @@ static int	nubus_debug = 0x01;
 #define NDB_ARITH	0x4
 #endif
 
-extern int	matchbyname();
-
 static int	nubusprint __P((void *aux, char *name));
 static void	nubusattach __P((struct device *parent, struct device *self,
 				 void *aux));
@@ -56,7 +55,9 @@ static int	probe_slot __P((int slot, nubus_slot *fmt));
 static u_long	IncPtr __P((nubus_slot *fmt, u_long base, long amt));
 static u_long	nubus_calc_CRC __P((nubus_slot *fmt));
 static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
-static u_short	GetWord __P((nubus_slot *fmt, u_long ptr));
+#ifdef notyet
+/* unused */ static u_short	GetWord __P((nubus_slot *fmt, u_long ptr));
+#endif
 static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
 
 struct cfattach nubus_ca = {
@@ -110,8 +111,6 @@ nubusprint(aux, name)
 	char	*name;
 {
 	nubus_slot	*fmt;
-	int		slot;
-	char		*info;
 
 	fmt = (nubus_slot *) aux;
 	if (name) {
@@ -160,7 +159,6 @@ probe_slot(slot, fmt)
 {
 	caddr_t		rom_probe;
 	u_long		hdr;
-	u_long		phys;
 	u_char		data;
 	int		hdr_size, i;
 
@@ -369,6 +367,8 @@ GetByte(fmt, ptr)
 	return *(caddr_t)ptr;
 }
 
+#ifdef notyet
+/* Nothing uses this, yet */
 static u_short
 GetWord(fmt, ptr)
 	nubus_slot	*fmt;
@@ -381,6 +381,7 @@ GetWord(fmt, ptr)
 	s |= GetByte(fmt, ptr);
 	return s;
 }
+#endif
 
 static u_long
 GetLong(fmt, ptr)
@@ -403,8 +404,6 @@ nubus_get_main_dir(slot, dir_return)
 	nubus_slot	*slot;
 	nubus_dir	*dir_return;
 {
-	u_long		off;
-
 #if DEBUG
 	if (nubus_debug & NDB_FOLLOW)
 		printf("nubus_get_main_dir(0x%x, 0x%x)\n",
