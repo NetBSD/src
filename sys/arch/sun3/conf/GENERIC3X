@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.23 1998/12/17 06:46:55 gwr Exp $
+# $NetBSD: GENERIC3X,v 1.24 1999/04/08 04:39:36 gwr Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -120,15 +120,12 @@ le0 at obio0 addr 0x65002000 ipl 3
 #
 
 # Emulex SCSI (3/80 only)
-# Note the flags on the esp entries below, that work around
-# deficiencies in the current driver:
+# Both `dma' and `esp' are needed.
+# The following flags may be set for the NCR53c94 based esp driver:
 #	bits 0-7:  disable disconnect/reselect for the corresponding target
-#	bits 8-15: disable synch negotiation for target [bit-8]
-#	Note: targets 4-7 have disconnect/reselect enabled on the premise
-#	      that tape devices normally have one of these targets. Tape
-#	      devices should be allowed to disconnect for the SCSI bus
-#	      to operate acceptably.
+#	bits 8-15: disable synchronous negotiation for target [bit-8]
 #
+dma0 at obio0 addr 0x66001000 ipl 2
 esp0 at obio0 addr 0x66000000 ipl 2 flags 0xff0f
 
 # Floppy drive

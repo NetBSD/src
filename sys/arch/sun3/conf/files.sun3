@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.49 1998/12/15 19:37:11 itohy Exp $
+#	$NetBSD: files.sun3,v 1.50 1999/04/08 04:37:00 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -161,7 +161,9 @@ file	arch/sun3/dev/si_obio.c		si_obio
 device esp: scsi, ncr53c9x
 attach esp at obio
 file arch/sun3/dev/esp.c		esp
-file arch/sun3/dev/dma.c		esp
+device dma
+attach dma at obio
+file arch/sun3/dev/dma.c		dma | esp
 
 # Sun3/80 Floppy disk
 device fdc {}
