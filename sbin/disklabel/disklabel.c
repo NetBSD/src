@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.102 2002/02/14 00:07:43 kleink Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.103 2002/04/09 21:08:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.102 2002/02/14 00:07:43 kleink Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.103 2002/04/09 21:08:58 mycroft Exp $");
 #endif
 #endif	/* not lint */
 
@@ -59,6 +59,9 @@ __RCSID("$NetBSD: disklabel.c,v 1.102 2002/02/14 00:07:43 kleink Exp $");
 #define DKTYPENAMES
 #define FSTYPENAMES
 #include <sys/disklabel.h>
+#ifdef __alpha__
+#include <dev/dec/dec_boot.h>
+#endif
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -551,10 +554,10 @@ writelabel(int f, char *boot, struct disklabel *lp)
 		 * The NetBSD/alpha disklabel.h provides a macro to do it.
 		 */
 		{
-			struct boot_block *bb;
+			struct alpha_boot_block *bb;
 
-			bb = (struct boot_block *)boot;
-			CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
+			bb = (struct alpha_boot_block *)boot;
+			ALPHA_BOOT_BLOCK_CKSUM(bb, &bb->bb_cksum);
 		}
 #endif	/* __alpha__ */
 
