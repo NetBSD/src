@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.24 1996/02/13 22:00:09 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.25 1996/02/21 14:28:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -509,7 +509,8 @@ ifioctl(so, cmd, data, p)
 			return (EOPNOTSUPP);
 #ifndef COMPAT_43
 		return ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-			cmd, data, ifp));
+			(struct mbuf *) cmd, (struct mbuf *) data,
+			(struct mbuf *) ifp));
 #else
 	    {
 		int ocmd = cmd;
