@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.14 1998/04/01 16:24:34 kleink Exp $	*/
+/*	$NetBSD: lfs.c,v 1.15 1998/09/11 21:23:39 pk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.14 1998/04/01 16:24:34 kleink Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.15 1998/09/11 21:23:39 pk Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,51 +94,54 @@ u_quad_t maxtable[] = {
 };
 
 static struct lfs lfs_default =  {
-	/* lfs_magic */		LFS_MAGIC,
-	/* lfs_version */	LFS_VERSION,
-	/* lfs_size */		0,
-	/* lfs_ssize */		DFL_LFSSEG/DFL_LFSBLOCK,
-	/* lfs_dsize */		0,
-	/* lfs_bsize */		DFL_LFSBLOCK,
-	/* lfs_fsize */		DFL_LFSFRAG,
-	/* lfs_frag */		1,
-	/* lfs_free */		LFS_FIRST_INUM,
-	/* lfs_bfree */		0,
-	/* lfs_nfiles */	0,
-	/* lfs_avail */		0,
-	/* lfs_uinodes */	0,
-	/* lfs_idaddr */	0,
-	/* lfs_ifile */		LFS_IFILE_INUM,
-	/* lfs_lastseg */	0,
-	/* lfs_nextseg */	0,
-	/* lfs_curseg */	0,
-	/* lfs_offset */	0,
-	/* lfs_lastpseg */	0,
-	/* lfs_tstamp */	0,
-	/* lfs_minfree */	MINFREE,
-	/* lfs_maxfilesize */	0,
-	/* lfs_dbpseg */	DFL_LFSSEG/DEV_BSIZE,
-	/* lfs_inopb */		DFL_LFSBLOCK/sizeof(struct dinode),
-	/* lfs_ifpb */		DFL_LFSBLOCK/sizeof(IFILE),
-	/* lfs_sepb */		DFL_LFSBLOCK/sizeof(SEGUSE),
-	/* lfs_nindir */	DFL_LFSBLOCK/sizeof(daddr_t),
-	/* lfs_nseg */		0,
-	/* lfs_nspf */		0,
-	/* lfs_cleansz */	0,
-	/* lfs_segtabsz */	0,
-	/* lfs_segmask */	DFL_LFSSEG_MASK,
-	/* lfs_segshift */	DFL_LFSSEG_SHIFT,
-	/* lfs_bmask */		DFL_LFSBLOCK_MASK,
-	/* lfs_bshift */	DFL_LFSBLOCK_SHIFT,
-	/* lfs_ffmask */	DFL_LFS_FFMASK,
-	/* lfs_ffshift */	DFL_LFS_FFSHIFT,
-	/* lfs_fbmask */	DFL_LFS_FBMASK,
-	/* lfs_fbshift */	DFL_LFS_FBSHIFT,
-	/* lfs_fsbtodb */	0,
-	/* lfs_sushift */	0,
-	/* lfs_maxsymlinklen */	MAXSYMLINKLEN,
-	/* lfs_sboffs */	{ 0 },
-	/* lfs_cksum */		0,
+	{ /* lfs_dlfs */
+		/* dlfs_magic */	LFS_MAGIC,
+		/* dlfs_version */	LFS_VERSION,
+		/* dlfs_size */		0,
+		/* dlfs_ssize */	DFL_LFSSEG/DFL_LFSBLOCK,
+		/* dlfs_dsize */	0,
+		/* dlfs_bsize */	DFL_LFSBLOCK,
+		/* dlfs_fsize */	DFL_LFSFRAG,
+		/* dlfs_frag */		1,
+		/* dlfs_free */		LFS_FIRST_INUM,
+		/* dlfs_bfree */	0,
+		/* dlfs_nfiles */	0,
+		/* dlfs_avail */	0,
+		/* dlfs_uinodes */	0,
+		/* dlfs_idaddr */	0,
+		/* dlfs_ifile */	LFS_IFILE_INUM,
+		/* dlfs_lastseg */	0,
+		/* dlfs_nextseg */	0,
+		/* dlfs_curseg */	0,
+		/* dlfs_offset */	0,
+		/* dlfs_lastpseg */	0,
+		/* dlfs_tstamp */	0,
+		/* dlfs_minfree */	MINFREE,
+		/* dlfs_maxfilesize */	0,
+		/* dlfs_dbpseg */	DFL_LFSSEG/DEV_BSIZE,
+		/* dlfs_inopb */	DFL_LFSBLOCK/sizeof(struct dinode),
+		/* dlfs_ifpb */		DFL_LFSBLOCK/sizeof(IFILE),
+		/* dlfs_sepb */		DFL_LFSBLOCK/sizeof(SEGUSE),
+		/* dlfs_nindir */	DFL_LFSBLOCK/sizeof(daddr_t),
+		/* dlfs_nseg */		0,
+		/* dlfs_nspf */		0,
+		/* dlfs_cleansz */	0,
+		/* dlfs_segtabsz */	0,
+		/* dlfs_segmask */	DFL_LFSSEG_MASK,
+		/* dlfs_segshift */	DFL_LFSSEG_SHIFT,
+		/* dlfs_bshift */	DFL_LFSBLOCK_SHIFT,
+		/* dlfs_ffshift */	DFL_LFS_FFSHIFT,
+		/* dlfs_fbshift */	DFL_LFS_FBSHIFT,
+		/* dlfs_bmask */	DFL_LFSBLOCK_MASK,
+		/* dlfs_ffmask */	DFL_LFS_FFMASK,
+		/* dlfs_fbmask */	DFL_LFS_FBMASK,
+		/* dlfs_fsbtodb */	0,
+		/* dlfs_sushift */	0,
+		/* dlfs_maxsymlinklen */	MAXSYMLINKLEN,
+		/* dlfs_sboffs */	{ 0 },
+		/* dlfs_cksum */	0,
+		/* dlfs_pad */ 		{ 0 }
+	},
 	/* lfs_sp */		NULL,
 	/* lfs_ivnode */	NULL,
 	/* lfs_seglock */	0,
@@ -152,8 +155,7 @@ static struct lfs lfs_default =  {
 	/* lfs_clean */		0,
 	/* lfs_ronly */		0,
 	/* lfs_flags */		0,
-	/* lfs_fsmnt */		{ 0 },
-	/* lfs_pad */ 		{ 0 },
+	/* lfs_fsmnt */		{ 0 }
 };
 
 
@@ -377,8 +379,6 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	 * to indicate this.
 	 */
 	lfsp->lfs_nfiles = LFS_FIRST_INUM - 1;
-	lfsp->lfs_cksum = 
-	    cksum(lfsp, sizeof(struct lfs) - sizeof(lfsp->lfs_cksum));
 
 	/* Now create a block of disk inodes */
 	if (!(dpagep = malloc(lfsp->lfs_bsize)))
@@ -490,8 +490,9 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	put(fd, off, ipagep, lfsp->lfs_bsize);
 
 	/* Write Supberblock */
+	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	lfsp->lfs_offset = (off + lfsp->lfs_bsize) / lp->d_secsize;
-	put(fd, LFS_LABELPAD, lfsp, sizeof(struct lfs));
+	put(fd, LFS_LABELPAD, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 
 	/* 
 	 * Finally, calculate all the fields for the summary structure
@@ -580,8 +581,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	put(fd, off, sp, LFS_SUMMARY_SIZE);
 
 	/* Now, write rest of segments containing superblocks */
-	lfsp->lfs_cksum = 
-	    cksum(lfsp, sizeof(struct lfs) - sizeof(lfsp->lfs_cksum));
+	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	for (seg_addr = last_addr = lfsp->lfs_sboffs[0], j = 1, i = 1; 
 	    i < lfsp->lfs_nseg; i++) {
 
@@ -593,7 +593,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 		if (seg_addr == lfsp->lfs_sboffs[j]) {
 			if (j < (LFS_MAXNUMSB - 2))
 				j++;
-			put(fd, seg_seek, lfsp, sizeof(struct lfs));
+			put(fd, seg_seek, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 			seg_seek += LFS_SBPAD;
 		} 
 
