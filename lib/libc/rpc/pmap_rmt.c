@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.20 1999/03/25 01:16:11 lukem Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.21 1999/05/03 15:32:13 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.20 1999/03/25 01:16:11 lukem Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.21 1999/05/03 15:32:13 christos Exp $");
 #endif
 #endif
 
@@ -255,7 +255,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	AUTH *unix_auth = authunix_create_default();
 	XDR xdr_stream;
 	XDR *xdrs = &xdr_stream;
-	int inlen, fromlen, nets;
+	int inlen, nets;
+	socklen_t fromlen;
 	size_t outlen;
 	int sock;
 	int on = 1;
