@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/16 18:57:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2001/04/05 21:48:05 thorpej Exp $
+
+BINDIR=/sbin
 
 PROG=	tbrconfig
 MAN=	tbrconfig.8
