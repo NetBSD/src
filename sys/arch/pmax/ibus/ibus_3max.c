@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_3max.c,v 1.6 2000/01/10 03:24:35 simonb Exp $ */
+/*	$NetBSD: ibus_3max.c,v 1.7 2000/01/14 15:52:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,15 +31,16 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.6 2000/01/10 03:24:35 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3max.c,v 1.7 2000/01/14 15:52:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <dev/tc/tcvar.h>
+
 #include <pmax/ibus/ibusvar.h>
+
 #include <pmax/pmax/kn02.h>
 
 #define KV(x) MIPS_PHYS_TO_KSEG1(x)
@@ -67,9 +68,7 @@ kn02sys_match(parent, cfdata, aux)
 {
 	struct tc_attach_args *ta = aux;
 
-	if (strncmp("KN02SYS ", ta->ta_modname, TC_ROM_LLEN) != 0)
-		return 0;
-	return 1;
+	return (strncmp("KN02SYS ", ta->ta_modname, TC_ROM_LLEN) == 0);
 }
 
 void

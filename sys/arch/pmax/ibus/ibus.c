@@ -1,4 +1,4 @@
-/* $NetBSD: ibus.c,v 1.5 2000/01/09 03:55:51 simonb Exp $ */
+/*	$NetBSD: ibus.c,v 1.6 2000/01/14 15:52:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,8 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.5 2000/01/09 03:55:51 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.6 2000/01/14 15:52:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +70,7 @@ ibusattach(parent, self, aux)
 		if (ia->ia_basz != 0 &&
 		    badaddr((caddr_t)ia->ia_addr, ia->ia_basz) != 0)
 			continue;
-		(void) config_found_sm(self, ia, ibusprint, ibussubmatch);
+		config_found_sm(self, ia, ibusprint, ibussubmatch);
 	}
 }
 
@@ -120,7 +119,6 @@ ibus_intr_establish(dev, cookie, level, handler, arg)
 
 	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
 }
-
 
 void
 ibus_intr_disestablish(dev, arg)
