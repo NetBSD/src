@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.h	5.14 (Berkeley) 7/1/91
- *	$Id: config.h,v 1.17 1994/06/24 14:22:15 hpeyerl Exp $
+ *	$Id: config.h,v 1.18 1995/08/17 17:09:24 thorpej Exp $
  */
 
 /*
@@ -199,7 +199,6 @@ int	seen_vba;
 #if MACHINE_I386
 int	seen_isa;
 #endif
-int	seen_cd;
 
 struct	device *connect();
 struct	device *dtab;
