@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: lms.c,v 1.6.2.9 1993/10/07 14:48:43 mycroft Exp $
+ *	$Id: lms.c,v 1.6.2.10 1993/10/11 01:51:28 mycroft Exp $
  */
 
 #include "param.h"
@@ -35,12 +35,13 @@
 #include "proc.h"
 #include "vnode.h"
 #include "sys/device.h"
+
 #include "machine/cpu.h"
+#include "machine/mouse.h"
+#include "machine/pio.h"
 
 #include "i386/isa/isavar.h"
 #include "i386/isa/icu.h"
-#include "i386/include/mouse.h"
-#include "i386/include/pio.h"
 
 #define LMS_DATA	0       /* Offset for data port, read-only */
 #define LMS_SIGN	1       /* Offset for signature port, read-write */

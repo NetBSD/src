@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.6 1993/10/07 14:48:42 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.7 1993/10/11 01:51:33 mycroft Exp $
  */
 
 #include "param.h"
@@ -35,12 +35,13 @@
 #include "proc.h"
 #include "vnode.h"
 #include "sys/device.h"
+
 #include "machine/cpu.h"
+#include "machine/mouse.h"
+#include "machine/pio.h"
 
 #include "i386/isa/isavar.h"
 #include "i386/isa/icu.h"
-#include "i386/include/mouse.h"
-#include "i386/include/pio.h"
 
 #define MMS_ADDR	0	/* Offset for register select */
 #define MMS_DATA	1	/* Offset for InPort data */

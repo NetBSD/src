@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.8 1993/10/09 08:44:20 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.9 1993/10/11 01:51:22 mycroft Exp $
  */
 
 #include "param.h"
@@ -48,8 +48,9 @@
 #include "uio.h"
 #include "syslog.h"
 #include "sys/device.h"
+
 #include "machine/cpu.h"
-#include "machine/cpufunc.h"
+#include "machine/pio.h"
 
 #include "i386/isa/isavar.h"
 #include "i386/isa/icu.h"
