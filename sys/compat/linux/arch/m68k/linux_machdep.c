@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.2 1998/12/19 16:27:10 drochner Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.3 1999/03/02 18:22:29 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -247,8 +247,8 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	 * The signal trampoline is on the signal frame.
 	 * Clear the instruction cache in case of cached.
 	 */
-	cachectl(CC_EXTPURGE | CC_IPURGE,
-			(caddr_t) fp->sf_sigtramp, sizeof fp->sf_sigtramp);
+	cachectl1(CC_EXTPURGE | CC_IPURGE,
+			(vaddr_t) fp->sf_sigtramp, sizeof fp->sf_sigtramp, p);
 
 	/* Set up the user stack pointer. */
 	frame->f_regs[SP] = (int)fp;
@@ -428,8 +428,8 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, psp)
 	 * The signal trampoline is on the signal frame.
 	 * Clear the instruction cache in case of cached.
 	 */
-	cachectl(CC_EXTPURGE | CC_IPURGE,
-			(caddr_t) fp->sf_sigtramp, sizeof fp->sf_sigtramp);
+	cachectl1(CC_EXTPURGE | CC_IPURGE,
+			(vaddr_t) fp->sf_sigtramp, sizeof fp->sf_sigtramp, p);
 
 	/* Set up the user stack pointer. */
 	frame->f_regs[SP] = (int)fp;
@@ -826,7 +826,7 @@ linux_sys_cacheflush(p, v, retval)
 		syscallarg(unsigned long)	len;
 	} */ *uap = v;
 	int scope, cache;
-	caddr_t addr;
+	vaddr_t addr;
 	int len;
 	int error;
 
@@ -838,14 +838,14 @@ linux_sys_cacheflush(p, v, retval)
 		return EINVAL;
 
 #if defined(M68040) || defined(M68060)
-	addr = (caddr_t) SCARG(uap, addr);
+	addr = (vaddr_t) SCARG(uap, addr);
 	len = (int) SCARG(uap, len);
 #else
 	/*
 	 * We always flush entire cache on 68020/030
 	 * and these values are not used afterwards.
 	 */
-	addr = (caddr_t) 0;
+	addr = 0;
 	len = 0;
 #endif
 
@@ -863,10 +863,10 @@ linux_sys_cacheflush(p, v, retval)
 
 	error = 0;
 	if (cache & LINUX_FLUSH_CACHE_DATA)
-		if ((error = cachectl(CC_EXTPURGE|CC_PURGE, addr, len)) != 0)
+		if ((error = cachectl1(CC_EXTPURGE|CC_PURGE, addr, len, p)) !=0)
 			return error;
 	if (cache & LINUX_FLUSH_CACHE_INSN)
-		error = cachectl(CC_EXTPURGE|CC_IPURGE, addr, len);
+		error = cachectl1(CC_EXTPURGE|CC_IPURGE, addr, len, p);
 
 	return error;
 }
