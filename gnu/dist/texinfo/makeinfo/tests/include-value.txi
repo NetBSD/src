@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename include-value.info
-@c Id: include-value.txi,v 1.1 2003/01/12 15:19:01 karl Exp
+@c Id: include-value.txi,v 1.1.1.1 2003/12/06 01:33:58 karl Exp
 
 @set testvar incl-incl.txi
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: node.c,v 1.1.1.4 2003/07/03 14:58:52 wiz Exp $	*/
+/*	$NetBSD: node.c,v 1.1.1.5 2004/07/12 23:26:49 wiz Exp $	*/
 
 /* node.c -- nodes for Texinfo.
-   Id: node.c,v 1.12 2003/05/01 00:30:07 karl Exp
+   Id: node.c,v 1.19 2004/02/29 13:23:51 dirt Exp
 
-   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003 Free Software
+   Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include "system.h"
 #include "cmds.h"
 #include "files.h"
+#include "float.h"
 #include "footnote.h"
 #include "macro.h"
 #include "makeinfo.h"
@@ -32,12 +33,12 @@
 #include "insertion.h"
 #include "xml.h"
 
-
 /* See comments in node.h.  */
 NODE_REF *node_references = NULL;
 NODE_REF *node_node_references = NULL;
 TAG_ENTRY *tag_table = NULL;
 int node_number = -1;
+int node_order = 0;
 int current_section = 0;
 int outstanding_node = 0;
 
@@ -45,7 +46,7 @@ int outstanding_node = 0;
 
 /* Start a new tag table. */
 void
-init_tag_table ()
+init_tag_table (void)
 {
   while (tag_table)
     {
@@ -63,8 +64,7 @@ init_tag_table ()
    INDIRECT_P says how to format the output (it depends on whether the
    table is direct or indirect).  */
 static void
-write_tag_table_internal (indirect_p)
-     int indirect_p;
+write_tag_table_internal (int indirect_p)
 {
   TAG_ENTRY *node;
   int old_indent = no_indent;
@@ -114,29 +114,37 @@ write_tag_table_internal (indirect_p)
 }
 
 void
-write_tag_table ()
+write_tag_table (char *filename)
 {
+  output_stream = fopen (filename, "a");
+  if (!output_stream)
+    {
+      fs_error (filename);
+      return;
+    }
+
   write_tag_table_internal (0); /* Not indirect. */
+
+  if (fclose (output_stream) != 0)
+    fs_error (filename);
 }
 
-void
-write_tag_table_indirect ()
+static void
+write_tag_table_indirect (void)
 {
   write_tag_table_internal (1);
 }
 
 /* Convert "top" and friends into "Top". */
 static void
-normalize_node_name (string)
-     char *string;
+normalize_node_name (char *string)
 {
   if (strcasecmp (string, "Top") == 0)
     strcpy (string, "Top");
 }
 
-char *
-get_node_token (expand)
-      int expand;
+static char *
+get_node_token (int expand)
 {
   char *string;
 
@@ -156,8 +164,7 @@ get_node_token (expand)
 /* Expand any macros and other directives in a node name, and
    return the expanded name as an malloc'ed string.  */
 char *
-expand_node_name (node)
-     char *node;
+expand_node_name (char *node)
 {
   char *result = node;
 
@@ -177,8 +184,7 @@ expand_node_name (node)
 /* Look up NAME in the tag table, and return the associated
    tag_entry.  If the node is not in the table return NULL. */
 TAG_ENTRY *
-find_node (name)
-     char *name;
+find_node (char *name)
 {
   TAG_ENTRY *tag = tag_table;
   char *expanded_name;
@@ -225,9 +231,8 @@ find_node (name)
 /* Look in the tag table for a node whose file name is FNAME, and
    return the associated tag_entry.  If there's no such node in the
    table, return NULL. */
-TAG_ENTRY *
-find_node_by_fname (fname)
-     char *fname;
+static TAG_ENTRY *
+find_node_by_fname (char *fname)
 {
   TAG_ENTRY *tag = tag_table;
   while (tag)
@@ -243,8 +248,7 @@ find_node_by_fname (fname)
 /* Remember next, prev, etc. references in a @node command, where we
    don't care about most of the entries. */
 static void
-remember_node_node_reference (node)
-     char *node;
+remember_node_node_reference (char *node)
 {
   NODE_REF *temp = xmalloc (sizeof (NODE_REF));
   int number;
@@ -265,10 +269,9 @@ remember_node_node_reference (node)
 }
 
 /* Remember NODE and associates. */
-void
-remember_node (node, prev, next, up, position, line_no, fname, flags)
-     char *node, *prev, *next, *up, *fname;
-     int position, line_no, flags;
+static void
+remember_node (char *node, char *prev, char *next, char *up,
+    int position, int line_no, char *fname, int flags)
 {
   /* Check for existence of this tag already. */
   if (validating)
@@ -316,6 +319,11 @@ remember_node (node, prev, next, up, position, line_no, fname, flags)
       new->html_fname
 	= normalize_filename (filename_part (current_output_filename));
     new->next_ent = tag_table;
+
+    /* Increment the order counter, and save it.  */
+    node_order++;
+    new->order = node_order;
+
     tag_table = new;
   }
 
@@ -332,10 +340,7 @@ remember_node (node, prev, next, up, position, line_no, fname, flags)
    output file has been written, if validation is on, then we use the
    contents of `node_references' as a list of nodes to validate.  */
 void
-remember_node_reference (node, line, type)
-     char *node;
-     int line;
-     enum reftype type;
+remember_node_reference (char *node, int line, enum reftype type)
 {
   NODE_REF *temp = xmalloc (sizeof (NODE_REF));
   int number = number_of_node (node);
@@ -359,8 +364,7 @@ remember_node_reference (node, line, type)
 }
 
 static void
-isolate_nodename (nodename)
-     char *nodename;
+isolate_nodename (char *nodename)
 {
   int i, c;
   int paren_seen, paren;
@@ -419,9 +423,7 @@ isolate_nodename (nodename)
    just before the menu line.  If REMEMBER_REF is zero, REF_TYPE is unused.  */
 #define MENU_STARTER "* "
 char *
-glean_node_from_menu (remember_ref, ref_type)
-     int remember_ref;
-     enum reftype ref_type;
+glean_node_from_menu (int remember_ref, enum reftype ref_type)
 {
   int i, orig_offset = input_text_offset;
   char *nodename;
@@ -475,8 +477,7 @@ glean_node_from_menu (remember_ref, ref_type)
 
 /* Set the name of the current output file.  */
 void
-set_current_output_filename (fname)
-     const char *fname;
+set_current_output_filename (const char *fname)
 {
   if (current_output_filename)
     free (current_output_filename);
@@ -490,7 +491,7 @@ set_current_output_filename (fname)
    It is an error not to do so.
    The defaults come from the menu in this node's parent. */
 void
-cm_node ()
+cm_node (void)
 {
   static long epilogue_len = 0L;
   char *node, *prev, *next, *up;
@@ -512,7 +513,6 @@ cm_node ()
 
   if (!html && !already_outputting_pending_notes)
     {
-      if (!xml)
       close_paragraph ();
       output_pending_notes ();
     }
@@ -588,6 +588,7 @@ cm_node ()
 		epilogue_len = ftell (output_stream) - pos1;
 	      fclose (output_stream);
 	      output_stream = NULL;
+              output_position = 0;
 	      tag = find_node_by_fname (fname_for_this_node);
 	    }
 	  free (fname_for_prev_node);
@@ -603,6 +604,10 @@ cm_node ()
 
   if (macro_expansion_output_stream && !executing_string)
     remember_itext (input_text, input_text_offset);
+
+  /* Reset the line number in each node for Info output, so that
+     index entries will save the line numbers of parent node.  */
+  node_line_number = 0;
 
   no_indent = 1;
   if (xml)
@@ -623,6 +628,9 @@ cm_node ()
     }
   else if (!no_headers && !html)
     {
+      /* Emacs Info reader cannot grok indented escape sequence.  */
+      kill_self_indent (-1);
+
       add_word_args ("\037\nFile: %s,  Node: ", pretty_output_filename);
 
       if (macro_expansion_output_stream && !executing_string)
@@ -635,7 +643,7 @@ cm_node ()
   /* Check for defaulting of this node's next, prev, and up fields. */
   defaulting = (*next == 0 && *prev == 0 && *up == 0);
 
-  this_section = what_section (input_text + input_text_offset);
+  this_section = what_section (input_text + input_text_offset, NULL);
 
   /* If we are defaulting, then look at the immediately following
      sectioning command (error if none) to determine the node's
@@ -681,6 +689,8 @@ cm_node ()
 
               int orig_offset, orig_size;
 
+              int bye_offset = search_forward ("\n@bye", input_text_offset);
+
               /* No matter what, make this file point back at `(dir)'. */
               free (up);
               up = xstrdup ("(dir)"); /* html fixxme */
@@ -696,6 +706,7 @@ cm_node ()
 
                   input_text_offset = search_forward ("\n@menu", orig_offset);
                   if (input_text_offset > -1
+                      && (bye_offset > -1 && input_text_offset < bye_offset)
                       && cr_or_whitespace (input_text[input_text_offset + 6]))
                     {
                       char *nodename_from_menu = NULL;
@@ -923,45 +934,53 @@ cm_node ()
 
       if (splitting || !no_headers)
         { /* Navigation bar. */
-          add_word ("<div class=\"node\">\n");
+          add_html_block_elt ("<div class=\"node\">\n");
           /* The <p> avoids the links area running on with old Lynxen. */
           add_word_args ("<p>%s\n", splitting ? "" : "<hr>");
-          add_word_args ("%s%s<a name=\"", _("Node:"), "&nbsp;");
+          add_word ("<a name=\"");
           tem = expand_node_name (node);
           add_anchor_name (tem, 0);
-          add_word_args ("\">%s</a>", tem);
           free (tem);
+          add_word ("\"></a>");
 
           if (next)
             {
               tem = expansion (next, 0);
-	      add_word (",\n");
-	      add_word (_("Next:"));
+	      add_word ((char *) _("Next:"));
               add_word ("&nbsp;");
+              
 	      add_word ("<a rel=\"next\" accesskey=\"n\" href=\"");
 	      add_anchor_name (tem, 1);
+              tem = escape_string (tem);
 	      add_word_args ("\">%s</a>", tem);
+	      
               free (tem);
+
+	      if (prev || up)
+		add_word (",\n");
             }
           if (prev)
             {
               tem = expansion (prev, 0);
-	      add_word (",\n");
-	      add_word (_("Previous:"));
+	      add_word ((char *) _("Previous:"));
               add_word ("&nbsp;");
 	      add_word ("<a rel=\"previous\" accesskey=\"p\" href=\"");
 	      add_anchor_name (tem, 1);
+              tem = escape_string (tem);
 	      add_word_args ("\">%s</a>", tem);
               free (tem);
+
+	      if (up)
+		add_word (",\n");
             }
           if (up)
             {
               tem = expansion (up, 0);
-	      add_word (",\n");
-	      add_word (_("Up:"));
+	      add_word ((char *) _("Up:"));
               add_word ("&nbsp;");
 	      add_word ("<a rel=\"up\" accesskey=\"u\" href=\"");
 	      add_anchor_name (tem, 1);
+              tem = escape_string (tem);
 	      add_word_args ("\">%s</a>", tem);
               free (tem);
             }
@@ -1035,8 +1054,7 @@ cm_node ()
 
 /* Cross-reference target at an arbitrary spot.  */
 void
-cm_anchor (arg)
-     int arg;
+cm_anchor (int arg)
 {
   char *anchor;
   char *fname_for_anchor = NULL;
@@ -1172,9 +1190,7 @@ cm_anchor (arg)
 
 /* Find NODE in REF_LIST. */
 static NODE_REF *
-find_node_reference (node, ref_list)
-     char *node;
-     NODE_REF *ref_list;
+find_node_reference (char *node, NODE_REF *ref_list)
 {
   NODE_REF *orig_ref_list = ref_list;
   char *expanded_node;
@@ -1212,7 +1228,7 @@ find_node_reference (node, ref_list)
 }
 
 void
-free_node_references ()
+free_node_references (void)
 {
   NODE_REF *list, *temp;
 
@@ -1230,7 +1246,7 @@ free_node_references ()
 }
 
 void
-free_node_node_references ()
+free_node_node_references (void)
 {
   NODE_REF *list, *temp;
 
@@ -1249,8 +1265,7 @@ free_node_node_references ()
 /* Return the number assigned to a named node in either the tag_table
    or node_references list or zero if no number has been assigned. */
 int
-number_of_node (node)
-     char *node;
+number_of_node (char *node)
 {
   NODE_REF *temp_ref;
   TAG_ENTRY *temp_node = find_node (node);
@@ -1272,10 +1287,7 @@ number_of_node (node)
    Menu, Cross, Next, etc.  */
 
 static int
-validate (tag, line, label)
-     char *tag;
-     int line;
-     char *label;
+validate (char *tag, int line, const char *label)
 {
   TAG_ENTRY *result;
 
@@ -1301,8 +1313,7 @@ validate (tag, line, label)
    the `validate' routine.  They are only used in messages, thus are
    translated.  */
 static const char *
-reftype_type_string (type)
-     enum reftype type;
+reftype_type_string (enum reftype type)
 {
   switch (type)
     {
@@ -1316,8 +1327,7 @@ reftype_type_string (type)
 }
 
 static void
-validate_other_references (ref_list)
-     NODE_REF *ref_list;
+validate_other_references (NODE_REF *ref_list)
 {
   char *old_input_filename = input_filename;
 
@@ -1346,8 +1356,7 @@ validate_other_references (ref_list)
    If the Next is different from the Next of the Up,
    then the Next node must have a Prev pointing at this node. */
 void
-validate_file (tag_table)
-     TAG_ENTRY *tag_table;
+validate_file (TAG_ENTRY *tag_table)
 {
   char *old_input_filename = input_filename;
   TAG_ENTRY *tags = tag_table;
@@ -1386,7 +1395,7 @@ validate_file (tag_table)
                   tem1 = expand_node_name (prev);
                   tem2 = expand_node_name (tags->node);
 
-                  if (STREQ (tem1, tem2))
+                  if (tem1 && tem2 && STREQ (tem1, tem2))
                     you_lose = 0;
                   free (tem1);
                   free (tem2);
@@ -1592,8 +1601,7 @@ validate_file (tag_table)
    This means only anchors follow.  */
 
 static int
-last_node_p (tags)
-     TAG_ENTRY *tags;
+last_node_p (TAG_ENTRY *tags)
 {
   int last = 1;
   while (tags->next_ent) {
@@ -1611,23 +1619,91 @@ last_node_p (tags)
 }
 
 
+static char *
+enumerate_filename (char *pathname, char *basename, int number)
+{
+  /* Do we need to generate names of subfiles which don't exceed 8+3 limits? */
+  static const int dos_file_names = !HAVE_LONG_FILENAMES (pathname ? pathname : ".");
+  unsigned name_len = strlen (basename);
+  char *filename = xmalloc (10 + strlen (pathname) + name_len);
+  char *base_filename = xmalloc (10 + name_len);
+
+  sprintf (base_filename, "%s-%d", basename, number);
+
+  if (dos_file_names)
+    {
+      char *dot = strchr (base_filename, '.');
+      unsigned base_len = strlen (base_filename);
+
+      if (dot)
+        { /* Make foobar.i1, .., foobar.i99, foobar.100, ... */
+          dot[1] = 'i';
+          memmove (number <= 99 ? dot + 2 : dot + 1,
+              base_filename + name_len + 1,
+              strlen (base_filename + name_len + 1) + 1);
+        }
+      else if (base_len > 8)
+        {
+          /* Make foobar-1, .., fooba-10, .., foob-100, ... */
+          unsigned numlen = base_len - name_len;
+
+          memmove (base_filename + 8 - numlen, base_filename + name_len, numlen + 1);
+        }
+    }
+
+  sprintf (filename, "%s%s", pathname, base_filename);
+
+  return filename;
+}
+
+/* Remove previously split files, to avoid
+   lingering parts of shrinked documents.  */
+void
+clean_old_split_files (char *filename)
+{
+  char *root_filename = filename_part (filename);
+  char *root_pathname = pathname_part (filename);
+  int i;
+
+  /* We break as soon as we hit an inexistent file,
+     so looping until large numbers is harmless.  */
+  for (i = 1; i < 1000; i++)
+    {
+      struct stat st;
+      char *check_file = enumerate_filename (root_pathname, root_filename, i);
+
+      if (stat (check_file, &st) != 0)
+        break;
+      else if (!S_ISDIR (st.st_mode))
+        {
+          /* Give feedback if requested, removing a file is important.  */
+          if (verbose_mode)
+            printf (_("Removing %s\n"), check_file);
+
+          /* Warn user that we cannot remove the file.  */
+          if (unlink (check_file) != 0)
+            warning (_("Can't remove file `%s': %s"), check_file, strerror (errno));
+        }
+
+      free (check_file);
+    }
+}
+
+
 /* Split large output files into a series of smaller files.  Each file
    is pointed to in the tag table, which then gets written out as the
    original file.  The new files have the same name as the original file
    with a "-num" attached.  SIZE is the largest number of bytes to allow
    in any single split file. */
 void
-split_file (filename, size)
-     char *filename;
-     int size;
+split_file (char *filename, int size)
 {
   char *root_filename, *root_pathname;
-  char *the_file, *filename_part ();
+  char *the_file;
   struct stat fileinfo;
   long file_size;
   char *the_header;
   int header_size;
-  int dos_file_names = 0;       /* if nonzero, don't exceed 8+3 limits */
 
   /* Can only do this to files with tag tables. */
   if (!tag_table)
@@ -1647,9 +1723,6 @@ split_file (filename, size)
 
   root_filename = filename_part (filename);
   root_pathname = pathname_part (filename);
-
-  /* Do we need to generate names of subfiles which don't exceed 8+3 limits? */
-  dos_file_names = !HAVE_LONG_FILENAMES (root_pathname ? root_pathname : ".");
 
   if (!root_pathname)
     root_pathname = xstrdup ("");
@@ -1753,36 +1826,9 @@ split_file (filename, size)
               write_region:
                 {
                   int fd;
-                  char *split_filename, *split_basename;
-                  unsigned root_len = strlen (root_filename);
-
-                  split_filename = xmalloc (10 + strlen (root_pathname)
-                                            + root_len);
-                  split_basename = xmalloc (10 + root_len);
-                  sprintf (split_basename, "%s-%d", root_filename, which_file);
-                  if (dos_file_names)
-                    {
-                      char *dot = strchr (split_basename, '.');
-                      unsigned base_len = strlen (split_basename);
-
-                      if (dot)
-                        { /* Make foobar.i1, .., foobar.i99, foobar.100, ... */
-                          dot[1] = 'i';
-                          memmove (which_file <= 99 ? dot + 2 : dot + 1,
-                                   split_basename + root_len + 1,
-                                   strlen (split_basename + root_len + 1) + 1);
-                        }
-                      else if (base_len > 8)
-                        {
-                          /* Make foobar-1, .., fooba-10, .., foob-100, ... */
-                          unsigned numlen = base_len - root_len;
-
-                          memmove (split_basename + 8 - numlen,
-                                   split_basename + root_len, numlen + 1);
-                        }
-                    }
-                  sprintf (split_filename, "%s%s", root_pathname,
-                           split_basename);
+                  char *split_filename = enumerate_filename (root_pathname,
+                      root_filename, which_file);
+                  char *split_basename = filename_part (split_filename);
 
                   fd = open (split_filename, O_WRONLY|O_TRUNC|O_CREAT, 0666);
                   if (fd < 0

@@ -1,7 +1,7 @@
-/*	$NetBSD: dngettext.c,v 1.1.1.2 2003/07/03 14:59:13 wiz Exp $	*/
+/*	$NetBSD: dngettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
 
 /* Implementation of the dngettext(3) function.
-   Copyright (C) 1995-1997, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1995-1997, 2000-2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -22,9 +22,10 @@
 # include <config.h>
 #endif
 
+#include "gettextP.h"
+
 #include <locale.h>
 
-#include "gettextP.h"
 #ifdef _LIBC
 # include <libintl.h>
 #else
@@ -48,11 +49,8 @@
 /* Look up MSGID in the DOMAINNAME message catalog of the current
    LC_MESSAGES locale and skip message according to the plural form.  */
 char *
-DNGETTEXT (domainname, msgid1, msgid2, n)
-     const char *domainname;
-     const char *msgid1;
-     const char *msgid2;
-     unsigned long int n;
+DNGETTEXT (const char *domainname,
+	   const char *msgid1, const char *msgid2, unsigned long int n)
 {
   return DCNGETTEXT (domainname, msgid1, msgid2, n, LC_MESSAGES);
 }

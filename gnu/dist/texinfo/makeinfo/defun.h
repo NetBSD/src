@@ -1,7 +1,7 @@
-/*	$NetBSD: defun.h,v 1.1.1.2 2003/01/17 14:54:34 wiz Exp $	*/
+/*	$NetBSD: defun.h,v 1.1.1.3 2004/07/12 23:26:51 wiz Exp $	*/
 
 /* defun.h -- declaration for defuns.
-   Id: defun.h,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: defun.h,v 1.2 2004/02/13 22:01:38 dirt Exp
 
    Copyright (C) 1999 Free Software Foundation, Inc.
 
@@ -26,8 +26,8 @@
 
 #include "insertion.h"
 
-extern enum insertion_type get_base_type ();
-extern void cm_defun ();
+extern enum insertion_type get_base_type (int type);
+extern void cm_defun (void);
 
 #endif /* !DEFUN_H */
 

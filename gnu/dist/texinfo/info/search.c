@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.3 2003/01/17 14:54:32 wiz Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.4 2004/07/12 23:26:54 wiz Exp $	*/
 
 /* search.c -- searching large bodies of text.
-   Id: search.c,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: search.c,v 1.3 2004/03/14 00:57:30 karl Exp
 
-   Copyright (C) 1993, 1997, 1998, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -38,9 +38,7 @@
 
 /* A function which makes a binding with buffer and bounds. */
 SEARCH_BINDING *
-make_binding (buffer, start, end)
-     char *buffer;
-     long start, end;
+make_binding (char *buffer, long int start, long int end)
 {
   SEARCH_BINDING *binding;
 
@@ -55,8 +53,7 @@ make_binding (buffer, start, end)
 
 /* Make a copy of BINDING without duplicating the data. */
 SEARCH_BINDING *
-copy_binding (binding)
-     SEARCH_BINDING *binding;
+copy_binding (SEARCH_BINDING *binding)
 {
   SEARCH_BINDING *copy;
 
@@ -75,9 +72,7 @@ copy_binding (binding)
 /* Search forwards or backwards for the text delimited by BINDING.
    The search is forwards if BINDING->start is greater than BINDING->end. */
 long
-search (string, binding)
-     char *string;
-     SEARCH_BINDING *binding;
+search (char *string, SEARCH_BINDING *binding)
 {
   long result;
 
@@ -92,9 +87,7 @@ search (string, binding)
 
 /* Search forwards for STRING through the text delimited in BINDING. */
 long
-search_forward (string, binding)
-     char *string;
-     SEARCH_BINDING *binding;
+search_forward (char *string, SEARCH_BINDING *binding)
 {
   register int c, i, len;
   register char *buff, *end;
@@ -153,9 +146,7 @@ search_forward (string, binding)
 
 /* Search for STRING backwards through the text delimited in BINDING. */
 long
-search_backward (input_string, binding)
-     char *input_string;
-     SEARCH_BINDING *binding;
+search_backward (char *input_string, SEARCH_BINDING *binding)
 {
   register int c, i, len;
   register char *buff, *end;
@@ -227,8 +218,7 @@ search_backward (input_string, binding)
    Return an offset of -1 if STRING does not appear in LINE.  The search
    is bound by the end of the line (i.e., either NEWLINE or 0). */
 int
-string_in_line (string, line)
-     char *string, *line;
+string_in_line (char *string, char *line)
 {
   register int end;
   SEARCH_BINDING binding;
@@ -247,9 +237,7 @@ string_in_line (string, line)
 
 /* Return non-zero if STRING is the first text to appear at BINDING. */
 int
-looking_at (string, binding)
-     char *string;
-     SEARCH_BINDING *binding;
+looking_at (char *string, SEARCH_BINDING *binding)
 {
   long search_end;
 
@@ -275,8 +263,7 @@ looking_at (string, binding)
 
 /* Return the index of the first non-whitespace character in STRING. */
 int
-skip_whitespace (string)
-     char *string;
+skip_whitespace (char *string)
 {
   register int i;
 
@@ -287,8 +274,7 @@ skip_whitespace (string)
 /* Return the index of the first non-whitespace or newline character in
    STRING. */
 int
-skip_whitespace_and_newlines (string)
-     char *string;
+skip_whitespace_and_newlines (char *string)
 {
   register int i;
 
@@ -298,8 +284,7 @@ skip_whitespace_and_newlines (string)
 
 /* Return the index of the first whitespace character in STRING. */
 int
-skip_non_whitespace (string)
-     char *string;
+skip_non_whitespace (char *string)
 {
   register int i;
 
@@ -315,9 +300,7 @@ skip_non_whitespace (string)
    the period.  If second argument NEWLINES_OKAY is non-zero, newlines should
    be skipped while parsing out the nodename specification. */
 int
-skip_node_characters (string, newlines_okay)
-     char *string;
-     int newlines_okay;
+skip_node_characters (char *string, int newlines_okay)
 {
   register int c, i = 0;
   int paren_seen = 0;
@@ -383,8 +366,7 @@ skip_node_characters (string, newlines_okay)
    BINDING-buffer.  The search starts at BINDING->start.  Return -1 if no node
    separator was found. */
 long
-find_node_separator (binding)
-     SEARCH_BINDING *binding;
+find_node_separator (SEARCH_BINDING *binding)
 {
   register long i;
   char *body;
@@ -409,8 +391,7 @@ find_node_separator (binding)
 /* Return the length of the node separator characters that BODY is
    currently pointing at. */
 int
-skip_node_separator (body)
-     char *body;
+skip_node_separator (char *body)
 {
   register int i;
 
@@ -434,8 +415,7 @@ skip_node_separator (body)
 /* Return the number of characters from STRING to the start of
    the next line. */
 int
-skip_line (string)
-     char *string;
+skip_line (char *string)
 {
   register int i;
 
@@ -450,23 +430,23 @@ skip_line (string)
 /* Return the absolute position of the beginning of a tags table in this
    binding starting the search at binding->start. */
 long
-find_tags_table (binding)
-     SEARCH_BINDING *binding;
+find_tags_table (SEARCH_BINDING *binding)
 {
-  SEARCH_BINDING search;
+  SEARCH_BINDING tmp_search;
   long position;
 
-  search.buffer = binding->buffer;
-  search.start = binding->start;
-  search.end = binding->end;
-  search.flags = S_FoldCase;
+  tmp_search.buffer = binding->buffer;
+  tmp_search.start = binding->start;
+  tmp_search.end = binding->end;
+  tmp_search.flags = S_FoldCase;
 
-  while ((position = find_node_separator (&search)) != -1 )
+  while ((position = find_node_separator (&tmp_search)) != -1 )
     {
-      search.start = position;
-      search.start += skip_node_separator (search.buffer + search.start);
+      tmp_search.start = position;
+      tmp_search.start += skip_node_separator (tmp_search.buffer
+          + tmp_search.start);
 
-      if (looking_at (TAGS_TABLE_BEG_LABEL, &search))
+      if (looking_at (TAGS_TABLE_BEG_LABEL, &tmp_search))
         return (position);
     }
   return (-1);
@@ -478,41 +458,41 @@ find_tags_table (binding)
    really point to the right node.  It returns the absolute position of
    the separator preceding the node. */
 long
-find_node_in_binding (nodename, binding)
-     char *nodename;
-     SEARCH_BINDING *binding;
+find_node_in_binding (char *nodename, SEARCH_BINDING *binding)
 {
   long position;
   int offset, namelen;
-  SEARCH_BINDING search;
+  SEARCH_BINDING tmp_search;
 
   namelen = strlen (nodename);
 
-  search.buffer = binding->buffer;
-  search.start = binding->start;
-  search.end = binding->end;
-  search.flags = 0;
+  tmp_search.buffer = binding->buffer;
+  tmp_search.start = binding->start;
+  tmp_search.end = binding->end;
+  tmp_search.flags = 0;
 
-  while ((position = find_node_separator (&search)) != -1)
+  while ((position = find_node_separator (&tmp_search)) != -1)
     {
-      search.start = position;
-      search.start += skip_node_separator (search.buffer + search.start);
+      tmp_search.start = position;
+      tmp_search.start += skip_node_separator
+        (tmp_search.buffer + tmp_search.start);
 
-      offset = string_in_line (INFO_NODE_LABEL, search.buffer + search.start);
+      offset = string_in_line
+        (INFO_NODE_LABEL, tmp_search.buffer + tmp_search.start);
 
       if (offset == -1)
         continue;
 
-      search.start += offset;
-      search.start += skip_whitespace (search.buffer + search.start);
+      tmp_search.start += offset;
+      tmp_search.start += skip_whitespace (tmp_search.buffer + tmp_search.start);
       offset = skip_node_characters
-        (search.buffer + search.start, DONT_SKIP_NEWLINES);
+        (tmp_search.buffer + tmp_search.start, DONT_SKIP_NEWLINES);
 
       /* Notice that this is an exact match.  You cannot grovel through
          the buffer with this function looking for random nodes. */
        if ((offset == namelen) &&
-           (search.buffer[search.start] == nodename[0]) &&
-           (strncmp (search.buffer + search.start, nodename, offset) == 0))
+           (tmp_search.buffer[tmp_search.start] == nodename[0]) &&
+           (strncmp (tmp_search.buffer + tmp_search.start, nodename, offset) == 0))
          return (position);
     }
   return (-1);

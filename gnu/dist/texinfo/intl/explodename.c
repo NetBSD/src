@@ -1,6 +1,6 @@
-/*	$NetBSD: explodename.c,v 1.1.1.3 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: explodename.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
 
-/* Copyright (C) 1995-1998, 2000, 2001 Free Software Foundation, Inc.
+/* Copyright (C) 1995-1998, 2000-2001, 2003 Free Software Foundation, Inc.
    Contributed by Ulrich Drepper <drepper@gnu.ai.mit.edu>, 1995.
 
    This program is free software; you can redistribute it and/or modify it
@@ -40,8 +40,7 @@
 /* @@ end of prolog @@ */
 
 char *
-_nl_find_language (name)
-     const char *name;
+_nl_find_language (const char *name)
 {
   while (name[0] != '\0' && name[0] != '_' && name[0] != '@'
 	 && name[0] != '+' && name[0] != ',')
@@ -52,17 +51,11 @@ _nl_find_language (name)
 
 
 int
-_nl_explode_name (name, language, modifier, territory, codeset,
-		  normalized_codeset, special, sponsor, revision)
-     char *name;
-     const char **language;
-     const char **modifier;
-     const char **territory;
-     const char **codeset;
-     const char **normalized_codeset;
-     const char **special;
-     const char **sponsor;
-     const char **revision;
+_nl_explode_name (char *name,
+		  const char **language, const char **modifier,
+		  const char **territory, const char **codeset,
+		  const char **normalized_codeset, const char **special,
+		  const char **sponsor, const char **revision)
 {
   enum { undecided, xpg, cen } syntax;
   char *cp;

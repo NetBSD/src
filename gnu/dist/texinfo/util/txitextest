@@ -1,5 +1,5 @@
 #!/bin/sh
-# Id: txitextest,v 1.4 2003/02/05 00:54:07 karl Exp
+# Id: txitextest,v 1.1.1.1 2003/12/06 01:35:52 karl Exp
 # Test texinfo.tex changes by running various manuals through with an
 # old version, saving the .ps result from dvips, doing the same with a
 # new version, and comparing.  Idea from Stepan Kasal.

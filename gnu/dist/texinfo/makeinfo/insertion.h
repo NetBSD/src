@@ -1,9 +1,9 @@
-/*	$NetBSD: insertion.h,v 1.1.1.2 2003/01/17 14:54:35 wiz Exp $	*/
+/*	$NetBSD: insertion.h,v 1.1.1.3 2004/07/12 23:26:50 wiz Exp $	*/
 
 /* insertion.h -- declarations for insertion.c.
-   Id: insertion.h,v 1.2 2002/09/29 19:15:20 karl Exp
+   Id: insertion.h,v 1.2 2004/02/13 22:01:38 dirt Exp
 
-   Copyright (C) 1998, 1999, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,14 +26,15 @@
 enum insertion_type
 { 
   cartouche, copying, defcv, deffn, defivar, defmac, defmethod, defop,
-  defopt, defspec, deftp, deftypefn, deftypefun, deftypeivar,
+  defopt, defspec, deftp, deftypecv, deftypefn, deftypefun, deftypeivar,
   deftypemethod, deftypeop, deftypevar, deftypevr, defun, defvar, defvr,
   detailmenu, direntry, display, documentdescription, enumerate,
-  example, flushleft, flushright, format, ftable, group, ifclear,
-  ifhtml, ifinfo, ifnothtml, ifnotinfo, ifnotplaintext, ifnottex, ifnotxml, 
-  ifplaintext, ifset, iftex, ifxml, itemize, lisp, menu, multitable, quotation,
-  rawhtml, rawtex, smalldisplay, smallexample, smallformat, smalllisp,
-  verbatim, table, tex, vtable, bad_type
+  example, floatenv, flushleft, flushright, format, ftable, group,
+  ifclear, ifdocbook, ifhtml, ifinfo, ifnotdocbook, ifnothtml, ifnotinfo,
+  ifnotplaintext, ifnottex, ifnotxml, ifplaintext, ifset, iftex, ifxml,
+  itemize, lisp, menu, multitable, quotation, rawdocbook, rawhtml, rawtex,
+  rawxml, smalldisplay, smallexample, smallformat, smalllisp, verbatim,
+  table, tex, vtable, titlepage, bad_type
 };
 
 typedef struct istack_elt
@@ -44,11 +45,10 @@ typedef struct istack_elt
   int line_number;
   int filling_enabled;
   int indented_fill;
-  enum insertion_type insertion;
+  int insertion;
   int inhibited;
   int in_fixed_width_font;
 } INSERTION_ELT;
-
 
 extern int insertion_level;
 extern INSERTION_ELT *insertion_stack;
@@ -57,10 +57,24 @@ extern int in_detailmenu;
 extern int had_menu_commentary;
 extern int in_paragraph;
 
-extern void command_name_condition ();
-extern void cm_ifhtml (), cm_ifnothtml(), cm_html ();
-extern void cm_ifinfo (), cm_ifnotinfo ();
-extern void cm_ifplaintext (), cm_ifnotplaintext();
-extern void cm_iftex (), cm_ifnottex (), cm_tex ();
-extern void cm_ifxml (), cm_ifnotxml ();
+extern int headitem_flag;
+extern int after_headitem;
+
+extern void init_insertion_stack (void);
+extern void command_name_condition (void);
+extern void cm_ifdocbook (void), cm_ifnotdocbook(void), cm_docbook (int arg);
+extern void cm_ifhtml (void), cm_ifnothtml(void), cm_html (int arg);
+extern void cm_ifinfo (void), cm_ifnotinfo (void);
+extern void cm_ifplaintext (void), cm_ifnotplaintext(void);
+extern void cm_iftex (void), cm_ifnottex (void), cm_tex (void);
+extern void cm_ifxml (void), cm_ifnotxml (void), cm_xml (int arg);
+extern void handle_verbatim_environment (int find_end_verbatim);
+extern void begin_insertion (enum insertion_type type);
+extern void pop_insertion (void);
+extern void discard_insertions (int specials_ok);
+
+extern int is_in_insertion_of_type (int type);
+extern int command_needs_braces (char *cmd);
+
+extern enum insertion_type find_type_from_name (char *name);
 #endif /* !INSERTION_H */

@@ -1,9 +1,9 @@
-/*	$NetBSD: sectioning.h,v 1.1.1.2 2003/01/17 14:54:36 wiz Exp $	*/
+/*	$NetBSD: sectioning.h,v 1.1.1.3 2004/07/12 23:26:47 wiz Exp $	*/
 
 /* sectioning.h -- all related stuff @chapter, @section... @contents
-   Id: sectioning.h,v 1.1 2002/08/25 23:38:39 karl Exp
+   Id: sectioning.h,v 1.3 2004/03/14 03:26:36 dirt Exp
 
-   Copyright (C) 1999 Free Software Foundation, Inc.
+   Copyright (C) 1999, 2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,28 +25,51 @@
 #define SECTIONING_H
 
 /* Sectioning.  */
+
+/* Level 4.  */
+extern void cm_chapter (void),
+  cm_unnumbered (void),
+  cm_appendix (void),
+  cm_top (void);
+
+/* Level 3.  */
+extern void cm_section (void),
+  cm_unnumberedsec (void),
+  cm_appendixsec (void);
+
+/* Level 2.  */
+extern void cm_subsection (void),
+  cm_unnumberedsubsec (void),
+  cm_appendixsubsec (void);
+
+/* Level 1.  */
+extern void cm_subsubsection (void),
+  cm_unnumberedsubsubsec (void),
+  cm_appendixsubsubsec (void);
+
+/* Headings.  */
+extern void cm_heading (void),
+  cm_chapheading (void),
+  cm_subheading (void),
+  cm_subsubheading (void),
+  cm_majorheading (void);
+
+extern void cm_raisesections (void),
+  cm_lowersections (void),
+  cm_ideprecated (int arg, int start, int end);
+
 extern void
-  cm_chapter (), cm_unnumbered (), cm_appendix (), cm_top (),
-  cm_section (), cm_unnumberedsec (), cm_appendixsec (),
-  cm_subsection (), cm_unnumberedsubsec (), cm_appendixsubsec (),
-  cm_subsubsection (), cm_unnumberedsubsubsec (), cm_appendixsubsubsec (),
-  cm_heading (), cm_chapheading (), cm_subheading (), cm_subsubheading (),
-  cm_majorheading (), cm_raisesections (), cm_lowersections (),
+  sectioning_underscore (char *cmd),
+  insert_and_underscore (int level, char *cmd);
 
-  cm_ideprecated ();
+/* needed in node.c */
+extern int set_top_section_level (int level);
 
-extern void
-  sectioning_underscore (), insert_and_underscore ();
-
-extern int what_section ();
-
-
-
-/* is needed in node.c */
-extern int set_top_section_level ();
-
-extern void sectioning_html ();
-extern int what_section ();
+extern void sectioning_html (int level, char *cmd);
+extern int what_section (char *text, char **secname);
+extern char *current_chapter_number (void),
+  *current_sectioning_number (void),
+  *current_sectioning_name (void);
 
 /* The argument of @settitle, used for HTML. */
 extern char *title;

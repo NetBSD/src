@@ -1,7 +1,8 @@
 #!/bin/sh
-# Id: include-value,v 1.2 2003/01/19 19:02:23 karl Exp
+# Id: include-value,v 1.2 2003/12/14 15:18:38 karl Exp
 # Test @value expansion in @include and @verbatiminclude names.
 
+unset TEXINFO_OUTPUT
 : ${srcdir=.}
 
 ../makeinfo -I $srcdir $srcdir/include-value.txi

@@ -1,9 +1,11 @@
-#serial 2
+#serial 4
 
-# On some systems (e.g., HPUX-10.20, SunOS4.1.4, solaris2.5.1), mkstemp has the
+# On some hosts (e.g., HP-UX 10.20, SunOS 4.1.4, Solaris 2.5.1), mkstemp has a
 # silly limit that it can create no more than 26 files from a given template.
-# Other systems lack mkstemp altogether.  On either type of system, arrange
-# to use the replacement function.
+# Other systems lack mkstemp altogether.
+# On OSF1/Tru64 V4.0F, the system-provided mkstemp function can create
+# only 32 files per process.
+# On systems like the above, arrange to use the replacement function.
 AC_DEFUN([UTILS_FUNC_MKSTEMP],
 [dnl
   AC_REPLACE_FUNCS(mkstemp)
@@ -18,7 +20,7 @@ AC_DEFUN([UTILS_FUNC_MKSTEMP],
 	  int main ()
 	  {
 	    int i;
-	    for (i = 0; i < 30; i++)
+	    for (i = 0; i < 70; i++)
 	      {
 		char template[] = "conftestXXXXXX";
 		int fd = mkstemp (template);
@@ -55,7 +57,6 @@ AC_DEFUN([gl_PREREQ_MKSTEMP],
 # Prerequisites of lib/tempname.c.
 AC_DEFUN([jm_PREREQ_TEMPNAME],
 [
-  AC_REQUIRE([AC_HEADER_STDC])
   AC_REQUIRE([AC_HEADER_STAT])
   AC_CHECK_HEADERS_ONCE(fcntl.h sys/time.h unistd.h)
   AC_CHECK_HEADERS(stdint.h)

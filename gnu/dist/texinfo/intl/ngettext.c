@@ -1,7 +1,7 @@
-/*	$NetBSD: ngettext.c,v 1.1.1.2 2003/07/03 14:59:13 wiz Exp $	*/
+/*	$NetBSD: ngettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
 
 /* Implementation of ngettext(3) function.
-   Copyright (C) 1995, 1997, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1995, 1997, 2000-2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -56,10 +56,7 @@
    LC_MESSAGES locale.  If not found, returns MSGID itself (the default
    text).  */
 char *
-NGETTEXT (msgid1, msgid2, n)
-     const char *msgid1;
-     const char *msgid2;
-     unsigned long int n;
+NGETTEXT (const char *msgid1, const char *msgid2, unsigned long int n)
 {
   return DCNGETTEXT (NULL, msgid1, msgid2, n, LC_MESSAGES);
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: footnotes.h,v 1.1.1.3 2003/01/17 14:54:31 wiz Exp $	*/
+/*	$NetBSD: footnotes.h,v 1.1.1.4 2004/07/12 23:26:56 wiz Exp $	*/
 
 /* footnotes.h -- Some functions for manipulating footnotes.
-   Id: footnotes.h,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: footnotes.h,v 1.3 2004/03/14 00:57:29 karl Exp
 
-   Copyright (C) 1993, 1997, 1998, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 1998, 2002, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
    and displayed.  Returns FN_UNFOUND if there were no footnotes found
    in WINDOW's node.  Returns FN_UNABLE if there were footnotes, but the
    window to show them couldn't be made. */
-extern int info_get_or_remove_footnotes ();
+extern int info_get_or_remove_footnotes (WINDOW *window);
 
 /* Non-zero means attempt to show footnotes when displaying a new window. */
 extern int auto_footnotes_p;

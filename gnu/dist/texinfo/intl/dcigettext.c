@@ -1,4 +1,4 @@
-/*	$NetBSD: dcigettext.c,v 1.1.1.2 2003/07/03 14:59:13 wiz Exp $	*/
+/*	$NetBSD: dcigettext.c,v 1.1.1.3 2004/07/12 23:27:16 wiz Exp $	*/
 
 /* Implementation of the internal dcigettext function.
    Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
@@ -150,13 +150,17 @@ extern int errno;
 char *getwd ();
 #  define getcwd(buf, max) getwd (buf)
 # else
+#  if VMS
+#   define getcwd(buf, max) (getcwd) (buf, max, 0)
+#  else
 char *getcwd ();
+#  endif
 # endif
 # ifndef HAVE_STPCPY
-static char *stpcpy PARAMS ((char *dest, const char *src));
+static char *stpcpy (char *dest, const char *src);
 # endif
 # ifndef HAVE_MEMPCPY
-static void *mempcpy PARAMS ((void *dest, const void *src, size_t n));
+static void *mempcpy (void *dest, const void *src, size_t n);
 # endif
 #endif
 
@@ -250,11 +254,8 @@ static void *root;
 # endif
 
 /* Function to compare two entries in the table of known translations.  */
-static int transcmp PARAMS ((const void *p1, const void *p2));
 static int
-transcmp (p1, p2)
-     const void *p1;
-     const void *p2;
+transcmp (const void *p1, const void *p2)
 {
   const struct known_translation_t *s1;
   const struct known_translation_t *s2;
@@ -306,19 +307,18 @@ INTVARDEF (_nl_default_dirname)
 struct binding *_nl_domain_bindings;
 
 /* Prototypes for local functions.  */
-static char *plural_lookup PARAMS ((struct loaded_l10nfile *domain,
-				    unsigned long int n,
-				    const char *translation,
-				    size_t translation_len))
+static char *plural_lookup (struct loaded_l10nfile *domain,
+			    unsigned long int n,
+			    const char *translation, size_t translation_len)
      internal_function;
-static const char *guess_category_value PARAMS ((int category,
-						 const char *categoryname))
+static const char *guess_category_value (int category,
+					 const char *categoryname)
      internal_function;
 #ifdef _LIBC
 # include "../locale/localeinfo.h"
 # define category_to_name(category)	_nl_category_names[category]
 #else
-static const char *category_to_name PARAMS ((int category)) internal_function;
+static const char *category_to_name (int category) internal_function;
 #endif
 
 
@@ -426,13 +426,8 @@ static int enable_secure;
    CATEGORY locale and, if PLURAL is nonzero, search over string
    depending on the plural form determined by N.  */
 char *
-DCIGETTEXT (domainname, msgid1, msgid2, plural, n, category)
-     const char *domainname;
-     const char *msgid1;
-     const char *msgid2;
-     int plural;
-     unsigned long int n;
-     int category;
+DCIGETTEXT (const char *domainname, const char *msgid1, const char *msgid2,
+	    int plural, unsigned long int n, int category)
 {
 #ifndef HAVE_ALLOCA
   struct block_list *block_list = NULL;
@@ -705,11 +700,10 @@ DCIGETTEXT (domainname, msgid1, msgid2, plural, n, category)
 #ifndef _LIBC
   if (!ENABLE_SECURE)
     {
-      extern void _nl_log_untranslated PARAMS ((const char *logfilename,
-						const char *domainname,
-						const char *msgid1,
-						const char *msgid2,
-						int plural));
+      extern void _nl_log_untranslated (const char *logfilename,
+					const char *domainname,
+					const char *msgid1, const char *msgid2,
+					int plural);
       const char *logfilename = getenv ("GETTEXT_LOG_UNTRANSLATED");
 
       if (logfilename != NULL && logfilename[0] != '\0')
@@ -726,11 +720,9 @@ DCIGETTEXT (domainname, msgid1, msgid2, plural, n, category)
 
 char *
 internal_function
-_nl_find_msg (domain_file, domainbinding, msgid, lengthp)
-     struct loaded_l10nfile *domain_file;
-     struct binding *domainbinding;
-     const char *msgid;
-     size_t *lengthp;
+_nl_find_msg (struct loaded_l10nfile *domain_file,
+	      struct binding *domainbinding, const char *msgid,
+	      size_t *lengthp)
 {
   struct loaded_domain *domain;
   nls_uint32 nstrings;
@@ -1037,11 +1029,8 @@ _nl_find_msg (domain_file, domainbinding, msgid, lengthp)
 /* Look up a plural variant.  */
 static char *
 internal_function
-plural_lookup (domain, n, translation, translation_len)
-     struct loaded_l10nfile *domain;
-     unsigned long int n;
-     const char *translation;
-     size_t translation_len;
+plural_lookup (struct loaded_l10nfile *domain, unsigned long int n,
+	       const char *translation, size_t translation_len)
 {
   struct loaded_domain *domaindata = (struct loaded_domain *) domain->data;
   unsigned long int index;
@@ -1078,8 +1067,7 @@ plural_lookup (domain, n, translation, translation_len)
 /* Return string representation of locale CATEGORY.  */
 static const char *
 internal_function
-category_to_name (category)
-     int category;
+category_to_name (int category)
 {
   const char *retval;
 
@@ -1139,9 +1127,7 @@ category_to_name (category)
 /* Guess value of current locale from value of the environment variables.  */
 static const char *
 internal_function
-guess_category_value (category, categoryname)
-     int category;
-     const char *categoryname;
+guess_category_value (int category, const char *categoryname)
 {
   const char *language;
   const char *retval;
@@ -1182,9 +1168,7 @@ guess_category_value (category, categoryname)
    to be defined.  */
 #if !_LIBC && !HAVE_STPCPY
 static char *
-stpcpy (dest, src)
-     char *dest;
-     const char *src;
+stpcpy (char *dest, const char *src)
 {
   while ((*dest++ = *src++) != '\0')
     /* Do nothing. */ ;
@@ -1194,10 +1178,7 @@ stpcpy (dest, src)
 
 #if !_LIBC && !HAVE_MEMPCPY
 static void *
-mempcpy (dest, src, n)
-     void *dest;
-     const void *src;
-     size_t n;
+mempcpy (void *dest, const void *src, size_t n)
 {
   return (void *) ((char *) memcpy (dest, src, n) + n);
 }

@@ -1,9 +1,9 @@
-/*	$NetBSD: pcterm.c,v 1.1.1.3 2003/07/03 14:58:54 wiz Exp $	*/
+/*	$NetBSD: pcterm.c,v 1.1.1.4 2004/07/12 23:26:52 wiz Exp $	*/
 
-/* pc_term.c -- How to handle the PC terminal for Info under MS-DOS/MS-Windows.
-   Id: pcterm.c,v 1.3 2003/03/31 21:43:27 karl Exp
+/* pcterm.c -- How to handle the PC terminal for Info under MS-DOS/MS-Windows.
+   Id: pcterm.c,v 1.2 2004/04/06 22:58:25 karl Exp
 
-   Copyright (C) 1998, 1999, 2003 Free Software Foundation, Inc.
+   Copyright (C) 1998, 1999, 2003, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -664,7 +664,7 @@ int
 kill (pid_t pid, int sig)
 {
   static char interrupted_msg[] = "Interrupted\r\n";
-  static char stopped_msg[] = "Stopped.  Type \"exit RET\" to return.\r\n";
+  static char stopped_msg[] = "Stopped.  Type `exit RET' to return.\r\n";
   char cwd[PATH_MAX + 1];
 
   if (pid == getpid ()

@@ -1,7 +1,7 @@
-/*	$NetBSD: macro.c,v 1.1.1.3 2003/07/03 14:58:53 wiz Exp $	*/
+/*	$NetBSD: macro.c,v 1.1.1.4 2004/07/12 23:26:49 wiz Exp $	*/
 
 /* macro.c -- user-defined macros for Texinfo.
-   Id: macro.c,v 1.2 2003/06/01 23:41:23 karl Exp
+   Id: macro.c,v 1.2 2004/02/13 22:01:38 dirt Exp
 
    Copyright (C) 1998, 1999, 2002, 2003 Free Software Foundation, Inc.
 
@@ -21,6 +21,7 @@
 
 #include "system.h"
 #include "cmds.h"
+#include "files.h"
 #include "macro.h"
 #include "makeinfo.h"
 #include "insertion.h"
@@ -56,8 +57,7 @@ int macro_list_size = 0;        /* Number of slots in total. */
 
 /* Return the length of the array in ARRAY. */
 int
-array_len (array)
-     char **array;
+array_len (char **array)
 {
   int i = 0;
 
@@ -68,8 +68,7 @@ array_len (array)
 }
 
 void
-free_array (array)
-     char **array;
+free_array (char **array)
 {
   if (array)
     {
@@ -83,8 +82,7 @@ free_array (array)
 
 /* Return the macro definition of NAME or NULL if NAME is not defined. */
 MACRO_DEF *
-find_macro (name)
-     char *name;
+find_macro (char *name)
 {
   int i;
   MACRO_DEF *def;
@@ -103,13 +101,9 @@ find_macro (name)
    and SOURCE_LINENO is the line number within that file.  If a macro already
    exists with NAME, then a warning is produced, and that previous
    definition is overwritten. */
-void
-add_macro (name, arglist, body, source_file, source_lineno, flags)
-     char *name;
-     char **arglist;
-     char *body;
-     char *source_file;
-     int source_lineno, flags;
+static void
+add_macro (char *name, char **arglist, char *body, char *source_file,
+    int source_lineno, int flags)
 {
   MACRO_DEF *def;
 
@@ -165,8 +159,7 @@ add_macro (name, arglist, body, source_file, source_lineno, flags)
 
 
 char **
-get_brace_args (quote_single)
-     int quote_single;
+get_brace_args (int quote_single)
 {
   char **arglist, *word;
   int arglist_index, arglist_size;
@@ -245,9 +238,8 @@ get_brace_args (quote_single)
   return arglist;
 }
 
-char **
-get_macro_args (def)
-    MACRO_DEF *def;
+static char **
+get_macro_args (MACRO_DEF *def)
 {
   int i;
   char *word;
@@ -300,9 +292,8 @@ get_macro_args (def)
 /* Substitute actual parameters for named parameters in body.
    The named parameters which appear in BODY must by surrounded
    reverse slashes, as in \foo\. */
-char *
-apply (named, actuals, body)
-     char **named, **actuals, *body;
+static char *
+apply (char **named, char **actuals, char *body)
 {
   int i;
   int new_body_index, new_body_size;
@@ -393,8 +384,7 @@ apply (named, actuals, body)
 /* Expand macro passed in DEF, a pointer to a MACRO_DEF, and
    return its expansion as a string.  */
 char *
-expand_macro (def)
-     MACRO_DEF *def;
+expand_macro (MACRO_DEF *def)
 {
   char **arglist;
   int num_args;
@@ -424,8 +414,7 @@ expand_macro (def)
 
 /* Execute the macro passed in DEF, a pointer to a MACRO_DEF.  */
 void
-execute_macro (def)
-     MACRO_DEF *def;
+execute_macro (MACRO_DEF *def)
 {
   char *execution_string;
   int start_line = line_number, end_line;
@@ -446,7 +435,8 @@ execute_macro (def)
       end_line = line_number;
       line_number = start_line;
 
-      if (macro_expansion_output_stream && !executing_string && !me_inhibit_expansion)
+      if (macro_expansion_output_stream
+          && !executing_string && !me_inhibit_expansion)
         {
           remember_itext (input_text, input_text_offset);
           me_execute_string (execution_string);
@@ -464,21 +454,17 @@ execute_macro (def)
    set the ME_RECURSE flag.  MACTYPE is either "macro" or "rmacro", and
    tells us what the matching @end should be.  */
 static void
-define_macro (mactype, recursive)
-     char *mactype;
-     int recursive;
+define_macro (char *mactype, int recursive)
 {
-  int i;
-  char *name, **arglist, *body, *line, *last_end;
-  int body_size, body_index;
+  int i, start;
+  char *name, *line;
+  char *last_end = NULL;
+  char *body = NULL;
+  char **arglist = NULL;
+  int body_size = 0, body_index = 0;
   int depth = 1;
-  int defining_line = line_number;
   int flags = 0;
-
-  arglist = NULL;
-  body = NULL;
-  body_size = 0;
-  body_index = 0;
+  int defining_line = line_number;
 
   if (macro_expansion_output_stream && !executing_string)
     me_append_before_this_command ();
@@ -487,15 +473,13 @@ define_macro (mactype, recursive)
 
   /* Get the name of the macro.  This is the set of characters which are
      not whitespace and are not `{' immediately following the @macro. */
+  start = input_text_offset;
   {
-    int start = input_text_offset;
     int len;
 
-    for (i = start;
-         (i < input_text_length) &&
-         (input_text[i] != '{') &&
-         (!cr_or_whitespace (input_text[i]));
-         i++);
+    for (i = start; i < input_text_length && input_text[i] != '{'
+                    && !cr_or_whitespace (input_text[i]);
+         i++) ;
 
     len = i - start;
     name = xmalloc (1 + len);
@@ -655,7 +639,7 @@ define_macro (mactype, recursive)
           depth--;
           last_end = "macro";
         }
-      if (*line == COMMAND_PREFIX && strncmp (line + 1, "end rmacro", 9) == 0)
+      if (*line == COMMAND_PREFIX && strncmp (line + 1, "end rmacro", 10) == 0)
         {
           depth--;
           last_end = "rmacro";
@@ -699,17 +683,32 @@ define_macro (mactype, recursive)
   add_macro (name, arglist, body, input_filename, defining_line, flags);
 
   if (macro_expansion_output_stream && !executing_string)
-    remember_itext (input_text, input_text_offset);
+    {
+      /* Remember text for future expansions.  */
+      remember_itext (input_text, input_text_offset);
+
+      /* Bizarrely, output the @macro itself.  This is so texinfo.tex
+         will have a chance to read it when texi2dvi calls makeinfo -E.
+         The problem is that we don't really expand macros in all
+         contexts; a @table's @item is one.  And a fix is not obvious to
+         me, since it appears virtually identical to any other internal
+         expansion.  Just setting a variable in cm_item caused other
+         strange expansion problems.  */
+      write_region_to_macro_output ("@", 0, 1);
+      write_region_to_macro_output (mactype, 0, strlen (mactype));
+      write_region_to_macro_output (" ", 0, 1);
+      write_region_to_macro_output (input_text, start, input_text_offset);
+    }
 }
 
 void 
-cm_macro ()
+cm_macro (void)
 {
   define_macro ("macro", 0);
 }
 
 void 
-cm_rmacro ()
+cm_rmacro (void)
 {
   define_macro ("rmacro", 1);
 }
@@ -719,8 +718,7 @@ cm_rmacro ()
    returned. */
 
 static MACRO_DEF *
-delete_macro (name)
-     char *name;
+delete_macro (char *name)
 {
   int i;
   MACRO_DEF *def;
@@ -739,7 +737,7 @@ delete_macro (name)
 }
 
 void
-cm_unmacro ()
+cm_unmacro (void)
 {
   int i;
   char *line, *name;
@@ -787,9 +785,7 @@ cm_unmacro ()
 
 /* Set the value of POINTER's offset to OFFSET. */
 ITEXT *
-remember_itext (pointer, offset)
-     char *pointer;
-     int offset;
+remember_itext (char *pointer, int offset)
 {
   int i;
   ITEXT *itext = NULL;
@@ -843,8 +839,7 @@ remember_itext (pointer, offset)
 
 /* Forget the input text associated with POINTER. */
 void
-forget_itext (pointer)
-     char *pointer;
+forget_itext (char *pointer)
 {
   int i;
 
@@ -860,7 +855,7 @@ forget_itext (pointer)
 /* Append the text which appeared in input_text from the last offset to
    the character just before the command that we are currently executing. */
 void
-me_append_before_this_command ()
+me_append_before_this_command (void)
 {
   int i;
 
@@ -872,8 +867,7 @@ me_append_before_this_command ()
 /* Similar to execute_string, but only takes a single string argument,
    and remembers the input text location, etc. */
 void
-me_execute_string (execution_string)
-     char *execution_string;
+me_execute_string (char *execution_string)
 {
   int saved_escape_html = escape_html;
   int saved_in_paragraph = in_paragraph;
@@ -905,8 +899,7 @@ me_execute_string (execution_string)
    when we need to produce macro-expanded output for input which
    leaves no traces in the Info output.  */
 void
-me_execute_string_keep_state (execution_string, append_string)
-     char *execution_string, *append_string;
+me_execute_string_keep_state (char *execution_string, char *append_string)
 {
   int op_orig, opcol_orig, popen_orig;
   int fill_orig, newline_orig, indent_orig, meta_pos_orig;
@@ -936,8 +929,7 @@ me_execute_string_keep_state (execution_string, append_string)
 /* Append the text which appears in input_text from the last offset to
    the current OFFSET. */
 void
-append_to_expansion_output (offset)
-     int offset;
+append_to_expansion_output (int offset)
 {
   int i;
   ITEXT *itext = NULL;
@@ -961,9 +953,7 @@ append_to_expansion_output (offset)
 
 /* Only write this input text iff it appears in our itext list. */
 void
-maybe_write_itext (pointer, offset)
-     char *pointer;
-     int offset;
+maybe_write_itext (char *pointer, int offset)
 {
   int i;
   ITEXT *itext = NULL;
@@ -983,9 +973,7 @@ maybe_write_itext (pointer, offset)
 }
 
 void
-write_region_to_macro_output (string, start, end)
-     char *string;
-     int start, end;
+write_region_to_macro_output (char *string, int start, int end)
 {
   if (macro_expansion_output_stream)
     fwrite (string + start, 1, end - start, macro_expansion_output_stream);
@@ -1002,14 +990,15 @@ typedef struct alias_struct
 
 static alias_type *aliases; 
 
-/* @alias */
+/* @alias aname = cmdname */
+
 void
-cm_alias ()
+cm_alias (void)
 {
   alias_type *a = xmalloc (sizeof (alias_type));
 
   skip_whitespace ();
-  get_until_in_line (1, "=", &(a->alias));
+  get_until_in_line (0, "=", &(a->alias));
   canon_white (a->alias);
 
   discard_until ("=");
@@ -1022,8 +1011,7 @@ cm_alias ()
 
 /* Perform an alias expansion.  Called from read_command.  */
 char *
-alias_expand (tok)
-     char *tok;
+alias_expand (char *tok)
 {
   alias_type *findit = aliases;
 
@@ -1064,7 +1052,7 @@ static enclosure_stack_type *enclosure_stack;
 
 /* @definfoenclose */
 void
-cm_definfoenclose ()
+cm_definfoenclose (void)
 {
   enclosure_type *e = xmalloc (sizeof (enclosure_type));
 
@@ -1083,8 +1071,7 @@ cm_definfoenclose ()
    return 1.  Else return 0.  */
 
 int
-enclosure_command (tok)
-     char *tok;
+enclosure_command (char *tok)
 {
   enclosure_type *findit = enclosures;
 
@@ -1106,8 +1093,7 @@ enclosure_command (tok)
 
 /* actually perform the enclosure expansion */
 void
-enclosure_expand (arg, start, end)
-     int arg, start, end;
+enclosure_expand (int arg, int start, int end)
 {
   if (arg == START)
     add_word (enclosure_stack->current->before);

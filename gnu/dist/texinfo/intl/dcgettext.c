@@ -1,7 +1,7 @@
-/*	$NetBSD: dcgettext.c,v 1.1.1.3 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: dcgettext.c,v 1.1.1.4 2004/07/12 23:27:16 wiz Exp $	*/
 
 /* Implementation of the dcgettext(3) function.
-   Copyright (C) 1995-1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1995-1999, 2000-2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -46,10 +46,7 @@
 /* Look up MSGID in the DOMAINNAME message catalog for the current CATEGORY
    locale.  */
 char *
-DCGETTEXT (domainname, msgid, category)
-     const char *domainname;
-     const char *msgid;
-     int category;
+DCGETTEXT (const char *domainname, const char *msgid, int category)
 {
   return DCIGETTEXT (domainname, msgid, NULL, 0, 0, category);
 }

@@ -1,12 +1,12 @@
-/*	$NetBSD: gc.h,v 1.1.1.2 2003/01/17 14:54:31 wiz Exp $	*/
+/*	$NetBSD: gc.h,v 1.1.1.3 2004/07/12 23:26:56 wiz Exp $	*/
 
 /* gc.h -- Functions for garbage collecting unused node contents.
-   Id: gc.h,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: gc.h,v 1.3 2004/03/14 00:57:29 karl Exp
 
    This file is part of GNU Info, a program for reading online documentation
    stored in Info format.
 
-   Copyright (C) 1993, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1997, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,10 +30,10 @@
 /* Add POINTER to the list of garbage collectible pointers.  A pointer
    is not actually garbage collected until no info window contains a node
    whose contents member is equal to the pointer. */
-extern void add_gcable_pointer ();
+extern void add_gcable_pointer (char *pointer);
 
 /* Grovel the list of info windows and gc-able pointers finding those
    node->contents which are collectible, and free them. */
-extern void gc_pointers ();
+extern void gc_pointers (void);
 
 #endif /* not INFO_GC_H */

@@ -1,9 +1,9 @@
-/*	$NetBSD: signals.h,v 1.1.1.2 2003/01/17 14:54:33 wiz Exp $	*/
+/*	$NetBSD: signals.h,v 1.1.1.3 2004/07/12 23:26:53 wiz Exp $	*/
 
 /* signals.h -- header to include system dependent signal definitions.
-   Id: signals.h,v 1.1 2002/08/25 23:38:38 karl Exp
+   Id: signals.h,v 1.2 2004/03/20 01:44:23 karl Exp
 
-   Copyright (C) 1993, 1994, 1995, 1997, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1994, 1995, 1997, 2002, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
-   Written by Brian Fox (bfox@ai.mit.edu). */
+   Originally written by Brian Fox (bfox@ai.mit.edu). */
 
 #ifndef INFO_SIGNALS_H
 #define INFO_SIGNALS_H
@@ -36,7 +36,10 @@
 #  define sigmask(x) (1 << ((x)-1))
 #endif /* !HAVE_SIGPROCMASK && !sigmask */
 
-#if !defined (HAVE_SIGPROCMASK)
+/* Without SA_NOCLDSTOP, sigset_t might end up being undefined even
+   though we have sigprocmask, on older systems, according to Nelson
+   Beebe.  The test is from coreutils/sort.c, via Paul Eggert.  */
+#if !defined (HAVE_SIGPROCMASK) || !defined (SA_NOCLDSTOP)
 #  if !defined (SIG_BLOCK)
 #    define SIG_UNBLOCK 1
 #    define SIG_BLOCK   2

@@ -1,8 +1,9 @@
-/*	$NetBSD: dribble.c,v 1.1.1.3 2003/01/17 14:54:31 wiz Exp $	*/
+/*	$NetBSD: dribble.c,v 1.1.1.4 2004/07/12 23:26:56 wiz Exp $	*/
 
 /* dribble.c -- dribble files for Info.
+   Id: dribble.c,v 1.3 2004/03/14 00:57:29 karl Exp
 
-   Copyright (C) 1993, 98 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1998, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,8 +31,7 @@ FILE *info_dribble_file = (FILE *)NULL;
 /* Open a dribble file named NAME, perhaps closing an already open one.
    This sets the global variable INFO_DRIBBLE_FILE to the open stream. */
 void
-open_dribble_file (name)
-     char *name;
+open_dribble_file (char *name)
 {
   /* Perhaps close existing dribble file. */
   close_dribble_file ();
@@ -51,7 +51,7 @@ open_dribble_file (name)
 
 /* If there is a dribble file already open, close it. */
 void
-close_dribble_file ()
+close_dribble_file (void)
 {
   if (info_dribble_file)
     {
@@ -63,8 +63,7 @@ close_dribble_file ()
 
 /* Write some output to our existing dribble file. */
 void
-dribble (byte)
-     unsigned char byte;
+dribble (unsigned char byte)
 {
   if (info_dribble_file)
     fwrite (&byte, sizeof (unsigned char), 1, info_dribble_file);

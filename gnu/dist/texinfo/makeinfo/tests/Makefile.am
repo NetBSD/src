@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.3 2003/02/16 17:31:08 karl Exp
+# Id: Makefile.am,v 1.4 2004/04/09 21:21:07 karl Exp
 # Makefile.am for texinfo/tests/makeinfo.
 #
 # This file is free software; as a special exception the author gives
@@ -11,21 +11,26 @@
 
 TESTS = accent accentenc \
   cond \
+  copying \
+  defxcond \
   html-docdesc html-extrali html-min html-manuals html-para html-title \
+  html-top \
   include-value \
   macro-at menu-whitespace \
   no-headers \
   node-expand node-value node-whitespace \
-  top top2 \
+  top \
   twofiles
 
 noinst_SCRIPTS = $(TESTS)
 
 EXTRA_DIST = $(noinst_SCRIPTS) \
   accent.txi accentenc.txi accent-text.txi \
-  cond.txi \
+  cond.txi copying.txi \
+  defxcond.txi \
   html-docdesc.txi html-extrali.txi html-min.txi html-para.txi html-title.txi \
+  html-top.txi \
   include-value.txi incl-incl.txi \
   macro-at.txi menu-whitespace.txi \
   node-expand.txi node-value.txi node-whitespace.txi \
-  top.txi top2.txi
+  top.txi # top2.txi

@@ -1,7 +1,7 @@
-/*	$NetBSD: eval-plural.h,v 1.1.1.1 2003/01/17 14:54:19 wiz Exp $	*/
+/*	$NetBSD: eval-plural.h,v 1.1.1.2 2004/07/12 23:27:17 wiz Exp $	*/
 
 /* Plural expression evaluation.
-   Copyright (C) 2000-2002 Free Software Foundation, Inc.
+   Copyright (C) 2000-2003 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU Library General Public License as published
@@ -23,16 +23,10 @@
 #endif
 
 /* Evaluate the plural expression and return an index value.  */
-STATIC unsigned long int plural_eval PARAMS ((struct expression *pexp,
-					      unsigned long int n))
-     internal_function;
-
 STATIC
 unsigned long int
 internal_function
-plural_eval (pexp, n)
-     struct expression *pexp;
-     unsigned long int n;
+plural_eval (struct expression *pexp, unsigned long int n)
 {
   switch (pexp->nargs)
     {
