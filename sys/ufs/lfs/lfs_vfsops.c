@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.52.4.1 2000/07/03 18:33:56 fvdl Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.52.4.2 2000/09/14 18:50:20 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -146,7 +146,7 @@ void
 lfs_init()
 {
 	ufs_init();
-	
+
 	/*
 	 * XXX Same structure as FFS inodes?  Should we share a common pool?
 	 */
@@ -422,6 +422,8 @@ lfs_mountfs(devvp, mp, p)
 	fs->lfs_iocount = 0;
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
+	fs->lfs_uinodes = 0;
+	fs->lfs_ravail = 0;
 #ifdef LFS_CANNOT_ROLLFW
 	fs->lfs_sbactive = 0;
 #endif
@@ -581,30 +583,14 @@ lfs_statfs(mp, sbp, p)
 	fs = ump->um_lfs;
 	if (fs->lfs_magic != LFS_MAGIC)
 		panic("lfs_statfs: magic");
+
 	sbp->f_type = 0;
 	sbp->f_bsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = dbtofrags(fs, fs->lfs_dsize);
-	sbp->f_bfree = dbtofrags(fs, fs->lfs_bfree);
-	/*
-	 * To compute the available space.  Subtract the minimum free
-	 * from the total number of blocks in the file system.	Set avail
-	 * to the smaller of this number and fs->lfs_bfree.
-	 *
-	 * XXX KS - is my modification below what is desired?  (This
-	 * will, e.g., change the report when the cleaner runs.)
-	 */
-#if 0
-        sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
-		(100 - fs->lfs_minfree) / (u_int64_t) 100);
-	sbp->f_bavail =
-	    sbp->f_bavail > fs->lfs_bfree ? fs->lfs_bfree : sbp->f_bavail;
-#else
-	sbp->f_bavail = (long) ((u_int64_t) fs->lfs_dsize * (u_int64_t)
-				(100 - fs->lfs_minfree) / (u_int64_t) 100)
-		- (u_int64_t)(fs->lfs_dsize - fs->lfs_bfree);
-#endif
-	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
+	sbp->f_blocks = dbtofrags(fs, LFS_EST_NONMETA(fs));
+	sbp->f_bfree = dbtofrags(fs, LFS_EST_BFREE(fs));
+	sbp->f_bavail = dbtofrags(fs, (long)LFS_EST_BFREE(fs) -
+				  (long)LFS_EST_RSVD(fs));
 	sbp->f_files = dbtofsb(fs,fs->lfs_bfree) * INOPB(fs);
 	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
 	if (sbp != &mp->mnt_stat) {
@@ -633,6 +619,8 @@ lfs_sync(mp, waitfor, cred, p)
 	struct lfs *fs;
 
 	fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+	if (fs->lfs_ronly)
+		return 0;
 	while(fs->lfs_dirops)
 		error = tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirops", 0);
 	fs->lfs_writer++;
@@ -745,6 +733,7 @@ lfs_vget(mp, ino, vpp)
 	}
 	ip->i_din.ffs_din = *lfs_ifind(fs, ino, bp);
 	ip->i_ffs_effnlink = ip->i_ffs_nlink;
+	ip->i_lfs_effnblks = ip->i_ffs_blocks;
 #ifdef LFS_ATIME_IFILE
 	ip->i_ffs_atime = ts.tv_sec;
 	ip->i_ffs_atimensec = ts.tv_nsec;
@@ -761,12 +750,12 @@ lfs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
+#ifdef DIAGNOSTIC
 	if(vp->v_type == VNON) {
-		printf("lfs_vget: ino %d is type VNON! (ifmt %o)\n", ip->i_number, (ip->i_ffs_mode&IFMT)>>12);
-#ifdef DDB
-		Debugger();
-#endif
+		panic("lfs_vget: ino %d is type VNON! (ifmt %o)\n",
+		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12);
 	}
+#endif
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
