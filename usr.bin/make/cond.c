@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.14 2002/12/30 18:03:09 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.15 2003/04/17 15:57:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.14 2002/12/30 18:03:09 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.15 2003/04/17 15:57:52 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.14 2002/12/30 18:03:09 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.15 2003/04/17 15:57:52 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -61,7 +61,6 @@ __RCSID("$NetBSD: cond.c,v 1.14 2002/12/30 18:03:09 sjg Exp $");
  */
 
 #include    <ctype.h>
-#include    <math.h>
 
 #include    "make.h"
 #include    "hash.h"
