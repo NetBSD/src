@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.23 2002/05/24 15:58:06 christos Exp $	*/
+/*	$NetBSD: twe.c,v 1.24 2002/05/24 18:10:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.23 2002/05/24 15:58:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.24 2002/05/24 18:10:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,12 +270,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	ccb = malloc(sizeof(*ccb) * TWE_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
 	sc->sc_ccbs = ccb;
 	tc = (struct twe_cmd *)sc->sc_cmds;
-	max_segs = ((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1;
-#ifdef TWE_SG_SIZE
-	if (TWE_SG_SIZE < max_segs)
-	    max_segs = TWE_SG_SIZE;
-#endif
-	max_xfer = (max_segs - 1) * PAGE_SIZE;
+	max_segs = twe_get_maxsegs();
+	max_xfer = twe_get_maxxfer(max_segs);
 
 	for (i = 0; i < TWE_MAX_QUEUECNT; i++, tc++, ccb++) {
 		ccb->ccb_cmd = tc;
