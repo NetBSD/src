@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.24 1999/02/23 02:56:40 ross Exp $ */
+/* $NetBSD: clock.c,v 1.25 1999/03/04 06:46:43 chs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24 1999/02/23 02:56:40 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 1999/03/04 06:46:43 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -223,7 +223,7 @@ inittodr(base)
 	dt.dt_sec = ct.sec;
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 #ifdef DEBUG
-	printf("=>%ld (%ld)\n", time.tv_sec, base);
+	printf("=>%ld (%d)\n", time.tv_sec, base);
 #endif
 
 	if (!badbase) {

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.34 1999/02/23 03:20:01 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.35 1999/03/04 06:46:23 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 1999/02/23 03:20:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 1999/03/04 06:46:23 chs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -237,7 +237,7 @@ recognized:
 #ifdef DEBUG
 	/* XXX SHOULD CHECK ARCHITECTURE MASK, TOO */
 	if (p->pcs_proc_var != 0) {
-		printf("%s: ", sc->sc_dev.dv_xname);
+		printf("%s: ", dev->dv_xname);
 
 		needcomma = 0;
 		if (p->pcs_proc_var & PCS_VAR_VAXFP) {
