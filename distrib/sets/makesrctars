@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.11 2000/08/06 13:22:16 fvdl Exp $
+#	$NetBSD: makesrctars,v 1.12 2001/12/18 10:19:14 wiz Exp $
 #
 # Make source code tarballs.
 
@@ -19,7 +19,7 @@ fi
 
 if [ -d ${DESTDIR} ]; then
 	echo "DESTDIR exists."
-	exit 1
+#	exit 1
 fi
 
 cd $SRCDIR
@@ -28,23 +28,22 @@ mkdir ${DESTDIR}
 
 mkdir ${DESTDIR}/sets
 
-find . \
+find -s . \
     \! \( \( -path ./gnu -o -path ./share \) -prune \) \
     \! \( -path ./sys -prune \) \
     \! \( -path ./usr.sbin/config -prune \) \
-    \! \( -path ./usr.sbin/dbsym -prune \) \
     \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
 	-print | \
-	sort | pax -w -d -s'|^\.|usr/src|' | gzip \
+	pax -w -d -s'|^\.|usr/src|' | gzip \
 	> ${DESTDIR}/sets/src.tgz
 
-find gnu \
+find -s gnu \
     \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
 	-print | \
-	sort | pax -w -d -s'|^|usr/src/|' | gzip \
+	pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/sets/gnusrc.tgz
 
-find sys usr.sbin/config usr.sbin/dbsym \
+find -s sys usr.sbin/config \
     \( \
 	-path 'sys/arch/*/compile/CVS' -o \
 	-name .keep_me -o \
@@ -52,13 +51,13 @@ find sys usr.sbin/config usr.sbin/dbsym \
     \) \
     ! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
 	-print | \
-	sort | pax -w -d -s'|^|usr/src/|' | gzip \
+	pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/sets/syssrc.tgz
 
-find share \
+find -s share \
     \! \( \( -type l -o -type d \) \( -name obj -o -name 'obj.*' \) \) \
 	-print | \
-	sort | pax -w -d -s'|^|usr/src/|' | gzip \
+	pax -w -d -s'|^|usr/src/|' | gzip \
 	> ${DESTDIR}/sets/sharesrc.tgz
 
 (cd ${DESTDIR}/sets
