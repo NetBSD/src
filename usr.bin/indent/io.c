@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.5 1997/10/19 03:17:23 lukem Exp $	*/
+/*	$NetBSD: io.c,v 1.6 1997/10/19 14:06:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.5 1997/10/19 03:17:23 lukem Exp $");
+__RCSID("$NetBSD: io.c,v 1.6 1997/10/19 14:06:35 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -134,7 +134,7 @@ dump_line()
 						fprintf(output, s[0] == '/' && s[1] == '*' ? "\t%.*s" : "\t/* %.*s */",
 						    e_lab - s, s);
 				} else
-					fprintf(output, "%.*s", e_lab - s_lab, s_lab);
+					fprintf(output, "%.*s", (int)(e_lab - s_lab), s_lab);
 				cur_col = count_spaces(cur_col, s_lab);
 			} else
 				cur_col = 1;	/* there is no label section */

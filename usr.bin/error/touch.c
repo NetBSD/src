@@ -1,4 +1,4 @@
-/*	$NetBSD: touch.c,v 1.6 1997/10/18 14:44:42 lukem Exp $	*/
+/*	$NetBSD: touch.c,v 1.7 1997/10/19 14:06:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: touch.c,v 1.6 1997/10/18 14:44:42 lukem Exp $");
+__RCSID("$NetBSD: touch.c,v 1.7 1997/10/19 14:06:23 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -182,7 +182,7 @@ filenames(nfiles, files)
 			FILEITERATE(fi, 1){
 				fprintf(stdout, "%s\"%s\" (%d)",
 					sep, (*files[fi])->error_text[0],
-					files[fi+1] - files[fi]);
+					(int)(files[fi+1] - files[fi]));
 				sep = ", ";
 			}
 		}
