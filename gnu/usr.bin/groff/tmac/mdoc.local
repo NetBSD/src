@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.10 2003/09/30 20:10:14 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.11 2003/09/30 20:11:26 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,8 +114,8 @@
 .ds doc-volume-as-x86_64   x86_64
 .
 .\" standards doc-names diverging from groff
-.ds doc-doc-str-St--isoC       \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:1990
-.as doc-doc-str-St--isoC       " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St]\*[Rq])
+.ds doc-str-St--isoC       \*[doc-Tn-font-size]ISO/IEC\*[doc-str-St] 9899:1990
+.as doc-str-St--isoC       " (\*[Lq]\*[doc-Tn-font-size]ISO\~C\^90\*[doc-str-St]\*[Rq])
 .ds doc-str-St--xcurses4.2     \*[doc-Tn-font-size]X/Open\*[doc-str-St] Curses Issue\~4, Version\~2
 .as doc-str-St--xcurses4.2     " (\*[Lq]\*[doc-Tn-font-size]XCURSES\*[doc-str-St]\^4.2\*[Rq])
 .ds doc-str-St--xpg4.2         \*[doc-Tn-font-size]X/Open\*[doc-str-St] Portability Guide Issue\~4, Version\~2
