@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.7 2003/07/14 12:28:36 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.8 2003/07/14 13:30:57 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -48,10 +48,11 @@ sedprog=/usr/bin/sed
 touchprog=/usr/bin/touch
 
 usage() {
-	echo 'Usage: pkg_view [-i ignore] [-v viewname] [-p prefix] add|check|delete pkgname...'
+	echo 'Usage: pkg_view [-i ignore] [-v viewname] [-d stowdir] [-p prefix] add|check|delete pkgname...'
 	exit 1
 }
 
+stowdir=""
 prefix=${PREFIX:-/usr/pkg}
 view=${PKG_VIEW:-""}
 ignorefiles=${PLIST_IGNORE_FILES:-info/dir}
@@ -59,6 +60,8 @@ dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
 
 while [ $# -gt 1 ]; do
 	case "$1" in
+	-d)		stowdir=$2; shift ;;
+	-d*)		stowdir=`echo $1 | $sedprog -e 's|^-d||'` ;;
 	-i)		ignorefiles="$ignorefiles $2"; shift ;;
 	-i*)		ignorefiles="$ignorefiles `echo $1 | $sedprog -e 's|^-i||'`" ;;
 	-p)		prefix=$2; shift ;;
@@ -84,7 +87,10 @@ delete|rm)	action=delete ;;
 esac
 shift
 
-depot_pkg_dbdir=${prefix}/packages
+case "${stowdir}" in
+"")	depot_pkg_dbdir=${prefix}/packages ;;
+*)	depot_pkg_dbdir=${stowdir} ;;
+esac
 
 # XXX Only support the standard view.
 view=""
