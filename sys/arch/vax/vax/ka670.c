@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.2 1999/08/07 10:36:49 ragge Exp $	*/
+/*	$NetBSD: ka670.c,v 1.3 1999/08/08 11:47:54 ragge Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -89,6 +89,11 @@ struct ka670_mcframe {		/* Format of RigelMAX machine check frame: */
 	int	mc670_psl;	/* trapped PSL */
 };
 
+#if 0
+
+/*
+ * This is not the mchk types on KA670.
+ */
 static char *ka670_mctype[] = {
 	"no error (0)",			/* Code 0: No error */
 	"FPA: protocol error",		/* Code 1-5: FPA errors */
@@ -112,6 +117,7 @@ static char *ka670_mctype[] = {
 	"undefined data bus state",	/* Code 19: Bus error */
 };
 #define MC670_MAX	19
+#endif
 
 static int ka670_error_count = 0;
 
@@ -123,7 +129,7 @@ ka670_mchk(addr)
 
 	mtpr(0x00, PR_MCESR);	/* Acknowledge the machine check */
 	printf("machine check %d (0x%x)\n", mcf->mc670_code, mcf->mc670_code);
-	printf("reason: %s\n", ka670_mctype[mcf->mc670_code & 0xff]);
+	printf("PC %x PSL %x\n", mcf->mc670_pc, mcf->mc670_psl);
 	if (++ka670_error_count > 10) {
 		printf("error_count exceeded: %d\n", ka670_error_count);
 		return (-1);
@@ -180,15 +186,17 @@ ka670_cache_init()
 	mtpr(KA670_PCS_FLUSH | KA670_PCS_REFRESH, PR_PCSTS);	/* flush primary cache */
 	mtpr(KA670_PCS_ENABLE | KA670_PCS_REFRESH, PR_PCSTS);	/* flush primary cache */
 
+#ifdef DEBUG
 	printf("primary cache status: %b\n", mfpr(PR_PCSTS), KA670_PCSTS_BITS);
 	printf("secondary cache status: %b\n", mfpr(PR_BCSTS), KA670_BCSTS_BITS);
+#endif
 
 	return (0);
 }
 void
 ka670_conf()
 {
-	printf("cpu: KA670\n");
+	printf("cpu0: KA670, ucode rev %d\n", vax_cpudata % 0377);
 
 	/*
 	 * ka670_conf() gets called with MMU enabled, now it's save to
