@@ -1,4 +1,4 @@
-/*	$NetBSD: cat.c,v 1.21 1999/07/08 01:56:09 christos Exp $	*/
+/*	$NetBSD: cat.c,v 1.22 2000/01/15 01:13:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.21 1999/07/08 01:56:09 christos Exp $");
+__RCSID("$NetBSD: cat.c,v 1.22 2000/01/15 01:13:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: cat.c,v 1.21 1999/07/08 01:56:09 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int bflag, eflag, nflag, sflag, tflag, vflag;
+int bflag, eflag, fflag, nflag, sflag, tflag, vflag;
 int rval;
 const char *filename;
 
@@ -84,7 +84,7 @@ main(argc, argv)
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "benstuv")) != -1)
+	while ((ch = getopt(argc, argv, "befnstuv")) != -1)
 		switch (ch) {
 		case 'b':
 			bflag = nflag = 1;	/* -b implies -n */
@@ -97,6 +97,9 @@ main(argc, argv)
 			break;
 		case 's':
 			sflag = 1;
+			break;
+		case 'f':
+			fflag = 1;
 			break;
 		case 't':
 			tflag = vflag = 1;	/* -t implies -v */
@@ -138,7 +141,7 @@ cook_args(argv)
 		if (*argv) {
 			if (!strcmp(*argv, "-"))
 				fp = stdin;
-			else if ((fp = fopen(*argv, "r")) == NULL) {
+			else if ((fp = fopen(*argv, "rf")) == NULL) {
 				warn("%s", *argv);
 				rval = 1;
 				++argv;
@@ -236,7 +239,24 @@ raw_args(argv)
 		if (*argv) {
 			if (!strcmp(*argv, "-"))
 				fd = fileno(stdin);
+			else if (fflag) {
+				struct stat st;
+				fd = open(*argv, O_RDONLY|O_NONBLOCK, 0);
+				if (fd < 0)
+					goto skip;
+
+				if (fstat(fd, &st) == -1) {
+					close(fd);
+					goto skip;
+				}
+				if (!S_ISREG(st.st_mode)) {
+					close(fd);
+					errno = EFTYPE;
+					goto skip;
+				}
+			}
 			else if ((fd = open(*argv, O_RDONLY, 0)) < 0) {
+skip:
 				warn("%s", *argv);
 				rval = 1;
 				++argv;
