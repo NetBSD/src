@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9.2.1 2002/07/24 06:53:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.9.2.2 2002/07/29 15:55:56 lukem Exp $
 
-SUBDIR=	notes
+SUBDIR=	notes .WAIT
 
 .if exists(${MACHINE}/miniroot/Makefile.inc)
 SUBDIR+= miniroot .WAIT
