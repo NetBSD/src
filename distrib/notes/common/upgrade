@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.22 2004/08/21 21:58:58 hubertf Exp $
+.\"	$NetBSD: upgrade,v 1.23 2004/08/24 21:58:29 hubertf Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
