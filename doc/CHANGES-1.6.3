@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.83 2004/04/16 22:35:54 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.84 2004/04/17 08:24:37 grant Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -583,3 +583,8 @@ distrib/i386/floppies/ramdisk-rescuesmall/Makefile	patch
 
 	Adjust size to fit current image. PR#25177
 	[grant, ticket #1671]
+
+sys/arch/i386/i386/pmc.c			patch
+
+	fix local panic DoS when running pmc(1) on a P4. PR#25014.
+	[mrg, ticket #1672]
