@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115 1998/05/06 14:17:53 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.116 1998/05/19 09:14:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6445,12 +6445,12 @@ kvm_uncache(va, npages)
 			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM &&
 			    managed(pa)) {
 				pv_changepte4m(pvhead(pa), 0, SRMMU_PG_C);
-			} else {
-				pte &= ~SRMMU_PG_C;
-				setpte4m((vm_offset_t) va, pte);
-				if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
-					cache_flush_page((int)va);
 			}
+			pte &= ~SRMMU_PG_C;
+			setpte4m((vm_offset_t) va, pte);
+			if ((pte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM)
+				cache_flush_page((int)va);
+		
 		}
 		setcontext4m(ctx);
 #endif
@@ -6465,12 +6465,11 @@ kvm_uncache(va, npages)
 			if ((pte & PG_TYPE) == PG_OBMEM &&
 			    managed(pa)) {
 				pv_changepte4_4c(pvhead(pa), PG_NC, 0);
-			} else {
-				pte |= PG_NC;
-				setpte4(va, pte);
-				if ((pte & PG_TYPE) == PG_OBMEM)
-					cache_flush_page((int)va);
 			}
+			pte |= PG_NC;
+			setpte4(va, pte);
+			if ((pte & PG_TYPE) == PG_OBMEM)
+				cache_flush_page((int)va);
 		}
 #endif
 	}
