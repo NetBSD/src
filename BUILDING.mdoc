@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.13 2002/03/04 02:10:02 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.14 2002/03/05 01:15:51 lukem Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd March 4, 2002
+.Dd March 5, 2002
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -176,6 +176,53 @@ and the release layout is described in
 .Pp
 .
 .Sh CONFIGURATION
+.
+.Ss Environment variables
+..
+Several environment variables control the behaviour of
+.Nx
+builds.
+.
+.Bl -tag -width "MAKEOBJDIRPREFIX"
+.
+.It Sy MACHINE
+Machine type.
+.
+.It Sy MACHINE_ARCH
+Machine architecture.
+.
+.It Sy MAKE
+Path name to invoke
+.Xr make 1
+as.
+.
+.It Sy MAKEFLAGS
+Flags to invoke
+.Xr make 1
+with.
+.
+.It Sy MAKEOBJDIR
+Directory to use as the
+.Sy .OBJDIR
+for the current directory.
+Used only if
+.Sy MAKEOBJDIRPREFIX
+is not defined.
+.Sy MAKEOBJDIR
+can only be provided in the environment.
+.
+.It Sy MAKEOBJDIRPREFIX
+Top level directory of the object directory tree.
+If this is defined,
+${MAKEOBJDIRPREFIX}/${.CURDIR}
+is used as the
+.Sy .OBJDIR
+for the current directory.
+The current directory may be read only.
+.Sy MAKEOBJDIRPREFIX
+can only be provided in the environment.
+.
+.El
 .
 .Ss \*qmake\*q variables
 .
