@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.37 2001/02/24 23:30:01 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.38 2001/02/25 01:44:02 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -551,7 +551,7 @@ isp_sbus_dmateardown(isp, xs, handle)
 		panic("%s: dma map not already allocated\n", isp->isp_name);
 		/* NOTREACHED */
 	}
-	bus_dmamap_sync(sbc->sbus_dmatag, dmap, dmap->dm_segs[0].ds_addr,
+	bus_dmamap_sync(sbc->sbus_dmatag, dmap, 0,
 	    xs->datalen, (xs->xs_control & XS_CTL_DATA_IN)?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sbc->sbus_dmatag, dmap);
