@@ -1,4 +1,4 @@
-/*	$NetBSD: vocab.c,v 1.3 1997/08/11 14:06:18 christos Exp $	*/
+/*	$NetBSD: vocab.c,v 1.4 1997/10/10 11:59:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: vocab.c,v 1.3 1997/08/11 14:06:18 christos Exp $");
+__RCSID("$NetBSD: vocab.c,v 1.4 1997/10/10 11:59:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ int object;
 void
 juggle(object)
 int object;
-{       register int i,j;
+{       int i,j;
 
 	i=place[object];
 	j=fixed[object];
@@ -75,7 +75,7 @@ int object;
 void
 move(object,where)
 int object,where;
-{       register int from;
+{       int from;
 
 	if (object<=100)
 		from=place[object];
@@ -95,7 +95,7 @@ int object,where,pval;
 void
 carry(object,where)
 int object,where;
-{       register int temp;
+{       int temp;
 
 	if (object<=100)
 	{       if (place[object]== -1) return;
@@ -129,8 +129,8 @@ vocab(word,type,value)                  /* look up or store a word      */
 char *word;
 int type;       /* -2 for store, -1 for user word, >=0 for canned lookup*/
 int value;                              /* used for storing only        */
-{       register int adr;
-	register char *s,*t;
+{       int adr;
+	char *s,*t;
 	int hash, i;
 	struct hashtab *h;
 
@@ -186,7 +186,7 @@ int value;                              /* used for storing only        */
 void
 copystr(w1,w2)                          /* copy one string to another   */
 char *w1,*w2;
-{       register char *s,*t;
+{       char *s,*t;
 	for (s=w1,t=w2; *s;)
 		*t++ = *s++;
 	*t=0;
@@ -195,8 +195,8 @@ char *w1,*w2;
 int
 weq(w1,w2)                              /* compare words                */
 char *w1,*w2;                           /* w1 is user, w2 is system     */
-{       register char *s,*t;
-	register int i;
+{       char *s,*t;
+	int i;
 	s=w1;
 	t=w2;
 	for (i=0; i<5; i++)             /* compare at most 5 chars      */
@@ -210,15 +210,15 @@ char *w1,*w2;                           /* w1 is user, w2 is system     */
 int
 length(str)                             /* includes 0 at end            */
 char *str;
-{       register char *s;
-	register int n;
+{       char *s;
+	int n;
 	for (n=0,s=str; *s++;) n++;
 	return(n+1);
 }
 
 void
 prht()                                  /* print hash table             */
-{       register int i,j,l;
+{       int i,j,l;
 	char *c;
 	struct hashtab *h;
 	for (i=0; i<HTSIZE/10+1; i++)

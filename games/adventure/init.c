@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.5 1997/08/11 14:06:14 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.6 1997/10/10 11:59:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.5 1997/08/11 14:06:14 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.6 1997/10/10 11:59:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ char a,b,c,d,e;
 
 void
 linkdata()                              /*  secondary data manipulation */
-{       register int i,j;
+{       int i,j;
 
 	/*      array linkages          */
 	for (i=1; i<=LOCSIZ; i++)
