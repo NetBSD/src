@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.1 2000/06/24 00:37:20 thorpej Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.2 2000/06/28 06:51:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -82,7 +82,7 @@ void
 sysmon_init(void)
 {
 
-	lockinit(&sysmon_lock, PWAIT, "sysmon", 0, 0);
+	lockinit(&sysmon_lock, PWAIT|PCATCH, "sysmon", 0, 0);
 	sysmon_initialized = 1;
 }
 
@@ -168,6 +168,8 @@ sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    {
 		struct envsys_tre_data *tred = (void *) data;
 
+		tred->validflags = 0;
+
 		sme = sysmon_envsys_find(tred->sensor);
 		if (sme == NULL)
 			break;
@@ -175,8 +177,6 @@ sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		tred->sensor = SME_SENSOR_IDX(sme, tred->sensor);
 		if (tred->sensor < sme->sme_nsensors)
 			error = (*sme->sme_gtredata)(sme, tred);
-		else
-			tred->validflags = 0;
 		tred->sensor = oidx;
 		sysmon_envsys_release(sme);
 		break;
@@ -187,6 +187,10 @@ sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		struct envsys_basic_info *binfo = (void *) data;
 
 		sme = sysmon_envsys_find(binfo->sensor);
+		if (sme == NULL) {
+			binfo->validflags = 0;
+			break;
+		}
 		oidx = binfo->sensor;
 		binfo->sensor = SME_SENSOR_IDX(sme, binfo->sensor);
 		if (binfo->sensor < sme->sme_nsensors)
@@ -202,13 +206,15 @@ sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    {
 		struct envsys_basic_info *binfo = (void *) data;
 
+		binfo->validflags = 0;
+
 		sme = sysmon_envsys_find(binfo->sensor);
+		if (sme == NULL)
+			break;
 		oidx = binfo->sensor;
 		binfo->sensor = SME_SENSOR_IDX(sme, binfo->sensor);
 		if (binfo->sensor < sme->sme_nsensors)
 			*binfo = sme->sme_sensor_info[binfo->sensor];
-		else
-			binfo->validflags = 0;
 		binfo->sensor = oidx;
 		sysmon_envsys_release(sme);
 		break;
