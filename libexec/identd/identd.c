@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.22 2004/02/05 13:18:48 christos Exp $ */
+/* $NetBSD: identd.c,v 1.23 2004/08/05 18:05:22 kim Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -37,7 +37,7 @@
 #include <syslog.h>
 #include <unistd.h>
 
-__RCSID("$NetBSD: identd.c,v 1.22 2004/02/05 13:18:48 christos Exp $");
+__RCSID("$NetBSD: identd.c,v 1.23 2004/08/05 18:05:22 kim Exp $");
 
 #define OPSYS_NAME      "UNIX"
 #define IDENT_SERVICE   "auth"
@@ -448,8 +448,8 @@ idparse(int fd, int lport, int fport, const char *charset, const char *osname,
 {
 	char *p;
 
-	if (asprintf(&p, "%d , %d : USERID : %s%s%s : %s\r\n", lport, fport,
-	    osname, charset ? " , " : "", charset ? charset : "", user) < 0)
+	if (asprintf(&p, "%d,%d:USERID:%s%s%s:%s\r\n", lport, fport,
+	    osname, charset ? "," : "", charset ? charset : "", user) < 0)
 		fatal("asprintf");
 	if (send(fd, p, strlen(p), 0) < 0) {
 		free(p);
@@ -464,7 +464,7 @@ iderror(int fd, int lport, int fport, const char *error)
 {
 	char *p;
 
-	if (asprintf(&p, "%d , %d : ERROR : %s\r\n", lport, fport, error) < 0)
+	if (asprintf(&p, "%d,%d:ERROR:%s\r\n", lport, fport, error) < 0)
 		fatal("asprintf");
 	if (send(fd, p, strlen(p), 0) < 0) {
 		free(p);
