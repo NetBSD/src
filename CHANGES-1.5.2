@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.1 2001/07/29 04:06:24 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.2 2001/07/29 04:15:08 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -10,3 +10,16 @@ sys/conf/osrelease.sh				patch
 share/tmac/doc-common				patch
 
   Mark this release as 1.5.2_ALPHA.
+
+libexec/telnetd/authenc.c			1.8
+libexec/telnetd/termstat.c			1.8
+libexec/telnetd/ext.h				1.13
+libexec/telnetd/state.c				1.17 via patch
+libexec/telnetd/sys_term.c			1.23 via patch
+libexec/telnetd/telnetd.c			1.26
+libexec/telnetd/telnetd.h			1.7
+libexec/telnetd/utility.c			1.18 via patch
+
+  Security-related fixups for telnet
+    Bound-check all "*nfrontp++" code.  From OpenBSD and Heimdal.
+    Complain if file descriptor goes above FD_SETSIZE.  From OpenBSD.
