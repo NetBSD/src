@@ -17,6 +17,8 @@ BINGRP?=	bin
 BINOWN?=	bin
 BINMODE?=	555
 
+
+LIBCRT0?=	/usr/lib/crt0.o
 LIBC?=		/usr/lib/libc.a
 LIBCOMPAT?=	/usr/lib/libcompat.a
 LIBCURSES?=	/usr/lib/libcurses.a
@@ -47,8 +49,17 @@ CLEANFILES+=strings
 
 OBJS+=  ${SRCS:R:S/$/.o/g}
 
+.if defined(LDONLY)
+
+${PROG}: ${LIBCRT0} ${LIBC} ${OBJS} ${DPADD}
+	${LD} ${LDFLAGS} -o ${.TARGET} ${LIBCRT0} ${OBJS} ${LIBC} ${LDADD}
+
+.else defined(LDONLY)
+
 ${PROG}: ${OBJS} ${LIBC} ${DPADD}
 	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
+
+.endif
 
 .else defined(PROG)
 
@@ -88,11 +99,12 @@ all: ${PROG} ${MANALL} _PROGSUBDIR
 .if !target(clean)
 clean: _PROGSUBDIR
 	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES}
+	rm -f .depend ${MANALL}
 .endif
 
 .if !target(cleandir)
 cleandir: _PROGSUBDIR
-	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES}
+	rm -f a.out [Ee]rrs mklog core ${PROG} ${OBJS} ${CLEANFILES} ${MANALL}
 	rm -f .depend ${MANALL}
 .endif
 
@@ -115,7 +127,7 @@ afterinstall:
 
 realinstall: _PROGSUBDIR
 .if defined(PROG)
-	install ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	install -c ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${PROG} ${DESTDIR}${BINDIR}
 .endif
 .if defined(HIDEGAME)

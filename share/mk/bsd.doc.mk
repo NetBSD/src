@@ -1,17 +1,22 @@
 #	@(#)bsd.doc.mk	5.3 (Berkeley) 1/2/91
 
-PRINTER=psc
+PRINTER=ps
+
+# Why d'command'?
+#EQN?=		deqn -P${PRINTER}
+#TBL?=		dtbl -P${PRINTER}
+#ROFF?=		ditroff -t ${MACROS} ${PAGES} -P${PRINTER}
 
 BIB?=		bib
-EQN?=		deqn -P${PRINTER}
+EQN?=		eqn -P${PRINTER}
 GREMLIN?=	grn -P${PRINTER}
 GRIND?=		vgrind -f
 INDXBIB?=	indxbib
 PIC?=		pic -P${PRINTER}
 REFER?=		refer
-ROFF?=		ditroff -t ${MACROS} ${PAGES} -P${PRINTER}
+ROFF?=		ntroff -t ${MACROS} ${PAGES} -P${PRINTER}
 SOELIM?=	soelim
-TBL?=		dtbl -P${PRINTER}
+TBL?=		tbl -P${PRINTER}
 
 .PATH: ${.CURDIR}
 
