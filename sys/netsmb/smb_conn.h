@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.11 2003/04/02 15:03:38 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.12 2003/04/05 13:13:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -182,6 +182,7 @@ struct smbioc_ossn;
 struct uio;
 
 #define SMB_DIALECT(vcp)	((vcp)->vc_sopt.sv_proto)
+#define SMB_CAPS(vcp)		((vcp)->vc_sopt.sv_caps)
 
 struct smb_tran_desc;
 
