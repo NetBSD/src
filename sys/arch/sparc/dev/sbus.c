@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.6 1995/02/01 12:37:28 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.7 1996/03/14 19:45:13 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -63,6 +64,9 @@ struct cfdriver sbuscd = {
 	NULL, "sbus", sbus_match, sbus_attach,
 	DV_DULL, sizeof(struct sbus_softc)
 };
+
+int sbus_print __P((void *, char *));
+void sbusreset __P((int));
 
 /*
  * Print the location of some sbus-attached device (called just
