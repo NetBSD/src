@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.25 2004/03/17 04:34:25 uwe Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.26 2004/03/18 01:11:58 uwe Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -661,6 +661,41 @@ static const keysym_t jornada6x0_fr_keydesc[] = {
     KC(208), KS_Cmd_BrightnessDown, KS_Down,
 };
 
+/* Scandinavian */
+static const keysym_t jornada6x0_scnv_keydesc[] = {
+/*  pos      normal          shifted        altgr	*/
+    KC(2),   KS_1,           KS_exclam,     KS_asciitilde,
+    KC(3),   KS_2,           KS_quotedbl,   KS_at,
+    KC(4),   KS_3,           KS_numbersign, KS_sterling,
+    KC(5),   KS_4,           KS_currency,   KS_dollar,
+    KC(7),   KS_6,           KS_ampersand,
+    KC(8),   KS_7,           KS_slash,      KS_braceleft,
+    KC(9),   KS_8,           KS_parenleft,  KS_bracketleft,
+    KC(10),  KS_9,           KS_parenright, KS_bracketright,
+    KC(11),  KS_0,           KS_equal,      KS_braceright,
+    KC(12),  KS_plus,        KS_question,   KS_backslash,
+    KC(13),  KS_apostrophe,  KS_grave,
+    KC(25),  KS_p,           KS_P,          KS_braceleft,
+    KC(26),  KS_aring,
+    /*
+     * XXX: KC(39) and KC(40) has odiaeresis/adiaeresis *and*
+     * oslash/ae on them.  Apparently localized WinCE uses the former
+     * for Swedish and Finnish and the latter for Danish and
+     * Norwegian.  But as the keyboard doesn't seem to have
+     * semicolon/colon and minus/underscore nowhere on the primary and
+     * altgr layers, I put them here (semicolon/colon is inherited).
+     */
+    KC(40),  KS_minus,       KS_underscore, /* XXX */
+    KC(41),  KS_paragraph,   KS_onehalf,    KS_bar,
+    KC(184), KS_Mode_switch, KS_Multi_key,
+
+    KC(200), KS_Cmd_BrightnessUp,   KS_Up,
+    KC(203), KS_Cmd_ContrastDown,   KS_Left,
+    KC(205), KS_Cmd_ContrastUp,     KS_Right,
+    KC(208), KS_Cmd_BrightnessDown, KS_Down,
+};
+
+
 const int jornada6x0_special_keymap[] = {
 	[KEY_SPECIAL_OFF]	= 88,
 	[KEY_SPECIAL_LIGHT]	= -1
@@ -899,6 +934,17 @@ const struct hpckbd_keymap_table {
 		jornada6x0_special_keymap,
  		CMDMAP(jornada6x0_fr_keydesc),
 		KB_FR },
+	/* Scandinavian */
+	{	&platid_mask_MACH_HP_JORNADA_680SV,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+		CMDMAP(jornada6x0_scnv_keydesc),
+		KB_US },
+	{	&platid_mask_MACH_HP_JORNADA_690SV,
+		jornada6x0_intl_keytrans,
+		jornada6x0_special_keymap,
+ 		CMDMAP(jornada6x0_scnv_keydesc),
+		KB_US },
 	/*
 	 * HP 620LX
 	 */
