@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.20 2002/06/26 14:08:30 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.21 2002/07/01 06:17:11 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.102 2002/06/24 14:33:27 markus Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.103 2002/06/30 21:59:45 deraadt Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1115,7 +1115,7 @@ client_input_exit_status(int type, u_int32_t seq, void *ctxt)
 static Channel *
 client_request_forwarded_tcpip(const char *request_type, int rchan)
 {
-	Channel* c = NULL;
+	Channel *c = NULL;
 	char *listen_address, *originator_address;
 	int listen_port, originator_port;
 	int sock;
@@ -1145,7 +1145,7 @@ client_request_forwarded_tcpip(const char *request_type, int rchan)
 	return c;
 }
 
-static Channel*
+static Channel *
 client_request_x11(const char *request_type, int rchan)
 {
 	Channel *c = NULL;
@@ -1181,7 +1181,7 @@ client_request_x11(const char *request_type, int rchan)
 	return c;
 }
 
-static Channel*
+static Channel *
 client_request_agent(const char *request_type, int rchan)
 {
 	Channel *c = NULL;
