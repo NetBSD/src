@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.14 2000/12/27 23:47:58 sommerfeld Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15 2001/01/26 19:45:58 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
+#include <sys/ioctl.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -84,7 +85,6 @@
 #include "wsdisplay.h"
 #endif
 #if (NWSDISPLAY >0)
-#include <sys/ioctl.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
 #endif
 #ifdef DEBUG
