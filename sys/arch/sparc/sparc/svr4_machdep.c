@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.4 1995/07/04 22:57:33 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.5 1995/07/05 13:06:33 pk Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -54,6 +54,14 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+
+#ifdef DEBUG
+extern int sigdebug;
+extern int sigpid;
+#define SDB_FOLLOW	0x01	/* XXX: dup from machdep.c */
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#endif
 
 void
 svr4_getcontext(p, uc, mask, oonstack)
