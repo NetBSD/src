@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.6 1995/10/07 06:25:46 mycroft Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.7 1995/10/10 21:18:01 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -116,7 +116,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	 * have the process die unconditionally. 
 	 */
 	if (ft >= FMT9) {
-		SIGACTION(p, sig) = SIG_DFL; 
+		SIGACTION(p, sig) = SIG_DFL;
 		p->p_sigignore &= ~sig;
 		p->p_sigcatch &= ~sig;
 		p->p_sigmask &= ~sig;
@@ -208,16 +208,16 @@ sunos_sendsig(catcher, sig, mask, code)
 }
 
 
-/*     
+/*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above). 
+ * stack state from context left by sendsig (above).
  * Return to previous pc and psl as specified by
  * context left by sendsig. Check carefully to
  * make sure that the user has not modified the
  * psl to gain improper priviledges or to cause
  * a machine fault.
- */           
+ */
 int
 sunos_sys_sigreturn(p, v, retval)
 	struct proc *p;
@@ -240,8 +240,8 @@ sunos_sys_sigreturn(p, v, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
+	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
+	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof(tsigc)))
 		return (EINVAL);
 	scp = &tsigc;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
@@ -251,7 +251,7 @@ sunos_sys_sigreturn(p, v, retval)
 	 */
 	if (scp->sc_onstack & 1)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else 
+	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
