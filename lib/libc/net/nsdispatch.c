@@ -1,8 +1,11 @@
-/*	$NetBSD: nsdispatch.c,v 1.1.4.2 1997/05/26 15:40:36 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.1.4.3 1998/11/02 03:29:36 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997 Luke Mewburn <lukem@netbsd.org>
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,33 +17,38 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- * 	This product includes software developed by Luke Mewburn.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <fcntl.h>
+#define _NS_PRIVATE
+#include <nsswitch.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "nsswitch.h"
 
 static int	  _nsmapsize = 0;
 static ns_DBT	 *_nsmap = NULL;
@@ -52,10 +60,14 @@ static ns_DBT	 *_nsmap = NULL;
  */
 #define NSELEMSPERCHUNK		10
 
+int	_nscmp __P((const void *, const void *));
+
 int
-_nscmp(const void *a, const void *b)
+_nscmp(a, b)
+	const void *a;
+	const void *b;
 {
-    return strncmp(((ns_DBT*)a)->name, ((ns_DBT *)b)->name, NS_MAXDBLEN);
+	return strncmp(((ns_DBT*)a)->name, ((ns_DBT *)b)->name, NS_MAXDBLEN);
 }
 
 void
@@ -76,7 +88,7 @@ __nsdbput(dbt)
 		_nsmap = realloc(_nsmap,
 			    (_nsmapsize + NSELEMSPERCHUNK) * sizeof(ns_DBT));
 		if (_nsmap == NULL)
-			_err(1, "nsdispatch: %m");
+			err(1, "nsdispatch: %m");
 
 	}
 	memmove((void *)&_nsmap[_nsmapsize++], (void *)dbt, sizeof(ns_DBT));
@@ -94,7 +106,7 @@ void
 __nsdbget(dbt)
 	ns_DBT *dbt;
 {
-#ifdef NSLINEAR		/* XXX: just to compare linear vs bsearch */
+#ifdef _NS_LINEAR		/* XXX: just to compare linear vs bsearch */
 	int	i;
 	for (i = 0; i < _nsmapsize; i++) {
 		if (_nscmp(dbt, &_nsmap[i]) == 0) {
@@ -158,7 +170,7 @@ _nsgetdbt(src, dbt)
 	struct stat	 statbuf;
 
 	extern FILE 	*_nsyyin;
-	extern int	_nsyyparse();
+	extern int	_nsyyparse __P((void));
 
 	strncpy(dbt->name, src, NS_MAXDBLEN);
 	dbt->name[NS_MAXDBLEN - 1] = '\0';
@@ -182,7 +194,7 @@ _nsgetdbt(src, dbt)
 		if (_nsyyin == NULL)
 			return;
 		_nsyyparse();
-#ifndef NSLINEAR
+#ifndef _NS_LINEAR
 		qsort(_nsmap, _nsmapsize, sizeof(ns_DBT), _nscmp);
 #endif
 		(void)fclose(_nsyyin);
@@ -209,13 +221,13 @@ nsdispatch(retval, disp_tab, database, va_alist)
 
 	_nsgetdbt(database, &dbt);
 
-#if NSDEBUG
+#if _NS_DEBUG
 	_nsdumpdbt(&dbt);
 	fprintf(stderr, "nsdispatch: %s\n", database);
 #endif
 	for (curdisp = 0; curdisp < dbt.size; curdisp++) {
 		int source = (dbt.map[curdisp] & NS_SOURCEMASK);
-#if NSDEBUG
+#if _NS_DEBUG
 		fprintf(stderr, "    %2d: source=%d", curdisp, source);
 #endif
 		if (source < 0 || source >= NS_MAXSOURCE)
@@ -231,18 +243,18 @@ nsdispatch(retval, disp_tab, database, va_alist)
 			result = disp_tab[source].cb(retval,
 						disp_tab[source].cb_data, ap);
 			va_end(ap);
-#if NSDEBUG
+#if _NS_DEBUG
 			fprintf(stderr, " result=%d (%d)", result,
 			    (result & (dbt.map[curdisp] & NS_STATUSMASK)));
 #endif
 			if (result & (dbt.map[curdisp] & NS_STATUSMASK)) {
-#if NSDEBUG
+#if _NS_DEBUG
 				fprintf(stderr, " MATCH!\n");
 #endif
 				break;
 			}
 		}
-#if NSDEBUG
+#if _NS_DEBUG
 		fprintf(stderr, "\n");
 #endif
 	}

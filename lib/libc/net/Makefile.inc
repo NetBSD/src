@@ -1,32 +1,29 @@
-#	$NetBSD: Makefile.inc,v 1.29.2.1 1997/05/23 21:14:42 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.29.2.2 1998/11/02 03:29:36 lukem Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
 
-SRCS+=	base64.c ethers.c gethostnamadr.c getnetbyaddr.c getnetbyname.c \
-	getnetent.c getproto.c getprotoent.c getprotoname.c getservbyname.c \
-	getservbyport.c getservent.c herror.c hesiod.c inet_addr.c \
+SRCS+=	base64.c ethers.c gethnamaddr.c getnetbyaddr.c getnetbyname.c \
+	getnetnamadr.c getnetent.c getproto.c getprotoent.c getprotoname.c \
+	getservbyname.c getservbyport.c getservent.c herror.c hesiod.c \
 	inet_lnaof.c inet_makeaddr.c inet_net_ntop.c inet_net_pton.c \
 	inet_neta.c inet_ntop.c inet_pton.c inet_netof.c inet_network.c \
-	inet_ntoa.c iso_addr.c linkaddr.c nsdispatch.c nsparser.c nslexer.c \
+	inet_ntoa.c iso_addr.c linkaddr.c nsdispatch.c nslexer.c nsparser.c \
 	ns_addr.c ns_ntoa.c nsap_addr.c rcmd.c recv.c res_comp.c res_data.c \
 	res_debug.c res_init.c res_mkquery.c res_query.c res_send.c send.c \
 	sethostent.c
 
 SRCS+=	__dn_comp.c __res_close.c __res_send.c
+CPPFLAGS+=-DRESOLVSORT -I.
 
+LPREFIX=_nsyy
+YPREFIX=_nsyy
+YHEADER=1
 
-CFLAGS+=      -I.
+CLEANFILES+=nsparser.c nslexer.c nsparser.h
 
-CLEANFILES+= nsparser.tab.h nsparser.c nslexer.c
-
-nsparser.c: nsparser.y
-	${YACC.y} -p_nsyy -b ${.TARGET:R} ${.IMPSRC}
-	mv ${.TARGET:R}.tab.c ${.TARGET}
-
-nslexer.c: nslexer.l nsparser.c
-	${LEX.l} -P_nsyy -o${.TARGET} ${.IMPSRC}
+nslexer.c: nsparser.h
 
 
 # machine-dependent net sources
@@ -36,8 +33,8 @@ nslexer.c: nslexer.l nsparser.c
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
-	getservent.3 inet.3 iso_addr.3 linkaddr.3 ns.3 nsdispatch.3 \
-	rcmd.3 resolver.3
+	getservent.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 ns.3 \
+	nsdispatch.3 rcmd.3 resolver.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3
@@ -55,10 +52,11 @@ MLINKS+=getservent.3 endservent.3 getservent.3 getservbyname.3 \
 MLINKS+=inet.3 addr.3 inet.3 inet_addr.3 inet.3 inet_aton.3 \
 	inet.3 inet_lnaof.3 inet.3 inet_makeaddr.3 inet.3 inet_netof.3 \
 	inet.3 inet_network.3 inet.3 inet_ntoa.3 inet.3 network.3 \
-	inet.3 ntoa.3
-MLINKS+=linkaddr.3 link_addr.3 linkaddr.3 link_ntoa.3
+	inet.3 ntoa.3 inet.3 inet_ntop.3 inet.3 inet_pton.3
+MLINKS+=inet_net.3 inet_net_ntop.3 inet_net.3 inet_net_pton.3
+MLINKS+=linkaddr.3 link_addr.3 linkaddr.3 link_ntoa.3 linkaddr.3 linkntoa.3
 MLINKS+=ns.3 ns_addr.3 ns.3 ns_ntoa.3
-MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3
+MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3 rcmd.3 orcmd.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
 	resolver.3 res_mkquery.3 resolver.3 res_send.3 resolver.3 res_query.3 \
 	resolver.3 res_search.3

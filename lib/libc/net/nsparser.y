@@ -1,9 +1,12 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.1.4.1 1997/05/23 21:14:52 lukem Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.1.4.2 1998/11/02 03:29:37 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997 Luke Mewburn <lukem@netbsd.org>
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Luke Mewburn.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,32 +18,33 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- * 	This product includes software developed by Luke Mewburn.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
- * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
- * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define _NS_PRIVATE
+#include <nsswitch.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "nsswitch.h"
 
-extern	void	__nsdbput __P((const ns_DBT *));
 
-static void	addsrctomap	__P((int));
-
-extern	int	_nsyylineno;
+static void	addsrctomap __P((int));
 
 static	ns_DBT	curdbt;
 static	int	donesrc[NS_MAXSOURCE];
@@ -167,22 +171,20 @@ addsrctomap(elem)
 
 	if (elem == NS_COMPAT) {
 			/* XXX: syslog the following */
-		fprintf(stderr,
-		    "line %d: 'compat' used with other sources in '%s'\n",
-		    _nsyylineno, curdbt.name);
+		fprintf(stderr, "'compat' used with other sources in '%s'",
+		    curdbt.name);
 		return;
 	}
 	if (donesrc[elem]) {
 			/* XXX: syslog the following */
-		fprintf(stderr, "line %d: duplicate source '%s' for '%s'\n",
-		    _nsyylineno, srcname[elem], curdbt.name);
+		fprintf(stderr, "duplicate source '%s' for '%s'", srcname[elem],
+		    curdbt.name);
 		return;
 	}
 	donesrc[elem]++;
 	if (curdbt.size >= NS_MAXSOURCE) {
 			/* XXX: syslog the following */
-		fprintf(stderr, "line %d: too many sources for '%s'\n",
-		    _nsyylineno, curdbt.name);
+		fprintf(stderr, "too many sources for '%s'", curdbt.name);
 		return;
 	}
 	curdbt.map[curdbt.size] |= (u_char)elem;

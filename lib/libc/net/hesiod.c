@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.1.4.2 1997/05/24 15:53:50 lukem Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.1.4.3 1998/11/02 03:29:36 lukem Exp $	*/
 
 /* This file is part of the Hesiod library.
  *
@@ -22,9 +22,11 @@
  * or implied warranty.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char rcsid_hesiod_c[] = "#Header: /afs/rel-eng.athena.mit.edu/project/release/current/source/athena/athena.lib/hesiod/RCS/hesiod.c,v 1.11 93/06/15 10:26:37 mar Exp #";
-static char rcsid_resolv_c[] = "#Header: /afs/rel-eng.athena.mit.edu/project/release/current/source/athena/athena.lib/hesiod/RCS/resolve.c,v 1.7 93/06/15 10:25:45 mar Exp #";
+__IDSTRING(rcsid_hesiod_c, "#Header: /afs/rel-eng.athena.mit.edu/project/release/current/source/athena/athena.lib/hesiod/RCS/hesiod.c,v 1.11 93/06/15 10:26:37 mar Exp #");
+__IDSTRING(rcsid_resolve_c, "#Header: /afs/rel-eng.athena.mit.edu/project/release/current/source/athena/athena.lib/hesiod/RCS/resolve.c,v 1.7 93/06/15 10:25:45 mar Exp #");
 #endif
 
 #include <sys/types.h>
@@ -65,6 +67,11 @@ static u_char	*Hes_eoM;
 
 #define DEF_RETRANS 4
 #define DEF_RETRY 3
+
+static	caddr_t	_hes_rr_scan __P((u_char *, rr_t *));
+static	nsmsg_p	_hes_res_scan __P((u_char *));
+static	nsmsg_p	_hes_res __P((u_char *, int, int));
+	int	hes_init __P((void));
 
 static caddr_t
 _hes_rr_scan(cp, rr)
@@ -343,7 +350,6 @@ hes_resolve(HesiodName, HesiodNameType)
 	char *HesiodName, *HesiodNameType;
 {
 	char		**retvec;
-	int		  vecsiz = 5;
 	char		 *cp, *ocp, *dst;
 	int		  i, n;
 	struct nsmsg	 *ns;
