@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.2 2003/10/13 16:35:49 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.3 2003/12/07 04:22:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -61,37 +61,27 @@
 /* for x a power of two and p a non-negative integer, is x a greater power than 2**p? */
 #define GTEQ_POWER(x, p) (((u_long)(x) >> (p)) != 0)
 
-#define MASK_TO_SHIFT(m) ((GTEQ_POWER(LOWEST_SET_BIT((m)), 31) ? 31 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 30) ? 30 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 29) ? 29 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 28) ? 28 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 27) ? 27 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 26) ? 26 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 25) ? 25 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 24) ? 24 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 23) ? 23 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 22) ? 22 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 21) ? 21 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 20) ? 20 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 19) ? 19 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 18) ? 18 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 17) ? 17 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 16) ? 16 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 15) ? 15 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 14) ? 14 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 13) ? 13 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 12) ? 12 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 11) ? 11 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)), 10) ? 10 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  9) ?  9 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  8) ?  8 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  7) ?  7 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  6) ?  6 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  5) ?  5 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  4) ?  4 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  3) ?  3 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  2) ?  2 :	\
-                          (GTEQ_POWER(LOWEST_SET_BIT((m)),  1) ?  1 : 0))))))))))))))))))))))))))))))))
+#define MASK_TO_SHIFT2(m) (GTEQ_POWER(LOWEST_SET_BIT((m)), 1) ? 1 : 0)
+
+#define MASK_TO_SHIFT4(m) \
+	(GTEQ_POWER(LOWEST_SET_BIT((m)), 2) \
+	    ? 2 + MASK_TO_SHIFT2((m) >> 2) \
+	    : MASK_TO_SHIFT2((m)))
+
+#define MASK_TO_SHIFT8(m) \
+	(GTEQ_POWER(LOWEST_SET_BIT((m)), 4) \
+	    ? 4 + MASK_TO_SHIFT4((m) >> 4) \
+	    : MASK_TO_SHIFT4((m)))
+
+#define MASK_TO_SHIFT16(m) \
+	(GTEQ_POWER(LOWEST_SET_BIT((m)), 8) \
+	    ? 8 + MASK_TO_SHIFT8((m) >> 8) \
+	    : MASK_TO_SHIFT8((m)))
+
+#define MASK_TO_SHIFT(m) \
+	(GTEQ_POWER(LOWEST_SET_BIT((m)), 16) \
+	    ? 16 + MASK_TO_SHIFT16((m) >> 16) \
+	    : MASK_TO_SHIFT16((m)))
 
 #define MASK_AND_RSHIFT(x, mask) (((x) & (mask)) >> MASK_TO_SHIFT(mask))
 #define LSHIFT(x, mask) ((x) << MASK_TO_SHIFT(mask))
