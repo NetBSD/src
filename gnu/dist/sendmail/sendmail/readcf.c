@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: readcf.c,v 8.382.4.38 2001/02/17 00:05:12 geir Exp";
+static char id[] = "@(#)Id: readcf.c,v 8.382.4.43 2001/08/14 23:08:13 ca Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -148,7 +148,7 @@ readcf(cfname, safe, e)
 		if (bp[0] == '#')
 		{
 			if (bp != buf)
-				free(bp);
+				sm_free(bp);
 			continue;
 		}
 
@@ -265,6 +265,11 @@ readcf(cfname, safe, e)
 			else
 			{
 				syserr("R line: null LHS");
+				rwp->r_lhs = null_list;
+			}
+			if (nfuzzy > MAXMATCH)
+			{
+				syserr("R line: too many wildcards");
 				rwp->r_lhs = null_list;
 			}
 
@@ -545,7 +550,7 @@ readcf(cfname, safe, e)
 			syserr("unknown configuration line \"%s\"", bp);
 		}
 		if (bp != buf)
-			free(bp);
+			sm_free(bp);
 	}
 	if (ferror(cf))
 	{
@@ -1269,7 +1274,7 @@ makemailer(line)
 	if (s->s_mailer != NULL)
 	{
 		i = s->s_mailer->m_mno;
-		free(s->s_mailer);
+		sm_free(s->s_mailer);
 	}
 	else
 	{
@@ -1548,9 +1553,7 @@ static struct optioninfo
 	{ "RemoteMode",			'>',		OI_NONE	},
 #endif /* defined(SUN_EXTENSIONS) && defined(REMOTE_MODE) */
 	{ "SevenBitInput",		'7',		OI_SAFE	},
-#if MIME8TO7
 	{ "EightBitMode",		'8',		OI_SAFE	},
-#endif /* MIME8TO7 */
 	{ "AliasFile",			'A',		OI_NONE	},
 	{ "AliasWait",			'a',		OI_NONE	},
 	{ "BlankSub",			'B',		OI_NONE	},
@@ -1898,8 +1901,8 @@ setoption(opt, val, safe, sticky, e)
 		SevenBitInput = atobool(val);
 		break;
 
-#if MIME8TO7
 	  case '8':		/* handling of 8-bit input */
+#if MIME8TO7
 		switch (*val)
 		{
 		  case 'm':		/* convert 8-bit, convert MIME */
@@ -1936,8 +1939,10 @@ setoption(opt, val, safe, sticky, e)
 			syserr("Unknown 8-bit mode %c", *val);
 			finis(FALSE, EX_USAGE);
 		}
-		break;
+#else /* MIME8TO7 */
+		printf("Warning: Option EightBitMode requires MIME8TO7 support\n");
 #endif /* MIME8TO7 */
+		break;
 
 	  case 'A':		/* set default alias file */
 		if (val[0] == '\0')
@@ -2641,7 +2646,7 @@ setoption(opt, val, safe, sticky, e)
 
 	  case O_PIDFILE:
 		if (PidFile != NULL)
-			free(PidFile);
+			sm_free(PidFile);
 		PidFile = newstr(val);
 		break;
 
@@ -2688,7 +2693,7 @@ setoption(opt, val, safe, sticky, e)
 
 	  case O_DEADLETTER:
 		if (DeadLetterDrop != NULL)
-			free(DeadLetterDrop);
+			sm_free(DeadLetterDrop);
 		DeadLetterDrop = newstr(val);
 		break;
 
@@ -2778,7 +2783,7 @@ setoption(opt, val, safe, sticky, e)
 
 	  case O_CONTROLSOCKET:
 		if (ControlSocketName != NULL)
-			free(ControlSocketName);
+			sm_free(ControlSocketName);
 		ControlSocketName = newstr(val);
 		break;
 
@@ -2792,7 +2797,7 @@ setoption(opt, val, safe, sticky, e)
 
 	  case O_PROCTITLEPREFIX:
 		if (ProcTitlePrefix != NULL)
-			free(ProcTitlePrefix);
+			sm_free(ProcTitlePrefix);
 		ProcTitlePrefix = newstr(val);
 		break;
 
@@ -2818,13 +2823,13 @@ setoption(opt, val, safe, sticky, e)
 		}
 #endif /* _FFR_ALLOW_SASLINFO */
 		if (SASLInfo != NULL)
-			free(SASLInfo);
+			sm_free(SASLInfo);
 		SASLInfo = newstr(val);
 		break;
 
 	  case O_SASLMECH:
 		if (AuthMechanisms != NULL)
-			free(AuthMechanisms);
+			sm_free(AuthMechanisms);
 		if (*val != '\0')
 			AuthMechanisms = newstr(val);
 		else
@@ -2886,63 +2891,63 @@ setoption(opt, val, safe, sticky, e)
 #if STARTTLS
 	  case O_SRVCERTFILE:
 		if (SrvCERTfile != NULL)
-			free(SrvCERTfile);
+			sm_free(SrvCERTfile);
 		SrvCERTfile = newstr(val);
 		break;
 
 	  case O_SRVKEYFILE:
 		if (Srvkeyfile != NULL)
-			free(Srvkeyfile);
+			sm_free(Srvkeyfile);
 		Srvkeyfile = newstr(val);
 		break;
 
 	  case O_CLTCERTFILE:
 		if (CltCERTfile != NULL)
-			free(CltCERTfile);
+			sm_free(CltCERTfile);
 		CltCERTfile = newstr(val);
 		break;
 
 	  case O_CLTKEYFILE:
 		if (Cltkeyfile != NULL)
-			free(Cltkeyfile);
+			sm_free(Cltkeyfile);
 		Cltkeyfile = newstr(val);
 		break;
 
 	  case O_CACERTFILE:
 		if (CACERTfile != NULL)
-			free(CACERTfile);
+			sm_free(CACERTfile);
 		CACERTfile = newstr(val);
 		break;
 
 	  case O_CACERTPATH:
 		if (CACERTpath != NULL)
-			free(CACERTpath);
+			sm_free(CACERTpath);
 		CACERTpath = newstr(val);
 		break;
 
 	  case O_DHPARAMS:
 		if (DHParams != NULL)
-			free(DHParams);
+			sm_free(DHParams);
 		DHParams = newstr(val);
 		break;
 
 #  if _FFR_TLS_1
 	  case O_DHPARAMS5:
 		if (DHParams5 != NULL)
-			free(DHParams5);
+			sm_free(DHParams5);
 		DHParams5 = newstr(val);
 		break;
 
 	  case O_CIPHERLIST:
 		if (CipherList != NULL)
-			free(CipherList);
+			sm_free(CipherList);
 		CipherList = newstr(val);
 		break;
 #  endif /* _FFR_TLS_1 */
 
 	  case O_RANDFILE:
 		if (RandFile != NULL)
-			free(RandFile);
+			sm_free(RandFile);
 		RandFile= newstr(val);
 		break;
 
@@ -3272,7 +3277,7 @@ strtorwset(p, endp, stabmode)
 			char *h = NULL;
 
 			if (RuleSetNames[ruleset] != NULL)
-				free(RuleSetNames[ruleset]);
+				sm_free(RuleSetNames[ruleset]);
 			if (delim != '\0' && (h = strchr(q, delim)) != NULL)
 				*h = '\0';
 			RuleSetNames[ruleset] = newstr(q);
@@ -3380,6 +3385,7 @@ settimeout(name, val, sticky)
 {
 	register struct timeoutinfo *to;
 	int i;
+	int addopts;
 	time_t toval;
 
 	if (tTd(37, 2))
@@ -3413,6 +3419,7 @@ settimeout(name, val, sticky)
 		dprintf("\n");
 
 	toval = convtime(val, 'm');
+	addopts = 0;
 
 	switch (to->to_code)
 	{
@@ -3481,6 +3488,7 @@ settimeout(name, val, sticky)
 		TimeOuts.to_q_warning[TOC_NORMAL] = toval;
 		TimeOuts.to_q_warning[TOC_URGENT] = toval;
 		TimeOuts.to_q_warning[TOC_NONURGENT] = toval;
+		addopts = 2;
 		break;
 
 	  case TO_QUEUEWARN_NORMAL:
@@ -3503,6 +3511,7 @@ settimeout(name, val, sticky)
 		TimeOuts.to_q_return[TOC_NORMAL] = toval;
 		TimeOuts.to_q_return[TOC_URGENT] = toval;
 		TimeOuts.to_q_return[TOC_NONURGENT] = toval;
+		addopts = 2;
 		break;
 
 	  case TO_QUEUERETURN_NORMAL:
@@ -3530,6 +3539,7 @@ settimeout(name, val, sticky)
 		TimeOuts.res_retrans[RES_TO_DEFAULT] = toval;
 		TimeOuts.res_retrans[RES_TO_FIRST] = toval;
 		TimeOuts.res_retrans[RES_TO_NORMAL] = toval;
+		addopts = 2;
 		break;
 
 	  case TO_RESOLVER_RETRY:
@@ -3537,6 +3547,7 @@ settimeout(name, val, sticky)
 		TimeOuts.res_retry[RES_TO_DEFAULT] = i;
 		TimeOuts.res_retry[RES_TO_FIRST] = i;
 		TimeOuts.res_retry[RES_TO_NORMAL] = i;
+		addopts = 2;
 		break;
 
 	  case TO_RESOLVER_RETRANS_NORMAL:
@@ -3565,7 +3576,10 @@ settimeout(name, val, sticky)
 	}
 
 	if (sticky)
-		setbitn(to->to_code, StickyTimeoutOpt);
+	{
+		for (i = 0; i <= addopts; i++)
+			setbitn(to->to_code + i, StickyTimeoutOpt);
+	}
 }
 /*
 **  INITTIMEOUTS -- parse and set timeout values
