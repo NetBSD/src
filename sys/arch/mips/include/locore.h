@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.9 1997/06/19 06:31:14 mhitch Exp $	*/
+/*	$NetBSD: locore.h,v 1.10 1997/06/21 04:52:26 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -85,7 +85,6 @@ extern void mips3_proc_trampoline __P((void));
 extern void mips3_switch_exit __P((struct proc *));
 extern void mips3_cpu_switch_resume __P((void));
 
-extern void MachHitFlushDCache __P((caddr_t, int));
 extern void mips3_SetWIRED __P((int));
 
 
