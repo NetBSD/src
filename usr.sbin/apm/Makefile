@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 1997/10/18 06:42:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/23 06:29:14 lukem Exp $
 
 .if ${MACHINE} == "i386"
 PROG=	apm
 SRCS=	apm.c apmsubr.c
 .PATH:	${.CURDIR}/../apmd
-CFLAGS+=-I${.CURDIR}/../apmd
+CPPFLAGS+=-I${.CURDIR}/../apmd
 LINKS=	${BINDIR}/apm ${BINDIR}/zzz
 .endif
 
