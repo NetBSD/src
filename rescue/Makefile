@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/05/26 09:46:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/07/14 09:00:33 tron Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -42,6 +42,7 @@ ${LIBOVERRIDE}: ${OVERRIDEOBJS}
 
 ${CRUNCHBIN}:	${LIBOVERRIDE}
 
+CLEANFILES+=	rescue.unstripped
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 
