@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.3 2003/05/15 13:30:31 fvdl Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.4 2003/05/15 21:31:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -330,6 +330,20 @@ mpacpi_config_ioapic(APIC_HEADER *hdrp, void *aux)
 int
 mpacpi_scan_apics(struct device *self)
 {
+#if NPCI > 0
+	int quirks;
+
+	/*
+	 * If PCI routing tables can't be built, don't bother
+	 * with the rest. Let MPBIOS do everything.
+	 * XXX could still only do CPUs and I/O APICs, but
+	 * need to split the MPBIOS code into interrupt and
+	 * device probing.
+	 */
+	quirks = acpi_find_quirks();
+	if ((quirks & (ACPI_QUIRK_BADPCI | ACPI_QUIRK_BADIRQ)) != 0)
+		return 0;
+#endif
 	if (acpi_madt_map() != AE_OK)
 		return 0;
 
@@ -603,9 +617,11 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 			break;
 		}
 		if (mpacpi_npciknown == known) {
-			if (mp_verbose)
-				printf("mpacpi: couldn't find all PCI bus "
-				       "numbers\n");
+			/*
+			 * Too committed at this point to find a graceful
+			 * way out.
+			 */
+			panic("mpacpi: couldn't find all PCI bus numbers");
 			break;
 		}
 	}
