@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.4 1998/10/18 09:52:16 tsubai Exp $	*/
+/*	$NetBSD: adb.c,v 1.5 1998/10/20 14:56:30 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -70,6 +70,8 @@ struct cfattach adb_ca = {
 	sizeof(struct adb_softc), adbmatch, adbattach
 };
 
+extern int adbHardware;
+
 static int
 adbmatch(parent, cf, aux)
 	struct device *parent;
@@ -78,16 +80,19 @@ adbmatch(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 
-	if (strcmp(ca->ca_name, "via-cuda") != 0)
-		return 0;
-
 	if (ca->ca_nreg < 8)
 		return 0;
 
 	if (ca->ca_nintr < 4)
 		return 0;
 
-	return 1;
+	if (strcmp(ca->ca_name, "via-cuda") == 0)
+		return 1;
+
+	if (strcmp(ca->ca_name, "via-pmu") == 0)
+		return 1;
+
+	return 0;
 }
 
 static void
@@ -110,6 +115,11 @@ adbattach(parent, self, aux)
 
 	sc->sc_regbase = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
 	Via1Base = sc->sc_regbase;
+
+	if (strcmp(ca->ca_name, "via-cuda") == 0)
+		adbHardware = ADB_HW_CUDA;
+	else if (strcmp(ca->ca_name, "via-pmu") == 0)
+		adbHardware = ADB_HW_PB;
 
 	adb_polling = 1;
 	ADBReInit();
@@ -145,7 +155,8 @@ adbattach(parent, self, aux)
 		(void)config_found(self, &aa_args, adbprint);
 	}
 
-	adb_cuda_autopoll();
+	if (adbHardware == ADB_HW_CUDA)
+		adb_cuda_autopoll();
 	adb_polling = 0;
 }
 

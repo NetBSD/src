@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.3 1998/10/13 11:21:21 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.4 1998/10/20 14:56:30 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -750,6 +750,7 @@ adb_intr(void)
 		break;
 
 	case ADB_HW_PB:
+		pm_intr();
 		break;
 
 	case ADB_HW_CUDA:
@@ -867,7 +868,13 @@ adb_pass_up(struct adbCommand *in)
 			break;
 
 		case ADB_HW_PB:
-			return;		/* how does PM handle "unsolicited" messages? */
+			cmd = in->data[1];
+			if (in->data[0] < 2)
+				len = 0;
+			else
+				len = in->data[0]-1;
+			start = 1;
+			break;
 
 		case ADB_HW_UNKNOWN:
 			return;
@@ -1075,7 +1082,6 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 			return -1;
 		break;
 
-#if 0
 	case ADB_HW_PB:
 		result = pm_adb_op((u_char *)buffer, (void *)compRout,
 		    (void *)data, (int)command);
@@ -1085,7 +1091,6 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 		else
 			return -1;
 		break;
-#endif
 
 	case ADB_HW_CUDA:
 		result = send_adb_cuda((u_char *)0, (u_char *)buffer,
@@ -1116,16 +1121,16 @@ adb_hw_setup(void)
 
 	switch (adbHardware) {
 	case ADB_HW_II:
-		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
+		via_reg_or(VIA1, vDirB, 0x30);	/* register B bits 4 and 5:
 						 * outputs */
-		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
-		via_reg(VIA1, vACR) &= ~vSR_OUT;	/* make sure SR is set
+		via_reg_and(VIA1, vDirB, 0xf7);	/* register B bit 3: input */
+		via_reg_and(VIA1, vACR, ~vSR_OUT);	/* make sure SR is set
 							 * to IN (II, IIsi) */
 		adbActionState = ADB_ACTION_IDLE;	/* used by all types of
 							 * hardware (II, IIsi) */
 		adbBusState = ADB_BUS_IDLE;	/* this var. used in II-series
 						 * code only */
-		via_reg(VIA1, vIER) = 0x84;	/* make sure VIA interrupts
+		write_via_reg(VIA1, vIER, 0x84);/* make sure VIA interrupts
 						 * are on (II, IIsi) */
 		ADB_SET_STATE_IDLE_II();	/* set ADB bus state to idle */
 
@@ -1133,16 +1138,16 @@ adb_hw_setup(void)
 		break;
 
 	case ADB_HW_IISI:
-		via_reg(VIA1, vDirB) |= 0x30;	/* register B bits 4 and 5:
+		via_reg_or(VIA1, vDirB, 0x30);	/* register B bits 4 and 5:
 						 * outputs */
-		via_reg(VIA1, vDirB) &= 0xf7;	/* register B bit 3: input */
-		via_reg(VIA1, vACR) &= ~vSR_OUT;	/* make sure SR is set
+		via_reg_and(VIA1, vDirB, 0xf7);	/* register B bit 3: input */
+		via_reg_and(VIA1, vACR, ~vSR_OUT);	/* make sure SR is set
 							 * to IN (II, IIsi) */
 		adbActionState = ADB_ACTION_IDLE;	/* used by all types of
 							 * hardware (II, IIsi) */
 		adbBusState = ADB_BUS_IDLE;	/* this var. used in II-series
 						 * code only */
-		via_reg(VIA1, vIER) = 0x84;	/* make sure VIA interrupts
+		write_via_reg(VIA1, vIER, 0x84);/* make sure VIA interrupts
 						 * are on (II, IIsi) */
 		ADB_SET_STATE_IDLE_IISI();	/* set ADB bus state to idle */
 
@@ -1163,7 +1168,7 @@ adb_hw_setup(void)
 		 * XXX - really PM_VIA_CLR_INTR - should we put it in
 		 * pm_direct.h?
 		 */
-		via_reg(VIA1, vIFR) = 0x90;	/* clear interrupt */
+		write_via_reg(VIA1, vIFR, 0x90);	/* clear interrupt */
 		break;
 
 	case ADB_HW_CUDA:
@@ -1199,7 +1204,7 @@ adb_hw_setup(void)
 
 	case ADB_HW_UNKNOWN:
 	default:
-		via_reg(VIA1, vIER) = 0x04;	/* turn interrupts off - TO
+		write_via_reg(VIA1, vIER, 0x04);/* turn interrupts off - TO
 						 * DO: turn PB ints off? */
 		return;
 		break;
@@ -1592,8 +1597,14 @@ adb_setup_hw_type(void)
 {
 	long response;
 
-	adbHardware = ADB_HW_CUDA;
-	return;
+	if (adbHardware == ADB_HW_CUDA)
+		return;
+
+	if (adbHardware == ADB_HW_PB) {
+		pm_setup_adb();
+		return;
+	}
+	panic("unknown adb hardware");
 
 	response = 0; /*mac68k_machine.machineid;*/
 
@@ -2022,13 +2033,6 @@ ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum)
 #endif
 
 
-
-void
-pm_check_adb_devices(x)
-	int x;
-{
-}
-
 int
 setsoftadb()
 {
@@ -2063,31 +2067,25 @@ powermac_restart()
 	int result;
 	u_char output[16];
 
-	output[0] = 0x02;	/* 2 byte message */
-	output[1] = 0x01;	/* to pram/rtc/soft-power device */
-	output[2] = 0x11;	/* restart */
-	result = send_adb_cuda((u_char *)output, (u_char *)0,
-		(void *)0, (void *)0, (int)0);
-	if (result != 0)	/* exit if not sent */
-		return;
+	switch (adbHardware) {
+	case ADB_HW_CUDA:
+		output[0] = 0x02;	/* 2 byte message */
+		output[1] = 0x01;	/* to pram/rtc/soft-power device */
+		output[2] = 0x11;	/* restart */
+		result = send_adb_cuda((u_char *)output, (u_char *)0,
+				       (void *)0, (void *)0, (int)0);
+		if (result != 0)	/* exit if not sent */
+			return;
+		while (1);		/* not return */
 
-	while (1);		/* not return */
+	case ADB_HW_PB:
+		pm_adb_restart();
+		return;
+	}
 }
 
 void
 powermac_powerdown()
 {
-	volatile int flag = 0;
-	int result;
-	u_char output[16];
-
-	output[0] = 0x02;	/* 2 byte message */
-	output[1] = 0x01;	/* to pram/rtc/soft-power device */
-	output[2] = 0x0a;	/* powerdown */
-	result = send_adb_cuda((u_char *)output, (u_char *)0,
-		(void *)0, (void *)0, (int)0);
-	if (result != 0)	/* exit if not sent */
-		return;
-
-	while (1);		/* not return */
+	adb_poweroff();
 }
