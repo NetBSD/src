@@ -234,7 +234,7 @@ symbolS *symbol_rootP;
 		 * depend on S_GET_OTHER() for some unspecified reason.
 		 */
 		S_SET_OTHER(symbolP,
-			(symbolP->sy_weak << 4) | (symbolP->sy_aux & 0xf) );
+			(symbolP->sy_bind << 4) | (symbolP->sy_aux & 0xf) );
 
 		/* Any symbol still undefined and is not a dbg symbol is made N_EXT. */
 		if (!S_IS_DEBUG(symbolP) && !S_IS_DEFINED(symbolP))
