@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.26 1998/01/24 13:19:55 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.27 1998/01/24 14:22:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -165,9 +165,9 @@ process_read_fpregs(p, regs)
 		 * save it temporarily.
 		 */
 		cw = frame->sv_env.en_cw;
-		bzero(frame, sizeof(*frame));
+		bzero(frame, sizeof(*regs));
 		frame->sv_env.en_cw = cw;
-		frame->sv_env.en_sw = 0;
+		frame->sv_env.en_sw = 0x0000;
 		frame->sv_env.en_tw = 0xffff;
 		p->p_md.md_flags |= MDP_USEDFPU;
 	}
