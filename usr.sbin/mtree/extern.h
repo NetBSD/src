@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2001/10/22 07:07:46 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2001/10/25 03:00:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,6 @@ int	 compare(const char *, NODE *, FTSENT *);
 int	 crc(int, u_int32_t *, u_int32_t *);
 void	 cwalk(void);
 void	 dump_nodes(const char *, NODE *);
-const char *inotype(u_int);
 int	 matchtags(NODE *);
 void	 mtree_err(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
