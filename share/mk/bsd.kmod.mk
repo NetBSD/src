@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.59 2003/03/27 17:05:14 christos Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.60 2003/04/23 18:34:20 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -54,6 +54,12 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 		`${OBJDUMP} --reloc ${KMOD}_tmp.o | \
 			 awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmwrap.awk` \
 		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
+.if exists($S/lkm/arch/${MACHINE_ARCH}/lkmhide.awk)
+	${OBJCOPY} \
+		`${NM} tmp.o | awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmhide.awk` \
+		tmp.o tmp1.o 
+	mv tmp1.o tmp.o
+.endif
 	mv tmp.o ${.TARGET}
 .else
 ${PROG}: ${OBJS} ${DPADD}
