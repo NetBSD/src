@@ -1,0 +1,38 @@
+#	$NetBSD: Makefile,v 1.1.1.1 2001/04/19 14:33:07 wiz Exp $
+
+.include "../../Makefile.path"
+
+.PATH:		${IIDIST}/font/devcp1047
+
+DEVICE=		cp1047
+FONTFILES=	$(FONTS) DESC
+FONTS=		R I B BI
+
+RES=240
+CPI=10
+LPI=6
+
+$(FONTS): R.proto
+	@echo Making $@
+	@-rm -f $@
+	@(charwidth=`expr $(RES) / $(CPI)` ; \
+	 sed -e "s/^name [A-Z]*$$/name $@/" \
+	     -e "s/^\\([^	]*\\)	[0-9]+	/\\1	$$charwidth	/" \
+	     -e "s/^spacewidth [0-9]+$$/spacewidth $$charwidth/" \
+	     -e "s/^internalname .*$$/internalname $@/" \
+	     -e "/^internalname/s/BI/3/" \
+	     -e "/^internalname/s/B/2/" \
+	     -e "/^internalname/s/I/1/" \
+	     -e "/^internalname .*[^ 0-9]/d" \
+	     $> >$@)
+
+DESC: DESC.proto
+	@echo Making $@
+	@-rm -f $@
+	@sed -e "s/^res .*$$/res $(RES)/" \
+	    -e "s/^hor .*$$/hor `expr $(RES) / $(CPI)`/" \
+	    -e "s/^vert .*$$/vert `expr $(RES) / $(LPI)`/" \
+	    -e "s/^fonts .*$$/fonts `set $(FONTS); echo $$#` $(FONTS)/" \
+	    $> >$@
+
+.include "../Makefile.dev"
