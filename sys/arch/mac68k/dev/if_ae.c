@@ -19,7 +19,7 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.10 1994/03/01 15:24:25 briggs Exp $
+ * $Id: if_ae.c,v 1.11 1994/03/20 00:14:16 briggs Exp $
  */
  
 #include "ae.h"
@@ -1071,7 +1071,7 @@ ae_ioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			ae_init(ifp->if_unit);	/* before arpwhohas */
+			ae_init(sc);	/* before arpwhohas */
 			/*
 			 * See if another station has *our* IP address.
 			 * i.e.: There is an address conflict! If a
@@ -1105,12 +1105,12 @@ ae_ioctl(ifp, command, data)
 			/*
 			 * Set new address
 			 */
-			ae_init(ifp->if_unit);
+			ae_init(sc);
 			break;
 		    }
 #endif
 		default:
-			ae_init(ifp->if_unit);
+			ae_init(sc);
 			break;
 		}
 		break;
@@ -1129,7 +1129,7 @@ ae_ioctl(ifp, command, data)
 		 */
 			if ((ifp->if_flags & IFF_UP) &&
 		    	    ((ifp->if_flags & IFF_RUNNING) == 0))
-				ae_init(ifp->if_unit);
+				ae_init(sc);
 		}
 #if NBPFILTER > 0
 		if (ifp->if_flags & IFF_PROMISC) {
