@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.3 2000/01/26 16:21:33 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.4 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -89,6 +89,46 @@ struct	ext2fs_direct {
 	u_int8_t e2d_type;		/* file type */
 	char	  e2d_name[EXT2FS_MAXNAMLEN];/* name with length <= EXT2FS_MAXNAMLEN */
 };
+
+/* Ext2 directory file types (not the same as FFS. Sigh. */
+#define EXT2_FT_UNKNOWN         0
+#define EXT2_FT_REG_FILE        1 
+#define EXT2_FT_DIR             2
+#define EXT2_FT_CHRDEV          3
+#define EXT2_FT_BLKDEV          4
+#define EXT2_FT_FIFO            5
+#define EXT2_FT_SOCK            6
+#define EXT2_FT_SYMLINK         7
+
+#define EXT2_FT_MAX             8
+
+#define E2IFTODT(mode)    (((mode) & 0170000) >> 12)
+
+static __inline__ u_int8_t inot2ext2dt __P((u_int16_t))
+    __attribute__((__unused__));
+static __inline__ u_int8_t
+inot2ext2dt(type)
+	u_int16_t type;
+{
+	switch(type) {
+	case E2IFTODT(EXT2_IFIFO):
+		return EXT2_FT_FIFO;
+	case E2IFTODT(EXT2_IFCHR):
+		return EXT2_FT_CHRDEV;
+	case E2IFTODT(EXT2_IFDIR):
+		return EXT2_FT_DIR;
+	case E2IFTODT(EXT2_IFBLK):
+		return EXT2_FT_BLKDEV;
+	case E2IFTODT(EXT2_IFREG):
+		return EXT2_FT_REG_FILE;
+	case E2IFTODT(EXT2_IFLNK):
+		return EXT2_FT_SYMLINK;
+	case E2IFTODT(EXT2_IFSOCK):
+		return EXT2_FT_SOCK;
+	default:
+		return 0;
+	}
+}
 
 /*
  * The EXT2FS_DIRSIZ macro gives the minimum record length which will hold
