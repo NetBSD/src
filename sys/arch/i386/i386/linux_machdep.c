@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.11 1995/08/14 01:38:24 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.12 1995/08/14 02:19:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -112,7 +112,7 @@ linux_sendsig(catcher, sig, mask, code)
 	}
 
 	frame.sf_handler = catcher;
-	frame.sf_sig = bsd_to_linux_sig(sig);
+	frame.sf_sig = bsd_to_linux_sig[sig];
 
 	/*
 	 * Build the signal context to be used by sigreturn.
