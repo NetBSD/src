@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.53 2001/01/14 02:38:19 mrg Exp $ */
+/*	$NetBSD: md.c,v 1.54 2001/01/14 23:45:17 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -445,16 +445,12 @@ md_cleanup_install(void)
 	sprintf(cmd, "sed "
 			"-e 's/rc_configured=NO/rc_configured=YES/' "
 			" < %s > %s", realfrom, realto);
-	scripting_fprintf(log, "%s\n", sedcmd);
-	do_system(cmd);
-
-	/* put "wscons=YES" into rc.conf.install (which will be renamed
-	 * to rc.conf in a second) */
-	sprintf(cmd, "echo wscons=YES >> %s", realto);
 	scripting_fprintf(log, "%s\n", cmd);
 	do_system(cmd);
 
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
+	
+	add_rc_conf("wscons=YES");
 
 	/*
 	 * For GENERIC_TINY, do not enable any extra screens or wsmux.
