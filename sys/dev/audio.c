@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.87 1998/07/05 08:49:41 jonathan Exp $	*/
+/*	$NetBSD: audio.c,v 1.88 1998/07/09 02:45:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1972,7 +1972,6 @@ int
 audio_check_params(p)
 	struct audio_params *p;
 {
-#if defined(COMPAT_12)
 	if (p->encoding == AUDIO_ENCODING_PCM16) {
 		if (p->precision == 8)
 			p->encoding = AUDIO_ENCODING_ULINEAR;
@@ -1984,7 +1983,6 @@ audio_check_params(p)
 		else
 			return EINVAL;
 	}
-#endif
 
 	if (p->encoding == AUDIO_ENCODING_SLINEAR)
 #if BYTE_ORDER == LITTLE_ENDIAN
