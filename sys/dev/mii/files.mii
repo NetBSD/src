@@ -1,15 +1,15 @@
-#	$NetBSD: files.mii,v 1.3 1998/01/12 09:28:51 thorpej Exp $
+#	$NetBSD: files.mii,v 1.4 1998/02/16 22:12:50 thorpej Exp $
 
-device mii class dull {dev = -1}
+device mii {dev = -1}
 attach mii at miibus
 
 file    dev/mii/mii.c miibus
 file    dev/mii/generic_phy.c miibus
 
-device tlphy class dull
+device tlphy
 attach tlphy at mii
 file dev/mii/tlphy.c	tlphy
 
-device nsphy class dull
+device nsphy
 attach nsphy at mii
 file dev/mii/nsphy.c	nsphy

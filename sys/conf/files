@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.172 1998/02/12 20:12:03 thorpej Exp $
+#	$NetBSD: files,v 1.173 1998/02/16 22:12:48 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -32,11 +32,13 @@ defopt	opt_uvm.h	UVM
 defopt	opt_uvmhist.h	UVMHIST UVMHIST_PRINT
 defopt	opt_pmap_new.h	PMAP_NEW
 
+# device classes
+devclass disk
+devclass tape
+devclass ifnet
+devclass tty
+
 # generic attributes
-define	disk
-define	tape
-define	ifnet
-define	tty
 define	audio { }
 define	scsi {[channel = -1]}
 define	ata {[drive = -1]}
@@ -48,7 +50,7 @@ define	mulaw
 define	auconv
 
 # audio device, attaches to audio hardware driver
-device	audio class dull
+device	audio
 attach	audio at audio
 
 # net device attributes - we have generic code for arc(net), ether(net),
@@ -64,9 +66,9 @@ define	arp
 # Device description for machine-independent IPKDB code.
 define	ipkdb
 
-device	ipkdbif class dull: ipkdb
-device	ipkdbslip class dull: ipkdb
-device	ipkdbppp class dull: ipkdb
+device	ipkdbif: ipkdb
+device	ipkdbslip: ipkdb
+device	ipkdbppp: ipkdb
 
 # Common files for any ipkdb support
 file	ipkdb/ipkdb_ipkdb.c		ipkdb			needs-flag
@@ -83,43 +85,43 @@ file	ipkdb/ipkdb_ppp.c		ipkdbppp		needs-flag
 # contain the cfdrivers.  Attachments are provided by files.<bus>
 
 # Adaptec AIC-6[32]60 ICs
-device	aic class dull: scsi
+device	aic: scsi
 file	dev/ic/aic6360.c		aic
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
-device	ahc class dull: scsi
+device	ahc: scsi
 file	dev/ic/aic7xxx.c		ahc
 
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 # (Must be declared before AHA to ensure bha probes before aha.
 #  Probing AHA first configures bhas as aha, via their AHA
 #  hardware-compatibility mode.)
-device	bha class dull: scsi
+device	bha: scsi
 file	dev/ic/bha.c			bha
 
 # Adaptec AHA-154x and AHA-164x controllers
 # (must be after bha, see above)
-device	aha class dull: scsi
+device	aha: scsi
 file	dev/ic/aha.c			aha
 
 # Qlogic ISP 10x0 SCSI Controllers
-device	isp class dull: scsi
+device	isp: scsi
 file	dev/ic/isp.c			isp
 
 # UltraStor SCSI controllers
-device	uha class dull: scsi
+device	uha: scsi
 file	dev/ic/uha.c			uha
 
 # 3Com Etherlink-III Ethernet controller
-device	ep class ifnet: arp, ether, ifnet
+device	ep: arp, ether, ifnet
 file	dev/ic/elink3.c			ep
 
 # DEC EtherWORKS III (LEMAC) Ethernet controllers
-device	lc class ifnet: arp, ether, ifnet
+device	lc: arp, ether, ifnet
 file	dev/ic/lemac.c			lc
 
 # LANCE and PCnet Ethernet controllers
-device	le class ifnet: arp, ether, ifnet
+device	le: arp, ether, ifnet
 file	dev/ic/am7990.c			le
 
 # 8390-family Ethernet controllers
@@ -136,11 +138,11 @@ file	dev/ic/pdq.c			pdq
 file	dev/ic/pdq_ifsubr.c		pdq
 
 # Cyclades Cyclom-8/16/32 
-device	cy class tty: tty
+device	cy: tty
 file	dev/ic/cy.c			cy			needs-flag
 
 # Efficient Networks, Inc. ATM interface
-device	en class ifnet: atm, ifnet
+device	en: atm, ifnet
 file	dev/ic/midway.c			en
 
 # NCR 53x9x or Emulex ESP SCSI Controller
@@ -152,7 +154,7 @@ define	i82586
 file	dev/ic/i82586.c			i82586
 
 # SMC 91Cxx Ethernet Controller
-device	sm class ifnet: arp, ether, ifnet
+device	sm: arp, ether, ifnet
 file	dev/ic/smc91cxx.c		sm
 
 # Interwave Am78C201 audio driver
@@ -165,12 +167,12 @@ file	dev/ic/tms320av110.c		tms320av110
 
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
-device	ne class ifnet: ether, ifnet, arp, dp8390nic
+device	ne: ether, ifnet, arp, dp8390nic
 file	dev/ic/ne2000.c			ne
 
 # 8250/16[45]50-based "com" ports
 # XXX In a perfect world, this would be done with attributes
-device	com class tty: tty
+device	com: tty
 file	dev/ic/com.c			com needs-flag
 
 # Device description for i2c bus and i2c eeprom
@@ -181,7 +183,7 @@ define  i2c_eeprom
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
 #
 # # ESDI/IDE/etc. controllers
-# device  wdc class dull: ata, atapi
+# device  wdc: ata, atapi
 # file    dev/ic/wdc.c
 #				wdc & (wd | !wd) needs-flag # XXX
 
