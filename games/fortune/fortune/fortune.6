@@ -33,142 +33,127 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)fortune.6	6.8 (Berkeley) 6/23/90
-.\"	$Id: fortune.6,v 1.2 1993/08/01 07:46:57 mycroft Exp $
+.\"	$Id: fortune.6,v 1.3 1993/08/05 02:15:58 jtc Exp $
 .\"
-.TH FORTUNE 6 "June 23, 1990"
-.UC 4
-.SH NAME
-fortune \- print a random, hopefully interesting, adage
-.SH SYNOPSIS
-.B fortune
-[
-.B \-aefilosw
-]
-[
-.B \-m
-.I pattern
-]
-[ [
-.IR N%
-]
-.I file/dir/all
-]
-.SH DESCRIPTION
+.Dd June 23, 1990
+.Dt FORTUNE 6
+.Os
+.Sh NAME
+.Nm fortune 
+.Nd print a random, hopefully interesting, adage
+.Sh SYNOPSIS
+.Nm fortune
+.Op Fl aefilosw
+.Op Fl m Ar pattern 
+.Oo 
+.Op Ar N% 
+.Ar file/dir/all
+.Oc
+.Sh DESCRIPTION
 When
-.I fortune
+.Nm fortune
 is run with no arguments it prints out a random epigram.
 Epigrams are divided into several categories, where each category
 is subdivided into those which are potentially offensive and those
 which are not.
 The options are as follows:
-.TP
-.B \-a
+.Bl -tag -width indent
+.It Fl a
 Choose from all lists of maxims, both offensive and not.
-.TP
-.B \-e
+.It Fl e
 Consider all fortune files to be of equal size (see discussion below
 on multiple files).
-.TP
-.B \-f
+.It Fl f
 Print out the list of files which would be searched, but don't
 print a fortune.
-.TP
-.B \-l
+.It Fl l
 Long dictums only.
-.TP
-.B \-m
+.It Fl m
 Print out all fortunes which match the regular expression
-.IR pattern .
+.Ar pattern .
 See
-.BR regex (3)
+.Xr regex 3
 for a description of patterns.
-.TP
-.B \-o
+.It Fl o
 Choose only from potentially offensive aphorisms.
-.ft B
+.Pp
 Please, please, please request a potentially offensive fortune if and
 only if you believe, deep down in your heart, that you are willing
 to be offended.
 (And that if you are, you'll just quit using -o rather than give us
 grief about it, okay?)
-.ft R
-.PP
-.in +5
+.Pp
+.Bd -filled -offset indent
 \&... let us keep in mind the basic governing philosophy
 of The Brotherhood, as handsomely summarized in these words:
 we believe in healthy, hearty laughter -- at the expense of
 the whole human race, if needs be.
 Needs be.
-.br
-.in +10
+.Ed
+.Bd -filled -offset indent-two
 -- H. Allen Smith, "Rude Jokes"
-.TP
-.B \-s
+.Ed
+.It Fl s
 Short apothegms only.
-.TP
-.B \-i
+.It Fl i
 Ignore case for
-.B \-m
+.Fl m
 patterns.
-.TP
-.B \-w
+.It Fl w
 Wait before termination for an amount of time calculated from the
 number of characters in the message.
 This is useful if it is executed as part of the logout procedure
 to guarantee that the message can be read before the screen is cleared.
-.PP
+.El
+.Pp
 The user may specify alternate sayings.
 You can specify a specific file, a directory which contains one or
 more files, or the special word
-.B all
+.Ar all
 which says to use all the standard databases.
 Any of these may be preceded by a percentage, which is a number
-.I N
+.Ar N
 between 0 and 100 inclusive, followed by a
-.B % .
+.Em % .
 If it is, there will be a
-.I N
+.Ar N
 percent probability that an adage will be picked from that file
 or directory.
 If the percentages do not sum to 100, and there are specifications
 without percentages, the remaining percent will apply to those files
 and/or directories, in which case the probability of selecting from
 one of them will be based on their relative sizes.
-.PP
+.Pp
 As an example, given two databases
-.B funny
+.Ar funny
 and
-.B not-funny ,
+.Ar not-funny ,
 with
-.B funny
+.Ar funny
 twice as big, saying
-.RS
-fortune funny not-funny
-.RE
+.Dl fortune funny not-funny
 will get you fortunes out of
-.B funny
+.Ar funny
 two-thirds of the time.
 The command
-.RS
-fortune 90% funny 10% not-funny
-.RE
+.Dl fortune 90% funny 10% not-funny
 will pick out 90% of its fortunes from
-.B funny
-(the ``10% not-funny'' is unnecessary, since 10% is all that's left).
+.Ar funny
+(the 
+.Dq 10% not-funny
+is unnecessary, since 10% is all that's left).
 The
-.B \-e
+.Fl e
 option says to consider all files equal;
 thus
-.RS
-fortune \-e
-.RE
+.Dl fortune Fl e
 is equivalent to
-.RS
-fortune 50% funny 50% not-funny
-.RE
-.SH FILES
-/usr/share/games/fortune
-.SH AUTHOR
+.Dl fortune 50% funny 50% not-funny
+.Sh FILES
+.Pa /usr/share/games/fortune
+.Sh AUTHOR
 Ken Arnold
-.SH "SEE ALSO"
-regex(3), regcmp(3), strfile(8)
+.Sh SEE ALSO
+.Xr regex 3 ,
+.Xr regcmp 3 ,
+.Xr strfile(8)
