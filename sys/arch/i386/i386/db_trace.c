@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28.4.3 2000/08/25 03:56:26 sommerfeld Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.28.4.4 2001/01/23 06:34:56 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -45,9 +45,9 @@
 
 #define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
 
-static int db_i386_regop (struct db_variable *, db_expr_t *, int);
+static int db_i386_regop (const struct db_variable *, db_expr_t *, int);
 
-struct db_variable db_regs[] = {
+const struct db_variable db_regs[] = {
 	{ "es",		dbreg(es),     db_i386_regop },
 	{ "ds",		dbreg(ds),     db_i386_regop },
 	{ "edi",	dbreg(edi),    db_i386_regop },
@@ -63,10 +63,11 @@ struct db_variable db_regs[] = {
 	{ "esp",	dbreg(esp),    db_i386_regop },
 	{ "ss",		dbreg(ss),     db_i386_regop },
 };
-struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs =
+    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 static int
-db_i386_regop (struct db_variable *vp, db_expr_t *val, int opcode)
+db_i386_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 	db_expr_t *regaddr =
 	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.3 2000/08/25 03:59:53 sommerfeld Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.2.4 2001/01/23 06:34:56 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,7 +63,7 @@ int	db_active = 0;
 
 void db_mach_cpu (db_expr_t, int, db_expr_t, char *);
 
-struct db_command db_machine_cmds[] = {
+const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
 	{ "cpu",	db_mach_cpu,	0,	0 },
 #endif
@@ -89,7 +89,6 @@ extern vector Xintrddbipi;
 void
 db_machine_init()
 {
-	db_machine_commands_install(db_machine_cmds);
 
 #ifdef MULTIPROCESSOR
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
