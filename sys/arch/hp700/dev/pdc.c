@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.10 2003/11/01 18:23:37 matt Exp $	*/
+/*	$NetBSD: pdc.c,v 1.11 2003/11/21 00:25:36 chs Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.10 2003/11/01 18:23:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.11 2003/11/21 00:25:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ void pdctimeout __P((void *v));
 int pdcparam __P((struct tty *tp, struct termios *));
 int pdccnlookc __P((dev_t dev, int *cp));
 
+static struct cnm_state pdc_cnm_state;
+
 void
 pdc_init()
 {
@@ -124,6 +126,9 @@ pdc_init()
 	/* XXX make pdc current console */
 	cn_tab = &constab[0];
 	/* TODO: detect that we are on cereal, and set CONADDR */
+
+	cn_init_magic(&pdc_cnm_state);
+	cn_set_magic("+++++");
 
 	hp700_pagezero_unmap(pagezero_cookie);
 }
@@ -361,6 +366,7 @@ pdctimeout(v)
 	int c;
 
 	while (pdccnlookc(tp->t_dev, &c)) {
+		cn_check_magic(tp->t_dev, c, pdc_cnm_state);
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}
@@ -430,7 +436,7 @@ pdccngetc(dev)
 	if (!pdc)
 		return 0;
 
-	while(!pdccnlookc(dev, &c))
+	while (!pdccnlookc(dev, &c))
 		;
 
 	return (c);
