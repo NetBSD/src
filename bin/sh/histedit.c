@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.21 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.22 2000/01/27 23:39:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.21 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.22 2000/01/27 23:39:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -375,7 +375,7 @@ histcmd(argc, argv)
 					out2str(s);
 				}
 
-				evalstring(strcpy(stalloc(strlen(s) + 1), s));
+				evalstring(strcpy(stalloc(strlen(s) + 1), s), 0);
 				free(sp);
 				if (displayhist && hist) {
 					/*
@@ -400,7 +400,7 @@ histcmd(argc, argv)
 		fclose(efp);
 		editcmd = stalloc(strlen(editor) + strlen(editfile) + 2);
 		sprintf(editcmd, "%s %s", editor, editfile);
-		evalstring(editcmd);	/* XXX - should use no JC command */
+		evalstring(editcmd, 0);	/* XXX - should use no JC command */
 		INTON;
 		readcmdfile(editfile);	/* XXX - should read back - quick tst */
 		unlink(editfile);

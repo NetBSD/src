@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.9 1995/09/11 17:05:43 christos Exp $	*/
+/*	$NetBSD: eval.h,v 1.10 2000/01/27 23:39:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -51,7 +51,7 @@ struct backcmd {		/* result of evalbackcmd */
 };
 
 int evalcmd __P((int, char **));
-void evalstring __P((char *));
+void evalstring __P((char *, int));
 union node;	/* BLETCH for ansi C */
 void evaltree __P((union node *, int));
 void evalbackcmd __P((union node *, struct backcmd *));

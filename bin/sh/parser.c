@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.43 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.44 2000/01/27 23:39:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.43 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.44 2000/01/27 23:39:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,10 +245,15 @@ andor() {
 
 STATIC union node *
 pipeline() {
-	union node *n1, *pipenode;
+	union node *n1, *n2, *pipenode;
 	struct nodelist *lp, *prev;
+	int negate;
 
+	negate = 0;
 	TRACE(("pipeline: entered\n"));
+	while (readtoken() == TNOT)
+		negate = !negate;
+	tokpushback++;
 	n1 = command();
 	if (readtoken() == TPIPE) {
 		pipenode = (union node *)stalloc(sizeof (struct npipe));
@@ -267,7 +272,13 @@ pipeline() {
 		n1 = pipenode;
 	}
 	tokpushback++;
-	return n1;
+	if (negate) {
+		n2 = (union node *)stalloc(sizeof (struct nnot));
+		n2->type = NNOT;
+		n2->nnot.com = n1;
+		return n2;
+	} else
+		return n1;
 }
 
 

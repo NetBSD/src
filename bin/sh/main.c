@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 1999/07/09 03:05:50 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2000/01/27 23:39:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 1999/07/09 03:05:50 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2000/01/27 23:39:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ state3:
 	}
 
 	if (minusc)
-		evalstring(minusc);
+		evalstring(minusc, 0);
 
 	if (sflag || minusc == NULL) {
 state4:	/* XXX ??? - why isn't this before the "if" statement */

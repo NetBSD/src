@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.49 1999/10/13 00:59:10 mrg Exp $	*/
+/*	$NetBSD: eval.c,v 1.50 2000/01/27 23:39:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.49 1999/10/13 00:59:10 mrg Exp $");
+__RCSID("$NetBSD: eval.c,v 1.50 2000/01/27 23:39:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,8 @@ int exitstatus;			/* exit status of last command */
 int oexitstatus;		/* saved exit status */
 
 
-STATIC void evalloop __P((union node *));
-STATIC void evalfor __P((union node *));
+STATIC void evalloop __P((union node *, int));
+STATIC void evalfor __P((union node *, int));
 STATIC void evalcase __P((union node *, int));
 STATIC void evalsubshell __P((union node *, int));
 STATIC void expredir __P((union node *));
@@ -151,7 +151,7 @@ evalcmd(argc, argv)
                         STPUTC('\0', concat);
                         p = grabstackstr(concat);
                 }
-                evalstring(p);
+                evalstring(p, EV_TESTED);
         }
         return exitstatus;
 }
@@ -162,8 +162,9 @@ evalcmd(argc, argv)
  */
 
 void
-evalstring(s)
+evalstring(s, flag)
 	char *s;
+	int flag;
 	{
 	union node *n;
 	struct stackmark smark;
@@ -171,7 +172,7 @@ evalstring(s)
 	setstackmark(&smark);
 	setinputstring(s, 1);
 	while ((n = parsecmd(0)) != NEOF) {
-		evaltree(n, 0);
+		evaltree(n, flag);
 		popstackmark(&smark);
 	}
 	popfile();
@@ -201,7 +202,7 @@ evaltree(n, flags)
 	TRACE(("evaltree(0x%lx: %d) called\n", (long)n, n->type));
 	switch (n->type) {
 	case NSEMI:
-		evaltree(n->nbinary.ch1, 0);
+		evaltree(n->nbinary.ch1, flags & EV_TESTED);
 		if (evalskip)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
@@ -213,13 +214,13 @@ evaltree(n, flags)
 			flags |= EV_TESTED;
 			goto out;
 		}
-		evaltree(n->nbinary.ch2, flags);
+		evaltree(n->nbinary.ch2, flags | EV_TESTED);
 		break;
 	case NOR:
 		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (evalskip || exitstatus == 0)
 			goto out;
-		evaltree(n->nbinary.ch2, flags);
+		evaltree(n->nbinary.ch2, flags | EV_TESTED);
 		break;
 	case NREDIR:
 		expredir(n->nredir.redirect);
@@ -247,10 +248,10 @@ evaltree(n, flags)
 	}
 	case NWHILE:
 	case NUNTIL:
-		evalloop(n);
+		evalloop(n, flags);
 		break;
 	case NFOR:
-		evalfor(n);
+		evalfor(n, flags);
 		break;
 	case NCASE:
 		evalcase(n, flags);
@@ -278,14 +279,15 @@ evaltree(n, flags)
 out:
 	if (pendingsigs)
 		dotrap();
-	if ((flags & EV_EXIT) || (eflag && exitstatus && !(flags & EV_TESTED)))
+	if (flags & EV_EXIT)
 		exitshell(exitstatus);
 }
 
 
 STATIC void
-evalloop(n)
+evalloop(n, flags)
 	union node *n;
+	int flags;
 {
 	int status;
 
@@ -309,7 +311,7 @@ skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 			if (exitstatus == 0)
 				break;
 		}
-		evaltree(n->nbinary.ch2, 0);
+		evaltree(n->nbinary.ch2, flags & EV_TESTED);
 		status = exitstatus;
 		if (evalskip)
 			goto skipping;
@@ -321,8 +323,9 @@ skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 
 
 STATIC void
-evalfor(n)
+evalfor(n, flags)
     union node *n;
+    int flags;
 {
 	struct arglist arglist;
 	union node *argp;
@@ -343,7 +346,7 @@ evalfor(n)
 	loopnest++;
 	for (sp = arglist.list ; sp ; sp = sp->next) {
 		setvar(n->nfor.var, sp->text, 0);
-		evaltree(n->nfor.body, 0);
+		evaltree(n->nfor.body, flags & EV_TESTED);
 		if (evalskip) {
 			if (evalskip == SKIPCONT && --skipcount <= 0) {
 				evalskip = 0;
@@ -571,6 +574,7 @@ evalbackcmd(n, result)
 				copyfd(pip[1], 1);
 				close(pip[1]);
 			}
+			eflag = 0;
 			evaltree(n, EV_EXIT);
 		}
 		close(pip[1]);
@@ -781,7 +785,7 @@ evalcommand(cmd, flags, backcmd)
 		for (sp = varlist.list ; sp ; sp = sp->next)
 			mklocal(sp->text);
 		funcnest++;
-		evaltree(cmdentry.u.func, 0);
+		evaltree(cmdentry.u.func, flags & EV_TESTED);
 		funcnest--;
 		INTOFF;
 		poplocalvars();
@@ -882,6 +886,9 @@ out:
 	if (lastarg)
 		setvar("_", lastarg, 0);
 	popstackmark(&smark);
+
+	if (eflag && exitstatus && !(flags & EV_TESTED))
+	    exitshell(exitstatus);
 }
 
 
