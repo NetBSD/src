@@ -1,4 +1,4 @@
-/*	$NetBSD: walk.c,v 1.15 2003/09/19 06:11:35 itojun Exp $	*/
+/*	$NetBSD: walk.c,v 1.15.2.1 2004/06/22 07:21:29 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,9 +71,13 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: walk.c,v 1.15 2003/09/19 06:11:35 itojun Exp $");
+__RCSID("$NetBSD: walk.c,v 1.15.2.1 2004/06/22 07:21:29 tron Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -129,11 +133,13 @@ walk_dir(const char *dir, fsnode *parent)
 			errx(1, "Pathname too long.");
 		if (lstat(path, &stbuf) == -1)
 			err(1, "Can't lstat `%s'", path);
+#ifdef S_ISSOCK
 		if (S_ISSOCK(stbuf.st_mode & S_IFMT)) {
 			if (debug & DEBUG_WALK_DIR_NODE)
 				printf("  skipping socket %s\n", path);
 			continue;
 		}
+#endif
 
 		cur = create_fsnode(dent->d_name, &stbuf);
 		cur->parent = parent;
@@ -401,8 +407,8 @@ apply_specentry(const char *dir, NODE *specnode, fsnode *dirnode)
 		dirnode->inode->st.st_atime =		specnode->st_mtimespec.tv_sec;
 		dirnode->inode->st.st_ctime =		start_time.tv_sec;
 #if HAVE_STRUCT_STAT_ST_MTIMENSEC
-		dirnode->inode->st.st_mtimensec =	specnode->st_mtimensec;
-		dirnode->inode->st.st_atimensec =	specnode->st_mtimensec;
+		dirnode->inode->st.st_mtimensec =	specnode->st_mtimespec.tv_nsec;
+		dirnode->inode->st.st_atimensec =	specnode->st_mtimespec.tv_nsec;
 		dirnode->inode->st.st_ctimensec =	start_time.tv_nsec;
 #endif
 	}
