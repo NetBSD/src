@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.78 2002/04/28 21:32:14 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.79 2002/05/12 16:51:06 matt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.78 2002/04/28 21:32:14 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.79 2002/05/12 16:51:06 matt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -1021,6 +1021,8 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *rq,
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
 	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
+		if (error == EAGAIN || error == ENOMEM)
+			return (CMD_EAGAIN);
 		XS_SETERR(xs, HBA_BOTCH);
 		return (CMD_COMPLETE);
 	}
