@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/12/09 14:03:52 scw Exp $
+#	$NetBSD: Makefile,v 1.32 2003/10/10 23:51:46 mbw Exp $
 #
 
 TARGETS+=	release
@@ -18,6 +18,7 @@ SUBDIR+= cats
 SUBDIR+= evbarm
 SUBDIR+= evbppc
 SUBDIR+= hp300
+SUBDIR+= hp700
 SUBDIR+= hpcmips
 SUBDIR+= hpcsh
 SUBDIR+= i386
