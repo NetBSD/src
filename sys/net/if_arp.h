@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_arp.h	7.4 (Berkeley) 6/28/90
- *	$Id: if_arp.h,v 1.4 1993/08/03 01:51:16 glass Exp $
+ *	$Id: if_arp.h,v 1.5 1993/09/05 00:46:54 cassidy Exp $
  */
 
 #ifndef _NET_IF_ARP_H_
@@ -56,6 +56,8 @@ struct	arphdr {
 	u_short	ar_op;		/* one of: */
 #define	ARPOP_REQUEST	1	/* request to resolve address */
 #define	ARPOP_REPLY	2	/* response to previous request */
+#define REVARP_REQUEST	3	/* reverse ARP request */
+#define REVARP_REPLY	4	/* reverse ARP reply */
 /*
  * The remaining fields are variable in size,
  * according to the sizes above.
