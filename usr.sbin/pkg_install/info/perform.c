@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.23.2.1 1999/08/22 18:03:34 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.23.2.2 1999/09/13 22:14:30 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.23.2.1 1999/08/22 18:03:34 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.23.2.2 1999/09/13 22:14:30 he Exp $");
 #endif
 #endif
 
@@ -40,32 +40,32 @@ __RCSID("$NetBSD: perform.c,v 1.23.2.1 1999/08/22 18:03:34 he Exp $");
 #include <dirent.h>
 #include <ctype.h>
 
-static char    *Home;
+static char *Home;
 
 static int
 pkg_do(char *pkg)
 {
-	Boolean         installed = FALSE, isTMP = FALSE;
-	char            log_dir[FILENAME_MAX];
-	char            fname[FILENAME_MAX];
-	package_t       plist;
-	FILE           *fp;
-	struct stat     sb;
-	char           *cp = NULL;
-	int             code = 0;
+	Boolean installed = FALSE, isTMP = FALSE;
+	char    log_dir[FILENAME_MAX];
+	char    fname[FILENAME_MAX];
+	package_t plist;
+	FILE   *fp;
+	struct stat sb;
+	char   *cp = NULL;
+	int     code = 0;
 
-	if (URLlength(pkg) > 0) {
+	if (IS_URL(pkg)) {
 		if ((cp = fileGetURL(NULL, pkg)) != NULL) {
 			strcpy(fname, cp);
 			isTMP = TRUE;
 		}
 	} else if (fexists(pkg) && isfile(pkg)) {
-		int             len;
+		int     len;
 
 		if (*pkg != '/') {
 			if (!getcwd(fname, FILENAME_MAX)) {
-			    cleanup(0);
-			    err(1, "fatal error during execution: getcwd");
+				cleanup(0);
+				err(1, "fatal error during execution: getcwd");
 			}
 			len = strlen(fname);
 			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
@@ -76,9 +76,9 @@ pkg_do(char *pkg)
 		if ((cp = fileFindByPath(NULL, pkg)) != NULL)
 			strncpy(fname, cp, FILENAME_MAX);
 	}
-	
+
 	if (cp) {
-		if (URLlength(pkg) > 0) {
+		if (IS_URL(pkg)) {
 			/* file is already unpacked by fileGetURL() */
 			strcpy(PlayPen, cp);
 		} else {
@@ -101,28 +101,26 @@ pkg_do(char *pkg)
 			}
 		}
 	} else {
-	    /*
-	     * It's not an uninstalled package, try and find it among the
-	     * installed
-	     */
-		char           *tmp;
+		/*
+	         * It's not an uninstalled package, try and find it among the
+	         * installed
+	         */
+		char   *tmp;
 
 		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
-				(tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-			pkg);
+		    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+		    pkg);
 		if (!fexists(log_dir) || !isdir(log_dir)) {
 			{
-			    /* Check if the given package name matches something
-			     * with 'pkg-[0-9]*'
-			     */
-			    char try[FILENAME_MAX];
-			    snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
-			    if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-						 find_fn, NULL) != 0) {
-				return 0; /* we've just appended some names to the pkgs list,
-					   * they will be processed after this package.
-					   */
-			    }
+				/* Check if the given package name matches
+				 * something with 'pkg-[0-9]*' */
+				char    try[FILENAME_MAX];
+				snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+				if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+					find_fn, NULL) != 0) {
+					return 0;	/* we've just appended some names to the pkgs list,
+							 * they will be processed after this package. */
+				}
 			}
 
 			/* No match */
@@ -153,7 +151,7 @@ pkg_do(char *pkg)
          * any sense.
          */
 	if (Flags & SHOW_INDEX) {
-		char            tmp[FILENAME_MAX];
+		char    tmp[FILENAME_MAX];
 
 		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
 		show_index(tmp, COMMENT_FNAME);
@@ -213,7 +211,9 @@ bail:
 	return code;
 }
 
-/* fn to be called for pkgs found */
+/*
+ * Function to be called for pkgs found
+ */
 static int
 foundpkg(const char *found, char *data)
 {
@@ -223,18 +223,20 @@ foundpkg(const char *found, char *data)
 	return 0;
 }
 
-/* check if a package "pkgspec" (which can be a pattern) is installed */
-/* return 0 if found, 1 otherwise (indicating an error). */
+/*
+ * Check if a package "pkgspec" (which can be a pattern) is installed.
+ * Return 0 if found, 1 otherwise (indicating an error).
+ */
 static int
 CheckForPkg(char *pkgspec, char *dbdir)
 {
-	struct stat     st;
-	char            buf[FILENAME_MAX];
-	int             error;
+	struct stat st;
+	char    buf[FILENAME_MAX];
+	int     error;
 
 	if (strpbrk(pkgspec, "<>[]?*{")) {
-	    /* expensive (pattern) match */
-	    return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
+		/* expensive (pattern) match */
+		return !findmatchingname(dbdir, pkgspec, foundpkg, NULL);
 	}
 	/* simple match */
 	(void) snprintf(buf, sizeof(buf), "%s/%s", dbdir, pkgspec);
@@ -243,15 +245,14 @@ CheckForPkg(char *pkgspec, char *dbdir)
 		printf("%s\n", pkgspec);
 	}
 	if (error) {
-	    /* found nothing - try 'pkg-[0-9]*'
-	     */
-	    char try[FILENAME_MAX];
-	    snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
-	    if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-				 foundpkg, NULL) != 0) {
-                error = 0;
-	    }
-	    
+		/* found nothing - try 'pkg-[0-9]*' */
+		
+		char    try[FILENAME_MAX];
+		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
+		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
+			foundpkg, NULL) != 0) {
+			error = 0;
+		}
 	}
 	return error;
 }
@@ -266,10 +267,10 @@ cleanup(int sig)
 int
 pkg_perform(lpkg_head_t *pkgs)
 {
-	struct dirent  *dp;
-	char           *tmp;
-	DIR            *dirp;
-	int		err_cnt = 0;
+	struct dirent *dp;
+	char   *tmp;
+	DIR    *dirp;
+	int     err_cnt = 0;
 
 	signal(SIGINT, cleanup);
 
@@ -280,51 +281,51 @@ pkg_perform(lpkg_head_t *pkgs)
 	if (CheckPkg) {
 		err_cnt += CheckForPkg(CheckPkg, tmp);
 	} else if (AllInstalled) {
-	    if (!(isdir(tmp) || islinktodir(tmp)))
-		return 1;
-	    
-	    if (File2Pkg) {
-		/* Show all files with the package they belong to */
-		char *file, *pkg;
-		
-		/* pkg_info -Fa => Dump pkgdb */
-		if (pkgdb_open(1)==-1) {
-		    err(1, "cannot open pkgdb");
-		}
-		while ((file = pkgdb_iter())) {
-		    pkg = pkgdb_retrieve(file);
-		    printf("%-50s %s\n", file, pkg);
-		}
-		pkgdb_close();
-	    } else {
-		/* Show all packges with description */
-		if ((dirp = opendir(tmp)) != (DIR *) NULL) {
-			while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-				char tmp2[FILENAME_MAX];
-				
-				if (strcmp(dp->d_name, ".")==0 ||
-				    strcmp(dp->d_name, "..")==0)
-					continue;
+		if (!(isdir(tmp) || islinktodir(tmp)))
+			return 1;
 
-				(void) snprintf(tmp2, sizeof(tmp2), "%s/%s",
-					 tmp, dp->d_name);
-				if (isfile(tmp2))
-					continue;
-				
-				err_cnt += pkg_do(dp->d_name);
+		if (File2Pkg) {
+			/* Show all files with the package they belong to */
+			char   *file, *pkg;
+
+			/* pkg_info -Fa => Dump pkgdb */
+			if (pkgdb_open(1) == -1) {
+				err(1, "cannot open pkgdb");
 			}
-			(void) closedir(dirp);
-		}
-	    }
-	} else {
-	    /* Show info on individual pkg(s) */
-	    lpkg_t *lpp;
+			while ((file = pkgdb_iter())) {
+				pkg = pkgdb_retrieve(file);
+				printf("%-50s %s\n", file, pkg);
+			}
+			pkgdb_close();
+		} else {
+			/* Show all packges with description */
+			if ((dirp = opendir(tmp)) != (DIR *) NULL) {
+				while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
+					char    tmp2[FILENAME_MAX];
 
-	    while ((lpp = TAILQ_FIRST(pkgs))) {
-		TAILQ_REMOVE(pkgs, lpp, lp_link);
-		err_cnt += pkg_do(lpp->lp_name);
-		free_lpkg(lpp);
-	    }
+					if (strcmp(dp->d_name, ".") == 0 ||
+					    strcmp(dp->d_name, "..") == 0)
+						continue;
+
+					(void) snprintf(tmp2, sizeof(tmp2), "%s/%s",
+					    tmp, dp->d_name);
+					if (isfile(tmp2))
+						continue;
+
+					err_cnt += pkg_do(dp->d_name);
+				}
+				(void) closedir(dirp);
+			}
+		}
+	} else {
+		/* Show info on individual pkg(s) */
+		lpkg_t *lpp;
+
+		while ((lpp = TAILQ_FIRST(pkgs))) {
+			TAILQ_REMOVE(pkgs, lpp, lp_link);
+			err_cnt += pkg_do(lpp->lp_name);
+			free_lpkg(lpp);
+		}
 	}
 	return err_cnt;
 }
