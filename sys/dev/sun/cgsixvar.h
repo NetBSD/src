@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.1 2000/08/20 14:28:50 pk Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.2 2002/03/11 16:01:57 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,7 @@ struct cgsix_softc {
 	struct device	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
-	bus_type_t	sc_btype;	/* phys address description */
-	bus_addr_t	sc_paddr;	/* for device mmap() */
+	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
 
 	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
 	volatile int *sc_fhc;			/* FHC register */
