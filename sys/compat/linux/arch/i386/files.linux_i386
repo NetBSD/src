@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_i386,v 1.5 2002/03/31 22:40:17 christos Exp $
+#	$NetBSD: files.linux_i386,v 1.5.10.1 2004/11/14 08:15:33 skrll Exp $
 #
 # Config file description for i386-dependent Linux compat code.
 
@@ -7,4 +7,4 @@ file	compat/linux/arch/i386/linux_syscalls.c		compat_linux
 file	compat/linux/arch/i386/linux_sysent.c		compat_linux
 file	compat/linux/arch/i386/linux_commons.c		compat_linux
 file	compat/linux/arch/i386/linux_ptrace.c		compat_linux
-
+file	compat/linux/arch/i386/linux_exec_machdep.c	compat_linux

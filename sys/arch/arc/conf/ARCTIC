@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.23.2.3 2004/09/21 13:12:59 skrll Exp $
+#	$NetBSD: ARCTIC,v 1.23.2.4 2004/11/14 08:15:05 skrll Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -61,6 +61,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 # mipsel specific
 options 	COMPAT_ULTRIX	# Ultrix binary compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# fast filesystem

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.71.2.3 2004/09/21 13:16:37 skrll Exp $
+#	$NetBSD: INSTALL_TINY,v 1.71.2.4 2004/11/14 08:15:16 skrll Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -99,6 +99,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.22.2.3 2004/09/21 13:19:24 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.22.2.4 2004/11/14 08:15:24 skrll Exp $
 
 #	config for bootable floppy kernel
 #
@@ -46,6 +46,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	COMPAT_15		# NetBSD 1.5 binary compatibility
 #options 	COMPAT_16		# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20		# NetBSD 2.0 binary compatibility
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

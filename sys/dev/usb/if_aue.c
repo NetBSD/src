@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.82.2.4 2004/11/02 07:53:02 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.82.2.5 2004/11/14 08:15:57 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.4 2004/11/02 07:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.82.2.5 2004/11/14 08:15:57 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -186,6 +186,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS},	  PNA },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII},	  PII },
  {{ USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII_2},  PII },
+ {{ USB_VENDOR_AEI,		USB_PRODUCT_AEI_USBTOLAN},	  PII },
  {{ USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_USB2LAN},	  PII },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100},	  0 },
  {{ USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USBLP100}, PNA },

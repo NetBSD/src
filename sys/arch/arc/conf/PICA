@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.37.2.3 2004/09/21 13:12:59 skrll Exp $
+#	$NetBSD: PICA,v 1.37.2.4 2004/11/14 08:15:05 skrll Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -55,6 +55,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 # mipsel specific
 options 	COMPAT_ULTRIX	# Ultrix binary compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# fast filesystem

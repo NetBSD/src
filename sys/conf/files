@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.615.2.9 2004/11/02 07:51:07 skrll Exp $
+#	$NetBSD: files,v 1.615.2.10 2004/11/14 08:15:43 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -45,7 +45,7 @@ defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 
 defflag	opt_ntp.h		PPS_SYNC NTP
 
-defflag	opt_ptm.h		NO_DEV_PTM
+defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
 
 defparam opt_kmempages.h	NKMEMPAGES KMEMPAGES_MIN NKMEMPAGES_MAX
 defflag	opt_malloclog.h		MALLOCLOG
@@ -229,7 +229,6 @@ define	pckbport_machdep_cnattach
 define	mulaw
 define	auconv
 define	aurateconv
-file	dev/aurateconv.c	aurateconv	needs-flag
 
 # audio and midi devices, attaches to audio hardware driver
 #
@@ -1101,11 +1100,15 @@ file	kern/kern_drvctl.c		drvctl
 #
 # File systems
 #
-include "fs/adosfs/files.adosfs"
 include "coda/files.coda"
-include "fs/filecorefs/files.filecorefs"
-include "fs/smbfs/files.smbfs"
+include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
+include "fs/filecorefs/files.filecorefs"
+include "fs/msdosfs/files.msdosfs"
+include "fs/ntfs/files.ntfs"
+include "fs/ptyfs/files.ptyfs"
+include "fs/smbfs/files.smbfs"
+include "fs/union/files.union"
 include "miscfs/fdesc/files.fdesc"
 include "miscfs/kernfs/files.kernfs"
 include "miscfs/nullfs/files.nullfs"
@@ -1113,10 +1116,7 @@ include "miscfs/overlay/files.overlay"
 include "miscfs/portal/files.portal"
 include "miscfs/procfs/files.procfs"
 include "miscfs/umapfs/files.umapfs"
-include "fs/union/files.union"
-include "fs/msdosfs/files.msdosfs"
 include "nfs/files.nfs"
-include "fs/ntfs/files.ntfs"
 include "ufs/files.ufs"
 
 #
@@ -1142,6 +1142,7 @@ file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
+file	dev/aurateconv.c		aurateconv		needs-flag
 file	dev/ccd.c			ccd			needs-flag
 file	dev/cgd.c			cgd			needs-flag
 file	dev/cgd_crypto.c		cgd
@@ -1157,7 +1158,7 @@ file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
 file	dev/mm.c
-file	dev/mulaw.c			mulaw
+file	dev/mulaw.c			mulaw			needs-flag
 file	dev/nullcons_subr.c		nullcons		needs-flag
 file	dev/radio.c			radio			needs-flag
 file	dev/rnd.c			rnd			needs-flag
@@ -1240,7 +1241,9 @@ file	kern/sysv_sem.c			sysvsem
 file	kern/sysv_shm.c			sysvshm
 file	kern/tty.c
 file	kern/tty_conf.c
+file	kern/tty_bsdpty.c		compat_bsdpty
 file	kern/tty_pty.c			pty 			needs-flag
+file	kern/tty_ptm.c			pty
 file	kern/tty_subr.c
 file	kern/tty_tb.c			tb			needs-count
 file	kern/tty_tty.c

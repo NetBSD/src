@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.10.2.3 2004/09/21 13:18:54 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.10.2.4 2004/11/14 08:15:16 skrll Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -35,6 +35,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	EXEC_AOUT		# exec a.out binaries
 #options 	EXEC_ECOFF		# exec ecoff binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Filesystem options
 file-system	FFS		# Berkeley Fast Filesystem

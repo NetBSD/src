@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.26.2.6 2004/11/02 07:52:09 skrll Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.26.2.7 2004/11/14 08:15:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.6 2004/11/02 07:52:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.7 2004/11/14 08:15:43 skrll Exp $");
 
 #include "midi.h"
 
@@ -212,7 +212,6 @@ cs4280_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char devinfo[256];
-	mixer_ctrl_t ctl;
 	u_int32_t mem;
 	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
@@ -309,22 +308,6 @@ cs4280_attach(parent, self, aux)
 		return;
 	}
 
-	/* Turn mute off of DAC, CD and master volumes by default */
-	ctl.type = AUDIO_MIXER_ENUM;
-	ctl.un.ord = 0;	 /* off */
-
-	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCoutputs,
-					     AudioNmaster, AudioNmute);
-	cs428x_mixer_set_port(sc, &ctl);
-
-	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCinputs,
-					     AudioNdac, AudioNmute);
-	cs428x_mixer_set_port(sc, &ctl);
-
-	ctl.dev = cs4280_get_portnum_by_name(sc, AudioCinputs,
-					     AudioNcd, AudioNmute);
-	cs428x_mixer_set_port(sc, &ctl);
-	
 	audio_attach_mi(&cs4280_hw_if, sc, &sc->sc_dev);
 
 #if NMIDI > 0

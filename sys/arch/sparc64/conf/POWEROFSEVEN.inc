@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.3 2004/09/21 13:22:40 skrll Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.4 2004/11/14 08:15:32 skrll Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -131,6 +131,7 @@ options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
