@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.2 2000/07/23 07:12:22 eeh Exp $	*/
+/*	$NetBSD: fabs.S,v 1.2.4.1 2003/02/03 05:09:49 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
 #if 0
 	.asciz "@(#)fabs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: fabs.S,v 1.2 2000/07/23 07:12:22 eeh Exp $")
+	RCSID("$NetBSD: fabs.S,v 1.2.4.1 2003/02/03 05:09:49 jmc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,9 @@
 
 
 ENTRY(fabs)
+#ifndef SOFTFLOATSPARC64_FOR_GCC
 	stx	%o0, [%sp + BIAS + 32]	! return value => %f0:f1
 	ldd	[%sp + BIAS + 32], %f0	! (via kernel %o0/%o1 slot)
+#endif
 	retl
 	 fabss	%f0, %f0		! return absolute value
