@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7 2000/11/11 22:26:10 perseant Exp $	 */
+/* $NetBSD: main.c,v 1.8 2001/02/04 21:52:04 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,6 +63,8 @@ static int      checkfilesys(const char *, char *, long, int);
 static int      docheck(struct fstab *);
 #endif
 static void     usage(void);
+
+extern char    *__progname;
 
 int
 main(int argc, char **argv)
@@ -322,8 +324,6 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 static void
 usage()
 {
-	extern char    *__progname;
-
 	(void)fprintf(stderr,
 		  "Usage: %s [-dnpy] [-b block] [-m mode] filesystem ...\n",
 		       __progname);

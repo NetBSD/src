@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.4 2000/06/14 18:44:01 perseant Exp $	 */
+/* $NetBSD: vars.c,v 1.5 2001/02/04 21:52:04 christos Exp $	 */
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -14,7 +14,6 @@ struct bufarea  sblk;		/* file system superblock */
 struct bufarea  iblk;		/* ifile on-disk inode block */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk(daddr_t, long);
 int             iinooff;	/* ifile inode offset in block of inodes */
 
 struct dups    *duplist;	/* head of dup list */
