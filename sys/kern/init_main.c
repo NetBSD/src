@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.11 2002/04/23 03:25:44 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.12 2002/04/23 19:19:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.11 2002/04/23 03:25:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.12 2002/04/23 19:19:57 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -187,6 +187,7 @@ main(void)
 	curproc = l;
 	l->l_cpu = curcpu();
 	l->l_proc = &proc0;
+	l->l_lid = 1;
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
