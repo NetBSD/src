@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.39 1998/01/18 19:07:19 is Exp $
+.\"	$NetBSD: options.4,v 1.40 1998/01/21 22:54:56 thorpej Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -254,6 +254,16 @@ was able to read it.
 Note that not all systems are capable of obtaining a variable sized message
 buffer. There are also some systems on which memory contents are not preserved
 accross reboots.
+.It Cd options MALLOCLOG
+Enables an event log for
+.Xr malloc 9 .
+Useful for tracking down
+.Dq Data modified on freelist
+and
+.Dq multiple free
+problems.
+.It Cd options MALLOCLOGSIZE=integer
+Defines the number of entries in the malloc log.  Default is 100000 entries.
 .El
 .Ss File Systems
 .Bl -ohang
