@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.6 1999/03/24 14:07:39 minoura Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.7 2000/03/23 06:47:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -53,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/conf.h>
 
 #include <x68k/x68k/iodevice.h>
@@ -80,6 +81,8 @@ struct bell_softc {
 };
 
 struct bell_softc *bell_softc;
+
+struct callout bell_ch = CALLOUT_INITIALIZER;
 
 static struct opm_voice vtab[NBELL];
 
@@ -437,7 +440,7 @@ opm_bell()
 	bell_on(sc);
 	sc->sc_flags |= BELLF_OUT;
 
-	timeout(bell_timeout, (caddr_t)NULL, ticks);
+	callout_reset(&bell_ch, ticks, bell_timeout, NULL);
     }
 }
 
@@ -449,7 +452,7 @@ bell_timeout(arg)
 
     sc->sc_flags &= ~BELLF_OUT; 
     bell_off(sc);
-    untimeout(bell_timeout, (caddr_t)NULL);
+    callout_stop(&bell_ch);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.14 2000/01/08 01:02:35 simonb Exp $	*/
+/*	$NetBSD: device.h,v 1.15 2000/03/23 06:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,6 +37,8 @@
  *
  *	@(#)device.h	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/callout.h>
 
 /*
  * This structure is used to encapsulate the routines for a device driver.
@@ -109,6 +111,7 @@ typedef struct ScsiCmd {
 	int	cmdlen;		/* length of data in cmdbuf */
 	u_char	*cmd;		/* buffer for the SCSI command */
 	int	error;		/* compatibility hack for new scsi */
+	struct callout timo_ch;	/* timeout callout handle */
 } ScsiCmd;
 
 /*

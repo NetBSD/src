@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.9 2000/02/07 20:16:54 thorpej Exp $ */
+/*	$NetBSD: ctu.c,v 1.10 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
@@ -98,6 +99,7 @@ void	ctustrategy __P((struct buf *));
 int	ctuioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	ctudump __P((dev_t, daddr_t, caddr_t, size_t));
 
+static struct callout ctu_watch_ch = CALLOUT_INITIALIZER;
 
 void
 ctuattach()
@@ -131,7 +133,7 @@ ctuopen(dev, oflags, devtype, p)
 
 	tu_sc.sc_error = 0;
 	mtpr(0100, PR_CSRS);	/* Enable receive interrupt */
-	timeout(ctuwatch, 0, 100); /* Check once/second */
+	callout_reset(&ctu_watch_ch, hz, ctuwatch, NULL);
 
 	tu_sc.sc_state = SC_INIT;
 
@@ -161,7 +163,7 @@ ctuclose(dev, oflags, devtype, p)
 	mtpr(0, PR_CSRS);
 	mtpr(0, PR_CSTS);
 	tu_sc.sc_state = SC_UNUSED;
-	untimeout(ctuwatch, 0);
+	callout_stop(&ctu_watch_ch);
 	return 0;
 }
 
@@ -398,7 +400,7 @@ ctuwatch(arg)
 	void *arg;
 {
 
-	timeout(ctuwatch, 0, 1000);
+	callout_reset(&ctu_watch_ch, hz, ctuwatch, NULL);
 
 	if (tu_sc.sc_state == SC_GET_RESP && tu_sc.sc_tpblk != 0 &&
 	    tu_sc.sc_tpblk == oldtp && (tu_sc.sc_tpblk % 128 != 0)) {

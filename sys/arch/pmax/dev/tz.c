@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.27 2000/01/21 23:29:06 thorpej Exp $	*/
+/*	$NetBSD: tz.c,v 1.28 2000/03/23 06:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -203,6 +203,7 @@ tzprobe(xxxsd)
 		return (0);
 
 	BUFQ_INIT(&sc->sc_tab);
+	callout_init(&sc->sc_cmd.timo_ch);
 
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;

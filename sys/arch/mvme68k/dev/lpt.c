@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.6 2000/03/18 22:33:03 scw Exp $	*/
+/*	$NetBSD: lpt.c,v 1.7 2000/03/23 06:41:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@ lpt_attach_subr(sc)
 {
 
 	sc->sc_state = 0;
+	callout_init(&sc->sc_wakeup_ch);
 }
 
 /*
@@ -185,7 +186,7 @@ lpt_wakeup(arg)
 	lpt_intr(sc);
 	splx(s);
 
-	timeout(lpt_wakeup, sc, STEP);
+	callout_reset(&sc->sc_wakeup_ch, STEP, lpt_wakeup, sc);
 }
 
 /*
@@ -208,7 +209,7 @@ lptclose(dev, flag, mode, p)
 		(void) pushbytes(sc);
 
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
-		untimeout(lpt_wakeup, sc);
+		callout_stop(&sc->sc_wakeup_ch);
 
 	(sc->sc_funcs->lf_close) (sc);
 

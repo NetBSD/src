@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.14 1999/12/18 05:00:56 tsubai Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.15 2000/03/23 06:42:12 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -336,9 +336,9 @@ start:
 		scb->sc_cpoint = scb->msgbuf;
 	scb->scb_softc = sc;
 
-	timeout(cxd1185_timeout, scb, hz * 10);
+	callout_reset(&scb->xs->xs_callout, hz * 10, cxd1185_timeout, scb);
 	sc_send(scb, chan, ie);
-	untimeout(cxd1185_timeout, scb);
+	callout_stop(&scb->xs->xs_callout);
 
 	nextscb = scb->chain.tqe_next;
 

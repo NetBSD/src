@@ -1,4 +1,4 @@
-/*	$NetBSD: dtopreg.h,v 1.6 1999/04/24 08:01:03 simonb Exp $	*/
+/*	$NetBSD: dtopreg.h,v 1.7 2000/03/23 06:43:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,6 +91,8 @@
 
 #ifndef	_DTOP_H_
 #define	_DTOP_H_
+
+#include <sys/callout.h>
 
 #define	DTOP_MAX_DEVICES	14
 #define	DTOP_MAX_MSG_SIZE	36	/* 3 hdr + 32 data + 1 checksum */
@@ -263,6 +265,7 @@ typedef	union {
 	} locator;
 
 	/* add more as they come along */
+	struct callout repeat_ch;
 
 } dtop_device, *dtop_device_t;
 

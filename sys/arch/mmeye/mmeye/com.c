@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.3 2000/03/06 21:36:09 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.4 2000/03/23 06:41:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -161,6 +161,7 @@ void 	comsoft		__P((void *));
 void 	comsoft		__P((void));
 #else
 void 	comsoft		__P((void *));
+struct callout comsoft_callout = CALLOUT_INITIALIZER;
 #endif
 #endif
 integrate void com_rxsoft	__P((struct com_softc *, struct tty *));
@@ -397,6 +398,8 @@ com_attach_subr(sc)
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
+
+	callout_init(&sc->sc_diag_callout);
 
 	/* Disable interrupts before configuring the device. */
 	sc->sc_ier = 0;
@@ -1156,7 +1159,7 @@ com_schedrx(sc)
 #else
 	if (!com_softintr_scheduled) {
 		com_softintr_scheduled = 1;
-		timeout(comsoft, NULL, 1);
+		callout_reset(&comsoft_callout, 1, comsoft, NULL);
 	}
 #endif
 #endif
@@ -1720,7 +1723,8 @@ com_rxsoft(sc, tp)
 	if (cc == com_rbuf_size) {
 		sc->sc_floods++;
 		if (sc->sc_errors++ == 0)
-			timeout(comdiag, sc, 60 * hz);
+			callout_reset(&sc->sc_diag_callout, 60 * hz,
+			    comdiag, sc);
 	}
 
 	while (cc) {
@@ -1730,7 +1734,8 @@ com_rxsoft(sc, tp)
 			if (ISSET(lsr, LSR_OE)) {
 				sc->sc_overflows++;
 				if (sc->sc_errors++ == 0)
-					timeout(comdiag, sc, 60 * hz);
+					callout_reset(&sc->sc_diag_callout,
+					    60 * hz, comdiag, sc);
 			}
 			if (ISSET(lsr, LSR_BI | LSR_FE))
 				SET(code, TTY_FE);
@@ -2136,7 +2141,7 @@ comintr(arg)
 #else
 	if (!com_softintr_scheduled) {
 		com_softintr_scheduled = 1;
-		timeout(comsoft, NULL, 1);
+		callout_reset(&comsoft_callout, 1, comsoft, NULL);
 	}
 #endif
 #endif

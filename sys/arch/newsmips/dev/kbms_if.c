@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_if.c,v 1.4 1999/12/18 06:54:05 tsubai Exp $	*/
+/*	$NetBSD: kbms_if.c,v 1.5 2000/03/23 06:42:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <machine/adrsmap.h>
 #include <newsmips/dev/scc.h>
 
@@ -119,6 +120,9 @@ static struct kbm_sw Kbm_port[] = {
 
 extern int kbd_flush();
 
+static struct callout ms_helper_ch = CALLOUT_INITIALIZER;
+statuc struct callout kb_soft_ch = CALLOUT_INITIALIZER;
+
 void
 kbm_open(chan)
 	int chan;
@@ -186,7 +190,7 @@ kbm_rint(chan)
 			if (xputc(code, SCC_MOUSE) < 0)
 				printf("mouse queue overflow\n");
 			/* KU:XXX softcall? */
-			timeout(_ms_helper, (caddr_t)0, 0);
+			callout_reset(&ms_helper_ch, 0, _ms_helper, NULL);
 #endif
 			break;
 		    }
@@ -197,7 +201,7 @@ kbm_rint(chan)
 			if (xputc(code, SCC_KEYBOARD) < 0)
 				printf("keyboard queue overflow\n");
 			/* KU:XXX softcall? */
-			timeout(kb_softint, (caddr_t)0, 0);
+			callout_reset(&kb_soft_ch, 0, kb_softint, NULL);
 #endif
 			break;
 		    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.6 2000/02/02 17:09:43 thorpej Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.7 2000/03/23 06:40:34 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 
 #include <vm/vm.h>
 
@@ -73,6 +74,7 @@ struct bmac_softc {
 	struct device sc_dev;
 	struct ethercom sc_ethercom;
 #define sc_if sc_ethercom.ec_if
+	struct callout sc_tick_ch;
 	vaddr_t sc_regs;
 	dbdma_regmap_t *sc_txdma;
 	dbdma_regmap_t *sc_rxdma;
@@ -193,6 +195,8 @@ bmac_attach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_if;
 	struct mii_data *mii = &sc->sc_mii;
 	u_char laddr[6];
+
+	callout_init(&sc->sc_tick_ch);
 
 	sc->sc_flags =0;
 	if (strcmp(ca->ca_name, "ethernet") == 0) {
@@ -400,8 +404,7 @@ bmac_init(sc)
 
 	bmac_start(ifp);
 
-	untimeout(bmac_mii_tick, sc);
-	timeout(bmac_mii_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, bmac_mii_tick, sc);
 }
 
 void
@@ -546,7 +549,7 @@ bmac_stop(sc)
 
 	s = splnet();
 
-	untimeout(bmac_mii_tick, sc);
+	callout_stop(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
 
 	/* Disable TX/RX. */
@@ -1000,5 +1003,5 @@ bmac_mii_tick(v)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(bmac_mii_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, bmac_mii_tick, sc);
 }

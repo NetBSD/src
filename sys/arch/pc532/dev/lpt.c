@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.30 1999/05/18 23:52:53 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.31 2000/03/23 06:42:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -62,6 +62,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
@@ -154,8 +155,12 @@ struct lpt_softc {
 #define	LPT_AUTOLF	0x20	/* automatic LF on CR */
 #define	LPT_NOPRIME	0x40	/* don't prime on open */
 
+	struct callout sc_out_ch;
+
 #if defined(INET) && defined(PLIP)
 	struct	ethercom sc_ethercom;
+	struct	callout sc_plipout_ch;
+	struct	callout sc_pliprx_ch;
 	u_char		*sc_ifbuf;
 	int		sc_ifierrs;	/* consecutive input errors */
 	int		sc_ifoerrs;	/* consecutive output errors */
@@ -266,6 +271,8 @@ lptattach(parent, self, aux)
 
 	sc->sc_state = 0;
 	sc->sc_i8255 = i8255;
+
+	callout_init(&sc->sc_out_ch);
 
 #if defined(INET) && defined(PLIP)
 	plipattach(sc, self->dv_unit);
@@ -475,7 +482,7 @@ lptintr(arg)
 		/* is printer online and ready for output? */
 		if (notready(i8255->port_c, sc)) {
 			i8255->port_control = LPT_IRQDISABLE;
-			timeout(lptout, sc, STEP);
+			callout_reset(&sc->sc_out_ch, STEP, lptout, sc);
 			return;
 		}
 		/* send char */
@@ -519,6 +526,9 @@ plipattach(sc, unit)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
+
+	callout_init(&sc->sc_plipout_ch);
+	callout_init(&sc->sc_pliprx_ch);
 
 	sc->sc_ifbuf = NULL;
 	sprintf(ifp->if_xname, "plip%d", unit);
@@ -769,7 +779,7 @@ plipinput(sc)
 	i8255->port_a &= ~(LPA_ACKENABLE | LPA_ACTIVE);
 
 	if (sc->sc_ifierrs)
-		untimeout(pliprxenable, sc);
+		callout_stop(&sc->sc_pliprx_ch);
 
 #if defined(COMPAT_PLIP10)
 	if (ifp->if_flags & IFF_LINK0) {
@@ -854,7 +864,8 @@ err:
 			log(LOG_NOTICE, "%s: rx hard error\n", ifp->if_xname);
 		i8255->port_a |= LPA_ACTIVE;
 		/* But we will retry from time to time. */
-		timeout(pliprxenable, sc, PLIPRETRY * 10);
+		callout_reset(&sc->sc_pliprx_ch, PLIPRETRY * 10,
+		    pliprxenable, sc);
 	}
 	ifp->if_ierrors++;
 	sc->sc_ifierrs++;
@@ -975,7 +986,7 @@ plipoutput(arg)
 	ifp->if_flags |= IFF_OACTIVE;
 
 	if (sc->sc_ifoerrs)
-		untimeout(plipoutput, sc);
+		callout_stop(&sc->sc_plipout_ch);
 
 	for (;;) {
 		s = splimp();
@@ -1056,7 +1067,7 @@ retry:
 		s = splimp();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
-		timeout(plipoutput, sc, PLIPRETRY);
+		callout_reset(&sc->sc_plipout_ch, PLIPRETRY, plipoutput, sc);
 	} else {
 		if (sc->sc_ifoerrs == PLIPMXRETRY) {
 			log(LOG_NOTICE, "%s: tx hard error\n", ifp->if_xname);

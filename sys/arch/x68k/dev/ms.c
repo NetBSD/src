@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.9 2000/01/14 08:22:42 itohy Exp $ */
+/*	$NetBSD: ms.c,v 1.10 2000/03/23 06:47:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,6 +101,8 @@ struct ms_softc {
 	struct	device ms_dev;		/* required first: base device */
 	struct	zs_chanstate *ms_cs;
 
+	struct callout ms_modem_ch;
+
 	/* Flags to communicate with ms_softintr() */
 	volatile int ms_intr_flags;
 #define	INTR_RX_OVERRUN 1
@@ -181,6 +183,8 @@ ms_attach(parent, self, aux)
 	struct cfdata *cf;
 	int reset, s;
 
+	callout_init(&ms->ms_modem_ch);
+
 	cf = ms->ms_dev.dv_cfdata;
 	cs = zsc->zsc_cs[1];
 	cs->cs_private = ms;
@@ -254,7 +258,7 @@ msclose(dev, flags, mode, p)
 
 	ms = ms_cd.cd_devs[minor(dev)];
 	ms->ms_ready = 0;		/* stop accepting events */
-	untimeout(ms_modem, ms);
+	callout_stop(&ms->ms_modem_ch);
 	ev_fini(&ms->ms_events);
 
 	ms->ms_events.ev_io = NULL;
@@ -688,5 +692,5 @@ ms_modem(arg)
 	}
 
 	(void) splx(s);
-	timeout(ms_modem, ms, 2);
+	callout_reset(&ms->ms_modem_ch, 2, ms_modem, ms);
 }

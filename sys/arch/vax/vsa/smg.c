@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.20 1999/12/12 14:40:55 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.21 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
@@ -140,6 +141,8 @@ struct	smg_screen {
 static	struct smg_screen smg_conscreen;
 static	struct smg_screen *curscr;
 
+static	struct callout smg_cursor_ch = CALLOUT_INITIALIZER;
+
 int
 smg_match(parent, match, aux)
 	struct device *parent;
@@ -191,7 +194,7 @@ smg_attach(parent, self, aux)
 	aa.console = !(vax_confdata & 0x20);
 	aa.scrdata = &smg_screenlist;
 	aa.accessops = &smg_accessops;
-	timeout(smg_crsr_blink, 0, hz/2);
+	callout_reset(&smc_cursor_ch, hz / 2, smg_crsr_blink, NULL);
 
 	config_found(self, &aa, wsemuldisplaydevprint);
 }
@@ -205,7 +208,7 @@ smg_crsr_blink(arg)
 {
 	if (cur_on)
 		*cursor ^= 255;
-	timeout(smg_crsr_blink, 0, hz/2);
+	callout_reset(&smg_cursor_ch, hz / 2, smg_crsr_blink, NULL);
 }
 
 void

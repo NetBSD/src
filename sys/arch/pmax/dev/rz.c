@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.57 2000/03/03 17:51:28 mhitch Exp $	*/
+/*	$NetBSD: rz.c,v 1.58 2000/03/23 06:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.57 2000/03/03 17:51:28 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.58 2000/03/23 06:43:01 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -413,6 +413,7 @@ rzprobe(xxxsd)
 		return (0);
 
 	BUFQ_INIT(&sc->sc_tab);
+	callout_init(&sc->sc_cmd.timo_ch);
 
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.20 1999/06/27 14:14:30 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.21 2000/03/23 06:47:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -556,7 +556,7 @@ itestart(tp)
 	/* we have characters remaining. */
 	if (rbp->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, (caddr_t)tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	/* wakeup we are below */
 	if (rbp->c_cc <= tp->t_lowat) {

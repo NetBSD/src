@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.62 2000/03/06 21:36:10 thorpej Exp $	*/
+/*	$NetBSD: dc.c,v 1.63 2000/03/23 06:43:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.62 2000/03/06 21:36:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.63 2000/03/23 06:43:01 thorpej Exp $");
 
 /*
  * devDC7085.c --
@@ -111,6 +111,8 @@ static int	 dcparam __P((struct tty *tp, struct termios *t));
 static int	 cold_dcparam __P((struct tty *tp, struct termios *t,
 		    struct dc_softc *sc));
 static void	 dc_reset __P((dcregs *dcaddr));
+
+struct callout dcscan_ch = CALLOUT_INITIALIZER;
 
 void		 ttrstrt __P((void *));
 
@@ -301,7 +303,7 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 
 	if (dc_timer == 0) {
 		dc_timer = 1;
-		timeout(dcscan, (void *)0, hz);
+		callout_reset(&dcscan_ch, hz, dcscan, NULL);
 	}
 
 	sc->dc_19200 = speed;
@@ -1164,7 +1166,7 @@ dcscan(arg)
 #endif /* HW_FLOW_CONTROL */
 	}
 	splx(s);
-	timeout(dcscan, (void *)0, hz);
+	callout_reset(&dcscan_ch, hz, dcscan, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.6 2000/02/22 01:37:11 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.7 2000/03/23 06:43:52 thorpej Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -140,6 +140,8 @@ struct sci_softc {
 	struct tty *sc_tty;
 	void *sc_ih;
 
+	struct callout sc_diag_ch;
+
 #if 0
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
 	bus_space_handle_t   sc_ioh;	/* ISA io handle */
@@ -248,6 +250,7 @@ int scicn_speed = 9600;
 #ifndef __GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 volatile int	sci_softintr_scheduled;
+struct callout sci_soft_ch = CALLOUT_INITIALIZER;
 #endif
 #endif
 
@@ -492,6 +495,8 @@ sci_attach(parent, self, aux)
 
 	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 	SET(sc->sc_hwflags, SCI_HW_CONSOLE);
+
+	callout_init(&sc->sc_diag_ch);
 
 #if 0
 	if (irq != IRQUNK) {
@@ -987,7 +992,7 @@ sci_schedrx(sc)
 #else
 	if (!sci_softintr_scheduled) {
 		sci_softintr_scheduled = 1;
-		timeout(scisoft, NULL, 1);
+		callout_reset(&sci_soft_ch, 1, scisoft, NULL);
 	}
 #endif
 #endif
@@ -1079,7 +1084,7 @@ sci_rxsoft(sc, tp)
 	if (cc == sci_rbuf_size) {
 		sc->sc_floods++;
 		if (sc->sc_errors++ == 0)
-			timeout(scidiag, sc, 60 * hz);
+			callout_reset(&sc->sc_diag_ch, 60 * hz, scidiag, sc);
 	}
 
 	while (cc) {
@@ -1469,7 +1474,7 @@ sciintr(arg)
 #else
 	if (!sci_softintr_scheduled) {
 		sci_softintr_scheduled = 1;
-		timeout(scisoft, NULL, 1);
+		callout_reset(&sci_soft_ch, 1, scisoft, 1);
 	}
 #endif
 #endif

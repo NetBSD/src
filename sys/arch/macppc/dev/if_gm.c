@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.3 2000/03/23 06:40:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 
 #include <vm/vm.h>
 
@@ -78,6 +79,7 @@ struct gmac_softc {
 	caddr_t sc_txbuf[NTXBUF];
 	caddr_t sc_rxbuf[NRXBUF];
 	struct mii_data sc_mii;
+	struct callout sc_tick_ch;
 	char sc_laddr[6];
 };
 
@@ -212,6 +214,8 @@ gmac_attach(parent, self, aux)
 
 	printf(": Ethernet address %s\n", ether_sprintf(laddr));
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	callout_init(&sc->sc_tick_ch);
 
 	gmac_reset(sc);
 	gmac_init_mac(sc);
@@ -584,7 +588,7 @@ gmac_stop(sc)
 
 	s = splnet();
 
-	untimeout(gmac_mii_tick, sc);
+	callout_stop(&sc->sc_tick_ch);
 	mii_down(&sc->sc_mii);
 
 	gmac_stop_txdma(sc);
@@ -680,8 +684,7 @@ gmac_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 
-	untimeout(gmac_mii_tick, sc);
-	timeout(gmac_mii_tick, sc, 1);
+	callout_reset(&sc->sc_tick_ch, 1, gmac_mii_tick, sc);
 
 	gmac_start(ifp);
 }
@@ -911,5 +914,5 @@ gmac_mii_tick(v)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout(gmac_mii_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, gmac_mii_tick, sc);
 }

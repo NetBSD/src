@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.1 2000/02/29 15:21:43 nonaka Exp $	*/
+/*	$NetBSD: pccons.c,v 1.2 2000/03/23 06:43:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,6 +161,8 @@ static struct video_state {
 	char	at;		/* normal attributes */
 	char	so_at;		/* standout attributes */
 } vs;
+
+static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
 struct pc_softc {
 	struct	device sc_dev;
@@ -457,13 +459,13 @@ async_update()
 
 	if (kernel || polling) {
 		if (async)
-			untimeout(do_async_update, NULL);
+			callout_stop(&async_update_ch);
 		do_async_update((void *)1);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout(do_async_update, NULL, 1);
+		callout_reset(&async_update_ch, 1, do_async_update, NULL);
 	}
 }
 
@@ -809,7 +811,7 @@ pcstart(tp)
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		callout_reset(&tp->t_rstrt_ch, 1, ttrstrt, tp);
 	}
 	if (cl->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {

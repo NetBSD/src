@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.2 1999/08/05 18:08:13 thorpej Exp $ */
+/*	$NetBSD: cons.c,v 1.3 2000/03/23 06:45:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -482,7 +482,7 @@ cnfbstart(tp)
 /*		        printspl = 1;*/
 			prom_printf("cnfbstart: timeout\r\n");
 #endif
-			timeout(cnfbdma, tp, 1);
+			callout_reset(&tp->t_rstrt_ch, 1, cnfbdma, tp);
 		}
 	}
 	splx(s);

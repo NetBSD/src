@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.6 2000/03/18 22:33:04 scw Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.7 2000/03/23 06:41:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
  */
 #ifndef _SBICVAR_H_
 #define _SBICVAR_H_
+#include <sys/callout.h>
 #include <sys/malloc.h>
 
 
@@ -104,6 +105,8 @@ struct  sbic_softc {
     sbic_regmap_p           sc_sbicp;   /* the SBIC */
     void                   *sc_driver;  /* driver specific field */
     int                     sc_ipl;
+
+    struct callout	    sc_timo_ch;
 
     /* Lists of command blocks */
     TAILQ_HEAD(acb_list, sbic_acb)  free_list,

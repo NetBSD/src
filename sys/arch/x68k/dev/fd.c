@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30 2000/02/07 20:16:54 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.31 2000/03/23 06:47:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -150,6 +151,10 @@ struct fdc_softc {
 
 	bus_space_tag_t sc_iot;		/* intio i/o space identifier */
 	bus_space_handle_t sc_ioh;	/* intio io handle */
+
+	struct callout sc_timo_ch;	/* timeout callout */
+	struct callout sc_intr_ch;	/* pseudo-intr callout */
+
 	bus_dma_tag_t sc_dmat;		/* intio dma tag */
 	bus_dmamap_t sc_dmamap;		/* dma map */
 	u_int8_t *sc_addr;			/* physical address */
@@ -219,6 +224,8 @@ struct fd_softc {
 
 	struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
+
+	struct callout sc_motor_ch;
 
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
@@ -422,6 +429,9 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
+	callout_init(&fdc->sc_timo_ch); 
+	callout_init(&fdc->sc_intr_ch);
+
 	/* Re-map the I/O space. */
 	bus_space_map(iot, ia->ia_addr, 0x2000, BUS_SPACE_MAP_SHIFTED, &ioh);
 
@@ -579,6 +589,8 @@ fdattach(parent, self, aux)
 	struct fd_type *type = &fd_types[0];	/* XXX 1.2MB */
 	int drive = fa->fa_drive;
 
+	callout_init(&fd->sc_motor_ch);
+
 	fd->sc_flags = 0;
 
 	if (type)
@@ -680,7 +692,7 @@ fdstrategy(bp)
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
 	disksort_cylinder(&fd->sc_q, bp);
-	untimeout(fd_motor_off, fd); /* a good idea */
+	callout_stop(&fd->sc_motor_ch);		/* a good idea */
 	if (fd->sc_active == 0)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
@@ -749,7 +761,7 @@ fdfinish(fd, bp)
 
 	biodone(bp);
 	/* turn off motor 5s from now */
-	timeout(fd_motor_off, fd, 5 * hz);
+	callout_reset(&fd->sc_motor_ch, 5 * hz, fd_motor_off, fd);
 	fdc->sc_state = DEVIDLE;
 }
 
@@ -1097,7 +1109,7 @@ loop:
 		fd->sc_skip = 0;
 		fd->sc_bcount = bp->b_bcount;
 		fd->sc_blkno = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE);
-		untimeout(fd_motor_off, fd);
+		callout_stop(&fd->sc_motor_ch);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
 			return 1;
@@ -1108,7 +1120,7 @@ loop:
 			for (i = 0; i < 4; i++) {
 				struct fd_softc *ofd = fdc->sc_fd[i];
 				if (ofd && ofd->sc_flags & FD_MOTOR) {
-					untimeout(fd_motor_off, ofd);
+					callout_stop(&ofd->sc_motor_ch);
 					ofd->sc_flags &= ~(FD_MOTOR | FD_MOTOR_WAIT);
 					break;
 				}
@@ -1117,7 +1129,8 @@ loop:
 			fd_set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
 			/* allow .5s for motor to stabilize */
-			timeout(fd_motor_on, fd, hz / 2);
+			callout_reset(&fd->sc_motor_ch, hz / 2,
+			    fd_motor_on, fd);
 			return 1;
 		}
 		/* Make sure the right drive is selected. */
@@ -1144,7 +1157,7 @@ loop:
 		fd->sc_dk.dk_seek++;
 		disk_busy(&fd->sc_dk);
 
-		timeout(fdctimeout, fdc, 4 * hz);
+		callout_stop(&fdc->sc_timo_ch, 4 * hz, fdctimeout, fdc);
 		return 1;
 
 	case DOIO:
@@ -1234,7 +1247,7 @@ loop:
 		disk_busy(&fd->sc_dk);
 
 		/* allow 2 seconds for operation */
-		timeout(fdctimeout, fdc, 2 * hz);
+		callout_reset(&fdc->sc_timo_ch, 2 * hz, fdctimeout, fdc);
 		return 1;				/* will return later */
 
 	case DOCOPY:
@@ -1252,7 +1265,7 @@ loop:
 		out_fdc(iot, ioh, type->datalen);	/* data length */
 		fdc->sc_state = COPYCOMPLETE;
 		/* allow 2 seconds for operation */
-		timeout(fdctimeout, fdc, 2 * hz);
+		callout_reset(&fdc->sc_timo_ch, 2 * hz, fdctimeout, fdc);
 		return 1;				/* will return later */
 
 	case DOIOHALF:
@@ -1303,15 +1316,15 @@ loop:
 		out_fdc(iot, ioh, fd->sc_type->datalen); /* data length */
 		fdc->sc_state = IOCOMPLETE;
 		/* allow 2 seconds for operation */
-		timeout(fdctimeout, fdc, 2 * hz);
+		callout_reset(&fdc->sc_timo_ch, 2 * hz, fdctimeout, fdc);
 		return 1;				/* will return later */
 
 	case SEEKWAIT:
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		fdc->sc_state = SEEKCOMPLETE;
 		/* allow 1/50 second for heads to settle */
 #if 0
-		timeout(fdcpseudointr, fdc, hz / 50);
+		callout_reset(&fdc->sc_intr_ch, hz / 50, fdcpseudointr, fdc);
 #endif
 		return 1;
 
@@ -1348,7 +1361,7 @@ loop:
 		goto loop;
 
 	case IOCOMPLETE: /* IO DONE, post-analyze */
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		DPRINTF(("fdcintr: in IOCOMPLETE\n"));
 		if ((tmp = fdcresult(fdc)) != 7 || (st0 & 0xf8) != 0) {
 			printf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
@@ -1388,7 +1401,7 @@ loop:
 
 	case COPYCOMPLETE: /* IO DONE, post-analyze */
 		DPRINTF(("fdcintr: COPYCOMPLETE:"));
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		if ((tmp = fdcresult(fdc)) != 7 || (st0 & 0xf8) != 0) {
 			printf("fdcintr: resnum=%d, st0=%x\n", tmp, st0);
 #if 0
@@ -1410,12 +1423,12 @@ loop:
 		DELAY(100);
 		fd_set_motor(fdc, 0);
 		fdc->sc_state = RESETCOMPLETE;
-		timeout(fdctimeout, fdc, hz / 2);
+		callout_reset(&fdc->sc_timo_ch, hz / 2, fdctimeout, fdc);
 		return 1;			/* will return later */
 
 	case RESETCOMPLETE:
 		DPRINTF(("fdcintr: in RESETCOMPLETE\n"));
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		/* clear the controller output buffer */
 		for (i = 0; i < 4; i++) {
 			out_fdc(iot, ioh, NE7CMD_SENSEI);
@@ -1428,16 +1441,16 @@ loop:
 		out_fdc(iot, ioh, NE7CMD_RECAL);	/* recalibrate function */
 		out_fdc(iot, ioh, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
-		timeout(fdctimeout, fdc, 5 * hz);
+		callout_reset(&fdc->sc_timo_ch, 5 * hz, fdctimeout, fdc);
 		return 1;			/* will return later */
 
 	case RECALWAIT:
 		DPRINTF(("fdcintr: in RECALWAIT\n"));
-		untimeout(fdctimeout, fdc);
+		callout_stop(&fdc->sc_timo_ch);
 		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
 #if 0
-		timeout(fdcpseudointr, fdc, hz / 30);
+		callout_reset(&fdc->sc_intr_ch, hz / 30, fdcpseudointr, fdc);
 #endif
 		return 1;			/* will return later */
 

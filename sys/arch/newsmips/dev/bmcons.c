@@ -1,4 +1,4 @@
-/*	$NetBSD: bmcons.c,v 1.5 2000/03/06 21:36:10 thorpej Exp $	*/
+/*	$NetBSD: bmcons.c,v 1.6 2000/03/23 06:42:12 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -559,7 +559,8 @@ bmcnstart(tp)
 		 */
 		if (nch == 0) {
 			nch = getc(&tp->t_outq);
-			timeout(ttrstrt, (caddr_t)tp, (nch&0x7f)+6);
+			callout_reset(&tp->t_rstrt_ch, (nch&0x7f)+6,
+			    ttrstrt, tp);
 			tp->t_state |= TS_TIMEOUT;
 			goto out;
 		}

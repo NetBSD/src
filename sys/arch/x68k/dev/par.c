@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.9 1999/08/05 18:08:14 thorpej Exp $	*/
+/*	$NetBSD: par.c,v 1.10 2000/03/23 06:47:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -54,6 +54,7 @@
 #include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 
@@ -77,6 +78,8 @@ struct	par_softc {
 #define sc_burst sc_param.burst
 #define sc_timo  sc_param.timo
 #define sc_delay sc_param.delay
+	struct callout sc_timo_ch;
+	struct callout sc_start_ch;
 } ;
 
 /* sc_flags values */
@@ -87,6 +90,8 @@ struct	par_softc {
 #define PARF_DELAY	0x10
 #define PARF_OREAD	0x40	/* no support */
 #define PARF_OWRITE	0x80
+
+static struct callout intr_callout = CALLOUT_INITIALIZER;
 
 #define UNIT(x)		minor(x)
 
@@ -138,6 +143,9 @@ parattach(pdp, dp, aux)
 	sc->sc_flags = PARF_ALIVE;
 	printf(": parallel port (write only, interrupt)\n");
 	ioctlr.intr &= (~PRTI_EN);
+
+	callout_init(&sc->sc_timo_ch);
+	callout_init(&sc->sc_start_ch);
 }
 
 int
@@ -191,11 +199,10 @@ void
 parstart(arg)
 	void *arg;
 {
-	int unit = (int)arg;
-	struct par_softc *sc = par_cd.cd_devs[unit];
+	struct par_softc *sc = arg;
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("parstart(%x)\n", unit);
+		printf("parstart(%x)\n", sc->sc_dev.dv_unit);
 #endif
 	sc->sc_flags &= ~PARF_DELAY;
 	wakeup(sc);
@@ -205,11 +212,10 @@ void
 partimo(arg)
 	void *arg;
 {
-	int unit = (int)arg;
-	struct par_softc *sc = par_cd.cd_devs[unit];
+	struct par_softc *sc = arg;
 #ifdef DEBUG
 	if (pardebug & PDB_FOLLOW)
-		printf("partimo(%x)\n", unit);
+		printf("partimo(%x)\n", sc->sc_dev.dv_unit);
 #endif
 	sc->sc_flags &= ~(PARF_UIO|PARF_TIMO);
 	wakeup(sc);
@@ -253,7 +259,7 @@ parrw(dev, uio)
 	sc->sc_flags |= PARF_UIO;
 	if (sc->sc_timo > 0) {
 		sc->sc_flags |= PARF_TIMO;
-		timeout(partimo, (void *) unit, sc->sc_timo);
+		callout_reset(&sc->sc_timo_ch, sc->sc_timo, partimo, sc);
 	}
 	while (uio->uio_resid > 0) {
 		len = min(buflen, uio->uio_resid);
@@ -276,7 +282,7 @@ parrw(dev, uio)
 				       sc->sc_flags);
 #endif
 			if (sc->sc_flags & PARF_TIMO) {
-				untimeout(partimo, (void *) unit);
+				callout_stop(&sc->sc_timo_ch);
 				sc->sc_flags &= ~PARF_TIMO;
 			}
 			splx(s);
@@ -309,7 +315,8 @@ parrw(dev, uio)
 		 */
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PARF_DELAY;
-			timeout(parstart, (void *) unit, sc->sc_delay);
+			callout_reset(&sc->sc_start_ch, sc->sc_delay,
+			    parstart, sc);
 			error = tsleep(sc, PCATCH|(PZERO-1), "par-cdelay", 0);
 			if (error) {
 				splx(s);
@@ -330,11 +337,11 @@ parrw(dev, uio)
 	}
 	s = splsoftclock();
 	if (sc->sc_flags & PARF_TIMO) {
-		untimeout(partimo, (void *) unit);
+		callout_stop(&sc->sc_timo_ch);
 		sc->sc_flags &= ~PARF_TIMO;
 	}
 	if (sc->sc_flags & PARF_DELAY)	{
-		untimeout(parstart, (void *) unit);
+		callout_stop(&sc->sc_start_ch);
 		sc->sc_flags &= ~PARF_DELAY;
 	}
 	splx(s);
@@ -449,7 +456,7 @@ parintr(arg)
 	 */
 	if (mask) {
 		if (partimeout_pending)
-			untimeout (parintr, 0);
+			callout_stop(&intr_callout);
 		if (parsend_pending)
 			parsend_pending = 0;
 	}
@@ -478,7 +485,7 @@ parsendch(ch)
 			extern int hz;
 			
 			/* wait a second, and try again */
-			timeout (parintr, 0, hz);
+			callout_reset(&intr_callout, hz, parintr, 0);
 			partimeout_pending = 1;
 			/* this is essentially a flipflop to have us wait for the
 			   first character being transmitted when trying to transmit
@@ -493,7 +500,7 @@ parsendch(ch)
 					printf ("parsendch interrupted, error = %d\n", error);
 #endif
 				if (partimeout_pending)
-					untimeout (parintr, 0);
+					callout_stop(&intr_callout);
 				
 				partimeout_pending = 0;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.18 1999/11/18 15:03:03 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.19 2000/03/23 06:47:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -729,7 +729,8 @@ mha_scsi_cmd(xs)
 	ACB_SETQ(acb, ACB_QREADY);
 	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 #if 1
-	timeout(mha_timeout, acb, (xs->timeout*hz)/1000);
+	callout_reset(&acb->xs->xs_callout, (xs->timeout*hz)/1000,
+	    mha_timeout, acb);
 #endif
 
 	/*
@@ -919,7 +920,7 @@ mha_done(sc, acb)
 	SPC_TRACE(("[mha_done(error:%x)] ", xs->error));
 
 #if 1
-	untimeout(mha_timeout, acb);
+	callout_stop(&acb->xs->xs_callout);
 #endif
 
 	/*
@@ -962,7 +963,8 @@ mha_done(sc, acb)
 				ACB_SETQ(acb, ACB_QREADY);
 				ti->lubusy &= ~(1<<sc_link->scsipi_scsi.lun);
 				ti->senses++;
-				timeout(mha_timeout, acb, (xs->timeout*hz)/1000);
+				callout_reset(&acb->xs->xs_callout,
+				    (xs->timeout*hz)/1000, mha_timeout, acb);
 				if (sc->sc_nexus == acb) {
 					sc->sc_nexus = NULL;
 					sc->sc_state = SPC_IDLE;
