@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.37 2003/10/15 18:08:40 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.38 2003/10/16 22:26:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.37 2003/10/15 18:08:40 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.38 2003/10/16 22:26:32 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -51,13 +51,20 @@ __RCSID("$NetBSD: readline.c,v 1.37 2003/10/15 18:08:40 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
+#include <errno.h>
+#include <fcntl.h>
+#ifdef HAVE_VIS_H
 #include <vis.h>
+#else
+#include "np/vis.h"
+#endif
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
 #include "histedit.h"
 #include "readline/readline.h"
 #include "el.h"
+#include "tokenizer.h"
 #include "fcns.h"		/* for EL_NUM_FCNS */
 
 /* for rl_complete() */
@@ -80,6 +87,8 @@ int rl_point = 0;
 int rl_end = 0;
 char *rl_line_buffer = NULL;
 VFunction *rl_linefunc = NULL;
+int rl_done = 0;
+VFunction *rl_event_hook = NULL;
 
 int history_base = 1;		/* probably never subject to change */
 int history_length = 0;
@@ -159,6 +168,7 @@ static char		*_rl_compat_sub(const char *, const char *,
 			    const char *, int);
 static int		 rl_complete_internal(int);
 static int		 _rl_qsort_string_compare(const void *, const void *);
+static int		 _rl_event_read_char(EditLine *, char *);
 
 
 /* ARGSUSED */
@@ -302,9 +312,12 @@ readline(const char *prompt)
 	int count;
 	const char *ret;
 	char *buf;
+	static int used_event_hook;
 
 	if (e == NULL || h == NULL)
 		rl_initialize();
+
+	rl_done = 0;
 
 	/* update prompt accordingly to what has been passed */
 	if (!prompt)
@@ -318,6 +331,16 @@ readline(const char *prompt)
 
 	if (rl_pre_input_hook)
 		(*rl_pre_input_hook)(NULL, 0);
+
+	if (rl_event_hook && !(e->el_flags&NO_TTY)) {
+		el_set(e, EL_GETCFN, _rl_event_read_char);
+		used_event_hook = 1;
+	}
+
+	if (!rl_event_hook && used_event_hook) {
+		el_set(e, EL_GETCFN, EL_BUILTIN_GETCFN);
+		used_event_hook = 0;
+	}
 
 	rl_already_prompted = 0;
 
@@ -1827,6 +1850,11 @@ rl_bind_wrapper(EditLine *el, unsigned char c)
 	if (map[c] == NULL)
 	    return CC_ERROR;
 	(*map[c])(NULL, c);
+
+	/* If rl_done was set by the above call, deal with it here */
+	if (rl_done)
+		return CC_EOF;
+
 	return CC_NORM;
 }
 
@@ -1905,4 +1933,89 @@ rl_get_previous_history(int count, int key)
 	while (count--)
 		el_push(e, a);
 	return 0;
+}
+
+void
+/*ARGSUSED*/
+rl_prep_terminal(int meta_flag)
+{
+	el_set(e, EL_PREP_TERM, 1);
+}
+
+void
+rl_deprep_terminal()
+{
+	el_set(e, EL_PREP_TERM, 0);
+}
+
+int
+rl_read_init_file(const char *s)
+{
+	return(el_source(e, s));
+}
+
+int
+rl_parse_and_bind(const char *line)
+{
+	const char **argv;
+	int argc;
+	Tokenizer *tok;
+
+	tok = tok_init(NULL);
+	tok_line(tok, line, &argc, &argv);
+	argc = el_parse(e, argc, argv);
+	tok_end(tok);
+	return (argc ? 1 : 0);
+}
+
+void
+rl_stuff_char(int c)
+{
+	char buf[2];
+
+	buf[0] = c;
+	buf[1] = '\0';
+	el_insertstr(e, buf);
+}
+
+static int
+_rl_event_read_char(EditLine *el, char *cp)
+{
+	int     n, num_read;
+
+	*cp = 0;
+	while (rl_event_hook) {
+
+		(*rl_event_hook)();
+
+#if defined(FIONREAD)
+		if (ioctl(el->el_infd, FIONREAD, &n) < 0)
+			return(-1);
+		if (n)
+			num_read = read(el->el_infd, cp, 1);
+		else
+			num_read = 0;
+#elif defined(F_SETFL) && defined(O_NDELAY)
+		if ((n = fcntl(el->el_infd, F_GETFL, 0)) < 0)
+			return(-1);
+		if (fcntl(el->el_infd, F_SETFL, n|O_NDELAY) < 0)
+			return(-1);
+		num_read = read(el->el_infd, cp, 1);
+		if (fcntl(el->el_infd, F_SETFL, n))
+			return(-1);
+#else
+		/* not non-blocking, but what you gonna do? */
+		num_read = read(el->el_infd, cp, 1);
+		return(-1);
+#endif
+
+		if (num_read < 0 && errno == EAGAIN)
+			continue;
+		if (num_read == 0)
+			continue;
+		break;
+	}
+	if (!rl_event_hook)
+		el_set(el, EL_GETCFN, EL_BUILTIN_GETCFN);
+	return(num_read);
 }

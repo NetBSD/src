@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.23 2003/09/26 17:44:51 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.24 2003/10/16 22:26:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -128,6 +128,7 @@ int		 el_get(EditLine *, int, void *);
 #define	EL_GETCFN	13	/* , el_rfunc_t);		*/
 #define	EL_CLIENTDATA	14	/* , void *);			*/
 #define	EL_UNBUFFERED	15	/* , int);			*/
+#define	EL_PREP_TERM    16      /* , int);                      */
 
 #define EL_BUILTIN_GETCFN	(NULL)
 
