@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.22 2000/05/22 10:18:47 elric Exp $	*/
+/*	$NetBSD: redir.c,v 1.23 2002/05/15 16:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.22 2000/05/22 10:18:47 elric Exp $");
+__RCSID("$NetBSD: redir.c,v 1.23 2002/05/15 16:33:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: redir.c,v 1.22 2000/05/22 10:18:47 elric Exp $");
 #include "shell.h"
 #include "nodes.h"
 #include "jobs.h"
+#include "options.h"
 #include "expand.h"
 #include "redir.h"
 #include "output.h"
@@ -179,6 +180,7 @@ openredirect(redir, memory)
 	int fd = redir->nfile.fd;
 	char *fname;
 	int f;
+	int flags = O_WRONLY|O_CREAT|O_TRUNC;
 
 	/*
 	 * We suppress interrupts so that we won't leave open file
@@ -199,26 +201,18 @@ openredirect(redir, memory)
 			goto ecreate;
 		break;
 	case NTO:
+		if (Cflag)
+			flags |= O_EXCL;
+		/* FALLTHROUGH */
+	case NCLOBBER:
 		fname = redir->nfile.expfname;
-#ifdef O_CREAT
-		if ((f = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
+		if ((f = open(fname, flags, 0666)) < 0)
 			goto ecreate;
-#else
-		if ((f = creat(fname, 0666)) < 0)
-			goto ecreate;
-#endif
 		break;
 	case NAPPEND:
 		fname = redir->nfile.expfname;
-#ifdef O_APPEND
 		if ((f = open(fname, O_WRONLY|O_CREAT|O_APPEND, 0666)) < 0)
 			goto ecreate;
-#else
-		if ((f = open(fname, O_WRONLY)) < 0
-		 && (f = creat(fname, 0666)) < 0)
-			goto ecreate;
-		lseek(f, (off_t)0, 2);
-#endif
 		break;
 	case NTOFD:
 	case NFROMFD:
