@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.9 1996/08/21 20:21:05 mark Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.10 1996/10/15 01:31:28 mark Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -63,14 +63,10 @@ extern int want_resched;
 extern u_int fpe_nexthandler;
 
 void undefinedinstruction_bounce __P(());
-void arm_fpe_exception_glue __P((int exception));
-void arm_fpe_panic __P(());
-void undefined_entry __P(());
-void arm_fpe_post_proc_glue __P(());
-
-/*
- * A module header, pointing into the module
- */
+void arm_fpe_exception_glue	__P((int exception));
+void arm_fpe_panic		__P(());
+void undefined_entry		__P(());
+void arm_fpe_post_proc_glue	__P(());
 
 extern u_int fpe_arm_start[];
 extern arm_fpe_mod_hdr_t fpe_arm_header;
@@ -91,8 +87,8 @@ static char *exception_errors[] = {
 
 
 /*
- * Initialisation point. The kernel calls this during the configuration of the cpu
- * in order to install the FPE.
+ * Initialisation point. The kernel calls this during the configuration of
+ * the cpu in order to install the FPE.
  * The FPE specification needs to be filled in the specified cpu_t structure
  * and the FPE needs to be installed on the CPU undefined instruction vector.
  */
@@ -105,16 +101,12 @@ initialise_arm_fpe(cpu)
 
 	cpu->fpu_class = FPU_CLASS_FPE;
 	cpu->fpu_type = FPU_TYPE_ARMLTD_FPE;
-	strcpy(cpu->fpu_model, "Advanced RISC Machines floating point emulator");
+	strcpy(cpu->fpu_model, fpe_arm_header.identity_addr);
 	error = arm_fpe_boot(cpu);
 	if (error != 0) {
 		strcat(cpu->fpu_model, " - boot failed");
 		return(1);
 	}
-
-/* Return with start failure so the old FPE is installed */
-
-/*	strcat(cpu->fpu_model, " - boot aborted");*/
 
 	return(0);
 }
@@ -134,18 +126,16 @@ arm_fpe_boot(cpu)
 	u_int workspace;
 	int id;
 	
-	/* First things first ... Relocate the FPE pointers */
-
 #ifdef DEBUG
 	/* Print a bit of debugging info */
 	printf("FPE: base=%08x\n", (u_int)fpe_arm_start);
 	printf("FPE: global workspace size = %d bytes, context size = %d bytes\n",
-	    fpe_arm_header.WorkspaceLength, fpe_arm_header.ContextLength);
+	    fpe_arm_header.workspacelength, fpe_arm_header.contextlength);
 #endif
 
 	/* Now we must do some memory allocation */
 
-	workspace = (u_int)malloc(fpe_arm_header.WorkspaceLength, M_DEVBUF, M_NOWAIT);
+	workspace = (u_int)malloc(fpe_arm_header.workspacelength, M_DEVBUF, M_NOWAIT);
 	if (!workspace)
 		return(ENOMEM);
 
@@ -156,7 +146,8 @@ arm_fpe_boot(cpu)
 
 	/* Initialise out gloable workspace */
 
-	id = arm_fpe_core_initws(workspace, (u_int)&fpe_nexthandler, (u_int)&fpe_nexthandler);
+	id = arm_fpe_core_initws(workspace, (u_int)&fpe_nexthandler,
+	    (u_int)&fpe_nexthandler);
 
 	if (id == FPU_TYPE_FPA11) {
 		cpu->fpu_class = FPU_CLASS_FPA;
@@ -171,19 +162,24 @@ arm_fpe_boot(cpu)
 
 	*fpe_arm_header.exc_handler_ptr_addr = (u_int)arm_fpe_exception_glue;
 	/* Set up post instruction handler */
-#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7500)
+#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7500) \
+ || defined(CPU_SA110)
 	*fpe_arm_header.fp_post_proc_addr = (((((u_int)arm_fpe_post_proc_glue -
-	    (u_int)fpe_arm_header.fp_post_proc_addr - 8)>>2) & 0x00ffffff) | 0xea000000);
+	    (u_int)fpe_arm_header.fp_post_proc_addr - 8)>>2) & 0x00ffffff)
+	    | 0xea000000);
 #ifdef DEBUG
 	printf("fpe_arm_header.fp_post_proc_addr = %08x (%08x)",
 	    (u_int)fpe_arm_header.fp_post_proc_addr,
 	    (u_int)*fpe_arm_header.fp_post_proc_addr);
 #endif
 #else
-#error ARMFPE currently only supports ARM6 and ARM7 cores
+#error ARMFPE currently only supports ARM6, ARM7 and SA110 cores
 #endif
 
-	/* Initialise proc0's FPE context */
+	/* We have modified code so sync the instruction cache */
+	sync_icache();
+
+	/* Initialise proc0's FPE context and select it */
 
 	arm_fpe_core_initcontext(FP_CONTEXT(&proc0));
 	arm_fpe_core_changecontext(FP_CONTEXT(&proc0));
@@ -261,21 +257,20 @@ arm_fpe_postproc(fpframe, frame)
  */
 
 void
-arm_fpe_exception(exception, pc, fpframe)
+arm_fpe_exception(exception, fpframe, frame)
 	int exception;
-	u_int pc;
 	u_int fpframe;
+	struct trapframe *frame;
 {
 	if (exception >= 0 && exception < 6)
-		printf("fpe exception: %d - %s\n", exception, exception_errors[exception]);
+		printf("fpe exception: %d - %s\n", exception,
+		    exception_errors[exception]);
 	else
 		printf("fpe exception: %d - unknown\n", exception);
 
-	trapsignal(curproc, SIGFPE, exception);
+	trapsignal(curproc, SIGFPE, exception << 8);
 
-	printf("PC=%08x\n", ReadWord(fpframe + 60));
-
-	userret(curproc, pc, curproc->p_sticks);
+	userret(curproc, frame->tf_pc, curproc->p_sticks);
 }
 
 
@@ -286,8 +281,22 @@ arm_fpe_copycontext(c1, c2)
 {
 	fp_context_frame_t fpcontext;
 
-	arm_fpe_core_savecontext(c1, (int *)&fpcontext, 0);
-	arm_fpe_core_loadcontext(c2, (int *)&fpcontext);
+	arm_fpe_core_savecontext(c1, &fpcontext, 0);
+	arm_fpe_core_loadcontext(c2, &fpcontext);
+}
+
+void arm_fpe_getcontext(p, fpregs)
+	struct proc *p;
+	fp_reg_t *fpregs;
+{
+	arm_fpe_core_savecontext(FP_CONTEXT(p), (fp_context_frame_t *)fpregs, 0);
+}
+
+void arm_fpe_setcontext(p, fpregs)
+	struct proc *p;
+	fp_reg_t *fpregs;
+{
+	arm_fpe_core_loadcontext(FP_CONTEXT(p), (fp_context_frame_t *)fpregs);
 }
 
 /* End of armfpe_init.c */
