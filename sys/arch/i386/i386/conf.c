@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.119 2000/03/09 11:19:30 ad Exp $	*/
+/*	$NetBSD: conf.c,v 1.120 2000/03/16 14:53:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@ bdev_decl(ccd);
 bdev_decl(raid);
 #include "md.h"
 bdev_decl(md);
+#include "ca.h"
+bdev_decl(ca);
 
 struct bdevsw	bdevsw[] =
 {
@@ -93,6 +95,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
+	bdev_disk_init(NCA,ca),		/* 19: Compaq array */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -201,6 +204,7 @@ cdev_decl(music);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
 cdev_decl(raid);
+cdev_decl(ca);
 #include "joy.h"
 cdev_decl(joy);
 #include "apm.h"
@@ -380,7 +384,8 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX,	wsmux), /* 65: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 66: USB tty */
 	cdev_lm78_init(NLM, lm),	/* 67: LM7[89] */
-	cdev_vmegen_init(NVMEGENERIC, vmegeneric), /* 68 generic VME access */
+	cdev_vmegen_init(NVMEGENERIC, vmegeneric), /* 68: generic VME access */
+	cdev_disk_init(NCA, ca),	/* 69: Compaq array */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -491,6 +496,7 @@ static int chrtoblktbl[] = {
 	/* 66 */	NODEV,
 	/* 67 */	NODEV,
 	/* 68 */	NODEV,
+	/* 69 */	19,
 };
 
 /*
