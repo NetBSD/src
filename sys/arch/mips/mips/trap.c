@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 1996/10/13 03:39:56 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 1996/10/13 05:14:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,6 +59,8 @@
 #include <sys/ktrace.h>
 #endif
 #include <net/netisr.h>
+
+#include <mips/locore.h>
 
 #include <machine/trap.h>
 #include <machine/psl.h>
@@ -286,7 +288,7 @@ char	*trap_type[] = {
 	"reserved 20",
 	"reserved 21",
 	"reserved 22",
-	"r4k watch",
+	"r4000 watch",
 	"reserved 24",
 	"reserved 25",
 	"reserved 26",
@@ -294,7 +296,7 @@ char	*trap_type[] = {
 	"reserved 28",
 	"reserved 29",
 	"reserved 30",
-	"r4k virtual coherency data",
+	"r4000 virtual coherency data",
 };
 
 #ifdef DEBUG
@@ -770,13 +772,13 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[V0] = i;
 			locr0[A3] = 1;
 		}
+
 		/*
 		 * If we modified code or data, flush caches.
 		 * XXX code unyderling ptrace() and/or proc fs should do this?
 		 */
 		if (code == SYS_ptrace)
 			MachFlushCache();
-
 	done:
 #ifdef SYSCALL_DEBUG
 		scdebug_ret(p, code, i, rval);
@@ -1133,7 +1135,11 @@ trapDump(msg)
 }
 #endif
 
+/*
+ * forward declaration
+ */
 static unsigned GetBranchDest __P((InstFmt *InstPtr));
+
 
 /*
  * Compute destination of a branch instruction.
@@ -1163,6 +1169,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 
 	inst.word = (instPC < MACH_CACHED_MEMORY_ADDR) ?
 		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
+
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
@@ -1574,10 +1581,12 @@ specialframe:
 		ra = 0;
 		goto done;
 	}
+#ifdef notyet /* XXX FIXME: the order changed with merged locore */
 	else if (pc >= (unsigned)MachUTLBMiss && pc < (unsigned)setsoftclock) {
 		(*printfn)("<<locore>>");
 		goto done;
 	}
+#endif	/* notyet */
 
 	/* check for bad PC */
 	if (pc & 3 || pc < 0x80000000 || pc >= (unsigned)edata) {
