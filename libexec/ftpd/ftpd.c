@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.134 2001/12/06 02:00:06 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.135 2001/12/12 08:13:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.134 2001/12/06 02:00:06 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.135 2001/12/12 08:13:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2076,7 +2076,7 @@ statcmd(void)
 			    conffilename(curclass.limitfile));
 		if (! EMPTYSTR(curclass.chroot))
 			reply(0, "Chroot format: %s", curclass.chroot);
-		reply(0, "Deny bad ftpusers(5) quickly: : %sabled",
+		reply(0, "Deny bad ftpusers(5) quickly: %sabled",
 		    CURCLASS_FLAGS_ISSET(denyquick) ? "en" : "dis");
 		if (! EMPTYSTR(curclass.homedir))
 			reply(0, "Homedir format: %s", curclass.homedir);
