@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vfsops.c,v 1.4 1993/06/07 18:12:52 cgd Exp $
+ *	$Id: isofs_vfsops.c,v 1.5 1993/07/19 13:40:09 cgd Exp $
  */
 
 #include "param.h"
@@ -170,6 +170,16 @@ isofs_mount(mp, path, data, ndp, p)
 		return (error);
 	}
 	imp = VFSTOISOFS(mp);
+
+	/* Check the Rock Ridge Extention support */
+	if ( args.exflags & ISOFSMNT_NORRIP ) {
+		imp->iso_ftype = ISO_FTYPE_9660;
+		mp->mnt_flag  |= ISOFSMNT_NORRIP;
+	} else {
+		imp->iso_ftype = ISO_FTYPE_RRIP;
+		mp->mnt_flag  &= ~ISOFSMNT_NORRIP;
+	}
+
 	(void) copyinstr(path, imp->im_fsmnt, sizeof(imp->im_fsmnt)-1, &size);
 	bzero(imp->im_fsmnt + size, sizeof(imp->im_fsmnt) - size);
 	bcopy((caddr_t)imp->im_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
@@ -402,7 +412,6 @@ isofs_root(mp, vpp)
 	ip->i_dev = imp->im_dev;
 	ip->i_diroff = 0;
 	ip->iso_extent = imp->root_extent;
-	ip->i_diroff = 0;
 	error = iso_iget(ip, imp->root_extent, &nip,
 			 (struct iso_directory_record *) imp->root);
 	if (error)
@@ -493,8 +502,8 @@ isofs_fhtovp(mp, fhp, vpp)
 
 	lbn = ifhp->ifid_lbn;
 	off = ifhp->ifid_offset;
-	ifhp->ifid_lbn += (ifhp->ifid_offset >> 12);
-	ifhp->ifid_offset &= 0x7fff;
+	ifhp->ifid_lbn += (ifhp->ifid_offset >> 11);
+	ifhp->ifid_offset &= 0x7ff;
 
 	if (ifhp->ifid_lbn >= imp->volume_space_size)
 		return (EINVAL);
