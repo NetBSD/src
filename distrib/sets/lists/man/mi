@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.163 1999/09/13 23:00:50 augustss Exp $
+# $NetBSD: mi,v 1.164 1999/09/13 23:03:44 augustss Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -486,6 +486,7 @@
 ./usr/share/man/cat4/uha.0
 ./usr/share/man/cat4/uhci.0
 ./usr/share/man/cat4/uhid.0
+./usr/share/man/cat4/uhub.0
 ./usr/share/man/cat4/uk.0
 ./usr/share/man/cat4/ukbd.0
 ./usr/share/man/cat4/ukphy.0
@@ -1634,6 +1635,7 @@
 ./usr/share/man/man4/uha.4
 ./usr/share/man/man4/uhci.4
 ./usr/share/man/man4/uhid.4
+./usr/share/man/man4/uhub.4
 ./usr/share/man/man4/uk.4
 ./usr/share/man/man4/ukbd.4
 ./usr/share/man/man4/ukphy.4
