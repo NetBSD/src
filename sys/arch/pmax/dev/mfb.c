@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.10 1996/02/02 18:07:26 mycroft Exp $	*/
+/*	$NetBSD: mfb.c,v 1.11 1996/02/15 19:13:16 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -197,7 +197,6 @@ mfbmatch(parent, match, aux)
 {
 	struct cfdata *cf = match;
 	struct confargs *ca = aux;
-	static int nmfbs = 1;
 
 #ifdef FBDRIVER_DOES_ATTACH
 	/* leave configuration  to the fb driver */
@@ -208,11 +207,6 @@ mfbmatch(parent, match, aux)
 	if (!TC_BUS_MATCHNAME(ca, "PMAG-AA "))
 		return (0);
 
-#ifdef notyet
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= nmfbs)
-		return (0);
-#endif
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.14 1996/02/13 18:27:28 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.15 1996/02/15 19:13:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: cfb.c,v 1.14 1996/02/13 18:27:28 jonathan Exp $
+ *      $Id: cfb.c,v 1.15 1996/02/15 19:13:18 jonathan Exp $
  */
 
 /*
@@ -121,7 +121,7 @@ struct fbinfo	cfbfi;	/*XXX*/ /* should be softc */
 extern struct cfdriver cfb;
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
-static u_char cmap_bits [CMAP_BITS];	/* One colormap per cfb... */
+static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 
 /*
  * Method table for standard framebuffer operations on a CFB.
