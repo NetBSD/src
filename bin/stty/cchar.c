@@ -1,4 +1,4 @@
-/*	$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $	*/
+/*	$NetBSD: cchar.c,v 1.11 1997/07/20 21:31:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $";
+__RCSID("$NetBSD: cchar.c,v 1.11 1997/07/20 21:31:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +88,8 @@ const struct cchar cchars2[] = {
 	{ "rprnt",	VREPRINT, 	CREPRINT },
 	{ NULL },
 };
+
+static int c_cchar __P((const void *, const void *));
 
 static int
 c_cchar(a, b)

@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.10 1997/04/02 03:13:15 kleink Exp $	*/
+/*	$NetBSD: modes.c,v 1.11 1997/07/20 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: modes.c,v 1.10 1997/04/02 03:13:15 kleink Exp $";
+__RCSID("$NetBSD: modes.c,v 1.11 1997/07/20 21:31:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +46,7 @@ static char rcsid[] = "$NetBSD: modes.c,v 1.10 1997/04/02 03:13:15 kleink Exp $"
 #include <stddef.h>
 #include <string.h>
 #include "stty.h"
+#include "extern.h"
 
 struct modes {
 	const char *name;

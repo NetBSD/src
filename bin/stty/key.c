@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $	*/
+/*	$NetBSD: key.c,v 1.12 1997/07/20 21:31:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)key.c	8.4 (Berkeley) 2/20/95";
 #else
-static char rcsid[] = "$NetBSD: key.c,v 1.11 1995/09/07 06:57:11 jtc Exp $";
+__RCSID("$NetBSD: key.c,v 1.12 1997/07/20 21:31:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,6 +98,8 @@ static struct key {
 	{ "speed",	f_speed,	0 },
 	{ "tty",	f_tty,		0 },
 };
+
+static int c_key __P((const void *, const void *));
 
 static int
 c_key(a, b)

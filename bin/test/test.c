@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.16 1997/01/09 16:44:57 tls Exp $	*/
+/*	$NetBSD: test.c,v 1.17 1997/07/20 21:36:26 christos Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -10,8 +10,9 @@
  * This program is in the Public Domain.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: test.c,v 1.16 1997/01/09 16:44:57 tls Exp $";
+__RCSID("$NetBSD: test.c,v 1.17 1997/07/20 21:36:26 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -141,18 +142,20 @@ struct t_op {
 char **t_wp;
 struct t_op const *t_wp_op;
 
-static enum token t_lex();
-static int oexpr();
-static int aexpr();
-static int nexpr();
-static int binop();
-static int primary();
-static int filstat();
-static int getn();
-static int newerf();
-static int olderf();
-static int equalf();
-static void syntax();
+static void syntax __P((const char *, const char *));
+static int oexpr __P((enum token));
+static int aexpr __P((enum token));
+static int nexpr __P((enum token));
+static int primary __P((enum token));
+static int binop __P((void));
+static int filstat __P((char *, enum token));
+static enum token t_lex __P((char *));
+static int getn __P((const char *));
+static int newerf __P((const char *, const char *));
+static int olderf __P((const char *, const char *));
+static int equalf __P((const char *, const char *));
+
+int main __P((int, char **));
 
 int
 main(argc, argv)
@@ -209,8 +212,8 @@ main(argc, argv)
 
 static void
 syntax(op, msg)
-	char	*op;
-	char	*msg;
+	const char	*op;
+	const char	*msg;
 {
 	if (op && *op)
 		errx(2, "%s: %s", op, msg);
@@ -330,8 +333,11 @@ binop()
 		return olderf (opnd1, opnd2);
 	case FILEQ:
 		return equalf (opnd1, opnd2);
+	default:
+		/* NOTREACHED */
+		abort();
+		return 0;
 	}
-	/* NOTREACHED */
 }
 
 static int
@@ -440,7 +446,7 @@ t_lex(s)
 /* atoi with error detection */
 static int
 getn(s)
-	char *s;
+	const char *s;
 {
 	char *p;
 	long r;
@@ -462,7 +468,7 @@ getn(s)
 
 static int
 newerf (f1, f2)
-char *f1, *f2;
+const char *f1, *f2;
 {
 	struct stat b1, b2;
 
@@ -473,7 +479,7 @@ char *f1, *f2;
 
 static int
 olderf (f1, f2)
-char *f1, *f2;
+const char *f1, *f2;
 {
 	struct stat b1, b2;
 
@@ -484,7 +490,7 @@ char *f1, *f2;
 
 static int
 equalf (f1, f2)
-char *f1, *f2;
+const char *f1, *f2;
 {
 	struct stat b1, b2;
 
