@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.22 1998/12/22 02:27:06 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.23 1998/12/27 11:44:41 veego Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -622,7 +622,7 @@ rt_timer_init()
 {
 	assert(rt_init_done == 0);
 
-	pool_init(&rtentry_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
+	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
 	    0, NULL, NULL, M_RTABLE);
 
 	LIST_INIT(&rttimer_queue_head);
