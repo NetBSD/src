@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiuvar.h,v 1.6 2001/01/21 05:00:29 takemura Exp $	*/
+/*	$NetBSD: vrpiuvar.h,v 1.7 2001/07/22 10:40:09 sato Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -39,13 +39,6 @@ enum vrpiu_adstat {
 };
 
 
-#define MAX_BATTERY_VALUES	3
-struct battery_values {
-	int nextpoll;
-	int n_values;
-	int value[MAX_BATTERY_VALUES];
-};
-
 struct vrpiu_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot;
@@ -64,5 +57,6 @@ struct vrpiu_softc {
 	struct callout sc_adpoll;
 	struct callout sc_tptimeout;
 	void *sc_power_hook;
-	struct battery_values sc_battery;
+	struct hpcbattery_values sc_battery;
+	struct hpcbattery_spec *sc_battery_spec;
 };
