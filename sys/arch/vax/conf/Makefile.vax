@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.8 1995/05/16 22:25:24 jtc Exp $
+#	$NetBSD: Makefile.vax,v 1.9 1995/06/24 21:14:40 christos Exp $
 
 #	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
 #
@@ -42,9 +42,17 @@ INLINE= ${INLINECMD} ${INLINEOPTS}
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
-LIBKERN=../../../../lib/libkern/libkern.a   #        ${KERNLIB}
+LIBKERN=	${KERNLIB}
 .else
 LIBKERN=        ${KERNLIB_PROF}
+.endif
+
+### find out what to use for libcompat
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPAT=	${COMPATLIB}
+.else
+LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
 NORMAL_C= ${CC} -O -c ${CFLAGS} ${PROF} $<
@@ -54,7 +62,8 @@ NORMAL_S= ${CC} -x assembler-with-cpp -E -I. -DLOCORE ${COPTS} $< | \
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 SYSTEM_ASMS=intvec.o subr.o
-SYSTEM_OBJS=${SYSTEM_ASMS} lim.o vnode_if.o ${OBJS} param.o ioconf.o ${LIBKERN}
+SYSTEM_OBJS=${SYSTEM_ASMS} lim.o vnode_if.o ${OBJS} param.o ioconf.o \
+	    ${LIBKERN} ${LIBCOMPAT}
 #SYSTEM_DEP=${SYSTEM_ASMS} lovm.o pmap.o
 SYSTEM_DEP=${SYSTEM_ASMS} ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD=         @echo loading $@; rm -f $@
@@ -69,9 +78,9 @@ SYSTEM_LD_TAIL=@echo Nu {r k{rnan klar!!!!
 
 %LOAD
 
-clean:
+clean::
 	rm -f eddep *vmunix tags *.o subr.i [a-tv-z]*.s \
-		Errs errs linterrs makelinks vnode_if.*
+		Errs errs linterrs makelinks vnode_if.* genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC ${COPTS} ${PARAM} \
