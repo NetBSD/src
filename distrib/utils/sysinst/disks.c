@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.31 2000/05/20 00:45:45 wiz Exp $ */
+/*	$NetBSD: disks.c,v 1.32 2000/09/27 12:42:04 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -588,4 +588,38 @@ fsck_disks(void)
 	}
 	
 	return 1;
+}
+
+int
+set_swap(dev, pp, enable)
+	const char *dev;
+	partinfo *pp;
+{
+	partinfo parts[16];
+	int i, maxpart;
+
+	if (pp == NULL) {
+		emptylabel(parts);
+		if (incorelabel(dev, parts) < 0)
+			return -1;
+		pp = parts;
+	}
+
+	maxpart = getmaxpartitions();
+
+	for (i = 0; i < maxpart; i++) {
+		if (pp[i].pi_fstype == FS_SWAP) {
+			if (run_prog(0, 0, NULL,
+			    "/sbin/swapctl -%c /dev/%s%c",
+			    enable ? 'a' : 'd', dev, 'a' + i) != 0)
+				return -1;
+			if (enable)
+				strcpy(swapdev, dev);
+			else
+				swapdev[0] = '\0';
+			break;
+		}
+	}
+
+	return 0;
 }

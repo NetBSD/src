@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.69 2000/09/20 21:21:15 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.70 2000/09/27 12:42:04 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -771,3 +771,14 @@ the timezone selection.
  Selected:	%s 
  Local time: 	%s %s 
 }
+
+message swapactive
+{The disk that you selected has a swap partition that may currently be
+in use if your system is low on memory. Because you are going to
+repartition this disk, this swap partition will be disabled now. Please
+beware that this might lead to out of swap errors. Should you get such
+an error, please restart the system and try again.}
+
+message swapdelfailed
+{Sysinst failed to deactivate the swap partition on the disk that you
+chose for installation. Please reboot and try again.}
