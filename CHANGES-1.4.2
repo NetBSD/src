@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.85 1999/12/04 20:12:33 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.86 1999/12/04 20:37:14 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1739,3 +1739,8 @@ src/lib/libutil/passwd.c			1.19
 
   Correct handling of more complex EDITOR environment variable
   settings by using /bin/sh.  Fixes PR#8935.
+
+sys/dev/tc/asc_ioasic.c				1.18
+
+  Fix IOASIC DMA alignment problems.  This should fix the problems
+  with dump(8) failing randomly on DECstations.
