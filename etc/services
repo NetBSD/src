@@ -33,6 +33,7 @@ tftp		69/udp
 rje		77/tcp		netrjs
 finger		79/tcp
 link		87/tcp		ttylink
+http		90/tcp
 supdup		95/tcp
 hostnames	101/tcp		hostname	# usually from sri-nic
 tsap		102/tcp				# part of ISODE.
