@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.17 2004/06/04 04:38:27 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.18 2004/06/04 07:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -360,6 +360,7 @@ struct	nvlist *options;	/* options */
 struct	nvlist *fsoptions;	/* filesystems */
 struct	nvlist *mkoptions;	/* makeoptions */
 struct	nvlist *appmkoptions;	/* appending mkoptions */
+struct	hashtab *condmkopttab;	/* conditional makeoption table */
 struct	hashtab *devbasetab;	/* devbase lookup */
 struct	hashtab *devatab;	/* devbase attachment lookup */
 struct	hashtab *devitab;	/* device instance lookup */
@@ -436,6 +437,7 @@ void	addoption(const char *, const char *);
 void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
 void	appendmkoption(const char *, const char *);
+void	appendcondmkoption(const char *, const char *, const char *);
 void	deffilesystem(const char *, struct nvlist *);
 void	defoption(const char *, struct nvlist *, struct nvlist *);
 void	defflag(const char *, struct nvlist *, struct nvlist *);
