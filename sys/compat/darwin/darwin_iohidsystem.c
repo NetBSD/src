@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.16 2003/10/18 13:27:17 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.17 2003/10/25 10:43:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.16 2003/10/18 13:27:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.17 2003/10/25 10:43:45 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.16 2003/10/18 13:27:17 manu
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_iokit.h>
 
+#include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_iohidsystem.h>
@@ -89,6 +90,7 @@ struct darwin_iohidsystem_thread_args {
 	vaddr_t dita_shmem;
 	struct proc *dita_p;
 	int dita_done;
+	int *dita_hidsystem_finished;
 };
 
 #if 0
@@ -142,7 +144,9 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 		int error;
 		size_t memsize;
 		vaddr_t kvaddr;
+		struct proc *p;
 		struct darwin_iohidsystem_thread_args *dita;
+		struct darwin_emuldata *ded;
 
 		version = req->req_in[0]; /* 1 */
 #ifdef DEBUG_DARWIN
@@ -174,6 +178,9 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 
 			darwin_iohidsystem_shmeminit(kvaddr);
 
+			p = args->l->l_proc;
+			ded = (struct darwin_emuldata *)p->p_emuldata;
+
 			dita = malloc(sizeof(*dita), M_TEMP, M_WAITOK);
 			dita->dita_shmem = kvaddr;
 			dita->dita_done = 0;
@@ -188,6 +195,9 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 			while (!dita->dita_done)
 				(void)tsleep(&dita->dita_done, 
 				    PZERO, "iohid_done", 0);
+
+			ded->ded_hidsystem_finished = 
+			    dita->dita_hidsystem_finished;
 
 			free(dita, M_TEMP);
 
@@ -380,6 +390,7 @@ darwin_iohidsystem_thread(args)
 	int error = 0;
 	struct mach_right *mr;
 	struct lwp *l;
+	int finished = 0;
 	
 #ifdef DEBUG_DARWIN
 	printf("darwin_iohidsystem_thread: start\n");
@@ -388,9 +399,14 @@ darwin_iohidsystem_thread(args)
 	shmem = (struct darwin_iohidsystem_shmem *)dita->dita_shmem;
 	p = dita->dita_p;
 	l = proc_representative_lwp(p);
+	dita->dita_hidsystem_finished = &finished;
 
 	/* 
-	 * Allow the parent to get rid of dita.
+	 * Allow the parent to read dita_hidsystem_finished
+	 * and to get rid of dita. Once the parent is awaken,
+	 * it holds a reference to our on-stack finished flag,
+	 * hence we cannot exi before the parent sets this flag.
+	 * This is done in darwin_proc_exit()
 	 */
 	dita->dita_done = 1;
 	wakeup(&dita->dita_done);
@@ -401,17 +417,17 @@ darwin_iohidsystem_thread(args)
 	 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux 
 	 */
 	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
-		goto exit;		
+		goto out2;		
 
 	if ((wsmux = cdevsw_lookup(dev)) == NULL) {
 		error = ENXIO;
-		goto exit;
+		goto out2;
 	}
 
 	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
-		goto exit;
+		goto out2;
 	
-	while(1) {
+	while(!finished) {
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		aiov.iov_base = &wsevt;
@@ -422,10 +438,13 @@ darwin_iohidsystem_thread(args)
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = p;
 
-		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0)
-			goto exit;
+		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0) {
+#ifdef DEBUG_DARWIN
+			printf("iohidsystem: read error %d\n", error);
+#endif
+			goto out1;
+		}
 
-		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0)
 		diei = &evg->evg_evqueue[evg->evg_event_last];
 		while (diei->diei_sem != 0)
 			tsleep((void *)&diei->diei_sem, PZERO, "iohid_lock", 1);
@@ -469,7 +488,15 @@ darwin_iohidsystem_thread(args)
 
 	}
 
-exit:
+out1:
+	(wsmux->d_close)(dev, FREAD|FWRITE, 0, p);
+	
+out2:
+	while (!finished)
+		tsleep((void *)&finished, PZERO, "iohid_exit", 0);
+
+	uao_detach(darwin_iohidsystem_shmem);
+	darwin_iohidsystem_shmem = NULL;
 	kthread_exit(error);
 	/* NOTREACHED */
 };
@@ -596,12 +623,18 @@ darwin_wscons_to_iohidsystem(wsevt, hidevt)
 
 	case WSCONS_EVENT_KEY_DOWN:
 		hidevt->die_type = DARWIN_NX_KEYDOWN;
-		hidevt->die_data.key.keycode = wsevt->value;
+		hidevt->die_data.key.charcode = wsevt->value;
+		hidevt->die_data.key.orig_charcode = wsevt->value;
+		hidevt->die_data.key.keycode = wsevt->value; /* Translate */
+		hidevt->die_data.key.keyboardtype = 0xcd; /* XXX */
 		break;
 
 	case WSCONS_EVENT_KEY_UP:
 		hidevt->die_type = DARWIN_NX_KEYUP;
-		hidevt->die_data.key.keycode = wsevt->value;
+		hidevt->die_data.key.charcode = wsevt->value;
+		hidevt->die_data.key.orig_charcode = wsevt->value;
+		hidevt->die_data.key.keycode = wsevt->value; /* Translate */
+		hidevt->die_data.key.keyboardtype = 0xcd; /* XXX */
 		break;
 		
 	default:
@@ -661,5 +694,30 @@ mach_notify_iohidsystem(l, mr)
 #endif
 	wakeup(mp->mp_recv->mr_sethead);
 	
+	return;
+}
+
+void
+darwin_iohidsystem_postfake(p)
+	struct proc *p;
+{
+	const struct cdevsw *wsmux;
+	dev_t dev;	
+	int error;
+	struct wscons_event wsevt;
+
+	/* 
+	 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux 
+	 */
+	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
+		return;
+
+	if ((wsmux = cdevsw_lookup(dev)) == NULL)
+		return;
+
+	wsevt.type = 0;
+	wsevt.value = 0;
+	(wsmux->d_ioctl)(dev, WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p);
+
 	return;
 }
