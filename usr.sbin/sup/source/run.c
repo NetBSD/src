@@ -48,6 +48,10 @@
  **********************************************************************
  * HISTORY
  * $Log: run.c,v $
+ * Revision 1.5  1996/12/31 18:08:00  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.4  1996/12/23 19:42:09  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -143,6 +147,7 @@ va_dcl
 {
 	int val;
 	va_list ap;
+	char **argv;
 #ifdef __STDC__
 	va_start(ap, name);
 #else
@@ -152,7 +157,8 @@ va_dcl
 	name = va_arg(ap, char *);
 #endif
 
-	val = runv (name, (char **) ap);
+	argv = va_arg(ap, char **);
+	val = runv (name, argv);
 	va_end(ap);
 	return(val);
 }
@@ -173,6 +179,7 @@ va_dcl
 {
 	int val;
 	va_list ap;
+	char **argv;
 #ifdef __STDC__
 	va_start(ap, name);
 #else
@@ -182,7 +189,8 @@ va_dcl
 	name = va_arg(ap, char *);
 #endif
 
-	val = runvp (name, (char **) ap);
+	argv = va_arg(ap, char **);
+	val = runvp (name, argv);
 	va_end(ap);
 	return (val);
 }

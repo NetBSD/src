@@ -27,6 +27,10 @@
  **********************************************************************
  * HISTORY
  * $Log: supcmisc.c,v $
+ * Revision 1.5  1996/12/31 18:08:06  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.4  1996/12/23 19:42:19  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -112,7 +116,7 @@ prtime ()
 {
 	char buf[STRINGLENGTH];
 	char relsufix[STRINGLENGTH];
-	long twhen;
+	time_t twhen;
 
 	if ((thisC->Cflags&CFURELSUF) && thisC->Crelease)
 		(void) sprintf (relsufix,".%s",thisC->Crelease);
@@ -281,7 +285,7 @@ va_dcl
 {
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
-	long tloc;
+	time_t tloc;
 	static FILE *noteF = NULL;	/* mail program on pipe */
 	va_list ap;
 
@@ -316,7 +320,7 @@ va_dcl
 			}
 		} else
 			noteF = stdout;
-		tloc = time ((long *)NULL);
+		tloc = time ((time_t *)NULL);
 		fprintf (noteF,"SUP Upgrade of %s at %s",
 			collrelname,ctime (&tloc));
 		(void) fflush (noteF);
@@ -347,7 +351,7 @@ int on;
 }
 
 char *fmttime (time)
-long time;
+time_t time;
 {
 	static char buf[STRINGLENGTH];
 	int len;
