@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.10 2002/05/22 22:43:15 bjh21 Exp $
+$NetBSD: podules,v 1.11 2002/05/22 23:23:23 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -36,26 +36,74 @@ $NetBSD: podules,v 1.10 2002/05/22 22:43:15 bjh21 Exp $
  */
 
 manufacturer	ACORN		0x0000	Acorn Computers
+manufacturer	ACORNUSA	0x0001	Acorn Computers (USA)
 manufacturer	OLIVETTI	0x0002	Olivetti
 manufacturer	WATFORD		0x0003	Watford Electronics
 manufacturer	CCONCEPTS	0x0004	Computer Concepts
+manufacturer	IINTERFACES	0x0005	Intelligent Interfaces
+manufacturer	CAMAN		0x0006	Caman
 manufacturer	ARMADILLO	0x0007	Armadillo Systems
+manufacturer	SOFTOPTION	0x0008	Soft Option
 manufacturer	WILDVISION	0x0009	Wild Vision
+manufacturer	ANGLOCOMPUTERS	0x000a	Anglo Computers
+manufacturer	RESOURCE	0x000b	Resource
+/* RISC iX: #define XCB_COMPANY_ALLIEDINTERACTIVE 12 */
 manufacturer	HCCS		0x000c	HCCS
+manufacturer	MUSBURYCONSULT	0x000d	Musbury Consultants
+manufacturer	GNOME		0x000e	Gnome
+manufacturer	AANDGELEC	0x000f	A and G Electronics
+manufacturer	SPACETECH	0x0010	Spacetech
 manufacturer	ATOMWIDE	0x0011	Atomwide
+manufacturer	SYNTEC		0x0012	Syntec
+manufacturer	EMR		0x0013	ElectroMusic Research
+manufacturer	MILLIPEDE	0x0014	Millipede
+manufacturer	VIDEOELEC	0x0015	Video Electronics
+manufacturer	BRAINSOFT	0x0016	Brainsoft
+/* RISC iX: #define XCB_COMPANY_ASP 23 */
 manufacturer	ATOMWIDE2	0x0017	Atomwide
+manufacturer	LENDAC		0x0018	Lendac Data Systems
+manufacturer	CAMMICROSYS	0x0019	Cambridge Micro Systems
+/* RISC iX: #define XCB_COMPANY_JOHNBALANCECOMPUTING 26 */
 manufacturer	LINGENUITY	0x001a	Lingenuity
+manufacturer	SIPLAN		0x001b	Siplan Electronics Research
+manufacturer	SCIFRONTIERS	0x001c	Science Frontiers
+manufacturer	PINEAPPLE	0x001d	Pineapple Software
+manufacturer	TECHNOMATIC	0x001e	Technomatic
 manufacturer	IRLAM		0x001f	Irlam Instruments
+manufacturer	NEXUS		0x0020	Nexus Electronics
 manufacturer	OAK		0x0021	Oak Solutions
+manufacturer	HUGHSYMONS	0x0022	Hugh Symons
 manufacturer	BEEBUG		0x0023	BEEBUG (RISC Developments)
+manufacturer	TEKNOMUSIK	0x0024	Teknomusik
+manufacturer	REELTIME	0x0025	Reel Time
+manufacturer	PRES		0x0026	PRES
+manufacturer	DIGIHURST	0x0027	Digihurst
+manufacturer	SGBCOMPSERV	0x0028	SGB Computer Services
 manufacturer	SJ		0x0029	SJ Research
-manufacturer	MORLEY		0x002b	Morley
+manufacturer	PHOBOX		0x002a	Phobox Electronics
+manufacturer	MORLEY		0x002b	Morley Electronics
+manufacturer	RACINGCAR	0x002c	Raching Car Computers
 manufacturer	HCCS2		0x002d	HCCS
+manufacturer	LINDIS		0x002e	Lindis International
+manufacturer	CCC		0x002f	Computer Control Consultants
+manufacturer	UNILAB		0x0030	Unilab
+manufacturer	SEFANFROHLING	0x0031	Sefan Frohling
+manufacturer	ROMBO		0x0032	Rombo Productions
+manufacturer	3SL		0x0033	3SL
+manufacturer	DELTRONICS	0x0034	Deltronics
+/* RISC iX: #define XCB_COMPANY_PCARNOLDTECHNICALSERVICES 53 */
 manufacturer	VTI		0x0035	Vertical Twist
+manufacturer	SIMIS		0x0036	Simis
 manufacturer	DTSOFT		0x0037	D.T. Software
+manufacturer	ARMINTERFACES	0x0038	ARM Interfaces
+manufacturer	BIA		0x0039	BIA
 manufacturer	CUMANA		0x003a	Cumana
-manufacturer	ICS		0x003c	ICS
+manufacturer	IOTA		0x003b	Iota
+manufacturer	ICS		0x003c	Ian Copestake Software
+manufacturer	BAILDON		0x003d	Baildon Electronics
+manufacturer	CSD		0x003e	CSD
 manufacturer	SERIALPORT	0x003f	Serial Port
+manufacturer	CADSOFT		0x0040	CADsoft
 manufacturer	ARXE		0x0041	ARXE
 manufacturer	ALEPH1		0x0042	Aleph 1
 manufacturer	ICUBED		0x0046	I-Cubed
