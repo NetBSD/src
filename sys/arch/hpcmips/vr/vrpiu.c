@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.25 2002/10/02 05:26:56 thorpej Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.26 2002/12/15 09:24:26 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
@@ -97,6 +97,8 @@ int	vrpiu_debug = 0;
  */
 static int	vrpiumatch(struct device *, struct cfdata *, void *);
 static void	vrpiuattach(struct device *, struct device *, void *);
+static void	vrc4173piuattach(struct device *, struct device *, void *);
+static void	vrpiu_init(struct vrpiu_softc *, void *);
 
 static void	vrpiu_write(struct vrpiu_softc *, int, unsigned short);
 static u_short	vrpiu_read(struct vrpiu_softc *, int);
@@ -130,6 +132,8 @@ int mra_Y_AX1_BX2_C(int *y, int ys, int *x1, int x1s, int *x2, int x2s,
  */
 CFATTACH_DECL(vrpiu, sizeof(struct vrpiu_softc),
     vrpiumatch, vrpiuattach, NULL, NULL);
+CFATTACH_DECL(vrc4173piu, sizeof(struct vrpiu_softc),
+    vrpiumatch, vrc4173piuattach, NULL, NULL);
 
 const struct wsmouse_accessops vrpiu_accessops = {
 	vrpiu_tp_enable,
@@ -174,6 +178,27 @@ static void
 vrpiuattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrpiu_softc *sc = (struct vrpiu_softc *)self;
+
+	sc->sc_ab_paddata_mask = PIUAB_PADDATA_MASK;
+	sc->sc_pb_paddata_mask = PIUPB_PADDATA_MASK;
+	sc->sc_pb_paddata_max = PIUPB_PADDATA_MAX;
+	vrpiu_init(sc, aux);
+}
+
+static void
+vrc4173piuattach(struct device *parent, struct device *self, void *aux)
+{
+	struct vrpiu_softc *sc = (struct vrpiu_softc *)self;
+
+	sc->sc_ab_paddata_mask = VRC4173PIUAB_PADDATA_MASK;
+	sc->sc_pb_paddata_mask = VRC4173PIUPB_PADDATA_MASK;
+	sc->sc_pb_paddata_max = VRC4173PIUPB_PADDATA_MAX;
+	vrpiu_init(sc, aux);
+}
+
+static void
+vrpiu_init(struct vrpiu_softc *sc, void *aux)
+{
 	struct vrip_attach_args *va = aux;
 	struct wsmousedev_attach_args wsmaa;
 	int res;
@@ -290,7 +315,7 @@ vrpiuattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * attach the wsmouse
 	 */
-	sc->sc_wsmousedev = config_found(self, &wsmaa, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(&sc->sc_dev, &wsmaa, wsmousedevprint);
 
 	/*
 	 * power management events
@@ -558,7 +583,8 @@ vrpiu_ad_intr(struct vrpiu_softc *sc)
 	if (intrstat & PIUINT_PADADPINTR) {
 		for (i = 0; i < 3; i++) {
 			if (sc->sc_battery.value[i] & PIUAB_VALID)
-				sc->sc_battery.value[i] &= PIUAB_PADDATA_MASK;
+				sc->sc_battery.value[i] &=
+					sc->sc_ab_paddata_mask;
 			else
 				sc->sc_battery.value[i] = 0;
 		}
@@ -642,21 +668,21 @@ vrpiu_tp_intr(struct vrpiu_softc *sc)
 				printf("vrpiu: internal error,"
 				    " data is not valid!\n");
 			} else {
-				tpx0 &= PIUPB_PADDATA_MASK;
-				tpx1 &= PIUPB_PADDATA_MASK;
-				tpy0 &= PIUPB_PADDATA_MASK;
-				tpy1 &= PIUPB_PADDATA_MASK;
+				tpx0 &= sc->sc_pb_paddata_mask;
+				tpx1 &= sc->sc_pb_paddata_mask;
+				tpy0 &= sc->sc_pb_paddata_mask;
+				tpy1 &= sc->sc_pb_paddata_mask;
 #define ISVALID(n, c, m)	((c) - (m) < (n) && (n) < (c) + (m))
-				if (ISVALID(tpx0 + tpx1, 1024, 200) &&
-				    ISVALID(tpy0 + tpy1, 1024, 200)) {
+				if (ISVALID(tpx0 + tpx1, sc->sc_pb_paddata_max, 200) &&
+				    ISVALID(tpy0 + tpy1, sc->sc_pb_paddata_max, 200)) {
 #if 0
 					DPRINTF(("%04x %04x %04x %04x\n",
 					    tpx0, tpx1, tpy0, tpy1));
 					DPRINTF(("%3d %3d (%4d %4d)->", tpx0,
 					    tpy0, tpx0 + tpx1, tpy0 + tpy1));
 #endif
-					xraw = tpy1 * 1024 / (tpy0 + tpy1);
-					yraw = tpx1 * 1024 / (tpx0 + tpx1);
+					xraw = tpy1 * sc->sc_pb_paddata_max / (tpy0 + tpy1);
+					yraw = tpx1 * sc->sc_pb_paddata_max / (tpx0 + tpx1);
 					DPRINTF(("%3d %3d", xraw, yraw));
 					
 					tpcalib_trans(&sc->sc_tpcalib, xraw,
