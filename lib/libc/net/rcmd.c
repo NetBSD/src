@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.48 2002/05/22 14:42:37 tron Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.49 2002/11/11 19:49:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.48 2002/05/22 14:42:37 tron Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.49 2002/11/11 19:49:00 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -313,7 +313,8 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		listen(s2, 1);
 		(void)snprintf(num, sizeof(num), "%d", lport);
-		if (write(s, num, strlen(num) + 1) != strlen(num) + 1) {
+		if (write(s, num, strlen(num) + 1) !=
+		    (ssize_t) (strlen(num) + 1)) {
 			warn("rcmd: write (setting up stderr)");
 			(void)close(s2);
 			goto bad;
