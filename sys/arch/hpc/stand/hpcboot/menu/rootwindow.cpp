@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.18 2004/08/06 17:22:01 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.19 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -334,7 +334,7 @@ RootWindow::focusManagerHook(MSG &msg, HWND tab_window)
 		next = _base->_window; // out of the tab window
 		prev = 0;	// let IsDialogMessage handle it
 	}
- 
+
 #if 0 // XXX: breaks tabbing out of the console window
 	if (dlgcode & DLGC_WANTALLKEYS)
 		return FALSE;

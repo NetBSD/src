@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.4 2004/08/06 17:21:28 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.5 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright(c) 1996, 2001, 2004 The NetBSD Foundation, Inc.
@@ -101,8 +101,8 @@ FileManager::read(void *buf, size_t len, off_t ofs)
 size_t
 FileManager::_read(void *buf, size_t len)
 {
-	// starting point for crc computation 
-	u_int8_t *start = reinterpret_cast<u_int8_t *>(buf); 
+	// starting point for crc computation
+	u_int8_t *start = reinterpret_cast<u_int8_t *>(buf);
 
 	if (_z_err == Z_DATA_ERROR || _z_err == Z_ERRNO) {
 		return -1;
@@ -148,7 +148,7 @@ FileManager::_read(void *buf, size_t len)
 		}
 
 		_z_err = inflate(_stream, Z_NO_FLUSH);
-		
+
 		if (_z_err == Z_STREAM_END) {
 			/* Check CRC and original size */
 			_crc = crc32(_crc, start,(unsigned int)
@@ -157,7 +157,6 @@ FileManager::_read(void *buf, size_t len)
 
 			if (_get_long() != _crc ||
 			    _get_long() != _stream->total_out) {
-				
 				_z_err = Z_DATA_ERROR;
 			} else {
 				/* Check for concatenated .gz files: */
@@ -200,7 +199,7 @@ FileManager::close()
 size_t
 FileManager::_skip_compressed(off_t toskip)
 {
-#define DUMMYBUFSIZE 256
+#define	DUMMYBUFSIZE 256
 	char dummybuf[DUMMYBUFSIZE];
 
 	size_t skipped = 0;
@@ -240,13 +239,13 @@ FileManager::realsize()
 BOOL
 FileManager::seek(off_t offset)
 {
+
 	if (!_compressed) {
 		_file->seek(offset);
 		_stream->avail_in = 0;
 
 		return TRUE;
 	}
-	
 	/* if seek backwards, simply start from the beginning */
 	if (offset < _stream->total_out) {
 		_file->seek(0);
@@ -277,6 +276,7 @@ FileManager::seek(off_t offset)
 int
 FileManager::_get_byte()
 {
+
 	if (_z_eof)
 		return(EOF);
 

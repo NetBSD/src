@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.5 2001/06/18 11:31:04 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_boot.cpp,v 1.6 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -155,7 +155,6 @@ MIPSBoot::create()
 	}
 	_mem->setDebug() = args.memorymanagerDebug;
 
-  
 	// File Manager, Loader
 	return super::create();
 }

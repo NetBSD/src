@@ -1,4 +1,4 @@
-/*	$NetBSD: winprintf.c,v 1.1 2001/02/09 18:35:39 uch Exp $	*/
+/*	$NetBSD: winprintf.c,v 1.2 2004/08/06 18:33:10 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -38,7 +38,7 @@
 #include <windows.h>
 #include <stand.h>
 
-int 
+int
 win_printf(LPWSTR lpszFmt, ...)
 {
 	int count;

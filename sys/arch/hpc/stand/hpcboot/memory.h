@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: memory.h,v 1.4 2002/02/11 17:05:45 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: memory.h,v 1.5 2004/08/06 18:33:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_MEMORY_H_
-#define _HPCBOOT_MEMORY_H_
+#define	_HPCBOOT_MEMORY_H_
 
 #undef MEMORY_MAP_DEBUG		// super verbose.
 
@@ -56,7 +56,7 @@ TRUNC(const T v, const T x) {
 	return(v / x) * x;
 }
 
-#define MAX_MEM_BANK	16
+#define	MAX_MEM_BANK	16
 class MemoryManager {
 private:
 	struct bank {
@@ -72,7 +72,7 @@ protected:
 	// Console options.
 	Console *&_cons;
 	BOOL _debug;
-  
+
 	enum { BLOCK_SIZE = WCE_REGION_SIZE * 64 }; // 4MByte
 
 	// Pagesize, D-RAM bank
@@ -86,7 +86,7 @@ protected:
 	vaddr_t _memory;
 
 	// Virtual <-> Physical table
-	int _naddr_table; 
+	int _naddr_table;
 	struct AddressTranslationTable {
 		vaddr_t vaddr;
 		paddr_t paddr;
@@ -157,12 +157,12 @@ class MemoryManager_VirtualCopy : public MemoryManager {
 private:
 	// search guess
 	paddr_t _search_guess;
-	
+
 	// Memory marker
 	u_int32_t _magic0, _magic1;
 	volatile u_int32_t *_magic_addr;
 	enum {
-		MAGIC_CHECK_DONE	= 0xac1dcafe, 
+		MAGIC_CHECK_DONE	= 0xac1dcafe,
 		MAGIC_CHECK_DUMMY	= 0xa5a5a5a5
 	};
 	void setMagic(vaddr_t v) {
@@ -176,7 +176,7 @@ private:
 	}
 	BOOL checkMagic(vaddr_t v) {
 		volatile u_int32_t *marker =(u_int32_t *)v;
-		return (marker[0] == _magic0) && (marker[1] == _magic1); 
+		return (marker[0] == _magic0) && (marker[1] == _magic1);
 	}
 	void clearMagic(void) {
 		_magic_addr[0] = MAGIC_CHECK_DONE;
