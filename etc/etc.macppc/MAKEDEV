@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 2000/01/21 12:28:26 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.25 2000/02/29 19:07:43 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -434,7 +434,7 @@ scsibus*)
 	;;
 
 usbs)
-	sh $0 usb0 usb1
+	sh $0 usb usb0 usb1
 	sh $0 uhid0 uhid1 uhid2 uhid3
 	sh $0 ulpt0 ulpt1
 	sh $0 ttyU0 ttyU1
@@ -442,7 +442,12 @@ usbs)
 
 usb*)
 	unit=${i#usb}
-	usb=usb$unit
+	if [ "$unit" = "" ]; then
+	    unit=255
+	    usb=usb
+	else
+	    usb=usb$unit
+	fi
 	major=39
 	rm -f $usb
 	mknod $usb c $major $unit
