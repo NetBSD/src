@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.5 1998/09/05 04:04:24 mark Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.6 1999/05/11 12:41:15 hpeyerl Exp $	*/
 
 /*
  * Copyright 1997
@@ -240,7 +240,9 @@ irq_release(irq, handler)
 {
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
+#ifdef IRQSTATS
 	extern char *_intrnames;
+#endif
 
 	/*
 	 * IRQ_INSTRUCT indicates that we should get the irq number
