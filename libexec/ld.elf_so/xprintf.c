@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.15 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.16 2004/02/15 02:59:04 enami Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -51,7 +51,7 @@ xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)
 {
 	char *bp = buf;
 	char *const ep = buf + buflen - 4;
-	int size;
+	int size, prec;
 
 	while (*fmt != '\0' && bp < ep) {
 		switch (*fmt) {
@@ -62,7 +62,14 @@ xvsnprintf(char *buf, size_t buflen, const char *fmt, va_list ap)
 		}
 		case '%':{
 			size = 0;
+			prec = -1;
 	rflag:		switch (fmt[1]) {
+			case '*':
+				prec = va_arg(ap, int);
+				/* FALLTHROUGH */
+			case '.':
+				fmt++;
+				goto rflag;
 			case 'l':
 				size |= SZ_LONG;
 				fmt++;
@@ -155,7 +162,10 @@ va_arg(ap, unsigned int))
 				if (str == NULL)
 					str = "(null)";
 
-				len = strlen(str);
+				if (prec < 0)
+					len = strlen(str);
+				else
+					len = prec;
 				if (ep - bp < len)
 					len = ep - bp;
 				memcpy(bp, str, len);
