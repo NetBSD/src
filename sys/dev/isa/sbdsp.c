@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.44 1997/05/07 18:51:47 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.45 1997/05/09 22:16:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,6 +57,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -128,6 +129,8 @@ int	sbdsp16_setrate __P((struct sbdsp_softc *, int, int, int *));
 int	sbdsp_tctosr __P((struct sbdsp_softc *, int));
 int	sbdsp_set_timeconst __P((struct sbdsp_softc *, int));
 int	sbdsp_set_io_params __P((struct sbdsp_softc *, struct audio_params *));
+void	sbdsp_mulaw_expand __P((void *, u_char *, int));
+void	sbdsp_mulaw_compress __P((void *, u_char *, int));
 
 #ifdef AUDIO_DEBUG
 void sb_printsc __P((struct sbdsp_softc *));
@@ -397,62 +400,78 @@ sbdsp_set_io_params(sc, p)
 	return (0);
 }
 
+void
+sbdsp_mulaw_expand(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	mulaw_to_ulinear8(p, cc);
+}
+
+void
+sbdsp_mulaw_compress(v, p, cc)
+	void *v;
+	u_char *p;
+	int cc;
+{
+	ulinear8_to_mulaw(p, cc);
+}
+
 int
-sbdsp_set_in_params(addr, p)
+sbdsp_set_params(addr, mode, p, q)
 	void *addr;
-	struct audio_params *p;
+	int mode;
+	struct audio_params *p, *q;
 {
 	register struct sbdsp_softc *sc = addr;
-	int error;
+	int error, rate;
 
 	error = sbdsp_set_io_params(sc, p);
 	if (error)
 		return error;
 
-	if (ISSB16CLASS(sc))
-		error = sbdsp16_setrate(sc, p->sample_rate, SB_INPUT_RATE, &sc->sc_irate);
-	else
-		error = sbdsp_srtotc(sc, p->sample_rate, SB_INPUT_RATE, &sc->sc_itc, &sc->sc_imode);
+	if (mode == AUMODE_RECORD) {
+		if (ISSB16CLASS(sc)) {
+			error = sbdsp16_setrate(sc, p->sample_rate, SB_INPUT_RATE, 
+						&sc->sc_irate);
+			rate = sc->sc_irate;
+		} else {
+			error = sbdsp_srtotc(sc, p->sample_rate, SB_INPUT_RATE, 
+					     &sc->sc_itc, &sc->sc_imode);
+			rate = sbdsp_tctosr(sc, sc->sc_itc);
+		}
+	} else {
+		if (ISSB16CLASS(sc)) {
+			error = sbdsp16_setrate(sc, p->sample_rate, SB_OUTPUT_RATE, 
+						&sc->sc_orate);
+			rate = sc->sc_orate;
+		} else {
+			error = sbdsp_srtotc(sc, p->sample_rate, SB_OUTPUT_RATE, 
+					     &sc->sc_otc, &sc->sc_omode);
+			rate = sbdsp_tctosr(sc, sc->sc_otc);
+		}
+	}
 	if (error)
 		return error;
 
 	sc->sc_precision = p->precision;
 	sc->sc_channels = p->channels;
-	if (ISSB16CLASS(sc))
-		p->sample_rate = sc->sc_irate;
-	else
-		p->sample_rate = sbdsp_tctosr(sc, sc->sc_itc);
+
+	p->sample_rate = rate;
+	if (p->encoding == AUDIO_ENCODING_ULAW) {
+		p->sw_code = mode == AUMODE_PLAY ? 
+			sbdsp_mulaw_expand : sbdsp_mulaw_compress;
+	} else
+		p->sw_code = 0;
+
+	/* Update setting for the other mode. */
+	q->encoding = p->encoding;
+	q->channels = p->channels;
+	q->precision = p->precision;
 	return 0;
 }
 
-int
-sbdsp_set_out_params(addr, p)
-	void *addr;
-	struct audio_params *p;
-{
-	register struct sbdsp_softc *sc = addr;
-	int error;
-
-	error = sbdsp_set_io_params(sc, p);
-	if (error)
-		return error;
-
-	if (ISSB16CLASS(sc))
-		error = sbdsp16_setrate(sc, p->sample_rate, SB_OUTPUT_RATE, &sc->sc_orate);
-	else
-		error = sbdsp_srtotc(sc, p->sample_rate, SB_OUTPUT_RATE, &sc->sc_otc, &sc->sc_omode);
-	if (error)
-		return error;
-
-	sc->sc_precision = p->precision;
-	sc->sc_channels = p->channels;
-	if (ISSB16CLASS(sc))
-		p->sample_rate = sc->sc_orate;
-	else
-		p->sample_rate = sbdsp_tctosr(sc, sc->sc_otc);
-	return 0;
-}
-  
 int
 sbdsp_set_ifilter(addr, which)
 	void *addr;

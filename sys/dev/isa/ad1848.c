@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.26 1997/05/07 18:51:41 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.27 1997/05/09 22:16:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -85,6 +85,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -150,13 +151,15 @@ static int ad1848_init_values[] = {
 void	ad1848_reset __P((struct ad1848_softc *));
 int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
 void	ad1848_mute_monitor __P((void *, int));
-int	ad1848_set_params __P((void *, struct audio_params *));
 
 static int ad_read __P((struct ad1848_softc *, int));
 static __inline void ad_write __P((struct ad1848_softc *, int, int));
 static void ad_set_MCE __P((struct ad1848_softc *, int));
 static void wait_for_calibration __P((struct ad1848_softc *));
 
+void ad1848_sign8(void *, u_char *, int);
+void ad1848_sign16(void *, u_char *, int);
+void ad1848_swap(void *, u_char *, int);
 
 static int
 ad_read(sc, reg)
@@ -492,7 +495,7 @@ ad1848_attach(sc)
     int i;
     struct ad1848_volume vol_mid = {220, 220};
     struct ad1848_volume vol_0   = {0, 0};
-    struct audio_params params;
+    struct audio_params params, xparams;
     
     sc->sc_locked = 0;
 
@@ -513,8 +516,8 @@ ad1848_attach(sc)
     params.precision = 8;
     params.channels = 1;
     params.encoding = AUDIO_ENCODING_ULAW;
-    (void) ad1848_set_in_params(sc, &params);
-    (void) ad1848_set_out_params(sc, &params);
+    (void) ad1848_set_params(sc, AUMODE_RECORD, &params, &xparams);
+    (void) ad1848_set_params(sc, AUMODE_PLAY,   &params, &xparams);
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);
@@ -923,6 +926,8 @@ ad1848_query_encoding(addr, fp)
     void *addr;
     struct audio_encoding *fp;
 {
+    struct ad1848_softc *sc = addr;
+
     switch (fp->index) {
     case 0:
 	strcpy(fp->name, AudioEmulaw);
@@ -937,48 +942,117 @@ ad1848_query_encoding(addr, fp)
 	fp->flags = 0;
 	break;
     case 2:
-	strcpy(fp->name, AudioEadpcm);
-	fp->encoding = AUDIO_ENCODING_ADPCM;
-	fp->precision = 8;
-	fp->flags = 0;
-	break;
-    case 3:
 	strcpy(fp->name, AudioElinear_le);
 	fp->encoding = AUDIO_ENCODING_LINEAR_LE;
 	fp->precision = 16;
 	fp->flags = 0;
 	break;
-    case 4:
-	strcpy(fp->name, AudioElinear_be);
-	fp->encoding = AUDIO_ENCODING_LINEAR_BE;
-	fp->precision = 16;
-	fp->flags = 0;
-	break;
-    case 5:
+    case 3:
 	strcpy(fp->name, AudioEulinear);
 	fp->encoding = AUDIO_ENCODING_ULINEAR;
 	fp->precision = 8;
 	fp->flags = 0;
 	break;
+
+    case 4: /* only on CS4231 */
+	strcpy(fp->name, AudioElinear_be);
+	fp->encoding = AUDIO_ENCODING_LINEAR_BE;
+	fp->precision = 16;
+	fp->flags = sc->mode == 1;
+	break;
+
+    /* emulate some modes */
+    case 5:
+	strcpy(fp->name, AudioElinear);
+	fp->encoding = AUDIO_ENCODING_LINEAR;
+	fp->precision = 8;
+	fp->flags = 1;
+	break;
+    case 6:
+	strcpy(fp->name, AudioEulinear_le);
+	fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+	fp->precision = 16;
+	fp->flags = 1;
+	break;
+
+    case 7: /* only on CS4231 */
+	if (sc->mode == 1)
+	    return EINVAL;
+	strcpy(fp->name, AudioEadpcm);
+	fp->encoding = AUDIO_ENCODING_ADPCM;
+	fp->precision = 8;
+	fp->flags = 0;
+	break;
     default:
-	return(EINVAL);
+	return EINVAL;
 	/*NOTREACHED*/
     }
     return (0);
 }
 
-int
-ad1848_set_params(addr, p)
+void
+ad1848_sign8(addr, p, cc)
     void *addr;
-    struct audio_params *p;
+    u_char *p;
+    int cc;
 {
-    register struct ad1848_softc *sc = addr;
-    int error, bits;
+    change_sign8(p, cc);
+}
+
+void
+ad1848_sign16(addr, p, cc)
+    void *addr;
+    u_char *p;
+    int cc;
+{
+    change_sign16(p, cc);
+}
+
+void
+ad1848_swap(addr, p, cc)
+    void *addr;
+    u_char *p;
+    int cc;
+{
+    swap_bytes(p, cc);
+}
+
+int
+ad1848_set_params(addr, mode, p, q)
+    void *addr;
+    int mode;
+    struct audio_params *p, *q;
+{
+    struct ad1848_softc *sc = addr;
+    int error, bits, enc;
 
     DPRINTF(("ad1848_set_params: %d %d %d %d\n", 
 	     p->encoding, p->precision, p->channels, p->sample_rate));
 
-    switch (p->encoding) {
+    p->sw_code = 0;
+
+    enc = p->encoding;
+    switch (enc) {
+    case AUDIO_ENCODING_LINEAR_LE:
+	if (p->precision == 8) {
+	    enc = AUDIO_ENCODING_ULINEAR_LE;
+	    p->sw_code = ad1848_sign8;
+	}
+	break;
+    case AUDIO_ENCODING_LINEAR_BE:
+	if (p->precision == 16 && sc->mode == 1) {
+	    enc = AUDIO_ENCODING_LINEAR_LE;
+	    p->sw_code = ad1848_swap;
+	}
+	break;
+    case AUDIO_ENCODING_ULINEAR_LE:
+	if (p->precision == 16) {
+	    enc = AUDIO_ENCODING_LINEAR_LE;
+	    p->sw_code = ad1848_sign16;
+	}
+	break;
+    }
+    switch (enc) {
     case AUDIO_ENCODING_ULAW:
 	bits = FMT_ULAW >> 5;
 	break;
@@ -1001,7 +1075,6 @@ ad1848_set_params(addr, p)
 	    return EINVAL;
 	break;
     case AUDIO_ENCODING_ULINEAR_LE:
-    case AUDIO_ENCODING_ULINEAR_BE:
 	if (p->precision == 8)
 	    bits = FMT_PCM8 >> 5;
 	else
@@ -1023,28 +1096,16 @@ ad1848_set_params(addr, p)
     sc->precision = p->precision;
     sc->need_commit = 1;
 
+    /* Update setting for the other mode. */
+    q->sample_rate = p->sample_rate;
+    q->encoding = p->encoding;
+    q->channels = p->channels;
+    q->precision = p->precision;
+
     DPRINTF(("ad1848_set_params succeeded\n"));
     return (0);
 }
 
-/* We always set both play and record parameters */
-int
-ad1848_set_in_params(addr, p)
-    void *addr;
-    struct audio_params *p;
-{
-    return ad1848_set_params(addr, p);
-}
-
-/* We always set both play and record parameters */
-int
-ad1848_set_out_params(addr, p)
-    void *addr;
-    struct audio_params *p;
-{
-    return ad1848_set_params(addr, p);
-}
-  
 int
 ad1848_set_rec_port(sc, port)
     register struct ad1848_softc *sc;

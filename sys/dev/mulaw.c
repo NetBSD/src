@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 #include <sys/audioio.h>
+#include <machine/endian.h>
 #include <dev/mulaw.h>
 
 static u_char mulawtolin[256] = {
@@ -107,48 +108,67 @@ static u_char lintomulaw[256] = {
 };
 
 void
-mulaw_compress(hdl, e, p, cc)
-	void *hdl;
-	int e;
+mulaw_to_ulinear8(p, cc)
 	u_char *p;
 	int cc;
 {
-	u_char *tab;
-
-	switch (e) {
-	case AUDIO_ENCODING_ULAW:
-		tab = lintomulaw;
-		break;
-	default:
-		return;
-	}
-
 	while (--cc >= 0) {
-		*p = tab[*p];
+		*p = mulawtolin[*p];
 		++p;
 	}
 }
 
 void
-mulaw_expand(hdl, e, p, cc)
-	void *hdl;
-	int e;
+ulinear8_to_mulaw(p, cc)
 	u_char *p;
 	int cc;
 {
-	u_char *tab;
-
-	switch (e) {
-	case AUDIO_ENCODING_ULAW:
-		tab = mulawtolin;
-		break;
-	default:
-		return;
-	}
-	
 	while (--cc >= 0) {
-		*p = tab[*p];
+		*p = lintomulaw[*p];
 		++p;
 	}
 }
 
+void
+change_sign8(p, cc)
+	u_char *p;
+	int cc;
+{
+	while (--cc >= 0) {
+		*p = *p ^ 0x80;
+		++p;
+	}
+}
+
+void
+change_sign16(p, cc)
+	u_char *p;
+	int cc;
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	while ((cc -=2) >= 0) {
+		p[1] = p[1] ^ 0x80;
+		p += 2;
+	}
+#else
+	while ((cc -=2) >= 0) {
+		*p = *p ^ 0x80;
+		p += 2;
+	}
+#endif
+}
+
+void
+swap_bytes(p, cc)
+	u_char *p;
+	int cc;
+{
+	u_char t;
+
+	while ((cc -=2) >= 0) {
+		t = p[0];
+		p[0] = p[1];
+		p[1] = t;
+		p += 2;
+	}
+}

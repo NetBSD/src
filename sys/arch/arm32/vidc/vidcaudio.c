@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.12 1997/05/07 18:51:33 augustss Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.13 1997/05/09 22:16:28 augustss Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -293,15 +293,13 @@ vidcaudio_close(addr)
  * ************************************************************************* */
 
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    vidcaudio_set_params	 __P((void *, struct audio_params *));
+int    vidcaudio_set_params	 __P((void *, int, struct audio_params *, struct audio_params *));
 int    vidcaudio_round_blocksize __P((void *, int));
 int    vidcaudio_set_out_port	 __P((void *, int));
 int    vidcaudio_get_out_port	 __P((void *));
 int    vidcaudio_set_in_port	 __P((void *, int));
 int    vidcaudio_get_in_port  	 __P((void *));
 int    vidcaudio_commit_settings __P((void *));
-void   vidcaudio_sw_encode	 __P((void *, int, u_char *, int));
-void   vidcaudio_sw_decode	 __P((void *, int, u_char *, int));
 int    vidcaudio_start_output	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_start_input	 __P((void *, void *, int, void (*)(), void *));
 int    vidcaudio_halt_output	 __P((void *));
@@ -339,16 +337,21 @@ int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
 }
 
 int
-vidcaudio_set_params(addr, p)
+vidcaudio_set_params(addr, mode, p, q)
 	void *addr;
-	struct audio_params *p;
+	struct audio_params *p, *q;
 {
-	struct vidcaudio_softc *sc = addr;
-
 	if (p->encoding != AUDIO_ENCODING_ULAW ||
 	    p->channels != 8)
 		return EINVAL;
 	vidcaudio_rate(4 * p->sample_rate / (3 * 1024)); /* XXX probably wrong */
+	p->sw_code = 0;
+
+	/* Update setting for the other mode. */
+	q->sample_rate = p->sample_rate;
+	q->encoding = p->encoding;
+	q->channels = p->channels;
+	q->precision = p->precision;
 	return 0;
 }
 
@@ -392,21 +395,6 @@ int vidcaudio_commit_settings ( void *addr )
 printf ( "DEBUG: committ_settings\n" );
 #endif
     return 0;
-}
-
-void vidcaudio_sw_encode ( void *addr, int e, u_char *p, int cc )
-{
-#ifdef DEBUG
-    printf ( "DEBUG: sw_encode\n" );    
-#endif
-    return;
-}
-
-void vidcaudio_sw_decode ( void *addr, int e, u_char *p, int cc )
-{
-#ifdef DEBUG
-    printf ( "DEBUG: sw_decode\n" );    
-#endif
 }
 
 #define ROUND(s)  ( ((int)s) & (~(NBPG-1)) )
@@ -525,15 +513,12 @@ struct audio_hw_if vidcaudio_hw_if = {
     NULL,
     vidcaudio_query_encoding,
     vidcaudio_set_params,
-    vidcaudio_set_params,
     vidcaudio_round_blocksize,
     vidcaudio_set_out_port,
     vidcaudio_get_out_port,
     vidcaudio_set_in_port,
     vidcaudio_get_in_port,
     vidcaudio_commit_settings,
-    vidcaudio_sw_encode,
-    vidcaudio_sw_decode,
     vidcaudio_start_output,
     vidcaudio_start_input,
     vidcaudio_halt_output,

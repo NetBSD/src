@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.44 1997/05/07 19:24:34 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.45 1997/05/09 22:16:30 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -160,7 +160,8 @@ int	audio_drain __P((struct audio_softc *));
 void	audio_clear __P((struct audio_softc *));
 
 /* The default audio mode: 8 kHz mono ulaw */
-static struct audio_params audio_default = { 8000, AUDIO_ENCODING_ULAW, 8, 1 };
+static struct audio_params audio_default = 
+	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0 };
 
 #ifdef AUDIO_DEBUG
 void
@@ -213,8 +214,7 @@ audio_hardware_attach(hwp, hdlp)
 	if (hwp->open == 0 ||
 	    hwp->close == 0 ||
 	    hwp->query_encoding == 0 ||
-	    hwp->set_in_params == 0 ||
-	    hwp->set_out_params == 0 ||
+	    hwp->set_params == 0 ||
 	    hwp->round_blocksize == 0 ||
 	    hwp->set_out_port == 0 ||
 	    hwp->get_out_port == 0 ||
@@ -540,10 +540,12 @@ audio_open(dev, flags, ifmt, p)
 		sc->sc_rparams = audio_default;
 		sc->sc_pparams = audio_default;
 		/** XXX should we abort on error? */
-		error = hw->set_in_params(sc->hw_hdl, &sc->sc_rparams);
+		error = hw->set_params(sc->hw_hdl, AUMODE_RECORD,
+				       &sc->sc_rparams, &sc->sc_pparams);
 		if (error)
 			return (error);
-		error = hw->set_out_params(sc->hw_hdl, &sc->sc_pparams);
+		error = hw->set_params(sc->hw_hdl, AUMODE_PLAY,
+				       &sc->sc_pparams, &sc->sc_rparams);
 		if (error)
 			return (error);
 	}
@@ -786,9 +788,8 @@ audio_read(dev, uio, ioflag)
 				return (error);
 		}
 		hp = cb->hp;
-		if (hw->sw_decode)
-			hw->sw_decode(sc->hw_hdl, sc->sc_rparams.encoding,
-				      hp, blocksize);
+		if (sc->sc_rparams.sw_code)
+			sc->sc_rparams.sw_code(sc->hw_hdl, hp, blocksize);
 		error = uiomove(hp, blocksize, uio);
 		if (error)
 			break;
@@ -941,8 +942,6 @@ audio_alloc_auzero(sc, bs)
 	struct audio_softc *sc;
 	int bs;
 {
-	struct audio_hw_if *hw = sc->hw_if;
-
 	if (sc->auzero_block)
 		free(sc->auzero_block, M_DEVBUF);
 
@@ -953,9 +952,8 @@ audio_alloc_auzero(sc, bs)
 	}
 #endif
 	audio_fill_silence(&sc->sc_pparams, sc->auzero_block, bs);
-	if (hw->sw_encode)
-		hw->sw_encode(sc->hw_hdl, sc->sc_pparams.encoding,
-			      sc->auzero_block, bs);
+	if (sc->sc_pparams.sw_code)
+		sc->sc_pparams.sw_code(sc->hw_hdl, sc->auzero_block, bs);
 }
 
     
@@ -1003,10 +1001,9 @@ audio_write(dev, uio, ioflag)
 				cc = min(cb->fill, uio->uio_resid);
 				error = uiomove(cb->otp, cc, uio);
 				if (error == 0) {
-					if (hw->sw_encode)
-						hw->sw_encode(sc->hw_hdl,
-						    sc->sc_pparams.encoding, cb->otp,
-						    cc);
+					if (sc->sc_pparams.sw_code)
+						sc->sc_pparams.sw_code(sc->hw_hdl,
+						    cb->otp, cc);
 					cb->fill -= cc;
 					cb->otp += cc;
 				}
@@ -1104,9 +1101,8 @@ audio_write(dev, uio, ioflag)
 			break;
 		}		    
 
-		if (hw->sw_encode)
-			hw->sw_encode(sc->hw_hdl, sc->sc_pparams.encoding, 
-				      cb->tp, blocksize);
+		if (sc->sc_pparams.sw_code)
+			sc->sc_pparams.sw_code(sc->hw_hdl, cb->tp, blocksize);
 
 		/* wrap the ring buffer if at end */
 		s = splaudio();
@@ -1604,7 +1600,7 @@ audiosetinfo(sc, ai)
 		return error;
 	if (nr) {
 		audio_clear(sc);
-		error = hw->set_in_params(sc->hw_hdl, &rp);
+		error = hw->set_params(sc->hw_hdl, AUMODE_RECORD, &rp, &sc->sc_pparams);
 		if (error)
 			return (error);
 		sc->sc_rparams = rp;
@@ -1614,7 +1610,7 @@ audiosetinfo(sc, ai)
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
-		error = hw->set_out_params(sc->hw_hdl, &pp);
+		error = hw->set_params(sc->hw_hdl, AUMODE_PLAY, &pp, &sc->sc_rparams);
 		if (error)
 			return (error);
 		sc->sc_pparams = pp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.11 1997/04/29 21:01:45 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.12 1997/05/09 22:16:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -45,6 +45,8 @@ struct audio_params {
 	u_int	encoding;			/* e.g. ulaw, linear, etc */
 	u_int	precision;			/* bits/sample */
 	u_int	channels;			/* mono(1), stereo(2) */
+	/* Software en/decode functions, set if SW coding required by HW */
+	void	(*sw_code)__P((void *, u_char *, int));
 };
 
 struct audio_hw_if {
@@ -62,8 +64,7 @@ struct audio_hw_if {
 	 * The values in the params struct may be changed (e.g. rounding
 	 * to the nearest sample rate.)
 	 */
-        int	(*set_out_params)__P((void *, struct audio_params *));
-        int	(*set_in_params)__P((void *, struct audio_params *));
+        int	(*set_params)__P((void *, int, struct audio_params *, struct audio_params *));
   
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)__P((void *, int));
@@ -83,10 +84,6 @@ struct audio_hw_if {
 	 * adjustment.
 	 */
 	int	(*commit_settings)__P((void *));
-
-	/* Software en/decode functions, set if SW coding required by HW */
-	void	(*sw_encode)__P((void *, int, u_char *, int));
-	void	(*sw_decode)__P((void *, int, u_char *, int));
 
 	/* Start input/output routines. These usually control DMA. */
 	int	(*start_output)__P((void *, void *, int,
