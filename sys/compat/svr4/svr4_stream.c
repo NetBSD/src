@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.9 1995/10/07 06:27:52 mycroft Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.10 1996/02/04 02:01:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -340,7 +340,7 @@ svr4_showioc(str, ioc)
 	int i;
 
 	printf("%s cmd = %d, timeout = %d, len = %d, buf = %x { ",
-	       str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
+	       str, ioc->cmd, ioc->timeout, ioc->len, (unsigned int) ioc->buf);
 
 	if ((error = copyin(ioc->buf, ptr, ioc->len)) != 0) {
 		free((char *) ptr, M_TEMP);
@@ -584,7 +584,8 @@ svr4_getstrbuf(str)
 	    }
 	}
 
-	printf(", { %d, %d, %x=[ ", str->maxlen, str->len, str->buf);
+	printf(", { %d, %d, %x=[ ", str->maxlen, str->len,
+	       (unsigned int) str->buf);
 	for (i = 0; i < len; i++) {
 		printf("%x ", (unsigned char) ptr[i]);
 		if (i > 20) {
@@ -688,7 +689,7 @@ svr4_sys_putmsg(p, v, retval)
 	}
 
 	so = (struct socket *)  fp->f_data;
-	st = (struct svr4_strm *) so->so_tpcb;
+	st = (struct svr4_strm *) so->so_internal;
 
 
 	if (ctl.len > sizeof(sc)) {
@@ -821,7 +822,7 @@ svr4_sys_getmsg(p, v, retval)
 	}
 
 	so = (struct socket *)  fp->f_data;
-	st = (struct svr4_strm *) so->so_tpcb;
+	st = (struct svr4_strm *) so->so_internal;
 
 	if (ctl.maxlen == -1 || dat.maxlen == -1) {
 		DPRINTF(("getmsg: Cannot handle -1 maxlen (yet)\n"));
@@ -913,7 +914,7 @@ svr4_sys_getmsg(p, v, retval)
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = recvit(p, SCARG(uap, fd), &msg, flen, retval);
+		error = recvit(p, SCARG(uap, fd), &msg, (caddr_t) flen, retval);
 
 		if (error) {
 			DPRINTF(("getmsg: recvit failed %d\n", error))
