@@ -1,4 +1,4 @@
-/*	$NetBSD: cia.h,v 1.9 1996/02/01 22:29:06 mycroft Exp $	*/
+/*	$NetBSD: cia.h,v 1.10 1999/09/25 21:47:03 is Exp $	*/
 
 /*
  * Mach Operating System
@@ -55,7 +55,7 @@ struct CIA {
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-vm_offset_t CIAAbase, CIABbase, CIAADDR;
+vaddr_t CIAAbase, CIABbase, CIAADDR;
 #define CIABASE		(0x00BFC000)
 #define CIATOP		(0x00C00000)
 #define NCIAPG		btoc(CIATOP - CIABASE)
