@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2001/02/24 22:39:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2001/02/26 14:55:05 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -621,50 +621,6 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 #endif
 }
 #endif
-
-/*
- * Crash dump handling.
- */
-u_long dumpmag = 0x8fca0101;		/* magic number */
-int dumpsize = 0;			/* size of dump in pages */
-long dumplo = -1;			/* blocks */
-
-/*
- * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first NBPG of disk space
- * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end to
- * reduce the chance that swapping trashes it.
- */
-void
-cpu_dumpconf()
-{
-	int nblks;	/* size of dump area */
-	int maj;
-
-	if (dumpdev == NODEV)
-		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
-		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
-		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
-	if (nblks <= ctod(1))
-		return;
-
-	dumpsize = physmem;
-
-	/* Always skip the first NBPG, in case there is a label there. */
-	if (dumplo < ctod(1))
-		dumplo = ctod(1);
-
-	/* Put dump at end of partition, and make it fit. */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
-}
 
 void
 dumpsys()
