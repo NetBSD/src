@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.45 1999/03/26 15:49:34 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.45.2.1 1999/04/07 17:24:02 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.45 1999/03/26 15:49:34 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.45.2.1 1999/04/07 17:24:02 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -538,7 +538,7 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 			if (patmatch(str, startp, varflags & VSQUOTE))
 				goto recordleft;
 			*loc = c;
-			if ((varflags && VSQUOTE) && *loc == CTLESC)
+			if ((varflags & VSQUOTE) && *loc == CTLESC)
 			        loc++;
 		}
 		return 0;
