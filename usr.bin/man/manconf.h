@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.6 2002/06/11 04:39:52 lukem Exp $	*/
+/*	$NetBSD: manconf.h,v 1.1 2002/09/13 15:56:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993

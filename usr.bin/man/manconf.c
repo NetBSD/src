@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.16 2002/06/11 04:39:52 lukem Exp $	*/
+/*	$NetBSD: manconf.c,v 1.1 2002/09/13 15:56:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
 #if defined(__RCSID)
-__RCSID("$NetBSD: config.c,v 1.16 2002/06/11 04:39:52 lukem Exp $");
+__RCSID("$NetBSD: manconf.c,v 1.1 2002/09/13 15:56:39 thorpej Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: config.c,v 1.16 2002/06/11 04:39:52 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
+#include "manconf.h"
 #include "pathnames.h"
 
 struct _head head;

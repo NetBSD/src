@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/04 16:57:47 junyoung Exp $
+#	$NetBSD: Makefile,v 1.15 2002/09/13 15:56:37 thorpej Exp $
 
 .ifndef HOSTPROG
 .include <bsd.obj.mk>
 .endif
 
 PROG=	makewhatis
-SRCS=	makewhatis.c config.c
+SRCS=	makewhatis.c manconf.c
 .PATH:	${NETBSDSRCDIR}/usr.bin/man
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin
 
