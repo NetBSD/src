@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.10 2002/05/24 21:41:40 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.11 2002/06/04 15:13:55 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -242,7 +242,7 @@ igen:	uda.uda_cmd.mscp_opcode = cmd;
 	printf("sending cmd %x...", cmd);
 #endif
 	hej = *ra_ip;
-	to = 1000000;
+	to = 10000000;
 	while (uda.uda_ca.ca_rspdsc < 0) {
 //		if (uda.uda_ca.ca_cmdint)
 //			uda.uda_ca.ca_cmdint = 0;
