@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.31 2001/04/04 03:17:19 atatat Exp $
+# $NetBSD: rc.subr,v 1.32 2001/04/06 06:48:35 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -205,8 +205,8 @@ check_process()
 #
 #	${name}_group	n	Group to run chrooted ${command} as.
 #
-#	${name}_groups	n	Supplementary group list to run chrooted
-#				${command} with.
+#	${name}_groups	n	Comma separated list of supplementary groups
+#				to run the chrooted ${command} with.
 #
 #	${_arg}_cmd	n	If set, use this as the action when invoked;
 #				$_arg is available to the action to use.
