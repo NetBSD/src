@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.38 2004/08/14 01:08:07 mycroft Exp $	*/
+/*	$NetBSD: inode.h,v 1.39 2004/08/14 14:32:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -269,7 +269,6 @@ struct indir {
 		if ((ip)->i_flag & IN_ACCESS) {				\
 			DIP_ASSIGN(ip, atime, (acc)->tv_sec);		\
 			DIP_ASSIGN(ip, atimensec, (acc)->tv_nsec);	\
-			(ip)->i_flag |= IN_ACCESSED;			\
 		}							\
 		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
 			if (((ip)->i_flags & SF_SNAPSHOT) == 0) {	\
@@ -277,13 +276,15 @@ struct indir {
 				DIP_ASSIGN(ip, mtimensec, (mod)->tv_nsec); \
 			}						\
 			(ip)->i_modrev++;				\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
 		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
 			DIP_ASSIGN(ip, ctime, (cre)->tv_sec);		\
 			DIP_ASSIGN(ip, ctimensec, (cre)->tv_nsec);	\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
+		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
+			ip->i_flag |= IN_ACCESSED;			\
+		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
+			ip->i_flag |= IN_MODIFIED;			\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
 	}								\
 }
@@ -292,17 +293,18 @@ struct indir {
 	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) {\
 		if ((ip)->i_flag & IN_ACCESS) {				\
 			(ip)->i_e2fs_atime = (acc)->tv_sec;		\
-			(ip)->i_flag |= IN_ACCESSED;			\
 		}							\
 		if ((ip)->i_flag & (IN_UPDATE | IN_MODIFY)) {		\
 			(ip)->i_e2fs_mtime = (mod)->tv_sec;		\
 			(ip)->i_modrev++;				\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
 		if ((ip)->i_flag & (IN_CHANGE | IN_MODIFY)) {		\
 			(ip)->i_e2fs_ctime = (cre)->tv_sec;		\
-			(ip)->i_flag |= IN_MODIFIED;			\
 		}							\
+		if ((ip)->i_flag & (IN_ACCESS | IN_MODIFY))		\
+			(ip)->i_flag |= IN_ACCESSED;			\
+		if ((ip)->i_flag & (IN_UPDATE | IN_CHANGE))		\
+			(ip)->i_flag |= IN_MODIFIED;			\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY);	\
 	}								\
 }
