@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.6.2.2 1993/11/08 20:37:35 mycroft Exp $
+ *	$Id: if.c,v 1.6.2.3 1993/11/08 20:43:54 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -44,11 +44,11 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 
-#include <machine/cpu.h>
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
 
-#include <if.h>
-#include <if_dl.h>
-#include <if_types.h>
+#include <machine/cpu.h>
 
 #include "ether.h"
 
