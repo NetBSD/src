@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/01/16 02:42:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 2001/02/16 01:01:39 enami Exp $
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
@@ -12,7 +12,7 @@ DPADD=	${LIBRPCSVC} ${LIBCRYPT}
 LDADD=	-lrpcsvc -lcrypt
 
 .ifnmake getrpcgen
-XRPCGEN != (cd ${.CURDIR} && ${MAKE} getrpcgen)
+XRPCGEN != (cd ${.CURDIR} && ${MAKE} -B getrpcgen)
 .endif
 
 getrpcgen:
