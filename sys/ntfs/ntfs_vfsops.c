@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.18 1999/10/17 10:18:15 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.18.2.1 1999/10/20 22:56:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -601,8 +601,6 @@ out1:
 out:
 #if defined(__FreeBSD__)
 	devvp->v_specmountpoint = NULL;
-#else
-	devvp->v_specflags &= ~SI_MOUNTEDON;
 #endif
 	if (bp)
 		brelse(bp);
@@ -672,7 +670,8 @@ ntfs_unmount(
 	vnode_pager_uncache(ntmp->ntm_devvp);
 	VOP_UNLOCK(ntmp->ntm_devvp);
 #else
-	ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
+	if (ntmp->ntm_devvp->v_type != VBAD)
+		ntmp->ntm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #endif
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);

@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.17 1999/08/02 06:00:40 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.17.2.1 1999/10/20 22:54:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.17 1999/08/02 06:00:40 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.17.2.1 1999/10/20 22:54:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ struct wsscreen_descr mfb_stdscreen = {
 	"std", 0, 0,
 	&mfb_emulops,
 	0, 0,
-	0
+	WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *_mfb_scrlist[] = {

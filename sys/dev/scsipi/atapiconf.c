@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.28.2.2 1999/10/20 10:14:54 enami Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28.2.3 1999/10/20 22:53:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -89,6 +89,7 @@ const struct scsipi_bustype atapi_bustype = {
 	atapi_scsipi_cmd,
 	atapi_interpret_sense,
 	atapi_print_addr,
+	atapi_kill_pending,
 };
 
 struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {

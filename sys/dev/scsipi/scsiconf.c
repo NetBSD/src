@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.1 1999/10/19 17:39:33 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.2 1999/10/20 22:54:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ const struct scsipi_bustype scsi_bustype = {
 	scsi_scsipi_cmd,
 	scsipi_interpret_sense,
 	scsi_print_addr,
+	scsi_kill_pending,
 };
 
 int
