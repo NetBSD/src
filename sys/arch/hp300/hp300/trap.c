@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.12 1994/05/04 03:47:20 mycroft Exp $
+ *	$Id: trap.c,v 1.13 1994/05/04 04:07:19 mycroft Exp $
  */
 
 #include "param.h"
@@ -64,7 +64,7 @@
 #include "vm/vm.h"
 #include "vm/pmap.h"
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 #include "../hpux/hpux.h"
 #endif
 
@@ -270,7 +270,7 @@ copyfault:
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX) {
 			ucode = HPUX_ILL_ILLINST_TRAP;
 			i = SIGILL;
@@ -279,7 +279,7 @@ copyfault:
 		/* fall through */
 #endif
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX)
 			ucode = HPUX_ILL_PRIV_TRAP;
 		else
@@ -289,7 +289,7 @@ copyfault:
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX)
 			ucode = HPUX_FPE_INTDIV_TRAP;
 		else
@@ -299,7 +299,7 @@ copyfault:
 		break;
 
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
@@ -312,7 +312,7 @@ copyfault:
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX) {
 			/* handled differently under hp-ux */
 			i = SIGILL;
@@ -490,7 +490,7 @@ syscall(code, frame)
 	} args;
 	int rval[2];
 	struct timeval sticks;
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	extern struct sysent hpux_sysent[];
 	extern int nhpux_sysent, notimp();
 #endif
@@ -502,7 +502,7 @@ syscall(code, frame)
 	sticks = p->p_stime;
 	p->p_regs = frame.f_regs;
 	opc = frame.f_pc;
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX)
 		callp = hpux_sysent, numsys = nhpux_sysent;
 	else
@@ -516,7 +516,7 @@ syscall(code, frame)
 		break;
 
 	case SYS___syscall:
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX)
 			break;
 #endif
@@ -546,7 +546,7 @@ syscall(code, frame)
 #endif
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	/* debug kludge */
 	if (callp->sy_call == notimp)
 		error = notimp(p, args.i, rval, code, callp->sy_narg);
@@ -578,7 +578,7 @@ syscall(code, frame)
 
 	default:
 	bad:
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 		if (p->p_emul == EMUL_HPUX)
 			error = bsdtohpuxerrno(error);
 #endif

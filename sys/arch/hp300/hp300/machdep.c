@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.30 1994/05/04 03:47:18 mycroft Exp $
+ *	$Id: machdep.c,v 1.31 1994/05/04 04:07:18 mycroft Exp $
  */
 
 #include "param.h"
@@ -60,7 +60,7 @@
 #ifdef SYSVSHM
 #include "shm.h"
 #endif
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 #include "../hpux/hpux.h"
 #endif
 
@@ -365,7 +365,7 @@ setregs(p, entry, stack, retval)
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 #endif
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX) {
 
 		p->p_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
@@ -485,7 +485,7 @@ identifycpu()
 	}
 }
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 tweaksigcode(ishpux)
 {
 	static short *sigtrap = NULL;
@@ -527,7 +527,7 @@ struct sigframe {
 	struct	sigcontext sf_sc;	/* actual context */
 };
 
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 struct	hpuxsigcontext {
 	int	hsc_syscall;
 	char	hsc_action;
@@ -593,7 +593,7 @@ sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX)
 		fsize = sizeof(struct sigframe) + sizeof(struct hpuxsigframe);
 	else
@@ -694,7 +694,7 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	/*
 	 * Create an HP-UX style sigcontext structure and associated goo
 	 */
@@ -778,7 +778,7 @@ sigreturn(p, uap, retval)
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
-#ifdef HPUXCOMPAT
+#ifdef COMPAT_HPUX
 	/*
 	 * Grab context as an HP-UX style context and determine if it
 	 * was one that we contructed in sendsig.
