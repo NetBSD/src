@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.11 2003/09/02 21:02:57 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.12 2003/10/01 18:01:06 fvdl Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.11 2003/09/02 21:02:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.12 2003/10/01 18:01:06 fvdl Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -556,7 +556,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	if (xs->xs_tag_type)
 		scb->hscb->control |= xs->xs_tag_type;
 
-#if 0	/* This looks like it makes sense at first, but it can loop */
+#if 1	/* This looks like it makes sense at first, but it can loop */
 	if ((xs->xs_control & XS_CTL_DISCOVERY) && (tinfo->goal.width == 0
 	     && tinfo->goal.offset == 0
 	     && tinfo->goal.ppr_options == 0)) {
