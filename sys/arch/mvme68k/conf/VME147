@@ -1,10 +1,10 @@
-#	$NetBSD: VME147,v 1.6 1996/09/10 22:45:17 thorpej Exp $
+#	$NetBSD: VME147,v 1.7 1996/09/12 07:36:37 thorpej Exp $
 
 machine		mvme68k m68k
 
-options		"M68040"	# support for 040
-options		FPSP		# MC68040 floating point support
-options		"M68030"	# support for 030
+# Boards this kernel supports; need at lest the correct one
+options		MVME147
+
 options		FPCOPROC	# Support for MC6888[12] (Required)
 
 maxusers	2
