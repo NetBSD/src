@@ -1,4 +1,5 @@
-/*	$NetBSD: mouse.h,v 1.1.1.2 2000/01/23 20:08:27 soda Exp $	*/
+/*	$OpenBSD: mouse.h,v 1.2 1997/01/19 09:58:45 pefo Exp $	*/
+/*	$NetBSD: mouse.h,v 1.1.1.3 2000/01/23 20:24:28 soda Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993 Erik Forsberg.
@@ -44,6 +45,8 @@ struct mouseinfo {
 /* Ioctl definitions */
 
 #define MOUSEIOC        ('M'<<8)
-#define MOUSEIOCREAD	(MOUSEIOC|60)
+#define MOUSEIOCREAD    (MOUSEIOC|60)
+#define MOUSEIOCSRAW    (MOUSEIOC|61)
+#define MOUSEIOCSCOOKED (MOUSEIOC|62)
 
 #endif /* !_MOUSE_H_ */
