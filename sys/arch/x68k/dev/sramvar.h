@@ -1,4 +1,4 @@
-/*	$NetBSD: sramvar.h,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: sramvar.h,v 1.2 1999/06/23 15:20:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -35,9 +35,13 @@ struct sram_softc {
 };
 
 enum sram_unit_flag_bits {
-	SRB_OPEN
+	SRB_OPEN,
+	SRB_READ,
+	SRB_WRITE
 };
 
 enum sram_unit_flags {
-	SRF_OPEN = 1<<SRB_OPEN
+	SRF_OPEN = 1<<SRB_OPEN,
+	SRF_READ = 1<<SRB_READ,
+	SRF_WRITE = 1<<SRB_WRITE
 };
