@@ -3830,7 +3830,8 @@ do_undef (pfile, keyword, buf, limit)
   SKIP_WHITE_SPACE (buf);
   sym_length = check_macro_name (pfile, buf, "macro");
 
-  while ((hp = cpp_lookup (pfile, buf, sym_length, -1)) != NULL)
+  /* pass -2 to indicate that we are going to undefine */
+  while ((hp = cpp_lookup (pfile, buf, sym_length, -2)) != NULL)
     {
       /* If we are generating additional info for debugging (with -g) we
 	 need to pass through all effective #undef commands.  */
