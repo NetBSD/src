@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14 1993/09/04 01:29:24 cgd Exp $
+ *	$Id: trap.c,v 1.14.2.1 1993/09/14 17:28:46 mycroft Exp $
  */
 
 /*
@@ -42,6 +42,7 @@
  */
 
 #include "npx.h"
+#include "fpe.h"
 
 #include "machine/cpu.h"
 #include "machine/psl.h"
@@ -91,20 +92,18 @@ trap(frame)
 
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
+
 #ifdef DDB
-	if (curpcb && curpcb->pcb_onfault) {
-		if (frame.tf_trapno == T_BPTFLT
-		    || frame.tf_trapno == T_TRCTRAP)
+	if (curpcb && curpcb->pcb_onfault)
+		if (type == T_BPTFLT || type == T_TRCTRAP)
 			if (kdb_trap (type, 0, &frame))
 				return;
-	}
 #endif
 	
-/*pg("trap type %d code = %x eip = %x cs = %x eva = %x esp %x",
-			frame.tf_trapno, frame.tf_err, frame.tf_eip,
-			frame.tf_cs, rcr2(), frame.tf_esp);*/
-if(curpcb == 0 || curproc == 0) goto we_re_toast;
-	if (curpcb->pcb_onfault && frame.tf_trapno != 0xc) {
+	if (curpcb == 0 || curproc == 0)
+		goto we_re_toast;
+
+	if (curpcb->pcb_onfault && type != T_PAGEFLT) {
 copyfault:
 		frame.tf_eip = (int)curpcb->pcb_onfault;
 		return;
@@ -117,15 +116,15 @@ copyfault:
 		curpcb->pcb_flags |= FM_TRAP;	/* used by sendsig */
 	}
 
-	ucode=0;
+	ucode = 0;
 	eva = rcr2();
 	code = frame.tf_err;
 	switch (type) {
 
 	default:
 	we_re_toast:
-#ifdef KDB
-		if (kdb_trap(&psl))
+#ifdef KDB /* XXX KGDB? */
+		if (kdb_trap (&psl))
 			return;
 #endif
 #ifdef DDB
@@ -134,11 +133,9 @@ copyfault:
 #endif
 
 		printf("trap type %d code = %x eip = %x cs = %x eflags = %x ",
-			frame.tf_trapno, frame.tf_err, frame.tf_eip,
-			frame.tf_cs, frame.tf_eflags);
-	eva = rcr2();
+			type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags);
+		eva = rcr2();
 		printf("cr2 %x cpl %x\n", eva, cpl);
-		/* type &= ~T_USER; */ /* XXX what the hell is this */
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -169,9 +166,10 @@ copyfault:
 	case T_DNA|T_USER:
 #if NNPX > 0
 		/* if a transparent fault (due to context switch "late") */
-		if (npxdna()) return;
+		if (npxdna())
+			return;
 #endif
-#ifdef MATH_EMULATE
+#if NFPE > 0
 		i = math_emulate(&frame);
 		if (i == 0) {
 #ifdef		TRACE_EMU			/* XXX is this necessary? */
@@ -181,7 +179,9 @@ copyfault:
 			return;
 		}
 #else
-		panic("trap: math emulation necessary!");
+		printf("pid %d killed due to lack of fpu and fpe\n",
+		       p->p_pid);
+		i = SIGKILL;
 #endif
 		ucode = FPE_FPU_NP_TRAP;
 		break;
@@ -212,7 +212,7 @@ copyfault:
 		if (code & PGEX_P) goto we_re_toast;
 #endif
 
-		/* fall into */
+		/*FALLTHROUGH*/
 	case T_PAGEFLT|T_USER:		/* page fault */
 	    {
 		register vm_offset_t va;
@@ -262,12 +262,10 @@ copyfault:
 		else
 			ftype = VM_PROT_READ;
 
-#ifdef DEBUG
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", va);
 			goto we_re_toast;
 		}
-#endif
 
 		nss = 0;
 		if ((caddr_t)va >= vm->vm_maxsaddr
@@ -275,15 +273,13 @@ copyfault:
 		    && map != kernel_map) {
 			nss = clrnd(btoc(USRSTACK-(unsigned)va));
 			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-/*pg("trap rlimit %d, maxsaddr %x va %x ", nss, vm->vm_maxsaddr, va);*/
 				rv = KERN_FAILURE;
 				goto nogo;
 			}
 		}
 
 		/* check if page table is mapped, if not, fault it first */
-#define pde_v(v) (PTD[((v)>>PD_SHIFT)&1023].pd_v)
-		if (!pde_v(va)) {
+		if (!PTD[pdei(va)].pd_v) {
 			v = trunc_page(vtopte(va));
 			rv = vm_fault(map, v, ftype, FALSE);
 			if (rv != KERN_SUCCESS) goto nogo;
@@ -321,11 +317,10 @@ nogo:
 	    }
 
 #ifndef DDB
+	/* XXX need to deal with this when DDB is present, too */
 	case T_TRCTRAP:	 /* trace trap -- someone single stepping lcall's */
+		/* restored later from lcall frame */
 		frame.tf_eflags &= ~PSL_T;
-
-			/* Q: how do we turn it on again? */
-			/* A: it's saved in the PS */
 		return;
 #endif
 	
@@ -430,9 +425,6 @@ syscall(frame)
 	int args[8], rval[2];
 	int code;
 
-#ifdef lint
-	r0 = 0; r0 = r0; r1 = 0; r1 = r1;
-#endif
 	syst = p->p_stime;
 	if (ISPL(frame.sf_cs) != SEL_UPL)
 		panic("syscall");
@@ -470,13 +462,11 @@ syscall(frame)
 #endif
 	rval[0] = 0;
 	rval[1] = frame.sf_edx;
-/*pg("%d. s %d\n", p->p_pid, code);*/
 	error = (*callp->sy_call)(p, args, rval);
 	if (error == ERESTART)
 		frame.sf_eip = opc;
 	else if (error != EJUSTRETURN) {
 		if (error) {
-/*pg("error %d", error);*/
 			frame.sf_eax = error;
 			frame.sf_eflags |= PSL_C;	/* carry bit */
 		} else {
@@ -534,7 +524,7 @@ done:
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
-#ifdef	DIAGNOSTICx
+#ifdef	DIAGNOSTIC
 { extern int _udatasel, _ucodesel;
 	if (frame.sf_ss != _udatasel)
 		printf("ss %x call %d\n", frame.sf_ss, code);

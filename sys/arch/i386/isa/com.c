@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12 1993/08/29 13:47:03 deraadt Exp $
+ *	$Id: com.c,v 1.12.2.1 1993/09/14 17:32:22 mycroft Exp $
  */
 
 #include "com.h"
@@ -186,6 +186,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 	register struct tty *tp;
 	register int unit;
 	int error = 0;
+	int s;
  
 	unit = UNIT(dev);
 	if (unit >= NCOM || (com_active & (1 << unit)) == 0)
@@ -211,7 +212,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		ttsetwater(tp);
 	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
-	(void) spltty();
+	s = spltty();
 	(void) commctl(dev, MCR_DTR | MCR_RTS, DMSET);
 	if ((comsoftCAR & (1 << unit)) || (commctl(dev, 0, DMGET) & MSR_DCD))
 		tp->t_state |= TS_CARR_ON;
@@ -222,7 +223,7 @@ comopen(dev_t dev, int flag, int mode, struct proc *p)
 		    ttopen, 0))
 			break;
 	}
-	(void) spl0();
+	splx(s);
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
 	return (error);
@@ -399,7 +400,7 @@ commint(unit, com)
 			outb(com+com_mcr,
 				inb(com+com_mcr) & ~(MCR_DTR | MCR_RTS) | MCR_IENABLE);
 	} else if ((stat & MSR_DCTS) && (tp->t_state & TS_ISOPEN) &&
-		   (tp->t_flags & CRTSCTS)) {
+		   (tp->t_cflag & CRTSCTS)) {
 		/* the line is up and we want to do rts/cts flow control */
 		if (stat & MSR_CTS) {
 			tp->t_state &=~ TS_TTSTOP;

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.13 1993/08/04 00:42:51 mycroft Exp $
+ *	$Id: clock.c,v 1.13.2.1 1993/09/14 17:32:21 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -91,70 +91,209 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "time.h"
 #include "kernel.h"
 #include "machine/segments.h"
+#include "sys/device.h"
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
-#include "i386/isa/clock.h"
-#include "i386/isa/rtc.h"
+#include "i386/isa/isavar.h"
+#include "i386/isa/nvram.h"
+#include "i386/isa/clockreg.h"
 #include "i386/isa/timerreg.h"
 
 void spinwait __P((int));
 
-void
-startrtclock(void)
+struct clock_softc {
+	struct	device sc_dev;
+	struct	isadev sc_id;
+
+	u_short	sc_iobase;
+};
+
+static int clockprobe __P((struct device *, struct cfdata *, void *));
+static void clockattach __P((struct device *, struct device *, void *));
+
+struct cfdriver clockcd =
+{ NULL, "clock", clockprobe, clockattach, DV_DULL, sizeof(struct device) };
+
+static int
+clockprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	int s;
+	struct isa_attach_args *ia = aux;
 
-	findcpuspeed();		/* use the clock (while it's free)
-					to find the cpu speed */
-	/* initialize 8253 clock */
-	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+	if (ia->ia_iobase == IOBASEUNK)
+		return 0;
 
-	/* Correct rounding will buy us a better precision in timekeeping */
-	outb (IO_TIMER1, TIMER_DIV(hz)%256);
-	outb (IO_TIMER1, TIMER_DIV(hz)/256);
+	/* XXX need real probe */
 
-        /* Check diagnostic status */
-        outb (IO_RTC, RTC_DIAG);
-	if (s = inb (IO_RTC+1))
-		printf("RTC BIOS diagnostic error %b\n", s, RTCDG_BITS);
-	outb (IO_RTC, RTC_DIAG);
-	outb (IO_RTC+1, 0);
+	ia->ia_iosize = CLOCK_NPORTS;
+	ia->ia_irq = IRQUNK;
+	ia->ia_drq = DRQUNK;
+	ia->ia_msize = 0;
+	return 1;
 }
 
-unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
+static void
+clockattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	struct clock_softc *sc = (struct clock_softc *)self;
+	u_short iobase = ia->ia_iobase;
+	u_char d;
+
+	printf(": Intel XXXX\n");
+	sc->sc_iobase = iobase;
+
+	/* check and clear diagnostic flags */
+	if (d = nvram(NVRAM_DIAG))
+		printf("clock%d: diagnostic error %b\n", self->sc_dev.dv_unit,
+			d, NVRAM_DIAG_BITS);
+	outb(iobase, NVRAM_DIAG);
+	outb(iobase + 1, 0);
+
+	/* set clock rate */
+	outb(iobase, CLOCK_RATE);
+	outb(iobase + 1, CLOCK_RATE_DIV2 | CLOCK_RATE_6);
+	outb(iobase, CLOCK_MODE);
+	outb(iobase + 1, CLOCK_MODE_HM);
+}
+
+u_char
+nvram(pos)
+	u_char pos;
+{
+	struct clock_softc *sc;
+
+	if (clockcd.cd_ndevs < 1 ||
+	    !(sc = (struct clock_softc *)clockcd.cd_devs[0]))
+		panic("nvram: no clock");
+	outb(sc->sc_iobase, pos);
+	return inb(sc->sc_iobase + 1);
+}
+
+struct timer_softc {
+	struct	device sc_dev;
+	struct	isadev sc_id;
+	struct	intrhand sc_ih;
+
+	u_short	sc_iobase;
+	u_short sc_limit;
+};
+
+static int timerprobe __P((struct device *, struct cfdata *, void *));
+static void timerforceintr __P((void *));
+static void timerattach __P((struct device *, struct device *, void *));
+
+struct cfdriver timercd =
+{ NULL, "timer", timerprobe, timerattach, DV_DULL, sizeof(struct device) };
+
+static int
+timerprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+
+	if (ia->ia_iobase == IOBASEUNK)
+		return 0;
+
+	/* XXX need a real probe */
+
+	if (ia->ia_irq == IRQUNK) {
+		ia->ia_irq = isa_discoverintr(timerforceintr, aux);
+		if (ia->ia_irq == IRQUNK)
+			return 0:
+	}
+
+	ia->ia_iosize = TIMER_NPORTS;
+	ia->ia_drq = DRQUNK;
+	ia->ia_msize = 0;
+	return 1;
+}
+
+static void
+timerforceintr(aux)
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
+
+	/* this generates a single interrupt */
+	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_INTTC|TIMER_16BIT);
+	outb(iobase + TIMER_CNTR0, 100);
+	outb(iobase + TIMER_CNTR0, 0);
+}
+
+static void
+timerattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct isa_attach_args *ia = aux;
+	struct timer_softc *sc = (struct timer_softc *)self;
+	u_short iobase = ia->ia_iobase;
+	u_short limit = TIMER_DIV(hz);
+
+	printf(": Intel 8253\n");
+	sc->sc_iobase = iobase;
+	sc->sc_limit = limit;
+
+	if (sc->sc_dev.dv_unit == 0) {
+		/* need to do this here so the rest of autoconfig can
+		   use delay() */
+
+		findcpuspeed(iobase);	/* use the clock (while it's free)
+					   to find the cpu speed XXXX */
+
+		outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
+		outb(iobase + TIMER_CNTR0, limit%256);
+		outb(iobase + TIMER_CNTR0, limit/256);
+	}
+}
+
+void
+cpu_initclocks(void)
+{
+	struct timer_softc *sc;
+
+	if (timercd.cd_ndevs < 1 ||
+	    !(sc = (struct timer_softc *)timercd.cd_devs[0]))
+		panic("cpu_initclocks: no timer");
+
+	sc->sc_ih.ih_fun = timerintr;
+	sc->sc_ih.ih_arg = XXXX;
+	intr_establish(ia->ia_irq, &sc->sc_ih, DV_DULL);
+}
+
+u_int delaycount;	/* calibrated loop variable (1 millisecond) */
 
 #define FIRST_GUESS	0x2000
-findcpuspeed(void)
-{
-	unsigned char low;
-	unsigned int remainder;
 
-	/* Put counter in count down mode */
-	outb(IO_TIMER1+3, 0x34);
-	outb(IO_TIMER1, 0xff);
-	outb(IO_TIMER1, 0xff);
+findcpuspeed(iobase)
+	u_short iobase;
+{
+	u_char lo, hi;
+	u_int remainder;
+
+	/* put counter in count down mode */
+	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_INTTC|TIMER_16BIT);
+	outb(iobase + TIMER_CNTR0, 0xff);
+	outb(iobase + TIMER_CNTR0, 0xff);
 	delaycount = FIRST_GUESS;
 	spinwait(1);
-	/* Read the value left in the counter */
-	low 	= inb(IO_TIMER1);	/* least siginifcant */
-	remainder = inb(IO_TIMER1);	/* most significant */
-	remainder = (remainder<<8) + low ;
-	/* Formula for delaycount is :
-	 *  (loopcount * timer clock speed)/ (counter ticks * 1000)
+	/* read the value left in the counter */
+	lo = inb(iobase + TIMER_CNTR0);
+	hi = inb(iobase + TIMER_CNTR0);
+	remainder = (hi << 8) | lo;
+	/*
+	 * Formula for delaycount is:
+	 * (loopcount * timer clock speed) / (counter ticks * 1000)
 	 */
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
-}
-
-/*
- * Wire clock interrupt in.
- */
-#define VEC(s)	__CONCAT(X, s)
-extern VEC(clk)();
-
-void
-enablertclock(void) {
-	setidt(ICU_OFFSET+0, &VEC(clk), SDT_SYS386IGT, SEL_KPL);
-	INTREN(IRQ0);
 }
 
 /*
@@ -163,22 +302,70 @@ enablertclock(void) {
 void
 spinwait(int millisecs)
 {
+	/* XXXX */
 	DELAY(1000 * millisecs);
 }
 
-static int first_rtcopen_ever = 1;
-
-void
-rtcinit(void)
+static __inline u_short
+gettick(iobase)
+	u_short iobase;
 {
-        if (first_rtcopen_ever) {
-                outb(IO_RTC, RTC_STATUSA);
-                outb(IO_RTC+1, RTC_DIV2 | RTC_RATE6);
-                outb(IO_RTC, RTC_STATUSB);
-                outb(IO_RTC+1, RTC_HM);
-                first_rtcopen_ever = 0;
-        }
+	u_char lo, hi;
+
+	disable_intr();
+	outb(iobase + TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
+	lo = inb(iobase + TIMER_CNTR0);
+	hi = inb(iobase + TIMER_CNTR0);
+	enable_intr();
+	return (hi << 8) | lo;
 }
+
+/*
+ * Wait `n' microseconds.
+ */
+void
+delay(n)
+	int n;
+{
+	struct timer_softc *sc;
+	u_short iobase;
+	u_short limit, tick, otick;
+
+	if (timercd.cd_ndevs < 1 ||
+	    !(sc = (struct timer_softc *)timercd.cd_devs[0]))
+		panic("cpu_initclocks: no timer");
+	
+	iobase = sc->sc_iobase;
+	limit = sc->sc_limit;
+
+	otick = gettick(iobase);
+
+	n -= 25;
+
+	/*
+	 * Calculate (n * (TIMER_FREQ / 1e6)) without using floating point and
+	 * without any avoidable overflows.
+	 */
+	{
+		int sec = n / 1000000,
+		    usec = n % 1000000;
+		n = sec * TIMER_FREQ +
+		    usec * (TIMER_FREQ / 1000000) +
+		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
+		    usec * (TIMER_FREQ % 1000) / 1000000;
+	}
+
+	while (n > 0) {
+		tick = gettick(iobase);
+		if (tick > otick)
+			n -= otick - (tick - limit);
+		else
+			n -= otick - tick;
+		otick = tick;
+	}
+}
+
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
 int
 rtcget(struct rtc_st *rtc_regs)
@@ -186,9 +373,6 @@ rtcget(struct rtc_st *rtc_regs)
 	int	i;
         u_char *regs = (u_char *)rtc_regs;
         
-	if (first_rtcopen_ever) {
-		rtcinit();
-	}
 	outb(IO_RTC, RTC_D); 
 	if (inb(IO_RTC+1) & RTC_VRT == 0) return(-1);
 	outb(IO_RTC, RTC_STATUSA);	
@@ -208,9 +392,6 @@ rtcput(struct rtc_st *rtc_regs)
 	int	i;
         u_char *regs = (u_char *)rtc_regs;
 
-	if (first_rtcopen_ever) {
-		rtcinit();
-	}
 	outb(IO_RTC, RTC_STATUSB);
 	x = inb(IO_RTC+1);
 	outb(IO_RTC, RTC_STATUSB);

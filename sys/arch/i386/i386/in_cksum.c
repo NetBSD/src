@@ -30,13 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from tahoe:	in_cksum.c	1.2	86/01/05
+ *	from tahoe: in_cksum.c	1.2	86/01/05
  *	from: @(#)in_cksum.c	1.3 (Berkeley) 1/19/91
- *	$Id: in_cksum.c,v 1.3 1993/05/22 07:59:51 cgd Exp $
- */
-
-/*
- * 920724 	i386 changes by Bakul Shah <bvs@bitblocks.com>
+ *	$Id: in_cksum.c,v 1.3.4.1 1993/09/14 17:28:32 mycroft Exp $
  */
 
 #include "param.h"

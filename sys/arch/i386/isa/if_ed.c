@@ -1,6 +1,7 @@
 /*
  * Device driver for National Semiconductor DS8390 based ethernet
- *   adapters. By David Greenman, 29-April-1993
+ *   adapters. By David Greenman, 29-April-1993. Support for Novell cards
+ *   added by Charles Hannum, 9-September-1993.
  *
  * Copyright (C) 1993, David Greenman. This software may be used, modified,
  *   copied, distributed, and sold, in both source and binary form provided
@@ -9,12 +10,12 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- * Currently supports the Western Digital/SMC 8003 and 8013 series
- *   and the 3Com 3c503
+ * Currently supports the Western Digital/SMC 8003 and 8013 series,
+ *   the 3Com 3c503, and Novell NE1000 and NE2000.
  */
 
 /*
- * $Id: if_ed.c,v 1.8 1993/09/09 09:40:56 davidg Exp $
+ * $Id: if_ed.c,v 1.8.2.1 1993/09/14 17:32:34 mycroft Exp $
  */
 
 /*
@@ -183,51 +184,294 @@ static unsigned short ed_intr_mask[] = {
 #define	ETHER_ADDR_LEN	6
 #define	ETHER_HDR_SIZE	14
 
+struct trailer_header {
+	u_short ether_type;
+	u_short ether_residual;
+};
+
+u_short
+neputm(sc, m, addr)
+	struct	ed_softc *sc;
+	struct	mbuf *m;
+	u_short	addr;
+{
+	u_short	len = 0, rlen;
+	u_short	nic = sc->nic_addr;
+
+	{
+		struct	mbuf *m0;
+		for (m0 = m; m0; m0 = m0->m_next)
+			len += m0->m_len;
+	}
+	rlen = len;
+
+	if (sc->memwidth == 16)
+		len = (len + 1) & ~1;
+
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	outb(nic + ED_P0_ISR, ED_ISR_RDC);
+
+	outb(nic + ED_P0_RBCR0, len>>0);
+	outb(nic + ED_P0_RBCR1, len>>8);
+	outb(nic + ED_P0_RSAR0, addr>>0);
+	outb(nic + ED_P0_RSAR1, addr>>8);
+
+	outb(nic + ED_P0_CR, ED_CR_RD1|ED_CR_STA);
+
+	if (sc->memwidth == 16) {
+		u_char dribble[2];
+		while (m) {
+			if (m->m_len > 1)
+				outsw(nic + ED_NE_DATA, m->m_data, m->m_len / 2);
+			if (m->m_len & 1) {
+				dribble[0] = m->m_data[m->m_len-1];
+				if (m = m->m_next) {
+					dribble[1] = *(m->m_data++);
+					m->m_len--;
+				} else
+					dribble[1] = 0;
+				outsw(nic + ED_NE_DATA, dribble, 1);
+			} else
+				m = m->m_next;
+		}
+	} else
+		while (m) {
+			if (m->m_len)
+				outsb(nic + ED_NE_DATA, m->m_data, m->m_len);
+			m = m->m_next;
+		}
+
+	{
+		int count = 10000;
+		while ((inb(nic + ED_P0_ISR) & ED_ISR_RDC) == 0)
+			if (!--count)
+				goto aborted;
+	}
+	goto xit;
+
+    aborted:
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	printf("ed%d: neput timeout\n", sc - ed_softc);
+
+    xit:
+	outb(nic + ED_P0_ISR, ED_ISR_RDC);
+	return(rlen);
+}
+
+/* this routine is only used in probing, and can probably go away */
+void
+neput(sc, buf, addr, len)
+	struct	ed_softc *sc;
+	u_char 	*buf;
+	u_short	addr;
+	/* must be even! */
+	u_short	len;
+{
+	u_short	nic = sc->nic_addr;
+
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	outb(nic + ED_P0_ISR, ED_ISR_RDC);
+
+	outb(nic + ED_P0_RBCR0, len>>0);
+	outb(nic + ED_P0_RBCR1, len>>8);
+	outb(nic + ED_P0_RSAR0, addr>>0);
+	outb(nic + ED_P0_RSAR1, addr>>8);
+
+	outb(nic + ED_P0_CR, ED_CR_RD1|ED_CR_STA);
+
+	if (sc->memwidth == 16)
+		outsw(nic + ED_NE_DATA, buf, len/2);
+	else
+		outsb(nic + ED_NE_DATA, buf, len);
+
+	{
+		int count = 10000;
+		while ((inb(nic + ED_P0_ISR) & ED_ISR_RDC) == 0)
+			if (!--count)
+				goto aborted;
+	}
+	goto xit;
+
+    aborted:
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	printf("ed%d: neput timeout\n", sc - ed_softc);
+
+    xit:
+	outb(nic + ED_P0_ISR, ED_ISR_RDC);
+	return;
+}
+
+void
+nefetch(sc, buf, addr, len)
+	struct	ed_softc *sc;
+	u_char 	*buf;
+	u_short	addr;
+	/* must be even! */
+	u_short	len;
+{
+	u_short	nic = sc->nic_addr;
+
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	outb(nic + ED_P0_ISR, ED_ISR_RDC);
+
+	outb(nic + ED_P0_RBCR0, len>>0);
+	outb(nic + ED_P0_RBCR1, len>>8);
+	outb(nic + ED_P0_RSAR0, addr>>0);
+	outb(nic + ED_P0_RSAR1, addr>>8);
+
+	outb(nic + ED_P0_CR, ED_CR_RD0|ED_CR_STA);
+
+	if (sc->memwidth == 16)
+		insw(nic + ED_NE_DATA, buf, len/2);
+	else
+		insb(nic + ED_NE_DATA, buf, len);
+
+	{
+		int count = 10000;
+		while ((inb(nic + ED_P0_ISR) & ED_ISR_RDC) == 0)
+			if (!--count)
+				goto aborted;
+	}
+	goto xit;
+
+    aborted:
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+	printf("ed%d: nefetch timeout\n", sc - ed_softc);
+
+    xit:
+	outb(nic + ED_P0_ISR, ED_ISR_RDC);
+	return;
+}
+
 /*
- * Determine if the device is present
- *
- *   on entry:
- * 	a pointer to an isa_device struct
- *   on exit:
- *	NULL if device not found
- *	or # of i/o addresses used (if found)
+ * Probe routine for Novell NE1000 and NE2000 boards
  */
 int
-ed_probe(isa_dev)
+ed_probe_Novell(isa_dev)
 	struct isa_device *isa_dev;
 {
 	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
-	int i;
-	u_char sum;
+	u_short nic;
+	u_char memwidth;
+	extern unsigned ipending;
+	unsigned oldimen;
 
-	/*
-	 * Setup initial i/o address for ASIC and NIC
-	 */
-	sc->asic_addr = isa_dev->id_iobase;
-	sc->vector = isa_dev->id_irq;
-	sc->smem_start = (caddr_t)isa_dev->id_maddr;
- 
-	/*
-	 * Attempt to do a checksum over the station address PROM.
-	 * This is mapped differently on the WD80x3 and 3C503, so if
-	 *	it fails, it might be a 3C503. There is a problem with
-	 *	this, though: some clone WD boards don't pass the
-	 *	checksum test. Danpex boards for one. We need to do
-	 *	additional checking for this case.
-	 */
-	for (sum = 0, i = 0; i < 8; ++i) {
-		sum += inb(sc->asic_addr + ED_WD_PROM + i);
+	sc->vendor = ED_VENDOR_NOVELL;
+
+	nic = sc->nic_addr = sc->asic_addr;
+
+	/* reset the board */
+	{
+		u_char val;
+		val = inb(sc->asic_addr + ED_NE_RESET);
+		outb(sc->asic_addr + ED_NE_RESET, val);
 	}
-	
-	if (sum == ED_WD_ROM_CHECKSUM_TOTAL) {
-		return (ed_probe_WD80x3(isa_dev));
-	} else {
-		/*
-		 * XXX - Should do additional checking to make sure its a 3Com
-		 *	and not a broken WD clone
-		 */
-		return (ed_probe_3Com(isa_dev));
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
+	DELAY(100);
+	/* make sure reset line is high */
+	if ((inb(nic + ED_P0_ISR) & ED_ISR_RST) == 0)
+		return(0);
+
+	/* clear interrupts */
+	outb(nic + ED_P0_IMR, 0);
+	outb(nic + ED_P0_ISR, 0xff);
+
+	/* make sure control register echoes what we input */
+	outb(nic + ED_P0_CR, ED_CR_RD2|ED_CR_STP);
+	if (inb(nic + ED_P0_CR) != (ED_CR_RD2|ED_CR_STP))
+		return(0);
+
+	/* set card to 8-bit mode; doesn't make any difference for the
+	   following kluge and it will get changed later anyway */
+	sc->memwidth = 8;
+	outb(nic + ED_P0_DCR, ED_DCR_FT1|ED_DCR_LS);
+
+	/* need to make sure setting the start bit doesn't cause us to start
+	   receiving yet */
+	outb(nic + ED_P0_RCR, ED_RCR_MON);
+
+	if (isa_dev->id_flags & ED_FLAGS_FORCE_8BIT_MODE)
+		memwidth = 8;
+	else if (isa_dev->id_flags & ED_FLAGS_FORCE_16BIT_MODE)
+		memwidth = 16;
+	else {
+		/* for some reason the I/O transfer size and the length and
+		   address of the memory are intimately related, and we can
+		   use this weirdness to intuit the transfer size */
+		u_long val;
+		for (memwidth = 16; memwidth; memwidth -= 8) {
+			sc->smem_size = memwidth * 1024;
+			/* the board will not do transfers if these are not
+			   set */
+			outb(nic + ED_P0_PSTART,
+			     sc->smem_size / ED_PAGE_SIZE);
+			outb(nic + ED_P0_PSTOP,
+			     sc->smem_size * 2 / ED_PAGE_SIZE);
+			/* clear the value first; just in case someone leaves
+			   dead beef lying around */
+			val = 0;
+			neput(sc, &val, sc->smem_size, sizeof(val));
+			val = 0xdeadbeef;
+			nefetch(sc, &val, sc->smem_size, sizeof(val));
+			if (val != 0)
+				continue;
+			val = 0xdeadbeef;
+			neput(sc, &val, sc->smem_size, sizeof(val));
+			val = 0;
+			nefetch(sc, &val, sc->smem_size, sizeof(val));
+			if (val != 0xdeadbeef)
+				continue;
+			break;
+		}
+		if (!memwidth)
+			return(0);
 	}
+
+	/* abort if this interrupt already in use */
+	if ((imen & isa_dev->id_irq) == 0)
+		return(0);
+
+	/* try to generate an interrupt */
+	outb(nic + ED_P0_IMR, ED_IMR_RDCE);
+	outb(nic + ED_P0_ISR, 0xff);
+	oldimen = imen;
+	ipending = 0;
+	imen = isa_dev->id_irq | IRQ_SLAVE; SET_ICUS();
+	neput(sc, &ipending, sc->smem_size, sizeof(ipending));
+	DELAY(100);
+	imen = oldimen; SET_ICUS();
+	outb(nic + ED_P0_IMR, 0);
+	outb(nic + ED_P0_ISR, 0xff);
+	printf("ed%d: auto-detected irq %d\n", sc - ed_softc,
+	       ffs(ipending & ~1) - 1);
+	ipending = 0;
+
+	sc->type_str = (memwidth == 16) ? "NE2000" : "NE1000";
+	sc->smem_size = memwidth * 1024;
+	sc->smem_start = sc->smem_size;
+	sc->smem_end = sc->smem_size * 2;
+	sc->tx_page_start = sc->smem_size / ED_PAGE_SIZE;
+	sc->rec_page_stop = sc->smem_size * 2 / ED_PAGE_SIZE;
+	if ((sc->smem_size < 16384) ||
+	    (isa_dev->id_flags & ED_FLAGS_NO_DOUBLE_BUFFERING))
+		sc->txb_cnt = 1;
+	else
+		sc->txb_cnt = 2;
+	sc->smem_ring = sc->smem_start +
+			ED_PAGE_SIZE * ED_TXBUF_SIZE * sc->txb_cnt;
+	sc->rec_page_start = sc->tx_page_start + ED_TXBUF_SIZE * sc->txb_cnt;
+
+	/* read ether address; stupid card doubles each byte */
+	{
+		u_char addr[12];
+		int n;
+		nefetch(sc, addr, 0, 12);
+		for (n = 0; n < 6; n++)
+			sc->arpcom.ac_enaddr[n] = addr[n*2];
+	}
+
+	sc->memwidth = memwidth;
+	return (ED_NE_IO_PORTS);
 }
 
 /*
@@ -241,6 +485,21 @@ ed_probe_WD80x3(isa_dev)
 	int i;
 	u_int memsize;
 	u_char iptr, memwidth, sum, tmp;
+
+	/*
+	 * Attempt to do a checksum over the station address PROM.
+	 * This is mapped differently on the WD80x3 and 3C503, so if
+	 *	it fails, it might be a 3C503. There is a problem with
+	 *	this, though: some clone WD boards don't pass the
+	 *	checksum test. Danpex boards for one. We need to do
+	 *	additional checking for this case.
+	 */
+	for (sum = 0, i = 0; i < 8; ++i) {
+		sum += inb(sc->asic_addr + ED_WD_PROM + i);
+	}
+	
+	if (sum != ED_WD_ROM_CHECKSUM_TOTAL)
+		return(0);
 
 	sc->vendor = ED_VENDOR_WD_SMC;
 	sc->type = inb(sc->asic_addr + ED_WD_CARD_ID);
@@ -681,6 +940,43 @@ ed_probe_3Com(isa_dev)
 	return(ED_3COM_IO_PORTS);
 }
  
+int (*ed_probe_tab[])(struct isa_device *) = {
+	ed_probe_WD80x3, ed_probe_Novell, ed_probe_3Com,
+};
+
+/*
+ * Determine if the device is present
+ *
+ *   on entry:
+ * 	a pointer to an isa_device struct
+ *   on exit:
+ *	NULL if device not found
+ *	or # of i/o addresses used (if found)
+ */
+int
+ed_probe(isa_dev)
+	struct isa_device *isa_dev;
+{
+	struct ed_softc *sc = &ed_softc[isa_dev->id_unit];
+	int i;
+	int rv;
+
+	/*
+	 * Setup initial i/o address for ASIC and NIC
+	 */
+	sc->asic_addr = isa_dev->id_iobase;
+	sc->vector = isa_dev->id_irq;
+	sc->smem_start = (caddr_t)isa_dev->id_maddr;
+ 
+	/*
+	 * Try each probe routine until one succeeds
+	 */
+	for (i = 0; i < sizeof(ed_probe_tab)/sizeof(ed_probe_tab[0]); i++)
+		if (rv = ed_probe_tab[i](isa_dev))
+			return(rv);
+	return(0);
+}
+
 /*
  * Install interface into kernel networking data structures
  */
@@ -818,7 +1114,7 @@ int
 ed_watchdog(unit)
 	int unit;
 {
-	log(LOG_ERR, "ed%d: device timeout\n", unit);
+	log(LOG_ERR, "ed%d: transmit timeout\n", unit);
 
 	ed_reset(unit);
 }
@@ -1101,11 +1397,14 @@ outloop:
 
 	buffer = sc->smem_start + (sc->txb_next * ED_TXBUF_SIZE * ED_PAGE_SIZE);
 	len = 0;
-	for (m0 = m; m != 0; m = m->m_next) {
-		bcopy(mtod(m, caddr_t), buffer, m->m_len);
-		buffer += m->m_len;
-       		len += m->m_len;
-	}
+	if (sc->vendor == ED_VENDOR_NOVELL)
+		len = neputm(sc, m0 = m, buffer);
+	else
+		for (m0 = m; m != 0; m = m->m_next) {
+			bcopy(mtod(m, caddr_t), buffer, m->m_len);
+			buffer += m->m_len;
+	       		len += m->m_len;
+		}
 
 	/*
 	 * Restore previous shared mem access type
@@ -1135,10 +1434,7 @@ outloop:
 		u_short etype;
 		int off, datasize, resid;
 		struct ether_header *eh;
-		struct trailer_header {
-			u_short ether_type;
-			u_short ether_residual;
-		} trailer_header;
+		struct trailer_header trailer_header;
 		char ether_packet[ETHER_MAX_LEN];
 		char *ep;
 
@@ -1218,7 +1514,8 @@ ed_rint(unit)
 	register struct ed_softc *sc = &ed_softc[unit];
 	u_char boundry, current;
 	u_short len;
-	struct ed_ring *packet_ptr;
+	struct ed_ring packet_hdr;
+	caddr_t packet_ptr;
 
 	/*
 	 * Set NIC to page 1 registers to get 'current' pointer
@@ -1236,21 +1533,26 @@ ed_rint(unit)
 	while (sc->next_packet != inb(sc->nic_addr + ED_P1_CURR)) {
 
 		/* get pointer to this buffer header structure */
-		packet_ptr = (struct ed_ring *)(sc->smem_ring +
-			 (sc->next_packet - sc->rec_page_start) * ED_PAGE_SIZE);
+		packet_ptr = sc->smem_ring +
+			     (sc->next_packet - sc->rec_page_start) * ED_PAGE_SIZE;
 
 		/*
 		 * The byte count includes the FCS - Frame Check Sequence (a
 		 *	32 bit CRC).
 		 */
-		len = packet_ptr->count;
+		if (sc->vendor == ED_VENDOR_NOVELL)
+			nefetch(sc, (u_char *)&packet_hdr, packet_ptr,
+				sizeof(packet_hdr));
+		else
+			packet_hdr = *(struct ed_ring *)packet_ptr;
+		len = packet_hdr.count;
 		if ((len >= ETHER_MIN_LEN) && (len <= ETHER_MAX_LEN)) {
 			/*
 			 * Go get packet. len - 4 removes CRC from length.
 			 * (packet_ptr + 1) points to data just after the packet ring
 			 *	header (+4 bytes)
 			 */
-			ed_get_packet(sc, (caddr_t)(packet_ptr + 1), len - 4);
+			ed_get_packet(sc, packet_ptr + 4, len - 4);
 			++sc->arpcom.ac_if.if_ipackets;
 		} else {
 			/*
@@ -1268,7 +1570,7 @@ ed_rint(unit)
 		/*
 		 * Update next packet pointer
 		 */
-		sc->next_packet = packet_ptr->next_packet;
+		sc->next_packet = packet_hdr.next_packet;
 
 		/*
 		 * Update NIC boundry pointer - being careful to keep it
@@ -1630,7 +1932,7 @@ ed_ioctl(ifp, command, data)
  */
 ed_get_packet(sc, buf, len)
 	struct ed_softc *sc;
-	char *buf;
+	caddr_t buf;
 	u_short len;
 {
 	struct ether_header *eh;
@@ -1638,10 +1940,6 @@ ed_get_packet(sc, buf, len)
 	u_short off;
 	int resid;
 	u_short etype;
-	struct trailer_header {
-		u_short	trail_type;
-		u_short trail_residual;
-	} trailer_header;
 
 	/* Allocate a header mbuf */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1652,8 +1950,6 @@ ed_get_packet(sc, buf, len)
 	m->m_len = 0;
 	head = m;
 
-	eh = (struct ether_header *)buf;
-
 	/* The following sillines is to make NFS happy */
 #define EROUND	((sizeof(struct ether_header) + 3) & ~3)
 #define EOFF	(EROUND - sizeof(struct ether_header))
@@ -1663,7 +1959,11 @@ ed_get_packet(sc, buf, len)
 	 * the ether header in the header mbuf
 	 */
 	head->m_data += EOFF;
-	bcopy(buf, mtod(head, caddr_t), sizeof(struct ether_header));
+	eh = mtod(head, struct ether_header *);
+	if (sc->vendor == ED_VENDOR_NOVELL)
+		nefetch(sc, mtod(head, u_char *), buf, sizeof(struct ether_header));
+	else
+		bcopy(buf, mtod(head, caddr_t), sizeof(struct ether_header));
 	buf += sizeof(struct ether_header);
 	head->m_len += sizeof(struct ether_header);
 	len -= sizeof(struct ether_header);
@@ -1685,8 +1985,17 @@ ed_get_packet(sc, buf, len)
 		if ((off + sizeof(struct trailer_header)) > len)
 			goto bad;	/* insanity */
 
-		eh->ether_type = *ringoffset(sc, buf, off, u_short *);
-		resid = ntohs(*ringoffset(sc, buf, off+2, u_short *));
+		if (sc->vendor == ED_VENDOR_NOVELL) {
+			struct trailer_header trailer_header;
+			nefetch(sc, (u_char *)&trailer_header,
+				ringoffset(sc, buf, off, caddr_t),
+				sizeof(trailer_header));
+			eh->ether_type = trailer_header.ether_type;
+			resid = trailer_header.ether_residual;
+		} else {
+			eh->ether_type = *ringoffset(sc, buf, off, u_short *);
+			resid = ntohs(*ringoffset(sc, buf, off+2, u_short *));
+		}
 
 		if ((off + resid) > len) goto bad;	/* insanity */
 
@@ -1764,7 +2073,7 @@ bad:	if (head)
 static inline char *
 ed_ring_copy(sc,src,dst,amount)
 	struct ed_softc *sc;
-	char	*src;
+	caddr_t	src;
 	char	*dst;
 	u_short	amount;
 {
@@ -1773,13 +2082,20 @@ ed_ring_copy(sc,src,dst,amount)
 	/* does copy wrap to lower addr in ring buffer? */
 	if (src + amount > sc->smem_end) {
 		tmp_amount = sc->smem_end - src;
-		bcopy(src,dst,tmp_amount); /* copy amount up to end of smem */
+		/* copy amount up to end of smem */
+		if (sc->vendor == ED_VENDOR_NOVELL)
+			nefetch(sc, dst, src, (tmp_amount + 1) & ~1);
+		else
+			bcopy(src,dst,tmp_amount);
 		amount -= tmp_amount;
 		src = sc->smem_ring;
 		dst += tmp_amount;
 	}
 
-	bcopy(src, dst, amount);
+	if (sc->vendor == ED_VENDOR_NOVELL)
+		nefetch(sc, dst, src, (amount + 1) & ~1);
+	else
+		bcopy(src, dst, amount);
 
 	return(src + amount);
 }

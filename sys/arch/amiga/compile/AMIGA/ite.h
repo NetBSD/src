@@ -1,1 +1,0 @@
-#define NITE	1

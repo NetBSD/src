@@ -1,4 +1,0 @@
-#	from: @(#)Makefile.vax	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile.vax,v 1.2 1993/08/01 05:42:32 mycroft Exp $
-
-SRCS+=		vax.c atof-vax.c

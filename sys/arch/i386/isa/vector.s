@@ -1,4 +1,4 @@
-/*	$Id: vector.s,v 1.10 1993/08/02 17:52:37 mycroft Exp $ */
+/*	$Id: vector.s,v 1.10.2.1 1993/09/14 17:32:51 mycroft Exp $ */
 
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
@@ -344,7 +344,7 @@ _intrnames:
 	.asciz	"splnet"
 	.asciz	"splsoftclock"
 	.asciz	"spltty"
-	.asciz	"spl0"
+	.asciz	"splnone"
 	.asciz	"netisr_raw2"
 	.asciz	"netisr_ip2"
 	.asciz	"splx"

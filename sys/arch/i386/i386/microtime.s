@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: microtime.s,v 1.4 1993/06/16 21:42:43 mycroft Exp $
+ *	$Id: microtime.s,v 1.4.4.1 1993/09/14 17:28:43 mycroft Exp $
  */
 
 #include "../include/asm.h"
@@ -43,11 +43,11 @@
  */
 #ifndef HZ
 ENTRY(microtime)
-	pushl %edi
-	pushl %esi
-	pushl %ebx
+	pushl	%edi
+	pushl	%esi
+	pushl	%ebx
 
-	movl $_time,%ebx
+	movl	$(_time),%ebx
 
 	cli				# disable interrupts
 

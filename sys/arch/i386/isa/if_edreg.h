@@ -1,7 +1,7 @@
 /*
  * National Semiconductor DS8390 NIC register definitions 
  *
- * $Id: if_edreg.h,v 1.4 1993/09/09 09:41:03 davidg Exp $
+ * $Id: if_edreg.h,v 1.4.2.1 1993/09/14 17:32:37 mycroft Exp $
  *
  * Modification history
  *
@@ -567,6 +567,7 @@ struct ed_ring	{
  */
 #define ED_VENDOR_WD_SMC	0x00		/* Western Digital/SMC */
 #define ED_VENDOR_3COM		0x01		/* 3Com */
+#define ED_VENDOR_NOVELL	0x02		/* Novell */
 
 /*
  * Compile-time config flags
@@ -848,3 +849,10 @@ struct ed_ring	{
  *	Register File Access LSB
  */
 #define ED_3COM_RFLSB		0x0f
+
+/*
+ *		Definitions for Novell NE1000 and NE2000 boards
+ */
+#define ED_NE_DATA		0x10
+#define ED_NE_RESET		0x1f
+#define ED_NE_IO_PORTS		0x20

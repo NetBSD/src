@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7 1993/08/02 23:20:55 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.1 1993/09/14 17:28:47 mycroft Exp $
  */
 
 /*
@@ -185,23 +185,6 @@ cpu_wait(p)
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 }
 #endif
-
-/*
- * Set a red zone in the kernel stack after the u. area.
- */
-setredzone(pte, vaddr)
-	u_short *pte;
-	caddr_t vaddr;
-{
-/* eventually do this by setting up an expand-down stack segment
-   for ss0: selector, allowing stack access down to top of u.
-   this means though that protection violations need to be handled
-   thru a double fault exception that must do an integral task
-   switch to a known good context, within which a dump can be
-   taken. a sensible scheme might be to save the initial context
-   used by sched (that has physical memory mapped 1:1 at bottom)
-   and take the dump while still in mapped mode */
-}
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -409,8 +392,8 @@ cpu_reset() {
 
 	/* force a shutdown by unmapping entire address space ! */
 	bzero((caddr_t) PTD, NBPG);
-
 	/* "good night, sweet prince .... <THUNK!>" */
 	tlbflush(); 
-	/* NOTREACHED */
+	/* just in case */
+	for(;;);
 }
