@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.16 2003/12/20 18:22:17 manu Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.17 2003/12/24 22:42:11 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.16 2003/12/20 18:22:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.17 2003/12/24 22:42:11 manu Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -177,8 +177,8 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int target_lid;
 	struct proc *p = l->l_proc;
-	struct lwp *t, *t2;
-	int s;
+	struct lwp *t;
+	struct lwp *t2;
 
 	target_lid = SCARG(uap, target);
 
@@ -201,11 +201,24 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 
 		if (t2 == NULL) /* All other LWPs are suspended */
 			return (EDEADLK);
+	}
 
+	return lwp_suspend(l, t);
+}
+
+inline int
+lwp_suspend(l, t)
+	struct lwp *l;
+	struct lwp *t;
+{
+	struct proc *p = t->l_proc;
+	int s;
+
+	if (t == l) {
 		SCHED_LOCK(s);
 		l->l_stat = LSSUSPENDED;
 		/* XXX NJWLWP check if this makes sense here: */
-		l->l_proc->p_stats->p_ru.ru_nvcsw++;
+		p->p_stats->p_ru.ru_nvcsw++;
 		mi_switch(l, NULL);
 		SCHED_ASSERT_UNLOCKED();
 		splx(s);
