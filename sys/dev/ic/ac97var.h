@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.h,v 1.1 1999/10/27 13:18:03 augustss Exp $ */
+/*	$NetBSD: ac97var.h,v 1.1 2000/05/15 01:27:45 thorpej Exp $	*/
 /*      $OpenBSD: ac97.h,v 1.1 1999/09/19 06:45:12 csapuntz Exp $ */
 
 /*
@@ -45,7 +45,6 @@ struct ac97_host_if {
 /*
  * This is the interface exported by the AC97 compliant CODEC
  */
-
 struct ac97_codec_if_vtbl {
 	int (*mixer_get_port)(struct ac97_codec_if *addr, mixer_ctrl_t *cp);
 	int (*mixer_set_port)(struct ac97_codec_if *addr, mixer_ctrl_t *cp);

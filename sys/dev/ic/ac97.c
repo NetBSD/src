@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.8 2000/04/28 12:39:59 augustss Exp $ */
+/*      $NetBSD: ac97.c,v 1.9 2000/05/15 01:27:44 thorpej Exp $ */
 /*      $OpenBSD: ac97.c,v 1.2 1999/09/21 16:06:27 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/ic/ac97.h>
+#include <dev/ic/ac97var.h>
 
 #define AC97_REG_RESET                0x00
 #define AC97_SOUND_ENHANCEMENT(reg)   (((reg) >> 10) & 0x1f)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_fms.c,v 1.1 1999/11/01 20:43:13 augustss Exp $	*/
+/*	$NetBSD: mpu_fms.c,v 1.2 2000/05/15 01:27:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
-#include <dev/ic/ac97.h>
+#include <dev/ic/ac97var.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.4 2000/04/08 03:50:48 tsarna Exp $	*/
+/*	$NetBSD: fms.c,v 1.5 2000/05/15 01:27:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
-#include <dev/ic/ac97.h>
+#include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>
 
 #include <dev/pci/fmsvar.h>
