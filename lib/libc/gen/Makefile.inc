@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.24 1993/11/17 18:15:32 jtc Exp $
+#	$Id: Makefile.inc,v 1.25 1993/11/29 19:22:31 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen
@@ -44,7 +44,7 @@ SRCS+=	_setjmp.s alloca.s fabs.s ldexp.s modf.s setjmp.s
 SRCS+=	udiv.s urem.s
 .endif
 
-MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 directory.0 err.0 \
+MAN3+=	alarm.0 clock.0 ctermid.0 ctime.0 ctype.0 cuserid.0 directory.0 err.0 \
 	exec.0 fnmatch.0 frexp.0 fts.0 getcap.0 getcwd.0 getdiskbyname.0 \
 	getfsent.0 getgrent.0 getmntinfo.0 getpass.0 getpwent.0 getsubopt.0 \
 	getttyent.0 getusershell.0 glob.0 initgroups.0 insque.0 isalnum.0 \
