@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/02/09 05:58:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2004/03/12 03:59:42 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -34,11 +34,13 @@ CONFIG_SUBST=	${HOST_SH} ${XFTDIR}/config/config-subst \
 		exec_prefix="${X11BINDIR}" \
 		libdir="${X11USRLIBDIR}" \
 		includedir="${X11INCDIR}" \
+		hardcode_libdir_flag_spec="-Wl,-rpath,${X11USRLIBDIR}" \
 		PACKAGE_VERSION="2.1.0" \
 		FREETYPE_LIBS="-L${X11USRLIBDIR} -lfreetype" \
 		FREETYPE_CFLAGS="-I${X11INCDIR}/freetype2" \
 		XRENDER_LIBS="-L${X11USRLIBDIR} -lXrender" \
 		XRENDER_CFLAGS="-I${X11INCDIR}" \
+		FONTCONFIG_LIBS="-L${X11USRLIBDIR} -lfontconfig" \
 		FONTCONFIG_CFLAGS="-I${X11INCDIR}" 
 
 xft.pc:
