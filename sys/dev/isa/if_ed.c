@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.106.4.1 1997/02/20 19:17:18 is Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.106.4.2 1997/02/21 19:41:14 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -2070,11 +2070,12 @@ edioctl(ifp, cmd, data)
 			if (ns_nullhost(*ina))
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
-			else
-				/* XXX ?
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr))*/;
+			else {
+				bcopy(ina->x_host.c_host, sc->sc_enaddr,
+				    sizeof(sc->sc_enaddr));
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    sizeof(sc->sc_enaddr));
+			}
 			/* Set new address. */
 			edinit(sc);
 			break;
