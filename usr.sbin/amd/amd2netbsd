@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: amd2netbsd,v 1.5 1997/09/22 22:09:55 christos Exp $
+#	$NetBSD: amd2netbsd,v 1.6 1997/09/23 08:40:57 veego Exp $
 #
 #  Perl script to convert a standard distribution directory for am-utils into
 #	a NetBSD source tree.
@@ -387,7 +387,7 @@ fsi_gram.c fsi_gram.h: fsi_gram.y
 %% NetBSD #
 
 LIB= amu
-%% srcs libamu
+%% srcs libamu config_local.h
 
 config_local.h: mkconf
 	@rm -f ${.TARGET}
