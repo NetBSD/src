@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_tcp.c,v 1.12 1997/09/21 02:35:44 enami Exp $	*/
+/*	$NetBSD: pt_tcp.c,v 1.13 1998/02/03 03:35:06 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -41,14 +41,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_tcp.c,v 1.12 1997/09/21 02:35:44 enami Exp $");
+__RCSID("$NetBSD: pt_tcp.c,v 1.13 1998/02/03 03:35:06 perry Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <strings.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/syslog.h>
