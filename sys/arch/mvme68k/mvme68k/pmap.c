@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1999/02/14 17:54:29 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.26 1999/02/26 22:16:36 is Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2525,6 +2525,22 @@ pmap_enter_ptpage(pmap, va)
 	pmap->pm_ptpages++;
 	splx(s);
 }
+
+/*
+ *	Routine:        pmap_procwr
+ * 
+ *	Function:
+ *		Synchronize caches corresponding to [addr, addr+len) in p.
+ */   
+void
+pmap_procwr(p, va, len)
+	struct proc	*p;
+	vaddr_t		va;
+	size_t		len;
+{
+	(void)cachectl1(0x80000004, va, len, p);
+}
+
 
 #ifdef DEBUG
 /*

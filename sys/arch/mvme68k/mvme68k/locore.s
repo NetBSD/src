@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 1999/02/20 00:12:02 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 1999/02/26 22:16:36 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -895,11 +895,12 @@ Ltrap1:
  * command in d0, addr in a1, length in d1
  */
 ENTRY_NOPROFILE(trap12)
+	movl	_C_LABEL(cachectl),sp@-	| push curproc pointer
 	movl	d1,sp@-			| push length
 	movl	a1,sp@-			| push addr
 	movl	d0,sp@-			| push command
-	jbsr	_C_LABEL(cachectl)	| do it
-	lea	sp@(12),sp		| pop args
+	jbsr	_C_LABEL(cachectl1)	| do it
+	lea	sp@(16),sp		| pop args
 	jra	_ASM_LABEL(rei)		| all done
 
 /*
