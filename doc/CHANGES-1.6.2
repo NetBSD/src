@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.79 2003/06/30 02:28:46 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.80 2003/06/30 02:39:29 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -915,3 +915,19 @@ usr.sbin/rpc.lockd/lockd_lock.c			1.19 (via patch)
 
 	While there, add a NULL check for the return value of another malloc().
 	[bouyer, ticket #1347]
+
+sys/dev/pci/if_fxp_pci.c			1.32-1.33 (via patch)
+sys/dev/pci/pcidevs				1.506 (via patch)
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	add Intel PRO/100M.
+
+	apparently this driver works fine for Intel PRO/100 VM with 82562EM/EX
+	PHY, so make driver match it
+	while here, also make the driver match 'Intel PRO/100 VM with
+	82562EM/EX (CNR) PHY', with anticipation it would work fine too
+	activate the resume and dynamic standby bug workaround for these;
+	might not be necessary (not confirmed to be needed), but better safe
+	than sorry
+	[drochner, ticket #1343]
