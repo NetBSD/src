@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
-#	$Id: Makefile,v 1.11 1993/09/30 23:31:43 jtc Exp $
+#	$Id: Makefile,v 1.12 1994/02/02 02:37:07 cgd Exp $
 
 # reorder gives an editor command for most common terminals
 # (in reverse order from n'th to 1'st most commonly used)
@@ -11,8 +11,7 @@ CLEANFILES= termcap termcap.db
 all: termcap termcap.db
 
 termcap: reorder termcap.src
-#	ex - ${.CURDIR}/termcap.src < ${.CURDIR}/reorder > /dev/null
-	-ex - ${.CURDIR}/termcap.src < ${.CURDIR}/reorder > /dev/null
+	ex - ${.CURDIR}/termcap.src < ${.CURDIR}/reorder > /dev/null
 
 termcap.db: termcap
 	cap_mkdb termcap
