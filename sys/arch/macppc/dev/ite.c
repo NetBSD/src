@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.1 1998/05/15 10:15:49 tsubai Exp $	*/
+/*	$NetBSD: ite.c,v 1.2 1998/07/02 18:58:32 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,9 +67,6 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-
-#define KEYBOARD_ARRAY
-#include <machine/keyboard.h>
 #include <machine/adbsys.h>
 #include <machine/iteioctl.h>
 #include <machine/grfioctl.h>
@@ -161,10 +158,6 @@ static int	scrreg_bottom;
 static int	bell_freq = 1880;	/* frequency */
 static int	bell_length = 10;	/* duration */
 static int	bell_volume = 100;	/* volume */
-
-/* For polled ADB mode */
-static int	polledkey;
-extern int	adb_polling;
 
 struct tty	*ite_tty;		/* Our tty */
 
@@ -878,46 +871,6 @@ ite_putchar(ch)
 
 
 /*
- * Keyboard support functions
- */
-
-static int 
-ite_pollforchar()
-{
-	int s;
-	register int intbits;
-
-	s = splhigh();
-
-	polledkey = -1;
-	adb_polling = 1;
-
-	/* pretend we're VIA interrupt dispatcher */
-	while (polledkey == -1) {
-		adb_intr_cuda();
-#if 0
-		intbits = via_reg(VIA1, vIFR);
-
-		if (intbits & V1IF_ADBRDY) {
-			mrg_adbintr();
-			via_reg(VIA1, vIFR) = V1IF_ADBRDY;
-		}
-		if (intbits & 0x10) {
-			mrg_pmintr();
-			via_reg(VIA1, vIFR) = 0x10;
-		}
-#endif
-	}
-
-	adb_polling = 0;
-
-	splx(s);
-
-	return polledkey;
-}
-
-
-/*
  * Autoconfig attachment
  */
 
@@ -1140,71 +1093,6 @@ itestop(struct tty * tp, int flag)
 	splx(s);
 }
 
-int
-ite_intr(adb_event_t * event)
-{
-	static int shift = 0, control = 0, capslock = 0;
-	int key, press, val, state;
-	char str[10], *s;
-
-	key = event->u.k.key;
-	press = ADBK_PRESS(key);
-	val = ADBK_KEYVAL(key);
-
-/*printf("ite_intr: (%x %x ", press, val);*/
-	if (val == ADBK_SHIFT)
-		shift = press;
-	else if (val == ADBK_CAPSLOCK)
-		capslock = !capslock;
-	else if (val == ADBK_CONTROL)
-		control = press;
-	else if (press) {
-		switch (val) {
-		case ADBK_UP:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'A';
-			str[3] = '\0';
-			break;
-		case ADBK_DOWN:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'B';
-			str[3] = '\0';
-			break;
-		case ADBK_RIGHT:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'C';
-			str[3] = '\0';
-			break;
-		case ADBK_LEFT:
-			str[0] = '\e';
-			str[1] = 'O';
-			str[2] = 'D';
-			str[3] = '\0';
-			break;
-		default:
-			state = 0;
-			if (capslock && isealpha(keyboard[val][1]))
-				state = 1;
-			if (shift)
-				state = 1;
-			if (control)
-				state = 2;
-			str[0] = keyboard[val][state];
-			str[1] = '\0';
-			break;
-		}
-		if (adb_polling)
-			polledkey = str[0];
-		else
-			for (s = str; *s; s++)
-				(*linesw[ite_tty->t_line].l_rint)(*s, ite_tty);
-	}
-/*printf("%x) ", str[0]);*/
-	return 0;
-}
 /*
  * Console functions
  */
@@ -1291,8 +1179,6 @@ void
 itecninit(struct consdev * cp)
 {
 	int node, options;
-	int len;
-	vm_offset_t pa;
 	u_int reg[5];
 	extern int console_node;
 
@@ -1309,22 +1195,7 @@ itecninit(struct consdev * cp)
 	OF_getprop(node, "linebytes", &videorowbytes, sizeof(videorowbytes));
 	OF_getprop(node, "assigned-addresses", reg, sizeof(reg));
 
-	/*
-	 * XXX This should not be here.
-	 *
-	 * we cannot use kmem_alloc_...
-	 */
-	len = videorowbytes * height;
-	pa = reg[2];
-	while (len > 0) {
-		pmap_enter(pmap_kernel(), pa, pa,
-			VM_PROT_READ|VM_PROT_WRITE, 1);
-		pa += NBPG;
-		len -= NBPG;
-	}
-
 	videoaddr = reg[2] + 0x400;	/* XXX ATI only */
-
 	videosize = width | (height << 16);
 
 	ite_initted = 1;

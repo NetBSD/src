@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.1 1998/05/15 10:15:47 tsubai Exp $	*/
+/*	$NetBSD: adb.c,v 1.2 1998/07/02 18:58:32 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -183,7 +183,7 @@ adb_handoff(event)
 		adb_enqevent(event);
 	} else {
 		if (event->def_addr == 2)
-			ite_intr(event);
+			kbd_intr(event);
 	}
 }
 
