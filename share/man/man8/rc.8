@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.11 2000/07/26 05:29:15 lukem Exp $
+.\" 	$NetBSD: rc.8,v 1.12 2000/08/22 08:53:17 lukem Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 26, 2000
+.Dd August 16, 2000
 .Dt RC 8
 .Os
 .Sh NAME
@@ -97,6 +97,12 @@ Invoke
 .Xr rcorder 8
 to order the files in
 .Pa /etc/rc.d/
+that do not have a
+.Dq nostart
+keyword (refer to
+.Xr rcorder 8 's
+.Fl s 
+flag),
 and assigns the result to a variable.
 .It
 Calls each script in turn using run_rc_script() (from
@@ -166,10 +172,23 @@ ensure basic services exist for services that start early.
 Scripts that are to be sourced into the current shell rather than a subshell.
 Extreme care must be taken in using this, as the startup sequence will
 terminate if the script does.
-.Pa rc.d/fsck.sh
-uses this behaviour to terminate the boot in case of a failed disk check.
-.It foo
+.Pa /etc/rc.d/bootconf.sh
+uses this behaviour to allow the user to select a different
+configuration (including
+.Pa /etc/rc.conf )
+early in the boot.
+.It bar
 Scripts that are sourced in a subshell.
+These can stop the boot if necessary with the following shell
+commands:
+.Bd -literal -offset
+	if [ "$autoboot" = yes ]; then
+		kill -TERM $$
+	fi
+	exit 1
+.Ed
+.Pp
+Note that this should be used sparingly!
 .El
 .Pp
 The scripts are expected to support at least the following arguments:
@@ -230,5 +249,6 @@ command appeared in
 .Bx 4.0 .
 The
 .Pa /etc/rc.d
-support appeared in
-.Nx 1.5 .
+support was implemented in
+.Nx 1.5
+by Luke Mewburn <lukem@netbsd.org>.
