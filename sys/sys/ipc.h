@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.23 2000/06/02 15:53:05 simonb Exp $	*/
+/*	$NetBSD: ipc.h,v 1.24 2002/08/07 23:39:24 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,6 +100,11 @@ struct ipc_perm14 {
 };
 #endif /* _KERNEL */
 
+/* Common access type bits, used with ipcperm(). */
+#define	IPC_R		000400	/* read permission */
+#define	IPC_W		000200	/* write/alter permission */
+#define	IPC_M		010000	/* permission to change control info */
+
 /* X/Open required constants (same values as system 5) */
 #define	IPC_CREAT	001000	/* create entry if key does not exist */
 #define	IPC_EXCL	002000	/* fail if key exists */
@@ -123,11 +128,6 @@ struct ipc_perm14 {
 #ifdef _KERNEL
 #define	IPCID_TO_IX(id)		((id) & 0xffff)
 #define	IPCID_TO_SEQ(id)	(((id) >> 16) & 0xffff)
-
-/* Common access type bits, used with ipcperm(). */
-#define	IPC_R		000400	/* read permission */
-#define	IPC_W		000200	/* write/alter permission */
-#define	IPC_M		010000	/* permission to change control info */
 
 int	ipcperm __P((struct ucred *, struct ipc_perm *, int));
 
