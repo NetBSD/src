@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.27 2003/12/08 12:03:16 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.28 2003/12/08 19:27:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.27 2003/12/08 12:03:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.28 2003/12/08 19:27:38 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.27 2003/12/08 12:03:16 manu Exp $")
 #include <sys/proc.h>
 #include <sys/ktrace.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_map.h>
-
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_port.h>
@@ -746,7 +742,7 @@ mach_io_registry_entry_get_properties(args)
 	size_t *msglen = args->rsize; 
 	struct lwp *l = args->l;
 	int error;
-	vaddr_t va;
+	void *uaddr;
 	size_t size;
 	mach_port_t mn;
 	struct mach_right *mr;
@@ -764,24 +760,13 @@ mach_io_registry_entry_get_properties(args)
 		return mach_iokit_error(args, MACH_IOKIT_EINVAL);
 	size = strlen(mid->mid_properties) + 1; /* Include trailing zero */
 
-	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
-	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
-	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
-	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
-	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
-		return mach_msg_error(args, error);
-
-	if ((error = copyout(mid->mid_properties, (void *)va, size)) != 0) {
+	if ((error = mach_ool_copyout(l->l_proc, 
+	    mid->mid_properties, &uaddr, size, MACH_OOL_TRACE)) != 0) {
 #ifdef DEBUG_MACH
 		printf("pid %d.%d: copyout iokit properties failed\n",
 		    l->l_proc->p_pid, l->l_lid);
 #endif
 	}
-
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
-		ktrmool(l->l_proc, mid->mid_properties, size, (void *)va);
-#endif
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -790,7 +775,7 @@ mach_io_registry_entry_get_properties(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_properties.address = (void *)va;
+	rep->rep_properties.address = uaddr;
 	rep->rep_properties.size = size;
 	rep->rep_properties.deallocate = 0;
 	rep->rep_properties.copy = MACH_MSG_ALLOCATE;
@@ -811,7 +796,7 @@ mach_io_registry_entry_get_property(args)
 	size_t *msglen = args->rsize; 
 	struct lwp *l = args->l;
 	int error;
-	vaddr_t va;
+	void *uaddr;
 	size_t size;
 	mach_port_t mn;
 	struct mach_right *mr;
@@ -848,28 +833,17 @@ mach_io_registry_entry_get_property(args)
 
 	if (mip->mip_value == NULL)
 		return mach_iokit_error(args, MACH_IOKIT_ENOENT);
-
-	/* And copyout its associated value */
-	va = vm_map_min(&l->l_proc->p_vmspace->vm_map);
 	size = strlen(mip->mip_value) + 1; /* Include trailing zero */
 
-	if ((error = uvm_map(&l->l_proc->p_vmspace->vm_map, &va, 
-	    round_page(size), NULL, UVM_UNKNOWN_OFFSET, 0, 
-	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_ALL,
-	    UVM_INH_COPY, UVM_ADV_NORMAL, UVM_FLAG_COPYONW))) != 0)
-		return mach_msg_error(args, error);
-
-	if ((error = copyout(mip->mip_value, (void *)va, size)) != 0) {
+	/* And copyout its associated value */
+	if ((error = mach_ool_copyout(l->l_proc, 
+	    (void *)mip->mip_value, &uaddr, size, MACH_OOL_TRACE)) != 0) {
 #ifdef DEBUG_MACH
 		printf("pid %d.%d: copyout iokit property failed\n",
 		    l->l_proc->p_pid, l->l_lid);
 #endif
 	}
 
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_MOOL) && error == 0)
-		ktrmool(l->l_proc, mip->mip_value, size, (void *)va);
-#endif
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
@@ -877,7 +851,7 @@ mach_io_registry_entry_get_property(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_properties.address = (void *)va;
+	rep->rep_properties.address = uaddr;
 	rep->rep_properties.size = size;
 	rep->rep_properties.deallocate = 0;
 	rep->rep_properties.copy = MACH_MSG_ALLOCATE;
