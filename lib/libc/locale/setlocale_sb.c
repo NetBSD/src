@@ -1,3 +1,5 @@
+/*	$NetBSD: setlocale_sb.c,v 1.3 2000/08/10 09:55:32 kleink Exp $	*/
+
 /*-
  * Copyright (c)1999 Citrus Project,
  * All rights reserved.
@@ -23,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: setlocale_sb.c,v 1.2 2000/08/08 22:31:15 tshiozak Exp $
+ *	Id: setlocale_sb.c,v 1.4 2000/01/25 14:24:22 cvscitrus Exp
  */
 
 
