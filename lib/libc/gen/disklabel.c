@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.15 1997/07/21 14:06:53 jtc Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.16 1998/02/02 02:41:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
+static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.15 1997/07/21 14:06:53 jtc Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.16 1998/02/02 02:41:20 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: disklabel.c,v 1.15 1997/07/21 14:06:53 jtc Exp $");
 #include <sys/param.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.12 1997/07/21 14:07:37 jtc Exp $	*/
+/*	$NetBSD: syslog.c,v 1.13 1998/02/02 02:41:31 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)syslog.c	8.4 (Berkeley) 3/18/94";
+static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.12 1997/07/21 14:07:37 jtc Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.13 1998/02/02 02:41:31 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
