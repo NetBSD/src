@@ -1,4 +1,4 @@
-/*	$NetBSD: _sys_errlist.c,v 1.6 1998/01/09 03:15:25 perry Exp $	*/
+/*	$NetBSD: _sys_errlist.c,v 1.7 1998/12/06 07:12:18 jonathan Exp $	*/
 
 /*
  * Written by J.T. Conklin, December 12, 1994
@@ -6,6 +6,17 @@
  */
 
 #include <sys/cdefs.h>
+
+__warn_references(sys_errlist,
+    "warning: reference to compatibility sys_errlist[]; include <errno.h> for correct reference")
+__warn_references(__sys_errlist,
+    "warning: reference to deprecated __sys_errlist[]; include <errno.h> and use sys_errlist")
+
+__warn_references(sys_nerr,
+    "warning: reference to compatibility sys_nerr; include <errno.h> for correct reference")
+__warn_references(__sys_nerr,
+    "warning: reference to deprecated __sys_nerr; include <errno.h> and use sys_nerr")
+ 
 
 #ifdef __indr_reference
 __indr_reference(_sys_errlist, sys_errlist)
