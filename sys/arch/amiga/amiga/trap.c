@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 2003/10/21 00:49:34 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.98 2003/10/31 16:44:34 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2003/10/21 00:49:34 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2003/10/31 16:44:34 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2003/10/21 00:49:34 fvdl Exp $");
 #include <sys/syscall.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-
 #include <sys/user.h>
+#include <sys/userret.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -242,18 +242,9 @@ userret(l, pc, oticks)
 	u_quad_t oticks;
 {
 	struct proc *p = l->l_proc;
-	int sig;
 
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
-
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	/* Invoke MI userret code */
+	mi_userret(l);
 
 	/*
 	 * If profiling, charge recent system time.
