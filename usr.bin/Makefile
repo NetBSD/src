@@ -1,13 +1,13 @@
 #	@(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 #
-# $Header: /cvsroot/src/usr.bin/Makefile,v 1.14 1993/04/29 11:24:58 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/Makefile,v 1.15 1993/04/29 12:39:24 cgd Exp $
 
 SUBDIR=	ar biff basename cal calendar \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
 	cpio crontab ctags cut dirname du egrep elvis elvisrecover \
 	env error expand false file find finger fmt fold fpr from \
-	fsplit fstat ftp g++ gprof grep groff groups head hexdump \
-	id indent ktrace last lastcomm ld leave locate lock logger \
+	fsplit fstat ftp gprof groups head hexdump \
+	id indent ktrace last lastcomm leave locate lock logger \
 	login logname look lorder m4 machine mail make man mesg mkdep mkfifo \
 	mkstr more msgs netstat nfsstat nice nm nohup pagesize \
 	passwd paste patch printenv printf quota ranlib \
