@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinfo.c,v 1.2 1997/06/24 06:18:58 mikel Exp $	*/
+/*	$NetBSD: skeyinfo.c,v 1.3 1997/11/08 09:37:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-
 #ifndef lint
-__RCSID("$NetBSD: skeyinfo.c,v 1.2 1997/06/24 06:18:58 mikel Exp $");
+__RCSID("$NetBSD: skeyinfo.c,v 1.3 1997/11/08 09:37:44 lukem Exp $");
 #endif
 
 #include <stdio.h>
