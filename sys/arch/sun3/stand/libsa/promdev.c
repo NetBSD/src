@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.3 1995/08/12 18:39:00 gwr Exp $ */
+/*	$NetBSD: promdev.c,v 1.4 1995/09/23 03:42:44 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -36,8 +36,10 @@
 #include <machine/pte.h>
 #include <machine/saio.h>
 
-#include <dvma.h>
-#include <stand.h>
+#include "stand.h"
+#include "dvma.h"
+
+extern void set_pte __P((int, int));
 
 struct saioreq prom_si;
 static int promdev_inuse;
@@ -52,7 +54,6 @@ prom_iopen(void **devdatap)
 	struct boottab *ops;
 	struct devinfo *dip;
 	struct saioreq *si;
-	char *p;
 	int	error;
 
 	if (promdev_inuse)
