@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.4 2003/08/27 03:57:05 bsh Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.5 2003/09/03 03:12:28 mycroft Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -69,7 +69,8 @@
 #define	 BANKCON_PMC_4   	(1<<0)
 #define	 BANKCON_PMC_8   	(2<<0)
 #define	 BANKCON_PMC_16   	(3<<0)
-#define	 BANKCON_TRCD_2  	(0<<2)	/* RAS to CAS delay */
+#define	 BANKCON_TRCD_SHIFT 	2	/* RAS to CAS delay */
+#define	 BANKCON_TRCD_2  	(0<<2)
 #define	 BANKCON_TRCD_3  	(1<<2)
 #define	 BANKCON_TRCD_4  	(2<<2)
 #define	 BANKCON_SCAN_8 	(0<<0)	/* Column address number */
