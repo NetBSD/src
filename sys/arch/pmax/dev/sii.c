@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.13 1996/07/30 06:36:33 mhitch Exp $	*/
+/*	$NetBSD: sii.c,v 1.14 1996/09/07 01:19:45 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1485,7 +1485,7 @@ abort:
 		if (sii_debug > 0)
 			printf("Abort: cs %x ds %x i %d\n", cstat, dstat, i);
 #endif
-		if (dstat & (SII_DNE | SII_PHASE_MSK) ==
+		if ((dstat & (SII_DNE | SII_PHASE_MSK)) ==
 		    (SII_DNE | SII_MSG_OUT_PHASE)) {
 			/* disconnect if command in progress */
 			regs->comm = SII_DISCON;
