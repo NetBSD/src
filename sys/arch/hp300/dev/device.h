@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.8 1996/10/14 07:11:50 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.9 1996/10/20 23:47:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -135,6 +135,6 @@ struct	devqueue {
 extern struct hp_hw sc_table[];
 extern struct hp_ctlr hp_cinit[];
 extern struct hp_device hp_dinit[];
-extern caddr_t sctova(), sctopa(), iomap();
+extern caddr_t sctopa(), iomap();
 #endif
 #endif
