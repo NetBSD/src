@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2003/07/09 20:02:35 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2003/07/18 09:46:11 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -337,9 +337,13 @@ cleanup(void)
 	time_t tloc;
 
 	(void)time(&tloc);
+
+	restore_etc();
 	unwind_mounts();
 	run_prog(0, NULL, "/sbin/umount /mnt2");
+
 	endwin();
+
 	if (logging) {
 		fprintf(logfp, "Log ended at: %s\n", asctime(localtime(&tloc)));
 		fflush(logfp);
