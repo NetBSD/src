@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.111 2002/09/05 15:54:44 jwise Exp $
+$NetBSD: acronyms,v 1.112 2002/09/27 03:40:46 junyoung Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -42,6 +42,7 @@ DWIM	do what I mean
 EG	evil grin
 EMSG	email message
 EOB	end of business [day]
+EOL	end of life
 ETLA	extended three letter acronym
 EWAG	experienced wild-ass guess
 FAQ	frequently asked question
