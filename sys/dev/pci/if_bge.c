@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.68 2004/04/06 08:48:55 keihan Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.69 2004/04/10 19:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.68 2004/04/06 08:48:55 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.69 2004/04/10 19:23:49 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -583,6 +583,15 @@ bge_miibus_statchg(dev)
 	struct bge_softc *sc = (struct bge_softc *)dev;
 	struct mii_data *mii = &sc->bge_mii;
 
+	/*
+	 * Get flow control negotiation result.
+	 */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->bge_flowflags) {
+		sc->bge_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+		mii->mii_media_active &= ~IFM_ETH_FMASK;
+	}
+
 	BGE_CLRBIT(sc, BGE_MAC_MODE, BGE_MACMODE_PORTMODE);
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_PORTMODE_GMII);
@@ -594,6 +603,20 @@ bge_miibus_statchg(dev)
 		BGE_CLRBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
 	} else {
 		BGE_SETBIT(sc, BGE_MAC_MODE, BGE_MACMODE_HALF_DUPLEX);
+	}
+
+	/*
+	 * 802.3x flow control
+	 */
+	if (sc->bge_flowflags & IFM_ETH_RXPAUSE) {
+		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_FLOWCTL_ENABLE);
+	} else {
+		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_FLOWCTL_ENABLE);
+	}
+	if (sc->bge_flowflags & IFM_ETH_TXPAUSE) {
+		BGE_SETBIT(sc, BGE_TX_MODE, BGE_TXMODE_FLOWCTL_ENABLE);
+	} else {
+		BGE_CLRBIT(sc, BGE_TX_MODE, BGE_TXMODE_FLOWCTL_ENABLE);
 	}
 }
 
@@ -2421,7 +2444,8 @@ bge_attach(parent, self, aux)
 		ifmedia_init(&sc->bge_mii.mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
 		mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
-			   MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
+			   MII_PHY_ANY, MII_OFFSET_ANY,
+			   MIIF_FORCEANEG|MIIF_DOPAUSE);
 		
 		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
@@ -3481,6 +3505,7 @@ bge_ifmedia_upd(ifp)
 		default:
 			return(EINVAL);
 		}
+		/* XXX 802.3x flow control for 1000BASE-SX */
 		return(0);
 	}
 
@@ -3516,8 +3541,9 @@ bge_ifmedia_sts(ifp, ifmr)
 	}
 
 	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
 	ifmr->ifm_status = mii->mii_media_status;
+	ifmr->ifm_active = (mii->mii_media_active & ~IFM_ETH_FMASK) |
+	    sc->bge_flowflags;
 }
 
 int
@@ -3565,6 +3591,26 @@ bge_ioctl(ifp, command, data)
 		error = 0;
 		break;
 	case SIOCSIFMEDIA:
+		/* XXX Flow control is not supported for 1000BASE-SX */
+		if (sc->bge_tbi) {
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
+			sc->bge_flowflags = 0;
+		}
+
+		/* Flow control requires full-duplex mode. */
+		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		    (ifr->ifr_media & IFM_FDX) == 0) {
+		    	ifr->ifr_media &= ~IFM_ETH_FMASK;
+		}
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
+				/* We an do both TXPAUSE and RXPAUSE. */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->bge_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
+		/* FALLTHROUGH */
 	case SIOCGIFMEDIA:
 		if (sc->bge_tbi) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
@@ -3574,7 +3620,6 @@ bge_ioctl(ifp, command, data)
 			error = ifmedia_ioctl(ifp, ifr, &mii->mii_media,
 			    command);
 		}
-		error = 0;
 		break;
 	default:
 		error = ether_ioctl(ifp, command, data);
