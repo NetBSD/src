@@ -1,5 +1,6 @@
+#	$NetBSD: Makefile,v 1.5 1997/10/18 05:48:18 lukem Exp $
+#
 # Makefile for uuxqt
-# $Id: Makefile,v 1.4 1994/12/22 09:32:33 cgd Exp $
 
 BINDIR=		$(sbindir)
 BINOWN=		$(owner)

@@ -1,5 +1,6 @@
+#	$NetBSD: Makefile,v 1.3 1997/10/18 05:48:05 lukem Exp $
+#
 # Makefile for uulog
-# $Id: Makefile,v 1.2 1993/08/05 16:15:14 jtc Exp $
 
 BINDIR=		$(bindir)
 

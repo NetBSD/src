@@ -1,5 +1,6 @@
+#	$NetBSD: Makefile,v 1.9 1997/10/18 05:47:52 lukem Exp $
+#
 # This subdirectory contains Unix specific support functions.
-# $Id: Makefile,v 1.8 1997/05/31 21:21:26 cjs Exp $
 
 LIB=		unix
 SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
