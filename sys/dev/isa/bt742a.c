@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.54 1996/03/16 04:37:40 cgd Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.55 1996/03/16 05:33:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -129,9 +129,12 @@ typedef u_long physlen;
 #define BT_READ_FIFO		0x1d	/* read fifo buffer */
 #define BT_ECHO			0x1e	/* Echo command data */
 #define BT_MBX_INIT_EXTENDED	0x81	/* Mbx initialization */
-#define BT_INQUIRE_EXTENDED	0x8D	/* Adapter Setup Inquiry */
+#define BT_INQUIRE_REV_THIRD	0x84	/* Get 3rd firmware version byte */
+#define BT_INQUIRE_REV_FOURTH	0x85	/* Get 4th firmware version byte */
+#define BT_GET_BOARD_INFO	0x8b	/* Get hardware ID and revision */
+#define BT_INQUIRE_EXTENDED	0x8d	/* Adapter Setup Inquiry */
 
-/* Follows command appeared at FirmWare 3.31 */
+/* Follows command appeared at firmware 3.31 */
 #define	BT_ROUND_ROBIN	0x8f	/* Enable/Disable(default) round robin */
 #define   BT_DISABLE		0x00	/* Parameter value for Disable */
 #define   BT_ENABLE		0x01	/* Parameter value for Enable */
@@ -291,6 +294,11 @@ struct bt_boardID {
 	u_char  custom_feture;
 	char    firm_revision;
 	u_char  firm_version;
+};
+
+struct bt_board_info {
+	u_char	id[4];		/* i.e bt742a -> '7','4','2','A' */
+	u_char	version[2];	/* i.e Board Revision 'H' -> 'H', 0x00 */
 };
 
 struct bt_setup {
@@ -1147,16 +1155,48 @@ bt_inquire_setup_information(sc)
 {
 	int iobase = sc->sc_iobase;
 	struct bt_boardID bID;
-	char dummy[8];
+	struct bt_board_info binfo;
+	char dummy[8], sub_ver[3];
 	struct bt_setup setup;
-	int i;
+	int i, ver;
 
-	/* Inquire Board ID to Bt742 for firmware version */
+	/*
+	 * Get and print board hardware information.
+	 */
+	bt_cmd(iobase, sc, 1, sizeof(binfo), 0, (u_char *)&binfo,
+	    BT_GET_BOARD_INFO, sizeof(binfo));
+	printf(": Bt%c%c%c", binfo.id[0], binfo.id[1], binfo.id[2]);
+	if (binfo.id[3] != ' ')
+		printf("%c", binfo.id[3]);
+	if (binfo.version[0] != ' ')
+		printf("%c%s", binfo.version[0], binfo.version[1]);
+	printf("\n");
+
+	/*
+	 * Inquire Board ID to Bt742 for board type and firmware version.
+	 */
 	bt_cmd(iobase, sc, 0, sizeof(bID), 0, (u_char *)&bID, BT_INQUIRE);
-	printf(": version %c.%c, ", bID.firm_revision, bID.firm_version);
+	ver = (bID.firm_revision - '0') * 10 + (bID.firm_version - '0');
 
-	if (bID.firm_revision != '2') {	/* XXXX */
-		/* Enable round-robin scheme - appeared at firmware rev. 3.31 */
+	/*
+	 * Get the rest of the firmware version.  Firmware revisions
+	 * before 3.3 apparently don't accept the BT_INQUIRE_REV_FOURTH
+	 * command.
+	 */
+	i = 0;
+	bt_cmd(iobase, sc, 0, 1, 0, &sub_ver[i++], BT_INQUIRE_REV_THIRD);
+	if (ver >= 33)
+		bt_cmd(iobase, sc, 0, 1, 0, &sub_ver[i++],
+		    BT_INQUIRE_REV_FOURTH);
+	if (sub_ver[i - 1] == ' ')
+		i--;
+	sub_ver[i] = '\0';
+
+	printf("%s: firmware version %c.%c%s, ", sc->sc_dev.dv_xname,
+	    bID.firm_revision, bID.firm_version, sub_ver);
+
+	/* Enable round-robin scheme - appeared at firmware rev. 3.31 */
+	if (ver > 33 || (ver == 33 && sub_ver[0] >= 1)) {
 		bt_cmd(iobase, sc, 1, 0, 0, 0, BT_ROUND_ROBIN, BT_ENABLE);
 	}
 
@@ -1167,7 +1207,7 @@ bt_inquire_setup_information(sc)
 	bt_cmd(iobase, sc, 1, sizeof(setup), 0, (u_char *)&setup, BT_SETUP_GET,
 	    sizeof(setup));
 
-	printf("%s, %s, %d mbxs",
+	printf("%s, %s, %d mailboxes",
 	    setup.sync_neg ? "sync" : "async",
 	    setup.parity ? "parity" : "no parity",
 	    setup.num_mbx);
