@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.46 2002/05/26 14:45:43 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.47 2002/06/29 12:12:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.46 2002/05/26 14:45:43 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.47 2002/06/29 12:12:57 itojun Exp $");
 #endif
 #endif
 
@@ -391,7 +391,6 @@ main(int argc, char **argv)
 	register struct sockaddr_in *to = (struct sockaddr_in *)&whereto;
 	register struct hostinfo *hi;
 	int on = 1;
-	register struct protoent *pe;
 	register int ttl, probe, i;
 	register int seq = 0;
 	int tos = 0, settos = 0, ttl_flag = 0;
@@ -637,12 +636,7 @@ main(int argc, char **argv)
 		outmark = outudp + 1;
 	}
 
-	cp = "icmp";
-	if ((pe = getprotobyname(cp)) == NULL) {
-		Fprintf(stderr, "%s: unknown protocol %s\n", prog, cp);
-		exit(1);
-	}
-	if ((s = socket(AF_INET, SOCK_RAW, pe->p_proto)) < 0) {
+	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
 		Fprintf(stderr, "%s: icmp socket: %s\n", prog, strerror(errno));
 		exit(1);
 	}
@@ -736,12 +730,6 @@ main(int argc, char **argv)
 	if (lsrr > 0) {
 		u_char optlist[MAX_IPOPTLEN];
 
-		cp = "ip";
-		if ((pe = getprotobyname(cp)) == NULL) {
-			Fprintf(stderr, "%s: unknown protocol %s\n", prog, cp);
-			exit(1);
-		}
-
 		/* final hop */
 		gwlist[lsrr] = to->sin_addr.s_addr;
 		++lsrr;
@@ -756,7 +744,7 @@ main(int argc, char **argv)
 		optlist[3] = IPOPT_MINOFF;
 		memcpy(optlist + 4, gwlist, i);
 
-		if ((setsockopt(sndsock, pe->p_proto, IP_OPTIONS, optlist,
+		if ((setsockopt(sndsock, IPPROTO_IP, IP_OPTIONS, optlist,
 		    i + sizeof(gwlist[0]))) < 0) {
 			Fprintf(stderr, "%s: IP_OPTIONS: %s\n",
 			    prog, strerror(errno));
