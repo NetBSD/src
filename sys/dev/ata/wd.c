@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.249 2003/04/27 14:27:36 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.250 2003/04/27 14:33:20 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.249 2003/04/27 14:27:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.250 2003/04/27 14:33:20 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1704,7 +1704,7 @@ wd_setcache(wd, bits)
 		return EIO;
 
 	if (params.atap_cmd_set1 == 0x0000 ||
-	    params.atap_cmd_set1 == 0xffff)
+	    params.atap_cmd_set1 == 0xffff ||
 	    (params.atap_cmd_set1 & WDC_CMD1_CACHE) == 0)
 		return EOPNOTSUPP;
 
