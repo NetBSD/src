@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2001/06/08 00:32:03 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 2001/06/19 12:02:57 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -588,7 +588,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 int
 writedisklabel(dev, strat, lp, osdep)
 	dev_t dev;
-	void (*strat)();
+	void (*strat)(struct buf *);
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {

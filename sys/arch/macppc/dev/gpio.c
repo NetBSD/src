@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
+/*	$NetBSD: gpio.c,v 1.3 2001/06/19 12:02:56 simonb Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -39,6 +39,8 @@
 #include <sys/malloc.h>
 #include <machine/autoconf.h>
 #include <machine/pio.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include "adb.h"
 
@@ -169,7 +171,6 @@ extern struct cfdriver adb_cd;
 int
 gpio_intr(void *arg)
 {
-	struct gpio_softc *sc = arg;
 	int rv = 0;
 
 #if NADB > 0
