@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.85 2002/04/02 20:18:06 jdolecek Exp $	*/
+/*	$NetBSD: exec.h,v 1.86 2002/04/02 20:20:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -108,10 +108,6 @@ struct execsw {
 					/* Dump core */
 	int	(*es_coredump) __P((struct proc *, struct vnode *,
 				    struct ucred *));
-					/* Emulation specific sysctl */
-	int	(*es_sysctl) __P((int *, u_int , void *, size_t *, void *,
-				  size_t, struct proc *p));
-
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
