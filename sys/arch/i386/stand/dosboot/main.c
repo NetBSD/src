@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1997/07/29 16:01:45 christos Exp $	 */
+/*	$NetBSD: main.c,v 1.6 1997/08/14 15:28:47 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -336,7 +336,7 @@ print_banner(void)
 	char *s = "";
 
 #ifdef XMS
-	if (extmem == 0) {
+	if (getextmem1() == 0) {
 		if ((extmem = checkxms()) != 0)
 			s = "(xms) ";
 	}
