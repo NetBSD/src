@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 1995/03/21 12:14:47 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1997/04/19 07:08:39 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
-PROG=	mkdict
-CFLAGS+=-I${.CURDIR}/../boggle
-NOMAN=noman
+HOST_CFLAGS+=-I${.CURDIR}/../boggle
 
-install:
+mkdict: ${.CURDIR}/mkdict.c ${.CURDIR}/../boggle/bog.h
+	${HOST_COMPILE.c} ${.CURDIR}/mkdict.c
+	${HOST_LINK.c} -o ${.TARGET} mkdict.o
 
-.include <bsd.prog.mk>
+.include <bsd.sys.mk>
