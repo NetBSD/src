@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.16 2000/09/05 09:01:17 haya Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.17 2000/09/12 03:19:51 haya Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -192,8 +192,8 @@ ex_cardbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct ex_cardbus_softc *psc = (void *)self;
-	struct ex_softc *sc = &psc->sc_softc;
+	struct ex_cardbus_softc *csc = (void *)self;
+	struct ex_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -204,7 +204,7 @@ ex_cardbus_attach(parent, self, aux)
 	bus_addr_t adr;
 
 	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
-	    &sc->sc_iot, &ioh, &adr, &psc->sc_mapsize)) {
+	    &sc->sc_iot, &ioh, &adr, &csc->sc_mapsize)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -243,13 +243,13 @@ ex_cardbus_attach(parent, self, aux)
 	command = cardbus_conf_read(cc, cf, ca->ca_tag,
 	    CARDBUS_COMMAND_STATUS_REG);
 	command |= ecp->ecp_csr;
-	psc->sc_cardtype = ecp->ecp_cardtype;
+	csc->sc_cardtype = ecp->ecp_cardtype;
 
-	if (psc->sc_cardtype == EX_CB_CYCLONE) {
+	if (csc->sc_cardtype == EX_CB_CYCLONE) {
 		/* Map CardBus function status window. */
 		if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-		    CARDBUS_MAPREG_TYPE_MEM, 0, &psc->sc_funct,
-		    &psc->sc_funch, 0, &psc->sc_funcsize)) {
+		    CARDBUS_MAPREG_TYPE_MEM, 0, &csc->sc_funct,
+		    &csc->sc_funch, 0, &csc->sc_funcsize)) {
 			printf("%s: unable to map function status window\n",
 			    self->dv_xname);
 			return;
@@ -283,14 +283,14 @@ ex_cardbus_attach(parent, self, aux)
 		cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG, bhlc);
 	}
 
-	psc->sc_ct = ca->ca_ct;
-	psc->sc_intrline = ca->ca_intrline;
+	csc->sc_ct = ca->ca_ct;
+	csc->sc_intrline = ca->ca_intrline;
 
 #if defined EX_POWER_STATIC
 	/* Map and establish the interrupt. */
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_NET,
-	    ex_intr, psc);
+	    ex_intr, csc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
@@ -302,32 +302,14 @@ ex_cardbus_attach(parent, self, aux)
 	    ca->ca_intrline);
 #endif
 
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, ELINK_COMMAND, GLOBAL_RESET);
-	delay(400);
-	{
-		int i = 0;
-		while (bus_space_read_2(sc->sc_iot, sc->sc_ioh, ELINK_STATUS) &
-		    S_COMMAND_IN_PROGRESS) {
-			if (++i > 10000) {
-				printf("ex: timeout %x\n",
-				    bus_space_read_2(sc->sc_iot, sc->sc_ioh,
-				        ELINK_STATUS));
-				printf("ex: addr %x\n",
-				    cardbus_conf_read(cc, cf, ca->ca_tag,
-				    CARDBUS_BASE0_REG));
-				return;		/* emergency exit */
-			}
-		}
-	}
-
 	ex_config(sc);
 
-	if (psc->sc_cardtype == EX_CB_CYCLONE)
-		bus_space_write_4(psc->sc_funct, psc->sc_funch,
+	if (csc->sc_cardtype == EX_CB_CYCLONE)
+		bus_space_write_4(csc->sc_funct, csc->sc_funch,
 		    EX_CB_INTR, EX_CB_INTR_ACK);
 
 #if !defined EX_POWER_STATIC
-	cardbus_function_disable(psc->sc_ct);  
+	cardbus_function_disable(csc->sc_ct);  
 	sc->enabled = 0;
 #endif
 }
@@ -336,9 +318,9 @@ void
 ex_cardbus_intr_ack(sc)
 	struct ex_softc *sc;
 {
-	struct ex_cardbus_softc *psc = (struct ex_cardbus_softc *)sc;
+	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
 
-	bus_space_write_4(psc->sc_funct, psc->sc_funch, EX_CB_INTR,
+	bus_space_write_4(csc->sc_funct, csc->sc_funch, EX_CB_INTR,
 	    EX_CB_INTR_ACK);
 }
 
@@ -347,9 +329,9 @@ ex_cardbus_detach(self, arg)
 	struct device *self;
 	int arg;
 {
-	struct ex_cardbus_softc *psc = (void *)self;
-	struct ex_softc *sc = &psc->sc_softc;
-	struct cardbus_devfunc *ct = psc->sc_ct;
+	struct ex_cardbus_softc *csc = (void *)self;
+	struct ex_softc *sc = &csc->sc_softc;
+	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv;
 
 #if defined(DIAGNOSTIC)
@@ -365,14 +347,14 @@ ex_cardbus_detach(self, arg)
 		 */
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 
-		if (psc->sc_cardtype == EX_CB_CYCLONE) {
+		if (csc->sc_cardtype == EX_CB_CYCLONE) {
 			Cardbus_mapreg_unmap(ct,
 			    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-			    psc->sc_funct, psc->sc_funch, psc->sc_funcsize);
+			    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
 		}
 
 		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->sc_iot,
-		    sc->sc_ioh, psc->sc_mapsize);
+		    sc->sc_ioh, csc->sc_mapsize);
 	}
 	return (rv);
 }
