@@ -211,7 +211,7 @@ mapblock:
 				}
 	;
 
-redir:	rdrit ifnames addr dport IPNY_TLATE dip nport rdrproto rdroptions
+redir:	rdrit ifnames addr dport IPNY_TLATE dip nport setproto rdroptions
 				{ nat->in_v = 4;
 				  nat->in_outip = $3.a.s_addr;
 				  nat->in_outmsk = $3.m.s_addr;
@@ -226,7 +226,7 @@ redir:	rdrit ifnames addr dport IPNY_TLATE dip nport rdrproto rdroptions
 				       nat->in_pnext != 0))
 						setnatproto(IPPROTO_TCP);
 				}
-	| rdrit ifnames rdrfrom IPNY_TLATE dip nport rdrproto rdroptions
+	| rdrit ifnames rdrfrom IPNY_TLATE dip nport setproto rdroptions
 				{ nat->in_v = 4;
 				  if ((nat->in_p == 0) &&
 				      ((nat->in_flags & IPN_TCPUDP) == 0) &&
@@ -239,7 +239,7 @@ redir:	rdrit ifnames addr dport IPNY_TLATE dip nport rdrproto rdroptions
 						nat->in_ifnames[0],
 						sizeof(nat->in_ifnames[0]));
 				}
-	| rdrit ifnames addr IPNY_TLATE dip rdrproto rdroptions
+	| rdrit ifnames addr IPNY_TLATE dip setproto rdroptions
 				{ nat->in_v = 4;
 				  nat->in_outip = $3.a.s_addr;
 				  nat->in_outmsk = $3.m.s_addr;
@@ -250,7 +250,7 @@ redir:	rdrit ifnames addr dport IPNY_TLATE dip nport rdrproto rdroptions
 				}
 	;
 
-proxy:	| IPNY_PROXY IPNY_PORT YY_NUMBER YY_STR '/' proto
+proxy:	| IPNY_PROXY IPNY_PORT portspec YY_STR '/' proto
 			{ strncpy(nat->in_plabel, $4, sizeof(nat->in_plabel));
 			  if (nat->in_dcmp == 0) {
 				nat->in_dport = htons($3);
@@ -261,24 +261,35 @@ proxy:	| IPNY_PROXY IPNY_PORT YY_NUMBER YY_STR '/' proto
 			  free($4);
 			}
 	| IPNY_PROXY IPNY_PORT YY_STR YY_STR '/' proto
-			{ strncpy(nat->in_plabel, $4, sizeof(nat->in_plabel));
-			  nat->in_dport = getportproto($3, $6);
+			{ int pnum;
+			  strncpy(nat->in_plabel, $4, sizeof(nat->in_plabel));
+			  pnum = getportproto($3, $6);
+			  if (pnum == -1)
+				yyerror("invalid port number");
+			  nat->in_dport = pnum;
 			  setnatproto($6);
 			  free($3);
 			  free($4);
 			}
 	;
 
-rdrproto:
-	| IPNY_TCP			{ setnatproto(IPPROTO_TCP); }
-	| IPNY_UDP			{ setnatproto(IPPROTO_UDP); }
-	| IPNY_TCPUDP			{ nat->in_flags |= IPN_TCPUDP;
-					  nat->in_p = 0; }
-	| IPNY_TCP '/' IPNY_UDP		{ nat->in_flags |= IPN_TCPUDP;
-					  nat->in_p = 0; }
-	| YY_NUMBER			{ setnatproto($1); }
-	| YY_STR			{ setnatproto(getproto($1));
-					  free($1);
+setproto:
+	| proto				{ if (nat->in_p != 0 ||
+					      nat->in_flags & IPN_TCPUDP)
+						yyerror("protocol set twice");
+					  setnatproto($1);
+					}
+	| IPNY_TCPUDP			{ if (nat->in_p != 0 ||
+					      nat->in_flags & IPN_TCPUDP)
+						yyerror("protocol set twice");
+					  nat->in_flags |= IPN_TCPUDP;
+					  nat->in_p = 0;
+					}
+	| IPNY_TCP '/' IPNY_UDP		{ if (nat->in_p != 0 ||
+					      nat->in_flags & IPN_TCPUDP)
+						yyerror("protocol set twice");
+					  nat->in_flags |= IPN_TCPUDP;
+					  nat->in_p = 0;
 					}
 	;
 
@@ -297,8 +308,16 @@ dip:
 	;
 
 portspec:
-	YY_NUMBER			{ $$ = $1; }
-	| YY_STR			{ $$ = getport(NULL, $1); }
+	YY_NUMBER			{ $$ = $1;
+					  if ($$ < 0 || $$ > 65535)
+						yyerror("invalid port number");
+					}
+	| YY_STR			{ $$ = getport(NULL, $1);
+					  if (ntohl((long)$$) < 0 ||
+					      ntohl((long)$$) > 65535)
+						yyerror("invalid port number");
+					  $$ = ntohs($$);
+					}
 	;
 
 dport:	| IPNY_PORT portspec			{ nat->in_pmin = htons($2);
@@ -375,11 +394,15 @@ mapport:
 			  nat->in_pmin = htons(1024);
 			  nat->in_pmax = htons(65535);
 			}
-	| IPNY_ICMPIDMAP YY_STR portspec ':' portspec
+	| IPNY_ICMPIDMAP YY_STR YY_NUMBER ':' YY_NUMBER
 			{ if (strcmp($2, "icmp") != 0) {
 				yyerror("icmpidmap not followed by icmp");
 			  }
 			  free($2);
+			  if ($3 < 0 || $3 > 65535)
+				yyerror("invalid ICMP Id number");
+			  if ($5 < 0 || $5 > 65535)
+				yyerror("invalid ICMP Id number");
 			  nat->in_flags = IPN_ICMPQUERY;
 			  nat->in_pmin = htons($3);
 			  nat->in_pmax = htons($5);
@@ -449,7 +472,7 @@ portstuff:
 	;
 
 mapoptions:
-	rr frag age mssclamp nattag
+	rr frag age mssclamp nattag setproto
 	;
 
 rdroptions:
@@ -536,8 +559,8 @@ compare:
 	| YY_CMP_EQ			{ $$ = FR_EQUAL; }
 	| YY_CMP_NE			{ $$ = FR_NEQUAL; }
 	| YY_CMP_LT			{ $$ = FR_LESST; }
-	| YY_CMP_GT			{ $$ = FR_LESSTE; }
-	| YY_CMP_LE			{ $$ = FR_GREATERT; }
+	| YY_CMP_LE			{ $$ = FR_LESSTE; }
+	| YY_CMP_GT			{ $$ = FR_GREATERT; }
 	| YY_CMP_GE			{ $$ = FR_GREATERTE; }
 
 range:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.8 2005/02/17 04:14:31 christos Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.9 2005/02/19 21:30:25 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.24 2005/01/08 16:55:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:14:31 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
