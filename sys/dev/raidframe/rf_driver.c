@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.62 2002/09/21 01:00:43 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.63 2002/09/23 04:14:20 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.62 2002/09/21 01:00:43 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.63 2002/09/23 04:14:20 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -731,9 +731,8 @@ rf_FailDisk(
  * access_suspend_mutex should be locked upon calling this
  */
 void 
-rf_SignalQuiescenceLock(raidPtr, reconDesc)
+rf_SignalQuiescenceLock(raidPtr)
 	RF_Raid_t *raidPtr;
-	RF_RaidReconDesc_t *reconDesc;
 {
 #if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.h,v 1.7 2002/01/07 01:58:03 oster Exp $	*/
+/*	$NetBSD: rf_driver.h,v 1.8 2002/09/23 04:14:20 oster Exp $	*/
 /*
  * rf_driver.h
  */
@@ -61,8 +61,7 @@ int     rf_SetReconfiguredMode(RF_Raid_t * raidPtr, RF_RowCol_t row,
 #endif
 int     rf_FailDisk(RF_Raid_t * raidPtr, RF_RowCol_t frow, RF_RowCol_t fcol,
 		    int initRecon);
-void    rf_SignalQuiescenceLock(RF_Raid_t * raidPtr, 
-				RF_RaidReconDesc_t * reconDesc);
+void    rf_SignalQuiescenceLock(RF_Raid_t * raidPtr);
 int     rf_SuspendNewRequestsAndWait(RF_Raid_t * raidPtr);
 void    rf_ResumeNewRequests(RF_Raid_t * raidPtr);
 void    rf_StartThroughputStats(RF_Raid_t * raidPtr);
