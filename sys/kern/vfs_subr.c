@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.223 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.224 2004/05/02 12:21:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.223 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.224 2004/05/02 12:21:02 pk Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -298,7 +298,7 @@ vfs_busy(mp, flags, interlkp)
 	int lkflags;
 
 	while (mp->mnt_iflag & IMNT_UNMOUNT) {
-		int gone;
+		int gone, n;
 
 		if (flags & LK_NOWAIT)
 			return (ENOENT);
@@ -312,16 +312,15 @@ vfs_busy(mp, flags, interlkp)
 		 * lock granted when unmounting, the only place that a
 		 * wakeup needs to be done is at the release of the
 		 * exclusive lock at the end of dounmount.
-		 *
-		 * XXX MP: add spinlock protecting mnt_wcnt here once you
-		 * can atomically unlock-and-sleep.
 		 */
+		simple_lock(&mp->mnt_slock);
 		mp->mnt_wcnt++;
-		tsleep((caddr_t)mp, PVFS, "vfs_busy", 0);
-		mp->mnt_wcnt--;
+		ltsleep((caddr_t)mp, PVFS, "vfs_busy", 0, &mp->mnt_slock);
+		n = --mp->mnt_wcnt;
+		simple_unlock(&mp->mnt_slock);
 		gone = mp->mnt_iflag & IMNT_GONE;
 
-		if (mp->mnt_wcnt == 0)
+		if (n == 0)
 			wakeup(&mp->mnt_wcnt);
 		if (interlkp)
 			simple_lock(interlkp);
@@ -371,6 +370,7 @@ vfs_rootmountalloc(fstypename, devname, mpp)
 	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
 	memset((char *)mp, 0, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
+	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 	LIST_INIT(&mp->mnt_vnodelist);
 	mp->mnt_op = vfsp;
@@ -2909,8 +2909,11 @@ vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 	}
 	mp->mnt_iflag |= IMNT_SUSPEND;
 
+	simple_lock(&mp->mnt_slock);
 	if (mp->mnt_writeopcountupper > 0)
-		tsleep(&mp->mnt_writeopcountupper, PUSER - 1, "suspwt", 0);
+		ltsleep(&mp->mnt_writeopcountupper, PUSER - 1, "suspwt",
+			0, &mp->mnt_slock);
+	simple_unlock(&mp->mnt_slock);
 
 	error = VFS_SYNC(mp, MNT_WAIT, p->p_ucred, p);
 	if (error) {
@@ -2919,9 +2922,12 @@ vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
 	}
 	mp->mnt_iflag |= IMNT_SUSPENDLOW;
 
+	simple_lock(&mp->mnt_slock);
 	if (mp->mnt_writeopcountlower > 0)
-		tsleep(&mp->mnt_writeopcountlower, PUSER - 1, "suspwt", 0);
+		ltsleep(&mp->mnt_writeopcountlower, PUSER - 1, "suspwt",
+			0, &mp->mnt_slock);
 	mp->mnt_iflag |= IMNT_SUSPENDED;
+	simple_unlock(&mp->mnt_slock);
 
 	return 0;
 }
