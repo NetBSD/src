@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.4 2002/08/02 06:52:16 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.5 2002/08/03 21:31:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.4 2002/08/02 06:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.5 2002/08/03 21:31:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -66,7 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.4 2002/08/02 06:52:16 thorpej Exp $");
 #endif
 
 static struct pool aau_desc_4_pool;
-static struct pool_cache aau_desc_4_cache;
+
+struct pool_cache iopaau_desc_4_cache;
 
 /*
  * iopaau_desc_ctor:
@@ -89,18 +90,18 @@ iopaau_desc_ctor(void *arg, void *object, int flags)
 }
 
 /*
- * iopaau_desc_4_free:
+ * iopaau_desc_free:
  *
- *	Free a chain of aau_desc_4 structures.
+ *	Free a chain of AAU descriptors.
  */
 void
-iopaau_desc_4_free(struct iopaau_softc *sc, void *firstdesc)
+iopaau_desc_free(struct pool_cache *dc, void *firstdesc)
 {
 	struct aau_desc_4 *d, *next;
 
 	for (d = firstdesc; d != NULL; d = next) {
 		next = d->d_next;
-		pool_cache_put(&aau_desc_4_cache, d);
+		pool_cache_put(dc, d);
 	}
 }
 
@@ -197,7 +198,7 @@ iopaau_finish(struct iopaau_softc *sc)
 	iopaau_start(sc);
 
 	/* Now free descriptors for last transfer. */
-	(*af->af_free)(sc, firstdesc);
+	iopaau_desc_free(af->af_desc_cache, firstdesc);
 
 	dmover_done(dreq);
 }
@@ -232,6 +233,9 @@ static int
 iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
     struct dmover_request *dreq, uint32_t immed)
 {
+	struct iopaau_function *af =
+	    dreq->dreq_assignment->das_algdesc->dad_data;
+	struct pool_cache *dc = af->af_desc_cache;
 	bus_dmamap_t dmamap = sc->sc_map_out;
 	uint32_t *prevpa;
 	struct aau_desc_4 **prevp, *cur;
@@ -268,7 +272,7 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 	prevpa = &sc->sc_firstdesc_pa;
 
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-		cur = pool_cache_get(&aau_desc_4_cache, PR_NOWAIT);
+		cur = pool_cache_get(dc, PR_NOWAIT);
 		if (cur == NULL) {
 			*prevp = NULL;
 			error = ENOMEM;
@@ -305,7 +309,7 @@ iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
 	return (0);
 
  bad:
-	iopaau_desc_4_free(sc, sc->sc_firstdesc);
+	iopaau_desc_free(dc, sc->sc_firstdesc);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_map_out);
 	sc->sc_firstdesc = NULL;
 
@@ -372,6 +376,9 @@ static const uint32_t iopaau_dc_inputs[] = {
 int
 iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 {
+	struct iopaau_function *af =
+	    dreq->dreq_assignment->das_algdesc->dad_data;
+	struct pool_cache *dc = af->af_desc_cache;
 	bus_dmamap_t dmamap = sc->sc_map_out;
 	bus_dmamap_t *inmap = sc->sc_map_in;
 	uint32_t *prevpa;
@@ -467,7 +474,7 @@ iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 	prevpa = &sc->sc_firstdesc_pa;
 
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-		cur = pool_cache_get(&aau_desc_4_cache, PR_NOWAIT);
+		cur = pool_cache_get(dc, PR_NOWAIT);
 		if (cur == NULL) {
 			*prevp = NULL;
 			error = ENOMEM;
@@ -506,7 +513,7 @@ iopaau_func_xor_1_4_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 	return (0);
 
  bad:
-	iopaau_desc_4_free(sc, sc->sc_firstdesc);
+	iopaau_desc_free(dc, sc->sc_firstdesc);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_map_out);
 	for (i = 0; i < ninputs; i++)
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_map_in[i]);
@@ -594,8 +601,8 @@ iopaau_attach(struct iopaau_softc *sc)
 	pool_init(&aau_desc_4_pool, sizeof(struct aau_desc_4),
 	    8 * 4, offsetof(struct aau_desc_4, d_nda), 0, "aaud4pl",
 	    NULL);
-	pool_cache_init(&aau_desc_4_cache, &aau_desc_4_pool, iopaau_desc_ctor,
-	    NULL, NULL);
+	pool_cache_init(&iopaau_desc_4_cache, &aau_desc_4_pool,
+	    iopaau_desc_ctor, NULL, NULL);
 
 	/* Register us with dmover. */
 	dmover_backend_register(&sc->sc_dmb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaauvar.h,v 1.2 2002/08/02 06:52:17 thorpej Exp $	*/
+/*	$NetBSD: iopaauvar.h,v 1.3 2002/08/03 21:31:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _XSCALE_IOPAAUVAR_H_
 #define	_XSCALE_IOPAAUVAR_H_
 
+#include <sys/pool.h>
 #include <dev/dmover/dmovervar.h>
 
 #define	AAU_MAX_INPUTS		4
@@ -72,8 +73,10 @@ struct iopaau_softc {
 
 struct iopaau_function {
 	int	(*af_setup)(struct iopaau_softc *, struct dmover_request *);
-	void	(*af_free)(struct iopaau_softc *, void *);
+	struct pool_cache *af_desc_cache;
 };
+
+extern struct pool_cache iopaau_desc_4_cache;
 
 void	iopaau_attach(struct iopaau_softc *);
 void	iopaau_process(struct dmover_backend *);
@@ -86,6 +89,6 @@ int	iopaau_func_fill8_setup(struct iopaau_softc *,
 int	iopaau_func_xor_1_4_setup(struct iopaau_softc *,
 	    struct dmover_request *);
 
-void	iopaau_desc_4_free(struct iopaau_softc *, void *);
+void	iopaau_desc_free(struct pool_cache *, void *);
 
 #endif /* _XSCALE_IOPAAUVAR_H_ */
