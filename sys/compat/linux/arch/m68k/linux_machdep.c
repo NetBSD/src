@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17 2003/06/29 22:29:24 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:21:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17 2003/06/29 22:29:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.18 2003/08/02 19:21:50 jdolecek Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -675,7 +675,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	struct linux_ucontext *ucp;	/* ucontext in user space */
 	struct linux_ucontext tuc;	/* copy of *ucp */
 	sigset_t mask;
-	int sz = 0;			/* extra frame size */
+	int sz = 0, error;		/* extra frame size */
 
 	/*
 	 * rt_sigreturn of Linux/m68k takes no arguments.
@@ -683,9 +683,9 @@ linux_sys_rt_sigreturn(l, v, retval)
 	 * usp + 8 is a pointer to ucontext structure.
 	 */
 	frame = (struct frame *) l->l_md.md_regs;
-	ucp = (struct linux_ucontext *) fuword((caddr_t)frame->f_regs[SP] + 8);
-	if ((int) ucp & 1)
-		goto bad;		/* error (-1) or odd address */
+	error = copyin((caddr_t) frame->f_regs[SP] + 8, (void *) &ucp, sizeof(void *));
+	if (error || (int) ucp & 1)
+		goto bad;		/* error or odd address */
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
