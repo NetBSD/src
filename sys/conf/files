@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.381 2000/08/03 00:30:49 jeffs Exp $
+#	$NetBSD: files,v 1.382 2000/08/07 15:23:43 matt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -46,7 +46,7 @@ defopt	COMPAT_VAX1K
 defopt	COMPAT_43
 defopt	COMPAT_PECOFF
 defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
-				COMPAT_13 COMPAT_14 COMPAT_NOMID
+				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
 # networking protocols
 defopt	opt_inet.h	INET INET6
