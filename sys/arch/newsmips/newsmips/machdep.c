@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2003/11/23 00:09:11 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75 2003/11/23 08:54:57 taca Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2003/11/23 00:09:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2003/11/23 08:54:57 taca Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -262,10 +262,10 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	struct btinfo_symtab *bi_sym;
 	int nsym = 0;
 	char *ssym, *esym;
-#endif
 
-	bi_arg = NULL;
 	ssym = esym = NULL;	/* XXX: gcc */
+#endif
+	bi_arg = NULL;
 
 	/* clear the BSS segment */
 	bzero(edata, end - edata);
