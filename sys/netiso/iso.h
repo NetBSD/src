@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.11 1999/01/31 19:43:32 christos Exp $	*/
+/*	$NetBSD: iso.h,v 1.12 2000/06/26 16:20:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,13 @@ SOFTWARE.
 
 #ifndef _NETISO_ISO_H_
 #define _NETISO_ISO_H_
+
+#include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	sa_family_t
+#endif
 
 /*
  *	Return true if this is a multicast address
@@ -145,7 +152,7 @@ struct iso_addr {
 
 struct sockaddr_iso {
 	u_char          siso_len;	/* length */
-	u_char          siso_family;	/* family */
+	sa_family_t     siso_family;	/* family */
 	u_char          siso_plen;	/* presentation selector length */
 	u_char          siso_slen;	/* session selector length */
 	u_char          siso_tlen;	/* transport selector length */
