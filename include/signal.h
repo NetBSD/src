@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.23 2003/01/18 10:32:11 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.24 2003/02/15 21:11:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -170,6 +170,14 @@ int	sigignore __P((int));
 int	sigpause __P((int));
 int	sigrelse __P((int));
 void	(*sigset __P((int, void (*)(int)))) __P((int));
+int	sigwait	__P((const sigset_t * __restrict, int * __restrict));
+int	sigwaitinfo __P((const sigset_t * __restrict, siginfo_t * __restrict));
+
+struct timespec;
+int	sigtimedwait __P((const sigset_t * __restrict,
+	    siginfo_t * __restrict, const struct timespec * __restrict));
+int	__sigtimedwait __P((const sigset_t * __restrict,
+	    siginfo_t * __restrict, struct timespec * __restrict));
 #endif /* (!_POSIX_C_SOURCE && !_XOPEN_SOURCE) || ... */
 
 
