@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.91 2000/05/26 00:36:53 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.92 2000/05/26 02:23:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -201,6 +201,12 @@ struct	proc {
 
 	struct 	pgrp *p_pgrp;	/* Pointer to process group. */
 	void	*p_ctxlink;	/* uc_link {get,set}context */
+
+	struct	ps_strings *p_psstr;	/* address of process's ps_strings */
+	size_t	p_psargv;		/* offset of ps_argvstr in above */
+	size_t	p_psnargv;		/* offset of ps_nargvstr in above */
+	size_t	p_psenv;		/* offset of ps_envstr in above */
+	size_t	p_psnenv;		/* offset of ps_nenvstr in above */
 
 /* End area that is copied on creation. */
 #define	p_endcopy	p_thread
