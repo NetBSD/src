@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wdreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: wdreg.h,v 1.5 1994/03/10 05:18:36 mycroft Exp $
+ *	$Id: wdreg.h,v 1.5.2.1 1994/08/22 21:43:59 mycroft Exp $
  */
 
 /*
@@ -70,7 +70,7 @@
 #define	WDCS_INDEX	0x02		/* Index pulse from selected drive */
 #define	WDCS_ERR	0x01		/* Error detect bit. */
 
-#define WDCS_BITS	"\020\010busy\006rdy\006wrtflt\005seekdone\004drq\003ecc_cor\002index\001err"
+#define WDCS_BITS	"\020\010busy\007rdy\006wrtflt\005seekdone\004drq\003ecc_cor\002index\001err"
 
 #define WDERR_BITS	"\020\010badblk\007uncorr\006id_crc\005no_id\003abort\002tr000\001no_dam"
 
