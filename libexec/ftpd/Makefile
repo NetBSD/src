@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile,v 1.41 2000/06/14 13:44:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.42 2000/06/20 06:00:34 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
-
-SRCTOP=	../..
-.include <bsd.crypto.mk>
 
 PROG=	ftpd
 SRCS=	cmds.c conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
@@ -28,8 +25,19 @@ LDADD+= -lskey
 
 ftpd.o ftpcmd.o: version.h
 
-.if defined(CRYPTOPATH)
-.sinclude "${CRYPTOPATH}/libexec/ftpd/Makefile.frag"
-.endif
+# XXX Kerberos support is broken right now.
+#.PATH:	${.CURDIR}/../../usr.bin/login
+
+#.ifdef KERBEROS5
+#SRCS+=	k5login.c
+#CPPFLAGS+=-DKERBEROS5
+#DPADD+= ${LIBKRB5} ${LIBK5CRYPTO} ${LIBCOM_ERR}
+#LDADD+= -lkrb5 -lk5crypto -lcom_err
+#.else
+#SRCS+=	klogin.c
+#CPPFLAGS+=-DKERBEROS
+#DPADD+= ${LIBKRB} ${LIBDES} ${LIBCOM_ERR}
+#LDADD+= -lkrb -kdes -lcom_err
+#.endif
 
 .include <bsd.prog.mk>

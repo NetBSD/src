@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.153 2000/06/12 06:23:21 fredb Exp $
+#	$NetBSD: Makefile,v 1.154 2000/06/20 06:00:28 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -25,11 +25,7 @@
 #   BUILD_KERNELS are a machine-dependent list of kernels that should just
 #	be built in place but not made into sets or installed, e.g., an
 #	INSTALL kernel used later in src/distrib/.
-#   CRYPTOPATH is automatically defined by bsd.crypto.mk to be either
-#	../crypto-us or ../crypto-intl.  It controls the building of
-#	the secr set, which can be disabled by setting CRYPTOPATH to
-#	"none".
-# 
+#
 # Targets:
 #    distribution: makes a full NetBSD distribution in DESTDIR. If
 #	INSTALL_DONE is set, it will not do a `make install.'
@@ -43,10 +39,8 @@
 # do this before bsd.own.mk so we get correct KERNSRCDIR
 .include "../Makefile.inc"
 
-# For NO_SENDMAIL and INSTPRIV and CRYPTOPATH
+# For NO_SENDMAIL and INSTPRIV
 .include <bsd.own.mk>
-SRCTOP= ..
-.include <bsd.crypto.mk>
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	US/Pacific
@@ -256,9 +250,6 @@ release snapshot snap_pre snap_md_pre snap_md_post:
 release snapshot: distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
-
-cryptoset: distribution snap_pre snap_md_pre snap_kern snap_md_post
-	(cd ../distrib/sets; ${MAKE} cryptoset)
 
 snap_pre:
 	/bin/rm -rf ${RELEASEDIR}
