@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1b.c,v 1.9 1995/03/18 14:55:51 cgd Exp $	*/
+/*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1b.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: pass1b.c,v 1.9 1995/03/18 14:55:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ static char rcsid[] = "$NetBSD: pass1b.c,v 1.9 1995/03/18 14:55:51 cgd Exp $";
 #include "fsck.h"
 #include "extern.h"
 
-int	pass1bcheck();
+static int	pass1bcheck __P((struct inodesc *));
 static  struct dups *duphead;
 
 void
@@ -81,7 +81,7 @@ pass1b()
 	}
 }
 
-int
+static int
 pass1bcheck(idesc)
 	register struct inodesc *idesc;
 {

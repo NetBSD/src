@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.11 1996/06/11 07:07:53 mycroft Exp $	*/
+/*	$NetBSD: fsck.h,v 1.12 1996/09/23 16:18:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -79,7 +79,7 @@ struct bufarea sblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk();
+struct bufarea *getdatablk __P((daddr_t, long));
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -96,7 +96,8 @@ enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
 struct inodesc {
 	enum fixstate id_fix;	/* policy on fixing errors */
-	int (*id_func)();	/* function to be applied to blocks of inode */
+	int (*id_func)		/* function to be applied to blocks of inode */
+	    __P((struct inodesc *));
 	ino_t id_number;	/* inode number described */
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	daddr_t id_blkno;	/* current block number being examined */
@@ -164,7 +165,6 @@ struct inoinfo {
 } **inphead, **inpsort;
 long numdirs, listmax, inplast;
 
-char	*cdevname;		/* name of device being checked */
 long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
@@ -175,8 +175,7 @@ int	cvtlevel;		/* convert to newer file system format */
 int	doinglevel1;		/* converting to new cylinder group format */
 int	doinglevel2;		/* converting to new inode format */
 int	newinofmt;		/* filesystem has new inode format */
-char	preen;			/* just fix normal inconsistencies */
-char	hotroot;		/* checking root device */
+int	preen;			/* just fix normal inconsistencies */
 char	havesb;			/* superblock has been read */
 char	skipclean;		/* skip clean file systems if preening */
 int	fsmodified;		/* 1 => write done to file system */
@@ -211,8 +210,7 @@ struct	dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-time_t time();
-struct dinode *ginode();
-struct inoinfo *getinoinfo();
-void getblk();
-ino_t allocino();
+struct dinode *ginode __P((ino_t));
+struct inoinfo *getinoinfo __P((ino_t));
+void getblk __P((struct bufarea *, daddr_t, long));
+ino_t allocino __P((ino_t, int));

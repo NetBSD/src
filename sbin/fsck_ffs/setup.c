@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.25 1996/05/21 17:36:21 mycroft Exp $	*/
+/*	$NetBSD: setup.c,v 1.26 1996/09/23 16:18:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$NetBSD: setup.c,v 1.25 1996/05/21 17:36:21 mycroft Exp $";
+static char rcsid[] = "$NetBSD: setup.c,v 1.26 1996/09/23 16:18:41 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,10 @@ static char rcsid[] = "$NetBSD: setup.c,v 1.25 1996/05/21 17:36:21 mycroft Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "fsck.h"
 #include "extern.h"
+#include "util.h"
 
 struct bufarea asblk;
 #define altsblock (*asblk.b_un.b_fs)
@@ -65,8 +67,8 @@ struct bufarea asblk;
 
 void badsb __P((int, char *));
 int calcsb __P((char *, int, struct fs *));
-struct disklabel *getdisklabel();
-int readsb __P((int));
+static struct disklabel *getdisklabel __P((char *, int));
+static int readsb __P((int));
 
 int
 setup(dev)
@@ -115,7 +117,7 @@ setup(dev)
 	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
 		errexit("cannot allocate space for superblock\n");
-	if (lp = getdisklabel((char *)NULL, fsreadfd))
+	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
 		dev_bsize = secsize = lp->d_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
@@ -334,7 +336,7 @@ setup(dev)
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
 			if (reply("CONTINUE") == 0)
-				errexit("");
+				errexit("%s", "");
 			asked++;
 		}
 	}
@@ -389,7 +391,7 @@ badsblabel:
 /*
  * Read in the super block and its summary info.
  */
-int
+static int
 readsb(listerr)
 	int listerr;
 {
@@ -477,7 +479,7 @@ readsb(listerr)
 			for ( ; olp < endlp; olp++, nlp++) {
 				if (*olp == *nlp)
 					continue;
-				printf("offset %d, original %d, alternate %d\n",
+				printf("offset %d, original %ld, alternate %ld\n",
 				    olp - (long *)&sblock, *olp, *nlp);
 			}
 		}
@@ -498,7 +500,7 @@ badsb(listerr, s)
 	if (!listerr)
 		return;
 	if (preen)
-		printf("%s: ", cdevname);
+		printf("%s: ", cdevname());
 	pfatal("BAD SUPER BLOCK: %s\n", s);
 }
 
@@ -520,7 +522,7 @@ calcsb(dev, devfd, fs)
 	int i;
 
 	cp = strchr(dev, '\0') - 1;
-	if (cp == (char *)-1 || (*cp < 'a' || *cp > 'h') && !isdigit(*cp)) {
+	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'h')) && !isdigit(*cp)) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
 	}
@@ -562,7 +564,7 @@ calcsb(dev, devfd, fs)
 	return (1);
 }
 
-struct disklabel *
+static struct disklabel *
 getdisklabel(s, fd)
 	char *s;
 	int	fd;
