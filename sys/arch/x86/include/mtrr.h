@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.h,v 1.1 2003/02/26 21:26:11 fvdl Exp $ */
+/* $NetBSD: mtrr.h,v 1.2 2003/07/28 10:29:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -106,13 +106,13 @@ struct mtrr_state {
 #define mtrr_base_value(mtrrp) \
     (((uint64_t)(mtrrp)->base) | ((uint64_t)(mtrrp)->type))
 #define mtrr_mask_value(mtrrp) \
-    ((~((mtrrp)->len - 1) & 0x0000000ffffff000))
+    ((~((mtrrp)->len - 1) & 0x0000000ffffff000LL))
 	
 
 #define mtrr_len(val) \
-    ((~((val) & 0x0000000ffffff000)+1) & 0x0000000ffffff000)
-#define mtrr_base(val)		((val) & 0x0000000ffffff000)
-#define mtrr_type(val)		((uint8_t)((val) & 0x00000000000000ff))
+    ((~((val) & 0x0000000ffffff000LL)+1) & 0x0000000ffffff000LL)
+#define mtrr_base(val)		((val) & 0x0000000ffffff000LL)
+#define mtrr_type(val)		((uint8_t)((val) & 0x00000000000000ffLL))
 #define mtrr_valid(val)		(((val) & MTRR_I686_MASK_VALID) != 0)
 
 struct proc;
