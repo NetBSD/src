@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.19 2003/07/20 18:01:41 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.20 2003/07/22 03:24:26 itojun Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -78,6 +78,8 @@ struct ah_algorithm {
 };
 
 #define	AH_MAXSUMSIZE	16
+
+#define	HMACSIZE	16
 
 extern const struct ah_algorithm *ah_algorithm_lookup __P((int));
 

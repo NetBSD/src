@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.618 2003/07/21 05:35:49 thorpej Exp $
+#	$NetBSD: files,v 1.619 2003/07/22 03:24:23 itojun Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -90,6 +90,7 @@ include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
 include "crypto/rijndael/files.rijndael"
+include "crypto/sha2/files.sha2"
 
 #
 # System monitoring framework
