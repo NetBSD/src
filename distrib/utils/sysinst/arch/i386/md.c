@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.100 2004/03/22 07:11:00 lukem Exp $ */
+/*	$NetBSD: md.c,v 1.101 2004/04/25 21:55:18 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -104,8 +104,13 @@ edit:
 			root_limit = bcyl * bhead * bsec;
 	}
 
-	/* Ensure the install partition and active partition are bootable */
-	fl = MBR_BS_NEWMBR;
+	/*
+	 * Ensure the install partition (at sector ptstart) and the active
+	 * partition are bootable.
+	 * Determine whether the bootselect code is needed.
+	 * Note that MBR_BS_NEWMBR is always set, so we ignore it!
+	 */
+	fl = 0;
 	names = 0;
 	for (ext = &mbr; ext != NULL; ext = ext->extended) {
 		p = ext->mbr.mbr_parts;
@@ -115,14 +120,19 @@ edit:
 			    if (ext->sector + p->mbrp_start == ptstart)
 				fl |= NETBSD_ACTIVE;
 			}
-			if (ext->nametab[i][0] == 0) {
+			if (ext->mbrb.mbrbs_nametab[i][0] == 0) {
+				/* No bootmenu label... */
 				if (ext->sector == 0)
 					continue;
 				if (ext->sector + p->mbrp_start == ptstart)
-					/* force name & bootsel... */
+					/*
+					 * Have installed into an extended ptn
+					 * force name & bootsel...
+					 */
 					names++;
 				continue;
 			}
+			/* Partition has a bootmenu label... */
 			if (ext->sector != 0)
 				fl |= MBR_BS_EXTLBA;
 			if (ext->sector + p->mbrp_start == ptstart)
@@ -159,6 +169,7 @@ edit:
 			goto edit;
 	}
 
+	/* Sort out the name of the mbr code we need */
 	if (names > 0 || fl & (NETBSD_NAMED | ACTIVE_NAMED)) {
 		/* Need bootselect code */
 		fl |= MBR_BS_ACTIVE;
@@ -166,27 +177,21 @@ edit:
 	} else
 		bootcode = _PATH_MBR;
 
-	/* Look at what is installed */
-	if (mbr.mbr.mbr_bootsel_magic == htole16(MBR_BS_MAGIC))
-		/* Netbsd bootcode, grab its features */
-		ofl = mbr.mbr.mbr_bootsel.mbrbs_flags;
-	else {
-		/* Not netbsd code, might be ok if we are booting the active
-		 * partition.
-		 */
-/* XXXLUKEM: unconditionally set ofl=0 with new bootsel code? */
-		if (mbr.mbr.mbr_magic == htole16(MBR_MAGIC) &&
-		    mbr.mbr.mbr_jmpboot[0] != 0 &&
-		    (fl & (MBR_BS_ACTIVE | MBR_BS_EXTLBA)) == 0 &&
-		    !mbr_root_above_chs())
-			ofl = MBR_BS_NEWMBR;
-		else
-			ofl = 0;
-	}
+	fl &=  MBR_BS_ACTIVE | MBR_BS_EXTLBA;
 
-	fl &=  MBR_BS_NEWMBR | MBR_BS_ACTIVE | MBR_BS_EXTLBA;
-	ofl &= MBR_BS_NEWMBR | MBR_BS_ACTIVE | MBR_BS_EXTLBA;
-	if (fl & ~ofl) {
+	/* Look at what is installed */
+	ofl = mbr.mbrb.mbrbs_flags;
+	if (ofl == 0) {
+		/* Check there is some bootcode at all... */
+		if (mbr.mbr.mbr_magic != htole16(MBR_MAGIC) ||
+		    mbr.mbr.mbr_jmpboot[0] == 0 ||
+		    mbr_root_above_chs())
+			/* Existing won't do, force update */
+			fl |= MBR_BS_NEWMBR;
+	}
+	ofl = mbr.oflags & (MBR_BS_ACTIVE | MBR_BS_EXTLBA);
+
+	if (fl & ~ofl || (fl == 0 && ofl & MBR_BS_ACTIVE)) {
 		/* Existing boot code isn't the right one... */
 		if (fl & MBR_BS_ACTIVE)
 			msg_display(MSG_installbootsel);
@@ -197,8 +202,17 @@ edit:
 		msg_display(MSG_updatembr);
 
 	process_menu(MENU_yesno, NULL);
-	if (yesno)
-		md_read_bootcode(bootcode, &mbr.mbr);
+	if (!yesno)
+		/* User doesn't want to update mbr code */
+		return 1;
+
+	if (md_read_bootcode(bootcode, &mbr.mbr) == 0)
+		/* update suceeded - to memory copy */
+		return 1;
+
+	/* This shouldn't happen since the files are in the floppy fs... */
+	msg_display("Can't find %s", bootcode);
+	process_menu(MENU_yesno, NULL);
 
 	return 1;
 }
