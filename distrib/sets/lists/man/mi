@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.595 2003/07/16 11:21:33 dsl Exp $
+# $NetBSD: mi,v 1.596 2003/07/25 21:48:36 perry Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -236,6 +236,7 @@
 ./usr/share/man/cat1/od.0			man-util-catman
 ./usr/share/man/cat1/omshell.0			man-dhcpd-catman
 ./usr/share/man/cat1/openssl.0			man-crypto-catman
+./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman
 ./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman
 ./usr/share/man/cat1/openssl_ca.0		man-crypto-catman
 ./usr/share/man/cat1/openssl_ciphers.0		man-crypto-catman
@@ -2050,6 +2051,7 @@
 ./usr/share/man/man1/od.1			man-util-man
 ./usr/share/man/man1/omshell.1			man-dhcpd-man
 ./usr/share/man/man1/openssl.1			man-crypto-man
+./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man
 ./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man
 ./usr/share/man/man1/openssl_ca.1		man-crypto-man
 ./usr/share/man/man1/openssl_ciphers.1		man-crypto-man
