@@ -1,4 +1,4 @@
-.\"     $NetBSD: microtime.9,v 1.4 2001/04/29 19:12:20 jhawk Exp $
+.\"     $NetBSD: microtime.9,v 1.5 2001/06/19 19:26:01 msaitoh Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 returns the current value of the system realtime clock in the structure
 pointed to by the argument
 .Fa tv .
-The system realtime clock is guaranteed to be monotomically increasing
+The system realtime clock is guaranteed to be monotonically increasing
 at all times.
 As such,
 all calls to
@@ -72,6 +72,6 @@ hence its location in the source code tree varies from architecture to
 architecture.
 .Sh BUGS
 Despite the guarantee that the system realtime clock will always be
-monotomically increasing,
+monotonically increasing,
 it is always possible for the system clock to be manually reset by the
 system administrator to any date.
