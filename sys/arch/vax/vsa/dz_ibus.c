@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.21 2000/12/02 17:09:43 ragge Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.22 2000/12/30 20:11:54 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -56,17 +56,22 @@
 #include <dev/qbus/dzreg.h>
 #include <dev/qbus/dzvar.h>
 
-#include <dev/dec/dzkbdvar.h>
-
 #include "ioconf.h"
 #include "dzkbd.h"
 #include "dzms.h"
+
+#if NDZKBD > 0 || NDZMS > 0
+#include <dev/dec/dzkbdvar.h>
+
+#if 0
+static	struct dz_linestate dz_conslinestate = { NULL, -1, NULL, NULL, NULL };
+#endif
+#endif
 
 static  int     dz_vsbus_match(struct device *, struct cfdata *, void *);
 static  void    dz_vsbus_attach(struct device *, struct device *, void *);
 
 static	vaddr_t dz_regs; /* Used for console */
-//static	struct dz_linestate dz_conslinestate = { NULL, -1, NULL, NULL, NULL };
 
 struct  cfattach dz_vsbus_ca = {
 	sizeof(struct dz_softc), dz_vsbus_match, dz_vsbus_attach
@@ -88,6 +93,7 @@ static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
 cons_decl(dz);
 cdev_decl(dz);
 
+#if NDZKBD > 0 || NDZMS > 0
 static int
 dz_print(void *aux, const char *name)
 {
@@ -108,6 +114,7 @@ dz_print(void *aux, const char *name)
 #endif
 	return (UNCONF);
 }
+#endif
 
 static int
 dz_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -280,9 +287,7 @@ dzcnputc(dev_t dev, int	ch)
 }
 
 void 
-dzcnpollc(dev, pollflag)
-	dev_t dev;
-	int pollflag;
+dzcnpollc(dev_t dev, int pollflag)
 {
 	static	u_char mask;
 
@@ -292,9 +297,9 @@ dzcnpollc(dev, pollflag)
 		vsbus_setmask(mask);
 }
 
+#if NDZKBD > 0 || NDZMS > 0
 int
-dzgetc(ls)
-	struct	dz_linestate *ls;
+dzgetc(struct dz_linestate *ls)
 {
 	int line = ls->dz_line;
 	u_short rbuf;
@@ -308,9 +313,7 @@ dzgetc(ls)
 }
 
 void
-dzputc(ls,ch)
-	struct	dz_linestate *ls;
-	int	ch;
+dzputc(struct dz_linestate *ls, int ch)
 {
 	int line = 0; /* = ls->dz_line; */
 	u_short tcr;
@@ -332,3 +335,4 @@ dzputc(ls,ch)
 	/* use dzcnputc to do the transmitting: */
 	dzcnputc(makedev(getmajor(dzopen), line), ch);
 }
+#endif /* NDZKBD > 0 || NDZMS > 0 */
