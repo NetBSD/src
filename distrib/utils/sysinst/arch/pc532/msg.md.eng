@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.1.1.1.2.1 1997/12/10 07:46:49 phil Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.1.1.1.2.2 1997/12/25 09:08:07 matthias Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,3 +66,7 @@ Partition size? }
 
 message askboot
 {Size of the boot images partition in sectors? }
+
+message dobootblks
+{Installing boot blocks on %s....
+}

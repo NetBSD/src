@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.1.1.2.4 1997/12/10 07:46:48 phil Exp $	*/
+/*	$NetBSD: md.h,v 1.1.1.1.2.5 1997/12/25 09:08:07 matthias Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,6 +52,20 @@ EXTERN	char *disk_names[]
 = {"sd", NULL}
 #endif
 ;
+
+/*
+ * Machine-specific command to write a new label to a disk.
+ * For example, i386  uses "/sbin/disklabel -w -r", just like i386
+ * miniroot scripts, though this may leave a bogus incore label.
+ * Sun ports should probably use  DISKLABEL_CMD "/sbin/disklabel -w"
+ * to get incore  to ondisk inode translation for the Sun proms.
+ * If not defined, we assume the port does not support disklabels and
+ * hand-edited disklabel will NOT be written by MI code.
+ *
+ * On pc532, do what i386 does.
+ */
+#define DISKLABEL_CMD "disklabel -w -r"
+
 
 /* Legal start character for a disk for checking input. */
 #define ISDISKSTART(dn)	(dn == 's')
