@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.36 2004/08/24 01:46:30 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.37 2005/02/26 18:15:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.36 2004/08/24 01:46:30 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.37 2005/02/26 18:15:25 nathanw Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -201,10 +201,10 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 		return EINVAL;
 
 	self = pthread__self();
+	pthread_spinlock(self, &pt_sigacts_lock);
+	oldmask = pt_sigacts[sig].sa_mask;
 	if (act != NULL) {
 		/* Save the information for our internal dispatch. */
-		pthread_spinlock(self, &pt_sigacts_lock);
-		oldmask = pt_sigacts[sig].sa_mask;
 		pt_sigacts[sig] = *act;
 		pthread_spinunlock(self, &pt_sigacts_lock);
 		/*
@@ -218,7 +218,8 @@ __sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 		realact = *act;
 		__sigemptyset14(&realact.sa_mask);
 		act = &realact;
-	}
+	} else
+		pthread_spinunlock(self, &pt_sigacts_lock);
 
 	retval = __libc_sigaction14(sig, act, oact);
 	if (oact && (retval == 0))
