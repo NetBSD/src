@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.16 2004/03/05 03:22:05 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.17 2004/03/06 23:34:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.16 2004/03/05 03:22:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.17 2004/03/06 23:34:27 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -245,12 +245,16 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	i += nWndNodes;
 	rrdNodes = &nodes[i];
 	i += nRrdNodes;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		wnqNode = &nodes[i];
 		i += 1;
 	} else {
+#endif
 		wnqNode = NULL;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
+#endif
 	RF_ASSERT(i == nNodes);
 
 	/* this dag can not commit until all rrd and xor Nodes have completed */
@@ -344,6 +348,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	wnpNode->params[2].v = parityStripeID;
 	wnpNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* fill in the Wnq Node */
 	if (nfaults == 2) {
 		{
@@ -364,6 +369,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 			wnqNode->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 	}
+#endif
 	/* fill in the Wnd nodes */
 	for (pda = asmap->physInfo, i = 0; i < nWndNodes; i++, pda = pda->next) {
 		if (pda == failedPDA) {
@@ -469,12 +475,14 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	commitNode->succedents[nWndNodes] = wnpNode;
 	wnpNode->antecedents[0] = commitNode;
 	wnpNode->antType[0] = rf_control;
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	if (nfaults == 2) {
 		RF_ASSERT(wnqNode->numAntecedents == 1);
 		commitNode->succedents[nWndNodes + 1] = wnqNode;
 		wnqNode->antecedents[0] = commitNode;
 		wnqNode->antType[0] = rf_control;
 	}
+#endif
 	/* link write new data nodes to unblock node */
 	RF_ASSERT(unblockNode->numAntecedents == (nWndNodes + nfaults));
 	for (i = 0; i < nWndNodes; i++) {
@@ -490,6 +498,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 	unblockNode->antecedents[nWndNodes] = wnpNode;
 	unblockNode->antType[nWndNodes] = rf_control;
 
+#if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	/* link write new q node to unblock node */
 	if (nfaults == 2) {
 		RF_ASSERT(wnqNode->numSuccedents == 1);
@@ -497,6 +506,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(RF_Raid_t *raidPtr,
 		unblockNode->antecedents[nWndNodes + 1] = wnqNode;
 		unblockNode->antType[nWndNodes + 1] = rf_control;
 	}
+#endif
 	/* link unblock node to term node */
 	RF_ASSERT(unblockNode->numSuccedents == 1);
 	RF_ASSERT(termNode->numAntecedents == 1);
