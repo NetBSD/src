@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.27 1998/06/27 20:29:47 wrstuden Exp $
+#	$NetBSD: services,v 1.28 1998/06/29 05:24:51 tron Exp $
 #
 # Network services, Internet style
 #
@@ -167,6 +167,8 @@ ingreslock	1524/tcp
 ingreslock	1524/udp
 prospero-np	1525/tcp		# Prospero non-privileged
 prospero-np	1525/udp
+cvspserver	2401/tcp
+cvspserver	2401/udp
 rfe		5002/tcp		# Radio Free Ethernet
 rfe		5002/udp		# Actually uses UDP only
 
