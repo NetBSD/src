@@ -1,6 +1,7 @@
-/*	$NetBSD: bktr_mem.c,v 1.1.1.1 2000/10/28 14:17:40 wiz Exp $	*/
+/* $SourceForge: bktr_mem.c,v 1.3 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/* FreeBSD: src/sys/dev/bktr/bktr_mem.c,v 1.4 2000/09/11 12:23:50 roger Exp */
+/*	$NetBSD: bktr_mem.c,v 1.1.1.2 2003/03/12 00:02:32 wiz Exp $	*/
+/* $FreeBSD: src/sys/dev/bktr/bktr_mem.c,v 1.4 2000/09/11 12:23:50 roger Exp$ */
 
 /*
  * This is prt of the Driver for Video Capture Cards (Frame grabbers)
@@ -47,6 +48,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_mem.c,v 1.1.1.2 2003/03/12 00:02:32 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -68,7 +71,7 @@ static struct memory_pointers memory_list[BKTR_MEM_MAX_DEVICES];
 /*************************************************************/
 
 static int
-bktr_mem_modevent(module_t mod, int type, void *unused){
+bktr_mem_modevent(module_t mod, int type, void *unused) {
 
 	switch (type) {
 	case MOD_LOAD:
