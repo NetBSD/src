@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.43 2002/08/16 09:03:36 petrov Exp $
+# 	$NetBSD: GENERIC32,v 1.44 2002/08/29 04:54:47 chs Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.43 $"
+#ident 		"GENERIC-$Revision: 1.44 $"
 
 maxusers	64
 
@@ -511,6 +511,7 @@ autri*		at pci? dev ? function ?	# Blade 100 'sound'
 
 audio*		at audiocs?
 audio*		at autri?
+audio*		at uaudio?
 
 #midi*		at autri?
 
