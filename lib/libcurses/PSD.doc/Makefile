@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 8/14/93
+#	from: @(#)Makefile	8.1 (Berkeley) 8/14/93
+#	$Id: Makefile,v 1.2 1993/11/09 04:09:08 cgd Exp $
 
 DIR=	psd/19.curses
 SRCS=	Master

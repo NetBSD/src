@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)c_macros	8.1 (Berkeley) 6/4/93
+.\"	from: @(#)c_macros	8.1 (Berkeley) 6/4/93
+.\"	$Id: c_macros,v 1.2 1993/11/09 04:09:23 cgd Exp $
 .\"
 'ie t 'ds _ \d\(mi\u
 'el 'ds _ _

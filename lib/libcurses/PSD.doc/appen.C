@@ -29,7 +29,8 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)appen.C	8.1 (Berkeley) 6/8/93
+.\"	from: @(#)appen.C	8.1 (Berkeley) 6/8/93
+.\"	$Id: appen.C,v 1.2 1993/11/09 04:09:20 cgd Exp $
 .\"
 .ie t .oh '\*(Ln Appendix A''PS1:19-%'
 .eh 'PS1:19-%''\*(Ln Appendix A'
