@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.4 2003/07/13 12:16:05 itojun Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.5 2003/10/21 02:51:37 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -340,7 +340,7 @@ init_transport(struct netconfig *nconf)
 		struct pmaplist *pml;
 
 		if (!svc_register(my_xprt, PMAPPROG, PMAPVERS,
-			pmap_service, NULL)) {
+			pmap_service, 0)) {
 			syslog(LOG_ERR, "could not register on %s",
 					nconf->nc_netid);
 			goto error;
