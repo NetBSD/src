@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/03/21 17:37:11 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/04/10 22:05:47 thorpej Exp $
 
 WARNS?=	0
 
-CPPFLAGS+=	-DNEWDB -DNIS
+CPPFLAGS+=	-DNEWDB
 CPPFLAGS+=	-DMAP_REGEX -DTCPWRAPPERS -DNETISO
 CPPFLAGS+=	-DNEEDSGETIPNODE -DNETINET6
 CPPFLAGS+=	-I. -I${DIST}/sendmail/sendmail -I${DIST}/sendmail/include
+
+.if (${USE_YP} != "no")
+CPPFLAGS+=	-DNIS
+.endif
 
 .if ${MKCRYPTO} != "no"
 CPPFLAGS+=	-DSTARTTLS -D_FFR_TLS_TOREK
