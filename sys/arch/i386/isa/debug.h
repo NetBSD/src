@@ -1,6 +1,4 @@
-/*	$Id: debug.h,v 1.4.2.2 1993/11/11 02:16:35 mycroft Exp $ */
-
-/* #define	SHOW_A_LOT */
+/*	$Id: debug.h,v 1.4.2.3 1993/11/11 16:56:35 mycroft Exp $ */
 
 #ifdef INTR_DEBUG
 #define INTRLOCAL(label) label
@@ -19,10 +17,10 @@
 bdb_/**/name/**/_ljmp: ; \
 	ljmp	$0,$0 ; \
 1:
-#endif
 
 	.data
 	.globl	_bdb_exists
 _bdb_exists:
 	.long	0
 	.text
+#endif

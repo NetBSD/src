@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.26 1993/11/11 07:04:27 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.27 1993/11/11 16:55:50 mycroft Exp $
  */
 
 
@@ -317,11 +317,13 @@ start:	jmp	1f
 	movl	%eax,(UPTDI*4)(%esi)	# which is where kernel stack maps!
 
 	/* copy and convert stuff from old gdt and idt for debugger */
-
+#ifdef BDB
 	cmpl	$0x0375c339,0x96104	# XXX - debugger signature
 	jne	1f
 	movb	$1,_bdb_exists-KERNBASE
 1:
+#endif
+
 	pushal
 	subl	$2*6,%esp
 
@@ -337,7 +339,7 @@ start:	jmp	1f
 
 	sidt	6(%esp)
 	movl	6+2(%esp),%esi		# base address of current idt
-#ifdef BDBTRAP
+#ifdef BDB
 	movl	8+4(%esi),%eax		# convert dbg descriptor to ...
 	movw	8(%esi),%ax
 	movl	%eax,bdb_dbg_ljmp+1-KERNBASE	# ... immediate offset ...
@@ -349,7 +351,6 @@ start:	jmp	1f
 	movl	24+2(%esi),%eax
 	movw	%ax,bdb_bpt_ljmp+5-KERNBASE
 #endif
-
 	movl	$(_idt-KERNBASE),%edi
 	movl	%edi,6+2(%esp)
 	movl	$8*4/4,%ecx
@@ -396,10 +397,12 @@ reloc_gdt:
 	addl	$8,%eax			# now KERNBASE>>24
 	loop	reloc_gdt
 
+#ifdef BDB
 	cmpl	$0,_bdb_exists
 	jz	1f
 	int	$3
 1:
+#endif
 
 	lea	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
 	pushl	%esi
