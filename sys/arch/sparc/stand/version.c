@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.4 1995/09/16 23:20:39 pk Exp $ */
+/*	$NetBSD: version.c,v 1.5 1997/05/04 14:19:22 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -36,6 +36,7 @@
  *	1.1
  *	1.2	get it to work with V0 bootproms.
  *	1.4	add oldmon support and network support.
+ *	1.5	bootprograms work unmodified across all platforms.
  */
 
-char *version = "$Revision: 1.4 $";
+char *version = "$Revision: 1.5 $";
