@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 2000/08/22 11:59:34 wdk Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 2000/09/16 08:27:16 wdk Exp $	*/
 
 /*
  * Copyright (c) 2000 Wayne Knowles.     All rights reserved.
@@ -45,13 +45,14 @@
 
 #define MAXPARTITIONS	8	/* XXX - NetBSD Compatability */
 #define RAW_PART	2
-#define LABELSECTOR	0
-#define LABELOFFSET	128
+#define LABELSECTOR	1
+#define LABELOFFSET	0
 
 #define MIPS_PARTITIONS	16	/* Number or partitions for Mips */
 #define MIPS_NVOLDIR	15	/* Number of volume directory files */
 #define MIPS_VDIRSZ	8	/* File name size in volume directory */
 #define MIPS_BFSIZE	16	/* Boot filename size */
+#define	MIPS_VHSECTOR	0	/* Sector number for MIPS disklabel */
 
 /*
  * Devices parameters that RISC/os uses for mapping logical block numbers
