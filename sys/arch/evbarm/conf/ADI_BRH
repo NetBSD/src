@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.3 2003/04/16 23:34:30 thorpej Exp $
+#	$NetBSD: ADI_BRH,v 1.4 2003/04/20 20:50:49 thorpej Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -153,6 +153,7 @@ com1		at obio? addr 0x03100000 irq 25
 
 # Big Endian Companion Chip support
 becc*		at mainbus?
+beccbut0	at becc?		# Reset button
 pci0		at becc? bus ?
 
 # PCI-PCI bridges
