@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.114 1999/07/22 18:13:37 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.115 1999/07/24 15:10:02 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1958,7 +1958,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "empty foreground process group\n");
 	else {
 		/* Pick interesting process. */
-		for (pick = NULL; p != 0; p = p->p_pglist.le_next)
+		for (pick = NULL; p != NULL; p = p->p_pglist.le_next)
 			if (proc_compare(pick, p))
 				pick = p;
 
@@ -1992,7 +1992,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "%d%% ", tmp / 100);
 
 		/* Print resident set size. */
-		if (pick->p_stat == SIDL || P_ZOMBIE(p))
+		if (pick->p_stat == SIDL || P_ZOMBIE(pick))
 			tmp = 0;
 		else {
 			register struct vmspace *vm = pick->p_vmspace;
