@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.19 2004/04/10 19:23:50 thorpej Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.20 2004/05/15 21:58:40 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -546,6 +546,7 @@
 #define BGE_RX_BD_RULES_CTL15		0x04F8
 #define BGE_RX_BD_RULES_MASKVAL15	0x04FC
 #define BGE_RX_RULES_CFG		0x0500
+#define BGE_MAX_RX_FRAME_LOWAT		0x0504
 #define BGE_RX_STATS			0x0800
 #define BGE_TX_STATS			0x0880
 
