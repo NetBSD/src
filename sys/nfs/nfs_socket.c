@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.27.4.1 1996/07/08 20:40:36 jtc Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.27.4.2 1996/07/10 05:45:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -1300,10 +1300,10 @@ nfs_timer(arg)
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 			if ((nmp->nm_flag & NFSMNT_NOCONN) == 0)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
+			    (struct mbuf *)0, (struct mbuf *)0);
 			else
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, (struct mbuf *)0, (struct proc *)0);
+			    nmp->nm_nam, (struct mbuf *)0);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error))
 					so->so_error = 0;
