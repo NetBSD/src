@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.18 2004/04/11 08:36:19 kochi Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.19 2004/04/11 10:36:35 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -271,6 +271,7 @@ ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 ACPI_STATUS	acpi_resource_parse(struct device *, ACPI_HANDLE, char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(struct device *, struct acpi_resources *);
+void		acpi_resource_cleanup(struct acpi_resources *);
 
 #if defined(_KERNEL_OPT)
 #include "acpiec.h"
