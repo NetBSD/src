@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.49 2004/09/04 23:29:49 manu Exp $
+#	$NetBSD: IOPENER,v 1.50 2004/09/08 11:38:25 jmmv Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.49 $"
+#ident 		"IOPENER-$Revision: 1.50 $"
 
 maxusers	32		# estimated number of users
 
@@ -148,8 +148,8 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_DEFAULT_COLATTR=""
-#options 	WS_DEFAULT_MONOATTR=""
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""

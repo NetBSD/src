@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.73 2004/09/04 23:29:49 manu Exp $
+#	$NetBSD: GENERIC_TINY,v 1.74 2004/09/08 11:38:24 jmmv Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -175,8 +175,8 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_DEFAULT_COLATTR=""
-#options 	WS_DEFAULT_MONOATTR=""
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""

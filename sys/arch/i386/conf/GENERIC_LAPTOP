@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.115 2004/09/04 23:29:48 manu Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.116 2004/09/08 11:38:23 jmmv Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 maxusers	32		# estimated number of users
 
@@ -195,8 +195,8 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_DEFAULT_COLATTR=""
-#options 	WS_DEFAULT_MONOATTR=""
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""
