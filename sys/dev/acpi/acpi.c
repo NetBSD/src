@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.9 2002/06/17 08:18:51 kanaoka Exp $	*/
+/*	$NetBSD: acpi.c,v 1.10 2002/06/18 08:09:21 tshiozak Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.9 2002/06/17 08:18:51 kanaoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.10 2002/06/18 08:09:21 tshiozak Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.9 2002/06/17 08:18:51 kanaoka Exp $");
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
+
+#include <machine/acpi_machdep.h>
 
 #ifdef ENABLE_DEBUGGER
 #define	ACPI_DBGR_INIT		0x01
@@ -712,4 +714,78 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 	memset(buf->Pointer, 0, buf->Length);
 
 	return ((*getit)(handle, buf));
+}
+
+
+/*****************************************************************************
+ * ACPI sleep support.
+ *****************************************************************************/
+
+static int
+is_available_state(struct acpi_softc *sc, int state)
+{
+	UINT8 type_a, type_b;
+
+	return (ACPI_SUCCESS(AcpiGetSleepTypeData((UINT8)state,
+						  &type_a, &type_b)));
+}
+
+/*
+ * acpi_enter_sleep_state:
+ *
+ *	enter to the specified sleep state.
+ */
+
+ACPI_STATUS
+acpi_enter_sleep_state(struct acpi_softc *sc, int state)
+{
+	int s;
+	ACPI_STATUS ret = AE_OK;
+
+	switch (state) {
+	case ACPI_STATE_S0:
+		break;
+	case ACPI_STATE_S1:
+	case ACPI_STATE_S2:
+	case ACPI_STATE_S3:
+	case ACPI_STATE_S4:
+		if (!is_available_state(sc, state)) {
+			printf("acpi: cannot enter the sleep state (%d).\n",
+			       state);
+			break;
+		}
+		ret = AcpiEnterSleepStatePrep(state);
+		if (ACPI_FAILURE(ret)) {
+			printf("acpi: failed preparing to sleep (%s)\n",
+			       AcpiFormatException(ret));
+			break;
+		}
+		if (state==ACPI_STATE_S1) {
+			/* just enter the state */
+			AcpiEnterSleepState((UINT8)state);
+			AcpiUtReleaseMutex(ACPI_MTX_HARDWARE);
+		} else {
+			/* XXX: powerhooks(9) framework is too poor to
+			 * support ACPI sleep state...
+			 */
+			dopowerhooks(PWR_SOFTSUSPEND);
+			s = splhigh();
+			dopowerhooks(PWR_SUSPEND);
+			acpi_md_sleep(state);
+			dopowerhooks(PWR_RESUME);
+			splx(s);
+			dopowerhooks(PWR_SOFTRESUME);
+			if (state==ACPI_STATE_S4)
+				AcpiEnable();
+		}
+		AcpiLeaveSleepState((UINT8)state);
+		break;
+	case ACPI_STATE_S5:
+		AcpiEnterSleepStatePrep(ACPI_STATE_S5);
+		AcpiEnterSleepState(ACPI_STATE_S5);
+		printf("WARNING: powerdown failed!\n");
+		break;
+	}
+
+	return_ACPI_STATUS(ret);
 }
