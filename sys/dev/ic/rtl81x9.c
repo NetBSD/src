@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.38 2001/08/14 11:57:26 mrg Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.39 2001/08/20 11:57:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -846,7 +846,7 @@ rtk_detach(sc)
 	int i;
 
 	/*
-	 * Succeed now if thereisn't any work to do.
+	 * Succeed now if there isn't any work to do.
 	 */
 	if ((sc->sc_flags & RTK_ATTACHED) == 0)
 		return (0);
@@ -960,7 +960,7 @@ rtk_power(why, arg)
  * attempt to document it here. The driver provides a buffer area and
  * places its base address in the RX buffer start address register.
  * The chip then begins copying frames into the RX buffer. Each frame
- * is preceeded by a 32-bit RX status word which specifies the length
+ * is preceded by a 32-bit RX status word which specifies the length
  * of the frame and certain other status bits. Each frame (starting with
  * the status word) is also 32-bit aligned. The frame length is in the
  * first 16 bits of the status word; the lower 15 bits correspond with
