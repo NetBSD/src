@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2004/08/01 18:52:03 uch Exp $
+#	$NetBSD: Makefile,v 1.15.4.1 2005/04/06 21:01:53 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,10 @@ SUBDIR+=	Xarm32VIDC
 
 .if ${XSERVER_XDECNETBSD} != "no"
 SUBDIR+=	XdecNetBSD
+.endif
+
+.if ${XSERVER_XDMX} != "no"
+SUBDIR+=	Xdmx
 .endif
 
 .if ${XSERVER_XDREAMCAST} != "no"
