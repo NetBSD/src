@@ -27,7 +27,7 @@
  *	i4b_l4.h - kernel interface to userland header file
  *	---------------------------------------------------
  *
- *	$Id: i4b_l4.h,v 1.5 2002/03/27 07:39:35 martin Exp $ 
+ *	$Id: i4b_l4.h,v 1.6 2002/05/02 18:56:56 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -70,5 +70,6 @@ extern unsigned char get_rand_cr ( int unit );
 extern call_desc_t * reserve_cd ( void );
 extern void T400_start ( call_desc_t *cd );
 extern void T400_stop ( call_desc_t *cd );
+extern void update_controller_leds(struct isdn_l3_driver *d);
 
 #endif /* _I4B_L4_H_ */

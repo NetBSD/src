@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.11 2002/03/30 17:54:18 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.12 2002/05/02 18:56:56 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.11 2002/03/30 17:54:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.12 2002/05/02 18:56:56 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -344,6 +344,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			}
 			else
 			{
+				int old_chanid = cd->channelid;
 				switch(msg_ptr[2] & 0x03)
 				{
 					case IE_CHAN_ID_NO:
@@ -363,15 +364,21 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 
 				NDBGL3(L3_P_MSG, "IEI_CHANNELID - channel %d, exclusive = %d", cd->channelid, cd->channelexcl);
 
-				/* if this is a setup message, reserve channel */
-				
-				if(cd->event == EV_SETUP)
+				/* if this is the first time we know the real channel,
+				 * reserve it */
+				if (old_chanid != cd->channelid)
 				{
 					if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 					{
-						if (i4b_l2_channel_get_state(unit, cd->channelid) == BCH_ST_FREE)
+						struct isdn_l3_driver *d = cd->l3drv;
+						
+						if (i4b_l2_channel_get_state(unit, cd->channelid) == BCH_ST_FREE) {
+							if (d != NULL) {
+								d->bch_state[cd->channelid] = BCH_ST_RSVD;
+								update_controller_leds(d);
+							}
 							i4b_l2_channel_set_state(unit, cd->channelid, BCH_ST_RSVD);
-						else
+						} else
 							NDBGL3(L3_P_ERR, "IE ChannelID, Channel NOT free!!");
 					}
 					else if(cd->channelid == CHAN_NO)

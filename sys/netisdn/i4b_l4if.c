@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.10 2002/03/30 17:54:18 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.11 2002/05/02 18:56:56 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.10 2002/03/30 17:54:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.11 2002/05/02 18:56:56 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -84,8 +84,6 @@ void n_connect_response(struct call_desc *cd, int response, int cause);
 void n_disconnect_request(struct call_desc *cd, int cause);
 void n_alert_request(struct call_desc *cd);
 void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
-
-static void update_controller_leds(struct isdn_l3_driver *d);
 
 /*---------------------------------------------------------------------------*
  *	i4b_mdl_status_ind - status indication from lower layers
@@ -193,7 +191,7 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 	return(0);
 }
 
-static void
+void
 update_controller_leds(struct isdn_l3_driver *d)
 {
 	int leds = 0;
@@ -294,6 +292,7 @@ n_connect_response(struct call_desc *cd, int response, int cause)
 			break;
 	}
 
+	printf("bri %d channel %d -> chstate = %d\n", cd->bri, cd->channelid, chstate);
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
 		d->bch_state[cd->channelid] = chstate;

@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.20 2002/03/30 11:43:33 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.21 2002/05/02 18:56:55 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.20 2002/03/30 11:43:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.21 2002/05/02 18:56:55 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -593,6 +593,8 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 	
 	i4b_link_bchandrvr(cd);
 
+	update_controller_leds(cd->l3drv);
+
 	(*cd->l4_driver->line_connected)(cd->l4_driver_softc, cd);
 
 	i4b_l4_setup_timeout(cd);
@@ -645,6 +647,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 		/* no error, might be hunting call for callback */
 		NDBGL4(L4_MSG, "channel free not B1/B2 but %d!", cd->channelid);
 	}
+	update_controller_leds(d);
 	
 	if((m = i4b_Dgetmbuf(sizeof(msg_disconnect_ind_t))) != NULL)
 	{
