@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.18 2002/07/31 01:28:32 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.19 2002/08/03 14:34:22 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -131,6 +131,14 @@ set_field_opts(FIELD *field, Form_Options options)
 	
 	fp->opts = options;
 
+	  /* if appropriate, redraw the field */
+	if ((field != NULL) && (field->parent != NULL)
+	    && (field->parent->posted == 1)) {
+		_formi_redraw_field(field->parent, field->index);
+		pos_form_cursor(field->parent);
+		wrefresh(field->parent->scrwin);
+	}
+	
 	return E_OK;
 }
 
@@ -157,6 +165,14 @@ field_opts_on(FIELD *field, Form_Options options)
 	}
 	
 	fp->opts |= options;
+	
+	  /* if appropriate, redraw the field */
+	if ((field != NULL) && (field->parent != NULL)
+	    && (field->parent->posted == 1)) {
+		_formi_redraw_field(field->parent, field->index);
+		pos_form_cursor(field->parent);
+		wrefresh(field->parent->scrwin);
+	}
 
 	return E_OK;
 }
@@ -175,6 +191,15 @@ field_opts_off(FIELD *field, Form_Options options)
 		return E_CURRENT;
 	
 	fp->opts &= ~options;
+	
+	  /* if appropriate, redraw the field */
+	if ((field != NULL) && (field->parent != NULL)
+	    && (field->parent->posted == 1)) {
+		_formi_redraw_field(field->parent, field->index);
+		pos_form_cursor(field->parent);
+		wrefresh(field->parent->scrwin);
+	}
+	
 	return E_OK;
 }
 
