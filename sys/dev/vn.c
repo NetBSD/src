@@ -35,9 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: vn.c 1.8 92/12/20$
+ * from: Utah $Hdr: vn.c 1.13 94/04/02$
  *
- *	@(#)vn.c	8.1 (Berkeley) 6/10/93
+ *	@(#)vn.c	8.6 (Berkeley) 4/1/94
  */
 
 /*
@@ -80,6 +80,7 @@
 #include <dev/vnioctl.h>
 
 #ifdef DEBUG
+int dovncluster = 1;
 int vndebug = 0x00;
 #define VDB_FOLLOW	0x01
 #define VDB_INIT	0x02
@@ -179,7 +180,7 @@ vnstrategy(bp)
 	register struct buf *nbp;
 	register int bn, bsize, resid;
 	register caddr_t addr;
-	int sz, flags;
+	int sz, flags, error;
 	extern void vniodone();
 
 #ifdef DEBUG
@@ -204,31 +205,40 @@ vnstrategy(bp)
 		return;
 	}
 	bn = dbtob(bn);
-#if (BSD > 199103)
  	bsize = vn->sc_vp->v_mount->mnt_stat.f_iosize;
-#else
-	bsize = vn->sc_vp->v_mount->mnt_stat.f_bsize;
-#endif
-	addr = bp->b_un.b_addr;
+	addr = bp->b_data;
 	flags = bp->b_flags | B_CALL;
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vnode *vp;
 		daddr_t nbn;
-		int off, s;
+		int off, s, nra;
 
-		nbp = getvnbuf();
-		off = bn % bsize;
-		sz = min(bsize - off, resid);
+		nra = 0;
 #if (BSD > 199103)
-		(void) VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn, NULL);
+		error = VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn, &nra);
 #else
-		(void) VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn);
+		error = VOP_BMAP(vn->sc_vp, bn / bsize, &vp, &nbn);
 #endif
+		if (error == 0 && (long)nbn == -1)
+			error = EIO;
+#ifdef DEBUG
+		if (!dovncluster)
+			nra = 0;
+#endif
+
+		if (off = bn % bsize)
+			sz = bsize - off;
+		else
+			sz = (1 + nra) * bsize;
+		if (resid < sz)
+			sz = resid;
 #ifdef DEBUG
 		if (vndebug & VDB_IO)
-			printf("vnstrategy: vp %x/%x bn %x/%x\n",
-			       vn->sc_vp, vp, bn, nbn);
+			printf("vnstrategy: vp %x/%x bn %x/%x sz %x\n",
+			       vn->sc_vp, vp, bn, nbn, sz);
 #endif
+
+		nbp = getvnbuf();
 		nbp->b_flags = flags;
 		nbp->b_bcount = sz;
 		nbp->b_bufsize = bp->b_bufsize;
@@ -237,7 +247,7 @@ vnstrategy(bp)
 			nbp->b_dev = vp->v_rdev;
 		else
 			nbp->b_dev = NODEV;
-		nbp->b_un.b_addr = addr;
+		nbp->b_data = addr;
 		nbp->b_blkno = nbn + btodb(off);
 		nbp->b_proc = bp->b_proc;
 		nbp->b_iodone = vniodone;
@@ -247,21 +257,19 @@ vnstrategy(bp)
 		nbp->b_wcred = vn->sc_cred;	/* XXX crdup? */
 		nbp->b_dirtyoff = bp->b_dirtyoff;
 		nbp->b_dirtyend = bp->b_dirtyend;
-#if (BSD > 199103)
 		nbp->b_validoff = bp->b_validoff;
 		nbp->b_validend = bp->b_validend;
-#endif
 		/*
-		 * There is a hole in the file...punt.
+		 * If there was an error or a hole in the file...punt.
 		 * Note that we deal with this after the nbp allocation.
 		 * This ensures that we properly clean up any operations
 		 * that we have already fired off.
 		 *
-		 * XXX we could deal with this but it would be
+		 * XXX we could deal with holes here but it would be
 		 * a hassle (in the write case).
 		 */
-		if ((long)nbn == -1) {
-			nbp->b_error = EIO;
+		if (error) {
+			nbp->b_error = error;
 			nbp->b_flags |= B_ERROR;
 			bp->b_resid -= (resid - sz);
 			biodone(nbp);
@@ -303,8 +311,8 @@ vnstart(vn)
 #ifdef DEBUG
 	if (vndebug & VDB_IO)
 		printf("vnstart(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
-		       vn-vn_softc, bp, bp->b_vp, bp->b_blkno, bp->b_un.b_addr,
-		       bp->b_bcount);
+		    vn-vn_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
+		    bp->b_bcount);
 #endif
 	if ((bp->b_flags & B_READ) == 0)
 		bp->b_vp->v_numoutput++;
@@ -323,8 +331,8 @@ vniodone(bp)
 #ifdef DEBUG
 	if (vndebug & VDB_IO)
 		printf("vniodone(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
-		       vn-vn_softc, bp, bp->b_vp, bp->b_blkno, bp->b_un.b_addr,
-		       bp->b_bcount);
+		    vn-vn_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
+		    bp->b_bcount);
 #endif
 	if (bp->b_error) {
 #ifdef DEBUG
@@ -396,7 +404,7 @@ vnioctl(dev, cmd, data, flag, p)
 #ifdef DEBUG
 	if (vndebug & VDB_FOLLOW)
 		printf("vnioctl(%x, %x, %x, %x, %x): unit %d\n",
-		       dev, cmd, data, flag, p, unit);
+		    dev, cmd, data, flag, p, unit);
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
 	if (error)
@@ -422,7 +430,7 @@ vnioctl(dev, cmd, data, flag, p)
 		if (error = vn_open(&nd, FREAD|FWRITE, 0))
 			return(error);
 #else
-                nd.ni_nameiop = LOOKUP | FOLLOW;
+		nd.ni_nameiop = LOOKUP | FOLLOW;
 		nd.ni_segflg = UIO_USERSPACE;
 		nd.ni_dirp = vio->vn_file;
 		if (error = vn_open(&nd, p, FREAD|FWRITE, 0))
@@ -437,7 +445,7 @@ vnioctl(dev, cmd, data, flag, p)
 		vn->sc_vp = nd.ni_vp;
 		vn->sc_size = btodb(vattr.va_size);	/* note truncation */
 		if (error = vnsetcred(vn, p->p_ucred)) {
-			(void) vn_close(vn->sc_vp, FREAD|FWRITE, p->p_ucred, p);
+			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			return(error);
 		}
 		vnthrottle(vn, vn->sc_vp);
@@ -446,7 +454,7 @@ vnioctl(dev, cmd, data, flag, p)
 #ifdef DEBUG
 		if (vndebug & VDB_INIT)
 			printf("vnioctl: SET vp %x size %x\n",
-			       vn->sc_vp, vn->sc_size);
+			    vn->sc_vp, vn->sc_size);
 #endif
 		break;
 
@@ -478,9 +486,12 @@ vnsetcred(vn, cred)
 {
 	struct uio auio;
 	struct iovec aiov;
-	char tmpbuf[DEV_BSIZE];
+	char *tmpbuf;
+	int error;
 
 	vn->sc_cred = crdup(cred);
+	tmpbuf = malloc(DEV_BSIZE, M_TEMP, M_WAITOK);
+
 	/* XXX: Horrible kludge to establish credentials for NFS */
 	aiov.iov_base = tmpbuf;
 	aiov.iov_len = min(DEV_BSIZE, dbtob(vn->sc_size));
@@ -490,7 +501,10 @@ vnsetcred(vn, cred)
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_resid = aiov.iov_len;
-	return(VOP_READ(vn->sc_vp, &auio, 0, vn->sc_cred));
+	error = VOP_READ(vn->sc_vp, &auio, 0, vn->sc_cred);
+
+	free(tmpbuf, M_TEMP);
+	return (error);
 }
 
 /*
@@ -503,10 +517,12 @@ vnthrottle(vn, vp)
 #ifdef NFSCLIENT
 #if (BSD > 199103)
 	extern int (**nfsv2_vnodeop_p)();
+
 	if (vp->v_op == nfsv2_vnodeop_p)
 #else
  	extern struct vnodeops nfsv2_vnodeops;
-        if (vp->v_op == &nfsv2_vnodeops)
+
+	if (vp->v_op == &nfsv2_vnodeops)
 #endif
 		vn->sc_maxactive = 2;
 	else
@@ -539,10 +555,6 @@ vnclear(vn)
 	vn->sc_flags &= ~VNF_INITED;
 	if (vp == (struct vnode *)0)
 		panic("vnioctl: null vp");
-#if 0
-	/* XXX - this doesn't work right now */
-	(void) VOP_FSYNC(vp, 0, vn->sc_cred, MNT_WAIT, p);
-#endif
 	(void) vn_close(vp, FREAD|FWRITE, vn->sc_cred, p);
 	crfree(vn->sc_cred);
 	vn->sc_vp = (struct vnode *)0;
