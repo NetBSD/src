@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.27 2004/08/24 12:41:06 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.28 2004/11/27 18:31:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.27 2004/08/24 12:41:06 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.28 2004/11/27 18:31:45 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -246,19 +246,18 @@ history_def_next(ptr_t p, HistEvent *ev)
 {
 	history_t *h = (history_t *) p;
 
-	if (h->cursor != &h->list)
-		h->cursor = h->cursor->next;
-	else {
+	if (h->cursor == &h->list) {
 		he_seterrev(ev, _HE_EMPTY_LIST);
 		return (-1);
 	}
 
-	if (h->cursor != &h->list)
-		*ev = h->cursor->ev;
-	else {
+	if (h->cursor->next == &h->list) {
 		he_seterrev(ev, _HE_END_REACHED);
 		return (-1);
 	}
+
+        h->cursor = h->cursor->next;
+        *ev = h->cursor->ev;
 
 	return (0);
 }
@@ -272,20 +271,19 @@ history_def_prev(ptr_t p, HistEvent *ev)
 {
 	history_t *h = (history_t *) p;
 
-	if (h->cursor != &h->list)
-		h->cursor = h->cursor->prev;
-	else {
+	if (h->cursor == &h->list) {
 		he_seterrev(ev,
 		    (h->cur > 0) ? _HE_END_REACHED : _HE_EMPTY_LIST);
 		return (-1);
 	}
 
-	if (h->cursor != &h->list)
-		*ev = h->cursor->ev;
-	else {
+	if (h->cursor->prev == &h->list) {
 		he_seterrev(ev, _HE_START_REACHED);
 		return (-1);
 	}
+
+        h->cursor = h->cursor->prev;
+        *ev = h->cursor->ev;
 
 	return (0);
 }
