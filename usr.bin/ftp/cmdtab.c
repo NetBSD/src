@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.37 2000/07/28 11:45:11 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.38 2000/09/14 13:48:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.37 2000/07/28 11:45:11 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.38 2000/09/14 13:48:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ char	xferbufhelp[] =	"set socket send/receive buffer size";
 #define	CMPL(x)
 #define	CMPL0
 #else  /* !NO_EDITCOMPLETE */
-#define	CMPL(x)	__STRING(x),
+#define	CMPL(x)	#x,
 #define	CMPL0	"",
 #endif /* !NO_EDITCOMPLETE */
 
