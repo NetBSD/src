@@ -1,4 +1,4 @@
-#	$Id: Makefile.cc1,v 1.2 1993/09/23 23:13:04 cgd Exp $
+#	$Id: Makefile.cc1,v 1.3 1993/10/07 07:24:17 cgd Exp $
 
 NOMAN=
 
@@ -15,5 +15,6 @@ LDADD+=	${.CURDIR}/../common/libcc1.a
 .endif
 
 LDADD+=	-lgnumalloc
+DPADD+= /usr/lib/libgnumalloc.a
 
 .include <bsd.prog.mk>
