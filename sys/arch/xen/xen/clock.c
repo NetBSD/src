@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 2004/04/17 12:50:45 cl Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 2004/04/17 21:49:55 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2004/04/17 12:50:45 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2004/04/17 21:49:55 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ static int xen_timer_handler(void *, struct trapframe *);
 
 /* These are peridically updated in shared_info, and then copied here. */
 static unsigned long shadow_tsc_stamp;
-static uint64_t shadow_system_time;
+static u_int64_t shadow_system_time;
 static unsigned long shadow_time_version;
 static struct timeval shadow_tv;
 
@@ -152,17 +152,12 @@ startrtclock()
 void
 xen_delay(int n)
 {
-	long last;
+	u_int64_t when;
 
 	get_time_values_from_xen();
-	last = shadow_tv.tv_usec;
-	while (n > 0) {
+	when = shadow_system_time + n * 1000;
+	while (shadow_system_time < when)
 		get_time_values_from_xen();
-		while (last != shadow_tv.tv_usec) {
-			last++;
-			n--;
-		}
-	}
 }
 
 void
