@@ -1,4 +1,4 @@
-/*	$NetBSD: print-msdp.c,v 1.1.1.1 2002/02/18 09:08:22 itojun Exp $	*/
+/*	$NetBSD: print-msdp.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 William C. Fenner.
@@ -17,9 +17,15 @@
  * LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
  * FOR A PARTICULAR PURPOSE.
  */
+
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-msdp.c,v 1.2 2001/12/10 08:06:40 guy Exp";
+#else
+__RCSID("$NetBSD: print-msdp.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

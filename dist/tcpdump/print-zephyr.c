@@ -1,4 +1,4 @@
-/*	$NetBSD: print-zephyr.c,v 1.1.1.1 2002/02/18 09:09:00 itojun Exp $	*/
+/*	$NetBSD: print-zephyr.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $	*/
 
 /*
  * Decode and print Zephyr packets.
@@ -20,9 +20,14 @@
  * PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.2 2001/09/11 02:37:12 guy Exp";
+#else
+__RCSID("$NetBSD: print-zephyr.c,v 1.2 2002/04/09 02:53:20 thorpej Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
