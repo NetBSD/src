@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2000/07/13 06:30:16 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.50 2000/07/13 16:44:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -987,7 +987,7 @@ data_access_fault(type, addr, pc, tf)
 
 #ifdef DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
-		printf("data_access_fault: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		printf("data_access_fault: tpc %qx == tnpc %qx\n", tf->tf_pc, tf->tf_npc);
 		Debugger();
 	}
 	if (protmmu || missmmu) {
@@ -1210,7 +1210,7 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 
 #if DEBUG
 	if (tf->tf_pc == tf->tf_npc) {
-		printf("data_access_error: tpc %p == tnpc %p\n", tf->tf_pc, tf->tf_npc);
+		printf("data_access_error: tpc %qx == tnpc %qx\n", tf->tf_pc, tf->tf_npc);
 		Debugger();
 	}
 	if (protmmu || missmmu) {
