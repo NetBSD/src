@@ -1,13 +1,13 @@
-/*	$NetBSD: localtime.c,v 1.9 1997/04/22 12:33:19 mrg Exp $	*/
+/*	$NetBSD: localtime.c,v 1.10 1997/06/18 01:12:45 jtc Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
-** June 5, 1996 by Arthur David Olson (arthur_david_olson@nih.gov).
+** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)localtime.c	7.58";
+static char	elsieid[] = "@(#)localtime.c	7.61";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -283,7 +283,7 @@ register struct state * const	sp;
 		/*
 		** Section 4.9.1 of the C standard says that
 		** "FILENAME_MAX expands to an integral constant expression
-		** that is the sie needed for an array of char large enough
+		** that is the size needed for an array of char large enough
 		** to hold the longest file name string that the implementation
 		** guarantees can be opened."
 		*/
@@ -730,15 +730,14 @@ const int			lastditch;
 		name += stdlen;
 		if (stdlen >= sizeof sp->chars)
 			stdlen = (sizeof sp->chars) - 1;
+		stdoffset = 0;
 	} else {
 		name = getzname(name);
 		stdlen = name - stdname;
 		if (stdlen < 3)
 			return -1;
-	}
-	if (*name == '\0')
-		return -1;	/* was "stdoffset = 0;" */
-	else {
+		if (*name == '\0')
+			return -1;
 		name = getoffset(name, &stdoffset);
 		if (name == NULL)
 			return -1;
@@ -907,7 +906,7 @@ const int			lastditch;
 	sp->charcnt = stdlen + 1;
 	if (dstlen != 0)
 		sp->charcnt += dstlen + 1;
-	if (sp->charcnt > sizeof sp->chars)
+	if ((size_t) sp->charcnt > sizeof sp->chars)
 		return -1;
 	cp = sp->chars;
 	(void) strncpy(cp, stdname, stdlen);
