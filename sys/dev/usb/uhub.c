@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.68 2004/06/29 06:30:05 mycroft Exp $	*/
+/*	$NetBSD: uhub.c,v 1.69 2004/10/22 12:03:21 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.68 2004/06/29 06:30:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.69 2004/10/22 12:03:21 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,9 @@ struct uhub_softc {
 	u_int8_t		sc_status[1];	/* XXX more ports */
 	u_char			sc_running;
 };
+#define UHUB_PROTO(sc) ((sc)->sc_hub->ddesc.bDeviceProtocol)
+#define UHUB_IS_HIGH_SPEED(sc) (UHUB_PROTO(sc) != UDPROTO_FSHUB)
+#define UHUB_IS_SINGLE_TT(sc) (UHUB_PROTO(sc) == UDPROTO_HSHUBSTT)
 
 Static usbd_status uhub_explore(usbd_device_handle hub);
 Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
@@ -159,6 +162,11 @@ USB_ATTACH(uhub)
 	usbd_devinfo(dev, 1, devinfo, sizeof(devinfo));
 	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+
+	if (UHUB_IS_HIGH_SPEED(sc)) {
+		printf("%s: %s\n",USBDEVNAME(sc->sc_dev), 
+		       UHUB_IS_SINGLE_TT(sc) ? "single TT" : "multiple TTs");
+	}
 
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
@@ -448,6 +456,13 @@ uhub_explore(usbd_device_handle dev)
 			printf("%s: port %d, device disappeared after reset\n",
 			       USBDEVNAME(sc->sc_dev), port);
 #endif
+			continue;
+		}
+
+		if (UHUB_IS_HIGH_SPEED(sc) && !(status & UPS_HIGH_SPEED)) {
+			printf("%s: port %d, transaction translation not "
+			       "implemented, low/full speed device ignored\n",
+			       USBDEVNAME(sc->sc_dev), port);
 			continue;
 		}
 
