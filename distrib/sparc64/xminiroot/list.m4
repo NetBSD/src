@@ -1,4 +1,4 @@
-#	$NetBSD: list.m4,v 1.1 2001/01/07 09:30:20 mrg Exp $
+#	$NetBSD: list.m4,v 1.2 2001/07/21 06:01:04 eeh Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -130,4 +130,4 @@ COPY	${OBJDIR}/dot.profile			.profile
 #the lists of obsolete files used by sysinst  
 SPECIAL sh ${CURDIR}/../../sets/makeobsolete -b -s ${CURDIR}/../../sets -t ./dist
 
-ifelse(MACHINE,sparc64, SPECIAL gzip -9 < ${SRCDIR}/sys/arch/sparc64/compile/GENERIC/netbsd > netbsd)
+ifelse(MACHINE,sparc64, SPECIAL gzip -9 < ${KERNOBJDIR}/GENERIC/netbsd > netbsd)
