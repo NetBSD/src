@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.6 1996/12/20 20:16:07 sommerfe Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.7 1997/07/13 19:17:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)pwcache.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: pwcache.c,v 1.6 1996/12/20 20:16:07 sommerfe Exp $";
+__RCSID("$NetBSD: pwcache.c,v 1.7 1997/07/13 19:17:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,7 +52,7 @@ static char rcsid[] = "$NetBSD: pwcache.c,v 1.6 1996/12/20 20:16:07 sommerfe Exp
 #include <utmp.h>
 
 #define	NCACHE	64			/* power of 2 */
-#define	MASK	NCACHE - 1		/* bits to store with */
+#define	MASK	(NCACHE - 1)		/* bits to store with */
 
 char *
 user_from_uid(uid, nouser)
