@@ -95,7 +95,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: mpbios.c,v 1.1.2.1 2000/02/20 17:09:12 sommerfeld Exp $
+ *	$Id: mpbios.c,v 1.1.2.2 2000/02/21 18:46:14 sommerfeld Exp $
  */
 
 /*
@@ -175,7 +175,7 @@ static void mp_print_special_intr (int intr);
 static void mp_print_pci_intr (int intr);
 static void mp_print_isa_intr (int intr);
 
-static int mpbios_cpu __P((const u_int8_t *, struct device *, paddr_t));
+static int mpbios_cpu __P((const u_int8_t *, struct device *));
 static int mpbios_bus __P((const u_int8_t *, struct device *));
 static int mpbios_ioapic __P((const u_int8_t *, struct device *));
 static int mpbios_int __P((const u_int8_t *, int, struct mp_intr_map *));
@@ -318,24 +318,10 @@ mpbios_probe(self)
 	return 0;
 
  found:
-	if(mp_verbose) {
-#if 0
-		int i;
-		u_int8_t *cp = (u_int8_t *)mp_fps;
-#endif
-			
+	if (mp_verbose)
 		printf("%s: MP floating pointer found in %s at 0x%lx\n",
 		    self->dv_xname, loc_where[scan_loc], mp_fp_map.pa);
 
-#if 0
-		printf("%s: Mapped in at %p\n", self->dv_xname, mp_fps);
-		printf("%s: fps is ", self->dv_xname);
-		for (i=0; i<16; i++)
-			printf(" %02x", cp[i]);
-		printf("\n");
-#endif
-	}
-	
 	if (mp_fps->pap == 0) {
 		if (mp_fps->mpfb1 == 0) {
 			printf("%s: MP fps invalid: "
@@ -357,7 +343,7 @@ mpbios_probe(self)
 	
 	mp_cth = mpbios_map (cthpa, cthlen, &mp_cfg_table_map);
 	
-	if(mp_verbose)
+	if (mp_verbose)
 		printf("%s: MP config table at 0x%lx, %d bytes long\n",
 		    self->dv_xname, cthpa, cthlen);
 
@@ -425,7 +411,7 @@ mpbios_search (self, start, count, map)
 	struct mp_map t;
 
 	int i, len;
-	struct mpbios_fps *m;
+	const struct mpbios_fps *m;
 	int end = count - sizeof(*m);
 	const u_int8_t *base = mpbios_map (start, count, &t);	
 
@@ -439,28 +425,10 @@ mpbios_search (self, start, count, map)
 		if ((m->signature == MP_FP_SIG) &&
 		    ((len = m->length << 4) != 0) &&
 		    mpbios_cksum(m, (m->length << 4)) == 0) {
-#if 0
-			int j;
-			const u_int8_t *cp = (const u_int8_t *)m;
-			
-			printf("%s: found at pa 0x%lx, va %p, len is %d\n",
-			    self->dv_xname, start + i, m, len);
 
-			printf("%s: fps is ", self->dv_xname);
-			for (j=0; j<16; j++)
-				printf(" %02x", cp[j]);
-			printf("\n");
-#endif
-			
 			mpbios_unmap (&t);
 
-			m = (struct mpbios_fps *)
-			    mpbios_map (start+i, len, map);
-#if 0
-			printf("%s: remapped at %p", 
-			    self->dv_xname, m);
-#endif
-			return m;
+			return mpbios_map (start+i, len, map);
 		}
 	}
 	mpbios_unmap(&t);
@@ -533,10 +501,11 @@ mpbios_scan(self)
 	int		count;
 	int		type;
 	int		intr_cnt, cur_intr;
+	paddr_t		lapic_base;
 	
 	printf ("%s: Intel MP Specification ", self->dv_xname);
 
-	switch (mp_cth->spec_rev) {
+	switch (mp_fps->spec_rev) {
 	case 1:
 		printf("(Version 1.1)");
 		break;
@@ -544,38 +513,42 @@ mpbios_scan(self)
 		printf("(Version 1.4)");
 		break;
 	default:
-		printf("(unrecognized rev %d)", mp_cth->spec_rev);
+		printf("(unrecognized rev %d)", mp_fps->spec_rev);
 	}
 	
-	printf("\n%s: MP OEM %8.8s Product %12.12s\n",
-	    self->dv_xname, mp_cth->oem_id, mp_cth->product_id);
-
 	/*
 	 * looks like we've got a MP system.  start setting up
 	 * infrastructure..
 	 * XXX is this the right place??
 	 */
-	lapic_vector_init();
 
+	lapic_base = LAPIC_BASE;
+	if (mp_cth != NULL)
+		lapic_base = (paddr_t)mp_cth->apic_address;
+	
+	lapic_boot_init(lapic_base);
+		
 	/* check for use of 'default' configuration */
 	if (mp_fps->mpfb1 != 0) {
-		/* XXX does not handle case of bsp at apic 1, ap at apic 0 */
 		struct mpbios_proc pe;
 
 		extern int cpu_id, cpu_feature;	/* XXX */
 
+		printf("\n%s: MP default configuration %d\n",
+		    self->dv_xname, mp_fps->mpfb1);
+		
 		/* use default addresses */
-		pe.apic_id = 0;
+		pe.apic_id = cpu_number();
 		pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
 		pe.cpu_signature = cpu_id;
 		pe.feature_flags = cpu_feature;
 
-		mpbios_cpu((u_int8_t *)&pe, self, LAPIC_BASE);
+		mpbios_cpu((u_int8_t *)&pe, self);
 
-		pe.apic_id = 1;
+		pe.apic_id = 1 - cpu_number();
 		pe.cpu_flags = PROCENTRY_FLAG_EN;
 
-		mpbios_cpu((u_int8_t *)&pe, self, LAPIC_BASE);
+		mpbios_cpu((u_int8_t *)&pe, self);
 
 		mpbios_ioapic((u_int8_t *)&default_ioapic, self);
 
@@ -591,7 +564,10 @@ mpbios_scan(self)
 		 */
 		if (mp_cth == NULL)
 			panic ("mpbios_scan: no config (can't happen?)");
-		
+
+		printf("\n%s: MP OEM %8.8s Product %12.12s\n",
+		    self->dv_xname, mp_cth->oem_id, mp_cth->product_id);
+
 		/*
 		 * Walk the table once, counting items
 		 */
@@ -643,9 +619,8 @@ mpbios_scan(self)
 		while ((count--) && (position < end)) {
 			switch (type = *(u_char *) position) {
 			case MPS_MCT_CPU:
-				 mpbios_cpu(position, self,
-				     (paddr_t)mp_cth->apic_address);
-				 break;
+				mpbios_cpu(position, self);
+				break;
 			case MPS_MCT_BUS:
 				mpbios_bus(position, self);
 				break;
@@ -682,10 +657,9 @@ mpbios_scan(self)
 }
 
 static int
-mpbios_cpu(ent, self, apic_paddr)
+mpbios_cpu(ent, self)
 	const u_int8_t *ent;
 	struct device *self;
-	paddr_t apic_paddr;
 {
 	const struct mpbios_proc *entry = (const struct mpbios_proc *)ent;
 	struct cpu_attach_args caa;
@@ -705,7 +679,6 @@ mpbios_cpu(ent, self, apic_paddr)
 	caa.cpu_number = entry->apic_id;
 	caa.cpu_func = &mpbios_cpu_funcs;
 	caa.cpu_signature = entry->cpu_signature;
-	caa.lapic_paddr = apic_paddr;
 
 	/*
 	 * XXX this is truncated to just contain the low-order 16 bits
@@ -993,7 +966,7 @@ mpbios_int(ent, enttype, mpi)
 			lapic_ints[pin] = mpi;
 		}
 	}
-	if(mp_verbose) {
+	if (mp_verbose) {
 		char buf[256];
 
 		printf("%s: int%d attached to %s",

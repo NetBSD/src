@@ -74,10 +74,11 @@ void		lapic_microtime __P((struct timeval *));
 static u_int32_t lapic_gettick __P((void));
 void		lapic_clockintr __P((void *));
 void		lapic_initclocks __P((void));
+static void 	lapic_map __P((paddr_t));
 
-void
-lapic_map(apic_paddr)
-	paddr_t apic_paddr;
+static void
+lapic_map(lapic_base)
+	paddr_t lapic_base;
 {
 	int s;
 	pt_entry_t *pte;
@@ -88,7 +89,7 @@ lapic_map(apic_paddr)
 	/*
 	 * Map local apic.
 	 */
-	pmap_enter(pmap_kernel(), va, apic_paddr,
+	pmap_enter(pmap_kernel(), va, lapic_base,
 	    VM_PROT_ALL, PMAP_WIRED|VM_PROT_ALL);
 
 	/*
@@ -160,8 +161,17 @@ lapic_set_lvt ()
  * Initialize fixed idt vectors for use by local apic.
  */
 void
-lapic_vector_init(void)
+lapic_boot_init(lapic_base)
+	paddr_t lapic_base;
 {
+	lapic_map(lapic_base);
+
+#ifdef MULTIPROCESSOR
+	idt_vec_set(LAPIC_IPI_VECTOR, Xintripi);
+	cpu_init_first();
+#endif
+	
+	
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintrltimer);
 
@@ -169,9 +179,6 @@ lapic_vector_init(void)
 	idt_vec_set(LAPIC_SOFTNET_VECTOR, Xintrsoftnet);
 	idt_vec_set(LAPIC_SOFTSER_VECTOR, Xintrsoftser);
 
-#ifdef MULTIPROCESSOR
-	idt_vec_set(LAPIC_IPI_VECTOR, Xintripi);
-#endif
 }
 
 static inline u_int32_t lapic_gettick()
