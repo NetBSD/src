@@ -31,6 +31,7 @@
 #include "symtab.h"
 #include "symfile.h"
 #include "objfiles.h"
+#include "solib.h"
 #include "gdbthread.h"
 #include "bfd.h"
 #include "elf-bfd.h"
@@ -53,12 +54,16 @@ typedef struct fpreg fpregset_t;
 
 /* nbsd_thread_present indicates that new_objfile has spotted
    libpthread and that post_attach() or create_inferior() should fire
-   up thread debugging. */
+   up thread debugging if it isn't already active. */
 static int nbsd_thread_present = 0;
 
 /* nbsd_thread_active indicates that thread debugging is up and running, and
    in particular that main_ta and main_ptid are valid. */
 static int nbsd_thread_active = 0;
+
+/* nbsd_thread_core indicates that we're working on a corefile, not a
+   live process. */ 
+static int nbsd_thread_core = 0;
 
 static ptid_t main_ptid;		/* Real process ID */
 
@@ -85,7 +90,8 @@ static void nbsd_find_new_threads PARAMS ((void));
 #define GET_LWP(ptid)		ptid_get_lwp (ptid)
 #define GET_THREAD(ptid)	ptid_get_tid (ptid)
 
-#define IS_THREAD(ptid)		(GET_LWP (ptid) == 0)
+#define IS_LWP(ptid)		(GET_LWP (ptid) != 0)
+#define IS_THREAD(ptid)		(GET_THREAD (ptid) != 0)
 
 #define BUILD_LWP(lwp, ptid)	ptid_build (GET_PID(ptid), lwp, 0)
 #define BUILD_THREAD(tid, ptid)	ptid_build (GET_PID(ptid), 0, tid)
@@ -96,7 +102,7 @@ static const char *syncnames[] = {"unknown",
 			   "mutex",
 			   "cond var",
 			   "spinlock",
-			   "joining thread"};
+			   "thread"};
 
 struct string_map
   {
@@ -137,58 +143,46 @@ td_err_string (int errcode)
 static void
 nbsd_thread_activate (void)
 {
-  int val;
-  ptid_t ptid;
-
-  val = td_open (&nbsd_thread_callbacks, NULL, &main_ta);
-  if (val != 0)
-    error ("nbsd_thread_activate: td_open: %s",
-	  td_err_string (val));
-
-  main_ptid = inferior_ptid;
   nbsd_thread_active = 1;
+  main_ptid = inferior_ptid;
+  cached_thread = minus_one_ptid;
   nbsd_find_new_threads ();
-  ptid = find_active_thread ();
-  if (ptid_equal (ptid, minus_one_ptid))
-    error ("No active thread found\n");
-  inferior_ptid = ptid;
+  inferior_ptid = find_active_thread ();
 }
 
 static void
 nbsd_thread_deactivate (void)
 {
+  td_close (main_ta);
+
   inferior_ptid = main_ptid;
   main_ptid = minus_one_ptid;
   cached_thread = main_ptid;
   nbsd_thread_active = 0;
+  nbsd_thread_present = 0;
   init_thread_list ();
-
-  td_close (main_ta);
 }
 
 static void
 nbsd_thread_attach (char *args, int from_tty)
 {
+  nbsd_thread_core = 0;
+
+  if (nbsd_thread_present && !nbsd_thread_active)
+    push_target(&nbsd_thread_ops);
+
   child_ops.to_attach (args, from_tty);
 
-  push_target (&nbsd_thread_ops);
-
-  /* Must get symbols from solibs before libthread_db can run! */
-  SOLIB_ADD ((char *) 0, from_tty, (struct target_ops *) 0, auto_solib_add);
-
+  /* seems like a good place to activate, but isn't. Let it happen in
+     nbsd_thread_post_attach(), after a wait has occurred. */
 }
-
-/* Attach to process PID, then initialize for debugging it
-   and wait for the trace-trap that results from attaching.  */
 
 static void
 nbsd_thread_post_attach (int pid)
 {
-  int val;
-
   child_ops.to_post_attach (pid);
 
-  if (nbsd_thread_present)
+  if (nbsd_thread_present && !nbsd_thread_active)
     nbsd_thread_activate ();
 }
 
@@ -204,22 +198,110 @@ nbsd_thread_post_attach (int pid)
 static void
 nbsd_thread_detach (char *args, int from_tty)
 {
-
-  if (nbsd_thread_active)
-    nbsd_thread_deactivate ();
+  nbsd_thread_deactivate ();
   unpush_target (&nbsd_thread_ops);
+  /* Ordinairly, gdb caches solib information, but this means that it
+     won't call the new_obfile hook on a reattach. Clear the symbol file
+     cache so that attach -> detach -> attach works. */
+  clear_solib();
+  symbol_file_clear(0);
   child_ops.to_detach (args, from_tty);
+}
+
+static int nsusp;
+static int nsuspalloc;
+static td_thread_t **susp;
+
+static int
+thread_resume_suspend_cb (td_thread_t *th, void *arg)
+{
+  int val;
+  ptid_t *pt = arg;
+  td_thread_info_t ti;
+
+  if (td_thr_info (th, &ti) != 0)
+      return -1;
+
+  if ((ti.thread_id != GET_THREAD (*pt)) &&
+      (ti.thread_type == TD_TYPE_USER) &&
+      (ti.thread_state != TD_STATE_SUSPENDED) &&
+      (ti.thread_state != TD_STATE_ZOMBIE))
+    {
+      val = td_thr_suspend(th);
+      if (val != 0)
+	error ("thread_resume_suspend_cb: td_thr_suspend(%p): %s", th,
+	       td_err_string (val));
+	
+      if (nsusp == nsuspalloc)
+	{
+	  if (nsuspalloc == 0)
+	    {
+	      nsuspalloc = 32;
+	      susp = malloc (nsuspalloc * sizeof(td_thread_t *));
+	      if (susp == NULL)
+		error ("thread_resume_suspend_cb: out of memory\n");
+	    }
+	  else
+	    {
+	      static td_thread_t **newsusp;
+	      nsuspalloc *= 2;
+	      newsusp = realloc (susp, nsuspalloc * sizeof(td_thread_t *));
+	      if (newsusp == NULL)
+		error ("thread_resume_suspend_cb: out of memory\n");
+	      susp = newsusp;
+	    }
+	}
+      susp[nsusp] = th;
+      nsusp++;
+    }
+  
+  return 0;
 }
 
 static void
 nbsd_thread_resume (ptid_t ptid, int step, enum target_signal signo)
 {
-  child_ops.to_resume (ptid, step, signo);
+
+  /* If a particular ptid is specified, then gdb wants to resume or
+     step just that thread. If it isn't on a processor, then it needs
+     to be put on one, and nothing else can be on the runnable
+     list. */
+  if (GET_PID (ptid) != -1)
+    {
+      int i, val;
+
+      val = td_thr_iter (main_ta, thread_resume_suspend_cb, &ptid);
+      if (val != 0)
+	error ("nbsd_thread_resume td_thr_iter: %s", td_err_string (val));
+
+	child_ops.to_resume (ptid, step, signo);
+
+      /* can't un-suspend just yet, child may not be stopped */
+    }
+  else
+    child_ops.to_resume (ptid, step, signo);
 
   cached_thread = minus_one_ptid;
 }
 
 
+static void
+nbsd_thread_unsuspend(void)
+{
+  int i, val;
+
+  for (i = 0; i < nsusp; i++)
+    {
+      td_thread_info_t ti;
+      td_thr_info(susp[i], &ti);
+      val = td_thr_resume(susp[i]);
+      if (val != 0)
+	error ("nbsd_thread_resume: td_thr_suspend(%p): %s", susp[i],
+	       td_err_string (val));
+    }
+  nsusp = 0;
+}
+  
 static ptid_t
 find_active_thread (void)
 {
@@ -268,6 +350,8 @@ nbsd_thread_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
   ptid_t rtnval;
 
   rtnval = child_ops.to_wait (ptid, ourstatus);
+
+  nbsd_thread_unsuspend();
 
   if (nbsd_thread_active && (ourstatus->kind != TARGET_WAITKIND_EXITED))
     {
@@ -447,7 +531,7 @@ nbsd_thread_new_objfile (struct objfile *objfile)
 
   if (!objfile)
     {
-      nbsd_thread_present = 0;
+      nbsd_thread_active = 0;
       goto quit;
     }
 
@@ -456,7 +540,7 @@ nbsd_thread_new_objfile (struct objfile *objfile)
     goto quit;
 
   /* Don't do anything if we've already fired up the debugging library */
-  if (nbsd_thread_present)
+  if (nbsd_thread_active)
     goto quit;
 
   /* Now, initialize the thread debugging library.  This needs to be
@@ -470,15 +554,21 @@ nbsd_thread_new_objfile (struct objfile *objfile)
       warning ("target_new_objfile: td_open: %s", td_err_string (val));
       goto quit;
     }
-  td_close (main_ta);
+
   nbsd_thread_present = 1;
+
+  if ((nbsd_thread_core == 0) && 
+      !ptid_equal (inferior_ptid, null_ptid))
+    {
+      push_target (&nbsd_thread_ops);
+      nbsd_thread_activate();
+    }
 
  quit:
   /* Call predecessor on chain, if any. */
   if (target_new_objfile_chain)
     target_new_objfile_chain (objfile);
 }
-
 
 static int
 nbsd_thread_alive (ptid_t ptid)
@@ -501,7 +591,7 @@ nbsd_thread_alive (ptid_t ptid)
 		val = 1;
 	    }
 	}
-      else 
+      else if (IS_LWP (ptid))
 	{
 	  struct ptrace_lwpinfo pl;
 	  pl.pl_lwpid = GET_LWP (ptid);
@@ -511,6 +601,8 @@ nbsd_thread_alive (ptid_t ptid)
 	  else
 	    val = 1;
 	}
+      else
+	val = child_ops.to_thread_alive (ptid);
     }
   else
     val = child_ops.to_thread_alive (ptid);
@@ -603,29 +695,15 @@ nbsd_thread_can_run (void)
 static void
 nbsd_thread_create_inferior (char *exec_file, char *allargs, char **env)
 {
-  int val;
+  nbsd_thread_core = 0;
 
-  push_target (&nbsd_thread_ops);
+  if (nbsd_thread_present && !nbsd_thread_active)
+    push_target(&nbsd_thread_ops);
 
   child_ops.to_create_inferior (exec_file, allargs, env);
 
-  if (!nbsd_thread_active && nbsd_thread_present && GET_PID(inferior_ptid) != 0)
-    {
-      nbsd_thread_activate ();
-#if 0
-      /* This is gross. Due to the the differences in when the thread
-	 library gets initialized (static vs. dynamic binaries,
-	 mostly) and calls back to nbsd_thread_wait(), there's no
-	 decent way for the child_ops.to_create_inferior() routine to
-	 call back to us to start threads and find the right current
-	 thread before it prints out a stack frame. So we print out
-	 another stack frame here, after activating, to make sure that
-	 the user sees what we think is interesing. */
-      flush_cached_frames ();
-      select_frame (get_current_frame ());
-      show_and_print_stack_frame (selected_frame, -1, 1);
-#endif
-    }
+  if (nbsd_thread_present && !nbsd_thread_active)
+    nbsd_thread_activate();
 }
 
 
@@ -759,11 +837,13 @@ nbsd_thread_examine_cmd (char *exp, int from_tty)
       if (from_tty)
 	*exp = 0;
     }
+  else
+    return;
 
   if ((ret = td_map_pth2thr (main_ta, (pthread_t) addr, &th)) != 0)
     error ("nbsd_thread_examine_command: td_map_pth2thr: %s",
-	  td_err_string (ret));
-
+	   td_err_string (ret));
+  
   info_cb (th, NULL);
 }
 
@@ -791,6 +871,8 @@ nbsd_thread_sync_cmd (char *exp, int from_tty)
       if (from_tty)
 	*exp = 0;
     }
+  else
+    return;
 
   if ((ret = td_map_addr2sync (main_ta, (caddr_t)addr, &ts)) != 0)
     error ("nbsd_thread_sync_cmd: td_map_addr2sync: %s", td_err_string (ret));
@@ -815,10 +897,7 @@ nbsd_thread_sync_cmd (char *exp, int from_tty)
       if (!tsi.sync_data.spin.locked)
 	printf_filtered (" unlocked ");
       else
-	{
-	  td_thr_info (tsi.sync_data.mutex.owner, &ti);
-	  printf_filtered (" locked (waiters not tracked)");
-	}
+	printf_filtered (" locked (waiters not tracked)");
     }
   else if (tsi.sync_type == TD_SYNC_JOIN)
     {
@@ -887,6 +966,8 @@ nbsd_core_open (char *filename, int from_tty)
   td_thread_t *thread;
   td_thread_info_t ti;
 
+  nbsd_thread_core = 1;
+
   orig_core_ops.to_open (filename, from_tty);
 
   if (nbsd_thread_present)
@@ -901,7 +982,7 @@ nbsd_core_open (char *filename, int from_tty)
 	  nbsd_find_new_threads ();
 	}
       else
-	error ("target_new_objfile: td_open: %s", td_err_string (val));
+	error ("nbsd_core_open: td_open: %s", td_err_string (val));
     }
 }
 
@@ -1138,8 +1219,8 @@ init_nbsd_core_ops (void)
   nbsd_core_ops.to_doc = "NetBSD pthread support for core files.";
   nbsd_core_ops.to_open = nbsd_core_open;
   nbsd_core_ops.to_close = nbsd_core_close;
-  nbsd_core_ops.to_attach = nbsd_thread_attach;
-  nbsd_core_ops.to_post_attach = nbsd_thread_post_attach;
+  nbsd_core_ops.to_attach = 0;
+  nbsd_core_ops.to_post_attach = 0;
   nbsd_core_ops.to_detach = nbsd_core_detach;
   /* nbsd_core_ops.to_resume  = 0; */
   /* nbsd_core_ops.to_wait  = 0;  */
