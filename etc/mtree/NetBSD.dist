@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.280 2005/03/24 05:27:18 rtr Exp $
+#	$NetBSD: NetBSD.dist,v 1.281 2005/03/27 22:30:05 tnozaki Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -456,6 +456,7 @@
 ./usr/share/groff_font/devutf8
 ./usr/share/i18n
 ./usr/share/i18n/csmapper
+./usr/share/i18n/csmapper/CNS
 ./usr/share/i18n/csmapper/CP
 ./usr/share/i18n/csmapper/EBCDIC
 ./usr/share/i18n/csmapper/GB

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.c,v 1.8 2003/10/14 12:50:03 yamt Exp $	*/
+/*	$NetBSD: citrus_euctw.c,v 1.9 2005/03/27 22:30:06 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euctw.c,v 1.8 2003/10/14 12:50:03 yamt Exp $");
+__RCSID("$NetBSD: citrus_euctw.c,v 1.9 2005/03/27 22:30:06 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -382,15 +382,12 @@ _citrus_EUCTW_stdenc_cstowc(_EUCTWEncodingInfo * __restrict ei,
 
 	_DIAGASSERT(ei != NULL && wc != NULL);
 
-	if (csid > 7 || (idx & ~0x7F7F) != 0)
-		return (EINVAL);
-
 	if (csid==0) {
 		if ((idx & ~0x7F) != 0)
 			return (EINVAL);
 		*wc = (wchar_t)idx;
 	} else {
-		if ((idx & ~0x7F7F) != 0)
+		if (csid < 'G' || csid > 'M' || (idx & ~0x7F7F) != 0)
 			return (EINVAL);
 		*wc = (wchar_t)idx | ((wchar_t)csid<<24);
 	}
