@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.46 2001/10/11 15:04:44 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.47 2001/11/17 23:56:22 gmcgarry Exp $
 #
 # hp300-specific configuration info
 
@@ -31,6 +31,12 @@ attach	mainbus at root
 device	intio { }
 attach	intio at mainbus
 file	arch/hp300/dev/intio.c		intio
+
+# Human (Hilarious) Interface Loop
+device	hil { }
+attach	hil at intio
+file	arch/hp300/dev/hil.c			hil	needs-flag
+file	arch/hp300/dev/hil_keymaps.c		hil
 
 #
 # DIO bus
@@ -83,7 +89,7 @@ file	arch/hp300/dev/grf_subr.c	grf
 device	ite: tty
 attach	ite at grf
 file	arch/hp300/dev/ite.c		ite needs-flag
-file	arch/hp300/dev/ite_subr.c	ite
+file	arch/hp300/dev/ite_subr.c	ite 
 
 # Internal i/o framebuffer attachments
 attach	dvbox at intio with dvbox_intio
@@ -174,10 +180,10 @@ file	arch/hp300/dev/ac.c		ac needs-flag
 # RAIDframe
 major	{raid = 15}
 
-# Human (Hilarious) Interface Loop
-# XXX should be a real device
-file	arch/hp300/dev/hil.c
-file	arch/hp300/dev/hil_keymaps.c
+# Real-time clock (not optional)
+device	rtc
+attach	rtc at intio
+file	arch/hp300/dev/rtc.c			rtc
 
 #
 # Non-device files
