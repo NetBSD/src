@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bsd_audio.c,v 1.1 1994/01/09 19:35:00 cgd Exp $
+ *	$Id: bsd_audio.c,v 1.2 1994/04/24 01:29:56 mycroft Exp $
  */
 
 /*
@@ -57,10 +57,10 @@
 #include <sys/vnode.h>
 #include <sys/select.h>
 #include <sys/malloc.h>
-#include <i386/isa/isa.h>
+
 #include <machine/bsd_audioio.h>
 
-#include "sbreg.h"
+#include <i386/isa/sbreg.h>
 
 #define AUDIODEBUG	if (audiodebug) printf
 int	audiodebug = 0;

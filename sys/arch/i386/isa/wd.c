@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.78 1994/04/20 07:23:54 mycroft Exp $
+ *	$Id: wd.c,v 1.79 1994/04/24 01:30:04 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -64,7 +64,6 @@
 #include <machine/cpufunc.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa.h>
 #ifndef NEWCONFIG
 #include <i386/isa/isa_device.h>
 #endif

@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.8 1994/04/22 22:59:00 mycroft Exp $
+ *	$Id: sb.c,v 1.9 1994/04/24 01:30:01 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -43,7 +43,6 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa.h>
 #include <i386/isa/isavar.h>
 #include <i386/isa/dmavar.h>
 #include <i386/isa/icu.h>
