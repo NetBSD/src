@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.4 2000/10/02 06:19:17 itojun Exp $
+$NetBSD: UPDATING,v 1.5 2000/10/14 01:06:55 wiz Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -145,3 +145,6 @@ Fix:	Try the following sequence of commands in the directory in question.
 	make cleandir; rm `make print-objdir`; make cleandir; make obj
 	(If you built the tree without "make obj" in the past, obsolete files
 	may remain.  The command tries to clean everything up)
+
+Symptom:.../sysinst/run.c:xx: warning: initialization from incompatible pointer type
+Fix:	Rebuild and install usr.bin/menuc
