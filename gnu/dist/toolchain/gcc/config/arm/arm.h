@@ -320,9 +320,8 @@ extern const char * target_fp_name;
 function tries to return. */
 #define ARM_FLAG_ABORT_NORETURN (0x8000)
 
-/* Nonzero if the stack should be 64-bit aligned at function boundaries,
-   as mandated by the ATPCS.  */
-#define ARM_FLAG_ATPCS_STACK_ALIGN (0x10000)
+/* Nonzero if we use ATPCS conventions (stack, return-in-mem, etc.)  */
+#define ARM_FLAG_ATPCS (0x10000)
 
 #define TARGET_APCS			(target_flags & ARM_FLAG_APCS_FRAME)
 #define TARGET_POKE_FUNCTION_NAME	(target_flags & ARM_FLAG_POKE)
@@ -346,7 +345,7 @@ function tries to return. */
 #define TARGET_LITTLE_WORDS		(target_flags & ARM_FLAG_LITTLE_WORDS)
 #define TARGET_NO_SCHED_PRO		(target_flags & ARM_FLAG_NO_SCHED_PRO)
 #define TARGET_ABORT_NORETURN           (target_flags & ARM_FLAG_ABORT_NORETURN)
-#define TARGET_ATPCS_STACK_ALIGN	(target_flags & ARM_FLAG_ATPCS_STACK_ALIGN)
+#define TARGET_ATPCS			(target_flags & ARM_FLAG_ATPCS)
 
 /* SUBTARGET_SWITCHES is used to add flags on a per-config basis.
    Bit 31 is reserved.  See riscix.h.  */
@@ -614,7 +613,7 @@ extern int arm_is_6_or_7;
 
 #define STACK_BOUNDARY  32
 
-#define PREFERRED_STACK_BOUNDARY (TARGET_ATPCS_STACK_ALIGN ? 64 : 32)
+#define PREFERRED_STACK_BOUNDARY (TARGET_ATPCS ? 64 : 32)
 
 #define FUNCTION_BOUNDARY  32
 

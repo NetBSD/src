@@ -1367,12 +1367,24 @@ int
 arm_return_in_memory (type)
      tree type;
 {
+  HOST_WIDE_INT size;
+
   if (! AGGREGATE_TYPE_P (type))
     {
       /* All simple types are returned in registers. */
       return 0;
     }
-  else if (int_size_in_bytes (type) > 4)
+
+  size = int_size_in_bytes (type);
+
+  if (TARGET_ATPCS)
+    {
+      /* ATPCS returns aggregate types in memory only if they are
+	 larger than a word (or are variable size).  */
+      return (size < 0 || size > 4);
+    }
+
+  if (size < 0 || size > 4)
     {
       /* All structures/unions bigger than one word are returned in memory. */
       return 1;
@@ -5998,7 +6010,7 @@ int arm_get_frame_size ()
   int volatile_func = (optimize > 0
 		       && TREE_THIS_VOLATILE (current_function_decl));
 
-  if (! TARGET_ATPCS_STACK_ALIGN)
+  if (! TARGET_ATPCS)
     return base_size;
 
   /* We know that SP will be word aligned on entry, and we must
