@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_emul.c,v 1.5 1996/11/13 21:13:41 cgd Exp $	*/
+/*	$NetBSD: wscons_emul.c,v 1.6 1996/11/16 23:10:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -55,8 +55,9 @@ wscons_emul_attach(we, wo)
 	if (wo->wo_ef == NULL)
 		panic("wscons_emul_attach: bogus emul functions");
 #endif
-	if (wo->wo_nrows < 0 || wo->wo_ncols < 0)
-		panic("wscons_emul_attach: bogus size");
+	if (wo->wo_nrows <= 0 || wo->wo_ncols <= 0)
+		panic("wscons_emul_attach: bogus size (%d/%d)",
+		    wo->wo_nrows, wo->wo_ncols);
 	if (wo->wo_crow < 0 || wo->wo_ccol < 0 ||
 	    wo->wo_crow >= wo->wo_nrows || wo->wo_ccol >= wo->wo_ncols)
 		panic("wscons_emul_attach: bogus location (n: %d/%d, c: %d/%d",
