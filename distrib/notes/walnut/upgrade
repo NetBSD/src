@@ -1,0 +1,5 @@
+.\"	$NetBSD: upgrade,v 1.1.2.2 2002/06/19 00:53:17 lukem Exp $
+.
+This is the first release of
+.Nx*M ,
+and as such, there is no ability to upgrade from a prior release.
