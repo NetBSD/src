@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.8.2.1 2002/06/07 18:43:00 thorpej Exp $	*/
+/*	$NetBSD: file.c,v 1.8.2.2 2002/12/11 17:26:29 he Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.8.2.1 2002/06/07 18:43:00 thorpej Exp $");
+__RCSID("$NetBSD: file.c,v 1.8.2.2 2002/12/11 17:26:29 he Exp $");
 #endif
 
 #include "os.h"
@@ -521,7 +521,7 @@ GetElfFileInfo(dl)
 	}
 
 	dl->image_type = IMAGE_TYPE_ELF32;
-	dl->loadaddr = e_entry;		/* We assume the standalone program */
+	dl->loadaddr = 0;
 	dl->xferaddr = e_entry;		/* will relocate itself if necessary */
 
 	if (e_phnum > SEC_MAX)
@@ -1068,6 +1068,9 @@ mopFileRead(dlslot, buf)
 		
 		dlslot->a_lseek = pos;
 		break;
+
+	default:
+		abort();
 	}
 
 	return(len);
