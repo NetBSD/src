@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.23 2003/01/18 10:54:11 thorpej Exp $	*/
+/*	$NetBSD: pigs.c,v 1.24 2003/02/24 10:10:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.23 2003/01/18 10:54:11 thorpej Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.24 2003/02/24 10:10:00 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -77,7 +77,7 @@ WINDOW *
 openpigs(void)
 {
 
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, -1, 0, 5, 0));
 }
 
 void
