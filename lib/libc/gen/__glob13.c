@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.13.4.1 2001/03/29 13:03:58 lukem Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.13.4.2 2001/04/04 15:52:37 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.13.4.1 2001/03/29 13:03:58 lukem Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.13.4.2 2001/04/04 15:52:37 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -171,7 +171,7 @@ static int	 glob2 __P((Char *, Char *, Char *, glob_t *, size_t *));
 static int	 glob3 __P((Char *, Char *, Char *, Char *, glob_t *,
     size_t *));
 static int	 globextend __P((const Char *, glob_t *, size_t *));
-static const Char *	 globtilde __P((const Char *, Char *, size_t, glob_t *));
+static const Char *globtilde __P((const Char *, Char *, size_t, glob_t *));
 static int	 globexp1 __P((const Char *, glob_t *));
 static int	 globexp2 __P((const Char *, const Char *, glob_t *, int *));
 static int	 match __P((Char *, Char *, Char *));
@@ -385,7 +385,7 @@ globtilde(pattern, patbuf, patsize, pglob)
 	const Char *p;
 	Char *b;
 	char *d;
-	Char *pend = &patbuf[patsize];
+	Char *pend = &patbuf[patsize / sizeof(Char)];
 
 	pend--;
 
@@ -468,7 +468,8 @@ glob0(pattern, pglob)
 	_DIAGASSERT(pattern != NULL);
 	_DIAGASSERT(pglob != NULL);
 
-	if ((qpatnext = globtilde(pattern, patbuf, sizeof(patbuf), pglob)) == NULL)
+	if ((qpatnext = globtilde(pattern, patbuf, sizeof(patbuf),
+	    pglob)) == NULL)
 		return GLOB_ABEND;
 	oldpathc = pglob->gl_pathc;
 	bufnext = patbuf;
