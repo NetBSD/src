@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.19 1998/07/02 23:30:18 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.20 1998/07/04 21:53:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.19 1998/07/02 23:30:18 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.20 1998/07/04 21:53:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.19 1998/07/02 23:30:18 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.20 1998/07/04 21:53:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -695,6 +695,7 @@ Suff_EndTransform(gnp, dummy)
 	Lst_IsEmpty(gn->children))
     {
 	Suff	*s, *t;
+	Lst	 p;
 
 	(void)SuffParseTransform(gn->name, &s, &t);
 
@@ -702,6 +703,11 @@ Suff_EndTransform(gnp, dummy)
 	    printf("deleting transformation from `%s' to `%s'\n",
 		    s->name, t->name);
 	}
+
+	/*
+	 * Store s->parents because s could be deleted in SuffRemove
+	 */
+	p = s->parents;
 
 	/*
 	 * Remove the source from the target's children list. We check for a
@@ -716,7 +722,7 @@ Suff_EndTransform(gnp, dummy)
 	/*
 	 * Remove the target from the source's parents list
 	 */
-	SuffRemove(s->parents, t);
+	SuffRemove(p, t);
     } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
 	printf("transformation %s complete\n", gn->name);
     }
