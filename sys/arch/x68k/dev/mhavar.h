@@ -1,4 +1,4 @@
-/*	$NetBSD: mhavar.h,v 1.5 2001/04/25 17:53:26 bouyer Exp $	*/
+/*	$NetBSD: mhavar.h,v 1.6 2004/12/07 22:23:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -51,7 +51,7 @@ struct acb {
 #define	ACB_ABORTED	0x10
 #define	ACB_RESET	0x80
 #define ACB_SETQ(e, q)	do (e)->flags = ((e)->flags&~ACB_QBITS)|(q); while(0)
-	struct scsi_generic cmd;  /* SCSI command block */
+	struct scsipi_generic cmd;  /* SCSI command block */
 	int	 clen;
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */

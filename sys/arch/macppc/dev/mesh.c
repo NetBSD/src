@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.19 2003/07/15 02:43:29 lukem Exp $	*/
+/*	$NetBSD: mesh.c,v 1.20 2004/12/07 22:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.19 2003/07/15 02:43:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.20 2004/12/07 22:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -84,7 +84,7 @@ struct mesh_scb {
 	TAILQ_ENTRY(mesh_scb) chain;
 	int flags;
 	struct scsipi_xfer *xs;
-	struct scsi_generic cmd;
+	struct scsipi_generic cmd;
 	int cmdlen;
 	int target;			/* target SCSI ID */
 	int resid;

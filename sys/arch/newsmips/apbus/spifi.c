@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.11 2003/07/15 02:59:28 lukem Exp $	*/
+/*	$NetBSD: spifi.c,v 1.12 2004/12/07 22:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.11 2003/07/15 02:59:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spifi.c,v 1.12 2004/12/07 22:23:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -62,7 +62,7 @@ struct spifi_scb {
 	TAILQ_ENTRY(spifi_scb) chain;
 	int flags;
 	struct scsipi_xfer *xs;
-	struct scsi_generic cmd;
+	struct scsipi_generic cmd;
 	int cmdlen;
 	int resid;
 	vaddr_t daddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.8 2004/09/25 12:17:30 tsutsui Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.9 2004/12/07 22:23:45 thorpej Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -67,7 +67,7 @@
  * occasionally xs->retries.
  */
 struct spc_acb {
-	struct scsi_generic scsipi_cmd;
+	struct scsipi_generic scsipi_cmd;
 	int scsipi_cmd_length;
 	u_char *data_addr;		/* Saved data pointer */
 	int data_length;		/* Residue */
