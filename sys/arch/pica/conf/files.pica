@@ -1,4 +1,4 @@
-#	$NetBSD: files.pica,v 1.7.2.1 1997/08/27 22:33:19 thorpej Exp $
+#	$NetBSD: files.pica,v 1.7.2.2 1997/10/15 22:55:00 thorpej Exp $
 maxpartitions 8
 maxusers 2 8 64
 
@@ -39,9 +39,9 @@ attach asc at pica
 file	arch/pica/dev/asc.c		asc	needs-count
 
 #	NS16450/16550 Serial line driver
-device com
-attach com at pica
-file	arch/pica/dev/com.c		com	needs-count
+device pcom
+attach pcom at pica
+file	arch/pica/dev/com.c		pcom	needs-count
 
 #	Parallel printer port driver
 device lpt
