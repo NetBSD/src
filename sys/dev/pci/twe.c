@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.54 2003/12/04 05:46:47 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.54.2.1 2004/05/30 07:10:42 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.54 2003/12/04 05:46:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.54.2.1 2004/05/30 07:10:42 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1635,8 +1635,8 @@ tweclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-static void
-twe_tweio_command_handler(struct twe_ccb *ccb, int error)
+void
+twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
 {
 
 	/* Just wake up the sleeper. */
@@ -1697,7 +1697,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			KASSERT(ccb != NULL);
 		}
 
-		ccb->ccb_tx.tx_handler = twe_tweio_command_handler;
+		ccb->ccb_tx.tx_handler = twe_ccb_wait_handler;
 		ccb->ccb_tx.tx_context = NULL;
 		ccb->ccb_tx.tx_dv = &twe->sc_dv;
 
