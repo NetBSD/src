@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.21 1999/02/26 23:44:46 wrstuden Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.22 1999/05/02 00:18:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -188,7 +188,7 @@ union_mount(mp, path, data, ndp, p)
 
 	um->um_cred = p->p_ucred;
 	crhold(um->um_cred);
-	um->um_cmode = UN_DIRMODE &~ p->p_fd->fd_cmask;
+	um->um_cmode = UN_DIRMODE &~ p->p_cwdi->cwdi_cmask;
 
 	/*
 	 * Depending on what you think the MNT_LOCAL flag might mean,
