@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.27 1999/05/02 20:53:22 is Exp $
+#	$NetBSD: install.sub,v 1.28 1999/05/16 20:42:27 is Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -373,6 +373,7 @@ configure_ifs() {
 	local _interface_extra
 	local _interface_mediumtype
 	local _interface_supported_media
+	local _m
 
 	_interface_name=$1
 	_up=DOWN
@@ -426,8 +427,10 @@ configure_ifs() {
 	echo " $_interface_supported_media."
 	echo -n "Additional media type arguments? [$_interface_mediumtype] "
 	getresp "$_interface_mediumtype"
+	_m=""
 	if [ "X${resp}" != X"" ]; then
 		_interface_mediumtype=$resp
+		_m="media ${resp}"
 	fi
 
 
@@ -448,26 +451,27 @@ configure_ifs() {
 		ifconfig ${_interface_name} down
 		if ifconfig ${_interface_name} inet \
 		    ${_interface_ip} \
-		    netmask ${_interface_mask} ${_interface_extra} up ; then
+		    netmask ${_interface_mask} \
+		    ${_interface_extra} ${_m} up ; then
 			addifconfig \
-			    ${_interface_name} \
-			    ${_interface_symname} \
-			    ${_interface_ip} \
-			    ${_interface_mask} \
-			    ${_interface_mediumtype} \
-			    ${_interface_extra}
+			    "${_interface_name}" \
+			    "${_interface_symname}" \
+			    "${_interface_ip}" \
+			    "${_interface_mask}" \
+			    "${_interface_mediumtype}" \
+			    "${_interface_extra}"
 			return 0
 		fi
 	else
 		echo "Interface ${_interface_name} is already active."
 		echo "Just saving configuration on new root filesystem."
 		addifconfig \
-		    ${_interface_name} \
-		    ${_interface_symname} \
-		    ${_interface_ip} \
-		    ${_interface_mask} \
-		    ${_interface_mediumtype} \
-		    ${_interface_extra}
+		    "${_interface_name}" \
+		    "${_interface_symname}" \
+		    "${_interface_ip}" \
+		    "${_interface_mask}" \
+		    "${_interface_mediumtype}" \
+		    "${_interface_extra}"
 	fi
 	return 1
 }
