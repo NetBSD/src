@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.2 1998/07/07 03:05:05 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -613,7 +613,6 @@ OF_boot(bootspec)
 		panic("OF_boot");
 	args.bootspec = bootspec;
 	openfirmware(&args);
-	while (1);			/* just in case */
 }
 
 void
@@ -646,7 +645,22 @@ OF_exit()
 	};
 
 	openfirmware(&args);
-	while (1);			/* just in case */
+}
+
+void
+OF_poweroff()
+{
+	static struct {
+		int pad0; char *name;
+		int64_t nargs;
+		int64_t nreturns;
+	} args = {
+		0, "SUNW,power-off",
+		0,
+		0,
+	};
+
+	openfirmware(&args);
 }
 
 void
