@@ -1,13 +1,19 @@
-#	$NetBSD: Makefile,v 1.36 2003/09/26 18:13:36 christos Exp $
+#	$NetBSD: Makefile,v 1.37 2003/10/04 20:29:52 christos Exp $
 
 SUBDIR+= _setjmp atexit basename clone convfp db dirname div divrem \
 	gen getaddrinfo hsearch int_fmtio locale md5sha popen regex rpc \
-	setjmp siginfo sigsetjmp stdio stdlib string sys time
+	setjmp sigsetjmp stdio stdlib string sys time
 .if (${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m68000")
 SUBDIR+= ieeefp
 .endif
 .if (${MACHINE_ARCH} != "vax")
 SUBDIR+= ldexp
+.endif
+
+HAVE_SIGINFO != if (echo "\#include <signal.h>" && echo "SA_SIGINFO") | ${CC} -E - | grep -sq 0x0040; then echo yes; else echo no; fi
+
+.if (${HAVE_SIGINFO} == "yes")
+SUBDIR+= siginfo
 .endif
 
 .if exists(arch/${MACHINE_ARCH})
