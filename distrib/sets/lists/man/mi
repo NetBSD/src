@@ -845,6 +845,7 @@
 ./usr/share/man/cat9/fddi_delmulti.0
 ./usr/share/man/cat9/fddi_ifattach.0
 ./usr/share/man/cat9/fetch.0
+./usr/share/man/can9/fork1.0
 ./usr/share/man/cat9/free.0
 ./usr/share/man/cat9/fubyte.0
 ./usr/share/man/cat9/fuibyte.0
@@ -1776,6 +1777,7 @@
 ./usr/share/man/man9/fddi_delmulti.9
 ./usr/share/man/man9/fddi_ifattach.9
 ./usr/share/man/man9/fetch.9
+./usr/share/man/man9/fork1.9
 ./usr/share/man/man9/free.9
 ./usr/share/man/man9/fubyte.9
 ./usr/share/man/man9/fuibyte.9
