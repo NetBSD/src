@@ -1,8 +1,7 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 1/25/94
-#	$Id: Makefile,v 1.6 1994/12/22 11:21:35 cgd Exp $
+#	$Id: Makefile,v 1.7 1996/02/20 00:14:43 jtc Exp $
 
 PROG=	mail
-CFLAGS+=-DUSE_OLD_TTY
 SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c edit.c fio.c \
 	getname.c head.c v7.local.c lex.c list.c main.c names.c popen.c \
 	quit.c send.c strings.c temp.c tty.c vars.c
