@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.22 2001/05/06 23:48:32 wiz Exp $
+.\"	$NetBSD: systat.1,v 1.23 2001/07/08 18:16:40 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -208,9 +208,9 @@ option, number of refresh-turns can be changed with the
 option.
 .It Ic bufcache
 Display, in the lower window, statistics about the file system buffers.
-Statistics for each filesystem that has active buffers include the number
+Statistics for each file system that has active buffers include the number
 of buffers for that file system, the number of active kilobytes in those
-buffers and the total size of the buffers for that filesystem.
+buffers and the total size of the buffers for that file system.
 .It Ic inet.icmp
 Display ICMP statistics.
 .It Ic inet.ip
@@ -486,7 +486,6 @@ Display statistics averaged over the refresh interval (the default).
 .It Cm zero
 Reset running statistics to zero.
 .El
-.Pp
 .Sh FILES
 .Bl -tag -width /etc/networks -compact
 .It Pa /netbsd
