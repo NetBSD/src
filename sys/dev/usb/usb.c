@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.24 1999/09/15 21:10:11 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.25 1999/09/18 11:25:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,10 +99,11 @@ struct usb_softc {
 	USBBASEDEVICE	sc_dev;		/* base device */
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
-	char		sc_exploring;
-	char		sc_dying;
+
 	struct selinfo	sc_consel;	/* waiting for connect change */
 	struct proc    *sc_event_thread;
+
+	char		sc_dying;
 };
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -289,11 +290,6 @@ usbioctl(dev, cmd, data, flag, p)
 		usbdebug = uhcidebug = ohcidebug = *(int *)data;
 		break;
 #endif
-#if 0
-	case USB_DISCOVER:
-		usb_discover(sc);
-		break;
-#endif
 	case USB_REQUEST:
 	{
 		struct usb_ctl_request *ur = (void *)data;
@@ -404,28 +400,19 @@ usbpoll(dev, events, p)
 	return (revents);
 }
 
+/* Explore device tree from the root. */
 usbd_status
 usb_discover(sc)
 	struct usb_softc *sc;
 {
-	int s;
-
-	/* Explore device tree from the root */
-	/* We need mutual exclusion while traversing the device tree. */
+	/* 
+	 * We need mutual exclusion while traversing the device tree,
+	 * but this is guaranteed since this function is only called
+	 * from the event thread for the controller.
+	 */
 	do {
-		s = splusb();
-		while (sc->sc_exploring)
-			tsleep(&sc->sc_exploring, PRIBIO, "usbdis", 0);
-		sc->sc_exploring = 1;
 		sc->sc_bus->needs_explore = 0;
-		splx(s);
-		
 		sc->sc_bus->root_hub->hub->explore(sc->sc_bus->root_hub);
-		
-		s = splusb();
-		sc->sc_exploring = 0;
-		wakeup(&sc->sc_exploring);
-		splx(s);
 	} while (sc->sc_bus->needs_explore && !sc->sc_dying);
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -445,7 +432,8 @@ usb_activate(self, act)
 	enum devact act;
 {
 	struct usb_softc *sc = (struct usb_softc *)self;
-	int rv = 0;
+	usbd_device_handle dev = sc->sc_port.device;
+	int i, rv = 0;
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -454,6 +442,10 @@ usb_activate(self, act)
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
+		if (dev && dev->cdesc && dev->subdevs) {
+			for (i = 0; dev->subdevs[i]; i++)
+				rv |= config_deactivate(dev->subdevs[i]);
+		}
 		break;
 	}
 	return (rv);
@@ -469,7 +461,8 @@ usb_detach(self, flags)
 	sc->sc_dying = 1;
 
 	/* Make all devices disconnect. */
-	usb_disconnect_port(&sc->sc_port);
+	if (sc->sc_port.device)
+		usb_disconnect_port(&sc->sc_port);
 
 	/* Kill off event thread. */
 	if (sc->sc_event_thread) {
