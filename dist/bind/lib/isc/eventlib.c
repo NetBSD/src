@@ -1,4 +1,4 @@
-/*	$NetBSD: eventlib.c,v 1.4 2002/06/20 11:43:07 itojun Exp $	*/
+/*	$NetBSD: eventlib.c,v 1.5 2002/07/04 23:30:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium
@@ -293,12 +293,12 @@ evGetNext(evContext opaqueCtx, evEvent *opaqueEv, int options) {
 			}
 
 			evPrintf(ctx, 4,
-				"pselect(%d, 0x%lx, 0x%lx, 0x%lx, %d.%09ld)\n",
+				"pselect(%d, 0x%lx, 0x%lx, 0x%lx, %ld.%09ld)\n",
 				 ctx->fdMax+1,
 				 (u_long)ctx->rdLast.fds_bits[0],
 				 (u_long)ctx->wrLast.fds_bits[0],
 				 (u_long)ctx->exLast.fds_bits[0],
-				 tp ? (int)tp->tv_sec : -1,
+				 tp ? (long)tp->tv_sec : -1,
 				 tp ? tp->tv_nsec : -1);
 
 			/* XXX should predict system's earliness and adjust. */
