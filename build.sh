@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.40 2002/01/19 16:49:28 tv Exp $
+#  $NetBSD: build.sh,v 1.41 2002/01/29 08:46:59 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -229,7 +229,7 @@ if $do_rebuildmake; then
 	tmpdir=${TMPDIR-/tmp}/nbbuild$$
 
 	$runcmd mkdir $tmpdir || bomb "cannot mkdir: $tmpdir"
-	trap "rm -r -f $tmpdir" 0
+	trap "cd /; rm -r -f $tmpdir" 0
 	trap "exit 1" 1 2 3 15
 	$runcmd cd $tmpdir
 
@@ -343,7 +343,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.40 2002/01/19 16:49:28 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.41 2002/01/29 08:46:59 tv Exp $
 #
 
 EOF
