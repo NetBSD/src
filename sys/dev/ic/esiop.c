@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.24 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: esiop.c,v 1.25 2004/03/10 21:51:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.24 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.25 2004/03/10 21:51:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -924,8 +924,7 @@ scintr:
 				scsipi_printaddr(xs->xs_periph);
 			else
 				printf("%s: ", sc->sc_c.sc_dev.dv_xname);
-			printf("unhandled message 0x%x\n",
-			    esiop_cmd->cmd_tables->msg_in[0]);
+			printf("unhandled message 0x%x\n", msgin);
 			esiop_cmd->cmd_tables->msg_out[0] = MSG_MESSAGE_REJECT;
 			esiop_cmd->cmd_tables->t_msgout.count= htole32(1);
 			esiop_table_sync(esiop_cmd,
