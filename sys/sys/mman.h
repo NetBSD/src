@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.28 2000/10/18 01:43:18 assar Exp $	*/
+/*	$NetBSD: mman.h,v 1.29 2003/03/06 00:41:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -98,6 +98,20 @@ typedef	__off_t		off_t;		/* file offset */
  */
 #define	MAP_FILE	0x0000	/* map from file (default) */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
+
+/*
+ * Alignment (expressed in log2).  Must be >= log2(PAGE_SIZE) and
+ * < # bits in a pointer (26 (acorn26), 32 or 64).
+ */
+#define	MAP_ALIGNED(n)		((n) << MAP_ALIGNMENT_SHIFT)
+#define	MAP_ALIGNMENT_SHIFT	24
+#define	MAP_ALIGNMENT_MASK	MAP_ALIGNED(0xff)
+#define	MAP_ALIGNMENT_64KB	MAP_ALIGNED(16)	/* 2^16 */
+#define	MAP_ALIGNMENT_16MB	MAP_ALIGNED(24)	/* 2^24 */
+#define	MAP_ALIGNMENT_4GB	MAP_ALIGNED(32)	/* 2^32 */
+#define	MAP_ALIGNMENT_1TB	MAP_ALIGNED(40)	/* 2^40 */
+#define	MAP_ALIGNMENT_256TB	MAP_ALIGNED(48)	/* 2^48 */
+#define	MAP_ALIGNMENT_64PB	MAP_ALIGNED(56)	/* 2^56 */
 
 /*
  * Error indicator returned by mmap(2)
