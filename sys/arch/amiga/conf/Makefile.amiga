@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.70 1998/04/12 23:47:42 tv Exp $
+#	$NetBSD: Makefile.amiga,v 1.71 1998/05/23 20:51:15 is Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,8 @@ CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-.if empty(IDENT:M-DM68060)
+OPT_M68KCPU!=	cpp -E -dM opt_m68kcpu.h
+.if empty(OPT_M68KCPU:MM68060)
 CMACHFLAGS=	-m68020
 .else
 CMACHFLAGS=	-m68060 -Wa,-m68030

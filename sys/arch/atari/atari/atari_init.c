@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.36 1998/02/24 13:02:06 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.37 1998/05/23 20:51:08 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,6 +31,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_m68kcpu.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.1 1997/06/02 20:26:57 leo Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.2 1998/05/23 20:51:11 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_m68kcpu.h"
 
 #include <sys/cdefs.h>
 #include <sys/types.h>

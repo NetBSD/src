@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 1998/03/21 08:05:37 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 1998/05/23 20:51:10 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -43,6 +43,7 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include "opt_m68kcpu.h"
 #include "opt_uvm.h"
 
 #include "assym.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.195 1998/05/05 06:48:52 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.196 1998/05/23 20:51:11 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,6 +77,7 @@
  */
 
 #include "opt_adb.h"
+#include "opt_m68kcpu.h"
 #include "opt_uvm.h"
 #include "zsc.h"
 

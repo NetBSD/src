@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 1998/05/19 19:00:14 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 1998/05/23 20:51:09 is Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -74,6 +74,7 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+#include "opt_m68kcpu.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
