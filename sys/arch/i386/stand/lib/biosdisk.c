@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.2 1997/03/22 01:33:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -180,12 +180,16 @@ unsigned int partition;
       sector = dptr->dp_start;
       break;
     }
-  if(sector == -1){
-#ifdef DISK_DEBUG
-    printf("no BSD partition\n");
-#endif
-    error = EUNLAB; /* ??? */
-    goto out;
+
+  if (sector == -1) {
+    /*
+     * One of two things:
+     *   1. no MBR
+     *   2. no NetBSD partition in MBR
+     *
+     * We simply default to "start of disk" in this case and press on.
+     */
+    sector = 0;
   }
 
 #ifdef NO_DISKLABEL
