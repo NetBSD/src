@@ -1,3 +1,4 @@
+/*	$NetBSD: authpf.c,v 1.2 2004/06/25 00:06:09 itojun Exp $	*/
 /*	$OpenBSD: authpf.c,v 1.75 2004/01/29 01:55:10 deraadt Exp $	*/
 
 /*
@@ -30,8 +31,10 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/param.h>
 
 #include <net/if.h>
+#include <netinet/in.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
@@ -298,6 +301,7 @@ dogdeath:
 	sleep(180); /* them lusers read reaaaaal slow */
 die:
 	do_death(0);
+	return (0);
 }
 
 /*
