@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.55 2004/06/15 21:52:00 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.56 2004/06/16 14:26:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.55 2004/06/15 21:52:00 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.56 2004/06/16 14:26:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -969,24 +969,24 @@ longlink(ARCHD *arcn, int type)
 {
 	ARCHD larc;
 
-	memset(&larc, 0, sizeof(larc));
+	(void)memset(&larc, 0, sizeof(larc));
 
-	switch (arcn->type) {
-	case PAX_SLK:
-	case PAX_HRG:
-	case PAX_HLK:
-		larc.type = type;
-		larc.nlen = strlcpy(larc.name, LONG_LINK,
-		    sizeof(larc.ln_name));
+	larc.type = type;
+	larc.nlen = strlcpy(larc.name, LONG_LINK, sizeof(larc.name));
+
+	switch (type) {
+	case PAX_GLL:
 		gnu_hack_string = arcn->ln_name;
 		gnu_hack_len = arcn->ln_nlen + 1;
 		break;
-	default:
-		larc.type = type;
-		larc.nlen = strlcpy(larc.name, LONG_LINK, sizeof(larc.name));
+	case PAX_GLF:
 		gnu_hack_string = arcn->name;
 		gnu_hack_len = arcn->nlen + 1;
+		break;
+	default:
+		errx(1, "Invalid type in GNU longlink %d\n", type);
 	}
+
 	/*
 	 * We need a longlink now.
 	 */
