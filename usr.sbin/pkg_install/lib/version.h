@@ -1,9 +1,4 @@
-/*	$NetBSD: version.h,v 1.2 2001/03/05 18:12:49 wiz Exp $	*/
-
-#include <sys/cdefs.h>
-#ifndef lint
-__RCSID("$NetBSD: version.h,v 1.2 2001/03/05 18:12:49 wiz Exp $");
-#endif
+/*	$NetBSD: version.h,v 1.3 2001/03/07 09:44:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001 Thomas Klausner.  All rights reserved.
