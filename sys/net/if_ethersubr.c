@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.39 1998/12/10 15:50:54 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.40 1999/03/10 03:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -664,7 +664,7 @@ ether_input(ifp, eh, m)
 static char digits[] = "0123456789abcdef";
 char *
 ether_sprintf(ap)
-	u_char *ap;
+	const u_char *ap;
 {
 	static char etherbuf[18];
 	char *cp = etherbuf;
