@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.21 1997/09/05 10:52:10 fvdl Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.22 1997/10/08 16:55:41 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static char rcsid[] = "$NetBSD: nfsd.c,v 1.21 1997/09/05 10:52:10 fvdl Exp $";
+static char rcsid[] = "$NetBSD: nfsd.c,v 1.22 1997/10/08 16:55:41 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ main(argc, argv, envp)
 #define	GETOPT	"n:rtu"
 #define	USAGE	"[-rtu] [-n num_servers]"
 #endif
-	while ((ch = getopt(argc, argv, GETOPT)) != EOF)
+	while ((ch = getopt(argc, argv, GETOPT)) != -1)
 		switch (ch) {
 		case 'n':
 			nfsdcnt = atoi(optarg);
