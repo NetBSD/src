@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 1999/02/26 12:05:49 is Exp $	*/
+/*	$NetBSD: cpu.c,v 1.22 2000/02/13 04:59:58 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -99,10 +99,7 @@ cpumatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-
-	if (cf->cf_unit == 0)
-		return(1);
-	return(0);
+	return(1);
 }
 
 

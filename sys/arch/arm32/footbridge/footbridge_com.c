@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.2 1998/10/05 02:36:02 mark Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.3 2000/02/13 04:59:57 mark Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -153,7 +153,7 @@ fcom_probe(parent, cf, aux)
 {
 	union footbridge_attach_args *fba = aux;
 
-	if (strcmp(fba->fba_name, "fcom") == 0 && cf->cf_unit == 0)
+	if (strcmp(fba->fba_name, "fcom") == 0)
 		return(1);
 	return(0);
 }
