@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.2 1998/01/09 08:06:58 perry Exp $	*/
+/*	$NetBSD: options.c,v 1.3 1999/01/08 06:16:54 abs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -82,6 +82,10 @@ OPTLIST const optlist[] = {
 	{"filec",	NULL,		OPT_STR,	0},
 /* O_FLASH	    HPUX */
 	{"flash",	NULL,		OPT_1BOOL,	0},
+#ifdef GTAGS
+/* O_GTAGSMODE      FreeBSD, NetBSD */
+	{"gtagsmode",   NULL,           OPT_0BOOL,      0},
+#endif
 /* O_HARDTABS	    4BSD */
 	{"hardtabs",	NULL,		OPT_NUM,	0},
 /* O_ICLOWER	  4.4BSD */
@@ -242,6 +246,9 @@ static OABBREV const abbrev[] = {
 	{"eb",		O_ERRORBELLS},		/*     4BSD */
 	{"ed",		O_EDCOMPATIBLE},	/*     4BSD */
 	{"ex",		O_EXRC},		/* System V (undocumented) */
+#ifdef GTAGS
+	{"gt",		O_GTAGSMODE},		/* FreeBSD, NetBSD */
+#endif
 	{"ht",		O_HARDTABS},		/*     4BSD */
 	{"ic",		O_IGNORECASE},		/*     4BSD */
 	{"li",		O_LINES},		/*   4.4BSD */
