@@ -1,0 +1,20 @@
+#	$NetBSD: files.ofisa,v 1.1 1998/02/07 00:46:48 cgd Exp $
+
+# OFW ISA bus support
+# XXX eventually we should do something with these locators
+define	ofisa { [i = -1], [it = -1], [iv = -1], [m = -1] }
+device	ofisa: ofisa, openfirm
+attach	ofisa at openfirm
+file	dev/ofisa/ofisa.c		ofisa
+
+# attachment for MI com driver
+attach	com at ofisa with com_ofisa
+file	dev/ofisa/com_ofisa.c		com_ofisa
+
+# attachment for MI lpt driver
+attach	lpt at ofisa with lpt_ofisa
+file	dev/ofisa/lpt_ofisa.c		lpt_ofisa
+
+# attachment for MI wdc driver
+attach	wdc at ofisa with wdc_ofisa
+file	dev/ofisa/wdc_ofisa.c		wdc_ofisa
