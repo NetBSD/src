@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.10 2000/06/30 03:35:32 matt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.11 2000/07/01 06:38:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@
 #define	_BSD_SSIZE_T_		int		/* byte count or error */
 #define	_BSD_TIME_T_		long		/* time() */
 #if __GNUC_PREREQ__(2,96)
-#define	_BSD_VA_LIST_		__builtin_va_list * /* va_list */
+#define	_BSD_VA_LIST_		__builtin_va_list /* va_list */
 #else
 #define	_BSD_VA_LIST_		char *		/* va_list */
 #endif
