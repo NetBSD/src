@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.17 1995/04/19 19:15:49 mycroft Exp $	*/
+/*	$NetBSD: dcm.c,v 1.18 1995/10/04 06:39:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -330,6 +330,7 @@ dcmprobe(hd)
 	if (isconsole) {
 		dcmconsinit = 0;
 		dcmsoftCAR[brd] |= (1 << PORT(dcmconsole));
+		printf("dcm%d: console\n");
 	}
 	return (1);
 }
@@ -343,7 +344,7 @@ dcmopen(dev, flag, mode, p)
 {
 	register struct tty *tp;
 	register int unit, brd;
-	int error = 0, mbits;
+	int error = 0, mbits, s;
 
 	unit = UNIT(dev);
 	brd = BOARD(unit);
@@ -356,41 +357,63 @@ dcmopen(dev, flag, mode, p)
 	tp->t_oproc = dcmstart;
 	tp->t_param = dcmparam;
 	tp->t_dev = dev;
+
 	if ((tp->t_state & TS_ISOPEN) == 0) {
+		/*
+		 * Sanity clause: reset the card on first open.
+		 * The card might be left in an inconsistent state
+		 * if the card memory is read inadvertently.
+		 */
+		dcminit(dev, dcmdefaultrate);
+
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-		}
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
+
+		s = spltty();
+
 		(void) dcmparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
+	else
+		s = spltty();
+
+	/* Set modem control state. */
 	mbits = MO_ON;
 	if (dcmsoftCAR[brd] & FLAG_STDDCE)
 		mbits |= MO_SR;		/* pin 23, could be used as RTS */
 	(void) dcmmctl(dev, mbits, DMSET);	/* enable port */
+
+	/* Set soft-carrier if so configured. */
 	if ((dcmsoftCAR[brd] & (1 << PORT(unit))) ||
 	    (dcmmctl(dev, MO_OFF, DMGET) & MI_CD))
 		tp->t_state |= TS_CARR_ON;
+
 #ifdef DEBUG
 	if (dcmdebug & DDB_MODEM)
 		printf("dcm%d: dcmopen port %d softcarr %c\n",
 		       brd, unit, (tp->t_state & TS_CARR_ON) ? '1' : '0');
 #endif
-	(void) spltty();
-	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
-	    (tp->t_state & TS_CARR_ON) == 0) {
-		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
-			break;
-	}
-	(void) spl0();
+
+	/* Wait for carrier if necessary. */
+	if ((flag & O_NONBLOCK) == 0)
+		while ((tp->t_cflag & CLOCAL) == 0 &&
+		    (tp->t_state & TS_CARR_ON) == 0) {
+			tp->t_state |= TS_WOPEN;
+			error = ttysleep(tp, (caddr_t)&tp->t_rawq,
+			    TTIPRI | PCATCH, ttopen, 0);
+			if (error) {
+				splx(s);
+				return (error);
+			}
+		}
+	
+	splx(s);
 
 #ifdef DEBUG
 	if (dcmdebug & DDB_OPENCLOSE)
@@ -399,6 +422,7 @@ dcmopen(dev, flag, mode, p)
 #endif
 	if (error == 0)
 		error = (*linesw[tp->t_line].l_open)(dev, tp);
+
 	return (error);
 }
  
@@ -410,19 +434,23 @@ dcmclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	register struct tty *tp;
-	int unit;
+	int s, unit;
  
 	unit = UNIT(dev);
 	tp = dcm_tty[unit];
 	(*linesw[tp->t_line].l_close)(tp, flag);
-	if (tp->t_cflag&HUPCL || tp->t_state&TS_WOPEN ||
-	    (tp->t_state&TS_ISOPEN) == 0)
+
+	s = spltty();
+
+	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
+	    (tp->t_state & TS_ISOPEN) == 0)
 		(void) dcmmctl(dev, MO_OFF, DMSET);
 #ifdef DEBUG
 	if (dcmdebug & DDB_OPENCLOSE)
 		printf("dcmclose: u %x st %x fl %x\n",
 			unit, tp->t_state, tp->t_flags);
 #endif
+	splx(s);
 	ttyclose(tp);
 #if 0
 	ttyfree(tp);
@@ -740,7 +768,7 @@ dcmioctl(dev, cmd, data, flag, p)
 	register struct tty *tp;
 	register int unit = UNIT(dev);
 	register struct dcmdevice *dcm;
-	register int port;
+	register int board, port;
 	int error, s;
  
 #ifdef DEBUG
@@ -757,7 +785,8 @@ dcmioctl(dev, cmd, data, flag, p)
 		return (error);
 
 	port = PORT(unit);
-	dcm = dcm_addr[BOARD(unit)];
+	board = BOARD(unit);
+	dcm = dcm_addr[board];
 	switch (cmd) {
 	case TIOCSBRK:
 		/*
@@ -803,6 +832,39 @@ dcmioctl(dev, cmd, data, flag, p)
 	case TIOCMGET:
 		*(int *)data = dcmmctl(dev, 0, DMGET);
 		break;
+
+	case TIOCGFLAGS: {
+		int bits = 0;
+
+		if ((dcmsoftCAR[board] & (1 << port)))
+			bits |= TIOCFLAG_SOFTCAR;
+
+		if (tp->t_cflag & CLOCAL)
+			bits |= TIOCFLAG_CLOCAL;
+
+		*(int *)data = bits;
+		break;
+	}
+
+	case TIOCSFLAGS: {
+		int userbits;
+
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			return (EPERM);
+
+		userbits = *(int *)data;
+
+		if ((userbits & TIOCFLAG_SOFTCAR) ||
+		    ((board == BOARD(dcmconsole)) &&
+		    (port == PORT(dcmconsole))))
+			dcmsoftCAR[board] |= (1 << port);
+
+		if (userbits & TIOCFLAG_CLOCAL)
+			tp->t_cflag |= CLOCAL;
+
+		break;
+	}
 
 	default:
 		return (ENOTTY);
