@@ -1,6 +1,6 @@
-.\" $NetBSD: cgd.4,v 1.5 2003/08/14 17:57:07 elric Exp $
+.\" $NetBSD: cgd.4,v 1.6 2003/08/14 17:59:40 wiz Exp $
 .\"
-.\" Copyright (c) 2002, The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 23, 2002
+.Dd August 14, 2003
 .Dt CGD 4
 .Os
 .Sh NAME
@@ -66,7 +66,7 @@ Currently the following cryptographic algorithms are supported:
 .It aes-cbc
 AES in CBC mode.
 AES uses a 128 bit blocksize and can accept keys of
-length 128, 192 or 256.
+length 128, 192, or 256.
 The default key length is 128.
 .It 3des-cbc
 Triple DES in CBC mode.
