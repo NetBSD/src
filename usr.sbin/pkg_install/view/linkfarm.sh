@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.9 2003/07/29 01:46:13 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.10 2003/07/29 06:08:18 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -39,6 +39,7 @@ findprog=/usr/bin/find
 grepprog=/usr/bin/grep
 lnprog=/bin/ln
 mkdirprog=/bin/mkdir
+pkginfoprog=/usr/sbin/pkg_info
 rmprog=/bin/rm
 rmdirprog=/bin/rmdir
 sedprog=/usr/bin/sed
@@ -50,7 +51,7 @@ usage() {
 }
 
 version() {
-	echo "20030728"
+	$pkginfoprog -V
 	exit 0
 }
 
