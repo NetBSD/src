@@ -11,9 +11,9 @@ Disassembly of section .text:
 [ 	]+4:	66 0f e0 0a[ 	]+pavgb[ 	]+\(%edx\),%xmm1
 [ 	]+8:	66 0f e3 d3[ 	]+pavgw[ 	]+%xmm3,%xmm2
 [ 	]+c:	66 0f e3 1c 24[ 	]+pavgw[ 	]+\(%esp,1\),%xmm3
-[ 	]+11:	66 0f c5 c8 00[ 	]+pextrw \$0x0,%xmm1,%ax
+[ 	]+11:	66 0f c5 c1 00[ 	]+pextrw \$0x0,%xmm1,%eax
 [ 	]+16:	66 0f c4 09 01[ 	]+pinsrw \$0x1,\(%ecx\),%xmm1
-[ 	]+1b:	66 0f c4 d2 02[ 	]+pinsrw \$0x2,%dx,%xmm2
+[ 	]+1b:	66 0f c4 d2 02[ 	]+pinsrw \$0x2,%edx,%xmm2
 [ 	]+20:	66 0f ee c1[ 	]+pmaxsw %xmm1,%xmm0
 [ 	]+24:	66 0f ee 0a[ 	]+pmaxsw \(%edx\),%xmm1
 [ 	]+28:	66 0f de d2[ 	]+pmaxub %xmm2,%xmm2
@@ -22,7 +22,7 @@ Disassembly of section .text:
 [ 	]+35:	66 0f ea 2e[ 	]+pminsw \(%esi\),%xmm5
 [ 	]+39:	66 0f da f7[ 	]+pminub %xmm7,%xmm6
 [ 	]+3d:	66 0f da 38[ 	]+pminub \(%eax\),%xmm7
-[ 	]+41:	66 0f d7 e8[ 	]+pmovmskb %xmm5,%ax
+[ 	]+41:	66 0f d7 c5[ 	]+pmovmskb %xmm5,%eax
 [ 	]+45:	66 0f e4 e5[ 	]+pmulhuw %xmm5,%xmm4
 [ 	]+49:	66 0f e4 2e[ 	]+pmulhuw \(%esi\),%xmm5
 [ 	]+4d:	66 0f f6 f7[ 	]+psadbw %xmm7,%xmm6
@@ -47,7 +47,7 @@ Disassembly of section .text:
 [ 	]+ca:	66 0f 6a 90 90 90 90 90 	punpckhdq 0x90909090\(%eax\),%xmm2
 [ 	]+d2:	66 0f 6b 90 90 90 90 90 	packssdw 0x90909090\(%eax\),%xmm2
 [ 	]+da:	66 0f 6e 90 90 90 90 90 	movd[ 	]+0x90909090\(%eax\),%xmm2
-[ 	]+e2:	f3 0f 7e 90 90 90 90 90 	movq[ 	]+%xmm2,0x90909090\(%eax\)
+[ 	]+e2:	f3 0f 7e 90 90 90 90 90 	movq[ 	]+0x90909090\(%eax\),%xmm2
 [ 	]+ea:	66 0f 71 d0 90[ 	]+psrlw[ 	]+\$0x90,%xmm0
 [ 	]+ef:	66 0f 72 d0 90[ 	]+psrld[ 	]+\$0x90,%xmm0
 [ 	]+f4:	66 0f 73 d0 90[ 	]+psrlq[ 	]+\$0x90,%xmm0

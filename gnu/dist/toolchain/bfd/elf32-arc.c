@@ -1,5 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright (C) 1994, 1995, 1997, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1994, 1995, 1997, 1999, 2001 Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -57,18 +57,18 @@ static reloc_howto_type elf_arc_howto_table[] =
 
   /* A standard 32 bit relocation.  */
   HOWTO (R_ARC_32,		/* type  */
-	 0,	                /* rightshift  */
-	 2,	                /* size (0 = byte, 1 = short, 2 = long)  */
-	 32,	                /* bitsize  */
-	 false,	                /* pc_relative  */
-	 0,	                /* bitpos  */
+	 0,			/* rightshift  */
+	 2,			/* size (0 = byte, 1 = short, 2 = long)  */
+	 32,			/* bitsize  */
+	 false,			/* pc_relative  */
+	 0,			/* bitpos  */
 	 complain_overflow_bitfield, /* complain_on_overflow  */
-	 bfd_elf_generic_reloc, /* special_function  */
+	 bfd_elf_generic_reloc,	/* special_function  */
 	 "R_ARC_32",		/* name  */
-	 false,	                /* partial_inplace  */
-	 0xffffffff,	        /* src_mask  */
-	 0xffffffff,   		/* dst_mask  */
-	 false),                /* pcrel_offset  */
+	 false,			/* partial_inplace  */
+	 0xffffffff,		/* src_mask  */
+	 0xffffffff,		/* dst_mask  */
+	 false),		/* pcrel_offset  */
 
   /* A 26 bit absolute branch, right shifted by 2.  */
   HOWTO (R_ARC_B26,		/* type  */
@@ -155,7 +155,7 @@ static boolean
 arc_elf_object_p (abfd)
      bfd *abfd;
 {
-  int mach = bfd_mach_arc_5;
+  int mach = bfd_mach_arc_6;
 
   if (elf_elfheader(abfd)->e_machine == EM_ARC)
     {
@@ -163,10 +163,10 @@ arc_elf_object_p (abfd)
 
       switch (arch)
 	{
-	default:
 	case E_ARC_MACH_ARC5:
 	  mach = bfd_mach_arc_5;
 	  break;
+	default:
 	case E_ARC_MACH_ARC6:
 	  mach = bfd_mach_arc_6;
 	  break;
@@ -193,10 +193,10 @@ arc_elf_final_write_processing (abfd, linker)
 
   switch (bfd_get_mach (abfd))
     {
-    default:
     case bfd_mach_arc_5:
       val = E_ARC_MACH_ARC5;
       break;
+    default:
     case bfd_mach_arc_6:
       val = E_ARC_MACH_ARC6;
       break;

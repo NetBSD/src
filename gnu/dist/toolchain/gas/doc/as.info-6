@@ -17,6 +17,52 @@ Software Foundation, Inc.
 section entitled "GNU Free Documentation License".
 
 
+File: as.info,  Node: Directives-i960,  Next: Opcodes for i960,  Prev: Floating Point-i960,  Up: i960-Dependent
+
+i960 Machine Directives
+-----------------------
+
+`.bss SYMBOL, LENGTH, ALIGN'
+     Reserve LENGTH bytes in the bss section for a local SYMBOL,
+     aligned to the power of two specified by ALIGN.  LENGTH and ALIGN
+     must be positive absolute expressions.  This directive differs
+     from `.lcomm' only in that it permits you to specify an alignment.
+     *Note `.lcomm': Lcomm.
+
+`.extended FLONUMS'
+     `.extended' expects zero or more flonums, separated by commas; for
+     each flonum, `.extended' emits an IEEE extended-format (80-bit)
+     floating-point number.
+
+`.leafproc CALL-LAB, BAL-LAB'
+     You can use the `.leafproc' directive in conjunction with the
+     optimized `callj' instruction to enable faster calls of leaf
+     procedures.  If a procedure is known to call no other procedures,
+     you may define an entry point that skips procedure prolog code
+     (and that does not depend on system-supplied saved context), and
+     declare it as the BAL-LAB using `.leafproc'.  If the procedure
+     also has an entry point that goes through the normal prolog, you
+     can specify that entry point as CALL-LAB.
+
+     A `.leafproc' declaration is meant for use in conjunction with the
+     optimized call instruction `callj'; the directive records the data
+     needed later to choose between converting the `callj' into a `bal'
+     or a `call'.
+
+     CALL-LAB is optional; if only one argument is present, or if the
+     two arguments are identical, the single argument is assumed to be
+     the `bal' entry point.
+
+`.sysproc NAME, INDEX'
+     The `.sysproc' directive defines a name for a system procedure.
+     After you define it using `.sysproc', you can use NAME to refer to
+     the system procedure identified by INDEX when calling procedures
+     with the optimized call instruction `callj'.
+
+     Both arguments are required; INDEX must be between 0 and 31
+     (inclusive).
+
+
 File: as.info,  Node: Opcodes for i960,  Prev: Directives-i960,  Up: i960-Dependent
 
 i960 Opcodes

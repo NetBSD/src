@@ -1,5 +1,5 @@
 /* tc-d10v.h -- Header file for tc-d10v.c.
-   Copyright (C) 1996, 1997, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 2000 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -56,7 +56,8 @@ int d10v_cleanup PARAMS ((void));
 #define md_do_align(a,b,c,d,e)	     d10v_cleanup()
 #define tc_frob_label(sym) do {\
   d10v_cleanup(); \
-  S_SET_VALUE (sym, (valueT) frag_now_fix ()); \
+  symbol_set_frag (sym, frag_now);					\
+  S_SET_VALUE (sym, (valueT) frag_now_fix ());				\
 } while (0)
 
 #define obj_fix_adjustable(fixP) d10v_fix_adjustable(fixP)

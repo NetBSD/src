@@ -1,5 +1,5 @@
 /* tc-tic54x.h -- Header file for tc-tic54x.c
-   Copyright (C) 1999, 2000 Free Software Foundation.
+   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@alum.mit.edu)
 
    This file is part of GAS, the GNU Assembler.
@@ -108,7 +108,7 @@ extern void tic54x_start_line_hook ();
 tic54x_estimate_size_before_relax(f,s)
 extern int tic54x_estimate_size_before_relax(fragS *, segT);
 
-#define md_relax_frag(f,s) tic54x_relax_frag(f,s)
+#define md_relax_frag(seg, f,s) tic54x_relax_frag(f,s)
 extern int tic54x_relax_frag(fragS *, long);
 
 #define md_convert_frag(b,s,f)	tic54x_convert_frag(b,s,f)
