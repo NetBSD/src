@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.32 1998/05/11 12:00:27 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.33 1998/06/01 20:10:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,7 +67,7 @@ typedef struct {
 	long rem;		/* remainder */
 } ldiv_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && \
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 typedef struct {
 	quad_t quot;		/* quotient */
@@ -118,7 +118,6 @@ void	*malloc __P((size_t));
 void	 qsort __P((void *, size_t, size_t,
 	    int (*)(const void *, const void *)));
 int	 rand __P((void));
-int	 rand_r __P((unsigned int *));
 void	*realloc __P((void *, size_t));
 void	 srand __P((unsigned));
 double	 strtod __P((const char *, char **));
@@ -134,20 +133,24 @@ int	 wctomb __P((char *, wchar_t));
 int	 mbtowc __P((wchar_t *, const char *, size_t));
 size_t	 wcstombs __P((char *, const wchar_t *, size_t));
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) || \
-    defined(_XOPEN_SOURCE)
-long	 a64l __P((const char *));
-char	*l64a __P((long));
+#if !defined(_ANSI_SOURCE)
 
-char	*initstate __P((unsigned long, char *, size_t));
-long	 random __P((void));
-char	*setstate __P((char *));
-void	 srandom __P((unsigned long));
 
-char	*realpath __P((const char *, char *));
+/*
+ * IEEE Std 1003.1c-95, also adopted by X/Open CAE Spec Issue 5 Version 2
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_REENTRANT)
+int	 rand_r __P((unsigned int *));
+#endif
 
-int	 putenv __P((const char *));
 
+/*
+ * X/Open Portability Guide >= Issue 4
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_XOPEN_SOURCE - 0) >= 4
 double	 drand48 __P((void));
 double	 erand48 __P((unsigned short[3]));
 long	 jrand48 __P((unsigned short[3]));
@@ -158,10 +161,42 @@ long	 nrand48 __P((unsigned short[3]));
 unsigned short *
 	 seed48 __P((unsigned short[3]));
 void	 srand48 __P((long));
-#endif /* !_ANSI_SOURCE && !_POSIX_C_SOURCE || _XOPEN_SOURCE */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+int	 putenv __P((const char *));
+#endif
+
+
+/*
+ * X/Open Portability Guide >= Issue 4 Version 2
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
+    (_XOPEN_SOURCE - 0) >= 500
+long	 a64l __P((const char *));
+char	*l64a __P((long));
+
+char	*initstate __P((unsigned long, char *, size_t));
+long	 random __P((void));
+char	*setstate __P((char *));
+void	 srandom __P((unsigned long));
+
+int	 mkstemp __P((char *));
+char	*mktemp __P((char *));
+
+int	 setkey __P((const char *));
+
+char	*realpath __P((const char *, char *));
+
+int	 ttyslot __P((void));
+
+void	*valloc __P((size_t));		/* obsoleted by malloc() */
+#endif
+
+
+/*
+ * Implementation-defined extensions
+ */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
 void	*alloca __P((int));     /* built-in for gcc */ 
 #else 
@@ -203,7 +238,8 @@ quad_t	 qabs __P((quad_t));
 qdiv_t	 qdiv __P((quad_t, quad_t));
 quad_t	 strtoq __P((const char *, char **, int));
 u_quad_t strtouq __P((const char *, char **, int));
-#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE && !_XOPEN_SOURCE */
+#endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif /* !_ANSI_SOURCE */
 __END_DECLS
 
 #endif /* !_STDLIB_H_ */
