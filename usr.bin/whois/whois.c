@@ -1,4 +1,4 @@
-/*	$NetBSD: whois.c,v 1.9 1999/05/18 22:36:36 tron Exp $	*/
+/*	$NetBSD: whois.c,v 1.10 1999/09/03 13:51:28 itojun Exp $	*/
 
 /*
  * RIPE version marten@ripe.net
@@ -61,7 +61,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.9 1999/05/18 22:36:36 tron Exp $");
+__RCSID("$NetBSD: whois.c,v 1.10 1999/09/03 13:51:28 itojun Exp $");
 #endif
 #endif /* not lint */
 #endif /* not RIPE */
@@ -167,16 +167,18 @@ void usage()
 {
 #ifdef RIPE
 #ifdef NETWORKUPDATE
-  (void)fprintf(stderr, "\nUsage: networkupdate [-h hostname] [-p port]");
+  (void)fprintf(stderr, "\nUsage: networkupdate [-46] [-h hostname] [-p port]");
 #else
-  (void)fprintf(stderr, "\nUsage: whois [-aFLmMrSvR] [-h hostname] [-s sources] [-T types] [-i attr] keys\n");
+  (void)fprintf(stderr, "\nUsage: whois [-46aFLmMrSvR] [-h hostname] [-s sources] [-T types] [-i attr] keys\n");
   (void)fprintf(stderr, "       whois -t type");
   (void)fprintf(stderr, "       whois -v type");
 #endif
 #else
-  (void)fprintf(stderr, "\nUsage: whois [-h hostname] [-p port] name ...");
+  (void)fprintf(stderr, "\nUsage: whois [-46] [-h hostname] [-p port] name ...");
 #endif
   (void)fprintf(stderr, "\n\nWhere:\n\n");
+  (void)fprintf(stderr, "-4                         Use IPv4 Only\n");
+  (void)fprintf(stderr, "-6                         Use IPv6 Only\n");
 #ifdef RIPE
 #ifndef NETWORKUPDATE
   (void)fprintf(stderr, "-a                         search all databases\n");
@@ -266,13 +268,19 @@ int main(argc, argv)
   FILE *sfi;
   FILE *sfo;
   int ch;
-  struct sockaddr_in sin;
-  struct hostent *hp;
-  struct servent *sp;
+  struct addrinfo *dst, hints;
+  int socktype=PF_UNSPEC;
+  int error;
   char *host, *whoishost;
-  int optp=0, optport=0;
+  int optp=0;
+  char *optport="whois";
+#ifdef DEBUG
+  int verb=1;
+#else /*DEBUG */
+  int verb=0;
+#endif
 #ifdef RIPE
-  int verb=0, opthost=0;
+  int opthost=0;
 #ifndef NETWORKUPDATE
   /* normal whois client */
   char *string;
@@ -304,20 +312,26 @@ int main(argc, argv)
   
 #ifdef RIPE
 #ifdef NETWORKUPDATE
-    while ((ch = getopt(argc, argv, "h:p:")) != EOF)
+    while ((ch = getopt(argc, argv, "46h:p:")) != EOF)
 #else
-  while ((ch = getopt(argc, argv, "acFg:h:i:LmMp:rs:SRt:T:v:")) != EOF)
+  while ((ch = getopt(argc, argv, "46acFg:h:i:LmMp:rs:SRt:T:v:")) != EOF)
 #endif
 #else
-    while ((ch = getopt(argc, argv, "h:p:")) != EOF)
+    while ((ch = getopt(argc, argv, "46h:p:")) != EOF)
 #endif
       switch((char)ch) {
+      case '4':
+	socktype = PF_INET;
+	break;
+      case '6':
+	socktype = PF_INET6;
+	break;
       case 'h':
 	host = optarg;
 	opthost = 1;
 	break;
       case 'p':
-        optport=htons((u_short)atoi(optarg));
+	optport=optarg;
         optp =1;
         break;	
 #ifdef RIPE
@@ -423,23 +437,32 @@ int main(argc, argv)
 	if (verb) fprintf(stderr, "Clever guess: %s\n", whoishost);
       }
     }
-    hp = gethostbyname(whoishost);
-    if ((hp == NULL) && (verb)) 
-      fprintf(stderr,"No such host: %s\n", whoishost);
 
-    if (hp==NULL) {
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = socktype;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = 0;
+    error = getaddrinfo(host, optport, &hints, &dst);
+    if ((error) && (verb))
+      fprintf(stderr,"No such host: %s\n", whoishost);
+    if (error) {
 #endif
     
       whoishost=NICHOST;
     
       if (verb) fprintf(stderr, "Default host: %s\n\n", whoishost);
-      hp = gethostbyname(whoishost);
-      
-      if (hp == NULL) {
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_flags = AI_CANONNAME;
+      hints.ai_family = socktype;
+      hints.ai_socktype = SOCK_STREAM;
+      hints.ai_protocol = 0;
+      error = getaddrinfo(host, optport , &hints, &dst);
+      if (error) {
 	fprintf(stderr,"No such host: %s\n", whoishost);
 	if (verb) fprintf(stderr, "Now I give up ...\n");
 	perror("Unknown host");
-	exit(1);
+	exit(1);	
       }
 
 #ifdef CLEVER
@@ -448,50 +471,34 @@ int main(argc, argv)
   }
   else {
     if (verb) fprintf(stderr, "Trying: %s\n\n", host);
-    hp = gethostbyname(host);
-    if (hp == NULL) {
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = socktype;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = 0;
+    error = getaddrinfo(host, optport, &hints, &dst);
+    if (error) {
       (void)fprintf(stderr, "whois: %s: ", host);
       perror("Unknown host");
       exit(1);
     }
   }
   
-  host = hp->h_name;
-  s = socket(hp->h_addrtype, SOCK_STREAM, 0);
-  if (s < 0) {
-    perror("whois: socket");
-    exit(1);
+  while (1) {
+    s = socket(dst->ai_family, dst->ai_socktype, dst->ai_protocol);
+    if (connect(s, dst->ai_addr, dst->ai_addrlen) < 0) {
+      if (verb) (void)fprintf(stderr, "whois: connect miss\n");
+      if (dst->ai_next == NULL) {
+	perror("whois: connect");
+	exit(1);
+      } else {
+	dst = dst->ai_next;
+      }
+      continue;
+    }
+    break;
   }
-  bzero((caddr_t)&sin, sizeof (sin));
-  sin.sin_family = hp->h_addrtype;
-  if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-    perror("whois: bind");
-    exit(1);
-  }
-  bcopy(hp->h_addr, (char *)&sin.sin_addr, hp->h_length);
-  
-  if (optp) {
-     sin.sin_port=optport;
-  }
-  else {
-     
-     sp=getservbyname("whois", "tcp");
-  
-     if (sp == NULL) {
-        (void)fprintf(stderr, "whois: whois/tcp: unknown service\n");
-        exit(1);
-     }
-  
-     sin.sin_port = sp->s_port;
-
-  }
-
-  /* printf("%i\n", sin.sin_port); */
-
-  if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-    perror("whois: connect");
-    exit(1);
-  }
+  if (verb) (void)fprintf(stderr, "whois: connect success\n");
 
 #ifndef NETWORKUPDATE
   sfi = fdopen(s, "r");
