@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.14 2000/02/22 11:26:00 soda Exp $	*/
+/*	$NetBSD: pccons.c,v 1.15 2000/03/03 12:35:40 soda Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -912,13 +912,15 @@ pccnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	u_char oldkernel = kernel;
+	u_char cc, oldkernel = kernel;
 
 	kernel = 1;
-	if (c == '\n')
+	if (c == '\n') {
 		sput("\r\n", 2);
-	else
-		sput(&c, 1);
+	} else {
+		cc = c;
+		sput(&cc, 1);
+	}
 	kernel = oldkernel;
 }
 
@@ -1918,6 +1920,7 @@ pcmmap(dev, offset, nprot)
 		 * processing is done in pmap.c. Until we are a real 64 bit
 		 * port this is how it will be done.
 		 */
+		/* XXX - the above is not supported merged pmap, yet */
 		if (offset >= 0xa0000 && offset < 0xc0000)
 			return mips_btop(TYNE_V_ISA_MEM + offset);
 		if (offset >= 0x0000 && offset < 0x10000)
@@ -1993,6 +1996,7 @@ int opmsclose __P((dev_t, int));
 int opmsread __P((dev_t, struct uio *, int));
 int opmsioctl __P((dev_t, u_long, caddr_t, int));
 int opmsselect __P((dev_t, int, struct proc *));
+int opmspoll __P((dev_t, int, struct proc *));
 static __inline void pms_dev_cmd __P((u_char));
 static __inline void pms_aux_cmd __P((u_char));
 static __inline void pms_pit_cmd __P((u_char));
