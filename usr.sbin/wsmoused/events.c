@@ -1,4 +1,4 @@
-/* $NetBSD: events.c,v 1.3 2002/07/04 20:50:29 christos Exp $ */
+/* $NetBSD: events.c,v 1.4 2002/12/25 19:13:53 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: events.c,v 1.3 2002/07/04 20:50:29 christos Exp $");
+__RCSID("$NetBSD: events.c,v 1.4 2002/12/25 19:13:53 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -101,27 +101,27 @@ mouse_button_event(struct mouse *m, struct wscons_event *evt)
 {
 	switch (evt->type) {
 	case WSCONS_EVENT_MOUSE_UP:
-		if (evt->value == 0) {
+		if (evt->value == m->but_select) {
+			/* End selection */
 			mouse_sel_end(m);
 			mouse_sel_hide(m);
 		}
 		break;
 
 	case WSCONS_EVENT_MOUSE_DOWN:
-		switch (evt->value) {
-		case 0: /* Button 1 */
+		if (evt->value == m->but_select) {
+			/* Start selection */
 			mouse_sel_start(m);
 			mouse_cursor_hide(m);
 			mouse_sel_show(m);
-			break;
-		case 2: /* Button 2 */
+		} else if (evt->value == m->but_paste) {
+			/* Paste selection */
 			mouse_sel_paste(m);
 			break;
 		}
-		break;
 
 	default:
-		warnx("unknown event");
+		warnx("unknown button event");
 	}
 }
 
