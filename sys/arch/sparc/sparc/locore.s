@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.10 1994/05/19 07:12:56 deraadt Exp $
+ * $Id: locore.s,v 1.11 1994/05/27 08:56:01 deraadt Exp $
  */
 
 #define	LOCORE
@@ -1449,6 +1449,8 @@ syscall:
 	ldd	[%sp + CCFSZ + 0], %l0	! new %psr, new pc
 	ldd	[%sp + CCFSZ + 8], %l2	! new npc, new %y
 	wr	%l3, 0, %y
+	/* see `dostart' for the reason for this label */
+init_syscall_ret:
 	ld	[%sp + CCFSZ + 20], %g1
 	ldd	[%sp + CCFSZ + 24], %g2
 	ldd	[%sp + CCFSZ + 32], %g4
@@ -2483,58 +2485,28 @@ dostart:
 	nop; nop; nop			! paranoia
 
 	/*
-	 * Bootstrap, call main, and `return' from a fake trap into `icode'.
+	 * Ready to run C code; finish bootstrap.
 	 */
 	call	_bootstrap
 	 nop
-	call	_main
-	 nop
 
 	/*
-	 * Return from main means we are process 1 and need to
-	 * jump to the `icode' (which appears below) which has
-	 * been copied in to address 0x2000 in the new process.
-	 *
-	 * Our stack & frame pointers are already set up to make it
-	 * look like we are currently running in a trap taken from
-	 * user mode (there is room for a full blown trapfrape),
-	 * so all we need do is set up %l0, %l1, and %l2 and branch
-	 * to return_from_trap.
+	 * Call main.  This returns to us after loading /sbin/init into
+	 * user space.  (If the exec fails, main() does not return.)
 	 */
-	mov	PSR_S, %l0		! user psr
-#define XADDR 0
-	set	XADDR, %l1		! pc
-	add	%l1, 4, %l2		! npc
-	b	return_from_trap
-	 wr	%l0, 0, %psr		! just like syscall()
+	call	_main
+	 clr	%o0			! our frame arg is ignored
 
-/*
- * Icode is copied out to process 1 to exec init.
- * If the exec fails, process 1 exits.
- *
- * We depend here on the fact that we are copied to address XADDR
- * (but so does the code above).
- */
-	.globl	_icode, _szicode
-_icode:
-	mov	SYS_execve, %g1
-	set	init - _icode + XADDR, %o0	! actual location of pathname
-	set	argv - _icode + XADDR, %o1	! ... and of argv
-	clr	%o2				! no environment
-	t	ST_SYSCALL
-	mov	SYS_exit, %g1
-	t	ST_SYSCALL
-
-init:	.ascii	"/sbin/"
-init1:	.asciz	"init"
-	ALIGN
-argv:	.word	init1 - _icode + XADDR
-	.word	initflags - _icode + XADDR
-	.word	0
-initflags:
-_szicode:
-	.long	_szicode - _icode
-#undef XADDR
+	/*
+	 * Here we finish up as in syscall, but simplified.  We need to
+	 * fiddle pc and npc a bit, as execve() / setregs() have only set
+	 * npc, in anticipation that trap.c will advance past the trap
+	 * instruction; but we bypass that, so we must do it manually.
+	 */
+	mov	PSR_S, %l0		! user psr (no need to load it)
+	ld	[%sp + CCFSZ + 8], %l1	! pc = npc from execve
+	b	init_syscall_ret
+	 add	%l1, 4, %l2		! npc = pc+4
 
 /*
  * The following code is copied to the top of the user stack when each
