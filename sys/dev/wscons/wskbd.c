@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.15 1999/01/10 00:28:21 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.16 1999/01/10 18:22:14 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.15 1999/01/10 00:28:21 augustss Exp $";
+    "$NetBSD: wskbd.c,v 1.16 1999/01/10 18:22:14 augustss Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -515,13 +515,7 @@ wskbdclose(dev, flags, mode, p)
 	struct proc *p;
 {
 #if NWSKBD > 0
-	struct wskbd_softc *sc;
-	int unit;
-
-	unit = minor(dev);
-	if (unit >= wskbd_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
 	sc->sc_ready = 0;			/* stop accepting events */
 	sc->sc_translating = 1;
@@ -541,13 +535,7 @@ wskbdread(dev, uio, flags)
 	int flags;
 {
 #if NWSKBD > 0
-	struct wskbd_softc *sc;
-	int unit;
-
-	unit = minor(dev);
-	if (unit >= wskbd_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
 	return (wsevent_read(&sc->sc_events, uio, flags));
 #else
@@ -564,13 +552,8 @@ wskbdioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 #if NWSKBD > 0
-	struct wskbd_softc *sc;
-	int unit, error;
-
-	unit = minor(dev);
-	if (unit >= wskbd_cd.cd_ndevs ||	/* make sure it was attached */
-	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
+	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
+	int error;
 
 	/*      
 	 * Try the generic ioctls that the wskbd interface supports.
