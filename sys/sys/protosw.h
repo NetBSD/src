@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.22 2000/02/17 10:59:41 darrenr Exp $	*/
+/*	$NetBSD: protosw.h,v 1.23 2000/11/11 00:52:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -61,11 +61,6 @@
  * described below.
  */
 
-/*
- * For pfil_head structure.
- */
-#include <net/pfil.h>
-
 struct mbuf;
 struct sockaddr;
 struct socket;
@@ -105,7 +100,6 @@ struct protosw {
 			__P((void));
 	int	(*pr_sysctl)		/* sysctl for protocol */
 			__P((int *, u_int, void *, size_t *, void *, size_t));
-	struct	pfil_head	pr_pfh;
 };
 
 #define	PR_SLOWHZ	2		/* 2 slow timeouts per second */
