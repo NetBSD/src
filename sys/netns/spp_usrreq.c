@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.12 1996/05/22 13:56:26 mycroft Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.13 1996/09/08 14:48:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -76,7 +76,6 @@ int traceallspps = 0;
 extern int sppconsdebug;
 int spp_hardnosed;
 int spp_use_delack = 0;
-u_short spp_newchecks[50];
 
 /*ARGSUSED*/
 void
@@ -542,11 +541,9 @@ present:
 			if (cb->s_flags2 & SF_NEWCALL) {
 				struct sphdr *sp = mtod(m, struct sphdr *);
 				u_char dt = sp->sp_dt;
-				spp_newchecks[4]++;
 				if (dt != cb->s_rhdr.sp_dt) {
 					struct mbuf *mm =
 					   m_getclr(M_DONTWAIT, MT_CONTROL);
-					spp_newchecks[0]++;
 					if (mm != NULL) {
 						u_short *s =
 							mtod(mm, u_short *);
@@ -560,7 +557,6 @@ present:
 				}
 				if (sp->sp_cc & SP_OB) {
 					MCHTYPE(m, MT_OOBDATA);
-					spp_newchecks[1]++;
 					so->so_oobmark = 0;
 					so->so_state &= ~SS_RCVATMARK;
 				}
@@ -571,7 +567,6 @@ present:
 				}
 				if ((sp->sp_cc & SP_EM) || packetp) {
 					sbappendrecord(&so->so_rcv, m);
-					spp_newchecks[9]++;
 				} else
 					sbappend(&so->so_rcv, m);
 			} else
@@ -798,7 +793,6 @@ spp_output(m0, va_alist)
 					m = m_copym(m0, 0, mtu, M_WAIT);
 					if (cb->s_flags & SF_NEWCALL) {
 					    struct mbuf *mm = m;
-					    spp_newchecks[7]++;
 					    while (mm) {
 						mm->m_flags &= ~M_EOR;
 						mm = mm->m_next;
@@ -869,10 +863,8 @@ spp_output(m0, va_alist)
 			len -= sizeof (*sh);
 		}
 		len += sizeof(*si);
-		if ((cb->s_flags2 & SF_NEWCALL) && recordp) {
+		if ((cb->s_flags2 & SF_NEWCALL) && recordp)
 			si->si_cc  |= SP_EM;
-			spp_newchecks[8]++;
-		}
 		if (cb->s_oobflags & SF_SOOB) {
 			/*
 			 * Per jqj@cornell:
@@ -1280,13 +1272,10 @@ spp_ctloutput(req, so, level, name, value)
 #ifdef SF_NEWCALL
 		case SO_NEWCALL:
 			ok = mtod(*value, int *);
-			if (*ok) {
+			if (*ok)
 				cb->s_flags2 |= SF_NEWCALL;
-				spp_newchecks[5]++;
-			} else {
+			else
 				cb->s_flags2 &= ~SF_NEWCALL;
-				spp_newchecks[6]++;
-			}
 			break;
 #endif
 
@@ -1309,6 +1298,9 @@ spp_ctloutput(req, so, level, name, value)
 		return (error);
 }
 
+u_long	spp_sendspace = 3072;
+u_long	spp_recvspace = 3072;
+
 /*ARGSUSED*/
 int
 spp_usrreq(so, req, m, nam, control, p)
@@ -1317,43 +1309,39 @@ spp_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	struct nspcb *nsp = sotonspcb(so);
+	register struct nspcb *nsp;
 	register struct sppcb *cb = NULL;
-	int s = splsoftnet();
-	int error = 0, ostate;
-	register struct sockbuf *sb;
+	int s;
+	int error = 0;
+	int ostate;
 
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
-	if (nsp == NULL) {
-		if (req != PRU_ATTACH) {
-			error = EINVAL;
-			goto release;
-		}
-	} else
-		cb = nstosppcb(nsp);
 
-	ostate = cb ? cb->s_state : 0;
+	s = splsoftnet();
+	nsp == sotonspcb(so);
+	if (nsp == 0 && req != PRU_ATTACH) {
+		error = EINVAL;
+		goto release;
+	}
+	if (nsp) {
+		cb = nstosppcb(nsp);
+		ostate = cb->s_state;
+	} else
+		ostate = 0;
 
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (nsp != NULL) {
+		if (nsp != 0) {
 			error = EISCONN;
 			break;
 		}
-		error = ns_pcballoc(so, &nspcb);
-		if (error)
+		if ((error = soreserve(so, spp_sendspace, spp_recvspace)) ||
+		    (error = ns_pcballoc(so, &nspcb)))
 			break;
-		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
-			error = soreserve(so, (u_long) 3072, (u_long) 3072);
-			if (error)
-				break;
-		}
 		nsp = sotonspcb(so);
-		sb = &so->so_snd;
-
 		cb = malloc(sizeof(*cb), M_PCB, M_NOWAIT);
 		if (cb == 0) {
 			error = ENOBUFS;
@@ -1373,9 +1361,9 @@ spp_usrreq(so, req, m, nam, control, p)
 		cb->s_q.si_next = cb->s_q.si_prev = &cb->s_q;
 		cb->s_nspcb = nsp;
 		cb->s_mtu = 576 - sizeof (struct spidp);
-		cb->s_cwnd = sbspace(sb) * CUNIT / cb->s_mtu;
+		cb->s_cwnd = sbspace(&so->so_snd) * CUNIT / cb->s_mtu;
 		cb->s_ssthresh = cb->s_cwnd;
-		cb->s_cwmx = sbspace(sb) * CUNIT /
+		cb->s_cwmx = sbspace(&so->so_snd) * CUNIT /
 				(2 * sizeof (struct spidp));
 		/* Above is recomputed when connecting to account
 		   for changed buffering or mtu's */
@@ -1388,10 +1376,6 @@ spp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_DETACH:
-		if (nsp == NULL) {
-			error = ENOTCONN;
-			break;
-		}
 		if (cb->s_state > TCPS_LISTEN)
 			cb = spp_disconnect(cb);
 		else
@@ -1463,14 +1447,9 @@ spp_usrreq(so, req, m, nam, control, p)
 	 * done at higher levels; just return the address
 	 * of the peer, storing through addr.
 	 */
-	case PRU_ACCEPT: {
-		struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
-
-		nam->m_len = sizeof (struct sockaddr_ns);
-		sns->sns_family = AF_NS;
-		sns->sns_addr = nsp->nsp_faddr;
+	case PRU_ACCEPT:
+		ns_setpeeraddr(nsp, nam);
 		break;
-		}
 
 	case PRU_SHUTDOWN:
 		socantsendmore(so);
@@ -1489,15 +1468,20 @@ spp_usrreq(so, req, m, nam, control, p)
 		cb->s_flags &= ~SF_RVD;
 		break;
 
+	case PRU_SEND:
+		error = spp_output(m, cb);
+		break;
+
 	case PRU_ABORT:
-		(void) spp_drop(cb, ECONNABORTED);
+		cb = spp_drop(cb, ECONNABORTED);
 		break;
 
 	case PRU_SENSE:
-	case PRU_CONTROL:
-		m = NULL;
-		error = EOPNOTSUPP;
-		break;
+		/*
+		 * stat: don't bother with a blocksize.
+		 */
+		splx(s);
+		return (0);
 
 	case PRU_RCVOOB:
 		if ((cb->s_oobflags & SF_IOOB) || so->so_oobmark ||
@@ -1511,24 +1495,12 @@ spp_usrreq(so, req, m, nam, control, p)
 
 	case PRU_SENDOOB:
 		if (sbspace(&so->so_snd) < -512) {
+			m_freem(m);
 			error = ENOBUFS;
 			break;
 		}
 		cb->s_oobflags |= SF_SOOB;
-		/* fall into */
-	case PRU_SEND:
-		if (control) {
-			u_short *p = mtod(control, u_short *);
-			spp_newchecks[2]++;
-			if ((p[0] == 5) && p[1] == 1) { /* XXXX, for testing */
-				cb->s_shdr.sp_dt = *(u_char *)(&p[2]);
-				spp_newchecks[3]++;
-			}
-			m_freem(control);
-		}
-		control = NULL;
 		error = spp_output(m, cb);
-		m = NULL;
 		break;
 
 	case PRU_SOCKADDR:
@@ -1544,22 +1516,12 @@ spp_usrreq(so, req, m, nam, control, p)
 		req |= ((long)nam) << 8;
 		break;
 
-	case PRU_FASTTIMO:
-	case PRU_PROTORCV:
-	case PRU_PROTOSEND:
-		error =  EOPNOTSUPP;
-		break;
-
 	default:
 		panic("sp_usrreq");
 	}
 	if (cb && (so->so_options & SO_DEBUG || traceallspps))
 		spp_trace(SA_USER, (u_char)ostate, cb, (struct spidp *)0, req);
 release:
-	if (control != NULL)
-		m_freem(control);
-	if (m != NULL)
-		m_freem(m);
 	splx(s);
 	return (error);
 }
