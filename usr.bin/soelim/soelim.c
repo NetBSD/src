@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.4 1997/10/19 23:25:51 lukem Exp $	*/
+/*	$NetBSD: soelim.c,v 1.5 1997/12/21 17:04:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,10 +43,9 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.4 1997/10/19 23:25:51 lukem Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.5 1997/12/21 17:04:16 christos Exp $");
 #endif /* not lint */
 
-#include <stdio.h>
 /*
  * soelim - a filter to process n/troff input eliminating .so's
  *
@@ -63,25 +62,113 @@ __RCSID("$NetBSD: soelim.c,v 1.4 1997/10/19 23:25:51 lukem Exp $");
  * This program is more generally useful, it turns out, because
  * the program tbl doesn't understand ".so" directives.
  */
+#include <sys/param.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <err.h>
+
 #define	STDIN_NAME	"-"
 
+struct path {
+	char **list;
+	size_t n, c;
+};
+
+static int	 process __P((struct path *, char *));
+static void	 initpath __P((struct path *));
+static void	 addpath __P((struct path *,  const char *));
+static FILE	*openpath __P((struct path *, const char *, const char *));
+
 int	main __P((int, char **));
-int	process __P((char *));
+
+
+static void
+initpath(p)
+	struct path *p;
+{
+	p->list = NULL;
+	p->n = p->c = 0;
+}
+
+static void
+addpath(p, dir)
+	struct path *p;
+	const char *dir;
+{
+	if (p->list == NULL || p->n <= p->c - 2) {
+		p->n += 10;
+		p->list = realloc(p->list, p->n * sizeof(p->list[0]));
+		if (p->list == NULL)
+			err(1, "%s", "");
+	}
+
+	if ((p->list[p->c++] = strdup(dir)) == NULL)
+		err(1, "%s", "");
+
+	p->list[p->c] = NULL;
+}
+
+static FILE *
+openpath(p, name, parm)
+	struct path *p;
+	const char *name;
+	const char *parm;
+{
+	char filename[MAXPATHLEN];
+	const char *f;
+	FILE *fp;
+	size_t i;
+
+	if (*name == '/' || p->c == 0)
+		return fopen(name, parm);
+
+	for (i = 0; i < p->c; i++) {
+		if (p->list[i][0] == '\0')
+			f = name;
+		else {
+			(void)snprintf(filename, sizeof(filename), "%s/%s", 
+			    p->list[i], name);
+			f = filename;
+		}
+		if ((fp = fopen(f, parm)) != NULL)
+			return fp;
+	}
+	return NULL;
+}
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	extern char *__progname;
+	struct path p;
+	int c;
 
-	argc--;
-	argv++;
+	initpath(&p);
+	addpath(&p, ".");
+
+	while ((c = getopt(argc, argv, "I:")) != -1)
+		switch (c) {
+		case 'I':
+			addpath(&p, optarg);
+			break;
+		default:
+			(void)fprintf(stderr,
+			    "Usage: %s [-I<dir>] [files...]\n", __progname);
+			exit(1);
+		}
+
+	argc -= optind;
+	argv += optind;
+			
 	if (argc == 0) {
-		(void)process(STDIN_NAME);
+		(void)process(&p, STDIN_NAME);
 		exit(0);
 	}
 	do {
-		(void)process(argv[0]);
+		(void)process(&p, argv[0]);
 		argv++;
 		argc--;
 	} while (argc > 0);
@@ -89,7 +176,8 @@ main(argc, argv)
 }
 
 int
-process(file)
+process(p, file)
+	struct path *p;
 	char *file;
 {
 	char *cp;
@@ -101,9 +189,9 @@ process(file)
 	if (!strcmp(file, STDIN_NAME)) {
 		soee = stdin;
 	} else {
-		soee = fopen(file, "r");
+		soee = openpath(p, file, "r");
 		if (soee == NULL) {
-			perror(file);
+			warn("Cannot open `%s'", file);
 			return(-1);
 		}
 	}
@@ -150,7 +238,7 @@ donename:
 			goto simple;
 		}
 		*cp = 0;
-		if (process(fname) < 0)
+		if (process(p, fname) < 0)
 			if (isfile)
 				printf(".so %s\n", fname);
 		continue;
