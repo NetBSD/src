@@ -1,4 +1,4 @@
-# $NetBSD: md.x86_64,v 1.1 2003/03/08 20:49:15 fvdl Exp $
+# $NetBSD: md.amd64,v 1.1 2003/04/26 18:48:55 fvdl Exp $
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/pcitweak
 ./usr/X11R6/bin/xf86cfg

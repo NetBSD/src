@@ -1,4 +1,4 @@
-# $NetBSD: md.x86_64,v 1.1 2003/03/08 20:49:13 fvdl Exp $
+# $NetBSD: md.amd64,v 1.1 2003/04/26 18:48:51 fvdl Exp $
 ./usr/X11R6/bin/beforelight
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/kbd_mode

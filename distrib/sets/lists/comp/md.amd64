@@ -1,4 +1,4 @@
-# $NetBSD: md.x86_64,v 1.5 2003/04/26 10:51:16 fvdl Exp $
+# $NetBSD: md.amd64,v 1.1 2003/04/26 18:48:49 fvdl Exp $
 ./usr/include/x86                       comp-c-include
 ./usr/include/x86/aout_machdep.h        comp-c-include
 ./usr/include/x86/bootinfo.h            comp-c-include
