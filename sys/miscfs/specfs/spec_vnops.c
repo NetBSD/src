@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.46 1999/12/08 18:57:07 sommerfeld Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.47 1999/12/08 19:16:52 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -87,6 +87,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
+	{ &vop_fcntl_desc, spec_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_revoke_desc, spec_revoke },		/* revoke */
