@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.16 2002/01/29 18:53:15 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.17 2002/05/03 07:31:25 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -402,7 +402,7 @@ TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 			pend &= ~reg;
 			if (pend) {
 				printf("%d pending:", i);
-				__dbg_bit_print(pend, 0, 31, 0, 1);
+				dbg_bit_print(pend);
 			}
 #endif
 
@@ -761,13 +761,13 @@ tx39_intr_dump(struct tx39icu_softc *sc)
 			}
 		}
 		sprintf(msg, "%d high", i);
-		__dbg_bit_print(reg, sizeof(reg), 0, 0, msg, 1);
+		dbg_bit_print_msg(reg, msg);
 		sprintf(msg, "%d status", i);
-		__dbg_bit_print(sc->sc_regs[i], sizeof(reg), 0, 0, msg, 1);
+		dbg_bit_print_msg(sc->sc_regs[i], msg);
 		ofs = TX39_INTRENABLE_REG(i);
 		reg = tx_conf_read(tc, ofs);
 		sprintf(msg, "%d enable", i);
-		__dbg_bit_print(reg, sizeof(reg), 0, 0, msg, 1);
+		dbg_bit_print_msg(reg, msg);
 	}
 	reg = sc->sc_regs[0];
 	printf("<%s><%s> vector=%2d\t\t[6 status]\n",
@@ -775,6 +775,7 @@ tx39_intr_dump(struct tx39icu_softc *sc)
 	    reg & TX39_INTRSTATUS6_IRQLOW ? "LO" : "--",
 	    TX39_INTRSTATUS6_INTVECT(reg));
 	reg = tx_conf_read(tc, TX39_INTRENABLE6_REG);
-	__dbg_bit_print(reg, sizeof(reg), 0, 18, "6 enable", 1);
+	__dbg_bit_print(reg, sizeof(reg), 0, 18, "6 enable",
+	    DBG_BIT_PRINT_COUNT);
 
 }

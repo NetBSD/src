@@ -1,4 +1,4 @@
-/*	$NetBSD: debug_subr.c,v 1.3 2002/02/22 19:56:27 uch Exp $	*/
+/*	$NetBSD: debug_subr.c,v 1.4 2002/05/03 07:31:23 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ static const char onoff[2] = "_x";
 
 void
 __dbg_bit_print(u_int32_t a, int len, int start, int end, char *title,
-    int count)
+    int flags)
 {
 	u_int32_t j, j1;
 	int i, n;
@@ -60,7 +60,8 @@ __dbg_bit_print(u_int32_t a, int len, int start, int end, char *title,
 	j1 = 1 << n;
 	end = end ? end : n;
 
-	printf(" ");
+	if (!(flags & DBG_BIT_PRINT_QUIET))
+		printf(" ");
 	if (title) {
 		printf("[%-16s] ", title);
 	}
@@ -73,10 +74,12 @@ __dbg_bit_print(u_int32_t a, int len, int start, int end, char *title,
 		}
 	}
 
-	snprintf(buf, sizeof buf, " [0x%%0%dx %%12d]", len << 1);
-	printf(buf, a, a);
+	if (!(flags & DBG_BIT_PRINT_QUIET)) {
+		snprintf(buf, sizeof buf, " [0x%%0%dx %%12d]", len << 1);
+		printf(buf, a, a);
+	}
 
-	if (count) {
+	if (flags & DBG_BIT_PRINT_COUNT) {
 		for (j = j1, i = n; j > 0; j >>=1, i--) {
 			if (!(i > end || i < start) && (a & j)) {
 				printf(" %d", i);
@@ -84,7 +87,8 @@ __dbg_bit_print(u_int32_t a, int len, int start, int end, char *title,
 		}
 	}
 
-	printf("\n");
+	if (!(flags & DBG_BIT_PRINT_QUIET))
+		printf("\n");
 }
 
 void
