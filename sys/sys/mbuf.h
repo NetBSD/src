@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.71 2003/01/31 04:55:52 thorpej Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.72 2003/01/31 05:00:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -158,9 +158,9 @@ struct	pkthdr {
 struct m_ext {
 	caddr_t	ext_buf;		/* start of buffer */
 	void	(*ext_free)		/* free routine if not the usual */
-		(struct mbuf *, caddr_t, u_int, void *);
+		(struct mbuf *, caddr_t, size_t, void *);
 	void	*ext_arg;		/* argument for ext_free */
-	u_int	ext_size;		/* size of buffer, for ext_free */
+	size_t	ext_size;		/* size of buffer, for ext_free */
 	int	ext_type;		/* malloc type */
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;

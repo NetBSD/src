@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.30 2003/01/31 01:03:35 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.31 2003/01/31 05:00:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -149,7 +149,7 @@ void bge_handle_events(struct bge_softc *);
 int bge_alloc_jumbo_mem(struct bge_softc *);
 void bge_free_jumbo_mem(struct bge_softc *);
 void *bge_jalloc(struct bge_softc *);
-void bge_jfree(struct mbuf *, caddr_t, u_int, void *);
+void bge_jfree(struct mbuf *, caddr_t, size_t, void *);
 int bge_newbuf_std(struct bge_softc *, int, struct mbuf *, bus_dmamap_t);
 int bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
 int bge_init_rx_ring_std(struct bge_softc *);
@@ -671,7 +671,7 @@ void
 bge_jfree(m, buf, size, arg)
 	struct mbuf	*m;
 	caddr_t		buf;
-	u_int		size;
+	size_t		size;
 	void		*arg;
 {
 	struct bge_jpool_entry *entry;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.55 2003/01/21 05:39:57 itojun Exp $ */
+/* $NetBSD: if_ti.c,v 1.56 2003/01/31 05:00:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.55 2003/01/21 05:39:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.56 2003/01/31 05:00:25 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -195,7 +195,7 @@ static void ti_cmd_ext		__P((struct ti_softc *, struct ti_cmd_desc *,
 static void ti_handle_events	__P((struct ti_softc *));
 static int ti_alloc_jumbo_mem	__P((struct ti_softc *));
 static void *ti_jalloc		__P((struct ti_softc *));
-static void ti_jfree		__P((struct mbuf *, caddr_t, u_int, void *));
+static void ti_jfree		__P((struct mbuf *, caddr_t, size_t, void *));
 static int ti_newbuf_std	__P((struct ti_softc *, int, struct mbuf *, bus_dmamap_t));
 static int ti_newbuf_mini	__P((struct ti_softc *, int, struct mbuf *, bus_dmamap_t));
 static int ti_newbuf_jumbo	__P((struct ti_softc *, int, struct mbuf *));
@@ -684,7 +684,7 @@ static void *ti_jalloc(sc)
 static void ti_jfree(m, buf, size, arg)
 	struct mbuf		*m;
 	caddr_t			buf;
-	u_int			size;
+	size_t			size;
 	void *arg;
 {
 	struct ti_softc		*sc;

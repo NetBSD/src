@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.18 2003/01/20 05:29:58 simonb Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.19 2003/01/31 05:00:25 thorpej Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -234,7 +234,7 @@ static void dumpring(void **);
  * course, they won't be needing de(4) drivers.
  */
 static void
-donothing(struct mbuf *m, caddr_t buf, u_int size, void *arg)
+donothing(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 {
 	int s;
 
