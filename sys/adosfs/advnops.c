@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.48 1999/03/22 19:21:07 kleink Exp $	*/
+/*	$NetBSD: advnops.c,v 1.49 1999/06/02 22:04:30 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -288,7 +288,7 @@ adosfs_read(v)
 		 * but not much as ados makes little attempt to 
 		 * make things contigous
 		 */
-		error = bread(sp->a_vp, lbn * amp->secsperblk,
+		error = bread(sp->a_vp, lbn * amp->bsize / DEV_BSIZE,
 			      amp->bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp);
@@ -302,14 +302,14 @@ adosfs_read(v)
 			else if (adoswordn(bp, 0) != BPT_DATA) {
 #ifdef DIAGNOSTIC
 				printf("adosfs: bad primary type blk %ld\n",
-				    bp->b_blkno / amp->secsperblk);
+				    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
 				error=EINVAL;
 			}
 			else if ( adoscksum(bp, ap->nwords)) {
 #ifdef DIAGNOSTIC
 				printf("adosfs: blk %ld failed cksum.\n",
-				    bp->b_blkno / amp->secsperblk);
+				    bp->b_blkno / (amp->bsize / DEV_BSIZE));
 #endif
 				error=EINVAL;
 			}
@@ -496,7 +496,7 @@ adosfs_bmap(v)
 	advopprint(sp);
 #endif
 	ap = VTOA(sp->a_vp);
-	bn = sp->a_bn / ap->amp->secsperblk;
+	bn = sp->a_bn / (ap->amp->bsize / DEV_BSIZE);
 	bnp = sp->a_bnp;
 	error = 0;
 
@@ -549,7 +549,7 @@ adosfs_bmap(v)
 			error = EINVAL;
 			goto reterr;
 		}
-		error = bread(ap->amp->devvp, nb * ap->amp->secsperblk,
+		error = bread(ap->amp->devvp, nb * ap->amp->bsize / DEV_BSIZE,
 			      ap->amp->bsize, NOCRED, &flbp);
 		if (error) {
 			brelse(flbp);
@@ -580,11 +580,11 @@ adosfs_bmap(v)
 	flblkoff = bn % ANODENDATBLKENT(ap);
 	if (flblkoff < adoswordn(flbp, 2 /* ADBI_NBLKTABENT */)) {
 		flblkoff = (ap->nwords - 51) - flblkoff;
-		*bnp = adoswordn(flbp, flblkoff) * ap->amp->secsperblk;
+		*bnp = adoswordn(flbp, flblkoff) * ap->amp->bsize / DEV_BSIZE;
 	} else {
 #ifdef DIAGNOSTIC
 		printf("flblk offset %ld too large in lblk %ld blk %d\n", 
-		    flblkoff, bn / ap->amp->secsperblk , flbp->b_blkno);
+		    flblkoff, bn / (ap->amp->bsize / DEV_BSIZE), flbp->b_blkno);
 #endif
 		error = EINVAL;
 	}

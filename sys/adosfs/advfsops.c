@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.35 1999/02/26 23:44:43 wrstuden Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.36 1999/06/02 22:04:30 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -395,7 +395,7 @@ adosfs_vget(mp, an, vpp)
 	ap->nwords = amp->nwords;
 	adosfs_ainshash(amp, ap);
 
-	if ((error = bread(amp->devvp, an * amp->secsperblk,
+	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
 			   amp->bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		vput(vp);
@@ -514,7 +514,7 @@ adosfs_vget(mp, an, vpp)
 		ap->lastindblk = ap->linkto;
 		brelse(bp);
 		bp = NULL;
-		error = bread(amp->devvp, ap->linkto * amp->secsperblk,
+		error = bread(amp->devvp, ap->linkto * amp->bsize / DEV_BSIZE,
 		    amp->bsize, NOCRED, &bp);
 		if (error) {
 			brelse(bp);
@@ -595,7 +595,7 @@ adosfs_loadbitmap(amp)
 
 	bp = mapbp = NULL;
 	bn = amp->rootb;
-	if ((error = bread(amp->devvp, bn * amp->secsperblk, amp->bsize,
+	if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE, amp->bsize,
 	    NOCRED, &bp)) != 0) {
 		brelse(bp);
 		return (error);
@@ -613,7 +613,7 @@ adosfs_loadbitmap(amp)
 		if (mapbp != NULL)
 			brelse(mapbp);
 		if ((error = bread(amp->devvp,
-		    adoswordn(bp, blkix) * amp->secsperblk, amp->bsize,
+		    adoswordn(bp, blkix) * amp->bsize / DEV_BSIZE, amp->bsize,
 		     NOCRED, &mapbp)) != 0)
 			break;
 		if (adoscksum(mapbp, amp->nwords)) {
@@ -640,7 +640,7 @@ adosfs_loadbitmap(amp)
 		if (mapix < bmsize && blkix == endix) {
 			bn = adoswordn(bp, blkix);
 			brelse(bp);
-			if ((error = bread(amp->devvp, bn * amp->secsperblk,
+			if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE,
 			    amp->bsize, NOCRED, &bp)) != 0)
 				break;
 			/*
