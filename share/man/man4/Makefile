@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.336 2004/11/24 20:49:19 bouyer Exp $
+#	$NetBSD: Makefile,v 1.337 2004/11/24 22:38:44 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
@@ -23,7 +23,7 @@ MAN=	aac.4 acardide.4 aceride.4 acphy.4 adc.4 adv.4 \
 	ld.4 lkm.4 lo.4 lxtphy.4 mainbus.4 makphy.4 \
 	mbe.4 mca.4 mcclock.4 md.4 mfb.4 mhzc.4 midi.4 \
 	mii.4 mk48txx.4 mlx.4 mly.4 mpt.4 mpu.4 mtd.4 \
-	mtio.4 multicast.4 ne.4 neo.4 netintro.4 netsmb.4 njs.4 ns.4 \
+	mtio.4 multicast.4 ne.4 neo.4 netintro.4 njs.4 ns.4 \
 	nsclpcsio.4 nsip.4 nsphy.4 nsphyter.4 ntwoc.4 \
 	null.4 nsmb.4 oak.4 oosiop.4 opl.4 options.4 \
 	optiide.4 osiop.4 pas.4 pcdisplay.4 pciide.4 \
@@ -93,42 +93,43 @@ MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
 MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
 	ifpci.4 isic.4 iwic.4 isdncapi.4 iavc.4
 
+MLINKS+=ata.4 atabus.4
+MLINKS+=audio.4 mixer.4
+MLINKS+=audio.4 sound.4
 MLINKS+=bha.4 bt.4
+MLINKS+=cardbus.4 cardslot.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=fss.4 fssbs.4
+MLINKS+=icp.4 icpsp.4
+MLINKS+=irframe.4 irda.4
 MLINKS+=le.4 bicc.4 le.4 nele.4 le.4 depca.4
-MLINKS+=netintro.4 networking.4
-MLINKS+=pms.4 pmsi.4
-MLINKS+=si.4 sw.4
-MLINKS+=audio.4 sound.4
-MLINKS+=audio.4 mixer.4
-MLINKS+=midi.4 sequencer.4
 MLINKS+=midi.4 music.4
 MLINKS+=midi.4 rmidi.4
-MLINKS+=ata.4 atabus.4
-MLINKS+=scsi.4 atapi.4
+MLINKS+=midi.4 sequencer.4
 MLINKS+=mii.4 phy.4
-MLINKS+=usb.4 uhub.4
-MLINKS+=usb.4 usbtask.4
-MLINKS+=url.4 urlphy.4
+MLINKS+=netintro.4 networking.4
+MLINKS+=nsmb.4 netsmb.4
 MLINKS+=ntwoc.4 ntwo.4
-MLINKS+=scsi.4 scsibus.4
-MLINKS+=scsi.4 atapibus.4
-MLINKS+=sk.4 skc.4
-MLINKS+=speaker.4 spkr.4
-MLINKS+=cardbus.4 cardslot.4
 MLINKS+=pci.4 pchb.4
 MLINKS+=pci.4 ppb.4
-MLINKS+=pcppi.4 sysbeep.4
 MLINKS+=pcppi.4 isabeep.4
+MLINKS+=pcppi.4 sysbeep.4
+MLINKS+=pms.4 pmsi.4
 MLINKS+=pss.4 sp.4
-MLINKS+=viaenv.4 viapm.4
-MLINKS+=tty.4 dty.4
 MLINKS+=rcons.4 rasterconsole.4
-MLINKS+=irframe.4 irda.4
-MLINKS+=icp.4 icpsp.4
+MLINKS+=scsi.4 atapi.4
+MLINKS+=scsi.4 atapibus.4
+MLINKS+=scsi.4 scsibus.4
+MLINKS+=si.4 sw.4
+MLINKS+=sk.4 skc.4
+MLINKS+=speaker.4 spkr.4
+MLINKS+=tty.4 dty.4
+MLINKS+=url.4 urlphy.4
+MLINKS+=usb.4 uhub.4
+MLINKS+=usb.4 usbtask.4
+MLINKS+=viaenv.4 viapm.4
 MLINKS+=zstty.4 zs.4 zstty.4 zsc.4
 
 # This is a hack
