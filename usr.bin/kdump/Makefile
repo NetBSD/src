@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/09/19 11:31:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2002/11/15 19:58:05 manu Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT & NETBSDSRCDIR
@@ -10,9 +10,9 @@ SRCS=	kdump.c ioctl.c subr.c setemul.c
 CLEANFILES+=ioctl.c
 WFORMAT=1
 
-.if (${MKDYNAMICROOT} == "no")
-LDSTATIC?=-static
-.endif
+#.if (${MKDYNAMICROOT} == "no")
+#LDSTATIC?=-static
+#.endif
 
 .include "Makefile.ioctl-c"
 

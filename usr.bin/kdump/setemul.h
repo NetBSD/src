@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.h,v 1.6 2002/03/31 22:44:03 christos Exp $	*/
+/*	$NetBSD: setemul.h,v 1.7 2002/11/15 19:58:05 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,4 +88,6 @@ extern const struct emulation *previous;
 
 void setemul __P((const char *, pid_t, int));
 void ectx_sanify __P((pid_t));
+int mach_traps_dispatch __P((int *, const struct emulation **));
+void mach_lookup_emul __P((void));
 

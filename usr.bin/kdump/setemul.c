@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.13 2002/10/29 07:17:43 manu Exp $	*/
+/*	$NetBSD: setemul.c,v 1.14 2002/11/15 19:58:05 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.13 2002/10/29 07:17:43 manu Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.14 2002/11/15 19:58:05 manu Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,6 +98,9 @@ __RCSID("$NetBSD: setemul.c,v 1.13 2002/10/29 07:17:43 manu Exp $");
 #include "../../sys/compat/irix/irix_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
 #include "../../sys/compat/mach/mach_syscall.h"
+#include "../../sys/compat/darwin/darwin_syscall.h"
+#include "../../sys/compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscall.h"
+#include "../../sys/compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscall.h"
 #include "../../sys/compat/osf1/osf1_syscall.h"
 #include "../../sys/compat/sunos32/sunos32_syscall.h"
 #include "../../sys/compat/sunos/sunos_syscall.h"
@@ -114,7 +117,10 @@ __RCSID("$NetBSD: setemul.c,v 1.13 2002/10/29 07:17:43 manu Exp $");
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
 #include "../../sys/compat/irix/irix_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
+#include "../../sys/compat/darwin/darwin_syscalls.c"
 #include "../../sys/compat/mach/mach_syscalls.c"
+#include "../../sys/compat/mach/arch/powerpc/ppccalls/mach_ppccalls_syscalls.c"
+#include "../../sys/compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscalls.c"
 #include "../../sys/compat/osf1/osf1_syscalls.c"
 #include "../../sys/compat/sunos/sunos_syscalls.c"
 #include "../../sys/compat/sunos32/sunos32_syscalls.c"
@@ -140,7 +146,8 @@ __RCSID("$NetBSD: setemul.c,v 1.13 2002/10/29 07:17:43 manu Exp $");
 
 #define NELEM(a) (sizeof(a) / sizeof(a[0]))
 
-static const struct emulation emulations[] = {
+/* static */
+const struct emulation emulations[] = {
 	{ "netbsd",	syscallnames,		SYS_MAXSYSCALL,
 	  NULL,				0,
 	  NULL,				0 },
@@ -173,8 +180,22 @@ static const struct emulation emulations[] = {
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),
 	  linux_to_native_signo,	NSIG },
 
-	{ "mach",	mach_syscallnames,	MACH_SYS_MAXSYSCALL,
+	{ "darwin",	darwin_syscallnames,	DARWIN_SYS_MAXSYSCALL,
 	  NULL,				0,
+	  NULL,				0 },
+
+	{ "mach",	mach_syscallnames,	MACH_SYS_MAXSYSCALL,
+	  NULL,				0,	
+	  NULL,				0 },
+
+	{ "mach ppccalls",	mach_ppccalls_syscallnames,
+	  MACH_PPCCALLS_SYS_MAXSYSCALL,
+	  NULL,				0,	
+	  NULL,				0 },
+
+	{ "mach fasttraps",	mach_fasttraps_syscallnames,
+	  MACH_FASTTRAPS_SYS_MAXSYSCALL,
+	  NULL,				0,	
 	  NULL,				0 },
 
 	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL,
@@ -218,6 +239,10 @@ struct emulation_ctx {
 
 const struct emulation *current;
 const struct emulation *previous;
+/* Mach emulation require extra emulation contexts */
+const struct emulation *mach;
+const struct emulation *mach_ppccalls;
+const struct emulation *mach_fasttraps;
 
 static const struct emulation *default_emul=NULL;
 
@@ -327,4 +352,62 @@ ectx_sanify(pid)
 		current = default_emul;
 	else
 		current = &emulations[0]; /* NetBSD */
+}
+
+/*
+ * Temporarily modify code and emulations to handle Mach traps
+ * XXX The define are duplicated from sys/arch/powerpc/include/mach_syscall.c
+ */
+#define MACH_FASTTRAPS		0x00007ff0
+#define MACH_PPCCALLS		0x00006000
+#define MACH_ODD_SYSCALL_MASK	0x0000fff0
+int
+mach_traps_dispatch(code, emul)
+	int *code;
+	const struct emulation **emul;
+{
+	switch (*code & MACH_ODD_SYSCALL_MASK) {
+	case MACH_FASTTRAPS:
+		*emul = mach_fasttraps;
+		*code -= MACH_FASTTRAPS;
+		return 1;
+		break;
+
+	case MACH_PPCCALLS:
+		*emul = mach_ppccalls;
+		*code -= MACH_PPCCALLS;
+		return 1;
+		break;
+
+	default:
+		if (*code < 0) {
+			*emul = mach;
+			*code = -*code;
+			return 1;
+		}
+		break;
+	}
+	return 0;
+}
+
+/*
+ * Lookup Machs emulations
+ */
+void
+mach_lookup_emul(void) {
+	const struct emulation *emul_idx;
+
+	for (emul_idx = emulations; emul_idx->name; emul_idx++) {
+		if (strcmp("mach", emul_idx->name) == 0)
+			mach = emul_idx;
+		if (strcmp("mach fasttraps", emul_idx->name) == 0)
+			mach_fasttraps = emul_idx;
+		if (strcmp("mach ppccalls", emul_idx->name) == 0)
+			mach_ppccalls = emul_idx;
+	}
+	if (mach == NULL || mach_fasttraps == NULL || mach_ppccalls == NULL) {
+		errx(1, "Cannot load mach emulations");
+		exit(1);
+	}
+	return;
 }
