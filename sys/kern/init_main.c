@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.211 2002/11/17 22:53:46 chs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.212 2002/11/24 17:33:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.211 2002/11/17 22:53:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.212 2002/11/24 17:33:43 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -223,8 +223,9 @@ main(void)
 	soinit();
 
 	/*
-	 * The following 3 things must be done before autoconfiguration.
+	 * The following things must be done before autoconfiguration.
 	 */
+	evcnt_init();		/* initialize event counters */
 	disk_init();		/* initialize disk list */
 	tty_init();		/* initialize tty list */
 #if NRND > 0
