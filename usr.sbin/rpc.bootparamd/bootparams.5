@@ -1,4 +1,4 @@
-.\"	$NetBSD: bootparams.5,v 1.6 1997/04/23 00:28:03 mrg Exp $
+.\"	$NetBSD: bootparams.5,v 1.7 1997/10/17 15:59:11 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross
 .\" All rights reserved.
@@ -35,18 +35,18 @@
 .Nm /etc/bootparams
 .Sh DESCRIPTION
 The
-.Nm bootparams
+.Nm
 file specifies the boot parameters that
 .Xr diskless
 clients may request when booting over the network.
 Each client supported by this server must have an entry in the
-.Nm bootparams
+.Nm
 file containing the servers and pathnames for its
-.Nm root ,
+.Pa root ,
 area.  It may optionally contain
-.Nm swap
+.Pa swap
 and
-.Nm dump
+.Pa dump
 areas.
 .Pp
 Each line in the file
