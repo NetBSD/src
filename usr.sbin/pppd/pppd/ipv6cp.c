@@ -1,3 +1,5 @@
+/*	$NetBSD: ipv6cp.c,v 1.2 1999/08/25 02:07:43 christos Exp $	*/
+
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
  *
@@ -21,14 +23,21 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipv6cp.c,v 1.1.1.1 1999/08/24 20:25:43 christos Exp $ 
+ * Id: ipv6cp.c,v 1.3 1999/08/24 05:31:09 paulus Exp 
  *
  *
  * Original version by Inria (www.inria.fr)
  * Modified to match RFC2472 by Tommi Komulainen <Tommi.Komulainen@iki.fi>
  */
 
-#define RCSID	"$Id: ipv6cp.c,v 1.1.1.1 1999/08/24 20:25:43 christos Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: ipv6cp.c,v 1.3 1999/08/24 05:31:09 paulus Exp "
+#else
+__RCSID("$NetBSD: ipv6cp.c,v 1.2 1999/08/25 02:07:43 christos Exp $");
+#endif
+#endif
 
 /*
  * TODO: 
@@ -51,12 +60,17 @@
 #include "pppd.h"
 #include "fsm.h"
 #include "ipcp.h"
+#ifdef INET6
 #include "ipv6cp.h"
+#endif
 #include "magic.h"
 #include "pathnames.h"
 
+#ifdef RCSID
 static const char rcsid[] = RCSID;
+#endif
 
+#ifdef INET6
 /* global vars */
 ipv6cp_options ipv6cp_wantoptions[NUM_PPP];     /* Options that we want to request */
 ipv6cp_options ipv6cp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
@@ -80,6 +94,7 @@ static int  ipv6cp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
 static void ipv6cp_up __P((fsm *));		/* We're UP */
 static void ipv6cp_down __P((fsm *));		/* We're DOWN */
 static void ipv6cp_finished __P((fsm *));	/* Don't need lower layer */
+static char *llv6_ntoa __P((eui64_t));
 
 fsm ipv6cp_fsm[NUM_PPP];		/* IPV6CP fsm structure */
 
@@ -243,7 +258,7 @@ setifaceid(arg)
 /*
  * Make a string representation of a network address.
  */
-char *
+static char *
 llv6_ntoa(ifaceid)
     eui64_t ifaceid;
 {
@@ -1362,3 +1377,4 @@ ipv6_active_pkt(pkt, len)
 	return 0;
     return 1;
 }
+#endif

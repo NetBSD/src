@@ -1,4 +1,4 @@
-/*	$NetBSD: ipxcp.h,v 1.3 1997/09/26 19:52:53 christos Exp $	*/
+/*	$NetBSD: ipxcp.h,v 1.4 1999/08/25 02:07:43 christos Exp $	*/
 
 /*
  * ipxcp.h - IPX Control Protocol definitions.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: ipxcp.h,v 1.3 1997/03/04 03:39:33 paulus Exp 
+ * Id: ipxcp.h,v 1.4 1998/11/07 06:59:27 paulus Exp 
  */
 
 /*
@@ -37,22 +37,22 @@
 #define NLSP			  4
 
 typedef struct ipxcp_options {
-    int neg_node       : 1;	/* Negotiate IPX node number? */
-    int req_node       : 1;	/* Ask peer to send IPX node number? */
+    bool neg_node;		/* Negotiate IPX node number? */
+    bool req_node;		/* Ask peer to send IPX node number? */
 
-    int neg_nn         : 1;	/* Negotiate IPX network number? */
-    int req_nn         : 1;     /* Ask peer to send IPX network number */
+    bool neg_nn;		/* Negotiate IPX network number? */
+    bool req_nn;		/* Ask peer to send IPX network number */
 
-    int neg_name       : 1;	/* Negotiate IPX router name */
-    int neg_complete   : 1;     /* Negotiate completion */
-    int neg_router     : 1;	/* Negotiate IPX router number */
+    bool neg_name;		/* Negotiate IPX router name */
+    bool neg_complete;		/* Negotiate completion */
+    bool neg_router;		/* Negotiate IPX router number */
 
-    int accept_local   : 1;	/* accept peer's value for ournode */
-    int accept_remote  : 1;	/* accept peer's value for hisnode */
-    int accept_network : 1;	/* accept network number */
+    bool accept_local;		/* accept peer's value for ournode */
+    bool accept_remote;		/* accept peer's value for hisnode */
+    bool accept_network;	/* accept network number */
 
-    int tried_nlsp     : 1;     /* I have suggested NLSP already */
-    int tried_rip      : 1;     /* I have suggested RIP/SAP already */
+    bool tried_nlsp;		/* I have suggested NLSP already */
+    bool tried_rip;		/* I have suggested RIP/SAP already */
 
     u_int32_t his_network;	/* base network number */
     u_int32_t our_network;	/* our value for network number */

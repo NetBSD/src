@@ -1,3 +1,5 @@
+/*	$NetBSD: eui64.c,v 1.2 1999/08/25 02:07:42 christos Exp $	*/
+
 /*
  * eui64.c - EUI64 routines for IPv6CP.
  *
@@ -15,15 +17,25 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: eui64.c,v 1.1.1.1 1999/08/24 20:25:44 christos Exp $
+ * Id: eui64.c,v 1.2 1999/08/13 06:46:12 paulus Exp 
  */
 
-#define RCSID	"$Id: eui64.c,v 1.1.1.1 1999/08/24 20:25:44 christos Exp $"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+#define RCSID	"Id: eui64.c,v 1.2 1999/08/13 06:46:12 paulus Exp "
+#else
+__RCSID("$NetBSD: eui64.c,v 1.2 1999/08/25 02:07:42 christos Exp $");
+#endif
+#endif
 
 #include "pppd.h"
 
+#ifdef RCSID
 static const char rcsid[] = RCSID;
+#endif
 
+#ifdef INET6
 /*
  * eui64_ntoa - Make an ascii representation of an interface identifier
  */
@@ -38,3 +50,4 @@ eui64_ntoa(e)
 	     e.e8[4], e.e8[5], e.e8[6], e.e8[7]);
     return buf;
 }
+#endif
