@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 1998/09/13 16:45:43 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.17 1998/09/17 04:52:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -592,10 +592,10 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct sigacts *psp = p->p_sigacts;
-	register struct sigframe *fp;
-	register struct trapframe *tf;
+	struct proc *p = curproc;
+	struct sigacts *psp = p->p_sigacts;
+	struct sigframe *fp;
+	struct trapframe *tf;
 	vaddr_t addr; 
 	struct rwindow *oldsp, *newsp, /* DEBUG */tmpwin;
 	struct sigframe sf;
@@ -642,19 +642,9 @@ sendsig(catcher, sig, mask, code)
 	sf.sf_signo = sig;
 	sf.sf_code = code;
 #ifndef _LP64
-#ifdef COMPAT_SUNOS
-	sf.sf_scp = &fp->sf_sc;
-#endif
+	sf.sf_scp = 0;
 	sf.sf_addr = 0;			/* XXX */
 #endif
-
-	/* Save register context. */
-	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
-	sf.sf_sc.sc_pc = tf->tf_pc;
-	sf.sf_sc.sc_npc = tf->tf_npc;
-	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
-	sf.sf_sc.sc_g1 = tf->tf_global[1];
-	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -670,7 +660,13 @@ sendsig(catcher, sig, mask, code)
 	 */
 	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
 #endif
-	
+	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
+	sf.sf_sc.sc_pc = tf->tf_pc;
+	sf.sf_sc.sc_npc = tf->tf_npc;
+	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
+	sf.sf_sc.sc_g1 = tf->tf_global[1];
+	sf.sf_sc.sc_o0 = tf->tf_out[0];
+
 	/*
 	 * Put the stack in a consistent state before we whack away
 	 * at it.  Note that write_user_windows may just dump the
@@ -717,16 +713,8 @@ sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-#ifdef _COMPAT_SUNOS
-/* XXXXXXX FIX MEEEEEEE XXXXXXX */
-	if (psp->ps_usertramp & sigmask(sig)) {
-		addr = (vaddr_t)catcher;	/* user does his own trampolining */
-	} else
-#endif
-	{
-		addr = (vaddr_t)psp->ps_sigcode;
-		tf->tf_global[1] = (vaddr_t)catcher;
-	}
+	addr = (vaddr_t)psp->ps_sigcode;
+	tf->tf_global[1] = (vaddr_t)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
@@ -742,20 +730,6 @@ sendsig(catcher, sig, mask, code)
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
- 
-	/* Remember that we're now on the signal stack. */
-	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-int compat_13_sys_sigreturn __P((struct proc *, void *, register_t *));
-int
-compat_13_sys_sigreturn(p, v, retval)
-	register struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return sys___sigreturn14(p, v, retval);
 }
 
 /*
@@ -777,8 +751,7 @@ sys___sigreturn14(p, v, retval)
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct sigcontext *scp;
-	struct sigcontext sc;
+	struct sigcontext sc, *scp;
 	register struct trapframe *tf;
 #ifndef TRAPWIN
 	int i;
@@ -815,6 +788,8 @@ sys___sigreturn14(p, v, retval)
 #else
 		return (EINVAL);
 #endif
+	scp = &sc;
+
 	tf = p->p_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
@@ -832,12 +807,12 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 #endif
 	/* take only psr ICC field */
-	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(sc.sc_psr);
-	tf->tf_pc = (int64_t)sc.sc_pc;
-	tf->tf_npc = (int64_t)sc.sc_npc;
-	tf->tf_global[1] = (int64_t)sc.sc_g1;
-	tf->tf_out[0] = (int64_t)sc.sc_o0;
-	tf->tf_out[6] = (int64_t)sc.sc_sp;
+	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
+	tf->tf_pc = (int64_t)scp->sc_pc;
+	tf->tf_npc = (int64_t)scp->sc_npc;
+	tf->tf_global[1] = (int64_t)scp->sc_g1;
+	tf->tf_out[0] = (int64_t)scp->sc_o0;
+	tf->tf_out[6] = (int64_t)scp->sc_sp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sys_sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
