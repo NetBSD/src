@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.20 2001/09/16 02:23:09 wiz Exp $
+.\"	$NetBSD: rcmd.3,v 1.21 2001/09/16 02:54:17 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -254,6 +254,14 @@ to avoid dependency between
 .Aq Li unistd.h
 and
 .Aq Li sys/socket.h .
+.Sh ENVIRONMENT
+.Bl -tag -width RCMD_CMDxx -compact
+.It Ev RCMD_CMD
+When using the
+.Fn rcmd
+function, this variable is used as the program to run instead of
+.Xr rcmd 1 .
+.El
 .Sh DIAGNOSTICS
 The
 .Fn rcmd
@@ -273,14 +281,6 @@ set according to the reason for failure.
 The error code
 .Dv EAGAIN
 is overloaded to mean ``All network ports in use.''
-.Sh ENVIRONMENT
-.Bl -tag -width RCMD_CMDxx -compact
-.It Ev RCMD_CMD
-When using the
-.Fn rcmd
-function, this variable is used as the program to run instead of
-.Xr rcmd 1 .
-.El
 .Sh SEE ALSO
 .Xr rcmd 1 ,
 .Xr rlogin 1 ,
