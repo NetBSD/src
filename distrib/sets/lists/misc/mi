@@ -227,6 +227,7 @@
 ./usr/share/examples/ipf/firewall
 ./usr/share/examples/ipf/ftp-proxy
 ./usr/share/examples/ipf/ftppxy
+./usr/share/examples/ipf/mediaone
 ./usr/share/examples/ipf/mkfilters
 ./usr/share/examples/ipf/nat-setup
 ./usr/share/examples/ipf/nat.eg
