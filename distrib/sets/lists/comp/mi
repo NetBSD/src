@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.509 2002/12/31 23:55:45 thorpej Exp $
+#	$NetBSD: mi,v 1.510 2003/01/05 23:40:05 sommerfeld Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -7042,6 +7042,7 @@
 ./usr/share/mk/bsd.obj.mk		comp-util-share
 ./usr/share/mk/bsd.own.mk		comp-util-share
 ./usr/share/mk/bsd.prog.mk		comp-util-share
+./usr/share/mk/bsd.rpc.mk		comp-util-share
 ./usr/share/mk/bsd.shlib.mk		comp-util-share
 ./usr/share/mk/bsd.subdir.mk		comp-util-share
 ./usr/share/mk/bsd.sys.mk		comp-util-share
