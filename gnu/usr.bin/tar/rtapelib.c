@@ -16,7 +16,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rtapelib.c,v 1.3 1994/10/16 11:34:34 andrew Exp $";
+static char rcsid[] = "$Id: rtapelib.c,v 1.4 1994/10/18 06:04:08 andrew Exp $";
 #endif /* not lint */
 
 /* The man page rmt(8) for /etc/rmt documents the remote mag tape
@@ -376,10 +376,10 @@ __rmt_open (path, oflag, mode, bias)
 
       if (*login)
 	  execl ("/usr/bin/rsh", "rsh", system, "-l", login,
-		 "/usr/sbin/rmt", (char *) 0);
+		 "/etc/rmt", (char *) 0);
       else
 	  execl ("/usr/bin/rsh", "rsh", system,
-		 "/usr/sbin/rmt", (char *) 0);
+		 "/etc/rmt", (char *) 0);
 
       /* Bad problems if we get here.  */
 
