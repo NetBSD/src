@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.12 1997/11/04 01:39:09 phil Exp $	*/
+/*	$NetBSD: util.c,v 1.13 1997/11/05 01:23:09 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -183,6 +183,11 @@ get_via_cdrom(void)
 {
 	/* Get server and filepath */
 	process_menu (MENU_cdromsource);
+
+	/* Fill in final default path. */
+	strncat (ftp_dir, rels, STRSIZE-strlen(ftp_dir));
+	strcat  (ftp_dir, "/");
+	strncat (ftp_dir, machine, STRSIZE-strlen(ftp_dir));
 
 	/* Mount it */
 	while (run_prog ("/sbin/mount -rt cd9660 /dev/%sa /mnt2", cdrom_dev)) {
