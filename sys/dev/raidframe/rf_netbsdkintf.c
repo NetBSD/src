@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.178 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.178.2.1 2004/07/02 18:03:06 he Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.178 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.178.2.1 2004/07/02 18:03:06 he Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1672,6 +1672,7 @@ raidstart(RF_Raid_t *raidPtr)
 	struct raid_softc *rs;
 	int     do_async;
 	struct buf *bp;
+	int rc;
 
 	unit = raidPtr->raidid;
 	rs = &raid_softc[unit];
@@ -1766,13 +1767,17 @@ raidstart(RF_Raid_t *raidPtr)
 		/* don't ever condition on bp->b_flags & B_WRITE.  
 		 * always condition on B_READ instead */
 		
-		bp->b_error = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
-				      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
-				      do_async, raid_addr, num_blocks,
-				      bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
+		rc = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
+				 RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
+				 do_async, raid_addr, num_blocks,
+				 bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
 
-		if (bp->b_error) {
+		if (rc) {
+			bp->b_error = rc;
 			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
+			/* continue loop */
 		}	
 
 		RF_LOCK_MUTEX(raidPtr->mutex);
