@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.7 1995/09/23 20:29:16 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.8 1996/03/08 21:52:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -200,18 +200,29 @@ dmode_t	*curr_mode;
 {
 	dmode_t		*save;
 	dmode_t		*dm;
-	long   		dt, dx, dy, ct;
+	long   		dx, dy, dd, ct;
+	long		size_diff, depth_diff;
 
-	save = NULL;
-	dm = modes.lh_first;
+	save       = NULL;
+	size_diff  = 0;
+	depth_diff = 0;
+	dm         = modes.lh_first;
 	while (dm != NULL) {
 		dx = abs(dm->size.width  - dim->width);
 		dy = abs(dm->size.height - dim->height);
+		dd = abs(dm->depth - depth);
 		ct = dx + dy;
 
-		if (ct < dt || save == NULL) {
-			save = dm;
-			dt = ct;
+		if ((save != NULL) && (size_diff == 0)) {
+			if (dd > depth_diff) {
+				dm = dm->link.le_next;
+				continue;
+			}
+		}
+		if ((save == NULL) || (ct <= size_diff)) {
+			save       = dm;
+			size_diff  = ct;
+			depth_diff = dd;
 		}
 		dm = dm->link.le_next;
 	}
@@ -221,8 +232,9 @@ dmode_t	*curr_mode;
 	if ((save != NULL) && (curr_mode != NULL)) {
 		dx = abs(curr_mode->size.width  - dim->width);
 		dy = abs(curr_mode->size.height - dim->height);
+		dd = abs(curr_mode->depth - depth);
 		ct = dx + dy;
-		if (ct <= dt)
+		if ((ct <= size_diff) && (dd <= depth_diff))
 			return (NULL);
 	}
 	return (save);
