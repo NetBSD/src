@@ -1,25 +1,25 @@
-# $NetBSD: Makefile,v 1.16 1998/10/15 00:52:38 ross Exp $
+# $NetBSD: Makefile,v 1.17 1999/03/31 02:52:11 cgd Exp $
 
 PROG = bootxx
 
 SRCS = start.S bootxx.c prom.c prom_disp.S puts.c
 
 BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
-HEADERSIZE_PROG = headersize
+PRIMARY_MAX_LOAD!=	expr 8192 - 512
 
 CPPFLAGS += ${PRIMARY_CPPFLAGS}
 
-CLEANFILES+= ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
+CLEANFILES+= ${PROG}.sym
 
-${PROG}.nosym: ${PROG}.sym
-	cp ${PROG}.sym ${PROG}.nosym
-	${STRIP} ${PROG}.nosym
+${PROG}: ${PROG}.sym
+	@echo creating ${PROG} from ${PROG}.sym...
+	@objcopy --output-target=binary ${PROG}.sym ${PROG}
+	@chmod 644 ${PROG}
+	@ls -l ${PROG}
+	@${CHECKSIZE_CMD} ${PROG}.sym ${PROG} ${PRIMARY_MAX_LOAD} \
+	    ${PRIMARY_MAX_TOTAL} || (rm -f ${PROG} ; false)
 
-${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
-	dd if=${PROG}.nosym of=${PROG} \
-	    ibs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1 \
-	    obs=`expr 15 \* 512` conv=osync
-
+SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 .include "../Makefile.bootprogs"
 
 NETBSD_VERS!=sh ${.CURDIR}/../../../../conf/osrelease.sh
@@ -28,4 +28,5 @@ CPPFLAGS+= -DNETBSD_VERS='"${NETBSD_VERS}"'
 ${PROG}.sym: ${OBJS} ${LIBKERN}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym ${OBJS} \
 	    ${LIBKERN}
-	${SIZE} ${PROG}.sym
+	@chmod 644 ${PROG}.sym
+	@${SIZE} ${PROG}.sym
