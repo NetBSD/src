@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.33 2004/04/23 14:46:31 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.34 2004/04/24 15:46:24 matt Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -75,6 +75,13 @@ struct passwd;
 #if !defined(__attribute__) && !defined(__GNUC__)
 #define __attribute__(x)
 #endif
+#if !defined(__packed)
+#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 7)
+#define __packed	__attribute__((__packed__))
+#else
+#define	__packed	error: no __packed for this compiler
+#endif
+#endif /* !__packed */
 #ifndef __RENAME
 #define __RENAME(x)
 #endif
