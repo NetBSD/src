@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.8 1997/10/10 08:45:33 mrg Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.9 1997/10/21 19:58:21 thorpej Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -51,6 +51,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#define __RMTLIB_PRIVATE
+#include <rmt.h>		/* get prototypes for remapped functions */
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
 static	int	_rmt_close __P((int));
 static	int	_rmt_ioctl __P((int, unsigned long, char *));
 static	off_t	_rmt_lseek __P((int, off_t, int));
@@ -63,20 +72,6 @@ static	void	rmtabort __P((int));
 static	int	status __P((int));
 
 	int	isrmt __P((int));
-	int	rmtaccess __P((const char *, int));
-	int	rmtclose __P((int));
-	int	rmtcreat __P((const char *, mode_t));
-	int	rmtdup __P((int));
-	int	rmtfcntl __P((int, int, int));
-	int	rmtfstat __P((int, struct stat *));
-	int	rmtioctl __P((int, unsigned long, char *));
-	int	rmtisatty __P((int));
-	off_t	rmtlseek __P((int, off_t, int));
-	int	rmtlstat __P((const char *, struct stat *));
-	int	rmtopen __P((const char *, int, mode_t));
-	ssize_t	rmtread __P((int, void *, size_t));
-	int	rmtstat __P((const char *, struct stat *));
-	ssize_t	rmtwrite __P((int, const void *, size_t));
 
 
 #define BUFMAGIC	64	/* a magic number for buffer sizes */
@@ -657,12 +652,29 @@ remdev(path)
  */
  
 int
-rmtopen(path, oflag, mode)
+#ifdef __STDC__
+rmtopen(const char *path, int oflag, ...)
+#else
+rmtopen(va_alist)
+	va_decl
+#endif
+{
+	mode_t mode;
+	int fd;
+	va_list ap;
+#if __STDC__
+	va_start(ap, oflag);
+#else
 	const char *path;
 	int oflag;
-	mode_t mode;
-{
-	int fd;
+
+	va_start(ap);
+	path = va_arg(ap, const char *);
+	oflag = va_arg(ap, int);
+#endif
+
+	mode = va_arg(ap, mode_t);
+	va_end(ap);
 
 	if (remdev (path))
 	{
@@ -794,11 +806,29 @@ rmtclose(fildes)
  */
  
 int
-rmtioctl(fildes, request, arg)
+#ifdef __STDC__
+rmtioctl(int fildes, unsigned long request, ...)
+#else
+rmtioctl(va_alist)
+	va_decl
+#endif
+{
+	char *arg;
+	va_list ap;
+#if __STDC__
+	va_start(ap, request);
+#else
 	int fildes;
 	unsigned long request;
-	char *arg;
-{
+
+	va_start(ap);
+	filedes = va_arg(ap, int);
+	request = va_arg(ap, unsigned long);
+#endif
+
+	arg = va_arg(ap, char *);
+	va_end(ap);
+
 	if (isrmt (fildes))
 	{
 #ifdef RMTIOCTL
@@ -902,9 +932,28 @@ rmtcreat(path, mode)
  */
 
 int
-rmtfcntl(fd, cmd, arg)
-	int fd, cmd, arg;
+#ifdef __STDC__
+rmtfcntl(int fd, int cmd, ...)
+#else
+rmtfcntl(va_alist)
+	va_decl
+#endif
 {
+	void *arg;
+	va_list ap;
+#if __STDC__
+	va_start(ap, cmd);
+#else
+	int fd, cmd;
+
+	va_start(ap);
+	fd = va_arg(ap, int);
+	cmd = va_arg(ap, int);
+#endif
+
+	arg = va_arg(ap, void *);
+	va_end(ap);
+
 	if (isrmt (fd))
 	{
 		errno = EOPNOTSUPP;
