@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.8 1996/04/11 10:07:17 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.9 1996/04/12 05:57:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -382,10 +382,11 @@ i386_vm86(p, args, retval)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct vm86_kern vm86s;
-	int err;
+	int error;
 
-	if (err = copyin(args, &vm86s, sizeof(vm86s)))
-		return err;
+	error = copyin(args, &vm86s, sizeof(vm86s));
+	if (error)
+		return (error);
 
 	pcb->vm86_userp = (void *)args;
 
@@ -397,18 +398,19 @@ i386_vm86(p, args, retval)
 	case VCPU_086:
 	case VCPU_186:
 	case VCPU_286:
-		pcb->vm86_flagmask = 0;
-		break;
-	case VCPU_386:
-		pcb->vm86_flagmask = PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_486:
-		pcb->vm86_flagmask = PSL_AC|PSL_NT|PSL_IOPL;
-		break;
-	case VCPU_586:
-	default:
 		pcb->vm86_flagmask = PSL_ID|PSL_AC|PSL_NT|PSL_IOPL;
 		break;
+	case VCPU_386:
+		pcb->vm86_flagmask = PSL_ID|PSL_AC;
+		break;
+	case VCPU_486:
+		pcb->vm86_flagmask = PSL_ID;
+		break;
+	case VCPU_586:
+		pcb->vm86_flagmask = 0;
+		break;
+	default:
+		return (EINVAL);
 	}
 
 #define DOVREG(reg) tf->tf_vm86_##reg = (u_short) vm86s.regs.vmsc.sc_##reg
