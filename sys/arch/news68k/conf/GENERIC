@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.1 1999/12/09 14:53:02 tsutsui Exp $
+# 	$NetBSD: GENERIC,v 1.2 2000/01/20 19:12:33 wrstuden Exp $
 
 #	news68k GENERIC config file;
 #
@@ -56,6 +56,7 @@ file-system	KERNFS		# /kern
 file-system	PROCFS		# /proc
 file-system	FDESC		# /dev/fd/*
 file-system	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system	PORTAL		# portal filesystem (still experimental)
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system 

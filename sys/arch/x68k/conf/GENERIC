@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.39 1999/11/21 14:00:45 itojun Exp $
+#	$NetBSD: GENERIC,v 1.40 2000/01/20 19:12:37 wrstuden Exp $
 
 #
 #	GENERIC
@@ -137,6 +137,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 #file-system	NULLFS		# NULL layered filesystem (buggy)
+#file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 #file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem

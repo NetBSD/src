@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.131 1999/11/21 14:00:38 itojun Exp $
+#	$NetBSD: GENERIC,v 1.132 2000/01/20 19:12:28 wrstuden Exp $
 
 #
 #if 0
@@ -93,6 +93,7 @@ file-system 	MSDOSFS		# MS-DOS filesystem
 file-system 	FDESC		# user file descriptor filesystem
 file-system 	KERNFS		# kernel data-structure filesystem
 file-system 	NULLFS		# loopback filesystem
+file-system 	OVERLAY		# overlay filesystem
 #file-system 	PORTAL		# Portal filesystem
 file-system 	PROCFS		# /proc filesystem
 file-system 	UMAPFS		# NULLFS + uid and gid remapping

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.6 1999/11/21 14:00:42 itojun Exp $
+#	$NetBSD: GENERIC,v 1.7 2000/01/20 19:12:34 wrstuden Exp $
 #
 # GENERIC: generic kernel for most machines
 #
@@ -31,6 +31,7 @@ options 	COMPAT_43		# and 4.3BSD
 # file system options
 file-system	FFS			# Berkeley fast file system
 file-system	NULLFS			# loopback file system
+file-system 	OVERLAY			# overlay file system
 file-system	UNION			# union file system
 file-system	NFS			# Network File System client
 

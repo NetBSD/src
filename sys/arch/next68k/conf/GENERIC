@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 1999/12/14 11:17:27 dbj Exp $
+# $NetBSD: GENERIC,v 1.23 2000/01/20 19:12:33 wrstuden Exp $
 #
 # GENERIC next68k
 #
@@ -71,6 +71,7 @@ file-system 	NFS		# Network File System client
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping

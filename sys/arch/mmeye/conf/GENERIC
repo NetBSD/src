@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5 1999/11/21 14:00:41 itojun Exp $
+#	$NetBSD: GENERIC,v 1.6 2000/01/20 19:12:32 wrstuden Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -60,6 +60,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
+file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
