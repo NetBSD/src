@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.1.2.2 1997/02/18 13:27:44 is Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.1.2.3 1997/03/06 18:30:21 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,18 +54,7 @@ struct	ether_header {
 	u_int16_t ether_type;
 };
 
-#define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
-#define	ETHERTYPE_IP		0x0800	/* IP protocol */
-#define	ETHERTYPE_ARP		0x0806	/* address resolution protocol */
-#define	ETHERTYPE_REVARP	0x8035	/* reverse addr resolution protocol */
-
-/*
- * The ETHERTYPE_NTRAILER packet types starting at ETHERTYPE_TRAIL have
- * (type-ETHERTYPE_TRAIL)*512 bytes of data followed
- * by an ETHER type (as given above) and then the (variable-length) header.
- */
-#define	ETHERTYPE_TRAIL		0x1000		/* Trailer packet */
-#define	ETHERTYPE_NTRAILER	16
+#include <net/ethertypes.h>
 
 #define	ETHER_IS_MULTICAST(addr) (*(addr) & 0x01) /* is address mcast/bcast? */
 
