@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.6 2001/05/08 18:51:22 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.7 2001/05/17 01:50:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@ public:
 		BOOL	boot_verbose;
 		BOOL	boot_single_user;
 		BOOL	boot_ask_for_name;
+		BOOL	boot_debugger;
 		// boot loader options.
 		int		auto_boot;
 		BOOL	reverse_video;
