@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_syscall.h,v 1.7 2000/01/08 17:03:23 tron Exp $	*/
+/*	$NetBSD: aout_syscall.h,v 1.8 2000/01/31 15:53:46 christos Exp $	*/
 
 /*
  * System call numbers.
@@ -751,10 +751,10 @@
 /* syscall: "fhstatfs" ret: "int" args: "const fhandle_t *" "struct statfs *" */
 #define	AOUT_SYS_fhstatfs	300
 
-/* syscall: "__semctl13" ret: "int" args: "int" "int" "int" "union __semun" */
-#define	AOUT_SYS___semctl13	301
+/* syscall: "____semctl13" ret: "int" args: "int" "int" "int" "..." */
+#define	AOUT_SYS_____semctl13	301
 
-				/* 301 is excluded __semctl13 */
+				/* 301 is excluded ____semctl13 */
 /* syscall: "__msgctl13" ret: "int" args: "int" "int" "struct msqid_ds *" */
 #define	AOUT_SYS___msgctl13	302
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_sysent.c,v 1.7 2000/01/08 17:03:23 tron Exp $	*/
+/*	$NetBSD: aout_sysent.c,v 1.8 2000/01/31 15:53:46 christos Exp $	*/
 
 /*
  * System call switch table.
@@ -744,11 +744,11 @@ struct sysent aout_sysent[] = {
 	{ 2, s(struct sys_fhstatfs_args),
 	    sys_fhstatfs },			/* 300 = fhstatfs */
 #if defined(SYSVSEM) || !defined(_KERNEL)
-	{ 4, s(struct sys___semctl13_args),
-	    sys___semctl13 },			/* 301 = __semctl13 */
+	{ 4, s(struct sys_____semctl13_args),
+	    sys_____semctl13 },			/* 301 = ____semctl13 */
 #else
 	{ 0, 0,
-	    sys_nosys },			/* 301 = excluded __semctl13 */
+	    sys_nosys },			/* 301 = excluded ____semctl13 */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
 	{ 3, s(struct sys___msgctl13_args),
