@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.2 1997/10/17 06:49:20 mark Exp $	*/
+/*	$NetBSD: simide.c,v 1.3 1997/11/06 01:52:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -273,8 +273,6 @@ simide_shutdown(arg)
 	void *arg;
 {
 	struct simide_softc *sc = arg;
-
-	printf("%s: stopped\n", sc->sc_dev.dv_xname);
 
 	sc->sc_ctl_reg &= (CONTROL_PRIMARY_IRQ | CONTROL_SECONDARY_IRQ);
 
