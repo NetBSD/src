@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.18 2002/01/16 09:07:35 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.19 2002/01/16 09:36:35 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -406,3 +406,7 @@ sys/miscfs/procfs/procfs_vnops.c		1.88 via patch
 gnu/usr.bin/gzip/gzip.c				1.9
 
   Fix long file name buffer overrun vulnerability.
+
+sys/arch/i386/i386/sys_machdep.c		patch
+
+  Correct error in previous pull-up, to make this compile again.
