@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: sd.c,v 1.28 1994/04/11 02:23:48 mycroft Exp $
+ *      $Id: sd.c,v 1.29 1994/04/11 03:54:10 mycroft Exp $
  */
 
 /* 
@@ -84,11 +84,10 @@ struct sd_data {
 	struct device sc_dev;
 	struct dkdevice sc_dk;
 
-	u_int32 flags;
-#define	SDINIT		0x04	/* device has been init'd */
-#define SDHAVELABEL	0x10	/* have read the label */
-#define SDDOSPART	0x20	/* Have read the DOS partition table */
-#define SDWRITEPROT	0x40	/* Device in readonly mode (S/W) */
+	int flags;
+#define SDHAVELABEL	0x01	/* have read the label */
+#define SDDOSPART	0x02	/* Have read the DOS partition table */
+#define SDWRITEPROT	0x04	/* Device in readonly mode (S/W) */
 	struct scsi_link *sc_link;	/* contains our targ, lun etc. */
 	u_int32 ad_info;	/* info about the adapter */
 	u_int32 cmdscount;	/* cmds allowed outstanding by board */
@@ -100,7 +99,7 @@ struct sd_data {
 		u_int32 blksize;	/* Number of bytes/sector */
 		u_long disksize;	/* total number sectors */
 	} params;
-	u_int32 partflags[MAXPARTITIONS];	/* per partition flags */
+	int partflags[MAXPARTITIONS];	/* per partition flags */
 #define SDOPEN	0x01
 	u_int32 openparts;		/* one bit for each open partition */
 	u_int32 xfer_block_wait;
@@ -176,7 +175,6 @@ sdattach(parent, self, aux)
 	printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 	    dp->disksize / ((1024L * 1024L) / dp->blksize), dp->cyls,
 	    dp->heads, dp->sectors, dp->blksize);
-	sd->flags |= SDINIT;
 }
 
 /*
@@ -197,12 +195,7 @@ sdopen(dev)
 	if (unit >= sdcd.cd_ndevs)
 		return ENXIO;
 	sd = sdcd.cd_devs[unit];
-	/*
-	 * Make sure the disk has been initialised
-	 * At some point in the future, get the scsi driver
-	 * to look for a new device if we are not initted
-	 */
-	if (!sd || !(sd->flags & SDINIT))
+	if (!sd)
 		return ENXIO;
 
 	sc_link = sd->sc_link;
@@ -841,7 +834,7 @@ sdsize(dev_t dev)
 	if (unit >= sdcd.cd_ndevs)
 		return -1;
 	sd = sdcd.cd_devs[unit];
-	if (!sd || !(sd->flags & SDINIT))
+	if (!sd)
 		return -1;
 
 	if ((sd->flags & SDHAVELABEL) == 0) {
@@ -903,9 +896,6 @@ sddump(dev_t dev)
 
 	sd = sd_data[unit];
 	if (!sd)
-		return ENXIO;
-	/* was it ever initialized etc. ? */
-	if (!(sd->flags & SDINIT))
 		return ENXIO;
 	if (sd->sc_link->flags & SDEV_MEDIA_LOADED != SDEV_MEDIA_LOADED)
 		return ENXIO;
