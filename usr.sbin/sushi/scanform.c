@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.2 2001/01/06 15:04:05 veego Exp $       */
+/*      $NetBSD: scanform.c,v 1.3 2001/01/09 19:32:35 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -438,6 +438,8 @@ my_driver(FORM * form, int c, char *path)
 		/* pull the grand popup list */
 		curfield = current_field(form);
 		list = (char **) field_userptr(curfield);
+		if (list == NULL)
+			break;
 		for (i=0, y=0; list[i] != NULL; i++)
 			if (strlen(list[i]) > y)
 				y = strlen(list[i]);
@@ -476,7 +478,8 @@ my_driver(FORM * form, int c, char *path)
 			    10, y+2, catgets(catalog, 4, 1, "Select choice"),
 			    list, i, FALSE, A_REVERSE ,TRUE, FALSE);
 			i = activateCDKScroll(plist, NULL);
-			set_field_buffer(curfield, 0, list[i]);
+			if (i != -1)
+				set_field_buffer(curfield, 0, list[i]);
 			destroyCDKScroll(plist);
 		}
 		return FALSE;
