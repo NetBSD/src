@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.6 1997/10/18 14:45:57 lukem Exp $	*/
+/*	$NetBSD: expand.c,v 1.7 1998/11/06 23:10:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: expand.c,v 1.6 1997/10/18 14:45:57 lukem Exp $");
+__RCSID("$NetBSD: expand.c,v 1.7 1998/11/06 23:10:40 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,7 +70,7 @@ main(argc, argv)
 	int n;
 
 	/* handle obsolete syntax */
-	while (argc > 1 && argv[1][0] && isdigit(argv[1][1])) {
+	while (argc > 1 && argv[1][0] && isdigit((unsigned char)argv[1][1])) {
 		getstops(&argv[1][1]);
 		argc--; argv++;
 	}

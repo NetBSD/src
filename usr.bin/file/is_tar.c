@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.9 1998/09/20 15:27:16 christos Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.10 1998/11/06 23:11:26 christos Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -25,7 +25,7 @@
 #if 0
 FILE_RCSID("@(#)Id: is_tar.c,v 1.10 1998/06/27 13:23:39 christos Exp ")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.9 1998/09/20 15:27:16 christos Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.10 1998/11/06 23:11:26 christos Exp $");
 #endif
 #endif
 
@@ -95,7 +95,7 @@ from_oct(digs, where)
 {
 	register int	value;
 
-	while (isspace(*where)) {		/* Skip spaces */
+	while (isspace((unsigned char)*where)) {		/* Skip spaces */
 		where++;
 		if (--digs <= 0)
 			return -1;		/* All blank field */
@@ -106,7 +106,7 @@ from_oct(digs, where)
 		--digs;
 	}
 
-	if (digs > 0 && *where && !isspace(*where))
+	if (digs > 0 && *where && !isspace((unsigned char)*where))
 		return -1;			/* Ended on non-space/nul */
 
 	return value;

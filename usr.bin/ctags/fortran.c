@@ -1,4 +1,4 @@
-/*	$NetBSD: fortran.c,v 1.4 1997/10/18 13:18:37 lukem Exp $	*/
+/*	$NetBSD: fortran.c,v 1.5 1998/11/06 23:06:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fortran.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: fortran.c,v 1.4 1997/10/18 13:18:37 lukem Exp $");
+__RCSID("$NetBSD: fortran.c,v 1.5 1998/11/06 23:06:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ PF_funcs()
 		lbp = lbuf;
 		if (*lbp == '%')	/* Ratfor escape to fortran */
 			++lbp;
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		if (!*lbp)
 			continue;
@@ -79,7 +79,7 @@ PF_funcs()
 			break;
 		case 'd':
 			if (cicmp("double")) {
-				for (; isspace(*lbp); ++lbp)
+				for (; isspace((unsigned char)*lbp); ++lbp)
 					continue;
 				if (!*lbp)
 					continue;
@@ -101,7 +101,7 @@ PF_funcs()
 				takeprec();
 			break;
 		}
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		if (!*lbp)
 			continue;
@@ -120,7 +120,7 @@ PF_funcs()
 		default:
 			continue;
 		}
-		for (; isspace(*lbp); ++lbp)
+		for (; isspace((unsigned char)*lbp); ++lbp)
 			continue;
 		if (!*lbp)
 			continue;
@@ -161,15 +161,15 @@ cicmp(cp)
 static void
 takeprec()
 {
-	for (; isspace(*lbp); ++lbp)
+	for (; isspace((unsigned char)*lbp); ++lbp)
 		continue;
 	if (*lbp == '*') {
-		for (++lbp; isspace(*lbp); ++lbp)
+		for (++lbp; isspace((unsigned char)*lbp); ++lbp)
 			continue;
-		if (!isdigit(*lbp))
+		if (!isdigit((unsigned char)*lbp))
 			--lbp;			/* force failure */
 		else
-			while (isdigit(*++lbp))
+			while (isdigit((unsigned char)*++lbp))
 				continue;
 	}
 }

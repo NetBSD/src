@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.5 1997/10/18 14:44:40 lukem Exp $	*/
+/*	$NetBSD: subr.c,v 1.6 1998/11/06 23:10:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: subr.c,v 1.5 1997/10/18 14:44:40 lukem Exp $");
+__RCSID("$NetBSD: subr.c,v 1.6 1998/11/06 23:10:08 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -200,7 +200,7 @@ persperdexplode(string, r_perd, r_pers)
 	if (   (length >= 4)
 	    && (string[length - 1] == ')' ) ){
 		for (cp = &string[length - 2];
-		     (isdigit(*cp)) && (*cp != '(');
+		     (isdigit((unsigned char)*cp)) && (*cp != '(');
 		     --cp)
 			continue;
 		if (*cp == '('){
@@ -233,7 +233,7 @@ qpersperdexplode(string, r_perd, r_pers)
 	if (   (length >= 4)
 	    && (string[length - 1] == ')' ) ){
 		for (cp = &string[length - 2];
-		     (isdigit(*cp)) && (*cp != '(');
+		     (isdigit((unsigned char)*cp)) && (*cp != '(');
 		     --cp)
 			continue;
 		if (*cp == '(' && *(cp - 1) == '"'){
@@ -343,21 +343,21 @@ wordvbuild(string, r_wordc, r_wordv)
 	int	wordindex;
 
 	for (wordcount = 0, cp = string; *cp; wordcount++){
-		while (*cp  && isspace(*cp))
+		while (*cp  && isspace((unsigned char)*cp))
 			cp++;
 		if (*cp == 0)
 			break;
-		while (!isspace(*cp))
+		while (!isspace((unsigned char)*cp))
 			cp++;
 	}
 	wordv = (char **)Calloc(wordcount + 1, sizeof (char *));
 	for (cp=string,wordindex=0; wordcount; wordindex++,--wordcount){
-		while (*cp && isspace(*cp))
+		while (*cp && isspace((unsigned char)*cp))
 			cp++;
 		if (*cp == 0)
 			break;
 		wordv[wordindex] = cp;
-		while(!isspace(*cp))
+		while(!isspace((unsigned char)*cp))
 			cp++;
 		*cp++ = '\0';
 	}

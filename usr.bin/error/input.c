@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.6 1998/10/08 01:29:27 wsanchez Exp $	*/
+/*	$NetBSD: input.c,v 1.7 1998/11/06 23:10:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.6 1998/10/08 01:29:27 wsanchez Exp $");
+__RCSID("$NetBSD: input.c,v 1.7 1998/11/06 23:10:08 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -134,7 +134,7 @@ erroradd(errorlength, errorv, errorclass, errorsubclass)
 
 	if (errorclass == C_TRUE){
 		/* check canonicalization of the second argument*/
-		for(cp = errorv[1]; *cp && isdigit(*cp); cp++)
+		for(cp = errorv[1]; *cp && isdigit((unsigned char)*cp); cp++)
 			continue;
 		errorclass = (*cp == '\0') ? C_TRUE : C_NONSPEC;
 #ifdef FULLDEBUG
@@ -228,7 +228,7 @@ cpp()
 	 */
 	if (   (language != INLD)		/* loader errors have almost same fmt*/
 	    && (lastchar(wordv[1]) == ':')
-	    && (isdigit(firstchar(wordv[2])))
+	    && (isdigit((unsigned char)firstchar(wordv[2])))
 	    && (lastchar(wordv[2]) == ':') ){
 		language = INCPP;
 		clob_last(wordv[1], '\0');
@@ -252,7 +252,7 @@ pccccom()
 	    && (lastchar(wordv[1]) == ',')
 	    && (next_lastchar(wordv[1]) == '"')
 	    && (strcmp(wordv[2],"line") == 0)
-	    && (isdigit(firstchar(wordv[3])))
+	    && (isdigit((unsigned char)firstchar(wordv[3])))
 	    && (lastchar(wordv[3]) == ':') ){
 		clob_last(wordv[1], '\0');	/* drop last , */
 		clob_last(wordv[1], '\0');	/* drop last " */
@@ -286,7 +286,7 @@ richieccom()
 
 	if (lastchar(wordv[1]) == ':'){
 		cp = wordv[1] + strlen(wordv[1]) - 1;
-		while (isdigit(*--cp))
+		while (isdigit((unsigned char)*--cp))
 			continue;
 		if (*cp == ':'){
 			clob_last(wordv[1], '\0');	/* last : */
@@ -506,7 +506,7 @@ ri()
 	if (  (firstchar(wordv[1]) == '"')
 	    &&(lastchar(wordv[1]) == '"')
 	    &&(lastchar(wordv[2]) == ':')
-	    &&(isdigit(firstchar(wordv[2]))) ){
+	    &&(isdigit((unsigned char)firstchar(wordv[2]))) ){
 		clob_last(wordv[1], '\0');	/* drop the last " */
 		wordv[1]++;	/* skip over the first " */
 		clob_last(wordv[2], '\0');
@@ -537,7 +537,7 @@ troff()
 	    && (lastchar(wordv[1]) == ',')
 	    && (next_lastchar(wordv[1]) == '\'')
 	    && (strcmp(wordv[2],"line") == 0)
-	    && (isdigit(firstchar(wordv[3])))
+	    && (isdigit((unsigned char)firstchar(wordv[3])))
 	    && (lastchar(wordv[3]) == ':') ){
 		clob_last(wordv[1], '\0');	/* drop last , */
 		clob_last(wordv[1], '\0');	/* drop last " */
@@ -562,7 +562,7 @@ mod2()
 	        ||(strcmp(wordv[1], "File") == 0))	/* later version */
 	    && (lastchar(wordv[2]) == ',')	/* file name */
 	    && (strcmp(wordv[3], "line") == 0)
-	    && (isdigit(firstchar(wordv[4])))	/* line number */
+	    && (isdigit((unsigned char)firstchar(wordv[4])))	/* line number */
 	    && (lastchar(wordv[4]) == ':')	/* line number */
 	){
 		clob_last(wordv[2], '\0');	/* drop last , on file name */
