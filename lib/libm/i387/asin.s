@@ -35,14 +35,13 @@
 
 #include <machine/asm.h>
 
-ENTRY(cos)
-	fldpi				/* Pi */
-	fadd	%st(0),%st		/* 2 Pi */
-	fldl	4(%esp)			/* Theta */
-1:	fprem1
-	fstswl	%ax
-	sahf
-	jp	1b
-	fstpl	%st(1)
-	fcos
+/* asin = atan (x / sqrt(1 - x^2)) */
+ENTRY(asin)
+	fldl	4(%esp)			/* x */
+	fst	%st(1)
+	fmul	%st(0)			/* x^2 */
+	fld1
+	fsubp				/* 1 - x^2 */
+	fsqrt				/* sqrt (1 - x^2) */
+	fpatan
 	ret
