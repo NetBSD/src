@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.46 1997/08/27 04:56:38 mikel Exp $
+#	$NetBSD: INSTALL,v 1.47 1997/08/28 08:00:15 mikel Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -41,7 +41,8 @@ options 	MINIROOTSIZE=3074
 #options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	DIAGNOSTIC	# internal consistency checks
-#options 	KTRACE		# system call tracing, a la ktrace(1)
+#options 	KTRACE		# system call tracing via ktrace(1)
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
@@ -102,7 +103,7 @@ config		netbsd	root on ? type ?
 
 #options 	EISAVERBOSE	# verbose EISA device messages
 #options 	PCIVERBOSE	# verbose PCI device messages
-#options	SCSIVERBOSE	# Verbose SCSI errors
+#options	SCSIVERBOSE	# verbose SCSI error messages
 
 mainbus0 at root
 
@@ -197,6 +198,8 @@ fd*	at fdc? drive ?
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
+atapibus* at wdc?
+cd* at atapibus? drive ?
 
 # note: the wt driver conflicts unpleasantly with ed devices at the
 # same I/O address. The probe reprograms their eeproms. Don't
