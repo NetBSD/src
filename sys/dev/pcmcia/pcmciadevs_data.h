@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.162 2002/02/01 22:04:03 is Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.163 2002/03/10 15:13:53 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.162 2002/01/31 14:27:29 is Exp 
+ *	NetBSD: pcmciadevs,v 1.163 2002/03/04 16:41:50 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -881,6 +881,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "TDK Corporation",
 	    "TDK LAC-CF010",	}
+	,
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_C6500012,
+	    PCMCIA_CIS_TDK_C6500012,
+	    0,
+	    "TDK Corporation",
+	    "TDK ELSA MicroLink MC all",	}
 	,
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_DFL9610,
