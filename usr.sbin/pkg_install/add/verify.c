@@ -1,4 +1,4 @@
-/* $NetBSD: verify.c,v 1.3 2002/06/09 14:14:49 yamt Exp $ */
+/* $NetBSD: verify.c,v 1.4 2003/09/23 09:36:04 wiz Exp $ */
 
 /*
  * Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.3 2002/06/09 14:14:49 yamt Exp $");
+__RCSID("$NetBSD: verify.c,v 1.4 2003/09/23 09:36:04 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ do_verify(const char *pkgname, const char *cmd, const char *const *extensions)
 		(void) snprintf(f, sizeof(f), "%s%s", pkgname, *ep);
 		if (stat(f, &st) == 0) {
 			(void) fprintf(stderr, "pkg_add: Using signature file: %s\n", f);
-			if (vsystem(cmd, f) != 0) {
+			if (fexec(cmd, f, NULL) != 0) {
 				(void) fprintf(stderr, "*** WARNING ***: `%s' has a bad signature\n", f);
 				return 0;
 			}
