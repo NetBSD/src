@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.65 1994/05/05 08:28:35 mycroft Exp $
+ *	$Id: pccons.c,v 1.66 1994/08/17 19:14:53 mycroft Exp $
  */
 
 /*
@@ -428,7 +428,7 @@ pcopen(dev, flag, mode, p)
 	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= pccd.cd_ndevs)
+	if (unit >= pccd.cd_ndevs || !pccd.cd_devs[unit])
 		return ENXIO;
 
 	if (!pc_tty[unit])
