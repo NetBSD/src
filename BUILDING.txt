@@ -90,7 +90,7 @@ FILES
      described in release(7).
 
 CONFIGURATION
-   make variables
+   "make" variables
      Several variables control the behavior of NetBSD builds.  Unless other-
      wise specified, these variables may be set in either the process environ-
      ment or the make(1) configuration file specified by MAKECONF.
@@ -235,7 +235,7 @@ CONFIGURATION
                  future to add the described functionality for version-specif-
                  ic tool components.
 
-   make variables for full builds
+   "make" variables for full builds
      These variables only affect the top level ``Makefile'' and do not manual-
      ly building subtrees of the NetBSD source code.
 
@@ -305,7 +305,7 @@ CONFIGURATION
                     DATE above, this implies the effects of NOCLEANDIR.
 
 BUILDING
-   make command line options
+   "make" command line options
      This is only a summary of options available to make(1); only the options
      used most frequently with NetBSD builds are listed here.
 
@@ -326,7 +326,7 @@ BUILDING
                 fied by the process environment, the MAKECONF configuration
                 file, or the system Makefile segments.
 
-   make targets
+   "make" targets
      These default targets may be built by running make(1) in any subtree of
      the NetBSD source code.  It is recommended that none of these be used
      from the top level Makefile; as a specific exception, ``make obj'' and
@@ -365,7 +365,7 @@ BUILDING
      tags       Create ctags(1) searchable function lists usable by the ex(1)
                 and vi(1) text editors.
 
-   make targets for the top level
+   "make" targets for the top level
      Additional make(1) targets are usable specifically from the top source
      level to facilitate building the entire NetBSD source tree.
 
@@ -382,7 +382,7 @@ BUILDING
                 rectory ``regress''.  Runs the compiled regression tests on
                 the local host.
 
-   The build.sh script
+   The "build.sh" script
      This script file is a Bourne shell script designed to build the entire
      NetBSD system on any host with a Bourne shell in /bin/sh, including many
      that are not POSIX compliant.  Note that if a host system's /bin/sh is
@@ -427,7 +427,7 @@ BUILDING
 
      -T tools  Set the value of TOOLDIR to tools.
 
-The nbmake-MACHINE wrapper script
+   The "nbmake-MACHINE" wrapper script
      If using the build.sh script to build NetBSD, a nbmake-MACHINE script
      will be created in TOOLDIR/bin upon the first build to assist in building
      subtrees on a cross-compile host.
