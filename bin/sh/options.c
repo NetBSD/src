@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.16 1996/06/25 16:47:43 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.17 1996/10/16 14:49:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: options.c,v 1.16 1996/06/25 16:47:43 christos Exp $";
+static char rcsid[] = "$NetBSD: options.c,v 1.17 1996/10/16 14:49:56 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,10 @@ procargs(argc, argv)
 		commandname = arg0 = *argptr++;
 		setinputfile(commandname, 0);
 	}
+	/* POSIX 1003.2: first arg after -c cmd is $0, remainder $1... */
+	if (argptr && minusc)
+	        arg0 = *argptr++;
+
 	shellparam.p = argptr;
 	/* assert(shellparam.malloc == 0 && shellparam.nparam == 0); */
 	while (*argptr) {
@@ -138,7 +142,7 @@ optschanged()
  */
 
 STATIC void
-options(cmdline) 
+options(cmdline)
 	int cmdline;
 {
 	register char *p;
@@ -213,7 +217,7 @@ minus_o(name, val)
 		error("Illegal option -o %s", name);
 	}
 }
-			
+
 
 STATIC void
 setoption(flag, val)
@@ -305,7 +309,7 @@ freeparam(param)
 int
 shiftcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	int n;
 	char **ap1, **ap2;
@@ -337,7 +341,7 @@ shiftcmd(argc, argv)
 int
 setcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	if (argc == 1)
 		return showvarscmd(argc, argv);
@@ -370,7 +374,7 @@ getoptsreset(value)
 int
 getoptscmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char **optbase;
 
@@ -378,7 +382,7 @@ getoptscmd(argc, argv)
 		error("Usage: getopts optstring var [arg]");
 	else if (argc == 3)
 		optbase = shellparam.p;
-	else 
+	else
 		optbase = &argv[3];
 
 	if (shellparam.optnext == NULL) {
