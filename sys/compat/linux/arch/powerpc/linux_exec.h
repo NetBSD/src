@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.9 2002/11/13 13:37:22 jdolecek Exp $  */
+/*	$NetBSD: linux_exec.h,v 1.10 2002/11/13 13:40:51 jdolecek Exp $  */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  * room for the sp_wrap_code.
  */
 #define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) \
+    ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))) \
     + 16 + LINUX_SP_WRAP)
 
 /* XXX should use ELFNAME2 */
