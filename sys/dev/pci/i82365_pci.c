@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.2 1997/10/16 23:23:14 thorpej Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.3 1998/05/23 18:32:30 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -211,6 +211,7 @@ pcic_pci_chip_intr_establish(pch, pf, ipl, fct, arg)
 	void *arg;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
+	pci_chipset_tag_t pc = h->sc->intr_est;
 	int irq;
 	pci_intr_handle_t piht;
 	void *ih;
@@ -223,12 +224,12 @@ pcic_pci_chip_intr_establish(pch, pf, ipl, fct, arg)
 
 	isa_intr_alloc(NULL, 0xffff, IST_PULSE, &irq);
 
-	if (pci_intr_map(h->sc->intr_est, pci_make_tag(NULL, 0, 0, 0),
+	if (pci_intr_map(pc, pci_make_tag(NULL, 0, 0, 0),
 	    1, irq, &piht)) {
 		printf("%s: couldn't map interrupt\n", h->sc->dev.dv_xname);
 		return (NULL);
 	}
-	if ((ih = pci_intr_establish(h->sc->intr_est, piht, ipl, fct,
+	if ((ih = pci_intr_establish(pc, piht, ipl, fct,
 	    arg)) == NULL)
 		return (NULL);
 
@@ -248,6 +249,7 @@ pcic_pci_chip_intr_disestablish(pch, ih)
 	void *ih;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
+	pci_chipset_tag_t pc = h->sc->intr_est;
 
-	pci_intr_disestablish(h->sc->intr_est, ih);
+	pci_intr_disestablish(pc, ih);
 }

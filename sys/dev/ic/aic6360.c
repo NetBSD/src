@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.56 1998/01/13 03:31:42 enami Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.57 1998/05/23 18:32:29 matt Exp $	*/
 
 #ifdef DDB
 #define	integrate
@@ -1420,11 +1420,11 @@ aic_dataout_pio(sc, p, n)
 			out += DOUTAMOUNT;
 
 #if AIC_USE_DWORDS
-			bus_space_write_multi_4(iot, ioh, DMADATALONG, p,
-			    DOUTAMOUNT >> 2);
+			bus_space_write_multi_4(iot, ioh, DMADATALONG,
+			    (u_int32_t *) p, DOUTAMOUNT >> 2);
 #else
-			bus_space_write_multi_2(iot, ioh, DMADATA, p,
-			    DOUTAMOUNT >> 1);
+			bus_space_write_multi_2(iot, ioh, DMADATA,
+			    (u_int16_t *) p, DOUTAMOUNT >> 1);
 #endif
 
 			p += DOUTAMOUNT;
@@ -1440,14 +1440,14 @@ aic_dataout_pio(sc, p, n)
 #if AIC_USE_DWORDS
 			if (xfer >= 12) {
 				bus_space_write_multi_4(iot, ioh, DMADATALONG,
-				    p, xfer >> 2);
+				    (u_int32_t *) p, xfer >> 2);
 				p += xfer & ~3;
 				xfer &= 3;
 			}
 #else
 			if (xfer >= 8) {
 				bus_space_write_multi_2(iot, ioh, DMADATA,
-				    p, xfer >> 1);
+				    (u_int16_t *) p, xfer >> 1);
 				p += xfer & ~1;
 				xfer &= 1;
 			}
@@ -1564,11 +1564,11 @@ aic_datain_pio(sc, p, n)
 			in += DINAMOUNT;
 
 #if AIC_USE_DWORDS
-			bus_space_read_multi_4(iot, ioh, DMADATALONG, p,
-			    DINAMOUNT >> 2);
+			bus_space_read_multi_4(iot, ioh, DMADATALONG,
+			    (u_int32_t *) p, DINAMOUNT >> 2);
 #else
-			bus_space_read_multi_2(iot, ioh, DMADATA, p,
-			    DINAMOUNT >> 1);
+			bus_space_read_multi_2(iot, ioh, DMADATA,
+			    (u_int16_t *) p, DINAMOUNT >> 1);
 #endif
 
 			p += DINAMOUNT;
@@ -1584,14 +1584,14 @@ aic_datain_pio(sc, p, n)
 #if AIC_USE_DWORDS
 			if (xfer >= 12) {
 				bus_space_read_multi_4(iot, ioh, DMADATALONG,
-				    p, xfer >> 2);
+				    (u_int32_t *) p, xfer >> 2);
 				p += xfer & ~3;
 				xfer &= 3;
 			}
 #else
 			if (xfer >= 8) {
-				bus_space_read_multi_2(iot, ioh, DMADATA, p,
-				    xfer >> 1);
+				bus_space_read_multi_2(iot, ioh, DMADATA,
+				    (u_int16_t *) p, xfer >> 1);
 				p += xfer & ~1;
 				xfer &= 1;
 			}
