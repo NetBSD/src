@@ -1,4 +1,4 @@
-/*	$NetBSD: do_command.c,v 1.8 2001/08/03 04:10:51 yamt Exp $	*/
+/*	$NetBSD: do_command.c,v 1.9 2001/08/13 06:54:58 yamt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: do_command.c,v 2.12 1994/01/15 20:43:43 vixie Exp ";
 #else
-__RCSID("$NetBSD: do_command.c,v 1.8 2001/08/03 04:10:51 yamt Exp $");
+__RCSID("$NetBSD: do_command.c,v 1.9 2001/08/13 06:54:58 yamt Exp $");
 #endif
 #endif
 
@@ -133,33 +133,35 @@ child_process(e, u)
 	 * command, and subsequent characters are the additional input to
 	 * the command.  Subsequent %'s will be transformed into newlines,
 	 * but that happens later.
-	 *
-	 * If there are escaped %'s, remove the escape character.
 	 */
 	/*local*/{
 		int escaped = FALSE;
 		int ch;
 		char *p;
 
-		for (input_data = p = e->cmd;  (ch = *input_data) != '\0'; 
-		    input_data++, p++) {
-			if (p != input_data)
-				*p = ch;
+		/* translation:
+		 *	\% -> %
+		 *	%  -> end of command, following is command input.
+		 *	\x -> \x	for all x != %
+		 */
+		input_data = p = e->cmd;
+		while ((ch = *input_data++) != '\0') {
 			if (escaped) {
-				if (ch == '%' || ch == '\\')
-					*--p = ch;
-				escaped = FALSE;
-				continue;
+				if (ch != '%')
+					*p++ = '\\';
+			} else {
+				if (ch == '%') {
+					break;
+				}
 			}
-			if (ch == '\\') {
-				escaped = TRUE;
-				continue;
-			}
-			if (ch == '%') {
-				input_data++;
-				break;
+
+			if (!(escaped = (ch == '\\'))) {
+				*p++ = ch;
 			}
 		}
+		if (escaped)
+			*p++ = '\\';
+
 		*p = '\0';
 	}
 
