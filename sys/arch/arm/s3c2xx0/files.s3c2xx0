@@ -1,4 +1,4 @@
-#	$NetBSD: files.s3c2xx0,v 1.2 2003/01/02 23:37:59 thorpej Exp $
+#	$NetBSD: files.s3c2xx0,v 1.3 2003/05/13 05:10:55 bsh Exp $
 #
 # Configuration info common to Samsung S3C2800/S3C24[10]0
 #
@@ -6,6 +6,13 @@
 file	arch/arm/arm/softintr.c  # Use the generic ARM soft interrupt code.
 file	arch/arm/s3c2xx0/s3c2xx0_space.c
 
+#
+# External Xtal clock frequency.
+#
+defparam opt_cpuoptions.h      S3C2XX0_XTAL_CLK
+
+
+#
 # S3C2XX0's integrated peripherals bus.
 #
 device ssio { [index=-1], [addr=0], [size=0], [intr=-1] } : bus_space_generic
@@ -13,9 +20,9 @@ attach ssio at mainbus
 file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/s3c2xx0/s3c2xx0_intr.c
 
-# S3C2XX0's integrated peripherals.
 #
-
+# built-in UART
+#
 device sscom
 attach sscom at ssio
 file arch/arm/s3c2xx0/sscom.c		sscom needs-flag
