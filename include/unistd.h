@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.52 1998/03/27 13:02:20 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.53 1998/05/06 19:59:35 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -117,10 +117,10 @@ int	 exect __P((const char *, char * const *, char * const *));
 int	 fchdir __P((int));
 int	 fsync __P((int));
 int	 ftruncate __P((int, off_t));
-int	 getdomainname __P((char *, int));
+int	 getdomainname __P((char *, size_t));
 int	 getdtablesize __P((void));
 long	 gethostid __P((void));
-int	 gethostname __P((char *, int));
+int	 gethostname __P((char *, size_t));
 mode_t	 getmode __P((const void *, mode_t));
 __pure int
 	 getpagesize __P((void));
@@ -149,12 +149,12 @@ int	 rresvport __P((int *));
 int	 ruserok __P((const char *, int, const char *, const char *));
 char	*sbrk __P((int));
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
-int	 setdomainname __P((const char *, int));
+int	 setdomainname __P((const char *, size_t));
 int	 setegid __P((gid_t));
 int	 seteuid __P((uid_t));
 int	 setgroups __P((int, const gid_t *));
 int	 sethostid __P((long));
-int	 sethostname __P((const char *, int));
+int	 sethostname __P((const char *, size_t));
 int	 setkey __P((const char *));
 int	 setlogin __P((const char *));
 void	*setmode __P((const char *));
