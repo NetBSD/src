@@ -1,4 +1,4 @@
-.\"	$NetBSD: pac.8,v 1.7 1999/03/22 18:44:01 garbled Exp $
+.\"	$NetBSD: pac.8,v 1.8 2000/10/04 11:40:51 jdolecek Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,6 +88,21 @@ Statistics are only printed for user(s)
 .Ar name ;
 usually, statistics are printed for every user who has used any paper.
 .El
+.Sh OUTPUT FORMAT
+.Nm
+formats the output into simple table, using four columns - number of feets
+or pages (column "pages/feet"), how many copies were made (column "runs"),
+total price for this print (column "price") and user login with host name
+(column "login" or "host name and login"). If argument
+.Ar name
+was not used and hence
+.Nm
+is printing information for all users, 
+a summary line with print totals (runs, pages, price) is appended.
+
+Note that
+.Nm
+on other system might print the price as price per copy.
 .Sh FILES
 .Bl -tag -width /var/account/?_sum -compact
 .It Pa /var/account/?acct
