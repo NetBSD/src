@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.3 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.3 2003/02/01 06:23:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1447,12 +1447,12 @@ ntfs_writeattr_plain(
 					 off - ntfs_cntob(vap->va_vcnstart),
 					 towrite, data, &init, uio);
 		if (error) {
-			printf("ntfs_writeattr_plain: " \
+			dprintf(("ntfs_writeattr_plain: " \
 			       "ntfs_writentvattr_plain failed: o: %d, s: %d\n",
-			       (u_int32_t) off, (u_int32_t) towrite);
-			printf("ntfs_writeattr_plain: attrib: %d - %d\n",
+			       (u_int32_t) off, (u_int32_t) towrite));
+			dprintf(("ntfs_writeattr_plain: attrib: %d - %d\n",
 			       (u_int32_t) vap->va_vcnstart, 
-			       (u_int32_t) vap->va_vcnend);
+			       (u_int32_t) vap->va_vcnend));
 			ntfs_ntvattrrele(vap);
 			break;
 		}
@@ -1493,7 +1493,7 @@ ntfs_writentvattr_plain(
 	*initp = 0;
 
 	if ((vap->va_flag & NTFS_AF_INRUN) == 0) {
-		printf("ntfs_writevattr_plain: CAN'T WRITE RES. ATTRIBUTE\n");
+		dprintf(("ntfs_writevattr_plain: CAN'T WRITE RES. ATTRIBUTE\n"));
 		return ENOTTY;
 	}
 
