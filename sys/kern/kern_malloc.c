@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.46 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.47 1999/12/03 21:43:20 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -223,10 +223,10 @@ malloc(size, type, flags)
 	if (kbp->kb_next == NULL) {
 		kbp->kb_last = NULL;
 		if (size > MAXALLOCSAVE)
-			allocsize = roundup(size, CLBYTES);
+			allocsize = roundup(size, NBPG);
 		else
 			allocsize = 1 << indx;
-		npg = clrnd(btoc(allocsize));
+		npg = btoc(allocsize);
 		va = (caddr_t) uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 				(vsize_t)ctob(npg), 
 				(flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0);
@@ -417,8 +417,8 @@ free(addr, type)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (size > NBPG * CLSIZE)
-		alloc = addrmask[BUCKETINDX(NBPG * CLSIZE)];
+	if (size > NBPG)
+		alloc = addrmask[BUCKETINDX(NBPG)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)addr & alloc) != 0)
@@ -543,8 +543,8 @@ realloc(curaddr, newsize, type, flags)
 	 * Check for returns of data that do not point to the
 	 * beginning of the allocation.
 	 */
-	if (cursize > NBPG * CLSIZE)
-		alloc = addrmask[BUCKETINDX(NBPG * CLSIZE)];
+	if (cursize > NBPG)
+		alloc = addrmask[BUCKETINDX(NBPG)];
 	else
 		alloc = addrmask[kup->ku_indx];
 	if (((u_long)curaddr & alloc) != 0)
@@ -601,7 +601,7 @@ kmeminit()
 #if	(MAXALLOCSAVE > MINALLOCSIZE * 32768)
 		ERROR!_kmeminit:_MAXALLOCSAVE_too_big
 #endif
-#if	(MAXALLOCSAVE < CLBYTES)
+#if	(MAXALLOCSAVE < NBPG)
 		ERROR!_kmeminit:_MAXALLOCSAVE_too_small
 #endif
 
@@ -616,10 +616,10 @@ kmeminit()
 			VM_MAP_INTRSAFE, FALSE, &kmem_map_store.vmi_map);
 #ifdef KMEMSTATS
 	for (indx = 0; indx < MINBUCKET + 16; indx++) {
-		if (1 << indx >= CLBYTES)
+		if (1 << indx >= NBPG)
 			bucket[indx].kb_elmpercl = 1;
 		else
-			bucket[indx].kb_elmpercl = CLBYTES / (1 << indx);
+			bucket[indx].kb_elmpercl = NBPG / (1 << indx);
 		bucket[indx].kb_highwat = 5 * bucket[indx].kb_elmpercl;
 	}
 	for (indx = 0; indx < M_LAST; indx++)

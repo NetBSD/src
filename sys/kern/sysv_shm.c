@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.52 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.53 1999/12/03 21:43:20 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ shm_deallocate_segment(shmseg)
 	size_t size;
 
 	shm_handle = shmseg->_shm_internal;
-	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
+	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	uao_detach(shm_handle->shm_object);
 	free((caddr_t)shm_handle, M_SHM);
 	shmseg->_shm_internal = NULL;
@@ -184,7 +184,7 @@ shm_delete_mapping(vm, shmmap_s)
 	
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
-	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
+	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 	if (result != KERN_SUCCESS)
 		return EINVAL;
@@ -266,7 +266,7 @@ sys_shmat(p, v, retval)
 	}
 	if (i >= shminfo.shmseg)
 		return EMFILE;
-	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
+	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	prot = VM_PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
 		prot |= VM_PROT_WRITE;
@@ -445,7 +445,7 @@ shmget_allocate_segment(p, uap, mode, retval)
 		return EINVAL;
 	if (shm_nused >= shminfo.shmmni) /* any shmids left? */
 		return ENOSPC;
-	size = (SCARG(uap, size) + CLOFSET) & ~CLOFSET;
+	size = (SCARG(uap, size) + PGOFSET) & ~PGOFSET;
 	if (shm_committed + btoc(size) > shminfo.shmall)
 		return ENOMEM;
 	if (shm_last_free < 0) {
