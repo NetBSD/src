@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.12 2002/03/14 21:22:28 yamt Exp $	*/
+/*	$NetBSD: wchar.h,v 1.13 2003/03/02 22:18:11 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -101,6 +101,7 @@ typedef	_BSD_SIZE_T_	size_t;
 #define putwchar(wc) putwc((wc), stdout)
 
 __BEGIN_DECLS
+wint_t	btowc __P((int c));
 size_t	mbrlen __P((const char * __restrict, size_t, mbstate_t * __restrict));
 size_t	mbrtowc __P((wchar_t * __restrict, const char * __restrict, size_t,
 	    mbstate_t * __restrict));
@@ -111,6 +112,7 @@ size_t	wcrtomb __P((char * __restrict, wchar_t, mbstate_t * __restrict));
 wchar_t	*wcscat __P((wchar_t * __restrict, const wchar_t * __restrict));
 wchar_t	*wcschr __P((const wchar_t *, wchar_t));
 int	wcscmp __P((const wchar_t *, const wchar_t *));
+int	wcscoll __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcscpy __P((wchar_t * __restrict, const wchar_t * __restrict));
 size_t	wcscspn __P((const wchar_t *, const wchar_t *));
 size_t	wcslen __P((const wchar_t *));
@@ -125,6 +127,7 @@ size_t	wcsrtombs __P((char * __restrict, const wchar_t ** __restrict, size_t,
 	    mbstate_t * __restrict));
 size_t	wcsspn __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcsstr __P((const wchar_t *, const wchar_t *));
+size_t	wcsxfrm __P((wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemchr __P((const wchar_t *, wchar_t, size_t));
 int	wmemcmp __P((const wchar_t *, const wchar_t *, size_t));
 wchar_t	*wmemcpy __P((wchar_t * __restrict, const wchar_t * __restrict,
