@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2003/12/15 13:02:28 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 2003/12/29 06:26:41 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2003/12/15 13:02:28 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2003/12/29 06:26:41 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -498,7 +498,7 @@ mach_init(argc, argv, magic, btinfo)
 			arcsmem += btoc(size);
 			break;
 
-		case ARCBIOS_MEM_ExecptionBlock:
+		case ARCBIOS_MEM_ExceptionBlock:
 		case ARCBIOS_MEM_SystemParameterBlock:
 		case ARCBIOS_MEM_BadMemory:
 			break;
