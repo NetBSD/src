@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 1995/08/12 04:10:39 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 1995/08/16 04:48:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1778,7 +1778,7 @@ getenvvars()
 	extern u_long locore_dodebugmarks;
 	extern u_long bootdev, videobitdepth, videosize;
 	extern u_long end, esym;
-	extern u_long macos_boottime;
+	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
 	int     root_scsi_id;
 
@@ -1850,6 +1850,7 @@ getenvvars()
 	if (ROMBase == (caddr_t) 0) {
 		ROMBase = (caddr_t) ROMBASE;
 	}
+	MacOSROMBase = ROMBase
 	TimeDBRA = getenv("TIMEDBRA");
 	ADBDelay = (u_short) getenv("ADBDELAY");
 }
