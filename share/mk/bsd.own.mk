@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.321 2002/12/19 12:44:03 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.322 2002/12/23 02:01:29 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -55,7 +55,7 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 .endif					# }
 
 
-# If _SRC_TOP != "", we're within the NetBSD source tree, so set
+# If _SRC_TOP_ != "", we're within the NetBSD source tree, so set
 # defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
 #
 .if (${_SRC_TOP_} != "")		# {
@@ -67,7 +67,7 @@ _SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
 
-.endif	# _SRC_TOP != ""		# }
+.endif	# _SRC_TOP_ != ""		# }
 
 
 .if (${_SRC_TOP_} != "") && \
