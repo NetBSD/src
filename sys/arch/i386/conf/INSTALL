@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.238.2.3 2004/07/13 09:26:51 tron Exp $
+#	$NetBSD: INSTALL,v 1.238.2.4 2004/07/14 09:06:19 tron Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -407,6 +407,7 @@ aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+geodeide* 	at pci? dev ? function ?	# AMD Geode IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
