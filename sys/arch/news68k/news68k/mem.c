@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2003/08/07 16:28:52 agc Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 2004/09/04 13:43:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15 2003/08/07 16:28:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16 2004/09/04 13:43:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,10 +104,7 @@ const struct cdevsw mem_cdevsw = {
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	vaddr_t o, v;
 	int c;
@@ -123,7 +120,7 @@ mmrw(dev, uio, flags)
 			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
 			    "mmrw", 0);
 			if (error)
-				return (error);
+				return error;
 		}
 		physlock = 1;
 	}
@@ -167,7 +164,7 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+				return EFAULT;
 
 			/*
 			 * Don't allow reading intio
@@ -175,7 +172,7 @@ mmrw(dev, uio, flags)
 			 * corruption of device registers.
 			 */
 			if (ISIIOVA(v))
-				return (EFAULT);
+				return EFAULT;
 
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
@@ -183,7 +180,7 @@ mmrw(dev, uio, flags)
 		case DEV_NULL:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
-			return (0);
+			return 0;
 
 		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
@@ -202,7 +199,7 @@ mmrw(dev, uio, flags)
 			continue;
 
 		default:
-			return (ENXIO);
+			return ENXIO;
 		}
 		if (error)
 			break;
@@ -212,19 +209,16 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == DEV_MEM) {
-unlock:
+ unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;
 	}
-	return (error);
+	return error;
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this
@@ -235,12 +229,12 @@ mmmmap(dev, off, prot)
 	 * pager in mmap().
 	 */
 	if (minor(dev) != DEV_MEM)
-		return (-1);
+		return -1;
 
 	/*
 	 * Allow access only in RAM.
 	 */
 	if ((u_int)off < lowram || (u_int)off >= 0xFFFFFFFC)
-		return (-1);
-	return (m68k_btop((u_int)off));
+		return -1;
+	return m68k_btop((u_int)off);
 }
