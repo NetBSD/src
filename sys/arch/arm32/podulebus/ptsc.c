@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.10 1996/10/13 03:06:50 christos Exp $ */
+/* $NetBSD: ptsc.c,v 1.11 1996/10/14 23:42:19 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -38,7 +38,7 @@
  *	@(#)ptsc.c
  */
 /*
- * Power-tec SCSI-2 driver
+ * Power-tec SCSI-2 driver uses SFAS216 generic driver
  */
 
 #include <sys/param.h>
@@ -58,6 +58,7 @@
 #include <arm32/podulebus/sfasvar.h>
 #include <arm32/podulebus/ptscreg.h>
 #include <arm32/podulebus/ptscvar.h>
+#include <arm32/podulebus/podules.h>
 
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, void *, void *));
@@ -103,9 +104,9 @@ ptscmatch(pdp, match, auxp)
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
-/* Look for the card */
+	/* Look for the card */
 
-	if (matchpodule(pa, 0x5b, 0x107, -1) == 0)
+	if (matchpodule(pa, MANUFACTURER_ALSYSTEMS, PODULE_ALSYSTEMS_SCSI, -1) == 0)
 		return(0);
 
 	return(1);
@@ -181,6 +182,8 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.device	    = &ptsc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
 
+	printf(" host=%d", sc->sc_softc.sc_link.adapter_target);
+
 	sc->sc_softc.sc_ih.ih_func = ptsc_intr;
 	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
 	sc->sc_softc.sc_ih.ih_level = IPL_BIO;
@@ -188,22 +191,23 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_specific.sc_podule->irq_addr;
 	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_specific.sc_podule->irq_mask;
 
-/* initialise the card */
-	*rp->term = 0;
+	/* initialise the card */
+/*	*rp->term = 0;*/
 	*rp->inten = (PTSC_POLL?0:1);
 	*rp->led = 0;
 
 #if PTSC_POLL == 0
 	if (irq_claim(IRQ_PODULE /*IRQ_EXPCARD0 + sc->sc_specific.sc_podule_number */,
 		      &sc->sc_softc.sc_ih))
-	    panic("ptsc: Cannot install IRQ handler\n");
+	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
 #endif
 	
 	printf("\n");
 
-/* attach all scsi units on us */
+	/* attach all scsi units on us */
 	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
 }
+
 
 int
 ptsc_intr(dev)
