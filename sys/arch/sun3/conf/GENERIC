@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.101.2.2 2004/07/02 17:39:52 he Exp $
+# $NetBSD: GENERIC,v 1.101.2.3 2004/07/15 20:18:35 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101.2.2 $"
+#ident 		"GENERIC-$Revision: 1.101.2.3 $"
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE
@@ -50,6 +50,7 @@ options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
