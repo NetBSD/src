@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.14 2002/10/02 05:30:40 thorpej Exp $	*/
+/*	$NetBSD: awacs.c,v 1.15 2002/10/13 14:43:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -109,7 +109,7 @@ static inline void awacs_write_reg(struct awacs_softc *, int, int);
 void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
-int awacs_set_rate(struct awacs_softc *, int);
+int awacs_set_rate(struct awacs_softc *, struct audio_params *);
 
 static void mono16_to_stereo16(void *, u_char *, int);
 static void swap_bytes_mono16_to_stereo16(void *, u_char *, int);
@@ -472,7 +472,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 {
 	struct awacs_softc *sc = h;
 	struct audio_params *p;
-	int mode, rate;
+	int mode;
 
 	/*
 	 * This device only has one clock, so make the sample rates match.
@@ -572,9 +572,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 	}
 
 	/* Set the speed */
-	rate = p->sample_rate;
-
-	if (awacs_set_rate(sc, rate))
+	if (awacs_set_rate(sc, p))
 		return EINVAL;
 
 	return 0;
@@ -970,14 +968,17 @@ awacs_set_ext_volume(sc, left, right)
 }
 
 int
-awacs_set_rate(sc, rate)
+awacs_set_rate(sc, p)
 	struct awacs_softc *sc;
-	int rate;
+	struct audio_params *p;
 {
 	int c;
 
-	switch (rate) {
-
+	switch (p->sample_rate) {
+	case 48000:
+		p->hw_sample_rate = 44100;
+		c = AWACS_RATE_44100;
+		break;
 	case 44100:
 		c = AWACS_RATE_44100;
 		break;
