@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.27 2002/03/11 11:50:12 reinoud Exp $	*/
+/*	$NetBSD: cpu.c,v 1.28 2002/03/16 14:41:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2002/03/11 11:50:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2002/03/16 14:41:15 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -166,6 +166,7 @@ enum cpu_class {
 	CPU_CLASS_ARM9ES,
 	CPU_CLASS_SA1,
 	CPU_CLASS_XSCALE,
+	CPU_CLASS_ARM10E
 };
 
 static const char *generic_steppings[16] = {
@@ -271,6 +272,9 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_I80200,	CPU_CLASS_XSCALE,	"i80200",
 	  i80200_steppings },
 
+	{ CPU_ID_ARM1022ES,	CPU_CLASS_ARM10E,	"ARM1022ES",
+	  generic_steppings },
+
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
 
@@ -292,6 +296,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE" },		/* CPU_CLASS_XSCALE */
+	{ "ARM10E",	NULL },			/* CPU_CLASS_ARM10E */
 };
 
 /*
