@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.1.1.1 1998/06/06 06:11:19 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.2 2001/01/04 16:17:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Matthew R. Green
@@ -421,7 +421,7 @@ file_uncompress(file)
 		}
 		newfile = outfile;
 		if (sb.st_size != size) {
-	warn("stat gave different size: %qd != %qd (leaving original)",
+	warn("stat gave different size: %lld != %lld (leaving original)",
 			    (long long)size, (long long)sb.st_size);
 			goto lose;
 		}
