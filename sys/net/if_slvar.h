@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_slvar.h	7.7 (Berkeley) 5/7/91
- *	$Id: if_slvar.h,v 1.9 1994/02/10 05:39:08 cgd Exp $
+ *	$Id: if_slvar.h,v 1.10 1994/03/08 07:27:24 cgd Exp $
  */
 
 #ifndef _IF_SLVAR_H_
@@ -55,6 +55,12 @@ struct sl_softc {
 	long	sc_lasttime;		/* last time a char arrived */
 	long	sc_abortcount;		/* number of abort esacpe chars */
 	long	sc_starttime;		/* time of first abort in window */
+	long	sc_oqlen;		/* previous output queue size */
+	long	sc_otimeout;		/* number of times output's stalled */
+#ifdef __NetBSD__
+	int	sc_oldbufsize;		/* previous output buffer size */
+	int	sc_oldbufquot;		/* previous output buffer quoting */
+#endif
 #ifdef INET				/* XXX */
 	struct	slcompress sc_comp;	/* tcp compression data */
 #endif
