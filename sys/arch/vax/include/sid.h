@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sid.h,v 1.1 1994/08/02 20:20:57 ragge Exp $
+ *	$Id: sid.h,v 1.2 1994/10/08 15:43:58 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -41,8 +41,9 @@
 #define VAX_8200 5
 #define VAX_8800 6
 #define VAX_610 7
-#define VAX_630 8
+#define VAX_630	8
 #define VAX_650 10
+#define	VAX_MAX	10
 
 #define MACHID(x)       ((x>>24)&255)
 

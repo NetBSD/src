@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)ansi.h      7.1 (Berkeley) 3/9/91
- *	$Id: ansi.h,v 1.1 1994/08/02 20:20:07 ragge Exp $
+ *	$Id: ansi.h,v 1.2 1994/10/08 15:43:53 ragge Exp $
  */
 
 #ifndef _ANSI_H_
@@ -48,11 +48,12 @@
  *
  * Thanks, ANSI!
  */
-#define _CLOCK_T_       unsigned long           /* clock() */
-#define _PTRDIFF_T_     int                     /* ptr1 - ptr2 */
-#define _SIZE_T_        unsigned int            /* sizeof() */
-#define _TIME_T_        long                    /* time() */
-#define _VA_LIST_       char *                  /* va_list */
-#define _WCHAR_T_       unsigned short          /* wchar_t */
+#define _BSD_CLOCK_T_   unsigned long           /* clock() */
+#define _BSD_PTRDIFF_T_ int                     /* ptr1 - ptr2 */
+#define _BSD_SIZE_T_    unsigned int            /* sizeof() */
+#define _BSD_SSIZE_T_   int                     /* byte count or error */
+#define _BSD_TIME_T_    long                    /* time() */
+#define _BSD_VA_LIST_   char *                  /* va_list */
+#define	_BSD_WCHAR_T_	int                     /* wchar_t */
 
 #endif  /* _ANSI_H_ */

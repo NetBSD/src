@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cpu.h,v 1.1 1994/08/02 20:20:13 ragge Exp $
+ *	$Id: cpu.h,v 1.2 1994/10/08 15:43:54 ragge Exp $
  */
  /* All bugs are subject to removal without further notice */
 
@@ -37,6 +37,13 @@
 #define enablertclock()
 
 #define setsoftclock()	mtpr(8,PR_SIRR)
+
+struct	cpu_dep {
+	int	(*cpu_loinit)();
+	int	(*cpu_clock)();
+	int	(*cpu_mem)();
+	int	(*cpu_config)();
+};
 
 struct clockframe {
         int     pc;
@@ -74,7 +81,7 @@ struct clockops {
  * The following code are from the hp300 port/ragge.
  *      from: Utah Hdr: cpu.h 1.16 91/03/25
  *      from: @(#)cpu.h 7.7 (Berkeley) 6/27/91
- *      $Id: cpu.h,v 1.1 1994/08/02 20:20:13 ragge Exp $
+ *      $Id: cpu.h,v 1.2 1994/10/08 15:43:54 ragge Exp $
  */
 /*
  * Preempt the current process if in interrupt from user mode,

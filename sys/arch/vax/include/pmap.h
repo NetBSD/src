@@ -38,16 +38,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.2 1994/08/16 23:41:56 ragge Exp $
+ *	$Id: pmap.h,v 1.3 1994/10/08 15:43:56 ragge Exp $
  */
 
 
 #ifndef	PMAP_H
 #define	PMAP_H
 
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-/* #include "vm/vm_statistics.h" */
 
 #define VAX_PAGE_SIZE	NBPG
 #define VAX_SEG_SIZE	NBSEG
