@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2003/01/06 05:56:00 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2003/01/06 06:25:32 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -71,7 +71,9 @@
 
 #include <mips/locore.h>
 #include <mips/cache.h>
+#if 0
 #include <mips/cache_r5k.h>
+#endif
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
