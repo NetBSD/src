@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.6 2003/03/03 21:16:02 jdolecek Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.7 2003/03/23 10:38:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.6 2003/03/03 21:16:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.7 2003/03/23 10:38:14 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,28 +363,27 @@ smb_smb_ssnclose(struct smb_vc *vcp, struct smb_cred *scred)
 	return error;
 }
 
-static char smb_any_share[] = "?????";
-
-static char *
+static const char *
 smb_share_typename(int stype)
 {
-	char *pp;
+	static const char smb_any_share[] = "?????";
+	const char *pp;
 
 	switch (stype) {
-	    case SMB_ST_DISK:
+	case SMB_ST_DISK:
 		pp = "A:";
 		break;
-	    case SMB_ST_PRINTER:
+	case SMB_ST_PRINTER:
 		pp = smb_any_share;		/* can't use LPT: here... */
 		break;
-	    case SMB_ST_PIPE:
+	case SMB_ST_PIPE:
 		pp = "IPC";
 		break;
-	    case SMB_ST_COMM:
+	case SMB_ST_COMM:
 		pp = "COMM";
 		break;
-	    case SMB_ST_ANY:
-	    default:
+	case SMB_ST_ANY:
+	default:
 		pp = smb_any_share;
 		break;
 	}
@@ -397,7 +396,8 @@ smb_smb_treeconnect(struct smb_share *ssp, struct smb_cred *scred)
 	struct smb_vc *vcp;
 	struct smb_rq rq, *rqp = &rq;
 	struct mbchain *mbp;
-	char *pp, *pbuf, *encpass;
+	const char *pp;
+	char *pbuf, *encpass;
 	int error, plen, caseopt;
 
 	ssp->ss_tid = SMB_TID_UNKNOWN;
