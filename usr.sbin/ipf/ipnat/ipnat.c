@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.14 1997/12/21 12:53:01 darrenr Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.15 1997/12/21 13:35:34 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -143,7 +143,7 @@ char *argv[];
 
 	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAT, O_RDWR)) == -1) &&
 	    ((fd = open(IPL_NAT, O_RDONLY)) == -1)) {
-		(void) fprintf(stderr, "%s: open: %\ns", IPL_NAT,
+		(void) fprintf(stderr, "%s: open: %s\n", IPL_NAT,
 		    STRERROR(errno));                     
 		exit(-1);
 	}
