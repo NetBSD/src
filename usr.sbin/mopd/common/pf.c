@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.9 2004/04/10 17:53:05 darrenr Exp $	*/
+/*	$NetBSD: pf.c,v 1.10 2004/12/01 23:15:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -35,11 +35,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.9 2004/04/10 17:53:05 darrenr Exp $");
+__RCSID("$NetBSD: pf.c,v 1.10 2004/12/01 23:15:08 christos Exp $");
 #endif
 
 #include "os.h"
 
+#include <paths.h>
 #include <sys/uio.h>
 #include <net/bpf.h>
 
@@ -77,12 +78,11 @@ pfInit(interface, mode, protocol, typ)
 	int typ, mode;
 {
 	int	fd;
-	int	n = 0;
-	char	device[sizeof "/dev/bpf000"];
 	struct ifreq ifr;
 	u_int	dlt;
 	int	immediate;
 	u_int	bufsize;
+	const char *device = _PATH_BPF;
 
 	static struct bpf_insn insns[] = {
 		BPF_STMT(BPF_LD | BPF_H | BPF_ABS, 12),
@@ -99,12 +99,7 @@ pfInit(interface, mode, protocol, typ)
 		insns
 	};
 	
-  	/* Go through all the minors and find one that isn't in use. */
-	do {
-		(void) snprintf(device, sizeof(device), "/dev/bpf%d", n++);
-		fd = open(device, mode);
-	} while (fd < 0 && errno == EBUSY);
-
+	fd = open(device, mode);
 	if (fd < 0) {
       		mopLogWarn("pfInit: open %s", device);
 		return(-1);
