@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.40 2001/04/25 17:53:33 bouyer Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.41 2001/06/13 18:27:27 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -609,9 +609,6 @@ ncr5380_scsipi_request(chan, req, arg)
 		xs = arg;
 		periph = xs->xs_periph;
 		flags = xs->xs_control;
-
-		if (sc->sc_flags & NCR5380_FORCE_POLLING)
-			flags |= XS_CTL_POLL;
 
 		if (flags & XS_CTL_DATA_UIO)
 			panic("ncr5380: scsi data uio requested");
@@ -2580,6 +2577,8 @@ ncr5380_attach(sc)
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = SCI_OPENINGS;
 	adapt->adapt_max_periph = 1;
+	if (sc->sc_flags & NCR5380_FORCE_POLLING)
+		adapt->adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;
 	/* adapt_minphys filled in by front-end */
 
 	/*
