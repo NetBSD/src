@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.4 1998/06/24 18:43:44 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.5 1998/06/24 19:31:59 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -42,6 +42,7 @@
 #include <sys/time.h>
 
 #include <machine/irqhandler.h>
+#include <machine/cpufunc.h>
 #include <machine/cpu.h>
 #include <machine/ofw.h>
 
@@ -179,4 +180,29 @@ void
 need_proftick(p)
 	struct proc *p;
 {
+}
+
+/*
+ * Estimated loop for n microseconds
+ */
+
+/* Need to re-write this to use the timers */
+
+/* One day soon I will actually do this */
+
+int delaycount = 50;
+
+void
+delay(n)
+	u_int n;
+{
+	u_int i;
+
+	if (n == 0) return;
+	while (--n > 0) {
+		if (cputype == ID_SA110)	/* XXX - Seriously gross hack */
+			for (i = delaycount; --i;);
+		else
+			for (i = 8; --i;);
+	}
 }
