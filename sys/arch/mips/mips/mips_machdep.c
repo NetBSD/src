@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.103 2000/09/18 18:17:32 uch Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.104 2000/10/04 21:41:47 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.103 2000/09/18 18:17:32 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.104 2000/10/04 21:41:47 cgd Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -457,7 +457,7 @@ mips_vector_init()
 		memcpy(mips_locoresw, mips1_locoresw, sizeof(mips_locoresw));
 		break;
 #endif
-#if (MIPS3 + MIPS4) > 0
+#ifdef MIPS3
 	case 3:
 	case 4:
 		mips3_SetWIRED(0);
