@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.61 1996/02/01 00:26:46 jtc Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.62 1996/02/02 07:49:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -523,15 +523,14 @@ sys_fstatfs(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct statfs *) buf;
 	} */ *uap = v;
-	struct vnode *vp;
 	struct file *fp;
 	struct mount *mp;
 	register struct statfs *sp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
-	mp = vp->v_mount;
+	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	if (error = VFS_STATFS(mp, sp, p))
 		return (error);
@@ -605,8 +604,9 @@ sys_fchdir(p, v, retval)
 	struct file *fp;
 	int error;
 
-	if (error = getvnode(fdp, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(fdp, SCARG(uap, fd), &fp))
 		return (error);
+	vp = (struct vnode *)fp->f_data;
 	VREF(vp);
 	VOP_LOCK(vp);
 	if (vp->v_type != VDIR)
@@ -1383,8 +1383,9 @@ sys_fchflags(p, v, retval)
 	struct file *fp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
+	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -1451,8 +1452,9 @@ sys_fchmod(p, v, retval)
 	struct file *fp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
+	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -1522,8 +1524,9 @@ sys_fchown(p, v, retval)
 	struct file *fp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
+	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -1640,10 +1643,11 @@ sys_ftruncate(p, v, retval)
 	struct file *fp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
 	if ((fp->f_flag & FWRITE) == 0)
 		return (EINVAL);
+	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	if (vp->v_type == VDIR)
@@ -1669,12 +1673,13 @@ sys_fsync(p, v, retval)
 	struct sys_fsync_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
-	struct vnode *vp;
+	register struct vnode *vp;
 	struct file *fp;
 	int error;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
+	vp = (struct vnode *)fp->f_data;
 	VOP_LOCK(vp);
 	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
 	VOP_UNLOCK(vp);
@@ -1875,17 +1880,18 @@ sys_getdirentries(p, v, retval)
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
 	} */ *uap = v;
-	struct vnode *vp;
+	register struct vnode *vp;
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
 	long loff;
 	int error, eofflag;
 
-	if (error = getvnode(p->p_fd, SCARG(uap, fd), &vp, &fp))
+	if (error = getvnode(p->p_fd, SCARG(uap, fd), &fp))
 		return (error);
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
+	vp = (struct vnode *)fp->f_data;
 unionread:
 	if (vp->v_type != VDIR)
 		return (EINVAL);
@@ -2028,10 +2034,9 @@ out:
  * Convert a user file descriptor to a kernel file entry.
  */
 int
-getvnode(fdp, fd, vpp, fpp)
+getvnode(fdp, fd, fpp)
 	struct filedesc *fdp;
 	int fd;
-	struct vnode **vpp;
 	struct file **fpp;
 {
 	struct vnode *vp;
@@ -2045,7 +2050,6 @@ getvnode(fdp, fd, vpp, fpp)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type == VBAD)
 		return (EBADF);
-	*vpp = vp;
 	*fpp = fp;
 	return (0);
 }
