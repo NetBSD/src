@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.bigram.c,v 1.6 1997/10/19 04:11:52 lukem Exp $	*/
+/*	$NetBSD: locate.bigram.c,v 1.7 2000/03/20 19:17:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: locate.bigram.c,v 1.6 1997/10/19 04:11:52 lukem Exp $");
+__RCSID("$NetBSD: locate.bigram.c,v 1.7 2000/03/20 19:17:35 jdolecek Exp $");
 #endif /* not lint */
 
 /*
@@ -57,12 +57,53 @@ __RCSID("$NetBSD: locate.bigram.c,v 1.6 1997/10/19 04:11:52 lukem Exp $");
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/param.h>			/* for MAXPATHLEN */
 
-char buf1[MAXPATHLEN] = " ";	
-char buf2[MAXPATHLEN];
-
 int	main __P((int, char **));
+static int compare_bigrams __P((const void *, const void *));
+static void add_bigram __P((u_char, u_char));
+
+static char buf1[MAXPATHLEN] = " ";	
+static char buf2[MAXPATHLEN];
+
+struct bigram {
+	int count;
+	u_char b1, b2;	/* needed for final sorting */
+};
+
+struct bigram bigrams[256 * 256];
+
+static void
+add_bigram(i1, i2)
+	u_char i1, i2;
+{
+	if (i1 == '\n') {
+		bigrams[0].count++;
+		i1 = 0;
+	}
+	if (i2 == '\n') {
+		bigrams[0].count++;
+		i2 = i1;
+		i1 = 0;
+	}
+
+	bigrams[(i1<<8)+i2].count++;
+}
+
+static int
+compare_bigrams(item1, item2)
+	const void *item1, *item2;
+{
+	const struct bigram *it1=item1, *it2=item2;
+
+	if (it1->count != it2->count)
+		return it2->count - it1->count;
+	else if (it1->b1 != it2->b1)
+		return it2->b1 - it1->b1;
+	else
+		return it2->b2 - it2->b2;
+}
 
 int
 main(argc, argv)
@@ -71,6 +112,15 @@ main(argc, argv)
 {
   	char *cp;
 	char *oldpath = buf1, *path = buf2;
+	struct bigram *bg;
+	int i;
+
+	/* initialize bigram array */
+	memset(bigrams, 0, sizeof(bigrams));
+	for(i=0; i < 65536; i++) {
+		bigrams[i].b1 = i / 256;
+		bigrams[i].b2 = i % 256;
+	}
 
      	while ( fgets ( path, sizeof(buf2), stdin ) != NULL ) {
 
@@ -78,18 +128,31 @@ main(argc, argv)
 		for ( cp = path; *cp == *oldpath; cp++, oldpath++ )
 			if ( *oldpath == '\0' )
 				break;
+
 		/*
 		 * output post-residue bigrams only
 		 */
-		while ( *cp != '\0' && *(cp + 1) != '\0' ) {
-			putchar ( *cp++ );
-			putchar ( *cp++ );
-			putchar ( '\n' );
-		}
-		if ( path == buf1 )		/* swap pointers */
+		for(; cp[0] != '\0' && cp[1] != '\0'; cp += 2)
+			add_bigram((u_char)cp[0], (u_char)cp[1]);
+
+		if (path == buf1)		/* swap pointers */
 			path = buf2, oldpath = buf1;
 		else
 			path = buf1, oldpath = buf2;
    	}
+
+	/* sort the bigrams by how many times it appeared and their value */
+	heapsort((void *)bigrams, 256 * 256, sizeof(struct bigram),
+			compare_bigrams);
+
+	/* write 128 most frequent bigrams out */
+	bg = bigrams;
+	for (i = 0; i < 128 && bg->count > 0; i++, bg++) {
+		if (bg->b1 != '\0')
+			fputc(bg->b1, stdout);
+		if (bg->b2 != '\0')
+			fputc(bg->b2, stdout);
+	}
+		
 	return (0);
 }
