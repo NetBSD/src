@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.182 1998/10/13 09:34:00 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.183 1998/10/20 17:00:25 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -625,7 +625,7 @@ wdopen(dev, flag, fmt, p)
 			wd->sc_flags |= WDF_LOADED;
 
 			/* Load the physical device parameters. */
-			wd_get_params(wd, AT_POLL, &wd->sc_params);
+			wd_get_params(wd, AT_WAIT, &wd->sc_params);
 
 			/* Load the partition info if not already loaded. */
 			wdgetdisklabel(wd);
@@ -761,7 +761,7 @@ wdgetdisklabel(wd)
 	wd->sc_badsect[0] = -1;
 
 	if (wd->drvp->state > RECAL)
-		wd->drvp->state = RECAL;
+		wd->drvp->drive_flags |= DRIVE_RESET;
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
 	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	if (errstring) {
@@ -772,7 +772,7 @@ wdgetdisklabel(wd)
 		 * again.  XXX This is a kluge.
 		 */
 		if (wd->drvp->state > RECAL)
-			wd->drvp->state = RECAL;
+			wd->drvp->drive_flags |= DRIVE_RESET;
 		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit,
 		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	}
@@ -782,7 +782,7 @@ wdgetdisklabel(wd)
 	}
 
 	if (wd->drvp->state > RECAL)
-		wd->drvp->state = RECAL;
+		wd->drvp->drive_flags |= DRIVE_RESET;
 #ifdef HAS_BAD144_HANDLING
 	if ((lp->d_flags & D_BADSECT) != 0)
 		bad144intern(wd);
@@ -840,7 +840,7 @@ wdioctl(dev, xfer, addr, flag, p)
 		    wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (wd->drvp->state > RECAL)
-				wd->drvp->state = RECAL;
+				wd->drvp->drive_flags |= DRIVE_RESET;
 			if (xfer == DIOCWDINFO)
 				error = writedisklabel(WDLABELDEV(dev),
 				    wdstrategy, wd->sc_dk.dk_label,
