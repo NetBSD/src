@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 2003/08/07 11:14:37 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2003/10/31 01:25:54 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95 
- *	$NetBSD: extern.h,v 1.18 2003/08/07 11:14:37 agc Exp $
+ *	$NetBSD: extern.h,v 1.19 2003/10/31 01:25:54 ross Exp $
  */
 
 struct name;
@@ -56,9 +56,9 @@ char	*expand(char *);
 char	*getdeadletter(void);
 const	char *getname(int);
 struct message;
-char	*hfield(char [], struct message *);
+char	*hfield(const char [], const struct message *);
 FILE	*infix(struct header *, FILE *);
-char	*ishfield(char [], char[], char *);
+char	*ishfield(const char [], char[], const char *);
 char	*name1(struct message *, int);
 char	*nameof(struct message *, int);
 char	*nextword(char *, char *);
@@ -67,7 +67,7 @@ char 	*reedit(char *);
 FILE	*run_editor(FILE *, off_t, int, int);
 char	*salloc(int);
 char	*savestr(const char *);
-FILE	*setinput(struct message *);
+FILE	*setinput(const struct message *);
 char	*skin(char *);
 char	*skip_comment(char *);
 char	*snarf(char [], int *);

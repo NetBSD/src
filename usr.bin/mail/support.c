@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.10 2003/08/07 11:14:42 agc Exp $	*/
+/*	$NetBSD: support.c,v 1.11 2003/10/31 01:25:54 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.10 2003/08/07 11:14:42 agc Exp $");
+__RCSID("$NetBSD: support.c,v 1.11 2003/10/31 01:25:54 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ argcount(char **argv)
  * pointer (or NULL if the desired header field is not available).
  */
 char *
-hfield(char field[], struct message *mp)
+hfield(const char field[], const struct message *mp)
 {
 	FILE *ibuf;
 	char linebuf[LINESIZE];
@@ -212,7 +212,7 @@ gethfield(FILE *f, char linebuf[], int rem, char **colon)
  */
 
 char*
-ishfield(char linebuf[], char *colon, char field[])
+ishfield(const char linebuf[], char *colon, const char field[])
 {
 	char *cp = colon;
 

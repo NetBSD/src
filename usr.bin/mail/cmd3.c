@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.22 2003/10/29 05:11:26 ross Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.23 2003/10/31 01:25:54 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.22 2003/10/29 05:11:26 ross Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.23 2003/10/31 01:25:54 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -363,6 +363,7 @@ set(void *v)
 	char *cp, *cp2;
 	char varbuf[BUFSIZ], **ap, **p;
 	int errs, h, s;
+	size_t l;
 
 	if (*arglist == NULL) {
 		for (h = 0, s = 1; h < HSHSIZE; h++)
@@ -383,8 +384,12 @@ set(void *v)
 		cp = *ap;
 		cp2 = varbuf;
 		while (*cp != '=' && *cp != '\0')
-			*cp2++ = *cp++;
-		*cp2 = '\0';
+			++cp;
+		l = cp - *ap;
+		if (l >= sizeof varbuf)
+			l = sizeof varbuf - 1;
+		strncpy(cp2, *ap, l);
+		ap[0][l] = '\0';
 		if (*cp == '\0')
 			cp = "";
 		else

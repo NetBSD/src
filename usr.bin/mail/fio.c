@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.22 2003/08/07 11:14:37 agc Exp $	*/
+/*	$NetBSD: fio.c,v 1.23 2003/10/31 01:25:54 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.22 2003/08/07 11:14:37 agc Exp $");
+__RCSID("$NetBSD: fio.c,v 1.23 2003/10/31 01:25:54 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ readline(FILE *ibuf, char *linebuf, int linesize)
  * passed message pointer.
  */
 FILE *
-setinput(struct message *mp)
+setinput(const struct message *mp)
 {
 
 	fflush(otf);
