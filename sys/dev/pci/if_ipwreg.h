@@ -1,3 +1,4 @@
+/*	$NetBSD: if_ipwreg.h,v 1.2 2004/08/23 11:57:35 lukem Exp $	*/
 /*      Id: if_ipwreg.h,v 1.1.2.1 2004/08/19 16:28:26 damien Exp  */
 
 /*-
