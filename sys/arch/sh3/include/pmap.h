@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2000/04/25 12:17:06 tsubai Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5.4.1 2000/09/28 15:38:19 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -357,6 +357,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #ifdef SH4
 #define	pmap_update()			(cacheflush(), tlbflush())
 #else

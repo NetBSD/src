@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 1999/07/28 01:07:53 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.12.1 2000/09/28 15:38:19 is Exp $	*/
 
 /*
  *
@@ -351,6 +351,7 @@ extern int nkpde;			/* current # of PDEs for kernel */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update()			tlbflush()
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.45 2000/06/15 13:35:34 mycroft Exp $	*/
+/*	$NetBSD: pmap.h,v 1.45.2.1 2000/09/28 15:38:18 is Exp $	*/
 
 /*
  *
@@ -373,6 +373,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update()			tlbflush()
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
