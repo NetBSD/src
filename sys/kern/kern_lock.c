@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.53 2001/04/27 00:05:13 marcus Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.54 2001/05/01 04:30:04 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1062,7 +1062,9 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 int
 _simple_lock_held(__volatile struct simplelock *alp)
 {
+#if defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
 	cpuid_t cpu_id = cpu_number();
+#endif
 	int s, locked = 0;
 
 	s = spllock();
