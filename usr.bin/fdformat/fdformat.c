@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.1 1996/11/29 16:31:03 jtk Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.2 1996/11/30 01:53:51 jtk Exp $	*/
 /*-
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  *
@@ -31,7 +31,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
-static const char rcsid[] = "$Id: fdformat.c,v 1.1 1996/11/29 16:31:03 jtk Exp $";
 
 /*
  * fdformat: format a floppy diskette, using interface provided in
