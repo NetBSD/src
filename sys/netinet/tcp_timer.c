@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.31 1998/03/19 22:29:34 kml Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.32 1998/03/31 22:49:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -282,6 +282,13 @@ tcp_timers(tp, timer)
 		 */
 		tp->t_rtt = 0;
 		/*
+		 * Remember if we are retransmitting a SYN, because if
+		 * we do, set the initial congestion window must be set
+		 * to 1 segment.
+		 */
+		if (tp->t_state == TCPS_SYN_SENT)
+			tp->t_flags |= TF_SYN_REXMT;
+		/*
 		 * Close the congestion window down to the initial window
 		 * (we'll open it by one segment for each ack we get).
 		 * Since we probably have a window's worth of unacked
@@ -309,7 +316,7 @@ tcp_timers(tp, timer)
 		u_int win = min(tp->snd_wnd, tp->snd_cwnd) / 2 / tp->t_segsz;
 		if (win < 2)
 			win = 2;
-		tp->snd_cwnd = TCP_INITIAL_WINDOW(tp->t_segsz);
+		tp->snd_cwnd = TCP_INITIAL_WINDOW(tcp_init_win, tp->t_segsz);
 		tp->snd_ssthresh = win * tp->t_segsz;
 		tp->t_dupacks = 0;
 		}
