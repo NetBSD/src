@@ -1,5 +1,3 @@
-/*	$NetBSD: demand.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $	*/
-
 /*
  * demand.c - Support routines for demand-dialling.
  *
@@ -19,14 +17,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-#define RCSID	"Id: demand.c,v 1.13 2000/04/15 01:27:11 masputra Exp "
-#else
-__RCSID("$NetBSD: demand.c,v 1.1.1.6 2000/09/23 22:14:45 christos Exp $");
-#endif
-#endif
+#define RCSID	"Id: demand.c,v 1.15 2001/03/08 05:14:26 paulus Exp "
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,6 +85,7 @@ demand_conf()
     flush_flag = 0;
     fcs = PPP_INITFCS;
 
+    netif_set_mtu(0, MIN(lcp_allowoptions[0].mru, PPP_MRU));
     ppp_send_config(0, PPP_MRU, (u_int32_t) 0, 0, 0);
     ppp_recv_config(0, PPP_MRU, (u_int32_t) 0, 0, 0);
 
@@ -339,8 +331,11 @@ active_packet(p, len)
 	return 0;
     proto = PPP_PROTOCOL(p);
 #ifdef PPP_FILTER
+    if (pass_filter.bf_len != 0
+	&& bpf_filter(pass_filter.bf_insns, p, len, len) == 0)
+	return 0;
     if (active_filter.bf_len != 0
-	&& bpf_filter(active_filter.bf_insns, frame, len, len) == 0)
+	&& bpf_filter(active_filter.bf_insns, p, len, len) == 0)
 	return 0;
 #endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {

@@ -1,5 +1,3 @@
-/*	$NetBSD: chap.c,v 1.1.1.7 2000/09/23 22:14:44 christos Exp $	*/
-
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
  *
@@ -35,14 +33,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-#define RCSID	"Id: chap.c,v 1.24 1999/11/15 01:51:50 paulus Exp "
-#else
-__RCSID("$NetBSD: chap.c,v 1.1.1.7 2000/09/23 22:14:44 christos Exp $");
-#endif
-#endif
+#define RCSID	"Id: chap.c,v 1.25 2001/03/08 05:11:11 paulus Exp "
 
 /*
  * TODO:
@@ -67,11 +58,11 @@ static const char rcsid[] = RCSID;
  */
 static option_t chap_option_list[] = {
     { "chap-restart", o_int, &chap[0].timeouttime,
-      "Set timeout for CHAP" },
+      "Set timeout for CHAP", OPT_PRIO },
     { "chap-max-challenge", o_int, &chap[0].max_transmits,
-      "Set max #xmits for challenge" },
+      "Set max #xmits for challenge", OPT_PRIO },
     { "chap-interval", o_int, &chap[0].chal_interval,
-      "Set interval for rechallenge" },
+      "Set interval for rechallenge", OPT_PRIO },
 #ifdef MSLANMAN
     { "ms-lanman", o_bool, &ms_lanman,
       "Use LanMan passwd when using MS-CHAP", 1 },

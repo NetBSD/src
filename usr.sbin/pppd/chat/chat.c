@@ -1,5 +1,3 @@
-/*	$NetBSD: chat.c,v 1.1.1.7 2000/09/23 22:14:40 christos Exp $	*/
-
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
  *		the phone and log in).
@@ -88,13 +86,8 @@
 #define const
 #endif
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
 static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
-#else
-__RCSID("$NetBSD: chat.c,v 1.1.1.7 2000/09/23 22:14:40 christos Exp $");
-#endif
 #endif
 
 #include <stdio.h>

@@ -1,5 +1,3 @@
-/*	$NetBSD: lcp.h,v 1.1.1.6 2000/09/23 22:14:50 christos Exp $	*/
-
 /*
  * lcp.h - Link Control Protocol definitions.
  *
@@ -18,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: lcp.h,v 1.15 2000/04/04 07:06:51 paulus Exp 
+ * Id: lcp.h,v 1.16 2001/03/08 05:11:14 paulus Exp 
  */
 
 /*
@@ -79,7 +77,6 @@ extern lcp_options lcp_wantoptions[];
 extern lcp_options lcp_gotoptions[];
 extern lcp_options lcp_allowoptions[];
 extern lcp_options lcp_hisoptions[];
-extern u_int32_t xmit_accm[][8];
 
 #define DEFMRU	1500		/* Try for this */
 #define MINMRU	128		/* No MRUs below this */

@@ -1,5 +1,3 @@
-/*	$NetBSD: magic.h,v 1.1.1.5 2000/09/23 22:14:50 christos Exp $	*/
-
 /*
  * magic.h - PPP Magic Number definitions.
  *

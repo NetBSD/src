@@ -1,5 +1,3 @@
-/*	$NetBSD: ipv6cp.h,v 1.1.1.3 2000/09/23 22:14:48 christos Exp $	*/
-
 /*
     ipv6cp.h - PPP IPV6 Control Protocol.
     Copyright (C) 1999  Tommi Komulainen <Tommi.Komulainen@iki.fi>

@@ -1,5 +1,3 @@
-/*	$NetBSD: fsm.h,v 1.1.1.6 2000/09/23 22:14:46 christos Exp $	*/
-
 /*
  * fsm.h - {Link, IP} Control Protocol Finite State Machine definitions.
  *

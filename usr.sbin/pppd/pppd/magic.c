@@ -1,5 +1,3 @@
-/*	$NetBSD: magic.c,v 1.1.1.6 2000/09/23 22:14:50 christos Exp $	*/
-
 /*
  * magic.c - PPP Magic Number routines.
  *
@@ -19,14 +17,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
 #define RCSID	"Id: magic.c,v 1.9 1999/08/13 06:46:15 paulus Exp "
-#else
-__RCSID("$NetBSD: magic.c,v 1.1.1.6 2000/09/23 22:14:50 christos Exp $");
-#endif
-#endif
 
 #include <stdio.h>
 #include <unistd.h>

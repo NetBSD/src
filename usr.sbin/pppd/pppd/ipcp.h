@@ -1,5 +1,3 @@
-/*	$NetBSD: ipcp.h,v 1.1.1.6 2000/09/23 22:14:47 christos Exp $	*/
-
 /*
  * ipcp.h - IP Control Protocol definitions.
  *

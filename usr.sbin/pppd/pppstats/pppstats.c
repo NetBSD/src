@@ -1,5 +1,3 @@
-/*	$NetBSD: pppstats.c,v 1.1.1.6 2000/09/23 22:14:58 christos Exp $	*/
-
 /*
  * print PPP statistics:
  * 	pppstats [-a|-d] [-v|-r|-z] [-c count] [-w wait] [interface]
@@ -37,13 +35,8 @@
 #define const
 #endif
 
-#include <sys/cdefs.h>
 #ifndef lint
-#if 0
 static const char rcsid[] = "Id: pppstats.c,v 1.28 2000/04/24 02:54:18 masputra Exp ";
-#else
-__RCSID("$NetBSD: pppstats.c,v 1.1.1.6 2000/09/23 22:14:58 christos Exp $");
-#endif
 #endif
 
 #include <stdio.h>

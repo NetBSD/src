@@ -1,5 +1,3 @@
-/*	$NetBSD: tty.c,v 1.1.1.1 2000/09/23 22:14:55 christos Exp $	*/
-
 /*
  * tty.c - code for handling serial ports in pppd.
  *
@@ -22,14 +20,7 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-#define RCSID	"Id: tty.c,v 1.3 2000/07/24 14:58:15 paulus Exp "
-#else
-__RCSID("$NetBSD: tty.c,v 1.1.1.1 2000/09/23 22:14:55 christos Exp $");
-#endif
-#endif
+#define RCSID	"Id: tty.c,v 1.6 2001/03/12 22:59:01 paulus Exp "
 
 #include <stdio.h>
 #include <ctype.h>
@@ -58,7 +49,19 @@ __RCSID("$NetBSD: tty.c,v 1.1.1.1 2000/09/23 22:14:55 christos Exp $");
 #include "fsm.h"
 #include "lcp.h"
 
+void tty_process_extra_options __P((void));
+void tty_check_options __P((void));
+int  connect_tty __P((void));
+void disconnect_tty __P((void));
+void tty_close_fds __P((void));
+void cleanup_tty __P((void));
+void tty_do_send_config __P((int, u_int32_t, int, int));
+
+static int setdevname __P((char *, char **, int));
+static int setspeed __P((char *, char **, int));
 static int setxonxoff __P((char **));
+static int setescape __P((char **));
+static void printescape __P((option_t *, void (*)(void *, char *,...),void *));
 static void finish_tty __P((void));
 static int start_charshunt __P((int, int));
 static void stop_charshunt __P((void *, int));
@@ -73,6 +76,7 @@ static int pty_master;		/* fd for master side of pty */
 static int pty_slave;		/* fd for slave side of pty */
 static int real_ttyfd;		/* fd for actual serial port (not pty) */
 static int ttyfd;		/* Serial port file descriptor */
+static char speed_str[16];	/* Serial port speed as string */
 
 mode_t tty_mode = (mode_t)-1;	/* Original access permissions to tty */
 int baud_rate;			/* Actual bits/second for serial device */
@@ -104,55 +108,174 @@ extern int kill_link;
 /* XXX */
 extern int privopen;		/* don't lock, open device as root */
 
+u_int32_t xmit_accm[8];		/* extended transmit ACCM */
+
 /* option descriptors */
 option_t tty_options[] = {
+    /* device name must be first, or change connect_tty() below! */
+    { "device name", o_wild, (void *) &setdevname,
+      "Serial port device name",
+      OPT_DEVNAM | OPT_PRIVFIX | OPT_NOARG  | OPT_A2STRVAL | OPT_STATIC,
+      devnam},
+
+    { "tty speed", o_wild, (void *) &setspeed,
+      "Baud rate for serial port",
+      OPT_PRIO | OPT_NOARG | OPT_A2STRVAL | OPT_STATIC, speed_str },
+
     { "lock", o_bool, &lockflag,
-      "Lock serial device with UUCP-style lock file", 1 },
+      "Lock serial device with UUCP-style lock file", OPT_PRIO | 1 },
     { "nolock", o_bool, &lockflag,
-      "Don't lock serial device", OPT_PRIV },
+      "Don't lock serial device", OPT_PRIOSUB | OPT_PRIV },
+
     { "init", o_string, &initializer,
-      "A program to initialize the device",
-      OPT_A2INFO | OPT_PRIVFIX, &initializer_info },
+      "A program to initialize the device", OPT_PRIO | OPT_PRIVFIX },
+
     { "connect", o_string, &connect_script,
-      "A program to set up a connection",
-      OPT_A2INFO | OPT_PRIVFIX, &connect_script_info },
+      "A program to set up a connection", OPT_PRIO | OPT_PRIVFIX },
+
     { "disconnect", o_string, &disconnect_script,
-      "Program to disconnect serial device",
-      OPT_A2INFO | OPT_PRIVFIX, &disconnect_script_info },
+      "Program to disconnect serial device", OPT_PRIO | OPT_PRIVFIX },
+
     { "welcome", o_string, &welcomer,
-      "Script to welcome client",
-      OPT_A2INFO | OPT_PRIVFIX, &welcomer_info },
+      "Script to welcome client", OPT_PRIO | OPT_PRIVFIX },
+
     { "pty", o_string, &ptycommand,
       "Script to run on pseudo-tty master side",
-      OPT_A2INFO | OPT_PRIVFIX | OPT_DEVNAM, &ptycommand_info },
+      OPT_PRIO | OPT_PRIVFIX | OPT_DEVNAM },
+
     { "notty", o_bool, &notty,
       "Input/output is not a tty", OPT_DEVNAM | 1 },
+
     { "socket", o_string, &pty_socket,
-      "Send and receive over socket, arg is host:port", OPT_DEVNAM },
+      "Send and receive over socket, arg is host:port",
+      OPT_PRIO | OPT_DEVNAM },
+
     { "record", o_string, &record_file,
-      "Record characters sent/received to file" },
+      "Record characters sent/received to file", OPT_PRIO },
+
     { "crtscts", o_int, &crtscts,
-      "Set hardware (RTS/CTS) flow control", OPT_NOARG|OPT_VAL(1) },
-    { "nocrtscts", o_int, &crtscts,
-      "Disable hardware flow control", OPT_NOARG|OPT_VAL(-1) },
-    { "-crtscts", o_int, &crtscts,
-      "Disable hardware flow control", OPT_NOARG|OPT_VAL(-1) },
+      "Set hardware (RTS/CTS) flow control",
+      OPT_PRIO | OPT_NOARG | OPT_VAL(1) },
     { "cdtrcts", o_int, &crtscts,
-      "Set alternate hardware (DTR/CTS) flow control", OPT_NOARG|OPT_VAL(2) },
+      "Set alternate hardware (DTR/CTS) flow control",
+      OPT_PRIOSUB | OPT_NOARG | OPT_VAL(2) },
+    { "nocrtscts", o_int, &crtscts,
+      "Disable hardware flow control",
+      OPT_PRIOSUB | OPT_NOARG | OPT_VAL(-1) },
+    { "-crtscts", o_int, &crtscts,
+      "Disable hardware flow control",
+      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
     { "nocdtrcts", o_int, &crtscts,
-      "Disable hardware flow control", OPT_NOARG|OPT_VAL(-1) },
+      "Disable hardware flow control",
+      OPT_PRIOSUB | OPT_ALIAS | OPT_NOARG | OPT_VAL(-1) },
     { "xonxoff", o_special_noarg, (void *)setxonxoff,
-      "Set software (XON/XOFF) flow control" },
+      "Set software (XON/XOFF) flow control", OPT_PRIOSUB },
+
     { "modem", o_bool, &modem,
-      "Use modem control lines", 1 },
+      "Use modem control lines", OPT_PRIO | 1 },
     { "local", o_bool, &modem,
-      "Don't use modem control lines" },
+      "Don't use modem control lines", OPT_PRIOSUB | 0 },
+
     { "sync", o_bool, &sync_serial,
       "Use synchronous HDLC serial encoding", 1 },
+
     { "datarate", o_int, &max_data_rate,
-      "Maximum data rate in bytes/sec (with pty, notty or record option)" },
+      "Maximum data rate in bytes/sec (with pty, notty or record option)",
+      OPT_PRIO },
+
+    { "escape", o_special, (void *)setescape,
+      "List of character codes to escape on transmission",
+      OPT_A2PRINTER, (void *)printescape },
+
     { NULL }
 };
+
+
+struct channel tty_channel = {
+	tty_options,
+	&tty_process_extra_options,
+	&tty_check_options,
+	&connect_tty,
+	&disconnect_tty,
+	&tty_establish_ppp,
+	&tty_disestablish_ppp,
+	&tty_do_send_config,
+	&tty_recv_config,
+	&cleanup_tty,
+	&tty_close_fds
+};
+
+/*
+ * setspeed - Set the serial port baud rate.
+ * If doit is 0, the call is to check whether this option is
+ * potentially a speed value.
+ */
+static int
+setspeed(arg, argv, doit)
+    char *arg;
+    char **argv;
+    int doit;
+{
+	char *ptr;
+	int spd;
+
+	spd = strtol(arg, &ptr, 0);
+	if (ptr == arg || *ptr != 0 || spd == 0)
+		return 0;
+	if (doit) {
+		inspeed = spd;
+		slprintf(speed_str, sizeof(speed_str), "%d", spd);
+	}
+	return 1;
+}
+
+
+/*
+ * setdevname - Set the device name.
+ * If doit is 0, the call is to check whether this option is
+ * potentially a device name.
+ */
+static int
+setdevname(cp, argv, doit)
+    char *cp;
+    char **argv;
+    int doit;
+{
+	struct stat statbuf;
+	char dev[MAXPATHLEN];
+
+	if (*cp == 0)
+		return 0;
+
+	if (strncmp("/dev/", cp, 5) != 0) {
+		strlcpy(dev, "/dev/", sizeof(dev));
+		strlcat(dev, cp, sizeof(dev));
+		cp = dev;
+	}
+
+	/*
+	 * Check if there is a character device by this name.
+	 */
+	if (stat(cp, &statbuf) < 0) {
+		if (!doit)
+			return errno != ENOENT;
+		option_error("Couldn't stat %s: %m", cp);
+		return 0;
+	}
+	if (!S_ISCHR(statbuf.st_mode)) {
+		if (doit)
+			option_error("%s is not a character device", cp);
+		return 0;
+	}
+
+	if (doit) {
+		strlcpy(devnam, cp, sizeof(devnam));
+		devstat = statbuf;
+		default_device = 0;
+	}
+  
+	return 1;
+}
 
 static int
 setxonxoff(argv)
@@ -166,19 +289,76 @@ setxonxoff(argv)
 }
 
 /*
+ * setescape - add chars to the set we escape on transmission.
+ */
+static int
+setescape(argv)
+    char **argv;
+{
+    int n, ret;
+    char *p, *endp;
+
+    p = *argv;
+    ret = 1;
+    while (*p) {
+	n = strtol(p, &endp, 16);
+	if (p == endp) {
+	    option_error("escape parameter contains invalid hex number '%s'",
+			 p);
+	    return 0;
+	}
+	p = endp;
+	if (n < 0 || n == 0x5E || n > 0xFF) {
+	    option_error("can't escape character 0x%x", n);
+	    ret = 0;
+	} else
+	    xmit_accm[n >> 5] |= 1 << (n & 0x1F);
+	while (*p == ',' || *p == ' ')
+	    ++p;
+    }
+    lcp_allowoptions[0].asyncmap = xmit_accm[0];
+    return ret;
+}
+
+static void
+printescape(opt, printer, arg)
+    option_t *opt;
+    void (*printer) __P((void *, char *, ...));
+    void *arg;
+{
+	int n;
+	int first = 1;
+
+	for (n = 0; n < 256; ++n) {
+		if (n == 0x7d)
+			n += 2;		/* skip 7d, 7e */
+		if (xmit_accm[n >> 5] & (1 << (n & 0x1f))) {
+			if (!first)
+				printer(arg, ",");
+			else
+				first = 0;
+			printer(arg, "%x", n);
+		}
+	}
+	if (first)
+		printer(arg, "oops # nothing escaped");
+}
+
+/*
  * tty_init - do various tty-related initializations.
  */
 void tty_init()
 {
     add_notifier(&pidchange, maybe_relock, 0);
-    add_options(tty_options);
+    the_channel = &tty_channel;
+    xmit_accm[3] = 0x60000000;
 }
 
 /*
- * tty_device_check - work out which tty device we are using
+ * tty_process_extra_options - work out which tty device we are using
  * and read its options file.
  */
-void tty_device_check()
+void tty_process_extra_options()
 {
 	using_pty = notty || ptycommand != NULL || pty_socket != NULL;
 	if (using_pty)
@@ -323,12 +503,14 @@ int connect_tty()
 		for (;;) {
 			/* If the user specified the device name, become the
 			   user before opening it. */
-			int err;
-			if (!devnam_info.priv && !privopen)
+			int err, prio;
+
+			prio = privopen? OPRIO_ROOT: tty_options[0].priority;
+			if (prio < OPRIO_ROOT)
 				seteuid(uid);
 			ttyfd = open(devnam, O_NONBLOCK | O_RDWR, 0);
 			err = errno;
-			if (!devnam_info.priv && !privopen)
+			if (prio < OPRIO_ROOT)
 				seteuid(0);
 			if (ttyfd >= 0)
 				break;
@@ -479,6 +661,11 @@ int connect_tty()
 			warn("Welcome script failed");
 	}
 
+	/*
+	 * If we are initiating this connection, wait for a short
+	 * time for something from the peer.  This can avoid bouncing
+	 * our packets off his tty before he has it set up.
+	 */
 	if (connector != NULL || ptycommand != NULL)
 		listen_time = connect_delay;
 
@@ -521,6 +708,20 @@ void cleanup_tty()
 		unlock();
 		locked = 0;
 	}
+}
+
+/*
+ * tty_do_send_config - set transmit-side PPP configuration.
+ * We set the extended transmit ACCM here as well.
+ */
+void
+tty_do_send_config(mtu, accm, pcomp, accomp)
+    int mtu;
+    u_int32_t accm;
+    int pcomp, accomp;
+{
+	tty_set_xaccm(xmit_accm);
+	tty_send_config(mtu, accm, pcomp, accomp);
 }
 
 /*

@@ -1,4 +1,3 @@
-$NetBSD: README,v 1.1.1.3 2000/09/23 22:14:41 christos Exp $
 This is the README file for ppp-2.4, a package which implements the
 Point-to-Point Protocol (PPP) to provide Internet connections over
 serial lines.
@@ -10,7 +9,8 @@ Introduction.
 The Point-to-Point Protocol (PPP) provides a standard way to establish
 a network connection over a serial link.  At present, this package
 supports IP and the protocols layered above IP, such as TCP and UDP.
-The Linux port of this package also has support for IPX.
+The Linux and Solaris ports of this package have optional support for
+IPV6; the Linux port of this package also has support for IPX.
 
 This software consists of two parts:
 
@@ -57,8 +57,39 @@ use any IP address.  (This only applies where the peer is
 authenticating itself to you, of course.)
 
 
-What's new in ppp-2.4.0.
+What's new in ppp-2.4.1.
 ************************
+
+* Pppd can now print out the set of options that are in effect.  The
+  new `dump' option causes pppd to print out the option values after
+  option parsing is complete.  The `dryrun' option causes pppd to
+  print the options and then exit.
+
+* The option parsing code has been fixed so that options in the
+  per-tty options file are parsed correctly, and don't override values
+  from the command line in most cases.
+
+* The plugin option now looks in /usr/lib/pppd/<pppd-version> (for
+  example, /usr/lib/pppd/2.4.1b1) for shared objects for plugins if
+  there is no slash in the plugin name.
+
+* When loading a plugin, pppd will now check the version of pppd for
+  which the plugin was compiled, and refuse to load it if it is
+  different to pppd's version string.  To enable this, the plugin
+  source needs to #include "pppd.h" and have a line saying:
+	char pppd_version[] = VERSION;
+
+* There is a bug in zlib, discovered by James Carlson, which can cause
+  kernel memory corruption if Deflate is used with the lowest setting,
+  8.  As a workaround pppd will now insist on using at least 9.
+
+* Pppd should compile on Solaris and SunOS again.
+
+* Pppd should now set the MTU correctly on demand-dialled interfaces.
+
+
+What was new in ppp-2.4.0.
+**************************
 
 * Multilink: this package now allows you to combine multiple serial
   links into one logical link or `bundle', for increased bandwidth and
@@ -114,7 +145,7 @@ If you find bugs in this package, please report them to the maintainer
 for the port for the operating system you are using:
 
 Linux			Paul Mackerras <paulus@linuxcare.com>
-Solaris 2		Adi Masputra <adi.masputra@sun.com>
+Solaris 2		James Carlson <james.d.carlson@east.sun.com>
 SunOS 4.x		Adi Masputra <adi.masputra@sun.com>
 
 
@@ -134,4 +165,4 @@ The primary site for releases of this software is:
 	ftp://linuxcare.com.au/pub/ppp/
 
 
-(Id: README,v 1.23 2000/04/13 11:59:40 paulus Exp )
+($Id: README,v 1.1.1.4 2002/05/29 18:30:16 christos Exp $)

@@ -1,5 +1,3 @@
-/*	$NetBSD: eui64.c,v 1.1.1.3 2000/09/23 22:14:45 christos Exp $	*/
-
 /*
     eui64.c - EUI64 routines for IPv6CP.
     Copyright (C) 1999  Tommi Komulainen <Tommi.Komulainen@iki.fi>
@@ -20,14 +18,7 @@
     Id: eui64.c,v 1.5 2000/08/05 06:46:47 paulus Exp 
 */
 
-#include <sys/cdefs.h>
-#ifndef lint
-#if 0
-#define RCSID	"Id: eui64.c,v 1.5 2000/08/05 06:46:47 paulus Exp "
-#else
-__RCSID("$NetBSD: eui64.c,v 1.1.1.3 2000/09/23 22:14:45 christos Exp $");
-#endif
-#endif
+#define RCSID	"$Id: eui64.c,v 1.1.1.4 2002/05/29 18:29:56 christos Exp $"
 
 #include "pppd.h"
 
