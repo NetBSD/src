@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 2000/09/27 18:16:01 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.41 2000/10/04 23:05:08 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -314,11 +314,17 @@ bootpath_build()
 	/* Setup pointer to boot flags */
 	OF_getprop(chosen, "bootargs", buf, sizeof(buf));
 	cp = buf;
-	if (cp == NULL)
+
+	/* Find start of boot flags */
+	while (*cp) {
+		while(*cp == ' ' || *cp == '\t') cp++;
+		if (*cp == '-' || *cp == '\0')
+			break;
+		while(*cp != ' ' && *cp != '\t' && *cp != '\0') cp++;
+		
+	}
+	if (*cp != '-')
 		return;
-	while (*cp != '-')
-		if (*cp++ == '\0')
-			return;
 
 	for (;*++cp;) {
 		int fl;
