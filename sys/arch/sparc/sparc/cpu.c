@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.62 1998/03/21 20:34:59 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.63 1998/07/26 23:35:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -382,7 +382,8 @@ struct module_info module_sun4 = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_line
+	noop_pcache_flush_line,
+	noop_pure_vcache_flush
 };
 
 void
@@ -504,7 +505,8 @@ struct module_info module_sun4c = {
 	sun4_vcache_flush_segment,
 	sun4_vcache_flush_region,
 	sun4_vcache_flush_context,
-	noop_pcache_flush_line
+	noop_pcache_flush_line,
+	noop_pure_vcache_flush
 };
 
 void
@@ -698,7 +700,8 @@ struct module_info module_ms1 = {
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	noop_pcache_flush_line
+	noop_pcache_flush_line,
+	noop_pure_vcache_flush
 };
 
 void
@@ -741,7 +744,8 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line
+	srmmu_pcache_flush_line,
+	noop_pure_vcache_flush
 };
 
 void
@@ -776,7 +780,8 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	viking_pcache_flush_line
+	viking_pcache_flush_line,
+	noop_pure_vcache_flush
 };
 
 void
@@ -853,7 +858,8 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line
+	srmmu_pcache_flush_line,
+	hypersparc_pure_vcache_flush
 };
 
 void
@@ -863,6 +869,8 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
+	if (node == 0)
+		sta(0, ASI_HICACHECLR, 0);
 	printf("warning: hypersparc support still under construction\n");
 }
 
@@ -896,7 +904,8 @@ struct module_info module_cypress = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line
+	srmmu_pcache_flush_line,
+	noop_pure_vcache_flush
 };
 
 /* Fujitsu Turbosparc */
@@ -915,7 +924,8 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	srmmu_pcache_flush_line
+	srmmu_pcache_flush_line,
+	noop_pure_vcache_flush
 };
 
 void
@@ -1135,6 +1145,7 @@ getcpuinfo(sc, node)
 		MPCOPY(vcache_flush_region);
 		MPCOPY(vcache_flush_context);
 		MPCOPY(pcache_flush_line);
+		MPCOPY(pure_vcache_flush);
 #undef MPCOPY
 		return;
 	}

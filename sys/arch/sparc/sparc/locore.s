@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.85 1998/07/04 22:18:40 jonathan Exp $	*/
+/*	$NetBSD: locore.s,v 1.86 1998/07/26 23:35:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4675,8 +4675,18 @@ Lsw_havectx:
 #endif
 1:
 #if defined(SUN4M)
+	/*
+	 * Flush caches that need to be flushed on context switch.
+	 * We know this is currently only necessary on the sun4m hypersparc.
+	 */
+	set	CPUINFO_VA+CPUINFO_PURE_VCACHE_FLS, %o2
+	ld	[%o2], %o2
+	mov	%o7, %g7	! save return address
+	jmpl	%o2, %o7	! this function must not clobber %o0 and %g7
+	 nop
+
 	set	SRMMU_CXR, %o1
-	retl
+	jmp	%g7 + 8
 	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 
@@ -5842,6 +5852,14 @@ ALTENTRY(hypersparc_get_fltstatus)
 	set	SRMMU_AFADDR, %o4
 	retl
 	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
+
+ALTENTRY(hypersparc_pure_vcache_flush)
+	/*
+	 * Flush entire on-chip instruction cache, which is
+	 * a pure vitually-indexed/virtually-tagged cache.
+	 */
+	retl
+	 sta	%g0, [%g0] ASI_HICACHECLR
 
 #endif /* SUN4M */
 

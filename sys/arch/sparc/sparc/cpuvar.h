@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.6 1997/10/09 08:34:38 jtc Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.7 1998/07/26 23:35:34 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ struct module_info {
 	void (*vcache_flush_region)__P((int));
 	void (*vcache_flush_context)__P((void));
 	void (*pcache_flush_line)__P((int, int));
+	void (*pure_vcache_flush)__P((void));
 };
 
 
@@ -175,6 +176,7 @@ struct cpu_softc {
 	void	(*vcache_flush_region)__P((int));
 	void	(*vcache_flush_context)__P((void));
 	void	(*pcache_flush_line)__P((int, int));
+	void	(*pure_vcache_flush)__P((void));
 
 #ifdef SUN4M
 	/* hardware-assisted block operation routines */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.122 1998/07/25 22:01:19 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.123 1998/07/26 23:35:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1930,6 +1930,8 @@ ctx_alloc(pm)
 		 * XXX: Do we have to flush cache after reloading ctx tbl?
 		 */
 
+		/* Do any cache flush needed on context switch */
+		(*cpuinfo.pure_vcache_flush)();
 #ifdef DEBUG
 #if 0
 		ctxbusyvector[cnum] = 1; /* mark context as busy */
@@ -1966,6 +1968,9 @@ ctx_free(pm)
 	oldc = getcontext();
 
 	if (CACHEINFO.c_vactype != VAC_NONE) {
+		/* Do any cache flush needed on context switch */
+		(*cpuinfo.pure_vcache_flush)();
+
 		newc = pm->pm_ctxnum;
 		CHANGE_CONTEXTS(oldc, newc);
 		cache_flush_context();
@@ -1977,6 +1982,8 @@ ctx_free(pm)
 	} else {
 #if defined(SUN4M)
 		if (CPU_ISSUN4M) {
+			/* Do any cache flush needed on context switch */
+			(*cpuinfo.pure_vcache_flush)();
 			newc = pm->pm_ctxnum;
 			CHANGE_CONTEXTS(oldc, newc);
 			tlb_flush_context();
@@ -6584,10 +6591,13 @@ pmap_activate(p)
 	s = splpmap();
 	if (p == curproc) {
 		write_user_windows();
-		if (pmap->pm_ctx == NULL)
+		if (pmap->pm_ctx == NULL) {
 			ctx_alloc(pmap);	/* performs setcontext() */
-		else
+		} else {
+			/* Do any cache flush needed on context switch */
+			(*cpuinfo.pure_vcache_flush)();
 			setcontext(pmap->pm_ctxnum);
+		}
 	}
 	splx(s);
 }

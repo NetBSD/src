@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 1998/06/24 10:52:54 jonathan Exp $
+#	$NetBSD: genassym.cf,v 1.6 1998/07/26 23:35:32 pk Exp $
 
 #
 # Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -114,6 +114,7 @@ endif
 
 # CPU info structure
 define	CPUINFO_FAULTSTATUS	offsetof(struct cpu_softc, get_faultstatus)
+define	CPUINFO_PURE_VCACHE_FLS	offsetof(struct cpu_softc, pure_vcache_flush)
 
 # PTE bits and related information
 define	PG_W		PG_W
