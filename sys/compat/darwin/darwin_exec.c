@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.20 2003/09/30 19:49:00 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.21 2003/10/19 07:52:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.20 2003/09/30 19:49:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.21 2003/10/19 07:52:22 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -154,10 +154,14 @@ exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
 	*stackp = (char *)(((unsigned long)*stackp - 1) & ~0xfUL);
 
 	emea = (struct exec_macho_emul_arg *)pack->ep_emul_arg;
-	macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
-	if ((error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr))) != 0)
-		return error;
-	*stackp += sizeof(macho_hdr);
+
+	if (emea->dynamic == 1) {
+		macho_hdr = (struct exec_macho_object_header *)emea->macho_hdr;
+		error = copyout(&macho_hdr, *stackp, sizeof(macho_hdr));
+		if (error != 0)
+			return error;
+		*stackp += sizeof(macho_hdr);
+	}
 
 	cpp = (char **)*stackp;
 	argc = arginfo->ps_nargvstr;
