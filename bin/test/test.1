@@ -1,5 +1,7 @@
-.\" Copyright (c) 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
+.\"
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,10 +34,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)test.1	6.6 (Berkeley) 6/8/92
-.\"	$Id: test.1,v 1.5 1994/06/30 05:12:34 jtc Exp $
+.\"     @(#)test.1	8.1 (Berkeley) 5/31/93
 .\"
-.Dd June 8, 1992
+.Dd May 31, 1993
 .Dt TEST 1
 .Os
 .Sh NAME
@@ -274,6 +275,16 @@ The
 operator has higher precedence than the
 .Fl o
 operator.
+.Sh GRAMMAR AMBIGUITY
+The 
+.Nm test
+grammar is inherently ambiguous.  In order to assure a degree of consistency,
+the cases described in 
+.St -p1003.2
+section 4.62.4, 
+are evaluated consistently according to the rules specified in the
+standards document.  All other cases are subject to the ambiguity in the
+command semantics.
 .Sh RETURN VALUES
 The
 .Nm test
@@ -293,13 +304,3 @@ The
 utility implements a superset of the
 .St -p1003.2
 specification.
-.Sh BUGS
-The 
-.Nm test
-grammar is inherently ambiguous.  In order to assure a degree of consistency,
-the cases described in 
-.St -p1003.2
-section 4.62.4, 
-are evaluated consistently according to the rules specified in the
-standards document.  All other cases are subject to the ambiguity in the
-command semantics.
