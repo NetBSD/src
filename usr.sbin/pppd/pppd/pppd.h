@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.25 2003/07/13 14:02:23 itojun Exp $	*/
+/*	$NetBSD: pppd.h,v 1.26 2004/05/13 17:31:57 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -636,6 +636,10 @@ extern int (*pap_passwd_hook) __P((char *user, char *passwd));
 extern void (*ip_up_hook) __P((void));
 extern void (*ip_down_hook) __P((void));
 extern void (*ip_choose_hook) __P((u_int32_t *));
+void (*lcp_up_hook) __P((void));
+void (*lcp_down_hook) __P((void));
+void (*lcp_echo_hook) __P((int));
+void (*lcp_echoreply_hook) __P((int));
 
 /*
  * Inline versions of get/put char/short/long.
