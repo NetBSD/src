@@ -1,4 +1,4 @@
-/* $NetBSD: dec_550.c,v 1.23 2003/10/24 15:00:20 mycroft Exp $ */
+/* $NetBSD: dec_550.c,v 1.24 2003/12/14 05:15:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.23 2003/10/24 15:00:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.24 2003/12/14 05:15:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_550.c,v 1.23 2003/10/24 15:00:20 mycroft Exp $")
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
-#include <dev/ata/wdvar.h>
 
 /* Write this to Pyxis General Purpose Output to turn off the power. */
 #define	DEC_550_PYXIS_GPO_POWERDOWN	0x00000400
