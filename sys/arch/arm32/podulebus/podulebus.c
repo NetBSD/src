@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.32 1998/08/28 03:19:34 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.33 2000/01/10 04:01:17 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -513,7 +513,7 @@ podulebusattach(parent, self, aux)
 	int easi_time;
 	int bit;
 #endif
-	int boolean;
+	unsigned int value;
 	char argstring[20];
 
 #if 0
@@ -572,12 +572,40 @@ podulebusattach(parent, self, aux)
 	/* Look for drivers to attach */
 
 	for (loop = 0; loop < MAX_PODULES+MAX_NETSLOTS; ++loop) {
+#if 1
+		/* Provide backwards compat for a while */
 		sprintf(argstring, "podule%d.disable", loop);
 		if (get_bootconf_option(boot_args, argstring,
-		    BOOTOPT_TYPE_BOOLEAN, &boolean)) {
-			if (boolean) {
+		    BOOTOPT_TYPE_BOOLEAN, &value)) {
+			if (value) {
 				if (podules[loop].slottype != SLOT_NONE)
 					printf("podule%d: Disabled\n", loop);
+				continue;
+			}
+ 		}
+#endif
+ 		sprintf(argstring, "podule%d=", loop);
+ 		if (get_bootconf_option(boot_args, argstring,
+ 		    BOOTOPT_TYPE_HEXINT, &value)) {
+			/* Override the ID */
+			podules[loop].manufacturer = value >> 16;
+ 			podules[loop].product = value & 0xffff;
+			/* Any old description is now wrong */
+			podules[loop].description[0] = 0;
+			if (value != 0xffff) {
+				printf("podule%d: ID overriden man=%04x prod=%04x\n",
+				    loop, podules[loop].manufacturer,
+				    podules[loop].product);
+				podules[loop].slottype = SLOT_POD;
+				pa.pa_podule_number = loop;
+				pa.pa_podule = &podules[loop];
+				pa.pa_iot = &podulebus_bs_tag;
+				config_found_sm(self, &pa, podulebusprint,
+				    podulebussubmatch);
+				continue;
+			}
+			if (value == 0xffff) {
+				printf("podule%d: Disabled\n", loop);
 				continue;
 			}
 		}
