@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.52 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.53 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -199,3 +199,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		using 1.44MB floppy disk [jdolecek 20021204]
 	edquota(8): Added command-line options to allow setting quotas
 		from command line.  [bouyer 20021204]
+	build.sh: add -E, to enable "expert mode", which allows builds
+		to DESTDIR=/.  [lukem 20021208]
