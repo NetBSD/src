@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: sbic.c,v 1.4 1994/06/15 19:06:26 chopps Exp $
+ *	$Id: sbic.c,v 1.5 1994/06/20 02:23:12 chopps Exp $
  */
 
 /*
@@ -1296,12 +1296,15 @@ out:
 #if 0
 	DCIS();
 #elif defined(M68040)
-	dma_cachectl(tmpaddr, len);
+	if (cpu040) {
+		dma_cachectl(tmpaddr, len);
 
-	dspa = (u_int)dev->sc_chain[0].dc_addr;
-	deoff = (u_int)dev->sc_last->dc_addr + (dev->sc_last->dc_count >> 1);
-	if ((dspa & 0xF) || (deoff & 0xF))
-		dev->sc_flags |= SBICF_DCFLUSH;
+		dspa = (u_int)dev->sc_chain[0].dc_addr;
+		deoff = (u_int)dev->sc_last->dc_addr
+		    + (dev->sc_last->dc_count >> 1);
+		if ((dspa & 0xF) || (deoff & 0xF))
+			dev->sc_flags |= SBICF_DCFLUSH;
+	}
 #endif
 
 	/*
