@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.7 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.8 2003/05/26 19:41:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.7 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.8 2003/05/26 19:41:03 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -61,12 +61,6 @@ __RCSID("$NetBSD: pthread_sa.c,v 1.7 2003/03/08 08:03:35 lukem Exp $");
 #endif
 
 extern struct pthread_queue_t pthread__allqueue;
-
-static stack_t recyclable[2][(PT_UPCALLSTACKS/2)+1];
-static int	recycle_count;
-static int	recycle_threshold;
-static int	recycle_side;
-static pthread_spin_t recycle_lock;
 
 #define	PTHREAD_RRTIMER_INTERVAL_DEFAULT	100
 static pthread_mutex_t rrtimer_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -138,6 +132,9 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		t->blocks++;
 #endif
 		t->pt_uc = sas[1]->sa_context;
+		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self, 1, t,
+			     t->pt_type));
+
 		PTHREADD_ADD(PTHREADD_UP_BLOCK);
 		break;
 	case SA_UPCALL_NEWPROC:
@@ -237,7 +234,7 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 		victim->pt_uc = sas[i]->sa_context;
 		victim->pt_uc->uc_flags &= ~_UC_SIGMASK;
 		SDPRINTF(("(fi %p) victim %d %p(%d)", self, i, victim,
-		    victim->pt_type));
+			     victim->pt_type));
 		if (victim->pt_type == PT_THREAD_UPCALL) {
 			/* Case 1: Upcall. Must be resumed. */
 				SDPRINTF((" upcall"));
@@ -325,6 +322,7 @@ void
 pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 {
 	pthread_t victim, prev, next, switchto, runq, recycleq, intqueue;
+	pthread_t tmp;
 	pthread_spin_t *lock;
 
 	PTHREADD_ADD(PTHREADD_RESOLVELOCKS);
@@ -349,14 +347,6 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 			next = victim->pt_next;
 			SDPRINTF(("(rl %p) victim %p (uc %p)", self,
 			    victim, victim->pt_uc));
-			if (victim->pt_switchto) {
-				PTHREADD_ADD(PTHREADD_SWITCHTO);
-				switchto = victim->pt_switchto;
-				switchto->pt_uc = victim->pt_switchtouc;
-				victim->pt_switchto = NULL;
-				victim->pt_switchtouc = NULL;
-				SDPRINTF((" switchto: %p", switchto));
-			}
 
 			if (victim->pt_type == PT_THREAD_NORMAL) {
 				SDPRINTF((" normal"));
@@ -458,7 +448,15 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				}
 			}
 
-			if (switchto) {
+			if (victim->pt_switchto) {
+				PTHREADD_ADD(PTHREADD_SWITCHTO);
+				switchto = victim->pt_switchto;
+				switchto->pt_uc = victim->pt_switchtouc;
+				victim->pt_switchto = NULL;
+				victim->pt_switchtouc = NULL;
+				SDPRINTF((" switchto: %p (uc %p)", switchto,
+					     switchto->pt_uc));
+
 				pthread__assert(switchto->pt_spinlocks == 0);
 				/*
 				 * Threads can have switchto set to themselves
@@ -466,8 +464,26 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 				 * on the run queue twice.
 				 */
 				if (switchto != victim) {
-					switchto->pt_next = runq;
-					runq = switchto;
+					if (switchto->pt_next) {
+						/*
+						 * The thread being switched
+						 * to was preempted and
+						 * continued. Find the
+						 * preempter and put it on 
+						 * our continuation chain.
+						 */
+						SDPRINTF((" switchto chained"));
+						for ( tmp = switchto;
+						      tmp->pt_parent != NULL; 
+						      tmp = tmp->pt_parent)
+							SDPRINTF((" parent: %p", tmp));
+						tmp->pt_parent = self;
+						tmp->pt_next = intqueue;
+						intqueue = tmp;
+					} else {
+						switchto->pt_next = runq;
+						runq = switchto;
+					}
 				}
 				switchto = NULL;
 			}
@@ -515,45 +531,24 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 void
 pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 {
-	int do_recycle, my_side, ret;
+	int count, ret;
 	pthread_t upcall;
+	stack_t recyclable[PT_UPCALLSTACKS];
 
+	count = 0;
 	while(qhead != NULL) {
-		pthread_spinlock(self, &recycle_lock);
-		my_side = recycle_side;
-		do_recycle = 0;
-		while ((qhead != NULL) && 
-		    (recycle_count < recycle_threshold)) {
-			upcall = qhead; 
-			qhead = qhead->pt_next;
-			upcall->pt_state = PT_STATE_RUNNABLE;
-			upcall->pt_next = NULL;
-			upcall->pt_parent = NULL;
-			recyclable[my_side][recycle_count] = upcall->pt_stack;
-			recycle_count++;
-		}
-		SDPRINTF(("(recycle_bulk %p) count %d\n", self, recycle_count));
-		if (recycle_count == recycle_threshold) {
-			recycle_side = 1 - recycle_side;
-			recycle_count = 0;
-			do_recycle = 1;
-		}
-		pthread_spinunlock(self, &recycle_lock);
-		if (do_recycle) {
-			SDPRINTF(("(recycle_bulk %p) recycled %d stacks\n", self, recycle_threshold));
-
-			ret = sa_stacks(recycle_threshold, 
-			    recyclable[my_side]);
-			if (ret != recycle_threshold) {
-				printf("Error: recycle_threshold\n");
-				printf("ret: %d  threshold: %d\n",
-				    ret, recycle_threshold);
-				/*CONSTCOND*/
-				pthread__assert(0);
-			}
-		}
+		upcall = qhead; 
+		qhead = qhead->pt_next;
+		upcall->pt_state = PT_STATE_RUNNABLE;
+		upcall->pt_next = NULL;
+		upcall->pt_parent = NULL;
+		recyclable[count] = upcall->pt_stack;
+		count++;
 	}
 	
+	ret = sa_stacks(count, recyclable);
+	pthread__assert(ret == count);
+	SDPRINTF(("(recycle_bulk %p) recycled %d stacks\n", self, count));
 }
 
 /*
@@ -563,37 +558,13 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 void
 pthread__sa_recycle(pthread_t old, pthread_t new)
 {
-	int do_recycle, my_side, ret;
-
-	do_recycle = 0;
 
 	old->pt_next = NULL;
 	old->pt_parent = NULL;
 	old->pt_state = PT_STATE_RUNNABLE;
 
-	pthread_spinlock(new, &recycle_lock);
-
-	my_side = recycle_side;
-	recyclable[my_side][recycle_count] = old->pt_stack;
-	recycle_count++;
-	SDPRINTF(("(recycle %p) count %d\n", new, recycle_count));
-
-	if (recycle_count == recycle_threshold) {
-		/* Switch */
-		recycle_side = 1 - recycle_side;
-		recycle_count = 0;
-		do_recycle = 1;
-	}
-	pthread_spinunlock(new, &recycle_lock);
-
-	if (do_recycle) {
-		ret = sa_stacks(recycle_threshold, recyclable[my_side]);
-		SDPRINTF(("(recycle %p) recycled %d stacks\n", new, recycle_threshold));
-		if (ret != recycle_threshold) {
-			/*CONSTCOND*/
-			pthread__assert(0);
-		}
-	}
+	sa_stacks(1, &old->pt_stack);
+	SDPRINTF(("(recycle %p) recycled %p\n", new, old));
 }
 
 /*
@@ -677,8 +648,6 @@ pthread__sa_start(void)
 		/* No locking needed, there are no threads yet. */
 		PTQ_INSERT_HEAD(&pthread__allqueue, t, pt_allq);
 	}
-
-	recycle_threshold = PT_UPCALLSTACKS/2;
 
 	ret = sa_stacks(i, upcall_stacks);
 	if (ret == -1)
