@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 1999/09/16 21:39:25 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 1999/09/17 15:20:54 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -462,7 +462,7 @@ ENTRY(longjmp)
 ENTRY(idle)
 	CLI
 	ECLI
-	mov.l	XXLwhichqs, r0
+	mov.l	XLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
 	tst	r0, r0
@@ -475,11 +475,6 @@ ENTRY(idle)
 
 	bra	_idle
 	nop
-
-	.align	2
-XXLwhichqs:
-	.long	_whichqs
-
 
 #define	PUSHALL	\
 	mov.l	r0, @-r15	; \
@@ -594,8 +589,7 @@ ENTRY(cpu_switch)
 	jsr	@r0
 	nop
 	mov.l	@r0, r4		/* r4 = oldCurproc->p_addr */
-	mov	#PCB_R15, r1
-	add	r1, r4
+	add	#PCB_R15, r4
 	mov.l	XL_ConvVtoP, r0
 	jsr	@r0
 	nop
@@ -632,7 +626,6 @@ ENTRY(cpu_switch)
 
 	.align	2
 XXLcpl:		.long	_cpl
-XXLcurproc:	.long	_curproc
 XXLXspllower:	.long	_Xspllower
 XXLKernelStack:	.long	KernelStack
 XXLKernelSp:	.long	KernelSp
@@ -652,17 +645,9 @@ switch_search:
 
 	/* Wait for new process. */
 	CLI				/* splhigh doesn't do a cli */
-	mov.l	XXXLwhichqs, r0
+	mov.l	XLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
-	bra	1f
-	nop
-
-	.align	2
-XXXLwhichqs:
-	.long	_whichqs
-1:
-
 
 #define TESTANDSHIFT \
 	tst	r1, r0		; \
@@ -710,8 +695,7 @@ sw1:	mov	#1, r1
 
 1:	mov.l	XLqs, r0
 	mov	r2, r13
-	shll	r2
-	shll	r2
+	shll2	r2
 	shll	r2
 	add	r2, r0		/* r0 = &qs[i] */
 
@@ -739,10 +723,8 @@ sw1:	mov	#1, r1
 10:
 #endif
 
-	mov	r8, r3
-	add	r1, r3
-
-	mov	r3, r4
+	mov	r8, r4
+	add	r1, r4
 	mov.l	XL_ConvVtoP, r0
 	jsr	@r0
 	nop
@@ -753,9 +735,7 @@ sw1:	mov	#1, r1
 	mov.l	r9, @r2		/* qs[i].p_forw = qs[i].p_forw->p_forw */
 
 	mov	r9, r4
-	mov	#P_BACK, r2
-	add	r2, r4
-
+	add	#P_BACK, r4
 	mov.l	XL_ConvVtoP, r0
 	jsr	@r0
 	nop
@@ -816,8 +796,7 @@ XL_printf:
 	nop
 	mov.b	@r0, r0
 	extu.b	r0, r0
-	mov	#SRUN, r1
-	cmp/eq	r0, r1
+	cmp/eq	#SRUN, r0
 	bt	11f
 	nop
 
@@ -832,8 +811,7 @@ XL_switch_error:	.long	switch_error
 
 	/* Isolate process.  XXX Is this necessary? */
 	mov	r8, r4
-	mov	#P_BACK, r2
-	add	r2, r4
+	add	#P_BACK, r4
 
 	mov.l	XL_ConvVtoP, r0
 	jsr	@r0
@@ -844,7 +822,7 @@ XL_switch_error:	.long	switch_error
 	mov.l	r0, @r1		/* r8->p_back = 0 */
 
 	/* Record new process. */
-	mov.l	XXXLcurproc, r0
+	mov.l	XXLcurproc, r0
 	mov.l	r8, @r0
 
 	/* It's okay to take interrupts here. */
@@ -973,10 +951,9 @@ switch_return:
 
 	.align	2
 XLqs:		.long	_qs
-XLP_ADDR:	.long	P_ADDR
 XLwhichqs:	.long	_whichqs
 XLwant_resched:	.long	_want_resched
-XXXLcurproc:	.long	_curproc
+XXLcurproc:	.long	_curproc
 XL_ConvVtoP:	.long	_ConvVtoP
 XL_KernelSp:	.long	KernelSp
 /*
@@ -997,7 +974,7 @@ ENTRY(switch_exit)
 	/* Restore proc0's context. */
 	CLI
 	mov	r9, r0
-	mov.l	XXLP_ADDR, r1
+	mov.l	XLP_ADDR, r1
 	add	r1, r0
 	mov.l	@r0, r10
 
@@ -1046,11 +1023,9 @@ ENTRY(switch_exit)
 	nop
 
 	.align	2
-	.globl	_exit2
 XLexit2:
 	.long	_exit2
-
-XXLP_ADDR:
+XLP_ADDR:
 	.long	P_ADDR
 
 /*
@@ -1060,10 +1035,7 @@ XXLP_ADDR:
 ENTRY(savectx)
 	mov.l	r14, @-r15
 	sts.l	pr, @-r15
-	mov	r15, r14
-	add	#PCB_R15, r4
-	mov.l	r15, @r4
-	mov	r14, r15
+	mov.l	r15, @(PCB_R15, r4)
 	lds.l	@r15+, pr
 	mov.l	@r15+, r14
 
@@ -1242,12 +1214,8 @@ _MonTrap600_end:
 XL_curpcb:	.long	_curpcb
 XLcurproc:	.long	_curproc
 XLcpl:		.long	_cpl
-XLXspllower:	.long	_Xspllower
 XLproc0:	.long	_proc0
 
-XL_trap:	.long	_trap
-XL_astpending:	.long	_astpending
-XLT_ASTFLT:	.long	T_ASTFLT
 XL_tlb_handler:	.long	_tlb_handler
 XLexphandler:	.long	_exphandler
 
@@ -1357,7 +1325,7 @@ XL_splimit_low2:	.long	0x80000000
 
 2:	/* Check for ASTs on exit to user mode. */
 	CLI
-	mov.l	XXL_astpending, r0
+	mov.l	XL_astpending, r0
 	mov.l	@r0, r0
 	tst	r0, r0
 	bt	1f
@@ -1374,12 +1342,12 @@ XL_splimit_low2:	.long	0x80000000
 	bf	1f
 	nop
 5:	xor	r0, r0
-	mov.l	XXL_astpending, r1
+	mov.l	XL_astpending, r1
 	mov.l	r0, @r1
 	STI
-	mov.l	XXLT_ASTFLT, r1
+	mov.l	XLT_ASTFLT, r1
 	mov.l	r1, @-r15
-	mov.l	XXL_trap, r0
+	mov.l	XL_trap, r0
 	jsr	@r0
 	nop
 	add	#4, r15
@@ -1389,17 +1357,16 @@ XL_splimit_low2:	.long	0x80000000
 
 	.align	2
 XL_intrhandler:		.long	_intrhandler
-XXL_astpending:		.long	_astpending
-XXLT_ASTFLT:		.long	T_ASTFLT
-XXL_trap:		.long	_trap
-XL_check_ipending:	.long	_check_ipending
+XL_astpending:		.long	_astpending
+XLT_ASTFLT:		.long	T_ASTFLT
+XL_trap:		.long	_trap
 
 NENTRY(Xspllower)
 	sts.l	pr, @-r15
 	mov.l	r1, @-r15
 
 Xrestart:
-	mov.l	XXL_check_ipending, r0
+	mov.l	XL_check_ipending, r0
 	jsr	@r0
 	nop
 
@@ -1418,9 +1385,8 @@ Xrestart:
 	rts
 	nop
 
-
 	.align	2
-XXL_check_ipending:
+XL_check_ipending:
 		.long	_check_ipending
 XL_Xrecurse:	.long	Xrecurse
 XL_restart:	.long	Xrestart
