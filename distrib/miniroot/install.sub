@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.41 2002/04/18 21:41:38 fredette Exp $
+#	$NetBSD: install.sub,v 1.42 2002/05/23 02:57:08 nathanw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1299,7 +1299,7 @@ get_timezone() {
 cat << \__get_timezone_1
 
 Select a time zone for your location. Timezones are represented on the
-system by a directory structure rooted in "/usr/share/timezone". Most
+system by a directory structure rooted in "/usr/share/zoneinfo". Most
 timezones can be selected by entering a token like "MET" or "GMT-6".
 Other zones are grouped by continent, with detailed zone information
 separated by a slash ("/"), e.g. "US/Pacific".
