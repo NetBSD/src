@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5 1999/04/11 04:25:47 simonb Exp $	*/
+/*	$NetBSD: boot.c,v 1.6 1999/04/12 05:19:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,26 +91,45 @@
 
 extern	char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
+char *kernelnames[] = {
+	"netbsd",	"netbsd.gz",
+	"netbsd.bak",	"netbsd.bak.gz",
+	"netbsd.old",	"netbsd.old.gz",
+	"onetbsd",	"onetbsd.gz",
+	"gennetbsd",	"gennetbsd.gz",
+#ifdef notyet
+	"netbsd.el",	"netbsd.el.gz",
+#endif /*notyet*/
+	NULL
+};
+
+
+static int devonly __P((char *));
 int main __P((int, char **));
 
 /*
- * This gets arguments from the PROM, calls other routines to open
- * and load the program to boot, and then transfers execution to that
- * new program.
- * Argv[0] should be something like "rz(0,0,0)vmunix" on a DECstation 3100.
- * Argv[0,1] should be something like "boot 5/rz0/vmunix" on a DECstation 5000.
- * The argument "-a" means vmunix should do an automatic reboot.
+ * This gets arguments from the first stage boot lader, calls PROM routines
+ * to open and load the program to boot, and then transfers execution to
+ * that new program.
+ *
+ * Argv[0] should be something like "rz(0,0,0)netbsd" on a DECstation 3100.
+ * Argv[0,1] should be something like "boot 5/rz0/netbsd" on a DECstation 5000.
+ * The argument "-a" means netbsd should do an automatic reboot.
  */
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	char *cp;
-	int entry;
+	char *name, **namep, *dev;
+	char bootname[PATH_MAX], bootpath[PATH_MAX];
+	int entry, win;
 	u_long marks[MARK_MAX];
 	struct btinfo_symtab bi_syms;
 	struct btinfo_bootpath bi_bpath;
+
+	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/* initialise bootinfo structure early */
 	bi_init(BOOTINFO_ADDR);
@@ -120,17 +139,37 @@ main(argc, argv)
 		argc--;
 		argv++;
 	}
-	cp = *argv;
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	name = argv[0];
+	printf("Boot: %s\n", name);
 
-	printf("Boot: %s\n", cp);
-	strncpy(bi_bpath.bootpath, cp, BTINFO_BOOTPATH_LEN);
-	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
+	/* NOTE: devonly() can modify name[]. */
+	strcpy(bootname, argv[0]);
+	if (devonly(bootname)) {
+		dev = bootname;
+		name = NULL;
+	}
 
 	marks[MARK_START] = 0;
-	if (loadfile(cp, marks, LOAD_ALL) == -1)
+	if (name != NULL)
+		win = (loadfile(name, marks, LOAD_ALL) != -1);
+	else {
+		win = 0;
+		for (namep = kernelnames, win = 0; *namep != NULL && !win;
+		    namep++) {
+			name = *namep;
+			strcpy(bootpath, dev);
+			strcat(bootpath, name);
+			printf("Loading: %s\n", bootpath);
+			win = (loadfile(bootpath, marks, LOAD_ALL) != -1);
+			if (win)
+				name = bootpath;
+		}
+	}
+	if (!win)
 		goto fail;
+
+	strncpy(bi_bpath.bootpath, name, BTINFO_BOOTPATH_LEN);
+	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
 	entry = marks[MARK_ENTRY];
 	bi_syms.nsym = marks[MARK_NSYM];
@@ -145,8 +184,47 @@ main(argc, argv)
 	else
 		startprog(entry, entry, argc, argv, DEC_PROM_MAGIC,
 		    callv, BOOTINFO_MAGIC, BOOTINFO_ADDR);
+	(void)printf("KERNEL RETURNED!\n");
 
 fail:
 	(void)printf("Boot failed!  Halting...\n");
 	return (0);
+}
+
+
+/*
+ * Check whether or not fname is a device name only or a full
+ * bootpath including the kernel name.  This code to do this
+ * is copied from loadfile() in the first stage bootblocks.
+ *
+ * NOTE:  fname will be modified if it's of the form N/rzY
+ *        without a trailing slash.
+ */
+static
+int
+devonly(fname)
+	char *fname;
+{
+	char c;
+
+	while ((c = *fname++) != '\0') {
+		if (c == ')')
+			break;
+		if (c != '/')
+			continue;
+		while ((c = *fname++) != '\0')
+			if (c == '/')
+				break;
+		/*
+		 * Make "N/rzY" with no trailing '/' valid by adding
+		 * the extra '/' before appending 'boot' to the path.
+		 */
+		if (c != '/') {
+			fname--;
+			*fname++ = '/';
+			*fname = '\0';
+		}
+		break;
+	}
+	return (*fname == '\0');
 }
