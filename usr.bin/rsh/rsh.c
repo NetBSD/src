@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.12 1997/07/20 20:44:23 christos Exp $	*/
+/*	$NetBSD: rsh.c,v 1.13 2000/01/31 14:19:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.12 1997/07/20 20:44:23 christos Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.13 2000/01/31 14:19:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,8 @@ int	main __P((int, char **));
 #ifdef IN_RCMD
 int	 orcmd __P((char **, int, const char *,
     const char *, const char *, int *));
+int	 orcmd_af __P((char **, int, const char *,
+    const char *, const char *, int *, int));
 #endif
 
 int
@@ -324,21 +326,21 @@ try_connect:
 		if (doencrypt)
 			errx(1, "the -x flag requires Kerberos authentication.");
 #ifdef IN_RCMD
-		rem = orcmd(&host, sp->s_port, locuser ? locuser :
+		rem = orcmd_af(&host, sp->s_port, locuser ? locuser :
 #else
-		rem = rcmd(&host, sp->s_port,
+		rem = rcmd_af(&host, sp->s_port,
 #endif
 		    name,
-		    user, args, &remerr);
+		    user, args, &remerr, PF_UNSPEC);
 	}
 #else /* KERBEROS */
 
 #ifdef IN_RCMD
-	rem = orcmd(&host, sp->s_port, locuser ? locuser :
+	rem = orcmd_af(&host, sp->s_port, locuser ? locuser :
 #else
-	rem = rcmd(&host, sp->s_port,
+	rem = rcmd_af(&host, sp->s_port,
 #endif
-	    name, user, args, &remerr);
+	    name, user, args, &remerr, PF_UNSPEC);
 #endif /* KERBEROS */
 	(void)free(name);
 
