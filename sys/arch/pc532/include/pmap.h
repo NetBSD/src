@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 1999/07/18 21:33:22 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 1999/07/28 01:07:53 thorpej Exp $	*/
 
 /*
  *
@@ -371,7 +371,6 @@ void		pmap_activate __P((struct proc *));
 void		pmap_bootstrap __P((vaddr_t));
 boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
 void		pmap_deactivate __P((struct proc *));
-static void	pmap_kenter_pa __P((vaddr_t, paddr_t, vm_prot_t));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
 static void	pmap_protect __P((struct pmap *, vaddr_t,
@@ -461,38 +460,6 @@ pmap_protect(pmap, sva, eva, prot)
 			pmap_remove(pmap, sva, eva);
 		}
 	}
-}
-
-/*
- * pmap_kenter_pa: enter a kernel mapping without R/M (pv_entry) tracking
- *
- * => no need to lock anything, assume va is already allocated
- * => should be faster than normal pmap enter function
- */
-
-__inline static void
-pmap_kenter_pa(va, pa, prot)
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-{
-	struct pmap *pm = pmap_kernel();
-	pt_entry_t *pte, opte;
-	int s;
-
-	s = splimp();
-	simple_lock(&pm->pm_obj.vmobjlock);
-	pm->pm_stats.resident_count++;
-	pm->pm_stats.wired_count++;
-	simple_unlock(&pm->pm_obj.vmobjlock);
-	splx(s);
-
-	pte = vtopte(va);
-	opte = *pte;
-	*pte = pa | ((prot & VM_PROT_WRITE)? PG_RW : PG_RO) |
-		PG_V;         /* zap! */
-	if (pmap_valid_entry(opte))
-		pmap_update_pg(va);
 }
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
