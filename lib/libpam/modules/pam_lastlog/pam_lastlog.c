@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.4 2005/02/04 15:11:35 he Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.5 2005/03/03 02:11:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.4 2005/02/04 15:11:35 he Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.5 2005/03/03 02:11:40 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,6 +62,9 @@ __RCSID("$NetBSD: pam_lastlog.c,v 1.4 2005/02/04 15:11:35 he Exp $");
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef LOGIN_CAP
+#include <login_cap.h>
+#endif
 
 #ifdef SUPPORT_UTMP
 #include <utmp.h>
@@ -91,8 +94,8 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 {
 	struct passwd *pwd;
 	struct timeval now;
-	const char *user, *rhost, *tty;
-	const void *vrhost, *vtty, *vss;
+	const char *user, *rhost, *tty, *nuser;
+	const void *vrhost, *vtty, *vss, *vnuser;
 	const struct sockaddr_storage *ss;
 	int pam_err;
 
@@ -125,6 +128,11 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 		goto err;
 	}
 
+	if (pam_get_item(pamh, PAM_NUSER, &vnuser) != PAM_SUCCESS)
+		nuser = NULL;
+	else
+		nuser = (const char *)vnuser;
+
 	if (strncmp(tty, _PATH_DEV, strlen(_PATH_DEV)) == 0)
 		tty = tty + strlen(_PATH_DEV);
 
@@ -135,14 +143,23 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	(void)gettimeofday(&now, NULL);
 
+	if (openpam_get_option(pamh, "no_nested") == NULL || nuser == NULL) {
+		int quiet;
+#ifdef LOGIN_CAP
+		quiet = login_getcapbool(login_getpwclass(pwd), "hushlogin", 0);
+#else
+		quiet = 0;
+#endif
 #ifdef SUPPORT_UTMPX
-	doutmpx(user, rhost, tty, ss, &now);
-	dolastlogx(1, pwd, rhost, tty, ss, &now);
+		doutmpx(user, rhost, tty, ss, &now);
+		dolastlogx(quiet, pwd, rhost, tty, ss, &now);
+		quiet = 1;
 #endif
 #ifdef SUPPORT_UTMP
-	doutmp(user, rhost, tty, &now);
-	dolastlog(1, pwd, rhost, tty, &now);
+		doutmp(user, rhost, tty, &now);
+		dolastlog(quiet, pwd, rhost, tty, &now);
 #endif
+	}
 err:
 	if (openpam_get_option(pamh, "no_fail"))
 		return PAM_SUCCESS;
@@ -153,8 +170,13 @@ PAM_EXTERN int
 pam_sm_close_session(pam_handle_t *pamh __unused, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
-	const void *vtty;
-	const char *tty;
+	const void *vtty, *vnuser;
+	const char *tty, *nuser;
+
+	if (pam_get_item(pamh, PAM_NUSER, &vnuser) != PAM_SUCCESS)
+		nuser = NULL;
+	else
+		nuser = (const char *)vnuser;
 
 	pam_get_item(pamh, PAM_TTY, &vtty);
 	if (vtty == NULL)
@@ -167,21 +189,24 @@ pam_sm_close_session(pam_handle_t *pamh __unused, int flags __unused,
 	if (*tty == '\0')
 		return PAM_SERVICE_ERR;
 
+	if (openpam_get_option(pamh, "no_nested") == NULL || nuser == NULL) {
+
 #ifdef SUPPORT_UTMPX
-	if (logoutx(tty, 0, DEAD_PROCESS))
-		logwtmpx(tty, "", "", 0, DEAD_PROCESS);
-	else
-                syslog(LOG_NOTICE, "%s(): no utmpx record for %s",
-		    __func__, tty);
+		if (logoutx(tty, 0, DEAD_PROCESS))
+			logwtmpx(tty, "", "", 0, DEAD_PROCESS);
+		else
+			syslog(LOG_NOTICE, "%s(): no utmpx record for %s",
+			    __func__, tty);
 #endif
 
 #ifdef SUPPORT_UTMP
-	if (logout(tty))
-		logwtmp(tty, "", "");
-	else
-                syslog(LOG_NOTICE, "%s(): no utmp record for %s",
+		if (logout(tty))
+			logwtmp(tty, "", "");
+		else
+			syslog(LOG_NOTICE, "%s(): no utmp record for %s",
 		    __func__, tty);
 #endif
+	}
         return PAM_SUCCESS;
 }
 
