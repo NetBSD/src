@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.272 2004/06/14 18:26:01 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.273 2004/06/14 20:26:39 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3752,4 +3752,24 @@ gnu/usr.bin/gcc3/host-libiberty/Makefile	1.5
 	on MKUPDATE. Also, run configure w. $HOST_SH as highlighted in
 	PR toolchain/25606
 	[jmc, ticket #474]
+
+tools/compat/compat_defs.h			1.36
+
+	Before sucking in stdlib.h check if this is NetBSD. If so, explicitly
+	make sure to use _POSIX_C_SOURCE and undef _NETBSD_SOURCE so the
+	myriad of NetBSD extentions don't get pulled into scope (and likely
+	conflict at some point with branched code trying to build on -current
+	due to drift). Fixes PR toolchain/25533.
+	[jmc, ticket #495]
+
+usr.bin/vi/cl/cl_screen.c			1.7
+usr.bin/vi/ex/version.h				1.16
+
+	. don't call newterm() more than once; use setterm() and resizeterm()
+	  instead on subsequent calls. Newterm() would fail after a few calls,
+	  leading to vi exiting with a "ex/vi: error initializing terminal"
+	  message
+	. if tcsetattr() fails due to EINTR, ignore it
+	Fixes PR bin/25849.
+	[aymeric, ticket #496]
 
