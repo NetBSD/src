@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.52 1999/06/07 20:31:35 thorpej Exp $
+#       $NetBSD: files.vax,v 1.53 1999/06/20 01:05:19 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -58,7 +58,7 @@ file arch/vax/vax/md_root.c		memory_disk_hooks
 major	{md = 23}
 
 # MSCP device drivers
-include "arch/vax/mscp/files.mscp"
+include "dev/mscp/files.mscp"
 major	{ra = 9}
 
 # KDB50 on BI
@@ -67,28 +67,12 @@ attach	kdb at bi
 file	arch/vax/bi/kdb.c		kdb
 
 # Unibus/Q22 bus definitions
-include "dev/dec/uba/files.uba"
+include "dev/qbus/files.uba"
 
 attach	uba at mainbus with uba_mainbus
-file	arch/vax/uba/uba_mainbus.c	uba_mainbus & new_uba
+file	arch/vax/uba/uba_mainbus.c	uba_mainbus
 attach	uba at sbi with uba_sbi
 attach	uba at cmi with uba_cmi
-file	arch/vax/uba/uba.c		uba & !new_uba
-
-device	mtc: mscp
-attach	mtc at uba
-device	uda: mscp
-attach	uda at uba
-file    arch/vax/uba/uda.c		uda | mtc
-
-device	de: ifnet, ether, arp
-attach	de at uba
-file	arch/vax/if/if_de.c		de needs-flag
-
-# DEQNA/DELQA used on Qbus
-device	qe: ifnet, ether, arp
-attach	qe at uba
-file	arch/vax/if/if_qe.c		qe needs-flag
 
 # DEBNA/DEBNT Ethernet Adapter
 device	ni: ifnet, ether, arp
@@ -103,18 +87,6 @@ file	arch/vax/bi/uba_bi.c		uba_bi
 device	ts: tape
 attach	ts at uba
 file	arch/vax/uba/ts.c		ts needs-flag
-
-# DHU-11 at UBA
-device	dhu: tty
-attach	dhu at uba
-file	arch/vax/uba/dhu.c		dhu needs-flag
-
-# DZ11(-compatible) at UBA/vsbus
-device	dz { }: tty
-file	arch/vax/uba/dz.c		dz needs-flag
-
-attach	dz at uba with dz_uba
-file	arch/vax/uba/dz_uba.c		dz_uba
 
 attach	dz at vsbus with dz_vsbus
 file	arch/vax/vsa/dz_vsbus.c		dz_vsbus
@@ -163,11 +135,6 @@ device	qd
 attach	qd at uba
 file	arch/vax/uba/qd.c		qd needs-count
 file	arch/vax/uba/qfont.c		qd | smg
-
-# DL-11 at UBA
-device	dl: tty
-attach	dl at uba
-file	arch/vax/uba/dl.c		dl needs-flag
 
 # These devices aren't tested (or even compiled!)
 # They are just included here to make some files happy ;)
@@ -307,7 +274,7 @@ file	arch/vax/uba/dh.c		dh needs-flag
 # These are general files needed for compilation.
 file	dev/cons.c
 file	dev/cninit.c
-file	dev/clock_subr.c	vax8200|vax410|vax43|vax630|vax46|vax48|vax49
+file	dev/clock_subr.c	vax8200|vax410|vax43|vax630|vax670|vax46|vax48|vax49
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
@@ -328,7 +295,8 @@ file	arch/vax/vax/ka43.c		vax43
 file	arch/vax/vax/ka46.c		vax46
 file	arch/vax/vax/ka48.c		vax48
 file	arch/vax/vax/emulate.s		vax630|vax650|vax410
-file	arch/vax/vax/ka650.c		vax650|vax670
+file	arch/vax/vax/ka650.c		vax650
+file	arch/vax/vax/ka670.c		vax670
 file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
 file	arch/vax/vax/urem.s
@@ -336,16 +304,16 @@ file	arch/vax/vax/udiv.s
 file	arch/vax/vax/trap.c
 file	arch/vax/vax/bus_dma.c
 file	arch/vax/vax/bus_mem.c
-
+file	arch/vax/vax/sgmap.c
 file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/findcpu.c
 file	arch/vax/vax/autoconf.c
 file	arch/vax/vax/in_cksum.c		inet
 file	arch/vax/vax/ns_cksum.c		ns
 file	arch/vax/vax/disksubr.c		disk | tape
-file	arch/vax/if/if_uba.c		de | qe
 file	arch/vax/vax/db_machdep.c	ddb
 file	arch/vax/vax/db_disasm.c	ddb
+file	arch/vax/uba/uba_dma.c		uba
 
 include "../../../compat/ultrix/files.ultrix"
 include "../../../compat/vax1k/files.vax1k"
