@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.9 1997/05/13 19:27:25 jtc Exp $	*/
+/*	$NetBSD: memset.S,v 1.10 1997/05/14 18:18:44 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,11 +79,11 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: memset.S,v 1.9 1997/05/13 19:27:25 jtc Exp $")
+	RCSID("$NetBSD: memset.S,v 1.10 1997/05/14 18:18:44 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-ENTRY(bzero)
+ENTRY(memset)
 	movl	d2,sp@-
 	movl	sp@(8),a0		| destination
 	movl	sp@(16),d1		| count
