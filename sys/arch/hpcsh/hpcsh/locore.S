@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2003/10/25 00:18:43 uwe Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2004/03/21 02:20:21 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ ALTENTRY(kernel_text)
 	mov.l	_L.machine_startup, r0
 	mov.l	_L.bootstrap_stack, r1
 	jmp	@r0
-	 mov	r1,	r15
+	 mov	r1, sp
 	/* NOTREACHED */
 
 	.align	2
