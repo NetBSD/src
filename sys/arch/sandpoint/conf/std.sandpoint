@@ -1,9 +1,10 @@
-#	$NetBSD: std.sandpoint,v 1.1 2001/02/04 18:32:11 briggs Exp $
+#	$NetBSD: std.sandpoint,v 1.2 2001/06/10 03:16:29 briggs Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 
 machine		sandpoint powerpc
 
+options		PPC_MPC6XX	# Sandpoint uses Motorola PPC60x CPUs
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 

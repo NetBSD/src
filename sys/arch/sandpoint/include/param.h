@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2001/05/30 12:28:50 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2001/06/10 03:16:30 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,99 +41,9 @@
  * Machine dependent constants for PowerPC (32-bit only currently)
  */
 #define	MACHINE		"sandpoint"
-#define	MACHINE_ARCH	"powerpc"
-#define	MID_MACHINE	MID_POWERPC
-
-#define	ALIGNBYTES		(sizeof(double) - 1)
-#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-
-#define	PGSHIFT		12
-#define	NBPG		(1 << PGSHIFT)	/* Page size */
-#define	PGOFSET		(NBPG - 1)
-
-#define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
-#define	DEV_BSIZE	(1 << DEV_BSHIFT)
-#define	BLKDEV_IOSIZE	NBPG
-#define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
-
-#define	UPAGES		4
-#define	USPACE		(UPAGES * NBPG)
-
-#ifndef	MSGBUFSIZE
-#define	MSGBUFSIZE	NBPG		/* default message buffer size */
-#endif
 
 #define	__NO_FIXED_MSGBUF
 
 #define	KERNBASE	0x3100
 
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		256		/* size of an mbuf */
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
-
-#ifndef NMBCLUSTERS
-
-#if defined(_KERNEL_OPT)
-#include "opt_gateway.h"
-#endif
-
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
-#endif
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
-
-/*
- * pages ("clicks") to disk blocks
- */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
-/*
- * bytes to pages
- */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
-
-/*
- * bytes to disk blocks
- */
-#define	dbtob(x)	((x) << DEV_BSHIFT)
-#define	btodb(x)	((x) >> DEV_BSHIFT)
-
-/*
- * Segment handling stuff
- */
-#define	SEGMENT_LENGTH	0x10000000
-#define	SEGMENT_MASK	0xf0000000
-
-/*
- * Fixed segments
- */
-#define	USER_SR		13
-#define	KERNEL_SR	14
-#define	KERNEL_SEGMENT	(0xfffff0 + KERNEL_SR)
-#define	EMPTY_SEGMENT	0xfffff0
-#define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
-
-/*
- * Some system constants
- */
-#ifndef	NPMAPS
-#define	NPMAPS		32768	/* Number of pmaps in system */
-#endif
+#include <powerpc/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2001/03/07 05:52:28 briggs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2001/06/10 03:16:31 briggs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,10 +42,6 @@
 #include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-#if (NPCI > 0)
-struct sandpoint_bus_dma_tag pci_bus_dma_tag;
-#endif
 
 int	mainbus_match __P((struct device *, void *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
@@ -96,8 +92,8 @@ mainbus_attach(parent, self, aux)
 	 */
 #if NPCI > 0
 #if !defined(PCI_NETBSD_CONFIGURE)
-#error Sandpoint needs PCI_NETBSD_CONFIGURE if PCI busses are defined.
-#endif
+/* #error Sandpoint needs PCI_NETBSD_CONFIGURE if PCI busses are defined. */
+#else
 	ioext  = extent_create("pciio",  0x00000600, 0x0000ffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", 0x80000000, 0x8fffffff, M_DEVBUF,
@@ -107,10 +103,11 @@ mainbus_attach(parent, self, aux)
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
+#endif
 
 	mba.mba_pba.pba_busname = "pci";
-	mba.mba_pba.pba_iot = (bus_space_tag_t)SANDPOINT_BUS_SPACE_IO;
-	mba.mba_pba.pba_memt = (bus_space_tag_t)0;
+	mba.mba_pba.pba_iot = &sandpoint_io_bs_tag;
+	mba.mba_pba.pba_memt = &sandpoint_mem_bs_tag;
 	mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 	mba.mba_pba.pba_bus = 0;
 	mba.mba_pba.pba_pc = 0;
