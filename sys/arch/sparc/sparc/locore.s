@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.141 2001/06/08 04:49:45 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.142 2001/06/08 16:15:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -160,6 +160,7 @@ _EINTSTACKP = CPUINFO_VA + CPUINFO_EINTSTACK
  * upon context switch.
  */
 _CISELFP = CPUINFO_VA + CPUINFO_SELF
+_CIFLAGS = CPUINFO_VA + CPUINFO_FLAGS
 
 /*
  * When a process exits and its u. area goes away, we set cpcb to point
@@ -1505,7 +1506,7 @@ wmask:	.skip	32			! u_char wmask[0..31];
  * go to the interrupt stack if (a) we came from user mode or (b) we
  * came from kernel mode on the kernel stack.
  */
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 /*
  * SMP kernels: read `eintstack' from cpuinfo structure. Since the
  * location of the interrupt stack is not known in advance, we need
@@ -2116,7 +2117,7 @@ Lslowtrap_reenter:
  * Lslowtrap_reenter above, but maybe after switching stacks....
  */
 softtrap:
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	/*
 	 * The interrupt stack is not at a fixed location
 	 * and %sp must be checked against both ends.
@@ -2694,8 +2695,33 @@ nmi_sun4m:
 	sethi	%hi(ICR_SI_SET), %o0
 	set	SINTR_MA, %o2
 	st	%o2, [%o0 + %lo(ICR_SI_SET)]
+#if defined(MULTIPROCESSOR) && defined(DDB)
+	b	2f
+	 clr	%o0
+#endif
 
 1:
+#if defined(MULTIPROCESSOR) && defined(DDB)
+	/*
+	 * Setup a trapframe for nmi_soft; this might be an IPI telling
+	 * us to pause, so lets save some state for DDB to get at.
+	 */
+	std	%l0, [%sp + CCFSZ]	! tf.tf_psr = psr; tf.tf_pc = ret_pc;
+	rd	%y, %l3
+	std	%l2, [%sp + CCFSZ + 8]	! tf.tf_npc = return_npc; tf.tf_y = %y;
+	st	%g1, [%sp + CCFSZ + 20]
+	std	%g2, [%sp + CCFSZ + 24]
+	std	%g4, [%sp + CCFSZ + 32]
+	std	%g6, [%sp + CCFSZ + 40]
+	std	%i0, [%sp + CCFSZ + 48]
+	std	%i2, [%sp + CCFSZ + 56]
+	std	%i4, [%sp + CCFSZ + 64]
+	std	%i6, [%sp + CCFSZ + 72]
+	add	%sp, CCFSZ, %o0
+2:
+#else
+	clr	%o0
+#endif
 	/*
 	 * Now clear the NMI. Apparently, we must allow some time
 	 * to let the bits sink in..
@@ -2707,21 +2733,20 @@ nmi_sun4m:
 
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
-	std	%g2, [%sp + CCFSZ + 0]	! save g2, g3
+	std	%g2, [%sp + CCFSZ + 80]	! save g2, g3
 	rd	%y, %l4			! save y
-	std	%g4, [%sp + CCFSZ + 8]	! save g4,g5
+	std	%g4, [%sp + CCFSZ + 88]	! save g4,g5
 
 	/* Finish stackframe, call C trap handler */
 	mov	%g1, %l5		! save g1,g6,g7
 	mov	%g6, %l6
-	mov	%g7, %l7
 
-	jmpl	%o3, %o7		! handler(0);
-	 clr	%o0
+	jmpl	%o3, %o7		! nmi_hard(0) or nmi_soft(&tf)
+	 mov	%g7, %l7
 
 	mov	%l5, %g1		! restore g1 through g7
-	ldd	[%sp + CCFSZ + 0], %g2
-	ldd	[%sp + CCFSZ + 8], %g4
+	ldd	[%sp + CCFSZ + 80], %g2
+	ldd	[%sp + CCFSZ + 88], %g4
 	wr	%l0, 0, %psr		! re-disable traps
 	mov	%l6, %g6
 	mov	%l7, %g7
@@ -3949,6 +3974,40 @@ _C_LABEL(cpu_hatch):
 	call	_C_LABEL(cpu_setup)
 	 ld	[%o0+%lo(_C_LABEL(cpu_hatch_sc))], %o0
 
+	/* Wait for our flags to go non-STARTUP */
+	set	CPUINFO_VA+CPUINFO_FLAGS, %l1
+	ld	[%l1], %l0
+/* XXX hard to include <sparc/sparc/cpuvar.h> */
+#define CPUFLG_STARTUP 0x2000
+	set	CPUFLG_STARTUP, %l2
+1:
+	and	%l0, %l2, %l0
+	cmp	%l0, %l2
+	be	1b
+	 ld	[%l1], %l0
+
+#if defined(MULTIPROCESSOR)
+	set	_C_LABEL(proc0), %g3		! p = proc0
+	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
+	sethi	%hi(cpcb), %g6
+	sethi	%hi(curproc), %g7
+	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
+
+	mov	PSR_S|PSR_ET, %g1		! oldpsr = PSR_S | PSR_ET;
+	sethi	%hi(IDLE_UP), %g5
+	ld	[%g5 + %lo(IDLE_UP)], %g5
+	st	%g5, [%g6 + %lo(cpcb)]		! cpcb = &idle_u
+	set	USPACE-CCFSZ, %o1
+	add	%g5, %o1, %sp			! set new %sp
+
+#ifdef DEBUG
+	mov	%g5, %o2			! %o2 = _idle_u
+	SET_SP_REDZONE(%o2, %o1)
+#endif /* DEBUG */
+
+	b	idle_enter_no_schedlock
+	 clr	%g4				! lastproc = NULL;	
+#else
 	/* Idle here .. */
 	rd	%psr, %l0
 	andn	%l0, PSR_PIL, %l0	! psr &= ~PSR_PIL;
@@ -3957,6 +4016,7 @@ _C_LABEL(cpu_hatch):
 9:	ba 9b
 	 nop
 	/*NOTREACHED*/
+#endif
 
 #include "sigcode_state.s"
 
@@ -4345,10 +4405,39 @@ ENTRY(switchexit)
  * The registers are set up as noted above.
  */
 idle:
+#if defined(MULTIPROCESSOR)
+	/*
+	 * Change pcb to idle u. area, i.e., set %sp to top of stack
+	 * and %psr to PSR_S, and set cpcb to point to idle_u.
+	 */
+#define	SAVE save %sp, -64, %sp
+	/* XXX: FIXME
+	 * 7 of each:
+	 */
+	SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE
+	restore; restore; restore; restore; restore; restore; restore
+
+	sethi	%hi(IDLE_UP), %g5
+	ld	[%g5 + %lo(IDLE_UP)], %g5
+	rd	%psr, %g1		! oldpsr = %psr;
+	andn	%g1, PSR_PIL|PSR_PS, %g1! oldpsr &= ~(PSR_PIL|PSR_PS);
+	and	%g1, PSR_S|PSR_ET, %g1	! oldpsr |= PSR_S|PSR_ET;
+	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = &idle_u
+	set	USPACE-CCFSZ, %o1
+	add	%g5, %o1, %sp		! set new %sp
+	clr	%g4			! lastproc = NULL;
+
+#ifdef DEBUG
+	mov	%g5, %o2		! %o2 = _idle_u
+	SET_SP_REDZONE(%o2, %o1)
+#endif /* DEBUG */
+#endif /* MULTIPROCESSOR */
+
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* Release the scheduler lock */
 	SAVE_GLOBALS_AND_CALL(sched_unlock_idle)
 #endif
+
 idle_enter_no_schedlock:
 	wr	%g1, 0, %psr		! (void) spl0();
 1:					! spin reading whichqs until nonzero
@@ -4427,15 +4516,15 @@ ENTRY(cpu_switch)
 	 *	%o4 = tmp 5, then at Lsw_scan, which
 	 *	%o5 = tmp 6, then at Lsw_scan, q
 	 */
+	mov	%o0, %g4			! lastproc = p;
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
 	sethi	%hi(cpcb), %g6
 	ld	[%g6 + %lo(cpcb)], %o0
 	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
 	rd	%psr, %g1			! oldpsr = %psr;
-	sethi	%hi(curproc), %g7
-	ld	[%g7 + %lo(curproc)], %g4	! lastproc = curproc;
 	st	%g1, [%o0 + PCB_PSR]		! cpcb->pcb_psr = oldpsr;
 	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
+	sethi	%hi(curproc), %g7
 	st	%g0, [%g7 + %lo(curproc)]	! curproc = NULL;
 
 Lsw_scan:
@@ -4559,8 +4648,8 @@ Lsw_scan:
 	 * save: write back all windows (including the current one).
 	 * XXX	crude; knows nwindows <= 8
 	 */
-#define	SAVE save %sp, -64, %sp
-wb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE; SAVE	/* 7 of each: */
+wb1:	/* 7 of each: */
+	SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE;    SAVE
 	restore; restore; restore; restore; restore; restore; restore
 
 	/*
@@ -4706,7 +4795,7 @@ ENTRY(proc_trampoline)
 	 * so we can call other functions from here without using
 	 * `save ... restore'.
 	 */
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR)
 	/* Finish setup in SMP environment: acquire locks etc. */
 	call _C_LABEL(proc_trampoline_mp)
 	 nop
@@ -5807,6 +5896,29 @@ _ENTRY(_C_LABEL(cypress_get_syncflt))
 	jmp	%l7 + 8			! return to caller
 	 st	%l5, [%l4]		! => dump.sfsr
 
+#if defined(MULTIPROCESSOR) && 0 /* notyet *
+/*
+ * Read Synchronous Fault Status registers.
+ * On entry: %o0 == &sfsr, %o1 == &sfar
+ */
+_ENTRY(_C_LABEL(smp_get_syncflt))
+	save    %sp, -CCFSZ, %sp
+
+	sethi	%hi(CPUINFO_VA), %o4
+	ld	[%l4 + %lo(CPUINFO_VA+CPUINFO_GETSYNCFLT)], %o5
+	clr	%l1
+	clr	%l3
+	jmpl	%o5, %l7
+	 or	%o4, %lo(CPUINFO_SYNCFLTDUMP), %l4
+
+	! load values out of the dump
+	ld	[%o4 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP)], %o5
+	st	%o5, [%i0]
+	ld	[%o4 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP+4)], %o5
+	st	%o5, [%i1]
+	ret
+	 restore
+#endif /* MULTIPROCESSOR */
 
 /*
  * Read Asynchronous Fault Status registers.
