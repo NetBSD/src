@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.66 1998/09/18 20:19:12 pk Exp $
+#	$NetBSD: files.sparc,v 1.67 1998/09/23 08:49:46 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -155,8 +155,8 @@ device cgsix: bt_dac, fb
 attach cgsix at sbus with cgsix_sbus
 attach cgsix at obio with cgsix_obio
 file	arch/sparc/dev/cgsix.c		cgsix needs-flag
-file	arch/sparc/dev/cgsix_sbus.c	cgsix & (sbus | obio)
-file	arch/sparc/dev/cgsix_obio.c	cgsix & obio
+file	arch/sparc/dev/cgsix_sbus.c	cgsix_sbus & (sbus | obio)
+file	arch/sparc/dev/cgsix_obio.c	cgsix_obio & obio
 
 device cgeight: bt_dac, fb
 attach cgeight at obio
