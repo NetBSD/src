@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.2 1993/08/01 18:29:37 mycroft Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.3 1994/12/21 20:03:48 glass Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$Id: announce.c,v 1.2 1993/08/01 18:29:37 mycroft Exp $";
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <vis.h>
 #include <paths.h>
 
 extern char hostname[];
@@ -143,7 +144,7 @@ print_mesg(tf, request, remote_machine)
 	char line_buf[N_LINES][N_CHARS];
 	int sizes[N_LINES];
 	char big_buf[N_LINES*N_CHARS];
-	char *bptr, *lptr;
+	char *bptr, *lptr, *vis_user;
 	int i, j, max_size;
 
 	i = 0;
@@ -159,13 +160,15 @@ print_mesg(tf, request, remote_machine)
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
+	vis_user = (char *) malloc(strlen(request->l_name) * 4 + 1);
+	strvis(vis_user, request->l_name, VIS_CSTYLE);
 	(void)sprintf(line_buf[i], "talk: connection requested by %s@%s.",
-		request->l_name, remote_machine);
+		vis_user, remote_machine);
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
 	(void)sprintf(line_buf[i], "talk: respond with:  talk %s@%s",
-		request->l_name, remote_machine);
+		vis_user, remote_machine);
 	sizes[i] = strlen(line_buf[i]);
 	max_size = max(max_size, sizes[i]);
 	i++;
