@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.147 2001/09/13 13:12:13 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.148 2001/09/13 13:25:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3833,9 +3833,9 @@ startmap_done:
 	call	init_tables
 	 st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#if defined(SUN4)
+#if defined(SUN4) || defined(SUN4C)
 	/*
-	 * Some sun4 models have fewer than 8 windows. For extra
+	 * Some sun4/sun4c models have fewer than 8 windows. For extra
 	 * speed, we do not need to save/restore those windows
 	 * The save/restore code has 7 "save"'s followed by 7
 	 * "restore"'s -- we "nop" out the last "save" and first
@@ -3844,8 +3844,8 @@ startmap_done:
 	cmp	%o0, 8
 	be	1f
 noplab:	 nop
-	set	noplab, %l0
-	ld	[%l0], %l1
+	sethi	%hi(noplab), %l0
+	ld	[%l0 + %lo(noplab)], %l1
 	set	wb1, %l0
 	st	%l1, [%l0 + 6*4]
 	st	%l1, [%l0 + 7*4]
