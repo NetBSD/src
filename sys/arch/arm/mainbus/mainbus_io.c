@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.6 2001/11/23 17:23:42 thorpej Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.7 2002/03/23 19:38:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -144,7 +144,7 @@ mainbus_bs_map(t, bpa, size, cacheable, bshp)
 	vaddr_t va;
 	pt_entry_t *pte;
 
-	if ((u_long)bpa > (u_long)KERNEL_SPACE_START) {
+	if ((u_long)bpa > (u_long)KERNEL_BASE) {
 		/* XXX This is a temporary hack to aid transition. */
 		*bshp = bpa;
 		return(0);
