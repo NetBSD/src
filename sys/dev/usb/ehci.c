@@ -1,7 +1,7 @@
 /* TODO
 Add intrinfo.
 */
-/*	$NetBSD: ehci.c,v 1.16 2001/11/21 02:47:07 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.17 2001/11/21 08:18:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ Add intrinfo.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.16 2001/11/21 02:47:07 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.17 2001/11/21 08:18:39 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,8 +273,6 @@ Static struct usbd_pipe_methods ehci_device_isoc_methods = {
 	ehci_device_isoc_done,
 };
 
-int ehcidisable = 0;
-
 usbd_status
 ehci_init(ehci_softc_t *sc)
 {
@@ -282,9 +280,6 @@ ehci_init(ehci_softc_t *sc)
 	u_int i;
 	usbd_status err;
 	ehci_soft_qh_t *sqh;
-
-	if (ehcidisable)
-		return (USBD_INVAL);
 
 	DPRINTF(("ehci_init: start\n"));
 #ifdef EHCI_DEBUG
@@ -433,7 +428,7 @@ ehci_intr(void *v)
 {
 	ehci_softc_t *sc = v;
 
-	if (sc == NULL || sc->sc_dying || ehcidisable)
+	if (sc == NULL || sc->sc_dying)
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */
@@ -591,6 +586,8 @@ ehci_waitintr(ehci_softc_t *sc, usbd_xfer_handle xfer)
 	xfer->status = USBD_IN_PROGRESS;
 	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
 		usb_delay_ms(&sc->sc_bus, 1);
+		if (sc->sc_dying)
+			break;
 		intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS)) &
 			sc->sc_eintrs;
 		DPRINTFN(15,("ehci_waitintr: 0x%04x\n", intrs));
@@ -648,7 +645,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	if (sc->sc_shutdownhook != NULL)
 		shutdownhook_disestablish(sc->sc_shutdownhook);
 
-	usb_delay_ms(&sc->sc_bus, 1000); /* XXX let stray task complete */
+	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
 	/* XXX free other data structures XXX */
 
@@ -954,6 +951,9 @@ ehci_open(usbd_pipe_handle pipe)
 
 	DPRINTFN(1, ("ehci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
+
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
 
 	if (addr == sc->sc_addr) {
 		switch (ed->bEndpointAddress) {
@@ -1537,10 +1537,18 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			EOWRITE4(sc, port, v | EHCI_PS_PR);
 			/* Wait for reset to complete. */
 			usb_delay_ms(&sc->sc_bus, USB_PORT_ROOT_RESET_DELAY);
+			if (sc->sc_dying) {
+				err = USBD_IOERROR;
+				goto ret;
+			}
 			/* Terminate reset sequence. */
 			EOWRITE4(sc, port, v);
 			/* Wait for HC to complete reset. */
 			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE);
+			if (sc->sc_dying) {
+				err = USBD_IOERROR;
+				goto ret;
+			}
 			v = EOREAD4(sc, port);
 			DPRINTF(("ehci after reset, status=0x%08x\n", v));
 			if (v & EHCI_PS_PR) {
@@ -1924,8 +1932,8 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 {
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	ehci_soft_qh_t *sqh = epipe->sqh;
-#if 0
 	ehci_softc_t *sc = (ehci_softc_t *)epipe->pipe.device->bus;
+#if 0
 	ehci_soft_td_t *p, *n;
 	ehci_physaddr_t headp;
 	int hit;
@@ -1933,6 +1941,16 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	int s;
 
 	DPRINTF(("ehci_abort_xfer: xfer=%p pipe=%p sqh=%p\n", xfer, epipe,sqh));
+
+	if (sc->sc_dying) {
+		/* If we're dying, just do the software part. */
+		s = splusb();
+		xfer->status = status;	/* make software ignore it */
+		usb_uncallout(xfer->timeout_handle, ehci_timeout, xfer);
+		usb_transfer_complete(xfer);
+		splx(s);
+		return;
+	}
 
 	if (xfer->device->bus->intr_context || !curproc)
 		panic("ehci_abort_xfer: not in process context\n");
@@ -1983,8 +2001,15 @@ void
 ehci_timeout(void *addr)
 {
 	struct ehci_xfer *exfer = addr;
+	struct ehci_pipe *epipe = (struct ehci_pipe *)exfer->xfer.pipe;
+	ehci_softc_t *sc = (ehci_softc_t *)epipe->pipe.device->bus;
 
 	DPRINTF(("ehci_timeout: exfer=%p\n", exfer));
+
+	if (sc->sc_dying) {
+		ehci_abort_xfer(&exfer->xfer, USBD_TIMEOUT);
+		return;
+	}
 
 	/* Execute the abort in a process context. */
 	usb_init_task(&exfer->abort_task, ehci_timeout_task, addr);
@@ -2198,7 +2223,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	}
 	splx(s);
 
-#if 1
+#ifdef EHCI_DEBUG
 	if (ehcidebug > 10) {
 		delay(10000);
 		DPRINTF(("ehci_device_request: status=%x\n",

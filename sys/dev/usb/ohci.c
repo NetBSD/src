@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.115 2001/11/21 05:52:50 itojun Exp $	*/
+/*	$NetBSD: ohci.c,v 1.116 2001/11/21 08:18:40 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.115 2001/11/21 05:52:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.116 2001/11/21 08:18:40 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,6 +380,8 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	powerhook_disestablish(sc->sc_powerhook);
 	shutdownhook_disestablish(sc->sc_shutdownhook);
 #endif
+
+	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
 	/* free data structures XXX */
 
@@ -1057,7 +1059,7 @@ ohci_intr(void *p)
 {
 	ohci_softc_t *sc = p;
 
-	if (sc->sc_dying)
+	if (sc == NULL || sc->sc_dying)
 		return (0);
 
 	/* If we get an interrupt while polling, then just ignore it. */
@@ -1516,6 +1518,8 @@ ohci_waitintr(ohci_softc_t *sc, usbd_xfer_handle xfer)
 	xfer->status = USBD_IN_PROGRESS;
 	for (usecs = timo * 1000000 / hz; usecs > 0; usecs -= 1000) {
 		usb_delay_ms(&sc->sc_bus, 1);
+		if (sc->sc_dying)
+			break;
 		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs;
 		DPRINTFN(15,("ohci_waitintr: 0x%04x\n", intrs));
 #ifdef OHCI_DEBUG
@@ -1808,8 +1812,15 @@ void
 ohci_timeout(void *addr)
 {
 	struct ohci_xfer *oxfer = addr;
+	struct ohci_pipe *opipe = (struct ohci_pipe *)oxfer->xfer.pipe;
+	ohci_softc_t *sc = (ohci_softc_t *)opipe->pipe.device->bus;
 
 	DPRINTF(("ohci_timeout: oxfer=%p\n", oxfer));
+
+	if (sc->sc_dying) {
+		ohci_abort_xfer(&oxfer->xfer, USBD_TIMEOUT);
+		return;
+	}
 
 	/* Execute the abort in a process context. */
 	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr);
@@ -1928,6 +1939,9 @@ ohci_open(usbd_pipe_handle pipe)
 
 	DPRINTFN(1, ("ohci_open: pipe=%p, addr=%d, endpt=%d (%d)\n",
 		     pipe, addr, ed->bEndpointAddress, sc->sc_addr));
+
+	if (sc->sc_dying)
+		return (USBD_IOERROR);
 
 	std = NULL;
 	sed = NULL;
@@ -2085,6 +2099,15 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	int s, hit;
 
 	DPRINTF(("ohci_abort_xfer: xfer=%p pipe=%p sed=%p\n", xfer, opipe,sed));
+
+	if (sc->sc_dying) {
+		/* If we're dying, just do the software part. */
+		s = splusb();
+		xfer->status = status;	/* make software ignore it */
+		usb_uncallout(xfer->timeout_handle, ehci_timeout, xfer);
+		usb_transfer_complete(xfer);
+		splx(s);
+	}
 
 	if (xfer->device->bus->intr_context || !curproc)
 		panic("ohci_abort_xfer: not in process context\n");
@@ -2531,6 +2554,10 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			for (i = 0; i < 5; i++) {
 				usb_delay_ms(&sc->sc_bus,
 					     USB_PORT_ROOT_RESET_DELAY);
+				if (sc->sc_dying) {
+					err = USBD_IOERROR;
+					goto ret;
+				}
 				if ((OREAD4(sc, port) & UPS_RESET) == 0)
 					break;
 			}
