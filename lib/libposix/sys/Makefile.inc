@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2001/11/13 18:55:00 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2002/01/29 19:03:01 tv Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
@@ -14,8 +14,10 @@ ${PSEUDO}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 		>${.TARGET}
 
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
+.if ${MKLINT} != "no"
 LSRCS+=		LintSysPseudo.c
 DPSRCS+=	LintSysPseudo.c
+.endif
 
 LintSysPseudo.c: ${.CURDIR}/../libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
