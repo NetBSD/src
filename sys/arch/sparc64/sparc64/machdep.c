@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2001/09/10 21:19:26 chris Exp $ */
+/*	$NetBSD: machdep.c,v 1.111 2001/09/15 07:13:40 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -680,14 +680,11 @@ sys___sigreturn14(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-if (p->p_addr->u_pcb.pcb_nsaved) 
-printf("sigreturn14: pid %d nsaved %d\n",
-       p->p_pid, (p->p_addr->u_pcb.pcb_nsaved));
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
 #ifdef DDB
-		Debugger();
+		if (sigdebug & SDB_DDB) Debugger();
 #endif
 #endif
 		sigexit(p, SIGILL);
@@ -707,7 +704,7 @@ printf("sigreturn14: pid %d nsaved %d\n",
 	{
 		printf("sigreturn14: copyin failed: scp=%p\n", scp);
 #ifdef DDB
-		Debugger();
+		if (sigdebug & SDB_DDB) Debugger();
 #endif
 		return (error);
 	}
@@ -729,7 +726,7 @@ printf("sigreturn14: pid %d nsaved %d\n",
 		   (void *)(unsigned long)sc.sc_pc,
 		   (void *)(unsigned long)sc.sc_npc);
 #ifdef DDB
-		Debugger();
+		if (sigdebug & SDB_DDB) Debugger();
 #endif
 		return (EINVAL);
 	}
