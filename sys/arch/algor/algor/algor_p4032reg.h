@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032reg.h,v 1.1 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032reg.h,v 1.2 2001/06/22 05:57:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,13 @@
  * The Algorithmics PMON initializes two DMA windows:
  *
  *	PCI 8000.0000 -> Phys 0000.0000 (256MB)
+ *	PCI c000.0000 -> Phys 0000.0000 (256MB)
+ *
+ * The latter has prefetching enabled, the former disabled, on
+ * V962 < rev B2, which have broken DMA FIFOs.  The latter is
+ * given to the on-board Ethernet.
  */
 #define	P4032_DMA_PCI_PCIBASE	0x80000000UL
+#define	P4032_DMA_PCI_PF_PCIBASE 0xc0000000UL
 #define	P4032_DMA_PCI_PHYSBASE	0x00000000UL
 #define	P4032_DMA_PCI_SIZE	(256 * 1024 * 1024)
