@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.h,v 1.2 1996/04/12 06:09:34 cgd Exp $	*/
+/*	$NetBSD: bbinfo.h,v 1.3 1997/01/18 00:24:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -31,6 +31,7 @@ struct bbinfoloc {
         u_int64_t       magic1;
         u_int64_t       start;
         u_int64_t       end;
+	u_int64_t	pad1[4];
         u_int64_t       magic2;
 };
 
@@ -38,5 +39,16 @@ struct bbinfo {
         int32_t         cksum;
         int32_t         nblocks;
         int32_t         bsize;
+	u_int32_t	pad1[8];
         int32_t         blocks[1];
+};
+
+struct netbbinfo {
+	u_int64_t	magic1;
+	u_int8_t	set;
+	u_int8_t	ether_addr[6];
+	u_int8_t	force;
+	u_int64_t	pad1[4];
+	u_int64_t	cksum;
+	u_int64_t	magic2;
 };
