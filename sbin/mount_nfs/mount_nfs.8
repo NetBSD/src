@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.6 1997/03/23 20:59:56 fvdl Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.7 1997/10/19 01:24:47 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,6 +117,12 @@ the client.
 .It Fl U
 Force the mount protocol to use UDP transport, even for TCP NFS mounts.
 (Necessary for some old BSD servers.)
+.It Fl X
+Perform 32 <-> 64 bit directory cookie translation for version 3 mounts.
+This may be need in the case of a server using the upper 32 bits of
+v3 directory cookies, and when you are running emulated binaries
+that access such a filesystem. Native NetBSD binaries will never need this
+option. This option introduces some overhead.
 .It Fl a
 Set the read-ahead count to the specified value.
 This may be in the range of 0 - 4, and determines how many blocks
