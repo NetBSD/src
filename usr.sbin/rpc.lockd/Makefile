@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/25 06:58:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1999/06/06 03:13:13 thorpej Exp $
 
 PROG=	rpc.lockd
 SRCS=	nlm_prot_svc.c lockd.c lock_proc.c
@@ -7,8 +7,8 @@ MLINKS=	rpc.lockd.8 lockd.8
 
 CPPFLAGS+= -I.
 
-DPADD=	${LIBRPCSVC}
-LDADD=	-lrpcsvc
+DPADD=	${LIBRPCSVC} ${LIBUTIL}
+LDADD=	-lrpcsvc -lutil
 
 CLEANFILES= nlm_prot_svc.c nlm_prot.x nlm_prot.h test
 
