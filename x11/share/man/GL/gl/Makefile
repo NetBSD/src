@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:03 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -495,6 +495,6 @@ LNFILES=accum.3gl glAccum.man \
 
 .PATH:  ${X11SRCDIR.xc}/doc/man/GL/gl
 
+.include <bsd.x11.mk>
 .include <bsd.files.mk>
 .include <bsd.man.mk>
-.include <bsd.x11.mk>

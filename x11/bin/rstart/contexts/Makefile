@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/11 18:37:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:10 lukem Exp $
 
 CFDIR=		contexts
 CFFILES=	@List default x11r6
@@ -10,5 +10,5 @@ SYMLINKS=	x11r6 ${FILESDIR}/x \
 
 .include "../Makefile.rstart"
 
-.include <bsd.prog.mk>
 .include <bsd.x11.mk>
+.include <bsd.prog.mk>

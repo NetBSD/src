@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:50:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:18:48 lukem Exp $
 
 NOPIC=	1
 
@@ -11,5 +11,5 @@ SRCS=	Xinerama.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
-.include <bsd.lib.mk>
 .include <bsd.x11.mk>
+.include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/09/12 18:52:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/13 20:19:08 lukem Exp $
 
 NOMAN=		1
 
@@ -49,5 +49,5 @@ HOST_CPPFLAGS+=	-I${DESTDIR}/${X11INCDIR} \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' -DHAVE_EXPAT \
 		${EXPAT_FLAGS}
 
-.include <bsd.hostprog.mk>
 .include <bsd.x11.mk>
+.include <bsd.hostprog.mk>
