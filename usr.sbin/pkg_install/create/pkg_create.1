@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.16 1999/03/22 18:44:03 garbled Exp $
+.\" $NetBSD: pkg_create.1,v 1.16.2.1 1999/08/22 17:44:38 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -114,9 +114,7 @@ and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgcfl
 directives in the packing list (see PACKING LIST DETAILS section below).
 .It Fl D Ar displayfile
-Display the file (using
-.Xr more 1 )
-after installing the package.  Useful for things like
+Display the file after installing the package. Useful for things like
 legal notices on almost-free software, etc.
 .It Fl O
 Go into a `packing list Only' mode.
@@ -271,7 +269,7 @@ All subsequent filenames will be assumed relative to this directory.
 Note:
 .Cm @cd
 is also an alias for this command.
-.It Cm @srcdir Ar directory
+.It Cm @src Ar directory
 Set the internal directory pointer for _creation only_ to
 .Ar directory .
 That is to say that it overrides
