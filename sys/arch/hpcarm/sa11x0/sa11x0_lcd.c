@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcd.c,v 1.2 2001/02/23 04:31:19 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_lcd.c,v 1.3 2001/05/01 12:36:55 toshii Exp $	*/
 #define SALCD_DEBUG
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ salcd_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return(0);
+	return (1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.3 2001/03/31 12:49:21 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.4 2001/05/01 12:36:54 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ sacc_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return (0);
+	return (1);
 }
 
 static void
