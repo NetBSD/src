@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: kernfs_vnops.c,v 1.6 1993/04/27 10:06:10 cgd Exp $
+ *	$Id: kernfs_vnops.c,v 1.7 1993/05/20 04:01:31 cgd Exp $
  */
 
 /*
