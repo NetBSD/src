@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2000/02/29 15:21:46 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2000/03/27 16:45:42 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -285,6 +285,11 @@ initppc(startkernel, endkernel, args, btinfo)
 	boothowto = args;
 
 	/*
+	 * Initialize bus_space.
+	 */
+	prep_bus_space_init();
+
+	/*
 	 * i386 port says, that this shouldn't be here,
 	 * but I really think the console should be initialized
 	 * as early as possible.
@@ -324,10 +329,6 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	asm volatile ("mtibatl 0,%0; mtibatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-	asm volatile ("mtibatl 1,%0; mtibatu 1,%1"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
-	asm volatile ("mtibatl 2,%0; mtibatu 2,%1"
-		      :: "r"(battable[2].batl), "r"(battable[2].batu));
 
 	asm volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
@@ -623,6 +624,11 @@ cpu_startup()
 		asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
+
+	/*
+	 * Now safe for bus space allocation to use malloc.
+	 */
+	prep_bus_space_mallocok();
 }
 
 /*
