@@ -1,7 +1,7 @@
-dnl $Heimdal: broken-snprintf.m4,v 1.4 2001/09/01 11:56:05 assar Exp $
-dnl $NetBSD: broken-snprintf.m4,v 1.1.1.4 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: broken-snprintf.m4,v 1.4.10.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: broken-snprintf.m4,v 1.1.1.5 2004/04/02 14:48:06 lha Exp $
 dnl
-AC_DEFUN(AC_BROKEN_SNPRINTF, [
+AC_DEFUN([AC_BROKEN_SNPRINTF], [
 AC_CACHE_CHECK(for working snprintf,ac_cv_func_snprintf_working,
 ac_cv_func_snprintf_working=yes
 AC_TRY_RUN([
@@ -22,7 +22,7 @@ AC_NEED_PROTO([#include <stdio.h>],snprintf)
 fi
 ])
 
-AC_DEFUN(AC_BROKEN_VSNPRINTF,[
+AC_DEFUN([AC_BROKEN_VSNPRINTF],[
 AC_CACHE_CHECK(for working vsnprintf,ac_cv_func_vsnprintf_working,
 ac_cv_func_vsnprintf_working=yes
 AC_TRY_RUN([

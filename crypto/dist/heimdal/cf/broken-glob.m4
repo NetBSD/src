@@ -1,9 +1,9 @@
-dnl $Heimdal: broken-glob.m4,v 1.4 2001/06/19 09:59:46 assar Exp $
-dnl $NetBSD: broken-glob.m4,v 1.1.1.5 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: broken-glob.m4,v 1.4.12.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: broken-glob.m4,v 1.1.1.6 2004/04/02 14:48:06 lha Exp $
 dnl
 dnl check for glob(3)
 dnl
-AC_DEFUN(AC_BROKEN_GLOB,[
+AC_DEFUN([AC_BROKEN_GLOB],[
 AC_CACHE_CHECK(for working glob, ac_cv_func_glob_working,
 ac_cv_func_glob_working=yes
 AC_TRY_LINK([

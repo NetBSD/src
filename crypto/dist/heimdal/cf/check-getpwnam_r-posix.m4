@@ -1,9 +1,9 @@
-dnl $Heimdal: check-getpwnam_r-posix.m4,v 1.2 1999/03/23 16:47:31 joda Exp $
-dnl $NetBSD: check-getpwnam_r-posix.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: check-getpwnam_r-posix.m4,v 1.2.34.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: check-getpwnam_r-posix.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
 dnl
 dnl check for getpwnam_r, and if it's posix or not
 
-AC_DEFUN(AC_CHECK_GETPWNAM_R_POSIX,[
+AC_DEFUN([AC_CHECK_GETPWNAM_R_POSIX],[
 AC_FIND_FUNC_NO_LIBS(getpwnam_r,c_r)
 if test "$ac_cv_func_getpwnam_r" = yes; then
 	AC_CACHE_CHECK(if getpwnam_r is posix,ac_cv_func_getpwnam_r_posix,

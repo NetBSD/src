@@ -1,13 +1,13 @@
 dnl
-dnl $Heimdal: capabilities.m4,v 1.2 1999/09/01 11:02:26 joda Exp $
-dnl $NetBSD: capabilities.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: capabilities.m4,v 1.2.20.1 2004/04/01 07:27:32 joda Exp $
+dnl $NetBSD: capabilities.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
 dnl
 
 dnl
 dnl Test SGI capabilities
 dnl
 
-AC_DEFUN(KRB_CAPABILITIES,[
+AC_DEFUN([KRB_CAPABILITIES],[
 
 AC_CHECK_HEADERS(capability.h sys/capability.h)
 

@@ -1,10 +1,10 @@
 dnl 
 dnl See if there is any X11 present
 dnl
-dnl $Heimdal: check-x.m4,v 1.2 1999/11/05 04:25:23 assar Exp $
-dnl $NetBSD: check-x.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: check-x.m4,v 1.2.20.1 2004/04/01 07:27:33 joda Exp $
+dnl $NetBSD: check-x.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
 
-AC_DEFUN(KRB_CHECK_X,[
+AC_DEFUN([KRB_CHECK_X],[
 AC_PATH_XTRA
 
 # try to figure out if we need any additional ld flags, like -R

@@ -32,8 +32,8 @@
  */
 
 #include "rsh_locl.h"
-__RCSID("$Heimdal: rshd.c,v 1.51 2003/04/16 19:50:49 joda Exp $"
-        "$NetBSD: rshd.c,v 1.1.1.7 2003/05/15 20:28:41 lha Exp $");
+__RCSID("$Heimdal: rshd.c,v 1.51.2.1 2003/08/19 11:36:17 joda Exp $"
+        "$NetBSD: rshd.c,v 1.1.1.8 2004/04/02 14:47:25 lha Exp $");
 
 int
 login_access( struct passwd *user, char *from);
@@ -920,7 +920,7 @@ struct getargs args[] = {
       "port" },
     { "vacuous",	'v',	arg_flag, &do_vacuous,
       "Don't accept non-kerberised connections" },
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
     { NULL,		'P',	arg_negative_flag, &do_newpag,
       "Don't put process in new PAG" },
 #endif

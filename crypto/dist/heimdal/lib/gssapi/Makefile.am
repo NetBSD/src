@@ -1,12 +1,12 @@
-# $Heimdal: Makefile.am,v 1.44.2.5 2003/05/12 15:20:46 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.7 2003/05/15 20:28:46 lha Exp $
+# $Heimdal: Makefile.am,v 1.44.2.7 2003/10/14 16:13:13 joda Exp $
+# $NetBSD: Makefile.am,v 1.1.1.8 2004/04/02 14:47:44 lha Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 INCLUDES += -I$(srcdir)/../krb5 $(INCLUDE_des) $(INCLUDE_krb4)
 
 lib_LTLIBRARIES = libgssapi.la
-libgssapi_la_LDFLAGS = -version-info 4:0:3
+libgssapi_la_LDFLAGS = -version-info 5:0:4
 libgssapi_la_LIBADD  = ../krb5/libkrb5.la $(LIB_des) ../asn1/libasn1.la ../roken/libroken.la
 
 man_MANS = gssapi.3 gss_acquire_cred.3
@@ -15,6 +15,7 @@ include_HEADERS = gssapi.h
 
 libgssapi_la_SOURCES =		\
 	8003.c			\
+	arcfour.c		\
 	accept_sec_context.c	\
 	acquire_cred.c		\
 	add_cred.c		\
