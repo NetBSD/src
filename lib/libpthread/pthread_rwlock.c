@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.9 2004/08/03 11:50:45 yamt Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.10 2005/01/09 01:47:20 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.9 2004/08/03 11:50:45 yamt Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.10 2005/01/09 01:47:20 nathanw Exp $");
 
 #include <errno.h>
 
@@ -251,9 +251,13 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
-	if ((abs_timeout == NULL) || (abs_timeout->tv_nsec >= 1000000000))
+	if (abs_timeout == NULL)
 		return EINVAL;
 #endif
+	if ((abs_timeout->tv_nsec >= 1000000000) ||
+	    (abs_timeout->tv_nsec < 0) ||
+	    (abs_timeout->tv_sec < 0))
+		return EINVAL;
 	self = pthread__self();
 	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
@@ -311,7 +315,13 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 #ifdef ERRORCHECK
 	if ((rwlock == NULL) || (rwlock->ptr_magic != _PT_RWLOCK_MAGIC))
 		return EINVAL;
+	if (abs_timeout == NULL)
+		return EINVAL;
 #endif
+	if ((abs_timeout->tv_nsec >= 1000000000) ||
+	    (abs_timeout->tv_nsec < 0) ||
+	    (abs_timeout->tv_sec < 0))
+		return EINVAL;
 	self = pthread__self();
 	
 	pthread_spinlock(self, &rwlock->ptr_interlock);
