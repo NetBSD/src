@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.12 2000/01/08 22:57:30 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.13 2000/01/09 00:00:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -176,10 +176,12 @@ rf_ContinueDagAccess(RF_DagList_t * dagList)
 		 * free all dags and start over */
 		desc->status = 1;	/* bad status */
 		{
-			printf("[%d] DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
-			    desc->tid, desc->type, (long) desc->raidAddress,
-			    (long) desc->raidAddress, (int) desc->numBlocks,
-			    (int) desc->numBlocks, (unsigned long) (desc->bufPtr));
+			printf("raid%d: DAG failure: %c addr 0x%lx (%ld) nblk 0x%x (%d) buf 0x%lx\n",
+			       desc->raidPtr->raidid, desc->type, 
+			       (long) desc->raidAddress,
+			       (long) desc->raidAddress, (int) desc->numBlocks,
+			       (int) desc->numBlocks, 
+			       (unsigned long) (desc->bufPtr));
 		}
 	}
 	dagList->numDagsDone++;
@@ -371,14 +373,16 @@ rf_State_Lock(RF_RaidAccessDesc_t * desc)
 					}
 				} else {
 					if (rf_pssDebug) {
-						printf("[%d] skipping force/block because already done, psid %ld\n",
-						    desc->tid, (long) asm_p->stripeID);
+						printf("raid%d: skipping force/block because already done, psid %ld\n",
+						       desc->raidPtr->raidid, 
+						       (long) asm_p->stripeID);
 					}
 				}
 			} else {
 				if (rf_pssDebug) {
-					printf("[%d] skipping force/block because not write or not under recon, psid %ld\n",
-					    desc->tid, (long) asm_p->stripeID);
+					printf("raid%d: skipping force/block because not write or not under recon, psid %ld\n",
+					       desc->raidPtr->raidid, 
+					       (long) asm_p->stripeID);
 				}
 			}
 		}
