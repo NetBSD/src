@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1999/07/11 14:12:21 minoura Exp $ */
+/*	$NetBSD: md.c,v 1.3 1999/08/10 15:54:56 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -26,17 +26,18 @@
  * THIS SOFTWARE IS PROVIDED BY PIERMONT INFORMATION SYSTEMS INC. ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE 
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * ARE DISCLAIMED. IN NO EVENT SHALL PIERMONT INFORMATION SYSTEMS INC. BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /* md.c -- Machine specific code for x68k */
+/* This file is in close sync with pmax, sparc, and vax md.c */
 
 #include <stdio.h>
 #include <unistd.h>
@@ -53,10 +54,16 @@
 /*
  * Symbolic names for disk partitions.
  */
-#define	PART_ROOT	A
-#define	PART_RAW	C
-#define	PART_USR	D
+#define PART_ROOT	A
+#define PART_SWAP	B
+#define PART_RAW	C
+#define PART_USR	D	/* Can be after PART_FIRST_FREE */
+#define PART_FIRST_FREE	E
+#define PART_LAST	H
 
+#define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
+#define DEFROOTSIZE	20	/* Default root size */
+#define STDNEEDMB	80	/* Min space for non X install */
 
 #ifdef notyet
 #undef NDOSPART 8
@@ -80,7 +87,7 @@ static int md_newdisk __P((void));
 static int md_check_partition_order __P((void));
 
 int
-md_get_info()
+md_get_info(void)
 {
 	char buf[1024];
 	int fd;
@@ -91,12 +98,16 @@ md_get_info()
 
 	fd = open(devname, O_RDONLY, 0);
 	if (fd < 0) {
+		if (logging)
+			(void)fprintf(log, "Can't open %s\n", devname);
 		endwin();
 		fprintf(stderr, "Can't open %s\n", devname);
 		exit(1);
 	}
-
 	if (ioctl(fd, DIOCGDINFO, &disklabel) == -1) {
+		if (logging)
+			(void)fprintf(log, "Can't read disklabel on %s.\n",
+				devname);
 		endwin();
 		fprintf(stderr, "Can't read disklabel on %s.\n", devname);
 		close(fd);
@@ -141,7 +152,7 @@ md_get_info()
 	close(fd);
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
-	minfsdmb = (80 + 4*rammb) * (MEG / sectorsize);
+	minfsdmb = STDNEEDMB * (MEG / sectorsize);
 
 	return 1;
 }
@@ -157,7 +168,7 @@ md_newdisk(void)
 	size_t size = dlsize + 64;
 
 	snprintf(devname, 100, "/dev/r%sc", diskdev);
-	fd = open (devname, O_WRONLY);
+	fd = open(devname, O_WRONLY);
 	if (fd < 0) {
 		endwin();
 		fprintf(stderr, "Can't open %s\n", devname);
@@ -301,14 +312,14 @@ md_check_partitions(void)
 	}
 
 	/* Partitions should be preserved in md_make_bsdpartitions() */
-}	
+}
 #endif
 
 /*
  * hook called before writing new disklabel.
  */
 int
-md_pre_disklabel()
+md_pre_disklabel(void)
 {
 	if (md_need_newdisk)
 		md_newdisk ();
@@ -327,7 +338,7 @@ md_post_disklabel(void)
 /*
  * MD hook called after upgrade() or install() has finished setting
  * up the target disk but immediately before the user is given the
- * ``disks are now set up'' message that, if power fails, they can
+ * ``disks are now set up'' message, so that if power fails, they can
  * continue installation by booting the target disk and doing an
  * `upgrade'.
  *
@@ -352,20 +363,24 @@ md_copy_filesystem(void)
 	return 0;
 }
 
+/*
+ * md back-end code for menu-driven BSD disklabel editor.
+ */
 int
 md_make_bsd_partitions(void)
 {
 	int i, part;
 	int remain;
 	char isize[20];
+	int maxpart = getmaxpartitions();
 
 	/*
-	 * Initialize global variables that track  space used on this disk.
+	 * Initialize global variables that track space used on this disk.
 	 * Standard 4.3BSD 8-partition labels always cover whole disk.
 	 */
 	ptstart = 64;		/* assume 512 byte/sector */
 	ptsize = dlsize - ptstart;
-	fsdsize = dlsize;
+	fsdsize = dlsize;		/* actually means `whole disk' */
 	fsptsize = dlsize - ptstart;	/* netbsd partition -- same as above */
 	fsdmb = fsdsize / MEG;
 
@@ -383,6 +398,7 @@ md_make_bsd_partitions(void)
 		multname = msg_string(MSG_megname);
 	}
 
+
 	/* Build standard partitions */
 	emptylabel(bsdlabel);
 
@@ -390,17 +406,16 @@ md_make_bsd_partitions(void)
 	bsdlabel[C].pi_fstype = FS_UNUSED;
 	bsdlabel[C].pi_offset = 0;
 	bsdlabel[C].pi_size = dlsize;
-	
+
 	/* Standard fstypes */
 	bsdlabel[A].pi_fstype = FS_BSDFFS;
-	bsdlabel[B].pi_fstype = FS_SWAP;
+	bsdlabel[B].pi_fstype = FS_UNUSED;
 	/* Conventionally, C is whole disk. */
 	bsdlabel[D].pi_fstype = FS_UNUSED;	/* fill out below */
 	bsdlabel[E].pi_fstype = FS_UNUSED;
 	bsdlabel[F].pi_fstype = FS_UNUSED;
 	bsdlabel[G].pi_fstype = FS_UNUSED;
 	bsdlabel[H].pi_fstype = FS_UNUSED;
-	part = D;
 
 
 	switch (layoutkind) {
@@ -409,22 +424,23 @@ md_make_bsd_partitions(void)
 		partstart = ptstart;
 
 		/* Root */
-		/* 20Mbyte for root */
-		partsize= NUMSEC(20, MEG/sectorsize, dlcylsize);
-		bsdlabel[A].pi_offset = partstart;
-		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
-		strcpy(fsmount[A], "/");
+		partsize = NUMSEC(DEFROOTSIZE, MEG/sectorsize, dlcylsize);
+		bsdlabel[PART_ROOT].pi_offset = partstart;
+		bsdlabel[PART_ROOT].pi_size = partsize;
+		bsdlabel[PART_ROOT].pi_bsize = 8192;
+		bsdlabel[PART_ROOT].pi_fsize = 1024;
+		strcpy(fsmount[PART_ROOT], "/");
 		partstart += partsize;
 
 		/* swap */
-		i = NUMSEC (layoutkind * 2 * (rammb < 32 ? 32 : rammb),
-			    MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
-		bsdlabel[B].pi_offset = partstart;
-		bsdlabel[B].pi_size = partsize;
+		i = NUMSEC(layoutkind * 2 *
+			   (rammb < DEFSWAPRAM ? DEFSWAPRAM : rammb),
+			   MEG/sectorsize, dlcylsize) + partstart;
+		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
+			   dlcylsize) - partstart;
+		bsdlabel[PART_SWAP].pi_fstype = FS_SWAP;
+		bsdlabel[PART_SWAP].pi_offset = partstart;
+		bsdlabel[PART_SWAP].pi_size = partsize;
 		partstart += partsize;
 
 		/* /usr */
@@ -443,62 +459,83 @@ md_make_bsd_partitions(void)
 		/* root */
 		partstart = ptstart;
 		remain = fsdsize - partstart;
-		/* 20Mbyte for root */
-		partsize = NUMSEC (20, MEG/sectorsize, dlcylsize);
+		partsize = NUMSEC(DEFROOTSIZE, MEG/sectorsize, dlcylsize);
 		snprintf(isize, 20, "%d", partsize/sizemult);
 		msg_prompt(MSG_askfsroot, isize, isize, 20,
-			   remain/sizemult, multname);
+			    remain/sizemult, multname);
 		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		bsdlabel[A].pi_offset = partstart;
-		bsdlabel[A].pi_size = partsize;
-		bsdlabel[A].pi_bsize = 8192;
-		bsdlabel[A].pi_fsize = 1024;
-		strcpy(fsmount[A], "/");
-		partstart += partsize;
-		
-		/* swap */
-		remain = fsdsize - partstart;
-		i = NUMSEC(2 * (rammb < 32 ? 32 : rammb),
-			   MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC (i/(MEG/sectorsize)+1, MEG/sectorsize,
-				   dlcylsize) - partstart;
-		snprintf(isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add(MSG_askfsswap, isize, isize, 20,
-			       remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
-		bsdlabel[B].pi_offset = partstart;
-		bsdlabel[B].pi_size = partsize;
-		partstart += partsize;
-		
-		/* /usr */
-		remain = fsdsize - partstart;
-		partsize = fsdsize - partstart;
-		snprintf(isize, 20, "%d", partsize/sizemult);
-		msg_prompt_add(MSG_askfsusr, isize, isize, 20,
-			       remain/sizemult, multname);
-		partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+		/* If less than a 'unit' left, also use it */
 		if (remain - partsize < sizemult)
 			partsize = remain;
-		bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
-		bsdlabel[PART_USR].pi_offset = partstart;
-		bsdlabel[PART_USR].pi_size = partsize;
-		bsdlabel[PART_USR].pi_bsize = 8192;
-		bsdlabel[PART_USR].pi_fsize = 1024;
-		strcpy(fsmount[PART_USR], "/usr");
+		bsdlabel[PART_ROOT].pi_offset = partstart;
+		bsdlabel[PART_ROOT].pi_size = partsize;
+		bsdlabel[PART_ROOT].pi_bsize = 8192;
+		bsdlabel[PART_ROOT].pi_fsize = 1024;
+		strcpy(fsmount[PART_ROOT], "/");
 		partstart += partsize;
+
+		/* swap */
+		remain = fsdsize - partstart;
+		if (remain > 0) {
+			i = NUMSEC(2 *
+				   (rammb < DEFSWAPRAM ? DEFSWAPRAM : rammb),
+				   MEG/sectorsize, dlcylsize) + partstart;
+			partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
+				   dlcylsize) - partstart;
+			if (partsize > remain)
+				partsize = remain;
+			snprintf(isize, 20, "%d", partsize/sizemult);
+			msg_prompt_add(MSG_askfsswap, isize, isize, 20,
+				    remain/sizemult, multname);
+			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			if (partsize) {
+				/* If less than a 'unit' left, also use it */
+				if (remain - partsize < sizemult)
+					partsize = remain;
+				bsdlabel[PART_SWAP].pi_fstype = FS_SWAP;
+				bsdlabel[PART_SWAP].pi_offset = partstart;
+				bsdlabel[PART_SWAP].pi_size = partsize;
+				partstart += partsize;
+			}
+		}
+
+		/* /usr */
+		remain = fsdsize - partstart;
+		if (remain > 0) {
+			partsize = remain;
+			snprintf(isize, 20, "%d", partsize/sizemult);
+			msg_prompt_add(MSG_askfsusr, isize, isize, 20,
+				    remain/sizemult, multname);
+			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			if (partsize) {
+				/* If less than a 'unit' left, also use it */
+				if (remain - partsize < sizemult)
+					partsize = remain;
+				bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
+				bsdlabel[PART_USR].pi_offset = partstart;
+				bsdlabel[PART_USR].pi_size = partsize;
+				bsdlabel[PART_USR].pi_bsize = 8192;
+				bsdlabel[PART_USR].pi_fsize = 1024;
+				strcpy(fsmount[PART_USR], "/usr");
+				partstart += partsize;
+			}
+		}
 
 		/* Others ... */
 		remain = fsdsize - partstart;
-		part = F;
 		if (remain > 0)
 			msg_display(MSG_otherparts);
-		while (remain > 0 && part <= H) {
+		part = PART_FIRST_FREE;
+		for (; remain > 0 && part <= PART_LAST; ++part ) {
+			if (bsdlabel[part].pi_fstype != FS_UNUSED)
+				continue;
 			partsize = fsdsize - partstart;
 			snprintf(isize, 20, "%d", partsize/sizemult);
 			msg_prompt_add(MSG_askfspart, isize, isize, 20,
-				       diskdev, partname[part],
-				       remain/sizemult, multname);
+					diskdev, partname[part],
+					remain/sizemult, multname);
 			partsize = NUMSEC(atoi(isize),sizemult, dlcylsize);
+			/* If less than a 'unit' left, also use it */
 			if (remain - partsize < sizemult)
 				partsize = remain;
 			bsdlabel[part].pi_fstype = FS_BSDFFS;
@@ -506,23 +543,21 @@ md_make_bsd_partitions(void)
 			bsdlabel[part].pi_size = partsize;
 			bsdlabel[part].pi_bsize = 8192;
 			bsdlabel[part].pi_fsize = 1024;
-			msg_prompt_add(MSG_mountpoint, NULL,
-				       fsmount[part], 20);
+			msg_prompt_add(MSG_mountpoint, NULL, fsmount[part],
+				    20);
 			partstart += partsize;
 			remain = fsdsize - partstart;
-			part++;
 		}
 
 		break;
 	}
-
 
 	/*
 	 * OK, we have a partition table. Give the user the chance to
 	 * edit it and verify it's OK, or abort altogether.
 	 */
  edit_check:
-	if (edit_and_check_label(bsdlabel, 8, RAW_PART, RAW_PART) == 0) {
+	if (edit_and_check_label(bsdlabel, maxpart, RAW_PART, RAW_PART) == 0) {
 		msg_display(MSG_abort);
 		return 0;
 	}
@@ -533,7 +568,7 @@ md_make_bsd_partitions(void)
 	msg_prompt(MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* save label to disk for MI code to update. */
-	(void) savenewlabel(bsdlabel, 8);	/* 8 partitions in  label */
+	(void) savenewlabel(bsdlabel, 8);	/* 8 partitions in label */
 
 	/* Everything looks OK. */
 	return (1);
@@ -602,6 +637,7 @@ md_cleanup_install(void)
 	do_system(sedcmd);
 
 	run_prog(1, 0, NULL, "mv -f %s %s", realto, realfrom);
+
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/sysinst"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.termcap"));
 	run_prog(0, 0, NULL, "rm -f %s", target_expand("/.profile"));
