@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2003/04/10 22:07:00 christos Exp $
+# $NetBSD: GENERIC,v 1.29 2003/04/26 14:10:10 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -169,3 +169,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	ksyms			# /dev/ksyms

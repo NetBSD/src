@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2003/04/10 22:07:02 christos Exp $
+# $NetBSD: GENERIC,v 1.111 2003/04/26 14:10:08 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.110 $"
+#ident		"GENERIC-$Revision: 1.111 $"
 
 maxusers	64
 
@@ -247,3 +247,4 @@ pseudo-device	fb		 3	# up to 3 framebuffers
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
