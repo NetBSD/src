@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: fsck.sh,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: fsck.sh,v 1.2 2000/04/26 05:13:51 thorpej Exp $
 #
 
 # PROVIDE: fsck
-# REQUIRE: localswap ccd raidframe
+# REQUIRE: localswap
 
 fsck_start()
 {
