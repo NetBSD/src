@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.30 1999/04/11 23:31:09 perseant Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.31 1999/04/11 23:58:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -570,8 +570,8 @@ lfs_statfs(mp, sbp, p)
 		- (u_int64_t)(fs->lfs_dsize - fs->lfs_bfree);
 #endif
 	sbp->f_bavail = dbtofrags(fs, sbp->f_bavail);
-	sbp->f_files = fs->lfs_nfiles;
-	sbp->f_ffree = sbp->f_bfree * INOPB(fs);
+	sbp->f_files = dbtofsb(fs,fs->lfs_bfree) * INOPB(fs);
+	sbp->f_ffree = sbp->f_files - fs->lfs_nfiles;
 	if (sbp != &mp->mnt_stat) {
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
