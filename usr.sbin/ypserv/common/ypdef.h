@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdef.h,v 1.3 1999/06/06 02:43:04 thorpej Exp $	*/
+/*	$NetBSD: ypdef.h,v 1.4 2002/07/06 21:39:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -39,7 +39,7 @@ struct ypresp_xfr {
 	int xfrstat;
 };
 
-bool_t	xdr_ypresp_xfr __P((XDR *, struct ypresp_xfr *));
+bool_t	xdr_ypresp_xfr(XDR *, struct ypresp_xfr *);
 
 #define YP_DB_PATH "/var/yp"
 #define YP_LAST_KEY        "YP_LAST_MODIFIED"

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib_host.h,v 1.1.1.1 1996/08/09 10:14:51 thorpej Exp $	*/
+/*	$NetBSD: yplib_host.h,v 1.2 2002/07/06 21:39:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -34,25 +34,25 @@
 #ifndef _YPLIB_HOST_H_
 #define _YPLIB_HOST_H_
 
-int	yp_match_host 	__P((CLIENT *client, char *indomain, char *inmap,
-			    const char *inkey, int inkeylen, char **outval,
-			    int *outvallen));
-int	yp_first_host	__P((CLIENT *client, char *indomain, char *inmap,
-			    char **outkey, int *outkeylen, char **outval,
-			    int *outvallen));
-int	yp_next_host	__P((CLIENT *client, char *indomain, char *inmap,
-			    char *inkey, int inkeylen, char **outkey,
-			    int *outkeylen, char **outval, int *outvallen));
-int	yp_master_host	__P((CLIENT *client,
-			    char *indomain, char *inmap, char **outname));
-int	yp_order_host	__P((CLIENT *client,
-			    char *indomain, char *inmap, int *outorder));
-int	yp_all_host	__P((CLIENT *client, char *indomain, char *inmap,
-			    struct ypall_callback *incallback));
-int	yp_maplist_host	__P((CLIENT *client, char *indomain,
-			    struct ypmaplist **outmaplist));
-CLIENT *yp_bind_local	__P((u_int program, u_int version));
-CLIENT *yp_bind_host	__P((char *server, u_int program, u_int version,
-			    u_short port, int usetcp));
+int	yp_match_host(CLIENT *client, char *indomain, char *inmap,
+		      const char *inkey, int inkeylen, char **outval,
+		      int *outvallen);
+int	yp_first_host(CLIENT *client, char *indomain, char *inmap,
+		      char **outkey, int *outkeylen, char **outval,
+		      int *outvallen);
+int	yp_next_host(CLIENT *client, char *indomain, char *inmap,
+		     char *inkey, int inkeylen, char **outkey,
+		     int *outkeylen, char **outval, int *outvallen);
+int	yp_master_host(CLIENT *client,
+		       char *indomain, char *inmap, char **outname);
+int	yp_order_host(CLIENT *client,
+		      char *indomain, char *inmap, int *outorder);
+int	yp_all_host(CLIENT *client, char *indomain, char *inmap,
+		    struct ypall_callback *incallback);
+int	yp_maplist_host(CLIENT *client, char *indomain,
+		        struct ypmaplist **outmaplist);
+CLIENT *yp_bind_local(u_int program, u_int version);
+CLIENT *yp_bind_host(char *server, u_int program, u_int version,
+		     u_short port, int usetcp);
 
 #endif /* _YPLIB_HOST_H_ */

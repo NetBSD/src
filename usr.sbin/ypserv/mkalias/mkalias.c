@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.9 2001/02/19 23:22:50 cgd Exp $ */
+/*	$NetBSD: mkalias.c,v 1.10 2002/07/06 21:31:55 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.9 2001/02/19 23:22:50 cgd Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.10 2002/07/06 21:31:55 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,17 +58,14 @@ __RCSID("$NetBSD: mkalias.c,v 1.9 2001/02/19 23:22:50 cgd Exp $");
 #include "ypdb.h"
 #include "ypdef.h"
 
-void	capitalize __P((char *, int));
-int	check_host __P((char *, char *, int, int, int));
-int	main __P((int, char *[]));
-void	split_address __P((char *, int, char *, char *));
-void	usage __P((void));
+void	capitalize(char *, int);
+int	check_host(char *, char *, int, int, int);
+int	main(int, char *[]);
+void	split_address(char *, int, char *, char *);
+void	usage(void);
 
 void
-split_address(address, len, user, host)
-	char	*address;
-	int	 len;
-	char	*user, *host;
+split_address(char *address, int len, char *user, char *host)
 {
 	char *c, *s, *r;
 	int  i = 0;
@@ -105,9 +102,7 @@ split_address(address, len, user, host)
 }
 
 int
-check_host(address, host, dflag, uflag, Eflag)
-	char	*address, *host;
-	int	 dflag, uflag, Eflag;
+check_host(char *address, char *host, int dflag, int uflag, int Eflag)
 {
 	char answer[PACKETSZ];
 	int  status;
@@ -131,9 +126,7 @@ check_host(address, host, dflag, uflag, Eflag)
 }
 
 void
-capitalize(name, len)
-	char	*name;
-	int	 len;
+capitalize(char *name, int len)
 {
 	char last = ' ';
 	char *c;
@@ -155,9 +148,7 @@ capitalize(name, len)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int	eflag = 0;
 	int	dflag = 0;
@@ -350,7 +341,7 @@ main(argc, argv)
 }
 
 void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 		"usage: %s [-e|-E [-d] [-u]] [-n] [-v] input [output]\n",
