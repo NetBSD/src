@@ -46,7 +46,7 @@ file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
 major   {md = 18}
 
 # Standard parallal driver
-device  lpt: tty, ether, ifnet
+device  lpt: tty, ether, ifnet, arp
 attach	lpt at mainbus
 file    arch/arm32/mainbus/lpt.c		lpt needs-flag
 major   {lpt = 8}
@@ -98,23 +98,23 @@ file	arch/arm32/podulebus/podulebus_io.c	podulebus
 file	arch/arm32/podulebus/podulebus_io_asm.S	podulebus
 
 # Ethernet devices
-device ea: ether, ifnet
+device ea: ether, ifnet, arp
 attach ea at podulebus
 file	arch/arm32/podulebus/if_ea.c		ea
 
-device eb: ether, ifnet
+device eb: ether, ifnet, arp
 attach eb at podulebus
 file	arch/arm32/podulebus/if_eb.c		eb
 
-device eh: ether, ifnet
+device eh: ether, ifnet, arp
 attach eh at podulebus
 file	arch/arm32/podulebus/if_eh.c		eh
 
-device ie: ether, ifnet
+device ie: ether, ifnet, arp
 attach ie at podulebus
 file	arch/arm32/podulebus/if_ie.c		ie
 
-device es: ether, ifnet
+device es: ether, ifnet, arp
 attach es at mainbus
 file  arch/arm32/mainbus/if_es.c		es
 

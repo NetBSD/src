@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.25.6.1 1997/03/06 19:50:10 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.25.6.2 1997/03/10 16:00:40 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -69,7 +69,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #include <netinet/if_arc.h>
 #endif
 

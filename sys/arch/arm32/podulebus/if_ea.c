@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.12.6.1 1997/03/06 16:03:11 is Exp $ */
+/* $NetBSD: if_ea.c,v 1.12.6.2 1997/03/10 16:04:21 is Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -71,7 +71,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
