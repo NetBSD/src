@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.10 2003/01/01 00:46:15 thorpej Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.11 2003/04/01 23:19:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -60,6 +60,8 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -164,7 +166,7 @@ sa11x0_attach(parent, self, aux)
 		panic("%s: unable to map DMAC registers", self->dv_xname);
 
 	/* Map the reset controller registers */
-	if (bus_space_map(sc->sc_iot, SARCR_BASE, NBPG,
+	if (bus_space_map(sc->sc_iot, SARCR_BASE, PAGE_SIZE,
 			  0, &sc->sc_reseth))
 		panic("%s: unable to map reset registers", self->dv_xname);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.2 2003/01/01 00:46:15 thorpej Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.3 2003/04/01 23:19:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -382,8 +382,8 @@ sspci_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 		 * want.  */
 		pmap_enter(pmap_kernel(), va, (bus_addr_t) t + startpa,
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
-		va += NBPG;
-		startpa += NBPG;
+		va += PAGE_SIZE;
+		startpa += PAGE_SIZE;
 	}
 	pmap_update(pmap_kernel());
 
