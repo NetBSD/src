@@ -1781,7 +1781,7 @@
 ./usr/share/man/cat3/regexec.0
 ./usr/share/man/cat3/regexp.0
 ./usr/share/man/cat3/regfree.0
-./usr/share/man/cat3/regsterrpc.0
+./usr/share/man/cat3/registerrpc.0
 ./usr/share/man/cat3/remainder.0
 ./usr/share/man/cat3/remove.0
 ./usr/share/man/cat3/remque.0
@@ -2746,7 +2746,7 @@
 ./usr/share/man/man3/regexec.3
 ./usr/share/man/man3/regexp.3
 ./usr/share/man/man3/regfree.3
-./usr/share/man/man3/regsterrpc.3
+./usr/share/man/man3/registerrpc.3
 ./usr/share/man/man3/remainder.3
 ./usr/share/man/man3/remove.3
 ./usr/share/man/man3/remque.3

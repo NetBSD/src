@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 1997/11/14 02:04:47 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1998/03/18 01:37:39 jtc Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/arch/${MACHINE}/rpc ${.CURDIR}/rpc
@@ -45,7 +45,7 @@ MLINKS+=	getrpcent.3 getrpcbyname.3 \
 		rpc.3 pmap_rmtcall.3 \
 		rpc.3 pmap_set.3 \
 		rpc.3 pmap_unset.3 \
-		rpc.3 regsterrpc.3 \
+		rpc.3 registerrpc.3 \
 		rpc.3 rpc_createerr.3 \
 		rpc.3 svc_destroy.3 \
 		rpc.3 svc_fds.3 \
