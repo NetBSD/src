@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.63 2002/09/23 03:35:22 enami Exp $	*/
+/*	$NetBSD: mount.c,v 1.64 2002/09/23 03:39:41 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.63 2002/09/23 03:35:22 enami Exp $");
+__RCSID("$NetBSD: mount.c,v 1.64 2002/09/23 03:39:41 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,10 +448,11 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 		if (optbuf)
 			free(optbuf);
 
-		if (buf || (options != NULL
-		    && strstr(options, "getargs") != NULL)) {
+		if (buf || (options != NULL &&
+		    strstr(options, "getargs") != NULL)) {
 			char tbuf[1024], *ptr;
 			int nread;
+
 			if (buf == NULL) {
 				ptr = tbuf;
 				buflen = sizeof(tbuf) - 1;
@@ -471,7 +472,7 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted, buf, buflen)
 					continue;
 			}
 			if (buf == NULL)
-			    (void)fprintf(stdout, "%s", tbuf);
+				(void)fprintf(stdout, "%s", tbuf);
 		}
 
 		if (waitpid(pid, &status, 0) < 0) {
@@ -553,15 +554,16 @@ getmntargs(sfs, buf, buflen)
 	char *buf;
 	size_t buflen;
 {
+
 	if (mountfs(sfs->f_fstypename, sfs->f_mntfromname, sfs->f_mntonname, 0,
 	    "getargs", NULL, 0, buf, buflen))
-		return 0;
+		return (0);
 	else {
 		if (*buf == '\0')
-			return 0;
+			return (0);
 		if ((buf = strchr(buf, '\n')) != NULL)
 			*buf = '\0';
-		return 1;
+		return (1);
 	}
 }
 
