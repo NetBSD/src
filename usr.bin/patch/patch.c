@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.12.2.1 2003/01/26 09:57:23 jmc Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.12 2002/03/16 22:36:42 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.12.2.1 2003/01/26 09:57:23 jmc Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 	reinitialize_almost_everything()
     ) {					/* for each patch in patch file */
 
-	if (outname == NULL)
+	if (!skip_rest_of_patch && outname == NULL)
 	    outname = xstrdup(filearg[0]);
     
 	/* for ed script just up and do it and exit */
@@ -314,20 +314,23 @@ main(int argc, char *argv[])
 	rejfp = NULL;
 	if (failed) {
 	    failtotal += failed;
-	    if (!*rejname) {
-		Strcpy(rejname, outname);
-		Strcat(rejname, REJEXT);
-	    }
-	    if (skip_rest_of_patch) {
-		say("%d out of %d hunks ignored--saving rejects to %s\n",
-		    failed, hunk, rejname);
-	    }
-	    else {
-		say("%d out of %d hunks failed--saving rejects to %s\n",
-		    failed, hunk, rejname);
-	    }
-	    if (move_file(TMPREJNAME, rejname) < 0)
-		trejkeep = TRUE;
+	    if (outname != NULL) {
+		    if (!*rejname) {
+			    Strcpy(rejname, outname);
+			    Strcat(rejname, REJEXT);
+		    }
+		    if (skip_rest_of_patch)
+			    say("%d out of %d hunks ignored"
+				"--saving rejects to %s\n",
+				failed, hunk, rejname);
+		    else
+			    say("%d out of %d hunks failed"
+				"--saving rejects to %s\n",
+				failed, hunk, rejname);
+		    if (move_file(TMPREJNAME, rejname) < 0)
+			    trejkeep = TRUE;
+	    } else
+		    say("%d out of %d hunks ignored\n", failed, hunk);
 	}
 	set_signals(1);
     }
