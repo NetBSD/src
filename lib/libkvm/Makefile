@@ -1,6 +1,11 @@
-#	$NetBSD: Makefile,v 1.13 1997/03/21 18:48:58 gwr Exp $
+#	$NetBSD: Makefile,v 1.14 1997/06/23 05:24:19 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
+.if	(${MACHINE} != "arm32")  && \
+	(${MACHINE} != "i386")   && \
+	(${MACHINE} != "pica")   && \
+	(${MACHINE} != "pmax")   && \
+	(${MACHINE} != "x68k")
 LIB=	kvm
 CFLAGS+=-DLIBC_SCCS
 
@@ -16,6 +21,7 @@ SRCS+=	kvm_${MACHINE_ARCH}.c
 # Additional modules needed for m68k
 .if (${MACHINE_ARCH} == "m68k")
 SRCS+=	kvm_m68k_cmn.c kvm_sun3.c kvm_sun3x.c
+.endif
 .endif
 
 MAN=	kvm.3 kvm_dump.3 kvm_geterr.3 kvm_getfiles.3 kvm_getloadavg.3 \

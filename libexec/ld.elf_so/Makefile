@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/31 21:21:54 cjs Exp $
+#	$NetBSD: Makefile,v 1.7 1997/06/23 05:15:45 mrg Exp $
 
+.if ${MACHINE} == "alpha"
 PROG=	ld.elf_so
 
 # Adds SRCS, CFLAGS, LDFLAGS, etc.  Must go first so MD startup source
@@ -20,7 +21,6 @@ DPADD+=	${LIBC_PIC}
 # to be installed
 HDRS=	link.h
 
-NOMAN=
 STRIPFLAG=
 
 .PATH: ${.CURDIR}/${MACHINE_ARCH}
@@ -36,5 +36,8 @@ includes:
 	    echo $$j; \
 	    eval "$$j"; \
 	done
+.endif
+
+NOMAN=
 
 .include <bsd.prog.mk>
