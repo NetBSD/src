@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.4 2002/09/27 15:35:44 provos Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.5 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,6 +41,9 @@
 /*
  * bus_space I/O functions for mainbus
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com_io.c,v 1.5 2003/03/23 14:12:25 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
