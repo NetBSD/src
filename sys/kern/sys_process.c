@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.39 1994/08/23 22:13:59 deraadt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.40 1994/09/14 16:40:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -211,7 +211,11 @@ ptrace(p, uap, retval)
 		 * that the address be int-aligned.
 		 */
 		if ((u_long)uap->addr > USPACE - sizeof(int) ||
+#ifdef m68k /* XXX */
+		    ((u_long)uap->addr & 1) != 0)
+#else /* !m68k XXX */
 		    ((u_long)uap->addr & (sizeof(int) - 1)) != 0)
+#endif /* !m68k XXX */
 			return (EINVAL);
 
 		/*
@@ -232,7 +236,11 @@ ptrace(p, uap, retval)
 		 * it won't be used for anything anyway.
 		 */
 		if ((u_long)uap->addr > USPACE - sizeof(int) ||
+#ifdef m68k /* XXX */
+		    ((u_long)uap->addr & 1) != 0)
+#else /* !m68k XXX */
 		    ((u_long)uap->addr & (sizeof(int) - 1)) != 0)
+#endif /* !m68k XXX */
 			return (EINVAL);
 
 		/* And write the data. */
