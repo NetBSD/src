@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2002/08/11 20:45:10 bjh21 Exp $ */
+/* $NetBSD: machdep.c,v 1.4 2002/08/11 20:50:39 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2002/08/11 20:45:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2002/08/11 20:50:39 bjh21 Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -224,6 +224,8 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	curpcb = &proc0.p_addr->u_pcb;
 
 #if 0
 	/* Test exception handlers */
