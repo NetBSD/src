@@ -1,4 +1,4 @@
-/*	$NetBSD: networkdelta.c,v 1.7 1997/10/20 18:25:05 drochner Exp $	*/
+/*	$NetBSD: networkdelta.c,v 1.8 1997/10/20 18:42:17 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,12 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)networkdelta.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: networkdelta.c,v 1.7 1997/10/20 18:25:05 drochner Exp $");
+__RCSID("$NetBSD: networkdelta.c,v 1.8 1997/10/20 18:42:17 drochner Exp $");
 #endif
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif
 
 #include "globals.h"
@@ -148,8 +148,8 @@ networkdelta()
 	}
 
 	if (trace)
-		fprintf(fd, "median of %d values starting at %ld is ",
-		        xp-&x[0], med);
+		fprintf(fd, "median of %ld values starting at %ld is ",
+		        (long)(xp - &x[0]), med);
 	return median(med, &eps, &x[0], xp, 1);
 }
 
