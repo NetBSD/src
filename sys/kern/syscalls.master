@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 1997/06/12 22:05:37 mrg Exp $
+	$NetBSD: syscalls.master,v 1.53 1997/09/08 18:03:32 chuck Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -471,7 +471,8 @@
 247	UNIMPL
 248	UNIMPL
 249	UNIMPL
-250	UNIMPL
+250	STD		{ int sys_minherit(caddr_t addr, size_t len, \
+			    int inherit); }
 251	UNIMPL
 252	UNIMPL
 253	UNIMPL
