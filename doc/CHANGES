@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.287 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.288 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -637,3 +637,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	libcurses: add KEY_RESIZE, SIGWINCH handler and support for more
 		colour pairs. [jdc 20040322]
 	file(1): update to 4.08.  [pooka 20040323]
+	sysctl: Update dynamic implementation.  Solves netbsd32 compat issue
+		and adds support for descriptions.  [atatat 20040324]
