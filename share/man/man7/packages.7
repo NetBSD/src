@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.44 2001/01/24 10:01:14 garbled Exp $
+.\"	$NetBSD: packages.7,v 1.45 2001/01/31 17:04:03 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -96,16 +96,12 @@ GLX (hardware-accelerated) version of the Mesa library.
 This section documents variables that typically apply to an individual
 package.  Non-Boolean variables without defaults are *mandatory*.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It ONLY_FOR_ARCHS
-If set, it lists the values of MACHINE_ARCH (basic
-.Nx
-CPU types) that the package will build under.
-It can be a glob-style wildcard.
-.It NOT_FOR_ARCHS
-If set, it lists the values of MACHINE_ARCH (basic
-.Nx
-CPU types) that the package will not build under.
-It can be a glob-style wildcard.
+.It ONLY_FOR_PLATFORM
+If set, it lists the values of OS triples (OS-version-platform)
+that the package will build under.  It can be a glob-style wildcard.
+.It NOT_FOR_PLATFORM
+If set, it lists the values of OS triples (OS-version-platform)
+that the package will not build under.  It can be a glob-style wildcard.
 .It MAINTAINER
 The e-mail address of the contact person for this package.  The default
 is packages@NetBSD.ORG.
@@ -113,28 +109,25 @@ is packages@NetBSD.ORG.
 A list of descriptive categories into which this package falls.
 .It MASTER_SITES
 Primary location(s) for distribution files if not found locally.
-.It MASTER_SITE_SUBDIR
-Directory that
-.Dq %SUBDIR%
-in MASTER_SITES is replaced by.
 .It PATCH_SITES
 Primary location(s) for distribution patch files (see
 .Dv It PATCHFILES
 below) if not found locally.
-.It PATCH_SITE_SUBDIR
-Directory that
-.Dq %SUBDIR%
-in PATCH_SITES is replaced by.
 .It WRKDIR
 A temporary working directory that gets *clobbered* on clean.  The default is
-.Pa ${.CURDIR}/work .
+.Pa ${.CURDIR}/work
+or
+.Pa ${.CURDIR}/work.${MACHINE_ARCH}
+if
+.Dv OBJMACHINE
+is set.
 .It WRKSRC
 A subdirectory of ${WRKDIR} where the distribution actually
 unpacks to.  The default is
 .Pa ${WRKDIR}/${DISTNAME}
 unless
 .Dv NO_WRKSUBDIR
-is set, in which case simply
+is set, in which case it is simply
 .Pa ${WRKDIR} .
 .It DISTNAME
 Name of package or distribution.
@@ -231,15 +224,17 @@ will not be built.
 .It PLIST_SRC	   
 Which file(s) to use to build
 .Pa ${PLIST} .
-Either
-.Pa ${PKGDIR}/PLIST
-or
-.Pa ${PKGDIR}/PLIST-mi
-plus
-.Pa ${PKGDIR}/PLIST-md.shared
-or
-.Pa ${PKGDIR}/PLIST-md.static ,
-if not set otherwise.
+Default is
+.Pa ${PKGDIR}/PLIST .
+.It PLIST_SUBST
+Patterns that get automatically expanded during the PLIST creation.
+Takes arguments of the form
+.Li VARNAME =
+.Dq value
+and subsequently replaces every occurance of
+.Li ${VARNAME}
+with
+.Li value .
 .It INSTALL_FILE
 The name of a script which will be invoked when installing
 binary packages. If there is a file called
@@ -250,17 +245,33 @@ The name of a script which will be invoked when de-installing
 binary packages. If there is a file called
 .Pa ${PKGDIR}/DEINSTALL ,
 that file will be used.
-.It REQ_FILE
-The name of a script that is invoked before installation and de-installation
-to ensure things are available.
-If there is a file called
-.Pa ${PKGDIR}/REQ ,
-that file will be used.
-.It MESSAGE_FILE
+.It MESSAGE
+The name of a file which will be displayed during the installation
+of a package. No substitution according to MESSAGE_SUBST takes
+place. Overrides MESSAGE_SRC. Should not be used.
+.It MESSAGE_SRC
 The name of a file which will be displayed when installing
-binary packages. If there is a file called
+a package. If neither MESSAGE_SRC nor MESSAGE are set, and there
+is a file called
 .Pa ${PKGDIR}/MESSAGE ,
 that file will be used.
+Before displaying the file, substitution according to MESSAGE_SUBST
+takes place.
+.It MESSAGE_SUBST
+This variable takes equations of the form
+.Li VARNAME =
+.Dq value ,
+and replaces all occurrences of
+.Li ${VARNAME}
+in MESSAGE_SRC with
+.Li value .
+By default, substitution is performed for
+.Li LOCALBASE ,
+.Li PKGNAME ,
+.Li PREFIX ,
+.Li X11BASE ,
+and
+.Li X11PREFIX .
 .It NO_BIN_ON_CDROM
 Binaries of this package may not be placed on CDROM.  Set this string to
 .Pa ${RESTRICTED} .
@@ -321,15 +332,10 @@ to manage building of libraries and shared objects, where applicable.
 .It LTCONFIG_OVERRIDE
 If set, override the specified
 .Pa ltconfig
-for using
-.Pa pkglibtool
-instead of the pkg's own
-.Pa libtool .
-.It LIBTOOL_OVERRIDE
-If set, override the specified
+for using the
 .Pa libtool
-with our
-.Pa pkglibtool .
+package instead of the pkg's own
+.Pa libtool .
 .It USE_FORTRAN
 Says that the package uses a fortran compiler for building.
 .It USE_GMAKE	
@@ -486,7 +492,7 @@ if you want to fetch all distfiles, even for packages not built due to
 limitation by absent X or Motif.
 .\" XXXmrg -- this shouldn't be documented.  if we want to export the
 .\" feature, give it a different name, or something.
-.It __ARCH_OK    
+.It __PLATFORM_OK    
 Internal variable set if the package is ok to build on this architecture. Set
 to
 .Dq YES
@@ -548,10 +554,12 @@ Local package source distributions that are maintained in
 .Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ .
 .It Sy MASTER_SITE_PERL_CPAN
 Perl CPAN mirror.
-.It Sy MASTER_SITE_TEX_CTAN
-TeX CTAN mirror.
+.It Sy MASTER_SITE_SOURCEFORGE
+download.sourceforge.net mirror.
 .It Sy MASTER_SITE_SUNSITE
 sunsite.unc.edu mirror.
+.It Sy MASTER_SITE_TEX_CTAN
+TeX CTAN mirror.
 .It Sy MASTER_SITE_XCONTRIB
 X Window System contributed source mirror.
 .El
