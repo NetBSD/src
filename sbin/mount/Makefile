@@ -1,10 +1,8 @@
-#	@(#)Makefile	5.5 (Berkeley) 5/11/90
+#	@(#)Makefile	8.5 (Berkeley) 3/27/94
 
 PROG=	mount
-CFLAGS+=-DNFS
+SRCS=	mount.c mount_ufs.c getmntopts.c
 MAN8=	mount.0
-DPADD=	${LIBRPC}
-LDADD=	-lrpc
-MLINKS=	mount.8 umount.8
+# We do NOT install the getmntopts.3 man page.
 
 .include <bsd.prog.mk>

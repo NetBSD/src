@@ -1,6 +1,6 @@
-#	@(#)Makefile	5.3.1.1 (Berkeley) 5/7/91
+#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 PROG=	clri
-NOMAN=	noman
+MAN8=	clri.0
 
 .include <bsd.prog.mk>
