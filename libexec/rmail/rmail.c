@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.15 2001/01/16 02:38:05 cgd Exp $	*/
+/*	$NetBSD: rmail.c,v 1.16 2003/04/05 17:45:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.15 2001/01/16 02:38:05 cgd Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.16 2003/04/05 17:45:11 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,24 @@ main(argc, argv)
 	i = 0;
 	args[i++] = _PATH_SENDMAIL;	/* Build sendmail's argument list. */
 	args[i++] = "-oee";		/* No errors, just status. */
+	/*
+	 * If you define QUEUE_ONLY, sendmail is invoked with "-odq",
+	 * which means all mail is queued instead of being delivered
+	 * right then. Your system load will be lower, but mail won't
+	 * be delivered until the next queue run (say up to an hour
+	 * away). This used to be the default in rmail, but it seems
+	 * way outdated now.
+	 * The default now is "-odb", deliver in background.
+	 * Another possibility would be "-odi", which would deliver in
+	 * foreground, which is slow if you have a lot of mail since
+	 * you won't get parallelism but will guarantee you don't get
+	 * lots of forks. 
+	 */
+#ifdef QUEUE_ONLY
 	args[i++] = "-odq";		/* Queue it, don't try to deliver. */
+#else
+	args[i++] = "-odb";		/* Deliver in background. */
+#endif
 	args[i++] = "-oi";		/* Ignore '.' on a line by itself. */
 
 	/* set from system and protocol used */
