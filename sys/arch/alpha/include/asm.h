@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 1996/10/13 02:59:52 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.9 1996/10/17 02:49:04 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -128,6 +128,22 @@
 /* Other DEC standard names */
 #define ai	$25	/* (T)		argument information	*/
 #define pv	$27	/* (T)		procedure value		*/
+
+
+/*
+ * Useful stuff.
+ */
+#ifdef __STDC__
+#define	__CONCAT(a,b)	a ## b
+#else
+#define	__CONCAT(a,b)	a/**/b
+#endif
+#define ___CONCAT(a,b)	__CONCAT(a,b)
+
+/*
+ * Macro to make a local label name.
+ */
+#define	LLABEL(name,num)	___CONCAT(___CONCAT(L,name),num)
 
 /*
  *
@@ -587,13 +603,19 @@ label:	ASCIZ msg;						\
 #define	PAL_OSF1_callsys	0x0083			/* U */
 #define	PAL_OSF1_imb		0x0086			/* U */
 
+
 /*
- * Defintions to make things portable between gcc and OSF/1 cc.
+ * System call glue.
  */
-#define	SETGP(pv)	ldgp	gp,0(pv)
+#define	SYSCALLNUM(name)					\
+	___CONCAT(SYS_,name)
 
-#define	MF_FPCR(x)	mf_fpcr x
-#define	MT_FPCR(x)	mt_fpcr x
-#define	JMP(loc)	jmp	zero,loc
-#define	CONST(c,reg)	ldiq	reg, c
+#define	CALLSYS_NOERROR(name)					\
+	ldiq	v0, SYSCALLNUM(name);				\
+	call_pal PAL_OSF1_callsys
 
+/*
+ * Load the global pointer.
+ */
+#define	LDGP(reg)						\
+	ldgp	gp, 0(reg)
