@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.12 2000/10/11 12:17:35 is Exp $
+#	$NetBSD: airport,v 1.13 2000/10/11 12:23:50 is Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -6,6 +6,7 @@
 # available at http://www.cowtown.net/users/rcr/aaa/ccmain.htm
 #
 # Airport Code : Airport
+AAR:Tirstrup, Aarhus, Denmark
 ABE:Allentown-Bethlehem-Easton International, Pennsylvania, USA
 ABQ:Albuquerque International, New Mexico, USA
 ADL:Adelaide, Australia
@@ -362,6 +363,7 @@ YZF:Yellowknife, Northwest Territories, Canada
 YZR:Sarnia, Ontario, Canada
 YZV:Sept-Iles, Quebec, Canada
 ZBF:Bathurst, New Brunswick, Canada
+ZBT:Bus Service, Aarhus, Denmark
 ZGS:Gethsemani, Quebec, Canada
 ZKG:Kegaska, Quebec, Canada
 ZRH:Zurich, Switzerland
