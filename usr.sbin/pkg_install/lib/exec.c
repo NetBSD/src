@@ -1,10 +1,10 @@
-/* $NetBSD: exec.c,v 1.2 1997/06/05 12:59:44 agc Exp $ */
+/* $NetBSD: exec.c,v 1.3 1997/10/16 00:32:17 hubertf Exp $ */
 
 #ifndef lint
 #if 0
-static const char *rcsid = "from FreeBSD Id: exec.c,v 1.5 1997/02/22 16:09:46 peter Exp";
+static const char *rcsid = "from FreeBSD Id: exec.c,v 1.6 1997/10/08 07:47:50 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: exec.c,v 1.2 1997/06/05 12:59:44 agc Exp $";
+static const char *rcsid = "$NetBSD: exec.c,v 1.3 1997/10/16 00:32:17 hubertf Exp $";
 #endif
 #endif
 
@@ -28,6 +28,7 @@ static const char *rcsid = "$NetBSD: exec.c,v 1.2 1997/06/05 12:59:44 agc Exp $"
  *
  */
 
+#include <err.h>
 #include "lib.h"
 
 /*
@@ -46,13 +47,13 @@ vsystem(const char *fmt, ...)
     maxargs -= 32;			/* some slop for the sh -c */
     cmd = malloc(maxargs);
     if (!cmd) {
-	whinge("vsystem can't alloc arg space");
+	warnx("vsystem can't alloc arg space");
 	return 1;
     }
 
     va_start(args, fmt);
     if (vsnprintf(cmd, maxargs, fmt, args) > maxargs) {
-	whinge("vsystem args are too long");
+	warnx("vsystem args are too long");
 	return 1;
     }
 #ifdef DEBUG
