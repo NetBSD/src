@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.20 2000/01/16 10:27:51 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.21 2000/01/18 20:11:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -142,6 +142,8 @@ typedef struct uhci_softc {
 
 	uhci_soft_td_t *sc_freetds;	/* TD free list */
 	uhci_soft_qh_t *sc_freeqhs;	/* QH free list */
+
+	SIMPLEQ_HEAD(, usbd_xfer) sc_free_xfers; /* free xfers */
 
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
