@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.28 2002/03/16 16:56:00 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.29 2002/06/17 16:33:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -233,6 +233,11 @@ struct cdevsw	cdevsw[] =
 	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 46: isdn trace device */
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 47: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl), /* 48: settimeofday driver */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 49: system call tracing */
+#else
+	cdev_notdef(),			/* 49: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -297,7 +302,7 @@ static int chrtoblktbl[] = {
 	/* 42 */	NODEV,		/* 43 */	NODEV,
 	/* 44 */	NODEV,		/* 45 */	NODEV,
 	/* 46 */	NODEV,		/* 47 */	NODEV,
-	/* 48 */	NODEV,
+	/* 48 */	NODEV,		/* 49 */	NODEV,
 };
 
 /*

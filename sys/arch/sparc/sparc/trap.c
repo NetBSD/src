@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.108 2001/12/04 00:05:08 darrenr Exp $ */
+/*	$NetBSD: trap.c,v 1.109 2002/06/17 16:33:17 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,7 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_sunos.h"
 #include "opt_sparc_arch.h"
@@ -67,6 +68,9 @@
 #include <sys/syslog.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -1275,14 +1279,8 @@ syscall(code, tf, pc)
 			error = copyin((caddr_t)tf->tf_out[6] +
 			    offsetof(struct frame, fr_argx),
 			    (caddr_t)&args.i[nap], (i - nap) * sizeof(register_t));
-			if (error) {
-#ifdef KTRACE
-				if (KTRPOINT(p, KTR_SYSCALL))
-					ktrsyscall(p, code,
-					    callp->sy_argsize, args.i);
-#endif
+			if (error)
 				goto bad;
-			}
 			i = nap;
 		}
 		copywords(ap, args.i, i * sizeof(register_t));
@@ -1295,10 +1293,9 @@ syscall(code, tf, pc)
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0)
 		KERNEL_PROC_LOCK(p);
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args.i);
-#endif
+	f ((error = trace_enter(p, code, args.i, rval)) != 0)
+		goto bad;
+
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 	error = (*callp->sy_call)(p, &args, rval);
@@ -1344,17 +1341,9 @@ syscall(code, tf, pc)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif /* SYSCALL_DEBUG */
+	trace_exit(p, code, args.i, rval, error);
+
 	userret(p, pc, sticks);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
 	share_fpu(p, tf);
 }
 

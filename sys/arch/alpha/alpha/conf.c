@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.62 2002/03/16 16:55:52 martin Exp $ */
+/* $NetBSD: conf.c,v 1.63 2002/06/17 16:32:58 christos Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,8 +37,9 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.62 2002/03/16 16:55:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.63 2002/06/17 16:32:58 christos Exp $");
 
+#include "opt_systrace.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -303,6 +304,11 @@ struct cdevsw	cdevsw[] =
 	cdev__ocim_init(NAGP,agp),	/* 67: AGP graphics aperture device */
 	cdev__ocm_init(NSTIC,stic),	/* 68: PixelStamp mmap interface */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 69: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 70: system call tracing */
+#else
+	cdev_notdef(),			/* 70: system call tracing */
+#endif
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -414,6 +420,7 @@ static int chrtoblktbl[] = {
 	/* 67 */	NODEV,
 	/* 68 */	NODEV,
 	/* 69 */	NODEV,
+	/* 70 */	NODEV,
 };
 
 /*

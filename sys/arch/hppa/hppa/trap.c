@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.1 2002/06/05 01:04:21 fredette Exp $	*/
+/*	$NetBSD: trap.c,v 1.2 2002/06/17 16:33:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -74,12 +74,19 @@
 
 #include "opt_kgdb.h"
 #include "opt_syscall_debug.h"
+#include "opt_ktrace.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
+#ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
@@ -1029,13 +1036,8 @@ syscall(frame, args)
 		callp += code;
 	argsize = callp->sy_argsize;
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -1073,19 +1075,16 @@ syscall(frame, args)
 		p = curproc;
 		break;
 	default:
+	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		frame->tf_t1 = error;
 		break;
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
+
+	trace_exit(p, code, args, rval, error);
+
 	userret(p, frame->tf_iioq_head, 0);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
 #ifdef DEBUG
 	frame_sanity_check(frame, p);
 #endif /* DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2002/03/28 18:48:31 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10 2002/06/17 16:33:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,9 +80,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2002/03/28 18:48:31 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2002/06/17 16:33:09 christos Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
@@ -92,6 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2002/03/28 18:48:31 manu Exp $");
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 
@@ -122,13 +126,19 @@ vaddr_t MachEmulateBranch(struct frame *, vaddr_t, u_int, int);
 void
 EMULNAME(syscall_intern)(struct proc *p)
 {
-
 #ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
 		p->p_md.md_syscall = EMULNAME(syscall_fancy);
-	else
+		return;
+	}
 #endif
-		p->p_md.md_syscall = EMULNAME(syscall_plain);
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
+		return;
+	} 
+#endif
+	p->p_md.md_syscall = EMULNAME(syscall_plain);
 }
 
 /*
@@ -390,14 +400,8 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args);
-#endif
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
 	rval = (register_t *)&frame->f_regs[V0];
@@ -434,14 +438,7 @@ EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
+	trace_exit(p, code, args, rval, error);
 
 	userret(p);
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif
 }

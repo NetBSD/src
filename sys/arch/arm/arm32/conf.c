@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 2002/06/17 16:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,8 @@
  *
  * Created      : 17/09/94
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,6 +390,7 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 95: */
 	bdev_lkm_dummy(),		/* 96: */
 	bdev_lkm_dummy(),		/* 97: */
+	bdev_lkm_dummy(),		/* 98: */
 };
 
 /* Character devices */
@@ -500,6 +503,11 @@ struct cdevsw cdevsw[] = {
 	cdev_ir_init(NIRFRAMEDRV,irframe),	/* 95: IrDA frame driver */
 	cdev_ir_init(NCIR,cir),			/* 96: Consumer Ir */
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),	/* 98: system call tracing */
+#else
+	cdev_notdef(),				/* 98: system call tracing */
+#endif
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -640,6 +648,7 @@ static int chrtoblktbl[] = {
     /* 95 */	    NODEV,
     /* 96 */	    NODEV,
     /* 97 */	    NODEV,
+    /* 98 */	    NODEV,
 };
 
 /*

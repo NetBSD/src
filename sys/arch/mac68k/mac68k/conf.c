@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.56 2002/04/27 19:29:09 shiba Exp $	*/
+/*	$NetBSD: conf.c,v 1.57 2002/06/17 16:33:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,7 @@
  */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,6 +223,11 @@ struct cdevsw	cdevsw[] =
 	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 47: Venus cache driver (Coda) */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 48: clockctl pseudo device */
 	cdev_disk_init(NWD, wd),	/* 49: IDE disk */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 50: system call tracing */
+#else
+	cdev_notdef(),			/* 50: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -313,6 +319,7 @@ static int chrtoblktab[] = {
 	/* 47 */	NODEV,
 	/* 48 */	NODEV,
 	/* 49 */	22,
+	/* 50 */	NODEV,
 };
 
 dev_t

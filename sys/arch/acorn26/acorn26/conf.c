@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $ */
+/* $NetBSD: conf.c,v 1.3 2002/06/17 16:32:57 christos Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -29,9 +29,10 @@
  * conf.c -- Device switch tables and related gumf.
  */
 
+#include "opt_systrace.h"
 #include <sys/param.h>
 
-__RCSID("$NetBSD: conf.c,v 1.2 2002/03/24 23:37:42 bjh21 Exp $");
+__RCSID("$NetBSD: conf.c,v 1.3 2002/06/17 16:32:57 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -130,6 +131,11 @@ struct cdevsw cdevsw[] = {
        	cdev_vc_nb_init(NVCODA,vc_nb_),	/* 25: coda file system psdev */
 	cdev_disk_init(NRAID,raid),    	/* 26: RAIDframe disk driver */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 27: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 28: system call tracing */
+#else
+	cdev_notdef(),			/* 28: system call tracing */
+#endif
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -200,6 +206,7 @@ static int chrtoblktbl[] = {
 	/* 25 */	NODEV,
 	/* 26 */	7,		/* raid */
 	/* 27 */	NODEV,
+	/* 28 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 2002/01/12 14:52:40 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 2002/06/17 16:33:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,7 @@
  */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +202,11 @@ struct cdevsw	cdevsw[] =
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
 	cdev_mouse_init(NWSMUX, wsmux),  /* 45: ws multiplexor */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 46: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 47: system call tracing */
+#else
+	cdev_notdef(),			/* 47: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -289,6 +295,7 @@ static int chrtoblktab[] = {
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
+	/* 47 */	NODEV,
 };
 
 dev_t

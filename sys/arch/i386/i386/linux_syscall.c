@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.19 2002/03/22 16:41:23 christos Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.20 2002/06/17 16:33:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.19 2002/03/22 16:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.20 2002/06/17 16:33:07 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #endif
 
 #include <sys/param.h>
@@ -52,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.19 2002/03/22 16:41:23 christos 
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 
@@ -75,13 +79,19 @@ void
 linux_syscall_intern(p)
 	struct proc *p;
 {
-
 #ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
 		p->p_md.md_syscall = linux_syscall_fancy;
-	else
+		return;
+	}
 #endif
-		p->p_md.md_syscall = linux_syscall_plain;
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = linux_syscall_fancy;
+		return;
+	} 
+#endif
+	p->p_md.md_syscall = linux_syscall_plain;
 }
 
 /*
@@ -217,13 +227,10 @@ linux_syscall_fancy(frame)
 			break;
 		}
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif /* SYSCALL_DEBUG */
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
-#endif /* KTRACE */
+
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
+
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
@@ -244,18 +251,14 @@ linux_syscall_fancy(frame)
 		/* nothing to do */
 		break;
 	default:
+	bad:
 		error = native_to_linux_errno[error];
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif /* SYSCALL_DEBUG */
+	trace_exit(p, code, args, rval, error);
+
 	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
-#endif /* KTRACE */
 }

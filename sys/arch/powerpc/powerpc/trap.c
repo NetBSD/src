@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 2002/05/19 06:35:45 augustss Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 2002/06/17 16:33:15 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -42,7 +43,12 @@
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -281,10 +287,8 @@ trap(frame)
 				params = args;
 			}
 
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSCALL))
-				ktrsyscall(p, code, argsize, params);
-#endif
+			if ((error = trace_enter(p, code, args, rval)) != 0)
+				goto syscall_bad;
 
 			rval[0] = 0;
 			rval[1] = 0;
@@ -314,12 +318,11 @@ syscall_bad:
 				break;
 			}
 
-#ifdef	KTRACE
-			if (KTRPOINT(p, KTR_SYSRET))
-				ktrsysret(p, code, error, rval[0]);
-#endif
 		}
 		KERNEL_PROC_UNLOCK(p);
+
+		trace_exit(p, code, args, rval, error);
+
 		break;
 
 	case EXC_FPU|EXC_USER:

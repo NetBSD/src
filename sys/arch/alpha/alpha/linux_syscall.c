@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.5 2001/05/30 12:28:38 mrg Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.6 2002/06/17 16:32:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,11 +97,12 @@
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5 2001/05/30 12:28:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.6 2002/06/17 16:32:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +111,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5 2001/05/30 12:28:38 mrg Exp $"
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #include <sys/syscall.h>
 
@@ -136,11 +140,18 @@ linux_syscall_intern(struct proc *p)
 {
 
 #ifdef KTRACE
-	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
-		p->p_md.md_syscall = linux_syscall_fancy;
-	else
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	}
 #endif
-		p->p_md.md_syscall = linux_syscall_plain;
+#ifdef SYSTRACE
+	if (ISSET(p->p_flag, P_SYSTRACE)) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	} 
+#endif
+	p->p_md.md_syscall = syscall_plain;
 }
 
 /*
@@ -304,13 +315,9 @@ linux_syscall_fancy(struct proc *p, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, callp->sy_argsize, args);
-#endif
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
-#endif
+
+	if ((error = trace_enter(p, code, args, rval)) != 0)
+		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -335,16 +342,9 @@ linux_syscall_fancy(struct proc *p, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
 	KERNEL_PROC_UNLOCK(p);
+
+	trace_exit(p, code, args, rval, error);
+
 	userret(p);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(p);
-		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(p);
-	}
-#endif
 }

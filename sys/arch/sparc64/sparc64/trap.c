@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 2002/05/14 02:34:14 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.78 2002/06/17 16:33:18 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -54,6 +54,7 @@
 #include "opt_ddb.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 
@@ -70,6 +71,9 @@
 #include <sys/syslog.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 
 #include <uvm/uvm_extern.h>
@@ -1883,11 +1887,6 @@ syscall(tf, code, pc)
 		for (argp = &args.l[0]; i--;) 
 			*argp++ = *ap++;
 		
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p, code,
-				   callp->sy_argsize, (register_t*)args.l);
-#endif
 		if (error) goto bad;
 #ifdef DEBUG
 		if (trapdebug&(TDB_SYSCALL|TDB_FOLLOW)) {
@@ -1948,8 +1947,8 @@ syscall(tf, code, pc)
 		}
 		/* Need to convert from int64 to int32 or we lose */
 		for (argp = &args.i[0]; i--;) 
-				*argp++ = *ap++;
-#ifdef KTRACE
+			*argp++ = *ap++;
+#ifdef notdef
 		if (KTRPOINT(p, KTR_SYSCALL)) {
 #if defined(__arch64__)
 			register_t temp[8];
@@ -1967,6 +1966,7 @@ syscall(tf, code, pc)
 #endif
 		}
 #endif
+#endif
 		if (error) {
 			goto bad;
 		}
@@ -1982,9 +1982,10 @@ syscall(tf, code, pc)
 		}
 #endif
 	}
-#ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, (register_t *)&args);
-#endif
+
+	if ((error = trace_enter(p, code, &args, rval)) != 0)
+		goto bad;
+
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 #ifdef DEBUG
@@ -2062,19 +2063,15 @@ syscall(tf, code, pc)
 		break;
 	}
 
-#ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
-#endif
+
+	trace_exit(p, code, &args, rval, error);
+
 	userret(p, pc, sticks);
 #ifdef NOTDEF_DEBUG
 	if ( code == 202) {
 		/* Trap on __sysctl */
 		Debugger();
 	}
-#endif
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p, code, error, rval[0]);
 #endif
 	share_fpu(p, tf);
 #ifdef DEBUG

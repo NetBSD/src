@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.52 2002/03/16 16:55:54 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.53 2002/06/17 16:33:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -36,6 +36,7 @@
  */
 
 #include "opt_compat_svr4.h"
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,6 +250,11 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 50: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 51: svr4 net pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 53: system call tracing */
+#else
+	cdev_notdef(),			/* 53: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -364,6 +370,7 @@ static int chrtoblktab[] = {
 	/* 50 */	15,
 	/* 51 */	NODEV,
 	/* 52 */	NODEV,
+	/* 53 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2002/01/12 12:59:11 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2002/06/17 16:33:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,6 +34,8 @@
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include "opt_systrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +121,11 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 20 */
 	cdev_rnd_init(NRND,rnd),	/* 21: random source pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 22: clockctl pseudo device */
+#ifdef SYSTRACE
+	cdev_systrace_init(1, systrace),/* 23: system call tracing */
+#else
+	cdev_notdef(),			/* 23: system call tracing */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -183,6 +190,7 @@ static int chrtoblktbl[] = {
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
+	/* 23 */	NODEV,
 };
 
 /*
