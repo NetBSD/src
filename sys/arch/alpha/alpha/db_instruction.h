@@ -1,4 +1,4 @@
-/* $NetBSD: db_instruction.h,v 1.5 1999/05/09 19:38:59 cgd Exp $ */
+/* $NetBSD: db_instruction.h,v 1.6 2000/03/20 02:54:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -362,13 +362,17 @@ typedef union {
 
 		/* SPECIAL, "displacement" opcodes (bits 0..15)  */
 
-#define	op_draint	0x0000
+#define	op_trapb	0x0000
+#define	op_excb		0x0400
 #define	op_mb		0x4000
+#define	op_wmb		0x4400
 #define	op_fetch	0x8000
 #define	op_fetch_m	0xa000
 #define	op_rpcc		0xc000
 #define op_rc		0xe000
+#define	op_ecb		0xe800
 #define	op_rs		0xf000
+#define	op_wh64		0xf800
 
 		/* JUMP, "action" opcodes (bits 14..15) */
 
