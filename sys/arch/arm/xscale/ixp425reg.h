@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.8 2003/07/02 10:40:47 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.9 2003/07/02 14:03:52 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -433,6 +433,14 @@
 #define	COMMAND_MEM_WRITE	0x7	/* Memory Write		(T)(I) */
 #define	COMMAND_CONF_READ	0xa	/* Configuration Read	(T)(I) */
 #define	COMMAND_CONF_WRITE	0xb	/* Configuration Write	(T)(I) */
+
+/*
+ * SDRAM Configuration Register
+ */
+#define	IXP425_MCU_HWBASE	0xcc000000UL
+#define	MCU_SDR_CONFIG		0x00
+#define	MCU_SDR_REFRESH		0x04
+#define	MCU_SDR_IR		0x08
 
 /*
  * Performance Monitoring Unit          (CP14)
