@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.232 2002/11/18 07:09:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.233 2002/12/02 13:18:03 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -47,12 +47,12 @@ NOOBJ=		# defined
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	UTC
 PWD_MKDB?=	pwd_mkdb
-MAKESUMS=	CKSUM=${CKSUM:Q} sh ../distrib/sets/makesums
+MAKESUMS=	CKSUM=${CKSUM:Q} sh ${NETBSDSRCDIR}/distrib/sets/makesums
 
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
 MKISOFS?=	mkisofs
-DISTRIBREV!=	sh ${NETBSDSRCDIR}/sys/conf/osrelease.sh -s
+DISTRIBREV!=	sh ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
 ISO_VOLID!=	echo NETBSD_${MACHINE}_${DISTRIBREV} | tr a-z A-Z
 MKISOFS_FLAGS+= -J -l \
@@ -134,8 +134,8 @@ obj:
 distribution: check_DESTDIR .WAIT distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
-	(cd ..; ${MAKE} _DISTRIB= includes)
-	(cd ..; ${MAKE} _DISTRIB= install)
+	(cd ${NETBSDSRCDIR}; ${MAKE} _DISTRIB= includes)
+	(cd ${NETBSDSRCDIR}; ${MAKE} _DISTRIB= install)
 .endif	# !INSTALL_DONE
 	${MAKE} install-etc-files
 .endif	# !DISTRIBUTION_DONE
@@ -264,13 +264,13 @@ install-etc-files: check_DESTDIR
 	${ETC_INSTALL_FILE} -o games -g games -m 664 \
 	    /dev/null ${DESTDIR}/var/games/tetris.scores
 	(cd skel; ${MAKE} distribution)
-	(cd ../usr.bin/mail; ${MAKE} distribution)
-	(cd ../gnu/usr.sbin/postfix/; ${MAKE} distribution)
+	(cd ${NETBSDSRCDIR}/usr.bin/mail; ${MAKE} distribution)
+	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/postfix/; ${MAKE} distribution)
 .if (${MKCRYPTO} != "no")
-	(cd ../usr.bin/ssh; ${MAKE} distribution)
+	(cd ${NETBSDSRCDIR}/usr.bin/ssh; ${MAKE} distribution)
 .endif
 .if !defined(NO_SENDMAIL)
-	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+	(cd ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
 
 distrib-dirs: check_DESTDIR
@@ -281,13 +281,16 @@ distrib-dirs: check_DESTDIR
 	    usr/src/sys ${DESTDIR}/sys
 
 release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
-    distribution .WAIT snap_pre snap_md_pre .WAIT snap_kern .WAIT snap_md_post
-	(cd ../distrib/sets; ${MAKE} sets)
+		    distribution .WAIT \
+		    snap_pre .WAIT snap_kern .WAIT \
+		    snap_post .WAIT snap_md_post
+	(cd ${NETBSDSRCDIR}/distrib/sets; ${MAKE} sets)
 	${MAKESUMS} -t ${RELEASEDIR}/binary/kernel '*.gz'
 
 # Standalone target to create a CDROM image after the release
 # was composed. Should be run after "make build" in both src and xsrc
 iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_post
+#	empty target
 
 iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_pre
 	@if ${MKISOFS} --version; then \
@@ -302,11 +305,11 @@ iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_pre
 
 # Setup the $RELEASEDIR to produce a bootable CD image:
 iso-image_md_pre: check_DESTDIR check_RELEASEDIR
-# nothing here -- look in the machine-dependent Makefile.inc
+#	nothing here -- look in the machine-dependent Makefile.inc
 
 # Fixup the  CD-image to be bootable
 iso-image_md_post: check_DESTDIR check_RELEASEDIR .WAIT iso-image_mi
-# nothing here -- look in the machine-dependent Makefile.inc
+#	nothing here -- look in the machine-dependent Makefile.inc
 
 snap_pre: check_DESTDIR check_RELEASEDIR
 # Could be a mount point, ignore the errors
@@ -315,6 +318,13 @@ snap_pre: check_DESTDIR check_RELEASEDIR
 .for dir in ${INSTALLATION_DIRS}
 	${INSTALL} -d -m 755 ${RELEASEDIR}/${dir}
 .endfor
+
+snap_post: check_DESTDIR check_RELEASEDIR
+.ifndef UPDATE
+	cd ${NETBSDSRCDIR}/distrib && ${MAKE} cleandir
+.endif
+	cd ${NETBSDSRCDIR}/distrib && ${MAKE} depend && ${MAKE} && \
+	    ${MAKE} release
 
 # snap_kern --
 # This target builds the kernels specified by each port.
@@ -437,10 +447,7 @@ snap_kern: check_DESTDIR check_RELEASEDIR .WAIT \
 .endif # !target(snap_kern)					# }
 
 
-snap_md_pre: check_DESTDIR check_RELEASEDIR
-# nothing here -- look in the machine-dependent Makefile.inc
-
 snap_md_post: check_DESTDIR check_RELEASEDIR
-# nothing here -- look in the machine-dependent Makefile.inc
+#	nothing here -- look in the machine-dependent Makefile.inc
 
 .include <bsd.prog.mk>
