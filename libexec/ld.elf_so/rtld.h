@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.53 2002/09/23 23:56:49 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.54 2002/09/24 01:24:44 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -57,9 +57,9 @@
 #define LIBDIRLEN	(sizeof LIBDIR - 1)
 #define SVR4_LIBDIRLEN	(sizeof SVR4_LIBDIR - 1)
 
+extern int _rtld_pagesz;
 #ifndef	PAGESIZE
 # ifdef VARPSZ
-extern int _rtld_pagesz;
 #  ifdef RTLD_DEBUG
 #   define PAGESIZE	(assert(_rtld_pagesz), _rtld_pagesz)
 #  else
