@@ -36,7 +36,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(fnmsId, "$Id: rcsfnms.c,v 1.2 1993/08/02 17:47:22 mycroft Exp $")
+libId(fnmsId, "$Id: rcsfnms.c,v 1.3 1993/10/08 02:33:30 cgd Exp $")
 
 char const *RCSfilename;
 char *workfilename;
@@ -95,7 +95,7 @@ static struct compair const comtable[] = {
 	"ms",  ".\\\" ",/* ms-macros   t/nroff*/
 	"p",   " * ",   /* Pascal      */
 	"pas", " * ",
-	"pl",  "% ",	/* Prolog      */
+	"pl",  "# ",	/* Perl        */
 	"tex", "% ",	/* TeX	       */
         "y",   " * ",   /* yacc        */
 	nil,   "# "     /* default for unknown suffix; must always be last */
