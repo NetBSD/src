@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dbxread.c	6.3 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: dbxread.c,v 1.3 1993/08/01 18:47:28 mycroft Exp $";
+static char rcsid[] = "$Id: dbxread.c,v 1.4 1993/12/08 08:33:40 pk Exp $";
 #endif /* not lint */
 
 /* Read dbx symbol tables and convert to internal format, for GDB.
@@ -62,6 +62,11 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <stab.h>
 #endif
 #include <ctype.h>
+
+/* This type specified the size of a N_DATA symbol of the same name */
+#ifndef N_SIZE
+#define N_SIZE  0xc
+#endif
 
 #ifndef NO_GNU_STABS
 /*
@@ -2273,6 +2278,11 @@ read_dbx_symtab (desc, stringtab, stringtab_size, nlistlen, inclink,
 	case N_SETB:
 	case N_SETB | N_EXT:
 	case N_SETV:
+#endif
+
+#ifdef N_SIZE
+	case N_SIZE:
+	case N_SIZE | N_EXT:
 #endif
 	  continue;
 
