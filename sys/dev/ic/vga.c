@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.51 2002/06/25 21:07:42 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.52 2002/06/26 16:33:18 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.51 2002/06/25 21:07:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.52 2002/06/26 16:33:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,8 +852,9 @@ vga_usefont(struct vga_config *vc, struct egavga_font *f)
 	slot = 0;
 
 loadit:
-	vga_loadchars(&vc->hdl, slot, 0, 256,
-		      f->wsfont->fontheight, f->wsfont->data);
+	vga_loadchars(&vc->hdl, slot, f->wsfont->firstchar,
+		      f->wsfont->numchars, f->wsfont->fontheight,
+		      f->wsfont->data);
 	f->slot = slot;
 	vc->vc_fonts[slot] = f;
 
@@ -992,7 +993,7 @@ vga_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 				*name2++ = '\0';
 		}
 		res = vga_selectfont(vc, scr, data->name, name2);
-		if (!res)
+		if (!res && scr->pcs.active)
 			vga_setfont(vc, scr);
 		return (res);
 	}
