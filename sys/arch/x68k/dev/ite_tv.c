@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.4 1997/10/12 14:52:25 oki Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.5 1998/08/06 14:08:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -35,9 +35,10 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <machine/grfioctl.h>
+
 #include <x68k/x68k/iodevice.h>
 #include <x68k/dev/itevar.h>
-#include <x68k/dev/grfioctl.h>
 #include <x68k/dev/grfvar.h>
 
 /*
