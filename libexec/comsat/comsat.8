@@ -1,4 +1,4 @@
-.\"	$NetBSD: comsat.8,v 1.8 2000/08/14 12:16:45 msaitoh Exp $
+.\"	$NetBSD: comsat.8,v 1.9 2002/01/15 02:19:36 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,6 +96,11 @@ to find out who's logged on and on what terminals
 .Xr biff 1 ,
 .Xr inetd 8 ,
 .Xr syslogd 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 The message header filtering is prone to error.
 The density of the information presented is near the theoretical minimum.
@@ -108,8 +113,3 @@ does not mess up the screen.
 .Pp
 .Nm
 runs as root so that it can open the users maildrop.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.2 .
