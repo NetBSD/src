@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.22 1999/01/23 16:59:22 drochner Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.23 1999/01/28 11:46:23 dbj Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -472,6 +472,7 @@
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
 #define KB_LK401		0x0004	/* DEC LK401 instead LK201 */
 #define KB_SWAPCTRLCAPS		0x0008	/* Swap Control-L and Caps-Lock */
+#define KB_NEXT			0x0010	/* NeXT keyboard */
 
 #define KB_NAMETAB \
 	{ KB_USER,	"user" }, \
@@ -485,6 +486,7 @@
 	{ KB_NODEAD,	"nodead" }, \
 	{ KB_DECLK,	"declk" }, \
 	{ KB_LK401,	"lk401" }, \
-	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }
+	{ KB_SWAPCTRLCAPS, "swapctrlcaps" }, \
+ 	{ KB_NEXT,	"next" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
