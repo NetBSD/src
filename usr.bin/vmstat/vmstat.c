@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.82 2001/06/13 08:18:30 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.83 2001/08/26 02:50:37 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.82 2001/06/13 08:18:30 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.83 2001/08/26 02:50:37 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -773,12 +773,12 @@ dointr(int verbose)
 	}
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("%-24s %16s %8s\n", "interrupt", "total", "rate");
+	(void)printf("%-34s %16s %8s\n", "interrupt", "total", "rate");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
 		if (*intrcnt || verbose)
-			(void)printf("%-24s %16lld %8lld\n", intrname,
+			(void)printf("%-34s %16lld %8lld\n", intrname,
 			    (long long)*intrcnt,
 			    (long long)(*intrcnt / uptime));
 		intrname += strlen(intrname) + 1;
@@ -811,13 +811,13 @@ event_chain_trashed:
 			goto event_chain_trashed;
 
 		(void)printf("%s %s%*s %16lld %8lld\n", evgroup, evname,
-		    24 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
+		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
 		    (long long)evcnt.ev_count,
 		    (long long)(evcnt.ev_count / uptime));
 
 		inttotal += evcnt.ev_count++;
 	}
-	(void)printf("%-24s %16lld %8lld\n", "Total", inttotal,
+	(void)printf("%-34s %16lld %8lld\n", "Total", inttotal,
 	    (long long)(inttotal / uptime));
 }
 #endif
@@ -825,6 +825,7 @@ event_chain_trashed:
 void
 doevcnt(int verbose)
 {
+	static const char * evtypes [] = { "misc", "intr", "trap" };
 	long long uptime;
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
@@ -833,7 +834,7 @@ doevcnt(int verbose)
 	/* XXX should print type! */
 
 	uptime = getuptime();
-	(void)printf("%-24s %16s %8s %s\n", "event", "total", "rate", "type");
+	(void)printf("%-34s %16s %8s %s\n", "event", "total", "rate", "type");
 	kread(X_ALLEVENTS, &allevents, sizeof allevents);
 	evptr = allevents.tqh_first;
 	while (evptr) {
@@ -858,12 +859,11 @@ event_chain_trashed:
 			goto event_chain_trashed;
 
 		(void)printf("%s %s%*s %16lld %8lld %s\n", evgroup, evname,
-		    24 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
+		    34 - (evcnt.ev_grouplen + 1 + evcnt.ev_namelen), "",
 		    (long long)evcnt.ev_count,
 		    (long long)(evcnt.ev_count / uptime),
-		    /* XXX do the following with an array lookup XXX */
-		    (evcnt.ev_type == EVCNT_TYPE_MISC) ? "misc" :
-			((evcnt.ev_type == EVCNT_TYPE_INTR) ? "intr" : "?"));
+		    (evcnt.ev_type < sizeof(evtypes)/sizeof(evtypes)
+			? evtypes[evcnt.ev_type] : "?"));
 	}
 }
 
