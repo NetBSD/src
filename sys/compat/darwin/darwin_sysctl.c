@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.32 2004/07/28 22:24:06 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.33 2004/10/01 16:30:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.32 2004/07/28 22:24:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.33 2004/10/01 16:30:52 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -652,7 +652,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 
 	pd = proclists;
 again:
-	for (p = LIST_FIRST(pd->pd_list); p != NULL; p = LIST_NEXT(p, p_list)) {
+	PROCLIST_FOREACH(p, pd->pd_list) {
 		/*
 		 * Skip embryonic processes.
 		 */
