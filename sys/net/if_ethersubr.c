@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.45 1999/08/04 19:29:01 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.46 1999/08/05 02:07:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -527,7 +527,7 @@ ether_input(ifp, m)
 	m_adj(m, sizeof(struct ether_header));
 
 	/* If the CRC is still on the packet, trim it off. */
-	if (m->m_flags & M_HASCRC)
+	if (m->m_flags & M_HASFCS)
 		m_adj(m, -ETHER_CRC_LEN);
 
 	switch (etype) {
