@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.64 2001/01/22 14:30:43 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.65 2001/02/05 10:42:41 chs Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -114,8 +114,6 @@
 #include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 #include <dev/microcode/aic7xxx/aic7xxx_seq.h>
 
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define ALL_CHANNELS '\0'
 #define ALL_TARGETS_MASK 0xFFFF
 #define INITIATOR_WILDCARD	(~0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.11 2000/08/09 21:00:42 veego Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.12 2001/02/05 10:42:44 chs Exp $	*/
 
 /*
  * Copyright (C) 1997-2000 by Darren Reed.
@@ -119,11 +119,6 @@
 # if (__FreeBSD_version >= 300000)
 #  include <sys/malloc.h>
 # endif
-
-# ifndef MIN
-#  define	MIN(a,b)	(((a)<(b))?(a):(b))
-# endif
-
 
 # if SOLARIS || defined(__sgi)
 extern	kmutex_t	ipl_mutex;

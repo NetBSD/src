@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.25 2001/01/18 20:28:17 jdolecek Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.26 2001/02/05 10:42:42 chs Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -37,14 +37,6 @@
 
 #ifndef _AIC7XXX_H_
 #define _AIC7XXX_H_
-
-#ifndef MAX
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef MIN
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#endif
 
 #ifndef FALSE
 #define FALSE 0
