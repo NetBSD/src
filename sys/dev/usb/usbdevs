@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.231 2002/02/27 22:45:16 augustss Exp $
+$NetBSD: usbdevs,v 1.232 2002/02/28 21:10:28 jmcneill Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -781,6 +781,8 @@ product LINKSYS USB10T		0x2202	USB10T Ethernet
 product LINKSYS USB100TX	0x2203	USB100TX Ethernet
 product LINKSYS USB100H1	0x2204	USB100H1 Ethernet/HPNA
 product LINKSYS USB10TA		0x2206	USB10TA Ethernet
+product	LINKSYS	WUSB11		0x2211	WUSB11 Wireless USB Network Adapter
+product	LINKSYS	WUSB11_25	0x2212	WUSB11 Wireless USB Network Adapter (version 2.5)
 product LINKSYS USB10TX2	0x400b	USB10TX
 
 /* Logitech products */
