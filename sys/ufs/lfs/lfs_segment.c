@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.49 2000/06/06 20:19:16 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.49.2.1 2000/06/22 20:26:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1747,10 +1747,6 @@ lfs_vunref(vp)
 		simple_unlock(&vp->v_interlock);
 		return;
 	}
-#ifdef DIAGNOSTIC
-	if(VOP_ISLOCKED(vp))
-		panic("lfs_vunref: vnode locked");
-#endif
 	/*
 	 * insert at tail of LRU list
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.34 2000/06/06 20:19:15 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.34.2.1 2000/06/22 20:26:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ lfs_valloc(v)
 	
 	*ap->a_vpp = vp;
 	if(!(vp->v_flag & VDIROP)) {
-		lfs_vref(vp);
+		(void)lfs_vref(vp);
 		++lfs_dirvcount;
 	}
 	vp->v_flag |= VDIROP;
