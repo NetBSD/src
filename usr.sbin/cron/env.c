@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.7 1998/01/31 14:40:33 christos Exp $	*/
+/*	$NetBSD: env.c,v 1.8 1998/10/07 23:18:29 aidan Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: env.c,v 2.7 1994/01/26 02:25:50 vixie Exp";
 #else
-__RCSID("$NetBSD: env.c,v 1.7 1998/01/31 14:40:33 christos Exp $");
+__RCSID("$NetBSD: env.c,v 1.8 1998/10/07 23:18:29 aidan Exp $");
 #endif
 #endif
 
@@ -123,6 +123,7 @@ load_env(envstr, f)
 	long	filepos;
 	int	fileline, len;
 	char	*name, *val, *s;
+	char	*space;
 
 	filepos = ftell(f);
 	fileline = LineNumber;
@@ -133,7 +134,32 @@ load_env(envstr, f)
 	Debug(DPARS, ("load_env, read <%s>\n", envstr))
 
 	s = strchr(envstr, '=');
-	if (s != NULL && s != envstr) {
+	if (s) {
+		/*
+		 * decide if this is an environment variable or not by
+		 * checking for spaces in the middle of the variable name.
+		 * (it could also be a crontab line of the form
+		 * <min> <hour> <day> <month> <weekday> command flag=value)
+		 */
+		/* space before var name */
+		for (space = envstr; space < s && isspace(*space); space++)
+			;
+		/* var name */
+		for ( ; space < s && !isspace(*space); space++)
+			;
+		/* space after var name */
+		for ( ; space < s && isspace(*space); space++)
+			;
+		/*
+		 * space should equal s..  otherwise, this is not an
+		 * environment set command.
+		 */
+	}
+	if (s != NULL && s != envstr && *space == '=') {
+		/* XXX:
+		 * The manpage says spaces around the '=' are ignored, but
+		 * there's no code here to ignore them.
+		 */
 		*s++ = '\0';
 		val = s;
 		name = strdup(envstr);
