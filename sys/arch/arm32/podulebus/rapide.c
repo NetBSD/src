@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.3 1997/10/14 23:09:38 mark Exp $	*/
+/*	$NetBSD: rapide.c,v 1.4 1997/10/17 06:49:22 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -95,7 +95,7 @@
 #include <arm32/podulebus/rapidereg.h>
 
 #include <arm32/dev/wdreg.h>
-#include <arm32/dev/wdcvar.h>
+#include <arm32/dev/wdlink.h>
 
 /*
  * RapIDE podule device.
