@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.8 1997/11/22 07:28:48 lukem Exp $	*/
+/*	$NetBSD: tip.h,v 1.9 1998/04/02 11:31:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,11 +40,10 @@
  * tip - terminal interface program
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/dir.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <machine/endian.h>
@@ -60,6 +59,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <time.h>
 #include <unistd.h>
 
 /*
