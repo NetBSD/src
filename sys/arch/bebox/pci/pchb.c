@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2 1998/01/12 18:18:13 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.3 2000/01/18 20:01:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,11 +68,9 @@ pchbmatch(parent, match, aux)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_MOT:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-#define	PCI_PRODUCT_MOT_MPC105	0x0001
-#define	PCI_PRODUCT_MOT_MPC106	0x0002
 			case PCI_PRODUCT_MOT_MPC105:
 			case PCI_PRODUCT_MOT_MPC106:
-			return(1);
+			return (1);
 		}
 		break;
 	}
