@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.85 2004/01/02 05:08:57 dbj Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.86 2004/03/07 12:26:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.85 2004/01/02 05:08:57 dbj Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.86 2004/03/07 12:26:38 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	gettimeofday(&tv, NULL);
 #endif
 #ifdef MFS
-	if (mfs) {
+	if (mfs && !Nflag) {
 		calc_memfree();
 		if (fssize * sectorsize > memleft)
 			fssize = memleft / sectorsize;
@@ -516,7 +516,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	/*
 	 * Dump out summary information about file system.
 	 */
-	if (!mfs) {
+	if (!mfs || Nflag) {
 #define	B2MBFACTOR (1 / (1024.0 * 1024.0))
 		printf("%s: %.1fMB (%lld sectors) block size %d, "
 		       "fragment size %d\n",
@@ -611,11 +611,11 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	if (needswap)
 		ffs_sb_swap(&sblock, (struct fs *)iobuf);
 
-	if (!mfs)
+	if (!mfs || Nflag)
 		printf("super-block backups (for fsck -b #) at:");
 	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
 		initcg(cylno, &tv);
-		if (mfs)
+		if (mfs && !Nflag)
 			continue;
 		if (cylno % nprintcols == 0)
 			printf("\n");
@@ -623,9 +623,9 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 			(long long)fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		fflush(stdout);
 	}
-	if (!mfs)
+	if (!mfs || Nflag)
 		printf("\n");
-	if (Nflag && !mfs)
+	if (Nflag)
 		exit(0);
 
 	/*
@@ -1204,7 +1204,10 @@ rdfs(daddr_t bno, int size, void *bf)
 
 #ifdef MFS
 	if (mfs) {
-		memmove(bf, membase + bno * sectorsize, size);
+		if (Nflag)
+			memset(bf, 0, size);
+		else
+			memmove(bf, membase + bno * sectorsize, size);
 		return;
 	}
 #endif
@@ -1226,14 +1229,14 @@ wtfs(daddr_t bno, int size, void *bf)
 	int n;
 	off_t offset;
 
+	if (Nflag)
+		return;
 #ifdef MFS
 	if (mfs) {
 		memmove(membase + bno * sectorsize, bf, size);
 		return;
 	}
 #endif
-	if (Nflag)
-		return;
 	offset = bno;
 	n = pwrite(fso, bf, size, offset * sectorsize);
 	if (n != size) {
