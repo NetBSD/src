@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.26 2002/09/18 20:04:51 mycroft Exp $	*/
+/*	$NetBSD: subr.c,v 1.27 2002/09/23 03:32:34 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.26 2002/09/18 20:04:51 mycroft Exp $");
+__RCSID("$NetBSD: subr.c,v 1.27 2002/09/23 03:32:34 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,12 +48,12 @@ __RCSID("$NetBSD: subr.c,v 1.26 2002/09/18 20:04:51 mycroft Exp $");
 #define COMPAT_43
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include "extern.h"
 #include "gettytab.h"

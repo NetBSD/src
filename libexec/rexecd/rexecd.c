@@ -1,4 +1,4 @@
-/*	$NetBSD: rexecd.c,v 1.11 2002/06/05 23:05:34 itojun Exp $	*/
+/*	$NetBSD: rexecd.c,v 1.12 2002/09/23 03:32:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,13 +40,12 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)rexecd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexecd.c,v 1.11 2002/06/05 23:05:34 itojun Exp $");
+__RCSID("$NetBSD: rexecd.c,v 1.12 2002/09/23 03:32:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/time.h>
@@ -64,6 +63,7 @@ __RCSID("$NetBSD: rexecd.c,v 1.11 2002/06/05 23:05:34 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 void error __P((const char *, ...))
      __attribute__((__format__(__printf__, 1, 2)));
