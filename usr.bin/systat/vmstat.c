@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.7 1996/12/13 19:26:23 scottr Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.8 1997/07/21 07:05:10 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$NetBSD: vmstat.c,v 1.7 1996/12/13 19:26:23 scottr Exp $";
+__RCSID("$NetBSD: vmstat.c,v 1.8 1997/07/21 07:05:10 mrg Exp $");
 #endif /* not lint */
 
 /*

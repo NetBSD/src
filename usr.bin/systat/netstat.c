@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.6 1997/05/24 00:48:28 jtc Exp $	*/
+/*	$NetBSD: netstat.c,v 1.7 1997/07/21 07:05:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: netstat.c,v 1.6 1997/05/24 00:48:28 jtc Exp $";
+__RCSID("$NetBSD: netstat.c,v 1.7 1997/07/21 07:05:06 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -50,7 +51,10 @@ static char rcsid[] = "$NetBSD: netstat.c,v 1.6 1997/05/24 00:48:28 jtc Exp $";
 #include <sys/protosw.h>
 
 #include <netinet/in.h>
+
+#include <arpa/inet.h>
 #include <net/route.h>
+
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
@@ -114,8 +118,9 @@ static struct {
 static	int aflag = 0;
 static	int nflag = 0;
 static	int lastrow = 1;
-static	void enter(), inetprint();
-static	char *inetname();
+static	void enter __P((struct inpcb *, struct socket *, int, char *));
+static	void inetprint __P((struct in_addr *, int, char *));
+static	char *inetname __P((struct in_addr));
 
 void
 closenetstat(w)
@@ -198,7 +203,7 @@ again:
 	while (next != head) {
 		KREAD(next, &inpcb, sizeof (inpcb));
 		if (inpcb.inp_queue.cqe_prev != prev) {
-printf("prev = %x, head = %x, next = %x, inpcb...prev = %x\n", prev, head, next, inpcb.inp_queue.cqe_prev);
+printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next, inpcb.inp_queue.cqe_prev);
 			p = netcb.ni_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
 				p->ni_seen = 1;
@@ -230,8 +235,8 @@ printf("prev = %x, head = %x, next = %x, inpcb...prev = %x\n", prev, head, next,
 
 static void
 enter(inp, so, state, proto)
-	register struct inpcb *inp;
-	register struct socket *so;
+	struct inpcb *inp;
+	struct socket *so;
 	int state;
 	char *proto;
 {
@@ -378,12 +383,12 @@ shownetstat()
  */
 static void
 inetprint(in, port, proto)
-	register struct in_addr *in;
+	struct in_addr *in;
 	int port;
 	char *proto;
 {
 	struct servent *sp = 0;
-	char line[80], *cp, *index();
+	char line[80], *cp;
 
 	sprintf(line, "%.*s.", 16, inetname(*in));
 	cp = index(line, '\0');

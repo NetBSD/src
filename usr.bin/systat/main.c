@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1997/03/03 22:19:37 explorer Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1997/07/21 07:05:03 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,17 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.10 1997/03/03 22:19:37 explorer Exp $";
+__RCSID("$NetBSD: main.c,v 1.11 1997/07/21 07:05:03 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +52,8 @@ static char rcsid[] = "$NetBSD: main.c,v 1.10 1997/03/03 22:19:37 explorer Exp $
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 #include "systat.h"
 #include "extern.h"
@@ -86,7 +85,8 @@ int     CMDLINE;
 
 static	WINDOW *wload;			/* one line window for load average */
 
-static void usage();
+static void usage __P((void));
+int main __P((int, char **));
 
 int
 main(argc, argv)

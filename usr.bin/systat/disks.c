@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.4 1996/05/10 23:16:33 thorpej Exp $	*/
+/*	$NetBSD: disks.c,v 1.5 1997/07/21 07:04:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,17 +33,25 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: disks.c,v 1.4 1996/05/10 23:16:33 thorpej Exp $";
+__RCSID("$NetBSD: disks.c,v 1.5 1997/07/21 07:04:59 mrg Exp $");
 #endif /* not lint */
+
+#include <sys/types.h>
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <ctype.h>
 
 #include "systat.h"
 #include "extern.h"
-static void dkselect(char *args, int truefalse, int selections[]);
 
+static void dkselect(char *args, int truefalse, int selections[]);
 
 int
 dkcmd(cmd, args)
@@ -75,7 +83,6 @@ dkselect(args, truefalse, selections)
 {
 	register char *cp;
 	register int i;
-	char *index();
 
 	cp = index(args, '\n');
 	if (cp)
