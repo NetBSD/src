@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.8 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.9 2005/01/09 12:25:25 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -567,3 +567,5 @@ struct rtk_stats {
 
 #define RTK_JUMBO_FRAMELEN	9018
 #define RTK_JUMBO_MTU		(RTK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
+
+#define RTK_NTXSEGS		32

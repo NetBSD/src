@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.4 2005/01/09 12:15:36 kanaoka Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.5 2005/01/09 12:25:25 kanaoka Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -156,7 +156,6 @@
 
 static int re_encap(struct rtk_softc *, struct mbuf *, int *);
 
-static int re_allocmem(struct rtk_softc *);
 static int re_newbuf(struct rtk_softc *, int, struct mbuf *);
 static int re_rx_list_init(struct rtk_softc *);
 static int re_tx_list_init(struct rtk_softc *);
@@ -568,82 +567,6 @@ done:
 	return error;
 }
 
-static int
-re_allocmem(struct rtk_softc *sc)
-{
-	int			error;
-	int			nseg, rseg;
-	int			i;
-
-	nseg = 32;
-
-	/* Allocate DMA'able memory for the TX ring */
-
-	error = bus_dmamap_create(sc->sc_dmat, RTK_TX_LIST_SZ, 1,
-	    RTK_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
-	    &sc->rtk_ldata.rtk_tx_list_map);
-	error = bus_dmamem_alloc(sc->sc_dmat, RTK_TX_LIST_SZ,
-	    RTK_ETHER_ALIGN, 0,
-	    &sc->rtk_ldata.rtk_tx_listseg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error)
-		return ENOMEM;
-
-	/* Load the map for the TX ring. */
-	error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_tx_listseg,
-	    1, RTK_TX_LIST_SZ,
-	    (caddr_t *)&sc->rtk_ldata.rtk_tx_list, BUS_DMA_NOWAIT);
-	memset(sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ);
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map,
-	    sc->rtk_ldata.rtk_tx_list, RTK_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
-
-	/* Create DMA maps for TX buffers */
-
-	for (i = 0; i < RTK_TX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * nseg, nseg,
-		    MCLBYTES, 0, BUS_DMA_ALLOCNOW,
-		    &sc->rtk_ldata.rtk_tx_dmamap[i]);
-		if (error) {
-			aprint_error("%s: can't create DMA map for TX\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
-		}
-	}
-
-	/* Allocate DMA'able memory for the RX ring */
-
-	error = bus_dmamap_create(sc->sc_dmat, RTK_RX_LIST_SZ, 1,
-	    RTK_RX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
-	    &sc->rtk_ldata.rtk_rx_list_map);
-	error = bus_dmamem_alloc(sc->sc_dmat, RTK_RX_LIST_SZ, RTK_RING_ALIGN,
-	    0, &sc->rtk_ldata.rtk_rx_listseg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error)
-		return ENOMEM;
-
-	/* Load the map for the RX ring. */
-	error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_rx_listseg,
-	    1, RTK_RX_LIST_SZ,
-	    (caddr_t *)&sc->rtk_ldata.rtk_rx_list, BUS_DMA_NOWAIT);
-	memset(sc->rtk_ldata.rtk_rx_list, 0, RTK_TX_LIST_SZ);
-
-	error = bus_dmamap_load(sc->sc_dmat, sc->rtk_ldata.rtk_rx_list_map,
-	    sc->rtk_ldata.rtk_rx_list, RTK_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT);
-
-	/* Create DMA maps for RX buffers */
-
-	for (i = 0; i < RTK_RX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * nseg, nseg,
-		    MCLBYTES, 0, BUS_DMA_ALLOCNOW,
-		    &sc->rtk_ldata.rtk_rx_dmamap[i]);
-		if (error) {
-			aprint_error("%s: can't create DMA map for RX\n",
-			    sc->sc_dev.dv_xname);
-			return ENOMEM;
-		}
-	}
-
-	return 0;
-}
 
 /*
  * Attach the interface. Allocate softc structures, do ifmedia
@@ -656,6 +579,7 @@ re_attach(struct rtk_softc *sc)
 	u_int16_t		val;
 	struct ifnet		*ifp;
 	int			error = 0, i, addr_len;
+
 
 	/* XXX JRS: bus-attach-independent code begins approximately here */
 
@@ -722,12 +646,101 @@ re_attach(struct rtk_softc *sc)
 	aprint_normal("%s: Ethernet address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(eaddr));
 
-	error = re_allocmem(sc);
 
-	if (error) {
-		aprint_error("%s: attach aborted, re_allocmem() failure\n",
-		    sc->sc_dev.dv_xname);
-		goto fail;
+	/* Allocate DMA'able memory for the TX ring */
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, RTK_TX_LIST_SZ, 
+		    RTK_ETHER_ALIGN, 0, &sc->rtk_ldata.rtk_tx_listseg, 
+		    1, &sc->rtk_ldata.rtk_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
+		aprint_error("%s: can't allocate tx listseg, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_0;
+	}
+
+	/* Load the map for the TX ring. */
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_tx_listseg,
+		    sc->rtk_ldata.rtk_tx_listnseg, RTK_TX_LIST_SZ, 
+		    (caddr_t *)&sc->rtk_ldata.rtk_tx_list,
+		    BUS_DMA_NOWAIT)) != 0) {
+		aprint_error("%s: can't map tx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+	  	goto fail_1;
+	}
+	memset(sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ);
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_TX_LIST_SZ, 1, 
+		    RTK_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW, 
+		    &sc->rtk_ldata.rtk_tx_list_map)) != 0) {
+		aprint_error("%s: can't create tx list map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_2;
+	}
+
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, 
+		    sc->rtk_ldata.rtk_tx_list_map, sc->rtk_ldata.rtk_tx_list, 
+		    RTK_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
+		aprint_error("%s: can't load tx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_3;
+	}
+
+	/* Create DMA maps for TX buffers */
+	for (i = 0; i < RTK_TX_DESC_CNT; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * RTK_NTXSEGS,
+		    RTK_NTXSEGS, MCLBYTES, 0, BUS_DMA_ALLOCNOW,
+		    &sc->rtk_ldata.rtk_tx_dmamap[i]);
+		if (error) {
+			aprint_error("%s: can't create DMA map for TX\n",
+			    sc->sc_dev.dv_xname);
+			goto fail_4;
+		}
+	}
+
+	/* Allocate DMA'able memory for the RX ring */
+        if ((error = bus_dmamem_alloc(sc->sc_dmat, RTK_RX_LIST_SZ,
+		    RTK_RING_ALIGN, 0, &sc->rtk_ldata.rtk_rx_listseg, 1,
+		    &sc->rtk_ldata.rtk_rx_listnseg, BUS_DMA_NOWAIT)) != 0) {
+		aprint_error("%s: can't allocate rx listseg, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_4;
+	}
+
+	/* Load the map for the RX ring. */
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_rx_listseg,
+		    sc->rtk_ldata.rtk_rx_listnseg, RTK_RX_LIST_SZ,
+		    (caddr_t *)&sc->rtk_ldata.rtk_rx_list,
+		    BUS_DMA_NOWAIT)) != 0) {
+		aprint_error("%s: can't map rx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_5;
+	}
+	memset(sc->rtk_ldata.rtk_rx_list, 0, RTK_TX_LIST_SZ);
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_RX_LIST_SZ, 1,
+		    RTK_RX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
+		    &sc->rtk_ldata.rtk_rx_list_map)) != 0) {
+		aprint_error("%s: can't create rx list map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_6;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat,
+		    sc->rtk_ldata.rtk_rx_list_map, sc->rtk_ldata.rtk_rx_list,
+		    RTK_RX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
+		aprint_error("%s: can't load rx list, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail_7;
+	}
+
+	/* Create DMA maps for RX buffers */
+	for (i = 0; i < RTK_RX_DESC_CNT; i++) {
+		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_ALLOCNOW, &sc->rtk_ldata.rtk_rx_dmamap[i]);
+		if (error) {
+			aprint_error("%s: can't create DMA map for RX\n",
+			    sc->sc_dev.dv_xname);
+			goto fail_8;
+		}
 	}
 
 	ifp = &sc->ethercom.ec_if;
@@ -784,7 +797,7 @@ re_attach(struct rtk_softc *sc)
 		    sc->sc_dev.dv_xname);
 		ether_ifdetach(ifp);
 		if_detach(ifp);
-		goto fail;
+		goto fail_8;
 	}
 
 	/*
@@ -809,7 +822,44 @@ re_attach(struct rtk_softc *sc)
 
 	sc->sc_flags |= RTK_ATTACHED;
 
-fail:
+	return;
+
+fail_8:
+	/* Destroy DMA maps for RX buffers. */
+	for (i = 0; i < RTK_RX_DESC_CNT; i++)
+		if (sc->rtk_ldata.rtk_rx_dmamap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->rtk_ldata.rtk_rx_dmamap[i]);
+
+	/* Free DMA'able memory for the RX ring. */
+	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_rx_list_map);
+fail_7:
+	bus_dmamap_destroy(sc->sc_dmat, sc->rtk_ldata.rtk_rx_list_map);
+fail_6:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->rtk_ldata.rtk_rx_list, RTK_RX_LIST_SZ);
+fail_5:
+	bus_dmamem_free(sc->sc_dmat,
+	    &sc->rtk_ldata.rtk_rx_listseg, sc->rtk_ldata.rtk_rx_listnseg);
+
+fail_4:
+	/* Destroy DMA maps for TX buffers. */
+	for (i = 0; i < RTK_TX_DESC_CNT; i++)
+		if (sc->rtk_ldata.rtk_tx_dmamap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->rtk_ldata.rtk_tx_dmamap[i]);
+
+	/* Free DMA'able memory for the TX ring. */
+	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
+fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
+fail_2:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->rtk_ldata.rtk_tx_list, RTK_TX_LIST_SZ);
+fail_1:
+	bus_dmamem_free(sc->sc_dmat,
+	    &sc->rtk_ldata.rtk_tx_listseg, sc->rtk_ldata.rtk_tx_listnseg);
+fail_0:
 	return;
 }
 
@@ -847,6 +897,7 @@ int
 re_detach(struct rtk_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
+	int i;
 
 	/*
 	 * Succeed now if there isn't any work to do.
@@ -867,19 +918,36 @@ re_detach(struct rtk_softc *sc)
 	if_detach(ifp);
 
 	/* XXX undo re_allocmem() */
-#if 0 /* bogus cut-and-paste from rtl81x9.c */
-	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
-		txd = &sc->rtk_tx_descs[i];
-		if (txd->txd_dmamap != NULL)
-			bus_dmamap_destroy(sc->sc_dmat, txd->txd_dmamap);
-	}
-	bus_dmamap_destroy(sc->sc_dmat, sc->recv_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rtk_rx_buf,
-	    RTK_RXBUFLEN + 16);
-	/* XXX TX ring, Tx buffer, Rx ring, Rx buffer */
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
-#endif
 
+	/* Destroy DMA maps for RX buffers. */
+	for (i = 0; i < RTK_RX_DESC_CNT; i++)
+		if (sc->rtk_ldata.rtk_rx_dmamap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->rtk_ldata.rtk_rx_dmamap[i]);
+
+	/* Free DMA'able memory for the RX ring. */
+	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_rx_list_map);
+	bus_dmamap_destroy(sc->sc_dmat, sc->rtk_ldata.rtk_rx_list_map);
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->rtk_ldata.rtk_rx_list, RTK_RX_LIST_SZ);
+	bus_dmamem_free(sc->sc_dmat,
+	    &sc->rtk_ldata.rtk_rx_listseg, sc->rtk_ldata.rtk_rx_listnseg);
+
+	/* Destroy DMA maps for TX buffers. */
+	for (i = 0; i < RTK_TX_DESC_CNT; i++)
+		if (sc->rtk_ldata.rtk_tx_dmamap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->rtk_ldata.rtk_tx_dmamap[i]);
+
+	/* Free DMA'able memory for the TX ring. */
+	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
+	bus_dmamap_destroy(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->rtk_ldata.rtk_tx_list, RTK_TX_LIST_SZ);
+	bus_dmamem_free(sc->sc_dmat,
+	    &sc->rtk_ldata.rtk_tx_listseg, sc->rtk_ldata.rtk_tx_listnseg);
+
+	
 	shutdownhook_disestablish(sc->sc_sdhook);
 	powerhook_disestablish(sc->sc_powerhook);
 
@@ -987,8 +1055,6 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	map = sc->rtk_ldata.rtk_rx_dmamap[idx];
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
 
-	if (map->dm_nsegs > 1)
-		goto out;
 	if (error)
 		goto out;
 
