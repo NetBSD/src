@@ -80,4 +80,4 @@ struct isa_driver {
 };
 
 extern struct isa_device isa_devtab_bio[], isa_devtab_tty[], isa_devtab_net[],
-		isa_devtab_null[];
+		isa_devtab_null[], isa_subdev[];
