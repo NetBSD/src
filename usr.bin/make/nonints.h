@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.32 2004/05/07 08:12:16 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.33 2004/12/29 00:43:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -153,6 +153,7 @@ void Suff_DoPaths(void);
 void Suff_AddInclude(char *);
 void Suff_AddLib(char *);
 void Suff_FindDeps(GNode *);
+Lst Suff_FindPath(GNode *);
 void Suff_SetNull(char *);
 void Suff_Init(void);
 void Suff_End(void);
