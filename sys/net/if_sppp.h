@@ -1,11 +1,11 @@
-/*	$NetBSD: if_sppp.h,v 1.21 2003/09/11 18:04:51 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.22 2003/11/28 08:56:48 keihan Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Martin Husemann <martin@netbsd.org>.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

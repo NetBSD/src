@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.134 2003/11/11 20:33:46 drochner Exp $	*/
+/*	$NetBSD: if.c,v 1.135 2003/11/28 08:56:48 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.134 2003/11/11 20:33:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.135 2003/11/28 08:56:48 keihan Exp $");
 
 #include "opt_inet.h"
 
@@ -615,7 +615,7 @@ if_detach(ifp)
 		if (purged == 0) {
 			/*
 			 * XXX What's really the best thing to do
-			 * XXX here?  --thorpej@netbsd.org
+			 * XXX here?  --thorpej@NetBSD.org
 			 */
 			printf("if_detach: WARNING: AF %d not purged\n",
 			    family);
