@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.20 1999/10/04 17:54:15 tron Exp $	*/
+/*	$NetBSD: lib.c,v 1.21 1999/12/01 03:45:54 phil Exp $	*/
 
 /*
  *	- library routines
@@ -825,7 +825,7 @@ struct file_entry	*p;
 
 	fname = findshlib(p->filename, &major, &minor, 1);
 
-	if (fname && (fd = open(fname, O_RDONLY, 0)) > 0) {
+	if (fname && (fd = open(fname, O_RDONLY, 0)) >= 0) {
 		p->filename = fname;
 		p->lib_major = major;
 		p->lib_minor = minor;
@@ -847,7 +847,7 @@ dot_a:
 		register char *path
 			= concat(search_dirs[i], "/", fname);
 		fd = open(path, O_RDONLY, 0);
-		if (fd > 0) {
+		if (fd >= 0) {
 			p->filename = path;
 			p->flags &= ~E_SEARCH_DIRS;
 			break;
