@@ -1,4 +1,4 @@
-/*	$NetBSD: isinfl.c,v 1.3 2003/10/27 01:11:46 kleink Exp $	*/
+/*	$NetBSD: isinfl.c,v 1.4 2004/03/04 23:42:38 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,27 +40,24 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinfl.c,v 1.3 2003/10/27 01:11:46 kleink Exp $");
+__RCSID("$NetBSD: isinfl.c,v 1.4 2004/03/04 23:42:38 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
-#include <sys/types.h>
 #include <machine/ieee.h>
 #include <math.h>
 
-#if 0	/* XXX Currently limited to internal use. */
-#ifdef __weak_alias
-__weak_alias(isinfl,_isinfl)
-#endif
-#endif
-
+/*
+ * 7.12.3.3 isinf - test for infinity
+ *          IEEE 754 compatible 80-bit extended-precision Motorola 68k version
+ */
 int
-isinfl(long double ld)
+__isinfl(long double x)
 {
 	union ieee_ext_u u;
 
-	u.extu_ld = ld;
+	u.extu_ld = x;
+
 	/* Note: the explicit integer bit is "don't care". */
 	return (u.extu_ext.ext_exp == EXT_EXP_INFNAN &&
 	    (u.extu_ext.ext_frach == 0 && u.extu_ext.ext_fracl == 0));
