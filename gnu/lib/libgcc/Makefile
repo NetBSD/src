@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2001/12/14 16:55:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.37 2002/01/02 09:17:48 tron Exp $
 
 REQUIRETOOLS=	yes
 
@@ -36,7 +36,7 @@ SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_EH} ${CXX_LIB2FUNCS} \
 OBJS+=		${G_LIB2FUNCS_EH:=.o}
 
 # XXX fp-bit.c should be removed from this list after some grace period.
-CLEANFILES+=	${LIB2FUNCS} ${CXX_LIB2FUNCS} dp-bit.c fp-bit.c
+CLEANFILES+=	${LIB2FUNCS} ${CXX_LIB2FUNCS} dp-bit.c _eh.c fp-bit.c
 
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
