@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.84 2000/08/22 17:28:29 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.85 2000/08/24 02:37:27 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -402,9 +402,6 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	int sig, s;
 	int catch = priority & PCATCH;
 	int relock = (priority & PNORELOCK) == 0;
-#if defined(MULTIPROCESSOR)
-	int dobiglock, held_count;
-#endif
 
 	/*
 	 * XXXSMP
@@ -429,9 +426,6 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		return (0);
 	}
 
-#if defined(MULTIPROCESSOR)
-	dobiglock = (p->p_flag & P_BIGLOCK) != 0;
-#endif
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
@@ -491,22 +485,11 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 			if (p->p_wchan != NULL)
 				unsleep(p);
 			p->p_stat = SONPROC;
-#if defined(MULTIPROCESSOR)
-			/*
-			 * We're going to skip the unlock, so
-			 * we don't need to relock after resume.
-			 */
-			dobiglock = 0;
-#endif
 			SCHED_UNLOCK(s);
 			goto resume;
 		}
 		if (p->p_wchan == NULL) {
 			catch = 0;
-#if defined(MULTIPROCESSOR)
-			/* See above. */
-			dobiglock = 0;
-#endif
 			SCHED_UNLOCK(s);
 			goto resume;
 		}
@@ -514,18 +497,6 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 		sig = 0;
 	p->p_stat = SSLEEP;
 	p->p_stats->p_ru.ru_nvcsw++;
-
-#if defined(MULTIPROCESSOR)
-	if (dobiglock) {
-		/*
-		 * Release the kernel_lock, as we are about to
-		 * yield the CPU.  The scheduler_slock is still
-		 * held until cpu_switch() selects a new process
-		 * and removes it from the run queue.
-		 */
-		held_count = kernel_lock_release_all();
-	}
-#endif
 
 	SCHED_ASSERT_LOCKED();
 	mi_switch(p);
@@ -543,17 +514,6 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	KDASSERT(p->p_cpu == curcpu());
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
 
-#if defined(MULTIPROCESSOR)
-	if (dobiglock) {
-		/*
-		 * Reacquire the kernel_lock now.  We do this after
-		 * we've released sched_lock to avoid deadlock,
-		 * and before we reacquire the interlock.
-		 */
-		kernel_lock_acquire_count(LK_EXCLUSIVE|LK_CANRECURSE,
-		    held_count);
-	}
-#endif
 	p->p_flag &= ~P_SINTR;
 	if (p->p_flag & P_TIMEOUT) {
 		p->p_flag &= ~P_TIMEOUT;
@@ -845,8 +805,23 @@ mi_switch(struct proc *p)
 	struct rlimit *rlim;
 	long s, u;
 	struct timeval tv;
+#if defined(MULTIPROCESSOR)
+	int hold_count;
+#endif
 
 	SCHED_ASSERT_LOCKED();
+
+#if defined(MULTIPROCESSOR)
+	if (p->p_flag & P_BIGLOCK) {
+		/*
+		 * Release the kernel_lock, as we are about to
+		 * yield the CPU.  The scheduler_slock is still
+		 * held until cpu_switch() selects a new process
+		 * and removes it from the run queue.
+		 */
+		hold_count = kernel_lock_release_all();
+	}
+#endif
 
 	KDASSERT(p->p_cpu != NULL);
 	KDASSERT(p->p_cpu == curcpu());
@@ -925,6 +900,18 @@ mi_switch(struct proc *p)
 	KDASSERT(p->p_cpu != NULL);
 	KDASSERT(p->p_cpu == curcpu());
 	microtime(&p->p_cpu->ci_schedstate.spc_runtime);
+
+#if defined(MULTIPROCESSOR)
+	if (p->p_flag & P_BIGLOCK) {
+		/*
+		 * Reacquire the kernel_lock now.  We do this after
+		 * we've released sched_lock to avoid deadlock,
+		 * and before we reacquire the interlock.
+		 */
+		kernel_lock_acquire_count(LK_EXCLUSIVE|LK_CANRECURSE,
+		    hold_count);
+	}
+#endif
 }
 
 /*
