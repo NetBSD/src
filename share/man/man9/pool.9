@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool.9,v 1.8 1998/09/02 05:13:07 jeremy Exp $
+.\"	$NetBSD: pool.9,v 1.9 1998/09/03 00:54:23 jeremy Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,15 +69,14 @@
 .Fn pool_setlowat "struct pool *pp" "int n"
 .Fn POOL_STORAGE_SIZE "size" "nitems"
 .Sh DESCRIPTION
-These utility routines provide management of pools of fixed-sized
-areas of memory. Resource pools set aside an amount of memory for
-exclusive use by the resource pool owner. This can be used by
-applications to guarantee the availability of a minimum amount of memory
-needed to continue operation independent of the memory resources
-currently available from the system-wide memory allocator
-.Po
-.Xr malloc 9
-.Pc .
+These utility routines provide management of pools of fixed\(ensized
+areas of memory.
+Resource pools set aside an amount of memory for exclusive use by the resource
+pool owner.
+This can be used by applications to guarantee the availability of a minimum
+amount of memory needed to continue operation independent of the memory
+resources currently available from the system\(enwide memory allocator
+.Pq Xr malloc 9 .
 The pool manager can optionally obtain temporary memory by calling the
 .Fn palloc
 function passed to
@@ -86,31 +85,34 @@ for extra pool items in case the number of allocations exceeds
 the nominal number of pool items managed by a pool resource.
 This temporary memory will be automatically returned to the system
 at a later time.
-.Pp
+.Ss CREATING A POOL
 The function
 .Fn pool_create
-initializes a resource pool and returns a handle to it. The
-arguments are:
+initializes a resource pool and returns a handle to it.
+The arguments are:
 .Pp
 .Bl -tag -offset indent -width "prelease"
 .It Fa size
-specifies the size of the memory items managed by the pool.
+Specifies the size of the memory items managed by the pool.
 .It Fa align
 Specifies the memory address aligment of the items returned by
 .Fn pool_get .
-This argument must be a power of two. If zero, the alignment defaults
-to a architecture-specific natural aligment.
+This argument must be a power of two.
+If zero,
+the alignment defaults to a architecture\(enspecific natural aligment.
 .It Fa align_offset
 The offset within an item to which the
 .Fa align
 parameter applies.
 .It Fa nitems
-specifies the number of memory items that are allocated to
-the pool at creation time. This number may be zero, in which case
+Specifies the number of memory items that are allocated to
+the pool at creation time.
+This number may be zero,
+in which case
 .Fn pool_prime
 can be used at a later time to add permanent items to the pool.
 .It Fa wchan
-the
+The
 .Sq wait channel
 passed on to
 .Xr tsleep 9
@@ -121,9 +123,11 @@ must wait for items to be returned to the pool.
 The unit which is used to allocate additional memory to the pool.
 It must be a power of two.
 .It Fa palloc
-is called to add additional memory if the pool is depleted. It returns
+is called to add additional memory if the pool is depleted.
+It returns
 .Fa pagesz
-aligned memory. The argument
+aligned memory.
+The argument
 .Fa sz
 will be a multiple of
 .Fa pagesz .
@@ -144,7 +148,7 @@ to allocate and release memory using the
 .Xr UVM 9
 .Pc .
 .It Fa mtag
-the memory tag passed to
+The memory tag passed to
 .Fn palloc
 and
 .Fn prelease
@@ -161,7 +165,8 @@ returns
 .Dv NULL .
 If the
 .Fa storage
-parameter is used, the client is responsible for providing enough storage
+parameter is used,
+the client is responsible for providing enough storage
 to accommodate the number of pool items specified by
 .Fa nitems ,
 as well as the space required by the pool's administrative overhead
@@ -170,8 +175,7 @@ as well as the space required by the pool's administrative overhead
 .\".Fn POOL_STORAGE_SIZE "size" "nitems"
 .\"can be used to determine the amount of storage needed to setup a pool,
 .\"given the size and number of the pool items.
-.Pp
-
+.Ss ALLOCATING ITEMS FROM A POOL
 .Fn pool_get
 allocates an item from the pool and returns a pointer to it.
 .Bl -tag -offset indent -width "flags"
@@ -185,8 +189,9 @@ or
 that define behaviour in case the pooled resources are depleted.
 If no resources are available and
 .Dv PR_WAITOK
-is given, this function will wait until items are returned to the pool,
-otherwise
+is given,
+this function will wait until items are returned to the pool.
+Otherwise
 .Fn pool_get
 returns
 .Dv NULL .
@@ -194,14 +199,15 @@ If
 .Dv PR_URGENT
 is specified and no items are available and
 .Fn palloc
-cannot allocate a new page, the system will panic (XXX).
+cannot allocate a new page,
+the system will panic
+.Pq XXX .
 .\"Undefined behaviour results if
 .\".Dv PR_MALLOCOK
 .\"is specified on a pool handle that was created using client-provided
 .\"storage.
 .El
-
-.Pp
+.Ss RETURNING ITEMS TO A POOL
 .Fn pool_put
 returns the pool item pointed at by
 .Fa item
@@ -210,8 +216,8 @@ to the resource pool identified by the pool handle
 If the number of available items in the pool exceeds the maximum pool
 size set by
 .Fn pool_sethiwat
-and there are no out-standing requests for pool items, the excess
-items will be returned to the system by calling
+and there are no outstanding requests for pool items,
+the excess items will be returned to the system by calling
 .Fn prelease .
 .Bl -tag -offset indent -width "item"
 .It Fa pp
@@ -220,76 +226,97 @@ The handle identifying the pool resource instance.
 A pointer to a pool item previously obtained by
 .Fn pool_get .
 .El
-
-.Pp
+.Ss PRIMING A POOL
 .Fn pool_prime
 adds items to the pool.
+Storage space for the items is either allocated directly using
+.Xr malloc 9
+or given to
+.Fn pool_prime
+preallocated by the calling function.
+.Pp
+.Fn pool_prime
 .Bl -tag -offset indent -width "nitems"
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa nitems
-The number of items to add to the pool. Storage for the pool items can be
-passed in the
+The number of items to add to the pool.
+Storage for the pool items can be passed in the
 .Fa storage
-argument. If this parameter is
+argument.
+If this parameter is
 .Dv NULL ,
 the items are allocated by using
 .Xr malloc 9 .
 This function may return
 .Dv ENOMEM
-in case the requested number of items could not be allocated. Otherwise,
+in case the requested number of items could not be allocated.
+Otherwise,
 the return value is 0.
 .El
-
+.Ss SETTING POOL RESOURCE WATERMARKS
+A pool will attempt to increase its resource usage to keep up with the demand
+for its items.
+Conversely,
+it will return unused memory to the system should the number of accumulated
+unused items in the pool exceed a programmable limit.
+The limits for the minimum and maximum number of items which a pool should keep
+at hand are known as the high and low
+.Sy watermarks.
+The functions
+.Fn pool_sethiwat
+and
+.Fn pool_setlowat
+set a pool's high and low watermarks, respectively.
 .Pp
 .Fn pool_sethiwat
 .Bl -tag -offset indent -width "flags"
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa n
-The maximum number of items to keep in the pool. As items are returned
-and the total number of pages in the pool is larger than the maximum
-set by this function, any completely unused pages are released immediately
+The maximum number of items to keep in the pool.
+As items are returned and the total number of pages in the pool is larger
+than the maximum set by this function,
+any completely unused pages are released immediately
 .Pq by calling Fn prelease .
-If this function is not used to specify a maximum number of items, the
-pages will remain associated with the pool until the system runs low
-on memory at which point the VM system will try to reclaim unused pages.
+If this function is not used to specify a maximum number of items,
+the pages will remain associated with the pool until the system runs low
+on memory,
+at which point the VM system will try to reclaim unused pages.
 .El
-
 .Pp
 .Fn pool_setlowat
 .Bl -tag -offset indent -width "flags"
 .It Fa pp
 The handle identifying the pool resource instance.
 .It Fa n
-The minimum number of items to keep in the pool. The number pages
-in the pool will not decrease below the required value to accommodate
-the minimum number of items specified by this function.
+The minimum number of items to keep in the pool.
+The number pages in the pool will not decrease below the required value to
+accommodate the minimum number of items specified by this function.
 Unlike
 .Fn pool_prime ,
 this function does not allocate the necessary memory upfront.
 .El
-
-.Pp
+.Ss POTENTIAL PITFALLS
 Note that undefined behaviour results when mixing the storage providing
 methods supported by the pool resource routines.
 .Pp
-The pool resource code uses a per-pool lock to protect the internal state.
-If a pool is used from an interrupt context, the caller is responsible
-for blocking interrupts appropriately.
-.Pp
-Pool usage logs can be enabled by defining the compile-time option
+The pool resource code uses a per\(enpool lock to protect its internal state.
+If any pool functions are called in an interrupt context,
+the caller must block all interrupts that might cause the
+code to be reentered.
+.Ss DIAGNOSTICS
+Pool usage logs can be enabled by defining the compile\(entime option
 .Dv POOL_DIAGNOSTIC .
-.Sh RETURN VALUES
-.Sh EXAMPLES
+.\" .Sh RETURN VALUES
+.\" .Sh EXAMPLES
 .Sh CODE REFERENCES
-.Pp
 The pool manager is implemented in the file
 .Pa sys/kern/subr_pool.c .
-.Sh AUTHOR
+.\" .Sh AUTHOR
 .Sh SEE ALSO
 .Xr malloc 9 ,
-.Xr free 9 .
+.Xr free 9 ,
 .Xr uvm 9 .
 .Sh HISTORY
 The
