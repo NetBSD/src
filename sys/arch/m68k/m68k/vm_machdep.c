@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.3 2002/11/13 15:35:37 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.4 2002/12/03 19:44:17 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.3 2002/11/13 15:35:37 skrll Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.4 2002/12/03 19:44:17 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,14 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.3 2002/11/13 15:35:37 skrll Exp
 #include <machine/reg.h>
 
 #include <uvm/uvm_extern.h>
+
+void
+cpu_proc_fork(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_md.mdp_flags = p1->p_md.mdp_flags;
+}
 
 /*
  * Finish a fork operation, with process l2 nearly set up.
