@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.2 1999/03/17 18:59:23 sommerfe Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2.2.1 1999/04/10 14:26:00 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ md_attach_hook(unit, md)
 		md->md_addr = (caddr_t) md_root_image;
 		md->md_size = (size_t)  md_root_size;
 		md->md_type = MD_KMEM_FIXED;
-		printf(" fixed, %d blocks", MINIROOTSIZE);
+		printf("md0: fixed, %d blocks\n", MINIROOTSIZE);
 	}
 }
 
