@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2001/01/04 01:53:24 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.20 2001/01/04 01:56:27 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -51,7 +51,6 @@ extern jmp_buf restart;
 #define MODE_LOGGER	3
 
 	/* command line flags */
-extern char debug;			/* -D */
 extern char randomize;			/* -x, give first available ship */
 extern char longfmt;			/* -l, print score in long format */
 extern char nobells;			/* -b, don't ring bell before Signal */
