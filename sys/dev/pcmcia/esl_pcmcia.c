@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.1 2001/09/29 14:00:57 augustss Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.2 2001/09/29 19:06:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -65,12 +65,12 @@ static const struct esl_pcmcia_product {
 	{ NULL }
 };
 
-int	esl_pcmcia_match __P((struct device *, struct cfdata *, void *)); 
-void	esl_pcmcia_attach __P((struct device *, struct device *, void *));  
-int	esl_pcmcia_detach __P((struct device *, int));
+int	esl_pcmcia_match(struct device *, struct cfdata *, void *); 
+void	esl_pcmcia_attach(struct device *, struct device *, void *);  
+int	esl_pcmcia_detach(struct device *, int);
 
-int	esl_pcmcia_enable __P((struct esl_pcmcia_softc *));
-void	esl_pcmcia_disable __P((struct esl_pcmcia_softc *));
+int	esl_pcmcia_enable(struct esl_pcmcia_softc *);
+void	esl_pcmcia_disable(struct esl_pcmcia_softc *);
 
 struct cfattach esl_pcmcia_ca = {
 	sizeof(struct esl_pcmcia_softc), esl_pcmcia_match, esl_pcmcia_attach,
@@ -92,10 +92,7 @@ struct cfattach esl_pcmcia_ca = {
 	 &esl_pcmcia_products[(n)] : NULL)
 
 int
-esl_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+esl_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	int i;
@@ -108,9 +105,7 @@ esl_pcmcia_match(parent, match, aux)
 }
 
 void
-esl_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct esl_pcmcia_softc *esc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
@@ -247,6 +242,4 @@ esl_pcmcia_disable(struct esl_pcmcia_softc *sc)
 
 	pcmcia_function_disable(sc->sc_pf);
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-
-	return;
 }
