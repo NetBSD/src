@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.187 2003/09/14 22:36:55 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.188 2003/09/19 16:32:10 martin Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -28,9 +28,6 @@ LDSTATIC+=  ${LDSTATIC.${PROG}}
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 CFLAGS+=	${COPTS}
-.if ${MACHINE_ARCH} == "sparc64"
-CFLAGS+=	-mcmodel=medlow
-.endif
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
 .if ${OBJECT_FMT} == "ELF"
