@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.6 2003/03/04 17:25:23 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsutils.c,v 1.7 2003/10/30 17:46:08 mycroft Exp $");
 
 #define __NSUTILS_C__
 
@@ -1043,7 +1043,7 @@ AcpiNsGetNodeByPath (
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if (ACPI_FAILURE (Status))
     {
-        return_ACPI_STATUS (Status);
+	goto Cleanup;
     }
 
     /* Setup lookup scope (search starting point) */
@@ -1066,6 +1066,7 @@ AcpiNsGetNodeByPath (
 
     (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
 
+Cleanup:
     if (InternalPath)
     {
         ACPI_MEM_FREE (InternalPath);

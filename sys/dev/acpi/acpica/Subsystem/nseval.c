@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.6 2003/03/04 17:25:22 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nseval.c,v 1.7 2003/10/30 17:46:08 mycroft Exp $");
 
 #define __NSEVAL_C__
 
@@ -191,7 +191,7 @@ AcpiNsEvaluateRelative (
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if (ACPI_FAILURE (Status))
     {
-        return_ACPI_STATUS (Status);
+	goto Cleanup;
     }
 
     PrefixNode = AcpiNsMapHandleToNode (Handle);
@@ -282,7 +282,7 @@ AcpiNsEvaluateByName (
     Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
     if (ACPI_FAILURE (Status))
     {
-        return_ACPI_STATUS (Status);
+	goto Cleanup;
     }
 
     /* Lookup the name in the namespace */
