@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.12 2002/11/16 09:46:21 he Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.13 2002/11/21 18:36:47 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.13 2002/11/16 09:44:54 he Exp 
+ *	NetBSD
  */
 
 /*
@@ -1320,7 +1320,7 @@
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
-#define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82452 Gigabit Ethernet */
+#define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82542 Gigabit Ethernet */
 #define	PCI_PRODUCT_INTEL_82543GC_FIBER	0x1001		/* i82453GC Gigabit Ethernet (1000BASE-X) */
 #define	PCI_PRODUCT_INTEL_82543GC_COPPER	0x1004		/* i82543GC Gigabit Ethernet (1000BASE-T) */
 #define	PCI_PRODUCT_INTEL_82544EI_COPPER	0x1008		/* i82544EI Gigabit Ethernet (1000BASE-T) */
