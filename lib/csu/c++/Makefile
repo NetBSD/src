@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1999/02/27 03:27:54 tv Exp $
+#	$NetBSD: Makefile,v 1.12 1999/04/03 16:28:50 simonb Exp $
 
 CPPFLAGS+=	-DLIBC_SCCS
 COPTS+=		-fpic
@@ -12,6 +12,6 @@ c++rt0.o: c++rt0.c
 	@mv a.out ${.TARGET}
 
 FILES=${OBJS}
-FILESDIR=/usr/lib
+FILESDIR=${LIBDIR}
 
 .include <bsd.prog.mk>
