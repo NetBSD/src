@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.6 2000/08/07 01:08:39 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.7 2000/08/18 13:37:44 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1458,7 +1458,8 @@ setregs(p, pack, stack)
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	npxdrop(p);
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p, 0);
 #endif
 
 #ifdef USER_LDT
@@ -1733,7 +1734,10 @@ init386(first_avail)
 		extern int *esym;
 		struct btinfo_symtab *symtab;
 
+		db_machine_init();
+
 		symtab = lookup_bootinfo(BTINFO_SYMTAB);
+
 		if (symtab) {
 			symtab->ssym += KERNBASE;
 			symtab->esym += KERNBASE;
