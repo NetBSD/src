@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.41 2005/01/01 21:02:14 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.42 2005/01/01 21:08:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -110,6 +110,7 @@
 #endif /* _KERNEL */
 
 #include <sys/tree.h>
+#include <sys/pool.h>
 
 #include <uvm/uvm_anon.h>
 
@@ -241,6 +242,11 @@ struct vm_map_kernel {
 			/* Freelist of map entry */
 	struct vm_map_entry	*vmk_merged_entries;
 			/* Merged entries, kept for later splitting */
+
+#if !defined(PMAP_MAP_POOLPAGE)
+	struct pool vmk_vacache; /* kva cache */
+	struct pool_allocator vmk_vacache_allocator; /* ... and its allocator */
+#endif
 };
 #endif /* defined(_KERNEL) */
 
@@ -254,6 +260,7 @@ struct vm_map_kernel {
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
 #define	VM_MAP_DYING		0x20		/* rw: map is being destroyed */
 #define	VM_MAP_TOPDOWN		0x40		/* ro: arrange map top-down */
+#define	VM_MAP_VACACHE		0x80		/* ro: use kva cache */
 
 #ifdef _KERNEL
 struct uvm_mapent_reservation {
