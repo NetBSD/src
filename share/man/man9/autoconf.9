@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.15 2003/02/04 22:38:18 perry Exp $
+.\"     $NetBSD: autoconf.9,v 1.16 2003/04/04 20:31:43 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -263,7 +263,7 @@ removal)) and DETACH_QUIET (do not print a notice).
 returns zero if successful and an error code otherwise.
 .Fn config_detach
 is always called from a thread context, allowing
-.Xr sleep 9
+.Xr ltsleep 9
 to be called while the device detaches itself.
 .It Fn config_activate "dev"
 Called by the parent to activate the child device
