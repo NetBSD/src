@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.96 2003/09/06 22:09:21 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.97 2003/09/21 17:42:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.96 2003/09/06 22:09:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.97 2003/09/21 17:42:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -126,8 +126,8 @@ static void linux_save_sigcontext __P((struct lwp *, struct trapframe *,
     sigset_t *, struct linux_sigcontext *));
 static int linux_restore_sigcontext __P((struct lwp *,
     struct linux_sigcontext *, register_t *));
-static void linux_rt_sendsig __P((int, sigset_t *, u_long));
-static void linux_old_sendsig __P((int, sigset_t *, u_long));
+static void linux_rt_sendsig __P((ksiginfo_t *, sigset_t *));
+static void linux_old_sendsig __P((ksiginfo_t *, sigset_t *));
 
 extern char linux_sigcode[], linux_rt_sigcode[];
 /*
@@ -195,9 +195,9 @@ void
 linux_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
 	if (SIGACTION(curproc, ksi->ksi_signo).sa_flags & SA_SIGINFO)
-		linux_rt_sendsig(ksi->ksi_signo, mask, ksi->ksi_trap);
+		linux_rt_sendsig(ksi, mask);
 	else
-		linux_old_sendsig(ksi->ksi_signo, mask, ksi->ksi_trap);
+		linux_old_sendsig(ksi, mask);
 }
 
 
@@ -266,16 +266,14 @@ linux_save_sigcontext(l, tf, mask, sc)
 }
 
 static void
-linux_rt_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_rt_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_rt_sigframe *fp, frame;
 	int onstack;
+	linux_siginfo_t *lsi;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
@@ -302,26 +300,38 @@ linux_rt_sendsig(sig, mask, code)
 	frame.sf_sip = &fp->sf_si;
 	frame.sf_ucp = &fp->sf_uc;
 
-	(void)memset(&frame.sf_si, 0, sizeof(frame.sf_si));
 	/*
-	 * XXX: We'll fake bit of it here, all of the following
-	 * info is a bit bogus, because we don't have the
-	 * right info passed to us from the trap.
+	 * XXX: the following code assumes that the constants for
+	 * siginfo are the same between linux and NetBSD.
 	 */
-	switch (frame.sf_si.lsi_signo = frame.sf_sig) {
+	(void)memset(lsi = &frame.sf_si, 0, sizeof(frame.sf_si));
+	lsi->lsi_errno = native_to_linux_errno[ksi->ksi_errno];
+	lsi->lsi_code = ksi->ksi_code;
+	switch (lsi->lsi_signo = frame.sf_sig) {
+	case LINUX_SIGILL:
+	case LINUX_SIGFPE:
 	case LINUX_SIGSEGV:
-		frame.sf_si.lsi_code = LINUX_SEGV_MAPERR;
-		break;
 	case LINUX_SIGBUS:
-		frame.sf_si.lsi_code = LINUX_BUS_ADRERR;
-		break;
 	case LINUX_SIGTRAP:
-		frame.sf_si.lsi_code = LINUX_TRAP_BRKPT;
+		lsi->lsi_addr = ksi->ksi_addr;
 		break;
 	case LINUX_SIGCHLD:
+		lsi->lsi_uid = ksi->ksi_uid;
+		lsi->lsi_pid = ksi->ksi_pid;
+		lsi->lsi_status = ksi->ksi_status;
+		lsi->lsi_utime = ksi->ksi_utime;
+		lsi->lsi_stime = ksi->ksi_stime;
+		break;
 	case LINUX_SIGIO:
+		lsi->lsi_band = ksi->ksi_band;
+		lsi->lsi_fd = ksi->ksi_fd;
+		break;
 	default:
-		frame.sf_si.lsi_signo = 0;
+		lsi->lsi_uid = ksi->ksi_uid;
+		lsi->lsi_pid = ksi->ksi_pid;
+		if (lsi->lsi_signo == LINUX_SIGALRM ||
+		    lsi->lsi_signo >= LINUX_SIGRTMIN)
+			lsi->lsi_sigval.sival_ptr = ksi->ksi_sigval.sival_ptr;
 		break;
 	}
 
@@ -357,16 +367,14 @@ linux_rt_sendsig(sig, mask, code)
 }
 
 static void
-linux_old_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+linux_old_sendsig(ksiginfo_t *ksi, sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	int onstack;
+	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
