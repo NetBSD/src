@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.43 2001/01/21 22:41:48 veego Exp $
+.\"	$NetBSD: packages.7,v 1.44 2001/01/24 10:01:14 garbled Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -505,6 +505,14 @@ accordingly.
 .It MASTER_SORT_REGEX
 Similar to MASTER_SORT, but takes a list of regular expressions for
 finer grained control.
+.It OSVERSION_SPECIFIC
+Used to denote packages, such as LKM's, which are tightly bound to a specific
+version of the OS.  Such binary packages are not backwards compatible with 
+other versions of the OS, and should be uploaded to a version specific 
+directory on the FTP.  This variable is not currently used by any of the 
+package system internals, but may be used in the future.  Set this to
+.Dq YES
+to denote such a package.
 .El
 .Sh MOTIF SUPPORT
 This section documents variables related to the use and installation of
