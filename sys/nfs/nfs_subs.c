@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.54 1998/02/10 14:10:16 mrg Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.55 1998/02/19 00:54:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
  *	@(#)nfs_subs.c	8.8 (Berkeley) 5/22/95
  */
 
+#include "fs_nfs.h"
 #include "opt_uvm.h"
 
 /*
