@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)df.1	8.2 (Berkeley) 1/13/92
-.\"	$Id: df.1,v 1.8 1995/01/13 23:23:41 mycroft Exp $
+.\"	$Id: df.1,v 1.9 1995/01/30 18:14:55 mycroft Exp $
 .\"
 .Dd January 13, 1994
 .Dt DF 1
@@ -72,9 +72,7 @@ The
 option causes the numbers to be reported in kilobyte counts.
 .It Fl l
 Display statistics only about mounted file systems with the MNT_LOCAL
-flag set.  This option is deprecated by the
-.Fl t\ local
-option, and may be removed in a future release.
+flag set.
 .It Fl n
 Print out the previously obtained statistics from the file systems.
 This option should be used if it is possible that one or more
@@ -84,24 +82,15 @@ When this option is specified,
 .Nm df
 will not request new statistics from the file systems, but will respond
 with the possibly stale statistics that were previously obtained.
-.It Fl t
-Only print out statistics for file systems of the specified types.
-The follow additional types are recognized:
-all (the default),
-local (all file systems with the MNT_LOCAL flag set),
-ro (all file systems with the MNT_RDONLY flag set),
-and rw (all file systems with the MNT_RDONLY flag clear).
-The string ``no'' may be prepended to a type to get its complement
-(e.g. ``nonfs'' to get non-NFS file systems).  The first
-.Fl t
-option overrides the default, additional such options will add to
-(or subtract from) the current set of types; e.g. 
-``df -t ufs -t lfs''
-will display statistics for UFS and LFS file systems, and
-``df -t local -t nolfs''
-will display statistics for all
-.Dq local
-file systems except LFS.
+.It Fl t Ar type
+Is used to indicate the actions should only be taken on
+filesystems of the specified type.
+More than one type may be specified in a comma separated list.
+The list of filesystem types can be prefixed with
+.Dq no
+to specify the filesystem types for which action should
+.Em not
+be taken.
 .El
 .Sh ENVIRONMENTAL VARIABLES
 .Bl -tag -width BLOCKSIZE
