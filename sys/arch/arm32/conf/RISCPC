@@ -1,4 +1,4 @@
-#	$NetBSD: RISCPC,v 1.30 2000/11/03 10:18:56 abs Exp $
+#	$NetBSD: RISCPC,v 1.31 2001/02/18 00:54:02 reinoud Exp $
 #
 #	RISCPC -- Full RiscPC config
 #
@@ -92,6 +92,9 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+
+# Bootloader options
+options		COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 

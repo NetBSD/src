@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.88 2001/02/11 17:03:06 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.89 2001/02/18 00:54:03 reinoud Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -23,6 +23,9 @@ defopt	PMAP_DEBUG
 
 # X server support in console drivers
 defopt	XSERVER
+
+# Bootloader options (COMPAT... to be dropped ASAP)
+defopt	COMPAT_OLD_BOOTLOADER
 
 # Architectures and core logic
 defopt	EBSA285

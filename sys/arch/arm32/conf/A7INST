@@ -1,4 +1,4 @@
-#	$NetBSD: A7INST,v 1.28 2000/09/24 15:59:29 jdolecek Exp $
+#	$NetBSD: A7INST,v 1.29 2001/02/18 00:54:02 reinoud Exp $
 #
 #	A7INST - A7000 install configuration
 #
@@ -85,6 +85,9 @@ options 	COMPAT_12	# NetBSD 1.2 compatibility.
 #options 	COMPAT_10	# NetBSD 1.0 compatibility.
 #options 	COMPAT_09	# NetBSD 0.9 compatibility.
 #options 	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+
+# Bootloader options
+options		COMPAT_OLD_BOOTLOADER
 
 # Shared memory options
 
