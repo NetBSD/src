@@ -1,4 +1,4 @@
-/*	$NetBSD: faketalk.c,v 1.4 1997/10/11 08:13:48 lukem Exp $	*/
+/*	$NetBSD: faketalk.c,v 1.5 2001/01/09 23:49:54 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: faketalk.c,v 1.4 1997/10/11 08:13:48 lukem Exp $");
+__RCSID("$NetBSD: faketalk.c,v 1.5 2001/01/09 23:49:54 lukem Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -123,7 +123,7 @@ faketalk()
 # else
 		warn("falktalk:  socket");
 # endif
-		_exit(-1);
+		_exit(1);
 	}
 
 	if (connect(service, (struct sockaddr *) &des, sizeof(des)) != 0) {
@@ -132,7 +132,7 @@ faketalk()
 # else
 		warn("faketalk:  connect");
 # endif
-		_exit(-1);
+		_exit(1);
 	}
 	if ((f = fdopen(service, "r")) == NULL) {
 # ifdef LOG
@@ -140,7 +140,7 @@ faketalk()
 # else
 		warn("faketalk:  fdopen");
 # endif
-		_exit(-2);
+		_exit(2);
 	}
 
 	(void) fgets(buf, BUFSIZ, f);
