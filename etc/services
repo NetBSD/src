@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.40 2000/08/06 20:12:19 thorpej Exp $
+#	$NetBSD: services,v 1.41 2000/08/08 03:10:50 thorpej Exp $
 #
 # Network services, Internet style
 #
@@ -231,6 +231,7 @@ supfiledbg	1127/tcp		# SUP debugging
 #
 # other common ports
 #
+swat		901/tcp			# Samba Web Administration Tool
 nfs		2049/udp	nfsd	# Sun NFS
 nfs		2049/tcp	nfsd	# Sun NFS
 X11		6000/tcp		# X Window System
