@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.32 2000/01/15 19:16:32 chs Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.33 2000/04/15 15:52:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.32 2000/01/15 19:16:32 chs Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.33 2000/04/15 15:52:52 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -319,6 +319,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 		} else
 			eproc.e_tdev = NODEV;
 		eproc.e_flag = sess.s_ttyvp ? EPROC_CTTY : 0;
+		eproc.e_sid = sess.s_sid;
 		if (sess.s_leader == p)
 			eproc.e_flag |= EPROC_SLEADER;
 		if (proc.p_wmesg)
