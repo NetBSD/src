@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.20 1999/11/04 01:20:58 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.21 1999/11/19 18:22:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -280,11 +280,13 @@ struct tulip_softc {
 	 * Contents of the SROM.
 	 */
 	u_int8_t sc_srom[TULIP_MAX_ROM_SIZE];
+	int sc_srom_addrbits;
 
 	/*
 	 * Media access functions for this chip.
 	 */
 	const struct tulip_mediasw *sc_mediasw;
+	mii_bitbang_ops_t sc_bitbang_ops;
 
 	/*
 	 * For chips with built-in NWay blocks, these are state
