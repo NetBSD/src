@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.24 2001/05/27 14:17:56 lukem Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.25 2001/05/28 00:41:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.24 2001/05/27 14:17:56 lukem Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.25 2001/05/28 00:41:14 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,11 +69,9 @@ __RCSID("$NetBSD: dumprmt.c,v 1.24 2001/05/27 14:17:56 lukem Exp $");
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
-#ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#endif
 
 #include "pathnames.h"
 #include "dump.h"
