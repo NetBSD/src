@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 1998/05/07 21:01:42 kleink Exp $	*/
+/*	$NetBSD: mem.c,v 1.20 1998/08/20 08:33:44 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,7 +97,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vm_offset_t o, v;
+	vaddr_t o, v;
 	int c;
 	struct iovec *iov;
 	int error = 0;
@@ -137,14 +137,14 @@ mmrw(dev, uio, flags)
 				goto unlock;
 			}
 
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
+			    (vaddr_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */

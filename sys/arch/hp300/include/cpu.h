@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 1998/02/13 07:41:51 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 1998/08/20 08:33:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -147,17 +147,17 @@ void	ICIA __P((void));
 void	ICPA __P((void));
 void	PCIA __P((void));
 void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
+void	TBIS __P((vaddr_t));
 void	TBIAS __P((void));
 void	TBIAU __P((void));
 #if defined(M68040)
 void	DCFA __P((void));
-void	DCFP __P((vm_offset_t));
-void	DCFL __P((vm_offset_t));
-void	DCPL __P((vm_offset_t));
-void	DCPP __P((vm_offset_t));
-void	ICPL __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
+void	DCFP __P((paddr_t));
+void	DCFL __P((paddr_t));
+void	DCPL __P((paddr_t));
+void	DCPP __P((paddr_t));
+void	ICPL __P((paddr_t));
+void	ICPP __P((paddr_t));
 #endif
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));

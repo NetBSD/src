@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.22 1998/05/24 19:32:39 is Exp $	*/
+/*	$NetBSD: dma.c,v 1.23 1998/08/20 08:33:41 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -399,7 +399,7 @@ dmago(unit, addr, count, flags)
 		 * Push back dirty cache lines
 		 */
 		if (mmutype == MMU_68040)
-			DCFP((vm_offset_t)dc->dm_chain[seg].dc_addr);
+			DCFP((paddr_t)dc->dm_chain[seg].dc_addr);
 #endif
 		if (count < (tcount = NBPG - ((int)addr & PGOFSET)))
 			tcount = count;
