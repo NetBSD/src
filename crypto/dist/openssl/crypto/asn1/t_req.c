@@ -95,26 +95,27 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	char str[128];
 
 	ri=x->req_info;
-	sprintf(str,"Certificate Request:\n");
+	snprintf(str, sizeof(str), "Certificate Request:\n");
 	if (BIO_puts(bp,str) <= 0) goto err;
-	sprintf(str,"%4sData:\n","");
+	snprintf(str, sizeof(str), "%4sData:\n","");
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	neg=(ri->version->type == V_ASN1_NEG_INTEGER)?"-":"";
 	l=0;
 	for (i=0; i<ri->version->length; i++)
 		{ l<<=8; l+=ri->version->data[i]; }
-	sprintf(str,"%8sVersion: %s%lu (%s0x%lx)\n","",neg,l,neg,l);
+	snprintf(str, sizeof(str), "%8sVersion: %s%lu (%s0x%lx)\n", "", neg,
+	    l, neg, l);
 	if (BIO_puts(bp,str) <= 0) goto err;
-	sprintf(str,"%8sSubject: ","");
+	snprintf(str, sizeof(str), "%8sSubject: ", "");
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	X509_NAME_print(bp,ri->subject,16);
-	sprintf(str,"\n%8sSubject Public Key Info:\n","");
+	snprintf(str, sizeof(str), "\n%8sSubject Public Key Info:\n", "");
 	if (BIO_puts(bp,str) <= 0) goto err;
 	i=OBJ_obj2nid(ri->pubkey->algor->algorithm);
-	sprintf(str,"%12sPublic Key Algorithm: %s\n","",
-		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
+	snprintf(str, sizeof(str), "%12sPublic Key Algorithm: %s\n", "",
+	    (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	pkey=X509_REQ_get_pubkey(x);
@@ -141,7 +142,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 	    EVP_PKEY_free(pkey);
 
 	/* may not be */
-	sprintf(str,"%8sAttributes:\n","");
+	snprintf(str, sizeof(str), "%8sAttributes:\n", "");
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	sk=x->req_info->attributes;
@@ -149,7 +150,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 		{
 		if (!x->req_info->req_kludge)
 			{
-			sprintf(str,"%12sa0:00\n","");
+			snprintf(str, sizeof(str), "%12sa0:00\n", "");
 			if (BIO_puts(bp,str) <= 0) goto err;
 			}
 		}
@@ -166,7 +167,7 @@ int X509_REQ_print(BIO *bp, X509_REQ *x)
 			a=sk_X509_ATTRIBUTE_value(sk,i);
 			if(X509_REQ_extension_nid(OBJ_obj2nid(a->object)))
 								continue;
-			sprintf(str,"%12s","");
+			snprintf(str, sizeof(str), "%12s", "");
 			if (BIO_puts(bp,str) <= 0) goto err;
 			if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)
 			{
@@ -230,8 +231,8 @@ get_next:
 	}
 
 	i=OBJ_obj2nid(x->sig_alg->algorithm);
-	sprintf(str,"%4sSignature Algorithm: %s","",
-		(i == NID_undef)?"UNKNOWN":OBJ_nid2ln(i));
+	snprintf(str, sizeof(str), "%4sSignature Algorithm: %s", "",
+	    (i == NID_undef) ? "UNKNOWN" : OBJ_nid2ln(i));
 	if (BIO_puts(bp,str) <= 0) goto err;
 
 	n=x->signature->length;
@@ -240,10 +241,11 @@ get_next:
 		{
 		if ((i%18) == 0)
 			{
-			sprintf(str,"\n%8s","");
+			snprintf(str, sizeof(str), "\n%8s", "");
 			if (BIO_puts(bp,str) <= 0) goto err;
 			}
-		sprintf(str,"%02x%s",(unsigned char)s[i],((i+1) == n)?"":":");
+		snprintf(str, sizeof(str), "%02x%s", (unsigned char)s[i],
+		    ((i + 1) == n) ? "" : ":");
 		if (BIO_puts(bp,str) <= 0) goto err;
 		}
 	if (BIO_puts(bp,"\n") <= 0) goto err;

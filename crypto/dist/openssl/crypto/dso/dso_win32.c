@@ -127,7 +127,7 @@ static int win32_load(DSO *dso, const char *filename)
 			(strstr(filename, "\\") == NULL) &&
 			(strstr(filename, ":") == NULL))
 		{
-		sprintf(translated, "%s.dll", filename);
+		snprintf(translated, sizeof(translated), "%s.dll", filename);
 		h = LoadLibrary(translated);
 		}
 	else

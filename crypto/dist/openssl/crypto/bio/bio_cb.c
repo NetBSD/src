@@ -74,51 +74,64 @@ long MS_CALLBACK BIO_debug_callback(BIO *bio, int cmd, const char *argp,
 	if (BIO_CB_RETURN & cmd)
 		r=ret;
 
-	sprintf(buf,"BIO[%08lX]:",(unsigned long)bio);
+	snprintf(buf, sizeof(buf), "BIO[%08lX]:", (unsigned long)bio);
 	p= &(buf[14]);
 	switch (cmd)
 		{
 	case BIO_CB_FREE:
-		sprintf(p,"Free - %s\n",bio->method->name);
+		snprintf(p, sizeof(buf) - (p - buf), "Free - %s\n",
+		    bio->method->name);
 		break;
 	case BIO_CB_READ:
 		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
-			sprintf(p,"read(%d,%d) - %s fd=%d\n",bio->num,argi,bio->method->name,bio->num);
+			snprintf(p, sizeof(buf) - (p - buf),
+			    "read(%d,%d) - %s fd=%d\n", bio->num, argi,
+			    bio->method->name,bio->num);
 		else
-			sprintf(p,"read(%d,%d) - %s\n",bio->num,argi,bio->method->name);
+			snprintf(p, sizeof(buf) - (p - buf),
+			    "read(%d,%d) - %s\n", bio->num, argi,
+			    bio->method->name);
 		break;
 	case BIO_CB_WRITE:
 		if (bio->method->type & BIO_TYPE_DESCRIPTOR)
-			sprintf(p,"write(%d,%d) - %s fd=%d\n",bio->num,argi,bio->method->name,bio->num);
+			snprintf(p, sizeof(buf) - (p - buf),
+			    "write(%d,%d) - %s fd=%d\n", bio->num, argi,
+			    bio->method->name,bio->num);
 		else
-			sprintf(p,"write(%d,%d) - %s\n",bio->num,argi,bio->method->name);
+			snprintf(p, sizeof(buf) - (p - buf),
+			    "write(%d,%d) - %s\n", bio->num, argi,
+			    bio->method->name);
 		break;
 	case BIO_CB_PUTS:
-		sprintf(p,"puts() - %s\n",bio->method->name);
+		snprintf(p, sizeof(buf) - (p - buf), "puts() - %s\n",
+		    bio->method->name);
 		break;
 	case BIO_CB_GETS:
-		sprintf(p,"gets(%d) - %s\n",argi,bio->method->name);
+		snprintf(p, sizeof(buf) - (p - buf), "gets(%d) - %s\n",
+		    argi, bio->method->name);
 		break;
 	case BIO_CB_CTRL:
-		sprintf(p,"ctrl(%d) - %s\n",argi,bio->method->name);
+		snprintf(p, sizeof(buf) - (p - buf), "ctrl(%d) - %s\n",
+		    argi, bio->method->name);
 		break;
 	case BIO_CB_RETURN|BIO_CB_READ:
-		sprintf(p,"read return %ld\n",ret);
+		snprintf(p, sizeof(buf) - (p - buf), "read return %ld\n", ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_WRITE:
-		sprintf(p,"write return %ld\n",ret);
+		snprintf(p, sizeof(buf) - (p - buf), "write return %ld\n", ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_GETS:
-		sprintf(p,"gets return %ld\n",ret);
+		snprintf(p, sizeof(buf) - (p - buf), "gets return %ld\n", ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_PUTS:
-		sprintf(p,"puts return %ld\n",ret);
+		snprintf(p, sizeof(buf) - (p - buf), "puts return %ld\n", ret);
 		break;
 	case BIO_CB_RETURN|BIO_CB_CTRL:
-		sprintf(p,"ctrl return %ld\n",ret);
+		snprintf(p, sizeof(buf) - (p - buf), "ctrl return %ld\n", ret);
 		break;
 	default:
-		sprintf(p,"bio callback - unknown type (%d)\n",cmd);
+		snprintf(p, sizeof(buf) - (p - buf),
+		    "bio callback - unknown type (%d)\n", cmd);
 		break;
 		}
 
