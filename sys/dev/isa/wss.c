@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.26 1997/06/06 23:44:09 thorpej Exp $	*/
+/*	$NetBSD: wss.c,v 1.27 1997/07/27 01:17:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -171,6 +171,8 @@ struct audio_hw_if wss_hw_if = {
 	wss_set_in_port,
 	wss_get_in_port,
 	ad1848_commit_settings,
+	ad1848_dma_init_output,
+	ad1848_dma_init_input,
 	ad1848_dma_output,
 	ad1848_dma_input,
 	ad1848_halt_out_dma,
@@ -183,7 +185,10 @@ struct audio_hw_if wss_hw_if = {
 	wss_mixer_set_port,
 	wss_mixer_get_port,
 	wss_query_devinfo,
-	0,	/* not full-duplex */
+	ad1848_malloc,
+	ad1848_free,
+	ad1848_round,
+	AUDIO_PROP_MMAP,
 	0
 };
 
@@ -224,7 +229,7 @@ wssprobe(parent, match, aux)
 	return 0;
     }
 
-    /* map the ports upto the AD1488 port */
+    /* Map the ports upto the AD1848 port */
     if (bus_space_map(sc->sc_iot, ia->ia_iobase, WSS_CODEC, 0, &sc->sc_ioh))
 	return 0;
 

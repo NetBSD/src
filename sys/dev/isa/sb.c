@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.49 1997/06/06 23:44:01 thorpej Exp $	*/
+/*	$NetBSD: sb.c,v 1.50 1997/07/27 01:17:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -86,6 +86,8 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_set_in_port,
 	sbdsp_get_in_port,
 	sbdsp_commit_settings,
+	sbdsp_dma_init_output,
+	sbdsp_dma_init_input,
 	sbdsp_dma_output,
 	sbdsp_dma_input,
 	sbdsp_haltdma,
@@ -98,7 +100,10 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_mixer_set_port,
 	sbdsp_mixer_get_port,
 	sbdsp_mixer_query_devinfo,
-	0,	/* not full-duplex */
+	sb_malloc,
+	sb_free,
+	sb_round,
+	AUDIO_PROP_MMAP,
 	0
 };
 

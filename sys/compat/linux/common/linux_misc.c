@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.30 1997/04/07 14:13:16 augustss Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.31 1997/07/27 01:16:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -502,6 +502,8 @@ linux_sys_mmap(p, v, retval)
 
 	SCARG(&cma,addr) = lmap.lm_addr;
 	SCARG(&cma,len) = lmap.lm_len;
+	if (lmap.lm_prot & VM_PROT_WRITE) /* XXX */
+		lmap.lm_prot |= VM_PROT_READ;
  	SCARG(&cma,prot) = lmap.lm_prot;
 	SCARG(&cma,flags) = flags;
 	SCARG(&cma,fd) = lmap.lm_fd;

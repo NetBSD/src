@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.23 1997/06/06 23:44:04 thorpej Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.24 1997/07/27 01:17:08 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -174,6 +174,8 @@ int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
 int	sbdsp_commit_settings __P((void *));
 
+int	sbdsp_dma_init_input __P((void *, void *, int));
+int	sbdsp_dma_init_output __P((void *, void *, int));
 int	sbdsp_dma_output __P((void *, void *, int, void (*)(void *), void*));
 int	sbdsp_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
@@ -201,5 +203,10 @@ int	sbdsp_mix_read __P((struct sbdsp_softc *, int));
 int	sbdsp_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	sbdsp_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	sbdsp_mixer_query_devinfo __P((void *, mixer_devinfo_t *));
+
+void 	*sb_malloc __P((void *, unsigned long, int, int));
+void	sb_free __P((void *, void *, int));
+unsigned long sb_round __P((void *, unsigned long));
+
 
 #endif

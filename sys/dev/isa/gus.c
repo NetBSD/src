@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.32 1997/07/15 07:46:16 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.33 1997/07/27 01:16:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -319,9 +319,8 @@ struct ics2101_volume {
 
 #ifdef AUDIO_DEBUG
 #define GUSPLAYDEBUG	/*XXX*/
-extern void Dprintf __P((const char *, ...));
-#define DPRINTF(x)	if (gusdebug) Dprintf x
-#define DMAPRINTF(x)	if (gusdmadebug) Dprintf x
+#define DPRINTF(x)	if (gusdebug) printf x
+#define DMAPRINTF(x)	if (gusdmadebug) printf x
 int	gusdebug = 0;
 int	gusdmadebug = 0;
 #else
@@ -611,6 +610,9 @@ struct audio_hw_if gus_hw_if = {
 
 	gus_commit_settings,
 
+	NULL,
+	NULL,
+
 	gus_dma_output,
 	gus_dma_input,
 	gus_halt_out_dma,
@@ -625,7 +627,10 @@ struct audio_hw_if gus_hw_if = {
 	gus_mixer_set_port,
 	gus_mixer_get_port,
 	gus_mixer_query_devinfo,
-	1,				/* full-duplex */
+	NULL,
+	NULL,
+	NULL,
+	AUDIO_PROP_FULLDUPLEX,
 	0,
 };
 
@@ -888,10 +893,10 @@ gusattach(parent, self, aux)
 		printf("%s codec/mixer, ", sc->sc_codec.chip_name);
 	if (sc->sc_recdrq == sc->sc_drq) {
 		printf("half-duplex");
-		gus_hw_if.full_duplex = 0;
+		gus_hw_if.props &= ~AUDIO_PROP_FULLDUPLEX;
 	} else {
 		printf("full-duplex, record drq %d", sc->sc_recdrq);
-		gus_hw_if.full_duplex = 1;
+		gus_hw_if.props |= AUDIO_PROP_FULLDUPLEX;
 	}
 
 	printf(">\n");
@@ -1117,7 +1122,7 @@ gus_dma_output(addr, buf, size, intr, arg)
 	u_long boarddma;
 	int flags;
 
-	DMAPRINTF(("gus_dma_output %d @ %x\n", size, buf));
+	DMAPRINTF(("gus_dma_output %d @ %p\n", size, buf));
 
 	if (size != sc->sc_blocksize) {
 	    DPRINTF(("gus_dma_output reqsize %d not sc_blocksize %d\n",
@@ -1210,7 +1215,7 @@ gusclose(addr)
 {
 	struct gus_softc *sc = addr;
 
-        DPRINTF(("gus_close: sc=0x%x\n", sc));
+        DPRINTF(("gus_close: sc=%p\n", sc));
 
 
 /*	if (sc->sc_flags & GUS_DMAOUT_ACTIVE) */ {
@@ -1365,7 +1370,7 @@ gus_dmaout_dointr(sc)
 	/* sc->sc_dmaoutcnt - 1 because DMA controller counts from zero?. */
 	isa_dmadone(sc->sc_dev.dv_parent, sc->sc_drq);
 	sc->sc_flags &= ~GUS_DMAOUT_ACTIVE;  /* pending DMA is done */
-	DMAPRINTF(("gus_dmaout_dointr %d @ %x\n", sc->sc_dmaoutcnt,
+	DMAPRINTF(("gus_dmaout_dointr %d @ %p\n", sc->sc_dmaoutcnt,
 		   sc->sc_dmaoutaddr));
 
 	/*
@@ -2519,7 +2524,7 @@ gus_get_curaddr(sc, voice)
 
 	if (sc->sc_voc[voice].voccntl & GUSMASK_DATA_SIZE16)
 	    addr = (addr & 0xc0000) | ((addr & 0x1ffff) << 1); /* undo 16-bit change */
-	DPRINTF(("gus voice %d curaddr %d end_addr %d\n",
+	DPRINTF(("gus voice %d curaddr %ld end_addr %ld\n",
 		 voice, addr, sc->sc_voc[voice].end_addr));
 	/* XXX sanity check the address? */
 
@@ -2774,6 +2779,9 @@ gus_init_cs4231(sc)
 
 			gusmax_commit_settings,
 
+			NULL,
+			NULL,
+
 			gusmax_dma_output,
 			gusmax_dma_input,
 			gusmax_halt_out_dma,
@@ -2788,7 +2796,10 @@ gus_init_cs4231(sc)
 			gusmax_mixer_set_port,
 			gusmax_mixer_get_port,
 			gusmax_mixer_query_devinfo,
-			1,				/* full-duplex */
+			NULL,
+			NULL,
+			NULL,
+			AUDIO_PROP_FULLDUPLEX,
 			0,
 		};
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
@@ -3029,7 +3040,7 @@ gus_dmain_intr(sc)
 	    sc->sc_inarg = 0;
 
 	    sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
-	    DMAPRINTF(("calling dmain_intr callback %x(%x)\n", callback, arg));
+	    DMAPRINTF(("calling dmain_intr callback %p(%p)\n", callback, arg));
 	    (*callback)(arg);
 	    return 1;
 	} else {
@@ -3157,9 +3168,6 @@ gus_setfd(addr, flag)
 	void *addr;
 	int flag;
 {
-    if (gus_hw_if.full_duplex == 0)
-	 return ENOTTY;
-
     return(0);				/* nothing fancy to do. */
 }
 

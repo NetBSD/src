@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.22 1997/05/24 20:15:59 pk Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.23 1997/07/27 01:16:37 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -240,6 +240,8 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_set_in_port,
 	amd7930_get_in_port,
 	amd7930_commit_settings,
+	NULL,
+	NULL,
 	amd7930_start_output,
 	amd7930_start_input,
 	amd7930_halt_output,
@@ -252,7 +254,10 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_set_port,
 	amd7930_get_port,
 	amd7930_query_devinfo,
-	1,
+	0,
+	0,
+	0,
+	AUDIO_PROP_FULLDUPLEX,
 	0
 };
 

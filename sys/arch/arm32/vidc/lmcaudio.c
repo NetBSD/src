@@ -1,4 +1,4 @@
-/* $NetBSD: lmcaudio.c,v 1.8 1997/07/15 07:46:07 augustss Exp $ */
+/* $NetBSD: lmcaudio.c,v 1.9 1997/07/27 01:16:32 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -613,6 +613,8 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_set_in_port,
 	lmcaudio_get_in_port,
 	lmcaudio_commit_settings,
+	NULL,
+	NULL,
 	lmcaudio_start_output,
 	lmcaudio_start_input,
 	lmcaudio_halt_output,
@@ -625,7 +627,10 @@ struct audio_hw_if lmcaudio_hw_if = {
 	lmcaudio_set_port,
 	lmcaudio_get_port,
 	lmcaudio_query_devinfo,
-	0, /* not full duplex */
+	0,
+	0,
+	0,
+	0,
 	0
 };
 

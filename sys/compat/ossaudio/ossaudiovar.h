@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.1 1997/04/04 15:36:02 augustss Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.2 1997/07/27 01:16:42 augustss Exp $	*/
 struct oss_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
@@ -16,22 +16,22 @@ struct oss_sys_ioctl_args {
 #define _OSS_IOW(x,y,t)     _OSS_IOCTL(OSS_IOC_IN, x, y, sizeof(t))
 #define _OSS_IOWR(x,y,t)    _OSS_IOCTL(OSS_IOC_INOUT, x, y, sizeof(t))
 
-#define	OSS_SNDCTL_DSP_RESET		_OSS_IO('P', 0)
-#define	OSS_SNDCTL_DSP_SYNC		_OSS_IO('P', 1)
+#define	OSS_SNDCTL_DSP_RESET		_OSS_IO  ('P', 0)
+#define	OSS_SNDCTL_DSP_SYNC		_OSS_IO  ('P', 1)
 #define	OSS_SNDCTL_DSP_SPEED		_OSS_IOWR('P', 2, int)
-#define	OSS_SOUND_PCM_READ_RATE		_OSS_IOR('P', 2, int)
+#define	OSS_SOUND_PCM_READ_RATE		_OSS_IOR ('P', 2, int)
 #define	OSS_SNDCTL_DSP_STEREO		_OSS_IOWR('P', 3, int)
 #define	OSS_SNDCTL_DSP_GETBLKSIZE	_OSS_IOWR('P', 4, int)
 #define	OSS_SNDCTL_DSP_SETFMT		_OSS_IOWR('P', 5, int)
-#define	OSS_SOUND_PCM_READ_BITS		_OSS_IOR('P', 5, int)
+#define	OSS_SOUND_PCM_READ_BITS		_OSS_IOR ('P', 5, int)
 #define	OSS_SNDCTL_DSP_CHANNELS		_OSS_IOWR('P', 6, int)
-#define	OSS_SOUND_PCM_READ_CHANNELS	_OSS_IOR('P', 6, int)
+#define	OSS_SOUND_PCM_READ_CHANNELS	_OSS_IOR ('P', 6, int)
 #define OSS_SOUND_PCM_WRITE_FILTER	_OSS_IOWR('P', 7, int)
-#define OSS_SOUND_PCM_READ_FILTER	_OSS_IOR('P', 7, int)
-#define	OSS_SNDCTL_DSP_POST		_OSS_IO('P', 8)
+#define OSS_SOUND_PCM_READ_FILTER	_OSS_IOR ('P', 7, int)
+#define	OSS_SNDCTL_DSP_POST		_OSS_IO  ('P', 8)
 #define OSS_SNDCTL_DSP_SUBDIVIDE	_OSS_IOWR('P', 9, int)
 #define	OSS_SNDCTL_DSP_SETFRAGMENT	_OSS_IOWR('P', 10, int)
-#define	OSS_SNDCTL_DSP_GETFMTS		_OSS_IOR('P', 11, int)
+#define	OSS_SNDCTL_DSP_GETFMTS		_OSS_IOR ('P', 11, int)
 #define OSS_SNDCTL_DSP_GETOSPACE	_OSS_IOR ('P',12, struct oss_audio_buf_info)
 #define OSS_SNDCTL_DSP_GETISPACE	_OSS_IOR ('P',13, struct oss_audio_buf_info)
 #define OSS_SNDCTL_DSP_NONBLOCK		_OSS_IO  ('P',14)
@@ -43,10 +43,12 @@ struct oss_sys_ioctl_args {
 # define OSS_DSP_CAP_COPROC		0x00000800
 # define OSS_DSP_CAP_TRIGGER		0x00001000
 # define OSS_DSP_CAP_MMAP		0x00002000
-#define OSS_SNDCTL_DSP_GETTRIGGER	_OSS_IOR ('P',16, int)
-#define OSS_SNDCTL_DSP_SETTRIGGER	_OSS_IOW ('P',16, int)
-#define OSS_SNDCTL_DSP_GETIPTR		_OSS_IOR ('P',17, struct oss_count_info)
-#define OSS_SNDCTL_DSP_GETOPTR		_OSS_IOR ('P',18, struct oss_count_info)
+#define OSS_SNDCTL_DSP_GETTRIGGER	_OSS_IOR ('P', 16, int)
+#define OSS_SNDCTL_DSP_SETTRIGGER	_OSS_IOW ('P', 16, int)
+# define OSS_PCM_ENABLE_INPUT		0x00000001
+# define OSS_PCM_ENABLE_OUTPUT		0x00000002
+#define OSS_SNDCTL_DSP_GETIPTR		_OSS_IOR ('P', 17, struct oss_count_info)
+#define OSS_SNDCTL_DSP_GETOPTR		_OSS_IOR ('P', 18, struct oss_count_info)
 #define OSS_SNDCTL_DSP_MAPINBUF		_OSS_IOR ('P', 19, struct oss_buffmem_desc)
 #define OSS_SNDCTL_DSP_MAPOUTBUF	_OSS_IOR ('P', 20, struct oss_buffmem_desc)
 #define OSS_SNDCTL_DSP_SETSYNCRO	_OSS_IO  ('P', 21)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.12 1997/07/15 07:46:09 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.13 1997/07/27 01:16:41 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -30,7 +30,10 @@ oss_ioctl_audio(p, uap, retval)
 	register struct filedesc *fdp;
 	u_long com;
 	struct audio_info tmpinfo;
-	int idat;
+	struct audio_offset tmpoffs;
+	struct oss_audio_buf_info bufinfo;
+	struct oss_count_info cntinfo;
+	int idat, idata;
 	int error;
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
 
@@ -270,19 +273,85 @@ oss_ioctl_audio(p, uap, retval)
 			return error;
 		break;
 	case OSS_SNDCTL_DSP_GETOSPACE:
+		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		if (error)
+			return error;
+		bufinfo.fragsize = tmpinfo.blocksize;
+		bufinfo.fragments = /* XXX */
+		bufinfo.fragstotal = tmpinfo.buffersize / bufinfo.fragsize;
+		bufinfo.bytes = bufinfo.fragments * bufinfo.fragsize;
+		error = copyout(&bufinfo, SCARG(uap, data), sizeof bufinfo);
+		if (error)
+			return error;
+		break;
 	case OSS_SNDCTL_DSP_GETISPACE:
 	case OSS_SNDCTL_DSP_NONBLOCK:
 		return EINVAL; /* XXX unimplemented */
 	case OSS_SNDCTL_DSP_GETCAPS:
-		idat = 0; /* XXX full duplex info should be set */
+		error = ioctlf(fp, AUDIO_GETPROPS, (caddr_t)&idata, p);
+		if (error)
+			return error;
+		idat = OSS_DSP_CAP_TRIGGER; /* pretend we have trigger */
+		if (idata & AUDIO_PROP_FULLDUPLEX)
+			idat |= OSS_DSP_CAP_DUPLEX;
+		if (idata & AUDIO_PROP_MMAP)
+			idat |= OSS_DSP_CAP_MMAP;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error)
 			return error;
 		break;
+#if 0
+	case OSS_SNDCTL_DSP_GETTRIGGER:
+		error = ioctlf(fp, AUDIO_GETINFO, (caddr_t)&tmpinfo, p);
+		if (error)
+			return error;
+		idat = (tmpinfo.play.pause ? 0 : OSS_PCM_ENABLE_OUTPUT) |
+		       (tmpinfo.record.pause ? 0 : OSS_PCM_ENABLE_INPUT);
+		error = copyout(&idat, SCARG(uap, data), sizeof idat);
+		if (error)
+			return error;
+		break;
+	case OSS_SNDCTL_DSP_SETTRIGGER:
+		AUDIO_INITINFO(&tmpinfo);
+		error = copyin(SCARG(uap, data), &idat, sizeof idat);
+		if (error)
+			return error;
+		tmpinfo.play.pause = (idat & OSS_PCM_ENABLE_OUTPUT) == 0;
+		tmpinfo.record.pause = (idat & OSS_PCM_ENABLE_INPUT) == 0;
+		(void) ioctlf(fp, AUDIO_SETINFO, (caddr_t)&tmpinfo, p);
+		error = copyout(&idat, SCARG(uap, data), sizeof idat);
+		if (error)
+			return error;
+		break;
+#else
 	case OSS_SNDCTL_DSP_GETTRIGGER:
 	case OSS_SNDCTL_DSP_SETTRIGGER:
+		/* XXX Do nothing for now. */
+		idat = OSS_PCM_ENABLE_OUTPUT;
+		return copyout(&idat, SCARG(uap, data), sizeof idat);
+#endif
 	case OSS_SNDCTL_DSP_GETIPTR:
+		error = ioctlf(fp, AUDIO_GETIOFFS, (caddr_t)&tmpoffs, p);
+		if (error)
+			return error;
+		cntinfo.bytes = tmpoffs.samples;
+		cntinfo.blocks = tmpoffs.deltablks;
+		cntinfo.ptr = tmpoffs.offset;
+		error = copyout(&cntinfo, SCARG(uap, data), sizeof cntinfo);
+		if (error)
+			return error;
+		break;
 	case OSS_SNDCTL_DSP_GETOPTR:
+		error = ioctlf(fp, AUDIO_GETOOFFS, (caddr_t)&tmpoffs, p);
+		if (error)
+			return error;
+		cntinfo.bytes = tmpoffs.samples;
+		cntinfo.blocks = tmpoffs.deltablks;
+		cntinfo.ptr = tmpoffs.offset;
+		error = copyout(&cntinfo, SCARG(uap, data), sizeof cntinfo);
+		if (error)
+			return error;
+		break;
 	case OSS_SNDCTL_DSP_MAPINBUF:
 	case OSS_SNDCTL_DSP_MAPOUTBUF:
 	case OSS_SNDCTL_DSP_SETSYNCRO:

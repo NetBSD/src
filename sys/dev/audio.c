@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.51 1997/07/15 07:46:11 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.52 1997/07/27 01:16:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,10 +57,7 @@
 /*
  * Todo:
  * - Add softaudio() isr processing for wakeup, poll and signals.
- * - Allow opens for READ and WRITE (one open each)
- * - Setup for single isr for full-duplex
- * - Add SIGIO generation for changes in the mixer device
- * - Fixup SunOS compat for mixer device changes in ioctl.
+ * - Add SIGIO generation for changes in the mixer device.
  */
 
 #include "audio.h"
@@ -84,37 +81,21 @@
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
 
+#include <vm/vm.h>
+#include <vm/vm_prot.h>
+
 #include <machine/endian.h>
 
 #ifdef AUDIO_DEBUG
-#include <machine/stdarg.h>
-
-void Dprintf __P((const char *, ...));
-
-void
-#ifdef __STDC__
-Dprintf(const char *fmt, ...)
-#else
-Dprintf(fmt, va_alist)
-	char *fmt;
-#endif
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	log(LOG_DEBUG, "%:", fmt, ap);
-	va_end(ap);
-}
-
-#define DPRINTF(x)	if (audiodebug) Dprintf x
+#define DPRINTF(x)	if (audiodebug) printf x
 int	audiodebug = 0;
 #else
 #define DPRINTF(x)
 #endif
 
+#define ROUNDSIZE(x) x &= -16	/* round to nice boundary */
 
 int	audio_blk_ms = AUDIO_BLK_MS;
-int	audio_backlog = AUDIO_BACKLOG;
 
 struct	audio_softc **audio_softc;
 int	naudio = 0;             /* Current size of audio_softc */
@@ -140,30 +121,33 @@ void	audiostartr __P((struct audio_softc *));
 void	audiostartp __P((struct audio_softc *));
 void	audio_rint __P((void *));
 void	audio_pint __P((void *));
-void	audio_rpint __P((void *));
 int	audio_check_params __P((struct audio_params *));
 
-int	audio_calc_blksize __P((struct audio_softc *));
+void	audio_calc_blksize __P((struct audio_softc *, int));
 void	audio_fill_silence __P((struct audio_params *, u_char *, int));
 int	audio_silence_copyout __P((struct audio_softc *, int, struct uio *));
-void	audio_alloc_auzero __P((struct audio_softc *, int));
 
-void	audio_printsc __P((struct audio_softc *));
-void	audioattach __P((int));
 int	audio_hardware_attach __P((struct audio_hw_if *, void *));
-void	audio_init_ring __P((struct audio_buffer *, int));
+void	audio_init_ringbuffer __P((struct audio_ringbuffer *));
 void	audio_initbufs __P((struct audio_softc *));
 static __inline int audio_sleep_timo __P((int *, char *, int));
 static __inline int audio_sleep __P((int *, char *));
 static __inline void audio_wakeup __P((int *));
 int	audio_drain __P((struct audio_softc *));
 void	audio_clear __P((struct audio_softc *));
+static __inline void audio_pint_silence __P((struct audio_softc *, struct audio_ringbuffer *, u_char *, int));
+
+int	audio_alloc_ring __P((struct audio_softc *, struct audio_ringbuffer *, int));
+void	audio_free_ring __P((struct audio_softc *, struct audio_ringbuffer *));
 
 /* The default audio mode: 8 kHz mono ulaw */
 struct audio_params audio_default = 
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0 };
 
 #ifdef AUDIO_DEBUG
+void	audio_printsc __P((struct audio_softc *));
+void	audio_print_params __P((char *, struct audio_params *));
+
 void
 audio_printsc(sc)
 	struct audio_softc *sc;
@@ -171,19 +155,58 @@ audio_printsc(sc)
 	printf("hwhandle %p hw_if %p ", sc->hw_hdl, sc->hw_if);
 	printf("open %x mode %x\n", sc->sc_open, sc->sc_mode);
 	printf("rchan %x wchan %x ", sc->sc_rchan, sc->sc_wchan);
-	printf("rring blk %x pring nblk %x\n", sc->rr.nblk, sc->pr.nblk);
+	printf("rring used %x pring used=%d\n", sc->sc_rr.used, sc->sc_pr.used);
 	printf("rbus %x pbus %x ", sc->sc_rbus, sc->sc_pbus);
-	printf("blksz %d sib %d ", sc->sc_blksize, sc->sc_smpl_in_blk);
-	printf("sp50ms %d backlog %d\n", sc->sc_50ms, sc->sc_backlog);
-	printf("hiwat %d lowat %d rblks %d\n", sc->sc_hiwat, sc->sc_lowat,
-	    sc->sc_rblks);
+	printf("blksize %d", sc->sc_pr.blksize);
+	printf("hiwat %d lowat %d\n", sc->sc_pr.usedhigh, sc->sc_pr.usedlow);
+}
+
+void
+audio_print_params(s, p)
+	char *s;
+	struct audio_params *p;
+{
+	printf("audio: %s sr=%ld, enc=%d, chan=%d, prec=%d\n", s,
+	       p->sample_rate, p->encoding, p->channels, p->precision);
 }
 #endif
 
-void
-audioattach(num)
-	int num;
+int
+audio_alloc_ring(sc, r, bufsize)
+	struct audio_softc *sc;
+	struct audio_ringbuffer *r;
+	int bufsize;
 {
+	struct audio_hw_if *hw = sc->hw_if;
+	void *hdl = sc->hw_hdl;
+	/*
+	 * Alloc DMA play and record buffers
+	 */
+	ROUNDSIZE(bufsize);
+	if (bufsize < AUMINBUF)
+		bufsize = AUMINBUF;
+	if (hw->roundbuffer)
+		bufsize = hw->roundbuffer(hdl, bufsize);
+	r->bufsize = bufsize;
+	if (hw->alloc)
+	    r->start = hw->alloc(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
+	else
+	    r->start = malloc(bufsize, M_DEVBUF, M_WAITOK);
+	if (r->start == 0)
+		return ENOMEM;
+	return 0;
+}
+
+void
+audio_free_ring(sc, r)
+	struct audio_softc *sc;
+	struct audio_ringbuffer *r;
+{
+	if (sc->hw_if->free) {
+	    sc->hw_if->free(sc->hw_hdl, r->start, M_DEVBUF);
+	} else {
+	    free(r->start, M_DEVBUF);
+	}
 }
 
 /*
@@ -195,6 +218,7 @@ audio_hardware_attach(hwp, hdlp)
 	void *hdlp;
 {
 	struct audio_softc *sc;
+	int error;
         int n;
 
         /* Find a free slot. */
@@ -207,10 +231,10 @@ audio_hardware_attach(hwp, hdlp)
                 naudio++;
                 new = malloc(naudio * sizeof(struct audio_softc *),
                              M_DEVBUF, M_WAITOK);
-                bcopy(audio_softc, new,
-                       n * sizeof(struct audio_softc *));
-                if (audio_softc)
+                if (audio_softc) {
+			bcopy(audio_softc, new, n * sizeof(struct audio_softc *));
                 	free(audio_softc, M_DEVBUF);
+		}
                 audio_softc = new;
                 audio_softc[n] = 0;
 	}
@@ -219,8 +243,9 @@ audio_hardware_attach(hwp, hdlp)
 	sc = malloc(sizeof(struct audio_softc), M_DEVBUF, M_WAITOK);
 	bzero(sc, sizeof(struct audio_softc));
 
-	/* XXX too paranoid? */
-	if (hwp->open == 0 ||
+#ifdef DIAGNOSTIC
+	if (hwp == 0 ||
+	    hwp->open == 0 ||
 	    hwp->close == 0 ||
 	    hwp->query_encoding == 0 ||
 	    hwp->set_params == 0 ||
@@ -243,25 +268,20 @@ audio_hardware_attach(hwp, hdlp)
         	free(sc, M_DEVBUF);
 		return(EINVAL);
         }
+#endif
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
-	
-	/*
-	 * Alloc DMA play and record buffers
-	 */
-	sc->rr.bp = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
-	if (sc->rr.bp == 0) {
-        	free(sc, M_DEVBUF);
-		return (ENOMEM);
-	}
-	sc->pr.bp = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
-	if (sc->pr.bp == 0) {
-		free(sc->rr.bp, M_DEVBUF);
-        	free(sc, M_DEVBUF);
-		return (ENOMEM);
-	}
 
+	error = audio_alloc_ring(sc, &sc->sc_pr, AU_RING_SIZE);
+	if (error)
+		return error;
+	error = audio_alloc_ring(sc, &sc->sc_rr, AU_RING_SIZE);
+	if (error) {
+		audio_free_ring(sc, &sc->sc_pr);
+		return error;
+	}
+	
 	audio_softc[n] = sc;
 
 	/*
@@ -304,14 +324,12 @@ audio_hardware_detach(hwp)
 	if (sc->sc_open != 0)
 		return(EBUSY);
 
-	sc->hw_if = 0;
-
 	/* Free audio buffers */
-	free(sc->rr.bp, M_DEVBUF);
-	free(sc->pr.bp, M_DEVBUF);
+	audio_free_ring(sc, &sc->sc_rr);
+	audio_free_ring(sc, &sc->sc_pr);
 
 	free(sc, M_DEVBUF);
-	audio_softc[hwp->audio_unit] = NULL;
+	audio_softc[hwp->audio_unit] = 0;
 
 	return(0);
 }
@@ -447,30 +465,56 @@ audiommap(dev, off, prot)
  * Audio driver
  */
 void
-audio_init_ring(rp, blksize)
-	struct audio_buffer *rp;
-	int blksize;
+audio_init_ringbuffer(rp)
+	struct audio_ringbuffer *rp;
 {
-	int nblk = AU_RING_SIZE / blksize;
+	int nblks;
+	int blksize = rp->blksize;
 
-	rp->ep = rp->bp + nblk * blksize;
-	rp->hp = rp->tp = rp->bp;
-	rp->maxblk = nblk;
-	rp->nblk = 0;
-	rp->cb_drops = 0;
-	rp->cb_pdrops = 0;
+	nblks = rp->bufsize / blksize;
+	if (nblks < AUMINNOBLK) {
+		nblks = AUMINNOBLK;
+		blksize = rp->bufsize / nblks;
+		ROUNDSIZE(blksize);
+	}
+	DPRINTF(("audio_init_ringbuffer: blksize=%d\n", blksize));
+	rp->blksize = blksize;
+	rp->maxblks = nblks;
+	rp->used = 0;
+	rp->end = rp->start + nblks * blksize;
+	rp->inp = rp->outp = rp->start;
+	rp->stamp = 0;
+	rp->drops = 0;
+	rp->pause = 0;
+	rp->copying = 0;
+	rp->needfill = 0;
+	rp->mmapped = 0;
 }
 
 void
 audio_initbufs(sc)
 	struct audio_softc *sc;
 {
-	int nblk = AU_RING_SIZE / sc->sc_blksize;
+	struct audio_hw_if *hw = sc->hw_if;
 
-	audio_init_ring(&sc->rr, sc->sc_blksize);
-	audio_init_ring(&sc->pr, sc->sc_blksize);
-	sc->sc_lowat = nblk * 3 / 4;
-	sc->sc_hiwat = nblk;
+	DPRINTF(("audio_initbufs: mode=%x\n", sc->sc_mode));
+	audio_init_ringbuffer(&sc->sc_rr);
+	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD))
+		hw->init_input(sc->hw_hdl, sc->sc_rr.start,
+			       sc->sc_rr.end - sc->sc_rr.start);
+
+	audio_init_ringbuffer(&sc->sc_pr);
+	sc->sc_sil_count = 0;
+	if (hw->init_output && (sc->sc_mode & AUMODE_PLAY))
+		hw->init_output(sc->hw_hdl, sc->sc_pr.start,
+				sc->sc_pr.end - sc->sc_pr.start);
+
+	sc->sc_pr.usedhigh = sc->sc_pr.end - sc->sc_pr.start;
+	sc->sc_pr.usedlow = sc->sc_pr.usedhigh * 3 / 4;	/* set lowater at 75% */
+	if (sc->sc_pr.usedlow == sc->sc_pr.usedhigh)
+		sc->sc_pr.usedlow -= sc->sc_pr.blksize;
+	sc->sc_rr.usedhigh = sc->sc_pr.end - sc->sc_pr.start - sc->sc_pr.blksize;
+	sc->sc_rr.usedlow = 0;
 }
 
 static __inline int
@@ -485,11 +529,12 @@ audio_sleep_timo(chan, label, timo)
 		label = "audio";
 	
 	*chan = 1;
-	st = (tsleep(chan, PWAIT | PCATCH, label, timo));
+	st = tsleep(chan, PWAIT | PCATCH, label, timo);
 	*chan = 0;
-	if (st != 0) {
-	    DPRINTF(("audio_sleep: %d\n", st));
-	}
+#ifdef AUDIO_DEBUG
+	if (st != 0)
+	    printf("audio_sleep: %d\n", st);
+#endif
 	return (st);
 }
 
@@ -498,7 +543,7 @@ audio_sleep(chan, label)
 	int *chan;
 	char *label;
 {
-    return audio_sleep_timo(chan, label, 0);
+	return audio_sleep_timo(chan, label, 0);
 }
 
 static __inline void
@@ -519,7 +564,7 @@ audio_open(dev, flags, ifmt, p)
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
-	int s, error;
+	int error;
 	struct audio_hw_if *hw;
 
 	if (unit >= naudio || !audio_softc[unit]) {
@@ -530,19 +575,24 @@ audio_open(dev, flags, ifmt, p)
 	sc = audio_softc[unit];
 	hw = sc->hw_if;
 
-	DPRINTF(("audio_open: dev=0x%x flags=0x%x sc=0x%x hdl=0x%x\n", dev, flags, sc, sc->hw_hdl));
-	if (hw == 0)		/* Hardware has not attached to us... */
+	DPRINTF(("audio_open: dev=0x%x flags=0x%x sc=%p hdl=%p\n", dev, flags, sc, sc->hw_hdl));
+#ifdef DIAGNOSTIC
+	if (hw == 0) {		/* Hardware has not attached to us... */
+		printf("audio_open: hw==0\n");
 		return (ENXIO);
+	}
+#endif
 
-	if ((sc->sc_open & (AUOPEN_READ|AUOPEN_WRITE)) != 0) /* XXX use flags */
+	if ((sc->sc_open & (AUOPEN_READ|AUOPEN_WRITE)) != 0)
 		return (EBUSY);
 
-	if ((error = hw->open(dev, flags)) != 0)
+	error = hw->open(dev, flags);
+	if (error)
 		return (error);
 
-	if (flags&FREAD)
+	if (flags & FREAD)
 		sc->sc_open |= AUOPEN_READ;
-	if (flags&FWRITE)
+	if (flags & FWRITE)
 		sc->sc_open |= AUOPEN_WRITE;
 
 	/*
@@ -554,47 +604,65 @@ audio_open(dev, flags, ifmt, p)
 		/* /dev/audio */
 		sc->sc_rparams = audio_default;
 		sc->sc_pparams = audio_default;
-		/** XXX should we abort on error? */
-		error = hw->set_params(sc->hw_hdl, AUMODE_RECORD,
+		if (flags & FREAD) {
+			error = hw->set_params(sc->hw_hdl, AUMODE_RECORD,
 				       &sc->sc_rparams, &sc->sc_pparams);
-		if (error)
-			return (error);
-		error = hw->set_params(sc->hw_hdl, AUMODE_PLAY,
+			if (error)
+				return (error);
+		}
+		if (flags & FWRITE) {
+			error = hw->set_params(sc->hw_hdl, AUMODE_PLAY,
 				       &sc->sc_pparams, &sc->sc_rparams);
-		if (error)
-			return (error);
+			if (error)
+				return (error);
+		}
 	}
 
+#ifdef DIAGNOSTIC
 	/*
 	 * Sample rate and precision are supposed to be set to proper
 	 * default values by the hardware driver, so that it may give
 	 * us these values.
 	 */
-#ifdef DIAGNOSTIC
 	if (sc->sc_rparams.precision == 0 || sc->sc_pparams.precision == 0) {
 		printf("audio_open: 0 precision\n");
 		return EINVAL;
 	}
 #endif
 
-	sc->sc_blksize = audio_calc_blksize(sc);
-	audio_alloc_auzero(sc, sc->sc_blksize);
-	sc->sc_smpl_in_blk = sc->sc_blksize / (sc->sc_pparams.precision / NBBY);
-	sc->sc_50ms = 50 * sc->sc_pparams.sample_rate / 1000;
+	if (flags & FREAD) {
+		audio_calc_blksize(sc, AUMODE_RECORD);
+		sc->sc_mode = AUMODE_RECORD;
+	}
+	if (flags & FWRITE) {
+		audio_calc_blksize(sc, AUMODE_PLAY);
+		sc->sc_mode = AUMODE_PLAY | AUMODE_PLAY_ALL;
+	}
 	audio_initbufs(sc);
+	sc->sc_playdrop = 0;
+#ifdef AUDIO_INTR_TIME
+	sc->sc_pnintr = 0;
+	sc->sc_pblktime = (u_long)(
+	    (double)sc->sc_pr.blksize * 1e6 / 
+	    (double)(sc->sc_pparams.precision / NBBY * 
+                     sc->sc_pparams.channels * 
+		     sc->sc_pparams.sample_rate));
+	DPRINTF(("audio: play blktime = %lu for %d\n", 
+		 sc->sc_pblktime, sc->sc_pr.blksize));
+	sc->sc_rnintr = 0;
+	sc->sc_rblktime = (u_long)(
+	    (double)sc->sc_rr.blksize * 1e6 / 
+	    (double)(sc->sc_rparams.precision / NBBY * 
+                     sc->sc_rparams.channels * 
+		     sc->sc_rparams.sample_rate));
+	DPRINTF(("audio: record blktime = %lu for %d\n", 
+		 sc->sc_rblktime, sc->sc_rr.blksize));
+#endif
 
-	sc->sc_backlog = audio_backlog;
-
-	DPRINTF(("audio_open: rr.bp=%x-%x pr.bp=%x-%x\n",
-		 sc->rr.bp, sc->rr.ep, sc->pr.bp, sc->pr.ep));
+	DPRINTF(("audio_open: rr.buf=%p-%p pr.buf=%p-%p\n",
+		 sc->sc_rr.start, sc->sc_rr.end, sc->sc_pr.start, sc->sc_pr.end));
 	
 	hw->commit_settings(sc->hw_hdl);
-
-	s = splaudio();
-
-	/* nothing read or written yet */
-	sc->sc_rseek = 0;
-	sc->sc_wseek = 0;
 
 	sc->sc_rchan = 0;
 	sc->sc_wchan = 0;
@@ -602,34 +670,19 @@ audio_open(dev, flags, ifmt, p)
 	sc->sc_rbus = 0;
 	sc->sc_pbus = 0;
 
-	if ((flags & FWRITE) != 0) {
+	sc->sc_eof = 0;
+
+	if ((flags & (FWRITE|FREAD)) == (FWRITE|FREAD))
+		sc->sc_full_duplex = (hw->props & AUDIO_PROP_FULLDUPLEX) != 0;
+
+	if (flags & FWRITE)
 		audio_init_play(sc);
-		/* audio_pint(sc);		??? */
-	}
-	if ((flags & FREAD) != 0) {
+	if (flags & FREAD) {
 		/* Play takes precedence if HW is half-duplex */
-		if (hw->full_duplex || ((flags & FWRITE) == 0)) {
+		if (sc->sc_full_duplex || (flags & FWRITE) == 0)
 			audio_init_record(sc);
-			/* audiostartr(sc); don't start recording until read */
-		}
 	}
-	if (ISDEVAUDIO(dev)) {
-	    /* if open only for read or only for write, then set specific mode */
-	    if ((flags & (FWRITE|FREAD)) == FWRITE) {
-		sc->sc_mode = AUMODE_PLAY;
-		sc->pr.cb_pause = 0;
-		sc->rr.cb_pause = 1;
-		audiostartp(sc);
-	    } else if ((flags & (FWRITE|FREAD)) == FREAD) {
-		sc->sc_mode = AUMODE_RECORD;
-		sc->rr.cb_pause = 0;
-		sc->pr.cb_pause = 1;
-		audiostartr(sc);
-	    }
-	}
-	/* Play all sample, and don't pad short writes by default */
-	sc->sc_mode |= AUMODE_PLAY_ALL;
-	splx(s);
+
 	return (0);
 }
 
@@ -644,7 +697,7 @@ audio_init_record(sc)
 
 	sc->sc_mode |= AUMODE_RECORD;
 	if (sc->hw_if->speaker_ctl &&
-	    (!sc->hw_if->full_duplex || (sc->sc_mode & AUMODE_PLAY) == 0))
+	    (!sc->sc_full_duplex || (sc->sc_mode & AUMODE_PLAY) == 0))
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_OFF);
 	splx(s);
 }
@@ -658,8 +711,9 @@ audio_init_play(sc)
 {
 	int s = splaudio();
 
+	sc->sc_wstamp = sc->sc_pr.stamp;
+
 	sc->sc_mode |= AUMODE_PLAY;
-	sc->sc_rblks = sc->sc_wblks = 0;
 	if (sc->hw_if->speaker_ctl)
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_ON);
 	splx(s);
@@ -669,17 +723,43 @@ int
 audio_drain(sc)
 	struct audio_softc *sc;
 {
-	int error;
+	int error, drops;
+	struct audio_ringbuffer *cb = &sc->sc_pr;
 
-	while (sc->pr.nblk > 0) {
-		DPRINTF(("audio_drain: nblk=%d\n", sc->pr.nblk));
-		/*
-		 * XXX
-		 * When the process is exiting, it ignores all signals and
-		 * we can't interrupt this sleep, so we set a 1-minute
-		 * timeout.
+	if (sc->sc_pr.mmapped || sc->sc_pr.used <= 0)
+		return 0;
+	if (!sc->sc_pbus) {
+		/* We've never started playing, probably because the
+		 * block was too short.  Pad it and start now.
 		 */
-		error = audio_sleep_timo(&sc->sc_wchan, "aud dr", 60*hz);
+		int s, cc;
+		u_char *inp = cb->inp;
+
+		cc = cb->blksize - (inp - cb->start) % cb->blksize;
+		audio_fill_silence(&sc->sc_pparams, inp, cc);
+		inp += cc;
+		if (inp >= cb->end)
+			inp = cb->start;
+		s = splaudio();
+		cb->used += cc;
+		cb->inp = inp;
+		audiostartp(sc);
+		splx(s);
+	}
+	/* 
+	 * Play until a silence block has been played, then we
+	 * know all has been drained.
+	 * XXX This should be done some other way to avoid
+	 * playing silence.
+	 */
+	drops = cb->drops;
+	while (cb->drops == drops) {
+		DPRINTF(("audio_drain: used=%d\n", sc->sc_pr.used));
+		/*
+		 * When the process is exiting, it ignores all signals and
+		 * we can't interrupt this sleep, so we set a timeout just in case.
+		 */
+		error = audio_sleep_timo(&sc->sc_wchan, "aud dr", 30*hz);
 		if (error)
 			return (error);
 	}
@@ -706,22 +786,22 @@ audio_close(dev, flags, ifmt, p)
 	/*
 	 * Block until output drains, but allow ^C interrupt.
 	 */
-	sc->sc_lowat = 0;	/* avoid excessive wakeups */
+	sc->sc_pr.usedlow = sc->sc_pr.blksize;	/* avoid excessive wakeups */
 	s = splaudio();
 	/*
 	 * If there is pending output, let it drain (unless
 	 * the output is paused).
 	 */
-	if (sc->sc_pbus && sc->pr.nblk > 0 && !sc->pr.cb_pause) {
+	if (!sc->sc_pr.pause) {
 		if (!audio_drain(sc) && hw->drain)
 			(void)hw->drain(sc->hw_hdl);
 	}
 	
 	hw->close(sc->hw_hdl);
 	
-	if (flags&FREAD)
+	if (flags & FREAD)
 		sc->sc_open &= ~AUOPEN_READ;
-	if (flags&FWRITE)
+	if (flags & FWRITE)
 		sc->sc_open &= ~AUOPEN_WRITE;
 
 	sc->sc_async = 0;
@@ -739,34 +819,30 @@ audio_read(dev, uio, ioflag)
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_softc[unit];
-	struct audio_hw_if *hw = sc->hw_if;
-	struct audio_buffer *cb = &sc->rr;
-	u_char *hp;
-	int blocksize = sc->sc_blksize;
-	int error, s;
+	struct audio_ringbuffer *cb = &sc->sc_rr;
+	u_char *outp;
+	int error, s, used, cc, n;
 
-	DPRINTF(("audio_read: cc=%d mode=%d rblks=%d\n",
-	         uio->uio_resid, sc->sc_mode, sc->sc_rblks));
+	if (cb->mmapped)
+		return EINVAL;
 
-	if (uio->uio_resid == 0)
-		return (0);
+	DPRINTF(("audio_read: cc=%d mode=%d\n", uio->uio_resid, sc->sc_mode));
 
-	if (uio->uio_resid < blocksize)
-		return (EINVAL);
-
-	/* First sample we'll read in sample space */
-	sc->sc_rseek = cb->au_stamp - AU_RING_LEN(cb);
-
+	error = 0;
 	/*
 	 * If hardware is half-duplex and currently playing, return
 	 * silence blocks based on the number of blocks we have output.
 	 */
-	if ((!hw->full_duplex) &&
+	if (!sc->sc_full_duplex &&
 	    (sc->sc_mode & AUMODE_PLAY)) {
-		do {
+		while (uio->uio_resid > 0 && !error) {
 			s = splaudio();
-			while (sc->sc_rblks <= 0) {
-				DPRINTF(("audio_read: sc_rblks=%d\n", sc->sc_rblks));
+			for(;;) {
+				cc = sc->sc_pr.stamp - sc->sc_wstamp;
+				if (cc > 0)
+					break;
+				DPRINTF(("audio_read: stamp=%lu, wstamp=%lu\n", 
+					 sc->sc_pr.stamp, sc->sc_wstamp));
 				if (ioflag & IO_NDELAY) {
 					splx(s);
 					return (EWOULDBLOCK);
@@ -778,18 +854,20 @@ audio_read(dev, uio, ioflag)
 				}
 			}
 			splx(s);
-			error = audio_silence_copyout(sc, blocksize, uio);
-			if (error)
-				break;
-			s = splaudio();
-			--sc->sc_rblks;
-			splx(s);
-		} while (uio->uio_resid >= blocksize);
+
+			if (uio->uio_resid < cc)
+				cc = uio->uio_resid;
+#ifdef AUDIO_DEBUG
+			if (audiodebug > 1)
+				printf("audio_read: reading in write mode, cc=%d\n", cc);
+#endif	
+			error = audio_silence_copyout(sc, cc, uio);
+			sc->sc_wstamp += cc;
+		} 
 		return (error);
 	}
-	error = 0;
-	do {
-		while (cb->nblk <= 0) {
+	while (uio->uio_resid > 0 && !error) {
+		while (cb->used <= 0) {
 			if (ioflag & IO_NDELAY) {
 				error = EWOULDBLOCK;
 				return (error);
@@ -797,24 +875,45 @@ audio_read(dev, uio, ioflag)
 			s = splaudio();
 			if (!sc->sc_rbus)
 				audiostartr(sc);
+#ifdef AUDIO_DEBUG
+			if (audiodebug > 2)
+				printf("audio_read: sleep used=%d\n", cb->used);
+#endif
 			error = audio_sleep(&sc->sc_rchan, "aud rd");
 			splx(s);
 			if (error)
 				return (error);
 		}
-		hp = cb->hp;
-		if (sc->sc_rparams.sw_code)
-			sc->sc_rparams.sw_code(sc->hw_hdl, hp, blocksize);
-		error = uiomove(hp, blocksize, uio);
-		if (error)
-			break;
-		hp += blocksize;
-		if (hp >= cb->ep)
-			hp = cb->bp;
-		cb->hp = hp;
-		--cb->nblk;
-	} while (uio->uio_resid >= blocksize);
+		s = splaudio();
+		used = cb->used;
+		outp = cb->outp;
+		cb->copying = 1;
+		splx(s);
+		cc = used - cb->usedlow; /* maximum to read */
+		n = cb->end - outp;
+		if (n < cc)
+			cc = n;	/* don't read beyond end of buffer */
+		
+		if (uio->uio_resid < cc)
+			cc = uio->uio_resid; /* and no more than we want */
 
+		if (sc->sc_rparams.sw_code)
+			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
+#ifdef AUDIO_DEBUG
+		if (audiodebug > 1)
+			printf("audio_read: outp=%p, cc=%d\n", outp, cc);
+#endif	
+		error = uiomove(outp, cc, uio);
+		used -= cc;
+		outp += cc;
+		if (outp >= cb->end)
+			outp = cb->start;
+		s = splaudio();
+		cb->outp = outp;
+		cb->used = used;
+		cb->copying = 0;
+		splx(s);
+	}
 	return (error);
 }
 
@@ -830,32 +929,37 @@ audio_clear(sc)
 		sc->sc_rbus = 0;
 		sc->sc_pbus = 0;
 	}
-	AU_RING_INIT(&sc->rr);
-	AU_RING_INIT(&sc->pr);
-	sc->sc_rblks = sc->sc_wblks = 0;
+	audio_init_ringbuffer(&sc->sc_rr);
+	audio_init_ringbuffer(&sc->sc_pr);
 
 	splx(s);
 }
 
-int
-audio_calc_blksize(sc)
+void
+audio_calc_blksize(sc, mode)
 	struct audio_softc *sc;
+	int mode;
 {
 	struct audio_hw_if *hw = sc->hw_if;
+	struct audio_params *parm;
+	struct audio_ringbuffer *rb;
     	int bs;
-	
-	bs = sc->sc_pparams.sample_rate * audio_blk_ms / 1000;
-	if (bs == 0)
-		bs = 1;
-	bs *= sc->sc_pparams.channels;
-	bs *= sc->sc_pparams.precision / NBBY;
-	if (bs > AU_RING_SIZE/2)
-		bs = AU_RING_SIZE/2;
-	bs = hw->round_blocksize(sc->hw_hdl, bs);
-	if (bs > AU_RING_SIZE)
-		bs = AU_RING_SIZE;
 
-	return(bs);
+	if (mode == AUMODE_PLAY) {
+		parm = &sc->sc_pparams;
+		rb = &sc->sc_pr;
+	} else {
+		parm = &sc->sc_rparams;
+		rb = &sc->sc_rr;
+	}
+	
+	bs = parm->sample_rate * audio_blk_ms / 1000 *
+		parm->channels * parm->precision / NBBY;
+	ROUNDSIZE(bs);
+	rb->blksize = hw->round_blocksize(sc->hw_hdl, bs);
+
+	DPRINTF(("audio_calc_blksize: %s blksize=%d\n", 
+		 mode == AUMODE_PLAY ? "play" : "record", bs));
 }
 
 void
@@ -864,47 +968,47 @@ audio_fill_silence(params, p, n)
         u_char *p;
         int n;
 {
-	u_char auzero[2];
+	u_char auzero0, auzero1 = 0; /* initialize to please gcc */
 	int nfill = 1;
-    
+
 	switch (params->encoding) {
 	case AUDIO_ENCODING_ULAW:
-	    	auzero[0] = 0x7f; 
+	    	auzero0 = 0x7f; 
 		break;
 	case AUDIO_ENCODING_ALAW:
-		auzero[0] = 0x55;
+		auzero0 = 0x55;
 		break;
 	case AUDIO_ENCODING_ADPCM: /* is this right XXX */
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_SLINEAR_BE:
-		auzero[0] = 0;	/* fortunately this works for both 8 and 16 bits */
+		auzero0 = 0;	/* fortunately this works for both 8 and 16 bits */
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_BE:
 		if (params->precision == 16) {
 			nfill = 2;
 			if (params->encoding == AUDIO_ENCODING_ULINEAR_LE) {
-				auzero[0] = 0;
-				auzero[1] = 0x80;
+				auzero0 = 0;
+				auzero1 = 0x80;
 			} else {
-				auzero[0] = 0x80;
-				auzero[1] = 0;
+				auzero0 = 0x80;
+				auzero1 = 0;
 			}
 		} else
-			auzero[0] = 0x80;
+			auzero0 = 0x80;
 		break;
 	default:
 		printf("audio: bad encoding %d\n", params->encoding);
-		auzero[0] = 0;
+		auzero0 = 0;
 		break;
 	}
 	if (nfill == 1) {
 		while (--n >= 0)
-			*p++ = auzero[0]; /* XXX memset */
-	} else /* must be 2 */ {
+			*p++ = auzero0; /* XXX memset */
+	} else /* nfill must be 2 */ {
 		while (n > 1) {
-			*p++ = auzero[0];
-			*p++ = auzero[1];
+			*p++ = auzero0;
+			*p++ = auzero1;
 			n -= 2;
 		}
 	}
@@ -931,26 +1035,6 @@ audio_silence_copyout(sc, n, uio)
         return (error);
 }
 
-void
-audio_alloc_auzero(sc, bs)
-	struct audio_softc *sc;
-	int bs;
-{
-	if (sc->auzero_block)
-		free(sc->auzero_block, M_DEVBUF);
-
-	sc->auzero_block = malloc(bs, M_DEVBUF, M_WAITOK);
-#ifdef DIAGNOSTIC
-	if (sc->auzero_block == 0) {
-		panic("audio_alloc_auzero: malloc auzero_block failed");
-	}
-#endif
-	audio_fill_silence(&sc->sc_pparams, sc->auzero_block, bs);
-	if (sc->sc_pparams.sw_code)
-		sc->sc_pparams.sw_code(sc->hw_hdl, sc->auzero_block, bs);
-}
-
-    
 int
 audio_write(dev, uio, ioflag)
 	dev_t dev;
@@ -959,168 +1043,118 @@ audio_write(dev, uio, ioflag)
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_softc[unit];
-	struct audio_hw_if *hw = sc->hw_if;
-	struct audio_buffer *cb = &sc->pr;
-	u_char *tp;
-	int error, s, cc;
-	int blocksize = sc->sc_blksize;
+	struct audio_ringbuffer *cb = &sc->sc_pr;
+	u_char *inp, *einp;
+	int error, s, n, cc, used;
 
-	DPRINTF(("audio_write: cc=%d hiwat=%d\n", uio->uio_resid, sc->sc_hiwat));
+	DPRINTF(("audio_write: count=%d used=%d(hi=%d)\n", uio->uio_resid, 
+		 sc->sc_pr.used, sc->sc_pr.usedhigh));
+
+	if (cb->mmapped)
+		return EINVAL;
+
+	if (uio->uio_resid == 0) {
+		sc->sc_eof++;
+		return 0;
+	}
+
 	/*
 	 * If half-duplex and currently recording, throw away data.
 	 */
-	if (!hw->full_duplex &&
+	if (!sc->sc_full_duplex &&
 	    (sc->sc_mode & AUMODE_RECORD)) {
 		uio->uio_offset += uio->uio_resid;
 		uio->uio_resid = 0;
 		DPRINTF(("audio_write: half-dpx read busy\n"));
 		return (0);
 	}
+
+	if (!(sc->sc_mode & AUMODE_PLAY_ALL) && sc->sc_playdrop > 0) {
+		n = min(sc->sc_playdrop, uio->uio_resid);
+		uio->uio_offset += n;
+		uio->uio_resid -= n;
+		sc->sc_playdrop -= n;
+		if (uio->uio_resid == 0)
+			return 0;
+	}
+
 	error = 0;
-
-	while (uio->uio_resid > 0) {
-		if (cb->fill > 0) {
-			if (sc->sc_pbus == 0) {
-				/* playing has stopped, ignore fill */
-				cb->fill = 0;
-			} else {
-				/* Write samples in the silence fill space.
-				 * We don't know where the DMA is
-				 * happening in the buffer, but if we
-				 * are lucky we will fill the buffer before
-				 * playing has reached the point we move to.
-				 * If we are unlucky some sample will
-				 * not be played.
-				 */
-				cc = min(cb->fill, uio->uio_resid);
-				error = uiomove(cb->otp, cc, uio);
-				if (error == 0) {
-					if (sc->sc_pparams.sw_code)
-						sc->sc_pparams.sw_code(sc->hw_hdl,
-						    cb->otp, cc);
-					cb->fill -= cc;
-					cb->otp += cc;
-				}
-				continue;
-			}
+	while (uio->uio_resid > 0 && !error) {
+		while (cb->used >= cb->usedhigh) {
+			DPRINTF(("audio_write: sleep used=%d lowat=%d hiwat=%d\n", 
+				 cb->used, cb->usedlow, cb->usedhigh));
+			if (ioflag & IO_NDELAY)
+				return (EWOULDBLOCK);
+			error = audio_sleep(&sc->sc_wchan, "aud wr");
+			if (error)
+				return (error);
 		}
-		if (cb->nblk >= sc->sc_hiwat) {
-			do {
-				DPRINTF(("audio_write: nblk=%d hiwat=%d lowat=%d\n", cb->nblk, sc->sc_hiwat, sc->sc_lowat));
-				if (ioflag & IO_NDELAY)
-					return (EWOULDBLOCK);
-				error = audio_sleep(&sc->sc_wchan, "aud wr");
-				if (error)
-					return (error);
-			} while (cb->nblk >= sc->sc_lowat);
-		}
-#if 0
-		if (cb->nblk == 0 &&
-		    cb->maxblk > sc->sc_backlog &&
-		    uio->uio_resid <= blocksize &&
-		    (cb->au_stamp - sc->sc_wseek) > sc->sc_50ms) {
-			/*
-			 * the write is 'small', the buffer is empty
-			 * and we have been silent for at least 50ms
-			 * so we might be dealing with an application
-			 * that writes frames synchronously with
-			 * reading them.  If so, we need an output
-			 * backlog to cover scheduling delays or
-			 * there will be gaps in the sound output.
-			 * Also take this opportunity to reset the
-			 * buffer pointers in case we ended up on
-			 * a bad boundary (odd byte, blksize bytes
-			 * from end, etc.).
-			 */
-		        DPRINTF(("audiowrite: set backlog %d\n", sc->sc_backlog));
-			s = splaudio();
-			cb->hp = cb->bp;
-			cb->nblk = sc->sc_backlog;
-			cb->tp = cb->hp + sc->sc_backlog * blocksize;
-			splx(s);
-			audio_fill_silence(&sc->sc_pparams, cb->hp, sc->sc_backlog * blocksize);
-		}
-#endif
-		/* Calculate sample number of first sample in block we write */
 		s = splaudio();
-		sc->sc_wseek = AU_RING_LEN(cb) + cb->au_stamp;
+		used = cb->used;
+		inp = cb->inp;
+		cb->copying = 1;
 		splx(s);
-		
-		tp = cb->tp;
-		cc = uio->uio_resid;
+		cc = cb->usedhigh - used; 	/* maximum to write */
+		n = cb->end - inp;
+		if (n < cc)
+			cc = n;			/* don't write beyond end of buffer */
+		if (uio->uio_resid < cc)
+			cc = uio->uio_resid; 	/* and no more than we have */
 
 #ifdef AUDIO_DEBUG
-		if (audiodebug > 1) {
-		    int left = cb->ep - tp;
-		    Dprintf("audio_write: cc=%d tp=%p bs=%d nblk=%d left=%d\n", cc, tp, blocksize, cb->nblk, left);
-		}
-#endif		
-#ifdef DIAGNOSTIC
-  {
-		int towrite = (cc < blocksize)?cc:blocksize;
-      
-		/* check for an overwrite. Should never happen */
-		if ((tp + towrite) > cb->ep) {
-			DPRINTF(("audio_write: overwrite tp=%p towrite=%d ep=0x%x bs=%d\n",
-			         tp, towrite, cb->ep, blocksize));
-			printf("audio_write: overwrite tp=%p towrite=%d ep=%p\n",
-			         tp, towrite, cb->ep);
-			tp = cb->bp;
-		}
-  }
+		if (audiodebug > 1)
+		    printf("audio_write: uiomove cc=%d inp=%p, left=%d\n", cc, inp, uio->uio_resid);
 #endif
-		if (cc < blocksize) {
-			error = uiomove(tp, cc, uio);
-			if (error == 0) {
-				/* fill with audio silence */
-				tp += cc;
-				cc = blocksize - cc;
-				cb->fill = cc;
-				cb->otp = tp;
-				audio_fill_silence(&sc->sc_pparams, tp, cc);
-				DPRINTF(("audio_write: auzero 0x%x %d 0x%x\n",
-				         tp, cc, *tp));
-				tp += cc;
-			}
-		} else {
-			error = uiomove(tp, blocksize, uio);
-			if (error == 0) {
-				tp += blocksize;
-			}
-		}
-		if (error) {
+		n = uio->uio_resid;
+		error = uiomove(inp, cc, uio);
+		cc = n - uio->uio_resid; /* number of bytes actually moved */
 #ifdef AUDIO_DEBUG
-		        printf("audio_write:(1) uiomove failed %d; cc=%d tp=%p bs=%d\n", error, cc, tp, blocksize);
+		if (error)
+		        printf("audio_write:(1) uiomove failed %d; cc=%d inp=%p\n",
+			       error, cc, inp);
 #endif
-			break;
-		}		    
-
+		/* Continue even if uiomove() failed because we may have
+		 * gotten a partial block. */
 		if (sc->sc_pparams.sw_code)
-			sc->sc_pparams.sw_code(sc->hw_hdl, cb->tp, blocksize);
+			sc->sc_pparams.sw_code(sc->hw_hdl, inp, cc);
 
-		/* wrap the ring buffer if at end */
+		einp = cb->inp + cc;
+		if (einp >= cb->end)
+			einp = cb->start;
+
 		s = splaudio();
-		if ((sc->sc_mode & AUMODE_PLAY_ALL) == 0 && sc->sc_wblks)
-			/*
-			 * discard the block if we sent out a silence
-			 * packet that hasn't yet been countered
-			 * by user data.  (They must supply enough
-			 * data to catch up to "real time").
-			 */
-			sc->sc_wblks--;
-		else {
-			if (tp >= cb->ep)
-				tp = cb->bp;
-			cb->tp = tp;
-			++cb->nblk;	/* account for buffer filled */
+		/*
+		 * This is a very suboptimal way of keeping track of
+		 * silence in the buffer, but it is simple.
+		 */
+		sc->sc_sil_count = 0;
 
-			/*
-			 * If output isn't active, start it up.
-			 */
-			if (sc->sc_pbus == 0)
-				audiostartp(sc);
-		}
+		cb->inp = einp;
+		cb->used += cc;
+		/* If the interrupt routine wants the last block filled AND
+		 * the copy did not fill the last block completely it needs to
+		 * be padded.
+		 */
+		if (cb->needfill &&
+		    (inp  - cb->start) / cb->blksize == 
+		    (einp - cb->start) / cb->blksize) {
+			/* Figure out how many bytes there is to a block boundary. */
+			cc = cb->blksize - (einp - cb->start) % cb->blksize;
+			DPRINTF(("audio_write: partial fill %d\n", cc));
+		} else
+			cc = 0;
+		cb->needfill = 0;
+		cb->copying = 0;
+		if (!sc->sc_pbus && !cb->pause)
+			audiostartp(sc);
 		splx(s);
+		if (cc) {
+#ifdef AUDIO_DEBUG
+			if (audiodebug > 1)
+				printf("audio_write: fill %d\n", cc);
+#endif
+			audio_fill_silence(&sc->sc_pparams, einp, cc);
+		}
 	}
 	return (error);
 }
@@ -1136,12 +1170,12 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_softc[unit];
 	struct audio_hw_if *hw = sc->hw_if;
-	int error = 0, s;
+	struct audio_offset *ao;
+	int error = 0, s, offs;
 
 	DPRINTF(("audio_ioctl(%d,'%c',%d)\n",
 	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
 	switch (cmd) {
-
 	case FIOASYNC:
 		if (*(int *)addr) {
 			if (sc->sc_async)
@@ -1151,18 +1185,15 @@ audio_ioctl(dev, cmd, addr, flag, p)
 			sc->sc_async = 0;
 		break;
 
-	case FIONBIO:	/* to be removed? */
-		break;
-
 	case AUDIO_FLUSH:
 		DPRINTF(("AUDIO_FLUSH\n"));
 		audio_clear(sc);
 		s = splaudio();
-		if ((sc->sc_mode & AUMODE_PLAY) && (sc->sc_pbus == 0))
+		if ((sc->sc_mode & AUMODE_PLAY) && !sc->sc_pbus)
 			audiostartp(sc);
 		/* Again, play takes precedence on half-duplex hardware */
 		if ((sc->sc_mode & AUMODE_RECORD) &&
-		    (hw->full_duplex ||
+		    (sc->sc_full_duplex ||
 		     ((sc->sc_mode & AUMODE_PLAY) == 0)))
 			audiostartr(sc);
 		splx(s);
@@ -1173,25 +1204,51 @@ audio_ioctl(dev, cmd, addr, flag, p)
 	 * when they were dropped.
 	 */
 	case AUDIO_RERROR:
-		*(int *)addr = sc->rr.cb_drops;
+		*(int *)addr = sc->sc_rr.drops;
 		break;
 
 	case AUDIO_PERROR:
-		*(int *)addr = sc->pr.cb_drops;
+		*(int *)addr = sc->sc_pr.drops;
 		break;
 
 	/*
-	 * How many samples will elapse until mike hears the first
-	 * sample of what we last wrote?
+	 * Offsets into buffer.
 	 */
-	case AUDIO_WSEEK:
+	case AUDIO_GETIOFFS:
 		s = splaudio();
-		*(u_long *)addr = sc->sc_wseek - sc->pr.au_stamp
-				  + AU_RING_LEN(&sc->rr);
+		/* figure out where next DMA will start */
+		ao = (struct audio_offset *)addr;
+		ao->samples = sc->sc_rr.stamp;
+		ao->deltablks = (sc->sc_rr.stamp - sc->sc_rr.stamp_last) / sc->sc_rr.blksize;
+		sc->sc_rr.stamp_last = sc->sc_rr.stamp;
+		ao->offset = sc->sc_rr.inp - sc->sc_rr.start;
 		splx(s);
 		break;
+
+	case AUDIO_GETOOFFS:
+		s = splaudio();
+		/* figure out where next DMA will start */
+		ao = (struct audio_offset *)addr;
+		offs = sc->sc_pr.outp - sc->sc_pr.start + sc->sc_pr.blksize;
+		if (sc->sc_pr.start + offs >= sc->sc_pr.end)
+			offs = 0;
+		ao->samples = sc->sc_pr.stamp;
+		ao->deltablks = (sc->sc_pr.stamp - sc->sc_pr.stamp_last) / sc->sc_pr.blksize;
+		sc->sc_pr.stamp_last = sc->sc_pr.stamp;
+		ao->offset = offs;
+		splx(s);
+		break;
+
+	/*
+	 * How many bytes will elapse until mike hears the first
+	 * sample of what we write next?
+	 */
+	case AUDIO_WSEEK:
+		*(u_long *)addr = sc->sc_rr.used;
+		break;
+
 	case AUDIO_SETINFO:
-		DPRINTF(("AUDIO_SETINFO\n"));
+		DPRINTF(("AUDIO_SETINFO mode=%x\n", sc->sc_mode));
 		error = audiosetinfo(sc, (struct audio_info *)addr);
 		break;
 
@@ -1219,12 +1276,19 @@ audio_ioctl(dev, cmd, addr, flag, p)
 
 	case AUDIO_GETFD:
 		DPRINTF(("AUDIO_GETFD\n"));
-		*(int *)addr = hw->full_duplex;
+		*(int *)addr = sc->sc_full_duplex;
 		break;
 
 	case AUDIO_SETFD:
 		DPRINTF(("AUDIO_SETFD\n"));
 		error = hw->setfd(sc->hw_hdl, *(int *)addr);
+		if (error == 0)
+			sc->sc_full_duplex = *(int *)addr;
+		break;
+
+	case AUDIO_GETPROPS:
+		DPRINTF(("AUDIO_GETPROPS\n"));
+		*(int *)addr = hw->props;
 		break;
 
 	default:
@@ -1249,18 +1313,18 @@ audio_poll(dev, events, p)
 	int s = splaudio();
 
 #if 0
-	DPRINTF(("audio_poll: events=%d mode=%d rblks=%d rr.nblk=%d\n",
-	         events, sc->sc_mode, sc->sc_rblks, sc->rr.nblk));
+	DPRINTF(("audio_poll: events=%d mode=%d rr.nblk=%d\n",
+	         events, sc->sc_mode, sc->sc_rr.nblk));
 #endif
 
 	if (events & (POLLIN | POLLRDNORM))
 		if ((sc->sc_mode & AUMODE_PLAY) ?
-		    (sc->sc_rblks > 0) : (sc->rr.nblk > 0))
+		    0/*XXX*/ : sc->sc_rr.used > sc->sc_rr.usedlow)
 			revents |= events & (POLLIN | POLLRDNORM);
 
 	if (events & (POLLOUT | POLLWRNORM))
-		if ((sc->sc_mode & AUMODE_RECORD) ?
-		    1 : (sc->pr.nblk <= sc->sc_lowat))
+		if (sc->sc_mode & AUMODE_RECORD ||
+		    sc->sc_pr.used < sc->sc_pr.usedlow)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (revents == 0) {
@@ -1280,9 +1344,59 @@ audio_mmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
+	int s;
+	int unit = AUDIOUNIT(dev);
+	struct audio_softc *sc = audio_softc[unit];
+	struct audio_hw_if *hw = sc->hw_if;
+	struct audio_ringbuffer *cb;
 
-	/* XXX placeholder */
-	return (-1);
+	DPRINTF(("audio_mmap: off=%d, prot=%d\n", off, prot));
+
+	if (!(hw->props & AUDIO_PROP_MMAP))
+		return -1;
+#if 0
+/* XXX
+ * The idea here was to use the protection to determine if
+ * we are mapping the read or write buffer, but it fails.
+ * The VM system is broken in (at least) two ways.
+ * 1) If you map memory VM_PROT_WRITE you SIGSEGV
+ *    when writing to it, so VM_PROT_READ|VM_PROT_WRITE
+ *    has to be used for mmapping the play buffer.
+ * 2) Even if calling mmap() with VM_PROT_READ|VM_PROT_WRITE
+ *    audio_mmap will get called at some point with VM_PROT_READ
+ *    only.
+ * So, alas, we always map the play buffer for now.
+ */
+	if (prot == (VM_PROT_READ|VM_PROT_WRITE) ||
+	    prot == VM_PROT_WRITE)
+		cb = &sc->sc_pr;
+	else if (prot == VM_PROT_READ)
+		cb = &sc->sc_rr;
+	else
+		return -1;
+#else
+	cb = &sc->sc_pr;
+#endif
+
+	if (off >= cb->bufsize)
+		return -1;
+	if (!cb->mmapped) {
+		cb->mmapped = 1;
+		if (cb == &sc->sc_pr) {
+			audio_fill_silence(&sc->sc_pparams, cb->start, cb->bufsize);
+			s = splaudio();
+			if (!sc->sc_pbus)
+				audiostartp(sc);
+			splx(s);
+		} else {
+			s = splaudio();
+			if (!sc->sc_rbus)
+				audiostartr(sc);
+			splx(s);
+		}
+	}
+
+	return i386_btop(vtophys((caddr_t)cb->start + off));
 }
 
 void
@@ -1291,15 +1405,16 @@ audiostartr(sc)
 {
 	int error;
     
-    	DPRINTF(("audiostartr: tp=%p\n", sc->rr.tp));
+    	DPRINTF(("audiostartr: start=%p used=%d(hi=%d) mmapped=%d\n", 
+		 sc->sc_rr.start, sc->sc_rr.used, sc->sc_rr.usedhigh, 
+		 sc->sc_rr.mmapped));
 
-	error = sc->hw_if->start_input(sc->hw_hdl, sc->rr.tp, sc->sc_blksize,
-	    			       audio_rint, (void *)sc);
+	error = sc->hw_if->start_input(sc->hw_hdl, sc->sc_rr.start, 
+				       sc->sc_rr.blksize, audio_rint, (void *)sc);
 	if (error) {
 		DPRINTF(("audiostartr failed: %d\n", error));
 		audio_clear(sc);
-	}
-	else
+	} else
 		sc->sc_rbus = 1;
 }
 
@@ -1309,36 +1424,77 @@ audiostartp(sc)
 {
 	int error;
     
-    	DPRINTF(("audiostartp: hp=0x%x nblk=%d\n", sc->pr.hp, sc->pr.nblk));
+    	DPRINTF(("audiostartp: start=%p used=%d(hi=%d) mmapped=%d\n", 
+		 sc->sc_pr.start, sc->sc_pr.used, sc->sc_pr.usedhigh,
+		 sc->sc_pr.mmapped));
     
-	if (sc->pr.nblk > 0) {
-		u_char *hp = sc->pr.hp;
-		error = sc->hw_if->start_output(sc->hw_hdl, hp, sc->sc_blksize,
-					        audio_rpint, (void *)sc);
+	if (sc->sc_pr.used >= sc->sc_pr.blksize || sc->sc_pr.mmapped) {
+		error = sc->hw_if->start_output(sc->hw_hdl, sc->sc_pr.outp,
+					sc->sc_pr.blksize, audio_pint, (void *)sc);
 		if (error) {
 		    	DPRINTF(("audiostartp: failed: %d\n", error));
-		}
-		else {
+		} else {
 			sc->sc_pbus = 1;
-			hp += sc->sc_blksize;
-			if (hp >= sc->pr.ep)
-				hp = sc->pr.bp;
-			sc->pr.hp = hp;
 		}
 	}
 }
 
 /*
- * Use this routine as DMA callback if we played user data.  We need to
- * account for user data and silence separately.
+ * When the play interrupt routine finds that the write isn't keeping
+ * the buffer filled it will insert silence in the buffer to make up
+ * for this.  The part of the buffer that is filled with silence
+ * is kept track of in a very approcimate way: it starts at sc_sil_start
+ * and extends sc_sil_count bytes.  If the writer doesn't write sc_sil_count
+ * get to encompass the whole buffer after which no more filling needs
+ * to be done.  When the writer starts again sc_sil_count is set to 0.
  */
-void
-audio_rpint(v)
-	void *v;
+/* XXX
+ * Putting silence into the output buffer should not really be done
+ * at splaudio, but there is no softaudio level to do it at yet.
+ */
+static __inline void
+audio_pint_silence(sc, cb, inp, cc)
+	struct audio_softc *sc;
+	struct audio_ringbuffer *cb;
+	u_char *inp;
+	int cc;
 {
-	struct audio_softc *sc = v;
-	sc->pr.nblk--;
-	audio_pint(v);		/* 'twas a real audio block */
+	u_char *s, *e, *p, *q;
+
+	if (sc->sc_sil_count > 0) {
+		s = sc->sc_sil_start; /* start of silence */
+		e = s + sc->sc_sil_count; /* end of silence, may be beyond end */
+		p = inp;	/* adjusted pointer to area to fill */
+		if (p < s)
+			p += cb->end - cb->start;
+		q = p+cc;
+		/* Check if there is already silence. */
+		if (!(s <= p && p <  e &&
+		      s <= q && q <= e)) {
+			if (s <= p)
+				sc->sc_sil_count = max(sc->sc_sil_count, q - s);
+#ifdef AUDIO_DEBUG
+			if (audiodebug > 2)
+				printf("audio_pint_silence: fill cc=%d inp=%p, count=%d size=%d\n", 
+				       cc, inp, sc->sc_sil_count, (int)(cb->end - cb->start));
+#endif
+			audio_fill_silence(&sc->sc_pparams, inp, cc);
+		} else {
+#ifdef AUDIO_DEBUG
+			if (audiodebug > 2)
+				printf("audio_pint_silence: already silent cc=%d inp=%p\n", cc, inp);
+#endif
+			
+		}
+	} else {
+		sc->sc_sil_start = inp;
+		sc->sc_sil_count = cc;
+#ifdef AUDIO_DEBUG
+		if (audiodebug > 2)
+			printf("audio_pint_silence: start fill %p %d\n", inp, cc);
+#endif
+		audio_fill_silence(&sc->sc_pparams, inp, cc);
+	}
 }
 
 /*
@@ -1352,74 +1508,105 @@ audio_pint(v)
 	void *v;
 {
 	struct audio_softc *sc = v;
-	u_char *hp;
-	int cc = sc->sc_blksize;
 	struct audio_hw_if *hw = sc->hw_if;
-	struct audio_buffer *cb = &sc->pr;
+	struct audio_ringbuffer *cb = &sc->sc_pr;
+	u_char *inp;
+	int cc, n;
 	int error;
-	
-	/*
-	 * XXX
-	 * if there is only one buffer in the ring, this test
-	 * always fails and the output is always silence after the
-	 * first block.
-	 */
-	if (cb->nblk > 0) {
-		hp = cb->hp;
-		if (cb->cb_pause) {
-		    cb->cb_pdrops++;
-#ifdef AUDIO_DEBUG
-		    if (audiodebug > 2)
-			Dprintf("audio_pint: paused %d\n", cb->cb_pdrops);
-#endif
-		    goto psilence;
-		}
-		else {
-#ifdef AUDIO_DEBUG
-		    if (audiodebug > 2)
-		    	Dprintf("audio_pint: hp=0x%x cc=%d\n", hp, cc);
-#endif
-		    error = hw->start_output(sc->hw_hdl, hp, cc,
-					     audio_rpint, (void *)sc);
-		    if (error) {
-			    DPRINTF(("audio_pint restart failed: %d\n", error));
-			    audio_clear(sc);
-		    }
-		    else {
-		    	    hp += cc;
-			    if (hp >= cb->ep)
-				    hp = cb->bp;
-			    cb->hp = hp;
-			    cb->au_stamp += sc->sc_smpl_in_blk;
 
-			    ++sc->sc_rblks;
-		    }
-		}
-	}
-	else {
-		cb->cb_drops++;
+	n = (cb->outp - cb->start) / cb->blksize;
+	cb->outp += cb->blksize;
+	if (cb->outp >= cb->end)
+		cb->outp = cb->start;
+	cb->stamp += cb->blksize;
+	if (cb->mmapped) {
 #ifdef AUDIO_DEBUG
 		if (audiodebug > 2)
-		    Dprintf("audio_pint: drops=%d auzero %d 0x%x\n", cb->cb_drops, cc, *(int *)sc->auzero_block);
+			printf("audio_pint: mmapped outp=%p cc=%d inp=%p\n", 
+			       cb->outp, cb->blksize, cb->inp);
 #endif
- psilence:
-		error = hw->start_output(sc->hw_hdl,
-		    			 sc->auzero_block, cc,
-					 audio_pint, (void *)sc);
-		if (error) {
-			DPRINTF(("audio_pint zero failed: %d\n", error));
-			audio_clear(sc);
+		hw->start_output(sc->hw_hdl, cb->outp, cb->blksize,
+				 audio_pint, (void *)sc);
+		return;
+	}
+		
+#ifdef AUDIO_INTR_TIME
+	{
+		struct timeval tv;
+		u_long t;
+		microtime(&tv);
+		t = tv.tv_usec + 1000000 * tv.tv_sec;
+		if (sc->sc_pnintr) {
+			long lastdelta, totdelta;
+			lastdelta = t - sc->sc_plastintr - sc->sc_pblktime;
+			if (lastdelta > sc->sc_pblktime / 5) {
+				printf("audio: play interrupt(%d) off relative by %ld us (%lu)\n", 
+				       sc->sc_pnintr, lastdelta, sc->sc_pblktime);
+			}
+			totdelta = t - sc->sc_pfirstintr - sc->sc_pblktime * sc->sc_pnintr;
+			if (totdelta > sc->sc_pblktime / 2) {
+				sc->sc_pnintr++;
+				printf("audio: play interrupt(%d) off absolute by %ld us (%lu)\n", 
+				       sc->sc_pnintr, totdelta, sc->sc_pblktime);
+				sc->sc_pnintr++; /* avoid repeated messages */
+			}
 		} else
-			++sc->sc_wblks;
+			sc->sc_pfirstintr = t;
+		sc->sc_plastintr = t;
+		sc->sc_pnintr++;
+	}
+#endif
+
+	cb->used -= cb->blksize;
+	if (cb->used < cb->blksize) {
+		/* we don't have a full block to use */
+		if (cb->copying) {
+			/* writer is in progress, don't disturb */
+			cb->needfill = 1;
+#ifdef AUDIO_DEBUG
+			if (audiodebug > 1)
+			    printf("audio_pint: copying in progress\n");
+#endif
+		} else {
+			inp = cb->inp;
+			cc = cb->blksize - (inp - cb->start) % cb->blksize;
+			if (cb->pause)
+				cb->pdrops += cc;
+			else {
+				cb->drops += cc;
+				sc->sc_playdrop += cc;
+			}
+			audio_pint_silence(sc, cb, inp, cc);
+			inp += cc;
+			if (inp >= cb->end)
+				inp = cb->start;
+			cb->inp = inp;
+			cb->used += cc;
+
+			/* Clear next block so we keep ahead of the DMA. */
+			if (cb->used + cc < cb->usedhigh)
+				audio_pint_silence(sc, cb, inp, cb->blksize);
+		}
 	}
 
 #ifdef AUDIO_DEBUG
-	if (audiodebug > 1)
-		Dprintf("audio_pint: mode=%d pause=%d nblk=%d lowat=%d\n",
-			sc->sc_mode, cb->cb_pause, cb->nblk, sc->sc_lowat);
+	if (audiodebug > 3)
+		printf("audio_pint: outp=%p cc=%d\n", cb->outp, cb->blksize);
 #endif
-	if ((sc->sc_mode & AUMODE_PLAY) && !cb->cb_pause) {
-		if (cb->nblk <= sc->sc_lowat) {
+	error = hw->start_output(sc->hw_hdl, cb->outp, cb->blksize,
+				 audio_pint, (void *)sc);
+	if (error) {
+		DPRINTF(("audio_pint restart failed: %d\n", error));
+		audio_clear(sc);
+	}
+
+#ifdef AUDIO_DEBUG
+	if (audiodebug > 3)
+		printf("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
+			 sc->sc_mode, cb->pause, cb->used, cb->usedlow);
+#endif
+	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
+		if (cb->used <= cb->usedlow) {
 			audio_wakeup(&sc->sc_wchan);
 			selwakeup(&sc->sc_wsel);
 			if (sc->sc_async)
@@ -1427,12 +1614,8 @@ audio_pint(v)
 		}
 	}
 
-	/*
-	 * XXX
-	 * possible to return one or more "phantom blocks" now.
-	 * Only in half duplex?
-	 */
-	if (hw->full_duplex) {
+	/* Possible to return one or more "phantom blocks" now. */
+	if (!sc->sc_full_duplex && sc->sc_rchan) {
 		audio_wakeup(&sc->sc_rchan);
 		selwakeup(&sc->sc_rsel);
 		if (sc->sc_async)
@@ -1450,53 +1633,81 @@ audio_rint(v)
 	void *v;
 {
 	struct audio_softc *sc = v;
-	u_char *tp;
-	int cc = sc->sc_blksize;
 	struct audio_hw_if *hw = sc->hw_if;
-	struct audio_buffer *cb = &sc->rr;
+	struct audio_ringbuffer *cb = &sc->sc_rr;
 	int error;
-	
-	tp = cb->tp;
-	if (cb->cb_pause) {
-		cb->cb_pdrops++;
-		DPRINTF(("audio_rint: pdrops %d\n", cb->cb_pdrops));
-	}
-	else {
-		tp += cc;
-	    	if (tp >= cb->ep)
-			tp = cb->bp;
-	    	if (++cb->nblk < cb->maxblk) {
-#ifdef AUDIO_DEBUG
-		    	if (audiodebug > 2)
-				Dprintf("audio_rint: tp=%p cc=%d\n", tp, cc);
-#endif
-			error = hw->start_input(sc->hw_hdl, tp, cc,
-						audio_rint, (void *)sc);
-			if (error) {
-				DPRINTF(("audio_rint: start failed: %d\n",
-					 error));
-				audio_clear(sc);
-			}
-			cb->au_stamp += sc->sc_smpl_in_blk;
-		    } else {
-			/* 
-			 * XXX 
-			 * How do we count dropped input samples due to overrun?
-			 * Start a "dummy DMA transfer" when the input ring buffer
-			 * is full and count # of these?  Seems pretty lame to
-			 * me, but how else are we going to do this?
-			 */
-			cb->cb_drops++;
-			sc->sc_rbus = 0;
-			DPRINTF(("audio_rint: drops %d\n", cb->cb_drops));
-	    	}
-	    	cb->tp = tp;
 
-	    	audio_wakeup(&sc->sc_rchan);
-	    	selwakeup(&sc->sc_rsel);
-		if (sc->sc_async)
-			psignal(sc->sc_async, SIGIO);
+	cb->inp += cb->blksize;
+	if (cb->inp >= cb->end)
+		cb->inp = cb->start;
+	cb->stamp += cb->blksize;
+	if (cb->mmapped) {
+#ifdef AUDIO_DEBUG
+		if (audiodebug > 2)
+			printf("audio_rint: mmapped inp=%p cc=%d\n", 
+			       cb->inp, cb->blksize);
+#endif
+		hw->start_output(sc->hw_hdl, cb->inp, cb->blksize,
+				 audio_rint, (void *)sc);
+		return;
 	}
+
+#ifdef AUDIO_INTR_TIME
+	{
+		struct timeval tv;
+		u_long t;
+		microtime(&tv);
+		t = tv.tv_usec + 1000000 * tv.tv_sec;
+		if (sc->sc_rnintr) {
+			long lastdelta, totdelta;
+			lastdelta = t - sc->sc_rlastintr - sc->sc_rblktime;
+			if (lastdelta > sc->sc_rblktime / 5) {
+				printf("audio: record interrupt(%d) off relative by %ld us (%lu)\n", 
+				       sc->sc_rnintr, lastdelta, sc->sc_rblktime);
+			}
+			totdelta = t - sc->sc_rfirstintr - sc->sc_rblktime * sc->sc_rnintr;
+			if (totdelta > sc->sc_rblktime / 2) {
+				sc->sc_rnintr++;
+				printf("audio: record interrupt(%d) off absolute by %ld us (%lu)\n", 
+				       sc->sc_rnintr, totdelta, sc->sc_rblktime);
+				sc->sc_rnintr++; /* avoid repeated messages */
+			}
+		} else
+			sc->sc_rfirstintr = t;
+		sc->sc_rlastintr = t;
+		sc->sc_rnintr++;
+	}
+#endif
+
+	cb->used += cb->blksize;
+	if (cb->pause) {
+		DPRINTF(("audio_rint: pdrops %lu\n", cb->pdrops));
+		cb->pdrops += cb->blksize;
+		cb->outp += cb->blksize;
+		cb->used -= cb->blksize;
+	} else if (cb->used + cb->blksize >= cb->usedhigh && !cb->copying) {
+		DPRINTF(("audio_rint: drops %lu\n", cb->drops));
+		cb->drops += cb->blksize;
+		cb->outp += cb->blksize;
+		cb->used -= cb->blksize;
+	}
+
+#ifdef AUDIO_DEBUG
+	if (audiodebug > 2)
+		printf("audio_rint: inp=%p cc=%d used=%d\n", 
+		       cb->inp, cb->blksize, cb->used);
+#endif
+	error = hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
+				audio_rint, (void *)sc);
+	if (error) {
+		DPRINTF(("audio_rint: restart failed: %d\n", error));
+		audio_clear(sc);
+	}
+
+	audio_wakeup(&sc->sc_rchan);
+	selwakeup(&sc->sc_rsel);
+	if (sc->sc_async)
+		psignal(sc->sc_async, SIGIO);
 }
 
 int
@@ -1558,11 +1769,12 @@ audiosetinfo(sc, ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
 	int cleared = 0;
-	int s, bsize, error = 0;
+	int s, error = 0;
 	struct audio_hw_if *hw = sc->hw_if;
 	mixer_ctrl_t ct;
 	struct audio_params pp, rp;
 	int np, nr;
+	unsigned int blks;
 	
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
@@ -1602,28 +1814,47 @@ audiosetinfo(sc, ai)
 		rp.channels = r->channels;
 		nr++;
 	}
+#ifdef AUDIO_DEBUG
+	if (audiodebug && nr)
+	    audio_print_params("Setting record params", &rp);
+	if (audiodebug && np)
+	    audio_print_params("Setting play params", &pp);
+#endif
 	if (nr && (error = audio_check_params(&rp)))
 		return error;
 	if (np && (error = audio_check_params(&pp)))
 		return error;
 	if (nr) {
-		audio_clear(sc);
-		error = hw->set_params(sc->hw_hdl, AUMODE_RECORD, &rp, &sc->sc_pparams);
+		if (!cleared)
+			audio_clear(sc);
+		cleared = 1;
+		error = hw->set_params(sc->hw_hdl, AUMODE_RECORD, 
+				       &rp, &sc->sc_pparams);
 		if (error)
 			return (error);
 		sc->sc_rparams = rp;
-		sc->sc_blksize = audio_calc_blksize(sc);
 	}
 	if (np) {
 		if (!cleared)
 			audio_clear(sc);
 		cleared = 1;
-		error = hw->set_params(sc->hw_hdl, AUMODE_PLAY, &pp, &sc->sc_rparams);
+		error = hw->set_params(sc->hw_hdl, AUMODE_PLAY, 
+				       &pp, &sc->sc_rparams);
 		if (error)
 			return (error);
 		sc->sc_pparams = pp;
-		sc->sc_blksize = audio_calc_blksize(sc);
 	}
+	/* Play params can affect the record params, so recalculate blksize. */
+	if (nr || np) {
+		audio_calc_blksize(sc, AUMODE_RECORD);
+		audio_calc_blksize(sc, AUMODE_PLAY);
+	}
+#ifdef AUDIO_DEBUG
+	if (audiodebug > 1 && nr)
+	    audio_print_params("After setting record params", &sc->sc_rparams);
+	if (audiodebug > 1 && np)
+	    audio_print_params("After setting play params", &sc->sc_pparams);
+#endif
 
 	if (p->port != ~0) {
 		if (!cleared)
@@ -1663,7 +1894,7 @@ audiosetinfo(sc, ai)
 	}
 	
 	if (p->pause != (u_char)~0) {
-		sc->pr.cb_pause = p->pause;
+		sc->sc_pr.pause = p->pause;
 		if (!p->pause) {
 			s = splaudio();
 			audiostartp(sc);
@@ -1671,7 +1902,7 @@ audiosetinfo(sc, ai)
 		}
 	}
 	if (r->pause != (u_char)~0) {
-		sc->rr.cb_pause = r->pause;
+		sc->sc_rr.pause = r->pause;
 		if (!r->pause) {
 			s = splaudio();
 			audiostartr(sc);
@@ -1685,41 +1916,46 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 
-		if (ai->blocksize == 0)
-			bsize = sc->sc_blksize;
-		else if (ai->blocksize > AU_RING_SIZE/2)
-			bsize = AU_RING_SIZE/2;
-		else
-			bsize = ai->blocksize;
-		bsize = hw->round_blocksize(sc->hw_hdl, bsize);
-		if (bsize > AU_RING_SIZE)
-			bsize = AU_RING_SIZE;
-
-		sc->sc_blksize = bsize;
+		/* No need to check the blocksize, audio_initbufs() does that. */
+		sc->sc_pr.blksize = ai->blocksize;
+		sc->sc_rr.blksize = ai->blocksize;
 	}
 
 	if (np || nr || ai->blocksize != ~0) {
-		audio_alloc_auzero(sc, sc->sc_blksize);
-		sc->sc_smpl_in_blk = sc->sc_blksize / (sc->sc_pparams.precision / NBBY);
-		sc->sc_50ms = 50 * sc->sc_pparams.sample_rate / 1000;
 		audio_initbufs(sc);
+#ifdef AUDIO_INTR_TIME
+		sc->sc_pnintr = 0;
+		sc->sc_pblktime = (u_long)(
+		    (double)sc->sc_pr.blksize * 1e6 / 
+		    (double)(sc->sc_pparams.precision / NBBY * 
+			     sc->sc_pparams.channels * 
+			     sc->sc_pparams.sample_rate));
+		DPRINTF(("audio: play blktime = %lu for %d\n", 
+			 sc->sc_pblktime, sc->sc_pr.blksize));
+		sc->sc_rnintr = 0;
+		sc->sc_rblktime = (u_long)(
+		    (double)sc->sc_rr.blksize * 1e6 / 
+		    (double)(sc->sc_rparams.precision / NBBY * 
+			     sc->sc_rparams.channels * 
+			     sc->sc_rparams.sample_rate));
+		DPRINTF(("audio: record blktime = %lu for %d\n", 
+			 sc->sc_rblktime, sc->sc_rr.blksize));
+#endif
 	}
 
 	if (ai->hiwat != ~0) {
-		if ((unsigned)ai->hiwat > sc->pr.maxblk)
-			ai->hiwat = sc->pr.maxblk;
-		if (sc->sc_hiwat != 0)
-			sc->sc_hiwat = ai->hiwat;
+		blks = ai->hiwat;
+		if (blks > sc->sc_pr.maxblks)
+			blks = sc->sc_pr.maxblks;
+		if (blks < 1)
+			blks = 1;
+		sc->sc_pr.usedhigh = blks * sc->sc_pr.blksize;
 	}
 	if (ai->lowat != ~0) {
-		if ((unsigned)ai->lowat > sc->pr.maxblk)
-			ai->lowat = sc->pr.maxblk;
-		sc->sc_lowat = ai->lowat;
-	}
-	if (ai->backlog != ~0) {
-		if ((unsigned)ai->backlog > (sc->pr.maxblk/2))
-			ai->backlog = sc->pr.maxblk/2;
-		sc->sc_backlog = ai->backlog;
+		blks = ai->lowat;
+		if (blks > sc->sc_pr.maxblks - 1)
+			blks = sc->sc_pr.maxblks - 1;
+		sc->sc_pr.usedlow = blks * sc->sc_pr.blksize;
 	}
 	if (ai->mode != ~0) {
 		if (!cleared)
@@ -1729,8 +1965,8 @@ audiosetinfo(sc, ai)
 		sc->sc_mode = ai->mode;
 		if (sc->sc_mode & AUMODE_PLAY) {
 			audio_init_play(sc);
-			if (!hw->full_duplex) /* Play takes precedence */
-				sc->sc_mode &= ~(AUMODE_RECORD);
+			if (!sc->sc_full_duplex) /* Play takes precedence */
+				sc->sc_mode &= ~AUMODE_RECORD;
 		}
 		if (sc->sc_mode & AUMODE_RECORD)
 			audio_init_record(sc);
@@ -1791,25 +2027,34 @@ audiogetinfo(sc, ai)
 	else
 	    p->gain = AUDIO_MAX_GAIN/2;
 
-	p->pause = sc->pr.cb_pause;
-	r->pause = sc->rr.cb_pause;
-	p->error = sc->pr.cb_drops != 0;
-	r->error = sc->rr.cb_drops != 0;
+	p->seek = sc->sc_pr.used;
+	r->seek = sc->sc_rr.used;
 
-	p->open = ((sc->sc_open & AUOPEN_WRITE) != 0);
-	r->open = ((sc->sc_open & AUOPEN_READ) != 0);
+	p->samples = sc->sc_pr.stamp - sc->sc_pr.drops;
+	r->samples = sc->sc_rr.stamp - sc->sc_rr.drops;
 
-	p->samples = sc->pr.au_stamp - sc->pr.cb_pdrops;
-	r->samples = sc->rr.au_stamp - sc->rr.cb_pdrops;
+	p->eof = sc->sc_eof;
+	r->eof = 0;
 
-	p->seek = sc->sc_wseek;
-	r->seek = sc->sc_rseek;
+	p->pause = sc->sc_pr.pause;
+	r->pause = sc->sc_rr.pause;
 
-	ai->buffersize = AU_RING_SIZE;
-	ai->blocksize = sc->sc_blksize;
-	ai->hiwat = sc->sc_hiwat;
-	ai->lowat = sc->sc_lowat;
-	ai->backlog = sc->sc_backlog;
+	p->error = sc->sc_pr.drops != 0;
+	r->error = sc->sc_rr.drops != 0;
+
+	p->waiting = r->waiting = 0;		/* open never hangs */
+
+	p->open = (sc->sc_open & AUOPEN_WRITE) != 0;
+	r->open = (sc->sc_open & AUOPEN_READ) != 0;
+
+	p->active = sc->sc_pbus;
+	r->active = sc->sc_rbus;
+
+	ai->buffersize = sc->sc_pr.bufsize;
+	ai->blocksize = sc->sc_pr.blksize;
+	ai->hiwat = sc->sc_pr.usedhigh / sc->sc_pr.blksize;
+	ai->lowat = sc->sc_pr.usedlow / sc->sc_pr.blksize;
+	ai->backlog = 0;	/* unused */
 	ai->mode = sc->sc_mode;
 
 	return (0);
@@ -1826,7 +2071,6 @@ mixer_open(dev, flags, ifmt, p)
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
-	struct audio_hw_if *hw;
 
 	if (unit >= naudio || !audio_softc[unit]) {
 	    DPRINTF(("mixer_open: invalid device unit - %d\n", unit));
@@ -1834,10 +2078,9 @@ mixer_open(dev, flags, ifmt, p)
 	}
 
 	sc = audio_softc[unit];
-	hw = sc->hw_if;
 
-	DPRINTF(("mixer_open: dev=%x flags=0x%x sc=0x%x\n", dev, flags, sc));
-	if (hw == 0)		/* Hardware has not attached to us... */
+	DPRINTF(("mixer_open: dev=%x flags=0x%x sc=%p\n", dev, flags, sc));
+	if (sc->hw_if == 0)		/* Hardware has not attached to us... */
 		return (ENXIO);
 
 	return (0);
