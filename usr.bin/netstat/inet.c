@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.53 2003/02/03 23:37:09 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.54 2003/02/04 01:22:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.53 2003/02/03 23:37:09 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.54 2003/02/04 01:22:08 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -660,17 +660,18 @@ tcp_dump(pcbaddr)
 	u_long pcbaddr;
 {
 	struct tcpcb tcpcb;
-	int i;
+	int i, hardticks;
 
 	kread(pcbaddr, (char *)&tcpcb, sizeof(tcpcb));
+	hardticks = get_hardticks();
 
 	printf("TCP Protocol Control Block at 0x%08lx:\n\n", pcbaddr);
 
 	printf("Timers:\n");
 	for (i = 0; i < TCPT_NTIMERS; i++) {
-		printf("\t%s: %llu", tcptimers[i],
+		printf("\t%s: %d", tcptimers[i],
 		    (tcpcb.t_timer[i].c_flags & CALLOUT_PENDING) ?
-		    (unsigned long long) tcpcb.t_timer[i].c_time : 0);
+		    tcpcb.t_timer[i].c_time - hardticks : 0);
 	}
 	printf("\n\n");
 
