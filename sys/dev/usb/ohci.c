@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.61 2000/01/16 13:12:06 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.62 2000/01/18 20:11:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -153,6 +153,9 @@ static usbd_status	ohci_allocm __P((struct usbd_bus *, usb_dma_t *,
 			    u_int32_t));
 static void		ohci_freem __P((struct usbd_bus *, usb_dma_t *));
 
+static usbd_xfer_handle	ohci_allocx __P((struct usbd_bus *));
+static void		ohci_freex __P((struct usbd_bus *, usbd_xfer_handle));
+
 static usbd_status	ohci_root_ctrl_transfer __P((usbd_xfer_handle));
 static usbd_status	ohci_root_ctrl_start __P((usbd_xfer_handle));
 static void		ohci_root_ctrl_abort __P((usbd_xfer_handle));
@@ -262,6 +265,8 @@ static struct usbd_bus_methods ohci_bus_methods = {
 	ohci_poll,
 	ohci_allocm,
 	ohci_freem,
+	ohci_allocx,
+	ohci_freex,
 };
 
 static struct usbd_pipe_methods ohci_root_ctrl_methods = {	
@@ -612,6 +617,8 @@ ohci_init(sc)
 	for (i = 0; i < OHCI_HASH_SIZE; i++)
 		LIST_INIT(&sc->sc_hash_tds[i]);
 
+	SIMPLEQ_INIT(&sc->sc_free_xfers);
+
 	/* Allocate the HCCA area. */
 	err = usb_allocmem(&sc->sc_bus, OHCI_HCCA_SIZE, 
 			 OHCI_HCCA_ALIGN, &sc->sc_hccadma);
@@ -817,6 +824,31 @@ ohci_freem(bus, dma)
 #endif
 
 	usb_freemem(&sc->sc_bus, dma);
+}
+
+usbd_xfer_handle
+ohci_allocx(bus)
+	struct usbd_bus *bus;
+{
+	struct ohci_softc *sc = (struct ohci_softc *)bus;
+	usbd_xfer_handle xfer;
+
+	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
+	if (xfer != NULL)
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, xfer, next);
+	else
+		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
+	return (xfer);
+}
+
+void
+ohci_freex(bus, xfer)
+	struct usbd_bus *bus;
+	usbd_xfer_handle xfer;
+{
+	struct ohci_softc *sc = (struct ohci_softc *)bus;
+
+	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
 }
 
 /*

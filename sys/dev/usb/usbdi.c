@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.57 2000/01/16 23:11:43 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.58 2000/01/18 20:11:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -81,9 +81,6 @@ static void usbd_do_request_async_cb
 	__P((usbd_xfer_handle, usbd_private_handle, usbd_status));
 static void usbd_start_next __P((usbd_pipe_handle pipe));
 
-static SIMPLEQ_HEAD(, usbd_xfer) usbd_free_xfers =
-	SIMPLEQ_HEAD_INITIALIZER(usbd_free_xfers);
-
 static int usbd_nbuses = 0;
 
 void
@@ -95,18 +92,7 @@ usbd_init()
 void
 usbd_finish()
 {
-	usbd_xfer_handle xfer;
-
-	if (--usbd_nbuses == 0) {
-		/* Last controller is gone, free all xfers. */
-		for (;;) {
-			xfer = SIMPLEQ_FIRST(&usbd_free_xfers);
-			if (xfer == NULL)
-				break;
-			SIMPLEQ_REMOVE_HEAD(&usbd_free_xfers, xfer, next);
-			free(xfer, M_USB);
-		}			
-	}
+	--usbd_nbuses;
 }
 
 static __inline int usbd_xfer_isread __P((usbd_xfer_handle xfer));
@@ -377,13 +363,9 @@ usbd_alloc_xfer(dev)
 {
 	usbd_xfer_handle xfer;
 
-	xfer = SIMPLEQ_FIRST(&usbd_free_xfers);
-	if (xfer != NULL)
-		SIMPLEQ_REMOVE_HEAD(&usbd_free_xfers, xfer, next);
-	else
-		xfer = malloc(sizeof(*xfer), M_USB, M_NOWAIT);
+	xfer = dev->bus->methods->allocx(dev->bus);
 	if (xfer == NULL)
-		return (0);
+		return (NULL);
 	memset(xfer, 0, sizeof *xfer);
 	xfer->device = dev;
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
@@ -397,7 +379,7 @@ usbd_free_xfer(xfer)
 	DPRINTFN(5,("usbd_free_xfer: %p\n", xfer));
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		usbd_free_buffer(xfer);
-	SIMPLEQ_INSERT_HEAD(&usbd_free_xfers, xfer, next);
+	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
 	return (USBD_NORMAL_COMPLETION);
 }
 
