@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_lnaof.c,v 1.8 2003/05/05 13:56:14 bjh21 Exp $	*/
+/*	$NetBSD: inet_lnaof.c,v 1.9 2003/05/05 21:35:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_lnaof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_lnaof.c,v 1.8 2003/05/05 13:56:14 bjh21 Exp $");
+__RCSID("$NetBSD: inet_lnaof.c,v 1.9 2003/05/05 21:35:40 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,10 +57,9 @@ __weak_alias(inet_lnaof,_inet_lnaof)
  * number formats.
  */
 in_addr_t
-inet_lnaof(in)
-	struct in_addr in;
+inet_lnaof(struct in_addr in)
 {
-	register u_long i = ntohl(in.s_addr);
+	in_addr_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return ((i)&IN_CLASSA_HOST);

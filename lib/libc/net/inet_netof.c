@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_netof.c,v 1.9 2003/05/05 19:53:29 bjh21 Exp $	*/
+/*	$NetBSD: inet_netof.c,v 1.10 2003/05/05 21:35:42 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_netof.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_netof.c,v 1.9 2003/05/05 19:53:29 bjh21 Exp $");
+__RCSID("$NetBSD: inet_netof.c,v 1.10 2003/05/05 21:35:42 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,8 +56,7 @@ __weak_alias(inet_netof,_inet_netof)
  * address; handles class a/b/c network #'s.
  */
 in_addr_t
-inet_netof(in)
-	struct in_addr in;
+inet_netof(struct in_addr in)
 {
 	in_addr_t i = ntohl(in.s_addr);
 
