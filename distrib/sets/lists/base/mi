@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.340 2002/07/10 10:49:50 agc Exp $
+# $NetBSD: mi,v 1.341 2002/07/27 01:02:26 grant Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2452,6 +2452,7 @@
 ./var/spool/lock		base-sys-root
 ./var/spool/mqueue		base-sendmail-root
 ./var/spool/output		base-lpr-root
+./var/spool/output/lpd		base-lpr-root
 ./var/spool/postfix		base-postfix-root
 ./var/spool/postfix/etc		base-postfix-root
 ./var/spool/sockets		base-sys-root
