@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.10 1996/03/06 06:22:06 scottr Exp $	*/
+/*	$NetBSD: mt.c,v 1.11 1996/03/06 06:34:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.10 1996/03/06 06:22:06 scottr Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.11 1996/03/06 06:34:20 scottr Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.10 1996/03/06 06:22:06 scottr Exp $";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "mt.h"
 
@@ -89,8 +90,8 @@ void status __P((struct mtget *));
 void usage __P((void));
 
 char	*host = NULL;	/* remote host (if any) */
-uid_t	uid;
-uid_t	euid;
+uid_t	uid;		/* read uid */
+uid_t	euid;		/* effective uid */
 
 int
 main(argc, argv)
@@ -105,7 +106,7 @@ main(argc, argv)
 
 	uid = getuid();
 	euid = geteuid();
-	seteuid(uid);
+	(void) seteuid(uid);
 
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = DEFTAPE;
@@ -242,7 +243,7 @@ printreg(s, v, bits)
 	bits++;
 	if (v && bits) {
 		putchar('<');
-		while (i = *bits++) {
+		while ((i = *bits++)) {
 			if (v & (1 << (i-1))) {
 				if (any)
 					putchar(',');
