@@ -397,6 +397,7 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 		message->rcpt_unread--;
 	    }
 	} else if (rec_type == REC_TYPE_RCPT) {
+	    /* See also below for code setting orig_rcpt. */
 	    if (message->rcpt_list.len < recipient_limit) {
 		message->rcpt_unread--;
 		qmgr_rcpt_list_add(&message->rcpt_list, curr_offset,
@@ -467,7 +468,9 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	    orig_rcpt = 0;
 	}
 	if (rec_type == REC_TYPE_ORCP)
-	    orig_rcpt = mystrdup(start);
+	    /* See also above for code clearing orig_rcpt. */
+	    if (message->rcpt_offset == 0)
+		orig_rcpt = mystrdup(start);
     } while (rec_type > 0 && rec_type != REC_TYPE_END);
 
     /*

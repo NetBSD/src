@@ -65,3 +65,6 @@ postcat.o: ../../include/msg_vstream.h
 postcat.o: ../../include/vstring_vstream.h
 postcat.o: ../../include/record.h
 postcat.o: ../../include/rec_type.h
+postcat.o: ../../include/mail_queue.h
+postcat.o: ../../include/mail_conf.h
+postcat.o: ../../include/mail_params.h

@@ -15,8 +15,8 @@
 #
 # A block of table entries may be "enclosed" by a line with `if
 # /pattern/flags' or `if !/pattern/flags' and a line with `endif'.
-# This causes the block of table entries to be examined only when
-# the pattern produces a successful (non)match. The `if..endif' may
+# This causes the block of table entries to be examined only when the
+# search string produces a successful (non)match. The `if..endif' may
 # be nested. There currently is no `else' operator.
 #
 # The syntax of access table results is described in the Postfix
@@ -30,4 +30,6 @@
 /^postmaster@/				OK
 
 # Protect your outgoing majordomo exploders
-/^(.*)-outgoing@(.*)$/!/^owner-.*/	550 Use ${1}@${2} instead
+if !/^owner-.*/
+/^(.*)-outgoing@(.*)$/			550 Use ${1}@${2} instead
+endif

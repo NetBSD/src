@@ -66,4 +66,4 @@ strict_8bitmime = no
 # 
 # This blocks mail from poorly written mail software.
 # 
-strict_mime_domain_encoding = no
+strict_mime_encoding_domain = no

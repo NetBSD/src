@@ -93,6 +93,7 @@ typedef struct SMTPD_STATE {
     int     defer_if_permit_client;	/* force permit into warning */
     int     defer_if_permit_helo;	/* force permit into warning */
     int     defer_if_permit_sender;	/* force permit into warning */
+    int     discard;			/* discard message */
     VSTRING *expand_buf;		/* scratch space for $name expansion */
 } SMTPD_STATE;
 

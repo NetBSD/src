@@ -14,6 +14,21 @@
 #	addresses to message delivery transports and/or relay hosts. The
 #	mapping is used by the \fBtrivial-rewrite\fR(8) daemon.
 #
+#	This mapping overrides the default routing that is built into
+#	Postfix:
+# .IP \fBmydestination\fR
+#	A list of domains that is by default delivered via
+#	\fB$local_transport\fR.
+# .IP \fBvirtual_mailbox_domains\fR
+#	A list of domains that is by default delivered via
+#	\fB$virtual_transport\fR.
+# .IP \fBrelay_domains\fR
+#	A list of domains that is by default delivered via
+#	\fB$relay_transport\fR.
+# .IP "any other destination"
+#	Mail for any other destination is by default delivered via
+#	\fB$default_transport\fR.
+# .PP
 #	Normally, the \fBtransport\fR table is specified as a text file
 #	that serves as input to the \fBpostmap\fR(1) command.
 #	The result, an indexed file in \fBdbm\fR or \fBdb\fR format, is used
@@ -31,7 +46,7 @@
 # TABLE FORMAT
 # .ad
 # .fi
-#	The format of the transport table is as follows:
+#	The input format for the \fBpostmap\fR(1) command is as follows:
 # .IP "\fIpattern result\fR"
 #	When \fIpattern\fR matches the recipient address or domain, use the
 #	corresponding \fIresult\fR.

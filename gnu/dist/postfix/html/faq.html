@@ -209,7 +209,7 @@ domains with "relay access denied"</a>
 
 <li><a href="#relay_restrict">Restricting what users can send mail to off-site destinations</a>
 
-<li><a href="#backup">Configuring Postfix as backup MX host</a>
+<li><a href="#backup">Configuring Postfix as MX host for a remote site</a>
 
 </ul>
 
@@ -1441,7 +1441,20 @@ the address does resolve to a name.
 <p>
 
 You run the Postfix SMTP server inside a <b>chroot</b> jail for
-extra security, but some configuration files are missing. In order
+extra security, but some configuration files are missing or have
+incorrect information. The command "postfix check" will report
+what files may have incorrect information. For example:
+
+<blockquote>
+<pre>
+warning: /var/spool/postfix/etc/resolv.conf and /etc/resolv.conf differ
+warning: /var/spool/postfix/etc/localtime and /etc/localtime differ
+</pre>
+</blockquote>
+
+<p>
+
+In order
 to run inside a chroot jail, the Postfix SMTP client and server
 need copies of system configuration files inside the Postfix queue
 directory.  The exact list of files is very system dependent, but
@@ -1685,7 +1698,7 @@ host.
 
 <hr>
 
-<a name="backup"><h3>Configuring Postfix as backup MX host</h3></a>
+<a name="backup"><h3>Configuring Postfix as MX host for a remote site</h3></a>
 
 When you are <b>secondary mx</b> for a <b>remote site</b> this is
 all you need:
@@ -1703,6 +1716,10 @@ all you need:
 
 <p>
 
+<blink><b>DO NOT LIST the.backed-up.domain.tld in MYDESTINATION</b></blink>
+
+<p>
+
 When you are <b>primary mx</b> for a <b>remote site</b> you also
 need:
 
@@ -1713,7 +1730,7 @@ need:
         transport_maps = hash:/etc/postfix/transport
 
     /etc/postfix/transport:
-        the.backed-up.domain.tld       smtp:[their.mail.host.tld]
+        the.backed-up.domain.tld       relay:[their.mail.host.tld]
 </pre>
 
 <p>
@@ -1772,7 +1789,8 @@ for the <b>/etc/resolv.conf</b> file.
 Check out your Postfix <b>master.cf</b> file. If the SMTP client
 runs chrooted, then it needs a bunch of files inside the Postfix
 queue directory.  Examples are in the source distribution in the
-<b>examples</b> subdirectory.
+<b>examples</b> subdirectory. See also the other FAQ entry on 
+<a href="#numerical_log">name service trouble</a>.
 
 </ul>
 
@@ -2618,8 +2636,9 @@ the <b>virtual_mailbox_maps</b> parameter.
 
 <p>
 
-If you want to deliver the domain as a Postfix simulated <a
-href="virtual.8.html">virtual</a>(5) domain, then you should list
+If you want to deliver the domain as a <a href="virtual.8.html">
+virtual</a>(5) alias domain, where each address is aliased to
+a real local or remote address, then you should list
 the virtual domain name in the tables specified with the
 <b>virtual_alias_domains</b> parameter instead.
 
@@ -2638,7 +2657,7 @@ Solutions:
 
 <ul>
 
-<li>Specify a simulated virtual domain as per the
+<li>Specify a virtual alias domain as per the
 <a href="virtual.5.html">virtual(5)</a> manual page.
 
 <p>

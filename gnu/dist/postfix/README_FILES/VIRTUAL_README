@@ -8,7 +8,7 @@ Purpose of this software
 You can use the virtual delivery agent for mailbox delivery of some
 or all domains that are handled by a machine.
 
-This mechanism is different from simulated virtual domains. Those
+This mechanism is different from virtual alias domains. Those
 are implemented by translating every recipient address into a
 different address. For that, see the virtual(5) manual page.
 
@@ -24,12 +24,13 @@ It looks up the user mailbox location, uid and gid via separate
 maps, and the mailbox location map can specify either mailbox or
 maildir delivery (controlled by trailing slash on mailbox name).
 
-The agent does not support user+foo address extensions, aliases or
-.forward files (use the virtual table instead), and therefore
-doesn't support file or program aliases. This choice was made to
-simplify and streamline the code (it allowed me to dispense with
-70% of local's code - mostly the bits that are a security headache)
-- if you need this functionality, this agent isn't for you.
+The agent allows but ignores user+foo address extensions, does not
+support aliases or .forward files (use the virtual table instead),
+and therefore doesn't support file or program aliases. This choice
+was made to simplify and streamline the code (it allowed me to
+dispense with 70% of local's code - mostly the bits that are a
+security headache) - if you need this functionality, this agent
+isn't for you.
 
 It also doesn't support writing to a common spool as root and then
 chowning the mailbox to the user - I felt this functionality didn't
@@ -67,7 +68,7 @@ virtual_mailbox_domains
 
     Specifies the list of domains that should be delivered to the
     $virtual_transport delivery agent (default: virtual). As of
-    version 1.2, Postfix is smart enough that you don't have to
+    version 2.0, Postfix is smart enough that you don't have to
     list every virtual domain in a Postfix transport map.
 
 virtual_mailbox_maps
@@ -160,9 +161,9 @@ Example 1: using the virtual delivery agent for all local mail
 ==============================================================
 
 This example does not use the Postfix local delivery agent at all.
-With this configuration Postfix does no user+foo address extension,
-no alias expansion, no .forward file expansion, and no lookups of
-recipients in /etc/passwd.
+With this configuration Postfix does no alias expansion, no .forward
+file expansion, no lookups of recipients in /etc/passwd, and allows
+but ignores user+foo address extensions.
 
 Instead of "hash" specify "dbm" or "btree", depending on your system
 type.  The command "postconf -m" displays possible lookup table

@@ -462,6 +462,7 @@ token.o: ../../include/tok822.h
 token.o: ../../include/resolve_clnt.h
 token.o: ../../include/mail_params.h
 token.o: ../../include/bounce.h
+token.o: ../../include/defer.h
 token.o: local.h
 token.o: ../../include/been_here.h
 token.o: ../../include/deliver_request.h
