@@ -6,7 +6,4 @@ SUBDIR+=	vgaio kbdio set2061
 SUBDIR+=	demo
 .endif
 
-#includes:
-#	(cd ${.CURDIR}/..; ${MAKE} includes)
-
 .include <bsd.subdir.mk>
