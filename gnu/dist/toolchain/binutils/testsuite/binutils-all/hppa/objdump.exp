@@ -29,6 +29,11 @@ if [istarget hppa*w-*-*] then {
   return
 }
 
+# elf hppa assembler doesn't support .subspa
+if {[istarget *-*-*elf*] || [istarget *-*-linux*]} then {
+  return
+}
+
 if {[which $OBJDUMP] == 0} then {
     perror "$OBJDUMP does not exist"
     return

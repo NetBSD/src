@@ -78,10 +78,10 @@ const bfd_target TARGET_BIG_SYM =
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | WP_TEXT),
-  
+
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_CODE | SEC_DATA), 
+   SEC_CODE | SEC_DATA),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
@@ -147,7 +147,7 @@ const bfd_target TARGET_BIG_SYM =
 #else
   NULL,
 #endif
-  
+
   /* backend_data: */
   (PTR) TARGET_BACKEND_DATA
 };
@@ -171,10 +171,10 @@ const bfd_target TARGET_LITTLE_SYM =
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
    | WP_TEXT),
-  
+
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY |
-   SEC_DATA), 
+   SEC_DATA),
 
    /* leading_symbol_char: is the first char of a user symbol
       predictable, and if so what is it */
@@ -240,7 +240,7 @@ const bfd_target TARGET_LITTLE_SYM =
 #else
   NULL,
 #endif
-  
+
   /* backend_data: */
   (PTR) TARGET_BACKEND_DATA
 };

@@ -32,5 +32,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define bfd_arm_process_before_allocation \
 	bfd_arm_epoc_pe_process_before_allocation
 
-#include "pe-arm.c"
+#define EXTRA_S_FLAGS (SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_CODE | SEC_READONLY | SEC_DATA)
 
+#include "pe-arm.c"

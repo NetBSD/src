@@ -1,5 +1,5 @@
 /* tc-fr30.c -- Assembler for the Fujitsu FR30.
-   Copyright (C) 1998, 1999 Free Software Foundation.
+   Copyright (C) 1998, 1999, 2000 Free Software Foundation.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "as.h"
-#include "subsegs.h"     
+#include "subsegs.h"
 #include "symcat.h"
 #include "opcodes/fr30-desc.h"
 #include "opcodes/fr30-opc.h"
@@ -82,7 +82,7 @@ md_show_usage (stream)
   FILE * stream;
 {
   fprintf (stream, _(" FR30 specific command line options:\n"));
-} 
+}
 
 /* The target specific pseudo-ops which we support.  */
 const pseudo_typeS md_pseudo_table[] =
@@ -100,7 +100,7 @@ md_begin ()
   subsegT  subseg;
 
   /* Initialize the `cgen' interface.  */
-  
+
   /* Set the machine number and endian.  */
   gas_cgen_cpu_desc = fr30_cgen_cpu_open (CGEN_CPU_OPEN_MACHS, 0,
 					  CGEN_CPU_OPEN_ENDIAN,
@@ -126,7 +126,7 @@ md_assemble (str)
 
   insn.insn = fr30_cgen_assemble_insn
     (gas_cgen_cpu_desc, str, & insn.fields, insn.buffer, & errmsg);
-  
+
   if (!insn.insn)
     {
       as_bad (errmsg);
@@ -150,7 +150,7 @@ md_assemble (str)
 /* The syntax in the manual says constants begin with '#'.
    We just ignore it.  */
 
-void 
+void
 md_operand (expressionP)
      expressionS * expressionP;
 {
@@ -279,7 +279,7 @@ md_estimate_size_before_relax (fragP, segment)
 	 all further handling to md_convert_frag.  */
       fragP->fr_subtype = 2;
 
-#if 0 /* Can't use this, but leave in for illustration.  */     
+#if 0 /* Can't use this, but leave in for illustration.  */
       /* Change 16 bit insn to 32 bit insn.  */
       fragP->fr_opcode[0] |= 0x80;
 
@@ -323,7 +323,7 @@ md_estimate_size_before_relax (fragP, segment)
     }
 
   return (fragP->fr_var + fragP->fr_fix - old_fr_fix);
-} 
+}
 
 /* *fragP has been relaxed to its final size, and now needs to have
    the bytes inside it modified to conform to the new size.
@@ -549,7 +549,7 @@ md_atof (type, litP, sizeP)
 			  sizeof (LITTLENUM_TYPE));
       litP += sizeof (LITTLENUM_TYPE);
     }
-     
+
   return 0;
 }
 
@@ -559,14 +559,14 @@ restore_colon (advance_i_l_p_by)
      int advance_i_l_p_by;
 {
   char c;
-  
+
   /* Restore the colon, and advance input_line_pointer to
      the end of the new symbol.  */
   * input_line_pointer = ':';
   input_line_pointer += advance_i_l_p_by;
   c = * input_line_pointer;
   * input_line_pointer = 0;
-  
+
   return c;
 }
 
@@ -610,11 +610,11 @@ fr30_is_colon_insn (start)
 
 	      if (start [len] != 0)
 		continue;
-	      
+
 	      while (len --)
 		if (tolower (start [len]) != insn [len])
 		  break;
-	      
+
 	      if (len == -1)
 		return restore_colon (1);
 	    }
@@ -645,16 +645,16 @@ fr30_fix_adjustable (fixP)
 {
   if (fixP->fx_addsy == NULL)
     return 1;
-  
-#if 0  
-  /* Prevent all adjustments to global symbols. */
+
+#if 0
+  /* Prevent all adjustments to global symbols.  */
   if (S_IS_EXTERN (fixP->fx_addsy))
     return 0;
-  
+
   if (S_IS_WEAK (fixP->fx_addsy))
     return 0;
 #endif
-  
+
   /* We need the symbol name for the VTABLE entries */
   if (   fixP->fx_r_type == BFD_RELOC_VTABLE_INHERIT
       || fixP->fx_r_type == BFD_RELOC_VTABLE_ENTRY)

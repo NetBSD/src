@@ -119,7 +119,7 @@ extern const char *m68k_comment_chars;
 /* On the Delta, `%' can occur within a label name, but not as the
    initial character.  */
 #define LEX_PCT LEX_NAME
-/* On the Delta, `~' can start a label name, but is converted to '.'. */
+/* On the Delta, `~' can start a label name, but is converted to '.'.  */
 #define LEX_TILDE LEX_BEGIN_NAME
 #define tc_canonicalize_symbol_name(s) ((*(s) == '~' ? *(s) = '.' : '.'), s)
 /* On the Delta, dots are not required before pseudo-ops.  */
@@ -157,6 +157,12 @@ do								\
 while (0)
 
 #define NO_RELOC BFD_RELOC_NONE
+#define RELAX_RELOC_ABS8  BFD_RELOC_8
+#define RELAX_RELOC_ABS16 BFD_RELOC_16
+#define RELAX_RELOC_ABS32 BFD_RELOC_32
+#define RELAX_RELOC_PC8   BFD_RELOC_8_PCREL
+#define RELAX_RELOC_PC16  BFD_RELOC_16_PCREL
+#define RELAX_RELOC_PC32  BFD_RELOC_32_PCREL
 
 #ifdef OBJ_ELF
 
@@ -175,6 +181,13 @@ while (0)
 
 #define tc_fix_adjustable(X) tc_m68k_fix_adjustable(X)
 extern int tc_m68k_fix_adjustable PARAMS ((struct fix *));
+
+#ifdef OBJ_ELF
+/* This arranges for gas/write.c to not apply a relocation if
+   tc_fix_adjustable() says it is not adjustable.  */
+#define TC_FIX_ADJUSTABLE(fixP) tc_fix_adjustable (fixP)
+#endif
+
 #define elf_tc_final_processing m68k_elf_final_processing
 extern void m68k_elf_final_processing PARAMS ((void));
 #endif
@@ -187,7 +200,13 @@ extern void m68k_elf_final_processing PARAMS ((void));
 
 #define tc_frob_coff_symbol(sym) m68k_frob_symbol (sym)
 
-#define NO_RELOC 0
+#define NO_RELOC          0
+#define RELAX_RELOC_ABS8  0
+#define RELAX_RELOC_ABS16 0
+#define RELAX_RELOC_ABS32 0
+#define RELAX_RELOC_PC8   0
+#define RELAX_RELOC_PC16  0
+#define RELAX_RELOC_PC32  0
 
 #endif /* ! BFD_ASSEMBLER */
 
@@ -213,5 +232,3 @@ extern struct relax_type md_relax_table[];
   if (aim==0 && this_state== 4) { /* hard encoded from tc-m68k.c */ \
     aim=this_type->rlx_forward+1; /* Force relaxation into word mode */ \
   }
-
-/* end of tc-m68k.h */

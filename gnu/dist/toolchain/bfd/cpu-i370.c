@@ -46,7 +46,7 @@ i370_compatible (a, b)
 
 static const bfd_arch_info_type arch_info_struct[] =
 {
-  /* hack alert: old old machines are really 16 and 24 bit arch ... */
+  /* hack alert: old old machines are really 16 and 24 bit arch ...  */
   {
     32, /* 32 bits in a word */
     32, /* 32 bits in an address */
