@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_cc.c,v 1.10 1994/03/30 17:24:31 chopps Exp $
+ *	$Id: grf_cc.c,v 1.11 1994/04/10 00:43:32 chopps Exp $
  */
 
 #include "grf.h"
@@ -118,7 +118,7 @@ XXX_grf_cc_on (unit)
   bmap_t bm;
   struct view_size vs;
 
-  viewioctl (unit, VIEW_GETBITMAP, &bm, 0, -1);
+  viewioctl (unit, VIOCGBMAP, &bm, 0, -1);
   
   gp->g_data = (caddr_t) 12345678; /* not particularly clean.. */
   
@@ -135,7 +135,7 @@ XXX_grf_cc_on (unit)
   gi->gd_fbaddr  = bm.hardware_address;
   gi->gd_fbsize  = bm.depth*bm.bytes_per_row*bm.rows;
 
-  if (viewioctl (unit, VIEW_GETSIZE, &vs, 0, -1))
+  if (viewioctl (unit, VIOCGSIZE, &vs, 0, -1))
     {
       /* fill in some default values... XXX */
       vs.width = 640; vs.height = 400; vs.depth = 2;
@@ -156,14 +156,14 @@ XXX_grf_cc_on (unit)
   gp->g_regkva = 0;	/* builtin */
   gp->g_fbkva  = 0;	/* not needed, view internal */
 
-  viewioctl (unit, VIEW_DISPLAY, NULL, 0, -1);
+  viewioctl (unit, VIOCDISPLAY, NULL, 0, -1);
     
 }
 
 XXX_grf_cc_off (unit)
     int unit;
 {
-    viewioctl (unit, VIEW_REMOVE, NULL, 0, -1);
+    viewioctl (unit, VIOCREMOVE, NULL, 0, -1);
 }
 
 
