@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.1 2000/07/07 10:52:41 ad Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.2 2000/07/13 11:28:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -28,5 +28,5 @@
  */
 
 #define	_PATH_NEWSYSLOGCONF	"/etc/newsyslog.conf"
-#define _PATH_SYSLOGDPID	"/var/run/syslogd.pid"
+#define _PATH_SYSLOGDPID	_PATH_VARRUN"syslogd.pid"
 #define _PATH_GZIP		"/usr/bin/gzip"
