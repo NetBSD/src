@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.118 2003/01/21 12:39:08 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.119 2003/02/13 02:50:51 nathanw Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -15,8 +15,9 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	getusershell.c __glob13.c glob.c humanize_number.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nice.c nlist.c nlist_aout.c \
 	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
-	pause.c popen.c psignal.c pwcache.c pw_scan.c raise.c readdir.c \
-	rewinddir.c scandir.c seekdir.c setdomainname.c \
+	pause.c popen.c psignal.c pthread_atfork.c pwcache.c pw_scan.c \
+	raise.c readdir.c rewinddir.c \
+	scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
 	__siglist14.c siglist.c signal.c __signame14.c signame.c sigrelse.c \

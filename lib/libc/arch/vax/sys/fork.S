@@ -33,16 +33,12 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)fork.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: fork.S,v 1.3 2002/02/24 01:06:20 matt Exp $"
+	.asciz "$NetBSD: fork.S,v 1.4 2003/02/13 02:50:51 nathanw Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(fork, _fork)
-#endif
-
-_SYSCALL(_fork,fork)
+_SYSCALL(__fork,fork)
 	jlbc	%r1,1f	# parent, since %r1 == 0 in parent, 1 in child
 	clrl	%r0
 1:
