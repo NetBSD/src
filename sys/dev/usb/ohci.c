@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.131 2002/09/30 16:36:19 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.132 2002/12/07 06:52:11 toshii Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.131 2002/09/30 16:36:19 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.132 2002/12/07 06:52:11 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1277,7 +1277,7 @@ ohci_softintr(void *v)
 	usbd_xfer_handle xfer;
 	int len, cc, s;
 
-	DPRINTFN(10,("ohci_softintr: enter\n:"));
+	DPRINTFN(10,("ohci_softintr: enter\n"));
 
 	sc->sc_bus.intr_context++;
 
