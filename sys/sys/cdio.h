@@ -7,6 +7,10 @@
  *
  * 16 Feb 93	Julian Elischer		ADDED for SCSI system
  */
+
+#ifndef _SYS_CDIO_H_
+#define _SYS_CDIO_H_
+
 /* Shared between kernel & process */
 
 struct cd_toc_entry {
@@ -145,5 +149,4 @@ struct	ioc_vol
 #define	CDIOCSTOP	_IO('c',23)
 #define	CDIOCEJECT	_IO('c',24)
 
-
-
+#endif /* !_SYS_CDIO_H_ */

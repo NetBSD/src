@@ -33,6 +33,9 @@
  *	@(#)user.h	7.19 (Berkeley) 5/4/91
  */
 
+#ifndef _SYS_USER_H_
+#define _SYS_USER_H_
+
 #include <machine/pcb.h>
 #ifndef KERNEL
 /* stuff that *used* to be included by user.h, or is now needed */
@@ -88,3 +91,5 @@ struct	user {
 #define	u_sig	U_sig
 #define	u_code	U_code
 #endif /* KERNEL */
+
+#endif /* !_SYS_USER_H_ */

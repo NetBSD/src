@@ -33,6 +33,9 @@
  *	@(#)vnode.h	7.39 (Berkeley) 6/27/91
  */
 
+#ifndef _SYS_VNODE_H_
+#define _SYS_VNODE_H_
+
 #ifndef KERNEL
 #include <machine/endian.h>
 #endif
@@ -331,3 +334,5 @@ extern	struct vnode *rootdir;		/* root (i.e. "/") vnode */
 extern	long desiredvnodes;		/* number of vnodes desired */
 extern	struct vattr va_null;		/* predefined null vattr structure */
 #endif
+
+#endif /* !_SYS_VNODE_H_ */

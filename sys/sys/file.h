@@ -33,6 +33,9 @@
  *	@(#)file.h	7.10 (Berkeley) 6/4/91
  */
 
+#ifndef _SYS_FILE_H_
+#define _SYS_FILE_H_
+
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
 
@@ -71,3 +74,5 @@ extern int maxfiles;		/* kernel limit on number of open files */
 extern int nfiles;		/* actual number of open files */
 
 #endif /* KERNEL */
+
+#endif /* !_SYS_FILE_H_ */

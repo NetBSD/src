@@ -36,6 +36,9 @@
  *	@(#)asm.h	5.5 (Berkeley) 5/7/91
  */
 
+#ifndef _SYS_ASM_H_
+#define _SYS_ASM_H_
+
 #ifdef PROF
 # ifdef __STDC__
 #  define ENTRY(x)	.globl _ ## x; \
@@ -55,3 +58,4 @@
 #endif PROF
 #define	ASMSTR		.asciz
 
+#endif /* !_SYS_ASM_H_ */

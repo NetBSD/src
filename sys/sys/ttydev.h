@@ -33,10 +33,10 @@
  *	@(#)ttydev.h	7.8 (Berkeley) 5/9/91
  */
 
-/* COMPATABILITY HEADER FILE */
+#ifndef _SYS_TTYDEV_H_
+#define _SYS_TTYDEV_H_
 
-#ifndef _TTYDEV_H_
-#define	_TTYDEV_H_
+/* COMPATABILITY HEADER FILE */
 
 #ifdef USE_OLD_TTY
 #define B0	0
@@ -57,4 +57,4 @@
 #define EXTB	15
 #endif /* USE_OLD_TTY */
 
-#endif /* !_TTYDEV_H_ */
+#endif /* !_SYS_TTYDEV_H_ */

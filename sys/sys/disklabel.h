@@ -33,9 +33,13 @@
  *	@(#)disklabel.h	7.19 (Berkeley) 5/7/91
  */
 
+#ifndef _SYS_DISKLABEL_H_
+#define _SYS_DISKLABEL_H_
+
 /*
  * Disk description table, see disktab(5)
  */
+
 #define	_PATH_DISKTAB	"/etc/disktab"
 #define	DISKTAB		"/etc/disktab"		/* deprecated */
 
@@ -362,3 +366,5 @@ struct disklabel *getdiskbyname __P((const char *));
 __END_DECLS
 
 #endif
+
+#endif /* !_SYS_DISKLABEL_H_ */

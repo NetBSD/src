@@ -33,6 +33,9 @@
  *	@(#)fifo.h	7.1 (Berkeley) 4/15/91
  */
 
+#ifndef _SYS_FIFO_H_
+#define _SYS_FIFO_H_
+
 #ifdef FIFO
 /*
  * Prototypes for fifo operations on vnodes.
@@ -178,3 +181,5 @@ int	fifo_advlock __P((
 		struct flock *fl,
 		int flags));
 #endif /* FIFO */
+
+#endif /* !_SYS_FIFO_H_ */

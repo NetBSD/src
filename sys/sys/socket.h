@@ -33,6 +33,9 @@
  *	@(#)socket.h	7.13 (Berkeley) 4/20/91
  */
 
+#ifndef _SYS_SOCKET_H_
+#define _SYS_SOCKET_H_
+
 /*
  * Definitions related to sockets: types, address families, options.
  */
@@ -257,4 +260,6 @@ int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
 
-#endif	/* !KERNEL */
+#endif /* KERNEL */
+
+#endif /* !_SYS_SOCKET_H_ */

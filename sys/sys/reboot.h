@@ -33,6 +33,9 @@
  *	@(#)reboot.h	7.6 (Berkeley) 6/28/90
  */
 
+#ifndef _SYS_REBOOT_H_
+#define _SYS_REBOOT_H_
+
 /*
  * Arguments to reboot system call.
  * These are passed to boot program in r11,
@@ -85,3 +88,5 @@
 	(((type) << B_TYPESHIFT) | ((adaptor) << B_ADAPTORSHIFT) | \
 	((controller) << B_CONTROLLERSHIFT) | ((unit) << B_UNITSHIFT) | \
 	((partition) << B_PARTITIONSHIFT) | B_DEVMAGIC)
+
+#endif /* !_SYS_REBOOT_H_ */

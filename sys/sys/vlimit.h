@@ -33,6 +33,9 @@
  *	@(#)vlimit.h	7.2 (Berkeley) 5/5/91
  */
 
+#ifndef _SYS_VLIMIT_H_
+#define _SYS_VLIMIT_H_
+
 /*
  * Limits for u.u_limit[i], per process, inherited.
  */
@@ -47,3 +50,5 @@
 #define	NLIMITS		6
 
 #define	INFINITY	0x7fffffff
+
+#endif /* !_SYS_VLIMIT_H_ */

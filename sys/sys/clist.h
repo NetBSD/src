@@ -33,6 +33,9 @@
  *	@(#)clist.h	7.3 (Berkeley) 2/15/91
  */
 
+#ifndef _SYS_CLIST_H_
+#define _SYS_CLIST_H_
+
 struct cblock {
 	struct cblock *c_next;		/* next cblock in queue */
 	char c_quote[CBQSIZE];		/* quoted characters */
@@ -43,3 +46,5 @@ struct cblock {
 struct cblock *cfree, *cfreelist;
 int cfreecount, nclist;
 #endif
+
+#endif /* !_SYS_CLIST_H_ */

@@ -33,8 +33,8 @@
  *	@(#)malloc.h	7.25 (Berkeley) 5/15/91
  */
 
-#ifndef _MALLOC_H_
-#define	_MALLOC_H_
+#ifndef _SYS_MALLOC_H_
+#define	_SYS_MALLOC_H_
 
 #define KMEMSTATS
 
@@ -266,4 +266,5 @@ extern struct kmembuckets bucket[];
 extern void *malloc __P((unsigned long size, int type, int flags));
 extern void free __P((void *addr, int type));
 #endif /* KERNEL */
-#endif /* !_MALLOC_H_ */
+
+#endif /* !_SYS_MALLOC_H_ */

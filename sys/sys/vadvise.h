@@ -33,6 +33,9 @@
  *	@(#)vadvise.h	7.2 (Berkeley) 5/5/91
  */
 
+#ifndef _SYS_VADVISE_H_
+#define _SYS_VADVISE_H_
+
 /*
  * Parameters to vadvise() to tell system of particular paging
  * behaviour:
@@ -47,3 +50,5 @@
 #define	VA_ANOM		1
 #define	VA_SEQL		2
 #define	VA_FLUSH 	3
+
+#endif /* !_SYS_VADVISE_H_ */

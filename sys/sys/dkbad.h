@@ -33,6 +33,9 @@
  *	@(#)dkbad.h	7.2 (Berkeley) 2/15/91
  */
 
+#ifndef _SYS_DKBAD_H_
+#define _SYS_DKBAD_H_
+
 /*
  * Definitions needed to perform bad sector revectoring ala DEC STD 144.
  *
@@ -66,3 +69,5 @@ struct dkbad {
 #define	SSE	1
 #define	BSE	2
 #define	CONT	3
+
+#endif /* !_SYS_DKBAD_H_ */

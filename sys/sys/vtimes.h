@@ -33,6 +33,9 @@
  *	@(#)vtimes.h	7.2 (Berkeley) 5/5/91
  */
 
+#ifndef _SYS_VTIMES_H_
+#define _SYS_VTIMES_H_
+
 /*
  * Structure returned by vtimes() and in vwait().
  * In vtimes() two of these are returned, one for the process itself
@@ -52,3 +55,5 @@ struct vtimes {
 	int	vm_inblk;		/* block reads */
 	int	vm_oublk;		/* block writes */
 };
+
+#endif /* !_SYS_VTIMES_H_ */
