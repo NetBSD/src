@@ -1,65 +1,83 @@
-#	$NetBSD: Makefile.inc,v 1.25 2000/05/05 20:13:30 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2000/05/05 21:34:32 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
-COMMONDIR=	${TOP}/bootfloppy-common
-
-MOUNT_POINT?=	/mnt
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}d
 VND_CRDEV=	/dev/r${VND}d
-IMAGE?=		xxx.fs
+IMAGE?=		boot-xxx.fs
+FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
 BOOTCODE=	${MDEC}/biosboot.sym
+#BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
-
-LISTS?=		${COMMONDIR}/list
 
 DISKTYPE?=	floppy3
 DISKSIZE?=	2880
+BLOCK8K?=	179
 
-# Some reasonable values for the -i parameter to newfs are:
-#
-#   6144	1147k, 189 inodes free
-#  16384	1159k,  93 inodes free
-# on 1.44M:
-# 204800	1407k,  27 inodes free
-# (with a 4k blocksize, one cannot get fewer than ~32 inodes allocated)
+CLEANFILES+=	netbsd boot ustar.tmp
 
-INO_BYTES?=	204800
-
-CLEANFILES+=	netbsd
-
-realall:	netbsd
+realall:	netbsd boot
+	tar cvf ${FSTMP} boot netbsd
+	@echo
+	@echo Making disk number one
 	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
+	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B le -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
-	${MDEC}/installboot -v -f ${BOOTCODE} ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	umount ${MOUNT_POINT}
+	@echo "installing new bootblocks"
+	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${VND_RDEV}
 	vnconfig -u ${VND_CDEV}
+	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
+		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
+		disks=$$(($$size / $$dksize + 1)); \
+		if test $$size -gt $$dksize; then \
+                	bytes=$$(($$size - $$dksize));    \
+			echo "Image is $$bytes ($$(($$bytes / 1024))K) to fit\
+				on one disk."; \
+			exit 1; \
+		else \
+			dd seek=$$(($${size} / 512 + 15)) count=1 \
+				if=/dev/zero of=${IMAGE}; \
+		fi; \
+		echo; \
+                bytes=$$(($$dksize * $$disks - $$size));    \
+                echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
+                        on disk $$disks."; \
+	)
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
+# Let the kernel on the diskette be called "netbsd" although
+# it is compressed.  This is because the boot code will search
+# for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz" 
+# we avoid scanning all the diskettes before reading the file.
 
 netbsd: ${KERN}
 	rm -f netbsd
 	cp ${KERN} netbsd
 
+# This is "cheating", just so that we have the available
+# space at the start of the tar file.  Installboot will overwrite
+# the start of the bootcode with the tail end of the "real", aligned 
+# second-stage boot loader when it is run (which is quite a bit shorter
+# than the entire ${BOOTCODE} file, even when symbols are removed.
+# (the first 15*512 bytes are put into the first 8K filesystem block,
+# around the disklabel)
+
+boot: ${BOOTCODE}
+	rm -f boot
+	cp ${BOOTCODE} boot
+	strip boot
+
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppies
 	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppies
-	gzip <${IMAGE} >${RELEASEDIR}/installation/floppies/${IMAGE}.gz
-
+	for f in ${RELEASEDIR}/installation/floppies/${IMAGE}; do \
+		gzip <$$f >$$f.gz; \
+	done
+	
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} ${IMAGE}
 
