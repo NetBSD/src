@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.19 2000/01/07 08:12:15 nisimura Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.20 2000/03/18 22:09:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -395,7 +395,7 @@ struct ncr53c9x_softc {
 void	ncr53c9x_attach __P((struct ncr53c9x_softc *, struct scsipi_device *));
 int	ncr53c9x_scsi_cmd __P((struct scsipi_xfer *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
-int	ncr53c9x_intr __P((struct ncr53c9x_softc *));
+int	ncr53c9x_intr __P((void *));
 
 extern	int ncr53c9x_dmaselect;
 

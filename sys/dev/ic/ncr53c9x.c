@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.41 2000/03/09 23:19:26 matt Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.42 2000/03/18 22:09:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1414,9 +1414,10 @@ ncr53c9x_msgout(sc)
  */
 int sdebug = 0;
 int
-ncr53c9x_intr(sc)
-	register struct ncr53c9x_softc *sc;
+ncr53c9x_intr(arg)
+	void *arg;
 {
+	register struct ncr53c9x_softc *sc = arg;
 	register struct ncr53c9x_ecb *ecb;
 	register struct scsipi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
