@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.75 2003/09/05 01:02:51 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.76 2003/09/12 22:09:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.75 2003/09/05 01:02:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.76 2003/09/12 22:09:04 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -1425,7 +1425,6 @@ pcic_chip_socket_enable(pch)
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
 	int cardtype, win, intr, pwr;
-	int vcc_3v, regtmp;
 #if defined(DIAGNOSTIC) || defined(PCICDEBUG)
 	int reg;
 #endif
@@ -1456,25 +1455,16 @@ pcic_chip_socket_enable(pch)
 	switch( h->vendor ) {
 	case PCIC_VENDOR_RICOH_5C296:
 	case PCIC_VENDOR_RICOH_5C396:
-		vcc_3v = 0;
-		regtmp = pcic_read(h, PCIC_CARD_DETECT);
-		if(regtmp & PCIC_CARD_DETECT_GPI_ENABLE) {
-			DPRINTF(("\nGPI is enabled. Can't sense VS1\n"));
-		} else {
-			regtmp = pcic_read(h, PCIC_IF_STATUS) ;
-			vcc_3v = (regtmp & PCIC_IF_STATUS_GPI) ? 1 : 0;
-			DPRINTF(("\n5VDET = %s\n",
-				 vcc_3v ? "1 (3.3V)" : "0 (5V)"));
-		}
-
+	{
+		int regtmp;
 		regtmp = pcic_read(h, PCIC_RICOH_REG_MCR2);
-		regtmp &= ~PCIC_RICOH_MCR2_VCC_SEL_MASK;
-		if(vcc_3v) {
-			regtmp |= PCIC_RICOH_MCR2_VCC_SEL_3V;
-		} else {
-			regtmp |= PCIC_RICOH_MCR2_VCC_SEL_5V;
-		}
+#ifdef RICOH_POWER_HACK
+		regtmp |= PCIC_RICOH_MCR2_VCC_DIRECT;
+#else
+		regtmp &= ~(PCIC_RICOH_MCR2_VCC_DIRECT|PCIC_RICOH_MCR2_VCC_SEL_3V);
+#endif
 		pcic_write(h, PCIC_RICOH_REG_MCR2, regtmp);
+	}
 		break;
 	default:
 		break;
