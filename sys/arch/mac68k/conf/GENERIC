@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.86 1999/04/19 21:22:59 kleink Exp $
+#	$NetBSD: GENERIC,v 1.87 1999/06/01 02:39:25 briggs Exp $
 #
 # GENERIC
 
@@ -105,7 +105,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Mac-specific options
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
-options 	DISABLE_EXT_CACHE # Don't use IIci external cache
+#options 	DISABLE_EXT_CACHE # If really paranoid, disable IIci ext. cache
 options 	GRF_COMPAT	# Include grf compatibility code
 #options 	MRG_ADB		# Use ROM-based ADB driver
 options 	ZS_CONSOLE_ABORT
