@@ -1,4 +1,4 @@
-/*      $NetBSD: en.c,v 1.3 1999/05/07 16:19:28 drochner Exp $        */
+/*      $NetBSD: en.c,v 1.3.28.1 2002/07/16 12:59:00 gehenna Exp $        */
 /*
  * Copyright (c) 1996 Rolf Grossmann
  * All rights reserved.
@@ -124,10 +124,15 @@ en_init(struct iodesc *desc, void *machdep_hint)
 
 	er->reset = EN_RST_RESET;
 
-	/* ### we'll need this when we need to decide which interface to use
-	 bmap_chip[12] = 0x90000000;
-	 bmap_chip[13] = ~(0x80000000|0x10000000); * BMAP_TPE  ???
-	 */
+	/* ### we'll need this when we need to decide which interface to use	 */
+	/* bmap_chip[12] = 0x90000000; */
+	/* bmap_chip[13] = ~(0x80000000|0x10000000); */ /* BMAP_TPE  ??? */
+	DPRINTF (("en_media: %s\n",
+		  (bmap_chip[13] & 0x20000000) ? "BNC" : "TP"));
+	if (!(bmap_chip[13] & 0x20000000)) {
+		bmap_chip[12] |= 0x90000000;
+		bmap_chip[13] |= (0x80000000|0x10000000); /* TP */
+	}
 
 	er->txmode = EN_TMD_LB_DISABLE;
 	er->txmask = 0;

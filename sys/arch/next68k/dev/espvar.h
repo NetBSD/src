@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.12 2001/09/14 18:29:08 jdolecek Exp $	*/
+/*	$NetBSD: espvar.h,v 1.12.12.1 2002/07/16 12:58:56 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -79,3 +79,7 @@ struct esp_softc {
 	size_t  sc_tail_size;	/* aligned length of tailbuf we are using */
 	u_char sc_tailbuf[ESP_DMA_TAILBUFSIZE];
 };
+
+#ifndef ESP_MAX_DMASIZE
+#define ESP_MAX_DMASIZE MAX_DMASIZE
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4 2001/05/12 22:35:30 chs Exp $	*/
+/*	$NetBSD: boot.c,v 1.4.16.1 2002/07/16 12:58:59 gehenna Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -38,9 +38,20 @@
 
 #include <machine/cpu.h>        /* for NEXT_RAMBASE */
 
+#include <next68k/next68k/nextrom.h>
+
 #define KERN_LOADADDR NEXT_RAMBASE
 
 extern int errno;
+
+extern char *mg;
+#define	MON(type, off) (*(type *)((u_int) (mg) + off))
+
+int devparse __P((const char *fname, int *dev,
+	 char *count, char *lun, char *part, char **file));
+
+/* the PROM overwrites MG_boot_arg :-( */
+/* #define PROCESS_ARGS */
 
 /*
  * Boot device is derived from PROM provided information.
@@ -64,6 +75,12 @@ main(char *boot_arg)
 {
 	int fd;
 	u_long marks[MARK_MAX];
+	int dev;
+	char count, lun, part;
+	char *file;
+#ifdef PROCESS_ARGS
+	char *kernel_args = MON(char *, MG_boot_dev);
+#endif
 
 	memset(marks, 0, sizeof(marks));
 	printf(">> %s BOOT [%s #%d]\n", bootprog_name, bootprog_rev, build);
@@ -89,9 +106,39 @@ main(char *boot_arg)
 		printf("load of %s: %s\n", kernel, strerror(errno));
 		printf("boot: ");
 		gets(kernel);
-		/* XXX we have to write this back into boot_arg or even mg->boot* */
 		if (kernel[0] == '\0')
 			return NULL;
+
+#ifdef PROCESS_ARGS
+		kernel_args = strchr(kernel, ')');
+		if (kernel_args == NULL)
+			kernel_args = kernel;
+		kernel_args = strchr(kernel_args, ' ');
+		if (kernel_args)
+			*kernel_args++ = '\0';
+#endif
+	}
+
+	dev = 0;
+	count = lun = part = 0;
+	if (devparse(kernel, &dev, &count, &lun, &part, &file) == 0) {
+		char *p = (char *)marks[MARK_END];
+		strcpy (p, devsw[dev].dv_name);
+		MON(char *, MG_boot_dev) = p;
+		p += strlen (p) + 1;
+		sprintf (p, "(%d,%d,%d)", count, lun, part);
+		MON(char *, MG_boot_info) = p;
+		p += strlen (p) + 1;
+		sprintf (p, "%s", file);
+		MON(char *, MG_boot_file) = p;
+#ifdef PROCESS_ARGS
+		p += strlen (p) + 1;
+		if (kernel_args)
+			strcpy (p, kernel_args);
+		else
+			*p = 0;
+		MON(char *, MG_boot_arg) = p;
+#endif
 	}
 
 	*((u_long *)KERN_LOADADDR) = marks[MARK_END] - KERN_LOADADDR;
