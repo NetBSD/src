@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.66 2000/02/19 09:46:49 nisimura Exp $
+# 	$NetBSD: DS5000,v 1.1 2000/02/19 09:46:48 nisimura Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.66 $"
+#ident 		"GENERIC-$Revision: 1.1 $"
 
 maxusers	64
 
@@ -14,8 +14,8 @@ options 	MIPS3		# R4000/R4400 CPUs
 
 
 # Support for specific models of DECstation
-options 	DEC_3100	# DECstation 2100, 3100 (kn01)
-options 	DEC_5100	# DECsystem 5100 (kn230)
+#options 	DEC_3100	# DECstation 2100, 3100 (kn01)
+#options 	DEC_5100	# DECsystem 5100 (kn230)
 options 	DEC_3MAX	# DECstation 5000/200 (kn02)
 options 	DEC_3MIN	# DECstation 5000/1xx (kn02ba), 5000/150 (kn04)
 options 	DEC_MAXINE	# Personal DECstation 5000/xx (kn02ca)
@@ -146,8 +146,7 @@ scc*	at	ioasic? offset ?	# Z85C30
 #isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
 dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
-asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
-#xasc*	at	ioasic? offset ?	#  [ MI SCSI version ]
+xasc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
 
 # 3MAX has TURBOchannel but no IOASIC
 ibus0	at	tc? slot ? offset ?	# 3MAX system slot
@@ -164,30 +163,29 @@ sfb*	at	tc? slot ? offset ?	# PMAGB-B HX Smart Framebuffer
 px0	at	tc? slot ? offset ?	# PMAG-C,D,E,F PX family
 #sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
 xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
-asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
-#xasc*	at	tc? slot ? offset ?	#  [ MI SCSI version ]
+xasc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
 le*	at	tc? slot ? offset ?	# PMAD-A LANCE
 fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
 #tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
 #asc*	at	tcds? chip ?
 
 # PMAX and MIPSMATE
-ibus0	at	mainbus0
-pm*	at	ibus0 addr ?		# 3100 onboard fb
-le*	at	ibus0 addr ?		# 3100, 5100 onboard LANCE
-sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
+#ibus0	at	mainbus0
+#pm*	at	ibus0 addr ?		# 3100 onboard fb
+#le*	at	ibus0 addr ?		# 3100, 5100 onboard LANCE
+#sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 
 #########################################################################
 # SCSI configuration							#
 #########################################################################
 
 # old 4.4BSD/pmax DECstation SCSI driver
-oldscsibus*	at sii?
-oldscsibus*	at asc?
+#oldscsibus*	at sii?
+#oldscsibus*	at asc?
 #include 	"arch/pmax/conf/scsi.pmax"
 
 # MI SCSI configuration 
-#include 	"arch/pmax/conf/mi.scsi"		# DS5000 only
+include 	"arch/pmax/conf/mi.scsi"		# DS5000 only
 
 #########################################################################
 # Pseudo-devices							#

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.81 2000/02/18 10:18:12 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.82 2000/02/19 09:46:49 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -54,7 +54,7 @@ file	arch/pmax/ibus/ibus.c		ibus
 file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100)
 
 #
-# TURBOchannel Devices
+# TURBOchannel devices
 #
 include	"dev/tc/files.tc"
 attach	tc at mainbus with tcbus
@@ -103,8 +103,8 @@ major { md = 17 }
 define	oldscsi {}
 device oldscsibus {target = -1, drive = -1}
 attach oldscsibus at oldscsi
-file	arch/pmax/dev/scsi.c
-file	arch/pmax/pmax/conf-glue.c
+file	arch/pmax/dev/scsi.c		oldscsi
+file	arch/pmax/pmax/conf-glue.c	oldscsi
 
 # asc: SCSI interface in TC option slot or in IOASIC slot
 device asc: oldscsi
@@ -127,6 +127,15 @@ file	arch/pmax/dev/tz.c		tz needs-count
 device	rz: disk
 attach	rz at oldscsibus
 file	arch/pmax/dev/rz.c		rz needs-count
+
+#
+# MI SCSI driver; to be moved into dev/tc/ replacing existings, eventually.
+#
+device  xasc: ncr53c9x,scsi
+attach  xasc at tc with xasc_pmaz
+file    arch/pmax/tc/asc_pmaz.c         xasc_pmaz needs-flag
+attach  xasc at ioasic with xasc_ioasic   
+file    arch/pmax/tc/asc_ioasic.c       xasc_ioasic needs-flag
 
 
 # DC7085 (DZ-like four-port serial device) on ibus

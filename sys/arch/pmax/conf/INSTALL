@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.30 2000/02/12 03:36:33 thorpej Exp $
+# 	$NetBSD: INSTALL,v 1.31 2000/02/19 09:46:49 nisimura Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -86,21 +86,20 @@ tc*	at	mainbus0
 
 # 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
 ioasic0	at	tc?
-mcclock0 at	ioasic? offset ?	# DS1287 RTC
-le0	at	ioasic? offset ?	# LANCE
-scc0	at	ioasic? offset ?	# Z85C30
-scc1	at	ioasic? offset ?	# Z85C30
+mcclock* at	ioasic? offset ?	# DS1287 RTC
+le*	at	ioasic? offset ?	# LANCE
+scc*	at	ioasic? offset ?	# Z85C30
 #isdn	at	ioasic? offset ?	# MAXINE ISDN/audio (not supported)
-dtop0	at	ioasic? offset ?	# MAXINE kbd and mouse
+dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
-asc0	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
+asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
 
 # 3MAX has TURBOchannel but no IOASIC
 ibus0	at	tc? slot ? offset ?	# 3MAX system slot
-mcclock0 at	ibus0 addr ?		# DS1287 RTC
-dc0	at	ibus0 addr ?		# DC7085 quad line serial device
-asc0	at	tc? slot ? offset ?	# NCR53C94 SCSI
-le0	at	tc? slot ? offset ?	# LANCE
+
+# PMAX, 3MAX and MIPSMATE common devices
+mcclock* at	ibus0 addr ?		# DS1287 RTC
+dc*	at	ibus0 addr ?		# DC7085 quad line serial device
 
 # TURBOchannel devices
 mfb*	at	tc? slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
@@ -118,25 +117,21 @@ fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
 
 # PMAX and MIPSMATE
 ibus0	at	mainbus0
-pm0	at	ibus0 addr ?		# 3100 onboard fb
-dc0	at	ibus0 addr ?		# DC7085 quad line serial device
-le0	at	ibus0 addr ?		# 3100 onboard LANCE
-sii0	at	ibus0 addr ?		# DC7061 onboard SCSI
-mcclock0 at	ibus0 addr ?		# MC146818 RTC
-dc*	at	ibus0 addr ?		# 5100 optional serial devices
+pm*	at	ibus0 addr ?		# 3100 onboard fb
+le*	at	ibus0 addr ?		# 3100 onboard LANCE
+sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
 
 #########################################################################
 # SCSI configuration							#
 #########################################################################
 
+# SCSI configuration for old 4.4BSD/pmax DECstation SCSI driver
 oldscsibus*	at sii?
 oldscsibus*	at asc?
-#
-# SCSI configuration for old 4.4BSD/pmax DECstation SCSI driver
-#
 include 	"arch/pmax/conf/scsi.pmax"
-#include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
+# MI SCSI configuration
+#include 	"arch/pmax/conf/mi.scsi"		# DS5000 only
 
 #########################################################################
 # Pseudo-devices							#
