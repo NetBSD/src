@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 1994/11/23 08:15:58 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 1994/12/14 19:10:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -58,8 +58,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 /*
  * macros for function declarations
  */
-#define decl_open(f)     int f __P((dev_t, int, int, struct proc *, \
-				    struct file *))
+#define decl_open(f)     int f __P((dev_t, int, int, struct proc *))
 #define decl_close(f)    int f __P((dev_t, int, int, struct proc *))
 #define decl_read(f)     int f __P((dev_t, struct uio *, int))
 #define decl_write(f)    int f __P((dev_t, struct uio *, int))
