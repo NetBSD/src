@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.26 2001/07/20 07:07:28 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.27 2001/07/27 17:55:07 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.26 2001/07/20 07:06:42 thorpej Exp 
+ *	NetBSD: miidevs,v 1.27 2001/07/27 17:54:40 thorpej Exp 
  */
 
 /*-
@@ -122,12 +122,14 @@
 #define	MII_STR_yyAMD_79c901home	"Am79C901 HomePHY"
 
 /* Broadcom Corp. PHYs */
+#define	MII_MODEL_xxBROADCOM_3C905B	0x0012
+#define	MII_STR_xxBROADCOM_3C905B	"Broadcom 3c905B internal PHY"
 #define	MII_MODEL_xxBROADCOM_3C905C	0x0017
-#define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3C905C internal PHY"
+#define	MII_STR_xxBROADCOM_3C905C	"Broadcom 3c905C internal PHY"
 #define	MII_MODEL_xxBROADCOM_BCM5201	0x0021
 #define	MII_STR_xxBROADCOM_BCM5201	"BCM5201 10/100 media interface"
-#define	MII_MODEL_BROADCOM_BCM5221	0x001e
-#define	MII_STR_BROADCOM_BCM5221	"BCM5221 10/100 media interface"
+#define	MII_MODEL_xxBROADCOM_BCM5221	0x001e
+#define	MII_STR_xxBROADCOM_BCM5221	"BCM5221 10/100 media interface"
 #define	MII_MODEL_BROADCOM_BCM5400	0x0004
 #define	MII_STR_BROADCOM_BCM5400	"BCM5400 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5401	0x0005
