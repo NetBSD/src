@@ -1,3 +1,5 @@
+/*	$NetBSD: mdef.h,v 1.6 1995/09/28 05:37:39 tls Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
