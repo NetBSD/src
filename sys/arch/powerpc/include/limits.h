@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.8 2001/05/04 15:12:32 simonb Exp $	*/
+/*	$NetBSD: limits.h,v 1.9 2002/11/03 22:36:23 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_LIMITS_H_
-#define	_MACHINE_LIMITS_H_
+#ifndef	_POWERPC_LIMITS_H_
+#define	_POWERPC_LIMITS_H_
 
 #define	CHAR_BIT	8		/* bits per char		*/
 #define	MB_LEN_MAX	32		/* no multibyte characters	*/
@@ -88,4 +88,4 @@
 #define FLT_MIN		1.17549435E-38F
 #endif
 
-#endif /* _MACHINE_LIMITS_H_ */
+#endif /* _POWERPC_LIMITS_H_ */
