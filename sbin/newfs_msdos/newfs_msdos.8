@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_msdos.8,v 1.7 2001/09/10 18:27:42 christos Exp $
+.\" $NetBSD: newfs_msdos.8,v 1.8 2001/11/16 11:21:38 wiz Exp $
 .\" Copyright (c) 1998 Robert Nordier
 .\" All rights reserved.
 .\"
@@ -169,13 +169,13 @@ Create a standard 1.44M file system, with volume label
 .Ar foo ,
 on
 .Pa /dev/fd0 .
+.Sh DIAGNOSTICS
+Exit status is 0 on success and 1 on error.
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr disklabel 8 ,
 .Xr fdisk 8 ,
 .Xr newfs 8
-.Sh DIAGNOSTICS
-Exit status is 0 on success and 1 on error.
 .Sh HISTORY
 The
 .Nm
