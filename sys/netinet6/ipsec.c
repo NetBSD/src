@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.44 2002/04/28 00:54:41 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.45 2002/05/10 05:38:29 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.44 2002/04/28 00:54:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.45 2002/05/10 05:38:29 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -173,11 +173,6 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	int dir;
 {
 	struct secpolicyindex spidx;
-#if defined(__FreeBSD__) && __FreeBSD__ > 2
-	struct timeval mono_time;
-
-	microtime(&mono_time);
-#endif
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
