@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.66 2003/09/04 16:44:06 wrstuden Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.67 2003/09/06 22:01:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -240,13 +240,13 @@ do {									\
 #define	sorwakeup(so)							\
 do {									\
 	if (sb_notify(&(so)->so_rcv))					\
-		sowakeup((so), &(so)->so_rcv);				\
+		sowakeup((so), &(so)->so_rcv, POLL_IN);				\
 } while (/* CONSTCOND */ 0)
 
 #define	sowwakeup(so)							\
 do {									\
 	if (sb_notify(&(so)->so_snd))					\
-		sowakeup((so), &(so)->so_snd);				\
+		sowakeup((so), &(so)->so_snd, POLL_OUT);		\
 } while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
@@ -330,7 +330,7 @@ int	sosend(struct socket *, struct mbuf *, struct uio *,
 	    struct mbuf *, struct mbuf *, int);
 int	sosetopt(struct socket *, int, int, struct mbuf *);
 int	soshutdown(struct socket *, int);
-void	sowakeup(struct socket *, struct sockbuf *);
+void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
