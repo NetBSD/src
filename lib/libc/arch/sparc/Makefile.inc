@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/10/09 10:07:50 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/07/10 04:29:09 thorpej Exp $
 
 KMINCLUDES= arch/sparc/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
 	ntohl.S ntohs.S divrem.m4 \
 	_setjmp.S mul.S saveregs.S setjmp.S umul.S
+
+SRCS+=	__sigaction14_sigtramp.c __sigtramp1.S
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
