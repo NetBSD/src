@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.69 2004/02/03 20:55:02 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.70 2004/05/08 15:03:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.69 2004/02/03 20:55:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.70 2004/05/08 15:03:32 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -475,6 +475,7 @@ ready:
 		drvp->state = READY;
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT);
+		delay(10); /* some drives need a little delay here */
 	}
 	/* start timeout machinery */
 	if ((sc_xfer->xs_control & XS_CTL_POLL) == 0)
@@ -543,6 +544,7 @@ timeout:
 	    errstring);
 	sc_xfer->error = XS_TIMEOUT;
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
+	delay(10); /* some drives need a little delay here */
 	wdc_atapi_reset(chp, xfer);
 	return;
 error:
@@ -553,6 +555,7 @@ error:
 	sc_xfer->error = XS_SHORTSENSE;
 	sc_xfer->sense.atapi_sense = chp->ch_error;
 	bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr, WDCTL_4BIT);
+	delay(10); /* some drives need a little delay here */
 	wdc_atapi_reset(chp, xfer);
 	return;
 }

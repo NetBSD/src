@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.53 2004/03/02 13:13:57 fvdl Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.54 2004/05/08 15:03:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.53 2004/03/02 13:13:57 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.54 2004/05/08 15:03:32 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -303,6 +303,7 @@ ready:
 		 */
 		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT);
+		delay(10); /* some drives need a little delay here */
 	}
 
 	_wdc_ata_bio_start(chp, xfer);
