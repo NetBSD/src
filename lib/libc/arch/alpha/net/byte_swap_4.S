@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap_4.S,v 1.1 1996/04/17 22:36:49 cgd Exp $	*/
+/*	$NetBSD: byte_swap_4.S,v 1.2 1996/10/17 03:08:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #ifndef NAME
 #define	NAME byte_swap_4

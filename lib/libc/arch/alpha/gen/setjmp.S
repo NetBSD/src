@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.1 1995/02/10 17:50:26 cgd Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.2 1996/10/17 03:08:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,7 +27,7 @@
  * rights to redistribute these changes.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 /*
  * C library -- setjmp, longjmp
@@ -43,7 +43,7 @@
 	.set	noreorder
 
 LEAF(setjmp, 1)
-	SETGP(pv)
+	LDGP(pv)
 	stq	ra, (2 * 8)(a0)			/* sc_pc = return address */
 	stq	s0, (( 9 + 4) * 8)(a0)		/* saved bits of sc_regs */
 	stq	s1, ((10 + 4) * 8)(a0)
@@ -81,10 +81,10 @@ LEAF(setjmp, 1)
 	mov	s0, a0
 	ldq	s0, (( 9 + 4) * 8)(a0)
 
-	CONST(0xACEDBADE, t0)			/* sigcontext magic number */
+	ldiq	t0, 0xacedbade			/* sigcontext magic number */
 	stq	t0, ((31 + 4) * 8)(a0)		/* magic in sc_regs[31] */
 	/* Too bad we can't check if we actually used FP */
-	CONST(1, t0)
+	ldiq	t0, 1
 	stq	t0, (36 * 8)(a0)		/* say we've used FP.  */
 	stt	fs0, ((2 + 37) * 8)(a0)		/* saved bits of sc_fpregs */
 	stt	fs1, ((3 + 37) * 8)(a0)
@@ -94,7 +94,7 @@ LEAF(setjmp, 1)
 	stt	fs5, ((7 + 37) * 8)(a0)
 	stt	fs6, ((8 + 37) * 8)(a0)
 	stt	fs7, ((9 + 37) * 8)(a0)
-	MF_FPCR(ft0)				/* get FP control reg */
+	mf_fpcr	ft0				/* get FP control reg */
 	stt	ft0, (69 * 8)(a0)		/* and store it in sc_fpcr */
 	stq	zero, (70 * 8)(a0)		/* FP software control XXX */
 	stq	zero, (71 * 8)(a0)		/* sc_reserved[0] */
@@ -113,7 +113,7 @@ LEAF(setjmp, 1)
 END(setjmp)
 
 LEAF(longjmp, 2)
-	SETGP(pv)
+	LDGP(pv)
 	stq	a1, (( 0 + 4) * 8)(a0)		/* save return value */
 	CALL(sigreturn)				/* use sigreturn to return */
 

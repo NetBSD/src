@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.3 1996/09/09 00:58:00 cgd Exp $	*/
+/*	$NetBSD: brk.S,v 1.4 1996/10/17 03:08:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,11 +39,11 @@ EXPORT(minbrk)
 	.text
 LEAF(brk, 1)
 	br	pv, L1				/* XXX profiling */
-L1:	SETGP(pv)
+L1:	LDGP(pv)
 	ldq	v0, minbrk
 	cmpult  a0, v0, t0
 	cmovne  t0, v0, a0
-	SYSCALL_NOLABEL(break)
+	CALLSYS_ERROR(break)
 	stq	a0, curbrk
 	mov	zero, v0
 	RET
