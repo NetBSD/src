@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.13 1999/06/23 23:48:28 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.14 1999/06/24 03:51:14 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.13 1999/06/23 23:48:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.14 1999/06/24 03:51:14 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,52 +59,34 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.13 1999/06/23 23:48:28 nisimura Exp $");
 #define	machine_btop(x) mips_btop(x)
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG0_TO_PHYS(x)
 
-struct bt455reg {
-	u_int8_t	bt_reg;
-	unsigned : 24;
-	u_int8_t	bt_cmap;
-	unsigned : 24;
-	u_int8_t	bt_clr;
-	unsigned : 24;
-	u_int8_t	bt_ovly;
-};
-
-/*
- * N.B. a pair of Bt431s are located adjascently.
- * 	struct bt431twin {
- *		struct {
- *			u_int8_t u0;	for sprite image
- *			u_int8_t u1;	for sprite mask
- *			unsigned :16;
- *		} bt_lo;
- *		...
- */
-struct bt431reg {
-	u_int16_t	bt_lo;
-	unsigned : 16;
-	u_int16_t	bt_hi;
-	unsigned : 16;
-	u_int16_t	bt_ram;
-	unsigned : 16;
-	u_int16_t	bt_ctl;
-};
-
 #define	BYTE(base, index)	*((u_int8_t *)(base) + ((index)<<2))
 #define	HALF(base, index)	*((u_int16_t *)(base) + ((index)<<1))
 
+/* Bt431 hardware registers */
+#define	bt_reg	0
+#define	bt_cmap	1
+#define	bt_clr	2
+#define	bt_ovly	3
+
+/* Bt455 hardware registers */
+#define	bt_lo	0
+#define	bt_hi	1
+#define	bt_ram	2
+#define	bt_ctl	3
+
 #define BT455_SELECT(vdac, regno) do {	\
-	(vdac)->bt_reg = regno;		\
-	(vdac)->bt_clr = 0;		\
+	BYTE(vdac, bt_reg) = (regno);	\
+	BYTE(vdac, bt_clr) = 0;		\
 	tc_wmb();			\
    } while (0)
 
-#define	TWIN(x)    ((x)|(x) << 8)
+#define	TWIN(x)    ((x)|((x) << 8))
 #define	TWIN_LO(x) (twin = (x) & 0x00ff, twin << 8 | twin)
 #define	TWIN_HI(x) (twin = (x) & 0xff00, twin | twin >> 8)
 
 #define	BT431_SELECT(curs, regno) do {	\
-	(curs)->bt_lo = TWIN(regno);	\
-	(curs)->bt_hi = 0;		\
+	HALF(curs, bt_lo) = TWIN(regno);\
+	HALF(curs, bt_hi) = 0;		\
 	tc_wmb();			\
    } while (0);
 
@@ -504,8 +486,8 @@ mfbintr(arg)
 {
 	struct mfb_softc *sc = arg;
 	caddr_t mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	struct bt455reg *vdac;
-	struct bt431reg *curs;
+	void *vdac;
+	void *curs;
 	int v;
 	volatile register int junk;
 	
@@ -522,23 +504,23 @@ mfbintr(arg)
 	sc->sc_changed = 0;	
 	if (v & DATA_ENB_CHANGED) {
 		BT431_SELECT(curs, BT431_REG_COMMAND);
-		curs->bt_ctl = (sc->sc_curenb) ? 0x4444 : 0x0404;
+		HALF(curs, bt_ctl) = (sc->sc_curenb) ? 0x4444 : 0x0404;
 	}
 	if (v & DATA_CURCMAP_CHANGED) {
 		u_int8_t *cp = sc->sc_cursor.cc_color;
 
 		BT455_SELECT(vdac, 8);
-		vdac->bt_cmap = 0;	tc_wmb();
-		vdac->bt_cmap = cp[1];	tc_wmb();
-		vdac->bt_cmap = 0;	tc_wmb();
+		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
+		BYTE(vdac, bt_cmap) = cp[1];	tc_wmb();
+		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
 
-		vdac->bt_cmap = 0;	tc_wmb();
-		vdac->bt_cmap = cp[1];	tc_wmb();
-		vdac->bt_cmap = 0;	tc_wmb();
+		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
+		BYTE(vdac, bt_cmap) = cp[1];	tc_wmb();
+		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
 
-		vdac->bt_ovly = 0;	tc_wmb();
-		vdac->bt_ovly = cp[0];	tc_wmb();
-		vdac->bt_ovly = 0;	tc_wmb();
+		BYTE(vdac, bt_ovly) = 0;	tc_wmb();
+		BYTE(vdac, bt_ovly) = cp[0];	tc_wmb();
+		BYTE(vdac, bt_ovly) = 0;	tc_wmb();
 	}
 	if (v & DATA_CURSHAPE_CHANGED) {
 		u_int8_t *ip, *mp, img, msk;
@@ -553,21 +535,22 @@ mfbintr(arg)
 		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
 			/* pad right half 32 pixel when smaller than 33 */
 			if ((bcnt & 0x8) && sc->sc_cursor.cc_size.x < 33) {
-				curs->bt_ram = 0;
+				HALF(curs, bt_ram) = 0;
 				tc_wmb();
 			}
 			else {
 				img = *ip++;
 				msk = *mp++;
 				img &= msk;	/* cookie off image */
-				curs->bt_ram = (flip[msk] << 8) | flip[img];
+				HALF(curs, bt_ram)
+				    = (flip[msk] << 8) | flip[img];
 				tc_wmb();
 			}
 			bcnt += 2;
 		}
 		/* pad unoccupied scan lines */
 		while (bcnt < CURSOR_MAX_SIZE * 16) {
-			curs->bt_ram = 0;
+			HALF(curs, bt_ram) = 0;
 			tc_wmb();
 			bcnt += 2;
 		}
@@ -580,43 +563,46 @@ mfbinit(dc)
 	struct fb_devconfig *dc;
 {
 	caddr_t mfbbase = (caddr_t)dc->dc_vaddr;
-	struct bt431reg *curs = (void *)(mfbbase + MX_BT431_OFFSET);
-	struct bt455reg *vdac = (void *)(mfbbase + MX_BT455_OFFSET);
+	void *curs = (void *)(mfbbase + MX_BT431_OFFSET);
+	void *vdac = (void *)(mfbbase + MX_BT455_OFFSET);
 	int i;
 
 	BT431_SELECT(curs, BT431_REG_COMMAND);
-	curs->bt_ctl = 0x0404;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
-	curs->bt_ctl = 0;	tc_wmb();
+	HALF(curs, bt_ctl) = 0x0404;		tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* XLO */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* XHI */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* YLO */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* YHI */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* XWLO */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* XWHI */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* WYLO */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* WYLO */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* WWLO */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* WWHI */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* WHLO */	tc_wmb();
+	HALF(curs, bt_ctl) = 0; /* WHHI */	tc_wmb();
 
+	/* 0: black, 1: white, 8,9: cursor mask, ovly: cursor image */
 	BT455_SELECT(vdac, 0);
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0xff;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-
+	BYTE(vdac, bt_cmap) = 0; 		tc_wmb();
+	BYTE(vdac, bt_cmap) = 0; 		tc_wmb();
+	BYTE(vdac, bt_cmap) = 0;		tc_wmb();
+	BYTE(vdac, bt_cmap) = 0;		tc_wmb();
+	BYTE(vdac, bt_cmap) = 0xff;		tc_wmb();
+	BYTE(vdac, bt_cmap) = 0;		tc_wmb();
 	for (i = 2; i < 16; i++) {
-		vdac->bt_cmap = 0;	tc_wmb();
-		vdac->bt_cmap = 0;	tc_wmb();
-		vdac->bt_cmap = 0;	tc_wmb();
+		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
+		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
+		BYTE(vdac, bt_cmap) = 0;	tc_wmb();
 	}
+	BYTE(vdac, bt_ovly) = 0;	tc_wmb();
+	BYTE(vdac, bt_ovly) = 0xff;	tc_wmb();
+	BYTE(vdac, bt_ovly) = 0;	tc_wmb();
 
-	vdac->bt_ovly = 0;	tc_wmb();
-	vdac->bt_ovly = 0xff;	tc_wmb();
-	vdac->bt_ovly = 0;	tc_wmb();
+	BT431_SELECT(curs, BT431_REG_CRAM_BASE);
+	for (i = 0; i < 512; i++) {
+		HALF(curs, bt_ram) = 0;	tc_wmb();
+	}
 }
 
 static int
@@ -706,7 +692,7 @@ bt431_set_curpos(sc)
 	struct mfb_softc *sc;
 {
 	caddr_t mfbbase = (caddr_t)sc->sc_dc->dc_vaddr;
-	struct bt431reg *curs = (void *)(mfbbase + MX_BT431_OFFSET);
+	void *curs = (void *)(mfbbase + MX_BT431_OFFSET);
 	u_int16_t twin;
 	int x, y, s;
 
@@ -719,10 +705,10 @@ bt431_set_curpos(sc)
 	s = spltty();
 
 	BT431_SELECT(curs, BT431_REG_CURSOR_X_LOW);
-	curs->bt_ctl = TWIN_LO(x);	tc_wmb();
-	curs->bt_ctl = TWIN_HI(x);	tc_wmb();
-	curs->bt_ctl = TWIN_LO(y);	tc_wmb();
-	curs->bt_ctl = TWIN_HI(y);	tc_wmb();
+	HALF(curs, bt_ctl) = TWIN_LO(x);	tc_wmb();
+	HALF(curs, bt_ctl) = TWIN_HI(x);	tc_wmb();
+	HALF(curs, bt_ctl) = TWIN_LO(y);	tc_wmb();
+	HALF(curs, bt_ctl) = TWIN_HI(y);	tc_wmb();
 
 	splx(s);
 }
