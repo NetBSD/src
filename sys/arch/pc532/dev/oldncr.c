@@ -1,4 +1,4 @@
-/*	$NetBSD: oldncr.c,v 1.3 1996/03/17 01:39:01 thorpej Exp $	*/
+/*	$NetBSD: oldncr.c,v 1.4 1996/08/28 19:00:27 cgd Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -211,6 +211,7 @@ ncrattach(parent, self, aux)
 	struct ncr5380_softc *ncr5380 = (void *)self;
 	int r;
 
+	ncr5380->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr5380->sc_link.adapter_softc = ncr5380;
 /*	ncr5380->sc_link.scsibus = 0; */
 	ncr5380->sc_link.adapter_target = 7;
@@ -220,7 +221,7 @@ ncrattach(parent, self, aux)
 
 	printf("\n");
 
-	config_found(self, &(ncr5380->sc_link), NULL);
+	config_found(self, &(ncr5380->sc_link), scsiprint);
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/

@@ -1,4 +1,4 @@
-/* $NetBSD: ptsc.c,v 1.7 1996/08/27 21:55:33 cgd Exp $ */
+/* $NetBSD: ptsc.c,v 1.8 1996/08/28 18:59:54 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -59,7 +59,6 @@
 #include <arm32/podulebus/ptscreg.h>
 #include <arm32/podulebus/ptscvar.h>
 
-int  ptscprint  __P((void *auxp, const char *));
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, void *, void *));
 int ptsc_scsicmd __P((struct scsi_xfer *));
@@ -175,6 +174,7 @@ ptscattach(pdp, dp, auxp)
 
 	sfasinitialize((struct sfas_softc *)sc);
 
+	sc->sc_softc.sc_link.channel	    = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_softc.sc_link.adapter_softc  = sc;
 	sc->sc_softc.sc_link.adapter_target = sc->sc_softc.sc_host_id;
 	sc->sc_softc.sc_link.adapter	    = &ptsc_scsiswitch;
@@ -202,19 +202,7 @@ ptscattach(pdp, dp, auxp)
 	printf("\n");
 
 /* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, ptscprint);
-}
-
-/* print diag if pnp is NULL else just extra */
-int
-ptscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-
-	return(QUIET);
+	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
 }
 
 int

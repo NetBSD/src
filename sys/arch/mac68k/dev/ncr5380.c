@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.32 1996/08/27 21:56:04 cgd Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.33 1996/08/28 19:00:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -201,7 +201,6 @@ extern __inline__ void finish_req(SC_REQ *reqp)
 /*
  * Auto config stuff....
  */
-int	ncr_cprint __P((void *auxp, const char *));
 void	ncr_attach __P((struct device *, struct device *, void *));
 int	ncr_match __P((struct device *, void *, void *));
 
@@ -238,6 +237,7 @@ void		*auxp;
 
 	sc = (struct ncr_softc *)dp;
 
+	sc->sc_link.channel         = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc   = sc;
 	sc->sc_link.adapter_target  = 7;
 	sc->sc_link.adapter         = &ncr5380_switch;
@@ -278,21 +278,9 @@ void		*auxp;
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, ncr_cprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
 
-/*
- * print diag if name is NULL else just extra
- */
-int
-ncr_cprint(auxp, name)
-void	*auxp;
-const char	*name;
-{
-	if (name == NULL)
-		return (UNCONF);
-	return (QUIET);
-}
 /*
  * End of auto config stuff....
  */

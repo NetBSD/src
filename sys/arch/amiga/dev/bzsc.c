@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.10 1996/08/27 21:54:32 cgd Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.11 1996/08/28 18:59:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -57,7 +57,6 @@
 #include <amiga/dev/bzscreg.h>
 #include <amiga/dev/bzscvar.h>
 
-int  bzscprint  __P((void *auxp, const char *));
 void bzscattach __P((struct device *, struct device *, void *));
 int  bzscmatch  __P((struct device *, void *, void *));
 
@@ -178,6 +177,7 @@ bzscattach(pdp, dp, auxp)
 
 	sfasinitialize((struct sfas_softc *)sc);
 
+	sc->sc_softc.sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_softc.sc_link.adapter_softc = sc;
 	sc->sc_softc.sc_link.adapter_target = sc->sc_softc.sc_host_id;
 	sc->sc_softc.sc_link.adapter = &bzsc_scsiswitch;
@@ -192,19 +192,7 @@ bzscattach(pdp, dp, auxp)
 	add_isr(&sc->sc_softc.sc_isr);
 
 	/* attach all scsi units on us */
-	config_found(dp, &sc->sc_softc.sc_link, bzscprint);
-}
-
-/* print diag if pnp is NULL else just extra */
-int
-bzscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-
-	return(QUIET);
+	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
 }
 
 int

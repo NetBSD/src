@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.26 1996/08/27 21:57:41 cgd Exp $	*/
+/*	$NetBSD: si.c,v 1.27 1996/08/28 19:00:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -108,7 +108,6 @@ static int si_link_flags = 0 /* | SDEV_DB2 */ ;
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 static void	si_minphys __P((struct buf *));
-static int	si_print __P((void *, const char *));
 
 static struct scsi_adapter	si_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
@@ -147,6 +146,7 @@ si_attach(sc)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
+	ncr_sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	ncr_sc->sc_link.adapter_softc = sc;
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
@@ -187,17 +187,7 @@ si_attach(sc)
 	si_reset_adapter(ncr_sc);
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
-	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), si_print);
-}
-
-static int
-si_print(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
+	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
 }
 
 static void

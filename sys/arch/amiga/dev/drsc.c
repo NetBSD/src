@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.3 1996/08/27 21:54:34 cgd Exp $	*/
+/*	$NetBSD: drsc.c,v 1.4 1996/08/28 18:59:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -51,7 +51,6 @@
 #include <amiga/dev/siopvar.h>
 #include <amiga/amiga/drcustom.h>
 
-int drscprint __P((void *auxp, const char *));
 void drscattach __P((struct device *, struct device *, void *));
 int drscmatch __P((struct device *, void *, void *));
 int drsc_dmaintr __P((struct siop_softc *));
@@ -127,6 +126,7 @@ drscattach(pdp, dp, auxp)
 
 	alloc_sicallback();
 
+	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &drsc_scsiswitch;
@@ -148,22 +148,8 @@ drscattach(pdp, dp, auxp)
 	/*
 	 * attach all scsi units on us
 	 */
-	config_found(dp, &sc->sc_link, drscprint);
+	config_found(dp, &sc->sc_link, scsiprint);
 }
-
-/*
- * print diag if pnp is NULL else just extra
- */
-int
-drscprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	if (pnp == NULL)
-		return(UNCONF);
-	return(QUIET);
-}
-
 
 /*
  * Level 4 interrupt processing for the MacroSystem DraCo mainboard

@@ -48,7 +48,6 @@ static int ncr_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
 static int ncr_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
 static void ncr_minphys __P((struct buf *bp));
 static void ncr_intr __P((void *));
-static int ncr_print __P((void *, const char *));
 static void ncr_attach __P((struct device *, struct device *, void *));
 static int ncr_match __P((struct device *, void *, void *));
 
@@ -127,6 +126,7 @@ ncr_attach(parent, self, aux)
 	/*
 	 * Fill in the prototype scsi_link.
 	 */
+	sc->sc_link.channel        = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc  = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter        = &ncr_switch;
@@ -170,17 +170,7 @@ ncr_attach(parent, self, aux)
 	 */
 	ncr5380_init(sc);
 	ncr5380_reset_scsibus(sc);
-	config_found(self, &(sc->sc_link), ncr_print);
-}
-
-static int
-ncr_print(aux, name)
-	void *aux;
-	const char *name;
-{
-	if (name != NULL)
-		printf("%s: scsibus ", name);
-	return UNCONF;
+	config_found(self, &(sc->sc_link), scsiprint);
 }
 
 static void ncr_intr(p)
