@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2002/09/27 15:36:38 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2002/10/10 22:37:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -131,7 +131,7 @@ static inline int ptematch __P((pte_t *, sr_t, vaddr_t, int));
 static inline struct pv_entry *pa_to_pv __P((paddr_t));
 static inline char *pa_to_attr __P((paddr_t));
 static int pte_insert __P((int, pte_t *));
-int pmap_pte_spill __P((vaddr_t));	/* Called from trap_subr.S */
+int pmap_pte_spill __P((struct pmap *, vaddr_t));	/* Called from trap.c */
 static inline int pmap_enter_pv __P((int, vaddr_t, paddr_t));
 static void pmap_remove_pv __P((int, vaddr_t, paddr_t, struct pte *));
 static pte_t *pte_find __P((struct pmap *, vaddr_t));
@@ -265,7 +265,8 @@ pte_insert(idx, pt)
  * with interrupts disabled.
  */
 int
-pmap_pte_spill(addr)
+pmap_pte_spill(pm, addr)
+	struct pmap *pm;
 	vaddr_t addr;
 {
 	int idx, i;
@@ -274,8 +275,7 @@ pmap_pte_spill(addr)
 	pte_t ps;
 	pte_t *pt;
 
-	asm ("mfsrin %0,%1" : "=r"(sr) : "r"(addr));
-	idx = pteidx(sr, addr);
+	idx = pteidx(ptesr(pm->pm_sr, addr), addr);
 	for (po = potable[idx].lh_first; po; po = po->po_list.le_next)
 		if (ptematch(&po->po_pte, sr, addr, 0)) {
 			/*
