@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.10 2001/04/10 06:11:27 enami Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.11 2001/07/04 20:42:02 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.10 2001/04/10 06:11:27 enami Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.11 2001/07/04 20:42:02 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,11 +82,19 @@ main(argc, argv)
 	FTSENT *p;
 	int ch;
 	u_char buf[MAXPATHLEN + 1];
-	char dbtmp[MAXPATHLEN + 1], dbname[MAXPATHLEN + 1];
+	char dbtmp[MAXPATHLEN + 1];
+	char dbname[MAXPATHLEN + 1];
+	char *dbname_arg = NULL;
 	char *pathv[2];
+	char path_dev[MAXPATHLEN + 1] = _PATH_DEV;
+	char cur_dir[MAXPATHLEN + 1];
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
+		case 'o':
+			if (strlen(optarg) <= MAXPATHLEN)
+				dbname_arg = optarg;
+			break;
 		case '?':
 		default:
 			usage();
@@ -94,20 +102,29 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc > 0)
+	if ((argc == 1) && (strlen(argv[0]) <= MAXPATHLEN))
+		strncpy(path_dev, argv[0], MAXPATHLEN);
+
+	if (argc > 1)
 		usage();
 
-	if (chdir(_PATH_DEV))
-		err(1, "%s", _PATH_DEV);
+	if (!getcwd(cur_dir, MAXPATHLEN))
+		err(1, "%s", cur_dir);
 
-	pathv[0] = _PATH_DEV;
+	if (chdir(path_dev))
+		err(1, "%s", path_dev);
+
+	pathv[0] = path_dev;
 	pathv[1] = NULL;
 	ftsp = fts_open(pathv, FTS_PHYSICAL, NULL);
 	if (ftsp == NULL)
-		err(1, "fts_open: %s", _PATH_DEV);
+		err(1, "fts_open: %s", path_dev);
 
-	(void)snprintf(dbtmp, sizeof(dbtmp), "%sdev.tmp", _PATH_VARRUN);
-	(void)snprintf(dbname, sizeof(dbtmp), "%sdev.db", _PATH_VARRUN);
+	(void)snprintf(dbtmp, MAXPATHLEN, "%sdev.tmp", _PATH_VARTMP);
+	if (dbname_arg)
+		strncpy(dbname, dbname_arg, MAXPATHLEN);
+	else
+		(void)snprintf(dbname, MAXPATHLEN, "%sdev.db", _PATH_VARRUN);
 	db = dbopen(dbtmp, O_CREAT|O_EXLOCK|O_RDWR|O_TRUNC,
 	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
 	if (db == NULL)
@@ -143,15 +160,18 @@ main(argc, argv)
 
 		/*
 		 * Create the data; nul terminate the name so caller doesn't
-		 * have to.  Skip _PATH_DEV and slash.
+		 * have to.  Skip path_dev and slash.
 		 */
-		strlcpy(buf, p->fts_path + sizeof(_PATH_DEV), sizeof(buf));
-		data.size = p->fts_pathlen - sizeof(_PATH_DEV) + 1;
-		if ((*db->put)(db, &key, &data, 0))
+		strlcpy(buf, p->fts_path + strlen(path_dev), sizeof(buf));
+		data.size = p->fts_pathlen - strlen(path_dev) + 1;
+		if ((*db->put)(db, &key, &data, 0)) {
 			err(1, "dbput %s", dbtmp);
+		}
 	}
 	(void)(*db->close)(db);
 	fts_close(ftsp);
+	if (chdir(cur_dir))
+		err(1, "%s", cur_dir);
 	if (rename(dbtmp, dbname))
 		err(1, "rename %s to %s", dbtmp, dbname);
 	exit(0);
@@ -161,6 +181,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: dev_mkdb\n");
+	(void)fprintf(stderr, "usage: dev_mkdb [-o database] [directory]\n");
 	exit(1);
 }
