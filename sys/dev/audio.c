@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.15 1996/02/05 21:11:10 scottr Exp $	*/
+/*	$NetBSD: audio.c,v 1.16 1996/02/08 03:05:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -441,11 +441,8 @@ audio_initbufs(sc)
 
 	audio_init_ring(&sc->rr, sc->sc_blksize);
 	audio_init_ring(&sc->pr, sc->sc_blksize);
-	sc->sc_lowat = 1;
-	if (nblk == 1)
-	  sc->sc_hiwat = 1;
-	else
-	  sc->sc_hiwat = nblk - sc->sc_lowat;
+	sc->sc_lowat = nblk / 2;
+	sc->sc_hiwat = nblk;
 }
 
 static inline int
@@ -934,18 +931,15 @@ audio_write(dev, uio, ioflag)
 	error = 0;
 
 	while (uio->uio_resid > 0) {
-		int watermark = sc->sc_hiwat;
-		while (cb->nblk > watermark) {
-			DPRINTF(("audio_write: nblk=%d watermark=%d\n", cb->nblk, watermark));
-			if (ioflag & IO_NDELAY) {
-				error = EWOULDBLOCK;
-				return (error);
-			}
-			error = audio_sleep(&sc->sc_wchan, "aud wr");
-			if (error != 0) {
-				return (error);
-			}
-			watermark = sc->sc_lowat;
+		if (cb->nblk >= sc->sc_hiwat) {
+			do {
+				DPRINTF(("audio_write: nblk=%d hiwat=%d lowat=%d\n", cb->nblk, sc->sc_hiwat, sc->sc_lowat));
+				if (ioflag & IO_NDELAY)
+					return (EWOULDBLOCK);
+				error = audio_sleep(&sc->sc_wchan, "aud wr");
+				if (error)
+					return (error);
+			} while (cb->nblk >= sc->sc_lowat);
 		}
 #if 0
 		if (cb->nblk == 0 &&
