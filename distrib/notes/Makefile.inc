@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2000/03/08 15:39:48 cjs Exp $
+#	$NetBSD: Makefile.inc,v 1.11.4.1 2000/08/01 03:48:37 enami Exp $
 
 # Ross Harvey <ross@netbsd.org>
 
@@ -22,9 +22,9 @@ PRESET=	${GFLAGS} -dV=$V -dV_S=${V_S} -dMACHINE=$M -d.CURDIR=${.CURDIR} -r$M=1
 POST_PLAIN= -P-b -P-u -P-o
 
 ARGS_PS=	${PRESET} -dformat=PostScript
-ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN} -Tascii
+ARGS_TXT=	${PRESET} -dformat=ASCII ${POST_PLAIN} -Tascii -mtty-char
 ARGS_HTML=	${PRESET} -dformat=HTML ${POST_PLAIN} -Tlatin1 -ww
-ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii
+ARGS_MORE=	${PRESET} -dformat=more -P-h -Tascii -mtty-char
 
 #
 # For example...
