@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.50 2003/09/13 08:32:17 jdolecek Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.51 2003/11/29 06:15:00 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.50 2003/09/13 08:32:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.51 2003/11/29 06:15:00 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.50 2003/09/13 08:32:17 jdolecek E
 #include <sys/namei.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/protosw.h>
 #include <sys/socketvar.h>
 #include <sys/un.h>
 #include <sys/unpcb.h>
@@ -293,7 +292,7 @@ portal_connect(so, so2)
 	so2 = so3;
 
 
-	return (unp_connect2(so, so2, PRU_CONNECT2));
+	return (unp_connect2(so, so2));
 }
 
 int
