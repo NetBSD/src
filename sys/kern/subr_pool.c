@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.46 2000/12/07 21:30:07 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.47 2000/12/10 17:03:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1683,18 +1683,18 @@ pool_cache_put(struct pool_cache *pc, void *object)
 
 		/*
 		 * No empty groups to free the object to.  Attempt to
-		 * allocate one.  We don't unlock the cache here, since
-		 * we never block.
+		 * allocate one.
 		 */
+		simple_unlock(&pc->pc_slock);
 		pcg = pool_get(&pcgpool, PR_NOWAIT);
 		if (pcg != NULL) {
 			memset(pcg, 0, sizeof(*pcg));
+			simple_lock(&pc->pc_slock);
 			TAILQ_INSERT_TAIL(&pc->pc_grouplist, pcg, pcg_list);
-			pc->pc_freeto = pcg;
+			if (pc->pc_freeto == NULL)
+				pc->pc_freeto = pcg;
 			goto have_group;
 		}
-
-		simple_unlock(&pc->pc_slock);
 
 		/*
 		 * Unable to allocate a cache group; destruct the object
@@ -1772,13 +1772,7 @@ static void
 pool_cache_reclaim(struct pool_cache *pc)
 {
 
-	/*
-	 * We're locking in the opposite order (pool already
-	 * locked in pool_reclaim()), so use a try-lock instead.
-	 */
-
-	if (simple_lock_try(&pc->pc_slock) == 0)
-		return;
+	simple_lock(&pc->pc_slock);
 	pool_cache_do_invalidate(pc, 1, pool_do_put);
 	simple_unlock(&pc->pc_slock);
 }
