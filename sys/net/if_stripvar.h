@@ -1,11 +1,10 @@
-/*	$NetBSD: if_stripvar.h,v 1.8 2000/12/12 18:00:30 thorpej Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.9 2001/01/11 22:23:12 thorpej Exp $	*/
 
 #ifndef _NET_IF_STRIPVAR_H_
 #define _NET_IF_STRIPVAR_H_
 
 /*
  * Definitions for STRIP interface data structures
- * 
  */
 struct strip_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
@@ -15,10 +14,10 @@ struct strip_softc {
 	struct	callout sc_timo_ch;	/* timeout callout */
 	u_char	*sc_mp;			/* pointer to next available buf char */
 	u_char	*sc_ep;			/* pointer to last available buf char */
-	u_char	*sc_buf;		/* input buffer */
+	u_char	*sc_pktstart;		/* pointer to beginning of packet */
+	struct mbuf *sc_mbuf;		/* input buffer */
 	u_char	*sc_rxbuf;		/* input destuffing buffer */
 	u_char	*sc_txbuf;		/* output stuffing buffer */
-	u_char	*sc_xxx;		/* XXX don't ask... */
 	u_int	sc_flags;		/* see below */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
