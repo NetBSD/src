@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 1997/03/20 12:00:59 matthias Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 1997/04/01 16:33:04 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -302,22 +302,24 @@ trap(frame)
 	case T_SLAVE | T_USER: {
 		int fsr, sig = SIGFPE;
 		pcb = &p->p_addr->u_pcb;
-		save_fpu_context(pcb);
-		switch(ieee_handle_exception(p)) {
-		case FPC_TT_NONE:
-			restore_fpu_context(pcb);
-			if (frame.tf_regs.r_psr &  PSL_T) {
-				type = T_TRC | T_USER;
-				goto trace;
+		if (ieee_handler_disable == 0) {
+			save_fpu_context(pcb);
+			switch(ieee_handle_exception(p)) {
+			case FPC_TT_NONE:
+				restore_fpu_context(pcb);
+				if (frame.tf_regs.r_psr &  PSL_T) {
+					type = T_TRC | T_USER;
+					goto trace;
+				}
+				return;
+			case FPC_TT_ILL:
+				sig = SIGILL;
+				break;
+			default:
+				break;
 			}
-			return;
-		case FPC_TT_ILL:
-			sig = SIGILL;
-			break;
-		default:
-			break;
+			restore_fpu_context(pcb);
 		}
-		restore_fpu_context(pcb);
 		sfsr(fsr);
 		trapsignal(p, sig, 0x80000000 | fsr);
 		goto out;
