@@ -1,4 +1,4 @@
-/*	$NetBSD: scanw.c,v 1.14 2000/04/15 13:17:04 blymn Exp $	*/
+/*	$NetBSD: scanw.c,v 1.15 2000/12/30 17:20:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)scanw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scanw.c,v 1.14 2000/04/15 13:17:04 blymn Exp $");
+__RCSID("$NetBSD: scanw.c,v 1.15 2000/12/30 17:20:55 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -165,7 +165,7 @@ va_dcl
  *	This routine actually executes the scanf from the window.
  */
 int
-vwscanw(WINDOW *win, const char *fmt, va_list ap)
+vwscanw(WINDOW *win, const char *fmt, _BSD_VA_LIST_ ap)
 {
 
 	char    buf[1024];
