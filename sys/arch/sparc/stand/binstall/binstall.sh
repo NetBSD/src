@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.4.4.1 2000/08/26 00:08:45 mrg Exp $
+#	$NetBSD: binstall.sh,v 1.4.4.2 2002/03/20 22:21:23 he Exp $
 #
 
 vecho () {
@@ -27,6 +27,7 @@ Help () {
 	echo "	-u		- install sparc64 (UltraSPARC) boot block"
 	echo "	-U		- install sparc boot block"
 	echo "	-b<bootprog>	- second-stage boot program to install"
+	echo "  -f<path name>	- path to device/file image for filesystem"
 	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
 	echo "	-v		- verbose mode"
 	echo "	-t		- test mode (implies -v)"
@@ -34,7 +35,8 @@ Help () {
 }
 
 Secure () {
-	echo "This script has to be run when the kernel is in 'insecure' mode."
+	echo "This script has to be run when the kernel is in 'insecure' mode,"
+	echo "or when applying bootblocks to a file image (ala vnd)."
 	echo "The best way is to run this script in single-user mode."
 	exit 1
 }
@@ -49,11 +51,7 @@ else
 	ULTRASPARC=0
 fi
 
-if [ "`sysctl -n kern.securelevel`" -gt 0 ]; then
-	Secure
-fi
-
-set -- `getopt "b:hm:tvuU" "$@"`
+set -- `getopt "b:hm:f:tvuU" "$@"`
 if [ $? -gt 0 ]; then
 	Usage
 fi
@@ -65,12 +63,17 @@ do
 	-u) ULTRASPARC=1; shift ;;
 	-U) ULTRASPARC=0; shift ;;
 	-b) BOOTPROG=$2; OFWBOOT=$2; shift 2 ;;
+	-f) FILENAME=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
 	-t) TEST=1; VERBOSE=1; shift ;;
 	-v) VERBOSE=1; shift ;;
 	--) shift; break ;;
 	esac
 done
+
+if [ "`sysctl -n kern.securelevel`" -gt 0 ] && [ ! -f "$FILENAME" ]; then
+	Secure
+fi
 
 DOIT=${TEST:+echo "=>"}
 
@@ -116,6 +119,9 @@ case $WHAT in
 			break;
 		fi
 	done`
+	if [ "$FILENAME" != "" ]; then
+		DEV=$FILENAME
+	fi
 	if [ "$DEV" = "" ]; then
 		echo "Cannot find \"$DEST\" in mount table"
 		exit 1
