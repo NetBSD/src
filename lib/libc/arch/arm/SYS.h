@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.8 2003/08/07 16:42:02 agc Exp $	*/
+/*	$NetBSD: SYS.h,v 1.9 2004/08/21 11:18:40 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,11 +69,11 @@
 
 #define PSEUDO_NOERROR(x,y)						\
 	_SYSCALL_NOERROR(x,y);						\
-	mov r15, r14
+	RET
 
 #define PSEUDO(x,y)							\
 	_SYSCALL(x,y);							\
-	mov r15, r14
+	RET
 
 
 #define RSYSCALL_NOERROR(x)						\
