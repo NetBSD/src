@@ -18,7 +18,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: c-typeck.c,v 1.2 1993/08/02 18:26:21 mycroft Exp $";
+static char rcsid[] = "$Id: c-typeck.c,v 1.3 1994/09/19 14:44:05 mycroft Exp $";
 #endif /* not lint */
 
 /* This file is part of the C front end.
@@ -1318,9 +1318,11 @@ build_array_ref (array, index)
 
 #define T_I	&integer_type_node
 #define T_L	&long_integer_type_node
+#define T_LL	&long_long_integer_type_node
 #define T_S	&short_integer_type_node
 #define T_UI	&unsigned_type_node
 #define T_UL	&long_unsigned_type_node
+#define T_ULL	&long_long_unsigned_type_node
 #define T_US	&short_unsigned_type_node
 #define T_F	&float_type_node
 #define T_D	&double_type_node
@@ -1341,6 +1343,9 @@ typedef struct
   /* Type of argument if length modifier `l' is used.
      If NULL, then this modifier is not allowed.  */
   tree *llen;
+  /* Type of argument if length modifier `q' is used.
+     If NULL, then this modifier is not allowed.  */
+  tree *qlen;
   /* Type of argument if length modifier `L' is used.
      If NULL, then this modifier is not allowed.  */
   tree *bigllen;
@@ -1350,30 +1355,30 @@ typedef struct
 
 static format_char_info print_table[]
   = {
-      { "di",		0,	T_I,	T_I,	T_L,	NULL,	"-wp0 +" },
-      { "oxX",		0,	T_UI,	T_UI,	T_UL,	NULL,	"-wp0#" },
-      { "u",		0,	T_UI,	T_UI,	T_UL,	NULL,	"-wp0" },
-      { "feEgG",	0,	T_D,	NULL,	NULL,	T_LD,	"-wp0 +#" },
-      { "c",		0,	T_I,	NULL,	T_W,	NULL,	"-w" },
-      { "C",		0,	T_W,	NULL,	NULL,	NULL,	"-w" },
-      { "s",		1,	T_C,	NULL,	T_W,	NULL,	"-wp" },
-      { "S",		1,	T_W,	NULL,	NULL,	NULL,	"-wp" },
-      { "p",		1,	T_V,	NULL,	NULL,	NULL,	"-" },
-      { "n",		1,	T_I,	T_S,	T_L,	NULL,	"" },
+      { "di",		0,	T_I,	T_I,	T_L,	T_LL,	NULL,	"-wp0 +" },
+      { "oxX",		0,	T_UI,	T_UI,	T_UL,	T_ULL,	NULL,	"-wp0#" },
+      { "u",		0,	T_UI,	T_UI,	T_UL,	T_ULL,	NULL,	"-wp0" },
+      { "feEgG",	0,	T_D,	NULL,	NULL,	NULL,	T_LD,	"-wp0 +#" },
+      { "c",		0,	T_I,	NULL,	T_W,	NULL,	NULL,	"-w" },
+      { "C",		0,	T_W,	NULL,	NULL,	NULL,	NULL,	"-w" },
+      { "s",		1,	T_C,	NULL,	T_W,	NULL,	NULL,	"-wp" },
+      { "S",		1,	T_W,	NULL,	NULL,	NULL,	NULL,	"-wp" },
+      { "p",		1,	T_V,	NULL,	NULL,	NULL,	NULL,	"-" },
+      { "n",		1,	T_I,	T_S,	T_L,	T_LL,	NULL,	"" },
       { NULL }
     };
 
 static format_char_info scan_table[]
   = {
-      { "di",		1,	T_I,	T_S,	T_L,	NULL,	"*" },
-      { "ouxX",		1,	T_UI,	T_US,	T_UL,	NULL,	"*" },	
-      { "efgEG",	1,	T_F,	NULL,	T_D,	T_LD,	"*" },
-      { "sc",		1,	T_C,	NULL,	T_W,	NULL,	"*" },
-      { "[",		1,	T_C,	NULL,	NULL,	NULL,	"*" },
-      { "C",		1,	T_W,	NULL,	NULL,	NULL,	"*" },
-      { "S",		1,	T_W,	NULL,	NULL,	NULL,	"*" },
-      { "p",		2,	T_V,	NULL,	NULL,	NULL,	"*" },
-      { "n",		1,	T_I,	T_S,	T_L,	NULL,	"" },
+      { "di",		1,	T_I,	T_S,	T_L,	T_LL,	NULL,	"*" },
+      { "ouxX",		1,	T_UI,	T_US,	T_UL,	T_ULL,	NULL,	"*" },	
+      { "efgEG",	1,	T_F,	NULL,	T_D,	NULL,	T_LD,	"*" },
+      { "sc",		1,	T_C,	NULL,	T_W,	NULL,	NULL,	"*" },
+      { "[",		1,	T_C,	NULL,	NULL,	NULL,	NULL,	"*" },
+      { "C",		1,	T_W,	NULL,	NULL,	NULL,	NULL,	"*" },
+      { "S",		1,	T_W,	NULL,	NULL,	NULL,	NULL,	"*" },
+      { "p",		2,	T_V,	NULL,	NULL,	NULL,	NULL,	"*" },
+      { "n",		1,	T_I,	T_S,	T_L,	T_LL,	NULL,	"" },
       { NULL }
     };
 
@@ -1645,7 +1650,8 @@ check_format (info, params)
 		}
 	    }
 	}
-      if (*format_chars == 'h' || *format_chars == 'l' || *format_chars == 'L')
+      if (*format_chars == 'h' || *format_chars == 'l' || *format_chars == 'q' ||
+	  *format_chars == 'L')
 	length_char = *format_chars++;
       else
 	length_char = 0;
@@ -1731,6 +1737,7 @@ check_format (info, params)
 	default: wanted_type = fci->nolen ? *(fci->nolen) : 0; break;
 	case 'h': wanted_type = fci->hlen ? *(fci->hlen) : 0; break;
 	case 'l': wanted_type = fci->llen ? *(fci->llen) : 0; break;
+	case 'q': wanted_type = fci->qlen ? *(fci->qlen) : 0; break;
 	case 'L': wanted_type = fci->bigllen ? *(fci->bigllen) : 0; break;
 	}
       if (wanted_type == 0)
