@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 1996/05/05 06:54:16 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 1996/05/06 01:06:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2510,7 +2510,7 @@ get_mapping(void)
 		nblen[nbnumranges - 1] = -nblen[nbnumranges - 1];
 		same = 0;
 	}
-#if 1
+#if 0
 	printf("Non-system RAM (nubus, etc.):\n");
 	for (i = 0; i < nbnumranges; i++) {
 		printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
