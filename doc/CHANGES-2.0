@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.15 2004/03/31 20:06:12 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.16 2004/04/01 02:29:29 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -51,7 +51,6 @@ usr.bin/gzip/zdiff				1.3
 usr.bin/gzip/zmore				1.3
 
 	s/compress/gzip/, our compress is not the backend for gzip.
-	Noted by hubertf.
 	[wiz, ticket #9]
 
 sys/sys/param.h					patch by hand
@@ -128,30 +127,26 @@ distrib/hp300/miniroot/list			1.12
 usr.bin/gzip/gzip.c				1.30
 usr.bin/gzip/unbzip2.c				1.2-1.3
 
-	patch from tron@ to convert to using public bz interfaces.  simonb says
-	no reason not to and this fixes PR#24964.
-
-	backout previous.  fix the bug it inspired instead.  we will want this
-	version of the code when doing file-type detection.
+	Patch to convert to using public bz interfaces. PR#24964
 	[tron, ticket #21]
 
 usr.bin/gzip/gzip.c				1.31
 
-	use off_t instead of ssize_t in a few places.
-	fix "gzip -l" in -DSMALL (it wasn't doing a stat(2)).
+	Use off_t instead of ssize_t in a few places.
+	Fix "gzip -l" in -DSMALL (it wasn't doing a stat(2)).
 	[mrg, ticket #22]
 
 sys/uvm/uvm_map.c				1.165
 
 	uvm_map_findspace: don't return unaligned address if alignment is
-	specified. discussed on tech-kern@.
+	specified.
 	[yamt, ticket #23]
 
 usr.bin/find/find.1				1.48
 usr.bin/find/find.c				1.19
 
 	Do not skip whiteout files returned by fts_read(), which only returns
-	them if requested. Patch from Dave Huang in PR bin/5419.
+	them if requested. Patch from PR#5419.
 	Mention -type w, which is coded as a synonym for W (whitespace).
 	[heas, ticket #25]
 
@@ -177,3 +172,8 @@ sys/netinet/ip_compat.h				1.36
 	Fix panics caused by IPFilter on most platforms.
 	[mrg, ticket #32]
 
+
+usr.sbin/wsmoused/wsmoused.conf.5		1.8
+
+	Fix two typos. PR#22581
+	[jmmv, ticket #29]
