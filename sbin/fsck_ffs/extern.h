@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2001/01/09 05:51:14 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2001/01/26 17:37:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -40,6 +40,7 @@ int		chkrange __P((ufs_daddr_t, int));
 void		ckfini __P((void));
 int		ckinode __P((struct dinode *, struct inodesc *));
 void		clri __P((struct inodesc *, char *, int));
+int		cmpsblks __P((const struct fs *, struct fs *));
 struct		dinode * getnextinode __P((ino_t));
 void		direrror __P((ino_t, char *));
 int		dirscan __P((struct inodesc *));
