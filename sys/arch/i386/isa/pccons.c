@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.12 1993/10/17 14:04:28 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.13 1993/10/18 07:36:13 mycroft Exp $
  */
 
 /*
@@ -140,18 +140,21 @@ struct	cfdriver pccd =
 #define	KP		0x0200	/* Keypad keys */
 #define	NONE		0x0400	/* no function */
 
-static u_short *Crtat;		/* pointer to backing store */
-static u_short *crtat;		/* pointer to current char */
-static u_char ack, nak;		/* Don't ask. */
+/*
+ * XXX These really ought to at least be in pc_state.  Not today.
+ */
+static u_short *Crtat,		/* pointer to backing store */
+	       *crtat;		/* pointer to current char */
+static u_char ack, nak, async,	/* Don't ask. */
+	      kernel;		/* Really, you don't want to know. */
+static u_char leds,		/* all off */
+	      typematic = 0xff;	/* don't update until set by software */
 
 int pcopen __P((dev_t, int, int, struct proc *));
 int pcclose __P((dev_t, int));
 
-static void sput __P((struct pc_state *, u_char *, int, int));
+static void sput __P((struct pc_state *, u_char *, int));
 static char *sget __P((struct pc_state *, int));
-static void cursor __P((struct pc_state *));
-static void update_led __P((void));
-static void set_typematic __P((u_char));
 static void pc_xmode_on __P((struct pc_state *));
 static void pc_xmode_off __P((struct pc_state *));
 static void pcstart __P((struct tty *));
@@ -162,10 +165,9 @@ kbd_wait()
 {
 	u_int i;
 
-	for (i = 0x10000; i; i--)
+	for (i = 100000; i; i--)
 		if ((inb(KBSTATP) & KBS_IBF) == 0)
 			return 1;
-
 	return 0;
 }
 
@@ -199,24 +201,86 @@ kbd_cmd(val, polling)
 			return 0;
 		ack = nak = 0;
 		outb(KBOUTP, val);
-		for (i = 0x10000; i; i--) {
-			if (polling && inb(KBSTATP) & KBS_DIB) {
-				register u_char c;
-				c = inb(KBDATAP);
-				if (c == KBR_ACK)
-					ack = 1;
-				else if (c == KBR_RESEND)
-					nak = 1;
+		if (polling)
+			for (i = 100000; i; i--)
+				if (inb(KBSTATP) & KBS_DIB) {
+					register u_char c;
+					c = inb(KBDATAP);
+					if (c == KBR_ACK) {
+						ack = 1;
+						return 1;
+					}
+					if (c == KBR_RESEND) {
+						nak = 1;
+						break;
+					}
+				}
+		else
+			for (i = 100000; i; i--) {
+				if (ack)
+					return 1;
+				if (nak)
+					break;
 			}
-			if (ack)
-				return 1;
-			if (nak)
-				break;
-		}
 		if (!nak)
 			return 0;
 	} while (--retries);
 	return 0;
+}
+
+static void
+do_async_update(poll)
+	u_char poll;
+{
+	struct pc_state *ps = &pc_state[0];	/* XXX */
+	int pos = crtat - Crtat;
+	static int old_pos;
+	static u_char old_leds = 0xff, old_typematic = 0xff;
+
+	if (ps->ps_flags & PSF_RAW)
+		return;
+
+	async = 0;
+
+	if (pos != old_pos) {
+		register u_short iobase = ps->ps_iobase;
+		outb(iobase, 14);
+		outb(iobase+1, pos>>8);
+		outb(iobase, 15);
+		outb(iobase+1, pos);
+		old_pos = pos;
+	}
+
+	if (leds != old_leds)
+		if (!kbd_cmd(KBC_MODEIND, poll) ||
+		    !kbd_cmd(leds, poll)) {
+			printf("pc: timeout updating leds\n");
+			(void) kbd_cmd(KBC_ENABLE, poll);
+		} else
+			old_leds = leds;
+	if (typematic != old_typematic)
+		if (!kbd_cmd(KBC_TYPEMATIC, poll) ||
+		    !kbd_cmd(typematic, poll)) {
+			printf("pc: timeout updating typematic rate\n");
+			(void) kbd_cmd(KBC_ENABLE, poll);
+		} else
+			old_typematic = typematic;
+}
+
+static inline void
+async_update()
+{
+
+	if (kernel) {
+		if (async)
+			untimeout((timeout_t)do_async_update, 0);
+		do_async_update(1);
+	} else {
+		if (async)
+			return;
+		async = 1;
+		timeout((timeout_t)do_async_update, 0, 1);
+	}
 }
 
 static int
@@ -282,37 +346,25 @@ pcprobe(parent, cf, aux)
 	struct pc_state *ps = &pc_state[cf->cf_unit];
 
 	if (cf->cf_unit != 0)
-		panic("pcprobe: unit != 0");
+		panic("pcprobe: you are a fool");
 
-	/* Enable interrupts and keyboard, etc. */
+	/* enable interrupts and keyboard, etc. */
 	if (!kbc_8042cmd(K_LDCMDBYTE)) {
-#ifdef DIAGNOSTIC
-		printf("pc: command error 1\n");
-#endif
+		printf("pcprobe: command error 1\n");
 		return 0;
 	}
-	if (!kbd_cmd(CMDBYTE, 1)) {
-#ifdef DIAGNOSTIC
-		printf("pc: command error 2\n");
-#endif
+	if (!kbd_wait()) {
+		printf("pcprobe: command error 2\n");
 		return 0;
 	}
+	outb(KBOUTP, CMDBYTE);
 
-	/* Start keyboard reset */
-	if (!kbd_cmd(KBC_RESET, 1)) {
-#ifdef DIAGNOSTIC
-		printf("pc: reset error 1\n");
-#endif
-		return 0;
-	}
-
+	/* reset the keyboard */
+	if (!kbd_cmd(KBC_RESET, 1))
+		printf("pcprobe: reset error 1\n");
 	while ((inb(KBSTATP) & KBS_DIB) == 0);
-	if (inb(KBDATAP) != KBR_RSTDONE) {
-#ifdef DIAGNOSTIC
-		printf("pc: reset error 2\n");
-#endif
-		return 0;
-	}
+	if (inb(KBDATAP) != KBR_RSTDONE)
+		printf("pcprobe: reset error 2\n");
 
 	if (!_pcprobe(ps))
 		return 0;
@@ -365,7 +417,7 @@ pcattach(self, parent, aux)
 	fillw((ps->ps_at << 8) | ' ', crtat,
 	      (Crtat + COL * ROW) - crtat);
 
-	cursor(ps);
+	do_async_update(1);
 
 	sc->sc_ih.ih_fun = pcintr;
 	sc->sc_ih.ih_arg = sc;
@@ -520,7 +572,8 @@ pcioctl(dev, cmd, data, flag)
 		 */
 		if (rate & 0x80)
 			return EINVAL;
-		set_typematic(rate);
+		typematic = rate;
+		async_update();
 		break;
 	    }
 	    default:
@@ -551,7 +604,7 @@ pcstart(tp)
 	 */
 	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
-	sput(ps, buf, len, 0);
+	sput(ps, buf, len);
 	s = spltty();
 	tp->t_state &=~ TS_BUSY;
 	if (cl->c_cc) {
@@ -578,48 +631,15 @@ pcparam(tp, t)
 	struct termios *t;
 {
 
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = t->c_cflag;
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = t->c_cflag;
 	return 0;
 }
-
-/*
- * cursor():
- *   reassigns cursor position, updated by the rescheduling clock
- *   which is a index (0-1999) into the text area. Note that the
- *   cursor is a "foreground" character, it's color determined by
- *   the fg_at attribute. Thus if fg_at is left as 0, (FG_BLACK),
- *   as when a portion of screen memory is 0, the cursor may dissappear.
- */
-static void
-docursor(ps)
-	struct pc_state *ps;
-{
- 	int pos = crtat - Crtat;
-	u_short iobase = ps->ps_iobase;
-
-	outb(iobase, 14);
-	outb(iobase + 1, pos>>8);
-	outb(iobase, 15);
-	outb(iobase + 1, pos);
-}
-
-static void
-cursor(ps)
-	struct pc_state *ps;
-{
-
-	docursor(ps);
-	timeout((timeout_t)cursor, (caddr_t)ps, hz/10);
-}
-
-static	u_char lock_state;
 
 #define	wrtchar(c, at) do { \
 	char *cp = (char *)crtat; *cp++ = (c); *cp = (at); crtat++; ps->ps_col++; \
 } while (0)
-
 
 /* translate ANSI color codes to standard pc ones */
 static char fgansitopc[] =
@@ -635,11 +655,10 @@ static char bgansitopc[] =
  *   if ka, use kernel attributes.
  */
 static void
-sput(ps, cp, n, kernel)
+sput(ps, cp, n)
 	register struct pc_state *ps;
 	u_char *cp;
 	int n;
-	int kernel;
 {
 #define	state	ps->ps_state
 #define	at	ps->ps_at
@@ -936,8 +955,8 @@ sput(ps, cp, n, kernel)
 			if (crtat >= Crtat + COL * ROW) { /* scroll check */
 				if (!kernel) {
 					int s = spltty();
-					if (lock_state & SCROLL)
-						tsleep((caddr_t)&lock_state, PUSER,
+					if (leds & SCROLL)
+						tsleep((caddr_t)&leds, PUSER,
 						       "pcputc", 0);
 					splx(s);
 				}
@@ -947,6 +966,7 @@ sput(ps, cp, n, kernel)
 			}
 		}
 	}
+	async_update();
 #undef at
 #undef state
 }
@@ -1362,27 +1382,6 @@ static Scan_def	scan_codes[] =
 	NONE,	"",		"",		"",		/* 127 */
 };
 
-static void
-update_led()
-{
-	u_char new_leds = lock_state & (SCROLL | NUM | CAPS);
-
-	if (kbd_cmd(KBC_MODEIND, 0) || kbd_cmd(new_leds, 0)) {
-		printf("pc: timeout updating leds\n");
-		(void) kbd_cmd(KBC_ENABLE, 0);
-	}
-}
-
-static void
-set_typematic(u_char new_rate)
-{
-
-	if (kbd_cmd(KBC_TYPEMATIC, 0) || kbd_cmd(new_rate, 0)) {
-		printf("pc: timeout updating typematic rate\n");
-		(void) kbd_cmd(KBC_ENABLE, 0);
-	}
-}
-
 /*
  *   sget(ps, noblock):  get  characters  from  the  keyboard.  If
  *   noblock  ==  0  wait  until a key is gotten. Otherwise return a
@@ -1423,7 +1422,7 @@ loop:
 					break;
 				}
 				lock_down |= NUM;
-				lock_state ^= NUM;
+				leds ^= NUM;
 				break;
 			case CAPS:
 				if (dt & 0x80) {
@@ -1431,7 +1430,7 @@ loop:
 					break;
 				}
 				lock_down |= CAPS;
-				lock_state ^= CAPS;
+				leds ^= CAPS;
 				break;
 			case SCROLL:
 				if (dt & 0x80) {
@@ -1439,9 +1438,9 @@ loop:
 					break;
 				}
 				lock_down |= SCROLL;
-				lock_state ^= SCROLL;
-				if ((lock_state & SCROLL) == 0)
-					wakeup((caddr_t)&lock_state);
+				leds ^= SCROLL;
+				if ((leds & SCROLL) == 0)
+					wakeup((caddr_t)&leds);
 				break;
 		}
 		return capchar;
@@ -1511,24 +1510,24 @@ loop:
 				if (lock_down & NUM)
 					break;
 				lock_down |= NUM;
-				lock_state ^= NUM;
-				update_led();
+				leds ^= NUM;
+				async_update();
 				break;
 			case CAPS:
 				if (lock_down & CAPS)
 					break;
 				lock_down |= CAPS;
-				lock_state ^= CAPS;
-				update_led();
+				leds ^= CAPS;
+				async_update();
 				break;
 			case SCROLL:
 				if (lock_down & SCROLL)
 					break;
 				lock_down |= SCROLL;
-				lock_state ^= SCROLL;
-				if ((lock_state & SCROLL) == 0)
-					wakeup((caddr_t)&lock_state);
-				update_led();
+				leds ^= SCROLL;
+				if ((leds & SCROLL) == 0)
+					wakeup((caddr_t)&leds);
+				async_update();
 				break;
 			/*
 			 *   Non-locking keys
@@ -1573,7 +1572,7 @@ loop:
 			case KP: {
 				char  	*more_chars;
 				if (lock_down & (SHIFT | CTL) ||
-				    (lock_state & NUM) == 0 || extended)
+				    (leds & NUM) == 0 || extended)
 					more_chars = scan_codes[dt].shift;
 				else
 					more_chars = scan_codes[dt].unshift;
@@ -1608,8 +1607,6 @@ pc_xmode_on(ps)
 		return;
 	ps->ps_flags |= PSF_RAW;
 
-	untimeout((timeout_t)cursor, (caddr_t)ps);
-
 	fp = (struct trapframe *)curproc->p_regs;
 	fp->tf_eflags |= PSL_IOPL;
 }
@@ -1624,7 +1621,7 @@ pc_xmode_off(ps)
 		return;
 	ps->ps_flags &= ~PSF_RAW;
 
-	cursor(ps);
+	async_update();
 
 	fp = (struct trapframe *)curproc->p_regs;
 	fp->tf_eflags &= ~PSL_IOPL;
@@ -1673,7 +1670,9 @@ pccngetc(dev)
 		return 0;
 
 	s = spltty();		/* block pcrint while we poll */
+	kernel = 1;
 	cp = sget(ps, 0);
+	kernel = 0;
 	splx(s);
 	if (*cp == '\r')
 		return '\n';
@@ -1687,9 +1686,10 @@ pccnputc(dev, c)
 {
 	struct pc_state *ps = &pc_state[PCUNIT(dev)];
 
+	kernel = 1;
 	if (c == '\n')
-		sput(ps, "\r\n", 2, 1);
+		sput(ps, "\r\n", 2);
 	else
-		sput(ps, &c, 1, 1);
-	docursor(ps);
+		sput(ps, &c, 1);
+	kernel = 0;
 }
