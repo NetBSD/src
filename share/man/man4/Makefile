@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.294 2003/09/25 16:34:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.295 2003/09/25 16:48:04 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amdpm.4 \
@@ -84,7 +84,7 @@ MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
 
 # ISDN devices
 MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \
-	ifpci.4 isic.4 iwic.4
+	ifpci.4 isic.4 iwic.4 isdncapi.4 iavc.4
 
 MLINKS+=bha.4 bt.4
 MLINKS+=cardbus.4 cbb.4
