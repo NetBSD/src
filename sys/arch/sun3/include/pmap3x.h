@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.12 2001/04/22 00:34:03 thorpej Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.13 2001/04/22 23:19:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ segsz_t pmap_count __P((pmap_t, int));
 /* We use the PA plus some low bits for device mmap. */
 #define pmap_phys_address(addr) 	(addr)
 
-#define	pmap_update(pmap)		/* nothing (yet) */
+#define	pmap_update()			/* nothing (yet) */
 
 /* Map a given physical region to a virtual region */
 vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
