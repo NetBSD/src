@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.10 2000/05/20 14:01:42 blymn Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.11 2001/11/02 18:27:00 christos Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -6,7 +6,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.10 2000/05/20 14:01:42 blymn Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.11 2001/11/02 18:27:00 christos Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -18,7 +18,6 @@ __RCSID("$NetBSD: hack.termcap.c,v 1.10 2000/05/20 14:01:42 blymn Exp $");
 #include "extern.h"
 #include "def.flag.h"		/* for flags.nonull */
 
-static char     *tbuf;
 static struct tinfo *info;
 static char    *HO, *CL, *CE, *UP, *CM, *ND, *XD, *BC, *SO, *SE, *TI, *TE;
 static char    *VS, *VE;
@@ -32,9 +31,8 @@ void
 startup()
 {
 	char           *term;
-	char           *tbufptr, *pc;
+	char           *pc;
 
-	tbuf = NULL;
 	
  	if (!(term = getenv("TERM")))
 		error("Can't get TERM.");
@@ -42,45 +40,45 @@ startup()
 		flags.nonull = 1;	/* this should be a termcap flag */
 	if (t_getent(&info, term) < 1)
 		error("Unknown terminal type: %s.", term);
-	if ((pc = t_agetstr(info, "pc", &tbuf, &tbufptr)) != NULL)
+	if ((pc = t_agetstr(info, "pc")) != NULL)
 		PC = *pc;
-	if (!(BC = t_agetstr(info, "bc", &tbuf, &tbufptr))) {
+	if (!(BC = t_agetstr(info, "bc"))) {
 		if (!t_getflag(info, "bs"))
 			error("Terminal must backspace.");
 		BC = &BC_char;
 	}
-	HO = t_agetstr(info, "ho", &tbuf, &tbufptr);
+	HO = t_agetstr(info, "ho");
 	CO = t_getnum(info, "co");
 	LI = t_getnum(info, "li");
 	if (CO < COLNO || LI < ROWNO + 2)
 		setclipped();
-	if (!(CL = t_agetstr(info, "cl", &tbuf, &tbufptr)))
+	if (!(CL = t_agetstr(info, "cl")))
 		error("Hack needs CL.");
-	ND = t_agetstr(info, "nd", &tbuf, &tbufptr);
+	ND = t_agetstr(info, "nd");
 	if (t_getflag(info, "os"))
 		error("Hack can't have OS.");
-	CE = t_agetstr(info, "ce", &tbuf, &tbufptr);
-	UP = t_agetstr(info, "up", &tbuf, &tbufptr);
+	CE = t_agetstr(info, "ce");
+	UP = t_agetstr(info, "up");
 	/*
 	 * It seems that xd is no longer supported, and we should use a
 	 * linefeed instead; unfortunately this requires resetting CRMOD, and
 	 * many output routines will have to be modified slightly. Let's
 	 * leave that till the next release.
 	 */
-	XD = t_agetstr(info, "xd", &tbuf, &tbufptr);
-	/* not: 		XD = t_agetstr(info, "do", &tbuf, &tbufptr); */
-	if (!(CM = t_agetstr(info, "cm", &tbuf, &tbufptr))) {
+	XD = t_agetstr(info, "xd");
+	/* not: 		XD = t_agetstr(info, "do"); */
+	if (!(CM = t_agetstr(info, "cm"))) {
 		if (!UP && !HO)
 			error("Hack needs CM or UP or HO.");
 		printf("Playing hack on terminals without cm is suspect...\n");
 		getret();
 	}
-	SO = t_agetstr(info, "so", &tbuf, &tbufptr);
-	SE = t_agetstr(info, "se", &tbuf, &tbufptr);
+	SO = t_agetstr(info, "so");
+	SE = t_agetstr(info, "se");
 	SG = t_getnum(info, "sg");	/* -1: not fnd; else # of spaces left by so */
 	if (!SO || !SE || (SG > 0))
 		SO = SE = 0;
-	CD = t_agetstr(info, "cd", &tbuf, &tbufptr);
+	CD = t_agetstr(info, "cd");
 	set_whole_screen();	/* uses LI and CD */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2001/02/19 22:46:14 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2001/11/02 18:27:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.38 2001/02/19 22:46:14 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2001/11/02 18:27:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -706,8 +706,6 @@ clearscreen()
 {
 	struct ttyent *typ;
 	struct tinfo *tinfo;
-	char *buffer = NULL;
-	char *area = NULL;
 	char *cs;
 
 	if (rawttyn == NULL)
@@ -722,10 +720,9 @@ clearscreen()
 	if (t_getent(&tinfo, typ->ty_type) <= 0)
 		return;
 
-	cs = t_agetstr(tinfo, "cl", &buffer, &area);
+	cs = t_agetstr(tinfo, "cl");
 	if (cs == NULL)
 		return;
 
 	putpad(cs);
-	free(buffer);
 }
