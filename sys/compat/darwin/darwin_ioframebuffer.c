@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.28 2003/12/09 19:51:51 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.29 2003/12/26 20:34:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.28 2003/12/09 19:51:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.29 2003/12/26 20:34:34 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,6 @@ struct mach_iokit_devclass darwin_ioframebuffer_devclass = {
 	NULL,
 };
 
-
 int
 darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	struct mach_trap_args *args;
@@ -128,6 +127,7 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
 	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	int maxoutcount;
 	int error;
 
@@ -268,6 +268,7 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 
 	case DARWIN_IOFBGETVRAMMAPOFFSET: {
 		darwin_iopixelaperture aperture; /* 0 XXX Current aperture? */
+		struct darwin_emuldata *ded = l->l_proc->p_emuldata;
 
 		aperture = req->req_in[0];
 #ifdef DEBUG_DARWIN
@@ -278,7 +279,7 @@ darwin_ioframebuffer_connect_method_scalari_scalaro(args)
 			return mach_msg_error(args, EINVAL);
 
 		rep->rep_outcount = 1;
-		rep->rep_out[0] = 0x00801000; /* XXX */
+		rep->rep_out[0] = (int)ded->ded_vramoffset;
 		break;
 	}
 
@@ -603,6 +604,14 @@ darwin_ioframebuffer_connect_map_memory(args)
 	rep->rep_len = len;
 
 	mach_set_trailer(rep, *msglen);
+
+	/* Track VRAM offset for connect_method IOFBGETVRAMMAPOFFSET */
+	if (req->req_memtype == DARWIN_IOFRAMEBUFFER_VRAM_MEMORY) {
+		struct darwin_emuldata *ded;
+
+		ded = p->p_emuldata;
+		ded->ded_vramoffset = (void *)pvaddr;
+	}
 
 	return 0;
 }
