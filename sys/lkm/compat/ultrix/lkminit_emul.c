@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_linux.c,v 1.4 1997/05/19 22:11:17 jtc Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.1 2000/12/08 20:15:20 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,71 +42,27 @@
 #include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_elf.h>
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
+extern const struct emul emul_ultrix;
 
-#include <compat/linux/linux_exec.h>
-
-extern int exec_linux_aout_makecmds();
-extern struct emul *emul_linux_elf;
-extern struct emul *emul_linux_aout;
-extern struct emul _emul_linux_elf;
-extern struct emul _emul_linux_aout;
-
-struct execsw linux_lkm_execsw = {
-  LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds,
-};
+int compat_ultrix_lkmentry __P((struct lkm_table *, int, int));
 
 /*
- * declare the filesystem
+ * declare the emulation
  */
-MOD_EXEC("compat_linux", -1, &linux_lkm_execsw);
+MOD_COMPAT("ultrix", -1, &emul_ultrix);
 
 /*
  * entry point
  */
 int
-compat_linux_lkmentry(lkmtp, cmd, ver)
+compat_ultrix_lkmentry(lkmtp, cmd, ver)
 	struct lkm_table *lkmtp;	
 	int cmd;
 	int ver;
 {
-	DISPATCH(lkmtp, cmd, ver,
-		 compat_linux_lkmload,
-		 compat_linux_lkmunload,
-		 lkm_nofunc);
-}
-
-int
-compat_linux_lkmload(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
-	int cmd;
-{
-	if (elf_probe_funcs_insert(linux_elf32_probe))
-		return 1;  /* Failure! */
-	emul_linux_aout = &_emul_linux_aout;
-	emul_linux_elf = &_emul_linux_elf;
-
-	return 0;
-}
-
-/*
- * Note that it is NOT safe to unload this at all...
- */
-int
-compat_linux_lkmunload(lkmtp, cmd)
-	struct lkm_table *lkmtp;	
-	int cmd;
-{
-	if (elf_probe_funcs_insert(linux_elf32_probe))
-		return 1;  /* Failure! */
-	emul_linux_aout = NULL;
-	emul_linux_elf = NULL;
-
-	return 0;
+	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
 }
