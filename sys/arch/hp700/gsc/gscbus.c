@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.8 2003/11/18 04:04:42 chs Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.9 2003/11/20 03:58:47 chs Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.8 2003/11/18 04:04:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.9 2003/11/20 03:58:47 chs Exp $");
 
 #define GSCDEBUG
 
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.8 2003/11/18 04:04:42 chs Exp $");
 #include <hp700/gsc/gscbusvar.h>
 #include <hp700/hp700/machdep.h>
 
-int	gscmatch __P((struct device *, struct cfdata *, void *));
-void	gscattach __P((struct device *, struct device *, void *));
+int	gscmatch(struct device *, struct cfdata *, void *);
+void	gscattach(struct device *, struct device *, void *);
 
 struct gsc_softc {
 	struct device sc_dev;
@@ -111,7 +111,7 @@ CFATTACH_DECL(gsc, sizeof(struct gsc_softc),
  * to fix up the module's attach arguments, then we match
  * and attach it.
  */
-static void gsc_module_callback __P((struct device *, struct confargs *));
+static void gsc_module_callback(struct device *, struct confargs *);
 static void
 gsc_module_callback(struct device *self, struct confargs *ca)
 {
@@ -129,10 +129,7 @@ gsc_module_callback(struct device *self, struct confargs *ca)
 }
 
 int
-gscmatch(parent, cf, aux)   
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+gscmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 
@@ -140,13 +137,10 @@ gscmatch(parent, cf, aux)
 }
 
 void
-gscattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+gscattach(struct device *parent, struct device *self, void *aux)
 {
-	register struct gsc_softc *sc = (struct gsc_softc *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct gsc_softc *sc = (struct gsc_softc *)self;
+	struct gsc_attach_args *ga = aux;
 
 	sc->sc_ga = *ga;
 
@@ -165,9 +159,8 @@ gscattach(parent, self, aux)
 }
 
 int
-gscprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+gscprint(void *aux, const char *pnp)
 {
+
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_gsc.c,v 1.8 2003/07/15 02:29:25 lukem Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.9 2003/11/20 03:58:47 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_gsc.c,v 1.8 2003/07/15 02:29:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_gsc.c,v 1.9 2003/11/20 03:58:47 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,7 @@ CFATTACH_DECL(osiop_gsc, sizeof(struct osiop_softc),
     osiop_gsc_match, osiop_gsc_attach, NULL, NULL);
 
 int
-osiop_gsc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+osiop_gsc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
@@ -119,12 +116,10 @@ osiop_gsc_match(parent, match, aux)
 }
 
 void
-osiop_gsc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+osiop_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	register struct osiop_softc *sc = (void *)self;
-	register struct gsc_attach_args *ga = aux;
+	struct osiop_softc *sc = (void *)self;
+	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 
 	sc->sc_bst = ga->ga_iot;
@@ -171,8 +166,7 @@ osiop_gsc_attach(parent, self, aux)
  * interrupt handler
  */
 int
-osiop_gsc_intr(arg)
-	void *arg;
+osiop_gsc_intr(void *arg)
 {
 	struct osiop_softc *sc = arg;
 	u_int8_t istat;
