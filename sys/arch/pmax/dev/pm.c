@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.15 1996/09/08 19:28:05 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.16 1996/09/21 03:25:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ pm needs dc device
 #include <sys/proc.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 
@@ -87,13 +88,13 @@ pm needs dc device
 #include <machine/fbvar.h>
 
 #include <pmax/pmax/kn01.h>
-#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/cons.h>
 
 #include <pmax/dev/fbreg.h>
+#include <pmax/dev/pmvar.h>
 
 #include <pmax/dev/pmreg.h>
-#include <pmax/dev/bt478.h>
+#include <pmax/dev/bt478var.h>
 
 /*
  * These need to be mapped into user space.
@@ -117,35 +118,19 @@ void pmPosCursor __P((struct fbinfo *fi, int x, int y));
 void bt478CursorColor __P((struct fbinfo *fi, u_int *color));
 void bt478InitColorMap __P((struct fbinfo *fi));
 
-static void pmLoadColorMap __P ((ColorMap *ptr));	/*XXX*/
-
 
 int pminit __P((struct fbinfo *fi, int unit, int silent));
 
 static int pm_video_on __P ((struct fbinfo *));
 static int pm_video_off __P ((struct fbinfo *));
-int bt478LoadColorMap __P ((struct fbinfo *, caddr_t, int, int));
-int bt478GetColorMap __P ((struct fbinfo *, caddr_t, int, int));
 
 
-#if 0
-static void pmVDACInit();
-void pmKbdEvent(), pmMouseEvent(), pmMouseButtons();
-#endif
+/*
+ * pm framebuffers are only found in {dec,vax}station 3100s with dc7085s
+ */
 
-/* pm framebuffers are only found in {dec,vax}station 3100s with dc7085s */
+void dcPutc	__P((dev_t, int));		/* XXX */
 
-extern void dcPutc();
-extern void (*dcDivertXInput)();
-extern void (*dcMouseEvent)();
-extern void (*dcMouseButtons)();
-extern int pmax_boardtype;
-extern u_short defCursor[32];
-
-void genConfigMouse(), genDeconfigMouse();
-void genKbdEvent(), genMouseEvent(), genMouseButtons();
-
-extern void pmEventQueueInit __P((pmEventQueue *qe));
 
 #define CMAP_BITS	(3 * 256)		/* 256 entries, 3 bytes per. */
 static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
@@ -187,7 +172,6 @@ pmmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	caddr_t pmaddr = (caddr_t)ca->ca_addr;
 
@@ -207,8 +191,8 @@ pmattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	caddr_t pmaddr = (caddr_t)ca->ca_addr;
+	/*struct confargs *ca = aux;*/
+	/*caddr_t pmaddr = (caddr_t)ca->ca_addr;*/
 
 	if (!pminit(&pmfi, 0, 0))
 		return;
@@ -224,6 +208,7 @@ pmattach(parent, self, aux)
  * pmax FB initialization.  This is abstracted out from pmbattch() so
  * that a console framebuffer can be initialized early in boot.
  */
+int
 pminit(fi, unit, silent)
 	struct fbinfo *fi;
 	int unit;
@@ -242,7 +227,7 @@ pminit(fi, unit, silent)
 	} else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("pm%d: no memory for cmap 0x%x\n", unit);
+			printf("pm%d: no memory for cmap\n", unit);
 			return (0);
 		}
 	}
@@ -297,7 +282,7 @@ pminit(fi, unit, silent)
 	 */
 	fi->fi_fbu = (struct fbuaccess *)
 		MACH_PHYS_TO_UNCACHED(MACH_CACHED_TO_PHYS(&pmu));
-	fi->fi_glasstty->KBDPutc = dcPutc;
+	fi->fi_glasstty->KBDPutc = dcPutc;	/* XXX */
 	fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 
 	if (fi->fi_type.fb_depth == 1) {
@@ -353,10 +338,6 @@ pminit(fi, unit, silent)
 }
 
 
-static u_char	bg_RGB[3];	/* background color for the cursor */
-static u_char	fg_RGB[3];	/* foreground color for the cursor */
-
-
 /*
  * ----------------------------------------------------------------------------
  *
@@ -384,42 +365,10 @@ pmLoadCursor(fi, cur)
 	pcc->cmdr = curReg;
 	for (i = 0; i < 32; i++) {
 		pcc->memory = cur[i];
-		MachEmptyWriteBuffer();
+		wbflush();
 	}
 	curReg &= ~PCC_LODSA;
 	pcc->cmdr = curReg;
-}
-
-/* should zap pmloadcolormap too, but i haven't fixed the callers yet */
-
-/*
- * ----------------------------------------------------------------------------
- *
- * pmLoadColorMap --
- *
- *	Load the color map.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The color map is loaded.
- *
- * ----------------------------------------------------------------------------
- */
-static void
-pmLoadColorMap(ptr)
-	ColorMap *ptr;
-{
-	register VDACRegs *vdac = (VDACRegs *)MACH_PHYS_TO_UNCACHED(KN01_SYS_VDAC);
-
-	if (ptr->index > 256)
-		return;
-
-	vdac->mapWA = ptr->index; MachEmptyWriteBuffer();
-	vdac->map = ptr->Entry.red; MachEmptyWriteBuffer();
-	vdac->map = ptr->Entry.green; MachEmptyWriteBuffer();
-	vdac->map = ptr->Entry.blue; MachEmptyWriteBuffer();
 }
 
 
@@ -458,9 +407,12 @@ pmPosCursor(fi, x, y)
 	pcc->ypos = PCC_Y_OFFSET + y;
 }
 
-/* enable the video display. */
 
-static int pm_video_on (fi)
+/*
+ * Enable the video display.
+ */
+static int
+pm_video_on (fi)
 	struct fbinfo *fi;
 {
 	register PCCRegs *pcc = (PCCRegs *)fi -> fi_base;

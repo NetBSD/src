@@ -1,4 +1,4 @@
-/*	$NetBSD: xcfb.c,v 1.15 1996/05/29 06:15:53 mhitch Exp $	*/
+/*	$NetBSD: xcfb.c,v 1.16 1996/09/21 03:25:17 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -157,16 +157,6 @@ struct fbdriver xcfb_driver = {
 /*
  * Forward references.
  */
-extern void fbScreenInit __P((struct fbinfo *fi));
-
-
-void genKbdEvent(), genMouseEvent(), genMouseButtons();
-
-extern void dtopKBDPutc();
-extern void (*dtopDivertXInput)();
-extern void (*dtopMouseEvent)();
-extern void (*dtopMouseButtons)();
-extern int pmax_boardtype;
 extern u_short defCursor[32];
 
 
