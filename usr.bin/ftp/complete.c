@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.6 1997/03/16 14:24:16 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.7 1997/04/14 09:09:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$NetBSD: complete.c,v 1.6 1997/03/16 14:24:16 lukem Exp $";
+static char rcsid[] = "$NetBSD: complete.c,v 1.7 1997/04/14 09:09:16 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -364,8 +364,8 @@ complete(el, ch)
 			return (complete_local(word, dolist));
 		case 'r':			/* remote complete */
 		case 'R':
-			if (!connected) {
-				puts("\nMust be connected to complete.");
+			if (connected != -1) {
+				puts("\nMust be logged in to complete.");
 				return (CC_REDISPLAY);
 			}
 			return (complete_remote(word, dolist));
