@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.60 2001/01/14 11:17:28 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.61 2001/02/02 21:52:12 is Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -111,6 +111,12 @@ dev_decl(filedesc,open);
 #include "rnd.h"
 #include "scsibus.h"
 
+#include "wsdisplay.h"
+#include "amidisplaycc.h"
+#include "wskbd.h"
+cdev_decl(wsdisplay);
+cdev_decl(wskbd);
+
 cdev_decl(wd);
 
 /* open, close, ioctl */
@@ -214,6 +220,10 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NRAID,raid),	/* 50: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 51: svr4 net pseudo-device */
 	cdev_disk_init(NWD,wd),		/* 52: IDE disk */
+	cdev_wsdisplay_init(NWSDISPLAY,
+			    wsdisplay), /* 53: display */
+
+	cdev_mouse_init(NWSKBD,wskbd),  /* 54: keyboard */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -356,10 +366,14 @@ chrtoblk(dev)
  */
 cons_decl(ser);
 cons_decl(ite);
+cons_decl(amidisplaycc_);
 
 struct	consdev constab[] = {
 #if NSER > 0
 	cons_init(ser),
+#endif
+#if NAMIDISPLAYCC>0
+	cons_init(amidisplaycc_),
 #endif
 #if NITE > 0
 	cons_init(ite),

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.34 2000/05/25 18:39:09 is Exp $	*/
+/*	$NetBSD: kbd.c,v 1.35 2001/02/02 21:52:11 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -58,7 +58,59 @@
 #include <amiga/dev/kbdmap.h>
 #include <amiga/dev/event_var.h>
 #include <amiga/dev/vuid_event.h>
+
 #include "kbd.h"
+#include "ite.h"
+
+/* WSKBD */
+
+/* 
+ * If NWSKBD>0 we try to attach an wskbd device to us. What follows
+ * is definitions of callback functions and structures that are passed
+ * to wscons when initializing.
+ */
+
+#include "wskbd.h"
+
+#if NWSKBD>0
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdvar.h>
+#include <dev/wscons/wsksymdef.h>
+#include <dev/wscons/wsksymvar.h>
+#include <amiga/dev/wskbdmap_amiga.h>
+
+/* accessops */
+int     kbd_enable    __P((void *, int));
+void    kbd_set_leds  __P((void *, int));
+int     kbd_ioctl     __P((void *, u_long, caddr_t, int, struct proc *));
+
+/* console ops */
+void    kbd_getc      __P((void *, u_int *, int *));
+void    kbd_pollc     __P((void *, int));
+void    kbd_bell      __P((void *, u_int, u_int, u_int));
+
+static struct wskbd_accessops kbd_accessops = {
+	kbd_enable,
+	kbd_set_leds,
+	kbd_ioctl
+};
+
+static struct wskbd_consops kbd_consops = {
+	kbd_getc,
+	kbd_pollc,
+	kbd_bell
+};
+
+/*
+ * Pointer to keymap. It is defined in wskbdmap_amiga.c.
+ */
+static struct wskbd_mapdata kbd_mapdata = {
+	amigakbd_keydesctab,
+	KB_US
+};
+
+#endif /* WSKBD */
+
 
 #include <sys/conf.h>
 #include <machine/conf.h>
@@ -69,6 +121,11 @@ struct kbd_softc {
 #ifdef DRACO
 	u_char k_rlprfx;	/* MF-II rel. prefix has been seen */
 	u_char k_mf2;
+#endif
+
+#if NWSKBD>0
+	struct device *k_wskbddev; /* pointer to wskbd for sending strokes */
+	int k_pollingmode;         /* polling mode on? whatever it isss... */
 #endif
 };
 struct kbd_softc kbd_softc;
@@ -117,6 +174,26 @@ kbdattach(pdp, dp, auxp)
 	printf(": CIA A type Amiga\n");
 #endif
 
+#if NWSKBD>0
+	if (dp != NULL) {
+		/*
+		 * Try to attach the wskbd.
+		 */
+		struct wskbddev_attach_args waa;
+
+		/* Maybe should be done before this?... */
+		wskbd_cnattach(&kbd_consops, NULL, &kbd_mapdata);
+
+		waa.console = 1;
+		waa.keymap = &kbd_mapdata;
+		waa.accessops = &kbd_accessops;
+		waa.accesscookie = NULL;
+		kbd_softc.k_wskbddev = config_found(dp, &waa, wskbddevprint);
+
+		kbd_softc.k_pollingmode = 0;
+	}
+	kbdenable();
+#endif /* WSKBD */
 }
 
 /* definitions for amiga keyboard encoding. */
@@ -574,13 +651,35 @@ kbdstuffchar(c)
 	struct kbd_softc *k = &kbd_softc;
 	int put;
 
+#if NWSKBD>0
+	/* 
+	 * If we have attached a wskbd and not in polling mode and
+	 * nobody has opened us directly, then send the keystroke
+	 * to the wskbd.
+	 */
+
+	if (kbd_softc.k_pollingmode == 0 
+	    && kbd_softc.k_wskbddev != NULL
+	    && k->k_event_mode == 0) {
+		wskbd_input(kbd_softc.k_wskbddev,
+			    KEY_UP(c) ? 
+			    WSCONS_EVENT_KEY_UP : 
+			    WSCONS_EVENT_KEY_DOWN,
+			    KEY_CODE(c));
+		return;
+	}
+
+#endif /* NWSKBD */
+
 	/* 
 	 * If not in event mode, deliver straight to ite to process 
 	 * key stroke 
 	 */
 
 	if (! k->k_event_mode) {
+#if NITE>0
 		ite_filter (c, ITEFILT_TTY);
+#endif
 		return;
 	}
 
@@ -626,3 +725,86 @@ drkbdintr()
 }
 
 #endif
+
+
+#if NWSKBD>0
+/*
+ * These are the callback functions that are passed to wscons.
+ * They really don't do anything worth noting, just call the
+ * other functions above.
+ */
+
+int
+kbd_enable(c, on)
+	void *c;
+	int   on;
+{
+	/* Wonder what this is supposed to do... */
+	return (0);
+}
+
+void
+kbd_set_leds(c, leds)
+	void *c;
+	int   leds;
+{
+}
+
+int 
+kbd_ioctl(c, cmd, data, flag, p)
+	void        *c;
+	u_long       cmd;
+	caddr_t      data;
+	int          flag;
+	struct proc *p;
+{
+	switch (cmd)
+	{
+	case WSKBDIO_COMPLEXBELL:
+		return 0;
+	case WSKBDIO_SETLEDS:
+		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int*)data = 0;
+		return 0;
+	case WSKBDIO_GTYPE:
+		/* XXX well is it, dont think so */ 
+		*(u_int*)data = WSKBD_TYPE_PC_AT; 
+		return 0;
+	}
+
+	/* We are supposed to return -1 to wscons if we didnt understand */
+	return (-1);
+}
+
+void
+kbd_getc(c, type, data)
+	void  *c;
+	u_int *type;
+	int   *data;
+{
+	int key;
+
+	key = kbdgetcn();
+
+	*data = KEY_CODE(key);
+	*type = KEY_UP(key) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
+}
+
+void
+kbd_pollc(c, on)
+	void *c;
+	int   on;
+{
+	kbd_softc.k_pollingmode = on;
+}
+
+void
+kbd_bell(c, x, y, z)
+	void  *c;
+	u_int  x;
+	u_int  y;
+	u_int  z;
+{
+}
+#endif /* WSKBD */
