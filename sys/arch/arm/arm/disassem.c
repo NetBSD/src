@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.9 2001/01/18 21:41:09 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.10 2001/01/18 21:54:28 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: disassem.c,v 1.9 2001/01/18 21:41:09 bjh21 Exp $");
+__RCSID("$NetBSD: disassem.c,v 1.10 2001/01/18 21:54:28 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -125,8 +125,8 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0e100000, 0x04100000, "ldr",	"BTdaW" },
     { 0x0c100010, 0x04000000, "str",	"BTdaW" },
     { 0x0c100010, 0x04100000, "ldr",	"BTdaW" },
-    { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },	/* separate out r13 base */
-    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },	/* separate out r13 base */    
+    { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },/* separate out r13 base */
+    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },/* separate out r13 base */    
     { 0x0e100000, 0x08000000, "stm",	"XnWl" },
     { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
     { 0x0e500ff0, 0x001000b0, "ldrh",	"daW" },
@@ -136,9 +136,9 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0f200090, 0x00200090, "und",	"x" },	/* Before data processing */
     { 0x0e1000d0, 0x000000d0, "und",	"x" },	/* Before data processing */
     { 0x0fb00ff0, 0x01000090, "swp",	"Bdmo" },
-    { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },		/* Before data processing */
-    { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },	/* Before data processing */
-    { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },	/* Before data processing */
+    { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },	/* Before data processing */
+    { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },/* Before data processing */
+    { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },/* Before data processing */
     { 0x0ffffff0, 0x012fff10, "bx",	"m" },
     { 0x0fff0ff0, 0x016f0f10, "clz",	"dm" },
     { 0x0ffffff0, 0x012fff30, "blx",	"m" },
