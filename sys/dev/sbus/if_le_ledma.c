@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.10 2000/05/10 14:25:43 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.11 2000/07/09 20:57:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -441,7 +441,7 @@ leattach_ledma(parent, self, aux)
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
-		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0,
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET, 0,
 					 am7990_intr, sc);
 
 	am7990_config(&lesc->sc_am7990);
