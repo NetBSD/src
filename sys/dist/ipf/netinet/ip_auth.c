@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.1 2004/10/01 15:25:59 christos Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.2 2004/12/06 02:59:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
@@ -121,7 +121,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.1 2004/10/01 15:25:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.2 2004/12/06 02:59:23 christos Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.2 2004/06/08 13:14:12 darrenr Exp";
 #endif
@@ -372,7 +372,9 @@ int mode;
 	mb_t *m;
 #if defined(_KERNEL) && !defined(MENTAT) && !defined(linux) && \
     (!defined(__FreeBSD_version) || (__FreeBSD_version < 501000))
+#ifdef INET
 	struct ifqueue *ifq;
+#endif
 # ifdef USE_SPL
 	int s;
 # endif /* USE_SPL */
@@ -509,6 +511,7 @@ fr_authioctlloop:
 		RWLOCK_EXIT(&ipf_auth);
 #ifdef	_KERNEL
 		if ((m != NULL) && (au->fra_info.fin_out != 0)) {
+#ifdef INET
 # ifdef MENTAT
 			error = !putq(fra->fra_q, m);
 # else /* MENTAT */
@@ -524,11 +527,13 @@ fr_authioctlloop:
 #   endif
 #  endif /* Linux */
 # endif /* MENTAT */
+#endif
 			if (error != 0)
 				fr_authstats.fas_sendfail++;
 			else
 				fr_authstats.fas_sendok++;
 		} else if (m) {
+#ifdef INET
 # ifdef MENTAT
 			error = !putq(fra->fra_q, m);
 # else /* MENTAT */
@@ -555,6 +560,7 @@ fr_authioctlloop:
 #   endif
 #  endif /* Linux */
 # endif /* MENTAT */
+#endif
 			if (error != 0)
 				fr_authstats.fas_quefail++;
 			else

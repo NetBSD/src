@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.74 2004/12/04 23:22:58 peter Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.75 2004/12/06 02:59:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.74 2004/12/04 23:22:58 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.75 2004/12/06 02:59:23 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -491,11 +491,11 @@ tun_output(ifp, m0, dst, rt)
 	struct rtentry *rt;
 {
 	struct tun_softc *tp = ifp->if_softc;
-#ifdef INET
 	int		s;
 	int		error;
-#endif
+#ifdef INET
 	int		mlen;
+#endif
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();
