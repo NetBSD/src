@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.160 2001/12/17 21:03:20 wiz Exp $
+.\"	$NetBSD: options.4,v 1.161 2001/12/18 03:44:35 atatat Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1022,6 +1022,11 @@ included by the config file itself, e.g.
 .Pa GENERIC.local
 or
 .Pa std.$MACHINE .
+The embedded config file can be extracted from the resulting kernel by
+the following command:
+.Bd -literal -offset indent
+strings netbsd | sed -n 's/^_CFG_//p' | unvis
+.Ed
 .It Cd options INCLUDE_JUST_CONFIG
 Similar to the above option, but includes just the actual config file,
 not any included files.
