@@ -30,7 +30,7 @@
  *
  *	dpreg.h: definitions for the dp driver.
  *
- *	$Id: scnreg.h,v 1.1.1.1 1993/09/09 23:53:52 phil Exp $
+ *	$Id: scnreg.h,v 1.2 1994/03/08 19:48:20 phil Exp $
  */
 
 /* Constants. */
@@ -48,9 +48,11 @@
 
 #define SCN_CON_MAP_STAT  0xFFC80001	/* raw addresses for console */
 #define SCN_CON_MAP_DATA  0xFFC80003	/* Mapped .... */
+#define SCN_CON_MAP_ISR	  0xFFC80005
 
-#define SCN_CONSOLE_STAT  0x28000001    /* raw addresses for console */
-#define SCN_CONSOLE_DATA  0x28000003    /* Unmapped .... */
+#define SCN_CON_STAT 	  0x28000001    /* raw addresses for console */
+#define SCN_CON_DATA  	  0x28000003    /* Unmapped .... */
+#define SCN_CON_ISR	  0x28000005
 
 
 /* SCN2691 registers, values. */
