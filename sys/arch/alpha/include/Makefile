@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2002/11/26 23:30:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2003/01/17 22:11:16 thorpej Exp $
 
 INCSDIR= /usr/include/alpha
 
@@ -13,7 +13,7 @@ INCS=	alpha_cpu.h ansi.h aout_machdep.h asm.h atomic.h autoconf.h \
 	intr.h \
 	kbio.h kcore.h \
 	limits.h lock.h \
-	math.h \
+	math.h mcontext.h \
 	pal.h param.h pcb.h pio.h pmap.h pmc.h proc.h profile.h prom.h psl.h \
 	pte.h ptrace.h \
 	reg.h rpb.h \

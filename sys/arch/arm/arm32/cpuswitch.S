@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.28 2002/10/19 00:10:53 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.29 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -88,15 +88,15 @@
 #ifdef MULTIPROCESSOR
 .Lcpu_info_store:
 	.word	_C_LABEL(cpu_info_store)
-.Lcurproc:
+.Lcurlwp:
 	/* FIXME: This is bogus in the general case. */
-	.word	_C_LABEL(cpu_info_store) + CI_CURPROC
+	.word	_C_LABEL(cpu_info_store) + CI_CURLWP
 
 .Lcurpcb:
 	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
 #else
-.Lcurproc:
-	.word	_C_LABEL(curproc)
+.Lcurlwp:
+	.word	_C_LABEL(curlwp)
 
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
@@ -165,36 +165,38 @@ ASENTRY_NP(idle)
 
 
 /*
- * Find a new process to run, save the current context and
+ * Find a new lwp to run, save the current context and
  * load the new context
+ *
+ * Arguments:
+ *	r0	'struct lwp *' of the current LWP
  */
 
 ENTRY(cpu_switch)
 /*
  * Local register usage. Some of these registers are out of date.
- * r1 = oldproc
+ * r1 = oldlwp
+ * r2 = spl level
  * r3 = whichqs
  * r4 = queue
  * r5 = &qs[queue]
- * r6 = newproc
+ * r6 = newlwp
  * r7 = scratch
  */
 	stmfd	sp!, {r4-r7, lr}
 
 	/*
-	 * Get the current process and indicate that there is no longer
-	 * a valid process (curproc = 0).  Zero the current PCB pointer
-	 * while we're at it.
+	 * Indicate that there is no longer a valid process (curlwp = 0).
+	 * Zero the current PCB pointer while we're at it.
 	 */
-	ldr	r7, .Lcurproc
+	ldr	r7, .Lcurlwp
 	ldr	r6, .Lcurpcb
-	mov	r0, #0x00000000
-	ldr	r1, [r7]		/* r1 = curproc */
-	str	r0, [r7]		/* curproc = NULL */
-	str	r0, [r6]		/* curpcb = NULL */
+	mov	r2, #0x00000000
+	str	r2, [r7]		/* curproc = NULL */
+	str	r2, [r6]		/* curpcb = NULL */
 
 	/* stash the old proc while we call functions */
-	mov	r5, r1
+	mov	r5, r0
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/* release the sched_lock before handling interrupts */
@@ -217,11 +219,11 @@ ENTRY(cpu_switch)
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
 
-	/* First phase : find a new process */
+	/* First phase : find a new lwp */
 
 	ldr	r7, .Lwhichqs
 
-	/* rem: r5 = old proc */
+	/* rem: r5 = old lwp */
 	/* rem: r7 = &whichqs */
 
 .Lswitch_search:
@@ -240,7 +242,7 @@ ENTRY(cpu_switch)
 	/* put old proc back in r1 */
 	mov	r1, r5
 
-	/* rem: r1 = old proc */
+	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs */
 	/* rem: interrupts are disabled */
 
@@ -268,7 +270,7 @@ ENTRY(cpu_switch)
 	ldrb	r4, [ r5, r4, lsr #26 ]
 
 	/* rem: r0 = bit mask of chosen queue (1 << r4) */
-	/* rem: r1 = old proc */
+	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs */
 	/* rem: r4 = queue number */
 	/* rem: interrupts are disabled */
@@ -277,19 +279,19 @@ ENTRY(cpu_switch)
 	add	r5, r6, r4, lsl #3
 
 	/*
-	 * Get the process from the queue and place the next process in
-	 * the queue at the head. This basically unlinks the process at
+	 * Get the lwp from the queue and place the next process in
+	 * the queue at the head. This basically unlinks the lwp at
 	 * the head of the queue.
 	 */
-	ldr	r6, [r5, #(P_FORW)]
+	ldr	r6, [r5, #(L_FORW)]
 
-	/* rem: r6 = new process */
-	ldr	r7, [r6, #(P_FORW)]
-	str	r7, [r5, #(P_FORW)]	
+	/* rem: r6 = new lwp */
+	ldr	r7, [r6, #(L_FORW)]
+	str	r7, [r5, #(L_FORW)]	
 
 	/*
 	 * Test to see if the queue is now empty. If the head of the queue
-	 * points to the queue itself then there are no more processes in
+	 * points to the queue itself then there are no more lwps in
 	 * the queue. We can therefore clear the queue not empty flag held
 	 * in r3.
 	 */
@@ -299,18 +301,18 @@ ENTRY(cpu_switch)
 
 	/* rem: r0 = bit mask of chosen queue (1 << r4) - NOT NEEDED AN MORE */
 
-	/* Fix the back pointer for the process now at the head of the queue. */
-	ldr	r0, [r6, #(P_BACK)]
-	str	r0, [r7, #(P_BACK)]
+	/* Fix the back pointer for the lwp now at the head of the queue. */
+	ldr	r0, [r6, #(L_BACK)]
+	str	r0, [r7, #(L_BACK)]
 
 	/* Update the RAM copy of the queue not empty flags word. */
 	ldr	r7, .Lwhichqs
 	str	r3, [r7]
 
-	/* rem: r1 = old proc */
+	/* rem: r1 = old lwp */
 	/* rem: r3 = whichqs - NOT NEEDED ANY MORE */
 	/* rem: r4 = queue number - NOT NEEDED ANY MORE */
-	/* rem: r6 = new process */
+	/* rem: r6 = new lwp */
 	/* rem: interrupts are disabled */
 
 	/* Clear the want_resched flag */
@@ -319,10 +321,10 @@ ENTRY(cpu_switch)
 	str	r0, [r7]
 
 	/*
-	 * Clear the back pointer of the process we have removed from
-	 * the head of the queue. The new process is isolated now.
+	 * Clear the back pointer of the lwp we have removed from
+	 * the head of the queue. The new lwp is isolated now.
 	 */
-	str	r0, [r6, #(P_BACK)]
+	str	r0, [r6, #(L_BACK)]
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/*
@@ -333,31 +335,33 @@ ENTRY(cpu_switch)
 	mov	r1, r7
 #endif
 
+.Lswitch_resume:
 #ifdef MULTIPROCESSOR
 	/* XXX use curcpu() */
 	ldr	r0, .Lcpu_info_store
-	str	r0, [r6, #(P_CPU)]
+	str	r0, [r6, #(L_CPU)]
 #else
-	/* p->p_cpu initialized in fork1() for single-processor */
+	/* l->l_cpu initialized in fork1() for single-processor */
 #endif
 
 	/* Process is now on a processor. */
-	mov	r0, #SONPROC			/* p->p_stat = SONPROC */
-	strb	r0, [r6, #(P_STAT)]
+	mov	r0, #LSONPROC			/* l->l_stat = LSONPROC */
+	str	r0, [r6, #(L_STAT)]
 
-	/* We have a new curproc now so make a note it */
-	ldr	r7, .Lcurproc
+	/* We have a new curlwp now so make a note it */
+	ldr	r7, .Lcurlwp
 	str	r6, [r7]
 
 	/* Hook in a new pcb */
 	ldr	r7, .Lcurpcb
-	ldr	r0, [r6, #(P_ADDR)]
+	ldr	r0, [r6, #(L_ADDR)]
 	str	r0, [r7]
 
 	/* At this point we can allow IRQ's again. */
 	IRQenable
 
-	/* rem: r1 = old proc */
+	/* rem: r1 = old lwp */
+	/* rem: r4 = return value */
 	/* rem: r6 = new process */
 	/* rem: interrupts are enabled */
 
@@ -365,17 +369,24 @@ ENTRY(cpu_switch)
 	 * If the new process is the same as the process that called
 	 * cpu_switch() then we do not need to save and restore any
 	 * contexts. This means we can make a quick exit.
-	 * The test is simple if curproc on entry (now in r1) is the
+	 * The test is simple if curlwp on entry (now in r1) is the
 	 * same as the proc removed from the queue we can jump to the exit.
 	 */
 	teq	r1, r6
+	moveq	r4, #0x00000000		/* default to "didn't switch" */
 	beq	.Lswitch_return
 
-	/* Remember the old process in r0 */
+	/*
+	 * At this point, we are guaranteed to be switching to
+	 * a new lwp.
+	 */
+	mov	r4, #0x00000001
+
+	/* Remember the old lwp in r0 */
 	mov	r0, r1
 
 	/*
-	 * If the curproc on entry to cpu_switch was zero then the
+	 * If the old lwp on entry to cpu_switch was zero then the
 	 * process that called it was exiting. This means that we do
 	 * not need to save the current context. Instead we can jump
 	 * straight to restoring the context for the new process.
@@ -383,18 +394,32 @@ ENTRY(cpu_switch)
 	teq	r0, #0x00000000
 	beq	.Lswitch_exited
 
-	/* rem: r0 = old proc */
+	/* rem: r0 = old lwp */
+	/* rem: r4 = return value */
 	/* rem: r6 = new process */
 	/* rem: interrupts are enabled */
 
 	/* Stage two : Save old context */
 
-	/* Get the user structure for the old process. */
-	ldr	r1, [r0, #(P_ADDR)]
+	/* Get the user structure for the old lwp. */
+	ldr	r1, [r0, #(L_ADDR)]
 
-	/* Save all the registers in the old process's pcb */
+	/* Save all the registers in the old lwp's pcb */
 	add	r7, r1, #(PCB_R8)
 	stmia	r7, {r8-r13}
+
+	/*
+	 * NOTE: We can now use r8-r13 until it is time to restore
+	 * them for the new process.
+	 */
+
+	/* Remember the old PCB. */
+	mov	r8, r1
+
+	/* r1 now free! */
+
+	/* Get the user structure for the new process in r9 */
+	ldr	r9, [r6, #(L_ADDR)]
 
 	/*
 	 * This can be optimised... We know we want to go from SVC32
@@ -405,24 +430,45 @@ ENTRY(cpu_switch)
 	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
 
-	str	sp, [r1, #(PCB_UND_SP)]
+	str	sp, [r8, #(PCB_UND_SP)]
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	/* rem: r0 = old proc */
-	/* rem: r1 = old pcb */
+	/* rem: r0 = old lwp */
+	/* rem: r4 = return value */
 	/* rem: r6 = new process */
+	/* rem: r8 = old PCB */
+	/* rem: r9 = new PCB */
 	/* rem: interrupts are enabled */
 
 	/* What else needs to be saved  Only FPA stuff when that is supported */
 
-	/* r1 now free! */
-
 	/* Third phase : restore saved context */
 
-	/* rem: r0 = old proc */
-	/* rem: r6 = new process */
+	/* rem: r0 = old lwp */
+	/* rem: r4 = return value */
+	/* rem: r6 = new lwp */
+	/* rem: r8 = old PCB */
+	/* rem: r9 = new PCB */
 	/* rem: interrupts are enabled */
+
+	/*
+	 * Get the new L1 table pointer into r11.  If we're switching to
+	 * an LWP with the same address space as the outgoing one, we can
+	 * skip the cache purge and the TTB load.
+	 *
+	 * To avoid data dep stalls that would happen anyway, we try
+	 * and get some useful work done in the mean time.
+	 */
+	ldr	r10, [r8, #(PCB_PAGEDIR)]	/* r10 = old L1 */
+	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
+
+	ldr	r3, .Lblock_userspace_access
+	mov	r1, #0x00000001
+	mov	r2, #0x00000000
+
+	teq	r10, r11			/* r10 == r11? */
+	beq	.Lcs_context_switched		/* yes! */
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
@@ -442,6 +488,13 @@ ENTRY(cpu_switch)
 	/* At this point we need to kill IRQ's again. */
 	IRQdisable
 
+	/* rem: r2 = 0 */
+	/* rem: r3 = &block_userspace_access */
+	/* rem: r4 = return value */
+	/* rem: r6 = new lwp */
+	/* rem: r9 = new PCB */
+	/* rem: r11 == new L1 */
+
 	/*
 	 * Interrupts are disabled so we can allow user space accesses again
 	 * as none will occur until interrupts are re-enabled after the
@@ -449,17 +502,17 @@ ENTRY(cpu_switch)
 	 */
 	str	r2, [r3]
 
-	/* Get the user structure for the new process in r1 */
-	ldr	r1, [r6, #(P_ADDR)]
-
-	/* Get the pagedir physical address for the process. */
-	ldr	r0, [r1, #(PCB_PAGEDIR)]
-
 	/* Switch the memory to the new process */
 	ldr	r3, .Lcpufuncs
+	mov	r0, r11
 	mov	lr, pc
 	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
-       
+
+.Lcs_context_switched:
+	/* rem: r4 = return value */
+	/* rem: r6 = new lwp */
+	/* rem: r9 = new PCB */
+
 	/*
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
@@ -469,18 +522,25 @@ ENTRY(cpu_switch)
 	orr	r2, r2, #(PSR_UND32_MODE)
         msr	cpsr_c, r2
 
-	ldr	sp, [r1, #(PCB_UND_SP)]
+	ldr	sp, [r9, #(PCB_UND_SP)]
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the save registers */
-	add	r7, r1, #PCB_R8
+	add	r7, r9, #PCB_R8
 	ldmia	r7, {r8-r13}
 
-	mov	r7, r1			/* preserve PCB pointer */
+	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
+
+	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
+
+	/* rem: r4 = return value */
+	/* rem: r5 = new lwp's proc */
+	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 
 #ifdef ARMFPE
-	add	r0, r1, #(USER_SIZE) & 0x00ff
+	add	r0, r7, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
@@ -488,14 +548,16 @@ ENTRY(cpu_switch)
 	/* We can enable interrupts again */
 	IRQenable
 
-	/* rem: r6 = new proc */
+	/* rem: r4 = return value */
+	/* rem: r5 = new lwp's proc */
+	/* rem: r6 = new lwp */
 	/* rem: r7 = new PCB */
 
 	/* 
 	 * Check for restartable atomic sequences (RAS).
 	 */
 
-	ldr	r2, [r6, #(P_NRAS)]
+	ldr	r2, [r5, #(P_NRAS)]
 	ldr	r4, [r7, #(PCB_TF)]	/* r4 = trapframe (used below) */
 	teq	r2, #0			/* p->p_nras == 0? */
 	bne	.Lswitch_do_ras		/* no, check for one */
@@ -506,8 +568,8 @@ ENTRY(cpu_switch)
 	ldr	r0, [sp], #0x0004
 	bl	_C_LABEL(splx)
 
-	/* cpu_switch returns the proc it switched to. */
-	mov	r0, r6
+	/* cpu_switch returns 1 == switched, 0 == didn't switch */
+	mov	r0, r4
 
 	/*
 	 * Pull the registers that got pushed when either savectx() or
@@ -517,7 +579,7 @@ ENTRY(cpu_switch)
 
 .Lswitch_do_ras:
 	ldr	r1, [r4, #(TF_PC)]	/* second ras_lookup() arg */
-	mov	r0, r6			/* first ras_lookup() arg */
+	mov	r0, r5			/* first ras_lookup() arg */
 	bl	_C_LABEL(ras_lookup)
 	cmn	r0, #1			/* -1 means "not in a RAS" */
 	strne	r0, [r4, #(TF_PC)]
@@ -525,90 +587,154 @@ ENTRY(cpu_switch)
 
 .Lswitch_exited:
 	/*
-	 * We skip the cache purge because switch_exit() already did
-	 * it.  Load up registers the way Lcs_cache_purge_skipped
-	 * expects.  Userspace access already blocked in switch_exit().
+	 * We skip the cache purge because switch_exit() already did it.
+	 * Load up registers the way .Lcs_cache_purge_skipped expects.
+	 * Userpsace access already blocked by switch_exit().
 	 */
+	ldr	r9, [r6, #(L_ADDR)]		/* r9 = new PCB */
 	ldr	r3, .Lblock_userspace_access
 	mov	r2, #0x00000000
+	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 	b	.Lcs_cache_purge_skipped
 
 /*
- * void switch_exit(struct proc *p, struct proc *p0);
- * Switch to proc0's saved context and deallocate the address space and kernel
- * stack for p.  Then jump into cpu_switch(), as if we were in proc0 all along.
+ * cpu_switchto(struct lwp *current, struct lwp *next)
+ * Switch to the specified next LWP
+ * Arguments:
+ *
+ *	r0	'struct lwp *' of the current LWP
+ *	r1	'struct lwp *' of the LWP to switch to
+ */
+ENTRY(cpu_switchto)
+	stmfd	sp!, {r4-r7, lr}
+
+	/* Lower the spl level to spl0 and get the current spl level. */
+	mov	r6, r0		/* save old lwp */
+	mov	r5, r1		/* save new lwp */
+
+#if defined(LOCKDEBUG)
+	/* release the sched_lock before handling interrupts */
+	bl	_C_LABEL(sched_unlock_idle)
+#endif
+
+#ifdef __NEWINTR
+	mov	r0, #(IPL_NONE)
+	bl	_C_LABEL(_spllower)
+#else /* ! __NEWINTR */
+#ifdef spl0
+	mov	r0, #(_SPL_0)
+	bl	_C_LABEL(splx)
+#else
+	bl	_C_LABEL(spl0)
+#endif /* spl0 */
+#endif /* __NEWINTR */
+
+	/* Push the old spl level onto the stack */
+	str	r0, [sp, #-0x0004]!
+
+	IRQdisable
+#if defined(LOCKDEBUG)
+	bl	_C_LABEL(sched_lock_idle)
+#endif
+
+	mov	r0, r6		/* restore old lwp */
+	mov	r1, r5		/* restore new lwp */
+
+	/* rem: r0 = old lwp */
+	/* rem: r1 = new lwp */
+	/* rem: interrupts are disabled */
+
+	/*
+	 * Okay, set up registers the way cpu_switch() wants them,
+	 * and jump into the middle of it (where we bring up the
+	 * new process).
+	 */
+	mov	r6, r1			/* r6 = new lwp */
+#if defined(LOCKDEBUG)
+	mov	r5, r0			/* preserve old lwp */
+	bl	_C_LABEL(sched_unlock_idle)
+	mov	r1, r5			/* r1 = old lwp */
+#else
+	mov	r1, r0			/* r1 = old lwp */
+#endif
+	b	.Lswitch_resume
+
+/*
+ * void switch_exit(struct lwp *l, struct lwp *l0, void (*exit)(struct lwp *));
+ * Switch to lwp0's saved context and deallocate the address space and kernel
+ * stack for l.  Then jump into cpu_switch(), as if we were in lwp0 all along.
  */
 
-/* LINTSTUB: Func: void switch_exit(struct proc *p, struct proc *p0) */
+/* LINTSTUB: Func: void switch_exit(struct lwp *l, struct lwp *l0, void (*)(struct lwp *)) */
 ENTRY(switch_exit)
 	/*
-	 * r0 = proc
-	 * r1 = proc0
+	 * The process is going away, so we can use callee-saved
+	 * registers here without having to save them.
 	 */
 
-	mov	r3, r0
+	mov	r4, r0
+	ldr	r0, .Lcurlwp
 
-	/* In case we fault */
-	ldr	r0, .Lcurproc
-	mov	r2, #0x00000000
+	mov	r5, r1
+	ldr	r1, .Lblock_userspace_access
+
+	mov	r6, r2
+
+	/*
+	 * r4 = lwp
+	 * r5 = lwp0
+	 * r6 = exit func
+	 */
+
+	mov	r2, #0x00000000		/* curlwp = NULL */
 	str	r2, [r0]
-
-/*	ldr	r0, .Lcurpcb
-	str	r2, [r0]*/
 
 	/*
 	 * Don't allow user space access between the purge and the switch.
 	 */
-	ldr	r0, .Lblock_userspace_access
 	mov	r2, #0x00000001
-	str	r2, [r0]
+	str	r2, [r1]
 
-	/* Switch to proc0 context */
-
-	stmfd	sp!, {r0-r3}
+	/* Switch to lwp0 context */
 
 	ldr	r0, .Lcpufuncs
 	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
-	ldmfd	sp!, {r0-r3}
+	ldr	r2, [r5, #(L_ADDR)]
+
+	/*
+	 * r2 = lwp0's PCB
+	 */
 
 	IRQdisable
 
-	ldr	r2, [r1, #(P_ADDR)]
 	ldr	r0, [r2, #(PCB_PAGEDIR)]
 
 	/* Switch the memory to the new process */
-	ldr	r4, .Lcpufuncs
+	ldr	r1, .Lcpufuncs
 	mov	lr, pc
-	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
-       
+	ldr	pc, [r1, #CF_CONTEXT_SWITCH]
+
+	ldr	r0, .Lcurpcb
+   
 	/* Restore all the save registers */
 	add	r7, r2, #PCB_R8
 	ldmia	r7, {r8-r13}
 
-	/* This is not really needed ! */
-	/* Yes it is for the su and fu routines */
-	ldr	r0, .Lcurpcb
-	str	r2, [r0]
+	str	r2, [r0]	/* curpcb = lwp0's PCB */
 
 	IRQenable
-
-/*	str	r3, [sp, #-0x0004]!*/
 
 	/*
 	 * Schedule the vmspace and stack to be freed.
 	 */
-	mov	r0, r3			/* exit2(p) */
-	bl	_C_LABEL(exit2)
-
-	/* Paranoia */
-	ldr	r1, .Lcurproc
-	mov	r0, #0x00000000
-	str	r0, [r1]
+	mov	r0, r4			/* {lwp_}exit2(l) */
+	mov	lr, pc
+	mov	pc, r6
 
 	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
-	mov	r5, #0x00000000		/* r5 = old proc = NULL */
+	mov	r5, #0x00000000		/* r5 = old lwp = NULL */
 	b	.Lswitch_search
 
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
@@ -657,5 +783,3 @@ ENTRY(proc_trampoline)
 	.byte	 9,  0,  0, 24,  0,  0, 20, 26  /* 40-47 */
 	.byte	30,  0,  0,  0,  0, 23,  0, 19  /* 48-55 */
 	.byte   29,  0, 22, 18, 28, 17, 16,  0  /* 56-63 */
-
-/* End of cpuswitch.S */

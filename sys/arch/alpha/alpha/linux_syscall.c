@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.9 2002/12/21 16:23:57 manu Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.10 2003/01/17 22:11:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,11 +102,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9 2002/12/21 16:23:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10 2003/01/17 22:11:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #ifdef KTRACE
@@ -132,8 +134,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9 2002/12/21 16:23:57 manu Exp $
 #include <compat/linux/arch/alpha/linux_machdep.h>
 
 void	linux_syscall_intern(struct proc *);
-void	linux_syscall_plain(struct proc *, u_int64_t, struct trapframe *);
-void	linux_syscall_fancy(struct proc *, u_int64_t, struct trapframe *);
+void	linux_syscall_plain(struct lwp *, u_int64_t, struct trapframe *);
+void	linux_syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 
 void
 linux_syscall_intern(struct proc *p)
@@ -168,18 +170,19 @@ linux_syscall_intern(struct proc *p)
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-linux_syscall_plain(struct proc *p, u_int64_t code, struct trapframe *framep)
+linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
 	u_int64_t rval[2];
 	u_int64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
+	struct proc *p = l->l_proc;
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 	uvmexp.syscalls++;
-	p->p_md.md_tf = framep;
+	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;
 
@@ -225,12 +228,12 @@ linux_syscall_plain(struct proc *p, u_int64_t code, struct trapframe *framep)
 	args += hidden;
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -252,25 +255,26 @@ linux_syscall_plain(struct proc *p, u_int64_t code, struct trapframe *framep)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif
-	KERNEL_PROC_UNLOCK(p);
-	userret(p);
+	KERNEL_PROC_UNLOCK(l);
+	userret(l);
 }
 
 void
-linux_syscall_fancy(struct proc *p, u_int64_t code, struct trapframe *framep)
+linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
 	u_int64_t rval[2];
 	u_int64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
+	struct proc *p = l->l_proc;
 
-	KERNEL_PROC_LOCK(p);
+	KERNEL_PROC_LOCK(l);
 
 	uvmexp.syscalls++;
-	p->p_md.md_tf = framep;
+	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;
 
@@ -316,12 +320,12 @@ linux_syscall_fancy(struct proc *p, u_int64_t code, struct trapframe *framep)
 	args += hidden;
 
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -342,9 +346,9 @@ linux_syscall_fancy(struct proc *p, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-	KERNEL_PROC_UNLOCK(p);
+	KERNEL_PROC_UNLOCK(l);
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p);
+	userret(l);
 }

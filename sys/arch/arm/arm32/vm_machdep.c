@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 2002/11/24 01:07:47 chris Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -74,7 +74,8 @@ extern pv_addr_t systempage;
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
-void	switch_exit	__P((struct proc *p, struct proc *p0));
+void	switch_exit	__P((struct lwp *l, struct lwp *l0,
+			     void (*)(struct lwp *)));
 extern void proc_trampoline	__P((void));
 
 /*
@@ -84,6 +85,21 @@ extern void proc_trampoline	__P((void));
  *		 on forking and check the pattern on exit, reporting
  *		 the amount of stack used.
  */
+
+void
+cpu_proc_fork(p1, p2)
+	struct proc *p1, *p2;
+{
+
+#if defined(PERFCTRS)
+	if (PMC_ENABLED(p1))
+		pmc_md_fork(p1, p2);
+	else {
+		p2->p_md.pmc_enabled = 0;
+		p2->p_md.pmc_state = NULL;
+	}
+#endif
+}
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -104,81 +120,72 @@ extern void proc_trampoline	__P((void));
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize, func, arg)
-	struct proc *p1;
-	struct proc *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1;
+	struct lwp *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
+	struct pcb *pcb = (struct pcb *)&l2->l_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("cpu_fork: %p %p %p %p\n", p1, p2, curproc, &proc0);
+		printf("cpu_lwp_fork: %p %p %p %p\n", l1, l2, curlwp, &lwp0);
 #endif	/* PMAP_DEBUG */
 
 #if 0 /* XXX */
-	if (p1 == curproc) {
+	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}
 #endif
 
-#if defined(PERFCTRS)
-	if (PMC_ENABLED(p1))
-		pmc_md_fork(p1, p2);
-	else {
-		p2->p_md.pmc_enabled = 0;
-		p2->p_md.pmc_state = NULL;
-	}
-#endif
-
 	/* Copy the pcb */
-	*pcb = p1->p_addr->u_pcb;
+	*pcb = l1->l_addr->u_pcb;
 
 	/* 
 	 * Set up the undefined stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
-	pcb->pcb_un.un_32.pcb32_und_sp = (u_int)p2->p_addr +
+	pcb->pcb_un.un_32.pcb32_und_sp = (u_int)l2->l_addr +
 	    USPACE_UNDEF_STACK_TOP;
-	pcb->pcb_un.un_32.pcb32_sp = (u_int)p2->p_addr + USPACE_SVC_STACK_TOP;
+	pcb->pcb_un.un_32.pcb32_sp = (u_int)l2->l_addr + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
 	/* Fill the undefined stack with a known pattern */
-	memset(((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
+	memset(((u_char *)l2->l_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
 	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
 	/* Fill the kernel stack with a known pattern */
-	memset(((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
+	memset(((u_char *)l2->l_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
 	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
 #endif	/* STACKCHECKS */
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("p1->procaddr=%p p1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    p1->p_addr, &p1->p_addr->u_pcb, p1->p_pid,
-		    p1->p_vmspace->vm_map.pmap);
-		printf("p2->procaddr=%p p2->procaddr->u_pcb=%p pid=%d pmap=%p\n",
-		    p2->p_addr, &p2->p_addr->u_pcb, p2->p_pid,
-		    p2->p_vmspace->vm_map.pmap);
+		printf("l1->procaddr=%p l1->procaddr->u_pcb=%p pid=%d pmap=%p\n",
+		    l1->l_addr, &l1->l_addr->u_pcb, l1->l_lid,
+		    l1->l_proc->p_vmspace->vm_map.pmap);
+		printf("l2->procaddr=%p l2->procaddr->u_pcb=%p pid=%d pmap=%p\n",
+		    l2->l_addr, &l2->l_addr->u_pcb, l2->l_lid,
+		    l2->l_proc->p_vmspace->vm_map.pmap);
 	}
 #endif	/* PMAP_DEBUG */
 
-	pmap_activate(p2);
+	pmap_activate(l2);
 
 #ifdef ARMFPE
 	/* Initialise a new FP context for p2 and copy the context from p1 */
-	arm_fpe_core_initcontext(FP_CONTEXT(p2));
-	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
+	arm_fpe_core_initcontext(FP_CONTEXT(l2));
+	arm_fpe_copycontext(FP_CONTEXT(l1), FP_CONTEXT(l2));
 #endif	/* ARMFPE */
 
-	p2->p_addr->u_pcb.pcb_tf = tf =
+	l2->l_addr->u_pcb.pcb_tf = tf =
 	    (struct trapframe *)pcb->pcb_un.un_32.pcb32_sp - 1;
-	*tf = *p1->p_addr->u_pcb.pcb_tf;
+	*tf = *l1->l_addr->u_pcb.pcb_tf;
 
 	/*
 	 * If specified, give the child a different stack.
@@ -187,6 +194,20 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_usr_sp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
+	sf->sf_spl = 0;		/* always equivalent to spl0() */
+	sf->sf_r4 = (u_int)func;
+	sf->sf_r5 = (u_int)arg;
+	sf->sf_pc = (u_int)proc_trampoline;
+	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = pcb->pcb_tf;
+	struct switchframe *sf = (struct switchframe *)tf - 1;
+
 	sf->sf_spl = 0;		/* always equivalent to spl0() */
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
@@ -203,18 +224,17 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
  */
 
 void
-cpu_exit(p)
-	register struct proc *p;
+cpu_exit(struct lwp *l, int proc)
 {
 #ifdef ARMFPE
 	/* Abort any active FP operation and deactivate the context */
-	arm_fpe_core_abort(FP_CONTEXT(p), NULL, NULL);
+	arm_fpe_core_abort(FP_CONTEXT(l), NULL, NULL);
 	arm_fpe_core_changecontext(0);
 #endif	/* ARMFPE */
 
 #ifdef STACKCHECKS
 	/* Report how much stack has been used - debugging */
-	if (p) {
+	if (l) {
 		u_char *ptr;
 		int loop;
 
@@ -229,19 +249,21 @@ cpu_exit(p)
 	}
 #endif	/* STACKCHECKS */
 	uvmexp.swtch++;
-	switch_exit(p, &proc0);
+	switch_exit(l, &lwp0, proc ? exit2 : lwp_exit2);
 }
 
 
 void
-cpu_swapin(p)
-	struct proc *p;
+cpu_swapin(l)
+	struct lwp *l;
 {
 #if 0
+	struct proc *p = l->l_proc;
+
 	/* Don't do this.  See the comment in cpu_swapout().  */
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("cpu_swapin(%p, %d, %s, %p)\n", p, p->p_pid,
+		printf("cpu_swapin(%p, %d, %s, %p)\n", l, l->l_lid,
 		    p->p_comm, p->p_vmspace->vm_map.pmap);
 #endif	/* PMAP_DEBUG */
 
@@ -256,17 +278,19 @@ cpu_swapin(p)
 
 
 void
-cpu_swapout(p)
-	struct proc *p;
+cpu_swapout(l)
+	struct lwp *l;
 {
 #if 0
+	struct proc *p = l->l_proc;
+
 	/* 
 	 * Don't do this!  If the pmap is shared with another process,
 	 * it will loose it's page0 entry.  That's bad news indeed.
 	 */
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("cpu_swapout(%p, %d, %s, %p)\n", p, p->p_pid,
+		printf("cpu_swapout(%p, %d, %s, %p)\n", l, l->l_lid,
 		    p->p_comm, &p->p_vmspace->vm_map.pmap);
 #endif	/* PMAP_DEBUG */
 

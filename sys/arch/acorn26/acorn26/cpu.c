@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.8 2002/10/02 03:25:46 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.9 2003/01/17 21:55:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2002/10/02 03:25:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2003/01/17 21:55:24 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -197,7 +197,7 @@ arm2_undef_handler(u_int addr, u_int insn, struct trapframe *frame,
 static int
 swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 {
-	struct proc *p;
+	struct proc *p = curlwp->l_proc;
 	int rd, rm, rn, byte;
 	register_t temp;
 	caddr_t uaddr;
@@ -215,9 +215,9 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 	uaddr = (caddr_t)getreg(rn);
 	/* We want the page wired so we won't sleep */
 	/* XXX only wire one byte due to weirdness with unaligned words */
-	err = uvm_vslock(curproc, uaddr, 1, VM_PROT_READ | VM_PROT_WRITE);
+	err = uvm_vslock(p, uaddr, 1, VM_PROT_READ | VM_PROT_WRITE);
 	if (err != 0) {
-		trapsignal(p, SIGSEGV, (u_int)uaddr);
+		trapsignal(curlwp, SIGSEGV, (u_int)uaddr);
 		return 0;
 	}
 	/* I believe the uvm_vslock() guarantees the fetch/store won't fail. */
@@ -234,7 +234,7 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 		suword(uaddr, getreg(rm));
 		getreg(rd) = temp;
 	}
-	uvm_vsunlock(curproc, uaddr, 1);
+	uvm_vsunlock(p, uaddr, 1);
 	return 0;
 }
 #endif

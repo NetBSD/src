@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.11 2001/07/14 17:55:42 thorpej Exp $ */
+/* $NetBSD: proc.h,v 1.12 2003/01/17 22:11:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,19 +27,18 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _ALPHA_PROC_H
+#define _ALPHA_PROC_H
+
 #include <machine/frame.h>
 
 /*
- * Machine-dependent part of the proc struct for the Alpha.
+ * Machine-dependent part of the lwp struct for the Alpha.
  */
-struct proc;
-struct mdproc {
+struct mdlwp {
 	u_long	md_flags;
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
-					/* this process's syscall vector */
-	void	(*md_syscall)(struct proc *, u_int64_t, struct trapframe *);
-	__volatile int md_astpending;	/* AST pending for this process */
 };
 /*
  * md_flags usage
@@ -61,3 +60,16 @@ struct mdproc {
  */
 #define	MDP_FPUSED	0x00000001	/* Process used the FPU */
 #define	MDP_FP_C	0x007ffffe	/* Extended FP_C Quadword bits */
+
+/*
+ * Machine-dependent part of the proc struct for the Alpha.
+ */
+struct lwp;
+struct mdproc {
+					/* this process's syscall vector */
+	void	(*md_syscall)(struct lwp *, u_int64_t, struct trapframe *);
+	__volatile int md_astpending;	/* AST pending for this process */
+};
+
+
+#endif /* !_ALPHA_PROC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.31 2002/10/20 02:37:25 chs Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.32 2003/01/17 22:53:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.31 2002/10/20 02:37:25 chs Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.32 2003/01/17 22:53:08 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.31 2002/10/20 02:37:25 chs Exp $"
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
@@ -204,10 +205,10 @@ hpux_cpu_vmcmd(p, ev)
 	/* Deal with misc. HP-UX process attributes. */
 	if (execp->ha_trsize & HPUXM_VALID) {
 		if (execp->ha_trsize & HPUXM_DATAWT)
-			p->p_md.md_flags &= ~MDP_CCBDATA;
+			p->p_md.mdp_flags &= ~MDP_CCBDATA;
 
 		if (execp->ha_trsize & HPUXM_STKWT)
-			p->p_md.md_flags &= ~MDP_CCBSTACK;
+			p->p_md.mdp_flags &= ~MDP_CCBSTACK;
 	}
 
 	return (0);
@@ -237,8 +238,8 @@ hpux_cpu_sysconf_arch()
  * HP-UX advise(2) system call.
  */
 int
-hpux_sys_advise(p, v, retval)
-	struct proc *p;
+hpux_sys_advise(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -247,7 +248,7 @@ hpux_sys_advise(p, v, retval)
 
 	switch (SCARG(uap, arg)) {
 	case 0:
-		p->p_md.md_flags |= MDP_HPUXMMAP; 
+		l->l_proc->p_md.mdp_flags |= MDP_HPUXMMAP; 
 		break;
 
 	case 1:
@@ -271,8 +272,8 @@ hpux_sys_advise(p, v, retval)
  * Man page lies, behaviour here is based on observed behaviour.
  */
 int
-hpux_sys_getcontext(p, v, retval)
-	struct proc *p; 
+hpux_sys_getcontext(lp, v, retval)
+	struct lwp *lp; 
 	void *v;
 	register_t *retval; 
 {
@@ -309,11 +310,11 @@ hpux_sys_getcontext(p, v, retval)
  * XXX This probably doesn't work anymore, BTW.  --thorpej
  */
 int
-hpux_to_bsd_uoff(off, isps, p)
+hpux_to_bsd_uoff(off, isps, l)
 	int *off, *isps; 
-	struct proc *p;
+	struct lwp *l;
 {
-	int *ar0 = p->p_md.md_regs;
+	int *ar0 = l->l_md.md_regs;
 	struct hpux_fp *hp; 
 	struct bsdfp *bp;
 	u_int raddr;
@@ -342,7 +343,7 @@ hpux_to_bsd_uoff(off, isps, p)
 	 * for simplicity.
 	 */
 	if (off < (int *)ctob(UPAGES))
-		off = (int *)((u_int)off + (u_int)p->p_addr);	/* XXX */
+		off = (int *)((u_int)off + (u_int)l->l_addr);	/* XXX */
 
 	/*
 	 * General registers.
@@ -379,7 +380,7 @@ hpux_to_bsd_uoff(off, isps, p)
 		 */
 		else
 			raddr = (u_int) &ar0[(int)(off - ar0)];
-		return((int)(raddr - (u_int)p->p_addr));	/* XXX */
+		return((int)(raddr - (u_int)l->l_addr));	/* XXX */
 	}
 
 	/* everything else */
@@ -427,14 +428,15 @@ hpux_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct hpuxsigframe *fp, kf;
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	frame = (struct frame *)p->p_md.md_regs;
+	frame = (struct frame *)l->l_md.md_regs;
 	ft = frame->f_format;
 
 	/* Do we need to jump onto the signal stack? */
@@ -540,7 +542,7 @@ hpux_sendsig(sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
@@ -579,14 +581,15 @@ hpux_sendsig(sig, mask, code)
  */
 /* ARGSUSED */
 int
-hpux_sys_sigreturn(p, v, retval)
-	struct proc *p;
+hpux_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_sigreturn_args /* {
 		syscallarg(struct hpuxsigcontext *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct hpuxsigcontext *scp;
 	struct frame *frame;
 	struct hpuxsigcontext tsigc;
@@ -615,7 +618,7 @@ hpux_sys_sigreturn(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	frame = (struct frame *) p->p_md.md_regs;
+	frame = (struct frame *) l->l_md.md_regs;
 
 	/*
 	 * Grab pointer tohardware state information.  We have
@@ -722,19 +725,19 @@ hpux_sys_sigreturn(p, v, retval)
  * Set registers on exec.
  */
 void
-hpux_setregs(p, pack, stack)
-	struct proc *p;
+hpux_setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
 	struct frame *frame;
 
-	setregs(p, pack, stack);
+	setregs(l, pack, stack);
 
-	frame = (struct frame *)p->p_md.md_regs;
+	frame = (struct frame *)l->l_md.md_regs;
 	frame->f_regs[D0] = 0;	/* no float card */
 	frame->f_regs[D1] = fputype ? 1 : 0;	/* yes/no 68881 */
 	frame->f_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
 
-	p->p_md.md_flags &= ~MDP_HPUXMMAP;
+	l->l_proc->p_md.mdp_flags &= ~MDP_HPUXMMAP;
 }

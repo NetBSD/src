@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21285reg.h,v 1.3 2002/11/03 21:43:30 chris Exp $	*/
+/*	$NetBSD: dc21285reg.h,v 1.4 2003/01/17 22:29:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -364,7 +364,7 @@
 
 /* Maximum timer value */
 
-#define TIMER_MAX		0x00FFFFFF
+#define TIMER_MAX_VAL		0x00FFFFFF
 
 /* Specific registers */
 

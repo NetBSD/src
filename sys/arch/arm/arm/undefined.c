@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.15 2002/05/02 22:47:09 rjs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.16 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -50,7 +50,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.15 2002/05/02 22:47:09 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.16 2003/01/17 22:28:49 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.15 2002/05/02 22:47:09 rjs Exp $");
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>
+#include <sys/savar.h>
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
@@ -124,7 +125,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 
 	if ((insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) &&
 	    code == FAULT_USER) {
-		trapsignal(curproc, SIGTRAP, 0);
+		trapsignal(curlwp, SIGTRAP, 0);
 		return 0;
 	}
 	return 1;
@@ -151,6 +152,7 @@ void
 undefinedinstruction(trapframe_t *frame)
 {
 	struct proc *p;
+	struct lwp *l;
 	u_int fault_pc;
 	int fault_instruction;
 	int fault_code;
@@ -206,10 +208,9 @@ undefinedinstruction(trapframe_t *frame)
 	else
 		coprocessor = 0;
 
-	/* Get the current proc structure or proc0 if there is none. */
-
-	if ((p = curproc) == 0)
-		p = &proc0;
+	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
+	l = curlwp == NULL ? &lwp0 : curlwp;
+	p = l->l_proc;
 
 #ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
@@ -221,7 +222,7 @@ undefinedinstruction(trapframe_t *frame)
 		 * time of fault.
 		 */
 		fault_code = FAULT_USER;
-		p->p_addr->u_pcb.pcb_tf = frame;
+		l->l_addr->u_pcb.pcb_tf = frame;
 	} else
 		fault_code = 0;
 
@@ -262,7 +263,7 @@ undefinedinstruction(trapframe_t *frame)
 #endif
 		}
 
-		trapsignal(p, SIGILL, fault_instruction);
+		trapsignal(l, SIGILL, fault_instruction);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)
@@ -273,14 +274,6 @@ undefinedinstruction(trapframe_t *frame)
 	{
 		int sig;
 
-		/* take pending signals */
-
-		while ((sig = (CURSIG(p))) != 0) {
-			postsig(sig);
-		}
-
-		p->p_priority = p->p_usrpri;
-
 		/*
 		 * Check for reschedule request, at the moment there is only
 		 * 1 ast so this code should always be run
@@ -290,13 +283,25 @@ undefinedinstruction(trapframe_t *frame)
 			/*
 			 * We are being preempted.
 			 */
-			preempt(NULL);
-			while ((sig = (CURSIG(p))) != 0) {
-				postsig(sig);
-			}
+			preempt(0);
 		}
 
-		curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+		/* take pending signals */
+		while ((sig = (CURSIG(l))) != 0) {
+			postsig(sig);
+		}
+
+		/* Invoke per-process kernel-exit handling, if any */
+		if (p->p_userret)
+			(p->p_userret)(l, p->p_userret_arg);
+
+		/* Invoke any pending upcalls. */
+		while (l->l_flag & L_SA_UPCALL)
+			sa_upcall_userret(l);
+
+		l->l_priority = l->l_usrpri;
+
+		curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 	}
 
 #else

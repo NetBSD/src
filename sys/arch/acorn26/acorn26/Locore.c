@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.6 2003/01/08 00:00:03 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7 2003/01/17 21:55:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.6 2003/01/08 00:00:03 thorpej Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.7 2003/01/17 21:55:23 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -82,47 +82,48 @@ extern int want_resched; /* XXX should be in <machine/cpu.h> */
 /*
  * Find the highest-priority runnable process and switch to it.
  */
-void
-cpu_switch(struct proc *p1, struct proc *newp)
+int
+cpu_switch(struct lwp *l1, struct lwp *newl)
 {
 	int which;
 	struct prochd *q;
+	struct lwp *l2;
 	struct proc *p2;
-
 	/*
 	 * We enter here with interrupts blocked and sched_lock held.
 	 */
 
 #if 0
-	printf("cpu_switch: %p ->", p1);
+	printf("cpu_switch: %p ->", l1);
 #endif
-	curproc = NULL;
+	curlwp = NULL;
 	curpcb = NULL;
 	while (sched_whichqs == 0)
 		idle();
 	which = ffs(sched_whichqs) - 1;
 	q = &sched_qs[which];
-	p2 = q->ph_link;
-	remrunqueue(p2);
+	l2 = q->ph_link;
+	remrunqueue(l2);
 	want_resched = 0;
 #ifdef LOCKDEBUG
 	sched_unlock_idle();
 #endif
 	/* p->p_cpu initialized in fork1() for single-processor */
-	p2->p_stat = SONPROC;
-	curproc = p2;
-	curpcb = &curproc->p_addr->u_pcb;
+	l2->l_stat = LSONPROC;
+	curlwp = l2;
+	curpcb = &curlwp->l_addr->u_pcb;
 #if 0
-	printf(" %p\n", p2);
+	printf(" %p\n", l2);
 #endif
-	if (p2 == p1)
-		return;
-	pmap_deactivate(p1);
-	pmap_activate(p2);
+	if (l2 == l1)
+		return (0);
+	pmap_deactivate(l1);
+	pmap_activate(l2);
 
 	/* Check for Restartable Atomic Sequences. */
+	p2 = l2->l_proc;
 	if (p2->p_nras != 0) {
-		struct trapframe *tf = p2->p_addr->u_pcb.pcb_tf;
+		struct trapframe *tf = l2->l_addr->u_pcb.pcb_tf;
 		caddr_t pc;
 
 		pc = ras_lookup(p2, (caddr_t) tf->tf_pc);
@@ -130,6 +131,35 @@ cpu_switch(struct proc *p1, struct proc *newp)
 			tf->tf_pc = (register_t) pc;
 	}
 
-	cpu_loswitch(&p1->p_addr->u_pcb.pcb_sf, p2->p_addr->u_pcb.pcb_sf);
+	cpu_loswitch(&l1->l_addr->u_pcb.pcb_sf, l2->l_addr->u_pcb.pcb_sf);
+	/* We only get back here after the other process has run. */
+	return (1);
+}
+
+/*
+ * Switch to the indicated lwp.
+ */
+void
+cpu_switchto(struct lwp *old, struct lwp *new)
+{
+
+	/*
+	 * We enter here with interrupts blocked and sched_lock held.
+	 */
+
+#if 0
+	printf("cpu_switchto: %p -> %p", old, new);
+#endif
+	want_resched = 0;
+#ifdef LOCKDEBUG
+	sched_unlock_idle();
+#endif
+	/* p->p_cpu initialized in fork1() for single-processor */
+	new->l_stat = LSONPROC;
+	curlwp = new;
+	curpcb = &curlwp->l_addr->u_pcb;
+	pmap_deactivate(old);
+	pmap_activate(new);
+	cpu_loswitch(&old->l_addr->u_pcb.pcb_sf, new->l_addr->u_pcb.pcb_sf);
 	/* We only get back here after the other process has run. */
 }

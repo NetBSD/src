@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.7 2002/12/21 16:23:57 manu Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.7 2002/12/21 16:23:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -111,12 +111,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.7 2002/12/21 16:23:57 manu Exp $
 #define LINUX_SYS_ARMBASE	0x000100 /* Must agree with syscalls.master */
 
 /* XXX */
-void linux_syscall(struct trapframe *frame, struct proc *p, u_int32_t insn);
+void linux_syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn);
 
 void
-linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
+linux_syscall(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 {
 	const struct sysent *callp;
+	struct proc *p = l->l_proc;
 	int code, error;
 	u_int nargs;
 	register_t *args, rval[2];
@@ -132,12 +133,12 @@ linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 	callp = p->p_emul->e_sysent + code;
 	nargs = callp->sy_argsize / sizeof(register_t);
 
-	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
+	if ((error = trace_enter(l, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -160,7 +161,7 @@ linux_syscall(trapframe_t *frame, struct proc *p, u_int32_t insn)
 		break;
 	}
 
-	trace_exit(p, code, args, rval, error);
+	trace_exit(l, code, args, rval, error);
 
-	userret(p);
+	userret(l);
 }

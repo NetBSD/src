@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.89 2003/01/08 23:41:03 aymeric Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.90 2003/01/17 22:17:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89 2003/01/08 23:41:03 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.90 2003/01/17 22:17:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89 2003/01/08 23:41:03 aymeric Exp $"
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/proc.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2003/01/04 18:14:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2003/01/17 22:48:44 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -79,6 +79,7 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -175,6 +176,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 #endif
 	int exc;
 	extern char _edata, _end;
+	struct cpu_info * const ci = &cpu_info_store;
 
 	/* Disable all external interrupts */
 	mtdcr(DCR_UIC0_ER, 0);
@@ -198,11 +200,14 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	availmemr[0].start = startkernel; 
 	availmemr[0].size = board_data.mem_size - availmemr[0].start;
 
-	proc0.p_addr = proc0paddr;
-	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
+	/*
+	 * Initialize lwp0 and current pcb and pmap pointers.
+	 */
+	lwp0.l_cpu = ci;
+	lwp0.l_addr = proc0paddr;
+	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
 	curpcb = &proc0paddr->u_pcb;
-
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
 
 	/*
@@ -369,9 +374,6 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	u_int sz, i, base, residual;
 	char pbuf[9];
-
-	proc0.p_addr = proc0paddr;
-	v = (caddr_t)proc0paddr + USPACE;
 
 	/*
 	 * Initialize error message buffer (at end of core).

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.1 2002/12/09 12:16:03 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.2 2003/01/17 22:48:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -62,7 +62,7 @@ struct trapframe {
  * This is to ensure alignment of the stackpointer
  */
 #define	FRAMELEN	roundup(sizeof(struct trapframe) + 8, 16)
-#define	trapframe(p)	((struct trapframe *)((char *)(p)->p_addr + USPACE - FRAMELEN + 8))
+#define	trapframe(l)	((struct trapframe *)((char *)(l)->l_addr + USPACE - FRAMELEN + 8))
 
 struct switchframe {
 	register_t sp;
@@ -88,6 +88,12 @@ struct callframe {
 	register_t lr;
 	register_t r30;
 	register_t r31;
+};
+
+struct saframe {
+	register_t r1;		/* stack pointer */
+	register_t lr;		/* Callee lr save area */
+	register_t fill[2];	/* Pad to multiple of 16 bytes */
 };
 
 #endif	/* _MACHINE_FRAME_H_ */

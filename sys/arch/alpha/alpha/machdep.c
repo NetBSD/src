@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.260 2003/01/08 00:02:25 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.261 2003/01/17 22:11:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,13 +75,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2003/01/08 00:02:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2003/01/17 22:11:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -98,11 +100,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2003/01/08 00:02:25 thorpej Exp $"
 #include <sys/exec_ecoff.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ucontext.h>
 #include <sys/conf.h>
 #include <machine/kcore.h>
 #include <machine/fpu.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -641,7 +645,7 @@ nobootinfo:
 	/*
 	 * Init mapping for u page(s) for proc 0
 	 */
-	proc0.p_addr = proc0paddr =
+	lwp0.l_addr = proc0paddr =
 	    (struct user *)uvm_pageboot_alloc(UPAGES * PAGE_SIZE);
 
 	/*
@@ -666,7 +670,7 @@ nobootinfo:
 	 * Initialize the rest of proc 0's PCB, and cache its physical
 	 * address.
 	 */
-	proc0.p_md.md_pcbpaddr =
+	lwp0.l_md.md_pcbpaddr =
 	    (struct pcb *)ALPHA_K0SEG_TO_PHYS((vaddr_t)&proc0paddr->u_pcb);
 
 	/*
@@ -675,7 +679,7 @@ nobootinfo:
 	 */
 	proc0paddr->u_pcb.pcb_hw.apcb_ksp =
 	    (u_int64_t)proc0paddr + USPACE - sizeof(struct trapframe);
-	proc0.p_md.md_tf =
+	lwp0.l_md.md_tf =
 	    (struct trapframe *)proc0paddr->u_pcb.pcb_hw.apcb_ksp;
 	simple_lock_init(&proc0paddr->u_pcb.pcb_fpcpu_slock);
 
@@ -685,10 +689,10 @@ nobootinfo:
 	 * its own idle PCB when autoconfiguration runs.
 	 */
 	ci->ci_idle_pcb = &proc0paddr->u_pcb;
-	ci->ci_idle_pcb_paddr = (u_long)proc0.p_md.md_pcbpaddr;
+	ci->ci_idle_pcb_paddr = (u_long)lwp0.l_md.md_pcbpaddr;
 
 	/* Indicate that proc0 has a CPU. */
-	proc0.p_cpu = ci;
+	lwp0.l_cpu = ci;
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
@@ -1397,7 +1401,7 @@ err:
 
 void
 frametoreg(framep, regp)
-	struct trapframe *framep;
+	const struct trapframe *framep;
 	struct reg *regp;
 {
 
@@ -1437,7 +1441,7 @@ frametoreg(framep, regp)
 
 void
 regtoframe(regp, framep)
-	struct reg *regp;
+	const struct reg *regp;
 	struct trapframe *framep;
 {
 
@@ -1509,14 +1513,15 @@ sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct sigcontext *scp, ksc;
 	struct trapframe *frame;
 	int onstack, fsize, rndfsize;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	frame = p->p_md.md_tf;
+	frame = l->l_md.md_tf;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -1549,13 +1554,13 @@ sendsig(sig, mask, code)
 	ksc.sc_regs[R_ZERO] = 0xACEDBADE;		/* magic number */
 	ksc.sc_regs[R_SP] = alpha_pal_rdusp();
 
-	/* save the floating-point state, if necessary, then copy it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 1);
-	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
-	memcpy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
+ 	/* save the floating-point state, if necessary, then copy it. */
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(l, 1);
+	ksc.sc_ownedfp = l->l_md.md_flags & MDP_FPUSED;
+	memcpy((struct fpreg *)ksc.sc_fpregs, &l->l_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
-	ksc.sc_fp_control = alpha_read_fp_c(p);
+	ksc.sc_fp_control = alpha_read_fp_c(l);
 	memset(ksc.sc_reserved, 0, sizeof ksc.sc_reserved);	/* XXX */
 	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
 
@@ -1597,7 +1602,7 @@ sendsig(sig, mask, code)
 			printf("sendsig(%d): copyout failed on sig %d\n",
 			    p->p_pid, sig);
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
@@ -1626,7 +1631,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 	frame->tf_regs[FRAME_PC] = (u_int64_t)catcher;
 	frame->tf_regs[FRAME_A0] = sig;
@@ -1649,6 +1654,25 @@ sendsig(sig, mask, code)
 #endif
 }
 
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+       	struct trapframe *tf;
+
+	tf = l->l_md.md_tf;
+
+	tf->tf_regs[FRAME_PC] = (u_int64_t)upcall;
+	tf->tf_regs[FRAME_RA] = 0;
+	tf->tf_regs[FRAME_A0] = type;
+	tf->tf_regs[FRAME_A1] = (u_int64_t)sas;
+	tf->tf_regs[FRAME_A2] = nevents;
+	tf->tf_regs[FRAME_A3] = ninterrupted;
+	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
+	tf->tf_regs[FRAME_T12] = (u_int64_t)upcall;  /* t12 is pv */
+	alpha_pal_wrusp((unsigned long)sp);
+}
+
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -1661,8 +1685,8 @@ sendsig(sig, mask, code)
  */
 /* ARGSUSED */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1670,6 +1694,7 @@ sys___sigreturn14(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, ksc;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -1691,20 +1716,20 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	p->p_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;
-	p->p_md.md_tf->tf_regs[FRAME_PS] =
+	l->l_md.md_tf->tf_regs[FRAME_PC] = ksc.sc_pc;
+	l->l_md.md_tf->tf_regs[FRAME_PS] =
 	    (ksc.sc_ps | ALPHA_PSL_USERSET) & ~ALPHA_PSL_USERCLR;
 
-	regtoframe((struct reg *)ksc.sc_regs, p->p_md.md_tf);
+	regtoframe((struct reg *)ksc.sc_regs, l->l_md.md_tf);
 	alpha_pal_wrusp(ksc.sc_regs[R_SP]);
 
 	/* XXX ksc.sc_ownedfp ? */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 0);
-	memcpy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(l, 0);
+	memcpy(&l->l_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
-	p->p_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
-	p->p_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
+	l->l_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
+	l->l_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
@@ -1784,12 +1809,12 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * Set registers on exec.
  */
 void
-setregs(p, pack, stack)
-	register struct proc *p;
+setregs(l, pack, stack)
+	register struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct trapframe *tfp = p->p_md.md_tf;
+	struct trapframe *tfp = l->l_md.md_tf;
 #ifdef DEBUG
 	int i;
 #endif
@@ -1808,7 +1833,7 @@ setregs(p, pack, stack)
 #else
 	memset(tfp->tf_regs, 0, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
-	memset(&p->p_addr->u_pcb.pcb_fp, 0, sizeof p->p_addr->u_pcb.pcb_fp);
+	memset(&l->l_addr->u_pcb.pcb_fp, 0, sizeof l->l_addr->u_pcb.pcb_fp);
 	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
@@ -1816,16 +1841,16 @@ setregs(p, pack, stack)
 	tfp->tf_regs[FRAME_A0] = stack;			/* a0 = sp */
 	tfp->tf_regs[FRAME_A1] = 0;			/* a1 = rtld cleanup */
 	tfp->tf_regs[FRAME_A2] = 0;			/* a2 = rtld object */
-	tfp->tf_regs[FRAME_A3] = (u_int64_t)p->p_psstr;	/* a3 = ps_strings */
+	tfp->tf_regs[FRAME_A3] = (u_int64_t)l->l_proc->p_psstr;	/* a3 = ps_strings */
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
-	p->p_md.md_flags &= ~MDP_FPUSED;
-	if (__predict_true((p->p_md.md_flags & IEEE_INHERIT) == 0)) {
-		p->p_md.md_flags &= ~MDP_FP_C;
-		p->p_addr->u_pcb.pcb_fp.fpr_cr = FPCR_DYN(FP_RN);
+	l->l_md.md_flags &= ~MDP_FPUSED;
+	if (__predict_true((l->l_md.md_flags & IEEE_INHERIT) == 0)) {
+		l->l_md.md_flags &= ~MDP_FP_C;
+		l->l_addr->u_pcb.pcb_fp.fpr_cr = FPCR_DYN(FP_RN);
 	}
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 0);
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(l, 0);
 }
 
 /*
@@ -1834,7 +1859,7 @@ setregs(p, pack, stack)
 void
 fpusave_cpu(struct cpu_info *ci, int save)
 {
-	struct proc *p;
+	struct lwp *l;
 #if defined(MULTIPROCESSOR)
 	int s;
 #endif
@@ -1845,23 +1870,23 @@ fpusave_cpu(struct cpu_info *ci, int save)
 	atomic_setbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
 #endif
 
-	p = ci->ci_fpcurproc;
-	if (p == NULL)
+	l = ci->ci_fpcurlwp;
+	if (l == NULL)
 		goto out;
 
 	if (save) {
 		alpha_pal_wrfen(1);
-		savefpstate(&p->p_addr->u_pcb.pcb_fp);
+		savefpstate(&l->l_addr->u_pcb.pcb_fp);
 	}
 
 	alpha_pal_wrfen(0);
 
-	FPCPU_LOCK(&p->p_addr->u_pcb, s);
+	FPCPU_LOCK(&l->l_addr->u_pcb, s);
 
-	p->p_addr->u_pcb.pcb_fpcpu = NULL;
-	ci->ci_fpcurproc = NULL;
+	l->l_addr->u_pcb.pcb_fpcpu = NULL;
+	ci->ci_fpcurlwp = NULL;
 
-	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 
  out:
 #if defined(MULTIPROCESSOR)
@@ -1874,7 +1899,7 @@ fpusave_cpu(struct cpu_info *ci, int save)
  * Synchronize FP state for this process.
  */
 void
-fpusave_proc(struct proc *p, int save)
+fpusave_proc(struct lwp *l, int save)
 {
 	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
@@ -1883,39 +1908,39 @@ fpusave_proc(struct proc *p, int save)
 	int s, spincount;
 #endif
 
-	KDASSERT(p->p_addr != NULL);
-	KDASSERT(p->p_flag & P_INMEM);
+	KDASSERT(l->l_addr != NULL);
+	KDASSERT(l->l_flag & L_INMEM);
 
-	FPCPU_LOCK(&p->p_addr->u_pcb, s);
+	FPCPU_LOCK(&l->l_addr->u_pcb, s);
 
-	oci = p->p_addr->u_pcb.pcb_fpcpu;
+	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL) {
-		FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+		FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 		return;
 	}
 
 #if defined(MULTIPROCESSOR)
 	if (oci == ci) {
-		KASSERT(ci->ci_fpcurproc == p);
-		FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+		KASSERT(ci->ci_fpcurlwp == l);
+		FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 		fpusave_cpu(ci, save);
 		return;
 	}
 
-	KASSERT(oci->ci_fpcurproc == p);
+	KASSERT(oci->ci_fpcurlwp == l);
 	alpha_send_ipi(oci->ci_cpuid, ipi);
-	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 
 	spincount = 0;
-	while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
+	while (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
 		spincount++;
 		delay(1000);	/* XXX */
 		if (spincount > 10000)
 			panic("fpsave ipi didn't");
 	}
 #else
-	KASSERT(ci->ci_fpcurproc == p);
-	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
+	KASSERT(ci->ci_fpcurlwp == l);
+	FPCPU_UNLOCK(&l->l_addr->u_pcb, s);
 	fpusave_cpu(ci, save);
 #endif /* MULTIPROCESSOR */
 }
@@ -1964,14 +1989,14 @@ delay(n)
 
 #ifdef EXEC_ECOFF
 void
-cpu_exec_ecoff_setregs(p, epp, stack)
-	struct proc *p;
+cpu_exec_ecoff_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
 	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	p->p_md.md_tf->tf_regs[FRAME_GP] = execp->a.gp_value;
+	l->l_md.md_tf->tf_regs[FRAME_GP] = execp->a.gp_value;
 }
 
 /*
@@ -2055,4 +2080,84 @@ dot_conv(x)
 			break;
 	}
 	return xc;
+}
+
+void
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	mcontext_t *mcp;
+	unsigned int *flags;
+{
+	struct trapframe *frame = l->l_md.md_tf;
+	__greg_t *gr = mcp->__gregs;
+
+	/* Save register context. */
+	frametoreg(frame, (struct reg *)gr);
+	/* XXX if there's a better, general way to get the USP of
+	 * an LWP that might or might not be curlwp, I'd like to know
+	 * about it.
+	 */
+	if (l == curlwp) {
+		gr[_REG_SP] = alpha_pal_rdusp();
+		gr[_REG_UNIQUE] = alpha_pal_rdunique();
+	} else {
+		gr[_REG_SP] = l->l_addr->u_pcb.pcb_hw.apcb_usp;
+		gr[_REG_UNIQUE] = l->l_addr->u_pcb.pcb_hw.apcb_unique;
+	}
+	gr[_REG_PC] = frame->tf_regs[FRAME_PC];
+	gr[_REG_PS] = frame->tf_regs[FRAME_PS];
+	*flags |= _UC_CPU | _UC_UNIQUE;
+
+	/* Save floating point register context, if any, and copy it. */
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
+		fpusave_proc(l, 1);
+		(void)memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_fp,
+		    sizeof (mcp->__fpregs));
+		mcp->__fpregs.__fp_fpcr = alpha_read_fp_c(l);
+		*flags |= _UC_FPU;
+	}
+}
+
+
+int
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	const mcontext_t *mcp;
+	unsigned int flags;
+{
+	struct trapframe *frame = l->l_md.md_tf;
+	const __greg_t *gr = mcp->__gregs;
+
+	/* Restore register context, if any. */
+	if (flags & _UC_CPU) {
+		/* Check for security violations first. */
+		if ((gr[_REG_PS] & ALPHA_PSL_USERSET) != ALPHA_PSL_USERSET ||
+		    (gr[_REG_PS] & ALPHA_PSL_USERCLR) != 0)
+			return (EINVAL);
+
+		regtoframe((struct reg *)gr, l->l_md.md_tf);
+		if (l == curlwp)
+			alpha_pal_wrusp(gr[_REG_SP]);
+		else
+			l->l_addr->u_pcb.pcb_hw.apcb_usp = gr[_REG_SP];
+		frame->tf_regs[FRAME_PC] = gr[_REG_PC];
+		frame->tf_regs[FRAME_PS] = gr[_REG_PS];
+	}
+	if (flags & _UC_UNIQUE) {
+		if (l == curlwp)
+			alpha_pal_wrunique(gr[_REG_UNIQUE]);
+		else
+			l->l_addr->u_pcb.pcb_hw.apcb_unique = gr[_REG_UNIQUE];
+	}
+	/* Restore floating point register context, if any. */
+	if (flags & _UC_FPU) {
+		/* If we have an FP register context, get rid of it. */
+		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+			fpusave_proc(l, 0);
+		(void)memcpy(&l->l_addr->u_pcb.pcb_fp, &mcp->__fpregs,
+		    sizeof (l->l_addr->u_pcb.pcb_fp));
+		l->l_md.md_flags = mcp->__fpregs.__fp_fpcr & MDP_FP_C;
+	}
+
+	return (0);
 }

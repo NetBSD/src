@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.64 2002/09/27 15:35:36 provos Exp $ */
+/* $NetBSD: interrupt.c,v 1.65 2003/01/17 22:11:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.64 2002/09/27 15:35:36 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.65 2003/01/17 22:11:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	static int microset_iter;	/* call microset() once per sec. */
 	struct cpu_info *ci = curcpu();
 	struct cpu_softc *sc = ci->ci_softc;
-	struct proc *p;
+	struct lwp *l;
 
 	switch (a0) {
 	case ALPHA_INTR_XPROC:	/* interprocessor interrupt */
@@ -271,8 +271,8 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			 * do so.
 			 */
 			if ((++ci->ci_schedstate.spc_schedticks & 0x3f) == 0 &&
-			    (p = ci->ci_curproc) != NULL && schedhz != 0)
-				schedclock(p);
+			    (l = ci->ci_curlwp) != NULL && schedhz != 0)
+				schedclock(l);
 		}
 		break;
 
@@ -390,9 +390,10 @@ fatal:
 	printf("    pc      = 0x%lx\n", framep->tf_regs[FRAME_PC]);
 	printf("    ra      = 0x%lx\n", framep->tf_regs[FRAME_RA]);
 	printf("    code    = 0x%lx\n", *(unsigned long *)(param + 0x10));
-	printf("    curproc = %p\n", curproc);
-	if (curproc != NULL)
-		printf("        pid = %d, comm = %s\n", curproc->p_pid,
+	printf("    curlwp = %p\n", curlwp);
+	if (curlwp != NULL)
+		printf("        pid = %d.%d, comm = %s\n", 
+		    curproc->p_pid, curlwp->l_lid,
 		    curproc->p_comm);
 	printf("\n");
 	panic("machine check");

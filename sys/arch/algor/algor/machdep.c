@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2002/08/25 20:21:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2003/01/17 22:01:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -538,13 +538,13 @@ mach_init(int argc, char *argv[], char *envp[])
 	pmap_bootstrap();
 
 	/*
-	 * Init mapping for u page(s) for proc0.
+	 * Init mapping for u page(s) for lwp0.
 	 */
 	led_display('u', 's', 'p', 'c');
 	v = (caddr_t) uvm_pageboot_alloc(USPACE);
-	proc0.p_addr = proc0paddr = (struct user *) v;
-	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	curpcb = &proc0.p_addr->u_pcb;
+	lwp0.l_addr = proc0paddr = (struct user *) v;
+	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
 	/*
@@ -714,7 +714,7 @@ cpu_reboot(int howto, char *bootstr)
 	int tmp;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *) curpcb);
 
 	/* If "always halt" was specified as a boot flag, obey. */

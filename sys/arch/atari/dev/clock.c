@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 2002/10/23 09:10:48 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 2003/01/17 22:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/proc.h>
 #include <sys/event.h>
 
 #include <dev/clock_subr.h>

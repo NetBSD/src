@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2002/09/27 15:35:40 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2003/01/17 22:17:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2002/09/27 15:35:40 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2003/01/17 22:17:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1299,6 +1299,7 @@ validate:
 	if (pmapdebug & 0x10000 && mmutype == MMU_68040 &&
 	    pmap == pmap_kernel()) {
 		char *s;
+		struct proc *cp = curproc;
 		if (va >= amiga_uptbase &&
 		    va < (amiga_uptbase + AMIGA_UPTMAXSIZE))
 			s = "UPT";
@@ -1308,9 +1309,9 @@ validate:
 		else if (va >= (u_int)pmap->pm_stab &&
 		    va < ((u_int)pmap->pm_stab + AMIGA_STSIZE))
 			s = "KST";
-		else if (curproc &&
-		    va >= (u_int)curproc->p_vmspace->vm_map.pmap->pm_stab &&
-		    va < ((u_int)curproc->p_vmspace->vm_map.pmap->pm_stab +
+		else if (cp &&
+		    va >= (u_int)cp->p_vmspace->vm_map.pmap->pm_stab &&
+		    va < ((u_int)cp->p_vmspace->vm_map.pmap->pm_stab +
 		    AMIGA_STSIZE))
 			s = "UST";
 		else
@@ -1765,25 +1766,25 @@ ok:
  *	Mark that a processor is about to be used by a given pmap.
  */
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%p)\n", p);
+		printf("pmap_activate(%p)\n", l);
 #endif
 
-	PMAP_ACTIVATE(pmap, p == curproc);
+	PMAP_ACTIVATE(pmap, curlwp == NULL || l->l_proc == curproc);
 }
 
 /*
  *	Mark that a processor is no longer in use by a given pmap.
  */
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 }
 

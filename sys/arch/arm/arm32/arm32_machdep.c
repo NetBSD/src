@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.26 2002/08/25 20:21:35 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.27 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -199,7 +199,7 @@ cpu_startup()
 	char pbuf[9];
 
 	proc0paddr = (struct user *)kernelstack.pv_va;
-	proc0.p_addr = proc0paddr;
+	lwp0.l_addr = proc0paddr;
 
 	/* Set the cpu control register */
 	cpu_setup(boot_args);
@@ -323,11 +323,11 @@ cpu_startup()
 	 */
 	bufinit();
 
-	curpcb = &proc0.p_addr->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_flags = 0;
-	curpcb->pcb_un.un_32.pcb32_und_sp = (u_int)proc0.p_addr +
+	curpcb->pcb_un.un_32.pcb32_und_sp = (u_int)lwp0.l_addr +
 	    USPACE_UNDEF_STACK_TOP;
-	curpcb->pcb_un.un_32.pcb32_sp = (u_int)proc0.p_addr +
+	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
 	    USPACE_SVC_STACK_TOP;
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)(pmap_kernel())->pm_pdir,
 	    (paddr_t *)&curpcb->pcb_pagedir);

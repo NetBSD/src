@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2002/08/25 20:21:33 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.6 2003/01/17 21:55:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2002/08/25 20:21:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2003/01/17 21:55:24 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -225,7 +225,7 @@ cpu_startup()
 	 */
 	bufinit();
 
-	curpcb = &proc0.p_addr->u_pcb;
+	curpcb = &lwp0.l_addr->u_pcb;
 
 #if 0
 	/* Test exception handlers */

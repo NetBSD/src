@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.89 2002/11/02 20:03:04 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.90 2003/01/17 22:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -497,7 +497,8 @@ ENTRY_NOPROFILE(trap0)
  * command in d0, addr in a1, length in d1
  */
 ENTRY_NOPROFILE(trap12)
-	movl	_C_LABEL(curproc),%sp@-	|  push curproc pointer
+	movl	_C_LABEL(curlwp),%a0
+	movl	%a0@(L_PROC),%sp@-	|  push curproc pointer
 	movl	%d1,%sp@-		|  push length
 	movl	%a1,%sp@-		|  push addr
 	movl	%d0,%sp@-		|  push command
@@ -964,12 +965,14 @@ Lend_cpuset:
 	/*
 	 * set kernel stack, user SP, and initial pcb
 	 */
-	movl	_C_LABEL(proc0paddr),%a1| proc0 kernel stack
-	lea	%a1@(USPACE),%sp	| set kernel stack to end of area
+	movl	_C_LABEL(proc0paddr),%a1| lwp0 kernel stack
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
+	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.p_addr so that
+	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 	movl	%a2,%a1@(PCB_USP)	| and save it
-	movl	%a1,_C_LABEL(curpcb)	| proc0 is running
+	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 	clrw	%a1@(PCB_FLAGS)		| clear flags
 
 	/* flush TLB and turn on caches */
@@ -1014,8 +1017,8 @@ Lcacheon:
   	movw	#PSL_USER,%sp@-		|  in user mode
 	clrl	%sp@-			|  stack adjust count
 	lea	%sp@(-64),%sp		|  construct space for D0-D7/A0-A7
-	lea	_C_LABEL(proc0),%a0	| proc0 in a0
-	movl	%sp,%a0@(P_MD + MD_REGS)| save frame for proc0
+	lea	_C_LABEL(lwp0),%a0	| proc0 in a0
+	movl	%sp,%a0@(L_MD_REGS)     | save frame for proc0
 	movl	%usp,%a1
 	movl	%a1,%sp@(FR_SP)		| save user stack pointer in frame
 	pea	%sp@			|  addr of space for D0
@@ -1123,272 +1126,12 @@ ENTRY(qsetjmp)
  */
 #include <m68k/m68k/proc_subr.s>
 
-Lsw0:
-	.asciz	"cpu_switch"
-	.even
-
-	.data
-GLOBAL(masterpaddr)			|  XXX compatibility (debuggers)
-GLOBAL(curpcb)
-	.long	0
-Lpcbflag:
-	.byte	0			|  copy of pcb_flags low byte
-	.align	2
-	ASBSS(nullpcb,SIZEOF_PCB)
-	.text
-
 /*
- * At exit of a process, do a switch for the last time.
- * Switch to a safe stack and PCB, and select a new process to run.  The
- * old stack and u-area will be freed by the reaper.
+ * Use common m68k process/lwp switch and context save subroutines.
  */
-ENTRY(switch_exit)
-	movl	%sp@(4),%a0
-	movl	#nullpcb,_C_LABEL(curpcb)	| save state into garbage pcb
-	lea	tmpstk,%sp			| goto a tmp stack
+#define FPCOPROC
+#include <m68k/m68k/switch_subr.s>
 
-	/* Schedule the vmspace and stack to be freed. */
-	movl	%a0,%sp@-			| exit2(p)
-	jbsr	_C_LABEL(exit2)
-	lea	%sp@(4),%sp			| pop args
-
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-
-	jra	_C_LABEL(cpu_switch)
-
-/*
- * When no processes are on the runq, Swtch branches to idle
- * to wait for something to come ready.
- */
-ASENTRY_NOPROFILE(Idle)
-#if defined(LOCKDEBUG)
-	/* Release sched_lock */
-	jbsr	_C_LABEL(sched_unlock_idle)
-#endif
-	stop	#PSL_LOWIPL
-	movw	#PSL_HIGHIPL,%sr
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	_ASM_LABEL(Idle)
-	jra	Lsw1
-
-Lbadsw:
-	movl	#Lsw0,%sp@-
-	jbsr	_C_LABEL(panic)
-	/*NOTREACHED*/
-
-/*
- * Cpu_switch()
- *
- * NOTE: On the mc68851 (318/319/330) we attempt to avoid flushing the
- * entire ATC.  The effort involved in selective flushing may not be
- * worth it, maybe we should just flush the whole thing?
- *
- * NOTE 2: With the new VM layout we now no longer know if an inactive
- * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag
- * bit).  For now, we just always flush the full ATC.
- */
-ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),%a0	|  current pcb
-	movw	%sr,%a0@(PCB_PS)	|  save sr before changing ipl
-#ifdef notyet
-	movl	_C_LABEL(curproc),%sp@-	|  remember last proc running
-#endif
-	clrl	_C_LABEL(curproc)
-
-	/*
-	 * Find the highest-priority queue that isn't empty,
-	 * then take the first proc from that queue.
-	 */
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	_ASM_LABEL(Idle)
-Lsw1:
-	/*
-	 * Interrupts are blocked, sched_lock is held.  If
-	 * we come here via Idle, %d0 contains the contents
-	 * of a non-zero sched_whichqs.
-	 */
-	movl	%d0,%d1
-	negl	%d0
-	andl	%d1,%d0
-	bfffo	%d0{#0:#32},%d1
-	eorib	#31,%d1
-
-	movl	%d1,%d0
-	lslb	#3,%d1			| convert queue number to index
-	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
-	movl	%d1,%a1
-	movl	%a1@(P_FORW),%a0	| p = q->p_forw
-	cmpal	%d1,%a0			| anyone on queue?
-	jeq	Lbadsw			| no, panic
-#ifdef DIAGNOSTIC
-	tstl	%a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,%a0@(P_STAT)
-	jne	Lbadsw
-#endif
-	movl	%a0@(P_FORW),%a1@(P_FORW)	| q->p_forw = p->p_forw
-	movl	%a0@(P_FORW),%a1		| n = p->p_forw
-	movl	%a0@(P_BACK),%a1@(P_BACK)	| n->p_back = q
-	cmpal	%d1,%a1			| anyone left on queue?
-	jne	Lsw2			| yes, skip
-	movl	_C_LABEL(sched_whichqs),%d1
-	bclr	%d0,%d1			| no, clear bit
-	movl	%d1,_C_LABEL(sched_whichqs)
-Lsw2:
-	/* p->p_cpu initialized in fork1() for single-processor */
-	movb	#SONPROC,%a0@(P_STAT)	| p->p_stat = SONPROC
-	movl	%a0,_C_LABEL(curproc)
-	clrl	_C_LABEL(want_resched)
-#ifdef notyet
-	movl	%sp@+,%a1
-	cmpl	%a0,%a1			| switching to same proc?
-	jeq	Lswdone			| yes, skip save and restore
-#endif
-
-	/*
-	 * Save state of previous process in its pcb.
-	 */
-	movl	_C_LABEL(curpcb),%a1
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
-	movl	%usp,%a2		| grab USP (a2 has been saved)
-	movl	%a2,%a1@(PCB_USP)	| and save it
-	movl	_C_LABEL(CMAP2),%a1@(PCB_CMAP2)	| save temporary map PTE
-	tstl	_C_LABEL(fputype)	| do we have an FPU?
-	jeq	Lswnofpsave		| no? don't attempt to save
-	lea	%a1@(PCB_FPCTX),%a2	| pointer to FP save area
-	fsave	%a2@			| save FP state
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jeq	Lsavfp60		| It's a 060
-#endif
-	tstb	%a2@			| null state frame?
-	jeq	Lswnofpsave		| yes, all done
-	fmovem	%fp0-%fp7,%a2@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a2@(FPF_FPCR)	| save FP control registers
-#ifdef M68060
-	jra	Lswnofpsave
-Lsavfp60:
-	tstb	%a2@(2)			| null state frame?
-	jeq	Lswnofpsave		| yes, all done
-	fmovem	%fp0-%fp7,%a2@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr,%a2@(FPF_FPCR)	| save FP control registers
-	fmovem  %fpsr,%a2@(FPF_FPSR)
-	fmovem  %fpi,%a2@(FPF_FPI)
-#endif
-Lswnofpsave:
-
-	clrl	%a0@(P_BACK)			| clear back link
-	movl	%a0@(P_ADDR),%a1		| get p_addr
-	movl	%a1,_C_LABEL(curpcb)
-	movb	%a1@(PCB_FLAGS+1),Lpcbflag	| copy of pcb_flags low byte
-
-#if defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	movl	%a0,sp@-		| not args...
-	movl	%a1,sp@-		| ...just saving
-	jbsr	_C_LABEL(sched_unlock_idle)
-	movl	sp@+,%a1
-	movl	sp@+,%a0
-#endif
-
-	/*
-	 * Activate process's address space.
-	 * XXX Should remember the last USTP value loaded, and call this
-	 * XXX only if it has changed.
-	 */
-	pea	%a0@			| push proc
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p) 
-	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr 
-
-	lea	_ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI 
-
-	movl	%a1@(PCB_CMAP2),_C_LABEL(CMAP2)	| reload tmp map
-	moveml	%a1@(PCB_REGS),#0xFCFC	| and registers
-	movl	%a1@(PCB_USP),%a0
-	movl	%a0,%usp		| and USP
-	tstl	_C_LABEL(fputype)	| do we have an FPU?
-	jeq	Lnofprest		| no, don't attempt to restore
-	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jeq	Lresfp60rest1		| handle a 060
-#endif
-	tstb	%a0@			| null state frame?
-	jeq	Lresfprest		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control registers
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
-Lresfprest:
-	frestore %a0@			| restore state
-
-Lnofprest:
-	movw	%a1@(PCB_PS),%sr	| no, restore PS
-	moveq	#1,%d0			| return 1 (for alternate returns)
-	rts
-
-#ifdef M68060
-Lresfp60rest1:
-	tstb	%a0@(2)			| null state frame?
-	jeq	Lresfp60rest2		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr	| restore FP control registers
-	fmovem	%a0@(FPF_FPSR),%fpsr
-	fmovem	%a0@(FPF_FPI),%fpi
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
-Lresfp60rest2:
-	frestore %a0@			| restore state
-	movw	%a1@(PCB_PS),%sr	| no, restore PS
-	moveq	#1,%d0			| return 1 (for alternate returns)
-	rts
-#endif
-
-/*
- * savectx(pcb)
- * Update pcb, saving current processor state
- */
-ENTRY(savectx)
-	movl	%sp@(4),%a1
-	movw	%sr,%a1@(PCB_PS)
-	movl	%usp,%a0		| grab USP 
-	movl	%a0,%a1@(PCB_USP)	| and save it 
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers 
-	movl	_C_LABEL(CMAP2),%a1@(PCB_CMAP2)	| save temporary map PTE 
-	tstl	_C_LABEL(fputype)	| do we have an FPU?
-	jeq	Lsavedone		| no, don't attempt to save
-	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area 
-	fsave	%a0@			| save FP state 
-#ifdef M68060
-	cmpl	#CPU_68060,_C_LABEL(cputype)
-	jeq	Lsavctx60		| handle a 060
-#endif
-	tstb	%a0@			| null state frame? 
-	jeq	Lsavedone		| yes, all done 
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general registers 
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers 
-Lsavedone:
-	moveq	#0,%d0			| return 0 
-	rts
-
-#ifdef M68060
-Lsavctx60:
-	tstb	%a0@(2)
-	jeq	Lsavedone
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS)| save FP general registers
-	fmovem	%fpcr,%a0@(FPF_FPCR)	| save FP control registers
-	fmovem	%fpsr,%a0@(FPF_FPSR)
-	fmovem	%fpi,%a0@(FPF_FPI)
-	moveq	#0,%d0			| return 0
-	rts
-#endif
 
 #if defined(M68040)
 ENTRY(suline)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.6 2003/01/06 20:30:31 wiz Exp $ */
+/* $NetBSD: pmap.c,v 1.7 2003/01/17 21:55:24 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2003/01/06 20:30:31 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2003/01/17 21:55:24 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -421,8 +421,9 @@ _pmap_wired_count(pmap_t pmap)
 }
 
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	pmap_t pmap;
 	UVMHIST_FUNC("pmap_activate");
 
@@ -440,8 +441,9 @@ pmap_activate(struct proc *p)
 }
 
 void
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	pmap_t pmap;
 	int i;
 	UVMHIST_FUNC("pmap_deactivate");

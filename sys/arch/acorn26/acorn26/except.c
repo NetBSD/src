@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $ */
+/* $NetBSD: except.c,v 1.4 2003/01/17 21:55:24 thorpej Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4 2003/01/17 21:55:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.3 2002/04/12 18:50:30 thorpej Exp $");
 #endif
 
 void syscall(struct trapframe *);
-static void do_fault(struct trapframe *, struct proc *, struct vm_map *,
+static void do_fault(struct trapframe *, struct lwp *, struct vm_map *,
     vaddr_t, vm_prot_t);
 static void data_abort_fixup(struct trapframe *);
 static vaddr_t data_abort_address(struct trapframe *, vsize_t *);
@@ -97,6 +97,7 @@ prefetch_abort_handler(struct trapframe *tf)
 {
 	vaddr_t pc;
 	struct proc *p;
+	struct lwp *l;
 
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
@@ -110,12 +111,13 @@ prefetch_abort_handler(struct trapframe *tf)
 	 */
 
 	uvmexp.traps++;
-	p = curproc;
-	if (p == NULL)
-		p = &proc0;
+	l = curlwp;
+	if (l == NULL)
+		l = &lwp0;
+	p = l->l_proc;
 
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		p->p_addr->u_pcb.pcb_tf = tf;
+		l->l_addr->u_pcb.pcb_tf = tf;
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
 #ifdef DEBUG
@@ -128,9 +130,9 @@ prefetch_abort_handler(struct trapframe *tf)
 	/* User-mode prefetch abort */
 	pc = tf->tf_r15 & R15_PC;
 
-	do_fault(tf, p, &p->p_vmspace->vm_map, pc, VM_PROT_EXECUTE);
+	do_fault(tf, l, &p->p_vmspace->vm_map, pc, VM_PROT_EXECUTE);
 
-	userret(p);
+	userret(l);
 }
 
 void
@@ -139,6 +141,7 @@ data_abort_handler(struct trapframe *tf)
 	vaddr_t pc, va;
 	vsize_t asize;
 	struct proc *p;
+	struct lwp *l;
 	vm_prot_t atype;
 	boolean_t usrmode, twopages;
 	struct vm_map *map;
@@ -158,11 +161,12 @@ data_abort_handler(struct trapframe *tf)
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 	uvmexp.traps++;
-	p = curproc;
-	if (p == NULL)
-		p = &proc0;
+	l = curlwp;
+	if (l == NULL)
+		l = &lwp0;
+	p = l->l_proc;
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		p->p_addr->u_pcb.pcb_tf = tf;
+		l->l_addr->u_pcb.pcb_tf = tf;
 	pc = tf->tf_r15 & R15_PC;
 	data_abort_fixup(tf);
 	va = data_abort_address(tf, &asize);
@@ -173,19 +177,19 @@ data_abort_handler(struct trapframe *tf)
 		map = kernel_map;
 	else
 		map = &p->p_vmspace->vm_map;
-	do_fault(tf, p, map, va, atype);
+	do_fault(tf, l, map, va, atype);
 	if (twopages)
-		do_fault(tf, p, map, va + asize - 4, atype);
+		do_fault(tf, l, map, va + asize - 4, atype);
 
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		userret(p);
+		userret(l);
 }
 
 /*
  * General page fault handler.
  */
 void
-do_fault(struct trapframe *tf, struct proc *p,
+do_fault(struct trapframe *tf, struct lwp *l,
     struct vm_map *map, vaddr_t va, vm_prot_t atype)
 {
 	int error;
@@ -200,19 +204,20 @@ do_fault(struct trapframe *tf, struct proc *p,
 		error = uvm_fault(map, va, 0, atype);
 		if (error != ENOMEM)
 			break;
-		log(LOG_WARNING, "pid %d: VM shortage, sleeping\n", p->p_pid);
+		log(LOG_WARNING, "pid %d.%d: VM shortage, sleeping\n",
+		    l->l_proc->p_pid, l->l_lid);
 		tsleep(&lbolt, PVM, "abtretry", 0);
 	}
 
 	if (error != 0) {
-		curpcb = &p->p_addr->u_pcb;
+		curpcb = &l->l_addr->u_pcb;
 		if (curpcb->pcb_onfault != NULL) {
 			tf->tf_r0 = error;
 			tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
 			    (register_t)curpcb->pcb_onfault;
 			return;
 		}
-		trapsignal(p, SIGSEGV, va);
+		trapsignal(l, SIGSEGV, va);
 	}
 }
 
@@ -414,18 +419,18 @@ data_abort_usrmode(struct trapframe *tf)
 void
 address_exception_handler(struct trapframe *tf)
 {
-	struct proc *p;
+	struct lwp *l;
 	vaddr_t pc;
 
 	/* Enable interrupts if they were enabled before the trap. */
 	if ((tf->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 	uvmexp.traps++;
-	p = curproc;
-	if (p == NULL)
-		p = &proc0;
+	l = curlwp;
+	if (l == NULL)
+		l = &lwp0;
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		p->p_addr->u_pcb.pcb_tf = tf;
+		l->l_addr->u_pcb.pcb_tf = tf;
 	
 	pc = tf->tf_r15 & R15_PC;
 
@@ -439,8 +444,8 @@ address_exception_handler(struct trapframe *tf)
 		panic("address exception in kernel mode");
 	}
 
-	trapsignal(p, SIGBUS, pc);
-	userret(p);
+	trapsignal(l, SIGBUS, pc);
+	userret(l);
 }
 
 #ifdef DEBUG

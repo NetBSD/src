@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.55 2001/05/28 06:43:19 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.56 2003/01/17 22:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -559,8 +559,8 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * fault handler will get a NULL reference.
 	 */
 	bzero((u_char *)proc0paddr, USPACE);
-	proc0.p_addr = (struct user *)proc0paddr;
-	curproc = &proc0;
+	lwp0.l_addr = (struct user *)proc0paddr;
+	curlwp = &lwp0;
 	curpcb  = &((struct user *)proc0paddr)->u_pcb;
 
 	/*

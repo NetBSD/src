@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.4 2002/08/11 23:17:24 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.5 2003/01/17 21:55:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.4 2002/08/11 23:17:24 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.5 2003/01/17 21:55:23 thorpej Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -41,9 +41,9 @@ RCSID("$NetBSD: copyinout.S,v 1.4 2002/08/11 23:17:24 bjh21 Exp $")
 ENTRY(fubyte)
 	mov	ip, lr			/* data-abort safety */
 	adr	r1, Lfusufault
-	ldr	r2, Lcurproc
+	ldr	r2, Lcurlwp
 	ldr	r2, [r2]
-	ldr	r2, [r2, #P_ADDR]
+	ldr	r2, [r2, #L_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
 /* XXX Warning: Rn and Rd must be different in LDRT */
 	ldrbt	r0, [r0]
@@ -59,9 +59,9 @@ ENTRY(fubyte)
 ENTRY(fuword)
 	mov	ip, lr
 	adr	r1, Lfusufault
-	ldr	r2, Lcurproc
+	ldr	r2, Lcurlwp
 	ldr	r2, [r2]
-	ldr	r2, [r2, #P_ADDR]
+	ldr	r2, [r2, #L_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
 /* XXX Warning: Rn and Rd must be different in LDRT */
 	ldrt	r0, [r0]
@@ -77,9 +77,9 @@ ENTRY(fuword)
 ENTRY(subyte)
 	mov	ip, lr
 	adr	r3, Lfusufault
-	ldr	r2, Lcurproc
+	ldr	r2, Lcurlwp
 	ldr	r2, [r2]
-	ldr	r2, [r2, #P_ADDR]
+	ldr	r2, [r2, #L_ADDR]
 	str	r3, [r2, #(U_PCB + PCB_ONFAULT)]
 	strbt	r1, [r0]
 	mov	r0, #0
@@ -94,9 +94,9 @@ ENTRY(subyte)
 ENTRY(suword)
 	mov	ip, lr
 	adr	r3, Lfusufault
-	ldr	r2, Lcurproc
+	ldr	r2, Lcurlwp
 	ldr	r2, [r2]
-	ldr	r2, [r2, #P_ADDR]
+	ldr	r2, [r2, #L_ADDR]
 	str	r3, [r2, #(U_PCB + PCB_ONFAULT)]
 	strt	r1, [r0]
 	mov	r0, #0
@@ -117,5 +117,5 @@ Lfusufault:
 	mov	pc, ip
 #endif
 
-Lcurproc:
-	.word	_C_LABEL(curproc)
+Lcurlwp:
+	.word	_C_LABEL(curlwp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2002/10/13 12:24:58 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -164,12 +164,12 @@ extern int current_intr_depth;
 #endif
 
 /*
- * PROC_PC: Find out the program counter for the given process.
+ * LWP_PC: Find out the program counter for the given lwp.
  */
 #ifdef __PROG32
-#define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
+#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_pc)
 #else
-#define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
+#define LWP_PC(l)	((l)->l_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
 #endif
 
 /* The address of the vector page. */
@@ -219,6 +219,11 @@ extern struct cpu_info cpu_info_store;
 #define cpu_number()	0
 #endif
 
+#ifdef __PROG32
+void	cpu_proc_fork(struct proc *, struct proc *);
+#else
+#define	cpu_proc_fork(p1, p2)
+#endif
 
 /*
  * Scheduling glue
@@ -265,6 +270,8 @@ int	cpu_alloc_idlepcb	__P((struct cpu_info *));
  * Random cruft
  */
 
+struct lwp;
+
 /* locore.S */
 void atomic_set_bit	__P((u_int *address, u_int setmask));
 void atomic_clear_bit	__P((u_int *address, u_int clearmask));
@@ -274,7 +281,7 @@ struct pcb;
 void	savectx		__P((struct pcb *pcb));
 
 /* ast.c */
-void userret		__P((register struct proc *p));
+void userret		__P((register struct lwp *p));
 
 /* machdep.h */
 void bootsync		__P((void));

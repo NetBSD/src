@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2002/11/02 20:03:06 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2003/01/17 22:53:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,6 +87,8 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
 
+void	cpu_proc_fork(struct proc *, struct proc *);
+
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  One the hp300, we use
@@ -164,7 +166,8 @@ void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 void	proc_trampoline __P((void));
 void	loadustp __P((int));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.26 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25 2002/10/13 12:24:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.26 2003/01/17 22:28:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,7 @@ void
 data_abort_handler(frame)
 	trapframe_t *frame;
 {
+	struct lwp *l;
 	struct proc *p;
 	struct pcb *pcb;
 	u_int fault_address;
@@ -247,15 +248,15 @@ data_abort_handler(frame)
 	/* Extract the fault code from the fault status */
 	fault_code = fault_status & FAULT_TYPE_MASK;
 
-	/* Get the current proc structure or proc0 if there is none */
-	if ((p = curproc) == NULL)
-		p = &proc0;
+	/* Get the current lwp structure or lwp0 if there is none */
+	l = curlwp == NULL ? &lwp0 : curlwp;
+	p = l->l_proc;
 
 	/*
 	 * can't use curpcb, as it might be NULL; and we have p in
 	 * a register anyway
 	 */
-	pcb = &p->p_addr->u_pcb;
+	pcb = &l->l_addr->u_pcb;
 
 	/* fusubailout is used by [fs]uswintr to avoid page faulting */
 	if (pcb->pcb_onfault
@@ -266,8 +267,8 @@ data_abort_handler(frame)
 		frame->tf_r0 = EFAULT;
 copyfault:
 #ifdef DEBUG
-		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
-		    pcb->pcb_onfault, fault_address, fault_status, p);
+		printf("Using pcb_onfault=%p addr=%08x st=%08x l=%p\n",
+		    pcb->pcb_onfault, fault_address, fault_status, l);
 #endif
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
@@ -308,8 +309,8 @@ copyfault:
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
 		    pcb, curpcb);
-		printf("data_abort: Alert ! proc(%p), curproc(%p)\n",
-		    p, curproc);
+		printf("data_abort: Alert ! proc(%p), curlwp(%p)\n",
+		    p, curlwp);
 	}
 #endif	/* DEBUG */
 
@@ -319,15 +320,15 @@ copyfault:
 		 * Note that the fault was from USR mode.
 		 */
 		user = 1;
-		p->p_addr->u_pcb.pcb_tf = frame;
+		l->l_addr->u_pcb.pcb_tf = frame;
 	} else
 		user = 0;
 
 	/* check if this was a failed fixup */
 	if (error == ABORT_FIXUP_FAILED) {
 		if (user) {
-			trapsignal(p, SIGSEGV, TRAP_CODE);
-			userret(p);
+			trapsignal(l, SIGSEGV, TRAP_CODE);
+			userret(l);
 			return;
 		};
 		panic("Data abort fixup failed in kernel - we're dead");
@@ -441,7 +442,7 @@ copyfault:
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
 				report_abort("UND32", fault_status,
 				    fault_address, fault_pc);
-				trapsignal(p, SIGSEGV, TRAP_CODE);
+				trapsignal(l, SIGSEGV, TRAP_CODE);
 
 				/*
 				 * Force exit via userret()
@@ -450,7 +451,7 @@ copyfault:
 				 * priveledged mode but uses USR mode
 				 * permissions for its accesses.
 				 */
-				userret(p);
+				userret(l);
 				return;
 			}
 			map = kernel_map;
@@ -534,9 +535,9 @@ copyfault:
 			       "out of swap\n", p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, TRAP_CODE);
+			trapsignal(l, SIGKILL, TRAP_CODE);
 		} else
-			trapsignal(p, SIGSEGV, TRAP_CODE);
+			trapsignal(l, SIGSEGV, TRAP_CODE);
 		break;
 	    }
 	}
@@ -544,7 +545,7 @@ copyfault:
  out:
 	/* Call userret() if it was a USR mode fault */
 	if (user)
-		userret(p);
+		userret(l);
 }
 
 
@@ -566,6 +567,7 @@ void
 prefetch_abort_handler(frame)
 	trapframe_t *frame;
 {
+	struct lwp *l;
 	struct proc *p;
 	struct vm_map *map;
 	vaddr_t fault_pc, va;
@@ -595,12 +597,13 @@ prefetch_abort_handler(frame)
 		panic("prefetch abort fixup failed");
 
 	/* Get the current proc structure or proc0 if there is none */
-	if ((p = curproc) == 0) {
-		p = &proc0;
+	if ((l = curlwp) == NULL) {
+		l = &lwp0;
 #ifdef DEBUG
-		printf("Prefetch abort with curproc == 0\n");
+		printf("Prefetch abort with curlwp == 0\n");
 #endif
 	}
+	p = l->l_proc;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -613,7 +616,7 @@ prefetch_abort_handler(frame)
 
 	/* Was the prefectch abort from USR32 mode ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		p->p_addr->u_pcb.pcb_tf = frame;
+		l->l_addr->u_pcb.pcb_tf = frame;
 	} else {
 		/*
 		 * All the kernel code pages are loaded at boot time
@@ -635,8 +638,8 @@ prefetch_abort_handler(frame)
 		printf("prefetch: pc (%08lx) not in user process space\n",
 		    fault_pc);
 #endif
-		trapsignal(p, SIGSEGV, fault_pc);
-		userret(p);
+		trapsignal(l, SIGSEGV, fault_pc);
+		userret(l);
 		return;
 	}
 
@@ -693,9 +696,9 @@ prefetch_abort_handler(frame)
 		    "out of swap\n", p->p_pid, p->p_comm,
 		    p->p_cred && p->p_ucred ?
 		    p->p_ucred->cr_uid : -1);
-		trapsignal(p, SIGKILL, fault_pc);
+		trapsignal(l, SIGKILL, fault_pc);
 	} else
-		trapsignal(p, SIGSEGV, fault_pc);
+		trapsignal(l, SIGSEGV, fault_pc);
  out:
-	userret(p);
+	userret(l);
 }

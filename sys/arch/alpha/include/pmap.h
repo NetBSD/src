@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.57 2002/09/24 13:30:43 ad Exp $ */
+/* $NetBSD: pmap.h,v 1.58 2003/01/17 22:11:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ paddr_t vtophys(vaddr_t);
 
 /* Machine-specific functions. */
 void	pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids);
-void	pmap_emulate_reference(struct proc *p, vaddr_t v,
+void	pmap_emulate_reference(struct lwp *p, vaddr_t v,
 		int user, int write);
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
 int	pmap_uses_prom_console(void);

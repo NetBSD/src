@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2002/04/25 09:20:33 aymeric Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2003/01/17 22:17:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,6 +80,9 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
+
+void	cpu_proc_fork(struct proc *, struct proc *);
+
 
 extern volatile unsigned int interrupt_depth;
 /*
@@ -209,7 +212,8 @@ void	physcopyseg __P((vm_offset_t, vm_offset_t));
 u_int	probeva __P((u_int, u_int));
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 
 /*
  * Prototypes from machdep.c

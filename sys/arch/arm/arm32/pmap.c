@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2002/11/24 01:09:09 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.124 2003/01/17 22:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2002/11/24 01:09:09 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2003/01/17 22:28:49 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -1691,18 +1691,18 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
  * is the current process, load the new MMU context.
  */
 void
-pmap_activate(struct proc *p)
+pmap_activate(struct lwp *l)
 {
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
 	    (paddr_t *)&pcb->pcb_pagedir);
 
-	PDEBUG(0, printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
-	    p, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir));
+	PDEBUG(0, printf("pmap_activate: l=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
+	    l, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir));
 
-	if (p == curproc) {
+	if (l == curlwp) {
 		PDEBUG(0, printf("pmap_activate: setting TTB\n"));
 		setttb((u_int)pcb->pcb_pagedir);
 	}
@@ -1712,7 +1712,7 @@ pmap_activate(struct proc *p)
  * Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(struct proc *p)
+pmap_deactivate(struct lwp *l)
 {
 }
 
@@ -1764,7 +1764,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 	}
 
 	/*
-	 * Since we flush the cache each time we change curproc, we
+	 * Since we flush the cache each time we change curlwp, we
 	 * only need to flush the page if it is in the current pmap.
 	 */
 	if (curproc)

@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.18 2001/07/12 23:35:43 thorpej Exp $ */
+/* $NetBSD: process_machdep.c,v 1.19 2003/01/17 22:11:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2001/07/12 23:35:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.19 2003/01/17 22:11:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,32 +69,32 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2001/07/12 23:35:43 thorpej
 #include <machine/frame.h>
 #include <machine/alpha.h>
 
-#define	process_frame(p)	((p)->p_md.md_tf)
-#define	process_pcb(p)		(&(p)->p_addr->u_pcb)
-#define	process_fpframe(p)	(&(process_pcb(p)->pcb_fp))
+#define	lwp_frame(l)	((l)->l_md.md_tf)
+#define	lwp_pcb(l)	(&(l)->l_addr->u_pcb)
+#define	lwp_fpframe(l)	(&(lwp_pcb(l)->pcb_fp))
 
 int
-process_read_regs(struct proc *p, struct reg *regs)
+process_read_regs(struct lwp *l, struct reg *regs)
 {
 
-	frametoreg(process_frame(p), regs);
-	regs->r_regs[R_ZERO] = process_frame(p)->tf_regs[FRAME_PC];
-	regs->r_regs[R_SP] = process_pcb(p)->pcb_hw.apcb_usp;
+	frametoreg(lwp_frame(l), regs);
+	regs->r_regs[R_ZERO] = lwp_frame(l)->tf_regs[FRAME_PC];
+	regs->r_regs[R_SP] = lwp_pcb(l)->pcb_hw.apcb_usp;
 	return (0);
 }
 
 int
-process_write_regs(struct proc *p, struct reg *regs)
+process_write_regs(struct lwp *l, struct reg *regs)
 {
 
-	regtoframe(regs, process_frame(p));
-	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
-	process_pcb(p)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
+	regtoframe(regs, lwp_frame(l));
+	lwp_frame(l)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
+	lwp_pcb(l)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
 	return (0);
 }
 
 int
-process_sstep(struct proc *p, int sstep)
+process_sstep(struct lwp *l, int sstep)
 {
 
 	if (sstep)
@@ -104,32 +104,32 @@ process_sstep(struct proc *p, int sstep)
 }
 
 int
-process_set_pc(struct proc *p, caddr_t addr)
+process_set_pc(struct lwp *l, caddr_t addr)
 {
-	struct trapframe *frame = process_frame(p);
+	struct trapframe *frame = lwp_frame(l);
 
 	frame->tf_regs[FRAME_PC] = (u_int64_t)addr;
 	return (0);
 }
 
 int
-process_read_fpregs(struct proc *p, struct fpreg *regs)
+process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
 
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 1);
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(l, 1);
 
-	memcpy(regs, process_fpframe(p), sizeof(struct fpreg));
+	memcpy(regs, lwp_fpframe(l), sizeof(struct fpreg));
 	return (0);
 }
 
 int
-process_write_fpregs(struct proc *p, struct fpreg *regs)
+process_write_fpregs(struct lwp *l, struct fpreg *regs)
 {
 
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_proc(p, 0);
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_proc(l, 0);
 
-	memcpy(process_fpframe(p), regs, sizeof(struct fpreg));
+	memcpy(lwp_fpframe(l), regs, sizeof(struct fpreg));
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.45 2002/09/27 15:36:00 provos Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.46 2003/01/17 22:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -222,7 +222,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 #ifdef DIAGNOSTIC
 	/* info */
-	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
+	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
 #endif
 
 	/*
@@ -325,7 +325,9 @@ u_int
 initarm(void *arg)
 {
 	extern vaddr_t xscale_cache_clean_addr;
+#ifdef DIAGNOSTIC
 	extern vsize_t xscale_minidata_clean_size;
+#endif
 	int loop;
 	int loop1;
 	u_int l1pagetable;
