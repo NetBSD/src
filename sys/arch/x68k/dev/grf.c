@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.15 1999/06/18 05:13:46 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.16 1999/06/27 14:13:14 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
