@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.38 2000/09/21 01:45:46 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.39 2000/12/15 02:12:58 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -994,4 +994,25 @@ rf_PrintUserStats(RF_Raid_t * raidPtr)
 	printf("Total sectors moved:        %ld\n", raidPtr->userstats.num_sect_moved);
 	printf("Average access size (sect): %ld\n", RF_DB0_CHECK(raidPtr->userstats.num_sect_moved, raidPtr->userstats.num_ios));
 	printf("Achieved data rate:         %ld.%ld MB/sec\n", mbs, mbs_frac);
+}
+
+
+void
+rf_print_panic_message(line,file)
+	int line;
+	char *file;
+{
+	sprintf(rf_panicbuf,"raidframe error at line %d file %s",
+		line, file);
+}
+
+void
+rf_print_assert_panic_message(line,file,condition)
+	int line;
+	char *file;
+	char *condition;
+{
+	sprintf(rf_panicbuf,
+		"raidframe error at line %d file %s (failed asserting %s)\n",
+		line, file, condition);
 }
