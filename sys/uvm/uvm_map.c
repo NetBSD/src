@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.115 2001/12/31 19:21:36 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.116 2001/12/31 20:34:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.115 2001/12/31 19:21:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.116 2001/12/31 20:34:01 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2653,6 +2653,9 @@ uvm_map_clean(map, start, end, flags)
  flush_object:
 		/*
 		 * flush pages if we've got a valid backing object.
+		 * note that we must always clean object pages before
+		 * freeing them since otherwise we could reveal stale
+		 * data from files.
 		 */
 
 		offset = current->offset + (start - current->start);
@@ -2660,7 +2663,7 @@ uvm_map_clean(map, start, end, flags)
 		if (uobj != NULL) {
 			simple_lock(&uobj->vmobjlock);
 			error = (uobj->pgops->pgo_put)(uobj, offset,
-			    offset + size, flags);
+			    offset + size, flags | PGO_CLEANIT);
 		}
 		start += size;
 	}
