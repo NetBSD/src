@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 1999/08/05 21:16:55 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.19 1999/12/15 08:01:01 garbled Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -204,8 +204,9 @@ _SPLRAISE(splpmap, 7)
 /* clock interrupts at level 10 */
 _SPLRAISE(splclock, PIL_CLOCK)
 
-/* fd hardware interrupts are at level 11 */
+/* fd hardware, ts102, and tadpole microcontoller interrupts are at level 11 */
 _SPLRAISE(splfd, 11)
+_SPLRAISE(splts102, 11)
 
 /* zs hardware interrupts are at level 12 */
 _SPLRAISE(splzs, 12)
