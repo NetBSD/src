@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.148 2002/11/17 22:41:36 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.149 2002/11/19 01:45:29 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.148 2002/11/17 22:41:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.149 2002/11/19 01:45:29 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1178,6 +1178,35 @@ raidioctl(dev, cmd, data, flag, p)
 			return(EINVAL);
 		}
 
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		if ((raidPtr->Disks[row][column].status == rf_ds_optimal) &&
+		    (raidPtr->numFailures > 0)) { 
+			/* XXX 0 above shouldn't be constant!!! */
+			/* some component other than this has failed.
+			   Let's not make things worse than they already
+			   are... */
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:     Row: %d Col: %d   Too many failures.\n",
+			       raidPtr->raidid, row, column);
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
+		if (raidPtr->Disks[row][column].status == 
+		    rf_ds_reconstructing) {
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:    Row: %d Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, row, column);
+			
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
+		if (raidPtr->Disks[row][column].status == rf_ds_spared) {
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
+
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
 		if (rrcopy == NULL)
 			return(ENOMEM);
@@ -1263,6 +1292,22 @@ raidioctl(dev, cmd, data, flag, p)
 		if (rr->row < 0 || rr->row >= raidPtr->numRow
 		    || rr->col < 0 || rr->col >= raidPtr->numCol)
 			return (EINVAL);
+
+
+		RF_LOCK_MUTEX(raidPtr->mutex);
+		if ((raidPtr->Disks[rr->row][rr->col].status == 
+		     rf_ds_optimal) && (raidPtr->numFailures > 0)) { 
+			/* some other component has failed.  Let's not make
+			   things worse. XXX wrong for RAID6 */
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
+		if (raidPtr->Disks[rr->row][rr->col].status == rf_ds_spared) {
+			/* Can't fail a spared disk! */
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
+		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* make a copy of the recon request so that we don't rely on
 		 * the user's buffer */
