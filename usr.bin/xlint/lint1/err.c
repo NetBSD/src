@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.22 2002/10/22 13:48:50 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.23 2002/10/22 18:15:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.22 2002/10/22 13:48:50 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.23 2002/10/22 18:15:00 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -374,6 +374,7 @@ const	char *msgs[] = {
 	"__FUNCTION__ is a GCC extension",			      /* 316 */
 	"__func__ is a C9X feature",				      /* 317 */
 	"variable array dimension is a GCC extension",		      /* 318 */
+	"compound literals are a C9X/GCC extension",		      /* 319 */
 };
 
 /*
