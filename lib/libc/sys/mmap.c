@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.4 1995/02/27 11:23:07 cgd Exp $	*/
+/*	$NetBSD: mmap.c,v 1.5 1996/12/20 20:17:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)mmap.c	8.1 (Berkeley) 6/17/93";
 #else
-static char rcsid[] = "$NetBSD: mmap.c,v 1.4 1995/02/27 11:23:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: mmap.c,v 1.5 1996/12/20 20:17:26 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 /*
  * This function provides 64-bit offset padding that

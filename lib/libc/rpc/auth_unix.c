@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.3 1996/03/29 23:00:47 jtc Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.4 1996/12/20 20:17:19 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: auth_unix.c,v 1.3 1996/03/29 23:00:47 jtc Exp $";
+static char *rcsid = "$NetBSD: auth_unix.c,v 1.4 1996/12/20 20:17:19 cgd Exp $";
 #endif
 
 /*
@@ -49,6 +49,8 @@ static char *rcsid = "$NetBSD: auth_unix.c,v 1.3 1996/03/29 23:00:47 jtc Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
