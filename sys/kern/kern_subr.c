@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.56 2000/02/01 05:28:01 enami Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.57 2000/02/13 04:57:44 oster Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -535,6 +535,16 @@ doexechooks(p)
 static struct device fakemdrootdev[NMD];
 #endif
 
+#include "raid.h"
+#if NRAID == 1
+#define BOOT_FROM_RAID_HOOKS 1 
+#endif
+
+#ifdef BOOT_FROM_RAID_HOOKS
+extern int numraid;
+extern struct device *raidrootdev;
+#endif
+
 void
 setroot(bootdv, bootpartition)
 	struct device *bootdv;
@@ -885,6 +895,16 @@ finddevice(name)
 	const char *name;
 {
 	struct device *dv;
+#ifdef BOOT_FROM_RAID_HOOKS
+	int j;
+
+	for (j = 0; j < numraid; j++) {
+		if (strcmp(name, raidrootdev[j].dv_xname) == 0) {
+			dv = &raidrootdev[j];
+			return(dv);
+		}
+	}
+#endif;
 
 	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 	    dv = TAILQ_NEXT(dv, dv_list))
@@ -904,6 +924,9 @@ getdisk(str, len, defpart, devp, isdump)
 #ifdef MEMORY_DISK_HOOKS
 	int		i;
 #endif
+#ifdef BOOT_FROM_RAID_HOOKS
+	int 		j;
+#endif
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -912,6 +935,13 @@ getdisk(str, len, defpart, devp, isdump)
 			for (i = 0; i < NMD; i++)
 				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
 				    'a' + MAXPARTITIONS - 1);
+#endif
+#ifdef BOOT_FROM_RAID_HOOKS
+		if (isdump == 0)
+			for (j = 0; j < numraid; j++)
+				printf(" %s[a-%c]", 
+				       raidrootdev[j].dv_xname,
+				       'a' + MAXPARTITIONS - 1);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
@@ -940,7 +970,6 @@ parsedisk(str, len, defpart, devp)
 #ifdef MEMORY_DISK_HOOKS
 	int i;
 #endif
-
 	if (len == 0)
 		return (NULL);
 
