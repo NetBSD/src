@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-common,v 1.47 2001/06/13 15:16:14 wiz Exp $
+.\"	$NetBSD: doc-common,v 1.48 2001/10/19 15:36:36 uch Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -184,6 +184,7 @@
 .			if "\\$3"next68k"  .as vT /\\$3\ 
 .			if "\\$3"ofppc"    .as vT /\\$3\ 
 .			if "\\$3"pc532"    .as vT /\\$3\ 
+.			if "\\$3"playstation2 .as vT /\\$3\ 
 .			if "\\$3"pmax"     .as vT /\\$3\ 
 .			if "\\$3"powerpc"  .as vT /\\$3\ 
 .			if "\\$3"prep"     .as vT /\\$3\ 
