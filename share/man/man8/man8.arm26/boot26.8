@@ -1,4 +1,4 @@
-.\" $NetBSD: boot26.8,v 1.1 2001/07/28 14:40:01 bjh21 Exp $
+.\" $NetBSD: boot26.8,v 1.2 2001/08/04 14:31:10 bjh21 Exp $
 .\"
 .\" Copyright (c) 2000, 2001 Ben Harris
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 28, 2001
+.Dd August 4, 2001
 .Dt boot26 8 arm26
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ is a program that runs under
 and launches the
 .Nx Ns /arm26
 kernel.  It needs to be installed in a RISC OS
-filesystem and given file type FF8 (Absolute).  The kernel it is to load
+filesystem and given file type FFA (Module).  The kernel it is to load
 also needs to be stored in a
 .Tn RISC OS
 filesystem.
@@ -88,6 +88,25 @@ if
 is not specified.  The file must be an ELF image, and may have been compressed
 using
 .Xr gzip 1 .
+.Ss Use as a module
+.Nm
+is implemented as a RISC OS relocatable module.  It can be loaded into memory
+by running
+.Ql *RMLoad boot26 .
+After this,
+.Nx
+can be booted by running
+.Ql *boot26
+as usual, but the command will be handled by the module.
+.Pp
+It should also be possible to arrange for
+.Nm
+to be loaded from ROM (e.g. from the ROM on an expansion card), in which case
+.Nx
+could be made to boot automatically by making
+.Nm
+the configured language using
+.Ql *Configure Language .
 .Ss Screen display
 .\" From <URL:http://mail-index.netbsd.org/port-arm26/2000/05/02/0001.html>
 When it starts up,
@@ -130,6 +149,14 @@ is to do so successfully.  Future
 bootloaders should load the kernel into whatever pages are free, then kick
 out RISC OS and shuffle them into the right shape.  This is left as an
 exercise for the enthusiatic reader.
+.Sh FILES
+.Bl -tag -width Pa
+.It Pa /usr/mdec/boot26,ffa
+The location of
+.Nm
+in the
+.Nx
+filesystem.
 .Sh SEE ALSO
 .Xr gzip 1 ,
 .Xr reboot 2 ,
