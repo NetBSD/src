@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.11 2000/09/04 22:06:31 lukem Exp $	*/
+/*	$NetBSD: readline.c,v 1.12 2000/12/23 22:02:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.11 2000/09/04 22:06:31 lukem Exp $");
+__RCSID("$NetBSD: readline.c,v 1.12 2000/12/23 22:02:20 jdolecek Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: readline.c,v 1.11 2000/09/04 22:06:31 lukem Exp $");
 #include "readline.h"
 #include "sys.h"
 #include "el.h"
+#include "fcns.h"		/* for EL_NUM_FCNS */
 
 /* for rl_complete() */
 #define	TAB		'\r'
@@ -88,9 +89,28 @@ char *rl_completer_quote_characters = NULL;
 CPFunction *rl_completion_entry_function = NULL;
 CPPFunction *rl_attempted_completion_function = NULL;
 
+/*
+ * This is set to character indicating type of completion being done by
+ * rl_complete_internal(); this is available for application completion
+ * functions.
+ */
+int rl_completion_type = 0;
+
+/*
+ * If more than this number of items results from query for possible
+ * completions, we ask user if they are sure to really display the list.
+ */
+int rl_completion_query_items = 100;
+
+/*
+ * If not zero, non-unique completions always show list of possible matches.
+ */
+static int _rl_complete_show_all = 0;
+
 /* used for readline emulation */
 static History *h = NULL;
 static EditLine *e = NULL;
+static int el_rl_complete_cmdnum = 0;
 
 /* internal functions */
 static unsigned char	 _el_rl_complete(EditLine *, int);
@@ -101,6 +121,7 @@ static int		 _history_expand_command(const char *, size_t, char **);
 static char		*_rl_compat_sub(const char *, const char *,
 			    const char *, int);
 static int		 rl_complete_internal(int);
+static int		 _rl_qsort_string_compare(const void *, const void *);
 
 /*
  * needed for prompt switching in readline()
@@ -112,7 +133,6 @@ static char *el_rl_prompt = NULL;
 static char *
 _get_prompt(EditLine *el)
 {
-
 	return (el_rl_prompt);
 }
 
@@ -148,6 +168,7 @@ rl_initialize(void)
 {
 	HistEvent ev;
 	const LineInfo *li;
+	int i;
 
 	if (e != NULL)
 		el_end(e);
@@ -178,17 +199,33 @@ rl_initialize(void)
 	/* so this can be overriden */
 	el_set(e, EL_EDITOR, "emacs");
 
-	/* for word completition - this has to go AFTER rebinding keys */
-	/* to emacs-style */
+	/*
+	 * Word completition - this has to go AFTER rebinding keys
+	 * to emacs-style.
+	 */
 	el_set(e, EL_ADDFN, "rl_complete",
 	    "ReadLine compatible completition function",
 	    _el_rl_complete);
 	el_set(e, EL_BIND, "^I", "rl_complete", NULL);
 
+	/*
+	 * Find out where the rl_complete function was added; this is
+	 * used later to detect that lastcmd was also rl_complete.
+	 */
+	for(i=EL_NUM_FCNS; i < e->el_map.nfunc; i++) {
+		if (e->el_map.func[i] == _el_rl_complete) {
+			el_rl_complete_cmdnum = i;
+			break;
+		}
+	}
+		
 	/* read settings from configuration file */
 	el_source(e, NULL);
 
-	/* some readline apps do use this */
+	/*
+	 * Unfortunately, some applications really do use rl_point
+	 * and rl_line_buffer directly.
+	 */
 	li = el_line(e);
 	/* LINTED const cast */
 	rl_line_buffer = (char *) li->buffer;
@@ -253,7 +290,6 @@ readline(const char *prompt)
 void
 using_history(void)
 {
-
 	if (h == NULL || e == NULL)
 		rl_initialize();
 }
@@ -1163,7 +1199,7 @@ filename_completion_function(const char *text, int state)
 			temp = tilde_expand(dirname);
 			dirname = realloc(dirname, strlen(temp) + 1);
 			(void) strcpy(dirname, temp);	/* safe */
-			free(temp);	/* no more needed */
+			free(temp);	/* no longer needed */
 		}
 		/* will be used in cycle */
 		filename_len = strlen(filename);
@@ -1251,7 +1287,6 @@ username_completion_function(const char *text, int state)
 static unsigned char
 _el_rl_complete(EditLine *el, int ch)
 {
-
 	return (unsigned char) rl_complete(0, ch);
 }
 
@@ -1263,19 +1298,19 @@ char **
 completion_matches(const char *text, CPFunction *genfunc)
 {
 	char **match_list = NULL, *retstr, *prevstr;
-	size_t math_list_len, max_equal, which, i;
+	size_t match_list_len, max_equal, which, i;
 	int matches;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
 	matches = 0;
-	math_list_len = 1;
+	match_list_len = 1;
 	while ((retstr = (*genfunc) (text, matches)) != NULL) {
-		if (matches + 1 >= math_list_len) {
-			math_list_len <<= 1;
+		if (matches + 1 >= match_list_len) {
+			match_list_len <<= 1;
 			match_list = realloc(match_list,
-			    math_list_len * sizeof(char *));
+			    match_list_len * sizeof(char *));
 		}
 		match_list[++matches] = retstr;
 	}
@@ -1287,7 +1322,7 @@ completion_matches(const char *text, CPFunction *genfunc)
 	which = 2;
 	prevstr = match_list[1];
 	max_equal = strlen(prevstr);
-	for (; which < matches; which++) {
+	for (; which <= matches; which++) {
 		for (i = 0; i < max_equal &&
 		    prevstr[i] == match_list[which][i]; i++)
 			continue;
@@ -1300,26 +1335,82 @@ completion_matches(const char *text, CPFunction *genfunc)
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
-	if (matches + 1 >= math_list_len)
+	if (matches + 1 >= match_list_len)
 		match_list = realloc(match_list,
-		    (math_list_len + 1) * sizeof(char *));
+		    (match_list_len + 1) * sizeof(char *));
 	match_list[matches + 1] = (char *) NULL;
 
 	return (match_list);
 }
 
+/*
+ * Sort function for qsort(). Just wrapper around strcasecmp().
+ */
+static int
+_rl_qsort_string_compare(i1, i2)
+	const void *i1, *i2;
+{
+	const char *s1 = ((const char **)i1)[0];
+	const char *s2 = ((const char **)i1)[0];
+
+	return strcasecmp(s1, s2);
+}
 
 /*
- * called by rl_complete()
+ * Display list of strings in columnar format on readline's output stream.
+ * 'matches' is list of strings, 'len' is number of strings in 'matches',
+ * 'max' is maximum length of string in 'matches'.
  */
-/* ARGSUSED */
+void
+rl_display_match_list (matches, len, max)
+     char **matches;
+     int len, max;
+{
+	int i, idx, limit, count;
+	int screenwidth = e->el_term.t_size.h;
+
+	max += 2;	/* space between entries */
+	
+	/* find out how many entries can be put on one line */
+	limit = screenwidth / max;
+	if (limit == 0)
+		limit = 1;
+
+	/* how many lines of output */
+	count = len / limit;
+
+	/* Sort the items if they are not already sorted. */
+	qsort(matches + 1, len, sizeof(char *), _rl_qsort_string_compare);
+
+	idx = 1;
+	for(; count >= 0; count--) {
+		for(i=0; i < limit && matches[idx]; i++, idx++)
+			fprintf(e->el_outfile, "%s  ", matches[idx]);
+		fprintf(e->el_outfile, "\n");
+	}
+}
+
+/*
+ * Complete the word at or before point, called by rl_complete()
+ * 'what_to_do' says what to do with the completion.
+ * `?' means list the possible completions.
+ * TAB means do standard completion.
+ * `*' means insert all of the possible completions.
+ * `!' means to do standard completion, and list all possible completions if
+ * there is more than one.
+ *
+ * Note: '*' support is not implemented
+ */
 static int
 rl_complete_internal(int what_to_do)
 {
 	CPFunction *complet_func;
 	const LineInfo *li;
-	char *temp, *temp2, **arr;
+	char *temp, **matches;
+	const char *ctemp;
 	size_t len;
+
+	rl_completion_type = what_to_do;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
@@ -1329,16 +1420,14 @@ rl_complete_internal(int what_to_do)
 		complet_func = filename_completion_function;
 
 	li = el_line(e);
-	/* LINTED const cast */
-	temp = (char *) li->cursor;
-	while (temp > li->buffer &&
-	    !strchr(rl_basic_word_break_characters, *(temp - 1)))
-		temp--;
+	ctemp = (char *) li->cursor;
+	while (ctemp > li->buffer &&
+	    !strchr(rl_basic_word_break_characters, *(ctemp - 1)))
+		ctemp--;
 
-	len = li->cursor - temp;
-	temp2 = alloca(len + 1);
-	(void) strncpy(temp2, temp, len);
-	temp = temp2;
+	len = li->cursor - ctemp;
+	temp = alloca(len + 1);
+	(void) strncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
 	/* these can be used by function called in completion_matches() */
@@ -1347,37 +1436,81 @@ rl_complete_internal(int what_to_do)
 	rl_end = li->lastchar - li->buffer;
 
 	if (!rl_attempted_completion_function)
-		arr = completion_matches(temp, complet_func);
+		matches = completion_matches(temp, complet_func);
 	else {
 		int end = li->cursor - li->buffer;
-		arr = (*rl_attempted_completion_function) (temp, (int)
+		matches = (*rl_attempted_completion_function) (temp, (int)
 		    (end - len), end);
 	}
 
-	if (arr) {
-		int i;
+	if (matches) {
+		int i, retval = CC_REFRESH;
+		int matches_num, maxlen, match_len, match_display=1;
 
 		el_deletestr(e, (int) len);
-		el_insertstr(e, arr[0]);
-		if (strcmp(arr[0], arr[1]) == 0) {
-			/* lcd is valid object, so add a space to mark it */
-			/* in case of filename completition, add a space  */
-			/* only if object found is not directory	  */
-			size_t alen = strlen(arr[0]);
+		el_insertstr(e, matches[0]);
+
+		if (what_to_do == '?')
+			goto display_matches;
+
+		if (matches[2] == NULL && strcmp(matches[0], matches[1]) == 0) {
+			/*
+			 * We found exact match. Add a space after
+			 * it, unless we do filename completition and the
+			 * object is a directory.
+			 */
+			size_t alen = strlen(matches[0]);
 			if (complet_func != filename_completion_function
-			    || (alen > 0 && (arr[0])[alen - 1] != '/'))
+			    || (alen > 0 && (matches[0])[alen - 1] != '/'))
 				el_insertstr(e, " ");
-		} else
+		} else if (what_to_do == '!') {
+    display_matches:
+			/*
+			 * More than one match and requested to list possible
+			 * matches.
+			 */
+
+			for(i=1, maxlen=0; matches[i]; i++) {
+				match_len = strlen(matches[i]);
+				if (match_len > maxlen)
+					maxlen = match_len;
+			}
+			matches_num = i - 1;
+				
+			/* newline to get on next line from command line */
+			fprintf(e->el_outfile, "\n");
+
+			/*
+			 * If there are too many items, ask user for display
+			 * confirmation.
+			 */
+			if (matches_num > rl_completion_query_items) {
+				fprintf(e->el_outfile,
+				"Display all %d possibilities? (y or n) ",
+					matches_num);
+				fflush(e->el_outfile);
+				if (getc(stdin) != 'y')
+					match_display = 0;
+				fprintf(e->el_outfile, "\n");
+			}
+
+			if (match_display)
+				rl_display_match_list(matches, matches_num,
+					maxlen);
+			retval = CC_REDISPLAY;
+		} else {
 			/* lcd is not a valid object - further specification */
 			/* is needed */
 			el_beep(e);
+			retval = CC_NORM;
+		}
 
 		/* free elements of array and the array itself */
-		for (i = 0; arr[i]; i++)
-			free(arr[i]);
-		free(arr), arr = NULL;
+		for (i = 0; matches[i]; i++)
+			free(matches[i]);
+		free(matches), matches = NULL;
 
-		return (CC_REFRESH);
+		return (retval);
 	}
 	return (CC_NORM);
 }
@@ -1395,8 +1528,12 @@ rl_complete(int ignore, int invoking_key)
 	if (rl_inhibit_completion) {
 		rl_insert(ignore, invoking_key);
 		return (CC_REFRESH);
-	} else
-		return (rl_complete_internal(invoking_key));
+	} else if (e->el_state.lastcmd == el_rl_complete_cmdnum)
+		return rl_complete_internal('?');
+	else if (_rl_complete_show_all)
+		return rl_complete_internal('!');
+	else
+		return (rl_complete_internal(TAB));
 }
 
 

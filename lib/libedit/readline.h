@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.3 2000/09/04 22:06:31 lukem Exp $	*/
+/*	$NetBSD: readline.h,v 1.4 2000/12/23 22:02:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ extern char		*rl_completer_word_break_characters;
 extern char		*rl_completer_quote_characters;
 extern CPFunction	*rl_completion_entry_function;
 extern CPPFunction	*rl_attempted_completion_function;
+extern int		rl_completion_type;
+extern int		rl_completion_query_items;
 
 /* supported functions */
 char		*readline(const char *);
@@ -100,6 +102,7 @@ char		*username_completion_function(const char *, int);
 int		 rl_complete(int, int);
 int		 rl_read_key(void);
 char	       **completion_matches(const char *, CPFunction *);
+void		 rl_display_match_list(char **, int, int);
 
 int		 rl_insert(int, int);
 void		 rl_reset_terminal(const char *);
