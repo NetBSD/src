@@ -60,7 +60,6 @@ finduname(uname, uid)
 	int	uid;
 {
 	struct passwd	*pw;
-	extern struct passwd *getpwuid ();
 
 	if (uid != saveuid) {
 		saveuid = uid;
@@ -99,7 +98,6 @@ findgname(gname, gid)
 	int	gid;
 {
 	struct group	*gr;
-	extern struct group *getgrgid ();
 
 	if (gid != savegid) {
 		savegid = gid;

@@ -1205,6 +1205,7 @@ char *name;
 	char *rname;
 	char **tmp_ptr;
 	int size_buf;
+	extern char *un_quote_string();
 
 	un_quote_string(name);
 	size_buf = strlen(name);

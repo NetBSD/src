@@ -38,6 +38,7 @@ static char sccsid[] = "@(#)vgrindefs.c	5.3 (Berkeley) 6/1/90";
 #define	BUFSIZ	1024
 #define MAXHOP	32	/* max number of tc= indirections */
 
+#include <stdlib.h>
 #include <ctype.h>
 /*
  * grindcap - routines for dealing with the language definitions data base
@@ -57,10 +58,9 @@ static char sccsid[] = "@(#)vgrindefs.c	5.3 (Berkeley) 6/1/90";
 static	char *tbuf;
 static	char *filename;
 static	int hopcount;	/* detect infinite loops in termcap, init 0 */
-char	*tskip();
+static	char *tskip();
+static	char *tdecode();
 char	*tgetstr();
-char	*tdecode();
-char	*getenv();
 
 /*
  * Get an entry for terminal name in buffer bp,
