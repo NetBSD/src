@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1998/05/24 19:32:37 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1998/05/28 12:16:08 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -152,6 +152,9 @@ struct kpt_stats kpt_stats;
 #define PDB_PVDUMP	0x8000
 int debugmap = 0;
 int pmapdebug = PDB_PARANOIA;
+
+static void	pmap_check_wiring __P((char *, vm_offset_t));
+static void	pmap_pvdump __P((vm_offset_t));
 #endif
 
 /*
@@ -269,8 +272,6 @@ static struct pv_entry* pmap_alloc_pv __P((void));
 static void		pmap_free_pv __P((struct pv_entry *));
 static void		atari_protection_init __P((void));
 static void		pmap_collect1 __P((pmap_t, vm_offset_t, vm_offset_t));  
-void			pmap_pinit __P((pmap_t));
-void			pmap_release __P((pmap_t));
 
 /*
  * All those kernel PT submaps that BSD is so fond of
@@ -1054,9 +1055,7 @@ pmap_remove(pmap, sva, eva)
 		}
 #ifdef DEBUG
 		if (npv == NULL) {
-			printf ("pmap_remove: PA %08x index %d\n", pa,
-							pa_index(pa));
-			panic("pmap_remove: PA not in pv_tab");
+			panic("pmap_remove: PA not in pv_list");
 		}
 #endif
 		ste = (int *)npv->pv_ptste;
@@ -2398,7 +2397,7 @@ pmap_enter_ptpage(pmap, va)
 			panic("pmap_enter: vm_fault failed");
 #endif
 		ptpa = pmap_extract(pmap_kernel(), va);
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(UVM)
 		PHYS_TO_VM_PAGE(ptpa)->flags |=  PG_PTPAGE;
 #endif
 	}
@@ -2493,6 +2492,7 @@ pmap_virtual_space(vstartp, vendp)
 }
 
 #ifdef DEBUG
+static void
 pmap_pvdump(pa)
 	vm_offset_t pa;
 {
@@ -2506,6 +2506,7 @@ pmap_pvdump(pa)
 	printf("\n");
 }
 
+static void
 pmap_check_wiring(str, va)
 	char *str;
 	vm_offset_t va;
@@ -2518,10 +2519,17 @@ pmap_check_wiring(str, va)
 	    !pmap_pte_v(pmap_pte(pmap_kernel(), va)))
 		return;
 
+#if defined(UVM)
+	if (!uvm_map_lookup_entry(pt_map, va, &entry)) {
+		printf("wired_check: entry for %lx not found\n", va);
+		return;
+	}
+#else
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {
 		printf("wired_check: entry for %lx not found\n", va);
 		return;
 	}
+#endif
 	count = 0;
 	for (pte = (int *)va; pte < (int *)(va+PAGE_SIZE); pte++)
 		if (*pte)
