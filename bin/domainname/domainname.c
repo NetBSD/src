@@ -1,3 +1,7 @@
+#ifndef lint
+static char rcsid[] = "$Id: domainname.c,v 1.2 1993/08/02 17:15:10 mycroft Exp $";
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <netdb.h>
