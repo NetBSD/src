@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.11 1998/08/13 15:08:54 nathanw Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.12 1998/08/15 01:41:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -230,9 +230,15 @@ com_pcmcia_attach(parent, self, aux)
 
 	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
 	     cfe = cfe->cfe_list.sqe_next) {
+#if 0
+		/*
+		 * Some modem cards (e.g. Xircom CM33) also have
+		 * mem space.  Don't bother with this check.
+		 */
 		if (cfe->num_memspace != 0)
 			continue;
-     
+#endif
+
 		if (cfe->num_iospace != 1)
 			continue;
 
