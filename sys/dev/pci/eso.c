@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.13 1999/12/03 22:34:28 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.14 1999/12/10 19:13:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -156,6 +156,7 @@ static const char * const eso_rev2model[] = {
 static uint8_t	eso_read_ctlreg __P((struct eso_softc *, uint8_t));
 static uint8_t	eso_read_mixreg __P((struct eso_softc *, uint8_t));
 static uint8_t	eso_read_rdr __P((struct eso_softc *));
+static void	eso_reload_master_vol __P((struct eso_softc *));
 static int	eso_reset __P((struct eso_softc *));
 static void	eso_set_gain __P((struct eso_softc *, unsigned int));
 static int	eso_set_monooutsrc __P((struct eso_softc *, unsigned int));
@@ -258,13 +259,20 @@ eso_attach(parent, self, aux)
 
 	/* Enable the relevant (DMA) interrupts. */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ESO_IO_IRQCTL,
-	    ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ | ESO_IO_IRQCTL_MPUIRQ);
+	    ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ | ESO_IO_IRQCTL_HVIRQ |
+	    ESO_IO_IRQCTL_MPUIRQ);
 	
 	/* Set up A1's sample rate generator for new-style parameters. */
 	a2mode = eso_read_mixreg(sc, ESO_MIXREG_A2MODE);
 	a2mode |= ESO_MIXREG_A2MODE_NEWA1 | ESO_MIXREG_A2MODE_ASYNC;
 	eso_write_mixreg(sc, ESO_MIXREG_A2MODE, a2mode);
 	
+	/* Slave Master Volume to Hardware Volume Control Counter, unask IRQ. */
+	mvctl = eso_read_mixreg(sc, ESO_MIXREG_MVCTL);
+	mvctl &= ~ESO_MIXREG_MVCTL_SPLIT;
+	mvctl |= ESO_MIXREG_MVCTL_HVIRQM;
+	eso_write_mixreg(sc, ESO_MIXREG_MVCTL, mvctl);
+
 	/* Set mixer regs to something reasonable, needs work. */
 	sc->sc_recsrc = ESO_MIXREG_ERS_LINE;
 	sc->sc_monooutsrc = ESO_MIXREG_MPM_MOMUTE;
@@ -513,7 +521,7 @@ eso_intr(hdl)
 
 	/* If it wasn't ours, that's all she wrote. */
 	if ((irqctl & (ESO_IO_IRQCTL_A1IRQ | ESO_IO_IRQCTL_A2IRQ |
-	    ESO_IO_IRQCTL_MPUIRQ)) == 0)
+	    ESO_IO_IRQCTL_HVIRQ | ESO_IO_IRQCTL_MPUIRQ)) == 0)
 		return (0);
 	
 	if (irqctl & ESO_IO_IRQCTL_A1IRQ) {
@@ -538,6 +546,19 @@ eso_intr(hdl)
 			sc->sc_pintr(sc->sc_parg);
 		else
 			wakeup(&sc->sc_pintr);
+	}
+
+	if (irqctl & ESO_IO_IRQCTL_HVIRQ) {
+		/* Clear interrupt. */
+		eso_write_mixreg(sc, ESO_MIXREG_CHVIR, ESO_MIXREG_CHVIR_CHVIR);
+
+		/*
+		 * Raise a flag to cause a lazy update of the in-softc gain
+		 * values the next time the software mixer is read to keep
+		 * interrupt service cost low.  ~0 cannot occur otherwise
+		 * as the master volume has a precision of 6 bits only.
+		 */
+		sc->sc_gain[ESO_MASTER_VOL][ESO_LEFT] = (uint8_t)~0;
 	}
 
 #if NMPU > 0
@@ -1069,13 +1090,17 @@ eso_get_port(hdl, cp)
 	struct eso_softc *sc = hdl;
 
 	switch (cp->dev) {
+	case ESO_MASTER_VOL:
+		/* Reload from mixer after hardware volume control use. */
+		if (sc->sc_gain[cp->dev][ESO_LEFT] == (uint8_t)~0)
+			eso_reload_master_vol(sc);
+		/* FALLTHROUGH */
 	case ESO_DAC_PLAY_VOL:
 	case ESO_MIC_PLAY_VOL:
 	case ESO_LINE_PLAY_VOL:
 	case ESO_SYNTH_PLAY_VOL:
 	case ESO_CD_PLAY_VOL:
 	case ESO_AUXB_PLAY_VOL:
-	case ESO_MASTER_VOL:
 	case ESO_RECORD_VOL:
 	case ESO_DAC_REC_VOL:
 	case ESO_MIC_REC_VOL:
@@ -1135,6 +1160,9 @@ eso_get_port(hdl, cp)
 		break;
 
 	case ESO_MASTER_MUTE:
+		/* Reload from mixer after hardware volume control use. */
+		if (sc->sc_gain[cp->dev][ESO_LEFT] == (uint8_t)~0)
+			eso_reload_master_vol(sc);
 		cp->un.ord = sc->sc_mvmute;
 		break;
 
@@ -1810,6 +1838,26 @@ eso_set_recsrc(sc, recsrc)
 	}
 
 	return (EINVAL);
+}
+
+/*
+ * Reload Master Volume and Mute values in softc from mixer; used when
+ * those have previously been invalidated by use of hardware volume controls.
+ */
+static void
+eso_reload_master_vol(sc)
+	struct eso_softc *sc;
+{
+	uint8_t mv;
+
+	mv = eso_read_mixreg(sc, ESO_MIXREG_LMVM);
+	sc->sc_gain[ESO_MASTER_VOL][ESO_LEFT] =
+	    (mv & ~ESO_MIXREG_LMVM_MUTE) << 2;
+	mv = eso_read_mixreg(sc, ESO_MIXREG_LMVM);
+	sc->sc_gain[ESO_MASTER_VOL][ESO_RIGHT] =
+	    (mv & ~ESO_MIXREG_RMVM_MUTE) << 2;
+	/* Currently both channels are muted simultaneously; either is OK. */
+	sc->sc_mvmute = (mv & ESO_MIXREG_RMVM_MUTE) != 0;
 }
 
 static void
