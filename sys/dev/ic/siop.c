@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.37 2000/11/14 18:21:02 thorpej Exp $	*/
+/*	$NetBSD: siop.c,v 1.38 2001/01/26 22:00:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -697,6 +697,7 @@ scintr:
 			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
 			    siop_cmd->dsa + sizeof(struct siop_xfer_common) +
 			    Ent_ldsa_reload_dsa);
+			siop_table_sync(siop_cmd, BUS_DMASYNC_PREWRITE);
 			return 1;
 		case A_int_reseltag:
 			printf("%s: reselect with invalid tag\n",
@@ -1122,6 +1123,7 @@ siop_handle_qtag_reject(siop_cmd)
 		    siop_lun->siop_tag[0].reseloff + 1,
 		    siop_cmd->dsa + sizeof(struct siop_xfer_common) +
 		    Ent_ldsa_reload_dsa);
+		siop_table_sync(siop_cmd, BUS_DMASYNC_PREWRITE);
 	}
 	return 0;
 }
@@ -1490,6 +1492,7 @@ again:
 		siop_cmd->siop_xfer->resel[E_ldsa_abs_slot_Used[0]] = 
 		   htole32(sc->sc_scriptaddr + Ent_script_sched_slot0 +
 		   slot * 8);
+		siop_table_sync(siop_cmd, BUS_DMASYNC_PREWRITE);
 		/* scheduler slot: JUMP ldsa_select */
 		siop_script_write(sc,
 		    (Ent_script_sched_slot0 / 4) + slot * 2 + 1,
