@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.19 2000/07/06 03:03:59 christos Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.20 2001/11/04 13:57:30 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)bindresvport.c 1.8 88/02/08 SMI";
 static char *sccsid = "@(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: bindresvport.c,v 1.19 2000/07/06 03:03:59 christos Exp $");
+__RCSID("$NetBSD: bindresvport.c,v 1.20 2001/11/04 13:57:30 lukem Exp $");
 #endif
 #endif
 
@@ -65,11 +65,11 @@ __weak_alias(bindresvport_sa,_bindresvport_sa)
  * Bind a socket to a privileged IP port
  */
 int
-bindresvport(sd, sin)
+bindresvport(sd, brsin)
 	int sd;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *brsin;
 {
-	return bindresvport_sa(sd, (struct sockaddr *)(void *)sin);
+	return bindresvport_sa(sd, (struct sockaddr *)(void *)brsin);
 }
 
 /*
@@ -82,9 +82,9 @@ bindresvport_sa(sd, sa)
 {
 	int error, old;
 	struct sockaddr_storage myaddr;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *brsin;
 #ifdef INET6
-	struct sockaddr_in6 *sin6;
+	struct sockaddr_in6 *brsin6;
 #endif
 	int proto, portrange, portlow;
 	u_int16_t *portp;
@@ -108,18 +108,18 @@ bindresvport_sa(sd, sa)
 		proto = IPPROTO_IP;
 		portrange = IP_PORTRANGE;
 		portlow = IP_PORTRANGE_LOW;
-		sin = (struct sockaddr_in *)(void *)sa;
+		brsin = (struct sockaddr_in *)(void *)sa;
 		salen = sizeof(struct sockaddr_in);
-		portp = &sin->sin_port;
+		portp = &brsin->sin_port;
 		break;
 #ifdef INET6
 	case AF_INET6:
 		proto = IPPROTO_IPV6;
 		portrange = IPV6_PORTRANGE;
 		portlow = IPV6_PORTRANGE_LOW;
-		sin6 = (struct sockaddr_in6 *)(void *)sa;
+		brsin6 = (struct sockaddr_in6 *)(void *)sa;
 		salen = sizeof(struct sockaddr_in6);
-		portp = &sin6->sin6_port;
+		portp = &brsin6->sin6_port;
 		break;
 #endif
 	default:
