@@ -1,7 +1,7 @@
-/*	$NetBSD: midiplay.c,v 1.15 2001/11/25 12:29:52 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.16 2002/01/05 00:04:27 augustss Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -81,15 +81,15 @@ static int midi_lengths[] = { 2,2,2,2,1,1,2,0 };
 /* Number of bytes in a MIDI command */
 #define MIDI_LENGTH(d) (midi_lengths[((d) >> 4) & 7])
 
-void usage __P((void));
-void send_event __P((seq_event_rec *));
-void dometa __P((u_int, u_char *, u_int));
-void midireset __P((void));
-void send_sysex __P((u_char *, u_int));
-u_long getvar __P((struct track *));
-void playfile __P((FILE *, char *));
-void playdata __P((u_char *, u_int, char *));
-int main __P((int argc, char **argv));
+void usage(void);
+void send_event(seq_event_rec *);
+void dometa(u_int, u_char *, u_int);
+void midireset(void);
+void send_sysex(u_char *, u_int);
+u_long getvar(struct track *);
+void playfile(FILE *, char *);
+void playdata(u_char *, u_int, char *);
+int main(int argc, char **argv);
 
 #define P(c) 1,0x90,c,0x7f,4,0x80,c,0
 #define PL(c) 1,0x90,c,0x7f,8,0x80,c,0
@@ -125,9 +125,10 @@ u_char sample[] = {
 #define GET32(p) (((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | (p)[3])
 
 void
-usage()
+usage(void)
 {
-	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] [-t tempo] [-v] [-x] [file ...]\n",
+	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] "
+	       "[-t tempo] [-v] [-x] [file ...]\n",
 		getprogname());
 	exit(1);
 }
@@ -143,8 +144,7 @@ int fd = -1;
 int sameprogram = 0;
 
 void
-send_event(ev)
-	seq_event_rec *ev;
+send_event(seq_event_rec *ev)
 {
 	/*
 	printf("%02x %02x %02x %02x %02x %02x %02x %02x\n",
@@ -156,8 +156,7 @@ send_event(ev)
 }
 
 u_long
-getvar(tp)
-	struct track *tp;
+getvar(struct track *tp)
 {
 	u_long r, c;
 
@@ -170,10 +169,7 @@ getvar(tp)
 }
 
 void
-dometa(meta, p, len)
-	u_int meta;
-	u_char *p;
-	u_int len;
+dometa(u_int meta, u_char *p, u_int len)
 {
 	switch (meta) {
 	case META_TEXT:
@@ -215,7 +211,7 @@ dometa(meta, p, len)
 }
 
 void
-midireset()
+midireset(void)
 {
 	/* General MIDI reset sequence */
 	static u_char gm_reset[] = { 0x7e, 0x7f, 0x09, 0x01, 0xf7 };
@@ -225,9 +221,7 @@ midireset()
 
 #define SYSEX_CHUNK 6
 void
-send_sysex(p, l)
-	u_char *p;
-	u_int l;
+send_sysex(u_char *p, u_int l)
 {
 	seq_event_rec event;
 	u_int n;
@@ -248,9 +242,7 @@ send_sysex(p, l)
 }
 
 void
-playfile(f, name)
-	FILE *f;
-	char *name;
+playfile(FILE *f, char *name)
 {
 	u_char *buf;
 	u_int tot, n, size, nread;
@@ -284,10 +276,7 @@ playfile(f, name)
 }
 
 void
-playdata(buf, tot, name)
-	u_char *buf;
-	u_int tot;
-	char *name;
+playdata(u_char *buf, u_int tot, char *name)
 {
 	int format, ntrks, divfmt, ticks, t, besttrk = 0;
 	u_int len, mlen, status, chan;
@@ -481,18 +470,20 @@ playdata(buf, tot, name)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	int listdevs = 0;
 	int example = 0;
 	int nmidi;
 	int t;
-	char *file = DEVMUSIC;
+	const char *file = DEVMUSIC;
+	const char *sunit;
 	struct synth_info info;
 	FILE *f;
+
+	if ((sunit = getenv("MIDIUNIT")))
+		unit = atoi(sunit);
 
 	while ((ch = getopt(argc, argv, "?d:f:lmp:qt:vx")) != -1) {
 		switch(ch) {
