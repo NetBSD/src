@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21.2.8 2001/01/18 09:23:39 bouyer Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.9 2001/01/22 17:58:14 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -3549,7 +3549,6 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	    T_REMOV : T_FIXED;
 	if (sa.sa_inqbuf.removable)
 		periph->periph_flags |= PERIPH_REMOVABLE;
-	/* XXX how? sc_link->scsipi_atapi.cap |= ACAP_LEN;*/
 	sa.sa_inqbuf.vendor = vendor;
 	sa.sa_inqbuf.product = product;
 	sa.sa_inqbuf.revision = revision;
