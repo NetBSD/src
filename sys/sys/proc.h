@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.149 2002/12/12 20:41:47 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.150 2002/12/20 05:43:10 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -436,7 +436,6 @@ int	enterpgrp(struct proc *p, pid_t pgid, int mksess);
 void	fixjobc(struct proc *p, struct pgrp *pgrp, int entering);
 int	inferior(struct proc *p, struct proc *q);
 int	leavepgrp(struct proc *p);
-void	yield(void);
 void	preempt(struct proc *);
 void	mi_switch(struct proc *, struct proc *);
 struct proc *chooseproc(void);
