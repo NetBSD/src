@@ -1,4 +1,4 @@
-/* $NetBSD: e_asinf.S,v 1.1.1.1 1999/08/19 21:43:52 is Exp $ */
+/* $NetBSD: e_asinf.S,v 1.2 1999/08/21 21:04:17 is Exp $ */
 
 /*
  * Dummy file. Real code is in fplsp_wrap.S.
