@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.9 1998/08/24 01:40:27 sakamoto Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10 1999/08/01 07:52:22 thorpej Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -316,6 +316,13 @@ intr_calculatemasks()
 	}
 
 	/*
+	 * Initialize the soft interrupt masks to block themselves.
+	 */
+	imask[IPL_SOFTCLOCK] = SINT_SERIAL;
+	imask[IPL_SOFTNET] = SINT_NET;
+	imask[IPL_SOFTSERIAL] = SINT_SERIAL;
+
+	/*
 	 * IPL_NONE is used for hardware interrupts that are never blocked,
 	 * and do not block anything else.
 	 */
@@ -325,34 +332,45 @@ intr_calculatemasks()
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_SOFTCLOCK] |= imask[IPL_NONE];
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
+	imask[IPL_BIO] |= imask[IPL_SOFTNET];
 	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
+	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_IMP] |= imask[IPL_TTY];
+
 	imask[IPL_AUDIO] |= imask[IPL_IMP];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and disk drivers, clock > imp.
 	 */
+	imask[IPL_CLOCK] |= SPL_CLOCK;		/* block the clock */
 	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
-	imask[IPL_SERIAL] |= imask[IPL_CLOCK];
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
-	imask[IPL_HIGH] = 0xffffffff;
+	imask[IPL_HIGH] |= imask[IPL_CLOCK];
+
+	/*
+	 * We need serial drivers to run at the absolute highest priority to
+	 * avoid overruns, so serial > high.
+	 */
+	imask[IPL_SERIAL] |= imask[IPL_HIGH];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs | SINT_MASK;
+		intrmask[irq] = irqs;
 	}
 
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 1999/06/24 01:33:08 sakamoto Exp $	*/
+/*	$NetBSD: intr.h,v 1.8 1999/08/01 07:52:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,11 +45,12 @@
 #define	IPL_SOFTNET	7	/* software network interrupt */
 #define	IPL_BIO		6	/* block I/O */
 #define	IPL_NET		5	/* network */
-#define	IPL_TTY		4	/* terminal */
+#define	IPL_SOFTSERIAL	4	/* software serial interrupt */
+#define	IPL_TTY		3	/* terminal */
 #define	IPL_IMP		3	/* memory allocation */
 #define	IPL_AUDIO	2	/* audio */
 #define	IPL_CLOCK	1	/* clock */
-#define	IPL_HIGH	0	/* everything */
+#define	IPL_HIGH	1	/* everything */
 #define	IPL_SERIAL	0	/* serial */
 #define	NIPL		10
 
@@ -173,13 +174,13 @@ set_sint(pending)
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])
 #define spltty()	splraise(imask[IPL_TTY])
-#define splclock()	splraise(SPL_CLOCK|SINT_CLOCK|SINT_NET)
+#define splclock()	splraise(imask[IPL_CLOCK])
 #define splimp()	splraise(imask[IPL_IMP])
 #define	splserial()	splraise(imask[IPL_SERIAL])
-#define splstatclock()	splhigh()
-#define	splsoftclock()	spllower(SINT_CLOCK)
-#define	splsoftnet()	splraise(SINT_NET)
-#define	splsoftserial()	splraise(SINT_SERIAL)
+#define splstatclock()	splclock()
+#define	splsoftclock()	spllower(imask[IPL_SOFTCLOCK])
+#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
+#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
 
 #define spllpt()	spltty()
 
@@ -187,7 +188,7 @@ set_sint(pending)
 #define	setsoftnet()	set_sint(SINT_NET);
 #define	setsoftserial()	set_sint(SINT_SERIAL);
 
-#define	splhigh()	splraise(0xffffffff)
+#define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
 
 #endif /* !_LOCORE */
