@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4 2002/09/11 10:57:50 scw Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.5 2002/10/08 15:55:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,13 +106,7 @@ static void (*intr_disable)(void *, u_int);
 static void *intr_arg;
 
 struct evcnt _sh5_intr_events[NIPL];
-static char *intr_names[NIPL] = {
-	"none",
-	"softmisc", "softclock", "softnet", "ipl4",
-	"ipl5", "ipl6", "ipl7", "ipl8",
-	"ipl9", "softserial", "ipl11", "ipl12",
-	"ipl13", "clock", "ipl15"
-};
+extern const char intrnames[];		/* Defined in port-specific code */
 
 void sh5_intr_dispatch(struct intrframe *);
 static struct intrhand *alloc_ih(void);
@@ -130,6 +124,7 @@ sh5_intr_init(int nhandles,
     void *arg)
 {
 	struct intrhand *ih;
+	const char *iname;
 	int i;
 
 	ih = malloc(sizeof(*ih) * (nhandles + 1), M_DEVBUF, M_NOWAIT);
@@ -150,9 +145,12 @@ sh5_intr_init(int nhandles,
 	ih->ih_intevt = 0;
 	ih->ih_type = IST_NONE;
 
-	for (i = 0; i < NIPL; i++)
+	iname = intrnames;
+	for (i = 0; i < NIPL; i++) {
 		evcnt_attach_dynamic(&_sh5_intr_events[i], EVCNT_TYPE_INTR,
-		    NULL, "intr", intr_names[i]);
+		    NULL, "intr", iname);
+		iname = &iname[strlen(iname) + 1];
+	}
 }
 
 void *
@@ -203,6 +201,7 @@ sh5_intr_evcnt(void *cookie)
 void
 sh5_intr_dispatch(struct intrframe *fr)
 {
+	extern u_long intrcnt[];
 	struct intrhand *ih;
 
 	KDASSERT(INTEVT_TO_MAP_INDEX(fr->if_state.sf_intevt) < 0x100);
@@ -212,6 +211,7 @@ sh5_intr_dispatch(struct intrframe *fr)
 	KDASSERT(ih->ih_func != NULL);
 
 	_sh5_intr_events[ih->ih_level].ev_count++;
+	intrcnt[ih->ih_level]++;
 
 	if ((ih->ih_func)(ih->ih_arg ? ih->ih_arg : (void *)fr))
 		return;
