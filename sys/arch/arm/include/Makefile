@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.24 2002/01/13 15:03:06 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.24.10.1 2002/11/18 01:04:51 he Exp $
 
 KDIR=	/sys/arch/arm/include
 INCSDIR= /usr/include/arm
 
 INCS=	ansi.h aout_machdep.h armreg.h asm.h \
-	bswap.h bus.h \
+	bswap.h byte_swap.h bus.h \
 	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
