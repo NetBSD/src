@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.35 2003/02/26 22:31:14 thorpej Exp $
+# $NetBSD: shl.elf,v 1.36 2003/03/25 18:26:53 tshiozak Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -14,6 +14,7 @@
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtendS.o		comp-c-lib
 ./usr/lib/i18n/libBIG5.so	comp-i18n-lib
+./usr/lib/i18n/libGBK2K.so	comp-i18n-lib
 ./usr/lib/i18n/libEUC.so	comp-i18n-lib
 ./usr/lib/i18n/libEUCTW.so	comp-i18n-lib
 ./usr/lib/i18n/libISO2022.so	comp-i18n-lib
