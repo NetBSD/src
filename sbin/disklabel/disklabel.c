@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.122 2003/11/15 17:52:30 bouyer Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.123 2003/12/11 05:11:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.122 2003/11/15 17:52:30 bouyer Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.123 2003/12/11 05:11:50 dyoung Exp $");
 #endif
 #endif	/* not lint */
 
@@ -703,7 +703,7 @@ readmbr(int f)
 			/* No more extended partitions */
 			break;
 		if (next_ext <= this_ext) {
-			warnx("Invalid extented chain %x <= %x",
+			warnx("Invalid extended chain %x <= %x",
 				next_ext, this_ext);
 			break;
 		}
