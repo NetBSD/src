@@ -1,4 +1,4 @@
-# $NetBSD: system,v 1.5 2005/02/27 03:40:14 thorpej Exp $
+# $NetBSD: system,v 1.6 2005/03/03 02:12:32 christos Exp $
 #
 # System-wide defaults
 #
@@ -12,7 +12,7 @@ account 	required	pam_krb5.so
 account		required	pam_unix.so
 
 # session
-session		required	pam_lastlog.so		no_fail
+session		required	pam_lastlog.so		no_fail no_nested
 
 # password
 password	sufficient	pam_krb5.so		no_warn try_first_pass
