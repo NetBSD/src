@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 1999/04/12 20:38:20 pk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.10 1999/11/06 20:18:50 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -293,7 +293,7 @@ db_dump_trap(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct trapframe *tf;
+	struct trapframe64 *tf;
 
 	/* Use our last trapframe? */
 	tf = &ddb_regs.ddb_tf;
@@ -306,7 +306,7 @@ db_dump_trap(addr, have_addr, count, modif)
 	}
 	/* Or an arbitrary trapframe */
 	if (have_addr)
-		tf = (struct trapframe *)addr;
+		tf = (struct trapframe64 *)addr;
 
 	db_printf("Trapframe %p:\ttstate: %p\tpc: %p\tnpc: %p\n",
 		  tf, (long)tf->tf_tstate, (long)tf->tf_pc, (long)tf->tf_npc);
