@@ -1,4 +1,4 @@
-/*	$NetBSD: rain.c,v 1.12 1999/08/04 18:38:12 thorpej Exp $	*/
+/*	$NetBSD: rain.c,v 1.13 1999/08/08 02:06:01 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rain.c,v 1.12 1999/08/04 18:38:12 thorpej Exp $");
+__RCSID("$NetBSD: rain.c,v 1.13 1999/08/08 02:06:01 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: rain.c,v 1.12 1999/08/04 18:38:12 thorpej Exp $");
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 volatile sig_atomic_t sig_caught = 0;
