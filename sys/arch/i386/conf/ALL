@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.14 1993/08/14 06:38:06 deraadt Exp $
+#	$Id: ALL,v 1.15 1993/08/24 21:39:35 mycroft Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -15,6 +15,7 @@ options FIFO
 #options SYSVSHM		broken
 #options SHMMAXPGS=1024		broken
 options QUOTA
+options ACCOUNTING
 options MFS
 options NFS
 #options IMP	 
@@ -24,16 +25,17 @@ options ISO
 options TPIP
 options EON
 options CCITT
+options GATEWAY
 options ISOFS
 options DDB
 options FDESC
 options KERNFS
 options SCSI
 options	"MATH_EMULATE"
-options		"COMPAT_NOMID"
 
-options		"COMPAT_43"
-options		"TCP_COMPAT_42"
+options	"COMPAT_NOMID"
+options	"COMPAT_43"
+options	"TCP_COMPAT_42"
 
 config		netbsd	root on wd0 swap on wd0 and sd0
 
