@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 2002/09/29 09:07:45 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.131 2002/09/29 20:56:40 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1831,11 +1831,11 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 
 	/* note: preserve page offset */
 	hp->_ptr = (v | ((u_long)addr & PGOFSET));
-	hp->_asi = ASI_PRIMARY;
+	hp->_sasi = ASI_PRIMARY;
 	if (pm_flags & PMAP_LITTLE)
-		hp->_sasi = ASI_PRIMARY_LITTLE;
+		hp->_asi = ASI_PRIMARY_LITTLE;
 	else
-		hp->_sasi = ASI_PRIMARY;
+		hp->_asi = ASI_PRIMARY;
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 	if (!(flags&BUS_SPACE_MAP_READONLY))
