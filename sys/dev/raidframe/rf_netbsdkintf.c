@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.6 1999/09/28 04:46:28 cgd Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.16.2.7 1999/09/28 04:47:51 cgd Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -887,14 +887,11 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 
 		row = component_label->row;
-		printf("Row: %d\n",row);
-		if (row > raidPtrs[unit]->numRow) {
-			row = 0; /* XXX */
-		}
 		column = component_label->column;
-		printf("Column: %d\n",column);
-		if (column > raidPtrs[unit]->numCol) {
-			column = 0; /* XXX */
+
+		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
+		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
+			return(EINVAL);
 		}
 
 		raidread_component_label( 
@@ -931,8 +928,8 @@ raidioctl(dev, cmd, data, flag, p)
 		row = component_label->row;
 		column = component_label->column;
 
-		if ((row < 0) || (row > raidPtrs[unit]->numRow) ||
-		    (column < 0) || (column > raidPtrs[unit]->numCol)) {
+		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
+		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
 			return(EINVAL);
 		}
 
@@ -1026,8 +1023,8 @@ raidioctl(dev, cmd, data, flag, p)
 		row = component.row;
 		column = component.column;
 		printf("Rebuild: %d %d\n",row, column);
-		if ((row < 0) || (row > raidPtrs[unit]->numRow) ||
-		    (column < 0) || (column > raidPtrs[unit]->numCol)) {
+		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
+		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
 			return(EINVAL);
 		}
 		printf("Attempting a rebuild in place\n");
