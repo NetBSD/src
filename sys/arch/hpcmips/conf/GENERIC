@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2002/03/22 09:18:08 takemura Exp $
+# $NetBSD: GENERIC,v 1.112 2002/03/23 03:17:57 shin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 maxusers	16
 
@@ -100,6 +100,8 @@ options 	INET6		# IPV6
 
 # NetBSD backwards compatibility
 options 	COMPAT_43
+
+options 	LKM		# loadable kernel modules
 
 #options 	NFS_BOOT_DHCP
 options 	NFS_BOOT_BOOTP
