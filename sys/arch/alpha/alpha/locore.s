@@ -1,7 +1,7 @@
-/* $NetBSD: locore.s,v 1.72 1999/12/16 20:20:11 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.73 2000/05/26 00:36:42 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.72 1999/12/16 20:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.73 2000/05/26 00:36:42 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -916,6 +916,19 @@ cpu_switch_queuescan:
 	 *
 	 * Note: GET_CURPROC() clobbers v0, t0, t8...t11.
 	 */
+#ifdef __alpha_bwx__
+	ldiq	t0, SONPROC			/* p->p_stat = SONPROC */
+	stb	t0, P_STAT(s2)
+#else
+	addq	s2, P_STAT, t3			/* p->p_stat = SONPROC */
+	ldq_u	t1, 0(t3)
+	ldiq	t0, SONPROC
+	insbl	t0, t3, t0
+	mskbl	t1, t3, t1
+	or	t0, t1, t0
+	stq_u	t0, 0(t3)
+#endif /* __alpha_bwx__ */
+
 	GET_CURPROC(t1)
 	stq	s2, 0(t1)			/* curproc = p */
 	stq	zero, want_resched		/* we've rescheduled */

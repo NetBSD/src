@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.58 1999/11/13 18:01:27 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.59 2000/05/26 00:36:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -811,6 +811,7 @@ sw1:	/* Get the process and unlink it from the queue. */
 	movqd	0,P_BACK(r2)
 
 	/* Record new process. */
+	movb	SONPROC,P_STAT(r2)	/* p->p_stat = SONPROC */
 	movd	r2,_C_LABEL(curproc)(pc)
 
 	/* It's okay to take interrupts here. */

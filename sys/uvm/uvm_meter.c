@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.11 2000/02/11 19:22:54 thorpej Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.12 2000/05/26 00:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -103,6 +103,7 @@ uvm_loadav(avg)
 				continue;
 		/* fall through */
 		case SRUN:
+		case SONPROC:
 		case SIDL:
 			nrun++;
 		}
@@ -197,6 +198,7 @@ uvm_total(totalp)
 			break;
 
 		case SRUN:
+		case SONPROC:
 		case SIDL:
 			if (p->p_flag & P_INMEM)
 				totalp->t_rq++;

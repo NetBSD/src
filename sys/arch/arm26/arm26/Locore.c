@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $	*/
+/*	$NetBSD: Locore.c,v 1.2 2000/05/26 00:36:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -39,7 +39,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.2 2000/05/26 00:36:44 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ cpu_switch(struct proc *p1)
 	p2 = q->ph_link;
 	remrunqueue(p2);
 	want_resched = 0;
+	p2->p_stat = SONPROC;
 	curproc = p2;
 #if 0
 	printf(" %p\n", p2);

@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.26 1999/12/16 20:20:11 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.27 2000/05/26 00:36:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.26 1999/12/16 20:20:11 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.27 2000/05/26 00:36:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -172,10 +172,14 @@ struct nv assyms[] = {
 	off(P_BACK, struct proc, p_back),
 	off(P_ADDR, struct proc, p_addr),
 	off(P_VMSPACE, struct proc, p_vmspace),
+	off(P_STAT, struct proc, p_stat),
 	off(P_MD_FLAGS, struct proc, p_md.md_flags),
 	off(P_MD_PCBPADDR, struct proc, p_md.md_pcbpaddr),
 	off(PH_LINK, struct prochd, ph_link),
 	off(PH_RLINK, struct prochd, ph_rlink),
+
+	/* Process status constants */
+	def1(SONPROC),
 
 	/* offsets needed by cpu_switch() to switch mappings. */
 	off(VM_MAP_PMAP, struct vmspace, vm_map.pmap), 

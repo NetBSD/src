@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.90 2000/04/10 01:48:56 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.91 2000/05/26 00:36:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -217,13 +217,21 @@ struct	proc {
 #define	p_session	p_pgrp->pg_session
 #define	p_pgid		p_pgrp->pg_id
 
-/* Status values. */
+/*
+ * Status values.
+ *
+ * A note about SRUN and SONPROC: SRUN indicates that a process is
+ * runnable but *not* yet running, i.e. is on a run queue.  SONPROC
+ * indicates that the process is actually executing on a CPU, i.e.
+ * it is no longer on a run queue.
+ */
 #define	SIDL	1		/* Process being created by fork. */
 #define	SRUN	2		/* Currently runnable. */
 #define	SSLEEP	3		/* Sleeping on an address. */
 #define	SSTOP	4		/* Process debugging or suspension. */
 #define	SZOMB	5		/* Awaiting collection by parent. */
 #define	SDEAD	6		/* Process is almost a zombie. */
+#define	SONPROC	7		/* Process is currently on a CPU */
 
 #define	P_ZOMBIE(p)	((p)->p_stat == SZOMB || (p)->p_stat == SDEAD)
 

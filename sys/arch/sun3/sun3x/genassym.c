@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.22 1999/10/26 00:20:40 itohy Exp $	*/
+/*	$NetBSD: genassym.c,v 1.23 2000/05/26 00:36:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -174,6 +174,7 @@ struct nv assyms[] = {
 	def("P_MDFLAG", offsetof(struct proc, p_md.md_flags)),
 	def("P_MDREGS", offsetof(struct proc, p_md.md_regs)),
 	def1(SRUN),
+	def1(SONPROC),
 
 	/* XXX: HP-UX trace bit? */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 1999/06/17 00:22:42 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.7 2000/05/26 00:36:49 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,6 +55,7 @@ include <machine/pmap.h>
 include <machine/vmparam.h>
 
 define	SRUN			SRUN
+define	SONPROC			SONPROC
 
 define	PDSHIFT 		PDSHIFT
 define	PGSHIFT 		PGSHIFT

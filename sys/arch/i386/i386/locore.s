@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.218 2000/04/24 17:18:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.219 2000/05/26 00:36:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1941,6 +1941,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 	movl	%eax,P_BACK(%edi)
 
 	/* Record new process. */
+	movb	$SONPROC,P_STAT(%edi)	# p->p_stat = SONPROC
 	movl	%edi,_C_LABEL(curproc)
 
 	/* It's okay to take interrupts here. */

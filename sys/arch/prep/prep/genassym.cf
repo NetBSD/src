@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2000/02/29 15:21:47 nonaka Exp $
+#	$NetBSD: genassym.cf,v 1.2 2000/05/26 00:36:49 thorpej Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -68,3 +68,6 @@ define	PM_KERNELSR	offsetof(struct pmap, pm_sr[KERNEL_SR])
 define	P_FORW		offsetof(struct proc, p_forw)
 define	P_BACK		offsetof(struct proc, p_back)
 define	P_ADDR		offsetof(struct proc, p_addr)
+define	P_STAT		offsetof(struct proc, p_stat)
+
+define	SONPROC		SONPROC

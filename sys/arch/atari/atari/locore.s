@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 2000/05/14 14:13:51 minoura Exp $	*/
+/*	$NetBSD: locore.s,v 1.66 2000/05/26 00:36:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1157,6 +1157,12 @@ Lswok:
 	cmpl	a1@(P_FORW),a1		| anyone on queue?
 	jeq		Lbadsw		| no, panic
 	movl	a1@(P_FORW),a0		| p = q->p_forw
+#ifdef DIAGNOSTIC
+	tstl	a0@(P_WCHAN)
+	jne	Lbadsw
+	cmpb	#SRUN,a0@(P_STAT)
+	jne	Lbadsw
+#endif
 	movl	a0@(P_FORW),a1@(P_FORW)	| q->p_forw = p->p_forw
 	movl	a0@(P_FORW),a1		| q = p->p_forw
 	movl	a0@(P_BACK),a1@(P_BACK)	| q->p_back = p->p_back
@@ -1166,6 +1172,7 @@ Lswok:
 	bset	d0,d1			| yes, reset bit
 	movl	d1,_whichqs
 Lsw2:
+	movb	#SONPROC,a0@(P_STAT)	| p->p_stat = SONPROC
 	movl	a0,_curproc
 	clrl	_want_resched
 #ifdef notyet
@@ -1206,12 +1213,6 @@ Lsavfp60:
 #endif
 Lswnofpsave:
 
-#ifdef DIAGNOSTIC
-	tstl	a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,a0@(P_STAT)
-	jne	Lbadsw
-#endif
 	clrl	a0@(P_BACK)		| clear back link
 	movl	a0@(P_ADDR),a1		| get p_addr
 	movl	a1,_curpcb

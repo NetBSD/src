@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.71 2000/03/30 09:27:12 augustss Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.72 2000/05/26 00:36:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -279,8 +279,7 @@ schedcpu(arg)
 		p->p_estcpu = newcpu;
 		resetpriority(p);
 		if (p->p_priority >= PUSER) {
-			if ((p != curproc) &&
-			    p->p_stat == SRUN &&
+			if (p->p_stat == SRUN &&
 			    (p->p_flag & P_INMEM) &&
 			    (p->p_priority / PPQ) != (p->p_usrpri / PPQ)) {
 				remrunqueue(p);
@@ -387,8 +386,8 @@ tsleep(ident, priority, wmesg, timo)
 #ifdef DIAGNOSTIC
 	if (ident == NULL)
 		panic("tsleep: ident == NULL");
-	if (p->p_stat != SRUN)
-		panic("tsleep: p_stat %d != SRUN", p->p_stat);
+	if (p->p_stat != SONPROC)
+		panic("tsleep: p_stat %d != SONPROC", p->p_stat);
 	if (p->p_back != NULL)
 		panic("tsleep: p_back != NULL");
 #endif
@@ -418,7 +417,7 @@ tsleep(ident, priority, wmesg, timo)
 		if ((sig = CURSIG(p)) != 0) {
 			if (p->p_wchan)
 				unsleep(p);
-			p->p_stat = SRUN;
+			p->p_stat = SONPROC;
 			goto resume;
 		}
 		if (p->p_wchan == 0) {
@@ -522,7 +521,7 @@ sleep(ident, priority)
 		return;
 	}
 #ifdef DIAGNOSTIC
-	if (ident == NULL || p->p_stat != SRUN || p->p_back)
+	if (ident == NULL || p->p_stat != SONPROC || p->p_back)
 		panic("sleep");
 #endif
 	p->p_wchan = ident;
@@ -709,8 +708,9 @@ yield()
 	struct proc *p = curproc;
 	int s;
 
-	p->p_priority = p->p_usrpri;
 	s = splstatclock();
+	p->p_priority = p->p_usrpri;
+	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
 	mi_switch();
@@ -736,8 +736,9 @@ preempt(newp)
 	if (newp != NULL)
 		panic("preempt: cpu_preempt not yet implemented");
 
-	p->p_priority = p->p_usrpri;
 	s = splstatclock(); 
+	p->p_priority = p->p_usrpri;
+	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nivcsw++;
 	mi_switch();
@@ -745,7 +746,7 @@ preempt(newp)
 }
 
 /*
- * The machine independent parts of mi_switch().
+ * The machine independent parts of context switch.
  * Must be called at splstatclock() or higher.
  */
 void
@@ -844,6 +845,7 @@ setrunnable(p)
 	switch (p->p_stat) {
 	case 0:
 	case SRUN:
+	case SONPROC:
 	case SZOMB:
 	case SDEAD:
 	default:

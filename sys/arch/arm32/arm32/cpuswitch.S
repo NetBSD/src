@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.31 1999/10/26 06:53:41 cgd Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.32 2000/05/26 00:36:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -428,6 +428,10 @@ findqueue:
 	 */
 	mov	r0, #0x00000000
 	str	r0, [r6, #(P_BACK)]
+
+	/* Process is now on a processor. */
+	mov	r0, #SONPROC			/* p->p_stat = SONPROC */
+	strb	r0, [r6, #(P_STAT)]
 
 	/* We have a new curproc now so make a note it */
 	ldr	r7, Lcurproc
