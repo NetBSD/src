@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_update.c,v 1.3 2000/10/17 16:10:43 taca Exp $";
+static const char rcsid[] = "$Id: res_update.c,v 1.4 2001/04/02 23:45:58 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ static int	nsprom(struct sockaddr_in *, const struct in_addr *, int);
 
 void tkey_free (ns_tsig_key **);
 
-ns_rcode
+isc_result_t
 res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 	ns_updrec *rrecp;
 	double answer[PACKETSZ / sizeof (double)];
@@ -84,12 +84,12 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 	struct zonegrp *zptr, tgrp;
 	int nzones = 0, nscount = 0;
 	unsigned n;
-	int rval;
+	unsigned rval;
 	struct sockaddr_in nsaddrs[MAXNS];
-	ns_rcode rcode;
 	ns_tsig_key *key;
 	void *zcookie = 0;
 	void *zcookp = &zcookie;
+	isc_result_t rcode;
 
       again:
 	/* Make sure all the updates are in the same zone, and find out
@@ -104,16 +104,17 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 					sizeof tgrp.z_origin,
 					tgrp.z_nsaddrs, MAXNS, &tgrp.z_nscount,
 					zcookp);
-		if (rcode != ns_r_noerror)
+		if (rcode != ISC_R_SUCCESS)
 			goto done;
 		if (tgrp.z_nscount <= 0) {
-			rcode = ns_r_notzone;
+			rcode = ISC_R_NOTZONE;
 			goto done;
 		}
 		/* Make a group for it if there isn't one. */
 		if (zptr == NULL) {
 			zptr = malloc(sizeof *zptr);
 			if (zptr == NULL) {
+				rcode = ISC_R_NOMEMORY;
 				goto done;
 			}
 			*zptr = tgrp;
@@ -122,7 +123,7 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 		} else if (ns_samename(tgrp.z_origin, zptr->z_origin) == 0 ||
 			   tgrp.z_class != zptr->z_class) {
 			/* Some of the records are in different zones. */
-			rcode = ns_r_notzone;
+			rcode = ISC_R_CROSSZONE;
 			goto done;
 		}
 		/* Thread this rrecp onto the zone group. */
@@ -141,10 +142,10 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 
 	/* Marshall the update message. */
 	n = sizeof packet;
-	if (res_nmkupdate(statp, ISC_LIST_HEAD(zptr->z_rrlist), packet, &n)) {
-		rcode = -1;
+	rcode = res_nmkupdate(statp,
+			      ISC_LIST_HEAD(zptr->z_rrlist), packet, &n);
+	if (rcode != ISC_R_SUCCESS)
 		goto done;
-	}
 
 	/* Temporarily replace the resolver's nameserver set. */
 	nscount = nscopy(nsaddrs, statp->nsaddr_list, statp->nscount);
@@ -154,18 +155,18 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 	/* Send the update and remember the result. */
 	key = (ns_tsig_key *)0;
 	if (!find_tsig_key (&key, zptr->z_origin, zcookie)) {
-		rval = res_nsendsigned(statp, packet, n, key,
-				       answer, sizeof answer);
+		rcode = res_nsendsigned(statp, packet, n, key,
+					answer, sizeof answer, &rval);
 		tkey_free (&key);
 	} else {
-		rval = res_nsend(statp, packet, n, answer, sizeof answer);
+		rcode = res_nsend(statp, packet, n,
+				  answer, sizeof answer, &rval);
 	}
-	if (rval < 0) {
-		rcode = -1;
+	if (rcode != ISC_R_SUCCESS) {
 		goto undone;
 	}
-	rcode = ((HEADER *)answer)->rcode;
-	if (zcookie && rcode == ns_r_badsig) {
+	rcode = ns_rcode_to_isc (((HEADER *)answer)->rcode);
+	if (zcookie && rcode == ISC_R_BADSIG) {
 		repudiate_zone (&zcookie);
 	}
 
@@ -182,7 +183,7 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 
 	/* If the update failed because we used a cached zone and it
 	   didn't work, try it again without the cached zone. */
-	if (zcookp && (rcode == ns_r_notzone || rcode == ns_r_badsig)) {
+	if (zcookp && (rcode == ISC_R_NOTZONE || rcode == ISC_R_BADSIG)) {
 		zcookp = 0;
 		goto again;
 	}

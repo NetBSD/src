@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.8 2000/10/17 16:10:44 taca Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.9 2001/04/02 23:45:59 mellon Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -135,6 +135,15 @@ int main (argc, argv, envp)
 	setlogmask (LOG_UPTO (LOG_INFO));
 #endif	
 
+	/* Set up the OMAPI. */
+	status = omapi_init ();
+	if (status != ISC_R_SUCCESS)
+		log_fatal ("Can't initialize OMAPI: %s",
+			   isc_result_totext (status));
+
+	/* Set up the OMAPI wrappers for the interface object. */
+	interface_setup ();
+
 	for (i = 1; i < argc; i++) {
 		if (!strcmp (argv [i], "-p")) {
 			if (++i == argc)
@@ -190,6 +199,9 @@ int main (argc, argv, envp)
 			drop_agent_mismatches = 1;
  		} else if (argv [i][0] == '-') {
  		    usage ();
+		} else if (!strcmp (argv [i], "--version")) {
+			log_info ("isc-dhcrelay-%s", DHCP_VERSION);
+			exit (0);
  		} else {
 			struct hostent *he;
 			struct in_addr ia, *iap = (struct in_addr *)0;
@@ -259,12 +271,6 @@ int main (argc, argv, envp)
 
 	/* Get the current time... */
 	GET_TIME (&cur_time);
-
-	/* Set up the OMAPI. */
-	status = omapi_init ();
-	if (status != ISC_R_SUCCESS)
-		log_fatal ("Can't initialize OMAPI: %s",
-			   isc_result_totext (status));
 
 	/* Discover all the network interfaces. */
 	discover_interfaces (DISCOVER_RELAY);
@@ -813,8 +819,8 @@ int add_relay_agent_options (ip, packet, length, giaddr)
 	/* Relay option's total length shouldn't ever get to be more than
 	   257 bytes. */
 	if (sp - op > 257)
-		log_fatal ("total agent option length exceeds 257 (%d) on %s\n",
-		       sp - op, ip -> name);
+	    log_fatal ("total agent option length exceeds 257 (%ld) on %s\n",
+		       (long)(sp - op), ip -> name);
 
 	/* Calculate length of RAI option. */
 	op [1] = sp - op - 2;

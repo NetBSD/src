@@ -1,6 +1,6 @@
 	    Internet Software Consortium DHCP Distribution
-		   Version 3, Beta 2, Patchlevel 9
-			   October 15, 2000
+		   Version 3, Beta 2, Patchlevel 23
+			    March 22, 2001
 
 			     README FILE
 
@@ -15,6 +15,7 @@ the ISC DHCP Distribution.
 	 3.1	 UNPACKING IT
 	 3.2	 CONFIGURING IT
 	  3.2.1	  DYNAMIC DNS UPDATES
+	  3.2.2   LOCALLY DEFINED OPTIONS
 	 3.3	 BUILDING IT
 	4	INSTALLING THE DHCP DISTRIBUTION
 	5	USING THE DHCP DISTRIBUTION
@@ -141,14 +142,14 @@ information.   On Digital Unix, type ``man pfilt''.
 To build the DHCP Distribution, unpack the compressed tar file using
 the tar utility and the gzip command - type something like:
 
-	zcat dhcp-3.0b2pl9.tar.gz |tar xvf -
+	zcat dhcp-3.0b2pl23.tar.gz |tar xvf -
 
 On BSD/OS, you have to type gzcat, not zcat, and you may run into
 similar problems on other operating systems.
 
 			    CONFIGURING IT
 
-Now, cd to the dhcp-3.0b2pl9 subdirectory that you've just
+Now, cd to the dhcp-3.0b2pl23 subdirectory that you've just
 created and configure the source tree by typing:
 
 		./configure
@@ -168,6 +169,16 @@ this release.   There are no build dependencies with any BIND version
 There is documentation for the DDNS support in the dhcpd.conf manual
 page - see the beginning of this document for information on finding
 manual pages.
+
+		       LOCALLY DEFINED OPTIONS
+
+In previous versions of the DHCP server there was a mechanism whereby
+options that were not known by the server could be configured using
+a name made up of the option code number and an identifier:
+"option-nnn"   This is no longer supported, because it is not future-
+proof.   Instead, if you want to use an option that the server doesn't
+know about, you must explicitly define it using the method described
+in the dhcp-options man page under the DEFINING NEW OPTIONS heading.
 
 			     BUILDING IT
 
@@ -481,9 +492,13 @@ WHERE TO REPORT BUGS: If you want the act of sending in a bug report
 to result in you getting help in the form of a fixed piece of
 software, you are asking for help.  Your bug report is helpful to us,
 but fundamentally you are making a support request, so please use the
-addresses described in the previous paragraphs.  If your bug report
-includes a patch, or if you don't care about getting a response to it,
-you can send it to dhcp-bugs@isc.org without subscribing.
+addresses described in the previous paragraphs.  If you are _sure_ that
+your problem is a bug, and not user error, or if your bug report
+includes a patch, you can send it to dhcp-bugs@isc.org without
+subscribing.   This mailing list goes into a bug tracking system, so
+you don't need to check periodically to see if we still remember the
+bug - if you haven't been notified that the bug has been closed, we
+still consider it a bug, and still have it in the system.
 
 PLEASE DO NOT REPORT BUGS IN OLD SOFTWARE RELEASES!  Fetch the latest
 release and see if the bug is still in that version of the software,
@@ -492,7 +507,7 @@ latest patchlevel of a major version that's not the most recent major
 version, though - for example, if you're running 2.0, you don't have
 to upgrade to 3.0 before you can report bugs.
 
-PLEASE DO NOT REPORT BUGS IF YOU ARE NOT RUNNING A VERSION OF THE ISC
+PLEASE DO NOT REPORT BUGS IF YOU ARE RUNNING A VERSION OF THE ISC
 DHCP DISTRIBUTION THAT YOU DIDN'T GET FROM THE ISC!   Free operating
 system distributions are notorious for including outdated versions of
 software, and also versions of software that were not compiled on your
@@ -561,12 +576,12 @@ figure out your problem.   If you need handholding support, please
 consider contacting a commercial provider of the ISC DHCP
 Distribution.
 
-	- The specific operating system name and version of the
+      1.  The specific operating system name and version of the
           machine on which the DHCP server or client is running.
-	- The specific operating system name and version of the
+      2.  The specific operating system name and version of the
           machine on which the client is running, if you are having
           trouble getting a client working with the server.
-	- If you're running Linux, the version number we care about is
+      3.  If you're running Linux, the version number we care about is
           the kernel version and maybe the library version, not the
           distribution version - e.g., while we don't mind knowing
           that you're running Redhat version mumble.foo, we must know
@@ -575,16 +590,16 @@ Distribution.
           although if you don't know that off the top of your head it
           may be hard for you to figure it out, so don't go crazy
           trying.
-	- The specific version of the DHCP distribution you're
+      4.  The specific version of the DHCP distribution you're
           running, for example "2.0b1pl19", not "2.0".
-	- Please explain the problem carefully, thinking through what
+      5.  Please explain the problem carefully, thinking through what
           you're saying to ensure that you don't assume we know
           something about your situation that we don't know.
-	- Include your dhcpd.conf and dhcpd.leases file if they're not
+      6.  Include your dhcpd.conf and dhcpd.leases file if they're not
           huge (if they are huge, we may need them anyway, but don't
           send them until you're asked).   Huge means more than 100
           kilobytes each.
-	- Include a log of your server or client running until it
+      7.  Include a log of your server or client running until it
           encounters the problem - for example, if you are having
           trouble getting some client to get an address, restart the
           server with the -d flag and then restart the client, and
@@ -592,7 +607,7 @@ Distribution.
           include the output of the client as it fails to get an
           address or otherwise does the wrong thing.   Do not leave
           out parts of the output that you think aren't interesting.
-	- If the client or server is dumping core, please run the
+      8.  If the client or server is dumping core, please run the
           debugger and get a stack trace, and include that in your
           bug report.   For example, if your debugger is gdb, do the
           following:
@@ -604,6 +619,14 @@ Distribution.
 
 	  This assumes that it's the dhcp server you're debugging, and
 	  that the core file is in dhcpd.core.
+      9.  If you know that the problem is an actual bug, and you can
+	  reproduce the bug, you can skip steps 6 through 8 and instead
+	  capture a trace file using the -tf flag (see the man page for
+	  details).   If you do this, and there is anything in your
+	  dhcp configuration that you are not willing to make public,
+	  please send the trace file to dhcp-bugs@isc.org and NOT to
+	  dhcp-server@isc.org, because the tracefile contains your entire
+	  dhcp configuration.
 
 PLEASE DO NOT send queries about non-isc clients to the dhcp-client
 mailing list.   If you're asking about them on an ISC mailing list,
