@@ -1,4 +1,4 @@
-/* $NetBSD: cia_swiz_bus_io.c,v 1.7 1997/04/07 05:19:34 cgd Exp $ */
+/* $NetBSD: cia_swiz_bus_io.c,v 1.8 1997/04/07 06:36:46 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
