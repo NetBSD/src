@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1999/06/07 05:28:04 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.13 1999/06/10 04:31:20 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -203,8 +203,10 @@ clock_map(bh, model)
 	struct clockreg *cl;
 	paddr_t pa;
 
+#if 0
 	pa = pmap_extract(pmap_kernel(), (vaddr_t)bh);
 	pmap_enter(pmap_kernel(), (vaddr_t)bh, pa, VM_PROT_READ, 1, VM_PROT_READ);
+#endif
 	cl = (struct clockreg *)((long)bh + CLK_MK48T08_OFF);
 
 	return (cl);
@@ -226,6 +228,11 @@ clock_map(bh, model)
  * This is *UGLY*!  We probably have multiple mappings.  But I do
  * know that this all fits inside an 8K page, so I'll just map in
  * once.
+ *
+ * What we really need is some way to record the bus attach args
+ * so we can call *_bus_map() later with BUS_SPACE_MAP_READONLY
+ * or not to write enable/disable the device registers.  This is
+ * a non-trivial operation.  
  */
 /* ARGSUSED */
 static void
@@ -416,6 +423,7 @@ clk_wenable(onoff)
 	else
 		prot = --writers == 0 ? VM_PROT_READ : 0;
 	splx(s);
+#if 0
 	if (prot) {
 		vaddr_t va = (vaddr_t)clockreg & ~(NBPG-1);
 		paddr_t pa;
@@ -423,6 +431,7 @@ clk_wenable(onoff)
 		pa = pmap_extract(pmap_kernel(), va);
 		pmap_enter(pmap_kernel(), va, pa, prot, 1, prot);
 	}
+#endif
 }
 
 void
