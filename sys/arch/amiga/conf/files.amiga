@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.19 1995/03/02 03:30:55 chopps Exp $
+#	$NetBSD: files.amiga,v 1.20 1995/04/11 09:52:11 mellon Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -197,6 +197,7 @@ file	scsi/su.c			su needs-flag
 
 # list of standard files...
 file	dev/cons.c			ite ser
+file	dev/cninit.c			ite ser
 file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
 file	scsi/scsiconf.c			scsi

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.17 1995/02/08 14:22:30 mycroft Exp $
+#	$NetBSD: files.hp300,v 1.18 1995/04/11 09:54:47 mellon Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -57,4 +57,5 @@ arch/hp300/hpux/hpux_sysent.c		optional compat_hpux
 arch/hp300/hpux/hpux_tty.c		optional compat_hpux
 arch/m68k/m68k/copy.s			standard
 dev/cons.c				standard
+dev/cninit.c				standard
 thisisfor_in_proto.c			optional hy

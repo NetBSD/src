@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax.newconf,v 1.9 1995/03/29 22:50:49 ragge Exp $
+#       $NetBSD: files.vax.newconf,v 1.10 1995/04/11 10:04:37 mellon Exp $
 #
 # new style config file for vax architecture
 #
@@ -186,6 +186,7 @@ file	arch/vax/uba/dhu.c		dhu needs-count
 
 # These are general files needed for compilation.
 file	dev/cons.c
+file	dev/cninit.c
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
