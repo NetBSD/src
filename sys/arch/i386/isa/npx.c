@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.67 1998/03/22 12:53:56 drochner Exp $	*/
+/*	$NetBSD: npx.c,v 1.68 1999/01/26 14:27:08 christos Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -138,39 +138,8 @@ struct proc	*npxproc;
 
 static	enum npx_type		npx_type;
 static	int			npx_nointr;
-static	volatile u_int		npx_intrs_while_probing;
-static	volatile u_int		npx_traps_while_probing;
-
-/*
- * Special interrupt handlers.  Someday intr0-intr15 will be used to count
- * interrupts.  We'll still need a special exception 16 handler.  The busy
- * latch stuff in probintr() can be moved to npxprobe().
- */
-void probeintr __P((void));
-asm ("
-	.text
-_probeintr:
-	ss
-	incl	_npx_intrs_while_probing
-	pushl	%eax
-	movb	$0x20,%al	# EOI (asm in strings loses cpp features)
-	outb	%al,$0xa0	# IO_ICU2
-	outb	%al,$0x20	# IO_ICU1
-	movb	$0,%al
-	outb	%al,$0xf0	# clear BUSY# latch
-	popl	%eax
-	iret
-");
-
-void probetrap __P((void));
-asm ("
-	.text
-_probetrap:
-	ss
-	incl	_npx_traps_while_probing
-	fnclex
-	iret
-");
+volatile u_int			npx_intrs_while_probing;
+volatile u_int			npx_traps_while_probing;
 
 static inline int
 npxprobe1(ia)
@@ -303,21 +272,6 @@ npxprobe(parent, match, aux)
 	return (result);
 }
 
-int npx586bug1 __P((int, int));
-asm ("
-	.text
-_npx586bug1:
-	fildl	4(%esp)		# x
-	fildl	8(%esp)		# y
-	fld	%st(1)
-	fdiv	%st(1),%st	# x/y
-	fmulp	%st,%st(1)	# (x/y)*y
-	fsubrp	%st,%st(1)	# x-(x/y)*y
-	pushl	$0
-	fistpl	(%esp)
-	popl	%eax
-	ret
-");
 
 /*
  * Attach routine - announce which it is, and wire into system
