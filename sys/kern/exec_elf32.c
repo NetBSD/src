@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.29 1998/05/08 18:18:55 kleink Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.30 1998/06/25 23:19:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -32,6 +32,8 @@
 #ifndef ELFSIZE
 #define	ELFSIZE		32
 #endif
+
+#include "opt_compat_linux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
