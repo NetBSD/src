@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 2003/04/08 22:57:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 2003/04/27 10:42:54 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,7 @@
 #include "fd.h"
 #include "par.h"
 #include "assym.h"
+#include "ksyms.h"
 
 #include <machine/asm.h>
 
@@ -817,7 +818,7 @@ Lstart1:
 	RELOC(physmem, %a0)
 	movl	%d1,%a0@		| and physmem
 /* configure kernel and lwp0 VA space so we can get going */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
 	jne	Lstart2

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.8 2003/04/08 22:57:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.9 2003/04/27 10:42:49 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -49,6 +49,7 @@
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
 
+#include "ksyms.h"
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
@@ -209,7 +210,7 @@ Lmemok:
 	movl	%d1,%a0@		| and physmem
 /* configure kernel and lwp0 VA space so we can get going */
 	.globl	_Sysseg, _pmap_bootstrap, _avail_start
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
 	jne	Lstart2
