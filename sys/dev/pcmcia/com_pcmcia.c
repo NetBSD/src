@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.35 2004/07/06 13:43:00 mycroft Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.36 2004/07/07 05:51:42 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.35 2004/07/06 13:43:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.36 2004/07/07 05:51:42 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,13 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.35 2004/07/06 13:43:00 mycroft Exp 
 #include <dev/isa/isareg.h>
 
 struct com_dev {
-	char	*name;
 	char	*cis1_info[4];
 };
 
 /* Devices that we need to match by CIS strings */
 static struct com_dev com_devs[] = {
-	{ PCMCIA_STR_MEGAHERTZ_XJ2288, PCMCIA_CIS_MEGAHERTZ_XJ2288 },
+	{ PCMCIA_CIS_MEGAHERTZ_XJ2288 },
 };
 
 
