@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *	$Id: scsiconf.h,v 1.4.3.4 1993/11/28 11:54:33 mycroft Exp $
+ *	$Id: scsiconf.h,v 1.4.3.5 1994/02/01 20:05:22 mycroft Exp $
  */
 #ifndef	SCSI_SCSICONF_H
 #define SCSI_SCSICONF_H 1
@@ -232,6 +232,7 @@ int scsi_change_def __P((struct scsi_link *, u_int32));
 int scsi_inquire __P((struct scsi_link *, struct scsi_inquiry_data *, u_int32));
 int scsi_prevent __P((struct scsi_link *, u_int32, u_int32));
 int scsi_start_unit __P((struct scsi_link *, u_int32));
+int scsi_stop_unit __P((struct scsi_link *, u_int32, u_int32));
 void scsi_done __P((struct scsi_xfer *));
 int scsi_scsi_cmd __P((struct scsi_link *, struct scsi_generic *,
 			u_int32 cmdlen, u_char *data_addr,

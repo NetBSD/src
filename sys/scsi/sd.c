@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.18.2.9 1993/11/29 06:14:10 mycroft Exp $
+ *      $Id: sd.c,v 1.18.2.10 1994/02/01 20:05:24 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -92,12 +92,12 @@ struct dkdriver sddkdriver = { sdstrategy };
 
 struct scsi_device sd_switch =
 {
-    NULL,			/* Use default error handler */
-    sdstart,			/* have a queue, served by this */
-    NULL,			/* have no async handler */
-    NULL,			/* Use default 'done' routine */
-    "sd",
-    0
+	NULL,			/* Use default error handler */
+	sdstart,		/* have a queue, served by this */
+	NULL,			/* have no async handler */
+	NULL,			/* Use default 'done' routine */
+	"sd",
+	0
 };
 
 /*
