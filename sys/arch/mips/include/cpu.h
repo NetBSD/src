@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 1999/08/10 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2000/01/09 13:24:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,6 +44,24 @@
 /*
  * Exported definitions unique to NetBSD/mips cpu support.
  */
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
+#define	CPU_ROOT_DEVICE		3	/* string: root device name */
+#define	CPU_MAXID		4	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "root_device", CTLTYPE_STRING }, \
+}
+
+#ifdef _KERNEL
+#ifndef _LOCORE
 
 /*
  * Macros to find the CPU architecture we're on at run-time,
@@ -120,7 +138,6 @@ struct clockframe {
 #endif
 
 
-
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
@@ -153,22 +170,7 @@ extern int	mips_L2CacheMixed;
 extern u_int32_t mips3_intr_cycle_count;
 extern u_int32_t mips3_timer_delta;
 #endif
-#endif
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-}
-
-#ifdef _KERNEL
+#endif /* MIPS3 */
 
 /*
  * Misc prototypes.
@@ -194,6 +196,7 @@ int	badaddr __P((void *, size_t));
 void	cpu_identify __P((void));
 void	mips_vector_init __P((void));
 
+#endif /* ! _LOCORE */
 #endif /* _KERNEL */
 
 #endif /* _CPU_H_ */
