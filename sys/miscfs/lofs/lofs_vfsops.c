@@ -37,7 +37,7 @@
  * From:
  *	Id: lofs_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: lofs_vfsops.c,v 1.3 1994/04/14 04:06:00 cgd Exp $
+ *	$Id: lofs_vfsops.c,v 1.4 1994/04/21 07:48:45 cgd Exp $
  */
 
 /*
@@ -301,8 +301,8 @@ lofs_statfs(mp, sbp, p)
 	/* now copy across the "interesting" information and fake the rest */
 	sbp->f_type = mstat.f_type;
 	sbp->f_flags = mstat.f_flags;
-	sbp->f_fsize = mstat.f_fsize;
 	sbp->f_bsize = mstat.f_bsize;
+	sbp->f_iosize = mstat.f_iosize;
 	sbp->f_blocks = mstat.f_blocks;
 	sbp->f_bfree = mstat.f_bfree;
 	sbp->f_bavail = mstat.f_bavail;

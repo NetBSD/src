@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
- *	$Id: nfs_serv.c,v 1.13 1994/04/10 06:45:56 cgd Exp $
+ *	$Id: nfs_serv.c,v 1.14 1994/04/21 07:49:09 cgd Exp $
  */
 
 /*
@@ -1451,7 +1451,7 @@ nfsrv_statfs(mrep, md, dpos, cred, xid, mrq, repstat, p)
 	nfsm_reply(NFSX_STATFS);
 	nfsm_build(sfp, struct nfsv2_statfs *, NFSX_STATFS);
 	sfp->sf_tsize = txdr_unsigned(NFS_MAXDGRAMDATA);
-	sfp->sf_bsize = txdr_unsigned(sf->f_fsize);
+	sfp->sf_bsize = txdr_unsigned(sf->f_bsize);
 	sfp->sf_blocks = txdr_unsigned(sf->f_blocks);
 	sfp->sf_bfree = txdr_unsigned(sf->f_bfree);
 	sfp->sf_bavail = txdr_unsigned(sf->f_bavail);
