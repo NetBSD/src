@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.10 1997/02/19 00:22:40 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.11 1997/10/06 19:58:07 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -254,7 +254,7 @@ static int bw2gvideo(fb, data)
 	int s, ena;
 
 	s = splhigh();
-	ena = get_control_byte((char *)SYSTEM_ENAB);
+	ena = get_control_byte(SYSTEM_ENAB);
 	splx(s);
 
 	*on = (ena & SYSTEM_ENAB_VIDEO) ? 1 : 0;
@@ -270,12 +270,12 @@ static int bw2svideo(fb, data)
 	int s, ena;
 
 	s = splhigh();
-	ena = get_control_byte((char *)SYSTEM_ENAB);
+	ena = get_control_byte(SYSTEM_ENAB);
 
 	if (*on) ena |= SYSTEM_ENAB_VIDEO;
 	else ena &= ~SYSTEM_ENAB_VIDEO;
 
-	set_control_byte((char *)SYSTEM_ENAB, ena);
+	set_control_byte(SYSTEM_ENAB, ena);
 	splx(s);
 
 	return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.17 1997/04/28 21:46:31 gwr Exp $	*/
+/*	$NetBSD: control.h,v 1.18 1997/10/06 19:58:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,22 +82,23 @@
 #define SYSTEM_ENAB_FPP   0x40
 #define SYSTEM_ENAB_BOOT  0x80
 
-#include <sys/types.h>
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 /* ctrlsp.S */
-unsigned int get_control_byte __P((char *));
-unsigned int get_control_word __P((char *));
-void set_control_byte __P((char *, unsigned char));
-void set_control_word __P((char *, unsigned int));
+int get_control_byte __P((vm_offset_t));
+int get_control_word __P((vm_offset_t));
+void set_control_byte __P((vm_offset_t, int));
+void set_control_word __P((vm_offset_t, int));
 
 /* control.c */
 int get_context __P((void));
 void set_context __P((int));
 
-vm_offset_t get_pte __P((vm_offset_t va));
-void set_pte __P((vm_offset_t, vm_offset_t));
+int  get_pte __P((vm_offset_t));
+void set_pte __P((vm_offset_t, int));
 
-unsigned char get_segmap __P((vm_offset_t));
-void set_segmap __P((vm_offset_t va, unsigned char));
-void set_segmap_allctx __P((vm_offset_t va, unsigned char));
+int get_segmap __P((vm_offset_t));
+void set_segmap __P((vm_offset_t, int));
+void set_segmap_allctx __P((vm_offset_t, int));
 
+#endif	/* _KERNEL | _STANDALONE */
