@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2002/02/21 21:58:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2002/02/22 04:49:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -142,7 +142,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2002/02/21 21:58:01 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2002/02/22 04:49:20 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3766,19 +3766,24 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
  *	Create a single page mapping.
  */
 void
-pmap_map_entry(vaddr_t l2pt, vaddr_t va, paddr_t pa, int prot, int cache)
+pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 {
-	pt_entry_t *pte = (pt_entry_t *) l2pt;
+	pd_entry_t *pde = (pd_entry_t *) l1pt;
 	pt_entry_t ap = (prot & VM_PROT_WRITE) ? AP_KRW : AP_KR;
 	pt_entry_t fl = (cache == PTE_CACHE) ? pte_cache_mode : 0;
+	pt_entry_t *pte;
 
 	KASSERT(((va | pa) & PGOFSET) == 0);
 
-#ifdef cats	/* XXXJRT */
-	pte[(va >> PGSHIFT) & 0x7ff] = L2_SPTE(pa & PG_FRAME, ap, fl);
-#else
+	if ((pde[va >> PDSHIFT] & L1_MASK) != L1_PAGE)
+		panic("pmap_map_entry: no L2 table for VA 0x%08lx", va);
+
+	pte = (pt_entry_t *)
+	    kernel_pt_lookup(pde[va >> PDSHIFT] & PG_FRAME);
+	if (pte == NULL)
+		panic("pmap_map_entry: can't find L2 table for VA 0x%08lx", va);
+
 	pte[(va >> PGSHIFT) & 0x3ff] = L2_SPTE(pa & PG_FRAME, ap, fl);
-#endif
 }
 
 /*

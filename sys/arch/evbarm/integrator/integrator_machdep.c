@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.14 2002/02/21 21:58:02 thorpej Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.15 2002/02/22 04:49:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -357,7 +357,6 @@ initarm(bootinfo)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	u_int l2pagetable;
 	extern char page0[], page0_end[];
 	extern int etext asm ("_etext");
 	extern int end asm ("_end");
@@ -630,7 +629,6 @@ initarm(bootinfo)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL].pv_pa;
 
 	{
 		u_int logical;
@@ -666,7 +664,7 @@ initarm(bootinfo)
 
 	/* Map the boot arguments page */
 #if 0
-	pmap_map_entry(l2pagetable, intbootinfo.bt_vargp,
+	pmap_map_entry(l1pagetable, intbootinfo.bt_vargp,
 	    intbootinfo.bt_pargp, VM_PROT_READ, PTE_CACHE);
 #endif
 
@@ -684,7 +682,7 @@ initarm(bootinfo)
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
@@ -692,18 +690,21 @@ initarm(bootinfo)
 	 * Basically every kernel page table gets mapped here
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
-	l2pagetable = kernel_ptpt.pv_pa;
-	pmap_map_entry(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
-		pmap_map_entry(l2pagetable, ((KERNEL_VM_BASE +
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
@@ -712,14 +713,13 @@ initarm(bootinfo)
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_SYS].pv_pa;
 #if 1
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download
 	   the cache-clean code there.  */
-	pmap_map_entry(l2pagetable, 0x00000000, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 #else
-	pmap_map_entry(l2pagetable, 0x00000000, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, 0x00000000, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 #endif
 	/* Map the core memory needed before autoconfig */

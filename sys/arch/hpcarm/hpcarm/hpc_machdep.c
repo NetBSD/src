@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.33 2002/02/21 21:58:02 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.34 2002/02/22 04:49:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -287,7 +287,6 @@ initarm(argc, argv, bi)
 	int loop;
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
-	u_int l2pagetable;
 	vaddr_t freemempos;
 	extern char page0[], page0_end[];
 	pv_addr_t kernel_l1pt;
@@ -516,7 +515,6 @@ initarm(argc, argv, bi)
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel code/data */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL].pv_pa;
 
 	/*
 	 * XXX there is no ELF header to find RO region.
@@ -542,7 +540,6 @@ initarm(argc, argv, bi)
 #endif
 
 	/* Map the stack pages */
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL].pv_pa;
 	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
 	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
@@ -556,11 +553,11 @@ initarm(argc, argv, bi)
 	    PD_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l2pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_pa, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/* Map a page for entering idle mode */
-	pmap_map_entry(l2pagetable, sa11x0_idle_mem, sa11x0_idle_mem,
+	pmap_map_entry(l1pagetable, sa11x0_idle_mem, sa11x0_idle_mem,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 	/*
@@ -568,25 +565,30 @@ initarm(argc, argv, bi)
 	 * Basically every kernel page table gets mapped here
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
-	l2pagetable = kernel_ptpt.pv_pa;
-	pmap_map_entry(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (KERNEL_SPACE_START >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (KERNEL_SPACE_START >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
-		pmap_map_entry(l2pagetable, ((KERNEL_VM_BASE +
+		pmap_map_entry(l1pagetable,
+		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
-	pmap_map_entry(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l2pagetable, (SAIPIO_BASE >> (PGSHIFT-2)),
+	pmap_map_entry(l1pagetable,
+	    PROCESS_PAGE_TBLS_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 
@@ -594,18 +596,15 @@ initarm(argc, argv, bi)
 	 * Map the system page in the kernel page table for the bottom 1Meg
 	 * of the virtual memory map.
 	 */
-	l2pagetable = kernel_pt_table[KERNEL_PT_SYS].pv_pa;
-	pmap_map_entry(l2pagetable, 0x0000000, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, 0x0000000, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map any I/O modules here, as we don't have real bus_space_map() */
 	printf("mapping IO...");
-	l2pagetable = kernel_pt_table[KERNEL_PT_IO].pv_pa;
-	pmap_map_entry(l2pagetable, SACOM3_BASE, SACOM3_HW_BASE,
+	pmap_map_entry(l1pagetable, SACOM3_BASE, SACOM3_HW_BASE,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
 #ifdef CPU_SA110
-	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL].pv_pa;
 	pmap_map_chunk(l1pagetable, sa110_cache_clean_addr, 0xe0000000,
 	    CPU_SA110_CACHE_CLEAN_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
