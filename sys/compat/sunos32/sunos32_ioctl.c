@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.9 2003/01/04 23:43:05 wiz Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.10 2003/01/18 08:38:15 thorpej Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.9 2003/01/04 23:43:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.10 2003/01/18 08:38:15 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.9 2003/01/04 23:43:05 wiz Exp $"
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/disklabel.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -436,8 +437,8 @@ stio2stios(t, ts)
 }
 
 int
-sunos32_sys_ioctl(p, v, retval)
-	struct proc *p;
+sunos32_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -446,6 +447,7 @@ sunos32_sys_ioctl(p, v, retval)
 		netbsd32_u_long	com;
 		netbsd32_caddr_t	data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
@@ -912,7 +914,7 @@ sunos32_sys_ioctl(p, v, retval)
 	    }
 
 	}
-	return (netbsd32_ioctl(p, uap, retval));
+	return (netbsd32_ioctl(l, uap, retval));
 }
 
 /* SunOS fcntl(2) cmds not implemented */
@@ -1014,8 +1016,8 @@ static struct {
 };
 
 int
-sunos32_sys_fcntl(p, v, retval)
-	struct proc *p;
+sunos32_sys_fcntl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -1024,6 +1026,7 @@ sunos32_sys_fcntl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_voidp) arg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	netbsd32_long flg;
 	int n, ret;
 
@@ -1066,7 +1069,7 @@ sunos32_sys_fcntl(p, v, retval)
 			if (error)
 				return error;
 
-			error = sys_fcntl(p, &fa, retval);
+			error = sys_fcntl(l, &fa, retval);
 			if (error || SCARG(&fa, cmd) != F_GETLK)
 				return error;
 
@@ -1086,7 +1089,7 @@ sunos32_sys_fcntl(p, v, retval)
 		return (EOPNOTSUPP);
 	}
 
-	ret = netbsd32_fcntl(p, uap, retval);
+	ret = netbsd32_fcntl(l, uap, retval);
 
 	switch (SCARG(uap, cmd)) {
 	case F_GETFL:
