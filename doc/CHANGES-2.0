@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.31 2004/04/04 08:26:30 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.32 2004/04/05 06:07:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -329,4 +329,9 @@ xsrc/xfree/xc/fonts/util/bdftruncate.pl		1.4
 	are, may as well give it a "#! /usr/bin/env perl" so it has a chance
 	of working...  unfortunately, this even fixes PR#22578 ;-)
 	[tron, ticket #48]
+
+share/man/man4/options.4			1.233-1.234
+
+	Document BEEP_ONHALT{,COUNT,PITCH,PERIOD}.
+	[jmmv, ticket #51]
 
