@@ -22,14 +22,6 @@ Bugs:
 - Prevent multiple PREEMPTED upcalls from being delivered before a
   process ever returns to userspace.
 
-- Prevent race conditions between asynchronous upcall-generating
-  events (realtimerexpire, maybe signals?) and sa_yield().
-
-- Signals should not wake up sleeping normal LWPs of SA processes -
-  the kernel doesn't know what the signal mask of the executing thread
-  is, and can't make the decision about whether to wake them. Defer to
-  userland, in true SA style.
-
 Wishlist:
 
 - exit1() is too fragile. A cleaner solution to the LWPWAIT_EXITCONTROL
