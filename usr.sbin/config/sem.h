@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.15 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: sem.h,v 1.16 2002/10/09 20:17:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,13 +49,14 @@ void		enddefs(void);
 void		setdefmaxusers(int, int, int);
 void		setmaxusers(int);
 void		setident(const char *);
-int		defattr(const char *, struct nvlist *, int);
+int		defattr(const char *, struct nvlist *, struct nvlist *, int);
 void		defdev(struct devbase *, struct nvlist *, struct nvlist *, int);
 void		defdevattach(struct deva *, struct devbase *, struct nvlist *,
 			     struct nvlist *);
 struct devbase *getdevbase(const char *);
 struct deva    *getdevattach(const char *);
 struct attr    *getattr(const char *);
+void		expandattr(struct attr *, void (*)(struct attr *));
 void		setmajor(struct devbase *, int);
 void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
