@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.54 2004/07/01 17:45:12 uch Exp $
+#	$NetBSD: TX3922,v 1.55 2004/07/02 03:58:58 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -21,6 +21,7 @@ options 	TX39_DEBUG
 #options 	TX39POWER_DEBUG
 #options 	TX39UART_DEBUG
 
+options 	KLOADER
 options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options		KLOADER_DEBUG
 
