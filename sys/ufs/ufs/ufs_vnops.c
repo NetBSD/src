@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.3.2.1 1994/10/19 04:29:52 cgd Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.3.2.2 1994/10/19 07:01:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -613,7 +613,7 @@ ufs_seek(ap)
 	} */ *ap;
 {
 
-	if (length < 0 || length > 0xffffffffLL)
+	if (ap->a_newoff < 0 || ap->a_newoff > 0xffffffffLL)
 		return (EINVAL);
 
 	return (0);
