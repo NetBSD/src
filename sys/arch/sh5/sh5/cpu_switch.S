@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.11 2002/10/08 15:59:32 scw Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.12 2002/10/09 20:27:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -312,10 +312,11 @@ Lsw2:
 	 * Interrupts are blocked, sched_lock is held, and r0 contains
 	 * the contents of a non-zero sched_whichqs.
 	 */
-	addz.l	r0, r63, r0		/* Correct for sign extension */
-	nsb	r0, r1			/* Count sign bits in r0 */
-	addi	r1, -31, r1		/* Correct for 64-bitness of "nsb" */
-	xori	r1, 31, r1		/* Convert to range 31-0 */
+	addi	r0, -1, r1		/* Slightly modified ffs(r0) */
+	andc	r0, r1, r1
+	nsb	r1, r1
+	addi.l	r1, -62, r1		/* We know r0 != 0, so this works */
+	sub.l	r63, r1, r1		/* Result in r1 */
 	movi	1, r2
 	shlld	r2, r1, r2		/* Set appropriate bit in r2 */
 	andc	r0, r2, r5		/* Assume queue is empty, in r5 */
@@ -336,7 +337,7 @@ Lsw2:
 	 * Remove process from head of run queue
 	 */
 	LDPTR	r3, PH_LINK, r2		/* r2 = victim process, p */
-	beq/u	r2, r63, tr0		/* Queue was empty! Panic stations! */
+	beq/u	r2, r3, tr0		/* Queue was empty! Panic stations! */
 	LDPTR	r2, P_FORW, r4		/* r4 = p->p_forw */
 	STPTR	r3, PH_LINK, r4		/* queue->ph_link = p->p_forw */
 	STPTR	r4, P_BACK, r3		/* p->p_forw->p_back = queue */

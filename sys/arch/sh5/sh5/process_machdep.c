@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.5 2002/09/28 11:11:01 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6 2002/10/09 20:27:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -109,41 +109,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &p->p_addr->u_pcb);
-}
-
-void
-setrunqueue(struct proc *p)
-{
-	int queue = p->p_priority >> 2;
-
-#ifdef DIAGNOSTIC
-	if (p->p_back != NULL)
-		panic("setrunqueue");
-#endif
-
-	sched_whichqs |= (1 << queue);
-	p->p_forw = (struct proc *)&sched_qs[queue];
-	p->p_back = sched_qs[queue].ph_rlink;
-	p->p_back->p_forw = p;
-	sched_qs[queue].ph_rlink = p;
-}
-
-void
-remrunqueue(struct proc *p)
-{
-	int queue = p->p_priority >> 2;
-
-#ifdef DIAGNOSTIC
-	if ((sched_whichqs & (1 << queue)) == 0)
-		panic("remrunqueue");
-#endif
-
-	p->p_back->p_forw = p->p_forw;
-	p->p_forw->p_back = p->p_back;
-	p->p_back = NULL;
-
-	if ((struct proc *)&sched_qs[queue] == sched_qs[queue].ph_link)
-		sched_whichqs &= ~(1 << queue);
 }
 
 int
