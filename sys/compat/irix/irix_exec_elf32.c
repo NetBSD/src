@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.7.2.4 2004/09/21 13:25:14 skrll Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.7.2.5 2005/01/13 08:33:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.4 2004/09/21 13:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.5 2005/01/13 08:33:11 skrll Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.7.2.4 2004/09/21 13:25:14 skrl
  * IRIX o32 ABI probe function
  */
 int
-ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
-	struct proc *p;
+ELFNAME2(irix,probe_o32)(l, epp, eh, itp, pos)
+	struct lwp *l;
 	struct exec_package *epp;
 	void *eh;
 	char *itp; 
@@ -88,7 +88,7 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
 		if (strncmp(itp, "/lib/libc.so", 12) && 
 		    strncmp(itp, "/usr/lib/libc.so", 16))
 			return ENOEXEC;
-		if ((error = emul_find_interp(LIST_FIRST(&p->p_lwps),
+		if ((error = emul_find_interp(l,
 		    epp->ep_esch->es_emul->e_path, itp)))
 			return error;
 		*pos = ELF_LINK_ADDR;
@@ -105,8 +105,8 @@ ELFNAME2(irix,probe_o32)(p, epp, eh, itp, pos)
  * IRIX n32 ABI probe function
  */
 int
-ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
-	struct proc *p;
+ELFNAME2(irix,probe_n32)(l, epp, eh, itp, pos)
+	struct lwp *l;
 	struct exec_package *epp;
 	void *eh;
 	char *itp; 
@@ -126,7 +126,7 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 		if (strncmp(itp, "/lib32/libc.so", 14) &&
 		    strncmp(itp, "/usr/lib32/libc.so", 18))
 			return ENOEXEC;
-		if ((error = emul_find_interp(LIST_FIRST(&p->p_lwps),
+		if ((error = emul_find_interp(l,
 		    epp->ep_esch->es_emul->e_path, itp)))
 			return error;
 	}
@@ -139,8 +139,8 @@ ELFNAME2(irix,probe_n32)(p, epp, eh, itp, pos)
 }
 
 int
-ELFNAME2(irix,copyargs)(p, pack, arginfo, stackp, argp)
-	struct proc *p;
+ELFNAME2(irix,copyargs)(l, pack, arginfo, stackp, argp)
+	struct lwp *l;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;

@@ -1,9 +1,11 @@
-/*	$NetBSD: fb_usrreq.c,v 1.27.2.3 2004/09/21 13:20:19 skrll Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.27.2.4 2005/01/13 08:33:11 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_usrreq.c,v 1.27.2.3 2004/09/21 13:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_usrreq.c,v 1.27.2.4 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/conf.h>
+
+#include <sys/lwp.h>
 
 dev_type_open(fbopen);
 dev_type_close(fbclose);
@@ -19,10 +21,10 @@ const struct cdevsw fb_cdevsw = {
 
 /*ARGSUSED*/
 int
-fbopen(dev, flag, mode, p)
+fbopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fbinfo *fi;
 
@@ -59,10 +61,10 @@ fbopen(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-fbclose(dev, flag, mode, p)
+fbclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fbinfo *fi;
 	struct pmax_fbtty *fbtty;
@@ -101,11 +103,11 @@ fbclose(dev, flag, mode, p)
 
 /*ARGSUSED*/
 int
-fbioctl(dev, cmd, data, flag, p)
+fbioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fbinfo *fi;
 	struct pmax_fbtty *fbtty;
@@ -124,7 +126,7 @@ fbioctl(dev, cmd, data, flag, p)
 	 * so that X consortium Xservers work.
 	 */
 	case QIOCGINFO:
-		return (fbmmap_fb(fi, dev, data, p));
+		return (fbmmap_fb(fi, dev, data, l->l_proc));
 
 	case QIOCPMSTATE:
 		/*
@@ -241,10 +243,10 @@ fbioctl(dev, cmd, data, flag, p)
  * Poll on Digital-OS-compatible in-kernel input-event ringbuffer.
  */
 int
-fbpoll(dev, events, p)
+fbpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fbinfo *fi;
 	int revents = 0;
@@ -259,7 +261,7 @@ fbpoll(dev, events, p)
 		    fi->fi_fbu->scrInfo.qe.eTail)
 		 	revents |= (events & (POLLIN|POLLRDNORM));
 		else
-	  		selrecord(p, &fi->fi_selp);
+	  		selrecord(l, &fi->fi_selp);
 	}
 
 	/* XXX mice are not writable, what to do for poll on write? */
