@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.6 2002/10/02 16:33:32 thorpej Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.7 2003/05/13 15:42:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.6 2002/10/02 16:33:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.7 2003/05/13 15:42:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,11 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		/*
 		 * Allocate a CCB.
 		 */
-		ic = icp_ccb_alloc(icp);
+		if (__predict_false((ic = icp_ccb_alloc(icp)) == NULL)) {
+			xs->error = XS_RESOURCE_SHORTAGE;
+			scsipi_done(xs);
+			return;
+		}
 		rc = &ic->ic_cmd.cmd_packet.rc;
 		ic->ic_sg = rc->rc_sg;
 		ic->ic_service = ICP_SCSIRAWSERVICE;

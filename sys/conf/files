@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.610 2003/04/24 20:04:03 ragge Exp $
+#	$NetBSD: files,v 1.611 2003/05/13 15:42:33 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -323,6 +323,7 @@ file	dev/ic/ld_mlx.c			ld_mlx
 #
 device	icp {unit = -1}
 file	dev/ic/icp.c			icp			needs-flag
+file	dev/ic/icp_ioctl.c		icp
 
 attach	ld at icp with ld_icp
 file	dev/ic/ld_icp.c			ld_icp

@@ -1,4 +1,4 @@
-/*	$NetBSD: icpreg.h,v 1.1 2002/04/22 21:05:21 ad Exp $	*/
+/*	$NetBSD: icpreg.h,v 1.2 2003/05/13 15:42:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #define ICP_LOCALBOARD		0	/* Board node always 0 */
 #define ICP_MAX_CMDS		124
 #define ICP_SECTOR_SIZE		0x200	/* Always 512 bytes for cache devs */
+#define	ICP_MAX_EVENTS		0x100	/* event buffer */
 
 /* DPMEM constants */
 #define ICP_MPR_MAGIC		0xc0ffee11
@@ -140,17 +141,8 @@
 #define ICP_IO_CHANNEL		0x20000		/* default IO channel */
 #define ICP_INVALID_CHANNEL	0xffff		/* invalid channel */
 
-/* IOCTLs */
-#define ICPIOCTL_MASK	    ('J' << 8)
-#define ICPIOCTL_GENERAL    (ICPIOCTL_MASK | 0)	/* general IOCTL */
-#define ICPIOCTL_DRVERS	    (ICPIOCTL_MASK | 1)	/* get driver version */
-#define ICPIOCTL_CTRTYPE    (ICPIOCTL_MASK | 2)	/* get controller type */
-#define ICPIOCTL_CTRCNT	    (ICPIOCTL_MASK | 5)	/* get controller count */
-#define ICPIOCTL_LOCKDRV    (ICPIOCTL_MASK | 6)	/* lock host drive */
-#define ICPIOCTL_LOCKCHN    (ICPIOCTL_MASK | 7)	/* lock channel */
-#define ICPIOCTL_EVENT	    (ICPIOCTL_MASK | 8)	/* read controller events */
-
 /* Service errors */
+#define	ICP_S_MSG_REQUEST	0	/* screen service: async evt message */
 #define ICP_S_OK		1	/* no error */
 #define ICP_S_BSY		7	/* controller busy */
 #define ICP_S_RAW_SCSI		12	/* raw service: target error */

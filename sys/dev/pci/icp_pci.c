@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.7 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.8 2003/05/13 15:42:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.7 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.8 2003/05/13 15:42:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,8 @@ __KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.7 2003/01/31 00:07:42 thorpej Exp $");
 #define	ICP_MPR_LDOOR	0x20	/* u_int8_t, PCI to local doorbell */
 #define	ICP_MPR_EDOOR	0x2c	/* volatile u_int8_t, locl to PCI doorbell */
 #define	ICP_EDOOR_EN	0x34	/* u_int8_t, board interrupts enable */
+#define	ICP_SEVERITY	0xefc	/* u_int8_t, event severity */
+#define	ICP_EVT_BUF	0xf00	/* u_int8_t [256], event buffer */
 #define	ICP_I960_SZ	0x1000
 
 /* DPRAM PCI MPR controllers */
@@ -569,6 +571,12 @@ icp_pci_attach(struct device *parent, struct device *self, void *aux)
 	else
 		aprint_normal("ICP-Vortex RAID controller\n");
 
+	icp->icp_pci_bus = pa->pa_bus;
+	icp->icp_pci_device = pa->pa_device;
+	icp->icp_pci_device_id = pa->pa_id;
+	icp->icp_pci_subdevice_id = pci_conf_read(pa->pa_pc, pa->pa_tag,
+	    PCI_SUBSYS_ID_REG);
+
 	if (icp_init(icp, intrstr))
 		goto bail_out;
 
@@ -760,9 +768,24 @@ icp_mpr_intr(struct icp_softc *icp, struct icp_intr_ctx *ctx)
 	ctx->info2 = bus_space_read_4(icp->icp_dpmemt, icp->icp_dpmemh,
 	    ICP_MPR_INFO + sizeof(u_int32_t));
 
-	/*
-	 * XXX Read async event string here.
-	 */
+	if (ctx->istatus == ICP_ASYNCINDEX) {
+		if (ctx->service != ICP_SCREENSERVICE &&
+		    (icp->icp_fw_vers & 0xff) >= 0x1a) {
+			int i;
+
+			icp->icp_evt.severity =
+			    bus_space_read_1(icp->icp_dpmemt,
+			        icp->icp_dpmemh, ICP_SEVERITY);
+			for (i = 0;
+			     i < sizeof(icp->icp_evt.event_string); i++) {
+				icp->icp_evt.event_string[i] =
+				    bus_space_read_1(icp->icp_dpmemt,
+				    icp->icp_dpmemh, ICP_EVT_BUF + i);
+				if (icp->icp_evt.event_string[i] == '\0')
+					break;
+			}
+		}
+	}
 
 	bus_space_write_1(icp->icp_dpmemt, icp->icp_dpmemh, ICP_MPR_EDOOR,
 	    0xff);
