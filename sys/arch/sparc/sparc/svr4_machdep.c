@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.36 2000/04/09 05:25:37 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.37 2000/04/09 05:48:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -555,10 +555,13 @@ svr4_trap(type, p)
 		break;
 
 	case T_SVR4_SETPSR:
+		/* Disable for now; it makes things worse */
+#if 0
 		/* I have no clue if this is right!  */
 #define PRESERVE_PSR	(PSR_IMPL|PSR_VER|PSR_PIL|PSR_S|PSR_PS|PSR_ET|PSR_CWP)
 		tf->tf_psr = (tf->tf_psr & ~PRESERVE_PSR) |
 		    (tf->tf_out[0] & PRESERVE_PSR);
+#endif
 		break;
 
 	case T_SVR4_GETHRTIME:
