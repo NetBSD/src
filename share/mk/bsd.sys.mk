@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.66 2001/11/28 20:12:47 tv Exp $
+#	$NetBSD: bsd.sys.mk,v 1.67 2001/11/29 23:53:23 thorpej Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -60,6 +60,7 @@ GROFF?=		groff
 OBJCOPY?=	objcopy
 RPCGEN?=	rpcgen
 STRIP?=		strip
+MAKEWHATIS?=	/usr/libexec/makewhatis
 MDSETIMAGE?=	mdsetimage
 MKLOCALE?=	mklocale
 MKDEP?=		mkdep
