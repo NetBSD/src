@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.2 2000/12/21 11:29:47 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.3 2000/12/26 00:30:51 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.2 2000/12/21 11:29:47 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.3 2000/12/26 00:30:51 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -334,6 +334,15 @@ _Read_CTypeAsRune(fp)
 	    (new_toupper = malloc(sizeof(int16_t) * (1 + len))) == NULL ||
 	    (new_tolower = malloc(sizeof(int16_t) * (1 + len))) == NULL)
 		goto bad;
+	new_ctype[0] = 0;
+	if (fread(&new_ctype[1], sizeof(u_int8_t), len, fp) != len)
+		goto bad;
+	new_toupper[0] = EOF;
+	if (fread(&new_toupper[1], sizeof(int16_t), len, fp) != len)
+		goto bad;
+	new_tolower[0] = EOF;
+	if (fread(&new_tolower[1], sizeof(int16_t), len, fp) != len)
+		goto bad;
 
 	hostdatalen = sizeof(*rl);
 
@@ -357,8 +366,8 @@ _Read_CTypeAsRune(fp)
 		rl->__runetype[x] = new_ctype[1 + x];
 
 		/* XXX may fail on non-8bit encoding only */
-		rl->__maplower[x] = ntohs(new_toupper[1 + x]);
-		rl->__mapupper[x] = ntohs(new_tolower[1 + x]);
+		rl->__mapupper[x] = ntohs(new_toupper[1 + x]);
+		rl->__maplower[x] = ntohs(new_tolower[1 + x]);
 	}
 
 	/*
