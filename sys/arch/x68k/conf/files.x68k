@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.46 2002/04/22 09:41:21 augustss Exp $
+#	$NetBSD: files.x68k,v 1.47 2002/08/11 13:17:52 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -181,6 +181,10 @@ file	arch/x68k/dev/pow.c		pow needs-count
 attach	ne at intio with ne_intio: rtl80x9
 file	arch/x68k/dev/if_ne_intio.c	ne_intio
 
+# Nereid USB
+attach	slhci at intio with slhci_intio
+file	arch/x68k/dev/slhci_intio.c	slhci_intio
+
 # memory disk
 file	dev/md_root.c			memory_disk_hooks
 major	{md = 8}
@@ -205,3 +209,6 @@ file arch/m68k/m68k/linux_trap.c	compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+# USB support
+include "dev/usb/files.usb"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.125 2002/07/17 21:10:30 drochner Exp $
+#	$NetBSD: files.isa,v 1.126 2002/08/11 13:17:54 isaki Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -476,6 +476,10 @@ file	dev/isa/joy_isa.c		joy_isa
 device nsclpcsio: sysmon_envsys
 attach nsclpcsio at isa with nsclpcsio_isa
 file dev/isa/nsclpcsio_isa.c nsclpcsio_isa
+
+# USB Controller
+attach	slhci at isa with slhci_isa
+file	dev/isa/slhci_isa.c		slhci_isa
 
 #
 # ISA Plug 'n Play autoconfiguration glue.

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.544 2002/08/11 12:09:44 drochner Exp $
+#	$NetBSD: files,v 1.545 2002/08/11 13:17:55 isaki Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -819,6 +819,11 @@ file	dev/usb/ohci.c			ohci			needs-flag
 #
 device	ehci: usbus
 file	dev/usb/ehci.c			ehci			needs-flag
+
+# SL811HS/T USB controller
+defflag	opt_slhci.h	SLHCI_DEBUG	
+device	slhci: usbus
+file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # radio devices, attaches to radio hardware driver
 device	radio
