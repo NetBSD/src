@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_swiz_bus_mem.c,v 1.2 1996/04/12 06:08:23 cgd Exp $	*/
+/*	$NetBSD: cia_swiz_bus_mem.c,v 1.3 1996/06/10 00:04:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -36,9 +36,42 @@
 #include <machine/bus.h>
 
 #include <alpha/pci/ciareg.h>
+#include <alpha/pci/ciavar.h>
 
 #define	CHIP		cia
-#define	CHIP_D_MEM_BASE	CIA_PCI_DENSE
-#define	CHIP_S_MEM_BASE	CIA_PCI_SPARSE0
+
+/* Dense memory */
+#define	CHIP_D_MEM_BASE(v)	CIA_PCI_DENSE
+#define	CHIP_D_MEM_MASK(v)	0xffffffff
+
+/* Sparse region 1 */
+#define	CHIP_S_MEM_W1_START(v)						\
+	    HAE_MEM_REG1_START(((struct cia_config *)(v))->cc_hae_mem)
+#define	CHIP_S_MEM_W1_END(v)						\
+	    (CHIP_S_MEM_W1_START(v) + HAE_MEM_REG1_MASK)
+#define	CHIP_S_MEM_W1_BASE(v)						\
+	    CIA_PCI_SMEM1
+#define	CHIP_S_MEM_W1_MASK(v)						\
+	    HAE_MEM_REG1_MASK
+
+/* Sparse region 2 */
+#define	CHIP_S_MEM_W2_START(v)						\
+	    HAE_MEM_REG2_START(((struct cia_config *)(v))->cc_hae_mem)
+#define	CHIP_S_MEM_W2_END(v)						\
+	    (CHIP_S_MEM_W2_START(v) + HAE_MEM_REG2_MASK)
+#define	CHIP_S_MEM_W2_BASE(v)						\
+	    CIA_PCI_SMEM2
+#define	CHIP_S_MEM_W2_MASK(v)						\
+	    HAE_MEM_REG2_MASK
+
+/* Sparse region 3 */
+#define	CHIP_S_MEM_W3_START(v)						\
+	    HAE_MEM_REG3_START(((struct cia_config *)(v))->cc_hae_mem)
+#define	CHIP_S_MEM_W3_END(v)						\
+	    (CHIP_S_MEM_W3_START(v) + HAE_MEM_REG3_MASK)
+#define	CHIP_S_MEM_W3_BASE(v)						\
+	    CIA_PCI_SMEM3
+#define	CHIP_S_MEM_W3_MASK(v)						\
+	    HAE_MEM_REG3_MASK
 
 #include "pcs_bus_mem_common.c"
