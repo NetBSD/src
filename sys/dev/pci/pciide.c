@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.87 2000/08/21 15:52:50 enami Exp $	*/
+/*	$NetBSD: pciide.c,v 1.88 2000/10/04 09:34:09 bouyer Exp $	*/
 
 
 /*
@@ -1886,6 +1886,7 @@ apollo_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	int rev = PCI_REVISION(pa->pa_class);
 	int channel;
 	u_int32_t ideconf;
 	bus_size_t cmdsize, ctlsize;
@@ -1901,7 +1902,8 @@ apollo_chip_map(sc, pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE)
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE
+		    && rev >= 6)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
