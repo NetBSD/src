@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.3 1995/06/16 15:08:05 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.4 1995/09/16 16:20:20 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,28 +43,28 @@
 nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
 	.globl	nisse
 
-start:	.globl	start
+_start:	.globl	_start
 	nop;nop;		# If we get called by calls, or something
-	movl	$start, sp	# Probably safe place for stack
+	movl	$_start, sp	# Probably safe place for stack
+	subl2	$52, sp		# do not overwrite saved boot-registers
+
+	subl3   $_start, $_end, r0
+	moval   _start, r1
+	movl    $_start, r2
+	movc3	r0, (r1), (r2)	# should use movc5 instead, to clear bss.
+	
 	jsb	1f
-1:	movl	(sp)+,r0
-	bicl2	$0x1ff,r0
-
-	subl3	sp,$_end,r4	# Get size to copy, size < 64K
-	movc3	r4,(r0),(sp)	# Copy all
-
-	pushl	$cont		# new run address
-	rsb			# Doit
-
-cont:	movl    $start, sp
+1:	movl    $relocated, (sp)   # return-address on top of stack
+	rsb                        # can be replaced with new address
+relocated:	                   # now relocation is done !!!
 	calls	$0,_main	# Were here!
 	halt			# no return
 
+	
         .globl _hoppabort
 _hoppabort: .word 0x0
-        movl    4(ap),r6
-        movl    8(ap),r11
-        movl    0xc(ap),r10
-	movl	0x10(ap),r9
+        movl    4(ap), r6
+        movl    8(ap), r11
+        movl    0xc(ap), r10
+	movl	16(ap), r9
         calls   $0,(r6)
-

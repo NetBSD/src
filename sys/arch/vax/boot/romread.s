@@ -1,4 +1,4 @@
-/*	$NetBSD: romread.s,v 1.2 1995/04/25 14:14:31 ragge Exp $ */
+/*	$NetBSD: romread.s,v 1.3 1995/09/16 16:20:18 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -43,17 +43,14 @@
  * read630 (int block, int *regs)
  */
 ENTRY(read630, 0xFFE)
-	movl	8(ap), r11	# array of bootregs
-	movl	44(r11), r11	# restore boot-contents of r11 (rpb)
-	movl    52(r11), r7     # load iovec/bqo into r7
-	addl3   (r7), r7, r6	# load qio into r6
-	pushl	r11			# base of rpb
+	pushl	$0			# base of rpb
 	pushl	$0			# virtual-flag 
 	pushl	$33			# read-logical-block
-	pushl	4(ap)			# lbn to start reading
-	pushl	$512			# number of bytes to read
-	pushl	$0			# buffer-address 
+	pushl	12(ap)			# lbn to start reading
+	pushl	8(ap)			# number of bytes to read
+	pushl	4(ap)			# buffer-address 
 	calls	$6, (r6)	# call the qio-routine
+	halt
 	ret			# r0 holds the result
 
 /*
