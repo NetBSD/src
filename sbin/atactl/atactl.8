@@ -1,4 +1,4 @@
-.\"	$NetBSD: atactl.8,v 1.1 1998/11/19 23:55:00 kenh Exp $
+.\"	$NetBSD: atactl.8,v 1.2 1998/11/23 23:02:58 kenh Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,6 +98,11 @@ Places the specified device into Standby mode, and sets the Standby timer
 to
 .Ar standby-timer
 seconds.  A value of 0 will disable the Standby timer.
+.Pp
+.Nm checkpower
+.Pp
+Will print out if the device is in Active, Idle, or Standby power
+management mode.
 .Sh BUGS
 The output from the
 .Nm identify
