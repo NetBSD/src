@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)intro.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: intro.4,v 1.8 2001/04/11 19:24:35 wiz Exp $
+.\"	$NetBSD: intro.4,v 1.9 2001/10/21 03:33:44 isaki Exp $
 .\"
 .Dd September 11, 1997
 .Dt INTRO 4 x68k
@@ -100,7 +100,8 @@ A list of the supported devices is given below.
 .Xr config 8 ,
 .Xr intio 4 ,
 .Xr mfp 4 ,
-.Xr neptune 4
+.Xr neptune 4 ,
+.Xr vs 4
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
 the system.
@@ -135,8 +136,6 @@ Centronics printer interface
 NS16450 serial interface
 .It Em zs
 Z8530 built-in serial interface
-.\".It Em okiadpcm
-.\"Oki MSM6258V AD-PCM
 .It Em kbd
 x68k Keyboard device
 .It Em ms
@@ -145,6 +144,8 @@ x68k mouse / trackball
 The keyboard bell emulator
 .It Em pow
 The power switch
+.It Em vs
+MSM6258V built-in voice synthesizer
 .El
 .Sh HISTORY
 The
