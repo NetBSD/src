@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.12 2004/06/05 15:05:02 rumble Exp $
+.\" $NetBSD: evcnt.9,v 1.13 2005/01/11 07:23:49 simonb Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd February 18, 2004
+.Dd January 11, 2005
 .Dt EVCNT 9
 .Os
 .Sh NAME
@@ -89,6 +89,8 @@ Miscellaneous; doesn't fit into one of the other types.
 .It Ev EVCNT_TYPE_INTR
 Interrupt counter, reported by
 .Ic vmstat -i .
+.It Ev EVCNT_TYPE_TRAP
+Processor trap style events.
 .El
 .Pp
 Each event counter also has a group name
