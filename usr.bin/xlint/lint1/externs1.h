@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.6 1995/10/02 17:29:52 jpo Exp $	*/
+/*	$NetBSD: externs1.h,v 1.7 1995/10/02 17:31:39 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -137,6 +137,7 @@ extern	void	addtype __P((type_t *));
 extern	void	addqual	__P((tqual_t));
 extern	void	pushdecl __P((scl_t));
 extern	void	popdecl __P((void));
+extern	void	setasm __P((void));
 extern	void	clrtyp __P((void));
 extern	void	deftyp __P((void));
 extern	int	length __P((type_t *, const char *));
@@ -170,8 +171,8 @@ extern	sym_t	*decl1abs __P((sym_t *));
 extern	void	chksz __P((sym_t *));
 extern	void	setsflg __P((sym_t *));
 extern	void	setuflg __P((sym_t *, int, int));
-extern	void	chkusage __P((sym_t *));
-extern	void	chkusg1 __P((sym_t *));
+extern	void	chkusage __P((dinfo_t *));
+extern	void	chkusg1 __P((int, sym_t *));
 extern	void	chkglsyms __P((void));
 extern	void	prevdecl __P((int, sym_t *));
 
@@ -244,7 +245,7 @@ extern	void	dogoto __P((sym_t *));
 extern	void	docont __P((void));
 extern	void	dobreak __P((void));
 extern	void	doreturn __P((tnode_t *));
-extern	void	glclrlc __P((int));
+extern	void	glclup __P((int));
 extern	void	argsused __P((int));
 extern	void	constcond __P((int));
 extern	void	fallthru __P((int));

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.7 1995/10/02 17:29:45 jpo Exp $	*/
+/*	$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.7 1995/10/02 17:29:45 jpo Exp $";
+static char rcsid[] = "$NetBSD: cgram.y,v 1.8 1995/10/02 17:31:35 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -229,11 +229,11 @@ translation_unit:
 
 ext_decl:
 	  func_def {
-		glclrlc(0);
+		glclup(0);
 		clrwflgs();
 	  }
 	| data_def {
-		glclrlc(0);
+		glclup(0);
 		clrwflgs();
 	  }
 	;
@@ -1358,8 +1358,13 @@ goto:
 	;
 
 asm_stmnt:
-	  T_ASM T_LPARN read_until_rparn T_SEMI
-	| T_ASM T_QUAL T_LPARN read_until_rparn T_SEMI
+	  T_ASM T_LPARN read_until_rparn T_SEMI {
+		setasm();
+	  }
+	| T_ASM T_QUAL T_LPARN read_until_rparn T_SEMI {
+		setasm();
+	  }
+	| T_ASM error
 	;
 
 read_until_rparn:
