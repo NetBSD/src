@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.2 2003/12/24 23:22:22 manu Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.3 2004/01/01 22:48:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.2 2003/12/24 23:22:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.3 2004/01/01 22:48:54 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
@@ -160,9 +160,14 @@ mach_exception(exc_l, exc, code)
 	 */
 	exc_mle = exc_l->l_emuldata;
 	exc_med = exc_l->l_proc->p_emuldata;
-	if (((exc_port = exc_med->med_exc[exc]) == NULL) ||
-	    (exc_port->mp_recv == NULL))
+	if ((exc_port = exc_med->med_exc[exc]) == NULL)
 		return EINVAL;
+
+	MACH_PORT_REF(exc_port);
+	if (exc_port->mp_recv == NULL) {
+		error = EINVAL;
+		goto out;
+	}
 
 #ifdef DEBUG_MACH
 	printf("catcher is %d.%d, state %d\n", 
@@ -173,8 +178,10 @@ mach_exception(exc_l, exc, code)
 	/*
 	 * Don't send exceptions to dying processes
 	 */
-	if (P_ZOMBIE(exc_port->mp_recv->mr_lwp->l_proc))
-		return ESRCH;
+	if (P_ZOMBIE(exc_port->mp_recv->mr_lwp->l_proc)) {
+		error = ESRCH;
+		goto out;
+	}
 
 	/* 
 	 * XXX Avoid a nasty deadlock because process in TX state 
@@ -201,14 +208,16 @@ mach_exception(exc_l, exc, code)
 #ifdef DEBUG_MACH
 		printf("mach_exception: deadlock avoided\n");
 #endif
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	if (exc_port->mp_datatype != MACH_MP_EXC_INFO) {
 #ifdef DIAGNOSTIC
 		printf("mach_exception: unexpected datatype");
 #endif
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 	mei = exc_port->mp_data;
 	behavior = mei->mei_behavior;
@@ -328,7 +337,8 @@ mach_exception(exc_l, exc, code)
 
 	default:
 		printf("unknown exception bevahior %d\n", behavior);
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 		break;
 	}
 		
@@ -346,8 +356,10 @@ mach_exception(exc_l, exc, code)
 	 */
 	if (((exc_port = exc_med->med_exc[exc]) == NULL) ||
 	    (exc_port->mp_recv == NULL) ||
-	    (P_ZOMBIE(exc_port->mp_recv->mr_lwp->l_proc))) 
-		return ESRCH;
+	    (P_ZOMBIE(exc_port->mp_recv->mr_lwp->l_proc))) {
+		error = ESRCH;
+		goto out;
+	}
 
 	(void)mach_message_get(msgh, msglen, exc_port, NULL);
 	wakeup(exc_port->mp_recv->mr_sethead);
@@ -371,6 +383,8 @@ mach_exception(exc_l, exc, code)
 	 */
 	lockmgr(&catcher_med->med_exclock, LK_RELEASE, NULL);
 
+out:
+	MACH_PORT_UNREF(exc_port);
 	return error;
 }
 
