@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42.20.7 2002/12/11 06:50:07 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.8 2003/01/16 03:07:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -44,6 +44,7 @@
 #define	_SYS_SIGNAL_H_
 
 #include <sys/featuretest.h>
+#include <sys/sigtypes.h>
 
 #define _NSIG		64
 
@@ -120,18 +121,6 @@
 
 #ifndef _ANSI_SOURCE
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-typedef unsigned int sigset13_t;
-
-/*
- * Macro for manipulating signal masks.
- */
-#define __sigmask13(n)		(1 << ((n) - 1))
-#define	__sigaddset13(s, n)	(*(s) |= __sigmask13(n))
-#define	__sigdelset13(s, n)	(*(s) &= ~__sigmask13(n))
-#define	__sigismember13(s, n)	(*(s) & __sigmask13(n))
-#define	__sigemptyset13(s)	(*(s) = 0)
-#define	__sigfillset13(s)	(*(s) = ~(sigset13_t)0)
-
 /*
  * Signal vector "template" used in sigaction call.
  */
@@ -141,53 +130,7 @@ struct	sigaction13 {
 	sigset13_t osa_mask;		/* signal mask to apply */
 	int	osa_flags;		/* see signal options below */
 };
-#endif
-
-typedef struct {
-	u_int32_t	__bits[4];
-} sigset_t;
-
-/*
- * Macro for manipulating signal masks.
- */
-#define __sigmask(n)		(1 << (((unsigned int)(n) - 1) & 31))
-#define	__sigword(n)		(((unsigned int)(n) - 1) >> 5)
-#define	__sigaddset(s, n)	((s)->__bits[__sigword(n)] |= __sigmask(n))
-#define	__sigdelset(s, n)	((s)->__bits[__sigword(n)] &= ~__sigmask(n))
-#define	__sigismember(s, n)	(((s)->__bits[__sigword(n)] & __sigmask(n)) != 0)
-#define	__sigemptyset(s)	((s)->__bits[0] = 0x00000000, \
-				 (s)->__bits[1] = 0x00000000, \
-				 (s)->__bits[2] = 0x00000000, \
-				 (s)->__bits[3] = 0x00000000)
-#define __sigsetequal(s1,s2)	((s1)->__bits[0] == (s2)->__bits[0] && \
-				 (s1)->__bits[1] == (s2)->__bits[1] && \
-				 (s1)->__bits[2] == (s2)->__bits[2] && \
-				 (s1)->__bits[3] == (s2)->__bits[3])
-#define	__sigfillset(s)		((s)->__bits[0] = 0xffffffff, \
-				 (s)->__bits[1] = 0xffffffff, \
-				 (s)->__bits[2] = 0xffffffff, \
-				 (s)->__bits[3] = 0xffffffff)
-#define	__sigplusset(s, t) \
-	do {						\
-		(t)->__bits[0] |= (s)->__bits[0];	\
-		(t)->__bits[1] |= (s)->__bits[1];	\
-		(t)->__bits[2] |= (s)->__bits[2];	\
-		(t)->__bits[3] |= (s)->__bits[3];	\
-	} while (/* CONSTCOND */ 0)
-#define	__sigminusset(s, t) \
-	do {						\
-		(t)->__bits[0] &= ~(s)->__bits[0];	\
-		(t)->__bits[1] &= ~(s)->__bits[1];	\
-		(t)->__bits[2] &= ~(s)->__bits[2];	\
-		(t)->__bits[3] &= ~(s)->__bits[3];	\
-	} while (/* CONSTCOND */ 0)
-#define	__sigandset(s, t) \
-	do {						\
-		(t)->__bits[0] &= (s)->__bits[0];	\
-		(t)->__bits[1] &= (s)->__bits[1];	\
-		(t)->__bits[2] &= (s)->__bits[2];	\
-		(t)->__bits[3] &= (s)->__bits[3];	\
-	} while (/* CONSTCOND */ 0)
+#endif /* __LIBC12_SOURCE__ || _KERNEL */
 
 #ifdef _KERNEL
 #define	sigaddset(s, n)		__sigaddset(s, n)
@@ -245,30 +188,12 @@ struct	sigaction {
 typedef	void (*sig_t) __P((int));	/* type of signal function */
 #endif
 
-/*
- * Structure used in sigaltstack call.
- */
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-struct sigaltstack13 {
-	char	*ss_sp;			/* signal stack base */
-	int	ss_size;		/* signal stack length */
-	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
-};
-#endif /* defined(__LIBC12_SOURCE__) || defined(_KERNEL) */
-
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500
-typedef struct
-#ifndef _XOPEN_SOURCE
-               sigaltstack
-#endif /* !_XOPEN_SOURCE */
-			   {
-	void	*ss_sp;			/* signal stack base */
-	size_t	ss_size;		/* signal stack length */
-	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
-} stack_t;
-
+/*
+ * Flags used with stack_t/struct sigaltstack.
+ */
 #define SS_ONSTACK	0x0001	/* take signals on alternate stack */
 #define SS_DISABLE	0x0004	/* disable taking signals on alternate stack */
 #ifdef _KERNEL
