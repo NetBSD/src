@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.35 1999/04/28 23:27:01 fvdl Exp $ */
+/*	$NetBSD: fdisk.c,v 1.36 1999/05/02 12:17:48 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.35 1999/04/28 23:27:01 fvdl Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.36 1999/05/02 12:17:48 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -868,8 +868,8 @@ editentries:
 done:
 	for (i = 0; i < NMBRPART; i++) {
 		if (mboot.parts[i].mbrp_typ != 0 &&
-		   (mboot.parts[i].mbrp_start + mboot.parts[i].mbrp_size) >=
-		      (dos_cylinders * dos_heads * dos_sectors)) {
+		   mboot.parts[i].mbrp_start >=
+		     (dos_cylinders * dos_heads * dos_sectors)) {
 			mbs->flags |= BFL_EXTINT13;
 			break;
 		}
