@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.12 1994/12/05 06:41:42 mycroft Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.13 1994/12/05 06:46:29 mycroft Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -44,6 +44,15 @@ seminit()
 	semu_list = NULL;
 }
 
+void
+semwait(p)
+	struct proc *p;
+{
+
+	while (semlock_holder != NULL && semlock_holder != p)
+		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+}
+
 /*
  * Lock or unlock the entire semaphore facility.
  *
@@ -69,8 +78,7 @@ semconfig(p, uap, retval)
 {
 	int eval = 0;
 
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+	semwait();
 
 	switch (SCARG(uap, flag)) {
 	case SEM_CONFIG_FREEZE:
@@ -288,8 +296,7 @@ __semctl(p, uap, retval)
 	printf("call to semctl(%d, %d, %d, 0x%x)\n", semid, semnum, cmd, arg);
 #endif
 
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+	semwait();
 
 	semid = IPCID_TO_IX(semid);
 	if (semid < 0 || semid >= seminfo.semmsl)
@@ -448,8 +455,7 @@ semget(p, uap, retval)
 	printf("semget(0x%x, %d, 0%o)\n", key, nsems, semflg);
 #endif
 
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+	semwait();
 
 	if (key != IPC_PRIVATE) {
 		for (semid = 0; semid < seminfo.semmni; semid++) {
@@ -567,8 +573,7 @@ semop(p, uap, retval)
 	printf("call to semop(%d, 0x%x, %d)\n", semid, sops, nsops);
 #endif
 
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+	semwait();
 
 	semid = IPCID_TO_IX(semid);	/* Convert back to zero origin */
 
@@ -823,12 +828,7 @@ semexit(p)
 	register struct sem_undo **supptr;
 	int did_something;
 
-	/*
-	 * If somebody else is holding the global semaphore facility lock
-	 * then sleep until it is released.
-	 */
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+	semwait();
 
 	did_something = 0;
 
