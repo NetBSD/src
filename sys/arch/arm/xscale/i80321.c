@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.14 2003/07/15 00:24:53 lukem Exp $	*/
+/*	$NetBSD: i80321.c,v 1.15 2003/10/06 16:06:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.14 2003/07/15 00:24:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321.c,v 1.15 2003/10/06 16:06:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,11 @@ static const struct iopxs_device {
 	bus_size_t id_size;
 } iopxs_devices[] = {
 	{ "iopaau",	VERDE_AAU_BASE,		VERDE_AAU_SIZE },
-	{ "iopdma",	VERDE_DMA_BASE0,	VERDE_DMA_CHSIZE },
-	{ "iopdma",	VERDE_DMA_BASE1,	VERDE_DMA_CHSIZE },
-	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },
+/*	{ "iopdma",	VERDE_DMA_BASE0,	VERDE_DMA_CHSIZE },	*/
+/*	{ "iopdma",	VERDE_DMA_BASE1,	VERDE_DMA_CHSIZE },	*/
+	{ "iopiic",	VERDE_I2C_BASE0,	VERDE_I2C_CHSIZE },
+	{ "iopiic",	VERDE_I2C_BASE1,	VERDE_I2C_CHSIZE },
+/*	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },	*/
 	{ "iopmu",	VERDE_MU_BASE,		VERDE_MU_SIZE },
 	{ "iopwdog",	0,			0 },
 	{ NULL,		0,			0 }

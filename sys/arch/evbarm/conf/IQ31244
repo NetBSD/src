@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.5 2003/09/13 13:30:06 chris Exp $
+#	$NetBSD: IQ31244,v 1.6 2003/10/06 16:06:06 thorpej Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -151,6 +151,9 @@ com0		at obio? addr 0xfe800000 xint 1	# on-board TI 165C50 UART
 iopxs*		at mainbus?
 
 iopaau*		at iopxs?		# Application Accelerator Unit
+iopiic*		at iopxs?		# I2C Controller Unit(s)
+iic0		at iopiic?
+iic1		at iopiic?
 iopwdog*	at iopxs?		# Watchdog timer
 pci0		at iopxs? bus ?		# PCI/PCI-X support
 
