@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.8 1998/09/06 21:14:57 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.9 1998/09/07 23:02:40 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,16 +48,16 @@
  * There is one of these for each "mainline" CPU module we support.
  * The information contained in the structure is used only during
  * auto-configuration of the CPUs; some fields are copied into the
- * per-cpu data structure (cpu_softc) for easy access during normal
+ * per-cpu data structure (cpu_info) for easy access during normal
  * operation.
  */
-struct cpu_softc;
+struct cpu_info;
 struct module_info {
 	int  cpu_type;
 	enum vactype vactype;
-	void (*cpu_match)__P((struct cpu_softc *, struct module_info *, int));
-	void (*getcacheinfo)__P((struct cpu_softc *sc, int node));
-	void (*hotfix) __P((struct cpu_softc *));
+	void (*cpu_match)__P((struct cpu_info *, struct module_info *, int));
+	void (*getcacheinfo)__P((struct cpu_info *sc, int node));
+	void (*hotfix) __P((struct cpu_info *));
 	void (*mmu_enable)__P((void));
 	void (*cache_enable)__P((void));
 	int  ncontext;			/* max. # of contexts (we use) */
@@ -76,16 +76,14 @@ struct module_info {
 
 
 /*
- * The cpu_softc structure. This structure maintains information about one
+ * The cpuinfo structure. This structure maintains information about one
  * currently installed CPU (there may be several of these if the machine
  * supports multiple CPUs, as on some Sun4m architectures). The information
  * in this structure supercedes the old "cpumod", "mmumod", and similar
  * fields.
  */
 
-struct cpu_softc {
-	struct device	dv;		/* generic device info */
-
+struct cpu_info {
 	int		node;		/* PROM node for this CPU */
 
 	/* CPU information */
@@ -165,7 +163,7 @@ struct cpu_softc {
 	void	(*write_physmem) __P((u_int addr, u_int data));
 	void	(*cache_tablewalks) __P((void));
 	void	(*mmu_enable) __P((void));
-	void	(*hotfix) __P((struct cpu_softc *));
+	void	(*hotfix) __P((struct cpu_info *));
 
 	/* locore defined: */
 	void	(*get_faultstatus) __P((void));
@@ -275,12 +273,10 @@ struct cpu_softc {
 /*
  * Related function prototypes
  */
-void getcpuinfo __P((struct cpu_softc *sc, int node));
-void mmu_install_tables __P((struct cpu_softc *));
-void pmap_alloc_cpu __P((struct cpu_softc *));
+void getcpuinfo __P((struct cpu_info *sc, int node));
+void mmu_install_tables __P((struct cpu_info *));
+void pmap_alloc_cpu __P((struct cpu_info *));
 
-#define cpuinfo	(*(struct cpu_softc *)CPUINFO_VA)
-
-struct cpu_softc	**cpu_info;
+#define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 
 #endif	/* _sparc_cpuvar_h */
