@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.45 2001/05/01 16:42:12 lukem Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.46 2002/03/26 07:41:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -603,9 +603,15 @@ int	tlp_srom_crcok __P((const u_int8_t *));
 int	tlp_isv_srom __P((const u_int8_t *));
 int	tlp_isv_srom_enaddr __P((struct tulip_softc *, u_int8_t *));
 int	tlp_parse_old_srom __P((struct tulip_softc *, u_int8_t *));
+void	tlp_reset __P((struct tulip_softc *));
 
 int	tlp_mediachange __P((struct ifnet *));
 void	tlp_mediastatus __P((struct ifnet *, struct ifmediareq *));
+
+void	tlp_21140_gpio_get __P((struct tulip_softc *sc,
+	    struct ifmediareq *ifmr));
+int	tlp_21140_gpio_set __P((struct tulip_softc *sc));
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_TULIPVAR_H_ */
