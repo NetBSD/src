@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.54 2002/05/20 23:01:32 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.54.2.1 2002/06/05 04:27:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.54 2002/05/20 23:01:32 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.54.2.1 2002/06/05 04:27:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1109,8 +1109,6 @@ inet6_makenetandmask(sin6)
 		memset(&in6, 0, sizeof(in6));
 		if (!memcmp(&sin6->sin6_addr.s6_addr[8], &in6.s6_addr[8], 8))
 			plen = "64";
-		else
-			plen = "128";
 	}
 
 	if (plen) {
