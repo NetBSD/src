@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.71 1997/09/09 00:57:10 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.72 1997/10/06 20:16:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -797,8 +797,7 @@ sbdsp_set_in_ports(sc, mask)
 		default:
 			return (EINVAL);
 		}
-		sbdsp_mix_write(sc, SBP_RECORD_SOURCE,
-		    SBP_RECORD_FROM(sbport, SBP_FILTER_OFF, SBP_IFILTER_HIGH));
+		sbdsp_mix_write(sc, SBP_RECORD_SOURCE, sbport | sc->in_filter);
 		break;
 	case SBM_CT1XX5:
 	case SBM_CT1745:
