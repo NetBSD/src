@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.8 2000/10/06 16:31:17 bouyer Exp $
+;	$NetBSD: siop.ss,v 1.9 2000/10/06 16:39:04 bouyer Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.
@@ -79,9 +79,9 @@ ENTRY slotdata;
 ENTRY nextslot;
 ENTRY endslot;
 
-EXTERN script_abs_shed;
+EXTERN script_abs_sched;
 EXTERN slot_nextp;
-EXTERN slot_shed_addrsrc;
+EXTERN slot_sched_addrsrc;
 EXTERN slot_abs_reselect;
 EXTERN slot_abs_selected;
 
@@ -128,7 +128,7 @@ reselect_fail:
 	; check that host asserted SIGP, this'll clear SIGP in ISTAT
 	MOVE CTEST2 & 0x40 TO SFBR;
 	INT int_resfail,  IF 0x00;
-	JUMP script_abs_shed;
+	JUMP script_abs_sched;
 
 msgin:
 	CLEAR ATN
@@ -219,9 +219,9 @@ handle_dis:
 	CALL REL(disconnect);
 ; if we didn't get sdp, or if offset is 0, no need to interrupt
 	MOVE SCRATCHA0 & flag_sdp TO SFBR;
-	JUMP script_abs_shed, if 0x00; 
+	JUMP script_abs_sched, if 0x00; 
 	MOVE SCRATCHA1 TO SFBR;
-	JUMP script_abs_shed, if 0x00; 
+	JUMP script_abs_sched, if 0x00; 
 ; Ok, we need to save data pointers
 	INT int_disc;
 
@@ -265,7 +265,7 @@ idsa2:
 idsa3:
 	MOVE 0x03 to dsa3;
 	SELECT ATN FROM t_id, slot_abs_reselect;
-	MOVE MEMORY 4, slot_shed_addrsrc, slot_nextp;
+	MOVE MEMORY 4, slot_sched_addrsrc, slot_nextp;
 	JUMP slot_abs_selected;  
 slotdata:
 	NOP; slot variables: dsa & jumppatchp

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.7 2000/10/06 16:35:13 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.8 2000/10/06 16:39:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -208,7 +208,7 @@ siop_wdtr_neg(siop_cmd)
 		    (sc->targets[target]->id >> 24) & 0xff);
 		/*
 		 * we did reset wide parameters, so fall back to async,
-		 * but don't shedule a sync neg, target should initiate it
+		 * but don't schedule a sync neg, target should initiate it
 		 */
 		siop_target->status = TARST_OK;
 		siop_cmd->siop_table->msg_out[0] = MSG_EXTENDED;
