@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.99 2003/08/12 09:18:48 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.100 2003/08/31 21:52:01 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -743,7 +743,6 @@ dlsym(void *handle, const char *name)
 		return defobj->relocbase + def->st_value;
 	}
 	
-	_rtld_error("Undefined symbol \"%s\"", name);
 	return NULL;
 }
 
