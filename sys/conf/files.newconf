@@ -95,6 +95,7 @@ file kern/subr_xxx.c
 file kern/sys_generic.c	
 file kern/sys_process.c	
 file kern/sys_socket.c	
+file kern/syscalls.c		syscall_debug
 file kern/sysv_ipc.c		sysvshm sysvsem sysvmsg
 file kern/sysv_msg.c		sysvmsg
 file kern/sysv_sem.c		sysvsem
