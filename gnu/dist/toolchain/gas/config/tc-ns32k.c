@@ -1,5 +1,6 @@
 /* ns32k.c  -- Assemble on the National Semiconductor 32k series
-   Copyright (C) 1987, 92, 93, 94, 95, 96, 97, 98, 1999, 2000
+   Copyright 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
+   2001
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -2097,13 +2098,8 @@ md_estimate_size_before_relax (fragP, segment)
      register fragS *fragP;
      segT segment;
 {
-  int old_fix;
-
-  old_fix = fragP->fr_fix;
-
-  switch (fragP->fr_subtype)
+  if (fragP->fr_subtype == IND (BRANCH, UNDEF))
     {
-    case IND (BRANCH, UNDEF):
       if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
 	{
 	  /* The symbol has been assigned a value.  */
@@ -2111,7 +2107,7 @@ md_estimate_size_before_relax (fragP, segment)
 	}
       else
 	{
-	  /* We don't relax symbols defined in an other segment the
+	  /* We don't relax symbols defined in another segment.  The
 	     thing to do is to assume the object will occupy 4 bytes.  */
 	  fix_new_ns32k (fragP,
 			 (int) (fragP->fr_fix),
@@ -2130,16 +2126,19 @@ md_estimate_size_before_relax (fragP, segment)
 	  fragP->fr_opcode[1] = 0xff;
 #endif
 	  frag_wane (fragP);
-	  break;
+	  return 4;
 	}
-    case IND (BRANCH, BYTE):
-      fragP->fr_var += 1;
-      break;
-    default:
-      break;
+
+      /* Relaxable case.  Set up the initial guess for the variable
+	 part of the frag.  */
+      fragP->fr_subtype = IND (BRANCH, BYTE);
     }
 
-  return fragP->fr_var + fragP->fr_fix - old_fix;
+  if (fragP->fr_subtype >= sizeof (md_relax_table) / sizeof (md_relax_table[0]))
+    abort ();
+
+  /* Return the size of the variable part of the frag.  */
+  return md_relax_table[fragP->fr_subtype].rlx_length;
 }
 
 int md_short_jump_size = 3;

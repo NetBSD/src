@@ -72,6 +72,8 @@ CXXCPP = @CXXCPP@
 DATADIRNAME = @DATADIRNAME@
 DLLTOOL = @DLLTOOL@
 EXEEXT = @EXEEXT@
+GCJ = @GCJ@
+GCJFLAGS = @GCJFLAGS@
 GMOFILES = @GMOFILES@
 GMSGFMT = @GMSGFMT@
 GT_NO = @GT_NO@
@@ -180,12 +182,12 @@ NROFF = nroff
 HEADERS =  $(noinst_HEADERS)
 
 DIST_COMMON =  ./stamp-h.in ChangeLog Makefile.am Makefile.in TODO \
-acinclude.m4 aclocal.m4 configure configure.in gconfig.in
+acconfig.h acinclude.m4 aclocal.m4 configure configure.in gconfig.in
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = gtar
+TAR = tar
 GZIP_ENV = --best
 SOURCES = $(gprof_SOURCES)
 OBJECTS = $(gprof_OBJECTS)
@@ -223,7 +225,7 @@ $(srcdir)/gconfig.in: @MAINTAINER_MODE_TRUE@$(srcdir)/stamp-h.in
 		rm -f $(srcdir)/stamp-h.in; \
 		$(MAKE) $(srcdir)/stamp-h.in; \
 	else :; fi
-$(srcdir)/stamp-h.in: $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+$(srcdir)/stamp-h.in: $(top_srcdir)/configure.in $(ACLOCAL_M4) acconfig.h
 	cd $(top_srcdir) && $(AUTOHEADER)
 	@echo timestamp > $(srcdir)/stamp-h.in 2> /dev/null
 
@@ -801,7 +803,8 @@ gprof.o: gprof.c $(INCDIR)/getopt.h $(INCDIR)/libiberty.h \
   $(INCDIR)/fopen-same.h $(INCDIR)/filenames.h gconfig.h \
   $(INCDIR)/bin-bugs.h basic_blocks.h source.h search_list.h \
   symtab.h ../bfd/bfd.h call_graph.h cg_arcs.h cg_print.h \
-  corefile.h gmon_io.h gmon.h hertz.h hist.h sym_ids.h
+  corefile.h gmon_io.h gmon.h hertz.h hist.h sym_ids.h \
+  $(INCDIR)/demangle.h
 hertz.o: hertz.c hertz.h gprof.h $(INCDIR)/ansidecl.h \
   $(BFDDIR)/sysdep.h ../bfd/config.h $(INCDIR)/fopen-same.h \
   $(INCDIR)/filenames.h gconfig.h $(INCDIR)/bin-bugs.h

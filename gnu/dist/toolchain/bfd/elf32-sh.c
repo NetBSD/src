@@ -1,5 +1,6 @@
 /* Hitachi SH specific support for 32-bit ELF
-   Copyright 1996, 97, 98, 1999, 2000 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998, 1999, 2000, 2001
+   Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor, Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
