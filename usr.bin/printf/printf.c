@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.17 1997/10/18 15:38:08 mrg Exp $	*/
+/*	$NetBSD: printf.c,v 1.18 1997/10/19 22:57:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.17 1997/10/18 15:38:08 mrg Exp $");
+__RCSID("$NetBSD: printf.c,v 1.18 1997/10/19 22:57:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,8 +144,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register char *fmt, *start;
-	register int fieldwidth, precision;
+	char *fmt, *start;
+	int fieldwidth, precision;
 	char convch, nextch;
 	char *format;
 	int ch;
@@ -203,16 +203,16 @@ main(argc, argv)
 				}
 
 				/* skip to field width */
-				for (; index(SKIP1, *fmt); ++fmt) ;
+				for (; strchr(SKIP1, *fmt); ++fmt) ;
 				fieldwidth = *fmt == '*' ? getint() : 0;
 
 				/* skip to possible '.', get following precision */
-				for (; index(SKIP2, *fmt); ++fmt) ;
+				for (; strchr(SKIP2, *fmt); ++fmt) ;
 				if (*fmt == '.')
 					++fmt;
 				precision = *fmt == '*' ? getint() : 0;
 
-				for (; index(SKIP2, *fmt); ++fmt) ;
+				for (; strchr(SKIP2, *fmt); ++fmt) ;
 				if (!*fmt) {
 					warnx ("missing format character");
 					return(1);
@@ -285,7 +285,7 @@ main(argc, argv)
  */
 static int
 print_escape_str(str)
-	register const char *str;
+	const char *str;
 {
 	int value;
 	int c;
@@ -326,7 +326,7 @@ print_escape_str(str)
  */
 static size_t
 print_escape(str)
-	register const char *str;
+	const char *str;
 {
 	const char *start = str;
 	int value;
@@ -460,7 +460,7 @@ getint()
 	if (!*gargv)
 		return(0);
 
-	if (index(Number, **gargv))
+	if (strchr(Number, **gargv))
 		return(atoi(*gargv++));
 
 	return 0;
