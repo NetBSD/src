@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $	*/
+/*	$NetBSD: ipi.c,v 1.2 2003/03/01 13:05:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -130,8 +130,6 @@ x86_ipi_handler(void)
 	int bit;
 
 	pending = x86_atomic_testset_ul(&ci->ci_ipis, 0);
-
-	printf("%s: pending IPIs: %x\n", ci->ci_dev->dv_xname, pending);
 
 	for (bit = 0; bit < X86_NIPI && pending; bit++) {
 		if (pending & (1<<bit)) {
