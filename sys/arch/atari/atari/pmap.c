@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1999/07/08 18:05:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 1999/07/09 19:43:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1396,7 +1396,7 @@ pmap_unwire(pmap, va)
 	 * Wiring is not a hardware characteristic so there is no need
 	 * to invalidate TLB.
 	 */
-	if (pmap_ptw_w(pte)) {
+	if (pmap_pte_w(pte)) {
 		pmap->pm_stats.wired_count--;
 		pmap_pte_set_w(pte, FALSE);
 	}
