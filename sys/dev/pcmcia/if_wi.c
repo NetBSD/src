@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.41 2000/10/13 19:15:08 jonathan Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.42 2000/11/02 18:55:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -317,27 +317,34 @@ wi_attach(parent, self, aux)
 	struct wi_pcmcia_product *pp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
+	char devinfo[256];
 	static const u_int8_t empty_macaddr[ETHER_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
+
+	/* Print out what we are. */
+	pcmcia_devinfo(&pa->pf->sc->card, 0, devinfo, sizeof(devinfo));
+	printf(": %s\n", devinfo);
 
 	/* Enable the card. */
 	sc->sc_pf = pa->pf;
 	pcmcia_function_init(sc->sc_pf, sc->sc_pf->cfe_head.sqh_first);
 	if (pcmcia_function_enable(sc->sc_pf)) {
-		printf(": function enable failed\n");
+		printf("%s: function enable failed\n", sc->sc_dev.dv_xname);
 		goto enable_failed;
 	}
 
 	/* Allocate/map I/O space. */
 	if (pcmcia_io_alloc(sc->sc_pf, 0, WI_IOSIZ, WI_IOSIZ,
 	    &sc->sc_pcioh) != 0) {
-		printf(": can't allocate i/o space\n");
+		printf("%s: can't allocate i/o space\n",
+		    sc->sc_dev.dv_xname);
 		goto ioalloc_failed;
 	}
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO16, 0,
 	    WI_IOSIZ, &sc->sc_pcioh, &sc->sc_iowin) != 0) {
-		printf(": can't map i/o space\n");
+		printf("%s: can't map i/o space\n",
+		    sc->sc_dev.dv_xname);
 		goto iomap_failed;
 	}
 	sc->wi_btag = sc->sc_pcioh.iot;
@@ -373,11 +380,12 @@ wi_attach(parent, self, aux)
 	 * Or, check against possible vendor?  XXX.
 	 */
 	if (bcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
-		printf(": could not get mac address, attach failed\n");
+		printf("%s: could not get mac address, attach failed\n",
+		    sc->sc_dev.dv_xname);
 		goto bad_enaddr;
 	}
 
-	printf("\n%s: address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: 802.11 address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_macaddr));
 
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
