@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)file.c	5.17 (Berkeley) 6/8/91";
+static char sccsid[] = "@(#)file.c	8.2 (Berkeley) 3/19/94";
 #endif /* not lint */
 
 #ifdef FILEC
@@ -45,6 +45,9 @@ static char sccsid[] = "@(#)file.c	5.17 (Berkeley) 6/8/91";
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifndef SHORT_STRINGS
+#include <string.h>
+#endif /* SHORT_STRINGS */
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -83,10 +86,10 @@ static void	 catn __P((Char *, Char *, int));
 static void	 copyn __P((Char *, Char *, int));
 static Char	 filetype __P((Char *, Char *));
 static void	 print_by_column __P((Char *, Char *[], int));
-static Char 	*tilde __P((Char *, Char *));
+static Char	*tilde __P((Char *, Char *));
 static void	 retype __P((void));
 static void	 beep __P((void));
-static void 	 print_recognized_stuff __P((Char *));
+static void	 print_recognized_stuff __P((Char *));
 static void	 extract_dir_and_name __P((Char *, Char *, Char *));
 static Char	*getentry __P((DIR *, int));
 static void	 free_items __P((Char **));
@@ -109,8 +112,9 @@ setup_tty(on)
 {
     static struct termios tchars;
 
+    (void) tcgetattr(SHIN, &tchars);
+
     if (on) {
-	(void) tcgetattr(SHIN, &tchars);
 	tchars.c_cc[VEOL] = ESC;
 	if (tchars.c_lflag & ICANON)
 	    on = TCSANOW;
@@ -118,12 +122,13 @@ setup_tty(on)
 	    on = TCSAFLUSH;
 	    tchars.c_lflag |= ICANON;
 	}
-        (void) tcsetattr(SHIN, on, &tchars);
     }
     else {
 	tchars.c_cc[VEOL] = _POSIX_VDISABLE;
-	(void) tcsetattr(SHIN, TCSANOW, &tchars);
+	on = TCSANOW;
     }
+
+    (void) tcsetattr(SHIN, TCSANOW, &tchars);
 }
 
 /*
@@ -164,7 +169,7 @@ pushback(string)
     tty.c_lflag &= ~(ECHOKE | ECHO | ECHOE | ECHOK | ECHONL | ECHOPRT | ECHOCTL);
     (void) tcsetattr(SHOUT, TCSANOW, &tty);
 
-    for (p = string; c = *p; p++)
+    for (p = string; (c = *p) != '\0'; p++)
 	(void) ioctl(SHOUT, TIOCSTI, (ioctl_t) & c);
     (void) tcsetattr(SHOUT, TCSANOW, &tty_normal);
     (void) sigsetmask(omask);
@@ -261,17 +266,17 @@ print_by_column(dir, items, count)
 	    if (i < count) {
 		register int w;
 
-		xprintf("%s", short2str(items[i]));
-		xputchar(dir ? filetype(dir, items[i]) : ' ');
+		(void) fprintf(cshout, "%s", vis_str(items[i]));
+		(void) fputc(dir ? filetype(dir, items[i]) : ' ', cshout);
 		if (c < columns - 1) {	/* last column? */
 		    w = Strlen(items[i]) + 1;
 		    for (; w < maxwidth; w++)
-			xputchar(' ');
+			(void) fputc(' ', cshout);
 		}
 	    }
 	}
-	xputchar('\r');
-	xputchar('\n');
+	(void) fputc('\r', cshout);
+	(void) fputc('\n', cshout);
     }
 }
 
@@ -292,7 +297,8 @@ tilde(new, old)
     if (old[0] != '~')
 	return (Strcpy(new, old));
 
-    for (p = person, o = &old[1]; *o && *o != '/'; *p++ = *o++);
+    for (p = person, o = &old[1]; *o && *o != '/'; *p++ = *o++)
+	continue;
     *p = '\0';
     if (person[0] == '\0')
 	(void) Strcpy(new, value(STRhome));
@@ -335,28 +341,28 @@ print_recognized_stuff(recognized_part)
     Char   *recognized_part;
 {
     /* An optimized erasing of that silly ^[ */
-    putraw('\b');
-    putraw('\b');
+    (void) fputc('\b', cshout);
+    (void) fputc('\b', cshout);
     switch (Strlen(recognized_part)) {
 
     case 0:			/* erase two Characters: ^[ */
-	putraw(' ');
-	putraw(' ');
-	putraw('\b');
-	putraw('\b');
+	(void) fputc(' ', cshout);
+	(void) fputc(' ', cshout);
+	(void) fputc('\b', cshout);
+	(void) fputc('\b', cshout);
 	break;
 
     case 1:			/* overstrike the ^, erase the [ */
-	xprintf("%s", short2str(recognized_part));
-	putraw(' ');
-	putraw('\b');
+	(void) fprintf(cshout, "%s", vis_str(recognized_part));
+	(void) fputc(' ', cshout);
+	(void) fputc('\b', cshout);
 	break;
 
     default:			/* overstrike both Characters ^[ */
-	xprintf("%s", short2str(recognized_part));
+	(void) fprintf(cshout, "%s", vis_str(recognized_part));
 	break;
     }
-    flush();
+    (void) fflush(cshout);
 }
 
 /*
@@ -393,7 +399,7 @@ getentry(dir_fd, looking_for_lognames)
 	    return (NULL);
 	return (str2short(pw->pw_name));
     }
-    if (dirp = readdir(dir_fd))
+    if ((dirp = readdir(dir_fd)) != NULL)
 	return (str2short(dirp->d_name));
     return (NULL);
 }
@@ -457,7 +463,7 @@ tsearch(word, command, max_word_length)
 
 again:				/* search for matches */
     name_length = Strlen(name);
-    for (numitems = 0; entry = getentry(dir_fd, looking_for_lognames);) {
+    for (numitems = 0; (entry = getentry(dir_fd, looking_for_lognames)) != NULL;) {
 	if (!is_prefix(name, entry))
 	    continue;
 	/* Don't match . files on null prefix match */
@@ -466,9 +472,9 @@ again:				/* search for matches */
 	    continue;
 	if (command == LIST) {
 	    if (numitems >= MAXITEMS) {
-		xprintf("\nYikes!! Too many %s!!\n",
-			looking_for_lognames ?
-			"names in password file" : "files");
+		(void) fprintf(csherr, "\nYikes!! Too many %s!!\n",
+			       looking_for_lognames ?
+			       "names in password file" : "files");
 		break;
 	    }
 	    if (items == NULL)
@@ -514,7 +520,7 @@ again:				/* search for matches */
     }
     else {			/* LIST */
 	qsort((ptr_t) items, numitems, sizeof(items[0]), 
-	      (int (*)(const void *, const void *)) sortscmp);
+		(int (*) __P((const void *, const void *))) sortscmp);
 	print_by_column(looking_for_lognames ? NULL : tilded_dir,
 			items, numitems);
 	if (items != NULL)
@@ -543,7 +549,8 @@ recognize(extended_name, entry, name_length, numitems)
 	register int len = 0;
 
 	x = extended_name;
-	for (ent = entry; *x && *x == *ent++; x++, len++);
+	for (ent = entry; *x && *x == *ent++; x++, len++)
+	    continue;
 	*x = '\0';		/* Shorten at 1st Char diff */
 	if (len == name_length)	/* Ambiguous to prefix? */
 	    return (-1);	/* So stop now and save time */
@@ -577,8 +584,10 @@ is_suffix(check, template)
 {
     register Char *c, *t;
 
-    for (c = check; *c++;);
-    for (t = template; *t++;);
+    for (c = check; *c++;)
+	continue;
+    for (t = template; *t++;)
+	continue;
     for (;;) {
 	if (t == template)
 	    return 1;
@@ -614,7 +623,7 @@ tenex(inputline, inputline_size)
 	    break;
 	command = (last_Char == ESC) ? RECOGNIZE : LIST;
 	if (command == LIST)
-	    xputchar('\n');
+	    (void) fputc('\n', cshout);
 	str_end = &inputline[num_read];
 	if (last_Char == ESC)
 	    --str_end;		/* wipeout trailing cmd Char */

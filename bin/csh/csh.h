@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)csh.h	5.15 (Berkeley) 6/8/91
+ *	@(#)csh.h	8.1 (Berkeley) 5/31/93
  */
 
 /*
@@ -54,7 +54,7 @@
 #define	FSHTTY	15		/* /dev/tty when manip pgrps */
 #define	FSHIN	16		/* Preferred desc for shell input */
 #define	FSHOUT	17		/* ... shell output */
-#define	FSHDIAG	18		/* ... shell diagnostics */
+#define	FSHERR	18		/* ... shell diagnostics */
 #define	FOLDSTD	19		/* ... old std input */
 
 #ifdef PROF
@@ -71,6 +71,12 @@ typedef char Char;
 #define SAVE(a) (strsave(a))
 #endif
 
+/*
+ * Make sure a variable is not stored in a register by taking its address
+ * This is used where variables might be clobbered by longjmp.
+ */
+#define UNREGISTER(a)	(void) &a
+
 typedef void *ioctl_t;		/* Third arg of ioctl */
 
 typedef void *ptr_t;
@@ -79,23 +85,15 @@ typedef void *ptr_t;
 #include "char.h"
 #include "err.h"
 
-#ifdef SYSMALLOC
 #define xmalloc(i)	Malloc(i)
 #define xrealloc(p, i)	Realloc(p, i)
 #define xcalloc(n, s)	Calloc(n, s)
 #define xfree(p)	Free(p)
-#else
-#define xmalloc(i)	malloc(i)
-#define xrealloc(p, i)	realloc(p, i)
-#define xcalloc(n, s)	calloc(n, s)
-#define xfree(p)	free(p)
-#endif				/* SYSMALLOC */
+
+#include <stdio.h>
+FILE *cshin, *cshout, *csherr;
 
 #define	isdir(d)	((d.st_mode & S_IFMT) == S_IFDIR)
-
-#define SIGN_EXTEND_CHAR(a) \
-	((a) & 0x80 ? ((int) (a)) | 0xffffff00 : ((int) a) & 0x000000ff)
-
 
 typedef int bool;
 
@@ -140,6 +138,7 @@ Char   *ffile;			/* Name of shell file for $0 */
 char   *seterr;			/* Error message from scanner/parser */
 Char   *shtemp;			/* Temp name for << shell files in /tmp */
 
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 
@@ -150,8 +149,9 @@ struct rusage ru0;
  * Miscellany
  */
 Char   *doldol;			/* Character pid for $$ */
-int     uid;			/* Invokers uid */
-int     gid;			/* Invokers gid */
+int	backpid;		/* Pid of the last background process */
+int     uid, euid;		/* Invokers uid */
+int     gid, egid;		/* Invokers gid */
 time_t  chktim;			/* Time mail last checked */
 int     shpgrp;			/* Pgrp of shell */
 int     tpgrp;			/* Terminal process group */
@@ -159,36 +159,18 @@ int     tpgrp;			/* Terminal process group */
 /* If tpgrp is -1, leave tty alone! */
 int     opgrp;			/* Initial pgrp and tty pgrp */
 
-/*
- * These are declared here because they want to be
- * initialized in sh.init.c (to allow them to be made readonly)
- */
-
-extern struct biltins {
-    char   *bname;
-    void    (*bfunct) ();
-    short   minargs, maxargs;
-}       bfunc[];
-extern int nbfunc;
-
-extern struct srch {
-    char   *s_name;
-    short   s_value;
-}       srchn[];
-extern int nsrchn;
 
 /*
  * To be able to redirect i/o for builtins easily, the shell moves the i/o
  * descriptors it uses away from 0,1,2.
  * Ideally these should be in units which are closed across exec's
  * (this saves work) but for version 6, this is not usually possible.
- * The desired initial values for these descriptors are defined in
- * local.h.
+ * The desired initial values for these descriptors are F{SHIN,...}.
  */
-short   SHIN;			/* Current shell input (script) */
-short   SHOUT;			/* Shell output */
-short   SHDIAG;			/* Diagnostic output... shell errs go here */
-short   OLDSTD;			/* Old standard input (def for cmds) */
+int   SHIN;			/* Current shell input (script) */
+int   SHOUT;			/* Shell output */
+int   SHERR;			/* Diagnostic output... shell errs go here */
+int   OLDSTD;			/* Old standard input (def for cmds) */
 
 /*
  * Error control
@@ -217,7 +199,7 @@ sig_t parterm;			/* Parents terminate catch */
  * Lexical definitions.
  *
  * All lexical space is allocated dynamically.
- * The eighth/sizteenth bit of characters is used to prevent recognition,
+ * The eighth/sixteenth bit of characters is used to prevent recognition,
  * and eventually stripped.
  */
 #define	META		0200
@@ -245,9 +227,31 @@ struct Bin {
     off_t   Bfseekp;		/* Seek pointer */
     off_t   Bfbobp;		/* Seekp of beginning of buffers */
     off_t   Bfeobp;		/* Seekp of end of buffers */
-    short   Bfblocks;		/* Number of buffer blocks */
+    int     Bfblocks;		/* Number of buffer blocks */
     Char  **Bfbuf;		/* The array of buffer blocks */
 }       B;
+
+/*
+ * This structure allows us to seek inside aliases
+ */
+struct Ain {
+    int type;
+#define I_SEEK -1		/* Invalid seek */
+#define A_SEEK	0		/* Alias seek */
+#define F_SEEK	1		/* File seek */
+#define E_SEEK	2		/* Eval seek */
+    union {
+	off_t _f_seek;
+	Char* _c_seek;
+    } fc;
+#define f_seek fc._f_seek
+#define c_seek fc._c_seek
+    Char **a_seek;
+} ;
+extern int aret;		/* What was the last character returned */
+#define SEEKEQ(a, b) ((a)->type == (b)->type && \
+		      (a)->f_seek == (b)->f_seek && \
+		      (a)->a_seek == (b)->a_seek)
 
 #define	fseekp	B.Bfseekp
 #define	fbobp	B.Bfbobp
@@ -260,7 +264,7 @@ struct Bin {
  * For whiles, in particular, it reseeks to the beginning of the
  * line the while was on; hence the while placement restrictions.
  */
-off_t   lineloc;
+struct Ain lineloc;
 
 bool    cantell;		/* Is current source tellable ? */
 
@@ -342,9 +346,27 @@ struct command {
 #define	t_dcdr	R.T_dcdr
     Char  **t_dcom;		/* Command/argument vector 	 */
     struct command *t_dspr;	/* Pointer to ()'d subtree 	 */
-    short   t_nice;
+    int   t_nice;
 };
 
+
+/*
+ * These are declared here because they want to be
+ * initialized in sh.init.c (to allow them to be made readonly)
+ */
+
+extern struct biltins {
+    char   *bname;
+    void    (*bfunct) __P((Char **, struct command *));
+    short   minargs, maxargs;
+}       bfunc[];
+extern int nbfunc;
+
+extern struct srch {
+    char   *s_name;
+    short   s_value;
+}       srchn[];
+extern int nsrchn;
 
 /*
  * The keywords for the parser
@@ -375,8 +397,8 @@ struct command {
  * input.  For foreach (fe), the word list is attached here.
  */
 struct whyle {
-    off_t   w_start;		/* Point to restart loop */
-    off_t   w_end;		/* End of loop (0 if unknown) */
+    struct Ain   w_start;	/* Point to restart loop */
+    struct Ain   w_end;		/* End of loop (0 if unknown) */
     Char  **w_fe, **w_fe0;	/* Current/initial wordlist for fe */
     Char   *w_fename;		/* Name for fe */
     struct whyle *w_next;	/* Next (more outer) loop */
@@ -409,12 +431,12 @@ struct varent *adrof1();
  */
 struct wordent *alhistp;	/* Argument list (first) */
 struct wordent *alhistt;	/* Node after last in arg list */
-Char  **alvec;			/* The (remnants of) alias vector */
+Char  **alvec, *alvecp;		/* The (remnants of) alias vector */
 
 /*
  * Filename/command name expansion variables
  */
-short   gflag;			/* After tglob -> is globbing needed? */
+int   gflag;			/* After tglob -> is globbing needed? */
 
 #define MAXVARLEN 30		/* Maximum number of char in a variable name */
 
@@ -448,7 +470,6 @@ struct Hist {
     struct wordent Hlex;
     int     Hnum;
     int     Href;
-    long    Htime;
     struct Hist *Hnext;
 }       Histlist;
 
@@ -481,8 +502,7 @@ Char    HISTSUB;		/* auto-substitute character */
 #define str2short(a) 		(a)
 #define blk2short(a) 		saveblk(a)
 #define short2blk(a) 		saveblk(a)
-#define short2str(a) 		(a)
-#define short2qstr(a)		(a)
+#define short2str(a) 		strip(a)
 #else
 #define Strchr(a, b)		s_strchr(a, b)
 #define Strrchr(a, b) 		s_strrchr(a, b)
@@ -514,11 +534,6 @@ char  **Vt;
 
 Char  **evalvec;
 Char   *evalp;
-
-extern struct mesg {
-    char   *iname;		/* name from /usr/include */
-    char   *pname;		/* print name */
-}       mesg[];
 
 /* word_chars is set by default to WORD_CHARS but can be overridden by
    the worchars variable--if unset, reverts to WORD_CHARS */

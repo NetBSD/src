@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)char.c	5.6 (Berkeley) 6/7/91";
+static char sccsid[] = "@(#)char.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include "char.h"
@@ -63,10 +63,10 @@ unsigned short _cmap[256] = {
 	_CTR,		_CTR,		_CTR,		_CTR,
 
 /*	sp		!		"		#	*/
-	_SP|_META,	0,		_Q,		_META,
+	_SP|_META,	0,		_QF,		_META,
 
 /*	$		%		&		'	*/
-	_DOL,		0,		_META|_CMD,	_Q,
+	_DOL,		0,		_META|_CMD,	_QF,
 
 /*	(		)		*		+	*/
 	_META|_CMD,	_META,		_GLOB,		0,
@@ -111,7 +111,7 @@ unsigned short _cmap[256] = {
 	_ESC,		0,		0,		0,
 
 /*	`		a		b		c	*/
-  _Q1|_GLOB|_CMD|_META,	_LET|_LOW|_XD,	_LET|_LOW|_XD,	_LET|_LOW|_XD,
+  _QB|_GLOB|_META,	_LET|_LOW|_XD,	_LET|_LOW|_XD,	_LET|_LOW|_XD,
 
 /*	d		e		f		g	*/
 	_LET|_LOW|_XD,	_LET|_LOW|_XD,	_LET|_LOW|_XD,	_LET|_LOW,

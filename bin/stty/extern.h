@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,23 +30,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.4 (Berkeley) 6/10/91
+ *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
-__BEGIN_DECLS
 int	c_cchars __P((const void *, const void *));
 int	c_modes __P((const void *, const void *));
 int	csearch __P((char ***, struct info *));
 void	checkredirect __P((void));
-void	err __P((const char *, ...));
 void	gprint __P((struct termios *, struct winsize *, int));
 void	gread __P((struct termios *, char *));
 int	ksearch __P((char ***, struct info *));
 int	msearch __P((char ***, struct info *));
 void	optlist __P((void));
 void	print __P((struct termios *, struct winsize *, int, enum FMT));
-void	warn __P((const char *, ...));
-__END_DECLS
+void	usage __P((void));
 
 extern struct cchar cchars1[], cchars2[];
-extern char *usage;

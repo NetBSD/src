@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)cat.1	6.16 (Berkeley) 6/27/91
+.\"     @(#)cat.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd June 27, 1991
+.Dd June 29, 1993
 .Dt CAT 1
 .Os BSD 3
 .Sh NAME
@@ -52,7 +52,7 @@ utility reads files sequentially, writing them to the standard output.
 The
 .Ar file
 operands are processed in command line order.
-A single dash represents standard input.
+A single dash represents the standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -86,7 +86,7 @@ The
 option guarantees that the output is unbuffered.
 .It Fl v
 Displays non-printing characters so they are visible.
-Control characters print line
+Control characters print as
 .Ql ^X
 for control-X; the delete
 character (octal 0177) prints as

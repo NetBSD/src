@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)hist.c	5.9 (Berkeley) 6/8/91";
+static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,8 +47,8 @@ static char sccsid[] = "@(#)hist.c	5.9 (Berkeley) 6/8/91";
 #include "extern.h"
 
 static void	hfree __P((struct Hist *));
-static void	dohist1 __P((struct Hist *, int *, int, int, int));
-static void	phist __P((struct Hist *, int, int));
+static void	dohist1 __P((struct Hist *, int *, int, int));
+static void	phist __P((struct Hist *, int));
 
 void
 savehist(sp)
@@ -73,7 +73,7 @@ savehist(sp)
 	    histlen = histlen * 10 + *p++ - '0';
 	}
     }
-    for (hp = &Histlist; np = hp->Hnext;)
+    for (hp = &Histlist; (np = hp->Hnext) != NULL;)
 	if (eventno - np->Href >= histlen || histlen == 0)
 	    hp->Hnext = np->Hnext, hfree(np);
 	else
@@ -90,7 +90,6 @@ enthist(event, lp, docopy)
     register struct Hist *np;
 
     np = (struct Hist *) xmalloc((size_t) sizeof(*np));
-    (void) time(&(np->Htime));
     np->Hnum = np->Href = event;
     if (docopy) {
 	copylex(&np->Hlex, lp);
@@ -116,28 +115,27 @@ hfree(hp)
 }
 
 void
-dohist(vp)
-    Char  **vp;
+/*ARGSUSED*/
+dohist(v, t)
+    Char **v;
+    struct command *t;
 {
-    int     n, rflg = 0, hflg = 0, tflg = 0;
+    int     n, rflg = 0, hflg = 0;
 
     if (getn(value(STRhistory)) == 0)
 	return;
     if (setintr)
 	(void) sigsetmask(sigblock((sigset_t) 0) & ~sigmask(SIGINT));
-    while (*++vp && **vp == '-') {
-	Char   *vp2 = *vp;
+    while (*++v && **v == '-') {
+	Char   *vp = *v;
 
-	while (*++vp2)
-	    switch (*vp2) {
+	while (*++vp)
+	    switch (*vp) {
 	    case 'h':
 		hflg++;
 		break;
 	    case 'r':
 		rflg++;
-		break;
-	    case 't':
-		tflg++;
 		break;
 	    case '-':		/* ignore multiple '-'s */
 		break;
@@ -146,18 +144,18 @@ dohist(vp)
 		break;
 	    }
     }
-    if (*vp)
-	n = getn(*vp);
+    if (*v)
+	n = getn(*v);
     else {
 	n = getn(value(STRhistory));
     }
-    dohist1(Histlist.Hnext, &n, rflg, hflg, tflg);
+    dohist1(Histlist.Hnext, &n, rflg, hflg);
 }
 
 static void
-dohist1(hp, np, rflg, hflg, tflg)
+dohist1(hp, np, rflg, hflg)
     struct Hist *hp;
-    int    *np, rflg, hflg, tflg;
+    int    *np, rflg, hflg;
 {
     bool    print = (*np) > 0;
 
@@ -165,42 +163,22 @@ dohist1(hp, np, rflg, hflg, tflg)
 	(*np)--;
 	hp->Href++;
 	if (rflg == 0) {
-	    dohist1(hp->Hnext, np, rflg, hflg, tflg);
+	    dohist1(hp->Hnext, np, rflg, hflg);
 	    if (print)
-		phist(hp, hflg, tflg);
+		phist(hp, hflg);
 	    return;
 	}
 	if (*np >= 0)
-	    phist(hp, hflg, tflg);
+	    phist(hp, hflg);
     }
 }
 
 static void
-phist(hp, hflg, tflg)
+phist(hp, hflg)
     register struct Hist *hp;
-    int     hflg, tflg;
+    int     hflg;
 {
-    struct tm *t;
-    char    ampm = 'a';
-
-    if (hflg == 0) {
-	xprintf("%6d\t", hp->Hnum);
-	if (tflg == 0) {
-	    t = localtime(&hp->Htime);
-	    if (adrof(STRampm)) {	/* addition by Hans J. Albertsson */
-		if (t->tm_hour >= 12) {
-		    if (t->tm_hour > 12)
-			t->tm_hour -= 12;
-		    ampm = 'p';
-		}
-		else if (t->tm_hour == 0)
-		    t->tm_hour = 12;
-		xprintf("%2d:%02d%cm\t", t->tm_hour, t->tm_min, ampm);
-	    }
-	    else {
-		xprintf("%2d:%02d\t", t->tm_hour, t->tm_min);
-	    }
-	}
-    }
-    prlex(&hp->Hlex);
+    if (hflg == 0)
+	(void) fprintf(cshout, "%6d\t", hp->Hnum);
+    prlex(cshout, &hp->Hlex);
 }
