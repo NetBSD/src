@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.16 2001/10/08 07:50:17 mycroft Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.17 2001/10/28 20:47:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -82,12 +82,18 @@
 #include <sys/syscallargs.h>
 #include <uvm/uvm.h>
 #include <sys/sysctl.h>
+#include <sys/kernel.h>
 #endif /* NetBSD, FreeBSD */
 
 #include <sys/pipe.h>
 
 #ifdef __NetBSD__
-#define vfs_timestamp(tv) 	microtime(tv)
+/*
+ * Avoid microtime(9), it's slow. We don't guard the read from time(9)
+ * with splclock(9) since we don't actually need to be THAT sure the access
+ * is atomic.
+ */
+#define vfs_timestamp(tv)	(*(tv) = time)
 #endif
 
 /*
