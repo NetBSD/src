@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.5 1997/10/31 09:11:55 mycroft Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.6 1998/07/26 20:02:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.5 1997/10/31 09:11:55 mycroft Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.6 1998/07/26 20:02:36 mycroft Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -205,11 +205,12 @@ panic(va_alist)
 	exit(8);
 }
 
-char *
+const char *
 unrawname(name)
-	char *name;
+	const char *name;
 {
-	char *dp;
+	static char unrawbuf[32];
+	const char *dp;
 	struct stat stb;
 
 	if ((dp = strrchr(name, '/')) == 0)
@@ -220,33 +221,29 @@ unrawname(name)
 		return (name);
 	if (dp[1] != 'r')
 		return (name);
-	(void)strcpy(&dp[1], &dp[2]);
-	return (name);
+	(void)snprintf(unrawbuf, 32, "%.*s/%s", dp - name, name, dp + 2);
+	return (unrawbuf);
 }
 
-char *
+const char *
 rawname(name)
-	char *name;
+	const char *name;
 {
 	static char rawbuf[32];
-	char *dp;
+	const char *dp;
 
 	if ((dp = strrchr(name, '/')) == 0)
 		return (0);
-	*dp = 0;
-	(void)strcpy(rawbuf, name);
-	*dp = '/';
-	(void)strcat(rawbuf, "/r");
-	(void)strcat(rawbuf, &dp[1]);
+	(void)snprintf(rawbuf, 32, "%.*s/r%s", dp - name, name, dp + 1);
 	return (rawbuf);
 }
 
-char *
+const char *
 blockcheck(origname)
-	char *origname;
+	const char *origname;
 {
 	struct stat stslash, stblock, stchar;
-	char *newname, *raw;
+	const char *newname, *raw;
 	struct fstab *fsp;
 	int retried = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.17 1997/09/16 14:52:35 lukem Exp $	*/
+/*	$NetBSD: preen.c,v 1.18 1998/07/26 20:02:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.17 1997/09/16 14:52:35 lukem Exp $");
+__RCSID("$NetBSD: preen.c,v 1.18 1998/07/26 20:02:36 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ checkfstab(flags, maxrun, docheck, checkit)
 	struct partentry *p;
 	int ret, pid, retcode, passno, sumstatus, status;
 	void *auxarg;
-	char *name;
+	const char *name;
 
 	TAILQ_INIT(&badh);
 	TAILQ_INIT(&diskh);
