@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.8 1998/03/26 02:45:01 jonathan Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.9 1999/08/25 01:47:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -132,10 +132,15 @@ struct winsize {
 #define	TIOCDCDTIMESTAMP _IOR('t', 88, struct timeval) /* get timestamp of last
 						 * Cd rise, stamp next rise */
 
+#define	TIOCRCVFRAME	_IOW('t', 69, struct mbuf *)/* data frame received */
+#define	TIOCXMTFRAME	_IOW('t', 68, struct mbuf *)/* data frame transmit */
+
+
 #define	TTYDISC		0		/* termios tty line discipline */
 #define	TABLDISC	3		/* tablet discipline */
 #define	SLIPDISC	4		/* serial IP discipline */
 #define	PPPDISC		5		/* ppp discipline */
 #define	STRIPDISC	6		/* metricom wireless IP discipline */
+#define	HDLCDISC	7		/* HDLC discipline */
 
 #endif /* !_SYS_TTYCOM_H_ */
