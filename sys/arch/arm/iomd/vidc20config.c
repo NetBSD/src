@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.5 2001/12/15 22:21:46 bjh21 Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.6 2001/12/15 22:41:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -309,17 +309,6 @@ vidcvideo_stdpalette()
         WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 128, 255));
         WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(128, 255, 255));
         WriteWord(vidc_base, VIDC_PALETTE | VIDC_COL(255, 255, 255));
-}
-
-
-/* small inline mod function ... why here? */
-static __inline int
-mod(int n)
-{
-	if (n < 0)
-		return(-n);
-	else
-		return(n);
 }
 
 
