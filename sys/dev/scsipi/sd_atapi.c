@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.13 2001/11/15 09:48:17 lukem Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.14 2002/01/09 18:48:18 drochner Exp $	*/
 
 /*
  * Copyright 1998
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.13 2001/11/15 09:48:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_atapi.c,v 1.14 2002/01/09 18:48:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ sd_atapibus_attach(parent, self, aux)
 	SC_DEBUG(periph, SCSIPI_DB2, ("sd_atapi_attach: "));
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
-	scsipi_strvis(sd->name, 16, sa->sa_inqbuf.product, 16);
+	strncpy(sd->name, sa->sa_inqbuf.vendor, 16);
 
 	sdattach(parent, sd, periph, &sd_atapibus_ops);
 }
