@@ -1,12 +1,11 @@
-/*	$NetBSD: ldexp.c,v 1.5 1999/08/29 19:04:02 mycroft Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.6 1999/08/29 22:45:32 mycroft Exp $	*/
 
-/*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,34 +17,28 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- * from: Header: ldexp.c,v 1.1 91/07/07 04:28:19 torek Exp
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static const char sccsid[] = "@(#)ldexp.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: ldexp.c,v 1.5 1999/08/29 19:04:02 mycroft Exp $");
-#endif
+__RCSID("$NetBSD: ldexp.c,v 1.6 1999/08/29 22:45:32 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,8 +47,7 @@ __RCSID("$NetBSD: ldexp.c,v 1.5 1999/08/29 19:04:02 mycroft Exp $");
 #include <math.h>
 
 /*
- * double ldexp(double val, int exp)
- * returns: val * (2**exp)
+ * Multiply the given value by 2^exp.
  */
 double
 ldexp(val, exp)
@@ -68,85 +60,95 @@ ldexp(val, exp)
 		struct ieee_double s;
 	} u, mul;
 
-	/*
-	 * If input is zero, or no change, just return input.
-	 * Likewise, if input is Inf or NaN, just return it.
-	 */
 	u.v = val;
 	oldexp = u.s.dbl_exp;
-	if (val == 0.0 || exp == 0 || oldexp == DBL_EXP_INFNAN)
-		return (val);
 
 	/*
-	 * Compute new exponent and check for over/under flow.
-	 * Underflow, unfortunately, could mean switching to denormal.
-	 * If result out of range, set ERANGE and return 0 if too small
-	 * or Inf if too big, with the same sign as the input value.
+	 * If input is zero, Inf or NaN, just return it.
+	 */
+	if (u.v == 0.0 || oldexp == DBL_EXP_INFNAN)
+		return (val);
+
+	if (oldexp == 0) {
+		/*
+		 * u.v is denormal.  We must adjust it so that the exponent
+		 * arithmetic below will work.
+		 */
+		if (exp <= DBL_EXP_BIAS) {
+			/*
+			 * Optimization: if the scaling can be done in a single
+			 * multiply, or underflows, just do it now.
+			 */
+			if (exp <= -DBL_FRACBITS) {
+				errno = ERANGE;
+				return (0.0);
+			}
+			mul.v = 1.0;
+			mul.s.dbl_exp = exp + DBL_EXP_BIAS;
+			u.v *= mul.v;
+			if (u.v == 0.0) {
+				errno = ERANGE;
+				return (0.0);
+			}
+			return (u.v);
+		} else {
+			/*
+			 * We know that exp is very large, and therefore the
+			 * result cannot be denormal (though it may be Inf).
+			 * Shift u.v by just enough to make it normal.
+			 */
+			mul.v = 1.0;
+			mul.s.dbl_exp = DBL_FRACBITS + DBL_EXP_BIAS;
+			u.v *= mul.v;
+			exp -= DBL_FRACBITS;
+			oldexp = u.s.dbl_exp;
+		}
+	}
+
+	/*
+	 * u.v is now normalized and oldexp has been adjusted if necessary.
+	 * Calculate the new exponent and check for underflow and overflow.
 	 */
 	newexp = oldexp + exp;
+
 	if (newexp >= DBL_EXP_INFNAN) {
-		/* u.s.dbl_sign = val < 0.0; -- already set */
-		u.s.dbl_exp = DBL_EXP_INFNAN;
-		u.s.dbl_frach = u.s.dbl_fracl = 0;
-		errno = ERANGE;
-		return (u.v);		/* Inf */
-	}
-	if (newexp <= 0) {
 		/*
-		 * The output number is either a denormal or underflows
-		 * (see comments in machine/ieee.h).
+		 * The result overflowed; return +/-Inf.
+		 */
+		u.s.dbl_exp = DBL_EXP_INFNAN;
+		u.s.dbl_frach = 0;
+		u.s.dbl_fracl = 0;
+		errno = ERANGE;
+		return (u.v);
+	} else if (newexp <= 0) {
+		/*
+		 * The output number is either denormal or underflows (see
+		 * comments in machine/ieee.h).
 		 */
 		if (newexp <= -DBL_FRACBITS) {
 			errno = ERANGE;
 			return (0.0);
 		}
 		/*
-		 * We are going to produce a denorm.  Our `exp' argument
-		 * might be as small as -2097, and we cannot compute
-		 * 2^-2097, so we may have to do this as many as three
-		 * steps (not just two, as for positive `exp's below).
+		 * Denormalize the result.  We do this with a multiply.  If exp
+		 * is very large, it won't fit in a double, so we have to
+		 * adjust the exponent first.  This is safe because we know
+		 * that u.v is normal at this point.
 		 */
-		mul.v = 1.0;
-		while (exp <= -DBL_EXP_BIAS) {
-			mul.s.dbl_exp = 1;
-			val *= mul.v;
-			exp += DBL_EXP_BIAS - 1;
+		if (exp <= -DBL_EXP_BIAS) {
+			u.s.dbl_exp = 1;
+			exp += oldexp - 1;
 		}
-		mul.s.dbl_exp = exp + DBL_EXP_BIAS;
-		val *= mul.v;
-		return (val);
-	}
-
-	/*
-	 * Newexp is positive.
-	 *
-	 * If oldexp is zero, we are starting with a denorm, and simply
-	 * adjusting the exponent will produce bogus answers.  We need
-	 * to fix that first.
-	 */
-	if (oldexp == 0) {
-		/*
-		 * Multiply by 2^mulexp to make the number normalizable.
-		 * We cannot multiply by more than 2^1023, but `exp'
-		 * argument might be as large as 2046.  A single
-		 * adjustment, however, will normalize the number even
-		 * for huge `exp's, and then we can use exponent
-		 * arithmetic just as for normal `double's.
-		 */
-		mulexp = exp <= DBL_EXP_BIAS ? exp : DBL_EXP_BIAS;
 		mul.v = 1.0;
-		mul.s.dbl_exp = mulexp + DBL_EXP_BIAS;
-		val *= mul.v;
-		if (mulexp == exp)
-			return (val);
-		u.v = val;
-		newexp -= mulexp;
+		mul.s.dbl_exp = exp + DBL_EXP_BIAS;
+		u.v *= mul.v;
+		return (u.v);
+	} else {
+		/*
+		 * The result is normal; just replace the old exponent with the
+		 * new one.
+		 */
+		u.s.dbl_exp = newexp;
+		return (u.v);
 	}
-
-	/*
-	 * Both oldexp and newexp are positive; just replace the
-	 * old exponent with the new one.
-	 */
-	u.s.dbl_exp = newexp;
-	return (u.v);
 }
