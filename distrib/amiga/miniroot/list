@@ -1,8 +1,9 @@
-#	$NetBSD: list,v 1.7 1999/07/04 09:51:45 is Exp $
+#	$NetBSD: list,v 1.8 1999/07/04 11:46:23 mrg Exp $
 
 # Amiga extra's
 LINK	instbin			sbin/mount_ados
 LINK	instbin			sbin/mount_kernfs
+SPECIAL mkdir			kern
 LINK	instbin			usr/bin/printf
 LINK	instbin			usr/bin/vi
 LINK	instbin			usr/sbin/loadkmap
