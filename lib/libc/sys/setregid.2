@@ -1,6 +1,6 @@
-.\"	$NetBSD: setregid.2,v 1.11 1999/12/02 21:42:39 kleink Exp $
+.\"	$NetBSD: setregid.2,v 1.12 2001/01/05 23:29:42 mycroft Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -81,6 +81,13 @@
 .Ft int
 .Fn setregid "gid_t rgid" "gid_t egid"
 .Sh DESCRIPTION
+.Bf -symbolic
+This interface is made obsolete by the saved ID functionality in
+.Xr setgid 2
+and
+.Xr setegid 2 .
+.Ef
+.Pp
 The real and effective group ID's of the
 current process are set according to the arguments.  If the real group ID
 is changed, the saved group ID is changed to the new value of the effective
@@ -103,7 +110,7 @@ IDs in set-group-ID programs to temporarily relinquish the set-group-ID
 value.  This purpose is now better served by the use of the
 .Fn setegid
 function (see
-.Xr setuid 2 ).
+.Xr setgid 2 ).
 .Pp
 When setting the real and effective group IDs to the same value, this
 function is equivalent to the
@@ -134,11 +141,11 @@ was specified.
 The
 .Fn setregid
 function call appeared in
-.Bx 4.2
-and was dropped in
+.Bx 4.2 .
+An incompatible version was implemented in
 .Bx 4.4 .
 It was reimplemented in
 .Nx 1.2
 in a way compatible with
 .Bx 4.3 ,
-SunOS and Linux.
+SunOS and Linux, but should not be used in new code.
