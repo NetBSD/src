@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.5 2000/01/07 03:25:35 oster Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.6 2000/01/07 03:41:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -44,7 +44,6 @@
 #include "rf_diskqueue.h"
 #include "rf_paritylog.h"
 #include "rf_general.h"
-#include "rf_threadid.h"
 #include "rf_etimer.h"
 #include "rf_paritylogging.h"
 #include "rf_engine.h"

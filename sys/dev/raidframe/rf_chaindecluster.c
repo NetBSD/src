@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.4 2000/01/07 03:40:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include "rf_dagffwr.h"
 #include "rf_dagdegrd.h"
 #include "rf_dagfuncs.h"
-#include "rf_threadid.h"
 #include "rf_general.h"
 #include "rf_utils.h"
 
