@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.4 1996/10/10 23:02:24 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.5 1996/10/13 02:10:07 christos Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -170,7 +170,7 @@ llcintr()
 		if (((frame->llc_control & 0x03) != 0x03) 
 		    && ((expected_len - sizeof(struct sdl_hdr)) < LLC_ISFRAMELEN)) {
 			m_freem(m);
-			kprintf("llc: hurz error\n");
+			printf("llc: hurz error\n");
 			continue;
 		}
 
@@ -260,7 +260,7 @@ llcintr()
 			if ((linkp = llc_newlink(&sdlhdr->sdlhdr_src, ifp, nlrt,
 						     (nlrt == 0) ? 0 : nlrt->rt_llinfo,
 						     llrt)) == 0) {
-				kprintf("llcintr: couldn't create new link\n");
+				printf("llcintr: couldn't create new link\n");
 				m_freem(m);
 				continue;
 			}

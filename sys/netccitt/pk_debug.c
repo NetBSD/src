@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_debug.c,v 1.7 1996/10/10 23:02:26 christos Exp $	*/
+/*	$NetBSD: pk_debug.c,v 1.8 1996/10/13 02:10:10 christos Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -87,11 +87,11 @@ pk_trace (xcp, m, dir)
 		len = len + m -> m_len;
 		++cnt;
 	}
-	kprintf ("LCN=%d %s:	%s	#=%d, len=%d ",
+	printf ("LCN=%d %s:	%s	#=%d, len=%d ",
 		LCN(xp), dir, pk_name[i], cnt, len);
 	for (s = (char *) xp, i = 0; i < 5; ++i, ++s)
-		kprintf ("%x ", (int) * s & 0xff);
-	kprintf ("\n");
+		printf ("%x ", (int) * s & 0xff);
+	printf ("\n");
 }
 
 void
