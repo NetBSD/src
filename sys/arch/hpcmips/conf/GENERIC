@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.136 2003/02/27 19:22:41 perseant Exp $
+# $NetBSD: GENERIC,v 1.137 2003/04/10 22:06:56 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.136 $"
+#ident 		"GENERIC-$Revision: 1.137 $"
 
 maxusers	16
 
@@ -60,7 +60,6 @@ options 	MSGBUFSIZE=8192		# dmesg buffer size
 					# In NO RTC_OFFSET , inherit RTC_OFFSET
 					# from Windows CE.
 options 	NTP			# network time protocol
-#options 	UCONSOLE		# users can redirect console (unsafe)
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.16 2003/01/01 07:45:21 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.17 2003/04/10 22:07:04 christos Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -110,10 +110,6 @@ options 	PCIVERBOSE
 ## and other insecurities good only for development work.  Do not use this
 ## option on a production machine.
 options 	INSECURE
-
-## Allow non-root users to grab /dev/console with programs such as xconsole.
-## `xconsole' therefore does not need setuid root with this option enabled.
-options 	UCONSOLE
 
 ## `FDSCRIPTS' allows non-readable but executable scripts by providing a
 ## pre-opened opaque file to the script interpreter.  `SETUIDSCRIPTS',

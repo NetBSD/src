@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.32 2003/04/08 18:58:21 abs Exp $
+#	$NetBSD: LAMB,v 1.33 2003/04/10 22:06:58 christos Exp $
 #
 #	LAMB - a complete kernel for wildlab LAMB, http://www.wildlab.com/
 #
@@ -47,7 +47,6 @@ options 	MTRR		# memory-type range register syscall support
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT

@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.15 2002/09/18 02:16:01 lukem Exp $
+#	$NetBSD: MDINSTALL,v 1.16 2003/04/10 22:06:53 christos Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -54,7 +54,6 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 # Support for various kernel options
 #
 options 	KTRACE		# system call tracing support
-options 	UCONSOLE	# anyone can redirect a virtual console
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	NTP		# NTP phase/frequency locked loop

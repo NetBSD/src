@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2003/02/27 19:22:45 perseant Exp $
+# $NetBSD: GENERIC,v 1.110 2003/04/10 22:07:02 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.109 $"
+#ident		"GENERIC-$Revision: 1.110 $"
 
 maxusers	64
 
@@ -79,7 +79,6 @@ options 	USERCONF	# userconf(4) support
 #options 	KGDB_DEV="15*256+0"	# device for kernel gdb
 
 options 	NTP			# network time protocol
-#options 	UCONSOLE		# users can redirect console (unsafe)
 
 
 # Filesystem options

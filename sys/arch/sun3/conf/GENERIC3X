@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.55 2002/11/22 12:21:06 wiz Exp $
+# $NetBSD: GENERIC3X,v 1.56 2003/04/10 22:07:05 christos Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -27,7 +27,6 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
-#options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 

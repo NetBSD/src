@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.15 2002/09/18 02:44:09 lukem Exp $
+# $NetBSD: RAMDISK,v 1.16 2003/04/10 22:07:05 christos Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -27,7 +27,6 @@ maxusers	2
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
-#options 	UCONSOLE	# Allow non-root TIOCCONS
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.55 2003/04/08 18:58:20 abs Exp $
+#	$NetBSD: DR-EVIL,v 1.56 2003/04/10 22:06:57 christos Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -55,7 +55,6 @@ options 	XSERVER		# X server support in console drivers
 
 # Standard system options
 
-options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 options 	INSECURE	# disable kernel security levels
 
 options 	RTC_OFFSET=420	# hardware clock is this many mins. west of GMT
