@@ -1,10 +1,12 @@
-$NetBSD: acronyms,v 1.95 2001/11/19 09:36:43 lukem Exp $
+$NetBSD: acronyms,v 1.96 2001/11/26 02:11:07 hubertf Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
 AFAIK	as far as I know
 AFAIR	as far as I recall
 AFK	away from keyboard
+AFW	away from window
+AFD	away from desktop
 AIUI	as I understand it
 AKA	also known as
 ASAP	as soon as possible
@@ -29,6 +31,7 @@ CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 CYA	see you around
 DNDK	don't know, don't care
+DSTM	Don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
 DWIM	do what I mean
@@ -42,12 +45,14 @@ FIIR	fuck[ed] if I remember
 FOAD	fall over and die
 FSDO	for some definition of
 FSVO	for some value of
+FTFM	fuck the fuckin' manual!
 FUBAR	fucked up beyond all recognition
 FUD	fear, uncertainty and doubt
 FWIW	for what it's worth
 FYI	for your information
 G	grin
 GMTA	great minds think alike
+GTFO	get the fuck out
 HAND	have a nice day
 HHIS	hanging head in shame
 HTH	hope this helps
@@ -99,6 +104,7 @@ OTTOMH	off the top of my head
 PFO	please fuck off
 PFY	pimply faced youth
 PITA	pain in the ass
+PKSP	pound keys and spew profanity
 PNG	persona non grata
 POC	point of contact
 POLA	principle of least astonishment
@@ -149,4 +155,5 @@ WTF	{what,where,who,why} the fuck
 WTH	{what,where,who,why} the hell
 WYSIWYG	what you see is what you get
 YKWIM	you know what I mean
+YMA	yo momma's ass
 YMMV	your mileage may vary
