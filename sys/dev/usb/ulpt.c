@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.48 2002/02/11 15:11:49 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.49 2002/02/25 22:39:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.48 2002/02/11 15:11:49 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.49 2002/02/25 22:39:01 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,6 +454,7 @@ ulpt_reset(struct ulpt_softc *sc)
 	 * UT_WRITE_CLASS_INTERFACE.  Many printers use the old one,
 	 * so we try both.
 	 */
+	req.bmRequestType = UT_WRITE_CLASS_OTHER;
 	if (usbd_do_request(sc->sc_udev, &req, 0)) {	/* 1.0 */
 		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 		(void)usbd_do_request(sc->sc_udev, &req, 0); /* 1.1 */
