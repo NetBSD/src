@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.10 1998/12/09 12:42:51 christos Exp $	*/
+/*	$NetBSD: mpool.c,v 1.11 2000/01/09 19:56:15 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.5 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: mpool.c,v 1.10 1998/12/09 12:42:51 christos Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.11 2000/01/09 19:56:15 scw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -399,6 +399,15 @@ mpool_write(mp, bp)
 	off = mp->pagesize * bp->pgno;
 	if (pwrite(mp->fd, bp->page, (size_t)mp->pagesize, off) != (int)mp->pagesize)
 		return (RET_ERROR);
+
+	/*
+	 * Re-run through the input filter since this page may soon be
+	 * accessed via the cache, and whatever the user's output filter
+	 * did may screw things up if we don't let the input filter
+	 * restore the in-core copy.
+	 */
+	if (mp->pgin)
+		(mp->pgin)(mp->pgcookie, bp->pgno, bp->page);
 
 	bp->flags &= ~MPOOL_DIRTY;
 	return (RET_SUCCESS);
