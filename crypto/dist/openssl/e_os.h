@@ -221,6 +221,7 @@ extern "C" {
 #  define SSLEAY_CONF	OPENSSL_CONF
 #  define NUL_DEV	"nul"
 #  define RFILE		".rnd"
+#  define DEFAULT_HOME  "C:"
 
 #else /* The non-microsoft world world */
 
