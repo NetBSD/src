@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.38 1999/10/25 13:55:06 kleink Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.39 1999/12/30 15:57:31 eeh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -118,6 +118,9 @@ struct execsw execsw[] = {
 	{ MAXINTERP, exec_script_makecmds, },		/* shell scripts */
 #endif
 #ifdef EXEC_AOUT
+#ifdef COMPAT_NETBSD32
+	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, }, /* sparc 32 bit */
+#endif
 # ifdef COMPAT_AOUT
 	{ sizeof(struct exec), exec_aoutcompat_makecmds, },/* compat a.out */
 # else
@@ -156,9 +159,6 @@ struct execsw execsw[] = {
 #endif
 #ifdef COMPAT_M68K4K
 	{ sizeof(struct exec), exec_m68k4k_makecmds, },	/* m68k4k a.out */
-#endif
-#ifdef COMPAT_NETBSD32
-	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, }, /* sparc 32 bit */
 #endif
 #ifdef COMPAT_VAX1K
 	{ sizeof(struct exec), exec_vax1k_makecmds, },	/* vax1k a.out */
