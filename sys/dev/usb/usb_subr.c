@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.115 2004/06/23 05:23:19 mycroft Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.116 2004/06/23 06:27:54 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.115 2004/06/23 05:23:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.116 2004/06/23 06:27:54 mycroft Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -158,14 +158,35 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 		     usb_string_descriptor_t *sdesc, int *sizep)
 {
 	usb_device_request_t req;
+	usbd_status err;
+	int actlen;
 
 	req.bmRequestType = UT_READ_DEVICE;
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, UDESC_STRING, sindex);
 	USETW(req.wIndex, langid);
-	USETW(req.wLength, USB_MAX_STRING_DESC);
-	return (usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
-		sizep, USBD_DEFAULT_TIMEOUT));
+	USETW(req.wLength, 2);	/* only size byte first */
+	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
+	if (err)
+		return (err);
+
+	if (actlen < 2)
+		return (USBD_SHORT_XFER);
+
+	USETW(req.wLength, sdesc->bLength);	/* the whole string */
+	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
+	if (err)
+		return (err);
+
+	if (actlen != sdesc->bLength) {
+		DPRINTFN(-1, ("usbd_get_string_desc: expected %d, got %d\n",
+		    sdesc->bLength, actlen));
+	}
+
+	*sizep = actlen;
+	return (USBD_NORMAL_COMPLETION);
 }
 
 char *
