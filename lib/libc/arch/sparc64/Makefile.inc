@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/03/04 21:26:39 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.1 2002/05/24 22:28:22 perry Exp $
 
 KMINCLUDES= arch/sparc64/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
@@ -47,5 +47,6 @@ CPPFLAGS+=	-DSOFTFLOATSPARC64_FOR_GCC
 # Can't directly use softfloat.c due to .PATH issues with the other source
 # in softfloat. Just provide a wrapper which pulls it in via a #include
 SRCS+= softfloat-wrapper.c
-CPPFLAGS+=      -I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat
+CPPFLAGS+=      -I${ARCHDIR}/softfloat -I${.CURDIR}/softfloat \
+		-I${.CURDIR}/softfloat/bits64
 .endif
