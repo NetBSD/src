@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.207 2003/06/29 22:30:40 fvdl Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.208 2003/08/07 17:54:26 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207 2003/06/29 22:30:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.208 2003/08/07 17:54:26 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,6 +429,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-431  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "CHINON  ", "CD-ROM CDS-435  ", ""},     PQUIRK_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "Chinon  ", "CD-ROM CDS-525  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "CHINON  ", "CD-ROM CDS-535  ", ""},     PQUIRK_NOLUNS},
@@ -458,8 +460,14 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "NEC     ", "CD-ROM DRIVE:84 ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "NEC     ", "CD-ROM DRIVE:841", ""},     PQUIRK_NOLUNS},
+        {{T_CDROM, T_REMOV,
+	 "OLYMPUS ", "CDS620E         ", "1.1d"}, 
+			       PQUIRK_NOLUNS|PQUIRK_NOSYNC|PQUIRK_NOCAPACITY},
 	{{T_CDROM, T_REMOV,
 	 "PIONEER ", "CD-ROM DR-124X  ", "1.01"}, PQUIRK_NOLUNS},
+        {{T_CDROM, T_REMOV,
+         "PLEXTOR ", "CD-ROM PX-4XCS  ", "1.01"},
+                               PQUIRK_NOLUNS|PQUIRK_NOSYNC},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-541  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
