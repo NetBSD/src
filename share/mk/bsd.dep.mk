@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.23 1998/08/18 19:12:42 tv Exp $
+#	$NetBSD: bsd.dep.mk,v 1.24 1999/02/03 21:08:05 tv Exp $
 
 .PHONY:		cleandepend
 cleandir distclean: cleandepend
@@ -9,6 +9,7 @@ MKDEP?=		mkdep
 depend: beforedepend
 .if defined(SRCS)
 depend: .depend
+	@true # hack to prevent "make depend" from using implicit rules
 .NOPATH: .depend
 .depend: ${SRCS} ${DPSRCS}
 	@rm -f .depend
