@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1997/01/13 14:04:48 oki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1997/01/31 02:15:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -40,8 +40,7 @@
 #include <machine/cpu.h>
 
 void configure __P((void));
-static void setroot __P((void));
-void swapconf __P((void));
+static void findroot __P((struct device **, int *));
 void mbattach __P((struct device *, struct device *, void *));
 int mbprint __P((void *, const char *));
 int mbmatch __P((struct device *, void *, void *));
@@ -50,17 +49,12 @@ extern int cold;	/* 1 if still booting (locore.s) */
 int x68k_realconfig;
 #include <sys/kernel.h>
 
-/*
- * The mountroot_hook is provided as a mechanism for devices to perform
- * a special function if they're the root device, such as the floppy
- * drive ejecting the current disk and prompting for a filesystem floppy.
- */
-struct mountroot_hook {
-	LIST_ENTRY(mountroot_hook) mr_link;
-	struct	device *mr_device;
-	void	(*mr_func) __P((struct device *));
+struct devnametobdevmaj x68k_nam2blk[] = {
+	{ "fd",		2 },
+	{ "sd",		4 },
+	{ "md",		8 },
+	{ NULL,		0 },
 };
-LIST_HEAD(, mountroot_hook) mrh_list;
 
 /*
  * called at boot time, configure all devices on system
@@ -68,6 +62,8 @@ LIST_HEAD(, mountroot_hook) mrh_list;
 void
 configure()
 {
+	struct device *booted_device;
+	int booted_partition;
 	extern int x68k_realconfig;
 	
 	x68k_realconfig = 1;
@@ -78,14 +74,17 @@ configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
-#ifdef GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
-	setconf();
-#else
-	setroot();
-#endif
+	findroot(&booted_device, &booted_partition);
+
+	printf("boot device: %s\n",
+	    booted_device ? booted_device->dv_xname : "<unknown>");
+
+	setroot(booted_device, booted_partition, x68k_nam2blk);
+
 	swapconf();
+	dumpconf();
+	if (dumplo < 0)
+		dumplo = 0;
 	cold = 0;
 }
 
@@ -150,132 +149,45 @@ config_console()
 	x68k_config_found(cf, NULL, "grfbus", NULL);
 }
 
-/*
- * Configure swap space and related parameters.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	u_int maj;
-	int nb;
-
-	for (swp = swdevt; swp->sw_dev > 0; swp++) {
-		maj = major(swp->sw_dev);
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nb = bdevsw[maj].d_psize(swp->sw_dev);
-			if (nb > 0 && 
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nb))
-				swp->sw_nblks = nb;
-			else swp->sw_nblks = 0;
-		}
-		swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
-	}
-	dumpconf();
-	if( dumplo < 0)
-		dumplo = 0;
-}
-
-void
-mountroot_hook_establish(func, dev)
-	void (*func) __P((struct device *));
-	struct device *dev;
-{
-	struct mountroot_hook *mrhp;
-
-	mrhp = (struct mountroot_hook *)malloc(sizeof(struct mountroot_hook),
-	    M_DEVBUF, M_NOWAIT);
-	if (mrhp == NULL)
-		panic("no memory for mountroot_hook");
-
-	bzero(mrhp, sizeof(struct mountroot_hook));
-	mrhp->mr_device = dev;
-	mrhp->mr_func = func;
-	LIST_INSERT_HEAD(&mrh_list, mrhp, mr_link);
-}
-
-#define	DOSWAP	/* change swdevt and dumpdev */
 dev_t	bootdev = 0;
 
-static	char devname[][2] = {
-	0,0,		/* 0 = ct */
-	0,0,		/* 1 = xx */
-	'f','d',	/* 2 = fd */
-	0,0,		/* 3 = sw */
-	's','d',	/* 4 = sd */
-};
-
 static void
-setroot()
+findroot(devpp, partp)
+	struct device **devpp;
+	int *partp;
 {
-	int majdev, mindev, unit, part, adaptor;
-	dev_t temp, orootdev;
-	struct swdevt *swp;
-	extern int (*mountroot) __P((void *));
-	struct mountroot_hook *mrhp;
-	struct device *bootdv = 0, *dv;
+	int i, majdev, unit, part;
+	struct device *dv;
+	char buf[32];
 
-	if (boothowto & RB_DFLTROOT ||
-	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
+	/*
+	 * Default to "not found".
+	 */
+	*devpp = NULL;
+	*partp = 0;
+
+	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
+
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if(majdev > sizeof(devname) / sizeof(devname[0]))
+	for (i = 0; x68k_nam2blk[i].d_name != NULL; i++)
+		if (majdev == x68k_nam2blk[i].d_maj)
+			break;
+	if (x68k_nam2blk[i] == NULL)
 		return;
-	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
+
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	orootdev = rootdev;
-	rootdev = MAKEDISKDEV(majdev, unit, part);
-	/*
-	 * If the original rootdev is the same as the one
-	 * just calculated, don't need to adjust the swap configuration.
-	 */
-	printf("root on %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		unit, part + 'a');
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
-		if (devname[majdev][0] == dv->dv_xname[0] &&
-		    devname[majdev][1] == dv->dv_xname[1] &&
-		    unit + '0' == dv->dv_xname[2]) {
-			bootdv = dv;
-			break;
+
+	sprintf(buf, "%s%d", x68k_nam2blk[i].d_name, unit)
+	for (dv = alldevs.tqh_first; dv != NULL;
+	    dv = dv->dv_list.tqe_next) {
+		if (strcmp(buf, dv->dv_xname) == 0) {
+			*devpp = dv;
+			*partp = part;
+			return;
 		}
 	}
-	/*
-	 * Find mountroot hook and execute.
-	 */
-	for (mrhp = mrh_list.lh_first; mrhp != NULL;
-	     mrhp = mrhp->mr_link.le_next)
-		if (mrhp->mr_device == bootdv) {
-			(*mrhp->mr_func)(bootdv);
-			break;
-		}
-
-	if (rootdev == orootdev)
-		return;
-
-#ifdef DOSWAP
-	mindev = DISKUNIT(rootdev);
-	for (swp = swdevt; swp->sw_dev; swp++) {
-		if (majdev == major(swp->sw_dev)
-			&& mindev == DISKUNIT(swp->sw_dev)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
-		}
-	}
-	if (swp->sw_dev == 0)
-		return;
-	/*
-	 * If dumpdev was the same as the old primary swap
-	 * device, move it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
-#endif
 }
 
 /* 
