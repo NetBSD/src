@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.63 2000/10/03 23:33:38 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.64 2000/10/03 23:50:52 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -815,6 +815,11 @@ ether_ifdetach(struct ifnet *ifp)
 	struct sockaddr_dl *sdl = ifp->if_sadl;
 	struct ether_multi *enm;
 	int s;
+
+#if NVLAN > 0
+	if (ec->ec_nvlans)
+		vlan_ifdetach(ifp);
+#endif
 
 	s = splimp();
 	while ((enm = LIST_FIRST(&ec->ec_multiaddrs)) != NULL) {
