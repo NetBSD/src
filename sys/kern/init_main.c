@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.144 1999/03/26 01:10:50 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.145 1999/04/01 00:22:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -198,6 +198,9 @@ main()
 
 	uvm_init();
 
+	/* Do machine-dependent initialization. */
+	cpu_startup();
+
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
@@ -213,7 +216,7 @@ main()
 	rnd_init();
 #endif
 	config_init();		/* init autoconfiguration data structures */
-	cpu_startup();
+	configure();		/* ...and configure the hardware */
 
 	/*
 	 * Initialize process and pgrp structures.
