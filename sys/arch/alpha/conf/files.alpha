@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.60 1998/01/12 10:21:06 thorpej Exp $
+# $NetBSD: files.alpha,v 1.61 1998/01/15 07:09:24 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -56,6 +56,13 @@ include "dev/scsipi/files.scsipi"
 major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }
+
+#
+# Machine-independent ATA drivers
+#
+
+include "dev/ata/files.ata"
+major { wd = 4 }
 
 # Memory Disk
 file	arch/alpha/alpha/md_root.c	memory_disk_hooks
@@ -167,15 +174,6 @@ file	arch/alpha/tc/tcds_dma.c	asc
 
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
-
-# Hacked version of ISA "wd" (ESDI/IDE/etc.) controller driver
-device	awdc class dull {drive = -1}
-attach	awdc at isa
-device	awd class disk: disk
-attach	awd at awdc
-file	arch/alpha/isa/awd.c		awdc needs-flag
-
-major { awd = 4 }
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
 
