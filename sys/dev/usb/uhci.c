@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.14 1998/12/28 02:06:25 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.15 1998/12/28 16:13:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ uhci_busreset(sc)
 	uhci_softc_t *sc;
 {
 	UHCICMD(sc, UHCI_CMD_GRESET);	/* global reset */
-	usbd_delay_ms(&sc->sc_bus, USB_RESET_DELAY); /* wait at least 10ms */
+	usbd_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY); /* wait a little */
 	UHCICMD(sc, 0);			/* do nothing */
 }
 
