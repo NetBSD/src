@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.21 2004/12/27 01:57:58 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.22 2004/12/27 05:35:33 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.10 2004/04/02 23:25:39 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.21 2004/12/27 01:57:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.22 2004/12/27 05:35:33 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -296,13 +296,22 @@ static int
 ieee80211_compute_duration1(int len, uint32_t flags, int rate,
     struct ieee80211_duration *d)
 {
-	int ack, bitlen, cts, data_dur, remainder;
+	int pre, ctsrate;
+	int bitlen, data_dur, remainder;
 
 	/* RTS reserves medium for SIFS | CTS | SIFS | (DATA) | SIFS | ACK
 	 * DATA reserves medium for SIFS | ACK
+	 *
+	 * XXXMYC: no ACK on multicast/broadcast or control packets
 	 */
 
 	bitlen = len * 8;
+
+	pre = IEEE80211_DUR_DS_SIFS;
+	if ((flags & IEEE80211_F_SHPREAMBLE) != 0)
+		pre += IEEE80211_DUR_DS_SHORT_PREAMBLE + IEEE80211_DUR_DS_FAST_PLCPHDR;
+	else
+		pre += IEEE80211_DUR_DS_LONG_PREAMBLE + IEEE80211_DUR_DS_SLOW_PLCPHDR;
 
 #if 0
 	/* RTS is always sent at 1 Mb/s.  (XXX Really?) */
@@ -310,26 +319,23 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
 #endif
 	d->d_residue = 0;
 	data_dur = (bitlen * 2) / rate;
+	remainder = (bitlen * 2) % rate;
+	if (remainder != 0) {
+		d->d_residue = (rate - remainder) / 16;
+		data_dur++;
+	}
 
 	switch (rate) {
 	case 2:		/* 1 Mb/s */
 	case 4:		/* 2 Mb/s */
 		/* 1 - 2 Mb/s WLAN: send ACK/CTS at 1 Mb/s */
-		cts = IEEE80211_DUR_DS_SLOW_CTS;
-		ack = IEEE80211_DUR_DS_SLOW_ACK;
+		ctsrate = 2;
 		break;
 	case 11:	/* 5.5 Mb/s */
 	case 22:	/* 11  Mb/s */
 	case 44:	/* 22  Mb/s */
-		remainder = (bitlen * 2) % rate;
-		if (remainder != 0) {
-			data_dur++;
-			d->d_residue = (rate - remainder) / 16;
-		}
-
 		/* 5.5 - 11 Mb/s WLAN: send ACK/CTS at 2 Mb/s */
-		cts = IEEE80211_DUR_DS_FAST_CTS;
-		ack = IEEE80211_DUR_DS_FAST_ACK;
+		ctsrate = 4;
 		break;
 	default:
 		/* TBD */
@@ -338,25 +344,14 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
 
 	d->d_plcp_len = data_dur;
 
-	d->d_rts_dur = data_dur + 3 * (IEEE80211_DUR_DS_SIFS +
-	    IEEE80211_DUR_DS_SHORT_PREAMBLE +
-	    IEEE80211_DUR_DS_FAST_PLCPHDR) + cts + ack;
+	d->d_rts_dur =
+	    pre + (IEEE80211_DUR_DS_SLOW_CTS * 2) / ctsrate +
+	    pre + data_dur +
+	    pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / ctsrate;
 
-	/* Note that this is the amount of time reserved *after*
-	 * the packet is transmitted: just long enough for a SIFS
-	 * and an ACK.
-	 */
-	d->d_data_dur = IEEE80211_DUR_DS_SIFS +
-	    IEEE80211_DUR_DS_SHORT_PREAMBLE + IEEE80211_DUR_DS_FAST_PLCPHDR +
-	    ack;
+	d->d_data_dur =
+	    pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / rate;
 
-	if ((flags & IEEE80211_F_SHPREAMBLE) != 0)
-		return 0;
-
-	d->d_rts_dur += 3 * IEEE80211_DUR_DS_PREAMBLE_DIFFERENCE +
-			3 * IEEE80211_DUR_DS_PLCPHDR_DIFFERENCE;
-	d->d_data_dur += IEEE80211_DUR_DS_PREAMBLE_DIFFERENCE +
-			 IEEE80211_DUR_DS_PLCPHDR_DIFFERENCE;
 	return 0;
 }
 
