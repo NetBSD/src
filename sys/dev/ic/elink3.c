@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.2 1996/04/30 22:32:32 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.3 1996/05/03 17:44:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -33,6 +33,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -79,7 +80,7 @@ struct cfdriver ep_cd = {
 	NULL, "ep", DV_IFNET
 };
 
-static void epxstat __P((struct ep_softc *));
+static void eptxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 void epinit __P((struct ep_softc *));
 int epioctl __P((struct ifnet *, u_long, caddr_t));
@@ -88,7 +89,7 @@ void epwatchdog __P((int));
 void epreset __P((struct ep_softc *));
 void epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
-void epmbuffill __P((struct ep_softc *));
+void epmbuffill __P((void *));
 void epmbufempty __P((struct ep_softc *));
 void epstop __P((struct ep_softc *));
 void epsetfilter __P((struct ep_softc *));
@@ -1011,9 +1012,10 @@ epbusyeeprom(sc)
 }
 
 void
-epmbuffill(sc)
-	struct ep_softc *sc;
+epmbuffill(v)
+	void *v;
 {
+	struct ep_softc *sc = v;
 	int s, i;
 
 	s = splnet();
