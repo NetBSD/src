@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.97.2.12 2002/12/31 01:03:46 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.97.2.13 2003/01/03 22:27:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.12 2002/12/31 01:03:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.97.2.13 2003/01/03 22:27:51 thorpej Exp $");
 
 #include "assym.h"
 
@@ -1001,8 +1001,9 @@ LEAF_NOPROFILE(proc_trampoline, 0)
 LEAF(switch_exit, 1)
 	LDGP(pv)
 
-	/* save the exiting proc pointer */
+	/* save the exiting proc pointer and exit func */
 	mov	a0, s2
+	mov	a1, pv
 
 	/* Switch to our idle stack. */
 	GET_IDLE_PCB(a0)			/* clobbers v0, t0, t8-t11 */
@@ -1015,7 +1016,7 @@ LEAF(switch_exit, 1)
 
 	/* Schedule the vmspace and stack to be freed. */
 	mov	s2, a0
-	CALL(exit2)
+	CALL((pv))
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	CALL(sched_lock_idle)			/* acquire sched_lock */
@@ -1030,46 +1031,6 @@ LEAF(switch_exit, 1)
 	mov	zero, s0
 	jmp	zero, cpu_switch_queuescan
 	END(switch_exit)
-
-/*
- * switch_lwp_exit(struct lwp *l)
- * Make a the named LWP exit.  Partially switch to our idle thread
- * (we don't update curlwp or restore registers), and jump into the middle
- * of cpu_switch to switch into a few process.  The process reaper will
- * free the dead process stack.  MUST BE CALLED AT SPLHIGH.
- */
-LEAF(switch_lwp_exit, 1)
-	LDGP(pv)
-
-	/* save the exiting proc pointer */
-	mov	a0, s2
-
-	/* Switch to our idle stack. */
-	GET_IDLE_PCB(a0)			/* clobbers v0, t0, t8-t11 */
-	SWITCH_CONTEXT
-
-	/*
-	 * Now running as idle thread, except for the value of 'curlwp' and
-	 * the saved regs.
-	 */
-
-	/* Schedule the stack to be freed. */
-	mov	s2, a0
-	CALL(lwp_exit2)
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	CALL(sched_lock_idle)			/* acquire sched_lock */
-#endif
-
-	/*
-	 * Now jump back into the middle of cpu_switch().  Note that
-	 * we must clear s0 to guarantee that the check for switching
-	 * to ourselves in cpu_switch() will fail.  This is safe since
-	 * s0 will be restored when a new process is resumed.
-	 */
-	mov	zero, s0
-	jmp	zero, cpu_switch_queuescan
-	END(switch_lwp_exit)
 
 /**************************************************************************/
 
