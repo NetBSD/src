@@ -1,39 +1,140 @@
-.\"	@(#) $Id: pppstats.8,v 1.1 1994/08/26 05:13:13 paulus Exp $
-.TH PPPSTATS 8 "23 Aug 1994"
-.SH NAME
-pppstats \- print PPP statistics
-.SH SYNOPSIS
-.B pppstats
-[
-.B -v
-] [
-.B -i
-.I <secs>
-] [
-.I <unit#>
-]
-.ti 12
-.br
-[
-.I objectfile
-[
-.I corefile
-]]
-.SH DESCRIPTION
-.B pppstats
-prints PPP-related statistics.
-.PP
+.\"	@(#) $Header: /cvsroot/src/usr.sbin/pppd/pppstats/Attic/pppstats.8,v 1.2 1994/11/15 07:28:02 glass Exp $ (LBL)
+.Dd November 15, 1994
+.Dt PPPSTATS/SLSTATS 8
+.Sh NAME
+.Nm pppstats ,
+.Nm slstats
+.Nd report statistics for the specified PPP or SLIP interface
+.Sh SYNOPSIS
+.Nm pppstats
+.Op Fl v
+.Op Fl c Ar count
+.Op Fl w Ar wait
+.Op Fl M Ar core
+.Op Fl N Ar system
+.Op Ar interface
+.Nm slstats
+.Op Fl v
+.Op Fl c Ar count
+.Op Fl w Ar wait
+.Op Fl M Ar core
+.Op Fl N Ar system
+.Op Ar interface
+.Sh DESCRIPTION
+.Pp
+The 
+.Nm pppstats
+utility reports PPP-related statistics for the specified PPP
+.Ar interface .
+If the
+.Ar interface
+is unspecified, it will default to ppp0.
+.Pp
 The
-.B -v
-flag causes
-.B pppstats
-to display additional statistics, such as the number of packets tossed.
-.PP
-The
-.B -i
-flag is used to specify the interval between printouts. The default is
-5 seconds.
-.PP
-.B pppstats
-must be installed set-group-id to kmem, or the user must have read
-access to /dev/kmem.
+.Nm slstats
+utility reports SLIP-related statistics for the specified SLIP
+.Ar interface .
+If the
+.Ar interface
+is unspecified, it will default to sl0.
+.Pp
+Otherwise
+.Nm pppstats
+and
+.Nm slstats
+function identically.  Both programs will report interface-specific
+statistics at regular intervals.  The display is split horizontally
+into input and output sections containing columns of statistics
+describing the properties and volume of packets received and
+transmitted by the interface.
+.Pp
+The first report will consist of a snapshot of the interface's
+statistics.  Further output, if any, will describe activity between
+report intervals.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar count
+Repeat the display
+.Ar count
+times. The first display is for the time since a reboot and each
+subsequent report is for the time period since the last display.  If
+no
+.Ar wait
+interval is specified, the default is 5 seconds.
+.It Fl v
+Display additional statistics demonstrating the efficacy of VJ header
+compression and providing more explicit information on failure
+distribution.
+.It Fl w Ar wait
+Pause
+.Ar wait
+seconds between each display.  If no repeat
+.Ar count
+is specified, the default is infinity.
+.It Fl M Ar core
+Extract values associated with the name list from the specified core
+instead of the default
+.Pa /dev/kmem .
+.It Fl N Ar system
+Extract the name list from the specified system instead of the default
+.Pa /netbsd .
+.El
+.Pp
+The following fields are printed on the input side:
+.Bl -tag -width search
+.It Li IN
+The total number of bytes received by this interface.
+.It Li PACK
+The total number of packets received by this interface.
+.It Li COMP
+The number of compressed TCP packets received by this interface.
+.It Li UNCOMP
+The number of uncompressed TCP packets received by this interface.
+.It Li ERR
+The number of packets received by this interface of unknown type.
+.It Li TOSS
+The number of packets dropped on reception by this interface.  Only
+reported when the
+.Fl v
+option is specified.
+.It Li IP
+The total number of non-TCP packets received by this interface. Only
+reported when the
+.Fl v
+option is specified.
+.El
+.Pp
+The following fields are printed on the output side:
+.Bl -tag -width search
+.It Li OUT
+The total number of bytes transmitted from this interface.
+.It Li PACK
+The total number of packets transmitted from this interface.
+.It Li COMP
+The number of TCP packets compressed and then transmitted from this interface.
+.It Li UNCOMP
+The number of uncompressed TCP packets transmitted from this interface.
+.It Li IP
+The total number of non-TCP packets transmitted from this interface.
+.It Li SEARCH
+The number of searches for the cached header entry for a compressed
+packet.  Only reported when the
+.Fl v
+option is specified.
+.It Li MISS
+The number of failed searches for the cached header entry for a
+compressed packet.  Only reported when the
+.Fl v
+option is specified.
+.El
+.Sh FILES
+.Bl -tag -width /dev/kmem -compact
+.It Pa /netbsd
+Default kernel namelist.
+.It Pa /dev/kmem
+Default memory file.
+.El
+.Sh SEE ALSO
+.Xr pppd 8 ,
+.Xr slattach 8
