@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_log1p.c,v 1.8 1995/05/10 20:47:46 jtc Exp $";
+__RCSID("$NetBSD: s_log1p.c,v 1.9 1997/10/09 11:32:43 lukem Exp $");
 #endif
 
 /* double log1p(double x)
@@ -114,6 +115,8 @@ static double zero = 0.0;
 	double hfsq,f,c,s,z,R,u;
 	int32_t k,hx,hu,ax;
 
+	f = c = 0;
+	hu = 0;
 	GET_HIGH_WORD(hx,x);
 	ax = hx&0x7fffffff;
 
