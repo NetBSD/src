@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.1.1.1.2.5 2001/09/07 22:01:52 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.1.1.1.2.6 2001/09/08 02:33:48 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -986,7 +986,6 @@ kqueue_poll(struct file *fp, int events, struct proc *p)
 		} else {
 				/* XXXLUKEM: splsched() for next? */
 			selrecord(p, &kq->kq_sel);
-			kq->kq_state |= KQ_SEL;
 		}
 	}
 	splx(s);
@@ -1077,11 +1076,9 @@ kqueue_wakeup(struct kqueue *kq)
 		kq->kq_state &= ~KQ_SLEEP;
 		wakeup(kq);			/* ... wakeup */
 	}
-	if (kq->kq_state & KQ_SEL) {		/* if currently polling ... */
-		kq->kq_state &= ~KQ_SEL;
-		selwakeup(&kq->kq_sel);		/* ... selwakeup */
-	}
-	KNOTE(&kq->kq_sel.si_klist, 0);
+
+	/* Notify select/poll and kevent. */
+	selnotify(&kq->kq_sel, 0);
 }
 
 /*
