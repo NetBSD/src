@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.8 1998/03/27 09:11:33 jtc Exp $	*/
+/*	$NetBSD: crt0.c,v 1.9 1998/07/25 04:34:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -37,7 +37,6 @@
 #undef DYNAMIC
 #endif
 
-#include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/syscall.h>
 #include <vm/vm.h>
@@ -149,7 +148,7 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */     
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.8 1998/03/27 09:11:33 jtc Exp $"); 
+__RCSID("$NetBSD: crt0.c,v 1.9 1998/07/25 04:34:13 mycroft Exp $"); 
 #endif /* LIBC_SCCS and not lint */
 
 static char *
