@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: srvr_nfs.c,v 1.5 1997/07/24 23:17:20 christos Exp $
+ * $Id: srvr_nfs.c,v 1.6 1997/09/26 17:00:25 christos Exp $
  *
  */
 
@@ -97,7 +97,7 @@ static char ping_buf[sizeof(struct rpc_msg) + 32];
 static char *protocols[] = { "tcp", "udp", NULL };
 
 /* forward definitions */
-static void nfs_keepalive(fserver *fs);
+static void nfs_keepalive(voidp);
 
 
 
@@ -395,8 +395,9 @@ nfs_pinged(voidp pkt, int len, struct sockaddr_in * sp, struct sockaddr_in * tsp
  * Called when no ping-reply received
  */
 static void
-nfs_timed_out(fserver *fs)
+nfs_timed_out(voidp v)
 {
+  fserver *fs = v;
   nfs_private *np = (nfs_private *) fs->fs_private;
 
   /*
@@ -461,8 +462,9 @@ nfs_timed_out(fserver *fs)
  * Keep track of whether a server is alive
  */
 static void
-nfs_keepalive(fserver *fs)
+nfs_keepalive(voidp v)
 {
+  fserver *fs = v;
   int error;
   nfs_private *np = (nfs_private *) fs->fs_private;
   int fstimeo = -1;
@@ -610,16 +612,18 @@ start_nfs_pings(fserver *fs, int pingval)
 fserver *
 find_nfs_srvr(mntfs *mf)
 {
-  fserver *fs;
-  struct hostent *hp = 0;
   char *host = mf->mf_fo->opt_rhost;
-  char *rfsname = mf->mf_fo->opt_rfs;
-  struct sockaddr_in *ip;
-  nfs_private *np;
+  char *nfs_proto = NULL;
+  fserver *fs;
   int pingval;
   mntent_t mnt;
+  nfs_private *np;
+  struct hostent *hp = 0;
+  struct sockaddr_in *ip;
   u_long nfs_version = 0;	/* default is no version specified */
-  char *nfs_proto = NULL;
+#ifdef MNTTAB_OPT_PROTO
+  char *rfsname = mf->mf_fo->opt_rfs;
+#endif /* MNTTAB_OPT_PROTO */
 
   /*
    * Get ping interval from mount options.
@@ -821,7 +825,7 @@ find_nfs_srvr(mntfs *mf)
    */
   np->np_ttl = clocktime() + MAX_ALLOWED_PINGS * FAST_NFS_PING - 1;
   fs->fs_private = (voidp) np;
-  fs->fs_prfree = (void (*)()) free;
+  fs->fs_prfree = (void (*)(voidp)) free;
 
   if (!(fs->fs_flags & FSF_ERROR)) {
     /*

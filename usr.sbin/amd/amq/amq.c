@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq.c,v 1.6 1997/09/22 22:10:46 christos Exp $
+ * $Id: amq.c,v 1.7 1997/09/26 17:00:29 christos Exp $
  *
  */
 
@@ -54,7 +54,7 @@ char copyright[] = "\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
 #if __GNUC__ < 2
-static char rcsid[] = "$Id: amq.c,v 1.6 1997/09/22 22:10:46 christos Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.7 1997/09/26 17:00:29 christos Exp $";
 static char sccsid[] = "%W% (Berkeley) %G%";
 #endif /* __GNUC__ < 2 */
 #endif /* not lint */
@@ -310,7 +310,6 @@ main(int argc, char *argv[])
   struct timeval tv;
 #ifndef HAVE_TRANSPORT_TYPE_TLI
   enum clnt_stat cs;
-  u_long pmap_port = 0;
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
 
 

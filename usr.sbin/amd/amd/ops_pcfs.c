@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: ops_pcfs.c,v 1.3 1997/09/22 22:10:39 christos Exp $
+ * $Id: ops_pcfs.c,v 1.4 1997/09/26 17:00:15 christos Exp $
  *
  */
 
@@ -118,6 +118,7 @@ mount_pcfs(char *dir, char *fs_name, char *opts)
   /*
    * Fill in the mount structure
    */
+  memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
   mnt.mnt_fsname = fs_name;
   mnt.mnt_type = MNTTAB_TYPE_PCFS;
@@ -128,6 +129,18 @@ mount_pcfs(char *dir, char *fs_name, char *opts)
 #ifdef HAVE_FIELD_PCFS_ARGS_T_FSPEC
   pcfs_args.fspec = fs_name;
 #endif /* HAVE_FIELD_PCFS_ARGS_T_FSPEC */
+
+#ifdef HAVE_FIELD_PCFS_ARGS_T_MASK
+  pcfs_args.mask = 0777;	/* this may be the msdos file modes */
+#endif /* HAVE_FIELD_PCFS_ARGS_T_MASK */
+
+#ifdef HAVE_FIELD_PCFS_ARGS_T_UID
+  pcfs_args.uid = 0;		/* root */
+#endif /* HAVE_FIELD_PCFS_ARGS_T_UID */
+
+#ifdef HAVE_FIELD_PCFS_ARGS_T_GID
+  pcfs_args.gid = 0;		/* wheel */
+#endif /* HAVE_FIELD_PCFS_ARGS_T_GID */
 
 #ifdef HAVE_FIELD_PCFS_ARGS_T_SECONDSWEST
   pcfs_args.secondswest = 0;	/* XXX: fill in correct values */
