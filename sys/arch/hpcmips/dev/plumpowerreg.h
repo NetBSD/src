@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpowerreg.h,v 1.1 1999/11/21 06:50:26 uch Exp $ */
+/*	$NetBSD: plumpowerreg.h,v 1.2 1999/12/07 17:21:45 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -38,8 +38,11 @@
 #define PLUM_POWER_PWRCONT_USBEN	0x00000400
 #define PLUM_POWER_PWRCONT_IO5OE	0x00000200
 #define PLUM_POWER_PWRCONT_LCDOE	0x00000100
+/* Enable signal of oscillator for the VRAM control */
 #define PLUM_POWER_PWRCONT_EXTPW2	0x00000040
+/* Enable signal of the oscillator for LCD module */
 #define PLUM_POWER_PWRCONT_EXTPW1	0x00000020
+/* FET Switch that gates power line for RAMDAC */
 #define PLUM_POWER_PWRCONT_EXTPW0	0x00000010
 #define PLUM_POWER_PWRCONT_IO5PWR	0x00000008
 #define PLUM_POWER_PWRCONT_BKLIGHT	0x00000004
@@ -72,7 +75,9 @@
 
 /* reset control register (I/O bus)*/
 #define PLUM_POWER_RESETC_REG		0x010
+/* Active High control */
 #define PLUM_POWER_RESETC_IO5CL1	0x00000002
+/* Active Low control */
 #define PLUM_POWER_RESETC_IO5CL0	0x00000001
 
 #define PLUM_POWER_TESTMD_REG		0x100

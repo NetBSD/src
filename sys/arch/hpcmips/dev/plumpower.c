@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpower.c,v 1.1 1999/11/21 06:50:26 uch Exp $ */
+/*	$NetBSD: plumpower.c,v 1.2 1999/12/07 17:21:45 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -86,17 +86,19 @@ plumpower_attach(parent, self, aux)
 	}
 	plum_conf_register_power(sc->sc_pc, (void*)sc);
 
-#ifdef FULLPOWER
-	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_POWER_PWRCONT_REG, ~0);
-	delay(1000*1000);
-	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_POWER_CLKCONT_REG, ~0);
-	delay(1000*1000);
-#endif
 	plumpower_dump(sc);
 
-	/* Enable MCS interface */
+	/* disable all power/clock */
+	plum_conf_write(sc->sc_regt, sc->sc_regh, 
+			PLUM_POWER_PWRCONT_REG, 0);
+	plum_conf_write(sc->sc_regt, sc->sc_regh, 
+			PLUM_POWER_CLKCONT_REG, 0);
+	delay(300 * 1000);
+
+	/* enable MCS interface from TX3922 */
 	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_POWER_INPENA_REG,
 			PLUM_POWER_INPENA);
+	plumpower_dump(sc);
 }
 
 void
@@ -132,16 +134,27 @@ plum_power_establish(pc, src)
 	default:
 		panic("plum_power_establish: unknown power source");
 	case PLUM_PWR_LCD:
-		pwrreg |= (PLUM_POWER_PWRCONT_LCDOE |
-			PLUM_POWER_PWRCONT_LCDPWR |
-			PLUM_POWER_PWRCONT_LCDDSP);
+		pwrreg |= PLUM_POWER_PWRCONT_LCDPWR;
+		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
+		pwrreg |= PLUM_POWER_PWRCONT_LCDDSP;
+		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
+		pwrreg |= PLUM_POWER_PWRCONT_LCDOE;
+		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
 		break;
 	case PLUM_PWR_BKL:
 		pwrreg |= PLUM_POWER_PWRCONT_BKLIGHT;
 		break;
 	case PLUM_PWR_IO5:
-		pwrreg |= (PLUM_POWER_PWRCONT_IO5PWR |
-			   PLUM_POWER_PWRCONT_IO5OE);
+		/* reset I/O bus (High/Low) */
+		plum_power_ioreset(pc);
+
+		/* supply power */
+		pwrreg |= PLUM_POWER_PWRCONT_IO5PWR;
+		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
+		delay(300*1000);
+
+		/* output enable & supply clock */
+		pwrreg |= PLUM_POWER_PWRCONT_IO5OE;
 		clkreg |= PLUM_POWER_CLKCONT_IO5CLK;
 		break;
 	case PLUM_PWR_EXTPW0:
@@ -154,9 +167,12 @@ plum_power_establish(pc, src)
 		pwrreg |= PLUM_POWER_PWRCONT_EXTPW2;
 		break;
 	case PLUM_PWR_USB:
+		/* output enable */
 		pwrreg |= PLUM_POWER_PWRCONT_USBEN;
-		clkreg |= (PLUM_POWER_CLKCONT_USBCLK1 |
-			   PLUM_POWER_CLKCONT_USBCLK2);
+		/* supply clock to the USB host controller */
+		clkreg |= PLUM_POWER_CLKCONT_USBCLK1;
+		/* clock supply is adaptively controlled by hardware */
+		clkreg &= ~PLUM_POWER_CLKCONT_USBCLK2; 
 		break;
 	case PLUM_PWR_SM:
 		clkreg |= PLUM_POWER_CLKCONT_SMCLK;
@@ -170,7 +186,12 @@ plum_power_establish(pc, src)
 	}
 
 	plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
+	delay(300*1000);
+
 	plum_conf_write(regt, regh, PLUM_POWER_CLKCONT_REG, clkreg);
+	delay(300*1000);	
+
+	plumpower_dump(sc);
 
 	return (void*)src;
 }
@@ -194,8 +215,8 @@ plum_power_disestablish(pc, ph)
 		panic("plum_power_disestablish: unknown power source");
 	case PLUM_PWR_LCD:
 		pwrreg &= ~(PLUM_POWER_PWRCONT_LCDOE |
-			PLUM_POWER_PWRCONT_LCDPWR |
-			PLUM_POWER_PWRCONT_LCDDSP);
+			    PLUM_POWER_PWRCONT_LCDPWR |
+			    PLUM_POWER_PWRCONT_LCDDSP);
 		break;
 	case PLUM_PWR_BKL:
 		pwrreg &= ~PLUM_POWER_PWRCONT_BKLIGHT;
@@ -233,6 +254,7 @@ plum_power_disestablish(pc, ph)
 	plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
 	plum_conf_write(regt, regh, PLUM_POWER_CLKCONT_REG, clkreg);
 
+	plumpower_dump(sc);
 }
 
 #define ISPOWERSUPPLY(r, m) __is_set_print(r, PLUM_POWER_PWRCONT_##m, #m)
@@ -273,10 +295,6 @@ plumpower_dump(sc)
 	printf("\n IO5 reset:%s %s",
 	       reg & PLUM_POWER_RESETC_IO5CL0 ? "CLRL" : "",
 	       reg & PLUM_POWER_RESETC_IO5CL1 ? "CLRH" : "");
-
-	reg = plum_conf_read(regt, regh, PLUM_POWER_TESTMD_REG);
-	printf("\n Test mode set:");
-	bitdisp(reg);
 	printf("\n");
 }
 
