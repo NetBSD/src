@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_60.h,v 1.1 1997/06/02 20:26:43 leo Exp $	*/
+/*	$NetBSD: cacheops_60.h,v 1.1.8.1 1997/11/05 04:14:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * Invalidate entire TLB.
  */
 void TBIA_60 __P((void));
-extern inline void
+extern __inline void
 TBIA_60()
 {
 	__asm __volatile (" .word 0xf518" ); /*  pflusha */
@@ -50,7 +50,7 @@ TBIA_60()
  * Invalidate any TLB entry for given VA (TB Invalidate Single)
  */
 void TBIS_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 TBIS_60(va)
 	vm_offset_t	va;
 {
@@ -73,7 +73,7 @@ TBIS_60(va)
  * Invalidate supervisor side of TLB
  */
 void TBIAS_60 __P((void));
-extern inline void
+extern __inline void
 TBIAS_60()
 {
 	int	tmp;
@@ -91,7 +91,7 @@ TBIAS_60()
  * Invalidate user side of TLB
  */
 void TBIAU_60 __P((void));
-extern inline void
+extern __inline void
 TBIAU_60()
 {
 	int	tmp;
@@ -109,7 +109,7 @@ TBIAU_60()
  * Invalidate instruction cache
  */
 void ICIA_60 __P((void));
-extern inline void
+extern __inline void
 ICIA_60()
 {
 	/* inva ic (also clears branch cache) */
@@ -117,7 +117,7 @@ ICIA_60()
 }
 
 void ICPA_60 __P((void));
-extern inline void
+extern __inline void
 ICPA_60()
 {
 	/* inva ic (also clears branch cache) */
@@ -128,28 +128,28 @@ ICPA_60()
  * Invalidate data cache.
  */
 void DCIA_60 __P((void));
-extern inline void
+extern __inline void
 DCIA_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 void DCIS_60 __P((void));
-extern inline void
+extern __inline void
 DCIS_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 void DCIU_60 __P((void));
-extern inline void
+extern __inline void
 DCIU_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 void DCIAS_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 DCIAS_60(va)
 	vm_offset_t	va;
 {
@@ -159,14 +159,14 @@ DCIAS_60(va)
 }
 
 void PCIA_60 __P((void));
-extern inline void
+extern __inline void
 PCIA_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
 }
 
 void DCFA_60 __P((void));
-extern inline void
+extern __inline void
 DCFA_60()
 {
 	__asm __volatile (" .word 0xf478;"); /* cpusha dc */
@@ -174,7 +174,7 @@ DCFA_60()
 
 /* invalidate instruction physical cache line */
 void ICPL_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 ICPL_60(va)
 	vm_offset_t	va;
 {
@@ -185,7 +185,7 @@ ICPL_60(va)
 
 /* invalidate instruction physical cache page */
 void ICPP_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 ICPP_60(va)
 	vm_offset_t	va;
 {
@@ -196,7 +196,7 @@ ICPP_60(va)
 
 /* invalidate data physical cache line */
 void DCPL_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 DCPL_60(va)
 	vm_offset_t	va;
 {
@@ -207,7 +207,7 @@ DCPL_60(va)
 
 /* invalidate data physical cache page */
 void DCPP_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 DCPP_60(va)
 	vm_offset_t	va;
 {
@@ -218,7 +218,7 @@ DCPP_60(va)
 
 /* invalidate data physical all */
 void DCPA_60 __P((void));
-extern inline void
+extern __inline void
 DCPA_60()
 {
 	__asm __volatile (" .word 0xf458;"); /* cinva dc */
@@ -226,7 +226,7 @@ DCPA_60()
 
 /* data cache flush line */
 void DCFL_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 DCFL_60(va)
 	vm_offset_t	va;
 {
@@ -237,7 +237,7 @@ DCFL_60(va)
 
 /* data cache flush page */
 void DCFP_60 __P((vm_offset_t));
-extern inline void
+extern __inline void
 DCFP_60(va)
 	vm_offset_t	va;
 {
