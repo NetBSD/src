@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.6 1994/11/02 04:55:20 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.7 1994/11/02 23:16:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -102,6 +102,10 @@ busprint(args, obio)
 	if (obio)
 		printf("[%s at %s]", ca->ca_ra.ra_name, obio);
 	printf(" addr %x", ca->ca_ra.ra_paddr);
+	if (ca->ca_ra.ra_intr[0].int_pri != -1)
+		printf(" pri %d", ca->ca_ra.ra_intr[0].int_pri);
+	if (ca->ca_ra.ra_intr[0].int_vec != -1)
+		printf(" vec 0x%x", ca->ca_ra.ra_intr[0].int_vec);
 	return (UNCONF);
 }
 
