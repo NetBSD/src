@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/08/06 19:12:02 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2002/01/31 21:15:08 tv Exp $
 
 TOP=		${.CURDIR}/../../..
 DIST=		${TOP}/dist/toolchain
@@ -7,7 +7,9 @@ DIST=		${TOP}/dist/toolchain
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
 PROG=		as
-SRCS=		${G_OBJS:.o=.c}
+SRCS=		${G_OBJS:Nitbl-[pl]*:.o=.c} \
+		${G_OBJS:Mitbl-parse.o:.o=.y} \
+		${G_OBJS:Mitbl-lex.o:.o=.l}
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 
