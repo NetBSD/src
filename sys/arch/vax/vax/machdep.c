@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.41 1997/04/19 15:02:31 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.42 1997/06/06 23:26:10 veego Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -126,6 +126,7 @@ caddr_t		mcraddr[MAXNMCR];
 int		astpending;
 int		want_resched;
 char		machine[] = "vax";
+char		machine_arch[] = "vax";
 char		cpu_model[100];
 int		msgbufmapped = 0;
 struct msgbuf  *msgbufp;

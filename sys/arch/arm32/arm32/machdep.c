@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.20 1997/03/27 21:01:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21 1997/06/06 23:26:03 veego Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -159,6 +159,7 @@ pt_entry_t kernel_pt_table[15];
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "arm32";	/* cpu "architecture" */
+char machine_arch[] = "arm32";	/* machine == machine_arch */
 
 char *boot_args;
 
