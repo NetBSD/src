@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.81 1999/05/01 16:13:45 ragge Exp $	 */
+/* $NetBSD: machdep.c,v 1.82 1999/05/02 17:28:43 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -445,6 +445,10 @@ consinit()
 //		ksym_init(&end, esym);
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
 	}
+#ifdef DEBUG
+	if (sizeof(struct user) > REDZONEADDR)
+		panic("struct user inside red zone");
+#endif
 #ifdef donotworkbyunknownreason
 	if (boothowto & RB_KDB)
 		Debugger();
