@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.44 1999/09/02 23:23:03 ross Exp $	*/
+/*	$NetBSD: pciide.c,v 1.45 1999/10/25 14:13:12 bouyer Exp $	*/
 
 
 /*
@@ -1907,7 +1907,7 @@ cmd_chip_map(sc, pa)
 		return;
 #endif
 
-	printf("%s: hardware does not support DMA",
+	printf("%s: hardware does not support DMA\n",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	sc->sc_dma_ok = 0;
 
