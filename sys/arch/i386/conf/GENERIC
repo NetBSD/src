@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.320 2000/04/03 00:03:30 augustss Exp $
+#	$NetBSD: GENERIC,v 1.321 2000/04/09 18:34:02 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.320 $"
+#ident 		"GENERIC-$Revision: 1.321 $"
 
 maxusers	32		# estimated number of users
 
@@ -634,9 +634,12 @@ aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
+# Prolofic PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
 # USB Handspring Visor
-#uvisor*	at uhub? port ?
-#ucom*	at uvisor?
+uvisor*	at uhub? port ?
+ucom*	at uvisor?
 
 # USB Generic driver
 ugen*	at uhub? port ?
