@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.44 2001/09/22 23:01:12 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.45 2001/09/22 23:07:29 sommerfeld Exp $	*/
 
 /*
  *
@@ -3450,50 +3450,6 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		simple_unlock(&pq->pq_slock);
 	}
 	splx(s);
-}
-
-/*
- * XXX belongs in cpufunc.h??
- */
-static __inline void
-tlbflushg(void)
-{
-#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU)
-	u_int cr3;
-#endif
-#if defined(I686_CPU)
-	u_int ocr4, tcr4;
-#endif
-	/*
-	 * Big hammer: flush all TLB entries from PTE's with the G bit set.
-	 * This should only be necessary if MP TLB invalidation falls
-	 * far behind.
-	 *
-	 * Intel Architecture Software Developer's Manual, Volume 3,
-	 *	System Programming, section 9.10, "Invalidating the
-	 * Translation Lookaside Buffers (TLBS)":
-	 * "The following operations invalidate all TLB entries, irrespective
-	 * of the setting of the G flag:
-	 * ...
-	 * "(P6 family processors only): Writing to control register CR4 to
-	 * modify the PSE, PGE, or PAE flag."
-	 *
-	 * If appropriate, we also reload CR3 for the benefit of
-	 * pre-P6-family processors.
-	 */
-
-#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU)
-	cr3 = rcr3();
-#endif
-#if defined(I686_CPU)
-	ocr4 = rcr4();
-	tcr4 = ocr4 & ~CR4_PGE;
-	lcr4(tcr4);
-	lcr4(ocr4);
-#endif
-#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU)
-	lcr3(cr3);
-#endif
 }
 
 /*
