@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.32 1998/09/13 11:58:00 mycroft Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.33 1998/09/14 07:04:06 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.32 1998/09/13 11:58:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.33 1998/09/14 07:04:06 jonathan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_uvm.h"
@@ -903,14 +903,14 @@ sys___sigreturn14(p, v, retval)
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
 
-	if (ksc.sc.regs[ZERO] != 0xACEDBADE)		/* magic number */
+	if (ksc.sc_regs[ZERO] != 0xACEDBADE)		/* magic number */
 		return (EINVAL);
 
 	/* Resture the register context. */
 	regs = p->p_md.md_regs;
 	regs[PC] = ksc.sc_pc;
 	regs[MULLO] = ksc.mullo;
-	rege[MULHI] = ksc.mulhi;
+	regs[MULHI] = ksc.mulhi;
 	memcpy(&regs[1], &scp->sc_regs[1],
 	    sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)
