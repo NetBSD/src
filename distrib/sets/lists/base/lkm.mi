@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.9 2004/11/11 05:41:44 christos Exp $
+# $NetBSD: lkm.mi,v 1.10 2005/01/24 15:50:52 cube Exp $
 ./usr/lkm/adosfs.o				base-vfs-lkm
 ./usr/lkm/bsdcomp.o				base-ppp-lkm
 ./usr/lkm/cd9660.o				base-vfs-lkm
@@ -21,5 +21,6 @@
 ./usr/lkm/procfs.o				base-vfs-lkm
 ./usr/lkm/ptyfs.o				base-vfs-lkm
 ./usr/lkm/smbfs.o				base-vfs-lkm
+./usr/lkm/tap.o					base-net-lkm
 ./usr/lkm/umapfs.o				base-vfs-lkm
 ./usr/lkm/union.o				base-vfs-lkm
