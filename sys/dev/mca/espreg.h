@@ -1,12 +1,11 @@
-/*	$NetBSD: espvar.h,v 1.2 2001/12/04 20:47:58 jdolecek Exp $	*/
+/*	$NetBSD: espreg.h,v 1.1 2001/12/04 20:47:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center and Jaromir Dolecek.
+ * by Jaromir Dolecek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,24 +36,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct esp_softc {
-	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
-	bus_space_tag_t	sc_iot;
+/*
+ * MCA NCR 53C90 86C01 DMA controller registers.
+ *
+ * Information got from Tymm Twillman <tymm@computer.org>'s
+ * Linux MCA NC53c90 driver drivers/scsi/mca_53c9x.c.
+ */
 
-	bus_space_handle_t sc_ioh;	/* the device registers */
-	bus_space_handle_t sc_esp_ioh;	/* the 'esp' registers */
+#define N86C01_CARDID_LOW	0x00		/* CardId, lower byte */
 
-	bus_dma_tag_t sc_dmat;
+#define N86C01_CARDID_HIGH	0x01		/* CardId, high byte */
 
-	void *sc_ih;
+#define N86C01_MODE_ENABLE	0x02		/* Mode enable register */
+#define	 N86C01_DATA_WIDTH	0x80		/* data width - 1=16 0=8 */
+#define  N86C01_INTR_ENABLE	0x40		/* enable inrerrupts 1=enable*/
+#define  N86C01_INTR_SELECT_MSK	0x30		/* IRQ select - see ADF */
+#define  N86C01_IOADDR_MSK	0x0e		/* Base Address - see ADF */
+#define  N86C01_CARD_ENABLE	0x01		/* Card enable - 1=enabled */
 
-	bus_dmamap_t	sc_xfer;
+#define N86C01_DMA_CTRL		0x03		/* DMA control */
+#define  N86C01_DMA_ENABLE	0x80		/* DMA enable - 1=enabled */
+#define  N86C01_PREEMPT_CNT_MSK	0x60
+	/* Preemt Count Select - number of transfers to complete after
+	 * the chip is preempted on MCA bus
+	 *	0 0 = 0
+	 *	0 1 = 1
+	 *	1 0 = 3
+	 *	1 1 = 7
+	 */
+#define  N86C01_FAIRNESS_EN	0x10		/* Fairness enable 1=enable */
+#define  N86C01_DMA_ARB_MSK	0x0f		/* DMA Arbitration lvl */
 
-	caddr_t		*sc_xfer_addr;
-	size_t		*sc_xfer_len;
+#define N86C01_GENERAL		0x04		/* General purpose register */
+/* Bits 7,6 apply to SCSI Id selection in ADF, 5-3 user definable, 2-0 reserv*/
 
-	volatile int sc_flags;
-#define	ESP_XFER_LOADED		0x01
-#define ESP_XFER_ACTIVE		0x02
-#define	ESP_XFER_READ		0x04
-};
+#define N86C01_PIO		0x0a		/* IO-based DMA, PIO */
+
+#define N86C01_STATUS		0x0c		/* Status */
+#define  N86C01_DMA_PEND	0x02		/* DMA pending 1=pending */
+#define  N86C01_IRQ_PEND	0x01		/* IRQ pending 0=pending */
