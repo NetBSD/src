@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.14 1996/12/16 21:24:32 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.15 1996/12/16 22:03:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,6 +129,27 @@ clockmatch(pdp, match, auxp)
 struct device	*pdp;
 void		*match, *auxp;
 {
+	if (!atari_realconfig) {
+	    /*
+	     * Initialize Timer-B in the ST-MFP. This timer is used by
+	     * the 'delay' function below. This timer is setup to be
+	     * continueously counting from 255 back to zero at a
+	     * frequency of 614400Hz. We do this *early* in the
+	     * initialisation process.
+	     */
+	    MFP->mf_tbcr  = 0;		/* Stop timer			*/
+	    MFP->mf_iera &= ~IA_TIMB;	/* Disable timer interrupts	*/
+	    MFP->mf_tbdr  = 0;	
+	    MFP->mf_tbcr  = T_Q004;	/* Start timer			*/
+
+	    /*
+	     * Initialize the time structure
+	     */
+	    time.tv_sec  = 0;
+	    time.tv_usec = 0;
+
+	    return 0;
+	}
 	if(!strcmp("clock", auxp))
 		return(1);
 	return(0);
@@ -177,18 +198,6 @@ void		*auxp;
 	profmin  = (CLOCK_HZ/profhz) - (statvar >> 1);
 	clk2min  = statmin;
 #endif /* STATCLOCK */
-
-	/*
-	 * Initialize Timer-B in the ST-MFP. This timer is used by
-	 * the 'delay' function below. This timer is setup to be
-	 * continueously counting from 255 back to zero at a
-	 * frequency of 614400Hz. We do this *early* in the
-	 * initialisation process.
-	 */
-	MFP->mf_tbcr  = 0;		/* Stop timer			*/
-	MFP->mf_iera &= ~IA_TIMB;	/* Disable timer interrupts	*/
-	MFP->mf_tbdr  = 0;	
-	MFP->mf_tbcr  = T_Q004;	/* Start timer			*/
 
 }
 
