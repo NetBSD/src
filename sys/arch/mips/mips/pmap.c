@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 1997/06/16 23:41:53 jonathan Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 1997/06/17 01:38:21 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -251,8 +251,9 @@ pmap_bootstrap(firstaddr)
 	 * when Entry LO and Entry HI G bits are anded together
 	 * they will produce a global bit to store in the tlb.
 	 */
-	for(i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
-		spte->pt_entry = MIPS3_PG_G;
+	if (CPUISMIPS3)
+		for(i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
+			spte->pt_entry = MIPS3_PG_G;
 #endif
 }
 
@@ -458,9 +459,11 @@ pmap_release(pmap)
 			pte = pmap->pm_segtab->seg_tab[i];
 			if (!pte)
 				continue;
-#ifndef MIPS3
-			vm_page_free1(
-				PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
+#ifdef MIPS1
+			if (!(CPUISMIPS3)) {
+				vm_page_free1(
+				    PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
+			}
 #endif
 #ifdef DIAGNOSTIC
 			for (j = 0; j < NPTEPG; j++) {
@@ -468,11 +471,16 @@ pmap_release(pmap)
 					panic("pmap_release: segmap not empty");
 			}
 #endif
+
 #ifdef MIPS3
-			MachHitFlushDCache((vm_offset_t)pte, PAGE_SIZE);
-			vm_page_free1(
-				PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
-#endif
+			if (CPUISMIPS3) {
+					
+				MachHitFlushDCache((caddr_t)pte, PAGE_SIZE);
+				vm_page_free1(
+				    PHYS_TO_VM_PAGE(MACH_CACHED_TO_PHYS(pte)));
+			}
+#endif /* mips3 */
+
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
 		s = splimp();
@@ -541,10 +549,11 @@ pmap_remove(pmap, sva, eva)
 			if (mips_pg_wired(entry))
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
-			if(pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
+			if (pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
 #ifdef MIPS3
-				MachFlushDCache(sva, PAGE_SIZE);
-#endif
+				if (CPUISMIPS3)
+					MachFlushDCache(sva, PAGE_SIZE);
+#endif /* mips3 */
 			}
 #ifdef ATTR
 			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
@@ -598,8 +607,9 @@ pmap_remove(pmap, sva, eva)
 			pmap->pm_stats.resident_count--;
 			if(pmap_remove_pv(pmap, sva, pfn_to_vad(entry))) {
 #ifdef MIPS3
-				MachFlushDCache(sva, PAGE_SIZE);
-#endif
+				if (CPUISMIPS3)
+					MachFlushDCache(sva, PAGE_SIZE);
+#endif /* mips3 */
 			}
 #ifdef ATTR
 			pmap_attributes[atop(pfn_to_vad(entry))] = 0;
@@ -967,8 +977,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * between R/W and R/O pages.
 	 * NOTE: we only support cache flush for read only text.
 	 */
-#ifndef MIPS3
-	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
+#ifdef MIPS1
+	if ((!CPUISMIPS3) && prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
 		MachFlushICache(MACH_PHYS_TO_CACHED(pa), PAGE_SIZE);
 	}
 #endif
@@ -1062,7 +1072,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pte++;
 	} while (--i != 0);
 #ifdef MIPS3
-	if (prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
+	if (CPUISMIPS3 && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: flush I cache va %lx (%lx)\n",
@@ -1250,9 +1260,11 @@ pmap_zero_page(phys)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
 #ifdef MIPS3
-/*XXX FIXME Not very sophisticated */
-/*	MachFlushCache();*/
-	MachFlushDCache(phys, NBPG);
+	if (CPUISMIPS3) {
+		/*XXX FIXME Not very sophisticated */
+		/*	MachFlushCache();*/
+		MachFlushDCache(phys, NBPG);
+	}
 #endif
 	p = (int *)MACH_PHYS_TO_CACHED(phys);
 	end = p + PAGE_SIZE / sizeof(int);
@@ -1265,9 +1277,11 @@ pmap_zero_page(phys)
 		p += 4;
 	} while (p != end);
 #ifdef MIPS3
-/*XXX FIXME Not very sophisticated */
-/*	MachFlushCache();*/
-	MachFlushDCache(phys, NBPG);
+	if (CPUISMIPS3) {
+		/*XXX FIXME Not very sophisticated */
+		/*	MachFlushCache();*/
+		MachFlushDCache(phys, NBPG);
+	}
 #endif
 }
 
@@ -1287,9 +1301,11 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
 #ifdef MIPS3
-/*XXX FIXME Not very sophisticated */
-/*	MachFlushCache(); */
-	MachFlushDCache(src, NBPG);
+	if (CPUISMIPS3) {
+		/*XXX FIXME Not very sophisticated */
+		/*	MachFlushCache(); */
+		MachFlushDCache(src, NBPG);
+	}
 #endif
 	s = (int *)MACH_PHYS_TO_CACHED(src);
 	d = (int *)MACH_PHYS_TO_CACHED(dst);
@@ -1307,9 +1323,11 @@ pmap_copy_page(src, dst)
 		d += 4;
 	} while (s != end);
 #ifdef MIPS3
-/*XXX FIXME Not very sophisticated */
-/*	MachFlushCache();*/
-	MachFlushDCache(dst, NBPG);
+	if (CPUISMIPS3) {
+		/*XXX FIXME Not very sophisticated */
+		/*	MachFlushCache();*/
+		MachFlushDCache(dst, NBPG);
+	}
 #endif
 }
 
