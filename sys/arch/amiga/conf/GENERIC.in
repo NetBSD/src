@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.16 2003/10/08 11:02:45 bouyer Exp $
+# $NetBSD: GENERIC.in,v 1.17 2004/02/23 20:53:41 jandberg Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -310,14 +310,14 @@ m4_ifdef(`WSCONS_CONFIGURATION', `m4_dnl
 amidisplaycc0	at mainbus0		# wscons interface to custom chips
 wsdisplay0	at amidisplaycc0 console ?
 options 	WSEMUL_VT100
-options 	FONT_BOLD8x16
 options 	FONT_VT220L8x10
+options 	FONT_VT220ISO8x16
 ', `
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
 #options 	WSEMUL_VT100
-#options 	FONT_BOLD8x16
 #options 	FONT_VT220L8x10
+#options	FONT_VT220ISO8x16
 ')m4_dnl
 ')m4_dnl
 
