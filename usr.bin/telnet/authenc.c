@@ -1,4 +1,4 @@
-/*	$NetBSD: authenc.c,v 1.10 2003/06/18 20:51:00 christos Exp $	*/
+/*	$NetBSD: authenc.c,v 1.11 2003/07/12 13:33:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: authenc.c,v 1.10 2003/06/18 20:51:00 christos Exp $");
+__RCSID("$NetBSD: authenc.c,v 1.11 2003/07/12 13:33:08 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ telnet_gets(char *prompt, char *result, int length, int echo)
 		printf("%s", prompt);
 		res = fgets(result, length, stdin);
 	} else if ((res = getpass(prompt)) != NULL) {
-		strncpy(result, res, length);
+		strlcpy(result, res, length);
 		res = result;
 	}
 	TerminalNewMode(om);
