@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.105 2001/04/05 02:48:51 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.106 2001/06/21 03:07:04 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2661,8 +2661,6 @@ rf_find_raid_components()
 	/* initialize the AutoConfig list */
 	ac_list = NULL;
 
-if (raidautoconfig) {
-
 	/* we begin by trolling through *all* the devices on the system */
 
 	for (dv = alldevs.tqh_first; dv != NULL;
@@ -2785,8 +2783,7 @@ if (raidautoconfig) {
 			}
 		}
 	}
-}
-return(ac_list);
+	return(ac_list);
 }
 			
 static int
