@@ -1,3 +1,24 @@
+2005-03-14  Emmanuel Dreyfus <manu@netbsd.org>
+
+	* configure.ac: handle correctly dynamic libradius
+
+2005-03-13  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp.c: Fixed a buffer underrun (CAN-2005-0398)
+
+2005-03-09  Emmanuel Dreyfus <manu@netbsd.org>
+
+	* src/racoon/isakmp_xauth.c: fix a crash when using RADIUS auth
+
+2005-03-02  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/isakmp_quick.c: tunnel_mode_prop() is now public
+	* src/racoon/isakmp_inf.c: fixed compilation if HAVE_POLICY_FWD.
+
+2005-03-01  Yvan Vanhullebus  <vanhu@free.fr>
+
+	* src/racoon/oakley.c: fixed oakley_newiv2() when errors
+
 2005-02-24  Emmanuel Dreyfus <manu@netbsd.org>
 
 	* src/racoon/privsep.c: safety check port numbers given by the

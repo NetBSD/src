@@ -1,6 +1,6 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.1.1.2 2005/02/23 14:54:21 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.1.1.3 2005/03/14 08:14:31 manu Exp $	*/
 
-/* Id: isakmp_xauth.c,v 1.17.2.1 2005/02/23 12:18:40 manubsd Exp */
+/* Id: isakmp_xauth.c,v 1.17.2.2 2005/03/09 14:12:31 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -458,7 +458,6 @@ xauth_login_radius(iph1, usr, pwd)
 	char *usr;
 	char *pwd;
 {
-	static struct rad_handle *radius_state = NULL;
 	int res;
 	const void *data;
 	size_t len;
