@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.658 2004/10/22 15:00:50 cube Exp $
+$NetBSD: pcidevs,v 1.659 2004/10/26 11:30:52 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -583,6 +583,7 @@ vendor CAVIUM		0x177d	Cavium
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor HAWKING		0x17b3	Hawking Technology
 vendor SANDBURST	0x17ba	Sandburst, Inc.
+vendor I4		0x17cf	I4
 vendor S2IO		0x17d5	S2io Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
@@ -634,6 +635,7 @@ product 3COM 3C595TX	0x5950	3c595-TX 10/100 Ethernet
 product 3COM 3C595T4	0x5951	3c595-T4 10/100 Ethernet
 product 3COM 3C595MII	0x5952	3c595-MII 10/100 Ethernet
 product 3COM 3C555	0x5055	3c555 10/100 Mini-PCI Ethernet
+product 3COM 3C154G72	0x6001	3CRWE154G72 Wireless LAN adapter
 product 3COM 3C556	0x6055	3c556 10/100 Mini-PCI Ethernet
 product 3COM 3C556B	0x6056	3c556B 10/100 Mini-PCI Ethernet
 product 3COM 3C656_E	0x6560	3CCFEM656 10/100 Ethernet
@@ -1849,7 +1851,8 @@ product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
 
 /* Intersil products */
 product INTERSIL MINI_PCI_WLAN	0x3873	PRISM2.5 Mini-PCI WLAN
-product INTERSIL MINI_PCI_P54	0x3890	PRISM-54 Mini-PCI WLAN
+product INTERSIL MINI_PCI_3877	0x3877	PRISM Indigo Mini-PCI WLAN
+product INTERSIL MINI_PCI_3890	0x3890	PRISM Duette Mini-PCI WLAN
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
