@@ -1,4 +1,4 @@
-/*	$NetBSD: vmereg.h,v 1.2 1997/06/07 19:10:57 pk Exp $ */
+/*	$NetBSD: vmereg.h,v 1.3 1998/01/25 16:06:25 pk Exp $ */
 
 /*
  * Copyright (c) 1997 	Paul Kranenburg
@@ -33,12 +33,12 @@
  */
 
 struct vmebusreg {
-	u_int32_t	vmebus_cr;	/* VMEbus control register */
-	u_int32_t	vmebus_afar;	/* VMEbus async fault address */
-	u_int32_t	vmebus_afsr;	/* VMEbus async fault status */
+	volatile u_int32_t	vmebus_cr;	/* VMEbus control register */
+	volatile u_int32_t	vmebus_afar;	/* VMEbus async fault address */
+	volatile u_int32_t	vmebus_afsr;	/* VMEbus async fault status */
 };
 
-/* Control Register bits */
+/* VME Control Register bits */
 #define VMEBUS_CR_C	0x80000000	/* I/O cache enable */
 #define VMEBUS_CR_S	0x40000000	/* VME slave enable */
 #define VMEBUS_CR_L	0x20000000	/* Loopback enable (diagnostic) */
@@ -46,7 +46,7 @@ struct vmebusreg {
 #define VMEBUS_CR_RSVD	0x0ffffff0	/* reserved */
 #define VMEBUS_CR_IMPL	0x0000000f	/* VMEbus interface implementation */
 
-/* Asynchronous Fault Status bits */
+/* VME Asynchronous Fault Status bits */
 #define VMEBUS_AFSR_SZ	0xe0000000	/* Error transaction size */
 #define    VMEBUS_AFSR_SZ4	0	/* 4 byte */
 #define    VMEBUS_AFSR_SZ1	1	/* 1 byte */
@@ -65,10 +65,38 @@ struct vmebusvec {
 	volatile u_int8_t	vmebusvec[16];
 };
 
-/* VME address modifiers */
-#define VMEMOD_A16_D_S	0x2d		/* 16-bit address, data, supervisor */
-#define VMEMOD_A24_D_S	0x3d		/* 24-bit address, data, supervisor */
-#define VMEMOD_A32_D_S	0x0d		/* 32-bit address, data, supervisor */
+/*
+ * VME IO-cache definitions.
+ */
+#define VME_IOC_SIZE		0x8000
+#define VME_IOC_LINESHFT	5
+#define VME_IOC_LINESZ		(1 << VME_IOC_LINESHFT)
 
-#define VMEMOD_D32	0x40		/* 32-bit access */
+/*
+ * The VME IO cache lines are selected by bits [13-22] of the DVMA address.
+ * A byte within a cache line is selected by bits [0-4]. The bits in between
+ * (e.g. [5-12]) are used as the cache tag.
+ */
+#define VME_IOC_IDXSHFT		13
+#define VME_IOC_IDXMASK		0x3ff
+#define VME_IOC_PAGESZ		(1 << VME_IOC_IDXSHFT) /* 8192 */
+#define VME_IOC_LINE_IDX(addr)	\
+	((((u_long)(addr)) >> VME_IOC_IDXSHFT) & VME_IOC_IDXMASK)
+#define VME_IOC_LINE(addr)	(VME_IOC_LINE_IDX(addr) << VME_IOC_LINESHFT)
+
+/* Format of a IO cache tag entry */
+#define VME_IOC_W		0x00100000	/* Allow writes */
+#define VME_IOC_IC		0x00200000	/* Line is cacheable */
+#define VME_IOC_M		0x00400000	/* Line is modified */
+#define VME_IOC_V		0x00800000	/* Data is valid */
+#define VME_IOC_TAGMASK		0xff000000	/* Tag (bits <5-12> of DVMA) */
+
+/*
+ * Physical IO-cache addresses.
+ * (expressed as offsets relative to VME vector registers, for want
+ *  of something better).
+ */
+#define VME_IOC_TAGOFFSET	0x0f000000
+#define VME_IOC_DATAOFFSET	0x0f008000
+#define VME_IOC_FLUSHOFFSET	0x0f020000
 
