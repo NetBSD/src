@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.h,v 1.1 1999/03/15 15:47:22 leo Exp $	*/
+/*	$NetBSD: pci_vga.h,v 1.2 2001/05/28 07:22:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -28,10 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-int check_for_vga __P((void));
+int check_for_vga(bus_space_tag_t, bus_space_tag_t);
 
 /*
  * Card specific functions
  */
-void tseng_init __P((pci_chipset_tag_t, pcitag_t, int, volatile u_char *,
-			u_char *));
+void tseng_init (pci_chipset_tag_t, pcitag_t, int, volatile u_char *, u_char *);
