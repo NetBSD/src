@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.4 2002/10/02 08:58:01 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.5 2002/10/02 14:26:03 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -339,7 +339,7 @@ Current Vers:	3.4.29
 Maintainer:	Darren Reed
 Archive Site:	http://www.ipfilter.org/
 Mailing List:	ipfilter@postbox.anu.edu.au
-Responsible:	darrenr, mrg, mike, martti
+Responsible:	darrenr, mike, martti
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
 
@@ -469,7 +469,7 @@ Current Vers:	1.79
 Maintainer:	Keith Bostic <bostic@bsdi.com>
 Archive Site:	ftp://ftp.bostic.com/pub/
 Mailing List:	
-Responsible:	mrg, aymeric
+Responsible:	aymeric
 Notes:
 1.79 is probably the last version we will import. Nvi is now moving towards
 X11 support and other things we don't want.
