@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.92.2.10 2002/11/11 22:16:09 nathanw Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.92.2.11 2002/12/11 06:46:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.92.2.10 2002/11/11 22:16:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.92.2.11 2002/12/11 06:46:50 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -580,7 +580,6 @@ extern const int nqnfs_piggy[NFS_NPROCS];
 extern struct nfsnodehashhead *nfsnodehashtbl;
 extern u_long nfsnodehash;
 
-LIST_HEAD(nfsnodehashhead, nfsnode);
 u_long nfsdirhashmask;
 
 int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1.4.2 2002/02/28 04:14:41 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.4.3 2002/12/11 06:42:59 thorpej Exp $
 
-KDIR=	/sys/fs/smbfs
 INCSDIR= /usr/include/fs/smbfs
 
 #INCS=	smbfs.h smbfs_node.h smbfs_subr.h

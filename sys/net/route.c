@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43.2.6 2002/08/27 23:47:54 nathanw Exp $	*/
+/*	$NetBSD: route.c,v 1.43.2.7 2002/12/11 06:46:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.2.6 2002/08/27 23:47:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.2.7 2002/12/11 06:46:33 thorpej Exp $");
 
 #include "opt_ns.h"
 
@@ -251,7 +251,7 @@ rtfree(rt)
 			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
-		rt_timer_remove_all(rt);
+		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
 		IFAFREE(ifa);
 		Free(rt_key(rt));
@@ -918,7 +918,7 @@ rt_timer_queue_change(rtq, timeout)
 }
 
 void
-rt_timer_queue_destroy(rtq, destroy)
+rt_timer_queue_remove_all(rtq, destroy)
 	struct rttimer_queue *rtq;
 	int destroy;
 {
@@ -933,8 +933,18 @@ rt_timer_queue_destroy(rtq, destroy)
 		if (rtq->rtq_count > 0)
 			rtq->rtq_count--;
 		else
-			printf("rt_timer_queue_destroy: rtq_count reached 0\n");
+			printf("rt_timer_queue_remove_all: "
+			    "rtq_count reached 0\n");
 	}
+}
+
+void
+rt_timer_queue_destroy(rtq, destroy)
+	struct rttimer_queue *rtq;
+	int destroy;
+{
+
+	rt_timer_queue_remove_all(rtq, destroy);
 
 	LIST_REMOVE(rtq, rtq_link);
 
@@ -952,14 +962,17 @@ rt_timer_count(rtq)
 }
 
 void     
-rt_timer_remove_all(rt)
+rt_timer_remove_all(rt, destroy)
 	struct rtentry *rt;
+	int destroy;
 {
 	struct rttimer *r;
 
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		if (destroy)
+			RTTIMER_CALLOUT(r);
 		if (r->rtt_queue->rtq_count > 0)
 			r->rtt_queue->rtq_count--;
 		else

@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:00 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 06:43:00 thorpej Exp $
 
 SUBDIR=	cd9660
 
-KDIR=	/sys/isofs
 INCSDIR= /usr/include/isofs
 
 .include <bsd.kinc.mk>

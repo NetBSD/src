@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.72.2.6 2002/11/11 22:15:12 nathanw Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.72.2.7 2002/12/11 06:46:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.72.2.6 2002/11/11 22:15:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.72.2.7 2002/12/11 06:46:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1172,7 +1172,7 @@ arplookup(m, addr, create, proxy)
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s@%s on %s (%s)\n",
 		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
-		    ifp->if_xname, why);
+		    (ifp) ? ifp->if_xname : 0, why);
 	return (0);
 }
 

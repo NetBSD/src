@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.19 2002/11/12 20:11:04 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.20 2002/12/11 06:43:02 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.19 2002/11/12 20:11:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.20 2002/12/11 06:43:02 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -599,7 +599,36 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	arginfo.ps_nargvstr = argc;
 	arginfo.ps_nenvstr = envc;
 
-	stack = (char *) (vm->vm_minsaddr - len);
+	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
+		sizeof(struct ps_strings) + szsigcode),
+		len - (sizeof(struct ps_strings) + szsigcode));
+#ifdef __MACHINE_STACK_GROWS_UP
+	/*
+	 * The copyargs call always copies into lower addresses
+	 * first, moving towards higher addresses, starting with
+	 * the stack pointer that we give.  When the stack grows 
+	 * down, this puts argc/argv/envp very shallow on the 
+	 * stack, right at the first user stack pointer, and puts 
+	 * STACKGAPLEN very deep in the stack.  When the stack
+	 * grows up, the situation is reversed.
+	 *
+	 * Normally, this is no big deal.  But the ld_elf.so _rtld()
+	 * function expects to be called with a single pointer to 
+	 * a region that has a few words it can stash values into, 
+	 * followed by argc/argv/envp.  When the stack grows down,
+	 * it's easy to decrement the stack pointer a little bit to
+	 * allocate the space for these few words and pass the new
+	 * stack pointer to _rtld.  When the stack grows up, however,
+	 * a few words before argc is part of the signal trampoline,
+	 * so we have a problem.
+	 *
+	 * Instead of changing how _rtld works, we take the easy way 
+	 * out and steal 32 bytes before we call copyargs.  This 
+	 * space is effectively stolen from STACKGAPLEN.
+	 */
+	stack += 32;
+#endif /* __MACHINE_STACK_GROWS_UP */
+
 	/* Now copy argc, args & environ to new stack */
 	error = (*pack.ep_es->es_copyargs)(p, &pack, &arginfo, &stack, argp);
 	if (error) {
@@ -607,11 +636,11 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		goto exec_abort;
 	}
 	/* Move the stack back to original point */
-	stack = (char *) (vm->vm_minsaddr - len);
+	stack = (char *)STACK_GROW(vm->vm_minsaddr, len);
 
 	/* fill process ps_strings info */
-	p->p_psstr = (struct ps_strings *)(vm->vm_minsaddr
-		- sizeof(struct ps_strings));
+	p->p_psstr = (struct ps_strings *)STACK_ALLOC(vm->vm_minsaddr,
+	    sizeof(struct ps_strings));
 	p->p_psargv = offsetof(struct ps_strings, ps_argvstr);
 	p->p_psnargv = offsetof(struct ps_strings, ps_nargvstr);
 	p->p_psenv = offsetof(struct ps_strings, ps_envstr);
@@ -627,9 +656,10 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 
 	/* copy out the process's signal trampoline code */
 	if (szsigcode) {
+		p->p_sigctx.ps_sigcode = STACK_ALLOC(STACK_MAX(p->p_psstr,
+		    sizeof(struct ps_strings)), szsigcode);
 		if ((error = copyout((char *)pack.ep_es->es_emul->e_sigcode,
-		    p->p_sigctx.ps_sigcode = (char *)p->p_psstr - szsigcode,
-		    szsigcode)) != 0) {
+		    p->p_sigctx.ps_sigcode, szsigcode)) != 0) {
 			DPRINTF(("execve: sig trampoline copyout failed\n"));
 			goto exec_abort;
 		}

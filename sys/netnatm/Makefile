@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:08 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 06:46:45 thorpej Exp $
 
-KDIR=	/sys/netnatm
 INCSDIR= /usr/include/netnatm
 
 INCS=	natm.h

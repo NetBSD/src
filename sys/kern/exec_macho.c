@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.2.4.5 2002/11/11 22:13:29 nathanw Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.2.4.6 2002/12/11 06:43:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.4.5 2002/11/11 22:13:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.4.6 2002/12/11 06:43:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,18 +63,35 @@ __KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.4.5 2002/11/11 22:13:29 nathanw E
 static int exec_macho_load_segment(struct exec_package *, struct vnode *,
     u_long, struct exec_macho_segment_command *, int);
 static int exec_macho_load_dylinker(struct proc *, struct exec_package *,
-    struct exec_macho_dylinker_command *, u_long *);
+    struct exec_macho_dylinker_command *, u_long *, int);
 static int exec_macho_load_dylib(struct proc *, struct exec_package *,
-    struct exec_macho_dylib_command *);
+    struct exec_macho_dylib_command *, int);
 static u_long exec_macho_load_thread(struct exec_macho_thread_command *);
 static int exec_macho_load_file(struct proc *, struct exec_package *,
-    const char *, u_long *, int);
+    const char *, u_long *, int, int, int);
 static int exec_macho_load_vnode(struct proc *, struct exec_package *,
-    struct vnode *, struct exec_macho_fat_header *, u_long *, int);
+    struct vnode *, struct exec_macho_fat_header *, u_long *, int, int, int);
 
 #ifdef DEBUG_MACHO
+static void exec_macho_print_segment_command 
+    __P((struct exec_macho_segment_command *));
+static void exec_macho_print_fat_header __P((struct exec_macho_fat_header *));
+static void exec_macho_print_fat_arch __P((struct exec_macho_fat_arch *));
+static void exec_macho_print_object_header 
+    __P((struct exec_macho_object_header *));
+static void exec_macho_print_load_command 
+    __P((struct exec_macho_load_command *));
+static void exec_macho_print_dylinker_command 
+    __P((struct exec_macho_dylinker_command *));
+static void exec_macho_print_dylib_command 
+    __P((struct exec_macho_dylib_command *));
+static void exec_macho_print_thread_command 
+    __P((struct exec_macho_thread_command *));
+
 static void
-exec_macho_print_segment_command(struct exec_macho_segment_command *ls) {
+exec_macho_print_segment_command(ls)
+	struct exec_macho_segment_command *ls;
+{
 	printf("ls.cmd 0x%lx\n", ls->cmd);
 	printf("ls.cmdsize 0x%ld\n", ls->cmdsize);
 	printf("ls.segname %s\n", ls->segname);
@@ -89,13 +106,17 @@ exec_macho_print_segment_command(struct exec_macho_segment_command *ls) {
 }
 
 static void
-exec_macho_print_fat_header(struct exec_macho_fat_header *fat) {
+exec_macho_print_fat_header(fat)
+	struct exec_macho_fat_header *fat;
+{
 	printf("fat.magic 0x%x\n", be32toh(fat->magic));
 	printf("fat.nfat_arch %d\n", be32toh(fat->nfat_arch));
 }
 
 static void
-exec_macho_print_fat_arch(struct exec_macho_fat_arch *arch) {
+exec_macho_print_fat_arch(arch) 
+	struct exec_macho_fat_arch *arch;
+{
 	printf("arch.cputype %x\n", be32toh(arch->cputype));
 	printf("arch.cpusubtype %d\n", be32toh(arch->cpusubtype));
 	printf("arch.offset 0x%x\n", (int32_t)be32toh(arch->offset));
@@ -104,7 +125,9 @@ exec_macho_print_fat_arch(struct exec_macho_fat_arch *arch) {
 }
 
 static void
-exec_macho_print_object_header(struct exec_macho_object_header *hdr) {
+exec_macho_print_object_header(hdr)
+	struct exec_macho_object_header *hdr;
+{
 	printf("hdr.magic 0x%lx\n", hdr->magic);
 	printf("hdr.cputype %x\n", hdr->cputype);
 	printf("hdr.cpusubtype %d\n", hdr->cpusubtype);
@@ -115,13 +138,17 @@ exec_macho_print_object_header(struct exec_macho_object_header *hdr) {
 }
 
 static void
-exec_macho_print_load_command(struct exec_macho_load_command *lc) {
+exec_macho_print_load_command(lc)
+	struct exec_macho_load_command *lc;
+{
 	printf("lc.cmd %lx\n", lc->cmd);
 	printf("lc.cmdsize %ld\n", lc->cmdsize);
 }
 
 static void
-exec_macho_print_dylinker_command(struct exec_macho_dylinker_command *dy) {
+exec_macho_print_dylinker_command(dy)
+	struct exec_macho_dylinker_command *dy;
+{
 	printf("dy.cmd %lx\n", dy->cmd);
 	printf("dy.cmdsize %ld\n", dy->cmdsize);
 	printf("dy.name.offset 0x%lx\n", dy->name.offset);
@@ -129,7 +156,9 @@ exec_macho_print_dylinker_command(struct exec_macho_dylinker_command *dy) {
 }
 
 static void
-exec_macho_print_dylib_command(struct exec_macho_dylib_command *dy) {
+exec_macho_print_dylib_command(dy)
+	struct exec_macho_dylib_command *dy;
+{
 	printf("dy.cmd %lx\n", dy->cmd);
 	printf("dy.cmdsize %ld\n", dy->cmdsize);
 	printf("dy.dylib.name.offset 0x%lx\n", dy->dylib.name.offset);
@@ -141,7 +170,9 @@ exec_macho_print_dylib_command(struct exec_macho_dylib_command *dy) {
 }
 
 static void
-exec_macho_print_thread_command(struct exec_macho_thread_command *th) {
+exec_macho_print_thread_command(th)
+	struct exec_macho_thread_command *th;
+{
 	printf("th.cmd %lx\n", th->cmd);
 	printf("th.cmdsize %ld\n", th->cmdsize);
 	printf("th.flavor %ld\n", th->flavor);
@@ -150,16 +181,20 @@ exec_macho_print_thread_command(struct exec_macho_thread_command *th) {
 #endif /* DEBUG_MACHO */
 
 static int
-exec_macho_load_segment(struct exec_package *epp, struct vnode *vp,
-    u_long foff, struct exec_macho_segment_command *ls, int type)
+exec_macho_load_segment(epp, vp, foff, ls, type)
+	struct exec_package *epp;
+	struct vnode *vp;
+	u_long foff;
+	struct exec_macho_segment_command *ls;
+	int type;
 {
 	int flags;
+	struct exec_macho_emul_arg *emea;
 	u_long addr = trunc_page(ls->vmaddr), size = round_page(ls->filesize);
 
-	if (type != MACHO_MOH_DYLIB)
-		flags = VMCMD_BASE;
-	else
-		flags = VMCMD_RELATIVE;
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+
+	flags = VMCMD_BASE;
 
 #ifdef DEBUG_MACHO
 	exec_macho_print_segment_command(ls);
@@ -178,6 +213,8 @@ exec_macho_load_segment(struct exec_package *epp, struct vnode *vp,
 		if (strcmp(ls->segname, "__TEXT") == 0) {
 			epp->ep_taddr = addr;
 			epp->ep_tsize = round_page(ls->vmsize);
+			emea->macho_hdr = 
+			    (struct exec_macho_object_header *)addr;
 		}
 		if (strcmp(ls->segname, "__DATA") == 0) {
 			epp->ep_daddr = addr;
@@ -209,49 +246,58 @@ exec_macho_load_segment(struct exec_package *epp, struct vnode *vp,
 
 
 static int
-exec_macho_load_dylinker(struct proc *p, struct exec_package *epp,
-    struct exec_macho_dylinker_command *dy, u_long *entry)
+exec_macho_load_dylinker(p, epp, dy, entry, depth)
+	struct proc *p;
+	struct exec_package *epp;
+	struct exec_macho_dylinker_command *dy;
+	u_long *entry;
+	int depth;
 {
+	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->name.offset;
 	char path[MAXPATHLEN];
 	int error;
 #ifdef DEBUG_MACHO
 	exec_macho_print_dylinker_command(dy);
 #endif
-	(void)snprintf(path, sizeof(path), "%s%s",
-	    (const char *)epp->ep_emul_arg, name);
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+
+	(void)snprintf(path, sizeof(path), "%s%s", emea->path, name);
 	DPRINTF(("loading linker %s\n", path));
 	if ((error = exec_macho_load_file(p, epp, path, entry,
-	    MACHO_MOH_DYLINKER)) != 0)
+	    MACHO_MOH_DYLINKER, 1, depth)) != 0)
 		return error;
 	return 0;
 }
 
 static int
-exec_macho_load_dylib(struct proc *p, struct exec_package *epp,
-    struct exec_macho_dylib_command *dy) {
-#ifdef notdef
+exec_macho_load_dylib(p, epp, dy, depth)
+	struct proc *p;
+	struct exec_package *epp;
+	struct exec_macho_dylib_command *dy;
+	int depth;
+{
+	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->dylib.name.offset;
 	char path[MAXPATHLEN];
 	int error;
 	u_long entry;
-#endif
 #ifdef DEBUG_MACHO
 	exec_macho_print_dylib_command(dy);
 #endif
-#ifdef notdef
-	(void)snprintf(path, sizeof(path), "%s%s",
-	    (const char *)epp->ep_emul_arg, name);
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+	(void)snprintf(path, sizeof(path), "%s%s", emea->path, name);
 	DPRINTF(("loading library %s\n", path));
 	if ((error = exec_macho_load_file(p, epp, path, &entry,
-	    MACHO_MOH_DYLIB)) != 0)
+	    MACHO_MOH_DYLIB, 0, depth)) != 0)
 		return error;
-#endif
 	return 0;
 }
 
 static u_long
-exec_macho_load_thread(struct exec_macho_thread_command *th) {
+exec_macho_load_thread(th)
+	struct exec_macho_thread_command *th;
+{
 #ifdef DEBUG_MACHO
 	exec_macho_print_thread_command(th);
 #endif
@@ -261,14 +307,16 @@ exec_macho_load_thread(struct exec_macho_thread_command *th) {
 /*
  * exec_macho_load_file(): Load a macho-binary. This is used
  * for the dynamic linker and library recursive loading.
- *
- * XXX: We should be checking for recursive depth, because
- * one can construct a binary that crashes the kernel, by
- * using a self referential dynamic linker section.
  */
 static int
-exec_macho_load_file(struct proc *p, struct exec_package *epp,
-    const char *path, u_long *entry, int type)
+exec_macho_load_file(p, epp, path, entry, type, recursive, depth)
+	struct proc *p;
+	struct exec_package *epp;
+	const char *path;
+	u_long *entry;
+	int type;
+	int recursive;
+	int depth;
 {
 	int error;
 	struct nameidata nd;
@@ -276,6 +324,12 @@ exec_macho_load_file(struct proc *p, struct exec_package *epp,
 	struct vattr attr;
 	struct exec_macho_fat_header fat;
 
+	/*
+	 * Check for excessive rercursive loading
+	 */
+	if (depth++ > 6)
+		return E2BIG;
+	
 	/*
 	 * 1. open file
 	 * 2. read filehdr
@@ -314,7 +368,8 @@ exec_macho_load_file(struct proc *p, struct exec_package *epp,
 	if ((error = exec_read_from(p, vp, 0, &fat, sizeof(fat))) != 0)
 		goto bad;
 
-	if ((error = exec_macho_load_vnode(p, epp, vp, &fat, entry, type)) != 0)
+	if ((error = exec_macho_load_vnode(p, epp, vp, &fat, 
+	    entry, type, recursive, depth)) != 0)
 		goto bad;
 
 	vrele(vp);
@@ -340,9 +395,13 @@ bad:
  * the entry point.
  */
 static int
-exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
-    struct vnode *vp, struct exec_macho_fat_header *fat, u_long *entry,
-    int type)
+exec_macho_load_vnode(p, epp, vp, fat, entry, type, recursive, depth)
+	struct proc *p;
+	struct exec_package *epp;
+	struct vnode *vp;
+	struct exec_macho_fat_header *fat;
+	u_long *entry;
+	int type;
 {
 	u_long aoffs, offs;
 	struct exec_macho_fat_arch arch;
@@ -451,14 +510,22 @@ exec_macho_load_vnode(struct proc *p, struct exec_package *epp,
 		case MACHO_LC_LOAD_DYLINKER:
 			if ((error = exec_macho_load_dylinker(p, epp,
 			    (struct exec_macho_dylinker_command *)buf,
-			    entry)) != 0) {
+			    entry, depth)) != 0) {
 				DPRINTF(("load linker failed\n"));
 				goto bad;
 			}
 			break;
 		case MACHO_LC_LOAD_DYLIB:
+			/* 
+			 * We should only load libraries required by the 
+			 * binary we want to load, not libraries required 
+			 * by theses libraries.
+			 */
+			if (recursive == 0)
+				break;
 			if ((error = exec_macho_load_dylib(p, epp,
-			    (struct exec_macho_dylib_command *)buf)) != 0) {
+			    (struct exec_macho_dylib_command *)buf, 
+			    depth)) != 0) {
 				DPRINTF(("load dylib failed\n"));
 				goto bad;
 			}
@@ -504,9 +571,12 @@ bad:
  * text, data, bss, and stack segments.
  */
 int
-exec_macho_makecmds(struct proc *p, struct exec_package *epp)
+exec_macho_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
 {
 	struct exec_macho_fat_header *fat = epp->ep_hdr;
+	struct exec_macho_emul_arg *emea;
 	int error;
 
 	if (epp->ep_hdrvalid < sizeof(*fat))
@@ -527,31 +597,36 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 	if (error)
 		return (error);
 
+	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
+	epp->ep_emul_arg = (void *)emea;
+
 	if (!epp->ep_esch->u.mach_probe_func)
-		epp->ep_emul_arg = "/";
+		emea->path = "/";
 	else {
 	    if ((error = (*epp->ep_esch->u.mach_probe_func)((char **)
-		&epp->ep_emul_arg)) != 0)
-		    return error;
+		&emea->path)) != 0)
+		    goto bad2;
 	}
 		
 	if ((error = exec_macho_load_vnode(p, epp, epp->ep_vp, fat,
-	    &epp->ep_entry, MACHO_MOH_EXECUTE)) != 0)
+	    &epp->ep_entry, MACHO_MOH_EXECUTE, 1, 0)) != 0)
 		goto bad;
 
 	/*
 	 * stash a copy of the program name in epp->ep_emul_arg because
-	 * might need it later.
+	 * we will need it later.
 	 */
-	MALLOC(epp->ep_emul_arg, char *, MAXPATHLEN, M_EXEC, M_WAITOK);
-	if ((error = copyinstr(epp->ep_name, epp->ep_emul_arg,
+	if ((error = copyinstr(epp->ep_name, emea->filename,
 	    MAXPATHLEN, NULL)) != 0) {
 		DPRINTF(("Copyinstr %p failed\n", epp->ep_name));
 		goto bad;
 	}
+
 	return exec_macho_setup_stack(p, epp);
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
+bad2:
+	free(emea, M_EXEC);
 	return error;
 }
 
@@ -569,7 +644,9 @@ bad:
  * stack setup functions.  They might have errors to return.
  */
 int
-exec_macho_setup_stack(struct proc *p, struct exec_package *epp)
+exec_macho_setup_stack(p, epp)
+	struct proc *p; 
+	struct exec_package *epp;
 {
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;

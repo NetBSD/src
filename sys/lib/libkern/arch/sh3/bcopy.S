@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.2 2000/06/09 04:42:46 msaitoh Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2.6.1 2002/12/11 06:46:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,15 +29,17 @@
 
 #include <machine/asm.h>
 
-#define	REG_SRC	r4
-#define	REG_DST	r5
-#define	REG_LEN	r6
+#define	REG_DST0	r3
+#define	REG_SRC		r4
+#define	REG_DST		r5
+#define	REG_LEN		r6
 
 ENTRY(memcpy)
 ALTENTRY(memmove)
-	mov	r4,r0		/* memcpy(dst,src,len) -> bcopy(src,dst,len) */
-	mov	r5,r4
-	mov	r0,r5
+				/* memcpy(dst,src,len) -> bcopy(src,dst,len) */
+	mov	r4,r3		/* dst0 = dst */
+	mov	r5,r4		/* dst = src */
+	mov	r3,r5		/* src = dst0 */
 	/* fall through */
 
 ALTENTRY(bcopy)
@@ -141,7 +143,7 @@ no_align_delay:
 	add	#1,REG_DST	/* }                       */
 bcopy_return:
 	rts
-	nop
+	mov	REG_DST0,r0
 
 
 bcopy_overlap:
@@ -243,5 +245,5 @@ ov_no_align_delay:
 	mov.b	r0,@-REG_DST	/* }                       */
 9:
 	rts
-	nop
+	mov	REG_DST0,r0
 

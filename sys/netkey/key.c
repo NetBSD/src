@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.43.2.17 2002/11/11 22:15:58 nathanw Exp $	*/
+/*	$NetBSD: key.c,v 1.43.2.18 2002/12/11 06:46:43 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.17 2002/11/11 22:15:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.43.2.18 2002/12/11 06:46:43 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1534,7 +1534,7 @@ key_spdadd(so, m, mhp)
 			default:
 				break;
 			}
-			sa = (struct sockaddr *)(src0 + 1);
+			sa = (struct sockaddr *)(dst0 + 1);
 			switch (sa->sa_family) {
 			case AF_INET:
 				if (((struct sockaddr_in *)sa)->sin_port) {

@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.5.6.4 2002/11/11 22:13:16 nathanw Exp $ */
+/* $NetBSD: wsevent.c,v 1.5.6.5 2002/12/11 06:38:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.6.4 2002/11/11 22:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.6.5 2002/12/11 06:38:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -205,7 +205,7 @@ filt_wseventrdetach(struct knote *kn)
 	int s;
 
 	s = splwsevent();
-	SLIST_REMOVE(&ev->sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&ev->sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -239,7 +239,7 @@ wsevent_kqfilter(struct wseventvar *ev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &ev->sel.si_klist;
+		klist = &ev->sel.sel_klist;
 		kn->kn_fop = &wsevent_filtops;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.130.2.16 2002/11/11 22:16:12 nathanw Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.130.2.17 2002/12/11 06:46:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.16 2002/11/11 22:16:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.130.2.17 2002/12/11 06:46:52 thorpej Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -267,7 +267,7 @@ const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
  */
 extern u_int32_t nfs_true, nfs_false;
 extern u_int32_t nfs_xdrneg1;
-extern nfstype nfsv3_type[9];
+extern const nfstype nfsv3_type[9];
 
 struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 struct nfsmount *nfs_iodmount[NFS_MAXASYNCDAEMON];

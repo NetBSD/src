@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.34 2002/11/25 21:46:35 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.35 2002/12/11 06:43:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.34 2002/11/25 21:46:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.35 2002/12/11 06:43:05 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -787,10 +787,9 @@ void
 psignal1(struct proc *p, int signum,
 	int dolock)		/* XXXSMP: works, but icky */
 {
-	struct lwp	*l, *suspended;
-
-	int		s, prop, allsusp;
-	sig_t		action;
+	struct lwp *l, *suspended;
+	int	s = 0, prop, allsusp;
+	sig_t	action;
 
 #ifdef DIAGNOSTIC
 	if (signum <= 0 || signum >= NSIG)
@@ -1115,14 +1114,10 @@ firstsig(const sigset_t *ss)
 int
 issignal(struct lwp *l)
 {
-	struct proc	*p;
-	int		s, signum, prop;
-	int		dolock, locked;
+	struct proc	*p = l->l_proc;
+	int		s = 0, signum, prop;
+	int		dolock = (l->l_flag & L_SINTR) == 0, locked = !dolock;
 	sigset_t	ss;
-
-	dolock = (l->l_flag & L_SINTR) == 0;
-	locked = !dolock;
-	p = l->l_proc;
 
 	if (p->p_stat == SSTOP) {
 		/*
@@ -1267,9 +1262,11 @@ issignal(struct lwp *l)
 			 * to take action on an ignored signal other
 			 * than SIGCONT, unless process is traced.
 			 */
+#ifdef DEBUG_ISSIGNAL
 			if ((prop & SA_CONT) == 0 &&
 			    (p->p_flag & P_TRACED) == 0)
 				printf("issignal\n");
+#endif
 			break;		/* == ignore */
 
 		default:
@@ -1638,7 +1635,7 @@ coredump(struct lwp *l)
 		return error;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
-	error = vn_open(&nd, O_CREAT | FWRITE | FNOSYMLINK, S_IRUSR | S_IWUSR);
+	error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE, S_IRUSR | S_IWUSR);
 	if (error)
 		return (error);
 	vp = nd.ni_vp;

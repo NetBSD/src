@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54.2.10 2002/08/27 23:47:32 nathanw Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54.2.11 2002/12/11 06:43:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.10 2002/08/27 23:47:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.11 2002/12/11 06:43:08 thorpej Exp $");
 
 #include "opt_ktrace.h"
 
@@ -530,6 +530,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
+		com = 0;
 		goto out;
 	}
 
@@ -706,6 +707,7 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 	getbits(ex, 2);
 #undef	getbits
 
+	timo = 0;
 	if (SCARG(uap, tv)) {
 		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
 			sizeof(atv));
@@ -718,8 +720,8 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 		s = splclock();
 		timeradd(&atv, &time, &atv);
 		splx(s);
-	} else
-		timo = 0;
+	}
+
  retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
@@ -841,6 +843,7 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		goto done;
 
+	timo = 0;
 	if (SCARG(uap, timeout) != INFTIM) {
 		atv.tv_sec = SCARG(uap, timeout) / 1000;
 		atv.tv_usec = (SCARG(uap, timeout) % 1000) * 1000;
@@ -851,8 +854,8 @@ sys_poll(struct lwp *l, void *v, register_t *retval)
 		s = splclock();
 		timeradd(&atv, &time, &atv);
 		splx(s);
-	} else
-		timo = 0;
+	}
+
  retry:
 	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
@@ -948,24 +951,21 @@ selrecord(struct proc *selector, struct selinfo *sip)
 	int		collision;
 
 	mypid = selector->p_pid;
-	if (sip->si_pid == mypid)
+	if (sip->sel_pid == mypid)
 		return;
-
 	collision = 0;
-	if (sip->si_pid && (p = pfind(sip->si_pid))) {
+	if (sip->sel_pid && (p = pfind(sip->sel_pid))) {
 		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
 		     l = LIST_NEXT(l, l_sibling)) {
 			if (l->l_wchan == (caddr_t)&selwait) {
 				collision = 1;
-				sip->si_flags |= SI_COLL;
+				sip->sel_flags |= SI_COLL;
 			}
 		}
 	}
 
-	if (collision == 0) {
-		sip->si_flags &= ~SI_COLL;
-		sip->si_pid = mypid;
-	}
+	if (collision == 0)
+		sip->sel_pid = mypid;
 }
 
 /*
@@ -979,15 +979,17 @@ selwakeup(sip)
 	struct proc *p;
 	int s;
 
-	if (sip->si_pid == 0)
+	if (sip->sel_pid == 0)
 		return;
-	if (sip->si_flags & SI_COLL) {
+	if (sip->sel_flags & SI_COLL) {
+		sip->sel_pid = 0;
 		nselcoll++;
-		sip->si_flags &= ~SI_COLL;
+		sip->sel_flags &= ~SI_COLL;
 		wakeup((caddr_t)&selwait);
+		return;
 	}
-	p = pfind(sip->si_pid);
-	sip->si_pid = 0;
+	p = pfind(sip->sel_pid);
+	sip->sel_pid = 0;
 	if (p != NULL) {
 		for (l = LIST_FIRST(&p->p_lwps); l != NULL;
 		     l = LIST_NEXT(l, l_sibling)) {

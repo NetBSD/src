@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.28.2.6 2002/06/20 03:49:17 nathanw Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.28.2.7 2002/12/11 06:46:40 thorpej Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.28.2.6 2002/06/20 03:49:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.28.2.7 2002/12/11 06:46:40 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -286,7 +286,6 @@ time_t	ip6_log_time = (time_t)0L;
  * or so? (jinmei@kame.net 19990310)
  */
 int pmtu_expire = 60*10;
-int pmtu_probe = 60*2;
 
 /* raw IP6 parameters */
 /*

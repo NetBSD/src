@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.57.2.12 2002/11/11 22:14:09 nathanw Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.57.2.13 2002/12/11 06:43:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.57.2.12 2002/11/11 22:14:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.57.2.13 2002/12/11 06:43:11 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -229,7 +229,7 @@ sys_accept(struct lwp *l, void *v, register_t *retval)
 	*retval = fd;
 
 	/* connection has been removed from the listen queue */
-	KNOTE(&so->so_rcv.sb_sel.si_klist, 0);
+	KNOTE(&so->so_rcv.sb_sel.sel_klist, 0);
 
 	{ struct socket *aso = TAILQ_FIRST(&so->so_q);
 	  if (soqremque(aso, 1) == 0)

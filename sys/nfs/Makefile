@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:09 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 06:46:47 thorpej Exp $
 
-KDIR=	/sys/nfs
 INCSDIR= /usr/include/nfs
 
 INCS=	krpc.h nfs.h nfs_var.h nfsdiskless.h nfsm_subs.h nfsmount.h nfsnode.h \

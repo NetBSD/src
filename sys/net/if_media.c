@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.13.2.4 2002/11/11 22:15:00 nathanw Exp $	*/
+/*	$NetBSD: if_media.c,v 1.13.2.5 2002/12/11 06:46:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.13.2.4 2002/11/11 22:15:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.13.2.5 2002/12/11 06:46:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,12 +378,14 @@ ifmedia_match(ifm, target, mask)
 	for (next = TAILQ_FIRST(&ifm->ifm_list); next != NULL;
 	     next = TAILQ_NEXT(next, ifm_list)) {
 		if ((next->ifm_media & mask) == (target & mask)) {
-#if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 			if (match) {
+#if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 				printf("ifmedia_match: multiple match for "
-				    "0x%x/0x%x\n", target, mask);
-			}
+				    "0x%x/0x%x, selected instance %d\n",
+				    target, mask, IFM_INST(match->ifm_media));
 #endif
+				break;
+			}
 			match = next;
 		}
 	}

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:07 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 06:46:35 thorpej Exp $
 
-KDIR=	/sys/netccitt
 INCSDIR= /usr/include/netccitt
 
 INCS=	dll.h hd_var.h hdlc.h llc_var.h pk.h pk_extern.h pk_var.h x25.h \

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.9.2.3 2001/10/22 20:41:53 nathanw Exp $
+#	$NetBSD: Makefile,v 1.9.2.4 2002/12/11 06:46:30 thorpej Exp $
 
-KDIR=	/sys/net
 INCSDIR= /usr/include/net
 
 INCS=	bpf.h bpfdesc.h dlt.h ethertypes.h if.h if_arc.h if_arp.h \

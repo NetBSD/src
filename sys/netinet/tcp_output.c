@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.63.2.13 2002/11/11 22:15:30 nathanw Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.63.2.14 2002/12/11 06:46:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.63.2.13 2002/11/11 22:15:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.63.2.14 2002/12/11 06:46:38 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -234,7 +234,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 #ifdef INET6
 	struct in6pcb *in6p = tp->t_in6pcb;
 #endif
-	struct socket *so;
+	struct socket *so = NULL;
 	struct rtentry *rt;
 	struct ifnet *ifp;
 	int size;

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.9.26.2 2001/09/26 19:55:04 nathanw Exp $
+#	$NetBSD: genassym.sh,v 1.9.26.3 2002/12/11 06:43:01 thorpej Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -107,7 +107,10 @@ $0 ~ /^endif/ {
 }
 
 /^member[ \t]/ {
-	$0 = "define " $2 " offsetof(struct " structname ", " $2 ")";
+	if (NF > 2)
+		$0 = "define " $2 " offsetof(struct " structname ", " $3 ")";
+	else
+		$0 = "define " $2 " offsetof(struct " structname ", " $2 ")";
 	# fall through
 }
 

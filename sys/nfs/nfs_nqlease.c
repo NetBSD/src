@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.37.2.6 2002/10/22 18:09:43 thorpej Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.37.2.7 2002/12/11 06:46:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.37.2.6 2002/10/22 18:09:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.37.2.7 2002/12/11 06:46:48 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -131,8 +131,8 @@ const int nqnfs_piggy[NFS_NPROCS] = {
 	0,
 };
 
-extern nfstype nfsv2_type[9];
-extern nfstype nfsv3_type[9];
+extern const nfstype nfsv2_type[9];
+extern const nfstype nfsv3_type[9];
 extern struct nfssvc_sock *nfs_udpsock;
 #ifdef ISO
 extern struct nfssvc_sock *nfs_cltpsock

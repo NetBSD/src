@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.23 2002/12/03 23:22:16 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.24 2002/12/11 06:43:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.23 2002/12/03 23:22:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.24 2002/12/11 06:43:07 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -572,9 +572,7 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 	pt->pt_info.si_code = 0;
 	pt->pt_info.si_pid = p->p_pid;
 	pt->pt_info.si_uid = p->p_cred->p_ruid;
-	pt->pt_info.si_addr = NULL;
-	pt->pt_info.si_status = 0;
-	pt->pt_info.si_value = pt->pt_ev.sigev_value;
+	pt->pt_info.si_sigval = pt->pt_ev.sigev_value;
 
 	pt->pt_type = id;
 	pt->pt_proc = p;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.4.4 2002/06/20 03:47:52 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.4.5 2002/12/11 06:46:29 thorpej Exp $
 
 .include "../Makefile.inc"
 
@@ -20,6 +20,7 @@ SRCS+=	svr4_exec_elf${ELFSIZE}.c
 
 # compat_util.c symbol redifinitions
 CPPFLAGS+=	-Demul_find=svr4_emul_find				\
+		-Demul_find_interp=svr4_emul_find_interp		\
 		-Dstackgap_init=svr4_stackgap_init			\
 		-Demul_flags_translate=svr4_emul_flags_translate	\
 		-Dstackgap_alloc=svr4_stackgap_alloc		 	\

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:08 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 06:46:42 thorpej Exp $
 
-KDIR=	/sys/netiso
 INCSDIR= /usr/include/netiso
 
 INCS=	argo_debug.h clnl.h clnp.h clnp_stat.h cltp_var.h cons.h cons_pcb.h \

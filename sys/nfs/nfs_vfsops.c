@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101.2.12 2002/10/22 18:09:45 thorpej Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.13 2002/12/11 06:46:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.12 2002/10/22 18:09:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.13 2002/12/11 06:46:51 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -579,9 +579,11 @@ nfs_mount(mp, path, data, ndp, p)
 			error = copyout(sa, args.addr, sa->sa_len);
 			if (error)
 				return (error);
-		}
+			args.addrlen = sa->sa_len;
+		} else
+			args.addrlen = 0;
+
 		args.version = NFS_ARGSVERSION;
-		args.addrlen = sa->sa_len;
 		args.sotype = nmp->nm_sotype;
 		args.proto = nmp->nm_soproto;
 		args.fh = NULL;

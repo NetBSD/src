@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.37.2.10 2002/10/18 02:44:44 nathanw Exp $ */
+/* $NetBSD: wsconsio.h,v 1.37.2.11 2002/12/11 06:38:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -92,6 +92,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_ADB		11	/* ADB */
 #define		WSKBD_TYPE_HIL		12	/* HIL keyboard */
 #define		WSKBD_TYPE_AMIGA	13	/* Amiga keyboard */
+#define		WSKBD_TYPE_MAPLE	14	/* Dreamcast Maple keyboard */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -173,6 +174,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_HIL	9	/* HIL mouse */
 #define		WSMOUSE_TYPE_AMIGA	10	/* Amiga mouse */      
 #define		WSMOUSE_TYPE_MAXINE	11	/* DEC maxine mouse */
+#define		WSMOUSE_TYPE_MAPLE	12	/* Dreamcast Maple mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
