@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.29 2002/10/07 02:38:41 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.30 2002/10/07 04:51:00 dan Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.29 2002/10/07 02:38:41 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.30 2002/10/07 04:51:00 dan Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -190,9 +190,12 @@ rnd_counter(void)
 	if (cpu_hascounter())
 		return (cpu_counter() & 0xffffffff);
 #endif
-	microtime(&tv);
-
-	return (tv.tv_sec * 1000000 + tv.tv_usec);
+	if (rnd_ready) {
+		microtime(&tv);
+		return (tv.tv_sec * 1000000 + tv.tv_usec);
+	} 
+	/* when called from rnd_init, its too early to call microtime safely */
+	return 0;  
 }
 
 /*
@@ -285,16 +288,12 @@ rndattach(int num)
 void
 rnd_init(void)
 {
-#ifdef __HAVE_CPU_COUNTER
 	u_int32_t c;
-#endif
 
 	if (rnd_ready)
 		return;
 
-#ifdef __HAVE_CPU_COUNTER
 	c = rnd_counter();
-#endif
 
 	LIST_INIT(&rnd_sources);
 	SIMPLEQ_INIT(&rnd_samples);
@@ -304,16 +303,17 @@ rnd_init(void)
 
 	rndpool_init(&rnd_pool);
 
-#ifdef __HAVE_CPU_COUNTER
 	/* Mix *something*, *anything* into the pool to help it get started. 
-	 * However, it's not safe for rnd_counter to call microtime() yet, so 
-	 * we can only do this on platforms with a cpu counter.
+	 * However, it's not safe for rnd_counter() to call microtime() yet,
+	 * so on some platforms we might just end up with zeros anyway.
 	 * XXX more things to add would be nice.
 	 */ 
-	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
-	c = rnd_counter();
-	rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
-#endif
+	if (c) {
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+		c = rnd_counter();
+		rndpool_add_data(&rnd_pool, &c, sizeof(u_int32_t), 0);
+	}
+
 	rnd_ready = 1;
 
 #ifdef RND_VERBOSE
