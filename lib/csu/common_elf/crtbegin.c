@@ -1,11 +1,11 @@
-/*	$NetBSD: crtbegin.c,v 1.10 1998/09/05 13:25:06 pk Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.10.10.1 2001/12/09 17:10:30 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg and Ross Harvey.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,10 +37,6 @@
  */
 
 /*
- * XXX EVENTUALLY SHOULD BE MERGED BACK WITH c++rt0.c
- */
-
-/*
  * Run-time module which handles constructors and destructors,
  * and NetBSD identification.
  *
@@ -56,68 +52,107 @@
 #include <sys/exec_elf.h>
 #include <stdlib.h>
 
+#ifdef DWARF2_EH
+#include "dwarf2_eh.h"
+#endif
 #include "sysident.h"
+#include "dot_init.h"
 
-static void (*__CTOR_LIST__[1]) __P((void))
+static void (*__CTOR_LIST__[1])(void)
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
-static void (*__DTOR_LIST__[1]) __P((void))
+static void (*__DTOR_LIST__[1])(void)
     __attribute__((section(".dtors"))) = { (void *)-1 };	/* XXX */
 
-static void	__dtors __P((void));
-static void	__ctors __P((void));
+#ifdef DWARF2_EH
+static char __EH_FRAME_BEGIN__[]
+    __attribute__((section(".eh_frame"))) = { };
+#endif
+
+static void __dtors(void);
+static void __ctors(void);
+
+INIT_FALLTHRU_DECL;
+FINI_FALLTHRU_DECL;
+
+extern void _init(void)   __attribute__((section(".init")));
+extern void _fini(void)   __attribute__((section(".fini")));
+static void __ctors(void) __attribute__((section(".init")));
+static void __dtors(void) __attribute__((section(".fini")));
 
 static void
-__dtors()
+__ctors()
 {
-	unsigned long i = (unsigned long) __DTOR_LIST__[0];
+	unsigned long i = (unsigned long) __CTOR_LIST__[0];
 	void (**p)(void);
 
 	if (i == -1)  {
-		for (i = 1; __DTOR_LIST__[i] != NULL; i++)
+		for (i = 1; __CTOR_LIST__[i] != NULL; i++)
 			;
 		i--;
 	}
-	p = __DTOR_LIST__ + i;
+	p = __CTOR_LIST__ + i;
 	while (i--)
 		(**p--)();
 }
 
 static void
-__ctors()
+__dtors()
 {
-	void (**p)(void) = __CTOR_LIST__ + 1;
+	void (**p)(void) = __DTOR_LIST__ + 1;
 
 	while (*p)
 		(**p++)();
 }
 
-extern void _init(void) __attribute__((section(".init")));
-
 void
 _init()
 {
 	static int initialized = 0;
-	static void (*volatile call__ctors)(void) = __ctors;
+#ifdef DWARF2_EH
+#if defined(__GNUC__)
+	static struct dwarf2_eh_object object;
+#endif /* __GNUC__ */
+#endif /* DWARF2_EH */
+
 	/*
 	 * Call global constructors.
 	 * Arrange to call global destructors at exit.
 	 */
-	/* prevent function pointer constant propagation */
+	INIT_FALLTHRU();
 	if (!initialized) {
 		initialized = 1;
-		(*call__ctors)();
+
+#ifdef DWARF2_EH
+#if defined(__GNUC__)
+		if (__register_frame_info != NULL)
+			__register_frame_info(__EH_FRAME_BEGIN__, &object);
+#endif /* __GNUC__ */
+#endif /* DWARF2_EH */
+
+		__ctors();
 	}
 }
-
-extern void _fini(void) __attribute__((section(".fini")));
 
 void
 _fini()
 {
-	static void (* volatile call__dtors)(void) = __dtors;
+
 	/*
 	 * Call global destructors.
 	 */
 	/* prevent function pointer constant propagation */
-	(*call__dtors)();
+	__dtors();
+
+#ifdef DWARF2_EH
+#if defined(__GNUC__)
+	if (__deregister_frame_info != NULL)
+		__deregister_frame_info(__EH_FRAME_BEGIN__);
+#endif /* __GNUC__ */
+#endif /* DWARF2_EH */
+
+	FINI_FALLTHRU();
 }
+
+MD_INIT_SECTION_PROLOGUE;
+
+MD_FINI_SECTION_PROLOGUE;
