@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 2003/09/05 17:03:00 dsl Exp $
+#	$NetBSD: MAKEDEV,v 1.20 2003/09/19 11:11:52 pooka Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -80,6 +80,7 @@
 #	isdnctl	control device
 #	isdnbchan* raw b-channel access
 #	isdntel*	telephony device
+#	isdnteld*	telephony dialout device
 #	isdntrc*	trace device
 #
 # Special purpose devices:
@@ -159,7 +160,7 @@ ramdisk)
 	;;
 
 isdns)
-	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdntrc0 isdntrc1
+	makedev isdn isdnctl isdnbchan0 isdnbchan1 isdntel0 isdntel1 isdnteld0 isdnteld1 isdntrc0 isdntrc1
 	;;
 
 std)
@@ -585,6 +586,13 @@ random)
 #	rm -f isdnbchan$unit
 #	mknod isdnbchan$unit c 68 $unit
 #	chmod 600 isdnbchan$unit
+#	;;
+#
+#isdnteld*)
+#	unit=${i#isdnteld}
+#	rm -f isdnteld$unit
+#	mknod isdnteld$unit c 70 $(($unit + 64))
+#	chmod 600 isdnteld$unit
 #	;;
 #
 #isdntel*)
