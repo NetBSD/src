@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.1.6.2 2002/11/08 08:50:42 tron Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.1.6.3 2002/11/21 18:35:44 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*
- * Register description for the Intel i82452 (``Wiseman''),
+ * Register description for the Intel i82542 (``Wiseman''),
  * i82543 (``Livengood''), and i82544 (``Cordova'') Gigabit
  * Ethernet chips.
  */
