@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.26.4.2 2001/11/24 22:09:14 he Exp $	*/
+/*	$NetBSD: utilities.c,v 1.26.4.3 2001/11/25 19:35:56 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.26.4.2 2001/11/24 22:09:14 he Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.26.4.3 2001/11/25 19:35:56 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,6 +222,7 @@ flush(fd, bp)
 	struct bufarea *bp;
 {
 	int i, j;
+	struct csum *ccsp;
 
 	if (!bp->b_dirty)
 		return;
@@ -237,27 +238,14 @@ flush(fd, bp)
 	for (i = 0, j = 0; i < sblock->fs_cssize; i += sblock->fs_bsize, j++) {
 		int size = sblock->fs_cssize - i < sblock->fs_bsize ?
 			sblock->fs_cssize - i : sblock->fs_bsize;
-		/*
-		 * The following routines assumes that struct csum is made of
-		 * u_int32_t's
-		 */
-		if (needswap) {
-			int k;
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
-
-			for (k = 0; k < size / sizeof(u_int32_t); k++)
-				cd[k] = bswap32(cd[k]);
-		}
-		bwrite(fswritefd, (char *)sblock->fs_csp[j],
+		ccsp = (struct csum *)((char *)sblock->fs_csp + i);
+		if (needswap)
+			ffs_csum_swap(ccsp, ccsp, size);
+		bwrite(fswritefd, (char *)ccsp,
 		    fsbtodb(sblock, sblock->fs_csaddr + j * sblock->fs_frag),
 		    size);
-		if (needswap) {
-			int k;
-			u_int32_t *cd = (u_int32_t *)sblock->fs_csp[j];
-
-			for (k = 0; k < size / sizeof(u_int32_t); k++)
-				cd[k] = bswap32(cd[k]);
-		}
+		if (needswap)
+			ffs_csum_swap(ccsp, ccsp, size);
 	}
 }
 
