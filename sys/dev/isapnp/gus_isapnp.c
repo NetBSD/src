@@ -1,7 +1,7 @@
 #include "guspnp.h"
 #if NGUSPNP > 0
 
-/*	$NetBSD: gus_isapnp.c,v 1.9 1998/07/23 19:30:45 christos Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.10 1999/02/17 02:37:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ static struct audio_hw_if guspnp_hw_if = {
 	iw_query_devinfo,
 	iw_malloc,
 	iw_free,
-	iw_round,
+	iw_round_buffersize,
 	iw_mappage,
 	iw_get_props,
 };

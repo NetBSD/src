@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.4 1998/11/26 21:45:13 hannken Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.5 1999/02/17 02:37:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -639,15 +639,20 @@ ad1848_isa_intr(arg)
 }
 
 void *
-ad1848_isa_malloc(addr, size, pool, flags)
+ad1848_isa_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	unsigned long size;
-	int pool;
-	int flags;
+	int direction;
+	size_t size;
+	int pool, flags;
 {
 	struct ad1848_isa_softc *isc = addr;
+	int drq;
 
-	return isa_malloc(isc->sc_ic, 4, size, pool, flags);
+	if (direction == AUMODE_PLAY)
+		drq = isc->sc_drq;
+	else
+		drq = isc->sc_recdrq;
+	return (isa_malloc(isc->sc_ic, drq, size, pool, flags));
 }
 
 void
@@ -659,14 +664,15 @@ ad1848_isa_free(addr, ptr, pool)
 	isa_free(ptr, pool);
 }
 
-unsigned long
-ad1848_isa_round(addr, size)
+size_t
+ad1848_isa_round_buffersize(addr, direction, size)
 	void *addr;
-	unsigned long size;
+	int direction;
+	size_t size;
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
-	return size;
+	return (size);
 }
 
 int

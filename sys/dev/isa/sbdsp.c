@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.90 1999/02/17 01:22:47 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.91 1999/02/17 02:37:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2190,11 +2190,11 @@ sbdsp_mixer_query_devinfo(addr, dip)
 }
 
 void *
-sb_malloc(addr, size, pool, flags)
+sb_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	unsigned long size;
-	int pool;
-	int flags;
+	int direction;
+	size_t size;
+	int pool, flags;
 {
 	struct sbdsp_softc *sc = addr;
 	int drq;
@@ -2216,9 +2216,10 @@ sb_free(addr, ptr, pool)
 }
 
 unsigned long
-sb_round(addr, size)
+sb_round_buffersize(addr, direction, size)
 	void *addr;
-	unsigned long size;
+	int direction;
+	size_t size;
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;
