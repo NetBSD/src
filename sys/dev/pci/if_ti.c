@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.27 2001/06/29 23:58:08 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.28 2001/06/30 04:33:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,8 +126,9 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_tireg.h>
-#include <dev/pci/ti_fw.h>
-#include <dev/pci/ti_fw2.h>
+
+#include <dev/microcode/tigon/ti_fw.h>
+#include <dev/microcode/tigon/ti_fw2.h>
 
 /*
  * Various supported device vendors/types and their names.
