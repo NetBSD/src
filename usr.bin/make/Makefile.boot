@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.11 1999/04/03 04:50:16 gwr Exp $
+#	$NetBSD: Makefile.boot,v 1.12 2000/08/03 15:53:24 christos Exp $
 #
 # a very simple makefile...
 #
@@ -13,6 +13,9 @@ CC=gcc -O
 
 MACHINE=sun
 MACHINE_ARCH=sparc
+# tested on HP-UX 10.20
+#MACHINE=hp700
+#MACHINE_ARCH=hppa
 CFLAGS= -I.\
 	-DTARGET_MACHINE=\"${MACHINE}\" \
 	-DTARGET_MACHINE_ARCH=\"${MACHINE_ARCH}\" \
