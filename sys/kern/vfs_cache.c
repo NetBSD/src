@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.20 1999/09/05 14:22:34 jdolecek Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.21 1999/09/10 23:24:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -142,7 +142,8 @@ cache_lookup(dvp, vpp, cnp)
 		 * Restore the ISWHITEOUT flag saved earlier.
 		 */
 		cnp->cn_flags |= ncp->nc_vpid;
-		if (cnp->cn_nameiop != CREATE) {
+		if (cnp->cn_nameiop != CREATE ||
+		    (cnp->cn_flags & ISLASTCN) == 0) {
 			nchstats.ncs_neghits++;
 			/*
 			 * Move this slot to end of LRU chain,
