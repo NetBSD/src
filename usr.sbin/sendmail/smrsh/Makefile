@@ -6,5 +6,4 @@ MAN=	smrsh.8
 CFLAGS+=-I${.CURDIR}/../src -DNDBM -DNEWDB
 CFLAGS+=-DCMDDIR=\"/usr/libexec/sm.bin\"
 
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
