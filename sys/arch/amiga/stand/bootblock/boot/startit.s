@@ -1,4 +1,4 @@
-/*	$NetBSD: startit.s,v 1.3 1998/05/08 19:08:18 chopps Exp $	*/
+/*	$NetBSD: startit.s,v 1.4 1998/11/06 20:08:20 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * From: $NetBSD: startit.s,v 1.3 1998/05/08 19:08:18 chopps Exp $
+ * From: $NetBSD: startit.s,v 1.4 1998/11/06 20:08:20 is Exp $
  */
 
 	.set	ABSEXECBASE,4
@@ -44,6 +44,12 @@
 _startit:
 #if TESTONAMIGA
 	movew	#0x999,0xdff180		| gray
+#endif
+#if TESTONDRACO
+	moveb	#0,0x200003c8
+	moveb	#31,0x200003c9
+	moveb	#31,0x200003c9
+	moveb	#31,0x200003c9
 #endif
 	movel	sp,a3
 	movel	4:w,a6
@@ -95,10 +101,12 @@ start_super:
 #if TESTONAMIGA
 	movew	#0xf00,0xdff180		|red
 #endif
-|	moveb	#0,0x200003c8
-|	moveb	#63,0x200003c9
-|	moveb	#0,0x200003c9
-|	moveb	#0,0x200003c9
+#if TESTONDRACO
+	moveb	#0,0x200003c8
+	moveb	#63,0x200003c9
+	moveb	#0,0x200003c9
+	moveb	#0,0x200003c9
+#endif
 
 	movew	#(1<<9),0xdff096	| disable DMA on Amigas.
 
@@ -139,10 +147,12 @@ nott:
 #if TESTONAMIGA
 	movew	#0xf60,0xdff180		| orange
 #endif
-|	moveb	#0,0x200003c8
-|	moveb	#63,0x200003c9
-|	moveb	#24,0x200003c9
-|	moveb	#0,0x200003c9
+#if TESTONDRACO
+	moveb	#0,0x200003c8
+	moveb	#63,0x200003c9
+	moveb	#24,0x200003c9
+	moveb	#0,0x200003c9
+#endif
 
 | ---- switch off cache ----
 	btst	#3,d5
@@ -224,10 +234,12 @@ L2:
 #if TESTONAMIGA
 	movew	#0xFF0,0xdff180		| yellow
 #endif
-|	moveb	#0,0x200003c8
-|	moveb	#63,0x200003c9
-|	moveb	#0,0x200003c9
-|	moveb	#0,0x200003c9
+#if TESTONDRACO
+	moveb	#0,0x200003c8
+	moveb	#63,0x200003c9
+	moveb	#63,0x200003c9
+	moveb	#0,0x200003c9
+#endif
 
 	rts
 
@@ -237,10 +249,12 @@ ckend:
 #if TESTONAMIGA
 	movew	#0x0ff,0xdff180		| petrol
 #endif
-|	moveb	#0,0x200003c8
-|	moveb	#0,0x200003c9
-|	moveb	#63,0x200003c9
-|	moveb	#63,0x200003c9
+#if TESTONDRACO
+	moveb	#0,0x200003c8
+	moveb	#0,0x200003c9
+	moveb	#63,0x200003c9
+	moveb	#63,0x200003c9
+#endif
 
 	movl	d5,d2
 	roll	#8,d2
@@ -269,10 +283,12 @@ noDraCo:
 #if TESTONAMIGA
 	movew	#0x0F0,0xdff180		| green
 #endif
-|	moveb	#0,0x200003c8
-|	moveb	#0,0x200003c9
-|	moveb	#63,0x200003c9
-|	moveb	#0,0x200003c9
+#if TESTONDRACO
+	moveb	#0,0x200003c8
+	moveb	#0,0x200003c9
+	moveb	#63,0x200003c9
+	moveb	#0,0x200003c9
+#endif
 
 	jmp	sp@			| jump to kernel entry point
 
