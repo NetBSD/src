@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.103 2000/08/03 00:57:17 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.104 2000/08/03 20:41:29 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -157,13 +157,13 @@ msdosfs_create(v)
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
 
 bad:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (error);
 }
@@ -189,7 +189,7 @@ msdosfs_mknod(v)
 		break;
 
 	default:
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 		vput(ap->a_dvp);
 		return (EINVAL);
 	}
@@ -1342,7 +1342,7 @@ msdosfs_mkdir(v)
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
@@ -1350,7 +1350,7 @@ msdosfs_mkdir(v)
 bad:
 	clusterfree(pmp, newcluster, NULL);
 bad2:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (error);
 }
