@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.17 1998/12/19 20:10:08 christos Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.18 1999/09/30 12:35:53 soren Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.17 1998/12/19 20:10:08 christos Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.18 1999/09/30 12:35:53 soren Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -509,7 +509,7 @@ log_trim(log)
         fprintf(f,"%s %s newsyslog[%ld]: logfile turned over\n",
                 daytime, hostname, (u_long)getpid());
         if (fclose(f) == EOF) {
-                perror("log_trim: fclose:");
+                perror("log_trim: fclose");
                 exit(1);
         }
         return(0);
