@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_vnops.c	8.16 (Berkeley) 5/27/95
+ *	@(#)nfs_vnops.c	8.19 (Berkeley) 7/31/95
  */
 
 
@@ -483,9 +483,10 @@ nfs_close(ap)
 	if (vp->v_type == VREG) {
 	    if ((VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_NQNFS) == 0 &&
 		(np->n_flag & NMODIFIED)) {
-		if (NFS_ISV3(vp))
+		if (NFS_ISV3(vp)) {
 		    error = nfs_flush(vp, ap->a_cred, MNT_WAIT, ap->a_p, 0);
-		else
+		    np->n_flag &= ~NMODIFIED;
+		} else
 		    error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
 		np->n_attrstamp = 0;
 	    }
@@ -592,28 +593,26 @@ nfs_setattr(ap)
 			 */
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
- 			if (np->n_flag & NMODIFIED) {
- 			    if (vap->va_size == 0)
+ 			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
  					ap->a_cred, ap->a_p, 1);
- 			    else
+ 			else
  				error = nfs_vinvalbuf(vp, V_SAVE,
  					ap->a_cred, ap->a_p, 1);
- 			    if (error)
+ 			if (error)
  				return (error);
- 			}
  			tsize = np->n_size;
  			np->n_size = np->n_vattr.va_size = vap->va_size;
  			vnode_pager_setsize(vp, (u_long)np->n_size);
   		};
   	} else if ((vap->va_mtime.ts_sec != VNOVAL ||
-		vap->va_atime.ts_sec != VNOVAL) && (np->n_flag & NMODIFIED) &&
+		vap->va_atime.ts_sec != VNOVAL) &&
 		vp->v_type == VREG &&
   		(error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred,
 		 ap->a_p, 1)) == EINTR)
 		return (error);
 	error = nfs_setattrrpc(vp, vap, ap->a_cred, ap->a_p);
-	if (error) {
+	if (error && vap->va_size != VNOVAL) {
 		np->n_size = np->n_vattr.va_size = tsize;
 		vnode_pager_setsize(vp, (u_long)np->n_size);
 	}
@@ -1612,8 +1611,8 @@ nfs_renamerpc(fdvp, fnameptr, fnamelen, tdvp, tnameptr, tnamelen, cred, proc)
 int
 nfs_link(ap)
 	struct vop_link_args /* {
-		struct vnode *a_vp;
 		struct vnode *a_tdvp;
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
