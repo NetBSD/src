@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.22 2000/10/28 13:30:35 simonb Exp $	*/
+/*	$NetBSD: pchb.c,v 1.23 2000/11/03 17:28:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -111,8 +111,10 @@ pchbattach(parent, self, aux)
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
 	pcitag_t tag;
+	int doattach;
 
 	printf("\n");
+	doattach = 0;
 
 	/*
 	 * Print out a description, and configure certain chipsets which
@@ -123,8 +125,8 @@ pchbattach(parent, self, aux)
 	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_PEQUR:
-		pbnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
+	case PCI_VENDOR_SERVERWORKS:
+		pbnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44) & 0xff;
 
 		if (pbnum == 0)
 			break;
@@ -133,14 +135,7 @@ pchbattach(parent, self, aux)
 		 * This host bridge has a second PCI bus.
 		 * Configure it.
 		 */
-		pba.pba_busname = "pci";
-		pba.pba_iot = pa->pa_iot;
-		pba.pba_memt = pa->pa_memt;
-		pba.pba_dmat = pa->pa_dmat;
-		pba.pba_bus = pbnum;
-		pba.pba_flags = pa->pa_flags;
-		pba.pba_pc = pa->pa_pc;
-		config_found(self, &pba, pchb_print);
+		doattach = 1;
 		break;
 
 	case PCI_VENDOR_INTEL:
@@ -188,14 +183,7 @@ pchbattach(parent, self, aux)
 				 * This host bridge has a second PCI bus.
 				 * Configure it.
 				 */
-				pba.pba_busname = "pci";
-				pba.pba_iot = pa->pa_iot;
-				pba.pba_memt = pa->pa_memt;
-				pba.pba_dmat = pa->pa_dmat;
-				pba.pba_bus = pbnum;
-				pba.pba_flags = pa->pa_flags;
-				pba.pba_pc = pa->pa_pc;
-				config_found(self, &pba, pchb_print);
+				doattach = 1;
 				break;
 			}
 			break;
@@ -245,18 +233,22 @@ pchbattach(parent, self, aux)
 				pbnum = (bcreg & 0x000000ff) + 1;
 				break;
 			}
-			if (pbnum != 0) {
-				pba.pba_busname = "pci";
-				pba.pba_iot = pa->pa_iot;
-				pba.pba_memt = pa->pa_memt;
-				pba.pba_dmat = pa->pa_dmat;
-				pba.pba_bus = pbnum;
-				pba.pba_flags = pci_bus_flags();
-				pba.pba_pc = pa->pa_pc;
-				config_found(self, &pba, pchb_print);
-			}
+			if (pbnum != 0)
+				doattach = 1;
 			break;
 		}
+		break;
+	}
+
+	if (doattach) {
+		pba.pba_busname = "pci";
+		pba.pba_iot = pa->pa_iot;
+		pba.pba_memt = pa->pa_memt;
+		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_bus = pbnum;
+		pba.pba_flags = pa->pa_flags;
+		pba.pba_pc = pa->pa_pc;
+		config_found(self, &pba, pchb_print);
 	}
 
 #if NRND > 0
