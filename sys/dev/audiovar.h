@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.31.2.3 2004/12/25 12:24:38 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.31.2.4 2004/12/26 17:38:25 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ struct audio_softc {
 	 */
 	audio_params_t		sc_pparams;	/* play encoding parameters */
 	int			sc_npfilters;	/* number of filters */
-	audio_stream_t		*sc_pstreams[AUDIO_MAX_FILTERS];
+	audio_stream_t		sc_pstreams[AUDIO_MAX_FILTERS];
 	stream_filter_t		*sc_pfilters[AUDIO_MAX_FILTERS];
 	struct audio_ringbuffer	sc_pr;		/* Play ring */
 
@@ -201,7 +201,7 @@ struct audio_softc {
 	struct audio_ringbuffer	sc_rr;		/* Record ring */
 	int			sc_nrfilters;	/* number of filters */
 	stream_filter_t		*sc_rfilters[AUDIO_MAX_FILTERS];
-	audio_stream_t		*sc_rstreams[AUDIO_MAX_FILTERS];
+	audio_stream_t		sc_rstreams[AUDIO_MAX_FILTERS];
 	audio_params_t		sc_rparams;	/* record encoding parameters */
 
 	int	sc_eof;		/* EOF, i.e. zero sized write, counter */

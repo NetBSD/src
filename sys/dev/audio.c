@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.8 2004/12/25 17:19:42 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.9 2004/12/26 17:38:25 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.8 2004/12/25 17:19:42 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.9 2004/12/26 17:38:25 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -146,6 +146,9 @@ static __inline void audio_pint_silence
 int	audio_alloc_ring
 	(struct audio_softc *, struct audio_ringbuffer *, int, size_t);
 void	audio_free_ring(struct audio_softc *, struct audio_ringbuffer *);
+static void audio_destruct_filter_chain(struct audio_softc *);
+static void audio_stream_dtor(audio_stream_t *);
+static int audio_stream_ctor(audio_stream_t *, const audio_params_t *, int);
 int	audio_set_defaults(struct audio_softc *, u_int);
 
 int	audioprobe(struct device *, struct cfdata *, void *);
@@ -191,7 +194,9 @@ typedef struct uio_fetcher {
 
 static void	uio_fetcher_ctor(uio_fetcher_t *, struct uio *);
 static int	uio_fetcher_fetch_to(stream_fetcher_t *, audio_stream_t *,
-				     int, int*);
+				     int, int *);
+static int	null_fetcher_fetch_to(stream_fetcher_t *, audio_stream_t *,
+				      int, int *);
 
 dev_type_open(audioopen);
 dev_type_close(audioclose);
@@ -410,6 +415,7 @@ audiodetach(struct device *self, int flags)
 	/* free resources */
 	audio_free_ring(sc, &sc->sc_pr);
 	audio_free_ring(sc, &sc->sc_rr);
+	audio_destruct_filter_chain(sc);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&audio_cdevsw);
@@ -557,6 +563,49 @@ audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 	else
 		free(r->s.start, M_DEVBUF);
 	r->s.start = 0;
+}
+
+static void
+audio_destruct_filter_chain(struct audio_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < sc->sc_npfilters; i++) {
+		sc->sc_pfilters[i]->dtor(sc->sc_pfilters[i]);
+		sc->sc_pfilters[i] = NULL;
+		audio_stream_dtor(&sc->sc_pstreams[i]);
+	}
+	sc->sc_npfilters = 0;
+	for (i = 0; i < sc->sc_nrfilters; i++) {
+		sc->sc_rfilters[i]->dtor(sc->sc_rfilters[i]);
+		sc->sc_rfilters[i] = NULL;
+		audio_stream_dtor(&sc->sc_rstreams[i]);
+	}
+	sc->sc_nrfilters = 0;
+}
+
+static void
+audio_stream_dtor(audio_stream_t *stream)
+{
+	if (stream->start != NULL)
+		free(stream->start, M_DEVBUF);
+	memset(stream, 0, sizeof(audio_stream_t));
+}
+
+static int
+audio_stream_ctor(audio_stream_t *stream, const audio_params_t *param, int size)
+{
+	size = min(size, AU_RING_SIZE);
+	stream->bufsize = size;
+	stream->start = malloc(size, M_DEVBUF, M_WAITOK);
+	if (stream->start == NULL)
+		return ENOMEM;
+	stream->end = stream->start + size;
+	stream->inp = stream->start;
+	stream->outp = stream->start;
+	stream->param = *param;
+	stream->loop = FALSE;
+	return 0;
 }
 
 int
@@ -1223,7 +1272,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	}
 
 	last_stream = sc->sc_nrfilters > 0
-		? sc->sc_rstreams[sc->sc_nrfilters - 1]
+		? &sc->sc_rstreams[sc->sc_nrfilters - 1]
 		: &cb->s;
 
 	while (uio->uio_resid > 0 && !error) {
@@ -1432,6 +1481,14 @@ uio_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
 	return 0;
 }
 
+static int
+null_fetcher_fetch_to(stream_fetcher_t *self, audio_stream_t *p,
+		      int max_written, int *written)
+{
+	*written = 0;
+	return 0;
+}
+
 static void
 uio_fetcher_ctor(uio_fetcher_t *this, struct uio *u)
 {
@@ -1594,7 +1651,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 
 	case FIONREAD:
 		last_stream = sc->sc_nrfilters > 0
-			? sc->sc_rstreams[sc->sc_nrfilters - 1]
+			? &sc->sc_rstreams[sc->sc_nrfilters - 1]
 			: &sc->sc_rr.s;
 		*(int *)addr = audio_stream_get_used(last_stream);
 		break;
@@ -1681,7 +1738,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	 */
 	case AUDIO_WSEEK:
 		last_stream = sc->sc_nrfilters > 0
-			? sc->sc_rstreams[sc->sc_nrfilters - 1]
+			? &sc->sc_rstreams[sc->sc_nrfilters - 1]
 			: &sc->sc_rr.s;
 		*(u_long *)addr = audio_stream_get_used(last_stream);
 		break;
@@ -2192,6 +2249,7 @@ audio_rint(void *v)
 	struct audio_softc *sc;
 	const struct audio_hw_if *hw;
 	struct audio_ringbuffer *cb;
+	stream_fetcher_t null_fetcher;
 	stream_fetcher_t *last_fetcher;
 	audio_stream_t *last_stream;
 	int cc;
@@ -2267,8 +2325,11 @@ audio_rint(void *v)
 	}
 
 	if (sc->sc_nrfilters > 0) {
-		last_stream = sc->sc_rstreams[sc->sc_nrfilters - 1];
+		null_fetcher.fetch_to = null_fetcher_fetch_to;
+		last_stream = &sc->sc_rstreams[sc->sc_nrfilters - 1];
 		last_fetcher = &sc->sc_rfilters[sc->sc_nrfilters - 1]->base;
+		sc->sc_rfilters[0]->set_fetcher(sc->sc_rfilters[0],
+						&null_fetcher);
 		cc = audio_stream_get_space(last_stream);
 		error = last_fetcher->fetch_to(last_fetcher, last_stream,
 					       cc, &cc);
@@ -2675,27 +2736,37 @@ auconv_check_params(const struct audio_params *params)
 int
 audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
-	struct audio_prinfo *r = &ai->record, *p = &ai->play;
-	int cleared;
-	int s, setmode, modechange = 0;
-	int error;
-	const struct audio_hw_if *hw = sc->hw_if;
-	struct audio_params pp, rp;
 	stream_filter_list_t pfilters, rfilters;
+	stream_filter_t *pf[AUDIO_MAX_FILTERS];
+	audio_stream_t ps[AUDIO_MAX_FILTERS];
+	stream_filter_t *rf[AUDIO_MAX_FILTERS];
+	audio_stream_t rs[AUDIO_MAX_FILTERS];
+	audio_params_t pp, rp;
+	audio_params_t *from_param, *to_param;
+	struct audio_prinfo *r, *p;
+	const struct audio_hw_if *hw;
+	int s, setmode;
+	int error;
 	int np, nr;
 	unsigned int blks;
 	int oldpblksize, oldrblksize;
 	int rbus, pbus;
 	u_int gain;
+	int i;
+	boolean_t cleared, modechange;
 	u_char balance;
 
+	hw = sc->hw_if;
 	if (hw == 0)		/* HW has not attached */
 		return ENXIO;
 
+	r = &ai->record;
+	p = &ai->play;
 	rbus = sc->sc_rbus;
 	pbus = sc->sc_pbus;
 	error = 0;
-	cleared = 0;
+	cleared = FALSE;
+	modechange = FALSE;
 
 	pp = sc->sc_pparams;	/* Temporary encoding storage in */
 	rp = sc->sc_rparams;	/* case setting the modes fails. */
@@ -2734,31 +2805,31 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		nr++;
 	}
 #ifdef AUDIO_DEBUG
-	if (audiodebug && nr)
+	if (audiodebug && nr > 0)
 	    audio_print_params("Setting record params", &rp);
-	if (audiodebug && np)
+	if (audiodebug && np > 0)
 	    audio_print_params("Setting play params", &pp);
 #endif
-	if (nr && (error = audio_check_params(&rp)))
+	if (nr > 0 && (error = audio_check_params(&rp)))
 		return error;
-	if (np && (error = audio_check_params(&pp)))
+	if (np > 0 && (error = audio_check_params(&pp)))
 		return error;
 	setmode = 0;
-	if (nr) {
+	if (nr > 0) {
 		if (!cleared) {
 			audio_clear(sc);
-			cleared = 1;
+			cleared = TRUE;
 		}
-		modechange = 1;
+		modechange = TRUE;
 		/* rp.subframe_size = rp.precision; */
 		setmode |= AUMODE_RECORD;
 	}
-	if (np) {
+	if (np > 0) {
 		if (!cleared) {
 			audio_clear(sc);
-			cleared = 1;
+			cleared = TRUE;
 		}
-		modechange = 1;
+		modechange = TRUE;
 		/* pp.subframe_size = pp.precision; */
 		setmode |= AUMODE_PLAY;
 	}
@@ -2766,9 +2837,9 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	if (SPECIFIED(ai->mode)) {
 		if (!cleared) {
 			audio_clear(sc);
-			cleared = 1;
+			cleared = TRUE;
 		}
-		modechange = 1;
+		modechange = TRUE;
 		sc->sc_mode = ai->mode;
 		if (sc->sc_mode & AUMODE_PLAY_ALL)
 			sc->sc_mode |= AUMODE_PLAY;
@@ -2787,8 +2858,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 			else if (setmode == AUMODE_PLAY)
 				rp = pp;
 		}
-		pfilters.req_size = 0;
-		rfilters.req_size = 0;
+		memset(&pfilters, 0, sizeof(pfilters));
+		memset(&rfilters, 0, sizeof(rfilters));
 		/* Some device drivers change channels/sample_rate and change
 		 * no channels/sample_rate. */
 		error = hw->set_params(sc->hw_hdl, setmode,
@@ -2797,56 +2868,123 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		if (error)
 			return error;
 
-		if (np) {
+		if (np > 0) {
 			error = auconv_check_params(&pp);
 			if (error)
 				return error;
 		}
-		if (nr) {
+		if (nr > 0) {
 			error = auconv_check_params(&rp);
 			if (error)
 				return error;
 		}
 
 		if (!indep) {
+			/* XXX for !indep device, we have to use the same
+			 * parameters for the hardware, not userland */
 			if (setmode == AUMODE_RECORD) {
-				pp.sample_rate = rp.sample_rate;
-				pp.encoding    = rp.encoding;
-				pp.channels    = rp.channels;
-				pp.precision   = rp.precision;
+				pp = rp;
 			} else if (setmode == AUMODE_PLAY) {
-				rp.sample_rate = pp.sample_rate;
-				rp.encoding    = pp.encoding;
-				rp.channels    = pp.channels;
-				rp.precision   = pp.precision;
+				rp = pp;
 			}
 		}
-		sc->sc_rparams = rp;
+
+		/* construct new filter chain */
+		memset(pf, 0, sizeof(pf));
+		memset(ps, 0, sizeof(ps));
+		memset(rf, 0, sizeof(rf));
+		memset(rs, 0, sizeof(rs));
+		from_param = &pp;
+		for (i = 0; i < pfilters.req_size; i++) {
+			to_param = &pfilters.filters[i].param;
+			pf[i] = pfilters.filters[i].factory(sc, from_param,
+							    to_param);
+			if (pf[i] == NULL)
+				break;
+			if (audio_stream_ctor(&ps[i], to_param, AU_RING_SIZE))
+				break;
+			if (i > 0)
+				pf[i]->set_fetcher(pf[i], &pf[i - 1]->base);
+			from_param = to_param;
+		}
+		if (i < pfilters.req_size) { /* failure */
+			for (; i >= 0; i--) {
+				if (pf[i] != NULL)
+					pf[i]->dtor(pf[i]);
+				audio_stream_dtor(&ps[i]);
+			}
+			return EINVAL;
+		}
+		for (i = 0; i < rfilters.req_size; i++) {
+			from_param = &rfilters.filters[i].param;
+			to_param = i + 1 < rfilters.req_size
+				? &rfilters.filters[i + 1].param : &rp;
+			rf[i] = rfilters.filters[i].factory(sc, from_param,
+							    to_param);
+			if (rf[i] == NULL)
+				break;
+			if (audio_stream_ctor(&rs[i], from_param, AU_RING_SIZE))
+				break;
+			if (i > 0) {
+				rf[i]->set_fetcher(rf[i], &rf[i - 1]->base);
+			} else {
+				/* rf[0] has no previous fetcher because
+				 * the audio hardware fills data to the
+				 * input buffer. */
+				rf[0]->set_inputbuffer(rf[0], &sc->sc_rr.s);
+			}
+		}
+		if (i < rfilters.req_size) { /* failure */
+			for (; i >= 0; i--) {
+				if (rf[i] != NULL)
+					rf[i]->dtor(rf[i]);
+				audio_stream_dtor(&rs[i]);
+			}
+			return EINVAL;
+		}
+		/* New filter chain is ready. */
+		audio_destruct_filter_chain(sc);
+		memcpy(sc->sc_pfilters, pf, sizeof(pf));
+		memcpy(sc->sc_pstreams, ps, sizeof(ps));
+		sc->sc_npfilters = pfilters.req_size;
+		for (i = 0; i < pfilters.req_size; i++) {
+			pf[i]->set_inputbuffer(pf[i], &sc->sc_pstreams[i]);
+		}
+		memcpy(sc->sc_rfilters, rf, sizeof(rf));
+		memcpy(sc->sc_rstreams, rs, sizeof(rs));
+		sc->sc_nrfilters = rfilters.req_size;
+		for (i = 1; i < rfilters.req_size; i++) {
+			rf[i]->set_inputbuffer(rf[i], &sc->sc_rstreams[i - 1]);
+		}
+		/* userland formats */
 		sc->sc_pparams = pp;
-		sc->sc_rr.s.param = rfilters.req_size <= 0
-			? rp : rfilters.filters[0].param;
+		sc->sc_rparams = rp;
+		/* hardware formats */
 		sc->sc_pr.s.param = pfilters.req_size <= 0
 			? pp : pfilters.filters[pfilters.req_size - 1].param;
+		sc->sc_rr.s.param = rfilters.req_size <= 0
+			? rp : rfilters.filters[0].param;
+
 	}
 
 	oldpblksize = sc->sc_pr.blksize;
 	oldrblksize = sc->sc_rr.blksize;
 	/* Play params can affect the record params, so recalculate blksize. */
-	if (nr || np) {
+	if (nr > 0 || np > 0) {
 		audio_calc_blksize(sc, AUMODE_RECORD);
 		audio_calc_blksize(sc, AUMODE_PLAY);
 	}
 #ifdef AUDIO_DEBUG
-	if (audiodebug > 1 && nr)
+	if (audiodebug > 1 && nr > 0)
 	    audio_print_params("After setting record params", &sc->sc_rparams);
-	if (audiodebug > 1 && np)
+	if (audiodebug > 1 && np > 0)
 	    audio_print_params("After setting play params", &sc->sc_pparams);
 #endif
 
 	if (SPECIFIED(p->port)) {
 		if (!cleared) {
 			audio_clear(sc);
-			cleared = 1;
+			cleared = TRUE;
 		}
 		error = au_set_port(sc, &sc->sc_outports, p->port);
 		if (error)
@@ -2855,7 +2993,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	if (SPECIFIED(r->port)) {
 		if (!cleared) {
 			audio_clear(sc);
-			cleared = 1;
+			cleared = TRUE;
 		}
 		error = au_set_port(sc, &sc->sc_inports, r->port);
 		if (error)
@@ -2925,7 +3063,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		/* Block size specified explicitly. */
 		if (!cleared) {
 			audio_clear(sc);
-			cleared = 1;
+			cleared = TRUE;
 		}
 		if (ai->blocksize == 0) {
 			sc->sc_blkset = 0;
