@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.74 2000/05/07 00:31:42 wiz Exp $	*/
+/*	$NetBSD: conf.h,v 1.75 2000/05/07 00:38:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -481,6 +481,11 @@ cdev_decl(uk);
  */
 bdev_decl(ca);
 cdev_decl(ca);
+
+/*
+ * cdev_decl()s for Brooktree 8[47][89] based TV cards.
+ */
+cdev_decl(bktr);
 
 /*
  * [bc]dev_decl()s for 'fake' network devices.
