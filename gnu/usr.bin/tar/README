@@ -1,50 +1,40 @@
-This GNU tar 1.10.  Please send bug reports, etc., to
-bug-gnu-utils@prep.ai.mit.edu.  
+Hey!  Emacs!  Yo!  This is -*- Text -*- !!!
 
-This is GNU tar.  It is based heavily on John Gilmore's public domain
-tar, but with added features.  The manual is currently being written.
-An old manual, surely riddled with errors, is in tar.texinfo.  Please
-don't send in bug reports about that manual.  In particular, the
-mechanism for doing incremental dumps has been significantly changed.
+This GNU tar 1.11.2.  Please send bug reports, etc., to
+bug-gnu-utils@prep.ai.mit.edu.  This is a beta-test release.  Please
+try it out.  There is no manual; the release of version 1.12 will
+contain a manual.
 
-The mt program is in the GNU cpio distribution.
+GNU tar is based heavily on John Gilmore's public domain tar, but with
+added features.  The manual is currently being written.  
 
-Various people have been having problems using floppies on a NeXT.
-I've gotten conflicting reports about what should be done to solve the
-problems, and we have no way to test it ourselves.  If you don't have
-"rename" in your C library, you will need to find an implementation.
-I'm not sure if I want to roll in the GNU implementation into tar.
+This distribution also includes rmt, the remote tape server (which
+normally must reside in /etc).  The mt tape drive control program is
+in the GNU cpio distribution.
 
-	-mib
+See the file INSTALL for compilation and installation instructions for Unix.
+See the file NEWS for information on all that is new in this version
+of tar.
 
-User-visible changes since 1.09:
+makefile.pc is a makefile for Turbo C 2.0 on MS-DOS.
 
-Filename to -G is optional.  -C works right.  
-Names +newer and +newer-mtime work right.
+Various people have been having problems using floppies on a NeXT.  In
+order to have them work right, you need to kill the automounting
+program which tries to monut floppies as soon as they are added.
 
--g is now +incremental
--G is now +listed-incremental
+If you want to do incremental dumps, use the distributed backup
+scripts.  They are what we use at the FSF to do all our backups.  Most
+importantly, do not use --incremental (-G) or --after-date (-N) or
+--newer-mtime to do incremental dumps.  The only option that works
+correctly for this purpose is --listed-incremental.  (When extracting
+incremental dumps, use --incremental (-G).)
 
-Sparse files now work correctly.
-
-+volume is now called +label.
-
-+exclude now takes a filename argument, and +exclude-from does what
-+exclude used to do.
-
-Exit status is now correct.
-
-+totals keeps track of total I/O and prints it when tar exits.
-
-When using +label with +extract, the label is now a regexp.
-
-New option +tape-length (-L) does multi-volume handling like BSD dump:
-you tell tar how big the tape is and it will prompt at that point
-instead of waiting for a write error.
-
-New backup scripts level-0 and level-1 which might be useful to
-people.  They use a file "backup-specs" for information, and shouldn't
-need local modification.  These are what we use to do all our backups
-at the FSF.
-
+If your system needs to link with -lPW to get alloca, but has
+rename in the C library (so HAVE_RENAME is defined), -lPW might
+give you an incorrect version of rename.  On HP-UX this manifests
+itself as an undefined data symbol called "Error" when linking cp, ln,
+and mv.  If this happens, use `ar x' to extract alloca.o from libPW.a
+and `ar rc' to put it in a library liballoca.a, and put that in LIBS
+instead of -lPW.  This problem does not occur when using gcc, which
+has alloca built in.
 

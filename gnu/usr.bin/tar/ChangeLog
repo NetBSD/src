@@ -1,3 +1,837 @@
+Thu Mar 25 13:32:40 1993  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* version.c: Released version 1.11.2.
+
+	* Makefile.in (dist): Do the link differently; some of the
+	files have changed filesystems which makes it more complex.
+
+	* Makefile.in (dist, shar): Use gzip instead of compress.
+
+	* create.c (dump_file): Test for curdev==-1, not curdev<0.
+	Some losing NFS systems give negative device numbers
+	sometimes.
+
+Thu Mar 25 11:55:15 1993  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * level-0, level-1 (TAR_PART1): Use `--block-size', not just
+          `--block', which is now ambiguous. 
+
+Wed Mar 24 22:12:51 1993  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * backup-specs (TAR): New variable.
+
+        * level-0, level-1 (TAR_PART1): Get path of GNU tar from `TAR'
+          variable, don't hardcode it.
+
+Sat Mar 20 00:20:05 1993  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * backup-specs (SLEEP_MESSAGE): put backslashes in front of nested
+          double quotes. 
+
+        * level-0, level-1 (BACKUP_DIRS): Don't put in quotes. 
+          (LOGFILE): Use sed to construct name, not awk. 
+
+        * dump-remind (recipients): Replaced inefficient pipeline with a
+          single, simple sed script. 
+          (volno): Deal with the possibility that VOLNO_FILE may not be
+          created yet. 
+
+Fri Mar 19 15:05:15 1993  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* backup-specs (VOLNO_FILE): Removed abusive comment by Noah.
+
+	* buffer.c (new_volume): Write the global volume number to the
+	volno file before running the info script, so that the script
+	can look at it.
+
+Thu Mar 18 20:11:54 1993  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * Makefile.in (AUX): Include `dump-remind' in distribution.
+
+        * backup-specs (SLEEP_MESSAGE): New variable.
+          level-0, level-1: Use it instead of external `dont_touch' file.
+
+        * level-0, level-1: Put most of the script in () and pipe
+          everything from the subshell through tee -a $LOGFILE.  Since you
+          really want most of the output to go to the logfile anyway, and
+          since all those pipelines were preventing one from getting the
+          exit status of most commands, this seems like the right idea.
+
+        * level-0, level-1 (LOGFILE): Use YYYY-MM-DD (all numeric) format
+          for log file name, since that makes the file names sortable in a
+          coherent way.  Suffix should always be `level-n' where n is the
+          dump level.  level-0 script was just using `-full' instead.
+
+        * level-0, level-1 (DUMP_LEVEL): New variable.  Set to `0' or `1'
+          in each script as appropriate.
+
+        * level-0, level-1 (HOST): Renamed to `localhost' for clarity.
+          (host): renamed to `remotehost' for clarity.
+
+        * level-0, level-1 (startdate): New variable.  Use it in Subject
+          line of mailed report.
+
+        * level-0, level-1: Fixed all instances where sed is called with a
+          script on the command line to use `-e' option.
+
+        * level-0, level-1: Don't try to call logfile.sed to filter
+          LOGFILE.  It's not distributed with tar and was never really used
+          anyway.
+
+        * level-0, level-1: Put quotes around most variable names (barring
+          those that are known to intentionally contain text that should be
+          expanded into multiple words, like `TAR_PART1').
+
+        * level-0, level-1: Got rid of annoying trailing backslashes in awk
+          scripts.  They were gratuitous.  Made them a little more readable
+          by adding some whitespace.
+
+Wed Mar 17 10:30:58 1993  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* tar.c (describe, long_options): Changed --compress-block to
+	--block-compress.  
+	(options): Fixed f_compress_block sanity check error message
+	to give the correct name of the option.
+
+Tue Mar 16 14:52:40 1993  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* extract.c (extract_archive): case LF_DIR: Do chown when
+	necessary.  Don't bother jumping to set_filestat for
+	f_modified; repeat the chmod code here.  Replace `break',
+	deleted on 2 September 1992.  
+
+	* tar.c (describe, long_options, options): Added gzip options
+	and use-compress-program option.  
+	* tar.h: Added new compression options.
+	* buffer.c (child_open, open_archive): Use new compression options.
+
+	* create.c (start_header): Only mask off high bits when 
+	creating old-style archives.
+	* list.c (decode_header): Mask off potentially misleading
+	high bits from the mode when reading headers.
+
+Mon Mar 15 11:34:34 1993  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* extract.c (extract_archive): Put arguments in the right
+	order for error message.
+
+	* create.c (deal_with_sparse): if the last byte was null, we
+	didn't write it out.
+
+	* gnu.c, create.c, extract.c, diffarch.c, list.c throughout:
+	Replace malloc calls with ck_malloc and realloc with ck_realloc.
+
+	* tar.c (describe): Improve doc for -L.
+
+	* tar.c (name_next): Don't apply exclusion to explicitly named
+	files.
+
+	* tar.c (long_options, describe): Added new-volume-script as
+	an alias for info-script.
+
+	* extract.c (extract_archive): LF_DUMPDIR case; misplaced paren.
+
+	* extract.c (extract_archive): extract_file case, first if, 
+	include space for null in namelen computation.
+
+	* extract.c (extract_sparse_file): Use value returned by write
+	to properly create error message.
+
+	* create.c (create_archive): Don't assume we have anything to
+	dump.
+
+	* buffer.c (open_archive): Set current_file_name for the
+	volume header so that verbose listings work properly.
+
+	* Makefile.in (realclean): Added getdate.c.
+
+Thu Jan 14 23:38:44 1993  David J. MacKenzie  (djm@kropotkin.gnu.ai.mit.edu)
+
+	* tar.c: Include fnmatch.h after port.h to make sure we get our FNM_*
+	(e.g. on HPUX 8).
+
+Tue Nov 24 08:30:54 1992  David J. MacKenzie  (djm@goldman.gnu.ai.mit.edu)
+
+	* tar.c (addname), gnu.c (read_dir_file): Use HAVE_GETCWD, not USG.
+
+	* port.h, rmt.h: Use HAVE_STRING_H, not USG.
+
+	* port.h: Add dir header decls.
+	* create.c, gnu.c: Use SYSNDIR, SYSDIR, and NDIR
+	instead of BSD42 and USG.  Rename DP_NAMELEN to NLENGTH.
+	Use `struct dirent' instead of `struct direct'.
+	* create.c, gnu.c, tar.c: Remove dir header decls.
+
+Wed Nov 18 15:31:30 1992  David J. MacKenzie  (djm@goldman.gnu.ai.mit.edu)
+
+	* tar.c: Change FNM_TARPATH to FNM_LEADING_DIR to match change
+	in fnmatch.[ch].
+
+Wed Oct 21 00:52:24 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * level-0, level-1: put curly braces around variables for clarity.
+
+        * backup-specs (DUMP_REMIND_SCRIPT): define it (but commented out
+          so that distributed dump scripts won't use it by default).
+          level-0, level-1 (TAR_PART1): use --info-script if
+          DUMP_REMIND_SCRIPT is defined.
+          dump-remind: new file (intended as an example).
+
+Thu Oct 15 03:33:28 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * level-0, level-1: remove $LOGFILE.tmp files before exiting.
+
+Fri Oct  2 00:28:01 1992  David J. MacKenzie  (djm@goldman.gnu.ai.mit.edu)
+
+	* tar.c (describe): Fix some tab alignments.
+
+	* Makefile.in (SRC3): Add getdate.c, for systems without bison/yacc
+	(like MS-DOS).
+
+	* diffarch.c (diff_sparse_files): Add missing arg to fprintf calls.
+
+	* extract.c (extract_archive, restore_saved_dir_info),
+	buffer.c (child_open), list.c (decode_header, print_header):
+	Delete unused vars.  
+
+	* port.c [__MSDOS__]: Have strstr, rename, and mkdir.  Don't
+	define ck_pipe.
+
+	* buffer.c, tar.c (init_volume_number, closeout_volume_number),
+	create.c (write_long): 	Declare as void, not int, since they
+	don't return a value.
+
+Thu Sep 24 00:06:02 1992  Michael I Bushnell  (mib@churchy.gnu.ai.mit.edu)
+
+	* level-0, level-1 (TAR_PART1): remove --atime-preserve
+	because of a total screw.
+
+Tue Sep 22 14:15:48 1992  Michael I Bushnell  (mib@wookumz.gnu.ai.mit.edu)
+
+	* buffer.c (close_archive): Removed leftover `break' from when
+	this was a switch.
+
+Tue Sep 22 08:33:16 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * create.c, port.h: indented #pragma directives with 1 space. 
+
+Fri Sep 18 14:15:17 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* All source files: re indented using GNU indent.  
+
+	* rtapelib.c (__rmt_read): Only read the amount left in the
+	buffer; otherwise a broken rmt server (which puts too much
+	data out) could overwrite past our buffer.
+
+Thu Sep 17 14:08:58 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* create.c: Throughout, use struct utimbuf rather than array
+	of longs.
+
+	* configure.in: Check for getpwuid and getgrgid.
+
+	* Makefile.in (SRC3, AUX): Move alloca.c to SRC3.
+	(OBJ3): Add @ALLOCA@.
+
+	* Makefile.in (getdate.c): Look in srcdir for getdate.y.
+
+	* buffer.c (close_archive): We can't check WTERMSIG
+	meaningfully unless we already know tha WIFSIGNALED is true.
+	(There is no guarantee it WTERMSIG will return zero when
+	WIFSIGNALED is false.)
+	* port.c (rmdir, mkdir): Check WIFSIGNALED rather than
+	WTERMSIG.
+
+	* Makefile.in (getdate.c): Use $(YACC) instead of `yacc'.
+
+Tue Sep 15 14:49:48 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* version.c: Released version 1.11.1.
+
+	* Makefile (AUX): Added NEWS.
+
+	* Makefile.in (rmt): Added $(LIBS).
+	* configure.in: Added tests for libraries needed on Solaris.
+
+	* mangle.c (extract_mangle): Null terminate link name for
+	losing archives missing it.
+
+	* Makefile.in: added target and rule for getdate.c: getdate.y;
+	some makes don't have one built in.
+
+Mon Sep 14 16:23:15 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* tar.c (options, main): Advise use of --help rather than
+	+help.
+
+	* create.c (write_long): Using hstat here is a Bad Idea, and
+	totally unnecessary at that.
+
+	* list.c (read_header): Compute both signed and normal
+	checksums.
+
+	* configure.in: Define BSD in the presence of /sdmach or 
+	/../../mach.
+
+	* diffarch.c, buffer.c: Declare valloc as void* rather than
+	char*.
+
+	* Makefile.in: Don't install info files.
+
+	* configure.in: Check for malloc was scrambled.
+
+	* port.h: Undefine index and rindex if necessary; some
+	string.h's define them for us.
+
+	* tar.c (addname): Missing braces after if.
+	* gnu.c (read_dir_file): Missing braces after if.
+
+	* names.c: Add include of <stdio.h>,
+
+	* create.c (start_header): Set current_file_name so that 
+	print_header (used for verbose create) works properly.
+	(dump_file): Set current_link_name when setting up symlink
+	and hardlink records.
+
+Fri Sep 11 01:05:52 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* fnmatch.[ch]: New files.
+	* wildmat.c: File removed.
+	* tar.c: Include fnmatch.h and use fnmatch instead of wildmat.
+	* Makefile.in, makefile.pc: Replace wildmat.o(bj) with fnmatch.
+
+Thu Sep 10 23:19:30 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* buffer.c, tar.c: Remove redundant decls of getenv, rindex.
+
+	* Makefile.in: Add uninstall target.
+	Define libdir instead of hardcoding /etc for installing rmt.
+
+Thu Sep 10 13:06:03 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* list.c (read_header): On second thought, that doesn't work
+	either, so just store the names in malloced areas.  Sigh.
+
+	* NEWS: New file.
+	* README: Removed things that belong in NEWS; point to it.
+
+	* list.c (read_header): current_file_name and
+	current_link_name need to be set to the arrays in head rather
+	than header; header is the actual read buffer and will change.
+
+	* extract.c (extract_archive):
+	* buffer.c (new_volume): `#' directives need to start in
+	column 1.
+
+Thu Sep 10 06:09:18 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * level-0, level-1 (TAR_PART1): put --atime-preserve inside quotes.
+
+Wed Sep  9 13:34:26 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* Makefile.in (AUX): Add getpagesize.h.
+	(AUX): Comment out manuals.
+	(all): Comment out dependency on tar.info.
+
+	* version.c: Release of version 1.11.
+
+	* level-0, level-1 (TAR_PART1): Use --atime-preserve.
+
+	* Makefile, configure.in: Arrange to use local malloc on HP-UX.
+
+	* port.h Use the canonical Autoconf chunk for alloca instead
+	of just	looking for gcc.
+
+Wed Sep  9 03:16:58 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * port.h: If compiling with gcc, use __builtin_alloca.
+
+Tue Sep  8 16:13:41 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* extract.c: Removed long name support from here.
+	* list.c (read_header): Understand and skip longname/longlink
+	headers here.  Names for current file are stored in new global
+	variables.  All source files except create.c changed to refer
+	to current_file_name and current_link_name instead of fields
+	directly from the current header.
+
+Thu Sep  3 12:41:08 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* create.c (write_long): New function.
+	(dump_file): When writing link records or symlink records, use
+	new write_long function instead of mangling when the link
+	target is too long.
+	(start_header): Use write_long instead of mangling for long
+	names. 
+	* extract.c (saverec): Recognize LF_LONGNAME and LF_LONGLINK.
+	(saverec): Throughout, use longname and longlink if they are set.
+
+Wed Sep  2 14:41:13 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* mangle.c: This is now deprecated; retain extract_mangle for
+	backward compatability.
+
+	* list.c (print_header): patch from Chris Arthur to prevent 
+	printing 0 when the gid or uid is null.
+
+	* list.c (decode_header): patch from Chris Arthur to use the
+	gid field when the gid is empty, and similarly for uid.
+
+	* extract.c: saved_dir_info, saved_dir_info_head: new type and
+	var.
+	(extract_archive): When extracting directories, now save info
+	in saved_dir_info_head.
+	(restore_saved_dir_info): New function.
+	* list.c (read_and): Call restore_saved_dir_info at the end of
+	the run.
+	This patch is from Chris Arthur (csa@pennies.sw.stratus.com).
+
+Mon Aug 31 15:39:55 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* create.c (create_archive): If there are no names specified,
+	write nothing on the archive instead of dumping ".".  
+
+	* buffer.c (open_archive): Useful error message.
+ 
+ 	* tar.c, tar.h: Recognize f_atime_preserve.
+	* create.c (dump_file): Implement f_atime_preserve.
+
+	* rmt.h (_remdev): Don't require /dev/ to be in remote archive
+	names; obey new force-local flag.
+	* tar.c, tar.h: Implement new force-local flag.
+
+	* tar.c (describe): same-owner and same-order were confused.
+
+	* create.c (dump_file): Check for toplevel had sense reversed.
+
+	* buffer.c (new_archive): Don't free old_name...when these
+	come from the command line, they aren't malloced, and it isn't
+	important to save this trivial amount of memory.
+
+	* tar.h: replace ar_file with ar_files, n_ar_files,
+	cur_ar_files.
+	* buffer.c (open_archive): multi-volume compressed archives
+	never worked; give an appropriate error.  Change open of
+	ar_file to open of ar_files[0].
+	(writeerror, readerror, flush_archive): use
+	ar_files[cur_ar_file] instead of ar_file.
+	(new_archive): Necessary changes to support ar_files.
+	* tar.c (options): handle multiple tape drive arguments.
+
+Fri Aug 28 17:42:13 1992  Michael I Bushnell  (mib@wookumz.gnu.ai.mit.edu)
+
+	* list.c (decode_header), create.c (start_header), tar.h (TMAGIC): 
+	Undo djm's changes below; tar does not support the final
+	Posix.1 format; it's bad to make it look like it does.
+
+Sun Jul 19 02:13:46 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* port.h: Try to prevent redefining major.
+	* port.c: HAVE_BZERO -> minix.  Fix a typo.
+
+	* list.c (decode_header): Recognize the final POSIX.1 magic as
+	well as the early draft magic for ustar.
+	* create.c (start_header): Create a final POSIX.1 magic string
+	instead of an early draft string for ustar.
+	* tar.h (TMAGIC): Remove the trailing blanks.
+
+	* rmt.c, rtapelib.c: Use POSIX and STDC headers if available.
+	* rmt.h: Declare the external functions defined in rtapelib.c.
+
+Tue Jul 14 00:44:37 1992  David J. MacKenzie  (djm@apple-gunkies.gnu.ai.mit.edu)
+
+	* pathmax.h: New file.
+	* port.h: Include it.
+	* create.c (create_archive): Allocate PATH_MAX instead of
+	NAME_MAX for temporary buffer so we don't have to figure out
+	what NAME_MAX is (portably).
+
+Fri Jul 10 08:30:42 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* gnu.c (collect_and_sort_names): write_dir_file has no argument.
+
+	* level-0, level-1: Avoid silly Sun awk lossage.
+
+Mon Jul  6 20:11:32 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* port.c (rename): If unlinking the source at the end fails,
+	unlink the destination instead to avoid leaving a mess.
+
+Fri Jul  3 15:16:42 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* buffer.c, diffarch.c, update.c, rtapelib.c: Change NO_MTIO to
+	HAVE_SYS_MTIO_H.
+
+	* port.c, tar.h: Change FOO_MISSING to HAVE_FOO.
+
+Tue Jun 23 23:39:02 1992  David J. MacKenzie  (djm@goldman.gnu.ai.mit.edu)
+
+	* rmt.c: Add #ifdefs to work on ISC.
+
+Wed May 20 00:12:27 1992  David J. MacKenzie  (djm@churchy.gnu.ai.mit.edu)
+
+	* port.h: Define major, minor, makedev if the system doesn't.
+
+Wed May 13 21:16:38 1992  Michael I Bushnell  (mib@apple-gunkies.gnu.ai.mit.edu)
+
+	* gnu.c (add_dir_name): Store legitimate value into
+	dir_contents when get_dir_contents returns NULL.
+
+Thu May  7 23:44:35 1992  Michael I Bushnell  (mib@apple-gunkies.gnu.ai.mit.edu)
+
+	* gnu.c (add_dir_name): Check for return of NULL from get_dir_contents;
+	see djm's change of Fri Jul 26 01:12:58 1991.
+
+Mon May  4 22:50:57 1992  David J. MacKenzie  (djm@churchy.gnu.ai.mit.edu)
+
+	* tar.h: Make comments for option names say -- instead of +.
+
+Thu Apr 30 03:09:16 1992  Noah Friedman  (friedman@nutrimat.gnu.ai.mit.edu)
+
+        * level-1: Added `$' before VOLNO_FILE in definition of TAR_PART1.
+        Added line to remove $VOLNO_FILE from any previous dump before
+        starting. 
+          
+        * level-0, level-1: Change long options to use `--' instead of `+'
+        (support for `+' will go away soon) 
+
+Wed Apr 29 14:23:10 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* tar.c, tar.t: Added +volno-file option.
+	buffer.c: New functions init_volume_number,
+	closeout_volume_number.
+	tar.c (main): Call new functions in the right place.
+
+	* buffer.c (fl_write, fl_read): Mod to allow losing tape
+	drives which use short counts to indicate end of tape
+	correctly handle the multi-tape stuff.  The read half won't
+	co-exist with f_reblock; there's no way to fix that, of
+	course.
+
+	* tar.c, tar.h: Added new option +show-omitted-dirs, from
+	Karl Berry.  
+	list.c (read_and): Implemented show-omitted-dirs.
+
+	* tar.c, tar.h: Added new option +checkpoint.
+	buffer.c (fl_read, fl_write): Implemented +checkpoint lazily.
+
+	* create.c (dump_file): Added toplevel argument; some devices
+	can be negative, so the old method was bogus.  All callers
+	changed. 
+
+	* tar.c, tar.h: Added new option +ignore-failed-read.
+	create.c (dump_file): Implemented +ignore-failed-read.
+
+	* create.c (finish_sparse_file): Commented out debugging printf.
+
+	* tar.c, tar.h: Added new option +remove-files to delete files
+	after they are added to the archive.
+	create.c (dump_file): Implemented +remove-files for
+	everything but directories.  I don't think they need it.
+
+Tue Apr 28 13:21:42 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* create.c: (dump_file): save_name needs to be set equal to p,
+	not something inside the header, because the header changes at
+	the first buffer flush.
+
+Fri Apr 24 10:41:13 1992  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* create.c: Djm incorrectly moved the include of port.h to
+	precede the include of sys/file.h; restored.
+
+	* tar.c (main): Cases CMD_EXTRACT and CMD_LIST: declare error
+	string with const.
+
+	* gnu.c (collect_and_sort_names): Leave if around
+	write_dir_file in place.
+
+Wed Apr 22 02:16:14 1992  David J. MacKenzie  (djm@churchy.gnu.ai.mit.edu)
+
+	* rtapelib.c: SIGTYPE -> RETSIGTYPE.
+
+Mon Mar  9 22:42:05 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* rtapelib.c: Reformat and make comments more complete.
+	Rename a few variables for clarity.
+
+Thu Mar  5 14:07:34 1992  David J. MacKenzie  (djm@nutrimat.gnu.ai.mit.edu)
+
+	* tar.c (describe): Document long options as starting with --.
+
+Thu Jan 23 22:54:41 1992  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* tar.c (options): Check get_date return value for error indication.
+
+Tue Dec 24 00:03:03 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* tar.c, gnu.c, extract.c, create.c, port.h, rmt.h: Change
+	POSIX ifdefs to HAVE_UNISTD_H and _POSIX_VERSION.
+
+Fri Dec 20 13:50:38 1991  Michael I Bushnell  (mib at geech.gnu.ai.mit.edu)
+
+	* testpad.c (main): flush stderr so perror and fprintf
+	cooperate right.
+
+Wed Dec 18 16:52:42 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* port.h: Check MAJOR_IN_MKDEV and MAJOR_IN_SYSMACROS to find
+	where to get major, minor and makedev.
+	* create.c, list.c, update.c: Don't check USG to include
+	sys/sysmacros.h.
+
+Thu Dec 12 21:57:10 1991  Michael I Bushnell  (mib at geech.gnu.ai.mit.edu)
+
+	* mangle.c (extract_mangle): Correctly null terminate name of
+	link target.
+
+Thu Nov 21 07:44:18 1991  Michael I Bushnell  (mib at nutrimat)
+
+	* create.c (dump_file, at start of ISREG output loop): use
+	filename from header instead of real name to make sure that we
+	get the mangled version and not one that is too long and
+	overflows buffers.
+
+Sat Nov 16 01:37:45 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* tar.h: Use new criteria for STDC version of msg.
+
+Sat Nov  2 21:31:57 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* create.c, gnu.c, tar.c: Use DIRENT instead of NDIR to select
+	between dirent.h and ndir.h for USG.
+
+	* port.c: Rename WANT_FOO to FOO_MISSING to make sharing code
+	and configure script with other utilities easier.  Use
+	VPRINTF_MISSING and DOPRNT_MISSING instead of FOO_MSG to
+	select error reporting routines.
+
+Thu Oct 17 20:19:02 1991  Michael I Bushnell  (mib at churchy.gnu.ai.mit.edu)
+
+	* level-0: Repair damage from previous mod: stdin to rsh must
+	be the terminal or tar's questions lose.
+
+Sat Aug 31 15:05:27 1991  Noah Friedman  (friedman at nutrimat.gnu.ai.mit.edu)
+
+        * level-0: Fixed several syntax errors associated with
+          stdout/stderr redirection.
+          Made sure remote host executes commands from sh where redirection
+          is necessary, since root's shell might be csh in some places and
+          the redirect syntax differs.
+
+Thu Aug 29 00:54:01 1991  Michael I Bushnell  (mib@geech.gnu.ai.mit.edu)
+
+	* tar.c (long_options).  Fixed info-script long option.
+
+Mon Aug 26 16:53:50 1991  David J. MacKenzie  (djm at pogo.gnu.ai.mit.edu)
+
+	* configure, Makefile.in: Only put $< in Makefiles if VPATH
+	is being used, because older makes don't understand it.
+
+Mon Aug 19 01:47:57 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* create.c: Indent '#pragma alloca' so non-ANSI compilers
+	don't choke on it.
+
+Wed Aug 14 14:10:43 1991  David J. MacKenzie  (djm at geech.gnu.ai.mit.edu)
+
+	* list.c (UGSWIDTH): Increase from 11 (sort of like Unix tar) to
+	18, so that with normal user and group names of <= 8 chars,
+	the columns never shift in a tar -t listing.
+
+Fri Aug  2 00:41:08 1991  David J. MacKenzie  (djm at apple-gunkies)
+
+	* Makefile.in (dist): Include texinfo.tex and tar.info*.
+	(install): Install tar.info*.
+	* configure: Set INSTALLDATA.
+
+	* configure: Create config.status.  Remove it and Makefile if
+	interrupted while creating them.
+
+	* configure: Check for +srcdir etc. arg and look for
+	Makefile.in in that directory.  Set VPATH if srcdir is not `.'.
+	* Makefile.in: Add `prefix'.
+	(tar.info): New target.
+
+Tue Jul 30 17:08:04 1991  David J. MacKenzie  (djm at apple-gunkies)
+
+	* configure: NEED_TZSET has become FTIME_MISSING.
+
+Mon Jul 29 19:23:10 1991  David J. MacKenzie  (djm at wombat.gnu.ai.mit.edu)
+
+	* port.c [F_CHSIZE]: Additional version.
+
+Sat Jul 27 22:27:47 1991  David J. MacKenzie  (djm at wombat.gnu.ai.mit.edu)
+
+	* rmt.h: Clean up ifdefs.
+
+	* makefile.pc: Fix typo.
+	port.h: Change MSDOS to __MSDOS__.
+	[__MSDOS__]: Define off_t.  Include io.h and not sys/param.h.
+	[__TURBOC__]: Use void * and don't define const.
+
+Fri Jul 26 01:12:58 1991  David J. MacKenzie  (djm at bleen)
+
+	* buffer.c: Rename `eof' to `hit_eof' to avoid conflict with an
+	MSDOS function.
+	* gnu.c (get_dir_contents): Return NULL, not "\0\0\0\0", on error.
+	* diffarch.c (diff_archive): Open files in binary mode.
+	Don't use or free a non-malloc'd return value from get_dir_contents.
+	* msd_dir.c [__TURBOC__]: Include stdlib.h.
+	* rmt.h: lseek returns off_t, not long.
+
+	* tar.c (describe): -X is +exclude-from, not +exclude.
+	(names_notfound): Free memory only if amiga, not !unix.
+
+	* tar.h, tar.c: Add +null option to make -T read
+	null-terminated filenames (such as those produced by GNU find
+	-print0), and disable -C option.
+	This guarantees that odd filenames will get archived.
+	* tar.c (read_name_from_file): New function.
+	(name_next): Call it instead of fgets.
+
+Wed Jul 24 11:17:48 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* create.c [_AIX]: Declare alloca.
+
+	* buffer.c (open_archive): Check for successful open before,
+	not after, fstatting the fd.
+
+Tue Jul 23 20:51:31 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* configure: Only define BSD42 if sys/file.h exists.
+	If alloca is missing and /usr/ucblib exists (SVR4), use it
+	instead of -lPW.
+
+	* port.h [!__STDC__]: #define const.
+	* gnu.c (dirent_cmp): Fix args to agree with ANSI C prototype.
+	* create.c: Declare ck_realloc.
+	* gnu.c, diffarch.c: Move check for symlinks to after port.h include.
+
+Sat Jul 20 00:03:54 1991  David J. MacKenzie  (djm at apple-gunkies)
+
+	* msd_dir.[ch]: Use POSIX-style `struct dirent' instead of
+	`struct direct'.
+	* create.c, gnu.c, tar.c: Adjust callers.
+
+Thu Jul 18 00:05:01 1991  David J. MacKenzie  (djm at bleen)
+
+	* port.c (ck_malloc, ck_realloc): Return PTR, not char *.
+	* gnu.c, create.c, tar.c: Fix decls.
+
+	* port.c: Don't use the preprocessor to guess missing
+	functions on Unix; let configure do it.
+	[WANT_GETWD] (getwd): Function removed; not needed because
+	getcwd is used if needed.
+	* gnu.c, tar.c: Use getcwd if POSIX.
+
+	* rtapelib.c: Use SIGTYPE instead of testing SIGNAL_VOID.
+	Default to void (more common these days) instead of int.
+
+	* tar.c, gnu.c, mangle.c: Remove VOIDSTAR defn.  Use PTR instead.
+	* port.h: Define PTR.
+
+	* gnu.c, tar.c [__MSDOS__ || USG]: Remove incorrect getcwd
+	decl; put correct one in port.h [!POSIX].
+
+	* tar.c (describe): Print on stdout instead of stderr; it's
+	not so much a usage message (since you have to ask for it
+	explicitly) as on-line help, and you really need to be able to
+	page it because it's more than a screen long.
+
+	* Make #ifdefs for sys/file.h or fcntl.h, directory header,
+	sys/mtio.h consistent between files.  Use NO_MTIO instead of
+	tricks with USG and HAVE_MTIO and NO_RMTIOCTL.
+	* Move decls of ANSI C and POSIX functions to port.h and
+	use standard headers to declare them if available
+	[STDC_HEADERS or POSIX].
+	* Add many missing function declarations and return types.
+	* Some places used __MSDOS__, some MSDOS; standardize on __MSDOS__.
+	* Change S_IF macros to S_IS for POSIX.
+	* port.h: Define appropriate S_IS macros if missing.
+	* port.h: Rename macros for testing exit status to conform to
+	POSIX; use the system's versions if available [POSIX].
+	* Use POSIX PATH_MAX and NAME_MAX instead of MAXPATHLEN and MAXNAMLEN.
+	* port.h: Define PATH_MAX and NAME_MAX.
+	* create.c, gnu.c, tar.c: Use ck_malloc and free instead of
+	auto arrays of size PATH_MAX or NAME_MAX, since with pathconf
+	they might not be constants.
+	* Move all definitions of O_* to port.h to reduce redundancy.
+	* Make all source files that now need to include port.h do so.
+	* port.c: Remove #undefs of WANT_* so you can use -DWANT_*
+	when compiling, instead of having to edit port.c.
+	[WANT_DUMB_GET_DATE] (get_date): Function removed.
+	Even systems without bison can get bison output and compile it.
+	[WANT_STRING] (index, rindex, bcopy, bzero, bcmp): Functions
+	removed; the translation is now done by macros in port.h.
+	* wildmat.c (wildmat): Use POSIX.2 '!' instead of '^' to negate
+	character classes.
+
+Mon Jul 15 13:47:45 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* testpad.c (main): Return type void.
+
+	* port.c [WANT_STRING]: Don't include memory.h if NO_MEMORY_H.
+
+	* create.c (dump_file) [AIX]: Fix typo, `allocate' for `alloca'.
+	* gnu.c (collect_and_sort_names): Move misplaced brace out of #ifdef.
+	From: Minh Tran-Le <TRANLE@intellicorp.com>.
+
+	* configure: Also look in sys/signal.h for signal decl.
+
+Wed Jul 10 01:42:55 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* Rename rtape_server.c to rmt.c and rtape_lib.c to rtapelib.c.
+
+	* configure, Makefile.in: $(INSTALLPROG) -> $(INSTALL).
+
+Tue Jul  9 01:38:37 1991  David J. MacKenzie  (djm at wookumz.gnu.ai.mit.edu)
+
+	* Most files: Refer to GPL version 2.
+	* COPYING: Use version 2.
+
+	* port.c [__TURBOC__] (utime): New function.
+
+	* xmalloc: New function (just calls ck_malloc), for alloca.c
+	and bison.simple (in getdate.y output).
+
+	* Makefile.in (AUX): Include alloca.c and tcexparg.c, a
+	command line globber for Turbo C.
+
+Mon Jul  8 14:30:52 1991  David J. MacKenzie  (djm at geech.gnu.ai.mit.edu)
+
+	* testpad.c: Open and write to testpad.h instead of stdout,
+	because some MS-DOS makes (Borland's at least) can't do
+	redirection in commands.
+	* Makefile.in: Don't redirect testpad output.
+
+Mon Jul  8 12:56:35 1991  Michael I Bushnell  (mib at churchy.gnu.ai.mit.edu)
+
+	* buffer.c (fl_read): Missing \n in printf.
+
+Mon Jul  8 03:40:28 1991  David J. MacKenzie  (djm at geech.gnu.ai.mit.edu)
+
+	* create.c, extract.c, gnu.c, diffarch.c, tar.c: Comment out
+	unused variables. 
+
+	* tar.c (options): Cast get_date arg to VOIDSTAR instead of
+	`struct timeb *', since on some non-BSD systems the latter is
+	undefined.
+
+Sat Jul  6 04:53:14 1991  David J. MacKenzie  (djm at geech.gnu.ai.mit.edu)
+
+	* Replace Makefile with configure, Makefile.in, and makefile.pc.
+	Update README with current compilation instructions.
+
+	* port.c [WANT_RENAME] (rename): New function.
+
+Wed Jul  3 18:10:52 1991  Michael I Bushnell  (mib at geech.gnu.ai.mit.edu)
+
+	* testpad.c (main): Avoid warning from some compilers on array
+	address. 
+
+	* rtape_server.c (sys_errlist): Should be declared extern.
+
 Mon Jul  1 14:14:06 1991  Michael I Bushnell  (mib at geech.gnu.ai.mit.edu)
 
 	* Release of version 1.10; appropriate changes to README.
