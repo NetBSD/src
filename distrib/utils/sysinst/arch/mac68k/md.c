@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2.2.2 1999/06/24 22:51:39 cgd Exp $ */
+/*	$NetBSD: md.c,v 1.2.2.3 1999/09/13 18:15:02 he Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -639,7 +639,7 @@ md_pre_disklabel()
      */
     printf ("%s", msg_string (MSG_dodiskmap));
 
-    snprintf (devname, sizeof(devname), "dev/r%sc", diskdev);
+    snprintf (devname, sizeof(devname), "/dev/r%sc", diskdev);
 
     /*
      * Open the disk as a raw device
