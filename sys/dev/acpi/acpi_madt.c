@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.1 2003/01/05 01:03:44 fvdl Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.2 2003/01/07 18:46:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -50,11 +50,11 @@
 #include <dev/acpi/acpica/Subsystem/acnamesp.h>
 #include <dev/acpi/acpi_madt.h>
 
-/* #define ACPI_MADT_DEBUG */
+#undef ACPI_MADT_DEBUG
 
 #ifdef ACPI_MADT_DEBUG
 static void acpi_madt_print(void);
-static ACPI_STATUS acpi_madt_print_entry(APIC_HEADER *);
+static ACPI_STATUS acpi_madt_print_entry(APIC_HEADER *, void *);
 static void acpi_print_apic_proc(PROCESSOR_APIC *);
 static void acpi_print_ioapic(IO_APIC *);
 static void acpi_print_intsrc_ovr(INT_SOURCE_OVERRIDE *);
@@ -180,7 +180,7 @@ acpi_print_platint(INT_PLATFORM *p)
 #endif
 
 void
-acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *))
+acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *, void *), void *aux)
 {
 	char *madtend, *where;
 	APIC_HEADER *hdrp;
@@ -191,7 +191,7 @@ acpi_madt_walk(ACPI_STATUS (*func)(APIC_HEADER *))
 	where = (char *)AcpiGbl_MADT + sizeof (APIC_TABLE);
 	while (where < madtend) {
 		hdrp = (APIC_HEADER *)where;
-		if (func(hdrp) != AE_OK)
+		if (func(hdrp, aux) != AE_OK)
 			break;
 		where += hdrp->Length;
 	}
@@ -210,11 +210,11 @@ acpi_madt_print(void)
 	    ap->PCATCompat ? "" : " not");
 	printf("entries:\n");
 
-	acpi_madt_walk(acpi_madt_print_entry);
+	acpi_madt_walk(acpi_madt_print_entry, NULL);
 }
 
 static ACPI_STATUS
-acpi_madt_print_entry(APIC_HEADER *hdrp)
+acpi_madt_print_entry(APIC_HEADER *hdrp, void *aux)
 {
 	switch (hdrp->Type) {
 	case APIC_PROC:
