@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2000/11/17 09:57:55 pk Exp $
+# $NetBSD: Makefile,v 1.7 2000/11/19 10:56:05 veego Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1
 
@@ -104,7 +104,10 @@ ${ASN1_COMPILE}:
 
 CLEANFILES = ${BUILT_SOURCES} ${gen_files} asn1_files asn1.h asn1.hx
 
+SUBDIR=	asn1_compile
+
 .include <bsd.lib.mk>
+.include <bsd.subdir.mk>
 
 .SUFFIXES: .hx .x
 
