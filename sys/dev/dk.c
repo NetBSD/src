@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.1 2004/09/25 03:30:44 thorpej Exp $	*/
+/*	$NetBSD: dk.c,v 1.2 2004/09/25 16:42:15 chris Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -524,7 +524,9 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct proc *p)
 	return (error);
 }
 
+#ifdef DKWEDGE_AUTODISCOVER
 static int	dkwedge_discover_gpt(struct disk *, struct vnode *);
+#endif
 
 /*
  * dkwedge_discover:	[exported function]
@@ -594,6 +596,8 @@ dkwedge_discover(struct disk *pdk)
 #endif /* DKWEDGE_AUTODISCOVER */
 }
 
+
+#ifdef DKWEDGE_AUTODISCOVER
 /*
  * dkwedge_read:
  *
@@ -621,6 +625,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno, void *buf,
 	VOP_STRATEGY(vp, &b);
 	return (biowait(&b));
 }
+#endif /* DKWEDGE_AUTODISCOVER */
 
 /*
  * dkwedge_lookup:
@@ -975,6 +980,7 @@ dkdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 	return (ENXIO);
 }
 
+#ifdef DKWEDGE_AUTODISCOVER
 /*****************************************************************************
  * EFI GUID Partition Table support
  *****************************************************************************/
@@ -1235,3 +1241,4 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	free(buf, M_DEVBUF);
 	return (error);
 }
+#endif /* DKWEDGE_AUTODISCOVER */
