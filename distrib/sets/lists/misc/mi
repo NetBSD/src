@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2000/06/20 01:28:47 minoura Exp $
+# $NetBSD: mi,v 1.38 2000/06/21 06:28:17 thorpej Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -368,6 +368,10 @@
 ./usr/share/examples/mount_portal/tcp.1
 ./usr/share/examples/mount_portal/tcp.1.conf
 ./usr/share/examples/named/named.conf
+./usr/share/examples/openssl/CA.pl
+./usr/share/examples/openssl/CA.sh
+./usr/share/examples/openssl/der_chop
+./usr/share/examples/openssl/openssl.cnf
 ./usr/share/examples/postfix/LICENSE
 ./usr/share/examples/postfix/access
 ./usr/share/examples/postfix/aliases
