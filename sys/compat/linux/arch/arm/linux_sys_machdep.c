@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.4 2002/02/02 16:53:39 bjh21 Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.5 2002/03/10 11:35:32 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$Id: linux_sys_machdep.c,v 1.4 2002/02/02 16:53:39 bjh21 Exp $");
+__RCSID("$NetBSD: linux_sys_machdep.c,v 1.5 2002/03/10 11:35:32 bjh21 Exp $");
 
 #include <sys/systm.h>
 
