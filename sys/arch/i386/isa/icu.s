@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.37 1995/01/15 00:36:37 mycroft Exp $	*/
+/*	$NetBSD: icu.s,v 1.38 1995/04/22 00:54:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -77,7 +77,7 @@ _splx:
  *
  * Important registers:
  *   ebx - cpl
- *   esi - address to resume loop
+ *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
  */
 ENTRY(spllower)
@@ -85,8 +85,8 @@ IDTVEC(spllower)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-	movl	_cpl,%ebx
-	movl	$1f,%esi
+	movl	_cpl,%ebx		# save priority
+	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	notl	%eax
 	andl	_ipending,%eax
@@ -105,20 +105,13 @@ IDTVEC(spllower)
  *
  * Important registers:
  *   ebx - cpl to restore
- *   esi - address to resume loop
+ *   esi - address to resume loop at
  *   edi - scratch for Xsoftnet
  */
 IDTVEC(doreti)
 	popl	%ebx			# get previous priority
-/*
- * Now interrupt frame is a trap frame!
- *
- * XXX
- * Setting up the interrupt frame to be almost a stack frame is mostly a waste
- * of time.
- */
 	movl	%ebx,_cpl
-	movl	$1f,%esi
+	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	notl	%eax
 	andl	_ipending,%eax
@@ -149,10 +142,10 @@ IDTVEC(softtty)
 	jmp	%esi
 
 #define DONET(s, c) \
-	.globl  c	;\
-	btl	$s,%edi	;\
-	jnc	1f	;\
-	call	c	;\
+	.globl  c		;\
+	testl	$(1 << s),%edi	;\
+	jnc	1f		;\
+	call	c		;\
 1:
 
 IDTVEC(softnet)
