@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/01/05 07:00:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2002/01/07 16:27:22 lukem Exp $
 #
 
 PROG=	makefs
@@ -14,11 +14,11 @@ DDSRC=		${.CURDIR}/../../bin/dd
 LSSRC=		${.CURDIR}/../../bin/ls
 MKNODSRC=	${.CURDIR}/../../sbin/mknod
 MTREESRC=	${.CURDIR}/../../usr.sbin/mtree
-SYSSRC=		${.CURDIR}/../../sys
+UFSSRC=		${.CURDIR}/../../sys/ufs
 
-CPPFLAGS+=	-I${.CURDIR} -I${SYSSRC} \
+CPPFLAGS+=	-I${.CURDIR} \
 		-I${LSSRC} -I${MKNODSRC} -I${MTREESRC} -I${DDSRC} 
-.PATH:		${.CURDIR}/ffs ${SYSSRC}/ufs/ffs \
+.PATH:		${.CURDIR}/ffs ${UFSSRC}/ffs \
 		${LSSRC} ${MKNODSRC} ${MTREESRC} ${DDSRC} 
 
 WARNS?=	2
