@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.33 2000/07/26 15:02:14 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.34 2000/08/18 22:45:39 hubertf Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd August 30, 1999
+.Dd August 19, 2000
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -161,13 +161,6 @@ All of
 .Pa ${DISTFILES}
 and
 .Pa ${PATCHFILES} .
-.It MIRROR_DISTFILE
-Whether the distfile is redistributable without restrictions.
-Defaults to
-.Dq yes ,
-set this to
-.Dq no
-if restrictions exist.
 .It IGNOREFILES
 If some of the
 .Pa ${ALLFILES}
@@ -266,12 +259,6 @@ Binaries of this package may not be made available via ftp.  Set this string to
 Use a dummy (do-nothing) build target.
 .It NO_CONFIGURE
 Use a dummy (do-nothing) configure target.
-.It NO_CDROM	
-Package may not go on CDROM.  Set this string to reason.
-Use of this variable is deprecated in favour of
-.Pa NO_BIN_ON_CDROM
-and
-.Pa NO_SRC_ON_CDROM .
 .It NO_DESCRIBE
 Use a dummy (do-nothing) describe target.
 .It NO_EXTRACT
@@ -288,6 +275,7 @@ Distfile(s) of this package may not be placed on CDROM.  Set this string to
 .It NO_SRC_ON_FTP
 Distfile(s) of this package may not be made available via ftp.  Set this string to
 .Pa ${RESTRICTED} .
+If this variable is set, the distfile will not be mirrored by ftp.netbsd.org.
 .It NO_WRKSUBDIR
 Assume package unpacks directly into
 .Pa ${WRKDIR} .
@@ -675,13 +663,11 @@ Generate
 .It readme	
 Create a README.html file describing the category or package
 .It mirror-distfiles
-Mirror the distfile(s) if they are freely redistributable.  Setting
-.Dv MIRROR_DISTFILE
-to
-.Dq no
-in the package Makefile will override the default
-.Dq yes , and
-the distfile will not be fetched.
+Mirror the distfile(s) if they are freely redistributable. If
+.Dv NO_SRC_ON_FTP
+is set in the package's Makefile (usually to 
+.Pa ${RESTRICTED} )
+then that reason is printed, and the distfile is not mirrored.
 .El
 .Pp
 Default sequence for
