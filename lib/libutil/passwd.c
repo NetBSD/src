@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.21 2000/07/06 13:09:47 ad Exp $	*/
+/*	$NetBSD: passwd.c,v 1.22 2000/07/06 13:39:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.21 2000/07/06 13:09:47 ad Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.22 2000/07/06 13:39:47 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,9 @@ __RCSID("$NetBSD: passwd.c,v 1.21 2000/07/06 13:09:47 ad Exp $");
 
 static void	pw_cont(int sig);
 static int	pw_equal(char *buf, struct passwd *old_pw);
+static const char	*pw_default(const char *option);
+static int	read_line(FILE *fp, char *line, int max);
+static void	trim_whitespace(char *line);
 
 int
 pw_lock(int retries)
