@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.217 2000/06/29 09:02:54 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.218 2000/07/03 17:52:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2000/06/29 09:02:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2000/07/03 17:52:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,6 +986,7 @@ void
 identifycpu()
 {
 	char *s;
+	int i;
 
 	/*
 	 * print out CPU identification information.
@@ -996,6 +997,9 @@ identifycpu()
 			goto skipMHz;
 	printf(", %ldMHz", hwrpb->rpb_cc_freq / 1000000);
 skipMHz:
+	printf(", s/n ");
+	for (i = 0; i < 10; i++)
+		printf("%c", hwrpb->rpb_ssn[i]);
 	printf("\n");
 	printf("%ld byte page size, %d processor%s.\n",
 	    hwrpb->rpb_page_size, ncpus, ncpus == 1 ? "" : "s");
