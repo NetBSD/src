@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 1998/11/10 22:45:45 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 1998/11/14 04:32:50 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,7 +211,7 @@ next68k_init()
 		uvm_page_physload(atop(phys_seg_list[i].ps_start),
 				 atop(phys_seg_list[i].ps_end),
 				 atop(phys_seg_list[i].ps_start),
-				 atop(phys_seg_list[i].ps_end), i);
+				 atop(phys_seg_list[i].ps_end), VM_FREELIST_DEFAULT);
 #else
 		vm_page_physload(atop(phys_seg_list[i].ps_start),
 				 atop(phys_seg_list[i].ps_end),
@@ -234,7 +234,7 @@ next68k_init()
 
   /* Calibrate the delay loop. */
   next68k_calibrate_delay();
-  
+
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
