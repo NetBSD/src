@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.4 2002/09/06 15:39:16 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.5 2002/09/28 11:11:01 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -90,6 +90,23 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	/* Give the new process a clean set of FP regs */
 	memset(&p->p_addr->u_pcb.pcb_ctx.sf_fpregs, 0, sizeof(struct fpregs));
+
+	/*
+	 * I debated with myself about the following for a wee while.
+	 *
+	 * Disable FPU Exceptions for arithmetic operations on de-normalised
+	 * numbers. While this is contrary to the IEEE-754, it's how things
+	 * work in NetBSD/i386.
+	 *
+	 * Since most applications are likely to have been developed on i386
+	 * platforms, most application programmers would never see this
+	 * fault in their code. The in-tree top(1) program is one such
+	 * offender, under certain circumstances.
+	 *
+	 * With FPSCR.DN set, denormalised numbers are quietly flushed to zero.
+	 */
+	p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = 0x20000;
+
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &p->p_addr->u_pcb);
 }
