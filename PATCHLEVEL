@@ -23,6 +23,9 @@ ffs_clusteracct() after running fsck(8).
 
 Mondo patch 2:
 
+[kernel/i386]: Redo the way the GDT is allocated, to avoid a potential
+reentrance problem.
+
 [kernel/generic]: Fix a reversed test in the tty driver that caused
 ECHONL to not work correctly.
 
