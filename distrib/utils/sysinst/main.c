@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1.2.4 1997/11/25 06:57:59 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.2.5 1997/12/04 09:10:59 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,6 +91,22 @@ int main(int argc, char **argv)
 	return 0;
 }
 	
+
+/* toplevel menu handler ... */
+void toplevel(void)
+{
+	/* Display banner message in (english, francais, deutche..) */
+	msg_display (MSG_hello);
+
+	/* 
+	 * Undo any stateful side-effects of previous menu choices.
+	 * XXX must be idempotent, since we get run each time the main
+	 *     menu is displayed.
+	 */
+	unwind_mounts();
+	/* ... */
+}
+
 
 /* The usage ... */
 
