@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.8.2.4 2004/04/06 09:37:13 grant Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.8.2.5 2004/04/06 09:39:10 grant Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -95,6 +95,41 @@ struct host {
 };
 
 void do_mon __P((char *));
+
+#define	LL_FH	0x01
+#define	LL_NAME	0x02
+#define	LL_SVID	0x04
+
+static struct file_lock *lock_lookup __P((struct file_lock *, int));
+
+/*
+ * lock_lookup: lookup a matching lock.
+ * called with siglock held.
+ */
+static struct file_lock *
+lock_lookup(newfl, flags)
+	struct file_lock *newfl;
+	int flags;
+{
+	struct file_lock *fl;
+
+	LIST_FOREACH(fl, &lcklst_head, lcklst) {
+		if ((flags & LL_SVID) != 0 &&
+		    newfl->client.svid != fl->client.svid)
+			continue;
+		if ((flags & LL_NAME) != 0 &&
+		    strcmp(newfl->client_name, fl->client_name) != 0)
+			continue;
+		if ((flags & LL_FH) != 0 &&
+		    memcmp(&newfl->filehandle, &fl->filehandle,
+		    sizeof(fhandle_t)) != 0)
+			continue;
+		/* found */
+		break;
+	}
+
+	return fl;
+}
 
 /*
  * testlock(): inform the caller if the requested lock would be granted or not
@@ -210,63 +245,63 @@ getlock(lckarg, rqstp, flags)
 	newfl->flags = flags;
 	siglock();
 	/* look for a lock rq from this host for this fh */
-	for (fl = LIST_FIRST(&lcklst_head); fl != NULL;
-	    fl = LIST_NEXT(fl, lcklst)) {
-		if (memcmp(&newfl->filehandle, &fl->filehandle,
-		    sizeof(fhandle_t)) == 0) {
-			if (strcmp(newfl->client_name, fl->client_name) == 0 &&
-			    newfl->client.svid == fl->client.svid) {
-				/* already locked by this host ??? */
-				sigunlock();
-				syslog(LOG_NOTICE, "duplicate lock from %s.%"
-				    PRIu32,
-				    newfl->client_name, newfl->client.svid);
-				lfree(newfl);
-				switch(fl->status) {
-				case LKST_LOCKED:
-					return (flags & LOCK_V4) ?
-					    nlm4_granted : nlm_granted;
-				case LKST_WAITING:
-				case LKST_PROCESSING:
-					return (flags & LOCK_V4) ?
-					    nlm4_blocked : nlm_blocked;
-				case LKST_DYING:
-					return (flags & LOCK_V4) ?
-					    nlm4_denied : nlm_denied;
-				default:
-					syslog(LOG_NOTICE, "bad status %d",
-					    fl->status);
-					return (flags & LOCK_V4) ?
-					    nlm4_failed : nlm_denied;
-				}
-			}
-			/*
-			 * We already have a lock for this file. Put this one
-			 * in waiting state if allowed to block
-			 */
-			if (lckarg->block) {
-				syslog(LOG_DEBUG, "lock from %s.%" PRIu32 ": "
-				    "already locked, waiting",
-				    lckarg->alock.caller_name,
-				    lckarg->alock.svid);
-				newfl->status = LKST_WAITING;
-				LIST_INSERT_HEAD(&lcklst_head, newfl, lcklst);
-				do_mon(lckarg->alock.caller_name);
-				sigunlock();
-				return (flags & LOCK_V4) ?
-				    nlm4_blocked : nlm_blocked;
-			} else {
-				sigunlock();
-				syslog(LOG_DEBUG, "lock from %s.%" PRIu32 ": "
-				    "already locked, failed",
-				    lckarg->alock.caller_name,
-				    lckarg->alock.svid);
-				lfree(newfl);
-				return (flags & LOCK_V4) ?
-				    nlm4_denied : nlm_denied;
-			}
+	fl = lock_lookup(newfl, LL_FH|LL_NAME|LL_SVID);
+	if (fl) {
+		/* already locked by this host ??? */
+		sigunlock();
+		syslog(LOG_NOTICE, "duplicate lock from %s.%"
+		    PRIu32,
+		    newfl->client_name, newfl->client.svid);
+		lfree(newfl);
+		switch(fl->status) {
+		case LKST_LOCKED:
+			return (flags & LOCK_V4) ?
+			    nlm4_granted : nlm_granted;
+		case LKST_WAITING:
+		case LKST_PROCESSING:
+			return (flags & LOCK_V4) ?
+			    nlm4_blocked : nlm_blocked;
+		case LKST_DYING:
+			return (flags & LOCK_V4) ?
+			    nlm4_denied : nlm_denied;
+		default:
+			syslog(LOG_NOTICE, "bad status %d",
+			    fl->status);
+			return (flags & LOCK_V4) ?
+			    nlm4_failed : nlm_denied;
 		}
+		/* NOTREACHED */
 	}
+	fl = lock_lookup(newfl, LL_FH);
+	if (fl) {
+		/*
+		 * We already have a lock for this file.
+		 * Put this one in waiting state if allowed to block
+		 */
+		if (lckarg->block) {
+			syslog(LOG_DEBUG, "lock from %s.%" PRIu32 ": "
+			    "already locked, waiting",
+			    lckarg->alock.caller_name,
+			    lckarg->alock.svid);
+			newfl->status = LKST_WAITING;
+			LIST_INSERT_HEAD(&lcklst_head, newfl, lcklst);
+			do_mon(lckarg->alock.caller_name);
+			sigunlock();
+			return (flags & LOCK_V4) ?
+			    nlm4_blocked : nlm_blocked;
+		} else {
+			sigunlock();
+			syslog(LOG_DEBUG, "lock from %s.%" PRIu32 ": "
+			    "already locked, failed",
+			    lckarg->alock.caller_name,
+			    lckarg->alock.svid);
+			lfree(newfl);
+			return (flags & LOCK_V4) ?
+			    nlm4_denied : nlm_denied;
+		}
+		/* NOTREACHED */
+	}
+
 	/* no entry for this file yet; add to list */
 	LIST_INSERT_HEAD(&lcklst_head, newfl, lcklst);
 	/* do the lock */
