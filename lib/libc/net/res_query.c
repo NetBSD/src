@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_query.c	5.11 (Berkeley) 3/6/91";*/
-static char *rcsid = "$Id: res_query.c,v 1.6 1994/06/03 15:02:21 pk Exp $";
+static char *rcsid = "$Id: res_query.c,v 1.7 1994/10/19 03:21:15 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -142,7 +142,7 @@ res_query(name, class, type, answer, anslen)
  */
 int
 res_search(name, class, type, answer, anslen)
-	char *name;		/* domain name */
+	const char *name;	/* domain name */
 	int class, type;	/* class and type of query */
 	u_char *answer;		/* buffer to put answer */
 	int anslen;		/* size of answer */
@@ -157,7 +157,7 @@ res_search(name, class, type, answer, anslen)
 	errno = 0;
 	h_errno = HOST_NOT_FOUND;		/* default, if we never query */
 	dots = 0;
-	for (cp = name; *cp; cp++) {
+	for (cp = (char *)name; *cp; cp++) {
 		if (*cp == '.')
 			dots++;
 	}
