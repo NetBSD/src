@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cp.c	5.26 (Berkeley) 10/27/91";*/
-static char rcsid[] = "$Id: cp.c,v 1.5 1993/08/07 03:14:55 mycroft Exp $";
+static char rcsid[] = "$Id: cp.c,v 1.6 1993/10/30 13:06:46 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -353,6 +353,8 @@ copy_file(fs, dne)
 			err("%s: %s", from.p_path, strerror(errno));
 		if (write(to_fd, p, fs->st_size) != fs->st_size)
 			err("%s: %s", to.p_path, strerror(errno));
+		if (munmap(p, fs->st_size) < 0)
+			err("%s: %s", from.p_path, strerror(errno));
 	} else {
 		while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 			wcount = write(to_fd, buf, rcount);
