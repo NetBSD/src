@@ -1,17 +1,17 @@
-# $NetBSD: shl.elf,v 1.52 2001/12/02 22:46:05 christos Exp $
+# $NetBSD: shl.elf,v 1.53 2001/12/03 14:06:35 christos Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./usr/lib/libamu.so.2		base-amd-shlib
 ./usr/lib/libasn1.so.6		base-krb5-shlib
 ./usr/lib/libbz2.so.1		base-sys-shlib
 ./usr/lib/libc.so.12		base-sys-shlib
-./usr/lib/libcdk.so.0		base-sys-shlib
+./usr/lib/libcdk.so.3		base-sys-shlib
 ./usr/lib/libcom_err.so.4	base-krb5-shlib
 ./usr/lib/libcrypt.so.0		base-sys-shlib
 ./usr/lib/libcrypto.so.1	base-crypto-shlib
 ./usr/lib/libcurses.so.5	base-sys-shlib
 ./usr/lib/libdes.so.5		base-crypto-shlib
 ./usr/lib/libedit.so.2		base-sys-shlib
-./usr/lib/libform.so.2		base-sys-shlib
+./usr/lib/libform.so.3		base-sys-shlib
 ./usr/lib/libgnumalloc.so.0	base-sys-shlib
 ./usr/lib/libgssapi.so.4	base-krb5-shlib
 ./usr/lib/libhdb.so.8		base-krb5-shlib
@@ -27,7 +27,7 @@
 ./usr/lib/libkstream.so.2	base-krb4-shlib
 ./usr/lib/libkvm.so.5		base-sys-shlib
 ./usr/lib/libm.so.0		base-sys-shlib
-./usr/lib/libmenu.so.2		base-sys-shlib
+./usr/lib/libmenu.so.3		base-sys-shlib
 ./usr/lib/libossaudio.so.0	base-sys-shlib
 ./usr/lib/libpcap.so.1		base-net-shlib
 ./usr/lib/libpci.so.0		base-sys-shlib
