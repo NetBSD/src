@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makewhatis.sh,v 1.17 1998/05/24 03:54:12 tv Exp $
+#	$NetBSD: makewhatis.sh,v 1.18 1999/03/30 03:17:26 cjs Exp $
 #
 # written by matthew green <mrg@eterna.com.au>, based on the
 # original by J.T. Conklin <jtc@netbsd.org> and Thorsten
@@ -53,12 +53,11 @@ done >> $TMP
 
 sort -u -o $TMP $TMP
 
-make -f - install <<_Install_Whatis_Db_
+make -f - DESTDIR="" install <<_Install_Whatis_Db_
 FILES=$TMP
 FILESDIR=$MANDIR
 FILESNAME=whatis.db
 NOOBJ=noobj
-DESTDIR=
 
 .include <bsd.prog.mk>
 _Install_Whatis_Db_
