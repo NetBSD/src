@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.64 2000/06/29 14:06:40 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.65 2000/07/03 20:55:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,14 +132,6 @@
  */
 #define	MIN_DMA_LEN 128
 
-/*
- * Transfers lager than 65535 bytes need to be split-up.
- * (Some of the FIFO logic has only 16 bits counters.)
- * Make the size an integer multiple of the page size
- * to avoid buf/cluster remap problems.  (paranoid?)
- */
-#define	MAX_DMA_LEN 0xE000
-
 #ifdef	DEBUG
 int si_debug = 0;
 static int si_link_flags = 0 /* | SDEV_DB2 */ ;
@@ -189,13 +181,12 @@ struct si_softc {
 #define	SI_DO_RESELECT	0x04	/* Allow disconnect/reselect */
 #define	SI_OPTIONS_MASK	(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT)
 #define SI_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
-int si_options = SI_ENABLE_DMA|SI_DMA_INTR;
+int si_options = SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT;
 
 static int	si_match __P((struct device *, struct cfdata *, void *));
 static void	si_attach __P((struct device *, struct device *, void *));
 static int	si_intr __P((void *));
 static void	si_reset_adapter __P((struct ncr5380_softc *));
-static void	si_minphys __P((struct buf *));
 
 void	si_dma_alloc __P((struct ncr5380_softc *));
 void	si_dma_free __P((struct ncr5380_softc *));
@@ -371,7 +362,7 @@ si_attach(parent, self, aux)
 #endif
 
 	ncr_sc->sc_link.scsipi_scsi.adapter_target = 7;
-	ncr_sc->sc_adapter.scsipi_minphys = si_minphys;
+	ncr_sc->sc_adapter.scsipi_minphys = minphys;
 
 	/*
 	 *  Initialize si board itself.
@@ -387,21 +378,6 @@ si_attach(parent, self, aux)
 		ncr_sc->sc_intr_on   = si_intr_on;
 		ncr_sc->sc_intr_off  = si_intr_off;
 	}
-}
-
-static void
-si_minphys(struct buf *bp)
-{
-	if (bp->b_bcount > MAX_DMA_LEN) {
-#ifdef DEBUG
-		if (si_debug) {
-			printf("si_minphys len = 0x%x.\n", MAX_DMA_LEN);
-			Debugger();
-		}
-#endif
-		bp->b_bcount = MAX_DMA_LEN;
-	}
-	return (minphys(bp));
 }
 
 #define CSR_WANT (SI_CSR_SBC_IP | SI_CSR_DMA_IP | \
@@ -739,7 +715,7 @@ si_dma_start(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	u_long data_pa;
+	u_long dva;
 	int xlen;
 	u_int mode;
 	u_int16_t csr;
@@ -747,17 +723,17 @@ si_dma_start(ncr_sc)
 	/*
 	 * Get the DVMA mapping for this segment.
 	 */
-	data_pa = (u_long)(dh->dh_dvma);
-	if (data_pa & 1)
-		panic("si_dma_start: bad pa=0x%lx", data_pa);
+	dva = (u_long)(dh->dh_dvma);
+	if (dva & 1)
+		panic("si_dma_start: bad dmaaddr=0x%lx", dva);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;
 	sc->sc_xlen = xlen;	/* XXX: or less... */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=%p, pa=0x%lx, xlen=%d\n",
-			   dh, data_pa, xlen);
+		printf("si_dma_start: dh=%p, dmaaddr=0x%lx, xlen=%d\n",
+			   dh, dva, xlen);
 	}
 #endif
 
@@ -765,7 +741,13 @@ si_dma_start(ncr_sc)
 	 * Set up the DMA controller.
 	 * Note that (dh->dh_len < sc_datalen)
 	 */
+
 	csr = SIREG_READ(ncr_sc, SIREG_CSR);
+
+	/* Disable DMA while we're setting up the transfer */
+	csr &= ~SI_CSR_DMA_EN;
+
+	/* Reset FIFO (again?) */
 	csr &= ~SI_CSR_FIFO_RES;		/* active low */
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 	csr |= SI_CSR_FIFO_RES;
@@ -779,24 +761,19 @@ si_dma_start(ncr_sc)
 	}
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
-	if (data_pa & 2) {
+	if (dva & 2) {
 		csr |= SI_CSR_BPCON;
 	} else {
 		csr &= ~SI_CSR_BPCON;
 	}
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
-	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, (u_int16_t)(data_pa >> 16));
-	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, (u_int16_t)(data_pa & 0xFFFF));
-
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRH, (u_int16_t)(dva >> 16));
+	SIREG_WRITE(ncr_sc, SIREG_DMA_ADDRL, (u_int16_t)(dva & 0xFFFF));
 	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTH, (u_int16_t)(xlen >> 16));
 	SIREG_WRITE(ncr_sc, SIREG_DMA_CNTL, (u_int16_t)(xlen & 0xFFFF));
-
-#if 1
-	/* Set it anyway, even though dma_count hits it? */
 	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNTH, (u_int16_t)(xlen >> 16));
 	SIREG_WRITE(ncr_sc, SIREG_FIFO_CNT, (u_int16_t)(xlen & 0xFFFF));
-#endif
 
 	/*
 	 * Acknowledge the phase change.  (After DMA setup!)
@@ -824,7 +801,7 @@ si_dma_start(ncr_sc)
 		NCR5380_WRITE(ncr_sc, sci_irecv, 0); /* start it */
 	}
 
-	/* Let'er rip! */
+	/* Enable DMA engine */
 	csr |= SI_CSR_DMA_EN;
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
@@ -870,7 +847,7 @@ si_dma_stop(ncr_sc)
 	csr = SIREG_READ(ncr_sc, SIREG_CSR);
 
 	/* First, halt the DMA engine. */
-	csr &= ~SI_CSR_DMA_EN;	/* VME only */
+	csr &= ~SI_CSR_DMA_EN;
 	SIREG_WRITE(ncr_sc, SIREG_CSR, csr);
 
 	if (csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
@@ -933,11 +910,14 @@ si_dma_stop(ncr_sc)
 	{
 		char *cp = ncr_sc->sc_dataptr;
 		u_int16_t bprh, bprl;
-#ifdef DEBUG
-		printf("si: Got Left-over bytes!\n");
-#endif
+
 		bprh = SIREG_READ(ncr_sc, SIREG_BPRH);
 		bprl = SIREG_READ(ncr_sc, SIREG_BPRL);
+
+#ifdef DEBUG
+		printf("si: got left-over bytes: bprh=%x, bprl=%x, csr=%x\n",
+			bprh, bprl, csr);
+#endif
 
 		if (csr & SI_CSR_BPCON) {
 			/* have SI_CSR_BPCON */
