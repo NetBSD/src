@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.1 2001/02/23 21:23:50 reinoud Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.1 2001/07/14 00:23:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM32_SYSARCH_H_
-#define _ARM32_SYSARCH_H_
+#ifndef _ARM_SYSARCH_H_
+#define _ARM_SYSARCH_H_
 
 /*
  * Architecture specific syscalls (arm32)
@@ -53,4 +53,4 @@ int arm32_drain_writebuf	__P((void));
 int sysarch			__P((int, void *));
 #endif
 
-#endif /* !_ARM32_SYSARCH_H_ */
+#endif /* !_ARM_SYSARCH_H_ */
