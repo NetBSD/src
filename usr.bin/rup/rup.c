@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.16 1998/02/03 04:04:58 perry Exp $	*/
+/*	$NetBSD: rup.c,v 1.17 1999/01/10 08:19:23 abs Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.16 1998/02/03 04:04:58 perry Exp $");
+__RCSID("$NetBSD: rup.c,v 1.17 1999/01/10 08:19:23 abs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -235,7 +235,8 @@ print_rup_data(host, host_stat)
 			uph, upm);
 	else
 		if (upm != 0)
-			sprintf(hours_buf, "%2u mins, ", upm);
+			sprintf(hours_buf, "%2u min%s ", upm,
+			    (upm == 1) ? ", " : "s,");
 		else
 			hours_buf[0] = '\0';
 	if (printtime)
