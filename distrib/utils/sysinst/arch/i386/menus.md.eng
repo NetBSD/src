@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.4 1997/10/29 01:07:11 phil Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.5 1997/10/31 17:15:10 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,7 +150,7 @@ menu chooseid, title  "  Partition Kind? ";
 menu editfsparts, y=15, exit;
 	display action  {
 			ask_sizemult();
-			msg_display(MSG_fspart);
+			msg_display(MSG_fspart, multname);
 			disp_cur_fspart(-1, 1);
 		};
 	option "Change a", action { editpart = A;}, sub menu edfspart;
