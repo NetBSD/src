@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2000/09/14 14:28:10 minoura Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2000/12/15 05:32:19 he Exp $
 
 TOP=		${.CURDIR}/..
 COMMONDIR=	${TOP}/ramdisk-common
@@ -13,9 +13,10 @@ AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
 
-RAMDISKSPT=	36
+RAMDISKSPT=	15
 RAMDISKCYLS=	80
-RAMDISKCPG=	48
+RAMDISKHEADS=	2
+RAMDISKCPG=	32
 RAMDISKBPI=	4096
 
 passwd:
