@@ -1,4 +1,4 @@
-/*	$NetBSD: qduser.h,v 1.2 1999/06/20 17:54:27 ragge Exp $	*/
+/*	$NetBSD: qduser.h,v 1.3 1999/06/20 17:58:56 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -91,11 +91,7 @@
 *
 ***************************************************************************/
 
-#ifdef KERNEL
-#include "../include/qevent.h"		/* include event struct defs */
-#else
-#include <vax/uba/qevent.h>
-#endif
+#include <dev/qbus/qevent.h>
 
 /*---------------------
 * QDSS device map */
