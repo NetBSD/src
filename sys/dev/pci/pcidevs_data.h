@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.68 1998/06/15 19:35:32 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.69 1998/06/15 19:51:10 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.63 1998/06/15 19:31:46 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.64 1998/06/15 19:50:37 bouyer Exp 
  */
 
 /*
@@ -2008,7 +2008,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C416MV",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2,
 	    0,
 	    "VIA Technologies",
 	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
