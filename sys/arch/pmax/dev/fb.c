@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fb.c	8.1 (Berkeley) 6/10/93
- *      $Id: fb.c,v 1.3 1994/05/27 08:39:30 glass Exp $
+ *      $Id: fb.c,v 1.4 1994/05/27 08:58:45 glass Exp $
  */
 
 /* 
@@ -973,7 +973,7 @@ done:
 void
 KBDReset(kbddev, putc)
 	dev_t kbddev;
-	void (*putc)();
+	void (*putc) __P((dev_t, int));
 {
 	register int i;
 	static int inKBDReset;
@@ -992,8 +992,8 @@ KBDReset(kbddev, putc)
 void
 MouseInit(mdev, putc, getc)
 	dev_t mdev;
-	void (*putc)();
-	int (*getc)();
+	void (*putc) __P((dev_t, int));
+	int (*getc) __P((dev_t));
 {
 	int id_byte1, id_byte2, id_byte3, id_byte4;
 

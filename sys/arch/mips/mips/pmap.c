@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.4 1994/05/27 08:42:15 glass Exp $
+ *      $Id: pmap.c,v 1.5 1994/05/27 09:03:51 glass Exp $
  */
 
 /*
@@ -145,6 +145,7 @@ int pmapdebug;
 #endif /* DEBUG */
 
 struct pmap	kernel_pmap_store;
+pmap_t kernel_pmap;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
 vm_offset_t	avail_end;	/* PA of last available physical page */
@@ -215,6 +216,7 @@ pmap_bootstrap(firstaddr)
 	/* XXX need to decide how to set cnt.v_page_size */
 	pmaxpagesperpage = 1;
 
+        kernel_pmap = &kernel_pmap_store;
 	simple_lock_init(&kernel_pmap_store.pm_lock);
 	kernel_pmap_store.pm_count = 1;
 }
@@ -331,6 +333,7 @@ pmap_pinit(pmap)
 	} else {
 		register struct segtab *stp;
 		vm_page_t mem;
+		void pmap_zero_page();
 
 		mem = vm_page_alloc1();
 		pmap_zero_page(VM_PAGE_TO_PHYS(mem));

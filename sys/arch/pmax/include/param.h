@@ -37,14 +37,17 @@
  *
  * from: Utah Hdr: machparam.h 1.11 89/08/14
  *
+ *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *      $Id: param.h,v 1.3 1994/05/27 08:40:45 glass Exp $
+ *      $Id: param.h,v 1.4 1994/05/27 09:01:33 glass Exp $
  */
 
 /*
  * Machine dependent constants for DEC Station 3100.
  */
-#define	MACHINE	"mips"
+#define	MACHINE	     "pmax"
+#define MACHINE_ARCH "mips"
+#define MID_MACHINE  MID_PMAX
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)font.c	8.1 (Berkeley) 6/10/93
- *      $Id: font.c,v 1.2 1994/05/27 08:39:34 glass Exp $
+ *      $Id: font.c,v 1.3 1994/05/27 08:58:50 glass Exp $
  *
  *  font.c --
  *

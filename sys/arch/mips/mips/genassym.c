@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	8.2 (Berkeley) 9/23/93
- *      $Id: genassym.c,v 1.3 1994/05/27 08:41:50 glass Exp $
+ *      $Id: genassym.c,v 1.4 1994/05/27 09:03:15 glass Exp $
  */
 
 #define KERNEL

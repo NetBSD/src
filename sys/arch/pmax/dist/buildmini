@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)buildmini	7.3 (Berkeley) 6/10/93
-#	$Id: buildmini,v 1.2 1994/05/27 08:40:20 glass Exp $
+#	$Id: buildmini,v 1.3 1994/05/27 08:59:54 glass Exp $
 #
 
 dist=/sys/pmax/dist

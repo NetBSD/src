@@ -31,19 +31,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
- *	$Id: disksubr.c,v 1.1 1994/01/15 02:04:56 deraadt Exp $
+ *	$Id: disksubr.c,v 1.2 1994/05/27 09:03:09 glass Exp $
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/disklabel.h>
-#include <sys/syslog.h>
-
-/* XXX encoding of disk minor numbers, should be elsewhere... */
-#define dkunit(dev)		(minor(dev) >> 3)
-#define dkpart(dev)		(minor(dev) & 7)
-#define dkminor(unit, part)	(((unit) << 3) | (part))
+#include "param.h"
+#include "systm.h"
+#include "buf.h"
+#include "disklabel.h"
+#include "syslog.h"
 
 #define	b_cylin	b_resid
 

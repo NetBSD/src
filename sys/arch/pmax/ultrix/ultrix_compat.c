@@ -38,14 +38,12 @@
  * from: Utah Hdr: hpux_compat.c 1.41 91/04/06
  *
  *	from: @(#)ultrix_compat.c	8.1 (Berkeley) 6/10/93
- *      $Id: ultrix_compat.c,v 1.3 1994/05/27 08:43:21 glass Exp $
+ *      $Id: ultrix_compat.c,v 1.4 1994/05/27 09:06:48 glass Exp $
  */
 
 /*
  * Various ULTRIX compatibility routines
  */
-
-#ifdef ULTRIXCOMPAT
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,5 +277,3 @@ ultrixgetsysinfo(p, uap, retval)
 	retval[0] = 0;
 	return (0);
 }
-
-#endif

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)proc.h	8.1 (Berkeley) 6/10/93
- *      $Id: proc.h,v 1.2 1994/05/27 08:40:53 glass Exp $
+ *      $Id: proc.h,v 1.3 1994/05/27 09:01:47 glass Exp $
  */
 
 /*
@@ -50,4 +50,3 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
-#define	MDP_ULTRIX	0x0002	/* ULTRIX process (ULTRIXCOMPAT) */

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dtopreg.h	8.1 (Berkeley) 6/10/93
- *      $Id: dtopreg.h,v 1.3 1994/05/27 08:39:29 glass Exp $
+ *      $Id: dtopreg.h,v 1.4 1994/05/27 08:58:42 glass Exp $
  */
 
 /* 

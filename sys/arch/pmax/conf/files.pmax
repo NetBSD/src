@@ -1,37 +1,37 @@
-# $Id: files.pmax,v 1.4 1994/05/27 08:39:10 glass Exp $
-pmax/pmax/autoconf.c		standard
-pmax/pmax/clock.c		standard
-pmax/pmax/conf.c		standard
-pmax/pmax/cons.c		standard
-pmax/pmax/fp.s			standard
-pmax/pmax/kadb.c		optional kadb
-pmax/pmax/machdep.c		standard config-dependent
-pmax/pmax/mem.c			standard
-pmax/pmax/pmap.c		standard
-pmax/pmax/procfs_machdep.c	optional procfs
-pmax/pmax/sys_machdep.c		standard
-pmax/pmax/trap.c		standard
-pmax/pmax/vm_machdep.c		standard
-pmax/stand/libsa/callvec.c	standard
-pmax/dev/fb.c			standard device-driver
-pmax/dev/scsi.c			standard
-pmax/dev/asc.c			optional asc device-driver
-pmax/dev/dc.c			optional dc device-driver
-pmax/dev/dtop.c			optional dtop device-driver
-pmax/dev/if_le.c		optional le
-pmax/dev/pm.c			optional pm device-driver
-pmax/dev/cfb.c			optional cfb device-driver
-pmax/dev/mfb.c			optional mfb device-driver
-pmax/dev/rz.c			optional rz
-pmax/dev/scc.c			optional scc device-driver
-pmax/dev/sii.c			optional sii device-driver
-pmax/dev/tz.c			optional tz
-pmax/dev/xcfb.c			optional xcfb device-driver
-pmax/ultrix/ultrix_compat.c	optional ultrixcompat
-pmax/ultrix/ultrix_syscalls.c	optional ultrixcompat
-pmax/ultrix/ultrix_sysent.c	optional ultrixcompat
-netinet/in_cksum.c		optional inet
-netns/ns_cksum.c		optional ns
-dev/cd.c			optional cd
-dev/vn.c			optional vn
-thisisfor_in_proto.c		optional hy
+# $Id: files.pmax,v 1.5 1994/05/27 08:57:52 glass Exp $
+arch/pmax/pmax/autoconf.c		standard
+arch/pmax/pmax/clock.c			standard
+arch/pmax/pmax/conf.c			standard
+arch/pmax/pmax/cons.c			standard
+arch/pmax/pmax/disksubr.c		standard
+arch/pmax/pmax/fp.s			standard
+arch/pmax/pmax/kadb.c			optional kadb
+arch/pmax/pmax/machdep.c		standard config-dependent
+arch/pmax/pmax/mem.c			standard
+arch/pmax/pmax/pmap.c			standard
+arch/pmax/pmax/process_machdep.c	standard
+#arch/pmax/pmax/procfs_machdep.c	optional procfs
+arch/pmax/pmax/sys_machdep.c		standard
+arch/pmax/pmax/trap.c			standard
+arch/pmax/pmax/vm_machdep.c		standard
+arch/pmax/stand/libsa/callvec.c		standard
+arch/pmax/dev/fb.c			standard
+arch/pmax/dev/scsi.c			standard
+arch/pmax/dev/asc.c			optional asc device-driver
+arch/pmax/dev/dc.c			optional dc device-driver
+arch/pmax/dev/dtop.c			optional dtop device-driver
+arch/pmax/dev/if_le.c			optional le device-driver
+arch/pmax/dev/pm.c			optional pm device-driver
+arch/pmax/dev/cfb.c			optional cfb device-driver
+arch/pmax/dev/mfb.c			optional mfb device-driver
+arch/pmax/dev/rz.c			optional rz device-driver
+arch/pmax/dev/scc.c			optional scc device-driver
+arch/pmax/dev/sii.c			optional sii device-driver
+arch/pmax/dev/tz.c			optional tz device-driver
+arch/pmax/dev/xcfb.c			optional xcfb device-driver
+arch/pmax/ultrix/ultrix_compat.c	optional compat_ultrix
+arch/pmax/ultrix/ultrix_syscalls.c	optional compat_ultrix
+arch/pmax/ultrix/ultrix_sysent.c	optional compat_ultrix
+netinet/in_cksum.c			optional inet
+netns/ns_cksum.c			optional ns
+#dev/cd.c				optional cd

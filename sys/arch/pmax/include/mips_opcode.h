@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mips_opcode.h	8.1 (Berkeley) 6/10/93
- *      $Id: mips_opcode.h,v 1.2 1994/05/27 08:40:44 glass Exp $
+ *      $Id: mips_opcode.h,v 1.3 1994/05/27 09:01:30 glass Exp $
  */
 
 /*

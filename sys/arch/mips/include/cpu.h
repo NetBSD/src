@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	8.4 (Berkeley) 1/4/94
- *      $Id: cpu.h,v 1.5 1994/05/27 08:40:30 glass Exp $
+ *      $Id: cpu.h,v 1.6 1994/05/27 09:00:32 glass Exp $
  */
 
 #ifndef _CPU_H_

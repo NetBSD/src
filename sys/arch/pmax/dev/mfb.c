@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: mfb.c,v 1.2 1994/05/27 08:39:40 glass Exp $
+ *      $Id: mfb.c,v 1.3 1994/05/27 08:59:01 glass Exp $
  */
 
 /* 

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kn01.h	8.1 (Berkeley) 6/10/93
- *      $Id: kn01.h,v 1.2 1994/05/27 08:41:59 glass Exp $
+ *      $Id: kn01.h,v 1.3 1994/05/27 09:03:23 glass Exp $
  */
 
 /* 

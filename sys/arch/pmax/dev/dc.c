@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dc.c	8.2 (Berkeley) 11/30/93
- *      $Id: dc.c,v 1.3 1994/05/27 08:39:22 glass Exp $
+ *      $Id: dc.c,v 1.4 1994/05/27 08:58:30 glass Exp $
  */
 
 /*
@@ -105,7 +105,7 @@ extern void ttrstrt __P((void *));
 int dcGetc	__P((dev_t));
 int dcparam	__P((struct tty *, struct termios *));
 
-struct	tty dc_tty[NDCLINE];
+struct	tty *dc_tty[NDCLINE];
 int	dc_cnt = NDCLINE;
 void	(*dcDivertXInput)();	/* X windows keyboard input routine */
 void	(*dcMouseEvent)();	/* X windows mouse motion event routine */
@@ -193,7 +193,9 @@ dcprobe(cp)
 
 	/* init pseudo DMA structures */
 	pdp = &dcpdma[cp->pmax_unit * 4];
-	tp = &dc_tty[cp->pmax_unit * 4];
+	tp = dc_tty[cp->pmax_unit * 4];
+	if (tp == NULL)
+		tp = dc_tty[cp->pmax_unit * 4] = ttymalloc();
 	for (cntr = 0; cntr < 4; cntr++) {
 		pdp->p_addr = (void *)dcaddr;
 		pdp->p_arg = (int)tp;
@@ -250,7 +252,9 @@ dcopen(dev, flag, mode, p)
 	unit = minor(dev);
 	if (unit >= dc_cnt || dcpdma[unit].p_addr == (void *)0)
 		return (ENXIO);
-	tp = &dc_tty[unit];
+	tp = dc_tty[unit];
+	if (tp == NULL)
+		tp = dc_tty[unit] = ttymalloc();
 	tp->t_oproc = dcstart;
 	tp->t_param = dcparam;
 	tp->t_dev = dev;
@@ -299,7 +303,7 @@ dcclose(dev, flag, mode, p)
 	register int unit, bit;
 
 	unit = minor(dev);
-	tp = &dc_tty[unit];
+	tp = dc_tty[unit];
 	bit = 1 << ((unit & 03) + 8);
 	if (dc_brk[unit >> 2] & bit) {
 		dc_brk[unit >> 2] &= ~bit;
@@ -318,7 +322,7 @@ dcread(dev, uio, flag)
 {
 	register struct tty *tp;
 
-	tp = &dc_tty[minor(dev)];
+	tp = dc_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
@@ -328,7 +332,7 @@ dcwrite(dev, uio, flag)
 {
 	register struct tty *tp;
 
-	tp = &dc_tty[minor(dev)];
+	tp = dc_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
@@ -345,11 +349,11 @@ dcioctl(dev, cmd, data, flag, p)
 	register int dc = unit >> 2;
 	int error;
 
-	tp = &dc_tty[unit];
+	tp = dc_tty[unit];
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
@@ -475,7 +479,7 @@ dcintr(unit)
 		if (csr & CSR_RDONE)
 			dcrint(unit);
 		if (csr & CSR_TRDY)
-			dcxint(&dc_tty[unit + ((csr >> 8) & 03)]);
+			dcxint(dc_tty[unit + ((csr >> 8) & 03)]);
 	}
 }
 
@@ -489,7 +493,7 @@ dcrint(unit)
 	int overrun = 0;
 
 	dcaddr = (dcregs *)dcpdma[unit].p_addr;
-	tp0 = &dc_tty[unit];
+	tp0 = dc_tty[unit];
 	while ((c = dcaddr->dc_rbuf) < 0) {	/* char present */
 		cc = c & 0xff;
 		tp = tp0 + ((c >> 8) & 03);
@@ -499,7 +503,7 @@ dcrint(unit)
 			overrun = 1;
 		}
 		/* the keyboard requires special translation */
-		if (tp == &dc_tty[DCKBD_PORT] && cn_tab.cn_screen) {
+		if (tp == dc_tty[DCKBD_PORT] && cn_tab.cn_screen) {
 #ifdef KADB
 			if (cc == LK_DO) {
 				spl0();
@@ -516,7 +520,7 @@ dcrint(unit)
 			}
 			if ((cc = kbdMapChar(cc)) < 0)
 				return;
-		} else if (tp == &dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
+		} else if (tp == dc_tty[DCMOUSE_PORT] && dcMouseButtons) {
 			register MouseReport *mrp;
 			static MouseReport currentRep;
 
@@ -573,11 +577,14 @@ dcxint(tp)
 {
 	register struct pdma *dp;
 	register dcregs *dcaddr;
+	int unit = minor(tp->t_dev);
 
-	dp = &dcpdma[minor(tp->t_dev)];
+	dp = &dcpdma[unit];
 	if (dp->p_mem < dp->p_end) {
 		dcaddr = (dcregs *)dp->p_addr;
-		dcaddr->dc_tdr = dc_brk[(tp - dc_tty) >> 2] | *dp->p_mem++;
+/*		dcaddr->dc_tdr = dc_brk[(tp - dc_tty) >> 2] |*/
+		dcaddr->dc_tdr = dc_brk[unit >> 2] |
+			*dp->p_mem++; /* XXX i think i broke this */
 		MachEmptyWriteBuffer();
 		DELAY(10);
 		return;
@@ -595,7 +602,7 @@ dcxint(tp)
 		dcstart(tp);
 	if (tp->t_outq.c_cc == 0 || !(tp->t_state & TS_BUSY)) {
 		dcaddr = (dcregs *)dp->p_addr;
-		dcaddr->dc_tcr &= ~(1 << (minor(tp->t_dev) & 03));
+		dcaddr->dc_tcr &= ~(1 << (unit & 03));
 		MachEmptyWriteBuffer();
 		DELAY(10);
 	}
@@ -625,7 +632,7 @@ dcstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	/* handle console specially */
-	if (tp == &dc_tty[DCKBD_PORT] && cn_tab.cn_screen) {
+	if (tp == dc_tty[DCKBD_PORT] && cn_tab.cn_screen) {
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -760,7 +767,7 @@ dcmctl(dev, bits, how)
 		}
 	}
 	if ((mbits & DML_DTR) && (dcsoftCAR[unit >> 2] & b))
-		dc_tty[unit].t_state |= TS_CARR_ON;
+		dc_tty[unit]->t_state |= TS_CARR_ON;
 	(void) splx(s);
 	return (mbits);
 }
@@ -781,7 +788,7 @@ dcscan(arg)
 	s = spltty();
 	/* only channel 2 has modem control (what about line 3?) */
 	dcaddr = (dcregs *)dcpdma[i = 2].p_addr;
-	tp = &dc_tty[i];
+	tp = dc_tty[i];
 	bit = TCR_DTR2;
 	if (dcsoftCAR[i >> 2] & bit)
 		car = 1;

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	8.1 (Berkeley) 6/10/93
- *      $Id: psl.h,v 1.2 1994/05/27 08:41:00 glass Exp $
+ *      $Id: psl.h,v 1.3 1994/05/27 09:01:53 glass Exp $
  */
 
 #include <machine/machConst.h>

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)scsi.c	8.1 (Berkeley) 6/10/93
- *      $Id: scsi.c,v 1.2 1994/05/27 08:39:58 glass Exp $
+ *      $Id: scsi.c,v 1.3 1994/05/27 08:59:22 glass Exp $
  */
 
 /*

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmioctl.h	8.1 (Berkeley) 6/10/93
- *      $Id: pmioctl.h,v 1.2 1994/05/27 08:40:52 glass Exp $
+ *      $Id: pmioctl.h,v 1.3 1994/05/27 09:01:44 glass Exp $
  *
  * graphics.h --
  *
@@ -62,7 +62,7 @@
  *
  * from: Header: devSerialPmax.c,
  *	v 1.4 89/05/22 13:31:07 mnelson Exp  SPRITE (DECWRL)
- * $Id: pmioctl.h,v 1.2 1994/05/27 08:40:52 glass Exp $
+ * $Id: pmioctl.h,v 1.3 1994/05/27 09:01:44 glass Exp $
  */
 
 #include <sys/ioctl.h>

@@ -38,7 +38,7 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.3 1994/05/27 08:42:26 glass Exp $
+ *      $Id: vm_machdep.c,v 1.4 1994/05/27 09:04:32 glass Exp $
  */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ cpu_fork(p1, p2)
 	extern struct proc *machFPCurProcPtr;
 
 	p2->p_md.md_regs = up->u_pcb.pcb_regs;
-	p2->p_md.md_flags = p1->p_md.md_flags & (MDP_FPUSED | MDP_ULTRIX);
+	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
 
 	/*
 	 * Cache the PTEs for the user area in the machine dependent
@@ -153,7 +153,7 @@ cpu_swapin(p)
  * pcb and stack and never returns.  We block memory allocation
  * until switch_exit has made things safe again.
  */
-cpu_exit(p)
+void cpu_exit(p)
 	struct proc *p;
 {
 	extern struct proc *machFPCurProcPtr;

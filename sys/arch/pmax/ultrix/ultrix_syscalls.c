@@ -38,10 +38,8 @@
  * from: Utah Hdr: hpux_syscalls.c 1.1 90/07/09
  *
  *	from: @(#)ultrix_syscalls.c	8.1 (Berkeley) 6/10/93
- *      $Id: ultrix_syscalls.c,v 1.2 1994/05/27 08:43:23 glass Exp $
+ *      $Id: ultrix_syscalls.c,v 1.3 1994/05/27 09:06:54 glass Exp $
  */
-
-#ifdef HPUXCOMPAT
 
 /*
  * HPUX System call names.
@@ -329,4 +327,3 @@ char *hpuxbsdipcnames[] = {
 	"0x40C",
 	"0x40D"
 };
-#endif

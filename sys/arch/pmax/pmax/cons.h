@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.h	8.1 (Berkeley) 6/10/93
- *      $Id: cons.h,v 1.2 1994/05/27 08:41:44 glass Exp $
+ *      $Id: cons.h,v 1.3 1994/05/27 09:03:07 glass Exp $
  */
 
 struct consdev {

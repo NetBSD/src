@@ -38,7 +38,7 @@
  * from: Utah Hdr: clockreg.h 1.14 91/01/18
  *
  *	from: @(#)clockreg.h	8.1 (Berkeley) 6/10/93
- *      $Id: clockreg.h,v 1.2 1994/05/27 08:41:39 glass Exp $
+ *      $Id: clockreg.h,v 1.3 1994/05/27 09:03:00 glass Exp $
  */
 
 /*

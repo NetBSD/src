@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fp.s	8.1 (Berkeley) 6/10/93
- *      $Id: fp.S,v 1.2 1994/05/27 08:41:47 glass Exp $
+ *      $Id: fp.S,v 1.3 1994/05/27 09:03:12 glass Exp $
  */
 
 /*

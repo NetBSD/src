@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	8.2 (Berkeley) 11/16/93
- *      $Id: if_le.c,v 1.4 1994/05/27 08:39:36 glass Exp $
+ *      $Id: if_le.c,v 1.5 1994/05/27 08:58:54 glass Exp $
  */
 
 #include <le.h>
@@ -250,7 +250,6 @@ leprobe(dp)
 	ifp->if_unit = dp->pmax_unit;
 	ifp->if_name = "le";
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = leinit;
 	ifp->if_reset = lereset;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
@@ -264,6 +263,7 @@ leprobe(dp)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	if_attach(ifp);
+	ether_ifattach(ifp);
 
 	printf("le%d at nexus0 csr 0x%x priority %d ethernet address %s\n",
 		dp->pmax_unit, dp->pmax_addr, dp->pmax_pri,

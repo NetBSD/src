@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device.h	8.1 (Berkeley) 6/10/93
- *      $Id: device.h,v 1.2 1994/05/27 08:39:24 glass Exp $
+ *      $Id: device.h,v 1.3 1994/05/27 08:58:37 glass Exp $
  */
 
 /*

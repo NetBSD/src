@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)float.h	8.1 (Berkeley) 6/10/93
- *      $Id: float.h,v 1.2 1994/05/27 08:40:36 glass Exp $
+ *      $Id: float.h,v 1.3 1994/05/27 09:01:04 glass Exp $
  */
 
 #define FLT_RADIX	2		/* b */

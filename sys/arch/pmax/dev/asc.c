@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asc.c	8.2 (Berkeley) 1/4/94
- *      $Id: asc.c,v 1.4 1994/05/27 08:39:14 glass Exp $
+ *      $Id: asc.c,v 1.5 1994/05/27 08:58:02 glass Exp $
  */
 
 /* 

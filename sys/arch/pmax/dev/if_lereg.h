@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_lereg.h	8.1 (Berkeley) 6/10/93
- *      $Id: if_lereg.h,v 1.2 1994/05/27 08:39:38 glass Exp $
+ *      $Id: if_lereg.h,v 1.3 1994/05/27 08:58:58 glass Exp $
  */
 
 #define	LEMTU		1518

@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asic.h	8.1 (Berkeley) 6/10/93
- *      $Id: asic.h,v 1.2 1994/05/27 08:41:33 glass Exp $
+ *      $Id: asic.h,v 1.3 1994/05/27 09:02:48 glass Exp $
  */
 
 /* 

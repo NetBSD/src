@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kdbparam.h	8.1 (Berkeley) 6/10/93
- *      $Id: kdbparam.h,v 1.2 1994/05/27 08:40:38 glass Exp $
+ *      $Id: kdbparam.h,v 1.3 1994/05/27 09:01:10 glass Exp $
  */
 
 /*

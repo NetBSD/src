@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mkboot.c	8.1 (Berkeley) 6/10/93
- *      $Id: mkboot.c,v 1.2 1994/05/27 08:42:40 glass Exp $
+ *      $Id: mkboot.c,v 1.3 1994/05/27 09:05:17 glass Exp $
  */
 
 #ifndef lint

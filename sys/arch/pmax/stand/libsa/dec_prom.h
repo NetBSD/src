@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dec_prom.h	8.1 (Berkeley) 6/10/93
- *      $Id: dec_prom.h,v 1.2 1994/05/27 08:42:38 glass Exp $
+ *      $Id: dec_prom.h,v 1.3 1994/05/27 09:05:13 glass Exp $
  *
  * machMon.h --
  *
