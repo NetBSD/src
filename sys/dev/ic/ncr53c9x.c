@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.8 2000/12/16 19:40:29 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.9 2000/12/16 19:42:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1157,10 +1157,8 @@ ncr53c9x_done(sc, ecb)
 		} else {
 			xs->resid = ecb->dleft;
 		}
-		if (xs->status == SCSI_QUEUE_FULL) {
-			printf("queue full\n");
+		if (xs->status == SCSI_QUEUE_FULL)
 			xs->error = XS_BUSY;
-		}
 	}
 
 #ifdef NCR53C9X_DEBUG
