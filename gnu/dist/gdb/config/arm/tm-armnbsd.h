@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define IEEE_FLOAT
 
-#define ADDR_BITS_REMOVE(val) (val)
+#define ADDR_BITS_REMOVE(val) ((val) & ~3)
 
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
@@ -342,78 +342,84 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Push an empty stack frame, to record the current PC, etc.  */
 
-#define PUSH_DUMMY_FRAME \
-{								\
-    register CORE_ADDR sp = read_register (SP_REGNUM);		\
-    register int regnum;					\
-    /* opcode for ldmdb fp,{v1-v6,fp,ip,lr,pc}^ */		\
-    sp = push_word(sp, 0xe92bdbf0); /* dummy return_data_save ins */ \
-    /* push a pointer to the dummy instruction minus 12 */	\
-    sp = push_word(sp, read_register (SP_REGNUM) - 16);		\
-    sp = push_word(sp, read_register (PS_REGNUM));		\
-    sp = push_word(sp, read_register (SP_REGNUM));		\
-    sp = push_word(sp, read_register (FP_REGNUM));		\
-    for (regnum = 9; regnum >= 4; regnum --)			\
-	sp = push_word(sp, read_register (regnum));		\
-    write_register (FP_REGNUM, read_register (SP_REGNUM) - 8);	\
-    write_register (SP_REGNUM, sp); }
+#define PUSH_DUMMY_FRAME						\
+{									\
+  register CORE_ADDR sp = read_register (SP_REGNUM);			\
+  register int regnum;							\
+  /* opcode for stmdb fp!, {r4-r10, fp, ip, lr, pc} */			\
+  sp = push_word (sp, 0xe92bdff0); /* dummy return_data_save ins */	\
+  /* push a pointer to the dummy instruction minus 12 */		\
+  sp = push_word (sp, read_register (SP_REGNUM) - 16);			\
+  sp = push_word (sp, read_register (PC_REGNUM));			\
+  sp = push_word (sp, read_register (SP_REGNUM));			\
+  sp = push_word (sp, read_register (FP_REGNUM));			\
+  for (regnum = 10; regnum >= 4; regnum--)				\
+    sp = push_word (sp, read_register (regnum));			\
+  write_register (FP_REGNUM, read_register (SP_REGNUM) - 8);		\
+  write_register (SP_REGNUM, sp);					\
+}
 
 /* Discard from the stack the innermost frame, restoring all registers.  */
 
-#define POP_FRAME \
+#define POP_FRAME							\
 {									\
-    register CORE_ADDR fp = read_register (FP_REGNUM);			\
-    register unsigned long return_data_save =				\
-	read_memory_integer ( ADDR_BITS_REMOVE(read_memory_integer (fp, 4))	\
-			       - 12, 4);			\
-    register int regnum;						\
-    write_register (PS_REGNUM, read_memory_integer (fp - 4, 4));	\
-    write_register (PC_REGNUM, ADDR_BITS_REMOVE(read_register (PS_REGNUM)));	\
-    write_register (SP_REGNUM, read_memory_integer (fp - 8, 4));	\
-    write_register (FP_REGNUM, read_memory_integer (fp - 12, 4));	\
-    fp -= 12;								\
-    for (regnum = 9; regnum >= 4; regnum--)				\
-	if (return_data_save & (1<<regnum)) {				\
-	    fp -= 4;							\
-	    write_register (regnum, read_memory_integer(fp, 4));	\
-	}								\
-    flush_cached_frames ();						\
+  register CORE_ADDR fp = read_register (FP_REGNUM);			\
+  register unsigned long return_data_save =				\
+    read_memory_integer (ADDR_BITS_REMOVE (read_memory_integer (fp, 4))	\
+			 - 12, 4);					\
+  register int regnum;							\
+  write_register (PC_REGNUM, read_memory_integer (fp - 4, 4));		\
+  write_register (SP_REGNUM, read_memory_integer (fp - 8, 4));		\
+  write_register (FP_REGNUM, read_memory_integer (fp - 12, 4));		\
+  fp -= 12;								\
+  for (regnum = 10; regnum >= 4; regnum--)				\
+    if (return_data_save & (1 << regnum))				\
+      {									\
+	fp -= 4;							\
+	write_register (regnum, read_memory_integer (fp, 4));		\
+      }									\
+  flush_cached_frames ();						\
 }
 
-/* This sequence of words is the instructions
+/* This sequence of words is the instructions.  We use this rather than bl
+   becuase the code segment may not be reachable from the stack.
 
-     ldmia	sp!,{a1-a4}
-     mov 	lk,pc
-     bl		*+8
-     swi	bkpt_swi
+     ldmia	sp!, {r0-r3}
+     mov 	lr, pc
+     ldr	pc, . + 8
+     Breakpoint
+     <address to call>
 
-   Note this is 16 bytes.  */
+   Note this is 20 bytes.  */
 
-#define CALL_DUMMY {0xe8bd000f, 0xe1a0e00f, 0xeb000000, 0xef180000}
+#define CALL_DUMMY {0xe8bd000f, 0xe1a0e00f, 0xe59ff000, 0xe6000011, 0}
 
 #define CALL_DUMMY_START_OFFSET 0  /* Start execution at beginning of dummy */
 
 /* Insert the specified number of args and function address
    into a call sequence of the above form stored at DUMMYNAME.  */
 
-#define FIX_CALL_DUMMY(dummyname, pc, fun, nargs, args, type, gcc_p) \
-{										\
-    register enum type_code code = TYPE_CODE (type);				\
-    register nargs_in_registers, struct_return = 0;				\
-    /* fix the load-arguments mask to move the first 4 or less arguments	\
-       into a1-a4 but make sure the structure return address in a1 is		\
-       not disturbed if the function is returning a structure */		\
-    if ((code == TYPE_CODE_STRUCT ||						\
-	 code == TYPE_CODE_UNION ||						\
-	 code == TYPE_CODE_ARRAY) &&						\
-	TYPE_LENGTH (type) > 4) {						\
-	nargs_in_registers = min(nargs + 1, 4);					\
-	struct_return = 1;							\
-    } else									\
-	nargs_in_registers = min(nargs, 4);					\
-    *(char *) dummyname = (1 << nargs_in_registers) - 1 - struct_return;	\
-    *(int *)((char *) dummyname + 8) =						\
-	(((fun - (pc + 16)) / 4) & 0x00ffffff) | 0xeb000000; }
+#define FIX_CALL_DUMMY(dummyname, pc, fun, nargs, args, type, gcc_p)	 \
+{									 \
+  register enum type_code code = TYPE_CODE (type);			 \
+  register nargs_in_registers, struct_return = 0;			 \
+  /* fix the load-arguments mask to move the first 4 or less arguments 	 \
+     into a1-a4 but make sure the structure return address in a1 is	 \
+     not disturbed if the function is returning a structure */		 \
+  if ((code == TYPE_CODE_STRUCT						 \
+       || code == TYPE_CODE_UNION					 \
+       || code == TYPE_CODE_ARRAY)					 \
+      && TYPE_LENGTH (type) > 4)					 \
+  {					 				 \
+    nargs_in_registers = min(nargs + 1, 4);				 \
+    struct_return = 1;							 \
+  }									 \
+  else									 \
+    nargs_in_registers = min(nargs, 4);					 \
+  *(char *) dummyname = (1 << nargs_in_registers) - 1 - struct_return;	 \
+  *(int *)((char *) dummyname + 16) =	fun;				 \
+}
+
 
 CORE_ADDR arm_get_next_pc PARAMS ((CORE_ADDR));
 
