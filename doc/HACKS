@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.8 2003/09/19 08:43:14 mrg Exp $
+# $NetBSD: HACKS,v 1.9 2003/09/19 16:41:58 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -77,111 +77,6 @@ descr
 	strtoull() was returning a wrong result for small numbers with bit 31
 	set. This is a gcc/arm32 compiler bug in gcc < 2.95.2. Adding
 	(void)&acc; works around it.
-kcah
-
-hack	gcc-sparc64-memorysize
-mdate	17 Sep 2000
-who	mrg
-port	sparc64
-file	lib/libc/hash/sha1.c		: 1.6 : 78 : 129 : 162 : 189
-file	sys/lib/libkern/sha1.c		: 1.6 : 78 : 129 : 162 : 189
-file	usr.sbin/bind/lib/Makefile	: 1.14 : 87 : 91
-descr
-	the normal SHA1Transform() function causes the sparc64 compiler to
-	use excessive amounts of memory attempting to optimise this function.
-	using no optimisation allows the function to build.  this hack
-	splits the mathematical functions inside SHA1Transform() into 4
-	separate functions, which avoids the optimiser explosion.
-kcah
-
-hack	gcc-sparc64-double-arguments
-mdate	18 Sep 2000
-who	mrg
-port	sparc64
-file	xsrc/xc/lib/fonts/Type1/type1.c		: 1.2 : 1461 : 1507 : 1702 : 1709
-descr
-	in passing 17 "double" arguments to a function, gcc incorrectly tries
-	to use a register that doesn't exist, causing an internal error.  this
-	hack changes the way arguments are passed to the function, such that
-	a pointer to a "double" (really an array) is passed, and the old
-	arguments are assigned within the function.
-kcah
-
-hack	gcc-sparc64-gawk
-mdate	28 Oct 2000
-who	mrg
-port	sparc64
-file	gnu/usr.bin/gawk/Makefile		: 1.11 : 21 : 24
-descr
-	gcc fails to build gawk properly, due to double floating point bugs.
-	this simple test program will fail to print ``ab'':
-		BEGIN { f = "abc"; print substr(f, 1, 2); exit }
-	the work around is simple: use -msoft-quad-float.
-kcah
-
-hack    gcc-sparc64-libgcc
-mdate   01 Dec 2001
-who	jmc
-port	sparc64
-file	gnu/lib/libgcc/Makefile			: 1.29 : 24 : 27
-descr
-	gcc fails to do double -> int conversions correctly without 
-	soft-quad-float. Add it in there for the internal conversion
-	routines. This appears to be more than likely emulations bugs than
-	compiler bugs as the assembly looks correct on the surface.
-
-kcah
-
-hack	gcc-sparc64-iostat-systat
-mdate	04 Feb 2001
-who	mrg
-port	sparc64
-file	usr.sbin/iostat/Makefile	: 1.17 : 7 : 10
-file	usr.bin/systat/Makefile		: 1.23 : 6 : 9
-descr
-	gcc fails to build iostat properly, due to double floating point bugs.
-	results will include "Inf" and other garbage.
-	the work around is simple: use -msoft-quad-float.
-kcah
-
-hack	gcc-sparc64-nawk
-mdate	25 Oct 2001
-who	martin
-port	sparc64
-file	usr.bin/awk/Makefile		: 1.3 : 13 : 15
-descr
-	Don't use long double on sparc64.
-kcah
-
-hack	gcc-sparc64-ntp
-mdate	12 Nov 2000
-who	martin
-port	sparc64
-file	usr.sbin/ntp/Makefile.inc	: 1.5 : 17 : 19
-descr
-	gcc fails to build ntpd properly, due to double floating point bugs.
-	Ntpd will fail to decode incoming packets; ntpdc -s will report
-	a delay, offset and dispersion of 0.0000 for all peers.
-	the work around is simple: use -msoft-quad-float.
-kcah
-
-hack	gcc-sparc64-x_dhclient
-mdate	27 Dec 2000
-who	mrg
-port	sparc64
-file	distrib/utils/x_dhclient/Makefile	: 1.6 : 28 : 30
-descr
-	gcc fails with an ICE while building dhclient's parse.c with -O2
-	and -Os.  the work around is simple: don't use -Os.
-kcah
-
-hack	lint-no-long-double
-mdate	17 Aug 2001
-who	eeh
-port	sparc64
-file	usr.bin/xlint/lint1/param.h: 1.14 :
-descr
-	Don't use long double on sparc64.
 kcah
 
 hack	netstat ieee1394 address printing.
