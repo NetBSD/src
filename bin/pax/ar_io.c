@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.24 2002/10/12 18:49:28 thorpej Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.25 2002/10/12 19:21:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.24 2002/10/12 18:49:28 thorpej Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.25 2002/10/12 19:21:12 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,8 +61,10 @@ __RCSID("$NetBSD: ar_io.c,v 1.24 2002/10/12 18:49:28 thorpej Exp $");
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
+#ifdef SUPPORT_RMT
 #define __RMTLIB_PRIVATE
 #include <rmt.h>
+#endif /* SUPPORT_RMT */
 #include "pax.h"
 #include "options.h"
 #include "extern.h"
