@@ -1,7 +1,5 @@
 ./usr/bin/elf2aout
 ./usr/bin/elf2ecoff
-./usr/bin/objcopy
-./usr/bin/objdump
 ./usr/include/machine
 ./usr/include/machine/ansi.h
 ./usr/include/machine/aout_machdep.h
