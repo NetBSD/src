@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.12 2001/09/18 18:15:49 wiz Exp $	*/
+/*	$NetBSD: monop.c,v 1.13 2003/04/21 01:25:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.12 2001/09/18 18:15:49 wiz Exp $");
+__RCSID("$NetBSD: monop.c,v 1.13 2003/04/21 01:25:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static void getplayers __P((void));
 static void init_players __P((void));
 static void init_monops __P((void));
 static void do_quit __P((int));
+void *heapstart;
 
 /*
  *	This program implements a monopoly game
@@ -71,6 +72,7 @@ main(ac, av)
 	setgid(getgid());
 
 	srand(getpid());
+	heapstart = sbrk(0);
 	if (ac > 1) {
 		if (!rest_f(av[1]))
 			restore();
