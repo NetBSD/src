@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.39 1999/06/08 10:38:15 mrg Exp $	*/
+/*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1140,7 +1140,7 @@ default_setup_chip(sc)
 				    channel, drive);
 				drvp->drive_flags &= ~DRIVE_DMA;
 			}
-			printf("%s:%d:%d: using DMA data tranferts\n",
+			printf("%s:%d:%d: using DMA data transfers\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname,
 			    channel, drive);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
