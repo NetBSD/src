@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.20 1994/02/10 17:07:14 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.21 1994/02/10 17:09:31 mycroft Exp $
  */
 
 #include "ed.h"
@@ -2030,8 +2030,8 @@ ed_ioctl(ifp, command, data)
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			ed_stop(ifp->if_unit);
-			ed_init(ifp->if_unit);
+			ed_stop(sc);
+			ed_init(sc);
 		}
 		break;
 
