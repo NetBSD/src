@@ -1,5 +1,5 @@
-dnl $Heimdal: roken-frag.m4,v 1.44 2002/09/04 20:57:30 joda Exp $
-dnl $NetBSD: roken-frag.m4,v 1.5 2002/09/12 13:18:56 joda Exp $
+dnl $Heimdal: roken-frag.m4,v 1.45 2002/12/18 17:34:25 joda Exp $
+dnl $NetBSD: roken-frag.m4,v 1.6 2003/05/15 20:44:10 lha Exp $
 dnl
 dnl some code to get roken working
 dnl
@@ -144,7 +144,7 @@ AC_FIND_FUNC(res_nsearch, resolv,
 #include <resolv.h>
 #endif
 ],
-[0,0,0,0,0])
+[0,0,0,0,0,0])
 
 AC_FIND_FUNC(dn_expand, resolv,
 [

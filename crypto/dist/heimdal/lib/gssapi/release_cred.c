@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: release_cred.c,v 1.6 2002/08/20 12:02:45 nectar Exp $"
-        "$NetBSD: release_cred.c,v 1.4 2002/11/28 11:21:17 elric Exp $");
+        "$NetBSD: release_cred.c,v 1.5 2003/05/15 20:44:17 lha Exp $");
 
 OM_uint32 gss_release_cred
            (OM_uint32 * minor_status,

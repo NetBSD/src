@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 2001-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: keytab_any.c,v 1.6 2002/04/18 14:02:11 joda Exp $"
-        "$NetBSD: keytab_any.c,v 1.3 2002/09/12 13:19:14 joda Exp $");
+        "$NetBSD: keytab_any.c,v 1.4 2003/05/15 20:44:19 lha Exp $");
 
 struct any_data {
     krb5_keytab kt;
@@ -43,13 +43,15 @@ struct any_data {
 };
 
 static void
-free_list (struct any_data *a)
+free_list (krb5_context context, struct any_data *a)
 {
     struct any_data *next;
 
     for (; a != NULL; a = next) {
 	next = a->next;
 	free (a->name);
+	if(a->kt)
+	    krb5_kt_close(context, a->kt);
 	free (a);
     }
 }
@@ -92,7 +94,7 @@ any_resolve(krb5_context context, const char *name, krb5_keytab id)
     id->data = a0;
     return 0;
  fail:
-    free_list (a0);
+    free_list (context, a0);
     return ret;
 }
 
@@ -113,7 +115,7 @@ any_close (krb5_context context,
 {
     struct any_data *a = id->data;
 
-    free_list (a);
+    free_list (context, a);
     return 0;
 }
 

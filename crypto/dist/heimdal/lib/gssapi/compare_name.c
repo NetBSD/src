@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: compare_name.c,v 1.2 1999/12/02 17:05:03 joda Exp $"
-        "$NetBSD: compare_name.c,v 1.2 2002/11/28 11:21:16 elric Exp $");
+        "$NetBSD: compare_name.c,v 1.3 2003/05/15 20:44:15 lha Exp $");
 
 OM_uint32 gss_compare_name
            (OM_uint32 * minor_status,
@@ -43,9 +43,10 @@ OM_uint32 gss_compare_name
             int * name_equal
            )
 {
+    GSSAPI_KRB5_INIT ();
 
-    GSSAPI_KRB5_INIT_MS(minor_status);
     *name_equal = krb5_principal_compare (gssapi_krb5_context,
 					  name1, name2);
+    *minor_status = 0;
     return GSS_S_COMPLETE;
 }

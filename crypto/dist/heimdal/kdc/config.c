@@ -36,7 +36,7 @@
 #include <parse_bytes.h>
 
 __RCSID("$Heimdal: config.c,v 1.43 2002/08/29 01:51:07 assar Exp $"
-        "$NetBSD: config.c,v 1.9 2003/03/20 19:20:59 lha Exp $");
+        "$NetBSD: config.c,v 1.10 2003/05/15 20:44:12 lha Exp $");
 
 static const char *config_file;	/* location of kdc config file */
 
@@ -73,10 +73,11 @@ krb5_addresses explicit_addresses;
 #ifdef KRB4
 char *v4_realm;
 int enable_v4 = -1;
-int enable_524 = -1;
-int enable_v4_cross_realm = -1;
 int enable_kaserver = -1;
 #endif
+
+int enable_524 = -1;
+int enable_v4_cross_realm = -1;
 
 static int help_flag;
 static int version_flag;
@@ -101,13 +102,16 @@ static struct getargs args[] = {
     },
 #endif
     { "enable-http", 'H', arg_flag, &enable_http, "turn on HTTP support" },
-    { "no-detach",   'D', arg_flag, &no_detach, "do not detach from tty" },
-#ifdef KRB4
-    {	"kerberos4",	0, 	arg_negative_flag, &enable_v4,
-	"don't respond to kerberos 4 requests" 
-    },
     {	"524",		0, 	arg_negative_flag, &enable_524,
 	"don't respond to 524 requests" 
+    },
+#ifdef KRB4
+    {
+	"kaserver", 'K', arg_flag,   &enable_kaserver,
+	"enable kaserver support"
+    },
+    {	"kerberos4",	0, 	arg_flag, &enable_v4,
+	"respond to kerberos 4 requests" 
     },
     {	"kerberos4-cross-realm",	0, 	arg_flag,
 	&enable_v4_cross_realm,
@@ -116,10 +120,6 @@ static struct getargs args[] = {
     { 
 	"v4-realm",	'r',	arg_string, &v4_realm, 
 	"realm to serve v4-requests for"
-    },
-    {
-	"kaserver", 'K', arg_flag,   &enable_kaserver,
-	"enable kaserver support"
     },
 #endif
     {	"ports",	'P', 	arg_string, &port_str,
@@ -340,8 +340,11 @@ configure(int argc, char **argv)
 
 #ifdef KRB4
     if(enable_v4 == -1)
-	enable_v4 = krb5_config_get_bool_default(context, NULL, TRUE, "kdc", 
+	enable_v4 = krb5_config_get_bool_default(context, NULL, FALSE, "kdc", 
 					 "enable-kerberos4", NULL);
+#else
+#define enable_v4 0
+#endif
     if(enable_v4_cross_realm == -1)
 	enable_v4_cross_realm =
 	    krb5_config_get_bool_default(context, NULL,
@@ -351,9 +354,6 @@ configure(int argc, char **argv)
     if(enable_524 == -1)
 	enable_524 = krb5_config_get_bool_default(context, NULL, enable_v4, 
 						  "kdc", "enable-524", NULL);
-#else
-#define enable_v4 0
-#endif
 
     if(enable_http == -1)
 	enable_http = krb5_config_get_bool(context, NULL, "kdc", 

@@ -35,7 +35,7 @@
 #include <com_err.h>
 
 __RCSID("$Heimdal: context.c,v 1.81 2002/09/02 17:03:12 joda Exp $"
-        "$NetBSD: context.c,v 1.9 2002/09/19 19:48:33 joda Exp $");
+        "$NetBSD: context.c,v 1.10 2003/05/15 20:44:18 lha Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -177,6 +177,7 @@ init_context_from_config_file(krb5_context context)
     /* prefer dns_lookup_kdc over srv_lookup. */
     INIT_FIELD(context, bool, srv_lookup, TRUE, "srv_lookup");
     INIT_FIELD(context, bool, srv_lookup, context->srv_lookup, "dns_lookup_kdc");
+    context->default_cc_name = NULL;
     return 0;
 }
 
@@ -228,6 +229,8 @@ out:
 void
 krb5_free_context(krb5_context context)
 {
+    if (context->default_cc_name)
+	free(context->default_cc_name);
     free(context->etypes);
     free(context->etypes_des);
     krb5_free_host_realm (context, context->default_realms);

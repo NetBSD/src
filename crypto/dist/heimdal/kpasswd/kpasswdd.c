@@ -33,7 +33,7 @@
 
 #include "kpasswd_locl.h"
 __RCSID("$Heimdal: kpasswdd.c,v 1.53 2002/08/19 15:07:31 joda Exp $"
-        "$NetBSD: kpasswdd.c,v 1.6 2002/09/12 13:19:03 joda Exp $");
+        "$NetBSD: kpasswdd.c,v 1.7 2003/05/15 20:44:14 lha Exp $");
 
 #include <kadm5/admin.h>
 #ifdef HAVE_SYS_UN_H
@@ -483,33 +483,35 @@ doit (krb5_keytab keytab, int port)
 	 if (ret)
 	    krb5_err (context, 1, ret, "krb5_get_all_server_addrs");
 
-	n = addrs.len;
+	 n = addrs.len;
 
-	sockets = malloc (n * sizeof(*sockets));
-	if (sockets == NULL)
-	    krb5_errx (context, 1, "out of memory");
-	maxfd = 0;
-	FD_ZERO(&real_fdset);
-	for (i = 0; i < n; ++i) {
-	    int sa_size;
-
-	    krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
-	
-	    sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
-	    if (sockets[i] < 0)
-		krb5_err (context, 1, errno, "socket");
-	    if (bind (sockets[i], sa, sa_size) < 0) {
-		char str[128];
-		size_t len;
-		ret = krb5_print_address (&addrs.val[i], str, sizeof(str),
-		    &len);
-		krb5_err (context, 1, errno, "bind(%s)", str);
-	    }
-	    maxfd = max (maxfd, sockets[i]);
-	    if (maxfd >= FD_SETSIZE)
-		krb5_errx (context, 1, "fd too large");
-	    FD_SET(sockets[i], &real_fdset);
-	}
+	 sockets = malloc (n * sizeof(*sockets));
+	 if (sockets == NULL)
+	     krb5_errx (context, 1, "out of memory");
+	 maxfd = -1;
+	 FD_ZERO(&real_fdset);
+	 for (i = 0; i < n; ++i) {
+	     int sa_size = sizeof(__ss);
+	     
+	     krb5_addr2sockaddr (context, &addrs.val[i], sa, &sa_size, port);
+	     
+	     sockets[i] = socket (sa->sa_family, SOCK_DGRAM, 0);
+	     if (sockets[i] < 0)
+		 krb5_err (context, 1, errno, "socket");
+	     if (bind (sockets[i], sa, sa_size) < 0) {
+		 char str[128];
+		 size_t len;
+		 ret = krb5_print_address (&addrs.val[i], str, sizeof(str),
+					   &len);
+		 krb5_err (context, 1, errno, "bind(%s)", str);
+	     }
+	     maxfd = max (maxfd, sockets[i]);
+	     if (maxfd >= FD_SETSIZE)
+		 krb5_errx (context, 1, "fd too large");
+	     FD_SET(sockets[i], &real_fdset);
+	 }
+	 if (maxfd == -1)
+	     krb5_errx (context, 1, "No sockets!");
 #ifdef INETD_SUPPORT
     } else {
 	n = 1;

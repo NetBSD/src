@@ -1,5 +1,36 @@
-.\" $Heimdal: kadmin.8,v 1.7 2002/08/20 17:07:11 joda Exp $
-.\" $NetBSD: kadmin.8,v 1.7 2003/03/31 00:04:03 perry Exp $
+.\" Copyright (c) 2000 - 2003 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden). 
+.\" All rights reserved. 
+.\"
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\"
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\"    notice, this list of conditions and the following disclaimer in the 
+.\"    documentation and/or other materials provided with the distribution. 
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors 
+.\"    may be used to endorse or promote products derived from this software 
+.\"    without specific prior written permission. 
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+.\" SUCH DAMAGE. 
+.\" 
+.\" $Heimdal: kadmin.8,v 1.10 2003/03/31 10:42:32 lha Exp $
+.\" $NetBSD: kadmin.8,v 1.8 2003/05/15 20:44:11 lha Exp $
 .\"
 .Dd September 10, 2000
 .Dt KADMIN 8
@@ -44,8 +75,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-program is used to make modification to the Kerberos database, either
-remotely via the
+program is used to make modifications to the Kerberos database, either remotely via the
 .Xr kadmind 8
 daemon, or locally (with the
 .Fl l
@@ -147,7 +177,7 @@ removes a principal
 .Ar principal enctypes ...
 .Pp
 .Bd -ragged -offset indent
-removes some enctypes from a principal, this can be useful the service
+removes some enctypes from a principal. This can be useful the service
 belonging to the principal is known to not handle certain enctypes
 .Ed
 .Pp
@@ -205,7 +235,7 @@ lists the operations you are allowed to perform
 .Pp
 .Ed
 .Pp
-When running in local mode, the following commands can also be used.
+When running in local mode, the following commands can also be used:
 .Bd -ragged -offset indent
 .Nm dump
 .Op Fl d | Fl -decrypt
@@ -223,7 +253,7 @@ form to the specified file, or standard out
 .Ar realm
 .Pp
 .Bd -ragged -offset indent
-initializes the Kerberos database with entries for a new realm, it's
+initializes the Kerberos database with entries for a new realm. It's
 possible to have more than one realm served by one server
 .Ed
 .Pp

@@ -34,7 +34,7 @@
 #include "kdc_locl.h"
 
 __RCSID("$Heimdal: connect.c,v 1.86 2002/08/12 13:29:48 joda Exp $"
-        "$NetBSD: connect.c,v 1.9 2003/03/20 19:20:59 lha Exp $");
+        "$NetBSD: connect.c,v 1.10 2003/05/15 20:44:12 lha Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -132,14 +132,14 @@ add_standard_ports (int family)
     add_port_service(family, "kerberos-sec", 88, "tcp");
     if(enable_http)
 	add_port_service(family, "http", 80, "tcp");
+    if(enable_524) {
+	add_port_service(family, "krb524", 4444, "udp");
+	add_port_service(family, "krb524", 4444, "tcp");
+    }
 #ifdef KRB4
     if(enable_v4) {
 	add_port_service(family, "kerberos-iv", 750, "udp");
 	add_port_service(family, "kerberos-iv", 750, "tcp");
-    }
-    if(enable_524) {
-	add_port_service(family, "krb524", 4444, "udp");
-	add_port_service(family, "krb524", 4444, "tcp");
     }
     if (enable_kaserver)
 	add_port_service(family, "afs3-kaserver", 7004, "udp");
@@ -215,7 +215,7 @@ init_descr(struct descr *d)
 }
 
 /*
- * re-intialize all `n' ->sa in `d'.
+ * re-initialize all `n' ->sa in `d'.
  */
 
 static void
@@ -359,9 +359,7 @@ process_request(unsigned char *buf,
 		struct sockaddr *addr)
 {
     KDC_REQ req;
-#ifdef KRB4
     Ticket ticket;
-#endif
     krb5_error_code ret;
     size_t i;
 
@@ -374,21 +372,20 @@ process_request(unsigned char *buf,
 	ret = tgs_rep(&req, reply, from, addr);
 	free_TGS_REQ(&req);
 	return ret;
-    }
-#ifdef KRB4
-    else if(maybe_version4(buf, len)){
-	*sendlength = 0; /* elbitapmoc sdrawkcab XXX */
-	do_version4(buf, len, reply, from, (struct sockaddr_in*)addr);
-	return 0;
     }else if(decode_Ticket(buf, len, &ticket, &i) == 0){
 	ret = do_524(&ticket, reply, from, addr);
 	free_Ticket(&ticket);
 	return ret;
+#ifdef KRB4
+    } else if(maybe_version4(buf, len)){
+	*sendlength = 0; /* elbitapmoc sdrawkcab XXX */
+	do_version4(buf, len, reply, from, (struct sockaddr_in*)addr);
+	return 0;
     } else if (enable_kaserver) {
 	ret = do_kaserver (buf, len, reply, from, (struct sockaddr_in*)addr);
 	return ret;
-    }
 #endif
+    }
 			  
     return -1;
 }
@@ -494,7 +491,7 @@ de_http(char *buf)
 {
     char *p, *q;
     for(p = q = buf; *p; p++, q++) {
-	if(*p == '%') {
+	if(*p == '%' && isxdigit(p[1]) && isxdigit(p[2])) {
 	    unsigned int x;
 	    if(sscanf(p + 1, "%2x", &x) != 1)
 		return -1;

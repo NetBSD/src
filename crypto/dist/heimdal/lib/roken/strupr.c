@@ -35,7 +35,7 @@
 #include <config.h>
 #ifdef __RCSID
 __RCSID("$Heimdal: strupr.c,v 1.4 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: strupr.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+        "$NetBSD: strupr.c,v 1.3 2003/05/15 20:44:22 lha Exp $");
 #endif
 #endif
 #include <string.h>
@@ -50,7 +50,7 @@ strupr(char *str)
   char *s;
 
   for(s = str; *s; s++)
-    *s = toupper(*s);
+    *s = toupper((unsigned char)*s);
   return str;
 }
 #endif

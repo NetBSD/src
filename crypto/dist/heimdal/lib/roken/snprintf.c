@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: snprintf.c,v 1.34 2002/04/18 08:50:57 joda Exp $"
-        "$NetBSD: snprintf.c,v 1.3 2002/09/12 13:19:21 joda Exp $");
+        "$NetBSD: snprintf.c,v 1.4 2003/05/15 20:44:22 lha Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -339,6 +339,8 @@ xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 	  flags |= alternate_flag;
 	else if(c == '0')
 	  flags |= zero_flag;
+	else if(c == '\'')
+	    ; /* just ignore */
 	else
 	  break;
       }

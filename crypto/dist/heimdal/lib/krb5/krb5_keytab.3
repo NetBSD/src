@@ -1,6 +1,6 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
 .\" $Heimdal: krb5_keytab.3,v 1.5 2002/08/28 15:30:54 joda Exp $
-.\" $NetBSD: krb5_keytab.3,v 1.7 2003/01/02 12:59:59 wiz Exp $
+.\" $NetBSD: krb5_keytab.3,v 1.8 2003/05/15 20:44:21 lha Exp $
 .Dd February 5, 2001
 .Dt KRB5_KEYTAB 3
 .Os
@@ -18,6 +18,7 @@
 .Nm krb5_kt_free_entry ,
 .Nm krb5_kt_get_entry ,
 .Nm krb5_kt_get_name ,
+.Nm krb5_kt_get_type ,
 .Nm krb5_kt_next_entry ,
 .Nm krb5_kt_read_service_key ,
 .Nm krb5_kt_register ,
@@ -28,7 +29,7 @@
 .Sh LIBRARY
 Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5/krb5.h>
+.In krb5/krb5.h
 .Pp
 .Ft krb5_error_code
 .Fo krb5_kt_add_entry
@@ -92,6 +93,13 @@ Kerberos 5 Library (libkrb5, -lkrb5)
 .Fa "krb5_keytab keytab"
 .Fa "char *name"
 .Fa "size_t namesize"
+.Fc
+.Ft krb5_error_code
+.Fo krb5_kt_get_type
+.Fa "krb5_context context"
+.Fa "krb5_keytab keytab"
+.Fa "char *prefix"
+.Fa "size_t prefixsize"
 .Fc
 .Ft krb5_error_code
 .Fo krb5_kt_next_entry
@@ -259,6 +267,18 @@ retrieves the name of the keytab
 into
 .Fa name ,
 .Fa namesize .
+Returns 0 or an error.
+.Pp
+.Fn krb5_kt_get_type
+retrieves the type of the keytab
+.Fa keytab
+and store the prefix/name for type of the keytab into
+.Fa prefix ,
+.Fa prefixsize .
+The prefix will have the maximum length of
+.Dv KRB5_KT_PREFIX_MAX_LEN 
+(including terminating
+.Dv NUL ) .
 Returns 0 or an error.
 .Pp
 .Fn krb5_kt_free_entry

@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: com_err.c,v 1.18 2002/03/10 23:07:01 assar Exp $"
-        "$NetBSD: com_err.c,v 1.4 2002/09/12 13:19:06 joda Exp $");
+        "$NetBSD: com_err.c,v 1.5 2003/05/15 20:44:15 lha Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,10 +44,6 @@ __RCSID("$Heimdal: com_err.c,v 1.18 2002/03/10 23:07:01 assar Exp $"
 
 struct et_list *_et_list = NULL;
 
-static void
-default_proc (const char *whoami, long code, const char *fmt, va_list args)
-	__attribute__((__format__(__printf__, 3, 0)));
-	
 const char *
 error_message (long code)
 {

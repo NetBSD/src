@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: duplicate_name.c,v 1.5 2001/05/11 09:16:46 assar Exp $"
-        "$NetBSD: duplicate_name.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
+        "$NetBSD: duplicate_name.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
 
 OM_uint32 gss_duplicate_name (
             OM_uint32 * minor_status,
@@ -42,18 +42,19 @@ OM_uint32 gss_duplicate_name (
             gss_name_t * dest_name
            )
 {
-  krb5_error_code kret;
+    krb5_error_code kret;
 
-  GSSAPI_KRB5_INIT_MS(minor_status);
+    GSSAPI_KRB5_INIT ();
 
-  kret = krb5_copy_principal (gssapi_krb5_context,
-			      src_name,
-			      dest_name);
-  if (kret) {
-    *minor_status = kret;
-    gssapi_krb5_set_error_string ();
-    return GSS_S_FAILURE;
-  } else {
-    return GSS_S_COMPLETE;
-  }
+    kret = krb5_copy_principal (gssapi_krb5_context,
+				src_name,
+				dest_name);
+    if (kret) {
+	*minor_status = kret;
+	gssapi_krb5_set_error_string ();
+	return GSS_S_FAILURE;
+    } else {
+	*minor_status = 0;
+	return GSS_S_COMPLETE;
+    }
 }

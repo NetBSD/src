@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: copy_ccache.c,v 1.2 2001/05/11 09:16:45 assar Exp $"
-        "$NetBSD: copy_ccache.c,v 1.3 2002/09/12 13:19:07 joda Exp $");
+        "$NetBSD: copy_ccache.c,v 1.4 2003/05/15 20:44:16 lha Exp $");
 
 OM_uint32
 gss_krb5_copy_ccache(OM_uint32 *minor,
