@@ -1,4 +1,4 @@
-.\"     $NetBSD: tmac.e,v 1.3.2.2 1998/05/05 08:13:59 mycroft Exp $
+.\"     $NetBSD: tmac.e,v 1.3.2.3 1998/05/09 07:24:04 mycroft Exp $
 .\"
 .nr _0 \n(.c
 .\" Copyright (c) 1988, 1993
@@ -961,14 +961,7 @@
 .\}
 .nr ?C 1
 .nr $f 1 1
-.ie \n(.g \{\
-.ie \n(.C \
-.	ds * \\*{1\\*}\k*
-.el \
-.	ds * \\*{[]1\\*}\k*
-.\}
-.el \
-.	ds * \\*{1\\*}\k*
+.ds * \\*{1\\*}\k*
 .if \\n(?R \
 .	pn 1
 .bp
