@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.76 2003/10/14 14:59:04 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.77 2003/10/15 17:08:37 jmc Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/iostream.info
 ./usr/share/info/tar.info
@@ -94,6 +94,9 @@
 ./usr/share/man/cat4/imp.0
 ./usr/share/man/cat4/ipip.0
 ./usr/share/man/cat4/lsu.0
+./usr/share/man/cat4/mac68k/adb.0
+./usr/share/man/cat4/mac68k/mc.0
+./usr/share/man/cat4/macppc/mc.0
 ./usr/share/man/cat4/mvme68k/le.0
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/opms.0
@@ -272,6 +275,9 @@
 ./usr/share/man/man4/imp.4
 ./usr/share/man/man4/ipip.4
 ./usr/share/man/man4/lsu.4
+./usr/share/man/man4/mac68k/adb.4
+./usr/share/man/man4/mac68k/mc.4
+./usr/share/man/man4/macppc/mc.4
 ./usr/share/man/man4/mvme68k/le.4
 ./usr/share/man/man4/ncr.4
 ./usr/share/man/man4/opms.4
