@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.21 1998/06/11 05:10:41 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.22 1998/07/24 20:32:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,6 +189,12 @@ struct pv_page {
 extern	pt_entry_t *VPT;		/* Virtual Page Table */
 
 #define	PMAP_STEAL_MEMORY		/* enable pmap_steal_memory() */
+
+/*
+ * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
+ */
+#define	PMAP_MAP_POOLPAGE(pa)		ALPHA_PHYS_TO_K0SEG((pa))
+#define	PMAP_UNMAP_POOLPAGE(va)		ALPHA_K0SEG_TO_PHYS((va))
 
 vm_offset_t vtophys __P((vm_offset_t));
 
