@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.4 2000/05/11 19:49:13 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.1.1.5 2000/05/21 18:49:33 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.6 2000/05/09 22:42:40 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.7 2000/05/11 12:28:18 darrenr Exp";
 #endif
 
 #if defined(_KERNEL) && defined(__FreeBSD_version) && \
@@ -302,17 +302,33 @@ fr_info_t *fin;
 	}
 	case IPPROTO_TCP :
 		fi->fi_fl |= FI_TCPUDP;
-		if ((v == 4) && ((!IPMINLEN(ip, tcphdr) && !off) ||
-		     (off && off < sizeof(struct tcphdr))))
-			fi->fi_fl |= FI_SHORT;
+#ifdef	USE_INET6
+		if (v == 6) {
+			if (plen < sizeof(struct tcphdr))
+				fi->fi_fl |= FI_SHORT;
+		} else
+#endif
+		if (v == 4) {
+			if ((!IPMINLEN(ip, tcphdr) && !off) ||
+			     (off && off < sizeof(struct tcphdr)))
+				fi->fi_fl |= FI_SHORT;
+		}
 		if (!(fi->fi_fl & FI_SHORT) && !off)
 			fin->fin_tcpf = tcp->th_flags;
 		goto getports;
 	case IPPROTO_UDP :
 		fi->fi_fl |= FI_TCPUDP;
-		if ((v == 4) && ((!IPMINLEN(ip, udphdr) && !off) ||
-		    (off && off < sizeof(struct udphdr))))
-			fi->fi_fl |= FI_SHORT;
+#ifdef	USE_INET6
+		if (v == 6) {
+			if (plen < sizeof(struct udphdr))
+				fi->fi_fl |= FI_SHORT;
+		} else
+#endif
+		if (v == 4) {
+			if ((!IPMINLEN(ip, udphdr) && !off) ||
+			    (off && off < sizeof(struct udphdr)))
+				fi->fi_fl |= FI_SHORT;
+		}
 getports:
 		if (!off && (fin->fin_dlen > 3)) {
 			fin->fin_data[0] = ntohs(tcp->th_sport);
@@ -814,6 +830,7 @@ int out;
 	if ((out) && (v == 4))
 		ip->ip_id = ntohs(ip->ip_id);
 
+	changed = 0;
 	fin->fin_v = v;
 	fin->fin_ifp = ifp;
 	fin->fin_out = out;
@@ -1337,7 +1354,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.35.2.6 2000/05/09 22:42:40 darrenr Exp
+ * Id: fil.c,v 2.35.2.7 2000/05/11 12:28:18 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

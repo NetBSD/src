@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.3 2000/05/03 10:55:56 veego Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.4 2000/05/21 18:49:39 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.15.2.1 2000/04/30 05:03:43 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.15.2.2 2000/05/11 12:12:51 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -768,9 +768,14 @@ fixalign:
 			break;
 		}
 
-	if (hlen > mlen)
+	if (hlen > mlen) {
 		hlen = mlen;
-	else if (m->b_wptr - m->b_rptr > plen)
+#if SOLARIS2 >= 8
+	} else if (sap == IP6_DL_SAP) {
+		if (m->b_wptr - m->b_rptr > plen + hlen)
+			m->b_wptr = m->b_rptr + plen + hlen;
+#endif
+	} else if (m->b_wptr - m->b_rptr > plen)
 		m->b_wptr = m->b_rptr + plen;
 
 	/*
@@ -838,14 +843,6 @@ mblk_t *mb;
 		mb->b_prev = NULL;
 		freemsg(mb);
 		return 0;
-	}
-
-	if (mb->b_datap->db_ref > 1) {
-		mblk_t *m1;
-
-		m1 = copymsg(mb);
-		freemsg(mb);
-		mb = m1;
 	}
 
 	if (mb->b_datap->db_ref > 1) {
@@ -947,14 +944,6 @@ mblk_t *mb;
 		mb->b_prev = NULL;
 		freemsg(mb);
 		return 0;
-	}
-
-	if (mb->b_datap->db_ref > 1) {
-		mblk_t *m1;
-
-		m1 = copymsg(mb);
-		freemsg(mb);
-		mb = m1;
 	}
 
 	if (mb->b_datap->db_ref > 1) {
