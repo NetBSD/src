@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.10 1996/02/13 22:05:43 christos Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.10.4.1 1996/12/11 03:46:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -52,6 +52,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -75,18 +76,18 @@ static void new_to_old __P((struct mbuf *));
  *
  */
 int
-pk_usrreq(so, req, m, nam, control)
-	struct socket  *so;
-	int             req;
-	register struct mbuf *m, *nam;
-	struct mbuf    *control;
+pk_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
 	register struct pklcd *lcp = (struct pklcd *) so->so_pcb;
 	register int    error = 0;
 
 	if (req == PRU_CONTROL)
-		return (pk_control(so, (long) m, (caddr_t) nam,
-				   (struct ifnet *) control));
+		return (pk_control(so, (long)m, (caddr_t)nam,
+		    (struct ifnet *)control, p));
 	if (control && control->m_len) {
 		error = EINVAL;
 		goto release;
@@ -323,11 +324,12 @@ struct sockaddr_x25 pk_sockmask = {
 
 /* ARGSUSED */
 int
-pk_control(so, cmd, data, ifp)
-	struct socket  *so;
-	u_long          cmd;
-	caddr_t         data;
+pk_control(so, cmd, data, ifp, p)
+	struct socket *so;
+	u_long cmd;
+	caddr_t data;
 	register struct ifnet *ifp;
+	struct proc *p;
 {
 	register struct ifreq_x25 *ifr = (struct ifreq_x25 *) data;
 	register struct ifaddr *ifa = 0;
@@ -352,7 +354,7 @@ pk_control(so, cmd, data, ifp)
 		return (0);
 
 	case SIOCSIFCONF_X25:
-		if ((so->so_state & SS_PRIV) == 0)
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 			return (EPERM);
 		if (ifp == 0)
 			panic("pk_control");
@@ -413,6 +415,7 @@ pk_ctloutput(cmd, so, level, optname, mp)
 	struct mbuf   **mp;
 	int             cmd, level, optname;
 {
+	struct proc *p = curproc;		/* XXX */
 	register struct mbuf *m = *mp;
 	register struct pklcd *lcp = (struct pklcd *) so->so_pcb;
 	int             error = EOPNOTSUPP;
@@ -429,7 +432,7 @@ pk_ctloutput(cmd, so, level, optname, mp)
 			return (0);
 
 		case PK_ACCTFILE:
-			if ((so->so_state & SS_PRIV) == 0)
+			if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag)))
 				error = EPERM;
 			else if (m->m_len)
 				error = pk_accton(mtod(m, char *));

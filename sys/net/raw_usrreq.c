@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.11 1996/02/13 22:00:43 christos Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.11.4.1 1996/12/11 03:43:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,6 +43,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -154,27 +155,52 @@ raw_ctlinput(cmd, arg, d)
 	/* INCOMPLETE */
 }
 
+void
+raw_setsockaddr(rp, nam)
+	register struct rawcb *rp;
+	struct mbuf *nam;
+{
+
+	nam->m_len = rp->rcb_laddr->sa_len;
+	bcopy(rp->rcb_laddr, mtod(nam, caddr_t), (size_t)nam->m_len);
+}
+
+void
+raw_setpeeraddr(rp, nam)
+	register struct rawcb *rp;
+	struct mbuf *nam;
+{
+
+	nam->m_len = rp->rcb_faddr->sa_len;
+	bcopy(rp->rcb_faddr, mtod(nam, caddr_t), (size_t)nam->m_len);
+}
+
 /*ARGSUSED*/
 int
-raw_usrreq(so, req, m, nam, control)
+raw_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
+	struct proc *p;
 {
-	register struct rawcb *rp = sotorawcb(so);
+	register struct rawcb *rp;
+	int s;
 	register int error = 0;
-	int len;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
-	if (control && control->m_len) {
-		error = EOPNOTSUPP;
-		goto release;
-	}
-	if (rp == 0) {
+
+	s = splsoftnet();
+	rp = sotorawcb(so);
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("raw_usrreq: unexpected control mbuf");
+#endif
+	if (rp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
+
 	switch (req) {
 
 	/*
@@ -183,7 +209,7 @@ raw_usrreq(so, req, m, nam, control)
 	 * the appropriate raw interface routine.
 	 */
 	case PRU_ATTACH:
-		if ((so->so_state & SS_PRIV) == 0) {
+		if (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))) {
 			error = EACCES;
 			break;
 		}
@@ -195,50 +221,25 @@ raw_usrreq(so, req, m, nam, control)
 	 * Flush data or not depending on the options.
 	 */
 	case PRU_DETACH:
-		if (rp == 0) {
-			error = ENOTCONN;
-			break;
-		}
 		raw_detach(rp);
 		break;
 
-#ifdef notdef
 	/*
 	 * If a socket isn't bound to a single address,
 	 * the raw input routine will hand it anything
 	 * within that protocol family (assuming there's
 	 * nothing else around it should go to). 
 	 */
-	case PRU_CONNECT:
-		if (rp->rcb_faddr) {
-			error = EISCONN;
-			break;
-		}
-		nam = m_copym(nam, 0, M_COPYALL, M_WAIT);
-		rp->rcb_faddr = mtod(nam, struct sockaddr *);
-		soisconnected(so);
-		break;
-
 	case PRU_BIND:
-		if (rp->rcb_laddr) {
-			error = EINVAL;			/* XXX */
-			break;
-		}
-		error = raw_bind(so, nam);
-		break;
-#endif
-
+	case PRU_LISTEN:
+	case PRU_CONNECT:
 	case PRU_CONNECT2:
 		error = EOPNOTSUPP;
-		goto release;
+		break;
 
 	case PRU_DISCONNECT:
-		if (rp->rcb_faddr == 0) {
-			error = ENOTCONN;
-			break;
-		}
-		raw_disconnect(rp);
 		soisdisconnected(so);
+		raw_disconnect(rp);
 		break;
 
 	/*
@@ -248,31 +249,42 @@ raw_usrreq(so, req, m, nam, control)
 		socantsendmore(so);
 		break;
 
+	case PRU_RCVD:
+		error = EOPNOTSUPP;
+		break;
+
 	/*
 	 * Ship a packet out.  The appropriate raw output
 	 * routine handles any massaging necessary.
 	 */
 	case PRU_SEND:
-		if (nam) {
-			if (rp->rcb_faddr) {
-				error = EISCONN;
-				break;
-			}
-			rp->rcb_faddr = mtod(nam, struct sockaddr *);
-		} else if (rp->rcb_faddr == 0) {
-			error = ENOTCONN;
+		if (control && control->m_len) {
+			m_freem(control);
+			m_freem(m);
+			error = EINVAL;
 			break;
 		}
+		if (nam) {
+			if ((so->so_state & SS_ISCONNECTED) != 0) {
+				error = EISCONN;
+				goto die;
+			}
+			error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
+			    (struct mbuf *)0, nam, (struct mbuf *)0, p);
+			if (error) {
+			die:
+				m_freem(m);
+				break;
+			}
+		} else {
+			if ((so->so_state & SS_ISCONNECTED) == 0) {
+				error = ENOTCONN;
+				goto die;
+			}
+		}
 		error = (*so->so_proto->pr_output)(m, so);
-		m = NULL;
 		if (nam)
-			rp->rcb_faddr = 0;
-		break;
-
-	case PRU_ABORT:
-		raw_disconnect(rp);
-		sofree(so);
-		soisdisconnected(so);
+			raw_disconnect(rp);
 		break;
 
 	case PRU_SENSE:
@@ -285,12 +297,12 @@ raw_usrreq(so, req, m, nam, control)
 	 * Not supported.
 	 */
 	case PRU_RCVOOB:
-	case PRU_RCVD:
-		return(EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		break;
 
-	case PRU_LISTEN:
-	case PRU_ACCEPT:
 	case PRU_SENDOOB:
+		m_freem(control);
+		m_freem(m);
 		error = EOPNOTSUPP;
 		break;
 
@@ -299,9 +311,7 @@ raw_usrreq(so, req, m, nam, control)
 			error = EINVAL;
 			break;
 		}
-		len = rp->rcb_laddr->sa_len;
-		bcopy((caddr_t)rp->rcb_laddr, mtod(nam, caddr_t), (unsigned)len);
-		nam->m_len = len;
+		raw_setsockaddr(rp, nam);
 		break;
 
 	case PRU_PEERADDR:
@@ -309,16 +319,14 @@ raw_usrreq(so, req, m, nam, control)
 			error = ENOTCONN;
 			break;
 		}
-		len = rp->rcb_faddr->sa_len;
-		bcopy((caddr_t)rp->rcb_faddr, mtod(nam, caddr_t), (unsigned)len);
-		nam->m_len = len;
+		raw_setpeeraddr(rp, nam);
 		break;
 
 	default:
 		panic("raw_usrreq");
 	}
+
 release:
-	if (m != NULL)
-		m_freem(m);
+	splx(s);
 	return (error);
 }
