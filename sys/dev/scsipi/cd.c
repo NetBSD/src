@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.200 2004/02/22 00:26:43 enami Exp $	*/
+/*	$NetBSD: cd.c,v 1.201 2004/04/24 09:26:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.200 2004/02/22 00:26:43 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.201 2004/04/24 09:26:14 pk Exp $");
 
 #include "rnd.h"
 
@@ -2268,17 +2268,29 @@ cd_set_pa_immed(cd, flags)
 	} data;
 	int error;
 	uint8_t oflags;
-	int big;
+	int big, byte2;
 	struct cd_audio_page *page;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
-	    AUDIO_PAGE, flags, &big)) != 0)
+	byte2 = SMS_DBD;
+try_again:
+	if ((error = cd_mode_sense(cd, byte2, &data, sizeof(data.page),
+	    AUDIO_PAGE, flags, &big)) != 0) {
+		if (byte2 == SMS_DBD) {
+			/* Device may not understand DBD; retry without */
+			byte2 = 0;
+			goto try_again;
+		}
 		return (error);
+	}
 
 	if (big)
-		page = (void *)(&data.header.big + 1);
+		page = (void *)((u_long)&data.header.big +
+				sizeof data.header.big +
+				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)(&data.header.small + 1);
+		page = (void *)((u_long)&data.header.small +
+				sizeof data.header.small +
+				data.header.small.blk_desc_len);
 
 	oflags = page->flags;
 	page->flags &= ~CD_PA_SOTC;
@@ -2305,17 +2317,29 @@ cd_setchan(cd, p0, p1, p2, p3, flags)
 		struct cd_audio_page page;
 	} data;
 	int error;
-	int big;
+	int big, byte2;
 	struct cd_audio_page *page;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
-	    AUDIO_PAGE, flags, &big)) != 0)
+	byte2 = SMS_DBD;
+try_again:
+	if ((error = cd_mode_sense(cd, byte2, &data, sizeof(data.page),
+	    AUDIO_PAGE, flags, &big)) != 0) {
+		if (byte2 == SMS_DBD) {
+			/* Device may not understand DBD; retry without */
+			byte2 = 0;
+			goto try_again;
+		}
 		return (error);
+	}
 
 	if (big)
-		page = (void *)(&data.header.big + 1);
+		page = (void *)((u_long)&data.header.big +
+				sizeof data.header.big +
+				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)(&data.header.small + 1);
+		page = (void *)((u_long)&data.header.small +
+				sizeof data.header.small +
+				data.header.small.blk_desc_len);
 
 	page->port[0].channels = p0;
 	page->port[1].channels = p1;
@@ -2341,17 +2365,29 @@ cd_getvol(cd, arg, flags)
 		struct cd_audio_page page;
 	} data;
 	int error;
-	int big;
+	int big, byte2;
 	struct cd_audio_page *page;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
-	    AUDIO_PAGE, flags, &big)) != 0)
+	byte2 = SMS_DBD;
+try_again:
+	if ((error = cd_mode_sense(cd, byte2, &data, sizeof(data.page),
+	    AUDIO_PAGE, flags, &big)) != 0) {
+		if (byte2 == SMS_DBD) {
+			/* Device may not understand DBD; retry without */
+			byte2 = 0;
+			goto try_again;
+		}
 		return (error);
+	}
 
 	if (big)
-		page = (void *)(&data.header.big + 1);
+		page = (void *)((u_long)&data.header.big +
+				sizeof data.header.big +
+				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)(&data.header.small + 1);
+		page = (void *)((u_long)&data.header.small +
+				sizeof data.header.small +
+				data.header.small.blk_desc_len);
 
 	arg->vol[0] = page->port[0].volume;
 	arg->vol[1] = page->port[1].volume;
@@ -2375,22 +2411,38 @@ cd_setvol(cd, arg, flags)
 		struct cd_audio_page page;
 	} data, mask;
 	int error;
-	int big;
+	int big, byte2;
 	struct cd_audio_page *page, *page2;
 
-	if ((error = cd_mode_sense(cd, SMS_DBD, &data, sizeof(data.page),
-	    AUDIO_PAGE, flags, &big)) != 0)
+	byte2 = SMS_DBD;
+try_again:
+	if ((error = cd_mode_sense(cd, byte2, &data, sizeof(data.page),
+	    AUDIO_PAGE, flags, &big)) != 0) {
+		if (byte2 == SMS_DBD) {
+			/* Device may not understand DBD; retry without */
+			byte2 = 0;
+			goto try_again;
+		}
 		return (error);
-	if ((error = cd_mode_sense(cd, SMS_DBD, &mask, sizeof(mask.page),
+	}
+	if ((error = cd_mode_sense(cd, byte2, &mask, sizeof(mask.page),
 	    AUDIO_PAGE|SMS_PAGE_CTRL_CHANGEABLE, flags, &big)) != 0)
 		return (error);
 
 	if (big) {
-		page = (void *)(&data.header.big + 1);
-		page2 = (void *)(&mask.header.big + 1);
+		page = (void *)((u_long)&data.header.big +
+				sizeof data.header.big +
+				_2btol(data.header.big.blk_desc_len));
+		page2 = (void *)((u_long)&mask.header.big +
+				sizeof mask.header.big +
+				_2btol(mask.header.big.blk_desc_len));
 	} else {
-		page = (void *)(&data.header.small + 1);
-		page2 = (void *)(&mask.header.small + 1);
+		page = (void *)((u_long)&data.header.small +
+				sizeof data.header.small +
+				data.header.small.blk_desc_len);
+		page2 = (void *)((u_long)&mask.header.small +
+				sizeof mask.header.small +
+				mask.header.small.blk_desc_len);
 	}
 
 	page->port[0].volume = arg->vol[0] & page2->port[0].volume;
