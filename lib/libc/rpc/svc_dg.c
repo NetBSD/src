@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.2 2000/06/04 04:35:13 thorpej Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.3 2000/06/22 11:06:23 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -192,9 +192,13 @@ again:
 		goto again;
 	if (rlen == -1 || (rlen < 4 * sizeof (u_int32_t)))
 		return (FALSE);
-	xprt->xp_rtaddr.buf = mem_alloc(alen);
+	if (xprt->xp_rtaddr.len < alen) {
+		if (xprt->xp_rtaddr.len != 0)
+			mem_free(xprt->xp_rtaddr.buf, xprt->xp_rtaddr.len);
+		xprt->xp_rtaddr.buf = mem_alloc(alen);
+		xprt->xp_rtaddr.len = alen;
+	}
 	memcpy(xprt->xp_rtaddr.buf, &ss, alen);
-	xprt->xp_rtaddr.len = alen;
 #ifdef PORTMAP
 	if (ss.ss_family == AF_INET) {
 		xprt->xp_raddr = *(struct sockaddr_in *)xprt->xp_rtaddr.buf;
