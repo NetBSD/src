@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.152 2001/06/26 19:14:25 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.153 2001/06/26 22:52:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -418,7 +418,7 @@ getnewvnode(tag, mp, vops, vpp)
 	struct freelst *listhd;
 	static int toggle;
 	struct vnode *vp;
-	int error = 0;
+	int error = 0, tryalloc;
 #ifdef DIAGNOSTIC
 	int s;
 #endif
@@ -453,26 +453,31 @@ getnewvnode(tag, mp, vops, vpp)
 	 * referencing buffers.
 	 */
 
+ try_again:
+	vp = NULL;
+
+	simple_lock(&vnode_free_list_slock);
+
 	toggle ^= 1;
 	if (numvnodes > 2 * desiredvnodes)
 		toggle = 0;
 
-	simple_lock(&vnode_free_list_slock);
-	if (numvnodes < desiredvnodes ||
+	tryalloc = numvnodes < desiredvnodes ||
 	    (TAILQ_FIRST(listhd = &vnode_free_list) == NULL &&
-	    (TAILQ_FIRST(listhd = &vnode_hold_list) == NULL || toggle))) {
+	     (TAILQ_FIRST(listhd = &vnode_hold_list) == NULL || toggle));
+
+	if (tryalloc &&
+	    (vp = pool_get(&vnode_pool, PR_NOWAIT)) != NULL) {
 		simple_unlock(&vnode_free_list_slock);
-		vp = pool_get(&vnode_pool, PR_WAITOK);
 		memset(vp, 0, sizeof(*vp));
-		simple_lock_init(&vp->v_interlock);
+		simple_lock_init(&vp->v_interlock);  
 		numvnodes++;
 	} else {
 		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
 		    vp = TAILQ_NEXT(vp, v_freelist)) {
 			if (simple_lock_try(&vp->v_interlock)) {
-				if ((vp->v_flag & VLAYER) == 0) {
+				if ((vp->v_flag & VLAYER) == 0)
 					break;
-				}
 				if (VOP_ISLOCKED(vp) == 0)
 					break;
 				else
@@ -488,6 +493,12 @@ getnewvnode(tag, mp, vops, vpp)
 			simple_unlock(&vnode_free_list_slock);
 			if (mp && error != EDEADLK)
 				vfs_unbusy(mp);
+			if (tryalloc) {
+				printf("WARNING: unable to allocate new "
+				    "vnode, retrying...\n");
+				(void) tsleep(&lbolt, PRIBIO, "newvn", hz);
+				goto try_again;
+			}
 			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
 			*vpp = 0;
 			return (ENFILE);
