@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: e_acosf.c,v 1.4 1995/05/10 20:44:41 jtc Exp $";
+static char rcsid[] = "$NetBSD: e_acosf.c,v 1.5 1995/05/12 04:57:16 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -68,14 +68,14 @@ qS4 =  7.7038154006e-02; /* 0x3d9dc62e */
 	    z = (one+x)*(float)0.5;
 	    p = z*(pS0+z*(pS1+z*(pS2+z*(pS3+z*(pS4+z*pS5)))));
 	    q = one+z*(qS1+z*(qS2+z*(qS3+z*qS4)));
-	    s = sqrtf(z);
+	    s = __ieee754_sqrtf(z);
 	    r = p/q;
 	    w = r*s-pio2_lo;
 	    return pi - (float)2.0*(s+w);
 	} else {			/* x > 0.5 */
 	    int32_t idf;
 	    z = (one-x)*(float)0.5;
-	    s = sqrtf(z);
+	    s = __ieee754_sqrtf(z);
 	    df = s;
 	    GET_FLOAT_WORD(idf,df);
 	    SET_FLOAT_WORD(df,idf&0xfffff000);

@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: s_asinhf.c,v 1.4 1995/05/10 20:46:44 jtc Exp $";
+static char rcsid[] = "$NetBSD: s_asinhf.c,v 1.5 1995/05/12 04:57:39 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -48,10 +48,10 @@ huge=  1.0000000000e+30;
 	    w = __ieee754_logf(fabsf(x))+ln2;
 	} else if (ix>0x40000000) {	/* 2**28 > |x| > 2.0 */
 	    t = fabsf(x);
-	    w = __ieee754_logf((float)2.0*t+one/(sqrtf(x*x+one)+t));
+	    w = __ieee754_logf((float)2.0*t+one/(__ieee754_sqrtf(x*x+one)+t));
 	} else {		/* 2.0 > |x| > 2**-28 */
 	    t = x*x;
-	    w =log1pf(fabsf(x)+t/(one+sqrtf(one+t)));
+	    w =log1pf(fabsf(x)+t/(one+__ieee754_sqrtf(one+t)));
 	}
 	if(hx>0) return w; else return -w;
 }
