@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.5 1998/01/19 03:47:43 sakamoto Exp $
+#	$NetBSD: files.bebox,v 1.6 1998/02/03 03:59:54 sakamoto Exp $
 #
 # First try for be specific configuration info
 #
@@ -33,7 +33,7 @@ file	arch/bebox/bebox/trap.c
 file	arch/bebox/bebox/vm_machdep.c
 file	arch/bebox/bebox/bus_dma.c
 file	dev/cons.c
-file    arch/bebox/bebox/setjmp.S                   ddb
+file    arch/bebox/bebox/setjmp.s                   ddb
 file    arch/bebox/bebox/db_memrw.c                 ddb
 file    arch/bebox/bebox/db_disasm.c                ddb
 file    arch/bebox/bebox/db_interface.c             ddb
@@ -53,7 +53,7 @@ major	{cd = 6}
 # Machine-independent ATA drivers
 #
 
-# include "dev/ata/files.ata"
+include "dev/ata/files.ata"
 major	{wd = 0}
 
 #
@@ -86,7 +86,7 @@ file	arch/bebox/pci/pcib.c		pcib
 # ISA and mixed ISA+PCI drivers
 #
 
-include "arch/bebox/conf/files.isa"
+include "dev/isa/files.isa"
 major	{mcd = 7}
 #major	{scd = 15}
 major	{wt = 3}

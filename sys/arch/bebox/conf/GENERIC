@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.5 1998/01/19 03:58:35 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.6 1998/02/03 03:59:53 sakamoto Exp $
 #
 # First try for BEBOX config file
 #
@@ -52,7 +52,7 @@ options 	FIFO
 
 options 	INET
 
-options		NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
+options		NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 
 config		netbsd	root on ? type ?
 
@@ -111,11 +111,11 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #fd0	at fdc? drive 1
 #fd*	at fdc? drive ?
 
-#wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-#wd*	at wdc? drive ?
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+wd*	at wdc? drive ?
 
-ed0	at isa? port 0x300 iomem 0xd0000 irq 5	# WD/SMC, 3C503, and NE[12]000
-#ipkdbif0 at ed?
+ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
+#ipkdbif0 at ne?
 
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 spkr0	at pckbd? port 0x61
