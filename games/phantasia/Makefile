@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/03/24 03:58:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1996/06/01 19:47:19 jtk Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
@@ -16,7 +16,7 @@ setup: phantglobs.o setup.o monsters.asc ${LIBM}
 
 beforeinstall: 
 	./setup -m ${.CURDIR}/monsters.asc
-	chown games.bin ${DESTDIR}/var/games/phantasia/*
+	chown games:bin ${DESTDIR}/var/games/phantasia/*
 
 # Make Phantasia map.  Change the map commands reflect your installation.
 # PLOTDEVICE is used for plotting the map.  Change as appropriate.
