@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.7 2000/06/26 02:04:10 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.8 2000/08/07 01:08:45 sommerfeld Exp $	*/
 
 /*
  *
@@ -70,10 +70,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/user.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm.h>
 

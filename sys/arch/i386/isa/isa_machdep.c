@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.45.2.2 2000/06/25 19:37:13 sommerfeld Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.45.2.3 2000/08/07 01:09:00 sommerfeld Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -96,7 +96,7 @@
 #include <dev/isa/isavar.h>
 #include <i386/isa/icu.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "ioapic.h"
 

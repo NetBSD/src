@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35.2.2 2000/06/25 19:37:14 sommerfeld Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.35.2.3 2000/08/07 01:09:05 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -87,8 +87,7 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #define _I386_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -490,7 +489,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 		goto bad;
 	}
 
-	if (pin > 4) {
+	if (pin > PCI_INTERRUPT_PIN_MAX) {
 		printf("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
@@ -509,7 +508,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 	 * that the BIOS did its job, we also recognize that as meaning that
 	 * the BIOS has not configured the device.
 	 */
-	if (line == 0 || line == 255) {
+	if (line == 0 || line == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	} else {

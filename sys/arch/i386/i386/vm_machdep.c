@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.4 2000/06/26 02:04:12 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.5 2000/08/07 01:08:53 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -57,9 +57,6 @@
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <uvm/uvm_extern.h>
 

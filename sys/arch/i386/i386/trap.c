@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134.2.2 2000/06/25 19:37:07 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.134.2.3 2000/08/07 01:08:50 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,8 +101,6 @@
 #include <sys/ktrace.h>
 #endif
 #include <sys/syscall.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

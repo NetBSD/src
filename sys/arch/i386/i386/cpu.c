@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.8 2000/08/07 01:08:33 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -83,10 +83,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
- 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>

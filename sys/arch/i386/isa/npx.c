@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.4 2000/06/26 02:04:15 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.5 2000/08/07 01:09:02 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -52,8 +52,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/vmmeter.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

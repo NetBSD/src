@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.300.2.6 2000/06/25 19:36:55 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.300.2.7 2000/08/07 01:08:27 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.6 $"
+#ident 		"GENERIC-$Revision: 1.300.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -62,7 +62,7 @@ options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
@@ -82,8 +82,7 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-
-options 	COMPAT_AOUT	# binary compat for NetBSD a.out binaries
+#options        COMPAT_PECOFF   # kernel support to run Win32 apps
 
 # File systems
 file-system 	FFS		# UFS
@@ -116,6 +115,7 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -123,7 +123,7 @@ options 	INET6		# IPV6
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
@@ -146,6 +146,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fullsome Pnp BIOS debugging messages
+
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
@@ -220,7 +221,7 @@ cpu* at mainbus? apid ?
 #fdc*		at pnpbios? index ?	# floppy controller
 
 # IDE controller on Toshiba Portege 3000 series (crippled PCI device)
-#pciide* at pnpbios? index ?
+#pciide*	at pnpbios? index ?
 
 # PCI bus support
 pci*	at mainbus? bus ?
@@ -231,7 +232,7 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
-#options 	PCIBIOS_IRQS_HINT="0x0a00" # PCI interrupts hint. IRQ 9 or 11
+#options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 #options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 #options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
@@ -335,7 +336,7 @@ pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
 
 # CardBus serial interfaces
-#com*	at cardbus? function ?		# Modems and serial cards
+#com*	at cardbus? dev ? function ?	# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -357,6 +358,7 @@ com2	at isa? port 0x3e8 irq 5
 #addcom0 at isa? port 0x108 irq 5	# Addonics FlexPort 8S
 #com*	at addcom? slave ?
 
+
 # Parallel Printer Interfaces
 
 # PCI parallel printer interfaces
@@ -367,12 +369,15 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
+# Hardware monitors 
+
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
 
 # VIA VT82C686A hardware monitor
 #viapm*	at pci? dev ? function ?
 #viaenv* at viapm?
+
 
 # SCSI Controllers and Devices
 
@@ -454,6 +459,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 cac*	at pci? dev ? function ?	# Compaq array controller
 ca*	at cac? unit ?			# Compaq array disk device
+
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -620,6 +626,7 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+
 # USB Controller and Devices
 
 # PCI USB controllers
@@ -685,6 +692,7 @@ ucom*	at uvisor?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
 
 # Audio Devices
 
@@ -754,6 +762,7 @@ mpu*	at sb?
 mpu*	at ym?
 
 # MIDI support
+midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
 #midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
@@ -764,10 +773,12 @@ midi*	at sb?			# SB1 MIDI port
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
 
+
 # TV cards
 
 # Brooktree 848/849/878/879 based TV cards
 bktr* at pci? dev ? function ?
+
 
 # Mice
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.5 2000/06/26 02:04:08 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.6 2000/08/07 01:08:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -117,8 +117,7 @@
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/sysctl.h>
 
@@ -277,9 +276,8 @@ cpu_startup()
 
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
-	printf(version);
+	printf("%s", version);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
-
 	printf("total memory = %s\n", pbuf);
 
 	/*
