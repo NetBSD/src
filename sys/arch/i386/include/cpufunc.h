@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.25 2003/05/08 10:27:43 fvdl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.26 2003/06/26 16:45:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ x86_pause(void)
 
 #ifdef _KERNEL
 
-extern int cpu_feature;
+extern unsigned int cpu_feature;
 
 static __inline void 
 invlpg(u_int addr)
