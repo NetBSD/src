@@ -14,6 +14,7 @@
 03/01   NetBSD 1.6.2 released, 2004
 03/06   NetBSD/sbmips port started, 2002
 03/07   NetBSD/evbmips port started, 2002
+03/08   pkgsrc/Solaris support added, 1999
 03/09   NetBSD 1.3.1 released, 1998
 03/11   NetBSD/xen port started, 2004
 03/11	pkgsrc/Interix support added, 2004
@@ -44,6 +45,7 @@
 06/14   NetBSD/sgimips port started, 2000
 06/19   NetBSD/x86_64 port started, 2001
 06/20   NetBSD/sparc64 port started, 1998
+06/23   pkgsrc/Linux support added, 1999
 06/25   NetBSD/sun3 port started, 1993
 07/05   NetBSD/evbsh5 port started, 2002
 07/11   NetBSD 1.5.1 released, 2001
@@ -51,6 +53,7 @@
 07/25   NetBSD/mvme68k port started, 1995
 08/02   NetBSD/vax port started, 1994
 08/12   NetBSD/mipsco port started, 2000
+08/20   pkgsrc forked from FreeBSD Ports, 1997
 08/23   NetBSD 0.9 released, 1993
 08/26   NetBSD 1.4.1 released, 1999
 09/02   NetBSD/amiga port started, 1993
@@ -67,9 +70,15 @@
 10/14   NetBSD/bebox port started, 1997
 10/16   NetBSD/playstation2 port started, 2001
 10/26   NetBSD 1.0 released, 1994
+10/30   pkgsrc/Darwin support added, 2001
+11/17   pkgsrc/FreeBSD support added, 2002
 11/18   NetBSD/acorn32 port started, 2001
 11/25   NetBSD 1.4.3 released, 2000
 11/26   NetBSD 1.1 released, 1995
+11/30   pkgsrc/OpenBSD support added, 2002
+12/02   pkgsrc/IRIX support added, 2002
+12/03   pkgsrc/AIX support added, 2003
+12/03   pkgsrc/BSDI support added, 2003
 12/06   NetBSD 1.5 released, 2000
 12/09   NetBSD/news68k port started, 1999
 12/09   NetBSD/evbppc port started, 2002
