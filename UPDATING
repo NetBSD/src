@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.37 2001/09/29 21:22:49 kristerw Exp $
+$NetBSD: UPDATING,v 1.38 2001/09/30 20:09:11 tron Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -10,7 +10,7 @@ Recent changes:
 
 20010922:
 	The new toolchain is enabled on i386.  This new build method
-	is intended to make all the ugrade issues elsewhere in UPDATING
+	is intended to make all the upgrade issues elsewhere in UPDATING
 	obsolete (stay tuned...).
 
 	i386 platform builds must now set TOOLDIR in mk.conf or the
