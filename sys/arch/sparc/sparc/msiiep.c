@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.23 2004/08/30 15:05:18 drochner Exp $ */
+/*	$NetBSD: msiiep.c,v 1.23.6.1 2005/02/12 15:16:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.23 2004/08/30 15:05:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.23.6.1 2005/02/12 15:16:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -637,7 +637,7 @@ mspcic_dmamem_map(tag, segs, nsegs, size, kvap, flags)
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 	if (va == 0)
 		return (ENOMEM);
 

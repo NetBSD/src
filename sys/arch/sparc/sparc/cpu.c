@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.186 2004/05/07 14:59:26 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.186.6.1 2005/02/12 15:16:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.186 2004/05/07 14:59:26 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.186.6.1 2005/02/12 15:16:47 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -183,7 +183,10 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 	sz = (sz + PAGE_SIZE - 1) & -PAGE_SIZE;
 	esz = sz + align - PAGE_SIZE;
 
-	if ((sva = uvm_km_valloc(kernel_map, esz)) == 0)
+	sva = vm_map_min(kernel_map);
+	if (uvm_map(kernel_map, &sva, esz, NULL, UVM_UNKNOWN_OFFSET,
+	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    UVM_ADV_RANDOM, UVM_FLAG_NOWAIT)))
 		panic("alloc_cpuinfo_global_va: no virtual space");
 
 	va = sva + (((CPUINFO_VA & (align - 1)) + align - sva) & (align - 1));
@@ -237,7 +240,8 @@ alloc_cpuinfo()
 	cpi->eintstack = cpi->idle_u = (void *)((vaddr_t)cpi + sz - USPACE);
 
 	/* Allocate virtual space for pmap page_copy/page_zero */
-	if ((va = uvm_km_valloc(kernel_map, 2*PAGE_SIZE)) == 0)
+	va = uvm_km_alloc(kernel_map, 2*PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	if (va == 0)
 		panic("alloc_cpuinfo: no virtual space");
 
 	cpi->vpage[0] = (caddr_t)(va + 0);
