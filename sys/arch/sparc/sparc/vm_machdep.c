@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40 1998/09/09 11:17:31 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41 1998/09/30 18:38:57 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -201,12 +201,12 @@ vunmapbuf(bp, len)
  */
 void
 cpu_fork(p1, p2)
-	register struct proc *p1, *p2;
+	struct proc *p1, *p2;
 {
-	register struct pcb *opcb = &p1->p_addr->u_pcb;
-	register struct pcb *npcb = &p2->p_addr->u_pcb;
-	register struct trapframe *tf2;
-	register struct rwindow *rp;
+	struct pcb *opcb = &p1->p_addr->u_pcb;
+	struct pcb *npcb = &p2->p_addr->u_pcb;
+	struct trapframe *tf2;
+	struct rwindow *rp;
 
 	/*
 	 * Save all user registers to p1's stack or, in the case of
@@ -223,14 +223,18 @@ cpu_fork(p1, p2)
 	opcb->pcb_psr = getpsr();
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
 	if (p1->p_md.md_fpstate) {
-		if (p1 == fpproc)
+		if (p1 == cpuinfo.fpproc)
 			savefpstate(p1->p_md.md_fpstate);
+		else if (p1->p_md.md_fpumid != -1)
+			panic("FPU on module %d; fix this", p1->p_md.md_fpumid);
 		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate),
 		    M_SUBPROC, M_WAITOK);
 		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
 		    sizeof(struct fpstate));
 	} else
 		p2->p_md.md_fpstate = NULL;
+
+	p2->p_md.md_fpumid = -1;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
@@ -322,12 +326,12 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	register struct fpstate *fs;
+	struct fpstate *fs;
 
 	if ((fs = p->p_md.md_fpstate) != NULL) {
-		if (p == fpproc) {
+		if (p == cpuinfo.fpproc) {
 			savefpstate(fs);
-			fpproc = NULL;
+			cpuinfo.fpproc = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}
@@ -357,7 +361,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 	md_core.md_tf = *p->p_md.md_tf;
 	if (p->p_md.md_fpstate) {
-		if (p == fpproc)
+		if (p == cpuinfo.fpproc)
 			savefpstate(p->p_md.md_fpstate);
 		md_core.md_fpstate = *p->p_md.md_fpstate;
 	} else
