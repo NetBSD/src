@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.171 2003/01/23 11:50:50 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.172 2003/01/23 14:54:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -645,17 +645,21 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	int	arg0, arg1, arg2, arg3;
 	u_int	cpuset;
 {
-	int s, n, i, done;
+	int s, n, i, done, callself, mybit;
 	volatile struct xpmsg_func *p;
 
 	/* XXX - note p->retval is probably no longer useful */
+
+	mybit = (1 << cpuinfo.ci_cpuid);
+	callself = func && (cpuset & mybit) != 0;
+	cpuset &= ~mybit;
 
 	/*
 	 * If no cpus are configured yet, just call ourselves.
 	 */
 	if (cpus == NULL) {
 		p = &cpuinfo.msg.u.xpmsg_func;
-		if (func && (cpuset & (1 << cpuinfo.ci_cpuid)) != 0)
+		if (callself)
 			p->retval = (*func)(arg0, arg1, arg2, arg3); 
 		return;
 	}
@@ -681,10 +685,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
 
-		if (CPU_NOTREADY(cpi))
-			continue;
-
-		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
+		if (cpi == NULL || (cpuset & (1 << cpi->ci_cpuid)) == 0)
 			continue;
 
 		cpi->msg.tag = XPMSG_FUNC;
@@ -702,7 +703,7 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	 * Second, call ourselves.
 	 */
 	p = &cpuinfo.msg.u.xpmsg_func;
-	if (func && (cpuset & (1 << cpuinfo.ci_cpuid)) != 0)
+	if (callself)
 		p->retval = (*func)(arg0, arg1, arg2, arg3); 
 
 	/*
@@ -716,34 +717,24 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 		if (--i < 0) {
 			printf_nolog("xcall(cpu%d,%p): couldn't ping cpus:",
 			    cpu_number(), func);
-			break;
 		}
 
 		done = 1;
 		for (n = 0; n < ncpu; n++) {
 			struct cpu_info *cpi = cpus[n];
 
-			if (CPU_NOTREADY(cpi))
-				continue;
-			if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
+			if (cpi == NULL || (cpuset & (1 << cpi->ci_cpuid)) == 0)
 				continue;
 
 			if ((cpi->flags & CPUFLG_GOTMSG) == 0) {
-				done = 0;
-				break;
+				if (i < 0) {
+					printf_nolog(" cpu%d", cpi->ci_cpuid);
+				} else {
+					done = 0;
+					break;
+				}
 			}
 		}
-	}
-	for (n = 0; n < ncpu; n++) {
-		struct cpu_info *cpi = cpus[n];
-
-		if (CPU_NOTREADY(cpi))
-			continue;
-		if ((cpuset & (1 << cpi->ci_cpuid)) == 0)
-			continue;
-
-		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
-			printf_nolog(" cpu%d", cpi->ci_cpuid);
 	}
 	if (!done)
 		printf_nolog("\n");
