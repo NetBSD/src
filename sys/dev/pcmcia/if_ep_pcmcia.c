@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.11 1998/07/19 17:28:16 christos Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.12 1998/07/20 02:17:17 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -267,10 +267,10 @@ ep_pcmcia_attach(parent, self, aux)
 
 	switch (pa->product) {
 	case PCMCIA_PRODUCT_3COM_3C589:
-		model = PCMCIA_STR_3COM_3C589:
+		model = PCMCIA_STR_3COM_3C589;
 		break;
 	case PCMCIA_PRODUCT_3COM_3C562:
-		model = PCMCIA_STR_3COM_3C562:
+		model = PCMCIA_STR_3COM_3C562;
 		break;
 	default:
 		model = "3Com Ethernet, model unknown";
