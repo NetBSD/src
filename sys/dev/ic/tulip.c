@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.41 2000/01/28 23:23:49 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.42 2000/02/01 22:54:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -227,8 +227,7 @@ tlp_attach(sc, enaddr)
 	const u_int8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i, rseg, error;
-	bus_dma_segment_t seg;
+	int i, error;
 
 	/*
 	 * NOTE: WE EXPECT THE FRONT-END TO INITIALIZE sc_regshift!
@@ -369,14 +368,14 @@ tlp_attach(sc, enaddr)
 	 * DMA map for it.
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct tulip_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
-	    0)) != 0) {
+	    sizeof(struct tulip_control_data), PAGE_SIZE, 0, &sc->sc_cdseg,
+	    1, &sc->sc_cdnseg, 0)) != 0) {
 		printf("%s: unable to allocate control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_0;
 	}
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg,
 	    sizeof(struct tulip_control_data), (caddr_t *)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
@@ -506,9 +505,101 @@ tlp_attach(sc, enaddr)
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
 	    sizeof(struct tulip_control_data));
  fail_1:
-	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
  fail_0:
 	return;
+}
+
+/*
+ * tlp_activate:
+ *
+ *	Handle device activation/deactivation requests.
+ */
+int
+tlp_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct tulip_softc *sc = (void *) self;
+	int s, error = 0;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_flags & TULIPF_HAS_MII)
+			mii_phy_activate(&sc->sc_mii, act, MII_PHY_ANY,
+			    MII_OFFSET_ANY);
+		if_deactivate(&sc->sc_ethercom.ec_if);
+		break;
+	}
+	splx(s);
+
+	return (error);
+}
+
+/*
+ * tlp_detach:
+ *
+ *	Detach a Tulip interface.
+ */
+int
+tlp_detach(sc)
+	struct tulip_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct tulip_rxsoft *rxs;
+	struct tulip_txsoft *txs;
+	int i;
+
+	/* Unhook our tick handler. */
+	if (sc->sc_tick)
+		untimeout(sc->sc_tick, sc);
+
+	if (sc->sc_flags & TULIPF_HAS_MII) {
+		/* Detach all PHYs */
+		mii_phy_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	}
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	for (i = 0; i < TULIP_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+			m_freem(rxs->rxs_mbuf);
+			rxs->rxs_mbuf = NULL;
+		}
+		bus_dmamap_destroy(sc->sc_dmat, rxs->rxs_dmamap);
+	}
+	for (i = 0; i < TULIP_TXQUEUELEN; i++) {
+		txs = &sc->sc_txsoft[i];
+		if (txs->txs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+		}
+		bus_dmamap_destroy(sc->sc_dmat, txs->txs_dmamap);
+	}
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	    sizeof(struct tulip_control_data));
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
+
+	shutdownhook_disestablish(sc->sc_sdhook);
+
+	return (0);
 }
 
 /*
@@ -952,7 +1043,8 @@ tlp_intr(arg)
 	 * If the interface isn't running, the interrupt couldn't
 	 * possibly have come from us.
 	 */
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
+	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (0);
 
 	for (;;) {
@@ -2699,6 +2791,9 @@ tlp_mii_tick(arg)
 {
 	struct tulip_softc *sc = arg;
 	int s;
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
 
 	s = splnet();
 	mii_tick(&sc->sc_mii);
@@ -4771,6 +4866,9 @@ tlp_pnic_nway_tick(arg)
 {
 	struct tulip_softc *sc = arg;
 	int s;
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
 
 	s = splnet();
 	tlp_pnic_nway_service(sc, MII_TICK);

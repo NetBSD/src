@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.27 2000/01/28 23:23:50 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.28 2000/02/01 22:54:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -338,6 +338,8 @@ struct tulip_softc {
 
 	u_int32_t	sc_filtmode;	/* filter mode we're using */
 
+	bus_dma_segment_t sc_cdseg;	/* control data memory */
+	int		sc_cdnseg;	/* number of segments */
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
@@ -497,6 +499,8 @@ extern const struct tulip_mediasw tlp_pmac_mediasw;
 extern const struct tulip_mediasw tlp_al981_mediasw;
 
 void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));
+int	tlp_activate __P((struct device *, enum devact));
+int	tlp_detach __P((struct tulip_softc *));
 int	tlp_intr __P((void *));
 void	tlp_read_srom __P((struct tulip_softc *, int, int, u_int8_t *));
 int	tlp_srom_crcok __P((const u_int8_t *));
