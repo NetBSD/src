@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.15 2000/07/11 06:07:27 itohy Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.16 2000/07/28 16:35:11 thorpej Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -354,7 +354,7 @@ int skey_haskey(const char *username)
  * Returns the current sequence number and
  * seed for the passed user.
  */
-char *skey_keyinfo(const char *username)
+const char *skey_keyinfo(const char *username)
 {
 	int i;
 	static char str[SKEY_MAX_CHALLENGE];
