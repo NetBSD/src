@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.15 1997/02/24 16:03:05 gwr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.16 1997/05/19 04:01:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -296,7 +296,7 @@ zstty_attach(parent, self, aux)
 		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
 		/* Make sure zsparam will see changes. */
 		tp->t_ospeed = 0;
-		(void) zsparam(tp, &t);
+		(void)zsparam(tp, &t);
 	} else {
 		/* Not the console; may need reset. */
 		int reset, s;
@@ -506,7 +506,7 @@ zsclose(dev, flags, mode, p)
 	if (hup) {
 		zs_modem(zst, 0);
 		/* hold low for 1 second */
-		(void) tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
+		(void)tsleep((caddr_t)cs, TTIPRI, ttclos, hz);
 	}
 	if (cs->cs_creg[5] & ZSWR5_BREAK) {
 		zs_break(cs, 0);
