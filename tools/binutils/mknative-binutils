@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.1 2003/11/27 10:12:02 mrg Exp $
+#	$NetBSD: mknative-binutils,v 1.2 2003/11/27 10:52:53 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/binutils.
@@ -14,49 +14,50 @@ _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*= ,,'`
 
 . $_TOP/tools/gcc/mknative.common
 
-##### gnu/lib/libbfd #####
+##### gnu/usr.bin/binutils/libbfd #####
 
 get_libbfd () {
-	mkdir -p $_TOP/gnu/lib/libbfd/arch/$MACHINE_ARCH
+	mkdir -p $_TOP/gnu/usr.bin/binutils/libbfd/arch/$MACHINE_ARCH
 
 	{
 		getvars bfd/Makefile \
 			libbfd_la_DEPENDENCIES libbfd_la_OBJECTS DEFS \
 			INCLUDES TDEFAULTS
-	} | write_mk gnu/lib/libbfd/arch/$MACHINE_ARCH/defs.mk
+	} | write_mk gnu/usr.bin/binutils/libbfd/arch/$MACHINE_ARCH/defs.mk
 
-	write_c gnu/lib/libbfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
+	write_c gnu/usr.bin/binutils/libbfd/arch/$MACHINE_ARCH/bfd.h <$_TMPDIR/bfd/bfd.h
+	write_c gnu/usr.bin/binutils/libbfd/arch/$MACHINE_ARCH/bfdver.h <$_TMPDIR/bfd/bfdver.h
 
 	{
 		cat $_TMPDIR/bfd/config.h
-	} | write_c gnu/lib/libbfd/arch/$MACHINE_ARCH/config.h
+	} | write_c gnu/usr.bin/binutils/libbfd/arch/$MACHINE_ARCH/config.h
 }
 
-##### gnu/lib/libopcodes #####
+##### gnu/usr.bin/binutils/libopcodes #####
 
 get_libopcodes () {
-	mkdir -p $_TOP/gnu/lib/libopcodes/arch/$MACHINE_ARCH
+	mkdir -p $_TOP/gnu/usr.bin/binutils/libopcodes/arch/$MACHINE_ARCH
 
 	{
 		getvars opcodes/Makefile \
 			archdefs BFD_MACHINES libopcodes_la_SOURCES
-	} | write_mk gnu/lib/libopcodes/arch/$MACHINE_ARCH/defs.mk
+	} | write_mk gnu/usr.bin/binutils/libopcodes/arch/$MACHINE_ARCH/defs.mk
 
 	{
 		cat $_TMPDIR/opcodes/config.h
-	} | write_c gnu/lib/libopcodes/arch/$MACHINE_ARCH/config.h
+	} | write_c gnu/usr.bin/binutils/libopcodes/arch/$MACHINE_ARCH/config.h
 }
 
-##### gnu/lib/libiberty #####
+##### gnu/usr.bin/binutils/libiberty #####
 
 get_libiberty () {
-	mkdir -p $_TOP/gnu/lib/libiberty
+	mkdir -p $_TOP/gnu/usr.bin/binutils/libiberty
 
 	getvars libiberty/Makefile \
 		ALLOCA EXTRA_OFILES LIBOBJS REQUIRED_OFILES \
-		| write_mk gnu/lib/libiberty/defs.mk
+		| write_mk gnu/usr.bin/binutils/libiberty/defs.mk
 
-	write_c gnu/lib/libiberty/config.h \
+	write_c gnu/usr.bin/binutils/libiberty/config.h \
 		<$_TMPDIR/libiberty/config.h
 }
 
@@ -122,18 +123,11 @@ get_binutils () {
 ##### main #####
 
 case $1 in
-all)	# everything (uses "canadian cross" temp environment)
+all|binutils)	# everything (uses "canadian cross" temp environment)
 	get_binutils
 	get_libbfd
 	get_libopcodes
 	get_libiberty
-	exit 0
-	;;
-
-binutils)
-	get_binutils
-	get_libbfd
-	get_libopcodes
 	exit 0
 	;;
 
