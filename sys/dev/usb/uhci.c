@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.50 1999/09/13 19:18:17 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.51 1999/09/13 19:49:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -613,7 +613,9 @@ uhci_timo(addr)
 	reqh->status = USBD_NORMAL_COMPLETION;
 	s = splusb();
 	reqh->hcpriv = 0;
+	reqh->device->bus->intr_context++;
 	usb_transfer_complete(reqh);
+	reqh->device->bus->intr_context--;
 	splx(s);
 }
 
@@ -808,7 +810,7 @@ uhci_intr(arg)
 	else	/* nothing to acknowledge */
 		return (0);
 
-	sc->sc_bus.intr_context = 1;
+	sc->sc_bus.intr_context++;
 	sc->sc_bus.no_intrs++;
 
 	/*
@@ -827,7 +829,7 @@ uhci_intr(arg)
 
 	DPRINTFN(10, ("uhci_intr: exit\n"));
 
-	sc->sc_bus.intr_context = 0;
+	sc->sc_bus.intr_context--;
 
 	return (1);
 }
@@ -995,7 +997,10 @@ uhci_timeout(addr)
 	uhci_intr_info_t *ii = addr;
 
 	DPRINTF(("uhci_timeout: ii=%p\n", ii));
+
+	ii->reqh->device->bus->intr_context++;
 	uhci_abort_req(ii->reqh, USBD_TIMEOUT);
+	ii->reqh->device->bus->intr_context--;
 }
 
 /*

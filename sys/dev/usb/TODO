@@ -43,6 +43,8 @@ Stylistic changes:
 	declare all local definitions static
 	rename s/request/xfer/
 	use usb_ and usbd_ consistently
+	rename s/r/err/
+	use implicit test for no err
 	indent continuation lines according to KNF
 	rearrange the contents and names of some files (Nick)
 
