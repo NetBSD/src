@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.73 2000/07/16 08:11:34 itojun Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.74 2000/07/16 08:13:34 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.73 2000/07/16 08:11:34 itojun Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.74 2000/07/16 08:13:34 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -536,7 +536,6 @@ mntsrv(rqstp, transp)
 		   scan_tree(ep->ex_dirl, saddr) == 0))) {
 			if (sport >= IPPORT_RESERVED &&
 			    !(hostset & DP_NORESMNT)) {
-fprintf(stderr, "hostset=%x\n", hostset);
 				syslog(LOG_NOTICE,
 				    "Refused mount RPC from host %s port %d",
 				    numerichost, sport);
