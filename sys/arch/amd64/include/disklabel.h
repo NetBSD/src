@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 2003/08/04 10:09:10 dsl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -44,7 +44,7 @@
  * MAXPARTITIONS was increased.
  */
 /* Pull in MBR partition definitions. */
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #ifndef __ASSEMBLER__
 #include <sys/dkbad.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.3 2003/07/02 14:35:51 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.4 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 The NetBSD Foundation, Inc. 
@@ -50,13 +50,18 @@
  */
 
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #define BOOTADDR	0x7c00
 #define LOADADDR	0x0600		/* address were are linked to */
 
-#define TABENTRYSIZE	(PARTNAMESIZE + 1)
-#define NAMETABSIZE	(NMBRPART * TABENTRYSIZE)
+#define TABENTRYSIZE	(MBR_BS_PARTNAMESIZE + 1)
+#define NAMETABSIZE	(MBR_PART_COUNT * TABENTRYSIZE)
+
+/* Scan values for the various keys we use, as returned by the BIOS */
+#define	SCAN_ENTER	0x1c
+#define	SCAN_F1		0x3b
+#define	SCAN_1		0x2
 
 /*
  * Minimum and maximum drive number that is considered to be valid.
@@ -187,7 +192,7 @@ next_ptn:
 	push	%dx			/* save drive */
 	int	$0x13
 	jc	wait_key		/* abort menu on read fail */
-	cmpw	$MBR_MAGIC, LOADADDR + MBR_MAGICOFF
+	cmpw	$MBR_MAGIC, LOADADDR + MBR_MAGIC_OFFSET
 	movw	$nametab - LOADADDR + BOOTADDR, %bx
 	je	next_extended
 #endif
@@ -238,7 +243,7 @@ check_key:
 /*
  * Scan MBR for first active partition, and boot it.
  */
-	mov	$NMBRPART, %cx
+	mov	$MBR_PART_COUNT, %cx
 	mov	$parttab, %si
 1:
 	cmpb	$0x80, (%si)
@@ -356,7 +361,7 @@ err_msg:
 boot_si:
 	movl	8(%si), %ebp		/* get sector # */
 
-	testb	$BFL_READ_LBA, flags
+	testb	$MBR_BS_READ_LBA, flags
 	jnz	boot_lba		/* fdisk forced LBA read */
 
 	pop	%dx			/* collect saved drive... */
@@ -433,7 +438,7 @@ do_read:
 	movb	BOOTADDR, %al		/* first byte non-zero */
 	test	%al, %al
 	jz	1f
-	movw	BOOTADDR + MBR_MAGICOFF, %ax
+	movw	BOOTADDR + MBR_MAGIC_OFFSET, %ax
 1:	cmp	$MBR_MAGIC, %ax
 	set_err(ERR_NOOS)
 	jnz	err_msg
@@ -518,7 +523,7 @@ ERR_KEY:	.asciz	"bad key"
  * (Unfortunately I can't seem to get the value reported when it is -ve)
  */
 mbr_space	= defkey - .
-	. = start + MBR_BOOTSELOFF
+	. = start + MBR_BOOTSEL_OFFSET
 /*
  * Default action, as a keyvalue we'd normally read from the BIOS.
  */
@@ -527,7 +532,7 @@ defkey:
 #ifndef BOOTSEL_FLAGS
 #define	BOOTSEL_FLAGS	0
 #endif
-flags:	.byte	BFL_NEWMBR | BOOTSEL_FLAGS
+flags:	.byte	MBR_BS_NEWMBR | BOOTSEL_FLAGS
 /*
  * Timeout value. ~65536 ticks per hour, which is ~18.2 times per second.
  * 0xffff means never timeout.
@@ -538,16 +543,16 @@ timeout:
  * Space for name/select table and partition table.
  */
 nametab:
-	.fill	NMBRPART * (PARTNAMESIZE + 1), 0x01, 0x00
+	.fill	MBR_PART_COUNT * (MBR_BS_PARTNAMESIZE + 1), 0x01, 0x00
 
-	. = start + MBR_PARTOFF - 2
+	. = start + MBR_PART_OFFSET - 2
 	.word	MBR_MAGIC
 
-	. = start + MBR_PARTOFF
+	. = start + MBR_PART_OFFSET
 parttab:
 	.fill	0x40, 0x01, 0x00
 
-	. = start + MBR_MAGICOFF
+	. = start + MBR_MAGIC_OFFSET
 	.word	MBR_MAGIC
 
 /* zeroed data space */

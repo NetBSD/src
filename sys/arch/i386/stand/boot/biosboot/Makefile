@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 2003/04/16 22:36:15 dsl Exp $
+# $NetBSD: Makefile,v 1.2 2003/10/08 04:25:45 lukem Exp $
 
-PROG=biosboot
+PROG=	boot
 
 .include <../Makefile.boot>

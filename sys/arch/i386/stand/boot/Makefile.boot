@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.8 2003/08/30 20:38:58 fvdl Exp $
+# $NetBSD: Makefile.boot,v 1.9 2003/10/08 04:25:45 lukem Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -62,7 +62,7 @@ CPPFLAGS+= -DSUPPORT_SERIAL=boot_params.bp_consdev
 CPPFLAGS+= -DCONSPEED=boot_params.bp_conspeed
 
 CPPFLAGS+= -DSUPPORT_USTARFS
-#CPPFLAGS+= -DSUPPORT_DOSFS
+CPPFLAGS+= -DSUPPORT_DOSFS
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD

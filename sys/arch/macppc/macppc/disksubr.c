@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.30 2003/08/07 16:28:24 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.31 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2003/08/07 16:28:24 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2003/10/08 04:25:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.30 2003/08/07 16:28:24 agc Exp $");
 #include <sys/conf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 #include <sys/syslog.h>
 
 #include <machine/bswap.h>
@@ -438,10 +438,10 @@ read_dos_label(dev, strat, lp, osdep)
 		goto done;
 	}
 	/* XXX */
-	dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
+	dp = (struct mbr_partition *)(bp->b_data + MBR_PART_OFFSET);
 	bsdp = NULL;
-	for (i = 0; i < NMBRPART; i++, dp++) {
-		switch (dp->mbrp_typ) {
+	for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
+		switch (dp->mbrp_type) {
 		case MBR_PTYPE_NETBSD:
 			bsdp = dp;
 			break;
@@ -454,9 +454,9 @@ read_dos_label(dev, strat, lp, osdep)
 	}
 	if (!bsdp) {
 		/* generate fake disklabel */
-		dp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
-		for (i = 0; i < NMBRPART; i++, dp++) {
-			if (!dp->mbrp_typ)
+		dp = (struct mbr_partition *)(bp->b_data + MBR_PART_OFFSET);
+		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
+			if (!dp->mbrp_type)
 				continue;
 			slot = getFreeLabelEntry(lp);
 			if (slot < 0)
@@ -467,7 +467,7 @@ read_dos_label(dev, strat, lp, osdep)
 			lp->d_partitions[slot].p_offset = bswap32(dp->mbrp_start);
 			lp->d_partitions[slot].p_size = bswap32(dp->mbrp_size);
 
-			switch (dp->mbrp_typ) {
+			switch (dp->mbrp_type) {
 			case MBR_PTYPE_FAT12:
 			case MBR_PTYPE_FAT16S:
 			case MBR_PTYPE_FAT16B:
@@ -608,7 +608,7 @@ readdisklabel(dev, strat, lp, osdep)
 			/* it ignores labelsector/offset */
 			msg = read_mac_label(dev, strat, lp, osdep);
 			/* the disklabel is fictious */
-		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGICOFF))
+		} else if (bswap16(*(u_int16_t *)(bp->b_data + MBR_MAGIC_OFFSET))
 			   == MBR_MAGIC) {
 			/* read_dos_label figures out labelsector/offset */
 			msg = read_dos_label(dev, strat, lp, osdep);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.5 2002/05/04 20:47:48 kleink Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.6 2003/10/08 04:25:46 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
@@ -42,7 +42,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #include "byteorder.h"
 #include "magic.h"
@@ -51,8 +51,8 @@
 #define	MBR_PTYPE_PREP		0x41
 #endif
 
-#ifndef	MBR_FLAGS_ACTIVE
-#define	MBR_FLAGS_ACTIVE	0x80
+#ifndef	MBR_PFLAG_ACTIVE
+#define	MBR_PFLAG_ACTIVE	0x80
 #endif
 
 
@@ -71,7 +71,7 @@ main(argc, argv)
 	unsigned long length;
 	Elf32_Ehdr hdr;
 	Elf32_Phdr phdr;
-	struct mbr_partition *mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	struct mbr_partition *mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
 
 	switch (argc) { 
 	case 4:
@@ -152,14 +152,14 @@ main(argc, argv)
 	/*
 	 * Set magic number for msdos partition
 	 */
-	*(unsigned short *)&mbr[MBR_MAGICOFF] = sa_htole16(MBR_MAGIC);
+	*(unsigned short *)&mbr[MBR_MAGIC_OFFSET] = sa_htole16(MBR_MAGIC);
   
 	/*
 	 * Build a "PReP" partition table entry in the boot record
 	 *  - "PReP" may only look at the system_indicator
 	 */
-	mbrp->mbrp_flag = MBR_FLAGS_ACTIVE;
-	mbrp->mbrp_typ  = MBR_PTYPE_PREP;
+	mbrp->mbrp_flag = MBR_PFLAG_ACTIVE;
+	mbrp->mbrp_type  = MBR_PTYPE_PREP;
 
 	/*
 	 * The first block of the diskette is used by this "boot record" which

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.626 2003/10/03 18:46:22 wiz Exp $
+#	$NetBSD: mi,v 1.627 2003/10/08 04:25:43 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -741,7 +741,6 @@
 ./usr/include/sys/disk.h		comp-c-include
 ./usr/include/sys/disklabel.h		comp-c-include
 ./usr/include/sys/disklabel_acorn.h	comp-c-include
-./usr/include/sys/disklabel_mbr.h	comp-c-include
 ./usr/include/sys/dkbad.h		comp-c-include
 ./usr/include/sys/dkio.h		comp-c-include
 ./usr/include/sys/dkstat.h		comp-c-include

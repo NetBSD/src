@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.S,v 1.1 2003/04/16 22:17:44 dsl Exp $	*/
+/*	$NetBSD: bootxx.S,v 1.2 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 /*
  * Code linked to 0xa00 and copied to sectors 2+ of the netbsd boot

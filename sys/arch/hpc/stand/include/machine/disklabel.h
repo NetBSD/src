@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 2001/02/09 18:35:25 uch Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 2003/10/08 04:25:44 lukem Exp $	*/
 
 /* Windows CE architecture */
 
@@ -8,4 +8,4 @@
 #define	RAW_PART	3		/* raw partition: XX?d (XXX) */
 
 /* Pull in MBR partition definitions. */
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>

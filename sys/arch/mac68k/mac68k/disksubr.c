@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.47 2003/08/07 16:28:21 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -65,14 +65,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47 2003/08/07 16:28:21 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2003/10/08 04:25:45 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 #include <sys/syslog.h>
 
 #include <machine/bswap.h>
@@ -350,16 +350,16 @@ read_mbr_label(dlbuf, lp, match)
 	*match = 0;
 	msg = NULL;
 
-	if (MBR_MAGIC != bswap16(*(u_int16_t *)(dlbuf + MBR_MAGICOFF)))
+	if (MBR_MAGIC != bswap16(*(u_int16_t *)(dlbuf + MBR_MAGIC_OFFSET)))
 		return msg;
 
 	/* Found MBR magic number; set up disklabel */
 	*match = (-1);
-	mbr_lbl_off = MBR_BBSECTOR * lp->d_secsize + MBR_PARTOFF;
+	mbr_lbl_off = MBR_BBSECTOR * lp->d_secsize + MBR_PART_OFFSET;
 	
 	dp = (struct mbr_partition *)(dlbuf + mbr_lbl_off);
-	for (i = 0; i < NMBRPART; i++, dp++) {
-		if (dp->mbrp_typ == 0)
+	for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
+		if (dp->mbrp_type == 0)
 			continue;
 		
 		slot = getFreeLabelEntry(lp);
@@ -371,7 +371,7 @@ read_mbr_label(dlbuf, lp, match)
 		pp->p_size = bswap32(dp->mbrp_size);
 		
 		for (ip = fat_types; *ip != -1; ip++) {
-			if (dp->mbrp_typ == *ip) {
+			if (dp->mbrp_type == *ip) {
 				pp->p_fstype = FS_MSDOS;
 				break;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.118 2003/08/07 10:04:12 agc Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.119 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.118 2003/08/07 10:04:12 agc Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.119 2003/10/08 04:25:44 lukem Exp $");
 #endif
 #endif	/* not lint */
 
@@ -55,12 +55,7 @@ __RCSID("$NetBSD: disklabel.c,v 1.118 2003/08/07 10:04:12 agc Exp $");
 #define DKTYPENAMES
 #define FSTYPENAMES
 #include <sys/disklabel.h>
-#ifdef __alpha__
 #include <sys/bootblock.h>
-#endif
-#ifdef USE_MBR
-#include <sys/disklabel_mbr.h>
-#endif
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
@@ -638,10 +633,10 @@ static struct mbr_partition *
 readmbr(int f)
 {
 	struct mbr_partition *dp;
-	mbr_sector_t mbr;
+	struct mbr_sector mbr;
 	int part;
 	uint ext_base, next_ext, this_ext;
-	static mbr_partition_t netbsd_part;
+	static struct mbr_partition netbsd_part;
 
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
@@ -661,7 +656,7 @@ readmbr(int f)
 		}
 
 		/* Check if table is valid. */
-		if (mbr.mbr_signature != htole16(MBR_MAGIC)) {
+		if (mbr.mbr_magic != htole16(MBR_MAGIC)) {
 			warnx("Invalid signature in mbr record %d", next_ext);
 			return 0;
 		}
@@ -669,16 +664,16 @@ readmbr(int f)
 		dp = &mbr.mbr_parts[0];
 #if defined(_no_longer_needed) && !defined(__i386__) && !defined(__x86_64__)
 		/* avoid alignment error */
-		memcpy(mbr, dp, NMBRPART * sizeof(*dp));
+		memcpy(mbr, dp, MBR_PART_COUNT * sizeof(*dp));
 		dp = (struct mbr_partition *)mbr;
 #endif	/* ! __i386__ */
 		next_ext = 0;
 
 		/* Find NetBSD partition. */
-		for (part = 0; part < NMBRPART; dp++, part++) {
+		for (part = 0; part < MBR_PART_COUNT; dp++, part++) {
 			dp->mbrp_start = le32toh(dp->mbrp_start);
 			dp->mbrp_size = le32toh(dp->mbrp_size);
-			switch (dp->mbrp_typ) {
+			switch (dp->mbrp_type) {
 			case MBR_PTYPE_NETBSD:
 				netbsd_part = *dp;
 				break;
@@ -698,7 +693,7 @@ readmbr(int f)
 			}
 			break;
 		}
-		if (part < NMBRPART)
+		if (part < MBR_PART_COUNT)
 			/* We found a netbsd partition */
 			break;
 		if (next_ext == 0)
@@ -715,7 +710,7 @@ readmbr(int f)
 		}
 	}
 
-	if (netbsd_part.mbrp_typ == 0) {
+	if (netbsd_part.mbrp_type == 0) {
 		/*
 		 * Table doesn't contain a partition for us. Keep a flag
 		 * remembering us to warn before it is destroyed.

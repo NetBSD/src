@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.20 2003/02/24 23:23:14 dsl Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.21 2003/10/08 04:25:45 lukem Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -86,8 +86,8 @@ STACKOFF	=	0xfffc
 LOADSZ		=	PRIM_LOADSZ	# size of first loaded chunk
 
 SIGNATURE	=	0xaa55
-PARTSTART	=	MBR_PARTOFF	# starting address of partition table
-NUMPART		=	NMBRPART	# number of entries in partition table
+PARTSTART	=	MBR_PART_OFFSET	# starting address of partition table
+NUMPART		=	MBR_PART_COUNT	# number of entries in partition table
 PARTSZ		=	16		# sizeof(struct dos_partition)
 NETBSDPART	=	MBR_PTYPE_NETBSD
 #ifdef COMPAT_386BSD_MBRPART

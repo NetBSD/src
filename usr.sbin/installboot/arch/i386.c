@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.8 2003/10/06 05:24:54 lukem Exp $ */
+/* $NetBSD: i386.c,v 1.9 2003/10/08 04:25:46 lukem Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.8 2003/10/06 05:24:54 lukem Exp $");
+__RCSID("$NetBSD: i386.c,v 1.9 2003/10/08 04:25:46 lukem Exp $");
 #endif /* __RCSID && !__lint */
 
 #if HAVE_CONFIG_H
@@ -61,13 +61,13 @@ __RCSID("$NetBSD: i386.c,v 1.8 2003/10/06 05:24:54 lukem Exp $");
 int
 i386_setboot(ib_params *params)
 {
-	int		retval;
+	int		retval, i;
 	char		*bootstrapbuf;
 	uint		bootstrapsize;
 	ssize_t		rv;
 	uint32_t	magic;
-	struct i386_boot_params *bp;
-	int		i;
+	struct x86_boot_params	*bp;
+	struct mbr_sector	mbr;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -85,8 +85,29 @@ i386_setboot(ib_params *params)
 	if (params->s1stat.st_size > 8192) {
 		warnx("stage1 bootstrap `%s' is larger than 8192 bytes",
 			params->stage1);
-		return 0;
+		goto done;
 	}
+
+	/*
+	 * Read in the existing MBR.
+	 */
+	rv = pread(params->fsfd, &mbr, sizeof(mbr), MBR_BBSECTOR);
+	if (rv == -1) {
+		warn("Reading `%s'", params->filesystem);
+		goto done;
+	} else if (rv != sizeof(mbr)) {
+		warnx("Reading `%s': short read", params->filesystem);
+		goto done;
+	}
+	if (mbr.mbr_magic != le32toh(MBR_MAGIC)) {
+		if (params->flags & IB_VERBOSE) {
+			printf(
+		    "Ignoring MBR with invalid magic in sector 0 of `%s'\n",
+			    params->filesystem);
+		}
+		memset(&mbr, 0, sizeof(mbr));
+	}
+
 	/*
 	 * Allocate a buffer, with space to round up the input file
 	 * to the next block size boundary, and with space for the boot
@@ -101,14 +122,16 @@ i386_setboot(ib_params *params)
 	}
 	memset(bootstrapbuf, 0, bootstrapsize);
 
-	/* read the file into the buffer */
+	/*
+	 * Read the file into the buffer.
+	 */
 	rv = pread(params->s1fd, bootstrapbuf, params->s1stat.st_size, 0);
 	if (rv == -1) {
 		warn("Reading `%s'", params->stage1);
-		return 0;
+		goto done;
 	} else if (rv != params->s1stat.st_size) {
 		warnx("Reading `%s': short read", params->stage1);
-		return 0;
+		goto done;
 	}
 
 	magic = *(uint32_t *)(bootstrapbuf + 512 * 2 + 4);
@@ -118,7 +141,38 @@ i386_setboot(ib_params *params)
 		goto done;
 	}
 
-	/* Fill in any user-specified options */
+	/*
+	 * Ensure bootxx hasn't got code (i.e, non-zero bytes) in
+	 * the BIOS Parameter Block (BPB) or the partition table.
+	 */
+	for (i = 0; i < sizeof(mbr.mbr_bpb); i++) {
+		if (*(uint8_t *)(bootstrapbuf + MBR_BPB_OFFSET + i) != 0) {
+			warnx("BPB has non-zero byte at offset %d in `%s'",
+			    MBR_BPB_OFFSET + i, params->stage1);
+			goto done;
+		}
+	}
+	for (i = 0; i < sizeof(mbr.mbr_parts); i++) {
+		if (*(uint8_t *)(bootstrapbuf + MBR_PART_OFFSET + i) != 0) {
+			warnx(
+		    "Partition table has non-zero byte at offset %d in `%s'",
+			    MBR_PART_OFFSET + i, params->stage1);
+			goto done;
+		}
+	}
+
+	/*
+	 * Copy the BPB and the partition table from the original MBR to the
+	 * temporary buffer so that they're written back to the fs.
+	 */
+	memcpy(bootstrapbuf + MBR_BPB_OFFSET, &mbr.mbr_bpb,
+	    sizeof(mbr.mbr_bpb));
+	memcpy(bootstrapbuf + MBR_PART_OFFSET, &mbr.mbr_parts,
+	    sizeof(mbr.mbr_parts));
+
+	/*
+	 * Fill in any user-specified options.
+	 */
 	bp = (void *)(bootstrapbuf + 512 * 2 + 8);
 	if (le32toh(bp->bp_length) < sizeof *bp) {
 		warnx("Patch area in stage1 bootstrap is too small");
@@ -127,7 +181,7 @@ i386_setboot(ib_params *params)
 	if (params->flags & IB_TIMEOUT)
 		bp->bp_timeout = htole32(params->timeout);
 	if (params->flags & IB_RESETVIDEO)
-		bp->bp_flags |= htole32(I386_BP_FLAGS_RESET_VIDEO);
+		bp->bp_flags |= htole32(X86_BP_FLAGS_RESET_VIDEO);
 	if (params->flags & IB_CONSPEED)
 		bp->bp_conspeed = htole32(params->conspeed);
 	if (params->flags & IB_CONSOLE) {
@@ -154,7 +208,7 @@ i386_setboot(ib_params *params)
 		MD5Init(&md5ctx);
 		MD5Update(&md5ctx, params->password, strlen(params->password));
 		MD5Final(bp->bp_password, &md5ctx);
-		bp->bp_flags |= htole32(I386_BP_FLAGS_PASSWORD);
+		bp->bp_flags |= htole32(X86_BP_FLAGS_PASSWORD);
 	}
 
 	if (params->flags & IB_NOWRITE) {
@@ -162,7 +216,9 @@ i386_setboot(ib_params *params)
 		goto done;
 	}
 
-	/* Write pbr code to sector zero */
+	/*
+	 * Write MBR code to sector zero.
+	 */
 	rv = pwrite(params->fsfd, bootstrapbuf, 512, 0);
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
@@ -172,7 +228,9 @@ i386_setboot(ib_params *params)
 		goto done;
 	}
 
-	/* Skip disklabel and write bootxx to sectors 2 + */
+	/*
+	 * Skip disklabel in sector 1 and write bootxx to sectors 2..N.
+	 */
 	rv = pwrite(params->fsfd, bootstrapbuf + 512 * 2,
 		    bootstrapsize - 512 * 2, 512 * 2);
 	if (rv == -1) {

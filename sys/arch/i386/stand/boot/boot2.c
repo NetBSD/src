@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.3 2003/10/06 05:24:54 lukem Exp $	*/
+/*	$NetBSD: boot2.c,v 1.4 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -59,7 +59,7 @@ int errno;
 extern int boot_biosdev;
 extern int boot_biossector;	/* may be wrong... */
 
-extern struct i386_boot_params boot_params;
+extern struct x86_boot_params boot_params;
 
 extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
@@ -229,7 +229,7 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 #endif
 	gateA20();
 
-	if (boot_params.bp_flags & I386_BP_FLAGS_RESET_VIDEO)
+	if (boot_params.bp_flags & X86_BP_FLAGS_RESET_VIDEO)
 		biosvideomode();
 
 	print_banner();
@@ -249,7 +249,7 @@ boot2(uint32_t boot_biosdev, uint32_t boot_biossector)
 
 		c = awaitkey(boot_params.bp_timeout, 1);
 		if ((c != '\r') && (c != '\n') && (c != '\0') &&
-		    ((boot_params.bp_flags & I386_BP_FLAGS_PASSWORD) == 0
+		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
 		    || check_password(boot_params.bp_password))) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */

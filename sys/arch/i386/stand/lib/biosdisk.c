@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.17 2003/07/07 13:32:42 dsl Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.18 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -191,7 +191,7 @@ static int
 read_label(struct biosdisk *d)
 {
 	struct disklabel dflt_lbl;
-	struct mbr_partition mbr[NMBRPART];
+	struct mbr_partition mbr[MBR_PART_COUNT];
 	struct partition *p;
 	int sector, i;
 	int error;
@@ -225,10 +225,10 @@ read_label(struct biosdisk *d)
 #endif
 			return EIO;
 		}
-		memcpy(&mbr, ((mbr_sector_t *)d->buf)->mbr_parts, sizeof mbr);
+		memcpy(&mbr, ((struct mbr_sector *)d->buf)->mbr_parts, sizeof mbr);
 		/* Look for NetBSD partition ID */
-		for (i = 0; i < NMBRPART; i++) {
-			typ = mbr[i].mbrp_typ;
+		for (i = 0; i < MBR_PART_COUNT; i++) {
+			typ = mbr[i].mbrp_type;
 			if (typ == 0)
 				continue;
 			sector = this_ext + mbr[i].mbrp_start;

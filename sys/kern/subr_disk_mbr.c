@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.3 2003/08/19 11:49:24 dsl Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.4 2003/10/08 04:25:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.3 2003/08/19 11:49:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.4 2003/10/08 04:25:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,8 @@ typedef struct mbr_args {
 #define UPDATE_LABEL	2
 #define WRITE_LABEL	3
 static int validate_label(mbr_args_t *, uint, int);
-static int look_netbsd_part(mbr_args_t *, mbr_partition_t *, int, uint);
-static int write_netbsd_label(mbr_args_t *, mbr_partition_t *, int, uint);
+static int look_netbsd_part(mbr_args_t *, struct mbr_partition *, int, uint);
+static int write_netbsd_label(mbr_args_t *, struct mbr_partition *, int, uint);
 
 static int
 read_sector(mbr_args_t *a, uint sector)
@@ -110,11 +110,11 @@ read_sector(mbr_args_t *a, uint sector)
  */
 
 static int
-scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
+scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, struct mbr_partition *, int, uint))
 {
-	mbr_partition_t ptns[NMBRPART];
-	mbr_partition_t *dp;
-	mbr_sector_t *mbr;
+	struct mbr_partition ptns[MBR_PART_COUNT];
+	struct mbr_partition *dp;
+	struct mbr_sector *mbr;
 	uint ext_base, this_ext, next_ext;
 	int rval;
 	int i;
@@ -132,7 +132,7 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 
 		/* Note: Magic number is little-endian. */
 		mbr = (void *)a->bp->b_data;
-		if (mbr->mbr_signature != htole16(MBR_MAGIC))
+		if (mbr->mbr_magic != htole16(MBR_MAGIC))
 			return SCAN_CONTINUE;
 
 		/* Copy data out of buffer so action can use bp */
@@ -141,15 +141,15 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 		/* look for NetBSD partition */
 		next_ext = 0;
 		dp = ptns;
-		for (i = 0; i < NMBRPART; i++, dp++) {
-			if (dp->mbrp_typ == 0)
+		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
+			if (dp->mbrp_type == 0)
 				continue;
-			if (MBR_IS_EXTENDED(dp->mbrp_typ)) {
+			if (MBR_IS_EXTENDED(dp->mbrp_type)) {
 				next_ext = le32toh(dp->mbrp_start);
 				continue;
 			}
 #ifdef COMPAT_386BSD_MBRPART
-			if (dp->mbrp_typ == MBR_PTYPE_386BSD) {
+			if (dp->mbrp_type == MBR_PTYPE_386BSD) {
 				/*
 				 * If more than one matches, take last,
 				 * as NetBSD install tool does.
@@ -303,7 +303,7 @@ readdisklabel(dev, strat, lp, osdep)
 }
 
 static int
-look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
+look_netbsd_part(mbr_args_t *a, struct mbr_partition *dp, int slot, uint ext_base)
 {
 	struct partition *pp;
 	int ptn_base = ext_base + le32toh(dp->mbrp_start);
@@ -311,9 +311,9 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 
 	if (
 #ifdef COMPAT_386BSD_MBRPART
-	    dp->mbrp_typ == MBR_PTYPE_386BSD ||
+	    dp->mbrp_type == MBR_PTYPE_386BSD ||
 #endif
-	    dp->mbrp_typ == MBR_PTYPE_NETBSD) {
+	    dp->mbrp_type == MBR_PTYPE_NETBSD) {
 		rval = validate_label(a, ptn_base + MBR_LABELSECTOR, READ_LABEL);
 
 		/* Put actual location where we found the label into ptn 2 */
@@ -332,7 +332,7 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 	if (ext_base == 0)
 		slot += 4;
 	else {
-		slot = 4 + NMBRPART;
+		slot = 4 + MBR_PART_COUNT;
 		pp = &a->lp->d_partitions[slot];
 		for (; slot < MAXPARTITIONS; pp++, slot++) {
 			/* This gets called twice - avoid duplicates */
@@ -353,7 +353,7 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 		pp = &a->lp->d_partitions[slot];
 		pp->p_offset = ptn_base;
 		pp->p_size = le32toh(dp->mbrp_size);
-		pp->p_fstype = xlat_mbr_fstype(dp->mbrp_typ);
+		pp->p_fstype = xlat_mbr_fstype(dp->mbrp_type);
 
 		if (slot >= a->lp->d_npartitions)
 			a->lp->d_npartitions = slot + 1;
@@ -520,11 +520,11 @@ writedisklabel(dev, strat, lp, osdep)
 }
 
 static int
-write_netbsd_label(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
+write_netbsd_label(mbr_args_t *a, struct mbr_partition *dp, int slot, uint ext_base)
 {
 	int ptn_base = ext_base + le32toh(dp->mbrp_start);
 
-	if (dp->mbrp_typ != MBR_PTYPE_NETBSD)
+	if (dp->mbrp_type != MBR_PTYPE_NETBSD)
 		return SCAN_CONTINUE;
 
 	return validate_label(a, ptn_base + MBR_LABELSECTOR, WRITE_LABEL);

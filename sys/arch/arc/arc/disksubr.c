@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 2003/10/08 04:25:44 lukem Exp $	*/
 /*	$OpenBSD: disksubr.c,v 1.14 1997/05/08 00:14:29 deraadt Exp $	*/
 /*	NetBSD: disksubr.c,v 1.40 1999/05/06 15:45:51 christos Exp	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2003/08/07 16:26:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2003/10/08 04:25:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,17 +79,17 @@ mbr_findslice(dp, bp)
 
 #if 0
 	/* Note: Magic number is little-endian. */
-	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGICOFF);
+	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGIC_OFFSET);
 	if (*mbrmagicp != MBR_MAGIC)
 		return (NO_MBR_SIGNATURE);
 #endif
 
 	/* XXX how do we check veracity/bounds of this? */
-	memcpy(dp, bp->b_data + MBR_PARTOFF, NMBRPART * sizeof(*dp));
+	memcpy(dp, bp->b_data + MBR_PART_OFFSET, MBR_PART_COUNT * sizeof(*dp));
 
 	/* look for NetBSD partition */
-	for (i = 0; i < NMBRPART; i++) {
-		if (dp[i].mbrp_typ == MBR_PTYPE_NETBSD) {
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (dp[i].mbrp_type == MBR_PTYPE_NETBSD) {
 			ourdp = &dp[i];
 			break;
 		}
@@ -98,8 +98,8 @@ mbr_findslice(dp, bp)
 #ifdef COMPAT_386BSD_MBRPART
 	/* didn't find it -- look for 386BSD partition */
 	if (!ourdp) {
-		for (i = 0; i < NMBRPART; i++) {
-			if (dp[i].mbrp_typ == MBR_PTYPE_386BSD) {
+		for (i = 0; i < MBR_PART_COUNT; i++) {
+			if (dp[i].mbrp_type == MBR_PTYPE_386BSD) {
 				printf("WARNING: old BSD partition ID!\n");
 				ourdp = &dp[i];
  				/*
@@ -116,8 +116,8 @@ mbr_findslice(dp, bp)
 
 	/* didn't find it -- look for OpenBSD partition */
 	if (!ourdp) {
-		for (i = 0; i < NMBRPART; i++) {
-			if (dp[i].mbrp_typ == MBR_PTYPE_OPENBSD) {
+		for (i = 0; i < MBR_PART_COUNT; i++) {
+			if (dp[i].mbrp_type == MBR_PTYPE_OPENBSD) {
 				printf("WARNING: using OpenBSD partition\n");
 				ourdp = &dp[i];
 				break;
@@ -213,19 +213,19 @@ readdisklabel(dev, strat, lp, osdep)
 		if (ourdp ==  NO_MBR_SIGNATURE)
 			goto nombrpart;
 
-		for (i = 0; i < NMBRPART; i++, dp++) {
+		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
 			/* Install in partition e, f, g, or h. */
 			pp = &lp->d_partitions[RAW_PART + 1 + i];
 			pp->p_offset = dp->mbrp_start;
 			pp->p_size = dp->mbrp_size;
 			for (ip = fat_types; *ip != -1; ip++) {
-				if (dp->mbrp_typ == *ip)
+				if (dp->mbrp_type == *ip)
 					pp->p_fstype = FS_MSDOS;
 			}
-			if (dp->mbrp_typ == MBR_PTYPE_LNXEXT2)
+			if (dp->mbrp_type == MBR_PTYPE_LNXEXT2)
 				pp->p_fstype = FS_EX2FS;
 
-			if (dp->mbrp_typ == MBR_PTYPE_NTFS)
+			if (dp->mbrp_type == MBR_PTYPE_NTFS)
 				pp->p_fstype = FS_NTFS;
 
 			/* is this ours? */
@@ -241,7 +241,7 @@ readdisklabel(dev, strat, lp, osdep)
 				lp->d_partitions[2].p_offset =
 				    dp->mbrp_start;
 
-				if (dp->mbrp_typ == MBR_PTYPE_OPENBSD) {
+				if (dp->mbrp_type == MBR_PTYPE_OPENBSD) {
 					use_openbsd_part = 1;
 				}
 #if 0
@@ -453,7 +453,7 @@ writedisklabel(dev, strat, lp, osdep)
 			goto nombrpart;
 
 		if (ourdp) {
-			if (ourdp->mbrp_typ == MBR_PTYPE_OPENBSD) {
+			if (ourdp->mbrp_type == MBR_PTYPE_OPENBSD) {
 				/* do not override OpenBSD disklabel */
 				error = ESRCH;
 				goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md,v 1.7 2003/07/27 20:25:07 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.8 2003/10/08 04:25:43 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,30 +40,30 @@
 
 menu getboottype, title MSG_Bootblocks_selection, y=10, exit;
 	display action { msg_display(MSG_getboottype);
-		if (((struct i386_boot_params *)arg)->bp_consdev == 0)
+		if (((struct x86_boot_params *)arg)->bp_consdev == 0)
 			msg_display_add(MSG_console_PC);
 		else
 			msg_display_add(MSG_console_com,
-			((struct i386_boot_params *)arg)->bp_consdev - 1,
-			((struct i386_boot_params *)arg)->bp_conspeed);
+			((struct x86_boot_params *)arg)->bp_consdev - 1,
+			((struct x86_boot_params *)arg)->bp_conspeed);
 		};
 	option MSG_Use_normal_bootblocks, action
-	    {((struct i386_boot_params *)arg)->bp_consdev = 0;};
+	    {((struct x86_boot_params *)arg)->bp_consdev = 0;};
 	option MSG_Use_serial_com0, action
-	    {((struct i386_boot_params *)arg)->bp_consdev = 1;};
+	    {((struct x86_boot_params *)arg)->bp_consdev = 1;};
 	option MSG_Use_serial_com1, action
-	    {((struct i386_boot_params *)arg)->bp_consdev = 2;};
+	    {((struct x86_boot_params *)arg)->bp_consdev = 2;};
 	option MSG_Use_serial_com2, action
-	    {((struct i386_boot_params *)arg)->bp_consdev = 3;};
+	    {((struct x86_boot_params *)arg)->bp_consdev = 3;};
 	option MSG_Use_serial_com3, action
-	    {((struct i386_boot_params *)arg)->bp_consdev = 4;};
+	    {((struct x86_boot_params *)arg)->bp_consdev = 4;};
 	option MSG_serial_baud_rate, sub menu consolebaud;
 	option MSG_Use_existing_bootblocks, action
-	    {((struct i386_boot_params *)arg)->bp_consdev = ~0;};
+	    {((struct x86_boot_params *)arg)->bp_consdev = ~0;};
 
 menu consolebaud, title MSG_serial_baud_rate, x=40, y=13;
 	display action {
-		switch (((struct i386_boot_params *)arg)->bp_conspeed) {
+		switch (((struct x86_boot_params *)arg)->bp_conspeed) {
 		case   9600: menu->cursel = 0; break;
 		case  19200: menu->cursel = 1; break;
 		case  38400: menu->cursel = 2; break;
@@ -71,15 +71,15 @@ menu consolebaud, title MSG_serial_baud_rate, x=40, y=13;
 		case 115200: menu->cursel = 4; break;
 		}};
 	option "9600", exit, action
-	    {((struct i386_boot_params *)arg)->bp_conspeed = 9600;};
+	    {((struct x86_boot_params *)arg)->bp_conspeed = 9600;};
 	option "19200", exit, action
-	    {((struct i386_boot_params *)arg)->bp_conspeed = 19200;};
+	    {((struct x86_boot_params *)arg)->bp_conspeed = 19200;};
 	option "38400", exit, action
-	    {((struct i386_boot_params *)arg)->bp_conspeed = 38400;};
+	    {((struct x86_boot_params *)arg)->bp_conspeed = 38400;};
 	option "57600", exit, action
-	    {((struct i386_boot_params *)arg)->bp_conspeed = 57600;};
+	    {((struct x86_boot_params *)arg)->bp_conspeed = 57600;};
 	option "115200", exit, action
-	    {((struct i386_boot_params *)arg)->bp_conspeed = 115200;};
+	    {((struct x86_boot_params *)arg)->bp_conspeed = 115200;};
 
 menu biosonematch;
 	option MSG_This_is_the_correct_geometry, exit, action { };

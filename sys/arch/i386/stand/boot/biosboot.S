@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.S,v 1.1 2003/04/16 22:36:14 dsl Exp $	*/
+/*	$NetBSD: biosboot.S,v 1.2 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 /*
  * Code linked to 0x1000:0 and (usually) read from /boot by bootxx code

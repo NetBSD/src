@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.1 2003/04/16 22:36:14 dsl Exp $
+$NetBSD: version,v 1.2 2003/10/08 04:25:45 lukem Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -18,16 +18,19 @@ is taken as the current.
 2.9:	Recognize PS/2 L40 at runtime and use appropriate gate A20
 	initialization (rather than using a compile flag).
 	Recognize ESDI disks and identify them as ed(4) for COMPAT_OLDBOOT.
-2.10:	g/c COMPAT_OLDBOOT
+2.10:	g/c COMPAT_OLDBOOT.
 2.11:	loadfile() update:  ELF symbols no longer need backward seeks.
 2.12:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 2.13:	Support boot from 1.44MB floppies in 2.88MB floppy drives.
 2.14:	Add a quirk for BIOSes which report extended memory size
-	in slightly nonstandard way in int15, function 0xE801
+	in slightly nonstandard way in int15, function 0xE801.
 2.15:	Use int15/0xc7 to get memory information on machines which support
-	it, like later IBM PS/2 machines
-2.16:	Move 16bit %ss to allow >64k for code, data and stack
-	Default partition to that passed in by mbr code
-	Support limited filename globbing in 'ls' command
+	it, like later IBM PS/2 machines.
+2.16:	Move 16bit %ss to allow >64k for code, data and stack.
+	Default partition to that passed in by mbr code.
+	Support limited filename globbing in 'ls' command.
 	Use .code16 and .code32 directives
 3.0:	Separate out into bootxx and boot
+3.1:	Rename to /usr/mdec/boot.
+	Leave space in bootxx for FAT32 BPB and MBR partition table.
+	Keep MBR's existing BPB and partition table when installing bootxx.

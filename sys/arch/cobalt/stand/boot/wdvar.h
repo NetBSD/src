@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.1 2003/06/25 17:24:23 cdi Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.2 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <mips/cpuregs.h>
 
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #define WDC_TIMEOUT		2000000
 #define PCIIDE_CHANNEL_NDEV	2

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.22 2003/06/07 10:03:39 dsl Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.23 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.22 2003/06/07 10:03:39 dsl Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.23 2003/10/08 04:25:44 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: mbrlabel.c,v 1.22 2003/06/07 10:03:39 dsl Exp $");
 #include <sys/param.h>
 #define FSTYPENAMES
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 #include <sys/ioctl.h>
 
 #include "dkcksum.h"
@@ -57,7 +57,6 @@ void	usage(void);
 void	getlabel(int);
 void	setlabel(int, int);
 int	getparts(int, u_int32_t, u_int32_t, int);
-int	nbsdtype(int);
 u_int16_t	getshort(void *);
 u_int32_t	getlong(void *);
 
@@ -96,36 +95,6 @@ setlabel(int sd, int doraw)
 
 }
 
-static struct typetab {
-	int mbrtype;
-	int nbsdtype;
-} typetable[] = {
-	{ MBR_PTYPE_386BSD,	FS_BSDFFS },
-	{ MBR_PTYPE_FAT12,	FS_MSDOS },
-	{ MBR_PTYPE_FAT16B,	FS_MSDOS },
-	{ MBR_PTYPE_FAT16L,	FS_MSDOS },
-	{ MBR_PTYPE_FAT16S,	FS_MSDOS },
-	{ MBR_PTYPE_FAT32,	FS_MSDOS },
-	{ MBR_PTYPE_FAT32L,	FS_MSDOS },
-	{ MBR_PTYPE_LNXEXT2,	FS_EX2FS },
-	{ MBR_PTYPE_LNXSWAP,	FS_SWAP },
-	{ MBR_PTYPE_NETBSD,	FS_BSDFFS },
-	{ MBR_PTYPE_NTFS,	FS_NTFS },
-	{ MBR_PTYPE_APPLEUFS,	FS_APPLEUFS },
-	{ 0, 0 }
-};
-
-int
-nbsdtype(int type)
-{
-	struct typetab *tt;
-
-	for (tt = typetable; tt->mbrtype; tt++)
-		if (tt->mbrtype == type)
-			return (tt->nbsdtype);
-	return (FS_OTHER);
-}
-
 u_int16_t
 getshort(void *p)
 {
@@ -146,7 +115,7 @@ int
 getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 {
 	unsigned char		buf[DEV_BSIZE];
-	struct mbr_partition	parts[NMBRPART];
+	struct mbr_partition	parts[MBR_PART_COUNT];
 	struct partition	npe;
 	off_t			loff;
 	int			i, j, unused, changed;
@@ -162,21 +131,21 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 		perror("read label");
 		exit(1);
 	}
-	if (getshort(buf + MBR_MAGICOFF) != MBR_MAGIC)
+	if (getshort(buf + MBR_MAGIC_OFFSET) != MBR_MAGIC)
 		return (changed);
-	memcpy(parts, buf + MBR_PARTOFF, sizeof parts);
+	memcpy(parts, buf + MBR_PART_OFFSET, sizeof parts);
 
 				/* scan partition table */
-	for (i = 0; i < NMBRPART; i++) {
-		if (parts[i].mbrp_typ == 0 ||
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (parts[i].mbrp_type == 0 ||
 				/* extended partitions are handled below */
-		    MBR_IS_EXTENDED(parts[i].mbrp_typ))
+		    MBR_IS_EXTENDED(parts[i].mbrp_type))
 			continue;
 
 		memset((void *)&npe, 0, sizeof(npe));
 		npe.p_size = getlong(&parts[i].mbrp_size);
 		npe.p_offset = getlong(&parts[i].mbrp_start) + off;
-		npe.p_fstype = nbsdtype(parts[i].mbrp_typ);
+		npe.p_fstype = xlat_mbr_fstype(parts[i].mbrp_type);
 
 				/* find existing entry, or first free slot */
 		unused = -1;	/* flag as no free slot */
@@ -249,10 +218,10 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 	}
 
 				/* recursively scan extended partitions */
-	for (i = 0; i < NMBRPART; i++) {
+	for (i = 0; i < MBR_PART_COUNT; i++) {
 		u_int32_t poff;
 
-		if (MBR_IS_EXTENDED(parts[i].mbrp_typ)) {
+		if (MBR_IS_EXTENDED(parts[i].mbrp_type)) {
 			poff = getlong(&parts[i].mbrp_start) + extoff;
 			changed += getparts(sd, poff,
 			    extoff ? extoff : poff, verbose);

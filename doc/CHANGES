@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.206 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.207 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -486,3 +486,10 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sgimips: O2 (IP32) support is now functional again by fixes
 		contributed by Christopher SEKIYA. [tsutsui 20031005]
 	awk(1): Updated gawk to 3.1.3. [wiz 20031006]
+	installboot(8): On i386, preserve BIOS Parameter Block and MBR
+		partition table.  [lukem 20031008]
+	i386 & amd64: Rename /usr/mdec/biosboot to /usr/mdec/boot and
+		add support for booting off FAT partitions.  Rename
+		/usr/mdec/bootxx_dosfs to /usr/mdec/bootxx_msdos.
+		Deprecate /usr/mdec/bootxx_ufs (use bootxx_ffsv1).
+		[lukem 20031008].

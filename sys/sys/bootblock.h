@@ -1,7 +1,7 @@
-/*	$NetBSD: bootblock.h,v 1.15 2003/10/06 05:24:54 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.16 2003/10/08 04:25:46 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002,2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,16 +99,213 @@
 #ifndef _SYS_BOOTBLOCK_H
 #define	_SYS_BOOTBLOCK_H
 
+#if !defined(__ASSEMBLER__)
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/stdint.h>
 #else
 #include <stdint.h>
 #endif
+#endif	/* !defined(__ASSEMBLER__) */
+
+/* ------------------------------------------
+ * MBR (Master Boot Record) --
+ *	definitions for systems that use MBRs
+ */
+
+/*
+ * MBR (Master Boot Record)
+ */
+#define	MBR_BBSECTOR		0	/* MBR relative sector # */
+#define	MBR_BPB_OFFSET		11	/* offsetof(mbr_sector, mbr_bpb) */
+#define	MBR_BOOTCODE_OFFSET	90	/* offsetof(mbr_sector, mbr_bootcode) */
+#define	MBR_BOOTSEL_OFFSET	404	/* offsetof(mbr_sector, mbr_bootsel) */
+#define	MBR_PART_OFFSET		446	/* offsetof(mbr_sector, mbr_part[0]) */
+#define	MBR_MAGIC_OFFSET	510	/* offsetof(mbr_sector, mbr_magic) */
+#define	MBR_MAGIC		0xaa55	/* MBR magic number */
+#define	MBR_PART_COUNT		4	/* Number of partitions in MBR */
+#define	MBR_BS_PARTNAMESIZE	8	/* Size of name mbr_bootsel nametab */
+					/* (excluding trailing NUL) */
+
+		/* values for mbr_partition.mbrp_flag */
+#define	MBR_PFLAG_ACTIVE	0x80	/* The active partition */
+
+		/* values for mbr_partition.mbrp_type */
+#define	MBR_PTYPE_FAT12		0x01	/* 12-bit FAT */
+#define	MBR_PTYPE_FAT16S	0x04	/* 16-bit FAT, less than 32M */
+#define	MBR_PTYPE_EXT		0x05	/* extended partition */
+#define	MBR_PTYPE_FAT16B	0x06	/* 16-bit FAT, more than 32M */
+#define	MBR_PTYPE_NTFS		0x07	/* OS/2 HPFS, NTFS, QNX2, Adv. UNIX */
+#define	MBR_PTYPE_FAT32		0x0b	/* 32-bit FAT */
+#define	MBR_PTYPE_FAT32L	0x0c	/* 32-bit FAT, LBA-mapped */
+#define	MBR_PTYPE_FAT16L	0x0e	/* 16-bit FAT, LBA-mapped */
+#define	MBR_PTYPE_EXT_LBA	0x0f	/* extended partition, LBA-mapped */
+#define	MBR_PTYPE_ONTRACK	0x54
+#define	MBR_PTYPE_LNXSWAP	0x82	/* Linux swap or Solaris */
+#define	MBR_PTYPE_LNXEXT2	0x83	/* Linux native */
+#define	MBR_PTYPE_EXT_LNX	0x85	/* Linux extended partition */
+#define	MBR_PTYPE_NTFSVOL	0x87	/* NTFS volume set or HPFS mirrored */
+#define	MBR_PTYPE_PREP		0x41	/* PReP */
+#define	MBR_PTYPE_386BSD	0xa5	/* 386BSD partition type */
+#define	MBR_PTYPE_APPLEUFS 	0xa8	/* Apple UFS */
+#define	MBR_PTYPE_NETBSD	0xa9	/* NetBSD partition type */
+#define	MBR_PTYPE_OPENBSD	0xa6	/* OpenBSD partition type */
+
+#define	MBR_PSECT(s)		((s) & 0x3f)
+#define	MBR_PCYL(c, s)		((c) + (((s) & 0xc0) << 2))
+
+#define	MBR_IS_EXTENDED(x)	((x) == MBR_PTYPE_EXT || \
+				 (x) == MBR_PTYPE_EXT_LBA || \
+				 (x) == MBR_PTYPE_EXT_LNX)
+
+		/* values for mbr_bootsel.mbrbs_flags */
+#define	MBR_BS_ACTIVE	0x01	/* Bootselector active (or code present) */
+#define	MBR_BS_EXTINT13	0x02	/* Set by fdisk if LBA needed (deprecated) */
+#define	MBR_BS_READ_LBA	0x04	/* Force LBA reads - even for low numbers */
+#define	MBR_BS_EXTLBA	0x08	/* Extended ptn capable (LBA reads) */
+#define	MBR_BS_NEWMBR	0x80	/* New code: menu user 1..9 for ptns */
+
+#if !defined(__ASSEMBLER__)					/* { */
+
+/*
+ * (x86) BIOS Parameter Block for FAT12
+ */
+struct mbr_bpbFAT12 {
+	uint16_t	bpbBytesPerSec;	/* bytes per sector */
+	uint8_t		bpbSecPerClust;	/* sectors per cluster */
+	uint16_t	bpbResSectors;	/* number of reserved sectors */
+	uint8_t		bpbFATs;	/* number of FATs */
+	uint16_t	bpbRootDirEnts;	/* number of root directory entries */
+	uint16_t	bpbSectors;	/* total number of sectors */
+	uint8_t		bpbMedia;	/* media descriptor */
+	uint16_t	bpbFATsecs;	/* number of sectors per FAT */
+	uint16_t	bpbSecPerTrack;	/* sectors per track */
+	uint16_t	bpbHeads;	/* number of heads */
+	uint16_t	bpbHiddenSecs;	/* # of hidden sectors */
+} __attribute__((__packed__));
+
+/*
+ * (x86) BIOS Parameter Block for FAT16
+ */
+struct mbr_bpbFAT16 {
+	uint16_t	bpbBytesPerSec;	/* bytes per sector */
+	uint8_t		bpbSecPerClust;	/* sectors per cluster */
+	uint16_t	bpbResSectors;	/* number of reserved sectors */
+	uint8_t		bpbFATs;	/* number of FATs */
+	uint16_t	bpbRootDirEnts;	/* number of root directory entries */
+	uint16_t	bpbSectors;	/* total number of sectors */
+	uint8_t		bpbMedia;	/* media descriptor */
+	uint16_t	bpbFATsecs;	/* number of sectors per FAT */
+	uint16_t	bpbSecPerTrack;	/* sectors per track */
+	uint16_t	bpbHeads;	/* number of heads */
+	uint32_t	bpbHiddenSecs;	/* # of hidden sectors */
+	uint32_t	bpbHugeSectors;	/* # of sectors if bpbSectors == 0 */
+	uint8_t		bsDrvNum;	/* Int 0x13 drive number (e.g. 0x80) */
+	uint8_t		bsReserved1;	/* Reserved; set to 0 */
+	uint8_t		bsBootSig;	/* 0x29 if next 3 fields are present */
+	uint8_t		bsVolID[4];	/* Volume serial number */
+	uint8_t		bsVolLab[11];	/* Volume label */
+	uint8_t		bsFileSysType[8];
+					/* "FAT12   ", "FAT16   ", "FAT     " */
+} __attribute__((__packed__));
+
+/*
+ * (x86) BIOS Parameter Block for FAT32
+ */
+struct mbr_bpbFAT32 {
+	uint16_t	bpbBytesPerSec;	/* bytes per sector */
+	uint8_t		bpbSecPerClust;	/* sectors per cluster */
+	uint16_t	bpbResSectors;	/* number of reserved sectors */
+	uint8_t		bpbFATs;	/* number of FATs */
+	uint16_t	bpbRootDirEnts;	/* number of root directory entries */
+	uint16_t	bpbSectors;	/* total number of sectors */
+	uint8_t		bpbMedia;	/* media descriptor */
+	uint16_t	bpbFATsecs;	/* number of sectors per FAT */
+	uint16_t	bpbSecPerTrack;	/* sectors per track */
+	uint16_t	bpbHeads;	/* number of heads */
+	uint32_t	bpbHiddenSecs;	/* # of hidden sectors */
+	uint32_t	bpbHugeSectors;	/* # of sectors if bpbSectors == 0 */
+	uint32_t	bpbBigFATsecs;	/* like bpbFATsecs for FAT32 */
+	uint16_t	bpbExtFlags;	/* extended flags: */
+#define	MBR_FAT32_FATNUM	0x0F	/*   mask for numbering active FAT */
+#define	MBR_FAT32_FATMIRROR	0x80	/*   FAT is mirrored (as previously) */
+	uint16_t	bpbFSVers;	/* filesystem version */
+#define	MBR_FAT32_FSVERS	0	/*   currently only 0 is understood */
+	uint32_t	bpbRootClust;	/* start cluster for root directory */
+	uint16_t	bpbFSInfo;	/* filesystem info structure sector */
+	uint16_t	bpbBackup;	/* backup boot sector */
+	uint8_t		bsReserved[12];	/* Reserved for future expansion */
+	uint8_t		bsDrvNum;	/* Int 0x13 drive number (e.g. 0x80) */
+	uint8_t		bsReserved1;	/* Reserved; set to 0 */
+	uint8_t		bsBootSig;	/* 0x29 if next 3 fields are present */
+	uint8_t		bsVolID[4];	/* Volume serial number */
+	uint8_t		bsVolLab[11];	/* Volume label */
+	uint8_t		bsFileSysType[8]; /* "FAT32   " */
+} __attribute__((__packed__));
+
+/*
+ * (x86) MBR boot selector
+ */
+struct mbr_bootsel {
+	uint8_t		mbrbs_defkey;
+	uint8_t		mbrbs_flags;
+	uint16_t	mbrbs_timeo;
+	uint8_t		mbrbs_nametab[MBR_PART_COUNT][MBR_BS_PARTNAMESIZE + 1];
+	uint16_t	mbrbs_magic;
+} __attribute__((__packed__));
+
+/*
+ * MBR partition
+ */
+struct mbr_partition {
+	uint8_t		mbrp_flag;	/* MBR partition flags */
+	uint8_t		mbrp_shd;	/* Starting head */
+	uint8_t		mbrp_ssect;	/* Starting sector */
+	uint8_t		mbrp_scyl;	/* Starting cylinder */
+	uint8_t		mbrp_type;	/* Partition type (see below) */
+	uint8_t		mbrp_ehd;	/* End head */
+	uint8_t		mbrp_esect;	/* End sector */
+	uint8_t		mbrp_ecyl;	/* End cylinder */
+	uint32_t	mbrp_start;	/* Absolute starting sector number */
+	uint32_t	mbrp_size;	/* Partition size in sectors */
+} __attribute__((__packed__));
+
+int xlat_mbr_fstype(int);	/* in sys/lib/libkern/xlat_mbr_fstype.c */
+
+/*
+ * MBR boot sector.
+ * This is used by both the MBR (Master Boot Record) in sector 0 of the disk
+ * and the PBR (Partition Boot Record) in sector 0 of an MBR partition.
+ */
+struct mbr_sector {
+					/* Jump instruction to boot code.  */
+					/* Usually 0xE9nnnn or 0xEBnn90 */
+	uint8_t			mbr_jmpboot[3];	
+					/* OEM name and version */
+	uint8_t			mbr_oemname[8];	
+	union {				/* BIOS Parameter Block */
+		struct mbr_bpbFAT12	bpb12;
+		struct mbr_bpbFAT16	bpb16;
+		struct mbr_bpbFAT32	bpb32;
+	} mbr_bpb;
+					/* Boot code */
+	uint8_t			mbr_bootcode[314];
+					/* Config for /usr/mdec/mbr_bootsel */
+	struct mbr_bootsel	mbr_bootsel;
+					/* MBR partition table */
+	struct mbr_partition	mbr_parts[MBR_PART_COUNT];
+					/* MBR magic (0xaa55) */
+	uint16_t		mbr_magic;
+} __attribute__((__packed__));
+
+#endif	/* !defined(__ASSEMBLER__) */				/* } */
+
 
 /* ------------------------------------------
  * shared --
- *	definintions shared by many platforms
+ *	definitions shared by many platforms
  */
+
+#if !defined(__ASSEMBLER__)					/* { */
 
 	/* Maximum # of blocks in bbi_block_table, each bbi_block_size long */
 #define	SHARED_BBINFO_MAXBLOCKS	118	/* so sizeof(shared_bbinfo) == 512 */
@@ -120,11 +317,10 @@ struct shared_bbinfo {
 	int32_t bbi_block_table[SHARED_BBINFO_MAXBLOCKS];
 };
 
-
 /* ------------------------------------------
  * alpha --
  *	Alpha (disk, but also tape) Boot Block.
- * 
+ *
  *	See Section (III) 3.6.1 of the Alpha Architecture Reference Manual.
  */
 
@@ -191,7 +387,7 @@ struct apple_drvr_map {
 	uint16_t	sbDrvrCount;	/* number of driver descriptors */
 	struct apple_drvr_descriptor sb_dd[APPLE_DRVR_MAP_MAX_DESCRIPTORS];
 	uint16_t	pad[3];
-} __attribute__ ((packed));
+} __attribute__((__packed__));
 
 /*
  *	Partition map structure from Inside Macintosh: Devices, SCSI Manager
@@ -261,43 +457,47 @@ struct apple_blockzeroblock {
 	uint32_t       bzbUMountTime;
 };
 
-#define APPLE_BZB_MAGIC	0xABADBABE
-#define APPLE_BZB_TYPEFS	1
-#define APPLE_BZB_TYPESWAP	3
-#define APPLE_BZB_ROOTFS	0x8000
-#define APPLE_BZB_USRFS	0x4000
+#define	APPLE_BZB_MAGIC		0xABADBABE
+#define	APPLE_BZB_TYPEFS	1
+#define	APPLE_BZB_TYPESWAP	3
+#define	APPLE_BZB_ROOTFS	0x8000
+#define	APPLE_BZB_USRFS		0x4000
 
 /* ------------------------------------------
- * i386
+ * x86
  *
  */
-
-#define X86_BOOT_MAGIC_1	('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)
-#define X86_BOOT_MAGIC_2	('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)
 
 /*
  * Parameters for NetBSD /boot written to start of pbr code by installboot
  */
 
-struct i386_boot_params {
+#define	X86_BOOT_MAGIC_1	('x' << 24 | 0x86b << 12 | 'm' << 4 | 1)
+#define	X86_BOOT_MAGIC_2	('x' << 24 | 0x86b << 12 | 'm' << 4 | 2)
+
+struct x86_boot_params {
 	uint32_t	bp_length;	/* length of patchable data */
 	uint32_t	bp_flags;
-#define I386_BP_FLAGS_RESET_VIDEO	1
-#define I386_BP_FLAGS_PASSWORD		2
 	uint32_t	bp_timeout;	/* boot timeout in seconds */
 	uint32_t	bp_consdev;
-#define CONSDEV_PC	0
-#define CONSDEV_COM0	1
-#define CONSDEV_COM1	2
-#define CONSDEV_COM2	3
-#define CONSDEV_COM3	4
-#define CONSDEV_COM0KBD	5 
-#define CONSDEV_COM1KBD	6
-#define CONSDEV_COM2KBD	7
-#define CONSDEV_COM3KBD	8
 	uint32_t	bp_conspeed;
 	char		bp_password[16];	/* md5 hash of password */
 };
+
+		/* values for bp_flags */
+#define	X86_BP_FLAGS_RESET_VIDEO	1
+#define	X86_BP_FLAGS_PASSWORD		2
+
+		/* values for bp_consdev */
+#define	X86_BP_CONSDEV_PC	0
+#define	X86_BP_CONSDEV_COM0	1
+#define	X86_BP_CONSDEV_COM1	2
+#define	X86_BP_CONSDEV_COM2	3
+#define	X86_BP_CONSDEV_COM3	4
+#define	X86_BP_CONSDEV_COM0KBD	5
+#define	X86_BP_CONSDEV_COM1KBD	6
+#define	X86_BP_CONSDEV_COM2KBD	7
+#define	X86_BP_CONSDEV_COM3KBD	8
 
 /* ------------------------------------------
  * macppc
@@ -445,10 +645,12 @@ struct vax_boot_block {
  * x68k
  */
 
-#define X68K_BOOT_BLOCK_OFFSET		0
-#define X68K_BOOT_BLOCK_BLOCKSIZE	512
-#define X68K_BOOT_BLOCK_MAX_SIZE	(512 * 16)
+#define	X68K_BOOT_BLOCK_OFFSET		0
+#define	X68K_BOOT_BLOCK_BLOCKSIZE	512
+#define	X68K_BOOT_BLOCK_MAX_SIZE	(512 * 16)
 	/* Magic string -- 32 bytes long (including the NUL) */
-#define X68K_BBINFO_MAGIC		"NetBSD/x68k bootxx     20020601"
+#define	X68K_BBINFO_MAGIC		"NetBSD/x68k bootxx     20020601"
+
+#endif	/* !defined(__ASSEMBLER__) */				/* } */
 
 #endif	/* !_SYS_BOOTBLOCK_H */

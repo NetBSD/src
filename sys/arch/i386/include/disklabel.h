@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.11 2003/07/07 13:30:10 dsl Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.12 2003/10/08 04:25:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -53,7 +53,7 @@
      ((part) / OLDMAXPARTITIONS) * (__I386_MAXDISKS * OLDMAXPARTITIONS))
 
 /* Pull in MBR partition definitions. */
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 
 #ifndef __ASSEMBLER__
 #include <sys/dkbad.h>
