@@ -1,7 +1,7 @@
-/* $NetBSD: profile.h,v 1.1 1996/01/31 23:22:41 mark Exp $ */
+/* $NetBSD: profile.h,v 1.2 1996/03/13 21:04:55 mark Exp $ */
 
 /*
- * Copyright (c) 1995 Mark Brinicombe
+ * Copyright (c) 1995-1996 Mark Brinicombe
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,13 +28,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: profile.h,v 1.1 1996/01/31 23:22:41 mark Exp $
+ *	$Id: profile.h,v 1.2 1996/03/13 21:04:55 mark Exp $
  */
 
-#define	_MCOUNT_DECL static void _mcount
-#define MCOUNT
+#define	_MCOUNT_DECL static inline void _mcount
 
-#if 0
 /* Cannot implement mcount in C as GCC uses the ip register to pass the
  * frompcindex variable. GCC also uses ip during the register pushing
  * at the beginning of any C function.
@@ -58,7 +56,6 @@ mcount()								\
 	asm("mov %0, ip" : "=r" (frompcindex));				\
 	_mcount(frompcindex, selfpc);					\
 }
-#endif
 
 #ifdef _KERNEL
 /*
