@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.8 1998/01/12 10:21:09 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.9 1998/04/15 19:49:19 mjacob Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.8 1998/01/12 10:21:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.9 1998/04/15 19:49:19 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,6 @@ pcppi_attach(parent, self, aux)
 	pa.pa_iot = iot;				/* XXX */
 	pa.pa_ioh = sc->sc_ppi_ioh;			/* XXX */
 	pa.pa_pit_ioh = sc->sc_pit1_ioh;		/* XXX */
-	pa.pa_delaybah = ia->ia_delaybah;		/* XXX */
 	pa.pa_ic = ia->ia_ic;				/* XXX */
 	config_found(self, &pa, pcppiprint);
 
@@ -154,7 +153,6 @@ pcppi_attach(parent, self, aux)
 	pa.pa_iot = iot;				/* XXX */
 	pa.pa_ioh = sc->sc_ppi_ioh;			/* XXX */
 	pa.pa_pit_ioh = sc->sc_pit1_ioh;		/* XXX */
-	pa.pa_delaybah = ia->ia_delaybah;		/* XXX */
 	pa.pa_ic = ia->ia_ic;				/* XXX */
 	config_found(self, &pa, pcppiprint);
 }
