@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.136 2005/03/17 18:17:26 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.137 2005/03/19 02:05:06 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1568,4 +1568,41 @@ sys/dev/microcode/siop/siop.ss			1.18
 	Factor out code to do this, and to deal with xs->resid, in
 	siop_common.c.
 	[bouyer, ticket #1750]
+
+sys/dev/ic/esiop.c				1.30
+sys/dev/ic/siop.c				1.75
+sys/dev/ic/siop_common.c			1.36
+sys/dev/ic/siopvar_common.h			1.29
+
+	Add support for the Ignore Wide Residue SCSI message.
+	[bouyer, ticket #1751]
+
+sys/dev/ic/esiop.c				1.31
+
+	Remove a redundant BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE, and
+	fix another one (POST -> PRE).
+	[bouyer, ticket #1752]
+
+sys/dev/ic/siop.c				1.76
+
+	Add missing return, fix handling of Ignore Wide Residue messages.
+	[bouyer, ticket #1753]
+
+usr.sbin/sup/source/scm.c			1.18 via patch
+
+	Don't set AI_NUMERICHOST in matchhost() to resolve given hostname since
+	it is supposed to be an arbitrary name (i.e. not restricted to numeric
+	representation). Tested by Soda with our production server. PR#27047.
+	[soda, ticket #1754]
+
+usr.sbin/syslogd/syslogd.c			1.68
+
+	Postpone initial setting of the alarm timer until after the call to
+	daemon(), as the timer would be cleared by daemon's fork().
+	[heas, ticket #1773]
+
+sys/netinet6/ipsec.c				1.98-1.99
+
+	Add missing break.
+	[itojun, ticket #1774]
 
