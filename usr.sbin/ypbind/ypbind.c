@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.9 1994/07/02 06:45:51 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.10 1994/07/14 20:54:29 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ int check;
 #define YPSET_ALL	2
 int ypsetmode = YPSET_NO;
 
-int rpcsock;
+int rpcsock, pingsock;
 struct rmtcallargs rmtca;
 struct rmtcallres rmtcr;
 char rmtcr_outval;
@@ -154,11 +154,6 @@ CLIENT *clnt;
 		 * Hmm. More than 2 requests in 5 seconds have indicated
 		 * that my binding is possibly incorrect.
 		 * Ok, do an immediate poll of the server.
-		 * 
-		 * This might be a bit of a crock. It depends on our
-		 * implementation of YP: programs first use the binding
-		 * file to get the ypserv address, and only if RPC to
-		 * the ypserv fails do they contact ypbind via RPC.
 		 */
 		if (ypdb->dom_check_t >= now) {
 			/* don't flood it */
@@ -351,8 +346,13 @@ char **argv;
 		perror("socket");
 		return -1;
 	}
+	if( (pingsock=socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
+		perror("socket");
+		return -1;
+	}
 	
 	fcntl(rpcsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
+	fcntl(pingsock, F_SETFL, fcntl(rpcsock, F_GETFL, 0) | FNDELAY);
 	i = 1;
 	setsockopt(rpcsock, SOL_SOCKET, SO_BROADCAST, &i, sizeof(i));
 	rmtca.prog = YPPROG;
@@ -379,6 +379,7 @@ char **argv;
 	while(1) {
 		fdsr = svc_fdset;
 		FD_SET(rpcsock, &fdsr);
+		FD_SET(pingsock, &fdsr);
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
@@ -394,6 +395,10 @@ char **argv;
 				FD_CLR(rpcsock, &fdsr);
 				handle_replies();
 			}
+			if (FD_ISSET(pingsock, &fdsr)) {
+				FD_CLR(pingsock, &fdsr);
+				handle_ping();
+			}
 			svc_getreqset(&fdsr);
 			if(check)
 				checkwork();
@@ -407,10 +412,10 @@ char **argv;
  *
  * STATE	EVENT		ACTION		NEWSTATE	TIMEOUT
  * no binding	timeout		broadcast 	no binding	5 sec
- * no binding	answer		--		binding		30 sec
+ * no binding	answer		--		binding		60 sec
  * binding	timeout		check server	checking	5 sec
  * checking	timeout		broadcast	no binding	5 sec
- * checking	answer		--		binding		30 sec
+ * checking	answer		--		binding		60 sec
  */
 checkwork()
 {
@@ -422,7 +427,10 @@ checkwork()
 	time(&t);
 	for(ypdb=ypbindlist; ypdb; ypdb=ypdb->dom_pnext) {
 		if(ypdb->dom_check_t < t) {
-			ping(ypdb);
+			if (ypdb->dom_alive == 1)
+				ping(ypdb);
+			else
+				broadcast(ypdb);
 			time(&t);
 			ypdb->dom_check_t = t + 5;
 		}
@@ -434,10 +442,66 @@ ping(ypdb)
 {
 	char *dom = ypdb->dom_domain;
 	struct rpc_msg rpcmsg;
+	char buf[1400];
+	enum clnt_stat st;
+	int outlen;
+	AUTH *rpcua;
+	XDR rpcxdr;
+
+	bzero((char *)&rpcxdr, sizeof rpcxdr);
+	bzero((char *)&rpcmsg, sizeof rpcmsg);
+
+	rpcua = authunix_create_default();
+	if( rpcua == (AUTH *)NULL) {
+		/*printf("cannot get unix auth\n");*/
+		return RPC_SYSTEMERROR;
+	}
+	rpcmsg.rm_direction = CALL;
+	rpcmsg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
+	rpcmsg.rm_call.cb_prog = YPPROG;
+	rpcmsg.rm_call.cb_vers = YPVERS;
+	rpcmsg.rm_call.cb_proc = YPPROC_DOMAIN_NONACK;
+	rpcmsg.rm_call.cb_cred = rpcua->ah_cred;
+	rpcmsg.rm_call.cb_verf = rpcua->ah_verf;
+
+	rpcmsg.rm_xid = (int)dom;
+	xdrmem_create(&rpcxdr, buf, sizeof buf, XDR_ENCODE);
+	if( (!xdr_callmsg(&rpcxdr, &rpcmsg)) ) {
+		st = RPC_CANTENCODEARGS;
+		AUTH_DESTROY(rpcua);
+		return st;
+	}
+	if( (!xdr_domainname(&rpcxdr, dom)) ) {
+		st = RPC_CANTENCODEARGS;
+		AUTH_DESTROY(rpcua);
+		return st;
+	}
+	outlen = (int)xdr_getpos(&rpcxdr);
+	xdr_destroy(&rpcxdr);
+	if(outlen<1) {
+		st = RPC_CANTENCODEARGS;
+		AUTH_DESTROY(rpcua);
+		return st;
+	}
+	AUTH_DESTROY(rpcua);
+
+	ypdb->dom_alive = 2;
+	if (sendto(pingsock, buf, outlen, 0, 
+		   (struct sockaddr *)&ypdb->dom_server_addr,
+		   sizeof ypdb->dom_server_addr) < 0)
+		perror("sendto");
+	return 0;
+
+}
+
+broadcast(ypdb)
+	struct _dom_binding *ypdb;
+{
+	char *dom = ypdb->dom_domain;
+	struct rpc_msg rpcmsg;
 	char buf[1400], inbuf[8192];
 	char path[MAXPATHLEN];
 	enum clnt_stat st;
-	struct timeval tv;
 	int outlen, i, sock, len;
 	struct sockaddr_in bsin;
 	struct ifconf ifc;
@@ -465,9 +529,7 @@ ping(ypdb)
 	rpcmsg.rm_call.cb_cred = rpcua->ah_cred;
 	rpcmsg.rm_call.cb_verf = rpcua->ah_verf;
 
-	gettimeofday(&tv, (struct timezone *)0);
 	rpcmsg.rm_xid = (int)dom;
-	tv.tv_usec = 0;
 	xdrmem_create(&rpcxdr, buf, sizeof buf, XDR_ENCODE);
 	if( (!xdr_callmsg(&rpcxdr, &rpcmsg)) ) {
 		st = RPC_CANTENCODEARGS;
@@ -482,27 +544,17 @@ ping(ypdb)
 	outlen = (int)xdr_getpos(&rpcxdr);
 	xdr_destroy(&rpcxdr);
 	if(outlen<1) {
+		st = RPC_CANTENCODEARGS;
 		AUTH_DESTROY(rpcua);
 		return st;
 	}
 	AUTH_DESTROY(rpcua);
 
-	if (ypdb->dom_alive == 1) {
-		/* no need to broadcast, only send to my server */
-		ypdb->dom_alive = 2;
-		bsin = ypdb->dom_server_addr;
-		bsin.sin_port = htons(PMAPPORT);
-		if (sendto(rpcsock, buf, outlen, 0,
-		    (struct sockaddr *)&bsin, sizeof bsin) < 0)
-			perror("sendto");
-		return 0;
-	}
-
 	if(ypdb->dom_lockfd!=-1) {
 		close(ypdb->dom_lockfd);
 		ypdb->dom_lockfd = -1;
 		sprintf(path, "%s/%s.%d", BINDINGDIR,
-		    ypdb->dom_domain, ypdb->dom_vers);
+			ypdb->dom_domain, ypdb->dom_vers);
 		unlink(path);
 	}
 	ypdb->dom_alive = 0;
@@ -559,7 +611,7 @@ ping(ypdb)
 		in = ((struct sockaddr_in *)&ifreq.ifr_addr)->sin_addr;
 		bsin.sin_addr = in;
 		if( sendto(rpcsock, buf, outlen, 0, (struct sockaddr *)&bsin,
-		   sizeof bsin) < 0 )
+			   sizeof bsin) < 0 )
 			perror("sendto");
 	}
 	close(sock);
@@ -613,6 +665,53 @@ try_again:
 	return RPC_SUCCESS;
 }
 
+/*enum clnt_stat*/
+handle_ping()
+{
+	char buf[1400];
+	int fromlen, inlen;
+	struct sockaddr_in raddr;
+	struct rpc_msg msg;
+	XDR xdr;
+	bool_t res;
+
+recv_again:
+	bzero((char *)&xdr, sizeof(xdr));
+	bzero((char *)&msg, sizeof(msg));
+	msg.acpted_rply.ar_verf = _null_auth;
+	msg.acpted_rply.ar_results.where = (caddr_t)&res;
+	msg.acpted_rply.ar_results.proc = xdr_bool;
+
+try_again:
+	fromlen = sizeof (struct sockaddr);
+	inlen = recvfrom(pingsock, buf, sizeof buf, 0,
+		(struct sockaddr *)&raddr, &fromlen);
+	if(inlen<0) {
+		if(errno==EINTR)
+			goto try_again;
+		return RPC_CANTRECV;
+	}
+	if(inlen<sizeof(u_long))
+		goto recv_again;
+
+	/*
+	 * see if reply transaction id matches sent id.
+	 * If so, decode the results.
+	 */
+	xdrmem_create(&xdr, buf, (u_int)inlen, XDR_DECODE);
+	if( xdr_replymsg(&xdr, &msg)) {
+		if( (msg.rm_reply.rp_stat == MSG_ACCEPTED) &&
+		   (msg.acpted_rply.ar_stat == SUCCESS)) {
+			rpc_received(msg.rm_xid, &raddr, 0);
+		}
+	}
+	xdr.x_op = XDR_FREE;
+	msg.acpted_rply.ar_results.proc = xdr_void;
+	xdr_destroy(&xdr);
+
+	return RPC_SUCCESS;
+}
+
 /*
  * LOOPBACK IS MORE IMPORTANT: PUT IN HACK
  */
@@ -650,17 +749,16 @@ int force;
 	/* soft update, alive */
 	if(ypdb->dom_alive!=0 && force==0) {
 		if (bcmp((char *)raddrp, (char *)&ypdb->dom_server_addr,
-		    sizeof ypdb->dom_server_addr) == 0) {
+			 sizeof ypdb->dom_server_addr) == 0) {
 			ypdb->dom_alive = 1;
-			/* recheck binding in 30 sec */
-			ypdb->dom_check_t = time(NULL) + 30;
+			ypdb->dom_check_t = time(NULL) + 60; /* recheck binding in 60 sec */
 		}
 		return;
 	}
 	
 	bcopy((char *)raddrp, (char *)&ypdb->dom_server_addr,
 		sizeof ypdb->dom_server_addr);
-	ypdb->dom_check_t = time(NULL) + 30;	/* recheck binding in 30 seconds */
+	ypdb->dom_check_t = time(NULL) + 60;	/* recheck binding in 60 seconds */
 	ypdb->dom_vers = YPVERS;
 	ypdb->dom_alive = 1;
 
