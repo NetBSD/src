@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.2 1999/12/28 07:40:12 darrenr Exp $	*/
+/*	$NetBSD: parse.c,v 1.3 2000/02/01 20:31:11 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -43,7 +43,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)Id: parse.c,v 2.1.2.4 1999/12/11 05:30:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: parse.c,v 2.1.2.8 2000/01/27 08:49:42 darrenr Exp";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -129,16 +129,25 @@ int     linenum;
 
 	if (!strcasecmp("block", *cpp)) {
 		fil.fr_flags |= FR_BLOCK;
-		if (!strncasecmp(*(cpp+1), "return-icmp-as-dest", 19))
+		if (!strncasecmp(*(cpp+1), "return-icmp-as-dest", 19) &&
+		    (i = 19))
 			fil.fr_flags |= FR_FAKEICMP;
-		else if (!strncasecmp(*(cpp+1), "return-icmp", 11))
+		else if (!strncasecmp(*(cpp+1), "return-icmp", 11) && (i = 11))
 			fil.fr_flags |= FR_RETICMP;
 		if (fil.fr_flags & FR_RETICMP) {
 			cpp++;
-			i = 11;
-			if ((strlen(*cpp) > i) && (*(*cpp + i) != '('))
-				i = 19;
-			if (*(*cpp + i) == '(') {
+			if (strlen(*cpp) == i) {
+				if (*(cpp + 1) && **(cpp +1) == '(') {
+					cpp++;
+					i = 0;
+				} else
+					i = -1;
+			}
+
+			/*
+			 * The ICMP code is not required to follow in ()'s
+			 */
+			if ((i >= 0) && (*(*cpp + i) == '(')) {
 				i++;
 				j = icmpcode(*cpp + i);
 				if (j == -1) {
@@ -185,7 +194,11 @@ int     linenum;
 
 			fac = 0;
 			pri = 0;
-			cpp++;
+			if (!*++cpp) {
+				fprintf(stderr, "%d: %s\n", linenum,
+					"missing identifier after level");
+				return NULL;
+			}
 			s = index(*cpp, '.');
 			if (s) {
 				*s++ = '\0';
@@ -219,7 +232,10 @@ int     linenum;
 		fprintf(stderr, "%d: unknown keyword (%s)\n", linenum, *cpp);
 		return NULL;
 	}
-	cpp++;
+	if (!*++cpp) {
+		fprintf(stderr, "%d: missing 'in'/'out' keyword\n", linenum);
+		return NULL;
+	}
 
 	if (!strcasecmp("in", *cpp))
 		fil.fr_flags |= FR_INQUE;
@@ -236,13 +252,11 @@ int     linenum;
 				linenum);
 			return NULL;
 		}
-	} else {
-		fprintf(stderr, "%d: missing 'in'/'out' keyword (%s)\n",
-			linenum, *cpp);
+	}
+	if (!*++cpp) {
+		fprintf(stderr, "%d: missing source specification\n", linenum);
 		return NULL;
 	}
-	if (!*++cpp)
-		return NULL;
 
 	if (!strcasecmp("log", *cpp)) {
 		if (!*++cpp) {
@@ -254,15 +268,15 @@ int     linenum;
 			fil.fr_flags |= FR_LOGP;
 		else if (fil.fr_flags & FR_BLOCK)
 			fil.fr_flags |= FR_LOGB;
-		if (!strcasecmp(*cpp, "body")) {
+		if (*cpp && !strcasecmp(*cpp, "body")) {
 			fil.fr_flags |= FR_LOGBODY;
 			cpp++;
 		}
-		if (!strcasecmp(*cpp, "first")) {
+		if (*cpp && !strcasecmp(*cpp, "first")) {
 			fil.fr_flags |= FR_LOGFIRST;
 			cpp++;
 		}
-		if (!strcasecmp(*cpp, "or-block")) {
+		if (*cpp && !strcasecmp(*cpp, "or-block")) {
 			if (!(fil.fr_flags & FR_PASS)) {
 				fprintf(stderr,
 					"%d: or-block must be used with pass\n",
@@ -272,13 +286,17 @@ int     linenum;
 			fil.fr_flags |= FR_LOGORBLOCK;
 			cpp++;
 		}
-		if (!strcasecmp(*cpp, "level")) {
+		if (*cpp && !strcasecmp(*cpp, "level")) {
 			int fac, pri;
 			char *s;
 
 			fac = 0;
 			pri = 0;
-			cpp++;
+			if (!*++cpp) {
+				fprintf(stderr, "%d: %s\n", linenum,
+					"missing identifier after level");
+				return NULL;
+			}
 			s = index(*cpp, '.');
 			if (s) {
 				*s++ = '\0';
@@ -307,7 +325,7 @@ int     linenum;
 		}
 	}
 
-	if (!strcasecmp("quick", *cpp)) {
+	if (*cpp && !strcasecmp("quick", *cpp)) {
 		cpp++;
 		fil.fr_flags |= FR_QUICK;
 	}
@@ -339,12 +357,12 @@ int     linenum;
 					return NULL;
 				cpp++;
 			}
-			if (!strcasecmp(*cpp, "to") && *(cpp + 1)) {
+			if (*cpp && !strcasecmp(*cpp, "to") && *(cpp + 1)) {
 				cpp++;
 				if (to_interface(&fil.fr_tif, *cpp, linenum))
 					return NULL;
 				cpp++;
-			} else if (!strcasecmp(*cpp, "fastroute")) {
+			} else if (*cpp && !strcasecmp(*cpp, "fastroute")) {
 				if (!(fil.fr_flags & FR_INQUE)) {
 					fprintf(stderr,
 						"can only use %s with 'in'\n",
@@ -1224,12 +1242,13 @@ int     linenum;
 }
 
 
-#define	MAX_ICMPCODE	12
+#define	MAX_ICMPCODE	15
 
 char	*icmpcodes[] = {
 	"net-unr", "host-unr", "proto-unr", "port-unr", "needfrag", "srcfail",
 	"net-unk", "host-unk", "isolate", "net-prohib", "host-prohib",
-	"net-tos", "host-tos", NULL };
+	"net-tos", "host-tos", "filter-prohib", "host-preced", "preced-cutoff", 
+	NULL };
 /*
  * Return the number for the associated ICMP unreachable code.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lfil.c,v 1.1.1.2 2000/02/01 20:11:16 veego Exp $	*/
+/*	$NetBSD: ip_lfil.c,v 1.2 2000/02/01 20:31:10 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
