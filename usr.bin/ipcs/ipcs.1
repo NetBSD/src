@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipcs.1,v 1.10 2001/06/05 11:50:48 wiz Exp $
+.\"	$NetBSD: ipcs.1,v 1.11 2001/12/01 19:29:08 wiz Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -136,10 +136,6 @@ System data structures may change while
 is running; the output of
 .Nm
 is not guaranteed to be consistent.
-.Sh BUGS
-This manual page is woefully incomplete, because it does not
-at all attempt to explain the information printed by
-.Nm "" .
 .Sh FILES
 .Bl -tag -width /etc/passwd -compact
 .It Pa /dev/kmem
@@ -149,7 +145,9 @@ default system name list
 .El
 .Sh SEE ALSO
 .Xr ipcrm 1
-.Sh AUTHOR
-.Bl -tag
-Thorsten Lockert <tholo@sigmasoft.com>
-.El
+.Sh AUTHORS
+.An Thorsten Lockert Aq tholo@sigmasoft.com
+.Sh BUGS
+This manual page is woefully incomplete, because it does not
+at all attempt to explain the information printed by
+.Nm "" .
