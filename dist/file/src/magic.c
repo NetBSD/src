@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.1.1.5 2004/03/23 08:31:43 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.1.1.6 2004/04/08 12:22:17 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -68,9 +68,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.19 2004/03/22 20:37:13 christos Exp")
+FILE_RCSID("@(#)Id: magic.c,v 1.20 2004/03/23 15:33:43 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.1.1.5 2004/03/23 08:31:43 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.1.1.6 2004/04/08 12:22:17 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -240,13 +240,13 @@ magic_file(struct magic_set *ms, const char *inname)
 		fd = STDIN_FILENO;
 	else if ((fd = open(inname, O_RDONLY)) < 0) {
 		/* We cannot open it, but we were able to stat it. */
-		if (sb.st_mode & 0002)
+		if (sb.st_mode & 0222)
 			if (file_printf(ms, "writable, ") == -1)
 				return NULL;
 		if (sb.st_mode & 0111)
 			if (file_printf(ms, "executable, ") == -1)
 				return NULL;
-		if (sb.st_mode & 0100000)
+		if (S_ISREG(sb.st_mode))
 			if (file_printf(ms, "regular file, ") == -1)
 				return NULL;
 		if (file_printf(ms, "no read permission") == -1)
