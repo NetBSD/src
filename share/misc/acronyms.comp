@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.28 2003/12/02 18:14:17 sketch Exp $
+$NetBSD: acronyms.comp,v 1.29 2004/01/03 12:05:59 jmmv Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -101,6 +101,7 @@ LUN	logical unit number
 MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
+MIDI	musical instrument digital interface
 MIPS	million instructions per second
 MMU	memory management unit
 MSB	most significant bit [or: byte]
