@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.1 2003/04/16 22:02:59 thorpej Exp $	*/
+/*	$NetBSD: mpt.c,v 1.2 2003/04/16 23:02:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -277,10 +277,7 @@ mpt_send_cmd(mpt_softc_t *mpt, request_t *req)
 		mpt_prt(mpt, "%08x %08x %08x %08x",
 		    pReq[12], pReq[13], pReq[14], pReq[15]);
 	}
-#if 0 /* XXXJRT */
-	bus_dmamap_sync(mpt->request_dmat, mpt->request_dmap,
-	    BUS_DMASYNC_PREWRITE);
-#endif
+	MPT_SYNC_REQ(mpt, req, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	req->debug = REQ_ON_CHIP;
 	mpt_write(mpt, MPT_OFFSET_REQUEST_Q, (u_int32_t) req->req_pbuf);
 }
