@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.8 2002/07/20 11:28:08 hannken Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.9 2003/03/27 15:34:36 yamt Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ struct vnd_ioctl {
 
 /* vnd_flags */
 #define	VNDIOF_HASGEOM	0x01		/* use specified geometry */
+#define	VNDIOF_READONLY	0x02		/* as read-only device */
 
 #ifdef _KERNEL
 
@@ -135,6 +136,7 @@ struct vnd_softc {
 #define	VNF_WANTED	0x08	/* someone is waiting to obtain a lock */
 #define	VNF_LOCKED	0x10	/* unit is locked */
 #define	VNF_BUSY	0x20	/* unit is busy */
+#define	VNF_READONLY	0x40	/* unit is read-only */
 
 /*
  * A simple structure for describing which vnd units are in use.
