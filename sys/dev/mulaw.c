@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.19 2002/02/10 06:27:06 kent Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.20 2002/03/09 05:39:00 tacha Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.19 2002/02/10 06:27:06 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mulaw.c,v 1.20 2002/03/09 05:39:00 tacha Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -454,5 +454,30 @@ slinear8_to_alaw(void *v, u_char *p, int cc)
 	while (--cc >= 0) {
 		*p = lintoalaw[*p ^ 0x80];
 		++p;
+	}
+}
+
+void
+slinear16_to_alaw_le(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while (--cc >= 0) {
+		*p = lintoalaw[q[1] ^ 0x80];
+		++p;
+		q += 2;
+	}
+}
+
+
+void
+slinear16_to_alaw_be(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	while (--cc >= 0) {
+		*p = lintoalaw[q[0] ^ 0x80];
+		++p;
+		q += 2;
 	}
 }
