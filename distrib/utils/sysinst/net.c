@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.99 2003/11/19 00:16:49 dsl Exp $	*/
+/*	$NetBSD: net.c,v 1.100 2003/11/30 14:36:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -664,7 +664,7 @@ again:
 		fclose(f);
 	}
 
-	run_prog(0, NULL, "/sbin/ifconfig lo0 127.0.0.1");
+	run_program(0, "/sbin/ifconfig lo0 127.0.0.1");
 
 	/*
 	 * ifconfig does not allow media specifiers on IFM_MANUAL interfaces.
@@ -683,27 +683,26 @@ again:
 	}
 
 	if (*net_media != '\0')
-		run_prog(0, NULL, "/sbin/ifconfig %s media %s",
+		run_program(0, "/sbin/ifconfig %s media %s",
 		    net_dev, net_media);
 
 #ifdef INET6
 	if (v6config) {
 		init_v6kernel(1);
-		run_prog(0, NULL, "/sbin/ifconfig %s up", net_dev);
+		run_program(0, "/sbin/ifconfig %s up", net_dev);
 		sleep(get_v6wait() + 1);
-		run_prog(RUN_DISPLAY, NULL, "/sbin/rtsol -D %s", net_dev);
+		run_program(RUN_DISPLAY, "/sbin/rtsol -D %s", net_dev);
 		sleep(get_v6wait() + 1);
 	}
 #endif
 
 	if (net_ip[0] != '\0') {
 		if (net_mask[0] != '\0') {
-			run_prog(0, NULL,
-			    "/sbin/ifconfig %s inet %s netmask %s",
+			run_program(0, "/sbin/ifconfig %s inet %s netmask %s",
 			    net_dev, net_ip, net_mask);
 		} else {
-			run_prog(0, NULL,
-			    "/sbin/ifconfig %s inet %s", net_dev, net_ip);
+			run_program(0, "/sbin/ifconfig %s inet %s",
+			    net_dev, net_ip);
 		}
 	}
 
@@ -713,9 +712,8 @@ again:
 
 	/* Set a default route if one was given */
 	if (net_defroute[0] != '\0') {
-		run_prog(0, NULL, "/sbin/route -n flush -inet");
-		run_prog(0, NULL,
-		    "/sbin/route -n add default %s", net_defroute);
+		run_program(0, "/sbin/route -n flush -inet");
+		run_program(0, "/sbin/route -n add default %s", net_defroute);
 	}
 
 	/*
@@ -731,21 +729,21 @@ again:
 
 #ifdef INET6
 	if (v6config && network_up) {
-		network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
 		    "/sbin/ping6 -v -c 3 -n -I %s ff02::2", net_dev);
 
 		if (net_namesvr6[0] != '\0')
-			network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+			network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
 			    "/sbin/ping6 -v -c 3 -n %s", net_namesvr6);
 	}
 #endif
 
 	if (net_namesvr[0] != '\0' && network_up)
-		network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_namesvr);
 
 	if (net_defroute[0] != '\0' && network_up)
-		network_up = !run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+		network_up = !run_program(RUN_DISPLAY | RUN_PROGRESS, 
 		    "/sbin/ping -v -c 5 -w 5 -o -n %s", net_defroute);
 	fflush(NULL);
 
@@ -799,7 +797,7 @@ get_via_ftp(void)
 		 * unsafe by a strict reading of RFC 1738).
 		 */
 		if (strcmp("ftp", ftp_user) == 0 && ftp_pass[0] == 0)
-			ret = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+			ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 			    "/usr/bin/ftp -a ftp://%s/%s/%s",
 			    ftp_host,
 			    url_encode(ftp_dir_encoded, ftp_dir,
@@ -807,7 +805,7 @@ get_via_ftp(void)
 					RFC1738_SAFE_LESS_SHELL_PLUS_SLASH, 1),
 			    filename);
 		else {
-			ret = run_prog(RUN_DISPLAY | RUN_PROGRESS, NULL,
+			ret = run_program(RUN_DISPLAY | RUN_PROGRESS, 
 			    "/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 			    url_encode(ftp_user_encoded, ftp_user,
 					sizeof ftp_user_encoded,
@@ -877,8 +875,7 @@ again:
 	umount_mnt2();
 
 	/* Mount it */
-	if (run_prog(0, NULL,
-	    "/sbin/mount -r -o -2,-i,-r=1024 -t nfs %s:%s /mnt2",
+	if (run_program(0, "/sbin/mount -r -o -2,-i,-r=1024 -t nfs %s:%s /mnt2",
 	    nfs_host, nfs_dir)) {
 		msg_display(MSG_nfsbadmount, nfs_host, nfs_dir);
 		process_menu(MENU_nfsbadmount, NULL);
@@ -1058,7 +1055,7 @@ config_dhcp(char *inter)
 	process_menu(MENU_dhcpautoconf, NULL);
 	if (yesno) {
 		/* spawn off dhclient and wait for parent to exit */
-		dhcpautoconf = run_prog(RUN_DISPLAY, NULL,
+		dhcpautoconf = run_program(RUN_DISPLAY, 
 		    "%s -pf /tmp/dhclient.pid -lf /tmp/dhclient.leases %s",
 		    DHCLIENT_EX, inter);
 		return dhcpautoconf ? 0 : 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.25 2003/11/20 09:47:53 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.26 2003/11/30 14:36:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,10 +65,10 @@
 
 /* Defaults for things that might be defined in md.h */
 #ifndef PART_ROOT
-#define PART_ROOT	A
+#define PART_ROOT	PART_A
 #endif
 #ifndef PART_SWAP
-#define PART_SWAP	B
+#define PART_SWAP	PART_B
 #endif
 #ifndef PART_USR
 #define PART_USR	PART_ANY
@@ -555,15 +555,15 @@ make_bsd_partitions(void)
 	/* Whole disk partition */
 	part_raw = getrawpartition();
 	if (part_raw == -1)
-		part_raw = C;	/* for sanity... */
+		part_raw = PART_C;	/* for sanity... */
 	bsdlabel[part_raw].pi_offset = 0;
 	bsdlabel[part_raw].pi_size = dlsize;
 
-	if (part_raw == D) {
+	if (part_raw == PART_D) {
 		/* Probably a system that expects an i386 style mbr */
-		part_bsd = C;
-		bsdlabel[C].pi_offset = ptstart;
-		bsdlabel[C].pi_size = ptsize;
+		part_bsd = PART_C;
+		bsdlabel[PART_C].pi_offset = ptstart;
+		bsdlabel[PART_C].pi_size = ptsize;
 	} else {
 		part_bsd = part_raw;
 	}

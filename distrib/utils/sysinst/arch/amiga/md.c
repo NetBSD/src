@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2003/10/19 20:17:32 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.15 2003/11/30 14:36:44 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -75,9 +75,8 @@ md_post_newfs(void)
 {
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	return run_prog(RUN_DISPLAY, NULL,
-	    "/usr/mdec/installboot -v /usr/mdec/xxboot /dev/r%sa",
-	    diskdev);
+	return run_program(RUN_DISPLAY,
+	    "/usr/mdec/installboot -v /usr/mdec/xxboot /dev/r%sa", diskdev);
 }
 
 int
@@ -115,9 +114,9 @@ md_cleanup_install(void)
 
 	enable_rc_conf();
 
-	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_program(0, "rm -f %s", target_expand("/sysinst"));
+	run_program(0, "rm -f %s", target_expand("/.termcap"));
+	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int

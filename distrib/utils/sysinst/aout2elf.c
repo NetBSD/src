@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2elf.c,v 1.8 2003/08/06 13:56:58 itojun Exp $
+/*	$NetBSD: aout2elf.c,v 1.9 2003/11/30 14:36:43 dsl Exp $
  *
  * Copyright 1997 Piermont Information Systems Inc.
  * All rights reserved.
@@ -120,7 +120,7 @@ handle_aout_x_libs(const char *srcdir, const char *tgtdir)
 		snprintf(src, MAXPATHLEN, "%s/%s", srcdir, x_libs[i]);
 		if (!is_aout_shared_lib(src))
 			continue;
-		run_prog(0, NULL, "mv -f %s %s", src, tgtdir);
+		run_program(0, "mv -f %s %s", src, tgtdir);
 	}
 
 	/*
@@ -178,7 +178,7 @@ handle_aout_libs(const char *dir, int op, const void *arg)
 			n++;
 			break;
 		case LIB_MOVE:
-			run_prog(0, NULL, "mv -f %s %s/%s",
+			run_program(0, "mv -f %s %s/%s",
 			    full_name, destdir, dp->d_name);
 			break;
 		}
@@ -190,6 +190,14 @@ endloop:
 	closedir(dd);
 
 	return n;
+}
+
+static void
+abort_libupdate(void)
+{
+	msg_display(MSG_aoutfail);
+	process_menu(MENU_ok, NULL);
+	exit(1);
 }
 
 int
@@ -216,7 +224,7 @@ move_aout_libs(void)
 	if (target_realpath("/emul", prefix) == NULL || stat(prefix, &st) < 0) {
 		strlcpy(prefix, target_expand("/emul"), sizeof(prefix));
 		if (lstat(prefix, &st) == 0) {
-			run_prog(0, NULL, "mv -f %s %s", prefix,
+			run_program(0, "mv -f %s %s", prefix,
 			    target_expand("/emul.old"));
 			backedup = 1;
 		}
@@ -234,7 +242,7 @@ move_aout_libs(void)
 	 */
 	strlcpy(src, concat_paths(prefix, "aout"), sizeof(src));
 	if (lstat(src, &st) == 0) {
-		run_prog(0, NULL, "mv -f %s %s", src,
+		run_program(0, "mv -f %s %s", src,
 		    concat_paths(prefix, "aout.old"));
 		backedup = 1;
 	}
@@ -245,9 +253,10 @@ move_aout_libs(void)
 	 * avoid overflowing the root partition.
 	 */
 	strlcpy(prefix, target_expand("/usr/aout"), sizeof(prefix));
-	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s", prefix);
-	run_prog(RUN_FATAL, MSG_aoutfail, "ln -s %s %s",
-	    "/usr/aout", src);
+	if (run_program(0, "mkdir -p %s", prefix))
+		abort_libupdate();
+	if (run_program(0, "ln -s %s %s", "/usr/aout", src))
+		abort_libupdate();
 
 domove:
 	/*
@@ -260,26 +269,26 @@ domove:
 	 * and ld.so respectively will find them.
 	 */
 	strlcpy(src, concat_paths(prefix, "usr/lib"), sizeof(src));
-	run_prog(0, NULL, "mv -f %s %s", src,
-	    concat_paths(prefix, "usr/lib.old"));
+	run_program(0, "mv -f %s %s", src, concat_paths(prefix, "usr/lib.old"));
 	strlcpy(src, concat_paths(prefix, "etc/ld.so.conf"), sizeof(src));
-	run_prog(0, NULL, "mv -f %s %s", src,
-	    concat_paths(prefix, "etc/ld.so.conf.old"));
-	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
-	    concat_paths(prefix, "usr/lib"));
-	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
-	    concat_paths(prefix, "etc"));
+	run_program(0, "mv -f %s %s",
+	    src, concat_paths(prefix, "etc/ld.so.conf.old"));
+	if (run_program(0, "mkdir -p %s ", concat_paths(prefix, "usr/lib")))
+		abort_libupdate();
+	if (run_program(0, "mkdir -p %s ", concat_paths(prefix, "etc")))
+		abort_libupdate();
 
 	strlcpy(src, target_expand("/etc/ld.so.conf"), sizeof(src));
-	run_prog(RUN_FATAL, MSG_aoutfail, "mv -f %s %s", src,
-	    concat_paths(prefix, "etc/ld.so.conf"));
+	if (run_program(0, "mv -f %s %s",
+	    src, concat_paths(prefix, "etc/ld.so.conf")))
+		abort_libupdate();
 
 	strlcpy(src, target_expand("/usr/lib"), sizeof(src));
-	n = handle_aout_libs(src, LIB_MOVE,
-	    concat_paths(prefix, "usr/lib"));
+	n = handle_aout_libs(src, LIB_MOVE, concat_paths(prefix, "usr/lib"));
 
-	run_prog(RUN_FATAL, MSG_aoutfail, "mkdir -p %s ",
-	    concat_paths(prefix, "usr/X11R6/lib"));
+	if (run_program(0, "mkdir -p %s ",
+	    concat_paths(prefix, "usr/X11R6/lib")))
+		abort_libupdate();
 
 	strlcpy(src, target_expand("/usr/X11R6/lib"), sizeof(src));
 	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R6/lib"));
