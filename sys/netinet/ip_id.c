@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.6 2003/12/26 19:04:55 wiz Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.7 2004/01/02 20:51:51 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.6 2003/12/26 19:04:55 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.7 2004/01/02 20:51:51 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -175,10 +175,10 @@ ip_randomid(void)
 	if (ru_counter >= RU_MAX || time.tv_sec > ru_reseed)
 		ip_initid();
 
+#if 0
 	if (!tmp)
 		tmp = arc4random();
 
-#if 0
 	/* Skip a random number of ids */
 	n = tmp & 0x3; tmp = tmp >> 2;
 	if (ru_counter + n >= RU_MAX)
