@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.12 1999/06/23 01:58:22 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.13 1999/06/23 23:48:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.12 1999/06/23 01:58:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.13 1999/06/23 23:48:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.12 1999/06/23 01:58:22 nisimura Exp $");
 
 #include <uvm/uvm_extern.h>
 
-/* XXX BUS'IFYING XXX */
-
-#if defined(pmax)
 #define	machine_btop(x) mips_btop(x)
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG0_TO_PHYS(x)
 
@@ -92,31 +89,25 @@ struct bt431reg {
 	u_int16_t	bt_ctl;
 };
 
-#endif
+#define	BYTE(base, index)	*((u_int8_t *)(base) + ((index)<<2))
+#define	HALF(base, index)	*((u_int16_t *)(base) + ((index)<<1))
 
-#if defined(__alpha__) || defined(alpha)
-/*
- * Digital UNIX never supports PMAG-AA
- */
-#define machine_btop(x) alpha_btop(x)
-#define MACHINE_KSEG0_TO_PHYS(x) ALPHA_K0SEG_TO_PHYS(x)
+#define BT455_SELECT(vdac, regno) do {	\
+	(vdac)->bt_reg = regno;		\
+	(vdac)->bt_clr = 0;		\
+	tc_wmb();			\
+   } while (0)
 
-struct bt455reg {
-	u_int32_t	bt_reg;
-	u_int32_t	bt_cmap;
-	u_int32_t	bt_clr;
-	u_int32_t	bt_ovly;
-};
+#define	TWIN(x)    ((x)|(x) << 8)
+#define	TWIN_LO(x) (twin = (x) & 0x00ff, twin << 8 | twin)
+#define	TWIN_HI(x) (twin = (x) & 0xff00, twin | twin >> 8)
 
-struct bt431reg {
-	u_int32_t	bt_lo;
-	u_int32_t	bt_hi;
-	u_int32_t	bt_ram;
-	u_int32_t	bt_ctl;
-};
-#endif
+#define	BT431_SELECT(curs, regno) do {	\
+	(curs)->bt_lo = TWIN(regno);	\
+	(curs)->bt_hi = 0;		\
+	tc_wmb();			\
+   } while (0);
 
-/* XXX XXX XXX */
 
 struct fb_devconfig {
 	vaddr_t dc_vaddr;		/* memory space virtual base address */
@@ -227,24 +218,6 @@ static int  set_cursor __P((struct mfb_softc *, struct wsdisplay_cursor *));
 static int  get_cursor __P((struct mfb_softc *, struct wsdisplay_cursor *));
 static void set_curpos __P((struct mfb_softc *, struct wsdisplay_curpos *));
 void bt431_set_curpos __P((struct mfb_softc *));
-
-#define	TWIN_LO(x) (twin = (x) & 0x00ff, twin << 8 | twin)
-#define	TWIN_HI(x) (twin = (x) & 0xff00, twin | twin >> 8)
-
-/* XXX XXX XXX */
-#define	BT431_SELECT(curs, regno) do {	\
-	u_int16_t twin;			\
-	curs->bt_lo = TWIN_LO(regno);	\
-	curs->bt_hi = TWIN_HI(regno);	\
-	tc_wmb();			\
-   } while (0)
-
-#define BT455_SELECT(vdac, index) do {	\
-	vdac->bt_reg = index;		\
-	vdac->bt_clr = 0;		\
-	tc_wmb();			\
-   } while (0)
-/* XXX XXX XXX */
 
 /* bit order reverse */
 const static u_int8_t flip[256] = {
@@ -551,15 +524,31 @@ mfbintr(arg)
 		BT431_SELECT(curs, BT431_REG_COMMAND);
 		curs->bt_ctl = (sc->sc_curenb) ? 0x4444 : 0x0404;
 	}
+	if (v & DATA_CURCMAP_CHANGED) {
+		u_int8_t *cp = sc->sc_cursor.cc_color;
+
+		BT455_SELECT(vdac, 8);
+		vdac->bt_cmap = 0;	tc_wmb();
+		vdac->bt_cmap = cp[1];	tc_wmb();
+		vdac->bt_cmap = 0;	tc_wmb();
+
+		vdac->bt_cmap = 0;	tc_wmb();
+		vdac->bt_cmap = cp[1];	tc_wmb();
+		vdac->bt_cmap = 0;	tc_wmb();
+
+		vdac->bt_ovly = 0;	tc_wmb();
+		vdac->bt_ovly = cp[0];	tc_wmb();
+		vdac->bt_ovly = 0;	tc_wmb();
+	}
 	if (v & DATA_CURSHAPE_CHANGED) {
 		u_int8_t *ip, *mp, img, msk;
 		int bcnt;
 
 		ip = (u_int8_t *)sc->sc_cursor.cc_image;
 		mp = (u_int8_t *)(sc->sc_cursor.cc_image + CURSOR_MAX_SIZE);
-
 		bcnt = 0;
-		BT431_SELECT(curs, BT431_REG_CRAM_BASE+0);
+		BT431_SELECT(curs, BT431_REG_CRAM_BASE);
+
 		/* 64 pixel scan line is consisted with 16 byte cursor ram */
 		while (bcnt < sc->sc_cursor.cc_size.y * 16) {
 			/* pad right half 32 pixel when smaller than 33 */
@@ -611,21 +600,19 @@ mfbinit(dc)
 	curs->bt_ctl = 0;	tc_wmb();
 
 	BT455_SELECT(vdac, 0);
-	for (i = 0; i < 16; i++) {
+	vdac->bt_cmap = 0;	tc_wmb();
+	vdac->bt_cmap = 0;	tc_wmb();
+	vdac->bt_cmap = 0;	tc_wmb();
+
+	vdac->bt_cmap = 0;	tc_wmb();
+	vdac->bt_cmap = 0xff;	tc_wmb();
+	vdac->bt_cmap = 0;	tc_wmb();
+
+	for (i = 2; i < 16; i++) {
 		vdac->bt_cmap = 0;	tc_wmb();
 		vdac->bt_cmap = 0;	tc_wmb();
 		vdac->bt_cmap = 0;	tc_wmb();
 	}
-
-	BT455_SELECT(vdac, 1);
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0xff;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
-
-	BT455_SELECT(vdac, 8);
-	vdac->bt_cmap = 0;	tc_wmb();
-	vdac->bt_cmap = 0xff;	tc_wmb();
-	vdac->bt_cmap = 0;	tc_wmb();
 
 	vdac->bt_ovly = 0;	tc_wmb();
 	vdac->bt_ovly = 0xff;	tc_wmb();
@@ -638,9 +625,17 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	int v, count;
+	int v, count, index;
 
 	v = p->which;
+	if (v & WSDISPLAY_CURSOR_DOCMAP) {
+		index = p->cmap.index;
+		count = p->cmap.count;
+		if (index >= 2 || (index + count) > 2)
+			return (EINVAL);
+		if (!uvm_useracc(p->cmap.red, count, B_READ))
+			return (EFAULT);
+	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		if (p->size.x > CURSOR_MAX_SIZE || p->size.y > CURSOR_MAX_SIZE)
 			return (EINVAL);
@@ -661,6 +656,10 @@ set_cursor(sc, p)
 	if (v & WSDISPLAY_CURSOR_DOCUR) {
 		sc->sc_curenb = p->enable;
 		sc->sc_changed |= DATA_ENB_CHANGED;
+	}
+	if (v & WSDISPLAY_CURSOR_DOCMAP) {
+		copyin(p->cmap.red, &cc->cc_color[index], count);
+		sc->sc_changed |= DATA_CURCMAP_CHANGED;
 	}
 	if (v & WSDISPLAY_CURSOR_DOSHAPE) {
 		cc->cc_size = p->size;
