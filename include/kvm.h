@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kvm.h	5.6 (Berkeley) 4/23/91
- *	$Id: kvm.h,v 1.3 1993/08/01 18:44:51 mycroft Exp $
+ *	@(#)kvm.h	8.1 (Berkeley) 6/2/93
  */
 
 #ifndef _KVM_H_
@@ -41,21 +40,30 @@
 #define	VRS_SYM		"_version"
 #define	VRS_KEY		"VERSION"
 
+#include <nlist.h>
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct proc;
-struct user;
-char		*kvm_getargs __P((const struct proc *, const struct user *));
-char		*kvm_getenv __P((const struct proc *, const struct user *));
-struct eproc	*kvm_geteproc __P((const struct proc *));
-char		*kvm_geterr __P((void));
-int		 kvm_getprocs __P((int, int));
-struct user	*kvm_getu __P((const struct proc *));
-struct proc	*kvm_nextproc __P((void));
-int		 kvm_nlist __P((struct nlist *));
-int		 kvm_openfiles __P((const char *, const char *, const char *));
-int		 kvm_read __P((void *, void *, int));
+
+typedef struct __kvm kvm_t;
+
+struct kinfo_proc;
+int	  kvm_close __P((kvm_t *));
+char	**kvm_getargv __P((kvm_t *, const struct kinfo_proc *, int));
+char	**kvm_getenvv __P((kvm_t *, const struct kinfo_proc *, int));
+char	 *kvm_geterr __P((kvm_t *));
+int	  kvm_getloadavg __P((kvm_t *, double [], int));
+char	 *kvm_getfiles __P((kvm_t *, int, int, int *));
+struct kinfo_proc *
+	  kvm_getprocs __P((kvm_t *, int, int, int *));
+int	  kvm_nlist __P((kvm_t *, struct nlist *));
+kvm_t	 *kvm_open
+	    __P((const char *, const char *, const char *, int, const char *));
+kvm_t	 *kvm_openfiles
+	    __P((const char *, const char *, const char *, int, char *));
+int	  kvm_read __P((kvm_t *, unsigned long, void *, unsigned int));
+int	  kvm_write __P((kvm_t *, unsigned long, const void *, unsigned int));
+
 __END_DECLS
 
 #endif /* !_KVM_H_ */
