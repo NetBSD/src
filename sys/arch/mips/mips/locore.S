@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.64 1999/02/28 20:36:31 mhitch Exp $	*/
+/*	$NetBSD: locore.S,v 1.65 1999/03/23 22:43:18 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,17 @@ _C_LABEL(kernel_text):
 /*
  * Initialize stack and call machine startup.
  */
-	la	sp, start - CALLFRAME_SIZ	# for the sake of debugger
+	la	$3,start
+	slt	$2,$3,sp
+	bne	$2,$0,1f
+	addu	$2,$3,-CALLFRAME_SIZ
+	subu	$2,$3,sp
+	slt	$2,$2,4096			# within 4kB of _start
+	beq	$2,$0,2f
+	addu	$2,$3,-CALLFRAME_SIZ
+1:
+	move	sp,$2
+2:
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
 #endif
