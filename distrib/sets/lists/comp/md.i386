@@ -1,7 +1,9 @@
 ./usr/include/i386
 ./usr/include/machine/ansi.h
 ./usr/include/machine/asm.h
+./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
+./usr/include/machine/conf.h
 ./usr/include/machine/cpu.h
 ./usr/include/machine/cpufunc.h
 ./usr/include/machine/cputypes.h
@@ -14,6 +16,8 @@
 ./usr/include/machine/freebsd_machdep.h
 ./usr/include/machine/gdt.h
 ./usr/include/machine/ieeefp.h
+./usr/include/machine/intr.h
+./usr/include/machine/joystick.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/linux_machdep.h
 ./usr/include/machine/mouse.h
@@ -41,6 +45,7 @@
 ./usr/include/machine/tss.h
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
+./usr/include/machine/vm86.h
 ./usr/include/machine/vmparam.h
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
@@ -66,3 +71,4 @@
 ./usr/share/man/cat2/i386_iopl.0
 ./usr/share/man/cat2/i386_set_ioperm.0
 ./usr/share/man/cat2/i386_set_ldt.0
+./usr/share/man/cat2/i386_vm86.0
