@@ -1,5 +1,5 @@
-/*	$NetBSD: rtadvd.c,v 1.17 2002/05/21 23:35:18 itojun Exp $	*/
-/*	$KAME: rtadvd.c,v 1.63 2002/05/21 23:33:01 itojun Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.18 2002/05/29 14:40:32 itojun Exp $	*/
+/*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,8 +70,8 @@ static u_char *rcvcmsgbuf;
 static size_t rcvcmsgbuflen;
 static u_char *sndcmsgbuf = NULL;
 static size_t sndcmsgbuflen;
-static int do_dump;
-static int do_die;
+volatile sig_atomic_t do_dump;
+volatile sig_atomic_t do_die;
 struct msghdr sndmhdr;
 struct iovec rcviov[2];
 struct iovec sndiov[2];
@@ -82,9 +82,6 @@ static char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX: should be configurab
 static char *mcastif;
 int sock;
 int rtsock = -1;
-#ifdef MIP6
-int mobileip6 = 0;
-#endif
 int accept_rr = 0;
 int dflag = 0, sflag = 0;
 
@@ -96,7 +93,7 @@ struct nd_optlist {
 	struct nd_opt_hdr *opt;
 };
 union nd_opts {
-	struct nd_opt_hdr *nd_opt_array[7];
+	struct nd_opt_hdr *nd_opt_array[9];
 	struct {
 		struct nd_opt_hdr *zero;
 		struct nd_opt_hdr *src_lladdr;
@@ -122,7 +119,7 @@ union nd_opts {
 
 u_int32_t ndopt_flags[] = {
 	0, NDOPT_FLAG_SRCLINKADDR, NDOPT_FLAG_TGTLINKADDR,
-	NDOPT_FLAG_PREFIXINFO, NDOPT_FLAG_RDHDR, NDOPT_FLAG_MTU
+	NDOPT_FLAG_PREFIXINFO, NDOPT_FLAG_RDHDR, NDOPT_FLAG_MTU,
 };
 
 int main __P((int, char *[]));
@@ -156,11 +153,7 @@ main(argc, argv)
 	int fflag = 0, logopt;
 
 	/* get command line options and arguments */
-#ifdef MIP6
-#define OPTIONS "c:dDfM:mRs"
-#else
 #define OPTIONS "c:dDfM:Rs"
-#endif
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 #undef OPTIONS
 		switch (ch) {
@@ -179,11 +172,6 @@ main(argc, argv)
 		case 'M':
 			mcastif = optarg;
 			break;
-#ifdef MIP6
-		case 'm':
-			mobileip6 = 1;
-			break;
-#endif
 		case 'R':
 			fprintf(stderr, "rtadvd: "
 				"the -R option is currently ignored.\n");
@@ -199,11 +187,7 @@ main(argc, argv)
 	argv += optind;
 	if (argc == 0) {
 		fprintf(stderr,
-#ifdef MIP6
-			"usage: rtadvd [-dDfMmRs] [-c conffile] "
-#else
 			"usage: rtadvd [-dDfMRs] [-c conffile] "
-#endif
 			"interfaces...\n");
 		exit(1);
 	}
@@ -242,7 +226,11 @@ main(argc, argv)
 	sock_open();
 
 	/* record the current PID */
-	pidfile(NULL);
+	if (pidfile(NULL) < 0) {
+		syslog(LOG_ERR,
+		    "<%s> failed to open the pid log file, run anyway.",
+		    __FUNCTION__);
+	}
 
 	FD_ZERO(&fdset);
 	FD_SET(sock, &fdset);
@@ -521,7 +509,7 @@ rtmsg_input()
 			    "<%s> interface %s becomes down. stop timer.",
 			    __FUNCTION__, rai->ifname);
 			rtadvd_remove_timer(&rai->timer);
-		} else if ((oldifflags & IFF_UP) == 0 &&	/* DOWN to UP */
+		} else if ((oldifflags & IFF_UP) == 0 && /* DOWN to UP */
 			 (iflist[ifindex]->ifm_flags & IFF_UP) != 0) {
 			syslog(LOG_INFO,
 			    "<%s> interface %s becomes up. restart timer.",
@@ -745,7 +733,7 @@ rs_input(int len, struct nd_router_solicit *rs,
 	memset(&ndopts, 0, sizeof(ndopts));
 	if (nd6_options((struct nd_opt_hdr *)(rs + 1),
 			len - sizeof(struct nd_router_solicit),
-			 &ndopts, NDOPT_FLAG_SRCLINKADDR)) {
+			&ndopts, NDOPT_FLAG_SRCLINKADDR)) {
 		syslog(LOG_DEBUG,
 		       "<%s> ND option check failed for an RS from %s on %s",
 		       __FUNCTION__,
@@ -1210,11 +1198,7 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 			goto bad;
 		}
 
-#ifdef MIP6
-		if (hdr->nd_opt_type > ND_OPT_HOMEAGENT_INFO)
-#else
 		if (hdr->nd_opt_type > ND_OPT_MTU)
-#endif
 		{
 			syslog(LOG_INFO, "<%s> unknown ND option(type %d)",
 			    __FUNCTION__, hdr->nd_opt_type);
@@ -1232,10 +1216,6 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
 		case ND_OPT_MTU:
-#ifdef MIP6
-		case ND_OPT_ADVINTERVAL:
-		case ND_OPT_HOMEAGENT_INFO:
-#endif
 			if (ndopts->nd_opt_array[hdr->nd_opt_type]) {
 				syslog(LOG_INFO,
 				    "<%s> duplicated ND option (type = %d)",
