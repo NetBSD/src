@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.31 2001/03/10 22:46:50 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.32 2001/05/07 22:01:28 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -966,13 +966,14 @@ uvmpd_scan()
 		}
 
 		/*
-		 * If the page has not been referenced since the
-		 * last scan, deactivate the page if there is a
-		 * shortage of inactive pages.
+		 * If we're short on inactive pages, move this over
+		 * to the inactive list.  The second hand will sweep
+		 * it later, and if it has been referenced again, it
+		 * will be moved back to active.
 		 */
 
-		if (inactive_shortage > 0 &&
-		    pmap_clear_reference(p) == FALSE) {
+		if (inactive_shortage > 0) {
+			pmap_clear_reference(p);
 			/* no need to check wire_count as pg is "active" */
 			uvm_pagedeactivate(p);
 			uvmexp.pddeact++;
