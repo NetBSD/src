@@ -1,3 +1,5 @@
+/*	$NetBSD: fixunsdfsi.S,v 1.4 1997/07/16 14:37:40 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +37,15 @@
  * SUCH DAMAGE.
  *
  * from: Header: fixunsdfsi.s,v 1.3 91/10/08 00:03:15 torek Exp
- * $Id: fixunsdfsi.S,v 1.3 1996/11/16 20:53:19 pk Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)fixunsdfsi.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: fixunsdfsi.S,v 1.4 1997/07/16 14:37:40 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -49,7 +55,6 @@
  * that it really matters, by using `fbul,a'.
  */
 
-#include <machine/asm.h>
 
 	.align	8
 Lbig:

@@ -1,3 +1,5 @@
+/*	$NetBSD: setjmp.S,v 1.4 1997/07/16 14:37:44 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +37,15 @@
  * SUCH DAMAGE.
  *
  * from: Header: setjmp.s,v 1.2 92/06/25 03:18:43 torek Exp
- * $Id: setjmp.S,v 1.3 1994/05/17 23:56:24 deraadt Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: setjmp.S,v 1.4 1997/07/16 14:37:44 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

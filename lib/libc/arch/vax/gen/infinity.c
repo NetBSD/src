@@ -1,12 +1,8 @@
-/*	$NetBSD: infinity.c,v 1.2 1997/07/13 18:45:46 christos Exp $	*/
+/*	$NetBSD: infinity.c,v 1.3 1997/07/16 14:38:05 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char rcsid[] = "$Id: infinity.c,v 1.2 1997/07/13 18:45:46 christos Exp $";
-#else
-__RCSID("$NetBSD: infinity.c,v 1.2 1997/07/13 18:45:46 christos Exp $");
-#endif
+__RCSID("$NetBSD: infinity.c,v 1.3 1997/07/16 14:38:05 christos Exp $");
 #endif /* not lint */
 /*
  * XXX - THIS IS (probably) COMPLETELY WRONG ON VAX!!!

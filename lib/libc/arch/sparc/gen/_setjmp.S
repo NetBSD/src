@@ -1,3 +1,5 @@
+/*	$NetBSD: _setjmp.S,v 1.4 1997/07/16 14:37:39 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +37,15 @@
  * SUCH DAMAGE.
  *
  * from: Header: _setjmp.s,v 1.1 91/07/06 16:45:53 torek Exp
- * $Id: _setjmp.S,v 1.3 1996/11/16 20:53:15 pk Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: _setjmp.S,v 1.4 1997/07/16 14:37:39 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -52,8 +58,6 @@
  * by unwinding the call stack.
  * The previous signal state is NOT restored.
  */
-
-#include <machine/asm.h>
 
 ENTRY(_setjmp)
 	st	%sp, [%o0+0]	/* store caller's stack pointer */

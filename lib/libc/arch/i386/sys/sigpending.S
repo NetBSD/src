@@ -1,3 +1,5 @@
+/*	$NetBSD: sigpending.S,v 1.3 1997/07/16 14:37:33 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,12 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigpending.s	5.1 (Berkeley) 7/1/90
- *	$Id: sigpending.S,v 1.2 1993/10/21 02:19:38 jtc Exp $
  */
 
+#include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: sigpending.S,v 1.2 1993/10/21 02:19:38 jtc Exp $"
+	RCSID("$NetBSD: sigpending.S,v 1.3 1997/07/16 14:37:33 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

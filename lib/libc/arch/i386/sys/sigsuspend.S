@@ -1,3 +1,5 @@
+/*	$NetBSD: sigsuspend.S,v 1.7 1997/07/16 14:37:36 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,12 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigsuspend.s	5.2 (Berkeley) 12/17/90
- *	$Id: sigsuspend.S,v 1.6 1994/10/26 19:49:51 mycroft Exp $
  */
 
+#include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: sigsuspend.S,v 1.6 1994/10/26 19:49:51 mycroft Exp $"
+	RCSID("$NetBSD: sigsuspend.S,v 1.7 1997/07/16 14:37:36 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

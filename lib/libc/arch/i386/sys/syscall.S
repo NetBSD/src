@@ -1,3 +1,5 @@
+/*	$NetBSD: syscall.S,v 1.6 1997/07/16 14:37:38 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,12 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)syscall.s	5.1 (Berkeley) 4/23/90
- *	$Id: syscall.S,v 1.5 1994/10/26 19:49:52 mycroft Exp $
  */
 
+#include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: syscall.S,v 1.5 1994/10/26 19:49:52 mycroft Exp $"
+	RCSID("$NetBSD: syscall.S,v 1.6 1997/07/16 14:37:38 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: htonl.S,v 1.3 1997/07/16 14:37:46 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,16 +37,19 @@
  * SUCH DAMAGE.
  *
  * from: Header: htonl.s,v 1.1 92/06/25 12:47:05 torek Exp
- * $Id: htonl.S,v 1.2 1996/11/16 20:53:25 pk Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)htonl.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: htonl.S,v 1.3 1997/07/16 14:37:46 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* netorder = htonl(hostorder) */
 
-#include <machine/asm.h>
 
 ENTRY(htonl)
 	retl

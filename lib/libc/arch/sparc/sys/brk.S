@@ -1,3 +1,5 @@
+/*	$NetBSD: brk.S,v 1.3 1997/07/16 14:37:54 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,12 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: brk.s,v 1.3 92/06/25 12:56:05 mccanne Exp
- * $Id: brk.S,v 1.2 1994/02/10 20:15:56 pk Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#include <machine/asm.h>
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#else
+	RCSID("$NetBSD: brk.S,v 1.3 1997/07/16 14:37:54 christos Exp $")
+#endif
+#endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 

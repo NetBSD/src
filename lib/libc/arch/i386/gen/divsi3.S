@@ -1,3 +1,5 @@
+/*	$NetBSD: divsi3.S,v 1.5 1997/07/16 14:37:15 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)divsi3.s	5.1 (Berkeley) 5/15/90
- *	$Id: divsi3.S,v 1.4 1995/12/28 20:03:54 jtc Exp $
  */
 
 #include <machine/asm.h>
-
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: divsi3.S,v 1.4 1995/12/28 20:03:54 jtc Exp $"
+	RCSID("$NetBSD: divsi3.S,v 1.5 1997/07/16 14:37:15 christos Exp $")
 #endif
 
 ENTRY(__divsi3)

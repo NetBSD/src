@@ -1,3 +1,5 @@
+/*	$NetBSD: fixdfsi.S,v 1.5 1997/07/16 14:37:16 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixdfsi.s	5.4 (Berkeley) 4/12/91
- *	$Id: fixdfsi.S,v 1.4 1995/12/28 20:03:56 jtc Exp $
  */
 
 #include <machine/asm.h>
-
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: fixdfsi.S,v 1.4 1995/12/28 20:03:56 jtc Exp $"
+	RCSID("$NetBSD: fixdfsi.S,v 1.5 1997/07/16 14:37:16 christos Exp $")
 #endif
 
 ENTRY(__fixdfsi)

@@ -1,3 +1,5 @@
+/*	$NetBSD: ptrace.S,v 1.3 1997/07/16 14:37:59 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,12 +37,16 @@
  * SUCH DAMAGE.
  *
  * from: Header: ptrace.s,v 1.2 91/12/20 01:59:00 leres Exp
- * $Id: ptrace.S,v 1.2 1994/02/10 20:15:58 pk Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#include <machine/asm.h>
+#if defined(SYSLIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)ptrace.s	8.1 (Berkeley) 6/4/93"
-#endif /* LIBC_SCCS and not lint */
+#else
+	RCSID("$NetBSD: ptrace.S,v 1.3 1997/07/16 14:37:59 christos Exp $")
+#endif
+#endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 

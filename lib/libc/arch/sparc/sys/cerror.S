@@ -1,3 +1,5 @@
+/*	$NetBSD: cerror.S,v 1.5 1997/07/16 14:37:55 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +37,15 @@
  * SUCH DAMAGE.
  *
  * from: Header: cerror.s,v 1.3 92/07/02 04:17:59 torek Exp
- * $Id: cerror.S,v 1.4 1996/11/16 20:53:34 pk Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: cerror.S,v 1.5 1997/07/16 14:37:55 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"

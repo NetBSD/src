@@ -1,3 +1,5 @@
+/*	$NetBSD: modf.S,v 1.5 1997/07/16 14:37:18 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)modf.s	5.5 (Berkeley) 3/18/91
- *	$Id: modf.S,v 1.4 1995/12/28 20:03:58 jtc Exp $
  */
 
 #include <machine/asm.h>
-
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: modf.S,v 1.4 1995/12/28 20:03:58 jtc Exp $"
+	RCSID("$NetBSD: modf.S,v 1.5 1997/07/16 14:37:18 christos Exp $")
 #endif
 
 /*
