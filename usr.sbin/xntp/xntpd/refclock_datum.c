@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_datum.c,v 1.2 1998/01/09 06:06:56 perry Exp $	*/
+/*	$NetBSD: refclock_datum.c,v 1.3 1998/08/12 14:11:55 christos Exp $	*/
 
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server
@@ -870,4 +870,6 @@ static void datum_pts_receive(rbufp)
 #endif
 
 }
-#endif
+#else /* not (REFCLOCK && DATUM) */
+int refclock_datum_bs;
+#endif /* not (REFCLOCK && DATUM) */

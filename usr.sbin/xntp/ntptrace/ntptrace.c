@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptrace.c,v 1.6 1998/04/01 15:01:19 christos Exp $	*/
+/*	$NetBSD: ntptrace.c,v 1.7 1998/08/12 14:11:52 christos Exp $	*/
 
 /*
  * ntptrace - show the chain from an NTP host leading back to
@@ -116,13 +116,17 @@ int ntptracemain P((int, char *[]));
  * timer expiries.
  */
 #ifdef NO_MAIN_ALLOWED
+void ntptracemain P((int, char *[]));
+
 CALL(ntptrace,"ntptrace",ntptracemain);
-#endif
-int
-#ifndef NO_MAIN_ALLOWED
-main
 #else
-ntptracemain
+int main P((int, char *[]));
+#endif
+
+#ifndef NO_MAIN_ALLOWED
+int main
+#else
+void ntptracemain
 #endif /* NO_MAIN_ALLOWED */
 (argc, argv)
 	int argc;

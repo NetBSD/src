@@ -1,4 +1,4 @@
-/*	$NetBSD: statestr.c,v 1.3 1998/03/06 18:17:15 christos Exp $	*/
+/*	$NetBSD: statestr.c,v 1.4 1998/08/12 14:11:50 christos Exp $	*/
 
 /*
  * pretty printing of status information
@@ -132,7 +132,7 @@ getcode(code, codetab)
 
 	while (codetab->code != -1) {
 		if (codetab->code == code)
-			return codetab->string;
+			return (char *) codetab->string;
 		codetab++;
 	}
 	(void) sprintf(buf, "%s_%d", codetab->string, code);

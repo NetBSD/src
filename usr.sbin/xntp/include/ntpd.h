@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.4 1998/04/01 15:01:17 christos Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.5 1998/08/12 14:11:51 christos Exp $	*/
 
 /*
  * ntpd.h - Prototypes for xntpd.
@@ -50,7 +50,7 @@ extern	void	report_event	P((int, struct peer *));
 struct ctl_var {
   u_short code;
   u_short flags;
-  const char *text;
+  char *text;
 };
 /*
  * Flag values
@@ -178,7 +178,7 @@ extern	void	process_private	P((struct recvbuf *, int));
 /* ntp_restrict.c */
 extern	void	init_restrict	P((void));
 extern	int	restrictions	P((struct sockaddr_in *));
-extern	void	restrict_addr	P((int, struct sockaddr_in *, struct sockaddr_in *, int, int));
+extern	void	hack_restrict	P((int, struct sockaddr_in *, struct sockaddr_in *, int, int));
 
 /* ntp_timer.c */
 extern	void	init_timer	P((void));

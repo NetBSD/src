@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arbiter.c,v 1.3 1998/03/06 18:17:23 christos Exp $	*/
+/*	$NetBSD: refclock_arbiter.c,v 1.4 1998/08/12 14:11:54 christos Exp $	*/
 
 /*
  * refclock_arbiter - clock driver for Arbiter 1088A/B Satellite
@@ -438,4 +438,6 @@ arb_poll(unit, peer)
 	
 }
 
-#endif
+#else /* not (REFCLOCK && ARBITER) */
+int refclock_arbiter_bs;
+#endif /* not (REFCLOCK && ARBITER) */

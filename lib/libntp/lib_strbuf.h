@@ -1,4 +1,4 @@
-/*	$NetBSD: lib_strbuf.h,v 1.2 1998/01/09 03:16:17 perry Exp $	*/
+/*	$NetBSD: lib_strbuf.h,v 1.3 1998/08/12 14:11:49 christos Exp $	*/
 
 /*
  * lib_strbuf.h - definitions for routines which use the common string buffers
@@ -27,3 +27,5 @@
 extern char lib_stringbuf[LIB_NUMBUFS][LIB_BUFLENGTH];
 extern int lib_nextbuf;
 extern int lib_inited;
+
+void init_lib P((void));

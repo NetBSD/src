@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.5 1998/04/01 15:01:23 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.6 1998/08/12 14:11:54 christos Exp $	*/
 
 #define	HAVE_POSIX_MMAN
 /*
@@ -170,26 +170,20 @@ static	RETSIGTYPE	no_debug	P((int));
 #endif	/* not DEBUG */
 
 #ifdef NO_MAIN_ALLOWED
+void xntpdmain P((int, char *[]));
 CALL(xntpd,"xntpd",xntpdmain);
-#endif
-
-#ifndef NO_MAIN_ALLOWED
-int main P((int, char *[]));
 #else
-int xntpdmain P((int, char *[]));
+int main P((int, char *[]));
 #endif
 
 /*
  * Main program.  Initialize us, disconnect us from the tty if necessary,
  * and loop waiting for I/O and/or timer expiries.
  */
-#if !defined(VMS)
-int
-#endif /* VMS */
 #ifndef NO_MAIN_ALLOWED
-main
+int main
 #else
-xntpdmain
+void xntpdmain
 #endif
 (argc, argv)
      int argc;
@@ -777,14 +771,14 @@ worker_thread(notUsed)
 		   (nfound == SOCKET_ERROR && WSAGetLastError() != WSAEINTR)
 #endif /* SYS_WINNT */
 		   )
-	    msyslog(LOG_ERR, "select() error: %m");
-	  else if (debug)
-#ifndef SYS_VXWORKS
+	    msyslog(LOG_DEBUG, "select(): error: %m");
+	  else if (debug > 1)
 	    msyslog(LOG_DEBUG, "select(): nfound=%d, error: %m", nfound);
-#endif
-#else
+
+#else /* HAVE_SIGNALED_IO */
 	  wait_for_signal();
-#endif
+#endif /* HAVE_SIGNALED_IO */
+
 	  if (alarm_flag)		/* alarmed? */
 	    {
 	      was_alarmed = 1;

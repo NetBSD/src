@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.6 1998/04/01 15:01:25 christos Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.7 1998/08/12 14:11:56 christos Exp $	*/
 
 /*
  * xntpdc - control and monitor your xntpd daemon
@@ -246,7 +246,10 @@ char *progname;
 int debug;
 
 #ifdef NO_MAIN_ALLOWED
+void xntpdcmain P((int, char *[]));
 CALL(xntpdc,"xntpdc",xntpdcmain);
+#else
+int main P((int, char *[]));
 #endif
 
 #ifdef SYS_VXWORKS
@@ -267,11 +270,10 @@ void clear_globals()
 /*
  * main - parse arguments and handle options
  */
-int
-#ifndef NO_MAIN_ALLOWED
-main
+#ifdef NO_MAIN_ALLOWED
+void xntpdcmain
 #else
-xntpdcmain
+int main
 #endif
 (argc, argv)
 int argc;
