@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.48 2001/07/30 07:13:58 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.49 2001/07/30 07:45:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.48 2001/07/30 07:13:58 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.49 2001/07/30 07:45:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ char writebuf[MAXBSIZE];
 int	fsi, fso;
 
 void
-mkfs(struct partition *pp, char *fsys, int fi, int fo)
+mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 {
 	int32_t i, mincpc, mincpg, inospercg;
 	int32_t cylno, rpos, blk, j, warn = 0;
