@@ -70,11 +70,11 @@
  */
 
 /* 
- *	@(#)pmap.h	7.6 (Berkeley) 5/10/91
+ *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
+ *	$Id: pmap.h,v 1.2 1993/11/29 00:38:28 briggs Exp $
  */
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
-#ident "$Id: pmap.h,v 1.1.1.1 1993/09/29 06:09:22 briggs Exp $"
 
 #define MAC_PAGE_SIZE	NBPG
 #define MAC_SEG_SIZE	NBSEG

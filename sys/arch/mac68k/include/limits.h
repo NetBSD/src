@@ -30,9 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)limits.h	7.2 (Berkeley) 6/28/90
+ *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
+ *	$Id: limits.h,v 1.2 1993/11/29 00:38:13 briggs Exp $
  */
-#ident "$Id: limits.h,v 1.1.1.1 1993/09/29 06:09:23 briggs Exp $"
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	CLK_TCK		60		/* ticks per second */
