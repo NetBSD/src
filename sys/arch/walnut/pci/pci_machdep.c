@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2001/08/28 01:35:06 simonb Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2001/10/29 23:38:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -227,7 +227,7 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 }
 
 void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int func,
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 		   int swiz, int *iline)
 {
 
