@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.27 2002/02/10 15:30:55 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.28 2002/03/21 03:48:24 uwe Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -193,7 +193,7 @@ main(argc, argv)
 	audiofd = open(device, O_RDONLY);
 	if (audiofd < 0 && device == defdevice) {
 		device = _PATH_SOUND0;
-		audiofd = open(device, O_WRONLY);
+		audiofd = open(device, O_RDONLY);
 	}
 	if (audiofd < 0)
 		err(1, "failed to open %s", device);
