@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.11 1999/03/26 23:41:36 mycroft Exp $ */
+/*	$NetBSD: sbus.c,v 1.12 1999/05/22 20:33:56 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/extent.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -307,9 +308,19 @@ sbus_attach(parent, self, aux)
 	 *
 	 * The sun4u iommu is part of the SBUS controller so we will
 	 * deal with it here.  We could try to fake a device node so
-	 * we can eventually share it with the PCI bus run by psyco,
+	 * we can eventually share it with the PCI bus run by psycho,
 	 * but I don't want to get into that sort of cruft.
+	 *
+	 * First we need to allocate a IOTSB.  Problem is that the IOMMU
+	 * can only access the IOTSB by physical address, so all the 
+	 * pages must be contiguous.  Luckily, the smallest IOTSB size
+	 * is one 8K page.
 	 */
+#if 1
+	sc->sc_tsbsize = 0;
+	sc->sc_tsb = malloc(NBPG, M_DMAMAP, M_WAITOK);
+	sc->sc_ptsb = pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_tsb);
+#else
 
 	/* 
 	 * All IOMMUs will share the same TSB which is allocated in pmap_bootstrap.
@@ -325,6 +336,7 @@ sbus_attach(parent, self, aux)
 		sc->sc_tsb = iotsb;
 		sc->sc_ptsb = iotsbp;
 	}
+#endif
 #if 1
 	/* Need to do 64-bit stores */
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_cr, 
@@ -363,6 +375,22 @@ sbus_attach(parent, self, aux)
 #else
 	stxa(&sc->sc_sysio->sys_strbuf.strbuf_ctl,ASI_NUCLEUS,STRBUF_EN);
 #endif
+
+	/*
+	 * Now all the hardware's working we need to allocate a dvma map.
+	 *
+	 * The IOMMU address space always ends at 0xffffe000, but the starting
+	 * address depends on the size of the map.  The map size is 1024 * 2 ^
+	 * sc->sc_tsbsize entries, where each entry is 8 bytes.  The start of
+	 * the map can be calculated by (0xffffe000 << (8 + sc->sc_tsbsize)).
+	 *
+	 * Note: the stupid IOMMU ignores the high bits of an address, so a
+	 * NULL DMA pointer will be translated by the first page of the IOTSB.
+	 * To trap bugs we'll skip the first entry in the IOTSB.
+	 */
+	sc->sc_dvmamap = extent_create("SBus dvma", /* XXXX should have instance number */
+				       IOTSB_VSTART(sc->sc_tsbsize) + NBPG, IOTSB_VEND,
+				       M_DEVBUF, 0, 0, EX_NOWAIT);
 
 	/*
 	 * Loop through ROM children, fixing any relative addresses
@@ -579,7 +607,7 @@ sbusreset(sbus)
 	}
 #if 1
 	/* Reload iommu regs */
-	bus_space_write_8(sc->ma_bustag, &sc->sc_sysio->sys_iommu.iommu_cr, 
+	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_cr, 
 			  0, (IOMMUCR_TSB1K|IOMMUCR_8KPG|IOMMUCR_EN));
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_tsb, 
 			  0, sc->sc_ptsb);
@@ -621,6 +649,10 @@ sbus_enter(sc, va, pa, flags)
 	stxa(&(sc->sc_sysio->sys_strbuf.strbuf_pgflush), ASI_NUCLEUS, va);
 #endif
 	sbus_flush(sc);
+#ifdef DEBUG
+	if (sbusdebug & SDB_DVMA)
+		printf("Clearing TSB slot %d for va %p\n", (int)IOTSBSLOT(va,sc->sc_tsbsize), va);
+#endif
 	sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)] = tte;
 #if 1
 	bus_space_write_8(sc->sc_bustag, &sc->sc_sysio->sys_iommu.iommu_flush, 
@@ -950,7 +982,7 @@ sbus_alloc_bustag(sc)
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
-	sbt->type = ASI_PRIMARY;
+	sbt->type = SBUS_BUS_SPACE;
 	sbt->sparc_bus_map = _sbus_bus_map;
 	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
@@ -1000,10 +1032,11 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
-	int err;
+	int err, s;
 	bus_size_t sgsize;
 	paddr_t curaddr;
-	vaddr_t  dvmaddr, vaddr = (vaddr_t)buf;
+	u_long dvmaddr;
+	vaddr_t vaddr = (vaddr_t)buf;
 	pmap_t pmap;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
@@ -1014,9 +1047,59 @@ sbus_dmamap_load(t, map, buf, buflen, p, flags)
 #endif
 		bus_dmamap_unload(t, map);
 	}
-	if ((err = bus_dmamap_load(t->_parent, map, buf, buflen, p, flags)))
+#if 1
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
+
+	if (buflen > map->_dm_size)
+#ifdef DEBUG
+	{ 
+		printf("_bus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+		Debugger();
+		return (EINVAL);
+	}		
+#else	
+		return (EINVAL);
+#endif
+
+	sgsize = round_page(buflen + ((int)vaddr & PGOFSET));
+
+	/*
+	 * XXX Need to implement "don't dma across this boundry".
+	 */
+	
+	s = splhigh();
+	err = extent_alloc(sc->sc_dvmamap, sgsize, NBPG,
+			     map->_dm_boundary, EX_NOWAIT, (u_long *)&dvmaddr);
+	splx(s);
+
+	if (err != 0)
 		return (err);
 
+#ifdef DEBUG
+	if (dvmaddr == (bus_addr_t)-1)	
+	{ 
+		printf("_bus_dmamap_load(): dvmamap_alloc(%d, %x) failed!\n", sgsize, flags);
+		Debugger();
+	}		
+#endif	
+	if (dvmaddr == (bus_addr_t)-1)
+		return (ENOMEM);
+
+	/*
+	 * We always use just one segment.
+	 */
+	map->dm_mapsize = buflen;
+	map->dm_nsegs = 1;
+	map->dm_segs[0].ds_addr = dvmaddr + (vaddr & PGOFSET);
+	map->dm_segs[0].ds_len = sgsize;
+
+#else
+	if ((err = bus_dmamap_load(t->_parent, map, buf, buflen, p, flags)))
+		return (err);
+#endif
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
 	else
@@ -1060,7 +1143,9 @@ sbus_dmamap_unload(t, map)
 	bus_dmamap_t map;
 {
 	vaddr_t addr;
-	int len;
+	int len, error, s;
+	bus_addr_t dvmaddr;
+	bus_size_t sgsize;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
 	if (map->dm_nsegs != 1)
@@ -1075,7 +1160,25 @@ sbus_dmamap_unload(t, map)
 		       map, (long)addr, (long)len);
 #endif
 	sbus_remove(sc, addr, len);
+#if 1
+	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
+	sgsize = map->dm_segs[0].ds_len;
+
+	/* Mark the mappings as invalid. */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+	
+	/* Unmapping is bus dependent */
+	s = splhigh();
+	error = extent_free(sc->sc_dvmamap, dvmaddr, sgsize, EX_NOWAIT);
+	splx(s);
+	if (error != 0)
+		printf("warning: %ld of DVMA space lost\n", (long)sgsize);
+
+	cache_flush((caddr_t)dvmaddr, (u_int) sgsize);	
+#else
 	bus_dmamap_unload(t->_parent, map);
+#endif
 }
 
 
@@ -1177,11 +1280,11 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	int flags;
 {
 	paddr_t curaddr;
-	bus_addr_t dvmaddr;
+	u_long dvmaddr;
 	vm_page_t m;
 	struct pglist *mlist;
 	int error;
-	int n;
+	int n, s;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
 	if ((error = bus_dmamem_alloc(t->_parent, size, alignment, 
@@ -1192,12 +1295,24 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	 * Allocate a DVMA mapping for our new memory.
 	 */
 	for (n=0; n<*rsegs; n++) {
+#if 1
+		s = splhigh();
+		if (extent_alloc(sc->sc_dvmamap, segs[0].ds_len, alignment,
+				 boundary, EX_NOWAIT, (u_long *)&dvmaddr)) {
+			splx(s);
+				/* Free what we got and exit */
+			bus_dmamem_free(t->_parent, segs, nsegs);
+			return (ENOMEM);
+		}
+		splx(s);
+#else
 		dvmaddr = dvmamap_alloc(segs[0].ds_len, flags);
 		if (dvmaddr == (bus_addr_t)-1) {
 			/* Free what we got and exit */
 			bus_dmamem_free(t->_parent, segs, nsegs);
 			return (ENOMEM);
 		}
+#endif
 		segs[n].ds_addr = dvmaddr;
 		size = segs[n].ds_len;
 		mlist = segs[n]._ds_mlist;
@@ -1205,6 +1320,11 @@ sbus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		/* Map memory into DVMA space */
 		for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
 			curaddr = VM_PAGE_TO_PHYS(m);
+#ifdef DEBUG
+			if (sbusdebug & SDB_DVMA)
+				printf("sbus_dmamem_alloc: map %p loading va %lx at pa %lx\n",
+				       (long)m, (long)dvmaddr, (long)(curaddr & ~(NBPG-1)));
+#endif
 			sbus_enter(sc, dvmaddr, curaddr, flags);
 			dvmaddr += PAGE_SIZE;
 		}
@@ -1220,7 +1340,7 @@ sbus_dmamem_free(t, segs, nsegs)
 {
 	vaddr_t addr;
 	int len;
-	int n;
+	int n, s, error;
 	struct sbus_softc *sc = (struct sbus_softc *)t->_cookie;
 
 
@@ -1228,7 +1348,15 @@ sbus_dmamem_free(t, segs, nsegs)
 		addr = segs[n].ds_addr;
 		len = segs[n].ds_len;
 		sbus_remove(sc, addr, len);
+#if 1
+		s = splhigh();
+		error = extent_free(sc->sc_dvmamap, addr, len, EX_NOWAIT);
+		splx(s);
+		if (error != 0)
+			printf("warning: %ld of DVMA space lost\n", (long)len);
+#else
 		dvmamap_free(addr, len);
+#endif
 	}
 	bus_dmamem_free(t->_parent, segs, nsegs);
 }
