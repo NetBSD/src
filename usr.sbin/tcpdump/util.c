@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.3 1995/03/06 19:11:53 mycroft Exp $	*/
+/*	$NetBSD: util.c,v 1.4 1996/05/11 13:18:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994
@@ -320,16 +320,11 @@ int
 gmt2local()
 {
 #ifndef SOLARIS
-	struct timeval now;
-	struct timezone tz;
-	long t;
+	time_t now;
 
-	if (gettimeofday(&now, &tz) < 0)
-		error("gettimeofday");
-	t = tz.tz_minuteswest * -60;
-	if (localtime((time_t *)&now.tv_sec)->tm_isdst)
-		t += 3600;
-	return (t);
+	if (time(&now) == -1)
+		error("time");
+	return (localtime(&now)->tm_gmtoff);
 #else
 	tzset();
 	return (-altzone);
