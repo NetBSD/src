@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: amd,v 1.3 2000/05/13 08:45:06 lukem Exp $
+# $NetBSD: amd,v 1.4 2000/05/29 06:53:03 tron Exp $
 #
 
 # PROVIDE: amd
@@ -10,10 +10,11 @@
 
 name="amd"
 command="/usr/sbin/${name}"
+load_rc_config $name
+
 command_args='-p -a '$amd_dir' `sed s/#.*$// <'$amd_master'` >/var/run/amd.pid'
 required_files="$amd_master"
 required_dirs="$amd_dir"
 required_vars="portmap"
 
-load_rc_config $name
 run_rc_command "$1"
