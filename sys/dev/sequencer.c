@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.15 2000/03/23 07:01:27 thorpej Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.15.8.1 2001/09/08 20:51:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ seq_timeout(addr)
 	seq_startoutput(sc);
 	if (SEQ_QLEN(&sc->outq) < sc->lowat) {
 		seq_wakeup(&sc->wchan);
-		selwakeup(&sc->wsel);
+		selnotify(&sc->wsel, 0);
 		if (sc->async)
 			psignal(sc->async, SIGIO);
 	}
@@ -344,7 +344,7 @@ seq_input_event(sc, cmd)
 		return (ENOMEM);
 	SEQ_QPUT(q, *cmd);
 	seq_wakeup(&sc->rchan);
-	selwakeup(&sc->rsel);
+	selnotify(&sc->rsel, 0);
 	if (sc->async)
 		psignal(sc->async, SIGIO);
 	return 0;
@@ -656,6 +656,91 @@ sequencerpoll(dev, events, p)
 	}
 
 	return revents;
+}
+
+static void
+filt_sequencerrdetach(struct knote *kn)
+{
+	struct sequencer_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = splaudio();
+	SLIST_REMOVE(&sc->rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_sequencerread(struct knote *kn, long hint)
+{
+	struct sequencer_softc *sc = (void *) kn->kn_hook;
+
+	/* XXXLUKEM (thorpej): make sure this is correct */
+
+	if (SEQ_QEMPTY(&sc->inq))
+		return (0);
+	kn->kn_data = sizeof(seq_event_rec);
+	return (1);
+}
+
+static const struct filterops sequencerread_filtops =
+	{ 1, NULL, filt_sequencerrdetach, filt_sequencerread };
+
+static void
+filt_sequencerwdetach(struct knote *kn)
+{
+	struct sequencer_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = splaudio();
+	SLIST_REMOVE(&sc->wsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_sequencerwrite(struct knote *kn, long hint)
+{
+	struct sequencer_softc *sc = (void *) kn->kn_hook;
+
+	/* XXXLUKEM (thorpej): make sure this is correct */
+
+	if (SEQ_QLEN(&sc->outq) >= sc->lowat)
+		return (0);
+	kn->kn_data = sizeof(seq_event_rec);
+	return (1);
+}
+
+static const struct filterops sequencerwrite_filtops =
+	{ 1, NULL, filt_sequencerwdetach, filt_sequencerwrite };
+
+int
+sequencerkqfilter(dev_t dev, struct knote *kn)
+{
+	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->rsel.si_klist;
+		kn->kn_fop = &sequencerread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &sc->wsel.si_klist;
+		kn->kn_fop = &sequencerwrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = splaudio();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 void
