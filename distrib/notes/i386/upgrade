@@ -1,8 +1,8 @@
-The upgrade to NetBSD 1.2G is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 1.2G sources, and
+The upgrade to NetBSD _VER is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the _VER sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  Because of the many changes to the system, it
-is difficult impractical to upgrade by recompiling from the sources
+is difficult and impractical to upgrade by recompiling from the sources
 and installing.
 
 To do the upgrade, you must have the boot floppy image (boot-12G.fs)
@@ -104,7 +104,7 @@ To upgrade your system, follow the following instructions:
 	run the "Extract <setname>" command.)
 
         NOTE: YOU MUST INSTALL THE "kern12G" DISTRIBUTION, AS IT
-        CONTAINS THE NEW NetBSD 1.2G KERNEL! This step is different
+        CONTAINS THE NEW NetBSD _VER KERNEL! This step is different
         from previous netbsd upgrade procedures, which installed the
         kernel from a boot floppy using a special procedure.
 
@@ -120,10 +120,10 @@ To upgrade your system, follow the following instructions:
 	it is complete, you should use "halt" to halt the system, or
 	"reboot" to reboot it.
 
-Your system has now been upgraded to NetBSD 1.2G.
+Your system has now been upgraded to NetBSD _VER.
 
         After a new kernel has been copied to your hard disk, your
-	machine is a complete NetBSD 1.2G system.  However, that
+	machine is a complete NetBSD _VER system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
