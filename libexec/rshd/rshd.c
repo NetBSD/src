@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.12 1998/01/08 03:30:49 lukem Exp $	*/
+/*	$NetBSD: rshd.c,v 1.13 1998/02/28 13:29:03 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.12 1998/01/08 03:30:49 lukem Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.13 1998/02/28 13:29:03 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,26 +216,26 @@ doit(fromp)
       }
 #endif
 
-		if (fromp->sin_port >= IPPORT_RESERVED ||
-		    fromp->sin_port < IPPORT_RESERVED/2) {
-			syslog(LOG_NOTICE|LOG_AUTH,
-			    "Connection from %s on illegal port %u",
-			    inet_ntoa(fromp->sin_addr),
-			    fromp->sin_port);
-			exit(1);
-		}
+	if (fromp->sin_port >= IPPORT_RESERVED ||
+	    fromp->sin_port < IPPORT_RESERVED/2) {
+		syslog(LOG_NOTICE|LOG_AUTH,
+		    "Connection from %s on illegal port %u",
+		    inet_ntoa(fromp->sin_addr), fromp->sin_port);
+		exit(1);
+	}
 
 	(void) alarm(60);
 	port = 0;
 	for (;;) {
 		char c;
+
 		if ((cc = read(STDIN_FILENO, &c, 1)) != 1) {
 			if (cc < 0)
 				syslog(LOG_NOTICE, "read: %m");
 			shutdown(0, 1+1);
 			exit(1);
 		}
-		if (c== 0)
+		if (c == 0)
 			break;
 		port = port * 10 + c - '0';
 	}
@@ -268,7 +268,7 @@ doit(fromp)
 #endif
 	errorstr = NULL;
 	hp = gethostbyaddr((char *)&fromp->sin_addr, sizeof (struct in_addr),
-		fromp->sin_family);
+	    fromp->sin_family);
 	if (hp) {
 		/*
 		 * If name returned by gethostbyaddr is in our domain,
@@ -309,11 +309,10 @@ doit(fromp)
 			}
 		}
 		hostname = strncpy(hostnamebuf, hostname,
-				   sizeof(hostnamebuf) - 1);
+		    sizeof(hostnamebuf) - 1);
 	} else
 		errorhost = hostname = strncpy(hostnamebuf,
-					       inet_ntoa(fromp->sin_addr),
-					       sizeof(hostnamebuf) - 1);
+		    inet_ntoa(fromp->sin_addr), sizeof(hostnamebuf) - 1);
 
 	hostnamebuf[sizeof(hostnamebuf) - 1] = '\0';
 
@@ -342,25 +341,25 @@ doit(fromp)
 	}
 
 
-		if (errorstr ||
-		    (pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
-		    iruserok(fromp->sin_addr.s_addr, pwd->pw_uid == 0,
+	if (errorstr ||
+	    (pwd->pw_passwd != 0 && *pwd->pw_passwd != '\0' &&
+		iruserok(fromp->sin_addr.s_addr, pwd->pw_uid == 0,
 		    remuser, locuser) < 0)) {
-			if (__rcmd_errstr)
-				syslog(LOG_INFO|LOG_AUTH,
+		if (__rcmd_errstr)
+			syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: permission denied (%s). cmd='%.80s'",
-				    remuser, hostname, locuser, __rcmd_errstr,
-				    cmdbuf);
-			else
-				syslog(LOG_INFO|LOG_AUTH,
+			    remuser, hostname, locuser, __rcmd_errstr,
+			    cmdbuf);
+		else
+			syslog(LOG_INFO|LOG_AUTH,
 			    "%s@%s as %s: permission denied. cmd='%.80s'",
-				    remuser, hostname, locuser, cmdbuf);
+			    remuser, hostname, locuser, cmdbuf);
 fail:
-			if (errorstr == NULL)
-				errorstr = "Permission denied.\n";
-			error(errorstr, errorhost);
-			exit(1);
-		}
+		if (errorstr == NULL)
+			errorstr = "Permission denied.\n";
+		error(errorstr, errorhost);
+		exit(1);
+	}
 
 	if (pwd->pw_uid && !access(_PATH_NOLOGIN, F_OK)) {
 		error("Logins currently disabled.\n");
@@ -395,18 +394,19 @@ fail:
 				nfd = pv[0];
 			else
 				nfd = s;
-				ioctl(pv[0], FIONBIO, (char *)&one);
+			ioctl(pv[0], FIONBIO, (char *)&one);
 
 			/* should set s nbio! */
 			nfd++;
 			do {
 				ready = readfrom;
-					if (select(nfd, &ready, (fd_set *)0,
-					  (fd_set *)0, (struct timeval *)0) < 0)
-						break;
+				if (select(nfd, &ready, (fd_set *)0,
+				    (fd_set *)0, (struct timeval *)0) < 0)
+					break;
 				if (FD_ISSET(s, &ready)) {
 					int	ret;
-						ret = read(s, &sig, 1);
+
+					ret = read(s, &sig, 1);
 					if (ret <= 0)
 						FD_CLR(s, &readfrom);
 					else
@@ -419,8 +419,7 @@ fail:
 						shutdown(s, 1+1);
 						FD_CLR(pv[0], &readfrom);
 					} else {
-							(void)
-							  write(s, buf, cc);
+						(void) write(s, buf, cc);
 					}
 				}
 
@@ -455,8 +454,8 @@ fail:
 		cp = pwd->pw_shell;
 	endpwent();
 	if (log_success || pwd->pw_uid == 0) {
-		    syslog(LOG_INFO|LOG_AUTH, "%s@%s as %s: cmd='%.80s'",
-			remuser, hostname, locuser, cmdbuf);
+		syslog(LOG_INFO|LOG_AUTH, "%s@%s as %s: cmd='%.80s'",
+		    remuser, hostname, locuser, cmdbuf);
 	}
 	execl(pwd->pw_shell, cp, "-c", cmdbuf, 0);
 	perror(pwd->pw_shell);
