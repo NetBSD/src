@@ -203,7 +203,7 @@ statement 		: Warranty
 			    {
 			      if ($4 & 2)
 				warn ("Comparison in first for expression");
-			      if ($4 >= 0)
+			      if ($4 <= 0)
 				generate ("p");
 			      $4 = next_label++;
 			      sprintf (genstr, "N%1d:", $4);
@@ -211,7 +211,7 @@ statement 		: Warranty
 			    }
 			  opt_expression ';'
 			    {
-			      if ($7 < 0) generate ("1");
+			      if ($7 & 16 ) generate ("1");
 			      $7 = next_label++;
 			      sprintf (genstr, "B%1d:J%1d:", $7, break_label);
 			      generate (genstr);
