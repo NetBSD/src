@@ -1,7 +1,7 @@
-/*	$NetBSD: tlphy.c,v 1.25 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.25.4.1 2000/07/04 04:11:13 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -115,6 +115,10 @@ int	tlphy_auto __P((struct tlphy_softc *, int));
 void	tlphy_acomp __P((struct tlphy_softc *));
 void	tlphy_status __P((struct mii_softc *));
 
+const struct mii_phy_funcs tlphy_funcs = {
+	tlphy_service, tlphy_status, mii_phy_reset,
+};
+
 int
 tlphymatch(parent, match, aux)
 	struct device *parent;
@@ -146,12 +150,11 @@ tlphyattach(parent, self, aux)
 
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
-	sc->sc_mii.mii_service = tlphy_service;
-	sc->sc_mii.mii_status = tlphy_status;
+	sc->sc_mii.mii_funcs = &tlphy_funcs;
 	sc->sc_mii.mii_pdata = mii;
 	sc->sc_mii.mii_flags = mii->mii_flags;
 
-	mii_phy_reset(&sc->sc_mii);
+	PHY_RESET(&sc->sc_mii);
 
 	/*
 	 * Note that if we're on a device that also supports 100baseTX,

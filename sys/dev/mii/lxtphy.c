@@ -1,7 +1,7 @@
-/*	$NetBSD: lxtphy.c,v 1.20 2000/03/06 20:56:57 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.20.4.1 2000/07/04 04:11:12 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -98,6 +98,11 @@ struct cfattach lxtphy_ca = {
 
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	lxtphy_status __P((struct mii_softc *));
+void	lxtphy_reset __P((struct mii_softc *));
+
+const struct mii_phy_funcs lxtphy_funcs = {
+	lxtphy_service, lxtphy_status, lxtphy_reset,
+};
 
 int
 lxtphymatch(parent, match, aux)
@@ -128,12 +133,11 @@ lxtphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = lxtphy_service;
-	sc->mii_status = lxtphy_status;
+	sc->mii_funcs = &lxtphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -255,4 +259,14 @@ lxtphy_status(sc)
 			mii->mii_media_active |= IFM_FDX;
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+lxtphy_reset(sc)
+	struct mii_softc *sc;
+{
+
+	mii_phy_reset(sc);
+	PHY_WRITE(sc, MII_LXTPHY_IER,
+	    PHY_READ(sc, MII_LXTPHY_IER) & ~IER_INTEN);
 }

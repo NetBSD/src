@@ -1,7 +1,7 @@
-/*	$NetBSD: ukphy.c,v 1.12 2000/06/11 02:13:34 sommerfeld Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.12.2.1 2000/07/04 04:11:13 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -106,6 +106,10 @@ struct cfattach ukphy_ca = {
 
 int	ukphy_service __P((struct mii_softc *, struct mii_data *, int));
 
+const struct mii_phy_funcs ukphy_funcs = {
+	ukphy_service, ukphy_status, mii_phy_reset,
+};
+
 int
 ukphymatch(parent, match, aux)
 	struct device *parent;
@@ -151,8 +155,7 @@ ukphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = ukphy_service;
-	sc->mii_status = ukphy_status;
+	sc->mii_funcs = &ukphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -161,7 +164,7 @@ ukphyattach(parent, self, aux)
 	 */
 	sc->mii_flags |= MIIF_NOLOOP;
 
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
