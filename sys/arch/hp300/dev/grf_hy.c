@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.3 1996/02/24 00:55:11 thorpej Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.4 1996/02/26 23:40:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -667,21 +667,19 @@ hyper_console_scan(scode, va, arg)
 	struct grfreg *grf = (struct grfreg *)va;
 	struct consdev *cp = arg;
 	u_char *dioiidev;
-	int force = 0;
+	int force = 0, pri;
 
-	if ((grf->gr_id != GRFHWID) && (grf->gr_id2 != GID_HYPERION)) {
-		cp->cn_pri = CN_DEAD;
+	if ((grf->gr_id != GRFHWID) && (grf->gr_id2 != GID_HYPERION))
 		return (0);
-	}
 
-	cp->cn_pri = CN_NORMAL;
+	pri = CN_NORMAL;
 
 #ifdef CONSCODE
 	/*
 	 * Raise our prioity, if appropriate.
 	 */
 	if (scode == CONSCODE) {
-		cp->cn_pri = CN_REMOTE;
+		pri = CN_REMOTE;
 		force = conforced = 1;
 	}
 #endif
@@ -691,7 +689,7 @@ hyper_console_scan(scode, va, arg)
 	 * console, stash our priority.
 	 */
 	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri;
+		conpri = cp->cn_pri = pri;
 		if (scode >= 132) {
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);
