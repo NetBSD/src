@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.121 2001/07/02 23:18:34 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.122 2001/07/04 13:49:24 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -221,14 +221,14 @@ file	arch/arm32/vidc/lmcaudio.c		lmcaudio needs-flag
 file	arch/arm32/vidc/lmc1982.S		lmcaudio
 
 # Podule bus device
-device	podulebus { [slot = -1] }
+include "dev/podulebus/files.podulebus"
+
 attach	podulebus at root
 file	arch/arm32/podulebus/podulebus.c	podulebus needs-flag
 file	arch/arm32/podulebus/podulebus_io.c	podulebus
 file	arch/arm32/podulebus/podulebus_io_asm.S	podulebus
 file	arch/arm32/podulebus/netslot.c		podulebus
 
-include "dev/podulebus/files.podulebus"
 
 # Ethernet devices
 
