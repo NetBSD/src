@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.20 2003/12/13 23:13:41 thorpej Exp $
+#	$NetBSD: INTEGRATOR,v 1.21 2003/12/13 23:28:11 thorpej Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -176,18 +176,7 @@ pci0		at ifpga?			# PCI bus
 #viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ATA bus support
-#atabus* 	at pciide? channel ?
-#atabus* 	at acardide? channel ?
-#atabus* 	at aceride? channel ? 
-#atabus* 	at cmdide? channel ? 
-#atabus* 	at cypide? channel ?
-#atabus* 	at hptide? channel ?
-#atabus* 	at optiide? channel ?
-#atabus* 	at piixide? channel ?
-#atabus* 	at pdcide? channel ?
-#atabus* 	at siside? channel ?
-#atabus* 	at slide? channel ?
-#atabus* 	at viaide? channel ?
+#atabus*	at ata? channel ?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
