@@ -1,4 +1,4 @@
-/* $NetBSD: float.h,v 1.2 2000/12/28 03:55:14 matt Exp $ */
+/*	$NetBSD: float.h,v 1.3 2000/12/29 22:42:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +44,8 @@
  *	@(#)float.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _ARM26_FLOAT_H_
-#define _ARM26_FLOAT_H_
+#ifndef _ARM32_FLOAT_H_
+#define _ARM32_FLOAT_H_
 
 #include <sys/cdefs.h>
 
@@ -86,4 +86,4 @@ __END_DECLS
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
-#endif	/* _ARM26_FLOAT_H_ */
+#endif	/* _ARM32_FLOAT_H_ */
