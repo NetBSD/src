@@ -1,4 +1,4 @@
-#	$NetBSD: files.ev64260,v 1.5 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.ev64260,v 1.6 2004/06/24 18:32:38 he Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
@@ -26,8 +26,6 @@ include "dev/scsipi/files.scsipi"
 #
 
 include "dev/ata/files.ata"
-
-include	"dev/usb/files.usb"
 
 #
 # Memory Disk for install floppy
@@ -89,6 +87,8 @@ include	"dev/wscons/files.wscons"
 include	"dev/wsfont/files.wsfont"
 
 include "dev/pckbport/files.pckbport"
+
+include	"dev/usb/files.usb"
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma
