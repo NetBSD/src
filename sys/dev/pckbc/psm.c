@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
+/* $NetBSD: psm.c,v 1.2 1998/04/07 16:02:25 drochner Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -50,11 +50,7 @@ struct pms_softc {		/* driver status information */
 	struct device *sc_wsmousedev;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int pmsprobe __P((struct device *, void *, void *));
-#else
 int pmsprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void pmsattach __P((struct device *, struct device *, void *));
 void pmsinput __P((void *, int));
 
@@ -77,11 +73,7 @@ const struct wsmouse_accessops pms_accessops = {
 int
 pmsprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pckbc_attach_args *pa = aux;
@@ -98,11 +90,15 @@ pmsprobe(parent, match, aux)
 	cmd[0] = PMS_RESET;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 	if (res) {
+#ifdef DIAGNOSTIC
 		printf("pmsprobe: command error\n");
+#endif
 		return (0);
 	}
 	if (resp[0] != PMS_RSTDONE) {
+#ifdef DIAGNOSTIC
 		printf("pmsprobe: reset error\n");
+#endif
 		return (0);
 	}
 
