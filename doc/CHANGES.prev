@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.21 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.22 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -7683,6 +7683,11 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	postfix(1): update to 2.0.19 [heas 20040327]
 	ipf(8): updated to version 4.1.1. [martti 20040328]
 	libcurses: add *echochar() functions. [jdc 20040328]
+	hp300: Fix a longstanding bug in console attachment functions,
+		so that now DIO based framebuffers (mostly used on HP4xx
+		machines) can be used as console again. [tsutsui 20040408]
+	hp300: Fix some bugs in apci serial which was switched to MI com(4),
+		so that now it's actually functional. [tsutsui 20040410]
 	sgimips: Add IP12 support.  [pooka 20040411]
 	cvs(1): update to 1.11.15.  [itojun 20040416]
 	cvs: cvs-1.11.16 via patch [christos 20040519]
