@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.164 2002/09/30 21:19:38 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.165 2002/10/02 16:33:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.164 2002/09/30 21:19:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.165 2002/10/02 16:33:28 thorpej Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -199,7 +199,7 @@ struct audio_params audio_default =
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
 
 CFATTACH_DECL(audio, sizeof(struct audio_softc),
-    audioprobe, audioattach, audiodetach, audioactivate)
+    audioprobe, audioattach, audiodetach, audioactivate);
 
 extern struct cfdriver audio_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_cpcbus.c,v 1.4 2002/09/30 21:17:58 thorpej Exp $	*/
+/*	$NetBSD: timer_cpcbus.c,v 1.5 2002/10/02 16:33:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ static int	cpctim_match(struct device *, struct cfdata *, void *);
 static void	cpctim_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpctim, sizeof(struct cpctim_softc),
-    cpctim_match, cpctim_attach, NULL, NULL)
+    cpctim_match, cpctim_attach, NULL, NULL);
 
 int
 cpctim_match(struct device *parent, struct cfdata *cf, void *aux)

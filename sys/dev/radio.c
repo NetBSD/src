@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.6 2002/09/30 21:19:38 thorpej Exp $ */
+/* $NetBSD: radio.c,v 1.7 2002/10/02 16:33:30 thorpej Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.6 2002/09/30 21:19:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.7 2002/10/02 16:33:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ int	radiodetach(struct device *, int);
 int	radioactivate(struct device *, enum devact);
 
 CFATTACH_DECL(radio, sizeof(struct radio_softc),
-    radioprobe, radioattach, radiodetach, radioactivate)
+    radioprobe, radioattach, radiodetach, radioactivate);
 
 dev_type_open(radioopen);
 dev_type_close(radioclose);

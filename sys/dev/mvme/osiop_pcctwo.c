@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.3 2002/09/30 22:04:03 thorpej Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.4 2002/10/02 16:34:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct osiop_pcctwo_softc {
 };
 
 CFATTACH_DECL(osiop_pcctwo, sizeof(struct osiop_pcctwo_softc),
-    osiop_pcctwo_match, osiop_pcctwo_attach, NULL, NULL)
+    osiop_pcctwo_match, osiop_pcctwo_attach, NULL, NULL);
 
 static int osiop_pcctwo_intr __P((void *));
 
