@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54.2.1 1997/10/23 00:21:42 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.2 1998/05/08 05:12:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1070,6 +1070,8 @@ cpu_exec_aout_makecmds(p, epp)
 		extern sunos_exec_aout_makecmds
 		    __P((struct proc *, struct exec_package *));
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
+			return(0);
+	}
 #endif
 	return(error);
 }
