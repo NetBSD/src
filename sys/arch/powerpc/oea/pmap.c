@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2003/07/15 02:54:46 lukem Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2003/08/08 06:06:48 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2003/07/15 02:54:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2003/08/08 06:06:48 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_pmap.h"
@@ -152,6 +152,15 @@ struct pvo_entry {
 #define	PVO_WIRED		0x0010		/* PVO entry is wired */
 #define	PVO_MANAGED		0x0020		/* PVO e. for managed page */
 #define	PVO_EXECUTABLE		0x0040		/* PVO e. for executable page */
+#define	PVO_ENTER_INSERT	0		/* PVO has been removed */
+#define	PVO_SPILL_UNSET		1		/* PVO has been evicted */
+#define	PVO_SPILL_SET		2		/* PVO has been spilled */
+#define	PVO_SPILL_INSERT	3		/* PVO has been inserted */
+#define	PVO_PMAP_PAGE_PROTECT	4		/* PVO has changed */
+#define	PVO_PMAP_PROTECT	5		/* PVO has changed */
+#define	PVO_REMOVE		6		/* PVO has been removed */
+#define	PVO_WHERE_MASK		15
+#define	PVO_WHERE_SHFT		8
 };
 #define	PVO_VADDR(pvo)		((pvo)->pvo_vaddr & ~ADDR_POFF)
 #define	PVO_ISEXECUTABLE(pvo)	((pvo)->pvo_vaddr & PVO_EXECUTABLE)
@@ -161,6 +170,9 @@ struct pvo_entry {
 	((void)((pvo)->pvo_vaddr &= ~(PVO_PTEGIDX_VALID|PVO_PTEGIDX_MASK)))
 #define	PVO_PTEGIDX_SET(pvo,i)	\
 	((void)((pvo)->pvo_vaddr |= (i)|PVO_PTEGIDX_VALID))
+#define	PVO_WHERE(pvo,w)	\
+	((pvo)->pvo_vaddr &= ~(PVO_WHERE_MASK << PVO_WHERE_SHFT), \
+	 (pvo)->pvo_vaddr |= ((PVO_ ## w) << PVO_WHERE_SHFT))
 
 TAILQ_HEAD(pvo_tqhead, pvo_entry);
 struct pvo_tqhead *pmap_pvo_table;	/* pvo entries by ptegroup index */
@@ -762,12 +774,20 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 
 	/*
 	 * Have to substitute some entry. Use the primary hash for this.
-	 *
-	 * Use low bits of timebase as random generator
+	 * Use low bits of timebase as random generator.  Make sure we are
+	 * not picking a kernel pte for replacement.
 	 */
 	pteg = &pmap_pteg_table[ptegidx];
 	i = MFTB() & 7;
-	pt = &pteg->pt[i];
+	for (j = 0; j < 8; j++) {
+		pt = &pteg->pt[i];
+		if ((pt->pte_hi & PTE_VALID) == 0 ||
+		    VSID_TO_HASH((pt->pte_hi & PTE_VSID) >> PTE_VSID_SHFT)
+				!= KERNEL_VSIDBITS)
+			break;
+		i = (i + 1) & 7;
+	}
+	KASSERT(j < 8);
 
 	source_pvo = NULL;
 	victim_pvo = NULL;
@@ -797,6 +817,7 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 			if (j >= 0) {
 				PVO_PTEGIDX_SET(pvo, j);
 				PMAP_PVO_CHECK(pvo);	/* sanity check */
+				PVO_WHERE(pvo, SPILL_INSERT);
 				pvo->pvo_pmap->pm_evictions--;
 				PMAPCOUNT(ptes_spilled);
 				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
@@ -875,6 +896,13 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 	}
 
 	/*
+	 * The victim should be not be a kernel PVO/PTE entry.
+	 */
+	KASSERT(victim_pvo->pvo_pmap != pmap_kernel());
+	KASSERT(PVO_PTEGIDX_ISSET(victim_pvo));
+	KASSERT(PVO_PTEGIDX_GET(victim_pvo) == i);
+
+	/*
 	 * We are invalidating the TLB entry for the EA for the
 	 * we are replacing even though its valid; If we don't
 	 * we lose any ref/chg bit changes contained in the TLB
@@ -897,6 +925,8 @@ pmap_pte_spill(struct pmap *pm, vaddr_t addr)
 	pmap_pte_set(pt, &source_pvo->pvo_pte);
 	victim_pvo->pvo_pmap->pm_evictions++;
 	source_pvo->pvo_pmap->pm_evictions--;
+	PVO_WHERE(victim_pvo, SPILL_UNSET);
+	PVO_WHERE(source_pvo, SPILL_SET);
 
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
@@ -1264,7 +1294,7 @@ pmap_pvo_to_pte(const struct pvo_entry *pvo, int pteidx)
 #if defined(DEBUG) || defined(PMAPCHECK)
 		pmap_pte_print(pt);
 #endif
-		panic("pmap_pvo_to_pte: pvo %p: has invalid pte %p in "
+		panic("pmap_pvo_to_pte: pvo %p: has nomatching pte %p in "
 		    "pmap_pteg_table but valid in pvo", pvo, pt);
 	}
 	return NULL;
@@ -1513,11 +1543,11 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 	if (i >= 0) {
 		PVO_PTEGIDX_SET(pvo, i);
+		PVO_WHERE(pvo, ENTER_INSERT);
 		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
 		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
 		TAILQ_INSERT_TAIL(pvoh, pvo, pvo_olink);
 	} else {
-
 		/*
 		 * Since we didn't have room for this entry (which makes it
 		 * and evicted entry), place it at the head of the list.
@@ -1525,6 +1555,13 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		TAILQ_INSERT_HEAD(pvoh, pvo, pvo_olink);
 		PMAPCOUNT(ptes_evicted);
 		pm->pm_evictions++;
+		/*
+		 * If this is a kernel page, make sure it's active.
+		 */
+		if (pm == pmap_kernel()) {
+			i = pmap_pte_spill(pm, va);
+			KASSERT(i);
+		}
 	}
 	PMAP_PVO_CHECK(pvo);		/* sanity check */
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
@@ -1565,6 +1602,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	pt = pmap_pvo_to_pte(pvo, pteidx);
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+		PVO_WHERE(pvo, REMOVE);
 		PVO_PTEGIDX_CLR(pvo);
 		PMAPCOUNT(ptes_removed);
 	} else {
@@ -1928,6 +1966,7 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 */
 		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PVO_WHERE(pvo, PMAP_PROTECT);
 			PMAPCOUNT(ptes_changed);
 		}
 
@@ -2041,6 +2080,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		pvo->pvo_pte.pte_lo |= PTE_BR;
 		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PVO_WHERE(pvo, PMAP_PAGE_PROTECT);
 			PMAPCOUNT(ptes_changed);
 		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
