@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.1 1995/09/17 20:53:43 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.2 1995/10/02 09:07:04 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,6 +66,9 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
+#if defined(SUN4)
+#include <machine/eeprom.h>
+#endif
 
 #include <sparc/dev/cgtworeg.h>
 #include <sparc/dev/sbusvar.h>
@@ -100,7 +103,6 @@ static struct fbdriver cgtwofbdriver = {
 
 extern int fbnode;
 extern struct tty *fbconstty;
-extern int (*v_putc)();
 extern int nullop();
 static int cgtwo_cnputc();
 
@@ -117,13 +119,26 @@ cgtwomatch(parent, vcf, aux)
 	struct cfdata *cf = vcf;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
+	int probe;
+	caddr_t tmp;
+
+	if (ca->ca_bustype != BUS_VME16)
+		return (0);
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
-		return(1);
-	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 4) != -1);
+
+#if defined(SUN4)
+	if (cputyp != CPU_SUN4 || cf->cf_unit != 0)
+		return (0);
+
+	/* XXX - Must do our own mapping at CG2_CTLREG_OFF */
+	bus_untmp();
+	tmp = (caddr_t)bus_tmp(ra->ra_paddr + CG2_CTLREG_OFF, ca->ca_bustype);
+	if (probeget(tmp, 2) != -1)
+		return 1;
+#endif
+	return 0;
 }
 
 /*
@@ -136,7 +151,7 @@ cgtwoattach(parent, self, args)
 {
 	register struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
 	register struct confargs *ca = args;
-	register int node, ramsize, i;
+	register int node, i;
 	register struct cgtwo_all *p;
 	int isconsole;
 	int sbus = 1;
@@ -158,7 +173,47 @@ cgtwoattach(parent, self, args)
 		sc->sc_fb.fb_type.fb_height = 900;
 		sc->sc_fb.fb_linebytes = 1152;
 		nam = "cgtwo";
+
+#if defined(SUN4)
+		if (cputyp==CPU_SUN4) {
+			struct eeprom *eep = (struct eeprom *)eeprom_va;
+			if (eep != NULL) {
+				switch (eep->eeScreenSize) {
+				case EE_SCR_1152X900:
+					/* Handled above. */
+					break;
+
+				case EE_SCR_1024X1024:
+					sc->sc_fb.fb_type.fb_width = 1024;
+					sc->sc_fb.fb_type.fb_height = 1024;
+					sc->sc_fb.fb_linebytes = 128;
+					break;
+
+				case EE_SCR_1600X1280:
+					sc->sc_fb.fb_type.fb_width = 1600;
+					sc->sc_fb.fb_type.fb_height = 1280;
+					sc->sc_fb.fb_linebytes = 200;
+					break;
+
+				case EE_SCR_1440X1440:
+					sc->sc_fb.fb_type.fb_width = 1440;
+					sc->sc_fb.fb_type.fb_height = 1440;
+					sc->sc_fb.fb_linebytes = 180;
+					break;
+
+				default:
+					/*
+					 * XXX: Do nothing, I guess.
+					 * Should we print a warning about
+					 * an unknown value? --thorpej
+					 */
+					break;
+				}
+			}
+		}
+#endif
 		break;
+#if 0
 	case BUS_SBUS:
 		node = ca->ca_ra.ra_node;
 		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
@@ -166,13 +221,12 @@ cgtwoattach(parent, self, args)
 		sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 1152);
 		nam = getpropstring(node, "model");
 		break;
+#endif
 	}
 
-	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
-		NBPG);
 	sc->sc_fb.fb_type.fb_depth = 8;
 	sc->sc_fb.fb_type.fb_cmsize = 256;
-	sc->sc_fb.fb_type.fb_size = ramsize;
+	sc->sc_fb.fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
 	printf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
@@ -182,11 +236,28 @@ cgtwoattach(parent, self, args)
 	 * registers ourselves.  We only need the video RAM if we are
 	 * going to print characters via rconsole.
 	 */
-	isconsole = node == fbnode && fbconstty != NULL;
+#if defined(SUN4)
+	if (cputyp == CPU_SUN4) {
+		struct eeprom *eep = (struct eeprom *)eeprom_va;
+		/*
+		 * Assume this is the console if there's no eeprom info
+		 * to be found.
+		 */
+		if (eep == NULL || eep->eeConsole == EE_CONS_COLOR)
+			isconsole = (fbconstty != NULL);
+		else
+			isconsole = 0;
+	}
+#endif
+#if defined(SUN4C) || defined(SUN4M)
+	if (cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
+		isconsole = node == fbnode && fbconstty != NULL;
+#endif
 	sc->sc_phys = (caddr_t)ca->ca_ra.ra_paddr;
 	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
 		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(sc->sc_phys, ramsize,
+		sc->sc_fb.fb_pixels = mapiodev(sc->sc_phys + CG2_PIXMAP_OFF,
+					       CG2_PIXMAP_SIZE,
 					       ca->ca_bustype);
 	}
 	sc->sc_reg = (volatile struct cg2reg *)
@@ -391,5 +462,5 @@ cgtwommap(dev, off, prot)
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	return ((int)sc->sc_phys + off + PMAP_OBIO + PMAP_NC);
+	return ((int)sc->sc_phys + off + PMAP_VME16 + PMAP_NC);
 }
