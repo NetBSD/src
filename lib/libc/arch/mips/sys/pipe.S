@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.7 2000/09/28 08:38:54 kleink Exp $	*/
+/*	$NetBSD: pipe.S,v 1.8 2000/12/13 23:29:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,12 +40,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)pipe.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: pipe.S,v 1.7 2000/09/28 08:38:54 kleink Exp $")
+	ASMSTR("$NetBSD: pipe.S,v 1.8 2000/12/13 23:29:07 simonb Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(pipe, _pipe)

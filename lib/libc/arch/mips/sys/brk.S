@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.12 2000/07/04 07:37:33 kleink Exp $	*/
+/*	$NetBSD: brk.S,v 1.13 2000/12/13 23:29:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,12 +40,8 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: brk.S,v 1.12 2000/07/04 07:37:33 kleink Exp $")
+	ASMSTR("$NetBSD: brk.S,v 1.13 2000/12/13 23:29:06 simonb Exp $")
 #endif /* LIBC_SCCS and not lint */
-
-#ifdef ABICALLS
-	.abicalls
-#endif
 
 	.globl	_C_LABEL(__minbrk)
 	.globl	_C_LABEL(__curbrk)
