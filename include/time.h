@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.22 1998/09/15 12:24:28 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.23 1999/12/22 21:26:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,9 +48,7 @@
 #include <machine/ansi.h>
 #include <machine/limits.h>	/* Include file containing CLK_TCK. */
 
-#ifndef	NULL
-#define	NULL	0
-#endif
+#include <null.h>
 
 #ifdef	_BSD_CLOCK_T_
 typedef	_BSD_CLOCK_T_	clock_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.78 1999/12/02 13:15:55 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.79 1999/12/22 21:26:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -88,9 +88,7 @@
 #define	STDOUT_FILENO	1	/* standard output file descriptor */
 #define	STDERR_FILENO	2	/* standard error file descriptor */
 
-#ifndef NULL
-#define	NULL		0	/* null pointer constant */
-#endif
+#include <null.h>
 
 __BEGIN_DECLS
 __dead	 void _exit __P((int)) __attribute__((__noreturn__));

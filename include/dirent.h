@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.14 1998/05/06 19:05:51 kleink Exp $	*/
+/*	$NetBSD: dirent.h,v 1.15 1999/12/22 21:26:17 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -78,9 +78,7 @@ typedef struct _dirdesc {
 #define DTF_REWIND	0x0004	/* rewind after reading union stack */
 #define __DTF_READALL	0x0008	/* everything has been read */
 
-#ifndef NULL
-#define	NULL	0
-#endif
+#include <null.h>
 
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE */
 

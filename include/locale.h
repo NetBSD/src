@@ -1,4 +1,4 @@
-/*	$NetBSD: locale.h,v 1.7 1998/02/02 21:07:29 perry Exp $	*/
+/*	$NetBSD: locale.h,v 1.8 1999/12/22 21:26:17 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -59,9 +59,7 @@ struct lconv {
 	char	n_sign_posn;
 };
 
-#ifndef NULL
-#define	NULL	0
-#endif
+#include <null.h>
 
 #define	LC_ALL		0
 #define	LC_COLLATE	1
