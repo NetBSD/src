@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 2001/12/11 00:18:23 uwe Exp $ */
+/*	$NetBSD: pci_machdep.c,v 1.2 2001/12/20 11:38:52 uwe Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,9 @@
  * References are to the microSPARC-IIep manual unless noted otherwise.
  */
 
+#if defined(DEBUG) && !defined(SPARC_PCI_DEBUG)
 #define SPARC_PCI_DEBUG
+#endif
 
 #ifdef SPARC_PCI_DEBUG
 #define SPDB_CONF	0x01
