@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1997/01/12 19:12:07 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1997/07/20 17:42:08 christos Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -81,6 +81,8 @@ static const char *const initcoms [] = {
 #endif /* EXTRA_INITCOMS */
 	NULL
 };
+
+int main __P((int, char **));
 
 int
 main(argc, argv)
