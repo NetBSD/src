@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.1 2002/04/26 03:49:06 lukem Exp $
+# $NetBSD: list,v 1.1.2.1 2002/06/05 11:26:22 lukem Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -7,8 +7,8 @@ COPY	${KERNEL}			netbsd
 LINK	netbsd				vmunix
 
 # These are scripts:
-COPY	${DESTDIR}/usr/bin/false	bin/false
-COPY	${DESTDIR}/usr/bin/true 	bin/true
+COPY	${DESTDIR}/usr/bin/false	bin/false		555
+COPY	${DESTDIR}/usr/bin/true 	bin/true		555
 
 # From usr/mdec:
 COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
@@ -38,84 +38,84 @@ SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
 
 # copy the MAKEDEV script and make some devices
-COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
+COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV		555
+COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local	555
 
 # copy the miniroot installation tools
 COPY	${CURDIR}/profile		.profile
 COPY	${CURDIR}/termcap		usr/share/misc/termcap
 
-COPY	${CURDIR}/install.md		install.md	0644
-COPY	${OBJDIR}/install.sub		install.sub	0644
+COPY	${CURDIR}/install.md		install.md
+COPY	${OBJDIR}/install.sub		install.sub
 
-COPY	${DISTRIBDIR}/miniroot/install.sh install	0755
-COPY	${DISTRIBDIR}/miniroot/upgrade.sh upgrade	0755
+COPY	${DISTRIBDIR}/miniroot/install.sh install		555
+COPY	${DISTRIBDIR}/miniroot/upgrade.sh upgrade		555
 
 # miniroot files from /sbin:
 # Extras not in ../../miniroot/list:
 #  disklabel dmesg edlabel mount_kernfs restore 
 
-COPY	${DESTDIR}/sbin/dmesg		sbin/dmesg
-COPY	${DESTDIR}/sbin/edlabel 	sbin/edlabel
+COPY	${DESTDIR}/sbin/dmesg		sbin/dmesg		555
+COPY	${DESTDIR}/sbin/edlabel 	sbin/edlabel		555
 
-COPY	${DESTDIR}/sbin/fsck		sbin/fsck
-COPY	${DESTDIR}/sbin/fsck_ffs	sbin/fsck_ffs
+COPY	${DESTDIR}/sbin/fsck		sbin/fsck		555
+COPY	${DESTDIR}/sbin/fsck_ffs	sbin/fsck_ffs		555
 
-COPY	${DESTDIR}/sbin/ifconfig	sbin/ifconfig
-COPY	${DESTDIR}/sbin/init		sbin/init
-COPY	${DESTDIR}/sbin/mknod		sbin/mknod
+COPY	${DESTDIR}/sbin/ifconfig	sbin/ifconfig		555
+COPY	${DESTDIR}/sbin/init		sbin/init		555
+COPY	${DESTDIR}/sbin/mknod		sbin/mknod		555
 
-COPY	${DESTDIR}/sbin/mount		sbin/mount
-COPY	${DESTDIR}/sbin/mount_cd9660	sbin/mount_cd9660
-COPY	${DESTDIR}/sbin/mount_ffs	sbin/mount_ffs
-COPY	${DESTDIR}/sbin/mount_kernfs	sbin/mount_kernfs
-COPY	${DESTDIR}/sbin/mount_nfs	sbin/mount_nfs
+COPY	${DESTDIR}/sbin/mount		sbin/mount		555
+COPY	${DESTDIR}/sbin/mount_cd9660	sbin/mount_cd9660	555
+COPY	${DESTDIR}/sbin/mount_ffs	sbin/mount_ffs		555
+COPY	${DESTDIR}/sbin/mount_kernfs	sbin/mount_kernfs	555
+COPY	${DESTDIR}/sbin/mount_nfs	sbin/mount_nfs		555
 
-COPY	${DESTDIR}/sbin/newfs		sbin/newfs
-COPY	${DESTDIR}/sbin/ping		sbin/ping
-COPY	${DESTDIR}/sbin/reboot		sbin/reboot
+COPY	${DESTDIR}/sbin/newfs		sbin/newfs		555
+COPY	${DESTDIR}/sbin/ping		sbin/ping		555
+COPY	${DESTDIR}/sbin/reboot		sbin/reboot		555
 LINK		   sbin/reboot		sbin/halt
 
-COPY	${DESTDIR}/sbin/restore		sbin/restore
+COPY	${DESTDIR}/sbin/restore		sbin/restore		555
 LINK		   sbin/restore		sbin/rrestore
 
-COPY	${DESTDIR}/sbin/route		sbin/route
-COPY	${DESTDIR}/sbin/shutdown	sbin/shutdown
-COPY	${DESTDIR}/sbin/slattach	sbin/slattach
-COPY	${DESTDIR}/sbin/swapctl		sbin/swapctl
-COPY	${DESTDIR}/sbin/sysctl		sbin/sysctl
-COPY	${DESTDIR}/sbin/umount		sbin/umount
+COPY	${DESTDIR}/sbin/route		sbin/route		555
+COPY	${DESTDIR}/sbin/shutdown	sbin/shutdown		555
+COPY	${DESTDIR}/sbin/slattach	sbin/slattach		555
+COPY	${DESTDIR}/sbin/swapctl		sbin/swapctl		555
+COPY	${DESTDIR}/sbin/sysctl		sbin/sysctl		555
+COPY	${DESTDIR}/sbin/umount		sbin/umount		555
 
 # miniroot files from /bin:
 # Extras not in ../../miniroot/list:
 #  date ps rmdir
 
-COPY	${DESTDIR}/bin/cat		bin/cat
-COPY	${DESTDIR}/bin/chmod		bin/chmod
-COPY	${DESTDIR}/bin/cp		bin/cp
-COPY	${DESTDIR}/bin/date		bin/date
-COPY	${DESTDIR}/bin/dd		bin/dd
-COPY	${DESTDIR}/bin/df		bin/df
-COPY	${DESTDIR}/bin/ed		bin/ed
-COPY	${DESTDIR}/bin/expr		bin/expr
-COPY	${DESTDIR}/bin/hostname		bin/hostname
-COPY	${DESTDIR}/bin/kill		bin/kill
-COPY	${DESTDIR}/bin/ln		bin/ln
-COPY	${DESTDIR}/bin/ls		bin/ls
-COPY	${DESTDIR}/bin/mkdir		bin/mkdir
-COPY	${DESTDIR}/bin/mt		bin/mt
-COPY	${DESTDIR}/bin/mv		bin/mv
-COPY	${DESTDIR}/bin/pax		bin/pax
-COPY	${DESTDIR}/bin/ps		bin/ps
-COPY	${DESTDIR}/bin/pwd		bin/pwd
-COPY	${DESTDIR}/bin/rm		bin/rm
-COPY	${DESTDIR}/bin/rmdir		bin/rmdir
-COPY	${DESTDIR}/bin/sh		bin/sh
-COPY	${DESTDIR}/bin/sleep		bin/sleep
-COPY	${DESTDIR}/bin/stty		bin/stty
-COPY	${DESTDIR}/bin/sync		bin/sync
+COPY	${DESTDIR}/bin/cat		bin/cat			555
+COPY	${DESTDIR}/bin/chmod		bin/chmod		555
+COPY	${DESTDIR}/bin/cp		bin/cp			555
+COPY	${DESTDIR}/bin/date		bin/date		555
+COPY	${DESTDIR}/bin/dd		bin/dd			555
+COPY	${DESTDIR}/bin/df		bin/df			555
+COPY	${DESTDIR}/bin/ed		bin/ed			555
+COPY	${DESTDIR}/bin/expr		bin/expr		555
+COPY	${DESTDIR}/bin/hostname		bin/hostname		555
+COPY	${DESTDIR}/bin/kill		bin/kill		555
+COPY	${DESTDIR}/bin/ln		bin/ln			555
+COPY	${DESTDIR}/bin/ls		bin/ls			555
+COPY	${DESTDIR}/bin/mkdir		bin/mkdir		555
+COPY	${DESTDIR}/bin/mt		bin/mt			555
+COPY	${DESTDIR}/bin/mv		bin/mv			555
+COPY	${DESTDIR}/bin/pax		bin/pax			555
+COPY	${DESTDIR}/bin/ps		bin/ps			555
+COPY	${DESTDIR}/bin/pwd		bin/pwd			555
+COPY	${DESTDIR}/bin/rm		bin/rm			555
+COPY	${DESTDIR}/bin/rmdir		bin/rmdir		555
+COPY	${DESTDIR}/bin/sh		bin/sh			555
+COPY	${DESTDIR}/bin/sleep		bin/sleep		555
+COPY	${DESTDIR}/bin/stty		bin/stty		555
+COPY	${DESTDIR}/bin/sync		bin/sync		555
 
-COPY	${DESTDIR}/bin/test		bin/test
+COPY	${DESTDIR}/bin/test		bin/test		555
 LINK		   bin/test		bin/[
 
 # new, combined pax,tar,cpio
@@ -125,29 +125,29 @@ LINK		   bin/pax		usr/bin/tar
 SYMLINK	/usr/lib usr/libexec
 
 # usr.sbin:
-COPY	${DESTDIR}/usr/sbin/installboot		usr/sbin/installboot
-COPY	${DESTDIR}/usr/sbin/chown		usr/sbin/chown
-COPY	${DESTDIR}/usr/sbin/rdate		usr/sbin/rdate
+COPY	${DESTDIR}/usr/sbin/installboot	usr/sbin/installboot	555
+COPY	${DESTDIR}/usr/sbin/chown	usr/sbin/chown		555
+COPY	${DESTDIR}/usr/sbin/rdate	usr/sbin/rdate		555
 
 # usr.bin:
 
-LINK		   usr/sbin/chown		usr/bin/chgrp
+LINK		   usr/sbin/chown	usr/bin/chgrp
 
-COPY	${DESTDIR}/usr/bin/chflags		usr/bin/chflags
-COPY	${DESTDIR}/usr/bin/cksum		usr/bin/cksum
-COPY	${DESTDIR}/usr/bin/cmp			usr/bin/cmp
-COPY	${DESTDIR}/usr/bin/ftp			usr/bin/ftp
-COPY	${DESTDIR}/usr/bin/less			usr/bin/less
-LINK		   usr/bin/less 		usr/bin/more
-COPY	${DESTDIR}/usr/bin/rsh			usr/bin/rsh
-COPY	${DESTDIR}/usr/bin/sed			usr/bin/sed
-COPY	${DESTDIR}/usr/bin/tip			usr/bin/tip
-COPY	${DESTDIR}/usr/bin/vi			usr/bin/vi
+COPY	${DESTDIR}/usr/bin/chflags	usr/bin/chflags		555
+COPY	${DESTDIR}/usr/bin/cksum	usr/bin/cksum		555
+COPY	${DESTDIR}/usr/bin/cmp		usr/bin/cmp		555
+COPY	${DESTDIR}/usr/bin/ftp		usr/bin/ftp		555
+COPY	${DESTDIR}/usr/bin/less		usr/bin/less		555
+LINK		   usr/bin/less 	usr/bin/more
+COPY	${DESTDIR}/usr/bin/rsh		usr/bin/rsh		555
+COPY	${DESTDIR}/usr/bin/sed		usr/bin/sed		555
+COPY	${DESTDIR}/usr/bin/tip		usr/bin/tip		555
+COPY	${DESTDIR}/usr/bin/vi		usr/bin/vi		555
 
 # gnu/usr.bin:
-COPY	${DESTDIR}/usr/bin/gzip			usr/bin/gzip
-LINK		   usr/bin/gzip 		usr/bin/gunzip
-LINK		   usr/bin/gzip 		usr/bin/gzcat
+COPY	${DESTDIR}/usr/bin/gzip		usr/bin/gzip		555
+LINK		   usr/bin/gzip 	usr/bin/gunzip
+LINK		   usr/bin/gzip 	usr/bin/gzcat
 
 # install.md still uses sort
-COPY	${DESTDIR}/usr/bin/sort			usr/bin/sort
+COPY	${DESTDIR}/usr/bin/sort		usr/bin/sort		555
