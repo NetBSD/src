@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.44 2000/03/19 21:25:49 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.45 2000/03/20 00:49:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -299,7 +299,8 @@ ncr53c9x_reset(sc)
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_ESP406:
 	case NCR_VARIANT_FAS408:
-		NCR_SCSIREGS(sc);
+		NCR_WRITE_REG(sc, NCR_CFG5, sc->sc_cfg5 | NCRCFG5_SINT);
+		NCR_WRITE_REG(sc, NCR_CFG4, sc->sc_cfg4);
 	case NCR_VARIANT_AM53C974:
 	case NCR_VARIANT_FAS216:
 	case NCR_VARIANT_NCR53C94:
