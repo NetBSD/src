@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 1997/10/14 06:51:44 sakamoto Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.1.2.1 1997/11/28 19:50:13 mellon Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,6 +52,7 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
+#include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
 
@@ -62,8 +63,8 @@
 #include <bebox/isa/icu.h>
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
-#define	PCI_MODE1_ADDRESS_REG	0x0cf8
-#define	PCI_MODE1_DATA_REG	0x0cfc
+#define	PCI_MODE1_ADDRESS_REG	(bebox_bus_io.bus_base + 0x0cf8)
+#define	PCI_MODE1_DATA_REG	(bebox_bus_io.bus_base + 0x0cfc)
 
 void
 pci_attach_hook(parent, self, pba)
@@ -124,9 +125,9 @@ pci_conf_read(pc, tag, reg)
 {
 	pcireg_t data;
 
-	outl(PCI_MODE1_ADDRESS_REG, tag | reg);
-	data = inl(PCI_MODE1_DATA_REG);
-	outl(PCI_MODE1_ADDRESS_REG, 0);
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
+	data = in32rb(PCI_MODE1_DATA_REG);
+	out32rb(PCI_MODE1_ADDRESS_REG, 0);
 	return data;
 }
 
@@ -138,9 +139,9 @@ pci_conf_write(pc, tag, reg, data)
 	pcireg_t data;
 {
 
-	outl(PCI_MODE1_ADDRESS_REG, tag | reg);
-	outl(PCI_MODE1_DATA_REG, data);
-	outl(PCI_MODE1_ADDRESS_REG, 0);
+	out32rb(PCI_MODE1_ADDRESS_REG, tag | reg);
+	out32rb(PCI_MODE1_DATA_REG, data);
+	out32rb(PCI_MODE1_ADDRESS_REG, 0);
 }
 
 int
@@ -183,7 +184,7 @@ pci_intr_map(pc, intrtag, pin, line, ihp)
 			printf("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
-		if (line == 2) {
+		if (line == IRQ_SLAVE) {
 			printf("pci_intr_map: changed line 2 to line 9\n");
 			line = 9;
 		}
@@ -204,7 +205,7 @@ pci_intr_string(pc, ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
 		panic("pci_intr_string: bogus handle 0x%x\n", ih);
 
 	sprintf(irqstr, "irq %d", ih);
@@ -220,7 +221,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	void *arg;
 {
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
+	if (ih == 0 || ih >= ICU_LEN || ih == IRQ_SLAVE)
 		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
 
 	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
