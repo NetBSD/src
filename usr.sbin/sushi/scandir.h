@@ -1,4 +1,4 @@
-/*      $NetBSD: scandir.h,v 1.2 2003/11/12 13:31:08 grant Exp $       */
+/*      $NetBSD: scandir.h,v 1.3 2005/01/11 23:11:05 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "menutree.h"
 #endif	/* _SCANDIR_H_ */
 
-void scan_dir __P((struct cqMenu *, char *));
-void scan_index __P((struct cqMenu *, char *, char *));
+void scan_dir(struct cqMenu *, char *);
+void scan_index(struct cqMenu *, char *, char *);
 
 #endif	/* _SCANDIR_H_ */
