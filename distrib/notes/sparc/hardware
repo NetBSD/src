@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.26 2003/10/21 02:17:35 mbw Exp $
+.\"	$NetBSD: hardware,v 1.27 2003/10/22 07:59:44 mbw Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -78,7 +78,7 @@ SPARCstation/server 20
 SPARCstation Voyager
 .bullet)
 .(Note
-All known SuperSPARC, HyperSPARC, microSPARC, and TurboSPARC CPUs are supported
+All known SuperSPARC, hyperSPARC, microSPARC, and TurboSPARC CPUs are supported
 .Note)
 .It
 sun4m clones
@@ -443,7 +443,7 @@ On-board and Sbus card
 .Ss2 Unsupported devices
 .(bullet -offset indent
 .Em cpuN ;
-multiple HyperSPARC CPUs
+multiple hyperSPARC CPUs
 .It
 DBRIe-based audio and ISDN.
 .br

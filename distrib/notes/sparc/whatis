@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.17 2003/10/21 02:19:38 mbw Exp $
+.\"	$NetBSD: whatis,v 1.18 2003/10/22 07:59:44 mbw Exp $
 .
 .Nx \*V
 is the seventh major release for the \*M.
@@ -6,7 +6,7 @@ is the seventh major release for the \*M.
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
 Symmetric Multi-Processing (SMP) support has finally been completed.  Support
-for Viking and SuperSPARC CPU's is complete, but multi-processor HyperSPARC
+for SuperSPARC CPU's is complete, but multi-processor hyperSPARC
 systems are not yet supported.
 .It
 A longstanding sun4c MMU bug has been squashed.  sun4c models should be 
