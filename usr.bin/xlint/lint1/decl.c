@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.22 2001/05/28 12:40:37 lukem Exp $ */
+/* $NetBSD: decl.c,v 1.23 2001/07/26 15:05:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: decl.c,v 1.22 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: decl.c,v 1.23 2001/07/26 15:05:10 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1499,7 +1499,7 @@ dname(sym_t *sym)
 			 * XXX somewhat ugly because we dont know whether
 			 * this is AUTO or EXTERN (functions). If we are
 			 * wrong it must be corrected in decl1loc(), where
-			 * we have the neccessary type information.
+			 * we have the necessary type information.
 			 */
 			sc = AUTO;
 			sym->s_def = DEF;

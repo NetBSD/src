@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.20 2001/05/28 12:40:37 lukem Exp $ */
+/* $NetBSD: cgram.y,v 1.21 2001/07/26 15:05:10 wiz Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgram.y,v 1.20 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.21 2001/07/26 15:05:10 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1508,7 +1508,7 @@ expr:
 
 term:
 	  T_NAME {
-		/* XXX realy neccessary? */
+		/* XXX really necessary? */
 		if (yychar < 0)
 			yychar = yylex();
 		$$ = getnnode(getsym($1), yychar);
