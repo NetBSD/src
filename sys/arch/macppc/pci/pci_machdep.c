@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5 1998/08/15 03:02:41 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.6 1998/10/21 08:58:36 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -161,12 +161,14 @@ pci_conf_read(pc, tag, reg)
 		if (dev < 11) {
 			if (reg == PCI_ID_REG)
 				return 0xffffffff;
-			panic("pci_conf_read");
+			panic("pci_conf_read: dev < 11");
 		}
+		if (func > 7)
+			panic("pci_conf_read: func > 7");
 
 		r = &pci_bridges[pc];
 
-		out32rb(r->addr, (1 << dev) | reg);
+		out32rb(r->addr, (1 << dev) | (func << 8) | reg);
 		DELAY(10);
 		data = in32rb(r->data);
 		DELAY(10);
@@ -197,12 +199,12 @@ pci_conf_write(pc, tag, reg, data)
 
 		pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
-		if (dev < 11)
+		if (dev < 11 || func > 7)
 			panic("pci_conf_write");
 
 		r = &pci_bridges[pc];
 
-		out32rb(r->addr, (1 << dev) | reg);
+		out32rb(r->addr, (1 << dev) | (func << 8) | reg);
 		DELAY(10);
 		out32rb(r->data, data);
 		DELAY(10);
