@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.113 1997/10/20 15:19:51 explorer Exp $
+#	$NetBSD: GENERIC,v 1.114 1997/10/20 18:45:09 explorer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -427,4 +427,4 @@ pseudo-device	tb		1	# tablet line discipline
 
 # rnd is EXTERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
-#options 	RND_COM			# use "com" randomness as well
+#options 	RND_COM			# use "com" randomness as well (BROKEN)
