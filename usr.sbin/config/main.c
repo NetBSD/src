@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2001/06/08 12:47:06 fredette Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2001/07/01 02:46:47 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,6 +69,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #include "sem.h"
 
 int	vflag;				/* verbose output */
+int	Pflag;				/* pack locators */
 
 int	yyparse(void);
 
@@ -112,7 +113,7 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 
 	pflag = 0;
-	while ((ch = getopt(argc, argv, "Dgpvb:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "DPgpvb:s:")) != -1) {
 		switch (ch) {
 
 #ifndef MAKE_BOOTSTRAP
@@ -120,6 +121,10 @@ main(int argc, char **argv)
 			yydebug = 1;
 			break;
 #endif
+
+		case 'P':
+			Pflag = 1;
+			break;
 
 		case 'g':
 			/*
@@ -169,7 +174,7 @@ main(int argc, char **argv)
 	argv += optind;
 	if (argc > 1) {
 usage:
-		(void)fputs("usage: config [-pv] [-s srcdir] [-b builddir] sysname\n", stderr);
+		(void)fputs("usage: config [-Ppv] [-s srcdir] [-b builddir] sysname\n", stderr);
 		exit(1);
 	}
 	conffile = (argc == 1) ? argv[0] : "CONFIG";
