@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.72 1996/03/25 18:47:47 perry Exp $	*/
+/*	$NetBSD: conf.c,v 1.73 1996/03/27 19:13:18 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -121,6 +121,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
+#define cdev_joy_init cdev_ss_init
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -183,6 +184,8 @@ cdev_decl(vnd);
 cdev_decl(audio);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
+#include "joy.h"
+cdev_decl(joy);
 
 struct cdevsw	cdevsw[] =
 {
@@ -214,7 +217,7 @@ struct cdevsw	cdevsw[] =
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
 	cdev_notdef(),			/* 25 */
-	cdev_notdef(),			/* 26 */
+	cdev_joy_init(NJOY,joy),        /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_lkm_dummy(),		/* 29 */
