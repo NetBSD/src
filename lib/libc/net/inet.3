@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.22 2003/05/03 19:11:31 wiz Exp $
+.\"	$NetBSD: inet.3,v 1.23 2003/05/05 14:04:50 bjh21 Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)inet.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 29, 2003
+.Dd May 05, 2003
 .Dt INET 3
 .Os
 .Sh NAME
@@ -54,17 +54,17 @@
 .Lb libc
 .Sh SYNOPSIS
 .In arpa/inet.h
-.Ft unsigned long
+.Ft in_addr_t
 .Fn inet_addr "const char *cp"
 .Ft int
 .Fn inet_aton "const char *cp" "struct in_addr *addr"
-.Ft unsigned long
+.Ft in_addr_t
 .Fn inet_lnaof "struct in_addr in"
 .Ft struct in_addr
-.Fn inet_makeaddr "unsigned long net" "unsigned long lna"
-.Ft unsigned long
+.Fn inet_makeaddr "in_addr_t net" "in_addr_t lna"
+.Ft in_addr_t
 .Fn inet_netof "struct in_addr in"
-.Ft unsigned long
+.Ft in_addr_t
 .Fn inet_network "const char *cp"
 .Ft char *
 .Fn inet_ntoa "struct in_addr in"
@@ -320,6 +320,12 @@ and
 .Nm inet_netof
 functions appeared in
 .Bx 4.2 .
+They were changed to use
+.Va in_addr_t
+in place of
+.Va unsigned long
+in
+.Nx 2.0 .
 The
 .Nm inet_aton
 and
