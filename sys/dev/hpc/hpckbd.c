@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.2 2001/03/01 16:41:36 uch Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.3 2001/04/12 19:45:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -405,7 +405,7 @@ hpckbd_cngetc(void *arg, u_int *type, int *data)
 	if (!hc->hc_console || !hc->hc_polling || !hc->hc_ic)
 		return;
 
-	s = splimp();
+	s = splvm();		/* XXX Questionable. */
 	while (hpckbd_getevent(hc, type, data) == 0) /* busy loop */
 		hpckbd_ic_poll(hc->hc_ic);
 	splx(s);
@@ -415,7 +415,7 @@ void
 hpckbd_cnpollc(void *arg, int on)
 {
 	struct hpckbd_core *hc = arg;
-	int s = splimp();
+	int s = splvm();	/* XXX See above. */
 
 	hc->hc_polling = on;
 
