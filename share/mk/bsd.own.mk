@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.385 2003/10/27 01:45:20 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.386 2003/10/28 07:09:03 simonb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -74,11 +74,11 @@ USE_TOOLS_TOOLCHAIN?=yes
 # working:
 .if ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "vax" || \
