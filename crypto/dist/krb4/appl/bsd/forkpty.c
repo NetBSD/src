@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,7 @@
 
 #ifndef HAVE_FORKPTY
 
-RCSID("$Id: forkpty.c,v 1.1.1.2 2000/12/29 01:42:20 assar Exp $");
+RCSID("$Id: forkpty.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
 
 /* Only CRAY is known to have problems with forkpty(). */
 #if defined(CRAY)
@@ -69,14 +69,14 @@ static char *ptsname(int fd)
 
 #ifndef HAVE_REVOKE
 static
-void
-revoke(char *line)
+int
+revoke(const char *line)
 {
     int slave;
-    RETSIGTYPE (*ofun)();
+    RETSIGTYPE (*ofun)(int);
 
     if ( (slave = open(line, O_RDWR)) < 0)
-	return;
+	return -1;
     
     ofun = signal(SIGHUP, SIG_IGN);
     vhangup();
@@ -93,6 +93,7 @@ revoke(char *line)
      */
     fcntl(slave, F_SETFD, 1);
     /* close(slave); */
+    return 0;
 }
 #endif
 

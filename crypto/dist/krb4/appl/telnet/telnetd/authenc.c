@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: authenc.c,v 1.1.1.2 2000/12/29 01:42:40 assar Exp $");
+RCSID("$Id: authenc.c,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $");
 
 #ifdef AUTHENTICATION
 
@@ -67,9 +67,8 @@ telnet_spin(void)
 }
 
 char *
-telnet_getenv(char *val)
+telnet_getenv(const char *val)
 {
-    extern char *getenv(const char *);
     return(getenv(val));
 }
 

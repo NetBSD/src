@@ -30,7 +30,7 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$Id: ksrvutil.c,v 1.1.1.2 2000/12/29 01:43:07 assar Exp $");
+RCSID("$Id: ksrvutil.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
 
 #include "ksrvutil.h"
 
@@ -315,7 +315,7 @@ main(int argc, char **argv)
     memset(local_realm, 0, sizeof(local_realm));
     memset(cellname, 0, sizeof(cellname));
     
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     if (krb_get_default_principal(u_name, u_inst, u_realm) < 0)
 	errx (1, "could not get default principal");
@@ -499,12 +499,14 @@ main(int argc, char **argv)
 		     * key has been compromised so we also use a
 		     * random sequence number!
 		     */
+#ifndef HAVE_OPENSSL
 		    des_init_random_number_generator(&old_key);
 		    {
 		        des_cblock seqnum;
 			des_generate_random_block(&seqnum);
 			des_set_sequence_number((unsigned char *)&seqnum);
 		    }
+#endif
 		    /* 
 		     * Pick a new key and determine whether or not
 		     * it is safe to change
@@ -537,7 +539,7 @@ main(int argc, char **argv)
 			dest_tkt();
 		    }
 		    else {
-			com_err(__progname, status, 
+			com_err(getprogname(), status, 
 				" attempting to change password.");
 			dest_tkt();
 			/* XXX This knows the format of a keyfile */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 1998, 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: error.c,v 1.1.1.2 2000/12/29 01:43:55 assar Exp $");
+RCSID("$Id: error.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,9 +62,9 @@ initialize_error_table_r(struct et_list **list,
 			 int num_errors,
 			 long base)
 {
-    struct et_list *et;
+    struct et_list *et, **end;
     struct foobar *f;
-    for (et = *list; et; et = et->next)
+    for (end = list, et = *list; et; end = &et->next, et = et->next)
         if (et->table->msgs == messages)
             return;
     f = malloc(sizeof(*f));
@@ -75,8 +75,8 @@ initialize_error_table_r(struct et_list **list,
     et->table->msgs = messages;
     et->table->n_msgs = num_errors;
     et->table->base = base;
-    et->next = *list;
-    *list = et;
+    et->next = NULL;
+    *end = et;
 }
 			
 

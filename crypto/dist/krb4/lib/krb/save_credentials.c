@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: save_credentials.c,v 1.1.1.2 2000/12/29 01:43:19 assar Exp $");
+RCSID("$Id: save_credentials.c,v 1.1.1.3 2001/09/17 12:09:55 assar Exp $");
 
 /*
  * This routine takes a ticket and associated info and calls
@@ -56,4 +56,13 @@ save_credentials(char *service,	/* Service name */
 			     lifetime, kvno, ticket, issue_date);
     tf_close();
     return (tf_status);
+}
+
+int
+save_credentials_cred(CREDENTIALS *cred)
+{
+    return save_credentials(cred->service, cred->instance, cred->realm, 
+			    cred->session, cred->lifetime, cred->kvno, 
+			    &cred->ticket_st, cred->issue_date);
+    
 }

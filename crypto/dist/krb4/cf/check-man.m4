@@ -1,8 +1,8 @@
-dnl $Id: check-man.m4,v 1.1.1.2 2000/12/29 01:44:09 assar Exp $
+dnl $Id: check-man.m4,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $
 dnl check how to format manual pages
 dnl
 
-AC_DEFUN(AC_CHECK_MAN,
+AC_DEFUN(rk_CHECK_MAN,
 [AC_PATH_PROG(NROFF, nroff)
 AC_PATH_PROG(GROFF, groff)
 AC_CACHE_CHECK(how to format man pages,ac_cv_sys_man_format,
@@ -50,10 +50,9 @@ else
 fi
 ])
 if test "$ac_cv_sys_catman_ext" = number; then
-	CATMANEXT='$$ext'
+	CATMANEXT='$$section'
 else
 	CATMANEXT=0
 fi
 AC_SUBST(CATMANEXT)
-
 ])

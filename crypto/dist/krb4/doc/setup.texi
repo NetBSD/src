@@ -197,7 +197,9 @@ holds some things that are not normally used. It consists of a number of
 @samp{@var{variable} = @var{value}} pairs, blank lines and lines
 beginning with a hash (#) are ignored.
 
-The currently defined variables are:
+The currently defined variables are listed below.  For the boolean/flag
+variables the value should be any of the strings @samp{true} or
+@samp{yes} or any non-zero integer.
 
 @table @samp
 @item kdc_timeout
@@ -228,7 +230,8 @@ Normally the uid or tty is appended to this prefix.
 The file where the server keys are stored, the default is @file{/etc/srvtab}.
 @item nat_in_use
 @cindex nat_in_use
-If the client is behind a Network Address Translator (NAT).
+A flag to indicated that the client is behind a Network Address
+Translator (NAT).
 @cindex Network Address Translator
 @cindex NAT
 @item reverse_lsb_test
@@ -722,7 +725,7 @@ Zephyr
 Andrew File System
 @end table
 
-To create these keys you will use the the @code{ksrvutil} program.
+To create these keys you will use the @code{ksrvutil} program.
 Perform the
 @pindex ksrvutil
 following:

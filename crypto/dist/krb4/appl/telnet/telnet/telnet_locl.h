@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: telnet_locl.h,v 1.1.1.2 2000/12/29 01:42:40 assar Exp $ */
+/* $Id: telnet_locl.h,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -149,6 +149,7 @@
 #include <socks.h>
 #endif
 
+#include <err.h>
 #include <roken.h>
 /* krb.h? */
 
@@ -160,7 +161,9 @@
 #include <libtelnet/misc-proto.h>
 
 #define LINEMODE
+#ifndef KLUDGELINEMODE
 #define KLUDGELINEMODE
+#endif
 
 #include "ring.h"
 #include "externs.h"

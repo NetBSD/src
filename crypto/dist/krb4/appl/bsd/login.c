@@ -45,7 +45,7 @@
 #include <sys/capability.h>
 #endif
 
-RCSID("$Id: login.c,v 1.1.1.2 2000/12/29 01:42:21 assar Exp $");
+RCSID("$Id: login.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
 
 #ifdef OTP
 #include <otp.h>
@@ -131,7 +131,7 @@ static void
 motd(void)
 {
 	int fd, nchars;
-	RETSIGTYPE (*oldint)();
+	RETSIGTYPE (*oldint)(int);
 	char tbuf[8192];
 
 	if ((fd = open(_PATH_MOTDFILE, O_RDONLY, 0)) < 0)
@@ -189,7 +189,7 @@ main(int argc, char **argv)
 	int mask = 022;		/* Default umask (set below) */
 	int maxtrys = 5;	/* Default number of allowed failed logins */
 
-	set_progname(argv[0]);
+	setprogname(argv[0]);
 
 	openlog("login", LOG_ODELAY, LOG_AUTH);
 
@@ -665,7 +665,7 @@ main(int argc, char **argv)
         sysv_newenv(argc, argv, pwd, term, pflag);
 #ifdef KERBEROS
 	if (krbtkfile_env)
-	    setenv("KRBTKFILE", krbtkfile_env, 1);
+	    esetenv("KRBTKFILE", krbtkfile_env, 1);
 #endif
 
 	if (tty[sizeof("tty")-1] == 'd')
