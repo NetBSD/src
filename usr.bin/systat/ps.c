@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.1 1999/02/21 21:48:07 jwise Exp $  */
+/*      $NetBSD: ps.c,v 1.2 1999/04/22 03:40:46 simonb Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -43,6 +43,11 @@
  * closeps -- close mode to prepare to switch modes
  * cmdps -- optional, handle commands
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ps.c,v 1.2 1999/04/22 03:40:46 simonb Exp $");
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/dkstat.h>
