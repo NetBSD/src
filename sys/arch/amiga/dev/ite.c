@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.16 1994/05/09 06:38:40 chopps Exp $
+ *	$Id: ite.c,v 1.17 1994/05/11 19:06:45 chopps Exp $
  */
 
 /*
@@ -47,6 +47,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -84,8 +85,8 @@ struct tty *ite_tty[NGRF];
 
 int	nunits;				/* number of units */
 
-int	start_repeat_timeo = 20;	/* first repeat after. */
-int	next_repeat_timeo = 5;		/* next repeat after. */
+int	start_repeat_timeo = 30;	/* first repeat after x s/100 */
+int	next_repeat_timeo = 10;		/* next repeat after x s/100 */
 
 int	ite_default_wrap = 1;		/* you want vtxxx-nam, binpatch */
 
@@ -157,9 +158,9 @@ iteattach(pdp, dp, auxp)
 		splx(s);
 
 		iteinit(gp->g_itedev);
-		printf(" rows: %d cols: %d", ip->rows, ip->cols);
-		printf(" first key repeat: (%d/%d)s next: (%d/%d)s\n",
-		    start_repeat_timeo, hz, next_repeat_timeo, hz);
+		printf(" rows %d cols %d", ip->rows, ip->cols);
+		printf(" repeat at (%d/100)s next at (%d/100)s\n",
+		    start_repeat_timeo, next_repeat_timeo);
 
 		if (kbd_ite == NULL)
 			kbd_ite = ip;
@@ -424,6 +425,7 @@ iteioctl(dev, cmd, addr, flag, p)
 	caddr_t addr;
 	struct proc *p;
 {
+	struct iterepeat *irp;
 	struct ite_softc *ip;
 	struct tty *tp;
 	int error;
@@ -441,20 +443,27 @@ iteioctl(dev, cmd, addr, flag, p)
 		return (error);
 
 	switch (cmd) {
-	case ITELOADKMAP:
-		if (addr) {
-			bcopy(addr, &kbdmap, sizeof(struct kbdmap));
-
-			return 0;
-		} else
-			return EFAULT;
-	case ITEGETKMAP:
-		if (addr) {
-			bcopy(&kbdmap, addr, sizeof(struct kbdmap));
-
-			return 0;
-		} else
-			return EFAULT;
+	case ITEIOCSKMAP:
+		if (addr == 0)
+			return(EFAULT);
+		bcopy(addr, &kbdmap, sizeof(struct kbdmap));
+		return(0);
+	case ITEIOCGKMAP:
+		if (addr == NULL)
+			return(EFAULT);
+		bcopy(&kbdmap, addr, sizeof(struct kbdmap));
+		return(0);
+	case ITEIOCGREPT:
+		irp = (struct iterepeat *)addr;
+		irp->start = start_repeat_timeo;
+		irp->next = next_repeat_timeo;
+	case ITEIOCSREPT:
+		irp = (struct iterepeat *)addr;
+		if (irp->start < ITEMINREPEAT && irp->next < ITEMINREPEAT)
+			return(EINVAL);
+		start_repeat_timeo = irp->start;
+		next_repeat_timeo = irp->next;
+		return(0);
 	}
 	/* XXX */
 	if (minor(dev) == 0) {
@@ -814,12 +823,12 @@ ite_filter(c, caller)
 	if (!tout_pending && caller == ITEFILT_TTY && kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char = c;
-		timeout(repeat_handler, 0, start_repeat_timeo);
+		timeout(repeat_handler, 0, start_repeat_timeo * hz / 100);
 	} else if (!tout_pending && caller == ITEFILT_REPEATER &&
 	    kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char = c;
-		timeout(repeat_handler, 0, next_repeat_timeo);
+		timeout(repeat_handler, 0, next_repeat_timeo * hz / 100);
 	}
 	/* handle dead keys */
 	if (key.mode & KBD_MODE_DEAD) {

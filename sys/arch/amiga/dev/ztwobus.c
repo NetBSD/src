@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ztwobus.c,v 1.1 1994/05/08 05:53:52 chopps Exp $
+ *	$Id: ztwobus.c,v 1.2 1994/05/11 19:06:50 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,8 +138,9 @@ ztwoattach(pdp, dp, auxp)
 	int i, zcnt;
 
 	if (ZTWOMEMADDR)
-		printf (" mem %08x-%08x\n",
-		  ZTWOMEMADDR, ZTWOMEMADDR + ZTWOMEMSIZE - 1);
+		printf(" mem %08x-%08x",
+		    ZTWOMEMADDR, ZTWOMEMADDR + ZTWOMEMSIZE - 1);
+	printf("\n");
 
 	for (i = 0; i < ncfdev; i++) {
 		za.pa = cfdev[i].addr;
@@ -173,11 +174,11 @@ ztwoprint(auxp, pnp)
 	zap = auxp;
 
 	if (pnp) {
-		printf("%s at %s", aconflookup(zap->manid, zap->prodid),
+		printf("%s at %s:", aconflookup(zap->manid, zap->prodid),
 		    pnp);
 		if (zap->manid == -1)
 			rv = UNSUPP;
 	}
-	printf(" rom: 0x%x man/pro: %d/%d", zap->pa, zap->manid, zap->prodid);
+	printf(" rom 0x%x man/pro %d/%d", zap->pa, zap->manid, zap->prodid);
 	return(rv);
 }
