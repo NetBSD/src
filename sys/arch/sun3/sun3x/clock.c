@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 1997/05/14 16:42:45 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 1998/01/12 20:35:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -104,11 +104,6 @@ struct cfattach clock_ca = {
 	sizeof(struct device), clock_match, clock_attach
 };
 
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL
-};
-
-
 #ifdef	SUN3_470
 
 #define intersil_clock ((volatile struct intersil7170 *) intersil_va)
@@ -124,10 +119,6 @@ static void oclock_attach __P((struct device *, struct device *, void *));
 
 struct cfattach oclock_ca = {
 	sizeof(struct device), oclock_match, oclock_attach
-};
-
-struct cfdriver oclock_cd = {
-	NULL, "oclock", DV_DULL
 };
 
 /*

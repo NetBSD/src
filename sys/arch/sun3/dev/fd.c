@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1997/05/30 03:23:11 jeremy Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1998/01/12 20:35:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -135,10 +135,6 @@ struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcmatch, fdcattach
 };
 
-struct cfdriver fdc_cd = {
-	NULL, "fdc", DV_DULL
-};
-
 __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 
 /*
@@ -214,9 +210,7 @@ struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdmatch, fdattach
 };
 
-struct cfdriver fd_cd = {
-	NULL, "fd", DV_DISK
-};
+extern struct cfdriver fd_cd;
 
 void fdgetdisklabel __P((dev_t));
 int fd_get_parms __P((struct fd_softc *));
