@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.382 2003/10/26 06:26:26 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.383 2003/10/27 01:29:58 uwe Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -69,7 +69,6 @@ USE_TOOLS_TOOLCHAIN?=yes
 #	${MACHINE_ARCH} == "hppa"
 #	${MACHINE_ARCH} == "m68000"
 #	${MACHINE_ARCH} == "sh3eb"
-#	${MACHINE_ARCH} == "sh3el"
 # in progress:
 #	${MACHINE_ARCH} == "arm"
 # working:
@@ -78,6 +77,7 @@ USE_TOOLS_TOOLCHAIN?=yes
     ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "m68k" || \
+    ${MACHINE_ARCH} == "sh3el" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
