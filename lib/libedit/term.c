@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.8 1997/01/23 14:02:49 mrg Exp $	*/
+/*	$NetBSD: term.c,v 1.9 1997/04/11 22:40:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: term.c,v 1.8 1997/01/23 14:02:49 mrg Exp $";
+static char rcsid[] = "$NetBSD: term.c,v 1.9 1997/04/11 22:40:06 christos Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -883,7 +883,7 @@ term_set(el, term)
     term_change_size(el, lins, cols);
     (void) sigprocmask(SIG_SETMASK, &oset, NULL);
     term_bind_arrow(el);
-    return 0;
+    return i <= 0 ? -1 : 0;
 } /* end term_set */
 
 
