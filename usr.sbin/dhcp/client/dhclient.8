@@ -128,9 +128,6 @@ available but BOOTP is.   In that case, it may be advantageous to
 arrange with the network administrator for an entry on the BOOTP
 database, so that the host can boot quickly on that network rather
 than cycling through the list of old leases.
-.PP
-If dhclient receives the signal SIGHUP, it re-initialize the leases.
-On receipt of the signal SIGTERM, it release the leases, then exits.
 .SH COMMAND LINE
 .PP
 The names of the network interfaces that dhclient should attempt to
@@ -159,7 +156,7 @@ The DHCP client normally transmits any protocol messages it sends
 before acquiring an IP address to, 255.255.255.255, the IP limited
 broadcast address.   For debugging purposes, it may be useful to have
 the server transmit these messages to some other address.   This can
-be specified with the
+be specified with the 
 .B -s
 flag, followed by the IP address or domain name of the destination.
 .PP
