@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.24 2000/04/30 12:20:32 he Exp $
+.\" $NetBSD: main,v 1.6.2.25 2000/04/30 12:22:25 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -249,7 +249,7 @@ releases cause incompatibilities for users of
 .Dq kernel-grovellers
 such as top, ps, w, or corresponding binary packages., and these
 need to be upgraded shortly after a kernel upgrade to work as
-advertised.
+advertised.  This change may also affect users of LKMs.
 .El
 .Ss Known caveats with 1.4.2
 The following are the major known issues with
