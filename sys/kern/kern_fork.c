@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.52 1999/01/23 22:23:19 sommerfe Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.53 1999/02/23 02:57:18 ross Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -58,6 +58,7 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/vmmeter.h>
+#include <sys/sched.h>
 
 #include <sys/syscallargs.h>
 
@@ -315,13 +316,7 @@ again:
 			ktradref(p2);
 	}
 #endif
-
-        /*
-         * set priority of child to be that of parent
-	 * XXX should move p_estcpu into the region of struct proc which gets
-	 * copied.
-         */
-        p2->p_estcpu = p1->p_estcpu;
+	scheduler_fork_hook(p1, p2);
 
 	/*
 	 * This begins the section where we must prevent the parent

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.63 1999/01/23 22:23:19 sommerfe Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.64 1999/02/23 02:57:18 ross Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@
 #include <sys/acct.h>
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
+#include <sys/sched.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -452,11 +453,7 @@ loop:
 				wakeup((caddr_t)p->p_pptr);
 				return (0);
 			}
-
-			/* Charge us for our child's sins */
-			curproc->p_estcpu = min(curproc->p_estcpu +
-						p->p_estcpu, UCHAR_MAX);
-
+			scheduler_wait_hook(curproc, p);
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
 			pool_put(&rusage_pool, p->p_ru);
