@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.47 2004/12/29 11:34:59 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2005/03/11 22:52:04 rillig Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.47 2004/12/29 11:34:59 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.48 2005/03/11 22:52:04 rillig Exp $");
 #endif
 
 /*
@@ -487,12 +487,12 @@ main(int argc, char *argv[])
 		
 		argv++;		/* "pmatch" */
 
-		pattern = argv[0];
-		pkg = argv[1];
-
-		if (pattern == NULL || pkg == NULL) {
+		if (argv[0] == NULL || argv[1] == NULL) {
 			usage(prog);
 		}
+
+		pattern = argv[0];
+		pkg = argv[1];
 
 		if (pmatch(pattern, pkg)){
 			return 0;
