@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.11 2003/06/29 11:12:33 simonb Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.12 2003/06/29 11:14:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -291,7 +291,7 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 					m = m_gethdr(M_WAIT, MT_DATA);
 					mlen = MHLEN;
 					m->m_pkthdr.len = 0;
-					m->m_pkthdr.rcvif = (struct ifnet *)0;
+					m->m_pkthdr.rcvif = NULL;
 				} else {
 					m = m_get(M_WAIT, MT_DATA);
 					mlen = MLEN;
@@ -395,8 +395,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
-		    (struct mbuf *)(long)(flags & MSG_PEEK), (struct mbuf *)0,
-		    (struct lwp *)0);
+		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, NULL);
 		if (error)
 			goto bad;
 		do {
@@ -409,10 +408,9 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		return (error);
 	}
 	if (mp)
-		*mp = (struct mbuf *)0;
+		*mp = NULL;
 	if (so->so_state & SS_ISCONFIRMING && resid)
-		(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
-		    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
+		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, NULL);
 
  restart:
 	if ((error = sblock(&so->so_rcv, SBLOCKWAIT(flags))) != 0)
@@ -587,7 +585,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 					*mp = m;
 					mp = &m->m_next;
 					so->so_rcv.sb_mb = m = m->m_next;
-					*mp = (struct mbuf *)0;
+					*mp = NULL;
 				} else {
 					MFREE(m, so->so_rcv.sb_mb);
 					m = so->so_rcv.sb_mb;
@@ -659,11 +657,8 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			 * get it filled again.
 			 */
 			if ((pr->pr_flags & PR_WANTRCVD) && so->so_pcb)
-				(*pr->pr_usrreq)(so, PRU_RCVD,
-				    (struct mbuf *)0,
-				    (struct mbuf *)(long)flags,
-				    (struct mbuf *)0,
-				    (struct lwp *)0);
+				(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
+				    (struct mbuf *)(long)flags, NULL, NULL);
 			SBLASTRECORDCHK(&so->so_rcv,
 			    "kttcp_soreceive sbwait 2");
 			SBLASTMBUFCHK(&so->so_rcv,
@@ -701,9 +696,8 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 		SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 4");
 		SBLASTMBUFCHK(&so->so_rcv, "kttcp_soreceive 4");
 		if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
-			(*pr->pr_usrreq)(so, PRU_RCVD, (struct mbuf *)0,
-			    (struct mbuf *)(long)flags, (struct mbuf *)0,
-			    (struct lwp *)0);
+			(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
+			    (struct mbuf *)(long)flags, NULL, NULL);
 	}
 	if (orig_resid == resid && orig_resid &&
 	    (flags & MSG_EOR) == 0 && (so->so_state & SS_CANTRCVMORE) == 0) {
