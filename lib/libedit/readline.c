@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.45 2004/01/17 17:57:40 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.46 2004/02/27 14:52:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.45 2004/01/17 17:57:40 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.46 2004/02/27 14:52:18 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -161,6 +161,7 @@ static int el_rl_complete_cmdnum = 0;
 
 /* internal functions */
 static unsigned char	 _el_rl_complete(EditLine *, int);
+static unsigned char	 _el_rl_tstp(EditLine *, int);
 static char		*_get_prompt(EditLine *);
 static HIST_ENTRY	*_move_history(int);
 static int		 _history_expand_command(const char *, size_t, size_t,
@@ -272,6 +273,15 @@ rl_initialize(void)
 	    "ReadLine compatible completion function",
 	    _el_rl_complete);
 	el_set(e, EL_BIND, "^I", "rl_complete", NULL);
+
+	/*
+	 * Send TSTP when ^Z is pressed.
+	 */
+	el_set(e, EL_ADDFN, "rl_tstp",
+	    "ReadLine compatible suspend function",
+	    _el_rl_tstp);
+	el_set(e, EL_BIND, "^Z", "rl_tstp", NULL);
+
 	/*
 	 * Find out where the rl_complete function was added; this is
 	 * used later to detect that lastcmd was also rl_complete.
@@ -1571,6 +1581,16 @@ _el_rl_complete(EditLine *el __attribute__((__unused__)), int ch)
 	return (unsigned char) rl_complete(0, ch);
 }
 
+/*
+ * el-compatible wrapper to send TSTP on ^Z
+ */
+/* ARGSUSED */
+static unsigned char
+_el_rl_tstp(EditLine *el __attribute__((__unused__)), int ch __attribute__((__unused__)))
+{
+	(void)kill(0, SIGTSTP);
+	return CC_NORM;
+}
 
 /*
  * returns list of completions for text given
