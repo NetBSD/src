@@ -1,4 +1,4 @@
-/*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
+/*	$NetBSD: mv.c,v 1.10 1997/01/09 16:44:06 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: mv.c,v 1.10 1997/01/09 16:44:06 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int baselen, len, rval;
-	register char *p, *endp;
+	int baselen, len, rval;
+	char *p, *endp;
 	struct stat sb;
 	int ch;
 	char path[MAXPATHLEN + 1];
@@ -235,7 +235,7 @@ fastcopy(from, to, sbp)
 	struct timeval tval[2];
 	static u_int blen;
 	static char *bp;
-	register int nread, from_fd, to_fd;
+	int nread, from_fd, to_fd;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
 		warn("%s", from);
