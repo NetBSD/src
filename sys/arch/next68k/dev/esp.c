@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.28 2000/08/09 02:26:26 tv Exp $	*/
+/*	$NetBSD: esp.c,v 1.29 2001/03/29 03:33:07 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -347,9 +347,7 @@ espattach_intio(parent, self, aux)
 
 #if 0
 		/* Turn on target selection using the `dma' method */
-		ncr53c9x_dmaselect = 1;
-#else
-		ncr53c9x_dmaselect = 0;
+		sc->sc_features |= NCR_F_DMASELECT;
 #endif
 
 		esc->sc_datain = -1;
