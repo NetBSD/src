@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.1 2001/10/05 22:27:40 reinoud Exp $	*/
+/*	$NetBSD: beep.c,v 1.2 2001/10/17 23:28:19 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -32,8 +32,6 @@
 /*
  * Simple beep sounds using VIDC
  *
- * Added support for digital serial sound interface with
- * NS LMC1982 for RC7500
  */
 
 /*
@@ -62,9 +60,6 @@
 #include <arm/iomd/waveform.h>
 #include <arm/iomd/iomdreg.h>
 #include <arm/iomd/iomdvar.h>
-#ifdef RC7500
-#include <arm/iomd/lmc1982.h>
-#endif
 
 #include "beep.h"
 #include "locators.h"
@@ -156,14 +151,6 @@ beepattach(parent, self, aux)
 
 	bcopy(beep_waveform, (void *)sc->sc_buffer0, sizeof(beep_waveform));
 
-#ifdef RC7500
-	/*
-	 * Convert 8-bit data in 2's complement.  We should really
-	 * need to convert 8 bits to 16 bits.
-	 */
-	conv_jap((char *)sc->sc_buffer0, sizeof(beep_waveform));
-#endif
-
 	/* Reset the sound DMA channel */
 	IOMD_WRITE_WORD(IOMD_SD0CURA, sc->sc_sound_cur0);
 	IOMD_WRITE_WORD(IOMD_SD0ENDA, sc->sc_sound_end0 | 0xc0000000);
@@ -176,11 +163,7 @@ beepattach(parent, self, aux)
 	sc->sc_ih.ih_func = beepintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_AUDIO;
-#ifdef RC7500
-	sc->sc_ih.ih_name = "serial snd dma";
-#else
 	sc->sc_ih.ih_name = "dma snd ch 0";
-#endif
 
 	if (irq_claim(sdma_channel, &sc->sc_ih))
 		panic("Cannot claim IRQ %d for beep%d\n", sdma_channel, parent->dv_unit);
@@ -196,7 +179,6 @@ beepattach(parent, self, aux)
 	WriteWord(vidc_base, VIDC_SFR | 32);
 /*	WriteWord(vidc_base, VIDC_SCR | 0x05);*/
 
-#ifndef RC7500
 	/* Set the stereo postions to centred for all channels */
 	WriteWord(vidc_base, VIDC_SIR0 | SIR_CENTRE);
 	WriteWord(vidc_base, VIDC_SIR1 | SIR_CENTRE);
@@ -206,31 +188,6 @@ beepattach(parent, self, aux)
 	WriteWord(vidc_base, VIDC_SIR5 | SIR_CENTRE);
 	WriteWord(vidc_base, VIDC_SIR6 | SIR_CENTRE);
 	WriteWord(vidc_base, VIDC_SIR7 | SIR_CENTRE);
-#endif
-
-#ifdef RC7500
-	/*
-	 * Enable serial sound.  The digital serial sound interface
-	 * consists of 16 bits sample on each channel.  The waveform
-	 * data used to generate beep sound is a 8-bits sample.  I
-	 * really don't care, since it's just beep sound.
-	 */
-	outl(vidc_base, VIDC_SCR | 0x03);
-
-	/*
-	 * Video LCD and Serial Sound Mux control.  - Japanese format.
-	 */
-	IOMD_WRITE_BYTE(IOMD_VIDMUX, 0x02);
-
-	volume_ctl(VINPUTSEL, VIN1);
-	volume_ctl(VLOUD, 0);
-	volume_ctl(VBASS, VDBM0);
-	volume_ctl(VTREB, VDBM0);
-	volume_ctl(VLEFT, 24);
-	volume_ctl(VRIGHT, 24);
-	volume_ctl(VMODE, VSTEREO);
-	volume_ctl(VDIN, 0);
-#endif
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.1 2001/10/05 22:27:43 reinoud Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.2 2001/10/17 23:28:20 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -181,11 +181,7 @@ vidcaudio_probe(parent, cf, aux)
 		break;
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
-#ifdef RC7500
-		return(0);
-#else
 		return(1);
-#endif
 		break;
 	default:
 		printf("vidcaudio: Unknown IOMD id=%04x", id);
