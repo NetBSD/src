@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.35 1996/11/13 06:13:41 thorpej Exp $ */
+/*	$NetBSD: dma.c,v 1.36 1996/11/27 21:48:19 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -193,6 +193,8 @@ dmaattach(parent, self, aux)
 	case DMAREV_0:
 		printf("0");
 		break;
+	case DMAREV_ESC:
+		printf("esc");
 	case DMAREV_1:
 		printf("1");
 		break;
@@ -203,7 +205,7 @@ dmaattach(parent, self, aux)
 		printf("2");
 		break;
 	default:
-		printf("unknown");
+		printf("unknown (0x%x)", sc->sc_rev);
 	}
 	printf("\n");
 
@@ -272,21 +274,59 @@ espsearch:
 	}
 }
 
+#define DMAWAIT(SC, COND, MSG, DONTPANIC) do if (COND) {		\
+	int count = 500000;						\
+	while ((COND) && --count > 0) DELAY(1);				\
+	if (count == 0) {						\
+		printf("%s: line %d: CSR = %lx\n", __FILE__, __LINE__,	\
+			(SC)->sc_regs->csr);				\
+		if (DONTPANIC)						\
+			printf(MSG);					\
+		else							\
+			panic(MSG);					\
+	}								\
+} while (0)
+
+#define DMA_DRAIN(sc, dontpanic) do {					\
+	/*								\
+	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
+	 *     and "drain" bits while it is still thinking about a	\
+	 *     request.							\
+	 * other revs: D_R_PEND bit reads as 0				\
+	 */								\
+	DMAWAIT(sc, sc->sc_regs->csr & D_R_PEND, "R_PEND", dontpanic);	\
+	/*								\
+	 * select drain bit based on revision				\
+	 * also clears errors and D_TC flag				\
+	 */								\
+	if (sc->sc_rev == DMAREV_1 || sc->sc_rev == DMAREV_0)		\
+		DMACSR(sc) |= D_DRAIN;					\
+	else								\
+		DMACSR(sc) |= D_INVALIDATE;				\
+	/*								\
+	 * Wait for draining to finish					\
+	 *  rev0 & rev1 call this PACKCNT				\
+	 */								\
+	DMAWAIT(sc, sc->sc_regs->csr & D_DRAINING, "DRAINING", dontpanic);\
+} while(0)
+
 void
 dma_reset(sc)
 	struct dma_softc *sc;
 {
-	DMAWAIT(sc);
-	DMA_DRAIN(sc);				/* Drain (DMA rev 1) */
+	DMA_DRAIN(sc, 1);
 	DMACSR(sc) &= ~D_EN_DMA;		/* Stop DMA */
-	DMAWAIT1(sc);				/* let things drain */
 	DMACSR(sc) |= D_RESET;			/* reset DMA */
 	DELAY(200);				/* what should this be ? */
-	DMAWAIT1(sc);
+	/*DMAWAIT1(sc); why was this here? */
 	DMACSR(sc) &= ~D_RESET;			/* de-assert reset line */
 	DMACSR(sc) |= D_INT_EN;			/* enable interrupts */
 	if (sc->sc_rev > DMAREV_1)
 		DMACSR(sc) |= D_FASTER;
+	if (sc->sc_rev == DMAREV_ESC) {
+		/*DMACSR(sc) |= 0x800;		-* 16-byte burst mode */
+		DMACSR(sc) |= D_AUTODRAIN;	/* Auto-drain */
+	}
 	sc->sc_active = 0;			/* and of course we aren't */
 }
 
@@ -321,12 +361,7 @@ dma_setup(sc, addr, len, datain, dmasize)
 {
 	u_long csr;
 
-	/* clear errors and D_TC flag */
-	DMAWAIT(sc);
-	DMA_DRAIN(sc);		/* ? */
-	DMAWAIT1(sc);
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
+	DMA_DRAIN(sc, 0);
 
 #if 0
 	DMACSR(sc) &= ~D_INT_EN;
@@ -361,6 +396,14 @@ dma_setup(sc, addr, len, datain, dmasize)
 	} else
 		DMADDR(sc) = *sc->sc_dmaaddr;
 
+	if (sc->sc_rev == DMAREV_ESC) {
+		/* DMA ESC chip bug work-around */
+		register long bcnt = sc->sc_dmasize;
+		register long eaddr = bcnt + (long)*sc->sc_dmaaddr;
+		if ((eaddr & PGOFSET) != 0)
+			bcnt = roundup(bcnt, NBPG);
+		DMACNT(sc) = bcnt;
+	}
 	/* Setup DMA control register */
 	csr = DMACSR(sc);
 	if (datain)
@@ -408,19 +451,14 @@ espdmaintr(sc)
 		DMACSR(sc) |= D_INVALIDATE;
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
 			bitmask_snprintf(csr, DMACSRBITS, bits, sizeof(bits)));
-		return 0;
+		return -1;
 	}
 
 	/* This is an "assertion" :) */
 	if (sc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
 
-	/* clear errors and D_TC flag */
-	DMAWAIT(sc);
-	DMA_DRAIN(sc);		/* ? */
-	DMAWAIT1(sc);
-	DMACSR(sc) |= D_INVALIDATE;
-	DMAWAIT1(sc);
+	DMA_DRAIN(sc, 0);
 
 	/* DMA has stopped */
 	DMACSR(sc) &= ~D_EN_DMA;
