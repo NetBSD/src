@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.3 1995/04/25 14:14:27 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.4 1995/09/16 15:43:25 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,6 +40,7 @@
 
 #include "../mba/mbareg.h"
 #include "../mba/hpreg.h"
+
 #include "../include/pte.h"
 #include "../include/macros.h"
 
@@ -58,81 +59,107 @@ struct	hp_softc {
 	int unit;
 	int part;
 };
+
 struct	disklabel hplabel;
 struct	hp_softc hp_softc;
 char io_buf[MAXBSIZE];
+daddr_t part_offset;
 
 hpopen(f, adapt, ctlr, unit, part)
 	struct open_file *f;
         int ctlr, unit, part;
 {
+	struct disklabel *lp;
+	struct hp_softc *hs;
+	volatile struct mba_regs *mr;
+	volatile struct hp_drv *hd;
 	char *msg;
-	struct disklabel *lp=&hplabel;
-	struct hp_softc *hs=&hp_softc;
-	volatile struct mba_regs *mr=(void *)mbaaddr[ctlr];
-	volatile struct hp_drv *hd= (void *)&mr->mba_md[unit];
 	int i,err;
 
-	if(adapt>nsbi) return(EADAPT);
-	if(ctlr>nmba) return(ECTLR);
-	if(unit>MAXMBAU) return(EUNIT);
-	bzero(lp, sizeof(struct disklabel));
-	lp->d_secpercyl=32;
-	lp->d_nsectors=32;
-	hs->adapt=adapt;
-	hs->ctlr=ctlr;
-	hs->unit=unit;
-	hs->part=part;
-	/* Set volume valid and 16 bit format; only done once */
-	mr->mba_cr=MBACR_INIT;
-	hd->hp_cs1=HPCS_PA;
-	hd->hp_of=HPOF_FMT;
+	lp = &hplabel;
+	hs = &hp_softc;
+	mr = (void *)mbaaddr[ctlr];
+	hd = (void *)&mr->mba_md[unit];
 
-	err=hpstrategy(hs,F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
-	if(err){
-		printf("reading disklabel: %s\n",strerror(err));
+	if (adapt > nsbi) return(EADAPT);
+	if (ctlr > nmba) return(ECTLR);
+	if (unit > MAXMBAU) return(EUNIT);
+
+	bzero(lp, sizeof(struct disklabel));
+
+	lp->d_secpercyl = 32;
+	lp->d_nsectors = 32;
+	hs->adapt = adapt;
+	hs->ctlr = ctlr;
+	hs->unit = unit;
+	hs->part = part;
+
+	/* Set volume valid and 16 bit format; only done once */
+	mr->mba_cr = MBACR_INIT;
+	hd->hp_cs1 = HPCS_PA;
+	hd->hp_of = HPOF_FMT;
+
+	err = hpstrategy(hs, F_READ, LABELSECTOR, DEV_BSIZE, io_buf, &i);
+	if (err) {
+		printf("reading disklabel: %s\n", strerror(err));
 		return 0;
 	}
 
-	msg=getdisklabel(io_buf+LABELOFFSET, lp);
-	if(msg)printf("getdisklabel: %s\n",msg);
-	f->f_devdata=(void *)hs;
-	return(0);
+	msg = getdisklabel(io_buf + LABELOFFSET, lp);
+	if (msg)
+		printf("getdisklabel: %s\n", msg);
+	
+	f->f_devdata = (void *)hs;
+	return 0;
 }
 
 hpstrategy(hs, func, dblk, size, buf, rsize)
 	struct hp_softc *hs;
-	int func;
 	daddr_t	dblk;
-	char *buf;
 	u_int size, *rsize;
+	char *buf;
+	int func;
 {
-	u_int i,pfnum, mapnr, nsize, bn, cn, sn, tn;
-	volatile struct mba_regs *mr=(void *)mbaaddr[hs->ctlr];
-	volatile struct hp_drv *hd= (void *)&mr->mba_md[hs->unit];
-	struct disklabel *lp=&hplabel;
+	volatile struct mba_regs *mr;
+	volatile struct hp_drv *hd;
+	struct disklabel *lp;
+	unsigned int i, pfnum, mapnr, nsize, bn, cn, sn, tn;
 
-	pfnum=(u_int)buf>>PGSHIFT;
+	mr = (void *)mbaaddr[hs->ctlr];
+	hd = (void *)&mr->mba_md[hs->unit];
+	lp = &hplabel;
 
-	for(mapnr=0, nsize=size;(nsize+NBPG)>0;nsize-=NBPG)
-		mr->mba_map[mapnr++]=PG_V|pfnum++;
+	pfnum = (u_int)buf >> PGSHIFT;
 
-	mr->mba_var=((u_int)buf&PGOFSET);
-	mr->mba_bc=(~size)+1;
-	bn=dblk;
-	cn=bn / lp->d_secpercyl;
-	sn=bn % lp->d_secpercyl;
-	tn=sn / lp->d_nsectors;
-	sn=sn % lp->d_nsectors;
-	hd->hp_dc=cn;
-	hd->hp_da=(tn<<8)|sn;
-	hd->hp_cs1=HPCS_READ;
+	for(mapnr = 0, nsize = size; (nsize + NBPG) > 0; nsize -= NBPG)
+		mr->mba_map[mapnr++] = PG_V | pfnum++;
 
-	while(mr->mba_sr&MBASR_DTBUSY);
+	mr->mba_var = ((u_int)buf & PGOFSET);
+	mr->mba_bc = (~size) + 1;
+	bn = dblk + lp->d_partitions[hs->part].p_offset;
 
-	if(mr->mba_sr&MBACR_ABORT) return 1;
+	if (bn) {
+		cn = bn / lp->d_secpercyl;
+		sn = bn % lp->d_secpercyl;
+		tn = sn / lp->d_nsectors;
+		sn = sn % lp->d_nsectors;
+	} else
+		cn = sn = tn = 0;
+
+	hd->hp_dc = cn;
+	hd->hp_da = (tn << 8) | sn;
+	if (func == F_WRITE)
+		hd->hp_cs1 = HPCS_WRITE;
+	else
+		hd->hp_cs1 = HPCS_READ;
+
+	while (mr->mba_sr & MBASR_DTBUSY)
+		;
+
+	if (mr->mba_sr & MBACR_ABORT)
+		return 1;
 	
-	*rsize=size;
+	*rsize = size;
 
 	return 0;
 }
