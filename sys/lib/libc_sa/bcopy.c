@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.2 1994/10/26 05:36:47 cgd Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.3 1995/04/22 14:01:40 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #ifdef notdef
 static char *sccsid = "@(#)bcopy.c	5.11 (Berkeley) 6/21/91";
 #endif
-static char *rcsid = "$NetBSD: bcopy.c,v 1.2 1994/10/26 05:36:47 cgd Exp $";
+static char *rcsid = "$NetBSD: bcopy.c,v 1.3 1995/04/22 14:01:40 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -93,13 +93,13 @@ bcopy(src0, dst0, length)
 		/*
 		 * Copy forward.
 		 */
-		t = (int)src;	/* only need low bits */
-		if ((t | (int)dst) & wmask) {
+		t = (long)src;	/* only need low bits */
+		if ((t | (long)dst) & wmask) {
 			/*
 			 * Try to align operands.  This cannot be done
 			 * unless the low bits match.
 			 */
-			if ((t ^ (int)dst) & wmask || length < wsize)
+			if ((t ^ (long)dst) & wmask || length < wsize)
 				t = length;
 			else
 				t = wsize - (t & wmask);
@@ -121,9 +121,9 @@ bcopy(src0, dst0, length)
 		 */
 		src += length;
 		dst += length;
-		t = (int)src;
-		if ((t | (int)dst) & wmask) {
-			if ((t ^ (int)dst) & wmask || length <= wsize)
+		t = (long)src;
+		if ((t | (long)dst) & wmask) {
+			if ((t ^ (long)dst) & wmask || length <= wsize)
 				t = length;
 			else
 				t &= wmask;
