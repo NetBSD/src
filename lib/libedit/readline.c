@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.18 2001/01/05 22:45:30 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.19 2001/01/10 08:10:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.18 2001/01/05 22:45:30 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.19 2001/01/10 08:10:45 jdolecek Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1542,6 +1542,13 @@ rl_complete_internal(int what_to_do)
 				rl_display_match_list(matches, matches_num,
 					maxlen);
 			retval = CC_REDISPLAY;
+		} else if (matches[0][0]) {
+			/*
+			 * There was some common match, but the name was
+			 * not complete enough. Next tab will print possible
+			 * completions.
+			 */
+			el_beep(e);
 		} else {
 			/* lcd is not a valid object - further specification */
 			/* is needed */
