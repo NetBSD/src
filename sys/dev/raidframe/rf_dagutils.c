@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.37 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.38 2004/03/18 16:40:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.37 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.38 2004/03/18 16:40:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -97,6 +97,9 @@ rf_InitNode(RF_DagNode_t *node, RF_NodeStatus_t initstatus, int commit,
 	node->numAntecedents = nAnte;
 	node->numAntDone = 0;
 	node->next = NULL;
+	/* node->list_next = NULL */  /* Don't touch this here!  
+	                                 It may already be 
+					 in use by the caller! */
 	node->numSuccedents = nSucc;
 	node->name = name;
 	node->dagHdr = hdr;
@@ -152,6 +155,7 @@ void
 rf_FreeDAG(RF_DagHeader_t *dag_h)
 {
 	RF_AccessStripeMapHeader_t *asmap, *t_asmap;
+	RF_DagNode_t *tmpnode;
 	RF_DagHeader_t *nextDag;
 
 	while (dag_h) {
@@ -162,6 +166,11 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 			asmap = asmap->next;
 			rf_FreeAccessStripeMap(t_asmap);
 		}
+		while(dag_h->nodes) {
+			tmpnode = dag_h->nodes;
+			dag_h->nodes = dag_h->nodes->list_next;
+			rf_FreeDAGNode(tmpnode);
+		}
 		rf_FreeDAGHeader(dag_h);
 		dag_h = nextDag;
 	}
@@ -169,6 +178,9 @@ rf_FreeDAG(RF_DagHeader_t *dag_h)
 
 #define RF_MAX_FREE_DAGH 128
 #define RF_MIN_FREE_DAGH  32
+
+#define RF_MAX_FREE_DAGNODE 512 /* XXX Tune this... */
+#define RF_MIN_FREE_DAGNODE 128 /* XXX Tune this... */
 
 #define RF_MAX_FREE_DAGLIST 128
 #define RF_MIN_FREE_DAGLIST  32
@@ -181,6 +193,7 @@ static void
 rf_ShutdownDAGs(void *ignored)
 {
 	pool_destroy(&rf_pools.dagh);
+	pool_destroy(&rf_pools.dagnode);
 	pool_destroy(&rf_pools.daglist);
 	pool_destroy(&rf_pools.funclist);
 }
@@ -189,6 +202,8 @@ int
 rf_ConfigureDAGs(RF_ShutdownList_t **listp)
 {
 
+	rf_pool_init(&rf_pools.dagnode, sizeof(RF_DagNode_t),
+		     "rf_dagnode_pl", RF_MIN_FREE_DAGNODE, RF_MAX_FREE_DAGNODE);
 	rf_pool_init(&rf_pools.dagh, sizeof(RF_DagHeader_t),
 		     "rf_dagh_pl", RF_MIN_FREE_DAGH, RF_MAX_FREE_DAGH);
 	rf_pool_init(&rf_pools.daglist, sizeof(RF_DagList_t),
@@ -214,6 +229,22 @@ void
 rf_FreeDAGHeader(RF_DagHeader_t * dh)
 {
 	pool_put(&rf_pools.dagh, dh);
+}
+
+RF_DagNode_t *
+rf_AllocDAGNode()
+{
+	RF_DagNode_t *node;
+
+	node = pool_get(&rf_pools.dagnode, PR_WAITOK);
+	memset(node, 0, sizeof(RF_DagNode_t));
+	return (node);
+}
+
+void
+rf_FreeDAGNode(RF_DagNode_t *node)
+{
+	pool_put(&rf_pools.dagnode, node);
 }
 
 RF_DagList_t *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.16 2004/02/29 01:50:23 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.17 2004/03/18 16:40:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.16 2004/02/29 01:50:23 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.17 2004/03/18 16:40:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -62,6 +62,7 @@ InitHdrNode(RF_DagHeader_t **hdr, RF_Raid_t *raidPtr)
 	rf_MakeAllocList((*hdr)->allocList);
 	(*hdr)->status = rf_enable;
 	(*hdr)->numSuccedents = 0;
+	(*hdr)->nodes = NULL;
 	(*hdr)->raidPtr = raidPtr;
 	(*hdr)->next = NULL;
 }
