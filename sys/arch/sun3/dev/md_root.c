@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.10 1999/03/17 18:59:23 sommerfe Exp $	*/
+/*	$NetBSD: md_root.c,v 1.11 1999/05/08 18:46:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/systm.h>
 
 #include <dev/md.h>
 
