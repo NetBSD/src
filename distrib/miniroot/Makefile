@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1997/09/09 23:02:04 is Exp $
+#	$NetBSD: Makefile,v 1.16 1997/09/22 21:33:31 scottr Exp $
 
 .include <bsd.own.mk>
 
@@ -11,13 +11,14 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 .include "${ARCHDIR}/Makefile.inc"
 .endif
 
-MOUNT_POINT?=	/mnt
 VND?=		vnd0c
 VND_DEV=	/dev/${VND}
 VND_RDEV=	/dev/r${VND}
+VND_GEOM?=
 IMAGE?=		miniroot-${REV}.fs
-IMAGESIZE?=	12288 # 6Mb in 512 byte blocks
+IMAGESIZE?=	12288 # 6MB in 512 byte blocks
 NEWFSOPTS?=
+MOUNT_POINT?=	/mnt
 BOOTINSTALL?=	true
 
 .ifdef DISKTYPE
@@ -36,7 +37,7 @@ all:
 
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE}
+	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	${BOOTINSTALL}
 	mount ${VND_DEV} ${MOUNT_POINT}
