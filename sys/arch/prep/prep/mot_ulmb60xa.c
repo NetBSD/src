@@ -1,4 +1,4 @@
-/*	$NetBSD: mot_ulmb60xa.c,v 1.1 2002/02/26 16:09:15 kleink Exp $	*/
+/*	$NetBSD: mot_ulmb60xa.c,v 1.2 2002/05/02 14:48:27 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct platform platform_mot_ulmb60xa = {
 	pci_intr_fixup_mot_ulmb60xa,		/* pci_intr_fixup */
 	ext_intr_ivr,				/* ext_intr */
 	cpu_setup_unknown,			/* cpu_setup */
-	reset_ibm_generic,			/* reset */
+	reset_prep_generic,			/* reset */
 };
 
 static int

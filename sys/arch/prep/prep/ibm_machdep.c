@@ -1,4 +1,4 @@
-/*      $NetBSD: ibm_machdep.c,v 1.3 2002/04/25 20:40:16 nonaka Exp $        */
+/*      $NetBSD: ibm_machdep.c,v 1.4 2002/05/02 14:48:27 nonaka Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,22 +63,4 @@ cpu_setup_ibm_generic(struct device *dev)
 
 	/* Enable L2 cache */
 	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x81c) = l2ctrl | 0xc0;
-}
-
-void
-reset_ibm_generic(void)
-{
-	int msr;
-	u_char reg;
-
-	asm volatile("mfmsr %0" : "=r"(msr));
-	msr |= PSL_IP;
-	asm volatile("mtmsr %0" :: "r"(msr));
-
-	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-	reg &= ~1UL;
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
-	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
-	reg |= 1;
-	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
 }

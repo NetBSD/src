@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.4 2002/02/26 16:09:15 kleink Exp $	*/
+/*	$NetBSD: platform.c,v 1.5 2002/05/02 14:48:27 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -122,4 +122,22 @@ cpu_setup_unknown(struct device *dev)
 void
 reset_unknown(void)
 {
+}
+
+void
+reset_prep_generic(void)
+{
+	int msr;
+	u_char reg;
+
+	asm volatile("mfmsr %0" : "=r"(msr));
+	msr |= PSL_IP;
+	asm volatile("mtmsr %0" :: "r"(msr));
+
+	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	reg &= ~1UL;
+	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
+	reg = *(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92);
+	reg |= 1;
+	*(volatile u_char *)(PREP_BUS_SPACE_IO + 0x92) = reg;
 }
