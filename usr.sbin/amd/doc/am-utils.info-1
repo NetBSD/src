@@ -524,8 +524,11 @@ features.
 
 Auto-Configured System Name  Config  Compile  Amd  NFS3  Shlib  Hlfsd  
 alpha-dec-osf4.0             yes     yes      yes  yes                 
-hppa1.1-hp-hpux10.20         yes     yes      yes  n/a          no     
+hppa1.1-hp-hpux10.10         yes     yes      yes  n/a   no            
+hppa1.1-hp-hpux10.20         yes     yes      yes  n/a   no            
 hppa1.1-hp-hpux9.01          yes     yes      yes  n/a                 
+hppa1.1-hp-hpux9.05          yes     yes      yes  n/a                 
+hppa1.1-hp-hpux9.07          yes     yes      yes  n/a                 
 i386-pc-bsdi2.1              yes     yes      yes  n/a                 
 i386-pc-bsdi3.0              yes     yes      yes  n/a                 
 i386-pc-solaris2.5.1         yes     yes      yes  yes   yes    yes    
@@ -538,21 +541,25 @@ i486-ncr-sysv4.3.03          yes     yes           yes
 i486-pc-linux-gnu            yes     yes      yes  n/a   yes           
 i586-pc-linux-gnu            yes     yes      yes  n/a   yes           
 i686-pc-linux-gnu            yes     yes      yes  n/a   yes           
+m68k-hp-hpux9.00             yes     yes      yes  n/a                 
 mips-sgi-irix5.2                                                       
 mips-sgi-irix5.3             yes     yes      yes  yes                 
 mips-sgi-irix6.2             yes     yes      yes  yes                 
 mips-sgi-irix6.4             yes     yes      yes  yes   yes           
+powerpc-ibm-aix4.2.1.0       yes     yes      yes                      
 rs6000-ibm-aix3.2            yes     yes      yes  n/a                 
 rs6000-ibm-aix3.2.5          yes     yes      yes  n/a                 
+rs6000-ibm-aix4.1.4.0        yes     yes      yes                      
 rs6000-ibm-aix4.1.5.0        yes     yes      yes                      
 sparc-sun-solaris2.3         yes     yes      yes  n/a                 
 sparc-sun-solaris2.4         yes     yes      yes  n/a   yes           
 sparc-sun-solaris2.5         yes     yes      yes  yes   yes           
-sparc-sun-solaris2.5.1       yes     yes      yes  yes   yes           
-sparc-sun-solaris2.6         yes     yes      yes  yes                 
+sparc-sun-solaris2.5.1       yes     yes      yes  yes   yes    yes    
+sparc-sun-solaris2.6         yes     yes      yes  yes   yes    yes    
 sparc-sun-sunos4.1.1         yes     yes      yes  n/a   yes           
 sparc-sun-sunos4.1.3         yes     yes      yes  n/a   yes           
 sparc-sun-sunos4.1.3_U1      yes     yes      yes  n/a   yes           
+sparc-sun-sunos4.1.4         yes     yes      yes  n/a   yes           
 sparc-unknown-linux-gnu      yes     yes      yes  n/a   yes           
 sparc-unknown-netbsd1.2E     yes     yes      yes                      
 

@@ -24,6 +24,9 @@ May 7, 1997: contributed a special version of upl102 that included NFS V.3
 support.  Some of the code was contributed by Christos Zoulas
 <christos@deshaw.com>.  I (Erez) ported these changes to am-utils.
 
+September 12, 1997: lots of small prototype cleanups and fixes to numerous
+files.
+
 * Hannes Reinecke <hare@MathI.UNI-Heidelberg.DE>
 
 Back in 1995, contributed code for linux.  A new parser for file system
@@ -48,6 +51,8 @@ properly in mount tables and can be overridden.  Later on, more code
 contribued to optimize the best combination of proto/vers.
 
 July 4, 1997: patches to get NFS V.3 working under irix5.
+
+September 9, 1997: initialize all fields of mntent_t structures to 0.
 
 * Danny Braniss <danny@cs.huji.ac.il>
 
@@ -99,3 +104,18 @@ September 2, 1997: if plock() succeeded, don't display errno string.
 
 September 4, 1997: don't ping remote servers with NFS V.3 always, but V.2,
 regardless of client's NFS version. (conf/transp/transp_sockets.c)
+
+* Dan Riley <dsr@mail.lns.cornell.edu>
+
+September 19, 1997: make sure that amd works with more secure portmappers
+that do not allow forwarding of RPC messages to other services.
+
+* Wolfgang Rupprecht <wolfgang@wsrcc.com>
+
+August 10, 1997: netbsd and other bsd systems have a mask flag for
+pcfs_args (msdos mount).
+
+* Christos Zoulas <christos@deshaw.com>
+
+September 25, 1997: fix to initialize uid/gid fields of pcfs_args_t on
+netbsd.
