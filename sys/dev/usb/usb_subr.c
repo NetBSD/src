@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.65 2000/02/02 07:34:00 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.66 2000/02/20 14:45:05 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ usbd_devinfo_vp(dev, v, p)
 	vendor = usbd_get_string(dev, udd->iManufacturer, v);
 	product = usbd_get_string(dev, udd->iProduct, p);
 #ifdef USBVERBOSE
-	if (vendor == NULL) {
+	if (vendor == NULL || product == NULL) {
 		for(kdp = usb_knowndevs;
 		    kdp->vendorname != NULL;
 		    kdp++) {
@@ -242,11 +242,11 @@ usbd_devinfo_vp(dev, v, p)
 			     (kdp->flags & USB_KNOWNDEV_NOPROD) != 0))
 				break;
 		}
-		if (kdp->vendorname == NULL)
-			vendor = product = NULL;
-		else {
-			vendor = kdp->vendorname;
-			product = (kdp->flags & USB_KNOWNDEV_NOPROD) == 0 ?
+		if (kdp->vendorname != NULL) {
+			if (!vendor)
+			    vendor = kdp->vendorname;
+			if (!product)
+			    product = (kdp->flags & USB_KNOWNDEV_NOPROD) == 0 ?
 				kdp->productname : NULL;
 		}
 	}
