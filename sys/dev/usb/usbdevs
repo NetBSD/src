@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.166 2001/04/17 08:38:01 augustss Exp $
+$NetBSD: usbdevs,v 1.167 2001/04/19 00:47:12 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ vendor ELSA		0x05cc	ELSA Gmbh
 vendor BRAINBOXES	0x05d1	Brainboxes Limited
 vendor AXIOHM		0x05d9	Axiohm Transaction Solutions
 vendor MICROTEK		0x05da	Microtek
+vendor LEXAR		0x05dc	Lexar Media
 vendor SYMBOL		0x05e0	Symbol Technologies
 vendor GENESYS		0x05e3	Genesys Logic, Inc.
 vendor FUJI		0x05e5	Fuji Electric Co., Ltd.
@@ -640,6 +641,9 @@ product KYE VIVIDPRO		0x2001	ColorPage Vivid-Pro scanner
 /* LaCie products */
 product LACIE HD		0xa601	Hard Disk
 product LACIE CDRW		0xa602	CD R/W
+
+/* Lexar products */
+product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash Reader
 
 /* Lexmark products */
 product LEXMARK S2450		0x0009	Optra S 2450
