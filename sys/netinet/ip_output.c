@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.145 2005/03/05 02:46:38 briggs Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.146 2005/03/06 00:35:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.145 2005/03/05 02:46:38 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.146 2005/03/06 00:35:07 matt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -758,6 +758,8 @@ spd_done:
 	hlen = ip->ip_hl << 2;
 #endif /* PFIL_HOOKS */
 
+	m->m_pkthdr.csum_data |= hlen << 16;
+
 #if IFA_STATS
 	/*
 	 * search for the source address structure to
@@ -765,6 +767,19 @@ spd_done:
 	 */
 	INADDR_TO_IA(ip->ip_src, ia);
 #endif
+
+	if (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) {
+#if IFA_STATS
+		if (ia)
+			ia->ia_ifa.ifa_data.ifad_outbytes += ip_len;
+#endif
+#ifdef IPSEC
+		/* clean ipsec history once it goes out of the node */
+		ipsec_delaux(m);
+#endif
+		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
+		goto done;
+	}
 
 	/* Maybe skip checksums on loopback interfaces. */
 	if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
@@ -799,8 +814,7 @@ spd_done:
 		if (sw_csum & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
-		} else
-			m->m_pkthdr.csum_data |= hlen << 16;
+		}
 
 #ifdef IPSEC
 		/* clean ipsec history once it goes out of the node */
