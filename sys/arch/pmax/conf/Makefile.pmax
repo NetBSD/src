@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.35 1996/09/25 20:35:16 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.36 1996/09/25 20:41:00 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -31,6 +31,7 @@ STRIP?=	strip
 S!=	cd ../../../..; pwd
 .endif
 PMAX=	$S/arch/pmax
+MIPS=	$S/arch/mips
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
@@ -135,7 +136,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${PMAX}/pmax/Locore.c ${CFILES} ${PMAX}/pmax/swapgeneric.c \
+	    ${MIPS}/mips/Locore.c ${CFILES} ${PMAX}/pmax/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
@@ -150,11 +151,13 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S \
+SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
+	${PMAX}/pmax/locore_machdep.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
@@ -174,10 +177,14 @@ genassym.o machdep.o: Makefile
 machdep.o mainbus.o trap.o: Makefile
 
 
-locore.o: ${PMAX}/pmax/locore.S assym.h
+locore.o: ${MIPS}/mips/locore.S assym.h
 	${NORMAL_S}
 
-fp.o: ${PMAX}/pmax/fp.S assym.h
+
+fp.o: ${MIPS}/mips/fp.S assym.h
+	${NORMAL_S}
+
+locore_machdep.o: ${pmax}/pmax/locore.S assym.h
 	${NORMAL_S}
 
 %RULES
