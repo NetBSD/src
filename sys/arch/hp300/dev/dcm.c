@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.24 1996/02/24 00:55:03 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.25 1996/02/26 23:40:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -1379,19 +1379,18 @@ dcm_console_scan(scode, va, arg)
 	struct dcmdevice *dcm = (struct dcmdevice *)va;
 	struct consdev *cp = arg;
 	u_char *dioiidev;
-	int force = 0;
+	int force = 0, pri;
 
 	switch (dcm->dcm_rsid) {
 	case DCMID:
-		cp->cn_pri = CN_NORMAL;
+		pri = CN_NORMAL;
 		break;
 
 	case DCMID|DCMCON:
-		cp->cn_pri = CN_REMOTE;
+		pri = CN_REMOTE;
 		break;
 
 	default:
-		cp->cn_pri = CN_DEAD;
 		return (0);
 	}
 
@@ -1400,7 +1399,7 @@ dcm_console_scan(scode, va, arg)
 	 * Raise our priority, if appropriate.
 	 */
 	if (scode == CONSCODE) {
-		cp->cn_pri = CN_REMOTE;
+		pri = CN_REMOTE;
 		force = conforced = 1;
 	}
 #endif
@@ -1410,7 +1409,7 @@ dcm_console_scan(scode, va, arg)
 	 * console, stash our priority, for the benefit of dcmcninit().
 	 */
 	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri;
+		conpri = cp->cn_pri = pri;
 		if (scode >= 132) {
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);

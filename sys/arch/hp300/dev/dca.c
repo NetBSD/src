@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.21 1996/02/24 00:55:00 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.22 1996/02/26 23:40:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -889,19 +889,20 @@ dca_console_scan(scode, va, arg)
 	struct dcadevice *dca = (struct dcadevice *)va;
 	struct consdev *cp = arg;
 	u_char *dioiidev;
-	int force = 0;
+	int force = 0, pri;
 
 	switch (dca->dca_id) {
 	case DCAID0:
 	case DCAID1:
-		cp->cn_pri = CN_NORMAL;
+		pri = CN_NORMAL;
 		break;
+
 	case DCAREMID0:
 	case DCAREMID1:
-		cp->cn_pri = CN_REMOTE;
+		pri = CN_REMOTE;
 		break;
+
 	default:
-		cp->cn_pri = CN_DEAD;
 		return (0);
 	}
 
@@ -910,7 +911,7 @@ dca_console_scan(scode, va, arg)
 	 * Raise our priority, if appropriate.
 	 */
 	if (scode == CONSCODE) {
-		cp->cn_pri = CN_REMOTE;
+		pri = CN_REMOTE;
 		force = conforced = 1;
 	}
 #endif
@@ -920,7 +921,7 @@ dca_console_scan(scode, va, arg)
 	 * console, stash our priority, for the benefit of dcacninit().
 	 */
 	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri;
+		conpri = cp->cn_pri = pri;
 		if (scode >= 132) {
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);

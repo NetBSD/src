@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.5 1996/02/24 00:55:17 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.6 1996/02/26 23:40:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -512,12 +512,10 @@ topcat_console_scan(scode, va, arg)
 	struct grfreg *grf = (struct grfreg *)va;
 	struct consdev *cp = arg;
 	u_char *dioiidev; 
-	int force = 0; 
+	int force = 0, pri; 
 
-	if (grf->gr_id != GRFHWID) {
-		cp->cn_pri = CN_DEAD;
+	if (grf->gr_id != GRFHWID)
 		return (0);
-	}
 
 	switch (grf->gr_id2) {
 	case GID_TOPCAT:
@@ -527,18 +525,17 @@ topcat_console_scan(scode, va, arg)
 		break;
 
 	default:
-		cp->cn_pri = CN_DEAD;
 		return (0);
 	}
 
-	cp->cn_pri = CN_NORMAL;
+	pri = CN_NORMAL;
 
 #ifdef CONSCODE
 	/*
 	 * Raise our priority, if appropriate.
 	 */
 	if (scode == CONSCODE) {
-		cp->cn_pri = CN_REMOTE;
+		pri = CN_REMOTE;
 		force = conforced = 1;
 	}
 #endif
@@ -548,7 +545,7 @@ topcat_console_scan(scode, va, arg)
 	 * console, stash our priority.
 	 */
 	if ((cp->cn_pri > conpri) || force) {
-		conpri = cp->cn_pri;
+		conpri = cp->cn_pri = pri;
 		if (scode >= 132) {
 			dioiidev = (u_char *)va;
 			return ((dioiidev[0x101] + 1) * 0x100000);
