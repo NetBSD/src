@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.8 1995/08/05 16:47:37 thorpej Exp $	*/
+/*	$NetBSD: cons.c,v 1.9 1995/10/04 06:54:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,9 @@ struct consdev constab[] = {
 	{ 0 },
 };
 
+int	curcons_scode;	/* select code of device currently being probed */
+int	cons_scode;	/* final select code of console device */
+
 struct consdev *cn_tab;
 int noconsole;
 
@@ -71,15 +74,25 @@ cninit()
 
 	cn_tab = NULL;
 	noconsole = 1;
+	cons_scode = 256;	/* larger than last valid select code */
 	for (cp = constab; cp->cn_probe; cp++) {
 		(*cp->cn_probe)(cp);
 		if (cp->cn_pri > CN_DEAD &&
-		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
+		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri)) {
 			cn_tab = cp;
+			cons_scode = curcons_scode;
+		}
 	}
 	if (cn_tab) {
 		(*cn_tab->cn_init)(cn_tab);
 		noconsole = 0;
+#if 0
+		printf("console: ");
+		if (cons_scode == -1)
+			printf("internal grf\n");
+		else
+			printf("scode %d\n", cons_scode);
+#endif
 	}
 }
 

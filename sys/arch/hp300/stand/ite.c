@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.9 1995/08/05 16:47:44 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.10 1995/10/04 06:54:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,6 +102,7 @@ int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 /* these guys need to be in initialized data */
 int itecons = -1;
 struct  ite_softc ite_softc[NITE] = { 0 };
+int	ite_scode[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
@@ -129,6 +130,7 @@ iteconfig()
 			continue;
 		if (i >= NITE)
 			break;
+		ite_scode[i] = hw->hw_sc;
 		ip = &ite_softc[i];
 		ip->isw = &itesw[dtype];
 		ip->regbase = (caddr_t) gr;
@@ -200,6 +202,7 @@ iteprobe(cp)
 			unit = ite;
 		}
 	}
+	curcons_scode = ite_scode[unit];
 	cp->cn_dev = unit;
 	cp->cn_pri = pri;
 }

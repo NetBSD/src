@@ -1,4 +1,4 @@
-/*	$NetBSD: pboot.c,v 1.8 1995/09/02 05:04:22 thorpej Exp $	*/
+/*	$NetBSD: pboot.c,v 1.9 1995/10/04 06:54:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: pboot.c,v 1.8 1995/09/02 05:04:22 thorpej Exp $";
+static char rcsid[] = "$NetBSD: pboot.c,v 1.9 1995/10/04 06:54:49 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ char line[100];
 extern	u_int opendev;
 extern	char *lowram;
 extern	int noconsole;
+extern	int cons_scode;
 
 char *name;
 char *names[] = {
@@ -70,7 +71,7 @@ main()
 	int currname = 0;
 
 	printf("\n>> NetBSD BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.8 $");
+	       getmachineid(), "$Revision: 1.9 $");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
@@ -156,6 +157,7 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 
 	asm("movl %0,d7" : : "m" (howto));
 	asm("movl %0,d6" : : "m" (opendev));
+	asm("movl %0,d5" : : "m" (cons_scode));
 	asm("movl %0,a5" : : "a" (loadaddr));
 	asm("movl %0,a4" : : "a" (esym));
 	(*((int (*)())entry))();

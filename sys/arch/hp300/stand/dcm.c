@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.7 1995/08/05 16:47:40 thorpej Exp $	*/
+/*	$NetBSD: dcm.c,v 1.8 1995/10/04 06:54:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,6 +80,8 @@ dcmprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		break;
 	}
+
+	curcons_scode = hw->hw_sc;
 }
 
 void
