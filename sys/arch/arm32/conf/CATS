@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.17 1999/11/19 06:25:11 jun Exp $
+#	$NetBSD: CATS,v 1.18 1999/11/20 07:28:35 jun Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -10,6 +10,9 @@ include	"arch/arm32/conf/std.arm32"
 maxusers	32
 
 # Standard system options
+
+options		UCONSOLE	# users can use TIOCCONS (for xconsole)
+options		INSECURE	# disable kernel securelevel
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
@@ -67,8 +70,23 @@ options 	NFSSERVER
 
 # Networking options
 
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -120,9 +138,6 @@ options		PCIVERBOSE	# Verbose PCI descriptions
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options		PMAP_STATIC_L1S=128
-
-#options	XSERVER                 # also need INSECURE for now
-#options	INSECURE                # disable kernel securelevel
 
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
@@ -402,3 +417,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux		2
+
+# for IPv6
+pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
