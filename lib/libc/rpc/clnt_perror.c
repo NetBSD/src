@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.5 1995/02/25 03:01:39 cgd Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.6 1995/04/21 21:59:52 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_perror.c,v 1.5 1995/02/25 03:01:39 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_perror.c,v 1.6 1995/04/21 21:59:52 jtc Exp $";
 #endif
 
 /*
@@ -156,49 +156,25 @@ clnt_perror(rpch, s)
 	(void) fprintf(stderr,"%s\n",clnt_sperror(rpch,s));
 }
 
-
-struct rpc_errtab {
-	enum clnt_stat status;
-	char *message;
-};
-
-static const struct rpc_errtab  rpc_errlist[] = {
-	{ RPC_SUCCESS, 
-		"RPC: Success" }, 
-	{ RPC_CANTENCODEARGS, 
-		"RPC: Can't encode arguments" },
-	{ RPC_CANTDECODERES, 
-		"RPC: Can't decode result" },
-	{ RPC_CANTSEND, 
-		"RPC: Unable to send" },
-	{ RPC_CANTRECV, 
-		"RPC: Unable to receive" },
-	{ RPC_TIMEDOUT, 
-		"RPC: Timed out" },
-	{ RPC_VERSMISMATCH, 
-		"RPC: Incompatible versions of RPC" },
-	{ RPC_AUTHERROR, 
-		"RPC: Authentication error" },
-	{ RPC_PROGUNAVAIL, 
-		"RPC: Program unavailable" },
-	{ RPC_PROGVERSMISMATCH, 
-		"RPC: Program/version mismatch" },
-	{ RPC_PROCUNAVAIL, 
-		"RPC: Procedure unavailable" },
-	{ RPC_CANTDECODEARGS, 
-		"RPC: Server can't decode arguments" },
-	{ RPC_SYSTEMERROR, 
-		"RPC: Remote system error" },
-	{ RPC_UNKNOWNHOST, 
-		"RPC: Unknown host" },
-	{ RPC_UNKNOWNPROTO,
-		"RPC: Unknown protocol" },
-	{ RPC_PMAPFAILURE, 
-		"RPC: Port mapper failure" },
-	{ RPC_PROGNOTREGISTERED, 
-		"RPC: Program not registered"},
-	{ RPC_FAILED, 
-		"RPC: Failed (unspecified error)"}
+static const char *const rpc_errlist[] = {
+	"RPC: Success",				/*  0 - RPC_SUCCESS */
+	"RPC: Can't encode arguments",		/*  1 - RPC_CANTENCODEARGS */
+	"RPC: Can't decode result",		/*  2 - RPC_CANTDECODERES */
+	"RPC: Unable to send",			/*  3 - RPC_CANTSEND */
+	"RPC: Unable to receive",		/*  4 - RPC_CANTRECV */
+	"RPC: Timed out",			/*  5 - RPC_TIMEDOUT */
+	"RPC: Incompatible versions of RPC",	/*  6 - RPC_VERSMISMATCH */
+	"RPC: Authentication error",		/*  7 - RPC_AUTHERROR */
+	"RPC: Program unavailable",		/*  8 - RPC_PROGUNAVAIL */
+	"RPC: Program/version mismatch",	/*  9 - RPC_PROGVERSMISMATCH */
+	"RPC: Procedure unavailable",		/* 10 - RPC_PROCUNAVAIL */
+	"RPC: Server can't decode arguments",	/* 11 - RPC_CANTDECODEARGS */
+	"RPC: Remote system error",		/* 12 - RPC_SYSTEMERROR */
+	"RPC: Unknown host",			/* 13 - RPC_UNKNOWNHOST */
+	"RPC: Port mapper failure",		/* 14 - RPC_PMAPFAILURE */
+	"RPC: Program not registered",		/* 15 - RPC_PROGNOTREGISTERED */
+	"RPC: Failed (unspecified error)",	/* 16 - RPC_FAILED */
+	"RPC: Unknown protocol"			/* 17 - RPC_UNKNOWNPROTO */
 };
 
 
@@ -211,11 +187,11 @@ clnt_sperrno(stat)
 {
 	int i;
 
-	for (i = 0; i < sizeof(rpc_errlist)/sizeof(struct rpc_errtab); i++) {
-		if (rpc_errlist[i].status == stat) {
-			return (rpc_errlist[i].message);
-		}
-	}
+	unsigned int errnum = stat;
+
+	if (errnum < (sizeof(rpc_errlist)/sizeof(rpc_errlist[0])))
+		return rpc__errlist[errnum];
+
 	return ("RPC: (unknown error code)");
 }
 
@@ -260,40 +236,25 @@ clnt_pcreateerror(s)
 	(void) fprintf(stderr,"%s\n",clnt_spcreateerror(s));
 }
 
-struct auth_errtab {
-	enum auth_stat status;	
-	char *message;
-};
-
-static const struct auth_errtab auth_errlist[] = {
-	{ AUTH_OK,
-		"Authentication OK" },
-	{ AUTH_BADCRED,
-		"Invalid client credential" },
-	{ AUTH_REJECTEDCRED,
-		"Server rejected credential" },
-	{ AUTH_BADVERF,
-		"Invalid client verifier" },
-	{ AUTH_REJECTEDVERF,
-		"Server rejected verifier" },
-	{ AUTH_TOOWEAK,
-		"Client credential too weak" },
-	{ AUTH_INVALIDRESP,
-		"Invalid server verifier" },
-	{ AUTH_FAILED,
-		"Failed (unspecified error)" },
+static const char *const auth_errlist[] = {
+	"Authentication OK",			/* 0 - AUTH_OK */
+	"Invalid client credential",		/* 1 - AUTH_BADCRED */
+	"Server rejected credential",		/* 2 - AUTH_REJECTEDCRED */
+	"Invalid client verifier", 		/* 3 - AUTH_BADVERF */
+	"Server rejected verifier", 		/* 4 - AUTH_REJECTEDVERF */
+	"Client credential too weak",		/* 5 - AUTH_TOOWEAK */
+	"Invalid server verifier",		/* 6 - AUTH_INVALIDRESP */
+	"Failed (unspecified error)"		/* 7 - AUTH_FAILED */
 };
 
 static char *
 auth_errmsg(stat)
 	enum auth_stat stat;
 {
-	int i;
+	unsigned int errnum = stat;
 
-	for (i = 0; i < sizeof(auth_errlist)/sizeof(struct auth_errtab); i++) {
-		if (auth_errlist[i].status == stat) {
-			return(auth_errlist[i].message);
-		}
-	}
+	if (errnum < (sizeof(auth_errlist)/sizeof(auth_errlist[0])))
+		return auth_errlist[errnum];
+
 	return(NULL);
 }
