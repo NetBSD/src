@@ -61,7 +61,7 @@
 #define TIMESIZE 50
 
 /* File scope variables */
-static char rcsid[] = "$Id: at.c,v 1.2 1993/12/06 04:10:42 cgd Exp $";
+static char rcsid[] = "$Id: at.c,v 1.3 1995/03/02 21:33:13 cgd Exp $";
 char *no_export[] =
 {
 	"TERM", "TERMCAP", "DISPLAY", "_"
@@ -246,7 +246,7 @@ writefile(runtimer, queue)
 	 * write to the directory, if necessary.
 	 */
 
-	    REDUCE_PRIV(0);
+	    REDUCE_PRIV(effective_uid);
 
 	/*
 	 * We've successfully created the file; let's set the flag so it
@@ -527,16 +527,10 @@ main(argc, argv)
 	/* select our program */
 	switch (program) {
 	case ATQ:
-
-		REDUCE_PRIV(0);
-
 		list_jobs();
 		break;
 
 	case ATRM:
-
-		REDUCE_PRIV(0);
-
 		delete_jobs(argc, argv);
 		break;
 
