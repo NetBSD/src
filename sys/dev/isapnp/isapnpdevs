@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.16 1999/02/05 01:15:01 augustss Exp $
+$NetBSD: isapnpdevs,v 1.17 1999/02/08 22:10:09 tls Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -94,9 +94,8 @@ devlogic	ep	TCM5098		3Com 3c509B-8
  * ess
  */
 /* XXX not working yet
-devlogic	ess	ESS1868		ESS1868
-devlogic	ess	ESS1869		ESS1869
-*/
+/* devlogic	ess	ESS1868		ESS1868 */
+/* devlogic	ess	ESS1869		ESS1869 */
 
 /*
  * joy
@@ -130,6 +129,7 @@ devlogic	ne	@@@1980		OvisLink LE-8019R
  * pcic
  */
 devcompat	pcic	PNP0E00		PCIC Compatible PCMCIA Bridge
+devlogic	pcic	AEI0218		Actiontec PnP PCMCIA Adapter
 
 /*
  * sb
@@ -150,6 +150,7 @@ devcompat	sb	PNPB001		Generic SB 2.0
 devcompat	sb	PNPB002		Generic SB Pro
 devcompat	sb	PNPB003		Generic SB 16
 devlogic	sb	ESS1868		ESS1868
+devlogic	sb	ESS1869		ESS1869
 
 
 /*

@@ -1,10 +1,10 @@
-/*	$NetBSD: isapnpdevs.c,v 1.15 1999/01/04 22:41:58 augustss Exp $	*/
+/*	$NetBSD: isapnpdevs.c,v 1.16 1999/02/08 22:10:09 tls Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.15 1999/01/04 22:39:42 augustss Exp 
+ *	NetBSD: isapnpdevs,v 1.16 1999/02/05 01:15:01 augustss Exp 
  */
 
 /*-
@@ -112,8 +112,6 @@ const struct isapnp_devinfo isapnp_ep_devinfo = {
 
 /* ESS Audio Drive */
 static const char *isapnp_ess_devlogic[] = {
-	"ESS1868",	/* ESS1868 */
-	"ESS1869",	/* ESS1869 */
 	NULL
 };
 static const char *isapnp_ess_devcompat[] = {
@@ -181,6 +179,7 @@ const struct isapnp_devinfo isapnp_ne_devinfo = {
 
 /* PCMCIA bridge */
 static const char *isapnp_pcic_devlogic[] = {
+	"AEI0218",	/* Actiontec PnP PCMCIA Adapter */
 	NULL
 };
 static const char *isapnp_pcic_devcompat[] = {
@@ -204,6 +203,8 @@ static const char *isapnp_sb_devlogic[] = {
 	"CTL0045",	/* SB AWE64 Value */
 	"OPT9250",	/* Televideo card, Opti */
 	"@X@0001",	/* CMI8330. Audio Adapter */
+	"ESS1868",	/* ESS1868 */
+	"ESS1869",	/* ESS1869 */
 	NULL
 };
 static const char *isapnp_sb_devcompat[] = {
