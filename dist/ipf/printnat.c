@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.1.1.1 2002/01/24 08:18:30 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.2 2002/01/24 10:40:12 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -228,7 +228,8 @@ int opts;
 	printf(" [%s", inet_ntoa(nat->nat_oip));
 	if ((nat->nat_flags & IPN_TCPUDP) != 0)
 		printf(" %hu]", ntohs(nat->nat_oport));
-	printf("]");
+	else
+		printf("]");
 
 	if (opts & OPT_VERBOSE) {
 		printf("\n\tage %lu use %hu sumd %s/",
