@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.25 1998/04/01 14:18:10 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.26 1998/04/03 04:07:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.25 1998/04/01 14:18:10 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.26 1998/04/03 04:07:15 cgd Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.25 1998/04/01 14:18:10 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.26 1998/04/03 04:07:15 cgd Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1857,11 +1857,13 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    pattern.flags = 0;
 
 		    cp = ++tstr;
-		    if ((pattern.lhs = VarGetPattern(ctxt, err, &cp, ':',
+		    delim = ':';
+		    if ((pattern.lhs = VarGetPattern(ctxt, err, &cp, delim,
 			NULL, &pattern.leftLen, NULL)) == NULL)
 			goto cleanup;
 
-		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, '}',
+		    delim = '}';
+		    if ((pattern.rhs = VarGetPattern(ctxt, err, &cp, delim,
 			NULL, &pattern.rightLen, NULL)) == NULL)
 			goto cleanup;
 
