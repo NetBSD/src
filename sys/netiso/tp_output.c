@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_output.c	7.10 (Berkeley) 6/27/91
- *	$Id: tp_output.c,v 1.2 1993/05/20 05:27:47 cgd Exp $
+ *	$Id: tp_output.c,v 1.3 1993/09/06 18:05:06 mycroft Exp $
  */
 
 /***********************************************************
@@ -161,7 +161,7 @@ tp_consistency( tpcb, cmd, param )
 		printf("p_class 0x%x, class_to_use 0x%x\n",  param->p_class,
 			class_to_use);
 	ENDDEBUG
-	if((param->p_netservice < 0) || (param->p_netservice > TP_MAX_NETSERVICES)){
+	if( param->p_netservice > TP_MAX_NETSERVICES) {
 		error = EINVAL; goto done;
 	}
 	if( (param->p_class & TP_CLASSES_IMPLEMENTED) == 0 ) {
