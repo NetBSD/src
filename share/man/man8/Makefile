@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2003/04/26 19:22:10 fvdl Exp $
+#	$NetBSD: Makefile,v 1.65 2003/10/04 13:38:25 jdolecek Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	afterboot.8 \
@@ -19,7 +19,8 @@ MLINKS+=rc.8 rc.shutdown.8
 SUBDIR=	man8.acorn26 man8.acorn32 man8.algor man8.alpha man8.amiga \
 	man8.arc man8.atari man8.bebox man8.cats man8.cesfic \
 	man8.cobalt man8.dreamcast man8.evbarm man8.evbmips man8.evbppc \
-	man8.evbsh3 man8.hp300 man8.hp700 man8.hpcarm man8.hpcmips man8.hpcsh \
+	man8.evbsh3 man8.evbsh5 \
+	man8.hp300 man8.hp700 man8.hpcarm man8.hpcmips man8.hpcsh \
 	man8.i386 man8.luna68k \
 	man8.mac68k man8.macppc man8.mipsco man8.mmeye man8.mvme68k \
 	man8.mvmeppc man8.netwinder man8.news68k man8.newsmips \
