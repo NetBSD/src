@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.44 2000/04/16 22:12:05 pk Exp $ */
+/*	$NetBSD: fb.c,v 1.45 2000/04/17 20:37:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -456,23 +456,32 @@ fbrcons_init(fb)
 	if (ri->ri_depth == 8) {
 		int i;
 		for (i = 0; i < 16; i++) {
+
+			/*
+			 * Cmap entries are repeated four times in the
+			 * 32 bit wide `devcmap' entries for optimization
+			 * purposes; see rasops(9)
+			 */
+#define I_TO_DEVCMAP(i)	((i) | ((i)<<8) | ((i)<<16) | ((i)<<24))
+
 			/*
 			 * Use existing colormap entries for black and white
 			 */
 			if ((i & 7) == WSCOL_BLACK) {
-				ri->ri_devcmap[i] = 255;
+				ri->ri_devcmap[i] = I_TO_DEVCMAP(255);
 				continue;
 			}
 
 			if ((i & 7) == WSCOL_WHITE) {
-				ri->ri_devcmap[i] = 0;
+				ri->ri_devcmap[i] = I_TO_DEVCMAP(0);
 				continue;
 			}
 			/*
 			 * Other entries refer to ANSI map, which for now
 			 * is setup in bt_subr.c
 			 */
-			ri->ri_devcmap[i] = i + 1;
+			ri->ri_devcmap[i] = I_TO_DEVCMAP(i + 1);
+#undef I_TO_DEVCMAP
 		}
 	}
 
