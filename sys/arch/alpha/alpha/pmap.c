@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.23 1998/03/26 02:45:34 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.24 1998/03/26 19:06:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 1998/03/26 02:45:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 1998/03/26 19:06:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1391,6 +1391,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 #ifdef PMAPSTATS
 		enter_stats.kernel++
 #endif
+
+#ifdef DIAGNOSTIC
+		/*
+		 * Sanity check the virtual address.
+		 */
+		if (va < VM_MIN_KERNEL_ADDRESS)
+			panic("pmap_enter: kernel pmap, invalid va 0x%lx", va);
+#endif
+
 #ifdef DEBUG
 		/*
 		 * All kernel level 2 and 3 page tables are
@@ -1421,6 +1430,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 #ifdef PMAPSTATS
 		enter_stats.user++;
 #endif
+
+#ifdef DIAGNOSTIC
+		/*
+		 * Sanity check the virtual address.
+		 */
+		if (va >= VM_MAXUSER_ADDRESS)
+			panic("pmap_enter: user pmap, invalid va 0x%lx", va);
+#endif
+
 		/*
 		 * If we're still referencing the kernel Lev1map, create
 		 * a new level 1 page table.  A reference will be added
@@ -1646,7 +1664,17 @@ pmap_kenter_pa(va, pa, prot)
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
 		printf("pmap_kenter_pa(%lx, %lx, %x)\n",
 		    va, pa, prot);
+#endif
 
+#ifdef DIAGNOSTIC
+		/*
+		 * Sanity check the virtual address.
+		 */
+		if (va < VM_MIN_KERNEL_ADDRESS)
+			panic("pmap_enter: kernel pmap, invalid va 0x%lx", va);
+#endif
+
+#ifdef DEBUG
 	/*
 	 * All kernel level 2 and 3 page tables are
 	 * pre-allocated and mapped in.  Therefore, the
@@ -3306,11 +3334,6 @@ pmap_alloc_asn(pmap)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ASN))
 		printf("pmap_alloc_asn(%p)\n", pmap);
-#endif
-
-#ifdef DIAGNOSTIC
-	if (pmap == pmap_kernel())
-		panic("pmap_alloc_asn: got kernel pmap");
 #endif
 
 	/*
