@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.14 1996/12/20 19:38:16 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.13 1995/07/28 05:43:57 phil Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.14 1996/12/20 19:38:16 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,7 +160,7 @@ endgrent()
 static int
 grscan(search, gid, name)
 	register int search, gid;
-	register char *name;
+	register const char *name;
 {
 	register char *cp, **m;
 	char *bp;
