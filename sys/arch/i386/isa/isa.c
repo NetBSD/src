@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.61 1994/11/04 00:53:06 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.62 1994/11/04 02:55:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -96,7 +96,7 @@ isasubmatch(parent, match, aux)
 	ia.ia_iosize = 0x666;
 	ia.ia_maddr = cf->cf_loc[2] - 0xa0000 + atdevbase;
 	ia.ia_msize = cf->cf_loc[3];
-	ia.ia_irq = cf->cf_loc[4];
+	ia.ia_irq = (cf->cf_loc[4] == -1) ? IRQUNK : (1 << cf->cf_loc[4]);
 	ia.ia_drq = cf->cf_loc[5];
 
 	if ((*cf->cf_driver->cd_match)(parent, match, &ia) <= 0) {
@@ -121,5 +121,7 @@ isaattach(parent, self, aux)
 	void *aux;
 {
 
-	while (config_search(isasubmatch, self, NULL));
+	printf("\n");
+
+	while (config_search(isasubmatch, self, NULL) != NULL);
 }
