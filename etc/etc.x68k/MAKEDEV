@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.27.4.1 2000/08/11 20:43:41 mason Exp $
+#	$NetBSD: MAKEDEV,v 1.27.4.2 2000/09/14 14:09:02 minoura Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -122,7 +122,7 @@ floppy)
 	;;
 
 ramdisk)
-	sh $0 floppy md0
+	sh $0 floppy md0 sram
 	;;
 
 std)
