@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.21 2002/04/26 23:28:53 matt Exp $ */
+/* $NetBSD: crt0.c,v 1.22 2002/05/09 20:32:59 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -41,9 +41,9 @@
  * Small Data Area designators.  If not defined, will show up as being
  * at address zero.
  */
-extern int _SDA_BASE_;
+extern int _SDA_BASE_[];
 __weak_extern(_SDA_BASE_);
-extern int _SDA2_BASE_;
+extern int _SDA2_BASE_[];
 __weak_extern(_SDA2_BASE_);
 
 /*
@@ -105,7 +105,7 @@ _start(argc, argv, envp, obj, cleanup, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.21 2002/04/26 23:28:53 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.22 2002/05/09 20:32:59 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
