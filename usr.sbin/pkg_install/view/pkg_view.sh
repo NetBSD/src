@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.27 2003/08/25 20:17:12 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.28 2003/08/25 20:58:04 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -73,8 +73,9 @@ checkpkg() {
 stowdir=""
 viewbase=${LOCALBASE:-/usr/pkg}
 view=${PKG_VIEW:-""}
-ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
+dflt_ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
 dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
+ignorefiles=""
 verbose=no
 
 while [ $# -gt 0 ]; do
@@ -149,8 +150,15 @@ while [ $# -gt 0 ]; do
 				echo "Adding package $1 to ${targetdir}."
 			fi
 			checkpkg $1 ${depot_pkg_dbdir}
+			if [ -f ${depot_pkg_dbdir}/$1/+BUILD_INFO ]; then
+				ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$1/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
+			fi
+			case "$ignore" in
+			"")	ignore="${dflt_ignorefiles}" ;;
+			esac
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+			ignore="${ignore} ${ignorefiles} $dbs"
+			env PLIST_IGNORE_FILES="${ignore}" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 			$mkdirprog -p ${depot_pkg_dbdir}/$1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 			$touchprog ${depot_pkg_dbdir}/$1/+VIEWS
@@ -211,8 +219,15 @@ while [ $# -gt 0 ]; do
 			fi
 		fi
 		checkpkg $1 ${depot_pkg_dbdir}
+		if [ -f ${depot_pkg_dbdir}/$1/+BUILD_INFO ]; then
+			ignore=`$grepprog "^_PLIST_IGNORE_FILES=" ${depot_pkg_dbdir}/$1/+BUILD_INFO | $sedprog -e 's|^_PLIST_IGNORE_FILES=[ 	]*||'`
+		fi
+		case "$ignore" in
+		"")	ignore="${dflt_ignorefiles}" ;;
+		esac
 		dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-		env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		ignore="${ignore} ${ignorefiles} $dbs"
+		env PLIST_IGNORE_FILES="${ignore}" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 		temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 		$cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
 		($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true) > ${depot_pkg_dbdir}/$1/+VIEWS
