@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 2000/03/28 03:11:28 simonb Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.53 2000/04/12 01:05:36 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.52 2000/03/28 03:11:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.53 2000/04/12 01:05:36 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,8 +292,8 @@ pagemove(from, to, size)
 	}
 #endif
 	while (size > 0) {
-		MachTLBFlushAddr((vaddr_t)from);
-		MachTLBUpdate((vaddr_t)to, fpte->pt_entry);
+		MIPS_TBIS((vaddr_t)from);			/* ??? */
+		MachTLBUpdate((vaddr_t)to, fpte->pt_entry);	/* ??? */
 		*tpte = *fpte;
 		if (CPUISMIPS3)
 			fpte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
