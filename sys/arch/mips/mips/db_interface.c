@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.39 2002/01/12 01:40:37 enami Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.40 2002/02/15 07:32:35 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -56,8 +56,9 @@
 #include <ddb/db_interface.h>
 #endif
 
-int	db_active = 0;
-mips_reg_t kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
+int		db_active = 0;
+db_regs_t	ddb_regs;
+mips_reg_t	kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
 void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
 void db_kvtophys_cmd(db_expr_t, int, db_expr_t, char *);
