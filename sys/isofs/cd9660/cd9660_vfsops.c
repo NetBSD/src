@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.42 1999/11/15 18:49:08 fvdl Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.43 2000/01/11 09:04:50 scw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -458,8 +458,11 @@ out:
 		brelse(pribp);
 	if (supbp)
 		brelse(supbp);
-	if (needclose)
+	if (needclose) {
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
+		VOP_UNLOCK(devvp, 0);
+	}
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT);
 		mp->mnt_data = (qaddr_t)0;
