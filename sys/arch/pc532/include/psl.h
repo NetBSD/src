@@ -35,7 +35,7 @@
  *
  *	@(#)psl.h	5.2 (Berkeley) 1/18/91
  *
- *	$Id: psl.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	psl.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp
  */
 
 /*
@@ -59,3 +59,7 @@
 
 #define	PSL_USERSET	(PSL_USER | PSL_US | PSL_I)
 #define	PSL_USERCLR	(PSL_I)
+
+/* The PSR versions ... */
+#define PSR_USR PSL_USER
+ 

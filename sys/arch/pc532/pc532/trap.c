@@ -35,7 +35,7 @@
  *
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  *
- *	$Id: trap.c,v 1.1.1.1 1993/09/09 23:53:50 phil Exp $
+ *	trap.c,v 1.1.1.1 1993/09/09 23:53:50 phil Exp
  */
 
 /*
@@ -45,6 +45,8 @@
 #include "sys/types.h"
 
 #include "machine/cpu.h"
+#include "machine/trap.h"
+#include "machine/psl.h"
 
 #include "param.h"
 #include "systm.h"
@@ -61,7 +63,6 @@
 #include "vm/vm_map.h"
 #include "sys/vmmeter.h"
 
-#include "machine/trap.h"
 
 
 struct	sysent sysent[];
@@ -108,7 +109,7 @@ copyfault:
 	if (curpcb == 0 || curproc == 0) goto we_re_toast;
 
 	syst = p->p_stime;
-	if ((frame.tf_psr & PSR_USR) == PSR_USR) {
+	if ((frame.tf_psr & PSL_USER) == PSL_USER) {
 		type |= T_USER;
 		p->p_regs = (int *)&(frame.tf_reg);
 	}
@@ -297,7 +298,7 @@ nogo:
 	case T_TRC | T_USER: 	/* trace trap */
 	case T_BPT | T_USER: 	/* breakpoint instruction */
 	case T_DBG | T_USER: 	/* debug trap */
-		frame.tf_psr &= ~PSR_TRAP;
+		frame.tf_psr &= ~PSL_P;
 		i = SIGTRAP;
 		break;
 
@@ -379,7 +380,7 @@ syscall(frame)
 	syst = p->p_stime;
 
 	/* is this a user? */
-	if ((frame.sf_psr & PSR_USR) != PSR_USR)
+	if ((frame.sf_psr & PSL_USER) != PSL_USER)
 		panic("syscall - process not in user mode.");
 
 	code = frame.sf_reg[R0];
@@ -419,7 +420,7 @@ if (code == -1 && p->p_pid == 1) {
 	if ((i = callp->sy_narg * sizeof (int)) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
 		frame.sf_reg[R0] = error;
-		frame.sf_psr |= PSR_CARRY;	
+		frame.sf_psr |= PSL_C;	
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
 			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
@@ -439,11 +440,11 @@ if (code == -1 && p->p_pid == 1) {
 	else if (error != EJUSTRETURN) {
 		if (error) {
 			frame.sf_reg[R0] = error;
-			frame.sf_psr |= PSR_CARRY;
+			frame.sf_psr |= PSL_C;
 		} else {
 			frame.sf_reg[R0] = rval[0];
 			frame.sf_reg[R1] = rval[1];
-			frame.sf_psr &= ~PSR_CARRY;
+			frame.sf_psr &= ~PSL_C;
 		}
 	}
 	/* else if (error == EJUSTRETURN) */
