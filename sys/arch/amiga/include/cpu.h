@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 1996/05/09 20:31:51 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 1996/05/16 16:02:15 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,6 +255,7 @@ void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));
 void	DCIAS __P((vm_offset_t));
+void	DCIA __P((void));
 void	DCIS __P((void));
 void	DCIU __P((void));
 void	ICIA __P((void));
