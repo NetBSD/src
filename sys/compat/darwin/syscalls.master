@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 2004/07/04 21:03:55 manu Exp $
+	$NetBSD: syscalls.master,v 1.23 2004/07/07 22:03:38 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -356,12 +356,8 @@
 181	NOARGS		{ int sys_setgid(gid_t gid); }
 182	NOARGS		{ int sys_setegid(gid_t egid); }
 183	NOARGS		{ int sys_seteuid(uid_t euid); }
-#ifdef __powerpc__
 184	STD	    	{ int darwin_sys_sigreturn(struct \
 			    darwin_ucontext *uctx, int ucvers); }
-#else
-184	UNIMPL
-#endif
 185	UNIMPL
 186	UNIMPL
 187	UNIMPL
