@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.15 2000/02/17 10:59:39 darrenr Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.16 2000/02/20 00:56:43 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -801,7 +801,7 @@ skip_ipsec2:;
 	 * Run through list of hooks for output packets.
 	 */
 	m1 = m;
-	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IPV6]]);
+	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
 	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 		    	rv = pfh->pfil_func(ip6, sizeof(*ip6), ifp, 1, &m1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.10 2000/02/17 10:59:32 darrenr Exp $	*/
+/*	$NetBSD: pfil.h,v 1.11 2000/02/20 00:56:33 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -33,7 +33,6 @@
 
 #include <sys/queue.h>
 
-struct protosw;
 struct mbuf;
 struct ifnet;
 
@@ -61,11 +60,11 @@ struct pfil_head {
 	int		ph_init;
 } pfil_head_t;
 
-struct packet_filter_hook *pfil_hook_get __P((int, struct protosw *));
+struct packet_filter_hook *pfil_hook_get __P((int, struct pfil_head *));
 void	pfil_add_hook __P((int (*func) __P((void *, int,
-	    struct ifnet *, int, struct mbuf **)), int, struct protosw *));
+	    struct ifnet *, int, struct mbuf **)), int, struct pfil_head *));
 void	pfil_remove_hook __P((int (*func) __P((void *, int,
-	    struct ifnet *, int, struct mbuf **)), int, struct protosw *));
+	    struct ifnet *, int, struct mbuf **)), int, struct pfil_head *));
 
 /* XXX */
 #if defined(_KERNEL) && !defined(_LKM)

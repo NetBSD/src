@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.101 2000/02/17 10:59:35 darrenr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.102 2000/02/20 00:56:39 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -464,7 +464,7 @@ ip_input(struct mbuf *m)
 	 * in the list may have previously cleared it.
 	 */
 	m0 = m;
-	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IP]]);
+	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IP]].pr_pfh);
 	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 			rv = pfh->pfil_func(ip, hlen,
