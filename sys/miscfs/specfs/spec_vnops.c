@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.48.4.2 2000/10/30 22:01:12 tv Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.48.4.3 2000/12/14 23:36:14 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -483,6 +483,8 @@ spec_fsync(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int  a_flags;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
