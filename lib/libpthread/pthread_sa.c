@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.8 2001/07/31 00:13:46 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.9 2001/07/31 21:10:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -277,6 +277,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						lock = victim->pt_heldlock;
 						victim->pt_heldlock = NULL;
 						__cpu_simple_unlock(lock);
+						victim->pt_next = NULL;
+						victim->pt_parent = NULL;
 					} else {
 						/* No. Queue it for the 
 						 * run queue.
