@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.11 1999/03/09 00:42:41 mrg Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.12 1999/03/10 02:19:04 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,7 +96,7 @@ int	OF_seek __P((int handle, u_quad_t pos));
 void	OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
 void	OF_enter __P((void));
 void	OF_exit __P((void)) __attribute__((__noreturn__));
-void	(*OF_set_callback __P((void (*newfunc)(void *)))) __P((void));
+void	(*OF_set_callback __P((void (*newfunc)(void *)))) __P((void *));
 int	openfirmware __P((void *));
 
 /*
