@@ -32,7 +32,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pw_yp.c	1.0 2/2/93";*/
-static char rcsid[] = "$Id: pw_yp.c,v 1.3 1994/06/29 21:40:21 deraadt Exp $";
+static char rcsid[] = "$Id: pw_yp.c,v 1.4 1994/08/17 19:54:23 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -111,8 +111,7 @@ pw_yp(pw, uid)
 	/* prompt for old password */
 	bzero(&yppasswd, sizeof yppasswd);
 	yppasswd.oldpass = "none";
-	if (uid)
-		yppasswd.oldpass = getpass("Old password:");
+	yppasswd.oldpass = getpass("Old password:");
 	if (!yppasswd.oldpass) {
 		(void)fprintf(stderr, "Cancelled.\n");
 		return(0);
