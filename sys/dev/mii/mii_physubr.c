@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.27 2001/07/27 22:44:59 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.28 2001/08/25 01:57:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -418,6 +418,21 @@ mii_phy_add_media(sc)
 	if ((sc->mii_flags & MIIF_NOISOLATE) == 0)
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
 		    MII_MEDIA_NONE);
+
+	/*
+	 * There are different interpretations for the bits in
+	 * HomePNA PHYs.  And there is really only one media type
+	 * that is supported.
+	 */
+	if (sc->mii_flags & MIIF_IS_HPNA) {
+		if (sc->mii_capabilities & BMSR_10THDX) {
+			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_HPNA_1, 0,
+					 sc->mii_inst),
+			    MII_MEDIA_10_T);
+			PRINT("HomePNA1");
+		}
+		return;
+	}
 
 	if (sc->mii_capabilities & BMSR_10THDX) {
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, sc->mii_inst),
