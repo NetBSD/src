@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.1 2003/11/06 02:28:00 christos Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.2 2003/11/11 18:29:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  *		siginfo_t structure			[12]
  *		ucontext_t structure			[140]
  */
-ENTRY_NOPROFILE(__sigtramp_sigcontext_1)
+ENTRY_NOPROFILE(__sigtramp_siginfo_2)
 	addr	140(sp),4(sp)		/* get pointer to sigcontext */
 					/* and put it in argument slot */
 	SYSTRAP(setcontext)		/* call setcontext */
