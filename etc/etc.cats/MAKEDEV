@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14 2002/07/30 19:41:08 chris Exp $
+#	$NetBSD: MAKEDEV,v 1.15 2002/07/30 20:50:10 chris Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -114,6 +114,7 @@
 #	wsfont*	console font control
 #	pci*	PCI bus access devices
 #	systrace syscall tracer
+#	audio*	audio devices
 #
 
 dialin=0
