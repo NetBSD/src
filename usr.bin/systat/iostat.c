@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.25 2002/12/29 19:03:56 kristerw Exp $	*/
+/*	$NetBSD: iostat.c,v 1.26 2003/02/01 19:12:30 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.25 2002/12/29 19:03:56 kristerw Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.26 2003/02/01 19:12:30 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -309,22 +309,19 @@ stat1(int row, int o)
 static void
 histogram(double val, int colwidth, double scale)
 {
-	char buf[10];
-	int k;
-	int v = (int)(val * scale) + 0.5;
+	int v = (int)(val * scale + 0.5);
+	int factor = 1;
+	int y, x;
 
-	k = MIN(v, colwidth);
-	if (v > colwidth) {
-		snprintf(buf, sizeof buf, "%4.1f", val);
-		k -= strlen(buf);
-		while (k--)
-			waddch(wnd, 'X');
-		waddstr(wnd, buf);
-		wclrtoeol(wnd);
-		return;
+	while (v > colwidth) {
+		v = (v + 5) / 10;
+		factor *= 10;
 	}
+	getyx(wnd, y, x);
 	wclrtoeol(wnd);
-	whline(wnd, 'X', k);
+	whline(wnd, 'X', v);
+	if (factor != 1)
+		mvwprintw(wnd, y, x + colwidth + 1, "* %d ", factor);
 }
 
 void
