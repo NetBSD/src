@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.57.2.3 1997/09/01 20:20:39 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.57.2.4 1997/09/06 18:49:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -161,12 +161,6 @@ struct cfdriver audio_cd = {
 	NULL, "audio", DV_DULL
 };
 
-struct audio_attach_args {
-	struct audio_hw_if *ahw;
-	struct midi_hw_if *mhw;
-	void *hdl;
-};
-
 int
 audioprobe(parent, match, aux)
 	struct device *parent;
@@ -179,6 +173,10 @@ audioprobe(parent, match, aux)
 {
 	struct audio_attach_args *sa = aux;
 
+	DPRINTF(("audioprobe: done=%d sa=%p hw=%p\n", 
+		 sa->audiodone, sa, sa->ahw));
+	if (sa->audiodone)
+		return 0;
 	return sa->ahw != 0;
 }
 
@@ -194,6 +192,8 @@ audioattach(parent, self, aux)
 	int error;
 
 	printf("\n");
+
+	sa->audiodone++;
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -255,7 +255,7 @@ audioattach(parent, self, aux)
 
 /*
  * Called from hardware driver.  This is where the MI audio driver gets
- * probed/attached to the hardare driver.
+ * probed/attached to the hardware driver.
  */
 void
 audio_attach_mi(ahwp, mhwp, hdlp, dev)
@@ -269,7 +269,9 @@ audio_attach_mi(ahwp, mhwp, hdlp, dev)
 	arg.ahw = ahwp;
 	arg.mhw = mhwp;
 	arg.hdl = hdlp;
-	(void)config_found(dev, &arg, 0);
+	arg.audiodone = arg.mididone = 0;
+	while(config_found(dev, &arg, 0))
+		;
 }
 
 #ifdef AUDIO_DEBUG
@@ -573,7 +575,7 @@ audio_sleep_timo(chan, label, timo)
 
 	if (!label)
 		label = "audio";
-	
+
 	*chan = 1;
 	st = tsleep(chan, PWAIT | PCATCH, label, timo);
 	*chan = 0;
@@ -592,6 +594,7 @@ audio_sleep(chan, label)
 	return audio_sleep_timo(chan, label, 0);
 }
 
+/* call at splaudio() */
 static __inline void
 audio_wakeup(chan)
 	int *chan;
@@ -746,6 +749,7 @@ audio_drain(sc)
 {
 	int error, drops;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
+	int s;
 
 	if (sc->sc_pr.mmapped || sc->sc_pr.used <= 0)
 		return 0;
@@ -753,7 +757,7 @@ audio_drain(sc)
 		/* We've never started playing, probably because the
 		 * block was too short.  Pad it and start now.
 		 */
-		int s, cc;
+		int cc;
 		u_char *inp = cb->inp;
 
 		cc = cb->blksize - (inp - cb->start) % cb->blksize;
@@ -782,17 +786,18 @@ audio_drain(sc)
 	}
 #endif
 	drops = cb->drops;
-	while (cb->drops == drops) {
+	error = 0;
+	s = splaudio();
+	while (cb->drops == drops && !error) {
 		DPRINTF(("audio_drain: used=%d, drops=%ld\n", sc->sc_pr.used, cb->drops));
 		/*
 		 * When the process is exiting, it ignores all signals and
 		 * we can't interrupt this sleep, so we set a timeout just in case.
 		 */
 		error = audio_sleep_timo(&sc->sc_wchan, "aud dr", 30*hz);
-		if (error)
-			return (error);
 	}
-	return (0);
+	splx(s);
+	return error;
 }
 
 /*
@@ -879,12 +884,12 @@ audio_read(dev, uio, ioflag)
 					 sc->sc_pr.stamp, sc->sc_wstamp));
 				if (ioflag & IO_NDELAY) {
 					splx(s);
-					return (EWOULDBLOCK);
+					return EWOULDBLOCK;
 				}
 				error = audio_sleep(&sc->sc_rchan, "aud hr");
 				if (error) {
 					splx(s);
-					return (error);
+					return error;
 				}
 			}
 			splx(s);
@@ -901,27 +906,29 @@ audio_read(dev, uio, ioflag)
 		return (error);
 	}
 	while (uio->uio_resid > 0 && !error) {
+		s = splaudio();
 		while (cb->used <= 0) {
 			if (ioflag & IO_NDELAY) {
-				error = EWOULDBLOCK;
-				return (error);
+				splx(s);
+				return EWOULDBLOCK;
 			}
-			s = splaudio();
 			if (!sc->sc_rbus) {
 				error = audiostartr(sc);
-				if (error) goto err;
+				if (error) {
+					splx(s);
+					return error;
+				}
 			}
 #ifdef AUDIO_DEBUG
 			if (audiodebug > 2)
 				printf("audio_read: sleep used=%d\n", cb->used);
 #endif
 			error = audio_sleep(&sc->sc_rchan, "aud rd");
-		err:
-			splx(s);
-			if (error)
-				return (error);
+			if (error) {
+				splx(s);
+				return error;
+			}
 		}
-		s = splaudio();
 		used = cb->used;
 		outp = cb->outp;
 		cb->copying = 1;
@@ -1133,16 +1140,20 @@ audio_write(dev, uio, ioflag)
 
 	error = 0;
 	while (uio->uio_resid > 0 && !error) {
+		s = splaudio();
 		while (cb->used >= cb->usedhigh) {
 			DPRINTF(("audio_write: sleep used=%d lowat=%d hiwat=%d\n", 
 				 cb->used, cb->usedlow, cb->usedhigh));
-			if (ioflag & IO_NDELAY)
+			if (ioflag & IO_NDELAY) {
+				splx(s);
 				return (EWOULDBLOCK);
+			}
 			error = audio_sleep(&sc->sc_wchan, "aud wr");
-			if (error)
-				return (error);
+			if (error) {
+				splx(s);
+				return error;
+			}
 		}
-		s = splaudio();
 		used = cb->used;
 		inp = cb->inp;
 		cb->copying = 1;
@@ -1226,7 +1237,7 @@ audio_write(dev, uio, ioflag)
 		cb->needfill = 0;
 		cb->copying = 0;
 		if (!sc->sc_pbus && !cb->pause)
-			error = audiostartp(sc);
+			error = audiostartp(sc); /* XXX should not clobber error */
 		splx(s);
 		if (cc) {
 #ifdef AUDIO_DEBUG
@@ -2090,14 +2101,15 @@ audiosetinfo(sc, ai)
 			audio_clear(sc);
 		cleared = 1;
 
-		/* No need to check the blocksize, audio_initbufs() does that. */
 		if (ai->blocksize == 0) {
 			audio_calc_blksize(sc, AUMODE_RECORD);
 			audio_calc_blksize(sc, AUMODE_PLAY);
 			sc->sc_blkset = 0;
 		} else {
-			sc->sc_pr.blksize = ai->blocksize;
-			sc->sc_rr.blksize = ai->blocksize;
+			int bs = ai->blocksize;
+			if (hw->round_blocksize)
+				bs = hw->round_blocksize(sc->hw_hdl, bs);
+			sc->sc_pr.blksize = sc->sc_rr.blksize = bs;
 			sc->sc_blkset = 1;
 		}
 	}

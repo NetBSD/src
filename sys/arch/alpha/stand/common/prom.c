@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.2 1997/04/06 08:41:00 cgd Exp $ */
+/* $NetBSD: prom.c,v 1.2.4.1 1997/09/06 18:00:08 thorpej Exp $ */
 
 /*  
  * Mach Operating System
@@ -30,6 +30,8 @@
 
 #include <machine/prom.h>
 #include <machine/rpb.h>
+
+#include "common.h"
 
 int console;
 

@@ -1,19 +1,24 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/24 17:55:40 gwr Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 1997/09/06 18:44:28 thorpej Exp $
 
 SA_PROG= netboot
-SRCS=   boot.c conf.c version.c
-OBJS=   ${SRCS:S/.c/.o/g}
+SRC1=   boot.c conf.c version.c
+OBJS+= ${SRC1:.c=.o}
 
-# Using local rules for these
-OBJS+=	dev_net.o globals.o
+# Using local rule for this
+OBJS+= dev_net.o
+
+# Build these locally too
+SRC2= bootparam.c globals.c nfs.c rpc.c
+OBJS+= ${SRC2:.c=.o}
+
+SRCS= ${SRC1} ${SRC2}
 
 all:	${SA_PROG}.bin
 
 .include <bsd.prog.mk>
+.PATH: ${S}/lib/libsa
 
+# How about -DSUPPORT_BOOTP instead?
 dev_net.o : ${S}/lib/libsa/dev_net.c
-	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC}
-
-globals.o : ${S}/lib/libsa/globals.c
-	${CC} ${CFLAGS} ${CPPFLAGS} -c ${.IMPSRC}
+	${COMPILE.c} -DSUN_BOOTPARAMS ${.IMPSRC}
 

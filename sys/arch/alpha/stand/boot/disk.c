@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $ */
+/* $NetBSD: disk.c,v 1.6.4.1 1997/09/06 17:59:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,12 +39,14 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
 
 #include <machine/prom.h>
 
+#include "stand/common/common.h"
 #include "disk.h"
 
 struct	disk_softc {
@@ -68,7 +70,6 @@ diskstrategy(devdata, rw, bn, reqcnt, addrvoid, cnt)
 	struct disk_softc *sc;
 	struct partition *pp;
 	prom_return_t ret;
-	int s;
 
 	if ((reqcnt & 0xffffff) != reqcnt ||
 	    reqcnt == 0)
@@ -162,6 +163,7 @@ bad:		free(sc, sizeof(struct disk_softc));
 	return (0);
 }
 
+int
 diskclose(f)
 	struct open_file *f;
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.2.6.2 1997/09/04 00:53:00 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.2.6.3 1997/09/06 17:59:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2.6.2 1997/09/04 00:53:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.2.6.3 1997/09/06 17:59:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,6 +464,26 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 	bus_dma_segment_t *segs;
 	int nsegs, off, prot, flags;
 {
+	int i;
 
-	panic("_bus_dmamem_mmap: not implemented");
+	for (i = 0; i < nsegs; i++) {
+#ifdef DIAGNOSTIC
+		if (off & PGOFSET)
+			panic("_bus_dmamem_mmap: offset unaligned");
+		if (segs[i].ds_addr & PGOFSET)
+			panic("_bus_dmamem_mmap: segment unaligned");
+		if (segs[i].ds_len & PGOFSET)
+			panic("_bus_dmamem_mmap: segment size not multiple"
+			    " of page size");
+#endif
+		if (off >= segs[i].ds_len) {
+			off -= segs[i].ds_len;
+			continue;
+		}
+
+		return (alpha_btop((caddr_t)segs[i].ds_addr + off));
+	}
+
+	/* Page not found. */
+	return (-1);
 }
