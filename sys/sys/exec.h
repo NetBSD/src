@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.53 1995/03/26 20:24:06 jtc Exp $	*/
+/*	$NetBSD: exec.h,v 1.54 1995/04/07 22:34:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -137,6 +137,8 @@ struct exec_package {
 	exec_setup_fcn ep_setup;	/* special setup fn for exec type */
 	void	*ep_setup_arg;		/* setup argument */
 	u_long	ep_setup_arglen;	/* size of extra arguments */
+	char	*ep_sigcode;		/* start of sigtramp code (if any) */
+	char	*ep_esigcode;		/* end of sigtramp code (if any) */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
