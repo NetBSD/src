@@ -1,3 +1,5 @@
+/*	$NetBSD: pboot.c,v 1.3 1994/10/26 07:27:48 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,12 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)boot.c	8.1 (Berkeley) 6/10/93
- *	     $Id: pboot.c,v 1.2 1994/09/19 00:23:41 mycroft Exp $
+ *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: pboot.c,v 1.2 1994/09/19 00:23:41 mycroft Exp $";
+static char rcsid[] = "$NetBSD: pboot.c,v 1.3 1994/10/26 07:27:48 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +71,7 @@ main()
 	int io;
 
 	printf("\n>> NetBSD BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.2 $");
+	       getmachineid(), "$Revision: 1.3 $");
 
 	bdev   = B_TYPE(bootdev);
 	badapt = B_ADAPTOR(bootdev);

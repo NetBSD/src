@@ -1,3 +1,5 @@
+/*	$NetBSD: ct.c,v 1.9 1994/10/26 07:23:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ct.c	8.2 (Berkeley) 1/12/94
- *	$Id: ct.c,v 1.8 1994/05/23 05:58:26 mycroft Exp $
+ *	@(#)ct.c	8.2 (Berkeley) 1/12/94
  */
 
 #include "ct.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: acvar.h,v 1.2 1994/10/26 07:23:27 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: acvar.h 1.1 91/06/19$
  *
- *	from: @(#)acvar.h	8.1 (Berkeley) 6/10/93
- *	$Id: acvar.h,v 1.1 1994/05/23 05:58:23 mycroft Exp $
+ *	@(#)acvar.h	8.1 (Berkeley) 6/10/93
  */
 
 struct	ac_softc {

@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)mkboot.c	8.1 (Berkeley) 7/15/93
- *	$Id: mkboot.c,v 1.4 1994/06/19 01:50:09 hpeyerl Exp $
+ *	@(#)mkboot.c	8.1 (Berkeley) 7/15/93
  */
 
 #ifndef lint
@@ -41,9 +40,10 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/* from:
-   static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90"; */
-static char rcsid[] = "$Id: mkboot.c,v 1.4 1994/06/19 01:50:09 hpeyerl Exp $";
+#ifdef notdef
+static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
+#endif
+static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: samachdep.h,v 1.4 1994/10/26 07:27:55 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,9 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)samachdep.h	8.1 (Berkeley) 6/10/93
- *
- * $Id: samachdep.h,v 1.3 1994/01/26 02:38:57 brezak Exp $
+ *	@(#)samachdep.h	8.1 (Berkeley) 6/10/93
  */
 
 #define	NHPIB		4

@@ -1,3 +1,5 @@
+/*	$NetBSD: sd.c,v 1.11 1994/10/26 07:25:04 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)sd.c	8.5 (Berkeley) 5/19/94
- *	$Id: sd.c,v 1.10 1994/05/27 17:18:52 mycroft Exp $
+ *	@(#)sd.c	8.5 (Berkeley) 5/19/94
  */
 
 /*
@@ -44,7 +45,7 @@
 #if NSD > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.10 1994/05/27 17:18:52 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/hp300/dev/Attic/sd.c,v 1.11 1994/10/26 07:25:04 cgd Exp $";
 #endif
 
 #include <sys/param.h>

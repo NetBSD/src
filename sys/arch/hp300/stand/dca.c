@@ -1,3 +1,5 @@
+/*	$NetBSD: dca.c,v 1.5 1994/10/26 07:27:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -35,9 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)dca.c	8.1 (Berkeley) 6/10/93
- *
- * $Id: dca.c,v 1.4 1994/02/19 17:55:18 hpeyerl Exp $
+ *	@(#)dca.c	8.1 (Berkeley) 6/10/93
  */
 
 #ifdef DCACONSOLE

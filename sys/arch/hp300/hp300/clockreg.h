@@ -1,3 +1,5 @@
+/*	$NetBSD: clockreg.h,v 1.5 1994/10/26 07:25:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: clockreg.h 1.14 91/01/18$
  *
- *	from: @(#)clockreg.h	8.2 (Berkeley) 1/12/94
- *	$Id: clockreg.h,v 1.4 1994/05/23 06:14:07 mycroft Exp $
+ *	@(#)clockreg.h	8.2 (Berkeley) 1/12/94
  */
 
 /*

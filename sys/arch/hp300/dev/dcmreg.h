@@ -1,3 +1,5 @@
+/*	$NetBSD: dcmreg.h,v 1.4 1994/10/26 07:23:37 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: dcmreg.h 1.7 92/01/21$
  *
- *	from: @(#)dcmreg.h	8.1 (Berkeley) 6/10/93
- *	$Id: dcmreg.h,v 1.3 1994/05/23 05:58:43 mycroft Exp $
+ *	@(#)dcmreg.h	8.1 (Berkeley) 6/10/93
  */
 
 #include <hp300/dev/iotypes.h>		/* XXX */

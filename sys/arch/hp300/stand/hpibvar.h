@@ -1,3 +1,5 @@
+/*	$NetBSD: hpibvar.h,v 1.4 1994/10/26 07:27:24 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

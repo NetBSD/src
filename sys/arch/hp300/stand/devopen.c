@@ -1,3 +1,5 @@
+/*	$NetBSD: devopen.c,v 1.3 1994/10/26 07:27:16 cgd Exp $	*/
+
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -24,8 +26,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: devopen.c,v 1.2 1994/09/19 00:23:40 mycroft Exp $
  */
 
 #include <sys/param.h>

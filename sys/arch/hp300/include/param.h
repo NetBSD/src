@@ -1,3 +1,5 @@
+/*	$NetBSD: param.h,v 1.17 1994/10/26 07:26:30 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: machparam.h 1.16 92/12/20$
  *
- *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *	$Id: param.h,v 1.16 1994/10/14 18:26:40 cgd Exp $
+ *	@(#)param.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
