@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.3 2000/05/07 01:16:23 wiz Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.4 2000/05/07 14:43:32 veego Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.7 2000/04/16 07:50:09 roger Exp */
 
@@ -167,9 +167,6 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
-
-static int bootverbose = 1;
-
 
 #define BKTR_DEBUG
 #ifdef BKTR_DEBUG

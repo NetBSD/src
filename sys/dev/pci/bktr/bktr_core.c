@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.2 2000/05/07 00:24:33 wiz Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.3 2000/05/07 14:43:32 veego Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.106 2000/04/16 07:50:08 roger Exp */
 
@@ -184,8 +184,6 @@ typedef unsigned int uintptr_t;
 #include <dev/pci/bktr/bktr_audio.h>
 #include <dev/pci/bktr/bktr_core.h>
 #include <dev/pci/bktr/bktr_os.h>
-
-static int bootverbose = 1;
 
 static int bt848_format = -1;
 
