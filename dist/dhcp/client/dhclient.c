@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.3 2001/12/14 15:20:17 wiz Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.4 2002/04/03 03:32:50 christos Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -223,8 +223,9 @@ int main (argc, argv, envp)
  			log_fatal ("Can't record interface %s:%s",
 				   argv [i], isc_result_totext (status));
 		    if (strlen (argv [i]) > sizeof tmp -> name)
-			    log_fatal ("%s: interface name too long (max %ld)",
-				       argv [i], (long)strlen (argv [i]));
+			    log_fatal ("%s: interface name too long (max %lu)",
+				       argv [i],
+				       (unsigned long)sizeof tmp -> name);
  		    strcpy (tmp -> name, argv [i]);
 		    if (interfaces) {
 			    interface_reference (&tmp -> next,
