@@ -39,7 +39,7 @@
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.reg,v 1.10 2003/03/25 22:16:27 scottl Exp $
  */
-VERSION = "$NetBSD: aic79xx.reg,v 1.2 2003/04/20 11:19:33 fvdl Exp $"
+VERSION = "$NetBSD: aic79xx.reg,v 1.3 2003/05/14 12:57:46 wiz Exp $"
 
 /*
  * This file is processed by the aic7xxx_asm utility for use in assembling
@@ -285,7 +285,7 @@ register HS_MAILBOX {
 	address			0x00B
 	access_mode	RW
 	mask	HOST_TQINPOS	0x80	/* Boundary at either 0 or 128 */
-	mask	ENINT_COALESS	0x40	/* Perform interrupt coalessing */
+	mask	ENINT_COALESCE	0x40	/* Perform interrupt coalescing */
 }
 
 /*
@@ -3706,28 +3706,28 @@ scratch_ram {
 	}
 
 	/*
-	 * The maximum amount of time to wait, when interrupt coalessing
+	 * The maximum amount of time to wait, when interrupt coalescing
 	 * is enabled, before issueing a CMDCMPLT interrupt for a completed
 	 * command.
 	 */
-	INT_COALESSING_TIMER {
+	INT_COALESCING_TIMER {
 		size		2
 	}
 
 	/*
-	 * The maximum number of commands to coaless into a single interrupt.
+	 * The maximum number of commands to coalesce into a single interrupt.
 	 * Actually the 2's complement of that value to simplify sequencer
 	 * code.
 	 */
-	INT_COALESSING_MAXCMDS {
+	INT_COALESCING_MAXCMDS {
 		size		1
 	}
 
 	/*
 	 * The minimum number of commands still outstanding required
-	 * to continue coalessing (2's complement of value).
+	 * to continue coalescing (2's complement of value).
 	 */
-	INT_COALESSING_MINCMDS {
+	INT_COALESCING_MINCMDS {
 		size		1
 	}
 
@@ -3739,9 +3739,9 @@ scratch_ram {
 	}
 
 	/*
-	 * The count of commands that have been coalessed.
+	 * The count of commands that have been coalesced.
 	 */
-	INT_COALESSING_CMDCOUNT {
+	INT_COALESCING_CMDCOUNT {
 		size		1
 	}
 
