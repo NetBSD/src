@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.29 2000/06/09 01:40:12 cgd Exp $ */
+/* $NetBSD: intr.h,v 1.30 2000/07/13 05:47:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -137,14 +137,14 @@ _splraise(int s)
 #define splsoftserial()		splsoft()
 #define splsoftclock()		splsoft()
 #define splsoftnet()		splsoft()
-#define splnet()                _splraise(ALPHA_PSL_IPL_IO)
-#define splbio()                _splraise(ALPHA_PSL_IPL_IO)
-#define splimp()                _splraise(ALPHA_PSL_IPL_IO)
-#define spltty()                _splraise(ALPHA_PSL_IPL_IO)
-#define splserial()             _splraise(ALPHA_PSL_IPL_IO)
-#define splclock()              _splraise(ALPHA_PSL_IPL_CLOCK)
-#define splstatclock()          _splraise(ALPHA_PSL_IPL_CLOCK)
-#define splhigh()               _splraise(ALPHA_PSL_IPL_HIGH)
+#define splnet()		_splraise(ALPHA_PSL_IPL_IO)
+#define splbio()		_splraise(ALPHA_PSL_IPL_IO)
+#define splimp()		_splraise(ALPHA_PSL_IPL_IO)
+#define spltty()		_splraise(ALPHA_PSL_IPL_IO)
+#define splserial()		_splraise(ALPHA_PSL_IPL_IO)
+#define splclock()		_splraise(ALPHA_PSL_IPL_CLOCK)
+#define splstatclock()		_splraise(ALPHA_PSL_IPL_CLOCK)
+#define splhigh()		_splraise(ALPHA_PSL_IPL_HIGH)
 
 #define spllpt()		spltty()
 
