@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.8 1994/10/26 07:50:53 cgd Exp $	*/
+/*	$NetBSD: reg.h,v 1.9 1995/01/26 18:26:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,8 +50,8 @@
  */
 struct reg {
 	int	r_regs[16];	/* D0-D7/A0-A7 */
-	int	r_pc;
 	int	r_sr;
+	int	r_pc;
 };
 
 /* XXXX this is historical (but it can't be deprecated quite yet) */
@@ -79,8 +79,8 @@ struct reg {
 #define	A7	(15)
 
 #define	SP	A7
-#define	PC	(17)
 #define	PS	(16)
+#define	PC	(17)
 
 #ifdef KERNEL
 /*
