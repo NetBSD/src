@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.14 2002/02/08 01:38:57 ross Exp $ */
+.\" $NetBSD: usermod.8,v 1.15 2002/06/01 06:28:06 grant Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -44,7 +44,7 @@
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
-.Op Fl f Ar inactive-secs
+.Op Fl f Ar inactive-time
 .Oo
 .Fl g Ar gid | name | Li =uid
 .Oc
@@ -81,27 +81,31 @@ without populating it; if the
 .Fl m
 option is specified, tries to move the old home directory to
 .Ar home-directory .
-.It Fl e Ar secs-to-expiry
-provides the number of seconds since the epoch (UTC) at
-which the current password change expire. This
-can be used to implement password aging.
-A value of
-0 can be used to switch off this feature.
-The default value for this field is 0.
-See
-.Xr passwd 5
-for more details.
-This value can be preset for all users
-by using the
+.It Fl e Ar expiry-time
+sets the time at which the current password expires.  This can be used
+to implement password aging.  It should be entered in the form
+.Dq month day year ,
+where month is the month name (the first three characters are
+sufficient), day is the day of the month, and year is the year.
+Time in seconds since the epoch (UTC) is also valid.  A value of
+0 can be used to disable this feature.
+This value can be preset for all users using the
 .Ar expire
 field in the
 .Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic expire Ar secs-to-expiry
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
+.It Fl f Ar inactive-time
+sets the time at which the account expires.
+See the
+.Fl e
+option.
 .It Xo
 .Fl g Ar gid | name | Li =uid
 .Xc
-gives the group name or identifier to be used for the new user's primary group.
+gives the group name or identifier to be used for the user's primary group.
 If this is
 .Ql =uid ,
 then a uid and gid will be picked which are both unique
@@ -113,26 +117,22 @@ by using the
 .Ar gid
 field in the
 .Pa /etc/usermgmt.conf
-file - it has the format:
-.br \" XXX Shouldn't be necessary -- mdoc bug? --bjh21
-.Bd -ragged -offset indent -compact
-.Ic group
-.Ar gid | name | Li =uid
-.Ed
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl L Ar login-class
-This option sets the login class for the user being created.  See
+This option sets the login class for the user.  See
 .Xr login.conf 5
-for more information on user login classes. Thie value can be preset
+for more information on user login classes. This value can be preset
 for all users by using the
 .Ar class
 field in the
 .Pa /etc/usermgmt.conf
-file - it has the format:
-.br \" XXX skip empty line? - HF
-.Bd -ragged -offset indent -compact
-.Ic class
-.Ar login-class
-.Ed
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl l Ar new-user
 gives the new user name.
 It must consist of alphanumeric characters, or the characters
@@ -156,7 +156,7 @@ is needed.
 .It Fl o
 allows duplicate uids to be given.
 .It Fl p Ar password
-specifies an already-encrypted password for the new user.
+specifies an already-encrypted password for the user.
 This password can then be changed by using the
 .Xr chpass 1
 utility.
@@ -165,17 +165,21 @@ by using the
 .Ar password
 field in the
 .Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic password Ar encrypted-password
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl s Ar shell
-specifies the login shell for the new user.
+specifies the login shell for the user.
 This value can be preset for all users
 by using the
 .Ar shell
 field in the
 .Pa /etc/usermgmt.conf
-file - it has the format:
-.D1 Ic shell Ar login-shell
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl u Ar uid
 specifies a new uid for the user.
 Boundaries for this value can be preset for all users
@@ -183,12 +187,10 @@ by using the
 .Ar range
 field in the
 .Pa /etc/usermgmt.conf
-file - they have the format:
-.br \" XXX
-.Bd -ragged -offset indent -compact
-.Ic range
-.Ar starting-uid Ns Li .. Ns Ar ending_uid
-.Ed
+file.
+See
+.Xr usermgmt.conf 5
+for more details.
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
@@ -213,6 +215,7 @@ utility exits 0 on success, and \*[Gt]0 if an error occurs.
 .Xr chpass 1 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
+.Xr usermgmt.conf 5 ,
 .Xr pwd_mkdb 8
 .Sh HISTORY
 The
