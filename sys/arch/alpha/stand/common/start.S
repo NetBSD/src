@@ -1,4 +1,4 @@
-/* $NetBSD: start.S,v 1.3 1998/01/29 22:13:27 ross Exp $ */
+/* $NetBSD: start.S,v 1.4 1998/03/28 00:54:15 cgd Exp $ */
 
 /*  
  * Mach Operating System
@@ -53,11 +53,7 @@ Lstartgp:
 	lda	sp,-ENTRY_FRAME(sp)
 #endif
 
-#ifdef ECOFF_COMPAT
-	lda	a0,_EDATA
-#else
 	lda	a0,_edata
-#endif
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)

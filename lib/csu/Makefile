@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1997/04/16 19:43:53 thorpej Exp $
-
-.include <bsd.own.mk>			# for ECOFF_TOOLCHAIN defn on alpha
+#	$NetBSD: Makefile,v 1.11 1998/03/28 00:52:06 cgd Exp $
 
 SUBDIR=	${MACHINE_ARCH}
 
-.if (${MACHINE_ARCH} != "alpha" || \
-     (${MACHINE_ARCH} == "alpha" && defined(ECOFF_TOOLCHAIN))) && \
-    (${MACHINE_ARCH} != "powerpc")
+.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "powerpc")
 SUBDIR+= c++
 .endif
 
