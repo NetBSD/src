@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.41 1997/07/29 00:42:38 perry Exp $
+#	$NetBSD: INSTALL,v 1.42 1997/07/31 22:03:31 matt Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -209,6 +209,7 @@ ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 ie1	at isa? port 0x300 irq 10		# EtherExpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
 ep*	at eisa? slot ?				# 3C579 ethernet cards
 fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
 le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
