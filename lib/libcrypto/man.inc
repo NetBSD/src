@@ -72,3 +72,40 @@ MAN+=	SSL_COMP_add_compression_method.3 SSL_CTX_ctrl.3 \
 MAN+=	openssl.cnf.5
 
 MAN+=	des_modes.7
+
+MLINKS+=openssl_des.3 des.3 \
+	openssl_des.3 des_cbc_cksum.3 \
+	openssl_des.3 des_cfb64_encrypt.3 \
+	openssl_des.3 des_cfb_encrypt.3 \
+	openssl_des.3 des_crypt.3 \
+	openssl_des.3 des_ecb2_encrypt.3 \
+	openssl_des.3 des_ecb3_encrypt.3 \
+	openssl_des.3 des_ecb_encrypt.3 \
+	openssl_des.3 des_ede2_cbc_encrypt.3 \
+	openssl_des.3 des_ede2_cfb64_encrypt.3 \
+	openssl_des.3 des_ede2_ofb64_encrypt.3 \
+	openssl_des.3 des_ede3_cbc_encrypt.3 \
+	openssl_des.3 des_ede3_cbcm_encrypt.3 \
+	openssl_des.3 des_ede3_cfb64_encrypt.3 \
+	openssl_des.3 des_ede3_ofb64_encrypt.3 \
+	openssl_des.3 des_enc_read.3 \
+	openssl_des.3 des_enc_write.3 \
+	openssl_des.3 des_fcrypt.3 \
+	openssl_des.3 des_is_weak_key.3 \
+	openssl_des.3 des_key_sched.3 \
+	openssl_des.3 des_ncbc_encrypt.3 \
+	openssl_des.3 des_ofb64_encrypt.3 \
+	openssl_des.3 des_ofb_encrypt.3 \
+	openssl_des.3 des_pcbc_encrypt.3 \
+	openssl_des.3 des_quad_cksum.3 \
+	openssl_des.3 des_random_key.3 \
+	openssl_des.3 des_read_2passwords.3 \
+	openssl_des.3 des_read_password.3 \
+	openssl_des.3 des_read_pw_string.3 \
+	openssl_des.3 des_set_key.3 \
+	openssl_des.3 des_set_key_checked.3 \
+	openssl_des.3 des_set_key_unchecked.3 \
+	openssl_des.3 des_set_odd_parity.3 \
+	openssl_des.3 des_string_to_2keys.3 \
+	openssl_des.3 des_string_to_key.3 \
+	openssl_des.3 des_xcbc_encrypt.3
