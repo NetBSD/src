@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.24 2003/03/03 22:12:22 fvdl Exp $	*/
+/*	$NetBSD: asm.h,v 1.25 2003/05/02 18:05:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,15 +109,19 @@
 /* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
 #ifdef __ELF__
 #ifdef __STDC__
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X ## name; X ## name:
+#define	IDTVEC(name) \
+	ALIGN_TEXT; .globl X ## name; .type X ## name,@function; X ## name:
 #else 
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
+#define	IDTVEC(name) \
+	ALIGN_TEXT; .globl X/**/name; .type X/**/name,@function; X/**/name:
 #endif /* __STDC__ */ 
 #else 
 #ifdef __STDC__
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X ## name; _X ## name: 
+#define	IDTVEC(name) \
+	ALIGN_TEXT; .globl _X ## name; .type _X ## name,@function; _X ## name: 
 #else
-#define	IDTVEC(name)	ALIGN_TEXT; .globl _X/**/name; _X/**/name:
+#define	IDTVEC(name) \
+	ALIGN_TEXT; .globl _X/**/name; .type _X/**/name,@function; _X/**/name:
 #endif /* __STDC__ */
 #endif /* __ELF__ */
 
