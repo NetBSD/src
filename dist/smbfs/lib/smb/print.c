@@ -31,6 +31,10 @@
  *
  * from: Id: print.c,v 1.4 2001/04/16 04:33:01 bp Exp 
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: print.c,v 1.2 2003/04/04 08:05:36 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
