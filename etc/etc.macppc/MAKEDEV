@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.69 2003/01/05 19:24:05 briggs Exp $
+#	$NetBSD: MAKEDEV,v 1.70 2003/01/06 19:14:51 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,6 +51,7 @@
 #	raid*	RAIDframe disk driver
 #	ccd*	contatenated disk devices
 #	cgd*	cryptographic disk devices
+#	ld*	Logical disk devices (e.g., hardware RAID)
 #
 # Console ports:
 #	ttyE*	wscons
@@ -109,6 +110,7 @@
 #	sysmon	System Monitoring hardware
 #	systrace syscall tracer
 #	kttcp	Kernel ttcp helper device
+#	mlx*	Mylex DAC960 control interface
 #
 
 dialin=0
