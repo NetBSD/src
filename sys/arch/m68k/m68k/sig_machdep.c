@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.19 2002/10/05 00:57:00 gmcgarry Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.20 2003/01/10 01:08:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -488,11 +488,11 @@ cpu_getmcontext(l, mcp, flags)
 	*flags |= _UC_CPU;
 
 	/* Save exception frame information. */
-	mcp->__mc_pad.mc_frame.format = format;
+	mcp->__mc_pad.__mc_frame.__mcf_format = format;
 	if (format >= FMT4) {
-		mcp->__mc_pad.mc_frame.vector = frame->f_vector;
-		(void)memcpy(&mcp->__mc_pad.mc_frame.exframe, &frame->F_u,
-		    (size_t)exframesize[format]);
+		mcp->__mc_pad.__mc_frame.__mcf_vector = frame->f_vector;
+		(void)memcpy(&mcp->__mc_pad.__mc_frame.__mcf_exframe,
+		    &frame->F_u, (size_t)exframesize[format]);
 		
 		/* Leave indicators, see above. */
 		frame->f_stackadj += exframesize[format];
@@ -511,11 +511,11 @@ cpu_getmcontext(l, mcp, flags)
 		if (l == curlwp)
 			m68881_save(fpf);
 
-		mcp->__mc_pad.mc_frame.fpf_u1 = fpf->FPF_u1;
+		mcp->__mc_pad.__mc_frame.__mcf_fpf_u1 = fpf->FPF_u1;
 
 		/* If it's a null frame there's no need to save/convert. */
 		if (!FPFRAME_IS_NULL(fpf)) {
-			mcp->__mc_pad.mc_frame.fpf_u2 = fpf->FPF_u2;
+			mcp->__mc_pad.__mc_frame.__mcf_fpf_u2 = fpf->FPF_u2;
 			(void)memcpy(mcp->__fpregs.__fp_fpregs,
 			    fpf->fpf_regs, sizeof(fpf->fpf_regs));
 			mcp->__fpregs.__fp_pcr = fpf->fpf_fpcr;
@@ -534,7 +534,7 @@ cpu_setmcontext(l, mcp, flags)
 {
 	__greg_t *gr = mcp->__gregs;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	unsigned int format = mcp->__mc_pad.mc_frame.format;
+	unsigned int format = mcp->__mc_pad.__mc_frame.__mcf_format;
 	int sz;
 
 	/* Validate the supplied context */
@@ -558,9 +558,9 @@ cpu_setmcontext(l, mcp, flags)
 #endif
 
 		frame->f_format = format;
-		frame->f_vector = mcp->__mc_pad.mc_frame.vector;
+		frame->f_vector = mcp->__mc_pad.__mc_frame.__mcf_vector;
 		(void)memcpy(&frame->F_u,
-		    &mcp->__mc_pad.mc_frame.exframe, (size_t)sz);
+		    &mcp->__mc_pad.__mc_frame.__mcf_exframe, (size_t)sz);
 		frame->f_stackadj -= sz;
 	}
 
@@ -597,9 +597,10 @@ cpu_setmcontext(l, mcp, flags)
 			 * cpu_getmcontext(). We can do a full frestore if
 			 * something other than an null frame was saved.
 			 */
-			fpf->FPF_u1 = mcp->__mc_pad.mc_frame.fpf_u1;
+			fpf->FPF_u1 = mcp->__mc_pad.__mc_frame.__mcf_fpf_u1;
 			if (!FPFRAME_IS_NULL(fpf)) {
-				fpf->FPF_u2 = mcp->__mc_pad.mc_frame.fpf_u2;
+				fpf->FPF_u2 =
+				    mcp->__mc_pad.__mc_frame.__mcf_fpf_u2;
 				(void)memcpy(fpf->fpf_regs,
 				    fpr->__fp_fpregs, sizeof(fpf->fpf_regs));
 				fpf->fpf_fpcr = fpr->__fp_pcr;
