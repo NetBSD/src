@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.36 1996/09/02 06:44:52 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.37 1996/09/05 15:31:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,6 +60,11 @@
 #undef NPTY
 #define	NPTY	32		/* crude XXX */
 #endif
+
+/* Macros to clear/set/test flags. */
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~((unsigned)(f))
+#define	ISSET(t, f)	((t) & (f))
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 
@@ -125,8 +130,8 @@ ptsopen(dev, flag, devtype, p)
 	}
 	else
 		tp = pti->pt_tty;
-	if ((tp->t_state & TS_ISOPEN) == 0) {
-		tp->t_state |= TS_WOPEN;
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+		SET(tp->t_state, TS_WOPEN);
 		ttychars(tp);		/* Set up default chars */
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -134,12 +139,12 @@ ptsopen(dev, flag, devtype, p)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
-		tp->t_state |= TS_CARR_ON;
-	while ((tp->t_state & TS_CARR_ON) == 0) {
-		tp->t_state |= TS_WOPEN;
+		SET(tp->t_state, TS_CARR_ON);
+	while (!ISSET(tp->t_state, TS_CARR_ON)) {
+		SET(tp->t_state, TS_WOPEN);
 		if (flag&FNONBLOCK)
 			break;
 		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
@@ -247,7 +252,7 @@ ptsstart(tp)
 {
 	register struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
 
-	if (tp->t_state & TS_TTSTOP)
+	if (ISSET(tp->t_state, TS_TTSTOP))
 		return;
 	if (pti->pt_flags & PF_STOPPED) {
 		pti->pt_flags &= ~PF_STOPPED;
@@ -322,7 +327,7 @@ ptcopen(dev, flag, devtype, p)
 		return (EIO);
 	tp->t_oproc = ptsstart;
 	(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-	tp->t_lflag &= ~EXTPROC;
+	CLR(tp->t_lflag, EXTPROC);
 	pti->pt_flags = 0;
 	pti->pt_send = 0;
 	pti->pt_ucntl = 0;
@@ -340,7 +345,7 @@ ptcclose(dev, flag, devtype, p)
 	register struct tty *tp = pti->pt_tty;
 
 	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
-	tp->t_state &= ~TS_CARR_ON;
+	CLR(tp->t_state, TS_CARR_ON);
 	tp->t_oproc = 0;		/* mark closed */
 	return (0);
 }
@@ -363,7 +368,7 @@ ptcread(dev, uio, flag)
 	 * then return the appropriate error instead.
 	 */
 	for (;;) {
-		if (tp->t_state&TS_ISOPEN) {
+		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			if (pti->pt_flags&PF_PKT && pti->pt_send) {
 				error = ureadc((int)pti->pt_send, uio);
 				if (error)
@@ -384,10 +389,10 @@ ptcread(dev, uio, flag)
 				pti->pt_ucntl = 0;
 				return (0);
 			}
-			if (tp->t_outq.c_cc && (tp->t_state&TS_TTSTOP) == 0)
+			if (tp->t_outq.c_cc && !ISSET(tp->t_state, TS_TTSTOP))
 				break;
 		}
-		if ((tp->t_state&TS_CARR_ON) == 0)
+		if (!ISSET(tp->t_state, TS_CARR_ON))
 			return (0);	/* EOF */
 		if (flag & IO_NDELAY)
 			return (EWOULDBLOCK);
@@ -405,8 +410,8 @@ ptcread(dev, uio, flag)
 		error = uiomove(buf, cc, uio);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state&TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
+		if (ISSET(tp->t_state, TS_ASLEEP)) {
+			CLR(tp->t_state, TS_ASLEEP);
 			wakeup((caddr_t)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
@@ -430,7 +435,7 @@ ptcwrite(dev, uio, flag)
 	int error = 0;
 
 again:
-	if ((tp->t_state&TS_ISOPEN) == 0)
+	if (!ISSET(tp->t_state, TS_ISOPEN))
 		goto block;
 	if (pti->pt_flags & PF_REMOTE) {
 		if (tp->t_canq.c_cc)
@@ -444,7 +449,7 @@ again:
 				if (error)
 					return (error);
 				/* check again for safety */
-				if ((tp->t_state&TS_ISOPEN) == 0)
+				if (!ISSET(tp->t_state, TS_ISOPEN))
 					return (EIO);
 			}
 			if (cc)
@@ -464,12 +469,12 @@ again:
 			if (error)
 				return (error);
 			/* check again for safety */
-			if ((tp->t_state&TS_ISOPEN) == 0)
+			if (!ISSET(tp->t_state, TS_ISOPEN))
 				return (EIO);
 		}
 		while (cc > 0) {
 			if ((tp->t_rawq.c_cc + tp->t_canq.c_cc) >= TTYHOG - 2 &&
-			   (tp->t_canq.c_cc > 0 || !(tp->t_iflag&ICANON))) {
+			   (tp->t_canq.c_cc > 0 || !ISSET(tp->t_iflag, ICANON))) {
 				wakeup((caddr_t)&tp->t_rawq);
 				goto block;
 			}
@@ -485,7 +490,7 @@ block:
 	 * Come here to wait for slave to open, for space
 	 * in outq, or space in rawq.
 	 */
-	if ((tp->t_state&TS_CARR_ON) == 0)
+	if (!ISSET(tp->t_state, TS_CARR_ON))
 		return (EIO);
 	if (flag & IO_NDELAY) {
 		/* adjust for data copied in but not written */
@@ -514,7 +519,7 @@ ptcselect(dev, rw, p)
 	register struct tty *tp = pti->pt_tty;
 	int s;
 
-	if ((tp->t_state&TS_CARR_ON) == 0)
+	if (!ISSET(tp->t_state, TS_CARR_ON))
 		return (1);
 	switch (rw) {
 
@@ -523,8 +528,8 @@ ptcselect(dev, rw, p)
 		 * Need to block timeouts (ttrstart).
 		 */
 		s = spltty();
-		if ((tp->t_state&TS_ISOPEN) &&
-		     tp->t_outq.c_cc && (tp->t_state&TS_TTSTOP) == 0) {
+		if (ISSET(tp->t_state, TS_ISOPEN) &&
+		     tp->t_outq.c_cc && !ISSET(tp->t_state, TS_TTSTOP)) {
 			splx(s);
 			return (1);
 		}
@@ -532,7 +537,7 @@ ptcselect(dev, rw, p)
 		/* FALLTHROUGH */
 
 	case 0:					/* exceptional */
-		if ((tp->t_state&TS_ISOPEN) &&
+		if (ISSET(tp->t_state, TS_ISOPEN) &&
 		    (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
 		     ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl)))
 			return (1);
@@ -541,14 +546,14 @@ ptcselect(dev, rw, p)
 
 
 	case FWRITE:
-		if (tp->t_state&TS_ISOPEN) {
+		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			if (pti->pt_flags & PF_REMOTE) {
 			    if (tp->t_canq.c_cc == 0)
 				return (1);
 			} else {
 			    if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2)
 				    return (1);
-			    if (tp->t_canq.c_cc == 0 && (tp->t_iflag&ICANON))
+			    if (tp->t_canq.c_cc == 0 && ISSET(tp->t_iflag, ICANON))
 				    return (1);
 			}
 		}
@@ -599,14 +604,14 @@ ptyioctl(dev, cmd, data, flag, p)
 				pti->pt_send |= TIOCPKT_IOCTL;
 				ptcwakeup(tp, FREAD);
 			}
-			tp->t_lflag |= EXTPROC;
+			SET(tp->t_lflag, EXTPROC);
 		} else {
-			if ((tp->t_state & EXTPROC) &&
+			if (ISSET(tp->t_state, EXTPROC) &&
 			    (pti->pt_flags & PF_PKT)) {
 				pti->pt_send |= TIOCPKT_IOCTL;
 				ptcwakeup(tp, FREAD);
 			}
-			tp->t_lflag &= ~EXTPROC;
+			CLR(tp->t_lflag, EXTPROC);
 		}
 		return(0);
 	} else
@@ -674,11 +679,11 @@ ptyioctl(dev, cmd, data, flag, p)
 		case TIOCSIG:
 			if (*(unsigned int *)data >= NSIG)
 				return(EINVAL);
-			if ((tp->t_lflag&NOFLSH) == 0)
+			if (!ISSET(tp->t_lflag, NOFLSH))
 				ttyflush(tp, FREAD|FWRITE);
 			pgsignal(tp->t_pgrp, *(unsigned int *)data, 1);
 			if ((*(unsigned int *)data == SIGINFO) &&
-			    ((tp->t_lflag&NOKERNINFO) == 0))
+			    (!ISSET(tp->t_lflag, NOKERNINFO)))
 				ttyinfo(tp);
 			return(0);
 		}
@@ -699,7 +704,7 @@ ptyioctl(dev, cmd, data, flag, p)
 	/*
 	 * If external processing and packet mode send ioctl packet.
 	 */
-	if ((tp->t_lflag&EXTPROC) && (pti->pt_flags & PF_PKT)) {
+	if (ISSET(tp->t_lflag, EXTPROC) && (pti->pt_flags & PF_PKT)) {
 		switch(cmd) {
 		case TIOCSETA:
 		case TIOCSETAW:
@@ -719,7 +724,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			break;
 		}
 	}
-	stop = (tp->t_iflag & IXON) && CCEQ(cc[VSTOP], CTRL('s'))
+	stop = ISSET(tp->t_iflag, IXON) && CCEQ(cc[VSTOP], CTRL('s'))
 		&& CCEQ(cc[VSTART], CTRL('q'));
 	if (pti->pt_flags & PF_NOSTOP) {
 		if (stop) {
