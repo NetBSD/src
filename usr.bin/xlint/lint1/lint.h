@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.2 1995/07/03 21:24:18 cgd Exp $	*/
+/*	$NetBSD: lint.h,v 1.3 2002/01/03 05:37:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -41,7 +41,7 @@
  * Type specifiers, used in type structures (type_t) and otherwere.
  */
 typedef enum {
-	NOTSPEC,
+	NOTSPEC = 0,
 	SIGNED,		/* keyword "signed", only used in the parser */
 	UNSIGN,		/* keyword "unsigned", only used in the parser */
 	CHAR,		/* char */
@@ -64,8 +64,8 @@ typedef enum {
 	ENUM,		/* enum tag */
 	PTR,		/* pointer */
 	ARRAY,		/* array */
-	FUNC		/* function */
-#define	NTSPEC		((int)FUNC + 1)
+	FUNC,		/* function */
+	NTSPEC
 } tspec_t;
 
 /*
