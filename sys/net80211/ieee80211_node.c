@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.26 2004/07/25 05:08:33 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.27 2004/07/25 05:21:36 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.26 2004/07/25 05:08:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.27 2004/07/25 05:21:36 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -859,10 +859,13 @@ restart:
 			 * node lock and the driver lock.
 			 */
 			IEEE80211_NODE_UNLOCK(ic);
-			IEEE80211_SEND_MGMT(ic, ni,
-			    IEEE80211_FC0_SUBTYPE_DEAUTH,
-			    IEEE80211_REASON_AUTH_EXPIRE);
-			ieee80211_node_leave(ic, ni);
+			if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
+				IEEE80211_SEND_MGMT(ic, ni,
+				    IEEE80211_FC0_SUBTYPE_DEAUTH,
+				    IEEE80211_REASON_AUTH_EXPIRE);
+				ieee80211_node_leave(ic, ni);
+			} else
+				ieee80211_free_node(ic, ni);
 			ic->ic_stats.is_node_timeout++;
 			goto restart;
 		}
