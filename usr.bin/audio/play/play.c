@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.7.2.3 1999/09/27 05:08:00 cgd Exp $	*/
+/*	$NetBSD: play.c,v 1.7.2.4 1999/10/22 09:37:04 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -154,9 +154,10 @@ main(argc, argv)
 			errx(1, "unknown encoding, bailing...");
 	}
 
-	if (device == NULL)
+	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
+	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
 		device = _PATH_AUDIO;
-	if (ctldev == NULL)
+	if (ctldev == NULL && (ctldev = getenv("AUDIOCTLDEVICE")) == NULL)
 		ctldev = _PATH_AUDIOCTL;
 
 	audiofd = open(device, O_WRONLY);
