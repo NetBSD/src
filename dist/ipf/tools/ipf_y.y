@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.1 2004/04/01 11:55:48 tron Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.1.1.1.2.2 2004/04/09 21:16:04 jmc Exp $	*/
 
 %{
 #include "ipf.h"
@@ -261,6 +261,7 @@ blockreturn:
 	IPFY_RETICMP			{ fr->fr_flags |= FR_RETICMP; }
 	| IPFY_RETICMP returncode	{ fr->fr_flags |= FR_RETICMP; }
 	| IPFY_RETICMPASDST		{ fr->fr_flags |= FR_FAKEICMP; }
+	| IPFY_RETICMPASDST returncode  { fr->fr_flags |= FR_FAKEICMP; }
 	| IPFY_RETRST			{ fr->fr_flags |= FR_RETRST; }
 	;
 
