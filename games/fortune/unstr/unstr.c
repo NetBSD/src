@@ -1,4 +1,4 @@
-/*	$NetBSD: unstr.c,v 1.8 2003/08/07 09:37:15 agc Exp $	*/
+/*	$NetBSD: unstr.c,v 1.9 2004/01/27 20:25:07 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unstr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: unstr.c,v 1.8 2003/08/07 09:37:15 agc Exp $");
+__RCSID("$NetBSD: unstr.c,v 1.9 2004/01/27 20:25:07 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,10 +61,11 @@ __RCSID("$NetBSD: unstr.c,v 1.8 2003/08/07 09:37:15 agc Exp $");
 
 # include	<sys/types.h>
 # include	<sys/param.h>
-# include	<machine/endian.h>
+# include	<sys/endian.h>
 # include	<ctype.h>
 # include	<err.h>
 # include	<stdio.h>
+# include	<stdlib.h>
 # include	<string.h>
 # include	"strfile.h"
 
