@@ -1,4 +1,4 @@
-.\"	$Id: znew.1,v 1.2 1993/08/02 17:46:29 mycroft Exp $	-*- nroff -*-
+.\" $Id: znew.1,v 1.3 1993/10/15 23:06:05 jtc Exp $
 .TH ZNEW 1
 .SH NAME
 znew \-   recompress .Z files to .gz files
@@ -8,6 +8,8 @@ znew \-   recompress .Z files to .gz files
 .SH DESCRIPTION
 .I  Znew
 recompresses files from .Z (compress) format to .gz (gzip) format.
+If you want to recompress a file already in gzip format, rename the file
+to force a .Z extension then apply znew.
 .SH OPTIONS
 .TP
 .B \-f

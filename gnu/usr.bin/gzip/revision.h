@@ -4,13 +4,13 @@
  * terms of the GNU General Public License, see the file COPYING.
  */
 
-#define VERSION "1.2.2"
+#define VERSION "1.2.4"
 #define PATCHLEVEL 0
-#define REVDATE "17 Jun 93"
+#define REVDATE "18 Aug 93"
 
 /* This version does not support compression into old compress format: */
 #ifdef LZW
 #  undef LZW
 #endif
 
-/* $Id: revision.h,v 1.1.1.1 1993/07/09 15:47:40 jtc Exp $ */
+/* $Id: revision.h,v 1.2 1993/10/15 23:05:47 jtc Exp $ */
