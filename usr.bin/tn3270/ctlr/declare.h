@@ -1,4 +1,4 @@
-/*	$NetBSD: declare.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: declare.h,v 1.5 2002/06/13 23:41:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,21 +41,21 @@
 
 
 /* outbound.c */
-void init_ctlr __P((void));
-int FieldInc __P((int));
-int FieldDec __P((int));
-void Clear3270 __P((void));
-void AddHost __P((int, int));
-int DataFromNetwork __P((char *, int, int));
-void Init3270 __P((void));
-void Stop3270 __P((void));
+void init_ctlr(void);
+int FieldInc(int);
+int FieldDec(int);
+void Clear3270(void);
+void AddHost(int, int);
+int DataFromNetwork(char *, int, int);
+void Init3270(void);
+void Stop3270(void);
 
 /* inbound.c */
-void init_inbound __P((void));
-void ModifyMdt __P((int, int));
-void DoReadModified __P((int));
-void DoReadBuffer __P((void));
-void SendTransparent __P((char *, int));
-void SendToIBM __P((void));
-int AcceptKeystroke __P((unsigned int, unsigned int ));
-int DataFrom3270 __P((unsigned char *, int));
+void init_inbound(void);
+void ModifyMdt(int, int);
+void DoReadModified(int);
+void DoReadBuffer(void);
+void SendTransparent(char *, int);
+void SendToIBM(void);
+int AcceptKeystroke(unsigned int, unsigned int );
+int DataFrom3270(unsigned char *, int);

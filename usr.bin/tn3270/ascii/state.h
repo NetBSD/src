@@ -1,4 +1,4 @@
-/*	$NetBSD: state.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: state.h,v 1.5 2002/06/13 23:41:18 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -52,8 +52,8 @@ struct State {
 };
 
 /* termin.c */
-void init_keyboard __P((void));
-void InitMapping __P((void));
-void TransInput __P((int, int));
-int TerminalIn __P((void));
-int DataFromTerminal __P((char *, int));
+void init_keyboard(void);
+void InitMapping(void);
+void TransInput(int, int);
+int TerminalIn(void);
+int DataFromTerminal(char *, int);

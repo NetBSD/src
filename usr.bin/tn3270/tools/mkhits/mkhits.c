@@ -1,4 +1,4 @@
-/*	$NetBSD: mkhits.c,v 1.6 2002/01/31 19:36:52 tv Exp $	*/
+/*	$NetBSD: mkhits.c,v 1.7 2002/06/13 23:41:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mkhits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkhits.c,v 1.6 2002/01/31 19:36:52 tv Exp $");
+__RCSID("$NetBSD: mkhits.c,v 1.7 2002/06/13 23:41:22 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: mkhits.c,v 1.6 2002/01/31 19:36:52 tv Exp $");
 
 #include "dohits.h"
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)

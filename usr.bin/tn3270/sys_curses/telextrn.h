@@ -1,4 +1,4 @@
-/*	$NetBSD: telextrn.h,v 1.5 1998/03/04 13:16:09 christos Exp $	*/
+/*	$NetBSD: telextrn.h,v 1.6 2002/06/13 23:41:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -53,23 +53,23 @@ extern int
 extern char	*transcom;
 
 /* system.c */
-void freestorage __P((void));
-void movetous __P((char *, unsigned int, unsigned int , int));
-void movetothem __P((unsigned int, unsigned int , char *, int));
-char *access_api __P((char *, int, int ));
-void unaccess_api __P((char *, char *, int, int));
-int shell_continue __P((void));
-int shell __P((int, char *[]));
+void freestorage(void);
+void movetous(char *, unsigned int, unsigned int , int);
+void movetothem(unsigned int, unsigned int , char *, int);
+char *access_api(char *, int, int );
+void unaccess_api(char *, char *, int, int);
+int shell_continue(void);
+int shell(int, char *[]);
 
 /* termout.c */
-void init_screen __P((void));
-void InitTerminal __P((void));
-void StopScreen __P((int));
-void RefreshScreen __P((void));
-void ConnectScreen __P((void));
-void LocalClearScreen __P((void));
-void BellOff __P((void));
-void RingBell __P((char *));
-int DoTerminalOutput __P((void));
-void TransStop __P((void));
-void TransOut __P((unsigned char *, int, int, int));
+void init_screen(void);
+void InitTerminal(void);
+void StopScreen(int);
+void RefreshScreen(void);
+void ConnectScreen(void);
+void LocalClearScreen(void);
+void BellOff(void);
+void RingBell(char *);
+int DoTerminalOutput(void);
+void TransStop(void);
+void TransOut(unsigned char *, int, int, int);

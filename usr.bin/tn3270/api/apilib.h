@@ -1,4 +1,4 @@
-/*	$NetBSD: apilib.h,v 1.4 1998/03/04 13:16:04 christos Exp $	*/
+/*	$NetBSD: apilib.h,v 1.5 2002/06/13 23:41:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -45,17 +45,17 @@ extern int
     api_fcn_errno,			/* Function error number */
     api_fcn_fcn_id;			/* Function ID (0x6b, etc.) */
 
-int api_name_resolve __P((char *));
-int api_ps_or_oia_modified __P((void));
-int api_query_session_id __P((QuerySessionIdParms *));
-int api_query_session_parameters __P((QuerySessionParametersParms *));
-int api_query_session_cursor __P((QuerySessionCursorParms *));
-int api_connect_to_keyboard __P((ConnectToKeyboardParms *));
-int api_disconnect_from_keyboard __P((DisconnectFromKeyboardParms *));
-int api_write_keystroke __P((WriteKeystrokeParms *));
-int api_disable_input __P((DisableInputParms *));
-int api_enable_input __P((EnableInputParms *));
-int api_copy_string __P((CopyStringParms *));
-int api_read_oia_group __P((ReadOiaGroupParms *));
-int api_finish __P((void));
-int api_init __P((void));
+int api_name_resolve(char *);
+int api_ps_or_oia_modified(void);
+int api_query_session_id(QuerySessionIdParms *);
+int api_query_session_parameters(QuerySessionParametersParms *);
+int api_query_session_cursor(QuerySessionCursorParms *);
+int api_connect_to_keyboard(ConnectToKeyboardParms *);
+int api_disconnect_from_keyboard(DisconnectFromKeyboardParms *);
+int api_write_keystroke(WriteKeystrokeParms *);
+int api_disable_input(DisableInputParms *);
+int api_enable_input(EnableInputParms *);
+int api_copy_string(CopyStringParms *);
+int api_read_oia_group(ReadOiaGroupParms *);
+int api_finish(void);
+int api_init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: general.h,v 1.8 1998/09/06 02:54:47 lukem Exp $	*/
+/*	$NetBSD: general.h,v 1.9 2002/06/13 23:41:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -50,6 +50,6 @@
 #include <string.h>
 
 /* genbsubs.c */
-int bunequal __P((char *, char *, int));
-int bskip __P((char *, int, int));
-unsigned char *memNSchr __P((char *, int, unsigned int, int, ssize_t));
+int bunequal(char *, char *, int);
+int bskip(char *, int, int);
+unsigned char *memNSchr(char *, int, unsigned int, int, ssize_t);

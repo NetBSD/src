@@ -1,4 +1,4 @@
-/*	$NetBSD: inbound.c,v 1.5 1998/03/04 13:16:07 christos Exp $	*/
+/*	$NetBSD: inbound.c,v 1.6 2002/06/13 23:41:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inbound.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: inbound.c,v 1.5 1998/03/04 13:16:07 christos Exp $");
+__RCSID("$NetBSD: inbound.c,v 1.6 2002/06/13 23:41:19 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,19 +106,19 @@ extern int TransparentClock, OutputClock;
 extern int UnLocked;		/* keyboard is UnLocked? */
 
 
-static void Tab __P((void));
-static void BackTab __P((void));
-static void EraseEndOfField __P((void));
-static void Delete __P((int, int ));
-static void ColBak __P((void));
-static void ColTab __P((void));
-static void Home __P((void));
-static int LastOfField __P((int));
-static void FlushChar __P((void));
-static void AddChar __P((int));
-static void SendUnformatted __P((void));
-static int SendField __P((int, int));
-static void OneCharacter __P((int, int));
+static void Tab(void);
+static void BackTab(void);
+static void EraseEndOfField(void);
+static void Delete(int, int );
+static void ColBak(void);
+static void ColTab(void);
+static void Home(void);
+static int LastOfField(int);
+static void FlushChar(void);
+static void AddChar(int);
+static void SendUnformatted(void);
+static int SendField(int, int);
+static void OneCharacter(int, int);
 
 /*
  * init_inbound :

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkastosc.c,v 1.8 2002/01/31 19:36:51 tv Exp $	*/
+/*	$NetBSD: mkastosc.c,v 1.9 2002/06/13 23:41:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -67,7 +67,7 @@ static struct tbl {
 } tbl[128];
 
 
-int main __P((int, char *[]));
+int main(int, char *[]);
 
 int
 main(argc, argv)

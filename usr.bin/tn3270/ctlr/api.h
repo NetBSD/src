@@ -1,4 +1,4 @@
-/*	$NetBSD: api.h,v 1.5 2001/08/20 12:00:56 wiz Exp $	*/
+/*	$NetBSD: api.h,v 1.6 2002/06/13 23:41:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -405,9 +405,9 @@ struct SREGS {
 #endif	/* defined(MSDOS) (else section) */
 
 /* Interface */
-int api_close_api __P((void));
-int api_open_api __P((char *));
-int api_exch_api __P((union REGS *, struct SREGS *, char *, int));
+int api_close_api(void);
+int api_open_api(char *);
+int api_exch_api(union REGS *, struct SREGS *, char *, int);
 
 /* api.c */
-void handle_api __P((union REGS *, struct SREGS *));
+void handle_api(union REGS *, struct SREGS *);

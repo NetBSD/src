@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.14 2000/01/21 17:08:36 mycroft Exp $	*/
+/*	$NetBSD: system.c,v 1.15 2002/06/13 23:41:20 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: system.c,v 1.14 2000/01/21 17:08:36 mycroft Exp $");
+__RCSID("$NetBSD: system.c,v 1.15 2002/06/13 23:41:20 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,32 +59,15 @@ __RCSID("$NetBSD: system.c,v 1.14 2000/01/21 17:08:36 mycroft Exp $");
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/wait.h>
-#ifdef __STDC__
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
-#else
-#include <sys/file.h>
-extern char *crypt();
-#if	(!defined(sun)) || defined(BSD) && (BSD >= 43)
-extern uid_t geteuid();
-#endif	/* (!defined(sun)) || defined(BSD) && (BSD >= 43) */
-extern long random();
-#if	!defined(BSD4_4)
-extern char *mktemp();		/* NetBSD: NOT USED */
-#endif	/* !defined(BSD4_4) */
-extern char *strcpy();
-extern char *getenv();
-#endif
-
-
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
+#include <unistd.h>
 
 #include "../general/general.h"
 #include "../ctlr/api.h"
@@ -135,13 +118,13 @@ static struct SREGS inputSregs;
 
 extern int apitrace;
 
-static void kill_connection __P((void));
-static int nextstore __P((void));
-static int doreject __P((char *));
-static int doassociate __P((void));
-static int getstorage __P((long, int, int));
-static int doconnect __P((void));
-static void child_died __P((int));
+static void kill_connection(void);
+static int nextstore(void);
+static int doreject(char *);
+static int doassociate(void);
+static int getstorage(long, int, int);
+static int doconnect(void);
+static void child_died(int);
 
 static void
 kill_connection()

@@ -1,4 +1,4 @@
-/*	$NetBSD: apilib.c,v 1.5 2002/01/31 19:36:50 tv Exp $	*/
+/*	$NetBSD: apilib.c,v 1.6 2002/06/13 23:41:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)apilib.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: apilib.c,v 1.5 2002/01/31 19:36:50 tv Exp $");
+__RCSID("$NetBSD: apilib.c,v 1.6 2002/06/13 23:41:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,9 +60,9 @@ static int
 
 
 /* apilib.c */
-static int api_issue_regs __P((int, int , int , int , int , int , char *, int,
-    union REGS *, struct SREGS *));
-static int api_issue __P((int, int , int , int , int , int , char *, int));
+static int api_issue_regs(int, int , int , int , int , int , char *, int,
+    union REGS *, struct SREGS *);
+static int api_issue(int, int , int , int , int , int , char *, int);
 
 /*
  * Issue an API request, with reg structures supplied by the caller.

@@ -1,4 +1,4 @@
-/*	$NetBSD: api_bsd.c,v 1.8 2002/01/31 19:36:50 tv Exp $	*/
+/*	$NetBSD: api_bsd.c,v 1.9 2002/06/13 23:41:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,25 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)api_bsd.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_bsd.c,v 1.8 2002/01/31 19:36:50 tv Exp $");
+__RCSID("$NetBSD: api_bsd.c,v 1.9 2002/06/13 23:41:15 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #if	defined(unix)
 
-#ifdef __STDC__
-#include <stdlib.h>
-#include <unistd.h>
-#else
-extern char *getenv();
-extern char *gepass();
-#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "../ctlr/api.h"
 #include "api_exch.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: api_exch.c,v 1.6 2002/01/31 19:36:50 tv Exp $	*/
+/*	$NetBSD: api_exch.c,v 1.7 2002/06/13 23:41:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,16 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)api_exch.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api_exch.c,v 1.6 2002/01/31 19:36:50 tv Exp $");
+__RCSID("$NetBSD: api_exch.c,v 1.7 2002/06/13 23:41:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
-#ifdef __STDC__
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#endif
 
 #include "../general/general.h"
 
@@ -82,13 +80,13 @@ char obuffer[4000], *obuf_next;
 #define	OBUFROOM()		(obuffer+sizeof obuffer-obuf_next)
 
 
-static int outflush __P((void));
-static int iget __P((char *, int));
-static char *exch_to_ascii __P((int));
-static int send_state __P((void));
-static int receive_state __P((void));
-static int enter_receive __P((void));
-static int enter_send __P((void));
+static int outflush(void);
+static int iget(char *, int);
+static char *exch_to_ascii(int);
+static int send_state(void);
+static int receive_state(void);
+static int enter_receive(void);
+static int enter_send(void);
 
 static int
 outflush()

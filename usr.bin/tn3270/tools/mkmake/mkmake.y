@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: mkmake.y,v 1.9 2002/01/31 19:36:52 tv Exp $	*/
+/*	$NetBSD: mkmake.y,v 1.10 2002/06/13 23:41:23 wiz Exp $	*/
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkmake.y	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkmake.y,v 1.9 2002/01/31 19:36:52 tv Exp $");
+__RCSID("$NetBSD: mkmake.y,v 1.10 2002/06/13 23:41:23 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,41 +310,41 @@ white_space : WHITE_SPACE
 #include <ctype.h>
 
 /* mkmake.y */
-void yyerror __P((char *));
-void assign __P((same_t *, same_t *));
-int yylex __P((void));
-extern int yyparse __P((void));
-int main __P((int, char *[]));
+void yyerror(char *);
+void assign(same_t *, same_t *);
+int yylex(void);
+extern int yyparse(void);
+int main(int, char *[]);
 
-static int visitcheck __P((same_t *));
-static int string_hashof __P((char *, int));
-static int string_same __P((string_t *, string_t *));
-static string_t *string_lookup __P((char *));
-static same_t *same_search __P((same_t *, same_t *));
-static same_t *same_cat __P((same_t *, same_t *));
-static same_t *same_item __P((string_t *));
-static same_t *same_copy __P((same_t *));
-static same_t *same_merge __P((same_t *, same_t *));
-static void same_free __P((same_t *));
-static same_t *same_unlink __P((same_t *));
-static void same_replace __P((same_t *, same_t *));
-static same_t *same_char __P((int));
-static void add_target __P((same_t *, same_t *));
-static same_t *add_targets_actions __P((same_t *, same_t *));
-static same_t *add_depends __P((same_t *, same_t *));
-static same_t *value_of __P((same_t *));
-static same_t *expand_variables __P((same_t *, int));
-static same_t *ws_merge __P((same_t *));
-static same_t *variable __P((same_t *));
-static same_t *shell_variable __P((same_t *));
-static same_t *for_statement __P((same_t *, same_t *, same_t *));
-static same_t *do_command __P((same_t *, same_t *));
-static int Getchar __P((void));
-static int token_type __P((char *));
+static int visitcheck(same_t *);
+static int string_hashof(char *, int);
+static int string_same(string_t *, string_t *);
+static string_t *string_lookup(char *);
+static same_t *same_search(same_t *, same_t *);
+static same_t *same_cat(same_t *, same_t *);
+static same_t *same_item(string_t *);
+static same_t *same_copy(same_t *);
+static same_t *same_merge(same_t *, same_t *);
+static void same_free(same_t *);
+static same_t *same_unlink(same_t *);
+static void same_replace(same_t *, same_t *);
+static same_t *same_char(int);
+static void add_target(same_t *, same_t *);
+static same_t *add_targets_actions(same_t *, same_t *);
+static same_t *add_depends(same_t *, same_t *);
+static same_t *value_of(same_t *);
+static same_t *expand_variables(same_t *, int);
+static same_t *ws_merge(same_t *);
+static same_t *variable(same_t *);
+static same_t *shell_variable(same_t *);
+static same_t *for_statement(same_t *, same_t *, same_t *);
+static same_t *do_command(same_t *, same_t *);
+static int Getchar(void);
+static int token_type(char *);
 #if 0
-static void dump_same __P((same_t *));
+static void dump_same(same_t *);
 #endif
-static void do_dump __P((void));
+static void do_dump(void);
 static int last_char, last_saved = 0;
 static int column = 0, lineno = 1;
 
