@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.11 1997/06/07 11:59:44 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.12 1997/06/07 12:11:38 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -181,6 +181,8 @@ raattach(parent, self, aux)
 	ra->ra_havelabel = 0;
 	ra->ra_hwunit = mp->mscp_unit;
 	mi->mi_dp[mp->mscp_unit] = self;
+
+	ra->ra_disk.dk_name = ra->ra_dev.dv_xname;
 	disk_attach((struct disk *)&ra->ra_disk);
 
 	/* Fill in what we know. The actual size is gotten later */
@@ -398,6 +400,9 @@ rastrategy(bp)
 		    ra->ra_wlabel) <= 0)
 			goto done;
 
+	/* Make some statistics... /bqt */
+	ra->ra_disk.dk_xfer++;
+	ra->ra_disk.dk_bytes += bp->b_bcount;
 	mscp_strategy(bp, ra->ra_dev.dv_parent);
 	return;
 
