@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.41 2002/05/10 15:25:13 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.42 2002/06/23 18:35:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -394,12 +394,6 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 		fp = (struct sigframe *)tf->tf_r15;
 	fp--;
 
-	/* Build stack frame for signal trampoline. */
-	frame.sf_signum = sig;
-	frame.sf_code = code;
-	frame.sf_scp = &fp->sf_sc;
-	frame.sf_handler = catcher;
-
 	/* Save register context. */
 	frame.sf_sc.sc_ssr = tf->tf_ssr;
 	frame.sf_sc.sc_spc = tf->tf_spc;
@@ -440,6 +434,10 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	/*
 	 * Build context to run handler in.
 	 */
+	tf->tf_r4 = sig;
+	tf->tf_r5 = code;
+	tf->tf_r6 = (int)&fp->sf_sc;
+	tf->tf_r7 = (int)catcher;
 	tf->tf_spc = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_r15 = (int)fp;
 
