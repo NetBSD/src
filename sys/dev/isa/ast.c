@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.34 1997/08/13 21:26:52 jtk Exp $	*/
+/*	$NetBSD: ast.c,v 1.35 1997/08/16 08:33:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -93,7 +93,7 @@ astprobe(parent, self, aux)
 	 */
 
 	/* if the first port is in use as console, then it. */
-	if (iobase == comconsaddr 
+	if ((iobase == comconsaddr  && !comconsattached)
 #ifdef KGDB
 	    || iobase == com_kgdb_addr
 #endif
@@ -113,7 +113,7 @@ checkmappings:
 	for (i = 1; i < NSLAVES; i++) {
 		iobase += COM_NPORTS;
 
-		if (iobase == comconsaddr
+		if ((iobase == comconsaddr && !comconsattached)
 #ifdef KGDB
 		    || iobase == com_kgdb_addr
 #endif

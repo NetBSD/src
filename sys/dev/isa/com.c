@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.104 1997/08/14 16:15:15 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.105 1997/08/16 08:33:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -164,6 +164,7 @@ int	comconsaddr;
 bus_space_tag_t comconstag;
 bus_space_handle_t comconsioh;
 tcflag_t comconscflag = TTYDEF_CFLAG;
+int	comconsattached;
 
 int	commajor;
 
@@ -377,6 +378,8 @@ com_attach_subr(sc)
 #endif
 
 	if (iobase == comconsaddr) {
+		comconsattached = 1;
+
 		/* Make sure the console is always "hardwired". */
 		delay(1000);			/* wait for output to finish */
 		SET(sc->sc_hwflags, COM_HW_CONSOLE);
