@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.6 1999/07/29 19:24:39 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1999/08/25 23:06:48 augustss Exp $
 # @@@ This was taken from the mac68k port.  It works, but still should
 # be reviewed for next68k device #'s --dbj
 #
@@ -147,7 +147,8 @@ wscons)
 	sh $0 wsmux
 	;;
 
-wsmux)
+wsmux|wsmouse|wskbd)
+	rm -f wsmouse wskbd
 	mknod wsmouse c 45 0
 	mknod wskbd c 45 1
 	chown root.wheel wsmouse wskbd

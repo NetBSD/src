@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14 1999/08/17 20:06:58 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.15 1999/08/25 23:06:48 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -147,7 +147,8 @@ wscons)
 	sh $0 wsmux
 	;;
 
-wsmux)
+wsmux|wsmouse|wskbd)
+	rm -f wsmouse wskbd
 	mknod wsmouse c 43 0
 	mknod wskbd c 43 1
 	chown root.wheel wsmouse wskbd
