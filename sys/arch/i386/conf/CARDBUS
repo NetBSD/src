@@ -1,14 +1,14 @@
-#	$NetBSD: CARDBUS,v 1.39 2001/09/14 21:44:21 nathanw Exp $
+#	$NetBSD: CARDBUS,v 1.40 2001/10/30 01:39:15 lukem Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
 
-#	from: GENERIC,v 1.400 2001/02/04 17:36:03 perry Exp $
+#	from: GENERIC,v 1.432 2001/10/17 18:41:20 jdolecek Exp $
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.39 $"
+#ident		"CARDBUS-$Revision: 1.40 $"
 
 maxusers	32		# estimated number of users
 
@@ -24,6 +24,8 @@ options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
+
+options		MTRR		# memory-type range register syscall support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -55,13 +57,17 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
@@ -87,6 +93,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options 	COMPAT_MACH	# binary compatibility with Mach binaries
+#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
@@ -139,7 +147,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+#options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
@@ -149,6 +157,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 #options 	I2OVERBOSE	# verbose I2O driver messages
+#options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -243,8 +252,9 @@ options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
-pceb*	at pci? dev ? function ?	# PCI-EISA bridges
+#pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+#pcmb*	at pci? dev ? function ?	# PCI-MCA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
@@ -255,12 +265,15 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
 # ISA bus support
 isa0	at mainbus?
-isa0	at pceb?
+#isa0	at pceb?
 isa0	at pcib?
 
 # PCMCIA bus support
 #pcmcia*	at pcic? controller ? socket ?
 #pcmcia*	at tcic? controller ? socket ?
+
+# MCA bus support
+#mca0	at mainbus?
 
 # ISA PCMCIA controllers
 #pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
@@ -364,6 +377,8 @@ com2	at isa? port 0x3e8 irq 5
 #moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
 #com*	at moxa? slave ?
 
+# MCA serial interfaces
+#com*	at mca? slot ?			# 16x50s on comm boards
 
 # Parallel Printer Interfaces
 
@@ -438,6 +453,9 @@ esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # CardBus SCSI cards
 ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+
+# MCA SCSI cards
+#aha*	at mca? slot ?			# Adaptec AHA-1640
 
 # SCSI bus support
 #scsibus* at adv?
@@ -542,6 +560,10 @@ fd*	at fdc? drive ?			# the drives themselves
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
+# MCA ESDI devices
+#edc*	at mca? slot ?			# IBM ESDI Disk Controllers
+#ed*	at edc?
+
 
 # Network Interfaces
 
@@ -631,6 +653,15 @@ ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 fxp*	at cardbus? dev ? function ?	# Intel i8255x
 rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 tlp*	at cardbus? dev ? function ?	# DECchip 21143
+
+# MCA network cards
+#elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
+#ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
+#we*	at mca? slot ?			# WD/SMC Ethernet
+#ate*	at mca? slot ?			# Allied Telesis AT1720
+#ne*	at mca? slot ?			# Novell NE/2 and clones
+#tr*	at mca? slot ?			# IBM Token Ring adapter
+#le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
@@ -743,11 +774,13 @@ clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
+yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
 # ISA Plug-and-Play audio devices
 #ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
@@ -767,16 +800,21 @@ sv*	at pci? dev ? function ?	# S3 SonicVibes
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
+# PCMCIA audio devices
+esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
+
 #cms0	at isa? port 0x220			# Creative Music System
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at esl?
 opl*	at eso?
 #opl*	at ess?
 opl*	at fms?
 opl*	at sb?
 opl*	at sv?
 opl*	at wss?
+opl*	at yds?
 #opl*	at ym?
 
 # Audio support
@@ -787,6 +825,8 @@ audio*	at clcs?
 audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
+audio*	at emuxki?
+audio*	at esl?
 audio*	at esm?
 audio*	at eso?
 #audio*	at ess?
@@ -800,6 +840,7 @@ audio*	at sb?
 audio*	at sv?
 audio*	at uaudio?
 audio*	at wss?
+audio*	at yds?
 #audio*	at ym?
 
 # MPU 401 UARTs
@@ -807,6 +848,7 @@ audio*	at wss?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?
+mpu*	at yds?
 #mpu*	at ym?
 
 # MIDI support
@@ -894,6 +936,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
