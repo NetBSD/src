@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.18 2000/10/15 14:51:14 kleink Exp $	*/
+/*	$NetBSD: at.c,v 1.19 2002/08/01 22:39:14 christos Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -46,7 +46,6 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <utmp.h>
 #include <locale.h>
 
 /* Local headers */
@@ -71,7 +70,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.18 2000/10/15 14:51:14 kleink Exp $");
+__RCSID("$NetBSD: at.c,v 1.19 2002/08/01 22:39:14 christos Exp $");
 #endif
 #endif
 
