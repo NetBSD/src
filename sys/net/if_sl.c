@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.45 1997/03/27 20:36:14 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.46 1997/05/17 21:12:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -240,7 +240,7 @@ slinit(sc)
 	}
 	sc->sc_buf = sc->sc_ep - SLMAX;
 	sc->sc_mp = sc->sc_buf;
-	sl_compress_init(&sc->sc_comp, -1);
+	sl_compress_init(&sc->sc_comp);
 	return (1);
 }
 

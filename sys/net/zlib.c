@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.5 1997/03/13 20:11:53 fvdl Exp $	*/
+/*	$NetBSD: zlib.c,v 1.6 1997/05/17 21:12:14 christos Exp $	*/
 
 /*
  * This file is derived from various .h and .c files from the zlib-0.95
@@ -13,11 +13,11 @@
  * - added Z_PACKET_FLUSH (see zlib.h for details)
  * - added inflateIncomp
  *
- * Id: zlib.c,v 1.5 1997/03/04 03:26:35 paulus Exp 
+ * Id: zlib.c,v 1.6 1997/04/30 05:41:19 paulus Exp 
  */
 
 /* 
- *  ==FILEVERSION 960926==
+ *  ==FILEVERSION 970421==
  *
  * This marker is used by the Linux installation script to determine
  * whether an up-to-date version of this file is already installed.
@@ -146,6 +146,8 @@ typedef uLong (*check_func) OF((uLong check, Bytef *buf, uInt len));
 
 #define ZALLOC(strm, items, size) \
            (*((strm)->zalloc))((strm)->opaque, (items), (size))
+#define ZALLOC_INIT(strm, items, size) \
+           (*((strm)->zalloc_init))((strm)->opaque, (items), (size))
 #define ZFREE(strm, addr, size)	\
 	   (*((strm)->zfree))((strm)->opaque, (voidpf)(addr), (size))
 #define TRY_FREE(s, p, n) {if (p) ZFREE(s, p, n);}
@@ -169,7 +171,7 @@ typedef uLong (*check_func) OF((uLong check, Bytef *buf, uInt len));
  */
 
 /* Data type */
-#define BINARY  0
+#define Z_BINARY  0
 #define ASCII   1
 #define UNKNOWN 2
 
@@ -242,7 +244,7 @@ typedef struct deflate_state {
     int   pending;       /* nb of bytes in the pending buffer */
     uLong adler;         /* adler32 of uncompressed data */
     int   noheader;      /* suppress zlib header and adler32 */
-    Byte  data_type;     /* UNKNOWN, BINARY or ASCII */
+    Byte  data_type;     /* UNKNOWN, Z_BINARY or ASCII */
     Byte  method;        /* STORED (for zip only) or DEFLATED */
     int	  minCompr;	 /* min size decrease for Z_FLUSH_NOSTORE */
 
@@ -638,7 +640,7 @@ int deflateInit2 (strm, level, method, windowBits, memLevel,
         windowBits < 8 || windowBits > 15 || level < 1 || level > 9) {
         return Z_STREAM_ERROR;
     }
-    s = (deflate_state *) ZALLOC(strm, 1, sizeof(deflate_state));
+    s = (deflate_state *) ZALLOC_INIT(strm, 1, sizeof(deflate_state));
     if (s == Z_NULL) return Z_MEM_ERROR;
     strm->state = (struct internal_state FAR *)s;
     s->strm = strm;
@@ -653,13 +655,13 @@ int deflateInit2 (strm, level, method, windowBits, memLevel,
     s->hash_mask = s->hash_size - 1;
     s->hash_shift =  ((s->hash_bits+MIN_MATCH-1)/MIN_MATCH);
 
-    s->window = (Bytef *) ZALLOC(strm, s->w_size, 2*sizeof(Byte));
-    s->prev   = (Posf *)  ZALLOC(strm, s->w_size, sizeof(Pos));
-    s->head   = (Posf *)  ZALLOC(strm, s->hash_size, sizeof(Pos));
+    s->window = (Bytef *) ZALLOC_INIT(strm, s->w_size, 2*sizeof(Byte));
+    s->prev   = (Posf *)  ZALLOC_INIT(strm, s->w_size, sizeof(Pos));
+    s->head   = (Posf *)  ZALLOC_INIT(strm, s->hash_size, sizeof(Pos));
 
     s->lit_bufsize = 1 << (memLevel + 6); /* 16K elements by default */
 
-    s->pending_buf = (uchf *) ZALLOC(strm, s->lit_bufsize, 2*sizeof(ush));
+    s->pending_buf = (uchf *) ZALLOC_INIT(strm, s->lit_bufsize, 2*sizeof(ush));
 
     if (s->window == Z_NULL || s->prev == Z_NULL || s->head == Z_NULL ||
         s->pending_buf == Z_NULL) {
@@ -690,7 +692,8 @@ int deflateReset (strm)
     deflate_state *s;
     
     if (strm == Z_NULL || strm->state == Z_NULL ||
-        strm->zalloc == Z_NULL || strm->zfree == Z_NULL) return Z_STREAM_ERROR;
+        strm->zalloc == Z_NULL || strm->zfree == Z_NULL ||
+	strm->zalloc_init == Z_NULL) return Z_STREAM_ERROR;
 
     strm->total_in = strm->total_out = 0;
     strm->msg = Z_NULL; /* use zfree if we ever allocate msg dynamically */
@@ -2519,7 +2522,7 @@ local void compress_block(s, ltree, dtree)
 }
 
 /* ===========================================================================
- * Set the data type to ASCII or BINARY, using a crude approximation:
+ * Set the data type to ASCII or Z_BINARY, using a crude approximation:
  * binary if more than 20% of the bytes are <= 6 or >= 128, ascii otherwise.
  * IN assertion: the fields freq of dyn_ltree are set and the total of all
  * frequencies does not exceed 64K (to fit in an int on 16 bit machines).
@@ -2533,7 +2536,7 @@ local void set_data_type(s)
     while (n < 7)        bin_freq += s->dyn_ltree[n++].Freq;
     while (n < 128)    ascii_freq += s->dyn_ltree[n++].Freq;
     while (n < LITERALS) bin_freq += s->dyn_ltree[n++].Freq;
-    s->data_type = (Byte)(bin_freq > (ascii_freq >> 2) ? BINARY : ASCII);
+    s->data_type = (Byte)(bin_freq > (ascii_freq >> 2) ? Z_BINARY : ASCII);
 }
 
 /* ===========================================================================
@@ -2832,7 +2835,7 @@ int w;
 /*  if (z->zalloc == Z_NULL) z->zalloc = zcalloc; */
 /*  if (z->zfree == Z_NULL) z->zfree = zcfree; */
   if ((z->state = (struct internal_state FAR *)
-       ZALLOC(z,1,sizeof(struct internal_state))) == Z_NULL)
+       ZALLOC_INIT(z,1,sizeof(struct internal_state))) == Z_NULL)
     return Z_MEM_ERROR;
   z->state->blocks = Z_NULL;
 
@@ -3260,10 +3263,10 @@ uInt w;
 {
   inflate_blocks_statef *s;
 
-  if ((s = (inflate_blocks_statef *)ZALLOC
+  if ((s = (inflate_blocks_statef *)ZALLOC_INIT
        (z,1,sizeof(struct inflate_blocks_state))) == Z_NULL)
     return s;
-  if ((s->window = (Bytef *)ZALLOC(z, 1, w)) == Z_NULL)
+  if ((s->window = (Bytef *)ZALLOC_INIT(z, 1, w)) == Z_NULL)
   {
     ZFREE(z, s, sizeof(struct inflate_blocks_state));
     return Z_NULL;
