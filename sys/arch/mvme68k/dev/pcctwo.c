@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.6 2000/11/24 09:36:41 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.7 2000/11/24 09:42:10 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@ struct pcctwo_device {
  */
 static struct pcctwo_device pcctwo_devices[] = {
 	{"clock", PCCTWO_RTC_OFF},
+	{"memc", PCCTWO_MEMC1_OFF},
+	{"memc", PCCTWO_MEMC2_OFF},
 	{"clmpcc", PCCTWO_SCC_OFF},
 	{"ie", PCCTWO_IE_OFF},
 	{"ncrsc", PCCTWO_NCRSC_OFF},
@@ -128,6 +130,8 @@ static int pcctwo_vec2icsr_1x7[] = {
  */
 static struct pcctwo_device mcchip_devices[] = {
 	{"clock", PCCTWO_RTC_OFF},
+	{"memc", PCCTWO_MEMC1_OFF},
+	{"memc", PCCTWO_MEMC2_OFF},
 	{"zsc", MCCHIP_ZS0_OFF},
 	{"zsc", MCCHIP_ZS1_OFF},
 	{"ie", PCCTWO_IE_OFF},
