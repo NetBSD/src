@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.59 1999/03/24 05:51:29 mrg Exp $	*/
+/*	$NetBSD: vnode.h,v 1.59.2.1 1999/10/10 20:51:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -86,8 +86,8 @@ LIST_HEAD(buflists, buf);
 struct vnode {
 	struct uvm_vnode v_uvm;			/* uvm data */
 	u_long	v_flag;				/* vnode flags (see below) */
-	short	v_usecount;			/* reference count of users */
-	short	v_writecount;			/* reference count of writers */
+	long	v_usecount;			/* reference count of users */
+	long	v_writecount;			/* reference count of writers */
 	long	v_holdcnt;			/* page & buffer references */
 	daddr_t	v_lastr;			/* last read (read-ahead) */
 	u_long	v_id;				/* capability identifier */
