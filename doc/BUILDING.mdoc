@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.22 2003/05/25 12:34:28 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.23 2003/07/03 05:52:48 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd May 25, 2003
+.Dd July 3, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -216,7 +216,10 @@ Used only if
 .Sy MAKEOBJDIRPREFIX
 is not defined.
 .Sy MAKEOBJDIR
-can only be provided in the environment.
+can only be provided in the environment or via the
+.Fl M
+flag of
+.Nm build.sh .
 .
 .It Sy MAKEOBJDIRPREFIX
 Top level directory of the object directory tree.
@@ -227,7 +230,10 @@ is used as the
 for the current directory.
 The current directory may be read only.
 .Sy MAKEOBJDIRPREFIX
-can only be provided in the environment.
+can only be provided in the environment or via the
+.Fl M
+flag of
+.Nm build.sh .
 .
 .El
 .
