@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.4 1993/06/16 19:00:11 mycroft Exp $
+ *	$Id: asm.h,v 1.5 1993/06/16 21:04:00 mycroft Exp $
  */
 
 #ifndef _SYS_ASM_H_
@@ -45,26 +45,22 @@
  */
 
 #ifdef PROF
-# ifdef __STDC__
-#  define ENTRY(x)	.globl _ ## x; \
-			.data; 1:; .long 0; .text; .align 2; _ ## x: \
-			movl $1b,%eax; call mcount
-#  define ALTENTRY(x)	.globl _ ## x; _ ## x:
-# else
-#  define ENTRY(x)	.globl _/**/x; \
-			.data; 1:; .long 0; .text; .align 2; _/**/x: \
-			movl $1b,%eax; call mcount
-#  define ALTENTRY(x)	.globl _/**/x; _/**/x:
-# endif /* __STDC__ */
+# define _BEGIN_ENTRY	.data; 1:; .long 0; .text; .align 2
+# define _END_ENTRY	movl $1b,%eax; call mcount
 #else
-# ifdef __STDC__
-#  define ENTRY(x)	.globl _ ## x; .text; .align 2; _ ## x:
-#  define ALTENTRY(x)	.globl _ ## x; _ ## x:
-# else
-#  define ENTRY(x)	.globl _/**/x; .text; .align 2; _/**/x: 
-#  define ALTENTRY(x)	.globl _/**/x; _/**/x:
-# endif /* __STDC__ */
-#endif PROF
+# define _BEGIN_ENTRY	.text; .align 2
+# define _END_ENTRY
+#else
+
+#ifdef STDC
+# define _ENTRY(x)	.globl _ ## x; _ ## x:
+#else
+# define _ENTRY(x)	.globl _/**/x; _/**/x:
+#endif
+
+#define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(y); _END_ENTRY
+#define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(y); _ENTRY(z); _END_ENTRY
+
 #define	ASMSTR		.asciz
 
 #endif /* !_SYS_ASM_H_ */
