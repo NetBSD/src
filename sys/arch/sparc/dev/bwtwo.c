@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.26.4.1 1996/12/10 19:24:43 mycroft Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.26.4.2 1997/03/02 21:52:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -325,7 +325,15 @@ bwtwoattach(parent, self, args)
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
-		if (sc->sc_ovtype == BWO_NONE)
+#if defined(SUN4)
+		/*
+		 * XXX rcons doesn't seem to work properly on the overlay
+		 * XXX plane.  This is a temporary kludge until someone
+		 * XXX fixes it.
+		 */
+		if ((fb->fb_flags & FB_PFOUR) == 0 ||
+		    (sc->sc_ovtype == BWO_NONE))
+#endif
 			fbrcons_init(fb);
 #endif
 	} else
