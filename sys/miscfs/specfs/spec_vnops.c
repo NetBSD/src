@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.56.2.3 2001/09/26 15:28:24 fvdl Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.56.2.4 2001/09/27 14:52:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -809,6 +809,61 @@ spec_getattr(void *v)
 }
 
 /*
+ * XXX can probably always do locking, but not for now, until it can
+ * be verified whether vnodes created with {b,c}devvp during bootstrap
+ * are OK to lock.
+ */
+int
+spec_lock(void *v)
+{
+	struct vop_lock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	if (vp->v_flag & VCLONED)
+		return genfs_lock(ap);
+	else
+		return genfs_nolock(ap);
+}
+
+/*
+ * Unlock the node.
+ */
+int
+spec_unlock(void *v)
+{
+	struct vop_unlock_args /* {
+		struct vnode *a_vp;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	if (vp->v_flag & VCLONED)
+		return genfs_unlock(ap);
+	else
+		return genfs_nolock(ap);
+}
+
+/*
+ * Return whether or not the node is locked.
+ */
+int
+spec_islocked(void *v)
+{
+	struct vop_islocked_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	if (vp->v_flag & VCLONED)
+		return genfs_islocked(ap);
+	else
+		return genfs_noislocked(ap);
+}
+
+/*
  * Create a clone of a vnode.
  * vp is passed in unlocked, it's locked on exit.
  */
@@ -831,6 +886,14 @@ spec_clonevnode(struct vnode *vp, struct vnode **vpp, dev_t dev, int type,
 	}
 out:
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	/*
+	 * XXX check if vnode was revoked while sleeping for the lock.
+	 */
+	if ((*vpp)->v_type == VBAD) {
+		vrele(*vpp);
+		free(vap, M_VNODE);
+		return EIO;
+	}
 	if (error == 0) {
 		(*vpp)->v_cloneattr = vap;
 		(*vpp)->v_flag |= VCLONED;

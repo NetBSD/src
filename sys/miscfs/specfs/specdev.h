@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.20.2.3 2001/09/26 15:28:24 fvdl Exp $	*/
+/*	$NetBSD: specdev.h,v 1.20.2.4 2001/09/27 14:52:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -87,12 +87,12 @@ int	spec_fsync	(void *);
 #define	spec_abortop	genfs_badop
 #define	spec_reclaim	genfs_nullop
 int	spec_inactive	(void *);
-#define	spec_lock	genfs_nolock
-#define	spec_unlock	genfs_nounlock
+int	spec_lock	(void *);
+int	spec_unlock	(void *);
 int	spec_bmap	(void *);
 int	spec_strategy	(void *);
 int	spec_print	(void *);
-#define	spec_islocked	genfs_noislocked
+int	spec_islocked	(void *);
 int	spec_pathconf	(void *);
 int	spec_advlock	(void *);
 #define	spec_blkatoff	genfs_badop
