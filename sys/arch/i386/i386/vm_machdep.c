@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.8 2000/11/18 22:53:57 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.9 2000/12/31 18:01:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -124,14 +124,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * Preset these so that gdt_compact() doesn't get confused if called
 	 * during the allocations below.
 	 *
-	 * Note: pcb_ldt_sel is handled in the pmap_activate() call below.
+	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
+	 * the process runs.
 	 */
 	pcb->pcb_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
-
-	/*
-	 * Activate the addres space.  Note this will refresh pcb_ldt_sel.
-	 */
-	pmap_activate(p2);
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
@@ -193,6 +189,14 @@ cpu_exit(p)
 	 * No need to do user LDT cleanup here; it's handled in
 	 * pmap_destroy().
 	 */
+
+	/*
+	 * Deactivate the address space before the vmspace is
+	 * freed.  Note that we will continue to run on this
+	 * vmspace's context until the switch to the idle process
+	 * in switch_exit().
+	 */
+	pmap_deactivate(p);
 
 	uvmexp.swtch++;
 	switch_exit(p);

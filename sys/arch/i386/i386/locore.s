@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.15 2000/11/18 22:52:24 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.16 2000/12/31 18:01:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2004,6 +2004,10 @@ ENTRY(cpu_switch)
 	 *   %edi - new process
 	 */
 
+	pushl	%esi
+	call	_C_LABEL(pmap_deactivate)	# pmap_deactivate(oldproc)
+	addl	$4,%esp
+
 	movl	P_ADDR(%esi),%esi
 
 	/* Save segment registers. */
@@ -2158,6 +2162,10 @@ switch_dequeue:
 	 *   %edi - new process
 	 */
 
+	pushl	%esi
+	call	_C_LABEL(pmap_deactivate)	# pmap_deactivate(oldproc)
+	addl	$4,%esp
+
 	movl	P_ADDR(%esi),%esi
 
 	/* Save segment registers. */
@@ -2198,25 +2206,13 @@ switch_exited:
 	movl	_C_LABEL(gdt),%eax
 	movl	PCB_TSS_SEL(%esi),%edx
 
-	/* Switch address space. */
-	movl	PCB_CR3(%esi),%ecx
-	movl	%ecx,%cr3
-
 	/* Switch TSS. Reset "task busy" flag before */
 	andl	$~0x0200,4(%eax,%edx, 1)
 	ltr	%dx
 
-#ifdef USER_LDT
-	/*
-	 * Switch LDT.
-	 *
-	 * XXX
-	 * Always do this, because the LDT could have been swapped into a
-	 * different selector after a process exited.  (See gdt_compact().)
-	 */
-	movl	PCB_LDT_SEL(%esi),%edx
-	lldt	%dx
-#endif /* USER_LDT */
+	pushl	%edi
+	call	_C_LABEL(pmap_activate)		# pmap_activate(p)
+	addl	$4,%esp
 
 	/* Restore segment registers. */
 	movl	PCB_FS(%esi),%eax
