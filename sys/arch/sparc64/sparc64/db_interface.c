@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.44 2000/09/28 18:54:39 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.45 2000/10/19 05:30:29 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -565,7 +565,6 @@ db_page_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	struct pv_entry *pv;
 
 	if (!have_addr) {
 		db_printf("Need paddr for page\n");
@@ -695,7 +694,7 @@ db_setpcb(addr, have_addr, count, modif)
 		return;
 	}
     
-	for (p = allproc.lh_first; p != 0; p->p_list.le_next) {
+	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
 			curproc = p;
