@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.66 2002/10/23 13:25:24 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.67 2002/10/23 19:46:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.66 2002/10/23 13:25:24 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.67 2002/10/23 19:46:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -756,8 +756,6 @@ evalcommand(cmd, flags, backcmd)
 
 			savelocalvars = localvars;
 			localvars = NULL;
-			for (sp = varlist.list ; sp ; sp = sp->next)
-				mklocal(sp->text, VEXPORT);
 			vforked = 1;
 			switch (pid = vfork()) {
 			case -1:
@@ -783,6 +781,8 @@ evalcommand(cmd, flags, backcmd)
 				}
 				savehandler = handler;
 				handler = &jmploc;
+				for (sp = varlist.list; sp; sp = sp->next)
+					mklocal(sp->text, VEXPORT);
 				forkchild(jp, cmd, mode, vforked);
 				break;
 			default:
