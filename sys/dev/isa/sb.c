@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.46 1997/05/09 22:16:40 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.46.2.1 1997/05/13 03:37:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -44,6 +44,7 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <sys/audioio.h>
@@ -55,14 +56,6 @@
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
-
-struct sb_softc {
-	struct	device sc_dev;		/* base device */
-	struct	isadev sc_id;		/* ISA device */
-	void	*sc_ih;			/* interrupt vectoring */
-
-	struct	sbdsp_softc sc_sbdsp;
-};
 
 struct cfdriver sb_cd = {
 	NULL, "sb", DV_DULL
@@ -145,7 +138,12 @@ sbmatch(sc)
 			return 0;
 		}
 	}
-	
+
+	/*
+	 * XXX THIS IS WRONG!  My ViBRA16S PnP 
+	 * XXX has 1 drqs, but this resets it to use drq8 everywhere!
+	 * XXX --thorpej@netbsd.org
+	 */
 	if (ISSB16CLASS(sc)) {
 		if (sc->sc_drq16 == -1)
 			sc->sc_drq16 = sc->sc_drq8;
