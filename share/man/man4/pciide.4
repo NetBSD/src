@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.1 1998/10/19 12:44:15 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.2 1998/10/22 15:15:16 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -38,7 +38,7 @@
 .Nm pciide
 .Nd PCI IDE controllers driver
 .Sh SYNOPSIS
-.Cd "pciide* at pci ? dev ? function ?"
+.Cd "pciide* at pci ? dev ? function ? flags 0x0000"
 .Cd "options PCIIDE_CMD064x_DISABLE"
 .Sh DESCRIPTION
 The
@@ -52,6 +52,12 @@ and
 drivers. This driver include specific, enhanced support for the CMD Tech
 PCI0640 controller, and IDE DMA/Ultra-DMA support for the Intel PIIX and
 VIA Apollo controllers series.
+.Pp
+The 0x0001 flag force the
+.Nm 
+driver to use DMA when there is no explicit DMA mode setting support for
+the controller but DMA is present. If the BIOS didn't set up the controller
+properly, this can cause a machine hang.
 
 .Sh BUGS
 There's no way to reliably know if a PCI0640 controller is enabled or not.
