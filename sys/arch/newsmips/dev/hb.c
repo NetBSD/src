@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.10 2003/01/01 01:55:42 thorpej Exp $	*/
+/*	$NetBSD: hb.c,v 1.11 2003/05/09 13:36:40 tsutsui Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6,11 +6,12 @@
 
 #include <machine/autoconf.h>
 
+#include <newsmips/dev/hbvar.h>
+
 static int	hb_match __P((struct device *, struct cfdata *, void *));
 static void	hb_attach __P((struct device *, struct device *, void *));
 static int	hb_search __P((struct device *, struct cfdata *, void *));
 static int	hb_print __P((void *, const char *));
-void		hb_intr_dispatch __P((int));	/* XXX */
 
 CFATTACH_DECL(hb, sizeof(struct device),
     hb_match, hb_attach, NULL, NULL);
@@ -45,10 +46,11 @@ hb_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args ha;
 
 	printf("\n");
-	config_search(hb_search, self, ca);
+	memset(&ha, 0, sizeof(ha));
+	config_search(hb_search, self, &ha);
 }
 
 static int
@@ -57,13 +59,14 @@ hb_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	ca->ca_addr = cf->cf_addr;
-	ca->ca_name = cf->cf_name;
+	ha->ha_name = cf->cf_name;
+	ha->ha_addr = cf->cf_addr;
+	ha->ha_level = cf->cf_level;
 
-	if (config_match(parent, cf, ca) > 0)
-		config_attach(parent, cf, ca, hb_print);
+	if (config_match(parent, cf, ha) > 0)
+		config_attach(parent, cf, ha, hb_print);
 
 	return 0;
 }
@@ -77,14 +80,14 @@ hb_print(args, name)
 	void *args;
 	const char *name;
 {
-	struct confargs *ca = args;
+	struct hb_attach_args *ha = args;
 
 	/* Be quiet about empty HB locations. */
 	if (name)
 		return QUIET;
 
-	if (ca->ca_addr != -1)
-		aprint_normal(" addr 0x%x", ca->ca_addr);
+	if (ha->ha_addr != -1)
+		aprint_normal(" addr 0x%x", ha->ha_addr);
 
 	return UNCONF;
 }
