@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_var.h,v 1.11 2000/02/25 05:13:06 itojun Exp $	*/
-/*	$KAME: in6_var.h,v 1.28 2000/02/25 00:32:22 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.12 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$KAME: in6_var.h,v 1.29 2000/02/25 05:20:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -570,10 +570,11 @@ void	in6_savemkludge __P((struct in6_ifaddr *));
 void	in6_setmaxmtu   __P((void));
 void	in6_restoremkludge __P((struct in6_ifaddr *, struct ifnet *));
 void	in6_purgemkludge __P((struct ifnet *));
-struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *));
+struct in6_ifaddr *in6ifa_ifpforlinklocal __P((struct ifnet *, int));
 struct in6_ifaddr *in6ifa_ifpwithaddr __P((struct ifnet *,
 					     struct in6_addr *));
 char	*ip6_sprintf __P((struct in6_addr *));
+int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *p1, struct in6_addr *p2,
 				  int len));
