@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.85 2003/08/07 16:31:59 agc Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.86 2003/09/04 16:44:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.85 2003/08/07 16:31:59 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.86 2003/09/04 16:44:05 wrstuden Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1266,7 +1266,12 @@ sorflush(struct socket *so)
 	socantrcvmore(so);
 	sbunlock(sb);
 	asb = *sb;
-	memset((caddr_t)sb, 0, sizeof(*sb));
+	/*
+	 * Clear most of the sockbuf structure, but leave some of the
+	 * fields valid.
+	 */
+	memset(&sb->sb_startzero, 0,
+	    sizeof(*sb) - offsetof(struct sockbuf, sb_startzero));
 	splx(s);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(asb.sb_mb);
