@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.11.2.2 1999/04/12 21:27:04 pk Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11.2.3 1999/11/07 22:05:46 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -77,7 +77,7 @@ db_show_vnode_cmd(addr, have_addr, count, modif)
 	db_printf("vp->v_flag = %ld\n", vp->v_flag);
 	db_printf("vp->v_numoutput = %ld\n", vp->v_numoutput);
 
-	db_printf("type %s, usecount %d, writecount %d, refcount %ld,",
+	db_printf("type %s, usecount %ld, writecount %ld, refcount %ld,",
 		typename[vp->v_type], vp->v_usecount, vp->v_writecount,
 		vp->v_holdcnt);
 	buf[0] = '\0';
