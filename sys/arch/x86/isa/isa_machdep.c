@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 2003/05/03 18:11:08 wiz Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6 2003/05/05 12:55:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5 2003/05/03 18:11:08 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2003/05/05 12:55:44 fvdl Exp $");
 
 #define ISA_DMA_STATS
 
@@ -106,11 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.5 2003/05/03 18:11:08 wiz Exp $");
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
 #endif
-
-/*
- * ISA can only DMA to 0-16M.
- */
-#define	ISA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
 extern	paddr_t avail_end;
 
