@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)trap.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)trap.h	8.1 (Berkeley) 5/31/93
+ *	$Id: trap.h,v 1.6 1994/06/11 16:12:38 mycroft Exp $
  */
 
 extern int pendingsigs;

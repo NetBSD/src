@@ -76,7 +76,8 @@ expr:	ARITH_LPAREN expr ARITH_RPAREN = { $$ = $2; }
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)arith.y	8.1 (Berkeley) 5/31/93";
+/*static char sccsid[] = "from: @(#)arith.y	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: arith.y,v 1.2 1994/06/11 16:11:40 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"

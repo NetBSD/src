@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mystring.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)mystring.h	8.1 (Berkeley) 5/31/93
+ *	$Id: mystring.h,v 1.7 1994/06/11 16:12:19 mycroft Exp $
  */
 
 #include <string.h>

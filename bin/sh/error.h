@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)error.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)error.h	8.1 (Berkeley) 5/31/93
+ *	$Id: error.h,v 1.6 1994/06/11 16:11:48 mycroft Exp $
  */
 
 /*

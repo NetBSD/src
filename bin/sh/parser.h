@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)parser.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)parser.h	8.1 (Berkeley) 5/31/93
+ *	$Id: parser.h,v 1.6 1994/06/11 16:12:29 mycroft Exp $
  */
 
 /* control characters in argument strings */

@@ -34,7 +34,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)builtins	8.1 (Berkeley) 5/31/93
+#	from: @(#)builtins	8.1 (Berkeley) 5/31/93
+#	$Id: builtins,v 1.9 1994/06/11 16:11:43 mycroft Exp $
 
 #
 # This file lists all the builtin commands.  The first column is the name

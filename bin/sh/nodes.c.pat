@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nodes.c.pat	8.1 (Berkeley) 5/31/93
+ *	from: @(#)nodes.c.pat	8.1 (Berkeley) 5/31/93
+ *	$Id: nodes.c.pat,v 1.5 1994/06/11 16:12:21 mycroft Exp $
  */
 
 /*

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)alias.h	8.1 (Berkeley) 5/31/93
+ *	from: @(#)alias.h	8.1 (Berkeley) 5/31/93
+ *	$Id: alias.h,v 1.2 1994/06/11 16:11:39 mycroft Exp $
  */
 
 #define ALIASINUSE	1
