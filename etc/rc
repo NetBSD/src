@@ -152,7 +152,10 @@ fi
 
 echo -n ' printer';		lpd
 
+
+
 if [ X${nfs_server} = X"YES" -a -r /etc/exports ]; then
+	rm -f /var/db/mountdtab	
 	echo -n ' portmap';		portmap
 	echo -n ' mountd';		mountd
 	echo -n ' nfsd';		nfsd -u 0,0,4 -t 0,0
