@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.1 1999/03/23 20:04:15 bad Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.2 1999/04/08 16:14:29 bad Exp $	*/
 
 #undef	TCICISADEBUG
 
@@ -238,8 +238,8 @@ tcic_isa_attach(parent, self, aux)
 	sc->validirqs = tcic_validirqs(sc->chipid);
 
 	/*
-	 * allocate an irq.  but interrupts are relatively
-	 * scarce, shareable, and for PCIC controllers, very infrequent.
+	 * allocate an irq.  interrupts are relatively
+	 * scarce but for TCIC controllers very infrequent.
 	 */
 
 	if ((sc->irq = ia->ia_irq) == IRQUNK) {
