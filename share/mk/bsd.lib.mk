@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.62 1995/09/25 00:53:09 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.63 1995/09/26 23:48:24 jtc Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -43,7 +43,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .cc.o .C.o:
 	@echo "${COMPILE.cc} ${.IMPSRC}"
 	@${COMPILE.cc} ${.IMPSRC} -o ${.TARGET}.o
-	@${LD} -x -r ${.TARGET} -o ${.TARGET}
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
 .cc.po .C.po:
