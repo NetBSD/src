@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.20 2004/01/17 03:33:24 atatat Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.21 2004/02/19 03:57:56 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.20 2004/01/17 03:33:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.21 2004/02/19 03:57:56 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -89,11 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.20 2004/01/17 03:33:24 atatat Exp 
  */
 #define KERN_PROCSLOP	(5 * sizeof(struct kinfo_proc))
 #define KERN_LWPSLOP	(5 * sizeof(struct kinfo_lwp))
-
-/*
- * convert pointer to 64 int for struct kinfo_proc2
- */
-#define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
 
 #ifndef MULTIPROCESSOR
 #define	sysctl_ncpus()	(1)
@@ -2124,16 +2119,16 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 	memset(ki, 0, sizeof(*ki));
 
-	ki->p_paddr = PTRTOINT64(p);
-	ki->p_fd = PTRTOINT64(p->p_fd);
-	ki->p_cwdi = PTRTOINT64(p->p_cwdi);
-	ki->p_stats = PTRTOINT64(p->p_stats);
-	ki->p_limit = PTRTOINT64(p->p_limit);
-	ki->p_vmspace = PTRTOINT64(p->p_vmspace);
-	ki->p_sigacts = PTRTOINT64(p->p_sigacts);
-	ki->p_sess = PTRTOINT64(p->p_session);
+	ki->p_paddr = PTRTOUINT64(p);
+	ki->p_fd = PTRTOUINT64(p->p_fd);
+	ki->p_cwdi = PTRTOUINT64(p->p_cwdi);
+	ki->p_stats = PTRTOUINT64(p->p_stats);
+	ki->p_limit = PTRTOUINT64(p->p_limit);
+	ki->p_vmspace = PTRTOUINT64(p->p_vmspace);
+	ki->p_sigacts = PTRTOUINT64(p->p_sigacts);
+	ki->p_sess = PTRTOUINT64(p->p_session);
 	ki->p_tsess = 0;	/* may be changed if controlling tty below */
-	ki->p_ru = PTRTOINT64(p->p_ru);
+	ki->p_ru = PTRTOUINT64(p->p_ru);
 
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
@@ -2164,7 +2159,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	if ((p->p_flag & P_CONTROLT) && (tp = p->p_session->s_ttyp)) {
 		ki->p_tdev = tp->t_dev;
 		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-		ki->p_tsess = PTRTOINT64(tp->t_session);
+		ki->p_tsess = PTRTOUINT64(tp->t_session);
 	} else {
 		ki->p_tdev = NODEV;
 	}
@@ -2179,7 +2174,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	ki->p_sticks = p->p_sticks;
 	ki->p_iticks = p->p_iticks;
 
-	ki->p_tracep = PTRTOINT64(p->p_tracep);
+	ki->p_tracep = PTRTOUINT64(p->p_tracep);
 	ki->p_traceflag = p->p_traceflag;
 
 
@@ -2221,9 +2216,9 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 		/* Pick a "representative" LWP */
 		l = proc_representative_lwp(p);
-		ki->p_forw = PTRTOINT64(l->l_forw);
-		ki->p_back = PTRTOINT64(l->l_back);
-		ki->p_addr = PTRTOINT64(l->l_addr);
+		ki->p_forw = PTRTOUINT64(l->l_forw);
+		ki->p_back = PTRTOUINT64(l->l_back);
+		ki->p_addr = PTRTOUINT64(l->l_addr);
 		ki->p_stat = l->l_stat;
 		ki->p_flag |= l->l_flag;
 		ki->p_swtime = l->l_swtime;
@@ -2238,7 +2233,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_usrpri = l->l_usrpri;
 		if (l->l_wmesg)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
-		ki->p_wchan = PTRTOINT64(l->l_wchan);
+		ki->p_wchan = PTRTOUINT64(l->l_wchan);
 
 	}
 
@@ -2297,10 +2292,10 @@ static void
 fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 {
 
-	kl->l_forw = PTRTOINT64(l->l_forw);
-	kl->l_back = PTRTOINT64(l->l_back);
-	kl->l_laddr = PTRTOINT64(l);
-	kl->l_addr = PTRTOINT64(l->l_addr);
+	kl->l_forw = PTRTOUINT64(l->l_forw);
+	kl->l_back = PTRTOUINT64(l->l_back);
+	kl->l_laddr = PTRTOUINT64(l);
+	kl->l_addr = PTRTOUINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
 	kl->l_flag = l->l_flag;
@@ -2317,7 +2312,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_usrpri = l->l_usrpri;
 	if (l->l_wmesg)
 		strncpy(kl->l_wmesg, l->l_wmesg, sizeof(kl->l_wmesg));
-	kl->l_wchan = PTRTOINT64(l->l_wchan);
+	kl->l_wchan = PTRTOUINT64(l->l_wchan);
 #ifdef MULTIPROCESSOR
 	if (l->l_cpu != NULL)
 		kl->l_cpuid = l->l_cpu->ci_cpuid;

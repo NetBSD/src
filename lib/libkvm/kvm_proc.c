@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.56 2003/11/17 20:41:54 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.57 2004/02/19 04:13:28 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.56 2003/11/17 20:41:54 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.57 2004/02/19 04:13:28 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -148,8 +148,6 @@ struct miniproc {
 		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
 	} while (/*CONSTCOND*/0);
 
-
-#define	PTRTOINT64(foo)	((u_int64_t)(const uintptr_t)(const void *)(foo))
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
@@ -383,7 +381,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 		 * from the first available LWP.
 		 */
 		kl = kvm_getlwps(kd, proc.p_pid,
-		    (u_long)PTRTOINT64(eproc.e_paddr),
+		    (u_long)PTRTOUINT64(eproc.e_paddr),
 		    sizeof(struct kinfo_lwp), &nlwps);
 		if (kl) {
 			if (nlwps > 0) {
@@ -513,23 +511,23 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 		kp2p = &kp2;
 		for (i = 0; i < nprocs; i++, kp++) {
 			kl = kvm_getlwps(kd, kp->kp_proc.p_pid,
-			    (u_long)PTRTOINT64(kp->kp_eproc.e_paddr),
+			    (u_long)PTRTOUINT64(kp->kp_eproc.e_paddr),
 			    sizeof(struct kinfo_lwp), &nlwps);
 			/* We use kl[0] as the "representative" LWP */
 			memset(kp2p, 0, sizeof(kp2));
 			kp2p->p_forw = kl[0].l_forw;
 			kp2p->p_back = kl[0].l_back;
-			kp2p->p_paddr = PTRTOINT64(kp->kp_eproc.e_paddr);
+			kp2p->p_paddr = PTRTOUINT64(kp->kp_eproc.e_paddr);
 			kp2p->p_addr = kl[0].l_addr;
-			kp2p->p_fd = PTRTOINT64(kp->kp_proc.p_fd);
-			kp2p->p_cwdi = PTRTOINT64(kp->kp_proc.p_cwdi);
-			kp2p->p_stats = PTRTOINT64(kp->kp_proc.p_stats);
-			kp2p->p_limit = PTRTOINT64(kp->kp_proc.p_limit);
-			kp2p->p_vmspace = PTRTOINT64(kp->kp_proc.p_vmspace);
-			kp2p->p_sigacts = PTRTOINT64(kp->kp_proc.p_sigacts);
-			kp2p->p_sess = PTRTOINT64(kp->kp_eproc.e_sess);
+			kp2p->p_fd = PTRTOUINT64(kp->kp_proc.p_fd);
+			kp2p->p_cwdi = PTRTOUINT64(kp->kp_proc.p_cwdi);
+			kp2p->p_stats = PTRTOUINT64(kp->kp_proc.p_stats);
+			kp2p->p_limit = PTRTOUINT64(kp->kp_proc.p_limit);
+			kp2p->p_vmspace = PTRTOUINT64(kp->kp_proc.p_vmspace);
+			kp2p->p_sigacts = PTRTOUINT64(kp->kp_proc.p_sigacts);
+			kp2p->p_sess = PTRTOUINT64(kp->kp_eproc.e_sess);
 			kp2p->p_tsess = 0;
-			kp2p->p_ru = PTRTOINT64(kp->kp_proc.p_ru);
+			kp2p->p_ru = PTRTOUINT64(kp->kp_proc.p_ru);
 
 			kp2p->p_eflag = 0;
 			kp2p->p_exitsig = kp->kp_proc.p_exitsig;
@@ -559,7 +557,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_jobc = kp->kp_eproc.e_jobc;
 			kp2p->p_tdev = kp->kp_eproc.e_tdev;
 			kp2p->p_tpgid = kp->kp_eproc.e_tpgid;
-			kp2p->p_tsess = PTRTOINT64(kp->kp_eproc.e_tsess);
+			kp2p->p_tsess = PTRTOUINT64(kp->kp_eproc.e_tsess);
 
 			kp2p->p_estcpu = kp->kp_proc.p_estcpu;
 			kp2p->p_rtime_sec = kp->kp_proc.p_estcpu;
@@ -578,7 +576,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kp2p->p_sticks = kp->kp_proc.p_sticks;
 			kp2p->p_iticks = kp->kp_proc.p_iticks;
 
-			kp2p->p_tracep = PTRTOINT64(kp->kp_proc.p_tracep);
+			kp2p->p_tracep = PTRTOUINT64(kp->kp_proc.p_tracep);
 			kp2p->p_traceflag = kp->kp_proc.p_traceflag;
 
 			kp2p->p_holdcnt = kl[0].l_holdcnt;
@@ -744,7 +742,7 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 		    nlwps * sizeof(struct kinfo_lwp));
 		if (kd->lwpbase == NULL)
 			return (NULL);
-		laddr = (u_long)PTRTOINT64(p.p_lwps.lh_first);
+		laddr = (u_long)PTRTOUINT64(p.p_lwps.lh_first);
 		for (i = 0; (i < nlwps) && (laddr != 0); i++) {
 			st = kvm_read(kd, laddr, &l, sizeof(l));
 			if (st == -1) {
@@ -753,9 +751,9 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 			}
 			kl = &kd->lwpbase[i];
 			kl->l_laddr = laddr;
-			kl->l_forw = PTRTOINT64(l.l_forw);
-			kl->l_back = PTRTOINT64(l.l_back);
-			kl->l_addr = PTRTOINT64(l.l_addr);
+			kl->l_forw = PTRTOUINT64(l.l_forw);
+			kl->l_back = PTRTOUINT64(l.l_back);
+			kl->l_addr = PTRTOUINT64(l.l_addr);
 			kl->l_lid = l.l_lid;
 			kl->l_flag = l.l_flag;
 			kl->l_swtime = l.l_swtime;
@@ -765,12 +763,12 @@ kvm_getlwps(kd, pid, paddr, esize, cnt)
 			kl->l_priority = l.l_priority;
 			kl->l_usrpri = l.l_usrpri;
 			kl->l_stat = l.l_stat;
-			kl->l_wchan = PTRTOINT64(l.l_wchan);
+			kl->l_wchan = PTRTOUINT64(l.l_wchan);
 			if (l.l_wmesg)
 				(void)kvm_read(kd, (u_long)l.l_wmesg,
 				    kl->l_wmesg, (size_t)WMESGLEN);
 			kl->l_cpuid = KI_NOCPU;
-			laddr = (u_long)PTRTOINT64(l.l_sibling.le_next);
+			laddr = (u_long)PTRTOUINT64(l.l_sibling.le_next);
 		}
 	}
 
