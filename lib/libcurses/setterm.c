@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.25 2000/06/12 20:48:34 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.26 2000/06/12 21:04:08 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.25 2000/06/12 20:48:34 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.26 2000/06/12 21:04:08 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,12 +340,11 @@ getcap(char *name)
 	char *new_tspace;
 
 	  /* verify cap exists and grab size of it at the same time */
-	if (t_getstr(_cursesi_genbuf, name, NULL, &ent_size) == ERR)
-		return ERR;
+	t_getstr(_cursesi_genbuf, name, NULL, &ent_size);
 
 	  /* grow tspace to hold the new cap */
 	if ((new_tspace = realloc(tspace, ent_size + tspace_size)) == NULL)
-		return ERR;
+		return NULL;
 
 	  /* point aoftspace to the same place in the newly allocated buffer */
 	offset = aoftspace - tspace;
