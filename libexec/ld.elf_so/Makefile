@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.45 2002/01/23 15:10:24 skrll Exp $
+#	$NetBSD: Makefile,v 1.46 2002/02/03 23:34:42 thorpej Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
-ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/}
+ARCHSUBDIR= ${MACHINE_ARCH:C/mipse[bl]/mips/:C/sh3e[bl]/sh3/}
 M= ${.CURDIR}/arch/${ARCHSUBDIR}
 
 .if ((${MACHINE_ARCH} == "alpha") ||					\
@@ -11,6 +11,7 @@ M= ${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "m68k") ||					\
      (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") ||	\
      (${MACHINE_ARCH} == "powerpc") ||					\
+     (${MACHINE_ARCH} == "sh3eb") || (${MACHINE_ARCH} == "sh3el") ||	\
      (${MACHINE_ARCH} == "sparc") ||					\
      (${MACHINE_ARCH} == "sparc64") ||					\
      (${MACHINE_ARCH} == "x86_64") ||					\
