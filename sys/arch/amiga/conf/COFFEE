@@ -1,4 +1,4 @@
-#	$NetBSD: COFFEE,v 1.3 1995/04/23 18:24:30 chopps Exp $
+#	$NetBSD: COFFEE,v 1.4 1995/05/12 13:09:17 chopps Exp $
 
 #
 # COFFEE - GENERIC but with GATEWAY and DEBUG
@@ -155,7 +155,8 @@ mgnsc0		at zbus0		# Magnum scsi
 wesc0		at zbus0		# Warp Engine scsi
 idesc0		at mainbus0		# A4000 & A1200 IDE
 afsc0		at zbus0		# A4091 scsi
-#flz3sc0		at zbus0		# FastlaneZ3 scsi
+flsc0		at zbus0		# FastlaneZ3 scsi
+bzsc0		at zbus0		# Blizzard 1230 scsi
 
 scsibus*	at gtsc0
 scsibus*	at ahsc0
@@ -169,7 +170,8 @@ scsibus*	at mgnsc0
 scsibus*	at wesc0
 scsibus*	at idesc0
 scsibus*	at afsc0
-#scsibus*	at flz3sc0
+scsibus*	at flsc0
+scsibus*	at bzsc0
 
 # each hard drive from low target to high
 # will configure to the next available sd unit number
