@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/10/16 03:33:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/10/25 02:42:00 dmcmahill Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -115,8 +115,8 @@ tm_p.h: Makefile
 
 CLEANFILES+=	options.h
 options.h: Makefile
-	for f in $(lang_options_files); do \
-		echo "#include \"$$f\""; \
+	for f in $(lang_options_files) ""; do \
+		if [ -n "$$f" ] ; then echo "#include \"$$f\""; fi; \
 	done | sed 's|$(GNUHOSTDIST)/gcc/||' > options.h
 
 
