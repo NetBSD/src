@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_cd9660.8,v 1.10.2.1 2000/07/15 14:02:42 jdolecek Exp $
+.\" $NetBSD: mount_cd9660.8,v 1.10.2.2 2000/07/16 07:52:06 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993, 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -101,11 +101,14 @@ Do not use any Rockridge extensions included in the filesystem.
 Same as
 .Cm norrip .
 For compatibility with Solaris only.
+.It Cm rrcaseins
+Makes all lookups case-insensitive even for CD-ROMs with Rock-Ridge
+extensions (for Rock-Ridge, default is case-sensitive lookup).
 .El
 .El
 
 For compatibility with previous releases, following obsolete flags are
-recognized:
+still recognized:
 .Bl -tag -width indent
 .It Fl e
 Same as
