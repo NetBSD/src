@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.3 2000/11/09 17:20:24 itojun Exp $	*/
+/*	$NetBSD: iop.c,v 1.4 2000/11/14 18:48:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@
 #include <sys/ioctl.h>
 #include <sys/endian.h>
 #include <sys/pool.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -508,7 +510,7 @@ iop_alloc_dmamem(struct iop_softc *sc, int size, bus_dmamap_t *dmamap,
 	int rseg, rv;
 	bus_dma_segment_t seg;
 	
-	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, NBPG, 0, 
+	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, 
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: dmamem_alloc = %d\n", sc->sc_dv.dv_xname, rv);
 		return (rv);
@@ -556,7 +558,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	mb->msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_OUTBOUND_INIT);
 	mb->msgictx = IOP_ICTX;
 	mb->msgtctx = im->im_tctx;
-	mb->pagesize = NBPG;
+	mb->pagesize = PAGE_SIZE;
 	mb->flags = 0x80 | ((IOP_MAX_MSG_SIZE >> 2) << 16);
 
 	status = 0;

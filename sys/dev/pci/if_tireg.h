@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.1 1999/09/01 11:47:46 drochner Exp $ */
+/* $NetBSD: if_tireg.h,v 1.2 2000/11/14 18:42:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -997,7 +997,7 @@ struct ti_event_desc {
 #define TI_JRAWLEN (TI_JUMBO_FRAMELEN + ETHER_ALIGN + sizeof(u_int64_t))
 #define TI_JLEN (TI_JRAWLEN + (sizeof(u_int64_t) - \
 	(TI_JRAWLEN % sizeof(u_int64_t))))
-#define TI_JPAGESZ NBPG
+#define TI_JPAGESZ PAGE_SIZE
 #define TI_RESID (TI_JPAGESZ - (TI_JLEN * TI_JSLOTS) % TI_JPAGESZ)
 #define TI_JMEM ((TI_JLEN * TI_JSLOTS) + TI_RESID)
 
