@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2002/02/27 01:20:55 christos Exp $ */
+/*	$NetBSD: mem.c,v 1.20.8.1 2002/05/17 13:35:37 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,6 @@
 #include <sys/msgbuf.h>
 
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 #include <machine/ctlreg.h>
 
 #include <uvm/uvm_extern.h>
@@ -63,27 +62,13 @@ vaddr_t prom_vstart = 0xf000000;
 vaddr_t prom_vend = 0xf0100000;
 caddr_t zeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*ARGSUSED*/
 int
@@ -270,14 +255,4 @@ unlock:
 		physlock = 0;
 	}
 	return (error);
-}
-
-paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-
-	return (-1);
 }
