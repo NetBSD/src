@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.10 1994/05/19 07:12:44 deraadt Exp $
+ * $Id: autoconf.c,v 1.11 1994/05/27 08:43:30 pk Exp $
  */
 
 #include <sys/param.h>
@@ -822,6 +822,7 @@ swapconf()
 				swp->sw_nblks = nblks;
 			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
+	dumpconf();
 }
 
 #define	DOSWAP			/* Change swdevt and dumpdev too */
