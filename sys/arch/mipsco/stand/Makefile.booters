@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.9 2004/06/21 18:20:08 jmc Exp $
+#	$NetBSD: Makefile.booters,v 1.10 2004/07/19 01:41:26 chs Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -8,13 +8,8 @@ MIPSCO=	${S}/arch/mipsco
 
 .PATH:	${.CURDIR}/../common
 
+NOMAN=		# defined
 BINMODE?= 444
-
-# XXX SHOULD NOT NEED TO DEFINE THESE!
-LIBCRT0=
-LIBC=
-LIBCRTBEGIN=
-LIBCRTEND=
 
 .PHONY:		machine-links
 beforedepend: machine-links
@@ -48,6 +43,8 @@ PRIMARY_LOAD_ADDRESS?=	0x80600000
 SECONDARY_LOAD_ADDRESS?=0x80610000
 
 LDSCRIPT?=	${MIPSCO}/conf/stand.ldscript
+
+.include <bsd.own.mk>
 
 .if defined(PRIMARY_PROG)
 PROG=		${PRIMARY_PROG}
@@ -142,6 +139,3 @@ cleanlibdir:
 	-rm -rf lib
 
 .include <bsd.prog.mk>
-
-/usr/lib/crt0.o:
-	true
