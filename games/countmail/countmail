@@ -1,5 +1,7 @@
 #!/bin/sh
 
+#	$NetBSD: countmail,v 1.2 1997/10/03 08:50:42 mrg Exp $
+
 # Copyright (c) 1994, 1996 Charles Hannum.  All rights reserved.
 
 # Count the messages in your mailbox, using only POSIX shell builtins.
