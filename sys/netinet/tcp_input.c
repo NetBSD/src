@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.41 1998/01/21 01:21:22 mellon Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.42 1998/01/24 05:04:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994, 1995
@@ -782,19 +782,21 @@ after_listen:
 			}
 			todrop--;
 		}
-		if (todrop >= ti->ti_len) {
+		if (todrop > ti->ti_len ||
+		    (todrop == ti->ti_len && (tiflags & TH_FIN) == 0)) {
 			/*
-			 * Any valid FIN must be to the left of the
-			 * window.  At this point, FIN must be a
-			 * duplicate or out-of-sequence, so drop it.
+			 * Any valid FIN must be to the left of the window.
+			 * At this point the FIN must be a duplicate or
+			 * out of sequence; drop it.
 			 */
 			tiflags &= ~TH_FIN;
 			/*
-			 * Send ACK to resynchronize, and drop any data,
-			 * but keep on processing for RST or ACK.
+			 * Send an ACK to resynchronize and drop any data.
+			 * But keep on processing for RST or ACK.
 			 */
 			tp->t_flags |= TF_ACKNOW;
-			tcpstat.tcps_rcvdupbyte += todrop = ti->ti_len;
+			todrop = ti->ti_len;
+			tcpstat.tcps_rcvdupbyte += todrop;
 			tcpstat.tcps_rcvduppack++;
 		} else {
 			tcpstat.tcps_rcvpartduppack++;
