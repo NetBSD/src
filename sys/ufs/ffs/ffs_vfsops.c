@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.30 1997/07/22 14:36:31 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.31 1997/10/16 18:29:11 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -678,8 +678,9 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_blocks = fs->fs_dsize;
 	sbp->f_bfree = fs->fs_cstotal.cs_nbfree * fs->fs_frag +
 		fs->fs_cstotal.cs_nffree;
-	sbp->f_bavail = (fs->fs_dsize * (100 - fs->fs_minfree) / 100) -
-		(fs->fs_dsize - sbp->f_bfree);
+	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
+		(100 - fs->fs_minfree) / (u_int64_t) 100) -
+		(u_int64_t) (fs->fs_dsize - sbp->f_bfree));
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree;
 	if (sbp != &mp->mnt_stat) {
