@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.1 2000/08/20 19:59:46 pk Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.1.8.1 2001/10/01 12:46:17 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,8 +160,8 @@ cgthreeattach_sbus(parent, self, args)
 
 	/* Remember cookies for cgthree_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
-	sc->sc_paddr = (bus_addr_t)sa->sa_offset;
+	sc->sc_btype = (bus_type_t)sa->sa_slot; /* Should be deprecated */
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
@@ -188,7 +188,7 @@ cgthreeattach_sbus(parent, self, args)
 	sc->sc_fbc = (struct fbcontrol *)bh;
 
 	isconsole = fb_is_console(node);
-	name = getpropstring(node, "model");
+	name = PROM_getpropstring(node, "model");
 
 	if (sa->sa_npromvaddrs != 0)
 		fb->fb_pixels = (caddr_t)sa->sa_promvaddrs[0];

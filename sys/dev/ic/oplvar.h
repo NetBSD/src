@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.5 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.5.6.1 2001/10/01 12:45:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ struct opl_softc {
 #define OPL_2 2
 #define OPL_3 3
 	struct	midisyn syn;
+	struct	device *sc_mididev;
 
 	struct opl_voice voices[OPL3_NVOICE];
 	int volume;
@@ -96,4 +97,5 @@ extern const struct opl_operators opl3_instrs[];
 
 int	opl_find __P((struct opl_softc *));
 void	opl_attach __P((struct opl_softc *));
+int	opl_detach __P((struct opl_softc *, int));
 #endif

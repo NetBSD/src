@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2001/08/27 02:00:19 nisimura Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2.2.1 2001/10/01 12:41:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

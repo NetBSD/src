@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.1 2001/03/04 08:25:39 matt Exp $	*/
+/*	$NetBSD: copystr.S,v 1.1.2.1 2001/10/01 12:37:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -64,7 +64,7 @@ Lvm_maxkern_address:
  */
 
 ENTRY(copystr)
-	stmfd	sp!, {r4-r5}
+	stmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	teq	r2, #0x00000000
 	mov	r5, #0x00000000
 	moveq	r0, #ENAMETOOLONG
@@ -86,7 +86,7 @@ Lcopystrexit:
 	teq	r3, #0x00000000
 	strne	r5, [r3]
 
-	ldmfd	sp!, {r4-r5}
+	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	mov	pc, lr
 
 
@@ -128,7 +128,7 @@ ENTRY(copyinstr)
  */
 
 ENTRY(copyoutstr)
-	stmfd	sp!, {r4-r6}
+	stmfd	sp!, {r4-r6}		/* stack isn't 8 byte aligned */
 
 	/* Validate user and kernel addresses */
 	ldr	r4, Lvm_min_address
@@ -180,7 +180,7 @@ Lcopyinoutstrexit:
 	teq	r3, #0x00000000
 	strne	r6, [r3]
 
-	ldmfd	sp!, {r4-r6}
+	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
 	mov	pc, lr
 
 /* A fault occurred during the copy */
@@ -192,7 +192,7 @@ Lcopystrfault:
 
 /* Source or Destination address was bad so fail */
 Lbadaddress:
-	ldmfd	sp!, {r4-r6}
+	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
 	mov	r0, #EFAULT
 	mov	pc, lr
 
@@ -201,6 +201,7 @@ Lcopystrpcbfault:
 	mov	r2, r1
 	mov	r1, r0
 	add	r0, pc, #Lcopystrpcbfaulttext - . - 8
+	bic	sp, sp, #7			/* align stack to 8 bytes */
 	b	_C_LABEL(panic)
 
 Lcopystrpcbfaulttext:

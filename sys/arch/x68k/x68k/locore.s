@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.65 2001/05/30 15:24:40 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.65.4.1 2001/10/01 12:43:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -718,6 +718,11 @@ Ldorte:
  */
 BSS(lowram,4)
 BSS(esym,4)
+
+GLOBAL(_verspad)
+	.word	0
+GLOBAL(boot_version)
+	.word	X68K_BOOTIF_VERS
 
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts

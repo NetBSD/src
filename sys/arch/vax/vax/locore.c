@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.61 2001/06/12 11:24:50 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.61.4.1 2001/10/01 12:43:01 fvdl Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -180,11 +181,11 @@ _start(struct rpb *prpb)
 		dep_call = &ka53_calls;
 		switch((vax_siedata & 0xff00) >> 8) {
 		case VAX_STYP_51:
-			strcpy(cpu_model, "MicroVAX 3100/m90 or 95"); break;
+			strcpy(cpu_model, "MicroVAX 3100/m{90,95}"); break;
 		case VAX_STYP_52:
 			strcpy(cpu_model, "VAX 4000/100"); break;
 		case VAX_STYP_53:
-			strcpy(cpu_model, "VAX 4000/108 or 105A"); break;
+			strcpy(cpu_model, "VAX 4000/{105A,106A,108}"); break;
 		case VAX_STYP_55:
 			strcpy(cpu_model, "MicroVAX 3100/m85"); break;
 		default:

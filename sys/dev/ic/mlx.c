@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.13.2.2 2001/09/26 15:28:12 fvdl Exp $	*/
+/*	$NetBSD: mlx.c,v 1.13.2.3 2001/10/01 12:45:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -319,7 +319,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	memset(mlx->mlx_sgls, 0, size);
 
 	/*
-	 * Allocate and initalize the CCBs.
+	 * Allocate and initialize the CCBs.
 	 */
 	mc = malloc(sizeof(*mc) * MLX_MAX_QUEUECNT, M_DEVBUF, M_NOWAIT);
 	mlx->mlx_ccbs = mc;

@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.21 2001/08/26 12:25:38 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.21.2.1 2001/10/01 12:37:44 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.21 2001/08/26 12:25:38 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.21.2.1 2001/10/01 12:37:44 fvdl Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -189,7 +189,10 @@ irq_handler(struct irqframe *irqf)
 		    "mask = 0x%x\n", status, s, irqmask[s]);
 		Debugger();
 	}
+#if NFIQ > 0
 handled:
+#endif	/* NFIQ > 0 */
+
 #if 0
 	printf(" handled\n");
 #endif

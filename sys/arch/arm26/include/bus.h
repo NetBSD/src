@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.5 2001/06/12 20:16:23 bjh21 Exp $ */
+/* $NetBSD: bus.h,v 1.5.4.1 2001/10/01 12:37:47 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -69,6 +69,9 @@ extern int bus_space_shift(bus_space_tag_t, bus_space_handle_t, int,
 /* Allocating and freeing bus space */
 #define bus_space_alloc(t, rs, re, s, a, b, c, ap, hp) (-1)
 #define bus_space_free(t, h, s) /* Do nothing */
+
+/* Mapping bus space into user address space (impossible on arm26) */
+#define bus_space_mmap(t, a, o, p, f) (-1)
 
 /* Used by ne2000.c */
 #define BUS_SPACE_ALIGNED_POINTER ALIGNED_POINTER

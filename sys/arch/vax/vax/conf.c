@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.55 2001/06/22 16:40:51 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.55.4.1 2001/10/01 12:43:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -42,6 +42,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+#include <machine/cpu.h>
 
 #include "opt_cputype.h"
 

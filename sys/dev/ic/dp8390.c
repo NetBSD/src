@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.47 2001/08/09 11:54:32 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.47.2.1 2001/10/01 12:45:33 fvdl Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -757,7 +757,7 @@ dp8390_intr(arg)
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
-			 * be zero if a transmitter interrupt occured while not
+			 * be zero if a transmitter interrupt occurred while not
 			 * actually transmitting).
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.

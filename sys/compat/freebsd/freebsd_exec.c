@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.15 2001/06/18 02:00:52 christos Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.15.4.1 2001/10/01 12:43:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -62,6 +62,7 @@ const struct emul emul_freebsd = {
 	trapsignal,
 	freebsd_sigcode,
 	freebsd_esigcode,
+	freebsd_setregs,
 	NULL,
 	NULL,
 	NULL,

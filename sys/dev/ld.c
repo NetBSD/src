@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.11.2.2 2001/09/26 15:28:09 fvdl Exp $	*/
+/*	$NetBSD: ld.c,v 1.11.2.3 2001/10/01 12:44:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -470,7 +470,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 		return (-1);
 	}
 
-	part = DISKPART(vdev_rdev(devvp));
+	part = DISKPART(vdev_rdev(bp->b_devvp));
 	lp = sc->sc_dk.dk_label;
 
 	/*

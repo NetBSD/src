@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.23 2001/08/26 11:47:19 simonb Exp $
+#	$NetBSD: files.tc,v 1.23.2.1 2001/10/01 12:46:25 fvdl Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -61,7 +61,7 @@ file	dev/tc/if_fta.c			fta
 
 # STIC (stamp interface chip) for PX and PXG
 #define	stic
-#file	dev/tc/stic.c			stic
+#file	dev/tc/stic.c			stic needs-flag
 
 # PX PMAG-C
 #device	px: wsemuldisplaydev, stic

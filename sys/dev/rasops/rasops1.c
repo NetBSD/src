@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.12 2000/06/13 13:36:55 ad Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.12.8.1 2001/10/01 12:46:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.12 2000/06/13 13:36:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.12.8.1 2001/10/01 12:46:14 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,7 +61,7 @@ static void	rasops1_putchar16 __P((void *, int, int col, u_int, long));
 #endif
 
 /*
- * Initalize rasops_info struct for this colordepth.
+ * Initialize rasops_info struct for this colordepth.
  */
 void
 rasops1_init(ri)

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.455 2001/09/01 23:50:43 thorpej Exp $
+#	$NetBSD: files,v 1.455.2.1 2001/10/01 12:43:58 fvdl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -14,6 +14,8 @@ defopt	UCONSOLE
 defopt	NEW_PIPE
 
 defopt	MULTIPROCESSOR
+
+defopt	opt_callout.h	CALLWHEEL_STATS
 
 defopt	opt_sysv.h	SYSVMSG SYSVSEM	SYSVSHM
 defopt	opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
@@ -145,7 +147,8 @@ defopt	LOCKDEBUG
 defopt	SYSCALL_DEBUG
 
 # memory (ram) disk options
-defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER MEMORY_DISK_IS_ROOT MEMORY_DISK_DYNAMIC
+defopt	opt_md.h	MEMORY_DISK_HOOKS MEMORY_DISK_SERVER
+			MEMORY_DISK_IS_ROOT MEMORY_DISK_DYNAMIC
 
 defopt	opt_mdsize.h	MINIROOTSIZE
 
@@ -186,9 +189,10 @@ define	rasops24
 define	rasops32
 
 # net device attributes - we have generic code for arc(net), ether(net),
-# fddi, token ring and atm.
+# fddi, token ring, atm and eco(net).
 define	arc
 define	atm
+define	eco
 define	ether
 define	fddi
 define	hippi
@@ -324,8 +328,6 @@ file	dev/ic/an.c			an
 # AMD 79c930-based 802.11 cards
 device	awi: arp, wlan, ifnet
 file	dev/ic/awi.c			awi
-file	dev/ic/awi_wep.c		awi
-file	dev/ic/awi_wicfg.c		awi
 file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
@@ -360,6 +362,10 @@ attach	le at depca with le_depca
 # Sun HME Ethernet controllers
 device	hme: arp, ether, ifnet, mii
 file	dev/ic/hme.c			hme
+
+# Sun GEM Ethernet controllers
+device	gem: arp, ether, ifnet, mii
+file	dev/ic/gem.c			gem
 
 # 8390-family Ethernet controllers
 defopt	opt_ipkdb.h	IPKDB_DP8390				: IPKDB
@@ -610,6 +616,7 @@ define	mcabus { }			# MicroChannel attachment
 define	usbus { }			# USB attachment
 define	fwbus {[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
 define	vmebus { }			# VME bus attachment
+define	acpibus { }			# ACPI "bus" attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself:
@@ -638,7 +645,8 @@ define	bpf_filter
 
 # Attributes used by the ISDN subsystem
 define	isdn		# the ISDN subsystem
-define	passive_isdn	# files needed by passive cards (XXX - protocol specific)
+define	passive_isdn	# files needed by passive cards (XXX - protocol
+			# specific)
 define	spppi4b		# synchronous PPP support
 
 # ISDN cards based on the Siemens ISAC/HSCX chipset (or lookalikes)
@@ -684,6 +692,7 @@ defpseudo faith: ifnet
 defpseudo stf: ifnet
 
 defpseudo sequencer
+defpseudo clockctl
 
 # ISDN userland pseudo devices
 defpseudo i4btrc: isdn
@@ -722,7 +731,10 @@ file	coda/coda_vnops.c		coda
 file	crypto/arc4/arc4.c		wlan
 file	crypto/des/des_ecb.c		ipsec & ipsec_esp
 file	crypto/des/des_setkey.c		ipsec & ipsec_esp
-file	crypto/blowfish/bf_enc.c	ipsec & ipsec_esp
+file	crypto/des/des_enc.c		ipsec & ipsec_esp & !crypto_md_des_enc
+#file    crypto/des/des_cbc.c		ipsec & ipsec_esp & !crypto_md_des_cbc
+file	crypto/blowfish/bf_enc.c	ipsec & ipsec_esp & !crypto_md_bf_enc
+#file	crypto/blowfish/bf_cbc.c	ipsec & ipsec_esp & !crypto_md_bf_cbc
 file	crypto/blowfish/bf_skey.c	ipsec & ipsec_esp
 file	crypto/cast128/cast128.c	ipsec & ipsec_esp
 file	crypto/rijndael/rijndael-alg-fst.c ipsec & ipsec_esp
@@ -903,7 +915,6 @@ file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
-file	kern/vfs_cluster.c
 file	kern/vfs_getcwd.c
 file	kern/vfs_init.c
 file	kern/vfs_lockf.c
@@ -963,6 +974,7 @@ file	net/if_arcsubr.c		arc			needs-flag
 file	net/if_atmsubr.c		atm
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
+file	net/if_ecosubr.c		eco
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan | vlan | pppoe
 file	net/if_faith.c			faith & inet & inet6	needs-flag
@@ -971,6 +983,7 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-count	
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
+file	net/if_ieee80211subr.c		wlan
 file	net/if_loop.c			loop			needs-count
 file	net/if_media.c
 file	net/if_ppp.c			ppp			needs-count
@@ -1252,3 +1265,4 @@ file	netisdn/i4b_i4bdrv.c		i4b			needs-flag
 file	netisdn/i4b_l4.c		isdn			needs-flag
 file	netisdn/i4b_l4mgmt.c		isdn			needs-flag
 file	netisdn/i4b_l4timer.c		isdn			needs-flag
+file	dev/clockctl.c			clockctl		needs-flag

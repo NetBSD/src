@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.72 2001/08/20 23:15:40 bjh21 Exp $
+#	$NetBSD: DEVNAMES,v 1.72.2.1 2001/10/01 12:44:09 fvdl Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -178,6 +178,7 @@ clock			sparc64
 clock			sun2
 clock			sun3
 clock			x68k
+clockctl		MI
 cmi			vax
 cmpci			MI
 cnw			MI		
@@ -238,6 +239,7 @@ dmz			vax
 dn			vax
 dp8390nic		MI		Attribute
 dpt			MI		
+dpti			MI
 drbbc			amiga
 drbbc			amigappc
 drsc			amiga
@@ -257,7 +259,9 @@ eb			MI
 ebus			sparc64
 ec			MI		
 ec			sun2
+eca			arm26
 eccmemctl		sparc
+eco			MI		Attribute
 ed			amiga
 ed			amigappc
 ed			MI (MCA)
@@ -367,6 +371,7 @@ gayle			amiga		Attribute
 gayle			amigappc	Attribute
 gbox			hp300
 gbus			alpha
+gem			MI
 gio			sgimips
 giobus			sgimips		Attribute
 gm			macppc

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.39 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: cfb.c,v 1.39.4.1 2001/10/01 12:41:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/pmioctl.h>
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/bt459.h>
 #include <pmax/dev/cfbvar.h>
@@ -238,7 +238,7 @@ cfbinit(fi, cfbaddr, unit, silent)
 	fi->fi_blanked = 0;
 
 	/* Fill in Frame Buffer Type struct. */
-	fi->fi_type.fb_boardtype = PMAX_FBTYPE_CFB;
+	fi->fi_type.fb_type = PMAX_FBTYPE_CFB;
 	fi->fi_type.fb_width = 1024;
 	fi->fi_type.fb_height = 864;
 	fi->fi_type.fb_depth = 8;

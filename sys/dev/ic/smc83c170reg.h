@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.6 2000/05/26 00:20:26 tsutsui Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.6.10.1 2001/10/01 12:45:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ struct epic_fraglist {
 #define	INTSTAT_RXIDLE		0x00020000	/* receive idle */
 #define	INTSTAT_INT_ACTV	0x00010000	/* interrupt active */
 #define	INTSTAT_GP2_INT		0x00008000	/* gpio2 low (PHY event) */
-#define	INTSTAT_FATAL_INT	0x00001000	/* fatal error occured */
+#define	INTSTAT_FATAL_INT	0x00001000	/* fatal error occurred */
 #define	INTSTAT_RCT		0x00000800	/* rx copy threshold crossed */
 #define	INTSTAT_PREI		0x00000400	/* preemptive interrupt */
 #define	INTSTAT_CNT		0x00000200	/* counter overflow */

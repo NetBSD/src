@@ -1,6 +1,6 @@
-#	$NetBSD: INSTALLSBC,v 1.1 2000/12/07 10:57:17 toddpw Exp $
+#	$NetBSD: INSTALLSBC,v 1.1.4.1 2001/10/01 12:40:26 fvdl Exp $
 #
-# INSTALL
+# INSTALLSBC
 
 include	"arch/mac68k/conf/std.mac68k"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fr-kbdmap.c,v 1.1.1.1 1996/06/22 20:14:11 leo Exp $	*/
+/*	$NetBSD: fr-kbdmap.c,v 1.1.1.1.42.1 2001/10/01 12:38:14 fvdl Exp $	*/
 
 /*
  * Contributed by Cedric Moreau
@@ -205,6 +205,6 @@ struct kbdmap ascii_kbdmap = {
 #ifndef _KERNEL
 main()
 {
-  write (1, &ascii_kbdmap, sizeof (kbdmap));
+  exit(write (1, &ascii_kbdmap, sizeof (kbdmap)) == sizeof (kbdmap) ? 0 : 1);
 }
 #endif /* _KERNEL */

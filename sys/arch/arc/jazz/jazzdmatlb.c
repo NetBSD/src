@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlb.c,v 1.4 2000/12/24 09:25:29 ur Exp $	*/
+/*	$NetBSD: jazzdmatlb.c,v 1.4.2.1 2001/10/01 12:37:27 fvdl Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 #include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

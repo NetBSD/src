@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.54 2001/05/26 21:27:15 chs Exp $ */
+/*	$NetBSD: iommu.c,v 1.54.4.1 2001/10/01 12:42:09 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -42,6 +42,7 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -197,7 +198,7 @@ iommu_attach(parent, self, aux)
 	 * implicit iommu and attach that sbus node under it.
 	 */
 	node = ma->ma_node;
-	if (strcmp(getpropstring(node, "name"), "sbus") == 0)
+	if (strcmp(PROM_getpropstring(node, "name"), "sbus") == 0)
 		js1_implicit_iommu = 1;
 	else
 		js1_implicit_iommu = 0;
@@ -230,7 +231,7 @@ iommu_attach(parent, self, aux)
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
 	sc->sc_pagesize = js1_implicit_iommu ? NBPG
-				: getpropint(node, "page-size", NBPG),
+				: PROM_getpropint(node, "page-size", NBPG),
 
 	/*
 	 * Allocate memory for I/O pagetables.
@@ -262,7 +263,7 @@ iommu_attach(parent, self, aux)
 		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
 		va += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Copy entries from current IOMMU table.
@@ -335,7 +336,7 @@ iommu_attach(parent, self, aux)
 		struct iommu_attach_args ia;
 
 		bzero(&ia, sizeof ia);
-		ia.iom_name = getpropstring(node, "name");
+		ia.iom_name = PROM_getpropstring(node, "name");
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
@@ -344,7 +345,7 @@ iommu_attach(parent, self, aux)
 		ia.iom_node = node;
 
 		ia.iom_reg = NULL;
-		getprop(node, "reg", sizeof(struct sbus_reg),
+		PROM_getprop(node, "reg", sizeof(struct sbus_reg),
 			&ia.iom_nreg, (void **)&ia.iom_reg);
 
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
@@ -559,7 +560,7 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 	bus_size_t *sgsizep;
 {
 	bus_size_t sgsize;
-	u_long align, voff;
+	u_long align, voff, dvaddr;
 	int s, error;
 	int pagesz = PAGE_SIZE;
 
@@ -583,9 +584,9 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
 						? EX_WAITOK : EX_NOWAIT,
-					(u_long *)dvap);
+					&dvaddr);
 	splx(s);
-
+	*dvap = (bus_addr_t)dvaddr;
 	*sgsizep = sgsize;
 	return (error);
 }
@@ -846,7 +847,7 @@ iommu_dmamem_map(t, segs, nsegs, size, kvap, flags)
 		va += pagesz;
 		size -= pagesz;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

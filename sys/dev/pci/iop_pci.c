@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.5 2001/04/01 15:06:22 ad Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.5.4.1 2001/10/01 12:45:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -112,8 +112,10 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
 		reg = pci_conf_read(pc, pa->pa_tag, i);
-		if (PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_MEM)
+		if (PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_MEM) {
+			sc->sc_memaddr = PCI_MAPREG_MEM_ADDR(reg);
 			break;
+		}
 	}
 	if (i == PCI_MAPREG_END) {
 		printf("can't find mapping\n");
@@ -127,6 +129,8 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_pcibus = pa->pa_bus;
+	sc->sc_pcidev = pa->pa_device;
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_bus_memt = pa->pa_memt;
 	sc->sc_bus_iot = pa->pa_iot;

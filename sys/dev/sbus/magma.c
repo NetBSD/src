@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.10 2001/05/02 10:32:11 scw Exp $	*/
+/*	$NetBSD: magma.c,v 1.10.4.1 2001/10/01 12:46:19 fvdl Exp $	*/
 /*
  * magma.c
  *
@@ -317,13 +317,13 @@ magma_match(parent, cf, aux)
 
 	dprintf(("magma: matched `%s'\n", sa->sa_name));
 	dprintf(("magma: magma_prom `%s'\n",
-		getpropstring(sa->sa_node, "magma_prom")));
+		PROM_getpropstring(sa->sa_node, "magma_prom")));
 	dprintf(("magma: intlevels `%s'\n",
-		getpropstring(sa->sa_node, "intlevels")));
+		PROM_getpropstring(sa->sa_node, "intlevels")));
 	dprintf(("magma: chiprev `%s'\n",
-		getpropstring(sa->sa_node, "chiprev")));
+		PROM_getpropstring(sa->sa_node, "chiprev")));
 	dprintf(("magma: clock `%s'\n",
-		getpropstring(sa->sa_node, "clock")));
+		PROM_getpropstring(sa->sa_node, "clock")));
 
 	return (1);
 }
@@ -342,7 +342,7 @@ magma_attach(parent, self, aux)
 	int node, chip;
 
 	node = sa->sa_node;
-	magma_prom = getpropstring(node, "magma_prom");
+	magma_prom = PROM_getpropstring(node, "magma_prom");
 
 	/* find the card type */
 	while (card->mb_name && strcmp(magma_prom, card->mb_name) != 0)
@@ -383,10 +383,10 @@ magma_attach(parent, self, aux)
 
 		cd->cd_reg = (caddr_t)bh + card->mb_cd1400[chip];
 
-		/* XXX getpropstring(node, "clock") */
+		/* XXX PROM_getpropstring(node, "clock") */
 		cd->cd_clock = 25;
 
-		/* getpropstring(node, "chiprev"); */
+		/* PROM_getpropstring(node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
 		cd->cd_chiprev = cd1400_read_reg(cd, CD1400_GFRCR);
 

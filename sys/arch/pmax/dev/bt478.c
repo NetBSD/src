@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.16 2001/07/07 14:21:00 simonb Exp $	*/
+/*	$NetBSD: bt478.c,v 1.16.4.1 2001/10/01 12:41:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@
 
 #include <machine/bus.h>			/*  wbflush() */
 
-#include <machine/fbio.h>
+#include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 
 #include <pmax/dev/bt478.h>			/* chipset definitions */

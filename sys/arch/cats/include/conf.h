@@ -6,8 +6,9 @@
  */
 #include "fcom.h"
 
+#define	CONF_HAVE_PCI
+#define	CONF_HAVE_USB
 #define	CONF_HAVE_SCSIPI
 #define	CONF_HAVE_WSCONS
-#define	CONF_HAVE_USB
 
 #endif	/* _CATS_CONF_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.17 2001/06/02 18:09:14 chs Exp $ */
+/* $NetBSD: trap.c,v 1.17.4.1 2001/10/01 12:40:15 fvdl Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17 2001/06/02 18:09:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.17.4.1 2001/10/01 12:40:15 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -669,14 +669,14 @@ writeback(fp, docachepush)
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
-			pmap_update();
+			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL_40(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
-			pmap_update();
+			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
 			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);

@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.26.2.2 2001/09/26 15:28:07 fvdl Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.26.2.3 2001/10/01 12:43:21 fvdl Exp $	*/
 
 /*
  * 
@@ -1705,7 +1705,7 @@ coda_readdir(v)
 	if (cp->c_ovp == NULL) {
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
-	    error = VOP_OPEN(vp, FREAD, cred, p);
+	    error = VOP_OPEN(vp, FREAD, cred, p, NULL);
 #ifdef	CODA_VERBOSE
 printf("coda_readdir: Internally Opening %p\n", vp, NULL);
 #endif

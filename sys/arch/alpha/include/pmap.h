@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.53 2001/07/15 21:57:02 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.53.4.1 2001/10/01 12:37:03 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -201,7 +201,7 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
-#define	pmap_update()			/* nothing (yet) */
+#define	pmap_update(pmap)		/* nothing (yet) */
 
 #define	pmap_is_referenced(pg)						\
 	(((pg)->mdpage.pvh_attrs & PGA_REFERENCED) != 0)

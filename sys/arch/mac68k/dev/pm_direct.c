@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.15 2000/09/27 03:57:51 scottr Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.15.2.1 2001/10/01 12:40:26 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1050,7 +1050,7 @@ pm_adb_op(buffer, compRout, data, command)
 
 	PM_VIA_INTR_ENABLE();
 
-	/* wait until the PM interrupt is occured */
+	/* wait until the PM interrupt has occurred */
 	delay = 0x80000;
 	while (adbWaiting == 1) {
 		switch (mac68k_machine.machineid) {

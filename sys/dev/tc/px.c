@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.7 2001/07/04 14:17:58 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.7.4.1 2001/10/01 12:46:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/sticreg.h>
+#include <dev/tc/sticio.h>
 #include <dev/tc/sticvar.h>
 
 #define	PX_STIC_POLL_OFFSET	0x000000	/* STIC DMA poll space */
@@ -77,29 +78,45 @@
 #define	PX_VDAC_RESET_OFFSET	0x300000	/* VDAC reset register */
 #define	PX_ROM_OFFSET		0x300000	/* ROM code */
 
-#define	PX_BUF_SIZE		(STIC_PACKET_SIZE*2 + STIC_IMGBUF_SIZE*2)
+#define	PX_BUF_COUNT		16
+#define	PX_BUF_INC(x)		((x + 1) & (PX_BUF_COUNT - 1))
+
+/*
+ * We need enough aligned memory to hold:
+ *
+ * - Xserver communication area (4096 bytes)
+ * - 16 packet buffers (4096 bytes each)
+ * - 2 image buffers (5120 bytes each)
+ *
+ */
+#define	PX_BUF_SIZE		\
+    (STIC_PACKET_SIZE * PX_BUF_COUNT + STIC_IMGBUF_SIZE*2 + STIC_XCOMM_SIZE)
 #define	PX_BUF_ALIGN		32768
 
-static void	px_attach(struct device *, struct device *, void *);
-static void	px_init(struct stic_info *, int);
-static int	px_match(struct device *, struct cfdata *, void *);
+#define	PXF_QUEUE	0x01
 
-static int	px_intr(void *);
-static u_int32_t	*px_pbuf_get(struct stic_info *);
-static int	px_pbuf_post(struct stic_info *, u_int32_t *);
+void	px_attach(struct device *, struct device *, void *);
+void	px_init(struct stic_info *, int);
+int	px_ioctl(struct stic_info *, u_long, caddr_t, int, struct proc *);
+int	px_match(struct device *, struct cfdata *, void *);
+
+int	px_intr(void *);
+u_int32_t	*px_pbuf_get(struct stic_info *);
+int	px_pbuf_post(struct stic_info *, u_int32_t *);
 
 void	px_cnattach(tc_addr_t);
 
 struct px_softc {
 	struct	device px_dv;
 	struct	stic_info *px_si;
+	volatile u_int32_t	*px_qpoll[PX_BUF_COUNT];
 };
 
 struct cfattach px_ca = {
 	sizeof(struct px_softc), px_match, px_attach
 };
 
-static int
+int
 px_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct tc_attach_args *ta;
@@ -109,13 +126,14 @@ px_match(struct device *parent, struct cfdata *match, void *aux)
 	return (strncmp("PMAG-CA ", ta->ta_modname, TC_ROM_LLEN) == 0);
 }
 
-static void
+void
 px_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct stic_info *si;
 	struct tc_attach_args *ta;
 	struct px_softc *px;
-	int console;
+	int console, i;
+	u_long v;
 
 	px = (struct px_softc *)self;
 	ta = (struct tc_attach_args *)aux;
@@ -136,9 +154,18 @@ px_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	px->px_si = si;
+	si->si_dv = self;
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, px_intr, si);
 
 	printf(": 8 plane, %dx%d stamp\n", si->si_stampw, si->si_stamph);
+
+	for (i = 0; i < PX_BUF_COUNT; i++) {
+		v = i * STIC_PACKET_SIZE +
+		    si->si_buf_phys + STIC_XCOMM_SIZE;
+		v = ((v & 0xffff8000) << 3) | (v & 0x7fff);
+		px->px_qpoll[i] = (volatile u_int32_t *)
+		    ((caddr_t)si->si_slotbase + (v >> 9));
+	}
 
 	stic_attach(self, si, console);
 }
@@ -154,11 +181,11 @@ px_cnattach(tc_addr_t addr)
 	stic_cnattach(si);
 }
 
-static void
+void
 px_init(struct stic_info *si, int bootstrap)
 {
 	struct pglist pglist;
-	caddr_t kva;
+	caddr_t kva, bva;
 	paddr_t bpa;
 
 	/*
@@ -169,80 +196,133 @@ px_init(struct stic_info *si, int bootstrap)
 	 */
 	if (bootstrap) {
 		/* 
-		 * UVM won't be initalised at this point, so grab memory
+		 * UVM won't be initialised at this point, so grab memory
 		 * directly from vm_physmem[].
 		 */
-		kva = (caddr_t)uvm_pageboot_alloc(PX_BUF_SIZE + PX_BUF_ALIGN);
+		bva = (caddr_t)uvm_pageboot_alloc(PX_BUF_SIZE + PX_BUF_ALIGN);
 		bpa = (STIC_KSEG_TO_PHYS(kva) + PX_BUF_ALIGN - 1) &
 		    ~(PX_BUF_ALIGN - 1);
 		if (bpa + PX_BUF_SIZE > 8192*1024)
 			panic("px_init: allocation out of bounds");
 	} else {
 		TAILQ_INIT(&pglist);
-		if (uvm_pglistalloc(PX_BUF_SIZE, 0, 8192*1024, PX_BUF_ALIGN, 
-		    PX_BUF_ALIGN, &pglist, 1, 0) != 0)
+		if (uvm_pglistalloc(PX_BUF_SIZE, 0, 8192*1024, PX_BUF_ALIGN,
+		    0, &pglist, 1, 0) != 0)
 			panic("px_init: allocation failure");
 		bpa = TAILQ_FIRST(&pglist)->phys_addr;
 	}
 
-	kva = (caddr_t)TC_PHYS_TO_UNCACHED(si->si_slotbase);
+	kva = (caddr_t)si->si_slotbase;
 
 	si->si_vdac = (u_int32_t *)(kva + PX_VDAC_OFFSET);
 	si->si_vdac_reset = (u_int32_t *)(kva + PX_VDAC_RESET_OFFSET);
 	si->si_stic = (volatile struct stic_regs *)(kva + PX_STIC_OFFSET);
 	si->si_stamp = (u_int32_t *)(kva + PX_STAMP_OFFSET);
 	si->si_buf = (u_int32_t *)TC_PHYS_TO_UNCACHED(bpa);
-	si->si_buf_phys =  bpa;
+	si->si_buf_phys = bpa;
 	si->si_buf_size = PX_BUF_SIZE;
 	si->si_disptype = WSDISPLAY_TYPE_PX;
 	si->si_depth = 8;
+	si->si_sxc = (volatile struct stic_xcomm *)si->si_buf;
 
 	si->si_pbuf_get = px_pbuf_get;
 	si->si_pbuf_post = px_pbuf_post;
+	si->si_ioctl = px_ioctl;
 
 	memset(si->si_buf, 0, PX_BUF_SIZE);
 
 	stic_init(si);
 }
 
-static int
+int
 px_intr(void *cookie)
 {
 	volatile struct stic_regs *sr;
+	volatile struct stic_xcomm *sxc;
 	struct stic_info *si;
+	struct px_softc *px;
 	int state;
 
 	si = cookie;
+	px = (struct px_softc *)si->si_dv;
 	sr = si->si_stic;
 	state = sr->sr_ipdvint;
+	sxc = si->si_sxc;
 
+	/*
+	 * Vertical-retrace condition.
+	 *
+	 * Clear the flag and flush out any waiting VDAC updates.  We do
+	 * this at retrace time to avoid producing `shearing' and other
+	 * nasty artifacts.
+	 */	 
 	if ((state & STIC_INT_V) != 0) {
-		sr->sr_ipdvint = 
-		    STIC_INT_V_WE | (sr->sr_ipdvint & STIC_INT_V_EN);
+		sr->sr_ipdvint = STIC_INT_V_WE | STIC_INT_V_EN;
 		tc_wmb();
 		stic_flush(si);
 	}
 
-#ifdef DEBUG
-	if ((sr->sr_ipdvint & STIC_INT_E) != 0) {
-		printf("%s: error intr, %x %x %x %x %x", si->si_dv.dv_xname,
+	/*
+	 * Error condition.
+	 *
+	 * Simply clear the flag and report the error.
+	 */
+	if ((state & STIC_INT_E) != 0) {
+		printf("%s: error intr, %x %x %x %x %x", px->px_dv.dv_xname,
 		    sr->sr_ipdvint, sr->sr_sticsr, sr->sr_buscsr,
 		    sr->sr_busadr, sr->sr_busdat);
+		sr->sr_ipdvint = STIC_INT_E_WE | STIC_INT_E_EN;
+		tc_wmb();
 	}
-#endif
+
+	/*
+	 * Check for queue stalls.
+	 */
+	if (sxc->sxc_tail != sxc->sxc_head && !sxc->sxc_busy)
+		state |= STIC_INT_P;
+
+	/*
+	 * Packet-done condition.
+	 *
+	 * If packet queueing is enabled, clear the condition, and increment
+	 * the tail (submitted) pointer.
+	 */
+	if ((si->si_hwflags & PXF_QUEUE) != 0 && (state & STIC_INT_P) != 0) {
+		sr->sr_ipdvint = STIC_INT_P_WE | STIC_INT_P_EN;
+		tc_wmb();
+
+		if (sxc->sxc_tail != sxc->sxc_head) {
+			sxc->sxc_done[sxc->sxc_tail] = 0;
+			sxc->sxc_tail = PX_BUF_INC(sxc->sxc_tail);
+		}
+
+		if (sxc->sxc_tail != sxc->sxc_head) {
+			if (*px->px_qpoll[sxc->sxc_tail] != STAMP_OK) {
+				sxc->sxc_nreject++;
+				sxc->sxc_busy = 0;
+			} else
+				sxc->sxc_busy = 1;
+		} else
+			sxc->sxc_busy = 0;
+	}
+
+	if ((si->si_hwflags & PXF_QUEUE) != 0 && (state & STIC_INT_P_EN) == 0)
+		printf("px_intr: STIC_INT_P_EN == 0\n");
 
 	return (1);
 }
 
-static u_int32_t *
+u_int32_t *
 px_pbuf_get(struct stic_info *si)
 {
+	u_long off;
 
 	si->si_pbuf_select ^= STIC_PACKET_SIZE;
-	return ((u_int32_t *)((caddr_t)si->si_buf + si->si_pbuf_select));
+	off = si->si_pbuf_select + STIC_XCOMM_SIZE;
+	return ((u_int32_t *)((caddr_t)si->si_buf + off));
 }
 
-static int
+int
 px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 {
 	volatile u_int32_t *poll, junk;
@@ -266,7 +346,7 @@ px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 
 	for (c = STAMP_RETRIES; c != 0; c--) {
 		if ((sr->sr_ipdvint & STIC_INT_P) != 0) {
-			sr->sr_ipdvint = STIC_INT_P_WE | STIC_INT_P_EN;
+			sr->sr_ipdvint = STIC_INT_P_WE;
 			tc_wmb();
 			junk = *poll;
 			return (0);
@@ -277,4 +357,70 @@ px_pbuf_post(struct stic_info *si, u_int32_t *buf)
 	/* STIC has lost the plot, punish it. */
 	stic_reset(si);
 	return (-1);
+}
+
+int
+px_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
+	 struct proc *p)
+{
+	volatile struct stic_xcomm *sxc;
+	volatile struct stic_regs *sr;
+	struct stic_xinfo *sxi;
+	int rv, s;
+
+	sr = si->si_stic;
+
+	switch (cmd) {
+	case STICIO_STARTQ:
+		if (si->si_dispmode != WSDISPLAYIO_MODE_MAPPED ||
+		    (si->si_hwflags & PXF_QUEUE) != 0) {
+			rv = EBUSY;
+			break;
+		}
+
+		sxc = si->si_sxc;
+	 	memset((void *)sxc->sxc_done, 0, sizeof(sxc->sxc_done));
+		sxc->sxc_head = 0;
+		sxc->sxc_tail = 0;
+		sxc->sxc_nreject = 0;
+		sxc->sxc_nstall = 0;
+
+		s = spltty();
+		si->si_hwflags |= PXF_QUEUE;
+		sr->sr_ipdvint = STIC_INT_P_WE | STIC_INT_P_EN;
+		tc_wmb();
+		splx(s);
+
+		rv = 0;
+		break;
+
+	case STICIO_STOPQ:
+		s = spltty();
+		si->si_hwflags &= ~PXF_QUEUE;
+		sr->sr_ipdvint = STIC_INT_P_WE | STIC_INT_P;
+		tc_wmb();
+		splx(s);
+		rv = 0;
+		break;
+
+	case STICIO_GXINFO:
+		sxi = (struct stic_xinfo *)data;
+		sxi->sxi_unit = si->si_unit;
+		sxi->sxi_stampw = si->si_stampw;
+		sxi->sxi_stamph = si->si_stamph;
+		sxi->sxi_buf_size = si->si_buf_size;
+		sxi->sxi_buf_phys = (u_int)si->si_buf_phys;
+		sxi->sxi_buf_pktoff = STIC_XCOMM_SIZE;
+		sxi->sxi_buf_pktcnt = PX_BUF_COUNT;
+		sxi->sxi_buf_imgoff =
+		    STIC_XCOMM_SIZE + STIC_PACKET_SIZE * PX_BUF_COUNT;
+		rv = 0;
+		break;
+
+	default:
+		rv = ENOTTY;
+		break;
+	}
+
+	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.7 2001/09/05 15:46:52 sato Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.7.2.1 2001/10/01 12:38:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -68,16 +68,16 @@ int	hpcapm_debug = HPCAPMDEBUG_CONF;
 /* Definition of the driver for autoconfig. */
 static int	hpcapm_match(struct device *, struct cfdata *, void *);
 static void	hpcapm_attach(struct device *, struct device *, void *);
-static int	hpcapm_hook __P((void *, int, long, void *));
+static int	hpcapm_hook(void *, int, long, void *);
 
-static void	hpcapm_disconnect __P((void *));
-static void	hpcapm_enable __P((void *, int));
-static int	hpcapm_set_powstate __P((void *, u_int, u_int));
-static int	hpcapm_get_powstat __P((void *, struct apm_power_info *));
-static int	hpcapm_get_event __P((void *, u_int *, u_int *));
-static void	hpcapm_cpu_busy __P((void *));
-static void	hpcapm_cpu_idle __P((void *));
-static void	hpcapm_get_capabilities __P((void *, u_int *, u_int *));
+static void	hpcapm_disconnect(void *);
+static void	hpcapm_enable(void *, int);
+static int	hpcapm_set_powstate(void *, u_int, u_int);
+static int	hpcapm_get_powstat(void *, struct apm_power_info *);
+static int	hpcapm_get_event(void *, u_int *, u_int *);
+static void	hpcapm_cpu_busy(void *);
+static void	hpcapm_cpu_idle(void *);
+static void	hpcapm_get_capabilities(void *, u_int *, u_int *);
 
 struct cfattach hpcapm_ca = {
 	sizeof (struct device), hpcapm_match, hpcapm_attach
@@ -112,10 +112,7 @@ struct apm_accessops hpcapm_accessops = {
 extern struct cfdriver hpcapm_cd;
 
 static int
-hpcapm_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+hpcapm_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -126,10 +123,7 @@ hpcapm_match(parent, cf, aux)
 }
 
 static void
-hpcapm_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+hpcapm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct apmhpc_softc *sc;
 	struct apmdev_attach_args aaa;
@@ -170,11 +164,7 @@ hpcapm_attach(parent, self, aux)
 }
 
 static int
-hpcapm_hook(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+hpcapm_hook(void *ctx, int type, long id, void *msg)
 {
 	struct apmhpc_softc *sc;
 	int s;
@@ -310,8 +300,7 @@ hpcapm_hook(ctx, type, id, msg)
 }
 
 static void
-hpcapm_disconnect(scx)
-	void *scx;
+hpcapm_disconnect(void *scx)
 {
 	struct apmhpc_softc *sc;
 
@@ -319,9 +308,7 @@ hpcapm_disconnect(scx)
 }
 
 static void
-hpcapm_enable(scx, onoff)
-	void *scx;
-	int onoff;
+hpcapm_enable(void *scx, int onoff)
 {
 	struct apmhpc_softc *sc;
 
@@ -329,9 +316,7 @@ hpcapm_enable(scx, onoff)
 }
 
 static int
-hpcapm_set_powstate(scx, devid, powstat)
-	void *scx;
-	u_int devid, powstat;
+hpcapm_set_powstate(void *scx, u_int devid, u_int powstat)
 {
 	struct apmhpc_softc *sc;
 	int s;
@@ -446,9 +431,7 @@ hpcapm_set_powstate(scx, devid, powstat)
 }
 
 static int
-hpcapm_get_powstat(scx, pinfo)
-	void *scx;
-	struct apm_power_info *pinfo;
+hpcapm_get_powstat(void *scx, struct apm_power_info *pinfo)
 {
 	struct apmhpc_softc *sc;
 
@@ -461,10 +444,7 @@ hpcapm_get_powstat(scx, pinfo)
 }
 
 static int
-hpcapm_get_event(scx, event_type, event_info)
-	void *scx;
-	u_int *event_type;
-	u_int *event_info;
+hpcapm_get_event(void *scx, u_int *event_type, u_int *event_info)
 {
 	struct apmhpc_softc *sc;
 	int s, i;
@@ -491,8 +471,7 @@ hpcapm_get_event(scx, event_type, event_info)
 }
 
 static void
-hpcapm_cpu_busy(scx)
-	void *scx;
+hpcapm_cpu_busy(void *scx)
 {
 	struct apmhpc_softc *sc;
 
@@ -500,8 +479,7 @@ hpcapm_cpu_busy(scx)
 }
 
 static void
-hpcapm_cpu_idle(scx)
-	void *scx;
+hpcapm_cpu_idle(void *scx)
 {
 	struct apmhpc_softc *sc;
 
@@ -509,9 +487,7 @@ hpcapm_cpu_idle(scx)
 }
 
 static void
-hpcapm_get_capabilities(scx, numbatts, capflags)
-	void *scx;
-	u_int *numbatts, *capflags;
+hpcapm_get_capabilities(void *scx, u_int *numbatts, u_int *capflags)
 {
 	struct apmhpc_softc *sc;
 

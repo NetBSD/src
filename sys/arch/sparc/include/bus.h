@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2001/07/19 15:32:18 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.25.2.1 2001/10/01 12:42:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,8 +78,13 @@
  */
 typedef	u_long	bus_space_handle_t;
 typedef u_long	bus_type_t;
-typedef u_long	bus_addr_t;
+typedef u_int64_t	bus_addr_t;
 typedef u_long	bus_size_t;
+
+/* bus_addr_t is extended to 64-bits and has the iospace encoded in it */
+#define	BUS_ADDR_IOSPACE(x)	((x)>>32)
+#define	BUS_ADDR_PADDR(x)	((x)&0xffffffff)
+#define	BUS_ADDR(io, pa)	((((u_int64_t)(io))<<32)|(pa))
 
 /*
  * Access methods for bus resources and address space.
@@ -116,12 +121,12 @@ struct sparc_bus_space_tag {
 				bus_size_t,		/*size*/
 				int));			/*flags*/
 
-	int	(*sparc_bus_mmap) __P((
+	paddr_t	(*sparc_bus_mmap) __P((
 				bus_space_tag_t,
-				bus_type_t,		/**/
-				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+				bus_addr_t,
+				off_t,
+				int,			/*prot*/
+				int));			/*flags*/
 
 	void	*(*sparc_intr_establish) __P((
 				bus_space_tag_t,
@@ -186,12 +191,12 @@ static void	bus_space_barrier __P((
 				bus_size_t,
 				bus_size_t,
 				int));
-static int	bus_space_mmap __P((
+static paddr_t	bus_space_mmap __P((
 				bus_space_tag_t,
-				bus_type_t,		/**/
 				bus_addr_t,		/**/
-				int,			/*flags*/
-				bus_space_handle_t *));
+				off_t,
+				int,			/*prot*/
+				int));			/*flags*/
 static void	*bus_intr_establish __P((
 				bus_space_tag_t,
 				int,			/*bus-specific intr*/
@@ -252,15 +257,15 @@ bus_space_subregion(t, h, o, s, hp)
 	_BS_CALL(t, sparc_bus_subregion)(t, h, o, s, hp);
 }
 
-__inline__ int
-bus_space_mmap(t, bt, a, f, hp)
+__inline__ paddr_t
+bus_space_mmap(t, a, o, p, f)
 	bus_space_tag_t	t;
-	bus_type_t	bt;
 	bus_addr_t	a;
+	off_t		o;
+	int		p;
 	int		f;
-	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_mmap)(t, bt, a, f, hp);
+	_BS_CALL(t, sparc_bus_mmap)(t, a, o, p, f);
 }
 
 __inline__ void *

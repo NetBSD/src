@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.1 2001/09/03 01:50:00 matt Exp $	*/
+/*	$NetBSD: conf.h,v 1.1.2.1 2001/10/01 12:37:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -99,6 +99,7 @@ cdev_decl(pc);
 cdev_decl(ofcons_);
 cdev_decl(ofd);
 cdev_decl(ofrtc);
+cdev_decl(sacom);
 cdev_decl(scr);
 cdev_decl(prof);
 #define ofromread  ofromrw
@@ -114,10 +115,17 @@ cdev_decl(urio);
 cdev_decl(uscanner);
 cdev_decl(vc_nb_);
 cdev_decl(wsdisplay);
+cdev_decl(wsfont);
 cdev_decl(wskbd);
 cdev_decl(wsmouse);
 cdev_decl(wsmux);
 cdev_decl(scsibus);
 cdev_decl(openfirm);
+cdev_decl(pci);
+cdev_decl(agp);
+cdev_decl(iop);
+cdev_decl(ld);
+cdev_decl(mlx);
+cdev_decl(mly);
 
 #endif	/* _ARM_CONF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: umprintf.c,v 1.4 1996/02/02 18:13:04 mycroft Exp $	*/
+/*	$NetBSD: umprintf.c,v 1.4.42.1 2001/10/01 12:41:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991 The Regents of the University of California.
@@ -49,12 +49,14 @@ umprintf(char *fmt,...)
 	unsigned long ul;
 	char ch;
 
-        va_start (ap,fmt);
+	va_start(ap,fmt);
 
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
-			if (ch == '\0')
+			if (ch == '\0') {
+				va_end(ap);
 				return;
+			}
 			scncnputc(0, ch);
 		}
 		ch = *fmt++;
@@ -74,6 +76,7 @@ number:			p = ksprintn(ul, base, &tmp);
 			scncnputc(0,ch);
 		}
 	}
+	va_end(ap);
 }
 
 /*

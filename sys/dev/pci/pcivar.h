@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.46 2001/05/04 15:13:17 bouyer Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.46.4.1 2001/10/01 12:46:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,7 @@
  * provided by pci_machdep.h.
  */
 
+#include <sys/device.h>
 #include <machine/bus.h>
 #include <dev/pci/pcireg.h>
 
@@ -50,6 +51,7 @@
 typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 struct pcibus_attach_args;
 
+#ifdef _KERNEL
 /*
  * Machine-dependent definitions.
  */
@@ -133,9 +135,20 @@ struct pci_quirkdata {
 };
 #define	PCI_QUIRK_MULTIFUNCTION		1
 
-#ifdef _KERNEL
 #include "locators.h"
-#endif
+
+struct pci_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_iot, sc_memt;
+	bus_dma_tag_t sc_dmat; 
+	pci_chipset_tag_t sc_pc; 
+	int sc_bus, sc_maxndevs;
+	u_int sc_intrswiz;
+	pcitag_t sc_intrtag;
+	int sc_flags;
+};
+
+extern struct cfdriver pci_cd;
 
 /*
  * Locators devices that attach to 'pcibus', as specified to config.
@@ -176,8 +189,19 @@ const struct pci_quirkdata *
 	pci_lookup_quirkdata __P((pci_vendor_id_t, pci_product_id_t));
 
 /*
+ * Helper functions for user access to the PCI bus.
+ */
+struct proc;
+int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
+	    int flag, struct proc *));
+
+/*
  * Misc.
  */
 char   *pci_findvendor __P((pcireg_t));
+int	pci_find_device(struct pci_attach_args *pa,
+			int (*match)(struct pci_attach_args *));
+
+#endif /* _KERNEL */
 
 #endif /* _DEV_PCI_PCIVAR_H_ */

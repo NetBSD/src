@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.27 2000/12/19 06:23:26 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.27.6.1 2001/10/01 12:45:48 fvdl Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -328,7 +328,7 @@ pcic_isa_config_interrupts(self)
 	 * scarce, shareable, and for PCIC controllers, very infrequent.
 	 */
 	if ((self->dv_cfdata->cf_flags & 1) == 0) {
-		if (sc->irq != IRQUNK) {
+		if (sc->irq != ISACF_IRQ_DEFAULT) {
 			if ((chipmask & (1 << sc->irq)) == 0)
 				printf("%s: warning: configured irq %d not "
 				    "detected as available\n",
@@ -336,27 +336,27 @@ pcic_isa_config_interrupts(self)
 		} else if (chipmask == 0 ||
 		    isa_intr_alloc(ic, chipmask, IST_EDGE, &sc->irq)) {
 			printf("%s: no available irq; ", sc->dev.dv_xname);
-			sc->irq = IRQUNK;
+			sc->irq = ISACF_IRQ_DEFAULT;
 		} else if ((chipmask & ~(1 << sc->irq)) == 0 && chipuniq == 0) {
 			printf("%s: can't share irq with cards; ",
 			    sc->dev.dv_xname);
-			sc->irq = IRQUNK;
+			sc->irq = ISACF_IRQ_DEFAULT;
 		}
 	} else {
 		printf("%s: ", sc->dev.dv_xname);
-		sc->irq = IRQUNK;
+		sc->irq = ISACF_IRQ_DEFAULT;
 	}
 
-	if (sc->irq != IRQUNK) {
+	if (sc->irq != ISACF_IRQ_DEFAULT) {
 		sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 		    pcic_intr, sc);
 		if (sc->ih == NULL) {
 			printf("%s: can't establish interrupt",
 			    sc->dev.dv_xname);
-			sc->irq = IRQUNK;
+			sc->irq = ISACF_IRQ_DEFAULT;
 		}
 	}
-	if (sc->irq == IRQUNK)
+	if (sc->irq == ISACF_IRQ_DEFAULT)
 		printf("polling for socket events\n");
 	else
 		printf("%s: using irq %d for socket events\n", sc->dev.dv_xname,

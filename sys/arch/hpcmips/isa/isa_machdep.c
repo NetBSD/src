@@ -1,35 +1,46 @@
-/*	$NetBSD: isa_machdep.c,v 1.15 2001/06/11 05:22:10 enami Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.15.4.1 2001/10/01 12:39:13 fvdl Exp $	*/
 
-/*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_vr41xx.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/reboot.h>
-
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -41,7 +52,6 @@
 #include <dev/hpc/hpciovar.h>
 
 #include <hpcmips/hpcmips/machdep.h>
-#include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>
 #include <hpcmips/vr/vripreg.h>
 #include <hpcmips/vr/vripvar.h>
@@ -78,9 +88,9 @@ int vrisa_debug = VRISADEBUG_CONF;
 #define INTR_MODE(i)	(((i)>>24) & 0x07)
 #define INTR_NIRQS	16
 
-int	vrisabprint __P((void*, const char*));
-int	vrisabmatch __P((struct device*, struct cfdata*, void*));
-void	vrisabattach __P((struct device*, struct device*, void*));
+int	vrisabprint(void *, const char *);
+int	vrisabmatch(struct device *, struct cfdata *, void *);
+void	vrisabattach(struct device *, struct device *, void *);
 
 struct vrisab_softc {
 	struct device sc_dev;
@@ -96,7 +106,7 @@ struct cfattach vrisab_ca = {
 #ifdef DEBUG_FIND_PCIC
 #include <mips/cpuregs.h>
 #warning DEBUG_FIND_PCIC
-static void __find_pcic __P((void));
+static void __find_pcic(void);
 #endif
 
 #ifdef DEBUG_FIND_COMPORT
@@ -104,34 +114,30 @@ static void __find_pcic __P((void));
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
 #warning DEBUG_FIND_COMPORT
-static void __find_comport __P((void));
+static void __find_comport(void);
 #endif
 
-
 int
-vrisabmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vrisabmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
     
 	if (strcmp(haa->haa_busname, match->cf_driver->cd_name))
-		return 0;
+		return (0);
+
 	if (match->cf_loc[HPCIOIFCF_PLATFORM] == HPCIOIFCF_PLATFORM_DEFAULT) 
-		return 1;
+		return (1);
+
 	mask = PLATID_DEREF(match->cf_loc[HPCIOIFCF_PLATFORM]);
 	if (platid_match(&platid, &mask))
-		return 2;
-	return 0;
+		return (2);
+
+	return (0);
 }
 
 void
-vrisabattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vrisabattach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	struct vrisab_softc *sc = (void*)self;
@@ -184,20 +190,19 @@ vrisabattach(parent, self, aux)
 }
 
 int
-vrisabprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+vrisabprint(void *aux, const char *pnp)
 {
 	if (pnp)
 		return (QUIET);
+
 	return (UNCONF);
 }
 
 void
-isa_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isa_attach_hook(struct device *parent, struct device *self,
+    struct isabus_attach_args *iba)
 {
+
 }
 
 const struct evcnt *
@@ -205,17 +210,12 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
 
 	/* XXX for now, no evcnt parent reported */
-	return NULL;
+	return (NULL);
 }
 
 void *
-isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
-	isa_chipset_tag_t ic;
-	int intr;
-	int type;  /* XXX not yet */
-	int level;  /* XXX not yet */
-	int (*ih_fun) __P((void*));
-	void *ih_arg;
+isa_intr_establish(isa_chipset_tag_t ic, int intr, int type, int level,
+    int (*ih_fun)(void*), void *ih_arg)
 {
 	struct vrisab_softc *sc = ic->ic_sc;
 	int port, irq, mode;
@@ -257,11 +257,11 @@ isa_intr_establish(ic, intr, type, level, ih_fun, ih_arg)
 	port = INTR_PORT(intr);
 
 	VPRINTF(("ISA IRQ %d -> %s port %d, %s\n",
-	       irq, sc->sc_hc->hc_name, port, intr_mode_names[mode]));
+	    irq, sc->sc_hc->hc_name, port, intr_mode_names[mode]));
 
 	/* Call Vr routine */
-	return hpcio_intr_establish(sc->sc_hc, port, intr_modes[mode],
-				    ih_fun, ih_arg);
+	return (hpcio_intr_establish(sc->sc_hc, port, intr_modes[mode],
+	    ih_fun, ih_arg));
 }
 
 void
@@ -275,19 +275,15 @@ isa_intr_disestablish(ic, arg)
 }
 
 int
-isa_intr_alloc(ic, mask, type, irq)
-	isa_chipset_tag_t ic;
-	int mask;
-	int type;
-	int *irq;
+isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq)
 {
 	/* XXX not coded yet. this is temporary XXX */
 	DPRINTF(("isa_intr_alloc:"));
 	DBITDISP32(mask);
 	*irq = (ffs(mask) -1); /* XXX */
-	return 0;
-}
 
+	return (0);
+}
 
 #ifdef DEBUG_FIND_PCIC
 #warning DEBUG_FIND_PCIC
@@ -298,80 +294,82 @@ __find_pcic(void)
 	u_int32_t addr;
 	u_int8_t reg;
 	int __read_revid (u_int32_t port) 
-		{
-			addr = MIPS_PHYS_TO_KSEG1(i + port);
-			printf("%#x\r", i);
-			for (found = 0, j = 0; j < 0x100; j += 0x40) {
-				*((volatile u_int8_t*)addr) = j;
-				reg = *((volatile u_int8_t*)(addr + 1));
+	    {
+		    addr = MIPS_PHYS_TO_KSEG1(i + port);
+		    printf("%#x\r", i);
+		    for (found = 0, j = 0; j < 0x100; j += 0x40) {
+			    *((volatile u_int8_t *)addr) = j;
+			    reg = *((volatile u_int8_t *)(addr + 1));
 #ifdef DEBUG_FIND_PCIC_I82365SL_ONLY
-				if (reg == 0x82 || reg == 0x83) {
+			    if (reg == 0x82 || reg == 0x83) {
 #else
-				if ((reg & 0xc0) == 0x80) {
+				    if ((reg & 0xc0) == 0x80) {
 #endif
-					found++;
-				}
-			}
-			if (found)
-				printf("\nfound %d socket at %#x (base from %#x)\n", found, addr,
-				       i + port - VR_ISA_PORT_BASE);
-		};
+					    found++;
+				    }
+			    }
+			    if (found)
+				    printf("\nfound %d socket at %#x"
+					"(base from %#x)\n", found, addr,
+					i + port - VR_ISA_PORT_BASE);
+		    };
+	    }
 	step = 0x1000000;
 	printf("\nFinding PCIC. Trying ISA port %#x-%#x step %#x\n", 
-	       VR_ISA_PORT_BASE, VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE, step);
-	for (i = VR_ISA_PORT_BASE; i < VR_ISA_PORT_BASE+VR_ISA_PORT_SIZE; i+= step) {
+	    VR_ISA_PORT_BASE, VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE, step);
+	for (i = VR_ISA_PORT_BASE; i < VR_ISA_PORT_BASE+VR_ISA_PORT_SIZE;
+	    i+= step) {
 		__read_revid (0x3e0);
 		__read_revid (0x3e2);
 	}
 }
-#endif
+#endif /* DEBUG_FIND_PCIC */
 
 
 #ifdef DEBUG_FIND_COMPORT
 #warning DEBUG_FIND_COMPORT
 
-static int probe_com __P((u_int32_t));
+static int probe_com(u_int32_t);
 
-static int  probe_com( port_addr )
-	u_int32_t	port_addr;
+static int
+probe_com(u_int32_t port_addr)
 {
-	u_int32_t	addr;
-	u_int8_t	ubtmp1;
-	u_int8_t	ubtmp2;
+	u_int32_t addr;
+	u_int8_t ubtmp1, ubtmp2;
 
-	addr = MIPS_PHYS_TO_KSEG1( port_addr );
+	addr = MIPS_PHYS_TO_KSEG1(port_addr);
 
-	*((volatile u_int8_t*)(addr + com_cfcr)) = LCR_8BITS;
-	*((volatile u_int8_t*)(addr + com_iir)) = 0;
+	*((volatile u_int8_t *)(addr + com_cfcr)) = LCR_8BITS;
+	*((volatile u_int8_t *)(addr + com_iir)) = 0;
 
-	ubtmp1 = *((volatile u_int8_t*)(addr + com_cfcr));
-	ubtmp2 = *((volatile u_int8_t*)(addr + com_iir));
+	ubtmp1 = *((volatile u_int8_t *)(addr + com_cfcr));
+	ubtmp2 = *((volatile u_int8_t *)(addr + com_iir));
 
-	if( (ubtmp1 != LCR_8BITS) || ((ubtmp2 & 0x38) != 0) ){
-		return( 0 );
+	if ((ubtmp1 != LCR_8BITS) || ((ubtmp2 & 0x38) != 0)) {
+		return (0);
 	}
 
-	return( 1 );
+	return (1);
 }
 
 static void
-__find_comport(void)
+__find_comport()
 {
-	int	found;
-	u_int32_t	port;
-	u_int32_t	step;
+	int found;
+	u_int32_t port, step;
 
 	found = 0;
 	step = 0x08;
 
 	printf("Searching COM port. Trying ISA port %#x-%#x step %#x\n",
-		   VR_ISA_PORT_BASE, VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE - 1, step );
+	    VR_ISA_PORT_BASE, VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE - 1, step );
 
-	for( port = VR_ISA_PORT_BASE ; port < (VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE) ; port += step ){
-		if( probe_com( port ) ){
+	for (port = VR_ISA_PORT_BASE;
+	    port < (VR_ISA_PORT_BASE + VR_ISA_PORT_SIZE); port += step){
+		if (probe_com(port)) {
 			found++;
-			printf("found %d at %#x\n",found,port);
+			printf("found %d at %#x\n", found, port);
 		}
 	}
 }
-#endif
+#endif /* DEBUG_FIND_COMPORT */

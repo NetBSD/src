@@ -1,4 +1,4 @@
-/*     $NetBSD: bus.h,v 1.11 2001/07/19 15:32:13 thorpej Exp $   */
+/*     $NetBSD: bus.h,v 1.11.2.1 2001/10/01 12:39:10 fvdl Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  * Utility macros; do not use outside this file.
  */
 #define	__PB_TYPENAME_PREFIX(BITS)	___CONCAT(u_int,BITS)
-#define	__PB_TYPENAME(BITS)		___CONCAT(__PB_TYPENAME_PREFIX(BITS),_t)
+#define	__PB_TYPENAME(BITS)	___CONCAT(__PB_TYPENAME_PREFIX(BITS),_t)
 
 /*
  * Bus address and size types
@@ -89,8 +89,9 @@ typedef u_int32_t bus_space_handle_t;
 /*
  * Initialize extent.
  */
-void hpcmips_init_bus_space_extent __P((bus_space_tag_t));
-bus_space_tag_t hpcmips_alloc_bus_space_tag __P((void));
+bus_space_tag_t hpcmips_system_bus_space(void);
+void hpcmips_init_bus_space_extent(bus_space_tag_t);
+bus_space_tag_t hpcmips_alloc_bus_space_tag(void);
 
 struct hpcmips_bus_space {
     char t_name[16];  /* bus name */
@@ -101,8 +102,8 @@ struct hpcmips_bus_space {
 
 
 /*
- *	int bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
- *	    bus_size_t size, int flags, bus_space_handle_t *bshp));
+ *	int bus_space_map(bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int flags, bus_space_handle_t *bshp);
  *
  * Map a region of bus space.
  */
@@ -111,56 +112,53 @@ struct hpcmips_bus_space {
 #define	BUS_SPACE_MAP_LINEAR		0x02
 #define	BUS_SPACE_MAP_PREFETCHABLE		0x04
 
-int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
-	    int, bus_space_handle_t *));
+int	bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
+	    int, bus_space_handle_t *);
 
 /*
- *	void bus_space_unmap __P((bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t size));
+ *	void bus_space_unmap(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
  *
  * Unmap a region of bus space.
  */
 
-void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
+void	bus_space_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
- *	int bus_space_subregion __P((bus_space_tag_t t,
+ *	int bus_space_subregion(bus_space_tag_t t,
  *	    bus_space_handle_t bsh, bus_size_t offset, bus_size_t size,
- *	    bus_space_handle_t *nbshp));
+ *	    bus_space_handle_t *nbshp);
  *
  * Get a new handle for a subregion of an already-mapped area of bus space.
  */
 
-int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
+int	bus_space_subregion(bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t, bus_size_t, bus_space_handle_t *);
 
 /*
- *	int bus_space_alloc __P((bus_space_tag_t t, bus_addr_t, rstart,
+ *	int bus_space_alloc(bus_space_tag_t t, bus_addr_t, rstart,
  *	    bus_addr_t rend, bus_size_t size, bus_size_t align,
  *	    bus_size_t boundary, int flags, bus_addr_t *addrp,
- *	    bus_space_handle_t *bshp));
+ *	    bus_space_handle_t *bshp);
  *
  * Allocate a region of bus space.
  */
 
-int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
-	    bus_addr_t rend, bus_size_t size, bus_size_t align,
-	    bus_size_t boundary, int cacheable, bus_addr_t *addrp,
-	    bus_space_handle_t *bshp));
+int	bus_space_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
+	    bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 
 /*
- *	int bus_space_free __P((bus_space_tag_t t,
- *	    bus_space_handle_t bsh, bus_size_t size));
+ *	int bus_space_free(bus_space_tag_t t,
+ *	    bus_space_handle_t bsh, bus_size_t size);
  *
  * Free a region of bus space.
  */
 
-void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
-	    bus_size_t size));
+void	bus_space_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
- *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset));
+ *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
@@ -183,9 +181,9 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #endif
 
 /*
- *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
@@ -193,16 +191,13 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define __HPCMIPS_bus_space_read_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_read_multi_,BYTES)		\
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t));				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_multi_,BYTES)(bus_space_tag_t t,		\
+    bus_space_handle_t h, bus_size_t o, __PB_TYPENAME(BITS) *a,		\
+    size_t c)								\
 {									\
 									\
 	while (c--)							\
@@ -220,9 +215,9 @@ __HPCMIPS_bus_space_read_multi(4,32)
 #undef __HPCMIPS_bus_space_read_multi
 
 /*
- *	void bus_space_read_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count));
+ *	    u_intN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -231,16 +226,13 @@ __HPCMIPS_bus_space_read_multi(4,32)
 
 #define __HPCMIPS_bus_space_read_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_read_region_,BYTES)		\
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t));				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);			       		\
 									\
 static __inline void							\
-__CONCAT(bus_space_read_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_read_region_,BYTES)(bus_space_tag_t t,		\
+    bus_space_handle_t h, bus_size_t o, __PB_TYPENAME(BITS) *a,		\
+    size_t c)								\
 {									\
 									\
 	while (c--) {							\
@@ -260,9 +252,9 @@ __HPCMIPS_bus_space_read_region(4,32)
 #undef __HPCMIPS_bus_space_read_region
 
 /*
- *	void bus_space_write_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value));
+ *	    u_intN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
@@ -294,9 +286,9 @@ do {									\
 #endif
 
 /*
- *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
@@ -304,16 +296,13 @@ do {									\
 
 #define __HPCMIPS_bus_space_write_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_multi_,BYTES)		\
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t));				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_multi_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_write_multi_,BYTES)(bus_space_tag_t t,		\
+    bus_space_handle_t h, bus_size_t o, __PB_TYPENAME(BITS) *a,		\
+    size_t c)								\
 {									\
 									\
 	while (c--)							\
@@ -332,9 +321,9 @@ __HPCMIPS_bus_space_write_multi(4,32)
 #undef __HPCMIPS_bus_space_write_multi
 
 /*
- *	void bus_space_write_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count));
+ *	    const u_intN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
@@ -342,16 +331,13 @@ __HPCMIPS_bus_space_write_multi(4,32)
 
 #define __HPCMIPS_bus_space_write_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_write_region_,BYTES)		\
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS) *, size_t));				\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS) *, size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_write_region_,BYTES)(t, h, o, a, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) *a;						\
-	size_t c;							\
+__CONCAT(bus_space_write_region_,BYTES)(bus_space_tag_t t,		\
+    bus_space_handle_t h, bus_size_t o, __PB_TYPENAME(BITS) *a,		\
+    size_t c)								\
 {									\
 									\
 	while (c--) {							\
@@ -372,9 +358,9 @@ __HPCMIPS_bus_space_write_region(4,32)
 #undef __HPCMIPS_bus_space_write_region
 
 /*
- *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle/offset `count' times.
@@ -382,16 +368,12 @@ __HPCMIPS_bus_space_write_region(4,32)
 
 #define __HPCMIPS_bus_space_set_multi(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_set_multi_,BYTES)		\
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS), size_t));					\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_multi_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_multi_,BYTES)(bus_space_tag_t t,			\
+    bus_space_handle_t h, bus_size_t o, __PB_TYPENAME(BITS) v, size_t c)\
 {									\
 									\
 	while (c--)							\
@@ -410,9 +392,9 @@ __HPCMIPS_bus_space_set_multi(4,32)
 #undef __HPCMIPS_bus_space_set_multi
 
 /*
- *	void bus_space_set_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_set_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
- *	    size_t count));
+ *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
  * by tag/handle starting at `offset'.
@@ -420,16 +402,12 @@ __HPCMIPS_bus_space_set_multi(4,32)
 
 #define __HPCMIPS_bus_space_set_region(BYTES,BITS)			\
 static __inline void __CONCAT(bus_space_set_region_,BYTES)		\
-	__P((bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
-	__PB_TYPENAME(BITS), size_t));					\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	__PB_TYPENAME(BITS), size_t);					\
 									\
 static __inline void							\
-__CONCAT(bus_space_set_region_,BYTES)(t, h, o, v, c)			\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h;						\
-	bus_size_t o;							\
-	__PB_TYPENAME(BITS) v;						\
-	size_t c;							\
+__CONCAT(bus_space_set_region_,BYTES)(bus_space_tag_t t,		\
+    bus_space_handle_t h, bus_size_t o, __PB_TYPENAME(BITS) v, size_t c)\
 {									\
 									\
 	while (c--) {							\
@@ -450,10 +428,10 @@ __HPCMIPS_bus_space_set_region(4,32)
 #undef __HPCMIPS_bus_space_set_region
 
 /*
- *	void bus_space_copy_region_N __P((bus_space_tag_t tag,
+ *	void bus_space_copy_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh1, bus_size_t off1,
  *	    bus_space_handle_t bsh2, bus_size_t off2,
- *	    bus_size_t count));
+ *	    bus_size_t count);
  *
  * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
@@ -461,16 +439,13 @@ __HPCMIPS_bus_space_set_region(4,32)
 
 #define	__HPCMIPS_copy_region(BYTES)					\
 static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
-	__P((bus_space_tag_t,						\
-	    bus_space_handle_t bsh1, bus_size_t off1,			\
-	    bus_space_handle_t bsh2, bus_size_t off2,			\
-	    bus_size_t count));						\
+	(bus_space_tag_t, bus_space_handle_t, bus_size_t,		\
+	    bus_space_handle_t, bus_size_t, bus_size_t);		\
 									\
 static __inline void							\
-__CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
-	bus_space_tag_t t;						\
-	bus_space_handle_t h1, h2;					\
-	bus_size_t o1, o2, c;						\
+__CONCAT(bus_space_copy_region_,BYTES)(bus_space_tag_t t,		\
+    bus_space_handle_t h1, bus_size_t o1, bus_space_handle_t h2, 	\
+    bus_size_t o2, bus_size_t c)					\
 {									\
 	bus_size_t o;							\
 									\
@@ -501,9 +476,9 @@ __HPCMIPS_copy_region(4)
 /*
  * Bus read/write barrier methods.
  *
- *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	void bus_space_barrier(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    bus_size_t len, int flags));
+ *	    bus_size_t len, int flags);
  *
  * On the MIPS, we just flush the write buffer.
  */
@@ -601,33 +576,32 @@ struct hpcmips_bus_dma_tag {
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
-	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct mbuf *, int));
-	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct uio *, int));
-	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*_dmamem_free) __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
-	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int));
-	void	(*_dmamem_unmap) __P((bus_dma_tag_t, caddr_t, size_t));
-	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, off_t, int, int));
+	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*_dmamem_free)(bus_dma_tag_t, bus_dma_segment_t *, int);
+	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, caddr_t *, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int);
 
 	void	*_dmamap_chipset_v;
 };
@@ -684,37 +658,29 @@ struct hpcmips_bus_dmamap {
 };
 
 #ifdef _HPCMIPS_BUS_DMA_PRIVATE
-int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *));
-void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
-int	_bus_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
-int	_bus_dmamap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
-int	_bus_dmamap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
-int	_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
-void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
-
-int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
-int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, caddr_t *kvap, int flags));
-void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
-	    size_t size));
-paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, off_t off, int prot, int flags));
-
-int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
-	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
-	    vaddr_t low, vaddr_t high));
+int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
+int	_bus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+	    struct proc *, int);
+int	_bus_dmamap_load_mbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *, int);
+int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int);
+int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+	    int, bus_size_t, int);
+void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t,
+	    int);
+int	_bus_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
+	    bus_dma_segment_t *, int, int *, int);
+void	_bus_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
+int	_bus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
+	    caddr_t *, int);
+void	_bus_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+paddr_t	_bus_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int, off_t, int,
+	    int);
+int	_bus_dmamem_alloc_range(bus_dma_tag_t, bus_size_t, bus_size_t,
+	    bus_size_t, bus_dma_segment_t *, int, int *, int, vaddr_t,
+	    vaddr_t);
 
 extern struct hpcmips_bus_dma_tag hpcmips_default_bus_dma_tag;
 #endif /* _HPCMIPS_BUS_DMA_PRIVATE */

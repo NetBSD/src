@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.62 2001/06/12 13:20:29 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.62.4.1 2001/10/01 12:43:00 fvdl Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -34,6 +34,8 @@
 #include "assym.h"
 #include <sys/cdefs.h>
 #include <net/netisr.h>
+
+#define	__HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX - cannot include types.h! */
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"

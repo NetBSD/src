@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.20 2001/05/28 02:50:52 chs Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.20.4.1 2001/10/01 12:46:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -40,6 +40,8 @@
  *	@(#)cd9660_node.h	8.6 (Berkeley) 5/14/95
  */
 
+#include <miscfs/genfs/genfs_node.h>
+
 /*
  * Theoretically, directories can be more than 2Gb in length,
  * however, in practice this seems unlikely. So, we define
@@ -65,7 +67,7 @@ typedef	struct	{
  * FOr device# (major,minor) translation table
  */
 struct iso_dnode {
-	struct iso_dnode *d_next, **d_prev;	/* hash chain */
+	LIST_ENTRY(iso_dnode) d_hash;
 	dev_t		i_dev;		/* device where dnode resides */
 	ino_t		i_number;	/* the identity of the inode */
 	dev_t		d_dev;		/* device # for translation */
@@ -73,7 +75,8 @@ struct iso_dnode {
 #endif
 
 struct iso_node {
-	struct	iso_node *i_next, **i_prev;	/* hash chain */
+	struct	genfs_node i_gnode;
+	LIST_ENTRY(iso_node) i_hash;
 	struct	vnode *i_vnode;	/* vnode associated with this inode */
 	struct	vnode *i_devvp;	/* vnode for block I/O */
 	u_long	i_flag;		/* see below */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
+/*	$NetBSD: cpu.c,v 1.13.4.1 2001/10/01 12:42:32 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -175,7 +175,7 @@ cpu_init(pa, cpu_num)
 			VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 		va += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	if (!cpus) cpus = (struct cpu_info *)va;
 	else {
@@ -238,6 +238,7 @@ cpu_attach(parent, dev, aux)
 	char fpbuf[40];
 	register int i, l;
 	u_int64_t ver;
+	int bigcache, cachesize;
 	extern u_int64_t cpu_clockrate[];
 
 	/* This needs to be 64-bit aligned */
@@ -266,56 +267,72 @@ cpu_attach(parent, dev, aux)
 	/* tell them what we have */
 	node = ma->ma_node;
 
-	clk = getpropint(node, "clock-frequency", 0);
+	clk = PROM_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
 		/*
 		 * Try to find it in the OpenPROM root...
 		 */
-		clk = getpropint(findroot(), "clock-frequency", 0);
+		clk = PROM_getpropint(findroot(), "clock-frequency", 0);
 	}
 	if (clk) {
 		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
 		cpu_clockrate[1] = clk/1000000;
 	}
 	sprintf(cpu_model, "%s @ %s MHz, %s FPU",
-		getpropstring(node, "name"),
+		PROM_getpropstring(node, "name"),
 		clockfreq(clk), fpuname);
 	printf(": %s\n", cpu_model);
 
+	bigcache = 0;
+
 	cacheinfo.c_physical = 1; /* Dunno... */
 	cacheinfo.c_split = 1;
-	cacheinfo.ic_linesize = l = getpropint(node, "icache-line-size", 0);
+	cacheinfo.ic_linesize = l = PROM_getpropint(node, "icache-line-size", 0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
 	cacheinfo.ic_l2linesize = i;
 	cacheinfo.ic_totalsize = l *
-		getpropint(node, "icache-nlines", 64) *
-		getpropint(node, "icache-associativity", 1);
-	
+		PROM_getpropint(node, "icache-nlines", 64) *
+		PROM_getpropint(node, "icache-associativity", 1);
+
+	cachesize = cacheinfo.ic_totalsize /
+	    PROM_getpropint(node, "icache-associativity", 1);
+	bigcache = cachesize;
+
 	cacheinfo.dc_linesize = l =
-		getpropint(node, "dcache-line-size",0);
+		PROM_getpropint(node, "dcache-line-size",0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
 	cacheinfo.dc_l2linesize = i;
 	cacheinfo.dc_totalsize = l *
-		getpropint(node, "dcache-nlines", 128) *
-		getpropint(node, "dcache-associativity", 1);
-	
+		PROM_getpropint(node, "dcache-nlines", 128) *
+		PROM_getpropint(node, "dcache-associativity", 1);
+
+	cachesize = cacheinfo.dc_totalsize /
+	    PROM_getpropint(node, "dcache-associativity", 1);
+	if (cachesize > bigcache)
+		bigcache = cachesize;
+
 	cacheinfo.ec_linesize = l =
-		getpropint(node, "ecache-line-size", 0);
+		PROM_getpropint(node, "ecache-line-size", 0);
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
 	cacheinfo.ec_l2linesize = i;
 	cacheinfo.ec_totalsize = l *
-		getpropint(node, "ecache-nlines", 32768) *
-		getpropint(node, "ecache-associativity", 1);
-	
+		PROM_getpropint(node, "ecache-nlines", 32768) *
+		PROM_getpropint(node, "ecache-associativity", 1);
+
+	cachesize = cacheinfo.ec_totalsize /
+	     PROM_getpropint(node, "ecache-associativity", 1);
+	if (cachesize > bigcache)
+		bigcache = cachesize;
+
 	/*
 	 * XXX - The following will have to do until
 	 * we have per-cpu cache handling.
@@ -354,6 +371,12 @@ cpu_attach(parent, dev, aux)
 	}
 	printf(" \n");
 	cache_enable();
+
+	/*
+	 * Now that we know the size of the largest cache on this CPU,
+	 * re-color our pages.
+	 */
+	uvm_page_recolor(atop(bigcache));
 }
 
 /*

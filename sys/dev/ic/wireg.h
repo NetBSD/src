@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.9 2001/07/07 16:13:51 thorpej Exp $	*/
+/*	$NetBSD: wireg.h,v 1.9.4.1 2001/10/01 12:45:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -195,8 +195,17 @@
 #define WI_CMD_INQUIRE		0x0011
 #define WI_CMD_ACCESS		0x0021
 #define WI_CMD_PROGRAM		0x0022
+#define WI_CMD_READMIF		0x0030 /* prism2 only? */
+#define WI_CMD_WRITEMIF		0x0031 /* prism2 only? */
+#define WI_CMD_TEST		0x0038 /* prism2 only? */
 
 #define WI_CMD_CODE_MASK	0x003F
+
+/*
+ * prism2 test mode commands
+ */
+#define WI_TEST_MONITOR		0x000b
+#define WI_TEST_STOP		0x000f
 
 /*
  * Reclaim qualifier bit, applicable to the
@@ -261,7 +270,7 @@
 #define WI_EV_RES		0x4000	/* controller h/w error (time out) */
 #define WI_EV_INFO_DROP		0x2000	/* no RAM to build unsolicited frame */
 #define WI_EV_NO_CARD		0x0800	/* card removed (hunh?) */
-#define WI_EV_DUIF_RX		0x0400	/* wavelan management packet received */
+#define WI_EV_AWAKE		0x0100
 #define WI_EV_INFO		0x0080	/* async info frame */
 #define WI_EV_CMD		0x0010	/* command completed */
 #define WI_EV_ALLOC		0x0008	/* async alloc/reclaim completed */
@@ -554,6 +563,7 @@ struct wi_frame {
 	u_int16_t		wi_rsvd2;	/* 0x08 */
 	u_int16_t		wi_rsvd3;	/* 0x0A */
 	u_int16_t		wi_tx_ctl;	/* 0x0C */
+	/* 802.11 */
 	u_int16_t		wi_frame_ctl;	/* 0x0E */
 	u_int16_t		wi_id;		/* 0x10 */
 	u_int8_t		wi_addr1[6];	/* 0x12 */
@@ -562,10 +572,12 @@ struct wi_frame {
 	u_int16_t		wi_seq_ctl;	/* 0x24 */
 	u_int8_t		wi_addr4[6];	/* 0x26 */
 	u_int16_t		wi_dat_len;	/* 0x2C */
+	/* 802.3 */
 	u_int8_t		wi_dst_addr[6];	/* 0x2E */
 	u_int8_t		wi_src_addr[6];	/* 0x34 */
 	u_int16_t		wi_len;		/* 0x3A */
-	u_int16_t		wi_dat[3];	/* 0x3C */ /* SNAP header */
+	/* SNAP header */
+	u_int16_t		wi_dat[3];	/* 0x3C */
 	u_int16_t		wi_type;	/* 0x42 */
 };
 
@@ -581,6 +593,16 @@ struct wi_frame {
 #define WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
 #define WI_STAT_WMP_MSG		0x6000	/* WaveLAN-II management protocol */
 #define WI_RXSTAT_MSG_TYPE	0xE000
+
+#define BIT(x) (1 << (x))
+
+#define WLAN_FC_GET_TYPE(fc) (((fc) & (BIT(3) | BIT(2))) >> 2)
+#define WLAN_FC_GET_STYPE(fc) \
+	(((fc) & (BIT(7) | BIT(6) | BIT(5) | BIT(4))) >> 4)
+
+#define WLAN_FC_TYPE_MGMT 0
+#define WLAN_FC_TYPE_CTRL 1
+#define WLAN_FC_TYPE_DATA 2
 
 #define WI_ENC_TX_802_3		0x00
 #define WI_ENC_TX_802_11	0x11

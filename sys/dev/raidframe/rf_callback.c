@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.3.24.1 2001/10/01 12:46:12 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,6 +34,7 @@
 
 
 #include "rf_types.h"
+#include "rf_archs.h"
 #include "rf_threadstuff.h"
 #include "rf_callback.h"
 #include "rf_debugMem.h"

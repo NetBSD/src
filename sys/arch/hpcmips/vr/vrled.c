@@ -1,4 +1,4 @@
-/*	$NetBSD: vrled.c,v 1.2 2000/12/27 12:08:03 sato Exp $	*/
+/*	$NetBSD: vrled.c,v 1.2.2.1 2001/10/01 12:39:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -50,20 +50,20 @@ int vrleddebug = VRLEDDEBUG_CONF;
 #define VPRINTF(arg) if (bootverbose) printf arg;
 #endif /* VRLEDDEBUG */
 
-static int vrledmatch __P((struct device *, struct cfdata *, void *));
-static void vrledattach __P((struct device *, struct device *, void *));
+static int vrledmatch(struct device *, struct cfdata *, void *);
+static void vrledattach(struct device *, struct device *, void *);
 
-static void vrled_write __P((struct vrled_softc *, int, unsigned short));
-static unsigned short vrled_read __P((struct vrled_softc *, int));
+static void vrled_write(struct vrled_softc *, int, unsigned short);
+static unsigned short vrled_read(struct vrled_softc *, int);
 
-static void vrled_stop __P((struct vrled_softc *));
-static void vrled_on __P((struct vrled_softc *));
-static void vrled_blink __P((struct vrled_softc *));
-static void vrled_flash __P((struct vrled_softc *));
-static void vrled_change_state __P((struct vrled_softc *));
-static int vrled_event __P((void *, int, long, void *));
+static void vrled_stop(struct vrled_softc *);
+static void vrled_on(struct vrled_softc *);
+static void vrled_blink(struct vrled_softc *);
+static void vrled_flash(struct vrled_softc *);
+static void vrled_change_state(struct vrled_softc *);
+static int vrled_event(void *, int, long, void *);
 
-int vrled_intr __P((void *));
+int vrled_intr(void *);
 
 struct cfattach vrled_ca = {
 	sizeof(struct vrled_softc), vrledmatch, vrledattach
@@ -72,36 +72,28 @@ struct cfattach vrled_ca = {
 struct vrled_softc *this_led;
 
 static inline void
-vrled_write(sc, port, val)
-	struct vrled_softc *sc;
-	int port;
-	unsigned short val;
+vrled_write(struct vrled_softc *sc, int port, unsigned short val)
 {
+
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
 }
 
 static inline unsigned short
-vrled_read(sc, port)
-	struct vrled_softc *sc;
-	int port;
+vrled_read(struct vrled_softc *sc, int port)
 {
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
+
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, port));
 }
 
 static int
-vrledmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vrledmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+
+	return (1);
 }
 
 static void
-vrledattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vrledattach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrled_softc *sc = (struct vrled_softc *)self;
 	struct vrip_attach_args *va = aux;
@@ -118,8 +110,8 @@ vrledattach(parent, self, aux)
 	sc->sc_ioh = ioh;
 
 	if (!(sc->sc_handler = 
-	      vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
-				  vrled_intr, sc))) {
+	    vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+		vrled_intr, sc))) {
 		printf (": can't map interrupt line.\n");
 		return;
 	}
@@ -135,9 +127,8 @@ vrledattach(parent, self, aux)
 	vrled_stop(sc);
 
 	sc->sc_hook = config_hook(CONFIG_HOOK_SET,
-					CONFIG_HOOK_LED,
-					CONFIG_HOOK_SHARE,
-					vrled_event, sc);
+	    CONFIG_HOOK_LED, CONFIG_HOOK_SHARE, vrled_event, sc);
+
 	this_led = sc;
 }
 
@@ -147,8 +138,7 @@ vrledattach(parent, self, aux)
  *
  */
 int
-vrled_intr(arg)
-	void *arg;
+vrled_intr(void *arg)
 {
         struct vrled_softc *sc = arg;
 	unsigned int intstat;
@@ -159,7 +149,7 @@ vrled_intr(arg)
 	if (intstat&LEDINT_AUTOSTOP) {
 		vrled_change_state(sc);
 	}
-	return 0;
+	return (0);
 }
 
 /*
@@ -167,8 +157,7 @@ vrled_intr(arg)
  *
  */
 void
-vrled_stop(sc)
-struct vrled_softc *sc;
+vrled_stop(struct vrled_softc *sc)
 {
 	vrled_write(sc, LEDHTS_REG_W, LEDHTS_DIV16SEC);
 	vrled_write(sc, LEDLTS_REG_W, LEDLTS_4SEC);
@@ -184,8 +173,7 @@ struct vrled_softc *sc;
  *
  */
 void
-vrled_on(sc)
-struct vrled_softc *sc;
+vrled_on(struct vrled_softc *sc)
 {
 	vrled_write(sc, LEDHTS_REG_W, LEDHTS_SEC);
 	vrled_write(sc, LEDLTS_REG_W, LEDLTS_DIV16SEC);
@@ -201,8 +189,7 @@ struct vrled_softc *sc;
  *
  */
 void
-vrled_blink(sc)
-struct vrled_softc *sc;
+vrled_blink(struct vrled_softc *sc)
 {
 	int ledhts;
 	int ledlts;
@@ -235,8 +222,7 @@ struct vrled_softc *sc;
  *
  */
 void
-vrled_flash(sc)
-struct vrled_softc *sc;
+vrled_flash(struct vrled_softc *sc)
 {
 	int ledhts;
 	int ledlts;
@@ -278,8 +264,7 @@ struct vrled_softc *sc;
  *
  */
 void
-vrled_change_state(sc)
-struct vrled_softc *sc;
+vrled_change_state(struct vrled_softc *sc)
 {
 
 	switch (sc->sc_next) {
@@ -310,9 +295,7 @@ struct vrled_softc *sc;
  *
  */
 void
-vrled_set_state(sc, state)
-struct vrled_softc *sc;
-vrled_status state;
+vrled_set_state(struct vrled_softc *sc, vrled_status state)
 {
 
 	int ledstate;
@@ -370,20 +353,16 @@ vrled_status state;
  *
  */
 int
-vrled_event(ctx, type, id, msg)
-	void *ctx;
-        int type;
-        long id;
-        void *msg;
+vrled_event(void *ctx, int type, long id, void *msg)
 {
 	struct vrled_softc *sc = (struct vrled_softc *)ctx;
         int why =*(int *)msg;
 
 	if (type != CONFIG_HOOK_SET 
-		|| id != CONFIG_HOOK_LED)
-		return 1;
+	    || id != CONFIG_HOOK_LED)
+		return (1);
 	if (msg == NULL)
-		return 1; 
+		return (1); 
 		
         switch (why) {
         case CONFIG_HOOK_LED_OFF:

@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.10 2001/08/02 18:06:22 matt Exp $ */
+/*	$NetBSD: promlib.c,v 1.10.2.1 2001/10/01 12:42:16 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ notimplemented()
 
 
 /*
- * getprop() reads the named property data from a given node.
+ * PROM_getprop() reads the named property data from a given node.
  * A buffer for the data may be passed in `*bufp'; if NULL, a
  * buffer is allocated. The argument `size' specifies the data
  * element size of the property data. This function checks that
@@ -188,7 +188,7 @@ notimplemented()
  */
 
 int
-getprop(node, name, size, nitem, bufp)
+PROM_getprop(node, name, size, nitem, bufp)
 	int	node;
 	char	*name;
 	int	size;
@@ -198,7 +198,7 @@ getprop(node, name, size, nitem, bufp)
 	void	*buf;
 	int	len;
 
-	len = getproplen(node, name);
+	len = PROM_getproplen(node, name);
 	if (len <= 0)
 		return (ENOENT);
 
@@ -228,20 +228,20 @@ getprop(node, name, size, nitem, bufp)
  * subsequent calls.
  */
 char *
-getpropstring(node, name)
+PROM_getpropstring(node, name)
 	int node;
 	char *name;
 {
 	static char stringbuf[32];
 
-	return (getpropstringA(node, name, stringbuf, sizeof stringbuf));
+	return (PROM_getpropstringA(node, name, stringbuf, sizeof stringbuf));
 }
 
 /*
- * Alternative getpropstring(), where caller provides the buffer
+ * Alternative PROM_getpropstring(), where caller provides the buffer
  */
 char *
-getpropstringA(node, name, buf, bufsize)
+PROM_getpropstringA(node, name, buf, bufsize)
 	int node;
 	char *name;
 	char *buf;
@@ -249,7 +249,7 @@ getpropstringA(node, name, buf, bufsize)
 {
 	int len = bufsize - 1;
 
-	if (getprop(node, name, 1, &len, (void **)&buf) != 0)
+	if (PROM_getprop(node, name, 1, &len, (void **)&buf) != 0)
 		len = 0;
 
 	buf[len] = '\0';	/* usually unnecessary */
@@ -261,7 +261,7 @@ getpropstringA(node, name, buf, bufsize)
  * The return value is the property, or the default if there was none.
  */
 int
-getpropint(node, name, deflt)
+PROM_getpropint(node, name, deflt)
 	int node;
 	char *name;
 	int deflt;
@@ -269,7 +269,7 @@ getpropint(node, name, deflt)
 	int intbuf, *ip = &intbuf;
 	int len = 1;
 
-	if (getprop(node, name, sizeof(int), &len, (void **)&ip) != 0)
+	if (PROM_getprop(node, name, sizeof(int), &len, (void **)&ip) != 0)
 		return (deflt);
 
 	return (*ip);
@@ -288,7 +288,7 @@ prom_search(rootnode, name)
 	int node = rootnode;
 	char buf[32];
 
-#define GPSA(nm)	getpropstringA(node, nm, buf, sizeof buf)
+#define GPSA(nm)	PROM_getpropstringA(node, nm, buf, sizeof buf)
 	if (node == findroot() ||
 	    !strcmp("hierarchical", GPSA("device type")))
 		node = firstchild(node);
@@ -408,7 +408,7 @@ prom_findnode(first, name)
 	char buf[32];
 
 	for (node = first; node != 0; node = prom_nextsibling(node)) {
-		if (strcmp(getpropstringA(node, "name", buf, sizeof(buf)),
+		if (strcmp(PROM_getpropstringA(node, "name", buf, sizeof(buf)),
 			   name) == 0)
 			return (node);
 	}
@@ -424,7 +424,7 @@ prom_node_has_property(node, prop)
 	const char *prop;
 {
 
-	return (getproplen(node, (caddr_t)prop) != -1);
+	return (PROM_getproplen(node, (caddr_t)prop) != -1);
 }
 
 
@@ -749,7 +749,7 @@ opf_getbootpath()
 	char *buf = NULL;
 	int blen = 0;
 
-	if (getprop(node, "bootpath", 1, &blen, (void **)&buf) != 0)
+	if (PROM_getprop(node, "bootpath", 1, &blen, (void **)&buf) != 0)
 		return ("");
 
 	return (buf);
@@ -762,7 +762,7 @@ opf_getbootargs()
 	char *buf = NULL;
 	int blen = 0;
 
-	if (getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
+	if (PROM_getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
 		return ("");
 
 	return (parse_bootargs(buf));
@@ -775,7 +775,7 @@ opf_getbootfile()
 	char *buf = NULL;
 	int blen = 0;
 
-	if (getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
+	if (PROM_getprop(node, "bootargs", 1, &blen, (void **)&buf) != 0)
 		return ("");
 
 	return (parse_bootfile(buf));

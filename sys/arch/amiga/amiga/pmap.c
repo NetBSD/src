@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2001/08/15 01:03:59 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90.2.1 2001/10/01 12:37:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -792,7 +792,7 @@ pmap_map(virt, start, end, prot)
 		virt += PAGE_SIZE;
 		start += PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return(virt);
 }
 
@@ -1492,7 +1492,7 @@ pmap_kremove(va, len)
 				 */
 
 				*pte = PG_NV;
-				TBIS(va);
+				TBIS(sva);
 			}
 			pte++;
 			sva += NBPG;
@@ -2578,7 +2578,7 @@ pmap_enter_ptpage(pmap, va)
 		bzero((char *)kpt->kpt_va, NBPG);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-		pmap_update();
+		pmap_update(pmap);
 #if defined(M68060)
 		if (cputype == CPU_68060) {
 			pmap_changebit(ptpa, PG_CCB, 0);

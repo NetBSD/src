@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2001/09/05 14:12:22 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.2.1 2001/10/01 12:42:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -264,7 +264,7 @@ cpu_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -711,12 +711,11 @@ dumpsys()
 	do {
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);
-		pmap_enter(pmap_kernel(), vmmap, paddr | PMAP_NC,
-		    VM_PROT_READ, VM_PROT_READ);
-		pmap_update();
+		pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
+		pmap_update(pmap_kernel());
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
-		pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
-		pmap_update();
+		pmap_kremove(vmmap, NBPG);
+		pmap_update(pmap_kernel());
 		if (error)
 			goto fail;
 		paddr += NBPG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 2001/07/06 05:53:35 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.60.4.1 2001/10/01 12:38:38 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -229,7 +229,7 @@ pagemove(from, to, size)
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -319,7 +319,7 @@ vmapbuf(bp, len)
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -341,7 +341,7 @@ vunmapbuf(bp, len)
 	len = m68k_round_page(off + len);
 
 	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

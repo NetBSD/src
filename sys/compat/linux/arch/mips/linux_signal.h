@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.3 2001/09/02 08:39:37 manu Exp $ */
+/* $NetBSD: linux_signal.h,v 1.3.2.1 2001/10/01 12:43:39 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,20 @@
 
 #ifndef _MIPS_LINUX_SIGNAL_H
 #define _MIPS_LINUX_SIGNAL_H
+
+/*
+ * From Linux's include/asm-mips/ptrace.h 
+ */
+struct linux_pt_regs {
+	unsigned long lpad0[6];
+	unsigned long lregs[32];
+	unsigned long llo;
+	unsigned long lhi;
+	unsigned long lcp0_spc;
+	unsigned long lcp0_badvaddr;
+	unsigned long lcp0_status;
+	unsigned long lcp0_cause;
+};
 
 /* 
  * Everything is from Linux's include/asm-mips/signal.h 
@@ -121,6 +135,14 @@ struct linux_sigaction {
 
 struct linux_k_sigaction {
 	struct linux_sigaction sa;
+};
+
+struct linux_old_sigaction {
+	unsigned int		sa_flags;
+	linux___sighandler_t	sa_handler;
+	linux_old_sigset_t	sa_mask;
+	void			(*sa_restorer) __P((void));
+	int			sa_resv[1];
 };
 
 #define	LINUX_SS_ONSTACK	1

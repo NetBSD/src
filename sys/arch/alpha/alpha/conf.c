@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.57 2001/03/21 22:25:52 lukem Exp $ */
+/* $NetBSD: conf.c,v 1.57.6.1 2001/10/01 12:36:53 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.57 2001/03/21 22:25:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.57.6.1 2001/10/01 12:36:53 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,15 @@ cdev_decl(i4btel);
 
 #include <altq/altqconf.h>
 
+#include "pci.h"
+cdev_decl(pci);
+
+#include "agp.h"
+cdev_decl(agp);
+
+#include "stic.h"
+cdev_decl(stic);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -287,6 +296,9 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUSCANNER,uscanner),/* 63: USB scanner */
 	cdev_altq_init(NALTQ,altq),	/* 64: ALTQ control interface */
 	cdev__oci_init(NMLX,mlx),	/* 65: Mylex DAC960 control interface */
+	cdev_pci_init(NPCI,pci),	/* 66: PCI bus access device */
+	cdev__ocim_init(NAGP,agp),	/* 67: AGP graphics aperture device */
+	cdev__ocm_init(NSTIC,stic),	/* 68: PixelStamp mmap interface */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -394,6 +406,9 @@ static int chrtoblktbl[] = {
 	/* 63 */	NODEV,
 	/* 64 */	NODEV,
 	/* 65 */	NODEV,
+	/* 66 */	NODEV,
+	/* 67 */	NODEV,
+	/* 68 */	NODEV,
 };
 
 /*

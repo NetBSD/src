@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.49 2000/07/25 21:50:03 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.49.2.1 2001/10/01 12:41:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -93,8 +93,8 @@ struct obio4_busattachargs {
 #if defined(SUN4)
 static	int obioprint  __P((void *, const char *));
 static	int obiosearch   __P((struct device *, struct cfdata *, void *));
-static	int obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
-			       int, bus_space_handle_t *));
+static	paddr_t obio_bus_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+			       int, int));
 static	int _obio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       bus_size_t, int,
 			       vaddr_t, bus_space_handle_t *));
@@ -244,17 +244,18 @@ _obio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 				size, flags, vaddr, hp));
 }
 
-int
-obio_bus_mmap(t, btype, paddr, flags, hp)
+paddr_t
+obio_bus_mmap(t, paddr, off, prot, flags)
 	bus_space_tag_t t;
-	bus_type_t btype;
 	bus_addr_t paddr;
+	off_t off;
+	int prot;
 	int flags;
-	bus_space_handle_t *hp;
 {
 	struct obio4_softc *sc = t->cookie;
 
-	return (bus_space_mmap(sc->sc_bustag, PMAP_OBIO, paddr, flags, hp));
+	paddr = BUS_ADDR(PMAP_OBIO, paddr);
+	return (bus_space_mmap(sc->sc_bustag, paddr, off, prot, flags));
 }
 
 int

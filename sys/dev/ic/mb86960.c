@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.48 2001/07/07 15:59:38 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.48.4.1 2001/10/01 12:45:39 fvdl Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -892,7 +892,7 @@ mb86960_tint(sc, tstat)
 		 * packet transmission.  When we send two or more packets
 		 * with one start command (that's what we do when the
 		 * transmission queue is clauded), 86960 informs us number
-		 * of collisions occured on the last packet on the
+		 * of collisions occurred on the last packet on the
 		 * transmission only.  Number of collisions on previous
 		 * packets are lost.  I have told that the fact is clearly
 		 * stated in the Fujitsu document.
@@ -1398,7 +1398,7 @@ mb86960_get_packet(sc, len)
  *
  * I wrote a code for an experimental "delayed padding" technique.
  * When employed, it postpones the padding process for short packets.
- * If xmit() occured at the moment, the padding process is omitted, and
+ * If xmit() occurred at the moment, the padding process is omitted, and
  * garbages are sent as pad data.  If next packet is stored in the
  * transmission buffer before xmit(), write_mbuf() pads the previous
  * packet before transmitting new packet.  This *may* gain the

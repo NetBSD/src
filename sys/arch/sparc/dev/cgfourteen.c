@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.20 2000/08/22 21:28:30 pk Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.20.2.1 2001/10/01 12:41:56 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -540,7 +540,6 @@ cgfourteenmmap(dev, off, prot)
 	int prot;
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
-	bus_space_handle_t bh;
 
 #define CG3START	(128*1024 + 128*1024)
 #define CG8START	(256*1024)
@@ -560,12 +559,9 @@ cgfourteenmmap(dev, off, prot)
 	if ((u_int)off >= 0x10000000 && (u_int)off < 0x10000000 + 16*4096) {
 		off -= 0x10000000;
 		if (bus_space_mmap(sc->sc_bustag,
-				   sc->sc_physadr[CG14_CTL_IDX].sbr_slot,
-				   sc->sc_physadr[CG14_CTL_IDX].sbr_offset+off,
-				   BUS_SPACE_MAP_LINEAR, &bh))
-			return (-1);
-
-		return ((off_t)bh);
+			BUS_ADDR(sc->sc_physadr[CG14_CTL_IDX].sbr_slot,
+				sc->sc_physadr[CG14_CTL_IDX].sbr_offset),
+			off, prot, BUS_SPACE_MAP_LINEAR));
 	}
 #endif
 	
@@ -592,13 +588,10 @@ cgfourteenmmap(dev, off, prot)
 		return (-1);
 	}
 
-	if (bus_space_mmap(sc->sc_bustag,
-			   sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
-			   sc->sc_physadr[CG14_PXL_IDX].sbr_offset + off,
-			   BUS_SPACE_MAP_LINEAR, &bh))
-		return (-1);
-
-	return ((paddr_t)bh);
+	return (bus_space_mmap(sc->sc_bustag,
+		BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
+			sc->sc_physadr[CG14_PXL_IDX].sbr_offset),
+		off, prot, BUS_SPACE_MAP_LINEAR));
 }
 
 int

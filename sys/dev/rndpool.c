@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.11 2001/07/07 17:04:02 thorpej Exp $        */
+/*      $NetBSD: rndpool.c,v 1.11.4.1 2001/10/01 12:44:12 fvdl Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,17 +47,16 @@
 /*
  * The random pool "taps"
  */
-#define TAP1	99
-#define TAP2	59
-#define TAP3	31
-#define TAP4	 9
-#define TAP5	 7
+#define	TAP1	99
+#define	TAP2	59
+#define	TAP3	31
+#define	TAP4	 9
+#define	TAP5	 7
 
 static inline void rndpool_add_one_word(rndpool_t *, u_int32_t);
 
 void
-rndpool_init(rp)
-	rndpool_t *rp;
+rndpool_init(rndpool_t *rp)
 {
 
 	rp->cursor = 0;
@@ -71,30 +70,23 @@ rndpool_init(rp)
 	rp->stats.maxentropy = RND_POOLBITS;
 
 	assert(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX sha knowledge */
-	
 }
 
 u_int32_t
-rndpool_get_entropy_count(rp)
-	rndpool_t *rp;
+rndpool_get_entropy_count(rndpool_t *rp)
 {
 
-	return rp->stats.curentropy;
+	return (rp->stats.curentropy);
 }
 
-void rndpool_get_stats(rp, rsp, size)
-	rndpool_t *rp;
-	void *rsp;
-	int size;
+void rndpool_get_stats(rndpool_t *rp, void *rsp, int size)
 {
+
 	memcpy(rsp, &rp->stats, size);
 }
 
-
 void
-rndpool_increment_entropy_count(rp, entropy)
-	rndpool_t *rp;
-	u_int32_t  entropy;
+rndpool_increment_entropy_count(rndpool_t *rp, u_int32_t  entropy)
 {
 
 	rp->stats.curentropy += entropy;
@@ -106,8 +98,7 @@ rndpool_increment_entropy_count(rp, entropy)
 }
 
 u_int32_t *
-rndpool_get_pool(rp)
-	rndpool_t *rp;
+rndpool_get_pool(rndpool_t *rp)
 {
 
 	return (rp->pool);
@@ -124,10 +115,9 @@ rndpool_get_poolsize(void)
  * Add one word to the pool, rotating the input as needed.
  */
 static inline void
-rndpool_add_one_word(rp, val)
-	rndpool_t *rp;
-	u_int32_t  val;
+rndpool_add_one_word(rndpool_t *rp, u_int32_t  val)
 {
+
 	/*
 	 * Steal some values out of the pool, and xor them into the
 	 * word we were given.
@@ -144,7 +134,7 @@ rndpool_add_one_word(rp, val)
 	if (rp->rotate != 0)
 		val = ((val << rp->rotate) | (val >> (32 - rp->rotate)));
 	rp->pool[rp->cursor++] ^= val;
-	
+
 	/*
 	 * If we have looped around the pool, increment the rotate
 	 * variable so the next value will get xored in rotated to
@@ -165,10 +155,7 @@ rndpool_add_one_word(rp, val)
  * Update entropy estimate.
  */
 void
-rndpool_add_uint32(rp, val, entropy)
-	rndpool_t *rp;
-	u_int32_t  val;
-	u_int32_t  entropy;
+rndpool_add_uint32(rndpool_t *rp, u_int32_t  val, u_int32_t  entropy)
 {
 	rndpool_add_one_word(rp, val);
 
@@ -182,21 +169,17 @@ rndpool_add_uint32(rp, val, entropy)
 #endif
 
 /*
- * add a buffer's worth of data to the pool.
+ * Add a buffer's worth of data to the pool.
  */
 void
-rndpool_add_data(rp, p, len, entropy)
-	rndpool_t *rp;
-	void      *p;
-	u_int32_t  len;
-	u_int32_t  entropy;
+rndpool_add_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t entropy)
 {
-	u_int32_t  val;
-	u_int8_t  *buf;
-	
+	u_int32_t val;
+	u_int8_t *buf;
+
 	buf = p;
-	
-	for (; len > 3 ; len -= 4) {
+
+	for (; len > 3; len -= 4) {
 		val = *((u_int32_t *)buf);
 
 		rndpool_add_one_word(rp, val);
@@ -239,18 +222,14 @@ rndpool_add_data(rp, p, len, entropy)
  * before we return anything in the high-quality modes.
  */
 int
-rndpool_extract_data(rp, p, len, mode)
-	rndpool_t *rp;
-	void      *p;
-	u_int32_t  len;
-	u_int32_t  mode;
+rndpool_extract_data(rndpool_t *rp, void *p, u_int32_t len, u_int32_t mode)
 {
-	u_int      i;
-	SHA1_CTX    hash;
-	u_char      digest[20];	/* XXX SHA knowledge */
-	u_int32_t  remain, deltae, count;
-	u_int8_t  *buf;
-	int        good;
+	u_int i;
+	SHA1_CTX hash;
+	u_char digest[20];	/* XXX SHA knowledge */
+	u_int32_t remain, deltae, count;
+	u_int8_t *buf;
+	int good;
 
 	buf = p;
 	remain = len;
@@ -261,7 +240,7 @@ rndpool_extract_data(rp, p, len, mode)
 		good = (rp->stats.curentropy >= (8 * RND_ENTROPY_THRESHOLD));
 
 	assert(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX SHA knowledge */
-	
+
 	while (good && (remain != 0)) {
 		/*
 		 * While bytes are requested, compute the hash of the pool,
@@ -277,22 +256,22 @@ rndpool_extract_data(rp, p, len, mode)
 		SHA1Init(&hash);
 		SHA1Update(&hash, (u_int8_t *)rp->pool, RND_POOLWORDS * 4);
 		SHA1Final(digest, &hash);
-    
+
 		/*
 		 * Stir the hash back into the pool.  This guarantees
 		 * that the next hash will generate a different value
 		 * if no new values were added to the pool.
 		 */
-		for (i = 0 ; i < 5 ; i++) {
+		for (i = 0; i < 5; i++) {
 			u_int32_t word;
-			memcpy(&word, &digest[i*4], 4);
+			memcpy(&word, &digest[i * 4], 4);
 			rndpool_add_one_word(rp, word);
 		}
 
 		count = min(remain, RND_ENTROPY_THRESHOLD);
 
-		for (i=0; i<count; i++)
-			buf[i] = digest[i] ^ digest[i+RND_ENTROPY_THRESHOLD];
+		for (i = 0; i < count; i++)
+			buf[i] = digest[i] ^ digest[i + RND_ENTROPY_THRESHOLD];
 
 		buf += count;
 		deltae = count * 8;
@@ -305,12 +284,12 @@ rndpool_extract_data(rp, p, len, mode)
 
 		if (rp->stats.curentropy == 0)
 			rp->stats.generated += (count * 8) - deltae;
-		
+
 		if (mode == RND_EXTRACT_GOOD)
 			good = (rp->stats.curentropy >=
 			    (8 * RND_ENTROPY_THRESHOLD));
 	}
-	
+
 	memset(&hash, 0, sizeof(hash));
 	memset(digest, 0, sizeof(digest));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsdstart.s,v 1.5 1997/12/04 07:39:05 leo Exp $	*/
+/*	$NetBSD: bsdstart.s,v 1.5.26.1 2001/10/01 12:38:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -36,12 +36,11 @@
  *
  * bsd_startup(struct kparamb *)
  */
-	.text
-	.even
-	.globl	_bsd_startup
 
-_bsd_startup:
-	movw	#0x2700,sr
+#include <machine/asm.h>
+
+ENTRY_NOPROFILE(bsd_startup)
+	movw	#0x2700,%sr
 
 	| the BSD kernel wants values into the following registers:
 	| d0:  ttmem-size
@@ -54,24 +53,24 @@ _bsd_startup:
 	| a1:  end of symbols (esym)
 	| All other registers zeroed for possible future requirements.
 
-	movl	sp@(4),a3		| a3 points to parameter block
+	movl	%sp@(4),%a3		| a3 points to parameter block
 #ifdef	TOSTOOLS
-	lea	_bsd_startup,sp		| make sure we have a good stack ***
+	lea	_ASM_LABEL(bsd_startup),%sp	| make sure we have a good stack ***
 #endif
-	movl	a3@,a0			| loaded kernel
-	movl	a3@(8),d0		| kernel entry point
-	addl	a0,d0			| added makes our absolute entry point
-	movl	d0,sp@-			| push entry point		***
-	movl	a3@(12),d1		| stmem-size
-	movl	a3@(16),d0		| ttmem-size
-	movl	a3@(20),d2		| bootflags
-	movl	a3@(24),d3		| boothowto
-	movl	a3@(4),d4		| length of loaded kernel
-	movl	a3@(28),d5		| start of fastram
-	movl	a3@(32),a1		| end of symbols
-	subl	a5,a5			| target, load to 0
-	movl	d2,d6
-	andb	#0x50,d6		| Is this an 68040/68060?
+	movl	%a3@,%a0		| loaded kernel
+	movl	%a3@(8),%d0		| kernel entry point
+	addl	%a0,%d0			| added makes our absolute entry point
+	movl	%d0,%sp@-		| push entry point		***
+	movl	%a3@(12),%d1		| stmem-size
+	movl	%a3@(16),%d0		| ttmem-size
+	movl	%a3@(20),%d2		| bootflags
+	movl	%a3@(24),%d3		| boothowto
+	movl	%a3@(4),%d4		| length of loaded kernel
+	movl	%a3@(28),%d5		| start of fastram
+	movl	%a3@(32),%a1		| end of symbols
+	subl	%a5,%a5			| target, load to 0
+	movl	%d2,%d6
+	andb	#0x50,%d6		| Is this an 68040/68060?
 	beqs	0f
 
 	| Turn off 68040 type MMU
@@ -85,25 +84,25 @@ _bsd_startup:
 	.word	0xf4f8			|  cpusha bc - push and inval caches
 	bras	1f
 
-0:	lea	pc@(zero),a3
-	pmove	a3@,tc			| Turn off MMU
-	pmove	a3@(-4),crp		| crp = nullrp
-	pmove	a3@(-4),srp		| srp = nullrp
-	btst	#3,d2			| Is this an 68030?
+0:	lea	%pc@(zero),%a3
+	pmove	%a3@,%tc		| Turn off MMU
+	pmove	%a3@(-4),%crp		| crp = nullrp
+	pmove	%a3@(-4),%srp		| srp = nullrp
+	btst	#3,%d2			| Is this an 68030?
 	beqs	1f
 
 	| Turn off 68030 TT registers
 	.word	0xf013,0x0800		| pmove	a3@,tt0
 	.word	0xf013,0x0c00		| pmove	a3@,tt1
 
-1:	movq	#0,d6			|  would have known contents
-	movc	d6,cacr			|  turn off the caches
-	movl	d6,d7
-	movl	d6,a2
-	movl	d6,a3
-	movl	d6,a4
-	movl	d6,a5
-	movl	d6,a6
+1:	movq	#0,%d6			|  would have known contents
+	movc	%d6,%cacr		|  turn off the caches
+	movl	%d6,%d7
+	movl	%d6,%a2
+	movl	%d6,%a3
+	movl	%d6,%a4
+	movl	%d6,%a5
+	movl	%d6,%a6
 	rts				| enter kernel at address on stack ***
 
 | A do-nothing MMU root pointer (includes the following long as well)

@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.2 2001/04/26 16:25:19 kleink Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.2.8.1 2001/10/01 12:37:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define	PRId8		"d"	/* int8_t		*/
 #define	PRId16		"d"	/* int16_t		*/
 #define	PRId32		"d"	/* int32_t		*/
-#define	PRId64		"lld"	/* int64_t		*/
+#define	PRId64		"ld"	/* int64_t		*/
 #define	PRIdLEAST8	"d"	/* int_least8_t		*/
 #define	PRIdLEAST16	"d"	/* int_least16_t	*/
 #define	PRIdLEAST32	"d"	/* int_least32_t	*/

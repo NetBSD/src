@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
+/*	$NetBSD: qe.c,v 1.16.4.1 2001/10/01 12:46:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -239,13 +239,15 @@ qeattach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_rev = getpropint(node, "mace-version", -1);
+	sc->sc_rev = PROM_getpropint(node, "mace-version", -1);
 	printf(" rev %x", sc->sc_rev);
 
+	sc->sc_bustag = sa->sa_bustag;
+	sc->sc_dmatag = sa->sa_dmatag;
 	sc->sc_qec = qec;
 	sc->sc_qr = qec->sc_regs;
 
-	sc->sc_channel = getpropint(node, "channel#", -1);
+	sc->sc_channel = PROM_getpropint(node, "channel#", -1);
 	sc->sc_burst = qec->sc_burst;
 
 	qestop(sc);

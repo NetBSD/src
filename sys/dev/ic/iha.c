@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.8 2001/07/27 16:16:34 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.8.2.1 2001/10/01 12:45:37 fvdl Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -223,7 +223,6 @@ static int  iha_resel(struct iha_softc *);
 
 static void iha_abort_xs(struct iha_softc *, struct scsipi_xfer *, u_int8_t);
 
-static void iha_minphys(struct buf *);
 void iha_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
     void *arg);
 
@@ -396,13 +395,12 @@ iha_attach(sc)
 	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
 		scb->scb_tagid = i;
 		scb->sgoffset = IHA_SG_SIZE * i;
-		scb->sglist = &sc->sc_sglist[i].sg_element[0];
+		scb->sglist = sc->sc_sglist + IHA_MAX_SG_ENTRIES * i;
 		scb->sg_addr =
 		    sc->sc_dmamap->dm_segs[0].ds_addr + scb->sgoffset;
 
 		error = bus_dmamap_create(sc->sc_dmat,
-		    (IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE, IHA_MAX_SG_ENTRIES,
-		    (IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE, 0,
+		    MAXPHYS, IHA_MAX_SG_ENTRIES, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT, &scb->dmap);
 
 		if (error != 0) {
@@ -467,7 +465,7 @@ iha_attach(sc)
 	sc->sc_adapter.adapt_openings = IHA_MAX_SCB;
 	sc->sc_adapter.adapt_max_periph = IHA_MAX_SCB;
 	sc->sc_adapter.adapt_ioctl = NULL;
-	sc->sc_adapter.adapt_minphys = iha_minphys;
+	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = iha_scsipi_request;
 
 	/*
@@ -484,22 +482,6 @@ iha_attach(sc)
 	 * Now try to attach all the sub devices.
 	 */
 	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
-}
-
-/*
- * iha_minphys - reduce bp->b_bcount to something less than
- *		 or equal to the largest I/O possible through
- *		 the adapter. Called from higher layers
- *		 via sc->sc_adapter.scsi_minphys.
- */
-static void
-iha_minphys(bp)
-	struct buf *bp;
-{
-	if (bp->b_bcount > ((IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE))
-		bp->b_bcount = ((IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE);
-
-	minphys(bp);
 }
 
 /*

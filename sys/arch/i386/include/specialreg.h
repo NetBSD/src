@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.19 2001/08/01 18:47:38 thorpej Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.19.4.1 2001/10/01 12:40:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -217,6 +217,11 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+
+/*
+ * AMD K6 MSRs.
+ */
+#define	MSR_K6_UWCCR		0xc0000085
 
 /*
  * Constants related to MTRRs

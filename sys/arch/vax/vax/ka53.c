@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.5 2001/03/31 11:50:45 ragge Exp $	*/
+/*	$NetBSD: ka53.c,v 1.5.4.1 2001/10/01 12:43:01 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -91,7 +91,7 @@ ka53_conf()
 	switch((vax_siedata & 0xff00) >> 8) {
 		case VAX_STYP_51: cpuname = "KA51"; break;
 		case VAX_STYP_52: cpuname = "KA52"; break;
-		case VAX_STYP_53: cpuname = "KA53 or KA57"; break;
+		case VAX_STYP_53: cpuname = "KA53,54,57"; break;
 		case VAX_STYP_55: cpuname = "KA55"; break;
 		default: cpuname = "unknown NVAX";
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.102 2001/04/01 15:00:29 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.102.4.1 2001/10/01 12:46:29 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -204,6 +204,7 @@ Static int		ohci_str(usb_string_descriptor_t *, int, char *);
 
 Static void		ohci_timeout(void *);
 Static void		ohci_rhsc_able(ohci_softc_t *, int);
+Static void		ohci_rhsc_enable(void *);
 
 Static void		ohci_close_pipe(usbd_pipe_handle, ohci_soft_ed_t *);
 Static void		ohci_abort_xfer(usbd_xfer_handle, usbd_status);
@@ -369,6 +370,8 @@ ohci_detach(struct ohci_softc *sc, int flags)
 	
 	if (rv != 0)
 		return (rv);
+
+	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	powerhook_disestablish(sc->sc_powerhook);
@@ -758,6 +761,8 @@ ohci_init(ohci_softc_t *sc)
 			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
 			goto reset;
 		}
+#if 0
+/* Don't bother trying to reuse the BIOS init, we'll reset it anyway. */
 	} else if ((ctl & OHCI_HCFS_MASK) != OHCI_HCFS_RESET) {
 		/* BIOS started controller. */
 		DPRINTF(("ohci_init: BIOS active\n"));
@@ -765,6 +770,7 @@ ohci_init(ohci_softc_t *sc)
 			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_OPERATIONAL);
 			usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		}
+#endif
 	} else {
 		DPRINTF(("ohci_init: cold started\n"));
 	reset:
@@ -857,6 +863,8 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
+
+	usb_callout_init(sc->sc_tmo_rhsc);
 
 	return (USBD_NORMAL_COMPLETION);
 
@@ -1131,6 +1139,8 @@ ohci_intr1(ohci_softc_t *sc)
 		 * on until the port has been reset.
 		 */
 		ohci_rhsc_able(sc, 0);
+		/* Do not allow RHSC interrupts > 1 per second */
+                usb_callout(sc->sc_tmo_rhsc, hz, ohci_rhsc_enable, sc);
 	}
 
 	sc->sc_bus.intr_context--;
@@ -1153,6 +1163,14 @@ ohci_rhsc_able(ohci_softc_t *sc, int on)
 		sc->sc_eintrs &= ~OHCI_RHSC;
 		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_RHSC);
 	}
+}
+
+void
+ohci_rhsc_enable(void *v_sc)
+{
+	ohci_softc_t *sc = v_sc;
+
+	ohci_rhsc_able(sc, 1);
 }
 
 #ifdef OHCI_DEBUG

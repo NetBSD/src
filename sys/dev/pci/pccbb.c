@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.67 2001/08/30 09:20:17 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.67.2.1 2001/10/01 12:45:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -2932,6 +2932,9 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 	if (rb->rb_bt == sc->sc_memt) {
 		if (align < 16) {
 			return 1;
+		}
+		if (align < 0x1000) {
+			align = 0x1000;
 		}
 	} else if (rb->rb_bt == sc->sc_iot) {
 		if (align < 4) {

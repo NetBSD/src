@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.65 2001/08/03 11:17:17 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.65.2.1 2001/10/01 12:46:29 fvdl Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -178,7 +178,7 @@ Static const struct aue_type aue_devs[] = {
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX9,		  PNA },
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_XX10,	  0 },
   { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_DSB650TX_PNA,  0 },
-  { USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_USB10_100,	  0 },
+  { USB_VENDOR_ACCTON,		USB_PRODUCT_ACCTON_USB320_EC,	  0 },
   { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUS,	  PNA },
   { USB_VENDOR_ADMTEK,		USB_PRODUCT_ADMTEK_PEGASUSII,	  PII },
   { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	  0 },

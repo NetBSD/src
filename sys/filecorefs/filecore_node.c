@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.7 2001/02/07 12:34:59 tsutsui Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.7.6.1 2001/10/01 12:46:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -58,7 +58,7 @@
 /*
  * Structures associated with filecore_node caching.
  */
-struct filecore_node **filecorehashtbl;
+LIST_HEAD(ihashhead, filecore_node) *filecorehashtbl;
 u_long filecorehash;
 #define	INOHASH(device, inum)	(((device) + ((inum)>>12)) & filecorehash)
 struct simplelock filecore_ihash_slock;
@@ -79,6 +79,36 @@ filecore_init()
 	pool_init(&filecore_node_pool, sizeof(struct filecore_node),
 	    0, 0, 0, "filecrnopl", 0, pool_page_alloc_nointr,
 	    pool_page_free_nointr, M_FILECORENODE);
+}
+
+/*
+ * Reinitialize inode hash table.
+ */
+void
+filecore_reinit()
+{
+	struct filecore_node *ip;
+	struct ihashhead *oldhash, *hash;
+	u_long oldmask, mask, val;
+	int i;
+
+	hash = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT, M_WAITOK,
+	    &mask);
+
+	simple_lock(&filecore_ihash_slock);
+	oldhash = filecorehashtbl;
+	oldmask = filecorehash;
+	filecorehashtbl = hash;
+	filecorehash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((ip = LIST_FIRST(&oldhash[i])) != NULL) {
+			LIST_REMOVE(ip, i_hash);
+			val = INOHASH(ip->i_dev, ip->i_number);
+			LIST_INSERT_HEAD(&hash[val], ip, i_hash);
+		}
+	}
+	simple_unlock(&filecore_ihash_slock);
+	hashdone(oldhash, M_FILECOREMNT);
 }
 
 /*
@@ -105,7 +135,7 @@ filecore_ihashget(dev, inum)
 
 loop:
 	simple_lock(&filecore_ihash_slock);
-	for (ip = filecorehashtbl[INOHASH(dev, inum)]; ip; ip = ip->i_next) {
+	LIST_FOREACH(ip, &filecorehashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
@@ -126,16 +156,12 @@ void
 filecore_ihashins(ip)
 	struct filecore_node *ip;
 {
-	struct filecore_node **ipp, *iq;
+	struct ihashhead *ipp;
 	struct vnode *vp;
 
 	simple_lock(&filecore_ihash_slock);
 	ipp = &filecorehashtbl[INOHASH(ip->i_dev, ip->i_number)];
-	if ((iq = *ipp) != NULL)
-		iq->i_prev = &ip->i_next;
-	ip->i_next = iq;
-	ip->i_prev = ipp;
-	*ipp = ip;
+	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	simple_unlock(&filecore_ihash_slock);
 
 	vp = ip->i_vnode;
@@ -149,16 +175,8 @@ void
 filecore_ihashrem(ip)
 	struct filecore_node *ip;
 {
-	struct filecore_node *iq;
-
 	simple_lock(&filecore_ihash_slock);
-	if ((iq = ip->i_next) != NULL)
-		iq->i_prev = ip->i_prev;
-	*ip->i_prev = iq;
-#ifdef DIAGNOSTIC
-	ip->i_next = NULL;
-	ip->i_prev = NULL;
-#endif
+	LIST_REMOVE(ip, i_hash);
 	simple_unlock(&filecore_ihash_slock);
 }
 

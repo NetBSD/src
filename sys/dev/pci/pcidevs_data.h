@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.358 2001/09/05 13:47:59 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.358.2.1 2001/10/01 12:46:00 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.355 2001/09/05 13:46:51 drochner Exp 
+ *	NetBSD: pcidevs,v 1.359 2001/09/28 22:06:04 thorpej Exp 
  */
 
 /*
@@ -236,6 +236,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Dfx Interactive",
 	    "Voodoo3",
+	},
+	{
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO5,
+	    0,
+	    "3Dfx Interactive",
+	    "Voodoo 4/5",
 	},
 	{
 	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
@@ -2767,19 +2773,25 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82452)",
+	    "i82452 Gigabit Ethernet",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_FIBER,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82453)",
+	    "i82453 Gigabit Ethernet (1000BASE-X)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82453_SC,
 	    0,
 	    "Intel",
-	    "PRO/1000 Gigabit Ethernet (i82453-SC)",
+	    "i82453-SC Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543_COPPER,
+	    0,
+	    "Intel",
+	    "i82543 Gigabit Ethernet (1000BASE-T)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
@@ -4924,6 +4936,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SiS 7016 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 7018 Sound",
+	},
+	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_LYNX_EMP,
 	    0,
 	    "Silicon Motion",
@@ -5030,6 +5048,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems",
 	    "USB controller",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_GEMNETWORK,
+	    0,
+	    "Sun Microsystems",
+	    "GEM Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
@@ -5426,6 +5450,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Transmeta Corp",
 	    "BIOS Scratchpad",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,
+	    0,
+	    "Trident Microsystems",
+	    "4DWAVE DX",
+	},
+	{
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX,
+	    0,
+	    "Trident Microsystems",
+	    "4DWAVE NX",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,

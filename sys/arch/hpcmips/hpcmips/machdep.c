@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.4.1 2001/10/01 12:39:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -67,14 +67,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * from: Utah Hdr: machdep.c 1.63 91/04/24
+ *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.4.1 2001/10/01 12:39:08 fvdl Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $");
-
-/* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 #include "opt_boot_standalone.h"
@@ -89,50 +89,30 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/map.h>
-#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
-#include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/kcore.h>
+#include <sys/sysctl.h>
 #include <sys/boot_flag.h>
+
+#include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */
+#include <dev/cons.h>		/* cntab access (cpu_reboot) */
+
+#include <machine/psl.h>
+#include <machine/sysconf.h>
+#include <machine/bootinfo.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
+
+#include <hpcmips/hpcmips/machdep.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
-#include <uvm/uvm_extern.h>
-
-#include <sys/sysctl.h>
-#include <dev/cons.h>
-
-#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
-
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
-#include <machine/bus.h>
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
-#include <machine/bootinfo.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-#include <machine/locore.h>
-
 #ifdef DDB
-#include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
 #include <machine/db_machdep.h>
-#include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #ifndef DB_ELFSIZE
@@ -143,20 +123,24 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2001/07/03 02:37:06 enami Exp $");
 #endif
 
 #if NBICONSDEV > 0
+#include <sys/conf.h>
 #include <dev/hpc/biconsvar.h>
 #include <dev/hpc/bicons.h>
 #define biconscnpollc	nullcnpollc
 cons_decl(bicons);
 static struct consdev bicons = cons_init(bicons);
 #define DPRINTF(arg) printf arg
-#else
+#else /* NBICONSDEV > 0 */
 #define DPRINTF(arg)
-#endif
+#endif /* NBICONSDEV > 0 */
+
+#define VPRINTF(arg)	if (bootverbose) printf arg;
 
 #ifdef NFS
-extern int nfs_mountroot __P((void));
-extern int (*mountroot) __P((void));
+extern int nfs_mountroot(void);
+extern int (*mountroot)(void);
 #endif
+
 #ifdef MEMORY_DISK_DYNAMIC
 void md_root_setconf(caddr_t, size_t);
 #endif
@@ -165,21 +149,32 @@ void md_root_setconf(caddr_t, size_t);
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];	
-char	booted_kernel[128];
-
 char	cpu_name[40];			/* set cpu depend xx_init() */
+struct cpu_info cpu_info_store;		/* only one cpu */
+int	cpuspeed = 1;			/* approx # instr per usec. */
 
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
+/* CPU core switch table */
+struct platform platform;
+#ifdef VR41XX
+extern void	vr_init(void);
+#endif
+#ifdef TX39XX
+extern void	tx_init(void);
+#endif
 
-#define VPRINTF(arg)	if (bootverbose) printf arg;
+/* boot environment */
+static struct bootinfo bi_copy;
+struct bootinfo *bootinfo;
+char booted_kernel[128];
+struct device *booted_device;
+int booted_partition;
 
 /* maps for VM objects */
-struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
-struct vm_map *phys_map = NULL;
+struct vm_map *exec_map;
+struct vm_map *mb_map;
+struct vm_map *phys_map;
 
-int	systype;		/* mother board type */
+/* physical memory */
 int	physmem;		/* max supported memory, changes to actual */
 int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
@@ -193,60 +188,12 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
-unsigned ssir;				/* schedules software interrupt */
-
-struct splvec	splvec;			/* XXX will go XXX */
-
-void mach_init __P((int, char *[], struct bootinfo*));
-
-static struct bootinfo bi_copy;
-struct bootinfo *bootinfo = NULL;
-
-unsigned (*clkread) __P((void)); /* high resolution timer if available */
-unsigned nullclkread __P((void));
-
-int	initcpu __P((void));
-void	consinit __P((void));
+void mach_init(int, char *[], struct bootinfo *);
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
-extern void stacktrace __P((void)); /*XXX*/
+extern void stacktrace(void); /*XXX*/
 #endif
-
-/* Motherboard or system-specific initialization vector */
-void	unimpl_os_init __P((void));
-void	unimpl_bus_reset __P((void));
-int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
-void	unimpl_cons_init __P((void));
-void	unimpl_device_register __P((struct device *, void *));
-int 	unimpl_iointr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-void	unimpl_clockintr __P ((void *));
-void    unimpl_fb_init __P((caddr_t*));
-void    unimpl_mem_init __P((paddr_t));
-void	unimpl_reboot __P((int howto, char *bootstr));
-
-struct platform platform = {
-	"iobus not set",
-	unimpl_os_init,
-	unimpl_bus_reset,
-	unimpl_cons_init,
-	unimpl_device_register,
-	unimpl_iointr,
-	unimpl_clockintr,
-	unimpl_fb_init,
-	unimpl_mem_init,
-	unimpl_reboot,
-};
-
-#ifdef VR41XX
-extern void	vr_init __P((void));
-#endif
-#ifdef TX39XX
-extern void	tx_init __P((void));
-#endif
-
-extern caddr_t esym;
-extern struct user *proc0paddr;
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -254,16 +201,15 @@ extern struct user *proc0paddr;
  * Return the first page address following the system.
  */
 void
-mach_init(argc, argv, bi)
-	int argc;
-	char *argv[];
-	struct bootinfo *bi;
+mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
-	int i;
+	extern struct user *proc0paddr;
+	extern char edata[], end[];
+	extern caddr_t esym;
 	caddr_t kernend, v;
 	unsigned size;
 	char *cp;
-	extern char edata[], end[];
+	int i;
 
 	/* clear the BSS segment */
 #ifdef DDB
@@ -315,34 +261,32 @@ mach_init(argc, argv, bi)
 			platid.dw.dw1 = bootinfo->platid_machine;
 		}
 	}
-#if defined TX39XX && defined VR41XX
-/* XXX: currently, the case defined TX39XX && defined VR41XX don't work */
-#error misconfiguration
-#endif /* defined TX39XX && defined VR41XX */
 
-	/* Platform Specific Function Hooks */
-#ifdef VR41XX
-#ifdef TX39XX
+	/* 
+	 * CPU core Specific Function Hooks 
+	 */
+#if defined(VR41XX) && defined(TX39XX)
+#error "currently, the case defined TX39XX && defined VR41XX don't work"
 	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
-#endif /* TX39XX */
-	{
 		vr_init();
-#if NBICONSDEV > 0
-	/* bicons don't need actual device initialize. only bootinfo needed. */
-		cn_tab = &bicons;
-		bicons_init(&bicons);
-#endif
-	}
-#endif /* VR41XX */
-#ifdef TX39XX
-#ifdef VR41XX
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
-	    || platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
-#endif /* VR41XX */
-	{
+	else if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900) ||
+	    platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
 		tx_init();
-	}
-#endif /* TX39XX */
+#elif defined(VR41XX)
+	vr_init();
+#elif defined(TX39XX)
+	tx_init();
+#else
+#error "define TX39XX or VR41XX"
+#endif
+
+#if NBICONSDEV > 0
+	/* 
+	 *  bicons don't need actual device initialize.  only bootinfo needed. 
+	 */
+	cn_tab = &bicons;
+	bicons_init(&bicons);
+#endif
 
 	/* Initialize frame buffer (to steal DMA buffer, stay here.) */
 	(*platform.fb_init)(&kernend);
@@ -359,6 +303,7 @@ mach_init(argc, argv, bi)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
+	intr_init();
 	mips_vector_init();
 
 	/*
@@ -381,8 +326,8 @@ mach_init(argc, argv, bi)
 	 * rtc_offset from bootinfo.timezone set by pbsdboot.exe
 	 */
 	if (rtc_offset == 0 && bootinfo
-	   && bootinfo->timezone > (-12*60)
-	   && bootinfo->timezone <= (12*60))
+	    && bootinfo->timezone > (-12*60)
+	    && bootinfo->timezone <= (12*60))
 		rtc_offset = bootinfo->timezone;
 #endif /* RTC_OFFSET */
 
@@ -409,9 +354,9 @@ mach_init(argc, argv, bi)
 					mountroot = nfs_mountroot;
 				else
 					makebootdev(cp+2);
-#else
+#else /* NFS */
 				makebootdev(cp+2);
-#endif
+#endif /* NFS */
 				cp += strlen(cp);
 				break;
 			default:
@@ -430,16 +375,16 @@ mach_init(argc, argv, bi)
 		fssz = round_page(mfs_initminiroot(kernend));
 #ifdef MEMORY_DISK_DYNAMIC
 		md_root_setconf((caddr_t)kernend, fssz);
-#endif
+#endif /* MEMORY_DISK_DYNAMIC */
 		kernend += fssz;
 	}
-#endif
+#endif /* MFS */
 
 #ifdef DDB
 	/* init symbols if present */
 	if (esym)
 		ddb_init(symbolsz, &end, esym);
-#endif
+#endif /* DDB */
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
@@ -452,9 +397,6 @@ mach_init(argc, argv, bi)
 
 	kernend += UPAGES * PAGE_SIZE;
 
-	/* Setup interrupt handler */
-	(*platform.os_init)();
-
 	/* Initialize console and KGDB serial port. */
 	(*platform.cons_init)();
 
@@ -462,13 +404,13 @@ mach_init(argc, argv, bi)
 	if (boothowto & RB_KDB) {
 #ifdef DDB
 		Debugger();
-#endif
+#endif /* DDB */
 #ifdef KGDB
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
-#endif
+#endif /* KGDB */
 	}
-#endif
+#endif /* DDB || KGDB */
 
 	/* Find physical memory regions. */
 	(*platform.mem_init)((paddr_t)kernend - MIPS_KSEG0_START);
@@ -491,12 +433,11 @@ mach_init(argc, argv, bi)
 
 		printf("loading 0x%lx,0x%lx\n", start, size);
 
-		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0,
-		       size);
+		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0, size);
 
 		uvm_page_physload(atop(start), atop(start + size),
-				  atop(start), atop(start + size),
-				  VM_FREELIST_DEFAULT);
+		    atop(start), atop(start + size),
+		    VM_FREELIST_DEFAULT);
 	}
 
 	/*
@@ -525,7 +466,6 @@ mach_init(argc, argv, bi)
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
 }
-
 
 /*
  * Machine-dependent startup code.
@@ -572,9 +512,9 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		UVM_ADV_NORMAL, 0)) != 0)
 		panic("cpu_startup: cannot allocate VM for buffers");
 
 	minaddr = (vaddr_t)buffers;
@@ -605,25 +545,25 @@ cpu_startup()
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -643,11 +583,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 }
 
 
@@ -655,14 +590,8 @@ cpu_startup()
  * Machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen, struct proc *p)
 {
 
 	/* all sysctl names at this level are terminal */
@@ -686,9 +615,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 void
-cpu_reboot(howto, bootstr)
-	volatile int howto;	/* XXX volatile to keep gcc happy */
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 	extern int cold;
 
@@ -732,11 +659,11 @@ cpu_reboot(howto, bootstr)
 #if 0
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 #else
-	if (howto & RB_DUMP)
+		if (howto & RB_DUMP)
 #endif
-		dumpsys();
+			dumpsys();
 
-haltsys:
+ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
@@ -750,151 +677,8 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-/*
- * Return the best possible estimate of the time in the timeval to
- * which tvp points.  We guarantee that the time will be greater than
- * the value obtained by a previous call.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	*tvp = time;
-
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
-int
-initcpu()
-{
-	int i = 0;
-
-	/*
-	 * reset after autoconfig probe:
-	 * clear  any memory errors, reset any pending interrupts.
-	 */
-
-	(*platform.bus_reset)();
-
-	return i;
-}
-
 void
 consinit()
 {
-	/*
-	 *	Nothing to do.
-	 *	Console is alredy initialized in platform.cons_init().
-	 */
-
-	return;
+	/* platform.cons_init() do it */
 }
-
-/*
- * Wait "n" microseconds.
- */
-void
-delay(n)
-        int n;
-{
-        DELAY(n);
-}
-
-/*
- *  Ensure all platform vectors are always initialized.
- */
-void
-unimpl_os_init()
-{
-	panic("sysconf.init didnt set os_init");
-}
-
-void
-unimpl_bus_reset()
-{
-	panic("sysconf.init didnt set bus_reset");
-}
-
-void
-unimpl_cons_init()
-{
-	panic("sysconf.init didnt set cons_init");
-}
-
-void
-unimpl_device_register(sc, arg)
-	struct device *sc;
-	void *arg;
-{
-	panic("sysconf.init didnt set device_register");
-
-}
-
-int
-unimpl_iointr(arg, arg2, arg3, arg4)
-	u_int32_t arg, arg2, arg3, arg4;
-{
-	panic("sysconf.init didnt set iointr");
-}
-
-void
-unimpl_clockintr(arg)
-	void *arg;
-{
-	panic("sysconf.init didnt set clockintr");
-}
-
-int
-unimpl_intr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
-{
-	panic("sysconf.init didnt set intr");
-}
-
-void
-unimpl_mem_init(kernend)
-	paddr_t kernend;
-{
-	panic("sysconf.init didnt set memory");
-}
-
-void
-unimpl_fb_init(kernend)
-	caddr_t *kernend;
-{
-	panic("sysconf.init didnt set frame buffer");
-}
-
-void
-unimpl_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
-{
-	printf("platform depend reboot code is not implemented.\n");
-}
-
-unsigned
-nullclkread()
-{
-	return 0;
-}	
-
-

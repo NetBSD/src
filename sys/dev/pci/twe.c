@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.16 2001/07/19 16:36:16 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.16.2.1 2001/10/01 12:46:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -459,7 +459,7 @@ twe_intr(void *arg)
 
 	/*
 	 * Attention interrupts, signalled when a controller or child device
-	 * state change has occured.
+	 * state change has occurred.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
 		if ((sc->sc_flags & TWEF_AEN) == 0) {
@@ -810,24 +810,37 @@ twe_ccb_free(struct twe_softc *sc, struct twe_ccb *ccb)
 int
 twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 {
+	struct twe_buf *tb;
 	struct twe_cmd *tc;
-	int flags, nsegs, i, s, rv;
+	int flags, nsegs, i, rv;
 	void *data;
 
 	/*
 	 * The data as a whole must be 512-byte aligned.
 	 */
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
-		s = splvm();
-		/* XXX */
-		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-		    ccb->ccb_datasize, UVM_KMF_NOWAIT);
-		splx(s);
-		data = (void *)ccb->ccb_abuf;
+		tb = malloc(sizeof(*ccb->ccb_buf), M_DEVBUF, M_NOWAIT);
+
+		rv = bus_dmamem_alloc(sc->sc_dmat, ccb->ccb_datasize,
+		    PAGE_SIZE, 0, tb->tb_segs, TWE_MAX_SEGS, &tb->tb_rseg,
+		    BUS_DMA_NOWAIT);
+		if (rv != 0)
+			return (rv);
+
+		rv = bus_dmamem_map(sc->sc_dmat, tb->tb_segs, tb->tb_rseg,
+		    ccb->ccb_datasize, &tb->tb_vaddr, BUS_DMA_NOWAIT);
+		if (rv != 0) {
+			bus_dmamem_free(sc->sc_dmat, tb->tb_segs, tb->tb_rseg);
+			return (rv);
+		}
+
+		ccb->ccb_buf = tb;
+		data = tb->tb_vaddr;
 		if ((ccb->ccb_flags & TWE_CCB_DATA_OUT) != 0)
 			memcpy(data, ccb->ccb_data, ccb->ccb_datasize);
 	} else {
-		ccb->ccb_abuf = (vaddr_t)0;
+		tb = NULL;
+		ccb->ccb_buf = NULL;
 		data = ccb->ccb_data;
 	}
 
@@ -839,12 +852,10 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	    ((ccb->ccb_flags & TWE_CCB_DATA_IN) ?
 	     BUS_DMA_READ : BUS_DMA_WRITE));
 	if (rv != 0) {
-		if (ccb->ccb_abuf != (vaddr_t)0) {
-			s = splvm();
-			/* XXX */
-			uvm_km_free(kmem_map, ccb->ccb_abuf,
+		if (tb != NULL) {
+			bus_dmamem_unmap(sc->sc_dmat, tb->tb_vaddr,
 			    ccb->ccb_datasize);
-			splx(s);
+			bus_dmamem_free(sc->sc_dmat, tb->tb_segs, tb->tb_rseg);
 		}
 		return (rv);
 	}
@@ -906,7 +917,8 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 void
 twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 {
-	int flags, s;
+	struct twe_buf *tb;
+	int flags;
 
 	if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
 		flags = BUS_DMASYNC_POSTREAD;
@@ -919,14 +931,15 @@ twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 	    ccb->ccb_datasize, flags);
 	bus_dmamap_unload(sc->sc_dmat, ccb->ccb_dmamap_xfer);
 
-	if (ccb->ccb_abuf != (vaddr_t)0) {
+	if (ccb->ccb_buf != NULL) {
+		tb = ccb->ccb_buf;
+
 		if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
-			memcpy(ccb->ccb_data, (void *)ccb->ccb_abuf,
+			memcpy(ccb->ccb_data, tb->tb_vaddr,
 			    ccb->ccb_datasize);
-		s = splvm();
-		/* XXX */
-		uvm_km_free(kmem_map, ccb->ccb_abuf, ccb->ccb_datasize);
-		splx(s);
+
+		bus_dmamem_unmap(sc->sc_dmat, tb->tb_vaddr, ccb->ccb_datasize);
+		bus_dmamem_free(sc->sc_dmat, tb->tb_segs, tb->tb_rseg);
 	}
 }
 

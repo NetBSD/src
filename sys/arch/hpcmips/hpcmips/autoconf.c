@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2001/06/13 06:03:10 enami Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.4.1 2001/10/01 12:39:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,47 +43,28 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2001/06/13 06:03:10 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.4.1 2001/10/01 12:39:05 fvdl Exp $");
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/conf.h>	/* setroot() */
+
+#include <machine/disklabel.h>
+
+#include <machine/sysconf.h>
+#include <machine/config_hook.h>
+
+#include <hpcmips/hpcmips/machdep.h>
+
+static char __booted_device_name[16];
+static void get_device(char *);
 
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time.  Available
+ * cpu_configure() is called at boot time.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
- */
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/map.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
-#include <sys/conf.h>
-#include <sys/disklabel.h>
-#include <sys/reboot.h>
-#include <sys/device.h>
-
-#include <machine/cpu.h>
-#include <machine/bus.h>
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
-
-#include <machine/config_hook.h>
-
-int	cpuspeed = 7;	/* approx # instr per usec. */
-
-struct device *booted_device;
-int booted_partition;
-
-static char booted_device_name[16];
-static void get_device __P((char *name));
-
-/*
- * Determine mass storage and memory configuration for a machine.
- * Print cpu type, and then iterate over an array of devices
- * found on the baseboard or in turbochannel option slots.
- * Once devices are configured, enable interrupts, and probe
- * for attached scsi devices.
  */
 void
 cpu_configure()
@@ -99,9 +80,6 @@ cpu_configure()
 	if (config_rootfound("mainbus", "mainbus") == NULL)
 		panic("no mainbus found");
 
-	/* Reset any bus errors due to probing nonexistent devices. */
-	(*platform.bus_reset)();
-
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
 }
@@ -109,7 +87,8 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	get_device(booted_device_name);
+
+	get_device(__booted_device_name);
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
@@ -118,15 +97,14 @@ cpu_rootconf()
 }
 
 void
-makebootdev(cp)
-	char *cp;
+makebootdev(char *cp)
 {
-	strncpy(booted_device_name, cp, 16);
+
+	strncpy(__booted_device_name, cp, 16);
 }
 
 static void
-get_device(name)
-	char *name;
+get_device(char *name)
 {
 	int loop, unit, part;
 	char buf[32], *cp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 2001/03/21 22:25:55 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.33.4.1 2001/10/01 12:40:40 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -170,6 +170,11 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
+#include "clockctl.h"
+cdev_decl(clockctl);
+
+#include "pci.h"
+cdev_decl(pci);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -232,6 +237,8 @@ struct cdevsw cdevsw[] = {
 	cdev_i4btrc_init(NI4BTRC, i4btrc), /* 57: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel), /* 58: i4b phone device */
 	cdev_disk_init(NLD,ld),		/* 59: logical disk driver */
+	cdev_pci_init(NPCI,pci),	/* 60: PCI bus access device */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 61: settimeofday driver */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

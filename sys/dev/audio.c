@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.138.2.2 2001/09/26 15:28:08 fvdl Exp $	*/
+/*	$NetBSD: audio.c,v 1.138.2.3 2001/10/01 12:44:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1601,7 +1601,7 @@ audio_write(sc, uio, ioflag)
 			saveerror = error;
 			error = audiostartp(sc);
 			if (saveerror != 0) {
-				/* Report the first error that occured. */
+				/* Report the first error that occurred. */
 				error = saveerror;
 			}
 		}

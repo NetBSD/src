@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.97 2001/07/27 02:33:34 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.97.2.1 2001/10/01 12:45:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -837,7 +837,7 @@ epinit(ifp)
 	    S_TX_AVAIL);
 
 	/*
-	 * Attempt to get rid of any stray interrupts that occured during
+	 * Attempt to get rid of any stray interrupts that occurred during
 	 * configuration.  On the i386 this isn't possible because one may
 	 * already be queued.  However, a single stray interrupt is
 	 * unimportant.

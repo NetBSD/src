@@ -1,29 +1,39 @@
-/*	$NetBSD: plumicu.c,v 1.3 2000/02/26 15:14:19 uch Exp $ */
+/*	$NetBSD: plumicu.c,v 1.3.8.1 2001/10/01 12:38:55 fvdl Exp $ */
 
-/*
- * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include "opt_tx39_debug.h"
@@ -46,12 +56,12 @@
 #define	DPRINTF(arg)
 #endif
 
-int	plumicu_match __P((struct device*, struct cfdata*, void*));
-void	plumicu_attach __P((struct device*, struct device*, void*));
-int	plumicu_intr __P((void*));
+int plumicu_match(struct device *, struct cfdata *, void *);
+void plumicu_attach(struct device *, struct device *, void *);
+int plumicu_intr(void *);
 
-__inline__ void	plum_di __P((plum_chipset_tag_t));
-__inline__ void	plum_ei __P((plum_chipset_tag_t));
+static __inline__ void plum_di(plum_chipset_tag_t);
+static __inline__ void plum_ei(plum_chipset_tag_t);
 
 const struct plum_intr_ctrl {
 	plumreg_t	ic_ackpat1;
@@ -61,7 +71,7 @@ const struct plum_intr_ctrl {
 } pi_ctrl[PLUM_INTR_MAX] = {
 	[PLUM_INT_C1IO]	= {PLUM_INT_INTSTA_PCCINT,	
 			   PLUM_INT_PCCINTS_C1IO,	PLUM_INT_PCCINTS_REG,
-			   PLUM_INT_PCCIEN_IENC1IO,	PLUM_INT_PCCIEN_REG,		
+			   PLUM_INT_PCCIEN_IENC1IO,	PLUM_INT_PCCIEN_REG,
 			   PLUM_INT_PCCIEN_SENC1IO,	PLUM_INT_PCCIEN_REG
 	},
 	[PLUM_INT_C1RI] = {PLUM_INT_INTSTA_PCCINT,	
@@ -132,7 +142,7 @@ const struct plum_intr_ctrl {
 struct plum_intr_entry {
 	int pi_enabled;
 	int pi_line;
-	int (*pi_fun) __P((void*));
+	int (*pi_fun)(void *);
 	void *pi_arg;
 	const struct plum_intr_ctrl *pi_ctrl;
 };
@@ -152,23 +162,18 @@ struct cfattach plumicu_ca = {
 };
 
 #ifdef PLUMICUDEBUG
-void	plumicu_dump __P((struct plumicu_softc*));
+void plumicu_dump(struct plumicu_softc *);
 #endif
 
 int
-plumicu_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+plumicu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+
 	return (2); /* 1st attach group */
 }
 
 void
-plumicu_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+plumicu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct plum_attach_args *pa = aux;
 	struct plumicu_softc *sc = (void*)self;
@@ -222,8 +227,7 @@ plumicu_attach(parent, self, aux)
 }
 
 __inline__ void
-plum_di(pc)
-	plum_chipset_tag_t pc;
+plum_di(plum_chipset_tag_t pc)
 {
 	struct plumicu_softc *sc = pc->pc_intrt;
 
@@ -231,8 +235,7 @@ plum_di(pc)
 }
 
 __inline__ void
-plum_ei(pc)
-	plum_chipset_tag_t pc;
+plum_ei(plum_chipset_tag_t pc)
 {
 	struct plumicu_softc *sc = pc->pc_intrt;
 
@@ -241,13 +244,8 @@ plum_ei(pc)
 }
 
 void*
-plum_intr_establish(pc, line, mode, level, ih_fun, ih_arg)
-	plum_chipset_tag_t pc;
-	int line;
-	int mode;  /* no meaning */
-	int level; /* XXX not yet */
-	int (*ih_fun) __P((void*));
-	void *ih_arg;
+plum_intr_establish(plum_chipset_tag_t pc, int line, int mode, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	struct plumicu_softc *sc = pc->pc_intrt;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -293,9 +291,7 @@ plum_intr_establish(pc, line, mode, level, ih_fun, ih_arg)
 }
 
 void
-plum_intr_disestablish(pc, arg)
-	plum_chipset_tag_t pc;
-	void *arg;
+plum_intr_disestablish(plum_chipset_tag_t pc, void *arg)
 {
 	struct plumicu_softc *sc = pc->pc_intrt;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -336,8 +332,7 @@ plum_intr_disestablish(pc, arg)
 }
 
 int
-plumicu_intr(arg)
-	void *arg;
+plumicu_intr(void *arg)
 {
 	struct plumicu_softc *sc = arg;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -385,8 +380,7 @@ plumicu_intr(arg)
 
 #ifdef PLUMICUDEBUG
 void
-plumicu_dump(sc)
-	struct plumicu_softc *sc;
+plumicu_dump(struct plumicu_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;

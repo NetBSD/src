@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99 2001/06/02 18:09:14 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.99.4.1 2001/10/01 12:39:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -47,6 +47,7 @@
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +66,7 @@
 #include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
+#include <machine/mtrr.h>
 
 #include "npx.h"
 #if NNPX > 0
@@ -194,6 +196,11 @@ cpu_exit(p)
 	/* If we were using the FPU, forget about it. */
 	if (npxproc == p)
 		npxproc = 0;
+#endif
+
+#ifdef MTRR
+	if (p->p_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(p);
 #endif
 
 	/*
@@ -394,7 +401,7 @@ vmapbuf(bp, len)
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -413,7 +420,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

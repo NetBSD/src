@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_status.h,v 1.2 1997/04/01 16:35:12 matthias Exp $	*/
+/*	$NetBSD: fpu_status.h,v 1.2.34.1 2001/10/01 12:41:21 fvdl Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -63,7 +63,10 @@
 #define FPC_DZF  0x4000		/* Divide by zero flag */
 #define FPC_UNDE 0x8000		/* Soft Underflow enable, requires FPC_UEN */
 
-#define GET_SET_FSR(val) ({int _tmp; asm volatile("sfsr %0; lfsr %1" : "&=g" (_tmp): "g" (val)); _tmp;})
+#define GET_SET_FSR(val) ({						\
+	int _tmp;							\
+	asm volatile("sfsr %0; lfsr %1" : "=&g" (_tmp): "g" (val)); _tmp; \
+})
 #define GET_FSR() ({int _tmp; asm volatile("sfsr %0" : "=g" (_tmp)); _tmp;})
 #define SET_FSR(val) ({asm volatile("lfsr %0" :: "g" (val));})
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.5 2001/05/30 15:24:37 lukem Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.5.4.1 2001/10/01 12:42:33 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -477,7 +477,7 @@ kgdb_trap(type, tf)
 	}
 	/*
 	 * Stick frame regs into our reg cache then tell remote host
-	 * that an exception has occured.
+	 * that an exception has occurred.
 	 */
 	regs_to_gdb(tf, gdb_regs);
 

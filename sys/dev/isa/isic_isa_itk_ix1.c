@@ -26,7 +26,7 @@
  *	i4b_itk_ix1.c - ITK ix1 micro passive card driver for isdn4bsd
  *	--------------------------------------------------------------
  *
- *	$Id: isic_isa_itk_ix1.c,v 1.4 2001/06/19 13:42:17 wiz Exp $
+ *	$Id: isic_isa_itk_ix1.c,v 1.4.4.1 2001/10/01 12:45:48 fvdl Exp $
  *
  *      last edit-date: [Fri Jan  5 12:31:50 2001]
  *
@@ -308,7 +308,7 @@ int isic_attach_itkix1(struct l1_softc *sc)
 
 	/* Read HSCX A/B VSTR.  Expected value is 0x05 (V2.1) or 0x04 (V2.0). */
 	hv1 = HSCX_READ(0, H_VSTR) & 0xf;
-	hv2 = HSCX_READ(2, H_VSTR) & 0xf;
+	hv2 = HSCX_READ(1, H_VSTR) & 0xf;
 	if((hv1 != 0x05 && hv1 != 0x04) || (hv2 != 0x05 && hv2 != 0x04))
 	{
 		printf("%s: HSCX VSTR test failed for ITK ix1 micro\n",

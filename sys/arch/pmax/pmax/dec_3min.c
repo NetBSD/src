@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.48 2001/08/27 02:00:18 nisimura Exp $ */
+/* $NetBSD: dec_3min.c,v 1.48.2.1 2001/10/01 12:41:36 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.48 2001/08/27 02:00:18 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.48.2.1 2001/10/01 12:41:36 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ dec_3min_init()
 }
 
 /*
- * Initalize the memory system and I/O buses.
+ * Initialize the memory system and I/O buses.
  */
 static void
 dec_3min_bus_reset()

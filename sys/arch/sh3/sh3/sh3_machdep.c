@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.17 2001/09/01 03:02:31 msaitoh Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.17.2.1 2001/10/01 12:41:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/proc.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -180,7 +181,7 @@ sh3_startup()
 			curbufsize -= PAGE_SIZE;
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively

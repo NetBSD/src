@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.3 2000/06/29 08:17:59 mrg Exp $ */
+/*	$NetBSD: plumohci.c,v 1.3.4.1 2001/10/01 12:38:58 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -62,20 +62,18 @@
 #include <hpcmips/dev/plumpowervar.h>
 #include <hpcmips/dev/plumohcireg.h>
 
-int	plumohci_match __P((struct device *, struct cfdata *, void *));
-void	plumohci_attach __P((struct device *, struct device *, void *));
-int	plumohci_intr __P((void *));
+int plumohci_match(struct device *, struct cfdata *, void *);
+void plumohci_attach(struct device *, struct device *, void *);
+int plumohci_intr(void *);
 
-void	__plumohci_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t,
-				     bus_addr_t, bus_size_t, int));
-int	__plumohci_dmamem_alloc __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-				      bus_size_t, bus_dma_segment_t *, int,
-				      int *, int));
-void	__plumohci_dmamem_free __P((bus_dma_tag_t, bus_dma_segment_t *,
-				     int));
-int	__plumohci_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *,
-				    int, size_t, caddr_t *, int));
-void	__plumohci_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
+void __plumohci_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
+    bus_addr_t, bus_size_t, int);
+int __plumohci_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t,
+    bus_size_t, bus_dma_segment_t *, int, int *, int);
+void __plumohci_dmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
+int __plumohci_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
+    int, size_t, caddr_t *, int);
+void __plumohci_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 
 struct hpcmips_bus_dma_tag plumohci_bus_dma_tag = {
 	_bus_dmamap_create,
@@ -115,10 +113,7 @@ struct cfattach plumohci_ca = {
 };
 
 int
-plumohci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+plumohci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	/* PLUM2 builtin OHCI module */
 
@@ -126,10 +121,7 @@ plumohci_match(parent, match, aux)
 }
 
 void
-plumohci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+plumohci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct plumohci_softc *sc = (struct plumohci_softc *)self;
 	struct plum_attach_args *pa = aux;
@@ -141,7 +133,7 @@ plumohci_attach(parent, self, aux)
 
 	/* Map I/O space */
 	if (bus_space_map(sc->sc.iot, PLUM_OHCI_REGBASE, OHCI_PAGE_SIZE, 
-			  0, &sc->sc.ioh)) {
+	    0, &sc->sc.ioh)) {
 		printf(": cannot map mem space\n");
 		return;
 	}
@@ -156,19 +148,19 @@ plumohci_attach(parent, self, aux)
 
 	/* Disable interrupts, so we don't can any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
-			  OHCI_ALL_INTRS);
+	    OHCI_ALL_INTRS);
 
 	/* master enable */
 	sc->sc_ih = plum_intr_establish(pa->pa_pc, PLUM_INT_USB, IST_EDGE,
-					IPL_USB, ohci_intr, sc);
+	    IPL_USB, ohci_intr, sc);
 #if 0
 	/* 
 	 *  enable the clock restart request interrupt 
 	 *  (for USBSUSPEND state)
 	 */
 	sc->sc_wakeih = plum_intr_establish(pa->pa_pc, PLUM_INT_USBWAKE, 
-					    IST_EDGE, IPL_USB, 
-					    plumohci_intr, sc);
+	    IST_EDGE, IPL_USB, 
+	    plumohci_intr, sc);
 #endif
 	/*
 	 * Shared memory list.
@@ -190,12 +182,11 @@ plumohci_attach(parent, self, aux)
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	    usbctlprint);
 }
 
 int
-plumohci_intr(arg)
-	void *arg;
+plumohci_intr(void *arg)
 {
 	printf("Plum2 OHCI: wakeup intr\n");
 	return 0;
@@ -208,31 +199,22 @@ plumohci_intr(arg)
  */
 
 void
-__plumohci_dmamap_sync(t, map, offset, len, ops)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+__plumohci_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+    bus_size_t len, int ops)
 {
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
+
 	/*
 	 * Flush the write buffer allocated on the V-RAM.
 	 * Accessing any host controller register flushs write buffer
 	 */
-
 	(void)bus_space_read_4(sc->sc.iot, sc->sc.ioh, OHCI_REVISION);
 }
 
 int
-__plumohci_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs,
-			 flags)
-	bus_dma_tag_t t;
-	bus_size_t size, alignment, boundary;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	int *rsegs;
-	int flags;
+__plumohci_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
 {
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
 	struct plumohci_shm *ps;
@@ -247,9 +229,9 @@ __plumohci_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 * Allocate buffer from V-RAM area.
 	 */
 	error = bus_space_alloc(sc->sc.iot, PLUM_OHCI_SHMEMBASE,
-				PLUM_OHCI_SHMEMBASE + PLUM_OHCI_SHMEMSIZE - 1,
-				size, OHCI_PAGE_SIZE, OHCI_PAGE_SIZE, 0,
-				(bus_addr_t*)&caddr, &bsh);
+	    PLUM_OHCI_SHMEMBASE + PLUM_OHCI_SHMEMSIZE - 1,
+	    size, OHCI_PAGE_SIZE, OHCI_PAGE_SIZE, 0,
+	    (bus_addr_t*)&caddr, &bsh);
 	if (error)
 		return (1);
 
@@ -272,16 +254,13 @@ __plumohci_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs,
 }
 
 void
-__plumohci_dmamem_free(t, segs, nsegs)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
+__plumohci_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 {
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
 	struct plumohci_shm *ps;
 
 	for (ps = LIST_FIRST(&sc->sc_shm_head); ps;
-	     ps = LIST_NEXT(ps, ps_link)) {
+	    ps = LIST_NEXT(ps, ps_link)) {
 
 		if (ps->ps_paddr == segs[0].ds_addr) {
 			bus_space_free(sc->sc.iot, ps->ps_bsh, ps->ps_size);
@@ -297,19 +276,14 @@ __plumohci_dmamem_free(t, segs, nsegs)
 }
 
 int
-__plumohci_dmamem_map(t, segs, nsegs, size, kvap, flags)
-	bus_dma_tag_t t;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	size_t size;
-	caddr_t *kvap;
-	int flags;
+__plumohci_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
+    size_t size, caddr_t *kvap, int flags)
 {
 	struct plumohci_softc *sc = t->_dmamap_chipset_v;
 	struct plumohci_shm *ps;
 
 	for (ps = LIST_FIRST(&sc->sc_shm_head); ps;
-	     ps = LIST_NEXT(ps, ps_link)) {
+	    ps = LIST_NEXT(ps, ps_link)) {
 		if (ps->ps_paddr == segs[0].ds_addr) {
 
 			*kvap = ps->ps_caddr;
@@ -322,10 +296,7 @@ __plumohci_dmamem_map(t, segs, nsegs, size, kvap, flags)
 }
 
 void
-__plumohci_dmamem_unmap(t, kva, size)
-	bus_dma_tag_t t;
-	caddr_t kva;
-	size_t size;
+__plumohci_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 {
 	/* nothing to do */
 }

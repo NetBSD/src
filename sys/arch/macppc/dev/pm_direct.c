@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.14 2001/08/03 23:09:43 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.14.2.1 2001/10/01 12:40:38 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -1021,7 +1021,7 @@ pm_adb_op(buffer, compRout, data, command)
 
 	PM_VIA_INTR_ENABLE();
 
-	/* wait until the PM interrupt is occured */
+	/* wait until the PM interrupt has occurred */
 	timo = 0x80000;
 	while (adbWaiting == 1) {
 		if (read_via_reg(VIA1, vIFR) & 0x14)

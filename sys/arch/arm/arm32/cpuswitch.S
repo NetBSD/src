@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.1 2001/07/28 13:28:03 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.1.4.1 2001/10/01 12:37:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -697,7 +697,7 @@ trampoline_return:
 
 	movs	pc, lr			/* Exit */
 
-.type Lffs_table, _ASM_TYPE_OBJECT;
+	.type Lcpu_switch_ffs_table, _ASM_TYPE_OBJECT;
 Lcpu_switch_ffs_table:
 /* same as ffs table but all nums are -1 from that */
 /*               0   1   2   3   4   5   6   7           */

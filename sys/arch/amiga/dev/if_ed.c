@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.36 2001/06/12 14:59:27 wiz Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.36.4.1 2001/10/01 12:37:16 fvdl Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -762,7 +762,7 @@ edintr(arg)
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
-			 * be zero if a transmitter interrupt occured while not
+			 * be zero if a transmitter interrupt occurred while not
 			 * actually transmitting).
 			 * If data is ready to transmit, start it transmitting,
 			 * otherwise defer until after handling receiver.

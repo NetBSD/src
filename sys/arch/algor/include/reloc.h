@@ -1,8 +1,3 @@
-/*	$NetBSD: reloc.h,v 1.1 2001/05/28 16:22:20 thorpej Exp $	*/
-
-#ifndef _ALGOR_RELOC_H_
-#define _ALGOR_RELOC_H_
+/*	$NetBSD: reloc.h,v 1.1.4.1 2001/10/01 12:36:52 fvdl Exp $	*/
 
 #include <mips/reloc.h>
-
-#endif	/* !_ALGOR_RELOC_H_ */

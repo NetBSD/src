@@ -4,6 +4,7 @@
 /*
  * NETWINDER specific device includes go in here
  */
+#define	CONF_HAVE_PCI
 #define	CONF_HAVE_SCSIPI
 #define	CONF_HAVE_WSCONS
 

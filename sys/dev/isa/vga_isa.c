@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp $ */
+/* $NetBSD: vga_isa.c,v 1.4.6.1 2001/10/01 12:45:48 fvdl Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -44,18 +44,11 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 
-struct vga_isa_softc {
-	struct device sc_dev; 
-#if 0
-	struct vga_config *sc_vc;	/* VGA configuration */
-#endif
-};
-
 int	vga_isa_match __P((struct device *, struct cfdata *, void *));
 void	vga_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach vga_isa_ca = {
-	sizeof(struct vga_isa_softc), vga_isa_match, vga_isa_attach,
+	sizeof(struct vga_softc), vga_isa_match, vga_isa_attach,
 };
 
 int
@@ -90,15 +83,13 @@ vga_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct vga_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
-#if 0
-	struct vga_isa_softc *sc = (struct vga_isa_softc *)self;
-#endif
 
 	printf("\n");
 
-	vga_common_attach(self, ia->ia_iot, ia->ia_memt,
-			  WSDISPLAY_TYPE_ISAVGA, NULL);
+	vga_common_attach(sc, ia->ia_iot, ia->ia_memt, WSDISPLAY_TYPE_ISAVGA,
+	    NULL);
 }
 
 int

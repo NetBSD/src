@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.24 2001/08/16 13:37:32 wiz Exp $	*/
+/*	$NetBSD: wi.c,v 1.24.2.1 2001/10/01 12:45:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -101,6 +101,8 @@
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
 
+#define STATS_FREQUENCY   (60 * hz) /* collect stats every 60 seconds */
+
 static void wi_reset		__P((struct wi_softc *));
 static int wi_ioctl		__P((struct ifnet *, u_long, caddr_t));
 static void wi_start		__P((struct ifnet *));
@@ -121,7 +123,8 @@ static int wi_write_data	__P((struct wi_softc *, int,
 					int, caddr_t, int));
 static int wi_seek		__P((struct wi_softc *, int, int, int));
 static int wi_alloc_nicmem	__P((struct wi_softc *, int, int *));
-static void wi_inquire		__P((void *));
+static void wi_inquire_stats	__P((void *));
+static void wi_inquire_scan	__P((void *));
 static int wi_setdef		__P((struct wi_softc *, struct wi_req *));
 static int wi_getdef		__P((struct wi_softc *, struct wi_req *));
 static int wi_mgmt_xmit		__P((struct wi_softc *, caddr_t, int));
@@ -156,7 +159,8 @@ wi_attach(sc)
 
 	s = splnet();
 
-	callout_init(&sc->wi_inquire_ch);
+	callout_init(&sc->wi_stats_ch);
+	callout_init(&sc->wi_scan_ch);
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -221,6 +225,8 @@ wi_attach(sc)
 	sc->wi_roaming = WI_DEFAULT_ROAMING;
 	sc->wi_authtype = WI_DEFAULT_AUTHTYPE;
 
+	memset(&sc->wi_results, 0, sizeof (sc->wi_results));
+
 	/*
 	 * Read the default channel from the NIC. This may vary
 	 * depending on the country where the NIC was purchased, so
@@ -284,6 +290,10 @@ static void wi_rxeof(sc)
 	struct wi_frame		rx_frame;
 	struct mbuf		*m;
 	int			id;
+	u_int16_t		msg_type;
+	u_int16_t		status;
+	u_int16_t		frame_ctl;
+	u_int16_t		port;
 
 	ifp = sc->sc_ifp;
 
@@ -295,7 +305,62 @@ static void wi_rxeof(sc)
 		return;
 	}
 
-	if (le16toh(rx_frame.wi_status) & WI_STAT_ERRSTAT) {
+	status = le16toh(rx_frame.wi_status);
+	frame_ctl = le16toh(rx_frame.wi_frame_ctl);
+	port = (status >> 8) & 0x07;
+	msg_type = status & WI_RXSTAT_MSG_TYPE;
+
+	/*
+	 * Drop packets with CRC errors here.  We may want the others,
+	 * since we may be doing interesting things with undecryptable
+	 * packets, like analyzing them in userland.
+	 */
+	if (status & WI_STAT_BADCRC) {
+		ifp->if_ierrors++;
+		return;
+	}
+
+	if (port == 7) {
+		if ((le16toh(rx_frame.wi_dat_len) + 60) > MCLBYTES)
+			return;
+
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			ifp->if_ierrors++;
+			return;
+		}
+		MCLGET(m, M_DONTWAIT);
+		if (!(m->m_flags & M_EXT)) {
+			m_freem(m);
+			ifp->if_ierrors++;
+			return;
+		}
+
+		memcpy(mtod(m, caddr_t), &rx_frame, 60);
+		m->m_pkthdr.rcvif = ifp;
+
+		m->m_pkthdr.len = m->m_len =
+			le16toh(rx_frame.wi_dat_len) + 60;
+
+		if (wi_read_data(sc, id, 60, mtod(m, caddr_t) + 60,
+				 m->m_len - 60)) {
+			m_freem(m);
+			ifp->if_ierrors++;
+			return;
+		}
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+		m_freem(m);
+		return;
+	}
+
+	/*
+	 * Drop undecryptable or packets with receive errors here
+	 */
+	if (status & WI_STAT_ERRSTAT) {
 		ifp->if_ierrors++;
 		return;
 	}
@@ -378,6 +443,14 @@ static void wi_rxeof(sc)
 		bpf_mtap(ifp->if_bpf, m);
 #endif
 
+	/*
+	 * Discard packets which are not data packets
+	 */
+	if (WLAN_FC_GET_TYPE(frame_ctl) != WLAN_FC_TYPE_DATA) {
+		m_freem(m);
+		return;
+	}
+
 	/* Receive packet. */
 	(*ifp->if_input)(ifp, m);
 }
@@ -399,7 +472,7 @@ static void wi_txeof(sc, status)
 	return;
 }
 
-void wi_inquire(xsc)
+void wi_inquire_stats(xsc)
 	void			*xsc;
 {
 	struct wi_softc		*sc;
@@ -411,15 +484,38 @@ void wi_inquire(xsc)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return;
 
-	callout_reset(&sc->wi_inquire_ch, hz * 60, wi_inquire, sc);
+	callout_reset(&sc->wi_stats_ch, STATS_FREQUENCY, wi_inquire_stats, sc);
 
 	/* Don't do this while we're transmitting */
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
 	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS);
+}
 
-	return;
+void wi_inquire_scan(xsc)
+	void			*xsc;
+{
+	struct wi_softc		*sc;
+	struct ifnet		*ifp;
+
+	sc = xsc;
+	ifp = &sc->sc_ethercom.ec_if;
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
+
+	if (sc->wi_results.scanning > 0)
+		callout_reset(&sc->wi_scan_ch, sc->wi_results.scanning,
+			      wi_inquire_scan, sc);
+	else
+		callout_stop(&sc->wi_scan_ch);
+
+	/* Don't do this while we're transmitting */
+	if (ifp->if_flags & IFF_OACTIVE)
+		return;
+
+	wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_SCAN_RESULTS);
 }
 
 void wi_update_stats(sc)
@@ -438,28 +534,55 @@ void wi_update_stats(sc)
 
 	wi_read_data(sc, id, 0, (char *)&gen, 4);
 
-	if (gen.wi_type != WI_INFO_COUNTERS)
-		return;
+	switch (gen.wi_type) {
+	case WI_INFO_COUNTERS:
+		/* some card versions have a larger stats structure */
+		len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
+			gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
+		ptr = (u_int32_t *)&sc->wi_stats;
 
-	/* some card versions have a larger stats structure */
-	len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
-		gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
-	ptr = (u_int32_t *)&sc->wi_stats;
-
-	for (i = 0; i < len; i++) {
-		t = CSR_READ_2(sc, WI_DATA1);
+		for (i = 0; i < len; i++) {
+			t = CSR_READ_2(sc, WI_DATA1);
 #ifdef WI_HERMES_STATS_WAR
-		if (t > 0xF000)
-			t = ~t & 0xFFFF;
+			if (t > 0xF000)
+				t = ~t & 0xFFFF;
 #endif
-		ptr[i] += t;
+			ptr[i] += t;
+		}
+
+		ifp->if_collisions = sc->wi_stats.wi_tx_single_retries +
+			sc->wi_stats.wi_tx_multi_retries +
+			sc->wi_stats.wi_tx_retry_limit;
+		break;
+
+	case WI_INFO_SCAN_RESULTS:
+		microtime(&sc->wi_results.lastscan);
+		for (i = 0 ; i < gen.wi_len - 1 ; i++) {
+			t = CSR_READ_2(sc, WI_DATA1);
+			if (i < WI_SCAN_RESULTS_MAXLEN)
+				sc->wi_results.scan_results[i] = t;
+		}
+		if (gen.wi_len - 1 <= WI_SCAN_RESULTS_MAXLEN) {
+			sc->wi_results.len = gen.wi_len - 1;
+			sc->wi_results.truncated = 0;
+		} else {
+			sc->wi_results.len = WI_SCAN_RESULTS_MAXLEN;
+			sc->wi_results.truncated = 1;
+		}
+		break;
+
+	default:
+#if 0
+		printf("Got info type: %04x\n", gen.wi_type);
+#endif
+		for (i = 0; i < gen.wi_len; i++) {
+			t = CSR_READ_2(sc, WI_DATA1);
+#if 0
+			printf("[0x%02x] = 0x%04x\n", i, t);
+#endif
+		}
+		break;
 	}
-
-	ifp->if_collisions = sc->wi_stats.wi_tx_single_retries +
-	    sc->wi_stats.wi_tx_multi_retries +
-	    sc->wi_stats.wi_tx_retry_limit;
-
-	return;
 }
 
 int wi_intr(arg)
@@ -1142,10 +1265,11 @@ wi_ioctl(ifp, command, data)
 	u_long			command;
 	caddr_t			data;
 {
-	int			s, error = 0;
+	int			i, s, error = 0;
 	struct wi_softc		*sc = ifp->if_softc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
+	struct ifdrv		*ifd;
 	struct proc *p = curproc;
 	struct ieee80211_nwid nwid;
 
@@ -1214,28 +1338,34 @@ wi_ioctl(ifp, command, data)
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
-		if (wreq.wi_type == WI_RID_IFACE_STATS) {
+		switch (wreq.wi_type) {
+		case WI_RID_IFACE_STATS:
 			/* XXX native byte order */
 			memcpy((char *)&wreq.wi_val, (char *)&sc->wi_stats,
-			    sizeof(sc->wi_stats));
+			       sizeof(sc->wi_stats));
 			wreq.wi_len = (sizeof(sc->wi_stats) / 2) + 1;
-		} else if (wreq.wi_type == WI_RID_DEFLT_CRYPT_KEYS) {
+			break;
+		case WI_RID_DEFLT_CRYPT_KEYS:
 			/* For non-root user, return all-zeroes keys */
 			if (suser(p->p_ucred, &p->p_acflag))
 				memset((char *)&wreq, 0,
-				    sizeof(struct wi_ltv_keys));
+				       sizeof(struct wi_ltv_keys));
 			else
 				memcpy((char *)&wreq, (char *)&sc->wi_keys,
-				    sizeof(struct wi_ltv_keys));
-		} else {
+				       sizeof(struct wi_ltv_keys));
+			break;
+		default:
 			if (sc->sc_enabled == 0)
 				error = wi_getdef(sc, &wreq);
-			else if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq))
+			else if (wi_read_record(sc,
+						(struct wi_ltv_gen *)&wreq))
 				error = EINVAL;
+			break;
 		}
 		if (error == 0)
 			error = copyout(&wreq, ifr->ifr_data, sizeof(wreq));
 		break;
+
 	case SIOCSWAVELAN:
 		error = suser(p->p_ucred, &p->p_acflag);
 		if (error)
@@ -1243,13 +1373,16 @@ wi_ioctl(ifp, command, data)
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
-		if (wreq.wi_type == WI_RID_IFACE_STATS) {
+		switch (wreq.wi_type) {
+		case WI_RID_IFACE_STATS:
 			error = EINVAL;
 			break;
-		} else if (wreq.wi_type == WI_RID_MGMT_XMIT) {
+		case WI_RID_MGMT_XMIT:
 			error = wi_mgmt_xmit(sc, (caddr_t)&wreq.wi_val,
-			    wreq.wi_len);
-		} else {
+					     wreq.wi_len);
+			break;
+
+		default:
 			if (sc->sc_enabled != 0)
 				error = wi_write_record(sc,
 				    (struct wi_ltv_gen *)&wreq);
@@ -1258,8 +1391,67 @@ wi_ioctl(ifp, command, data)
 			if (error == 0 && sc->sc_enabled != 0)
 				/* Reinitialize WaveLAN. */
 				wi_init(ifp);
+			break;
 		}
 		break;
+
+	case SIOCSDRVSPEC:
+		error = suser(p->p_ucred, &p->p_acflag);
+		if (error)
+			break;
+		ifd = (struct ifdrv *)data;
+		switch (ifd->ifd_cmd) {
+		case WI_IOCTL_SET_SCAN:
+			error = copyin(ifd->ifd_data, &i, sizeof (i));
+			if (error)
+				break;
+
+			sc->wi_results.scanning = i;
+			if (sc->wi_results.scanning > 0)
+				callout_reset(&sc->wi_scan_ch,
+					      sc->wi_results.scanning,
+					      wi_inquire_scan, sc);
+			else
+				callout_stop(&sc->wi_scan_ch);
+			break;
+
+		/*
+		 * Experimental XXXMLG
+		 */
+		case WI_IOCTL_SET_TESTMODE:
+			error = copyin(ifd->ifd_data, &i, sizeof (i));
+			if (error)
+				break;
+			if (i) {
+				wi_cmd(sc, WI_CMD_TEST | WI_TEST_MONITOR << 8,
+				       0);
+				printf("wi test mode enabled\n");
+			} else {
+				wi_cmd(sc, WI_CMD_TEST | WI_TEST_STOP << 8, 0);
+				printf("wi test mode disabled\n");
+			}
+			break;
+
+		default:
+			error = EINVAL;
+			break;
+		}
+		break;
+
+	case SIOCGDRVSPEC:
+		ifd = (struct ifdrv *)data;
+		switch (ifd->ifd_cmd) {
+		case WI_IOCTL_GET_SCAN_RESULTS:
+			error = copyout(&sc->wi_results, ifd->ifd_data,
+					sizeof(struct wi_scan_results));
+			break;
+
+		default:
+			error = EINVAL;
+			break;
+		}
+		break;
+
 	case SIOCG80211NWID:
 		if (sc->sc_enabled == 0) {
 			/* Return the desired ID */
@@ -1440,7 +1632,7 @@ wi_init(ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	callout_reset(&sc->wi_inquire_ch, hz * 60, wi_inquire, sc);
+	callout_reset(&sc->wi_stats_ch, STATS_FREQUENCY, wi_inquire_stats, sc);
 
  out:
 	if (error) {
@@ -1585,7 +1777,8 @@ wi_stop(ifp, disable)
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0);
 
-	callout_stop(&sc->wi_inquire_ch);
+	callout_stop(&sc->wi_stats_ch);
+	callout_stop(&sc->wi_scan_ch);
 
 	if (disable) {
 		if (sc->sc_enabled) {
@@ -1733,7 +1926,8 @@ wi_detach(sc)
 		return (0);
 
 	s = splnet();
-	callout_stop(&sc->wi_inquire_ch);
+	callout_stop(&sc->wi_stats_ch);
+	callout_stop(&sc->wi_scan_ch);
 
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.1 2000/08/20 14:33:25 pk Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.1.8.1 2001/10/01 12:46:17 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -163,8 +163,8 @@ bwtwoattach_sbus(parent, self, args)
 
 	/* Remember cookies for bwtwo_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
-	sc->sc_paddr = (bus_addr_t)sa->sa_offset;
+	sc->sc_btype = (bus_type_t)sa->sa_slot; /* Should be deprecated */
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 	fb->fb_type.fb_depth = 1;
@@ -190,7 +190,7 @@ bwtwoattach_sbus(parent, self, args)
 	sc->sc_pixeloffset = BWREG_MEM;
 
 	isconsole = fb_is_console(node);
-	name = getpropstring(node, "model");
+	name = PROM_getpropstring(node, "model");
 
 	/* Assume `bwtwo at sbus' only happens at sun4c's */
 	sc->sc_get_video = bwtwo_get_video;

@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.1 2001/01/28 02:52:17 uch Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.1.4.1 2001/10/01 12:38:40 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -48,7 +48,7 @@ struct hook_rec {
 	int hr_type;
 	long hr_id;
 	enum config_hook_mode hr_mode;
-	int (*hr_func) __P((void *, int, long, void *));
+	int (*hr_func)(void *, int, long, void *);
 };
 
 LIST_HEAD(hook_list, hook_rec);
@@ -65,12 +65,8 @@ config_hook_init()
 }
 
 config_hook_tag
-config_hook(type, id, mode, func, ctx)
-	int type;
-	long id;
-	enum config_hook_mode mode;
-	int (*func) __P((void*, int, long, void*));
-	void *ctx;
+config_hook(int type, long id, enum config_hook_mode mode,
+    int (*func)(void *, int, long, void *), void *ctx)
 {
 	struct hook_rec *hr, *prev_hr;
 	int s;
@@ -85,12 +81,12 @@ config_hook(type, id, mode, func, ctx)
 	 */
 	prev_hr = NULL;
 	for (hr = LIST_FIRST(&hook_lists[type]); hr != NULL;
-	     hr = LIST_NEXT(hr, hr_link)) {
+	    hr = LIST_NEXT(hr, hr_link)) {
 		if (hr->hr_id == id) {
 			if (hr->hr_mode != mode) {
 				panic("config_hook: incompatible mode on "
-				      "type=%d/id=%ld != %d",
-				      type, id, hr->hr_mode);
+				    "type=%d/id=%ld != %d",
+				    type, id, hr->hr_mode);
 			}
 			prev_hr = hr;
 		}
@@ -102,7 +98,7 @@ config_hook(type, id, mode, func, ctx)
 	case CONFIG_HOOK_REPLACE:
 		if (prev_hr != NULL) {
 			printf("config_hook: type=%d/id=%ld is replaced",
-			       type, id);
+			    type, id);
 			s = splhigh();
 			LIST_REMOVE(prev_hr, hr_link);
 			prev_hr->hr_link.le_next = NULL;
@@ -112,7 +108,7 @@ config_hook(type, id, mode, func, ctx)
 	case CONFIG_HOOK_EXCLUSIVE:
 		if (prev_hr != NULL) {
 			panic("config_hook: type=%d/id=%ld is already "
-			      "hooked(%p)", type, id, prev_hr);
+			    "hooked(%p)", type, id, prev_hr);
 		}
 		break;
 	default:
@@ -137,8 +133,7 @@ config_hook(type, id, mode, func, ctx)
 }
 
 void
-config_unhook(hrx)
-	config_hook_tag hrx;
+config_unhook(config_hook_tag hrx)
 {
 	int s;
 	struct hook_rec *hr = (struct hook_rec*)hrx;
@@ -153,10 +148,7 @@ config_unhook(hrx)
 }
 
 int
-config_hook_call(type, id, msg)
-	int type;
-	long id;
-	void *msg;
+config_hook_call(int type, long id, void *msg)
 {
 	int res;
 	struct hook_rec *hr;
@@ -168,10 +160,11 @@ config_hook_call(type, id, msg)
 
 	res = -1;
 	for (hr = LIST_FIRST(&hook_lists[type]); hr != NULL;
-	     hr = LIST_NEXT(hr, hr_link)) {
+	    hr = LIST_NEXT(hr, hr_link)) {
 		if (hr->hr_id == id) {
 			res = (*hr->hr_func)(hr->hr_ctx, type, id, msg);
 		}
 	}
+
 	return (res);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2001/06/19 00:21:17 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.4.1 2001/10/01 12:43:19 fvdl Exp $	*/
 
 /*
  *
@@ -223,9 +223,9 @@
  *		=> success: we have an unmapped VA, continue to [b]
  *		=> failure: unable to lock kmem_map or out of VA in it.
  *			move on to plan 3.
- *		[b] allocate a page in kmem_object for the VA
+ *		[b] allocate a page for the VA
  *		=> success: map it in, free the pv_entry's, DONE!
- *		=> failure: kmem_object locked, no free vm_pages, etc.
+ *		=> failure: no free vm_pages, etc.
  *			save VA for later call to [a], go to plan 3.
  *	If we fail, we simply let pmap_enter() tell UVM about it.
  */
@@ -1065,7 +1065,7 @@ pmap_init()
 
 	/*
 	 * now we need to free enough pv_entry structures to allow us to get
-	 * the kmem_map/kmem_object allocated and inited (done after this
+	 * the kmem_map allocated and inited (done after this
 	 * function is finished).  to do this we allocate one bootstrap page out
 	 * of kernel_map and use it to provide an initial pool of pv_entry
 	 * structures.   we never free this page.
@@ -1208,35 +1208,25 @@ pmap_alloc_pvpage(pmap, mode)
 	 * if not, try to allocate one.
 	 */
 
-	s = splvm();   /* must protect kmem_map/kmem_object with splvm! */
 	if (pv_cachedva == 0) {
-		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
+		s = splvm();   /* must protect kmem_map with splvm! */
+		pv_cachedva = uvm_km_kmemalloc(kmem_map, NULL,
 		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		splx(s);
 		if (pv_cachedva == 0) {
-			splx(s);
 			return (NULL);
 		}
 	}
 
 	/*
-	 * we have a VA, now let's try and allocate a page in the object
-	 * note: we are still holding splvm to protect kmem_object
+	 * we have a VA, now let's try and allocate a page.
 	 */
 
-	if (!simple_lock_try(&uvmexp.kmem_object->vmobjlock)) {
-		splx(s);
-		return (NULL);
-	}
-
-	pg = uvm_pagealloc(uvmexp.kmem_object, pv_cachedva -
-			   vm_map_min(kernel_map),
-			   NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, pv_cachedva - vm_map_min(kernel_map), NULL,
+	    UVM_PGA_USERESERVE);
 	if (pg)
 		pg->flags &= ~PG_BUSY;	/* never busy */
-
-	simple_unlock(&uvmexp.kmem_object->vmobjlock);
 	splx(s);
-	/* splvm now dropped */
 
 	if (pg == NULL)
 		return (NULL);
@@ -1249,8 +1239,8 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
-	pmap_update();
-	pvpage = (struct pv_page *) pv_cachedva;
+	pmap_update(pmap_kernel());
+	pvpage = (struct pv_page *)pv_cachedva;
 	pv_cachedva = 0;
 	return (pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 }
@@ -1387,9 +1377,6 @@ pmap_free_pvs(pmap, pvs)
  * => assume caller is holding the pvalloc_lock and that
  *	there is a page on the pv_unusedpgs list
  * => if we can't get a lock on the kmem_map we try again later
- * => note: analysis of MI kmem_map usage [i.e. malloc/free] shows
- *	that if we can lock the kmem_map then we are not already
- *	holding kmem_object's lock.
  */
 
 static void
@@ -1401,18 +1388,17 @@ pmap_free_pvpage()
 	struct pv_page *pvp;
 
 	s = splvm(); /* protect kmem_map */
-
-	pvp = pv_unusedpgs.tqh_first;
+	pvp = TAILQ_FIRST(&pv_unusedpgs);
 
 	/*
 	 * note: watch out for pv_initpage which is allocated out of
 	 * kernel_map rather than kmem_map.
 	 */
+
 	if (pvp == pv_initpage)
 		map = kernel_map;
 	else
 		map = kmem_map;
-
 	if (vm_map_lock_try(map)) {
 
 		/* remove pvp from pv_unusedpgs */
@@ -1429,7 +1415,6 @@ pmap_free_pvpage()
 
 		pv_nfpvents -= PVE_PER_PVPAGE;  /* update free count */
 	}
-
 	if (pvp == pv_initpage)
 		/* no more initpage, we've freed it */
 		pv_initpage = NULL;
@@ -2077,7 +2062,7 @@ pmap_map(va, spa, epa, prot)
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	return va;
 }
 
@@ -2583,9 +2568,6 @@ pmap_page_remove(pg)
 		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
 
 #ifdef DIAGNOSTIC
-		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
-			printf("pmap_page_remove: found pager VA on pv_list\n");
-		}
 		if (pve->pv_ptp && pmap_pdes_valid(pve->pv_va, pdes, &pde) &&
 		   (pde & PG_FRAME) != VM_PAGE_TO_PHYS(pve->pv_ptp)) {
 			printf("pmap_page_remove: pg=%p: va=%lx, pv_ptp=%p\n",
@@ -2766,9 +2748,6 @@ pmap_change_attrs(pg, setbits, clearbits)
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
 		pmap_map_ptes(pve->pv_pmap, &ptes, &pdes);	/* locks pmap */
 #ifdef DIAGNOSTIC
-		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
-			printf("pmap_change_attrs: found pager VA on pv_list\n");
-		}
 		if (!pmap_pdes_valid(pve->pv_va, pdes, NULL))
 			panic("pmap_change_attrs: mapping without PTP "
 			      "detected");

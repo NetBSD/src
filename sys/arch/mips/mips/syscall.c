@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.4 2001/05/11 01:42:32 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4.4.1 2001/10/01 12:40:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2001/05/11 01:42:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4.4.1 2001/10/01 12:40:50 fvdl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -103,24 +103,32 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2001/05/11 01:42:32 thorpej Exp $");
 #include <mips/regnum.h>			/* symbolic register indices */
 #include <mips/userret.h>
 
-void	syscall_intern(struct proc *);
-void	syscall_plain(struct proc *, u_int, u_int, u_int);
-void	syscall_fancy(struct proc *, u_int, u_int, u_int);
+#ifndef EMULNAME
+#define EMULNAME(x)	(x)
+#endif
+
+#ifndef SYSCALL_SHIFT
+#define SYSCALL_SHIFT 0
+#endif
+
+void	EMULNAME(syscall_intern)(struct proc *);
+void	EMULNAME(syscall_plain)(struct proc *, u_int, u_int, u_int);
+void	EMULNAME(syscall_fancy)(struct proc *, u_int, u_int, u_int);
 
 vaddr_t MachEmulateBranch(struct frame *, vaddr_t, u_int, int);
 
 #define DELAYBRANCH(x) ((int)(x)<0)
 
 void
-syscall_intern(struct proc *p)
+EMULNAME(syscall_intern)(struct proc *p)
 {
 
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = EMULNAME(syscall_fancy);
 	else
 #endif
-		p->p_md.md_syscall = syscall_plain;
+		p->p_md.md_syscall = EMULNAME(syscall_plain);
 }
 
 /*
@@ -135,7 +143,7 @@ syscall_intern(struct proc *p)
  */
 
 void
-syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
+EMULNAME(syscall_plain)(struct proc *p, u_int status, u_int cause, u_int opc)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 	mips_reg_t *args, copyargs[8], ov0;
@@ -152,7 +160,7 @@ syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
 
 	callp = p->p_emul->e_sysent;
 	numsys = p->p_emul->e_nsysent;
-	ov0 = code = frame->f_regs[V0];
+	ov0 = code = frame->f_regs[V0] - SYSCALL_SHIFT;
 
 	switch (code) {
 	case SYS_syscall:
@@ -253,7 +261,7 @@ syscall_plain(struct proc *p, u_int status, u_int cause, u_int opc)
 }
 
 void
-syscall_fancy(struct proc *p, u_int status, u_int cause, u_int opc)
+EMULNAME(syscall_fancy)(struct proc *p, u_int status, u_int cause, u_int opc)
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 	mips_reg_t *args, copyargs[8], ov0;
@@ -270,7 +278,7 @@ syscall_fancy(struct proc *p, u_int status, u_int cause, u_int opc)
 
 	callp = p->p_emul->e_sysent;
 	numsys = p->p_emul->e_nsysent;
-	ov0 = code = frame->f_regs[V0];
+	ov0 = code = frame->f_regs[V0] - SYSCALL_SHIFT;
 
 	switch (code) {
 	case SYS_syscall:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7 2001/04/18 10:42:39 sato Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7.4.1 2001/10/01 12:39:07 fvdl Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -56,18 +56,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 
-#include <mips/locore.h>
-#include <machine/cpu.h>
+#include <machine/sysconf.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/platid.h>
-#include <machine/platid_mask.h>
-
-#include "opt_vr41xx.h"
-#include "opt_tx39xx.h"
 
 /* Definition of the driver for autoconfig. */
 static int	cpumatch(struct device *, struct cfdata *, void *);
@@ -79,53 +72,24 @@ struct cfattach cpu_ca = {
 
 extern struct cfdriver cpu_cd;
 
-extern void cpu_identify __P((void));
-extern void vr_idle __P((void));
-
-
 static int
-cpumatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+cpumatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0) {
-		return (0);
-	}
-	return (1);
+	return (strcmp(ma->ma_name, cpu_cd.cd_name) != 0 ? 0 : 1);
 }
 
 static void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+cpuattach(struct device *parent, struct device *dev, void *aux)
 {
 
 	printf(": ");
 
 	cpu_identify();
 
-#ifdef VR41XX
-#ifdef TX39XX
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX))
-#endif /* TX39XX */
-	{
-		printf("cpu0: install VR specific idle routine\n");
-		CPU_IDLE = (long *)vr_idle;
-	}
-#endif
-#ifdef TX39XX
-#ifdef VR41XX
-	if (platid_match(&platid, &platid_mask_CPU_MIPS_TX_3900)
-	    || platid_match(&platid, &platid_mask_CPU_MIPS_TX_3920))
-#endif /* VR41XX */
-	{
-		; /* XXXX: currenty not implemented */
-	}
-#endif
+	/* install CPU specific idle routine if any. */
+	if (platform.cpu_idle != NULL)
+		CPU_IDLE = (long *)platform.cpu_idle;
 }

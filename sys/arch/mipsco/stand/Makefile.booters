@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.2 2000/09/26 09:11:04 wdk Exp $
+#	$NetBSD: Makefile.booters,v 1.2.4.1 2001/10/01 12:40:56 fvdl Exp $
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -114,7 +114,7 @@ ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 	@${SIZE} ${PROG}
 .if defined(PRIMARY_PROG)
 	@mv ${PROG} ${PROG}.elf
-	@objcopy --strip-all -O ecoff-bigmips -R .reginfo ${PROG}.elf ${PROG}
+	@${OBJCOPY} --strip-all -O ecoff-bigmips -R .reginfo ${PROG}.elf ${PROG}
 .endif
 .if defined(CHECKSIZE_CMD)
 	@${CHECKSIZE_CMD} ${PROG} ${PRIMARY_MAX_LOAD} || \

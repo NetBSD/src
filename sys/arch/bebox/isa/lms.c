@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.4 1998/08/15 03:02:35 mycroft Exp $	*/
+/*	$NetBSD: lms.c,v 1.4.24.1 2001/10/01 12:38:23 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -209,7 +209,7 @@ lmsread(dev, uio, flag)
 	size_t length;
 	u_char buffer[LMS_CHUNK];
 
-	/* Block until mouse activity occured. */
+	/* Block until mouse activity occurred. */
 
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {

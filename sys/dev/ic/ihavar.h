@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.3 2001/07/27 16:16:34 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.3.2.1 2001/10/01 12:45:37 fvdl Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -48,7 +48,7 @@
  * $OpenBSD: iha.h,v 1.2 2001/02/08 17:35:05 krw Exp $
  */
 
-#define IHA_MAX_SG_ENTRIES	33
+#define IHA_MAX_SG_ENTRIES	(MAXPHYS / PAGE_SIZE + 1)
 #define IHA_MAX_TARGETS		16
 #define IHA_MAX_SCB		32
 #define IHA_MAX_EXTENDED_MSG	 4 /* SDTR(3) and WDTR(4) only */
@@ -65,11 +65,7 @@ struct iha_sg_element {
 	u_int32_t sg_len;	/* Data Length  */
 };
 
-struct iha_sglist {
-	struct iha_sg_element sg_element[IHA_MAX_SG_ENTRIES];
-};
-	
-#define IHA_SG_SIZE (sizeof(struct iha_sglist))
+#define IHA_SG_SIZE (sizeof(struct iha_sg_element) * IHA_MAX_SG_ENTRIES)
 
 /*
  * iha_scsi_req_q - SCSI Request structure used by the
@@ -185,7 +181,7 @@ struct iha_softc {
 
 	struct iha_scsi_req_q *sc_scb;		    /* SCB array	     */
 	struct iha_scsi_req_q *sc_actscb;	    /* SCB using SCSI bus    */
-	struct iha_sglist *sc_sglist;
+	struct iha_sg_element *sc_sglist;
 
 	TAILQ_HEAD(, iha_scsi_req_q) sc_freescb,
 				     sc_pendscb,

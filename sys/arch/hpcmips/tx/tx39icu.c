@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39icu.c,v 1.12 2001/06/14 11:09:55 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.12.4.1 2001/10/01 12:39:15 fvdl Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_vr41xx.h"
+#include "opt_tx39xx.h"
+
 #include "opt_tx39_debug.h"
 #include "opt_use_poll.h"
 #include "opt_tx39icudebug.h"
@@ -47,6 +50,8 @@
 #include <sys/malloc.h>
 #include <sys/queue.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <mips/cpuregs.h>
 #include <machine/bus.h>
 
@@ -54,11 +59,16 @@
 #include <hpcmips/tx/tx39icureg.h>
 #include <hpcmips/tx/tx39clockvar.h>
 
-#include <machine/clock_machdep.h>
 #include <machine/cpu.h>
 #include <dev/dec/clockvar.h>
 
 #undef TX39ICUDEBUG_PRINT_PENDING_INTERRUPT /* For explorer. good luck! */
+
+#if defined(VR41XX) && defined(TX39XX)
+#define	TX_INTR	tx_intr
+#else
+#define	TX_INTR	cpu_intr	/* locore_mips3 directly call this */
+#endif
 
 #ifdef TX39ICUDEBUG
 #define	DPRINTF(arg) printf arg
@@ -66,6 +76,44 @@
 #define	DPRINTF(arg)
 #endif
 u_int32_t tx39intrvec;
+
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+const u_int32_t __ipl_sr_bits_tx[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_4,		/* IPL_{CLOCK,HIGH} */
+};
 
 /* IRQHIGH lines list */
 static const struct irqhigh_list {
@@ -180,13 +228,14 @@ void	tx39_irqhigh_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 int	tx39_irqhigh(int, int);
 
 struct cfattach tx39icu_ca = {
-sizeof(struct tx39icu_softc), tx39icu_match, tx39icu_attach
+	sizeof(struct tx39icu_softc), tx39icu_match, tx39icu_attach
 };
 
 int
 tx39icu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-return (ATTACH_FIRST);
+
+	return (ATTACH_FIRST);
 }
 
 void
@@ -197,7 +246,7 @@ tx39icu_attach(struct device *parent, struct device *self, void *aux)
 	tx_chipset_tag_t tc = ta->ta_tc;
 	txreg_t reg, *regs;
 	int i;
-	
+
 	printf("\n");
 	sc->sc_tc = ta->ta_tc;
 
@@ -273,14 +322,18 @@ tx39icu_attach(struct device *parent, struct device *self, void *aux)
 	tx_conf_register_intr(tc, self);
 }
 
-int
-tx39icu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-    u_int32_t ipending)
+void
+TX_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	struct tx39icu_softc *sc;
 	tx_chipset_tag_t tc;
 	txreg_t reg, pend, *regs;
 	int i, j;
+
+	uvmexp.intrs++;
+
+	if ((ipending & MIPS_HARD_INT_MASK) == 0)
+		goto softintr;
 
 	tc = tx_conf_get_tag();
 	sc = tc->tc_intrt;
@@ -315,7 +368,7 @@ tx39icu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 	if (ipending & MIPS_INT_MASK_4) {
 		tx39_irqhigh_intr(ipending, pc, status, cause);
 
-		return (0);
+		goto softintr;
 	}
 
 	/* IRQLOW */
@@ -372,7 +425,11 @@ tx39icu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 	reg = TX39_INTRENABLE6_PRIORITYMASK_SET(reg, 0xffff);
 	tx_conf_write(tc, TX39_INTRENABLE6_REG, reg);
 #endif
-	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
+
+ softintr:
+	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+
+	softintr(ipending);
 }
 
 int
