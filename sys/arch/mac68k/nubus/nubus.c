@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.45.8.1 1999/11/01 06:19:16 scottr Exp $	*/
+/*	$NetBSD: nubus.c,v 1.45.8.2 1999/11/01 07:06:44 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -784,3 +784,43 @@ nubus_get_card_name(bst, bsh, fmt)
 
 	return name_ret;
 }
+
+#ifdef DEBUG
+void
+nubus_scan_slot(bst, slotno)
+	bus_space_tag_t bst;
+	int slotno;
+{
+	int i=0, state=0;
+	char twirl[] = "-\\|/";
+	bus_space_handle_t sc_bsh;
+
+	if (bus_space_map(bst, NUBUS_SLOT2PA(slotno), NBMEMSIZE, 0, &sc_bsh)) {
+		printf("nubus_scan_slot: failed to map slot %d\n", slotno);
+		return;
+	}
+
+	printf("Scanning slot %c for accessible regions:\n",
+		slotno == 9 ? '9' : slotno - 10 + 'A');
+	for (i=0 ; i<NBMEMSIZE; i++) {
+		if (mac68k_bus_space_probe(bst, sc_bsh, i, 1)) {
+			if (state == 0) {
+				printf("\t0x%x-", i);
+				state = 1;
+			}
+		} else {
+			if (state) {
+				printf("0x%x\n", i);
+				state = 0;
+			}
+		}
+		if (i%100 == 0) {
+			printf("%c\b", twirl[(i/100)%4]);
+		}
+	}
+	if (state) {
+		printf("0x%x\n", i);
+	}
+	return;
+}
+#endif
