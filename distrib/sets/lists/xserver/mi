@@ -1,8 +1,7 @@
-# $NetBSD: mi,v 1.10 2004/01/11 15:12:46 lukem Exp $
+# $NetBSD: mi,v 1.11 2004/01/13 06:07:33 lukem Exp $
 ./usr/X11R6/bin/Xprt
 ./usr/X11R6/bin/xvidtune
 ./usr/X11R6/lib/X11/app-defaults/Xvidtune
-./usr/X11R6/lib/X11/xserver
 ./usr/X11R6/lib/X11/xserver/SecurityPolicy
 ./usr/X11R6/man/cat1/Xserver.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/xvidtune.0			-unknown-		.cat
