@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13 2000/07/10 10:38:23 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.14 2000/07/10 10:45:21 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,9 +71,11 @@ autoconf()
 	consinit(); /* Allow us to print out things */
 	scbinit(); /* Fix interval clock etc */
 
-printf("fromnet %d bootregs[12] %ld &bootrpb %p\n", fromnet, bootregs[12], &bootrpb);
-for (copyrpb = 0; copyrpb < 13; copyrpb++)
-	printf("r%d: %lx\n", copyrpb, bootregs[copyrpb]);
+#ifdef DEV_DEBUG
+	printf("Register contents:\n");
+	for (copyrpb = 0; copyrpb < 13; copyrpb++)
+		printf("r%d: %lx\n", copyrpb, bootregs[copyrpb]);
+#endif
 	switch (vax_boardtype) {
 
 	case VAX_BTYP_8000:
