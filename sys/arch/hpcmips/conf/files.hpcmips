@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.46 2001/01/28 03:09:41 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.47 2001/02/04 05:19:15 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -54,8 +54,8 @@ file	arch/hpcmips/hpcmips/disksubr.c	disk
 file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
 
 include "arch/hpc/conf/files.hpc"
-file	arch/hpcmips/hpcmips/platid_mask.c
-file	arch/hpcmips/hpcmips/platid_name.c
+file	arch/hpc/hpc/platid_mask.c
+file	arch/hpc/hpc/platid_name.c
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c

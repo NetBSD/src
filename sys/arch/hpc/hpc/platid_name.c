@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.12 2001/01/28 02:52:35 uch Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.1 2001/02/04 05:19:14 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -14,24 +14,23 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the PocketBSD project
- *	and its contributors.
- * 4. Neither the name of the project nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 /*
  *  Do not edit.
@@ -40,6 +39,7 @@
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 struct platid_name platid_name_table[] = {
+#ifdef hpcmips
 	{ &platid_mask_CPU_MIPS,
 	 TEXT("MIPS") },
 	{ &platid_mask_CPU_MIPS_VR,
@@ -64,6 +64,22 @@ struct platid_name platid_name_table[] = {
 	 TEXT("MIPS TX 3920") },
 	{ &platid_mask_CPU_MIPS_TX_3922,
 	 TEXT("MIPS TX 3922") },
+#endif /* hpcmips */
+#ifdef hpcsh
+	{ &platid_mask_CPU_SH,
+	 TEXT("SH") },
+	{ &platid_mask_CPU_SH_3,
+	 TEXT("SH 3") },
+	{ &platid_mask_CPU_SH_3_7709,
+	 TEXT("SH 3 7709") },
+	{ &platid_mask_CPU_SH_3_7709A,
+	 TEXT("SH 3 7709A") },
+	{ &platid_mask_CPU_SH_4,
+	 TEXT("SH 4") },
+	{ &platid_mask_CPU_SH_4_7750,
+	 TEXT("SH 4 7750") },
+#endif /* hpcsh */
+#ifdef hpcmips
 	{ &platid_mask_MACH_NEC,
 	 TEXT("NEC") },
 	{ &platid_mask_MACH_NEC_MCCS,
@@ -264,5 +280,34 @@ struct platid_name platid_name_table[] = {
 	 TEXT("VADEM CLIO C-1000") },
 	{ &platid_mask_MACH_VADEM_CLIO_C1050,
 	 TEXT("VADEM CLIO C-1050") },
+#endif /* hpcmips */
+#ifdef hpcsh
+	{ &platid_mask_MACH_HP,
+	 TEXT("HP") },
+	{ &platid_mask_MACH_HP_LX,
+	 TEXT("HP LX") },
+	{ &platid_mask_MACH_HP_LX_620,
+	 TEXT(" HP620LX") },
+	{ &platid_mask_MACH_HP_LX_620JP,
+	 TEXT(" HP620LX (Japanese)") },
+	{ &platid_mask_MACH_HP_JORNADA,
+	 TEXT("HP Jornada") },
+	{ &platid_mask_MACH_HP_JORNADA_6XX,
+	 TEXT("HP Jornada 6XX") },
+	{ &platid_mask_MACH_HP_JORNADA_680,
+	 TEXT("HP Jornada 680") },
+	{ &platid_mask_MACH_HP_JORNADA_680JP,
+	 TEXT("HP Jornada680 (Japanese)") },
+	{ &platid_mask_MACH_HP_JORNADA_690,
+	 TEXT("HP Jornada 690") },
+	{ &platid_mask_MACH_HP_JORNADA_690JP,
+	 TEXT("HP Jornada690 (Japanese)") },
+	{ &platid_mask_MACH_LGE,
+	 TEXT("LGE") },
+	{ &platid_mask_MACH_LGE_PHENOM,
+	 TEXT("LGEPhenom") },
+	{ &platid_mask_MACH_LGE_PHENOM_H220C,
+	 TEXT("LGE H-220C") },
+#endif /* hpcsh */
 };
-int platid_name_table_size = 112;
+int platid_name_table_size = sizeof(platid_name_table)/sizeof(*platid_name_table);

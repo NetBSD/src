@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.1 2001/01/28 02:52:24 uch Exp $	*/
+/*	$NetBSD: gram.y,v 1.2 2001/02/04 05:19:15 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -41,7 +41,7 @@
 #include "platid_gen.h"
 
 #define LIST_NEW(l)	{ \
-	(l) = new_node(LIST, 0, NULL, NULL, NULL); \
+	(l) = new_node(N_LIST, 0, NULL, NULL, NULL); \
 }
 #define LIST_ADD(l, i)	{ \
 	if ((l)->ptr1 == NULL) { \
@@ -68,6 +68,7 @@
 %token <str>SYM
 %token <str>MOD
 %token <str>NAME
+%token <str>DIRECTIVE
 
 %type <str>sym
 %type <val>name_prefix
@@ -87,17 +88,18 @@ list:
   /* empty */ { LIST_NEW($$); };
 
 item:
-sym ':' { $$ = new_node(LABEL, 0, $1, NULL, NULL); } |
-sym '=' sym  { $$ = new_node(MODIFIER, 0, $1, $3, NULL); } |
+sym ':' { $$ = new_node(N_LABEL, 0, $1, NULL, NULL); } |
+sym '=' sym  { $$ = new_node(N_MODIFIER, 0, $1, $3, NULL); } |
 ent { $$ = $1; }|
-'{' sub_list '}' { $$ = $2; };
+'{' sub_list '}' { $$ = $2; } |
+DIRECTIVE { $$ = new_node(N_DIRECTIVE, 0, $1, NULL, NULL); };
 
 sub_list:
   sub_list sub_item { LIST_ADD($1, $2); $$ = $1; } |
   /* empty */ { LIST_NEW($$); };
 
 sub_item:
-  sym '=' sym { $$ = new_node(MODIFIER, 0, $1, $3, NULL); }|
+  sym '=' sym { $$ = new_node(N_MODIFIER, 0, $1, $3, NULL); }|
   ent { $$ = $1; } |
   '{' sub_list '}' { $$ = $2; };
 
@@ -113,8 +115,8 @@ ent : sym name_opt {
 };
 
 name_opt:
-    name_prefix NAME { $$ = new_node(ENTRY, $1, NULL, $2, NULL); } |
-    name_prefix { $$ = new_node(ENTRY, $1, NULL, NULL, NULL); };
+    name_prefix NAME { $$ = new_node(N_ENTRY, $1, NULL, $2, NULL); } |
+    name_prefix { $$ = new_node(N_ENTRY, $1, NULL, NULL, NULL); };
 
 name_prefix:
   name_prefix '-' { $$ = $1 + 1; } |
@@ -180,25 +182,29 @@ dump_node(prefix, n)
 	sprintf(prefix2, "%s    ", prefix);
 
 	switch (n->type) {
-	case LABEL:
+	case N_LABEL:
 		printf("%s%s:\n", prefix, n->ptr1);
 		break;
-	case MODIFIER:
+	case N_MODIFIER:
 		printf("%s%s=%s\n", prefix, n->ptr1, n->ptr2);
 		break;
-	case ENTRY:
+	case N_ENTRY:
 		if (n->val == 0)
 			printf("%s%s(%s)\n", prefix, n->ptr1, n->ptr2);
 		else
 			printf("%s%s(-%d, %s)\n",
 			       prefix, n->ptr1, n->val, n->ptr2);
 		break;
-	case LIST:
+	case N_LIST:
 		printf("%s{\n", prefix);
 	       	for (np = (node_t*)n->ptr1; np; np = np->link) {
 			dump_node(prefix2, np);
 		}
 		printf("%s}\n", prefix);
+		break;
+	case N_DIRECTIVE:
+		printf("%s", n->ptr1);
+		break;
 		break;
 	default:
 		printf("%s???\n", prefix);

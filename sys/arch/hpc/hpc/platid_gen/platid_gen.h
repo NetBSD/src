@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.h,v 1.1 2001/01/28 02:52:25 uch Exp $	*/
+/*	$NetBSD: platid_gen.h,v 1.2 2001/02/04 05:19:15 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  */
-enum { LABEL, MODIFIER, ENTRY, LIST };
+enum { N_LABEL, N_MODIFIER, N_ENTRY, N_LIST,  N_DIRECTIVE };
 typedef struct node_s {
 	int type;
 	int val;
