@@ -1,6 +1,6 @@
 /* 
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,14 +39,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)main.c	5.2 (Berkeley) 4/18/93
- *	$Id: main.c,v 1.4 1994/01/08 18:19:58 cgd Exp $
+ *	from: @(#)main.c	8.1 (Berkeley) 6/6/93
+ *	$Id: main.c,v 1.5 1994/06/22 10:44:12 pk Exp $
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #include <sys/types.h>
