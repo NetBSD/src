@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.4 2001/05/28 08:12:48 leo Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.5 2001/05/28 08:30:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -128,6 +128,11 @@ check_for_vga(iot, memt)
 		if (i == 0)
 			continue;
 
+#if _MILANHW_
+		/* Don't need to be more specific */
+		milan_vga_init(pc, tag, id, regs, fb);
+		found = 1;
+#else
 		switch (id = PCI_PRODUCT(id)) {
 
 			/*
@@ -145,6 +150,7 @@ check_for_vga(iot, memt)
 			default:
 				break;
 		}
+#endif /* _MILANHW_ */
 	}
 	if (!found)
 		goto bad;

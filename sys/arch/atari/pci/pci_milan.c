@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.1 2001/05/15 14:14:49 leo Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.2 2001/05/28 08:30:03 leo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 #include <dev/pci/pcireg.h>
 
 #include <machine/bswap.h>
+
+#include <atari/pci/pci_vga.h>
+#include <atari/dev/grf_etreg.h>
 
 int
 pci_bus_maxdevs(pc, busno)
@@ -107,4 +110,56 @@ pci_intr_disestablish(pc, cookie)
 	pci_chipset_tag_t pc;
 	void *cookie;
 {
+}
+
+/*
+ * VGA related stuff...
+ * XXX: Currently, you can only boot the Milan through loadbsd.ttp, hence the
+ *      text mode ;-)
+ * It looks like the Milan BIOS is initializing the VGA card in a reasonably
+ * standard text mode. However, the screen mode is 640*480 instead of 640*400.
+ * Since wscons does not handle the right by default, the card is reprogrammed
+ * to 640*400 using only 'standard' VGA registers (I hope!). So this ought to
+ * work on cards other than the S3Trio card I have tested it on.
+ */
+static u_char crt_tab[] = {
+	0x60, 0x53, 0x4f, 0x14, 0x56, 0x05, 0xc1, 0x1f,
+	0x00, 0x4f, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00,
+	0x98, 0x3d, 0x8f, 0x28, 0x0f, 0x8f, 0xc1, 0xc3,
+	0xff };
+
+/*
+ * XXX: Why are we repeating this everywhere! (Leo)
+ */
+#define PCI_LINMEMBASE  0x0e000000
+
+void
+milan_vga_init(pc, tag, id, ba, fb)
+	pci_chipset_tag_t	pc;
+	pcitag_t		tag;
+	int			id;
+	volatile u_char		*ba;
+	u_char			*fb;
+{
+	int			i, csr;
+
+	/* Turn on the card */
+	pci_conf_write(pc, tag, PCI_MAPREG_START, PCI_LINMEMBASE);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= (PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/*
+	 * Make sure we're allowed to write all crt-registers and reload them.
+	 */
+	WCrt(ba, CRT_ID_END_VER_RETR, (RCrt(ba, CRT_ID_END_VER_RETR) & 0x7f));
+
+	for (i = 0; i < 0x18; i++)
+		WCrt(ba, i, crt_tab[i]);
+
+	/*
+	 * The Milan has a white border... make it black
+	 */
+	WAttr(ba, 0x11, 0|0x20);
 }
