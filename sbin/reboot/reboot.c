@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.10 1996/08/10 00:20:58 mrg Exp $	*/
+/*	$NetBSD: reboot.c,v 1.11 1996/09/16 18:09:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: reboot.c,v 1.10 1996/08/10 00:20:58 mrg Exp $";
+static char rcsid[] = "$NetBSD: reboot.c,v 1.11 1996/09/16 18:09:34 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,11 @@ main(argc, argv)
 			syslog(LOG_CRIT, "halted by %s", user);
 		} else {
 			openlog("reboot", 0, LOG_AUTH | LOG_CONS);
-			syslog(LOG_CRIT, "rebooted by %s: %s", user, bootstr);
+			if (bootstr)
+				syslog(LOG_CRIT, "rebooted by %s: %s", user,
+				    bootstr);
+			else
+				syslog(LOG_CRIT, "rebooted by %s", user);
 		}
 	}
 	logwtmp("~", "shutdown", "");
