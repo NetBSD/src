@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.10 1998/09/12 14:12:49 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.11 1998/09/16 13:36:23 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -277,6 +277,8 @@ struct cpu_info {
 void getcpuinfo __P((struct cpu_info *sc, int node));
 void mmu_install_tables __P((struct cpu_info *));
 void pmap_alloc_cpu __P((struct cpu_info *));
+
+extern struct cpu_info *cpus[];
 
 #define cpuinfo	(*(struct cpu_info *)CPUINFO_VA)
 
