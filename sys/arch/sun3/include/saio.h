@@ -1,4 +1,4 @@
-/*	$NetBSD: saio.h,v 1.1 1995/02/07 05:01:07 gwr Exp $	*/
+/*	$NetBSD: saio.h,v 1.2 1995/05/24 20:58:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -100,7 +100,7 @@ typedef struct devinfo {
 
 
 /*
- * A "stand alone I/O request", taken from SunOS saio.h (struct saioreq)
+ * A "stand alone I/O request", (from SunOS saio.h)
  * This is passed as the main argument to the PROM I/O routines
  * in the MachMonBootDevice structure.
  */
@@ -116,7 +116,7 @@ typedef struct saioreq {
 	long	si_bn;			/* Block number to R/W */
 	char	*si_ma;			/* Memory address to R/W */
 	int	si_cc;			/* Character count to R/W */
-	struct	saif *si_sif;		/* interface pointer (not defined) */
+	struct	saif *si_sif;		/* net if. pointer (set by b_open) */
 	char 	*si_devaddr;		/* Points to mapped in device */
 	char	*si_dmaaddr;		/* Points to allocated DMA space */
 } MachMonIORequest;
@@ -129,3 +129,22 @@ typedef struct saioreq {
 #define	SAIO_F_EOF	0x10	/* EOF on device */
 #define SAIO_F_AJAR	0x20	/* Descriptor "ajar" (stopped but not closed) */
 
+
+/*
+ * Ethernet interface descriptor (from SunOS saio.h)
+ * First, set: saiop->si_devaddr, saiop->si_dmaaddr, etc.
+ * Then:  saiop->si_boottab->b_open()  will set:
+ *   saiop->si_sif;
+ *   saiop->si_devdata;
+ * The latter is the first arg to the following functions.
+ * Note that the buffer must be in DVMA space...
+ */
+struct saif {
+	/* transmit packet, returns zero on success. */
+	int	(*sif_xmit)(void *devdata, char *buf, int len);
+	/* wait for packet, zero if none arrived */
+	int	(*sif_poll)(void *devdata, char *buf);
+	/* reset interface, set addresses, etc. */
+	int	(*sif_reset)(void *devdata, struct saioreq *sip);
+	/* Later (sun4 only) proms have more stuff here. */
+};
