@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.4 2002/01/29 10:20:36 tv Exp $
+#	$NetBSD: Makefile.boot,v 1.5 2002/09/22 06:22:50 dbj Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 #
 # a very simple makefile...
@@ -19,8 +19,9 @@ LEX=flex -l
 
 YACC=yacc
 
-OBJS=	files.o hash.o main.o mkheaders.o mkioconf.o mkmakefile.o \
-	mkswap.o pack.o sem.o util.o gram.o lex.yy.o strerror.o
+OBJS=	files.o hash.o main.o mkdevsw.o mkheaders.o mkioconf.o \
+	mkmakefile.o mkswap.o pack.o sem.o util.o \
+	gram.o lex.yy.o strerror.o
 
 config: ${OBJS}
 	${CC} -o $@ ${OBJS}
