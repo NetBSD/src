@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.5 2000/05/28 16:23:55 he Exp $	*/
+/*	$NetBSD: config.h,v 1.6 2002/06/11 04:39:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -53,12 +53,11 @@ typedef struct _entry {
 TAILQ_HEAD(_head, _tag);
 extern struct _head head;
 
-TAG	*addlist __P((const char *));
 void	 addentry __P((TAG *, const char *, int));
 void	 config __P((const char *));
 #ifdef MANDEBUG
 void	 debug __P((const char *));
 #endif
-TAG	*getlist __P((const char *));
+TAG	*getlist __P((const char *, int));
 void	removelist __P((const char *));
 TAG	*renamelist __P((const char *, const char *));
