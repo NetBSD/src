@@ -1,5 +1,6 @@
-/*	$NetBSD: types.h,v 1.3 2000/02/01 04:04:17 danw Exp $	*/
+/*	$NetBSD: types.h,v 1.4 2000/05/16 05:45:48 thorpej Exp $	*/
 
 #include <powerpc/types.h>
 
 #define __HAVE_DEVICE_REGISTER
+#define	__BROKEN_DK_ESTABLISH

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 2000/01/18 19:39:18 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 2000/05/16 05:45:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -511,13 +511,4 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return (0);
-}
-
-/* For bootstrapping / device */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	return;
 }

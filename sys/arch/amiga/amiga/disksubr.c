@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.33 2000/03/30 11:37:23 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.34 2000/05/16 05:45:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -85,15 +85,6 @@ u_long rdbchksum __P((void *));
 struct adostype getadostype __P((u_long));
 struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *), struct disklabel *,
     struct cpu_disklabel *));
-
-/* XXX unknown function but needed for /sys/scsi to link */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	return;
-}
 
 /*
  * Attempt to read a disk label from a device

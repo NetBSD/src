@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2000/02/05 07:38:10 itohy Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 2000/05/16 05:45:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,14 +43,6 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/disk.h>
-
-/* was this the boot device ? */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
 
 /*
  * Attempt to read a disk label from a device

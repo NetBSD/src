@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2000/01/18 19:36:24 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 2000/05/16 05:45:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -433,15 +433,6 @@ bad:
 	bp->b_flags |= B_ERROR;
 done:
 	return (0);
-}
-
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-	return;
 }
 
 /* End of disksubr.c */

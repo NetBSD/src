@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.20 2000/05/10 14:26:06 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.21 2000/05/16 05:45:53 thorpej Exp $	*/
 
 /*
  *
@@ -794,8 +794,6 @@ xyattach(parent, self, aux)
 	} else {
 		bcopy(buf, &xy->dkb, XYFM_BPS);
 	}
-
-	dk_establish(&xy->sc_dk, &xy->sc_dev);		/* XXX */
 
 done:
 	if (buf != NULL) {

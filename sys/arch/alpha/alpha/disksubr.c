@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.18 2000/03/07 15:55:14 tsutsui Exp $ */
+/* $NetBSD: disksubr.c,v 1.19 2000/05/16 05:45:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2000/03/07 15:55:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2000/05/16 05:45:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -46,14 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2000/03/07 15:55:14 tsutsui Exp $"
 #include <machine/autoconf.h>
 
 extern struct device *bootdv;
-
-/* was this the boot device ? */
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-}
 
 /*
  * Attempt to read a disk label from a device

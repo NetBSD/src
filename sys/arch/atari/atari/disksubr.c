@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 1999/09/22 07:20:44 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18 2000/05/16 05:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -61,16 +61,6 @@ static int   ahdi_label __P((dev_t, void (*)(struct buf *),
 static void  ahdi_to_bsd __P((struct disklabel *, struct ahdi_ptbl *));
 static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
 					u_int, u_int, struct ahdi_ptbl *));
-
-/*
- * XXX unknown function but needed for /sys/scsi to link
- */
-void
-dk_establish(disk, device)
-	struct disk	*disk;
-	struct device	*device;
-{
-}
 
 /*
  * Determine the size of the transfer, and make sure it is

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.41 2000/01/18 19:40:53 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.42 2000/05/16 05:45:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -53,15 +53,6 @@ int fat_types[] = { MBR_PTYPE_FAT12, MBR_PTYPE_FAT16S,
 
 static struct mbr_partition *
 mbr_findslice __P((struct mbr_partition* dp, struct buf *bp));
-
-void
-dk_establish(dk, dev)
-	struct disk *dk;
-	struct device *dev;
-{
-
-	/* Nothing to do. */
-}
 
 /* 
  * Scan MBR for  NetBSD partittion.  Return NO_MBR_SIGNATURE if no MBR found
