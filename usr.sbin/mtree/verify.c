@@ -98,7 +98,7 @@ vwalk()
 		}
 
 		for (ep = level; ep; ep = ep->next)
-			if (ep->flags & F_MAGIC && fnmatch(ep->name,
+			if (ep->flags & F_MAGIC && !fnmatch(ep->name,
 			    p->fts_name, FNM_PATHNAME|FNM_QUOTE) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;
