@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -12,7 +12,7 @@
  */
 
 #ifndef lint
-static char id[] = "@(#)Id: conf.c,v 8.646.2.2.2.23 2000/07/15 17:35:18 gshapiro Exp";
+static char id[] = "@(#)Id: conf.c,v 8.646.2.2.2.69 2001/02/27 19:50:11 gshapiro Exp";
 #endif /* ! lint */
 
 #include <sendmail.h>
@@ -197,6 +197,12 @@ struct dbsval DontBlameSendmailValues[] =
 #if _FFR_UNSAFE_SASL
 	{ "groupreadablesaslfile",	DBS_GROUPREADABLESASLFILE	},
 #endif /* _FFR_UNSAFE_SASL */
+#if _FFR_UNSAFE_WRITABLE_INCLUDE
+	{ "groupwritableforwardfile",	DBS_GROUPWRITABLEFORWARDFILE	},
+	{ "groupwritableincludefile",	DBS_GROUPWRITABLEINCLUDEFILE	},
+	{ "worldwritableforwardfile",	DBS_WORLDWRITABLEFORWARDFILE	},
+	{ "worldwritableincludefile",	DBS_WORLDWRITABLEINCLUDEFILE	},
+#endif /* _FFR_UNSAFE_WRITABLE_INCLUDE */
 	{ NULL,				0				}
 };
 
@@ -374,7 +380,7 @@ setupmailers()
 {
 	char buf[100];
 
-	(void) strlcpy(buf, "prog, P=/bin/sh, F=lsoDq9, T=X-Unix/X-Unix/X-Unix, A=sh -c \201u",
+	(void) strlcpy(buf, "prog, P=/bin/sh, F=lsouDq9, T=X-Unix/X-Unix/X-Unix, A=sh -c \201u",
 		sizeof buf);
 	makemailer(buf);
 
@@ -819,7 +825,7 @@ switch_map_find(service, maptype, mapreturn)
 	char *maptype[MAXMAPSTACK];
 	short mapreturn[MAXMAPACTIONS];
 {
-	int svcno;
+	int svcno = 0;
 	int save_errno = errno;
 
 #ifdef _USE_SUN_NSSWITCH_
@@ -839,7 +845,7 @@ switch_map_find(service, maptype, mapreturn)
 	else
 		lk = nsw_conf->lookups;
 	svcno = 0;
-	while (lk != NULL)
+	while (lk != NULL && svcno < MAXMAPSTACK)
 	{
 		maptype[svcno] = lk->service_name;
 		if (lk->actions[__NSW_NOTFOUND] == __NSW_RETURN)
@@ -876,7 +882,7 @@ switch_map_find(service, maptype, mapreturn)
 		errno = save_errno;
 		return -1;
 	}
-	for (svcno = 0; svcno < SVC_PATHSIZE; svcno++)
+	for (svcno = 0; svcno < SVC_PATHSIZE && svcno < MAXMAPSTACK; svcno++)
 	{
 		switch (svcinfo->svcpath[svc][svcno])
 		{
@@ -1506,6 +1512,7 @@ init_vendor_macros(e)
 #define LA_KSTAT	12	/* special Solaris kstat(3k) implementation */
 #define LA_DEVSHORT	13	/* read short from a device */
 #define LA_ALPHAOSF	14	/* Digital UNIX (OSF/1 on Alpha) table() call */
+#define LA_PSET		15	/* Solaris per-processor-set load average */
 
 /* do guesses based on general OS type */
 #ifndef LA_TYPE
@@ -2063,6 +2070,28 @@ int getla()
 
 #endif /* LA_TYPE == LA_ALPHAOSF */
 
+#if LA_TYPE == LA_PSET
+
+static int
+getla()
+{
+	double avenrun[3];
+
+	if (pset_getloadavg(PS_MYID, avenrun,
+			    sizeof(avenrun) / sizeof(avenrun[0])) < 0)
+	{
+		if (tTd(3, 1))
+			dprintf("getla: pset_getloadavg failed: %s",
+				errstring(errno));
+		return -1;
+	}
+	if (tTd(3, 1))
+		dprintf("getla: %d\n", (int) (avenrun[0] +0.5));
+	return ((int) (avenrun[0] + 0.5));
+}
+
+#endif /* LA_TYPE == LA_PSET */
+
 #if LA_TYPE == LA_ZERO
 
 static int
@@ -2145,7 +2174,7 @@ sm_getla(e)
 	{
 		char labuf[8];
 
-		snprintf(labuf, sizeof labuf, "%d", CurrentLA);
+		snprintf(labuf, sizeof labuf, "%d", la);
 		define(macid("{load_avg}", NULL), newstr(labuf), e);
 	}
 	return la;
@@ -2222,35 +2251,12 @@ refuseconnections(name, e, d)
 	ENVELOPE *e;
 	int d;
 {
-	time_t now;
-	static time_t lastconn[MAXDAEMONS];
-	static int conncnt[MAXDAEMONS];
-
-
 #ifdef XLA
 	if (!xla_smtp_ok())
 		return TRUE;
 #endif /* XLA */
 
-	now = curtime();
-	if (now != lastconn[d])
-	{
-		lastconn[d] = now;
-		conncnt[d] = 0;
-	}
-	else if (conncnt[d]++ > ConnRateThrottle && ConnRateThrottle > 0)
-	{
-		/* sleep to flatten out connection load */
-		sm_setproctitle(TRUE, e, "deferring connections on daemon %s: %d per second",
-				name, ConnRateThrottle);
-		if (LogLevel >= 9)
-			sm_syslog(LOG_INFO, NOQID,
-				"deferring connections on daemon %s: %d per second",
-				name, ConnRateThrottle);
-		(void) sleep(1);
-	}
-
-	CurrentLA = getla();
+	CurrentLA = sm_getla(NULL);
 	if (RefuseLA > 0 && CurrentLA >= RefuseLA)
 	{
 		sm_setproctitle(TRUE, e, "rejecting connections on daemon %s: load average: %d",
@@ -2467,7 +2473,7 @@ setproctitle(fmt, va_alist)
 	if (kmem < 0 || kmempid != getpid())
 	{
 		if (kmem >= 0)
-			close(kmem);
+			(void) close(kmem);
 		kmem = open(_PATH_KMEM, O_RDWR, 0);
 		if (kmem < 0)
 			return;
@@ -2984,7 +2990,7 @@ setsid __P ((void))
 	fd = open("/dev/tty", O_RDWR, 0);
 	if (fd >= 0)
 	{
-		(void) ioctl(fd, (int) TIOCNOTTY, (char *) 0);
+		(void) ioctl(fd, TIOCNOTTY, (char *) 0);
 		(void) close(fd);
 	}
 #  endif /* TIOCNOTTY */
@@ -3623,6 +3629,7 @@ transienterror(err)
 **		type -- type of the lock.  Bits can be:
 **			LOCK_EX -- exclusive lock.
 **			LOCK_NB -- non-blocking.
+**			LOCK_UN -- unlock.
 **
 **	Returns:
 **		TRUE if the lock was acquired.
@@ -4131,7 +4138,7 @@ validate_connection(sap, hostname, e)
 			hostname, anynet_ntoa(sap));
 
 	if (rscheck("check_relay", hostname, anynet_ntoa(sap),
-		    e, TRUE, TRUE, 4) != EX_OK)
+		    e, TRUE, TRUE, 4, NULL) != EX_OK)
 	{
 		static char reject[BUFSIZ*2];
 		extern char MsgBuf[];
@@ -4351,7 +4358,7 @@ getipnodebyname(name, family, flags, err)
 		resv6 = bitset(RES_USE_INET6, _res.options);
 		_res.options |= RES_USE_INET6;
 	}
-	h_errno = 0;
+	SM_SET_H_ERRNO(0);
 	h = gethostbyname(name);
 	*err = h_errno;
 	if (family == AF_INET6 && !resv6)
@@ -4368,11 +4375,25 @@ getipnodebyaddr(addr, len, family, err)
 {
 	struct hostent *h;
 
-	h_errno = 0;
+	SM_SET_H_ERRNO(0);
 	h = gethostbyaddr(addr, len, family);
 	*err = h_errno;
 	return h;
 }
+
+# if _FFR_FREEHOSTENT
+void
+freehostent(h)
+	struct hostent *h;
+{
+	/*
+	**  Stub routine -- if they don't have getipnodeby*(),
+	**  they probably don't have the free routine either.
+	*/
+
+	return;
+}
+# endif /* _FFR_FREEHOSTENT */
 #endif /* NEEDSGETIPNODE && NETINET6 && __RES < 19990909 */
 
 struct hostent *
@@ -4380,6 +4401,7 @@ sm_gethostbyname(name, family)
 	char *name;
 	int family;
 {
+	int save_errno;
 	struct hostent *h = NULL;
 #if (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) || (defined(sony_news) && defined(__svr4))
 # if SOLARIS == 20300 || SOLARIS == 203
@@ -4390,12 +4412,14 @@ sm_gethostbyname(name, family)
 	if (tTd(61, 10))
 		dprintf("_switch_gethostbyname_r(%s)... ", name);
 	h = _switch_gethostbyname_r(name, &hp, buf, sizeof(buf), &h_errno);
+	save_errno = errno;
 # else /* SOLARIS == 20300 || SOLARIS == 203 */
 	extern struct hostent *__switch_gethostbyname();
 
 	if (tTd(61, 10))
 		dprintf("__switch_gethostbyname(%s)... ", name);
 	h = __switch_gethostbyname(name);
+	save_errno = errno;
 # endif /* SOLARIS == 20300 || SOLARIS == 203 */
 #else /* (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) || (defined(sony_news) && defined(__svr4)) */
 	int nmaps;
@@ -4403,7 +4427,6 @@ sm_gethostbyname(name, family)
 	int flags = AI_DEFAULT|AI_ALL;
 	int err;
 # endif /* NETINET6 */
-	int save_errno;
 	char *maptype[MAXMAPSTACK];
 	short mapreturn[MAXMAPACTIONS];
 	char hbuf[MAXNAME];
@@ -4416,7 +4439,7 @@ sm_gethostbyname(name, family)
 	flags &= ~AI_ADDRCONFIG;
 #  endif /* ADDRCONFIG_IS_BROKEN */
 	h = getipnodebyname(name, family, flags, &err);
-	h_errno = err;
+	SM_SET_H_ERRNO(err);
 # else /* NETINET6 */
 	h = gethostbyname(name);
 # endif /* NETINET6 */
@@ -4429,9 +4452,12 @@ sm_gethostbyname(name, family)
 
 		nmaps = switch_map_find("hosts", maptype, mapreturn);
 		while (--nmaps >= 0)
+		{
 			if (strcmp(maptype[nmaps], "nis") == 0 ||
 			    strcmp(maptype[nmaps], "files") == 0)
 				break;
+		}
+
 		if (nmaps >= 0)
 		{
 			/* try short name */
@@ -4441,7 +4467,7 @@ sm_gethostbyname(name, family)
 				return NULL;
 			}
 			(void) strlcpy(hbuf, name, sizeof hbuf);
-			shorten_hostname(hbuf);
+			(void) shorten_hostname(hbuf);
 
 			/* if it hasn't been shortened, there's no point */
 			if (strcmp(hbuf, name) != 0)
@@ -4454,7 +4480,7 @@ sm_gethostbyname(name, family)
 				h = getipnodebyname(hbuf, family,
 						    AI_V4MAPPED|AI_ALL,
 						    &err);
-				h_errno = err;
+				SM_SET_H_ERRNO(err);
 				save_errno = errno;
 # else /* NETINET6 */
 				h = gethostbyname(hbuf);
@@ -4517,26 +4543,43 @@ sm_gethostbyaddr(addr, len, type)
 	int type;
 {
 	struct hostent *hp;
+
+#if NETINET6
+	if (type == AF_INET6 &&
+	    (IN6_IS_ADDR_UNSPECIFIED((struct in6_addr *) addr) ||
+	     IN6_IS_ADDR_LINKLOCAL((struct in6_addr *) addr)))
+	{
+		/* Avoid reverse lookup for IPv6 unspecified address */
+		SM_SET_H_ERRNO(HOST_NOT_FOUND);
+		return NULL;
+	}
+#endif /* NETINET6 */
+
 #if (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204)
 # if SOLARIS == 20300 || SOLARIS == 203
-	static struct hostent he;
-	static char buf[1000];
-	extern struct hostent *_switch_gethostbyaddr_r();
+	{
+		static struct hostent he;
+		static char buf[1000];
+		extern struct hostent *_switch_gethostbyaddr_r();
 
-	hp = _switch_gethostbyaddr_r(addr, len, type, &he, buf, sizeof(buf), &h_errno);
+		hp = _switch_gethostbyaddr_r(addr, len, type, &he,
+					     buf, sizeof(buf), &h_errno);
+	}
 # else /* SOLARIS == 20300 || SOLARIS == 203 */
-	extern struct hostent *__switch_gethostbyaddr();
+	{
+		extern struct hostent *__switch_gethostbyaddr();
 
-	hp = __switch_gethostbyaddr(addr, len, type);
+		hp = __switch_gethostbyaddr(addr, len, type);
+	}
 # endif /* SOLARIS == 20300 || SOLARIS == 203 */
 #else /* (SOLARIS > 10000 && SOLARIS < 20400) || (defined(SOLARIS) && SOLARIS < 204) */
 # if NETINET6
-	int err;
-# endif /* NETINET6 */
+	{
+		int err;
 
-# if NETINET6
-	hp = getipnodebyaddr(addr, len, type, &err);
-	h_errno = err;
+		hp = getipnodebyaddr(addr, len, type, &err);
+		SM_SET_H_ERRNO(err);
+	}
 # else /* NETINET6 */
 	hp = gethostbyaddr(addr, len, type);
 # endif /* NETINET6 */
@@ -4662,14 +4705,16 @@ add_hostnames(sa)
 #if NETINET
 		case AF_INET:
 			hp = sm_gethostbyaddr((char *) &sa->sin.sin_addr,
-				sizeof(sa->sin.sin_addr), sa->sa.sa_family);
+					      sizeof(sa->sin.sin_addr),
+					      sa->sa.sa_family);
 			break;
 #endif /* NETINET */
 
 #if NETINET6
 		case AF_INET6:
 			hp = sm_gethostbyaddr((char *) &sa->sin6.sin6_addr,
-				sizeof(sa->sin6.sin6_addr), sa->sa.sa_family);
+					      sizeof(sa->sin6.sin6_addr),
+					      sa->sa.sa_family);
 			break;
 #endif /* NETINET6 */
 
@@ -4742,6 +4787,9 @@ add_hostnames(sa)
 					*ha);
 		}
 	}
+#if _FFR_FREEHOSTENT && NETINET6
+	freehostent(hp);
+#endif /* _FFR_FREEHOSTENT && NETINET6 */
 	return 0;
 }
 /*
@@ -4810,7 +4858,7 @@ load_if_names()
 
 	if (numifs <= 0)
 	{
-		close(s);
+		(void) close(s);
 		return;
 	}
 	lifc.lifc_len = numifs * sizeof (struct lifreq);
@@ -4821,7 +4869,8 @@ load_if_names()
 	{
 		if (tTd(0, 4))
 			dprintf("SIOCGLIFCONF failed: %s\n", errstring(errno));
-		close(s);
+		(void) close(s);
+		free(lifc.lifc_buf);
 		return;
 	}
 
@@ -4854,7 +4903,10 @@ load_if_names()
 
 		s = socket(af, SOCK_DGRAM, 0);
 		if (s == -1)
+		{
+			free(lifc.lifc_buf);
 			return;
+		}
 
 		/*
 		**  If we don't have a complete ifr structure,
@@ -4902,8 +4954,22 @@ load_if_names()
 		switch (af)
 		{
 		  case AF_INET6:
+#  ifdef __KAME__
+			/* convert into proper scoped address */
+			if ((IN6_IS_ADDR_LINKLOCAL(&sa->sin6.sin6_addr) ||
+			     IN6_IS_ADDR_SITELOCAL(&sa->sin6.sin6_addr)) &&
+			    sa->sin6.sin6_scope_id == 0)
+			{
+				struct in6_addr *ia6p;
+
+				ia6p = &sa->sin6.sin6_addr;
+				sa->sin6.sin6_scope_id = ntohs(ia6p->s6_addr[3] |
+							       ((unsigned int)ia6p->s6_addr[2] << 8));
+				ia6p->s6_addr[2] = ia6p->s6_addr[3] = 0;
+			}
+#  endif /* __KAME__ */
 			ia6 = sa->sin6.sin6_addr;
-			if (ia6.s6_addr == in6addr_any.s6_addr)
+			if (IN6_IS_ADDR_UNSPECIFIED(&ia6))
 			{
 				addr = anynet_ntop(&ia6, buf6, sizeof buf6);
 				message("WARNING: interface %s is UP with %s address",
@@ -4917,7 +4983,7 @@ load_if_names()
 			if (addr != NULL)
 				(void) snprintf(ip_addr, sizeof ip_addr,
 						"[%.*s]",
-						sizeof ip_addr - 3, addr);
+						(int) sizeof ip_addr - 3, addr);
 			break;
 
 		  case AF_INET:
@@ -4932,7 +4998,7 @@ load_if_names()
 
 			/* save IP address in text from */
 			(void) snprintf(ip_addr, sizeof ip_addr, "[%.*s]",
-					sizeof ip_addr - 3, inet_ntoa(ia));
+					(int) sizeof ip_addr - 3, inet_ntoa(ia));
 			break;
 		}
 
@@ -4954,7 +5020,7 @@ load_if_names()
 		(void) add_hostnames(sa);
 	}
 	free(lifc.lifc_buf);
-	close(s);
+	(void) close(s);
 #else /* NETINET6 && defined(SIOCGLIFCONF) */
 # if defined(SIOCGIFCONF) && !SIOCGIFCONF_IS_BROKEN
 	int s;
@@ -4993,6 +5059,7 @@ load_if_names()
 		if (tTd(0, 4))
 			dprintf("SIOCGIFCONF failed: %s\n", errstring(errno));
 		(void) close(s);
+		free(ifc.ifc_buf);
 		return;
 	}
 
@@ -5084,8 +5151,22 @@ load_if_names()
 
 #   if NETINET6
 		  case AF_INET6:
+#    ifdef __KAME__
+			/* convert into proper scoped address */
+			if ((IN6_IS_ADDR_LINKLOCAL(&sa->sin6.sin6_addr) ||
+			     IN6_IS_ADDR_SITELOCAL(&sa->sin6.sin6_addr)) &&
+			    sa->sin6.sin6_scope_id == 0)
+			{
+				struct in6_addr *ia6p;
+
+				ia6p = &sa->sin6.sin6_addr;
+				sa->sin6.sin6_scope_id = ntohs(ia6p->s6_addr[3] |
+							       ((unsigned int)ia6p->s6_addr[2] << 8));
+				ia6p->s6_addr[2] = ia6p->s6_addr[3] = 0;
+			}
+#    endif /* __KAME__ */
 			ia6 = sa->sin6.sin6_addr;
-			if (ia6.s6_addr == in6addr_any.s6_addr)
+			if (IN6_IS_ADDR_UNSPECIFIED(&ia6))
 			{
 				addr = anynet_ntop(&ia6, buf6, sizeof buf6);
 				message("WARNING: interface %s is UP with %s address",
@@ -5099,7 +5180,7 @@ load_if_names()
 			if (addr != NULL)
 				(void) snprintf(ip_addr, sizeof ip_addr,
 						"[%.*s]",
-						sizeof ip_addr - 3, addr);
+						(int) sizeof ip_addr - 3, addr);
 			break;
 
 #   endif /* NETINET6 */
