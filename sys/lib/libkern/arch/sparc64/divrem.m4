@@ -1,4 +1,4 @@
-/*	$NetBSD: divrem.m4,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $	*/
+/*	$NetBSD: divrem.m4,v 1.2 2002/10/27 18:41:27 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
+ * from: Header: divrem.m4,v 1.4 92/06/25 13:23:57 torek Exp
  */
 
 /*
@@ -44,12 +44,9 @@
  * Architecture Manual, with fixes from Gordon Irlam.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
+#if defined(LIBC_SCCS)
+	RCSID("$NetBSD: divrem.m4,v 1.2 2002/10/27 18:41:27 chs Exp $")
 #endif
-	.asciz "$NetBSD: divrem.m4,v 1.1.1.1 1998/06/20 05:18:14 eeh Exp $"
-#endif /* LIBC_SCCS and not lint */
 
 /*
  * Input: dividend and divisor in %o0 and %o1 respectively.
@@ -97,7 +94,7 @@ define(V, `%o5')
 
 /* m4 reminder: ifelse(a,b,c,d) => if a is b, then c, else d */
 define(T, `%g1')
-define(SC, `%g7')
+define(SC, `%g5')
 ifelse(S, `true', `define(SIGN, `%g6')')
 
 /*
@@ -132,7 +129,7 @@ L.$1.eval(TWOSUPN+$2):
 	', `	DEVELOP_QUOTIENT_BITS(incr($1), `eval(2*$2-1)')')
 	ifelse($1, 1, `9:')')
 
-#include "DEFS.h"
+#include <machine/asm.h>
 #include <machine/trap.h>
 
 FUNC(NAME)
