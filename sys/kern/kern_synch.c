@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.96 2000/09/15 06:36:25 enami Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.97 2000/09/23 01:00:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1003,36 +1003,35 @@ schedclock(struct proc *p)
 void
 suspendsched()
 {
-	struct proc *p, *next;
-	int s, i;
+	struct proc *p;
+	int s;
 
 	/*
-	 * Convert all non-P_SYSTEM SSLEEP processes to SSTOP. Curproc is
-	 * necesserelly SONPROC.
+	 * Convert all non-P_SYSTEM SSLEEP or SRUN processes to SSTOP.
 	 */
 	proclist_lock_read();
 	SCHED_LOCK(s);
 	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
-		if (p->p_stat != SSLEEP || p == curproc ||
-		    (p->p_flag & P_SYSTEM) != 0)
+		if ((p->p_flag & P_SYSTEM) != 0)
 			continue;
-		p->p_stat = SSTOP;
-	}
-	proclist_unlock_read();
-
-	/* Go through the run queues, remove non-P_SYSTEM processes */
-	for (i = 0; i < RUNQUE_NQS; i++) {
-		for (p = sched_qs[i].ph_link;
-		    p != (struct proc *)&sched_qs[i]; p = next) {
-			next = p->p_forw;
-			if ((p->p_flag & P_SYSTEM) == 0) {
-				if (p->p_flag & P_INMEM)
-					remrunqueue(p);
-				p->p_stat = SSTOP;
-			}
+		switch (p->p_stat) {
+		case SRUN:
+			if ((p->p_flag & P_INMEM) != 0)
+				remrunqueue(p);
+			/* FALLTHROUGH */
+		case SSLEEP:
+			p->p_stat = SSTOP;
+			break;
+		case SONPROC:
+			/*
+			 * XXX SMP: we need to deal with processes on
+			 * others CPU !
+			 */
+			break;
+		default:
+			break;
 		}
 	}
-	/* XXX SMP: we need to deal with processes on others CPU ! */
-
 	SCHED_UNLOCK(s);
+	proclist_unlock_read();
 }
