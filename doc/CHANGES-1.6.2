@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.112 2003/08/16 16:19:15 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.113 2003/08/16 19:54:07 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1272,4 +1272,10 @@ sys/arch/i386/i386/machdep.c			1.529
 	(It might be a good idea to use the process' pre-vm86()-call stack,
 	but atm the infrastructure for this is missing.)
 	[drochner, ticket #1415]
+
+sys/arch/sparc/sparc/pmap.c			1.259 via patch
+
+	Make sure to flush any user register windows when stealing PMEGs in
+	me_alloc() (and SMEGs in region_alloc()). Should fix PR#14180.
+	[pk, ticket #1362]
 
