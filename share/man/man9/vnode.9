@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.8 2002/08/14 18:50:48 soren Exp $
+.\"     $NetBSD: vnode.9,v 1.9 2002/08/15 03:22:49 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -291,7 +291,7 @@ It is used by
 .Xr fsync 2
 to wait for all writes to complete before returning to the user.  Its
 value must only be modified at splbio (see
-.Xr spl 9 ).
+.Xr spl 9 ) .
 It does not track the number of dirty buffers attached to the
 vnode.
 .Pp
