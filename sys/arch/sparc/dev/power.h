@@ -1,4 +1,4 @@
-/*	$NetBSD: power.h,v 1.2 1996/05/16 15:56:57 abrown Exp $ */
+/*	$NetBSD: power.h,v 1.3 1996/06/07 21:48:36 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,9 +37,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $Id: power.h,v 1.2 1996/05/16 15:56:57 abrown Exp $
- *
  */
 
 /*
