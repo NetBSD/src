@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.3 1997/07/18 21:57:05 thorpej Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.4 1997/09/08 03:18:19 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -49,7 +49,7 @@
 #include "ypdb.h"
 #include "ypdef.h"
 
-extern	char *__progname;		/* from crt0.s */
+extern	char *__progname;		/* from crt0.o */
 extern	char *optarg;
 extern	int optind;
 
@@ -347,7 +347,7 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s -u file", __progname);
+	fprintf(stderr, "usage: %s -u file\n", __progname);
 	fprintf(stderr, "       %s [-lbs] %s\n", __progname,
 	    "[-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]");
 	fprintf(stderr, "          %s infile outfile\n",
