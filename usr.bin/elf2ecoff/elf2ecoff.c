@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.9 1997/10/18 13:53:19 lukem Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.10 1998/08/10 03:11:07 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -293,7 +293,7 @@ usage:
 	ep.a.data_start = data.vaddr;
 	ep.a.bss_start = bss.vaddr;
 	ep.a.gprmask = 0xf3fffffe;
-	bzero(&ep.a.cprmask, sizeof ep.a.cprmask);
+	memset(&ep.a.cprmask, 0, sizeof ep.a.cprmask);
 	ep.a.gp_value = 0;	/* unused. */
 
 	ep.f.f_magic = ECOFF_MAGIC_MIPSEL;
@@ -304,7 +304,7 @@ usage:
 	ep.f.f_opthdr = sizeof ep.a;
 	ep.f.f_flags = 0x100f;	/* Stripped, not sharable. */
 
-	bzero(esecs, sizeof(esecs));
+	memset(esecs, 0, sizeof(esecs));
 
 	/* Make  ECOFF section headers, with empty stubs for
 	 * .rdata/.sdata/.sbss. */
@@ -566,7 +566,7 @@ write_ecoff_symhdr(out, ep, symhdrp, nesyms, extsymoff, extstroff, strsize)
 
 	ep->f.f_nsyms = sizeof(struct ecoff_symhdr);
 
-	bzero(symhdrp, sizeof(*symhdrp));
+	memset(symhdrp, 0, sizeof(*symhdrp));
 	symhdrp->esymMax = nesyms;
 	symhdrp->magic = 0x7009;/* XXX */
 	symhdrp->cbExtOffset = extsymoff;
@@ -689,7 +689,7 @@ translate_syms(elfp, ecoffp)
 	oldstringbase = elfp->stringtab;
 
 	/* Allocate space for corresponding ECOFF symbols. */
-	bzero(ecoffp, sizeof(*ecoffp));
+	memset(ecoffp, 0, sizeof(*ecoffp));
 
 	ecoffp->nsymbols = 0;
 	ecoffp->ecoff_syms = malloc(sizeof(struct ecoff_extsym) * nsyms);

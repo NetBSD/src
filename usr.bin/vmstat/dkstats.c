@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.5 1998/07/19 17:47:08 drochner Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.6 1998/08/10 03:11:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -274,7 +274,7 @@ deref_kptr(kptr, ptr, len)
 	char buf[128];
 
 	if (kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len) {
-		bzero(buf, sizeof(buf));
+		memset(buf, 0, sizeof(buf));
 		snprintf(buf, sizeof buf, "can't dereference kptr 0x%lx",
 		    (u_long)kptr);
 		KVM_ERROR(buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.52 1998/08/01 23:45:05 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.53 1998/08/10 03:11:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.52 1998/08/01 23:45:05 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.53 1998/08/10 03:11:08 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,7 +466,7 @@ dovmstat(interval, reps)
 		mib[1] = VM_UVMEXP;
 		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 			printf("can't get uvmexp: %s\n", strerror(errno));
-			bzero(&uvmexp, sizeof(uvmexp));
+			memset(&uvmexp, 0, sizeof(uvmexp));
 		}
 #else
 		kread(X_SUM, &sum, sizeof(sum));
@@ -476,7 +476,7 @@ dovmstat(interval, reps)
 		mib[1] = VM_METER;
 		if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
 			printf("Can't get kerninfo: %s\n", strerror(errno));
-			bzero(&total, sizeof(total));
+			memset(&total, 0, sizeof(total));
 		}
 		(void)printf("%2d%2d%2d",
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
@@ -604,7 +604,7 @@ dosum()
 	mib[1] = VM_UVMEXP;
 	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 		printf("can't get uvmexp: %s\n", strerror(errno));
-		bzero(&uvmexp, sizeof(uvmexp));
+		memset(&uvmexp, 0, sizeof(uvmexp));
 	}
 
 	(void)printf("%9u bytes per page\n", uvmexp.pagesize);
@@ -743,7 +743,7 @@ doforkst()
 	mib[1] = VM_UVMEXP;
 	if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 		printf("can't get uvmexp: %s\n", strerror(errno));
-		bzero(&uvmexp, sizeof(uvmexp));
+		memset(&uvmexp, 0, sizeof(uvmexp));
 	}
 	(void)printf("%u forks total\n", uvmexp.forks);
 	(void)printf("%u forks blocked parent\n", uvmexp.forks_ppwait);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.14 1998/07/06 06:48:38 mrg Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.15 1998/08/10 02:57:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.14 1998/07/06 06:48:38 mrg Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.15 1998/08/10 02:57:23 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ doit(f, fromp)
 					hostname = inet_ntoa(fromp->sin_addr);
 					break;
 				}
-				if (!bcmp(hp->h_addr_list[0],
+				if (!memcmp(hp->h_addr_list[0],
 				    (caddr_t)&fromp->sin_addr,
 				    sizeof(fromp->sin_addr))) {
 					hostname = hp->h_name;
@@ -433,7 +433,8 @@ protocol(f, p)
 						if (n) {
 							left -= n;
 							if (left > 0)
-								bcopy(cp+n, cp,
+								memcpy(cp,
+								    cp+n,
 								    left);
 							fcc -= n;
 							goto top; /* n^2 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.15 1998/07/26 19:48:10 mycroft Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.16 1998/08/10 02:57:23 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.15 1998/07/26 19:48:10 mycroft Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.16 1998/08/10 02:57:23 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,7 @@ store(from)
 		if (line[0] == '\n')
 			eline = 1;
 		else {
-			if (eline && line[0] == 'F' && !bcmp(line, "From ", 5))
+			if (eline && line[0] == 'F' && !memcmp(line, "From ", 5))
 				(void)putc('>', fp);
 			eline = 0;
 		}
@@ -286,7 +286,7 @@ notifybiff(msg)
 		addr.sin_len = sizeof(struct sockaddr_in);
 		addr.sin_family = hp->h_addrtype;
 		addr.sin_port = sp->s_port;
-		bcopy(hp->h_addr, &addr.sin_addr, hp->h_length);
+		memcpy(&addr.sin_addr, hp->h_addr, hp->h_length);
 	}
 	if (f < 0 && (f = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 		err(NOTFATAL, "socket: %s", strerror(errno));

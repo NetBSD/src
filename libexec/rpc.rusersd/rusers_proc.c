@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers_proc.c,v 1.18 1998/07/03 11:49:50 mrg Exp $	*/
+/*	$NetBSD: rusers_proc.c,v 1.19 1998/08/10 02:57:24 perry Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers_proc.c,v 1.18 1998/07/03 11:49:50 mrg Exp $");
+__RCSID("$NetBSD: rusers_proc.c,v 1.19 1998/08/10 02:57:24 perry Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -319,7 +319,7 @@ do_names_2(int all)
 	int nusers = 0;
 	FILE *ufp;
 
-	bzero((char *)&ut, sizeof(ut));
+	memset((char *)&ut, 0, sizeof(ut));
 	ut.uia_arr = utmp_idlep;
 	ut.uia_cnt = 0;
 	
@@ -455,7 +455,7 @@ rusers_service(rqstp, transp)
 		svcerr_noproc(transp);
 		goto leave;
 	}
-	bzero((char *)&argument, sizeof(argument));
+	memset((char *)&argument, 0, sizeof(argument));
 	if (!svc_getargs(transp, xdr_argument, (caddr_t)&argument)) {
 		svcerr_decode(transp);
 		goto leave;
