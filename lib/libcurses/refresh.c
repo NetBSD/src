@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.33 2000/05/19 07:39:02 mycroft Exp $	*/
+/*	$NetBSD: refresh.c,v 1.34 2000/05/19 16:00:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.33 2000/05/19 07:39:02 mycroft Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.34 2000/05/19 16:00:52 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -372,7 +372,7 @@ makech(wy)
 	int	wy;
 {
 	WINDOW	*win;
-	static __LDATA blank = {' ', 0};
+	static __LDATA blank = {' ', 0, ' ', 0};
 	__LDATA *nsp, *csp, *cp, *cep;
 	u_int	force;
 	int	clsp, nlsp;	/* Last space in lines. */
