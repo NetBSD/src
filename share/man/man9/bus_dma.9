@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.16 2001/06/21 11:59:00 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.17 2001/07/19 15:32:06 thorpej Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -277,6 +277,18 @@ constraints required for use of the feature, then this flag will
 be silently ignored.  Also refer to the use of this flag with the
 .Fn bus_dmamem_alloc
 function.
+.It Dv BUS_DMA_READ
+This is a hint to the machine-dependent back-end that indicates the
+mapping will be used only for a
+.Em "device -> memory"
+transaction.  The back-end may perform optimizations based on this
+information.
+.It Dv BUS_DMA_WRITE
+This is a hint to the machine-dependent back-end that indicates the
+mapping will be used only for a
+.Em "memory -> device"
+transaction.  The back-end may perform optimizations based on this
+information.
 .It Dv BUS_DMA_BUS[1-4]
 These flags are placeholders, and may be used by busses to
 provide bus-dependent functionality.
