@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.3 1996/10/15 02:26:11 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.4 1996/10/16 19:32:26 ws Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -171,7 +171,7 @@ process_sstep(p, sstep)
 	int sstep;
 {
 	if (sstep)
-	  	/* this is going to be fun, I'll start off with kgdb_step ... */
+	  	/* this is going to be fun, I'll start off with ipkdb_step ... */
 		return (EINVAL);
 	return (0);
 }

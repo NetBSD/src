@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.13 1996/10/15 02:10:17 mark Exp $ */
+/* $NetBSD: locore.S,v 1.14 1996/10/16 19:32:18 ws Exp $ */
 
 /*
  * Copyright (C) 1994 Mark Brinicombe
@@ -31,7 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "kgdb.h"
+#include "ipkdb.h"
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/cpu.h>
@@ -453,27 +453,27 @@ Lsigerr:
         .globl  _esigcode
 _esigcode:
 
-#if	NKGDB > 0 || NKGDBSLIP > 0
+#if	NIPKDB > 0
 #if	0
 /*
- * kgdbfbyte and kgdbsbyte are now in kgdb_glue.c and do not tweak
+ * ipkdbfbyte and ipkdbsbyte are now in ipkdb_glue.c and do not tweak
  * the abort handler anymore
  */
-	.global	_kgdbfbyte
-_kgdbfbyte:
+	.global	_ipkdbfbyte
+_ipkdbfbyte:
 	ldr	ip, abortp
 	ldr	r2, [ip]
-	add	r3, pc, #kgdbfault - . - 8
+	add	r3, pc, #ipkdbfault - . - 8
 	str	r3, [ip]
 	ldrb	r0, [r0]
 	str	r2, [ip]
 	mov	pc, lr
 
-	.global	_kgdbsbyte
-_kgdbsbyte:
+	.global	_ipkdbsbyte
+_ipkdbsbyte:
 	ldr	ip, abortp
 	ldr	r2, [ip]
-	add	r3, pc, #kgdbfault - . - 8
+	add	r3, pc, #ipkdbfault - . - 8
 	str	r3, [ip]
 	strb	r1, [r0]
 	sub	r0, r0, r0
@@ -482,7 +482,7 @@ _kgdbsbyte:
 
 abortp:
 	.word	Labortdata - _page0
-kgdbfault:
+ipkdbfault:
 	mov	r0, #0xd3
 	msr	cpsr_all, r0
 	mvn	r0, #0			/* mov	r0, #-1 */

@@ -41,19 +41,23 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <kgdb/kgdb.h>
-#include <machine/kgdb.h>
+#include <ipkdb/ipkdb.h>
+#include <machine/ipkdb.h>
 
-int	kgdb_probe __P((struct device *, void *, void *));
-void	kgdb_attach __P((struct device *, struct device *, void *));
+int	ipkdb_probe __P((struct device *, void *, void *));
+void	ipkdb_attach __P((struct device *, struct device *, void *));
 
-struct cfdriver kgdbif_cd = {
-	NULL, "kgdb", DV_DULL
+static void	ipkdbrcpy __P((struct ipkdb_if * , void *, void *, int));
+static void	ipkdbwcpy __P((struct ipkdb_if * , void *, void *, int));
+static int	ipkdbread __P((struct ipkdb_if *));
+
+struct cfdriver ipkdbif_cd = {
+	NULL, "ipkdb", DV_DULL
 };
 
 /* For the config system the device doesn't exist */
 int
-kgdb_probe(parent, match, aux)
+ipkdb_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
@@ -61,78 +65,79 @@ kgdb_probe(parent, match, aux)
 }
 
 void
-kgdb_attach(parent, self, aux)
+ipkdb_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	panic("kgdb_attach");
+	panic("ipkdb_attach");
 }
 
 static void
-kgdbrcpy(kip, sp, dp, l)
-	struct kgdb_if *kip;
-	char *sp;
-	char *dp;
+ipkdbrcpy(kip, vsp, vdp, l)
+	struct ipkdb_if *kip;
+	void *vsp;
+	void *vdp;
 	int l;
 {
 	int l1;
-	
+	char *sp = vsp, *dp = vdp;
+
 	/* bounce source pointer */
 	while (sp >= kip->gotbuf + sizeof kip->gotbuf)
 		sp -= sizeof kip->gotbuf;
 	l1 = kip->gotbuf + sizeof kip->gotbuf - sp;
 	if (l >= l1) {
-		kgdbcopy(sp, dp, l1);
+		ipkdbcopy(sp, dp, l1);
 		l -= l1;
 		dp += l1;
 		sp = kip->gotbuf;
 	}
 	if (l)
-		kgdbcopy(sp, dp, l);
+		ipkdbcopy(sp, dp, l);
 }
 
 static void
-kgdbwcpy(kip, sp, dp, l)
-	struct kgdb_if *kip;
-	char *sp;
-	char *dp;
+ipkdbwcpy(kip, vsp, vdp, l)
+	struct ipkdb_if *kip;
+	void *vsp;
+	void *vdp;
 	int l;
 {
 	int l1;
-	
+	char *sp = vsp, *dp = vdp;
+
 	/* bounce destination pointer */
 	while (dp >= kip->gotbuf + sizeof kip->gotbuf)
 		dp -= sizeof kip->gotbuf;
 	l1 = kip->gotbuf + sizeof kip->gotbuf - dp;
 	if (l >= l1) {
-		kgdbcopy(sp, dp, l1);
+		ipkdbcopy(sp, dp, l1);
 		l -= l1;
 		sp += l1;
 		dp = kip->gotbuf;
 	}
 	if (l)
-		kgdbcopy(sp, dp, l);
+		ipkdbcopy(sp, dp, l);
 }
 
 static int
-kgdbread(kip)
-	struct kgdb_if *kip;
-
+ipkdbread(kip)
+	struct ipkdb_if *kip;
 {
 	struct ifnet *ifp = &kip->arp->ac_if;
 	struct ether_header *eh;
 	struct mbuf *m, **mp, *head = 0;
 	int l, len;
 	char *buf = kip->got;
-	
-	kgdbrcpy(kip, buf, &len, sizeof(int));
+
+	ipkdbrcpy(kip, buf, &len, sizeof(int));
 	buf += sizeof(int);
 	kip->got += len + sizeof(int);
 	if (kip->got >= kip->gotbuf + sizeof kip->gotbuf)
 		kip->got -= sizeof kip->gotbuf;
 	if ((kip->gotlen -= len + sizeof(int)) < 0)
 		goto bad;
-	
+
 	/* Allocate a header mbuf */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
@@ -158,7 +163,7 @@ kgdbread(kip)
 				l = MCLBYTES;
 		}
 		m->m_len = l = min(len, l);
-		kgdbrcpy(kip, buf, mtod(m, caddr_t), l);
+		ipkdbrcpy(kip, buf, mtod(m, caddr_t), l);
 		buf += l;
 		len -= l;
 		*mp = m;
@@ -174,29 +179,28 @@ kgdbread(kip)
 	 */
 	if (kip->arp->ac_if.if_bpf)
 		bpf_mtap(kip->arp->ac_if.if_bpf, head);
-	
+
 	/*
 	 * Note that the interface cannot be in promiscuous mode if
 	 * there are no bpf listeners.  And if we are in promiscuous
 	 * mode, we have to check if this packet is really ours.
 	 */
 	if ((ifp->if_flags&IFF_PROMISC)
-	    && kgdbcmp(eh->ether_dhost,
-		       kip->arp->ac_enaddr,
-		       sizeof eh->ether_dhost)
+	    && ipkdbcmp(eh->ether_dhost,
+			kip->arp->ac_enaddr,
+			sizeof eh->ether_dhost)
 	       != 0
 	    && !(eh->ether_dhost[0] & 1)) {	/* !mcast && !bcast */
 		m_freem(head);
 		return 0;
 	}
-	
 #endif
-	
+
 	/*
 	 * Fix up data start offset in mbuf to point past ether header
 	 */
 	m_adj(head, sizeof(struct ether_header));
-	
+
 	ether_input(ifp, eh, head);
 	return 1;
 bad:
@@ -215,64 +219,64 @@ bad:
  * 1 - deliver 'em just as they would without debugging
  */
 #ifdef	__notyet__	/* results in mp_map overflows			XXX */
-char kgdbget = 1;
+char ipkdbget = 1;
 #else
-char kgdbget = 0;
+char ipkdbget = 0;
 #endif
 
 /*
  * Interface driver interrupt handler calls here
- * to get packets buffered by KGDB.
+ * to get packets buffered by IPKDB.
  */
 void
-kgdbrint(kip, ifp)
-	struct kgdb_if *kip;
+ipkdbrint(kip, ifp)
+	struct ipkdb_if *kip;
 	struct ifnet *ifp;
 {
 	if (kip && kip->arp && ifp == &kip->arp->ac_if)
 		while (kip->gotlen > 0)
-			kgdbread(kip);
+			ipkdbread(kip);
 }
 
 /*
- * KGDB hands out a packet that it doesn't want
+ * IPKDB hands out a packet that it doesn't want
  */
 void
-kgdbgotpkt(kip, cp, len)
-	struct kgdb_if *kip;
+ipkdbgotpkt(kip, cp, len)
+	struct ipkdb_if *kip;
 	char *cp;
 	int len;
 {
 	char *buf;
-	
-	if (!kip->arp || !kgdbget)
+
+	if (!kip->arp || !ipkdbget)
 		return;
 
 	if (kip->gotlen + sizeof(int) + len > sizeof kip->gotbuf)
 		return;
-	
+
 	buf = kip->got + kip->gotlen;
-	kgdbwcpy(kip, &len, buf, sizeof(int));
+	ipkdbwcpy(kip, &len, buf, sizeof(int));
 	buf += sizeof(int);
-	kgdbwcpy(kip, cp, buf, len);
+	ipkdbwcpy(kip, cp, buf, len);
 	kip->gotlen += sizeof(int) + roundup(len, sizeof(int));
 }
 
 /*
- * KGDB wants to know the IP address of its interface
+ * IPKDB wants to know the IP address of its interface
  */
 void
-kgdbinet(kip)
-	struct kgdb_if *kip;
+ipkdbinet(kip)
+	struct ipkdb_if *kip;
 {
 	struct ifaddr *ap;
-	
+
 	if (kip->arp) {
 		for (ap = kip->arp->ac_if.if_addrlist.tqh_first; ap; ap = ap->ifa_list.tqe_next) {
 			if (ap->ifa_addr->sa_family == AF_INET) {
-				kgdbcopy(&((struct sockaddr_in *)ap->ifa_addr)->sin_addr,
+				ipkdbcopy(&((struct sockaddr_in *)ap->ifa_addr)->sin_addr,
 					 kip->myinetaddr, sizeof kip->myinetaddr);
-				kip->flags |= KGDB_MYIP;
+				kip->flags |= IPKDB_MYIP;
 				return;
 			}
 		}
@@ -280,18 +284,18 @@ kgdbinet(kip)
 }
 
 /*
- * Initialize KGDB Interface handling
+ * Initialize IPKDB Interface handling
  */
 int
-kgdbifinit(kip, unit)
-	struct kgdb_if *kip;
+ipkdbifinit(kip, unit)
+	struct ipkdb_if *kip;
 	int unit;
 {
 	struct cfdata *cfp, *pcfp;
 	extern struct cfdata cfdata[];
 	short *pp;
 	u_char *cp;
-	
+
 	/* flush buffer */
 	kip->got = kip->gotbuf;
 	/* defaults: */
@@ -302,7 +306,7 @@ kgdbifinit(kip, unit)
 		*cp++ = -1;
 	/* search for interface */
 	for (cfp = cfdata; cfp->cf_driver; cfp++) {
-		if (strcmp(cfp->cf_driver->cd_name, "kgdb")
+		if (strcmp(cfp->cf_driver->cd_name, "ipkdb")
 		    || cfp->cf_unit != unit)
 			continue;
 		kip->cfp = cfp;
@@ -312,9 +316,9 @@ kgdbifinit(kip, unit)
 						      pcfp,
 						      kip)
 			    >= 0) {
-				printf("KGDB on %s at address %x\n",
-				    kip->name, kip->port);
-				if (cfp->cf_loc[0]) /* disable interface fro system */
+				printf("IPKDB on %s at address %x\n",
+				       kip->name, kip->port);
+				if (cfp->cf_loc[0]) /* disable interface from system */
 					pcfp->cf_fstate = FSTATE_FOUND;
 				return 0;
 			}

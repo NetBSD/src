@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.11 1996/10/15 21:00:55 mark Exp $	*/
+/*	$NetBSD: com.c,v 1.12 1996/10/16 19:32:56 ws Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -39,7 +39,7 @@
  */
 
 /*
- * For KGDBSLIP support: (NOTE: No relationship to KGDBSERIAL!!!)
+ * For IPKDBSLIP support: (NOTE: No relationship to IPKDBSERIAL!!!)
  *
  * Copyright (C) 1996 Frank Lancaster
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -102,25 +102,25 @@
 
 #include "com.h"
 
-#if NKGDB_CSLP > 0 || NKGDB_CPPP > 0
+#if NIPKDB_CSLP > 0 || NIPKDB_CPPP > 0
 
-#define kgdbinb inb
-#define kgdboutb outb
+#define ipkdbinb inb
+#define ipkdboutb outb
 
-#include <kgdb/kgdb.h>
-#include <machine/kgdb.h>
+#include <ipkdb/ipkdb.h>
+#include <machine/ipkdb.h>
 
-static int kgdbprobe __P((void *, void *));
+static int ipkdbprobe __P((void *, void *));
 
-#if NKGDB_CSLP > 0
-struct cfattach kgdb_cslp_ca = {
-	0, kgdb_probe, kgdb_attach
+#if NIPKDB_CSLP > 0
+struct cfattach ipkdb_cslp_ca = {
+	0, ipkdb_probe, ipkdb_attach
 };
 #endif
 
-#if NKGDB_CPPP > 0
-struct cfattach kgdb_cppp_ca = {
-	0, kgdb_probe, kgdb_attach
+#if NIPKDB_CPPP > 0
+struct cfattach ipkdb_cppp_ca = {
+	0, ipkdb_probe, ipkdb_attach
 };
 #endif
 #endif
@@ -293,9 +293,9 @@ comprobe(parent, match, aux)
 		rv = 0;
 		goto out;
 	}
-#if NKGDB_CSLP > 0 || NKGDB_CPPP > 0
+#if NIPKDB_CSLP > 0 || NIPKDB_CPPP > 0
 	if (!parent)
-		return(kgdbprobe(match, aux));
+		return(ipkdbprobe(match, aux));
 #endif
 	rv = comprobe1(bc, ioh, iobase);
 	if (needioh)
@@ -1356,7 +1356,7 @@ comcnpollc(dev, on)
 
 }
 
-#if NKGDB_CSLP > 0 || NKGDB_CPPP > 0
+#if NIPKDB_CSLP > 0 || NIPKDB_CPPP > 0
 
 /*
  * This need upgrading to use bus_io_*. However I need to
@@ -1364,71 +1364,71 @@ comcnpollc(dev, on)
  */
  
 static void
-kgdbstart(kip)
-	struct kgdb_if *kip;
+ipkdbstart(kip)
+	struct ipkdb_if *kip;
 {
 	int iobase = kip->port;
 	int speed;
 
 	if (!(kip->drvflags&1)) {
 		kip->drvflags |= 1;
-		kgdboutb(iobase + com_lcr, LCR_DLAB);
+		ipkdboutb(iobase + com_lcr, LCR_DLAB);
 		speed = comspeed(kip->speed);
-		kgdboutb(iobase + com_dlbl, speed);
-		kgdboutb(iobase + com_dlbh, speed >> 8);
-		kgdboutb(iobase + com_lcr, LCR_8BITS);
-		kgdboutb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY);
-		kgdboutb(iobase + com_fifo,
+		ipkdboutb(iobase + com_dlbl, speed);
+		ipkdboutb(iobase + com_dlbh, speed >> 8);
+		ipkdboutb(iobase + com_lcr, LCR_8BITS);
+		ipkdboutb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY);
+		ipkdboutb(iobase + com_fifo,
 			 FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
-		kgdboutb(iobase + com_mcr, MCR_IENABLE | MCR_DTR | MCR_RTS);
-		kgdbinb(iobase + com_iir);
+		ipkdboutb(iobase + com_mcr, MCR_IENABLE | MCR_DTR | MCR_RTS);
+		ipkdbinb(iobase + com_iir);
 	}
 }
 
 static void
-kgdbleave(kip)
-	struct kgdb_if *kip;
+ipkdbleave(kip)
+	struct ipkdb_if *kip;
 {
 	int iobase = kip->port;
 
 	/* wait for draining */
-	while (!(kgdbinb(iobase + com_lsr) & LSR_TXRDY));
+	while (!(ipkdbinb(iobase + com_lsr) & LSR_TXRDY));
 }
 
 static int
-kgdbgetc(kip, poll)
-	struct kgdb_if *kip;
+ipkdbgetc(kip, poll)
+	struct ipkdb_if *kip;
 	int poll;
 {
 	int iobase = kip->port;
 	int stat, c = -1;
 	
 	do {
-		if ((stat = kgdbinb(iobase + com_lsr)) & LSR_RXRDY) {
-			c = (u_char)kgdbinb(iobase + com_data);
-			stat = kgdbinb(iobase + com_iir);
+		if ((stat = ipkdbinb(iobase + com_lsr)) & LSR_RXRDY) {
+			c = (u_char)ipkdbinb(iobase + com_data);
+			stat = ipkdbinb(iobase + com_iir);
 		}
 	} while (!poll && c == -1);
 	return c;
 }
 
 static void
-kgdbputc(kip, c)
- 	struct kgdb_if *kip;
+ipkdbputc(kip, c)
+ 	struct ipkdb_if *kip;
 	char c;
 {
 	int iobase = kip->port;
 	
-	while (!(kgdbinb(iobase + com_lsr) & LSR_TXRDY));
-	kgdboutb(iobase + com_data, c);
+	while (!(ipkdbinb(iobase + com_lsr) & LSR_TXRDY));
+	ipkdboutb(iobase + com_data, c);
 }
 
 static int
-kgdbprobe(match, aux)
+ipkdbprobe(match, aux)
 	void *match, *aux;
 {
 	struct cfdata *cf = match;
-	struct kgdb_if *kip = aux;
+	struct ipkdb_if *kip = aux;
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
 	char *name;
@@ -1450,12 +1450,12 @@ kgdbprobe(match, aux)
 
 	kip->speed = kip->cfp->cf_loc[2];
 	kip->name = "COM";
-	kip->start = kgdbstart;
-	kip->leave = kgdbleave;
-	kip->getc = kgdbgetc;
-	kip->putc = kgdbputc;
+	kip->start = ipkdbstart;
+	kip->leave = ipkdbleave;
+	kip->getc = ipkdbgetc;
+	kip->putc = ipkdbputc;
 	
-	kgdb_serial(kip);
+	ipkdb_serial(kip);
 	
 	printf("done: kip->send=%x\n", kip->send);
 	return 0;
