@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.168 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.169 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -411,3 +411,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	netwinder: Add wscons support. [uwe 20030614]
 	arc: Fix support for DeskStation Tyne and it boots into single user.
 		[tsutsui 20030614]
+	cvs(1): $CVS_RSH defaults to ssh (instead of rsh). [itojun 20030620]
