@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.2 1996/03/16 23:55:40 christos Exp $	*/
+/*	$NetBSD: zlib.c,v 1.3 1996/09/18 03:11:03 scottr Exp $	*/
 
 /*
  * This file is derived from various .h and .c files from the zlib-0.95
@@ -32,8 +32,10 @@
 
 #include "zlib.h"
 
-#ifdef STDC
-#  include <string.h>
+#ifndef __NetBSD__
+#  ifdef STDC
+#    include <string.h>
+#  endif
 #endif
 
 #ifndef local
@@ -86,6 +88,10 @@ extern char *z_errmsg[]; /* indexed by 1-zlib_error */
          /* functions */
 
 #if defined(KERNEL) || defined(_KERNEL)
+#  ifdef __NetBSD__
+#    include <sys/types.h>
+#    include <sys/systm.h>
+#  endif
 #  define zmemcpy(d, s, n)	bcopy((s), (d), (n))
 #  define zmemzero		bzero
 #else
