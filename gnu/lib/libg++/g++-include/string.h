@@ -1,4 +1,4 @@
-//	$Id: string.h,v 1.2 1993/08/02 17:22:18 mycroft Exp $
+//	$Id: string.h,v 1.3 1993/09/27 18:25:49 jtc Exp $
 
 #ifndef _string_h
 #define _string_h 1
@@ -22,6 +22,7 @@ int       strcoll(const char*, const char*);
 char*     strcpy(char*, const char*);
 size_t    strcspn(const char*, const char*);
 char*     strdup(const char*);
+char*	  strerror(int);
 // NOTE: If you get a error message from g++ that this declaration
 // conflicts with a <built-in> declaration of strlen(), that usually
 // indicates that __SIZE_TYPE__ is incorrectly defined by gcc.
