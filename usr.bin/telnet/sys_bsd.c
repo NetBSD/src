@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.12 1998/02/27 10:44:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp $";
+__RCSID("$NetBSD: sys_bsd.c,v 1.12 1998/02/27 10:44:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +53,8 @@ static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include <arpa/telnet.h>
 
@@ -69,9 +72,18 @@ static char rcsid[] = "$NetBSD: sys_bsd.c,v 1.11 1996/02/28 21:04:10 thorpej Exp
 #define	SIG_FUNC_RET	int
 #endif
 
+#ifdef	SIGTSTP
+SIG_FUNC_RET susp P((int));
+#endif	/* SIGTSTP */
 #ifdef	SIGINFO
-extern SIG_FUNC_RET ayt_status();
+SIG_FUNC_RET ayt P((int));
 #endif
+
+SIG_FUNC_RET intr P((int));
+SIG_FUNC_RET intr2 P((int));
+SIG_FUNC_RET sendwin P((int));
+SIG_FUNC_RET deadpeer P((int));
+
 
 int
 	tout,			/* Output file descriptor */
@@ -183,8 +195,6 @@ extern int kludgelinemode;
  *	0	Don't add this character.
  *	1	Do add this character
  */
-
-extern void xmitAO(), xmitEL(), xmitEC(), intp(), sendbrk();
 
     int
 TerminalSpecialChars(c)
@@ -615,13 +625,6 @@ TerminalNewMode(f)
 
     if (f != -1) {
 #ifdef	SIGTSTP
-	SIG_FUNC_RET susp();
-#endif	/* SIGTSTP */
-#ifdef	SIGINFO
-	SIG_FUNC_RET ayt();
-#endif
-
-#ifdef	SIGTSTP
 	(void) signal(SIGTSTP, susp);
 #endif	/* SIGTSTP */
 #ifdef	SIGINFO
@@ -667,9 +670,7 @@ TerminalNewMode(f)
 #endif
     } else {
 #ifdef	SIGINFO
-	SIG_FUNC_RET ayt_status();
-
-	(void) signal(SIGINFO, ayt_status);
+	(void) signal(SIGINFO, (void (*) P((int))) ayt_status);
 #endif
 #ifdef	SIGTSTP
 	(void) signal(SIGTSTP, SIG_DFL);
