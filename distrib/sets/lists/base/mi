@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.130 1999/10/28 02:34:15 perry Exp $
+# $NetBSD: mi,v 1.131 1999/11/11 14:28:23 kleink Exp $
 .
 ./altroot
 ./bin
@@ -1136,9 +1136,11 @@
 ./usr/share/zoneinfo/America/Barbados
 ./usr/share/zoneinfo/America/Belem
 ./usr/share/zoneinfo/America/Belize
+./usr/share/zoneinfo/America/Boa_Vista
 ./usr/share/zoneinfo/America/Bogota
 ./usr/share/zoneinfo/America/Boise
 ./usr/share/zoneinfo/America/Buenos_Aires
+./usr/share/zoneinfo/America/Cambridge_Bay
 ./usr/share/zoneinfo/America/Cancun
 ./usr/share/zoneinfo/America/Caracas
 ./usr/share/zoneinfo/America/Catamarca
@@ -1270,6 +1272,7 @@
 ./usr/share/zoneinfo/Asia/Colombo
 ./usr/share/zoneinfo/Asia/Dacca
 ./usr/share/zoneinfo/Asia/Damascus
+./usr/share/zoneinfo/Asia/Dili
 ./usr/share/zoneinfo/Asia/Dubai
 ./usr/share/zoneinfo/Asia/Dushanbe
 ./usr/share/zoneinfo/Asia/Gaza
