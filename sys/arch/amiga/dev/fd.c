@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61 2003/05/10 23:12:30 thorpej Exp $ */
+/*	$NetBSD: fd.c,v 1.62 2003/07/14 15:57:39 aymeric Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.61 2003/05/10 23:12:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2003/07/14 15:57:39 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -654,7 +654,7 @@ fdstrategy(struct buf *bp)
 	sc = getsoftc(fd_cd, unit);
 
 #ifdef FDDEBUG
-	printf("fdstrategy: 0x%x\n", bp);
+	printf("fdstrategy: %p\n", bp);
 #endif
 	/*
 	 * check for valid partition and bounds
@@ -1669,11 +1669,11 @@ fdminphys(struct buf *bp)
 	toff = sec * FDSECSIZE;
 	tsz = sc->nsectors * FDSECSIZE;
 #ifdef FDDEBUG
-	printf("fdminphys: before %d", bp->b_bcount);
+	printf("fdminphys: before %ld", bp->b_bcount);
 #endif
 	bp->b_bcount = min(bp->b_bcount, tsz - toff);
 #ifdef FDDEBUG
-	printf(" after %d\n", bp->b_bcount);
+	printf(" after %ld\n", bp->b_bcount);
 #endif
 	minphys(bp);
 }
@@ -1811,7 +1811,7 @@ again:
 		rp = mfmblkdecode(rp, &cktmp, NULL, 1);
 		if (cktmp != hcksum) {
 #ifdef FDDEBUG
-			printf("  info 0x%x hchksum 0x%x trkhcksum 0x%x\n",
+			printf("  info 0x%lx hchksum 0x%lx trkhcksum 0x%lx\n",
 			    info, hcksum, cktmp);
 #endif
 			goto again;
@@ -1824,7 +1824,7 @@ again:
 			goto again;
 		}
 #ifdef FDDEBUG
-		printf("  info 0x%x\n", info);
+		printf("  info 0x%lx\n", info);
 #endif
 
 		rp = mfmblkdecode(rp, &cktmp, NULL, 1);
@@ -1833,7 +1833,7 @@ again:
 		crp = mfmblkdecode(rp, dp, &dcksum, FDSECLWORDS);
 		if (cktmp != dcksum) {
 #ifdef FDDEBUG
-			printf("  info 0x%x dchksum 0x%x trkdcksum 0x%x\n",
+			printf("  info 0x%lx dchksum 0x%lx trkdcksum 0x%lx\n",
 			    info, dcksum, cktmp);
 #endif
 			goto again;
