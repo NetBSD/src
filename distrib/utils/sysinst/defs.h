@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.86 2003/06/11 21:35:35 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.87 2003/06/12 12:41:55 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,38 +77,38 @@ extern const char * const fstypenames[];
 #define RUN_SYSTEM	0x0010		/* just use system(3) */
 
 /* Installation sets */
-#define SET_KERNEL	0x000000ff	/* allow 8 kernels */
-#define SET_KERNEL_1	0x00000001	/* Usually GENERIC */
-#define SET_KERNEL_2	0x00000002	/* MD kernel... */
-#define SET_KERNEL_3	0x00000004	/* MD kernel... */
-#define SET_KERNEL_4	0x00000008	/* MD kernel... */
-#define SET_KERNEL_5	0x00000010	/* MD kernel... */
-#define SET_KERNEL_6	0x00000020	/* MD kernel... */
-#define SET_KERNEL_7	0x00000040	/* MD kernel... */
-#define SET_KERNEL_8	0x00000080	/* MD kernel... */
+#define SET_KERNEL	0x000000ffu	/* allow 8 kernels */
+#define SET_KERNEL_1	0x00000001u	/* Usually GENERIC */
+#define SET_KERNEL_2	0x00000002u	/* MD kernel... */
+#define SET_KERNEL_3	0x00000004u	/* MD kernel... */
+#define SET_KERNEL_4	0x00000008u	/* MD kernel... */
+#define SET_KERNEL_5	0x00000010u	/* MD kernel... */
+#define SET_KERNEL_6	0x00000020u	/* MD kernel... */
+#define SET_KERNEL_7	0x00000040u	/* MD kernel... */
+#define SET_KERNEL_8	0x00000080u	/* MD kernel... */
 
-#define SET_SYSTEM	0x000fff00	/* all system sets */
-#define SET_BASE	0x00000100	/* base */
-#define SET_ETC		0x00000200	/* /etc */
-#define SET_COMPILER	0x00000400	/* compiler tools */
-#define SET_GAMES	0x00000800	/* text games */
-#define SET_MAN_PAGES	0x00001000	/* online manual pages */
-#define SET_MISC	0x00002000	/* miscellaneuous */
-#define SET_TEXT_TOOLS	0x00004000	/* text processing tools */
+#define SET_SYSTEM	0x000fff00u	/* all system sets */
+#define SET_BASE	0x00000100u	/* base */
+#define SET_ETC		0x00000200u	/* /etc */
+#define SET_COMPILER	0x00000400u	/* compiler tools */
+#define SET_GAMES	0x00000800u	/* text games */
+#define SET_MAN_PAGES	0x00001000u	/* online manual pages */
+#define SET_MISC	0x00002000u	/* miscellaneuous */
+#define SET_TEXT_TOOLS	0x00004000u	/* text processing tools */
 
-#define SET_X11		0x0ff00000	/* All X11 sets */
-#define SET_X11_BASE	0x00100000	/* X11 base and clients */
-#define SET_X11_FONTS	0x00200000	/* X11 fonts */
-#define SET_X11_SERVERS	0x00400000	/* X11 servers */
-#define SET_X_CONTRIB	0x00800000	/* X contrib clients */
-#define SET_X11_PROG	0x01000000	/* X11 programming */
-#define SET_X11_MISC	0x02000000	/* X11 miscelllaneous */
+#define SET_X11		0x0ff00000u	/* All X11 sets */
+#define SET_X11_BASE	0x00100000u	/* X11 base and clients */
+#define SET_X11_FONTS	0x00200000u	/* X11 fonts */
+#define SET_X11_SERVERS	0x00400000u	/* X11 servers */
+#define SET_X_CONTRIB	0x00800000u	/* X contrib clients */
+#define SET_X11_PROG	0x01000000u	/* X11 programming */
+#define SET_X11_MISC	0x02000000u	/* X11 miscelllaneous */
 
-#define SET_MD		0xf0000000	/* All machine dependant sets */
-#define	SET_MD_1	0x10000000	/* Machine dependant set */
-#define	SET_MD_2	0x20000000	/* Machine dependant set */
-#define	SET_MD_3	0x40000000	/* Machine dependant set */
-#define	SET_MD_4	0x80000000	/* Machine dependant set */
+#define SET_MD		0xf0000000u	/* All machine dependant sets */
+#define	SET_MD_1	0x10000000u	/* Machine dependant set */
+#define	SET_MD_2	0x20000000u	/* Machine dependant set */
+#define	SET_MD_3	0x40000000u	/* Machine dependant set */
+#define	SET_MD_4	0x80000000u	/* Machine dependant set */
 
 /* Macros */
 #define nelem(x) (sizeof (x) / sizeof *(x))

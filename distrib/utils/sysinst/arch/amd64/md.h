@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2003/06/11 21:35:38 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2003/06/12 12:41:55 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,7 +68,7 @@
  * from floppy.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_6_NAME	"kern-GENERIC.MP"
+#define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
 
 #define SET_MD_1_NAME		"toolchain"
 
