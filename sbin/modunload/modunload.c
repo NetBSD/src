@@ -43,7 +43,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modunload.c,v 1.1 1993/06/07 19:52:16 cgd Exp $
+ *	$Id: modunload.c,v 1.2 1993/06/07 23:10:37 cgd Exp $
  */
 
 #define printf I_HATE_ANSI
@@ -115,7 +115,7 @@ char	*av[];
 	 * Open the virtual device device driver for exclusive use (needed
 	 * to ioctl() to retrive the loaded module(s) status).
 	 */
-	if( ( devfd = open( LKM_DEV, O_RDONLY, 0)) == -1) {
+	if( ( devfd = open( LKM_DEV, O_RDWR, 0)) == -1) {
 		perror( LKM_DEV);
 		exit( 2);
 	}
