@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.5 1995/07/05 08:22:22 ragge Exp $	*/
+/*	$NetBSD: endian.h,v 1.6 1995/08/21 16:36:32 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -62,29 +62,31 @@ unsigned long   ntohl __P((unsigned long));
 unsigned short  ntohs __P((unsigned short));
 __END_DECLS
 
-
 #ifdef	__GNUC__
 
-#define	__byte_swap_long_variable(x)	\
-({ register unsigned long __x,__y = (x);\
-					\
-	__asm ("rotl	$-8,%1,%0;   	\
-		insv	%0,$16,$8,%0;	\
-		rotl	$8,%1,%1; 	\
-		movb	%1,%0"		\
-		: "&=r" (__x)		\
-		: "r" (__y)		\
-		: "cc" );		\
-	__x; })
+#define	__byte_swap_long_variable(x)		\
+({ register unsigned long __y, __x = (x);	\
+						\
+	__asm ("rotl	$-8, %1, %0;   		\
+		insv	%0, $16, $8, %0;	\
+		rotl	$8, %1, r1; 		\
+		movb	r1, %0"			\
+		: "&=r" (__y)			\
+		: "r" (__x)			\
+		: "r1", "cc" );			\
+	__y; })
 
-#define __byte_swap_word_variable(x)	\
-({ register unsigned short __x = (x);	\
-	__asm ("insv	%1,$16,$8,%1;	\
-		rotl	$-8,%1,%1"	\
-		: "=r" (__x)		\
-		: "0" (__x)		\
-		: "cc");		\
-	__x; })
+#define __byte_swap_word_variable(x)		\
+({ register unsigned short __y, __x = (x);	\
+						\
+	__asm ("rotl	$8, %1, %0;		\
+		rotl	$-8, %1, r1;		\
+		movb	r1, %0;			\
+		movzwl	%0, %0"			\
+		: "&=r" (__y)			\
+		: "r" (__x)			\
+		: "r1", "cc" );			\
+	__y; })
 
 
 #define __byte_swap_long(x)     __byte_swap_long_variable(x)
