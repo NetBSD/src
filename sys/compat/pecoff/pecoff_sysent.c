@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.6 2003/01/18 23:41:14 thorpej Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.7 2003/04/08 10:58:55 oki Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.6 2003/01/18 23:41:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.7 2003/04/08 10:58:55 oki Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -17,6 +17,7 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.6 2003/01/18 23:41:14 thorpej Ex
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_posix.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
 #endif
@@ -613,16 +614,16 @@ struct sysent pecoff_sysent[] = {
 	    sys_clock_settime },		/* 233 = clock_settime */
 	{ 2, s(struct sys_clock_getres_args), 0,
 	    sys_clock_getres },			/* 234 = clock_getres */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 235 = unimplemented timer_create */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 236 = unimplemented timer_delete */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 237 = unimplemented timer_settime */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 238 = unimplemented timer_gettime */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 239 = unimplemented timer_getoverrun */
+	{ 3, s(struct sys_timer_create_args), 0,
+	    sys_timer_create },			/* 235 = timer_create */
+	{ 1, s(struct sys_timer_delete_args), 0,
+	    sys_timer_delete },			/* 236 = timer_delete */
+	{ 4, s(struct sys_timer_settime_args), 0,
+	    sys_timer_settime },		/* 237 = timer_settime */
+	{ 2, s(struct sys_timer_gettime_args), 0,
+	    sys_timer_gettime },		/* 238 = timer_gettime */
+	{ 1, s(struct sys_timer_getoverrun_args), 0,
+	    sys_timer_getoverrun },		/* 239 = timer_getoverrun */
 	{ 2, s(struct sys_nanosleep_args), 0,
 	    sys_nanosleep },			/* 240 = nanosleep */
 	{ 1, s(struct sys_fdatasync_args), 0,
@@ -631,52 +632,75 @@ struct sysent pecoff_sysent[] = {
 	    sys_mlockall },			/* 242 = mlockall */
 	{ 0, 0, 0,
 	    sys_munlockall },			/* 243 = munlockall */
+	{ 3, s(struct sys___sigtimedwait_args), 0,
+	    sys___sigtimedwait },		/* 244 = __sigtimedwait */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 244 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 245 = unimplemented */
+	    sys_nosys },			/* 245 = unimplemented sys_sigqueue */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 246 = unimplemented */
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+	{ 2, s(struct sys__ksem_init_args), 0,
+	    sys__ksem_init },			/* 247 = _ksem_init */
+	{ 5, s(struct sys__ksem_open_args), 0,
+	    sys__ksem_open },			/* 248 = _ksem_open */
+	{ 1, s(struct sys__ksem_unlink_args), 0,
+	    sys__ksem_unlink },			/* 249 = _ksem_unlink */
+	{ 1, s(struct sys__ksem_close_args), 0,
+	    sys__ksem_close },			/* 250 = _ksem_close */
+	{ 1, s(struct sys__ksem_post_args), 0,
+	    sys__ksem_post },			/* 251 = _ksem_post */
+	{ 1, s(struct sys__ksem_wait_args), 0,
+	    sys__ksem_wait },			/* 252 = _ksem_wait */
+	{ 1, s(struct sys__ksem_trywait_args), 0,
+	    sys__ksem_trywait },		/* 253 = _ksem_trywait */
+	{ 2, s(struct sys__ksem_getvalue_args), 0,
+	    sys__ksem_getvalue },		/* 254 = _ksem_getvalue */
+	{ 1, s(struct sys__ksem_destroy_args), 0,
+	    sys__ksem_destroy },		/* 255 = _ksem_destroy */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 247 = unimplemented */
+	    sys_nosys },			/* 256 = unimplemented sys__ksem_timedwait */
+#else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 248 = unimplemented */
+	    sys_nosys },			/* 247 = excluded sys__ksem_init */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 249 = unimplemented */
+	    sys_nosys },			/* 248 = excluded sys__ksem_open */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 250 = unimplemented */
+	    sys_nosys },			/* 249 = excluded sys__ksem_unlink */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 251 = unimplemented */
+	    sys_nosys },			/* 250 = excluded sys__ksem_close */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 252 = unimplemented */
+	    sys_nosys },			/* 251 = excluded sys__ksem_post */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 253 = unimplemented */
+	    sys_nosys },			/* 252 = excluded sys__ksem_wait */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 254 = unimplemented */
+	    sys_nosys },			/* 253 = excluded sys__ksem_trywait */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 255 = unimplemented */
+	    sys_nosys },			/* 254 = excluded sys__ksem_getvalue */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 256 = unimplemented */
+	    sys_nosys },			/* 255 = excluded sys__ksem_destroy */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 257 = unimplemented */
+	    sys_nosys },			/* 256 = unimplemented sys__ksem_timedwait */
+#endif
 	{ 0, 0, 0,
-	    sys_nosys },			/* 258 = unimplemented */
+	    sys_nosys },			/* 257 = unimplemented sys_mq_open */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 259 = unimplemented */
+	    sys_nosys },			/* 258 = unimplemented sys_mq_close */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 260 = unimplemented */
+	    sys_nosys },			/* 259 = unimplemented sys_mq_unlink */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 261 = unimplemented */
+	    sys_nosys },			/* 260 = unimplemented sys_mq_getattr */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 262 = unimplemented */
+	    sys_nosys },			/* 261 = unimplemented sys_mq_setattr */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 263 = unimplemented */
+	    sys_nosys },			/* 262 = unimplemented sys_mq_notify */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 264 = unimplemented */
+	    sys_nosys },			/* 263 = unimplemented sys_mq_send */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 265 = unimplemented */
+	    sys_nosys },			/* 264 = unimplemented sys_mq_receive */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 266 = unimplemented */
+	    sys_nosys },			/* 265 = unimplemented sys_mq_timedsend */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 266 = unimplemented sys_mq_timedreceive */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 267 = unimplemented */
 	{ 0, 0, 0,
@@ -713,8 +737,8 @@ struct sysent pecoff_sysent[] = {
 	    pecoff_sys___posix_chown },		/* 283 = __posix_chown */
 	{ 3, s(struct sys___posix_fchown_args), 0,
 	    sys___posix_fchown },		/* 284 = __posix_fchown */
-	{ 3, s(struct sys___posix_lchown_args), 0,
-	    sys___posix_lchown },		/* 285 = __posix_lchown */
+	{ 3, s(struct pecoff_sys___posix_lchown_args), 0,
+	    pecoff_sys___posix_lchown },	/* 285 = __posix_lchown */
 	{ 1, s(struct sys_getsid_args), 0,
 	    sys_getsid },			/* 286 = getsid */
 	{ 2, s(struct sys___clone_args), 0,
@@ -771,34 +795,34 @@ struct sysent pecoff_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 303 = excluded __shmctl13 */
 #endif
-	{ 2, s(struct sys_lchflags_args), 0,
-	    sys_lchflags },			/* 304 = lchflags */
+	{ 2, s(struct pecoff_sys_lchflags_args), 0,
+	    pecoff_sys_lchflags },		/* 304 = lchflags */
 	{ 0, 0, 0,
 	    sys_issetugid },			/* 305 = issetugid */
 	{ 3, s(struct sys_utrace_args), 0,
 	    sys_utrace },			/* 306 = utrace */
+	{ 1, s(struct sys_getcontext_args), 0,
+	    sys_getcontext },			/* 307 = getcontext */
+	{ 1, s(struct sys_setcontext_args), 0,
+	    sys_setcontext },			/* 308 = setcontext */
+	{ 3, s(struct sys__lwp_create_args), 0,
+	    sys__lwp_create },			/* 309 = _lwp_create */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 307 = unimplemented */
+	    sys__lwp_exit },			/* 310 = _lwp_exit */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 308 = unimplemented */
+	    sys__lwp_self },			/* 311 = _lwp_self */
+	{ 2, s(struct sys__lwp_wait_args), 0,
+	    sys__lwp_wait },			/* 312 = _lwp_wait */
+	{ 1, s(struct sys__lwp_suspend_args), 0,
+	    sys__lwp_suspend },			/* 313 = _lwp_suspend */
+	{ 1, s(struct sys__lwp_continue_args), 0,
+	    sys__lwp_continue },		/* 314 = _lwp_continue */
+	{ 1, s(struct sys__lwp_wakeup_args), 0,
+	    sys__lwp_wakeup },			/* 315 = _lwp_wakeup */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 309 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 310 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 311 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 312 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 313 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 314 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 315 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 316 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 317 = unimplemented */
+	    sys__lwp_getprivate },		/* 316 = _lwp_getprivate */
+	{ 1, s(struct sys__lwp_setprivate_args), 0,
+	    sys__lwp_setprivate },		/* 317 = _lwp_setprivate */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 318 = unimplemented */
 	{ 0, 0, 0,
@@ -823,18 +847,18 @@ struct sysent pecoff_sysent[] = {
 	    sys_nosys },			/* 328 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 329 = unimplemented */
+	{ 3, s(struct sys_sa_register_args), 0,
+	    sys_sa_register },			/* 330 = sa_register */
+	{ 2, s(struct sys_sa_stacks_args), 0,
+	    sys_sa_stacks },			/* 331 = sa_stacks */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 330 = unimplemented */
+	    sys_sa_enable },			/* 332 = sa_enable */
+	{ 1, s(struct sys_sa_setconcurrency_args), 0,
+	    sys_sa_setconcurrency },		/* 333 = sa_setconcurrency */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 331 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 332 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 333 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 334 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 335 = unimplemented */
+	    sys_sa_yield },			/* 334 = sa_yield */
+	{ 1, s(struct sys_sa_preempt_args), 0,
+	    sys_sa_preempt },			/* 335 = sa_preempt */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 336 = unimplemented */
 	{ 0, 0, 0,
@@ -843,34 +867,34 @@ struct sysent pecoff_sysent[] = {
 	    sys_nosys },			/* 338 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 339 = unimplemented */
+	{ 5, s(struct sys___sigaction_sigtramp_args), 0,
+	    sys___sigaction_sigtramp },		/* 340 = __sigaction_sigtramp */
+	{ 3, s(struct sys_pmc_get_info_args), 0,
+	    sys_pmc_get_info },			/* 341 = pmc_get_info */
+	{ 3, s(struct sys_pmc_control_args), 0,
+	    sys_pmc_control },			/* 342 = pmc_control */
+	{ 3, s(struct sys_rasctl_args), 0,
+	    sys_rasctl },			/* 343 = rasctl */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 340 = filler */
+	    sys_kqueue },			/* 344 = kqueue */
+	{ 6, s(struct sys_kevent_args), 0,
+	    sys_kevent },			/* 345 = kevent */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 341 = filler */
+	    sys_nosys },			/* 346 = unimplemented sys_sched_setparam */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 342 = filler */
+	    sys_nosys },			/* 347 = unimplemented sys_sched_getparam */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 343 = filler */
+	    sys_nosys },			/* 348 = unimplemented sys_sched_setscheduler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 344 = filler */
+	    sys_nosys },			/* 349 = unimplemented sys_sched_getscheduler */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 345 = filler */
+	    sys_nosys },			/* 350 = unimplemented sys_sched_yield */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 346 = filler */
+	    sys_nosys },			/* 351 = unimplemented sys_sched_get_priority_max */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 347 = filler */
+	    sys_nosys },			/* 352 = unimplemented sys_sched_get_priority_min */
 	{ 0, 0, 0,
-	    sys_nosys },			/* 348 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 349 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 350 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 351 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 352 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 353 = filler */
+	    sys_nosys },			/* 353 = unimplemented sys_sched_rr_get_interval */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 354 = filler */
 	{ 0, 0, 0,

@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.6 2003/01/18 23:41:13 thorpej Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.7 2003/04/08 10:58:55 oki Exp $ */
 
 /*
  * System call argument lists.
@@ -171,6 +171,17 @@ struct pecoff_sys___posix_chown_args {
 	syscallarg(const char *) path;
 	syscallarg(uid_t) uid;
 	syscallarg(gid_t) gid;
+};
+
+struct pecoff_sys___posix_lchown_args {
+	syscallarg(const char *) path;
+	syscallarg(uid_t) uid;
+	syscallarg(gid_t) gid;
+};
+
+struct pecoff_sys_lchflags_args {
+	syscallarg(const char *) path;
+	syscallarg(u_long) flags;
 };
 
 /*
@@ -374,10 +385,28 @@ int	sys_shmget(struct lwp *, void *, register_t *);
 int	sys_clock_gettime(struct lwp *, void *, register_t *);
 int	sys_clock_settime(struct lwp *, void *, register_t *);
 int	sys_clock_getres(struct lwp *, void *, register_t *);
+int	sys_timer_create(struct lwp *, void *, register_t *);
+int	sys_timer_delete(struct lwp *, void *, register_t *);
+int	sys_timer_settime(struct lwp *, void *, register_t *);
+int	sys_timer_gettime(struct lwp *, void *, register_t *);
+int	sys_timer_getoverrun(struct lwp *, void *, register_t *);
 int	sys_nanosleep(struct lwp *, void *, register_t *);
 int	sys_fdatasync(struct lwp *, void *, register_t *);
 int	sys_mlockall(struct lwp *, void *, register_t *);
 int	sys_munlockall(struct lwp *, void *, register_t *);
+int	sys___sigtimedwait(struct lwp *, void *, register_t *);
+#if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
+int	sys__ksem_init(struct lwp *, void *, register_t *);
+int	sys__ksem_open(struct lwp *, void *, register_t *);
+int	sys__ksem_unlink(struct lwp *, void *, register_t *);
+int	sys__ksem_close(struct lwp *, void *, register_t *);
+int	sys__ksem_post(struct lwp *, void *, register_t *);
+int	sys__ksem_wait(struct lwp *, void *, register_t *);
+int	sys__ksem_trywait(struct lwp *, void *, register_t *);
+int	sys__ksem_getvalue(struct lwp *, void *, register_t *);
+int	sys__ksem_destroy(struct lwp *, void *, register_t *);
+#else
+#endif
 int	pecoff_sys___posix_rename(struct lwp *, void *, register_t *);
 int	sys_swapctl(struct lwp *, void *, register_t *);
 int	sys_getdents(struct lwp *, void *, register_t *);
@@ -393,7 +422,7 @@ int	sys___sigaltstack14(struct lwp *, void *, register_t *);
 int	sys___vfork14(struct lwp *, void *, register_t *);
 int	pecoff_sys___posix_chown(struct lwp *, void *, register_t *);
 int	sys___posix_fchown(struct lwp *, void *, register_t *);
-int	sys___posix_lchown(struct lwp *, void *, register_t *);
+int	pecoff_sys___posix_lchown(struct lwp *, void *, register_t *);
 int	sys_getsid(struct lwp *, void *, register_t *);
 int	sys___clone(struct lwp *, void *, register_t *);
 #if defined(KTRACE) || !defined(_KERNEL)
@@ -424,7 +453,30 @@ int	sys___msgctl13(struct lwp *, void *, register_t *);
 int	sys___shmctl13(struct lwp *, void *, register_t *);
 #else
 #endif
-int	sys_lchflags(struct lwp *, void *, register_t *);
+int	pecoff_sys_lchflags(struct lwp *, void *, register_t *);
 int	sys_issetugid(struct lwp *, void *, register_t *);
 int	sys_utrace(struct lwp *, void *, register_t *);
+int	sys_getcontext(struct lwp *, void *, register_t *);
+int	sys_setcontext(struct lwp *, void *, register_t *);
+int	sys__lwp_create(struct lwp *, void *, register_t *);
+int	sys__lwp_exit(struct lwp *, void *, register_t *);
+int	sys__lwp_self(struct lwp *, void *, register_t *);
+int	sys__lwp_wait(struct lwp *, void *, register_t *);
+int	sys__lwp_suspend(struct lwp *, void *, register_t *);
+int	sys__lwp_continue(struct lwp *, void *, register_t *);
+int	sys__lwp_wakeup(struct lwp *, void *, register_t *);
+int	sys__lwp_getprivate(struct lwp *, void *, register_t *);
+int	sys__lwp_setprivate(struct lwp *, void *, register_t *);
+int	sys_sa_register(struct lwp *, void *, register_t *);
+int	sys_sa_stacks(struct lwp *, void *, register_t *);
+int	sys_sa_enable(struct lwp *, void *, register_t *);
+int	sys_sa_setconcurrency(struct lwp *, void *, register_t *);
+int	sys_sa_yield(struct lwp *, void *, register_t *);
+int	sys_sa_preempt(struct lwp *, void *, register_t *);
+int	sys___sigaction_sigtramp(struct lwp *, void *, register_t *);
+int	sys_pmc_get_info(struct lwp *, void *, register_t *);
+int	sys_pmc_control(struct lwp *, void *, register_t *);
+int	sys_rasctl(struct lwp *, void *, register_t *);
+int	sys_kqueue(struct lwp *, void *, register_t *);
+int	sys_kevent(struct lwp *, void *, register_t *);
 #endif /* _PECOFF_SYS__SYSCALLARGS_H_ */
