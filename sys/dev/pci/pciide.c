@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.100 2000/12/29 18:59:01 tsutsui Exp $	*/
+/*	$NetBSD: pciide.c,v 1.101 2001/01/05 15:20:53 bouyer Exp $	*/
 
 
 /*
@@ -2303,6 +2303,7 @@ cmd0643_9_setup_channel(chp)
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
 			if (drvp->drive_flags & DRIVE_UDMA) {
 				/* UltraDMA on a 646U2, 0648 or 0649 */
+				drvp->drive_flags &= ~DRIVE_DMA;
 				udma_reg = pciide_pci_read(sc->sc_pc,
 				    sc->sc_tag, CMD_UDMATIM(chp->channel));
 				if (drvp->UDMA_mode > 2 &&
@@ -2896,11 +2897,11 @@ hpt_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 4;
 
 	sc->sc_wdcdev.set_modes = hpt_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	if (revision == HPT366_REV) {
+		sc->sc_wdcdev.UDMA_cap = 4;
 		/*
 		 * The 366 has 2 PCI IDE functions, one for primary and one
 		 * for secondary. So we need to call pciide_mapregs_compat()
@@ -2918,6 +2919,7 @@ hpt_chip_map(sc, pa)
 		sc->sc_wdcdev.nchannels = 1;
 	} else {
 		sc->sc_wdcdev.nchannels = 2;
+		sc->sc_wdcdev.UDMA_cap = 5;
 	}
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
@@ -2958,7 +2960,6 @@ hpt_chip_map(sc, pa)
 	return;
 }
 
-
 void
 hpt_setup_channel(chp)
 	struct channel_softc *chp;
@@ -2989,6 +2990,8 @@ hpt_setup_channel(chp)
 
                 /* add timing values, setup DMA if needed */
                 if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
 			if ((cable & HPT_CSEL_CBLID(chp->channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
@@ -3253,6 +3256,8 @@ pdc202xx_setup_channel(chp)
 			continue;
 		mode = 0;
 		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
 			mode = PDC2xx_TIM_SET_MB(mode,
 			    pdc2xx_udma_mb[drvp->UDMA_mode]);
 			mode = PDC2xx_TIM_SET_MC(mode,
