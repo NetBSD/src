@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 1997/03/24 18:10:00 perry Exp $
+#	$NetBSD: Makefile,v 1.69 1997/04/02 05:23:49 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -80,6 +80,8 @@ distribution: distrib-dirs
 		${DESTDIR}/var/cron/log
 	${INSTALL} -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+		${DESTDIR}/var/log/authlog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 640 /dev/null \
@@ -92,6 +94,8 @@ distribution: distrib-dirs
 		${DESTDIR}/var/log/secure
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/wtmp
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
+		${DESTDIR}/var/log/xferlog
 	${INSTALL} -c -o daemon -g staff -m 664 /dev/null \
 		${DESTDIR}/var/msgs/bounds
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
