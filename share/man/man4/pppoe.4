@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.9.2.2 2003/02/07 20:22:55 tron Exp $
+.\"	$NetBSD: pppoe.4,v 1.9.2.3 2003/02/07 20:23:48 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -230,6 +230,40 @@ address suggested by the peer will be accepted.
 To wildcard the local address set it to 0.0.0.0, to wildcard the remote
 address set it to 0.0.0.1. Wildcarding is not available (nor necessary)
 for IPv6 operation.
+.Sh OPTIONS
+A
+.Nm
+enabled kernel will not interfere with other
+.Nm PPPoE
+implementations running on the same machine. Under special circumstances
+(details below) this is not desirable, so the
+.Nm
+driver can be told to kill all unknown 
+.Nm PPPoE
+sessions received by the ethernet interface used for a configured
+.Nm
+interface. To do this, add
+.Pp
+.Nm options
+.Ar PPPOE_TERM_UNKNOWN_SESSIONS
+.Pp
+to your kernel config file.
+.Pp
+Note that this will break all userland 
+.Nm PPPoE
+implementations using the same ethernet interface!
+.Pp
+This option is only usefull if you have a static IP address assigned and
+your ISP does not use LCP echo requests to monitor the link status. After
+a crash or power failure the peer device still tries to send data to the no
+longer active session on your computer, and might refuse to reestablish a
+new connection, because there already is an open session. On receipt of such
+packets the
+.Nm
+driver with this option set will send a
+.Nm PADT
+packet (request to terminate the session). The peer will imediately disconnect
+the orphaned session and allow a new one to be established.
 .Sh SEE ALSO
 .Xr ifwatchd 8 ,
 .Xr pppoectl 8
