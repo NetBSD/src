@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.10 1998/08/14 16:50:02 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.11 2001/01/03 19:15:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,5 +91,9 @@ void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
 int	alpha_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
 	    struct alpha_sgmap *, int));
 void	alpha_sgmap_free __P((bus_dmamap_t, struct alpha_sgmap *));
+
+int	alpha_sgmap_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+void	alpha_sgmap_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 
 #endif	/* _ALPHA_COMMON_SGMAPVAR_H */
