@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.6 2003/06/10 17:19:04 dsl Exp $	 */
+/*	$NetBSD: defs.h,v 1.7 2003/07/23 04:12:33 itojun Exp $	 */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,26 +81,26 @@ EXTERN action error_act INIT({NULL});
 /* Prototypes. */
 
 /* From util.c */
-void yyerror (const char *, ...)
+void yyerror(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));
-void buff_add_ch (char);
-char *buff_copy (void); 
+void buff_add_ch(char);
+char *buff_copy(void); 
 
 /* from scan.l */
-int yylex (void);
+int yylex(void);
 
 /* from parse.y */
-int yyparse (void);
+int yyparse(void);
 
 /* Vars not defined in main.c */
 extern FILE *yyin;
 
 /* from avl.c */
-id_rec *find_id (id_rec *tree, char *id);
-int insert_id (id_rec **root, id_rec *new_id);
+id_rec *find_id(id_rec *, char *);
+int insert_id(id_rec **, id_rec *);
 
 /* from mdb.c */
-id_rec *get_menu (char *);
-void check_defined (void);
-void write_menu_file (char *);
+id_rec *get_menu(char *);
+void check_defined(void);
+void write_menu_file(char *);
 
