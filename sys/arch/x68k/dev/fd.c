@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.59 2003/11/01 12:41:59 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.60 2003/11/15 15:02:08 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.59 2003/11/01 12:41:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.60 2003/11/15 15:02:08 isaki Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -518,6 +518,7 @@ fdprobe(parent, cf, aux)
 	int drive = fa->fa_drive;
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
+	int n = 0;
 	int found = 0;
 	int i;
 
@@ -541,18 +542,8 @@ retry:
 	i = 25000;
 	while (--i > 0) {
 		if ((intio_get_sicilian_intr() & SICILIAN_STAT_FDC)) {
-			int n;
-
 			out_fdc(iot, ioh, NE7CMD_SENSEI);
 			n = fdcresult(fdc);
-
-			if (n == 2) {
-				if ((fdc->sc_status[0] & 0xf0) == 0x20)
-					found = 1;
-				else if ((fdc->sc_status[0] & 0xf0) == 0xc0)
-					goto retry;
-			}
-
 			break;
 		}
 		DELAY(100);
@@ -567,6 +558,13 @@ retry:
 		DPRINTF(("\n"));
 	}
 #endif
+
+	if (n == 2) {
+		if ((fdc->sc_status[0] & 0xf0) == 0x20)
+			found = 1;
+		else if ((fdc->sc_status[0] & 0xf0) == 0xc0)
+			goto retry;
+	}
 
 	/* turn off motor */
 	bus_space_write_1(fdc->sc_iot, fdc->sc_ioh,
@@ -660,7 +658,8 @@ fdstrategy(bp)
 	    (fd = fd_cd.cd_devs[unit]) == 0 ||
 	    bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
-		DPRINTF(("fdstrategy: unit=%d, blkno=%d, bcount=%ld\n", unit,
+		DPRINTF(("fdstrategy: unit=%d, blkno=%" PRId64 ", "
+			 "bcount=%ld\n", unit,
 			 bp->b_blkno, bp->b_bcount));
 		bp->b_error = EINVAL;
 		goto bad;
@@ -694,7 +693,7 @@ fdstrategy(bp)
  	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
 		/ (fd->sc_type->seccyl * (1 << (fd->sc_type->secsize - 2)));
 
-	DPRINTF(("fdstrategy: %s b_blkno %d b_bcount %ld cylin %ld\n",
+	DPRINTF(("fdstrategy: %s b_blkno %" PRId64 " b_bcount %ld cylin %ld\n",
 		 bp->b_flags & B_READ ? "read" : "write",
 		 bp->b_blkno, bp->b_bcount, bp->b_cylinder));
 	/* Queue transfer on drive, activate drive and controller if idle. */
