@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.79 1999/11/18 06:47:49 jun Exp $	*/
+/*	$NetBSD: locore.S,v 1.80 1999/11/29 11:12:13 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,6 +99,16 @@ _C_LABEL(kernel_text):
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)
 #endif
+	
+#ifdef R3900_CACHE_DISABLE	
+	li	t0, ~(R3900_CONFIG_ICE|R3900_CONFIG_DCE)
+	mfc0	t1, R3900_COP_0_CONFIG
+	and	t1, t0, t1
+	nop
+	mtc0	t1, R3900_COP_0_CONFIG
+	nop
+#endif /* R3900_CACHE_DISABLE */
+	
 #ifdef SOFTFLOAT /* No FPU; avoid touching FPU registers */
 	li	t0, 0				# Disable interrupts and
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
