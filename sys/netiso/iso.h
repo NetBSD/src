@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.8 1996/02/13 22:09:58 christos Exp $	*/
+/*	$NetBSD: iso.h,v 1.9 1998/01/28 02:38:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -192,5 +192,4 @@ __END_DECLS
 
 #endif /* _KERNEL */
 
-#define _offsetof(t, m) ((int)((caddr_t)&((t *)0)->m))
 #endif /* _NETISO_ISO_H_ */

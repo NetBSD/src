@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.14 1997/06/24 02:26:10 thorpej Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.15 1998/01/28 02:38:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -370,7 +370,7 @@ iso_pcbconnect(v, nam)
 		oldtsel = TSEL(siso);
 		tlen = siso->siso_tlen;
 		nlen = ia->ia_addr.siso_nlen;
-		totlen = tlen + nlen + _offsetof(struct sockaddr_iso, siso_data[0]);
+		totlen = tlen + nlen + offsetof(struct sockaddr_iso, siso_data[0]);
 		if ((siso == &isop->isop_sladdr) &&
 		    (totlen > sizeof(isop->isop_sladdr))) {
 			struct mbuf    *m = m_get(M_DONTWAIT, MT_SONAME);
