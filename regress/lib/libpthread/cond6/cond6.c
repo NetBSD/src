@@ -1,4 +1,4 @@
-/*	$NetBSD: cond6.c,v 1.1 2004/12/10 17:07:31 nathanw Exp $	*/
+/*	$NetBSD: cond6.c,v 1.2 2004/12/29 20:34:11 nathanw Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -20,13 +20,13 @@ int main(void)
 	struct timespec ts;
 	struct timeval tv;
 
-	printf("condition variable test 6: bogus timedwait\n");
+	printf("condition variable test 6: bogus timedwaits\n");
 
 	ret = pthread_mutex_lock(&mutex);
 	if (ret)
 		err(1, "pthread_mutex_lock(1)");
 
-	printf("unthreaded test\n");
+	printf("unthreaded test (past)\n");
 	gettimeofday(&tv, NULL);
 	tv.tv_sec -= 2; /* Place the time in the past */
 	TIMEVAL_TO_TIMESPEC(&tv, &ts);
@@ -37,7 +37,19 @@ int main(void)
 		    " in the past returned %d\n", ret);
 		exit(1);
 	}
-		
+
+	printf("unthreaded test (zero time)\n");
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	TIMEVAL_TO_TIMESPEC(&tv, &ts);
+
+	ret = pthread_cond_timedwait(&cond, &mutex, &ts);
+	if (ret != ETIMEDOUT) {
+		printf("FAIL: pthread_cond_timedwait() (unthreaded)"
+		    " with zero time returned %d\n", ret);
+		exit(1);
+	}
+
 	ret = pthread_create(&new, NULL, threadfunc, NULL);
 	if (ret != 0)
 		err(1, "pthread_create");
@@ -54,6 +66,18 @@ int main(void)
 	if (ret != ETIMEDOUT) {
 		printf("FAIL: pthread_cond_timedwait() (threaded)"
 		    " in the past returned %d\n", ret);
+		exit(1);
+	}
+
+	printf("threaded test (zero time)\n");
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	TIMEVAL_TO_TIMESPEC(&tv, &ts);
+
+	ret = pthread_cond_timedwait(&cond, &mutex, &ts);
+	if (ret != ETIMEDOUT) {
+		printf("FAIL: pthread_cond_timedwait() (threaded)"
+		    " with zero time returned %d\n", ret);
 		exit(1);
 	}
 
