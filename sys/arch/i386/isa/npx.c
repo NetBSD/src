@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.7.4.9 1993/10/17 05:34:31 mycroft Exp $
+ *	$Id: npx.c,v 1.7.4.10 1993/10/26 12:16:07 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -67,7 +67,8 @@
 #define	fnsave(addr)		__asm("fnsave %0" : "=m" (*addr) : "0" (*addr))
 #define	fnstcw(addr)		__asm("fnstcw %0" : "=m" (*addr) : "0" (*addr))
 #define	fnstsw(addr)		__asm("fnstsw %0" : "=m" (*addr) : "0" (*addr))
-#define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1); fwait")
+/* XXXX */
+#define	fp_divide_by_0()	__asm("fldz; fld1; fdiv %st,%st(1) #; fwait")
 #define	frstor(addr)		__asm("frstor %0" : : "m" (*addr))
 #define	fwait()			__asm("fwait")
 #define	read_eflags()		({u_long ef; \
@@ -170,6 +171,7 @@ npxprobe(parent, cf, aux)
 
 	if (iobase == IOBASEUNK)
 		return 0;
+	ia->ia_iosize = 16;
 
 	/*
 	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
