@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.28 1997/07/17 00:58:50 jtk Exp $	*/
+/*	$NetBSD: isavar.h,v 1.28.2.1 1997/08/27 23:31:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -126,6 +126,7 @@ struct isa_attach_args {
 	int	ia_iosize;		/* span of ports used */
 	int	ia_irq;			/* interrupt request */
 	int	ia_drq;			/* DMA request */
+	int	ia_drq2;		/* second DMA request */
 	int	ia_maddr;		/* physical i/o mem addr */
 	u_int	ia_msize;		/* size of i/o memory */
 	void	*ia_aux;		/* driver specific */
@@ -206,6 +207,7 @@ struct isa_softc {
 #define		cf_msize		cf_loc[ISACF_IOSIZ]
 #define		cf_irq			cf_loc[ISACF_IRQ]
 #define		cf_drq			cf_loc[ISACF_DRQ]
+#define		cf_drq2			cf_loc[ISACF_DRQ2]
 
 /*
  * ISA interrupt handler manipulation.

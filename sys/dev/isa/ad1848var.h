@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.17.2.1 1997/08/23 07:13:09 thorpej Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.17.2.2 1997/08/27 23:31:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -116,7 +116,7 @@ void	ad1848_close __P((void *));
 void	ad1848_forceintr __P((struct ad1848_softc *));
 
 int	ad1848_query_encoding __P((void *, struct audio_encoding *));
-int	ad1848_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int	ad1848_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 
 int	ad1848_round_blocksize __P((void *, int));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.35.2.1 1997/08/23 07:13:18 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.35.2.2 1997/08/27 23:31:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -357,8 +357,8 @@ int	gus_set_in_gain __P((caddr_t, u_int, u_char));
 int	gus_get_in_gain __P((caddr_t));
 int	gus_set_out_gain __P((caddr_t, u_int, u_char));
 int	gus_get_out_gain __P((caddr_t));
-int 	gus_set_params __P((void *, int, struct audio_params *, struct audio_params *));
-int 	gusmax_set_params __P((void *, int, struct audio_params *, struct audio_params *));
+int 	gus_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
+int 	gusmax_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	gus_round_blocksize __P((void *, int));
 int	gus_set_out_port __P((void *, int));
 int	gus_get_out_port __P((void *));
@@ -658,9 +658,8 @@ gusprobe(parent, match, aux)
 {
 	struct gus_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	int iobase = ia->ia_iobase;
-	int recdrq = cf->cf_flags;
+	int recdrq = ia->ia_drq2;
 
 	sc->sc_iot = ia->ia_iot;
 	/*
@@ -668,19 +667,19 @@ gusprobe(parent, match, aux)
 	 * valid for this card.
 	 */
 
-	if (gus_irq_map[ia->ia_irq] == IRQUNK) {
+	if (ia->ia_irq == IRQUNK || gus_irq_map[ia->ia_irq] == IRQUNK) {
 		printf("gus: invalid irq %d, card not probed\n", ia->ia_irq);
 		return(0);
 	}
 
-	if (gus_drq_map[ia->ia_drq] == DRQUNK) {
+	if (ia->ia_drq == DRQUNK || gus_drq_map[ia->ia_drq] == DRQUNK) {
 		printf("gus: invalid drq %d, card not probed\n", ia->ia_drq);
 		return(0);
 	}
 
-	if (recdrq != 0x00) {
+	if (recdrq != DRQUNK) {
 		if (recdrq > 7 || gus_drq_map[recdrq] == DRQUNK) {
-		   printf("gus: invalid flag given for second DMA channel (0x%x), card not probed\n", recdrq);
+		   printf("gus: invalid second DMA channel (%d), card not probed\n", recdrq);
 		   return(0);
 	        }
 	} else
@@ -2088,27 +2087,27 @@ gus_set_volume(sc, voice, volume)
  */
 
 int
-gusmax_set_params(addr, mode, p, q)
+gusmax_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	int mode;
-	struct audio_params *p, *q;
+	int setmode, usemode;
+	struct audio_params *p, *r;
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
 	int error;
 
-	error = ad1848_set_params(ac, mode, p, q);
+	error = ad1848_set_params(ac, setmode, usemode, p, r);
 	if (error)
 		return error;
-	error = gus_set_params(sc, mode, p, q);
+	error = gus_set_params(sc, setmode, usemode, p, r);
 	return error;
 }
 
 int
-gus_set_params(addr, mode, p, q)
+gus_set_params(addr, setmode, usemode, p, r)
 	void *addr;
-	int mode;
-	struct audio_params *p, *q;
+	int setmode, usemode;
+	struct audio_params *p, *r;
 {
 	struct gus_softc *sc = addr;
 	int s;
@@ -2143,32 +2142,26 @@ gus_set_params(addr, mode, p, q)
 
 	if (p->sample_rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
 		p->sample_rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
-	if (mode == AUMODE_RECORD)
+	if (setmode & AUMODE_RECORD)
 		sc->sc_irate = p->sample_rate;
-	else
+	if (setmode & AUMODE_PLAY)
 		sc->sc_orate = p->sample_rate;
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
-		p->sw_code = mode == AUMODE_PLAY ? 
-			mulaw_to_ulinear8 : ulinear8_to_mulaw;
+		p->sw_code = mulaw_to_ulinear8;
+		r->sw_code = ulinear8_to_mulaw;
 		break;
 	case AUDIO_ENCODING_ALAW:
-		p->sw_code = mode == AUMODE_PLAY ? 
-			alaw_to_ulinear8 : ulinear8_to_alaw;
+		p->sw_code = alaw_to_ulinear8;
+		r->sw_code = ulinear8_to_alaw;
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 	case AUDIO_ENCODING_SLINEAR_BE:
-		p->sw_code = swap_bytes;
+		r->sw_code = p->sw_code = swap_bytes;
 		break;
-	default:
-		p->sw_code = 0;
 	}
 
-	/* Update setting for the other mode. */
-	q->encoding = p->encoding;
-	q->channels = p->channels;
-	q->precision = p->precision;
 	return 0;
 }
 
@@ -2260,8 +2253,11 @@ gusmax_commit_settings(addr)
 {
 	struct ad1848_softc *ac = addr;
 	struct gus_softc *sc = ac->parent;
+	int error;
 
-	(void) ad1848_commit_settings(ac);
+	error = ad1848_commit_settings(ac);
+	if (error)
+		return error;
 	return gus_commit_settings(sc);
 }
 
