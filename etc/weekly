@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.17 2001/06/18 10:54:02 lukem Exp $
+#	$NetBSD: weekly,v 1.18 2004/04/02 13:13:47 jmmv Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -13,6 +13,7 @@ fi
 
 host=`hostname`
 date=`date`
+rcvar_manpage='weekly.conf(5)'
 
 echo "To: ${MAILTO:-root}"
 echo "Subject: $host weekly output for $date"
