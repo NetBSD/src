@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.29 2000/06/29 19:27:55 fvdl Exp $	*/
+/*	$NetBSD: xd.c,v 1.30 2000/07/07 21:11:08 pk Exp $	*/
 
 /*
  *
@@ -82,6 +82,7 @@
 #include <dev/sun/disklabel.h>
 #endif
 
+#include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
 #include <dev/vme/xdreg.h>
@@ -462,10 +463,10 @@ int xdcmatch(parent, cf, aux)
 	vme_am_t		mod;
 	int error;
 
-	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
-	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xdc),
-			    mod))
+	mod = VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
+	if (vme_space_alloc(ct, va->r[0].offset, sizeof(struct xdc), mod))
 		return (0);
+
 	error = vme_probe(ct, va->r[0].offset, sizeof(struct xdc),
 			  mod, VME_D32, xdc_probe, 0);
 	vme_space_free(va->va_vct, va->r[0].offset, sizeof(struct xdc), mod);
@@ -502,11 +503,11 @@ xdcattach(parent, self, aux)
 	 * into our xdc_softc. */
 
 	xdc->dmatag = va->va_bdt;
-	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	mod = VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
 
-	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xdc),
-			    mod))
+	if (vme_space_alloc(ct, va->r[0].offset, sizeof(struct xdc), mod))
 		panic("xdc: vme alloc");
+
 	if (vme_space_map(ct, va->r[0].offset, sizeof(struct xdc),
 			  mod, VME_D32, 0, &bt, &bh, &resc) != 0)
 		panic("xdc: vme_map");
@@ -527,28 +528,37 @@ xdcattach(parent, self, aux)
 	 */
 
 	/* Get DMA handle for misc. transfers */
-	if ((error = bus_dmamap_create(
-				xdc->dmatag,
-				MAXPHYS,
+	if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
+				MAXPHYS,	/* size */
+				VME_AM_A24,	/* address modifier */
+				VME_D32,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
-				MAXPHYS,
+				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
 				&xdc->auxmap)) != 0) {
+
 		printf("%s: DMA buffer map create error %d\n",
 			xdc->sc_dev.dv_xname, error);
 		return;
 	}
 
+
 	/* Get DMA handle for mapping iorq descriptors */
-	if ((error = bus_dmamap_create(
-				xdc->dmatag,
+	if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
 				XDC_MAXIOPB * sizeof(struct xd_iopb),
+				VME_AM_A24,	/* address modifier */
+				VME_D32,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
 				XDC_MAXIOPB * sizeof(struct xd_iopb),
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
 				&xdc->iopmap)) != 0) {
+
 		printf("%s: DMA buffer map create error %d\n",
 			xdc->sc_dev.dv_xname, error);
 		return;
@@ -583,15 +593,18 @@ xdcattach(parent, self, aux)
 		xdc->iopbase[lcv].naddrmod = XDC_ADDRMOD; /* always the same */
 		xdc->iopbase[lcv].intr_vec = xdc->vector; /* always the same */
 
-		error = bus_dmamap_create(
-				xdc->dmatag,
+		if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
 				MAXPHYS,	/* size */
+				VME_AM_A24,	/* address modifier */
+				VME_D32,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
 				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
-				&xdc->reqs[lcv].dmamap);
-		if (error) {
+				&xdc->reqs[lcv].dmamap)) != 0) {
+
 			printf("%s: DMA buffer map create error %d\n",
 				xdc->sc_dev.dv_xname, error);
 			return;
