@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.1 1997/11/24 18:43:14 is Exp $ */
+/*	$NetBSD: mkarp.c,v 1.2 1998/01/17 11:38:36 christos Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.1 1997/11/24 18:43:14 is Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.2 1998/01/17 11:38:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,12 +116,13 @@ mkarp(haddr, ipaddr)
 
 	p = LLADDR(&sdl_m);
 	endp = ((caddr_t)&sdl_m) + sdl_m.sdl_len;
-	if (endp > (p + 6))
-		endp = p + 6;
+	if (endp > (p + ETHER_ADDR_LEN))
+		endp = p + ETHER_ADDR_LEN;
 
 	while (p < endp) {
 		*p++ = *haddr++;
 	}
+	sdl_m.sdl_alen = ETHER_ADDR_LEN;
 
 	rtm->rtm_flags = 0;
 
