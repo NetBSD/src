@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.8 2002/10/02 03:10:49 thorpej Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.8 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.8 2002/10/02 03:10:49 thorpej Exp $");
 #endif
 
 
-int lm_isa_match __P((struct device *, struct cfdata *, void *));
-void lm_isa_attach __P((struct device *, struct device *, void *));
+int lm_isa_match(struct device *, struct cfdata *, void *);
+void lm_isa_attach(struct device *, struct device *, void *);
+u_int8_t lm_isa_readreg(struct lm_softc *, int);
+void lm_isa_writereg(struct lm_softc *, int, int);
 
 CFATTACH_DECL(lm_isa, sizeof(struct lm_softc),
     lm_isa_match, lm_isa_attach, NULL, NULL);
@@ -140,5 +142,29 @@ lm_isa_attach(parent, self, aux)
 	}
 
 	/* Bus-independant attachment */
+	lmsc->lm_writereg = lm_isa_writereg;
+	lmsc->lm_readreg = lm_isa_readreg;
+
 	lm_attach(lmsc);
+}
+
+
+u_int8_t
+lm_isa_readreg(sc, reg)
+	struct lm_softc *sc;
+	int reg;
+{
+	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
+	return (bus_space_read_1(sc->lm_iot, sc->lm_ioh, LMC_DATA));
+}
+
+
+void
+lm_isa_writereg(sc, reg, val)
+	struct lm_softc *sc;
+	int reg;
+	int val;
+{
+	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
+	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.9 2002/11/07 08:08:52 thorpej Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.10 2002/11/15 14:55:42 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
  * WB83782D & WB83627HF: voltage sensors needs different handling, more FAN
  *                       dividers; mode voltage sensors, more temp sensors.
  */
+#define WB_T23ADDR	0x4A	/* temp sens 2/3 I2C addr */
 #define WB_PIN		0x4B	/* pin & fan3 divider */
 #define WB_BANKSEL	0x4E	/* banck select register */
 #define WB_BANKSEL_B0	0x00	/* select bank 0 */
@@ -128,6 +129,10 @@ struct lm_softc {
 	struct	envsys_basic_info info[WB_NUM_SENSORS];
 	u_int numsensors;
 	void (*refresh_sensor_data) __P((struct lm_softc *));
+
+	int (*lm_banksel)(struct lm_softc *, int);
+	u_int8_t (*lm_readreg)(struct lm_softc *, int);
+	void (*lm_writereg)(struct lm_softc *, int, int);
 
 	struct sysmon_envsys sc_sysmon;
 };
