@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.45 2002/10/07 00:09:16 wiz Exp $
+.\"	$NetBSD: pciide.4,v 1.46 2002/11/25 22:50:49 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -139,6 +139,3 @@ The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 MHz (except the OPTi controller,
 which supports both 25 and 33 MHz PCI bus timings).
 This driver may not work properly on overclocked systems.
-.Pp
-The core wdc doesn't support modes higher than Ultra-DMA 5, so the Promise
-Ultra/133 is only used at Ultra/100.
