@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.24 2001/12/27 01:29:05 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.25 2002/01/16 08:33:12 enami Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.24 2001/12/27 01:29:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.25 2002/01/16 08:33:12 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2346,7 +2346,7 @@ handle_workitem_freeblocks(freeblks)
 		if ((bn = freeblks->fb_iblks[level]) == 0)
 			continue;
 		if ((error = indir_trunc(&tip, fsbtodb(fs, bn), level,
-		    baselbns[level], &blocksreleased)) == 0)
+		    baselbns[level], &blocksreleased)) != 0)
 			allerror = error;
 		ffs_blkfree(&tip, bn, fs->fs_bsize);
 		fs->fs_pendingblocks -= nblocks;
