@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.190 2000/01/11 17:21:02 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.191 2000/01/12 09:11:42 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.183 2000/01/11 17:20:24 matt Exp 
+ *	NetBSD: pcidevs,v 1.184 2000/01/12 09:08:36 haya Exp 
  */
 
 /*
@@ -1330,6 +1330,7 @@
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95	0x0603		/* ToPIC95 CardBus-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC95B	0x060a		/* ToPIC95B CardBus-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_ToPIC97	0x060f		/* ToPIC97 CardBus-PCI Bridge */
+#define	PCI_PRODUCT_TOSHIBA2_ToPIC100	0x0617		/* ToPIC100 CardBus-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA2_FIRO	0x0701		/* Fast Infrared Type O */
 
 /* Trident products */
