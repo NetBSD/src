@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.28 1996/09/30 23:37:22 thorpej Exp $
+#	$NetBSD: sys.mk,v 1.29 1996/10/18 02:33:38 thorpej Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
 unix=		We run NetBSD.
@@ -40,6 +40,8 @@ COMPILE.F?=	${FC} ${FFLAGS} ${CPPFLAGS} -c
 LINK.F?=	${FC} ${FFLAGS} ${CPPFLAGS} ${LDFLAGS}
 COMPILE.r?=	${FC} ${FFLAGS} ${RFLAGS} -c
 LINK.r?=	${FC} ${FFLAGS} ${RFLAGS} ${LDFLAGS}
+
+INSTALL?=	install
 
 LEX?=		lex
 LFLAGS?=
