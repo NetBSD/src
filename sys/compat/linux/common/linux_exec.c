@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.26 1998/01/24 12:32:15 mycroft Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.27 1998/07/28 21:39:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -482,7 +482,8 @@ linux_sys_uselib(p, v, retval)
 	struct vnode *vp;
 	struct exec hdr;
 	struct exec_vmcmd_set vcset;
-	int rem, i, magic, error;
+	int i, magic, error;
+	size_t rem;
 
 	sg = stackgap_init(p->p_emul);
 	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));

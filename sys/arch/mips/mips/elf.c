@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.10 1998/06/26 00:08:41 thorpej Exp $	*/
+/*	$NetBSD: elf.c,v 1.11 1998/07/28 21:40:55 thorpej Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -409,7 +409,7 @@ elf_read_from(p, vp, off, buf, size)
 	int size;
 {
 	int error;
-	int resid;
+	size_t resid;
 
 	if ((error = vn_rdwr(UIO_READ, vp, buf, size,
 			     off, UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
