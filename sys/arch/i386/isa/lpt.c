@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.5 1993/10/01 00:38:54 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.6 1993/10/06 12:10:53 mycroft Exp $
  */
 
 /*
@@ -118,8 +118,8 @@ struct	cfdriver lptcd =
 #define	LPTUNIT(s)	((s)&0x1f)
 #define	LPTFLAGS(s)	((s)&0xe0)
 
-#define	LPS_INVERT	(LPS_SEL|LPS_NERR|LPS_NBSY|LPS_NACK)
-#define	LPS_MASK	(LPS_SEL|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_OUT)
+#define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
+#define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
 #define	NOT_READY()	((inb(iobase + lpt_status) ^ LPS_INVERT) & LPS_MASK)
 
 static void lptout __P((struct lpt_softc *));
@@ -263,7 +263,7 @@ lptopen(dev, flag)
 	u_short	iobase;
 	u_char	control;
 	int	error;
-	int	delay;
+	int	spin;
 
 	if (unit >= lptcd.cd_ndevs)
 		return ENXIO;
@@ -277,8 +277,6 @@ lptopen(dev, flag)
 	if (sc->sc_state)
 		return EBUSY;
 
-	/* XXXX mask or unmask interrupt */
-
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
 		printf("lpt%d: state=0x%x not zero\n", unit, sc->sc_state);
@@ -290,29 +288,34 @@ lptopen(dev, flag)
 	lprintf("lpt%d: open flags=0x%x\n", unit, flags);
 	iobase = sc->sc_iobase;
 
-	if ((flags & LPT_NOPRIME) == 0)
-		outb(iobase + lpt_control, 0);
+	if ((flags & LPT_NOPRIME) == 0) {
+		/* assert INIT for 100 usec to start up printer */
+		outb(iobase + lpt_control, LPC_SELECT);
+		delay(100);
+	}
 
-	outb(iobase + lpt_control, LPC_SEL|LPC_NINIT);
+	control = LPC_SELECT | LPC_NINIT;
+	outb(iobase + lpt_control, control);
 
 	/* wait till ready (printer running diagnostics) */
-	for (delay = 0; NOT_READY(); delay += STEP) {
-		if (delay >= TIMEOUT) {
+	for (spin = 0; NOT_READY(); spin += STEP) {
+		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
 			return EBUSY;
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
 		if (error = tsleep((caddr_t)sc,
-			   LPTPRI|PCATCH, "lptopen", STEP) != EWOULDBLOCK) {
+		    LPTPRI | PCATCH, "lptopen", STEP) != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
 		}
 	}
 		
-	control = LPC_SEL|LPC_NINIT|LPC_ENA;
-	if (sc->sc_flags & LPT_AUTOLF)
-		control |= LPC_AUTOL;
+	if ((flags & LPT_NOINTR) == 0)
+		control |= LPC_IENABLE;
+	if (flags & LPT_AUTOLF)
+		control |= LPC_AUTOLF;
 	sc->sc_control = control;
 	outb(iobase + lpt_control, control);
 
@@ -394,14 +397,14 @@ pushbytes(sc)
 					/* exponential backoff */
 					tic = tic + tic + 1;
 					if (error = tsleep((caddr_t)sc,
-					    LPTPRI|PCATCH, "lptwrite1", tic))
+					    LPTPRI | PCATCH, "lptwrite1", tic))
 						return error;
 				}
 
 			outb(iobase + lpt_data, *sc->sc_cp++);
-			outb(iobase + lpt_control, control|LPC_STB);
-			outb(iobase + lpt_control, control);
+			outb(iobase + lpt_control, control | LPC_STROBE);
 			sc->sc_count--;
+			outb(iobase + lpt_control, control);
 
 			/* adapt busy-wait algorithm */
 			if (spin >= sc->sc_smax && sc->sc_smax < MAX_SPIN)
@@ -421,7 +424,7 @@ pushbytes(sc)
 				splx(s);
 			}
 			if (error = tsleep((caddr_t)sc,
-			    LPTPRI|PCATCH, "lptwrite2", 0))
+			    LPTPRI | PCATCH, "lptwrite2", 0))
 				return error;
 		}
 	}
@@ -477,10 +480,13 @@ lptintr(arg)
 		if (sc->sc_count) {
 			/* send char */
 			sc->sc_state |= LPT_OBUSY;
-			outb(iobase + lpt_data, *sc->sc_cp++);
-			outb(iobase + lpt_control, control|LPC_STB);
-			outb(iobase + lpt_control, control);
-			sc->sc_count--;
+			while (sc->sc_count &&
+			       (inb(iobase + lpt_status) & LPS_NBSY) == 0) {
+				outb(iobase + lpt_data, *sc->sc_cp++);
+				outb(iobase + lpt_control, control | LPC_STROBE);
+				sc->sc_count--;
+				outb(iobase + lpt_control, control);
+			}
 		} else {
 			/* none, wake up the top half to get more */
 			sc->sc_state &= ~LPT_OBUSY;
@@ -488,7 +494,6 @@ lptintr(arg)
 		}
 	}
 
-	/* XXX possibly a more useful return value */
 	return 1;
 }
 
