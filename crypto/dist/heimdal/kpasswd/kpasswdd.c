@@ -32,7 +32,7 @@
  */
 
 #include "kpasswd_locl.h"
-RCSID("$Id: kpasswdd.c,v 1.4 2001/06/19 22:39:56 assar Exp $");
+RCSID("$Id: kpasswdd.c,v 1.5 2001/06/20 02:01:19 assar Exp $");
 
 #include <kadm5/admin.h>
 
@@ -547,7 +547,7 @@ doit (krb5_keytab keytab, int port)
 			ret2 = get_local_addr(sa, addrlen, localsa, &loclen);
 			if (ret2 < 0)
 				krb5_errx (context, errno, "get_local_addr");
-			ret2 = krb5_sockaddr2address(localsa, &my_addr);
+			ret2 = krb5_sockaddr2address(context, localsa, &my_addr);
 			if (ret2)
 				krb5_errx (context, ret2,
 				    "krb5_sockaddr2address");

@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.4 2001/02/11 17:55:16 assar Exp $ */
+/* $Id: roken.h,v 1.5 2001/06/20 02:01:18 assar Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +47,7 @@
 #include <signal.h>
 
 #include <sys/param.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/socket.h>
@@ -220,6 +221,6 @@ void set_progname(char *argv0);
 const char *get_progname(void);
 
 ROKEN_CPP_END
-#define ROKEN_VERSION 0.3e
+#define ROKEN_VERSION 0.3f
 
 #endif /* __ROKEN_H__ */
