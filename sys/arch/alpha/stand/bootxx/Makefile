@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1996/10/18 06:02:02 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 1997/01/16 03:00:22 cgd Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -31,14 +31,13 @@ install:
 	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
 	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
 
-clean: _SUBDIRUSE
+clean:
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
 	    ${BOOT_PROG}.hdr ${BOOT_PROG}.nohdr ${HEADERSIZE_PROG}
 
-cleandir: _SUBDIRUSE clean
+cleandir: clean
 
 .include "${.CURDIR}/../Makefile.inc"
 .include <bsd.obj.mk>
 .include <bsd.dep.mk>
-.include <bsd.subdir.mk>
