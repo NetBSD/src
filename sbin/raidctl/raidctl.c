@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.22 2000/05/31 00:47:30 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.23 2000/06/03 16:59:36 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -435,7 +435,7 @@ rf_get_device_status(fd)
 			       device_status(device_config.devs[i].status));
 		}
 	}
-#if 0
+
 	if (device_config.nspares > 0) {
 		for(i=0; i < device_config.nspares; i++) {
 			if ((device_config.spares[i].status == 
@@ -451,7 +451,7 @@ rf_get_device_status(fd)
 			}		
 		}
 	}
-#endif
+
 	do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
 		 "RAIDFRAME_CHECK_PARITY");
 	if (is_clean) {
@@ -498,6 +498,10 @@ get_component_number(fd, component_name, component_number, num_columns)
 				    PATH_MAX)==0) {
 				found = 1;
 				*component_number = i + device_config.ndevs;
+				/* the way spares are done should
+				   really change... */
+				*num_columns = device_config.cols + 
+					device_config.nspares;
 			}
 		}
 	}
