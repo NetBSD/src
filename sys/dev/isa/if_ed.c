@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.83 1995/07/24 02:43:11 mycroft Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.84 1995/07/24 02:46:47 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1850,6 +1850,7 @@ edioctl(ifp, cmd, data)
 
 	default:
 		error = EINVAL;
+		break;
 	}
 
 	splx(s);
