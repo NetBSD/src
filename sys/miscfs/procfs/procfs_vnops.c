@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.115 2004/10/01 14:09:14 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.116 2004/10/01 14:09:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.115 2004/10/01 14:09:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.116 2004/10/01 14:09:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1166,8 +1166,8 @@ procfs_readdir(v)
 		const struct proclist_desc *pd;
 		volatile struct proc *p;
 
-		if (pcnt > 3)
-			pcnt = 3;
+		if (pcnt > 4)
+			pcnt = 4;
 		if (ap->a_ncookies) {
 			/*
 			 * XXX Potentially allocating too much space here,
