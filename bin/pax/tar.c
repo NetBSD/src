@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.6 1997/01/11 02:06:45 tls Exp $	*/
+/*	$NetBSD: tar.c,v 1.7 1997/05/16 09:38:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: tar.c,v 1.6 1997/01/11 02:06:45 tls Exp $";
+static char rcsid[] = "$NetBSD: tar.c,v 1.7 1997/05/16 09:38:40 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ tar_trail(buf, in_resync, cnt)
  * ul_oct()
  *	convert an unsigned long to an octal string. many oddball field
  *	termination characters are used by the various versions of tar in the
- *	different fields. term selects which kind to use. str is BLANK padded
+ *	different fields. term selects which kind to use. str is '0' padded
  *	at the front to len. we are unable to use only one format as many old
  *	tar readers are very cranky about this.
  * Return:
@@ -219,7 +219,7 @@ ul_oct(val, str, len, term)
 	}
 
 	while (pt >= str)
-		*pt-- = ' ';
+		*pt-- = '0';
 	if (val != (u_long)0)
 		return(-1);
 	return(0);
@@ -230,7 +230,7 @@ ul_oct(val, str, len, term)
  * uqd_oct()
  *	convert an u_quad_t to an octal string. one of many oddball field
  *	termination characters are used by the various versions of tar in the
- *	different fields. term selects which kind to use. str is BLANK padded
+ *	different fields. term selects which kind to use. str is '0' padded
  *	at the front to len. we are unable to use only one format as many old
  *	tar readers are very cranky about this.
  * Return:
@@ -283,7 +283,7 @@ uqd_oct(val, str, len, term)
 	}
 
 	while (pt >= str)
-		*pt-- = ' ';
+		*pt-- = '0';
 	if (val != (u_quad_t)0)
 		return(-1);
 	return(0);
