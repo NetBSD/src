@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.8 1999/03/30 07:46:10 ross Exp $
+.\"	$NetBSD: contents,v 1.9 1999/04/06 12:33:49 leo Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -688,9 +688,9 @@ This TOS disk contains the loadbsd and chg_pid programs
 and a kernel. It is setup so that you can insert it
 int your floppy drive, and start the programs from GEM.
 .Pp
-For the TT030 and Falcon, the floppy is named boot-_SVER_S.fs and
+For the TT030 and Falcon, the (720KB) floppy is named boot.fs and
 the kernel supplied is 'BOOT'. For the Hades, you need the
-hades-boot-_SVER_S.fs floppy. The kernel is 'HADES'.
+hades-boot.fs floppy (1.44MB), the kernel is 'HADES'.
 .It Em Installation\ floppy:
 This disk contains a BSD root file system setup to help
 you install the rest of NetBSD. This includes formatting
