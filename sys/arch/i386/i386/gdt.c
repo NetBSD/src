@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.24 2001/11/15 07:03:29 lukem Exp $	*/
+/*	$NetBSD: gdt.c,v 1.25 2001/11/18 19:28:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.24 2001/11/15 07:03:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.25 2001/11/18 19:28:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.24 2001/11/15 07:03:29 lukem Exp $");
 #include <sys/lock.h>
 #include <sys/user.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/gdt.h>
 
@@ -161,6 +161,8 @@ gdt_init()
 	size_t max_len, min_len;
 	struct region_descriptor region;
 	union descriptor *old_gdt;
+	struct vm_page *pg;
+	vaddr_t va;
 
 	lockinit(&gdt_lock_store, PZERO, "gdtlck", 0, 0);
 
@@ -174,10 +176,15 @@ gdt_init()
 
 	old_gdt = gdt;
 	gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
-	uvm_map_pageable(kernel_map, (vaddr_t)gdt,
-	    (vaddr_t)gdt + min_len, FALSE, FALSE);
+	for (va = (vaddr_t)gdt; va < (vaddr_t)gdt + min_len; va += PAGE_SIZE) {
+		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
+		if (pg == NULL) {
+			panic("gdt_init: no pages");
+		}
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ | VM_PROT_WRITE);
+	}
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
-
 	setregion(&region, gdt, max_len - 1);
 	lgdt(&region);
 }
@@ -189,26 +196,45 @@ void
 gdt_grow()
 {
 	size_t old_len, new_len;
+	struct vm_page *pg;
+	vaddr_t va;
 
 	old_len = gdt_size * sizeof(gdt[0]);
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 
-	uvm_map_pageable(kernel_map, (vaddr_t)gdt + old_len,
-	    (vaddr_t)gdt + new_len, FALSE, FALSE);
+	for (va = (vaddr_t)gdt + old_len; va < (vaddr_t)gdt + new_len;
+	    va += PAGE_SIZE) {
+		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
+		       NULL) {
+			uvm_wait("gdt_grow");
+		}
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+		    VM_PROT_READ | VM_PROT_WRITE);
+	}
 }
 
 void
 gdt_shrink()
 {
 	size_t old_len, new_len;
+	struct vm_page *pg;
+	paddr_t pa;
+	vaddr_t va;
 
 	old_len = gdt_size * sizeof(gdt[0]);
 	gdt_size >>= 1;
 	new_len = old_len >> 1;
 
-	uvm_map_pageable(kernel_map, (vaddr_t)gdt + new_len,
-	    (vaddr_t)gdt + old_len, TRUE, FALSE);
+	for (va = (vaddr_t)gdt + new_len; va < (vaddr_t)gdt + old_len;
+	    va += PAGE_SIZE) {
+		if (!pmap_extract(pmap_kernel(), va, &pa)) {
+			panic("gdt_shrink botch");
+		}
+		pg = PHYS_TO_VM_PAGE(pa);
+		pmap_kremove(va, PAGE_SIZE);
+		uvm_pagefree(pg);
+	}
 }
 
 /*
