@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.4 1997/03/29 04:31:55 darrenr Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.5 1997/04/04 01:52:47 cgd Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -204,7 +204,7 @@ void *ptr;
 			printf(" udp");
 		printf("\n");
 		if (verbose)
-			printf("\t%p %u %x %u %x %d\n", (u_int)np->in_ifp,
+			printf("\t%p %u %x %u %x %d\n", np->in_ifp,
 			       np->in_space, np->in_flags, np->in_pnext, np,
 			       np->in_use);
 	} else {
@@ -234,7 +234,7 @@ void *ptr;
 		}
 		printf("\n");
 		if (verbose)
-			printf("\t%p %u %s %d %x\n", (u_int)np->in_ifp,
+			printf("\t%p %u %s %d %x\n", np->in_ifp,
 			       np->in_space, inet_ntoa(np->in_nextip),
 			       np->in_pnext, np->in_flags);
 	}
@@ -279,8 +279,7 @@ int fd, opts;
 			ns.ns_added, ns.ns_expire);
 		printf("inuse\t%lu\n", ns.ns_inuse);
 		if (opts & OPT_VERBOSE)
-			printf("table %p list %p\n",
-				(u_int)ns.ns_table, (u_int)ns.ns_list);
+			printf("table %p list %p\n", ns.ns_table, ns.ns_list);
 	}
 	if (opts & OPT_LIST) {
 		printf("List of active MAP/Redirect filters:\n");
