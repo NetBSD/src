@@ -1,7 +1,10 @@
-/* $NetBSD: conf.h,v 1.3 1998/03/24 05:17:14 thorpej Exp $ */
+/* $NetBSD: conf.h,v 1.4 2000/04/10 01:19:13 chs Exp $ */
 
 #include <sys/conf.h>
 #include <machine/cpuconf.h>
+
+bdev_decl(fd);
+cdev_decl(fd);
 
 cdev_decl(a12dc);
 cdev_decl(scc);
