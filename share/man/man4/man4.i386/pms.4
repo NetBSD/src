@@ -1,4 +1,4 @@
-.\"	$NetBSD: pms.4,v 1.6 1996/10/15 19:07:37 explorer Exp $
+.\"	$NetBSD: pms.4,v 1.7 1996/11/12 19:27:29 explorer Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -36,7 +36,6 @@
 .Nd
 PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
-.\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "pms0 at pckbd? irq 12
 .Sh DESCRIPTION
 This driver provides an interface to a PS/2 auxiliary port mice.  The driver
@@ -48,25 +47,9 @@ by reading the device directly using read().
 The MOUSEIOCREAD ioctl, found in machine/mouse.h, returns a struct mouseinfo.
 .Pp
 When reading the mouse device directly, each change of button state or
-mouse movement generates a five byte event.
-The bytes contain:
-.Bl -tag -width -offset indent -compact
-.It 1
-Button status. (u_char)
-.It 2
-Right/left movement.  Positive values indicate right, negative
-left. (char)
-.It 3
-Up/down movement.  Positive values indicate up, negative down. (char)
-.It 4
-Reserved.  Should be zero.
-.It 5
-Reserved.  Should be zero.
-.El
-.Pp
-The direction bytes are signed characters, giving a range of +127 to -127.
-A positive value indicates movement to the right or up, and negative left
-or down.
+mouse movement generates a five byte event.  The format of this message
+is described in
+.Xr 4 busmouse
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0
@@ -75,4 +58,5 @@ PS/2 mouse device file
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr lms 4 ,
-.Xr mms 4
+.Xr mms 4 ,
+.Xr busmouse 4
