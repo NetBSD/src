@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.17 1998/08/25 01:46:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.18 1998/08/28 21:58:29 thorpej Exp $	*/
 
 /*
  *
@@ -899,7 +899,7 @@ vaddr_t kva_start;
    */
 
   pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-    0, NULL, NULL, M_VMPMAP);
+    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
   
   /*
    * we must call uvm_page_physload() after we are done playing with
