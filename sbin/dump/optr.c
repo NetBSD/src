@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.25 2001/12/25 12:06:26 lukem Exp $	*/
+/*	$NetBSD: optr.c,v 1.26 2002/08/02 02:07:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.25 2001/12/25 12:06:26 lukem Exp $");
+__RCSID("$NetBSD: optr.c,v 1.26 2002/08/02 02:07:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,10 +60,11 @@ __RCSID("$NetBSD: optr.c,v 1.25 2001/12/25 12:06:26 lukem Exp $");
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-#include <utmp.h>
 
 #include "dump.h"
 #include "pathnames.h"
+
+#include "utmpentry.h"
 
 void	alarmcatch(int);
 struct fstab *allocfsent(struct fstab *);
@@ -216,11 +217,10 @@ struct tm *localclock;
 void
 broadcast(char	*message)
 {
-	struct utmp utmp;
 	time_t	now;
-	FILE   *f_utmp;
 	char  **np;
 	int	pid, s;
+	struct utmpentry *ep;
 
 	if (!notify || gp == NULL)
 		return;
@@ -243,31 +243,23 @@ broadcast(char	*message)
 	now = time((time_t *)0);
 	localclock = localtime(&now);
 
-	if ((f_utmp = fopen(_PATH_UTMP, "r")) == NULL) {
-		msg("Cannot open %s: %s\n", _PATH_UTMP, strerror(errno));
-		return;
-	}
+	(void)getutentries(NULL, &ep);
 
-	while (!feof(f_utmp)) {
-		if (fread((char *) &utmp, sizeof (struct utmp), 1, f_utmp) != 1)
-			break;
-		if (utmp.ut_name[0] == 0)
-			continue;
+	for (; ep; ep = ep->next) {
 		for (np = gp->gr_mem; *np; np++) {
-			if (strncmp(*np, utmp.ut_name, sizeof(utmp.ut_name)) != 0)
+			if (strcmp(*np, ep->name) != 0)
 				continue;
 			/*
 			 *	Do not send messages to operators on dialups
 			 */
-			if (strncmp(utmp.ut_line, DIALUP, strlen(DIALUP)) == 0)
+			if (strcmp(ep->line, DIALUP) == 0)
 				continue;
 #ifdef DEBUG
-			msg("Message to %s at %s\n", *np, utmp.ut_line);
+			msg("Message to %s at %s\n", *np, ep->line);
 #endif
-			sendmes(utmp.ut_line, message);
+			sendmes(ep->line, message);
 		}
 	}
-	(void) fclose(f_utmp);
 	Exit(0);	/* the wait in this same routine will catch this */
 	/* NOTREACHED */
 }
