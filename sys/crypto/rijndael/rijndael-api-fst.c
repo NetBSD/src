@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.10 2001/12/31 20:20:28 thorpej Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.11 2002/05/24 06:28:06 itojun Exp $	*/
 /*	$KAME: rijndael-api-fst.c,v 1.8 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.10 2001/12/31 20:20:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.11 2002/05/24 06:28:06 itojun Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -128,6 +128,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 		for (i = numBlocks - 1; i > 0; i--) {
 #if 1 /*STRICT_ALIGN*/
 			memcpy(block, outBuffer, 16);
+			memcpy(iv, input, 16);
 			((word32*)block)[0] ^= ((word32*)iv)[0];
 			((word32*)block)[1] ^= ((word32*)iv)[1];
 			((word32*)block)[2] ^= ((word32*)iv)[2];
