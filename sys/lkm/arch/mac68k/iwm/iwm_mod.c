@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_mod.c,v 1.5.8.1 2002/05/16 12:36:19 gehenna Exp $	*/
+/*	$NetBSD: iwm_mod.c,v 1.5.8.2 2002/05/19 14:15:09 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.5.8.1 2002/05/16 12:36:19 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_mod.c,v 1.5.8.2 2002/05/19 14:15:09 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,7 +53,7 @@ extern void fd_mod_free __P((void));
 extern const struct bdevsw fd_bdevsw;
 extern const struct cdevsw fd_cdevsw;
 
-MOD_DEV("iwmfd", "fd", &fd_bdevsw, 21, &fd_cdevsw, 43)
+MOD_DEV("iwmfd", "fd", &fd_bdevsw, -1, &fd_cdevsw, -1)
 
 /*
  * iwmfd_lkmentry
