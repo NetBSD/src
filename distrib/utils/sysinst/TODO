@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.14 1999/01/10 00:52:33 simonb Exp $
+#	$NetBSD: TODO,v 1.15 1999/03/17 12:42:42 simonb Exp $
 
 Things to do ....  in no specific order.
 
@@ -107,6 +107,8 @@ Things to do ....  in no specific order.
            from /etc.old?
 
 	-- Full configuration of rc.conf?
+
+	-- Set root's shell and password
 
 	-- If we're doing a fresh install and there's already a label
 	   on the disk, maybe use that intsead  of the compiled-in default
