@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.14 1999/04/12 20:38:21 pk Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.15 2000/07/17 19:57:50 jeffs Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,6 +44,8 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
+void (*db_trap_callback)(int);
+
 void
 db_trap(type, code)
 	int	type, code;
@@ -53,6 +55,8 @@ db_trap(type, code)
 
 	bkpt = IS_BREAKPOINT_TRAP(type, code);
 	watchpt = IS_WATCHPOINT_TRAP(type, code);
+
+	if (db_trap_callback) db_trap_callback(1);
 
 	if (db_stop_at_pc(DDB_REGS, &bkpt)) {
 	    if (db_inst_count) {
@@ -79,4 +83,6 @@ db_trap(type, code)
 	}
 
 	db_restart_at_pc(DDB_REGS, watchpt);
+
+	if (db_trap_callback) db_trap_callback(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30 2000/07/17 07:04:20 jeffs Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.31 2000/07/17 19:57:50 jeffs Exp $	*/
 
 /*
  * Mach Operating System
@@ -55,8 +55,6 @@
 
 int	db_active = 0;
 mips_reg_t kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
-
-void (*db_mach_break_hook)(int);
 
 void db_tlbdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_kvtophys_cmd __P((db_expr_t, int, db_expr_t, char *));
@@ -160,12 +158,10 @@ kdb_trap(type, tfp)
 	db_set_ddb_regs(type, tfp);
 
 	db_active++;
-	if (db_mach_break_hook) db_mach_break_hook(db_active);
 	cnpollc(1);
 	db_trap(type & ~T_USER, 0 /*code*/);
 	cnpollc(0);
 	db_active--;
-	if (db_mach_break_hook) db_mach_break_hook(db_active);
 
 	if (type & T_USER)
 		*(struct frame *)curproc->p_md.md_regs = *f;
