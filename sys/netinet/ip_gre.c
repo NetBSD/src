@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.11 2000/07/05 22:45:26 thorpej Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.12 2000/07/06 04:34:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,6 +99,8 @@ void gre_inet_ntoa(struct in_addr in); 	/* XXX */
 #endif
 
 struct gre_softc *gre_lookup __P((struct mbuf *, u_int8_t));
+
+int	gre_input2 __P((struct mbuf *, int, u_char));
 
 /*
  * De-encapsulate a packet and feed it back through ip input (this
