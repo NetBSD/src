@@ -1,3 +1,5 @@
+/*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 07:20:43 tsubai Exp $	*/
+
 /*
  * Copyright (c) 1999
  *     TSUBAI Masanari.  All rights reserved.
@@ -25,8 +27,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.c,v 1.1 1999/10/15 06:12:17 haya Exp $ */
-
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -44,8 +44,6 @@
 #include <dev/cardbus/rbus.h>
 
 static void macppc_cardbus_init __P((pci_chipset_tag_t, pcitag_t));
-
-#define DEBUG_ALLOC
 
 #ifdef DEBUG_ALLOC
 # define DPRINTF printf
