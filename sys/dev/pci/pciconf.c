@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.6 2001/08/28 15:09:10 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.7 2001/08/28 15:13:48 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,6 +40,15 @@
 
 /*
  * To do:
+ *    - Do this in 2 passes, with an MD hook to control the behavior:
+ *		(1) Configure the bus (possibly including expansion
+ *		    ROMs.
+ *		(2) Another pass to disable expansion ROMs if they're
+ *		    mapped (since you're not supposed to leave them
+ *		    mapped when you're not using them).
+ *	This would facilitate MD code executing the expansion ROMs
+ *	if necessary (possibly with an x86 emulator) to configure
+ *	devices (e.g. VGA cards).
  *    - Deal with "anything can be hot-plugged" -- i.e., carry configuration
  *	information around & be able to reconfigure on the fly.
  *    - Deal with segments (See IA64 System Abstraction Layer)
