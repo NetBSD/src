@@ -1,3 +1,5 @@
+/*	$NetBSD: sunndd.h,v 1.2 2001/05/17 20:42:08 fredette Exp $	*/
+
 /* sunndd.h - header file for the Sun Network Disk (nd) daemon: */
 
 /*
