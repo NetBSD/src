@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2003/01/18 18:17:51 augustss Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2003/01/18 18:20:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
