@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.2 1996/10/03 05:32:49 cgd Exp $	*/
+/*	$NetBSD: md_root.c,v 1.3 1996/10/03 19:54:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,7 +62,7 @@ rd_attach_hook(unit, rd)
 		rd->rd_addr = (caddr_t)rd_root_image;
 		rd->rd_size = (size_t)rd_root_size;
 		rd->rd_type = RD_KMEM_FIXED;
-		printf("rd%d: %dK file system image\n", unit,
+		printf("rd%d: internal %dK image area\n", unit,
 		    ROOTBYTES / 1024);
 	}
 }
