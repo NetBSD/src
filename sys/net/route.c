@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43 2001/02/21 05:45:11 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.44 2001/07/18 16:43:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ rtalloc1(dst, report)
 				goto miss;
 			}
 			/* Inform listeners of the new route */
-			bzero(&info, sizeof(info));
+			memset(&info, 0, sizeof(info));
 			info.rti_info[RTAX_DST] = rt_key(rt);
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -218,7 +218,7 @@ rtalloc1(dst, report)
 	} else {
 		rtstat.rts_unreach++;
 	miss:	if (report) {
-			bzero((caddr_t)&info, sizeof(info));
+			memset((caddr_t)&info, 0, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			rt_missmsg(msgtype, &info, 0, err);
 		}
@@ -365,7 +365,7 @@ out:
 		rtstat.rts_badredirect++;
 	else if (stat != NULL)
 		(*stat)++;
-	bzero((caddr_t)&info, sizeof(info));
+	memset((caddr_t)&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
@@ -388,7 +388,7 @@ rtdeletemsg(rt)
 	 * deleted.  That will allow the information being reported to
 	 * be accurate (and consistent with route_output()).
 	 */
-	bzero((caddr_t)&info, sizeof(info));
+	memset((caddr_t)&info, 0, sizeof(info));
 	info.rti_info[RTAX_DST] = rt_key(rt);
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
@@ -502,7 +502,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 {
 	struct rt_addrinfo info;
 
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	info.rti_flags = flags;
 	info.rti_info[RTAX_DST] = dst;
 	info.rti_info[RTAX_GATEWAY] = gateway;
@@ -762,7 +762,7 @@ rt_maskedcopy(src, dst, netmask)
 	while (cp2 < cplim)
 		*cp2++ = *cp1++ & *cp3++;
 	if (cp2 < cplim2)
-		bzero((caddr_t)cp2, (unsigned)(cplim2 - cp2));
+		memset((caddr_t)cp2, 0, (unsigned)(cplim2 - cp2));
 }
 
 /*
@@ -796,7 +796,7 @@ rtinit(ifa, cmd, flags)
 							: ENETUNREACH);
 		}
 	}
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	info.rti_ifa = ifa;
 	info.rti_flags = flags | ifa->ifa_flags;
 	info.rti_info[RTAX_DST] = dst;

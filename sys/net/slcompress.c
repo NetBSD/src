@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.21 2000/03/30 09:45:41 augustss Exp $   */
+/*	$NetBSD: slcompress.c,v 1.22 2001/07/18 16:43:10 thorpej Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -72,7 +72,7 @@ sl_compress_init(comp)
 	u_int i;
 	struct cstate *tstate = comp->tstate;
 
-	bzero((char *)comp, sizeof(*comp));
+	memset((char *)comp, 0, sizeof(*comp));
 	for (i = MAX_STATES - 1; i > 0; --i) {
 		tstate[i].cs_id = i;
 		tstate[i].cs_next = &tstate[i - 1];
@@ -100,11 +100,11 @@ sl_compress_setup(comp, max_state)
 
 	if (max_state == -1) {
 		max_state = MAX_STATES - 1;
-		bzero((char *)comp, sizeof(*comp));
+		memset((char *)comp, 0, sizeof(*comp));
 	} else {
 		/* Don't reset statistics */
-		bzero((char *)comp->tstate, sizeof(comp->tstate));
-		bzero((char *)comp->rstate, sizeof(comp->rstate));
+		memset((char *)comp->tstate, 0, sizeof(comp->tstate));
+		memset((char *)comp->rstate, 0, sizeof(comp->rstate));
 	}
 	for (i = max_state; i > 0; --i) {
 		tstate[i].cs_id = i;

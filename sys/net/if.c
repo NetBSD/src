@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.91 2001/06/14 05:44:23 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.92 2001/07/18 16:43:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	socksize = ROUNDUP(socksize);
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
-	bzero((caddr_t)ifa, ifasize);
+	memset((caddr_t)ifa, 0, ifasize);
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	sdl->sdl_len = socksize;
 	sdl->sdl_family = AF_LINK;
@@ -370,7 +370,7 @@ if_attach(ifp)
 		/* grow ifnet_addrs */
 		n = if_indexlim * sizeof(struct ifaddr *);
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
+		memset(q, 0, n);
 		if (ifnet_addrs) {
 			bcopy((caddr_t)ifnet_addrs, q, n/2);
 			free((caddr_t)ifnet_addrs, M_IFADDR);
@@ -380,7 +380,7 @@ if_attach(ifp)
 		/* grow ifindex2ifnet */
 		n = if_indexlim * sizeof(struct ifnet *);
 		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
-		bzero(q, n);
+		memset(q, 0, n);
 		if (ifindex2ifnet) {
 			bcopy((caddr_t)ifindex2ifnet, q, n/2);
 			free((caddr_t)ifindex2ifnet, M_IFADDR);
@@ -1400,7 +1400,7 @@ ifconf(cmd, data)
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		bcopy(ifp->if_xname, ifr.ifr_name, IFNAMSIZ);
 		if ((ifa = ifp->if_addrlist.tqh_first) == 0) {
-			bzero((caddr_t)&ifr.ifr_addr, sizeof(ifr.ifr_addr));
+			memset((caddr_t)&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (space >= (int)sizeof (ifr)) {
 				error = copyout((caddr_t)&ifr, (caddr_t)ifrp,
 						sizeof(ifr));

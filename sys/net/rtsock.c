@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.47 2001/06/04 08:57:58 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.48 2001/07/18 16:43:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -159,7 +159,7 @@ route_usrreq(so, req, m, nam, control, p)
 	if (req == PRU_ATTACH) {
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
 		if ((so->so_pcb = rp) != NULL)
-			bzero(so->so_pcb, sizeof(*rp));
+			memset(so->so_pcb, 0, sizeof(*rp));
 
 	}
 	if (req == PRU_DETACH && rp)
@@ -245,7 +245,7 @@ route_output(m, va_alist)
 		senderr(EPROTONOSUPPORT);
 	}
 	rtm->rtm_pid = curproc->p_pid;
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
 	if (rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
 		senderr(EINVAL);
@@ -473,7 +473,7 @@ rt_xaddrs(cp, cplim, rtinfo)
 	struct sockaddr *sa;
 	int i;
 
-	bzero(rtinfo->rti_info, sizeof(rtinfo->rti_info));
+	memset(rtinfo->rti_info, 0, sizeof(rtinfo->rti_info));
 	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
@@ -688,7 +688,7 @@ rt_missmsg(type, rtinfo, flags, error)
 
 	if (route_cb.any_count == 0)
 		return;
-	bzero(&rtm, sizeof(rtm));
+	memset(&rtm, 0, sizeof(rtm));
 	rtm.rtm_flags = RTF_DONE | flags;
 	rtm.rtm_errno = error;
 	m = rt_msg1(type, rtinfo, (caddr_t)&rtm, sizeof(rtm));
@@ -716,8 +716,8 @@ rt_ifmsg(ifp)
 
 	if (route_cb.any_count == 0)
 		return;
-	bzero(&info, sizeof(info));
-	bzero(&ifm, sizeof(ifm));
+	memset(&info, 0, sizeof(info));
+	memset(&ifm, 0, sizeof(ifm));
 	ifm.ifm_index = ifp->if_index;
 	ifm.ifm_flags = ifp->if_flags;
 	ifm.ifm_data = ifp->if_data;
@@ -728,8 +728,8 @@ rt_ifmsg(ifp)
 	route_proto.sp_protocol = 0;
 	raw_input(m, &route_proto, &route_src, &route_dst);
 #ifdef COMPAT_14
-	bzero(&info, sizeof(info));
-	bzero(&oifm, sizeof(oifm));
+	memset(&info, 0, sizeof(info));
+	memset(&oifm, 0, sizeof(oifm));
 	oifm.ifm_index = ifp->if_index;
 	oifm.ifm_flags = ifp->if_flags;
 	oifm.ifm_data.ifi_type = ifp->if_data.ifi_type;
@@ -782,7 +782,7 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 	if (route_cb.any_count == 0)
 		return;
 	for (pass = 1; pass < 3; pass++) {
-		bzero(&info, sizeof(info));
+		memset(&info, 0, sizeof(info));
 		if ((cmd == RTM_ADD && pass == 1) ||
 		    (cmd == RTM_DELETE && pass == 2)) {
 			struct ifa_msghdr ifam;
@@ -792,7 +792,7 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 			ifpaddr = ifp->if_addrlist.tqh_first->ifa_addr;
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
-			bzero(&ifam, sizeof(ifam));
+			memset(&ifam, 0, sizeof(ifam));
 			ifam.ifam_index = ifp->if_index;
 			ifam.ifam_metric = ifa->ifa_metric;
 			ifam.ifam_flags = ifa->ifa_flags;
@@ -811,7 +811,7 @@ rt_newaddrmsg(cmd, ifa, error, rt)
 			netmask = rt_mask(rt);
 			dst = sa = rt_key(rt);
 			gate = rt->rt_gateway;
-			bzero(&rtm, sizeof(rtm));
+			memset(&rtm, 0, sizeof(rtm));
 			rtm.rtm_index = ifp->if_index;
 			rtm.rtm_flags |= rt->rt_flags;
 			rtm.rtm_errno = error;
@@ -840,8 +840,8 @@ rt_ifannouncemsg(ifp, what)
 
 	if (route_cb.any_count == 0)
 		return;
-	bzero(&info, sizeof(info));
-	bzero(&ifan, sizeof(ifan));
+	memset(&info, 0, sizeof(info));
+	memset(&ifan, 0, sizeof(ifan));
 	ifan.ifan_index = ifp->if_index;
 	strcpy(ifan.ifan_name, ifp->if_xname);
 	ifan.ifan_what = what;
@@ -867,7 +867,7 @@ sysctl_dumpentry(rn, v)
 
 	if (w->w_op == NET_RT_FLAGS && !(rt->rt_flags & w->w_arg))
 		return 0;
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	dst = rt_key(rt);
 	gate = rt->rt_gateway;
 	netmask = rt_mask(rt);
@@ -908,7 +908,7 @@ sysctl_iflist(af, w, type)
 	struct	rt_addrinfo info;
 	int	len, error = 0;
 
-	bzero(&info, sizeof(info));
+	memset(&info, 0, sizeof(info));
 	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
