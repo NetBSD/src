@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.h,v 1.2 1998/08/14 18:04:07 mark Exp $	*/
+/*	$NetBSD: filecore_node.h,v 1.3 1999/07/08 01:06:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -57,7 +57,6 @@ struct filecore_node {
 
 	struct	filecore_mnt *i_mnt;	/* filesystem associated with this inode */
 	struct	lockf *i_lockf;	/* head of byte-level lock list */
-	struct	lock i_lock;	/* node lock */
         int	i_diroff;	/* offset in dir, where we found last entry */
 
 	struct	filecore_direntry i_dirent; /* directory entry */
@@ -95,11 +94,8 @@ int	filecore_reclaim	__P((void *));
 int	filecore_link	__P((void *));
 int	filecore_symlink	__P((void *));
 int	filecore_bmap	__P((void *));
-int	filecore_lock	__P((void *));
-int	filecore_unlock	__P((void *));
 int	filecore_strategy	__P((void *));
 int	filecore_print	__P((void *));
-int	filecore_islocked	__P((void *));
 int	filecore_pathconf	__P((void *));
 int	filecore_blkatoff	__P((void *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.4 1999/04/07 21:55:58 tron Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.5 1999/07/08 01:05:59 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -111,10 +111,13 @@ filecore_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct ucred *cred = cnp->cn_cred;
-	int flags = cnp->cn_flags;
+	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int i, endsearch;
-	
+
+	cnp->cn_flags &= ~PDIRUNLOCK;
+	flags = cnp->cn_flags;
+
 	bp = NULL;
 	*vpp = NULL;
 	vdp = ap->a_dvp;
@@ -163,13 +166,19 @@ filecore_lookup(v)
 			error = 0;
 		} else if (flags & ISDOTDOT) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!error && lockparent && (flags & ISLASTCN))
+			if (!error && lockparent && (flags & ISLASTCN)) {
 				error = vn_lock(pdp, LK_EXCLUSIVE);
+				if (error == 0)
+					cnp->cn_flags &= ~PDIRUNLOCK;
+			}
 		} else {
 			error = vget(vdp, LK_EXCLUSIVE);
-			if (!lockparent || error || !(flags & ISLASTCN))
+			if (!lockparent || error || !(flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		/*
 		 * Check that the capability number did not change
@@ -179,11 +188,14 @@ filecore_lookup(v)
 			if (vpid == vdp->v_id)
 				return (0);
 			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN))
+			if (lockparent && pdp != vdp && (flags & ISLASTCN)) {
 				VOP_UNLOCK(pdp, 0);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 		}
 		if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
 			return (error);
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		vdp = pdp;
 		dp = VTOI(pdp);
 		*vpp = NULL;
@@ -308,9 +320,11 @@ found:
 	if (flags & ISDOTDOT) {
 		ino_t pin = filecore_getparent(dp);
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		cnp->cn_flags |= PDIRUNLOCK;
 		error = VFS_VGET(vdp->v_mount, pin, &tdp);
 		if (error) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
@@ -318,6 +332,7 @@ found:
 			vput(tdp);
 			return (error);
 		}
+		cnp->cn_flags &= ~PDIRUNLOCK;
 		*vpp = tdp;
 	} else if (name[0] == '.' && namelen == 1) {
 		VREF(vdp);	/* we want ourself, ie "." */
@@ -331,8 +346,10 @@ found:
 		    (i << FILECORE_INO_INDEX), &tdp);
 		if (error)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		*vpp = tdp;
 	}
 	

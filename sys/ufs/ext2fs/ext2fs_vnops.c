@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.19 1999/03/24 05:51:30 mrg Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.20 1999/07/08 01:06:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -1274,14 +1274,13 @@ ext2fs_vinit(mntp, specops, fifoops, vpp)
 		    fs2h32(ip->i_din.e2fs_din.e2di_rdev), mntp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode.
-			 * Note that the lock is carried over in the inode
-			 * to the replacement vnode.
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
+			vput(vp);
 			vgone(vp);
+			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
 			 * Reinitialize aliased inode.
 			 */
