@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.39 1997/07/21 05:43:36 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.40 1998/02/03 09:18:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -636,12 +636,8 @@ _lkm_vfs(lkmtp, cmd)
 			return (EEXIST);
 
 		/* make sure there's no VFS in the table with this name */
-		for (i = 0; i < nvfssw; i++)
-			if (vfssw[i] != (struct vfsops *)0 &&
-			    strncmp(vfssw[i]->vfs_name,
-				    args->lkm_vfsops->vfs_name,
-				    MFSNAMELEN) == 0)
-				return (EEXIST);
+		if (vfs_getopsbyname(args->lkm_vfsops->vfs_name) != NULL)
+			return (EEXIST);
 
 		/* pick the last available empty slot */
 		for (i = nvfssw - 1; i >= 0; i--)
