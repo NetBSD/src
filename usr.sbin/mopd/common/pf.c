@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.7 2002/08/22 07:18:42 itojun Exp $	*/
+/*	$NetBSD: pf.c,v 1.8 2003/04/20 00:17:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.7 2002/08/22 07:18:42 itojun Exp $");
+__RCSID("$NetBSD: pf.c,v 1.8 2003/04/20 00:17:22 christos Exp $");
 #endif
 
 #include "os.h"
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: pf.c,v 1.7 2002/08/22 07:18:42 itojun Exp $");
 
 #include "mopdef.h"
 #include "pf.h"
+#include "log.h"
 
 /*
  * Variables
@@ -104,35 +105,35 @@ pfInit(interface, mode, protocol, typ)
 	} while (fd < 0 && errno == EBUSY);
 
 	if (fd < 0) {
-      		syslog(LOG_ERR,"pfInit: open %s: %m", device);
+      		mopLogWarn("pfInit: open %s", device);
 		return(-1);
 	}
   
 	/* Set immediate mode so packets are processed as they arrive. */
 	immediate = 1;
 	if (ioctl(fd, BIOCIMMEDIATE, &immediate) < 0) {
-      		syslog(LOG_ERR,"pfInit: BIOCIMMEDIATE: %m");
+      		mopLogWarn("pfInit: BIOCIMMEDIATE");
 		return(-1);
 	}
 	(void) strncpy(ifr.ifr_name, interface, sizeof ifr.ifr_name);
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
-      		syslog(LOG_ERR,"pfInit: BIOCSETIF: %m");
+      		mopLogWarn("pfInit: BIOCSETIF");
 		return(-1);
 	}
 	/* Check that the data link layer is an Ethernet; this code won't work
 	 * with anything else. */
 	if (ioctl(fd, BIOCGDLT, (caddr_t) & dlt) < 0) {
-      		syslog(LOG_ERR,"pfInit: BIOCGDLT: %m");
+      		mopLogWarn("pfInit: BIOCGDLT");
 		return(-1);
 	}
 	if (dlt != DLT_EN10MB) {
-      		syslog(LOG_ERR,"pfInit: %s is not ethernet", device);
+      		mopLogWarnX("pfInit: %s is not ethernet", device);
 		return(-1);
 	}
 	if (promisc) {
 		/* Set promiscuous mode. */
 		if (ioctl(fd, BIOCPROMISC, (caddr_t)0) < 0) {
-      			syslog(LOG_ERR,"pfInit: BIOCPROMISC: %m");
+      			mopLogWarn("pfInit: BIOCPROMISC");
 			return(-1);
 		}
 	}
@@ -141,7 +142,7 @@ pfInit(interface, mode, protocol, typ)
 	insns[3].k = protocol;
 
 	if (ioctl(fd, BIOCSETF, (caddr_t) & filter) < 0) {
-      		syslog(LOG_ERR,"pfInit: BIOCSETF: %m");
+      		mopLogWarn("pfInit: BIOCSETF");
 		return(-1);
 	}
 	return(fd);
@@ -169,11 +170,11 @@ pfAddMulti(s, interface, addr)
 	 *
 	 */
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "pfAddMulti: socket: %m");
+		mopLogWarn("pfAddMulti: socket");
 		return(-1);
 	}
 	if (ioctl(fd, SIOCADDMULTI, (caddr_t)&ifr) < 0) {
-		syslog(LOG_ERR, "pfAddMulti: SIOCADDMULTI: %m");
+		mopLogWarn("pfAddMulti: SIOCADDMULTI");
 		close(fd);
 		return(-1);
 	}
@@ -204,11 +205,11 @@ pfDelMulti(s, interface, addr)
 	 *
 	 */
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		syslog(LOG_ERR, "pfDelMulti: socket: %m");
+		mopLogWarn("pfDelMulti: socket");
 		return(-1);
 	}
 	if (ioctl(fd, SIOCDELMULTI, (caddr_t)&ifr) < 0) {
-		syslog(LOG_ERR, "pfAddMulti: SIOCDELMULTI: %m");
+		mopLogWarn("pfAddMulti: SIOCDELMULTI");
 		close(fd);
 		return(-1);
 	}

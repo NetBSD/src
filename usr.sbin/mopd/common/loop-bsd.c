@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.6 2002/09/20 14:16:03 mycroft Exp $	*/
+/*	$NetBSD: loop-bsd.c,v 1.7 2003/04/20 00:17:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: loop-bsd.c,v 1.6 2002/09/20 14:16:03 mycroft Exp $");
+__RCSID("$NetBSD: loop-bsd.c,v 1.7 2003/04/20 00:17:22 christos Exp $");
 #endif
 
 #include <errno.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: loop-bsd.c,v 1.6 2002/09/20 14:16:03 mycroft Exp $");
 #include "common.h"
 #include "device.h"
 #include "mopdef.h"
+#include "log.h"
 
 int
 mopOpenRC(p, trans)
@@ -112,21 +113,15 @@ Loop()
 	int     bufsize;
 	struct	if_info *ii;
 
-	if (iflist == 0) {
-		syslog(LOG_ERR, "no interfaces");
-		exit(0);
-	}
+	if (iflist == 0)
+		mopLogErrX("no interfaces");
 	if (iflist->fd != -1) {
-		if (ioctl(iflist->fd, BIOCGBLEN, (caddr_t) & bufsize) < 0) {
-			syslog(LOG_ERR, "BIOCGBLEN: %m");
-			exit(0);
-	        }
+		if (ioctl(iflist->fd, BIOCGBLEN, (caddr_t) & bufsize) < 0)
+			mopLogErr("BIOCGBLEN");
 	}
 	buf = (u_char *) malloc((unsigned) bufsize);
-	if (buf == 0) {
-		syslog(LOG_ERR, "malloc: %m");
-		exit(0);
-	}
+	if (buf == 0)
+		mopLogErr("malloc");
 	/*
          * Find the highest numbered file descriptor for select().
          * Initialize the set of descriptors to listen to.
@@ -140,10 +135,8 @@ Loop()
 		set[m].events = POLLIN;
 	}
 	for (;;) {
-		if (poll(set, n, INFTIM) < 0) {
-			syslog(LOG_ERR, "poll: %m");
-			exit(0);
-		}
+		if (poll(set, n, INFTIM) < 0)
+			mopLogErr("poll");
 		for (ii = iflist, m = 0; ii; ii = ii->next, m++) {
 			if (!(set[m].revents & POLLIN))
 				continue;
@@ -161,8 +154,7 @@ Loop()
 					(void) lseek(ii->fd, 0, 0);
 					goto again;
 				}
-				syslog(LOG_ERR, "read: %m");
-				exit(0);
+				mopLogErr("read");
 			}
 			/* Loop through the packet(s) */
 #define bhp ((struct bpf_hdr *)bp)
