@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.5.2.2 1993/12/28 16:35:23 pk Exp $
+ *	$Id: spec_vnops.c,v 1.5.2.3 1994/01/06 15:05:06 pk Exp $
  */
 
 #include <sys/param.h>
@@ -520,7 +520,7 @@ spec_advlock(vp, id, op, fl, flags)
 	int flags;
 {
 
-	return (ENODEV);
+	return (EOPNOTSUPP);
 }
 
 /*
