@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.411 2003/06/23 09:28:52 dyoung Exp $
+# $NetBSD: mi,v 1.412 2003/06/26 06:30:10 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -305,7 +305,9 @@
 ./usr/bin/midiplay	base-audio-bin
 ./usr/bin/mixerctl	base-audio-bin
 ./usr/bin/mk_cmds	base-krb5-bin
+./usr/bin/mkcsmapper	base-util-bin
 ./usr/bin/mkdep		base-c-bin
+./usr/bin/mkesdb	base-util-bin
 ./usr/bin/mkfifo	base-util-bin
 ./usr/bin/mklocale	base-locale-bin
 ./usr/bin/mktemp	base-util-bin

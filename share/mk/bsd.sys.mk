@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.87 2003/05/30 18:43:24 thorpej Exp $
+#	$NetBSD: bsd.sys.mk,v 1.88 2003/06/26 06:30:09 tshiozak Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -88,7 +88,9 @@ GROFF?=		groff
 INSTALLBOOT?=	installboot
 MAKEFS?=	makefs
 MDSETIMAGE?=	mdsetimage
+MKCSMAPPER?=	mkcsmapper
 MKDEP?=		mkdep
+MKESDB?=	mkesdb
 MKLOCALE?=	mklocale
 MTREE?=		mtree
 OBJCOPY?=	objcopy

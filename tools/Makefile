@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2003/05/18 08:05:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.65 2003/06/26 06:30:19 tshiozak Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,8 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	lex .WAIT \
 	${TOOLCHAIN_BITS} \
 		asn1_compile cat cksum compile_et config db file installboot \
-		lint1 makefs menuc mklocale msgc pax pwd_mkdb sunlabel zic
+		lint1 makefs menuc mklocale mkcsmapper mkesdb msgc pax \
+		pwd_mkdb sunlabel zic
 
 .if ${MKMAN} != "no"
 SUBDIR+=	groff
