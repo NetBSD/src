@@ -1,4 +1,4 @@
-/*	$NetBSD: field_types.c,v 1.4 2002/08/07 13:57:03 blymn Exp $	*/
+/*	$NetBSD: field_types.c,v 1.5 2002/08/22 11:34:00 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -169,7 +169,7 @@ new_fieldtype(int (*field_check)(FIELD *, char *),
 {
 	FIELDTYPE *new;
 	
-	if ((field_check == NULL) || (char_check == NULL))
+	if ((field_check == NULL) && (char_check == NULL))
 		return NULL;
 
 	if ((new = _formi_create_fieldtype()) != NULL) {
