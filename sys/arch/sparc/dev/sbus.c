@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.26 1998/07/29 18:42:32 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.27 1998/08/21 14:07:37 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ static int _sbus_bus_map __P((
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
+		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
@@ -514,7 +514,7 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_addr_t offset;
 	bus_size_t size;
 	int	flags;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	bus_space_handle_t *hp;
 {
 	struct sbus_softc *sc = t->cookie;
