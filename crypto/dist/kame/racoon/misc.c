@@ -1,4 +1,4 @@
-/*	$KAME: misc.c,v 1.22 2001/07/14 05:48:33 sakane Exp $	*/
+/*	$KAME: misc.c,v 1.23 2001/08/16 14:37:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -111,12 +111,12 @@ bit2str(n, bl)
 
 const char *
 debug_location(file, line, func)
-	char *file;
+	const char *file;
 	int line;
-	char *func;
+	const char *func;
 {
 	static char buf[1024];
-	char *p;
+	const char *p;
 
 	/* truncate pathname */
 	p = strrchr(file, '/');

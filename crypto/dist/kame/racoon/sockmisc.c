@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.c,v 1.28 2001/04/03 15:51:57 thorpej Exp $	*/
+/*	$KAME: sockmisc.c,v 1.29 2001/08/16 14:37:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -563,7 +563,8 @@ setsockopt_bypass(so, family)
 	int so, family;
 {
 	int level;
-	char *buf, *policy;
+	char *buf;
+	char *policy;
 
 	switch (family) {
 	case AF_INET:
@@ -658,7 +659,7 @@ dupsaddr(src)
 
 char *
 saddr2str(saddr)
-	struct sockaddr *saddr;
+	const struct sockaddr *saddr;
 {
 	static char buf[NI_MAXHOST + NI_MAXSERV + 10];
 	char addr[NI_MAXHOST], port[NI_MAXSERV];

@@ -1,4 +1,4 @@
-#	$KAME: Makefile.in,v 1.33 2001/06/01 10:12:55 sakane Exp $
+#	$KAME: Makefile.in,v 1.35 2001/08/08 22:09:26 sakane Exp $
 
 @SET_MAKE@
 srcdir=	@srcdir@
@@ -30,7 +30,7 @@ OBJS=	main.o session.o isakmp.o handler.o random.o \
 	policy.o localconf.o remoteconf.o crypto_openssl.o algorithm.o \
 	proposal.o sainfo.o cfparse.o cftoken.o strnames.o \
 	vmbuf.o plog.o logger.o schedule.o str2val.o misc.o sockmisc.o \
-	safefile.o backupsa.o @LIBOBJS@
+	safefile.o backupsa.o @LIBOBJS@ @CRYPTOBJS@
 # under samples
 CONF=	psk.txt racoon.conf
 
@@ -47,7 +47,7 @@ pfkey: dummy.o
 
 eaytest: eaytest.o crypto_openssl_test.o misc_noplog.o vmbuf.o str2val.o
 	$(CC) $(LDFLAGS) -o $@ eaytest.o crypto_openssl_test.o misc_noplog.o \
-		vmbuf.o str2val.o $(LIBS)
+		vmbuf.o str2val.o $(LIBS) @CRYPTOBJS@
 
 # special object rules
 crypto_openssl_test.o: crypto_openssl.c
@@ -66,6 +66,12 @@ getaddrinfo.o:	$(srcdir)/missing/getaddrinfo.c
 	$(CC) $(CFLAGS) -c $(srcdir)/missing/$*.c
 getnameinfo.o:	$(srcdir)/missing/getnameinfo.c
 	$(CC) $(CFLAGS) -c $(srcdir)/missing/$*.c
+rijndael-api-fst.o: $(srcdir)/missing/crypto/rijndael/$*.c
+	$(CC) $(CFLAGS) -c $(srcdir)/missing/crypto/rijndael/$*.c
+rijndael-alg-fst.o: $(srcdir)/missing/crypto/rijndael/$*.c
+	$(CC) $(CFLAGS) -c $(srcdir)/missing/crypto/rijndael/$*.c
+sha2.o: $(srcdir)/missing/crypto/sha2/$*.c
+	$(CC) $(CFLAGS) -c $(srcdir)/missing/crypto/sha2/$*.c
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
