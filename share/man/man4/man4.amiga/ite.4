@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ite.4	5.2 (Berkeley) 3/27/91
-.\"	$NetBSD: ite.4,v 1.6 2000/11/07 06:43:26 lukem Exp $
+.\"	$NetBSD: ite.4,v 1.7 2001/06/13 23:38:30 wiz Exp $
 .\"
 .Dd August 30, 1994
 .Dt ITE 4 amiga
@@ -69,7 +69,7 @@ If more than one of the supported displays exists on a system,
 any or all can be used as
 .Nm
 .Ns s
-with the limitation that only 
+with the limitation that only
 one will have a keyboard (since only one keyboard is supported) and only
 one of each type can be used.
 .Pp
@@ -92,7 +92,7 @@ The keyboard will use the left and right
 keys as meta keys, in that it will set the eighth bit of the character code.
 .Nm
 devices also do a good job at emulating the
-.Sq Li vt100 
+.Sq Li vt100
 .Xr termcap 5
 entry.
 .Pp
@@ -103,7 +103,7 @@ to use as the system console
 .Pq Pa /dev/console .
 If a display exists at any hardware address, it will be the console.
 The kernel looks for them in decreasing order (that is, choosing the
-hightest-numbered one).
+highest-numbered one).
 .Pp
 On most systems,
 a display is used both as an
