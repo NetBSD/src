@@ -23,7 +23,7 @@
 AS=	as ${DEBUG}
 CC=	cc ${DEBUG}
 CPP=	/usr/bin/cpp
-LD=	ld.dist
+LD=	ld
 TOUCH=	touch -f -c
 GPROF.EX=/usr/src/lib/libc/csu.mac68k/gmon.ex
 
