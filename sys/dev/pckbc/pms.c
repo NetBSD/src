@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.4 2002/05/17 22:49:48 martin Exp $ */
+/* $NetBSD: pms.c,v 1.5 2002/05/23 19:00:28 martin Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.4 2002/05/17 22:49:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.5 2002/05/23 19:00:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,13 @@ struct pms_softc {		/* driver status information */
 #ifndef PMS_DISABLE_POWERHOOK
 	void *sc_powerhook;	/* cookie from power hook */
 #endif /* !PMS_DISABLE_POWERHOOK */
-	int inputstate;
+	/*
+	 * Some devices (trackballs) seem to use the standard 3 byte protocol,
+	 * but send arbitrary (uninterpreted) bytes following the packet.
+	 * We set inputstate to -1 to indicate we are looking for a start
+	 * of packet (and discard input in this state).
+	 */
+	int inputstate;		/* number of bytes received for this packet */
 	u_int buttons;		/* mouse button status */
 	enum pms_type protocol;
 	unsigned char packet[4];
@@ -269,6 +275,8 @@ do_enable(sc)
 	sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
 	DPRINTF(("pms_enable: using %s protocol\n",
 	    pms_protocols[sc->protocol].name));
+	if (sc->protocol == PMS_STANDARD)
+		sc->inputstate = -1;	/* need to sync */
 #if 0
 	{
 		u_char scmd[2];
@@ -468,7 +476,7 @@ pmsinput(vsc, data)
 	}
 
 	microtime(&sc->current);
-	if (sc->inputstate != 0) {
+	if (sc->inputstate > 0) {
 		struct timeval diff;
 
 		timersub(&sc->current, &sc->last, &diff);
@@ -495,6 +503,13 @@ pmsinput(vsc, data)
 		}
 	}
 	sc->last = sc->current;
+
+	if (sc->inputstate < 0) {
+		if ((data & 0xc0) != 0)
+			return;	/* not in sync yet, discard input */
+		sc->inputstate = 0;
+	}
+
 	sc->packet[sc->inputstate++] = data & 0xff;
 	switch (sc->inputstate) {
 	case 0:
@@ -502,6 +517,8 @@ pmsinput(vsc, data)
 		break;
 
 	case 1:
+		if (sc->protocol == PMS_STANDARD)
+			break;
 		if (!(sc->packet[0] & 0x8)) {
 			DPRINTF(("pmsinput: 0x8 not set in first byte "
 			    "[0x%02x], resetting\n", sc->packet[0]));
@@ -560,7 +577,10 @@ pmsinput(vsc, data)
 		if (dy == -128)
 			dy = -127;
 		
-		sc->inputstate = 0;
+		if (sc->protocol == PMS_STANDARD)
+			sc->inputstate = -1;	/* may need to sync again */
+		else
+			sc->inputstate = 0;
 		changed = (sc->buttons ^ newbuttons);
 		sc->buttons = newbuttons;
 
