@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.41 2001/12/02 20:12:03 kleink Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.42 2001/12/07 11:47:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.41 2001/12/02 20:12:03 kleink Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.42 2001/12/07 11:47:44 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,10 +115,13 @@ __sbprintf(fp, fmt, ap)
 {
 	int ret;
 	FILE fake;
+	struct __sfileext fakeext;
 	unsigned char buf[BUFSIZ];
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(fmt != NULL);
+
+	_FILEEXT_SETUP(&fake, &fakeext);
 
 	/* copy the important variables */
 	fake._flags = fp->_flags & ~__SNBF;
@@ -308,6 +311,7 @@ vfprintf(fp, fmt0, ap)
 	_DIAGASSERT(fmt0 != NULL);
 
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 
 	/* sorry, fprintf(read_only_file, "") returns -1, not 0 */
 	if (cantwrite(fp)) {

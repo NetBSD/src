@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.11 1999/09/20 04:39:33 lukem Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.12 2001/12/07 11:47:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sscanf.c,v 1.11 1999/09/20 04:39:33 lukem Exp $");
+__RCSID("$NetBSD: sscanf.c,v 1.12 2001/12/07 11:47:44 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,16 +82,18 @@ sscanf(str, fmt, va_alist)
 	int ret;
 	va_list ap;
 	FILE f;
+	struct __sfileext fext;
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(fmt != NULL);
 
+	_FILEEXT_SETUP(&f, &fext);
 	f._flags = __SRD;
 	/* LINTED we don't touch the string */
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._r = strlen(str);
 	f._read = eofread;
-	f._ub._base = NULL;
+	_UB(&f)._base = NULL;
 	f._lb._base = NULL;
 #if __STDC__
 	va_start(ap, fmt);
