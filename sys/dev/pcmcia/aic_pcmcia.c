@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.8 1998/11/20 02:12:15 thorpej Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.9 1999/04/27 02:53:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -170,6 +170,7 @@ aic_pcmcia_attach(parent, self, aux)
 		panic("aic_pcmcia_attach: impossible");
 	}
 
+#if 0	/* XXX power management broken somehow. */
 	/* We can enable and disable the controller. */
 	sc->sc_adapter.scsipi_enable = aic_pcmcia_enable;
 
@@ -180,6 +181,17 @@ aic_pcmcia_attach(parent, self, aux)
 	pcmcia_function_disable(pf);
 
 	printf(": %s\n", app->app_name);
+#else
+	printf(": %s\n", app->app_name);
+
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_BIO,
+	    aicintr, &psc->sc_aic);
+	if (psc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt handler\n",
+		    psc->sc_aic.sc_dev.dv_xname);
+		return;
+	}
+#endif
 
 	aicattach(sc);
 }
