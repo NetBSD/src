@@ -1,5 +1,5 @@
 /*
- *	$Id: i8042reg.h,v 1.2 1993/05/22 08:01:55 cgd Exp $
+ *	$Id: i8042reg.h,v 1.3 1994/03/02 06:46:17 mycroft Exp $
  */
 
 #define	KBSTATP		0x64	/* kbd controller status port (I) */
@@ -24,4 +24,4 @@
 #define	KC8_IGNSEC	0x08	/* ignore security lock */
 #define	KC8_CPU		0x04	/* exit from protected mode reset */
 #define	KC8_IEN		0x01	/* enable interrupt */
-#define	CMDBYTE	(KC8_TRANS|KC8_IGNSEC|KC8_CPU|KC8_IEN)
+#define	CMDBYTE	(KC8_IGNSEC|KC8_CPU|KC8_IEN)
