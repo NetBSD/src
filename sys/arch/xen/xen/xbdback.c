@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.4 2005/03/15 23:39:18 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.5 2005/03/26 21:22:45 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -496,7 +496,7 @@ xbdback_evthandler(void *arg)
 	int error;
 
 	req_prod = xbdi->blk_ring->req_prod;
-	__insn_barrier(); /* ensure we see all requests up to req_prod */
+	x86_lfence(); /* ensure we see all requests up to req_prod */
 	/*
 	 * note that we'll eventually get a full ring of request.
 	 * in this case, MASK_BLKIF_IDX(req_cons) == MASK_BLKIF_IDX(req_prod)
@@ -711,7 +711,7 @@ xbdback_probe(struct xbdback_instance *xbdi, blkif_request_t *req)
 	}
 	xbd_req = pool_get(&xbdback_request_pool, PR_NOWAIT);
 	if (xbd_req == NULL) {
-		panic("xbd_req"); /* XXX */
+		return ENOMEM;
 	}
 	xbd_req->rq_xbdi = xbdi;
 	if (xbdback_map_shm(req, xbd_req) != 0) {
@@ -756,7 +756,7 @@ xbdback_send_reply(struct xbdback_instance *xbdi, int id, int op, int status)
 	resp->operation = op;
 	resp->status    = status;
 	xbdi->resp_prod++;
-	__insn_barrier(); /* ensure guest see all our replies */
+	x86_lfence(); /* ensure guest see all our replies */
 	xbdi->blk_ring->resp_prod = xbdi->resp_prod;
 	hypervisor_notify_via_evtchn(xbdi->evtchn);
 }
