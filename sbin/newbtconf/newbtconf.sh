@@ -5,6 +5,7 @@
 if [ $# -lt 1 ] ; then
 	echo "Usage: $0 <newconfig> [<baseconfig>]"
 	echo "Usage: $0 init"
+	echo "Usage: $0 revert"
 	exit 1;
 fi
 dir=$1
@@ -30,6 +31,42 @@ if [ $dir = init ] ; then
 		fi
 	done
 	echo "/etc/$dir has now been created and populated."
+	exit 0
+fi
+
+if [ $dir = revert ] ; then
+	if [ !  -d /etc/etc.current ] ; then
+		echo "Error: multi-configuration not initialized"
+		exit 1
+	fi
+	cd /etc
+	for i in ${FILES}; do
+		if [ -f $i -o -d $i ] ; then
+			stat="`ls -ld $i`"
+			case x"$stat" in
+				xl*) :;;
+				x*)
+				echo "$i: not a symlink, skipping"
+				continue ;;	
+			esac
+			linkto="${stat##*-> }"
+			case x"$linkto" in
+				xetc.current/*) :;;
+				x*)
+				echo "$i: does not symlink to etc.current, skipping"
+				continue ;;
+			esac
+			if [ -f $i ] ; then
+				rm $i
+				cp -p $linkto $i
+			else
+				rm $i
+				( cd etc.current && pax -rw -pe $i /etc )
+			fi
+		fi
+	done
+	rm etc.current
+	rm etc.default
 	exit 0
 fi
 
