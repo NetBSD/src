@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.15 1997/07/06 12:38:26 fvdl Exp $	*/
+/*	$NetBSD: vm.h,v 1.16 1998/01/06 08:36:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -84,10 +84,6 @@ typedef struct lock		*lock_t;
  */
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
-#ifdef	__VM_PMAP_HACK
-	/* XXX - All should use vm_map.pmap instead. */
-	struct	pmap vm_pmap;	/* private physical map */
-#endif
 	int	vm_refcnt;	/* number of references */
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
