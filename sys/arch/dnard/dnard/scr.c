@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.2 2001/06/05 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: scr.c,v 1.3 2001/11/23 19:36:49 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -118,7 +118,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <dev/isa/isavar.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 
 /* SCR_DEBUG is the master switch for turning on debugging */        
