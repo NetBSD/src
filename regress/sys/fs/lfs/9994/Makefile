@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/08/02 19:10:50 perseant Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:52 lukem Exp $
+
+NOMAN=	# defined
 
 PROG=	9994_f
-NOMAN=	# defined
 TMP?=	/tmp
 TESTFS?=.
 

@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/09/11 14:54:35 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:40 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		mbrtowc
-NOMAN=		# defined
 CPPFLAGS+=	-DUSE_MBSTATE
 .PATH:		${.CURDIR}/../ctype2
 

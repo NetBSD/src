@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/08/28 07:41:05 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:53 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		lock
-NOMAN=		# defined
 WARNS=		2
 
 regress:

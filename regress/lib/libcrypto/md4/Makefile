@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:08 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:45 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		md4test
-NOMAN=		# defined
 DPADD+=		${LIBCRYPTO}
 LDADD+=		-lcrypto
 

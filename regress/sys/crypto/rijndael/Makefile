@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:24:15 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/09/18 05:41:52 lukem Exp $
 #	$KAME: Makefile,v 1.4 2000/11/08 05:58:26 itojun Exp $
+
+NOMAN=		# defined
 
 PROG=		rijndaeltest
 SRCS=		rijndaeltest.c rijndael-alg-fst.c rijndael-api-fst.c
-NOMAN=		# defined
 
 .include "../Makefile.inc"
 .include <bsd.own.mk>

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:11 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:48 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		threadstest
 SRCS=		mttest.c
-NOMAN=		# defined
 DPADD+=		${LIBSSL} ${LIBCRYPTO}
 LDADD+=		-lssl -lcrypto
 

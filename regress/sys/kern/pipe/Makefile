@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:18 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:54 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		pipe1
-NOMAN=		# defined
 
 regress: ${PROG}
 	@./${PROG} || ( echo 'pipe write restart test failed' && exit 1 )

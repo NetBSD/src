@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:18 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:57 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		mmap
-NOMAN=		# defined
 CLEANFILES+=	mapped_file
 
 # This is hopefully just some file not mmap'd very often.
