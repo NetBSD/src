@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_proc.c,v 1.4 1997/10/21 20:38:03 christos Exp $	*/
+/*	$NetBSD: stat_proc.c,v 1.5 2000/06/06 18:19:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat_proc.c,v 1.4 1997/10/21 20:38:03 christos Exp $");
+__RCSID("$NetBSD: stat_proc.c,v 1.5 2000/06/06 18:19:56 bouyer Exp $");
 #endif
 
 #include <errno.h>
@@ -324,13 +324,13 @@ sm_notify_1_svc(arg, req)
 	hp = find_host(arg->mon_name, &h);
 	if (!hp) {
 		/* Never heard of this host - why is it notifying us? */
-		syslog(LOG_ERR, "Unsolicited notification from host %s",
+		syslog(LOG_DEBUG, "Unsolicited notification from host %s",
 		    arg->mon_name);
-		return (FALSE);
+		return (&dummy);
 	}
 	lp = hp->monList;
 	if (!lp) /* We know this host, but have no outstanding requests. */
-		return (FALSE);
+		return (&dummy);
 
 	pid = fork();
 	if (pid == -1) {
