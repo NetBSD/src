@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1996/09/13 00:02:36 jtk Exp $
+#	$NetBSD: Makefile,v 1.6 1996/09/13 02:24:30 jtk Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 CFLAGS+=	-I${.CURDIR}/../.. -I${.CURDIR}/../../..
@@ -18,7 +18,7 @@ biostramp: ${OBJS} ${DEPS}
 	${LD} -Bstatic -N -T 0 -o biostramp $(OBJS)
 	cp biostramp biostramp.sym
 	@${STRIP} biostramp
-	@if [ `${LS} -l biostramp |awk '{print $$5}'` -gt 4096 ]; then \
+	@if [ `ls -l biostramp |awk '{print $$5}'` -gt 4096 ]; then \
 		echo "biostramp too big"; \
 		exit 1; \
 	fi
