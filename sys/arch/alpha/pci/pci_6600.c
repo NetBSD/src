@@ -1,4 +1,4 @@
-/* $NetBSD: pci_6600.c,v 1.6 2000/06/29 08:58:48 mrg Exp $ */
+/* $NetBSD: pci_6600.c,v 1.7 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.6 2000/06/29 08:58:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_6600.c,v 1.7 2000/12/28 22:59:07 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ void *dec_6600_intr_establish __P((
     void *, pci_intr_handle_t, int, int (*func)(void *), void *));
 const char *dec_6600_intr_string __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_6600_intr_evcnt __P((void *, pci_intr_handle_t));
-int dec_6600_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
+int dec_6600_intr_map __P((struct pci_attach_args *, pci_intr_handle_t *));
 void *dec_6600_pciide_compat_intr_establish __P((void *, struct device *,
     struct pci_attach_args *, int, int (*)(void *), void *));
 
@@ -141,14 +141,13 @@ pci_6600_pickintr(pcp)
 }
 
 int     
-dec_6600_intr_map(acv, bustag, buspin, line, ihp)
-        void *acv;
-        pcitag_t bustag; 
-        int buspin, line;
+dec_6600_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	struct tsp_config *pcp = acv;
-	pci_chipset_tag_t pc = &pcp->pc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, device, function;
 
 	if (buspin == 0) {

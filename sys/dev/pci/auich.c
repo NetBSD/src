@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.2 2000/11/28 16:57:16 thorpej Exp $	*/
+/*	$NetBSD: auich.c,v 1.3 2000/12/28 22:59:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -335,8 +335,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

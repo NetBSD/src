@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_pci.c,v 1.3 2000/01/04 06:31:39 chopps Exp $	*/
+/*	$NetBSD: if_ntwoc_pci.c,v 1.4 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -230,8 +230,7 @@ ntwoc_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Map and establish the interrupt
 	 */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

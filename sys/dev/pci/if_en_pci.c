@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.13 1999/07/01 08:12:46 itojun Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.14 2000/12/28 22:59:12 sommerfeld Exp $	*/
 
 /*
  *
@@ -220,8 +220,7 @@ void *aux;
    * interrupt map
    */
 
-  if (pci_intr_map(scp->en_pc, pa->pa_intrtag, pa->pa_intrpin, 
-					pa->pa_intrline, &ih)) {
+  if (pci_intr_map(pa, &ih)) {
     printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
     return;
   }

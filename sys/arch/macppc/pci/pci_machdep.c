@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.13 2000/06/29 08:10:46 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.14 2000/12/28 22:59:10 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -180,12 +180,12 @@ pci_conf_write(pc, tag, reg, data)
 }
 
 int
-pci_intr_map(pc, intrtag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t intrtag;
-	int pin, line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
 
 	if (pin == 0) {
 		/* No IRQ used. */

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.1 2000/12/21 20:51:53 thorpej Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.2 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.1 2000/12/21 20:51:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.2 2000/12/28 22:59:07 sommerfeld Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,10 +67,10 @@ static bus_space_handle_t pic_elcr_ioh;
 
 static const int pic_slave_to_master[4] = { 1, 3, 4, 5 };
 
-int	dec_2100_a500_pic_intr_map(void *, pcitag_t, int, int,
+int	dec_2100_a500_pic_intr_map(struct pci_attach_args *,
 	    pci_intr_handle_t *);
 
-int	dec_2100_a500_icic_intr_map(void *, pcitag_t, int, int,
+int	dec_2100_a500_icic_intr_map(struct pci_attach_args *,
 	    pci_intr_handle_t *);
 
 const char *dec_2100_a500_intr_string(void *, pci_intr_handle_t);
@@ -273,8 +273,8 @@ pci_2100_a500_isa_pickintr(pci_chipset_tag_t pc, isa_chipset_tag_t ic)
  *****************************************************************************/
 
 int
-dec_2100_a500_pic_intr_map(void *v, pcitag_t bustag, int buspin,
-    int line, pci_intr_handle_t *ihp)
+dec_2100_a500_pic_intr_map(struct pci_attach_args *pa,
+    pci_intr_handle_t *ihp)
 {
 	/*
 	 * Interrupts in the Sable are even more of a pain than other
@@ -340,8 +340,9 @@ dec_2100_a500_pic_intr_map(void *v, pcitag_t bustag, int buspin,
 		{ 0x04, 0x19, 0x1b, 0x1e },	/* 7: PCI slot 1 */
 		{ 0x05, 0x14, 0x1c, 0x1f },	/* 8: PCI slot 2 */
 	};
-	struct ttwoga_config *tcp = v;
-	pci_chipset_tag_t pc = &tcp->tc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int device, irq;
 
 	if (buspin == 0) {
@@ -373,11 +374,11 @@ dec_2100_a500_pic_intr_map(void *v, pcitag_t bustag, int buspin,
 }
 
 int
-dec_2100_a500_icic_intr_map(void *v, pcitag_t bustag, int buspin,
-    int line, pci_intr_handle_t *ihp)
+dec_2100_a500_icic_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	struct ttwoga_config *tcp = v;
-	pci_chipset_tag_t pc = &tcp->tc_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int device, irq;
 
 	if (buspin == 0) {

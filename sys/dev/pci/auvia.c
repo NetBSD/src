@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.8 2000/12/10 15:43:02 jdolecek Exp $	*/
+/*	$NetBSD: auvia.c,v 1.9 2000/12/28 22:59:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -238,8 +238,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	printf(": VIA VT82C686A AC'97 Audio (rev %s)\n",
 		sc->sc_revision);
 
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-			&ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
