@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.33 1996/09/15 18:11:08 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.34 1996/09/16 17:45:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -106,6 +106,8 @@ rip_input(m, va_alist)
 	ripsrc.sin_family = AF_INET;
 	ripsrc.sin_len = sizeof(struct sockaddr_in);
 	ripsrc.sin_addr = ip->ip_src;
+	ripsrc.sin_port = 0;
+	bzero((caddr_t)ripsrc.sin_zero, sizeof(ripsrc.sin_zero));
 
 	for (inp = rawcbtable.inpt_queue.cqh_first;
 	    inp != (struct inpcb *)&rawcbtable.inpt_queue;
