@@ -1,4 +1,4 @@
-.\"	$NetBSD: expand.1,v 1.4 1997/10/18 14:45:55 lukem Exp $
+.\"	$NetBSD: expand.1,v 1.5 1999/02/10 16:15:31 kleink Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,12 +42,12 @@
 .Nd expand tabs to spaces, and vice versa
 .Sh SYNOPSIS
 .Nm
-.Op Fl Ns Ar tabstop
-.Op Fl Ns Ar tab1,tab2,...,tabn
-.Ar
+.Op Fl t Ar tabstop
+.Op Fl t Ar tab1,tab2,...,tabn
+.Op Ar
 .Nm unexpand
 .Op Fl a
-.Ar
+.Op Ar
 .Sh DESCRIPTION
 .Nm
 processes the named files or the standard input writing
