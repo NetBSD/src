@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.6 2001/03/30 11:08:57 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.7 2001/06/06 06:07:06 mrg Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -339,7 +339,6 @@ in6_pcbsetport(laddr, in6p)
 	int wild = 0;
 	void *t;
 	u_int16_t min, max;
-	struct proc *p = curproc;		/* XXX */
 
 	/* XXX: this is redundant when called from in6_pcbbind */
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&
@@ -349,6 +348,8 @@ in6_pcbsetport(laddr, in6p)
 
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
+		struct proc *p = curproc;		/* XXX */
+
 		if (p == 0 || (suser(p->p_ucred, &p->p_acflag) != 0))
 			return (EACCES);
 #endif
