@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.35 2002/02/05 00:17:26 augustss Exp $	*/
+/*	$NetBSD: play.c,v 1.36 2002/02/10 13:15:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -211,7 +211,7 @@ play(file)
 	struct stat sb;
 	void *addr, *oaddr;
 	off_t	filesize;
-	size_t datasize;
+	size_t datasize = 0;
 	ssize_t	hdrlen;
 	int fd;
 
@@ -268,7 +268,8 @@ play(file)
 	filesize -= hdrlen;
 	addr = (char *)addr + hdrlen;
 	if (filesize < datasize || datasize == 0) {
-		warnx("bogus datasize: %lu", (long)datasize);
+		if (filesize < datasize)
+			warnx("bogus datasize: %ld", (u_long)datasize);
 		datasize = filesize;
 	}
 
