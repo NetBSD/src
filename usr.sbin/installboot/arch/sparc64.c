@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc64.c,v 1.8 2002/04/19 07:08:54 lukem Exp $	*/
+/*	$NetBSD: sparc64.c,v 1.9 2002/04/22 16:03:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sparc64.c,v 1.8 2002/04/19 07:08:54 lukem Exp $");
+__RCSID("$NetBSD: sparc64.c,v 1.9 2002/04/22 16:03:07 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -101,17 +101,17 @@ sparc64_clearboot(ib_params *params)
 		return (0);
 	}
 	/* first check that it _could_ exist here */
-	rv = pread(params->fsfd, &bb, sizeof bb, SPARC64_BOOT_BLOCK_OFFSET);
+	rv = pread(params->fsfd, &bb, sizeof(bb), SPARC64_BOOT_BLOCK_OFFSET);
 	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
 		return (0);
-	} else if (rv != sizeof bb) {
+	} else if (rv != sizeof(bb)) {
 		warnx("Reading `%s': short read", params->filesystem);
 		return (0);
 	}
 
 	/* now clear it out to nothing */
-	memset(&bb, 0, sizeof bb);
+	memset(&bb, 0, sizeof(bb));
 
 	if (params->flags & IB_VERBOSE)
 		printf("%slearing boot block\n",
@@ -158,7 +158,7 @@ sparc64_setboot(ib_params *params)
 	}
 
 	memset(&bb, 0, SPARC64_BOOT_BLOCK_MAX_SIZE);
-	rv = read(params->s1fd, &bb, sizeof bb);
+	rv = read(params->s1fd, &bb, sizeof(bb));
 	if (rv == -1) {
 		warn("Reading `%s'", params->stage1);
 		goto done;
