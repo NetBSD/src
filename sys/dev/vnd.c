@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.111.10.2 2005/04/03 13:34:16 tron Exp $	*/
+/*	$NetBSD: vnd.c,v 1.111.10.3 2005/04/06 11:57:09 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111.10.2 2005/04/03 13:34:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.111.10.3 2005/04/06 11:57:09 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1237,6 +1237,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 	struct proc *p = curproc;		/* XXX */
 	int fflags = FREAD;
 	int bmaj, cmaj, i, mn;
+	int s;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -1256,6 +1257,10 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	if ((vnd->sc_flags & VNF_READONLY) == 0)
 		fflags |= FWRITE;
+
+	s = splbio();
+	bufq_drain(&vnd->sc_tab);
+	splx(s);
 
 	vnd->sc_flags |= VNF_VUNCONF;
 	wakeup(&vnd->sc_tab);
