@@ -1,7 +1,7 @@
-/*	$NetBSD: ehcireg.h,v 1.19 2004/10/25 08:53:38 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.20 2005/03/02 11:37:27 mycroft Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
