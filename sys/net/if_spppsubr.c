@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.42 2002/01/18 22:39:12 jdolecek Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.43 2002/01/21 11:37:29 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.42 2002/01/18 22:39:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.43 2002/01/21 11:37:29 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4998,7 +4998,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    	sp->hisauth.secret = NULL;
 			return error;
 		    }
-		    sp->hisauth.secret[cfg->hisname_length-1] = 0;
+		    sp->hisauth.secret[cfg->hissecret_length-1] = 0;
 		}
 		if (cfg->myname != NULL && cfg->myname_length > 0) {
 		    if (cfg->myname_length >= MCLBYTES)
@@ -5022,7 +5022,7 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    	sp->myauth.secret = NULL;
 			return error;
 		    }
-		    sp->myauth.secret[cfg->myname_length-1] = 0;
+		    sp->myauth.secret[cfg->mysecret_length-1] = 0;
 		}
 		sp->myauth.flags = cfg->myauthflags;
 		if (cfg->myauth)
