@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.30 2004/07/30 04:32:10 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.31 2004/07/30 17:05:18 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.30 2004/07/30 04:32:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.31 2004/07/30 17:05:18 mycroft Exp $");
 #endif
 
 /*
@@ -658,7 +658,7 @@ ieee80211_setbasicrates(struct ieee80211com *ic)
 	    { 0 },				/* IEEE80211_MODE_AUTO */
 	    { 3, { 12, 24, 48 } },		/* IEEE80211_MODE_11A */
 	    { 2, { 2, 4 } },			/* IEEE80211_MODE_11B */
-	    { 7, { 2, 4, 11, 22, 12, 24, 48 } },/* IEEE80211_MODE_11G */
+	    { 4, { 2, 4, 11, 22 } },		/* IEEE80211_MODE_11G */
 	    { 2, { 2, 4 } },			/* IEEE80211_MODE_FH */
 	    { 0 },				/* IEEE80211_MODE_TURBO	*/
 	};
