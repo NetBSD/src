@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.1 1998/08/12 18:14:02 augustss Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.2 1998/08/17 21:16:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SYS_DEV_MIDISYNVAR_H_
+#define _SYS_DEV_MIDISYNVAR_H_
+
 typedef struct midisyn midisyn;
 
 struct midisyn_methods {
@@ -54,9 +57,13 @@ struct midisyn_methods {
 
 struct voice {
 	u_int chan_note;	/* channel and note */
-#define CHANNOTE(chan, note) ((chan) * 256 + (note))
+#define MS_CHANNOTE(chan, note) ((chan) * 256 + (note))
+#define MS_GETCHAN(v) ((v)->chan_note >> 8)
 	u_int seqno;		/* allocation index (increases with time) */
+	u_char inuse;
 };
+
+#define MIDI_MAX_CHANS 16
 
 struct midisyn {
 	/* Filled by synth driver */
@@ -73,8 +80,17 @@ struct midisyn {
 	int pos;
 	struct voice *voices;
 	u_int seqno;
+	u_int16_t pgms[MIDI_MAX_CHANS];
 };
 
-void	midisyn_attach __P((struct midi_softc *, midisyn *, struct device *));
+#define MS_GETPGM(ms, vno) ((ms)->pgms[MS_GETCHAN(&(ms)->voices[vno])])
+
+struct midi_softc;
+
+extern struct midi_hw_if midisyn_hw_if;
+
+void	midisyn_attach __P((struct midi_softc *, midisyn *));
 
 #define MIDISYN_FREQ_TO_HZ(f) ((f) >> 16)
+
+#endif /* _SYS_DEV_MIDISYNVAR_H_ */

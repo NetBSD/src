@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.24 1998/07/07 03:05:17 mark Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.25 1998/08/17 21:16:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -279,7 +279,7 @@ vidcaudio_attach(parent, self, aux)
 	vidcaudio_dma_program(ag.silence, ag.silence+NBPG-16,
 	    vidcaudio_dummy_routine, NULL);
 
-	audio_attach_mi(&vidcaudio_hw_if, 0, sc, &sc->device);
+	audio_attach_mi(&vidcaudio_hw_if, sc, &sc->device);
 
 #ifdef DEBUG
 	printf(" UNDER DEVELOPMENT (nuts)\n");

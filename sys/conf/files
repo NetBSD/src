@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.233 1998/08/14 03:27:51 mark Exp $
+#	$NetBSD: files,v 1.234 1998/08/17 21:16:11 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -270,6 +270,11 @@ define  i2c_eeprom
 # Essential Communications Corp. HIPPI Interface
 device  esh: hippi, ifnet
 file    dev/ic/rrunner.c        esh
+
+# OPL2/OPL3 FM synth driver
+device	opl: midibus
+file	dev/ic/opl.c			opl
+file	dev/ic/oplinstrs.c		opl
 
 # XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
 # XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.7 1998/08/13 15:50:57 augustss Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.8 1998/08/17 21:16:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/midiio.h>
 #include <sys/device.h>
 
-#include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/midivar.h>
 #include <dev/sequencervar.h>
 
@@ -138,6 +138,7 @@ int midiseq_noteon __P((struct midi_dev *, int, int, int));
 int midiseq_noteoff __P((struct midi_dev *, int, int, int));
 int midiseq_keypressure __P((struct midi_dev *, int, int, int));
 int midiseq_pgmchange __P((struct midi_dev *, int, int));
+int midiseq_chnpressure __P((struct midi_dev *, int, int));
 int midiseq_ctlchange __P((struct midi_dev *, int, int, int));
 int midiseq_pitchbend __P((struct midi_dev *, int, int));
 int midiseq_loadpatch __P((struct midi_dev *, struct sysex_info *, 
@@ -786,6 +787,9 @@ seq_do_chncommon(sc, b)
 	case MIDI_PITCH_BEND:
 		error = midiseq_pitchbend(md, chan, w14);
 		break;
+	case MIDI_CHN_PRESSURE:
+		error = midiseq_chnpressure(md, chan, p1);
+		break;
 	default:
 		DPRINTFN(-1,("seq_do_chncommon: unimpl command %02x\n", cmd));
 		error = EINVAL;
@@ -1220,6 +1224,21 @@ midiseq_pgmchange(md, chan, parm)
 	    parm < 0 || parm > 127)
 		return EINVAL;
 	buf[0] = MIDI_PGM_CHANGE | chan;
+	buf[1] = parm;
+	return midiseq_out(md, buf, 2, 1);
+}
+
+int
+midiseq_chnpressure(md, chan, parm)
+	struct midi_dev *md;
+	int chan, parm;
+{
+	u_char buf[2];
+
+	if (chan < 0 || chan > 15 ||
+	    parm < 0 || parm > 127)
+		return EINVAL;
+	buf[0] = MIDI_CHN_PRESSURE | chan;
 	buf[1] = parm;
 	return midiseq_out(md, buf, 2, 1);
 }

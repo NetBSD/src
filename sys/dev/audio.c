@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.98 1998/08/10 01:17:33 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.99 1998/08/17 21:16:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -141,8 +141,6 @@ static __inline void audio_pint_silence __P((struct audio_softc *, struct audio_
 
 int	audio_alloc_ring __P((struct audio_softc *, struct audio_ringbuffer *, int));
 void	audio_free_ring __P((struct audio_softc *, struct audio_ringbuffer *));
-
-int	audioprint __P((void *, const char *));
 
 int	audioprobe __P((struct device *, struct cfdata *, void *));
 void	audioattach __P((struct device *, struct device *, void *));
@@ -378,26 +376,23 @@ au_check_ports(sc, ports, mi, cls, name, mname, tbl)
  * probed/attached to the hardware driver.
  */
 void
-audio_attach_mi(ahwp, mhwp, hdlp, dev)
+audio_attach_mi(ahwp, hdlp, dev)
 	struct audio_hw_if *ahwp;
-	struct midi_hw_if *mhwp;
 	void *hdlp;
 	struct device *dev;
 {
 	struct audio_attach_args arg;
 
-	if (ahwp != NULL) {
-		arg.type = AUDIODEV_TYPE_AUDIO;
-		arg.hwif = ahwp;
-		arg.hdl = hdlp;
-		(void)config_found(dev, &arg, audioprint);
+#ifdef DIAGNOSTIC
+	if (ahwp == NULL) {
+		printf("audio_attach_mi: NULL\n");
+		return;
 	}
-	if (mhwp != NULL) {
-		arg.type = AUDIODEV_TYPE_MIDI;
-		arg.hwif = mhwp;
-		arg.hdl = hdlp;
-		(void)config_found(dev, &arg, audioprint);
-	}
+#endif
+	arg.type = AUDIODEV_TYPE_AUDIO;
+	arg.hwif = ahwp;
+	arg.hdl = hdlp;
+	(void)config_found(dev, &arg, audioprint);
 }
 
 int
@@ -415,6 +410,12 @@ audioprint(aux, pnp)
 			break;
 		case AUDIODEV_TYPE_MIDI:
 			type = "midi";
+			break;
+		case AUDIODEV_TYPE_OPL:
+			type = "opl";
+			break;
+		case AUDIODEV_TYPE_MPU:
+			type = "mpu";
 			break;
 		default:
 			panic("audioprint: unknown type %d", arg->type);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.28 1998/08/07 00:01:00 augustss Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.29 1998/08/17 21:16:16 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -48,6 +48,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>
@@ -82,7 +83,7 @@ sb_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return isapnp_devmatch(aux, &isapnp_sb_devinfo);
+	return (isapnp_devmatch(aux, &isapnp_sb_devinfo));
 }
 
 

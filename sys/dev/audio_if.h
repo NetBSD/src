@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.29 1998/08/12 18:11:53 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.30 1998/08/17 21:16:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#ifndef _SYS_DEV_AUDIO_IF_H_
+#define _SYS_DEV_AUDIO_IF_H_
 
 /*
  * Generic interface to hardware driver.
@@ -121,24 +124,6 @@ struct audio_hw_if {
 		    void (*)(void *), void *, struct audio_params *));
 };
 
-struct midi_info {
-	char	*name;		/* Name of MIDI hardware */
-	int	props;
-};
-#define MIDI_PROP_OUT_INTR  1
-#define MIDI_PROP_CAN_INPUT 2
-
-struct midi_hw_if {
-	int	(*open)__P((void *, int, 	/* open hardware */
-			    void (*)__P((void *, int)), /* input callback */
-			    void (*)__P((void *)), /* output callback */
-			    void *));
-	void	(*close)__P((void *));		/* close hardware */
-	int	(*output)__P((void *, int));	/* output a byte */
-	void	(*getinfo)__P((void *, struct midi_info *));
-	int	(*ioctl)__P((void *, u_long, caddr_t, int, struct proc *));
-};
-
 struct audio_attach_args {
 	int	type;
 	void	*hwif;		/* either audio_hw_if * or midi_hw_if * */
@@ -146,9 +131,12 @@ struct audio_attach_args {
 };
 #define	AUDIODEV_TYPE_AUDIO	0
 #define	AUDIODEV_TYPE_MIDI	1
+#define AUDIODEV_TYPE_OPL	2
+#define AUDIODEV_TYPE_MPU	3
 
 /* Attach the MI driver(s) to the MD driver. */
-extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void *, struct device *));
+void	audio_attach_mi __P((struct audio_hw_if *, void *, struct device *));
+int	audioprint __P((void *, const char *));
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
@@ -168,3 +156,6 @@ extern void	audio_attach_mi __P((struct audio_hw_if *, struct midi_hw_if *, void
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
+
+#endif /* _SYS_DEV_AUDIO_IF_H_ */
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: midisyn.c,v 1.2 1998/08/13 00:13:56 augustss Exp $	*/
+/*	$NetBSD: midisyn.c,v 1.3 1998/08/17 21:16:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #include <sys/device.h>
 
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/midivar.h>
 #include <dev/midisynvar.h>
 
@@ -67,6 +68,7 @@ int	midisyn_findvoice __P((midisyn *, int, int));
 void	midisyn_freevoice __P((midisyn *, int));
 int	midisyn_allocvoice __P((midisyn *, u_int32_t, u_int32_t));
 u_int32_t midisyn_note_to_freq __P((int));
+u_int32_t midisyn_finetune __P((u_int32_t, int, int, int));
 
 int	midisyn_open __P((void *, int, 
 			  void (*iintr)__P((void *, int)),
@@ -153,18 +155,17 @@ midisyn_findvoice(ms, chan, note)
 
 	if (!(ms->flags & MS_DOALLOC))
 		return (chan);
-	cn = CHANNOTE(chan, note);
+	cn = MS_CHANNOTE(chan, note);
 	for (v = 0; v < ms->nvoice; v++)
-		if (ms->voices[v].chan_note == cn)
+		if (ms->voices[v].chan_note == cn && ms->voices[v].inuse)
 			return (v);
 	return (-1);
 }
 
 void
-midisyn_attach(sc, ms, parent)
+midisyn_attach(sc, ms)
 	struct midi_softc *sc;
 	midisyn *ms;
-	struct device *parent;
 {
 	if (ms->flags & MS_DOALLOC) {
 		ms->voices = malloc(ms->nvoice * sizeof (struct voice), 
@@ -177,7 +178,6 @@ midisyn_attach(sc, ms, parent)
 	sc->hw_if = &midisyn_hw_if;
 	sc->hw_hdl = ms;
 	DPRINTF(("midisyn_attach: ms=%p\n", sc->hw_hdl));
-	midi_attach(sc, parent);
 }
 
 void
@@ -187,7 +187,7 @@ midisyn_freevoice(ms, voice)
 {
 	if (!(ms->flags & MS_DOALLOC))
 		return;
-	ms->voices[voice].chan_note = ~0;
+	ms->voices[voice].inuse = 0;
 }
 
 int
@@ -202,16 +202,28 @@ midisyn_allocvoice(ms, chan, note)
 		return (chan);
 	/* Find a free voice, or if no free voice is found the oldest. */
 	bestv = 0;
-	bestseq = ms->voices[0].seqno;
+	bestseq = ms->voices[0].seqno + (ms->voices[0].inuse ? 0x40000000 : 0);
 	for (v = 1; v < ms->nvoice; v++) {
 		s = ms->voices[v].seqno;
+		if (ms->voices[v].inuse)
+			s += 0x40000000;
 		if (s < bestseq) {
 			bestseq = s;
 			bestv = v;
 		}
 	}
-	ms->voices[bestv].chan_note = CHANNOTE(chan, note);
+	DPRINTFN(10,("midisyn_allocvoice: v=%d seq=%d cn=%x inuse=%d\n",
+		     bestv, ms->voices[bestv].seqno, 
+		     ms->voices[bestv].chan_note,
+		     ms->voices[bestv].inuse));
+#ifdef AUDIO_DEBUG
+	if (ms->voices[bestv].inuse)
+		DPRINTFN(1,("midisyn_allocvoice: steal %x\n", 
+			    ms->voices[bestv].chan_note));
+#endif
+	ms->voices[bestv].chan_note = MS_CHANNOTE(chan, note);
 	ms->voices[bestv].seqno = ms->seqno++;
+	ms->voices[bestv].inuse = 1;
 	return (bestv);
 }
 
@@ -326,5 +338,81 @@ midisyn_note_to_freq(note)
 	else if (o > BASE_OCTAVE)
 		f <<= (o - BASE_OCTAVE);
 	return (f);
+}
+
+u_int32_t
+midisyn_finetune(base_freq, bend, range, vibrato_cents)
+	u_int32_t base_freq;
+	int bend;
+	int range;
+	int vibrato_cents;
+{
+	static u_int16_t semitone_tuning[24] = 
+	{
+/*   0 */ 10000, 10595, 11225, 11892, 12599, 13348, 14142, 14983, 
+/*   8 */ 15874, 16818, 17818, 18877, 20000, 21189, 22449, 23784, 
+/*  16 */ 25198, 26697, 28284, 29966, 31748, 33636, 35636, 37755
+	};
+	static u_int16_t cent_tuning[100] =
+	{
+/*   0 */ 10000, 10006, 10012, 10017, 10023, 10029, 10035, 10041, 
+/*   8 */ 10046, 10052, 10058, 10064, 10070, 10075, 10081, 10087, 
+/*  16 */ 10093, 10099, 10105, 10110, 10116, 10122, 10128, 10134, 
+/*  24 */ 10140, 10145, 10151, 10157, 10163, 10169, 10175, 10181, 
+/*  32 */ 10187, 10192, 10198, 10204, 10210, 10216, 10222, 10228, 
+/*  40 */ 10234, 10240, 10246, 10251, 10257, 10263, 10269, 10275, 
+/*  48 */ 10281, 10287, 10293, 10299, 10305, 10311, 10317, 10323, 
+/*  56 */ 10329, 10335, 10341, 10347, 10353, 10359, 10365, 10371, 
+/*  64 */ 10377, 10383, 10389, 10395, 10401, 10407, 10413, 10419, 
+/*  72 */ 10425, 10431, 10437, 10443, 10449, 10455, 10461, 10467, 
+/*  80 */ 10473, 10479, 10485, 10491, 10497, 10503, 10509, 10515, 
+/*  88 */ 10521, 10528, 10534, 10540, 10546, 10552, 10558, 10564, 
+/*  96 */ 10570, 10576, 10582, 10589
+	};
+	u_int32_t amount;
+	int negative, semitones, cents, multiplier;
+
+	if (range == 0)
+		return base_freq;
+
+	if (base_freq == 0)
+		return base_freq;
+
+	if (range >= 8192)
+		range = 8192;
+
+	bend = bend * range / 8192;
+	bend += vibrato_cents;
+
+	if (bend == 0)
+		return base_freq;
+
+	if (bend < 0) {
+		bend = -bend;
+		negative = 1;
+	} else 
+		negative = 0;
+
+	if (bend > range)
+		bend = range;
+
+	multiplier = 1;
+	while (bend > 2399) {
+		multiplier *= 4;
+		bend -= 2400;
+	}
+
+	semitones = bend / 100;
+	if (semitones > 99)
+		semitones = 99;
+	cents = bend % 100;
+
+	amount = semitone_tuning[semitones] * multiplier * cent_tuning[cents]
+		/ 10000;
+
+	if (negative)
+		return (base_freq * 10000 / amount);	/* Bend down */
+	else
+		return (base_freq * amount / 10000);	/* Bend up */
 }
 

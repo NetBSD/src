@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.7 1998/06/10 10:24:13 bouyer Exp $	*/
+/*	$NetBSD: interwave.c,v 1.8 1998/08/17 21:16:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ iwattach(sc)
 	iw_set_format(sc, AUDIO_ENCODING_ULAW, 1);
 	printf("%s: interwave version %s\n",
 		sc->sc_dev.dv_xname, iw_device.version);
-	audio_attach_mi(sc->iw_hw_if, 0, sc, &sc->sc_dev);
+	audio_attach_mi(sc->iw_hw_if, sc, &sc->sc_dev);
  }
 
 int 

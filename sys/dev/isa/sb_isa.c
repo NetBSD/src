@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.18 1998/06/29 22:42:09 thorpej Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.19 1998/08/17 21:16:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -46,6 +46,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/mulaw.h>
 
 #include <dev/isa/isavar.h>

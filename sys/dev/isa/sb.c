@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.62 1998/08/12 18:15:04 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.63 1998/08/17 21:16:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -50,6 +50,9 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
+
+#include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
@@ -180,29 +183,6 @@ sbmatch(sc)
 	} else
 		sc->sc_drq16 = sc->sc_drq8;
 	
-#ifdef NEWCONFIG
-	/*
-	 * If the IRQ wasn't compiled in, auto-detect it.
-	 */
-	if (sc->sc_irq == IRQUNK) {
-		sc->sc_irq = isa_discoverintr(sbforceintr, sc);
-		sbdsp_reset(sc);
-		if (ISSBPROCLASS(sc)) {
-			if (!SBP_IRQ_VALID(sc->sc_irq)) {
-				printf("%s: couldn't auto-detect interrupt\n",
-					sc->sc_dev.dv_xname);
-				return 0;
-			}
-		}
-		else {
-			if (!SB_IRQ_VALID(sc->sc_irq)) {
-				printf("%s: couldn't auto-detect interrupt\n",
-					sc->sc_dev.dv_xname);
-				return 0;
-			}
-		}
-	} else
-#endif
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_IRQ_VALID(sc->sc_irq)) {
 			printf("%s: configured irq %d invalid\n",
@@ -266,10 +246,9 @@ void
 sbattach(sc)
 	struct sbdsp_softc *sc;
 {
+	struct audio_attach_args arg;
 #if NMIDI > 0
 	struct midi_hw_if *mhw = &sb_midi_hw_if;
-#else
-	struct midi_hw_if *mhw = 0;
 #endif
 
 	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, sc->sc_ist,
@@ -286,9 +265,15 @@ sbattach(sc)
 			mhw = &sb_mpu401_hw_if;
 		}
 	}
+	midi_attach_mi(mhw, sc, &sc->sc_dev);
 #endif
 
-	audio_attach_mi(&sb_hw_if, mhw, sc, &sc->sc_dev);
+	audio_attach_mi(&sb_hw_if, sc, &sc->sc_dev);
+
+	arg.type = AUDIODEV_TYPE_OPL;
+	arg.hwif = 0;
+	arg.hdl = 0;
+	(void)config_found(&sc->sc_dev, &arg, audioprint);
 }
 
 /*

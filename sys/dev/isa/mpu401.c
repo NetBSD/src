@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu401.c,v 1.1 1998/08/07 00:01:00 augustss Exp $	*/
+/*	$NetBSD: mpu401.c,v 1.2 1998/08/17 21:16:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,8 +49,7 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <sys/audioio.h>
-#include <dev/audio_if.h>
+#include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>

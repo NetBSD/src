@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.3 1998/08/13 00:13:56 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.4 1998/08/17 21:16:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <sys/device.h>
 
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/midivar.h>
 
 #ifdef AUDIO_DEBUG
@@ -86,6 +87,17 @@ void	midiattach __P((struct device *, struct device *, void *));
 struct cfattach midi_ca = {
 	sizeof(struct midi_softc), midiprobe, midiattach
 };
+
+#ifdef MIDI_SAVE
+#define MIDI_SAVE_SIZE 100000
+int midicnt;
+struct {
+	int cnt;
+	u_char buf[MIDI_SAVE_SIZE];
+} midisave;
+#define MIDI_GETSAVE		_IOWR('m', 100, int)
+
+#endif
 
 extern struct cfdriver midi_cd;
 
@@ -354,6 +366,13 @@ midiopen(dev, flags, ifmt, p)
 	sc->pbus = 0;
 	sc->async = 0;
 
+#ifdef MIDI_SAVE
+	if (midicnt != 0) {
+		midisave.cnt = midicnt;
+		midicnt = 0;
+	}
+#endif
+
 	return 0;
 }
 
@@ -477,6 +496,10 @@ midi_start_output(sc, intr)
 		splx(s);
 		DPRINTFN(4, ("midi_start_output: %p i=%d, data=0x%02x\n", 
 			     sc, i, *outp));
+#ifdef MIDI_SAVE
+		midisave.buf[midicnt] = *outp;
+		midicnt = (midicnt + 1) % MIDI_SAVE_SIZE;
+#endif
 		error = sc->hw_if->output(sc->hw_hdl, *outp++);
 		if (outp >= mb->end)
 			outp = mb->start;
@@ -598,6 +621,12 @@ midiioctl(dev, cmd, addr, flag, p)
 		break;
 #endif
 
+#ifdef MIDI_SAVE
+	case MIDI_GETSAVE:
+		error = copyout(&midisave, *(void **)addr, sizeof midisave);
+  		break;
+#endif
+
 	default:
 		if (hw->ioctl)
 			error = hw->ioctl(sc->hw_hdl, cmd, addr, flag, p);
@@ -653,6 +682,28 @@ midi_getinfo(dev, mi)
 	    (sc = midi_cd.cd_devs[unit]) == NULL)
 		return;
 	sc->hw_if->getinfo(sc->hw_hdl, mi);
+}
+
+int	audioprint __P((void *, const char *));
+
+void
+midi_attach_mi(mhwp, hdlp, dev)
+	struct midi_hw_if *mhwp;
+	void *hdlp;
+	struct device *dev;
+{
+	struct audio_attach_args arg;
+
+#ifdef DIAGNOSTIC
+	if (mhwp == NULL) {
+		printf("midi_attach_mi: NULL\n");
+		return;
+	}
+#endif
+	arg.type = AUDIODEV_TYPE_MIDI;
+	arg.hwif = mhwp;
+	arg.hdl = hdlp;
+	(void)config_found(dev, &arg, audioprint);
 }
 
 #endif /* NMIDI > 0 */
