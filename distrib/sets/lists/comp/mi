@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.615 2003/09/09 22:10:33 itojun Exp $
+#	$NetBSD: mi,v 1.616 2003/09/12 19:57:28 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -8029,4 +8029,5 @@
 ./usr/share/mk/bsd.shlib.mk		comp-util-share
 ./usr/share/mk/bsd.subdir.mk		comp-util-share
 ./usr/share/mk/bsd.sys.mk		comp-util-share
+./usr/share/mk/bsd.x11.mk		comp-util-share
 ./var/db/libc.tags		comp-c-root
