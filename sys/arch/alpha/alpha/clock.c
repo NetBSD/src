@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp $ */
+/* $NetBSD: clock.c,v 1.32 2003/02/05 12:16:41 nakayama Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2003/02/05 12:16:41 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -223,8 +223,8 @@ inittodr(base)
 #ifdef DEBUG
 	printf("=>%ld (%d)\n", time.tv_sec, base);
 #endif
-	microset_time = time;
-	microset(curcpu(), NULL);
+	cc_microset_time = time;
+	cc_microset(curcpu());
 
 	if (!badbase) {
 		/*
@@ -260,11 +260,11 @@ resettodr()
 	if (!clockinitted)
 		return;
 
-	microset_time = time;
+	cc_microset_time = time;
 #if defined(MULTIPROCESSOR)
 	alpha_multicast_ipi(cpus_running, ALPHA_IPI_MICROSET);
 #endif	
-	microset(curcpu(), NULL);
+	cc_microset(curcpu());
 	
 	clock_secs_to_ymdhms(time.tv_sec, &dt);
 
