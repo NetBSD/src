@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.128 2001/01/26 09:42:49 itojun Exp $
+#	$NetBSD: bsd.prog.mk,v 1.129 2001/02/19 07:56:14 jmc Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -147,7 +147,7 @@ cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${PROG} ${OBJS} ${LOBJS} ${CLEANFILES}
 
-.if defined(SRCS)
+.if defined(SRCS) && !target(afterdepend)
 afterdepend: .depend
 	@(TMP=/tmp/_depend$$$$; \
 	    sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.ln:/' \
