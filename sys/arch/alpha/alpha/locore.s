@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.89 2001/04/10 10:09:45 ross Exp $ */
+/* $NetBSD: locore.s,v 1.90 2001/04/15 23:07:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.89 2001/04/10 10:09:45 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.90 2001/04/15 23:07:34 thorpej Exp $");
 
 #include "assym.h"
 
@@ -303,7 +303,7 @@ XNESTED(esigcode,0)
  * exception_return: return from trap, exception, or syscall
  */
 
-BSS(ssir, 8)
+IMPORT(ssir, 8)
 
 LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, 1f

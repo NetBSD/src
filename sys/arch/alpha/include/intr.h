@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.42 2001/04/14 00:45:13 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.43 2001/04/15 23:07:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ struct alpha_shared_intr {
 /*
  * simulated software interrupt register
  */
-extern u_int64_t ssir;
+extern unsigned long ssir;
 
 #define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
@@ -228,18 +228,6 @@ struct alpha_soft_intr {
 	unsigned long softintr_ipl;
 };
 
-#define	alpha_softintr_lock(asi, s)					\
-do {									\
-	(s) = splhigh();						\
-	simple_lock(&(asi)->softintr_slock);				\
-} while (/*CONSTCOND*/0)
-
-#define	alpha_softintr_unlock(asi, s)					\
-do {									\
-	simple_unlock(&(asi)->softintr_slock);				\
-	splx((s));							\
-} while (/*CONSTCOND*/0)
-
 void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
 void	softintr_init(void);
@@ -251,13 +239,15 @@ do {									\
 	struct alpha_soft_intr *__si = __sih->sih_intrhead;		\
 	int __s;							\
 									\
-	alpha_softintr_lock(__si, __s);					\
+	__s = splhigh();						\
+	simple_lock(&__si->softintr_slock);				\
 	if (__sih->sih_pending == 0) {					\
 		TAILQ_INSERT_TAIL(&__si->softintr_q, __sih, sih_q);	\
 		__sih->sih_pending = 1;					\
 		setsoft(__si->softintr_ipl);				\
 	}								\
-	alpha_softintr_unlock(__si, __s);				\
+	simple_unlock(&__si->softintr_slock);				\
+	splx(__s);							\
 } while (0)
 
 /* XXX For legacy software interrupts. */
