@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.60.2.5 1998/08/13 14:37:53 bouyer Exp $
+#	$NetBSD: files.isa,v 1.60.2.6 1998/09/11 16:23:15 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -248,7 +248,7 @@ define	mpu401
 file	dev/isa/mpu401.c		mpu401 & midi
 
 # the SoundBlaster DSP, or close likenesses; used by other drivers
-define	sbdsp
+define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
@@ -258,14 +258,16 @@ file	dev/isa/sb.c			sb needs-flag
 attach	sb at isa with sb_isa
 file	dev/isa/sb_isa.c		sb_isa needs-flag
 
+attach	opl at sbdsp with opl_sb
+file	dev/isa/opl_sb.c		opl_sb
+
 # ProAudio Spectrum
 device	pas: audio, isadma, sbdsp, mulaw, auconv
 attach	pas at isa
 file	dev/isa/pas.c			pas needs-flag
 
 # AD1848 (CS4248, CS4231, AD1845) audio codec support; used by other drivers
-define	ad1848
-file	dev/isa/ad1848.c		ad1848
+file	dev/isa/ad1848_isa.c		ad1848
 
 # ICS2101 mixer chip support; used by other drivers
 define	ics2101
@@ -289,11 +291,18 @@ attach	wss at isa with wss_isa
 file	dev/isa/wss_isa.c		wss_isa needs-flag
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess: audio, isadma, mulaw, auconv
+device	ess { } : audio, isadma, mulaw, auconv, midibus
 file	dev/isa/ess.c			ess needs-flag
 
 attach	ess at isa with ess_isa
 file	dev/isa/ess_isa.c		ess_isa needs-flag
+
+attach	opl at ess with opl_ess
+file	dev/isa/opl_ess.c		opl_ess
+
+# Yamaha OPL2/OPL3 FM synth
+attach	opl at isa with opl_isa
+file	dev/isa/opl_isa.c		opl_isa
 
 # Yamaha OPL3-SA3
 device	ym: audio, isadma, ad1848, auconv
