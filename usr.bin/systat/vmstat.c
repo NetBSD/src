@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.27 2000/06/04 16:06:26 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.28 2000/06/04 18:10:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.27 2000/06/04 16:06:26 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.28 2000/06/04 18:10:40 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -304,7 +304,7 @@ labelkre()
 	mvprintw(GENSTATROW, GENSTATCOL, "  Csw  Trp  Sys  Int  Sof  Flt");
 
 	mvprintw(GRAPHROW, GRAPHCOL,
-		"    . %% Sys    . %% User    . %% Nice    . %% Idle");
+		"    . %% Sy    . %% Us    . %% Ni    . %% In    . %% Id");
 	mvprintw(PROCSROW, PROCSCOL, "Proc:r  d  s  w");
 	mvprintw(GRAPHROW + 1, GRAPHCOL,
 		"|    |    |    |    |    |    |    |    |    |    |");
@@ -401,7 +401,7 @@ showkre()
 	/* 
 	 * Last CPU state not calculated yet.
 	 */
-	for (c = 0; c < CPUSTATES - 1; c++) {
+	for (c = 0; c < CPUSTATES; c++) {
 		i = cpuorder[c];
 		f1 = cputime(i);
 		f2 += f1;
@@ -409,12 +409,9 @@ showkre()
 		if (c == 0)
 			putfloat(f1, GRAPHROW, GRAPHCOL + 1, 5, 1, 0);
 		else
-			putfloat(f1, GRAPHROW, GRAPHCOL + 12 * c,
-				5, 1, 0);
-		move(GRAPHROW + 2, psiz);
+			putfloat(f1, GRAPHROW, GRAPHCOL + 10 * c + 1, 5, 1, 0);
+		mvhline(GRAPHROW + 2, psiz, cpuchar[c], l);
 		psiz += l;
-		while (l-- > 0)
-			addch(cpuchar[c]);
 	}
 
 	putint(ucount(), STATROW, STATCOL, 3);
