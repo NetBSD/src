@@ -1,4 +1,4 @@
-/*	$NetBSD: rtcreg.h,v 1.1.1.1 1999/09/16 12:23:32 takemura Exp $	*/
+/*	$NetBSD: rtcreg.h,v 1.2 1999/12/07 04:54:54 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -40,9 +40,22 @@
 #define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
 #define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
 
-#define	YRREF		1998
+#define	SEC2MIN	((unsigned)60/2)		/* 2seconds per minute */
+#define	SEC2HOUR ((unsigned)(60*SECMIN)/2)	/* 2seconds per hour */
+#define	SEC2DAY	((unsigned)(24*SECHOUR)/2)	/* 2seconds per day */
+#define	SEC2YR	((unsigned)(365*SECDAY)/2)	/* 2seconds per common year */
+
+#define	YRREF		1999
 #define	MREF		1
 #define	DREF		1
+
+#define YBASE		1900
+
+#define EPOCHOFF	0			/* epoch offset */
+#define EPOCHYEAR	1850	/* XXX */	/* WINCE epoch year */
+#define EPOCHMONTH	1			/* WINCE epoch month of year */
+#define EPOCHDATE	1			/* WINCE epoch date of month */
+
 #define	LEAPYEAR4(year)	((((year) % 4) == 0 && ((year) % 100) != 0) || ((year%400)) == 0)
 #define	LEAPYEAR2(year)	(((year) % 4) == 0)
 
