@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.77 2000/12/02 17:15:37 ragge Exp $
+#       $NetBSD: files.vax,v 1.78 2001/01/17 00:07:39 fvdl Exp $
 #
 # new style config file for vax architecture
 #
@@ -363,6 +363,7 @@ file	arch/vax/vax/udiv.s
 file	arch/vax/vax/trap.c
 file	arch/vax/vax/bus_dma.c
 file	arch/vax/vax/bus_mem.c
+file	arch/vax/vax/procfs_machdep.c	procfs
 file	arch/vax/vax/sgmap.c
 file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/findcpu.c

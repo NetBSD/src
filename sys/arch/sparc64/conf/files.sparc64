@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.41 2000/11/10 16:05:40 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.42 2001/01/17 00:07:38 fvdl Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -202,6 +202,7 @@ file	arch/sparc64/sparc64/kgdb_machdep.c kgdb
 file	arch/sparc64/sparc64/locore2.c
 file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/process_machdep.c
+file	arch/sparc64/sparc64/procfs_machdep.c	procfs
 file	arch/sparc64/sparc64/mem.c
 file	arch/sparc64/sparc64/openprom.c
 file	arch/sparc64/sparc64/openfirm.c
