@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.15 2002/05/15 13:39:22 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.16 2002/05/17 17:42:36 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 15, 2002
+.Dd May 18, 2002
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -123,6 +123,7 @@ These are:
 .It macppc Ta ffs, raw
 .It sparc Ta ffs, raw
 .It sun2 Ta ffs, raw
+.It sun3 Ta ffs, raw
 .El
 .Pp
 Perform the following steps to make a file system bootable:
@@ -217,6 +218,7 @@ The following machines are currently supported by
 .Sy sparc ,
 .Sy sparc64 ,
 .Sy sun2 ,
+.Sy sun3 ,
 .Sy vax
 .Ed
 .
@@ -411,7 +413,7 @@ The following people contributed to the various machine dependent
 back-ends:
 Simon Burge (pmax),
 Chris Demetriou (alpha),
-Matthew Fredette (sun2),
+Matthew Fredette (sun2, sun3),
 Matthew Green (sparc64),
 Ross Harvey (alpha),
 Paul Kranenburg (sparc),
