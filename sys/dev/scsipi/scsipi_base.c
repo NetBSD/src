@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.70 2002/03/28 22:01:22 christos Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.71 2002/04/01 20:37:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.70 2002/03/28 22:01:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.71 2002/04/01 20:37:42 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2139,8 +2139,7 @@ scsipi_create_completion_thread(arg)
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
 	if (kthread_create1(scsipi_completion_thread, chan,
-	    &chan->chan_thread, "%s:%d", adapt->adapt_dev->dv_xname,
-	    chan->chan_channel)) {
+	    &chan->chan_thread, "%s", chan->chan_name)) {
 		printf("%s: unable to create completion thread for "
 		    "channel %d\n", adapt->adapt_dev->dv_xname,
 		    chan->chan_channel);

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.47 2001/12/22 13:29:50 gehenna Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.48 2002/04/01 20:37:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.47 2001/12/22 13:29:50 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.48 2002/04/01 20:37:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,8 @@ atapibusattach(parent, self, aux)
 	struct scsipi_channel *chan = aux;
 
 	sc->sc_channel = chan;
+
+	chan->chan_name = sc->sc_dev.dv_xname;
 
 	/* ATAPI has no LUNs. */
 	chan->chan_nluns = 1;
