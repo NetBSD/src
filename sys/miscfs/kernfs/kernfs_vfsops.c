@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.39.2.5 2002/08/01 02:46:30 nathanw Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.39.2.6 2002/09/17 21:22:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.39.2.5 2002/08/01 02:46:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.39.2.6 2002/09/17 21:22:39 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -97,7 +97,6 @@ void
 kernfs_get_rrootdev()
 {
 	static int tried = 0;
-	int cmaj;
 
 	if (tried) {
 		/* Already did it once. */
@@ -107,15 +106,13 @@ kernfs_get_rrootdev()
 
 	if (rootdev == NODEV)
 		return;
-	for (cmaj = 0; cmaj < nchrdev; cmaj++) {
-		rrootdev = makedev(cmaj, minor(rootdev));
-		if (chrtoblk(rrootdev) == rootdev) {
+	rrootdev = devsw_blk2chr(rootdev);
+	if (rrootdev != NODEV) {
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_mount: rootdev = %u.%u; rrootdev = %u.%u\n",
 	    major(rootdev), minor(rootdev), major(rrootdev), minor(rrootdev));
 #endif
-			return;
-		}
+		return;
 	}
 	rrootdev = NODEV;
 	printf("kernfs_get_rrootdev: no raw root device\n");

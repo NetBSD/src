@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.28.2.6 2002/08/27 23:47:37 nathanw Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.28.2.7 2002/09/17 21:22:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.28.2.6 2002/08/27 23:47:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.28.2.7 2002/09/17 21:22:28 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -155,7 +155,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			 * Move this slot to end of LRU chain,
 			 * if not already there.
 			 */
-			if (ncp->nc_lru.tqe_next != 0) {
+			if (TAILQ_NEXT(ncp, nc_lru) != 0) {
 				TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 				TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 			}
@@ -230,7 +230,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	/*
 	 * Move this slot to end of LRU chain, if not already there.
 	 */
-	if (ncp->nc_lru.tqe_next != 0) {
+	if (TAILQ_NEXT(ncp, nc_lru) != 0) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	}

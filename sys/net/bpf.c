@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.60.2.5 2002/06/20 03:48:07 nathanw Exp $	*/
+/*	$NetBSD: bpf.c,v 1.60.2.6 2002/09/17 21:22:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.60.2.5 2002/06/20 03:48:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.60.2.6 2002/09/17 21:22:44 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -111,12 +111,25 @@ static int	bpf_movein __P((struct uio *, int, int,
 static void	bpf_attachd __P((struct bpf_d *, struct bpf_if *));
 static void	bpf_detachd __P((struct bpf_d *));
 static int	bpf_setif __P((struct bpf_d *, struct ifreq *));
-int		bpfpoll __P((dev_t, int, struct proc *));
 static __inline void
 		bpf_wakeup __P((struct bpf_d *));
 static void	catchpacket __P((struct bpf_d *, u_char *, u_int, u_int,
 				 void *(*)(void *, const void *, size_t)));
 static void	reset_d __P((struct bpf_d *));
+static int	bpf_getdltlist __P((struct bpf_d *, struct bpf_dltlist *));
+static int	bpf_setdlt __P((struct bpf_d *, u_int));
+
+dev_type_open(bpfopen);
+dev_type_close(bpfclose);
+dev_type_read(bpfread);
+dev_type_write(bpfwrite);
+dev_type_ioctl(bpfioctl);
+dev_type_poll(bpfpoll);
+
+const struct cdevsw bpf_cdevsw = {
+	bpfopen, bpfclose, bpfread, bpfwrite, bpfioctl,
+	nostop, notty, bpfpoll, nommap,
+};
 
 static int
 bpf_movein(uio, linktype, mtu, mp, sockp)
@@ -746,6 +759,26 @@ bpfioctl(dev, cmd, addr, flag, p)
 		break;
 
 	/*
+	 * Get a list of supported device parameters.
+	 */
+	case BIOCGDLTLIST:
+		if (d->bd_bif == 0)
+			error = EINVAL;
+		else
+			error = bpf_getdltlist(d, (struct bpf_dltlist *)addr);
+		break;
+
+	/*
+	 * Set device parameters.
+	 */
+	case BIOCSDLT:
+		if (d->bd_bif == 0)
+			error = EINVAL;
+		else
+			error = bpf_setdlt(d, *(u_int *)addr);
+		break;
+
+	/*
 	 * Set interface name.
 	 */
 	case BIOCGETIF:
@@ -946,6 +979,9 @@ bpf_setif(d, ifr)
 		if (ifp == 0 ||
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
+		/* skip additional entry */
+		if (bp->bif_driverp != (struct bpf_if **)&ifp->if_bpf)
+			continue;
 		/*
 		 * We found the requested interface.
 		 * If it's not up, return an error.
@@ -1078,7 +1114,7 @@ bpf_mcpy(dst_arg, src_arg, len)
 		dst += count;
 		len -= count;
 	}
-	return(dst_arg);
+	return (dst_arg);
 }
 
 /*
@@ -1227,13 +1263,28 @@ bpfattach(ifp, dlt, hdrlen)
 	struct ifnet *ifp;
 	u_int dlt, hdrlen;
 {
+
+	bpfattach2(ifp, dlt, hdrlen, &ifp->if_bpf);
+}
+
+/*
+ * Attach additional dlt for a interface to bpf.  dlt is the link layer type;
+ * hdrlen is the fixed size of the link header for the specified dlt
+ * (variable length headers not yet supported).
+ */
+void
+bpfattach2(ifp, dlt, hdrlen, driverp)
+	struct ifnet *ifp;
+	u_int dlt, hdrlen;
+	caddr_t *driverp;
+{
 	struct bpf_if *bp;
 	bp = (struct bpf_if *)malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
 	if (bp == 0)
 		panic("bpfattach");
 
 	bp->bif_dlist = 0;
-	bp->bif_driverp = (struct bpf_if **)&ifp->if_bpf;
+	bp->bif_driverp = (struct bpf_if **)driverp;
 	bp->bif_ifp = ifp;
 	bp->bif_dlt = dlt;
 
@@ -1267,9 +1318,7 @@ bpfdetach(ifp)
 	int i, s, cmaj;
 
 	/* locate the major number */
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == bpfopen)
-			break;
+	cmaj = cdevsw_lookup_major(&bpf_cdevsw);
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < NBPFILTER; ++i) {
@@ -1288,18 +1337,19 @@ bpfdetach(ifp)
 		}
 	}
 
+  again:
 	for (bp = bpf_iflist, pbp = &bpf_iflist;
 	     bp != NULL; pbp = &bp->bif_next, bp = bp->bif_next) {
 		if (bp->bif_ifp == ifp) {
 			*pbp = bp->bif_next;
 			free(bp, M_DEVBUF);
-			break;
+			goto again;
 		}
 	}
 }
 
 /*
- * Change the data link type of a BPF instance.
+ * Change the data link type of a interface.
  */
 void
 bpf_change_type(ifp, dlt, hdrlen)
@@ -1324,4 +1374,72 @@ bpf_change_type(ifp, dlt, hdrlen)
 	 * performance reasons and to alleviate alignment restrictions).
 	 */
 	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
+}
+
+/*
+ * Get a list of available data link type of the interface.
+ */
+static int
+bpf_getdltlist(d, bfl)
+	struct bpf_d *d;
+	struct bpf_dltlist *bfl;
+{
+	int n, error;
+	struct ifnet *ifp;
+	struct bpf_if *bp;
+
+	ifp = d->bd_bif->bif_ifp;
+	n = 0;
+	error = 0;
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_ifp != ifp)
+			continue;
+		if (bfl->bfl_list != NULL) {
+			if (n >= bfl->bfl_len)
+				return ENOMEM;
+			error = copyout(&bp->bif_dlt,
+			    bfl->bfl_list + n, sizeof(u_int));
+		}
+		n++;
+	}
+	bfl->bfl_len = n;
+	return error;
+}
+
+/*
+ * Set the data link type of a BPF instance.
+ */
+static int
+bpf_setdlt(d, dlt)
+	struct bpf_d *d;
+	u_int dlt;
+{
+	int s, error, opromisc;
+	struct ifnet *ifp;
+	struct bpf_if *bp;
+
+	if (d->bd_bif->bif_dlt == dlt)
+		return 0;
+	ifp = d->bd_bif->bif_ifp;
+	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
+		if (bp->bif_ifp == ifp && bp->bif_dlt == dlt)
+			break;
+	}
+	if (bp == NULL)
+		return EINVAL;
+	s = splnet();
+	opromisc = d->bd_promisc;
+	bpf_detachd(d);
+	bpf_attachd(d, bp);
+	reset_d(d);
+	if (opromisc) {
+		error = ifpromisc(bp->bif_ifp, 1);
+		if (error)
+			printf("%s: bpf_setdlt: ifpromisc failed (%d)\n",
+			    bp->bif_ifp->if_xname, error);
+		else
+			d->bd_promisc = 1;
+	}
+	splx(s);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.4.2.3 2001/11/14 19:18:03 nathanw Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.4.2.4 2002/09/17 21:23:14 nathanw Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.4.2.3 2001/11/14 19:18:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.4.2.4 2002/09/17 21:23:14 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -69,10 +69,10 @@ esp_rijndael_schedule(algo, sav)
 
 	k = (keyInstance *)sav->sched;
 	if (rijndael_makeKey(&k[0], DIR_DECRYPT, _KEYLEN(sav->key_enc) * 8,
-	    _KEYBUF(sav->key_enc)) < 0)
+	    (char *)_KEYBUF(sav->key_enc)) < 0)
 		return -1;
 	if (rijndael_makeKey(&k[1], DIR_ENCRYPT, _KEYLEN(sav->key_enc) * 8,
-	    _KEYBUF(sav->key_enc)) < 0)
+	    (char *)_KEYBUF(sav->key_enc)) < 0)
 		return -1;
 	return 0;
 }

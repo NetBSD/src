@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.130.2.12 2002/08/27 23:48:00 nathanw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.130.2.13 2002/09/17 21:23:03 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.130.2.12 2002/08/27 23:48:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.130.2.13 2002/09/17 21:23:03 nathanw Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -192,7 +192,7 @@ int	ip_forwsrcrt = IPFORWSRCRT;
 int	ip_directedbcast = IPDIRECTEDBCAST;
 int	ip_allowsrcrt = IPALLOWSRCRT;
 int	ip_mtudisc = IPMTUDISC;
-u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
+int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
@@ -1865,6 +1865,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_MTUDISCTIMEOUT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
+		if (ip_mtudisc_timeout < 0)
+			return (EINVAL);
 		if (ip_mtudisc_timeout_q != NULL)
 			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);
@@ -1887,13 +1889,13 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		    &hostzeroisbroadcast));
 #if NGIF > 0
 	case IPCTL_GIF_TTL:
-		return(sysctl_int(oldp, oldlenp, newp, newlen,
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip_gif_ttl));
 #endif
 
 #if NGRE > 0
 	case IPCTL_GRE_TTL:
-		return(sysctl_int(oldp, oldlenp, newp, newlen,
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip_gre_ttl));
 #endif
 

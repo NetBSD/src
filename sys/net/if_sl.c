@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.72.2.9 2002/07/12 01:40:30 nathanw Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.72.2.10 2002/09/17 21:22:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.72.2.9 2002/07/12 01:40:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.72.2.10 2002/09/17 21:22:52 nathanw Exp $");
 
 #include "sl.h"
 #if NSL > 0
@@ -313,7 +313,7 @@ slopen(dev, tp)
 					 * is no good, so we need to return
 					 * something else.
 					 */
-					return(ENOMEM); /* XXX ?! */
+					return (ENOMEM); /* XXX ?! */
 				}
 			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;

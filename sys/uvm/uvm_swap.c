@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.46.2.12 2002/08/01 02:47:09 nathanw Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46.2.13 2002/09/17 21:24:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.12 2002/08/01 02:47:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.13 2002/09/17 21:24:11 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -203,10 +203,6 @@ static struct pool vndbuf_pool;
 	pool_put(&vndbuf_pool, (void *)(vbp));				\
 }
 
-/* /dev/drum */
-bdev_decl(sw);
-cdev_decl(sw);
-
 /*
  * local variables
  */
@@ -237,6 +233,19 @@ static void sw_reg_iodone __P((struct buf *));
 static void sw_reg_start __P((struct swapdev *));
 
 static int uvm_swap_io __P((struct vm_page **, int, int, int));
+
+dev_type_read(swread);
+dev_type_write(swwrite);
+dev_type_strategy(swstrategy);
+
+const struct bdevsw swap_bdevsw = {
+	noopen, noclose, swstrategy, noioctl, nodump, nosize,
+};
+
+const struct cdevsw swap_cdevsw = {
+	nullopen, nullclose, swread, swwrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -573,6 +582,7 @@ sys_swapctl(l, v, retval)
 			break;
 		}
 		dumpdev = vp->v_rdev;
+		cpu_dumpconf();
 		break;
 
 	case SWAP_CTL:
@@ -772,6 +782,7 @@ swap_on(p, sdp)
 #ifdef NFS
 	extern int (**nfsv2_vnodeop_p) __P((void *));
 #endif /* NFS */
+	const struct bdevsw *bdev;
 	dev_t dev;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
 
@@ -810,8 +821,9 @@ swap_on(p, sdp)
 	 */
 	switch (vp->v_type) {
 	case VBLK:
-		if (bdevsw[major(dev)].d_psize == 0 ||
-		    (nblocks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
+		bdev = bdevsw_lookup(dev);
+		if (bdev == NULL || bdev->d_psize == NULL ||
+		    (nblocks = (*bdev->d_psize)(dev)) == -1) {
 			error = ENXIO;
 			goto bad;
 		}

@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.2.2.3 2002/04/01 07:49:00 nathanw Exp $
+ *	$Id: i4b_rbch.c,v 1.2.2.4 2002/09/17 21:23:38 nathanw Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.2.2.3 2002/04/01 07:49:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.2.2.4 2002/09/17 21:23:38 nathanw Exp $");
 
 #include "isdnbchan.h"
 
@@ -187,6 +187,13 @@ int isdnbchanpoll __P((dev_t dev, int events, struct proc *p));
 PDEVSTATIC int isdnbchanselect __P((dev_t dev, int rw, struct proc *p));
 #endif
 #endif
+
+#ifdef __NetBSD__
+const struct cdevsw isdnbchan_cdevsw = {
+	isdnbchanopen, isdnbchanclose, isdnbchanread, isdnbchanwrite,
+	isdnbchanioctl, nostop, notty, isdnbchanpoll, nommap,
+};
+#endif /* __NetBSD__ */
 
 #if BSD > 199306 && defined(__FreeBSD__)
 #define PDEVSTATIC	static

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.56.2.7 2002/06/20 03:50:39 nathanw Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.56.2.8 2002/09/17 21:24:05 nathanw Exp $	*/
 
 /*
  *
@@ -164,6 +164,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
  */
 #define UVM_KMF_NOWAIT	0x1			/* matches M_NOWAIT */
 #define UVM_KMF_VALLOC	0x2			/* allocate VA only */
+#define UVM_KMF_CANFAIL	0x4			/* caller handles failure */
 #define UVM_KMF_TRYLOCK	UVM_FLAG_TRYLOCK	/* try locking only */
 
 /*

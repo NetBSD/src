@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.16.6.1 2001/11/14 19:16:46 nathanw Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.16.6.2 2002/09/17 21:22:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.16.6.1 2001/11/14 19:16:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.16.6.2 2002/09/17 21:22:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,17 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.16.6.1 2001/11/14 19:16:46 nathanw Exp
 
 
 #define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
+
+dev_type_open(cttyopen);
+dev_type_read(cttyread);
+dev_type_write(cttywrite);
+dev_type_ioctl(cttyioctl);
+dev_type_poll(cttypoll);
+
+const struct cdevsw ctty_cdevsw = {
+	cttyopen, nullclose, cttyread, cttywrite, cttyioctl,
+	nullstop, notty, cttypoll, nommap, D_TTY
+};
 
 /*ARGSUSED*/
 int

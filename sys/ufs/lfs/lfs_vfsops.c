@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.64.2.11 2002/08/01 02:47:05 nathanw Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.64.2.12 2002/09/17 21:24:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.11 2002/08/01 02:47:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.12 2002/09/17 21:24:00 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.11 2002/08/01 02:47:05 nathanw
 #include <sys/socket.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -293,7 +294,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}
