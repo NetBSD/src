@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.14 2001/03/12 10:00:50 bouyer Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.15 2001/03/15 17:38:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -80,8 +80,8 @@ struct siop_softc {
 #define SF_BUS_DIFF	0x00000008 /* differential bus */
 
 #define SF_CHIP_LED0	0x00000100 /* led on GPIO0 */
-#define SF_CHIP_DBLR	0x00000200 /* clock doubler */
-#define SF_CHIP_QUAD	0x00000400 /* clock quadrupler */
+#define SF_CHIP_DBLR	0x00000200 /* clock doubler or quadrupler */
+#define SF_CHIP_QUAD	0x00000400 /* clock quadrupler, with PPL */
 #define SF_CHIP_FIFO	0x00000800 /* large fifo */
 #define SF_CHIP_PF	0x00001000 /* Intructions prefetch */
 #define SF_CHIP_RAM	0x00002000 /* on-board RAM */
