@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctermid.3,v 1.4 1995/02/25 15:39:12 cgd Exp $
+.\"	$NetBSD: ctermid.3,v 1.5 1997/07/14 23:19:39 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@ is assumed to point to an array at least
 .Dv L_ctermid
 (as defined in the include
 file
-.Aq Pa stdio.h )
+.Aq .Pa stdio.h )
 bytes long.
 .Pp
 The current implementation simply returns
@@ -84,7 +84,7 @@ The current implementation detects no error conditions.
 The
 .Xr ctermid
 function conforms to
-.St -p1003.1-88 .
+.St -p1003.1-90 .
 .Sh BUGS
 By default the
 .Fn ctermid
