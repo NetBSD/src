@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2000/08/02 17:46:20 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.42 2000/08/02 22:25:13 pooka Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -22,7 +22,7 @@ CPPFLAGS+=	-I. -I${.CURDIR} -I${DIST}/gdb/config -I${DIST}/gdb \
 CPPFLAGS+=	-DSVR4_SHARED_LIBS
 .endif
 
-.if ({MACHINE_ARCH} == "sh3") && (${OBJECT_FMT} != "ELF")
+.if (${MACHINE_ARCH} == "sh3") && (${OBJECT_FMT} != "ELF")
 CPPFLAGS+=	-DNO_SOLIB
 .endif
 
