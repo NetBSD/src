@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2001/11/15 18:06:14 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2001/11/23 17:39:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,8 +36,7 @@
 #ifndef	_HPCARM_VMPARAM_H_
 #define	_HPCARM_VMPARAM_H_
 
-/* for pt_entry_t definition */
-#include <machine/pte.h>
+#ifdef _KERNEL
 
 #include <arm/arm32/vmparam.h>
 
@@ -180,18 +179,6 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
 
-/*
- * define structure pmap_physseg: there is one of these structures
- * for each chunk of noncontig RAM you have.
- */
-
-#define	__HAVE_PMAP_PHYSSEG
-
-struct pmap_physseg {
-	struct pv_head *pvhead;		/* pv_entry array */
-	char *attrs;			/* attrs array */
-};
+#endif /* _KERNEL */
 
 #endif	/* _HPCARM_VMPARAM_H_ */
-
-/* End of vmparam.h */

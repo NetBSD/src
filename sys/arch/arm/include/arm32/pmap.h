@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.17 2001/11/19 18:41:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18 2001/11/23 17:39:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -33,8 +33,10 @@
 #ifndef	_ARM32_PMAP_H_
 #define	_ARM32_PMAP_H_
 
+#ifdef _KERNEL
+
 #include <machine/cpufunc.h>
-#include <machine/pte.h>
+#include <arm/arm32/pte.h>
 #include <uvm/uvm_object.h>
 
 /*
@@ -208,5 +210,7 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
 	(PD_SIZE - (KERNEL_SPACE_START >> PDSHIFT) * sizeof(pd_entry_t))
+
+#endif /* _KERNEL */
 
 #endif	/* _ARM32_PMAP_H_ */

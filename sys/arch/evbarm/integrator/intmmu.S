@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.1 2001/10/27 16:17:52 rearnsha Exp $ */
+/*	$NetBSD: intmmu.S,v 1.2 2001/11/23 17:39:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -28,10 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <arm/armreg.h>
-#include <arm/pte.h>
+#include <arm/arm32/pte.h>
 
 	.text
 
