@@ -3,6 +3,11 @@
 	PR target/13250
 	* config/sh/sh.md (rotlsi3): Use emit_move_insn.
 
+Fri Apr  4 17:43:52 2003  Olivier Hainque <hainque at act-europe dot fr>
+
+	* emit-rtl.c (get_mem_attrs): Adjust alignment tests determining
+	use of default attributes to agree MEM_ALIGN macro.
+
 2003-07-10  Kazu Hirata	 <kazu@cs.umass.edu>
 
 	PR c/11449
