@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.58 2003/04/02 10:39:26 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.59 2003/04/05 13:45:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.58 2003/04/02 10:39:26 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.59 2003/04/05 13:45:21 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -167,6 +167,11 @@ setup(dev)
 		printf("clean = %d\n", sblock->fs_clean);
 	if (doswap)
 		doskipclean = 0;
+	if (sblock->fs_old_postblformat == FS_42POSTBLFMT) {
+		pwarn("%sile system is in 4.2BSD format, check skipped\n",
+		    preen ? "f" : "** F");
+		return -1;
+	}
 	if (sblock->fs_clean & FS_ISCLEAN) {
 		if (doskipclean) {
 			pwarn("%sile system is clean; not checking\n",
