@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.97.4.1 2000/07/30 09:53:58 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.97.4.2 2000/07/30 09:57:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -366,19 +366,19 @@ msdosfs_setattr(v)
 	printf("msdosfs_setattr(): vp %p, vap %p, cred %p, p %p\n",
 	    ap->a_vp, vap, cred, ap->a_p);
 #endif
+	/*
+	 * Note we silently ignore uid or gid changes.
+	 */
 	if ((vap->va_type != VNON) || (vap->va_nlink != (nlink_t)VNOVAL) ||
 	    (vap->va_fsid != VNOVAL) || (vap->va_fileid != VNOVAL) ||
 	    (vap->va_blocksize != VNOVAL) || (vap->va_rdev != VNOVAL) ||
-	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL) ||
-	    (vap->va_uid != VNOVAL) || (vap->va_gid != VNOVAL)) {
+	    (vap->va_bytes != VNOVAL) || (vap->va_gen != VNOVAL)) {
 #ifdef MSDOSFS_DEBUG
 		printf("msdosfs_setattr(): returning EINVAL\n");
 		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
 		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
 		printf("    va_blocksize %lx, va_rdev %x, va_bytes %qx, va_gen %lx\n",
 		    vap->va_blocksize, vap->va_rdev, (long long)vap->va_bytes, vap->va_gen);
-		printf("    va_uid %x, va_gid %x\n",
-		    vap->va_uid, vap->va_gid);
 #endif
 		return (EINVAL);
 	}
