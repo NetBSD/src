@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
- *	$Id: trap.c,v 1.18 1994/05/17 10:34:00 cgd Exp $
+ *	$Id: trap.c,v 1.19 1994/05/20 10:44:55 mycroft Exp $
  */
 
 #include "param.h"
@@ -129,13 +129,13 @@ userret(p, pc, oticks)
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
 		 * If that happened after we setrunqueue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
+		 * we switch()'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
-		s = splclock();
+		s = splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		splx(s);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
