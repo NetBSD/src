@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.2 1998/10/05 02:40:26 mark Exp $	*/
+/*	$NetBSD: ebsa285_machdep.c,v 1.3 1998/10/12 03:32:51 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -183,6 +183,19 @@ extern void dumpsys		__P((void));
 extern int cold;
 
 /* A load of console goo. */
+#include "vga.h"
+#if (NVGA > 0)
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
+#include <dev/ic/vgareg.h>
+#include <dev/ic/vgavar.h>
+#endif
+
+#include "pckbc.h"
+#if (NPCKBC > 0)
+#include <dev/isa/pckbcvar.h>
+#endif
+
 #include "com.h"
 #if (NCOM > 0)
 #include <dev/ic/comreg.h>
@@ -193,7 +206,7 @@ extern int cold;
 #endif
 
 #ifndef CONSDEVNAME
-#define CONSDEVNAME "fcom"
+#define CONSDEVNAME "vga"
 #endif
 
 #define CONSPEED B38400
@@ -363,7 +376,7 @@ initarm(bootinfo)
 	 * Once all the memory map changes are complete we can call consinit()
 	 * and not have to worry about things moving.
 	 */
-	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);
+/*	fcomcnattach(DC21285_ARMCSR_BASE, comcnspeed, comcnmode);*/
 
 	/* Talk to the user */
 	printf("NetBSD/arm32 booting ...\n");
@@ -657,7 +670,7 @@ initarm(bootinfo)
 	 * Ok the DC21285 CSR registers have just moved.
 	 * Detach the diagnostic serial port and reattach at the new address.
 	 */
-	fcomcndetach();
+/*	fcomcndetach();*/
 
 	/*
 	 * XXX this should only be done in main() but it useful to
@@ -834,6 +847,14 @@ consinit(void)
 	if (strncmp(console, "fcom", 4) == 0
 	    || strncmp(console, "diag", 4) == 0)
 		fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed, comcnmode);
+#if (NVGA > 0)
+	else if (strncmp(console, "vga", 3) == 0) {
+		vga_cnattach(&isa_io_bs_tag, &isa_mem_bs_tag, -1, 0);
+#if (NPCKBC > 0)
+		pckbc_cnattach(&isa_io_bs_tag, PCKBC_KBD_SLOT);
+#endif	/* NPCKBC */
+	}
+#endif	/* NVGA */
 #if (NCOM > 0)
 	else if (strncmp(console, "com", 3) == 0) {
 		if (comcnattach(&isa_io_bs_tag, CONCOMADDR, comcnspeed,
