@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.19 1999/08/16 18:57:57 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.20 1999/12/23 10:15:05 kleink Exp $	*/
 
 /*
  * ====================================================
@@ -19,6 +19,7 @@
 #define _MATH_H_
 
 #include <sys/featuretest.h>
+#include <machine/math.h>
 
 /*
  * ANSI/POSIX
