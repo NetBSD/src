@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2001/03/20 16:04:01 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2001/03/22 18:34:08 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,6 +51,17 @@
 #include <sys/boot_flag.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#ifndef DB_ELFSIZE
+#error Must define DB_ELFSIZE!
+#endif
+#define ELFSIZE		DB_ELFSIZE
+#include <sys/exec_elf.h>
+#endif
 
 #include <dev/cons.h> /* consdev */
 
@@ -164,6 +175,18 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	pt_entry_t *pagetab, pte;
 	int i;
 	char *p;
+	size_t symbolsize;
+
+	/* symbol table size */
+	symbolsize = 0;
+	if (!memcmp(&end, "\177ELF", 4)) {
+		Elf_Ehdr *eh = (void *)end;
+		Elf_Shdr *sh = (void *)(end + eh->e_shoff);
+		for(i = 0; i < eh->e_shnum; i++, sh++)
+			if (sh->sh_offset > 0 &&
+			    (sh->sh_offset + sh->sh_size) > symbolsize)
+				symbolsize = sh->sh_offset + sh->sh_size;
+	}
 
 	/* clear BSS */
 	memset(edata, 0, end - edata);
@@ -180,7 +203,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	SHREG_TCR2 = 0;
 
 	/* start to determine heap area */
-	kernend = (vaddr_t)sh3_round_page(end);
+	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
 
 	/* setup bootinfo */
 	bootinfo = &__bootinfo;
@@ -224,15 +247,14 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		kernend += fssz;
 	}
 #endif
-	/* console requires platform information */
+
+	/* start console */
 	if (bootinfo->magic == BOOTINFO_MAGIC) {
 		platid.dw.dw0 = bootinfo->platid_cpu;
 		platid.dw.dw1 = bootinfo->platid_machine;
 	}
-
-	/* start console */
 	consinit();
-	
+
 	/* print kernel option */
 	for (i = 0; i < argc; i++)
 		DPRINTF(("option [%d]: %s\n", i, argv[i]));
@@ -308,6 +330,16 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* enable exception */
 	splraise(-1);
 	enable_intr();
+
+#ifdef DDB
+	/* initialize debugger */
+	if (symbolsize) {
+		ddb_init(symbolsize, &end, end + symbolsize);
+		DPRINTF(("symbol size = %d byte\n", symbolsize));
+		if (boothowto & RB_KDB)
+			Debugger();
+	}
+#endif	
 
 	/* setup proc0 stack */
 	proc0_sp = (vaddr_t)p + NBPG + USPACE - 16 - sizeof(struct trapframe);
