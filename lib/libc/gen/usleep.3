@@ -1,4 +1,4 @@
-.\"	$NetBSD: usleep.3,v 1.7 1997/11/02 07:23:09 mycroft Exp $
+.\"	$NetBSD: usleep.3,v 1.8 1997/11/24 19:56:30 kleink Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,8 @@
 .Nd suspend execution for interval of microseconds
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
-.Ft void
-.Fn usleep "unsigned int microseconds"
+.Ft int
+.Fn usleep "useconds_t microseconds"
 .Sh DESCRIPTION
 The
 .Fn usleep
@@ -54,13 +54,34 @@ have elapsed or a signal is delivered to the calling process and its
 action is to invoke a signal catching function or to terminate the
 process.  The suspension time may be longer than requested due to the
 scheduling of other activity by the system.
+.Pp
+The
+.Fa microseconds
+argument must be less than 1,000,000.  If The value of
+.Fa microseconds
+is 0, then the call has no effect.
 .Sh RETURN VALUE
+On successful completition,
+.Fn usleep
+returns 0.  Otherwhise, it returns -1 and sets errno to indicate the error.
+.Sh ERRORS
 The
 .Fn usleep
-function returns no value.
+function may fail if:
+.Bl -tag -width Er 
+.It Bq Er EINVAL
+The
+.Fa microseconds
+interval specified 1,000,000 or more microseconds.
+.El
 .Sh SEE ALSO
 .Xr nanosleep 2 ,
 .Xr sleep 3
+.Sh STANDARDS
+The
+.Fn usleep
+function conforms to
+.St -xpg4.2 .
 .Sh HISTORY
 The
 .Fn usleep
