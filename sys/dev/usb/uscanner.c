@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.7 2000/10/24 14:53:59 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.8 2000/11/03 04:00:15 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -85,6 +85,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_320U },
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_640U },
 	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_620U },
+	{ USB_VENDOR_ACERP, USB_PRODUCT_ACERP_ACERSCAN_C310U },
 
 	/* AGFA */
 	{ USB_VENDOR_AGFA, USB_PRODUCT_AGFA_SNAPSCAN1212U },
@@ -197,7 +198,7 @@ d_read_t  uscannerread;
 d_write_t uscannerwrite;
 d_poll_t  uscannerpoll;
 
-#define USCANNER_CDEV_MAJOR	155
+#define USCANNER_CDEV_MAJOR	156
 
 Static struct cdevsw uscanner_cdevsw = {
 	/* open */	uscanneropen,
@@ -458,7 +459,7 @@ uscanner_do_read(sc, uio, flag)
 
 		err = usbd_bulk_transfer(
 			sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
-			sc->sc_state & USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
+			USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 			sc->sc_bulkin_buffer, &tn,
 			"uscannerrb");
 		if (err) {
