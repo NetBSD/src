@@ -19,14 +19,17 @@
  */
 
 /*
- * $Id: if_ae.c,v 1.5 1994/01/30 01:14:49 briggs Exp $
+ * $Id: if_ae.c,v 1.6 1994/02/22 01:15:00 briggs Exp $
  */
 
 /*
  * Modification history
  *
  * $Log: if_ae.c,v $
- * Revision 1.5  1994/01/30 01:14:49  briggs
+ * Revision 1.6  1994/02/22 01:15:00  briggs
+ * Get rid of if_init assignment.
+ *
+ * Revision 1.5  1994/01/30  01:14:49  briggs
  * Include-cop strikes again.
  *
  * Revision 1.3  1993/12/21  03:18:04  briggs
@@ -289,7 +292,6 @@ ae_attach(parent, self, aux)
 	ifp->if_name = aecd.cd_name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
-	ifp->if_init = ae_init;
 	ifp->if_start = ae_start;
 	ifp->if_ioctl = ae_ioctl;
 	ifp->if_reset = ae_reset;
