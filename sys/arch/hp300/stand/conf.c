@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1996/06/26 17:44:26 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 
 #include "stand.h"
+#include "samachdep.h"
 
 #include <sys/socket.h>
 #include <net/if.h>
@@ -99,6 +100,37 @@ struct netif_driver *netif_drivers[] = {
 	&le_driver,
 };
 int	n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
+
+/*
+ * Physical unit/lun detection.
+ */
+int	punitzero __P((int, int, int *));
+
+int
+punitzero(ctlr, slave, punit)
+	int ctlr, slave, *punit;
+{
+
+	*punit = 0;
+	return (0);
+}
+
+extern	int ctpunit __P((int, int, int *));
+#define	xxpunit		punitzero
+#define	rdpunit		punitzero
+#define	sdpunit		punitzero
+#define	lepunit		punitzero
+
+struct punitsw punitsw[] = {
+	{ ctpunit },
+	{ xxpunit },
+	{ rdpunit },
+	{ xxpunit },
+	{ sdpunit },
+	{ xxpunit },
+	{ lepunit },
+};
+int	npunit = (sizeof(punitsw) / sizeof(punitsw[0]));
 
 /*
  * Filesystem configuration
