@@ -31,7 +31,7 @@
 #ifdef __STDC__
 #include <stdlib.h>
 #endif
-#ifdef _LIBC
+#if defined(_LIBC) || defined(__NetBSD__)
 # include <unistd.h>
 #endif
 #include <sys/types.h>
