@@ -1,0 +1,58 @@
+#
+# config file for da30
+
+device iio at root { slot = -1, ipl = 0 }
+
+device clock at iio
+file arch/da30/da30/clock.c		clock
+
+device gsp at iio: tty
+file arch/da30/dev/gsp.c		gsp needs-count
+
+device zs at iio: tty
+file arch/da30/dev/zs.c			zs gsp needs-count
+
+device wfc at iio { unit = -1 }
+device wd at wfc
+device fd at wfc
+file arch/da30/dev/wd.c			wd fd needs-count
+
+device sbic at iio { target = -1, lun = 0 }
+device sd at sbic
+file arch/da30/dev/sd.c			sd needs-count
+file arch/da30/dev/sias.s		sd
+
+device idc at iio { unit = -1 }
+device id at idc
+file arch/da30/dev/id.c			id needs-count
+
+major { sd = 1 }
+major { wd = 2 }
+major { id = 4 }
+major { vn = 6 }
+
+file arch/da30/da30/autoconf.c
+file arch/da30/da30/conf.c
+file arch/da30/da30/disksubr.c
+file arch/da30/da30/dkbad.c
+file arch/da30/da30/machdep.c		config-dependent
+file arch/da30/da30/mem.c
+file arch/da30/da30/pmap.c
+file arch/da30/da30/pmap_bootstrap.c
+file arch/da30/da30/raw_diskio.c
+file arch/da30/da30/sys_machdep.c
+file arch/da30/da30/trap.c
+file arch/da30/da30/vm_machdep.c
+
+file dev/cons.c
+
+#include ../../m68k/conf/files.m68k.newconf
+
+file	arch/m68k/m68k/db_disasm.c		ddb
+file	arch/m68k/m68k/db_interface.c		ddb
+file	arch/m68k/m68k/db_trace.c		ddb
+file	arch/m68k/m68k/in_cksum.c		inet
+file	arch/m68k/m68k/ns_cksum.c		ns
+file	arch/m68k/m68k/oc_cksum.s		inet
+file	arch/m68k/m68k/process_machdep.c
+file	arch/m68k/m68k/random.s
