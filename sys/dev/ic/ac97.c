@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.36 2002/11/06 13:41:22 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.37 2002/11/06 16:58:37 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.36 2002/11/06 13:41:22 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.37 2002/11/06 16:58:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ const struct ac97_source_info {
 	/* Record Gain */
 	{ AudioCrecord,		AudioNvolume,	NULL,
 	  AUDIO_MIXER_VALUE, WRAP(ac97_volume_stereo),
-	  AC97_REG_RECORD_GAIN, 0x8000, 4, 0, 1,
+	  AC97_REG_RECORD_GAIN, 0x8000, 4, 0, 1, 1,
 	},
 	/* Record Gain mic */
 	{ AudioCrecord,		AudioNmicrophone, NULL,
@@ -1160,7 +1160,7 @@ ac97_mixer_set_port(codec_if, cp)
 
 		newval = ((l & mask) << si->ofs);
 		if (value->num_channels == 2) {
-			newval |= ((r & mask) << (si->ofs + 8));
+			newval = (newval << 8) | ((r & mask) << si->ofs);
 			mask |= (mask << 8);
 		}
 		mask = mask << si->ofs;
@@ -1237,11 +1237,11 @@ ac97_mixer_get_port(codec_if, cp)
 			l = r = (val >> si->ofs) & mask;
 		} else {
 			if (!(as->host_flags & AC97_HOST_SWAPPED_CHANNELS)) {
-				l = (val >> si->ofs) & mask;
-				r = (val >> (si->ofs + 8)) & mask;
-			} else {	/* host has reversed channels */
-				r = (val >> si->ofs) & mask;
 				l = (val >> (si->ofs + 8)) & mask;
+				r = (val >> si->ofs) & mask;
+			} else {	/* host has reversed channels */
+				r = (val >> (si->ofs + 8)) & mask;
+				l = (val >> si->ofs) & mask;
 			}
 		}
 
