@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5.2.2 1998/11/07 00:56:56 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.5.2.3 1998/11/09 08:13:32 cgd Exp $
 
 .if !defined(__MAKEFILE_INC_INCLUDED__)
 __MAKEFILE_INC_INCLUDED__=1
@@ -19,7 +19,8 @@ DIST_NAME=binutils-${VERSION}
 .include <bsd.own.mk>
 TARGET=${MACHINE_GNU_ARCH}--netbsd
 
-INCLS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../common
+INCLS+=	-I${.OBJDIR} -I${.CURDIR} -I${.CURDIR}/../common \
+	-I${TOP}/lib/bfd
 
 INCLS+=	-I${BFDOBJ}
 INCLS+=	-I${dist}/bfd

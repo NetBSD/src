@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 1998/11/07 01:00:10 cgd Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 1998/11/09 08:13:33 cgd Exp $
 #
 
 DIST=	${.CURDIR}/../../dist
@@ -16,6 +16,7 @@ SRCS=	app.c as.c atof-generic.c bignum-copy.c cond.c expr.c \
 CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/arch/${TARGET_ARCH} \
 	-I${BFDOBJ} -I${DIST}/gas -I${DIST}/gas/config \
 	-I${DIST}/bfd -I${DIST}/include -I${DIST} \
+	-I${.CURDIR}/../../lib/bfd \
 	-D_GNU_SOURCE
 
 BFDOBJ!=cd ${.CURDIR}/../../lib/bfd; \
