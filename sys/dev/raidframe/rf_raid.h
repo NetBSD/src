@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.9 2000/02/13 04:53:57 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.10 2000/02/23 02:04:21 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -141,6 +141,20 @@ struct RF_Raid_s {
 	int     openings;       /* Number of IO's which can be scheduled
 				   simultaneously (high-level - not a 
 				   per-component limit)*/
+
+	int maxOutstanding;   /* maxOutstanding requests (per-component) */
+	int autoconfigure;    /* automatically configure this RAID set. 
+				 0 == no, 1 == yes */
+	int root_partition;   /* Use this set as /
+				 0 == no, 1 == yes*/
+	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0) 
+				 of this component.  Used for autoconfigure
+				 only. */
+	int config_order;     /* 0 .. n.  The order in which the component
+				 should be auto-configured.  E.g. 0 is will 
+				 done first, (and would become raid0).
+				 This may be in conflict with last_unit!!?! */
+	                      /* Not currently used. */
 
 	/*
          * Cleanup stuff
