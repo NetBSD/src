@@ -1,5 +1,4 @@
-.\" $NetBSD: pthread_suspend_np.3,v 1.1 2003/11/12 02:44:22 christos Exp $
-.\"
+.\" $NetBSD: pthread_suspend_np.3,v 1.2 2003/11/12 11:58:34 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,13 +34,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 30, 2003
+.Dd November 12, 2003
 .Dt PTHREAD_SUSPEND_NP 3
 .Os
 .Sh NAME
 .Nm pthread_suspend_np ,
 .Nm pthread_resume_np
-.Nd Suspend/resume the given thread.
+.Nd suspend/resume the given thread
 .Sh LIBRARY
 .Lb libpthread
 .Sh SYNOPSIS
@@ -53,18 +52,17 @@
 .Sh DESCRIPTION
 The
 .Fn pthread_suspend_np
-function suspends the 
+function suspends the
 .Ar thread
 given as argument.
 If
 .Ar thread
-is the current running thread
-as returned by
-.Xr thread_self 3 ,
+is the currently running thread as returned by
+.Xr pthread_self 3 ,
 the function fails and returns
 .Er EDEADLK .
-Otherwise, it removes the named thread from the running queue, and adds it
-to the suspended queue.
+Otherwise, it removes the named thread from the running queue, and
+adds it to the suspended queue.
 The
 .Ar thread
 will remain blocked until
@@ -72,23 +70,23 @@ will remain blocked until
 is called on it.
 .Pp
 .Fn pthread_resume_np
-resumes the 
+resumes the
 .Ar thread
 given as argument, if it was suspended.
 .Sh RETURN VALUES
 The
 .Fn pthread_suspend_np
-function returns 0 on success and an error number indicating the reason
-for the failure.
+function returns 0 on success and an error number indicating the
+reason for the failure.
 The
 .Fn pthread_resume_np
-always returns 0.
+function always returns 0.
 .Sh ERRORS
 .Fn pthread_suspend_np
 shall fail if:
 .Bl -tag -width Er
 .It Bq Er EDEADLK
-The thread requested to suspend was the current running thread.
+The thread requested to suspend was the currently running thread.
 .El
 .Pp
 .Fn pthread_resume_np
@@ -97,20 +95,22 @@ never fails.
 Some
 .Fn pthread_suspend_np
 implementations may allow suspending the current thread.
-This is dangerous, because the semantics of the function would then require
-the scheduler to schedule another thread, causing a thread context switch.
-Since that context switch can happen in a signal handler by someone calling
+This is dangerous, because the semantics of the function would then
+require the scheduler to schedule another thread, causing a thread
+context switch.
+Since that context switch can happen in a signal handler by someone
+calling
 .Fn pthread_suspend_np
 in a signal handler, this is currently not allowed.
 .Pp
 In
 .Fn pthread_resume_np
-we don't check if the 
+we don't check if the
 .Ar thread
-argument is not already suspended. Some implementations might return an
-error condition if
+argument is not already suspended.
+Some implementations might return an error condition if
 .Fn pthread_resume_np
 is called on a non-suspended thread.
 .Sh SEE ALSO
 .Xr pthread_attr_setcreatesuspend_np 3 ,
-.Xr pthread_self 3 
+.Xr pthread_self 3
