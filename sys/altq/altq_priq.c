@@ -1,3 +1,4 @@
+/*	$NetBSD: altq_priq.c,v 1.2 2000/12/14 08:49:50 thorpej Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
