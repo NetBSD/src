@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2005/02/20 10:28:49 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -73,7 +73,7 @@
 #if 0
 #define RCSID	"Id: main.c,v 1.148 2004/11/13 12:05:48 paulus Exp"
 #else
-__RCSID("$NetBSD: main.c,v 1.1.1.1 2005/02/20 10:28:49 cube Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -87,7 +87,6 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1 2005/02/20 10:28:49 cube Exp $");
 #include <fcntl.h>
 #include <syslog.h>
 #include <netdb.h>
-#include <utmp.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <sys/param.h>
@@ -243,6 +242,7 @@ static void create_pidfile __P((int pid));
 static void create_linkpidfile __P((int pid));
 static void cleanup __P((void));
 static void get_input __P((void));
+static const char *protocol_name __P((int));
 static void calltimeout __P((void));
 static struct timeval *timeleft __P((struct timeval *));
 static void kill_my_pg __P((int));
@@ -493,8 +493,14 @@ main(argc, argv)
 	/*
 	 * Open the loopback channel and set it up to be the ppp interface.
 	 */
+#ifdef USE_TDB
+	tdb_writelock(pppdb);
+#endif
 	fd_loop = open_ppp_loopback();
 	set_ifunit(1);
+#ifdef USE_TDB
+	tdb_writeunlock(pppdb);
+#endif
 	/*
 	 * Configure the interface and mark it up, etc.
 	 */
@@ -944,7 +950,7 @@ struct protocol_list {
 /*
  * protocol_name - find a name for a PPP protocol.
  */
-const char *
+static const char *
 protocol_name(proto)
     int proto;
 {
@@ -1671,7 +1677,7 @@ run_program(prog, args, must_exist, done, arg)
 	syslog(LOG_ERR, "Can't execute %s: %m", prog);
 	closelog();
     }
-    _exit(-1);
+    _exit(1);
 }
 
 
@@ -1928,41 +1934,6 @@ script_unsetenv(var)
 #ifdef USE_TDB
     if (pppdb != NULL)
 	update_db_entry();
-#endif
-}
-
-/*
- * Any arbitrary string used as a key for locking the database.
- * It doesn't matter what it is as long as all pppds use the same string.
- */
-#define PPPD_LOCK_KEY	"pppd lock"
-
-/*
- * lock_db - get an exclusive lock on the TDB database.
- * Used to ensure atomicity of various lookup/modify operations.
- */
-void lock_db()
-{
-#ifdef USE_TDB
-	TDB_DATA key;
-
-	key.dptr = PPPD_LOCK_KEY;
-	key.dsize = strlen(key.dptr);
-	tdb_chainlock(pppdb, key);
-#endif
-}
-
-/*
- * unlock_db - remove the exclusive lock obtained by lock_db.
- */
-void unlock_db()
-{
-#ifdef USE_TDB
-	TDB_DATA key;
-
-	key.dptr = PPPD_LOCK_KEY;
-	key.dsize = strlen(key.dptr);
-	tdb_chainunlock(pppdb, key);
 #endif
 }
 

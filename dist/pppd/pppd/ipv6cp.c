@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.1.1.1 2005/02/20 10:28:47 cube Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -145,7 +145,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.20 2004/11/13 02:28:15 paulus Exp"
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.1.1.1 2005/02/20 10:28:47 cube Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
 #endif
 #endif
 
@@ -160,6 +160,7 @@ __RCSID("$NetBSD: ipv6cp.c,v 1.1.1.1 2005/02/20 10:28:47 cube Exp $");
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -203,6 +204,7 @@ static int  ipv6cp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
 static void ipv6cp_up __P((fsm *));		/* We're UP */
 static void ipv6cp_down __P((fsm *));		/* We're DOWN */
 static void ipv6cp_finished __P((fsm *));	/* Don't need lower layer */
+static char *llv6_ntoa __P((eui64_t));
 
 fsm ipv6cp_fsm[NUM_PPP];		/* IPV6CP fsm structure */
 
@@ -339,9 +341,10 @@ setifaceid(argv)
     struct in6_addr addr;
     static int prio_local, prio_remote;
 
+#define s6_addr32 __u6_addr.__u6_addr32 /* non-standard */
 #define VALIDID(a) ( (((a).s6_addr32[0] == 0) && ((a).s6_addr32[1] == 0)) && \
 			(((a).s6_addr32[2] != 0) || ((a).s6_addr32[3] != 0)) )
-    
+
     arg = *argv;
     if ((comma = strchr(arg, ',')) == NULL)
 	comma = arg + strlen(arg);
@@ -386,8 +389,6 @@ setifaceid(argv)
     return 1;
 }
 
-char *llv6_ntoa(eui64_t ifaceid);
-
 static void
 printifaceid(opt, printer, arg)
     option_t *opt;
@@ -406,13 +407,13 @@ printifaceid(opt, printer, arg)
 /*
  * Make a string representation of a network address.
  */
-char *
+static char *
 llv6_ntoa(ifaceid)
     eui64_t ifaceid;
 {
     static char b[64];
 
-    sprintf(b, "fe80::%s", eui64_ntoa(ifaceid));
+    snprintf(b, sizeof(b), "fe80::%s", eui64_ntoa(ifaceid));
     return b;
 }
 
@@ -1417,10 +1418,11 @@ ipv6cp_script(script)
     char strspeed[32], strlocal[32], strremote[32];
     char *argv[8];
 
-    sprintf(strspeed, "%d", baud_rate);
-    strcpy(strlocal, llv6_ntoa(ipv6cp_gotoptions[0].ourid));
-    strcpy(strremote, llv6_ntoa(ipv6cp_hisoptions[0].hisid));
-
+    snprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
+    strlcpy(strlocal, llv6_ntoa(ipv6cp_gotoptions[0].ourid), sizeof(strlocal));
+    strlcpy(strremote, llv6_ntoa(ipv6cp_hisoptions[0].hisid),
+      sizeof(strremote));
+ 
     argv[0] = script;
     argv[1] = ifname;
     argv[2] = devnam;
