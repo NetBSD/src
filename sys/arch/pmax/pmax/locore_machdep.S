@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.5 1998/03/25 06:22:20 jonathan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.6 1998/03/31 11:04:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,10 +59,15 @@
  */
 
 #include <mips/asm.h>
+#include <mips/cpuregs.h>	/* XXX - misnomer? */
+
 #include "opt_dec_3100.h"
+#include "opt_dec_5100.h"
+#include "opt_dec_5400.h"
 
 	.set	noreorder
-#ifdef DEC_3100
+#if defined(DEC_3100) || defined(DEC_5100)
+
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
  * bits of padding per 32bit word (e.g., for pmin/pmax  sii (and lance) DMA).
@@ -135,7 +140,33 @@ LEAF(CopyFromBuffer)
 	j	ra
 	nop
 END(CopyFromBuffer)
-#endif /* DEC_3100 */
+#endif /* DEC_3100 || DEC_5100 */
+
+
+/*
+ * Write-buffer flush for writebuffer hardware on DEC mips r2000a
+ */
+#if defined(DEC_5100) || defined(DEC_5400)
+LEAF(dec_mips1_wbflush)
+        mfc0	v0, MIPS_COP_0_STATUS_REG	# save original SR in v0
+	li	t0, 0x80000000			# set CU3 bit
+	or	v1, v0 ,t0			# v1 = v0 | 0x80000000
+	nop
+	mtc0	v1, MIPS_COP_0_STATUS_REG
+	nop				/* two  more cycles to complete */
+ 	nop
+
+1:						# spin 
+	bc3f    1b				# until write buffer drained
+        nop                     		# (branch delay slot)
+
+        mtc0    v0, MIPS_COP_0_STATUS_REG	# restore SR on exit
+        nop
+        j       ra
+        nop
+END(dec_mips1_wbflush)
+#endif	/* defined(DEC_5100) || defined(DEC_5400) */
+
 
 /*
  * Interrupt counters for vmstat.
