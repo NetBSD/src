@@ -6,8 +6,6 @@
 # and the console is the controlling terminal.
 
 stty status '^T'
-# yellow characters with blue background
-echo -n "[3;30x"
 
 # Set shell to ignore SIGINT (2), but not children;
 # shell catches SIGQUIT (3) and returns to single user after fsck.
@@ -99,6 +97,7 @@ fi
 #quotaon -a
 
 # build ps databases
+echo 'building databases...'
 kvm_mkdb /386bsd
 dev_mkdb
 
@@ -146,8 +145,8 @@ if [ X${name_server} = X"YES" -a -r /etc/named.boot ]; then
 fi
 
 # $rwhod is imported from /etc/netstart;
-# if $rwhod is set to something other than NO, rwhod is run.
-if [ ${rwhod-NO} != "NO" ]; then
+# if $rwhod == YES, rwhod is run.
+if [ X${rwhod} != X"YES" ]; then
 	echo -n ' rwhod';	rwhod
 fi
 
@@ -169,6 +168,4 @@ sh /etc/rc.local
 
 date
 
-# reset to normal (no colors)
-echo -n "[0x"
 exit 0
