@@ -1,4 +1,4 @@
-/* $NetBSD: mountd.c,v 1.47 1998/10/29 12:57:02 christos Exp $	 */
+/* $NetBSD: mountd.c,v 1.48 1998/10/29 14:13:27 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.47 1998/10/29 12:57:02 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.48 1998/10/29 14:13:27 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -791,7 +791,7 @@ get_exportlist(n)
 	int has_host, exflags, got_nondir, dirplen, num, i;
 	FILE *exp_file;
 	char *line;
-	size_t lineno, len;
+	size_t lineno = 0, len;
 
 
 	/*
@@ -1056,7 +1056,8 @@ getexp_err(line, lineno, ep, grp)
 {
 	struct grouplist *tgrp;
 
-	syslog(LOG_ERR, "Bad exports list at line %d: %s", lineno, line);
+	syslog(LOG_ERR, "Bad exports list at line %ld: %s",
+	    (unsigned long)lineno, line);
 	if (ep && (ep->ex_flag & EX_LINKED) == 0)
 		free_exp(ep);
 	while (grp) {
