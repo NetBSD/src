@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.19 2003/12/29 06:19:28 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.20 2003/12/29 06:30:42 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.19 2003/12/29 06:19:28 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.20 2003/12/29 06:30:42 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -41,13 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.19 2003/12/29 06:19:28 oster Ex
 /*
  * Kernel
  */
-int
-rf_lkmgr_mutex_init(m)
-decl_lock_data(, *m)
-{
-	lockinit(m,PRIBIO,"RAIDframe lock",0,0);
-	return(0);
-}
 
 #if 0
 int
