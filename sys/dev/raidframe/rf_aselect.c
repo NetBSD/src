@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.18 2004/03/19 02:27:45 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.19 2004/03/20 21:25:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.18 2004/03/19 02:27:45 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.19 2004/03/20 21:25:55 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -501,45 +501,41 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				stripeFuncs = stripeFuncs->next;
 			}
 			RF_ASSERT(stripeNum == numStripesBailed);
-			if (numStripeUnitsBailed > 0) {
-				RF_ASSERT(stripeUnitNum == numStripeUnitsBailed);
-				
-				failed_stripe = failed_stripes_list;
-				while (failed_stripe) {
-					asmhle = failed_stripe->asmh_u;
-					while (asmhle) {
-						tmpasmhle= asmhle;
-						asmhle = tmpasmhle->next;
-						rf_FreeAccessStripeMap(tmpasmhle->asmh);
-						rf_FreeASMHeaderListElem(tmpasmhle);
-					}
+			RF_ASSERT(stripeUnitNum == numStripeUnitsBailed);
 
-					asmhle = failed_stripe->asmh_b;
-					while (asmhle) {
-						tmpasmhle= asmhle;
-						asmhle = tmpasmhle->next;
-						rf_FreeAccessStripeMap(tmpasmhle->asmh);
-						rf_FreeASMHeaderListElem(tmpasmhle);
-					}
-					
-					vfple = failed_stripe->vfple;
-					while (vfple) {
-						tmpvfple = vfple;
-						vfple = tmpvfple->next;
-						rf_FreeVFPListElem(tmpvfple);
-					}
+			failed_stripe = failed_stripes_list;
+			while (failed_stripe) {
 
-					vfple = failed_stripe->bvfple;
-					while (vfple) {
-						tmpvfple = vfple;
-						vfple = tmpvfple->next;
-						rf_FreeVFPListElem(tmpvfple);
-					}
-
-					tmpfailed_stripe = failed_stripe;
-					failed_stripe = tmpfailed_stripe->next;
-					rf_FreeFailedStripeStruct(tmpfailed_stripe);
+				asmhle = failed_stripe->asmh_u;
+				while (asmhle) {
+					tmpasmhle= asmhle;
+					asmhle = tmpasmhle->next;
+					rf_FreeASMHeaderListElem(tmpasmhle);
 				}
+
+				asmhle = failed_stripe->asmh_b;
+				while (asmhle) {
+					tmpasmhle= asmhle;
+					asmhle = tmpasmhle->next;
+					rf_FreeASMHeaderListElem(tmpasmhle);
+				}
+				vfple = failed_stripe->vfple;
+				while (vfple) {
+					tmpvfple = vfple;
+					vfple = tmpvfple->next;
+					rf_FreeVFPListElem(tmpvfple);
+				}
+				
+				vfple = failed_stripe->bvfple;
+				while (vfple) {
+					tmpvfple = vfple;
+					vfple = tmpvfple->next;
+					rf_FreeVFPListElem(tmpvfple);
+				}
+				
+				tmpfailed_stripe = failed_stripe;
+				failed_stripe = tmpfailed_stripe->next;
+				rf_FreeFailedStripeStruct(tmpfailed_stripe);
 			}
 		}
 		while (stripeFuncsList != NULL) {
