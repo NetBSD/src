@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.76 2003/03/19 17:56:58 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.77 2003/03/25 21:56:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.76 2003/03/19 17:56:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.77 2003/03/25 21:56:20 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -527,4 +527,81 @@ pci_get_powerstate(pci_chipset_tag_t pc, pcitag_t tag)
 	}
 
 	return (PCI_PWR_D0);
+}
+
+/*
+ * Vital Product Data (PCI 2.2)
+ */
+
+int
+pci_vpd_read(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
+    pcireg_t *data)
+{
+	uint32_t reg;
+	int ofs, i, j;
+
+	KASSERT(data != NULL);
+	KASSERT((offset + count) < 0x7fff);
+
+	if (pci_get_capability(pc, tag, PCI_CAP_VPD, &ofs, &reg) == 0)
+		return (1);
+
+	for (i = 0; i < count; offset += sizeof(*data), i++) {
+		reg &= 0x0000ffff;
+		reg &= ~PCI_VPD_OPFLAG;
+		reg |= PCI_VPD_ADDRESS(offset);
+		pci_conf_write(pc, tag, ofs, reg);
+
+		/*
+		 * PCI 2.2 does not specify how long we should poll
+		 * for completion nor whether the operation can fail.
+		 */
+		j = 0;
+		do {
+			if (j++ == 20)
+				return (1);
+			delay(4);
+			reg = pci_conf_read(pc, tag, ofs);
+		} while ((reg & PCI_VPD_OPFLAG) == 0);
+		data[i] = pci_conf_read(pc, tag, PCI_VPD_DATAREG(ofs));
+	}
+
+	return (0);
+}
+
+int
+pci_vpd_write(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
+    pcireg_t *data)
+{
+	pcireg_t reg;
+	int ofs, i, j;
+
+	KASSERT(data != NULL);
+	KASSERT((offset + count) < 0x7fff);
+
+	if (pci_get_capability(pc, tag, PCI_CAP_VPD, &ofs, &reg) == 0)
+		return (1);
+
+	for (i = 0; i < count; offset += sizeof(*data), i++) {
+		pci_conf_write(pc, tag, PCI_VPD_DATAREG(ofs), data[i]);
+
+		reg &= 0x0000ffff;
+		reg &= ~PCI_VPD_OPFLAG;
+		reg |= PCI_VPD_ADDRESS(offset);
+		pci_conf_write(pc, tag, ofs, reg);
+
+		/*
+		 * PCI 2.2 does not specify how long we should poll
+		 * for completion nor whether the operation can fail.
+		 */
+		j = 0;
+		do {
+			if (j++ == 20)
+				return (1);
+			delay(1);
+			reg = pci_conf_read(pc, tag, ofs);
+		} while ((reg & PCI_VPD_OPFLAG) == 0);
+	}
+
+	return (0);
 }
