@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.42 1998/02/10 14:10:08 mrg Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.43 1998/06/21 22:18:16 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -93,7 +93,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	int got_buf = 0, nra, error = 0, n = 0, on = 0, not_readin, en, enn;
 	int enough = 0;
 	struct dirent *dp, *pdp;
-	off_t curoff = 0;
+	off_t curoff = 0, offdiff;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
@@ -269,9 +269,9 @@ again:
 			}
 		}
 		n = min((unsigned)(biosize - on), uio->uio_resid);
-		diff = np->n_size - uio->uio_offset;
-		if (diff < n)
-			n = diff;
+		offdiff = np->n_size - uio->uio_offset;
+		if (offdiff < (off_t)n)
+			n = (int)offdiff;
 		if (not_readin && n > 0) {
 			if (on < bp->b_validoff || (on + n) > bp->b_validend) {
 				if (!got_buf) {
