@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.607 2004/01/26 14:20:42 blymn Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.608 2004/01/28 17:06:09 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.609 2004/01/26 14:18:13 blymn Exp 
+ *	NetBSD: pcidevs,v 1.610 2004/01/28 17:05:40 chs Exp 
  */
 
 /*
@@ -3370,10 +3370,46 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "QuickStep 1000 ISDN card",
 	},
 	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPPFC,
+	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_GLORIAXL,
+	    0,
+	    "Elsa",
+	    "Gloria XL 1624",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP6000,
 	    0,
 	    "Emulex",
-	    "\"Light Pulse\" FibreChannel adapter",
+	    "LP6000 FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982,
+	    0,
+	    "Emulex",
+	    "LP982 FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP7000,
+	    0,
+	    "Emulex",
+	    "LP7000 FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000,
+	    0,
+	    "Emulex",
+	    "LP8000 FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9000,
+	    0,
+	    "Emulex",
+	    "LP9000 FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9802,
+	    0,
+	    "Emulex",
+	    "LP9802 FibreChannel adapter",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
@@ -3704,6 +3740,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Galileo Technology",
 	    "GT-64011 System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET,
+	    0,
+	    "Galileo Technology",
+	    "SK-NET Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
@@ -5584,6 +5626,36 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "ITT3204 MPEG Decoder",
 	},
 	{
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
+	    0,
+	    "JNI Corporation",
+	    "JNIC-1460 Fibre-Channel adapter",
+	},
+	{
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1560,
+	    0,
+	    "JNI Corporation",
+	    "JNIC-1560 dual Fibre-Channel adapter",
+	},
+	{
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCI1063,
+	    0,
+	    "JNI Corporation",
+	    "FCI-1063 Fibre-Channel adapter",
+	},
+	{
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCX26562,
+	    0,
+	    "JNI Corporation",
+	    "FCX2-6562 dual Fibre-Channel adapter",
+	},
+	{
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCX6562,
+	    0,
+	    "JNI Corporation",
+	    "FCX-6562 Fibre-Channel adapter",
+	},
+	{
 	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_NE2KETHER,
 	    0,
 	    "KTI",
@@ -6610,16 +6682,64 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCIB,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_SMBUS,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 SMBus Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_ATA133,
 	    0,
 	    "Nvidia Corporation",
 	    "nForce2 ATA133 IDE",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_NET,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Ethernet",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_OHCI,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_EHCI,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 USB2 Host Controller",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
 	    0,
 	    "Nvidia Corporation",
 	    "nForce2 MCP-T AC-97",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AP,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 MCP-T Audio Processing Unit",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PPB,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_FW,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Firewire Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
@@ -6667,7 +6787,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB,
 	    0,
 	    "Nvidia Corporation",
-	    "nforce3 PCI-PCI bridge",
+	    "nForce3 PCI-PCI bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
@@ -6830,6 +6950,48 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Nvidia Corporation",
 	    "nForce ATA100 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PPB2,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 PCI-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM1,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM2,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM3,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM4,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Memory Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM5,
+	    0,
+	    "Nvidia Corporation",
+	    "nForce2 Memory Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX_IGP,
@@ -7100,6 +7262,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Opti",
 	    "82C701",
+	},
+	{
+	    PCI_VENDOR_PACKETENGINES, PCI_PRODUCT_PACKETENGINES_GNICII,
+	    0,
+	    "Packet Engines",
+	    "G-NIC II Ethernet",
 	},
 	{
 	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD2000,
@@ -13126,6 +13294,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_JNI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "JNI Corporation",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_AVM, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "AVM",
@@ -13285,6 +13459,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADMTEK, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ADMtek",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_PACKETENGINES, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Packet Engines",
 	    NULL,
 	},
 	{
