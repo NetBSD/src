@@ -1,4 +1,4 @@
-/*	$NetBSD: layout.h,v 1.4 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: layout.h,v 1.5 2003/10/03 15:32:06 christos Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -46,14 +46,14 @@
 #define  x_brkdn	15
 #define  y_brkdn	1
 #define  x_mem		8
-#define  y_mem		3
+#define  y_mem		(2 + ncpu)
 #define  x_swap 	6
-#define  y_swap 	4
-#define  y_message	5
+#define  y_swap 	(3 + ncpu)
+#define  y_message	(4 + ncpu)
 #define  x_header	0
-#define  y_header	6
+#define  y_header	(5 + ncpu)
 #define  x_idlecursor	0
-#define  y_idlecursor	5
-#define  y_procs	7
+#define  y_idlecursor	(4 + ncpu)
+#define  y_procs	(6 + ncpu)
 
 #define  y_cpustates	2

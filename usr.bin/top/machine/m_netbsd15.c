@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.19 2003/07/26 20:34:14 salo Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.20 2003/10/03 15:32:06 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -16,9 +16,9 @@
  * -
  * This is the machine-dependent module for NetBSD-1.5 and later
  * works for:
- *	NetBSD-1.5ZC
+ *	NetBSD-1.6ZC
  * and should work for:
- *	NetBSD-1.6	(when released)
+ *	NetBSD-2.0	(when released)
  * -
  * top does not need to be installed setuid or setgid with this module.
  *
@@ -36,12 +36,12 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.19 2003/07/26 20:34:14 salo Exp $
+ * $Id: m_netbsd15.c,v 1.20 2003/10/03 15:32:06 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.19 2003/07/26 20:34:14 salo Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.20 2003/10/03 15:32:06 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -118,9 +118,10 @@ static int ccpu;
 
 /* these are for calculating cpu state percentages */
 
-static u_int64_t cp_time[CPUSTATES];
-static u_int64_t cp_old[CPUSTATES];
-static u_int64_t cp_diff[CPUSTATES];
+static int ncpu = 0;
+static u_int64_t *cp_time;
+static u_int64_t *cp_old;
+static u_int64_t *cp_diff;
 
 /* these are for detailing the process states */
 
@@ -133,7 +134,7 @@ char *procstatenames[] = {
 
 /* these are for detailing the cpu states */
 
-int cpu_states[CPUSTATES];
+int *cpu_states;
 char *cpustatenames[] = {
 	"user", "nice", "system", "interrupt", "idle", NULL
 };
@@ -212,6 +213,37 @@ machine_init(statics)
 	if ((kd = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, "kvm_open")) == NULL)
 		return -1;
 
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1) {
+		fprintf(stderr, "top: sysctl hw.ncpu failed: %s\n",
+		    strerror(errno));
+		return(-1);
+	}
+	cp_time = malloc(sizeof(cp_time[0]) * CPUSTATES * ncpu);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CP_TIME;
+	size = sizeof(cp_time[0]) * CPUSTATES * ncpu;
+	if (sysctl(mib, 2, cp_time, &size, NULL, 0) < 0) {
+		fprintf(stderr, "top: sysctl kern.cp_time failed: %s\n",
+		    strerror(errno));
+		return(-1);
+	}
+	/* Handle old call that returned only aggregate */
+	if (size == sizeof(cp_time[0]) * CPUSTATES)
+		ncpu = 1;
+
+	cpu_states = malloc(sizeof(cpu_states[0]) * CPUSTATES * ncpu);
+	cp_old = malloc(sizeof(cp_old[0]) * CPUSTATES * ncpu);
+	cp_diff = malloc(sizeof(cp_diff[0]) * CPUSTATES * ncpu);
+	if (cpu_states == NULL || cp_time == NULL || cp_old == NULL ||
+	    cp_diff == NULL) {
+		fprintf(stderr, "top: machine_init: %s\n",
+		    strerror(errno));
+		return(-1);
+	}
+
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CCPU;
 	size = sizeof(ccpu);
@@ -250,6 +282,7 @@ machine_init(statics)
 	pageshift -= LOG1024;
 
 	/* fill in the statics information */
+	statics->ncpu = ncpu;
 	statics->procstate_names = procstatenames;
 	statics->cpustate_names = cpustatenames;
 	statics->memory_names = memorynames;
@@ -283,12 +316,12 @@ get_system_info(si)
 	struct uvmexp_sysctl uvmexp;
 	struct swapent *sep, *seporig;
 	u_int64_t totalsize, totalinuse;
-	int size, inuse, ncounted;
+	int size, inuse, ncounted, i;
 	int rnswap, nswap;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_CP_TIME;
-	ssize = sizeof(cp_time);
+	ssize = sizeof(cp_time[0]) * CPUSTATES * ncpu;
 	if (sysctl(mib, 2, cp_time, &ssize, NULL, 0) < 0) {
 		fprintf(stderr, "top: sysctl kern.cp_time failed: %s\n",
 		    strerror(errno));
@@ -304,7 +337,11 @@ get_system_info(si)
 	}
 
 	/* convert cp_time counts to percentages */
-	percentages64(CPUSTATES, cpu_states, cp_time, cp_old, cp_diff);
+	for (i = 0; i < ncpu; i++) {
+	    int j = i * CPUSTATES;
+	    percentages64(CPUSTATES, cpu_states + j, cp_time + j, cp_old + j,
+		cp_diff + j);
+	}
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_UVMEXP2;
