@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2002/06/17 16:33:20 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2002/07/10 13:44:02 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -137,6 +137,8 @@ cdev_decl(isdnbchan);
 cdev_decl(isdntel);
 #include "clockctl.h"
 cdev_decl(clockctl);
+#include "kttcp.h"
+cdev_decl(kttcp);
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -204,6 +206,7 @@ struct cdevsw cdevsw[] = {
 #else
 	cdev_notdef(),			/* 60: system call tracing */
 #endif
+	cdev__oci_init(NKTTCP,kttcp),	/* 61: kernel ttcp helper */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -298,6 +301,7 @@ static int chrtoblktbl[] = {
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
+	/* 61 */	NODEV,
 };
 
 /*
