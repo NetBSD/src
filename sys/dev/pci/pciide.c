@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.20 2001/02/26 21:49:16 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.21 2001/02/26 21:50:56 he Exp $	*/
 
 
 /*
@@ -2778,6 +2778,7 @@ acer_chip_map(sc, pa)
 	int channel;
 	pcireg_t cr, interface;
 	bus_size_t cmdsize, ctlsize;
+	pcireg_t rev = PCI_REVISION(pa->pa_class);
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -2788,7 +2789,9 @@ acer_chip_map(sc, pa)
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
+		if (rev >= 0x20)
+			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
