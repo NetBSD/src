@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.1.2.3 2002/10/27 23:32:12 thorpej Exp $	*/
+/*	$NetBSD: sched.c,v 1.1.2.4 2003/01/08 19:34:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 
 #include <errno.h>
 #include <sched.h>
+
+int	pthread__sched_binder;
 
 /* ARGSUSED */
 int

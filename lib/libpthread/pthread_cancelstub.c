@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.5 2002/11/03 12:29:02 skrll Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.1.2.6 2003/01/08 19:34:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <poll.h>
 #include <stdarg.h>
 #include <unistd.h>
+
+int	pthread__cancel_stub_binder;
 
 /*
  * XXX this is necessary to get the prototypes for the __sigsuspend14

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.41 2003/01/03 22:04:55 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.42 2003/01/08 19:34:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,39 +79,25 @@ pthread_spin_t pthread__runqueue_lock;
 struct pthread_queue_t pthread__runqueue;
 struct pthread_queue_t pthread__idlequeue;
 
+__strong_alias(__libc_thr_self,pthread_self);
+__strong_alias(__libc_thr_errno,pthread__errno);
 
-pthread_ops_t pthread_ops = {
-	pthread_mutex_init,
-	pthread_mutex_lock,
-	pthread_mutex_trylock,
-	pthread_mutex_unlock,
-	pthread_mutex_destroy,
-	pthread_mutexattr_init,
-	pthread_mutexattr_destroy,
+/*
+ * Static library kludge.  Place a reference to a symbol any library
+ * file which does not already have a reference here.
+ */
+extern int pthread__cancel_stub_binder;
+extern int pthread__sched_binder;
 
+void *pthread__static_lib_binder[] = {
+	&pthread__cancel_stub_binder,
 	pthread_cond_init,
-	pthread_cond_signal,
-	pthread_cond_broadcast,
-	pthread_cond_wait,
-	pthread_cond_timedwait,
-	pthread_cond_destroy,
-	pthread_condattr_init,
-	pthread_condattr_destroy,
-
+	pthread_mutex_init,
+	pthread_rwlock_init,
+	pthread_barrier_init,
 	pthread_key_create,
-	pthread_setspecific,
-	pthread_getspecific,
-	pthread_key_delete,
-
-	pthread_once,
-
-	pthread_self,
-
-	pthread_sigmask,
-
-	pthread__errno
+	&pthread__sched_binder,
 };
-
 
 /*
  * This needs to be started by the library loading code, before main()
@@ -119,11 +105,11 @@ pthread_ops_t pthread_ops = {
  * to work properly (thread-specific data is an application-visible example;
  * spinlock counts for mutexes is an internal example).
  */
-void pthread_init(void)
+void
+pthread_init(void)
 {
 	pthread_t first;
 	extern int __isthreaded;
-	extern pthread_ops_t *__libc_pthread_ops;
 
 	/* Initialize locks first; they're needed elsewhere. */
 	pthread__lockprim_init();
@@ -152,9 +138,7 @@ void pthread_init(void)
 #endif
 
 	/* Tell libc that we're here and it should role-play accordingly. */
-	__libc_pthread_ops = &pthread_ops;
 	__isthreaded = 1;
-
 }
 
 

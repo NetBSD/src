@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.20 2003/01/07 17:25:35 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8.2.21 2003/01/08 19:34:21 thorpej Exp $
 #
 
 WARNS=	2
@@ -30,6 +30,11 @@ assym.h: genassym.sh ${ARCHDIR}/genassym.cf
 
 LIB=	pthread
 
+#
+# NOTE: When you create a new file for libpthread, make sure that pthread.c
+# gets a reference to a symbol in that file.  Otherwise, Unix's stupid static
+# library semantics will end up discarding potentially important objects.
+#
 SRCS=	pthread.c 
 SRCS+=	pthread_alarms.c
 SRCS+=	pthread_barrier.c
