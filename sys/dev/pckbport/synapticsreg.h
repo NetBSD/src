@@ -1,0 +1,78 @@
+/*	$NetBSD: synapticsreg.h,v 1.1 2004/12/24 18:33:06 christos Exp $	*/
+
+/*
+ * Copyright (c) 2004, Ales Krenek
+ * Copyright (c) 2004, Kentaro A. Kurahone
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ *   * Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *   * Redistributions in binary form must reproduce the above
+ *     copyright notice, this list of conditions and the following
+ *     disclaimer in the documentation and/or other materials provided
+ *     with the distribution.
+ *   * Neither the name of the Kentaro A. Kurahone nor the names of its
+ *     contributors may be used to endorse or promote products derived
+ *     from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+#ifndef _DEV_PCKBCPORT_SYNAPTICSREG_H_
+#define _DEV_PCKBCPORT_SYNAPTICSREG_H_
+
+/* Synaptics PS/2 commands. */
+#define SYNAPTICS_IDENTIFY_TOUCHPAD	0x0
+#define SYNAPTICS_READ_CAPABILITIES	0x2
+#define SYNAPTICS_EXTENDED_QUERY	0x9
+
+/* Magic numbers. */
+#define SYNAPTICS_MIN_VERSION		45 /* 4.5 */
+#define SYNAPTICS_MAGIC_BYTE		0x47
+
+/* Capability bits. */
+#define SYNAPTICS_CAP_EXTENDED		(1 << 15)
+#define SYNAPTICS_CAP_EXTNUM		(1 << 14 | 1 << 13)
+#define SYNAPTICS_CAP_MBUTTON		(1 << 10)
+#define SYNAPTICS_CAP_PASSTHROUGH	(1 << 7)
+#define SYNAPTICS_CAP_SLEEP		(1 << 4)
+#define SYNAPTICS_CAP_4BUTTON		(1 << 3)
+#define SYNAPTICS_CAP_MULTIDETECT	(1 << 1)
+#define SYNAPTICS_CAP_PALMDETECT	(1)
+
+/* Mode bits. */
+#define SYNAPTICS_MODE_ABSOLUTE		(1 << 7)
+#define SYNAPTICS_MODE_RATE		(1 << 6)
+#define SYNAPTICS_MODE_SLEEP		(1 << 3)
+#define SYNAPTICS_MODE_GEST		(1 << 2)
+#define SYNAPTICS_MODE_W		(1)
+
+/* Tunables sysctl defaults. */
+#define SYNAPTICS_SLOW_LIMIT		(30*30)
+#define SYNAPTICS_TAP_TOLERANCE		500
+#define SYNAPTICS_TAP_LENGTH		200000
+
+/* Extended mode button masks. */
+#define SYN_1BUTMASK			0x1
+#define SYN_2BUTMASK			0x1
+
+/* Threshold for idleness. */
+#define SYNAPTICS_NOTOUCH		30
+
+#endif
