@@ -1,4 +1,4 @@
-.\"	$NetBSD: init.8,v 1.7 1997/01/17 02:56:27 perry Exp $
+.\"	$NetBSD: init.8,v 1.8 1997/06/30 20:30:06 phil Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,11 +94,11 @@ Security levels are defined as follows:
 .It Ic -1
 Permanently insecure mode \- always run system in level 0 mode.
 .It Ic 0
-Insecure mode \- immutable and append-only flags may be turned off.
+Insecure mode \- immutable and append-only flags may changed.
 All devices may be read or written subject to their permissions.
 .It Ic 1
-Secure mode \- immutable and append-only flags may not be changed;
-disks for mounted filesystems,
+Secure mode \- system immutable and system append-only flags may not
+be turned off; disks for mounted filesystems,
 .Pa /dev/mem ,
 and
 .Pa /dev/kmem
@@ -113,13 +113,13 @@ while the system is multi-user.
 .El
 .Pp
 Normally, the system runs in level 0 mode while single user
-and in level 1 mode while multiuser.
-If the level 2 mode is desired while running multiuser,
+and in level 1 mode while multi-user.
+If the level 2 mode is desired while running multi-user,
 it can be set in the startup script
 .Pa /etc/rc
 using
 .Xr sysctl 8 .
-If it is desired to run the system in level 0 mode while multiuser,
+If it is desired to run the system in level 0 mode while multi-user,
 the administrator must build a kernel with
 .Sy options INSECURE
 in the kernel configuration file, which initializes the kernel's
