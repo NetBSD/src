@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.2 2003/06/14 16:25:53 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.3 2003/06/18 09:40:06 bsh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,12 +82,10 @@ pxauart_match(struct device *parent, struct cfdata *cf, void *aux)
 			return (0);
 		break;
 
-#if 0
 	case PXA2X0_BTUART_BASE:	/* XXX: Config file option ... */
 		if (pxa->pxa_intr != PXA2X0_INT_BTUART)
 			return (0);
 		break;
-#endif
 
 	default:
 		return (0);
