@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.50.4.3 2002/10/24 09:34:24 lukem Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.50.4.4 2003/09/10 16:55:34 grant Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50.4.3 $"
+#ident 		"GENERIC-$Revision: 1.50.4.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -67,7 +67,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
