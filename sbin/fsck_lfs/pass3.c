@@ -1,4 +1,4 @@
-/* $NetBSD: pass3.c,v 1.6 2005/01/19 19:41:59 xtraeme Exp $	 */
+/* $NetBSD: pass3.c,v 1.7 2005/02/06 06:13:47 perry Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@
 void
 pass3(void)
 {
-	register struct inoinfo **inpp, *inp;
+	struct inoinfo **inpp, *inp;
 	ino_t orphan;
 	int loopcnt;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.11 2005/01/19 19:41:59 xtraeme Exp $	 */
+/* $NetBSD: pass2.c,v 1.12 2005/02/06 06:13:47 perry Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -201,8 +201,8 @@ pass2(void)
 static int
 pass2check(struct inodesc * idesc)
 {
-	register struct direct *dirp = idesc->id_dirp;
-	register struct inoinfo *inp;
+	struct direct *dirp = idesc->id_dirp;
+	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
 	struct ufs1_dinode *dp;
 	char *errmsg;

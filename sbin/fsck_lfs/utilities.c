@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.16 2003/10/20 12:04:38 dsl Exp $	 */
+/* $NetBSD: utilities.c,v 1.17 2005/02/06 06:13:47 perry Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -185,7 +185,7 @@ void
 getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 {
 	int len;
-	register char *cp;
+	char *cp;
 	struct inodesc idesc;
 	static int busy = 0;
 

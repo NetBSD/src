@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.150 2005/01/20 16:16:10 xtraeme Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.151 2005/02/06 06:15:57 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.150 2005/01/20 16:16:10 xtraeme Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.151 2005/02/06 06:15:57 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -2580,8 +2580,8 @@ in_getaddr(const char *str, int which)
 void
 in_getprefix(const char *plen, int which)
 {
-	register struct sockaddr_in *igsin = sintab[which];
-	register u_char *cp;
+	struct sockaddr_in *igsin = sintab[which];
+	u_char *cp;
 	int len = strtol(plen, (char **)NULL, 10);
 
 	if ((len < 0) || (len > 32))
@@ -2674,8 +2674,8 @@ in6_getaddr(const char *str, int which)
 void
 in6_getprefix(const char *plen, int which)
 {
-	register struct sockaddr_in6 *gpsin = sin6tab[which];
-	register u_char *cp;
+	struct sockaddr_in6 *gpsin = sin6tab[which];
+	u_char *cp;
 	int len = strtol(plen, (char **)NULL, 10);
 
 	if ((len < 0) || (len > 128))
@@ -2697,8 +2697,8 @@ in6_getprefix(const char *plen, int which)
 int
 prefix(void *val, int size)
 {
-	register u_char *pname = (u_char *)val;
-	register int byte, bit, plen = 0;
+	u_char *pname = (u_char *)val;
+	int byte, bit, plen = 0;
 
 	for (byte = 0; byte < size; byte++, plen += 8)
 		if (pname[byte] != 0xff)

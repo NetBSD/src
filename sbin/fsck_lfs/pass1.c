@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.19 2005/01/19 19:41:59 xtraeme Exp $	 */
+/* $NetBSD: pass1.c,v 1.20 2005/02/06 06:13:47 perry Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -314,7 +314,7 @@ pass1check(struct inodesc *idesc)
 	int res = KEEPON;
 	int anyout, ndblks;
 	daddr_t blkno = idesc->id_blkno;
-	register struct dups *dlp;
+	struct dups *dlp;
 	struct dups *new;
 
 	if ((anyout = chkrange(blkno, fragstofsb(fs, idesc->id_numfrags))) != 0) {
