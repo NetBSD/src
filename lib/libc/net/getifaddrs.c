@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.5 2000/07/06 02:53:12 christos Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.6 2000/10/27 15:48:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.5 2000/07/06 02:53:12 christos Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.6 2000/10/27 15:48:49 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -79,7 +79,12 @@ __weak_alias(freeifaddrs,_freeifaddrs)
 #endif
 
 #if	_BSDI_VERSION >= 199802
+/* ifam_data is very specific to recent versions of bsdi */
 #define	HAVE_IFAM_DATA
+#endif
+
+#if defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD__)
+#define	HAVE_IFM_DATA
 #endif
 
 int
