@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.33 2000/05/08 18:36:00 thorpej Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.34 2000/05/08 22:41:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -215,6 +215,12 @@
  *	* Other than that, if you don't know the liklyhood of a test
  *	  succeeding from empirical or other `hard' evidence, don't
  *	  make predictions.
+ *
+ *	* These are meant to be used in places that are run `a lot'.
+ *	  It is wasteful to make predictions in code that is run
+ *	  seldomly (e.g. at subsystem initialization time) as the
+ *	  basic block reordering that this affects can often generate
+ *	  larger code.
  */
 #if __GNUC_PREREQ__(2, 96)
 #define	__predict_true(exp)	__builtin_expect(((exp) != 0), 1)
