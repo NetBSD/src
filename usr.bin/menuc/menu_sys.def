@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.15 1998/07/23 17:56:00 phil Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.16 1999/04/18 03:29:18 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -576,7 +576,7 @@ void process_menu (int num)
 		}
 		cbreak();
 		noecho();
-		max_lines = stdscr->maxy;
+		max_lines = getmaxy(stdscr);
 		init_keyseq();
 #ifdef DYNAMIC_MENUS
 		num_menus = DYN_INIT_NUM;
