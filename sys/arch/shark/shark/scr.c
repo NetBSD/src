@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.8 2002/10/23 09:12:03 jdolecek Exp $	*/
+/*	$NetBSD: scr.c,v 1.9 2003/01/06 13:05:07 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -54,7 +54,7 @@
 **     
 **
 **    The driver is dived into the standard top half ioctl, and bottom
-**    half interupt.  The interrupt is FIQ, which requires its own stack.  
+**    half interrupt.  The interrupt is FIQ, which requires its own stack.  
 **    disable_interrupts and restore_interrupts must be used to protect from
 **    a FIQ.  Since splxxx functions do not use this, the bottom half cannot
 **    use any standard functions (ie like wakeup, timeout, etc.  

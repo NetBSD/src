@@ -1,4 +1,4 @@
-/*	$NetBSD: invite.c,v 1.4 1997/10/20 00:23:23 lukem Exp $	*/
+/*	$NetBSD: invite.c,v 1.5 2003/01/06 13:05:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)invite.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: invite.c,v 1.4 1997/10/20 00:23:23 lukem Exp $");
+__RCSID("$NetBSD: invite.c,v 1.5 2003/01/06 13:05:16 wiz Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -88,7 +88,7 @@ invite_remote()
 	announce_invite();
 	/*
 	 * Shut off the automatic messages for a while,
-	 * so we can use the interupt timer to resend the invitation
+	 * so we can use the interrupt timer to resend the invitation
 	 */
 	end_msgs();
 	setitimer(ITIMER_REAL, &itimer, (struct itimerval *)0);
@@ -118,7 +118,7 @@ invite_remote()
 }
 
 /*
- * Routine called on interupt to re-invite the callee
+ * Routine called on interrupt to re-invite the callee
  */
 void
 re_invite(dummy)

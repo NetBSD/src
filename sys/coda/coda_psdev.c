@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.22 2002/11/26 18:45:22 christos Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.23 2003/01/06 13:05:09 wiz Exp $	*/
 
 /*
  * 
@@ -52,7 +52,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.22 2002/11/26 18:45:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.23 2003/01/06 13:05:09 wiz Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -556,7 +556,7 @@ vc_nb_kqfilter(dev_t dev, struct knote *kn)
 struct coda_clstat coda_clstat;
 
 /* 
- * Key question: whether to sleep interuptably or uninteruptably when
+ * Key question: whether to sleep interruptably or uninterruptably when
  * waiting for Venus.  The former seems better (cause you can ^C a
  * job), but then GNU-EMACS completion breaks. Use tsleep with no
  * timeout, and no longjmp happens. But, when sleeping

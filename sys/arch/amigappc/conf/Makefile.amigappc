@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amigappc,v 1.8 2001/12/09 05:00:41 atatat Exp $
+#	$NetBSD: Makefile.amigappc,v 1.9 2003/01/06 13:04:59 wiz Exp $
 
 # Makefile for NetBSD
 #
@@ -93,7 +93,7 @@ bzsc.o bztzsc.o cbiisc.o cbsc.o flsc.o sbic.o: Makefile
 # depends on defined(DRACO)
 a2kbbc.o: Makefile
 
-# LEV6_DEFER blocks usage of audio interupt 3:
+# LEV6_DEFER blocks usage of audio interrupt 3:
 aucc.o cc.o: Makefile
 
 ##
