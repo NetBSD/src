@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/02/12 11:14:11 christos Exp $
+#	$NetBSD: Makefile,v 1.19 1999/02/12 11:32:32 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	termcap
@@ -17,13 +17,13 @@ INCSDIR=/usr/include
 LINKS+=	${LIBDIR}/libtermcap.a ${LIBDIR}/libtermlib.a
 .endif
 
-.if !defined(NOPROFILE)
+.if ${MKPROFILE} != "no"
 LINKS+=	${LIBDIR}/libtermcap_p.a ${LIBDIR}/libtermlib_p.a
 .endif
 
-.if !defined(NOPIC)
+.if ${MKPIC} != "no"
 
-.if !defined(NOPICINSTALL)
+.if ${MKPICINSTALL} != "no"
 LINKS+=	${LIBDIR}/libtermcap_pic.a ${LIBDIR}/libtermlib_pic.a
 .endif
 
@@ -38,6 +38,6 @@ LINKS+=	${LIBDIR}/lib${LIB}.so ${LIBDIR}/libtermlib.so
 .endif
 .endif
 
-.endif	# NOPIC
+.endif	# ${MKPIC} != "no"
 
 .include <bsd.lib.mk>
