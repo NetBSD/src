@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 1999/10/01 04:35:23 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2000/10/11 04:57:42 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 1999/10/01 04:35:23 perseant Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2000/10/11 04:57:42 briggs Exp $");
 #endif
 #endif /* not lint */
 
@@ -414,7 +414,7 @@ main(argc, argv)
 
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
-		quit("dev_bsize (%d) is not a power of 2", dev_bsize);
+		quit("dev_bsize (%ld) is not a power of 2", dev_bsize);
 	tp_bshift = ffs(TP_BSIZE) - 1;
 	if (TP_BSIZE != (1 << tp_bshift))
 		quit("TP_BSIZE (%d) is not a power of 2", TP_BSIZE);
@@ -545,9 +545,9 @@ main(argc, argv)
 	for (i = 0; i < ntrec; i++)
 		writeheader(maxino - 1);
 	if (pipeout)
-		msg("%ld tape blocks\n",iswap32(spcl.c_tapea));
+		msg("%d tape blocks\n",iswap32(spcl.c_tapea));
 	else
-		msg("%ld tape blocks on %d volume%s\n",
+		msg("%d tape blocks on %d volume%s\n",
 		    iswap32(spcl.c_tapea), iswap32(spcl.c_volume),
 		    (iswap32(spcl.c_volume) == 1) ? "" : "s");
 	tnow = do_stats();
@@ -555,7 +555,7 @@ main(argc, argv)
 	msg("Date of this level %c dump: %s", level,
 		spcl.c_date == 0 ? "the epoch\n" : ctime(&date));
 	msg("Date this dump completed:  %s", ctime(&tnow));
-	msg("Average transfer rate: %ld KB/s\n", xferrate / tapeno);
+	msg("Average transfer rate: %d KB/s\n", xferrate / tapeno);
 	putdumptime();
 	trewind();
 	broadcast("DUMP IS DONE!\7\7\n");
