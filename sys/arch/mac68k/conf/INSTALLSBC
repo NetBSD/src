@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.22 2005/01/31 16:55:00 hannken Exp $
+#	$NetBSD: INSTALLSBC,v 1.23 2005/02/11 08:25:55 dsl Exp $
 #
 # INSTALLSBC
 
@@ -61,6 +61,7 @@ file-system 	KERNFS		# /kern
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+#options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

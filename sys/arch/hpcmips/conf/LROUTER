@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.22 2005/01/31 16:54:34 hannken Exp $
+# 	$NetBSD: LROUTER,v 1.23 2005/02/11 08:25:54 dsl Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -78,6 +78,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
 #options 	QUOTA		# UFS quotas
 options 	VNODE_OP_NOINLINE # don't inline vnode op calls
+options 	FFS_SNAPSHOT	# ffs snapshots
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
