@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.38 1998/08/13 21:36:06 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.39 1998/08/15 05:10:26 mycroft Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -7,8 +7,8 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Charles M. Hannum and by Jason R. Thorpe of the Numerical Aerospace
+ * Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,8 +40,6 @@
  */
 
 /*-
- * Copyright (c) 1993, 1994, 1996, 1997
- *	Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
