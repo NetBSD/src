@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.13 2003/12/20 07:33:03 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.14 2003/12/26 23:49:39 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ sysctl_ncpus(void)
 #endif /* MULTIPROCESSOR */
 
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
+static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_securelevel(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
@@ -338,9 +339,9 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLTYPE_INT, "autoniceval", NULL,
 		       sysctl_kern_autonice, 0, &autoniceval, 0,
 		       CTL_KERN, KERN_AUTONICEVAL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
 		       CTLTYPE_INT, "rtc_offset", NULL,
-		       NULL, 0, &rtc_offset, 0,
+		       sysctl_kern_rtc_offset, 0, &rtc_offset, 0,
 		       CTL_KERN, KERN_RTC_OFFSET, CTL_EOL);
 	sysctl_createv(SYSCTL_PERMANENT,
 		       CTLTYPE_STRING, "root_device", NULL,
@@ -748,6 +749,41 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	}
 	vfs_reinit();
 	nchreinit();
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for rtc_offset - set time after changes
+ */
+static int
+sysctl_kern_rtc_offset(SYSCTLFN_ARGS)
+{
+	struct timeval tv, delta;
+	int s, error, new_rtc_offset;
+	struct sysctlnode node;
+
+	new_rtc_offset = rtc_offset;
+	node = *rnode;
+	node.sysctl_data = &new_rtc_offset;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+
+	if (securelevel > 0)
+		return (EPERM);
+	if (rtc_offset == new_rtc_offset)
+		return (0);
+
+	/* if we change the offset, adjust the time */
+	s = splclock();
+	tv = time;
+	splx(s);
+	delta.tv_sec = 60*(new_rtc_offset - rtc_offset);
+	delta.tv_usec = 0;
+	timeradd(&tv, &delta, &tv);
+	rtc_offset = new_rtc_offset;
+	settime(&tv);
 
 	return (0);
 }
