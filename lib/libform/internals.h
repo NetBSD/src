@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.h,v 1.4 2001/01/30 06:44:42 blymn Exp $	*/
+/*	$NetBSD: internals.h,v 1.5 2001/02/03 12:41:08 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -95,6 +95,8 @@ _formi_pos_first_field(FORM *form);
 int
 _formi_pos_new_field(FORM *form, unsigned direction, unsigned use_sorted);
 void
+_formi_redraw_field(FORM *form, int field);
+void
 _formi_sort_fields(FORM *form);
 void
 _formi_stitch_fields(FORM *form);
@@ -104,6 +106,8 @@ int
 _formi_validate_char(FIELD *field, char c);
 int
 _formi_validate_field(FORM *form);
+int
+_formi_wrap_field(FIELD *field, unsigned int pos);
 
 #ifdef DEBUG
 int
