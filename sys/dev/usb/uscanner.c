@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.38 2003/01/15 13:35:55 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.39 2003/01/27 00:31:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.38 2003/01/15 13:35:55 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.39 2003/01/27 00:31:02 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ static const struct uscan_info uscanner_devs[] = {
 
   /* Canon */
  {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N656U }, 0 },
+ {{ USB_VENDOR_CANON, USB_PRODUCT_CANON_N670U }, 0 },
 
   /* Kye */
  {{ USB_VENDOR_KYE, USB_PRODUCT_KYE_VIVIDPRO }, 0 },
