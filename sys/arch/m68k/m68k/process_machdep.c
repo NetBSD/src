@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17 1996/05/06 20:05:24 gwr Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18 1998/01/06 08:06:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -62,9 +62,6 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 
-#ifdef cpu_set_init_frame
-extern char kstack[];		/* XXX */
-#endif
 static inline struct frame   *process_frame __P((struct proc *p));
 static inline struct fpframe *process_fpframe __P((struct proc *p));
 
@@ -74,11 +71,7 @@ process_frame(p)
 {
 	void *ptr;
 
-#ifdef cpu_set_init_frame
-	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
-#else
 	ptr = p->p_md.md_regs;
-#endif
 	return (ptr);
 }
 
