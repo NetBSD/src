@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.18 2000/02/01 22:52:13 thorpej Exp $	*/
+/*	$NetBSD: ns.c,v 1.19 2000/02/02 23:28:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -223,6 +223,20 @@ ns_purgeaddr(ifa, ifp)
 		 * We reset to virginity and start all over again
 		 */
 		ns_thishost = ns_zerohost;
+	}
+}
+
+void
+ns_purgeif(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
+		nifa = TAILQ_NEXT(ifa, ifa_list);
+		if (ifa->ifa_addr->sa_family != AF_NS)
+			continue;
+		ns_purgeaddr(ifa, ifp);
 	}
 }
 

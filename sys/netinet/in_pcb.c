@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.62 2000/02/01 00:05:07 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.63 2000/02/02 23:28:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -618,6 +618,23 @@ in_pcbnotifyall(table, faddr, errno, notify)
 		ninp = inp->inp_queue.cqe_next;
 		if (in_hosteq(inp->inp_faddr, faddr))
 			(*notify)(inp, errno);
+	}
+}
+
+void
+in_pcbpurgeif(table, ifp)
+	struct inpcbtable *table;
+	struct ifnet *ifp;
+{
+	register struct inpcb *inp, *ninp;
+
+	for (inp = table->inpt_queue.cqh_first;
+	    inp != (struct inpcb *)&table->inpt_queue;
+	    inp = ninp) {
+		ninp = inp->inp_queue.cqe_next;
+		if (inp->inp_route.ro_rt != NULL &&
+		    inp->inp_route.ro_rt->rt_ifp == ifp)
+			in_rtchange(inp, 0);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.26 2000/02/01 22:52:12 thorpej Exp $	*/
+/*	$NetBSD: iso.c,v 1.27 2000/02/02 23:28:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -586,6 +586,20 @@ iso_purgeaddr(ifa, ifp)
 	IFAFREE(&ia->ia_ifa);
 	TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
 	IFAFREE((&ia->ia_ifa));
+}
+
+void
+iso_purgeif(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa, *nifa;
+
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
+		nifa = TAILQ_NEXT(ifa, ifa_list);
+		if (ifa->ifa_addr->sa_family != AF_ISO)
+			continue;
+		iso_purgeaddr(ifa, ifp);
+	}
 }
 
 /*
