@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.37 2004/03/23 13:22:04 junyoung Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.38 2005/02/26 21:34:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.37 2004/03/23 13:22:04 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.38 2005/02/26 21:34:55 perry Exp $");
 
 #define SYSVMSG
 
@@ -369,7 +369,7 @@ sys_msgget(l, v, retval)
 		}
 		if (msqid == msginfo.msgmni) {
 			MSG_PRINTF(("no more msqid_ds's available\n"));
-			return (ENOSPC);	
+			return (ENOSPC);
 		}
 		MSG_PRINTF(("msqid %d is available\n", msqid));
 		msqptr->msg_perm._key = key;

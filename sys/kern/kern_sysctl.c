@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.178 2005/02/20 19:43:46 heas Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.179 2005/02/26 21:34:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.178 2005/02/20 19:43:46 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.179 2005/02/26 21:34:55 perry Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -326,7 +326,7 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	 */
 	if (error == 0 && SCARG(uap, old) != NULL && savelen < oldlen)
 		error = ENOMEM;
-	
+
 	return (error);
 }
 
@@ -859,7 +859,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	if ((flags & CTLFLAG_PERMANENT) &
 	    (sysctl_root.sysctl_flags & CTLFLAG_PERMANENT))
 		return (EPERM);
-	if ((flags & (CTLFLAG_OWNDATA | CTLFLAG_IMMEDIATE)) == 
+	if ((flags & (CTLFLAG_OWNDATA | CTLFLAG_IMMEDIATE)) ==
 	    (CTLFLAG_OWNDATA | CTLFLAG_IMMEDIATE))
 		return (EINVAL);
 	if ((flags & CTLFLAG_IMMEDIATE) &&
@@ -1104,7 +1104,7 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 */
 	if (at < pnode->sysctl_clen) {
 		int t;
-		
+
 		/*
 		 * move the nodes that should come after the new one
 		 */
@@ -1761,7 +1761,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 		 * is this description "valid"?
 		 */
 		memset(&buf[0], 0, sizeof(buf));
-		if (node[i].sysctl_desc == NULL)			
+		if (node[i].sysctl_desc == NULL)
 			sz = 1;
 		else if (copystr(node[i].sysctl_desc, &d->descr_str[0],
 				 sizeof(buf) - sizeof(*d), &sz) != 0) {
@@ -1928,7 +1928,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	error = sysctl_lock(NULL, NULL, 0);
 	if (error)
 		return (error);
-	
+
 	/*
 	 * locate the prospective parent of the new node, and if we
 	 * find it, add the new node.
@@ -2517,7 +2517,7 @@ old_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	int error;
 	size_t savelen = *oldlenp;
-	
+
 	error = sysctl_lock(l, oldp, savelen);
 	if (error)
 		return (error);

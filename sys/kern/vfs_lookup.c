@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.55 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.56 2005/02/26 21:34:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.55 2004/09/17 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.56 2005/02/26 21:34:56 perry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -125,7 +125,7 @@ namei(ndp)
 
 	/*
 	 * POSIX.1 requirement: "" is not a valid file name.
-	 */      
+	 */
 	if (!error && ndp->ni_pathlen == 1)
 		error = ENOENT;
 
@@ -298,7 +298,7 @@ namei_hash(const char *name, const char **ep)
  * the target is returned locked, otherwise it is returned unlocked.
  * When creating or renaming and LOCKPARENT is specified, the target may not
  * be ".".  When deleting and LOCKPARENT is specified, the target may be ".".
- * 
+ *
  * Overall outline of lookup:
  *
  * dirloop:

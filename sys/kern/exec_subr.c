@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.42 2004/09/17 14:11:25 skrll Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.43 2005/02/26 21:34:55 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.42 2004/09/17 14:11:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.43 2005/02/26 21:34:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,9 +164,9 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
 	 * do the map
 	 */
 
-	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len, 
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, cmd->ev_len,
 		uobj, cmd->ev_offset, 0,
-		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY, 
+		UVM_MAPFLAG(cmd->ev_prot, VM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL, UVM_FLAG_COPYONW|UVM_FLAG_FIXED));
 	if (error) {
 		uobj->pgops->pgo_detach(uobj);
@@ -194,7 +194,7 @@ vmcmd_map_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_offset -= diff;
 	cmd->ev_len += diff;
 
-	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
@@ -235,7 +235,7 @@ vmcmd_readvn(struct proc *p, struct exec_vmcmd *cmd)
 		 * uvm_map_protect() to fix up the protection.  ICK.
 		 */
 
-		return uvm_map_protect(&p->p_vmspace->vm_map, 
+		return uvm_map_protect(&p->p_vmspace->vm_map,
 				trunc_page(cmd->ev_addr),
 				round_page(cmd->ev_addr + cmd->ev_len),
 				cmd->ev_prot, FALSE);
@@ -259,7 +259,7 @@ vmcmd_map_zero(struct proc *p, struct exec_vmcmd *cmd)
 	cmd->ev_addr -= diff;			/* required by uvm_map */
 	cmd->ev_len += diff;
 
-	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
+	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr,
 			round_page(cmd->ev_len), NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(cmd->ev_prot, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
@@ -321,7 +321,7 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 		epp->ep_minsaddr = USRSTACK;
 		max_stack_size = MAXSSIZ;
 	}
-	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
 	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 
@@ -336,7 +336,7 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 	access_size = epp->ep_ssize;
 	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
 	noaccess_size = max_stack_size - access_size;
-	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,

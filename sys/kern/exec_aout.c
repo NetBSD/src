@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.31 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.32 2005/02/26 21:34:55 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.31 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.32 2005/02/26 21:34:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 	 * computed (in execve(2)) by rounding *up* `ep_tsize' and `ep_dsize'
 	 * respectively to page boundaries.
 	 * Compensate `ep_dsize' for the amount of data covered by the last
-	 * text page. 
+	 * text page.
 	 */
 	dsize = epp->ep_dsize + execp->a_text - round_page(execp->a_text);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;

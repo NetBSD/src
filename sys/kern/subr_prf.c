@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.95 2004/09/29 23:54:11 reinoud Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.96 2005/02/26 21:34:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.95 2004/09/29 23:54:11 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.96 2005/02/26 21:34:55 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -180,7 +180,7 @@ twiddle(void)
  * panic: handle an unresolvable fatal error
  *
  * prints "panic: <message>" and reboots.   if called twice (i.e. recursive
- * call) we avoid trying to sync the disk and just reboot (to avoid 
+ * call) we avoid trying to sync the disk and just reboot (to avoid
  * recursive panics).
  */
 
@@ -201,7 +201,7 @@ panic(const char *fmt, ...)
 
 	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
 		panicstart = msgbufp->msg_bufx;
-	
+
 	va_start(ap, fmt);
 	printf("panic: ");
 	vprintf(fmt, ap);
@@ -481,7 +481,7 @@ tprintf_close(sess)
 }
 
 /*
- * tprintf: given tprintf handle to a process [obtained with tprintf_open], 
+ * tprintf: given tprintf handle to a process [obtained with tprintf_open],
  * send a message to the controlling tty for that process.
  *
  * => also sends message to /dev/klog
@@ -587,7 +587,7 @@ aprint_normal(const char *fmt, ...)
 	if ((boothowto & (AB_SILENT|AB_QUIET)) == 0 ||
 	    (boothowto & AB_VERBOSE) != 0)
 		flags |= TOCONS;
- 
+
 	KPRINTF_MUTEX_ENTER(s);
 
 	va_start(ap, fmt);
@@ -595,7 +595,7 @@ aprint_normal(const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
-        
+
 	if (!panicstr)
 		logwakeup();
 }
@@ -632,7 +632,7 @@ aprint_error(const char *fmt, ...)
 	if ((boothowto & (AB_SILENT|AB_QUIET)) == 0 ||
 	    (boothowto & AB_VERBOSE) != 0)
 		flags |= TOCONS;
- 
+
 	KPRINTF_MUTEX_ENTER(s);
 
 	aprint_error_count++;
@@ -642,7 +642,7 @@ aprint_error(const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
-        
+
 	if (!panicstr)
 		logwakeup();
 }
@@ -680,7 +680,7 @@ aprint_verbose(const char *fmt, ...)
 
 	if (boothowto & AB_VERBOSE)
 		flags |= TOCONS;
- 
+
 	KPRINTF_MUTEX_ENTER(s);
 
 	va_start(ap, fmt);
@@ -688,7 +688,7 @@ aprint_verbose(const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
-        
+
 	if (!panicstr)
 		logwakeup();
 }
@@ -997,7 +997,7 @@ out:
 /*
  * kprintf: scaled down version of printf(3).
  *
- * this version based on vfprintf() from libc which was derived from 
+ * this version based on vfprintf() from libc which was derived from
  * software contributed to Berkeley by Chris Torek.
  *
  * NOTE: The kprintf mutex must be held if we're going TOBUF or TOCONS!

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/11/15 20:26:02 thorpej Exp $
+#	$NetBSD: Makefile,v 1.13 2005/02/26 21:34:55 perry Exp $
 #
 #	from: @(#)Makefile	8.2 (Berkeley) 3/21/94
 
@@ -39,7 +39,7 @@ SYSDIR=..
 .ifmake links
 # Directories in which to place tags links (other than machine-dependent):
 # The invocation below returns every directory that contains sources, the idea
-# being, in the face of a constantly varying source tree, that this will be 
+# being, in the face of a constantly varying source tree, that this will be
 # easier to maintain than a fixed list.
 DGEN!=	(cd ${SYSDIR};							\
 	    find -H . -name arch -prune -o -name "*.[chs]" -print |	\

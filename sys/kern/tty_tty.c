@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.23 2003/10/15 11:29:00 hannken Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.24 2005/02/26 21:34:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.23 2003/10/15 11:29:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24 2005/02/26 21:34:55 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ cttyopen(dev, flag, mode, p)
 	 * Since group is tty and mode is 620 on most terminal lines
 	 * and since sessions protect terminals from processes outside
 	 * your session, this check is probably no longer necessary.
-	 * Since it inhibits setuid root programs that later switch 
+	 * Since it inhibits setuid root programs that later switch
 	 * to another user from accessing /dev/tty, we have decided
 	 * to delete this test. (mckusick 5/93)
 	 */
