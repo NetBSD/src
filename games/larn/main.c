@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.12 1998/02/12 08:07:49 mikel Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1998/07/27 01:12:35 mycroft Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.12 1998/02/12 08:07:49 mikel Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 1998/07/27 01:12:35 mycroft Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,7 @@ main(argc, argv)
 {
 	int    i;
 	int             hard;
-	char           *ptr = 0;
+	const char     *ptr = 0;
 	struct passwd  *pwe;
 
 	euid = geteuid();

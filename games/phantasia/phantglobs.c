@@ -1,4 +1,4 @@
-/*	$NetBSD: phantglobs.c,v 1.3 1997/10/13 02:18:32 lukem Exp $	*/
+/*	$NetBSD: phantglobs.c,v 1.4 1998/07/27 01:12:35 mycroft Exp $	*/
 
 /*
  * phantglobs.c - globals for Phantasia
@@ -29,7 +29,7 @@ jmp_buf Timeoenv;	/* used for timing out waiting for input	*/
 
 long	Fileloc;	/* location in file of player statistics	*/
 
-char	*Login;		/* pointer to login of player			*/
+const char *Login;	/* pointer to login of player			*/
 char	*Enemyname;	/* pointer name of monster/player we are battling*/
 
 struct	player	Player;	/* stats for player				*/

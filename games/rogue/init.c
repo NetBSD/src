@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.5 1997/10/12 11:45:08 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.6 1998/07/27 01:12:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.5 1997/10/12 11:45:08 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.6 1998/07/27 01:12:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ init(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *pn;
+	const char *pn;
 	int seed;
 
 	seed = 0;
