@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.482 2004/10/04 05:22:20 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.483 2004/10/04 05:23:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7714,3 +7714,9 @@ lib/libpthread/pthread_cond.c			1.16
 	waiters list in all cases, not just on cancellation; there are other 
 	sources of spurious wakeups, such as single-stepping in the debugger.
 	[oster, ticket #885]
+
+distrib/notes/sparc64/prep			1.12
+
+	Add a comment about that "Fast Data MMU Miss" may indicate a needed 
+	OBP upgrade. 
+	[hubertf, ticket #886]
