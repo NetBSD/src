@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.60 2003/08/07 11:17:13 agc Exp $	*/
+/*	$NetBSD: w.c,v 1.61 2004/01/03 01:18:14 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.60 2003/08/07 11:17:13 agc Exp $");
+__RCSID("$NetBSD: w.c,v 1.61 2004/01/03 01:18:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,8 +86,6 @@ __RCSID("$NetBSD: w.c,v 1.60 2003/08/07 11:17:13 agc Exp $");
 #include <vis.h>
 
 #include "extern.h"
-
-#define	max(a,b)	(((a)>(b))?(a):(b))
 
 struct timeval	boottime;
 struct winsize	ws;
