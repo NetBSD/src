@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1999/09/08 21:17:44 jsm Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1999/09/09 17:30:18 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)extern.h	8.1 (Berkeley) 6/11/93
  */
+
+#include <time.h>
 
 void	 addword __P((const char *));
 void	 badword __P((void));

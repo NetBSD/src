@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.11 1999/09/08 21:57:17 jsm Exp $	*/
+/*	$NetBSD: strfile.c,v 1.12 1999/09/09 17:30:19 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.11 1999/09/08 21:57:17 jsm Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.12 1999/09/09 17:30:19 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: strfile.c,v 1.11 1999/09/08 21:57:17 jsm Exp $");
 # include	<stdio.h>
 # include	<stdlib.h>
 # include	<string.h>
+# include	<time.h>
 # include	<unistd.h>
 # include	"strfile.h"
 
