@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.6 2002/04/15 16:47:03 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.7 2002/07/23 00:03:36 simonb Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.6 2002/04/15 16:47:03 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.7 2002/07/23 00:03:36 simonb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -68,6 +68,7 @@ static const char vers[] = "utmpx-1.00";
 void
 setutxent()
 {
+
 	(void)memset(&ut, 0, sizeof(ut));
 	if (fp == NULL)
 		return;
@@ -78,6 +79,7 @@ setutxent()
 void
 endutxent()
 {
+
 	(void)memset(&ut, 0, sizeof(ut));
 	if (fp != NULL)
 		(void)fclose(fp);
@@ -87,6 +89,7 @@ endutxent()
 struct utmpx *
 getutxent()
 {
+
 	if (fp == NULL) {
 		struct stat st;
 
@@ -131,6 +134,7 @@ fail:
 struct utmpx *
 getutxid(const struct utmpx *utx)
 {
+
 	if (utx->ut_type == EMPTY)
 		return NULL;
 
@@ -167,8 +171,7 @@ getutxid(const struct utmpx *utx)
 		default:
 			return NULL;
 		}
-	}
-	while (getutxent() != NULL);
+	} while (getutxent() != NULL);
 	return NULL;
 }
 
@@ -176,6 +179,7 @@ getutxid(const struct utmpx *utx)
 struct utmpx *
 getutxline(const struct utmpx *utx)
 {
+
 	do {
 		switch (ut.ut_type) {
 		case EMPTY:
@@ -189,8 +193,7 @@ getutxline(const struct utmpx *utx)
 		default:
 			break;
 		}
-	}
-	while (getutxent() != NULL);
+	} while (getutxent() != NULL);
 	return NULL;
 }
 
@@ -279,6 +282,7 @@ void
 updwtmpx(const char *file, const struct utmpx *utx)
 {
 	int fd = open(file, O_WRONLY | O_APPEND);
+
 	if (fd == -1) {
 		if ((fd = open(file, O_CREAT | O_WRONLY, 0644)) == -1)
 			return;
@@ -316,6 +320,7 @@ utmpxname(const char *fname)
 void
 getutmp(const struct utmpx *ux, struct utmp *u)
 {
+
 	(void)memcpy(u->ut_name, ux->ut_name, sizeof(u->ut_name));
 	(void)memcpy(u->ut_line, ux->ut_line, sizeof(u->ut_line));
 	(void)memcpy(u->ut_host, ux->ut_host, sizeof(u->ut_host));
@@ -325,6 +330,7 @@ getutmp(const struct utmpx *ux, struct utmp *u)
 void
 getutmpx(const struct utmp *u, struct utmpx *ux)
 {
+
 	(void)memcpy(ux->ut_name, u->ut_name, sizeof(u->ut_name));
 	(void)memcpy(ux->ut_line, u->ut_line, sizeof(u->ut_line));
 	(void)memcpy(ux->ut_host, u->ut_host, sizeof(u->ut_host));
