@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)du.c	5.17 (Berkeley) 5/20/92";*/
-static char rcsid[] = "$Id: du.c,v 1.6 1994/01/25 20:25:36 cgd Exp $";
+static char rcsid[] = "$Id: du.c,v 1.7 1994/01/27 20:32:37 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -54,8 +54,8 @@ static char rcsid[] = "$Id: du.c,v 1.6 1994/01/25 20:25:36 cgd Exp $";
 #include <dirent.h>
 #include <unistd.h>
 #include <fts.h>
+#include <err.h>
 
-void	 err __P((const char *, ...));
 int	 linkchk __P((FTSENT *));
 void	 usage __P((void));
 
@@ -116,7 +116,7 @@ main(argc, argv)
 	blocksize /= 512;
 
 	if ((fts = fts_open(argv, ftsoptions, NULL)) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 
 	while (p = fts_read(fts))
 		switch(p->fts_info) {
@@ -138,8 +138,7 @@ main(argc, argv)
 		case FTS_DNR:
 		case FTS_ERR:
 		case FTS_NS:
-			(void)fprintf(stderr,
-			    "du: %s: %s\n", p->fts_path, strerror(errno));
+			warn("%s", p->fts_path);
 			break;
 		case FTS_SL:
 			if (p->fts_level == FTS_ROOTLEVEL) {
@@ -161,7 +160,7 @@ main(argc, argv)
 			p->fts_parent->fts_number += p->fts_statp->st_blocks;
 		}
 	if (errno)
-		err("%s", strerror(errno));
+		err(1, NULL);
 	exit(0);
 }
 
@@ -189,7 +188,7 @@ linkchk(p)
 
 	if (nfiles == maxfiles && (files = realloc((char *)files,
 	    (u_int)(sizeof(ID) * (maxfiles += 128)))) == NULL)
-		err("%s", strerror(errno));
+		err(1, NULL);
 	files[nfiles].inode = ino;
 	files[nfiles].dev = dev;
 	++nfiles;
@@ -201,33 +200,4 @@ usage()
 {
 	(void)fprintf(stderr, "usage: du [-a | -s] [-x] [file ...]\n");
 	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "du: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
