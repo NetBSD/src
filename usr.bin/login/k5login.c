@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.4 1997/08/16 13:50:44 lukem Exp $	*/
+/*	$NetBSD: k5login.c,v 1.5 1997/08/19 17:26:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,16 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.4 1997/08/16 13:50:44 lukem Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.5 1997/08/19 17:26:14 mycroft Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
 #include <sys/param.h>
 #include <sys/syslog.h>
-#include <com_err.h>
-#include <krb5/krb5.h>
-#include <krb5/ext-proto.h>
-#include <krb5/los-proto.h>
+#include <krb5.h>
 #include <pwd.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -58,18 +55,12 @@ __RCSID("$NetBSD: k5login.c,v 1.4 1997/08/16 13:50:44 lukem Exp $");
 #define KRB5_DEFAULT_LIFE 60*60*10 /* 10 hours */
 
 krb5_data tgtname = {
+    0,
     KRB5_TGS_NAME_SIZE,
     KRB5_TGS_NAME
 };
 
-/*
- * Try no preauthentication first; then try the encrypted timestamp
- */
-int preauth_search_list[] = {
-	0,			
-	KRB5_PADATA_ENC_TIMESTAMP,
-	-1
-	};
+krb5_context kcontext;
 
 extern int notickets;
 extern char *krbtkfile_env;
@@ -110,7 +101,7 @@ klogin(pw, instance, localhost, password)
 	}
 #endif
 
-	krb5_init_ets();
+	krb5_init_ets(kcontext);
 
 	/*
 	 * Root logins don't use Kerberos.
@@ -121,7 +112,7 @@ klogin(pw, instance, localhost, password)
 	 * without issuing any tickets.
 	 */
 	if (strcmp(pw->pw_name, "root") == 0 ||
-	    krb5_get_default_realm(&realm))
+	    krb5_get_default_realm(kcontext, &realm))
 		return (1);
 
 	/*
@@ -138,32 +129,32 @@ klogin(pw, instance, localhost, password)
 		"FILE:/tmp/krb5cc_root_%d.%s", pw->pw_uid, tty);
 	krbtkfile_env = tkt_location;
 
-	principal = malloc(strlen(pw->pw_name)+strlen(instance)+2);
+	principal = (char *)malloc(strlen(pw->pw_name)+strlen(instance)+2);
 	strcpy(principal, pw->pw_name);	/* XXX strcpy is safe */
 	if (strlen(instance)) {
 	    strcat(principal, "/");		/* XXX strcat is safe */
 	    strcat(principal, instance);	/* XXX strcat is safe */
 	}
 	
-	if (kerror = krb5_cc_resolve(tkt_location, &ccache)) {
+	if (kerror = krb5_cc_resolve(kcontext, tkt_location, &ccache)) {
 	    syslog(LOG_NOTICE, "warning: %s while getting default ccache",
 		error_message(kerror));
 	    return(1);
 	}
 
-	if (kerror = krb5_parse_name(principal, &me)) {
+	if (kerror = krb5_parse_name(kcontext, principal, &me)) {
 	    syslog(LOG_NOTICE, "warning: %s when parsing name %s",
 		error_message(kerror), principal);
 	    return(1);
 	}
     
-	if (kerror = krb5_unparse_name(me, &client_name)) {
+	if (kerror = krb5_unparse_name(kcontext, me, &client_name)) {
 	    syslog(LOG_NOTICE, "warning: %s when unparsing name %s",
 		error_message(kerror), principal);
 	    return(1);
 	}
 
-	kerror = krb5_cc_initialize (ccache, me);
+	kerror = krb5_cc_initialize(kcontext, ccache, me);
 	if (kerror != 0) {
 	    syslog(LOG_NOTICE, "%s when initializing cache %s",
 		error_message(kerror), tkt_location);
@@ -174,12 +165,13 @@ klogin(pw, instance, localhost, password)
     
 	my_creds.client = me;
 
-	if (kerror = krb5_build_principal_ext(&server,
-					krb5_princ_realm(me)->length,
-					krb5_princ_realm(me)->data,
+	if (kerror = krb5_build_principal_ext(kcontext,
+					&server,
+					krb5_princ_realm(kcontext, me)->length,
+					krb5_princ_realm(kcontext, me)->data,
 					tgtname.length, tgtname.data,
-					krb5_princ_realm(me)->length,
-					krb5_princ_realm(me)->data,
+					krb5_princ_realm(kcontext, me)->length,
+					krb5_princ_realm(kcontext, me)->data,
 					0)) {
 	    syslog(LOG_NOTICE, "%s while building server name",
 		error_message(kerror));
@@ -188,14 +180,14 @@ klogin(pw, instance, localhost, password)
 
 	my_creds.server = server;
 
-	kerror = krb5_os_localaddr(&my_addresses);
+	kerror = krb5_os_localaddr(kcontext, &my_addresses);
 	if (kerror != 0) {
 	    syslog(LOG_NOTICE, "%s when getting my address",
 		error_message(kerror));
 	    return(1);
 	}
 
-	if (kerror = krb5_timeofday(&now)) {
+	if (kerror = krb5_timeofday(kcontext, &now)) {
 	    syslog(LOG_NOTICE, "%s while getting time of day",
 		error_message(kerror));
 	    return(1);
@@ -205,21 +197,16 @@ klogin(pw, instance, localhost, password)
 	my_creds.times.endtime = now + lifetime;
 	my_creds.times.renew_till = 0;
 
-	for (i=0; preauth_search_list[i] >= 0; i++) {
-	    kerror = krb5_get_in_tkt_with_password(options, my_addresses,
-		                                   preauth_search_list[i],
-		                                   ETYPE_DES_CBC_CRC,
-						   KEYTYPE_DES,
-						   password,
-						   ccache,
-						   &my_creds, 0);
-	    if (kerror != KRB5KDC_PREAUTH_FAILED &&
-		kerror != KRB5KRB_ERR_GENERIC)
-		    break;
-	}
+	kerror = krb5_get_in_tkt_with_password(kcontext, options,
+					       my_addresses,
+					       NULL,
+					       NULL,
+					       password,
+					       ccache,
+					       &my_creds, 0);
 
-	krb5_free_principal(server);
-	krb5_free_addresses(my_addresses);
+	krb5_free_principal(kcontext, server);
+	krb5_free_addresses(kcontext, my_addresses);
 
 	if (chown(&tkt_location[5], pw->pw_uid, pw->pw_gid) < 0)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", &tkt_location[5]);
@@ -250,11 +237,11 @@ kdestroy()
 	if (krbtkfile_env == NULL)
 	    return;
 
-	code = krb5_cc_resolve(krbtkfile_env, &ccache);
+	code = krb5_cc_resolve(kcontext, krbtkfile_env, &ccache);
 	if (!code) {
-	    code = krb5_cc_destroy(ccache);
+	    code = krb5_cc_destroy(kcontext, ccache);
 	    if (!code) {
-		krb5_cc_close(ccache);
+		krb5_cc_close(kcontext, ccache);
 	    }
 	}
 }
