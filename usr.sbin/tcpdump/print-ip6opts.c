@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip6opts.c,v 1.3 1999/09/04 03:36:41 itojun Exp $	*/
+/*	$NetBSD: print-ip6opts.c,v 1.4 1999/12/10 05:45:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-ip6opts.c,v 1.3 1999/09/04 03:36:41 itojun Exp $");
+__RCSID("$NetBSD: print-ip6opts.c,v 1.4 1999/12/10 05:45:08 itojun Exp $");
 #endif
 
 #ifdef INET6
@@ -113,7 +113,7 @@ trunc:
 int
 hbhopt_print(register const u_char *bp)
 {
-    register const struct ip6_hbh *dp = (struct ip6_hbh *)bp;
+    const struct ip6_hbh *dp = (struct ip6_hbh *)bp;
     register const u_char *ep;
     int hbhlen = 0;
 
@@ -121,6 +121,7 @@ hbhopt_print(register const u_char *bp)
     ep = snapend;
     TCHECK(dp->ip6h_len);
     hbhlen = (int)((dp->ip6h_len + 1) << 3);
+    TCHECK2(dp, hbhlen);
     printf("HBH ");
     if (vflag)
 	ip6_opt_print((const u_char *)dp + sizeof(*dp), hbhlen - sizeof(*dp));
@@ -135,7 +136,7 @@ hbhopt_print(register const u_char *bp)
 int
 dstopt_print(register const u_char *bp)
 {
-    register const struct ip6_dest *dp = (struct ip6_dest *)bp;
+    const struct ip6_dest *dp = (struct ip6_dest *)bp;
     register const u_char *ep;
     int dstoptlen = 0;
 
@@ -143,6 +144,7 @@ dstopt_print(register const u_char *bp)
     ep = snapend;
     TCHECK(dp->ip6d_len);
     dstoptlen = (int)((dp->ip6d_len + 1) << 3);
+    TCHECK2(dp, dstoptlen);
     printf("DSTOPT ");
     if (vflag) {
 	ip6_opt_print((const u_char *)dp + sizeof(*dp),
