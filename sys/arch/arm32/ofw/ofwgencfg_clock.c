@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.8 2000/12/12 06:06:06 mycroft Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.9 2001/02/25 21:31:15 bjh21 Exp $	*/
 
 /*
  * Copyright 1997
@@ -196,7 +196,7 @@ delay(n)
 
 	if (n == 0) return;
 	while (--n > 0) {
-		if (cputype == ID_SA110)	/* XXX - Seriously gross hack */
+		if (cputype == CPU_ID_SA110)	/* XXX - Seriously gross hack */
 			for (i = delaycount; --i;);
 		else
 			for (i = 8; --i;);
