@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.24 2002/04/02 16:59:14 ichiro Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.25 2002/04/09 02:56:17 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -66,10 +66,10 @@
 #include <err.h>
 
 #if !defined(lint)
-static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
-	Bill Paul. All rights reserved.";
-static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.24 2002/04/02 16:59:14 ichiro Exp $";
+__COPYRIGHT(
+"@(#) Copyright (c) 1997, 1998, 1999\
+	Bill Paul. All rights reserved.");
+__RCSID("$NetBSD: wiconfig.c,v 1.25 2002/04/09 02:56:17 thorpej Exp $");
 #endif
 
 struct wi_table {
