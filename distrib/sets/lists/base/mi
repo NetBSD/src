@@ -815,8 +815,8 @@
 ./usr/share/zoneinfo/America/Atka
 ./usr/share/zoneinfo/America/Barbados
 ./usr/share/zoneinfo/America/Belize
-./usr/share/zoneinfo/America/Boise
 ./usr/share/zoneinfo/America/Bogota
+./usr/share/zoneinfo/America/Boise
 ./usr/share/zoneinfo/America/Buenos_Aires
 ./usr/share/zoneinfo/America/Caracas
 ./usr/share/zoneinfo/America/Cayenne
@@ -851,8 +851,8 @@
 ./usr/share/zoneinfo/America/Knox_IN
 ./usr/share/zoneinfo/America/La_Paz
 ./usr/share/zoneinfo/America/Lima
-./usr/share/zoneinfo/America/Louisville
 ./usr/share/zoneinfo/America/Los_Angeles
+./usr/share/zoneinfo/America/Louisville
 ./usr/share/zoneinfo/America/Managua
 ./usr/share/zoneinfo/America/Manaus
 ./usr/share/zoneinfo/America/Martinique
@@ -1173,8 +1173,8 @@
 ./usr/share/zoneinfo/Pacific/Niue
 ./usr/share/zoneinfo/Pacific/Norfolk
 ./usr/share/zoneinfo/Pacific/Noumea
-./usr/share/zoneinfo/Pacific/Palau
 ./usr/share/zoneinfo/Pacific/Pago_Pago
+./usr/share/zoneinfo/Pacific/Palau
 ./usr/share/zoneinfo/Pacific/Pitcairn
 ./usr/share/zoneinfo/Pacific/Ponape
 ./usr/share/zoneinfo/Pacific/Port_Moresby
