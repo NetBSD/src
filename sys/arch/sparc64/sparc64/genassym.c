@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.6 1998/09/13 16:02:48 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.7 1998/09/17 04:41:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,7 +155,7 @@ main()
 	def("FPRS_FEF",FPRS_FEF);
 
 	/* system calls */
-	def("SYS_sigreturn", SYS___sigreturn14);
+	def("SYS___sigreturn14", SYS___sigreturn14);
 	def("SYS_execve", SYS_execve);
 	def("SYS_exit", SYS_exit);
 
