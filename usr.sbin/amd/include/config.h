@@ -1,4 +1,4 @@
-/* $NetBSD: config.h,v 1.17 2000/11/20 01:23:14 wiz Exp $ */
+/* $NetBSD: config.h,v 1.18 2000/11/21 12:14:18 veego Exp $ */
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -540,25 +540,25 @@
 /* #undef MNT2_NFS_OPT_ACREGMIN */
 
 /* Authentication error */
-/* #undef MNT2_NFS_OPT_AUTHERR */
+#define MNT2_NFS_OPT_AUTHERR 0x2000
 
 /* set dead server retry thresh */
-/* #undef MNT2_NFS_OPT_DEADTHRESH */
+#define MNT2_NFS_OPT_DEADTHRESH 0x4000
 
 /* Dismount in progress */
-/* #undef MNT2_NFS_OPT_DISMINPROG */
+#define MNT2_NFS_OPT_DISMINPROG 0x10
 
 /* Dismounted */
-/* #undef MNT2_NFS_OPT_DISMNT */
+#define MNT2_NFS_OPT_DISMNT 0x20
 
 /* Don't estimate rtt dynamically */
-/* #undef MNT2_NFS_OPT_DUMBTIMR */
+#define MNT2_NFS_OPT_DUMBTIMR 0x800
 
 /* System V-style gid inheritance */
 /* #undef MNT2_NFS_OPT_GRPID */
 
 /* Has authenticator */
-/* #undef MNT2_NFS_OPT_HASAUTH */
+#define MNT2_NFS_OPT_HASAUTH 0x800
 
 /* provide name of server's fs to system */
 /* #undef MNT2_NFS_OPT_FSNAME */
@@ -570,7 +570,7 @@
 /* #undef MNT2_NFS_OPT_IGNORE */
 
 /* allow interrupts on hard mount */
-/* #undef MNT2_NFS_OPT_INT */
+#define MNT2_NFS_OPT_INT 0x40
 
 /* allow interrupts on hard mount */
 /* #undef MNT2_NFS_OPT_INTR */
@@ -579,7 +579,7 @@
 /* #undef MNT2_NFS_OPT_INTERNAL */
 
 /* Use Kerberos authentication */
-/* #undef MNT2_NFS_OPT_KERB */
+#define MNT2_NFS_OPT_KERB 0x400
 
 /* use kerberos credentials */
 /* #undef MNT2_NFS_OPT_KERBEROS */
@@ -588,28 +588,28 @@
 /* #undef MNT2_NFS_OPT_KNCONF */
 
 /* set lease term (nqnfs) */
-/* #undef MNT2_NFS_OPT_LEASETERM */
+#define MNT2_NFS_OPT_LEASETERM 0x1000
 
 /* Local locking (no lock manager) */
 /* #undef MNT2_NFS_OPT_LLOCK */
 
 /* set maximum grouplist size */
-/* #undef MNT2_NFS_OPT_MAXGRPS */
+#define MNT2_NFS_OPT_MAXGRPS 0x20
 
 /* Mnt server for mnt point */
-/* #undef MNT2_NFS_OPT_MNTD */
+#define MNT2_NFS_OPT_MNTD 0x8
 
 /* Assume writes were mine */
 /* #undef MNT2_NFS_OPT_MYWRITE */
 
 /* mount NFS Version 3 */
-/* #undef MNT2_NFS_OPT_NFSV3 */
+#define MNT2_NFS_OPT_NFSV3 0x200
 
 /* don't cache attributes */
 /* #undef MNT2_NFS_OPT_NOAC */
 
 /* Don't Connect the socket */
-/* #undef MNT2_NFS_OPT_NOCONN */
+#define MNT2_NFS_OPT_NOCONN 0x80
 
 /* no close-to-open consistency */
 /* #undef MNT2_NFS_OPT_NOCTO */
@@ -621,25 +621,25 @@
 /* #undef MNT2_NFS_OPT_NQLOOKLEASE */
 
 /* Use Nqnfs protocol */
-/* #undef MNT2_NFS_OPT_NQNFS */
+#define MNT2_NFS_OPT_NQNFS 0x100
 
 /* static pathconf kludge info */
 /* #undef MNT2_NFS_OPT_POSIX */
 
 /* Rcv socket lock */
-/* #undef MNT2_NFS_OPT_RCVLOCK */
+#define MNT2_NFS_OPT_RCVLOCK 0x100
 
 /* Do lookup with readdir (nqnfs) */
 /* #undef MNT2_NFS_OPT_RDIRALOOK */
 
 /* set read ahead */
-/* #undef MNT2_NFS_OPT_READAHEAD */
+#define MNT2_NFS_OPT_READAHEAD 0x2000
 
 /* Allocate a reserved port */
-/* #undef MNT2_NFS_OPT_RESVPORT */
+#define MNT2_NFS_OPT_RESVPORT 0x8000
 
 /* set number of request retries */
-/* #undef MNT2_NFS_OPT_RETRANS */
+#define MNT2_NFS_OPT_RETRANS 0x10
 
 /* read only */
 /* #undef MNT2_NFS_OPT_RONLY */
@@ -648,13 +648,13 @@
 /* #undef MNT2_NFS_OPT_RPCTIMESYNC */
 
 /* set read size */
-/* #undef MNT2_NFS_OPT_RSIZE */
+#define MNT2_NFS_OPT_RSIZE 0x4
 
 /* secure mount */
 /* #undef MNT2_NFS_OPT_SECURE */
 
 /* Send socket lock */
-/* #undef MNT2_NFS_OPT_SNDLOCK */
+#define MNT2_NFS_OPT_SNDLOCK 0x40
 
 /* soft mount (hard is default) */
 #define MNT2_NFS_OPT_SOFT 0x1
@@ -663,7 +663,7 @@
 /* #undef MNT2_NFS_OPT_SPONGY */
 
 /* set initial timeout */
-/* #undef MNT2_NFS_OPT_TIMEO */
+#define MNT2_NFS_OPT_TIMEO 0x8
 
 /* use TCP for mounts */
 /* #undef MNT2_NFS_OPT_TCP */
@@ -672,19 +672,19 @@
 /* #undef MNT2_NFS_OPT_VER3 */
 
 /* Wait for authentication */
-/* #undef MNT2_NFS_OPT_WAITAUTH */
+#define MNT2_NFS_OPT_WAITAUTH 0x400
 
 /* Wants an authenticator */
-/* #undef MNT2_NFS_OPT_WANTAUTH */
+#define MNT2_NFS_OPT_WANTAUTH 0x1000
 
 /* Want receive socket lock */
-/* #undef MNT2_NFS_OPT_WANTRCV */
+#define MNT2_NFS_OPT_WANTRCV 0x200
 
 /* Want send socket lock */
-/* #undef MNT2_NFS_OPT_WANTSND */
+#define MNT2_NFS_OPT_WANTSND 0x80
 
 /* set write size */
-/* #undef MNT2_NFS_OPT_WSIZE */
+#define MNT2_NFS_OPT_WSIZE 0x2
 
 /* set symlink cache time-to-live */
 /* #undef MNT2_NFS_OPT_SYMTTL */
