@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.27 1996/10/01 00:22:30 thorpej Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.28 1996/10/01 01:38:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$NetBSD: ypbind.c,v 1.27 1996/10/01 00:22:30 thorpej Exp $";
+static char rcsid[] = "$NetBSD: ypbind.c,v 1.28 1996/10/01 01:38:00 thorpej Exp $";
 #endif
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ static char rcsid[] = "$NetBSD: ypbind.c,v 1.27 1996/10/01 00:22:30 thorpej Exp 
 
 #define BUFSIZE		1400
 
-#define YPSERVERSFILE	".ypservers"
+#define YPSERVERSFILE	"ypservers"
 #define BINDINGDIR	__CONCAT(_PATH_VAR_YP, "binding")
 
 struct _dom_binding {
