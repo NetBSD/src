@@ -1,4 +1,4 @@
-/*	$NetBSD: strpct.c,v 1.2 1998/05/08 18:43:54 fair Exp $	*/
+/*	$NetBSD: strpct.c,v 1.3 1999/01/31 08:00:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -51,49 +51,49 @@
 
 #include <stdio.h>
 
-char * strpct __P((u_long, u_long, u_int));
+char	*strpct __P((u_long, u_long, u_int));
 
 char *
 strpct(numerator, denominator, digits)
 	u_long  numerator, denominator;
 	u_int   digits;
 {
-        int i;
-        u_long result, factor;
-        static char     percent[32];
+	int i;
+	u_long result, factor;
+	static char percent[32];
 
-        /* I should check for digit overflow here, too XXX */
+	/* I should check for digit overflow here, too XXX */
 	factor = 100L;
-        for(i = 0; i < digits; i++) {
-                factor *= 10;
-        }
+	for (i = 0; i < digits; i++) {
+		factor *= 10;
+	}
 
-        /* watch out for overflow! */
-        if (numerator < (ULONG_MAX / factor)) {
-                numerator *= factor;
-        } else {
-                /* toss some of the bits of lesser significance */
-                denominator /= factor;
-        }
+	/* watch out for overflow! */
+	if (numerator < (ULONG_MAX / factor))
+		numerator *= factor;
+	else {
+		/* toss some of the bits of lesser significance */
+		denominator /= factor;
+	}
 
-        if (denominator == 0L)
-                denominator = 1L;
+	if (denominator == 0L)
+		denominator = 1L;
 
-        result = numerator / denominator;
+	result = numerator / denominator;
 
-        if (digits == 0) {
-                (void) snprintf(percent, sizeof(percent), "%lu%%", result);
-        } else {
-                char    fmt[32];
+	if (digits == 0)
+		(void)snprintf(percent, sizeof(percent), "%lu%%", result);
+	else {
+		char	fmt[32];
 
-                /* indirection to produce the right output format */
-                (void) snprintf(fmt, sizeof(fmt), "%%lu.%%0%ulu%%%%", digits);
+		/* indirection to produce the right output format */
+		(void)snprintf(fmt, sizeof(fmt), "%%lu.%%0%ulu%%%%", digits);
 
-                factor /= 100L;         /* undo initialization */
+		factor /= 100L;		/* undo initialization */
 
-                (void) snprintf(percent, sizeof(percent),
-                        fmt, result / factor, result % factor);
-        }       
+		(void)snprintf(percent, sizeof(percent), fmt, result / factor,
+		    result % factor);
+	}       
 
-        return(percent);
+	return (percent);
 }
