@@ -1,6 +1,6 @@
-# $NetBSD: md.hpcmips,v 1.6 2002/10/14 06:31:39 takemura Exp $
-./sbin/fdisk			base-sysutil-root
-./usr/sbin/apm			base-sysutil-bin
-./usr/sbin/apmd			base-sysutil-bin
-./usr/sbin/tpctl		base-sysutil-bin
-./usr/sbin/zzz			base-sysutil-bin
+# $NetBSD: md.hpcmips,v 1.7 2004/01/11 10:24:58 lukem Exp $
+./sbin/fdisk					base-sysutil-root
+./usr/sbin/apm					base-sysutil-bin
+./usr/sbin/apmd					base-sysutil-bin
+./usr/sbin/tpctl				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin

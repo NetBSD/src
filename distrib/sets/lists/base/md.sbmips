@@ -1,6 +1,6 @@
-# $NetBSD: md.sbmips,v 1.1 2002/11/09 06:58:37 cgd Exp $
-./usr/mdec/boot			base-sysutil-bin
-./usr/mdec/bootxx_cd9660	base-sysutil-bin
-./usr/mdec/bootxx_ffs		base-sysutil-bin
-./usr/mdec/bootxx_lfs		base-sysutil-bin
-./usr/mdec/netboot		base-sysutil-bin
+# $NetBSD: md.sbmips,v 1.2 2004/01/11 10:24:58 lukem Exp $
+./usr/mdec/boot					base-sysutil-bin
+./usr/mdec/bootxx_cd9660			base-sysutil-bin
+./usr/mdec/bootxx_ffs				base-sysutil-bin
+./usr/mdec/bootxx_lfs				base-sysutil-bin
+./usr/mdec/netboot				base-sysutil-bin

@@ -1,2 +1,2 @@
-# $NetBSD: rescue.sun3,v 1.1 2002/10/09 01:22:42 thorpej Exp $
-./rescue/edlabel		base-rescue-root
+# $NetBSD: rescue.sun3,v 1.2 2004/01/11 10:24:59 lukem Exp $
+./rescue/edlabel				base-rescue-root

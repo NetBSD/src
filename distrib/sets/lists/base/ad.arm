@@ -1,7 +1,7 @@
-# $NetBSD: ad.arm,v 1.7 2002/10/09 01:22:38 thorpej Exp $
-./sbin/ldconfig			base-sysutil-root
-./usr/lib/libarm.so.0		base-sys-shlib
-./usr/lib/libarm.so.0.0		base-sys-shlib
-./usr/lib/libpmc.so.0		base-sys-shlib
-./usr/lib/libpmc.so.0.0		base-sys-shlib
-./usr/libexec/ld.so		base-sys-shlib
+# $NetBSD: ad.arm,v 1.8 2004/01/11 10:24:58 lukem Exp $
+./sbin/ldconfig					base-sysutil-root
+./usr/lib/libarm.so.0				base-sys-shlib
+./usr/lib/libarm.so.0.0				base-sys-shlib
+./usr/lib/libpmc.so.0				base-sys-shlib
+./usr/lib/libpmc.so.0.0				base-sys-shlib
+./usr/libexec/ld.so				base-sys-shlib
