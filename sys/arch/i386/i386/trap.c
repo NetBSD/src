@@ -1,9 +1,9 @@
-/*	$NetBSD: trap.c,v 1.82 1995/04/26 00:00:23 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.83 1995/05/01 08:06:51 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
 /*-
- * Copyright (c) 1995 Charles Hannum.
+ * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -187,7 +187,7 @@ trap(frame)
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = (int *)&frame;
+		p->p_md.md_regs = &frame;
 	}
 
 	switch (type) {
@@ -487,7 +487,7 @@ trapwrite(addr)
 /*ARGSUSED*/
 void
 syscall(frame)
-	volatile struct trapframe frame;
+	struct trapframe frame;
 {
 	register caddr_t params;
 	register struct sysent *callp;
@@ -508,7 +508,7 @@ syscall(frame)
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
-	p->p_md.md_regs = (int *)&frame;
+	p->p_md.md_regs = &frame;
 	opc = frame.tf_eip;
 	code = frame.tf_eax;
 

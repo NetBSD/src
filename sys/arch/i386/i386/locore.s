@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.126 1995/05/01 07:55:21 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.127 1995/05/01 08:06:25 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -493,9 +493,8 @@ begin:
 	/*
 	 * Set up the initial stack frame for execve() to munge.
 	 */
-	.globl	__ucodesel,__udatasel
-	movl	__ucodesel,%eax
-	movl	__udatasel,%ecx
+	movl	$LSEL(LUCODE_SEL, SEL_UPL),%eax
+	movl	$LSEL(LUDATA_SEL, SEL_UPL),%ecx
 	pushl	%ecx			# user ss
 	pushl	$0xdeadbeef		# user esp (set by execve)
 	pushl	$PSL_USERSET		# user eflags
