@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.63 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.64 2004/05/29 14:28:41 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.63 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.64 2004/05/29 14:28:41 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -162,11 +162,14 @@ kernfs_mount(mp, path, data, ndp, p)
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
-	error = set_statvfs_info(path, UIO_USERSPACE, "kernfs", UIO_SYSSPACE,
-	    mp, p);
+	if ((error = set_statvfs_info(path, UIO_USERSPACE, "kernfs",
+	    UIO_SYSSPACE, mp, p)) != 0) {
+		free(fmp, M_KERNFSMNT);
+		return error;
+	}
 
 	kernfs_get_rrootdev();
-	return error;
+	return 0;
 }
 
 int
@@ -198,7 +201,7 @@ kernfs_unmount(mp, mntflags, p)
 	 * Finally, throw away the kernfs_mount structure
 	 */
 	free(mp->mnt_data, M_KERNFSMNT);
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 
