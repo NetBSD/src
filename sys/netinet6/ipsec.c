@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.93 2004/02/24 15:12:52 wiz Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.94 2004/03/02 02:17:38 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.93 2004/02/24 15:12:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.94 2004/03/02 02:17:38 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -107,8 +107,6 @@ int ip4_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy *ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
-static int sp_cachegen = 1;	/* cache generation # */
-
 #ifdef INET6
 struct ipsecstat ipsec6stat;
 int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;
@@ -119,6 +117,8 @@ struct secpolicy *ip6_def_policy;
 int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 #endif /* INET6 */
+
+u_int ipsec_spdgen = 1;		/* SPD generation # */
 
 #ifdef SADB_X_EXT_TAG
 static struct pf_tag *ipsec_get_tag __P((struct mbuf *));
@@ -193,31 +193,32 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 		return NULL;
 	}
 #ifdef DIAGNOSTIC
-	if (dir >= sizeof(pcbsp->cache)/sizeof(pcbsp->cache[0]))
+	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
 		panic("dir too big in ipsec_checkpcbcache");
 #endif
 	/* SPD table change invalidates all the caches */
-	if (pcbsp->cachegen[dir] == 0 || sp_cachegen > pcbsp->cachegen[dir]) {
+	if (ipsec_spdgen != pcbsp->sp_cache[dir].cachegen) {
 		ipsec_invalpcbcache(pcbsp, dir);
 		return NULL;
 	}
-	if (!pcbsp->cache[dir])
+	if (!pcbsp->sp_cache[dir].cachesp)
 		return NULL;
-	if (pcbsp->cache[dir]->state != IPSEC_SPSTATE_ALIVE) {
+	if (pcbsp->sp_cache[dir].cachesp->state != IPSEC_SPSTATE_ALIVE) {
 		ipsec_invalpcbcache(pcbsp, dir);
 		return NULL;
 	}
-	if ((pcbsp->cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
-		if (!pcbsp->cache[dir])
+	if ((pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
+		if (!pcbsp->sp_cache[dir].cachesp)
 			return NULL;
 		if (ipsec_setspidx(m, &spidx, 1) != 0)
 			return NULL;
-		if (bcmp(&pcbsp->cacheidx[dir], &spidx, sizeof(spidx))) {
-			if (!pcbsp->cache[dir]->spidx ||
-			    !key_cmpspidx_withmask(pcbsp->cache[dir]->spidx,
+		if (bcmp(&pcbsp->sp_cache[dir].cacheidx, &spidx,
+			 sizeof(spidx))) {
+			if (!pcbsp->sp_cache[dir].cachesp->spidx ||
+			    !key_cmpspidx_withmask(pcbsp->sp_cache[dir].cachesp->spidx,
 			    &spidx))
 				return NULL;
-			pcbsp->cacheidx[dir] = spidx;
+			pcbsp->sp_cache[dir].cacheidx = spidx;
 		}
 	} else {
 		/*
@@ -232,12 +233,13 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 		 */
 	}
 
-	pcbsp->cache[dir]->lastused = mono_time.tv_sec;
-	pcbsp->cache[dir]->refcnt++;
+	pcbsp->sp_cache[dir].cachesp->lastused = mono_time.tv_sec;
+	pcbsp->sp_cache[dir].cachesp->refcnt++;
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",
-		pcbsp->cache[dir]->refcnt, pcbsp->cache[dir]));
-	return pcbsp->cache[dir];
+		pcbsp->sp_cache[dir].cachesp->refcnt,
+		pcbsp->sp_cache[dir].cachesp));
+	return pcbsp->sp_cache[dir].cachesp;
 }
 
 static int
@@ -256,24 +258,43 @@ ipsec_fillpcbcache(pcbsp, m, sp, dir)
 		return EINVAL;
 	}
 #ifdef DIAGNOSTIC
-	if (dir >= sizeof(pcbsp->cache)/sizeof(pcbsp->cache[0]))
+	if (dir >= sizeof(pcbsp->sp_cache)/sizeof(pcbsp->sp_cache[0]))
 		panic("dir too big in ipsec_checkpcbcache");
 #endif
 
-	if (pcbsp->cache[dir])
-		key_freesp(pcbsp->cache[dir]);
-	pcbsp->cache[dir] = NULL;
-	if (ipsec_setspidx(m, &pcbsp->cacheidx[dir], 1) != 0) {
+	if (pcbsp->sp_cache[dir].cachesp)
+		key_freesp(pcbsp->sp_cache[dir].cachesp);
+	pcbsp->sp_cache[dir].cachesp = NULL;
+	pcbsp->sp_cache[dir].cachehint = IPSEC_PCBHINT_MAYBE;
+	if (ipsec_setspidx(m, &pcbsp->sp_cache[dir].cacheidx, 1) != 0) {
 		return EINVAL;
 	}
-	pcbsp->cache[dir] = sp;
-	if (pcbsp->cache[dir]) {
-		pcbsp->cache[dir]->refcnt++;
+	pcbsp->sp_cache[dir].cachesp = sp;
+	if (pcbsp->sp_cache[dir].cachesp) {
+		pcbsp->sp_cache[dir].cachesp->refcnt++;
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec_fillpcbcache cause refcnt++:%d SP:%p\n",
-			pcbsp->cache[dir]->refcnt, pcbsp->cache[dir]));
+			pcbsp->sp_cache[dir].cachesp->refcnt,
+			pcbsp->sp_cache[dir].cachesp));
+
+		/*
+		 * If the PCB is connected, we can remember a hint to
+		 * possibly short-circuit IPsec processing in other places.
+		 */
+		if (pcbsp->sp_cacheflags & IPSEC_PCBSP_CONNECTED) {
+			switch (pcbsp->sp_cache[dir].cachesp->policy) {
+			case IPSEC_POLICY_NONE:
+			case IPSEC_POLICY_BYPASS:
+				pcbsp->sp_cache[dir].cachehint =
+				    IPSEC_PCBHINT_NO;
+				break;
+			default:
+				pcbsp->sp_cache[dir].cachehint =
+				    IPSEC_PCBHINT_YES;
+			}
+		}
 	}
-	pcbsp->cachegen[dir] = sp_cachegen;
+	pcbsp->sp_cache[dir].cachegen = ipsec_spdgen;
 
 	return 0;
 }
@@ -288,11 +309,13 @@ ipsec_invalpcbcache(pcbsp, dir)
 	for (i = IPSEC_DIR_INBOUND; i <= IPSEC_DIR_OUTBOUND; i++) {
 		if (dir != IPSEC_DIR_ANY && i != dir)
 			continue;
-		if (pcbsp->cache[i])
-			key_freesp(pcbsp->cache[i]);
-		pcbsp->cache[i] = NULL;
-		pcbsp->cachegen[i] = 0;
-		bzero(&pcbsp->cacheidx[i], sizeof(pcbsp->cacheidx[i]));
+		if (pcbsp->sp_cache[i].cachesp)
+			key_freesp(pcbsp->sp_cache[i].cachesp);
+		pcbsp->sp_cache[i].cachesp = NULL;
+		pcbsp->sp_cache[i].cachehint = IPSEC_PCBHINT_MAYBE;
+		pcbsp->sp_cache[i].cachegen = 0;
+		bzero(&pcbsp->sp_cache[i].cacheidx,
+		      sizeof(pcbsp->sp_cache[i].cacheidx));
 	}
 	return 0;
 }
@@ -302,7 +325,7 @@ ipsec_pcbconn(pcbsp)
 	struct inpcbpolicy *pcbsp;
 {
 
-	pcbsp->cacheflags |= IPSEC_PCBSP_CONNECTED;
+	pcbsp->sp_cacheflags |= IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
 	return 0;
 }
@@ -312,17 +335,19 @@ ipsec_pcbdisconn(pcbsp)
 	struct inpcbpolicy *pcbsp;
 {
 
-	pcbsp->cacheflags &= ~IPSEC_PCBSP_CONNECTED;
+	pcbsp->sp_cacheflags &= ~IPSEC_PCBSP_CONNECTED;
 	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
 	return 0;
 }
 
-int
+void
 ipsec_invalpcbcacheall()
 {
 
-	sp_cachegen++;
-	return 0;
+	if (ipsec_spdgen == UINT_MAX)
+		ipsec_spdgen = 1;
+	else
+		ipsec_spdgen++;
 }
 
 #ifdef SADB_X_EXT_TAG
