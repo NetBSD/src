@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.152 2003/12/20 20:25:28 lha Exp $
+#       $NetBSD: Makefile,v 1.153 2004/01/21 03:02:06 atatat Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -31,7 +31,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	SCHED_LOCK.9 scheduler.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
 	signal.9 softintr.9 spl.9 store.9 suser.9 suspendsched.9 \
-	tc.9 time.9 todr.9 uiomove.9 ucom.9 userret.9 \
+	sysctl.9 tc.9 time.9 todr.9 uiomove.9 ucom.9 userret.9 \
 	vattr.9 vfs.9 vfsops.9 vfssubr.9 vme.9 vnfileops.9 \
 	vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
@@ -440,6 +440,22 @@ MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
+MLINKS+=sysctl.9 old_sysctl.9 \
+	sysctl.9 sysctl_create.9 \
+	sysctl.9 sysctl_createv.9 \
+	sysctl.9 sysctl_destroy.9 \
+	sysctl.9 sysctl_destroyv.9 \
+	sysctl.9 sysctl_dispatch.9 \
+	sysctl.9 sysctl_free.9 \
+	sysctl.9 sysctl_init.9 \
+	sysctl.9 sysctl_locate.9 \
+	sysctl.9 sysctl_lock.9 \
+	sysctl.9 sysctl_lookup.9 \
+	sysctl.9 sysctl_needfunc.9 \
+	sysctl.9 sysctl_notavail.9 \
+	sysctl.9 sysctl_null.9 \
+	sysctl.9 sysctl_query.9 \
+	sysctl.9 sysctl_unlock.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=tc.9 tc_intr_establish.9 \
 	tc.9 tc_intr_disestablish.9 \
