@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.51 2004/01/29 17:41:49 reed Exp $	*/
+/*	$NetBSD: perform.c,v 1.52 2004/11/02 00:38:23 erh Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.51 2004/01/29 17:41:49 reed Exp $");
+__RCSID("$NetBSD: perform.c,v 1.52 2004/11/02 00:38:23 erh Exp $");
 #endif
 #endif
 
@@ -317,6 +317,7 @@ require_delete(char *home, int tryall)
 					     Verbose ? "-v" : "",
 					     (Force > 1) ? "-f -f" : (Force == 1) ? "-f" : "",
 					     NoDeInstall ? "-D" : "",
+					     NoDeleteFiles ? "-N" : "",
 					     CleanDirs ? "-d" : "",
 					     Fake ? "-n" : "",
 					     rm_installed ? installed : lpp->lp_name, NULL);
@@ -661,9 +662,10 @@ pkg_do(char *pkg)
 	}
 	if (fexists(PRESERVE_FNAME)) {
 		printf("Package `%s' is marked as not for deletion\n", pkg);
-		if (Force <= 1) {
+		if (Force <= (NoDeleteFiles ? 0 : 1)) {
 			return 1;
 		}
+		printf("Deleting anyway\n");
 	}
 	if (!isemptyfile(REQUIRED_BY_FNAME)) {
 		/* This package is required by others. Either nuke
@@ -768,7 +770,7 @@ pkg_do(char *pkg)
 	}
 	if (!Fake) {
 		/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
-		if (delete_package(FALSE, CleanDirs, &Plist) == FAIL)
+		if (delete_package(FALSE, CleanDirs, &Plist, NoDeleteFiles) == FAIL)
 			warnx(
 		"couldn't entirely delete package `%s'\n"
 		"(perhaps the packing list is incorrectly specified?)", pkg);
