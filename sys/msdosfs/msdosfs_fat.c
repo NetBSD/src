@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.15 1995/01/04 06:32:21 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.16 1995/03/12 16:27:34 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -162,7 +162,7 @@ pcbmap(dep, findcn, bnp, cnp)
 	 */
 	if (cn == MSDOSFSROOT) {
 		if (dep->de_Attributes & ATTR_DIRECTORY) {
-			if (findcn * pmp->pm_SectPerClust > pmp->pm_rootdirsize) {
+			if (findcn * pmp->pm_SectPerClust >= pmp->pm_rootdirsize) {
 				if (cnp)
 					*cnp = pmp->pm_rootdirsize / pmp->pm_SectPerClust;
 				return (E2BIG);
