@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.2 1997/01/23 22:44:45 gwr Exp $	*/
+/*	$NetBSD: dvma.c,v 1.2.4.1 1997/03/12 14:22:14 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,8 +73,6 @@
  * device driver to convert this virtual address into the appropriate slave
  * address that its device should issue to access the buffer.  (The will be
  * routines that will assist the driver in doing so.)
- *
- * XXX - This needs work.  The address from dvma_malloc() faults!
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,8 +159,8 @@ dvma_kvtopa(kva, bustype)
  */
 void *
 dvma_mapin(kmem_va, len, canwait)
-	void *	kmem_va;
-	int		len, canwait;
+	void *  kmem_va;
+	int     len, canwait;
 {
 	void * dvma_addr;
 	vm_offset_t kva, tva;
@@ -171,17 +169,29 @@ dvma_mapin(kmem_va, len, canwait)
 	long off, pn;
 
 	kva = (u_long)kmem_va;
+#ifdef	DIAGNOSTIC
+	/*
+	 * Addresses below VM_MIN_KERNEL_ADDRESS are not part of the kernel
+	 * map and should not participate in DVMA.
+	 */
 	if (kva < VM_MIN_KERNEL_ADDRESS)
 		panic("dvma_mapin: bad kva");
+#endif
 
+	/*
+	 * Calculate the offset of the data buffer from a page boundary.
+	 */
 	off = (int)kva & PGOFSET;
-	kva -= off;
-	len = round_page(len + off);
-	npf = btoc(len);
+	kva -= off;	/* Truncate starting address to nearest page. */
+	len = round_page(len + off); /* Round the buffer length to pages. */
+	npf = btoc(len); /* Determine the number of pages to be mapped. */
 
 	s = splimp();
 	for (;;) {
-
+		/*
+		 * Try to allocate DVMA space of the appropriate size
+		 * in which to do a transfer.
+		 */
 		pn = rmalloc(dvmamap, npf);
 
 		if (pn != 0)
@@ -195,22 +205,31 @@ dvma_mapin(kmem_va, len, canwait)
 	}
 	splx(s);
 
+	
+	/* 
+	 * Tva is the starting page to which the data buffer will be double
+	 * mapped.  Dvma_addr is the starting address of the buffer within
+	 * that page and is the return value of the function.
+	 */
 	tva = ctob(pn);
 	dvma_addr = (void *) (tva + off);
 
-	while (npf--) {
+	for (;npf--; kva += NBPG, tva += NBPG) {
+		/*
+		 * Retrieve the physical address of each page in the buffer
+		 * and enter mappings into the I/O MMU so they may be seen
+		 * by external bus masters and into the special DVMA space
+		 * in the MC68030 MMU so they may be seen by the CPU.
+		 */
 		pa = pmap_extract(pmap_kernel(), kva);
+#ifdef	DEBUG
 		if (pa == 0)
 			panic("dvma_mapin: null page frame");
-		pa = trunc_page(pa);
+#endif	DEBUG
 
 		iommu_enter((tva & DVMA_SLAVE_MASK), pa);
-
 		pmap_enter(pmap_kernel(), tva, pa | PMAP_NC,
 			VM_PROT_READ|VM_PROT_WRITE, 1);
-
-		kva += NBPG;
-		tva += NBPG;
 	}
 
 	return (dvma_addr);
@@ -218,6 +237,10 @@ dvma_mapin(kmem_va, len, canwait)
 
 /*
  * Remove double map of `va' in DVMA space at `kva'.
+ *
+ * TODO - This function might be the perfect place to handle the
+ *       synchronization between the DVMA cache and central RAM
+ *       on the 3/470.
  */
 void
 dvma_mapout(dvma_addr, len)
@@ -234,7 +257,16 @@ dvma_mapout(dvma_addr, len)
 
 	iommu_remove((kva & DVMA_SLAVE_MASK), len);
 
+	/*
+	 * XXX - don't call pmap_remove() with DVMA space yet.
+	 * XXX   It cannot (currently) handle the removal
+	 * XXX   of address ranges which do not participate in the
+	 * XXX   PV system by virtue of their _virtual_ addresses.
+	 * XXX   DVMA is one of these special address spaces.
+	 */
+#ifdef	DVMA_ON_PVLIST
 	pmap_remove(pmap_kernel(), kva, kva + len);
+#endif	/* DVMA_ON_PVLIST */
 
 	s = splimp();
 	rmfree(dvmamap, btoc(len), btoc(kva));

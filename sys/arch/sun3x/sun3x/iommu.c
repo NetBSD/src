@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: iommu.c,v 1.1.1.1.6.1 1997/03/12 14:22:16 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ iommu_attach(parent, self, args)
 	iommu_va = (iommu_pde_t *)
 		obio_alloc(ca->ca_paddr, OBIO_IOMMU_SIZE);
 
-	printf("\n");
+	printf(": range %dMB\n", IOMMU_NENT * IOMMU_PAGE_SIZE / (1024 * 1024));
 }
 
 void
@@ -136,7 +136,7 @@ iommu_remove(sa, len)
 
 	pn = IOMMU_BTOP(sa);
 	while (len > 0) {
-		iommu_va[pn++].addr.raw = 0;
-		len -= NBPG;
+		iommu_va[pn++].addr.raw = IOMMU_PDE_DT_INVALID;
+		len -= IOMMU_PAGE_SIZE;
 	}
 }

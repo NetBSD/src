@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 1997/01/27 22:35:03 gwr Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3.4.1 1997/03/12 14:22:12 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
-
 #include <machine/db_machdep.h>
 #include <machine/machdep.h>
 #include <machine/pte.h>
@@ -55,11 +53,13 @@
 static void db_mach_abort   __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_halt    __P((db_expr_t, int, db_expr_t, char *));
 static void db_mach_reboot  __P((db_expr_t, int, db_expr_t, char *));
+static void db_mach_pagemap __P((db_expr_t, int, db_expr_t, char *));
 
 struct db_command db_machine_cmds[] = {
 	{ "abort",	db_mach_abort,	0,	0 },
 	{ "halt",	db_mach_halt,	0,	0 },
 	{ "reboot",	db_mach_reboot,	0,	0 },
+	{ "pgmap",	db_mach_pagemap, 	CS_SET_DOT, 0 },
 	{ (char *)0, }
 };
 
@@ -109,4 +109,42 @@ db_mach_reboot(addr, have_addr, count, modif)
 	char *		modif;
 {
 	sunmon_reboot("");
+}
+
+
+static void pte_print __P((int));
+
+static void
+db_mach_pagemap(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	u_long va, pte;
+
+	va = trunc_page((u_long)addr);
+	pte = get_pte(va);
+	db_printf("0x%08x 0x%08x", va, pte);
+	pte_print(pte);
+	db_next = va + NBPG;
+}
+
+static void
+pte_print(pte)
+	int pte;
+{
+
+	if (pte & MMU_SHORT_PTE_DT) {
+		if (pte & MMU_SHORT_PTE_CI)
+			db_printf(" CI");
+		if (pte & MMU_SHORT_PTE_M)
+			db_printf(" Mod");
+		if (pte & MMU_SHORT_PTE_USED)
+			db_printf(" Ref");
+		if (pte & MMU_SHORT_PTE_WP)
+			db_printf(" WP");
+		db_printf(" DT%d\n", pte & MMU_SHORT_PTE_DT);
+	}
+	else db_printf(" INVALID\n");
 }
