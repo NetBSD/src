@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.128 2005/01/30 23:38:17 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.129 2005/02/26 21:19:18 dsl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.128 2005/01/30 23:38:17 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.129 2005/02/26 21:19:18 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -800,19 +800,19 @@ void
 cpustats(void)
 {
 	int state;
-	double pct, total;
+	double pcnt, total;
 	double stat_us, stat_sy, stat_id;
 
 	total = 0;
 	for (state = 0; state < CPUSTATES; ++state)
 		total += cur.cp_time[state];
 	if (total)
-		pct = 100 / total;
+		pcnt = 100 / total;
 	else
-		pct = 0;
-	stat_us = (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * pct;
-	stat_sy = (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * pct;
-	stat_id = cur.cp_time[CP_IDLE] * pct;
+		pcnt = 0;
+	stat_us = (cur.cp_time[CP_USER] + cur.cp_time[CP_NICE]) * pcnt;
+	stat_sy = (cur.cp_time[CP_SYS] + cur.cp_time[CP_INTR]) * pcnt;
+	stat_id = cur.cp_time[CP_IDLE] * pcnt;
 	(void)printf("%*.0f ", ((stat_sy >= 100) ? 1 : 2), stat_us);
 	(void)printf("%*.0f ", ((stat_us >= 100 || stat_id >= 100) ? 1 : 2), stat_sy);
 	(void)printf("%2.0f", stat_id);
