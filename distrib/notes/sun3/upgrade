@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.10 2000/11/02 01:37:48 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.11 2000/11/04 06:52:19 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,14 +110,6 @@ will want to mount those file systems as well. To do
 this, you will need to enable the network:
 .Pp
 .Dl # Ic "sh /etc/rc.d/network start"
-.It
-Run the
-.Xr update 8
-daemon, to ensure that new programs
-are actually stored on disk.
-.\" XXX: check this
-.Pp
-.Dl # Ic update
 .It
 Make sure you are in the root file system
 .Pq Pa / and extract the
