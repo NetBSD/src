@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.21 1999/09/29 18:52:19 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.22 1999/09/29 22:07:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -4518,10 +4518,8 @@ tlp_pmac_nway_service(sc, cmd)
 			 */
 			return (EINVAL);
 		default:
-			/*
-			 * 10TCTL register data is stored in the ifmedia entry.
-			 */
-			TULIP_WRITE(sc, CSR_PMAC_10TCTL, ife->ifm_data);
+			/* Nothing to do in this case. */
+			break;
 		}
 		break;
 
@@ -4578,13 +4576,11 @@ tlp_pmac_nway_auto(sc, waitfor)
 	struct tulip_softc *sc;
 	int waitfor;
 {
-	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int i;
 
 	if ((sc->sc_flags & TULIPF_DOINGAUTO) == 0) {
 		TULIP_WRITE(sc, CSR_STATUS, STATUS_LNPANC);
-		TULIP_WRITE(sc, CSR_PMAC_10TCTL, ife->ifm_data);
+		TULIP_SET(sc, CSR_PMAC_10TCTL, PMAC_10TCTL_ANE);
 	}
 
 	if (waitfor) {
@@ -4695,11 +4691,8 @@ void
 tlp_pmac_nway_acomp(sc)
 	struct tulip_softc *sc;
 {
-	u_int32_t reg;
 
-	reg = TULIP_READ(sc, CSR_PMAC_10TCTL);
-	reg &= ~PMAC_10TCTL_ANE;
-	TULIP_WRITE(sc, CSR_PMAC_10TCTL, reg);
+	TULIP_CLR(sc, CSR_PMAC_10TCTL, PMAC_10TCTL_ANE);
 }
 
 /*
