@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.c,v 1.2 2001/11/13 01:40:07 lukem Exp $	*/
+/*	$NetBSD: arc4.c,v 1.3 2002/10/22 21:50:08 perry Exp $	*/
 
 /*
  * ARC4 implementation
@@ -30,16 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.2 2001/11/13 01:40:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.3 2002/10/22 21:50:08 perry Exp $");
 
 #include <sys/types.h>
 
 #include <crypto/arc4/arc4.h>
 
 struct arc4_ctx {
-	int	x;
-	int	y;
-	int	state[256];
+	unsigned int	x;
+	unsigned int	y;
+	unsigned int	state[256];
 	/* was unsigned char, changed to int for performance -- onoe */
 };
 
