@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.143 2001/08/23 19:59:44 manu Exp $
+.\"	$NetBSD: options.4,v 1.144 2001/09/03 23:03:29 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -93,7 +93,7 @@ error, and
 only works when this option is set in the kernel,
 see
 .Xr io 4
-on ports that support it. 
+on ports that support it.
 .It Cd options COMPAT_11
 Enable binary compatibility with
 .Nx 1.1 .
@@ -192,7 +192,7 @@ compatibility with Linux ELF and
 .Xr a.out 5
 applications built for the same architecture.
 This currently includes the alpha, i386, powerpc, and m68k
-port. 
+port.
 .It Cd options COMPAT_SUNOS
 On those architectures that support it, this enables binary
 compatibility with
@@ -810,7 +810,10 @@ usually requires a
 gadget box
 to convert from TTL to RS-232 signal levels.
 The gadget box and PPS are described in more detail in the HTML documentation
-shipped with the ntpd distribution.
+for
+.Xr ntpd 8
+in
+.Pa /usr/share/doc/html/ntp .
 .It Cd options SETUIDSCRIPTS
 Allows scripts with the setuid bit set to execute as the effective
 user rather than the real user, just like binary executables.
