@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.24 2002/08/01 02:42:04 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.25 2002/08/01 03:30:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.24 2002/08/01 02:42:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.25 2002/08/01 03:30:21 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2010,7 +2010,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	frame.sf_signum = sig;
