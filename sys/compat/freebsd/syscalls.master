@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35 2001/05/30 11:37:23 mrg Exp $
+	$NetBSD: syscalls.master,v 1.36 2001/10/27 10:00:55 jdolecek Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -501,7 +501,8 @@
 248	UNIMPL
 249	UNIMPL
 ; syscall numbers initially used in OpenBSD
-250	UNIMPL		minherit
+250	NOARGS		{ int sys_minherit(void *addr, size_t len, \
+			    int inherit); }
 251	UNIMPL		rfork
 252	UNIMPL		openbsd_poll
 253	NOARGS		{ int sys_issetugid(void); }
@@ -551,9 +552,11 @@
 294	UNIMPL
 295	UNIMPL
 296	UNIMPL
-297	UNIMPL		fhstatfs
-298	UNIMPL		fhopen
-299	UNIMPL		fhstat
+297	NOARGS		{ int sys_fhstatfs(const fhandle_t *fhp, \
+			    struct statfs *buf); }
+298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
+299	NOARGS		{ int sys_fhstat(const fhandle_t *fhp, \
+			    struct stat *sb); }
 ; syscall numbers for FreeBSD
 300	UNIMPL		modnext
 301	UNIMPL		modstat
