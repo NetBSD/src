@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_first.c,v 1.2 1996/05/20 15:17:32 cgd Exp $	 */
+/*	$NetBSD: yp_first.c,v 1.3 1996/05/23 13:48:59 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yp_first.c,v 1.2 1996/05/20 15:17:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: yp_first.c,v 1.3 1996/05/23 13:48:59 christos Exp $";
 #endif
 
 #include <stdlib.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$NetBSD: yp_first.c,v 1.2 1996/05/20 15:17:32 cgd Exp $";
 #include <rpcsvc/ypclnt.h>
 
 extern struct timeval _yplib_timeout;
+extern int _yplib_nerrs;
 
 int
 yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
@@ -55,7 +56,7 @@ yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
 	struct ypresp_key_val yprkv;
 	struct ypreq_nokey yprnk;
 	struct dom_binding *ysd;
-	int             r;
+	int r, nerrs = 0;
 
 	if (indomain == NULL || *indomain == '\0'
 	    || strlen(indomain) > YPMAXDOMAIN)
@@ -79,7 +80,10 @@ again:
 		   xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, 
 		   _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_first: clnt_call");
+		if (++nerrs == _yplib_nerrs) {
+			clnt_perror(ysd->dom_client, "yp_first: clnt_call");
+			nerrs = 0;
+		}
 		ysd->dom_vers = -1;
 		goto again;
 	}
@@ -118,7 +122,7 @@ yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
 	struct ypresp_key_val yprkv;
 	struct ypreq_key yprk;
 	struct dom_binding *ysd;
-	int             r;
+	int r, nerrs = 0;
 
 	if (indomain == NULL || *indomain == '\0'
 	    || strlen(indomain) > YPMAXDOMAIN)
@@ -144,7 +148,10 @@ again:
 		      xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, 
 		      _yplib_timeout);
 	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_next: clnt_call");
+		if (++nerrs == _yplib_nerrs) {
+			clnt_perror(ysd->dom_client, "yp_next: clnt_call");
+			nerrs = 0;
+		}
 		ysd->dom_vers = -1;
 		goto again;
 	}
