@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.29 2003/08/13 18:52:01 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.30 2003/11/09 18:56:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.29 2003/08/13 18:52:01 nathanw Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.30 2003/11/09 18:56:48 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -87,6 +87,7 @@ static int pthread__diagassert = DIAGASSERT_ABORT | DIAGASSERT_STDERR;
 pthread_spin_t pthread__runqueue_lock;
 struct pthread_queue_t pthread__runqueue;
 struct pthread_queue_t pthread__idlequeue;
+struct pthread_queue_t pthread__suspqueue;
 
 __strong_alias(__libc_thr_self,pthread_self)
 __strong_alias(__libc_thr_create,pthread_create)
@@ -355,8 +356,13 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	pthread_spinunlock(self, &pthread__allqueue_lock);
 
 	SDPRINTF(("(pthread_create %p) Created new thread %p (name pointer %p).\n", self, newthread, newthread->pt_name));
-	/* 6. Put on run queue. */
-	pthread__sched(self, newthread);
+	/* 6. Put on appropriate queue. */
+	if (newthread->pt_flags & PT_FLAG_SUSPENDED) {
+		pthread_spinlock(self, &newthread->pt_statelock);
+		pthread__suspend(self, newthread);
+		pthread_spinunlock(self, &newthread->pt_statelock);
+	} else
+		pthread__sched(self, newthread);
 
 	*thread = newthread;
 
@@ -375,6 +381,67 @@ pthread__create_tramp(void *(*start)(void *), void *arg)
 
 	/*NOTREACHED*/
 	pthread__abort();
+}
+
+int
+pthread_suspend_np(pthread_t thread)
+{
+	pthread_t self = pthread__self();
+	if (self == thread) {
+		fprintf(stderr, "suspend_np: can't suspend self\n");
+		return EDEADLK;
+	}
+	SDPRINTF(("(pthread_suspend_np %p) Suspend thread %p (state %d).\n",
+		     self, thread, thread->pt_state));
+	pthread_spinlock(self, &thread->pt_statelock);
+	switch (thread->pt_state) {
+	case PT_STATE_RUNNING:
+		pthread__abort();	/* XXX */
+		break;
+	case PT_STATE_SUSPENDED:
+		pthread_spinunlock(self, &thread->pt_statelock);
+		return 0;
+	case PT_STATE_RUNNABLE:
+		pthread_spinlock(self, &pthread__runqueue_lock);
+		PTQ_REMOVE(&pthread__runqueue, thread, pt_runq);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
+		break;
+	case PT_STATE_BLOCKED_QUEUE:
+		pthread_spinlock(self, thread->pt_sleeplock);
+		PTQ_REMOVE(thread->pt_sleepq, thread, pt_sleep);
+		pthread_spinunlock(self, thread->pt_sleeplock);
+		break;
+	case PT_STATE_BLOCKED_SYS:
+		/* XXX flaglock? */
+		thread->pt_flags |= PT_FLAG_SUSPENDED;
+		pthread_spinunlock(self, &thread->pt_statelock);
+		return 0;
+	default:
+		break;			/* XXX */
+	}
+	pthread__suspend(self, thread);
+	pthread_spinunlock(self, &thread->pt_statelock);
+	return 0;
+}
+
+int
+pthread_resume_np(pthread_t thread)
+{
+
+	pthread_t self = pthread__self();
+	SDPRINTF(("(pthread_resume_np %p) Resume thread %p (state %d).\n",
+		     self, thread, thread->pt_state));
+	pthread_spinlock(self, &thread->pt_statelock);
+	/* XXX flaglock? */
+	thread->pt_flags &= ~PT_FLAG_SUSPENDED;
+	if (thread->pt_state == PT_STATE_SUSPENDED) {
+		pthread_spinlock(self, &pthread__runqueue_lock);
+		PTQ_REMOVE(&pthread__suspqueue, thread, pt_runq);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
+		pthread__sched(self, thread);
+	}
+	pthread_spinunlock(self, &thread->pt_statelock);
+	return 0;
 }
 
 
