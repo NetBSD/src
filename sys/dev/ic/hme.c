@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.33 2003/02/13 12:10:20 pk Exp $	*/
+/*	$NetBSD: hme.c,v 1.34 2003/02/20 20:09:56 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.33 2003/02/13 12:10:20 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.34 2003/02/20 20:09:56 petrov Exp $");
 
 #define HMEDEBUG
 
@@ -258,7 +258,7 @@ hme_config(sc)
 
 	/* Initialize ifmedia structures and MII info */
 	mii->mii_ifp = ifp;
-	mii->mii_readreg = hme_mii_readreg; 
+	mii->mii_readreg = hme_mii_readreg;
 	mii->mii_writereg = hme_mii_writereg;
 	mii->mii_statchg = hme_mii_statchg;
 
@@ -267,7 +267,7 @@ hme_config(sc)
 	hme_mifinit(sc);
 
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-			MII_PHY_ANY, MII_OFFSET_ANY, 0);
+			MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
