@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.167 2003/01/18 06:45:01 thorpej Exp $ */
+/*	$NetBSD: cpu.c,v 1.168 2003/01/20 00:55:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -745,10 +745,10 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 			continue;
 
 		if ((cpi->flags & CPUFLG_GOTMSG) == 0)
-			printf(" cpu%d", cpi->ci_cpuid);
+			printf_nolog(" cpu%d", cpi->ci_cpuid);
 	}
 	if (!done)
-		printf("\n");
+		printf_nolog("\n");
 
 	UNLOCK_XPMSG();
 	splx(s);
