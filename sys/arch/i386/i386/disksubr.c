@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1994/11/04 21:19:48 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 1994/11/22 01:21:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -238,8 +238,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 
 	/* XXX missing check if other dos partitions will be overwritten */
 
-	while ((i = ffs((long)openmask)) != 0) {
-		i--;
+	while (openmask != 0) {
+		i = ffs(openmask) - 1;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)
 			return (EBUSY);
