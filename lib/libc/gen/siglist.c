@@ -33,13 +33,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: siglist.c,v 1.3 1993/08/26 00:45:07 jtc Exp $";
+static char *rcsid = "$Id: siglist.c,v 1.4 1993/12/02 09:53:28 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
 #include <unistd.h>
 
-char	*sys_siglist[NSIG] = {
+const char *const sys_siglist[NSIG] = {
 	"Signal 0",
 	"Hangup",			/* SIGHUP */
 	"Interrupt",			/* SIGINT */
