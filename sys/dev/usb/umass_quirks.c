@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.24 2002/10/05 01:11:47 gehenna Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.25 2002/11/05 12:06:58 cjs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 Static usbd_status umass_init_insystem(struct umass_softc *);
 Static usbd_status umass_init_shuttle(struct umass_softc *);
 
+Static void umass_fixup_sony(struct umass_softc *);
 Static void umass_fixup_yedata(struct umass_softc *);
 
 Static const struct umass_quirk umass_quirks[] = {
@@ -249,6 +250,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 
+	{ { USB_VENDOR_SONY, USB_PRODUCT_DSC },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  0,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, umass_fixup_sony
+	},
+
 	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_MSC },
 	  UMASS_WPROTO_CBI, UMASS_CPROTO_UFI,
 	  UMASS_QUIRK_FORCE_SHORT_INQUIRY | UMASS_QUIRK_RS_NO_CLEAR_UA,
@@ -327,6 +336,17 @@ umass_init_shuttle(struct umass_softc *sc)
 	USETW(req.wLength, sizeof(status));
 
 	return (usbd_do_request(sc->sc_udev, &req, &status));
+}
+
+Static void
+umass_fixup_sony(struct umass_softc *sc)
+{
+	usb_interface_descriptor_t *id;
+
+	id = usbd_get_interface_descriptor(sc->sc_iface);
+	if (id->bInterfaceSubClass == 0xff) {
+		sc->sc_cmd = UMASS_CPROTO_RBC;
+	}
 }
 
 Static void
