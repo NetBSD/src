@@ -31,6 +31,7 @@ struct value;
    on the Sparc, the stack frames are offset by +2047 (and the arguments
    are 8 bytes instead of 4). */
 /* Instructions are:
+   save %sp, -320, %sp
    std  %f10, [ %fp + 0x7a7 ]
    std  %f8, [ %fp + 0x79f ]
    std  %f6, [ %fp + 0x797 ]
@@ -62,7 +63,7 @@ struct value;
    ldx  [ %sp + 0x897 ], %o3
    ldx  [ %sp + 0x88f ], %o2
    ldx  [ %sp + 0x887 ], %o1
-   call  %g0
+   jmpl	%g1, %o7
    ldx  [ %sp + 0x87f ], %o0
    nop
    ta  1
@@ -80,7 +81,7 @@ struct value;
 				 0x0100000091580000LL, 0xd027a72b93500000LL,\
 				 0xd027a72791480000LL, 0xd027a72391400000LL,\
 				 0xd027a71fda5ba8a7LL, 0xd85ba89fd65ba897LL,\
-				 0xd45ba88fd25ba887LL, 0x9fc02000d05ba87fLL,\
+				 0xd45ba88fd25ba887LL, 0x9fc04000d05ba87fll,\
 				 0x0100000091d02001LL, 0x0100000001000000LL }
 
 
