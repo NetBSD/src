@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.76 2003/07/15 00:05:05 lukem Exp $ */
+/*	$NetBSD: iommu.c,v 1.77 2003/08/27 15:59:53 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.76 2003/07/15 00:05:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.77 2003/08/27 15:59:53 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -330,7 +330,7 @@ iommu_attach(parent, self, aux)
 
 		ia.iom_reg = NULL;
 		PROM_getprop(node, "reg", sizeof(struct openprom_addr),
-			&ia.iom_nreg, (void **)&ia.iom_reg);
+			&ia.iom_nreg, &ia.iom_reg);
 
 		(void) config_found(&sc->sc_dev, (void *)&ia, iommu_print);
 		if (ia.iom_reg != NULL)

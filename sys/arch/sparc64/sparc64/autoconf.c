@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.81 2003/08/25 17:50:27 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.82 2003/08/27 15:59:55 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.81 2003/08/25 17:50:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.82 2003/08/27 15:59:55 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -687,7 +687,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_upaid = portid;
 
 		if (PROM_getprop(node, "reg", sizeof(*ma.ma_reg), 
-				 &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
+				 &ma.ma_nreg, &ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
@@ -700,7 +700,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		}
 #endif
 		rv = PROM_getprop(node, "interrupts", sizeof(*ma.ma_interrupts),
-			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
+			&ma.ma_ninterrupts, &ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			continue;
@@ -714,7 +714,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		}
 #endif
 		rv = PROM_getprop(node, "address", sizeof(*ma.ma_address), 
-			&ma.ma_naddress, (void**)&ma.ma_address);
+			&ma.ma_naddress, &ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			if (ma.ma_ninterrupts)
@@ -751,7 +751,7 @@ PROM_getprop(node, name, size, nitem, bufp)
 	char	*name;
 	size_t	size;
 	int	*nitem;
-	void	**bufp;
+	void	*bufp;
 {
 	void	*buf;
 	long	len;
@@ -764,7 +764,7 @@ PROM_getprop(node, name, size, nitem, bufp)
 	if ((len % size) != 0)
 		return (EINVAL);
 
-	buf = *bufp;
+	buf = *(void **)bufp;
 	if (buf == NULL) {
 		/* No storage provided, so we allocate some */
 		buf = malloc(len, M_DEVBUF, M_NOWAIT);
@@ -773,7 +773,7 @@ PROM_getprop(node, name, size, nitem, bufp)
 	}
 
 	OF_getprop(node, name, buf, len);
-	*bufp = buf;
+	*(void **)bufp = buf;
 	*nitem = len / size;
 	return (0);
 }
@@ -814,7 +814,7 @@ PROM_getpropstringA(node, name, buffer)
 {
 	int blen;
 
-	if (PROM_getprop(node, name, 1, &blen, (void *)&buffer) != 0)
+	if (PROM_getprop(node, name, 1, &blen, &buffer) != 0)
 		blen = 0;
 
 	buffer[blen] = '\0';	/* usually unnecessary */
