@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.151 2001/04/19 14:27:10 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.152 2001/04/21 09:54:33 shin Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -17,6 +17,11 @@ bin
 
 # ./dev
 dev
+
+# ./dev/altq
+altq
+# ./dev/altq
+..
 
 # ./dev/fd
 fd
