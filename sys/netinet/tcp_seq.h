@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_seq.h,v 1.11 1998/09/04 22:34:51 mycroft Exp $	*/
+/*	$NetBSD: tcp_seq.h,v 1.12 1998/10/04 21:33:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1995
@@ -48,6 +48,8 @@
 #define	SEQ_GT(a,b)	((int)((a)-(b)) > 0)
 #define	SEQ_GEQ(a,b)	((int)((a)-(b)) >= 0)
 
+#define	SEQ_SUB(a,b)	((long)((a)-(b)))
+
 /*
  * Macros to initialize tcp sequence numbers for
  * send and receive from initial send and receive
@@ -58,7 +60,7 @@
 
 #define	tcp_sendseqinit(tp) \
 	(tp)->snd_una = (tp)->snd_nxt = (tp)->snd_max = (tp)->snd_up = \
-	    (tp)->iss
+	    (tp)->snd_recover = (tp)->iss
 
 #define TCP_ISS_RANDOM_MASK 0x00ffffff /* bits of randomness in a TCP ISS */
 #define TCP_ISSINCR         0x01000000 /* increment per time and per conn */

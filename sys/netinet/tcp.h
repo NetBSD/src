@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.h,v 1.9 1998/02/10 01:27:07 perry Exp $	*/
+/*	$NetBSD: tcp.h,v 1.10 1998/10/04 21:33:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -95,6 +95,8 @@ struct tcphdr {
 #define	TCP_MAXWIN	65535	/* largest value for (unscaled) window */
 
 #define	TCP_MAX_WINSHIFT	14	/* maximum window shift */
+
+#define	TCP_MAXBURST	4	/* maximum segments in a burst */
 
 /*
  * User-settable options (used with setsockopt).
