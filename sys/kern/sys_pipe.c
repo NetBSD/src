@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5 2001/07/02 20:43:39 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.6 2001/07/17 06:05:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -181,7 +181,7 @@ static int amountpipekva = 0;
 
 static void pipeclose __P((struct pipe *cpipe));
 static void pipe_free_kmem __P((struct pipe *cpipe));
-static int pipe_create __P((struct pipe **cpipep));
+static int pipe_create __P((struct pipe **cpipep, int allockva));
 static __inline int pipelock __P((struct pipe *cpipe, int catch));
 static __inline void pipeunlock __P((struct pipe *cpipe));
 static __inline void pipeselwakeup __P((struct pipe *selp,
@@ -238,16 +238,14 @@ sys_pipe(p, v, retval)
 #ifdef __FreeBSD__
 	if (pipe_zone == NULL)
 		pipe_zone = zinit("PIPE", sizeof(struct pipe), 0, 0, 4);
-#endif
 
 	rpipe = wpipe = NULL;
-	if (pipe_create(&rpipe) || pipe_create(&wpipe)) {
+	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 1)) {
 		pipeclose(rpipe);
 		pipeclose(wpipe);
 		return (ENFILE);
 	}
 
-#ifdef __FreeBSD__
 	error = falloc(p, &rf, &fd);
 	if (error) {
 		pipeclose(rpipe);
@@ -290,6 +288,13 @@ sys_pipe(p, v, retval)
 #endif /* FreeBSD */
 
 #ifdef __NetBSD__
+	rpipe = wpipe = NULL;
+	if (pipe_create(&rpipe, 1) || pipe_create(&wpipe, 0)) {
+		pipeclose(rpipe);
+		pipeclose(wpipe);
+		return (ENFILE);
+	}
+
 	/*
 	 * Note: the file structure returned from falloc() is marked
 	 * as 'larval' initially. Unless we mark it as 'mature' by
@@ -405,8 +410,9 @@ pipespace(cpipe, size)
  * initialize and allocate VM and memory for pipe
  */
 static int
-pipe_create(cpipep)
+pipe_create(cpipep, allockva)
 	struct pipe **cpipep;
+	int allockva;
 {
 	struct pipe *cpipe;
 	int error;
@@ -449,7 +455,7 @@ pipe_create(cpipep)
 #endif
 #endif /* !PIPE_NODIRECT */
 
-	if ((error = pipespace(cpipe, PIPE_SIZE)))
+	if (allockva && (error = pipespace(cpipe, PIPE_SIZE)))
 		return (error);
 
 	vfs_timestamp(&cpipe->pipe_ctime);
