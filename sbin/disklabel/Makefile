@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 3/17/94
-#	$Id: Makefile,v 1.13 1994/12/22 11:14:51 cgd Exp $
+#	$Id: Makefile,v 1.14 1995/02/11 02:42:21 cgd Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c
@@ -9,7 +9,7 @@ MAN=	disklabel.5 disklabel.8
 CFLAGS+= -D${MACHINE}
 .endif
 
-.if ${MACHINE} == "i386"
+.if (${MACHINE} == "i386") || (${MACHINE} == "alpha")
 CFLAGS+= -DNUMBOOT=2
 .endif
 
