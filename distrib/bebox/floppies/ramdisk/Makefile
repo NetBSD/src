@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/10/13 06:15:16 jmc Exp $
+#	$NetBSD: Makefile,v 1.9 2002/04/26 15:25:34 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -30,13 +30,13 @@ MTREE?=		mtree
 DISKTYPE=	floppy3
 
 install.sh: install.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+	sed "s/@@VERSION@@/${DISTRIBVER}/" < ${.ALLSRC} > ${.TARGET}
 
 upgrade.sh: upgrade.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+	sed "s/@@VERSION@@/${DISTRIBVER}/" < ${.ALLSRC} > ${.TARGET}
 
 start.sh: start.tmpl
-	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
+	sed "s/@@VERSION@@/${DISTRIBVER}/" < ${.ALLSRC} > ${.TARGET}
 
 all: ${AUXTARGETS} ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=3074
