@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.50 2003/12/07 20:30:28 dsl Exp $	*/
+/*	$NetBSD: make.h,v 1.51 2004/07/01 20:38:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -99,6 +99,13 @@
 # endif
 #endif
 
+#if !defined(__unused)
+#if __GNUC_PREREQ__(2, 7)
+#define __unused        __attribute__((__unused__))
+#else
+#define __unused        /* delete */
+#endif
+#endif
 
 #include "sprite.h"
 #include "lst.h"

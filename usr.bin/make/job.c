@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.86 2004/07/01 04:39:30 jmc Exp $	*/
+/*	$NetBSD: job.c,v 1.87 2004/07/01 20:38:09 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.86 2004/07/01 04:39:30 jmc Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.87 2004/07/01 20:38:09 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.86 2004/07/01 04:39:30 jmc Exp $");
+__RCSID("$NetBSD: job.c,v 1.87 2004/07/01 20:38:09 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -462,11 +462,7 @@ JobCondPassSig(ClientData jobp, ClientData signop)
  *-----------------------------------------------------------------------
  */
 static void
-#if __GNUC__
-JobChildSig(int signo __attribute__((unused)))
-#else
-JobChildSig(int signo)
-#endif
+JobChildSig(int signo __unused)
 {
     write(exit_pipe[1], ".", 1);
 }
@@ -490,11 +486,7 @@ JobChildSig(int signo)
  *-----------------------------------------------------------------------
  */
 static void
-#if __GNUC__
-JobContinueSig(int signo __attribute__((unused)))
-#else
-JobContinueSig(int signo)
-#endif
+JobContinueSig(int signo __unused)
 {
     JobRestartJobs();
 }
