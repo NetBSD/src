@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.47 2004/07/03 12:49:21 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2004/07/06 16:21:05 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2004/07/03 12:49:21 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2004/07/06 16:21:05 uch Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -315,21 +315,13 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 void
 cpu_startup()
 {
-	platid_t cpu;
 	int cpuclock, pclock;
 
 	cpuclock = sh_clock_get_cpuclock();
 	pclock = sh_clock_get_pclock();
+	sprintf(cpu_model, "%s\n", platid_name(&platid));
 
 	sh_startup();
-
-	memcpy(&cpu, &platid, sizeof(platid_t));
-	cpu.dw.dw1 = 0;	/* clear platform */
-	sprintf(cpu_model, "[%s] %s", platid_name(&platid), platid_name(&cpu));
-
-#define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
-	printf("%s %d.%02d MHz PCLOCK %d.%02d MHz\n", cpu_model,
-	    MHZ(cpuclock), MHZ(pclock));
 }
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
