@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.681 2005/01/15 08:33:19 jdolecek Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.682 2005/01/15 08:38:19 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.682 2005/01/15 08:32:53 jdolecek Exp 
+ *	NetBSD: pcidevs,v 1.683 2005/01/15 08:37:34 jdolecek Exp 
  */
 
 /*
@@ -7148,6 +7148,22 @@ const struct pci_product pci_products[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800U,
+	    "GeForce 6800 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800,
+	    "GeForce 6800",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800LE,
+	    "GeForce 6800LE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800GT,
+	    "GeForce 6800 GT",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCIB,
 	    "nForce2 PCI-ISA bridge",
 	},
@@ -9924,4 +9940,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1902;
+const int pci_nproducts = 1906;
