@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 1998/11/11 06:43:50 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 1999/03/18 04:56:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -486,8 +486,10 @@ trap(frame)
 			goto we_re_toast;
 		}
 		if (rv == KERN_RESOURCE_SHORTAGE) {
-			printf("UVM: process %d killed: out of swap space\n",
-				p->p_pid);
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, T_ABT);
 		} else {
 			trapsignal(p, SIGSEGV, T_ABT);
