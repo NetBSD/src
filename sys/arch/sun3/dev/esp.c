@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.9 1998/11/19 21:49:46 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.10 1999/04/08 04:46:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,13 +46,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/queue.h>
-#include <sys/malloc.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -68,7 +63,6 @@
 #include <sun3/dev/dmavar.h>
 
 #define	ESP_REG_SIZE	(12*4)
-#define	ESP_DMA_OFF 	0x1000
 
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
@@ -83,7 +77,7 @@ struct cfattach esp_ca = {
 	sizeof(struct esp_softc), espmatch, espattach
 };
 
-struct scsipi_device esp_dev = {
+static struct scsipi_device esp_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
@@ -93,16 +87,16 @@ struct scsipi_device esp_dev = {
 /*
  * Functions and the switch for the MI code.
  */
-u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
-void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_dma_isintr __P((struct ncr53c9x_softc *));
-void	esp_dma_reset __P((struct ncr53c9x_softc *));
-int	esp_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-	    size_t *, int, size_t *));
-void	esp_dma_go __P((struct ncr53c9x_softc *));
-void	esp_dma_stop __P((struct ncr53c9x_softc *));
-int	esp_dma_isactive __P((struct ncr53c9x_softc *));
+static u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
+static void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+static int	esp_dma_isintr __P((struct ncr53c9x_softc *));
+static void	esp_dma_reset __P((struct ncr53c9x_softc *));
+static int	esp_dma_intr __P((struct ncr53c9x_softc *));
+static int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
+				    size_t *, int, size_t *));
+static void	esp_dma_go __P((struct ncr53c9x_softc *));
+static void	esp_dma_stop __P((struct ncr53c9x_softc *));
+static int	esp_dma_isactive __P((struct ncr53c9x_softc *));
 
 static struct ncr53c9x_glue esp_glue = {
 	esp_read_reg,
@@ -117,8 +111,6 @@ static struct ncr53c9x_glue esp_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-extern int ncr53c9x_dmaselect;	/* Used in dev/ic/ncr53c9x.c */
-
 static int
 espmatch(parent, cf, aux)
 	struct device *parent;
@@ -126,13 +118,6 @@ espmatch(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-
-	/*
-	 * Check for the DMA registers.
-	 */
-	if (bus_peek(ca->ca_bustype,
-	    ca->ca_paddr + ESP_DMA_OFF, 4) == -1)
-		return (0);
 
 	/*
 	 * Check for the esp registers.
@@ -148,27 +133,12 @@ espmatch(parent, cf, aux)
 	return (1);
 }
 
-/*
- * Attach this instance, and then all the sub-devices
- *
- * In the SPARC port, the dma code used by the esp driver looks like
- * a separate driver, matched and attached by either the esp driver
- * or the bus attach function.  However it's not completely separate
- * in that the sparc esp driver has to go look in dma_cd.cd_devs to
- * get the softc for the dma driver, and shares its softc, etc.
- *
- * The dma module could exist as a separate autoconfig entity, but
- * that really does not buy us anything, so why bother with that?
- * In the current sun3x port, the dma chip is treated as just an
- * extension of the esp driver because that is easier, and the esp
- * driver is the only one that uses the dma module.
- */
 static void
 espattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct confargs *ca = aux;
+	struct confargs *ca = aux;
 	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 
@@ -180,8 +150,8 @@ espattach(parent, self, aux)
 	/*
 	 * Map in the ESP registers.
 	 */
-	esc->sc_reg = (volatile u_char *)
-		    bus_mapin(ca->ca_bustype, ca->ca_paddr, NBPG);
+	esc->sc_reg =
+		bus_mapin(ca->ca_bustype, ca->ca_paddr, ESP_REG_SIZE);
 
 	/* Other settings */
 	sc->sc_id = 7;
@@ -189,25 +159,9 @@ espattach(parent, self, aux)
 
 	/*
 	 * Hook up the DMA driver.
-	 * XXX - Would rather do this later, after the common
-	 * attach function is done printing its line so the DMA
-	 * module can print its revision, but the common attach
-	 * code needs this done first...
-	 * XXX - Move printf back to MD code?
 	 */
-	esc->sc_dma = malloc(sizeof(struct dma_softc), M_DEVBUF, M_NOWAIT);
-	if (esc->sc_dma == 0)
-		panic("espattach: malloc dma_softc");
-	bzero(esc->sc_dma, sizeof(struct dma_softc));
+	esc->sc_dma = espdmafind(sc->sc_dev.dv_unit);
 	esc->sc_dma->sc_esp = sc; /* Point back to us */
-	esc->sc_dma->sc_regs = (struct dma_regs *)
-		(esc->sc_reg + ESP_DMA_OFF);
-
-	/*
-	 * Simulate an attach call here for compatibility with
-	 * the sparc dma.c module.  It does not print anything.
-	 */
-	dmaattach(self, (struct device *) esc->sc_dma, NULL);
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -273,8 +227,6 @@ espattach(parent, self, aux)
 	case NCR_VARIANT_ESP100:
 		sc->sc_maxxfer = 64 * 1024;
 		sc->sc_minsync = 0;	/* No synch on old chip? */
-		/* Avoid hardware bug by using DMA when selecting targets */
-		/* ncr53c9x_dmaselect = 1; */
 		break;
 
 	case NCR_VARIANT_ESP100A:
@@ -297,6 +249,12 @@ espattach(parent, self, aux)
 	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
 	sc->sc_adapter.scsipi_minphys = minphys; 
 	ncr53c9x_attach(sc, &esp_dev);
+
+#if 0
+	/* XXX - This doesn't work yet.  Not sure why... */
+	/* Turn on target selection using the `dma' method */
+	ncr53c9x_dmaselect = 1;  /* XXX - OK? */
+#endif
 }
 
 
@@ -321,9 +279,8 @@ esp_write_reg(sc, reg, val)
 	u_char val;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	u_char v = val;
 
-	esc->sc_reg[reg * 4] = v;
+	esc->sc_reg[reg * 4] = val;
 }
 
 int
@@ -331,8 +288,10 @@ esp_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
+	u_int32_t csr;
 
-	return (dma_isintr(esc->sc_dma));
+	csr = DMACSR(esc->sc_dma);
+	return (csr & (D_INT_PEND|D_ERR_PEND));
 }
 
 void
