@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.23 1999/04/24 08:01:03 simonb Exp $	*/
+/*	$NetBSD: fb.c,v 1.24 1999/04/26 12:03:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -210,12 +210,14 @@ fbconnect (name, info, silent)
 		    && fbcd.cd_devs [fbix]->fi_unit == info -> fi_unit)
 			break;
 
-	if (fbcd.cd_ndevs >= NFB) {
-		printf ("fb: more frame buffers probed than configured!\n");
-		return;
-	}
+	if (fbix >= fbcd.cd_ndevs) {
+		if (fbcd.cd_ndevs >= NFB) {
+			printf("fb: more frame buffers probed than configured!\n");
+			return;
+		}
 
-	fbix = fbcd.cd_ndevs++;
+		fbix = fbcd.cd_ndevs++;
+	}
 	fbcd.cd_devs [fbix] = info;
 #endif /* FBDRIVER_DOES_ATTACH */
 
