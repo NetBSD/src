@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2002/07/05 13:32:03 scw Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.2 2003/07/18 19:20:57 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -56,7 +56,6 @@ struct clock_attach_args {
 
 extern	void	clock_config(struct device *, struct clock_attach_args *,
 		    struct evcnt *);
-extern	void	clock_rtc_config(todr_chip_handle_t);
 extern	void	clock_hardint(struct clockframe *);
 extern	void	clock_statint(struct clockframe *);
 
