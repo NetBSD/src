@@ -1,10 +1,10 @@
-/*	$NetBSD: sh.h,v 1.4 2000/01/21 17:08:33 mycroft Exp $	*/
+/*	$NetBSD: sh.h,v 1.5 2002/07/11 10:53:19 wiz Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
  */
 
-/* $Id: sh.h,v 1.4 2000/01/21 17:08:33 mycroft Exp $ */
+/* $Id: sh.h,v 1.5 2002/07/11 10:53:19 wiz Exp $ */
 
 #include "config.h"	/* system and option configuration info */
 
@@ -409,18 +409,18 @@ EXTERN	Area	aperm;		/* permanent object space */
  * parsing & execution environment
  */
 EXTERN	struct env {
-	short	type;			/* enviroment type - see below */
+	short	type;			/* environment type - see below */
 	short	flags;			/* EF_* */
 	Area	area;			/* temporary allocation area */
 	struct	block *loc;		/* local variables and functions */
 	short  *savefd;			/* original redirected fd's */
-	struct	env *oenv;		/* link to previous enviroment */
+	struct	env *oenv;		/* link to previous environment */
 	ksh_jmp_buf jbuf;		/* long jump back to env creator */
 	struct temp *temps;		/* temp files */
 } *e;
 
 /* struct env.type values */
-#define	E_NONE	0		/* dummy enviroment */
+#define	E_NONE	0		/* dummy environment */
 #define	E_PARSE	1		/* parsing command # */
 #define	E_FUNC	2		/* executing function # */
 #define	E_INCL	3		/* including a file via . # */
