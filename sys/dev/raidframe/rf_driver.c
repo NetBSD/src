@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.26 2000/01/09 03:15:59 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.27 2000/01/09 03:44:33 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -413,9 +413,6 @@ rf_Configure(raidPtr, cfgPtr)
 		DO_INIT_CONFIGURE(rf_ConfigureNWayXor);
 		DO_INIT_CONFIGURE(rf_ConfigureStripeLockFreeList);
 		DO_INIT_CONFIGURE(rf_ConfigureMCPair);
-#if !defined(__NetBSD__)
-		DO_INIT_CONFIGURE(rf_ConfigureCamLayer);
-#endif
 		DO_INIT_CONFIGURE(rf_ConfigureDAGs);
 		DO_INIT_CONFIGURE(rf_ConfigureDAGFuncs);
 		DO_INIT_CONFIGURE(rf_ConfigureDebugPrint);
