@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3 2002/02/12 15:26:50 uch Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.4 2002/03/03 14:31:28 uch Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997
@@ -75,7 +75,6 @@
 
 #include <machine/psl.h>
 #include <machine/reg.h>
-#include <machine/segments.h>
 
 static __inline struct trapframe *process_frame(struct proc *);
 

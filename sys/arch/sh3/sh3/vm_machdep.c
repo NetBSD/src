@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.25 2002/02/19 17:22:34 uch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26 2002/03/03 14:31:29 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -98,10 +98,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack,
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
-
-#ifdef sh3_debug
-	printf("cpu_fork:p1(%p),p2(%p)\n", p1, p2);
-#endif
 
 	if (CPU_IS_SH4)
 		cacheflush();

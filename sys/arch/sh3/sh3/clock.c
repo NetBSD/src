@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: clock.c,v 1.23 2002/03/03 14:31:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 
 #include <dev/clock_subr.h>
 
-#include <sh3/cpufunc.h>
 #include <sh3/clock.h>
 #include <sh3/tmureg.h>
 #include <sh3/rtcreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.3 2002/02/28 01:56:59 uch Exp $	*/
+/*	$NetBSD: mmu.c,v 1.4 2002/03/03 14:31:27 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <sh3/cpufunc.h>
 #include <sh3/pte.h>
 #include <sh3/cache.h>
 #include <sh3/mmu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.36 2002/03/02 22:26:27 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.37 2002/03/03 14:31:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -70,7 +70,6 @@
 #include <sh3/mmu.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
@@ -102,7 +101,6 @@ const char *trap_type[] = {
 };
 const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
-extern int cpu_debug_mode;
 int	trapdebug = 1;
 
 static __inline void userret(struct proc *, int, u_quad_t);
@@ -176,7 +174,7 @@ trap(struct trapframe *tf)
 	}
 #endif
 
-	if (!KERNELMODE(tf->tf_r15, tf->tf_ssr)) {
+	if (!KERNELMODE(tf->tf_ssr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = tf;
@@ -313,7 +311,7 @@ syscall(struct trapframe *frame)
 	u_quad_t sticks;
 
 	uvmexp.syscalls++;
-	if (KERNELMODE(frame->tf_r15, frame->tf_ssr))
+	if (KERNELMODE(frame->tf_ssr))
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
@@ -401,7 +399,7 @@ syscall(struct trapframe *frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	if (cpu_debug_mode)
+	if (trapdebug > 1)
 		scdebug_call(p, code, args);
 #endif
 #ifdef KTRACE
@@ -444,7 +442,7 @@ syscall(struct trapframe *frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	if (cpu_debug_mode)
+	if (trapdebug > 1)
 		scdebug_ret(p, code, error, rval);
 #endif
 	userret(p, frame->tf_spc, sticks);
@@ -521,7 +519,7 @@ tlb_handler(int p1, int p2, int p3, int p4, struct trapframe frame)
 		printf("tlb_handler#:va(0x%lx),curproc(%p)\n", va, curproc);
 #endif
 
-	user = !KERNELMODE(frame.tf_r15, frame.tf_ssr);
+	user = !KERNELMODE(frame.tf_ssr);
 
 	pteh_save = SH_PTEH;
 	va_save = va;
