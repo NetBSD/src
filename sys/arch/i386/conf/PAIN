@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.1 1993/05/17 05:25:01 cgd Exp $
+#	$Id: PAIN,v 1.2 1993/05/17 06:17:41 cgd Exp $
 #
 machine         "i386"
 cpu             "i486"
@@ -33,6 +33,9 @@ disk            sd1     at ahb0 flags 0 drive ?
 tape		st0	at ahb0 flags 1	drive ?
 
 device          we0 at isa? port 0x300 net irq 5 iomem 0xca000 iosiz 8192 vector weintr
+device          com0    at isa? port "IO_COM1" tty irq 4 vector comintr
+device          com1    at isa? port "IO_COM2" tty irq 3 vector comintr
+device          lpt0    at isa? port "IO_LPT1" tty irq 7 vector lptintr
 
 pseudo-device   loop		2
 pseudo-device   ether
