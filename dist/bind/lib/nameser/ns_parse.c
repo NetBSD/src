@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_parse.c,v 1.1.1.2 2001/01/27 06:20:18 itojun Exp $	*/
+/*	$NetBSD: ns_parse.c,v 1.2 2001/01/27 07:22:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
