@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.6 1998/01/19 20:34:30 phil Exp $
+	$NetBSD: contents,v 1.7 1998/01/28 10:38:14 is Exp $
 
 The pc532-specific portion of the NetBSD _VER release is found in the
 "pc532" subdirectory of the distribution.  That subdirectory contains
@@ -39,7 +39,8 @@ The binary distribution consists of the following files:
 
 	comp.tgz
 		The NetBSD/pc532 Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
+		relating to C, C++, Objective C, and FORTRAN (yes,
+		there are two, although NO FORTRAN compiler!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
 		and the various system libraries.  This set also includes

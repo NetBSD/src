@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.10 1998/01/09 18:45:42 perry Exp $	
+	$NetBSD: contents,v 1.11 1998/01/28 10:38:10 is Exp $	
 
 The Amiga-specific portion of the NetBSD _VER release is found in the
 "amiga" subdirectory of the distribution.  That subdirectory is laid
@@ -62,7 +62,8 @@ distribution tree, and are as follows:
 		[ 8.7M gzipped, 25.2M uncompressed ]
 
 	comp	The NetBSD/Amiga Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!).
+		relating to C, C++, Objective C, and FORTRAN (yes,
+		there are two, although NO FORTRAN compiler!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
 		and the various system libraries (except the shared
