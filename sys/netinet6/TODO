@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.11 2000/02/05 18:05:33 itojun Exp $
+$NetBSD: TODO,v 1.12 2000/02/05 18:11:41 itojun Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -79,6 +79,12 @@ KAME implements extended format for link-local address printing, like
 "fe80::1@lo0".  After long debate, IETF ipngwg will pick "lo0%fe80::1" as
 standard one (picked "%" for avoiding conflict with "user@host" notation).
 We'll need to update the support before the release.
+
+* PRC_IF{UP,CHANGE}
+
+We have some hook in sys/net/if.c for IPv6, for detecting (1) when interface
+bringed up, and (2) when interface MTU changes.  These hooks should be
+removed by introducing PRC_IF{UP,CHANGE}.
 
 
 USERLAND
