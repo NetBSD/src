@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37.2.7 2000/10/20 17:03:36 tv Exp $
+# $NetBSD: mi,v 1.37.2.8 2001/02/27 16:16:28 he Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -401,7 +401,6 @@
 ./usr/share/examples/postfix/virtual
 ./usr/share/examples/supfiles/ftp.cs.umn.edu
 ./usr/share/examples/supfiles/sup.au.netbsd.org
-./usr/share/examples/supfiles/sup.de.netbsd.org
 ./usr/share/examples/supfiles/sup.jp.netbsd.org
 ./usr/share/examples/supfiles/sup.netbsd.org
 ./usr/share/examples/supfiles/sup.uk.netbsd.org

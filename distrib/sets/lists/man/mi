@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.17 2001/02/26 21:03:21 he Exp $
+# $NetBSD: mi,v 1.253.2.18 2001/02/27 16:16:25 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -443,6 +443,7 @@
 ./usr/share/man/cat4/amiga/ser.0
 ./usr/share/man/cat4/amiga/wesc.0
 ./usr/share/man/cat4/amiga/zssc.0
+./usr/share/man/cat4/an.0
 ./usr/share/man/cat4/aria.0
 ./usr/share/man/cat4/arm26/arckbd.0
 ./usr/share/man/cat4/arm26/arcwskbd.0
@@ -486,7 +487,6 @@
 ./usr/share/man/cat4/ate.0
 ./usr/share/man/cat4/audio.0
 ./usr/share/man/cat4/aue.0
-./usr/share/man/cat4/auich.0
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
 ./usr/share/man/cat4/bba.0
@@ -886,6 +886,7 @@
 ./usr/share/man/cat5/access.0
 ./usr/share/man/cat5/acct.0
 ./usr/share/man/cat5/aliases.0
+./usr/share/man/cat5/amd.conf.0
 ./usr/share/man/cat5/ar.0
 ./usr/share/man/cat5/bootparams.0
 ./usr/share/man/cat5/bootptab.0
@@ -930,6 +931,7 @@
 ./usr/share/man/cat5/ipf.conf.0
 ./usr/share/man/cat5/ipnat.0
 ./usr/share/man/cat5/ipnat.conf.0
+./usr/share/man/cat5/ipsec.conf.0
 ./usr/share/man/cat5/ipsend.0
 ./usr/share/man/cat5/krb5.conf.0
 ./usr/share/man/cat5/lastlog.0
@@ -1061,6 +1063,7 @@
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/compat_svr4.0
 ./usr/share/man/cat8/compat_ultrix.0
+./usr/share/man/cat8/compat_win32.0
 ./usr/share/man/cat8/compat_xenix.0
 ./usr/share/man/cat8/comsat.0
 ./usr/share/man/cat8/cron.0
@@ -1247,6 +1250,7 @@
 ./usr/share/man/cat8/pc532/bim.0
 ./usr/share/man/cat8/pc532/makedev.0
 ./usr/share/man/cat8/pcnfsd.0
+./usr/share/man/cat8/peace.0
 ./usr/share/man/cat8/pickup.0
 ./usr/share/man/cat8/pim6dd.0
 ./usr/share/man/cat8/pim6sd.0
@@ -1851,6 +1855,7 @@
 ./usr/share/man/man4/amiga/ser.4
 ./usr/share/man/man4/amiga/wesc.4
 ./usr/share/man/man4/amiga/zssc.4
+./usr/share/man/man4/an.4
 ./usr/share/man/man4/aria.4
 ./usr/share/man/man4/arm26/arckbd.4
 ./usr/share/man/man4/arm26/arcwskbd.4
@@ -1894,7 +1899,6 @@
 ./usr/share/man/man4/ate.4
 ./usr/share/man/man4/audio.4
 ./usr/share/man/man4/aue.4
-./usr/share/man/man4/auich.4
 ./usr/share/man/man4/auvia.4
 ./usr/share/man/man4/awi.4
 ./usr/share/man/man4/bba.4
@@ -2294,6 +2298,7 @@
 ./usr/share/man/man5/access.5
 ./usr/share/man/man5/acct.5
 ./usr/share/man/man5/aliases.5
+./usr/share/man/man5/amd.conf.5
 ./usr/share/man/man5/ar.5
 ./usr/share/man/man5/bootparams.5
 ./usr/share/man/man5/bootptab.5
@@ -2338,6 +2343,7 @@
 ./usr/share/man/man5/ipf.conf.5
 ./usr/share/man/man5/ipnat.5
 ./usr/share/man/man5/ipnat.conf.5
+./usr/share/man/man5/ipsec.conf.5
 ./usr/share/man/man5/ipsend.5
 ./usr/share/man/man5/krb5.conf.5
 ./usr/share/man/man5/lastlog.5
@@ -2469,6 +2475,7 @@
 ./usr/share/man/man8/compat_sunos.8
 ./usr/share/man/man8/compat_svr4.8
 ./usr/share/man/man8/compat_ultrix.8
+./usr/share/man/man8/compat_win32.8
 ./usr/share/man/man8/compat_xenix.8
 ./usr/share/man/man8/comsat.8
 ./usr/share/man/man8/cron.8
@@ -2655,6 +2662,7 @@
 ./usr/share/man/man8/pc532/bim.8
 ./usr/share/man/man8/pc532/makedev.8
 ./usr/share/man/man8/pcnfsd.8
+./usr/share/man/man8/peace.8
 ./usr/share/man/man8/pickup.8
 ./usr/share/man/man8/pim6dd.8
 ./usr/share/man/man8/pim6sd.8
