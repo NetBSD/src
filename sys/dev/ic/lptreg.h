@@ -1,4 +1,4 @@
-/*	$NetBSD: lptreg.h,v 1.5 1996/11/23 23:22:50 cgd Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.6 2001/01/06 17:16:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,6 +43,20 @@
  * Interface port and bit definitions
  * Written by William Jolitz 12/18/90
  * Copyright (C) William Jolitz 1990
+ */
+
+/*
+ * On a standard DB25 parallel port, the bits show up as follows:
+ *
+ *   13   12   11   10    9    8    7    6    5    4    3    2    1 
+ *  ~S7   S6   S5   S4   D7   D6   D5   D4   D3   D2   D1   D0  ~C0
+ *
+ *      G    G    G    G    G    G    G    G   ~C3   C2   S3  ~C1
+ *      25   24   23   22   21   20   19   18   17   16   15   14     
+ *
+ *  D7-D0 are output bits from the data register
+ *  S7-S3 are input bits read at the status register
+ *  C3-C0 are output bits from the control register
  */
 
 #define	lpt_data	0	/* Data to/from printer (R/W) */
