@@ -1,8 +1,8 @@
-/*	$NetBSD: clock_jazzio.c,v 1.2 2001/02/17 04:27:55 tsutsui Exp $	*/
-/*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.1 2001/06/13 15:02:15 soda Exp $	*/
+/*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
+/*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
 /*
- * Copyright (c) 1997 Per Fogelstrom.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,104 +41,74 @@
  *
  * from: Utah Hdr: clock.c 1.18 91/01/21
  *
- *	from: @(#)clock.c	8.1 (Berkeley) 6/10/93
+ *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <arc/arc/clockvar.h>
-#include <arc/arc/arctype.h>
+#include <machine/bus.h>
+
+#include <dev/ic/mc146818reg.h>
+
+#include <arc/dev/mcclockvar.h>
 #include <arc/jazz/jazziovar.h>
+#include <arc/jazz/mcclock_jazziovar.h>
 
-#include <dev/isa/isavar.h>
-#include <machine/isa_machdep.h>
+int mcclock_jazzio_match __P((struct device *, struct cfdata *, void *));
+void mcclock_jazzio_attach __P((struct device *, struct device *, void *));
 
-int	clock_found = 0;
-extern int	clock_started;
-
-/* Definition of the driver for autoconfig. */
-static int	clock_jazzio_match(struct device *, struct cfdata *, void *);
-static void	clock_jazzio_attach(struct device *, struct device *, void *);
-
-extern struct cfdriver aclock_cd;
-
-struct cfattach aclock_jazzio_ca = {
-	sizeof(struct clock_softc), clock_jazzio_match, clock_jazzio_attach
+struct cfattach mcclock_jazzio_ca = {
+	sizeof(struct mcclock_softc),
+	mcclock_jazzio_match, mcclock_jazzio_attach
 };
 
-void	mcclock_attach(struct device *, struct device *, void *);
-int	clockintr(void *);
+struct mcclock_jazzio_config *mcclock_jazzio_conf = NULL;
+int mcclock_jazzio_found = 0;
 
-static int
-clock_jazzio_match(parent, match, aux)
+int
+mcclock_jazzio_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
 	struct jazzio_attach_args *ja = aux;
 
-	/* See how many clocks this system has */	
-	switch (cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		/* make sure that we're looking for this type of device. */
-		if (strcmp(ja->ja_name, "dallas_rtc") != 0)
-			return (0);
+	/* make sure that we're looking for this type of device. */
+	if (strcmp(ja->ja_name, "dallas_rtc") != 0)
+		return (0);
 
-		break;
-
-	default:
-		panic("unknown CPU");
-	}
-
-	if (clock_found)
+	if (mcclock_jazzio_found)
 		return (0);
 
 	return (1);
 }
 
-static void
-clock_jazzio_attach(parent, self, aux)
+void
+mcclock_jazzio_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
+	struct mcclock_softc *sc = (struct mcclock_softc *)self;
 	struct jazzio_attach_args *ja = aux;
 
-	mcclock_attach(parent, self, aux);
+	if (mcclock_jazzio_conf == NULL)
+		panic("mcclock_jazzio_conf isn't initialized");
 
-	switch (cputype) {
-
-	case ACER_PICA_61:
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		jazzio_intr_establish(ja->ja_intr,
-			(intr_handler_t)hardclock, self);
-		break;
-
-	case MAGNUM:
-		jazzio_intr_establish(ja->ja_intr,
-			(intr_handler_t)clockintr, self);
-		break;
-
-	default:
-		panic("clockattach: it didn't get here.  really.");
+	sc->sc_iot = ja->ja_bust;
+	if (bus_space_map(sc->sc_iot,
+	    ja->ja_addr, mcclock_jazzio_conf->mjc_iosize, 0, &sc->sc_ioh)) {
+		printf(": unable to map I/O space\n");
+		return;
 	}
 
-	printf("\n");
+	mcclock_attach(sc, &mcclock_jazzio_conf->mjc_mcbusfns, 80);
 
-	clock_found = 1;
+	/* Turn interrupts off, just in case. */
+	mc146818_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+
+	mcclock_jazzio_found = 1;
 }
