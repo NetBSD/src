@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.13 1994/12/03 23:26:25 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.14 1995/03/23 13:45:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -524,17 +524,30 @@ grfunmmap(dev, addr, p)
 
 #endif	/* NGRF > 0 */
 
+static char zero = 0;
+int  mac68k_mvintr_ctr=0;
 
-int macvideo_init(struct grf_softc *gp,struct nubus_hw *nu)
+static int
+macvideo_intr(int unit, int slot)
+{
+	struct grf_softc *gp = &grf_softc[unit];
+
+	mac68k_mvintr_ctr++;
+	((char *)(0xf0000000 | ((long)slot << 24)))[0xa0000] = zero;
+	return 1;
+}
+
+int
+macvideo_init(struct grf_softc *gp,struct nubus_hw *nu)
 {
 	int i=0;
 	struct grfinfo *gi;
 	struct imagedata *image;
 	struct imagedata imageSpace;
 
-/* find out which nubus slot this guy is in, then get the video
-params 
-*/
+/*
+ * find out which nubus slot this guy is in, then get the video params 
+ */
 	image=(struct imagedata *)NUBUS_GetImageData(&(nu->Slot),&imageSpace );
 
 	gi = &(gp->g_display);
@@ -547,11 +560,17 @@ params
 	gi->gd_fbrowbytes=image->rowbytes;
 	gi->gd_fbaddr=(caddr_t) ((u_long)image->offset+(u_long)nu->addr);
 	gp->g_fbkva=gi->gd_fbaddr;
+
+	add_nubus_intr((unsigned int)nu->addr & 0xFF000000, macvideo_intr,
+			(gp - grf_softc));
+
 	gNumGrfDev++;
 	
 	return 1;
 }
-int macvideo_mode(struct grf_softc *gp,int cmd, void *arg)
+
+int
+macvideo_mode(struct grf_softc *gp,int cmd, void *arg)
 {
 	return 0;
 }
