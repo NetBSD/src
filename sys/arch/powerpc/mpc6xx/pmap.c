@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2002/08/14 14:25:16 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 2002/08/18 19:18:33 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,12 +67,14 @@
  */
 
 #include "opt_altivec.h"
+#include "opt_pmap.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
+#include <sys/device.h>		/* for evcnt */
 #include <sys/systm.h>
 
 #if __NetBSD_Version__ < 105010000
@@ -91,8 +93,6 @@
 #else
 #include <powerpc/bat.h>
 #endif
-
-/*#define PMAPCHECK*/
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
@@ -268,6 +268,64 @@ unsigned int pmapdebug = 0;
 #else
 # define DPRINTF(x)
 # define DPRINTFN(n, x)
+#endif
+
+
+#ifdef PMAPCOUNTERS
+#define	PMAPCOUNT(ev)	((pmap_evcnt_ ## ev).ev_count++)
+struct evcnt pmap_evcnt_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pages mapped");
+struct evcnt pmap_evcnt_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "pages unmapped");
+
+struct evcnt pmap_evcnt_kernel_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "kernel pages mapped");
+struct evcnt pmap_evcnt_kernel_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_kernel_mappings,
+	    "pmap", "kernel pages unmapped");
+
+struct evcnt pmap_evcnt_mappings_replaced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pages mappings replaced");
+
+struct evcnt pmap_evcnt_exec_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages mapped");
+struct evcnt pmap_evcnt_exec_cached =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages cached");
+
+struct evcnt pmap_evcnt_exec_synced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced");
+struct evcnt pmap_evcnt_exec_synced_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced (CM)");
+
+struct evcnt pmap_evcnt_exec_uncached_page_protect =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (PP)");
+struct evcnt pmap_evcnt_exec_uncached_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CM)");
+struct evcnt pmap_evcnt_exec_uncached_zero_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (ZP)");
+struct evcnt pmap_evcnt_exec_uncached_copy_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CP)");
+
+/*
+ * From pmap_subr.c
+ */
+extern struct evcnt pmap_evcnt_zeroed_pages;
+extern struct evcnt pmap_evcnt_copied_pages;
+extern struct evcnt pmap_evcnt_idlezeroed_pages;
+#else
+#define	PMAPCOUNT(ev)	((void) 0)
 #endif
 
 #define	TLBIE(va)	__asm __volatile("tlbie %0" :: "r"(va))
@@ -791,6 +849,29 @@ pmap_init(void)
 
 	pmap_initialized = 1;
 	splx(s);
+
+#ifdef PMAPCOUNTERS
+	evcnt_attach_static(&pmap_evcnt_mappings);
+	evcnt_attach_static(&pmap_evcnt_mappings_replaced);
+	evcnt_attach_static(&pmap_evcnt_unmappings);
+
+	evcnt_attach_static(&pmap_evcnt_kernel_mappings);
+	evcnt_attach_static(&pmap_evcnt_kernel_unmappings);
+
+	evcnt_attach_static(&pmap_evcnt_exec_mappings);
+	evcnt_attach_static(&pmap_evcnt_exec_cached);
+	evcnt_attach_static(&pmap_evcnt_exec_synced);
+	evcnt_attach_static(&pmap_evcnt_exec_synced_clear_modify);
+
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_page_protect);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_clear_modify);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_zero_page);
+	evcnt_attach_static(&pmap_evcnt_exec_uncached_copy_page);
+
+	evcnt_attach_static(&pmap_evcnt_zeroed_pages);
+	evcnt_attach_static(&pmap_evcnt_copied_pages);
+	evcnt_attach_static(&pmap_evcnt_idlezeroed_pages);
+#endif
 }
 
 /*
@@ -1182,7 +1263,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		panic("pmap_pvo_enter: called recursively!");
 #endif
 
-	pmap_pvo_enter_calls++;
 	/*
 	 * Compute the PTE Group index.
 	 */
@@ -1213,6 +1293,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 #endif
 			}
 #endif
+			PMAPCOUNT(mappings_replaced);
 			pmap_pvo_remove(pvo, -1);
 			break;
 		}
@@ -1245,12 +1326,18 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	pvo->pvo_pmap = pm;
 	LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
 	pvo->pvo_vaddr &= ~ADDR_POFF;
-	if (flags & VM_PROT_EXECUTE)
+	if (flags & VM_PROT_EXECUTE) {
+		PMAPCOUNT(exec_mappings);
 		pvo->pvo_vaddr |= PVO_EXECUTABLE;
+	}
 	if (flags & PMAP_WIRED)
 		pvo->pvo_vaddr |= PVO_WIRED;
-	if (pvo_head != &pmap_pvo_kunmanaged)
+	if (pvo_head != &pmap_pvo_kunmanaged) {
 		pvo->pvo_vaddr |= PVO_MANAGED; 
+		PMAPCOUNT(mappings);
+	} else {
+		PMAPCOUNT(kernel_mappings);
+	}
 	pmap_pte_create(&pvo->pvo_pte, sr, va, pa | pte_lo);
 
 	LIST_INSERT_HEAD(pvo_head, pvo, pvo_vlink);
@@ -1334,12 +1421,14 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	 * ... if we aren't going to reuse it.
 	 */
 	LIST_REMOVE(pvo, pvo_olink);
+	if (pvo->pvo_vaddr & PVO_MANAGED)
+		PMAPCOUNT(unmappings);
+	else
+		PMAPCOUNT(kernel_unmappings);
 	pool_put(pvo->pvo_vaddr & PVO_MANAGED
 	    ? &pmap_mpvo_pool
 	    : &pmap_upvo_pool,
 	    pvo);
-	pmap_pvo_entries--;
-	pmap_pvo_remove_calls++;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 	pmap_pvo_remove_depth--;
 #endif
@@ -1449,9 +1538,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
             (pte_lo & PTE_I) == 0 &&
 	    was_exec == 0) {
 		DPRINTFN(ENTER, (" syncicache"));
+		PMAPCOUNT(exec_synced);
 		pmap_syncicache(pa, NBPG);
 		if (pg != NULL) {
 			pmap_attr_save(pg, PTE_EXEC);
+			PMAPCOUNT(exec_cached);
 #if defined(DEBUG) || defined(PMAPDEBUG)
 			if (pmapdebug & PMAPDEBUG_ENTER)
 				printf(" marked-as-exec"));
@@ -1709,7 +1800,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	if ((prot & VM_PROT_READ) == 0) {
 		DPRINTFN(EXEC, ("[pmap_page_protect: %#lx: clear-exec]\n",
 		    pg->phys_addr));
-		pmap_attr_clear(pg, PTE_EXEC);
+		if (pmap_attr_fetch(pg) & PTE_EXEC) {
+			PMAPCOUNT(exec_uncached_page_protect);
+			pmap_attr_clear(pg, PTE_EXEC);
+		}
 	}
 
 	pvo_head = vm_page_to_pvoh(pg);
@@ -1924,10 +2018,12 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: clear-exec]\n",
 			    pg->phys_addr));
 			pmap_attr_clear(pg, PTE_EXEC);
+			PMAPCOUNT(exec_uncached_clear_modify);
 		} else {
 			DPRINTFN(EXEC, ("[pmap_clear_bit: %#lx: syncicache]\n",
 			    pg->phys_addr));
 			pmap_syncicache(pg->phys_addr, NBPG);
+			PMAPCOUNT(exec_synced_clear_modify);
 		}
 	}
 	return (rv & ptebit) != 0;
