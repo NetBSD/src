@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 1999/09/12 01:17:19 chs Exp $ */
+/*	$NetBSD: pmap.h,v 1.42 1999/10/04 19:18:33 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -147,8 +147,8 @@ struct pmap {
 	void		*pm_regstore;
 	struct regmap	*pm_regmap;
 
-	int		*pm_reg_ptps;	/* SRMMU-edible region table for 4m */
-	int		pm_reg_ptps_pa;	/* _Physical_ address of pm_reg_ptps */
+	int		**pm_reg_ptps;	/* SRMMU-edible region tables for 4m */
+	int		*pm_reg_ptps_pa;/* _Physical_ address of pm_reg_ptps */
 
 	int		pm_gap_start;	/* Starting with this vreg there's */
 	int		pm_gap_end;	/* no valid mapping until here */
