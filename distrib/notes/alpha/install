@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.27 2003/11/01 03:02:59 grant Exp $
+.\"	$NetBSD: install,v 1.28 2004/05/10 00:35:10 ross Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,16 +123,22 @@ The 3.5", 1.44 MB boot floppy set is found under the
 as two files called
 .Pa disk1of2
 and
-.Pa disk2of2 .
-You need to put these two disk images on two floppy disks.
+.Pa disk2of2 ,
+or as three files called
+.Pa disk1of3 ,
+.Pa disk2of3 ,
+and
+.Pa disk3of3 .
+You need to put these disk images on two or three floppy disks.
 .Pp
 If you have a
 .Ul
 system handy, you can do this with commands
 like the following:
 .Pp
-.Dl # Ic "dd if=disk1of2 of=/dev/rfd0a bs=18k"
-.Dl # Ic "dd if=disk2of2 of=/dev/rfd0a bs=18k"
+.Dl # Ic "dd if=disk1of3 of=/dev/rfd0a bs=18k"
+.Dl # Ic "dd if=disk2of3 of=/dev/rfd0a bs=18k"
+.Dl # Ic "dd if=disk3of3 of=/dev/rfd0a bs=18k"
 .Pp
 If the
 .Ul
