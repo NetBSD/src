@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.42 2003/06/23 12:15:03 agc Exp $	*/
+/*	$NetBSD: play.c,v 1.43 2004/07/09 11:34:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.42 2003/06/23 12:15:03 agc Exp $");
+__RCSID("$NetBSD: play.c,v 1.43 2004/07/09 11:34:16 wiz Exp $");
 #endif
 
 
@@ -473,7 +473,6 @@ usage()
 	    "\t-P forced precision\n\t"
 	    "\t-s forced sample rate\n\t"
 	    "-i header information\n\t"
-	    "-m monitor volume\n\t"
 	    "-p output port\n\t"
 	    "-v volume\n");
 	exit(EXIT_FAILURE);
