@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2001/06/08 00:09:28 rafal Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2001/11/19 17:36:41 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -54,9 +54,7 @@
 #define IST_LEVEL	3	/* level-triggered */
 
 /* Soft interrupt numbers */
-#ifndef __NO_SOFT_SERIAL_INTERRUPT
 #define	IPL_SOFTSERIAL	0	/* serial software interrupts */
-#endif
 #define	IPL_SOFTNET	1	/* network software interrupts */
 #define	IPL_SOFTCLOCK	2	/* clock software interrupts */
 #define	IPL_NSOFT	3
@@ -92,12 +90,12 @@
 
 #define softintr_schedule(arg)						\
 do {									\
-	struct sgi_intrhand *__ih = (arg);				\
+	struct sgimips_intrhand *__ih = (arg);				\
 	__ih->ih_pending = 1;						\
 	setsoft(__ih->ih_intrhead->intr_ipl);				\
 } while (0)
 
-extern struct sgi_intrhand *softnet_intrhand;
+extern struct sgimips_intrhand *softnet_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
 
@@ -113,23 +111,23 @@ extern struct sgi_intrhand *softnet_intrhand;
 
 #define NINTR	32
 
-struct sgi_intrhand {
-	LIST_ENTRY(sgi_intrhand)
+struct sgimips_intrhand {
+	LIST_ENTRY(sgimips_intrhand)
 		ih_q;
 	int	(*ih_fun) __P((void *));
 	void	 *ih_arg;
-	struct	sgi_intr *ih_intrhead;
+	struct	sgimips_intr *ih_intrhead;
 	int	ih_pending;
 };
 
-struct sgi_intr {
-	LIST_HEAD(,sgi_intrhand)
+struct sgimips_intr {
+	LIST_HEAD(,sgimips_intrhand)
 		intr_q;
 	struct	evcnt ih_evcnt;
 	unsigned long intr_ipl;
 };
 
-extern struct sgi_intrhand intrtab[];
+extern struct sgimips_intrhand intrtab[];
 
 extern int		_splraise(int);
 extern int		_spllower(int); 
@@ -150,7 +148,7 @@ extern u_int32_t 	clockmask;
 #define splbio()        _splraise(biomask)
 #define splnet()        _splraise(netmask)
 #define spltty()        _splraise(ttymask)
-#define	splserial()	spltty()
+#define splserial()	spltty()
 #define splvm()         spltty()
 #define splclock()      _splraise(clockmask)
 #define splstatclock()  splclock()
@@ -173,6 +171,6 @@ void			softintr_dispatch(void);
 
 
 #endif /* _LOCORE */
-#endif /* _KERNEL */
+#endif /* !_KERNEL */
 
 #endif	/* !_SGIMIPS_INTR_H_ */
