@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.65 1999/02/18 07:08:35 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.66 1999/02/19 16:10:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -250,9 +250,6 @@ sbattach(sc)
 #if NMIDI > 0
 	struct midi_hw_if *mhw = &sb_midi_hw_if;
 #endif
-
-	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, sc->sc_ist,
-	    IPL_AUDIO, sbdsp_intr, sc);
 
 	sbdsp_attach(sc);
 
