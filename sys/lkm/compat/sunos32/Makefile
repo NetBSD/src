@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 11:44:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/10/16 15:57:12 christos Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/sunos32 $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 
-CPPFLAGS+= -DCOMPAT_SUNOS -DSYSVSEM -DSYSVMSG -DSYSVSHM -nostdinc
+CPPFLAGS+= -DCOMPAT_SUNOS -DCOMPAT_43 -DCOMPAT_NETBSD32
+CPPFLAGS+= -DSYSVSEM -DSYSVMSG -DSYSVSHM -nostdinc
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
 		-I. -I${S}
 
