@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.10 1996/02/28 01:44:41 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.11 1996/03/02 02:03:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -115,7 +115,7 @@ pciattach(parent, self, aux)
 		struct cfdata *cf;
 		int supported;
 
-		tag = pci_make_tag(sc->sc_bus, device, function);
+		tag = pci_make_tag(sc->sc_bus, device, 0);
 		id = pci_conf_read(tag, PCI_ID_REG);
 		if (id == 0 || id == 0xffffffff)
 			continue;
