@@ -1,4 +1,4 @@
-/*	$NetBSD: lptreg.h,v 1.4 1994/10/27 04:17:56 cgd Exp $	*/
+/*	$NetBSD: lptreg.h,v 1.5 1996/11/23 23:22:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,4 +61,4 @@
 #define	LPC_SELECT		0x08	/* printer selected */
 #define	LPC_IENABLE		0x10	/* printer out of paper */
 
-#define	LPT_NPORTS	8
+#define	LPT_NPORTS	4
