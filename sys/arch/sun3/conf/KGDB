@@ -1,4 +1,4 @@
-#	$NetBSD: KGDB,v 1.22 2000/09/24 15:59:38 jdolecek Exp $
+#	$NetBSD: KGDB,v 1.23 2000/12/19 15:54:26 tsutsui Exp $
 
 # KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260, 3/E)
 # like GENERIC but supports gdb on other machine, i.e.:
@@ -193,7 +193,6 @@ pseudo-device	ppp		2	# PPP
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 #pseudo-device	ipfilter		# ip filter
-# rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 
 pseudo-device	pty			# pseudo-terminals
