@@ -178,7 +178,7 @@ $ EBADMSG
 $ ENODATA
 89 No message available
 $ ENOSR
-90 No STREAM resource
+90 No STREAM resources
 $ ENOSTR
 91 Not a STREAM
 $set 2
