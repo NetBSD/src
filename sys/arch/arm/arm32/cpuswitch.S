@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.3.2.25 2002/10/18 02:35:20 nathanw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.3.2.26 2002/12/31 01:03:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -601,14 +601,14 @@ ENTRY(cpu_switch)
 	b	.Lcs_cache_purge_skipped
 
 /*
- * cpu_preempt(struct lwp *current, struct lwp *next)
+ * cpu_switchto(struct lwp *current, struct lwp *next)
  * Switch to the specified next LWP
  * Arguments:
  *
  *	r0	'struct lwp *' of the current LWP
  *	r1	'struct lwp *' of the LWP to switch to
  */
-ENTRY(cpu_preempt)
+ENTRY(cpu_switchto)
 	stmfd	sp!, {r4-r7, lr}
 
 	/* Lower the spl level to spl0 and get the current spl level. */
@@ -640,53 +640,12 @@ ENTRY(cpu_preempt)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 
-	/* Do we have any active queues? */
-	ldr	r7, .Lwhichqs
-	ldr	r3, [r7]
-
-	/* If none, panic! */
-	teq	r3, #0x00000000
-	beq	.Lpreempt_noqueues
-
 	mov	r0, r6		/* restore old lwp */
 	mov	r1, r5		/* restore new lwp */
 
 	/* rem: r0 = old lwp */
 	/* rem: r1 = new lwp */
-	/* rem: r3 = whichqs */
-	/* rem: r7 = &whichqs */
 	/* rem: interrupts are disabled */
-
-	/* Compute the queue bit corresponding to the new lwp. */
-	ldrb	r4, [r1, #(L_PRIORITY)]
-	mov	r2, #0x00000001
-	mov	r4, r4, lsr #2		/* queue number */
-	mov	r2, r2, lsl r4		/* queue bit */
-
-	/* rem: r0 = old lwp */
-	/* rem: r1 = new lwp */
-	/* rem: r2 = queue bit */
-	/* rem: r3 = whichqs */
-	/* rem: r4 = queue number */
-	/* rem: r7 = &whichqs */
-
-	/*
-	 * Unlink the lwp from the queue.
-	 */
-	ldr	r5, [r1, #(L_BACK)]	/* r5 = l->l_back */
-	mov	r6, #0x00000000
-	str	r6, [r1, #(L_BACK)]	/* firewall: l->l_back = NULL */
-	ldr	r6, [r1, #(L_FORW)]	/* r6 = l->l_forw */
-	str	r5, [r6, #(L_BACK)]	/* r6->l_back = r5 */
-	str	r6, [r5, #(L_FORW)]	/* r5->l_forw = r6 */
-
-	teq	r5, r6			/* see if queue is empty */
-	biceq	r3, r3, r2		/* clear bit if so */
-	streq	r3, [r7]		/* store it back if so */
-
-	/* rem: r2 (queue bit) now free */
-	/* rem: r3 (whichqs) now free */
-	/* rem: r7 (&whichqs) now free */
 
 	/*
 	 * Okay, set up registers the way cpu_switch() wants them,
@@ -702,14 +661,6 @@ ENTRY(cpu_preempt)
 	mov	r1, r0			/* r1 = old lwp */
 #endif
 	b	.Lswitch_resume
-
-.Lpreempt_noqueues:
-	add	r0, pc, #.Lpreemptpanic - . - 8
-	bl	_C_LABEL(panic)
-
-.Lpreemptpanic:
-	.asciz	"cpu_preempt: whichqs empty"
-	.align	0
 
 /*
  * void switch_exit(struct lwp *l, struct lwp *l0);

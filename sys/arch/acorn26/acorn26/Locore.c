@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.3.2.4 2002/12/03 05:03:21 gmcgarry Exp $	*/
+/*	$NetBSD: Locore.c,v 1.3.2.5 2002/12/31 01:03:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: Locore.c,v 1.3.2.4 2002/12/03 05:03:21 gmcgarry Exp $");
+__RCSID("$NetBSD: Locore.c,v 1.3.2.5 2002/12/31 01:03:46 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/sched.h>
@@ -186,7 +186,7 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
  * Switch to the indicated lwp.
  */
 void
-cpu_preempt(struct lwp *old, struct lwp *new)
+cpu_switchto(struct lwp *old, struct lwp *new)
 {
 
 	/*
@@ -194,9 +194,8 @@ cpu_preempt(struct lwp *old, struct lwp *new)
 	 */
 
 #if 0
-	printf("cpu_preempt: %p -> %p", old, new);
+	printf("cpu_switchto: %p -> %p", old, new);
 #endif
-	remrunqueue(new);
 	want_resched = 0;
 #ifdef LOCKDEBUG
 	sched_unlock_idle();

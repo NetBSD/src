@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.10.6.5 2002/08/10 15:49:29 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.10.6.6 2002/12/31 01:03:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -133,10 +133,10 @@ _L.cpu_switch_search:	.long	_C_LABEL(cpu_switch_search)
 FUNC_SYMBOL(switch_resume)
 
 /*
- * void cpu_preempt(struct lwp *current, struct lwp *next)
+ * void cpu_switchto(struct lwp *current, struct lwp *next)
  *	Switch to the specified next LWP.
  */
-ENTRY(cpu_preempt)
+ENTRY(cpu_switchto)
 	/* Save current process's context to switchframe. */
 	mov.l	_L.SFp,	r0
 	mov.l	@(r0, r4), r1
@@ -155,27 +155,15 @@ ENTRY(cpu_preempt)
 	mov.l	r15,	@-r1
 
 	/*
-	 * Don't need the outgoing LWP anymore.  Stash the incoming
-	 * LWP into a callee-saved register.
-	 */
-	mov	r5, r8
-
-	/* Unlink the new LWP from its run queue. */
-	mov.l	_L.remrunqueue, r0
-	jsr	@r0
-	 mov	r8, r4
-
-	/*
-	 * Put the incoming proc in r4 and jump into the middle
+	 * Put the incoming LWP in r4 and jump into the middle
 	 * of cpu_switch(), and let it do the work to restore the
 	 * incoming LWP's context.
 	 */
 	bra	_L.doswitch
-	 mov	r8, r4
+	 mov	r5, r4
 
 	.align	2
 _L.SFp:			.long	(L_MD_PCB)
-_L.remrunqueue:		.long	_C_LABEL(remrunqueue)
 
 #ifdef SH3
 /*

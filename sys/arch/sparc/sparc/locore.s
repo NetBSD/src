@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.16 2002/12/29 19:40:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.17 2002/12/31 01:03:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4823,13 +4823,6 @@ Lsw_scan:
 	sll	%o4, 3, %o0
 	add	%o0, %o5, %o5
 	ld	[%o5], %g3		! p = q->ph_link;
-
-cpu_switch0:
-	/*
-	 * Here code in common with cpu_preempt() starts.
-	 * cpu_preempt() sets %g3 to p, and %o5 to p->p_back,
-	 * so the following will unlink p from the switch_qs list.
-	 */
 	cmp	%g3, %o5		! if (p == q)
 	be	Lsw_panic_rq		!	panic("switch rq");
 	 EMPTY
@@ -4844,6 +4837,7 @@ cpu_switch0:
 	andn	%o3, %o1, %o3
 	st	%o3, [%g2 + %lo(_C_LABEL(sched_whichqs))]
 1:
+cpu_switch0:
 	/*
 	 * PHASE TWO: NEW REGISTER USAGE:
 	 *	%g1 = oldpsr (excluding ipl bits)
@@ -5021,7 +5015,7 @@ Lsw_sameproc:
 	retl
 	 mov	%g0, %o0	! return value = 0
 
-ENTRY(cpu_preempt)
+ENTRY(cpu_switchto)
 	/*
 	 * Like cpu_switch, but we're passed the process to switch to.
 	 *
@@ -5029,7 +5023,6 @@ ENTRY(cpu_preempt)
 	 */
 	mov	%o0, %g4			! lastproc = arg1;
 	mov	%o1, %g3			! newproc = arg2;
-	sethi	%hi(_C_LABEL(sched_whichqs)), %g2	! set up addr regs
 	sethi	%hi(cpcb), %g6
 	ld	[%g6 + %lo(cpcb)], %o0
 	std	%o6, [%o0 + PCB_SP]		! cpcb->pcb_<sp,pc> = <sp,pc>;
@@ -5038,14 +5031,6 @@ ENTRY(cpu_preempt)
 	andn	%g1, PSR_PIL, %g1		! oldpsr &= ~PSR_PIL;
 	sethi	%hi(curlwp), %g7
 	st	%g0, [%g7 + %lo(curlwp)]	! curlwp = NULL;
-
-	/*
-	 * now set up %o4 (which) and %o5 (p->p_back), and continue with
-	 * common code in cpu_switch().
-	 */
-	ld	[%g3 + L_PRIORITY], %o4
-	srl	%o4, 2, %o4
-	ld	[%g3 + 4], %o5		! %o5 = p->p_back
 	b,a	cpu_switch0
 
 /*
