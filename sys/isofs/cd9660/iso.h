@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.17 1997/01/24 00:44:40 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.18 1997/01/24 00:46:49 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -221,7 +221,7 @@ isonum_731(p)
 #if defined(UNALIGNED_ACCESS) && (BYTE_ORDER == LITTLE_ENDIAN)
 	return *(u_int32t *)p;
 #else
-	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24)
+	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
 #endif
 }
 
