@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.12 1998/07/13 14:54:11 augustss Exp $
+.\"	$NetBSD: pci.4,v 1.13 1998/12/08 14:15:27 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -151,6 +151,8 @@ device interface.
 .Bl -tag -width speaker -offset indent
 .It eap
 Ensoniq AudioPCI sound device.
+.It sv
+S3 SonicVibes sound device.
 .El
 .Pp
 .Ss Miscellaneous devices
@@ -198,6 +200,7 @@ USB UHCI host controller
 .Xr pcic 4 ,
 .Xr ppb 4 ,
 .Xr puc 4 ,
+.Xr sv 4 ,
 .Xr tl 4 ,
 .Xr uhci 4
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.21 1998/08/06 20:45:44 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.22 1998/12/08 14:15:27 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -633,12 +633,19 @@ mixer controls because they use a name from one of the AudioC* string values.
 .Xr ossaudio 3 .
 .br
 For ports using the ISA bus:
+.Xr aria 4 ,
+.Xr ess 4 ,
 .Xr gus 4 ,
 .Xr guspnp 4 ,
 .Xr pas 4 ,
 .Xr pss 4 ,
 .Xr sb 4 ,
-.Xr wss 4 .
+.Xr wss 4 ,
+.Xr ym 4 .
+.br
+For ports using the PCI bus:
+.Xr eap 4 ,
+.Xr sv 4 .
 .Sh BUGS
 If the device is used in
 .Xr mmap 2
