@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.13 1996/02/20 04:17:05 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.14 1996/02/22 06:21:48 mycroft Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -21,6 +21,7 @@ vm_offset_t isaphysmem;
 static caddr_t dma_bounce[8];		/* XXX */
 static char bounced[8];		/* XXX */
 #define MAXDMASZ 512		/* XXX */
+static u_int8_t dma_finished;
 
 /* high byte of address is stored in this port for i-th dma channel */
 static int dmapageport[8] =
@@ -88,6 +89,8 @@ isa_dmastart(flags, addr, nbytes, chan)
 
 	/* translate to physical */
 	phys = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
+
+	dma_finished &= ~(1 << chan);
 
 	if ((chan & 4) == 0) {
 		/*
@@ -164,7 +167,6 @@ int
 isa_dmafinished(chan)
 	int chan;
 {
-	u_char tc;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
@@ -173,10 +175,11 @@ isa_dmafinished(chan)
 
 	/* check that the terminal count was reached */
 	if ((chan & 4) == 0)
-		tc = inb(DMA1_SR) & (1 << chan);
+		dma_finished |= inb(DMA1_SR) & 0x0f;
 	else
-		tc = inb(DMA2_SR) & (1 << (chan & 3));
-	return (tc != 0);
+		dma_finished |= (inb(DMA2_SR) & 0x0f) << 4;
+
+	return ((dma_finished & (1 << chan)) != 0);
 }
 
 void
@@ -191,6 +194,9 @@ isa_dmadone(flags, addr, nbytes, chan)
 	if (chan < 0 || chan > 7)
 		panic("isa_dmadone: impossible request");
 #endif
+
+	if (!isa_dmafinished(chan))
+		printf("isa_dmadone: channel %d not finished\n", chan);
 
 	/* mask channel */
 	if ((chan & 4) == 0)
