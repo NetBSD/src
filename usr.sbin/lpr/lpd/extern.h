@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/07/10 06:24:55 mikel Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1997/07/10 10:44:48 veego Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/cdefs.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <stdio.h>
 
 /*
  * from stty.h
