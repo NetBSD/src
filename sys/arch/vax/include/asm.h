@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.6 1998/10/15 06:01:11 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.7 1998/12/02 00:58:43 thorpej Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -80,5 +80,16 @@
 	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
 #endif
+
+#ifdef __STDC__
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs \" ## msg ## \",30,0,0,0 ;				\
+	.stabs \"_ ## sym ## \",1,0,0,0
+#else
+#define	WARN_REFERENCES_STRING(x)	"x"
+#define	WARN_REFERENCES(sym,msg)					\
+	.stabs msg,30,0,0,0 ;						\
+	.stabs WARN_REFERENCES_STRING(_/**/sym),1,0,0,0
+#endif /* __STDC__ */
 
 #endif

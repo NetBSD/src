@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.4 1998/11/24 11:17:17 tsubai Exp $	*/
+/*	$NetBSD: asm.h,v 1.5 1998/12/02 00:58:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,5 +75,13 @@
 #define	ASMSTR		.asciz
 
 #define RCSID(x)	.text; .asciz x
+
+#ifdef __STDC__
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning. ## _sym ; .ascii _msg ; .text
+#else
+#define	WARN_REFERENCES(_sym,_msg)				\
+	.section .gnu.warning./**/_sym ; .ascii _msg ; .text
+#endif /* __STDC__ */
 
 #endif /* !_PPC_ASM_H_ */
