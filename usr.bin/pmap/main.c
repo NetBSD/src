@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2003/03/28 23:10:32 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.6 2003/03/29 18:01:21 he Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.5 2003/03/28 23:10:32 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2003/03/29 18:01:21 he Exp $");
 #endif
 
 #include <sys/param.h>
@@ -352,6 +352,7 @@ void
 load_symbols(kvm_t *kd)
 {
 	int rc, i, mib[2];
+	size_t sz;
 
 	rc = kvm_nlist(kd, &ksyms[0]);
 	if (rc != 0) {
@@ -398,8 +399,8 @@ load_symbols(kvm_t *kd)
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_PAGESIZE;
-	i = sizeof(page_size);
-	if (sysctl(&mib[0], 2, &page_size, &i, NULL, 0) == -1)
+	sz = sizeof(page_size);
+	if (sysctl(&mib[0], 2, &page_size, &sz, NULL, 0) == -1)
 		err(1, "sysctl: hw.pagesize");
 }
 
