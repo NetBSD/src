@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_user.c,v 1.1 1998/05/15 17:07:15 drochner Exp $	*/
+/*	$NetBSD: biosdisk_user.c,v 1.2 1998/11/22 15:44:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -110,4 +110,28 @@ biosread(dev, cyl, head, sec, nsec, buf)
 		return (-1);
 	}
 	return (0);
+}
+
+int
+int13_extension(dev)
+	int dev;
+{
+	return (0);
+}
+
+struct ext {
+	int8_t	size;
+	int8_t	resvd;
+	int16_t	cnt;
+	int16_t	off;
+	int16_t	seg;
+	int64_t	sec;
+};
+
+int
+biosextread(dev, ext)
+	int dev;
+	struct ext *ext;
+{
+	return (-1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: stand_user.c,v 1.1 1998/05/15 17:07:17 drochner Exp $	*/
+/*	$NetBSD: stand_user.c,v 1.2 1998/11/22 15:44:03 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -149,3 +149,5 @@ mapio()
 		warn("i386_iopl");
 	return (res);
 }
+
+int ourseg = 12345;
