@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 2000/01/13 01:06:24 nisimura Exp $
+#	$NetBSD: MAKEDEV,v 1.3 2000/01/21 12:28:25 tsutsui Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -73,11 +73,21 @@ fd)
 	chmod 666 fd/*
 	;;
 
-ccd*|cd*|md*|raid*|sd*|vnd*)
+md*)
+	unit=${i#md};	blk=7; chr=16;;
+	rm -rf md${unit}? rmd${unit}?
+	mknod md${unit}a  b $blk $(($unit * 8 + 0))
+	mknod md${unit}c  b $blk $(($unit * 8 + 2))
+#	mknod rmd${unit}a c $blk $(($unit * 8 + 0))
+#	mknod rmd${unit}c c $blk $(($unit * 8 + 2))
+	chgrp operator md${unit}? #rmd${unit}?
+	chmod 640 md${unit}? #rmd${unit}?
+	;;
+
+ccd*|cd*|raid*|sd*|vnd*)
 	case $i in
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=5; chr=14;;
 	cd*)	name=cd;	unit=${i#cd};	blk=4; chr=10;;
-	md*)	name=md;	unit=${i#md};	blk=7; chr=16;;
 	raid*)	name=raid;	unit=${i#raid};	blk=14; chr=32;;
 	sd*)	name=sd;	unit=${i#sd};	blk=2; chr=8;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=6; chr=15;;
