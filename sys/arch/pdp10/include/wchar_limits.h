@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar_limits.h,v 1.2 2004/05/09 19:48:38 kleink Exp $	*/
+/*	$NetBSD: wchar_limits.h,v 1.3 2004/05/09 19:50:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,4 +51,4 @@
 #define	WINT_MIN	(-0x7ffffffff-1)		/* wint_t	  */
 #define	WINT_MAX	0x7ffffffff			/* wint_t	  */
 
-#endif /* !_PDP10_WCHAT_LIMITS_H_ */
+#endif /* !_PDP10_WCHAR_LIMITS_H_ */
