@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.26 2000/12/24 09:35:28 ur Exp $
+#	$NetBSD: files.arc,v 1.27 2001/01/17 00:07:20 fvdl Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -19,6 +19,7 @@ file	arch/arc/arc/bus_space.c
 file	arch/arc/arc/bus_space_sparse.c
 file	arch/arc/arc/bus_space_large.c
 file	arch/arc/arc/bus_dma.c
+file	arch/arc/arc/procfs_machdep.c	procfs
 file	arch/arc/arc/wired_map.c
 
 file	arch/arc/arc/arcbios.c
