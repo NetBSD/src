@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.8 2002/09/19 14:39:51 itojun Exp $	*/
+/*	$NetBSD: process.c,v 1.9 2003/05/17 22:50:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: process.c,v 1.8 2002/09/19 14:39:51 itojun Exp $");
+__RCSID("$NetBSD: process.c,v 1.9 2003/05/17 22:50:29 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,8 +211,7 @@ find_user(name, tty, ttysize)
 			continue;
 		if (anytty) {
 			/* no particular tty was requested */
-			/* XXX strcpy is safe */
-			(void)strcpy(ftty + sizeof(_PATH_DEV) - 1, ep->line);
+			(void)strlcat(ftty, ep->line, sizeof(ftty));
 			if (stat(ftty, &statb) != 0)
 				continue;
 
