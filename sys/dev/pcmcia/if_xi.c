@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.12 2001/07/07 16:50:14 thorpej Exp $ */
+/*	$NetBSD: if_xi.c,v 1.13 2001/07/07 16:50:41 thorpej Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -1539,7 +1539,7 @@ xi_set_address(sc)
 		pos = IA + 6;
 		for (page = 0x50, num = ether->ec_multicnt; num > 0 && enm;
 		    num--) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    sizeof(enm->enm_addrlo)) != 0) {
 				/*
 				 * The multicast address is really a range;
