@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.1 1996/05/19 01:32:56 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.2 1996/05/20 23:38:26 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -39,6 +39,26 @@
 
 #ifndef _MIPS_LOCORE_H
 #define  _MIPS_LOCORE_H
+
+/*
+ * locore functions used by vm_machdep.c.
+ * These are not yet CPU-model specific.
+ */
+
+struct user;
+extern int  copykstack __P((struct user *up));
+extern void MachSaveCurFPState __P((struct proc *p));
+extern int switch_exit __P((void)); /* XXX never really returns? */
+
+/* MIPS-generic locore functions used by trap.c */
+ extern void MachFPTrap __P((u_int statusReg, u_int CauseReg, u_int pc));
+
+/*
+ * locore service routine for exeception vectors. Used outside locore
+ * only to print them by name in stack tracebacks
+ */
+
+extern void mips_r2000_KernIntr __P(());
 
 extern void mips_r2000_ConfigCache  __P((void));
 extern void mips_r2000_FlushCache  __P((void));
