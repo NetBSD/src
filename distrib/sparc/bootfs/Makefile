@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2000/10/20 11:56:57 pk Exp $
+#	$NetBSD: Makefile,v 1.26 2000/10/31 20:59:00 pk Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -45,19 +45,16 @@ FSSIZE!= expr ${BLOCKSIZE} \* 18 \* 2 \* 80
 
 GEOM=${BLOCKSIZE}/18/2/80
 
-CLEANFILES+=	netbsd.ram.gz netbsd.tmp disktab.tmp
+CLEANFILES+=	netbsd.ram netbsd.ram.aout netbsd.tmp
 
 .MAIN: all
 
-all:	netbsd.ram.gz
+all:	netbsd.ram netbsd.ram.aout
 	dd if=/dev/zero of=${IMAGE} bs=${FSSIZE} count=1
 	vnconfig -v -c ${VND_CDEV} ${IMAGE} ${GEOM}
-	#newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${MINIROOT} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${MINIROOT}/runlist.sh ${LISTS}
+	gzip -9 < netbsd.ram > ${MOUNT_POINT}/netbsd
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
@@ -71,12 +68,21 @@ unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
+netbsd.ram: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
 	strip netbsd.tmp
-	gzip -9 netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
+	mv netbsd.tmp ${.TARGET}
+
+
+# conjure up a magic header that is accepted by all Sun PROMS;
+# see sys/arch/sparc/stand/installboot/installboot.c for details.
+SUN_MAGIC_HEADER='\01\03\01\07\060\200\0\07\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0'
+
+netbsd.ram.aout: netbsd.ram
+	objcopy -O binary ${.ALLSRC} netbsd.ram.raw
+	(printf ${SUN_MAGIC_HEADER}; cat netbsd.ram.raw)  > ${.TARGET}
+	rm -f netbsd.ram.raw
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
@@ -94,6 +100,8 @@ release:
 release: $(IMAGE)
 	gzip -c -9 < $(.OBJDIR)/boot.fs \
 		> $(RELEASEDIR)/installation/bootfs/boot.fs.gz
+	gzip -c -9 < $(.OBJDIR)/netbsd.ram.aout \
+		> $(RELEASEDIR)/installation/bootfs/netbsd.ram.aout.gz
 .endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
