@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.5 1997/09/15 11:51:59 lukem Exp $	*/
+/*	$NetBSD: radix.c,v 1.6 1997/09/16 07:29:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: radix.c,v 1.5 1997/09/15 11:51:59 lukem Exp $");
+__RCSID("$NetBSD: radix.c,v 1.6 1997/09/16 07:29:56 lukem Exp $");
 #endif
 
 #include "defs.h"
@@ -60,7 +60,7 @@ static char *rn_zeros, *rn_ones;
 
 #define rn_masktop (mask_rnhead->rnh_treetop)
 #undef Bcmp
-#define Bcmp(a, b, l) (l == 0 ? 0 
+#define Bcmp(a, b, l) (l == 0 ? 0 \
 				: memcmp((caddr_t)(a), (caddr_t)(b), (size_t)l))
 
 static int rn_satsifies_leaf(char *, struct radix_node *, int);
