@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2003/09/12 02:52:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2003/09/23 10:59:19 lukem Exp $
 
 LIB=	ximcp
 SRCS=	imCallbk.c imDefFlt.c imDefIc.c imDefIm.c imDefLkup.c \
@@ -9,5 +9,6 @@ SRCS=	imCallbk.c imDefFlt.c imDefIc.c imDefIm.c imDefLkup.c \
 
 CPPFLAGS.imTrans.c=	${X11FLAGS.CONNECTION} -DXIM_t -DTRANS_CLIENT
 CPPFLAGS.imTransR.c=	${X11FLAGS.CONNECTION} -DXIM_t -DTRANS_CLIENT
+COPTS.imThaiFlt.c=	-Wno-error	# XXX gcc 3.3
 
 .include "../Makefile.xlibi18n"
