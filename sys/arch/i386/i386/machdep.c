@@ -48,6 +48,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
+#include <sys/exec_aout.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
@@ -1191,39 +1192,27 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");
 #endif
-		epp->ep_vcp = NULL;
 		return ETXTBSY;
 	}
 	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
-	epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_text,
-	    epp->ep_taddr,
-	    epp->ep_vp,
-	    NBPG,			/* XXX should be CLBYTES? */
-	    VM_PROT_READ | VM_PROT_EXECUTE);
-	ccmdp = epp->ep_vcp;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
+	    epp->ep_taddr, epp->ep_vp, NBPG, /* XXX should NBPG be CLBYTES? */
+	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/* set up command for data segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
-	    execp->a_data,
-	    epp->ep_daddr,
-	    epp->ep_vp,
-	    execp->a_text + NBPG,	/* XXX should be CLBYTES? */
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_data,
+	    epp->ep_daddr, epp->ep_vp,
+	    execp->a_text + NBPG, /* XXX should NBPG be CLBYTES? */
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-	    execp->a_bss,
-	    epp->ep_daddr + execp->a_data,
-	    0,
-	    0,
-	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
-	ccmdp = ccmdp->ev_next;
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+	    epp->ep_daddr + execp->a_data, 0, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp, ccmdp);
+	return exec_aout_setup_stack(p, epp);
 }
 #endif /* COMPAT_NOMID */
 
