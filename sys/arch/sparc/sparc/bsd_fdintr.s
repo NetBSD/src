@@ -1,3 +1,5 @@
+/*	$NetBSD: bsd_fdintr.s,v 1.4 1995/04/25 20:01:23 pk Exp $ */
+
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -27,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: bsd_fdintr.s,v 1.3 1995/04/07 19:49:30 pk Exp $
  */
 
 #ifndef FDC_C_HANDLER
