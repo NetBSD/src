@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.43 2003/08/11 13:27:58 christos Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.44 2003/09/29 04:03:55 junyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.43 2003/08/11 13:27:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.44 2003/09/29 04:03:55 junyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -241,7 +241,7 @@ mips_elf_makecmds (p, epp)
 					  epp->ep_vp, offset, prot);
 #ifdef OLD_ELF_DEBUG
 /*XXX*/		printf(
-	"obsolete elf: NEW_VNCMD len %x va %x off %x prot %x residue %x\n",
+	"obsolete elf: NEW_VMCMD len %x va %x off %x prot %x residue %x\n",
 			length, vaddr, offset, prot, residue);
 #endif /*ELF_DEBUG*/
 
@@ -273,7 +273,7 @@ mips_elf_makecmds (p, epp)
 			if (residue > 0) {
 #ifdef OLD_ELF_DEBUG
 /*XXX*/			printf(
-	"old elf:resid NEW_VNCMD len %x va %x off %x prot %x residue %x\n",
+	"old elf:resid NEW_VMCMD len %x va %x off %x prot %x residue %x\n",
 				length, vaddr + length, offset, prot, residue);
 #endif /*ELF_DEBUG*/
 
