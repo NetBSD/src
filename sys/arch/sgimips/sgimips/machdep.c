@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2001/06/02 18:09:20 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2001/06/13 12:34:24 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -143,6 +143,8 @@ static void	unimpl_iointr(unsigned, unsigned, unsigned, unsigned);
 static void	unimpl_intr_establish(int, int, int (*)(void *), void *);
 static unsigned	nullwork(void);
 
+void ddb_trap_hook(int where);
+
 struct platform platform = {
 	1000000,
 	unimpl_bus_reset,
@@ -238,6 +240,9 @@ mach_init(argc, argv, envp)
 		/* delay(20000); */ /* give the user a little time.. */
 #endif
 	}
+
+	/* Set up DDB hook to turn off watchdog on entry */
+	db_trap_callback = ddb_trap_hook;
 
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -686,3 +691,36 @@ void unconfigured_system_type(int ipnum)
 	panic("Kernel not configured for current hardware!");
 }
 
+void ddb_trap_hook(int where)
+{
+	switch (where) {
+	  case 1:	/* Entry to DDB, turn watchdog off */
+	    switch (mach_type) {
+	      case MACH_SGI_IP32:
+		    *(volatile u_int32_t *)0xb4000034 = 0;
+		    *(volatile u_int32_t *)0xb400000c &= ~0x200;
+		    break;
+
+	      case MACH_SGI_IP22:
+		    *(volatile u_int32_t *)0xbfa00014 = 0;
+		    *(volatile u_int32_t *)0xbfa00004 &= ~0x100;
+		    break;
+	    }
+	    break;
+
+	  case 0:	/* Exit from DDB, turn watchdog back on */
+	    switch (mach_type) {
+	      case MACH_SGI_IP32:
+		    *(volatile u_int32_t *)0xb400000c |= 0x200;
+		    *(volatile u_int32_t *)0xb4000034 = 0;
+		    break;
+
+	      case MACH_SGI_IP22:
+		    *(volatile u_int32_t *)0xbfa00004 |= 0x100;
+		    *(volatile u_int32_t *)0xbfa00014 = 0;
+
+		    break;
+	    }
+	    break;
+	}
+}
