@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.38 2000/01/31 19:04:53 kleink Exp $	*/
+/*	$NetBSD: sd.c,v 1.39 2000/02/07 20:16:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -716,7 +716,7 @@ sdstrategy(bp)
 			bp->b_error = EPERM;
 			goto bad;
 		}
-		bp->b_cylinder = 0;
+		bp->b_rawblkno = 0;
 	} else {
 		if (sc->sc_flags & SDF_ERROR) {
 			bp->b_error = EIO;
@@ -768,10 +768,10 @@ sdstrategy(bp)
 			sdlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylinder = (bn + offset) >> sc->sc_bshift; /* XXX */
+		bp->b_rawblkno = (bn + offset) >> sc->sc_bshift;
 	}
 	s = splbio();
-	disksort_cylinder(&sc->sc_tab, bp);	/* XXX */
+	disksort_blkno(&sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		sdustart(unit);
@@ -935,7 +935,7 @@ sdgo(arg)
 			return;
 		}
 		cmd = bp->b_flags & B_READ? &sd_read_cmd : &sd_write_cmd;
-		*(int *)(&cmd->cdb[2]) = bp->b_cylinder;	/* XXX */
+		*(int *)(&cmd->cdb[2]) = bp->b_rawblkno;
 		pad = howmany(bp->b_bcount, sc->sc_blksize);
 		*(u_short *)(&cmd->cdb[7]) = pad;
 		pad = (bp->b_bcount & (sc->sc_blksize - 1)) != 0;
@@ -961,7 +961,7 @@ sdgo(arg)
 		printf("%s: sdstart: %s adr %p blk %ld len %ld ecnt %ld\n",
 		       sc->sc_dev.dv_xname,
 		       bp->b_flags & B_READ? "read" : "write",
-		       bp->b_un.b_addr, bp->b_cylinder, bp->b_bcount,
+		       bp->b_un.b_addr, bp->b_rawblkno, bp->b_bcount,
 		       sc->sc_errcnt);
 #endif
 	bp->b_flags |= B_ERROR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.15 2000/01/21 23:43:10 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.16 2000/02/07 20:16:58 thorpej Exp $	*/
 
 /*
  *
@@ -1045,6 +1045,8 @@ xystrategy(bp)
 	struct xy_softc *xy;
 	int     s, unit;
 	struct xyc_attach_args xa;
+	struct disklabel *lp;
+	daddr_t blkno;
 
 	unit = DISKUNIT(bp->b_dev);
 
@@ -1083,9 +1085,21 @@ xystrategy(bp)
 	 * partition. Adjust transfer if needed, and signal errors or early
 	 * completion. */
 
-	if (bounds_check_with_label(bp, xy->sc_dk.dk_label,
+	lp = xy->sc_dk.dk_label;
+
+	if (bounds_check_with_label(bp, lp,
 		(xy->flags & XY_WLABEL) != 0) <= 0)
 		goto done;
+
+	/*
+	 * Now convert the block number to absolute and put it in
+	 * terms of the device's logical block size.
+	 */
+	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
+	if (DISKPART(bp->b_dev) != RAW_PART)
+		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+
+	bp->b_rawblkno = blkno;
 
 	/*
 	 * now we know we have a valid buf structure that we need to do I/O
@@ -1093,7 +1107,7 @@ xystrategy(bp)
 	 */
 	s = splbio();		/* protect the queues */
 
-	disksort_blkno(&xy->xyq, bp);	/* XXX disksort_cylinder */
+	disksort_blkno(&xy->xyq, bp);
 
 	/* start 'em up */
 
@@ -1328,15 +1342,13 @@ xyc_startbuf(xycsc, xysc, bp)
 #endif
 
 	/*
-	 * load request.  we have to calculate the correct block number based
-	 * on partition info.
+	 * load request.
 	 *
 	 * note that iorq points to the buffer as mapped into DVMA space,
 	 * where as the bp->b_data points to its non-DVMA mapping.
 	 */
 
-	block = bp->b_blkno + ((partno == RAW_PART) ? 0 :
-	    xysc->sc_dk.dk_label->d_partitions[partno].p_offset);
+	block = bp->b_rawblkno;
 
 	error = bus_dmamap_load(xycsc->dmatag, iorq->dmamap,
 			bp->b_data, bp->b_bcount, 0, BUS_DMA_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.55 2000/01/21 23:29:06 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.56 2000/02/07 20:16:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.55 2000/01/21 23:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.56 2000/02/07 20:16:52 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -671,7 +671,7 @@ rzstrategy(bp)
 			bp->b_error = EPERM;
 			goto bad;
 		}
-		bp->b_cylinder = 0;
+		bp->b_rawblkno = 0;
 	} else {
 		bn = bp->b_blkno;
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
@@ -711,13 +711,13 @@ rzstrategy(bp)
 			rzlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylinder = (bn + pp->p_offset) >> sc->sc_bshift; /* XXX */
+		bp->b_rawblkno = (bn + pp->p_offset) >> sc->sc_bshift;
 	}
 	/* don't let disksort() see sc_errbuf */
 	while (sc->sc_flags & RZF_SENSEINPROGRESS)
 		printf("SENSE\n"); /* XXX */
 	s = splbio();
-	disksort_cylinder(&sc->sc_tab, bp);	/* XXX */
+	disksort_blkno(&sc->sc_tab, bp);
 	if (sc->sc_active == 0) {
 		sc->sc_active = 1;
 		rzstart(unit);
@@ -757,7 +757,7 @@ rzstart(unit)
 		}
 		sc->sc_cmd.cmd = (u_char *)&sc->sc_rwcmd;
 		sc->sc_cmd.cmdlen = sizeof(sc->sc_rwcmd);
-		n = bp->b_cylinder;
+		n = bp->b_rawblkno;
 		sc->sc_rwcmd.highAddr = n >> 24;
 		sc->sc_rwcmd.midHighAddr = n >> 16;
 		sc->sc_rwcmd.midLowAddr = n >> 8;
