@@ -1,11 +1,11 @@
-.\" $NetBSD: at.1,v 1.13 2000/10/15 14:51:14 kleink Exp $
+.\" $NetBSD: at.1,v 1.14 2000/10/15 15:41:53 bjh21 Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt "AT" 1
 .Os
 .Sh NAME
-.Nm at, batch, atq, atrm
+.Nm at , batch , atq , atrm
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
@@ -294,6 +294,13 @@ Job-creation lock file.
 .Xr sh 1 ,
 .Xr sendmail 8 ,
 .Xr atrun 8
+.Sh STANDARDS
+The
+.Nm
+and
+.Nm batch
+utilities conform to
+.St -p1003.2-92 .
 .Sh BUGS
 .Pp
 If the file
