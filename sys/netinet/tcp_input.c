@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.31 1997/07/28 22:07:38 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.32 1997/09/22 21:49:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -651,12 +651,12 @@ after_listen:
 		tp->irs = ti->ti_seq;
 		tcp_rcvseqinit(tp);
 		tp->t_flags |= TF_ACKNOW;
-		tcp_mss(tp, opti.maxseg);
+		tcp_mss_from_peer(tp, opti.maxseg);
+		tcp_rmx_rtt(tp);
 		if (tiflags & TH_ACK && SEQ_GT(tp->snd_una, tp->iss)) {
 			tcpstat.tcps_connects++;
 			soisconnected(so);
-			tp->t_state = TCPS_ESTABLISHED;
-			tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+			tcp_established(tp);
 			/* Do window scaling on this connection? */
 			if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 				(TF_RCVD_SCALE|TF_REQ_SCALE)) {
@@ -918,8 +918,7 @@ after_listen:
 			goto dropwithreset;
 		tcpstat.tcps_connects++;
 		soisconnected(so);
-		tp->t_state = TCPS_ESTABLISHED;
-		tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+		tcp_established(tp);
 		/* Do window scaling? */
 		if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 			(TF_RCVD_SCALE|TF_REQ_SCALE)) {
@@ -1391,7 +1390,7 @@ tcp_dooptions(tp, cp, cnt, ti, oi)
 		case TCPOPT_TIMESTAMP:
 			if (optlen != TCPOLEN_TIMESTAMP)
 				continue;
-			oi -> ts_present = 1;
+			oi->ts_present = 1;
 			bcopy(cp + 2, &oi->ts_val, sizeof(oi->ts_val));
 			NTOHL(oi->ts_val);
 			bcopy(cp + 6, &oi->ts_ecr, sizeof(oi->ts_ecr));
@@ -1517,155 +1516,6 @@ tcp_xmit_timer(tp, rtt)
 	 * and the return path might not be symmetrical).
 	 */
 	tp->t_softerror = 0;
-}
-
-/*
- * Determine a reasonable value for maxseg size.
- * If the route is known, check route for mtu.
- * If none, use an mss that can be handled on the outgoing
- * interface without forcing IP to fragment; if bigger than
- * an mbuf cluster (MCLBYTES), round down to nearest multiple of MCLBYTES
- * to utilize large mbufs.  If no route is found, route has no mtu,
- * or the destination isn't local, use a default, hopefully conservative
- * size (usually 512 or the default IP max size, but no more than the mtu
- * of the interface), as we can't discover anything about intervening
- * gateways or networks.  We also initialize the congestion/slow start
- * window to be a single segment if the destination isn't local.
- * While looking at the routing entry, we also initialize other path-dependent
- * parameters from pre-set or cached values in the routing entry.
- */
-int
-tcp_mss(tp, offer)
-	register struct tcpcb *tp;
-	u_int offer;
-{
-	struct route *ro;
-	register struct rtentry *rt;
-	struct ifnet *ifp;
-	register int rtt, mss;
-	u_long bufsize;
-	struct inpcb *inp;
-	struct socket *so;
-
-	inp = tp->t_inpcb;
-	ro = &inp->inp_route;
-
-	if ((rt = ro->ro_rt) == (struct rtentry *)0) {
-		/* No route yet, so try to acquire one */
-		if (!in_nullhost(inp->inp_faddr)) {
-			ro->ro_dst.sa_family = AF_INET;
-			ro->ro_dst.sa_len = sizeof(ro->ro_dst);
-			satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
-			rtalloc(ro);
-		}
-		if ((rt = ro->ro_rt) == (struct rtentry *)0)
-			return (tcp_mssdflt);
-	}
-	ifp = rt->rt_ifp;
-	so = inp->inp_socket;
-
-#ifdef RTV_MTU	/* if route characteristics exist ... */
-	/*
-	 * While we're here, check if there's an initial rtt
-	 * or rttvar.  Convert from the route-table units
-	 * to scaled multiples of the slow timeout timer.
-	 */
-	if (tp->t_srtt == 0 && (rtt = rt->rt_rmx.rmx_rtt)) {
-		/*
-		 * XXX the lock bit for MTU indicates that the value
-		 * is also a minimum value; this is subject to time.
-		 */
-		if (rt->rt_rmx.rmx_locks & RTV_RTT)
-			tp->t_rttmin = rtt / (RTM_RTTUNIT / PR_SLOWHZ);
-		tp->t_srtt = rtt /
-		    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTT_SHIFT + 2));
-		if (rt->rt_rmx.rmx_rttvar)
-			tp->t_rttvar = rt->rt_rmx.rmx_rttvar /
-			    ((RTM_RTTUNIT / PR_SLOWHZ) >> (TCP_RTTVAR_SHIFT + 2));
-		else
-			/* default variation is +- 1 rtt */
-			tp->t_rttvar =
-			    tp->t_srtt >> (TCP_RTT_SHIFT - TCP_RTTVAR_SHIFT);
-		TCPT_RANGESET(tp->t_rxtcur,
-		    ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + 2),
-		    tp->t_rttmin, TCPTV_REXMTMAX);
-	}
-	/*
-	 * if there's an mtu associated with the route, use it
-	 */
-	if (rt->rt_rmx.rmx_mtu)
-		mss = rt->rt_rmx.rmx_mtu - sizeof(struct tcpiphdr);
-	else
-#endif /* RTV_MTU */
-	{
-		mss = ifp->if_mtu - sizeof(struct tcpiphdr);
-#if	(MCLBYTES & (MCLBYTES - 1)) == 0
-		if (mss > MCLBYTES)
-			mss &= ~(MCLBYTES-1);
-#else
-		if (mss > MCLBYTES)
-			mss = mss / MCLBYTES * MCLBYTES;
-#endif
-		if (!in_localaddr(inp->inp_faddr))
-			mss = min(mss, tcp_mssdflt);
-	}
-	/*
-	 * The current mss, t_maxseg, is initialized to the default value.
-	 * If we compute a smaller value, reduce the current mss.
-	 * If we compute a larger value, return it for use in sending
-	 * a max seg size option, but don't store it for use
-	 * unless we received an offer at least that large from peer.
-	 * However, do not accept offers under 32 bytes.
-	 */
-	if (offer)
-		mss = min(mss, offer);
-	mss = max(mss, 32);		/* sanity */
-	if (mss < tp->t_maxseg || offer != 0) {
-		/*
-		 * If there's a pipesize, change the socket buffer
-		 * to that size.  Make the socket buffers an integral
-		 * number of mss units; if the mss is larger than
-		 * the socket buffer, decrease the mss.
-		 */
-#ifdef RTV_SPIPE
-		if ((bufsize = rt->rt_rmx.rmx_sendpipe) == 0)
-#endif
-			bufsize = so->so_snd.sb_hiwat;
-		if (bufsize < mss)
-			mss = bufsize;
-		else {
-			bufsize = roundup(bufsize, mss);
-			if (bufsize > sb_max)
-				bufsize = sb_max;
-			(void)sbreserve(&so->so_snd, bufsize);
-		}
-		tp->t_maxseg = mss;
-
-#ifdef RTV_RPIPE
-		if ((bufsize = rt->rt_rmx.rmx_recvpipe) == 0)
-#endif
-			bufsize = so->so_rcv.sb_hiwat;
-		if (bufsize > mss) {
-			bufsize = roundup(bufsize, mss);
-			if (bufsize > sb_max)
-				bufsize = sb_max;
-			(void)sbreserve(&so->so_rcv, bufsize);
-		}
-	}
-	tp->snd_cwnd = mss;
-
-#ifdef RTV_SSTHRESH
-	if (rt->rt_rmx.rmx_ssthresh) {
-		/*
-		 * There's some sort of gateway or interface
-		 * buffer limit on the path.  Use this to set
-		 * the slow start threshhold, but set the
-		 * threshold to no less than 2*mss.
-		 */
-		tp->snd_ssthresh = max(2 * mss, rt->rt_rmx.rmx_ssthresh);
-	}
-#endif /* RTV_MTU */
-	return (mss);
 }
 
 /*
@@ -2021,7 +1871,10 @@ syn_cache_get(so, m)
 	tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
 	tcpstat.tcps_accepts++;
 
-	tcp_mss(tp, sc->sc_peermaxseg);
+	/* Initialize tp->t_ourmss before we deal with the peer's! */
+	tp->t_ourmss = sc->sc_ourmaxseg;
+	tcp_mss_from_peer(tp, sc->sc_peermaxseg);
+	tcp_rmx_rtt(tp);
 	tp->snd_wl1 = sc->sc_irs;
 	tp->rcv_up = sc->sc_irs + 1;
 
@@ -2116,6 +1969,8 @@ syn_cache_unreach(ip, th)
  * this to the syn cache, and send back a segment:
  *	<SEQ=ISS><ACK=RCV_NXT><CTL=SYN,ACK>
  * to the source.
+ *
+ * XXX We don't properly handle SYN-with-data!
  */
 
 int
@@ -2127,12 +1982,13 @@ syn_cache_add(so, m, optp, optlen, oi)
 	struct tcp_opt_info *oi;
 {
 	register struct tcpiphdr *ti;
-	struct tcpcb tb;
+	struct tcpcb tb, *tp;
 	long win;
 	struct syn_cache *sc, **sc_prev;
 	struct syn_cache_head *scp;
 	extern int tcp_do_rfc1323;
 
+	tp = sototcpcb(so);
 	ti = mtod(m, struct tcpiphdr *);
 
 	/*
@@ -2185,6 +2041,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_iss = tcp_iss;
 	tcp_iss += TCP_ISSINCR/2;
 	sc->sc_peermaxseg = oi->maxseg;
+	sc->sc_ourmaxseg = tcp_mss_to_advertise(tp);
 	sc->sc_tstmp = (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP)) ? 1 : 0;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
@@ -2219,12 +2076,6 @@ syn_cache_respond(sc, m, ti, win, ts)
 {
 	u_int8_t *optp;
 	int optlen;
-	u_int16_t mss;
-	extern unsigned long in_maxmtu;
-
-	mss = in_maxmtu - sizeof(struct tcpiphdr);
-	if (!in_localaddr(ti->ti_dst))
-		mss = min(mss, tcp_mssdflt);
 
 	/*
 	 * Tack on the TCP options.  If there isn't enough trailing
@@ -2252,8 +2103,8 @@ syn_cache_respond(sc, m, ti, win, ts)
 	optp = (u_int8_t *)(ti + 1);
 	optp[0] = TCPOPT_MAXSEG;
 	optp[1] = 4;
-	optp[2] = (mss >> 8) & 0xff;
-	optp[3] = mss & 0xff;
+	optp[2] = (sc->sc_ourmaxseg >> 8) & 0xff;
+	optp[3] = sc->sc_ourmaxseg & 0xff;
 	optlen = 4;
 
 	if (sc->sc_request_r_scale != 15) {

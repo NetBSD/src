@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.17 1997/09/22 21:49:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -44,6 +44,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 
+#include <net/if.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -72,6 +73,34 @@ extern struct mbuf *m_copypack();
 
 #define MAX_TCPOPTLEN	32	/* max # bytes that go in options */
 
+static __inline int tcp_segsize __P((struct tcpcb *));
+static __inline int
+tcp_segsize(tp)
+	struct tcpcb *tp;
+{
+	struct inpcb *inp = tp->t_inpcb;
+	struct rtentry *rt;
+	struct ifnet *ifp;
+	int size;
+
+	if ((rt = in_pcbrtentry(inp)) == NULL) {
+		size = tcp_mssdflt;
+		goto out;
+	}
+
+	ifp = rt->rt_ifp;
+
+	if (rt->rt_rmx.rmx_mtu)
+		size = rt->rt_rmx.rmx_mtu - sizeof(struct tcpiphdr);
+	else if (in_localaddr(inp->inp_faddr) || ifp->if_flags & IFF_LOOPBACK)
+		size = ifp->if_mtu - sizeof(struct tcpiphdr);
+	else
+		size = tcp_mssdflt;
+
+ out:
+	return (min(tp->t_maxseg, size));
+}
+
 /*
  * Tcp output routine: figure out what should be sent and send it.
  */
@@ -86,7 +115,9 @@ tcp_output(tp)
 	register struct tcpiphdr *ti;
 	u_char opt[MAX_TCPOPTLEN];
 	unsigned optlen, hdrlen;
-	int idle, sendalot;
+	int idle, sendalot, segsize;
+
+	segsize = tcp_segsize(tp);
 
 	/*
 	 * Determine length of data that should be transmitted,
@@ -164,8 +195,8 @@ again:
 			tp->snd_nxt = tp->snd_una;
 		}
 	}
-	if (len > tp->t_maxseg) {
-		len = tp->t_maxseg;
+	if (len > segsize) {
+		len = segsize;
 		flags &= ~TH_FIN;
 		sendalot = 1;
 	}
@@ -183,7 +214,7 @@ again:
 	 * to send into a small window), then must resend.
 	 */
 	if (len) {
-		if (len == tp->t_maxseg)
+		if (len == segsize)
 			goto send;
 		if ((idle || tp->t_flags & TF_NODELAY) &&
 		    len + off >= so->so_snd.sb_cc)
@@ -212,7 +243,7 @@ again:
 		long adv = min(win, (long)TCP_MAXWIN << tp->rcv_scale) -
 			(tp->rcv_adv - tp->rcv_nxt);
 
-		if (adv >= (long) (2 * tp->t_maxseg))
+		if (adv >= (long) (2 * tp->t_ourmss))
 			goto send;
 		if (2 * adv >= (long) so->so_rcv.sb_hiwat)
 			goto send;
@@ -282,13 +313,12 @@ send:
 	hdrlen = sizeof (struct tcpiphdr);
 	if (flags & TH_SYN) {
 		tp->snd_nxt = tp->iss;
+		tp->t_ourmss = tcp_mss_to_advertise(tp);
 		if ((tp->t_flags & TF_NOOPT) == 0) {
-			u_int16_t mss;
-
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
-			mss = htons((u_int16_t) tcp_mss(tp, 0));
-			bcopy((caddr_t)&mss, (caddr_t)(opt + 2), sizeof(mss));
+			opt[2] = (tp->t_ourmss >> 8) & 0xff;
+			opt[3] = tp->t_ourmss & 0xff;
 			optlen = 4;
 	 
 			if ((tp->t_flags & TF_REQ_SCALE) &&
@@ -326,10 +356,10 @@ send:
  
 	/*
 	 * Adjust data length if insertion of options will
-	 * bump the packet length beyond the t_maxseg length.
+	 * bump the packet length beyond the segsize length.
 	 */
-	 if (len > tp->t_maxseg - optlen) {
-		len = tp->t_maxseg - optlen;
+	 if (len > segsize - optlen) {
+		len = segsize - optlen;
 		flags &= ~TH_FIN;
 		sendalot = 1;
 	 }
@@ -450,7 +480,7 @@ send:
 	 * Calculate receive window.  Don't shrink window,
 	 * but avoid silly window syndrome.
 	 */
-	if (win < (long)(so->so_rcv.sb_hiwat / 4) && win < (long)tp->t_maxseg)
+	if (win < (long)(so->so_rcv.sb_hiwat / 4) && win < (long)tp->t_ourmss)
 		win = 0;
 	if (win > (long)TCP_MAXWIN << tp->rcv_scale)
 		win = (long)TCP_MAXWIN << tp->rcv_scale;
