@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.165 2003/10/01 15:05:55 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.166 2003/10/02 09:29:50 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2114,4 +2114,29 @@ crypto/dist/openssl/crypto/x509/x509_vfy.c	patch
 	If verify callback ignores invalid public key errors don't try to check
 	certificate signature with the NULL public key.
 	[christos, ticket #1492]
+
+sys/kern/kern_sysctl.c				1.147
+
+	make debug_sysctl() sysctl MIB check more strict. from smak.
+	attack similar to NetBSD-SA2003-014 can be mounted due to this flaw.
+	[itojun, ticket #1493]
+
+sbin/route/route.8				1.36
+
+	correct typo.  PR misc/22944
+	[itojun, ticket #1494]
+
+crypto/dist/openssl/ssl/ssl_ciph.c		1.6 (via patch)
+
+	From OpenBSD:
+	Correct some off-by-ones.  They currently don't matter, but this
+	is for future safety and consistency.
+	OK krw@, markus@
+	[itojun, ticket #1495]
+
+crypto/dist/openssl/ssl/s3_clnt.c		1.5
+crypto/dist/openssl/ssl/s3_srvr.c		1.6
+
+more fixes from 0.9.7c, from openbsd
+[itojun, ticket #1496]
 
