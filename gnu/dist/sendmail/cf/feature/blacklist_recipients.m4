@@ -1,6 +1,7 @@
 divert(-1)
 #
-# Copyright (c) 1998 Sendmail, Inc.  All rights reserved.
+# Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+#	All rights reserved.
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -9,10 +10,10 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)blacklist_recipients.m4	8.9 (Berkeley) 5/19/1998')
+VERSIONID(`$Id: blacklist_recipients.m4,v 1.1.1.2 2000/05/03 09:27:31 itojun Exp $')
 divert(-1)
 
-ifdef(`ACCESS_TABLE',
+ifdef(`_ACCESS_TABLE_',
 	`define(`_BLACKLIST_RCPT_', 1)',
 	`errprint(`*** ERROR: FEATURE(blacklist_recipients) requires FEATURE(access_db)
 ')')
