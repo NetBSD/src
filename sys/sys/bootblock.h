@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.6 2002/05/15 13:32:10 lukem Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.7 2002/05/17 18:53:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -252,7 +252,7 @@ struct apple_part_map_entry {
 
 #define MACPPC_BOOT_BLOCK_OFFSET	2048
 #define MACPPC_BOOT_BLOCK_BLOCKSIZE	512
-#define MACPPC_BOOT_BLOCK_MAX_SIZE	(512 * 12)
+#define MACPPC_BOOT_BLOCK_MAX_SIZE	2048	/* XXX: could be up to 6144 */
 	/* Magic string -- 32 bytes long (including the NUL) */
 #define	MACPPC_BBINFO_MAGIC		"NetBSD/macppc bootxx   20020515"
 
