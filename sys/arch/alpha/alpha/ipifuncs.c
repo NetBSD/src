@@ -1,7 +1,7 @@
-/* $NetBSD: ipifuncs.c,v 1.13 2000/06/29 09:02:54 mrg Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.14 2000/08/13 18:20:55 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2000/06/29 09:02:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2000/08/13 18:20:55 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -58,11 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2000/06/29 09:02:54 mrg Exp $");
 #include <machine/intr.h>
 #include <machine/rpb.h>
 
-void	alpha_ipi_halt __P((void));
-void	alpha_ipi_tbia __P((void));
-void	alpha_ipi_tbiap __P((void));
-void	alpha_ipi_imb __P((void));
-void	alpha_ipi_ast __P((void));
+void	alpha_ipi_halt(void);
+void	alpha_ipi_tbia(void);
+void	alpha_ipi_tbiap(void);
+void	alpha_ipi_imb(void);
+void	alpha_ipi_ast(void);
 
 /*
  * NOTE: This table must be kept in order with the bit definitions
@@ -81,8 +81,7 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
  * Send an interprocessor interrupt.
  */
 void
-alpha_send_ipi(cpu_id, ipimask)
-	u_long cpu_id, ipimask;
+alpha_send_ipi(u_long cpu_id, u_long ipimask)
 {
 
 #ifdef DIAGNOSTIC
@@ -101,22 +100,42 @@ printf("IPI SENT\n");
  * Broadcast an IPI to all but ourselves.
  */
 void
-alpha_broadcast_ipi(ipimask)
-	u_long ipimask;
+alpha_broadcast_ipi(u_long ipimask)
+{
+	u_long i, cpu_id = cpu_number();
+
+	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
+		if (cpu_info[i].ci_softc == NULL ||
+		    cpu_info[i].ci_cpuid == cpu_id)
+			continue;
+		alpha_send_ipi(i, ipimask);
+	}
+}
+
+/*
+ * Send an IPI to all in the list but ourselves.
+ */
+void
+alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 {
 	u_long i;
 
+	cpumask &= ~(1UL << cpu_number());
+	if (cpumask == 0)
+		return;
+
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if (cpu_info[i].ci_softc == NULL)
+		if (cpu_info[i].ci_softc == NULL ||
+		    ((1UL << cpu_info[i].ci_cpuid) & cpumask) == 0)
 			continue;
 		alpha_send_ipi(i, ipimask);
 	}
 }
 
 void
-alpha_ipi_halt()
+alpha_ipi_halt(void)
 {
-	u_long cpu_id = alpha_pal_whami();
+	u_long cpu_id = cpu_number();
 	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
 
 	/* Disable interrupts. */
@@ -133,9 +152,9 @@ alpha_ipi_halt()
 }
 
 void
-alpha_ipi_tbia()
+alpha_ipi_tbia(void)
 {
-	u_long cpu_id = alpha_pal_whami();
+	u_long cpu_id = cpu_number();
 
 	/* If we're doing a TBIA, we don't need to do a TBIAP or a SHOOTDOWN. */
 	atomic_clearbits_ulong(&cpu_info[cpu_id].ci_ipis,
@@ -145,7 +164,7 @@ alpha_ipi_tbia()
 }
 
 void
-alpha_ipi_tbiap()
+alpha_ipi_tbiap(void)
 {
 
 	/* Can't clear SHOOTDOWN here; might have PG_ASM mappings. */
@@ -154,14 +173,14 @@ alpha_ipi_tbiap()
 }
 
 void
-alpha_ipi_imb()
+alpha_ipi_imb(void)
 {
 
 	alpha_pal_imb();
 }
 
 void
-alpha_ipi_ast()
+alpha_ipi_ast(void)
 {
 
 	aston(curcpu());
