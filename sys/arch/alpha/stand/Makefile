@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/01/18 00:34:39 cgd Exp $
+# $NetBSD: Makefile,v 1.6 1997/04/06 08:39:37 cgd Exp $
 
 SUBDIR=	boot bootxx installboot netboot setnetbootinfo
 

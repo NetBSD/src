@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.1 1995/11/23 02:39:42 cgd Exp $	*/
+/* $NetBSD: disk.h,v 1.2 1997/04/06 08:40:34 cgd Exp $ */
 
 int	diskstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 /* int     diskopen __P((struct open_file *, int, int, int)); */

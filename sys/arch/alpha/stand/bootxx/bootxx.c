@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 1997/04/01 17:27:33 cgd Exp $	*/
+/* $NetBSD: bootxx.c,v 1.3 1997/04/06 08:40:46 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

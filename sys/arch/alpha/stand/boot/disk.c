@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.5 1997/04/01 17:23:04 cgd Exp $	*/
+/* $NetBSD: disk.c,v 1.6 1997/04/06 08:40:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
