@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.3 1999/02/08 16:33:18 bouyer Exp $	*/
+/*	$NetBSD: dkio.h,v 1.4 1999/12/23 21:23:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -53,6 +53,7 @@
 
 #define DIOCSSTEP	_IOW('d', 107, int)	/* set step rate */
 #define DIOCSRETRIES	_IOW('d', 108, int)	/* set # of retries */
+#define DIOCKLABEL	_IOW('d', 119, int)	/* keep/drop label on close? */
 #define DIOCWLABEL	_IOW('d', 109, int)	/* write en/disable label */
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */

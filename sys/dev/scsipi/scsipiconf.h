@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.33 1999/10/20 15:22:28 enami Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.34 1999/12/23 21:23:29 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ struct scsipi_link {
 #define	SDEV_OPEN	 	0x08	/* at least 1 open session */
 #define	SDEV_DBX		0xf0	/* debuging flags (scsipi_debug.h) */
 #define	SDEV_WAITDRAIN		0x100	/* waiting for pending_xfers to drain */
+#define	SDEV_KEEP_LABEL		0x200	/* retain label after 'full' close */
 	u_int16_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x0001	/*
 					 * Do implicit SAVEDATAPOINTER on
