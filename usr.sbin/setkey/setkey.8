@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$NetBSD: setkey.8,v 1.5 1999/09/07 06:49:37 itojun Exp $
-.\"	KAME Id: setkey.8,v 1.1.1.1 1999/08/08 23:31:51 itojun Exp
+.\"	$NetBSD: setkey.8,v 1.6 2000/01/31 14:22:43 itojun Exp $
+.\"	KAME Id: setkey.8,v 1.18 2000/01/14 01:28:27 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt SETKEY 8
-.Os
+.Os KAME
 .\" 
 .Sh NAME
 .Nm setkey
@@ -118,57 +118,53 @@ Description of meta-arguments follows.
 .Bl -tag -width Ds
 .It Xo
 .Li add
-.Ar src Ar dst Ar upperspec Ar spi
-.Op Ar proxyspec
-.Ar protocol
-.\" .Op Ar depend_on_sa
+.Ar src Ar dst Ar protocol Ar spi
+.Op Ar extensions
+.Ar algorithm...
 .Li ;
 .Xc
 Add a SAD entry.
 .\"
 .It Xo
 .Li get
-.Ar src Ar dst Ar upperspec Ar spi
-.Op Ar proxyspec
-.Op Ar protocol0
+.Ar src Ar dst Ar protocol Ar spi
+.Op Fl m Ar mode
 .Li ;
 .Xc
 Show a SAD entry.
 .\"
 .It Xo
 .Li delete
-.Ar src Ar dst Ar upperspec Ar spi
-.Op Ar proxyspec
-.Op Ar protocol0
+.Ar src Ar dst Ar protocol Ar spi
+.Op Fl m Ar mode
 .Li ;
 .Xc
 Remove a SAD entry.
 .\"
 .It Xo
 .Li flush
-.Op Ar protocol0
+.Op Ar protocol
 .Li ;
 .Xc
 Clear all SAD entries that matches the options.
 .\"
 .It Xo
 .Li dump
-.Op Ar protocol0
+.Op Ar protocol
 .Li ;
 .Xc
 Dumps all SAD entries that matches the options.
 .\"
 .It Xo
 .Li spdadd
-.Ar src Ar dst Ar upperspec
-.Op Ar policy
+.Ar src_range Ar dst_range Ar upperspec Ar policy
 .Li ;
 .Xc
 Add a SPD entry.
 .\"
 .It Xo
 .Li spddelete
-.Ar src Ar dst Ar upperspec
+.Ar src_range Ar dst_range Ar upperspec
 .Li ;
 .Xc
 Delete a SPD entry.
@@ -184,14 +180,158 @@ Clear all SPD entries.
 .Li ;
 .Xc
 Dumps all SAD entries.
-.\"
 .El
+.\"
 .Pp
 Meta-arguments are as follows:
-.Bl -tag -width Ds
+.Bl -tag -compact -width Ds
 .It Ar src
 .It Ar dst
 Source/destination of the secure communication is specified as
+IPv4/v6 address.
+.Nm
+does not consult hostname-to-address for arguments
+.Ar src
+and
+.Ar dst .
+They must be in numeric form.
+.\"
+.Pp
+.It Ar protocol
+.Ar protocol
+is one of following:
+.Bl -tag -width Fl -compact
+.It Li esp
+ESP based on rfc2405
+.It Li esp-old
+ESP based on rfc1827
+.It Li ah
+AH based on rfc2402
+.It Li ah-old
+AH based on rfc1826
+.It Li ipcomp
+IPCOMP
+.El
+.\"
+.Pp
+.It Ar spi
+Security Parameter Index (SPI) for the SA and SPD.
+It must be decimal number or hexadecimal number
+.Po
+with
+.Li 0x
+attached
+.Pc .
+.\"
+.Pp
+.It Ar extensions
+takes some of the following:
+.Bl -tag -width Fl -compact 
+.\"
+.It Fl m Ar mode
+Specify an security protocol mode for use.  By default,
+.Li any .
+.Ar mode
+is one of following:
+.Li transport , tunnel
+or
+.Li any .
+.\"
+.It Fl r Ar size
+Specify window size of bytes for replay prevention.
+.Ar size
+must be decimal number in 32-bit word.  If
+.Ar size
+is zero or not specified, replay check don't take place.
+.\"
+.It Fl u Ar id
+Specify the identifier of policy.  See also
+.Xr ipsec_set_policy 3 .
+.\"
+.It Fl f Ar pad_option
+.Ar pad_option
+is one of following:
+.Li zero-pad , random-pad
+or
+.Li seq-pad
+.\"
+.It Fl f Li nocyclic-seq
+Don't allow cyclic sequence number.
+.\"
+.It Fl lh Ar time
+.It Fl ls Ar time
+Specify hard/soft lifetime.
+.El
+.\"
+.Pp
+.It Ar algorithm
+.Bl -tag -width Fl -compact 
+.It Fl E Ar ealgo Ar key
+Specify encryption algorithm.
+.It Fl A Ar ealgo Ar key
+Specify authentication algorithm.
+If
+.Fl A
+is used for esp, it will be treated as ESP payload authentication algorithm.
+.It Fl C Ar calgo Op Fl R
+Specify compression algorithm.
+If
+.Fl R
+is not specified with
+.Li ipcomp
+line, the kernel will use well-known IPComp CPI
+.Pq compression parameter index
+on IPComp CPI field on packets, and
+.Ar spi
+field will be ignored.
+.Ar spi
+field is only for kernel internal use in this case.
+.\"Therefore, compression protocol number will appear on IPComp CPI field.
+If
+.Fl R
+is used,
+the value on
+.Ar spi
+field will appear on IPComp CPI field on outgoing packets.
+.Ar spi
+field needs to be smaller than
+.Li 0x10000
+in this case.
+.El
+.Pp
+.Li esp
+SAs accept
+.Fl E
+and
+.Fl A .
+.Li esp-old
+SAs accept
+.Fl E
+only.
+.Li ah
+and
+.Li ah-old
+SAs accept
+.Fl A
+only.
+.Li ipcomp
+SAs accept
+.Fl C
+only.
+.Pp
+.Ar key
+must be double-quoted character string or a series of hexadecimal digits.
+.Pp
+Possible values for
+.Ar ealgo ,
+.Ar aalgo
+and
+.Ar calgo
+are specified in separate section.
+.\"
+.It Ar src_range
+.It Ar dst_range
+These are selection of the secure communication is specified as
 IPv4/v6 address or IPv4/v6 address range, and it may accompany
 TCP/UDP port specification.
 This takes the following form:
@@ -209,8 +349,7 @@ must be decimal number.
 The square bracket around
 .Ar port
 is really necessary.
-They are not manpage metacharacters
-.Li :-)
+They are not manpage metacharacters.
 .Pp
 .Nm
 does not consult hostname-to-address for arguments
@@ -228,148 +367,14 @@ and
 .Li any
 can be specified.
 .Li any
-is as the wildcard.
+stands for
+.Dq any protocol .
+.Pp
 NOTE:
 .Ar upperspec
-of forwarding packet has no effect at this moment, since kernel code fragment to handle
-.Ar upperspec
-is disabled.
-.\"
-.It Ar spi
-Security Parameter Index (SPI) for the SA and SPD.
-It must be decimal number or hexadecimal number
-.Po
-with
-.Li 0x
-attached
-.Pc .
-.\"
-.It Ar proxyspec
-.Ar proxyspec
-can be specified as either an IPv4 or IPv6 address.
-If specified, the SAD entry will be used for tunnel mode IPsec processing.
-.\"
-.It Ar protocol
-.Ar protocol
-takes the following forms:
-.Bl -tag -width Ds
-.It Xo
-.Fl p
-.Li esp
-.Op Ar extensions
-.Op Fl E Ar ealgo Ar key
-.Op Fl A Ar aalgo Ar key
-.Op Fl r Ar replay
-.Xc
-.It Xo
-.Fl p
-.Li ah
-.Op Ar extensions
-.Op Fl A Ar aalgo Ar key
-.Op Fl r Ar replay
-.Xc
-.It Xo
-.Fl p
-.Li esp-old
-.Op Ar extensions
-.Op Fl E Ar ealgo Ar key
-.Op Fl A Ar aalgo Ar key
-.Op Fl r Ar replay
-.Xc
-.It Xo
-.Fl p
-.Li ah-old
-.Op Ar extensions
-.Op Fl A Ar aalgo Ar key
-.Op Fl r Ar replay
-.Xc
-.It Xo
-.Fl p
-.Li ipcomp
-.Op Fl C Ar calgo
-.Op Fl R
-.Xc
-.El
-.Pp
-.Fl p
-is always mandatory.
-Optional flag,
-.Ar extensions ,
-can be
-.Li cyclic-seq ,
-and one of the following:
-.Li random-pad ,
-.Li seq-pad ,
-.Li zero-pad .
-.Fl E
-specifies encryption algorithm, and
-.Fl A
-specifies authentication algorithm.
-If
-.Fl A
-is used for
-.Fl p Li esp
-or
-.Fl p Li esp-old ,
-it will be treated as ESP payload authentication algorithm.
-Possible values for
-.Ar ealgo ,
-.Ar aalgo
-and
-.Ar calgo
-are specified in separete section.
-.Ar key
-must be double-quoted character string or a series of hexadecimal digits.
-.Fl r Ar replay
-is used for checking replay attacks.
-.Ar replay
-must be decimal number in 32-bit word.  If
-.Ar replay
-is zero or not specified, repley check don't take place.
-.Fl R
-is used only with
-.Li ipcomp .
-If
-.Fl R
-is specified with
-.Li ipcomp
-line, the kernel will use well-known IPComp CPI
-.Pq compression parameter index
-on IPComp CPI field on packets, and
-.Ar spi
-field will be ignored.
-.Ar spi
-field is only for kernel internal use in this case.
-.\"Therefore, compression protocol number will appear on IPComp CPI field.
-If
-.Fl R
-is not used,
-the value on
-.Ar spi
-field will appear on IPComp CPI field on outgoing packets.
-.Ar spi
-field needs to be smaller than
-.Li 0x10000
-in this case.
-.\"
-.It Ar protocol0
-This is a subset of
-.Ar protocol ,
-which takes no optional arguments:
-.Bd -literal -offset
-.Xo
-.Fl p
-.Li esp
-.Xc
-.Xo
-.Fl p
-.Li ah
-.Xc
-.Xo
-.Fl p
-.Li ipcomp
-.Xc
-.Ed
+does not work against forwarding case at this moment,
+as it requires extra reassembly at forwarding node
+.Pq not implemented as this moment .
 .\"
 .It Ar policy
 .Ar policy
@@ -377,20 +382,29 @@ is the one of following:
 .Bd -literal -offset
 .Xo
 .Fl P
+.Ar direction
 .Li discard
 .Xc
 .Xo
 .Fl P
+.Ar direction
 .Li none
 .Xc
 .Xo
 .Fl P
+.Ar direction
 .Li ipsec
-.Ar protocol/level
-.Op Ar /peer
+.Ar protocol/mode/src-dst/level
 .Xc
 .Ed
 .Pp
+You must specify the direction of its policy as
+.Ar direction .
+Either
+.Li out
+or
+.Li in
+are used.
 .Li discard
 means the packet matching indexes will be discarded.
 .Li none
@@ -404,6 +418,18 @@ or
 .Li ipcomp
 is to be set as
 .Ar protocol .
+.Ar mode
+is either
+.Li transport
+or
+.Li tunnel .
+You must specify the end-points addresses of the SA as
+.Ar src
+and
+.Ar dst
+with
+.Sq -
+between these addresses which is used to specify the SA to use.
 .Ar level
 is to be one of the following:
 .Li default , use
@@ -419,10 +445,17 @@ means that kernel use a SA if it's available,
 otherwise kernel keeps normal operation.
 .Li require
 means SA is required whenever kernel deals with the packet.
-If you plan to set up the tunnel mode of IPsec, you can specify the end-point a
-ddress of the tunnel as
-.Ar peer
-which will be hint when IPsec system set up SAs by Key management automatically.
+Note that
+.Dq Li discard
+and
+.Dq Li none
+are not in the syntax described in
+.Xr ipsec_set_policy 3 .
+There are little differences in the syntax.
+See
+.Xr ipsec_set_policy 3
+for detail.
+.Pp
 .El
 .Pp
 .\"
@@ -440,18 +473,18 @@ of
 .Ar protocol
 parameter:
 .Pp
-.Bl -column "algorithmxx" -column "keylengthxx" -offset 
-.It Sy algorithm	key length (bits)	comment
-.It hmac-md5	128		ah: rfc2403
-.It 	128			ah-old: rfc2085
-.It hmac-sha1	160		ah: rfc2404
-.It 	160			ah-old: 128bit ICV (no document)
-.It keyed-md5	128			ah: 96bit ICV (no document)
-.It 	128			ah-old: rfc1828
-.It keyed-sha1	160			ah: 96bit ICV (no document)
-.It 	160			ah-old: 128bit ICV (no document)
-.It null	0 to 2048		for debugging
-.El
+.Bd -literal -offset indent
+algorithm	keylen (bits)	comment
+hmac-md5	128		ah: rfc2403
+		128		ah-old: rfc2085
+hmac-sha1	160		ah: rfc2404
+		160		ah-old: 128bit ICV (no document)
+keyed-md5	128		ah: 96bit ICV (no document)
+		128		ah-old: rfc1828
+keyed-sha1	160		ah: 96bit ICV (no document)
+		160		ah-old: 128bit ICV (no document)
+null		0 to 2048	for debugging
+.Ed
 .Pp
 Following are the list of encryption algorithms that can be used as
 .Ar ealgo
@@ -461,17 +494,17 @@ of
 .Ar protocol
 parameter:
 .Pp
-.Bl -column "algorithmxx" -column "keylengthxx" -offset
-.It Sy algorithm	key length(bits)	comment
-.It des-cbc	64			esp-old: rfc1829, esp: rfc2405
-.It 3des-cbc	192			rfc2451
-.It simple	0 to 2048		rfc2410
-.It blowfish-cbc	40 to 448		rfc2451
-.It cast128-cbc	40 to 128		rfc2451
-.It rc5-cbc	40 to 2040		rfc2451
-.It des-deriv	64		ipsec-ciph-des-derived-01 (expired)
-.It 3des-deriv	192		no document
-.El
+.Bd -literal -offset indent
+algorithm	keylen (bits)	comment
+des-cbc		64		esp-old: rfc1829, esp: rfc2405
+3des-cbc	192		rfc2451
+simple		0 to 2048	rfc2410
+blowfish-cbc	40 to 448	rfc2451
+cast128-cbc	40 to 128	rfc2451
+rc5-cbc		40 to 2040	rfc2451
+des-deriv	64		ipsec-ciph-des-derived-01 (expired)
+3des-deriv	192		no document
+.Ed
 .Pp
 Following are the list of compression algorithms that can be used as
 .Ar calgo
@@ -481,37 +514,32 @@ of
 .Ar protocol
 parameter:
 .Pp
-.Bl -column "algorithmxx" -offset
-.It Sy algorithm	comment
-.It deflate	rfc2394
-.It lzs	rfc2395
-.El
+.Bd -literal -offset indent
+algorithm	comment
+deflate		rfc2394
+lzs		rfc2395
+.Ed
 .\" 
 .Sh EXAMPLES
 .Bd -literal -offset
-add	10.0.11.41/32[21] 10.0.11.33/32[0] tcp 0x10001 202.249.11.41
-		-p esp -E des-cbc "hogehoge"
-		-A hmac-md5 "hagehogehogehoge" ;
+add	3ffe:501:4819::1 3ffe:501:481d::1 esp 123457
+		-E des-cbc "ESP SA!!"
 
-add	127.0.0.1 127.0.0.1 any 0x10001
-		-p esp -E blowfish-cbc "kamekame"
-		-A hmac-sha1 "hogehogehogehogehoge" ;
+add	3ffe:501:4819::1 3ffe:501:481d::1 ah 123456
+		-A hmac-sha1 "AH SA configuration!" ;
 
-add	127.0.0.1 127.0.0.1 any 0x10001
-		-p ah-old -A keyed-md5 "testtesttesttest" ;
+add	10.0.11.41 10.0.11.33 esp 0x10001
+		-E des-cbc "ESP with"
+		-A hmac-md5 "authentication!!" ;
 
-add	10.0.0.1 10.0.0.2 udp 0x10002 203.178.141.215
-		-p ah -A keyed-md5 "testtesttesttest" ;
-
-get	10.0.11.41/32[21] 10.0.11.33/32[0] tcp 0x10001 202.249.11.41
-		-p esp ;
+get	3ffe:501:4819::1 3ffe:501:481d::1 ah 123456 ;
 
 flush ;
 
-dump -p esp ;
+dump esp ;
 
-spdadd	10.0.11.41/32[21] 10.0.11.33/32[0] any
-		-P ipsec ah/use esp/require/192.168.0.1 ;
+spdadd	10.0.11.41/32[21] 10.0.11.33/32[any] any
+		-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
 
 .Ed
 .\" 

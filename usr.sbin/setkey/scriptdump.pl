@@ -1,6 +1,6 @@
 #! @LOCALPREFIX@/bin/perl
 #
-#	$NetBSD: scriptdump.pl,v 1.2 1999/07/06 13:13:03 itojun Exp $
+#	$NetBSD: scriptdump.pl,v 1.3 2000/01/31 14:22:43 itojun Exp $
 #
 
 if ($< != 0) {
@@ -21,9 +21,9 @@ while ($i = shift @ARGV) {
 open(IN, "setkey -D |") || die;
 foreach $_ (<IN>) {
 	if (/^[^\t]/) {
-		($src, $dst, $upper, $proxy) = split(/\s+/, $_);
-	} elsif (/^\t(esp|ah) spi=(\d+).*replay=(\d+)/) {
-		($proto, $spi, $replay) = ($1, $2, $3);
+		($src, $dst) = split(/\s+/, $_);
+	} elsif (/^\t(esp|ah) mode=(\S+) spi=(\d+).*reqid=(\d+)/) {
+		($proto, $ipsecmode, $spi, $reqid) = ($1, $2, $3, $4);
 	} elsif (/^\tE: (\S+) (.*)/) {
 		$ealgo = $1;
 		$ekey = $2;
@@ -34,17 +34,19 @@ foreach $_ (<IN>) {
 		$akey = $2;
 		$akey =~ s/\s//g;
 		$akey =~ s/^/0x/g;
-	} elsif (/^\tstate=/) {
-		print "$mode $src $src $upper $spi $proxy -p $proto";
+	} elsif (/^\treplay=(\d+) flags=(0x\d+) state=/) {
+		print "$mode $src $dst $proto $spi -m $ipsecmode";
+		$replay = $1;
+		print " -u $reqid" if $reqid;
 		if ($mode eq 'add') {
+			print " -r $replay" if $replay;
 			if ($proto eq 'esp') {
 				print " -E $ealgo $ekey" if $ealgo;
 				print " -A $aalgo $akey" if $aalgo;
 			} elsif ($proto eq 'ah') {
 				print " -A $aalgo $akey" if $aalgo;
 			}
-			print " -r $replay" if $replay;
-		}
+		} 
 		print ";\n";
 
 		$src = $dst = $upper = $proxy = '';

@@ -1,4 +1,4 @@
-/*	$NetBSD: setkey.c,v 1.2 1999/07/06 13:13:03 itojun Exp $	*/
+/*	$NetBSD: setkey.c,v 1.3 2000/01/31 14:22:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* KAME Id: setkey.c,v 1.1.4.1.2.5.2.21.2.19.4.16 1999/07/02 17:15:32 itojun Exp */
+/* KAME Id: setkey.c,v 1.8 1999/12/02 05:23:59 sakane Exp */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,14 +62,18 @@ const char *numstr __P((int));
 void shortdump_hdr __P((void));
 void shortdump __P((struct sadb_msg *));
 
+#define MODE_SCRIPT	1
+#define MODE_CMDDUMP	2
+#define MODE_CMDFLUSH	3
+
+int so;
+
 int f_forever = 0;
 int f_all = 0;
 int f_debug = 0;
 int f_verbose = 0;
-int f_command = 0;
-int f_script = 0;
+int f_mode = 0;
 int f_cmddump = 0;
-int f_cmdflush = 0;
 int f_policy = 0;
 int f_promisc = 0;
 int f_hexdump = 0;
@@ -85,12 +89,13 @@ extern int parse __P((FILE **));
 void
 Usage()
 {
-	printf("Usage:\t%s [-dv] -c", pname);
+	printf("Usage:\t%s [-dv] -c\n", pname);
 	printf("\t%s [-dv] -f (file)\n", pname);
 	printf("\t%s [-Padlv] -D\n", pname);
 	printf("\t%s [-Pdv] -F\n", pname);
 	printf("\t%s [-h] -x\n", pname);
-	exit(0);
+	pfkey_close(so);
+	exit(1);
 }
 
 int
@@ -107,22 +112,25 @@ main(ac, av)
 
 	while ((c = getopt(ac, av, "acdf:hlvxDFP")) != EOF) {
 		switch (c) {
-		case 'a':
-			f_all = 1;
-			break;
 		case 'c':
-			f_script = 1;
+			f_mode = MODE_SCRIPT;
 			fp = stdin;
 			break;
-		case 'd':
-			f_debug = 1;
-			break;
 		case 'f':
-			f_script = 1;
+			f_mode = MODE_SCRIPT;
 			if ((fp = fopen(optarg, "r")) == NULL) {
-				perror("fopen");
-				exit(-1);
+				err(-1, "fopen");
+				/*NOTREACHED*/
 			}
+			break;
+		case 'D':
+			f_mode = MODE_CMDDUMP;
+			break;
+		case 'F':
+			f_mode = MODE_CMDFLUSH;
+			break;
+		case 'a':
+			f_all = 1;
 			break;
 		case 'l':
 			f_forever = 1;
@@ -130,21 +138,18 @@ main(ac, av)
 		case 'h':
 			f_hexdump = 1;
 			break;
-		case 'v':
-			f_verbose = 1;
-			break;
 		case 'x':
 			f_promisc = 1;
 			promisc();
 			/*NOTREACHED*/
-		case 'D':
-			f_cmddump = 1;
-			break;
-		case 'F':
-			f_cmdflush = 1;
-			break;
 		case 'P':
 			f_policy = 1;
+			break;
+		case 'd':
+			f_debug = 1;
+			break;
+		case 'v':
+			f_verbose = 1;
 			break;
 		default:
 			Usage();
@@ -152,22 +157,24 @@ main(ac, av)
 		}
 	}
 
-	if (get_supported() < 0) {
-		printf("%s\n", ipsec_strerror());
-		exit(-1);
-	}
-
-	if (f_cmdflush)
-		sendkeyshort(f_policy ? SADB_X_SPDFLUSH: SADB_FLUSH);
-	else
-	if (f_cmddump)
+	switch (f_mode) {
+	case MODE_CMDDUMP:
 		sendkeyshort(f_policy ? SADB_X_SPDDUMP: SADB_DUMP);
-	else
-	if (f_script)
-		parse(&fp);
-	else {
+		break;
+	case MODE_CMDFLUSH:
+		sendkeyshort(f_policy ? SADB_X_SPDFLUSH: SADB_FLUSH);
+		pfkey_close(so);
+		break;
+	case MODE_SCRIPT:
+		if (get_supported() < 0) {
+			errx(-1, "%s", ipsec_strerror());
+			/*NOTREACHED*/
+		}
+		if (parse(&fp))
+			exit (1);
+		break;
+	default:
 		Usage();
-		/*NOTREACHED*/
 	}
 
 	exit(0);
@@ -178,14 +185,14 @@ get_supported()
 {
 	int so;
 
-#if 0
+	if ((so = pfkey_open()) < 0) {
+		perror("pfkey_open");
+		return -1;
+	}
+
 	/* debug mode ? */
 	if (f_debug)
 		return 0;
-#endif
-
-	if ((so = pfkey_open()) < 0)
-		return -1;
 
 	if (pfkey_send_register(so, PF_UNSPEC) < 0)
 		return -1;
@@ -193,14 +200,12 @@ get_supported()
 	if (pfkey_recv_register(so) < 0)
 		return -1;
 
-	pfkey_close(so);
-
 	return 0;
 }
 
 void
 sendkeyshort(type)
-	u_int type;
+        u_int type;
 {
 	struct sadb_msg *m_msg = (struct sadb_msg *)m_buf;
 
@@ -211,10 +216,12 @@ sendkeyshort(type)
 	m_msg->sadb_msg_errno = 0;
 	m_msg->sadb_msg_satype = SADB_SATYPE_UNSPEC;
 	m_msg->sadb_msg_len = PFKEY_UNIT64(m_len);
-	m_msg->sadb_msg_reserved = 0;
-	m_msg->sadb_msg_reserved = 0;
+	m_msg->sadb_msg_mode = IPSEC_MODE_ANY;
+	m_msg->sadb_msg_reserved1 = 0;
 	m_msg->sadb_msg_seq = 0;
 	m_msg->sadb_msg_pid = getpid();
+	m_msg->sadb_msg_reqid = 0;
+	m_msg->sadb_msg_reserved2 = 0;
 
 	sendkeymsg();
 
@@ -235,10 +242,12 @@ promisc()
 	m_msg->sadb_msg_errno = 0;
 	m_msg->sadb_msg_satype = 1;
 	m_msg->sadb_msg_len = PFKEY_UNIT64(m_len);
-	m_msg->sadb_msg_reserved = 0;
-	m_msg->sadb_msg_reserved = 0;
+	m_msg->sadb_msg_mode = IPSEC_MODE_ANY;
+	m_msg->sadb_msg_reserved1 = 0;
 	m_msg->sadb_msg_seq = 0;
 	m_msg->sadb_msg_pid = getpid();
+	m_msg->sadb_msg_reqid = 0;
+	m_msg->sadb_msg_reserved2 = 0;
 
 	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
 		err(1, "socket(PF_KEY)");
@@ -297,13 +306,15 @@ promisc()
 int
 sendkeymsg()
 {
+	int so;
+
 	u_char rbuf[1024 * 32];	/* XXX: Enough ? Should I do MSG_PEEK ? */
-	int so, len;
+	int len;
 	struct sadb_msg *msg;
 
 	if ((so = pfkey_open()) < 0) {
-		printf("%s\n", ipsec_strerror());
-		return 0;
+		perror("pfkey_open");
+		return -1;
 	}
 
     {
@@ -319,8 +330,10 @@ sendkeymsg()
 	if (f_forever)
 		shortdump_hdr();
 again:
-	if (f_verbose)
+	if (f_verbose) {
 		kdebug_sadb((struct sadb_msg *)m_buf);
+		printf("\n");
+	}
 
 	if ((len = send(so, m_buf, m_len, 0)) < 0) {
 		perror("send");
@@ -335,12 +348,14 @@ again:
 		}
 
 		if (PFKEY_UNUNIT64(msg->sadb_msg_len) != len) {
-			fprintf(stderr, "invalid keymsg length\n");
+			warnx("invalid keymsg length");
 			break;
 		}
 
-		if (f_verbose)
+		if (f_verbose) {
 			kdebug_sadb((struct sadb_msg *)rbuf);
+			printf("\n");
+		}
 		if (postproc(msg, len) < 0)
 			break;
 	} while (msg->sadb_msg_errno || msg->sadb_msg_seq);
@@ -366,7 +381,7 @@ postproc(msg, len)
 		char inf[80];
 		char *errmsg = NULL;
 
-		if (f_script)
+		if (f_mode == MODE_SCRIPT)
 			snprintf(inf, sizeof(inf), "The result of line %d: ", lineno);
 		else
 			inf[0] = '\0';
@@ -404,7 +419,8 @@ postproc(msg, len)
 		if (!f_all) {
 			caddr_t mhp[SADB_EXT_MAX + 1];
 			struct sadb_sa *sa;
-			pfkey_check(msg, mhp);
+			pfkey_align(msg, mhp);
+			pfkey_check(mhp);
 			if ((sa = (struct sadb_sa *)mhp[SADB_EXT_SA]) != NULL) {
 				if (sa->sadb_sa_state == SADB_SASTATE_DEAD)
 					break;
@@ -416,8 +432,10 @@ postproc(msg, len)
 			pfkey_sadump(msg);
 		msg = (struct sadb_msg *)((caddr_t)msg +
 				     PFKEY_UNUNIT64(msg->sadb_msg_len));
-		if (f_verbose)
+		if (f_verbose) {
 			kdebug_sadb((struct sadb_msg *)msg);
+			printf("\n");
+		}
 		break;
 
 	case SADB_X_SPDDUMP:
@@ -425,8 +443,10 @@ postproc(msg, len)
 		if (msg->sadb_msg_seq == 0) break;
 		msg = (struct sadb_msg *)((caddr_t)msg +
 				     PFKEY_UNUNIT64(msg->sadb_msg_len));
-		if (f_verbose)
+		if (f_verbose) {
 			kdebug_sadb((struct sadb_msg *)msg);
+			printf("\n");
+		}
 		break;
 	}
 
@@ -452,7 +472,7 @@ static char *ipproto[] = {
 /*40*/	NULL, "ip6", NULL, "rt6", "frag6",
 	NULL, "rsvp", "gre", NULL, NULL,
 /*50*/	"esp", "ah", NULL, NULL, NULL,
-	NULL, NULL, "icmp6", "none", NULL,
+	NULL, NULL, NULL, "icmp6", "none",
 /*60*/	"dst6",
 };
 
@@ -488,7 +508,8 @@ shortdump(msg)
 	u_int t;
 	time_t cur = time(0);
 
-	pfkey_check(msg, mhp);
+	pfkey_align(msg, mhp);
+	pfkey_check(mhp);
 
 	printf("%02lu%02lu", (u_long)(cur % 3600) / 60, (u_long)(cur % 60));
 

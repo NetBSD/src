@@ -1,39 +1,31 @@
-# $NetBSD: Makefile,v 1.2 1999/07/10 11:31:28 tron Exp $
+# $NetBSD: Makefile,v 1.3 2000/01/31 14:22:41 itojun Exp $
 
 PROG=	setkey
 SRCS=	setkey.c parse.y token.l
+CFLAGS+=-g
 LDADD+=	-ll -ly
-CLEANFILES+=	parse.c parse.h key_test.o keytest
-YFLAGS+=
+DPADD+=	${LIBL} ${LIBY}
+CLEANFILES+=	y.tab.c y.tab.h key_test.o keytest
+YFLAGS+=-d
 
-CPPFLAGS+=-DIPSEC_DEBUG -DYY_NO_UNPUT -DINET6
-CPPFLAGS+=-I.
+SCRIPTS=	scriptdump
 
-#SCRIPTS=	scriptdump
+BINOWN=root
+BINGRP=bin
+BINMODE=555
 
-BINOWN  = root
-BINGRP  = bin
-BINMODE = 555
+all: ${PROG} scriptdump
 
-all: ${PROG} ${SCRIPTS}
-
-# FreeBSD
-#SRCS+=y.tab.h
-#y.tab.h: parse.y
-
+CPPFLAGS+=-DIPSEC_DEBUG -DINET6 -DYY_NO_UNPUT
+CPPFLAGS+=-I. -I${.CURDIR}
 LDADD+= -lipsec
 DPADD+=	${LIBIPSEC}
-#CLEANFILES+=	scriptdump
+CLEANFILES+=	scriptdump
 
 MAN=	setkey.8
 LOCALPREFIX=	/usr/pkg
 
-#scriptdump: scriptdump.pl
-#	sed -e 's#@LOCALPREFIX@#${LOCALPREFIX}#' < ${.CURDIR}/scriptdump.pl > scriptdump
-
-parse.c parse.h: parse.y
-	${YACC.y} -d ${.ALLSRC}
-	mv -f y.tab.c parse.c
-	mv -f y.tab.h parse.h
+scriptdump: scriptdump.pl
+	sed -e 's#@LOCALPREFIX@#${LOCALPREFIX}#' < $> > scriptdump
 
 .include <bsd.prog.mk>
