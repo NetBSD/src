@@ -1,36 +1,52 @@
-#	$NetBSD: Makefile,v 1.1 2002/02/10 01:22:55 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.2 2002/02/13 06:01:36 gmcgarry Exp $
 
-.include "../../../Makefile.inc"
+TOP=	${.CURDIR}/..
+
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
-DISKBINDIR=	/installation/diskimage
-KERNBINDIR=	/binary/kernel
+RAMDISKS=	RAMDISK	ramdisk
 
-KERN=		${KERNOBJDIR}/RAMDISK/netbsd
-RAMDISK!=	cd ${.CURDIR}/../ramdisk; ${MAKE} echoimage
-CLEANFILES=	netbsd netbsd.gz
+.for V F in ${RAMDISKS}
+${V}!=		cd ${TOP}/${F}/; \
+	        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/${F}.fs\n" | \
+		${MAKE} -s -f-
+.endfor
 
-MDSETIMAGE?=	mdsetimage
+#	create netbsd.*.gz targets
+#
+#	TARGETS is a list of:
+#		KERNEL_name	fs-image	"nocluster" disables clustering
+#
+TARGETS=	RAMDISK		${RAMDISK}	-
 
-all:	netbsd.gz
+.for K R E in ${TARGETS}
+_E:=${E}			# work around obscure issue in make(1)
+KERNELS+=	netbsd.${K}.gz
+KERNELSYMS+=	netbsd.${K}.symbols
+netbsd.${K}.gz: .NOTMAIN ${KERNOBJDIR}/${K}/netbsd ${R}
+	@echo "Populating ${K} with ${R}"
+	cp ${KERNOBJDIR}/${K}/netbsd netbsd.tmp
+.if ${_E} == "nocluster"
+	gdb --write -batch -x ${.CURDIR}/nocluster.gdb netbsd.tmp </dev/null
+.endif
+	${MDSETIMAGE} -v netbsd.tmp ${R}
+	${NM} netbsd.tmp > netbsd.${K}.symbols
+	${STRIP} netbsd.tmp
+	gzip -9 netbsd.tmp
+	mv netbsd.tmp.gz ${.TARGET}
+.endfor
 
-netbsd.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd
-	${MDSETIMAGE} -v netbsd ${RAMDISK}
-	rm -f netbsd.gz
-	gzip -9 netbsd
+#	do the work
+#
+all: ${KERNELS}
 
-realinstall:
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${BINMODE} netbsd.gz ${RELEASEDIR}${KERNBINDIR}/install.gz
+release:
+	-mkdir -p ${RELEASEDIR}/binary/kernel
+	cp -p ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
 clean cleandir distclean:
-	rm -f ${CLEANFILES}
-
-# XXX!
-depend:
-dependall: depend all
+	rm -f *.core netbsd.tmp ${KERNELS} ${KERNELSYMS}
 
 .include <bsd.obj.mk>
-.include "../Makefile.inc"
+.include <bsd.prog.mk>
