@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip6.4,v 1.16 2003/09/07 16:22:28 wiz Exp $
+.\"	$NetBSD: ip6.4,v 1.17 2004/04/28 07:25:51 dyoung Exp $
 .\"	$KAME: ip6.4,v 1.11 2000/05/07 06:21:41 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -167,7 +167,7 @@ The
 option gives the sender explicit control
 over whether or not subsequent datagrams are looped back:
 .Bd -literal -offset indent
-u_char loop;	/* 0 = disable, 1 = enable (default) */
+u_int loop;	/* 0 = disable, 1 = enable (default) */
 setsockopt(s, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, \*[Am]loop, sizeof(loop));
 .Ed
 .Pp
