@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ps.1	6.17 (Berkeley) 6/20/91
 .\"
-.\"	$Header: /cvsroot/src/bin/ps/ps.1,v 1.4 1993/06/01 01:38:30 cgd Exp $
+.\"	$Header: /cvsroot/src/bin/ps/ps.1,v 1.5 1993/06/13 22:29:02 mycroft Exp $
 .\"
 .Dd June 20, 1991
 .Dt PS 1
@@ -100,7 +100,7 @@ Sort by memory usage, instead of by process
 .Tn ID .
 .It Fl N
 Extract the name list from the specified system instead of the default
-.Dq Pa /vmunix .
+.Dq Pa /netbsd .
 .It Fl O
 Add the information associated with the space or comma separated list
 of keywords specifed, after the process
@@ -151,7 +151,7 @@ option.
 .It Fl W
 Extract swap information from the specified file instead of the
 default
-.Dq Pa /dev/swap .
+.Dq Pa /dev/drum .
 .It Fl w
 Use 132 columns to display information, instead of the default which
 is your window size.
@@ -480,7 +480,7 @@ wait channel (as a symbolic name)
 exit or stop status (valid only for stopped or zombie process)
 .El
 .Sh FILES
-.Bl -tag -width /var/run/kvm_vmunix.db -compact
+.Bl -tag -width /var/run/kvm_netbsd.db -compact
 .It Pa /dev
 special files and device names
 .It Pa /dev/drum
@@ -489,9 +489,9 @@ default swap device
 default kernel memory
 .It Pa /var/run/dev.db
 /dev name database
-.It Pa /var/run/kvm_vmunix.db
+.It Pa /var/run/kvm_netbsd.db
 system namelist database
-.It Pa /vmunix
+.It Pa /netbsd
 default system namelist
 .El
 .Sh SEE ALSO
