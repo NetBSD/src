@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.96 2000/07/26 07:24:17 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.97 2000/08/24 07:12:20 imp Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.96 2000/07/24 21:45:00 gmcgarry Exp 
+ *	NetBSD: pcmciadevs,v 1.98 2000/08/24 07:10:36 imp Exp 
  */
 
 /*-
@@ -1018,17 +1018,17 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCMCIA_VENDOR_BAY, 0,
-	    PCMCIA_KNOWNDEV_NOPROD,
-	    PCMCIA_CIS_INVALID,
-	    "Bay Networks",
-	    NULL,
-	},
-	{
 	    PCMCIA_VENDOR_IODATA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_BAY, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Bay Networks",
 	    NULL,
 	},
 	{
