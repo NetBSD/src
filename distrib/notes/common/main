@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.73 2000/08/22 05:10:10 wdk Exp $
+.\" $NetBSD: main,v 1.74 2000/08/24 03:57:38 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ is one of
 .It Pa \&.ps
 PostScript.
 .It Pa \&.html
-.No Standard internet Tn HTML .
+.No Standard Internet Tn HTML .
 .It Pa \&.more
 The enhanced text format used on Unix-like systems by the
 .Xr more 1
@@ -287,7 +287,7 @@ rather large number of other ideas about what can be done to improve
 We intend to continue our current practice of making the
 NetBSD-current development source available on a daily basis.  In
 addition, we intend to provide Anonymous CVS access to the NetBSD
-source tree in the near future, so that anyone on the internet can
+source tree in the near future, so that anyone on the Internet can
 examine the full NetBSD source code repository.
 .Pp
 We intend to integrate free, positive changes from whatever sources
