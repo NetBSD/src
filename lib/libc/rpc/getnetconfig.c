@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.6.2.3 2002/11/11 22:22:40 nathanw Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.6.2.4 2003/01/06 23:34:38 thorpej Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -157,11 +157,14 @@ static int *
 __nc_error()
 {
 #ifdef _REENTRANT
+	extern int __isthreaded;
 	int *nc_addr = NULL;
 #endif
 	static int nc_error = 0;
 
 #ifdef _REENTRANT
+	if (__isthreaded == 0)
+		return &nc_error;
 	thr_once(&nc_once, __nc_error_setup);
 	nc_addr = thr_getspecific(nc_key) ;
 	if (nc_addr == NULL) {
