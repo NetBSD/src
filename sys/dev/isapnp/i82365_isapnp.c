@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.6 1999/03/22 10:00:11 mycroft Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.7 2000/02/01 22:39:52 chopps Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -176,31 +176,16 @@ pcic_isapnp_attach(parent, self, aux)
 	 * scarce, shareable, and for PCIC controllers, very infrequent.
 	 */
 
-	if (ipa->ipa_nirq > 0) {
+	if (ipa->ipa_nirq > 0)
 		sc->irq = ipa->ipa_irq[0].num;
-	} else {
-		if (isa_intr_alloc(ic,
-				   PCIC_CSC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask,
-				   IST_EDGE, &sc->irq)) {
-			printf("\n%s: can't allocate interrupt\n",
-			       sc->dev.dv_xname);
-			return;
-		}
-		printf(" irq %d", sc->irq);
-	}
+	else
+		sc->irq = IRQUNK;
+
 	printf("\n");
 
 	pcic_attach(sc);
-
-	pcic_isa_bus_width_probe(sc, iot, ioh, ipa->ipa_io[0].base, ipa->ipa_io[0].length);
-
-	sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
-	    pcic_intr, sc);
-	if (sc->ih == NULL) {
-		printf("%s: can't establish interrupt\n", sc->dev.dv_xname);
-		return;
-	}
-
+	pcic_isa_bus_width_probe(sc, iot, ioh, ipa->ipa_io[0].base,
+	    ipa->ipa_io[0].length);
 	pcic_attach_sockets(sc);
-
+	config_interrupts(self, pcic_isa_config_interrupts);
 }
