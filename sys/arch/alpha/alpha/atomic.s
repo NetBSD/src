@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.s,v 1.2 1998/09/22 05:56:52 thorpej Exp $ */
+/* $NetBSD: atomic.s,v 1.3 1998/09/22 06:10:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.2 1998/09/22 05:56:52 thorpej Exp $")
+__KERNEL_RCSID(4, "$NetBSD: atomic.s,v 1.3 1998/09/22 06:10:53 thorpej Exp $")
 
 /*
  * Misc. `atomic' operations.
@@ -67,6 +67,7 @@ Laasq_loop:
 	or	t0, a1, t0
 	stq_c	t0, 0(a0)
 	beq	t0, Laasq_retry
+	mb
 	RET
 Laasq_retry:
 	br	Laasq_loop
@@ -94,6 +95,7 @@ Laacq_loop:
 	and	t0, t1, t0
 	stq_c	t0, 0(a0)
 	beq	t0, Laacq_retry
+	mb
 	RET
 Laacq_retry:
 	br	Laacq_loop
@@ -122,6 +124,7 @@ Laatq_loop:
 	or	t0, a1, v0
 	stq_c	v0, 0(a0)
 	beq	v0, Laatq_retry
+	mb
 	RET				/* v0 != 0 */
 Laatq_already:
 	mov	zero, v0
