@@ -752,7 +752,7 @@ init_dev(dp)
 	dp->d_slave = dp->d_drive = dp->d_unit = UNKNOWN;
 	dp->d_port = (char *)0;
 	dp->d_portn = 0;
-	dp->d_irq = -1;
+	dp->d_irq = -2;
 	dp->d_drq = -1;
 	dp->d_maddr = 0;
 	dp->d_msize = 0;
