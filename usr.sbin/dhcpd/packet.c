@@ -42,16 +42,16 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.2 1996/10/03 06:57:21 mrg Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.3 1997/03/15 18:37:34 is Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
 #if defined (PACKET_ASSEMBLY) || defined (PACKET_DECODING)
 #include <netinet/in_systm.h>
 #ifdef __NetBSD__
+#include <net/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/udp.h>
-#include <netinet/if_ether.h>
 #else
 #include "includes/netinet/ip.h"
 #include "includes/netinet/udp.h"

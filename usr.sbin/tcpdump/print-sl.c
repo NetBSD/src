@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sl.c,v 1.6 1996/05/20 00:41:11 fvdl Exp $	*/
+/*	$NetBSD: print-sl.c,v 1.7 1997/03/15 18:37:59 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -39,7 +39,11 @@ static  char rcsid[] =
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
+#ifdef __NetBSD__
+#include <net/if_ether.h>
+#else
 #include <netinet/if_ether.h>
+#endif
 #include <netinet/ip_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>

@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 
 #ifdef	ETC_ETHERS
-#include <netinet/if_ether.h>
+#include <net/if_ether.h>
 extern int ether_hostton();
 #endif
 
