@@ -1,8 +1,8 @@
-/*	$NetBSD: ultrix_fs.c,v 1.11 1997/05/25 10:21:34 jonathan Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.12 1997/05/25 10:24:05 jonathan Exp $	*/
 
 /*
- * Copyright (c) 1995
- *	Jonathan Stone (hereinafter referred to as the author)
+ * Copyright (c) 1995, 1997 Jonathan Stone
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
