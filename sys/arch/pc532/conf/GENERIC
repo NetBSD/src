@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.29 2002/09/18 02:44:06 lukem Exp $
+# $NetBSD: GENERIC,v 1.30 2002/10/06 02:12:00 provos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	8			# estimated number of users
 
@@ -30,6 +30,7 @@ maxusers	8			# estimated number of users
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DIAGNOSTIC		# internal consistency checking
 options 	KTRACE			# system call tracing, a la ktrace(1)
+options 	SYSTRACE		# system call vetting via systrace(1)
 
 #options 	ACCOUNTING		# process accounting
 #options 	SYSVMSG			# System V message queues
