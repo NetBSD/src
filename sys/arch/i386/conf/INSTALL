@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.144 2000/05/09 00:28:22 hubertf Exp $
+#	$NetBSD: INSTALL,v 1.145 2000/06/07 02:16:06 gmcgarry Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -464,6 +464,7 @@ mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
+xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
