@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.50 2002/10/23 09:15:06 jdolecek Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.51 2002/11/01 21:11:43 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.50 2002/10/23 09:15:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.51 2002/11/01 21:11:43 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,9 +234,6 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 };
 const struct vnodeopv_desc ffs_fifoop_opv_desc =
 	{ &ffs_fifoop_p, ffs_fifoop_entries };
-
-int doclusterread = 1;
-int doclusterwrite = 1;
 
 #include <ufs/ufs/ufs_readwrite.c>
 
