@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.23 1998/12/23 15:09:09 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.24 1999/08/21 00:26:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@ enum Elf_e_machine {
 	Elf_em_arm = 40,
 	Elf_em_alpha = 41,
 	Elf_em_sparc64 = 43,
+	Elf_em_vax = 75,
 	Elf_em_alpha_exp = 0x9026,
 	Elf_em_num
 };
