@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.6 1999/11/05 19:00:44 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.7 1999/11/21 15:01:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -353,11 +353,13 @@ stp4020attach(parent, self, aux)
 	 * The higher level we use for status change interrupts;
 	 * the lower level for PC card I/O.
 	 */
-	bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
-			   0, stp4020_statintr, sc);
+	if (sa->sa_nintr != 0) {
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
+				   0, stp4020_statintr, sc);
 
-	bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
-			   0, stp4020_iointr, sc);
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
+				   0, stp4020_iointr, sc);
+	}
 
 	rev = stp4020_rd_sockctl(&sc->sc_socks[0], STP4020_ISR1_IDX) &
 		STP4020_ISR1_REV_M;
