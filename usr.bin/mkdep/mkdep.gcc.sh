@@ -73,9 +73,9 @@ trap 'rm -f $TMP ; exit 1' 1 2 3 13 15
 
 if [ "x${SED}" != "x" ]
 then
-	gcc -M "$@" | sed -e "${SED}" > $TMP
+	cpp -M "$@" | sed -e "${SED}" > $TMP
 else
-	gcc -M "$@" > $TMP
+	cpp -M "$@" > $TMP
 fi
 
 if [ $? != 0 ]; then
