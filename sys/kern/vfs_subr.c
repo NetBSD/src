@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.122 2000/03/17 01:25:06 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.123 2000/03/30 09:27:15 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -304,7 +304,7 @@ struct mount *
 vfs_getvfs(fsid)
 	fsid_t *fsid;
 {
-	register struct mount *mp;
+	struct mount *mp;
 
 	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
@@ -371,7 +371,7 @@ makefstype(type)
  */
 void
 vattr_null(vap)
-	register struct vattr *vap;
+	struct vattr *vap;
 {
 
 	vap->va_type = VNON;
@@ -544,8 +544,8 @@ getnewvnode(tag, mp, vops, vpp)
  */
 void
 insmntque(vp, mp)
-	register struct vnode *vp;
-	register struct mount *mp;
+	struct vnode *vp;
+	struct mount *mp;
 {
 
 #ifdef DIAGNOSTIC
@@ -576,9 +576,9 @@ insmntque(vp, mp)
  */
 void
 vwakeup(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register struct vnode *vp;
+	struct vnode *vp;
 
 	bp->b_flags &= ~B_WRITEINPROG;
 	if ((vp = bp->b_vp) != NULL) {
@@ -597,13 +597,13 @@ vwakeup(bp)
  */
 int
 vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
-	register struct vnode *vp;
+	struct vnode *vp;
 	int flags;
 	struct ucred *cred;
 	struct proc *p;
 	int slpflag, slptimeo;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct buf *nbp, *blist;
 	int s, error;
 
@@ -684,10 +684,10 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 
 void
 vflushbuf(vp, sync)
-	register struct vnode *vp;
+	struct vnode *vp;
 	int sync;
 {
-	register struct buf *bp, *nbp;
+	struct buf *bp, *nbp;
 	int s;
 
 loop:
@@ -730,8 +730,8 @@ loop:
  */
 void
 bgetvp(vp, bp)
-	register struct vnode *vp;
-	register struct buf *bp;
+	struct vnode *vp;
+	struct buf *bp;
 {
 	int s;
 
@@ -756,7 +756,7 @@ bgetvp(vp, bp)
  */
 void
 brelvp(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	struct vnode *vp;
 	int s;
@@ -879,7 +879,7 @@ getdevvp(dev, vpp, type)
 	struct vnode **vpp;
 	enum vtype type;
 {
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vnode *nvp;
 	int error;
 
@@ -912,12 +912,12 @@ getdevvp(dev, vpp, type)
  */
 struct vnode *
 checkalias(nvp, nvp_rdev, mp)
-	register struct vnode *nvp;
+	struct vnode *nvp;
 	dev_t nvp_rdev;
 	struct mount *mp;
 {
 	struct proc *p = curproc;       /* XXX */
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct vnode **vpp;
 
 	if (nvp->v_type != VBLK && nvp->v_type != VCHR)
@@ -1137,7 +1137,7 @@ vrele(vp)
  */
 void
 vhold(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 
 	/*
@@ -1170,7 +1170,7 @@ vhold(vp)
  */
 void
 holdrele(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 
 	simple_lock(&vp->v_interlock);
@@ -1242,7 +1242,7 @@ vflush(mp, skipvp, flags)
 	int flags;
 {
 	struct proc *p = curproc;	/* XXX */
-	register struct vnode *vp, *nvp;
+	struct vnode *vp, *nvp;
 	int busy = 0;
 
 	simple_lock(&mntvnode_slock);
@@ -1318,7 +1318,7 @@ loop:
  */
 void
 vclean(vp, flags, p)
-	register struct vnode *vp;
+	struct vnode *vp;
 	int flags;
 	struct proc *p;
 {
@@ -1476,7 +1476,7 @@ vgone(vp)
  */
 void
 vgonel(vp, p)
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct proc *p;
 {
 	struct vnode *vq;
@@ -1616,9 +1616,9 @@ vdevgone(maj, minl, minh, type)
  */
 int
 vcount(vp)
-	register struct vnode *vp;
+	struct vnode *vp;
 {
-	register struct vnode *vq, *vnext;
+	struct vnode *vq, *vnext;
 	int count;
 
 loop:
@@ -1652,7 +1652,7 @@ static char *typename[] =
 void
 vprint(label, vp)
 	char *label;
-	register struct vnode *vp;
+	struct vnode *vp;
 {
 	char buf[64];
 
@@ -1908,9 +1908,9 @@ vfs_hang_addrlist(mp, nep, argp)
 	struct netexport *nep;
 	struct export_args *argp;
 {
-	register struct netcred *np, *enp;
-	register struct radix_node_head *rnh;
-	register int i;
+	struct netcred *np, *enp;
+	struct radix_node_head *rnh;
+	int i;
 	struct radix_node *rn;
 	struct sockaddr *saddr, *smask = 0;
 	struct domain *dom;
@@ -1999,7 +1999,7 @@ vfs_free_netcred(rn, w)
 	struct radix_node *rn;
 	void *w;
 {
-	register struct radix_node_head *rnh = (struct radix_node_head *)w;
+	struct radix_node_head *rnh = (struct radix_node_head *)w;
 
 	(*rnh->rnh_deladdr)(rn->rn_key, rn->rn_mask, rnh);
 	free((caddr_t)rn, M_NETADDR);
@@ -2013,8 +2013,8 @@ static void
 vfs_free_addrlist(nep)
 	struct netexport *nep;
 {
-	register int i;
-	register struct radix_node_head *rnh;
+	int i;
+	struct radix_node_head *rnh;
 
 	for (i = 0; i <= AF_MAX; i++)
 		if ((rnh = nep->ne_rtable[i]) != NULL) {
@@ -2135,12 +2135,12 @@ vfs_setpublicfs(mp, nep, argp)
 
 struct netcred *
 vfs_export_lookup(mp, nep, nam)
-	register struct mount *mp;
+	struct mount *mp;
 	struct netexport *nep;
 	struct mbuf *nam;
 {
-	register struct netcred *np;
-	register struct radix_node_head *rnh;
+	struct netcred *np;
+	struct radix_node_head *rnh;
 	struct sockaddr *saddr;
 
 	np = NULL;
@@ -2237,7 +2237,7 @@ vaccess(type, file_mode, uid, gid, acc_mode, cred)
 void
 vfs_unmountall()
 {
-	register struct mount *mp, *nmp;
+	struct mount *mp, *nmp;
 	int allerror, error;
 	struct proc *p = curproc;	/* XXX */
 
@@ -2278,7 +2278,7 @@ vfs_unmountall()
 void
 vfs_shutdown()
 {
-	register struct buf *bp;
+	struct buf *bp;
 	int iter, nbusy, dcount, s;
 
 	printf("syncing disks... ");

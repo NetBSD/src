@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.75 2000/03/23 06:30:11 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.76 2000/03/30 09:27:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -147,11 +147,11 @@ sys_exit(p, v, retval)
  */
 void
 exit1(p, rv)
-	register struct proc *p;
+	struct proc *p;
 	int rv;
 {
-	register struct proc *q, *nq;
-	register struct vmspace *vm;
+	struct proc *q, *nq;
+	struct vmspace *vm;
 	int s;
 
 	if (p == initproc)
@@ -207,7 +207,7 @@ exit1(p, rv)
 		    VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 
 	if (SESS_LEADER(p)) {
-		register struct session *sp = p->p_session;
+		struct session *sp = p->p_session;
 
 		if (sp->s_ttyvp) {
 			/*
@@ -415,18 +415,18 @@ reaper()
 
 int
 sys_wait4(q, v, retval)
-	register struct proc *q;
+	struct proc *q;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_wait4_args /* {
+	struct sys_wait4_args /* {
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
 	} */ *uap = v;
-	register int nfound;
-	register struct proc *p, *t;
+	int nfound;
+	struct proc *p, *t;
 	int status, error, s;
 
 	if (SCARG(uap, pid) == 0)
@@ -557,8 +557,8 @@ loop:
  */
 void
 proc_reparent(child, parent)
-	register struct proc *child;
-	register struct proc *parent;
+	struct proc *child;
+	struct proc *parent;
 {
 
 	if (child->p_pptr == parent)

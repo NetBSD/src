@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.97 2000/02/08 04:13:51 fair Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.98 2000/03/30 09:27:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -180,7 +180,7 @@ sigaction1(p, signum, nsa, osa)
 	const struct sigaction *nsa;
 	struct sigaction *osa;
 {
-	register struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_sigacts;
 	int prop;
 
 	if (signum <= 0 || signum >= NSIG)
@@ -257,7 +257,7 @@ sys___sigaction14(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys___sigaction14_args /* {
+	struct sys___sigaction14_args /* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigaction *) nsa;
 		syscallarg(struct sigaction *) osa;
@@ -291,8 +291,8 @@ void
 siginit(p)
 	struct proc *p;
 {
-	register struct sigacts *ps = p->p_sigacts;
-	register int signum;
+	struct sigacts *ps = p->p_sigacts;
+	int signum;
 	int prop;
 
 	sigemptyset(&contsigmask);
@@ -330,10 +330,10 @@ siginit(p)
  */
 void
 execsigs(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register struct sigacts *ps = p->p_sigacts;
-	register int signum;
+	struct sigacts *ps = p->p_sigacts;
+	int signum;
 	int prop;
 
 	/*
@@ -409,7 +409,7 @@ sigprocmask1(p, how, nss, oss)
  */
 int
 sys___sigprocmask14(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -455,7 +455,7 @@ sys___sigpending14(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys___sigpending14_args /* {
+	struct sys___sigpending14_args /* {
 		syscallarg(sigset_t *) set;
 	} */ *uap = v;
 	sigset_t ss;
@@ -469,7 +469,7 @@ sigsuspend1(p, ss)
 	struct proc *p;
 	const sigset_t *ss;
 {
-	register struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_sigacts;
 
 	if (ss) {
 		/*
@@ -502,7 +502,7 @@ sigsuspend1(p, ss)
 /* ARGSUSED */
 int
 sys___sigsuspend14(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
@@ -527,7 +527,7 @@ sigaltstack1(p, nss, oss)
 	const struct sigaltstack *nss;
 	struct sigaltstack *oss;
 {
-	register struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_sigacts;
 
 	if (oss)
 		*oss = ps->ps_sigstk;
@@ -556,7 +556,7 @@ sys___sigaltstack14(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys___sigaltstack14_args /* {
+	struct sys___sigaltstack14_args /* {
 		syscallarg(const struct sigaltstack *) nss;
 		syscallarg(struct sigaltstack *) oss;
 	} */ *uap = v;
@@ -583,16 +583,16 @@ sys___sigaltstack14(p, v, retval)
 /* ARGSUSED */
 int
 sys_kill(cp, v, retval)
-	register struct proc *cp;
+	struct proc *cp;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_kill_args /* {
+	struct sys_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
 	} */ *uap = v;
-	register struct proc *p;
-	register struct pcred *pc = cp->p_cred;
+	struct proc *p;
+	struct pcred *pc = cp->p_cred;
 
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
@@ -623,11 +623,11 @@ sys_kill(cp, v, retval)
  */
 int
 killpg1(cp, signum, pgid, all)
-	register struct proc *cp;
+	struct proc *cp;
 	int signum, pgid, all;
 {
-	register struct proc *p;
-	register struct pcred *pc = cp->p_cred;
+	struct proc *p;
+	struct pcred *pc = cp->p_cred;
 	struct pgrp *pgrp;
 	int nfound = 0;
 	
@@ -690,7 +690,7 @@ pgsignal(pgrp, signum, checkctty)
 	struct pgrp *pgrp;
 	int signum, checkctty;
 {
-	register struct proc *p;
+	struct proc *p;
 
 	if (pgrp)
 		for (p = pgrp->pg_members.lh_first; p != 0; p = p->p_pglist.le_next)
@@ -706,10 +706,10 @@ pgsignal(pgrp, signum, checkctty)
 void
 trapsignal(p, signum, code)
 	struct proc *p;
-	register int signum;
+	int signum;
 	u_long code;
 {
-	register struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = p->p_sigacts;
 
 	if ((p->p_flag & P_TRACED) == 0 &&
 	    sigismember(&p->p_sigcatch, signum) &&
@@ -754,11 +754,11 @@ trapsignal(p, signum, code)
  */
 void
 psignal(p, signum)
-	register struct proc *p;
-	register int signum;
+	struct proc *p;
+	int signum;
 {
-	register int s, prop;
-	register sig_t action;
+	int s, prop;
+	sig_t action;
 
 #ifdef DIAGNOSTIC
 	if (signum <= 0 || signum >= NSIG)
@@ -991,9 +991,9 @@ firstsig(ss)
  */
 int
 issignal(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register int signum, prop;
+	int signum, prop;
 	sigset_t ss;
 
 	for (;;) {
@@ -1132,7 +1132,7 @@ keep:
  */
 void
 stop(p)
-	register struct proc *p;
+	struct proc *p;
 {
 
 	p->p_stat = SSTOP;
@@ -1146,11 +1146,11 @@ stop(p)
  */
 void
 postsig(signum)
-	register int signum;
+	int signum;
 {
-	register struct proc *p = curproc;
-	register struct sigacts *ps = p->p_sigacts;
-	register sig_t action;
+	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
+	sig_t action;
 	u_long code;
 	sigset_t *returnmask;
 
@@ -1252,7 +1252,7 @@ static	char	*lognocoredump =
 
 void
 sigexit(p, signum)
-	register struct proc *p;
+	struct proc *p;
 	int signum;
 {
 	int	error;
@@ -1284,11 +1284,11 @@ sigexit(p, signum)
  */
 int
 coredump(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register struct vnode *vp;
-	register struct vmspace *vm = p->p_vmspace;
-	register struct ucred *cred = p->p_cred->pc_ucred;
+	struct vnode *vp;
+	struct vmspace *vm = p->p_vmspace;
+	struct ucred *cred = p->p_cred->pc_ucred;
 	struct nameidata nd;
 	struct vattr vattr;
 	int error, error1;
@@ -1416,11 +1416,11 @@ out:
  */
 int
 coredump32(p, vp)
-	register struct proc *p;
-	register struct vnode *vp;
+	struct proc *p;
+	struct vnode *vp;
 {
-	register struct vmspace *vm = p->p_vmspace;
-	register struct ucred *cred = p->p_cred->pc_ucred;
+	struct vmspace *vm = p->p_vmspace;
+	struct ucred *cred = p->p_cred->pc_ucred;
 	int error, error1;
 	struct core32 core;
 
