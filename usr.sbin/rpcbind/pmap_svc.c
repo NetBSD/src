@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_svc.c,v 1.1 2000/06/02 23:15:41 fvdl Exp $	*/
+/*	$NetBSD: pmap_svc.c,v 1.2 2000/10/20 11:49:40 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -170,7 +170,7 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 {
 	struct pmap reg;
 	RPCB rpcbreg;
-	int ans;
+	long ans;
 	struct sockaddr_in *who;
 	struct sockcred *sc;
 	char uidbuf[32];
@@ -263,6 +263,7 @@ static bool_t
 pmapproc_getport(struct svc_req *rqstp, SVCXPRT *xprt)
 {
 	struct pmap reg;
+	long lport;
 	int port = 0;
 	struct pmaplist *fnd;
 #ifdef RPCBIND_DEBUG
@@ -319,7 +320,8 @@ pmapproc_getport(struct svc_req *rqstp, SVCXPRT *xprt)
 		}
 	}
 sendreply:
-	if ((!svc_sendreply(xprt, (xdrproc_t) xdr_long, (caddr_t)&port)) &&
+	lport = port;
+	if ((!svc_sendreply(xprt, (xdrproc_t) xdr_long, (caddr_t)&lport)) &&
 			debugging) {
 		(void) fprintf(stderr, "portmap: svc_sendreply\n");
 		if (doabort) {
