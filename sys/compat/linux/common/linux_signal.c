@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.21 1998/12/19 16:27:10 drochner Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.22 1999/09/08 16:52:08 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -219,7 +219,7 @@ linux_old_to_native_sigaction(lsa, bsa)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((lsa->sa_flags & LINUX_SA_SIGINFO) != 0)
 		bsa->sa_flags |= SA_SIGINFO;
-#ifdef DEBUG
+#ifdef DEBUG_LINUX
 	if ((lsa->sa_flags & ~LINUX_SA_ALLBITS) != 0)
 /*XXX*/		printf("linux_old_to_native_sigaction: extra bits ignored\n");
 	if (lsa->sa_restorer != 0)
@@ -275,7 +275,7 @@ linux_to_native_sigaction(lsa, bsa)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((lsa->sa_flags & LINUX_SA_SIGINFO) != 0)
 		bsa->sa_flags |= SA_SIGINFO;
-#ifdef DEBUG
+#ifdef DEBUG_LINUX
 	if ((lsa->sa_flags & ~LINUX_SA_ALLBITS) != 0)
 /*XXX*/		printf("linux_to_native_sigaction: extra bits ignored\n");
 	if (lsa->sa_restorer != 0)
@@ -415,7 +415,7 @@ linux_sys_rt_sigprocmask(p, v, retval)
 	/* Use non-rt function: sigsetsize is ignored. */
 	/* Assume sizeof(linux_sigset_t) == sizeof(linux_old_sigset_t) */
 	if (SCARG(uap, sigsetsize) != sizeof(linux_old_sigset_t)) {
-#ifdef LINUX_DEBUG
+#ifdef DEBUG_LINUX
 	    printf("linux_sys_rt_sigprocmask: sigsetsize != sizeof(old_sigset_t)");
 #endif
 	    return(ENOSYS);
