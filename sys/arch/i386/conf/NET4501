@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.1 2002/02/20 07:19:50 thorpej Exp $
+# $NetBSD: NET4501,v 1.2 2002/02/28 17:54:56 thorpej Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -8,7 +8,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"NET4501-$Revision: 1.1 $"
+#ident 		"NET4501-$Revision: 1.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -127,7 +127,7 @@ options 	SOFTDEP		# FFS soft updates support.
 				# immutable) behave as system flags.
 
 # Networking options
-#options 	GATEWAY		# packet forwarding
+options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 #options 	IPSEC		# IP security
