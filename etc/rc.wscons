@@ -1,0 +1,86 @@
+# $NetBSD: rc.wscons,v 1.1 1999/03/13 14:54:22 drochner Exp $
+
+# load fonts
+(
+cat <<END
+
+# name	width	height	enc	file
+#ibm	-	8	ibm	/usr/share/pcvt/fonts/vt220l.808
+#pcvt	-	-	pcvt	/usr/share/pcvt/fonts/vt220h.816
+#pcvt	-	8	pcvt	/usr/share/pcvt/fonts/vt220h.808
+
+END
+) | while read name width height enc file; do
+	case $name in
+		\#*|"")
+			continue
+			;;
+		*)
+			;;
+	esac
+	cmd="/usr/sbin/wsfontload"
+	case $width in
+		-)
+			;;
+		*)
+			cmd="$cmd -w $width"
+			;;
+	esac
+	case $height in
+		-)
+			;;
+		*)
+			cmd="$cmd -h $height"
+			;;
+	esac
+	case $enc in
+		-)
+			;;
+		*)
+			cmd="$cmd -e $enc"
+			;;
+	esac
+	cmd="$cmd -N $name $file"
+	$cmd
+done
+
+# set up virtual screens
+(
+cat <<END
+
+# idx	screen	emul
+0	-	vt100
+1	-	vt100
+2	-	vt100
+3	-	vt100
+4	-	-
+#4	80x25bf	vt100
+#5	80x50	vt100
+
+END
+) | while read idx scr emul; do
+	case $idx in
+		\#*|"")
+			continue
+			;;
+		*)
+			;;
+	esac
+	cmd="/usr/sbin/wsconscfg"
+	case $scr in
+		-)
+			;;
+		*)
+			cmd="$cmd -t $scr"
+			;;
+	esac
+	case $emul in
+		-)
+			;;
+		*)
+			cmd="$cmd -e $emul"
+			;;
+	esac
+	cmd="$cmd $idx"
+	$cmd
+done
