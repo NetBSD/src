@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.59 1998/08/03 14:19:59 kleink Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.60 1998/08/09 20:51:08 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -270,7 +270,7 @@ kernfs_xread(kt, off, bufp, len)
 		if (xlen >= (len-2))
 			return (EINVAL);
 
-		bcopy(cp, *bufp, xlen);
+		memcpy(*bufp, cp, xlen);
 		(*bufp)[xlen] = '\n';
 		(*bufp)[xlen+1] = '\0';
 		break;
@@ -305,7 +305,7 @@ kernfs_xwrite(kt, buf, len)
 	case KTT_HOSTNAME:
 		if (buf[len-1] == '\n')
 			--len;
-		bcopy(buf, hostname, len);
+		memcpy(hostname, buf, len);
 		hostname[len] = '\0';
 		hostnamelen = len;
 		return (0);
@@ -357,7 +357,7 @@ kernfs_lookup(v)
 	}
 
 #if 0
-	if (cnp->cn_namelen == 4 && bcmp(pname, "root", 4) == 0) {
+	if (cnp->cn_namelen == 4 && memcmp(pname, "root", 4) == 0) {
 		*vpp = rootdir;
 		VREF(rootdir);
 		vn_lock(rootdir, LK_SHARED | LK_RETRY);
@@ -367,7 +367,7 @@ kernfs_lookup(v)
 
 	for (kt = kern_targets, i = 0; i < nkern_targets; kt++, i++) {
 		if (cnp->cn_namelen == kt->kt_namlen &&
-		    bcmp(kt->kt_name, pname, cnp->cn_namelen) == 0)
+		    memcmp(kt->kt_name, pname, cnp->cn_namelen) == 0)
 			goto found;
 	}
 
@@ -454,7 +454,7 @@ kernfs_getattr(v)
 	int error = 0;
 	char strbuf[KSTRING], *buf;
 
-	bzero((caddr_t) vap, sizeof(*vap));
+	memset((caddr_t) vap, 0, sizeof(*vap));
 	vattr_null(vap);
 	vap->va_uid = 0;
 	vap->va_gid = 0;
@@ -622,7 +622,7 @@ kernfs_readdir(v)
 
 	error = 0;
 	i = uio->uio_offset;
-	bzero((caddr_t)&d, UIO_MX);
+	memset((caddr_t)&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
 
 	if (ap->a_ncookies) {
@@ -649,7 +649,7 @@ kernfs_readdir(v)
 
 		d.d_fileno = i + 3;
 		d.d_namlen = kt->kt_namlen;
-		bcopy(kt->kt_name, d.d_name, kt->kt_namlen + 1);
+		memcpy(d.d_name, kt->kt_name, kt->kt_namlen + 1);
 		d.d_type = kt->kt_type;
 
 		if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)

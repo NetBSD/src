@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.96 1998/08/08 11:39:20 kleink Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.97 1998/08/09 21:19:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1188,13 +1188,13 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 					commit == NFSV3WRITE_UNSTABLE)
 					committed = commit;
 				if ((nmp->nm_iflag & NFSMNT_HASWRITEVERF) == 0){
-				    bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+				    memcpy((caddr_t)nmp->nm_verf, (caddr_t)tl,
 					NFSX_V3WRITEVERF);
 				    nmp->nm_iflag |= NFSMNT_HASWRITEVERF;
-				} else if (bcmp((caddr_t)tl,
+				} else if (memcmp((caddr_t)tl,
 				    (caddr_t)nmp->nm_verf, NFSX_V3WRITEVERF)) {
 				    *must_commit = 1;
-				    bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+				    memcpy((caddr_t)nmp->nm_verf, (caddr_t)tl,
 					NFSX_V3WRITEVERF);
 				}
 			}
@@ -2399,7 +2399,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			attrflag = fxdr_unsigned(int, *tl);
 			if (attrflag) {
 			    nfsm_dissect(fp, struct nfs_fattr *, NFSX_V3FATTR);
-			    bcopy(fp, &fattr, NFSX_V3FATTR);
+			    memcpy(&fattr, fp, NFSX_V3FATTR);
 			    nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			    doit = fxdr_unsigned(int, *tl);
 			    if (doit) {
@@ -2508,7 +2508,7 @@ nfs_sillyrename(dvp, vp, cnp)
 
 	/* Fudge together a funny name */
 	pid = cnp->cn_proc->p_pid;
-	bcopy(".nfsAxxxx4.4", sp->s_name, 13);
+	memcpy(sp->s_name, ".nfsAxxxx4.4", 13);
 	sp->s_namlen = 12;
 	sp->s_name[8] = hextoasc[pid & 0xf];
 	sp->s_name[7] = hextoasc[(pid >> 4) & 0xf];
@@ -2581,7 +2581,7 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
 			np->n_fhp = &np->n_fh;
 		    } else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
 			np->n_fhp =(nfsfh_t *)malloc(fhlen,M_NFSBIGFH,M_WAITOK);
-		    bcopy((caddr_t)nfhp, (caddr_t)np->n_fhp, fhlen);
+		    memcpy((caddr_t)np->n_fhp, (caddr_t)nfhp, fhlen);
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {
@@ -2648,9 +2648,9 @@ nfs_commit(vp, offset, cnt, cred, procp)
 	nfsm_wcc_data(vp, wccflag);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
-		if (bcmp((caddr_t)nmp->nm_verf, (caddr_t)tl,
+		if (memcmp((caddr_t)nmp->nm_verf, (caddr_t)tl,
 			NFSX_V3WRITEVERF)) {
-			bcopy((caddr_t)tl, (caddr_t)nmp->nm_verf,
+			memcpy((caddr_t)nmp->nm_verf, (caddr_t)tl,
 				NFSX_V3WRITEVERF);
 			error = NFSERR_STALEWRITEVERF;
 		}
@@ -2665,7 +2665,7 @@ nfs_commit(vp, offset, cnt, cred, procp)
  * - do nfs_strategy() by doing I/O with nfs_readrpc/nfs_writerpc
  *   (Maybe I could use the process's page mapping, but I was concerned that
  *    Kernel Write might not be enabled and also figured copyout() would do
- *    a lot more work than bcopy() and also it currently happens in the
+ *    a lot more work than memcpy() and also it currently happens in the
  *    context of the swapper process (2).
  */
 int

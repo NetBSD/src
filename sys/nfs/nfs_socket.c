@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.45 1998/07/20 16:41:05 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.46 1998/08/09 21:19:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -337,7 +337,7 @@ nfs_safedisconnect(nmp)
 {
 	struct nfsreq dummyreq;
 
-	bzero(&dummyreq, sizeof(dummyreq));
+	memset(&dummyreq, 0, sizeof(dummyreq));
 	dummyreq.r_nmp = nmp;
 	nfs_rcvlock(&dummyreq);
 	nfs_disconnect(nmp);
@@ -859,7 +859,7 @@ kerbauth:
 		verf_str = nickv;
 		verf_len = sizeof (nickv);
 		auth_type = RPCAUTH_KERB4;
-		bzero((caddr_t)key, sizeof (key));
+		memset((caddr_t)key, 0, sizeof (key));
 		if (failed_auth || nfs_getnickauth(nmp, cred, &auth_str,
 			&auth_len, verf_str, verf_len)) {
 			error = nfs_getauth(nmp, rep, cred, &auth_str,
@@ -1598,7 +1598,7 @@ nfs_getreq(nd, nfsd, has_header)
 		}
 		nfsm_adv(nfsm_rndup(len));
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
-		bzero((caddr_t)&nd->nd_cr, sizeof (struct ucred));
+		memset((caddr_t)&nd->nd_cr, 0, sizeof (struct ucred));
 		nd->nd_cr.cr_ref = 1;
 		nd->nd_cr.cr_uid = fxdr_unsigned(uid_t, *tl++);
 		nd->nd_cr.cr_gid = fxdr_unsigned(gid_t, *tl++);
@@ -1658,7 +1658,7 @@ nfs_getreq(nd, nfsd, has_header)
 				return (0);
 			}
 			cp += NFSX_UNSIGNED;
-			bcopy(cp, nfsd->nfsd_verfstr, 3 * NFSX_UNSIGNED);
+			memcpy(nfsd->nfsd_verfstr, cp, 3 * NFSX_UNSIGNED);
 			nfsd->nfsd_verflen = 3 * NFSX_UNSIGNED;
 			nd->nd_flag |= ND_KERBFULL;
 			nfsd->nfsd_flag |= NFSD_NEEDAUTH;
@@ -1935,7 +1935,7 @@ nfsrv_getstream(slp, waitflag)
 		}
 		m = slp->ns_raw;
 		if (m->m_len >= NFSX_UNSIGNED) {
-			bcopy(mtod(m, caddr_t), (caddr_t)&recmark, NFSX_UNSIGNED);
+			memcpy((caddr_t)&recmark, mtod(m, caddr_t), NFSX_UNSIGNED);
 			m->m_data += NFSX_UNSIGNED;
 			m->m_len -= NFSX_UNSIGNED;
 		} else {
@@ -1992,7 +1992,7 @@ nfsrv_getstream(slp, waitflag)
 						return (EWOULDBLOCK);
 					}
 				}
-				bcopy(mtod(m, caddr_t), mtod(m2, caddr_t),
+				memcpy(mtod(m2, caddr_t), mtod(m, caddr_t),
 				    left);
 				m2->m_len = left;
 				m->m_data += left;

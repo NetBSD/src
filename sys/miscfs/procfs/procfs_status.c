@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.14 1998/02/14 00:37:35 thorpej Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.15 1998/08/09 20:51:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -81,7 +81,7 @@ procfs_dostatus(curp, p, pfs, uio)
 /* comm pid ppid pgid sid maj,min ctty,sldr start ut st wmsg uid gid groups ... */
 
 	ps = psbuf;
-	bcopy(p->p_comm, ps, MAXCOMLEN);
+	memcpy(ps, p->p_comm, MAXCOMLEN);
 	ps[MAXCOMLEN] = '\0';
 	ps += strlen(ps);
 	ps += sprintf(ps, " %d %d %d %d ", pid, ppid, pgid, sid);

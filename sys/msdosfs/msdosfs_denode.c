@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.32 1998/05/20 01:45:15 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.33 1998/08/09 20:52:20 perry Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -224,7 +224,7 @@ deget(pmp, dirclust, diroffset, depp)
 		return (error);
 	}
 	MALLOC(ldep, struct denode *, sizeof(struct denode), M_MSDOSFSNODE, M_WAITOK);
-	bzero((caddr_t)ldep, sizeof *ldep);
+	memset((caddr_t)ldep, 0, sizeof *ldep);
 	nvp->v_data = ldep;
 	ldep->de_vnode = nvp;
 	ldep->de_flag = 0;
@@ -436,7 +436,7 @@ detrunc(dep, length, flags, cred, p)
 		/*
 		 * is this the right place for it?
 		 */
-		bzero(bp->b_data + boff, pmp->pm_bpcluster - boff);
+		memset(bp->b_data + boff, 0, pmp->pm_bpcluster - boff);
 		if (flags & IO_SYNC)
 			bwrite(bp);
 		else
