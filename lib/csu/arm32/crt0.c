@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 1998/03/10 22:32:08 mark Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6 1998/07/25 04:34:12 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -31,8 +31,6 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/param.h>
 
 #include <stdlib.h>
 
