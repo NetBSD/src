@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.41 1997/08/27 11:25:32 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.42 1997/11/28 18:23:38 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1045,10 +1045,12 @@ again:
 				}
 				state->script =
 					&asc_scripts[SCRIPT_RESUME_DMA_IN];
-			} else if (state->flags & DMA_OUT)
+				state->flags |= DMA_RESUME;
+			} else if (state->flags & DMA_OUT) {
 				state->script =
 					&asc_scripts[SCRIPT_RESUME_DMA_OUT];
-			else
+				state->flags |= DMA_RESUME;
+			} else
 				state->script = asc->script;
 		} else if (state->flags & DMA_IN) {
 			if (len) {
@@ -1069,7 +1071,8 @@ again:
 				state->buflen -= len;
 			}
 			if (state->buflen)
-				state->script =
+				state->script = (state->flags & DMA_RESUME) ?
+				    &asc_scripts[SCRIPT_RESUME_DMA_IN] :
 				    &asc_scripts[SCRIPT_RESUME_IN];
 			else
 				state->script =
@@ -1093,7 +1096,8 @@ again:
 				state->buflen -= len;
 			}
 			if (state->buflen)
-				state->script =
+				state->script = (state->flags & DMA_RESUME) ?
+				    &asc_scripts[SCRIPT_RESUME_DMA_OUT] :
 				    &asc_scripts[SCRIPT_RESUME_OUT];
 			else
 				state->script =
@@ -1602,6 +1606,7 @@ asc_resume_dma_in(asc, status, ss, ir)
 
 	/* check for next chunk */
 	state->flags |= DMA_IN_PROGRESS;
+	state->flags &= ~DMA_RESUME;
 	if (state->dmalen != state->buflen) {
 		regs->asc_cmd = ASC_CMD_XFER_INFO | ASC_CMD_DMA;
 		readback(regs->asc_cmd);
@@ -1775,6 +1780,7 @@ asc_resume_dma_out(asc, status, ss, ir)
 
 	/* check for next chunk */
 	state->flags |= DMA_IN_PROGRESS;
+	state->flags &= ~DMA_RESUME;
 	if (state->dmalen != state->buflen) {
 		regs->asc_cmd = ASC_CMD_XFER_INFO | ASC_CMD_DMA;
 		readback(regs->asc_cmd);
