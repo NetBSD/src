@@ -32,7 +32,7 @@ char copyright[] =
  All rights reserved.\n";
 #endif /* not lint */
 
-/* $NetBSD: main.c,v 1.11 1998/01/05 05:15:55 perry Exp $ */
+/* $NetBSD: main.c,v 1.12 1998/02/22 12:08:35 christos Exp $ */
 
 
 #include "flexdef.h"
@@ -127,6 +127,8 @@ extern unsigned _stklen = 16384;
 static char outfile_path[MAXLINE];
 static int outfile_created = 0;
 static char *skelname = NULL;
+
+int main PROTO((int, char **));
 
 
 int main( argc, argv )
@@ -353,7 +355,6 @@ int exit_status;
 
 	{
 	int tblsiz;
-	int unlink();
 
 	if ( skelfile != NULL )
 		{

@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: flexdef.h,v 1.11 1998/01/05 05:15:48 perry Exp $ */
+/* $NetBSD: flexdef.h,v 1.12 1998/02/22 12:08:34 christos Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -63,6 +63,10 @@
 
 #ifdef STDC_HEADERS
 #include <stdlib.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 /* As an aid for the internationalization patch to flex, which

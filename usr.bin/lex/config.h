@@ -1,5 +1,5 @@
 /* config.h.  Generated automatically by configure.  */
-/* $NetBSD: config.h,v 1.3 1998/01/05 05:15:45 perry Exp $ */
+/* $NetBSD: config.h,v 1.4 1998/02/22 12:08:34 christos Exp $ */
 
 /* Define to empty if the keyword does not work.  */
 /* #undef const */
@@ -15,6 +15,9 @@
 
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1
+
+/* Define if you have the <unistd.h> header file.  */
+#define HAVE_UNISTD_H 1
 
 /* Define if you have the <sys/types.h> header file.  */
 #define HAVE_SYS_TYPES_H 1
