@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.1.1.5 2002/05/18 06:45:45 pooka Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.1.1.6 2002/07/09 14:47:16 pooka Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -7,33 +7,30 @@
  * Public Domain version written 26 Aug 1985 John Gilmore (ihnp4!hoptoad!gnu).
  *
  * @(#)list.c 1.18 9/23/86 Public Domain - gnu
- * Id: is_tar.c,v 1.14 2002/05/16 18:45:56 christos Exp 
+ * Id: is_tar.c,v 1.17 2002/07/03 18:26:38 christos Exp 
  *
  * Comments changed and some code/comments reformatted
  * for file command by Ian Darwin.
  */
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#include "file.h"
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include "tar.h"
-#include "file.h"
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: is_tar.c,v 1.14 2002/05/16 18:45:56 christos Exp ")
+FILE_RCSID("@(#)Id: is_tar.c,v 1.17 2002/07/03 18:26:38 christos Exp ")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.1.1.5 2002/05/18 06:45:45 pooka Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.1.1.6 2002/07/09 14:47:16 pooka Exp $");
 #endif
 #endif
 
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 
-static int from_oct __P((int, char *));	/* Decode octal number */
+static int from_oct(int, char *);	/* Decode octal number */
 
 /*
  * Return 
@@ -42,9 +39,7 @@ static int from_oct __P((int, char *));	/* Decode octal number */
  *	2 for Unix Std (POSIX) tar file.
  */
 int
-is_tar(buf, nbytes)
-	unsigned char *buf;
-	int nbytes;
+is_tar(unsigned char *buf, int nbytes)
 {
 	union record *header = (union record *)buf;
 	int	i;
@@ -87,9 +82,7 @@ is_tar(buf, nbytes)
  * Result is -1 if the field is invalid (all blank, or nonoctal).
  */
 static int
-from_oct(digs, where)
-	int	digs;
-	char	*where;
+from_oct(int digs, char *where)
 {
 	int	value;
 
