@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1995/08/17 17:40:48 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1995/11/30 00:57:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -150,6 +150,8 @@ cdev_decl(ccd);
 dev_decl(fd,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
+#include "tun.h"
+cdev_decl(tun);
 #ifdef LKM
 #define NLKM 1
 #else
@@ -189,6 +191,7 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 25 */
 	cdev_lkm_dummy(),		/* 26 */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
+	cdev_bpftun_init(NTUN,tun),	/* 28: network tunnel */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -277,6 +280,7 @@ static int chrtoblktab[] = {
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
 	/* 27 */	13,
+	/* 28 */	NODEV,
 };
 
 /*

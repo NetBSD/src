@@ -1,4 +1,5 @@
-/*	$NetBSD: mscp.c,v 1.5 1995/11/10 19:09:56 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.6 1995/11/30 00:59:37 jtc Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

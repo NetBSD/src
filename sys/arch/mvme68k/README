@@ -1,6 +1,6 @@
-	$NetBSD: README,v 1.1.1.1 1995/07/25 23:11:53 chuck Exp $
+	$NetBSD: README,v 1.2 1995/11/30 00:58:30 jtc Exp $
 
-NetBSD/mvme68k port
+NetBSD/mvme68k port README for NetBSD 1.1
 
 supported environment:
 
@@ -24,20 +24,23 @@ how to boot:
 the ROM doesn't know how to talk to the ethernet chip.   I have solved
 this problem by downloading a bootstrap into RAM via the console line.
 
-	First, you will need a m68k8k NFS mountable /usr and root
-directory.  NetBSD/sun3 binaries will run fine on the mvme68k system
-for the most part (the exception being kvm stuff).  These binaries can
-be ftp'd from ftp.netbsd.org.  You will also need a NetBSD/mvme68k
-kernel and related bootstraps.   For now these can be obtained from
-dworkin.wustl.edu in /dist/netbsd/mvme68k_boot.tar.gz (once I get set
-up I will put these plus a snapshot on ftp.netbsd.org).
+	First, you will need a mvme68k NFS mountable /usr and root
+directory.  Version 1.1 of NetBSD/mvme68k consists of the following files:
+	export_exec_mvme68k.tar.gz: /export/exec/mvme68k files (mount on /usr)
+	export_root_mvme68k.tar.gz: /export/root/mvme68k files (mount on /)
+	domestic_mvme68k.tar.gz: domestic crypto stuff (restricted to US)
+	README: this file
 
-	Put the mvme68k "netbsd" binary in NFS root directory.  Put
-boot.vme147 in /tftpboot of your NFS server machine.  Make a symbolic
-link from the hex encoding of your IP address to that file.  For
-example:
+These files can be ftp'd from ftp.netbsd.org in mvme68k area of the 1.1
+distribution.
 
-lrwxrwxrwx  1 root     11 Apr 13 17:27 80FCA93F.147 -> boot.vme147
+	First extract the files in the proper place on your NFS server.   
+Then get the following files: /export/exec/mvme68k/mdec/netboot and 
+/export/exec/mvme68k/mdec/sboot.  Copy netboot to /tftpboot/boot.mvme68k of
+your NFS server machine.  Make a symbolic link from the hex encoding of your 
+IP address to that file.  For example:
+
+lrwxrwxrwx  1 root     11 Apr 13 17:27 80FCA93F.147 -> boot.mvme68k
 
 
 [80FCA93F is the IP address (128.252.169.63) of my vme147.]
@@ -106,41 +109,46 @@ Once you've got the ">>> " prompt you can do commands such as:
 
 A typical boot looks like this:
 
+sboot: serial line bootstrap program (&end = 5fc8)
+
 >>> b
 le0: ethernet address: 8:0:3e:20:cb:87
 My ip address is: 128.252.169.63
 Server ip address is: 128.252.169.2
-3800 
+3a00 
 Download was a success!
 Start @ 0x8000 ... 
->> NetBSD netboot [$Revision: 1.1.1.1 $]
-boot: client IP address: 128.252.169.63
+>> NetBSD netboot [$Revision: 1.2 $]
+boot: client addr: 128.252.169.63
 boot: client name: vme147
-root addr=128.252.169.2 path=/export/root/vme147
-449744+20348+64444+[29268+29051]=0x90f0b
+boot: subnet mask: 255.255.0.0
+boot: net gateway: 128.252.169.249
+boot: server addr: 128.252.169.2
+boot: server path: /export/root/vme147
+452632+20360+64456+[30120+30477]=0x93809
 Start @ 0x88aa ...
 Copyright (c) 1982, 1986, 1989, 1991, 1993
         The Regents of the University of California.  All rights reserved.
 
-NetBSD 1.0A (VME147) #17: Sat Jul  1 00:07:04 CDT 1995
-    chuck@vme147.ccrc.wustl.edu:/um/netbsd/src/sys/arch/mvme68k/compile/VME147
+NetBSD 1.1_ALPHA (VME147) #4: Thu Oct 12 19:03:10 CDT 1995
+    chuck@vme147.ccrc.wustl.edu:/ui/netbsd/pain/src/sys/arch/mvme68k/compile/VME147
 Motorola MVME147 MC68030 CPU+MMU, ???MHz MC68882 FPU)
 real mem = 8388608
-avail mem = 6832128
+avail mem = 6823936
 using 102 buffers containing 417792 bytes of memory
 mainbus0 (root)
 iio0 at mainbus0 addr 0xfffe0000
 pcc0 at iio0 offset 0x1000 rev 0 intbvr 0x40
 clock0 at iio0 offset 0x7f8 ipl 5
 zs0 at iio0 offset 0x3000 ipl 4
-le0 at iio0 offset 0x1800 ipl 2 ler2 0x94000 address 08:00:3e:20:cb:87
+le0 at iio0 offset 0x1800 ipl 2 ler2 0x96000 address 08:00:3e:20:cb:87
 nfs_boot: using network interface 'le0'
 nfs_boot: client_addr=0x80fca93f
 nfs_boot: server_addr=0x80fca902
 nfs_boot: hostname=vme147
 root on dworkin:/export/root/vme147
-root time: 0x2ffc6859
-WARNING: clock gained 18 days -- CHECK AND RESET THE DATE!
+root time: 0x30538658
+WARNING: clock gained 37 days -- CHECK AND RESET THE DATE!
 swap on dworkin:/export/swap/vme147
 swap size: 0x4000 (blocks)
 init: copying out path `/sbin/init' 11
@@ -150,3 +158,28 @@ Automatic boot in progress: starting file system checks.
 
 good luck!
 
+
+step by step installation directions:
+
+[0] get the distribution
+[1] unpack export_exec_mvme68k.tar.gz: gunzip, tar xfp, in /export/exec or equiv
+[2] unpack export_root_mvme68k.tar.gz: gunzip, tar xfp, in /export/root or equiv
+[3] run "MAKEDEV all" in NFS /export/root/mvme68k/dev directory
+	(may have to add /etc, /usr/etc to the PATH line of MAKEDEV if 
+	on non-NetBSD system)
+[4] fix NFS root's etc/fstab
+[5] fix NFS root's etc/myname (put your hostname in there)
+[6] fix NFS root's etc/hosts
+[7] create the file etc/hostname.le0 with "inet HOSTNAME" in it (replace
+	"HOSTNAME" with your hostname as per etc/hosts)
+[8] create etc/defaultdomain with your YP domainname (if using YP)
+[9] adjust etc/localtime symbolic link as needed
+[10] create etc/mygate with your default router in it (if wanted, also
+		consider turning off routed in etc/netstart)
+[11] create etc/resolv.conf (if wanted)
+[12] make sure the mount point for /usr is there 
+	(e.g. mkdir /export/root/mvme68k/usr)
+[13] make sure the var/yp directory is there if you want to run YP
+[14] boot as described above
+[15] install domestic stuff if in US
+[16] have fun

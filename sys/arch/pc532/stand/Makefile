@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 1995/09/28 08:13:29 phil Exp $
+#	$NetBSD: Makefile,v 1.8 1995/11/30 00:59:05 jtc Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
-DESTDIR=
+#DESTDIR=
 STANDDIR=${DESTDIR}/stand
-# load at 0x400000 - 18 * 1024 - 0x10000
+# load at 0x400000 - 30 * 1024 - 0x10000
 # that way the boot code will be at the correct
 # address if the floppy image is started from memory
 # NOTE: alloc() function takes memory after _end
-RELOC=	3EB800
+RELOC=	3E8800
 
 CONS= -DSCNCONSOLE
 DEFS= -DSTANDALONE ${CONS}
@@ -34,8 +34,10 @@ NO_NET=
 .include "../../../lib/libsa/Makefile.inc"
 LIBSA=	${SALIB}
 
+#LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
+#	${LIBKERN} ${LIBSA} ${LIBKERN}
 LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
-	${LIBKERN} ${LIBSA} ${LIBKERN}
+	${LIBKERN} ${LIBSA}
 
 BOOTS=	boot zboot.o
 ALL=	${BOOTS}

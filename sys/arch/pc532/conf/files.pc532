@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.15 1995/09/26 20:16:03 phil Exp $
+#	$NetBSD: files.pc532,v 1.16 1995/11/30 00:58:42 jtc Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -71,7 +71,7 @@ file	arch/pc532/pc532/intr.c
 file	arch/pc532/pc532/machdep.c
 file	arch/pc532/pc532/mem.c
 file	arch/pc532/pc532/ns_cksum.c	ns
-file	arch/pc532/pc532/ntoh.s
+#file	arch/pc532/pc532/ntoh.s
 file	arch/pc532/pc532/pmap.c
 file	arch/pc532/pc532/process_machdep.c
 file 	arch/pc532/pc532/random.s
