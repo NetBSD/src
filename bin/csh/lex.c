@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.7 1995/03/21 09:03:07 cgd Exp $	*/
+/*	$NetBSD: lex.c,v 1.8 1995/04/29 23:21:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: lex.c,v 1.7 1995/03/21 09:03:07 cgd Exp $";
+static char rcsid[] = "$NetBSD: lex.c,v 1.8 1995/04/29 23:21:30 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1407,7 +1407,7 @@ reread:
 	    if (tcgetattr(SHIN, &tty) == 0 && (tty.c_lflag & ICANON))
 	    {
 		/* was 'short' for FILEC */
-		int     ctpgrp;
+		pid_t     ctpgrp;
 
 		if (++sincereal > 25)
 		    goto oops;
@@ -1415,7 +1415,7 @@ reread:
 		    (ctpgrp = tcgetpgrp(FSHTTY)) != -1 &&
 		    tpgrp != ctpgrp) {
 		    (void) tcsetpgrp(FSHTTY, tpgrp);
-		    (void) killpg((pid_t) ctpgrp, SIGHUP);
+		    (void) kill(-ctpgrp, SIGHUP);
 		    (void) fprintf(csherr, "Reset tty pgrp from %d to %d\n",
 				   ctpgrp, tpgrp);
 		    goto reread;

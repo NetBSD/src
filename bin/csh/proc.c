@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.8 1995/03/21 18:35:46 mycroft Exp $	*/
+/*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: proc.c,v 1.8 1995/03/21 18:35:46 mycroft Exp $";
+static char rcsid[] = "$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -1064,13 +1064,13 @@ pkill(v, signum)
 		pstart(pp, 0);
 		goto cont;
 	    }
-	    if (killpg((pid_t) pp->p_jobid, signum) < 0) {
+	    if (kill(-pp->p_jobid, signum) < 0) {
 		(void) fprintf(csherr, "%s: %s\n", vis_str(cp),
 			       strerror(errno));
 		err1++;
 	    }
 	    if (signum == SIGTERM || signum == SIGHUP)
-		(void) killpg((pid_t) pp->p_jobid, SIGCONT);
+		(void) kill(-pp->p_jobid, SIGCONT);
 	}
 	else if (!(Isdigit(*cp) || *cp == '-'))
 	    stderror(ERR_NAME | ERR_JOBARGS);
@@ -1127,7 +1127,7 @@ pstart(pp, foregnd)
     if (foregnd)
 	(void) tcsetpgrp(FSHTTY, pp->p_jobid);
     if (jobflags & PSTOPPED)
-	(void) killpg((pid_t) pp->p_jobid, SIGCONT);
+	(void) kill(-pp->p_jobid, SIGCONT);
     sigprocmask(SIG_SETMASK, &osigset, NULL);
 }
 

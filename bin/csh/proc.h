@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6 1995/03/21 09:03:19 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.7 1995/04/29 23:21:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -50,8 +50,8 @@ struct process {
     short unsigned p_flags;	/* various job status flags */
     char    p_reason;		/* reason for entering this state */
     int     p_index;		/* shorthand job index */
-    int     p_pid;
-    int     p_jobid;		/* pid of job leader */
+    pid_t   p_pid;
+    pid_t   p_jobid;		/* pid of job leader */
     /* if a job is stopped/background p_jobid gives its pgrp */
     struct timeval p_btime;	/* begin time */
     struct timeval p_etime;	/* end time */
