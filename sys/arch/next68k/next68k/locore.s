@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 2002/05/17 18:03:50 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.35 2002/05/30 21:58:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -319,7 +319,7 @@ Lhpmmu2:
 	movl	%d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
 #endif
 Lstploaddone:
-#ifdef defined(ENABLE_MAXADDR_TRAMPOLINE)
+#if defined(ENABLE_MAXADDR_TRAMPOLINE)
 	lea	MAXADDR,%a2		| PA of last RAM page
 	ASRELOC(Lhighcode, %a1)		| addr of high code
 	ASRELOC(Lehighcode, %a3)	| end addr
