@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 1998/08/21 14:13:54 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.26 1998/09/26 20:14:48 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -183,13 +183,16 @@ kdb_kbd_trap(tf)
 int
 kdb_trap(type, tf)
 	int	type;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 {
 	int s;
 
 #if NFB > 0
 	fb_unblank();
 #endif
+
+	/* While we're in the debugger, pause all other CPUs */
+	mp_pause_cpus();
 
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
@@ -218,6 +221,9 @@ kdb_trap(type, tf)
 
 	*(struct frame *)tf->tf_out[6] = ddb_regs.db_fr;
 	*tf = ddb_regs.db_tf;
+
+	/* Other CPUs can continue now */
+	mp_resume_cpus();
 
 	return (1);
 }
