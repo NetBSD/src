@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.2,v 1.1.2.4 2005/03/16 12:55:24 tron Exp $
+#	$NetBSD: CHANGES-2.0.2,v 1.1.2.5 2005/03/16 13:09:43 tron Exp $
 
 A complete list of changes from the NetBSD 2.0.1 release to the NetBSD 2.0.2
 release.
@@ -92,4 +92,10 @@ sys/arch/sun3/include/param3.h			1.50
 	than MAXBSIZE to limit page cache I/O sizes, and sun3 has been
 	broken since then.
 	[chs, ticket #1229]
+
+sys/kern/vfs_lookup.c				1.57
+
+	Adjust error case handling. If the VOP_LOOKUP() call unlocked the
+	parent directory node, remember that.
+	[wrstuden, ticket #1298]
 
