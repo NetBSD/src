@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.41 1996/10/03 23:40:59 thorpej Exp $	*/
+/*	$NetBSD: conf.h,v 1.42 1996/11/11 23:58:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -400,6 +400,9 @@ cdev_decl(st);
 
 bdev_decl(cd);
 cdev_decl(cd);
+
+bdev_decl(uk);
+cdev_decl(uk);
 
 cdev_decl(bpf);
 
