@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.35 2000/05/26 21:20:34 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.36 2000/05/29 19:25:56 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -94,7 +94,9 @@ struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
 int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
 
 /*
- * for testing the idle page zero loop.
+ * Some supported CPUs in a given architecture don't support all
+ * of the things necessary to do idle page zero'ing efficiently.
+ * We therefore provide a way to disable it from machdep code here.
  */
 
 boolean_t vm_page_zero_enable = TRUE;
