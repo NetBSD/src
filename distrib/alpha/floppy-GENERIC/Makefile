@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/11/05 02:47:14 ross Exp $
+#	$NetBSD: Makefile,v 1.4 1999/02/25 12:31:30 ross Exp $
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -9,7 +9,7 @@ VND_CRDEV=	/dev/r${VND}c
 MDEC=		${DESTDIR}/usr/mdec
 KERNEL=		${.CURDIR}/../../../sys/arch/alpha/compile/GENERIC/netbsd
 
-GZKERNEL=	netbsd.gz
+GZKERNEL=	netbsd
 IMAGE=		GENERIC.fs
 
 DISKTYPE=	floppy
@@ -26,34 +26,29 @@ CLEANFILES+=	${IMAGE} ${GZKERNEL}
 all: GENERIC.fs
 
 GENERIC.fs: ${GZKERNEL} ${MDEC}/boot ${MDEC}/bootxx
+	@echo Creating tar image
+	tar cvf ustar.tmp ${MDEC}/boot ${GZKERNEL}
 	@echo Creating vn image
 	dd if=/dev/zero of=${.TARGET}.tmp count=2880
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${.TARGET}.tmp
+	dd bs=8k seek=1 if=ustar.tmp of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${INSTALL} -c -m 0644 -o ${BINOWN} -g ${BINGRP}	\
-		${GZKERNEL} ${MOUNT_POINT}/.
-	@echo "installing new bootblocks"
-	-rm -f ${MOUNT_POINT}/boot
-	cp ${MDEC}/boot ${MOUNT_POINT}
-	${MDEC}/installboot -v ${MOUNT_POINT}/boot ${MDEC}/bootxx ${VND_CRDEV}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
+	${MDEC}/installboot -b 17 -v	\
+		${MDEC}/boot ${MDEC}/bootxx ${VND_CRDEV}
 	vnconfig -u ${VND_CDEV}
 	mv ${.TARGET}.tmp ${.TARGET}
 
 ${GZKERNEL}: ${KERNEL}
-	gzip -c9 ${KERNEL} > ${.TARGET}
+	cp ${KERNEL} ${.TARGET}
+	strip ${.TARGET}
+	gzip -9 ${.TARGET}
+	mv ${.TARGET}.gz ${.TARGET}
 
 unconfig:
-	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_CDEV}
 
 clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES}
+	/bin/rm -f *.core ${CLEANFILES} ${GZKERNEL} ${GZKERNEL}.gz *.tmp
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
