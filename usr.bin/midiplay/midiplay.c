@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.9 1999/10/11 12:52:10 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.10 2000/02/18 23:03:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ u_char sample[] = {
 void
 usage()
 {
-	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-q] [-t tempo] [-v] [-x] [file ...]\n",
+	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] [-t tempo] [-v] [-x] [file ...]\n",
 		__progname);
 	exit(1);
 }
@@ -142,6 +142,7 @@ u_int ttempo = 100;
 int unit = 0;
 int play = 1;
 int fd;
+int sameprogram = 0;
 
 void
 send_event(ev)
@@ -322,7 +323,7 @@ playdata(buf, tot, name)
 		printf("format=%d ntrks=%d divfmt=%x ticks=%d\n",
 		       format, ntrks, divfmt, ticks);
 	if (format != 0 && format != 1) {
-		warnx("Cannnot play MIDI file of type %d\n", format);
+		warnx("Cannot play MIDI file of type %d\n", format);
 		return;
 	}
 	if (ntrks == 0)
@@ -353,7 +354,13 @@ playdata(buf, tot, name)
 	 * Play MIDI events by selecting the track track with the lowest
 	 * curtime.  Execute the event, update the curtime and repeat.
 	 */
-
+	if(sameprogram) {
+		for(t=0;t<16;t++) {
+			SEQ_MK_CHN_COMMON(&event, unit, MIDI_PGM_CHANGE, t,
+				sameprogram+1, 0, 0);
+			send_event(&event);
+		}
+	}
 	/*
 	 * The ticks variable is the number of ticks that make up a quarter
 	 * note and is used as a reference value for the delays between
@@ -434,6 +441,7 @@ playdata(buf, tot, name)
 				send_event(&event);
 				break;
 			case MIDI_PGM_CHANGE:
+				if(sameprogram) break;
 			case MIDI_CHN_PRESSURE:
 				SEQ_MK_CHN_COMMON(&event, unit, status, chan, 
 						  msg[0], 0, 0);
@@ -486,7 +494,7 @@ main(argc, argv)
 	struct synth_info info;
 	FILE *f;
 
-	while ((ch = getopt(argc, argv, "?d:f:lmqt:vx")) != -1) {
+	while ((ch = getopt(argc, argv, "?d:f:lmp:qt:vx")) != -1) {
 		switch(ch) {
 		case 'd':
 			unit = atoi(optarg);
@@ -499,6 +507,9 @@ main(argc, argv)
 			break;
 		case 'm':
 			showmeta++;
+			break;
+		case 'p':
+			sameprogram = atoi(optarg);
 			break;
 		case 'q':
 			play = 0;
