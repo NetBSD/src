@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.6.2.3 2001/03/29 09:02:58 bouyer Exp $	*/
+/*	$NetBSD: csc.c,v 1.6.2.4 2001/03/29 09:39:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ cscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_adapter.adapt_minphys = sfas_minphys;
 	sc->sc_softc.sc_adapter.adapt_request = csc_scsi_request;
 
-	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_softc.sc_adapter;
 	sc->sc_softc.sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_softc.sc_channel.chan_channel = 0;
 	sc->sc_softc.sc_channel.chan_ntargets = 8;
@@ -335,6 +335,7 @@ csc_scsi_request(chan, req, arg)
 #if CSC_POLL > 0
 		xs->xs_control |= XS_CTL_POLL;
 #endif
+	default:
 	}
 	sfas_scsi_request(chan, req, arg);
 }

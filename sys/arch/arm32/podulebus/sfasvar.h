@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.6.10.2 2001/03/29 09:02:59 bouyer Exp $ */
+/* $NetBSD: sfasvar.h,v 1.6.10.3 2001/03/29 09:39:53 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -260,7 +260,8 @@ struct	sfas_softc {
 
 void	sfasinitialize __P((struct sfas_softc *sc));
 void	sfas_minphys   __P((struct buf *bp));
-int	sfas_scsicmd   __P((struct scsipi_xfer *));
+void	sfas_scsi_request __P((struct scsipi_channel *,
+				scsipi_adapter_req_t, void *));
 void	sfasintr       __P((struct sfas_softc *dev));
 
 #endif /* _SFASVAR_H_ */

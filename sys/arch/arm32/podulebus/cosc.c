@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.11.2.2 2001/03/29 09:02:58 bouyer Exp $	*/
+/*	$NetBSD: cosc.c,v 1.11.2.3 2001/03/29 09:39:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -61,7 +61,7 @@
 
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
-void cosc_scsicmd	__P((struct scsipi_channel *,
+void cosc_scsi_request	__P((struct scsipi_channel *,
 				scsipi_adapter_req_t, void *));
 
 struct cfattach cosc_ca = {
@@ -245,7 +245,7 @@ coscattach(pdp, dp, auxp)
 
 	escinitialize((struct esc_softc *)sc);
 
-	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_softc.sc_adapter.adapt_dev = &sc->sc_softc.sc_dev;
 	sc->sc_softc.sc_adapter.adapt_nchannels = 1;
 	sc->sc_softc.sc_adapter.adapt_openings = 7;
 	sc->sc_softc.sc_adapter.adapt_max_periph = 1;
@@ -253,7 +253,7 @@ coscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_adapter.adapt_minphys = esc_minphys;
 	sc->sc_softc.sc_adapter.adapt_request = cosc_scsi_request;
 
-	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_adapter;
+	sc->sc_softc.sc_channel.chan_adapter = &sc->sc_softc.sc_adapter;
 	sc->sc_softc.sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_softc.sc_channel.chan_channel = 0;
 	sc->sc_softc.sc_channel.chan_ntargets = 8;
@@ -461,6 +461,7 @@ cosc_scsi_request(chan, req, arg)
 		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
 		    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);
 #endif
+	default:
 	}
 	esc_scsi_request(chan, req, arg);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.26.2.3 2001/03/29 09:02:58 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.26.2.4 2001/03/29 09:39:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -78,9 +78,10 @@ void asc_dmastop __P((struct sbic_softc *));
 int asc_dmanext __P((struct sbic_softc *));
 int asc_dmaintr __P((struct sbic_softc *));
 int asc_dmago	__P((struct sbic_softc *, char *, int, int));
-void asc_scsipi_request __P((struct scsipi_channel *,
+void asc_scsi_request __P((struct scsipi_channel *,
                                 scsipi_adapter_req_t, void *));
 int asc_intr	__P((void *arg));
+void asc_minphys __P((struct buf *bp));
 
 #ifdef DEBUG
 int	asc_dmadebug = 0;
@@ -154,7 +155,7 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_sbicp = (sbic_regmap_p) (sc->sc_podule->mod_base + ASC_SBIC);
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 
-	sbic->sc_adapter.adapt_dev = &sc->sc_dev;
+	sbic->sc_adapter.adapt_dev = &sbic->sc_dev;
 	sbic->sc_adapter.adapt_nchannels = 1;
 	sbic->sc_adapter.adapt_openings = 7; 
 	sbic->sc_adapter.adapt_max_periph = 1;
@@ -162,7 +163,7 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_adapter.adapt_minphys = asc_minphys;
 	sbic->sc_adapter.adapt_request = asc_scsi_request;
 
-	sbic->sc_channel.chan_adapter = &sc->sc_adapter;
+	sbic->sc_channel.chan_adapter = &sbic->sc_adapter;
 	sbic->sc_channel.chan_bustype = &scsi_bustype;
 	sbic->sc_channel.chan_channel = 0;
 	sbic->sc_channel.chan_ntargets = 8;
@@ -439,6 +440,7 @@ asc_scsi_request(chan, req, arg)
 		    xs->xs_periph->periph_target, xs->xs_periph->periph_lun, xs->cmdlen, xs->datalen, xs->cmd->opcode,
 		    xs->xs_control, xs->status, xs->cmd->bytes[0], xs->cmd->bytes[1]);*/
 
+	default:
 	}
 	sbic_scsi_request(chan, req, arg);
 }

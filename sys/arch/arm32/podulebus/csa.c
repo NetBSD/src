@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.4.10.3 2001/03/29 09:02:58 bouyer Exp $	*/
+/*	$NetBSD: csa.c,v 1.4.10.4 2001/03/29 09:39:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ csa_attach(parent, self, aux)
 	sprintf(hi_option, "%s.hostid", sc->sc_ncr5380.sc_dev.dv_xname);
 	(void)get_bootconf_option(boot_args, hi_option,
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_channel.chan_id);
-	sc->sc_ncr5380.sc_adapter.adapter_minphys = minphys;
+	sc->sc_ncr5380.sc_adapter.adapt_minphys = minphys;
 
 	printf(": host=%d, using 8 bit PIO",
 	    sc->sc_ncr5380.sc_channel.chan_id);

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.8.2.2 2001/03/29 09:02:58 bouyer Exp $	*/
+/*	$NetBSD: esc.c,v 1.8.2.3 2001/03/29 09:39:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -217,7 +217,7 @@ escinitialize(dev)
 /*
  * used by specific esc controller
  */
-int
+void
 esc_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
  								void *arg)
 {
@@ -1166,8 +1166,7 @@ esc_midaction(dev, rp, nexus)
 
 		esc_restore_pointers(dev);
 
-		if (!(nexus->flags & ESC_NF_SENSING))
-			nexus->status	= 0xFF;
+		nexus->status	= 0xFF;
 		dev->sc_msg_in[0] = 0xFF;
 		dev->sc_msg_in_len= 0;
 
@@ -1239,9 +1238,8 @@ esc_midaction(dev, rp, nexus)
 		status = *rp->esc_fifo;
 		msg = *rp->esc_fifo;
 
-		if (!(nexus->flags & ESC_NF_SENSING))
-			nexus->status = status;
-		else if (status != 0)
+		nexus->status = status;
+		if (status != 0)
 			nexus->status = -1;
 
 		/*
