@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.9 1998/10/19 01:37:35 matt Exp $	*/
+/*	$NetBSD: crt0.c,v 1.10 1998/10/23 00:52:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,9 +50,9 @@ struct kframe {
 
 	asm("	.text");
 	asm("	.align 2");
-	asm("	.globl _start");
-	asm("	.type _start,@function");
-	asm("	_start:");
+	asm("	.globl start");
+	asm("	.type start,@function");
+	asm("	start:");
 	asm("		.word 0x0101");		/* two nops just in case */
 	asm("		pushl sp");		/* no registers to save */
 	asm("		calls $1,___start");	/* do the real start */
@@ -117,7 +117,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 #include "common.c"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.9 1998/10/19 01:37:35 matt Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.10 1998/10/23 00:52:53 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef MCRT0
