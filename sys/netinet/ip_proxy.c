@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.6.2.3 1997/11/25 03:32:17 mrg Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.6.2.4 1997/11/28 09:02:46 mellon Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -278,8 +278,6 @@ void ap_free(ap)
 aproxy_t *ap;
 {
 	ap->apr_ref--;
-	if (!ap->apr_ref)
-		KFREE(ap);
 }
 
 
