@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.2 1996/09/12 02:52:34 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.3 1997/02/02 06:56:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -186,5 +186,15 @@ extern	int mmutype;		/* MMU on this host */
 
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
+
+#ifdef _KERNEL
+void	copypage __P((void *fromaddr, void *toaddr));
+void	zeropage __P((void *addr));
+#ifdef MAPPEDCOPY
+int	mappedcopyin __P((void *fromp, void *top, size_t count));
+int	mappedcopyout __P((void *fromp, void *top, size_t count));
+extern	u_int mappedcopysize;
+#endif /* MAPPEDCOPY */
+#endif /* _KERNEL */
 
 #endif /* _M68K_CPU_H_ */
