@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.11 2002/02/18 22:00:37 thorpej Exp $	*/
+/*	$NetBSD: process.c,v 1.12 2002/07/13 11:35:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.11 2002/02/18 22:00:37 thorpej Exp $");
+__RCSID("$NetBSD: process.c,v 1.12 2002/07/13 11:35:35 itojun Exp $");
 #endif
 
 #include "os.h"
@@ -364,7 +364,7 @@ mopNextLoad(dst, src, new_count, trans)
 		close(dle->ldfd);
 		dle->ldfd = -1;
 		dle->status = DL_STATUS_FREE;
-		sprintf(line,
+		snprintf(line, sizeof(line),
 			"%x:%x:%x:%x:%x:%x Load completed",
 			dst[0],dst[1],dst[2],dst[3],dst[4],dst[5]);
 		syslog(LOG_INFO, "%s", line);
@@ -518,8 +518,9 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 			/* to ask. My solution is to use the ethernet addr */
 			/* as filename. Implementing a database would be   */
 			/* overkill.					   */
-			sprintf(pfile,"%02x%02x%02x%02x%02x%02x%c",
-				src[0],src[1],src[2],src[3],src[4],src[5],0);
+			snprintf(pfile, sizeof(pfile),
+			    "%02x%02x%02x%02x%02x%02x%c",
+			    src[0],src[1],src[2],src[3],src[4],src[5],0);
 		}
 		
 		tmpc = mopGetChar(pkt,index);		/* Processor */
@@ -531,17 +532,18 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 		memmove((char *)(dl_rpr->eaddr), (char *)src, 6);
 		mopProcessInfo(pkt,index,moplen,dl_rpr,trans);
 
-		sprintf(filename,"%s/%s.SYS", MOP_FILE_PATH, pfile);
+		snprintf(filename, sizeof(filename), "%s/%s.SYS",
+		    MOP_FILE_PATH, pfile);
 		if ((mopCmpEAddr(dst,dl_mcst) == 0)) {
 			if ((nfd = open(filename, O_RDONLY, 0)) != -1) {
 				close(nfd);
 				mopSendASV(src, ii->eaddr, ii, trans);
-				sprintf(line,
+				snprintf(line, sizeof(line),
 					"%x:%x:%x:%x:%x:%x (%d) Do you have %s? (Yes)",
 					src[0],src[1],src[2],
 					src[3],src[4],src[5],trans,pfile);
 			} else {
-				sprintf(line,
+				snprintf(line, sizeof(line),
 					"%x:%x:%x:%x:%x:%x (%d) Do you have %s? (No)",
 					src[0],src[1],src[2],
 					src[3],src[4],src[5],trans,pfile);
@@ -551,7 +553,7 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 			if ((mopCmpEAddr(dst,ii->eaddr) == 0)) {
 				dl_rpr->ldfd = open(filename, O_RDONLY, 0);
 				mopStartLoad(src, ii->eaddr, dl_rpr, trans);
-				sprintf(line,
+				snprintf(line, sizeof(line),
 					"%x:%x:%x:%x:%x:%x Send me %s",
 					src[0],src[1],src[2],
 					src[3],src[4],src[5],pfile);
