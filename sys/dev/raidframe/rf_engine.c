@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.27 2003/12/29 05:48:13 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.28 2003/12/29 06:19:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.27 2003/12/29 05:48:13 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.28 2003/12/29 06:19:28 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -135,10 +135,6 @@ rf_ConfigureEngine(
 	raidPtr->node_queue = NULL;
 	raidPtr->dags_in_flight = 0;
 
-	rc = rf_init_managed_threadgroup(listp, &raidPtr->engine_tg);
-	if (rc)
-		return (rc);
-
 	/* we create the execution thread only once per system boot. no need
 	 * to check return code b/c the kernel panics if it can't create the
 	 * thread. */
@@ -162,14 +158,7 @@ rf_ConfigureEngine(
 	if (rf_engineDebug) {
 		printf("raid%d: Created engine thread\n", raidPtr->raidid);
 	}
-	RF_THREADGROUP_STARTED(&raidPtr->engine_tg);
-	/* XXX something is missing here... */
-#ifdef debug
-	printf("Skipping the WAIT_START!!\n");
-#endif
-#if 0
-	RF_THREADGROUP_WAIT_START(&raidPtr->engine_tg);
-#endif
+
 	/* engine thread is now running and waiting for work */
 	if (rf_engineDebug) {
 		printf("raid%d: Engine thread running and waiting for events\n", raidPtr->raidid);
@@ -760,8 +749,6 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 
 	s = splbio();
 
-	RF_THREADGROUP_RUNNING(&raidPtr->engine_tg);
-
 	DO_LOCK(raidPtr);
 	while (!raidPtr->shutdown_engine) {
 
@@ -831,8 +818,6 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 		}
 	}
 	DO_UNLOCK(raidPtr);
-
-	RF_THREADGROUP_DONE(&raidPtr->engine_tg);
 
 	splx(s);
 	kthread_exit(0);

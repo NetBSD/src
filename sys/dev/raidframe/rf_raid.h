@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.20 2003/12/29 05:58:34 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.21 2003/12/29 06:19:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -220,7 +220,6 @@ struct RF_Raid_s {
 	RF_Thread_t engine_thread;
 	RF_Thread_t engine_helper_thread;
 	RF_Thread_t recon_thread;
-	RF_ThreadGroup_t engine_tg;
 	int     shutdown_engine;
 	int     shutdown_raidio;
 	int     dags_in_flight;	/* debug */
