@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.2 2002/04/09 19:48:19 hubertf Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.3 2003/06/10 17:47:23 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2002/03/31 02:14:06 thorpej Exp */
 
@@ -41,22 +41,6 @@
 
 /* shark machine dependent menus, Polish */
 
-menu editfsparts, y=12, exit;
-	display action  {
-			ask_sizemult(dlcylsize);
-			msg_display(MSG_arm32fspart, disk->dd_name, multname);
-			disp_cur_fspart(-1, 1);
-		};
-	option "Zmien a", action { editpart = A;}, sub menu edfspart;
-	option "Zmien b", action { editpart = B;}, sub menu edfspart;
-	option "Caly dysk - nie mozna zmienic", action {};
-	option "Zmien d", action { editpart = D;}, sub menu edfspart;
-	option "Zmien e", action { editpart = E;}, sub menu edfspart;
-	option "Zmien f", action { editpart = F;}, sub menu edfspart;
-	option "Zmien g", action { editpart = G;}, sub menu edfspart;
-	option "Zmien h", action { editpart = H;}, sub menu edfspart;
-	option "Ustaw nowy przydzial rozmiarow", action { reask_sizemult(dlcylsize); };
- 
 menu md_distcustom, x=26, y=5, exit, title "Wybierz";
 	display action { show_cur_distsets (); };
 	option	"Kernel (GENERIC)",		 action { toggle_getit (0); };
