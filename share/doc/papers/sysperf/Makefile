@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 06:54:34 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/02 17:40:46 pooka Exp $
 #
 #	@(#)Makefile	1.6 (Berkeley) 6/8/93
 
@@ -10,7 +10,7 @@ OBJS=	paper.tmp appendix.tmp
 CLEANFILES+=${OBJS}
 
 paper.ps: ${OBJS}
-	${ROFF} ${OBJS} > ${.TARGET}
+	${ROFF} ${MACROS} ${OBJS} > ${.TARGET}
 
 paper.tmp: ${SRCS}
 	${TBL} ${SRCS} | ${EQN} > paper.tmp
