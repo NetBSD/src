@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.5 2000/03/04 11:39:29 uch Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.6 2000/03/12 15:42:43 uch Exp $ */
 
 /*
  * Copyright (c) 2000, by UCHIYAMA Yasushi
@@ -327,13 +327,14 @@ __txsibsf0_ready(tc)
 	
 	tx_conf_write(tc, TX39_INTRSTATUS1_REG, TX39_INTRSTATUS1_SIBSF0INT);
 	for (i = 0; (!(tx_conf_read(tc, TX39_INTRSTATUS1_REG) & 
-		       TX39_INTRSTATUS1_SIBSF0INT)) && i < 200; i++)
-		;
-	if (i >= 200) {
+		       TX39_INTRSTATUS1_SIBSF0INT)) && i < 1000; i++) {
+		if (i > 100 && !(i % 100)) {
+			printf("sf0 busy loop: retry count %d\n", i);
+		}
+	}
+
+	if (i >= 1000) {
 		printf("sf0 busy\n");
-		return 0;
-	} else 	if (i > 100) {
-		printf("sf0 busy loop:%d\n", i);
 		return 0;
 	}
 
