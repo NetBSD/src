@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 2004/03/31 00:34:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2005/01/05 10:00:29 martti Exp $
 
 PROG=		ipmon
 SRCS=		ipmon.c ipmon_y.c ipmon_l.c
-MAN=		ipmon.8
+MAN=		ipmon.5 ipmon.8
 
 CPPFLAGS+=	-DLOGFAC=LOG_LOCAL0 -I.
 
