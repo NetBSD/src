@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2001/07/19 15:32:15 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 2001/09/15 00:49:53 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -158,6 +158,8 @@ struct mipsco_bus_space {
 				bus_size_t));
 	int	(*bs_subregion) __P((bus_space_tag_t, bus_space_handle_t,
 				bus_size_t, bus_size_t,	bus_space_handle_t *));
+	paddr_t	(*bs_mmap) __P((bus_space_tag_t, bus_addr_t, off_t, int, int));
+
 
 	/* allocation/deallocation */
 	int	(*bs_alloc) __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
@@ -217,6 +219,8 @@ void	mipsco_bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t));
 int	mipsco_bus_space_subregion __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_size_t, bus_size_t, bus_space_handle_t *));
+paddr_t	mipsco_bus_space_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+	    int, int));
 int	mipsco_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
 	    bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
 	    bus_space_handle_t *));
@@ -265,6 +269,15 @@ int	mipsco_bus_space_alloc __P((bus_space_tag_t, bus_addr_t, bus_addr_t,
  */
 #define bus_space_vaddr(bst, bsh)					\
 	((void *)(bsh))
+
+/*
+ *	paddr_t bus_space_mmap __P((bus_space_tag_t, bus_addr_t, off_t,
+ *	    int, int));
+ *
+ * Mmap bus space on behalf of the user.
+ */
+#define	bus_space_mmap(bst, addr, off, prot, flags)			\
+	(*(bst)->bs_mmap)((bst), (addr), (off), (prot), (flags))
 
 /*
  *	int bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
