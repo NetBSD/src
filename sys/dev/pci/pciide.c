@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.12 1998/10/20 18:47:45 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.13 1998/10/22 15:11:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -262,6 +262,9 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 
 #define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
+/* options passed via the 'flags' config keyword */
+#define PCIIDE_OPTIONS_DMA	0x01
+
 int	pciide_match __P((struct device *, struct cfdata *, void *));
 void	pciide_attach __P((struct device *, struct device *, void *));
 
@@ -425,7 +428,9 @@ pciide_attach(parent, self, aux)
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
 		printf("%s: bus-master DMA support present",
 		    sc->sc_wdcdev.sc_dev.dv_xname);
-		if (sc->sc_pp == &default_product_desc) {
+		if (sc->sc_pp == &default_product_desc &&
+		    (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags &
+		    PCIIDE_OPTIONS_DMA) == 0) {
 			printf(", but unused (no driver support)");
 			sc->sc_dma_ok = 0;
 		} else {
@@ -436,6 +441,9 @@ pciide_attach(parent, self, aux)
 			if (sc->sc_dma_ok == 0) {
 				printf(", but unused (couldn't map registers)");
 			} else {
+				if (sc->sc_pp == &default_product_desc)
+					printf(", used without full driver "
+					    "support");
 				sc->sc_wdcdev.dma_arg = sc;
 				sc->sc_wdcdev.dma_init = pciide_dma_init;
 				sc->sc_wdcdev.dma_start = pciide_dma_start;
@@ -724,6 +732,8 @@ void
 default_setup_cap(sc)
 	struct pciide_softc *sc;
 {
+	if (sc->sc_dma_ok)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 0;
 	sc->sc_wdcdev.dma_mode = 0;
 }
