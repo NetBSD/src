@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.39 1995/10/18 21:54:34 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.40 1995/12/28 19:17:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +74,6 @@
  * the machine.
  */
 int	cold;		/* if 1, still working on cold-start */
-int	dkn;		/* number of iostat dk numbers assigned so far */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
 int	cpumod;		/* CPU model,
