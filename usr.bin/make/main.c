@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
+/*	$NetBSD: main.c,v 1.35 1997/05/08 05:19:46 cjs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.35 1997/05/08 05:19:46 cjs Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,7 @@ Boolean			ignoreErrors;	/* -i flag */
 Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
 Boolean			checkEnvFirst;	/* -e flag */
+Boolean			mkIncPath;	/* -m flag */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 
 static void		MainParseArgs __P((int, char **));
@@ -288,6 +289,7 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != EOF) {
 			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
 			break;
 		case 'm':
+			mkIncPath = TRUE;
 			Dir_AddDir(sysIncPath, optarg);
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
@@ -653,7 +655,7 @@ main(argc, argv)
 	 * add the directories from the DEFSYSPATH (more than one may be given
 	 * as dir1:...:dirn) to the system include path.
 	 */
-	if (Lst_IsEmpty(sysIncPath)) {
+	if (!mkIncPath) {
 		for (start = syspath; *start != '\0'; start = cp) {
 			for (cp = start; *cp != '\0' && *cp != ':'; cp++)
 				continue;
