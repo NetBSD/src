@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.89 2004/05/14 16:36:33 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.90 2004/05/26 16:28:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.89 2004/05/14 16:36:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.90 2004/05/26 16:28:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ sys_ptrace(l, v, retval)
 		iov.iov_len = sizeof(tmp);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(long)SCARG(uap, addr);
+		uio.uio_offset = (off_t)(unsigned long)SCARG(uap, addr);
 		uio.uio_resid = sizeof(tmp);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
@@ -328,7 +328,7 @@ sys_ptrace(l, v, retval)
 		iov.iov_len = piod.piod_len;
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(long)piod.piod_offs;
+		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
 		uio.uio_segflg = UIO_USERSPACE;
 		uio.uio_procp = p;
