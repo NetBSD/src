@@ -1,4 +1,5 @@
-/*	$NetBSD: lpc.c,v 1.7 1997/10/05 11:52:30 mrg Exp $	*/
+/*	$NetBSD: lpc.c,v 1.8 1997/10/05 15:12:10 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +34,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: lpc.c,v 1.8 1997/10/05 15:12:10 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +57,7 @@ static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #include <ctype.h>
 #include <string.h>
 #include <grp.h>
-#include <sys/param.h>
+#include <err.h>
 #include "lp.h"
 #include "lpc.h"
 #include "extern.h"
@@ -85,13 +87,14 @@ static struct cmd	*getcmd __P((char *));
 static void		 intr __P((int));
 static void		 makeargv __P((void));
 static int		 ingroup __P((char *));
+int			 main __P((int, char *p[]));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	euid = geteuid();
 	uid = getuid();
@@ -142,7 +145,7 @@ static void
 cmdscanner(top)
 	int top;
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	if (!top)
 		putchar('\n');
@@ -176,11 +179,11 @@ cmdscanner(top)
 
 static struct cmd *
 getcmd(name)
-	register char *name;
+	char *name;
 {
-	register char *p, *q;
-	register struct cmd *c, *found;
-	register int nmatches, longest;
+	char *p, *q;
+	struct cmd *c, *found;
+	int nmatches, longest;
 
 	longest = 0;
 	nmatches = 0;
@@ -209,12 +212,13 @@ getcmd(name)
 static void
 makeargv()
 {
-	register char *cp;
-	register char **argp = margv;
-	register int n = 0;
+	char *cp;
+	char **argp = margv;
+	int n = 0;
 
 	margc = 0;
-	for (cp = cmdline; *cp && n < MAX_MARGV; n++) {
+	for (cp = cmdline; *cp && (cp - cmdline) < sizeof(cmdline) &&
+	    n < MAX_MARGV; n++) {
 		while (isspace(*cp))
 			cp++;
 		if (*cp == '\0')
@@ -240,12 +244,11 @@ help(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register struct cmd *c;
+	struct cmd *c;
 
 	if (argc == 1) {
-		register int i, j, w;
+		int i, j, w;
 		int columns, width = 0, lines;
-		extern int NCMDS;
 
 		printf("Commands may be abbreviated.  Commands are:\n\n");
 		for (c = cmdtab; c->c_name; c++) {
@@ -278,7 +281,7 @@ help(argc, argv)
 		return;
 	}
 	while (--argc > 0) {
-		register char *arg;
+		char *arg;
 		arg = *++argv;
 		c = getcmd(arg);
 		if (c == (struct cmd *)-1)
@@ -300,19 +303,17 @@ ingroup(grname)
 {
 	static struct group *gptr=NULL;
 	static gid_t groups[NGROUPS];
-	register gid_t gid;
-	register int i;
+	gid_t gid;
+	int i;
 
 	if (gptr == NULL) {
 		if ((gptr = getgrnam(grname)) == NULL) {
-			fprintf(stderr, "Warning: unknown group '%s'\n",
+			warnx("Warning: unknown group `%s'\n",
 				grname);
 			return(0);
 		}
-		if (getgroups(NGROUPS, groups) < 0) {
-			perror("getgroups");
-			exit(1);
-		}
+		if (getgroups(NGROUPS, groups) < 0)
+			err(1, "getgroups");
 	}
 	gid = gptr->gr_gid;
 	for (i = 0; i < NGROUPS; i++)

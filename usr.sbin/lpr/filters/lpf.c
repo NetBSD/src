@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.5 1997/07/10 06:21:51 mikel Exp $	*/
+/*	$NetBSD: lpf.c,v 1.6 1997/10/05 15:12:05 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,17 +32,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD";
+__RCSID("$NetBSD: lpf.c,v 1.6 1997/10/05 15:12:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,16 +72,18 @@ char	*name;		/* user's login name */
 char	*host;		/* user's machine name */
 char	*acctfile;	/* accounting information file */
 
+int main __P((int, char *[]));
+
 int
 main(argc, argv) 
 	int argc;
 	char *argv[];
 {
-	register FILE *p = stdin, *o = stdout;
-	register int i, col;
-	register char *cp;
-	int done, linedone, maxrep;
-	char ch, *limit;
+	FILE *p = stdin, *o = stdout;
+	int i, col;
+	char *cp;
+	int done, linedone, maxrep, ch;
+	char *limit;
 
 	while (--argc) {
 		if (*(cp = *++argv) == '-') {

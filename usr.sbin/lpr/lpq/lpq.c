@@ -1,4 +1,5 @@
-/*	$NetBSD: lpq.c,v 1.6 1997/10/05 11:52:38 mrg Exp $	*/
+/*	$NetBSD: lpq.c,v 1.7 1997/10/05 15:12:18 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,14 +34,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
+#else
+__RCSID("$NetBSD: lpq.c,v 1.7 1997/10/05 15:12:18 mrg Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -61,6 +63,8 @@ static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <err.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -72,12 +76,13 @@ int	 users;			/* # of users in user array */
 uid_t	uid, euid;
 
 static int ckqueue __P((char *));
-void usage __P((void));
+static void usage __P((void));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
-	register int	argc;
-	register char	**argv;
+	int	argc;
+	char	**argv;
 {
 	extern char	*optarg;
 	extern int	optind;
@@ -88,14 +93,12 @@ main(argc, argv)
 	uid = getuid();
 	seteuid(uid);
 	name = *argv;
-	if (gethostname(host, sizeof(host))) {
-		perror("lpq: gethostname");
-		exit(1);
-	}
+	if (gethostname(host, sizeof(host)))
+		err(1, "lpq: gethostname");
 	openlog("lpd", 0, LOG_LPR);
 
 	aflag = lflag = 0;
-	while ((ch = getopt(argc, argv, "alP:")) != EOF)
+	while ((ch = getopt(argc, argv, "alP:")) != -1)
 		switch((char)ch) {
 		case 'a':
 			++aflag;
@@ -152,7 +155,7 @@ static int
 ckqueue(cap)
 	char *cap;
 {
-	register struct dirent *d;
+	struct dirent *d;
 	DIR *dirp;
 	char *spooldir;
 
@@ -170,7 +173,7 @@ ckqueue(cap)
 	return (0);
 }
 
-void
+static void
 usage()
 {
 	puts("usage: lpq [-a] [-l] [-Pprinter] [user ...] [job ...]");

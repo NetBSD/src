@@ -1,4 +1,5 @@
-/*	$NetBSD: lpc.h,v 1.2 1995/11/15 22:27:44 pk Exp $	*/
+/*	$NetBSD: lpc.h,v 1.3 1997/10/05 15:12:11 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.

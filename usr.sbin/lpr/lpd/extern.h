@@ -1,4 +1,5 @@
-/*	$NetBSD: extern.h,v 1.6 1997/07/10 10:44:48 veego Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1997/10/05 15:12:12 mrg Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
