@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.75 2002/07/02 17:06:19 itojun Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.76 2002/08/24 17:27:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -478,7 +478,8 @@ struct kinfo_proc2 {
 #define	HW_MACHINE_ARCH	10		/* string: machine architecture */
 #define	HW_ALIGNBYTES	11		/* int: ALIGNBYTES for the kernel */
 #define	HW_CNMAGIC	12		/* string: console magic sequence(s) */
-#define	HW_MAXID	13		/* number of valid hw ids */
+#define HW_DEV		13		/* node: device driver values */
+#define	HW_MAXID	14		/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -494,7 +495,20 @@ struct kinfo_proc2 {
 	{ "machine_arch", CTLTYPE_STRING }, \
 	{ "alignbytes", CTLTYPE_INT }, \
 	{ "cnmagic", CTLTYPE_STRING }, \
+	{ "dev", CTLTYPE_NODE }, \
 }
+
+/*
+ * HW_DEV subtypes
+ */
+#define HW_DEV_UBTBCMFW	1
+#define HW_DEV_MAXID	2
+
+#define HW_DEV_NAMES { \
+	{ 0, 0 }, \
+	{ "ubtbcmfw", CTLTYPE_NODE }, \
+}
+
 
 /*
  * CTL_USER definitions

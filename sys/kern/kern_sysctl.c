@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.109 2002/07/02 17:06:17 itojun Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.110 2002/08/24 17:27:01 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.109 2002/07/02 17:06:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.110 2002/08/24 17:27:01 augustss Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -107,6 +107,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.109 2002/07/02 17:06:17 itojun Exp
 #include <sys/rnd.h>
 #endif
 
+#include "ubtbcmfw.h"
+#if NUBTBCMFW
+#include <dev/usb/ubtbcmfw.h>
+#endif
+
 #define PTRTOINT64(foo)	((u_int64_t)(uintptr_t)(foo))
 
 static int sysctl_file(void *, size_t *);
@@ -116,6 +121,8 @@ static int sysctl_sysvipc(int *, u_int, void *, size_t *);
 static int sysctl_msgbuf(void *, size_t *);
 static int sysctl_doeproc(int *, u_int, void *, size_t *);
 static int sysctl_dotkstat(int *, u_int, void *, size_t *, void *);
+static int sysctl_dodev(int *, u_int, void *, size_t *, void *, size_t,
+			struct proc *);
 #ifdef MULTIPROCESSOR
 static int sysctl_docptime(void *, size_t *, void *);
 static int sysctl_ncpus(void);
@@ -603,6 +610,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	/* All sysctl names at this level, except for a few, are terminal. */
 	switch (name[0]) {
 	case HW_DISKSTATS:
+	case HW_DEV:
 		/* Not terminal. */
 		break;
 	default:
@@ -647,6 +655,9 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		}
 		return (error);
 	}
+	case HW_DEV:
+		return (sysctl_dodev(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen, p));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1983,6 +1994,31 @@ sysctl_dotkstat(name, namelen, where, sizep, newp)
 		return (sysctl_rdquad(where, sizep, newp, tk_cancc));
 	case KERN_TKSTAT_RAWCC:
 		return (sysctl_rdquad(where, sizep, newp, tk_rawcc));
+	default:
+		return (EOPNOTSUPP);
+	}
+}
+
+static int
+sysctl_dodev(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	/* no sysctl names at this level are terminal */
+	if (namelen < 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+#if NUBTBCMFW
+	case HW_DEV_UBTBCMFW:
+		return (hw_dev_ubtbcmfw_sysctl(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, p));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
