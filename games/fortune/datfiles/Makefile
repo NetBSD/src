@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.26 2000/01/23 22:10:52 mycroft Exp $
+#	$NetBSD: Makefile,v 1.27 2000/02/06 11:59:29 pooka Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>			# for INSTALL_OFFENSIVE_FORTUNES
 
-SRCFILES=	fortunes fortunes2 startrek zippy unamerican-o limerick
+SRCFILES=	fortunes fortunes2 startrek zippy unamerican-o limerick \
+		netbsd
 DATFILES=	fortunes.dat fortunes2.dat startrek.dat zippy.dat \
 		fortunes-o fortunes-o.dat fortunes2-o fortunes2-o.dat \
-		limerick.dat limerick-o.dat unamerican-o unamerican-o.dat 
+		limerick.dat limerick-o.dat unamerican-o unamerican-o.dat \
+		netbsd.dat
 
 # TO AVOID INSTALLING THE POTENTIALLY OFFENSIVE FORTUNES, RUN 'make' with
 # "INSTALL_OFFENSIVE_FORTUNES=NO", or set "INSTALL_OFFENSIVE_FORTUNES=NO"
@@ -33,13 +35,14 @@ realall: ${DATFILES}
 
 # Normal fortunes: build directly from data files.
 
-fortunes.dat fortunes2.dat startrek.dat zippy.dat limerick.dat:
+fortunes.dat fortunes2.dat startrek.dat zippy.dat limerick.dat netbsd.dat:
 	${STRFILE} -rs ${.CURDIR}/${.TARGET:R} ${.TARGET}
 fortunes.dat:	fortunes
 fortunes2.dat:	fortunes2
 startrek.dat:	startrek
 zippy.dat:	zippy
 limerick.dat:	limerick
+netbsd.dat:	netbsd
 
 # Obscene fortunes: we have to build source and data files
 
