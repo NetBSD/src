@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/07/28 20:08:21 scw Exp $
+#	$NetBSD: Makefile,v 1.11 2000/12/04 18:35:16 scw Exp $
 
 LIB=bug
 
@@ -21,7 +21,8 @@ libinstall::
 # separate rule for bugcrt.c - NEED NOT BE COMPILED WITH -O2
 # this is build separately from rest of libbug
 bugcrt.o: bugcrt.c
-	${CC} -nostdinc ${INCPATH} -D_STANDALONE -o ${.TARGET}.tmp -c ${.IMPSRC}
+	${CC} -fomit-frame-pointer -nostdinc ${INCPATH} -D_STANDALONE \
+	    -o ${.TARGET}.tmp -c ${.IMPSRC}
 	${LD} -x -r ${.TARGET}.tmp -o ${.TARGET}
 
 all realall: lib${LIB}.a bugcrt.o
