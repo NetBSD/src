@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.18 2002/01/25 17:17:21 christos Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.19 2002/01/28 22:07:30 ichiro Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.18 2002/01/25 17:17:21 christos Exp $";
+	"@(#) $Id: wiconfig.c,v 1.19 2002/01/28 22:07:30 ichiro Exp $";
 #endif
 
 struct wi_table {
@@ -191,7 +191,7 @@ static void wi_apscan(iface)
 	wreq.wi_len = WI_MAX_DATALEN;
 
 	/* we have to do this ourself as opposed to
-	 * using setval, because we cannot bail if
+	 * using getval, because we cannot bail if
  	 * the ioctl fails
 	 */
 	memset((char *)&ifr, 0, sizeof(ifr));
@@ -203,7 +203,7 @@ static void wi_apscan(iface)
 	while (ioctl(s, SIOCGWAVELAN, &ifr) == -1) {
 		retries--;
 		if (retries >= 0) {
-			printf(".");
+			printf("."); fflush(stdout);
 			sleep(1);
 		} else
 			break;
