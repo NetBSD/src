@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.9 1993/12/18 00:45:25 mycroft Exp $
+ *	$Id: nfs_subs.c,v 1.10 1994/02/06 11:28:37 mycroft Exp $
  */
 
 /*
@@ -52,6 +52,9 @@
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/mbuf.h>
+#ifdef NFSCLIENT
+#include <sys/buf.h>
+#endif
 
 #include <ufs/quota.h>
 #include <ufs/inode.h>
@@ -82,6 +85,9 @@ static u_long *rpc_uidp = (u_long *)0;
 static u_long nfs_xid = 1;
 static char *rpc_unixauth;
 extern long hostid;
+#ifdef NFSCLIENT
+extern struct buf nfs_bqueue;
+#endif
 
 extern struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 extern struct nfsreq nfsreqh;
@@ -531,6 +537,7 @@ nfs_init()
 	/* Ensure async daemons disabled */
 	nfs_xdrneg1 = txdr_unsigned(-1);
 #ifdef NFSCLIENT	
+	nfs_bqueue.b_actb = &nfs_bqueue.b_actf;
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
 		nfs_iodwant[i] = (struct proc *)0;
 	nfs_nhinit();			/* Init the nfsnode table */

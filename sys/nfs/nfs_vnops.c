@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.20 1994/01/10 13:29:26 pk Exp $
+ *	$Id: nfs_vnops.c,v 1.21 1994/02/06 11:28:40 mycroft Exp $
  */
 
 /*
@@ -1565,15 +1565,10 @@ nfs_strategy(bp)
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
 		if (nfs_iodwant[i]) {
 			dp = &nfs_bqueue;
-			if (dp->b_actf == NULL) {
-				dp->b_actl = bp;
-				bp->b_actf = dp;
-			} else {
-				dp->b_actf->b_actl = bp;
-				bp->b_actf = dp->b_actf;
-			}
-			dp->b_actf = bp;
-			bp->b_actl = dp;
+			bp->b_actf = NULL;
+			bp->b_actb = dp->b_actb;
+			*dp->b_actb = bp;
+			dp->b_actb = &bp->b_actf;
 			fnd++;
 			wakeup((caddr_t)&nfs_iodwant[i]);
 			break;
