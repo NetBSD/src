@@ -1,6 +1,7 @@
-/*	$NetBSD: pcb.h,v 1.3 2001/08/27 11:39:44 chris Exp $	*/
+/*	$NetBSD: pcb.h,v 1.1 2001/09/03 19:20:27 matt Exp $	*/
 
 /*
+ * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
  * Copyright (c) 1994 Mark Brinicombe.
  * All rights reserved.
  *
@@ -32,30 +33,55 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_PCB_H_
-#define	_ARM32_PCB_H_
+#ifndef	_ARM_PCB_H_
+#define	_ARM_PCB_H_
 
+#include <machine/frame.h>
 #include <machine/pte.h>
 #include <machine/fp.h>
 
 struct trapframe;
 
-struct pcb {
-	pd_entry_t	*pcb_pagedir;		/* PT hooks */
-	u_int	pcb_flags;			/* Flags */
-	u_int	pcb_r8;				/* used */
-	u_int	pcb_r9;				/* used */
-	u_int	pcb_r10;			/* used */
-	u_int	pcb_r11;			/* used */
-	u_int	pcb_r12;			/* used */
-	u_int	pcb_sp;				/* used */
-	u_int	pcb_lr;
-	u_int	pcb_pc;
-	u_int	pcb_und_sp;
-	caddr_t	pcb_onfault;			/* On fault handler */
-	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
-	struct	trapframe *pcb_tf;
+struct pcb_arm32 {
+	pd_entry_t *pcb32_pagedir;		/* PT hooks */
+	u_int	pcb32_r8;			/* used */
+	u_int	pcb32_r9;			/* used */
+	u_int	pcb32_r10;			/* used */
+	u_int	pcb32_r11;			/* used */
+	u_int	pcb32_r12;			/* used */
+	u_int	pcb32_sp;			/* used */
+	u_int	pcb32_lr;
+	u_int	pcb32_pc;
+	u_int	pcb32_und_sp;
 };
+#define	pcb_pagedir	pcb_un.un_32.pcb32_pagedir
+#define	pcb_r8		pcb_un.un_32.pcb32_r8
+#define	pcb_r9		pcb_un.un_32.pcb32_r9
+#define	pcb_r10		pcb_un.un_32.pcb32_r10
+#define	pcb_r11		pcb_un.un_32.pcb32_r11
+#define	pcb_r12		pcb_un.un_32.pcb32_r12
+#define	pcb_sp		pcb_un.un_32.pcb32_sp
+#define	pcb_lr		pcb_un.un_32.pcb32_lr
+#define	pcb_pc		pcb_un.un_32.pcb32_pc
+#define	pcb_und_sp	pcb_un.un_32.pcb32_und_sp
+
+struct pcb_arm26 {
+	struct	switchframe *pcb26_sf;
+};
+#define	pcb_sf	pcb_un.un_26.pcb26_sf
+
+struct pcb {
+	u_int	pcb_flags;
+#define	PCB_OWNFPU	0x00000001
+	struct	trapframe *pcb_tf;
+	caddr_t	pcb_onfault;			/* On fault handler */
+	union	{
+		struct	pcb_arm32 un_32;
+		struct	pcb_arm26 un_26;
+	} pcb_un;
+	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
+};
+#define	pcb_ff	pcb_fpstate			/* for arm26 */
 
 /*
  * No additional data for core dumps.
@@ -68,6 +94,4 @@ struct md_coredump {
 extern struct pcb *curpcb;
 #endif	/* _KERNEL */
 
-#endif	/* _ARM32_PCB_H_ */
-
-/* End of pcb.h */
+#endif	/* _ARM_PCB_H_ */
