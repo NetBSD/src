@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.56 1998/03/01 02:24:28 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.57 1998/03/03 13:38:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1732,7 +1732,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	struct iovec aiov;
 	caddr_t buf, cp;
 	struct dirent *dp;
-	off_t *cookies, *cop;
+	off_t *cookies = NULL, *cop;
 	int error, eof, nc, len;
 
 	MALLOC(buf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
@@ -1752,7 +1752,8 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	len = NFS_DIRFRAGSIZ - auio.uio_resid;
 	if (error || len == 0) {
 		FREE(buf, M_TEMP);
-		FREE(cookies, M_TEMP);
+		if (cookies)
+			FREE(cookies, M_TEMP);
 		return;
 	}
 
