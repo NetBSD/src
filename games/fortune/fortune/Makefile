@@ -1,8 +1,10 @@
-#	$Id: Makefile,v 1.4 1993/08/02 17:16:08 mycroft Exp $
+#	$Id: Makefile,v 1.5 1993/08/05 02:16:36 jtc Exp $
 
-PROG=	fortune
-MAN6=	fortune.0
-CFLAGS+=-I${.CURDIR}/../strfile -DNO_REGEX
+PROG=		fortune
+MAN6=		fortune.0
+CFLAGS+=	-I${.CURDIR}/../strfile 
+LDADD+=		-lgnuregex
+DPADD+=		/usr/lib/libgnuregex.a
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.prog.mk>
