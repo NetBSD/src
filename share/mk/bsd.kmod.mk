@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.22 1997/10/11 08:16:25 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.23 1997/11/03 22:51:23 cgd Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -71,7 +71,7 @@ ${DESTDIR}${KMODDIR}/${PROG}: ${PROG}
 
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
-	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
+	${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
 .endif
 
 .if !target(load)
