@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.104 1999/11/10 00:02:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.105 1999/12/14 17:51:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -68,7 +68,11 @@
 GLOBAL(kernel_text)
 
 /*
- * Clear and skip the first page of text; it will not be mapped.
+ * Clear and skip the first page of text; it will not be mapped at
+ * VA 0.
+ *
+ * The bootloader places the bootinfo in this page, and we allocate
+ * a VA for it and map it in pmap_bootstrap().
  */
 	.fill	NBPG/4,4,0
 
@@ -1960,9 +1964,6 @@ GLOBAL(CLKbase)
 
 GLOBAL(MMUbase)
 	.long	0		| KVA of base of HP MMU registers
-
-GLOBAL(pagezero)
-	.long	0		| PA of first page of kernel text
 
 #ifdef USELEDS
 ASLOCAL(heartbeat)
