@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makewhatis.sh,v 1.14 1998/05/21 11:40:11 tv Exp $
+#	$NetBSD: makewhatis.sh,v 1.15 1998/05/23 13:42:25 tv Exp $
 #
 # written by matthew green <mrg@eterna.com.au>, based on the
 # original by J.T. Conklin <jtc@netbsd.org> and Thorsten
@@ -19,6 +19,16 @@ if test ! -d "$MANDIR"; then
 	exit 1
 fi
 
+if test -f $MANDIR/makewhatis.sed; then
+	MKWHATIS=$MANDIR/makewhatis.sed
+elif test -f $DESTDIR/usr/share/man/makewhatis.sed; then
+	MKWHATIS=$DESTDIR/usr/share/man/makewhatis.sed
+elif test -f /usr/share/man/makewhatis.sed; then
+	MKWHATIS=/usr/share/man/makewhatis.sed
+else
+	echo Cannot find makewhatis.sed; exit 1
+fi
+
 find $MANDIR \( -type f -o -type l \) -name '*.[0-9]*' -ls | \
     sort -n | awk '{if (u[$1]) next; u[$1]++ ; print $11}' > $LIST
  
@@ -27,7 +37,7 @@ egrep '\.[1-9]$' $LIST | xargs /usr/libexec/getNAME | \
 
 egrep '\.0$' $LIST | while read file
 do
-	sed -n -f $MANDIR/makewhatis.sed $file;
+	sed -n -f $MKWHATIS $file;
 done >> $TMP
 
 egrep '\.[0].(gz|Z)$' $LIST | while read file
