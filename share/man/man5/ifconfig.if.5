@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.if.5,v 1.5 2001/12/14 15:12:39 wiz Exp $
+.\"	$NetBSD: ifconfig.if.5,v 1.5.2.1 2002/10/23 12:34:48 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -91,12 +91,17 @@ up
 The following example is for dynamically-created pseudo interfaces like
 .Xr gif 4 :
 .Bd -literal -offset indent
-create
 up
 # configure IPv6 default route toward the interface
 !route add -inet6 default ::1
 !route change -inet6 default -ifp $int
 .Ed
+.Pp
+Earlier versions of
+.Pa /etc/rc.d/network
+required an explicit
+.Sq create
+command for such interfaces. This is now handled automatically.
 .Sh FILES
 .Pa /etc/rc.d/network
 .Sh SEE ALSO
