@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.9 1998/08/13 02:11:02 eeh Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.10 1998/08/31 00:03:02 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -61,10 +61,12 @@
  * list of uvm pagers in the system
  */
 
+extern struct uvm_pagerops aobj_pager;
 extern struct uvm_pagerops uvm_deviceops;
 extern struct uvm_pagerops uvm_vnodeops;
 
 struct uvm_pagerops *uvmpagerops[] = {
+	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,
 };
