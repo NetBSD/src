@@ -1,4 +1,4 @@
-/* $NetBSD: ym.c,v 1.3 1998/06/17 08:17:25 augustss Exp $ */
+/* $NetBSD: ym.c,v 1.4 1998/08/17 21:16:15 augustss Exp $ */
 
 
 /*
@@ -129,7 +129,7 @@ ym_attach(sc)
 	sc->mic_mute = 1;
 	ym_mute(sc, SA3_MIC, sc->mic_mute);
 
-	audio_attach_mi(&ym_hw_if, 0, &sc->sc_ad1848, &sc->sc_dev);
+	audio_attach_mi(&ym_hw_if, &sc->sc_ad1848, &sc->sc_dev);
 }
 
 static __inline int

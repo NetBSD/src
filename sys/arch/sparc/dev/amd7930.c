@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.38 1998/05/07 21:13:23 kleink Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.39 1998/08/17 21:16:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -370,7 +370,7 @@ amd7930attach(sc, pri)
 
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
-	audio_attach_mi(&sa_hw_if, 0, sc, &sc->sc_dev);
+	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
 }
 
 static void

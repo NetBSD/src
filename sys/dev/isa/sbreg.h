@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.25 1998/08/07 00:01:00 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.26 1998/08/17 21:16:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -109,6 +109,7 @@
 #define		SBP_IRQ_MPU401	0x04
 #define		SBP_IRQ_DMA16	0x02
 #define		SBP_IRQ_DMA8	0x01
+#define SBP_MPU_ADDR		0x84	/* Vibra16 register */
 
 #define SB16P_MASTER_L		0x30
 #define SB16P_VOICE_L		0x32

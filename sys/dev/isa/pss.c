@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.46 1998/06/30 08:24:56 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.47 1998/08/17 21:16:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1073,7 +1073,7 @@ pssattach(parent, self, aux)
     (void)pss_set_treble(sc, AUDIO_MAX_GAIN/2);
     (void)pss_set_bass(sc, AUDIO_MAX_GAIN/2);
 
-    audio_attach_mi(&pss_audio_if, 0, sc->ad1848_sc, &sc->ad1848_sc->sc_dev);
+    audio_attach_mi(&pss_audio_if, sc->ad1848_sc, &sc->ad1848_sc->sc_dev);
 }
 
 void

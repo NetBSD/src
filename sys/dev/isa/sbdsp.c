@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.87 1998/08/10 20:02:48 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.88 1998/08/17 21:16:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -62,6 +62,7 @@
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
+#include <dev/midi_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 

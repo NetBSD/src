@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.5 1998/07/21 07:48:36 mycroft Exp $	*/
+/*	$NetBSD: aria.c,v 1.6 1998/08/17 21:16:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -458,7 +458,7 @@ ariaattach(parent, self, aux)
 	sprintf(aria_device.version, "%s", 
 		ARIA_MODEL & sc->sc_hardware ? "SC18026" : "SC18025");
 
-	audio_attach_mi(&aria_hw_if, 0, (void *)sc, &sc->sc_dev);
+	audio_attach_mi(&aria_hw_if, (void *)sc, &sc->sc_dev);
 }
 
 /*

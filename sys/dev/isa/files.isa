@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.71 1998/08/13 04:53:18 kim Exp $
+#	$NetBSD: files.isa,v 1.72 1998/08/17 21:16:14 augustss Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -250,7 +250,7 @@ define	mpu401
 file	dev/isa/mpu401.c		mpu401 & midi
 
 # the SoundBlaster DSP, or close likenesses; used by other drivers
-define	sbdsp
+define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
@@ -259,6 +259,9 @@ file	dev/isa/sb.c			sb needs-flag
 
 attach	sb at isa with sb_isa
 file	dev/isa/sb_isa.c		sb_isa needs-flag
+
+attach	opl at sbdsp with opl_sb
+file	dev/isa/opl_sb.c		opl_sb
 
 # ProAudio Spectrum
 device	pas: audio, isadma, sbdsp, mulaw, auconv
