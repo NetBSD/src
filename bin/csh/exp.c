@@ -1,4 +1,4 @@
-/*	$NetBSD: exp.c,v 1.8 1997/07/04 21:23:59 christos Exp $	*/
+/*	$NetBSD: exp.c,v 1.9 1997/10/19 17:38:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: exp.c,v 1.8 1997/07/04 21:23:59 christos Exp $");
+__RCSID("$NetBSD: exp.c,v 1.9 1997/10/19 17:38:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -536,11 +536,8 @@ exp6(vp, ignore)
 	    break;
 
 	default:
-	    if (
-#ifdef S_IFLNK
-		cp[1] == 'l' ? lstat(short2str(ep), &stb) :
-#endif
-		stat(short2str(ep), &stb)) {
+	    if (cp[1] == 'l' ?
+		lstat(short2str(ep), &stb) : stat(short2str(ep), &stb)) {
 		xfree((ptr_t) ep);
 		return (Strsave(STR0));
 	    }
