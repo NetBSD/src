@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.27 1998/09/10 10:00:39 nisimura Exp $	*/
+/*	$NetBSD: sfb.c,v 1.27.8.1 1999/04/07 08:12:45 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,7 +65,7 @@
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
  *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS ``AS IS''
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  *
