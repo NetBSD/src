@@ -32,7 +32,7 @@
 */
 /*
  *	from: @(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.3 1993/12/15 03:27:54 briggs Exp $
+ *	$Id: genassym.c,v 1.4 1994/03/02 00:16:45 briggs Exp $
  */
 
 #include "sys/param.h"
@@ -206,6 +206,5 @@ main()
 	printf("#define\tPCB_TRCB %d\n", 5);
 	printf("#define\tINTIOBASE %d\n", INTIOBASE);
 	printf("#define\tNBBASE %d\n", NBBASE);
-	printf("#define\tMACH_MAC2 %d\n", MACH_MAC2);
 	exit(0);
 }
