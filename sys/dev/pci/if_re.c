@@ -1,3 +1,4 @@
+/*	$NetBSD: if_re.c,v 1.4.2.3 2004/06/21 17:13:46 tron Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
