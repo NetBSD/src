@@ -1,11 +1,11 @@
-/*	$NetBSD: dpt.c,v 1.21 2000/03/16 15:13:05 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.22 2000/06/13 13:36:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran, Charles M. Hannum and by Jason R. Thorpe of the Numerical 
+ * by Andrew Doran, Charles M. Hannum and by Jason R. Thorpe of the Numerical
  * Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.21 2000/03/16 15:13:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.22 2000/06/13 13:36:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

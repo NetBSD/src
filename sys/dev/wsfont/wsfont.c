@@ -1,11 +1,11 @@
-/* 	$NetBSD: wsfont.c,v 1.12 2000/01/07 03:25:46 enami Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.13 2000/06/13 13:37:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.12 2000/01/07 03:25:46 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.13 2000/06/13 13:37:06 ad Exp $");
 
 #include "opt_wsfont.h"
 

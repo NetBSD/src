@@ -1,7 +1,7 @@
-/*	$NetBSD: ipsec.c,v 1.3 2000/01/13 12:39:05 ad Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.4 2000/06/13 13:37:13 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
+ * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ipsec.c,v 1.3 2000/01/13 12:39:05 ad Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.4 2000/06/13 13:37:13 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
