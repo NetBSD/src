@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1999/09/21 00:10:39 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 1999/11/15 09:50:22 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 1999/09/21 00:10:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.42 1999/11/15 09:50:22 nisimura Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.41 1999/09/21 00:10:39 matt Exp $");
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/autoconf.h>
 #include <machine/sysconf.h>
 
 #include <pmax/dev/device.h>
@@ -88,6 +87,7 @@ tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 void configure_scsi __P((void));
 
 void findroot __P((struct device **, int *));
+void makebootdev __P((char *));
 
 /*
  * Determine mass storage and memory configuration for a machine.

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3max.c,v 1.2 1999/03/12 07:13:15 nisimura Exp $	*/
+/*	$NetBSD: tc_3max.c,v 1.3 1999/11/15 09:50:43 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,22 +31,20 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.2 1999/03/12 07:13:15 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_3max.c,v 1.3 1999/11/15 09:50:43 nisimura Exp $ ");
 
 
-#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
-#include <machine/sysconf.h>
 
+#include <dev/tc/tcvar.h>
 #include <pmax/pmax/kn02.h>
 
-
-/* 3MAX (kn02) turbochannel slots  */
+/* 3MAX (kn02) TURBOchannel slots  */
 /* slot addreseses */
 struct tc_slotdesc tc_kn02_slots [8] = {
-       	{ TC_KV(KN02_PHYS_TC_0_START), TC_C(0)},	/* tc option slot 0 */
+       	{ TC_KV(KN02_PHYS_TC_0_START), TC_C(0), },	/* tc option slot 0 */
 	{ TC_KV(KN02_PHYS_TC_1_START), TC_C(1), },	/* tc option slot 1 */
 	{ TC_KV(KN02_PHYS_TC_2_START), TC_C(2), },	/* tc option slot 2 */
 	{ TC_KV(KN02_PHYS_TC_3_START), TC_C(3), },	/*  - reserved */
@@ -56,27 +54,25 @@ struct tc_slotdesc tc_kn02_slots [8] = {
 	{ TC_KV(KN02_PHYS_TC_7_START), TC_C(7), }	/* system CSR, etc. */
 };
 
-int tc_kn02_nslots =
-    sizeof(tc_kn02_slots) / sizeof(tc_kn02_slots[0]);
+int tc_kn02_nslots = sizeof(tc_kn02_slots) / sizeof(tc_kn02_slots[0]);
 
 #define TC_KN02_DEV_IOASIC     -1
 #define TC_KN02_DEV_ETHER	6
 #define TC_KN02_DEV_SCSI	5
 
 const struct tc_builtin tc_kn02_builtins[] = {
-	{ "KN02    ",	7, 0x0, TC_C(TC_KN02_DEV_IOASIC) /* TC_C(7)*/ },
+	{ "KN02SYS ",	7, 0x0, TC_C(TC_KN02_DEV_IOASIC) /* TC_C(7)*/ },
 	{ "PMAD-AA ",	6, 0x0, TC_C(TC_KN02_DEV_ETHER)  /* TC_C(6)*/ },
 	{ "PMAZ-AA ",	5, 0x0, TC_C(TC_KN02_DEV_SCSI)   /* TC_C(5)*/ }
 };
 
 
-struct tcbus_attach_args kn02_tc_desc =
-{
-	"tc",				/* XXX common substructure */
-	0,				/* XXX bus_space_tag */
+struct tcbus_attach_args kn02_tc_desc = {
+	NULL,
+	0,
   	TC_SPEED_25_MHZ,
 	8, tc_kn02_slots,
 	3, tc_kn02_builtins,	/*XXX*/
-	0 /*tc_ds_ioasic_intr_establish*/,
-	0 /*tc_ds_ioasic_intr_disestablish*/
+	NULL,
+	NULL,
 };

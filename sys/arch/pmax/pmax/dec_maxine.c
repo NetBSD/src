@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.17 1999/11/12 09:55:39 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.18 1999/11/15 09:50:25 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.17 1999/11/12 09:55:39 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.18 1999/11/15 09:50:25 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.17 1999/11/12 09:55:39 nisimura Exp
 #include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/autoconf.h>		/* intr_arg_t */
 #include <machine/sysconf.h>
 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
@@ -105,8 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.17 1999/11/12 09:55:39 nisimura Exp
 void		dec_maxine_init __P((void));
 void		dec_maxine_bus_reset __P((void));
 void		dec_maxine_enable_intr
-		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
-			 intr_arg_t sc, int onoff));
+		   __P ((unsigned slotno, int (*handler)(void *),
+			 void *sc, int onoff));
 int		dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_maxine_device_register __P((struct device *, void *));
 void		dec_maxine_cons_init __P((void));
@@ -125,7 +124,7 @@ dec_maxine_init()
 {
 	extern char cpu_model[];
 
-	platform.iobus = "tcmaxine";
+	platform.iobus = "tcbus";
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
@@ -218,7 +217,7 @@ dec_maxine_device_register(dev, aux)
 void
 dec_maxine_enable_intr(slotno, handler, sc, on)
 	unsigned int slotno;
-	int (*handler) __P((void* softc));
+	int (*handler) __P((void *));
 	void *sc;
 	int on;
 {
