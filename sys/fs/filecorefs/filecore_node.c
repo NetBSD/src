@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.4 2004/04/25 16:42:40 simonb Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.5 2004/05/20 05:39:34 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.4 2004/04/25 16:42:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.5 2004/05/20 05:39:34 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,8 @@ filecore_init()
 {
 #ifdef _LKM
 	malloc_type_attach(M_FILECOREMNT);
+	pool_init(&filecore_node_pool, sizeof(struct filecore_node), 0, 0, 0,
+	    "filecrnopl", &pool_allocator_nointr);
 #endif
 	filecorehashtbl = hashinit(desiredvnodes, HASH_LIST, M_FILECOREMNT,
 	    M_WAITOK, &filecorehash);
@@ -150,9 +152,9 @@ filecore_reinit()
 void
 filecore_done()
 {
-	pool_destroy(&filecore_node_pool);
 	hashdone(filecorehashtbl, M_FILECOREMNT);
 #ifdef _LKM
+	pool_destroy(&filecore_node_pool);
 	malloc_type_detach(M_FILECOREMNT);
 #endif
 }
