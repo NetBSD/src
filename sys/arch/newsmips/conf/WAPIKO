@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.20 2003/04/10 22:07:01 christos Exp $
+# 	$NetBSD: WAPIKO,v 1.21 2003/10/25 04:07:28 tsutsui Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -52,7 +52,7 @@ mainbus0 at root
 cpu0	at mainbus0
 hb0	at mainbus0
 
-mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
+mkclock0 at hb0 addr 0xbff40000		# MK48T02 realtime clock
 
 le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
 le1	at hb0 addr 0xb8c30000 level 0
