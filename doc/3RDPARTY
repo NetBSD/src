@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.254 2004/11/07 16:30:02 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.255 2004/11/10 15:11:43 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -39,7 +39,7 @@ Package:	am-utils [amd]
 Version:	6.1b2
 Current Vers:	6.1b4
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
-Archive Site:	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/
+Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
 Mailing List:	amd-dev
 Responsible:	christos
 Notes:
@@ -90,7 +90,7 @@ Notes:
 
 Package:	bsd-family-tree
 Version:	1.73
-Current Vers:	1.75
+Current Vers:	1.86
 Maintainer:	n/a
 Archive Site:	http://www.freebsd.org/cgi/cvsweb.cgi/src/share/misc/bsd-family-tree
 Mailing List:
@@ -150,7 +150,7 @@ gnu/dist/cvs/config.h.in.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.2.52
+Current Vers:	1.86/4.3.21
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
 Archive Site:	http://www.sleepycat.com/products.html
 Mailing List:
@@ -165,7 +165,7 @@ src/lib/libc/db/db2netbsd.
 
 Package:	dhcp
 Version:	3.0.1rc11
-Current Vers:	3.0pl2/3.0.1
+Current Vers:	3.0.1/3.0.2rc2
 Maintainer:	Ted Lemon <mellon@NetBSD.org>
 Archive Site:	ftp://ftp.isc.org/isc/dhcp/
 Mailing List:	dhcp-server@isc.org
@@ -456,7 +456,7 @@ exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
 Package:	OpenSSH
 Version:	3.6.1 around 20030403
-Current Vers:	3.8 / portable 3.8p1
+Current Vers:	3.9 / portable 3.9p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
@@ -595,7 +595,7 @@ InterNIC version is usually more up to date.
 
 Package:	routed
 Version:	2.28
-Current Vers:	2.28
+Current Vers:	2.30
 Maintainer:	Vernon Schryver <vjs@rhyolite.com>
 Archive Site:	ftp://ftp.rhyolite.com/src/
 Mailing List:
@@ -682,7 +682,7 @@ for the import.
 
 Package:	top
 Version:	3.5beta12
-Current Vers:	3.5beta13
+Current Vers:	3.6alpha8
 Maintainer:	William LeFebvre <wnl@groupsys.com>
 Archive Site:	ftp://ftp.groupsys.com/pub/top/
 Mailing List:	top-spinners@ocee.groupsys.com
