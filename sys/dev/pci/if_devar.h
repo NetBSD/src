@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_devar.h,v 1.20 1997/03/25 21:12:17 thomas Exp
+ * Id: if_devar.h,v 1.21 1997/03/26 21:04:36 thomas Exp
  */
 
 #if !defined(_DEVAR_H)
@@ -267,6 +267,7 @@ typedef struct {
 	    u_int8_t mii_gpr_offset;
 	    u_int8_t mii_reset_length;
 	    u_int8_t mii_reset_offset;
+	    u_int32_t mii_phyid;
 	} un_mii;
     } mi_un;
 } tulip_media_info_t;
@@ -295,6 +296,7 @@ typedef struct {
 #define	mi_tx_threshold		mi_un.un_mii.mii_tx_threshold
 #define	mi_mediamask		mi_un.un_mii.mii_mediamask
 #define	mi_mii_interrupt	mi_un.un_mii.mii_interrupt
+#define	mi_phyid		mi_un.un_mii.mii_phyid
 
 #define	TULIP_MEDIAINFO_SIA_INIT(sc, mi, chipid, media) do { \
     (mi)->mi_type = TULIP_MEDIAINFO_SIA; \
