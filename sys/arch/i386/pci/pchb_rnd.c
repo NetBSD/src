@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.3 2000/10/30 00:26:04 thorpej Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.4 2000/11/06 22:01:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -139,7 +139,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			if (tv1.tv_sec)
 				tv1.tv_usec +=
 				    1000000 * tv1.tv_sec;
-			printf("%s: random number generator enabled, %ldKb/sec",
+			printf("%s: random number generator enabled, %ldKb/s\n",
 			    sc->sc_dev.dv_xname, 8 * 1000000 / tv1.tv_usec);
 
 			callout_init(&sc->sc_rnd_ch);
