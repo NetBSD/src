@@ -1,11 +1,11 @@
-/* $NetBSD: linux_mmap.h,v 1.2 2001/01/19 01:31:25 manu Exp $   */
+/* $NetBSD: linux_ioctl.h,v 1.1 2001/01/19 01:31:24 manu Exp $
 
 /*-
- * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz and Emmanuel Dreyfus.
+ * by Frank van der Linden, Eric Haszlakiewicz, and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,40 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_LINUX_MMAP_H
-#define _POWERPC_LINUX_MMAP_H
+#ifndef _POWERPC_LINUX_IOCTL_H
+#define _POWERPC_LINUX_IOCTL_H
 
-/* 
- * LINUX_PROT_* are defined in common/linux_mmap.h 
- * LINUX_MAP_SHARED/PRIVATE are defined in common/linux_mmap.h 
- */
+/* From Linux's include/asm-ppc/ioctl.h */
+#define _LINUX_IOC_NRBITS	 8
+#define _LINUX_IOC_TYPEBITS	 8
+#define _LINUX_IOC_SIZEBITS	13
+#define _LINUX_IOC_DIRBITS	 3
 
-/* 
- * From Linux's include/asm-ppc/mman.h 
- */
-#define LINUX_MAP_FIXED		0x0010
-#define LINUX_MAP_ANON		0x0020
+#define _LINUX_IOC_NRSHIFT	 0
 
-/* Ignored */
-#define LINUX_MAP_NORESERVE	0x0040
-#define LINUX_MAP_GROWSDOWN	0x0100
-#define LINUX_MAP_DENYWRITE	0x0800
-#define	LINUX_MAP_EXECUTABLE	0x1000
+#define _LINUX_IOC_NONE		1U
+#define _LINUX_IOC_READ		2U
+#define _LINUX_IOC_WRITE	4U
 
-/* 
- * On the PowerPC, we have a problem with the offset argument. It's 32 bit
- * long on Linux and 64 bit long on NetBSD. Therefore we use a wrapper
- * function linux_sys_powerpc_mmap() to linux_sys_mmap()
- * 
- * Linux's off_t is __kernel_off_t (include/linux/types.h) which in turn
- * is a long (include/asm-ppc/posix_types.h)
- */
-#define linux_off_t long
-
-#ifdef _KERNEL
-__BEGIN_DECLS 
-int linux_sys_powerpc_mmap(struct proc *, void *, register_t *);
-__END_DECLS
-#endif /* !_KERNEL */ 
-
-#endif /* !_POWERPC_LINUX_MMAP_H */
+#endif /* !_POWERPC_LINUX_IOCTL_H */
