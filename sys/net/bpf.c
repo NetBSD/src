@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.39 1998/03/01 02:25:04 fvdl Exp $	*/
+/*	$NetBSD: bpf.c,v 1.40 1998/04/30 00:08:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -605,6 +605,9 @@ bpfwrite(dev, uio, ioflag)
 	if (m->m_pkthdr.len > ifp->if_mtu)
 		return (EMSGSIZE);
 
+	if (d->bd_hdrcmplt)
+		dst.sa_family = pseudo_AF_HDRCMPLT;
+
 	s = splsoftnet();
 #if BSD >= 199103
 	error = (*ifp->if_output)(ifp, m, &dst, (struct rtentry *)0);
@@ -656,6 +659,8 @@ extern struct bpf_insn *bpf_udp_filter;
  *  BIOCGSTATS		Get packet stats.
  *  BIOCIMMEDIATE	Set immediate mode.
  *  BIOCVERSION		Get filter language version.
+ *  BIOGHDRCMPLT	Get "header already complete" flag.
+ *  BIOSHDRCMPLT	Set "header already complete" flag.
  */
 /* ARGSUSED */
 int
@@ -870,6 +875,13 @@ bpfioctl(dev, cmd, addr, flag, p)
 			break;
 		}
 
+	case BIOCGHDRCMPLT:	/* get "header already complete" flag */
+		*(u_int *)addr = d->bd_hdrcmplt;
+		break;
+
+	case BIOCSHDRCMPLT:	/* set "header already complete" flag */
+		d->bd_hdrcmplt = *(u_int *)addr ? 1 : 0;
+		break;
 
 	case FIONBIO:		/* Non-blocking I/O */
 		if (*(int *)addr)
