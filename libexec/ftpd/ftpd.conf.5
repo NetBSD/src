@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.conf.5,v 1.8 2000/01/12 22:39:29 lukem Exp $
+.\"	$NetBSD: ftpd.conf.5,v 1.8.4.1 2000/06/22 08:46:21 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 11, 2000
+.Dd June 20, 2000
 .Dt FTPD.CONF 5
 .Os
 .Sh NAME
@@ -295,7 +295,8 @@ and both numbers must be be between
 Set the maximum get (RETR) transfer rate throttle for
 .Ar class
 to
-.Ar rate .
+.Ar rate
+bytes per second.
 If
 .Ar rate
 is 0, the throttle is disabled.
@@ -317,7 +318,8 @@ Giga; multiply the argument by 1073741824
 Set the maximum put (STOR) transfer rate throttle for
 .Ar class
 to
-.Ar rate ,
+.Ar rate 
+bytes per second,
 which is parsed as per
 .Sy rateget Ar rate .
 .It Sy template Ar class Op Ar refclass
