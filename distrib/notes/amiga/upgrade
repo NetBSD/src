@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.20 2000/10/03 23:05:30 lukem Exp $	
+.\"	$NetBSD: upgrade,v 1.21 2000/10/10 12:55:16 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,18 +44,23 @@ you must transfer the miniroot file system miniroot.fs onto the swap
 partition of the
 .Nx
 hard disk. You must also have at least the
-"base" binary distribution set available, so that you can upgrade
+.Sy base
+binary distribution set available, so that you can upgrade
 with it, using one of the upgrade methods described above. Finally,
 you must have sufficient disk space available to install the new
 binaries. Since the old binaries are being overwritten in place,
 you only need space for the new binaries, which weren't previously
 on the system. If you have a few megabytes free on each of your
-root and /usr partitions, you should have enough space.
+.Pa /
+(root) and
+.Pa /usr
+partitions, you should have enough space.
 .Pp
 Since upgrading involves replacing the kernel, and most of the system
 binaries, it has the potential to cause data loss. You are strongly
 advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK, whether on the
-NetBSD partition or on another operating system's partition, before
+.Nx
+partition or on another operating system's partition, before
 beginning the upgrade process.
 .Pp
 To upgrade your system, follow the following instructions:
@@ -79,14 +84,16 @@ machines, use this instead:
 .Pp
 If you have a M680x0 + PPC board, make sure the PPC cpu is inactive
 before using loadbsd, else the kernel will hang!
-.Ss2 Directly\ booting\ NetBSD,\ with\ boot\ blocks\ installed:
-.(tag Note:
+.Ss2 Directly booting
+.Nx ,
+with boot blocks installed
+.(Note
 This description is for V40 (OS 3.1) ROMs. For older ROMs,
 there might be small differences. Check your AmigaOS documentation
 to learn about the exact procedure.
 Booting using bootblocks doesn't work at all on some systems, and may
 require a mountable filesystem on others.
-.tag)
+.Note)
 .Pp
 Reboot your machine, holding down both mouse buttons if you
 have a 2-button mouse, the outer mouse buttons if you have
@@ -116,7 +123,7 @@ E.g., instead of
 use
 .Dl "netbsd -bsSn2
 .
-.Ss2 Once\ your\ kernel\ boots:
+.Ss2 Once your kernel boots
 .
 You should see the screen clear and some information about
 your system as the kernel configures the hardware. Note which
@@ -145,7 +152,8 @@ may be left in an inconsistent (and possibly unusable) state.
 .Pp
 You will now be greeted and reminded of the fact that this is a
 potential dangerous procedure and that you should not upgrade the
-etc-set.
+.Sy etc
+set.
 .Pp
 When you decide to proceed, you will be prompted to enter
 your root disk. After you've done this, it will be checked
@@ -155,7 +163,9 @@ you will be asked if you want to configure your network.
 .Pp
 You are now allowed to edit your fstab. Normally you don't have
 to. Note that the upgrade-kit uses it's own copy of the fstab.
-Whatever you do here *won't* affect your actual fstab.
+Whatever you do here
+.Em won't
+affect your actual fstab.
 After you are satisfied with your fstab, the upgrade-kit will check
 all filesystems mentioned in it. When they're ok, they will be
 mounted.
@@ -164,7 +174,7 @@ You will now be asked if your sets are stored on a normally
 mounted filesystem. You should answer 'y' to this question if
 you have the sets stored on a filesystem that was present in
 the fstab. The actions you should take for the set extraction
-are pretty logical (I think).
+are pretty logical (we think).
 .Pp
 After you have extracted the sets, the upgrade kit will proceed
 with setting the timezone and installing the kernel and bootcode.
@@ -182,8 +192,11 @@ doesn't mean that you're finished with the upgrade process.
 There are several things that you should do, or might have to
 do, to insure that the system works properly.
 .Pp
-You will probably want to get the etc distribution,
-extract it, and compare its contents with those in your /etc
+You will probably want to get the
+.Sy etc
+distribution,
+extract it, and compare its contents with those in your
+.Pa /etc
 directory. You will probably want to replace some of your
 system configuration files, or incorporate some of the changes
 in the new versions into yours.

@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.28 2000/09/26 14:11:02 abs Exp $	
+.\"	$NetBSD: install,v 1.29 2000/10/10 12:55:22 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -37,10 +37,11 @@ Installing
 is a relatively complex process, but if you have
 this document in hand it shouldn't be too much trouble.
 .Pp
-NetBSD/sparc has two installation systems, an easy to use 'sysinst',
+.Nx*M
+has two installation systems, an easy to use 'sysinst',
 and a more flexible miniroot script based system.
 .Pp
-There are several ways to install 
+There are several ways to install
 .Nx
 onto a disk. The easiest way is to use the 'syboot.fs' image copied to
 a floppy or your local disk's swap partition.
@@ -53,10 +54,10 @@ convenient way to install on a machine whose disk does not currently
 hold a usable operating system (see the section `Installing
 .Nx
 by using a diskless setup' below).  There is
-also a bootable 1.4MB floppy available that contains a slightly less
+also a bootable 1.44 MB floppy available that contains a slightly less
 featureful miniroot environment.
 .
-.Ss2 Installing NetBSD by using the NetBSD miniroot.
+.Ss2 Installing NetBSD by using the NetBSD miniroot
 .
 If you wish to use the more flexible 'miniroot.fs', use in place
 of 'syboot.fs' below.
@@ -100,15 +101,15 @@ If you have to use the old-style
 .Ic sd( Ns Ar c,u,p Ns Ic \&)
 syntax to boot from a
 SCSI disk, you can calculate the parameters as follows:
-.Bl -tag -width xcc
-.	It Ar c
+.(tag xcc
+.It Ar c
 specifies the controller number
-.	It Ar u 
+.It Ar u
 the hexadecimal number obtained from evaluating
 the expression `(8 * TARGET) + LUN'
-.	It Ar p
+.It Ar p
 the partition number from which to boot (0=`a', 1=`b', etc).
-.El
+.tag)
 .Pp
 The monitor boot command will cause the
 .Nx
@@ -118,7 +119,7 @@ asked to start the install or upgrade procedure. Proceed to the section
 .Sx Running the installation scripts.
 below.
 .
-.Ss2 Installing NetBSD by using the bootable floppy.
+.Ss2 Installing NetBSD by using the bootable floppy
 .
 The
 .Nx
@@ -154,7 +155,7 @@ the install or upgrade procedure. Proceed to the section
 .Sx Running the installation scripts.
 below.
 .
-.Ss2 Installing NetBSD by using a diskless setup.
+.Ss2 Installing NetBSD by using a diskless setup
 .
 First, you must setup a diskless client configuration on a server. If
 you are using a
@@ -177,7 +178,9 @@ boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 You can find the boot program in
 .Pa /usr/mdec/boot.net
-in the NetBSD/sparc distribution.
+in the
+.Nx*M
+distribution.
 .(Note
 The only difference between
 .Pa /usr/mdec/boot.net No and Pa /usr/mdec/boot
@@ -235,6 +238,7 @@ instead of `ok', type:
 .Dl "\*>n                                  # enter native OpenBOOT mode
 .Dl "ok setenv sunmon-compat? false      # make it permanent
 .Dl "ok
+.Note)
 .
 .Ss2 Diskless script installation
 .
@@ -255,20 +259,18 @@ directory. Also put 'install.*' and 'upgrade.sh' from the
 directory into the root directory.
 .Pp
 A few configuration files need to be edited:
-.Bl -tag -width indent
-.	It Ar root Ns Pa /etc/hosts
+.(tag indent
+.It Ar root Ns Pa /etc/hosts
 Add the IP addresses of both server and client.
-
-.	It Ar root Ns Pa /etc/myname
+.It Ar root Ns Pa /etc/myname
 This files contains the client's hostname; use the same
 name as in \*<root\*>/etc/hosts.
-
-.	It Ar root Ns Pa /etc/fstab
+.It Ar root Ns Pa /etc/fstab
 Enter the entries for the remotely mounted filesystems.
 For example:
 .Dl server:/export/root/client       /     nfs  rw 0 0
 .Dl server:/export/exec/sun4.netbsd  /usr  nfs  rw 0 0
-.El
+.tag)
 .Pp
 Now you must populate the `/dev' directory for your client. If your server
 runs SunOS 4.x, you can simply change your working directory to
@@ -311,9 +313,11 @@ mount
 by hand now:
 .Dl netbsd# Ic mount /usr
 .Pp
-.Em NOTE:
-.Em For floppy installs, the text editor provided is ed.
-.Em For miniroot installs, the text editor is vi.
+.(Note
+For floppy installs, the text editor provided is ed.
+For miniroot installs, the text editor is vi.
+.Note)
+.Pp
 When using
 .Xr disklabel 8
 to edit disklabels the -e switch will invoke the editor on the
@@ -370,17 +374,18 @@ even if you define less then eight partitions. If this line displays
 a different number and the program complains about it (after you leave
 the editor), then try setting it to `8 partitions:'.
 .Note)
-.Ss2 Sample Disklabel Screen
-.Bd -literal -offset indent
+.
+.Ss2 Sample disklabel screen
+.(disp
 netbsd# disklabel sd2
  # /dev/rsd2c:
-type: SCSI 
+type: SCSI
 disk: SCSI disk
 label: Hold Your Breath
 flags:
 bytes/sector: 512
 sectors/track: 64
-tracks/cylinder: 7  
+tracks/cylinder: 7
 sectors/cylinder: 448
 cylinders: 1429
 rpm: 3600
@@ -397,7 +402,7 @@ drivedata: 0
   b:    64512    50176      swap               # (Cyl.  112 - 255)
   c:   640192        0   unknown               # (Cyl.    0 - 1428)
   d:   525504   114688    4.2BSD   0   0   0   # (Cyl.  256 - 1428)
-.Ed
+.disp)
 .Pp
 If you are upgrading a
 .Nx
@@ -406,7 +411,7 @@ installation, start the upgrade script:
 else, start the installation script:
 .Dl netbsd# Ic sh install.sh
 .
-.Ss2 Running the installation scripts.
+.Ss2 Running the installation scripts
 .
 The installation system will do most of the work of transferring the
 system from the distribution sets onto your disk. You will frequently be
@@ -420,23 +425,22 @@ to look at the output of the dmesg(8) command to see how your disks
 have been identified by the kernel.
 .Pp
 The installation script goes through the following phases:
-.Bl -bullet -compact
-.	It
-	determination of the disk on to install
+.(bullet -compact
+determination of the disk on to install
 .Nx
-.	It
-	checking of the partition information on the disk
-.	It
-	creating and mounting the
+.It
+checking of the partition information on the disk
+.It
+creating and mounting the
 .Nx
 filesystems
-.	It
-	setup of IP configuration
-.	It
-	extraction of the distribution tar files
-.	It
-	installation of boot programs
-.El
+.It
+setup of IP configuration
+.It
+extraction of the distribution tar files
+.It
+installation of boot programs
+.bullet)
 .Pp
 Now try a reboot.  Initially I'd suggest you "boot sd()netbsd -bs", then
 try multiuser after that. If you boot single-user the
@@ -458,4 +462,4 @@ On version 2 OpenBOOT ROMs:
 .Pp
 .Em Congratulations ,
 you have successfully installed
-.Nx \*V. 
+.Nx \*V.

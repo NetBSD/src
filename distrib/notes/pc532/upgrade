@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.9 1999/01/25 23:34:23 garbled Exp $
+.\"	$NetBSD: upgrade,v 1.10 2000/10/10 12:55:21 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,9 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-The upgrade to NetBSD \*V is a binary upgrade; it can be quite difficult
+The upgrade to
+.Nx
+\*V is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 .Pp
@@ -43,12 +45,12 @@ of disk space to do the upgrade.
 Since upgrading involves replacing the kernel, and most of the system
 binaries, it has the potential to cause data loss.  You are strongly
 advised to BACK UP ANY IMPORTANT DATA ON YOUR DISK, whether on the
-NetBSD partition or on another operating system's partition, before
+.Nx
+partition or on another operating system's partition, before
 beginning the upgrade process.
 .Pp
 To upgrade your system, follow the following instructions:
-.Bl -bullet
-.It
+.(bullet
 Assuming you have space, load the .tgz files onto disk
 some place.  Then boot the floppy-144.fs image via the
 method you use.  Under the install system, extract the
@@ -57,12 +59,14 @@ notes for how to use sysinst.
 .It
 Extract the .tgz files.
 For example, to extract base.tgz:
-.Dl Ic cd / 
+.Dl Ic cd /
 .Dl Ic pax -zrvpe -f /gz.files/base.tgz
 .It
 Extract all the .tgz files you want.  You should carefully
 work at upgrading /etc.  There may be changes to file formats
-depending on what version of NetBSD/pc532 you are running.
+depending on what version of
+.Nx*M
+you are running.
 .It
 .Em Be careful if you are not running with security.
 The \*V distribution does contain support for password encryption.
@@ -77,4 +81,4 @@ kernel.  Read the last part of the new installation part of
 these notes to find out how to change your default speed.)
 .It
 After reboot, you should make sure you check your new file systems.
-.El
+.bullet)

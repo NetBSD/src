@@ -1,4 +1,4 @@
-	$NetBSD: prep.RISCOS,v 1.3 2000/10/03 23:19:11 lukem Exp $	
+	$NetBSD: prep.RISCOS,v 1.4 2000/10/10 12:55:17 lukem Exp $
 
 These instructions are specific to NetBSD/arm32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+) running RiscOS, but may be relevant to futures
@@ -70,9 +70,9 @@ Additionally you will require the following:
 		A7000(+): UNKNOWN
 
 	The Bootloader and RiscOS tools: bootloader.arc (This should
-	be pre-extracted if you're installing from CDROM).
+	be pre-extracted if you're installing from CD-ROM).
 
-	The NetBSD/arm32 distribution sets (Will be on the CDROM, or
+	The NetBSD/arm32 distribution sets (Will be on the CD-ROM, or
 	available from your nearest NetBSD ftp site).
 
 	A hardcopy of this document, along with a hardcopy of the
@@ -322,7 +322,7 @@ can be non-trivial to put it back.
 
 Now that your device is ready for the installation you need to
 unpack the bootloader archive (bootloader.arc, if you're installing
-from CDROM then this should be unpacked already), copy it to your
+from CD-ROM then this should be unpacked already), copy it to your
 harddisk and run the bootloader (!BtRiscBSD).
 
 4.1 Configuring !BtRiscBSD before installation
@@ -373,7 +373,7 @@ a certain setup.
    device configured (eg *con. IDEdiscs 2) even if it has no RiscOS
    section.
 2) If you have RISC OS 3.5 without the new FileCore, then you must
-   also have the NetBSD filesystem *completely* below the 511MB
+   also have the NetBSD filesystem *completely* below the 511 MB
    boundary of the device.
 3) You must know the SWI base of the <filesys>_DiscOp SWI. Here
    <filesys> is SCSIFS, SCSI or ADFS depending upon which controller

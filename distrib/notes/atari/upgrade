@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.5 1999/01/13 07:30:04 ross Exp $	
+.\"	$NetBSD: upgrade,v 1.6 2000/10/10 12:55:17 lukem Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -40,8 +40,7 @@ distribution, you have to replace them again after you did the update.
 The etc-set needs special caution. You generally don't want to install
 this one when upgrading. It is recommended that you get a copy of this
 set and _carefully_ upgrade your configuration files by hand.
-.Bl -enum
-.It
+.(enum
 Starting the upgrade
 .Pp
 Ok, let's go. Insert the bootfloppy and follow the 'normal'
@@ -58,7 +57,9 @@ your root disk. After you've done this, it will be checked
 automatically to make sure that the filesystem is in a sane
 state before making any modifications. After this is done,
 you will be asked if you want to configure your network. You
-can skip this section on NetBSD/Atari for now.
+can skip this section on
+.Nx*M
+for now.
 .It
 Editing the fstab
 .Pp
@@ -85,4 +86,4 @@ After you have extracted the sets, the upgrade kit will proceed
 with setting the timezone and installing the kernel and bootcode.
 This is all exactly the same as described in the installation
 section.
-.El
+.enum)
