@@ -1,4 +1,4 @@
-.\" $NetBSD: userdel.8,v 1.3 1999/12/24 09:08:50 agc Exp $ */
+.\" $NetBSD: groupinfo.8,v 1.1 1999/12/24 09:08:49 agc Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -32,67 +32,38 @@
 .\"
 .\"
 .Dd November 30, 1999
-.Dt USERDEL 8
+.Dt GROUPINFO 8
 .Os NetBSD
 .Sh NAME
-.Nm userdel
-.Nd remove a user from the system
+.Nm groupinfo
+.Nd displays group information
 .Sh SYNOPSIS
-.Nm ""
-.Op Fl D
-.Op Fl p Ar preserve-value
-.Nm ""
-.Op Fl p
-.Op Fl r
+.Nm
+.Op Fl e
 .Op Fl v
-user
+group
 .Sh DESCRIPTION
 The
 .Nm
-utility removes a user from the system, optionally
-removing that user's home diretory and any subdirectories.
-.Pp
-The first format of the command shown above (utilising the -D option)
-sets and displays the defaults for the
-.Nm
-utility.
-.Bl -tag -width Ds
-.It Fl D
-without any further options, -D will show the current defaults which
-will be used by the
-.Nm
-utility. Together with one of the options shown for the first version
-of the command, -D will set the default to be the new value.
-.It Fl p Ar preserve-value
-sets the preservation value. If this value is one of "true", "false",
-or a non-zero number, then the user login information will be preserved.
-.El
+utility retrieves the group information from the system.
 .Pp
 The following command line options are recognised:
 .Bl -tag -width Ds
-.It Fl p
-preserve the user information in the password file,
-but do not allow the user to login, by switching the
-password to an "impossible" one, and by setting the
-user's shell the the false(1) program.
-This option can be helpful in preserving a user's
-files for later use by members of that person's
-group after the user has moved on.
-This value can also be set in the
-/etc/usermgmt.conf
-file, using the "preserve" field. If the field
-has any of the values "true", "yes", or a non-zero number,
-then user information preservation will take place.
-.It Fl r
-remove the user's home directory, any subdirectories,
-and any files and other entries in them.
+.It Fl e
+return 0 if the group exists, and non-zero if the
+group does not exist, on the system. No information is
+displayed. This form of the command is useful for
+scripts which need to check whether a particular group
+name or gid is already in use on the system.
 .It Fl v
 perform any actions in a verbose manner.
 .El
 .Pp
+The group argument may either be a group's name, or a gid.
+.Pp
 The
 .Nm
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 if the group name or gid exists, and non-zero if it does not.
 .Sh HISTORY
 The
 .Nm
@@ -106,6 +77,5 @@ The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
 .Sh SEE ALSO
-.Xr false 1 ,
 .Xr passwd 5 ,
 .Xr /etc/usermgmt.conf
