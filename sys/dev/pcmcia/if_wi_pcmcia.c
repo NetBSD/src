@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.45 2004/08/05 21:53:04 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.46 2004/08/07 05:27:39 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.45 2004/08/05 21:53:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.46 2004/08/07 05:27:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ wi_pcmcia_attach(parent, self, aux)
 			break;
 	}
 	if (cfe == NULL) {
-		printf(": no suitable CIS info found\n");
+		aprint_error("%s: no suitable CIS info found\n", self->dv_xname);
 		goto no_config_entry;
 	}
 
@@ -412,8 +412,8 @@ wi_pcmcia_attach(parent, self, aux)
 		if (wi_pcmcia_load_firm(sc,
 		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
 		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
-			printf("%s: couldn't load firmware\n",
-				sc->sc_dev.dv_xname);
+			aprint_error("%s: couldn't load firmware\n",
+			    self->dv_xname);
 			goto no_interrupt;
 		}
 	}
@@ -421,16 +421,15 @@ wi_pcmcia_attach(parent, self, aux)
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		        sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt\n", self->dv_xname);
 		goto no_interrupt;
 	}
 
-	printf("%s:", sc->sc_dev.dv_xname);
+	printf("%s:", self->dv_xname);
+
 	if (wi_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-		    sc->sc_dev.dv_xname);
-			goto attach_failed;
+		aprint_error("%s: failed to attach controller\n", self->dv_xname);
+		goto attach_failed;
 	}
 
 	psc->sc_sdhook    = shutdownhook_establish(wi_pcmcia_shutdown, psc);
