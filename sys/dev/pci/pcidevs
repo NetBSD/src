@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.312 2001/03/21 18:10:13 soren Exp $
+$NetBSD: pcidevs,v 1.313 2001/03/31 09:06:45 minoura Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -937,6 +937,8 @@ product	COMPAQ QVISION_1280P	0x3033	QVision 1280/p
 product	COMPAQ QVISION_V2	0x3034	QVision
 product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
 product COMPAQ USB		0x7020	USB Controller
+/* MediaGX Cx55x0 built-in OHCI seems to have this ID */
+product COMPAQ USB_MEDIAGX	0xa0f8	USB Controller
 product COMPAQ SMART2P		0xae10	SMART2P RAID
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
 product COMPAQ N10T		0xae34	Netelligent 10 T
@@ -977,6 +979,15 @@ product CYCLADES CYCLOM8Y_1	0x0104	Cyclom-8Y below 1M
 product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
+
+/* Cyrix (now National) products */
+product CYRIX MEDIAGX_PCHB	0x0001	MediaGX Built-in PCI Host Controller
+product CYRIX CX5520_PCIB	0x0002	Cx5520 I/O Companion
+product CYRIX CX5530_PCIB	0x0100	Cx5530 I/O Companion Multi-Function South Bridge
+product CYRIX CX5530_SMI	0x0101	Cx5530 I/O Companion (SMI Status and ACPI Timer)
+product CYRIX CX5530_IDE	0x0102	Cx5530 I/O Companion (IDE Controller)
+product CYRIX CX5530_AUDIO	0x0103	Cx5530 I/O Companion (XpressAUDIO)
+product CYRIX CX5530_VIDEO	0x0104	Cx5530 I/O Companion (Video Controller)
 
 /* Davicom Semiconductor products */
 product DAVICOM DM9102	0x9102	Davicom DM9102 10/100 Ethernet
