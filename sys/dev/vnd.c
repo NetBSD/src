@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.76 2002/01/04 06:31:08 mrg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.77 2002/01/13 19:28:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.76 2002/01/04 06:31:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.77 2002/01/13 19:28:08 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -193,12 +193,11 @@ vndattach(num)
 	if (num <= 0)
 		return;
 	i = num * sizeof(struct vnd_softc);
-	mem = malloc(i, M_DEVBUF, M_NOWAIT);
+	mem = malloc(i, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (mem == NULL) {
 		printf("WARNING: no memory for vnode disks\n");
 		return;
 	}
-	memset(mem, 0, i);
 	vnd_softc = (struct vnd_softc *)mem;
 	numvnd = num;
 
