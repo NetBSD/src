@@ -56,11 +56,10 @@ struct	sigcontext {
 	int	sc_mask;		/* signal mask to restore */
 	int	sc_sp;			/* sp to restore */
 	int	sc_fp;			/* fp to restore */
-	int	sc_ap;			/* ap to restore */
+	int	sc_sb;			/* sb to restore */
 	int	sc_pc;			/* pc to restore */
 	int	sc_ps;			/* psl to restore */
 	int	sc_reg[8];		/* The registers */
 };
-
 
 #endif	/* _MACHINE_SIGNAL_H_ */
