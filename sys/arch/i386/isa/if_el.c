@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.18 1994/11/18 22:03:17 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.19 1994/12/10 05:55:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -199,8 +199,7 @@ elattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print out some information for the user. */
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/* Finally, attach to bpf filter if it is present. */
 #if NBPFILTER > 0
