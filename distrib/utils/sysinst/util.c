@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.65 2002/03/23 05:18:23 shin Exp $	*/
+/*	$NetBSD: util.c,v 1.66 2002/04/04 14:26:44 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1057,6 +1057,31 @@ set_timezone()
 	symlink(localtime_target, localtime_link);
 	
 	return 1;
+}
+
+int
+set_crypt_type(void)
+{
+	FILE *pwc;
+	char *fn;
+
+	msg_display(MSG_choose_crypt);
+	process_menu(MENU_crypttype);
+	fn = strdup(target_expand("/etc/passwd.conf"));
+	rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
+
+	if (!yesno) {
+		pwc = fopen(fn, "w");
+
+		fprintf(pwc,
+		    "default:\n"
+		    "  localcipher = md5\n"
+		    "  ypcipher = md5\n");
+
+		fclose(pwc);
+	}
+
+	return (0);
 }
 
 int
