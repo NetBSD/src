@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.3 1996/06/29 20:07:08 chuck Exp $       */
+/*      $NetBSD: if_atm.c,v 1.4 1996/07/03 17:17:16 chuck Exp $       */
 
 /*
  *
@@ -237,7 +237,7 @@ register struct atm_pseudohdr *desten;	/* OUT */
 	}
 
 	if (rt == NULL) {
-		rt = rtalloc1(dst, 0);
+		rt = RTALLOC1(dst, 0);
 		if (rt == NULL) goto bad; /* failed */
 		rt->rt_refcnt--;	/* don't keep LL references */
 		if ((rt->rt_flags & RTF_GATEWAY) != 0 || 

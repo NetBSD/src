@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.1 1996/06/22 01:47:43 chuck Exp $       */
+/*      $NetBSD: if_atm.h,v 1.2 1996/07/03 17:17:17 chuck Exp $       */
 
 /*
  *
@@ -36,8 +36,6 @@
  * if_atm.h
  */
 
-#ifdef _KERNEL
 void atm_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int atmresolve __P((struct rtentry *, struct mbuf *, struct sockaddr *, 
 		struct atm_pseudohdr *));
-#endif /* _KERNEL */
