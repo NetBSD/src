@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.80 2003/02/20 22:16:07 atatat Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.81 2003/02/21 03:53:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.80 2003/02/20 22:16:07 atatat Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.81 2003/02/21 03:53:43 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -281,7 +281,7 @@ ELFNAME(load_psection)(struct exec_vmcmd_set *vcset, struct vnode *vp,
 	}
 
 	if ((flags & (VMCMD_TOPDOWN|VMCMD_RELATIVE)) == VMCMD_TOPDOWN)
-		*addr -= round_page(*size);
+		*addr -= round_page(msize);
 	if (psize > 0) {
 		NEW_VMCMD2(vcset, ph->p_align < PAGE_SIZE ?
 		    vmcmd_map_readvn : vmcmd_map_pagedvn, psize, *addr, vp,
