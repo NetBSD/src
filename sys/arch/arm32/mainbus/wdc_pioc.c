@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.4 1998/08/15 10:11:00 mycroft Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.5 1998/08/29 04:05:44 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,13 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <machine/bus.h>
+#include <machine/cpu.h>
 #include <machine/bootconfig.h>
 #include <machine/irqhandler.h>
 #include <arm32/mainbus/piocvar.h>
