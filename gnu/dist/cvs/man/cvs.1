@@ -1711,6 +1711,11 @@ prefaced with one of the characters
 .` "U A R M C ?"
 to indicate the status of the file:
 .TP 1i
+\fBP\fP \fIfile\fP
+The file has been \fIpatched\fP to be in sync with the version in the
+repository.  Only a diff has been applied, in contrast to \fBU\fP,
+where the whole file is fetched.
+.TP 1i
 \fBU\fP \fIfile\fP
 The file was brought \fIup to date\fP with respect to the repository.
 This is done for any file that exists in the repository but not in
