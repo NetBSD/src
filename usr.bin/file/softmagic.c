@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.26 2002/05/18 07:00:47 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.27 2002/06/05 12:52:58 itojun Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -42,16 +42,16 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.48 2002/05/16 18:45:56 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.26 2002/05/18 07:00:47 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.27 2002/06/05 12:52:58 itojun Exp $");
 #endif
 #endif	/* lint */
 
-static int match	__P((struct magic *, uint32, unsigned char *, int));
+static int match	__P((struct magic *, uint32_t, unsigned char *, int));
 static int mget		__P((union VALUETYPE *,
 			     unsigned char *, struct magic *, int));
 static int mcheck	__P((union VALUETYPE *, struct magic *));
-static int32 mprint	__P((union VALUETYPE *, struct magic *));
-static void mdebug	__P((int32, char *, int));
+static int32_t mprint	__P((union VALUETYPE *, struct magic *));
+static void mdebug	__P((int32_t, char *, int));
 static int mconvert	__P((union VALUETYPE *, struct magic *));
 
 extern int kflag;
@@ -106,7 +106,7 @@ softmagic(buf, nbytes)
 static int
 match(magic, nmagic, s, nbytes)
 	struct magic *magic;
-	uint32 nmagic;
+	uint32_t nmagic;
 	unsigned char	*s;
 	int nbytes;
 {
@@ -114,14 +114,14 @@ match(magic, nmagic, s, nbytes)
 	int cont_level = 0;
 	int need_separator = 0;
 	union VALUETYPE p;
-	static int32 *tmpoff = NULL;
+	static int32_t *tmpoff = NULL;
 	static size_t tmplen = 0;
-	int32 oldoff = 0;
+	int32_t oldoff = 0;
 	int returnval = 0; /* if a match is found it is set to 1*/
 	int firstline = 1; /* a flag to print X\n  X\n- X */
 
 	if (tmpoff == NULL)
-		if ((tmpoff = (int32 *) malloc(tmplen = 20)) == NULL)
+		if ((tmpoff = (int32_t *) malloc(tmplen = 20)) == NULL)
 			error("out of memory\n");
 
 	for (magindex = 0; magindex < nmagic; magindex++) {
@@ -152,7 +152,7 @@ match(magic, nmagic, s, nbytes)
 			need_separator = 1;
 		/* and any continuations that match */
 		if (++cont_level >= tmplen)
-			if ((tmpoff = (int32 *) realloc(tmpoff,
+			if ((tmpoff = (int32_t *) realloc(tmpoff,
 						       tmplen += 20)) == NULL)
 				error("out of memory\n");
 		while (magic[magindex+1].cont_level != 0 && 
@@ -199,7 +199,7 @@ match(magic, nmagic, s, nbytes)
 					 */
 					if (++cont_level >= tmplen)
 						if ((tmpoff = 
-						    (int32 *) realloc(tmpoff,
+						    (int32_t *) realloc(tmpoff,
 						    tmplen += 20)) == NULL)
 							error("out of memory\n");
 				}
@@ -217,13 +217,13 @@ match(magic, nmagic, s, nbytes)
 	return returnval;  /* This is hit if -k is set or there is no match */
 }
 
-static int32
+static int32_t
 mprint(p, m)
 	union VALUETYPE *p;
 	struct magic *m;
 {
-	uint32 v;
-	int32 t=0 ;
+	uint32_t v;
+	int32_t t=0 ;
 
 
   	switch (m->type) {
@@ -245,8 +245,8 @@ mprint(p, m)
   	case BELONG:
   	case LELONG:
 		v = signextend(m, p->l);
-		(void) printf(m->desc, (uint32) v);
-		t = m->offset + sizeof(int32);
+		(void) printf(m->desc, (uint32_t) v);
+		t = m->offset + sizeof(int32_t);
   		break;
 
   	case STRING:
@@ -457,7 +457,7 @@ mconvert(p, m)
 	case BELONG:
 	case BEDATE:
 	case BELDATE:
-		p->l = (int32)
+		p->l = (int32_t)
 		    ((p->hl[0]<<24)|(p->hl[1]<<16)|(p->hl[2]<<8)|(p->hl[3]));
 		if (m->mask)
 			switch (m->mask_op&0x7F) {
@@ -524,7 +524,7 @@ mconvert(p, m)
 	case LELONG:
 	case LEDATE:
 	case LELDATE:
-		p->l = (int32)
+		p->l = (int32_t)
 		    ((p->hl[3]<<24)|(p->hl[2]<<16)|(p->hl[1]<<8)|(p->hl[0]));
 		if (m->mask)
 			switch (m->mask_op&0x7F) {
@@ -567,7 +567,7 @@ mconvert(p, m)
 
 static void
 mdebug(offset, str, len)
-	int32 offset;
+	int32_t offset;
 	char *str;
 	int len;
 {
@@ -584,7 +584,7 @@ mget(p, s, m, nbytes)
 	struct magic *m;
 	int nbytes;
 {
-	int32 offset = m->offset;
+	int32_t offset = m->offset;
 
 	if (m->type == REGEX) {
 	      /*
@@ -604,7 +604,7 @@ mget(p, s, m, nbytes)
 		 * the usefulness of padding with zeroes eludes me, it
 		 * might even cause problems
 		 */
-		int32 have = nbytes - offset;
+		int32_t have = nbytes - offset;
 		memset(p, 0, sizeof(union VALUETYPE));
 		if (have > 0)
 			memcpy(p, s + offset, have);
@@ -777,56 +777,56 @@ mget(p, s, m, nbytes)
 			if (m->in_offset)
 				switch (m->in_op&0x7F) {
 				case OPAND:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) &
 						 m->in_offset;
 					break;
 				case OPOR:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) |
 						 m->in_offset;
 					break;
 				case OPXOR:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) ^
 						 m->in_offset;
 					break;
 				case OPADD:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) +
 						 m->in_offset;
 					break;
 				case OPMINUS:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) -
 						 m->in_offset;
 					break;
 				case OPMULTIPLY:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) *
 						 m->in_offset;
 					break;
 				case OPDIVIDE:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) /
 						 m->in_offset;
 					break;
 				case OPMODULO:
-					offset = (int32)((p->hl[0]<<24)|
+					offset = (int32_t)((p->hl[0]<<24)|
 							 (p->hl[1]<<16)|
 							 (p->hl[2]<<8)|
 							 (p->hl[3])) %
@@ -840,56 +840,56 @@ mget(p, s, m, nbytes)
 			if (m->in_offset)
 				switch (m->in_op&0x7F) {
 				case OPAND:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) &
 						 m->in_offset;
 					break;
 				case OPOR:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) |
 						 m->in_offset;
 					break;
 				case OPXOR:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) ^
 						 m->in_offset;
 					break;
 				case OPADD:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) +
 						 m->in_offset;
 					break;
 				case OPMINUS:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) -
 						 m->in_offset;
 					break;
 				case OPMULTIPLY:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) *
 						 m->in_offset;
 					break;
 				case OPDIVIDE:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) /
 						 m->in_offset;
 					break;
 				case OPMODULO:
-					offset = (int32)((p->hl[3]<<24)|
+					offset = (int32_t)((p->hl[3]<<24)|
 							 (p->hl[2]<<16)|
 							 (p->hl[1]<<8)|
 							 (p->hl[0])) %
@@ -959,8 +959,8 @@ mcheck(p, m)
 	union VALUETYPE* p;
 	struct magic *m;
 {
-	uint32 l = m->value.l;
-	uint32 v;
+	uint32_t l = m->value.l;
+	uint32_t v;
 	int matched;
 
 	if ( (m->value.s[0] == 'x') && (m->value.s[1] == '\0') ) {
@@ -1091,7 +1091,7 @@ mcheck(p, m)
 					       v, l, matched);
 		}
 		else {
-			matched = (int32) v > (int32) l;
+			matched = (int32_t) v > (int32_t) l;
 			if (debug)
 				(void) fprintf(stderr, "%d > %d = %d\n",
 					       v, l, matched);
@@ -1106,7 +1106,7 @@ mcheck(p, m)
 					       v, l, matched);
 		}
 		else {
-			matched = (int32) v < (int32) l;
+			matched = (int32_t) v < (int32_t) l;
 			if (debug)
 				(void) fprintf(stderr, "%d < %d = %d\n",
 					       v, l, matched);
