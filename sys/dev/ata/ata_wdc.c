@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.56 2004/06/22 19:20:14 mycroft Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.57 2004/06/22 19:20:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.56 2004/06/22 19:20:14 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.57 2004/06/22 19:20:56 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
