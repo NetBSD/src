@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.258 2000/09/13 13:58:06 tron Exp $
+$NetBSD: pcidevs,v 1.259 2000/09/13 14:45:09 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -692,6 +692,11 @@ product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
 product AMD PBC756_IDE	0x7409	AMD756 IDE controller
 product AMD PBC756_PMC	0x740B	AMD756 Power Management Controller
 product AMD PBC756_USB	0x740C	AMD756 USB Host Controller
+
+/* American Megatrends products */
+product AMI MEGARAID	0x9010	MegaRAID
+product AMI MEGARAID2	0x9060	MegaRAID 2
+product AMI MEGARAID3	0x1960	MegaRAID 3
 
 /* Apple products */
 product APPLE BANDIT		0x0001	Bandit Host-PCI Bridge
