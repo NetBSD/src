@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.4 2004/07/04 00:21:55 mycroft Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.5 2004/08/08 05:16:16 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.4 2004/07/04 00:21:55 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.5 2004/08/08 05:16:16 briggs Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -249,6 +249,78 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+}
+
+void
+via_cpu_cacheinfo(struct cpu_info *ci)
+{
+	struct x86_cache_info *cai;
+	int family, model, stepping;
+	u_int descs[4];
+	u_int lfunc;
+
+	family = (ci->ci_signature >> 8) & 15;
+	model = CPUID2MODEL(ci->ci_signature);
+	stepping = CPUID2STEPPING(ci->ci_signature);
+
+	/*
+	 * Determine the largest extended function value.
+	 */
+	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
+	lfunc = descs[0];
+
+	/*
+	 * Determine L1 cache/TLB info.
+	 */
+	if (lfunc < 0x80000005) {
+		/* No L1 cache info available. */
+		return;
+	}
+
+	CPUID(0x80000005, descs[0], descs[1], descs[2], descs[3]);
+
+	cai = &ci->ci_cinfo[CAI_ITLB];
+	cai->cai_totalsize = VIA_L1_EBX_ITLB_ENTRIES(descs[1]);
+	cai->cai_associativity = VIA_L1_EBX_ITLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DTLB];
+	cai->cai_totalsize = VIA_L1_EBX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = VIA_L1_EBX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (4 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_DCACHE];
+	cai->cai_totalsize = VIA_L1_ECX_DC_SIZE(descs[2]);
+	cai->cai_associativity = VIA_L1_ECX_DC_ASSOC(descs[2]);
+	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[2]);
+	if (model == 9 && stepping == 8) {
+		/* Erratum: stepping 8 reports 4 when it should be 2 */
+		cai->cai_associativity = 2;
+	}
+
+	cai = &ci->ci_cinfo[CAI_ICACHE];
+	cai->cai_totalsize = VIA_L1_EDX_IC_SIZE(descs[3]);
+	cai->cai_associativity = VIA_L1_EDX_IC_ASSOC(descs[3]);
+	cai->cai_linesize = VIA_L1_EDX_IC_LS(descs[3]);
+	if (model == 9 && stepping == 8) {
+		/* Erratum: stepping 8 reports 4 when it should be 2 */
+		cai->cai_associativity = 2;
+	}
+
+	/*
+	 * Determine L2 cache/TLB info.
+	 */
+	if (lfunc < 0x80000006) {
+		/* No L2 cache info available. */
+		return;
+	}
+
+	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
+
+	cai = &ci->ci_cinfo[CAI_L2CACHE];
+	cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
 }
 
 void
