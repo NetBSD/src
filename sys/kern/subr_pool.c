@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.22 1999/04/04 17:17:31 chs Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.23 1999/04/06 23:32:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,10 @@ static struct pool phpool;
 int pool_inactive_time = 10;
 
 /* Next candidate for drainage (see pool_drain()) */
-static struct pool	*drainpp = NULL;
+static struct pool	*drainpp;
+
+/* This spin lock protects both pool_head and drainpp. */
+struct simplelock pool_head_slock = SIMPLELOCK_INITIALIZER;
 
 struct pool_item_header {
 	/* Page headers */
@@ -363,7 +366,6 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	/*
 	 * Initialize the pool structure.
 	 */
-	TAILQ_INSERT_TAIL(&pool_head, pp, pr_poollist);
 	TAILQ_INIT(&pp->pr_pagelist);
 	pp->pr_curpage = NULL;
 	pp->pr_npages = 0;
@@ -451,13 +453,17 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 
 	/*
 	 * Initialize private page header pool if we haven't done so yet.
+	 * XXX LOCKING.
 	 */
 	if (phpool.pr_size == 0) {
 		pool_init(&phpool, sizeof(struct pool_item_header), 0, 0,
 			  0, "phpool", 0, 0, 0, 0);
 	}
 
-	return;
+	/* Insert into the list of all pools. */
+	simple_lock(&pool_head_slock);
+	TAILQ_INSERT_TAIL(&pool_head, pp, pr_poollist);
+	simple_unlock(&pool_head_slock);
 }
 
 /*
@@ -483,8 +489,11 @@ pool_destroy(pp)
 			pr_rmpage(pp, ph);
 
 	/* Remove from global pool list */
+	simple_lock(&pool_head_slock);
 	TAILQ_REMOVE(&pool_head, pp, pr_poollist);
+	/* XXX Only clear this if we were drainpp? */
 	drainpp = NULL;
+	simple_unlock(&pool_head_slock);
 
 #ifdef POOL_DIAGNOSTIC
 	if ((pp->pr_roflags & PR_LOGGING) != 0)
@@ -1215,19 +1224,21 @@ pool_drain(arg)
 	void *arg;
 {
 	struct pool *pp;
-	int s = splimp();
+	int s;
 
-	/* XXX:lock pool head */
-	if (drainpp == NULL && (drainpp = TAILQ_FIRST(&pool_head)) == NULL) {
-		splx(s);
-		return;
-	}
+	s = splimp();
+	simple_lock(&pool_head_slock);
+
+	if (drainpp == NULL && (drainpp = TAILQ_FIRST(&pool_head)) == NULL)
+		goto out;
 
 	pp = drainpp;
 	drainpp = TAILQ_NEXT(pp, pr_poollist);
-	/* XXX:unlock pool head */
 
 	pool_reclaim(pp);
+
+ out:
+	simple_unlock(&pool_head_slock);
 	splx(s);
 }
 
