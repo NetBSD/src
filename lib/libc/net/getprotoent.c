@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoent.c,v 1.9 2004/02/19 19:27:26 christos Exp $	*/
+/*	$NetBSD: getprotoent.c,v 1.10 2005/01/07 22:22:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,10 +38,12 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getprotoent.c,v 1.9 2004/02/19 19:27:26 christos Exp $");
+__RCSID("$NetBSD: getprotoent.c,v 1.10 2005/01/07 22:22:49 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
+
 #include <netdb.h>
 
 #ifdef __weak_alias
@@ -50,22 +52,34 @@ __weak_alias(getprotoent,_getprotoent)
 __weak_alias(setprotoent,_setprotoent)
 #endif
 
+#ifdef _REENTRANT
+mutex_t _protoent_mutex = MUTEX_INITIALIZER;
+#endif
 struct protoent_data _protoent_data;
 
 void
 setprotoent(int f)
 {
+	mutex_lock(&_protoent_mutex);
 	setprotoent_r(f, &_protoent_data);
+	mutex_unlock(&_protoent_mutex);
 }
 
 void
 endprotoent(void)
 {
+	mutex_lock(&_protoent_mutex);
 	endprotoent_r(&_protoent_data);
+	mutex_unlock(&_protoent_mutex);
 }
 
 struct protoent *
 getprotoent(void)
 {
-	return getprotoent_r(&_protoent_data.proto, &_protoent_data);
+	struct protoent *p;
+
+	mutex_lock(&_protoent_mutex);
+	p = getprotoent_r(&_protoent_data.proto, &_protoent_data);
+	mutex_unlock(&_protoent_mutex);
+	return (p);
 }
