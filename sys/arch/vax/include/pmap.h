@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.51 2002/03/01 23:55:11 ragge Exp $	   */
+/*	$NetBSD: pmap.h,v 1.52 2002/03/10 22:32:31 ragge Exp $	   */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -55,8 +55,17 @@
  */
 #define LTOHPS		(PGSHIFT - VAX_PGSHIFT)
 #define LTOHPN		(1 << LTOHPS)
-#define PROCPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
-#define	NPTEPGS	(PROCPTSIZE / (sizeof(struct pte) * LTOHPN))
+#define PROCPTSIZE	((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
+#define	NPTEPGS		(PROCPTSIZE / (NBPG / (sizeof(struct pte) * LTOHPN)))
+
+/*
+ * Link struct if more than one process share pmap (like vfork).
+ * This is rarely used.
+ */
+struct pm_share {
+	struct pm_share	*ps_next;
+	struct pcb	*ps_pcb;
+};
 
 /*
  * Pmap structure
@@ -64,15 +73,20 @@
  */
 
 typedef struct pmap {
-	vaddr_t		 pm_stack;	/* Base of alloced p1 pte space */
-	int		 ref_count;	/* reference count	  */
+	struct pte	*pm_p1ap;	/* Base of alloced p1 pte space */
+	short		 pm_count;	/* reference count */
+	short		 pm_flags;
+#define	PM_ACTIVE	1		/* Process connected to pmap */
+	struct pte	*pm_p0base;	/* Pointer to saved ptes */
+	struct pm_share	*pm_share;	/* PCBs using this pmap */
 	struct pte	*pm_p0br;	/* page 0 base register */
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
 	long		 pm_p1lr;	/* page 1 length register */
+	u_char		*pm_pref;	/* pte reference count array */
+	struct pte	*pm_p1base;	/* Number of pages wired */
 	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
-	u_char		 pm_refcnt[NPTEPGS];	/* Refcount per pte page */
 } *pmap_t;
 
 /*
@@ -82,7 +96,7 @@ typedef struct pmap {
 
 struct pv_entry {
 	struct pv_entry *pv_next;	/* next pv_entry */
-	struct pte	*pv_pte;	/* pte for this physical page */
+	vaddr_t		 pv_vaddr;	/* address for this physical page */
 	struct pmap	*pv_pmap;	/* pmap this entry belongs to */
 	int		 pv_attr;	/* write/modified bits */
 };
@@ -158,8 +172,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #define pmap_remove(pmap, start, slut)	pmap_protect(pmap, start, slut, 0)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define pmap_deactivate(p)		/* Dont do anything */
-#define pmap_reference(pmap)		(pmap)->ref_count++
+#define pmap_reference(pmap)		(pmap)->pm_count++
 
 /* These can be done as efficient inline macros */
 #define pmap_copy_page(src, dst)			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.76 2002/03/04 02:43:25 simonb Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.77 2002/03/10 22:32:31 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -258,23 +258,6 @@ cpu_coredump(p, vp, cred, chdr)
 		chdr->c_nseg++;
 
 	return error;
-}
-
-/*
- * Kernel stack red zone need to be set when a process is swapped in.
- * Be sure that all pages are valid.
- */
-void
-cpu_swapin(p)
-	struct proc *p;
-{
-	struct pte *pte;
-	int i;
-
-	pte = kvtopte((vaddr_t)p->p_addr);
-	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
-		pte[i].pg_v = 1;
-	kvtopte((vaddr_t)p->p_addr + REDZONEADDR)->pg_v = 0;
 }
 
 /*
