@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.22 1997/06/08 19:48:55 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.23 1997/06/09 01:23:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -423,6 +423,9 @@ pdq_pci_attach(
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;
     const char *intrstr;
+    bus_space_tag_t iot, memt;
+    bus_space_handle_t ioh, memh;
+    int ioh_valid, memh_valid;
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {
@@ -435,16 +438,30 @@ pdq_pci_attach(
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
-    /*
-     * XXX Previous NetBSD code preferred mem-mapped space,
-     * XXX whereas this new code from Matt Thomas prefers
-     * XXX i/o-mapped space.  Check up on this.
-     */
-    if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-		       &sc->sc_csrtag, &sc->sc_membase, NULL, NULL)
-	&& pci_mapreg_map(pa, PCI_CBMA,
-			  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			  &sc->sc_csrtag, &sc->sc_membase, NULL, NULL)) {
+    ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+		 &iot, &ioh, NULL, NULL) == 0);
+    memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
+		  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+		  &memt, &memh, NULL, NULL) == 0);
+
+#if defined(DEFPA_IOMAPED)
+    if (ioh_valid) {
+	sc->sc_csrtag = iot;
+	sc->sc_membase = ioh;
+    } else if (memh_valid) {
+	sc->sc_csrtag = memt;
+	sc->sc_membase = memh;
+    }
+#else /* defined(DEFPA_IOMAPPED) */
+    if (memh_valid) {
+	sc->sc_csrtag = memt;
+	sc->sc_membase = memh;
+    } else if (ioh_valid) {
+	sc->sc_csrtag = iot;
+	sc->sc_membase = ioh;
+    }
+#endif /* DEFPA_IOMAPPED */
+    else {
         printf(": unable to map device registers\n");
         return;
     }
