@@ -1,0 +1,17 @@
+#	$NetBSD: std.integrator,v 1.1 2001/10/27 16:14:44 rearnsha Exp $
+#
+# standard NetBSD/netwinder options
+
+machine	evbarm arm
+
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT
+options		EXEC_ELF32
+
+# To support easy transit to ../arch/arm/arm32
+options		PROG32
+options		ARM32
+
+makeoptions	LOADADDRESS="0xa0100000"
+makeoptions	LINKENTRY="-e 0x10000"
+makeoptions	BOARDTYPE="integrator"
