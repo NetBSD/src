@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.3 1998/10/18 09:52:16 tsubai Exp $	*/
+/*	$NetBSD: akbd.c,v 1.4 1998/10/20 14:56:30 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -212,7 +212,7 @@ akbdattach(parent, self, aux)
 	case ADB_PBEXTJAPKBD:
 		printf("PowerBook extended keyboard (Japanese layout)\n");
 		break;
-	case ADB_JISKBDII:
+	case ADB_JPKBDII:
 		printf("keyboard II (Japanese layout)\n");
 		break;
 	case ADB_PBEXTKBD:
@@ -223,6 +223,9 @@ akbdattach(parent, self, aux)
 #ifdef notyet
 		blinkleds(sc);
 #endif
+		break;
+	case ADB_PBJPKBD:
+		printf("PowerBook keyboard (Japanese layout)\n");
 		break;
 	default:
 		printf("mapped device (%d)\n", sc->handler_id);
@@ -543,7 +546,7 @@ akbd_cngetc(v, type, data)
 	adb_polling = 1;
 
 	while (polledkey == -1) {
-		adb_intr_cuda();
+		adb_intr();
 		DELAY(10000);				/* XXX */
 	}
 
