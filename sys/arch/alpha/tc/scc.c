@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.8 1995/06/28 04:30:34 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.9 1995/08/03 00:52:17 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -248,7 +248,7 @@ scc_alphaintr(onoff)
 		    ASIC_CSR_DMAEN_T2 | ASIC_CSR_DMAEN_R2);
 #endif
 	}
-	MB();
+	wbflush();
 }
 
 void
@@ -804,7 +804,7 @@ sccintr(xxxunit)
 		dp = &sc->scc_pdma[chan];
 		if (dp->p_mem < dp->p_end) {
 			SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
-			MB();
+			wbflush();
 		} else {
 			tp->t_state &= ~TS_BUSY;
 			if (tp->t_state & TS_FLUSH)
@@ -825,7 +825,7 @@ sccintr(xxxunit)
 				cc = sc->scc_wreg[chan].wr1 & ~ZSWR1_TIE;
 				SCC_WRITE_REG(regs, chan, SCC_WR1, cc);
 				sc->scc_wreg[chan].wr1 = cc;
-				MB();
+				wbflush();
 			}
 		}
 	    } else if (rr2 == SCC_RR2_A_RECV_DONE ||
@@ -1011,7 +1011,7 @@ sccstart(tp)
 #endif
 		SCC_WRITE_DATA(regs, chan, *dp->p_mem++);
 	}
-	MB();
+	wbflush();
 out:
 	splx(s);
 }
@@ -1214,7 +1214,7 @@ sccPutc(dev, c)
 	 * Send the char.
 	 */
 	SCC_WRITE_DATA(regs, line, c);
-	MB();
+	wbflush();
 	splx(s);
 
 	return;

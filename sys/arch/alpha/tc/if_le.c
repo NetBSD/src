@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6 1995/06/28 02:30:25 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7 1995/08/03 00:52:13 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -68,7 +68,7 @@
 
 /* access LANCE registers */
 void lewritereg();
-#define	LERDWR(cntl, src, dst)	{ (dst) = (src); MB(); }
+#define	LERDWR(cntl, src, dst)	{ (dst) = (src); wbflush(); }
 #define	LEWREG(src, dst)	lewritereg(&(dst), (src))
 
 #define LE_OFFSET_RAM		0x0
@@ -192,7 +192,7 @@ leattach(parent, self, aux)
 			(((u_int64_t)le_iomem >> 29) & 0x1f);
 		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
 		    ASIC_CSR_DMAEN_LANCE;
-		MB();
+		wbflush();
 	} else {
 		/* It's on the turbochannel proper */
 		sc->sc_r1 = (struct lereg1 *)
@@ -226,7 +226,7 @@ leattach(parent, self, aux)
 	BUS_INTR_ESTABLISH(ca, leintr, sc);
 	/* XXX YEECH!!! */
 	*(volatile u_int *)ASIC_REG_IMSK(asic_base) |= ASIC_INTR_LANCE;
-	MB();
+	wbflush();
 }
 
 /*
@@ -243,7 +243,7 @@ lewritereg(regptr, val)
 
 	while (*regptr != val) {
 		*regptr = val;
-		MB();
+		wbflush();
 		if (++i > 10000) {
 			printf("le: Reg did not settle (to x%x): x%x\n", val,
 			    *regptr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.4 1995/07/24 07:18:27 cgd Exp $	*/
+/*	$NetBSD: esp.c,v 1.5 1995/08/03 00:52:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -142,9 +142,9 @@ espreadregs(sc)
 	s = splhigh();
 
 	/* Only the stepo bits are of interest. */
-	sc->sc_espstep = RR(esp->esp_step) & ESPSTEP_MASK;	MB();
-	sc->sc_espstat = RR(esp->esp_stat);			MB();
-	sc->sc_espintr = RR(esp->esp_intr);			MB();
+	sc->sc_espstep = RR(esp->esp_step) & ESPSTEP_MASK;	wbflush();
+	sc->sc_espstat = RR(esp->esp_stat);			wbflush();
+	sc->sc_espintr = RR(esp->esp_intr);			wbflush();
 
 	/* Clear the TCDS interrupt bit. */
 	(void)tcds_scsi_isintr(sc->sc_dev.dv_unit, 1);
@@ -166,7 +166,7 @@ espgetbyte(sc)
 	u_int esp_fflag, esp_fifo;
 
 	ESP_TRACE(("esp_getbyte "));
-	esp_fflag = RR(esp->esp_fflag);				MB();
+	esp_fflag = RR(esp->esp_fflag);				wbflush();
 	if (!(esp_fflag & ESPFIFO_FF)) {
 xxx:
 		ESPCMD(sc, ESPCMD_TRANS);
@@ -178,12 +178,12 @@ xxx:
 		 */
 		espreadregs(sc);
 	}
-	esp_fflag = RR(esp->esp_fflag);				MB();
+	esp_fflag = RR(esp->esp_fflag);				wbflush();
 	if (!(esp_fflag & ESPFIFO_FF)) {
 		printf("error...\n");
 		goto xxx;
 	}
-	esp_fifo = RR(esp->esp_fifo);				MB();
+	esp_fifo = RR(esp->esp_fifo);				wbflush();
 	return esp_fifo;
 }
 
@@ -210,20 +210,20 @@ espselect(sc, target, lun, cmd, clen)
 	 * The docs say the target register is never reset, and I
 	 * can't think of a better place to set it
 	 */
-	esp->esp_id = target;					MB();
-	esp->esp_syncoff = sc->sc_tinfo[target].offset;		MB();
-	esp->esp_synctp = 250 / sc->sc_tinfo[target].period;	MB();
+	esp->esp_id = target;					wbflush();
+	esp->esp_syncoff = sc->sc_tinfo[target].offset;		wbflush();
+	esp->esp_synctp = 250 / sc->sc_tinfo[target].period;	wbflush();
 
 	/*
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
 	 */
-	esp->esp_fifo = ESP_MSG_IDENTIFY(lun);			MB();
+	esp->esp_fifo = ESP_MSG_IDENTIFY(lun);			wbflush();
 
 	/* Now the command into the FIFO */
 	for (i = 0; i < clen; i++) {
 		esp->esp_fifo = (u_int)*cmd++;
-		MB();
+		wbflush();
 	}
 
 	/* And get the targets attention */
@@ -398,27 +398,27 @@ espattach(parent, self, aux)
 #ifdef SPARC_DRIVER
 	sc->sc_cfg2 = ESPCFG2_SCSI2 | ESPCFG2_RSVD;
 	sc->sc_cfg3 = ESPCFG3_CDB;
-	sc->sc_reg->esp_cfg2 = sc->sc_cfg2;			MB();
+	sc->sc_reg->esp_cfg2 = sc->sc_cfg2;			wbflush();
 
-	esp_cfg2 = RR(sc->sc_reg->esp_cfg2);			MB();
+	esp_cfg2 = RR(sc->sc_reg->esp_cfg2);			wbflush();
 	if ((esp_cfg2 & ~ESPCFG2_RSVD) !=
 	    (ESPCFG2_SCSI2 | ESPCFG2_RPE)) {
 		printf(": ESP100");
 		sc->sc_rev = ESP100;
 	} else {
 		sc->sc_cfg2 = 0;
-		sc->sc_reg->esp_cfg2 = sc->sc_cfg2;		MB();
+		sc->sc_reg->esp_cfg2 = sc->sc_cfg2;		wbflush();
 		sc->sc_cfg3 = 0;
-		sc->sc_reg->esp_cfg3 = sc->sc_cfg3;		MB();
+		sc->sc_reg->esp_cfg3 = sc->sc_cfg3;		wbflush();
 		sc->sc_cfg3 = 5;
-		sc->sc_reg->esp_cfg3 = sc->sc_cfg3;		MB();
-		esp_cfg3 = RR(sc->sc_reg->esp_cfg3);		MB();
+		sc->sc_reg->esp_cfg3 = sc->sc_cfg3;		wbflush();
+		esp_cfg3 = RR(sc->sc_reg->esp_cfg3);		wbflush();
 		if (esp_cfg3 != 5) {
 			printf(": ESP100A");
 			sc->sc_rev = ESP100A;
 		} else {
 			sc->sc_cfg3 = 0;
-			sc->sc_reg->esp_cfg3 = sc->sc_cfg3;	MB();
+			sc->sc_reg->esp_cfg3 = sc->sc_cfg3;	wbflush();
 			printf(": ESP200");
 			sc->sc_rev = ESP200;
 		}
@@ -507,30 +507,30 @@ esp_reset(sc)
 	/* ESP: do these backwards, and fall through */
 	switch (sc->sc_rev) {
 	case NCR53C94:
-		esp->esp_cfg1 = sc->sc_cfg1;			MB();
-		esp->esp_cfg2 = sc->sc_cfg2;			MB();
-		esp->esp_cfg3 = sc->sc_cfg3;			MB();
-		esp->esp_ccf = sc->sc_ccf;			MB();
-		esp->esp_syncoff = 0;				MB();
-		esp->esp_timeout = sc->sc_timeout;		MB();
+		esp->esp_cfg1 = sc->sc_cfg1;			wbflush();
+		esp->esp_cfg2 = sc->sc_cfg2;			wbflush();
+		esp->esp_cfg3 = sc->sc_cfg3;			wbflush();
+		esp->esp_ccf = sc->sc_ccf;			wbflush();
+		esp->esp_syncoff = 0;				wbflush();
+		esp->esp_timeout = sc->sc_timeout;		wbflush();
 		break;
 	case ESP200:
-		esp->esp_cfg3 = sc->sc_cfg3;			MB();
+		esp->esp_cfg3 = sc->sc_cfg3;			wbflush();
 	case ESP100A:
-		esp->esp_cfg2 = sc->sc_cfg2;			MB();
+		esp->esp_cfg2 = sc->sc_cfg2;			wbflush();
 	case ESP100:
-		esp->esp_cfg1 = sc->sc_cfg1;			MB();
-		esp->esp_ccf = sc->sc_ccf;			MB();
-		esp->esp_syncoff = 0;				MB();
-		esp->esp_timeout = sc->sc_timeout;		MB();
+		esp->esp_cfg1 = sc->sc_cfg1;			wbflush();
+		esp->esp_ccf = sc->sc_ccf;			wbflush();
+		esp->esp_syncoff = 0;				wbflush();
+		esp->esp_timeout = sc->sc_timeout;		wbflush();
 		break;
 	default:
 		printf("%s: unknown revision code, assuming ESP100\n",
 		    sc->sc_dev.dv_xname);
-		esp->esp_cfg1 = sc->sc_cfg1;			MB();
-		esp->esp_ccf = sc->sc_ccf;			MB();
-		esp->esp_syncoff = 0;				MB();
-		esp->esp_timeout = sc->sc_timeout;		MB();
+		esp->esp_cfg1 = sc->sc_cfg1;			wbflush();
+		esp->esp_ccf = sc->sc_ccf;			wbflush();
+		esp->esp_syncoff = 0;				wbflush();
+		esp->esp_timeout = sc->sc_timeout;		wbflush();
 	}
 }
 
@@ -720,7 +720,7 @@ espphase(sc)
 		return BUSFREE_PHASE;
 
 	if (sc->sc_rev != ESP100) {
-		esp_stat = RR(sc->sc_reg->esp_stat);			MB();
+		esp_stat = RR(sc->sc_reg->esp_stat);		wbflush();
 		return (esp_stat & ESPSTAT_PHASE);
 	}
 
@@ -1143,10 +1143,10 @@ esp_msgin(sc)
 					|= (1<<sc_link->lun);
 				esp->esp_syncoff =
 				    sc->sc_tinfo[sc_link->target].offset;
-								MB();
+								wbflush();
 				esp->esp_synctp =
 				    250 / sc->sc_tinfo[sc_link->target].period;
-								MB();
+								wbflush();
 				ESP_MISC(("... found ecb"));
 				sc->sc_state = ESP_HASNEXUS;
 			}
@@ -1325,7 +1325,7 @@ espintr(__sc)
 		 || sc->sc_espstat & ESPSTAT_GE) {
 			/* SCSI Reset */
 			if (sc->sc_espintr & ESPINTR_SBR) {
-				esp_fflag = RR(esp->esp_fflag);	MB();
+				esp_fflag = RR(esp->esp_fflag);	wbflush();
 				if (esp_fflag & ESPFIFO_FF) {
 					ESPCMD(sc, ESPCMD_FLUSH);
 					DELAY(1);
@@ -1338,7 +1338,7 @@ espintr(__sc)
 
 			if (sc->sc_espstat & ESPSTAT_GE) {
 				/* no target ? */
-				esp_fflag = RR(esp->esp_fflag);	MB();
+				esp_fflag = RR(esp->esp_fflag);	wbflush();
 				if (esp_fflag & ESPFIFO_FF) {
 					ESPCMD(sc, ESPCMD_FLUSH);
 					DELAY(1);
@@ -1357,7 +1357,7 @@ espintr(__sc)
 				/* illegal command, out of sync ? */
 				printf("%s: illegal command\n",
 				    sc->sc_dev.dv_xname);
-				esp_fflag = RR(esp->esp_fflag);	MB();
+				esp_fflag = RR(esp->esp_fflag);	wbflush();
 				if (esp_fflag & ESPFIFO_FF) {
 					ESPCMD(sc, ESPCMD_FLUSH);
 					DELAY(1);
@@ -1400,7 +1400,7 @@ espintr(__sc)
 
 		if (sc->sc_espintr & ESPINTR_DIS) {
 			ESP_MISC(("disc "));
-			esp_fflag = RR(esp->esp_fflag);		MB();
+			esp_fflag = RR(esp->esp_fflag);		wbflush();
 			if (esp_fflag & ESPFIFO_FF) {
 				ESPCMD(sc, ESPCMD_FLUSH);
 				DELAY(1);
@@ -1510,7 +1510,8 @@ espintr(__sc)
 				break;
 			} else if (sc->sc_espintr & ESPINTR_FC) {
 				if (sc->sc_espstep != ESPSTEP_DONE) {
-					esp_fflag = RR(esp->esp_fflag);	MB();
+					esp_fflag = RR(esp->esp_fflag);
+					wbflush();
 					if (esp_fflag & ESPFIFO_FF) {
 						ESPCMD(sc, ESPCMD_FLUSH);
 						DELAY(1);
@@ -1551,7 +1552,7 @@ espintr(__sc)
 			/* well, this means send the command again */
 			ESP_PHASE(("COMMAND_PHASE 0x%02x (%d) ",
 				ecb->cmd.opcode, ecb->clen));
-			esp_fflag = RR(esp->esp_fflag);		MB();
+			esp_fflag = RR(esp->esp_fflag);		wbflush();
 			if (esp_fflag & ESPFIFO_FF) {
 				ESPCMD(sc, ESPCMD_FLUSH);
 				DELAY(1);
