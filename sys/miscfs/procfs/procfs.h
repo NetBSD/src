@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.48 2003/08/07 16:32:41 agc Exp $	*/
+/*	$NetBSD: procfs.h,v 1.49 2003/09/27 13:29:02 darcy Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -74,34 +74,36 @@
 /* This also pulls in __HAVE_PROCFS_MACHDEP */
 #include <sys/ptrace.h>
 
+#ifdef _KERNEL
 /*
  * The different types of node in a procfs filesystem
  */
 typedef enum {
-	Proot,		/* the filesystem root */
-	Pcurproc,	/* symbolic link for curproc */
-	Pself,		/* like curproc, but this is the Linux name */
-	Pproc,		/* a process-specific sub-directory */
-	Pfile,		/* the executable file */
-	Pmem,		/* the process's memory image */
-	Pregs,		/* the process's register set */
-	Pfpregs,	/* the process's FP register set */
-	Pctl,		/* process control */
-	Pstat,		/* process status (if -o linux) */
-	Pstatus,	/* process status */
-	Pnote,		/* process notifier */
-	Pnotepg,	/* process group notifier */
-	Pmap,		/* memory map */
-	Pcmdline,	/* process command line args */
-	Pmeminfo,	/* system memory info (if -o linux) */
-	Pcpuinfo,	/* CPU info (if -o linux) */
-	Pmaps,		/* memory map, Linux style (if -o linux) */
-	Pfd,		/* a directory containing the processes open fd's */
-	Puptime,	/* elapsed time since (if -o linux) */
+	PFSroot,	/* the filesystem root */
+	PFScurproc,	/* symbolic link for curproc */
+	PFSself,	/* like curproc, but this is the Linux name */
+	PFSproc,	/* a process-specific sub-directory */
+	PFSfile,	/* the executable file */
+	PFSmem,		/* the process's memory image */
+	PFSregs,	/* the process's register set */
+	PFSfpregs,	/* the process's FP register set */
+	PFSctl,		/* process control */
+	PFSstat,	/* process status (if -o linux) */
+	PFSstatus,	/* process status */
+	PFSnote,	/* process notifier */
+	PFSnotepg,	/* process group notifier */
+	PFSmap,		/* memory map */
+	PFScmdline,	/* process command line args */
+	PFSmeminfo,	/* system memory info (if -o linux) */
+	PFScpuinfo,	/* CPU info (if -o linux) */
+	PFSmaps,	/* memory map, Linux style (if -o linux) */
+	PFSfd,		/* a directory containing the processes open fd's */
+	PFSuptime,	/* elapsed time since (if -o linux) */
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODE_TYPES
 #endif
 } pfstype;
+#endif
 
 /*
  * control data for the proc file system.
@@ -143,7 +145,7 @@ struct procfs_args {
 #define UIO_MX 32
 
 #define PROCFS_FILENO(pid, type, fd) \
-    (((type) < Pproc) ? ((type) + 2) : \
+    (((type) < PFSproc) ? ((type) + 2) : \
 	(((fd) == -1) ? ((((pid)+1) << 5) + ((int) (type))) : \
 	((((pid)+1) << 16) | ((fd) << 5) | ((int) (type)))))
 
