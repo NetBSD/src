@@ -31,15 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/* static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93"; */
-static char rcsid[] = "$NetBSD: chroot.c,v 1.5 1997/03/06 07:00:52 mikel Exp $";
+#if 0
+static char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
+#else
+__RCSID("$NetBSD: chroot.c,v 1.6 1997/10/18 04:06:32 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,7 +55,8 @@ static char rcsid[] = "$NetBSD: chroot.c,v 1.5 1997/03/06 07:00:52 mikel Exp $";
 #include <string.h>
 #include <unistd.h>
 
-void usage __P((void));
+int	main __P((int, char **));
+void	usage __P((void));
 
 int
 main(argc, argv)
