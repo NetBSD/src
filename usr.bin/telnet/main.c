@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2000/01/31 14:25:43 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.12.4.1 2000/06/22 07:09:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2000/01/31 14:25:43 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.12.4.1 2000/06/22 07:09:06 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,12 @@ __RCSID("$NetBSD: main.c,v 1.12 2000/01/31 14:25:43 itojun Exp $");
 #include "ring.h"
 #include "externs.h"
 #include "defines.h"
+#ifdef AUTHENTICATION
+#include <libtelnet/auth.h>
+#endif
+#ifdef ENCRYPTION
+#include <libtelnet/encrypt.h>
+#endif
 
 /* These values need to be the same as defined in libtelnet/kerberos5.c */
 /* Either define them in both places, or put in some common header file. */
@@ -110,6 +116,9 @@ usage()
 # endif
 #else
 	    "[-r] ",
+#endif
+#ifdef	ENCRYPTION
+	    "[-x] "
 #endif
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 	    "[-P policy] [host-name [port]]"
@@ -293,9 +302,14 @@ main(argc, argv)
 #endif
 			break;
 		case 'x':
+#ifdef	ENCRYPTION
+			encrypt_auto(1);
+			decrypt_auto(1);
+#else	/* ENCRYPTION */
 			fprintf(stderr,
 			    "%s: Warning: -x ignored, no ENCRYPT support.\n",
 								prompt);
+#endif	/* ENCRYPTION */
 			break;
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
 		case 'P':

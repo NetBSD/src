@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 2000/02/01 02:23:20 assar Exp $	*/
+/*	$NetBSD: misc.c,v 1.9.4.1 2000/06/22 07:09:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 2000/02/01 02:23:20 assar Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9.4.1 2000/06/22 07:09:03 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: misc.c,v 1.9 2000/02/01 02:23:20 assar Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include "misc.h"
+#include "auth.h"
+#include "encrypt.h"
 
 const char *RemoteHostName;
 const char *LocalHostName;
@@ -64,6 +66,9 @@ auth_encrypt_init(local, remote, name, server)
 #if	defined(AUTHENTICATION)
 	auth_init(name, server);
 #endif
+#ifdef	ENCRYPTION
+	encrypt_init(name, server);
+#endif	/* ENCRYPTION */
 	if (UserNameRequested) {
 		free(UserNameRequested);
 		UserNameRequested = 0;
