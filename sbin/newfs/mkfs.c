@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.21 1995/04/12 21:24:31 mycroft Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.22 1995/05/06 06:55:34 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$NetBSD: mkfs.c,v 1.21 1995/04/12 21:24:31 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mkfs.c,v 1.22 1995/05/06 06:55:34 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -599,7 +599,7 @@ next:
 		if (cylno % 8 == 0)
 			printf("\n");
 		printf(" %d,", fsbtodb(&sblock, cgsblock(&sblock, cylno)));
-		fflush(stderr);
+		fflush(stdout);
 	}
 	if (!mfs)
 		printf("\n");
