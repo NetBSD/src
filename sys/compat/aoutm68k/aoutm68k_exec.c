@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_exec.c,v 1.1 2000/12/02 20:40:03 scw Exp $	*/
+/*	$NetBSD: aoutm68k_exec.c,v 1.2 2000/12/08 20:07:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ extern char sigcode[], esigcode[];
 
 
 struct emul emul_netbsd_aoutm68k = {
-	"netbsd",
+	"aoutm68k",
 	"/emul/aout",
 	NULL,
 	sendsig,
