@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.34 2000/12/03 01:27:03 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.35 2000/12/03 02:19:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.34 2000/12/03 01:27:03 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.35 2000/12/03 02:19:32 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.34 2000/12/03 01:27:03 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.35 2000/12/03 02:19:32 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -120,6 +120,11 @@ __RCSID("$NetBSD: job.c,v 1.34 2000/12/03 01:27:03 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#ifndef RMT_WILL_WATCH
+#ifndef USE_SELECT
+#include <poll.h>
+#endif
+#endif
 #include "make.h"
 #include "hash.h"
 #include "dir.h"
@@ -232,9 +237,21 @@ STATIC Boolean	jobFull;    	/* Flag to tell when the job table is full. It
 				 * running jobs equals the maximum allowed or
 				 * (2) a job can only be run locally, but
 				 * nLocal equals maxLocal */
+/*
+ * Set of descriptors of pipes connected to
+ * the output channels of children
+ */
 #ifndef RMT_WILL_WATCH
-static fd_set  	outputs;    	/* Set of descriptors of pipes connected to
-				 * the output channels of children */
+#ifdef USE_SELECT
+static fd_set  	outputs;
+#else
+static struct pollfd *fds = NULL;
+static int nfds = 0;
+static int maxfds = 0;
+static void watchfd __P((int));
+static void clearfd __P((int));
+static int readyfd __P((int));
+#endif
 #endif
 
 STATIC GNode   	*lastNode;	/* The node for which output was most recently
@@ -704,7 +721,11 @@ JobClose(job)
 #ifdef RMT_WILL_WATCH
 	Rmt_Ignore(job->inPipe);
 #else
+#ifdef USE_SELECT
 	FD_CLR(job->inPipe, &outputs);
+#else
+	clearfd(job->inPipe);
+#endif
 #endif
 	if (job->outPipe != job->inPipe) {
 	   (void) close(job->outPipe);
@@ -1310,7 +1331,11 @@ JobExec(job, argv)
 #ifdef RMT_WILL_WATCH
 	    Rmt_Watch(job->inPipe, JobLocalInput, job);
 #else
+#ifdef USE_SELECT
 	    FD_SET(job->inPipe, &outputs);
+#else
+	    watchfd(job->inPipe);
+#endif
 #endif /* RMT_WILL_WATCH */
 	}
 
@@ -1903,6 +1928,11 @@ JobStart(gn, flags, previous)
 	    if (pipe(fd) == -1)
 		Punt("Cannot create pipe: %s", strerror(errno));
 	    job->inPipe = fd[0];
+#ifdef USE_SELECT
+	    if (job->inPipe >= FD_SETSIZE)
+		Punt("Ran out of fd_set slots; " 
+		    "recompile with a larger FD_SETSIZE.");
+#endif
 	    job->outPipe = fd[1];
 	    (void) fcntl(job->inPipe, F_SETFD, 1);
 	    (void) fcntl(job->outPipe, F_SETFD, 1);
@@ -2330,9 +2360,7 @@ Job_CatchChildren(block)
 void
 Job_CatchOutput()
 {
-    int           	  nfds;
-    struct timeval	  timeout;
-    fd_set           	  readfds;
+    int           	  nready;
     register LstNode	  ln;
     register Job   	  *job;
 #ifdef RMT_WILL_WATCH
@@ -2364,23 +2392,37 @@ Job_CatchOutput()
     }
 #else
     if (usePipes) {
+#ifdef USE_SELECT
+	struct timeval	  timeout;
+	fd_set         	  readfds;
+
 	readfds = outputs;
 	timeout.tv_sec = SEL_SEC;
 	timeout.tv_usec = SEL_USEC;
 
-	if ((nfds = select(FD_SETSIZE, &readfds, (fd_set *) 0,
+	if ((nready = select(FD_SETSIZE, &readfds, (fd_set *) 0,
 			   (fd_set *) 0, &timeout)) <= 0)
 	    return;
+#else
+	if ((nready = poll(fds, nfds, 0)) <= 0)
+	    return;
+#endif
 	else {
 	    if (Lst_Open(jobs) == FAILURE) {
 		Punt("Cannot open job table");
 	    }
-	    while (nfds && (ln = Lst_Next(jobs)) != NILLNODE) {
+	    while (nready && (ln = Lst_Next(jobs)) != NILLNODE) {
 		job = (Job *) Lst_Datum(ln);
-		if (FD_ISSET(job->inPipe, &readfds)) {
+#ifdef USE_SELECT
+		if (FD_ISSET(job->inPipe, &readfds))
+#else
+		if (readyfd(job->inPipe))
+#endif
+		{
 		    JobDoOutput(job, FALSE);
-		    nfds -= 1;
+		    nready -= 1;
 		}
+		
 	    }
 	    Lst_Close(jobs);
 	}
@@ -3157,3 +3199,47 @@ JobRestartJobs()
 	JobRestart((Job *)Lst_DeQueue(stoppedJobs));
     }
 }
+
+#ifndef RMT_WILL_WATCH
+#ifndef USE_SELECT
+static void
+watchfd(fd)
+    int fd;
+{
+    if (fds == NULL)
+	fds = emalloc(sizeof(struct pollfd) * (maxfds = 256));
+    else if (nfds == maxfds)
+	fds = erealloc(fds, sizeof(struct pollfd) * (maxfds += 256));
+
+    fds[nfds].fd = fd;
+    fds[nfds++].events = POLLIN;
+}
+
+static void
+clearfd(fd)
+    int fd;
+{
+    int i;
+    for (i = 0; i < nfds; i++)
+	if (fds[i].fd == fd) {
+	    nfds--;
+	    (void)memcpy(&fds[i], &fds[i+1], (nfds-i) * sizeof(struct pollfd));
+	    return;
+	}
+    Punt("File descriptor %d not found in set", fd);
+}
+
+static int
+readyfd(fd)
+    int fd;
+{
+    int i;
+    for (i = 0; i < nfds; i++)
+	if (fds[i].fd == fd)
+	    return (fds[i].revents & POLLIN) != 0;
+    Punt("File descriptor %d not found in set", fd);
+    /*NOTREACHED*/
+    return -1;
+}
+#endif
+#endif
