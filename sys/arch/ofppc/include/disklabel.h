@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.1 1996/09/30 16:34:22 ws Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.2 1997/04/16 22:55:10 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,9 +61,7 @@ struct mbr_partition {
 
 /* Known partition types: */
 #define	MBR_EXTENDED	0x05		/* Extended partition */
-#define	MBR_NETBSD_LE	0xa5		/* NetBSD little endian partition */
-#define	MBR_NETBSD_BE	0xa6		/* NetBSD big endian partition */
-#define	MBR_NETBSD	MBR_NETBSD_BE	/* on this machine, we default to BE */
+#define	MBR_NETBSD	0xa5		/* NetBSD partition */
 
 /* For compatibility reasons (mainly for fdisk): */
 #define	dos_partition	mbr_partition
