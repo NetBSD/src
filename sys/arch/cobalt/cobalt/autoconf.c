@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 2003/07/15 01:29:21 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11 2003/09/12 17:55:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/07/15 01:29:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/09/12 17:55:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,9 @@ int		cpuspeed = 100;		/* Until we know more precisely. */
 void
 cpu_configure()
 {
+
+	softintr_init();
+
 	(void)splhigh();
 
 	if (config_rootfound("mainbus", "mainbus") == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2003/09/12 15:03:24 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2003/09/12 17:55:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -32,6 +32,7 @@
 #define	IPL_BIO		1	/* Disable block I/O interrupts. */
 #define	IPL_NET		2	/* Disable network interrupts. */
 #define	IPL_TTY		3	/* Disable terminal interrupts. */
+#define	IPL_SERIAL	3	/* Disable serial hardware interrupts. */
 #define	IPL_VM		4	/* Memory allocation */
 #define	IPL_CLOCK	5	/* Disable clock interrupts. */
 #define	IPL_STATCLOCK	6	/* Disable profiling interrupts. */
@@ -44,12 +45,19 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
-/* Soft interrupt masks. */
-#define SIR_CLOCK	31
-#define SIR_NET		30
-#define SIR_CLOCKMASK	((1 << SIR_CLOCK))
-#define SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
-#define SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK)
+/* Soft interrupt numbers. */
+#define	IPL_SOFT	0	/* generic software interrupts */
+#define	IPL_SOFTSERIAL	1	/* serial software interrupts */
+#define	IPL_SOFTNET	2	/* network software interrupts */
+#define	IPL_SOFTCLOCK	3	/* clock software interrupts */
+#define	_IPL_NSOFT	4
+
+#define	IPL_SOFTNAMES {							\
+	"misc",								\
+	"serial",							\
+	"net",								\
+	"clock",							\
+}
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -64,35 +72,48 @@ extern void		_splnone(void);
 extern void		_setsoftintr(int);
 extern void		_clrsoftintr(int);
 
-#define setsoftclock()	_setsoftintr(MIPS_SOFT_INT_MASK_0)
-#define setsoftnet()	_setsoftintr(MIPS_SOFT_INT_MASK_1)
-#define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
-#define clearsoftnet()	_clrsoftintr(MIPS_SOFT_INT_MASK_1)
-
 #define splhigh()       _splraise(MIPS_INT_MASK)
 #define spl0()          (void)_spllower(0)
 #define splx(s)         (void)_splset(s)
-#define SPLSOFT		MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1
-#define SPLBIO		SPLSOFT | MIPS_INT_MASK_4
-#define SPLNET		SPLBIO | MIPS_INT_MASK_1 | MIPS_INT_MASK_2
-#define SPLTTY		SPLNET | MIPS_INT_MASK_3
-#define SPLCLOCK	SPLTTY | MIPS_INT_MASK_0 | MIPS_INT_MASK_5
-#define splbio()        _splraise(SPLBIO)
-#define splnet()        _splraise(SPLNET)
-#define spltty()        _splraise(SPLTTY)
-#define splclock()      _splraise(SPLCLOCK)
+#define SPLSOFT		(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1)
+#define SPLBIO		(SPLSOFT | MIPS_INT_MASK_4)
+#define SPLNET		(SPLBIO | MIPS_INT_MASK_1 | MIPS_INT_MASK_2)
+#define SPLTTY		(SPLNET | MIPS_INT_MASK_3)
+#define SPLCLOCK	(SPLTTY | MIPS_INT_MASK_0 | MIPS_INT_MASK_5)
+#define splbio()	_splraise(SPLBIO)
+#define splnet()	_splraise(SPLNET)
+#define spltty()	_splraise(SPLTTY)
+#define splserial()	_splraise(SPLTTY)
+#define splclock()	_splraise(SPLCLOCK)
 #define splvm()		splclock()
-#define splstatclock()  splclock()
-#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
-#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define splstatclock()	splclock()
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
 
+#define splsoft()	_splraise(MIPS_SOFT_INT_MASK_0)
+#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_0)
+#define splsoftnet()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+#define splsoftserial()	_splraise(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
+
 extern unsigned int	intrcnt[];
-#define SOFTCLOCK_INTR	0
-#define SOFTNET_INTR	1
+
+struct cobalt_intrhand {
+	LIST_ENTRY(cobalt_intrhand) ih_q;
+	int (*ih_func)(void *);
+	void *ih_arg;
+	int cookie_type;
+#define	COBALT_COOKIE_TYPE_CPU	0x1
+#define	COBALT_COOKIE_TYPE_ICU	0x2
+};
+
+#include <mips/softintr.h>
+
+void *cpu_intr_establish(int, int, int (*)(void *), void *);
+void *icu_intr_establish(int, int, int, int (*)(void *), void *);
+void cpu_intr_disestablish(void *);
+void icu_intr_disestablish(void *);
 
 #endif /* !_LOCORE */
 #endif /* _LOCORE */
