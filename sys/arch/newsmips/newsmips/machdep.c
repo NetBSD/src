@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1998/05/03 17:46:41 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 1998/06/07 06:31:17 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 1998/05/03 17:46:41 tsubai Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 1998/06/07 06:31:17 tsubai Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -146,21 +146,20 @@ int	(*Mach_splimp)__P((void)) = splhigh;
 int	(*Mach_splclock)__P((void)) = splhigh;
 int	(*Mach_splstatclock)__P((void)) = splhigh;
 
+void to_monitor __P((int)) __attribute__((__noreturn__));
+
 /*
  *  Local functions.
  */
-extern	int	atoi __P((const char *cp));
-int	initcpu __P((void));
-
-int readidrom();
-extern void to_monitor(int);
-extern void configure(void);
+int initcpu __P((void));
+int readidrom __P((u_char *));
+int atoi __P((const char *cp));
+void configure __P((void));
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-extern	void
-mach_init __P((int, int, int, int));
+void mach_init __P((int, int, int, int));
 
-void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
+void prom_halt __P((int)) __attribute__((__noreturn__));
 
 #ifdef DEBUG
 /* stacktrace code violates prototypes to get callee's registers */
@@ -518,21 +517,17 @@ int	waittime = -1;
 /*
  * call PROM to halt or reboot.
  */
-volatile void
-prom_halt(howto, bootstr)
+void
+prom_halt(howto)
 	int howto;
-	char *bootstr;
 
 {
 	to_monitor(howto);
-
-	while(1) ;	/* fool gcc */
-	/*NOTREACHED*/
 }
 
 void
 cpu_reboot(howto, bootstr)
-	volatile int howto;	/* XXX to avoid gcc warning :-( */
+	volatile int howto;
 	char *bootstr;
 {
 	extern int cold;
@@ -587,10 +582,12 @@ haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
+		prom_halt(0x80);	/* rom monitor RB_PWOFF */
 
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
-	prom_halt(howto & RB_HALT, bootstr);
+	prom_halt(howto & RB_HALT);
 	/*NOTREACHED*/
 }
 
