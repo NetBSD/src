@@ -1,4 +1,4 @@
-# $NetBSD: defs.mk,v 1.1 2003/10/27 16:36:19 mrg Exp $
+# $NetBSD: defs.mk,v 1.2 2003/11/07 07:31:44 mrg Exp $
 G_GDB_OBJS=\
 annotate.o \
 arch-utils.o \
@@ -150,7 +150,7 @@ wrapper.o
 
 G_SIM_OBJS=
 
-G_BFD_CPPFLAGS=-DDEFAULT_VECTOR=bfd_elf32_littlearm_vec -DSELECT_VECS="&bfd_elf32_littlearm_vec,&bfd_elf32_bigarm_vec,&armnetbsd_vec,&bfd_elf32_little_generic_vec,&bfd_elf32_big_generic_vec" -DSELECT_ARCHITECTURES="&bfd_arm_arch" -DHAVE_bfd_elf32_littlearm_vec -DHAVE_bfd_elf32_bigarm_vec -DHAVE_armnetbsd_vec -DHAVE_bfd_elf32_little_generic_vec -DHAVE_bfd_elf32_big_generic_vec
+G_BFD_CPPFLAGS=-DDEFAULT_VECTOR=bfd_elf32_bigarm_vec -DSELECT_VECS="&bfd_elf32_littlearm_vec,&bfd_elf32_bigarm_vec,&armnetbsd_vec,&bfd_elf32_little_generic_vec,&bfd_elf32_big_generic_vec" -DSELECT_ARCHITECTURES="&bfd_arm_arch" -DHAVE_bfd_elf32_littlearm_vec -DHAVE_bfd_elf32_bigarm_vec -DHAVE_armnetbsd_vec -DHAVE_bfd_elf32_little_generic_vec -DHAVE_bfd_elf32_big_generic_vec
 
 G_BFD_OBJS=\
 aout32.o \
