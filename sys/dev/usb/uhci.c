@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.156 2002/03/04 00:53:33 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.157 2002/03/16 16:13:41 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.156 2002/03/04 00:53:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.157 2002/03/16 16:13:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1905,13 +1905,13 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		/* If we're dying, just do the software part. */
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
-		usb_uncallout(xfer->timeout_handle, ehci_timeout, xfer);
+		usb_uncallout(xfer->timeout_handle, uhci_timeout, xfer);
 		usb_transfer_complete(xfer);
 		splx(s);
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
-		panic("ohci_abort_xfer: not in process context\n");
+		panic("uhci_abort_xfer: not in process context\n");
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
