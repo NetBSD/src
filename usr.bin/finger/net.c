@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8 1997/01/09 20:19:23 tls Exp $	*/
+/*	$NetBSD: net.c,v 1.9 1997/05/17 19:42:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)net.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: net.c,v 1.8 1997/01/09 20:19:23 tls Exp $";
+static char rcsid[] = "$NetBSD: net.c,v 1.9 1997/05/17 19:42:25 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ netfinger(name)
 	lastc = 0;
 	if (!(host = strrchr(name, '@')))
 		return;
-	*host++ = NULL;
+	*host++ = '\0';
 	if (inet_aton(host, &sin.sin_addr) == 0) {
 		hp = gethostbyname(host);
 		if (hp == 0) {
