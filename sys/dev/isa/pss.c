@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.18 1997/03/13 02:20:05 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.19 1997/03/13 08:34:51 mikel Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -156,16 +156,20 @@ void	pssattach __P((struct device *, struct device *, void *));
 int	spprobe __P((struct device *, void *, void *));
 void	spattach __P((struct device *, struct device *, void *));
 
+#ifdef notyet
 int	mpuprobe __P((struct device *, void *, void *));
 void	mpuattach __P((struct device *, struct device *, void *));
 
 int	pcdprobe __P((struct device *, void *, void *));
 void	pcdattach __P((struct device *, struct device *, void *));
+#endif
 
 int	spopen __P((dev_t, int));
 
 int	pssintr __P((void *));
+#ifdef notyet
 int	mpuintr __P((void *));
+#endif
 
 int	pss_speaker_ctl __P((void *, int));
 
@@ -247,17 +251,14 @@ struct audio_hw_if pss_audio_if = {
 
 
 /* Interrupt translation for WSS config */
-static u_char wss_interrupt_bits[12] = {
+static u_char wss_interrupt_bits[16] = {
     0xff, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0x08,
-    0xff, 0x10, 0x18, 0x20
+    0xff, 0x10, 0x18, 0x20,
+    0xff, 0xff, 0xff, 0xff
 };
 /* ditto for WSS DMA channel */
 static u_char wss_dma_bits[4] = {1, 2, 0, 3};
-
-#ifndef NEWCONFIG
-#define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
-#endif
 
 struct cfattach pss_ca = {
 	sizeof(struct pss_softc), pssprobe, pssattach
@@ -275,6 +276,7 @@ struct cfdriver sp_cd = {
 	NULL, "sp", DV_DULL
 };
 
+#ifdef notyet
 struct cfattach mpu_ca = {
 	sizeof(struct mpu_softc), mpuprobe, mpuattach
 };
@@ -290,6 +292,7 @@ struct cfattach pcd_ca = {
 struct cfdriver pcd_cd = {
 	NULL, "pcd", DV_DULL
 };
+#endif
 
 struct audio_device pss_device = {
 	"pss,ad1848",
@@ -453,8 +456,8 @@ pss_setdma(dmaNum, configAddress)
 
 /*
  * This function tests an interrupt number to see if
- * it is availible. It takes the interrupt button
- * as it's argument and returns TRUE if the interrupt
+ * it is available. It takes the interrupt button
+ * as its argument and returns TRUE if the interrupt
  * is ok.
 */
 static int
@@ -938,6 +941,7 @@ spprobe(parent, match, aux)
     return 1;
 }
 
+#ifdef notyet
 int
 mpuprobe(parent, match, aux)
     struct device *parent;
@@ -1033,6 +1037,7 @@ pcdprobe(parent, match, aux)
     
     return 1;
 }
+#endif /* notyet */
 
 /*
  * Attach hardware to driver, attach hardware driver to audio
@@ -1107,6 +1112,7 @@ spattach(parent, self, aux)
     printf("\n");
 }
 
+#ifdef notyet
 void
 mpuattach(parent, self, aux)
     struct device *parent, *self;
@@ -1157,6 +1163,7 @@ pcdattach(parent, self, aux)
 	   sc->sc_iobase, sc->sc_iobase+2,
 	   cf->cf_irq);
 }
+#endif /* notyet */
 
 static int
 pss_to_vol(cp, vol)
@@ -1376,6 +1383,7 @@ pssintr(arg)
     return 0;
 }
 
+#ifdef notyet
 int
 mpuintr(arg)
 	void *arg;
@@ -1390,6 +1398,7 @@ mpuintr(arg)
     /* XXX Need to clear intr */
     return 1;
 }
+#endif
 
 int
 pss_getdev(addr, retp)
