@@ -1,4 +1,4 @@
-.\" $NetBSD: isdntrace.8,v 1.4 2002/02/08 01:38:50 ross Exp $
+.\" $NetBSD: isdntrace.8,v 1.5 2002/07/29 00:54:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdntrace.8,v 1.4 2002/02/08 01:38:50 ross Exp $
+.\"	$Id: isdntrace.8,v 1.5 2002/07/29 00:54:45 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -74,12 +74,12 @@ utility is only available for passive supported cards.
 All filenames, user specified or default, get a date and time stamp string
 added in the form -yymmdd-hhmmss: a hyphen, two digits year, month, day,
 a hyphen and two digits hour, minutes and seconds.
-Tracefiles no longer get overwritten.
+Trace files no longer get overwritten.
 In case a new filename is needed within a second, the filename-generating
 mechanism sleeps one second.
 .br
 In case the program is sent a USR1 signal, a new user specified or default
-filename with a new date and timestamp is generated and opened.
+filename with a new date and time stamp is generated and opened.
 .Pp
 The following options can be used:
 .Bl -tag -width Ds
@@ -110,7 +110,7 @@ print layer 1 (I.430) INFO signals to monitor layer 1 activity (default off).
 switch displaying of Layer 2 (Q.921) frames off (default on).
 .It Fl n
 This option takes a numeric argument specifying the minimum
-frame size in octetts a frame must have to be displayed. (default 0)
+frame size in octets a frame must have to be displayed. (default 0)
 .It Fl o
 switch off writing trace output to a file (default on).
 .It Fl p
@@ -178,7 +178,7 @@ Protocol Discriminator (see: Q.931/1993 pp. 53).
 .Sh FILES
 .Bl -tag -width daddeldi -compact
 .It Pa /dev/i4btrc\*[Lt]n\*[Gt]
-The devicefile(s) used to get the trace messages for ISDN card unit \*[Lt]n\*[Gt]
+The device file(s) used to get the trace messages for ISDN card unit \*[Lt]n\*[Gt]
 out of the kernel.
 .El
 .Sh EXAMPLES

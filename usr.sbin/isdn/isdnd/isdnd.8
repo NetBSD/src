@@ -1,4 +1,4 @@
-.\" $NetBSD: isdnd.8,v 1.6 2002/03/05 15:11:35 wiz Exp $
+.\" $NetBSD: isdnd.8,v 1.7 2002/07/29 00:54:46 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: isdnd.8,v 1.6 2002/03/05 15:11:35 wiz Exp $
+.\"	$Id: isdnd.8,v 1.7 2002/07/29 00:54:46 wiz Exp $
 .\"
 .\" $FreeBSD$
 .\"
@@ -188,11 +188,11 @@ environment variable exists.
 .It Fl u
 Specifies the length of a charging unit in case the config file entry
 keyword
-.Em unitlenghtsrc
+.Em unitlengthsrc
 is set to
 .Em cmdl .
 .It Fl m
-If the isdn daemon is compiled with local or remote monitoring support,
+If the ISDN daemon is compiled with local or remote monitoring support,
 this option disables all monitoring access. It overrides the config
 file option
 .Em monitor-allowed .
@@ -355,7 +355,7 @@ The default accounting information filename (if accounting is configured).
 .It Pa /var/log/isdnd.log
 The default logging filename (if logging to a file is configured).
 .It Pa /var/run/isdnd.pid
-The process id of the isdn daemon (also known as "lockfile" to isdnd, preventing multiple invocations of it).
+The process id of the ISDN daemon (also known as "lockfile" to isdnd, preventing multiple invocations of it).
 .It Pa /etc/isdn
 The directory where isdnd expects some supplementary data files and programs
 for telephone answering support.
