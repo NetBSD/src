@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.20 1994/08/24 19:32:36 mycroft Exp $
+ *	$Id: param.h,v 1.21 1994/10/09 13:20:37 mycroft Exp $
  */
 
 /*
@@ -80,10 +80,10 @@
 #define	CLSIZE		(1 << CLSIZELOG2)
 
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
-#define	SSIZE	1		/* initial stack size/NBPG */
-#define	SINCR	1		/* increment of stack/NBPG */
-#define	UPAGES	2		/* pages of u-area */
-#define	USPACE	(UPAGES * NBPG)	/* total size of u-area */
+#define	SSIZE		1		/* initial stack size/NBPG */
+#define	SINCR		1		/* increment of stack/NBPG */
+#define	UPAGES		2		/* pages of u-area */
+#define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
 /*
  * Constants related to network buffer management.
@@ -121,19 +121,16 @@
 #define LABELOFFSET	0			/* offset of label in sector */
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
-#define	dtob(x)	((x) << DEV_BSHIFT)
-
-#define	ctob(x)	((x) << PGSHIFT)
+#define	ctod(x)		((unsigned)(x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((unsigned)(x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* bytes to pages */
-#define	btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
+#define	ctob(x)		((unsigned)(x) << PGSHIFT)
+#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
 
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((unsigned)(bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((unsigned)(db) << DEV_BSHIFT)
+/* bytes to disk blocks */
+#define	dbtob(x)	((unsigned)(x) << DEV_BSHIFT)
+#define	btodb(x)	((unsigned)(x) >> DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
