@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.19 1994/06/14 04:40:29 cgd Exp $
+#	$Id: Makefile,v 1.20 1994/12/22 12:43:45 cgd Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -16,6 +16,8 @@ regression-tests:
 	@echo Running regression tests...
 	@(cd regress && ${MAKE} regress)
 .endif
+
+.include <bsd.own.mk>	# for NOMAN, if it's there.
 
 afterinstall:
 .ifndef NOMAN
