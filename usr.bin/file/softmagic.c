@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.2 1998/09/19 18:07:38 christos Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.3 1999/11/01 17:30:08 christos Exp $	*/
 
 /*
  * softmagic - interpret variable magic from /etc/magic
@@ -33,13 +33,10 @@
 #include <time.h>
 #include <sys/types.h>
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 #include "file.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: softmagic.c,v 1.38 1998/09/12 13:21:01 christos Exp ")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.39 1999/02/14 17:16:12 christos Exp ")
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
