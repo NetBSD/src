@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.3 2001/06/02 11:43:40 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.4 2001/06/02 12:07:34 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -72,7 +72,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.3 2001/06/02 11:43:40 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.4 2001/06/02 12:07:34 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -127,10 +127,10 @@ hcsc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
-	if (matchpodule(pa, MANUFACTURER_HCCS, PODULE_HCCS_IDESCSI, -1) == 0)
-		return(0);
-
-	return(1);
+	if (pa->pa_product == PODULE_HCCS_IDESCSI &&
+	    strncmp(pa->pa_descr, "SCSI", 4) == 0)
+		return 1;
+	return 0;
 }
 
 /*
