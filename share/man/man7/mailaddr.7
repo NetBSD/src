@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailaddr.7,v 1.8 2000/03/24 22:48:33 enami Exp $
+.\"	$NetBSD: mailaddr.7,v 1.9 2001/09/11 01:02:18 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,13 +86,13 @@ Certain old address formats, such as UUCP ``bang path'' addresses,
 explicitly routed internet addresses (so-called ``route-addrs'' and
 the ``percent hack'') and others have been used historically. All
 these addressing formats are now considered obsolete, and should no
-longer be used. 
+longer be used.
 .Pp
 To some extent,
 .Xr sendmail 8
 (when running with normal configuration files) attempts to provide
 backward compatibility for these addressing forms, but in practice
-many of them no longer work. Users should always use standard Internet 
+many of them no longer work. Users should always use standard Internet
 style addresses.
 .Sh SEE ALSO
 .Xr mail 1 ,
@@ -108,5 +108,5 @@ appeared in
 .Sh BUGS
 The RFC822 group syntax (``group:user1,user2,user3;'') is not supported
 except in the special case of ``group:;'' because of a conflict with old
-berknet-style addresses, not that anyone cares about either berknet or 
+berknet-style addresses, not that anyone cares about either berknet or
 group syntax style addresses any longer.
