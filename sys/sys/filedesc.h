@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.17 1999/04/30 18:42:58 thorpej Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.18 1999/05/05 19:52:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -101,7 +101,7 @@ struct filedesc0 {
 /*
  * Kernel global variables and routines.
  */
-int	dupfdopen __P((struct filedesc *fdp, int indx, int dfd, int mode,
+int	dupfdopen __P((struct proc *p, int indx, int dfd, int mode,
 	    int error));
 int	fdalloc __P((struct proc *p, int want, int *result));
 int	fdavail __P((struct proc *p, int n));
