@@ -1,17 +1,15 @@
-/*	$NetBSD: if_ie_subr.h,v 1.5 1995/02/13 22:23:56 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.h,v 1.6 1996/03/26 14:38:33 gwr Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
  */
 
 #define B_PER_F         3	/* number of buffers to allocate per frame */
-#define	MXFRAMES	300	/* max number of frames to allow for receive */
+#define	MXFRAMES	256	/* max number of frames to allow for receive */
 #define	MXRXBUF (MXFRAMES*B_PER_F)	/* max number of buffers to allocate */
 #define	IE_RBUF_SIZE	256	/* size of each buffer, MUST BE POWER OF TWO */
 #define	NTXBUF		2	/* number of transmit buffer/command pairs */
-#define	IE_TBUF_SIZE	1536	/* length of transmit buffer */
-
-#define MEMSIZE 0x10000
+#define	IE_TBUF_SIZE	(3*512)	/* length of transmit buffer */
 
 enum ie_hardware {
 	IE_VME,			/* multibus to VME ie card */
@@ -119,6 +117,5 @@ struct ie_softc {
 };
 
 
-extern int  ie_md_match(struct device *, void *, void *args);
-extern void ie_md_attach(struct device *, struct device *, void *);
-extern int  ie_intr(void *);
+extern void    ie_attach __P((struct ie_softc *));
+extern int  ie_intr __P((void *));
