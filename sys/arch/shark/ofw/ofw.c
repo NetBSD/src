@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.28 2003/05/03 18:10:58 wiz Exp $	*/
+/*	$NetBSD: ofw.c,v 1.29 2003/05/21 22:48:24 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -81,6 +81,8 @@
 #define	KERNEL_VMDATA_PTS	(KERNEL_VM_SIZE >> (L1_S_SHIFT + 2))
 #define	KERNEL_OFW_PTS		4
 #define	KERNEL_IO_PTS		4
+
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 /*
  *  Imported variables

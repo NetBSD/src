@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.12 2003/05/21 02:38:29 briggs Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.13 2003/05/21 22:48:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -119,6 +119,7 @@
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00200000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 
 /*
  * Address to call from cpu_reset() to reset the machine.
