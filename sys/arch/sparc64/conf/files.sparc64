@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.5 1998/07/27 05:52:21 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.6 1998/07/27 19:20:32 pk Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -19,7 +19,7 @@ device iommu {}
 attach iommu at mainbus
 file	arch/sparc64/sparc64/iommu.c		iommu
 
-device sbus { [slot = -1], [offset = -1] }
+include "../../../dev/sbus/files.sbus"
 attach sbus at mainbus, iommu
 file	arch/sparc64/dev/sbus.c			sbus
 
@@ -97,9 +97,6 @@ attach dma at sbus, obio
 device ledma {}
 attach ledma at sbus
 file	arch/sparc64/dev/dma.c		dma | ledma
-device lebuffer {}
-attach lebuffer at sbus
-file	dev/sbus/lebuffer.c		lebuffer
 
 device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio
