@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_kbd.c,v 1.8 1995/08/30 00:29:40 fvdl Exp $	*/
+/*	$NetBSD: pcvt_kbd.c,v 1.9 1995/09/03 01:20:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -1109,7 +1109,7 @@ loop:
 #if PCVT_USL_VT_COMPAT
 		if (vsp->kbd_state == K_RAW)
 #else
-		if (pcvt_kbd_raw)
+		if (pcvt_xmode)
 #endif
 		{
 			keybuf[0] = dt;

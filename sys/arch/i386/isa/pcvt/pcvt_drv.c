@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.18 1995/08/30 00:29:09 fvdl Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.19 1995/09/03 01:20:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -128,6 +128,9 @@ pcattach(struct isa_device *dev)
 {
 #endif
 	int i;
+
+	if(do_initialization)
+		vt_coldinit();
 
 	vt_coldmalloc();		/* allocate memory for screens */
 	
@@ -1014,7 +1017,7 @@ pcvt_xmode_set(int on, struct proc *p)
 
 		if(pcvt_xmode)
 			return 0;
-		pcvt_xmode = pcvt_kbd_raw = 1;
+		pcvt_xmode = 1;
 
 		for(i = 0; i < totalfonts; i++) {
 			if(vgacs[i].loaded) {
@@ -1067,7 +1070,7 @@ pcvt_xmode_set(int on, struct proc *p)
 	{
 		if(!pcvt_xmode)
 			return 0;
-		pcvt_xmode = pcvt_kbd_raw = 0;
+		pcvt_xmode = 0;
 
 		for(i = 0; i < totalfonts; i++)
 			if(saved_fonts[i]) {
