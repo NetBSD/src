@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.10 1996/04/05 00:01:44 christos Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.11 1996/11/15 09:51:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -112,10 +112,12 @@ static void bsd_to_linux_shmid_ds __P((struct shmid_ds *,
 #endif
 
 
+#if defined (SYSVSEM) || defined(SYSVSHM) || defined(SYSVMSG)
 static void linux_to_bsd_ipc_perm __P((struct linux_ipc_perm *,
 				       struct ipc_perm *));
 static void bsd_to_linux_ipc_perm __P((struct ipc_perm *,
 				       struct linux_ipc_perm *));
+#endif
 
 int
 linux_sys_ipc(p, v, retval)
@@ -165,6 +167,7 @@ linux_sys_ipc(p, v, retval)
 	}
 }
 
+#if defined (SYSVSEM) || defined(SYSVSHM) || defined(SYSVMSG)
 /*
  * Convert between Linux and NetBSD ipc_perm structures. Only the
  * order of the fields is different.
@@ -198,6 +201,7 @@ bsd_to_linux_ipc_perm(bpp, lpp)
 	lpp->l_mode = bpp->mode;
 	lpp->l_seq = bpp->seq;
 }
+#endif
 
 #ifdef SYSVSEM
 /*
