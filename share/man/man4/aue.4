@@ -1,4 +1,4 @@
-.\"	$NetBSD: aue.4,v 1.13 2003/11/23 18:53:11 augustss Exp $
+.\"	$NetBSD: aue.4,v 1.14 2003/11/23 18:57:11 augustss Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"     Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -32,12 +32,12 @@
 .\"
 .\" FreeBSD: src/share/man/man4/aue.4,v 1.2 2000/01/07 22:18:47 wpaul Exp
 .\"
-.Dd August 22, 2003
+.Dd November 23, 2003
 .Dt AUE 4
 .Os
 .Sh NAME
 .Nm aue
-.Nd ADMtek AN986 Pegasus USB Ethernet driver
+.Nd ADMtek AN986 and AN8511 Pegasus USB Ethernet driver
 .Sh SYNOPSIS
 .Cd "aue*   at uhub?"
 .Cd "ukphy* at mii?"
@@ -72,7 +72,7 @@ The
 .Nm
 driver provides support for USB
 .Tn Ethernet
-adapters based on the ADMtek AN986 Pegasus chipset.
+adapters based on the ADMtek AN986 Pegasus and AN8511 Pegasus II chipsets.
 .Pp
 The Pegasus contains a 10/100
 .Tn Ethernet
