@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.89 1998/11/25 18:37:48 tv Exp $
+# $NetBSD: ALPHA,v 1.90 1999/01/06 23:42:27 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -179,6 +179,8 @@ pci*	at	dwlpx?
 pci*	at	mcpcia?
 
 # PCI devices
+#adv*	at	pci? dev ? function ?		# AdvanSys SCSI
+#adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
@@ -194,12 +196,15 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
+pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
+ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 #eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #audio*	at	eap?
 
@@ -235,8 +240,8 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
-wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
-audio*	at	wss?
+#wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+#audio*	at	wss?
 #midi*	at	wss?
 aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
@@ -255,6 +260,8 @@ fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # SCSI bus support
+#scsibus* at	adv?
+#scsibus* at	adw?
 scsibus* at	aha?
 scsibus* at	ahb?
 scsibus* at	ahc?
@@ -262,6 +269,7 @@ scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	isp?
 scsibus* at	ncr?
+scsibus* at	pcscp?
 scsibus* at	uha?
 
 # SCSI devices
@@ -284,6 +292,28 @@ atapibus* at	wdc?
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
 cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+
+# USB bus support
+usb*	at	uhci?
+usb*	at	ohci?
+
+# USB hubs
+uhub*	at	usb?
+uhub*	at	uhub? port ?
+
+# USB mice
+ums*	at	uhub? port ?
+wsmouse* at	ums?
+
+# USB keyboards
+ukbd*	at	uhub? port ?
+wsbks*	at	ukbd? console ?
+
+# USB Generic HID devices
+uhid*	at	uhub? port ?
+
+# USB Printers
+ulpt*	at	uhub? port ?
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
