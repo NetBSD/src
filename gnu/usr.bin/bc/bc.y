@@ -3,7 +3,7 @@
          extensions to the language. */
 
 /*  This file is part of bc written for MINIX.
-    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
+    Copyright (C) 1991, 1992, 1993, 1994 Free Software Foundation, Inc.
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -300,15 +300,16 @@ function 		: Define NAME '(' opt_parameter_list ')' '{'
 			    {
 			      /* Check auto list against parameter list? */
 			      check_params ($4,$8);
-			      sprintf (genstr, "F%d,%s.%s[", lookup($2,FUNCT), 
-				       arg_str ($4,TRUE), arg_str ($8,TRUE));
+			      sprintf (genstr, "F%d,%s.%s[",
+				       lookup($2,FUNCTDEF), 
+				       arg_str ($4), arg_str ($8));
 			      generate (genstr);
 			      free_args ($4);
 			      free_args ($8);
 			      $1 = next_label;
-			      next_label = 0;
+			      next_label = 1;
 			    }
-			  statement_list NEWLINE '}'
+			  statement_list /* NEWLINE */ '}'
 			    {
 			      generate ("0R]");
 			      next_label = $1;
@@ -530,7 +531,7 @@ expression		:  named_expression ASSIGN_OP
 				{ 
 				  sprintf (genstr, "C%d,%s:",
 					   lookup ($1,FUNCT),
-					   arg_str ($3,FALSE));
+					   call_str ($3));
 				  free_args ($3);
 				}
 			      else
@@ -607,6 +608,8 @@ named_expression	: NAME
 			| Scale
 			    { $$ = 2; }
 			| Last
-			    { $$ = 3; }
+			    { $$ = 3;
+			      warn ("Last variable");
+			    }
 			;
 %%

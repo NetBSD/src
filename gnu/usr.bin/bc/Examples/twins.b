@@ -7,8 +7,6 @@ define primes (limit) {
     prime[1] = 2;
     prime[2] = 3;
     num = 2;
-    if (limit >= 2) print "prime 1 = 2\n"
-    if (limit >= 3) print "prime 2 = 3\n";
     scale = 0;
 
     for ( p=5; p <= limit; p += 2)  {
@@ -23,10 +21,20 @@ define primes (limit) {
 	if (isprime) {
 	    num += 1;
 	    prime [num] = p;
-	    print "prime ", num, " = ", p, "\n"
 	}
      }
 }
 
 
-print "\ntyping 'primes (10)' will print all primes less than 10.\n"
+print "\ntyping 'twins (10)' will print all twin primes less than 10.\n"
+
+define twins (limit) {
+   auto i;
+
+   i = primes(limit+2);
+
+   for (i=1; prime[i] > 0; i++) {
+      if ((prime[i]+2) == prime[i+1]) \
+	print "twins are ", prime[i], " and ", prime[i+1], "\n"
+   }
+}
