@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.template,v 1.3 1998/06/09 06:54:05 lukem Exp $
+.\"	$NetBSD: mdoc.template,v 1.4 2000/08/28 16:58:58 kleink Exp $
 .\"
 .\" Copyright notice
 .\"
@@ -10,6 +10,8 @@
 .Sh SYNOPSIS
 .Sh DESCRIPTION
 .\" The following requests should be uncommented and used where appropriate.
+.\" This next request is for sections 1 and 8 exit statuses only.
+.\" .Sh EXIT STATUS
 .\" This next request is for sections 2 and 3 function return values only.
 .\" .Sh RETURN VALUES
 .\" This next request is for sections 1, 6, 7 & 8 only
