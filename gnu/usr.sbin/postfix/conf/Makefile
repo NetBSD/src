@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/31 17:02:55 perry Exp $
+#	$NetBSD: Makefile,v 1.4 2001/03/13 18:13:17 itojun Exp $
 
 BINDIR=	${PFIX_EXAMPLEDIR}
 
@@ -8,14 +8,15 @@ DIST=	${.CURDIR}/../../../dist/postfix/conf
 # Not built yet: main.cf.default
 
 FILES=		LICENSE access aliases canonical main.cf master.cf \
-		relocated sample-aliases.cf sample-canonical.cf \
-		sample-debug.cf sample-filter.cf sample-ldap.cf \
-		sample-local.cf \
+		pcre_table regexp_table relocated sample-aliases.cf \
+		sample-auth.cf sample-canonical.cf sample-compatibility.cf \
+		sample-debug.cf sample-filter.cf sample-flush.cf \
+		sample-ldap.cf sample-lmtp.cf sample-local.cf \
 		sample-misc.cf sample-pcre.cf sample-rate.cf \
-		sample-regexp.cf sample-relocated.cf \
-		sample-resource.cf sample-rewrite.cf \
-		sample-smtp.cf sample-smtpd.cf sample-transport.cf \
-		sample-virtual.cf transport virtual
+		sample-regexp.cf sample-relocated.cf sample-resource.cf \
+		sample-rewrite.cf sample-smtp.cf sample-smtpd.cf \
+		sample-transport.cf sample-virtual.cf transport \
+		virtual
 
 SCRIPTS=	postfix-script-sgid
 SCRIPTSNAME=	postfix-script
@@ -26,4 +27,3 @@ SCRIPTSNAME=	postfix-script
 # postfix-script-nosgid: we don't use that version.
 
 .include <bsd.prog.mk>
-

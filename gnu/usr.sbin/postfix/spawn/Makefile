@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:18 itojun Exp $
+#	$NetBSD: Makefile,v 1.1 2001/03/13 18:13:23 itojun Exp $
 
-PROG=	error
+PROG=	spawn
 
 DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
-BINDIR=	${PFIX_LIBEXECDIR}
+BINDIR=	${PFIX_SBINDIR}
 
 DPADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}
 LDADD+= ${LIBPMASTER} ${LIBPGLOBAL} ${LIBPUTIL}

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.325 2001/03/12 12:44:42 wiz Exp $
+# $NetBSD: mi,v 1.326 2001/03/13 18:13:24 itojun Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1004,6 +1004,7 @@
 ./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman
 ./usr/share/man/cat5/passwd.0			man-sys-catman
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman
+./usr/share/man/cat5/pcre_table.0		man-postfix-catman
 ./usr/share/man/cat5/phones.0			man-uucp-catman
 ./usr/share/man/cat5/pim6dd.conf.0		man-router-catman
 ./usr/share/man/cat5/pim6sd.conf.0		man-router-catman
@@ -1012,6 +1013,7 @@
 ./usr/share/man/cat5/racoon.conf.0		man-netutil-catman
 ./usr/share/man/cat5/rc.conf.0			man-sys-catman
 ./usr/share/man/cat5/rcsfile.0			man-rcs-catman
+./usr/share/man/cat5/regexp_table.0		man-postfix-catman
 ./usr/share/man/cat5/relocated.0		man-postfix-catman
 ./usr/share/man/cat5/remote.0			man-uucp-catman
 ./usr/share/man/cat5/resolv.conf.0		man-net-catman
@@ -1140,6 +1142,7 @@
 ./usr/share/man/cat8/edquota.0			man-sysutil-catman
 ./usr/share/man/cat8/eeprom.0			man-sysutil-catman
 ./usr/share/man/cat8/envstat.0			man-sysutil-catman
+./usr/share/man/cat8/error.0			man-postfix-catman
 ./usr/share/man/cat8/error.0			man-sysutil-catman
 ./usr/share/man/cat8/eshconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/faithd.0			man-router-catman
@@ -1148,6 +1151,7 @@
 ./usr/share/man/cat8/fdisk.0			man-sysutil-catman
 ./usr/share/man/cat8/fingerd.0			man-sysutil-catman
 ./usr/share/man/cat8/fixmount.0			man-sysutil-catman
+./usr/share/man/cat8/flush.0			man-postfix-catman
 ./usr/share/man/cat8/fsck.0			man-sysutil-catman
 ./usr/share/man/cat8/fsck_ext2fs.0		man-ext2fs-catman
 ./usr/share/man/cat8/fsck_ffs.0			man-sysutil-catman
@@ -1223,6 +1227,7 @@
 ./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman
 ./usr/share/man/cat8/link.0			man-sysutil-catman
 ./usr/share/man/cat8/lmcctl.0			man-sysutil-catman
+./usr/share/man/cat8/lmtp.0			man-postfix-catman
 ./usr/share/man/cat8/local.0			man-postfix-catman
 ./usr/share/man/cat8/lockd.0			man-nfsserver-catman
 ./usr/share/man/cat8/lpc.0			man-lpr-catman
@@ -1418,6 +1423,7 @@
 ./usr/share/man/cat8/sparc64/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc64/installboot.0	man-sysutil-catman
 ./usr/share/man/cat8/sparc64/makedev.0		man-sysutil-catman
+./usr/share/man/cat8/spawn.0			man-postfix-catman
 ./usr/share/man/cat8/spray.0			man-netutil-catman
 ./usr/share/man/cat8/sprayd.0			man-netutil-catman
 ./usr/share/man/cat8/sshd.0			man-secsh-catman
@@ -2480,6 +2486,7 @@
 ./usr/share/man/man5/openssl.cnf.5		man-crypto-man
 ./usr/share/man/man5/passwd.5			man-sys-man
 ./usr/share/man/man5/passwd.conf.5		man-sys-man
+./usr/share/man/man5/pcre_table.5		man-postfix-man
 ./usr/share/man/man5/phones.5			man-uucp-man
 ./usr/share/man/man5/pim6dd.conf.5		man-router-man
 ./usr/share/man/man5/pim6sd.conf.5		man-router-man
@@ -2488,6 +2495,7 @@
 ./usr/share/man/man5/racoon.conf.5		man-netutil-man
 ./usr/share/man/man5/rc.conf.5			man-sys-man
 ./usr/share/man/man5/rcsfile.5			man-rcs-man
+./usr/share/man/man5/regexp_table.5		man-postfix-man
 ./usr/share/man/man5/relocated.5		man-postfix-man
 ./usr/share/man/man5/remote.5			man-uucp-man
 ./usr/share/man/man5/resolv.conf.5		man-net-man
@@ -2624,6 +2632,7 @@
 ./usr/share/man/man8/fdisk.8			man-sysutil-man
 ./usr/share/man/man8/fingerd.8			man-sysutil-man
 ./usr/share/man/man8/fixmount.8			man-sysutil-man
+./usr/share/man/man8/flush.8			man-postfix-man
 ./usr/share/man/man8/fsck.8			man-sysutil-man
 ./usr/share/man/man8/fsck_ext2fs.8		man-ext2fs-man
 ./usr/share/man/man8/fsck_ffs.8			man-sysutil-man
@@ -2699,6 +2708,7 @@
 ./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man
 ./usr/share/man/man8/link.8			man-sysutil-man
 ./usr/share/man/man8/lmcctl.8			man-sysutil-man
+./usr/share/man/man8/lmtp.8			man-postfix-man
 ./usr/share/man/man8/local.8			man-postfix-man
 ./usr/share/man/man8/lockd.8			man-nfsserver-man
 ./usr/share/man/man8/lpc.8			man-lpr-man
@@ -2894,6 +2904,7 @@
 ./usr/share/man/man8/sparc64/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/sparc64/installboot.8	man-sysutil-man
 ./usr/share/man/man8/sparc64/makedev.8		man-sysutil-man
+./usr/share/man/man8/spawn.8			man-postfix-man
 ./usr/share/man/man8/spray.8			man-netutil-man
 ./usr/share/man/man8/sprayd.8			man-netutil-man
 ./usr/share/man/man8/sshd.8			man-secsh-man

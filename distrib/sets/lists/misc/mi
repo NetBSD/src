@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.61 2001/01/25 09:49:56 wiz Exp $
+# $NetBSD: mi,v 1.62 2001/03/13 18:13:25 itojun Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -391,13 +391,19 @@
 ./usr/share/examples/postfix/canonical			misc-postfix-examples
 ./usr/share/examples/postfix/main.cf			misc-postfix-examples
 ./usr/share/examples/postfix/master.cf			misc-postfix-examples
+./usr/share/examples/postfix/pcre_table			misc-postfix-examples
 ./usr/share/examples/postfix/postfix-script		misc-postfix-examples
+./usr/share/examples/postfix/regexp_table		misc-postfix-examples
 ./usr/share/examples/postfix/relocated			misc-postfix-examples
 ./usr/share/examples/postfix/sample-aliases.cf		misc-postfix-examples
+./usr/share/examples/postfix/sample-auth.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-canonical.cf	misc-postfix-examples
+./usr/share/examples/postfix/sample-compatibility.cf	misc-postfix-examples
 ./usr/share/examples/postfix/sample-debug.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-filter.cf		misc-postfix-examples
+./usr/share/examples/postfix/sample-flush.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-ldap.cf		misc-postfix-examples
+./usr/share/examples/postfix/sample-lmtp.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-local.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-misc.cf		misc-postfix-examples
 ./usr/share/examples/postfix/sample-pcre.cf		misc-postfix-examples

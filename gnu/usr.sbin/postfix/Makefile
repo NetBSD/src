@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/01/09 08:52:59 enami Exp $
+#	$NetBSD: Makefile,v 1.7 2001/03/13 18:13:16 itojun Exp $
 
 # Note that the order here is picked to look much like that in the
 # original Makefile.in in order to make it easier to visually compare
@@ -8,10 +8,12 @@
 
 .include <bsd.own.mk>
 
-SUBDIR= util global dns masterlib .WAIT postfix master sendmail error \
-	pickup cleanup smtpd local trivial-rewrite qmgr smtp bounce pipe \
-	showq postalias postcat postconf postdrop postkick postlock postlog \
-	postmap postsuper man # postfix-script
+SUBDIR= util global dns masterlib .WAIT master postfix \
+	sendmail error pickup cleanup smtpd local \
+	lmtp trivial-rewrite qmgr smtp bounce pipe \
+	showq postalias postcat postconf postdrop \
+	postkick postlock postlog postmap postsuper \
+	spawn flush man # smtpstone proto html
 
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
@@ -24,7 +26,7 @@ SUBDIR+=conf
 # share/examples/postfix, and postfix-etc/Makefile (only called by
 # make distribution) installs a copy in /etc/postfix
 
-# also not built: smtpstone (unneeded), spawn (experimental),
+# also not built: smtpstone (unneeded)
 # and html (unsure what to do with it (yet))
 
 # The distribution: target is invoked from the make distribution
@@ -34,6 +36,5 @@ SUBDIR+=conf
 
 distribution:
 	cd ${.CURDIR}/postfix-etc; ${MAKE} install
-
 
 .include <bsd.subdir.mk>

@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:22:01 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:19 itojun Exp $
 
 DIST=	${.CURDIR}/../../../../dist/postfix/man/man5
 .PATH:	${DIST}
 
-MAN=	access.5 canonical.5 relocated.5 transport.5 virtual.5
+MAN=	access.5 canonical.5 relocated.5 \
+	transport.5 virtual.5 pcre_table.5 regexp_table.5
 
 # XXX notyet:
 # aliases.5

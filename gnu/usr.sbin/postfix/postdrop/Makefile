@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/01 00:12:26 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2001/03/13 18:13:21 itojun Exp $
 
 PROG=	postdrop
 
-DIST=	${.CURDIR}/../../../dist/postfix/${PROG}
+DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
 BINDIR=	${PFIX_SBINDIR}
