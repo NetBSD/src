@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.5 1996/05/20 01:33:45 cgd Exp 
+ *	NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp 
  */
 
 /*
@@ -38,9 +38,24 @@
 
 struct tc_knowndev tc_knowndevs[] = {
 	{
+	    "DGLTA-FA",
+	    TC_DEVICE_DGLTA_FA,
+	    TC_DESCRIPTION_DGLTA_FA,
+	},
+	{
+	    "FORE_ATM",
+	    TC_DEVICE_FORE_ATM,
+	    TC_DESCRIPTION_FORE_ATM,
+	},
+	{
 	    "KZTSA-AA",
 	    TC_DEVICE_KZTSA_AA,
 	    TC_DESCRIPTION_KZTSA_AA,
+	},
+	{
+	    "OTTO    ",
+	    TC_DEVICE_OTTO,
+	    TC_DESCRIPTION_OTTO,
 	},
 	{
 	    "PMAD-AA ",
@@ -78,14 +93,14 @@ struct tc_knowndev tc_knowndevs[] = {
 	    TC_DESCRIPTION_PMAG_DA,
 	},
 	{
-	    "PMAG-FA ",
-	    TC_DEVICE_PMAG_FA,
-	    TC_DESCRIPTION_PMAG_FA,
-	},
-	{
 	    "PMAG-DV ",
 	    TC_DEVICE_PMAG_DV,
 	    TC_DESCRIPTION_PMAG_DV,
+	},
+	{
+	    "PMAG-FA ",
+	    TC_DEVICE_PMAG_FA,
+	    TC_DESCRIPTION_PMAG_FA,
 	},
 	{
 	    "PMAGB-BA",
@@ -113,19 +128,14 @@ struct tc_knowndev tc_knowndevs[] = {
 	    TC_DESCRIPTION_PMAZ_AA,
 	},
 	{
-	    "T3PKT   ",
-	    TC_DEVICE_T3PKT,
-	    TC_DESCRIPTION_T3PKT,
-	},
-	{
 	    "T1D4PKT ",
 	    TC_DEVICE_T1D4PKT,
 	    TC_DESCRIPTION_T1D4PKT,
 	},
 	{
-	    "FORE_ATM",
-	    TC_DEVICE_FORE_ATM,
-	    TC_DESCRIPTION_FORE_ATM,
+	    "T3PKT   ",
+	    TC_DEVICE_T3PKT,
+	    TC_DESCRIPTION_T3PKT,
 	},
 	{ NULL, NULL, NULL, }
 };
