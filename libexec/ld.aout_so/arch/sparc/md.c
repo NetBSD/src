@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 1998/01/05 22:00:45 cgd Exp $	*/
+/*	$NetBSD: md.c,v 1.15 1998/08/26 14:37:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -266,9 +266,10 @@ md_make_jmpreloc(rp, r, type)
  * Set relocation type for a GOT RRS relocation.
  */
 void
-md_make_gotreloc(rp, r, type)
+md_make_gotreloc(rp, r, type, gotp)
 	struct relocation_info	*rp, *r;
 	int			type;
+	got_t			*gotp;
 {
 	/*
 	 * GOT value resolved (symbolic or entry point): R_32

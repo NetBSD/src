@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1996/11/03 18:06:50 ws Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1998/08/26 14:37:41 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -195,9 +195,10 @@ md_make_jmpreloc(rp, r, type)
  * Set relocation type for a RRS GOT relocation.
  */
 void
-md_make_gotreloc(rp, r, type)
+md_make_gotreloc(rp, r, type, gotp)
 	struct relocation_info	*rp, *r;
 	int			type;
+	got_t			*gotp;
 {
 	errx(1, "md_make_gotreloc unimplemented");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.20 1998/08/13 07:34:06 mycroft Exp $	*/
+/*	$NetBSD: rrs.c,v 1.21 1998/08/26 14:37:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -497,7 +497,7 @@ printf("claim_rrs_gotslot: %s(%d,%#x) slot offset %#x, addend %#x\n",
 	r->r_address = got_symbol->value + sp->gotslot_offset;
 	RELOC_SYMBOL(r) = sp->rrs_symbolnum;
 	RELOC_EXTERN_P(r) = !(reloc_type == RELTYPE_RELATIVE);
-	md_make_gotreloc(rp, r, reloc_type);
+	md_make_gotreloc(rp, r, reloc_type, GOTP(sp->gotslot_offset));
 
 	return sp->gotslot_offset;
 }
@@ -565,7 +565,7 @@ printf("claim_rrs_internal_gotslot: %s: slot offset %#x, addend = %#x\n",
 	r = rrs_next_reloc();
 	r->r_address = got_symbol->value + lsp->gotslot_offset;
 	RELOC_EXTERN_P(r) = 0;
-	md_make_gotreloc(rp, r, RELTYPE_RELATIVE);
+	md_make_gotreloc(rp, r, RELTYPE_RELATIVE, GOTP(lsp->gotslot_offset));
 	return lsp->gotslot_offset;
 }
 
@@ -725,6 +725,9 @@ consider_rrs_section_lengths()
 	if (number_of_gotslots > 1)
 		got_symbol->flags |= GS_REFERENCED;
 
+	if (number_of_jmpslots > 1)
+		plt_symbol->flags |= GS_REFERENCED;
+
 
 	/* Next, allocate relocs, got and plt */
 	n = reserved_rrs_relocs * sizeof(struct relocation_info);
@@ -880,6 +883,7 @@ relocate_rrs_addresses()
 		got_symbol->value = rrs_sdt.sdt_got + got_origin;
 		rrs_sdt.sdt_plt = rrs_sdt.sdt_got +
 				  number_of_gotslots * sizeof(got_t);
+		got_symbol->value = rrs_sdt.sdt_plt;
 		return;
 	}
 
@@ -932,6 +936,7 @@ relocate_rrs_addresses()
 	 * The value `&__DYNAMIC' is in the GOT table at offset 0.
 	 */
 	got_symbol->value = rrs_sdt.sdt_got + got_origin;
+	plt_symbol->value = rrs_sdt.sdt_plt;
 	*GOTP(0) = dynamic_symbol->value = rrs_data_start;
 
 }

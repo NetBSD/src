@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.h,v 1.20 1998/01/05 22:00:53 cgd Exp $	*/
+/*	$NetBSD: ld.h,v 1.21 1998/08/26 14:37:41 matt Exp $	*/
 
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -467,6 +467,7 @@ extern symbol	*edata_symbol;		/* the symbol _edata */
 extern symbol	*etext_symbol;		/* the symbol _etext */
 extern symbol	*end_symbol;		/* the symbol _end */
 extern symbol	*got_symbol;		/* the symbol __GLOBAL_OFFSET_TABLE_ */
+extern symbol	*plt_symbol;		/* the symbol __PROCEDURE_LINKAGE_TABLE_ */
 extern symbol	*dynamic_symbol;	/* the symbol __DYNAMIC */
 
 /*
@@ -688,7 +689,7 @@ void	md_make_jmpslot __P((jmpslot_t *, long, long));
 void	md_fix_jmpslot __P((jmpslot_t *, long, u_long));
 int	md_make_reloc __P((struct relocation_info *, struct relocation_info *, int));
 void	md_make_jmpreloc __P((struct relocation_info *, struct relocation_info *, int));
-void	md_make_gotreloc __P((struct relocation_info *, struct relocation_info *, int));
+void	md_make_gotreloc __P((struct relocation_info *, struct relocation_info *, int, got_t *));
 void	md_make_copyreloc __P((struct relocation_info *, struct relocation_info *));
 void	md_set_breakpoint __P((long, long *));
 
