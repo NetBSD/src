@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.642 2004/08/02 19:25:46 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.643 2004/08/04 17:18:19 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.640 2004/08/02 19:25:35 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.641 2004/08/04 17:18:01 mycroft Exp 
  */
 
 /*
@@ -799,10 +799,10 @@
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */
 
 /* ADMtek products */
-#define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* ADMtek AL981 10/100 Ethernet */
-#define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* ADMtek AN985 10/100 Ethernet */
-#define	PCI_PRODUCT_ADMTEK_AN985_2	0x1985		/* ADMtek AN985 10/100 Ethernet (OEM) */
-#define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADMtek ADM8211 11Mbps 802.11b WLAN */
+#define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_AN985	0x0985		/* AN985 10/100 Ethernet */
+#define	PCI_PRODUCT_ADMTEK_AN985_2	0x1985		/* AN985 10/100 Ethernet (OEM) */
+#define	PCI_PRODUCT_ADMTEK_ADM8211	0x8201		/* ADM8211 11Mbps 802.11b WLAN */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
@@ -816,11 +816,11 @@
 #define	PCI_PRODUCT_AGILENT_TACHYON_DX2	0x0100		/* Tachyon DX2 FC controller */
 
 /* Aironet Wireless Communicasions products */
-#define	PCI_PRODUCT_AIRONET_PC4xxx	0x0001		/* Aironet PC4500/PC4800 Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_350	0x0350		/* Aironet 350 Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_MPI350	0xa504		/* Aironet 350 miniPCI Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* Aironet PC4500 Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* Aironet PC4800 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4xxx	0x0001		/* PC4500/PC4800 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_350	0x0350		/* 350 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_MPI350	0xa504		/* 350 miniPCI Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless LAN Adapter */
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
@@ -933,7 +933,7 @@
 #define	PCI_PRODUCT_ASIX_AX88140A	0x1400		/* AX88140A 10/100 Ethernet */
 
 /* Asustek products */
-#define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* Asustek ISDN */
+#define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_RADEON_A3	0x4136		/* Radeon Mobility A3 */
@@ -1218,7 +1218,7 @@
 #define	PCI_PRODUCT_COLOGNECHIP_HFC	0x2bd0		/* HFC-S */
 
 /* COMPAL products */
-#define	PCI_PRODUCT_COMPAL_38W2	0x0011		/* COMPAL 38W2 OEM Notebook */
+#define	PCI_PRODUCT_COMPAL_38W2	0x0011		/* 38W2 OEM Notebook */
 
 /* Compaq products */
 #define	PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE	0x0001		/* PCI-EISA Bridge */
@@ -1300,27 +1300,27 @@
 #define	PCI_PRODUCT_CYRIX_CX5530_VIDEO	0x0104		/* Cx5530 I/O Companion (Video Controller) */
 
 /* Davicom Semiconductor products */
-#define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* Davicom DM9102 10/100 Ethernet */
+#define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* DM9102 10/100 Ethernet */
 
 /* DEC products */
-#define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21040	0x0002		/* DECchip 21040 (\"Tulip\") Ethernet */
-#define	PCI_PRODUCT_DEC_21030	0x0004		/* DECchip 21030 (\"TGA\") */
+#define	PCI_PRODUCT_DEC_21050	0x0001		/* DC21050 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_21040	0x0002		/* DC21040 (\"Tulip\") Ethernet */
+#define	PCI_PRODUCT_DEC_21030	0x0004		/* DC21030 (\"TGA\") */
 #define	PCI_PRODUCT_DEC_NVRAM	0x0007		/* Zephyr NV-RAM */
 #define	PCI_PRODUCT_DEC_KZPSA	0x0008		/* KZPSA */
-#define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 (\"FasterNet\") 10/100 Ethernet */
+#define	PCI_PRODUCT_DEC_21140	0x0009		/* DC21140 (\"FasterNet\") 10/100 Ethernet */
 #define	PCI_PRODUCT_DEC_PBXGB	0x000d		/* TGA2 */
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
 /* product DEC ???	0x0010	??? VME Interface */
-#define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 (\"Tulip Plus\") Ethernet */
+#define	PCI_PRODUCT_DEC_21041	0x0014		/* DC21041 (\"Tulip Plus\") Ethernet */
 #define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (\"OPPO\") */
-#define	PCI_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/21143 10/100 Ethernet */
-#define	PCI_PRODUCT_DEC_21052	0x0021		/* DECchip 21052 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21150	0x0022		/* DECchip 21150 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21554	0x0046		/* DECchip 21554 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_21142	0x0019		/* DC21142/21143 10/100 Ethernet */
+#define	PCI_PRODUCT_DEC_21052	0x0021		/* DC21052 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_21150	0x0022		/* DC21150 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_21152	0x0024		/* DC21152 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_21153	0x0025		/* DC21153 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_21154	0x0026		/* DC21154 PCI-PCI Bridge */
+#define	PCI_PRODUCT_DEC_21554	0x0046		/* DC21554 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_SWXCR	0x1065		/* SWXCR RAID */
 
 /* Dell Computer products */
@@ -1367,7 +1367,7 @@
 #define	PCI_PRODUCT_DOMEX_PCISCSI	0x0001		/* DMX-3191D */
 
 /* Dynalink products */
-#define	PCI_PRODUCT_DYNALINK_IS64PH	0x1702		/* Dynalink IS64PH ISDN Adapter */
+#define	PCI_PRODUCT_DYNALINK_IS64PH	0x1702		/* IS64PH ISDN Adapter */
 
 /* ELSA products */
 #define	PCI_PRODUCT_ELSA_QS1PCI	0x1000		/* QuickStep 1000 ISDN card */
@@ -1441,7 +1441,7 @@
 #define	PCI_PRODUCT_FORE_PCA200E	0x0300		/* ATM PCA-200e */
 
 /* Forte Media products */
-#define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* Forte Media 801 Sound */
+#define	PCI_PRODUCT_FORTEMEDIA_FM801	0x0801		/* 801 Sound */
 #define	PCI_PRODUCT_FORTEMEDIA_PCIJOY	0x0802		/* PCI Gameport Joystick */
 
 /* Future Domain products */
@@ -1907,8 +1907,8 @@
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0458	0x0458		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0459	0x0459		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_045a	0x045a		/* LTMODEM */
-#define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* Lucent ORCA FPGA w/32-bit PCI ASIC core */
-#define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* Lucent ORCA FPGA w/64-bit PCI ASIC core */
+#define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* ORCA FPGA w/32-bit PCI ASIC core */
+#define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* ORCA FPGA w/64-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 OHCI Controller */
 
@@ -1940,6 +1940,7 @@
 
 /* Microsoft Corporation products */
 #define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 Ethernet Notebook Adapter */
+
 /* Middle Digital, Inc. products */
 #define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA	0x9050		/* Weasel Virtual VGA */
 #define	PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_SERIAL	0x9051		/* Weasel Serial Port */
@@ -2053,8 +2054,8 @@
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD720100A	0x00e0		/* USB Host Controller */
-#define	PCI_PRODUCT_NEC_VA26D	0x803c		/* NEC Versa Pro LX VA26D */
-#define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* NEC Versa LX */
+#define	PCI_PRODUCT_NEC_VA26D	0x803c		/* Versa Pro LX VA26D */
+#define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* Versa LX */
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG2070	0x0001		/* MagicGraph NM2070 */
@@ -2189,9 +2190,9 @@
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
 
 /* Olicom products */
-#define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* Olicom OC-2183/2185 Ethernet */
-#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* Olicom OC-2325 Ethernet */
-#define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* Olicom OC-2326 10/100-TX Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2183	0x0013		/* OC-2183/2185 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2325	0x0012		/* OC-2325 Ethernet */
+#define	PCI_PRODUCT_OLICOM_OC2326	0x0014		/* OC-2326 10/100-TX Ethernet */
 
 /* Opti products */
 #define	PCI_PRODUCT_OPTI_82C557	0xc557		/* 82C557 */
@@ -2438,7 +2439,7 @@
 #define	PCI_PRODUCT_SIS_86C205	0x0005		/* 86C205 */
 #define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 or 5597/5598 ISA bridge */
 #define	PCI_PRODUCT_SIS_600PMC	0x0009		/* 600 Power Mngmt Controller */
-#define	PCI_PRODUCT_SIS_180_SATA	0x0180		/* SiS 180 SATA controller */
+#define	PCI_PRODUCT_SIS_180_SATA	0x0180		/* 180 SATA controller */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 integrated VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
@@ -2446,36 +2447,36 @@
 #define	PCI_PRODUCT_SIS_540HB	0x0540		/* 540 Host to PCI Bridge */
 #define	PCI_PRODUCT_SIS_550HB	0x0550		/* 550 Host to PCI Bridge */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
-#define	PCI_PRODUCT_SIS_620	0x0620		/* SiS 620 Host Bridge */
-#define	PCI_PRODUCT_SIS_630	0x0630		/* SiS 630 Host Bridge */
-#define	PCI_PRODUCT_SIS_633	0x0633		/* SiS 633 Host Bridge */
-#define	PCI_PRODUCT_SIS_635	0x0635		/* SiS 635 Host Bridge */
-#define	PCI_PRODUCT_SIS_640	0x0640		/* SiS 640 Host Bridge */
-#define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
-#define	PCI_PRODUCT_SIS_646	0x0646		/* SiS 646 Host Bridge */
-#define	PCI_PRODUCT_SIS_648	0x0648		/* SiS 648 Host Bridge */
-#define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
-#define	PCI_PRODUCT_SIS_651	0x0651		/* SiS 651 Host Bridge */
-#define	PCI_PRODUCT_SIS_652	0x0652		/* SiS 652 Host Bridge */
-#define	PCI_PRODUCT_SIS_655	0x0655		/* SiS 655 Host Bridge */
-#define	PCI_PRODUCT_SIS_658	0x0658		/* SiS 658 Host Bridge */
-#define	PCI_PRODUCT_SIS_730	0x0730		/* SiS 730 Host Bridge */
-#define	PCI_PRODUCT_SIS_733	0x0733		/* SiS 733 Host Bridge */
-#define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
-#define	PCI_PRODUCT_SIS_740	0x0740		/* SiS 740 Host Bridge */
-#define	PCI_PRODUCT_SIS_741	0x0741		/* SiS 741 Host Bridge */
-#define	PCI_PRODUCT_SIS_745	0x0745		/* SiS 745 Host Bridge */
-#define	PCI_PRODUCT_SIS_746	0x0746		/* SiS 746 Host Bridge */
-#define	PCI_PRODUCT_SIS_748	0x0748		/* SiS 748 Host Bridge */
-#define	PCI_PRODUCT_SIS_750	0x0750		/* SiS 750 Host Bridge */
-#define	PCI_PRODUCT_SIS_751	0x0751		/* SiS 751 Host Bridge */
-#define	PCI_PRODUCT_SIS_752	0x0752		/* SiS 752 Host Bridge */
-#define	PCI_PRODUCT_SIS_755	0x0755		/* SiS 755 Host Bridge */
-#define	PCI_PRODUCT_SIS_900	0x0900		/* SiS 900 10/100 Ethernet */
-#define	PCI_PRODUCT_SIS_961	0x0961		/* SiS 961 Host Bridge */
-#define	PCI_PRODUCT_SIS_962	0x0962		/* SiS 962 Host Bridge */
-#define	PCI_PRODUCT_SIS_963	0x0963		/* SiS 963 Host Bridge */
-#define	PCI_PRODUCT_SIS_964	0x0964		/* SiS 964 Host Bridge */
+#define	PCI_PRODUCT_SIS_620	0x0620		/* 620 Host Bridge */
+#define	PCI_PRODUCT_SIS_630	0x0630		/* 630 Host Bridge */
+#define	PCI_PRODUCT_SIS_633	0x0633		/* 633 Host Bridge */
+#define	PCI_PRODUCT_SIS_635	0x0635		/* 635 Host Bridge */
+#define	PCI_PRODUCT_SIS_640	0x0640		/* 640 Host Bridge */
+#define	PCI_PRODUCT_SIS_645	0x0645		/* 645 Host Bridge */
+#define	PCI_PRODUCT_SIS_646	0x0646		/* 646 Host Bridge */
+#define	PCI_PRODUCT_SIS_648	0x0648		/* 648 Host Bridge */
+#define	PCI_PRODUCT_SIS_650	0x0650		/* 650 Host Bridge */
+#define	PCI_PRODUCT_SIS_651	0x0651		/* 651 Host Bridge */
+#define	PCI_PRODUCT_SIS_652	0x0652		/* 652 Host Bridge */
+#define	PCI_PRODUCT_SIS_655	0x0655		/* 655 Host Bridge */
+#define	PCI_PRODUCT_SIS_658	0x0658		/* 658 Host Bridge */
+#define	PCI_PRODUCT_SIS_730	0x0730		/* 730 Host Bridge */
+#define	PCI_PRODUCT_SIS_733	0x0733		/* 733 Host Bridge */
+#define	PCI_PRODUCT_SIS_735	0x0735		/* 735 Host Bridge */
+#define	PCI_PRODUCT_SIS_740	0x0740		/* 740 Host Bridge */
+#define	PCI_PRODUCT_SIS_741	0x0741		/* 741 Host Bridge */
+#define	PCI_PRODUCT_SIS_745	0x0745		/* 745 Host Bridge */
+#define	PCI_PRODUCT_SIS_746	0x0746		/* 746 Host Bridge */
+#define	PCI_PRODUCT_SIS_748	0x0748		/* 748 Host Bridge */
+#define	PCI_PRODUCT_SIS_750	0x0750		/* 750 Host Bridge */
+#define	PCI_PRODUCT_SIS_751	0x0751		/* 751 Host Bridge */
+#define	PCI_PRODUCT_SIS_752	0x0752		/* 752 Host Bridge */
+#define	PCI_PRODUCT_SIS_755	0x0755		/* 755 Host Bridge */
+#define	PCI_PRODUCT_SIS_900	0x0900		/* 900 10/100 Ethernet */
+#define	PCI_PRODUCT_SIS_961	0x0961		/* 961 Host Bridge */
+#define	PCI_PRODUCT_SIS_962	0x0962		/* 962 Host Bridge */
+#define	PCI_PRODUCT_SIS_963	0x0963		/* 963 Host Bridge */
+#define	PCI_PRODUCT_SIS_964	0x0964		/* 964 Host Bridge */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
 #define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
@@ -2483,9 +2484,9 @@
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
 #define	PCI_PRODUCT_SIS_7002	0x7002		/* 7002 USB 2.0 host controller */
-#define	PCI_PRODUCT_SIS_7012_AC	0x7012		/* SiS 7012 AC-97 Sound */
-#define	PCI_PRODUCT_SIS_7016	0x7016		/* SiS 7016 10/100 Ethernet */
-#define	PCI_PRODUCT_SIS_7018	0x7018		/* SiS 7018 Sound */
+#define	PCI_PRODUCT_SIS_7012_AC	0x7012		/* 7012 AC-97 Sound */
+#define	PCI_PRODUCT_SIS_7016	0x7016		/* 7016 10/100 Ethernet */
+#define	PCI_PRODUCT_SIS_7018	0x7018		/* 7018 Sound */
 
 /* Silicon Motion, Inc. products */
 #define	PCI_PRODUCT_SILMOTION_SM710	0x0710		/* LynxEM */
@@ -2497,8 +2498,8 @@
 #define	PCI_PRODUCT_SILMOTION_SM910	0x0910		/* Lynx */
 
 /* SMC products */
-#define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
-#define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
+#define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC37C665 */
+#define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (\"EPIC/100\") Fast Ethernet */
 #define	PCI_PRODUCT_SMC_83C175	0x0006		/* 83C175 (\"EPIC/100\") Fast Ethernet */
 
@@ -2521,7 +2522,7 @@
 #define	PCI_PRODUCT_SUN_USB	0x1103		/* USB controller */
 #define	PCI_PRODUCT_SUN_GEMNETWORK	0x2bad		/* GEM Gigabit Ethernet */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
-#define	PCI_PRODUCT_SUN_5821	0x5454		/* Sun bcm5821 */
+#define	PCI_PRODUCT_SUN_5821	0x5454		/* BCM5821 */
 #define	PCI_PRODUCT_SUN_SCA1K	0x5455		/* Crypto Accelerator 1000 */
 #define	PCI_PRODUCT_SUN_PSYCHO	0x8000		/* psycho PCI controller */
 #define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
@@ -2552,8 +2553,8 @@
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK_9D41	0x4441		/* SK-9D41 1000BASE-X */
 
 /* Tamarack Microelectronics, Inc. */
-#define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* Tamarack TC9021 Gigabit Ethernet */
-#define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* Tamarack TC9021 Gigabit Ethernet (alt ID) */
+#define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 Gigabit Ethernet */
+#define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* TC9021 Gigabit Ethernet (alt ID) */
 
 /* Tandem Computers */
 #define	PCI_PRODUCT_TANDEM_SERVERNETII	0x0005		/* ServerNet II VIA adapter */
