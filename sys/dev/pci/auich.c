@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.32 2003/01/16 01:00:06 gendalia Exp $	*/
+/*	$NetBSD: auich.c,v 1.33 2003/01/21 16:05:21 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -107,10 +107,15 @@
  * TODO:
  *	- Add support for the dedicated microphone input.
  *	- 4ch/6ch support.
+ *
+ * NOTE:
+ *      - The 440MX B-stepping at running 100MHz has a hardware erratum.
+ *        It causes PCI master abort and hangups until cold reboot.
+ *        http://www.intel.com/design/chipsets/specupdt/245051.htm
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.32 2003/01/16 01:00:06 gendalia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.33 2003/01/21 16:05:21 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +203,10 @@ struct auich_softc {
 
 	struct auich_dma *sc_dmas;
 
+#ifdef DIAGNOSTIC
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pt;
+#endif
 	int sc_ignore_codecready;
 	/* SiS 7012 hack */
 	int  sc_sample_size;
@@ -377,6 +386,10 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	if (d == NULL)
 		panic("auich_attach: impossible");
 
+#ifdef DIAGNOSTIC
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_pt = pa->pa_tag;
+#endif
 	printf(": %s\n", d->name);
 
 	if (pci_mapreg_map(pa, ICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
@@ -946,6 +959,17 @@ auich_intr(void *v)
 	struct auich_softc *sc = v;
 	int ret = 0, sts, gsts, i, qptr;
 
+#ifdef DIAGNOSTIC
+	int csts;
+#endif
+
+#ifdef DIAGNOSTIC
+	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
+	if (csts & PCI_STATUS_MASTER_ABORT) {
+		printf("auich_intr: PCI master abort\n");
+	}
+#endif
+
 	gsts = bus_space_read_2(sc->iot, sc->aud_ioh, ICH_GSTS);
 	DPRINTF(ICH_DEBUG_DMA, ("auich_intr: gsts=0x%x\n", gsts));
 
@@ -1072,6 +1096,9 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	struct auich_dmalist *q;
 	struct auich_dma *p;
 	size_t size;
+#ifdef DIAGNOSTIC
+	int csts;
+#endif
 
 	DPRINTF(ICH_DEBUG_DMA,
 	    ("auich_trigger_output(%p, %p, %d, %p, %p, %p)\n",
@@ -1079,6 +1106,12 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 
 	sc->sc_pintr = intr;
 	sc->sc_parg = arg;
+#ifdef DIAGNOSTIC
+	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
+	if (csts & PCI_STATUS_MASTER_ABORT) {
+		printf("auich_trigger_output: PCI master abort\n");
+	}
+#endif
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
@@ -1129,6 +1162,9 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	struct auich_dmalist *q;
 	struct auich_dma *p;
 	size_t size;
+#ifdef DIAGNOSTIC
+	int csts;
+#endif
 
 	DPRINTF(ICH_DEBUG_DMA,
 	    ("auich_trigger_input(%p, %p, %d, %p, %p, %p)\n",
@@ -1136,6 +1172,13 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 
 	sc->sc_rintr = intr;
 	sc->sc_rarg = arg;
+
+#ifdef DIAGNOSTIC
+	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
+	if (csts & PCI_STATUS_MASTER_ABORT) {
+		printf("auich_trigger_input: PCI master abort\n");
+	}
+#endif
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != start; p = p->next)
 		;
