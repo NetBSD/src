@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iokit.h,v 1.3 2003/05/14 18:28:05 manu Exp $ */
+/*	$NetBSD: darwin_iokit.h,v 1.4 2003/05/22 22:07:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 typedef uint64_t darwin_unsignedwide;
 typedef darwin_unsignedwide darwin_absolutetime;
 typedef volatile int darwin_ev_lock_data_t; /* aka IOSharedLockData */
+typedef uint32_t darwin_iooptionbits;
 
 typedef struct {
 	int16_t x;

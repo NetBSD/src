@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.4 2003/05/14 18:28:05 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.5 2003/05/22 22:07:39 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -238,6 +238,11 @@ struct  darwin_iohidsystem_shmem {
 	int dis_private_offset;	/* Offset to privete memory. Don't care. */
 	struct darwin_iohidsystem_evglobals dis_evglobals; 
 };
+
+/* I/O selectors for io_connect_method_{scalar|struct}i_{scalar|struct}o */
+#define DARWIN_IOHIDCREATESHMEM 0
+#define DARWIN_IOHIDSETEVENTSENABLE 1
+#define DARWIN_IOHIDSETCURSORENABLE 2
 
 int darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *);
 int darwin_iohidsystem_connect_map_memory(struct mach_trap_args *);
