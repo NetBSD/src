@@ -1,5 +1,5 @@
 /*
- *	cdio.h,v 1.3 1993/05/20 16:21:53 cgd Exp
+ *	$Id: cdio.h,v 1.5 1993/08/04 19:33:38 brezak Exp $
  */
 
 #ifndef _SYS_CDIO_H_
@@ -7,25 +7,13 @@
 
 /* Shared between kernel & process */
 
-struct cd_msf {
-        u_char  __xxx;
-        u_char	minute;
-        u_char	second;
-        u_char	frame;
-};
-
 struct cd_toc_entry {
 	u_char	:8;
 	u_char	control:4;
 	u_char	addr_type:4;
 	u_char  track;
 	u_char	:8;
-        union {
-                u_char	block[4];
-                struct cd_msf	msf;
-        } un_addr;
-#define toce_addr	un_addr.block
-#define toce_msf	un_addr.msf
+	u_char	addr[4];
 };
 
 struct cd_sub_channel_header {
@@ -46,18 +34,8 @@ struct cd_sub_channel_position_data {
 	u_char	addr_type:4;
 	u_char	track_number;
 	u_char	index_number;
-        union {
-                u_char	addr[4];
-                struct cd_msf	msf;
-        } un_abs;
-        union {
-                u_char	addr[4];
-                struct cd_msf	msf;
-        } un_rel;
-#define cdscp_absaddr	un_abs.addr
-#define cdscp_absmsf	un_abs.msf
-#define cdscp_reladdr	un_rel.addr
-#define cdscp_relmsf	un_rel.msf
+	u_char	absaddr[4];
+	u_char	reladdr[4];
 };
 
 struct cd_sub_channel_media_catalog {
@@ -107,14 +85,6 @@ struct ioc_play_blocks
 	int	len;
 };
 #define	CDIOCPLAYBLOCKS	_IOW('c',2,struct ioc_play_blocks)
-
-struct ioc_play_msf
-{
-	struct cd_msf	start;
-        struct cd_msf	end;
-};
-
-#define	CDIOCPLAYMSF	_IOW('c',25,struct ioc_play_msf)
 
 struct ioc_read_subchannel {
 	u_char address_format;
@@ -173,4 +143,16 @@ struct	ioc_vol
 #define	CDIOCSTOP	_IO('c',23)
 #define	CDIOCEJECT	_IO('c',24)
 
+struct ioc_play_msf
+{
+	u_char	start_m;
+	u_char	start_s;
+	u_char	start_f;
+	u_char	end_m;
+	u_char	end_s;
+	u_char	end_f;
+};
+
+#define	CDIOCPLAYMSF	_IOW('c',25,struct ioc_play_msf)
+        
 #endif /* !_SYS_CDIO_H_ */
