@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.evbarm,v 1.1 2002/11/20 18:04:55 bsh Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -32,14 +32,14 @@ SECTIONS
      boundary.  */
   . = ALIGN(0x8000);
   .data    :
-  AT ((LOADADDR(.text) + SIZEOF(.text) + (0x8000 - 1)) & ~(0x8000 - 1))
+  AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
   {
     __data_start = . ;
     *(.data)
     *(.data.*)
   }
   .sdata     : 
-  AT (LOADADDR(.data) + SIZEOF(.data))
+  AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
   {
     *(.sdata) 
     *(.sdata.*)
