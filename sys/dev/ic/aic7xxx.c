@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.72 2001/04/27 14:49:11 bouyer Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.73 2001/06/19 12:59:17 wiz Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -898,7 +898,7 @@ ahcinitscbdata(struct ahc_softc *ahc)
 
 	/*
 	 * Create our DMA tags.  These tags define the kinds of device
-	 * accessable memory allocations and memory mappings we will
+	 * accessible memory allocations and memory mappings we will
 	 * need to perform during normal operation.
 	 *
 	 * Unless we need to further restrict the allocation, we rely

@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.22 2001/03/15 06:10:55 chs Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.23 2001/06/19 12:59:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -3219,7 +3219,7 @@ esh_generic_ioctl(struct esh_softc *sc, u_long cmd, caddr_t data,
 				  (misc_host_ctl & RR_MH_NO_SWAP) | 
 				  RR_MH_HALT_PROC);
 
-		/* Make the EEPROM accessable */
+		/* Make the EEPROM accessible */
 
 		misc_local_ctl = bus_space_read_4(iot, ioh, RR_MISC_LOCAL_CTL);
 		value = misc_local_ctl & 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.3 2001/06/13 15:08:06 soda Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.4 2001/06/19 12:59:14 wiz Exp $	*/
 /*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ sninit(sc)
 
 	s = splnet();
 
-	csr->s_cr = CR_RST;	/* s_dcr only accessable reset mode! */
+	csr->s_cr = CR_RST;	/* s_dcr only accessible reset mode! */
 
 	/* config it */
 	csr->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 | DCR_DW32 | 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.4 2001/06/09 10:44:10 chris Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.5 2001/06/19 12:59:16 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -412,7 +412,7 @@ initarm(bootinfo)
 	 *
 	 * This means that the kernel is mapped suitably for continuing
 	 * execution, all I/O is mapped 1:1 virtual to physical and
-	 * physical memory is accessable.
+	 * physical memory is accessible.
 	 *
 	 * The initarm() has the responcibility for creating the kernel
 	 * page tables.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 2001/06/02 18:09:22 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 2001/06/19 12:59:17 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1197,7 +1197,7 @@ pv_changepte(pa, set_bits, clear_bits)
 			}
 		}
 
-		/* Is the PTE currently accessable in some context? */
+		/* Is the PTE currently accessible in some context? */
 		in_ctx = FALSE;
 		sme = SEGINV;	/* kill warning */
 		if (pmap == kernel_pmap) {
@@ -1301,7 +1301,7 @@ pv_syncflags(pv)
 			panic("pv_syncflags: null segmap");
 #endif
 
-		/* Is the PTE currently accessable in some context? */
+		/* Is the PTE currently accessible in some context? */
 		in_ctx = FALSE;
 		if (pmap == kernel_pmap) {
 			set_context(KERNEL_CONTEXT);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.yp,v 1.14 2001/01/16 07:15:18 scottr Exp $
+#	$NetBSD: Makefile.yp,v 1.15 2001/06/19 12:59:18 wiz Exp $
 #
 # This is the YP Makefile, used to create and push YP maps.
 #
@@ -8,7 +8,7 @@
 NOPUSH?=	""
 
 # Password maps in standard YP are insecure, because the pw_passwd
-# field is accessable by any user. FreeBSD, NetBSD and OpenBSD have
+# field is accessible by any user. FreeBSD, NetBSD and OpenBSD have
 # a common solution: a secure map (generated with makedbm -s) can
 # only be accessed by a client bound to a privileged port.
 #

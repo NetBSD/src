@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.17 2001/04/04 11:22:48 wiz Exp $
+.\"	$NetBSD: yp.8,v 1.18 2001/06/19 12:59:13 wiz Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -127,7 +127,7 @@ that can use
 maps.
 .Pp
 Password maps in standard YP are insecure, because the pw_passwd
-field is accessable by any user. A common solution to this is to
+field is accessible by any user. A common solution to this is to
 generate a secure map (using
 .Dq makedbm -s )
 which can only be accessed by a client bound to a privileged port.
