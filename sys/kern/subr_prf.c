@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.70 2000/05/02 09:29:39 pk Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.71 2000/05/25 21:32:41 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -1060,9 +1060,6 @@ reswitch:	switch (ch) {
 #ifdef DDB
 		/* XXX: non-standard '%r' format (print int in db_radix) */
 		case 'r':
-			if ((oflags & TODDB) == 0) 
-				goto default_case;
-			
 			if (db_radix == 16)
 				goto case_z;	/* signed hex */
 			_uquad = SARG();
@@ -1077,9 +1074,6 @@ reswitch:	switch (ch) {
 		/* XXX: non-standard '%z' format ("signed hex", a "hex %i")*/
 		case 'z':
 		case_z:
-			if ((oflags & TODDB) == 0) 
-				goto default_case;
-
 			xdigs = "0123456789abcdef";
 			ch = 'x';	/* the 'x' in '0x' (below) */
 			_uquad = SARG();
@@ -1336,9 +1330,6 @@ number:			if ((dprec = prec) >= 0)
 		skipsize:
 			break;
 		default:	/* "%?" prints ?, unless ? is NUL */
-#ifdef DDB
-		default_case:	/* DDB */
-#endif
 			if (ch == '\0')
 				goto done;
 			/* pretend it was %c with argument ch */
