@@ -1,0 +1,4 @@
+#	$NetBSD: md.evbsh3,v 1.1 2004/04/04 10:06:24 mrg Exp $
+./usr/X11R6/bin/Xvfb
+./usr/X11R6/man/cat1/Xvfb.0
+./usr/X11R6/man/man1/Xvfb.1
