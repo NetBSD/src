@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 1999/02/10 17:03:27 kleink Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 1999/03/15 03:25:33 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,6 @@
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
 
-#include <mips/conf.h>
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
@@ -62,6 +61,10 @@
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
 #endif
+
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 extern paddr_t avail_end;
 void *zeropage;
