@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.9 1994/07/18 06:27:12 mycroft Exp $
+#	     $Id: Makefile,v 1.10 1994/08/04 19:42:16 brezak Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -123,8 +123,9 @@ dcopy:	copy.o srt0.o conf.o ${LIBS}
 mkboot: ${.CURDIR}/mkboot.c
 	${CC} ${CFLAGS} -o mkboot ${.CURDIR}/mkboot.c
 
-installboot: ${.CURDIR}/installboot.c
-	${CC} ${CFLAGS} -o installboot ${.CURDIR}/installboot.c
+installboot: ${.CURDIR}/installboot.sh
+	@rm -f installboot
+	cp -p ${.CURDIR}/installboot.sh installboot
 
 # utilities
 
