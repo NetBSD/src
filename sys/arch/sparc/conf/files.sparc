@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.71 1999/04/13 18:45:41 ad Exp $
+#	$NetBSD: files.sparc,v 1.72 1999/04/17 21:26:59 kleink Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -18,7 +18,7 @@ file	arch/sparc/sparc/iommu.c		iommu
 device obio { [addr = -1], [level = -1] }
 attach obio at mainbus
 
-include "../../../dev/vme/files.vme"
+include "dev/vme/files.vme"
 attach vme at mainbus with vme_mainbus
 attach vme at iommu with vme_iommu
 
@@ -76,17 +76,17 @@ attach fd at fdc
 file	arch/sparc/dev/fd.c			fdc | fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
-include "../../../dev/sbus/files.sbus"
+include "dev/sbus/files.sbus"
 attach sbus at mainbus with sbus_mainbus
 attach sbus at iommu with sbus_iommu
 file	arch/sparc/dev/sbus.c			sbus
 
 # network devices MII bus
-include "../../../dev/mii/files.mii"
+include "dev/mii/files.mii"
 
 # PCMCIA bus
-include "../../../dev/pcmcia/files.pcmcia"
-include "../../../dev/ata/files.ata"
+include "dev/pcmcia/files.pcmcia"
+include "dev/ata/files.ata"
 
 #
 # Console (zs) related stuff
@@ -113,7 +113,7 @@ file dev/sun/ms.c			ms needs-flag
 #
 # Machine-independent SCSI drivers
 #
-include "../../../dev/scsipi/files.scsipi"
+include "dev/scsipi/files.scsipi"
 
 major	{ cd = 18 }
 major	{ fd = 16 }
@@ -243,20 +243,20 @@ file	arch/sparc/sparc/db_disasm.c	ddb
 #
 # Raster Console
 #
-include "../../../dev/rcons/files.rcons"
-include "../../../dev/rasops/files.rasops"
-include "../../../dev/wsfont/files.wsfont"
+include "dev/rcons/files.rcons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 #
 # Compatibility modules
 #
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
-include "../../../compat/svr4/files.svr4"
+include "compat/svr4/files.svr4"
 file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
+include "compat/sunos/files.sunos"
 file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
