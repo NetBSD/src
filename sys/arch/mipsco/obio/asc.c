@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.3 2000/08/15 04:56:46 wdk Exp $	*/
+/*	$NetBSD: asc.c,v 1.4 2000/08/29 08:24:06 wdk Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -247,11 +247,28 @@ dma_status(sc)
 	addr  = (void *)
 	        bus_space_read_4(esc->sc_bst, esc->dm_bsh, RAMBO_CADDR);
 
-	NCR_DMA(("rambo status: cnt=%x addr=%p stat=%08x tc=%04x "
+	printf("rambo status: cnt=%x addr=%p stat=%08x tc=%04x "
 		 "ncr_stat=0x%02x ncr_fifo=0x%02x\n",
 		 count, addr, stat, tc, 
 		 asc_read_reg(sc, NCR_STAT),
-		 asc_read_reg(sc, NCR_FFLAG)));
+		 asc_read_reg(sc, NCR_FFLAG));
+}
+
+static __inline void
+check_fifo(esc)
+	struct asc_softc *esc;
+{
+	register int i=16;
+	
+	while (i && !(bus_space_read_4(esc->sc_bst, esc->dm_bsh,
+				       RAMBO_MODE) & RB_FIFO_EMPTY)) {
+		 DELAY(1); i--;
+	}
+
+	if (!i) {
+		dma_status((void *)esc);
+		panic("fifo didn't flush");
+	}
 }
 
 int
@@ -351,6 +368,7 @@ asc_dma_setup(sc, addr, len, datain, dmasize)
 	if (prime) {
 		if (esc->sc_flags & DMA_PULLUP) {
 			u_int16_t *p;
+
 			p = (u_int16_t *)((u_int32_t)*esc->sc_dmaaddr & ~0x3f);
 			/* Read from NCR 53c94 controller*/
 			while (prime > 0) {
@@ -406,12 +424,11 @@ asc_dma_intr(sc)
 	}
 #endif
 
-#if 0
 	if ((resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("asc_intr: empty FIFO of %d ", resid));
 		DELAY(10);
 	}
-#endif
+
 	resid = (tcl = NCR_READ_REG(sc, NCR_TCL)) +
 		((tcm = NCR_READ_REG(sc, NCR_TCM)) << 8);
 	trans = esc->sc_dmasize - resid;
@@ -425,18 +442,19 @@ asc_dma_intr(sc)
 		 tcl, tcm, trans, resid));
 
 	status = bus_space_read_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE);
-	resid  = status & 0x1f;
 
 	if (!(status & RB_FIFO_EMPTY)) { /* Data left in RAMBO FIFO */
 		if (esc->sc_flags & DMA_PULLUP) { /* SCSI Read */
 			paddr_t ptr;
 			u_int16_t *p;
 
+			resid  = status & 0x1f;
+
 			/* take the address of block to fixed up */
 			ptr = bus_space_read_4(esc->sc_bst, esc->dm_bsh,
 					       RAMBO_CADDR);
 			/* find the starting address of fractional data */
-			p = (u_int16_t *)MIPS_PHYS_TO_KSEG1(ptr+(resid<<1));
+			p = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr+(resid<<1));
 
 			/* XXX - disable DMA xfer before flushing FIFO ? */
 			len = RB_BLK_CNT - resid;
@@ -444,11 +462,16 @@ asc_dma_intr(sc)
 				bus_space_write_2(esc->sc_bst, esc->dm_bsh,
 						  RAMBO_FIFO, *p++);
 			}
+			check_fifo(esc);
 		} else {		/* SCSI Write */
+			bus_space_write_4(esc->sc_bst, esc->dm_bsh, 
+					  RAMBO_MODE, 0);
 			bus_space_write_4(esc->sc_bst, esc->dm_bsh, 
 					  RAMBO_MODE, RB_CLRFIFO);
 		}		
 	}
+
+ 	bus_space_write_2(esc->sc_bst, esc->dm_bsh, RAMBO_BLKCNT, 0);
 
 	bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE, 0);
 
@@ -458,7 +481,7 @@ asc_dma_intr(sc)
 			  ? BUS_DMASYNC_POSTREAD
 			  : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_dmamap);
-   
+
 	*esc->sc_dmaaddr += trans;
 	*esc->sc_dmalen  -= trans;
 
@@ -498,11 +521,18 @@ rambo_dma_chain(esc)
 
 	seg = ++esc->dm_curseg;
 
-	/* XXX: Check rambo status */
+	if (!(esc->sc_flags & DMA_PULLUP)) /* Wait for FIFO during write */
+		check_fifo(esc);
 
 #ifdef DIAGNOSTIC
 	if (!(esc->sc_flags & DMA_ACTIVE) || seg > esc->sc_dmamap->dm_nsegs)
 		panic("Unexpected DMA chaining intr");
+
+	/* Interrupt can only occur at terminal count, but double check */ 
+	if (bus_space_read_2(esc->sc_bst, esc->dm_bsh, RAMBO_BLKCNT)) {
+		dma_status((void *)esc);
+		panic("rambo blkcnt != 0");
+	}
 #endif
 
 	paddr  = esc->sc_dmamap->dm_segs[seg].ds_addr;
@@ -532,14 +562,14 @@ asc_intr(arg)
 
 	esc->sc_intrcnt.ev_count++;
 
-	/* Check for NCR 53c94 interrupt */
-	if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) {
-		ncr53c9x_intr(sc);
-	}
 	/* Check for RAMBO DMA Interrupt */
 	dma_stat = bus_space_read_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE);
 	if (dma_stat & RB_INTR_PEND) {
 		rambo_dma_chain(esc);
+	}
+	/* Check for NCR 53c94 interrupt */
+	if (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) {
+		ncr53c9x_intr(sc);
 	}
 	return 0;
 }
