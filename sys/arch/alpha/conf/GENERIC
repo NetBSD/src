@@ -1,10 +1,12 @@
-# $NetBSD: GENERIC,v 1.144 2000/02/29 06:32:20 simonb Exp $
+# $NetBSD: GENERIC,v 1.145 2000/03/09 22:27:26 cjs Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
+#
+# If you add stuff to this, please add it to the ALPHA configuration, too.
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.144 $"
+#ident 		"GENERIC-$Revision: 1.145 $"
 
 maxusers 32
 
