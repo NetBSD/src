@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.21 2003/08/21 04:30:25 jschauma Exp $ */
+/* $NetBSD: chio.c,v 1.22 2003/09/14 19:20:17 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.21 2003/08/21 04:30:25 jschauma Exp $");
+__RCSID("$NetBSD: chio.c,v 1.22 2003/09/14 19:20:17 jschauma Exp $");
 #endif
 
 #include <sys/param.h>
@@ -78,7 +78,6 @@ static int parse_element_unit(const char *);
 static int parse_special(const char *);
 static int is_special(const char *);
 static const char *bits_to_string(int, const char *);
-char *printescaped(const char *);
 
 static int do_move(const char *, int, char **);
 static int do_exchange(const char *, int, char **);
@@ -177,7 +176,7 @@ main(int argc, char *argv[])
 
 	/* Open the changer device. */
 	if ((changer_fd = open(changer_name, O_RDWR, 0600)) == -1)
-		err(EXIT_FAILURE, "%s: open", printescaped(changer_name));
+		err(EXIT_FAILURE, "%s: open", changer_name);
 		/* NOTREACHED */
 
 	/* Register cleanup function. */
@@ -255,7 +254,7 @@ do_move(const char *cname, int argc, char **argv)
 
 	/* Send command to changer. */
 	if (ioctl(changer_fd, CHIOMOVE, &cmd))
-		err(EXIT_FAILURE, "%s: CHIOMOVE", printescaped(changer_name));
+		err(EXIT_FAILURE, "%s: CHIOMOVE", changer_name);
 		/* NOTREACHED */
 
 	return (0);
@@ -341,7 +340,7 @@ do_exchange(const char *cname, int argc, char **argv)
 
 	/* Send command to changer. */
 	if (ioctl(changer_fd, CHIOEXCHANGE, &cmd))
-		err(EXIT_FAILURE, "%s: CHIOEXCHANGE", printescaped(changer_name));
+		err(EXIT_FAILURE, "%s: CHIOEXCHANGE", changer_name);
 		/* NOTREACHED */
 
 	return (0);
@@ -395,7 +394,7 @@ do_position(const char *cname, int argc, char **argv)
 
 	/* Send command to changer. */
 	if (ioctl(changer_fd, CHIOPOSITION, &cmd))
-		err(EXIT_FAILURE, "%s: CHIOPOSITION", printescaped(changer_name));
+		err(EXIT_FAILURE, "%s: CHIOPOSITION", changer_name);
 		/* NOTREACHED */
 
 	return (0);
@@ -406,7 +405,6 @@ static int
 do_params(const char *cname, int argc, char **argv)
 {
 	struct changer_params data;
-	char *cn;
 
 	/* No arguments to this command. */
 	if (argc) {
@@ -415,18 +413,16 @@ do_params(const char *cname, int argc, char **argv)
 		/* NOTREACHED */
 	}
 	
-	cn = printescaped(changer_name);
-
 	/* Get params from changer and display them. */
 	(void)memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, &data))
-		err(EXIT_FAILURE, "%s: CHIOGPARAMS", cn);
+		err(EXIT_FAILURE, "%s: CHIOGPARAMS", changer_name);
 		/* NOTREACHED */
 
 #define	PLURAL(n)	(n) > 1 ? "s" : ""
 
 	(void)printf("%s: %d slot%s, %d drive%s, %d picker%s",
-	    cn,
+	    changer_name,
 	    data.cp_nslots, PLURAL(data.cp_nslots),
 	    data.cp_ndrives, PLURAL(data.cp_ndrives),
 	    data.cp_npickers, PLURAL(data.cp_npickers));
@@ -436,9 +432,7 @@ do_params(const char *cname, int argc, char **argv)
 
 #undef PLURAL
 
-	(void)printf("\n%s: current picker: %d\n", cn, data.cp_curpicker);
-
-	free(cn);
+	(void)printf("\n%s: current picker: %d\n", changer_name, data.cp_curpicker);
 
 	return (0);
 }
@@ -448,7 +442,6 @@ static int
 do_getpicker(const char *cname, int argc, char **argv)
 {
 	int picker;
-	char *cn;
 
 	/* No arguments to this command. */
 	if (argc) {
@@ -457,15 +450,12 @@ do_getpicker(const char *cname, int argc, char **argv)
 		/*NOTREACHED*/
 	}
 
-	cn = printescaped(changer_name);
-
 	/* Get current picker from changer and display it. */
 	if (ioctl(changer_fd, CHIOGPICKER, &picker))
-		err(EXIT_FAILURE, "%s: CHIOGPICKER", cn);
+		err(EXIT_FAILURE, "%s: CHIOGPICKER", changer_name);
 		/* NOTREACHED */
 
-	(void)printf("%s: current picker: %d\n", cn, picker);
-	free(cn);
+	(void)printf("%s: current picker: %d\n", changer_name, picker);
 
 	return (0);
 }
@@ -489,7 +479,7 @@ do_setpicker(const char *cname, int argc, char **argv)
 
 	/* Set the changer picker. */
 	if (ioctl(changer_fd, CHIOSPICKER, &picker))
-		err(EXIT_FAILURE, "%s: CHIOSPICKER", printescaped(changer_name));
+		err(EXIT_FAILURE, "%s: CHIOSPICKER", changer_name);
 
 	return (0);
 }
@@ -503,7 +493,6 @@ do_status(const char *cname, int argc, char **argv)
 	int i, chet, count, echet, flags, have_ucount, have_unit;
 	int schet, ucount, unit;
 	size_t size;
-	char *cn;
 
 	flags = 0;
 	have_ucount = 0;
@@ -525,15 +514,13 @@ do_status(const char *cname, int argc, char **argv)
 		/*NOTREACHED*/
 	}
 
-	cn = printescaped(changer_name);
-
 	/*
 	 * Get params from changer.  Specifically, we need the element
 	 * counts.
 	 */
 	(void)memset(&data, 0, sizeof(data));
 	if (ioctl(changer_fd, CHIOGPARAMS, &data))
-		err(EXIT_FAILURE, "%s: CHIOGPARAMS", cn);
+		err(EXIT_FAILURE, "%s: CHIOGPARAMS", changer_name);
 		/* NOTREACHED */
 
 	schet = CHET_MT;
@@ -623,9 +610,8 @@ do_status(const char *cname, int argc, char **argv)
 				continue;
 			else {
 				(void)printf("%s: no %s elements\n",
-				    cn,
+				    changer_name,
 				    elements[chet].et_name);
-				free(cn);
 				return (0);
 			}
 		}
@@ -672,7 +658,7 @@ do_status(const char *cname, int argc, char **argv)
 
 		if (ioctl(changer_fd, CHIOGSTATUS, &cmd)) {
 			free(ces);
-			err(EXIT_FAILURE, "%s: CHIOGSTATUS", cn);
+			err(EXIT_FAILURE, "%s: CHIOGSTATUS", changer_name);
 			/* NOTREACHED */
 		}
 
@@ -710,7 +696,6 @@ do_status(const char *cname, int argc, char **argv)
 		free(ces);
 	}
 
-	free(cn);
 	return (0);
 }
 
@@ -720,7 +705,7 @@ do_ielem(const char *cname, int argc, char **argv)
 {
 
 	if (ioctl(changer_fd, CHIOIELEM, NULL))
-		err(EXIT_FAILURE, "%s: CHIOIELEM", printescaped(changer_name));
+		err(EXIT_FAILURE, "%s: CHIOIELEM", changer_name);
 		/* NOTREACHED */
 
 	return (0);
@@ -772,7 +757,7 @@ do_cdlu(const char *cname, int argc, char **argv)
 	 * XXX handling for cdlu; think about this some more.
 	 */
 	if (ioctl(changer_fd, CDIOCLOADUNLOAD, &cmd))
-		err(EXIT_FAILURE, "%s: CDIOCLOADUNLOAD", printescaped(changer_name));
+		err(EXIT_FAILURE, "%s: CDIOCLOADUNLOAD", changer_name);
 		/* NOTREACHED */
 
 	return (0);
@@ -879,28 +864,4 @@ usage(void)
 		    commands[i].cc_args);
 	exit(1);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strcpy(retval, src);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }

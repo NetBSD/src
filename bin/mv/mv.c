@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.32 2003/08/13 03:22:03 itojun Exp $ */
+/* $NetBSD: mv.c,v 1.33 2003/09/14 19:20:22 jschauma Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.32 2003/08/13 03:22:03 itojun Exp $");
+__RCSID("$NetBSD: mv.c,v 1.33 2003/09/14 19:20:22 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,14 +66,13 @@ __RCSID("$NetBSD: mv.c,v 1.32 2003/08/13 03:22:03 itojun Exp $");
 #include "pathnames.h"
 
 int fflg, iflg, vflg;
-int stdin_ok, stdout_ok;
+int stdin_ok;
 
 int	copy(char *, char *);
 int	do_move(char *, char *);
 int	fastcopy(char *, char *, struct stat *);
 void	usage(void);
 int	main(int, char *[]);
-char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -110,7 +109,6 @@ main(int argc, char *argv[])
 		usage();
 
 	stdin_ok = isatty(STDIN_FILENO);
-	stdout_ok = isatty(STDOUT_FILENO);
 
 	/*
 	 * If the stat on the target fails or the target isn't a directory,
@@ -138,9 +136,7 @@ main(int argc, char *argv[])
 			++p;
 
 		if ((baselen + (len = strlen(p))) >= MAXPATHLEN) {
-			char *fn = printescaped(*argv);
-			warnx("%s: destination pathname too long", fn);
-			free(fn);
+			warnx("%s: destination pathname too long", *argv);
 			rval = 1;
 		} else {
 			memmove(endp, p, len + 1);
@@ -157,10 +153,6 @@ do_move(char *from, char *to)
 {
 	struct stat sb;
 	char modep[15];
-	char *fn, *tn;
-
-	fn = printescaped(from);
-	tn = printescaped(to);
 
 	/*
 	 * (1)	If the destination path exists, the -f option is not specified
@@ -181,34 +173,27 @@ do_move(char *from, char *to)
 
 		if (iflg) {
 			if (access(from, F_OK)) {
-				warn("rename %s", fn);
-				free(fn);
-				free(tn);
+				warn("rename %s", from);
 				return (1);
 			}
-			(void)fprintf(stderr, "overwrite %s? ", tn);
+			(void)fprintf(stderr, "overwrite %s? ", to);
 		} else if (stdin_ok && access(to, W_OK) && !stat(to, &sb)) {
 			if (access(from, F_OK)) {
-				warn("rename %s", fn);
-				free(fn);
-				free(tn);
+				warn("rename %s", from);
 				return (1);
 			}
 			strmode(sb.st_mode, modep);
 			(void)fprintf(stderr, "override %s%s%s/%s for %s? ",
 			    modep + 1, modep[9] == ' ' ? "" : " ",
 			    user_from_uid(sb.st_uid, 0),
-			    group_from_gid(sb.st_gid, 0), tn);
+			    group_from_gid(sb.st_gid, 0), to);
 		} else
 			ask = 0;
 		if (ask) {
 			if ((ch = getchar()) != EOF && ch != '\n')
 				while (getchar() != '\n');
-			if (ch != 'y' && ch != 'Y') {
-				free(fn);
-				free(tn);
+			if (ch != 'y' && ch != 'Y')
 				return (0);
-			}
 		}
 	}
 
@@ -227,16 +212,12 @@ do_move(char *from, char *to)
 	 */
 	if (!rename(from, to)) {
 		if (vflg)
-			printf("%s -> %s\n", fn, tn);
-		free(fn);
-		free(tn);
+			printf("%s -> %s\n", from, to);
 		return (0);
 	}
 
 	if (errno != EXDEV) {
-		warn("rename %s to %s", fn, tn);
-		free(fn);
-		free(tn);
+		warn("rename %s to %s", from, to);
 		return (1);
 	}
 
@@ -248,9 +229,7 @@ do_move(char *from, char *to)
 	 */
 	if (!lstat(to, &sb)) {
 		if ((S_ISDIR(sb.st_mode)) ? rmdir(to) : unlink(to)) {
-			warn("can't remove %s", tn);
-			free(fn);
-			free(tn);
+			warn("can't remove %s", to);
 			return (1);
 		}
 	}
@@ -260,14 +239,9 @@ do_move(char *from, char *to)
 	 *	as a file hierarchy rooted in the destination path...
 	 */
 	if (lstat(from, &sb)) {
-		warn("%s", fn);
-		free(fn);
-		free(tn);
+		warn("%s", from);
 		return (1);
 	}
-
-	free(fn);
-	free(tn);
 
 	return (S_ISREG(sb.st_mode) ?
 	    fastcopy(from, to, &sb) : copy(from, to));
@@ -280,44 +254,32 @@ fastcopy(char *from, char *to, struct stat *sbp)
 	static u_int blen;
 	static char *bp;
 	int nread, from_fd, to_fd;
-	char *fn, *tn;
-
-	fn = printescaped(from);
-	tn = printescaped(to);
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
-		warn("%s", fn);
-		free(fn);
-		free(tn);
+		warn("%s", from);
 		return (1);
 	}
 	if ((to_fd =
 	    open(to, O_CREAT | O_TRUNC | O_WRONLY, sbp->st_mode)) < 0) {
-		warn("%s", tn);
-		free(fn);
-		free(tn);
+		warn("%s", to);
 		(void)close(from_fd);
 		return (1);
 	}
 	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
 		warn(NULL);
-		free(fn);
-		free(tn);
 		return (1);
 	}
 	while ((nread = read(from_fd, bp, blen)) > 0)
 		if (write(to_fd, bp, nread) != nread) {
-			warn("%s", tn);
+			warn("%s", to);
 			goto err;
 		}
 	if (nread < 0) {
-		warn("%s", fn);
+		warn("%s", from);
 err:		if (unlink(to))
-			warn("%s: remove", tn);
+			warn("%s: remove", to);
 		(void)close(from_fd);
 		(void)close(to_fd);
-		free(fn);
-		free(tn);
 		return (1);
 	}
 	(void)close(from_fd);
@@ -335,36 +297,30 @@ err:		if (unlink(to))
 #else
 	if (futimes(to_fd, tval))
 #endif
-		warn("%s: set times", tn);
+		warn("%s: set times", to);
 	if (fchown(to_fd, sbp->st_uid, sbp->st_gid)) {
 		if (errno != EPERM)
-			warn("%s: set owner/group", tn);
+			warn("%s: set owner/group", to);
 		sbp->st_mode &= ~(S_ISUID | S_ISGID);
 	}
 	if (fchmod(to_fd, sbp->st_mode))
-		warn("%s: set mode", tn);
+		warn("%s: set mode", to);
 	if (fchflags(to_fd, sbp->st_flags) && (errno != EOPNOTSUPP))
-		warn("%s: set flags (was: 0%07o)", tn, sbp->st_flags);
+		warn("%s: set flags (was: 0%07o)", to, sbp->st_flags);
 
 	if (close(to_fd)) {
-		warn("%s", tn);
-		free(fn);
-		free(tn);
+		warn("%s", to);
 		return (1);
 	}
 
 	if (unlink(from)) {
-		warn("%s: remove", fn);
-		free(fn);
-		free(tn);
+		warn("%s: remove", from);
 		return (1);
 	}
 
 	if (vflg)
-		printf("%s -> %s\n", fn, tn);
+		printf("%s -> %s\n", from, to);
 
-	free(fn);
-	free(tn);
 	return (0);
 }
 
@@ -420,28 +376,4 @@ usage(void)
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strlcpy(retval, src, 4 * len + 1);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.21 2003/09/11 17:38:23 christos Exp $ */
+/* $NetBSD: rmdir.c,v 1.22 2003/09/14 19:20:25 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.21 2003/09/11 17:38:23 christos Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.22 2003/09/14 19:20:25 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ int	stdout_ok;			/* stdout connected to a terminal */
 int	rm_path(char *);
 void	usage(void);
 int	main(int, char *[]);
-char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -100,10 +99,7 @@ main(int argc, char *argv[])
 #endif
 
 		if (rmdir(*argv) < 0) {
-			char *dn;
-			dn = printescaped(*argv);
-			warn("%s", dn);
-			free(dn);
+			warn("%s", *argv);
 			errors = 1;
 		} else if (pflag)
 			errors |= rm_path(*argv);
@@ -125,10 +121,7 @@ rm_path(char *path)
 		*++p = '\0';
 
 		if (rmdir(path) < 0) {
-			char *pn;
-			pn = printescaped(path);
-			warn("%s", pn);
-			free(pn);
+			warn("%s", path);
 			return (1);
 		}
 	}
@@ -142,28 +135,4 @@ usage(void)
 	(void)fprintf(stderr, "usage: %s [-p] directory ...\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strlcpy(retval, src, 4 * len + 1);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }

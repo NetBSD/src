@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.25 2003/08/21 04:30:25 jschauma Exp $ */
+/* $NetBSD: ln.c,v 1.26 2003/09/14 19:20:21 jschauma Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.25 2003/08/21 04:30:25 jschauma Exp $");
+__RCSID("$NetBSD: ln.c,v 1.26 2003/09/14 19:20:21 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,6 @@ char   linkch;
 int	linkit(char *, char *, int);
 void	usage(void);
 int	main(int, char *[]);
-char	*printescaped(const char *);
 
 int
 main(int argc, char *argv[])
@@ -129,11 +128,11 @@ main(int argc, char *argv[])
 		/* we were asked not to follow symlinks, but found one at
 		   the target--simulate "not a directory" error */
 		errno = ENOTDIR;
-		err(EXIT_FAILURE, "%s", printescaped(sourcedir));
+		err(EXIT_FAILURE, "%s", sourcedir);
 		/* NOTREACHED */
 	}
 	if (stat(sourcedir, &sb)) {
-		err(EXIT_FAILURE, "%s", printescaped(sourcedir));
+		err(EXIT_FAILURE, "%s", sourcedir);
 		/* NOTREACHED */
 	}
 	if (!S_ISDIR(sb.st_mode)) {
@@ -151,17 +150,11 @@ linkit(char *target, char *source, int isdir)
 {
 	struct stat sb;
 	char *p, path[MAXPATHLEN];
-	char *sn, *tn;
-
-	sn = printescaped(source);
-	tn = printescaped(target);
 
 	if (!sflag) {
 		/* If target doesn't exist, quit now. */
 		if (stat(target, &sb)) {
-			warn("%s", tn);
-			free(sn);
-			free(tn);
+			warn("%s", target);
 			return (1);
 		}
 	}
@@ -175,9 +168,7 @@ linkit(char *target, char *source, int isdir)
 			p = target;
 		else
 			++p;
-		p = printescaped(p);
-		(void)snprintf(path, sizeof(path), "%s/%s", sn, p);
-		free(p);
+		(void)snprintf(path, sizeof(path), "%s/%s", source, p);
 		source = path;
 	}
 
@@ -188,15 +179,11 @@ linkit(char *target, char *source, int isdir)
 	if ((fflag && unlink(source) < 0 && errno != ENOENT) ||
 	    (*linkf)(target, source)) {
 		warn("%s", source);
-		free(sn);
-		free(tn);
 		return (1);
 	}
 	if (vflag)
-		(void)printf("%s %c> %s\n", sn, linkch, tn);
+		(void)printf("%s %c> %s\n", source, linkch, target);
 
-	free(sn);
-	free(tn);
 	return (0);
 }
 
@@ -209,28 +196,4 @@ usage(void)
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
-}
-
-char *
-printescaped(const char *src)
-{
-	size_t len;
-	char *retval;
-
-	len = strlen(src);
-	if (len != 0 && SIZE_T_MAX/len <= 4) {
-		errx(EXIT_FAILURE, "%s: name too long", src);
-		/* NOTREACHED */
-	}
-
-	retval = (char *)malloc(4*len+1);
-	if (retval != NULL) {
-		if (stdout_ok)
-			(void)strvis(retval, src, VIS_NL | VIS_CSTYLE);
-		else
-			(void)strlcpy(retval, src, 4 * len + 1);
-		return retval;
-	} else
-		errx(EXIT_FAILURE, "out of memory!");
-		/* NOTREACHED */
 }
