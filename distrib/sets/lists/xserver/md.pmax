@@ -1,3 +1,4 @@
-# $NetBSD: md.pmax,v 1.6 1999/04/19 03:11:37 simonb Exp $
+# $NetBSD: md.pmax,v 1.6.8.1 2000/10/16 23:16:33 tv Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xpmax
+./usr/X11R6/lib/X11/rgb.db
