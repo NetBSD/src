@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca_fiq.S,v 1.2 2001/09/20 21:54:11 bjh21 Exp $	*/
+/*	$NetBSD: if_eca_fiq.S,v 1.3 2001/09/22 17:19:27 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: if_eca_fiq.S,v 1.2 2001/09/20 21:54:11 bjh21 Exp $")
+RCSID("$NetBSD: if_eca_fiq.S,v 1.3 2001/09/22 17:19:27 bjh21 Exp $")
 
 #include <dev/ic/mc6854reg.h>
 #include <arch/arm26/ioc/if_ecavar.h>
@@ -138,9 +138,20 @@ Leca_tx_nodata:
 	ldr	r12, [r12, #M_NEXT]
 	str	r12, [r11, #EFS_TX_CURMBUF]
 	teq	r12, #0				/* Another mbuf? */
-	moveq	r12, #(MC6854_CR2_TX_LAST)	/* If not, finish frame... */
-	streqb	r12, [r8, #(MC6854_CR2 << 2)]
-	beq	fiq_downgrade			/* ... and report back. */
+	beq	Leca_tx_endofframe
 	ldr	r9, [r12, #M_DATA]		/* Line up next mbuf. */
 	ldr	r10, [r12, #M_LEN]
 	subs	pc, r14, #4
+
+Leca_tx_endofframe:
+	mov	r12, #(MC6854_CR2_TX_LAST)	/* If not, finish frame... */
+	strb	r12, [r8, #(MC6854_CR2 << 2)]
+	/* Code equivalent to parts of eca_init_rx_hard() */
+	adr	r12, _C_LABEL(eca_fiqhandler_rx)
+	str	r12, [r11, #(EFS_FIQHANDLER)]
+	mov	r12, #(MC6854_CR1_RIE)
+	strb	r12, [r8, #(MC6854_CR1 << 2)]
+	add	r12, r11, #(EFS_RX_FIQREGS)
+	ldmia	r12, {r8-r11}
+	/* End code equivalent to parts of eca_init_rx_hard() */
+	b	fiq_downgrade_dont_disable	/* ... and report back. */
