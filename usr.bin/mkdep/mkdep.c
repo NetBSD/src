@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.10.2.1 2003/01/27 06:31:14 jmc Exp $ */
+/* $NetBSD: mkdep.c,v 1.10.2.2 2003/06/30 02:13:27 grant Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mkdep.c,v 1.10.2.1 2003/01/27 06:31:14 jmc Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.10.2.2 2003/06/30 02:13:27 grant Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -198,6 +198,7 @@ main(argc, argv)
 	(void)signal(SIGINT, finish);
 	(void)signal(SIGHUP, finish);
 	(void)signal(SIGQUIT, finish);
+	(void)signal(SIGPIPE, finish);
 	(void)signal(SIGTERM, finish);
 	if ((tmpfd = mkstemp (tmpfilename)) < 0) {
 		warn("unable to create temporary file %s", tmpfilename);
