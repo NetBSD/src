@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.23.4.3 2001/01/25 18:25:47 jhawk Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.23.4.4 2001/03/16 19:15:28 he Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -84,7 +84,7 @@
 
 
 #define	ISP_PLATFORM_VERSION_MAJOR	1
-#define	ISP_PLATFORM_VERSION_MINOR	0
+#define	ISP_PLATFORM_VERSION_MINOR	1
 
 struct isposinfo {
 	struct device		_dev;
@@ -116,7 +116,6 @@ struct isposinfo {
 
 #define	INLINE			inline
 
-#define	ISP2100_FABRIC		1
 #define	ISP2100_SCRLEN		0x400
 
 #define	MEMZERO			bzero
@@ -209,6 +208,9 @@ struct isposinfo {
 #define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
 
 #define	XS_SAVE_SENSE(xs, sp)				\
+	if (xs->error == XS_NOERROR) {			\
+		xs->error = XS_SENSE;			\
+	}						\
 	bcopy(sp->req_sense_data, &(xs)->sense,		\
 	    imin(XS_SNSLEN(xs), sp->req_sense_len))
 
@@ -257,15 +259,15 @@ struct isposinfo {
 /*
  * Driver prototypes..
  */
-void isp_attach __P((struct ispsoftc *));
-void isp_uninit __P((struct ispsoftc *));
+void isp_attach(struct ispsoftc *);
+void isp_uninit(struct ispsoftc *);
 
-static inline void isp_lock __P((struct ispsoftc *));
-static inline void isp_unlock __P((struct ispsoftc *));
-static inline char *strncat __P((char *, const char *, size_t));
+static inline void isp_lock(struct ispsoftc *);
+static inline void isp_unlock(struct ispsoftc *);
+static inline char *strncat(char *, const char *, size_t);
 static inline u_int64_t
-isp_microtime_sub __P((struct timeval *, struct timeval *));
-static void isp_wait_complete __P((struct ispsoftc *));
+isp_microtime_sub(struct timeval *, struct timeval *);
+static void isp_wait_complete(struct ispsoftc *);
 #if	_BYTE_ORDER == _BIG_ENDIAN
 static inline void isp_swizzle_request(struct ispsoftc *, ispreq_t *);
 static inline void isp_unswizzle_response(struct ispsoftc *, void *, u_int16_t);
@@ -314,8 +316,7 @@ static inline void isp_unswizzle_sns_rsp(struct ispsoftc *, sns_scrsp_t *, int);
  * Platform specific 'inline' or support functions
  */
 static inline void
-isp_lock(isp)
-	struct ispsoftc *isp;
+isp_lock(struct ispsoftc *isp)
 {
 	int s = splbio();
 	if (isp->isp_osinfo.islocked++ == 0) {
@@ -326,8 +327,7 @@ isp_lock(isp)
 }
 
 static inline void
-isp_unlock(isp)
-	struct ispsoftc *isp;
+isp_unlock(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.islocked-- <= 1) {
 		isp->isp_osinfo.islocked = 0;
@@ -336,10 +336,7 @@ isp_unlock(isp)
 }
 
 static inline char *
-strncat(d, s, c)
-	char *d;
-	const char *s;
-	size_t c;
+strncat(char *d, const char *s, size_t c)
 {
         char *t = d;
 
@@ -357,9 +354,7 @@ strncat(d, s, c)
 }
 
 static inline u_int64_t
-isp_microtime_sub(b, a)
-	struct timeval *b;
-	struct timeval *a;
+isp_microtime_sub(struct timeval *b, struct timeval *a)
 {
 	struct timeval x;
 	u_int64_t elapsed;
@@ -371,12 +366,15 @@ isp_microtime_sub(b, a)
 }
 
 static inline void
-isp_wait_complete(isp)
-	struct ispsoftc *isp;
+isp_wait_complete(struct ispsoftc *isp)
 {
 	if (isp->isp_osinfo.onintstack || isp->isp_osinfo.no_mbox_ints) {
 		int usecs = 0;
-		while (usecs < 2 * 1000000) {
+		/*
+		 * For sanity's sake, we don't delay longer
+		 * than 5 seconds for polled commands.
+		 */
+		while (usecs < 5 * 1000000) {
 			(void) isp_intr(isp);
 			if (isp->isp_mboxbsy == 0) {
 				break;
@@ -385,17 +383,19 @@ isp_wait_complete(isp)
 			usecs += 500;
 		}
 		if (isp->isp_mboxbsy != 0) {
-			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (poll) Timeout");
+			isp_prt(isp, ISP_LOGWARN,
+			    "Polled Mailbox Command (0x%x) Timeout",
+			    isp->isp_lastmbxcmd);
 		}
 	} else {
 		int rv = 0;
                 isp->isp_osinfo.mboxwaiting = 1;
                 while (isp->isp_osinfo.mboxwaiting && rv == 0) {
-			static struct timeval twosec = { 2, 0 };
+			static const struct timeval dtime = { 5, 0 };
 			int timo;
 			struct timeval tv;
 			microtime(&tv);
-			timeradd(&tv, &twosec, &tv);
+			timeradd(&tv, &dtime, &tv);
 			if ((timo = hzto(&tv)) == 0) {
 				timo = 1;
 			}
@@ -405,7 +405,9 @@ isp_wait_complete(isp)
 		if (rv == EWOULDBLOCK) {
 			isp->isp_mboxbsy = 0;
 			isp->isp_osinfo.mboxwaiting = 0;
-			isp_prt(isp, ISP_LOGWARN, "Mailbox Cmd (intr) Timeout");
+			isp_prt(isp, ISP_LOGWARN,
+			    "Interrupting Mailbox Command (0x%x) Timeout",
+			    isp->isp_lastmbxcmd);
 		}
 	}
 }
@@ -573,6 +575,13 @@ static inline void
 isp_unswizzle_sns_rsp(struct ispsoftc *isp, sns_scrsp_t *resp, int nwords)
 {
 	int index;
+	/*
+	 * Don't even think about asking. This. Is. So. Lame.
+	 */
+	if (IS_2200(isp) &&
+	    ISP_FW_REVX(isp->isp_fwrev) == ISP_FW_REV(2, 1, 26)) {
+		nwords = 128;
+	}
 	for (index = 0; index < nwords; index++) {
 		resp->snscb_data[index] = bswap16(resp->snscb_data[index]);
 	}
