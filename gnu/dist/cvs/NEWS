@@ -1,5 +1,157 @@
-Changes since 1.11.10:
+Changes since 1.11.14:
 **********************
+
+SERVER SECURITY ISSUES
+
+* Piped checkouts of paths above $CVSROOT no longer work.  Previously, clients
+  could have requested the contents of RCS archive files anywhere on a CVS
+  server.
+
+CLIENT SECURITY ISSUES
+
+* Clients now check paths from the server to verify that they are within one of
+  the sandboxes the user requested be updated.  Previously, a trojan server
+  could have written or overwritten files anywhere the user had access,
+  presenting a serious security risk.
+
+GENERAL USER ISSUES
+
+* Method options (used by WinCVS & CVS 1.12.7+) in CVSROOTs are ignored.
+
+* Configure no longer checks the $TMPDIR, $TMP, & $TEMP variables to set the
+  default temporary directory.
+
+* CVS on Cygwin correctly handles X:\ style paths.
+
+* Import now uses backslash rather than slash on Windows when checking for
+  "CVS" directories to ignore in import commands.
+
+* Relative paths containing up-references (`..') should now work in
+  client/server mode (client fix).
+
+* A race condition between the ordering of messages from CVS and messages from
+  called scripts in client/server mode has been removed (server fix).
+
+* Resurrected files now get their modes and timestamps set correctly and a
+  longstanding bug involving resurrection of an uncommitted removal has been
+  fixed (server fix).
+
+* Some resurrection (cvs add) status messages have changed slightly.
+
+* `cvs release' now works with Kerberos or GSSAPI encryption enabled (server
+  fix).
+
+* File resurrection from a previously existing revision no longer just reports
+  that it works (server fix).
+
+* Misc error & status message corrections.
+
+* Diffing of locally added files against arbitrary revisions in an RCS archive
+  is now allowed when a file of the same name exists or used to exist on some
+  branch (server fix).
+
+* Misc documentation fixes.
+
+Changes from 1.11.13 to 1.11.14:
+********************************
+
+GENERAL USER ISSUES
+
+* Imports will now always ignore directories and files named `CVS' to avoid
+  violating assumptions made by other parts of CVS.
+
+* A problem with `cvs release' of subdirs that could corrupt CVS/Entries files
+  has been fixed (client/server).
+
+* The CVS server's protocol check for unused data from the client is no longer
+  called automatically at program exit in order to avoid potential recursive
+  calls to error when the first close is due to memory allocation or similar
+  problems that cause calls to error() to fail.  The check is still made when
+  the server program exits normally.
+
+* The spec file has been updated to work with more recent versions of RPM.
+
+* Several memory leaks have been plugged (client/server).
+
+DEVELOPER ISSUES
+
+* Misc cosmetic, readability, and commenting fixes.
+
+Changes from 1.11.12 to 1.11.13:
+********************************
+
+GENERAL USER ISSUES
+
+* Several memory leaks have been plugged.
+
+* Thanks to Ville Skyttä the man page has a few less spelling errors and is
+  slightly more accurate.
+
+* An unlikely potential segfault when using the :fork: connection method has
+  been fixed.
+
+* The CVS server has had the protocol check for unused data from the client
+  partially restored.
+
+* A fix has been included that should avoid a very rare race condition that
+  could cause a CVS server to exit with a "broken pipe" message.
+
+* A minor problem with the nmake build file that was preventing the source from
+  compiling under Windows has been fixed.
+
+* Tests have been added to the test suite.
+
+DEVELOPER ISSUES
+
+* Misc cosmetic, readability, and commenting fixes.
+
+Changes from 1.11.11 to 1.11.12:
+********************************
+
+GENERAL USER ISSUES
+
+* Infinite alias loops in the modules file are now checked for and avoided.
+
+* Clients on case insensitive systems now preserve the case of directories in
+  CVS/Entries, in addition to files, for use in communications with the CVS
+  server.
+
+* Some previously untested behavior is now being tested.
+
+* Server support for case insensitive clients has been removed in favor of the
+  server relying on the client to preserve the case of checked out files, as
+  per the CVS client/server protocol spec.  This is not as drastic as it may
+  sound, as all of the current tests still pass without modification when run
+  from a case insensitive client to a case sensitive server.  This change
+  disables little previous functionality, enables access to more of the
+  possible namespace to users on systems with case insensitive file systems,
+  fixes a few bugs, and in the end this should provide a major stability
+  improvement.
+
+* Thanks to Ville Skyttä the man page is a bit more accurate.
+
+* Thanks to Ville Skyttä some unused variables were removed from the log_accum
+  Perl script in contrib.
+
+* Thanks to Alexey Mahotkin, a bug that prevented CVS from being compiled with
+  Kerberos 4 authentication enabled has been fixed.
+
+* A minor bug that caused CVS to fail to report an inifinte alias loop in the
+  modules file when portions of the alias definition contained trailing slashes
+  has been fixed.
+
+* A bug in the gzip code that could cause heap corruption and segfaults in CVS
+  servers talking to clients less than 1.8 and some modern third-party CVS
+  clients has been fixed.
+
+* mktemp.sh is now included with the source distribution so that the rcs2log
+  and cvsbug executables may be run on systems which do not contain an
+  implementation of mktemp.
+
+* Misc documentation fixes.
+
+Changes from 1.11.10 to 1.11.11:
+********************************
 
 SERVER SECURITY ISSUES
 

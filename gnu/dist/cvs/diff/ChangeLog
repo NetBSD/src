@@ -1,3 +1,8 @@
+2004-03-20  Derek Price  <derek@ximbiot.com>
+
+	* diff.c (diff_run): Update string arg to const.
+	* diffrun.h: Update prototype to match.
+
 2003-07-12  Larry Jones  <lawrence.jones@eds.com>
 
 	* io.c (find_identical_ends): Update to match current diffutils

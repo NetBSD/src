@@ -181,12 +181,12 @@ mydbm_store (db, key, value, flags)
     node->type = NDBMNODE;
 
     node->key = xmalloc (key.dsize + 1);
-    strncpy (node->key, key.dptr, key.dsize);
-    node->key[key.dsize] = '\0';
+    *node->key = '\0';
+    strncat (node->key, key.dptr, key.dsize);
 
     node->data = xmalloc (value.dsize + 1);
-    strncpy (node->data, value.dptr, value.dsize);
-    node->data[value.dsize] = '\0';
+    *(char *)node->data = '\0';
+    strncat (node->data, value.dptr, value.dsize);
 
     db->modified = 1;
     if (addnode (db->dbm_list, node) == -1)

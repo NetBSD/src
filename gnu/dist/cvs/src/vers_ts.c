@@ -9,8 +9,10 @@
 #include "cvs.h"
 
 #ifdef SERVER_SUPPORT
-static void time_stamp_server PROTO((char *, Vers_TS *, Entnode *));
+static void time_stamp_server PROTO((const char *, Vers_TS *, Entnode *));
 #endif
+
+
 
 /* Fill in and return a Vers_TS structure for the file FINFO.  TAG and
    DATE are from the command line.  */
@@ -55,13 +57,13 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
     else
     {
 	p = findnode_fn (finfo->entries, finfo->file);
-	sdtp = (struct stickydirtag *) finfo->entries->list->data; /* list-private */
+	sdtp = finfo->entries->list->data; /* list-private */
     }
 
     entdata = NULL;
     if (p != NULL)
     {
-	entdata = (Entnode *) p->data;
+	entdata = p->data;
 
 	if (entdata->type == ENT_SUBDIR)
 	{
@@ -260,7 +262,7 @@ Version_TS (finfo, options, tag, date, force_tag_match, set_time)
 
 static void
 time_stamp_server (file, vers_ts, entdata)
-    char *file;
+    const char *file;
     Vers_TS *vers_ts;
     Entnode *entdata;
 {
@@ -326,7 +328,7 @@ time_stamp_server (file, vers_ts, entdata)
  */
 char *
 time_stamp (file)
-    char *file;
+    const char *file;
 {
     struct stat sb;
     char *cp;

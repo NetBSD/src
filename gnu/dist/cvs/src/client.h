@@ -78,7 +78,7 @@ void connect_to_pserver PROTO ((cvsroot_t *,
 # endif /* HAVE_KERBEROS */
 
 /* Talking to the server. */
-void send_to_server PROTO((char *str, size_t len));
+void send_to_server PROTO((const char *str, size_t len));
 void read_from_server PROTO((char *buf, size_t len));
 
 /* Internal functions that handle client communication to server, etc.  */
@@ -125,7 +125,8 @@ send_arg PROTO((char *string));
 void
 send_option_string PROTO((char *string));
 
-extern void send_a_repository PROTO ((char *, char *, char *));
+extern void send_a_repository PROTO ((const char *, const char *,
+                                      const char *));
 
 #endif /* CLIENT_SUPPORT */
 
@@ -203,5 +204,6 @@ extern int client_process_import_file
 	   int targc, char *targv[], char *repository, int all_files_binary,
 	   int modtime));
 extern void client_import_done PROTO((void));
-extern void client_notify PROTO((char *, char *, char *, int, char *));
+extern void client_notify PROTO((const char *, const char *, const char *, int,
+                                 const char *));
 #endif /* CLIENT_SUPPORT */

@@ -1,3 +1,32 @@
+2004-04-07  Derek Price  <derek@ximbiot.com>
+
+	* regex.c: Revise "FREE_VAR" macro to eliminate C4090/C4022 warnings
+	in Windows build with Visual C++ 6.0 compiler.
+	(Original patch from Conrad T. Pino <Conrad@Pino.com>.)
+
+2004-04-04  Derek Price  <derek@ximbiot.com>
+
+	* system.h: Correct comment.
+
+2004-04-04  Derek Price  <derek@ximbiot.com>
+
+	* system.h: Restore complete path folding for Cygwin under Windows.
+	Add ISABSOLUTE macro for determining whether a path is absolute to
+	handle X:\ style paths under Windows (& Cygwin).
+
+2004-03-25  Derek Price  <derek@ximbiot.com>
+
+	* system.h: No longer fold back slashes in paths into slashes.
+
+2004-03-20  Derek Price  <derek@ximbiot.com>
+
+	* mkdir.c (mkdir): Declare string args const.
+
+2004-03-19  Derek Price  <derek@ximbiot.com>
+
+	* .cvsignore: Add fnmatch.h for Windows and other platforms which build
+	it.
+
 2003-12-09  Derek Price  <derek@ximbiot.com>
 
 	* system.h: Correct spelling in comment.
