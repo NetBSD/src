@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3x,v 1.11 1997/09/12 07:55:23 mycroft Exp $
+#	$NetBSD: Makefile.sun3x,v 1.12 1997/09/30 23:05:08 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -146,11 +146,17 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-
-clean: cleankernel
-cleankernel:
+__CLEANKERNEL: .USE
+	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+
+__CLEANDEPEND: .USE
+	rm -f .depend
+
+clean: __CLEANKERNEL
+
+cleandir: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
