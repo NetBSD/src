@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.12 1997/06/28 00:48:08 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.13 1997/06/28 00:59:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -2004,18 +2004,18 @@ syn_cache_lookup(ti, prevp, headp)
 	*headp = head;
 	prev = &head->sch_first;
 	s = splsoftnet();
-        for (sc = head->sch_first; sc; prev = &sc->sc_next, sc = sc->sc_next) {
-                if (sc->sc_hash != hash)
-                        continue;
-                if (sc->sc_src.s_addr == ti->ti_src.s_addr &&
-                    sc->sc_sport == ti->ti_sport &&
-                    sc->sc_dport == ti->ti_dport &&
-                    sc->sc_dst.s_addr == ti->ti_dst.s_addr) {
+	for (sc = head->sch_first; sc; prev = &sc->sc_next, sc = sc->sc_next) {
+		if (sc->sc_hash != hash)
+			continue;
+		if (sc->sc_src.s_addr == ti->ti_src.s_addr &&
+		    sc->sc_sport == ti->ti_sport &&
+		    sc->sc_dport == ti->ti_dport &&
+		    sc->sc_dst.s_addr == ti->ti_dst.s_addr) {
 			*prevp = prev;
 			splx(s);
-                        return (sc);
+			return (sc);
 		}
-        }
+	}
 	splx(s);
 	return (NULL);
 }
