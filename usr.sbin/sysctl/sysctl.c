@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.17 1998/11/13 20:16:49 thorpej Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.18 1998/11/13 20:56:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.17 1998/11/13 20:16:49 thorpej Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.18 1998/11/13 20:56:21 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,9 +359,17 @@ parse(string, flags)
 			len = sysctl_vfsgen(string, &bufp, mib, flags, &type);
 		else
 			len = sysctl_vfs(string, &bufp, mib, flags, &type);
-		if (len >= 0)
-			break;
-		return;
+		if (len < 0)
+			return;
+
+		/* XXX Special-case for NFS stats. */
+		if (mib[1] == 2 && mib[2] == NFS_NFSSTATS) {
+			if (flags == 0)
+				return;
+			warnx("Use nfsstat to view %s information", string);
+			return;
+		}
+		break;
 
 	case CTL_USER:
 	case CTL_DDB:
