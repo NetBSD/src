@@ -1,5 +1,5 @@
 #  @(#)Makefile 5.1beta 93/09/24 
-#  $Id: Makefile,v 1.19 1994/03/11 01:34:18 jtc Exp $
+#  $Id: Makefile,v 1.20 1994/03/11 17:18:54 jtc Exp $
 # 
 #  ====================================================
 #  Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -95,7 +95,7 @@ SRCS=${COMMON_SRCS}
 
 MAN3+=	acos.0 acosh.0 asin.0 asinh.0 atan.0 atan2.0 atanh.0 ceil.0 \
 	cos.0 cosh.0 erf.0 exp.0 fabs.0 floor.0 fmod.0 hypot.0 ieee.0 \
-	j0.0 lgamma.0 math.0 rint.0 sin.0 sinh.0 sqrt.0 \
+	ieee_test.0 j0.0 lgamma.0 math.0 rint.0 sin.0 sinh.0 sqrt.0 \
 	tan.0 tanh.0
 
 MLINKS+=erf.3 erfc.3
@@ -103,9 +103,11 @@ MLINKS+=exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
 MLINKS+=hypot.3 cabs.3
 MLINKS+=ieee.3 copysign.3 ieee.3 finite.3 ieee.3 ilogb.3 \
 	ieee.3 nextafter.3 ieee.3 remainder.3 ieee.3 scalbn.3
+MLINKS+=ieee_test.3 logb.3
+MLINKS+=ieee_test.3 scalb.3
+MLINKS+=ieee_test.3 significand.3
 MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
 MLINKS+=lgamma.3 gamma.3
 MLINKS+=sqrt.3 cbrt.3
-
 
 .include <bsd.lib.mk>
