@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.4 1995/12/29 17:16:29 thorpej Exp $
+#	$NetBSD: BASALT,v 1.5 1996/08/22 21:02:49 thorpej Exp $
 #
 # BASALT - thorpej's hp380
 #
@@ -19,6 +19,8 @@ options         "COMPAT_43"             # compatibility with 4.3BSD interfaces
 options         "COMPAT_44"             # compatibility with 4.4BSD binaries
 options         "COMPAT_09"             # compatibility with NetBSD 0.9
 options		"COMPAT_10"		# compatibility with NetBSD 1.0
+options		"COMPAT_11"		# compatibility with NetBSD 1.1
+options		"COMPAT_12"		# compatibility with NetBSD 1.2
 options         SYSVSHM                 # System V shared memory
 options         SYSVSEM                 # System V semaphores
 options         SYSVMSG                 # System V message queues

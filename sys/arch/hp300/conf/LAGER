@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.9 1996/05/26 23:45:42 hpeyerl Exp $
+#	$NetBSD: LAGER,v 1.10 1996/08/22 21:03:18 thorpej Exp $
 #
 # LAGER (hpeyerl's hp380)
 #
@@ -24,6 +24,7 @@ options		NFSSERVER,NFSCLIENT
 options		NULLFS,PROCFS
 options		"COMPAT_NOMID"
 options		"COMPAT_43"
+options		"COMPAT_12"
 options		"TCP_COMPAT_42"
 options		GATEWAY
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.9 1996/02/24 00:54:53 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.10 1996/08/22 21:03:13 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -26,6 +26,8 @@ options         "COMPAT_43"             # compatibility with 4.3BSD interfaces
 options         "COMPAT_44"             # compatibility with 4.4BSD binaries
 options         "COMPAT_09"             # compatibility with NetBSD 0.9
 options		"COMPAT_10"		# compatibility with NetBSD 1.0
+options		"COMPAT_11"		# compatibility with NetBSD 1.1
+options		"COMPAT_12"		# compatibility with NetBSD 1.2
 options         SYSVSHM                 # System V-style shared memory
 options         SYSVSEM                 # System V-style semaphores
 options         SYSVMSG                 # System V-style message queues
