@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.108 2001/07/18 06:45:34 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1744,9 +1744,7 @@ raidstart(raidPtr)
 		retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
 				      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
 				      do_async, raid_addr, num_blocks,
-				      bp->b_data, bp, NULL, NULL, 
-				      RF_DAG_NONBLOCKING_IO, NULL, NULL, NULL);
-
+				      bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
 
 		RF_LOCK_MUTEX(raidPtr->mutex);
 	}
