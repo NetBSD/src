@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.27 1994/11/21 21:39:09 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.27.2.1 1994/11/30 22:50:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -505,8 +505,19 @@ void sun3_vm_init()
 			mon_printf("invalid page at 0x%x\n", va);
 		}
 		pte &= ~(PG_WRITE|PG_NC);
+#ifdef	DDB
+		/*
+		 * Leave text writable for ddb.
+		 * Actually, if you use db_memrw.c and
+		 * comment out the replaced functions in
+		 * m68k/db_interface.c then you can make
+		 * kernel text read-only even with ddb.
+		 */
+		pte |= (PG_WRITE|PG_SYSTEM);
+#else
 		/* Kernel text is read-only */
 		pte |= (PG_SYSTEM);
+#endif
 		set_pte(va, pte);
 		va += NBPG;
 	}

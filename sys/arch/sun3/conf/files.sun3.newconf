@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3.newconf,v 1.16 1994/11/21 21:26:50 gwr Exp $
+#	$NetBSD: files.sun3.newconf,v 1.16.2.1 1994/11/30 23:07:08 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -101,7 +101,9 @@ file arch/sun3/sun3/trap.c
 file arch/sun3/sun3/vector.c		
 file arch/sun3/sun3/vm_machdep.c	
 
-file arch/sun3/sun3/db_memrw.c		ddb
+# You can uncomment this if you "#ifdef" out the
+# functions it replaces in m68k/db_interface.c
+# file arch/sun3/sun3/db_memrw.c		ddb
 
 file	compat/sunos/sun_exec.c		compat_sunos
 file	compat/sunos/sun_ioctl.c	compat_sunos
