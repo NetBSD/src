@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.4 1997/10/17 06:49:22 mark Exp $	*/
+/*	$NetBSD: rapide.c,v 1.5 1997/11/06 01:52:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -281,8 +281,6 @@ rapide_shutdown(arg)
 	void *arg;
 {
 	struct rapide_softc *sc = arg;
-
-	printf("%s: stopped\n", sc->sc_dev.dv_xname);
 
 	/* Disable card interrupts */
 	bus_space_write_1(sc->sc_iot, sc->sc_ctl_ioh,
