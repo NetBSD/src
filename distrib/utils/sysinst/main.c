@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1.2.5 1997/12/04 09:10:59 jonathan Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.2.6 1997/12/05 13:43:43 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,8 +50,11 @@
 #include "menu_defs.h"
 
 int main(int argc, char **argv);
-void usage (void);
-void inthandler (int);
+static void usage(void);
+static void inthandler(int);
+static void cleanup(void);
+
+static int exit_cleanly = 0;	/* Did we finish nicely? */
 
 int main(int argc, char **argv)
 {
@@ -84,11 +87,13 @@ int main(int argc, char **argv)
 
 	/* Watch for SIGINT and clean up */
 	(void) signal(SIGINT, inthandler);
+	(void) atexit(cleanup);
 
 	/* Menu processing */
 	process_menu (MENU_netbsd);
 	
-	return 0;
+	exit_cleanly = 1;
+	exit(0);
 }
 	
 
@@ -110,7 +115,7 @@ void toplevel(void)
 
 /* The usage ... */
 
-void
+static void
 usage(void)
 {
 	(void)fprintf (stderr, msg_string(MSG_usage));
@@ -118,10 +123,20 @@ usage(void)
 }
 
 /* ARGSUSED */
-void
+static void
 inthandler(int notused)
 {
-	endwin();
-	fprintf(stderr, "\n\n sysinst terminated.\n");
+	/* atexit() wants a void function, so inthandler() just calls cleanup */
+	cleanup();
 	exit(1);
+}
+
+static void
+cleanup(void)
+{
+	endwin();
+	unwind_mounts();
+	run_prog("/sbin/umount /mnt2 2>/dev/null");
+	if (!exit_cleanly)
+		fprintf(stderr, "\n\n sysinst terminated.\n");
 }
