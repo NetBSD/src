@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.4 1999/02/06 06:55:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -121,9 +121,13 @@ const struct puc_device_description puc_devices[] = {
 	 */
 
 	/*
-	 * XXX PLX Technology product 0x1076
+	 * VScom PCI-800, as sold on http://www.swann.com.au/isp/titan.html.
+	 * Some PLX chip.  Note: This board has a software selectable(?)
+	 * clock multiplier which this driver doesn't support, so you'll
+	 * have to use an appropriately scaled baud rate when talking to
+	 * the card.
 	 */
-	{   "VScom serial PCI",
+	{   "VScom PCI-800",
 	    {	0x10b5,	0x1076,	0x10b5,	0x1076	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
