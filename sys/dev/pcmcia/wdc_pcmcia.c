@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.57 2003/09/21 11:14:04 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.58 2003/09/23 09:19:25 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.57 2003/09/21 11:14:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.58 2003/09/23 09:19:25 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -360,7 +360,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
