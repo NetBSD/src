@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.5 1999/12/20 18:23:03 hubertf Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.6 2000/02/22 01:24:33 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.5 1999/12/20 18:23:03 hubertf Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.6 2000/02/22 01:24:33 hubertf Exp $");
 #endif
 
 /*
@@ -18,7 +18,8 @@ __RCSID("$NetBSD: pkgdb.c,v 1.5 1999/12/20 18:23:03 hubertf Exp $");
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Hubert Feyrer.
+ *      This product includes software developed by Hubert Feyrer for
+ *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
