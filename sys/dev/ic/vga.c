@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.52 2002/06/26 16:33:18 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.53 2002/06/26 23:05:33 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.52 2002/06/26 16:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.53 2002/06/26 23:05:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,6 +247,8 @@ static void	vga_free_screen(void *, void *);
 static int	vga_show_screen(void *, void *, int,
 				void (*)(void *, int, int), void *);
 static int	vga_load_font(void *, void *, struct wsdisplay_font *);
+static int	vga_getwschar(void *, struct wsdisplay_char *);
+static int	vga_putwschar(void *, struct wsdisplay_char *);
 
 void vga_doswitch(struct vga_config *);
 
@@ -256,7 +258,10 @@ const struct wsdisplay_accessops vga_accessops = {
 	vga_alloc_screen,
 	vga_free_screen,
 	vga_show_screen,
-	vga_load_font
+	vga_load_font,
+	NULL,
+	vga_getwschar,
+	vga_putwschar
 };
 
 /*
@@ -1302,4 +1307,22 @@ vga_mapchar(void *id, int uni, u_int *index)
 	}
 	*index = idx1;
 	return (res1);
+}
+
+int
+vga_getwschar(void *cookie, struct wsdisplay_char *wschar)
+{
+	struct vgascreen *scr = cookie;
+
+	if (scr == NULL) return 0;
+	return (pcdisplay_getwschar(&scr->pcs, wschar));
+}
+
+int
+vga_putwschar(void *cookie, struct wsdisplay_char *wschar)
+{
+	struct vgascreen *scr = cookie;
+
+	if (scr == NULL) return 0;
+	return (pcdisplay_putwschar(&scr->pcs, wschar));
 }
