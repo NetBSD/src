@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.243 2003/04/15 18:27:26 darrenr Exp $ */
+/*	$NetBSD: wd.c,v 1.244 2003/04/15 19:14:58 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.243 2003/04/15 18:27:26 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.244 2003/04/15 19:14:58 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -548,7 +548,7 @@ wdstrategy(bp)
 
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
 			if ((dbs->dbs_min <= blkno && blkno <= dbs->dbs_max) ||
-			    (dbs->dbs_min <= maxblk && maxblk <= dbs->dbs_max)
+			    (dbs->dbs_min <= maxblk && maxblk <= dbs->dbs_max))
 				goto bad;
 	}
 
