@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.40 2002/06/08 21:28:18 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.41 2002/06/08 21:29:26 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.40 2002/06/08 21:28:18 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.41 2002/06/08 21:29:26 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1269,9 +1269,9 @@ nd6_dad_timer(ifa)
 			 && dp->dad_ns_icount == dp->dad_count
 			 && dp->dad_na_icount == 0) {
 				log(LOG_INFO, "DAD questionable for %s(%s): "
-					"network card loops back multicast?\n",
-					ip6_sprintf(&ia->ia_addr.sin6_addr),
-					if_name(ifa->ifa_ifp));
+				    "network card loops back multicast?\n",
+				    ip6_sprintf(&ia->ia_addr.sin6_addr),
+				    if_name(ifa->ifa_ifp));
 				/* XXX consider it a duplicate or not? */
 				/* duplicate++; */
 			} else {
