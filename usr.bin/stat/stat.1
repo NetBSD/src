@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.5 2002/07/08 18:48:42 atatat Exp $
+.\"	$NetBSD: stat.1,v 1.6 2002/08/13 14:05:41 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Nd display file status
 .Sh SYNOPSIS
 .Nm
-.Op Fl FLn
+.Op Fl FLnq
 .Oo
 .Fl f Ar format |
 .Fl l |
@@ -104,6 +104,14 @@ if file is a symbolic link, and not to
 itself.
 .It Fl n
 Do not force a newline to appear at the end of each piece of output.
+.It Fl q
+Suppress failure messages if calls to
+.Xr stat 2
+or
+.Xr lstat 2
+fail.  When run as
+.Nm readlink ,
+error messages are automatically suppressed.
 .It Fl f Ar format
 Display information using the specified format.  See the FORMATS section
 for a description of valid formats.
