@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.12 1995/08/14 02:58:29 mycroft Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.13 1995/08/16 04:29:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -754,10 +754,11 @@ linux_select(p, uap, retval)
 {
 	struct linux_select ls;
 	struct select_args bsa;
-	struct timeval tv0, tv1, utv;
+	struct timeval tv0, tv1, utv, *tvp;
+	caddr_t sg;
 	int error;
 
-	if ((error = copyin(SCARG(uap, lsp), (caddr_t)&ls, sizeof ls)))
+	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof(ls))))
 		return error;
 
 	SCARG(&bsa, nd) = ls.nfds;
@@ -770,8 +771,30 @@ linux_select(p, uap, retval)
 	 * Store current time for computation of the amount of
 	 * time left.
 	 */
-	if (ls.timeout)
+	if (ls.timeout) {
+		if ((error = copyin(ls.timeout, &utv, sizeof(utv))))
+			return error;
+		if (itimerfix(&utv)) {
+			/*
+			 * The timeval was invalid.  Convert it to something
+			 * valid that will act as it does under Linux.
+			 */
+			sg = stackgap_init(p->p_emul);
+			tvp = stackgap_alloc(&sg, sizeof(utv));
+			utv.tv_sec += utv.tv_usec / 1000000;
+			utv.tv_usec %= 1000000;
+			if (utv.tv_usec < 0) {
+				utv.tv_sec -= 1;
+				utv.tv_usec += 1000000;
+			}
+			if (utv.tv_sec < 0)
+				timerclear(&utv);
+			if ((error = copyout(&utv, tvp, sizeof(utv))))
+				return error;
+			SCARG(&bsa, tv) = tvp;
+		}
 		microtime(&tv0);
+	}
 
 	error = select(p, &bsa, retval);
 	if (error) {
@@ -790,22 +813,19 @@ linux_select(p, uap, retval)
 			utv.tv_usec = 0;
 		} else {
 			/*
-			 * Compute how many time was left of the timeout,
+			 * Compute how much time was left of the timeout,
 			 * by subtracting the current time and the time
 			 * before we started the call, and subtracting
 			 * that result from the user-supplied value.
 			 */
 			microtime(&tv1);
-			if ((error = copyin((caddr_t)ls.timeout, (caddr_t)&utv,
-			    sizeof utv)))
-				return error;
 			timersub(&tv1, &tv0, &tv1);
 			timersub(&utv, &tv1, &utv);
 		}
-		if ((error = copyout((caddr_t)&utv, (caddr_t)ls.timeout,
-		    sizeof utv)))
+		if ((error = copyout(&utv, ls.timeout, sizeof(utv))))
 			return error;
 	}
+
 	return 0;
 }
 
