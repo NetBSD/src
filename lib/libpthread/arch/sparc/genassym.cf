@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2003/07/29 15:18:49 kleink Exp $
+#	$NetBSD: genassym.cf,v 1.7 2003/09/07 14:47:53 cl Exp $
 
 
 include <ucontext.h>
@@ -12,7 +12,6 @@ include "pthread_int.h"
 include "pthread_md.h"
 
 define PT_NEXT          offsetof(struct __pthread_st, pt_next)
-define PT_STATE         offsetof(struct __pthread_st, pt_state)
 define PT_SWITCHTO      offsetof(struct __pthread_st, pt_switchto)
 define PT_SWITCHTOUC    offsetof(struct __pthread_st, pt_switchtouc)
 define PT_SPINLOCKS     offsetof(struct __pthread_st, pt_spinlocks)
@@ -23,7 +22,6 @@ define CONTEXTSIZE      sizeof(ucontext_t)
 define UC_FLAGS		offsetof(ucontext_t, uc_flags)
 define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs)
 define UC_FPREGS	offsetof(ucontext_t, uc_mcontext.__fpregs)
-define PT_STATE_RECYCLABLE      PT_STATE_RECYCLABLE
 define STACKSPACE       STACKSPACE
 define _UC_USER_BIT	_UC_USER_BIT
 define _UC_USER		_UC_USER

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.5 2003/06/26 01:45:32 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.6 2003/09/07 14:47:51 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -270,8 +270,6 @@ NESTED(pthread__upcall_switch, 0, ra)
 	/* Yes, it was. Stash the thread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
 	 */
-	li	t1, PT_STATE_RECYCLABLE
-	sw	t1, PT_STATE(a0)
 	sw	s2, PT_SWITCHTOUC(a0)
 	sw	a1, PT_SWITCHTO(a0)
 	move	a0, a1

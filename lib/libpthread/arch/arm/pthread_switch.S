@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.6 2003/07/24 08:03:44 skrll Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.7 2003/09/07 14:47:48 cl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -193,8 +193,6 @@ ENTRY(pthread__upcall_switch)
 	 * Yes, it was.  Stash the tread we were going to switch to,
 	 * and switch to the next thread in the continuation chain.
 	 */
-	mov	r4, #(PT_STATE_RECYCLABLE)
-	str	r4, [r0, #(PT_STATE)]
 	str	r7, [r0, #(PT_SWITCHTOUC)]
 	str	r1, [r0, #(PT_SWITCHTO)]
 	mov	r0, r1		/* from = next */

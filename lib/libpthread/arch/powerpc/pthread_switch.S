@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.7 2003/06/26 01:45:32 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.8 2003/09/07 14:47:52 cl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -164,8 +164,6 @@ ENTRY(pthread__upcall_switch)
 	or.	%r7, %r7, %r7
 	beq	1f
 
-	li	%r6, PT_STATE_RECYCLABLE
-	stw	%r6, PT_STATE(%r3)
 	stw	%r5, PT_SWITCHTOUC(%r3)
 	stw	%r4, PT_SWITCHTO(%r3)
 	mr	%r3, %r4
