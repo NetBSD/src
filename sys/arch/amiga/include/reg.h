@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: reg.h 1.1 90/07/09
  *	from: @(#)reg.h	7.2 (Berkeley) 11/3/90
- *	$Id: reg.h,v 1.3 1993/09/02 19:05:47 mycroft Exp $
+ *	$Id: reg.h,v 1.4 1993/12/08 22:46:15 mycroft Exp $
  */
 
 /*
@@ -66,8 +66,9 @@
 #define	PC	(17)
 #define	PS	(16)
 
-#ifdef IPCREG
 #define	NIPCREG 17
+
+#ifdef IPCREG
 int ipcreg[NIPCREG] =
 	{D0,D1,D2,D3,D4,D5,D6,D7,A0,A1,A2,A3,A4,A5,A6,A7,PC};
 #endif
