@@ -1,4 +1,4 @@
-/*	$NetBSD: menu.h,v 1.7 2000/04/13 12:44:57 tron Exp $	*/
+/*	$NetBSD: menu.h,v 1.8 2000/04/20 12:17:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -137,70 +137,70 @@ struct __menu {
 
 /* Public function prototypes. */
 __BEGIN_DECLS
-int  menu_driver __P((MENU *, int));
-int scale_menu __P((MENU *, int *, int *));
-int set_top_row __P((MENU *, int));
-int pos_menu_cursor __P((MENU *));
-int top_row __P((MENU *));
+int  menu_driver(MENU *menu, int c);
+int scale_menu(MENU *menu, int *rows, int *cols);
+int set_top_row(MENU *menu, int row);
+int pos_menu_cursor(MENU *menu);
+int top_row(MENU *menu);
 
-int  free_menu __P((MENU *));
-char menu_back __P((MENU *));
-char menu_fore __P((MENU *));
-void menu_format __P((MENU *, int *, int *));
-char menu_grey __P((MENU *));
-Menu_Hook menu_init __P((MENU *));
-char *menu_mark __P((MENU *));
-OPTIONS menu_opts __P((MENU *));
-int menu_opts_off __P((MENU *, OPTIONS));
-int menu_opts_on __P((MENU *, OPTIONS));
-int menu_pad __P((MENU *));
-char *menu_pattern __P((MENU *));
-WINDOW *menu_sub __P((MENU *));
-Menu_Hook menu_term __P((MENU *));
-char *menu_unmark __P((MENU *));
-char *menu_userptr __P((MENU *));
-WINDOW *menu_win __P((MENU *));
-MENU *new_menu __P((ITEM **));
-int post_menu __P((MENU *));
-int set_menu_back __P((MENU *, int));
-int set_menu_fore __P((MENU *, int));
-int set_menu_format __P((MENU *, int, int));
-int set_menu_grey __P((MENU *, int));
-int set_menu_init __P((MENU *, Menu_Hook));
-int set_menu_items __P((MENU *, ITEM **));
-int set_menu_mark __P((MENU *, char *));
-int set_menu_opts __P((MENU *, OPTIONS));
-int set_menu_pad __P((MENU *, int));
-int set_menu_pattern __P((MENU *, char *));
-int  set_menu_sub __P((MENU *, WINDOW *));
-int set_menu_term __P((MENU *, Menu_Hook));
-int set_menu_unmark __P((MENU *, char *));
-int set_menu_userptr __P((MENU *, char *));
-int  set_menu_win __P((MENU *, WINDOW *));
-int unpost_menu __P((MENU *));
+int  free_menu(MENU *menu);
+char menu_back(MENU *menu);
+char menu_fore(MENU *menu);
+void menu_format(MENU *menu, int *rows, int *cols);
+char menu_grey(MENU *menu);
+Menu_Hook menu_init(MENU *menu);
+char *menu_mark(MENU *menu);
+OPTIONS menu_opts(MENU *menu);
+int menu_opts_off(MENU *menu, OPTIONS opts);
+int menu_opts_on(MENU *menu, OPTIONS opts);
+int menu_pad(MENU *menu);
+char *menu_pattern(MENU *menu);
+WINDOW *menu_sub(MENU *menu);
+Menu_Hook menu_term(MENU *menu);
+char *menu_unmark (MENU *menu);
+char *menu_userptr(MENU *menu);
+WINDOW *menu_win(MENU *menu);
+MENU *new_menu(ITEM **items);
+int post_menu(MENU *menu);
+int set_menu_back(MENU *menu, attr_t attr);
+int set_menu_fore(MENU *menu, attr_t attr);
+int set_menu_format(MENU *menu, int rows, int cols);
+int set_menu_grey(MENU *menu, attr_t attr);
+int set_menu_init(MENU *menu, Menu_Hook func);
+int set_menu_items(MENU *menu, ITEM **items);
+int set_menu_mark(MENU *menu, char *mark);
+int set_menu_opts(MENU *menu, OPTIONS opts);
+int set_menu_pad(MENU *menu, int pad);
+int set_menu_pattern(MENU *menu, char *pat);
+int set_menu_sub(MENU *menu, WINDOW *subwin);
+int set_menu_term(MENU *menu, Menu_Hook func);
+int set_menu_unmark(MENU *menu, char *mark);
+int set_menu_userptr(MENU *menu, char *userptr);
+int  set_menu_win(MENU *menu, WINDOW *win);
+int unpost_menu(MENU *menu);
 
-ITEM *current_item __P((MENU *));
-int free_item __P((ITEM *));
-int item_count __P((MENU *));
-char *item_description __P((ITEM *));
-int item_index __P((ITEM *));
-Menu_Hook item_init __P((MENU *));
-char *item_name __P((ITEM *));
-OPTIONS item_opts __P((ITEM *));
-int item_opts_off __P((ITEM *, OPTIONS));
-int item_opts_on __P((ITEM *, OPTIONS));
-Menu_Hook item_term __P((MENU *));
-char *item_userptr __P((ITEM *));
-int item_value __P((ITEM *));
-int item_visible __P((ITEM *));
-ITEM **menu_items __P((MENU *));
-ITEM *new_item __P((char *, char *));
-int set_current_item __P((MENU *, ITEM *));
-int set_item_init __P((MENU *, Menu_Hook));
-int set_item_opts __P((ITEM *, OPTIONS));
-int set_item_term __P((MENU *, Menu_Hook));
-int set_item_userptr __P((ITEM *, char *));
-int set_item_value __P((ITEM *, int));
+ITEM *current_item(MENU *menu);
+int free_item(ITEM *item);
+int item_count(MENU *menu);
+char *item_description(ITEM *item);
+int item_index(ITEM *item);
+Menu_Hook item_init(MENU *menu);
+char *item_name(ITEM *item);
+OPTIONS item_opts(ITEM *item);
+int item_opts_off(ITEM *item, OPTIONS opts);
+int item_opts_on(ITEM *item, OPTIONS opts);
+Menu_Hook item_term(MENU *menu);
+char *item_userptr(ITEM *item);
+int item_value(ITEM *item);
+int item_visible(ITEM *item);
+ITEM **menu_items(MENU *menu);
+ITEM *new_item(char *name, char *description);
+int set_current_item(MENU *menu, ITEM *item);
+int set_item_init(MENU *menu, Menu_Hook func);
+int set_item_opts(ITEM *menu, OPTIONS opts);
+int set_item_term(MENU *menu, Menu_Hook func);
+int set_item_userptr(ITEM *item, char *userptr);
+int set_item_value(ITEM *item, int flag);
 
 __END_DECLS
 
