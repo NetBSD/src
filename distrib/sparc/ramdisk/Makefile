@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.4 2000/06/03 15:17:46 he Exp $
+#	$NetBSD: Makefile,v 1.8.2.5 2000/08/26 18:35:45 he Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -17,7 +17,7 @@ VND_CRDEV=	/dev/r${VND}c
 MDEC=		${DESTDIR}/usr/mdec
 IMAGE?=		ramdisk-${REV}.fs
 
-LISTS=		list
+LISTS=		${.CURDIR}/list
 MTREE=		mtree.conf
 
 CYLS=		90
@@ -46,6 +46,8 @@ all: ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_CDEV}
+
+${IMAGE}: all
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
