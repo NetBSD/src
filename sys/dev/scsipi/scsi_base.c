@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.17 1994/11/21 10:39:17 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.18 1994/11/22 00:05:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -618,7 +618,7 @@ scsi_interpret_sense(xs)
 		printf(" DELAYED ERROR, key = 0x%x\n", key);
 	case 0x70:
 		if (sense->error_code & SSD_ERRCODE_VALID) {
-			bcopy(&sense->extended_info, &info, sizeof info);
+			bcopy(sense->extended_info, &info, sizeof info);
 			info = ntohl(info);
 		} else
 			info = 0;

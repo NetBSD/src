@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.5 1994/06/29 06:43:04 cgd Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.6 1994/11/22 00:05:39 deraadt Exp $	*/
 
 /*
  * SCSI interface description
@@ -84,7 +84,7 @@ struct scsi_rw_big
 	u_char	addr_2;
 	u_char	addr_1;
 	u_char	addr_0;		/* least significant */
-	u_char	reserved;;
+	u_char	reserved;
 	u_char	length2;
 	u_char	length1;
 	u_char	control;
