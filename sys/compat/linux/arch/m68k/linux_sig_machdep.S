@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_machdep.S,v 1.2 1999/04/19 20:58:38 kleink Exp $	*/
+/*	$NetBSD: linux_sig_machdep.S,v 1.3 1999/11/11 01:27:59 thorpej Exp $	*/
 
 /*
  * Written by ITOH Yasufumi.
@@ -14,7 +14,7 @@
  */
 	.align	2
 GLOBAL(linux_sigcode)
-	moveq	#LINUX_SYS_exit,d0	| _exit(?)
+	moveq	#LINUX_SYS_exit,%d0	| _exit(?)
 	trap	#0
 	.align	2
 GLOBAL(linux_esigcode)
