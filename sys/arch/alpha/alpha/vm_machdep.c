@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 1996/07/09 00:54:17 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 1996/07/11 03:53:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -147,9 +147,13 @@ cpu_fork(p1, p2)
 	 * Cache the physical address of the pcb, so we can
 	 * swap to it easily.
 	 */
+#ifdef OLD_PMAP
 	ptep = kvtopte(up);
 	p2->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
+#else
+	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
+#endif
 
 	/*
 	 * Simulate a write to the process's U-area pages,
@@ -177,7 +181,9 @@ cpu_fork(p1, p2)
 	 * part of the stack.  The stack and pcb need to agree;
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+#ifdef OLD_PMAP
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, 0);
+#endif
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -186,7 +192,7 @@ cpu_fork(p1, p2)
 #ifdef DIAGNOSTIC
 	if (p1 != curproc)
 		panic("cpu_fork: curproc");
-	if (up->u_pcb.pcb_fen != 0)
+	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
 		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
 #endif
 
@@ -221,7 +227,7 @@ cpu_fork(p1, p2)
 		 * 
 		 * This is an inlined version of cpu_set_kpc.
 		 */
-		up->u_pcb.pcb_ksp = (u_int64_t)p2tf;	
+		up->u_pcb.pcb_hw.apcb_ksp = (u_int64_t)p2tf;	
 		up->u_pcb.pcb_context[0] =
 		    (u_int64_t)child_return;		/* s0: pc */
 		up->u_pcb.pcb_context[1] =
@@ -276,9 +282,13 @@ cpu_swapin(p)
 	 * Cache the physical address of the pcb, so we can swap to
 	 * it easily.
 	 */
+#ifdef OLD_PMAP
 	ptep = kvtopte(up);
 	p->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
+#else
+	p->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
+#endif
 
 	/*
 	 * Simulate a write to the process's U-area pages,
@@ -328,8 +338,13 @@ pagemove(from, to, size)
 
 	if (size % CLBYTES)
 		panic("pagemove");
+#ifdef OLD_PMAP
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
+#else
+	fpte = pmap_pte(kernel_pmap, (vm_offset_t)from);
+	tpte = pmap_pte(kernel_pmap, (vm_offset_t)to);
+#endif
 	todo = size;			/* if testing > 0, need sign... */
 	while (todo > 0) {
 		TBIS((vm_offset_t)from);

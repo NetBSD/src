@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 1996/07/09 00:53:53 cgd Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7 1996/07/11 03:53:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -130,7 +130,7 @@ machine_check(framep, logoutp, vec)
 
 	if (!mc_expected)
 		panic("machine check: vec 0x%lx, pc = 0x%lx, ra = 0x%lx",
-		    vec, framep->tf_pc, framep->tf_regs[FRAME_RA]);
+		    vec, framep->tf_af.af_pc, framep->tf_regs[FRAME_RA]);
 
 	mc_expected = 0;
 	mc_received = 1;

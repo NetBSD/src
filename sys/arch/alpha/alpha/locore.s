@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.16 1996/07/09 04:18:13 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.17 1996/07/11 03:53:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -186,7 +186,7 @@ LEAF(rei, 1)					/* XXX should be NESTED */
 	br	pv, 1f
 1:	SETGP(pv)
 
-	ldq	s1, TF_PS(sp)			/* get the saved PS */
+	ldq	s1, TF_AF_PS(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
 	bne	t0, Lrestoreregs		/* != 0: can't do AST or SIR */
 
@@ -366,7 +366,7 @@ LEAF(XentIF, 1)					/* XXX should be NESTED */
 
 	or	s0, T_IFLT, a0			/* type = T_IFLT|type*/
 	mov	s0, a1				/* code = type */
-	ldq	a2, TF_PC(sp)			/* v = frame's pc */
+	ldq	a2, TF_AF_PC(sp)		/* v = frame's pc */
 	mov	sp, a3				/* frame */
 	CALL(trap)
 
@@ -505,9 +505,9 @@ LEAF(XentSys, 0)				/* XXX should be NESTED */
 	stq	s4,(FRAME_S4*8)(sp)
 	stq	s5,(FRAME_S5*8)(sp)
 	stq	s6,(FRAME_S6*8)(sp)
-	stq	a0,TF_A0(sp)
-	stq	a1,TF_A1(sp)
-	stq	a2,TF_A2(sp)
+	stq	a0,TF_AF_A0(sp)
+	stq	a1,TF_AF_A1(sp)
+	stq	a2,TF_AF_A2(sp)
 	stq	a3,(FRAME_A3*8)(sp)
 	stq	a4,(FRAME_A4*8)(sp)
 	stq	a5,(FRAME_A5*8)(sp)
@@ -720,7 +720,7 @@ LEAF(restorefpstate, 1)
 LEAF(savectx, 1)
 	br	pv, 1f
 1:	SETGP(pv)
-	stq	sp, U_PCB_KSP(a0)		/* store sp */
+	stq	sp, U_PCB_HW_KSP(a0)		/* store sp */
 	stq	s0, U_PCB_CONTEXT+(0 * 8)(a0)	/* store s0 - s6 */
 	stq	s1, U_PCB_CONTEXT+(1 * 8)(a0)
 	stq	s2, U_PCB_CONTEXT+(2 * 8)(a0)
@@ -841,6 +841,7 @@ sw1:
 	ldq	t5, P_MD_PCBPADDR(t4)		/* t5 = p->p_md.md_pcbpaddr */
 	stq	t5, curpcb			/* and store it in curpcb */
 
+#ifdef OLD_PMAP
 	/*
 	 * Do the context swap, and invalidate old TLB entries (XXX).
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
@@ -849,10 +850,13 @@ sw1:
 	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
 	ldq	t3, Lev1map			/* and store pte into Lev1map */
 	stq	t2, USTP_OFFSET(t3)
+#endif /* OLD_PMAP */
 	mov	t5, a0				/* swap the context */
 	call_pal PAL_OSF1_swpctx
+#ifdef OLD_PMAP
 	CONST(-1, a0)				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
+#endif /* OLD_PMAP */
 
 	/*
 	 * Now running on the new u struct.
@@ -914,14 +918,18 @@ LEAF(switch_exit, 1)
 	 * Do the context swap, and invalidate old TLB entries (XXX).
 	 * XXX should do the ASN thing, and therefore not have to invalidate.
 	 */
+#ifdef OLD_PMAP
 	ldq	t2, P_VMSPACE(t4)		/* t2 = p->p_vmspace */
 	ldq	t2, VM_PMAP_STPTE(t2)		/* = p_vmspace.vm_pmap.pm_ste */
 	ldq	t3, Lev1map			/* and store pte into Lev1map */
 	stq	t2, USTP_OFFSET(t3)
+#endif /* OLD_PMAP */
 	mov	t5, a0				/* swap the context */
 	call_pal PAL_OSF1_swpctx
+#ifdef OLD_PMAP
 	CONST(-1, a0)				/* & invalidate old TLB ents */
 	call_pal PAL_OSF1_tbi
+#endif /* OLD_PMAP */
 
 	/*
 	 * Now running as proc0, except for the value of 'curproc' and
@@ -1623,3 +1631,23 @@ EXPORT(eintrcnt)
 	.text
 
 /**************************************************************************/
+
+/*
+ *	Object:
+ *		swpctxt			EXPORTED function
+ *
+ *	Change HW process context
+ *
+ *	Arguments:
+ *		pcb			PHYSICAL struct pcb_hw *
+ *		old_ksp			VIRTUAL long *
+ *
+ *	If old_ksp is non-zero it saves the current KSP in it.
+ *	Execute the PAL call.
+ */
+LEAF(swpctxt,2)
+	beq	a1,1f
+	stq	sp,0(a1)
+1:	call_pal PAL_OSF1_swpctx
+	RET
+	END(swpctxt)

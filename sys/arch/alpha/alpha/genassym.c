@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.5 1996/07/09 00:53:51 cgd Exp $	*/
+/*	$NetBSD: genassym.c,v 1.6 1996/07/11 03:53:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -111,11 +111,11 @@ main(argc, argv)
 	def("FRAME_T12", FRAME_T12);
 	def("FRAME_AT", FRAME_AT);
 	def("FRAME_SP", FRAME_SP);
-	off("TF_PS", struct trapframe, tf_ps);
-	off("TF_PC", struct trapframe, tf_ps);
-	off("TF_A0", struct trapframe, tf_a0);
-	off("TF_A1", struct trapframe, tf_a1);
-	off("TF_A2", struct trapframe, tf_a2);
+	off("TF_AF_PS", struct trapframe, tf_af.af_ps);
+	off("TF_AF_PC", struct trapframe, tf_af.af_pc);
+	off("TF_AF_A0", struct trapframe, tf_af.af_a0);
+	off("TF_AF_A1", struct trapframe, tf_af.af_a1);
+	off("TF_AF_A2", struct trapframe, tf_af.af_a2);
 
 	/* bits of the PS register */
 	def("ALPHA_PSL_USERMODE", ALPHA_PSL_USERMODE);
@@ -140,14 +140,16 @@ main(argc, argv)
 	off("PH_LINK", struct prochd, ph_link);
 	off("PH_RLINK", struct prochd, ph_rlink);
 
+#ifdef OLD_PMAP
 	/* offsets needed by cpu_switch(), et al., to switch mappings. */
 	off("VM_PMAP_STPTE", struct vmspace, vm_pmap.pm_stpte);
 	def("USTP_OFFSET", kvtol1pte(VM_MIN_ADDRESS) * sizeof(pt_entry_t));
+#endif /* OLD_PMAP */
 
 	/* Important offsets into the user struct & associated constants */
 	def("UPAGES", UPAGES);
 	off("U_PCB", struct user, u_pcb);
-	off("U_PCB_KSP", struct user, u_pcb.pcb_ksp);
+	off("U_PCB_HW_KSP", struct user, u_pcb.pcb_hw.apcb_ksp);
 	off("U_PCB_CONTEXT", struct user, u_pcb.pcb_context[0]);
 	off("U_PCB_ONFAULT", struct user, u_pcb.pcb_onfault);
 
