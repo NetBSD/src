@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.7 1997/10/14 09:35:32 mark Exp $	*/
+/*	$NetBSD: disassem.c,v 1.8 1998/01/20 00:51:24 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -243,9 +243,10 @@ static char *insn_fpaconstants[] = {
 /* Local prototypes */
 static void disasm_register_shift __P((disasm_interface_t *di, u_int insn));
 static void disasm_print_reglist  __P((disasm_interface_t *di, u_int insn));
-static void disasm_insn_ldrstr    __P((disasm_interface_t *di, u_int insn, u_int loc));
-static void disasm_insn_cdt	  __P((disasm_interface_t *di, u_int insn, u_int loc));
-
+static void disasm_insn_ldrstr    __P((disasm_interface_t *di, u_int insn,
+    u_int loc));
+static void disasm_insn_ldcstc    __P((disasm_interface_t *di, u_int insn,
+    u_int loc));
 
 vm_offset_t
 disasm(di, loc, altfmt)
@@ -431,10 +432,11 @@ disasm(di, loc, altfmt)
 			break;
 		/* v - co-processor data transfer registers+addressing mode */
 		case 'v':
+			disasm_insn_ldcstc(di, insn, loc);
 			break;
 		/* x - instruction in hex */
 		case 'x':
-			db_printf("0x%08x", insn);
+			di->di_printf("0x%08x", insn);
 			break;
 		/* y - co-processor data processing registers */
 		case 'y':
