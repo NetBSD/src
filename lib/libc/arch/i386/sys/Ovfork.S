@@ -1,4 +1,4 @@
-/*	$NetBSD: Ovfork.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $	*/
+/*	$NetBSD: Ovfork.S,v 1.14 2000/12/08 22:57:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: Ovfork.S,v 1.13 2000/04/03 04:13:36 mycroft Exp $")
+	RCSID("$NetBSD: Ovfork.S,v 1.14 2000/12/08 22:57:57 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -57,8 +57,7 @@ WARN_REFERENCES(vfork, \
  */
 ENTRY(vfork)
 	popl	%ecx		/* my rta into ecx */
-	movl	$(SYS_vfork),%eax
-	int	$0x80
+	SYSTRAP(vfork)
 	jc	err
 	decl	%edx
 	andl	%edx,%eax
