@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.14 2000/12/06 01:47:50 mrg Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.15 2000/12/14 10:24:42 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LKM
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
