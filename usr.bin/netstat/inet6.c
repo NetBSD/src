@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.20 2001/05/28 04:22:55 assar Exp $	*/
+/*	$NetBSD: inet6.c,v 1.21 2001/06/13 02:50:25 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.20 2001/05/28 04:22:55 assar Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.21 2001/06/13 02:50:25 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -806,9 +806,9 @@ static	char *icmp6names[] = {
 	"multicast listener report",
 	"multicast listener done",
 	"router solicitation",
-	"router advertisment",
+	"router advertisement",
 	"neighbor solicitation",
-	"neighbor advertisment",
+	"neighbor advertisement",
 	"redirect",
 	"router renumbering",
 	"node information request",
