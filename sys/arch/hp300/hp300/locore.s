@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.24 1994/05/27 17:19:38 mycroft Exp $
+ *	$Id: locore.s,v 1.25 1994/07/03 11:40:35 mycroft Exp $
  */
 
 /*
@@ -247,7 +247,7 @@ _fpfline:
 #if defined(HP380)
 	cmpw	#0x202c,sp@(6)		| format type 2?
 	jne	_illinst		| no, not an FP emulation
-#ifdef HPFPLIB
+#ifdef FPSP
 	.globl fpsp_unimp
 	jmp	fpsp_unimp		| yes, go handle it
 #else
@@ -264,7 +264,7 @@ _fpunsupp:
 #if defined(HP380)
 	cmpl	#-2,_mmutype		| 68040?
 	jne	_illinst		| no, treat as illinst
-#ifdef HPFPLIB
+#ifdef FPSP
 	.globl	fpsp_unsupp
 	jmp	fpsp_unsupp		| yes, go handle it
 #else
@@ -276,6 +276,72 @@ _fpunsupp:
 #else
 	jra	_illinst
 #endif
+
+#ifdef FPSP
+/*
+ * Entry points for '040 FP emulator.
+ */
+	.globl	real_fline, real_trace, fpsp_done, fpsp_fmt_error
+real_fline:
+	jra	_illinst
+real_trace:
+	/* XXXX */
+fpsp_done:
+	rte
+fpsp_fmt_error:
+	pea	LFP1
+	jbsr	_panic
+LFP1:
+	.asciz	"FPSP format error"
+	.even
+
+	.globl	mem_read, mem_write
+mem_read:
+	btst	#5,a6@(4)
+	jeq	user_read
+super_read:
+	movb	a0@+,a1@+
+	subql	#1,d0
+	jne	super_read
+	rts
+user_read:
+	movl	d1,sp@-
+	movl	d0,sp@-		| len
+	movl	a1,sp@-		| to
+	movl	a0,sp@-		| from
+	jsr	_copyin
+	addw	#12,sp
+	movl	sp@+,d1
+	rts
+mem_write:
+	btst	#5,a6@(4)
+	jeq	user_write
+super_write:
+	movb	a0@+,a1@+
+	subql	#1,d0
+	jne	super_write
+	rts
+user_write:
+	movl	d1,sp@-
+	movl	d0,sp@-		| len
+	movl	a1,sp@-		| to
+	movl	a0,sp@-		| from
+	jsr	_copyout
+	addw	#12,sp
+	movl	sp@+,d1
+	rts
+
+	.globl	real_bsun, real_inex, real_dz, real_unfl, real_operr
+	.globl	real_ovfl, real_snan
+real_bsun:
+real_inex:
+real_dz:
+real_unfl:
+real_operr:
+real_ovfl:
+real_snan:
+	/* Fall through to _fpfault. */
+#endif /* FPSP */
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -305,37 +371,6 @@ Lfptnull:
 	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
 #else
 	jra	_badtrap	| treat as an unexpected trap
-#endif
-
-#ifdef HPFPLIB
-/*
- * We wind up here from the 040 FP emulation library after
- * the exception has been processed.
- */
-	.globl	_fault
-_fault:
-	subql	#4,sp		| space for rts addr
-	movl	d0,sp@-		| scratch register
-	movw	sp@(14),d0	| get vector offset
-	andl	#0xFFF,d0	| mask out frame type and clear high word
-	cmpl	#0x100,d0	| HP-UX style reschedule trap?
-	jne	Lfault1		| no, skip
-	movl	sp@+,d0		| restore scratch register
-	addql	#4,sp		| pop space
-	jra	Lrei1		| go do AST
-Lfault1:
-	cmpl	#0xC0,d0	| FP exception?
-	jlt	Lfault2		| no, skip
-	movl	sp@+,d0		| yes, backoff
-	addql	#4,sp		|  and prepare for normal trap frame
-	jra	_fpfault	| go to it
-Lfault2:
-	addl	#Lvectab,d0	| convert to vector table offset
-	exg	d0,a0
-	movl	a0@,sp@(4) 	| get exception vector and save for rts
-	exg	d0,a0
-	movl	sp@+,d0		|   scratch registers
-	rts			| return to handler from vectab
 #endif
 
 /*
@@ -938,10 +973,6 @@ Lnot68030:
 	movl	#-2,a0@			| with a 68040 MMU
 	RELOC(_ectype, a0)
 	movl	#0,a0@			| and no cache (for now XXX)
-#ifdef HPFPLIB
-	RELOC(_processor, a0)
-	movl	#3,a0@			| HP-UX style processor id
-#endif
 	RELOC(_machineid, a0)
 	movl	a1@(MMUCMD),d0		| read MMU register
 	lsrl	#8,d0			| get apparent ID
@@ -2546,27 +2577,6 @@ fulltflush:
 	.long	0
 fullcflush:
 	.long	0
-#endif
-#ifdef HPFPLIB
-/*
- * Undefined symbols from hpux_float.o:
- *
- * kdb_printf:	A kernel debugger print routine, we just use printf instead.
- * processor:	HP-UX equiv. of machineid, set to 3 if it is a 68040.
- * u:		Ye ole u-area.  The code wants to grab the first longword
- *		indirect off of that and clear the 0x40000 bit there.
- *		Oddly enough this was incorrect even in HP-UX!
- * runrun:	Old name for want_resched.
- */
-	.globl	_kdb_printf,_processor,_u,_runrun
-_kdb_printf:
-	.long	_printf
-_processor:
-	.long	0
-_u:
-	.long	.+4
-	.long	0
-	.set	_runrun,_want_resched
 #endif
 /* interrupt counters */
 	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
