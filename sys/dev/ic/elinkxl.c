@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.36 2000/06/28 17:12:56 mrg Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.37 2000/08/25 09:01:59 haya Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -771,7 +771,7 @@ ex_set_media(sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int config0, config1;
+	u_int32_t configreg;
 
 	if (((sc->ex_conf & EX_CONF_MII) &&
 	    (sc->ex_mii.mii_media_active & IFM_FDX))
@@ -790,16 +790,12 @@ ex_set_media(sc)
 	if (sc->ex_conf & EX_CONF_MII) {
 		GO_WINDOW(3);
 
-		config0 = (u_int)bus_space_read_2(iot, ioh,
-		    ELINK_W3_INTERNAL_CONFIG);
-		config1 = (u_int)bus_space_read_2(iot, ioh,
-		    ELINK_W3_INTERNAL_CONFIG + 2);
+		configreg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
 
-		config1 = config1 & ~CONFIG_MEDIAMASK;
-		config1 |= (ELINKMEDIA_MII << CONFIG_MEDIAMASK_SHIFT);
+		configreg &= ~(CONFIG_MEDIAMASK << 16);
+		configreg |= (ELINKMEDIA_MII << (CONFIG_MEDIAMASK_SHIFT + 16));
 
-		bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG, config0);
-		bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2, config1);
+		bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, configreg);
 		mii_mediachg(&sc->ex_mii);
 		return;
 	}
@@ -847,15 +843,13 @@ ex_set_media(sc)
 	}
 
 	GO_WINDOW(3);
-	config0 = (u_int)bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
-	config1 = (u_int)bus_space_read_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2);
+	configreg = bus_space_read_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG);
 
-	config1 = config1 & ~CONFIG_MEDIAMASK;
-	config1 |= (sc->ex_mii.mii_media.ifm_cur->ifm_data <<
-	    CONFIG_MEDIAMASK_SHIFT);
+	configreg &= ~(CONFIG_MEDIAMASK << 16);
+	configreg |= (sc->ex_mii.mii_media.ifm_cur->ifm_data <<
+	    (CONFIG_MEDIAMASK_SHIFT + 16));
 
-	bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG, config0);
-	bus_space_write_2(iot, ioh, ELINK_W3_INTERNAL_CONFIG + 2, config1);
+	bus_space_write_4(iot, ioh, ELINK_W3_INTERNAL_CONFIG, configreg);
 }
 
 /*
