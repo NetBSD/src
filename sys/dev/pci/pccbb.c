@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.17 2000/01/24 15:51:59 joda Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.18 2000/01/25 06:16:34 chopps Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -2074,10 +2074,8 @@ pccbb_pcmcia_socket_enable(pch)
   }
 
   /* assert reset bit */
-
-  intr = Pcic_read(ph, PCIC_INTR);
-  intr &= ~PCIC_INTR_RESET;
-  intr |= PCIC_INTR_PCI;	/* XXX */
+  intr = Pcic_read(ph, PCIC_INTR); 
+  intr &= ~(PCIC_INTR_RESET|PCIC_INTR_ENABLE|PCIC_INTR_CARDTYPE_MASK); 
   Pcic_write(ph, PCIC_INTR, intr);
 
   /* disable socket i/o: negate output enable bit */
@@ -2109,7 +2107,8 @@ pccbb_pcmcia_socket_enable(pch)
   /* delay((100 + 20 + 200)*1000); too much */
 
   power = Pcic_read(ph, PCIC_PWRCTL);
-  Pcic_write(ph, PCIC_PWRCTL, power | PCIC_PWRCTL_OE);
+  power |= PCIC_PWRCTL_OE;
+  Pcic_write(ph, PCIC_PWRCTL, power);
 
   /*
    * hold RESET at least 10us.
@@ -2120,8 +2119,8 @@ pccbb_pcmcia_socket_enable(pch)
 
   /* clear the reset flag */
 
-  intr = Pcic_read(ph, PCIC_INTR);
-  Pcic_write(ph, PCIC_INTR, intr | PCIC_INTR_RESET);
+  intr |= PCIC_INTR_RESET;
+  Pcic_write(ph, PCIC_INTR, intr);
 
   /* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
 
@@ -2139,8 +2138,7 @@ pccbb_pcmcia_socket_enable(pch)
 
   cardtype = pcmcia_card_gettype(ph->pcmcia);
 
-  intr = Pcic_read(ph, PCIC_INTR);
-  intr &= ~PCIC_INTR_CARDTYPE_MASK;
+  intr |= PCIC_INTR_PCI;
   intr |= ((cardtype == PCMCIA_IFTYPE_IO) ?
 	   PCIC_INTR_CARDTYPE_IO :
 	   PCIC_INTR_CARDTYPE_MEM);
@@ -2186,7 +2184,7 @@ pccbb_pcmcia_socket_disable(pch)
   /* reset signal asserting... */
 
   intr = Pcic_read(ph, PCIC_INTR);
-  intr &= ~PCIC_INTR_RESET;
+  intr &= ~(PCIC_INTR_RESET|PCIC_INTR_ENABLE|PCIC_INTR_CARDTYPE_MASK); 
   Pcic_write(ph, PCIC_INTR, intr);
   delay(2*1000);
 
