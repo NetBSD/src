@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.33 1996/09/07 12:41:36 mycroft Exp $	*/
+/*	$NetBSD: tty.h,v 1.34 1996/10/25 21:22:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -206,7 +206,7 @@ extern	struct ttychars ttydefaults;
 /* Symbolic sleep message strings. */
 extern	 char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
 
-int	 b_to_q __P((u_char *cp, int cc, struct clist *q));
+int	 b_to_q __P((const u_char *cp, int cc, struct clist *q));
 void	 catq __P((struct clist *from, struct clist *to));
 void	 clist_init __P((void));
 int	 getc __P((struct clist *q));
