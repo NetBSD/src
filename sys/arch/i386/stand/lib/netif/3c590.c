@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.3 1997/06/13 13:44:37 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.4 1997/06/21 14:41:13 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -85,8 +85,9 @@ char *myadr;
 	    return(0);
 	}
 
-	if(pcifinddev(0x10b7, 0x5900, &hdl)) {
-	    printf("cannot find 3c590\n");
+	if(pcifinddev(0x10b7, 0x5900, &hdl) &&
+	   pcifinddev(0x10b7, 0x9001, &hdl)) {
+	    printf("cannot find 3c590 / 3c900\n");
 	    return(0);
 	}
 
