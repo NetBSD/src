@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2.4.4 2001/11/14 19:13:10 nathanw Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.4.5 2001/12/06 09:30:54 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.4.4 2001/11/14 19:13:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.4.5 2001/12/06 09:30:54 wdk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,8 @@ linux_sys_truncate64(l, v, retval)
 
 #ifdef __mips__ /* i386 and powerpc could use it too */
 int
-linux_sys_fcntl64(p, v, retval)
-	struct proc *p;
+linux_sys_fcntl64(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -259,7 +259,7 @@ linux_sys_fcntl64(p, v, retval)
 			error = 0;
 			break;
 		default:
-			error = linux_sys_fcntl(p, v, retval);
+			error = linux_sys_fcntl(l, v, retval);
 			break;
 	}
 

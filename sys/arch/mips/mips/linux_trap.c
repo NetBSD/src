@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_ptrace.c,v 1.1.2.4 2001/12/06 09:30:55 wdk Exp $ */
+/*	$NetBSD: linux_trap.c,v 1.1.6.2 2001/12/06 09:30:52 wdk Exp $ */
 
 /*-
- * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matthias Scheler and Emmanuel Dreyfus.
+ * by Christos Zoulas and Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,39 +36,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.1.2.4 2001/12/06 09:30:55 wdk Exp $");
-
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-#include <sys/ptrace.h>
 #include <sys/systm.h>
-#include <sys/syscallargs.h>
-#include <uvm/uvm_extern.h>
+#include <sys/proc.h>
+#include <sys/lwp.h>
+#include <sys/user.h>
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signal.h>
+#include <sys/syscall.h>
 
-#include <machine/reg.h>
+#include <compat/linux/common/linux_exec.h>
 
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_ptrace.h>
-#include <compat/linux/common/linux_signal.h>
-
-#include <compat/linux/common/linux_util.h>
-#include <compat/linux/common/linux_machdep.h>
-#include <compat/linux/common/linux_emuldata.h>
-#include <compat/linux/common/linux_exec.h>	/* for emul_linux */
-
-#include <compat/linux/linux_syscallargs.h>
-
-#include <lib/libkern/libkern.h>	/* for offsetof() */
-
-int
-linux_sys_ptrace_arch(l, v, retval)	/* XXX write me! */
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	return 0;
+void
+linux_trapsignal(struct lwp *l, int signo, u_long type) {
+	trapsignal(l, signo, type);
 }
