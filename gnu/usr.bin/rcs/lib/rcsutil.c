@@ -30,7 +30,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(utilId, "$Id: rcsutil.c,v 1.2 1993/08/02 17:47:31 mycroft Exp $")
+libId(utilId, "$Id: rcsutil.c,v 1.3 1993/08/06 21:55:56 mycroft Exp $")
 
 #if !has_memcmp
 	int
@@ -260,7 +260,7 @@ catchsig(s)
 #if has_sys_siglist && defined(NSIG)
 	    if ((unsigned)s < NSIG) {
 #		ifndef sys_siglist
-		    extern char const *sys_siglist[];
+		    extern char *sys_siglist[];
 #		endif
 		sname = sys_siglist[s];
 	    }
