@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.3 1999/11/01 17:29:59 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.4 2000/05/14 22:44:19 christos Exp $	*/
 
 /*
  * ASCII magic -- file types that we know based on keywords
@@ -40,7 +40,7 @@
 #include "names.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: ascmagic.c,v 1.24 1999/02/14 17:16:00 christos Exp ")
+FILE_RCSID("@(#)Id: ascmagic.c,v 1.27 2000/04/23 04:28:19 christos Exp ")
 #endif	/* lint */
 
 			/* an optimisation over plain strcmp() */
@@ -63,10 +63,11 @@ int nbytes;	/* size actually read */
 	 */
 	switch (is_tar(buf, nbytes)) {
 	case 1:
-		ckfputs("tar archive", stdout);
+		ckfputs(iflag ? "application/x-tar" : "tar archive", stdout);
 		return 1;
 	case 2:
-		ckfputs("POSIX tar archive", stdout);
+		ckfputs(iflag ? "application/x-tar, POSIX"
+				: "POSIX tar archive", stdout);
 		return 1;
 	}
 
@@ -82,20 +83,21 @@ int nbytes;	/* size actually read */
 			++tp;	/* skip leading whitespace */
 		if ((isascii(*tp) && (isalnum(*tp) || *tp=='\\') &&
 		    isascii(tp[1]) && (isalnum(tp[1]) || tp[1] == '"'))) {
-			ckfputs("troff or preprocessor input text", stdout);
+			ckfputs(iflag ? "text/troff" 
+				: "troff or preprocessor input text", stdout);
 			return 1;
 		}
 	}
 	if ((*buf == 'c' || *buf == 'C') && 
 	    isascii(buf[1]) && isspace(buf[1])) {
-		ckfputs("fortran program text", stdout);
+		ckfputs(iflag ? "text/fortran" : "fortran program text", stdout);
 		return 1;
 	}
 
 
 	/* Make sure we are dealing with ascii text before looking for tokens */
 	for (i = 0; i < nbytes; i++) {
-		if (!isascii(buf[i]))
+		if (!isascii(buf[i]) && !isalpha(buf[i]))
 			return 0;	/* not all ASCII */
 	}
 
@@ -108,7 +110,7 @@ int nbytes;	/* size actually read */
 		s = NULL;	/* make strtok() keep on tokin' */
 		for (p = names; p < names + NNAMES; p++) {
 			if (STREQ(p->name, token)) {
-				ckfputs(types[p->type], stdout);
+				ckfputs(iflag ? types[p->type].mime : types[p->type].human, stdout);
 				if (has_escapes)
 					ckfputs(" (with escape sequences)", 
 						stdout);
@@ -118,11 +120,9 @@ int nbytes;	/* size actually read */
 	}
 
 	/* all else fails, but it is ASCII... */
-	ckfputs("ASCII text", stdout);
+	ckfputs(iflag ? "text/plain, ASCII" : "ASCII text", stdout);
 	if (has_escapes) {
 		ckfputs(" (with escape sequences)", stdout);
 	}
 	return 1;
 }
-
-
