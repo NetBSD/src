@@ -34,23 +34,26 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)swapgeneric.c	5.5 (Berkeley) 5/9/91
- *	$Id: swapgeneric.c,v 1.4 1993/07/18 09:51:26 cgd Exp $
+ *	$Id: swapgeneric.c,v 1.5 1994/07/28 21:40:27 mycroft Exp $
  */
 
-#include "machine/pte.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/reboot.h>
+#include <sys/device.h>
+#include <sys/disklabel.h>
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "sys/buf.h"
-#include "sys/systm.h"
-#include "sys/reboot.h"
+#include <machine/pte.h>
 
-#include "i386/isa/isa_device.h"
+#include <i386/isa/isa_device.h>
 
 #include "wd.h"
 #include "fd.h"
 #include "sd.h"
 #include "cd.h"
+#include "mcd.h"
 
 /*
  * Generic configuration;  all in one
@@ -67,40 +70,46 @@ long	dumplo;
 int	dmmin, dmmax, dmtext;
 
 #if NWD > 0
-extern	struct driver wdcdriver;
+extern	struct cfdriver wdcd;
 #endif
 #if NFD > 0
-extern	struct driver fdcdriver;
+extern	struct cfdriver fdcd;
 #endif
 #if NSD > 0
-extern	struct driver sddriver;
+extern	struct cfdriver sdcd;
 #endif
 #if NCD > 0
-extern	struct driver cddriver;
+extern	struct cfdriver cdcd;
+#endif
+#if NMCD > 0
+extern	struct cfdriver mcdcd;
 #endif
 
 struct	genericconf {
-	caddr_t	gc_driver;
-	char	*gc_name;
-	dev_t	gc_root;
+	struct cfdriver *gc_driver;
+	char *gc_name;
+	dev_t gc_major;
 } genericconf[] = {
 #if NWD > 0
-	{ (caddr_t)&wdcdriver,	"wd",	makedev(0, 0),	},
+	{ &wdcd,  "wd",  0 },
 #endif
 #if NSD > 0
-	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
+	{ &sdcd,  "sd",  4 },
 #endif
 #if NCD > 0
-	{ (caddr_t)&cddriver,	"cd",	makedev(6, 0),	},
+	{ &cdcd,  "cd",  6 },
+#endif
+#if NMCD > 0
+	{ &mcdcd, "mcd", 7 },
 #endif
 #if NFD > 0
-	{ (caddr_t)&fdcdriver,	"fd",	makedev(2, 0),	},
+	{ &fdcd,  "fd",  2 },
 #endif
-	{ 0 },
+	{ 0 }
 };
 
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
+extern int ffs_mountroot();
+int (*mountroot)() = ffs_mountroot;
 
 setconf()
 {
@@ -111,7 +120,7 @@ setconf()
 	if (rootdev != NODEV)
 		goto doswap;
 
-	if (genericconf[0].gc_driver == NULL)
+	if (genericconf[0].gc_driver == 0)
 		goto verybad;
 
 	if (boothowto & RB_ASKNAME) {
@@ -142,13 +151,14 @@ bad:
 	}
 	unit = 0;
 	for (gc = genericconf; gc->gc_driver; gc++) {
-		for (id = isa_subdev; id->id_driver; id++) {
-			if (id->id_alive == 0)
+		for (id = isa_devtab; id->id_driver != 0; id++) {
+			if (id->id_state != FSTATE_FOUND)
 				continue;
-			if (id->id_unit == 0 && id->id_driver ==
-			    (struct isa_driver *)gc->gc_driver) {
-				printf("root on %s0\n",
-				    gc->gc_name);
+			if (id->id_unit == 0 &&
+			    id->id_driver == gc->gc_driver &&
+			    id->id_driver->cd_ndevs >= 1 &&
+			    id->id_driver->cd_devs[0]) {
+				printf("root on %s0\n", gc->gc_name);
 				goto found;
 			}
 		}
@@ -161,13 +171,10 @@ verybad:
 	for (;;) ;
 
 found:
-/*	printf("m/m was: %d/%d\n", major(gc->gc_root), minor(gc->gc_root));*/
-	gc->gc_root = makedev(major(gc->gc_root), unit*8);
-	rootdev = gc->gc_root;
-/*	printf("m/m is: %d/%d\n", major(gc->gc_root), minor(gc->gc_root));*/
+	rootdev = makedev(gc->gc_major, unit * MAXPARTITIONS);
 doswap:
 	swdevt[0].sw_dev = argdev = dumpdev =
-	    makedev(major(rootdev), minor(rootdev)+1);
+	    makedev(major(rootdev), minor(rootdev) + 1);
 	/* swap size and dumplo set during autoconfigure */
 	if (swaponroot)
 		rootdev = dumpdev;
