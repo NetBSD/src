@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.4 2003/05/03 18:11:15 wiz Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.5 2003/05/04 23:37:27 kristerw Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -541,5 +541,5 @@ ahc_platform_flushwork(struct ahc_softc *ahc)
 /************************ Misc Function Declarations **************************/
 void	  ahc_done(struct ahc_softc *ahc, struct scb *scb);
 void	  ahc_send_async(struct ahc_softc *, char /*channel*/,
-			 u_int /*target*/, u_int /*lun*/, u_int /*ac_code*/, void *arg);
+			 u_int /*target*/, u_int /*lun*/, ac_code, void *arg);
 #endif  /* _AIC7XXX_NETBSD_H_ */
