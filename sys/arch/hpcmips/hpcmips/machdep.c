@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2001/01/22 13:57:00 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2001/02/09 19:47:29 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2001/01/22 13:57:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2001/02/09 19:47:29 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 #include "opt_vr41x1.h"
@@ -109,8 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2001/01/22 13:57:00 jdolecek Exp $"
 #endif
 
 #if NBICONSDEV > 0
-#include <hpcmips/dev/biconsvar.h>
-#include <hpcmips/dev/bicons.h>
+#include <dev/hpc/biconsvar.h>
+#include <dev/hpc/bicons.h>
+#define biconscnpollc	nullcnpollc
+cons_decl(bicons);
+static struct consdev bicons = cons_init(bicons);
 #define DPRINTF(arg) printf arg
 #else
 #define DPRINTF(arg)
@@ -260,18 +263,15 @@ mach_init(argc, argv, bi)
 	tx_init();
 #elif defined VR41X1
 	vr_init();
+#if NBICONSDEV > 0
+	/* bicons don't need actual device initialize. only bootinfo needed. */
+	cn_tab = &bicons;
 #endif
-	/* Initialize frame buffer */
+#endif
+	/* Initialize frame buffer (to steal DMA buffer, stay here.) */
 	(*platform.fb_init)(&kernend);
 	kernend = (caddr_t)mips_round_page(kernend);
 
-#if NBICONSDEV > 0
-	/* Use builtin console output until we initialize a console driver. */
-	cn_tab = &builtincd;
-
-	/* Initialize builtin console. */
-	bicons_init();
-#endif
 	/*
 	 * Set the VM page size.
 	 */

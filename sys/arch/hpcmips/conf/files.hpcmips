@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.48 2001/02/05 17:41:23 uch Exp $
+#	$NetBSD: files.hpcmips,v 1.49 2001/02/09 19:47:28 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -57,11 +57,10 @@ file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
 # H/PC Platform common files.
 #
 include "arch/hpc/conf/files.hpc"
+include "dev/hpc/files.bicons"
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c
-file	arch/hpcmips/dev/bicons.c
-file	arch/hpcmips/dev/bifont.c
 
 # Raster operations
 include "dev/rasops/files.rasops"
@@ -110,12 +109,6 @@ file	arch/hpcmips/dev/hpcapm.c	hpcapm
 # ISA bus support
 #
 include "dev/isa/files.isa"
-
-#
-# pseudo devices
-#
-defpseudo	biconsdev
-file	arch/hpcmips/dev/biconsdev.c	biconsdev	needs-count
 
 #
 #  Vr41x1 integrated peripherals
