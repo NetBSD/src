@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.20 1994/01/11 17:22:02 mycroft Exp $
+ *	$Id: sd.c,v 1.21 1994/01/25 08:56:45 deraadt Exp $
  */
 
 #include "sd.h"
@@ -77,6 +77,7 @@ sdattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 	unsigned char *tbl;
 	long int ad_info;
 	int targ, lun, i;
+	u_long sod;
 
 	targ = physid >> 3;
 	lun = physid & 7;
@@ -134,12 +135,13 @@ sdattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	sd_get_parms(*unit,  SCSI_NOSLEEP |  SCSI_NOMASK);
-	printf("sd%d at %s%d targ %d lun %d: %dMB %d cyl, %d head, %d sec, %d byte/sec\n",
-		*unit, sw->name, masunit, targ, lun,
-		(dp->cyls*dp->heads*dp->sectors*dp->secsiz)/ (1024*1024),
-		dp->cyls, dp->heads, dp->sectors, dp->secsiz);
-
+	sd_get_parms(*unit, SCSI_NOSLEEP | SCSI_NOMASK);
+	sod = ((u_long)dp->cyls * (u_long)dp->heads *
+	    (u_long)dp->sectors * (u_long)dp->secsiz) / (1024 * 1024);
+	printf("sd%d at %s%d targ %d lun %d: ",
+	    *unit, sw->name, masunit, targ, lun);
+	printf("%uMB %d cyl, %d head, %d sec, %d byte/sec\n",
+	    sod, dp->cyls, dp->heads, dp->sectors, dp->secsiz);
 	sd->flags |= SDINIT;
 	return 1;
 }
