@@ -1,4 +1,4 @@
-/*	$NetBSD: trapreg.h,v 1.2 2002/02/28 01:56:58 uch Exp $	*/
+/*	$NetBSD: trapreg.h,v 1.3 2002/03/02 22:25:19 uch Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -36,6 +36,7 @@
 #define SH3_TRA			0xffffffd0	/* 32bit */
 #define SH3_EXPEVT		0xffffffd4	/* 32bit */
 #define SH3_INTEVT		0xffffffd8	/* 32bit */
+#define SH7709A_INTEVT2		0xa4000000	/* 32bit */
 
 #define SH4_TRA			0xff000020	/* 32bit */
 #define SH4_EXPEVT		0xff000024	/* 32bit */
