@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.38 2005/03/20 19:16:33 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.39 2005/03/25 22:48:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.38 2005/03/20 19:16:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.39 2005/03/25 22:48:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,7 +498,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				needtolink = 0;
 			} else
 				*prev = overlap->lf_next;
-			lf_free(lock);
+			lf_free(overlap);
 			continue;
 
 		case 4: /* overlap starts before lock */
