@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.16 2003/08/07 16:33:00 agc Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.17 2004/04/18 19:11:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_subr.c,v 1.16 2003/08/07 16:33:00 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_subr.c,v 1.17 2004/04/18 19:11:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,10 @@ hd_ctlinput(prc, addr, ext)
 	if (hdp == 0) {		/* new interface */
 
 		/* an hdcb is now too big to fit in an mbuf */
-		MALLOC(hdp, struct hdcb *, sizeof(*hdp), M_PCB, M_DONTWAIT);
+		MALLOC(hdp, struct hdcb *, sizeof(*hdp), M_PCB,
+		    M_NOWAIT|M_ZERO);
 		if (hdp == 0)
 			return (void *) (ENOBUFS);
-		bzero((caddr_t) hdp, sizeof(*hdp));
 		hdp->hd_pkp =
 			(caddr_t) pk_newlink((struct x25_ifaddr *) ifa,
 					     (caddr_t) hdp);
