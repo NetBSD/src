@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1996/03/26 13:44:07 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 1996/04/08 20:09:56 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -108,7 +108,7 @@ extern struct cfdriver mainbus_cd; /* XXX */
 #include <dev/ic/am7990var.h>
 
 /* access LANCE registers */
-void lewritereg();
+void lewritereg __P((volatile u_short *regptr, u_short val));
 #define	LERDWR(cntl, src, dst)	{ (dst) = (src); tc_mb(); }
 #define	LEWREG(src, dst)	lewritereg(&(dst), (src))
 
