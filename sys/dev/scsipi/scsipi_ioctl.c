@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.34 1998/10/10 02:35:30 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.35 1998/11/17 14:38:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 #include <sys/fcntl.h>
 
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsiconf.h>
 #include <sys/scsiio.h>
@@ -170,6 +169,13 @@ scsipi_user_done(xs)
 		    SENSEBUFLEN);
 		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
+		break;
+	case XS_SHORTSENSE:
+		SC_DEBUG(sc_link, SDEV_DB3, ("have short sense\n"));
+		screq->senselen_used = min(sizeof(xs->sense.atapi_sense),
+		    SENSEBUFLEN);
+		bcopy(&xs->sense.scsi_sense, screq->sense, screq->senselen);
+		screq->retsts = SCCMD_UNKNOWN; /* XXX need a shortsense here */
 		break;
 	case XS_DRIVER_STUFFUP:
 		sc_link->sc_print_addr(sc_link);

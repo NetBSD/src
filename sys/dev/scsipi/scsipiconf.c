@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.7 1998/08/17 00:49:02 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.8 1998/11/17 14:38:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@
 #include <sys/device.h>
 
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 
 /*

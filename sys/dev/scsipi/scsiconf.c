@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.114 1998/10/20 22:26:04 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.115 1998/11/17 14:38:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ scsibusattach(parent, self, aux)
 
 	sc_link_proto->scsipi_scsi.scsibus = sb->sc_dev.dv_unit;
 	sc_link_proto->scsipi_cmd = scsi_scsipi_cmd;
-	sc_link_proto->scsipi_interpret_sense = scsi_interpret_sense;
+	sc_link_proto->scsipi_interpret_sense = scsipi_interpret_sense;
 	sc_link_proto->sc_print_addr = scsi_print_addr;
 
 	sb->adapter_link = sc_link_proto;

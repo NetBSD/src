@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.23 1998/10/15 07:06:47 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.24 1998/11/17 14:38:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -300,11 +300,12 @@ struct scsipi_xfer {
  */
 #define XS_NOERROR	0	/* there is no error, (sense is invalid)  */
 #define XS_SENSE	1	/* Check the returned sense for the error */
-#define	XS_DRIVER_STUFFUP 2	/* Driver failed to perform operation	  */
-#define XS_SELTIMEOUT	3	/* The device timed out.. turned off?	  */
-#define XS_TIMEOUT	4	/* The Timeout reported was caught by SW  */
-#define XS_BUSY		5	/* The device busy, try again later?	  */
-#define	XS_RESET	6	/* bus was reset; possible retry command  */
+#define XS_SHORTSENSE	2	/* Check the ATAPI sense for the error */
+#define	XS_DRIVER_STUFFUP 3	/* Driver failed to perform operation	  */
+#define XS_SELTIMEOUT	4	/* The device timed out.. turned off?	  */
+#define XS_TIMEOUT	5	/* The Timeout reported was caught by SW  */
+#define XS_BUSY		7	/* The device busy, try again later?	  */
+#define	XS_RESET	8	/* bus was reset; possible retry command  */
 
 /*
  * This describes matching information for scsipi_inqmatch().  The more things
@@ -379,6 +380,12 @@ int	scsipi_inquire __P((struct scsipi_link *,
 int	scsipi_start __P((struct scsipi_link *, int, int));
 void	scsipi_done __P((struct scsipi_xfer *));
 void	scsipi_user_done __P((struct scsipi_xfer *));
+int	scsipi_interpret_sense __P((struct scsipi_xfer *));
+#ifdef SCSIVERBOSE
+void	scsipi_print_sense __P((struct scsipi_xfer *, int));
+void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
+char   *scsipi_decode_sense __P((void *, int));
+#endif
 int	scsipi_do_ioctl __P((struct scsipi_link *, dev_t, u_long, caddr_t,
 	    int, struct proc *));
 
