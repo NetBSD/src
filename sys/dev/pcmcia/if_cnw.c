@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.3 1999/11/29 12:53:59 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.4 2000/01/25 16:48:47 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,6 +163,17 @@ int cnw_domain = CNW_DOMAIN;		/* Domain */
 #endif
 int cnw_skey = CNW_SCRAMBLEKEY;		/* Scramble key */
 
+/*
+ * The card appears to work much better when we only allow one packet
+ * "in the air" at a time.  This is done by not allowing another packet
+ * on the card, even if there is room.  Turning this off will allow the
+ * driver to stuff packets on the card as soon as a transmit buffer is
+ * available.  This does increase the number of collisions, though.
+ * We can que a second packet if there are transmit buffers available,
+ * but we do not actually send the packet until the last packet has
+ * been written.
+#define	ONE_AT_A_TIME
+ */
 
 int	cnw_match __P((struct device *, struct cfdata *, void *));
 void	cnw_attach __P((struct device *, struct device *, void *));
@@ -186,6 +197,8 @@ struct cnw_softc {
 	bus_space_tag_t sc_memt;	    /*   ...bus_space tag */
 	bus_space_handle_t sc_memh;	    /*   ...bus_space handle */
 	void *sc_ih;			    /* Interrupt cookie */
+	struct timeval sc_txlast;	    /* When the last xmit was made */
+	int sc_active;			    /* Currently xmitting a packet */
 };
 
 struct cfattach cnw_ca = {
@@ -386,6 +399,7 @@ cnw_enable(sc)
 		return (EIO);
 	}
 	cnw_init(sc);
+	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
 	return (0);
 }
@@ -528,14 +542,61 @@ cnw_start(ifp)
 {
 	struct cnw_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
+	int lif;
 	int asr;
+#ifdef ONE_AT_A_TIME
+	struct timeval now;
+#endif
 
 #ifdef CNW_DEBUG
 	if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 		printf("%s: cnw_start\n", ifp->if_xname);
+	if (ifp->if_flags & IFF_OACTIVE)
+		printf("%s: cnw_start reentered\n", ifp->if_xname);
 #endif
 
+	ifp->if_flags |= IFF_OACTIVE;
+
 	for (;;) {
+#ifdef ONE_AT_A_TIME
+		microtime(&now);
+		now.tv_sec -= sc->sc_txlast.tv_sec;
+		now.tv_usec -= sc->sc_txlast.tv_usec;
+		if (now.tv_usec < 0) {
+			now.tv_usec += 1000000;
+			now.tv_sec--;
+		}
+
+		/*
+		 * Don't ship this packet out until the last
+		 * packet has left the building.
+		 * If we have not tried to send a packet for 1/5
+		 * a second then we assume we lost an interrupt,
+		 * lets go on and send the next packet anyhow.
+		 *
+		 * I suppose we could check to see if it is okay
+		 * to put additional packets on the card (beyond
+		 * the one already waiting to be sent) but I don't
+		 * think we would get any improvement in speed as
+		 * we should have ample time to put the next packet
+		 * on while this one is going out.
+		 */
+		if (sc->sc_active && now.tv_sec == 0 && now.tv_usec < 200000)
+			break;
+#endif
+
+		/* Make sure the link integrity field is on */
+		WAIT_WOC(sc);
+		lif = bus_space_read_1(sc->sc_memt, sc->sc_memh,
+		    sc->sc_memoff + CNW_EREG_LIF);
+		if (lif == 0) {
+#ifdef CNW_DEBUG
+			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
+				printf("%s: link integrity %d\n", lif);
+#endif
+			break;
+		}
+
 		/* Is there any buffer space available on the card? */
 		WAIT_WOC(sc);
 		asr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, CNW_REG_ASR);
@@ -544,14 +605,14 @@ cnw_start(ifp)
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: no buffer space\n", ifp->if_xname);
 #endif
-			return;
+			break;
 		}
 
 		sc->sc_stats.nws_tx++;
 
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0)
-			return;
+			break;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -561,9 +622,13 @@ cnw_start(ifp)
 		cnw_transmit(sc, m0);
 		++ifp->if_opackets;
 		ifp->if_timer = 3; /* start watchdog timer */
-	}
-}
 
+		microtime(&sc->sc_txlast);
+		sc->sc_active = 1;
+	}
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+}
 
 /*
  * Transmit a packet.
@@ -868,6 +933,10 @@ cnw_intr(arg)
 				    (tser & CNW_TSER_ERROR) |
 				    CNW_TSER_RTRY);
 			}
+
+			sc->sc_active = 0;
+			ifp->if_flags &= ~IFF_OACTIVE;
+
 			/* Continue to send packets from the queue */
 			cnw_start(&sc->sc_ethercom.ec_if);
 		}
