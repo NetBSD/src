@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.76 2002/02/04 14:35:10 mrg Exp $	*/
+/*	$NetBSD: net.c,v 1.76.2.1 2002/05/24 22:37:40 perry Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -499,7 +499,7 @@ again:
 	/* IPv6 autoconfiguration */
 	if (!is_v6kernel())
 		v6config = 0;
-	else if (v6config) {  /* dhcp config will disable this */
+	else if (v6config) {
 		process_menu(MENU_ip6autoconf);
 		v6config = yesno ? 1 : 0;
 		net_ip6conf |= yesno ? IP6CONF_AUTOHOST : 0;
@@ -941,7 +941,7 @@ mnt_net_config(void)
 		if (ifconf != NULL) {
 			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
 			    target_prefix(), ifconfig_fn);
-			scripting_fprintf(ifconf, "!rtsol %s\n", net_dev);
+			scripting_fprintf(ifconf, "!rtsol $int\n");
 			scripting_fprintf(NULL, "EOF\n");
 		}
 	}
