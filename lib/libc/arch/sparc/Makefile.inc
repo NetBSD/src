@@ -1,4 +1,9 @@
-#	$Id: Makefile.inc,v 1.3 1993/12/08 13:30:16 pk Exp $
+#	$Id: Makefile.inc,v 1.4 1994/06/30 06:46:37 deraadt Exp $
+
+KMINCLUDES= arch/sparc/SYS.h arch/sparc/DEFS.h
+KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
+	ntohl.S ntohs.S divrem.m4 \
+	_setjmp.S mul.S saveregs.S setjmp.S umul.S
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
