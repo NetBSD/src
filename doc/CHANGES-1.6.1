@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.71 2002/12/14 00:19:04 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.72 2002/12/14 10:39:58 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2650,3 +2650,8 @@ sys/sys/param.h					1.153-1.154
 
 	Allow NOFILE to be more easily overridden.
 	[abs, ticket #1033]
+
+sys/arch/arm/include/varargs.h			1.3
+
+	Fix pasto which caused compile problem.
+	[he, ticket #1034]
