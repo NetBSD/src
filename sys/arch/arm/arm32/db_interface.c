@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 2001/03/04 05:11:41 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2 2001/03/04 05:40:03 matt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -305,22 +305,15 @@ void db_show_vmstat_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, cha
 void db_show_intrchain_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-#ifdef	OFW
-void db_of_boot_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_of_enter_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_of_exit_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-#endif
 
 const struct db_command db_machine_command_table[] = {
 	{ "frame",	db_show_frame_cmd,	0, NULL },
 	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
-#ifdef	OFW
-	{ "ofboot",	db_of_boot_cmd,		0, NULL },
-	{ "ofenter",	db_of_enter_cmd,	0, NULL },
-	{ "ofexit",	db_of_exit_cmd,		0, NULL },
-#endif
 	{ "panic",	db_show_panic_cmd,	0, NULL },
 	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
+#ifdef ARM32_DB_COMMANDS
+	ARM32_DB_COMMANDS,
+#endif
 	{ NULL, 	NULL, 			0, NULL }
 };
 
@@ -359,12 +352,9 @@ db_machine_init()
 	if (kernexec->a_syms == 0) {
 		printf("[No symbol table]\n");
 	} else {
-#if (!defined(SHARK) && !defined(OFWGENCFG)) || 1
+		/* cover the symbols themselves (what is the int for?? XXX) */
 		esym = (int)&end + kernexec->a_syms + sizeof(int);
-#else
-		/* cover the symbols themselves */
-		esym = (int)&end + kernexec->a_syms;
-#endif
+
 		/*
 		 * and the string table.  (int containing size of string
 		 * table is included in string table size).

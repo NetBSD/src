@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2001/03/04 05:11:41 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2 2001/03/04 05:40:03 matt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -40,10 +40,6 @@
 #include <ddb/db_output.h>
 
 #include <machine/irqhandler.h>
-
-#ifdef OFW
-#include <dev/ofw/openfirm.h>
-#endif
 
 void
 db_show_vmstat_cmd(addr, have_addr, count, modif)
@@ -175,37 +171,3 @@ db_show_frame_cmd(addr, have_addr, count, modif)
 	    frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
 	db_printf("slr=%08x\n", frame->tf_svc_lr);
 }
-
-#ifdef	OFW
-void
-db_of_boot_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	OF_boot("");
-}
-
-
-void
-db_of_enter_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	OF_enter();
-}
-
-
-void
-db_of_exit_cmd(addr, have_addr, count, modif)
-	db_expr_t       addr;
-	int             have_addr;
-	db_expr_t       count;
-	char            *modif;
-{
-	OF_exit();
-}
-#endif	/* OFW */
