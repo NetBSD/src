@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.1 2002/08/11 23:17:25 bjh21 Exp $	*/
+/*	$NetBSD: copystr.S,v 1.2 2002/08/12 20:34:47 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -184,10 +184,9 @@ ENTRY(copyoutstr)
 
 /* A fault occurred during the copy */
 Lcopystrfault:
-	mov	r0, #0x00000000
-	str	r0, [r4, #PCB_ONFAULT]
+	mov	r1, #0x00000000
+	str	r1, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
-	mov	r0, #EFAULT
 	mov	pc, lr
 
 #ifdef DIAGNOSTIC
