@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1995/05/11 21:28:33 christos Exp $
+#	$NetBSD: Makefile,v 1.21 1995/06/10 20:19:40 mycroft Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -8,6 +8,7 @@ SRCS=	alias.c builtins.c cd.c echo.c error.c eval.c exec.c expand.c \
 	trap.c output.c var.c
 OBJS+=	init.o arith.o arith_lex.o
 LDADD+=	-ll -ledit -ltermcap
+DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
 CFLAGS+=-DSHELL -I. -I${.CURDIR}
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
