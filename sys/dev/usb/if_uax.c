@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uax.c,v 1.8 2003/10/15 06:43:36 simonb Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.9 2003/10/15 08:28:29 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.8 2003/10/15 06:43:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.9 2003/10/15 08:28:29 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -795,7 +795,9 @@ uax_miibus_statchg(device_ptr_t dev)
 	struct uax_softc *sc = USBGETSOFTC(dev);
 	/*struct mii_data	*mii = GET_MII(sc);
 	  uint val;*/
+#if 0
 	usbd_status err;
+#endif
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
 
