@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.15 2003/02/25 10:35:06 wiz Exp $
+.\"     $NetBSD: newbtconf.8,v 1.16 2003/05/14 12:14:43 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 .Bl -tag -width indent
 .Nm
-is used to setup the system in such a way that the user is offered a
+is used to set up the system in such a way that the user is offered a
 selection of environments in which to boot the system up into.
 The most obvious application being for laptops to provide a network
 and non-network environment after a successful boot into multi-user mode.
@@ -130,7 +130,7 @@ If there were other configurations available at this stage, you would
 have 30 seconds to enter that name and press
 .Sy RETURN .
 .Ss Multiple Configurations
-Once an initial configuration has been setup, we can proceed to setup further
+Once an initial configuration has been set up, we can proceed to set up further
 run time environments.
 This is done by invoking
 .Nm
@@ -157,7 +157,7 @@ Upon rebooting, we should see:
 Which configuration [network] ?
 .Ed
 .Pp
-To setup the system for booting into the
+To set up the system for booting into the
 .Dq nonet
 configuration, the files in
 .Pa /etc/etc.nonet
