@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.113 2004/01/04 11:33:30 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.114 2004/01/04 11:44:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.113 2004/01/04 11:33:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.114 2004/01/04 11:44:52 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -246,14 +246,6 @@ cpu_swapout(l)
 	 */
 	npxsave_lwp(l, 1);
 #endif
-}
-
-void
-cpu_exit(struct lwp *l)
-{
-
-	switch_exit(l, lwp_exit2);
-	/* NOTREACHED */
 }
 
 /*
