@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$Id: k_sin.c,v 1.7 1994/09/22 16:40:22 jtc Exp $";
+static char rcsid[] = "$NetBSD: k_sin.c,v 1.8 1995/05/10 20:46:31 jtc Exp $";
 #endif
 
 /* __kernel_sin( x, y, iy)
