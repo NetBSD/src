@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.57 1994/04/05 19:47:45 mycroft Exp $
+ *	$Id: locore.s,v 1.58 1994/04/06 01:31:33 mycroft Exp $
  */
 
 /*
@@ -444,6 +444,17 @@ reloc_gdt:
 	int	$3
 1:
 #endif
+
+	/*
+	 * Some BIOSes leave trash in the spare segment registers.  We need to
+	 * clear them so we don't get a protection fault in swtch() later on.
+	 * Since the kernel itself does not use these except in copyin/out, it
+	 * seems best to make them null selectors so we get a trap if they are
+	 * accidentally referenced.
+	 */
+	xorl	%ecx,%ecx
+	movl	%cx,%fs
+	movl	%cx,%gs
 
 	lea	((NKPDE+UPAGES+2)*NBPG)(%esi),%esi	# skip past stack and page tables
 	pushl	%esi
