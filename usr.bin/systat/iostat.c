@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.14 2000/06/03 21:00:42 thorpej Exp $	*/
+/*	$NetBSD: iostat.c,v 1.15 2000/06/04 18:29:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.14 2000/06/03 21:00:42 thorpej Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.15 2000/06/04 18:29:13 mycroft Exp $");
 #endif not lint
 
 #include <sys/param.h>
@@ -313,9 +313,8 @@ histogram(val, colwidth, scale)
 		wclrtoeol(wnd);
 		return;
 	}
-	while (k--)
-		waddch(wnd, 'X');
 	wclrtoeol(wnd);
+	whline(wnd, 'X', k);
 }
 
 void

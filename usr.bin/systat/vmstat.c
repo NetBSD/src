@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.29 2000/06/04 18:14:45 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.30 2000/06/04 18:29:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.29 2000/06/04 18:14:45 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.30 2000/06/04 18:29:14 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -561,14 +561,12 @@ putint(n, l, c, w)
 
 	move(l, c);
 	if (n == 0) {
-		while (w-- > 0)
-			addch(' ');
+		hline(' ', w);
 		return;
 	}
 	(void)snprintf(b, sizeof b, "%*d", w, n);
 	if (strlen(b) > w) {
-		while (w-- > 0)
-			addch('*');
+		hline('*', w);
 		return;
 	}
 	addstr(b);
@@ -583,14 +581,12 @@ putfloat(f, l, c, w, d, nz)
 
 	move(l, c);
 	if (nz && f == 0.0) {
-		while (--w >= 0)
-			addch(' ');
+		hline(' ', w);
 		return;
 	}
 	(void)snprintf(b, sizeof b, "%*.*f", w, d, f);
 	if (strlen(b) > w) {
-		while (--w >= 0)
-			addch('*');
+		hline('*', w);
 		return;
 	}
 	addstr(b);
