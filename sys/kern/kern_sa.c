@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.8 2003/02/10 19:02:52 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.9 2003/02/11 00:03:47 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.8 2003/02/10 19:02:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.9 2003/02/11 00:03:47 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,9 +517,6 @@ sa_switch(struct lwp *l, int type)
 			goto sa_upcall_failed;
 		}
 
-		st = sa->sa_stacks[--sa->sa_nstacks];
-		DPRINTFN(9,("sa_switch(%d.%d) nstacks--   = %2d\n", 
-		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
 		sau = sadata_upcall_alloc(0);
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
@@ -530,6 +527,10 @@ sa_switch(struct lwp *l, int type)
 #endif
 			goto sa_upcall_failed;
 		}
+		st = sa->sa_stacks[--sa->sa_nstacks];
+		DPRINTFN(9,("sa_switch(%d.%d) nstacks--   = %2d\n", 
+		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
+
 		cpu_setfunc(l2, sa_switchcall, NULL);
 		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL,
 		    sau, &st);
@@ -551,7 +552,7 @@ sa_switch(struct lwp *l, int type)
 		/*
 		 * Case 2: We've been woken up while another LWP was
 		 * on the VP, but we're going back to sleep without
-		 * having returned to userland and delivered the
+		 * having returned to userland and delivering the
 		 * SA_UNBLOCKED upcall (select and poll cause this
 		 * kind of behavior a lot). We just switch back to the
 		 * LWP that had been running and let it have another
