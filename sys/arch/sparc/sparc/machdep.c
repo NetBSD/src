@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1995/04/10 16:48:52 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.40 1995/04/13 14:45:43 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -658,6 +658,7 @@ dumpconf()
 
 	dumpsize = physmem;
 #define DUMPMMU
+#undef DUMPMMU
 #ifdef DUMPMMU
 #define NPMEG 128
 	/*
