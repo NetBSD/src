@@ -1,4 +1,4 @@
-/*	$NetBSD: read_line.c,v 1.2 1997/10/13 03:42:29 lukem Exp $	*/
+/*	$NetBSD: read_line.c,v 1.2.2.1 1997/11/28 09:30:00 mellon Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,49 +33,69 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read_line.c,v 1.2 1997/10/13 03:42:29 lukem Exp $");
+__RCSID("$NetBSD: read_line.c,v 1.2.2.1 1997/11/28 09:30:00 mellon Exp $");
 #endif
 
 #include <sys/param.h>
-#include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "protos.h"
 
-/*
- * Read one line
+/* read_line():
+ *	Read a line from a file, parsing continuations ending in \
+ *	and eliminating trailing newlines.
+ *	Returns a pointer to an internal buffer that is reused upon
+ *	next invocation.
  */
-int 
-read_line(fp, buf, size)
-	FILE *fp;
-	char *buf;
-	int size;
+char *
+read_line(fp, size, lineno)
+	FILE	*fp;
+	size_t	*size;
+	int	*lineno;
 {
-	int done = 0;
+	static char	*buf;
+	static int	 buflen;
 
-	do {
-		while (fgets(buf, size, fp)) {
-			int len = strlen(buf);
+	size_t	 s, len;
+	char	*ptr;
+	int	 cnt;
 
-			done += len;
-			if (len > 1 && buf[len - 2] == '\\' &&
-			    buf[len - 1] == '\n') {
-				int ch;
-				buf += len - 2;
-				size -= len - 2;
-				*buf = '\n';
-				buf[1] = '\0';
-
-				/* Skip leading white space on next line */
-				while ((ch = getc(fp)) != EOF &&
-				    isascii(ch) && isspace(ch))
-					/* empty */ ;
-				(void) ungetc(ch, fp);
-			} else
-				return done;
+	len = 0;
+	cnt = 1;
+	while (cnt) {
+		if (lineno != NULL)
+			(*lineno)++;
+		if ((ptr = fgetln(fp, &s)) == NULL) {
+			if (size != NULL)
+				*size = len;
+			if (len == 0)
+				return NULL;
+			else
+				return buf;
 		}
-	} while (size > 0 && !feof(fp));
+		if (ptr[s - 1] == '\n')	/* the newline may be missing at EOF */
+			s--;		/* forget newline */
+		if (!s)
+			cnt = 0;
+		else {
+			if ((cnt = (ptr[s - 1] == '\\')) != 0)
+				s--;		/* forget \\ */
+		}
 
-	return done;
+		if (len + s + 1 > buflen) {
+			buflen = len + s + 1;
+			buf = realloc(buf, buflen);
+		}
+		if (buf == NULL)
+			err(1, "can't realloc");
+		memcpy(buf + len, ptr, s);
+		len += s;
+		buf[len] = '\0';
+	}
+	if (size != NULL)
+		*size = len;
+	return buf;
 }
