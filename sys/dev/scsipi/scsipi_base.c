@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.105 2004/04/27 18:15:37 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.106 2004/08/04 22:25:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.105 2004/04/27 18:15:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.106 2004/08/04 22:25:45 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -538,7 +538,8 @@ scsipi_put_xs(xs)
 		periph->periph_flags &= ~PERIPH_WAITING;
 		wakeup(periph);
 	} else {
-		if (periph->periph_switch->psw_start != NULL) {
+		if (periph->periph_switch->psw_start != NULL &&
+		    (periph->periph_dev->dv_flags & DVF_ACTIVE)) {
 			SC_DEBUG(periph, SCSIPI_DB2,
 			    ("calling private start()\n"));
 			(*periph->periph_switch->psw_start)(periph);
@@ -722,10 +723,6 @@ scsipi_kill_pending(periph)
 {
 
 	(*periph->periph_channel->chan_bustype->bustype_kill_pending)(periph);
-#ifdef DIAGNOSTIC
-	if (TAILQ_FIRST(&periph->periph_xferq) != NULL)
-		panic("scsipi_kill_pending");
-#endif
 	scsipi_wait_drain(periph);
 }
 
