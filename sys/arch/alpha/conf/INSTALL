@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.52 2001/05/06 20:32:20 ad Exp $
+# $NetBSD: INSTALL,v 1.53 2001/06/07 03:51:54 lukem Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -173,6 +173,7 @@ epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
+iha*	at	pci? dev ? function ?		# Initio INIC-940/950 SCSI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
@@ -254,6 +255,7 @@ scsibus* at	ahc?
 scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	dpt?
+scsibus* at	iha?
 scsibus* at	isp?
 #scsibus* at	ncr?
 scsibus* at	siop?
