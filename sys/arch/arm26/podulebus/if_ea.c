@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.5 2000/08/08 21:16:59 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.6 2000/08/10 22:43:45 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -30,14 +30,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * if_ea.c
- *
- * Ether3 device driver
- *
- * Created      : 08/07/95
+ */
+/*
+ * if_ea.c - Ether3 device driver
  */
 
 /*
@@ -57,7 +52,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.5 2000/08/08 21:16:59 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.6 2000/08/10 22:43:45 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -149,8 +144,8 @@ static int ea_stoprx(struct ea_softc *);
 static void ea_stop(struct ea_softc *);
 static void ea_writebuf(struct ea_softc *, u_char *, int, int);
 static void ea_readbuf(struct ea_softc *, u_char *, int, int);
-static void earead(struct ea_softc *, caddr_t, int);
-static struct mbuf *eaget(caddr_t, int, struct ifnet *);
+static void earead(struct ea_softc *, int, int);
+static struct mbuf *eaget(struct ea_softc *, int, int, struct ifnet *);
 static void ea_hardreset(struct ea_softc *);
 static void eagetpackets(struct ea_softc *);
 static void eatxpacket(struct ea_softc *);
@@ -1217,10 +1212,11 @@ eagetpackets(struct ea_softc *sc)
 		 * Did we have any errors? then note error and go to
 		 * next packet
 		 */
-		if (status & 0x0f) {
+		if (__predict_false(status & 0x0f)) {
 			++ifp->if_ierrors;
-			printf("rx packet error (%02x) - dropping packet\n",
-			       status & 0x0f);
+			log(LOG_WARNING,
+			    "%s: rx packet error (%02x) - dropping packet\n",
+			    sc->sc_dev.dv_xname, status & 0x0f);
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 			ea_reinit(sc);
@@ -1231,24 +1227,19 @@ eagetpackets(struct ea_softc *sc)
 		 * Is the packet too big ? - this will probably be trapped
 		 * above as a receive error
 		 */
-		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+		if (__predict_false(len > (ETHER_MAX_LEN - ETHER_CRC_LEN))) {
 			++ifp->if_ierrors;
-			printf("rx packet size error len=%d\n", len);
+			log(LOG_WARNING, "%s: rx packet size error len=%d\n",
+			    sc->sc_dev.dv_xname, len);
 			sc->sc_config2 |= EA_CFG2_OUTPUT;
 			WriteShort(iobase + EA_8005_CONFIG2, sc->sc_config2);
 			ea_reinit(sc);
 			return;
 		}
 
-		ea_readbuf(sc, sc->sc_pktbuf, addr + 4, len);
-
-#ifdef EA_RX_DEBUG
-		dprintf(("%s-->", ether_sprintf(sc->sc_pktbuf+6)));
-		dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
-#endif
 		ifp->if_ipackets++;
 		/* Pass data up to upper levels. */
-		earead(sc, (caddr_t)sc->sc_pktbuf, len);
+		earead(sc, addr + 4, len);
 
 		addr = ptr;
 		++pack;
@@ -1278,19 +1269,24 @@ eagetpackets(struct ea_softc *sc)
  */
 
 static void
-earead(struct ea_softc *sc, caddr_t buf, int len)
+earead(struct ea_softc *sc, int addr, int len)
 {
 	register struct ether_header *eh;
 	struct mbuf *m;
 	struct ifnet *ifp;
 
 	ifp = &sc->sc_ethercom.ec_if;
-	eh = (struct ether_header *)buf;
 
 	/* Pull packet off interface. */
-	m = eaget(buf, len, ifp);
+	m = eaget(sc, addr, len, ifp);
 	if (m == 0)
 		return;
+	eh = mtod(m, struct ether_header *);
+
+#ifdef EA_RX_DEBUG
+	dprintf(("%s-->", ether_sprintf(eh->ether_shost)));
+	dprintf(("%s\n", ether_sprintf(eh->ether_dhost)));
+#endif
 
 #if NBPFILTER > 0
 	/*
@@ -1325,14 +1321,13 @@ earead(struct ea_softc *sc, caddr_t buf, int len)
  */
 
 struct mbuf *
-eaget(caddr_t buf, int totlen, struct ifnet *ifp)
+eaget(struct ea_softc *sc, int addr, int totlen, struct ifnet *ifp)
 {
         struct mbuf *top, **mp, *m;
         int len;
-        register caddr_t cp = buf;
-        char *epkt;
+        int cp, epkt;
 
-        cp = buf;
+        cp = addr;
         epkt = cp + totlen;
 
         MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1380,13 +1375,15 @@ eaget(caddr_t buf, int totlen, struct ifnet *ifp)
 			m->m_len = len;
 			m->m_data = newdata;
 		}
-                bcopy(cp, mtod(m, caddr_t), (unsigned)len);
+                ea_readbuf(sc, mtod(m, u_char *),
+			   cp < EA_BUFFER_SIZE ? cp : cp - EA_RX_BUFFER_SIZE,
+			   len);
                 cp += len;
                 *mp = m;
                 mp = &m->m_next;
                 totlen -= len;
                 if (cp == epkt)
-                        cp = buf;
+                        cp = addr;
         }
 
         return top;
