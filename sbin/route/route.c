@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/19/94";*/
-static char *rcsid = "$Id: route.c,v 1.9 1994/09/23 23:51:33 mycroft Exp $";
+static char *rcsid = "$Id: route.c,v 1.10 1994/12/24 11:07:28 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1012,8 +1012,8 @@ rtmsg(cmd, flags)
 	else if (cmd == 'g') {
 		cmd = RTM_GET;
 		if (so_ifp.sa.sa_family == 0) {
-			so_ifp.sa.sa_family == AF_LINK;
-			so_ifp.sa.sa_len == sizeof(struct sockaddr_dl);
+			so_ifp.sa.sa_family = AF_LINK;
+			so_ifp.sa.sa_len = sizeof(struct sockaddr_dl);
 			rtm_addrs |= RTA_IFP;
 		}
 	} else
