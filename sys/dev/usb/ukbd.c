@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.24 1999/01/10 10:17:54 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.25 1999/01/10 11:13:36 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * Information about USB keyboard can be found in the USB HID spec.
+ * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
  */
 
 #include <sys/param.h>
