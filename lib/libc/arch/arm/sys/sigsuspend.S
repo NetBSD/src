@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.6 2003/08/07 16:42:05 agc Exp $	*/
+/*	$NetBSD: sigsuspend.S,v 1.7 2004/08/21 11:30:17 rearnsha Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,4 +41,4 @@ ENTRY(sigsuspend)
 	SYSTRAP(compat_13_sigsuspend13)
 	bcs	PIC_SYM(CERROR, PLT)
 	mov	r0, #0x00000000
-	mov	r15, r14
+	RET
