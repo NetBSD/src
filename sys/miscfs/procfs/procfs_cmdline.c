@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.9 2000/06/28 02:44:07 mrg Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.10 2000/09/26 23:28:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -107,7 +107,6 @@ procfs_docmdline(curp, p, pfs, uio)
 		free(arg, M_TEMP);
 		return (EFAULT);
 	}
-	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;	/* XXX */
 
 	/*
@@ -186,7 +185,6 @@ procfs_docmdline(curp, p, pfs, uio)
 	/*
 	 * Release the process.
 	 */
-	PRELE(p);
 	uvmspace_free(p->p_vmspace);
 
 	free(arg, M_TEMP);
