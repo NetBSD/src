@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.5 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.6 2001/09/27 03:24:05 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-dss.c,v 1.7 2001/06/06 23:13:54 markus Exp $");
+RCSID("$OpenBSD: ssh-dss.c,v 1.8 2001/09/17 19:27:15 stevesk Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -134,14 +134,14 @@ ssh_dss_verify(
 		/* ietf-drafts */
 		char *ktype;
 		buffer_init(&b);
-		buffer_append(&b, (char *) signature, signaturelen);
+		buffer_append(&b, signature, signaturelen);
 		ktype = buffer_get_string(&b, NULL);
 		if (strcmp("ssh-dss", ktype) != 0) {
 			error("ssh_dss_verify: cannot handle type %s", ktype);
 			buffer_free(&b);
 			return -1;
 		}
-		sigblob = (u_char *)buffer_get_string(&b, &len);
+		sigblob = buffer_get_string(&b, &len);
 		rlen = buffer_len(&b);
 		if(rlen != 0) {
 			error("remaining bytes in signature %d", rlen);

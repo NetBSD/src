@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.12 2001/06/23 19:37:42 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.13 2001/09/27 03:24:07 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.200 2001/06/23 15:12:21 itojun Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.204 2001/08/23 17:59:31 camield Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -84,10 +84,6 @@ int deny_severity = LOG_WARNING;
 #define O_NOCTTY	0
 #endif
 
-#ifdef KRB5
-#include <krb5.h>
-#endif /* KRB5 */
-
 extern char *__progname;
 
 /* Server configuration options. */
@@ -109,6 +105,9 @@ int IPv4or6 = AF_UNSPEC;
  * the first connection.
  */
 int debug_flag = 0;
+
+/* Flag indicating that the daemon should only test the configuration and keys. */
+int test_flag = 0;
 
 /* Flag indicating that the daemon is being started from inetd. */
 int inetd_flag = 0;
@@ -555,7 +554,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDeiqQ46")) != -1) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDeiqtQ46")) != -1) {
 		switch (opt) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -631,6 +630,9 @@ main(int ac, char **av)
 			/* only makes sense with inetd_flag, i.e. no listen() */
 			inetd_flag = 1;
 			break;
+		case 't':
+			test_flag = 1;
+			break;
 		case 'u':
 			utmp_len = atoi(optarg);
 			break;
@@ -643,6 +645,7 @@ main(int ac, char **av)
 			fprintf(stderr, "  -d         Debugging mode (multiple -d means more debugging)\n");
 			fprintf(stderr, "  -i         Started from inetd\n");
 			fprintf(stderr, "  -D         Do not fork into daemon mode\n");
+			fprintf(stderr, "  -t         Only test configuration file and keys\n");
 			fprintf(stderr, "  -q         Quiet (no logging)\n");
 			fprintf(stderr, "  -p port    Listen on the specified port (default: 22)\n");
 			fprintf(stderr, "  -k seconds Regenerate server key every this many seconds (default: 3600)\n");
@@ -747,6 +750,10 @@ main(int ac, char **av)
 			    options.server_key_bits);
 		}
 	}
+
+	/* Configuration looks good, so exit if in test mode. */
+	if (test_flag)
+		exit(0);
 
 	/* Initialize the log (it is reinitialized below in case we forked). */
 	if (debug_flag && !inetd_flag)
@@ -864,6 +871,22 @@ main(int ac, char **av)
 		if (!num_listen_socks)
 			fatal("Cannot bind any address.");
 
+		if (options.protocol & SSH_PROTO_1)
+			generate_ephemeral_server_key();
+
+		/*
+		 * Arrange to restart on SIGHUP.  The handler needs
+		 * listen_sock.
+		 */
+		signal(SIGHUP, sighup_handler);
+
+		signal(SIGTERM, sigterm_handler);
+		signal(SIGQUIT, sigterm_handler);
+
+		/* Arrange SIGCHLD to be caught. */
+		signal(SIGCHLD, main_sigchld_handler);
+
+		/* Write out the pid file after the sigterm handler is setup */
 		if (!debug_flag) {
 			/*
 			 * Record our pid in /var/run/sshd.pid to make it
@@ -878,17 +901,6 @@ main(int ac, char **av)
 				fclose(f);
 			}
 		}
-		if (options.protocol & SSH_PROTO_1)
-			generate_ephemeral_server_key();
-
-		/* Arrange to restart on SIGHUP.  The handler needs listen_sock. */
-		signal(SIGHUP, sighup_handler);
-
-		signal(SIGTERM, sigterm_handler);
-		signal(SIGQUIT, sigterm_handler);
-
-		/* Arrange SIGCHLD to be caught. */
-		signal(SIGCHLD, main_sigchld_handler);
 
 		/* setup fd set for listen */
 		fdset = NULL;
@@ -1102,7 +1114,7 @@ main(int ac, char **av)
 	{
 		struct request_info req;
 
-		request_init(&req, RQ_DAEMON, __progname, RQ_FILE, sock_in, NULL);
+		request_init(&req, RQ_DAEMON, __progname, RQ_FILE, sock_in, 0);
 		fromhost(&req);
 
 		if (!hosts_access(&req)) {
@@ -1148,7 +1160,7 @@ main(int ac, char **av)
 		debug("Kerberos Authentication disabled, only available for IPv4.");
 		options.kerberos_authentication = 0;
 	}
-#endif /* KRB4 */
+#endif /* KRB4 && !KRB5 */
 #ifdef AFS
 	/* If machine has AFS, set process authentication group. */
 	if (k_hasafs()) {
@@ -1168,13 +1180,6 @@ main(int ac, char **av)
 		do_ssh1_kex();
 		do_authentication();
 	}
-
-#ifdef KRB4
-	/* Cleanup user's ticket cache file. */
-	if (options.krb4_ticket_cleanup)
-		(void) dest_tkt();
-#endif /* KRB4 */
-
 	/* The connection has been terminated. */
 	verbose("Closing connection to %.100s", remote_ip);
 	packet_close();
@@ -1249,13 +1254,11 @@ do_ssh1_kex(void)
 	if (options.kerberos_authentication)
 		auth_mask |= 1 << SSH_AUTH_KERBEROS;
 #endif
-#ifdef KRB5
-	if (options.krb5_tgt_passing)
-	  	auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
-#endif /* KRB5 */
-#ifdef AFS
-	if (options.krb4_tgt_passing)
+#if defined(AFS) || defined(KRB5)
+	if (options.kerberos_tgt_passing)
 		auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
+#endif
+#ifdef AFS
 	if (options.afs_token_passing)
 		auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
 #endif
