@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.9 2003/08/27 00:28:16 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.10 2003/08/30 13:29:30 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.9 2003/08/27 00:28:16 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.10 2003/08/30 13:29:30 jlam Exp $");
 #endif
 #endif
 
@@ -126,16 +126,6 @@ pkg_do(const char *pkg)
 	LogDir[0] = '\0';
 	strlcpy(playpen, FirstPen, sizeof(playpen));
 	inPlace = 0;
-	dbdir = _pkgdb_getPKGDB_DIR();
-
-	/* make sure dbdir actually exists! */
-	if (!(isdir(dbdir) || islinktodir(dbdir))) {
-		if (fexec("mkdir", "-m", "755", "-p", dbdir, NULL)) {
-			errx(EXIT_FAILURE,
-			    "Database-dir %s cannot be generated, aborting.",
-			    dbdir);
-		}
-	}
 
 	/* Are we coming in for a second pass, everything already extracted?
 	 * (Slave mode) */
@@ -173,8 +163,7 @@ pkg_do(const char *pkg)
 				warnx("Package %s will not be extracted", pkg);
 				goto bomb;
 			}
-		}
-		else { /* local */
+		} else { /* local */
 			if (!IS_STDIN(pkg)) {
 			        /* not stdin */
 				if (!ispkgpattern(pkg)) {
@@ -292,8 +281,33 @@ pkg_do(const char *pkg)
 	/* Protect against old packages with bogus @name fields */
 	PkgName = (p = find_plist(&Plist, PLIST_NAME)) ? p->name : "anonymous";
 
-	/* See if this package (exact version) is already registered */
+	if (fexists(VIEWS_FNAME))
+		is_depoted_pkg = TRUE;
+	
+	dbdir = _pkgdb_getPKGDB_DIR();
 	(void) snprintf(LogDir, sizeof(LogDir), "%s/%s", dbdir, PkgName);
+
+	/* check if the dbdir is wrong because this is a depoted package */
+	if (is_depoted_pkg) {
+		if ((p = find_plist(&Plist, PLIST_CWD))) {
+			if (strcmp(p->name, LogDir) != 0) {
+				warnx("%s is not the depot directory for %s.",
+					dbdir, PkgName);
+				goto success;
+			}
+		}
+	}
+
+	/* make sure dbdir actually exists! */
+	if (!(isdir(dbdir) || islinktodir(dbdir))) {
+		if (fexec("mkdir", "-m", "755", "-p", dbdir, NULL)) {
+			errx(EXIT_FAILURE,
+			    "Database-dir %s cannot be generated, aborting.",
+			    dbdir);
+		}
+	}
+
+	/* See if this package (exact version) is already registered */
 	if ((isdir(LogDir) || islinktodir(LogDir)) && !Force) {
 		warnx("package `%s' already recorded as installed", PkgName);
 		goto success;	/* close enough for government work */
@@ -755,20 +769,8 @@ ignore_replace_depends_check:
 			warnx("cannot open %s as display file", buf);
 	}
 
-	goto success;
-
-bomb:
-	errc = 1;
-	goto success;
-
-fail:
-	/* Nuke the whole (installed) show, XXX but don't clean directories */
-	if (!Fake)
-		delete_package(FALSE, FALSE, &Plist);
-
-success:
 	/* Add the package to a default view. */
-	if (!NoView && is_depoted_pkg) {
+	if (!Fake && !NoView && is_depoted_pkg) {
 		if (Verbose) {
 			printf("%s/pkg_view %s%s %s%s %sadd %s\n",
 				BINDIR,
@@ -789,6 +791,18 @@ success:
 				PkgName);
 	}
 
+	goto success;
+
+bomb:
+	errc = 1;
+	goto success;
+
+fail:
+	/* Nuke the whole (installed) show, XXX but don't clean directories */
+	if (!Fake)
+		delete_package(FALSE, FALSE, &Plist);
+
+success:
 	/* delete the packing list contents */
 	free_plist(&Plist);
 	leave_playpen(Home);
