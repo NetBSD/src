@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.26 1993/08/16 01:41:01 mycroft Exp $
+#	$Id: bsd.lib.mk,v 1.27 1993/09/29 01:02:21 pk Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -8,8 +8,9 @@
 .MAIN: all
 
 # prefer .s to a .c, add .po, remove stuff not used in the BSD libraries
+# .so used for PIC object files
 .SUFFIXES:
-.SUFFIXES: .out .o .po .s .c .cc .C .f .y .l .0 .1 .2 .3 .4 .5 .6 .7 .8
+.SUFFIXES: .out .o .po .so .s .c .cc .C .f .y .l .0 .1 .2 .3 .4 .5 .6 .7 .8
 
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC} 
@@ -20,6 +21,9 @@
 	${CC} -p ${CFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+.c.so:
+	${CC} ${PICFLAG} -DPIC ${CFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 
 .cc.o .C.o:
 	${CXX} ${CXXFLAGS} -c ${.IMPSRC} 
@@ -43,10 +47,22 @@
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
+.s.so:
+	${CPP} -E -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
+	    ${AS} -k -o ${.TARGET}
+
 .if !defined(NOPROFILE)
 _LIBS=lib${LIB}.a lib${LIB}_p.a
 .else
 _LIBS=lib${LIB}.a
+.endif
+
+.if !defined(NOPIC)
+_LIBS+=lib${LIB}_pic.a
+.endif
+
+.if !defined(PICFLAG)
+PICFLAG=-fpic
 .endif
 
 all: ${_LIBS} # llib-l${LIB}.ln
@@ -66,6 +82,13 @@ lib${LIB}_p.a:: ${POBJS}
 	@${AR} cTq lib${LIB}_p.a `lorder ${POBJS} | tsort` ${LDADD}
 	${RANLIB} lib${LIB}_p.a
 
+SOBJS+=	${OBJS:.o=.so}
+lib${LIB}_pic.a:: ${SOBJS}
+	@echo building shared object ${LIB} library
+	@rm -f lib${LIB}_pic.a
+	@${AR} cTq lib${LIB}_pic.a `lorder ${SOBJS} | tsort` ${LDADD}
+	${RANLIB} lib${LIB}_pic.a
+
 llib-l${LIB}.ln: ${SRCS}
 	${LINT} -C${LIB} ${CFLAGS} ${.ALLSRC:M*.c}
 
@@ -74,6 +97,7 @@ clean:
 	rm -f a.out Errs errs mklog core ${CLEANFILES}
 	rm -f ${OBJS}
 	rm -f ${POBJS} profiled/*.o
+	rm -f ${SOBJS} shared/*.o
 	rm -f lib${LIB}.a lib${LIB}_p.a llib-l${LIB}.ln
 .endif
 
