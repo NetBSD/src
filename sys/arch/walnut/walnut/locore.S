@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2001/10/29 01:57:49 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2001/11/26 23:31:56 thorpej Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#undef NOCACHE
+#undef PPC_4XX_NOCACHE
 
 #include "opt_ddb.h"
 #include "fs_kernfs.h"
@@ -179,7 +179,7 @@ __start:
  *
  */
 __start_cpu0:
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	/* Disable all caches for physical addresses */
 	li	0,0
 #else
@@ -218,7 +218,7 @@ __start_cpu0:
 	sync
 
 	li	0,0
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	li	4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
 #else
 	li	4,TLB_EX|TLB_WR /* |TLB_W */
@@ -232,7 +232,7 @@ __start_cpu0:
 	li	0,1
 	lis	4,0x01000000@h
 	ori	3,4,0
-#ifdef NOCACHE
+#ifdef PPC_4XX_NOCACHE
 	addi	4,4,TLB_EX|TLB_WR|TLB_I /* |TLB_W */
 #else
 	addi	4,4,TLB_EX|TLB_WR /* |TLB_W */
