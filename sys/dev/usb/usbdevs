@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.201 2001/11/23 10:29:30 enami Exp $
+$NetBSD: usbdevs,v 1.202 2001/11/25 17:17:22 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -835,6 +835,7 @@ product NETGEAR EA101X		0x1001	Ethernet adapter
 product NIKON E990		0x0102	Digital Camera E990
 
 /* Olympus products */
+product OLYMPUS C1		0x0102	C-1 Digital Camera
 product OLYMPUS C700		0x0105	C-700 Ultra Zoom
 
 /* OmniVision Technologies, Inc. products */
