@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2000/10/22 17:17:08 simonb Exp $
+#	$NetBSD: Makefile,v 1.6 2000/10/23 06:45:18 jmc Exp $
+
+.include <bsd.own.mk>
 
 SUBDIR=	lib dig dnskeygen dnsquery host named named-bootconf named-xfer \
 	ndc nslookup nsupdate reload restart
