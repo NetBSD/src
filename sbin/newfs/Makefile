@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/01/06 23:09:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2002/01/08 20:54:49 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 PROG=	newfs
@@ -19,7 +19,7 @@ MLINKS=	mount_mfs.8 mfs.8
 
 .include <bsd.prog.mk>
 
-.if (${MACHINE} == "alpha")
+.if (${MACHINE_ARCH} == "alpha")
 #
 # XXX	gcc 2.95.3 with -O2 (the default) generates a non-functional newfs
 #
