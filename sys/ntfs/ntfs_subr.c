@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.7 1999/08/16 08:11:34 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.8 1999/08/18 13:35:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -68,7 +68,7 @@ MALLOC_DEFINE(M_NTFSDECOMP, "NTFS decomp", "NTFS decompression temporary");
 static wchar *ntfs_toupper_tab;
 #define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[ch & 0xFF])
 static struct lock ntfs_toupper_lock;
-signed int ntfs_toupper_used;
+static signed int ntfs_toupper_usecount;
 
 /*
  * 
@@ -1921,7 +1921,7 @@ ntfs_toupper_init()
 {
 	ntfs_toupper_tab = (wchar *) NULL;
 	lockinit(&ntfs_toupper_lock, PVFS, "ntfs_toupper", 0, 0);
-	ntfs_toupper_used = 0;
+	ntfs_toupper_usecount = 0;
 }
 
 /*
@@ -1959,7 +1959,7 @@ ntfs_toupper_use(mp, ntmp)
 	vput(vp);
 
     out:
-	ntfs_toupper_used++;
+	ntfs_toupper_usecount++;
 	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
 	return (error);
 }
@@ -1974,15 +1974,17 @@ ntfs_toupper_unuse()
 	/* get exclusive access */
 	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
 
-	ntfs_toupper_used--;
-	if (ntfs_toupper_used < 0) {
-		panic("ntfs_toupper_unuse(): ntfs_toupper_used negative: %d\n",
-			ntfs_toupper_used);
-	}
-	else if (ntfs_toupper_used == 0) {
+	ntfs_toupper_usecount--;
+	if (ntfs_toupper_usecount == 0) {
 		FREE(ntfs_toupper_tab, M_NTFSRDATA);
 		ntfs_toupper_tab = NULL;
 	}
+#ifdef DIAGNOSTIC
+	else if (ntfs_toupper_usecount < 0) {
+		panic("ntfs_toupper_unuse(): use count negative: %d\n",
+			ntfs_toupper_used);
+	}
+#endif
 	
 	/* release the lock */
 	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
