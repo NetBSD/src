@@ -1,3 +1,5 @@
+/* $NetBSD: pipe.h,v 1.11 2002/03/13 20:51:37 jdolecek Exp $ */
+
 /*
  * Copyright (c) 1996 John S. Dyson
  * All rights reserved.
