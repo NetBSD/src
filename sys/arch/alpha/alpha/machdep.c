@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.235 2001/04/20 00:10:17 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.236 2001/04/20 22:59:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.235 2001/04/20 00:10:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.236 2001/04/20 22:59:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1834,7 +1834,7 @@ fpusave_proc(struct proc *p, int save)
 	struct cpu_info *oci;
 #if defined(MULTIPROCESSOR)
 	u_long ipi = save ? ALPHA_IPI_SYNCH_FPU : ALPHA_IPI_DISCARD_FPU;
-	int s, spincount, hold_count;
+	int s, spincount;
 #endif
 
 	KDASSERT(p->p_addr != NULL);
@@ -1860,15 +1860,6 @@ fpusave_proc(struct proc *p, int save)
 	alpha_send_ipi(oci->ci_cpuid, ipi);
 	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
 
-	/*
-	 * If we're holding the kernel lock, release it before
-	 * spinning.
-	 *
-	 * XXX Why do we have to do this?!  We shouldn't need to!
-	 */
-	if (p->p_flag & P_BIGLOCK)
-		hold_count = spinlock_release_all(&kernel_lock);
-
 	spincount = 0;
 	while (p->p_addr->u_pcb.pcb_fpcpu != NULL) {
 		spincount++;
@@ -1876,12 +1867,6 @@ fpusave_proc(struct proc *p, int save)
 		if (spincount > 10000)
 			panic("fpsave ipi didn't");
 	}
-
-	/*
-	 * ...and reacquire it.
-	 */
-	if (p->p_flag & P_BIGLOCK)
-		spinlock_acquire_count(&kernel_lock, hold_count);
 #else
 	KASSERT(ci->ci_fpcurproc == p);
 	FPCPU_UNLOCK(&p->p_addr->u_pcb, s);
