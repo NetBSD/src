@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.33 2002/12/07 19:48:32 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.34 2002/12/09 15:24:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.33 2002/12/07 19:48:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.34 2002/12/09 15:24:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ static int	dpt_cmd(struct dpt_softc *, struct dpt_ccb *, int, int);
 static void	dpt_ctlrinfo(struct dpt_softc *, struct dpt_eata_ctlrinfo *);
 static void	dpt_hba_inquire(struct dpt_softc *, struct eata_inquiry_data **);
 static void	dpt_minphys(struct buf *);
-static int	dpt_passthrough(struct dpt_softc *, struct eata_cp *,
+static int	dpt_passthrough(struct dpt_softc *, struct eata_ucp *,
 				struct proc *);
 static void	dpt_scsipi_request(struct scsipi_channel *,
 				   scsipi_adapter_req_t, void *);
@@ -1152,7 +1152,7 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (sc->sc_uactive++)
 			tsleep(&sc->sc_uactive, PRIBIO, "dptslp", 0);
 
-		rv = dpt_passthrough(sc, (struct eata_cp *)data, p);
+		rv = dpt_passthrough(sc, (struct eata_ucp *)data, p);
 
 		sc->sc_uactive--;
 		wakeup_one(&sc->sc_uactive);
@@ -1258,7 +1258,7 @@ dpt_sysinfo(struct dpt_softc *sc, struct dpt_sysinfo *info)
 }
 
 int
-dpt_passthrough(struct dpt_softc *sc, struct eata_cp *ucp, struct proc *proc)
+dpt_passthrough(struct dpt_softc *sc, struct eata_ucp *ucp, struct proc *proc)
 {
 	struct dpt_ccb *ccb;
 	struct eata_sp sp;
@@ -1266,7 +1266,7 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_cp *ucp, struct proc *proc)
 	struct eata_sg *sg;
 	bus_dmamap_t xfer;
 	bus_dma_segment_t *ds;
-	int datain, s, rv, i;
+	int datain, s, rv, i, uslen;
 
 	/*
 	 * Get a CCB and fill.
@@ -1277,7 +1277,8 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_cp *ucp, struct proc *proc)
 	ccb->ccb_savesp = &sp;
 
 	cp = &ccb->ccb_eata_cp;
-	memcpy(cp, ucp, sizeof(*cp));
+	memcpy(cp, ucp->ucp_cp, sizeof(ucp->ucp_cp));
+	uslen = cp->cp_senselen;
 	cp->cp_ccbid = ccb->ccb_id;
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
 	cp->cp_senseaddr = htobe32(sc->sc_dmamap->dm_segs[0].ds_addr +
@@ -1287,17 +1288,17 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_cp *ucp, struct proc *proc)
 	/*
 	 * Map data transfers.
 	 */
-	if (ucp->cp_dataaddr && ucp->cp_datalen) {
+	if (ucp->ucp_dataaddr && ucp->ucp_datalen) {
 		xfer = ccb->ccb_dmamap_xfer;
-		datain = ((ucp->cp_ctl0 & CP_C0_DATA_IN) != 0);
+		datain = ((cp->cp_ctl0 & CP_C0_DATA_IN) != 0);
 
-		if (ucp->cp_datalen > DPT_MAX_XFER) {
+		if (ucp->ucp_datalen > DPT_MAX_XFER) {
 			DPRINTF(("%s: xfer too big\n", sc->sc_dv.dv_xname));
 			dpt_ccb_free(sc, ccb);
 			return (EFBIG);
 		}
 		rv = bus_dmamap_load(sc->sc_dmat, xfer,
-		    (caddr_t)ucp->cp_dataaddr, ucp->cp_datalen, proc,
+		    ucp->ucp_dataaddr, ucp->ucp_datalen, proc,
 		    BUS_DMA_WAITOK | BUS_DMA_STREAMING |
 		    (datain ? BUS_DMA_READ : BUS_DMA_WRITE));
 		if (rv != 0) {
@@ -1314,7 +1315,7 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_cp *ucp, struct proc *proc)
 		ds = xfer->dm_segs;
 		for (i = 0; i < xfer->dm_nsegs; i++, sg++, ds++) {
 	 		sg->sg_addr = htobe32(ds->ds_addr);
-	 		sg->sg_len =  htobe32(ds->ds_len);
+	 		sg->sg_len = htobe32(ds->ds_len);
  		}
 		cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) + 
 		    sc->sc_dmamap->dm_segs[0].ds_addr +
@@ -1353,15 +1354,15 @@ dpt_passthrough(struct dpt_softc *sc, struct eata_cp *ucp, struct proc *proc)
 		bus_dmamap_unload(sc->sc_dmat, xfer);
 	}
 
-	if (ucp->cp_stataddr != NULL) {
-		rv = copyout(&sp, (caddr_t)ucp->cp_stataddr, sizeof(sp));
+	if (ucp->ucp_stataddr != NULL) {
+		rv = copyout(&sp, ucp->ucp_stataddr, sizeof(sp));
 		if (rv != 0)
 			DPRINTF(("%s: sp copyout() failed\n",
 			    sc->sc_dv.dv_xname));
 	}
-	if (rv == 0 && ucp->cp_senseaddr != NULL) {
-		i = min(ucp->cp_senselen, sizeof(ccb->ccb_sense));
-		rv = copyout(&ccb->ccb_sense, (caddr_t)ucp->cp_senseaddr, i);
+	if (rv == 0 && ucp->ucp_senseaddr != NULL) {
+		i = min(uslen, sizeof(ccb->ccb_sense));
+		rv = copyout(&ccb->ccb_sense, ucp->ucp_senseaddr, i);
 		if (rv != 0)
 			DPRINTF(("%s: sense copyout() failed\n",
 			    sc->sc_dv.dv_xname));
