@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.21 1997/11/03 21:17:17 ross Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.22 1998/07/04 20:47:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.21 1997/11/03 21:17:17 ross Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.22 1998/07/04 20:47:24 mrg Exp $");
 #endif
 #endif
 
@@ -664,7 +664,7 @@ main(int argc, char **argv)
 		    sizeof(on));
 
 	/* Get the interface address list */
-	n = ifaddrlist(&al, errbuf);
+	n = ifaddrlist(&al, errbuf, sizeof errbuf);
 	if (n < 0) {
 		Fprintf(stderr, "%s: ifaddrlist: %s\n", prog, errbuf);
 		exit(1);

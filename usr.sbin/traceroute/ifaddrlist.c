@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.1.1.1 1997/10/03 22:25:12 christos Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.2 1998/07/04 20:47:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.1.1.1 1997/10/03 22:25:12 christos Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.2 1998/07/04 20:47:24 mrg Exp $");
 #endif
 #endif
 
@@ -90,15 +90,15 @@ struct rtentry;
  * Return the interface list
  */
 int
-ifaddrlist(register struct ifaddrlist **ipaddrp, register char *errbuf)
+ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 {
-	register int fd, nipaddr;
+	int fd, nipaddr;
 #ifdef HAVE_SOCKADDR_SA_LEN
-	register int n;
+	int n;
 #endif
-	register struct ifreq *ifrp, *ifend, *ifnext, *mp;
-	register struct sockaddr_in *sin;
-	register struct ifaddrlist *al;
+	struct ifreq *ifrp, *ifend, *ifnext, *mp;
+	struct sockaddr_in *sin;
+	struct ifaddrlist *al;
 	struct ifconf ifc;
 	struct ifreq ibuf[MAX_IPADDR], ifr;
 	char device[sizeof(ifr.ifr_name) + 1];
@@ -106,7 +106,7 @@ ifaddrlist(register struct ifaddrlist **ipaddrp, register char *errbuf)
 
 	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
-		(void)sprintf(errbuf, "socket: %s", strerror(errno));
+		(void)snprintf(errbuf, buflen, "socket: %s", strerror(errno));
 		return (-1);
 	}
 	ifc.ifc_len = sizeof(ibuf);
@@ -114,7 +114,7 @@ ifaddrlist(register struct ifaddrlist **ipaddrp, register char *errbuf)
 
 	if (ioctl(fd, SIOCGIFCONF, (char *)&ifc) < 0 ||
 	    ifc.ifc_len < sizeof(struct ifreq)) {
-		(void)sprintf(errbuf, "SIOCGIFCONF: %s", strerror(errno));
+		(void)snprintf(errbuf, buflen, "SIOCGIFCONF: %s", strerror(errno));
 		(void)close(fd);
 		return (-1);
 	}
@@ -146,7 +146,7 @@ ifaddrlist(register struct ifaddrlist **ipaddrp, register char *errbuf)
 		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
 			if (errno == ENXIO)
 				continue;
-			(void)sprintf(errbuf, "SIOCGIFFLAGS: %.*s: %s",
+			(void)snprintf(errbuf, buflen, "SIOCGIFFLAGS: %.*s: %s",
 			    (int)sizeof(ifr.ifr_name), ifr.ifr_name,
 			    strerror(errno));
 			(void)close(fd);
@@ -160,7 +160,7 @@ ifaddrlist(register struct ifaddrlist **ipaddrp, register char *errbuf)
 		(void)strncpy(device, ifr.ifr_name, sizeof(ifr.ifr_name));
 		device[sizeof(device) - 1] = '\0';
 		if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) < 0) {
-			(void)sprintf(errbuf, "SIOCGIFADDR: %s: %s",
+			(void)snprintf(errbuf, buflen, "SIOCGIFADDR: %s: %s",
 			    device, strerror(errno));
 			(void)close(fd);
 			return (-1);
