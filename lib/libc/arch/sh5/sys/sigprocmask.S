@@ -1,4 +1,4 @@
-/*	$NetBSD: sigprocmask.S,v 1.1 2002/07/05 13:31:36 scw Exp $	*/
+/*	$NetBSD: sigprocmask.S,v 1.2 2002/07/10 11:43:16 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)sigprocmask.s	5.2 (Berkeley) 6/6/90")
 #else
-	RCSID("$NetBSD: sigprocmask.S,v 1.1 2002/07/05 13:31:36 scw Exp $")
+	RCSID("$NetBSD: sigprocmask.S,v 1.2 2002/07/10 11:43:16 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,7 +98,7 @@ ENTRY(sigprocmask)
 	movi	0, r2			/* Return value is zero */
 	beq/l	r4, r63, tr0		/* Just exit if they don't want omask */
 	st.l	r4, 0, r0		/* Otherwise, store old mask */
-	blink	tr0, r18
+	blink	tr0, r63
 
 	.align 3
 1:	.quad	0
