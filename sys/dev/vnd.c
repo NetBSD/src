@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.80 2002/06/21 19:09:31 atatat Exp $	*/
+/*	$NetBSD: vnd.c,v 1.81 2002/07/20 11:28:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.80 2002/06/21 19:09:31 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.81 2002/07/20 11:28:08 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -202,7 +202,7 @@ vndattach(num)
 	numvnd = num;
 
 	for (i = 0; i < numvnd; i++)
-		BUFQ_INIT(&vnd_softc[i].sc_tab);
+		bufq_init(&vnd_softc[i].sc_tab, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
 }
 
 void
@@ -477,7 +477,7 @@ vndstrategy(bp)
 		}
 		vnx->vx_pending++;
 		bgetvp(vp, &nbp->vb_buf);
-		disksort_blkno(&vnd->sc_tab, &nbp->vb_buf);
+		BUFQ_PUT(&vnd->sc_tab, &nbp->vb_buf);
 		vndstart(vnd);
 		splx(s);
 		bn += sz;
@@ -526,10 +526,9 @@ vndstart(vnd)
 	vnd->sc_flags |= VNF_BUSY;
 
 	while (vnd->sc_active < vnd->sc_maxactive) {
-		bp = BUFQ_FIRST(&vnd->sc_tab);
+		bp = BUFQ_GET(&vnd->sc_tab);
 		if (bp == NULL)
 			break;
-		BUFQ_REMOVE(&vnd->sc_tab, bp);
 		vnd->sc_active++;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)

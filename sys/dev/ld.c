@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.13 2002/05/08 15:49:07 drochner Exp $	*/
+/*	$NetBSD: ld.c,v 1.14 2002/07/20 11:28:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.13 2002/05/08 15:49:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.14 2002/07/20 11:28:07 hannken Exp $");
 
 #include "rnd.h"
 
@@ -130,7 +130,7 @@ ldattach(struct ld_softc *sc)
 	/* Set the `shutdownhook'. */
 	if (ld_sdh == NULL)
 		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
-	BUFQ_INIT(&sc->sc_bufq);
+	bufq_init(&sc->sc_bufq, BUFQ_FCFS);
 }
 
 int
@@ -194,8 +194,7 @@ ldenddetach(struct ld_softc *sc)
 
 	/* Kill off any queued buffers. */
 	s = splbio();
-	while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
-		BUFQ_REMOVE(&sc->sc_bufq, bp);
+	while ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
@@ -444,7 +443,7 @@ ldstrategy(struct buf *bp)
 
 	s = splbio();
 	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt) {
-		BUFQ_INSERT_TAIL(&sc->sc_bufq, bp);
+		BUFQ_PUT(&sc->sc_bufq, bp);
 		splx(s);
 		return;
 	}
@@ -547,8 +546,7 @@ lddone(struct ld_softc *sc, struct buf *bp)
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
 		if ((sc->sc_flags & LDF_DRAIN) != 0)
 			wakeup(&sc->sc_queuecnt);
-		while ((bp = BUFQ_FIRST(&sc->sc_bufq)) != NULL) {
-			BUFQ_REMOVE(&sc->sc_bufq, bp);
+		while ((bp = BUFQ_GET(&sc->sc_bufq)) != NULL) {
 			if (!ldstart(sc, bp))
 				break;
 		}

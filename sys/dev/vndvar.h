@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.7 2002/06/21 19:09:31 atatat Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.8 2002/07/20 11:28:08 hannken Exp $	*/
 
 /*-     
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct vnd_softc {
 	struct vnode	*sc_vp;		/* vnode */
 	struct ucred	*sc_cred;	/* credentials */
 	int		 sc_maxactive;	/* max # of active requests */
-	struct buf_queue sc_tab;	/* transfer queue */
+	struct bufq_state sc_tab;	/* transfer queue */
 	int		 sc_active;	/* number of active transfers */
 	char		 sc_xname[8];	/* XXX external name */
 	struct disk	 sc_dkdev;	/* generic disk device info */
