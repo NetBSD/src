@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.35 2002/09/22 07:22:27 chs Exp $
+.\"	$NetBSD: uvm.9,v 1.36 2002/09/27 07:52:48 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" XXX this manual sets nS to 1 or 0 in the description, to obtain
 .\" synopsis-like function prototypes.  any better way?
 .\"
-.Dd December 24, 2001
+.Dd September 27, 2002
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -40,8 +40,10 @@
 .Fd #include \*[Lt]uvm/uvm.h\*[Gt]
 .Sh DESCRIPTION
 The UVM virtual memory system manages access to the computer's memory
-resources.  User processes and the kernel access these resources through
-UVM's external interface.  UVM's external interface includes functions that:
+resources.
+User processes and the kernel access these resources through
+UVM's external interface.
+UVM's external interface includes functions that:
 .Pp
 .Bl -hyphen -compact
 .It
@@ -61,11 +63,13 @@ allocate and free physical memory
 .El
 .Pp
 In addition to exporting these services, UVM has two kernel-level processes:
-pagedaemon and swapper.   The pagedaemon process sleeps until physical memory
-becomes scarce.  When that happens, pagedaemon is awoken.   It scans physical
-memory, paging out and freeing memory that has not been recently used.  The
-swapper process swaps in runnable processes that are currently swapped out,
-if there is room.
+pagedaemon and swapper.
+The pagedaemon process sleeps until physical memory becomes scarce.
+When that happens, pagedaemon is awoken.
+It scans physical memory, paging out and freeing memory that has not
+been recently used.
+The swapper process swaps in runnable processes that are currently swapped
+out, if there is room.
 .Pp
 There are also several miscellaneous functions.
 .Sh INITIALISATION
@@ -83,21 +87,21 @@ There are also several miscellaneous functions.
 .Pp
 .Fn uvm_init
 sets up the UVM system at system boot time, after the
-copyright has been printed.  It initialises
-global state, the page, map, kernel virtual memory state,
+copyright has been printed.
+It initialises global state, the page, map, kernel virtual memory state,
 machine-dependent physical map, kernel memory allocator,
 pager and anonymous memory sub-systems, and then enables
 paging of kernel objects.
 .Pp
 .Fn uvm_init_limits
-initialises process limits for the named process.  This is for use by
-the system startup for process zero, before any other processes are
-created.
+initialises process limits for the named process.
+This is for use by the system startup for process zero, before any
+other processes are created.
 .Pp
 .Fn uvm_setpagesize
 initialises the uvmexp members pagesize (if not already done by
-machine-dependent code), pageshift and pagemask.  It should be called by
-machine-dependent code early in the
+machine-dependent code), pageshift and pagemask.
+It should be called by machine-dependent code early in the
 .Fn pmap_init
 call (see
 .Xr pmap 9 ) .
@@ -138,15 +142,18 @@ initialises the swap sub-system.
 .Fn uvm_map
 establishes a valid mapping in map
 .Fa map ,
-which must be unlocked.  The new mapping has size
+which must be unlocked.
+The new mapping has size
 .Fa size ,
 which must be in
 .Dv PAGE_SIZE
-units.  The
+units.
+The
 .Fa uobj
 and
 .Fa uoffset
-arguments can have four meanings.  When
+arguments can have four meanings.
+When
 .Fa uobj
 is
 .Dv NULL
@@ -157,7 +164,8 @@ is
 .Fn uvm_map
 does not use the machine-dependent
 .Dv PMAP_PREFER
-function.  If
+function.
+If
 .Fa uoffset
 is any other value, it is used as the hint to
 .Dv PMAP_PREFER .
@@ -174,8 +182,8 @@ finds the offset based upon the virtual address, passed as
 .Fa startp .
 If
 .Fa uoffset
-is any other value, we are doing a normal mapping at this offset.  The
-start address of the map will be returned in
+is any other value, we are doing a normal mapping at this offset.
+The start address of the map will be returned in
 .Fa startp .
 .Pp
 .Fa flags
@@ -240,11 +248,13 @@ can take are:
 .Pp
 The
 .Dv UVM_MAPFLAG
-macro arguments can be combined with an or operator.  There are
-several special purpose macros for checking protection combinations, e.g. the
+macro arguments can be combined with an or operator.
+There are several special purpose macros for checking protection
+combinations, e.g. the
 .Dv UVM_PROT_WX
-macro.  There are also some additional macros to extract bits from
-the flags.  The
+macro.
+There are also some additional macros to extract bits from the flags.
+The
 .Dv UVM_PROTECTION ,
 .Dv UVM_INHERIT ,
 .Dv UVM_MAXPROTECTION
@@ -294,7 +304,8 @@ also setting the maximum protection to the region to
 .Fa new_prot
 if
 .Fa set_max
-is non-zero.  This function returns a standard UVM return value.
+is non-zero.
+This function returns a standard UVM return value.
 .Pp
 .Fn uvm_deallocate
 deallocates kernel memory in map
@@ -348,7 +359,7 @@ necessary by calling
 .Fn uvmspace_fork .
 .Pp
 .Fn uvm_uarea_alloc
-allocates virtual space for a u-area (ie. a kernel stack) and returns
+allocates virtual space for a u-area (i.e., a kernel stack) and returns
 its virtual address.
 .Pp
 .Fn uvm_uarea_free
@@ -363,7 +374,8 @@ allocated to back that virtual space later.
 .nr nS 0
 .Pp
 .Fn uvm_fault
-is the main entry point for faults.  It takes
+is the main entry point for faults.
+It takes
 .Fa orig_map
 as the map the fault originated in, a
 .Fa vaddr
@@ -389,15 +401,16 @@ returns a standard UVM return value.
 .Fn uvn_attach
 attaches a UVM object to vnode
 .Fa arg ,
-creating the object if necessary.  The object is returned.
+creating the object if necessary.
+The object is returned.
 .Pp
 .Fn uvm_vnp_setsize
 sets the size of vnode
 .Fa vp
 to
 .Fa newsize .
-Caller must hold a reference to the vnode.  If the vnode shrinks, pages
-no longer used are discarded.
+Caller must hold a reference to the vnode.
+If the vnode shrinks, pages no longer used are discarded.
 .Pp
 .Fn ubc_alloc
 creates a kernel mappings of
@@ -430,8 +443,10 @@ method being called to resolve the fault.
 .Fn ubc_release
 frees the mapping at
 .Fa va
-for reuse.  The mapping may be cached to speed future accesses to the same
-region of the object.  The flags are currently unused.
+for reuse.
+The mapping may be cached to speed future accesses to the same region
+of the object.
+The flags are currently unused.
 .Sh VIRTUAL MEMORY I/O
 .nr nS 1
 .Ft int
@@ -474,8 +489,8 @@ bytes of wired kernel memory in map
 .Fa map .
 In addition to allocation,
 .Fn uvm_km_zalloc
-zeros the memory.  Both of these functions are defined as macros in
-terms of
+zeros the memory.
+Both of these functions are defined as macros in terms of
 .Fn uvm_km_alloc1 ,
 and should almost always be used in preference to
 .Fn uvm_km_alloc1 .
@@ -517,11 +532,12 @@ indicates that
 .Fn uvm_km_kmemalloc
 can return 0 even if
 .Dv UVM_KMF_NOWAIT
-is not specified.  (If neither
+is not specified.
+(If neither
 .Dv UVM_KMF_NOWAIT
 nor
 .Dv UVM_KMF_CANFAIL
-is specified,
+are specified,
 .Fn uvm_km_kmemalloc
 will never fail, but rather sleep indefinitely until the allocation succeeds.)
 .Pp
@@ -557,7 +573,8 @@ The addresses of the submap can be specified exactly by setting the
 .Fa fixed
 argument to non-zero, which causes the
 .Fa min
-argument specify the beginning of the address in the submap.  If
+argument specify the beginning of the address in the submap.
+If
 .Fa fixed
 is zero, any address of size
 .Fa size
@@ -639,22 +656,26 @@ byte under various constraints.
 .Fa low
 and
 .Fa high
-describe the lowest and highest addresses acceptable for the list.  If
+describe the lowest and highest addresses acceptable for the list.
+If
 .Fa alignment
 is non-zero, it describes the required alignment of the list, in
-power-of-two notation.  If
+power-of-two notation.
+If
 .Fa boundary
 is non-zero, no segment of the list may cross this power-of-two
 boundary, relative to zero.
 .Fa nsegs
-is the maximum number of physically contigous segments. If
+is the maximum number of physically contigous segments.
+If
 .Fa waitok
 is non-zero, the function may sleep until enough memory is available.
 (It also may give up in some situations, so a non-zero
 .Fa waitok
 does not imply that
 .Fn uvm_pglistalloc
-cannot return an error.) The allocated memory is returned in the
+cannot return an error.)
+The allocated memory is returned in the
 .Fa rlist
 list; the caller has to provide storage only, the list is initialized by
 .Fn uvm_pglistalloc .
@@ -667,7 +688,8 @@ frees the list of pages pointed to by
 loads physical memory segments into VM space on the specified
 .Fa free_list .
 It must be called at system boot time to setup physical memory
-management pages.  The arguments describe the
+management pages.
+The arguments describe the
 .Fa start
 and
 .Fa end
@@ -689,8 +711,8 @@ is the main loop for the page daemon.
 .Pp
 .Fn uvm_scheduler
 is the process zero main loop, which is to be called after the
-system has finished starting other processes.  It handles the
-swapping in of runnable, swapped out processes in priority
+system has finished starting other processes.
+It handles the swapping in of runnable, swapped out processes in priority
 order.
 .Pp
 .Fn uvm_swapin
@@ -725,14 +747,16 @@ should be pointer to array of pointers to
 .Li struct anon
 or
 .Li struct vm_page ,
-as appropriate. The caller has to allocate memory for the array and
+as appropriate.
+The caller has to allocate memory for the array and
 ensure it's big enough to hold
 .Fa len / PAGE_SIZE
 pointers.
 Returns 0 for success, or appropriate error number otherwise.
 .Pp
 .Fn uvm_unloan
-kills loans on pages or anons. The
+kills loans on pages or anons.
+The
 .Fa v
 must point to the array of pointers initialized by previous call to
 .Fn uvm_loan .
@@ -863,10 +887,11 @@ handles the
 and
 .Dv VM_UVMEXP
 calls, which return the current load averages, calculates current VM
-totals, and returns the uvmexp structure respectively.  The load averages
-are access from userland using the
+totals, and returns the uvmexp structure respectively.
+The load averages are access from userland using the
 .Xr getloadavg 3
-function.  The uvmexp structure has all global state of the UVM system,
+function.
+The uvmexp structure has all global state of the UVM system,
 and has the following members:
 .Bd -literal
 /* vm_page constants */
@@ -958,9 +983,9 @@ and (new)
 If the
 .Fa shared
 argument is non zero, p1 shares its address space with p2,
-otherwise a new address space is created.  This function
-currently has no return value, and thus cannot fail.  In
-the future, this function will be changed to allow it to
+otherwise a new address space is created.
+This function currently has no return value, and thus cannot fail.
+In the future, this function will be changed to allow it to
 fail in low memory conditions.
 .Pp
 .Fn uvm_grow
@@ -1014,23 +1039,23 @@ causes any pages which do already exist to be skipped.
 causes any pages which are marked PG_READONLY to be skipped.
 .Pp
 .Fn uvm_swap_stats
-implements the 
-.Dv SWAP_STATS 
+implements the
+.Dv SWAP_STATS
 and
 .Dv SWAP_OSTATS
 operation of the
 .Xr swapctl 2
 system call.
 .Fa cmd
-is the requested command, 
+is the requested command,
 .Dv SWAP_STATS
 or
 .Dv SWAP_OSTATS .
-The function will copy no more than 
+The function will copy no more than
 .Fa sec
 entries in the array pointed by
 .Fa sep .
-On return, 
+On return,
 .Fa retval
 holds the actual number of entries copied in the array.
 .Sh NOTES
@@ -1052,32 +1077,42 @@ will be renamed to
 .Xr pmap 9
 .Sh HISTORY
 UVM is a new VM system developed at Washington University in St. Louis
-(Missouri).  UVM's roots lie partly in the Mach-based
+(Missouri).
+UVM's roots lie partly in the Mach-based
 .Bx 4.4
 VM system, the
 .Fx
-VM system, and the SunOS4 VM system.  UVM's basic structure is based on the
+VM system, and the SunOS4 VM system.
+UVM's basic structure is based on the
 .Bx 4.4
-VM system.  UVM's new anonymous memory system is based on the
+VM system.
+UVM's new anonymous memory system is based on the
 anonymous memory system found in the SunOS4 VM (as described in papers
-published by Sun Microsystems, Inc.).  UVM also includes a number of feature
-new to
+published by Sun Microsystems, Inc.).
+UVM also includes a number of feature new to
 .Bx
 including page loanout, map entry passing, simplified
-copy-on-write, and clustered anonymous memory pageout.  UVM is also
-further documented in a August 1998 dissertation by Charles D. Cranor.
+copy-on-write, and clustered anonymous memory pageout.
+UVM is also further documented in a August 1998 dissertation by
+Charles D. Cranor.
 .Pp
 UVM appeared in
 .Nx 1.4 .
 .Sh AUTHORS
-Charles D. Cranor \*[Lt]chuck@ccrc.wustl.edu\*[Gt] designed and implemented UVM.
+Charles D. Cranor
+.Aq chuck@ccrc.wustl.edu
+designed and implemented UVM.
 .Pp
-Matthew Green \*[Lt]mrg@eterna.com.au\*[Gt] wrote the swap-space management code
-and handled the logistical issues involved with merging UVM into the
+Matthew Green
+.Aq mrg@eterna.com.au
+wrote the swap-space management code and handled the logistical issues
+involved with merging UVM into the
 .Nx
 source tree.
 .Pp
-Chuck Silvers \*[Lt]chuq@chuq.com\*[Gt] implemented the aobj pager, thus allowing
-UVM to support System V shared memory and process swapping.  He also
-designed and implemented the UBC part of UVM, which uses UVM pages to
-cache vnode data rather than the traditional buffer cache buffers.
+Chuck Silvers
+.Aq chuq@chuq.com
+implemented the aobj pager, thus allowing UVM to support System V shared
+memory and process swapping.
+He also designed and implemented the UBC part of UVM, which uses UVM pages
+to cache vnode data rather than the traditional buffer cache buffers.
