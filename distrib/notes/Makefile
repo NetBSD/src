@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 1999/06/30 18:23:02 ross Exp $
+#	$NetBSD: Makefile,v 1.13 2000/03/21 03:58:12 garbled Exp $
 
 TARGETS += release
 
 .ifndef ALLNOTES
+.if exists($MACHINE)
 SUBDIR = ${MACHINE}
+.endif
 .else
 SUBDIR = alpha amiga arm32 atari hp300 i386 mac68k
 SUBDIR+= mvme68k pc532 pmax sparc sun3 vax x68k
