@@ -384,9 +384,9 @@ seaprobe(parent, match, aux)
 		    (void *) (((u_char *)sea->maddr) + 0x1e00);
 		break;
 	default:
-#ifdef DIAGNOSTIC
-		printf("%s: board type unknown at address %p\n",
-		    sea->sc_dev.dv_xname, sea->maddr);
+#ifdef DEBUG
+		printf("%s: board type unknown at address 0x%x\n",
+		    sea->sc_dev.dv_xname, ia->ia_maddr);
 #endif
 		return 0;
 	}
