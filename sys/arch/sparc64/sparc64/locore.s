@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.64 2000/06/24 04:38:21 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.65 2000/06/24 20:48:41 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -54,7 +54,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#define	NO_VCACHE		/* Map w/D$ disabled */
+#undef	NO_VCACHE		/* Map w/D$ disabled */
 #define	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
 #define	TRAPSTATS		/* Count traps */

@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.c,v 1.57 2000/06/24 04:38:20 eeh Exp $	*/
-#undef NO_VCACHE /* Don't forget the locked TLB in dostart */
+/*	$NetBSD: pmap.c,v 1.58 2000/06/24 20:48:44 eeh Exp $	*/
+#undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef	BOOT_DEBUG
 #undef	BOOT1_DEBUG
@@ -559,7 +559,33 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 */
 	kdsize = round_page(ekdata - kdata);
 
-	if (kdatap & (4*MEG-1)) {
+	if (!(kdatap & (4*MEG-1))) {
+		/* We were at a 4MB boundary -- claim the rest */
+		psize_t szdiff = 4*MEG - kdsize;
+
+		/* Claim the rest of the physical page. */
+		newkp = kdatap + kdsize;
+		newkv = kdata + kdsize;
+		if (kdatap != prom_claim_phys(newkp, szdiff)) {
+			prom_printf("pmap_bootstrap: could not claim physical "
+				"dseg extention at %lx size %lx\r\n", newkp, szdiff);
+			goto remap_data;
+		}
+
+		/* And the rest of the virtual page. */
+		if (prom_claim_virt(newkv, szdiff) != newkv)
+			prom_printf("pmap_bootstrap: could not claim virtual "
+				"dseg extention at size %lx\r\n", newkv, szdiff);
+
+		/* Make sure all 4MB are mapped */
+		prom_map_phys(newkp, szdiff, newkv, -1);
+	} else {
+remap_data:
+		/* 
+		 * Either we're not at a 4MB boundary or we can't get the rest
+		 * of the 4MB extension.  We need to move the data segment.
+		 */
+
 #ifdef BOOT1_DEBUG
 		prom_printf("Allocating new %lx kernel data at 4MB boundary\r\n",
 		    (u_long)kdsize);
@@ -598,8 +624,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #if 0
 		/*
 		 * calling the prom will probably require reading part of the
-		 * data segment so we can't do this.  
-		 */
+		 * data segment so we can't do this.  */
 		prom_unmap_virt((vaddr_t)kdatap, kdsize);
 #endif
 		prom_map_phys(newkp, 4*MEG, kdata, -1); 
@@ -617,30 +642,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		prom_printf("pmap_bootstrap: firstaddr is %lx virt (%lx phys)"
 		    "avail for kernel\r\n", (u_long)firstaddr,
 		    (u_long)prom_vtop(firstaddr));
-#endif
-	} else {
-		/* We was at a 4MB boundary after all! */
-#if 1
-		/*
-		 * XXXX should we not overlap?
-		 */
-		prom_map_phys(kdatap, 4*MEG, kdata, -1); 
-#else
-		psize_t szdiff = 4*MEG - kdsize;
-
-		/* Claim the rest of the physical page. */
-		newkp = kdatap + kdsize;
-		newkv = kdata + kdsize;
-		if (kdatap != prom_claim_phys(newkp, szdiff))
-			prom_printf("pmap_bootstrap: could not claim physical "
-				"dseg extention at %lx size %lx\r\n", newkp, szdiff);
-		/* And the rest of the virtual page. */
-		if (prom_claim_virt(newkv, szdiff) != newkv)
-			prom_printf("pmap_bootstrap: could not claim virtual "
-				"dseg extention at size %lx\r\n", newkv, szdiff);
-
-		/* Make sure all 4MB are mapped */
-		prom_map_phys(newkp, szdiff, newkv, -1);
 #endif
 	}
 
@@ -1239,7 +1240,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		if ((vmmap ^ INTSTACK) & VA_ALIAS_MASK) 
 			vmmap += NBPG; /* Matchup virtual color for D$ */
 		intstk = vmmap;
-		cpus = (struct cpu_info *)(vmmap+EINTSTACK-INTSTACK);
+		cpus = (struct cpu_info *)(intstk+EINTSTACK-INTSTACK);
 
 #ifdef BOOT1_DEBUG
 	prom_printf("Inserting cpu_info into pmap_kernel() at %p\r\n", cpus);
@@ -1268,7 +1269,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #endif
 
 		/* Initialize our cpu_info structure */
-		bzero(intstk, 8*NBPG);
+		bzero((void *)intstk, 8*NBPG);
 		cpus->ci_next = NULL; /* Redundant, I know. */
 		cpus->ci_curproc = &proc0;
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
@@ -1505,11 +1506,11 @@ pmap_release(pm)
 						}
 					}
 					vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
-					stxa(&pdir[k], ASI_PHYS_CACHED, NULL);
+					stxa((paddr_t)(long)&pdir[k], ASI_PHYS_CACHED, NULL);
 				}
 			}
 			vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
-			stxa(&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
+			stxa((paddr_t)(long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 		}
 	vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pm->pm_segs));
 	pm->pm_segs = NULL;
@@ -1594,14 +1595,14 @@ pmap_collect(pm)
 					if (!n) {
 						/* Free the damn thing */
 						vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)ptbl));
-						stxa(&pdir[k], ASI_PHYS_CACHED, NULL);
+						stxa((paddr_t)(long)&pdir[k], ASI_PHYS_CACHED, NULL);
 					}
 				}
 			}
 			if (!m) {
 				/* Free the damn thing */
 				vm_page_free1((vm_page_t)PHYS_TO_VM_PAGE((paddr_t)(u_long)pdir));
-				stxa(&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
+				stxa((paddr_t)(long)&pm->pm_segs[i], ASI_PHYS_CACHED, NULL);
 			}
 		}
 	}
