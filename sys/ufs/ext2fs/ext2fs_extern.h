@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.9.2.2 2002/10/18 02:45:45 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.9.2.3 2002/12/11 06:51:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)ffs_extern.h	8.3 (Berkeley) 4/16/94
  * Modified for ext2fs by Manuel Bouyer.
  */
+
+#ifndef _UFS_EXT2FS_EXT2FS_EXTERN_H_
+#define _UFS_EXT2FS_EXT2FS_EXTERN_H_
 
 struct buf;
 struct fid;
@@ -154,3 +157,4 @@ extern int (**ext2fs_vnodeop_p) __P((void *));
 extern int (**ext2fs_specop_p) __P((void *));
 extern int (**ext2fs_fifoop_p) __P((void *));
 
+#endif /* !_UFS_EXT2FS_EXT2FS_EXTERN_H_ */

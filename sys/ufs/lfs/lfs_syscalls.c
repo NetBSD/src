@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.2.11 2002/08/13 02:20:26 nathanw Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.2.12 2002/12/11 06:51:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.11 2002/08/13 02:20:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.2.12 2002/12/11 06:51:45 thorpej Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -129,6 +129,7 @@ extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 
 static int lfs_bmapv(struct proc *, fsid_t *, BLOCK_INFO *, int);
 static int lfs_markv(struct proc *, fsid_t *, BLOCK_INFO *, int);
+static void lfs_fakebuf_iodone(struct buf *);
 
 /*
  * sys_lfs_markv:
@@ -456,7 +457,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 * disk, so they should have the same size as their on-disk
 		 * counterparts.
 		 */
-		obsize = blksize(fs, ip, blkp->bi_lbn);
+		if (blkp->bi_lbn >= 0)
+			obsize = blksize(fs, ip, blkp->bi_lbn);
+		else
+			obsize = fs->lfs_bsize;
 		/* Check for fragment size change */
 		if (blkp->bi_lbn >= 0 && blkp->bi_lbn < NDADDR) {
 			obsize = ip->i_lfs_fragsize[blkp->bi_lbn];
@@ -485,6 +489,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			bp->b_blkno = fsbtodb(fs, blkp->bi_daddr);
 		} else {
 			/* Indirect block */
+			if (blkp->bi_size != fs->lfs_bsize)
+				panic("lfs_markv: partial indirect block?"
+				    " size=%d\n", blkp->bi_size);
 			bp = getblk(vp, blkp->bi_lbn, blkp->bi_size, 0, 0);
 			if (!(bp->b_flags & (B_DONE|B_DELWRI))) { /* B_CACHE */
 				/*
@@ -838,7 +845,10 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			}
 			blkp->bi_daddr = dbtofsb(fs, blkp->bi_daddr);
 			/* Fill in the block size, too */
-			blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
+			if (blkp->bi_lbn >= 0)
+				blkp->bi_size = blksize(fs, ip, blkp->bi_lbn);
+			else
+				blkp->bi_size = fs->lfs_bsize;
 		}
 	}
 	
@@ -1243,12 +1253,36 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	return (0);
 }
 
+static void
+lfs_fakebuf_iodone(struct buf *bp)
+{
+	struct buf *obp = bp->b_saveaddr;
+
+	if (!(obp->b_flags & (B_DELWRI | B_DONE)))
+		obp->b_flags |= B_INVAL;
+	brelse(obp);
+	lfs_callback(bp);
+}
+
 struct buf *
 lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
 {
 	struct buf *bp;
 	int error;
 	
+	struct buf *obp;
+
+	/*
+	 * make corresponding buffer busy to avoid
+	 * reading blocks that isn't written yet.
+	 * it's needed because we'll update metadatas in lfs_updatemeta
+	 * before data pointed by them is actually written to disk.
+	 * XXX no need to allocbuf.
+	 */
+	obp = getblk(vp, lbn, size, 0, 0);
+	if (obp == NULL)
+		panic("lfs_fakebuf: getblk failed");
+
 #ifndef ALLOW_VFLUSH_CORRUPTION
 	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, size);
 	error = copyin(uaddr, bp->b_data, size);
@@ -1256,6 +1290,15 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 		lfs_freebuf(bp);
 		return NULL;
 	}
+	bp->b_saveaddr = obp;
+	KDASSERT(bp->b_iodone == lfs_callback);
+	bp->b_iodone = lfs_fakebuf_iodone;
+
+#ifdef DIAGNOSTIC
+	if (obp->b_flags & B_GATHERED)
+		panic("lfs_fakebuf: gathered bp: %p, ino=%u, lbn=%d",
+		    bp, VTOI(vp)->i_number, lbn);
+#endif
 #else
 	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, 0);
 	bp->b_flags |= B_INVAL;

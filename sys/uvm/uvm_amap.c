@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.30.2.11 2002/09/17 21:24:02 nathanw Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.30.2.12 2002/12/11 06:51:51 thorpej Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.11 2002/09/17 21:24:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.30.2.12 2002/12/11 06:51:51 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -284,21 +284,27 @@ amap_free(amap)
  *    one (thus it can't be shared)
  */
 int
-amap_extend(entry, addsize)
+amap_extend(entry, addsize, flags)
 	struct vm_map_entry *entry;
 	vsize_t addsize;
+	int flags;
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_pageoff;
 	int slotmapped, slotadd, slotneed, slotadded, slotalloc;
+	int slotadj, slotspace;
 #ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
 #endif
-	int *newsl, *newbck, *oldsl, *oldbck;
+	int i, *newsl, *newbck, *oldsl, *oldbck;
 	struct vm_anon **newover, **oldover;
+	int mflag = (flags & AMAP_EXTEND_NOWAIT) ? M_NOWAIT :
+		        (M_WAITOK | M_CANFAIL);
+
 	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "  (entry=0x%x, addsize=0x%x)", entry,addsize,0,0);
+	UVMHIST_LOG(maphist, "  (entry=0x%x, addsize=0x%x, flags=0x%x)",
+	    entry, addsize, flags, 0);
 
 	/*
 	 * first, determine how many slots we need in the amap.  don't
@@ -309,7 +315,16 @@ amap_extend(entry, addsize)
 	amap_lock(amap);
 	AMAP_B2SLOT(slotmapped, entry->end - entry->start); /* slots mapped */
 	AMAP_B2SLOT(slotadd, addsize);			/* slots to add */
-	slotneed = slotoff + slotmapped + slotadd;
+	if (flags & AMAP_EXTEND_FORWARDS) {
+		slotneed = slotoff + slotmapped + slotadd;
+		slotadj = 0;
+		slotspace = 0;
+	}
+	else {
+		slotneed = slotadd + slotmapped;
+		slotadj = slotadd - slotoff;
+		slotspace = amap->am_maxslot - slotmapped;
+	}
 
 	/*
 	 * case 1: we already have enough slots in the map and thus
@@ -317,16 +332,35 @@ amap_extend(entry, addsize)
 	 * adding.
 	 */
 
-	if (amap->am_nslot >= slotneed) {
+	if (flags & AMAP_EXTEND_FORWARDS) {
+		if (amap->am_nslot >= slotneed) {
 #ifdef UVM_AMAP_PPREF
-		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-			amap_pp_adjref(amap, slotoff + slotmapped, slotadd, 1);
-		}
+			if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+				amap_pp_adjref(amap, slotoff + slotmapped,
+				    slotadd, 1);
+			}
 #endif
-		amap_unlock(amap);
-		UVMHIST_LOG(maphist,"<- done (case 1), amap = 0x%x, sltneed=%d",
-		    amap, slotneed, 0, 0);
-		return 0;
+			amap_unlock(amap);
+			UVMHIST_LOG(maphist,
+			    "<- done (case 1f), amap = 0x%x, sltneed=%d",
+			    amap, slotneed, 0, 0);
+			return 0;
+		}
+	} else {
+		if (slotadj <= 0) {
+			slotoff -= slotadd;
+			entry->aref.ar_pageoff = slotoff;
+#ifdef UVM_AMAP_PPREF
+			if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+				amap_pp_adjref(amap, slotoff, slotadd, 1);
+			}
+#endif
+			amap_unlock(amap);
+			UVMHIST_LOG(maphist,
+			    "<- done (case 1b), amap = 0x%x, sltneed=%d",
+			    amap, slotneed, 0, 0);
+			return 0;
+		}
 	}
 
 	/*
@@ -335,27 +369,87 @@ amap_extend(entry, addsize)
 	 */
 
 	if (amap->am_maxslot >= slotneed) {
+		if (flags & AMAP_EXTEND_FORWARDS) {
 #ifdef UVM_AMAP_PPREF
-		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-			if ((slotoff + slotmapped) < amap->am_nslot)
-				amap_pp_adjref(amap, slotoff + slotmapped,
-				    (amap->am_nslot - (slotoff + slotmapped)),
-				    1);
-			pp_setreflen(amap->am_ppref, amap->am_nslot, 1,
-			   slotneed - amap->am_nslot);
-		}
+			if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+				if ((slotoff + slotmapped) < amap->am_nslot)
+					amap_pp_adjref(amap,
+					    slotoff + slotmapped,
+					    (amap->am_nslot -
+					    (slotoff + slotmapped)), 1);
+				pp_setreflen(amap->am_ppref, amap->am_nslot, 1,
+				    slotneed - amap->am_nslot);
+			}
 #endif
-		amap->am_nslot = slotneed;
-		amap_unlock(amap);
+			amap->am_nslot = slotneed;
+			amap_unlock(amap);
 
-		/*
-		 * no need to zero am_anon since that was done at
-		 * alloc time and we never shrink an allocation.
-		 */
+			/*
+			 * no need to zero am_anon since that was done at
+			 * alloc time and we never shrink an allocation.
+			 */
 
-		UVMHIST_LOG(maphist,"<- done (case 2), amap = 0x%x, "
-		    "slotneed=%d", amap, slotneed, 0, 0);
-		return 0;
+			UVMHIST_LOG(maphist,"<- done (case 2f), amap = 0x%x, "
+			    "slotneed=%d", amap, slotneed, 0, 0);
+			return 0;
+		} else {
+#ifdef UVM_AMAP_PPREF
+			if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
+				/*
+				 * Slide up the ref counts on the pages that
+				 * are actually in use.
+				 */
+				memmove(amap->am_ppref + slotspace,
+				    amap->am_ppref + slotoff,
+				    slotmapped * sizeof(int));
+				/*
+				 * Mark the (adjusted) gap at the front as
+				 * referenced/not referenced.
+				 */
+				pp_setreflen(amap->am_ppref,
+				    0, 0, slotspace - slotadd);
+				pp_setreflen(amap->am_ppref,
+				    slotspace - slotadd, 1, slotadd);
+			}
+#endif
+
+			/*
+			 * Slide the anon pointers up and clear out
+			 * the space we just made.
+			 */
+			memmove(amap->am_anon + slotspace,
+			    amap->am_anon + slotoff,
+			    slotmapped * sizeof(struct vm_anon*));
+			memset(amap->am_anon + slotoff, 0,
+			    (slotspace - slotoff) * sizeof(struct vm_anon *));
+
+			/*
+			 * Slide the backpointers up, but don't bother
+			 * wiping out the old slots.
+			 */
+			memmove(amap->am_bckptr + slotspace,
+			    amap->am_bckptr + slotoff,
+			    slotmapped * sizeof(int));
+
+			/*
+			 * Adjust all the useful active slot numbers.
+			 */
+			for (i = 0; i < amap->am_nused; i++)
+				amap->am_slots[i] += (slotspace - slotoff);
+
+			/*
+			 * We just filled all the empty space in the
+			 * front of the amap by activating a few new
+			 * slots.
+			 */
+			amap->am_nslot = amap->am_maxslot;
+			entry->aref.ar_pageoff = slotspace - slotadd;
+			amap_unlock(amap);
+
+			UVMHIST_LOG(maphist,"<- done (case 2b), amap = 0x%x, "
+			    "slotneed=%d", amap, slotneed, 0, 0);
+			return 0;
+		}
 	}
 
 	/*
@@ -369,22 +463,19 @@ amap_extend(entry, addsize)
 	slotalloc = malloc_roundup(slotneed * sizeof(int)) / sizeof(int);
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
-	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		newppref = malloc(slotalloc * sizeof(int), M_UVMAMAP,
-		    M_WAITOK | M_CANFAIL);
-		if (newppref == NULL) {
-			free(amap->am_ppref, M_UVMAMAP);
-			amap->am_ppref = PPREF_NONE;
-		}
-	}
+	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
+		newppref = malloc(slotalloc * sizeof(int), M_UVMAMAP, mflag);
 #endif
-	newsl = malloc(slotalloc * sizeof(int), M_UVMAMAP,
-	    M_WAITOK | M_CANFAIL);
-	newbck = malloc(slotalloc * sizeof(int), M_UVMAMAP,
-	    M_WAITOK | M_CANFAIL);
+	newsl = malloc(slotalloc * sizeof(int), M_UVMAMAP, mflag);
+	newbck = malloc(slotalloc * sizeof(int), M_UVMAMAP, mflag);
 	newover = malloc(slotalloc * sizeof(struct vm_anon *), M_UVMAMAP,
-	    M_WAITOK | M_CANFAIL);
+		    mflag);
 	if (newsl == NULL || newbck == NULL || newover == NULL) {
+#ifdef UVM_AMAP_PPREF
+		if (newppref != NULL) {
+			free(newppref, M_UVMAMAP);
+		}
+#endif
 		if (newsl != NULL) {
 			free(newsl, M_UVMAMAP);
 		}
@@ -404,41 +495,82 @@ amap_extend(entry, addsize)
 	 */
 
 	slotadded = slotalloc - amap->am_nslot;
+	if (!(flags & AMAP_EXTEND_FORWARDS))
+		slotspace = slotalloc - slotmapped;
 
 	/* do am_slots */
 	oldsl = amap->am_slots;
-	memcpy(newsl, oldsl, sizeof(int) * amap->am_nused);
+	if (flags & AMAP_EXTEND_FORWARDS)
+		memcpy(newsl, oldsl, sizeof(int) * amap->am_nused);
+	else
+		for (i = 0; i < amap->am_nused; i++)
+			newsl[i] = oldsl[i] + slotspace - slotoff;
 	amap->am_slots = newsl;
 
 	/* do am_anon */
 	oldover = amap->am_anon;
-	memcpy(newover, oldover, sizeof(struct vm_anon *) * amap->am_nslot);
-	memset(newover + amap->am_nslot, 0, sizeof(struct vm_anon *) *
-	    slotadded);
+	if (flags & AMAP_EXTEND_FORWARDS) {
+		memcpy(newover, oldover,
+		    sizeof(struct vm_anon *) * amap->am_nslot);
+		memset(newover + amap->am_nslot, 0,
+		    sizeof(struct vm_anon *) * slotadded);
+	} else {
+		memcpy(newover + slotspace, oldover + slotoff,
+		    sizeof(struct vm_anon *) * slotmapped);
+		memset(newover, 0,
+		    sizeof(struct vm_anon *) * slotspace);
+	}
 	amap->am_anon = newover;
 
 	/* do am_bckptr */
 	oldbck = amap->am_bckptr;
-	memcpy(newbck, oldbck, sizeof(int) * amap->am_nslot);
+	if (flags & AMAP_EXTEND_FORWARDS)
+		memcpy(newbck, oldbck, sizeof(int) * amap->am_nslot);
+	else
+		memcpy(newbck + slotspace, oldbck + slotoff,
+		    sizeof(int) * slotmapped);
 	amap->am_bckptr = newbck;
 
 #ifdef UVM_AMAP_PPREF
 	/* do ppref */
 	oldppref = amap->am_ppref;
 	if (newppref) {
-		memcpy(newppref, oldppref, sizeof(int) * amap->am_nslot);
-		memset(newppref + amap->am_nslot, 0, sizeof(int) * slotadded);
+		if (flags & AMAP_EXTEND_FORWARDS) {
+			memcpy(newppref, oldppref,
+			    sizeof(int) * amap->am_nslot);
+			memset(newppref + amap->am_nslot, 0,
+			    sizeof(int) * slotadded);
+		} else {
+			memcpy(newppref + slotspace, oldppref + slotoff,
+			    sizeof(int) * slotmapped);
+		}
 		amap->am_ppref = newppref;
-		if ((slotoff + slotmapped) < amap->am_nslot)
+		if ((flags & AMAP_EXTEND_FORWARDS) &&
+		    (slotoff + slotmapped) < amap->am_nslot)
 			amap_pp_adjref(amap, slotoff + slotmapped,
 			    (amap->am_nslot - (slotoff + slotmapped)), 1);
-		pp_setreflen(newppref, amap->am_nslot, 1,
-		    slotneed - amap->am_nslot);
+		if (flags & AMAP_EXTEND_FORWARDS)
+			pp_setreflen(newppref, amap->am_nslot, 1,
+			    slotneed - amap->am_nslot);
+		else {
+			pp_setreflen(newppref, 0, 0,
+			    slotalloc - slotneed);
+			pp_setreflen(newppref, slotalloc - slotneed, 1,
+			    slotneed - slotmapped);
+		}
+	} else {
+		if (amap->am_ppref)
+			amap->am_ppref = PPREF_NONE;
 	}
 #endif
 
 	/* update master values */
-	amap->am_nslot = slotneed;
+	if (flags & AMAP_EXTEND_FORWARDS)
+		amap->am_nslot = slotneed;
+	else {
+		entry->aref.ar_pageoff = slotspace - slotadd;
+		amap->am_nslot = slotalloc;
+	}
 	amap->am_maxslot = slotalloc;
 
 	amap_unlock(amap);
@@ -1039,6 +1171,7 @@ amap_wiperange(amap, slotoff, slots)
 		byanon = TRUE;
 		lcv = slotoff;
 		stop = slotoff + slots;
+		slotend = 0;
 	} else {
 		byanon = FALSE;
 		lcv = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.h,v 1.2.4.4 2002/11/11 22:16:26 nathanw Exp $	*/
+/*	$NetBSD: exec_macho.h,v 1.2.4.5 2002/12/11 06:50:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _SYS_EXEC_MACHO_H_
 #define	_SYS_EXEC_MACHO_H_
+
+#include <sys/param.h>
 
 #include <machine/int_types.h>
 #include <machine/macho_machdep.h>
@@ -102,11 +104,11 @@ struct exec_macho_fat_arch {
 #define	MACHO_CPU_SUBTYPE_486		4
 #define	MACHO_CPU_SUBTYPE_486SX		(4 + 128)
 #define	MACHO_CPU_SUBTYPE_586		5
-#define	MACHO_CPU_SUBTYPE_INTEL(f, m)	(f) + ((m) << 4))
-#define	MACHO_CPU_SUBTYPE_PENT		CPU_SUBTYPE_INTEL(5, 0)
-#define	MACHO_CPU_SUBTYPE_PENTPRO	CPU_SUBTYPE_INTEL(6, 1)
-#define	MACHO_CPU_SUBTYPE_PENTII_M3	CPU_SUBTYPE_INTEL(6, 3)
-#define	MACHO_CPU_SUBTYPE_PENTII_M5	CPU_SUBTYPE_INTEL(6, 5)
+#define	MACHO_CPU_SUBTYPE_INTEL(f, m)	((f) + ((m) << 4))
+#define	MACHO_CPU_SUBTYPE_PENT		MACHO_CPU_SUBTYPE_INTEL(5, 0)
+#define	MACHO_CPU_SUBTYPE_PENTPRO	MACHO_CPU_SUBTYPE_INTEL(6, 1)
+#define	MACHO_CPU_SUBTYPE_PENTII_M3	MACHO_CPU_SUBTYPE_INTEL(6, 3)
+#define	MACHO_CPU_SUBTYPE_PENTII_M5	MACHO_CPU_SUBTYPE_INTEL(6, 5)
 #define	MACHO_CPU_SUBTYPE_INTEL_FAMILY(x)	((x) & 15)
 #define	MACHO_CPU_SUBTYPE_INTEL_FAMILY_MAX	15
 #define	MACHO_CPU_SUBTYPE_INTEL_MODEL(x)	((x) >> 4)
@@ -238,6 +240,12 @@ struct exec_macho_thread_command {
 	u_long	cmdsize;
 	u_long	flavor;
 	u_long	count;
+};
+
+struct exec_macho_emul_arg {
+	char *path;
+	char filename[MAXPATHLEN];
+	struct exec_macho_object_header *macho_hdr;
 };
 
 #ifndef _LKM

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.8.2.1 2002/10/18 02:45:57 nathanw Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.8.2.2 2002/12/11 06:51:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ufsmount.h	8.6 (Berkeley) 3/30/95
  */
+
+#ifndef _UFS_UFS_UFSMOUNT_H_
+#define _UFS_UFS_UFSMOUNT_H_
 
 /*
  * Arguments to mount UFS-based filesystems
@@ -124,3 +127,5 @@ struct ufsmount {
 #define	blkptrtodb(ump, b)		((b) << (ump)->um_bptrtodb)
 #define	is_sequential(ump, a, b)	((b) == (a) + ump->um_seqinc)
 #endif /* _KERNEL */
+
+#endif /* !_UFS_UFS_UFSMOUNT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.15.2.2 2002/08/27 23:48:30 nathanw Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.15.2.3 2002/12/11 06:51:52 thorpej Exp $	*/
 
 /*
  *
@@ -34,9 +34,6 @@
  * from: Id: uvm_amap_i.h,v 1.1.2.4 1998/01/05 18:12:57 chuck Exp
  */
 
-#ifndef _UVM_UVM_AMAP_I_H_
-#define _UVM_UVM_AMAP_I_H_
-
 /*
  * uvm_amap_i.h
  */
@@ -45,8 +42,9 @@
  * if inlines are enabled always pull in these functions, otherwise
  * pull them in only once (when we are compiling uvm_amap.c).
  */
-
 #if defined(UVM_AMAP_INLINE) || defined(UVM_AMAP_C)
+#ifndef _UVM_UVM_AMAP_I_H_
+#define _UVM_UVM_AMAP_I_H_
 
 /*
  * amap_lookup: look up a page in an amap
@@ -283,6 +281,7 @@ amap_unref(amap, offset, len, all)
 	UVMHIST_LOG(maphist,"<- done!", 0, 0, 0, 0);
 }
 
+#endif /* _UVM_UVM_AMAP_I_H_ */
+
 #endif /* defined(UVM_AMAP_INLINE) || defined(UVM_AMAP_C) */
 
-#endif /* _UVM_UVM_AMAP_I_H_ */

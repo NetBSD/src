@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.13.2.12 2002/10/18 02:45:49 nathanw Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.13.2.13 2002/12/11 06:51:41 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.12 2002/10/18 02:45:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.13 2002/12/11 06:51:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -58,16 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.13.2.12 2002/10/18 02:45:49 nathan
 #include <uvm/uvm.h>
 struct pool sdpcpool;
 u_int softdep_lockedbufs;
-
-/*
- * For now we want the safety net that the DIAGNOSTIC and DEBUG flags provide.
- */
-#ifndef DIAGNOSTIC
-#define DIAGNOSTIC
-#endif
-#ifndef DEBUG
-#define DEBUG
-#endif
 
 /*
  * These definitions need to be adapted to the system to which
@@ -344,8 +334,8 @@ sema_get(semap, interlock)
 	struct sema *semap;
 	struct lockit *interlock;
 {
-	int s;
-	
+	int s = 0;	/* Quell an uninitialized variable warning */
+
 	if (semap->value++ > 0) {
 		if (interlock != NULL)
 			s = FREE_LOCK_INTERLOCKED(interlock);
@@ -494,7 +484,8 @@ softdep_freequeue_process(void)
 	(item)->wk_state &= ~ONWORKLIST;	\
 	LIST_REMOVE(item, wk_list);		\
 } while (0)
-#define WORKITEM_FREE(item, type) softdep_freequeue_add(item, type)
+#define WORKITEM_FREE(item, type)		\
+	softdep_freequeue_add((struct worklist *)item)
 
 #else /* DEBUG */
 static	void worklist_insert __P((struct workhead *, struct worklist *));
@@ -563,8 +554,10 @@ static int req_clear_remove;	/* syncer process flush some freeblks */
  */
 static int stat_blk_limit_push;	/* number of times block limit neared */
 static int stat_ino_limit_push;	/* number of times inode limit neared */
+#ifdef DEBUG
 static int stat_blk_limit_hit;	/* number of times block slowdown imposed */
 static int stat_ino_limit_hit;	/* number of times inode slowdown imposed */
+#endif
 static int stat_indir_blk_ptrs;	/* bufs redirtied as indir ptrs not written */
 static int stat_inode_bitmap;	/* bufs redirtied as inode bitmap not written */
 static int stat_direct_blk_ptrs;/* bufs redirtied as direct ptrs not written */
@@ -3197,7 +3190,9 @@ handle_workitem_freefile(freefile)
 {
 	struct vnode vp;
 	struct inode tip;
+#ifdef DEBUG
 	struct inodedep *idp;
+#endif
 	struct vop_vfree_args args;
 	int error;
 
@@ -3390,7 +3385,9 @@ initiate_write_inodeblock(inodedep, bp)
 	struct allocdirect *adp, *lastadp;
 	struct dinode *dp;
 	struct fs *fs = inodedep->id_fs;
+#ifdef DIAGNOSTIC
 	ufs_lbn_t prevlbn = -1;
+#endif
 	int i, deplist;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.39.2.8 2002/06/24 22:12:47 nathanw Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.39.2.9 2002/12/11 06:51:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.39.2.8 2002/06/24 22:12:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.39.2.9 2002/12/11 06:51:53 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -825,6 +825,7 @@ uao_put(uobj, start, stop, flags)
 		PHOLD(curlwp);
 	} else {
 		curoff = start;
+		nextpg = NULL;	/* Quell compiler warning */
 	}
 
 	uvm_lock_pageq();
@@ -952,7 +953,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	voff_t current_offset;
-	struct vm_page *ptmp;
+	struct vm_page *ptmp = NULL;	/* Quell compiler warning */
 	int lcv, gotpages, maxpages, swslot, error, pageidx;
 	boolean_t done;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager_i.h,v 1.10.2.1 2001/06/21 20:10:43 nathanw Exp $	*/
+/*	$NetBSD: uvm_pager_i.h,v 1.10.2.2 2002/12/11 06:51:56 thorpej Exp $	*/
 
 /*
  *
@@ -34,9 +34,6 @@
  * from: Id: uvm_pager_i.h,v 1.1.2.2 1997/10/09 23:05:46 chuck Exp
  */
 
-#ifndef _UVM_UVM_PAGER_I_H_
-#define _UVM_UVM_PAGER_I_H_
-
 /*
  * uvm_pager_i.h
  */
@@ -46,6 +43,9 @@
  */
 
 #if defined(UVM_PAGER_INLINE) || defined(UVM_PAGER)
+
+#ifndef _UVM_UVM_PAGER_I_H_
+#define _UVM_UVM_PAGER_I_H_
 
 /*
  * uvm_pageratop: convert KVAs in the pager map back to their page
@@ -67,6 +67,6 @@ uvm_pageratop(kva)
 	return (pg);
 }
 
-#endif /* defined(UVM_PAGER_INLINE) || defined(UVM_PAGER) */
-
 #endif /* _UVM_UVM_PAGER_I_H_ */
+
+#endif /* defined(UVM_PAGER_INLINE) || defined(UVM_PAGER) */

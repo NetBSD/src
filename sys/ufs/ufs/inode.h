@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.23.2.6 2002/08/01 02:47:06 nathanw Exp $	*/
+/*	$NetBSD: inode.h,v 1.23.2.7 2002/12/11 06:51:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)inode.h	8.9 (Berkeley) 5/14/95
  */
+
+#ifndef _UFS_UFS_INODE_H_
+#define _UFS_UFS_INODE_H_
 
 #include <sys/vnode.h>
 #include <ufs/ufs/dinode.h>
@@ -100,7 +103,6 @@ struct inode {
 	doff_t	  i_endoff;	/* End of useful stuff in directory. */
 	doff_t	  i_diroff;	/* Offset in dir, where we found last entry. */
 	doff_t	  i_offset;	/* Offset of free space in directory. */
-	ino_t	  i_ino;	/* Inode number of found directory. */
 	u_int32_t i_reclen;	/* Size of found directory entry. */
 	int       i_ffs_effnlink;  /* i_nlink when I/O completes */
 	/*
@@ -252,3 +254,5 @@ struct ufid {
 	int32_t	  ufid_gen;	/* Generation number. */
 };
 #endif /* _KERNEL */
+
+#endif /* !_UFS_UFS_INODE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.56.2.6 2002/08/01 02:46:58 nathanw Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.56.2.7 2002/12/11 06:50:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -665,7 +665,10 @@ void	mbinit __P((void));
 struct mbuf *m_aux_add __P((struct mbuf *, int, int));
 struct mbuf *m_aux_find __P((struct mbuf *, int, int));
 void m_aux_delete __P((struct mbuf *, struct mbuf *));
+#endif /* _KERNEL */
+#endif /* !_SYS_MBUF_H_ */
 
+#ifdef _KERNEL
 #ifdef MBTYPES
 const int mbtypes[] = {				/* XXX */
 	M_FREE,		/* MT_FREE	0	should be on free list */
@@ -677,7 +680,8 @@ const int mbtypes[] = {				/* XXX */
 	M_MBUF,		/* MT_CONTROL	6	extra-data protocol message */
 	M_MBUF,		/* MT_OOBDATA	7	expedited data  */
 };
+#undef MBTYPES
+#else
+extern const int mbtypes[];
 #endif /* MBTYPES */
 #endif /* _KERNEL */
-
-#endif /* !_SYS_MBUF_H_ */

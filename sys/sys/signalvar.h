@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.28.2.7 2002/09/06 20:41:46 nathanw Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.28.2.8 2002/12/11 06:50:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -125,75 +125,6 @@ do {									\
 #define	SA_CANTMASK	0x40		/* non-maskable, catchable */
 #define	SA_NORESET	0x80		/* not reset when caught */
 
-#ifdef	SIGPROP
-const int sigprop[NSIG] = {
-	0,				/* 0 unused */
-	SA_KILL,			/* 1 SIGHUP */
-	SA_KILL,			/* 2 SIGINT */
-	SA_KILL|SA_CORE,		/* 3 SIGQUIT */
-	SA_KILL|SA_CORE|SA_NORESET,	/* 4 SIGILL */
-	SA_KILL|SA_CORE|SA_NORESET,	/* 5 SIGTRAP */
-	SA_KILL|SA_CORE,		/* 6 SIGABRT */
-	SA_KILL|SA_CORE,		/* 7 SIGEMT */
-	SA_KILL|SA_CORE,		/* 8 SIGFPE */
-	SA_KILL|SA_CANTMASK,		/* 9 SIGKILL */
-	SA_KILL|SA_CORE,		/* 10 SIGBUS */
-	SA_KILL|SA_CORE,		/* 11 SIGSEGV */
-	SA_KILL|SA_CORE,		/* 12 SIGSYS */
-	SA_KILL,			/* 13 SIGPIPE */
-	SA_KILL,			/* 14 SIGALRM */
-	SA_KILL,			/* 15 SIGTERM */
-	SA_IGNORE,			/* 16 SIGURG */
-	SA_STOP|SA_CANTMASK,		/* 17 SIGSTOP */
-	SA_STOP|SA_TTYSTOP,		/* 18 SIGTSTP */
-	SA_IGNORE|SA_CONT,		/* 19 SIGCONT */
-	SA_IGNORE,			/* 20 SIGCHLD */
-	SA_STOP|SA_TTYSTOP,		/* 21 SIGTTIN */
-	SA_STOP|SA_TTYSTOP,		/* 22 SIGTTOU */
-	SA_IGNORE,			/* 23 SIGIO */
-	SA_KILL,			/* 24 SIGXCPU */
-	SA_KILL,			/* 25 SIGXFSZ */
-	SA_KILL,			/* 26 SIGVTALRM */
-	SA_KILL,			/* 27 SIGPROF */
-	SA_IGNORE,			/* 28 SIGWINCH  */
-	SA_IGNORE,			/* 29 SIGINFO */
-	SA_KILL,			/* 30 SIGUSR1 */
-	SA_KILL,			/* 31 SIGUSR2 */
-	SA_IGNORE|SA_NORESET,		/* 32 SIGPWR */
-	SA_KILL,			/* 33 SIGRTMIN + 0 */
-	SA_KILL,			/* 34 SIGRTMIN + 1 */
-	SA_KILL,			/* 35 SIGRTMIN + 2 */
-	SA_KILL,			/* 36 SIGRTMIN + 3 */
-	SA_KILL,			/* 37 SIGRTMIN + 4 */
-	SA_KILL,			/* 38 SIGRTMIN + 5 */
-	SA_KILL,			/* 39 SIGRTMIN + 6 */
-	SA_KILL,			/* 40 SIGRTMIN + 7 */
-	SA_KILL,			/* 41 SIGRTMIN + 8 */
-	SA_KILL,			/* 42 SIGRTMIN + 9 */
-	SA_KILL,			/* 43 SIGRTMIN + 10 */
-	SA_KILL,			/* 44 SIGRTMIN + 11 */
-	SA_KILL,			/* 45 SIGRTMIN + 12 */
-	SA_KILL,			/* 46 SIGRTMIN + 13 */
-	SA_KILL,			/* 47 SIGRTMIN + 14 */
-	SA_KILL,			/* 48 SIGRTMIN + 15 */
-	SA_KILL,			/* 49 SIGRTMIN + 16 */
-	SA_KILL,			/* 50 SIGRTMIN + 17 */
-	SA_KILL,			/* 51 SIGRTMIN + 18 */
-	SA_KILL,			/* 52 SIGRTMIN + 19 */
-	SA_KILL,			/* 53 SIGRTMIN + 20 */
-	SA_KILL,			/* 54 SIGRTMIN + 21 */
-	SA_KILL,			/* 55 SIGRTMIN + 22 */
-	SA_KILL,			/* 56 SIGRTMIN + 23 */
-	SA_KILL,			/* 57 SIGRTMIN + 24 */
-	SA_KILL,			/* 58 SIGRTMIN + 25 */
-	SA_KILL,			/* 59 SIGRTMIN + 26 */
-	SA_KILL,			/* 60 SIGRTMIN + 27 */
-	SA_KILL,			/* 61 SIGRTMIN + 28 */
-	SA_KILL,			/* 62 SIGRTMIN + 29 */
-	SA_KILL,			/* 63 SIGRTMIN + 30 */
-};
-#endif /* SIGPROP */
-
 #ifdef _KERNEL
 
 extern sigset_t contsigmask, stopsigmask, sigcantmask;
@@ -268,3 +199,77 @@ void	native_sigaltstack_to_sigaltstack13 __P((const struct sigaltstack *,
 	    struct sigaltstack13 *));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */
+
+#ifdef	_KERNEL
+#ifdef	SIGPROP
+const int sigprop[NSIG] = {
+	0,				/* 0 unused */
+	SA_KILL,			/* 1 SIGHUP */
+	SA_KILL,			/* 2 SIGINT */
+	SA_KILL|SA_CORE,		/* 3 SIGQUIT */
+	SA_KILL|SA_CORE|SA_NORESET,	/* 4 SIGILL */
+	SA_KILL|SA_CORE|SA_NORESET,	/* 5 SIGTRAP */
+	SA_KILL|SA_CORE,		/* 6 SIGABRT */
+	SA_KILL|SA_CORE,		/* 7 SIGEMT */
+	SA_KILL|SA_CORE,		/* 8 SIGFPE */
+	SA_KILL|SA_CANTMASK,		/* 9 SIGKILL */
+	SA_KILL|SA_CORE,		/* 10 SIGBUS */
+	SA_KILL|SA_CORE,		/* 11 SIGSEGV */
+	SA_KILL|SA_CORE,		/* 12 SIGSYS */
+	SA_KILL,			/* 13 SIGPIPE */
+	SA_KILL,			/* 14 SIGALRM */
+	SA_KILL,			/* 15 SIGTERM */
+	SA_IGNORE,			/* 16 SIGURG */
+	SA_STOP|SA_CANTMASK,		/* 17 SIGSTOP */
+	SA_STOP|SA_TTYSTOP,		/* 18 SIGTSTP */
+	SA_IGNORE|SA_CONT,		/* 19 SIGCONT */
+	SA_IGNORE,			/* 20 SIGCHLD */
+	SA_STOP|SA_TTYSTOP,		/* 21 SIGTTIN */
+	SA_STOP|SA_TTYSTOP,		/* 22 SIGTTOU */
+	SA_IGNORE,			/* 23 SIGIO */
+	SA_KILL,			/* 24 SIGXCPU */
+	SA_KILL,			/* 25 SIGXFSZ */
+	SA_KILL,			/* 26 SIGVTALRM */
+	SA_KILL,			/* 27 SIGPROF */
+	SA_IGNORE,			/* 28 SIGWINCH  */
+	SA_IGNORE,			/* 29 SIGINFO */
+	SA_KILL,			/* 30 SIGUSR1 */
+	SA_KILL,			/* 31 SIGUSR2 */
+	SA_IGNORE|SA_NORESET,		/* 32 SIGPWR */
+	SA_KILL,			/* 33 SIGRTMIN + 0 */
+	SA_KILL,			/* 34 SIGRTMIN + 1 */
+	SA_KILL,			/* 35 SIGRTMIN + 2 */
+	SA_KILL,			/* 36 SIGRTMIN + 3 */
+	SA_KILL,			/* 37 SIGRTMIN + 4 */
+	SA_KILL,			/* 38 SIGRTMIN + 5 */
+	SA_KILL,			/* 39 SIGRTMIN + 6 */
+	SA_KILL,			/* 40 SIGRTMIN + 7 */
+	SA_KILL,			/* 41 SIGRTMIN + 8 */
+	SA_KILL,			/* 42 SIGRTMIN + 9 */
+	SA_KILL,			/* 43 SIGRTMIN + 10 */
+	SA_KILL,			/* 44 SIGRTMIN + 11 */
+	SA_KILL,			/* 45 SIGRTMIN + 12 */
+	SA_KILL,			/* 46 SIGRTMIN + 13 */
+	SA_KILL,			/* 47 SIGRTMIN + 14 */
+	SA_KILL,			/* 48 SIGRTMIN + 15 */
+	SA_KILL,			/* 49 SIGRTMIN + 16 */
+	SA_KILL,			/* 50 SIGRTMIN + 17 */
+	SA_KILL,			/* 51 SIGRTMIN + 18 */
+	SA_KILL,			/* 52 SIGRTMIN + 19 */
+	SA_KILL,			/* 53 SIGRTMIN + 20 */
+	SA_KILL,			/* 54 SIGRTMIN + 21 */
+	SA_KILL,			/* 55 SIGRTMIN + 22 */
+	SA_KILL,			/* 56 SIGRTMIN + 23 */
+	SA_KILL,			/* 57 SIGRTMIN + 24 */
+	SA_KILL,			/* 58 SIGRTMIN + 25 */
+	SA_KILL,			/* 59 SIGRTMIN + 26 */
+	SA_KILL,			/* 60 SIGRTMIN + 27 */
+	SA_KILL,			/* 61 SIGRTMIN + 28 */
+	SA_KILL,			/* 62 SIGRTMIN + 29 */
+	SA_KILL,			/* 63 SIGRTMIN + 30 */
+};
+#undef	SIGPROP
+#else
+extern const int sigprop[NSIG];
+#endif	/* SIGPROP */
+#endif	/* _KERNEL */

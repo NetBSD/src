@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.50.2.2 2002/11/11 22:16:42 nathanw Exp $	*/
+/*	$NetBSD: tty.h,v 1.50.2.3 2002/12/11 06:50:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -40,13 +40,13 @@
  *	@(#)tty.h	8.7 (Berkeley) 1/9/95
  */
 
-#ifndef _SYS_TTY_H_
-#define _SYS_TTY_H_
-
 #include <sys/termios.h>
 #include <sys/select.h>		/* For struct selinfo. */
 #include <sys/queue.h>
 #include <sys/callout.h>
+
+#ifndef _SYS_TTY_H_
+#define _SYS_TTY_H_
 
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.33.2.4 2002/10/18 02:45:57 nathanw Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.33.2.5 2002/12/11 06:51:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.33.2.4 2002/10/18 02:45:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.33.2.5 2002/12/11 06:51:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ ufs_lookup(v)
 	int nameiop = cnp->cn_nameiop;
 	const int needswap = UFS_MPNEEDSWAP(ap->a_dvp->v_mount);
 	int dirblksiz = DIRBLKSIZ;
+	ino_t foundino;
 	if (UFS_MPISAPPLEUFS(ap->a_dvp->v_mount)) {
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 	}
@@ -343,7 +344,7 @@ searchloop:
 					numdirpasses--;
 					goto notfound;
 				}
-				dp->i_ino = ufs_rw32(ep->d_ino, needswap);
+				foundino = ufs_rw32(ep->d_ino, needswap);
 				dp->i_reclen = ufs_rw16(ep->d_reclen, needswap);
 				goto found;
 			}
@@ -486,14 +487,14 @@ found:
 			dp->i_count = 0;
 		else
 			dp->i_count = dp->i_offset - prevoff;
-		if (dp->i_number == dp->i_ino) {
+		if (dp->i_number == foundino) {
 			VREF(vdp);
 			*vpp = vdp;
 			return (0);
 		}
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
@@ -533,11 +534,11 @@ found:
 		 * Careful about locking second inode.
 		 * This can only occur if the target is ".".
 		 */
-		if (dp->i_number == dp->i_ino)
+		if (dp->i_number == foundino)
 			return (EISDIR);
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
@@ -574,7 +575,7 @@ found:
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -588,11 +589,11 @@ found:
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 		*vpp = tdp;
-	} else if (dp->i_number == dp->i_ino) {
+	} else if (dp->i_number == foundino) {
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
@@ -983,7 +984,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 		/*
 		 * Whiteout entry: set d_ino to WINO.
 		 */
-		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (char **)&ep,
+		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (void *)&ep,
 				     &bp);
 		if (error)
 			return (error);
@@ -993,7 +994,7 @@ ufs_dirremove(dvp, ip, flags, isrmdir)
 	}
 
 	if ((error = VOP_BLKATOFF(dvp,
-	    (off_t)(dp->i_offset - dp->i_count), (char **)&ep, &bp)) != 0)
+	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp)) != 0)
 		return (error);
 
 	if (dp->i_count == 0) {
@@ -1046,7 +1047,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (char **)&ep, &bp);
+	error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(vdp->v_mount));
