@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: bsd_fdintr.s,v 1.1 1995/02/22 21:14:18 pk Exp $
+ *	$NetBSD: bsd_fdintr.s,v 1.2 1995/03/02 20:47:11 pk Exp $
  */
 
 #ifndef FDC_C_HANDLER
@@ -80,6 +80,12 @@ _fdchwintr:
 	set	save_l, %l7
 	std	%l0, [%l7]
 	st	%l2, [%l7 + 8]
+
+	! tally interrupt
+	sethi	%hi(_cnt+V_INTR), %l7
+	ld	[%l7 + %lo(_cnt+V_INTR)], %l6
+	inc	%l6
+	st	%l6, [%l7 + %lo(_cnt+V_INTR)]
 
 	! load fdc, if it's NULL there's nothing to do: schedule soft interrupt
 	sethi	%hi(_fdciop), %l7
