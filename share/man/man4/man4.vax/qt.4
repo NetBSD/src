@@ -1,4 +1,4 @@
-.\"	$NetBSD: qt.4,v 1.1 2003/08/31 11:29:05 ragge Exp $
+.\"	$NetBSD: qt.4,v 1.2 2003/08/31 16:40:33 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to a 10 Mb/s Ethernet network through
+interface provides access to a 10 Mb/s Ethernet network through a
 .Tn DEC DELQA-YM
 .Tn Q-bus
 controller.
@@ -53,16 +53,15 @@ The
 .Nm
 interface employs the address resolution protocol described in
 .Xr arp 4
-to map dynamically  between Internet and Ethernet addresses on the local
+to dynamically map between Internet and Ethernet addresses on the local
 network.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It qt%d: chained packet.
 A packet received from the network was longer than the allowed max length
-and is therefore discarded.  This is usually because a host on the local
-network is behaving badly.
+and is therefore discarded.
+This is usually because a host on the local network is behaving badly.
 .El
-.Pp
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr inet 4 ,
