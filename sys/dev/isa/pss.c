@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.8 1995/07/07 02:19:51 brezak Exp $	*/
+/*	$NetBSD: pss.c,v 1.9 1995/08/12 22:37:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -749,7 +749,7 @@ pss_found:
 	    return 0;
 	}
 	else {
-	    ia->ia_irq = (1<<i);
+	    ia->ia_irq = i;
 	    printf("pss: found IRQ %d free\n", i);
 	}
     }
