@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.8 2000/08/04 08:06:57 enami Exp $	*/
+/*	$NetBSD: chflags.c,v 1.9 2002/07/07 11:44:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chflags.c,v 1.8 2000/08/04 08:06:57 enami Exp $");
+__RCSID("$NetBSD: chflags.c,v 1.9 2002/07/07 11:44:03 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,8 @@ main(argc, argv)
 			fts_options &= ~FTS_PHYSICAL;
 			fts_options |= FTS_LOGICAL;
 		}
-	}
+	} else if (!hflag)
+		fts_options |= FTS_COMFOLLOW;
 
 	flags = *argv;
 	if (*flags >= '0' && *flags <= '7') {
