@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/28 13:37:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2003/12/28 13:40:56 mrg Exp $
 
 PROG=		gzip
 MAN=		gzip.1 gzexe.1 zdiff.1 zforce.1 zmore.1 znew.1
@@ -18,7 +18,7 @@ MLINKS+=	gzip.1 gunzip.1 \
 # XXX missing: zgrep->zegrep zgrep->zfgrep
 LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 		${BINDIR}/gzip ${BINDIR}/gzcat \
-		${BINDIR}/gzip ${BINDIR}/zcat
+		${BINDIR}/gzip ${BINDIR}/zcat \
 		${BINDIR}/zdiff ${BINDIR}/zcmp
 
 .include <bsd.prog.mk>
