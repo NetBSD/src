@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.8 2003/07/08 10:06:30 itojun Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.9 2004/08/23 23:17:54 thorpej Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -27,6 +27,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_AC97VAR_H_
+#define	_DEV_IC_AC97VAR_H_
 
 struct ac97_codec_if;
 
@@ -75,3 +78,5 @@ struct ac97_codec_if {
 };
 
 int ac97_attach __P((struct ac97_host_if *));
+
+#endif /* _DEV_IC_AC97VAR_H_ */
