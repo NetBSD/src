@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.153.2.1 2002/06/04 11:11:59 lukem Exp $	*/
+/*	$NetBSD: pciide.c,v 1.153.2.2 2002/06/10 16:23:56 tv Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153.2.1 2002/06/04 11:11:59 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153.2.2 2002/06/10 16:23:56 tv Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3613,7 +3613,7 @@ pdc202xx_chip_map(sc, pa)
 			st &= ~(PDC_IS_262(sc) ?
 			    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel));
 		pciide_map_compat_intr(pa, cp, channel, interface);
-		pdc202xx_setup_channel(&cp->wdc_channel);
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
 	}
 	if (!PDC_IS_268(sc)) {
 		WDCDEBUG_PRINT(("pdc202xx_setup_chip: new controller state "
