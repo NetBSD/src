@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.84 2002/10/06 12:37:35 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.85 2002/10/06 14:28:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,6 +74,8 @@ struct i386_cache_info {
 #define	CAI_L2CACHE	6		/* Level 2 cache */
 
 #define	CAI_COUNT	7
+
+struct mp_intr_map;
 
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
@@ -151,6 +153,8 @@ struct cpu_info {
 
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
+
+	struct mp_intr_map *ci_lapic_ints[2];
 };
 
 /*
