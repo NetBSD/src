@@ -1,4 +1,4 @@
-/*	$NetBSD: style,v 1.7 1998/02/09 06:58:39 enami Exp $	*/
+/*	$NetBSD: style,v 1.8 1998/09/01 06:51:09 simonb Exp $	*/
 
 /*
  * Style guide for the 4BSD KNF (Kernel Normal Form).
@@ -201,8 +201,8 @@ main(argc, argv)
 }
 
 /*
- * If a function type is declared, it should be on a line
- * by itself preceeding the function.
+ * The function type must be declared on a line by itself
+ * preceeding the function.
  */
 static char *
 function(a1, a2, fl, a4)
