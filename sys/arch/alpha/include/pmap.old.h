@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.26 1998/03/12 06:47:11 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.27 1998/03/17 04:53:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ int	pmap_uses_prom_console __P((void));
 #define	pmap_pte_prot(pte)	(*(pte) & PG_PROT)
 #define	pmap_pte_w(pte)		(*(pte) & PG_WIRED)
 #define	pmap_pte_v(pte)		(*(pte) & PG_V)
+#define	pmap_pte_pv(pte)	(*(pte) & PG_PVLIST)
 
 #define	pmap_pte_set_w(pte, v)						\
 do {									\
