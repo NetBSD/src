@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.9 1995/08/05 16:47:49 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.10 1995/09/23 17:19:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -250,7 +250,8 @@ rdgetinfo(rs)
 	register struct rdminilabel *pi = &rs->sc_pinfo;
 	register struct disklabel *lp = &rdlabel;
 	char *msg, *getdisklabel();
-	int rdstrategy(), i, err;
+	int rdstrategy(), err;
+	size_t i;
 
 	bzero((caddr_t)lp, sizeof *lp);
 	lp->d_secsize = DEV_BSIZE;
@@ -318,14 +319,30 @@ rdopen(f, ctlr, unit, part)
 	return (0);
 }
 
-rdstrategy(devdata, func, dblk, size, buf, rsize)
+rdclose(f)
+	struct open_file *f;
+{
+	struct rd_softc *rs = f->f_devdata;
+
+	/*
+	 * Mark the disk `not alive' so that the disklabel
+	 * will be re-loaded at next open.
+	 */
+	bzero(rs, sizeof(struct rd_softc));
+	f->f_devdata = NULL;
+
+	return (0);
+}
+
+rdstrategy(devdata, func, dblk, size, v_buf, rsize)
 	void *devdata;
 	int func;
 	daddr_t dblk;
-	u_int size;
-	char *buf;
-	u_int *rsize;
+	size_t size;
+	void *v_buf;
+	size_t *rsize;
 {
+	char *buf = v_buf;
 	struct rd_softc *rs = devdata;
 	register int ctlr = rs->sc_ctlr;
 	register int unit = rs->sc_unit;
