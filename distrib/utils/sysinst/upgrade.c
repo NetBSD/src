@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.4.2.2 1997/11/02 20:56:38 mellon Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.4.2.3 1997/11/06 00:50:25 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,12 +40,18 @@
 
 #include <stdio.h>
 #include <curses.h>
+#include <errno.h>
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-/* Do the system upgrade. */
+/*
+ * local prototypes
+ */
+void check_prereqs(void);
+int save_etc(void);
 
+/* Do the system upgrade. */
 void do_upgrade(void)
 {
 	doingwhat = msg_string (MSG_upgrade);
@@ -63,13 +69,78 @@ void do_upgrade(void)
 	if (!fsck_disks())
 		return;
 
-	/* Move /mnt/etc /mnt/etc.old so old stuff isn't overwritten. */
-	run_prog ("/bin/mv /mnt/etc /mnt/etc.old");
+	  /* Move /mnt/etc /mnt/etc.old so old stuff isn't overwritten. */
+	if (save_etc())
+		return;
+
 
 	/* Do any md updating of the file systems ... e.g. bootblocks,
 	   copy file systems ... */
 	if (!md_update ())
 		return;
 
+	/* Done with disks. Ready to get and unpack tarballs. */
+	msg_display(MSG_disksetupdone);
+	process_menu (MENU_ok);
+
 	get_and_unpack_sets(MSG_upgrcomplete, MSG_abortupgr);
+
+	sanity_check();
+}
+
+/*
+ * save target /etc files.
+ * if target /etc.old exists, print a warning message and give up.
+ * otherwise move /etc into target /etc.old, and then copy
+ * back files we might want during the installation --  in case 
+ * we are upgrading the target root.
+ */
+int save_etc(void)
+{
+
+	if (target_verify_file("/etc.old") == 0) {
+		msg_display(MSG_etc_oldexists);
+		process_menu (MENU_ok);
+		return EEXIST;
+	}
+
+#ifdef DEBUG
+	printf("saving /etc as /etc.old...");
+#endif
+
+	/* Move /mnt/etc /mnt/etc.old so old stuff isn't overwritten. */
+	mv_within_target_or_die ("/etc", "/etc.old");
+
+	/* now make an /etc that should let the user reboot */
+	make_target_dir("/etc");
+
+#ifdef DEBUG
+	printf("Copying essential files back into new /etc...");
+#endif
+	/* essential stuff */
+	cp_within_target("/etc.old/ld.so.cache", "/etc/");
+	cp_within_target("/etc.old/ld.so.conf", "/etc/");
+	cp_within_target("/etc.old/resolv.conf", "/etc/");
+
+	/* 
+	 * do NOT create fstab so that restarting an incomplete
+	 * upgrade (eg., after power failure) will fail, and
+	 * force the user to check and restore their old /etc.
+	 */
+
+	/* general config */
+	cp_within_target("/etc.old/rc", "/etc/");
+	cp_within_target("/etc.old/rc.conf", "/etc/");
+	cp_within_target("/etc.old/rc.local", "/etc/");
+
+	/* network config */
+	cp_within_target("/etc.old/ifconfig.*", "/etc/");
+	cp_within_target("/etc.old/myname", "/etc/");
+	cp_within_target("/etc.old/mygate", "/etc/");
+	cp_within_target("/etc.old/defaultdomain", "/etc/");
+
+	/* old-style network config */
+	cp_within_target("/etc.old/hostname.*", "/etc/");
+
+	return 0;
 }
