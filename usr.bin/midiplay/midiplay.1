@@ -1,4 +1,4 @@
-.\" $NetBSD: midiplay.1,v 1.12 2002/09/30 11:09:05 grant Exp $
+.\" $NetBSD: midiplay.1,v 1.13 2003/02/17 18:00:27 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Os
 .Sh NAME
 .Nm midiplay
-.Nd play MIDI files
+.Nd play MIDI and RMID files
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar devno
@@ -53,9 +53,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-command plays MIDI files using the sequencer device.
+command plays MIDI and RMID files using the sequencer device.
 If no file name is given it will play from standard input, otherwise
 it will play the named files.
+.Pp
+RMID files are Standard MIDI Files embedded in a RIFF container and
+can usually be found with the 'rmi' extension. They contain some
+additionnal information in other chunks which are not parsed by
+.Nm
+yet.
 .Pp
 The program accepts the following options:
 .Bl -tag -width Fl
