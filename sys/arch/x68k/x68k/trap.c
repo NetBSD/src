@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1997/09/12 08:19:02 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 1997/10/10 17:46:09 oki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,6 +81,7 @@ extern struct emul emul_sunos;
 int	writeback __P((struct frame *fp, int docachepush));
 void	trap __P((int type, u_int code, u_int v, struct frame frame));
 void	syscall __P((register_t code, struct frame frame));
+void	child_return __P((struct proc *, struct frame));
 
 #if defined(M68040) || defined(M68060)
 #ifdef DEBUG
@@ -174,8 +175,8 @@ int mmupid = -1;
  */
 static inline void
 userret(p, fp, oticks, faultaddr, fromtrap)
-	register struct proc *p;
-	register struct frame *fp;
+	struct proc *p;
+	struct frame *fp;
 	u_quad_t oticks;
 	u_int faultaddr;
 	int fromtrap;
@@ -256,12 +257,12 @@ void
 trap(type, code, v, frame)
 	int type;
 	unsigned code;
-	register unsigned v;
+	unsigned v;
 	struct frame frame;
 {
 	extern char fubail[], subail[];
-	register struct proc *p;
-	register int i, s;
+	struct proc *p;
+	int i, s;
 	u_int ucode;
 	u_quad_t sticks;
 
@@ -561,9 +562,9 @@ trap(type, code, v, frame)
 
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
+		vm_offset_t va;
+		struct vmspace *vm = p->p_vmspace;
+		vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
 		extern vm_map_t kernel_map;
@@ -692,8 +693,8 @@ writeback(fp, docachepush)
 	struct frame *fp;
 	int docachepush;
 {
-	register struct fmt7 *f = &fp->f_fmt7;
-	register struct proc *p = curproc;
+	struct fmt7 *f = &fp->f_fmt7;
+	struct proc *p = curproc;
 	int err = 0;
 	u_int fa;
 	caddr_t oonfault = p->p_addr->u_pcb.pcb_onfault;
@@ -776,8 +777,8 @@ writeback(fp, docachepush)
 		 * Writeback #1.
 		 * Position the "memory-aligned" data and write it out.
 		 */
-		register u_int wb1d = f->f_wb1d;
-		register int off;
+		u_int wb1d = f->f_wb1d;
+		int off;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -921,7 +922,7 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 static void
 dumpssw(ssw)
-	register u_short ssw;
+	u_short ssw;
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -952,7 +953,7 @@ dumpwb(num, s, a, d)
 	u_short s;
 	u_int a, d;
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	vm_offset_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
@@ -977,9 +978,9 @@ syscall(code, frame)
 	register_t code;
 	struct frame frame;
 {
-	register caddr_t params;
-	register struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	struct sysent *callp;
+	struct proc *p;
 	int error, opc, nsys;
 	size_t argsize;
 	register_t args[8], rval[2];
