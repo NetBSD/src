@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.1 2002/09/09 06:40:42 simonb Exp $ */
+/* $NetBSD: disksubr.c,v 1.2 2003/03/19 03:05:43 simonb Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -41,7 +41,7 @@
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.
