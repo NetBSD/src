@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.55 1998/05/02 04:21:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.56 1998/05/02 04:23:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,8 +114,6 @@
 int	tcprexmtthresh = 3;
 struct	tcpiphdr tcp_saveti;
 
-int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
-
 extern u_long sb_max;
 
 #endif /* TUBA_INCLUDE */
@@ -124,6 +122,8 @@ extern u_long sb_max;
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
+
+int	tcp_ack_on_push = 0;	/* set to enable immediate ACK-on-PUSH */
 
 /*
  * Macro to compute ACK transmission behavior.  Delay the ACK unless
