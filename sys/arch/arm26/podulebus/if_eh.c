@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.4 2000/12/18 00:46:47 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.5 2000/12/20 00:01:56 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.4 2000/12/18 00:46:47 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.5 2000/12/20 00:01:56 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -157,14 +157,14 @@ eh_match(struct device *parent, struct cfdata *cf, void *aux)
 static int media_only2[] = { IFM_ETHER | IFM_10_2 };
 static int media_onlyt[] = { IFM_ETHER | IFM_10_T };
 static int media_2andt[] =
-    { IFM_ETHER | IFM_10_2, IFM_ETHER | IFM_10_T, IFM_ETHER | IFM_AUTO };
+    { IFM_ETHER | IFM_10_2, IFM_ETHER | IFM_10_T, /* IFM_ETHER | IFM_AUTO */ };
 static const struct {
 	int nmedia;
 	int *media;
 } media_switch[] = {
 	{ 1, media_only2 },
 	{ 1, media_onlyt },
-	{ 3, media_2andt }
+	{ 2, media_2andt }
 };
 
 static void
@@ -173,7 +173,7 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	struct podulebus_attach_args *pa = aux;
 	struct eh_softc *sc = (struct eh_softc *)self;
 	struct dp8390_softc *dsc = &sc->sc_dp;
-	int *media;
+	int *media, defmedia;
 	int mediaset, nmedia;
 	int i;
 	char eatext[18];
@@ -250,6 +250,12 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ctrl = 0x00;
 
+	if ((bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0) &
+	    EH_CTRL2_10B2))
+		defmedia = IFM_ETHER | IFM_10_2;
+	else
+		defmedia = IFM_ETHER | IFM_10_T;
+
 	if (!(sc->sc_flags & EHF_MAU))
 		mediaset = eh_availmedia(sc);
 	else
@@ -264,6 +270,10 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case EH_MEDIA_2_T:
 		printf(", combo 10base2/T");
+		if (defmedia == (IFM_ETHER | IFM_10_2))
+			printf(" (using 10base2)");
+		else
+			printf(" (using 10baseT)");
 		break;
 	}
 	media = media_switch[mediaset].media;
@@ -758,6 +768,7 @@ eh_mediachange(struct dp8390_softc *dsc)
 	struct ifmedia *ifm = &dsc->sc_media;
 
 	switch (IFM_SUBTYPE(ifm->ifm_cur->ifm_media)) {
+#if 0 /* Not currently working */
 	case IFM_AUTO:
 		/* Auto-media logic from Linux */
 		sc->sc_ctrl |= EH_CTRL_MEDIA;
@@ -767,6 +778,7 @@ eh_mediachange(struct dp8390_softc *dsc)
 		    EH_CTRL_LINK)
 			break;
 		/* FALLTHROUGH */
+#endif
 	case IFM_10_2:
 		sc->sc_ctrl &= ~EH_CTRL_MEDIA;
 		bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
