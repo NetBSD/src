@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_prot.h,v 1.11 1998/02/11 23:07:40 lukem Exp $	*/
+/*	$NetBSD: yp_prot.h,v 1.12 1998/07/27 12:21:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -130,23 +130,23 @@ struct ypreq_xfr {
 #define ypxfr_owner	map_parms.owner
 
 struct ypresp_val {
-	int status;
+	unsigned int status;
 	datum valdat;
 };
 
 struct ypresp_key_val {
-	int status;
+	unsigned int status;
 	datum keydat;
 	datum valdat;
 };
 
 struct ypresp_master {
-	int status;
+	unsigned int status;
 	char *master;
 };
 
 struct ypresp_order {
-	int status;
+	unsigned int status;
 	unsigned int ordernum;
 };
 
@@ -156,7 +156,7 @@ struct ypmaplist {
 };
 
 struct ypresp_maplist {
-	int status;
+	unsigned int status;
 	struct ypmaplist *list;
 };
 
@@ -175,17 +175,17 @@ struct ypresp_maplist {
 #define YPPROC_MAPLIST		((unsigned long)11)
 
 /* ypserv procedure return status values */
-#define YP_TRUE	 	((int)1)	/* general purpose success code */
-#define YP_NOMORE 	((int)2)	/* no more entries in map */
-#define YP_FALSE 	((int)0)	/* general purpose failure code */
-#define YP_NOMAP 	((int)-1)	/* no such map in domain */
-#define YP_NODOM 	((int)-2)	/* domain not supported */
-#define YP_NOKEY 	((int)-3)	/* no such key in map */
-#define YP_BADOP 	((int)-4)	/* invalid operation */
-#define YP_BADDB 	((int)-5)	/* server data base is bad */
-#define YP_YPERR 	((int)-6)	/* YP server error */
-#define YP_BADARGS 	((int)-7)	/* request arguments bad */
-#define YP_VERS		((int)-8)	/* YP server version mismatch */
+#define YP_TRUE	 	((unsigned int)1)	/* general purpose success code */
+#define YP_NOMORE 	((unsigned int)2)	/* no more entries in map */
+#define YP_FALSE 	((unsigned int)0)	/* general purpose failure code */
+#define YP_NOMAP 	((unsigned int)-1)	/* no such map in domain */
+#define YP_NODOM 	((unsigned int)-2)	/* domain not supported */
+#define YP_NOKEY 	((unsigned int)-3)	/* no such key in map */
+#define YP_BADOP 	((unsigned int)-4)	/* invalid operation */
+#define YP_BADDB 	((unsigned int)-5)	/* server data base is bad */
+#define YP_YPERR 	((unsigned int)-6)	/* YP server error */
+#define YP_BADARGS 	((unsigned int)-7)	/* request arguments bad */
+#define YP_VERS		((unsigned int)-8)	/* YP server version mismatch */
 
 /*
  * Sun's header file says:
@@ -294,22 +294,22 @@ struct yppushresp_xfr {
 };
 
 /* yppush status value in yppushresp_xfr.status */
-#define YPPUSH_SUCC	((int)1)	/* Success */
-#define YPPUSH_AGE	((int)2)	/* Master's version not newer */
-#define YPPUSH_NOMAP 	((int)-1)	/* Can't find server for map */
-#define YPPUSH_NODOM 	((int)-2)	/* Domain not supported */
-#define YPPUSH_RSRC 	((int)-3)	/* Local resouce alloc failure */
-#define YPPUSH_RPC 	((int)-4)	/* RPC failure talking to server */
-#define YPPUSH_MADDR	((int)-5)	/* Can't get master address */
-#define YPPUSH_YPERR 	((int)-6)	/* YP server/map db error */
-#define YPPUSH_BADARGS 	((int)-7)	/* Request arguments bad */
-#define YPPUSH_DBM	((int)-8)	/* Local dbm operation failed */
-#define YPPUSH_FILE	((int)-9)	/* Local file I/O operation failed */
-#define YPPUSH_SKEW	((int)-10)	/* Map version skew during transfer */
-#define YPPUSH_CLEAR	((int)-11)	/* Can't send "Clear" req to local ypserv */
-#define YPPUSH_FORCE	((int)-12)	/* No local order number in map - use -f */
-#define YPPUSH_XFRERR	((int)-13)	/* ypxfr error */
-#define YPPUSH_REFUSED	((int)-14)	/* Transfer request refused by ypserv */
+#define YPPUSH_SUCC	((unsigned int)1)	/* Success */
+#define YPPUSH_AGE	((unsigned int)2)	/* Master's version not newer */
+#define YPPUSH_NOMAP 	((unsigned int)-1)	/* Can't find server for map */
+#define YPPUSH_NODOM 	((unsigned int)-2)	/* Domain not supported */
+#define YPPUSH_RSRC 	((unsigned int)-3)	/* Local resouce alloc failure */
+#define YPPUSH_RPC 	((unsigned int)-4)	/* RPC failure talking to server */
+#define YPPUSH_MADDR	((unsigned int)-5)	/* Can't get master address */
+#define YPPUSH_YPERR 	((unsigned int)-6)	/* YP server/map db error */
+#define YPPUSH_BADARGS 	((unsigned int)-7)	/* Request arguments bad */
+#define YPPUSH_DBM	((unsigned int)-8)	/* Local dbm operation failed */
+#define YPPUSH_FILE	((unsigned int)-9)	/* Local file I/O operation failed */
+#define YPPUSH_SKEW	((unsigned int)-10)	/* Map version skew during transfer */
+#define YPPUSH_CLEAR	((unsigned int)-11)	/* Can't send "Clear" req to local ypserv */
+#define YPPUSH_FORCE	((unsigned int)-12)	/* No local order number in map - use -f */
+#define YPPUSH_XFRERR	((unsigned int)-13)	/* ypxfr error */
+#define YPPUSH_REFUSED	((unsigned int)-14)	/* Transfer request refused by ypserv */
 
 struct ypall_callback;
 
