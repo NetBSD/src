@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.94 2003/07/27 20:25:07 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.95 2003/08/30 17:12:49 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -279,7 +279,7 @@ int
 md_post_newfs(void)
 {
 	int ret;
-	int len;
+	size_t len;
 	int td, sd;
 	char bootxx[8192 + 4];
 	static struct i386_boot_params boottype =
@@ -609,7 +609,10 @@ md_init(void)
 {
 
 	/* Default to install same type of kernel as we are running */
-	sets_selected = (sets_selected & ~SET_KERNEL) | get_bootmodel();
+	sets_selected = (sets_selected & ~SET_KERNEL);
+#if defined(__i386)
+	sets_selected |= get_bootmodel();
+#endif
 }
 
 void
