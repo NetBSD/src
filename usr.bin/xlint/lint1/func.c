@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.11 1998/10/10 20:51:48 itohy Exp $	*/
+/*	$NetBSD: func.c,v 1.12 1998/11/23 14:37:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: func.c,v 1.11 1998/10/10 20:51:48 itohy Exp $");
+__RCSID("$NetBSD: func.c,v 1.12 1998/11/23 14:37:08 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1230,6 +1230,9 @@ void
 linted(n)
 	int	n;
 {
+#ifdef DEBUG
+	printf("%s, %d: nowarn = 1\n", curr_pos.p_file, curr_pos.p_line);
+#endif
 	nowarn = 1;
 }
 
