@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.98 2000/03/27 07:39:48 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.99 2000/03/27 08:01:09 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -975,9 +975,6 @@ uhci_add_bulk(sc, sqh)
 	sc->sc_bulk_end = sqh;
 }
 
-void fooo(void);
-void fooo() { }
-
 /* Remove bulk QH, called at splusb(). */
 void
 uhci_remove_bulk(sc, sqh)
@@ -1043,7 +1040,6 @@ uhci_intr(arg)
 		printf("%s: host controller halted\n", 
 		       USBDEVNAME(sc->sc_bus.bdev));
 		sc->sc_dying = 1;
-		fooo();
 	}
 
 	if (ack)	/* acknowledge the ints */
