@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.12 2002/08/14 18:50:48 soren Exp $
+.\"     $NetBSD: vnodeops.9,v 1.13 2002/10/14 05:05:02 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -869,9 +869,9 @@ is the locked vnode of the directory to remove.  The argument
 .Fa cnp
 is the pathname component of the directory.  Zero is returned on
 success, otherwise an error code is returned.  Both
-.Fn dvp
+.Fa dvp
 and
-.Fn vp
+.Fa vp
 should be locked on entry and remain locked on return.
 .It Fn VOP_SYMLINK "dvp" "vpp" "cnp" "vap" "target"
 Create a symbolic link in a given directory.  The argument
