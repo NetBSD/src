@@ -1,4 +1,4 @@
-/*	$NetBSD: print-pppoe.c,v 1.2 2001/04/29 10:27:03 martin Exp $	*/
+/*	$NetBSD: print-pppoe.c,v 1.3 2001/05/06 07:57:08 tron Exp $	*/
 
 /*
  * Copied from print-ppp.c, slightly modified to work with the temporary
@@ -32,7 +32,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ppp.c,v 1.26 97/06/12 14:21:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.2 2001/04/29 10:27:03 martin Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.3 2001/05/06 07:57:08 tron Exp $");
 #endif
 #endif
 
@@ -73,16 +73,23 @@ struct rtentry;
 #define PPP_SHORT_HDRLEN	2
 
 /* PPPoE printer */
+
 void
 pppoe_if_print(u_char *user, const struct pcap_pkthdr *h,
 	     register const u_char *p)
 {
 	register u_int length = h->len;
 	register u_int caplen = h->caplen;
-	const struct ip *ip;
-	u_int proto;
 
 	ts_print(&h->ts);
+	pppoe_encap_print(p, length, caplen);
+}
+
+void
+pppoe_encap_print(const u_char *p, u_int length, u_int caplen)
+{
+	const struct ip *ip;
+	u_int proto;
 
 	if (caplen < PPPOE_HDRLEN+PPP_SHORT_HDRLEN) {
 		printf("[|pppoe]");
