@@ -32,15 +32,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bcopy.S,v 1.3 1993/12/10 10:45:18 mycroft Exp $
+ *	$Id: bcopy.S,v 1.4 1994/03/12 01:39:56 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: bcopy.S,v 1.3 1993/12/10 10:45:18 mycroft Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: bcopy.S,v 1.4 1994/03/12 01:39:56 jtc Exp $")
+#endif
 
 	/*
 	 * (ov)bcopy (src,dst,cnt)
