@@ -1,4 +1,4 @@
-/* $NetBSD: chksum.h,v 1.3 1999/02/16 23:34:11 is Exp $ */
+/* $NetBSD: chksum.h,v 1.4 2002/01/26 13:17:12 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,5 +38,5 @@
 
 #define CHKSUMOFFS 1
 
-u_int32_t chksum __P((u_int32_t *, int));
+u_int32_t chksum(u_int32_t *, int);
 
