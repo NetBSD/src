@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.22 2001/11/22 00:57:14 augustss Exp $ */
+/* $NetBSD: wsmouse.c,v 1.22.8.1 2002/05/16 04:54:52 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.22 2001/11/22 00:57:14 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.22.8.1 2002/05/16 04:54:52 gehenna Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -161,7 +161,16 @@ struct cfattach wsmouse_ca = {
 extern struct cfdriver wsmouse_cd;
 #endif /* NWSMOUSE > 0 */
 
-cdev_decl(wsmouse);
+dev_type_open(wsmouseopen);
+dev_type_close(wsmouseclose);
+dev_type_read(wsmouseread);
+dev_type_ioctl(wsmouseioctl);
+dev_type_poll(wsmousepoll);
+
+const struct cdevsw wsmouse_cdevsw = {
+	wsmouseopen, wsmouseclose, wsmouseread, nowrite, wsmouseioctl,
+	nostop, notty, wsmousepoll, nommap,
+};
 
 #if NWSMUX > 0
 struct wssrcops wsmouse_srcops = {
@@ -270,9 +279,7 @@ wsmouse_detach(struct device  *self, int flags)
 	}
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsmouseopen)
-			break;
+	maj = cdevsw_lookup_major(&wsmouse_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
