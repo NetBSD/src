@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.10 2004/11/13 08:08:22 kent Exp $	*/
+/*	$NetBSD: auconv.h,v 1.11 2004/12/06 13:28:34 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ struct audio_format {
 #define	AUFMT_IS_VALID(fmt)	(((fmt)->mode & 0x80000000) == 0)
 
 struct audio_encoding_set;
+struct audio_params;
 extern int auconv_set_converter(const struct audio_format *, int,
 				int, struct audio_params *, int);
 extern int auconv_create_encodings(const struct audio_format *, int,
