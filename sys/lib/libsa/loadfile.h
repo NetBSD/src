@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.1 1999/04/28 09:08:50 christos Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.2 2001/10/31 01:51:43 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,21 @@
 #define	COUNT_HDR	0x2000
 #define COUNT_ALL	0x3f00
 
-int loadfile __P((const char *, u_long *, int));
+int	loadfile(const char *, u_long *, int);
 
 #include "machine/loadfile_machdep.h"
+
+#ifdef BOOT_ECOFF
+#include <sys/exec_ecoff.h>
+int	loadfile_coff(int, struct ecoff_exechdr *, u_long *, int);
+#endif
+
+#ifdef BOOT_ELF
+#include <sys/exec_elf.h>
+int	loadfile_elf(int, Elf_Ehdr *, u_long *, int);
+#endif
+
+#ifdef BOOT_AOUT
+#include <sys/exec_aout.h>
+int	loadfile_aout(int, struct exec *, u_long *, int);
+#endif
