@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.7 2003/06/29 22:30:05 fvdl Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.8 2003/07/14 15:47:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,6 +43,9 @@
  * configuration data on the component disks, with the BIOS supporting
  * booting from the RAID volumes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.8 2003/07/14 15:47:02 lukem Exp $");
 
 #include "rnd.h"
 

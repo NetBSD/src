@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.1 2002/11/07 21:57:01 martin Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.2 2003/07/14 15:47:24 lukem Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  */
 
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.2 2003/07/14 15:47:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

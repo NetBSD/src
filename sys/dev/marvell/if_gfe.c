@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.11 2003/06/12 19:18:02 scw Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.12 2003/07/14 15:47:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
 /*
  * if_gfe.c -- GT ethernet MAC driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.12 2003/07/14 15:47:17 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcctwo.c,v 1.4 2002/10/02 16:34:26 thorpej Exp $	*/
+/*	$NetBSD: clock_pcctwo.c,v 1.5 2003/07/14 15:47:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * the Memory Controller ASIC (MCchip, and the Mostek clock chip found
  * on the MVME-1[67]7, MVME-1[67]2 and MVME-187 series of boards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock_pcctwo.c,v 1.5 2003/07/14 15:47:19 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.7 2003/06/29 22:30:50 fvdl Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.8 2003/07/14 15:47:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,6 +42,9 @@
  * power management is largely a policy issue.  This merely provides
  * for power management event notification to that daemon.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.8 2003/07/14 15:47:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>

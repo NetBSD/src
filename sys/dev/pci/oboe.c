@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.13 2003/06/29 22:30:26 fvdl Exp $	*/
+/*	$NetBSD: oboe.c,v 1.14 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -43,6 +43,9 @@
  *
  * Based on information from the Linux driver, thus the magic hex numbers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.14 2003/07/14 15:47:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.14 2003/06/29 22:30:25 fvdl Exp $	*/
+/*	$NetBSD: machfb.c,v 1.15 2003/07/14 15:47:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,6 +32,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.15 2003/07/14 15:47:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: oosiop.c,v 1.1 2003/04/06 09:48:43 tsutsui Exp $	*/
+/*	$NetBSD: oosiop.c,v 1.2 2003/07/14 15:47:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -33,6 +33,9 @@
  *   - More better error handling.
  *   - Implement tagged queuing.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: oosiop.c,v 1.2 2003/07/14 15:47:12 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

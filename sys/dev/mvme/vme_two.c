@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.1 2002/02/12 20:38:50 scw Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.2 2003/07/14 15:47:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * VME support specific to the VMEchip2 found on all high-end MVME boards
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.2 2003/07/14 15:47:21 lukem Exp $");
 
 #include "vmetwo.h"
 

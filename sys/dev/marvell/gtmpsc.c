@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.8 2003/06/12 19:16:18 scw Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.9 2003/07/14 15:47:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -43,6 +43,9 @@
  *
  * creation	Mon Apr  9 19:40:15 PDT 2001	cliff
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.9 2003/07/14 15:47:17 lukem Exp $");
 
 #include "opt_kgdb.h"
 

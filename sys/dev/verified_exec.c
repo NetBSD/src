@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.3 2003/06/29 22:30:03 fvdl Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.4 2003/07/14 15:47:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -28,6 +28,9 @@
  *
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.4 2003/07/14 15:47:04 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

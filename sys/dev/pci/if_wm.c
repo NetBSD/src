@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.37 2003/04/29 01:15:38 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.38 2003/07/14 15:47:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,6 +47,9 @@
  *	- Jumbo frames -- requires changes to network stack due to
  *	  lame buffer length handling on chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.38 2003/07/14 15:47:25 lukem Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

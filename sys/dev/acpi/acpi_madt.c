@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.5 2003/05/11 21:21:16 fvdl Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.6 2003/07/14 15:47:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_madt.c,v 1.6 2003/07/14 15:47:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.7 2002/10/02 03:10:46 thorpej Exp $ */
+/* $NetBSD: aztech.c,v 1.8 2003/07/14 15:47:16 lukem Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -37,6 +37,9 @@
  * Philips TEA5712T AM/FM Stereo DTS Radio:
  *     http://www.semiconductors.philips.com/pip/TEA5712
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aztech.c,v 1.8 2003/07/14 15:47:16 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -3,6 +3,10 @@
  *
  * written by Iain Hibbert <plunky@rya-online.net>
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_bsdcomp.c,v 1.2 2003/07/14 15:47:31 lukem Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>

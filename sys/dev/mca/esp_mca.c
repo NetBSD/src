@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.6 2002/10/02 16:34:09 thorpej Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.7 2003/07/14 15:47:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * from Tymm Twillman <tymm@computer.org>'s Linux MCA NC53c90 driver,
  * in drivers/scsi/mca_53c9x.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.7 2003/07/14 15:47:18 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwiso.c,v 1.2 2003/01/05 08:11:33 jmc Exp $	*/
+/*	$NetBSD: fwiso.c,v 1.3 2003/07/14 15:47:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 and 2002
@@ -27,6 +27,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwiso.c,v 1.3 2003/07/14 15:47:13 lukem Exp $");
 
 #include "fwiso.h"
 
