@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.81 2000/11/15 01:02:17 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.82 2000/11/26 11:08:58 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1953,14 +1953,24 @@ tlp_power(why, arg)
 	int s;
 
 	s = splnet();
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		tlp_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
-	} else if (ifp->if_flags & IFF_UP) {
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		tlp_init(ifp);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, why);
+			tlp_init(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }
