@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.14 2001/01/04 01:53:24 jwise Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.15 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.14 2001/01/04 01:53:24 jwise Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.15 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
-#include "driver.h"
 #include <stdlib.h>
+#include "extern.h"
+#include "driver.h"
 
 #define couldwin(f,t) (f->specs->crew2 > t->specs->crew2 * 1.5)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.8 2001/01/04 02:43:32 jwise Exp $	*/
+/*	$NetBSD: misc.c,v 1.9 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.8 2001/01/04 02:43:32 jwise Exp $");
+__RCSID("$NetBSD: misc.c,v 1.9 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
-#include <fcntl.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "extern.h"
 #include "pathnames.h"

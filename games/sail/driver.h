@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.h,v 1.6 1999/09/08 21:17:58 jsm Exp $	*/
+/*	$NetBSD: driver.h,v 1.7 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,5 @@
  *
  *	@(#)driver.h	8.2 (Berkeley) 5/3/95
  */
-
-#include "extern.h"
 
 extern const int dtab[];

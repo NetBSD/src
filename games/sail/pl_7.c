@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.17 2001/01/04 02:43:33 jwise Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.18 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,19 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.17 2001/01/04 02:43:33 jwise Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.18 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/ttydefaults.h>
-#include "player.h"
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
+#include "player.h"
 
 void	initscreen(void);
 void	cleanupscreen(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: assorted.c,v 1.11 2001/01/04 01:53:24 jwise Exp $	*/
+/*	$NetBSD: assorted.c,v 1.12 2001/01/04 03:21:16 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,14 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)assorted.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: assorted.c,v 1.11 2001/01/04 01:53:24 jwise Exp $");
+__RCSID("$NetBSD: assorted.c,v 1.12 2001/01/04 03:21:16 jwise Exp $");
 #endif
 #endif /* not lint */
 
-#include "extern.h"
 #include <stdlib.h>
-#include <unistd.h>
 #include <err.h>
+#include "extern.h"
 
 void	table(int, int, int, struct ship *, struct ship *, int);
 void	Cleansnag(struct ship *, struct ship *, int, int);

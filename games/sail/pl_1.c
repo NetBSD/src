@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_1.c,v 1.10 2001/01/04 02:43:32 jwise Exp $	*/
+/*	$NetBSD: pl_1.c,v 1.11 2001/01/04 03:21:17 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,15 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)pl_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_1.c,v 1.10 2001/01/04 02:43:32 jwise Exp $");
+__RCSID("$NetBSD: pl_1.c,v 1.11 2001/01/04 03:21:17 jwise Exp $");
 #endif
 #endif /* not lint */
 
-#include "player.h"
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
+#include "player.h"
 
 void	leave(int);
 void	choke(int);
