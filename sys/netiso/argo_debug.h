@@ -1,4 +1,4 @@
-/*	$NetBSD: argo_debug.h,v 1.10 1997/09/08 02:06:31 mikel Exp $	*/
+/*	$NetBSD: argo_debug.h,v 1.11 2002/05/12 21:30:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -86,7 +86,7 @@ void Dump_buf __P((caddr_t, int));
     #endif
 */
 
-unsigned char   argo_debug[128];
+extern	unsigned char   argo_debug[128];
 
 #endif				/* ARGO_DEBUG */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.12 2000/03/23 07:03:31 thorpej Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.13 2002/05/12 21:30:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -333,7 +333,7 @@ struct tp_pcb {
 
 };
 
-u_int		tp_start_win;
+extern	u_int	tp_start_win;
 
 #define ROUND(scaled_int) (((scaled_int) >> 8) + (((scaled_int) & 0x80) ? 1:0))
 
