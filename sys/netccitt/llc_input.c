@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.8 2000/02/01 00:00:22 thorpej Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.9 2000/03/30 13:53:33 augustss Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -76,10 +76,10 @@ struct ifqueue llcintrq;
 void
 llcintr()
 {
-	register struct mbuf *m;
-	register int i;
-	register int frame_kind;
-	register u_char cmdrsp;
+	struct mbuf *m;
+	int i;
+	int frame_kind;
+	u_char cmdrsp;
 	struct llc_linkcb *linkp;
 	struct npaidbentry *sapinfo = NULL;
 	struct sdl_hdr *sdlhdr;
@@ -383,7 +383,7 @@ llc_ctlinput(prc, addr, info)
 	struct rtentry *nlrt;
 	struct rtentry *llrt = NULL;
 	struct llc_linkcb *linkp = NULL;
-	register int i;
+	int i;
 
 	/* info must point to something valid at all times */
 	if (info == 0)
@@ -422,9 +422,9 @@ llc_ctlinput(prc, addr, info)
 		return 0;
 
 	case PRC_IFDOWN: {
-		register struct llc_linkcb *linkp;
-		register struct llc_linkcb *nlinkp;
-		register int i;
+		struct llc_linkcb *linkp;
+		struct llc_linkcb *nlinkp;
+		int i;
 
 		/*
 		 * All links are accessible over the doubly linked list llccb_q

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_output.c,v 1.11 1998/09/13 16:21:17 christos Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.12 2000/03/30 13:53:33 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -77,8 +77,8 @@ hd_output(m0, va_alist)
 	va_dcl
 #endif
 {
-	register struct hdcb *hdp;
-	register struct mbuf *m = m0;
+	struct hdcb *hdp;
+	struct mbuf *m = m0;
 	int             len;
 	va_list	ap;
 
@@ -116,9 +116,9 @@ hd_output(m0, va_alist)
 
 void
 hd_start(hdp)
-	register struct hdcb *hdp;
+	struct hdcb *hdp;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	/*
 	 * The iframe is only transmitted if all these conditions are FALSE.
@@ -160,11 +160,11 @@ hd_start(hdp)
  */
 void
 hd_send_iframe(hdp, buf, poll_bit)
-	register struct hdcb *hdp;
-	register struct mbuf *buf;
+	struct hdcb *hdp;
+	struct mbuf *buf;
 	int             poll_bit;
 {
-	register struct Hdlc_iframe *iframe;
+	struct Hdlc_iframe *iframe;
 	struct mbuf    *m;
 
 	KILL_TIMER(hdp);
@@ -218,8 +218,8 @@ hd_ifoutput(m, va_alist)
 	va_dcl
 #endif
 {
-	register struct hdcb *hdp;
-	register struct ifnet *ifp;
+	struct hdcb *hdp;
+	struct ifnet *ifp;
 	int             s = splimp();
 	va_list	ap;
 
@@ -257,7 +257,7 @@ hd_ifoutput(m, va_alist)
 
 void
 hd_resend_iframe(hdp)
-	register struct hdcb *hdp;
+	struct hdcb *hdp;
 {
 
 	if (hdp->hd_retxcnt++ < hd_n2) {

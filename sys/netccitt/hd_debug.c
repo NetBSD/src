@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_debug.c,v 1.10 1998/09/13 16:21:17 christos Exp $	*/
+/*	$NetBSD: hd_debug.c,v 1.11 2000/03/30 13:53:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -75,9 +75,9 @@ hd_trace(hdp, direction, m)
 	int direction;
 	struct mbuf *m;
 {
-	register char  *s;
-	register int    nr, pf, ns, i;
-	register struct Hdlc_frame *frame = mtod(m, struct Hdlc_frame *);
+	char  *s;
+	int    nr, pf, ns, i;
+	struct Hdlc_frame *frame = mtod(m, struct Hdlc_frame *);
 	struct Hdlc_iframe *iframe = (struct Hdlc_iframe *) frame;
 
 #ifdef HDLCDEBUG
@@ -110,7 +110,7 @@ hd_trace(hdp, direction, m)
 
 		case FRMR:
 			{
-				register struct Frmr_frame *f = (struct Frmr_frame *) frame;
+				struct Frmr_frame *f = (struct Frmr_frame *) frame;
 
 				printf("FRMR   : PF=%d, TEXT=", pf);
 				for (s = (char *) frame, i = 0; i < 5; ++i, ++s)
@@ -140,7 +140,7 @@ hd_trace(hdp, direction, m)
 
 		case IFRAME:
 			{
-				register int    len = 0;
+				int    len = 0;
 
 				for (; m; m = m->m_next)
 					len += m->m_len;
@@ -170,8 +170,8 @@ hd_savetrace(hdp, dir, m)
 	int dir;
 	struct mbuf *m;
 {
-	register struct hdlctrace *htp;
-	register struct Hdlc_frame *frame = mtod(m, struct Hdlc_frame *);
+	struct hdlctrace *htp;
+	struct Hdlc_frame *frame = mtod(m, struct Hdlc_frame *);
 
 	if (freezetrace)
 		return;
@@ -189,8 +189,8 @@ void
 hd_dumptrace(hdp)
 	struct hdcb    *hdp;
 {
-	register int    i, ltrace;
-	register struct hdlctrace *htp;
+	int    i, ltrace;
+	struct hdlctrace *htp;
 
 	freezetrace = 1;
 	hd_status(hdp);
