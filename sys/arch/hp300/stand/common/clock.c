@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2003/11/14 16:52:40 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2004/04/07 13:29:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -148,11 +148,12 @@ bbc_to_gmt(timbuf)
 	day   = bbc_to_decimal(8, 7);
 	month = bbc_to_decimal(10, 9);
 	year  = bbc_to_decimal(12, 11) + 1900;
+	if (year < STARTOFTIME)
+		year += 100;
 
 	range_test(hour, 0, 23);
 	range_test(day, 1, 31);
 	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
 
 	tmp = 0;
 
