@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112 1995/02/05 14:54:18 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.113 1995/02/05 15:46:58 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -39,12 +39,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
- */
-
-/*
- * locore.s:	4BSD machine support for the Intel 386
- *		Preliminary version
- *		Written by William F. Jolitz, 386BSD Project
  */
 
 #include "npx.h"
