@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.54 2002/03/18 14:06:08 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.55 2002/03/23 16:23:20 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.54 2002/03/18 14:06:08 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.55 2002/03/23 16:23:20 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ int	uaudiodebug = 0;
 #endif
 
 #define UAUDIO_NCHANBUFS 6	/* number of outstanding request */
-#define UAUDIO_NFRAMES   20	/* ms of sound in each request */
+#define UAUDIO_NFRAMES   10	/* ms of sound in each request */
 
 
 #define MIX_MAX_CHAN 8
