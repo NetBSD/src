@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.63 2002/09/06 12:00:40 mycroft Exp $	 */
+/*	$NetBSD: reloc.c,v 1.64 2002/09/06 13:20:30 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -115,7 +115,7 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 #ifndef RTLD_INHIBIT_COPY_RELOCS
 
 	/* COPY relocations are invalid elsewhere */
-	assert(dstobj->mainprog);
+	assert(!dstobj->isdynamic);
 
 	if (dstobj->rel != NULL) {
 		const Elf_Rel  *rel;

@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.13 2002/06/01 23:50:53 lukem Exp $	 */
+/*	$NetBSD: map_object.c,v 1.14 2002/09/06 13:20:29 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -273,6 +273,7 @@ _rtld_map_object(path, fd, sb)
 	}
 	if (phinterp != NULL)
 		obj->interp = (const char *) (obj->relocbase + phinterp->p_vaddr);
+	obj->isdynamic = u.hdr.e_type == ET_DYN;
 
 	return obj;
 }
