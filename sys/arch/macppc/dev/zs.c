@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.30 2005/01/10 16:34:46 chs Exp $	*/
+/*	$NetBSD: zs.c,v 1.31 2005/01/10 16:38:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.30 2005/01/10 16:34:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.31 2005/01/10 16:38:06 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.30 2005/01/10 16:34:46 chs Exp $");
 #define ZSMAC_RAW	0x01
 #define ZSMAC_LOCALTALK	0x02
 
-#include "zsc.h"	/* get the # of zs chips defined */
-
 /*
  * Some warts needed by z8530tty.c -
  */
@@ -108,16 +106,14 @@ struct zsdevice {
 	struct	zschan zs_chan_a;
 };
 
-/* Flags from cninit() */
-static int zs_hwflags[NZSC][2];
-/* Default speed for each channel */
-static int zs_defspeed[NZSC][2] = {
-	{ 38400, 	/* tty00 */
-	  38400 },	/* tty01 */
+static int zs_defspeed[2] = {
+	38400,		/* ttyZ0 */
+	38400,		/* ttyZ1 */
 };
 
 /* console stuff */
 void	*zs_conschan = 0;
+int	zs_conschannel;
 #ifdef	ZS_CONSOLE_ABORT
 int	zs_cons_canabort = 1;
 #else
@@ -169,6 +165,8 @@ CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
 
 extern struct cfdriver zsc_cd;
 
+int zsc_attached;
+
 int zshard(void *);
 int zssoft(void *);
 #ifdef ZS_TXDMA
@@ -188,12 +186,11 @@ static int
 zsc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
-	int unit = cf->cf_unit;
 
 	if (strcmp(ca->ca_name, "escc") != 0)
 		return 0;
 
-	if (unit > 1)
+	if (zsc_attached)
 		return 0;
 
 	return 1;
@@ -215,14 +212,14 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	struct xzs_chanstate *xcs;
 	struct zs_chanstate *cs;
 	struct zsdevice *zsd;
-	int zsc_unit, channel;
+	int channel;
 	int s, chip, theflags;
 	int node, intr[2][3];
 	u_int regs[6];
 
-	chip = 0;
-	zsc_unit = zsc->zsc_dev.dv_unit;
+	zsc_attached = 1;
 
+	chip = 0;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 	zsd = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
 
@@ -261,7 +258,8 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
+		zsc_args.hwflags = (channel == zs_conschannel ?
+				    ZS_HWFLAG_CONSOLE : 0);
 		xcs = &zsc->xzsc_xcs_store[channel];
 		cs  = &xcs->xzs_cs;
 		zsc->zsc_cs[channel] = cs;
@@ -284,7 +282,7 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
 			cs->cs_defspeed = zs_get_speed(cs);
 		else
-			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
+			cs->cs_defspeed = zs_defspeed[channel];
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -1038,16 +1036,13 @@ struct consdev consdev_zs = {
 	zscngetc,
 	zscnputc,
 	zscnpollc,
-	NULL,
 };
 
 void
 zscnprobe(struct consdev *cp)
 {
 	int chosen, pkg;
-	int unit = 0;
 	char name[16];
-	extern const struct cdevsw zstty_cdevsw;
 	
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
@@ -1071,10 +1066,6 @@ zscnprobe(struct consdev *cp)
 	if (OF_getprop(pkg, "name", name, sizeof(name)) == -1)
 		return;
 
-	if (strcmp(name, "ch-b") == 0)
-		unit = 1;
-
-	cp->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), unit);
 	cp->cn_pri = CN_REMOTE;
 }
 
@@ -1082,7 +1073,6 @@ void
 zscninit(struct consdev *cp)
 {
 	int escc, escc_ch, obio, zs_offset;
-	int ch = 0;
 	u_int32_t reg[5];
 	char name[16];
 
@@ -1093,8 +1083,7 @@ zscninit(struct consdev *cp)
 	if (OF_getprop(escc_ch, "name", name, sizeof(name)) == -1)
 		return;
 
-	if (strcmp(name, "ch-b") == 0)
-		ch = 1;
+	zs_conschannel = strcmp(name, "ch-b") == 0;
 
 	if (OF_getprop(escc_ch, "reg", reg, sizeof(reg)) < 4)
 		return;
@@ -1106,6 +1095,4 @@ zscninit(struct consdev *cp)
 	if (OF_getprop(obio, "assigned-addresses", reg, sizeof(reg)) < 12)
 		return;
 	zs_conschan = (void *)(reg[2] + zs_offset);
-
-	zs_hwflags[0][ch] = ZS_HWFLAG_CONSOLE;
 }
