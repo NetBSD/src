@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.1 1999/08/14 18:40:23 ragge Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.2 1999/08/27 20:05:08 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@
 #endif
 
 #include <machine/cpu.h>
+#include <machine/sid.h>
 #include <machine/bus.h>
 #include <machine/rpb.h>
 #include <machine/vsbus.h>
@@ -154,6 +155,8 @@ le_vsbus_match(parent, cf, aux)
 	struct  vsbus_attach_args *va = aux;
 	volatile short *rdp, *rap;
 
+	if (vax_boardtype == VAX_BTYP_49)
+		return 0;
 	rdp = (short *)va->va_addr;
 	rap = rdp + 2;
 
