@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.221 2004/05/25 01:14:21 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.222 2004/05/25 01:15:32 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3046,3 +3046,11 @@ include/signal.h				1.37
 	Implement sigemptyset() and sigfillset() not as macros but as inline
 	functions. PR#25627
 	[kleink, ticket #381]
+
+sys/dev/pci/if_sk.c				1.9
+
+	In sk_init_yukon(), don't open-code clearing the multicast filter but
+	go via the normal filter setup path instead.  The old behaviour only
+	worked ok as long as the init function was exclusively called at attach
+	time, when there was no configuration to be lost.
+	[kleink, ticket #382]
