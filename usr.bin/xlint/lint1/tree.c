@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.17 1998/07/27 13:50:48 mycroft Exp $	*/
+/*	$NetBSD: tree.c,v 1.18 1998/07/27 19:58:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.17 1998/07/27 13:50:48 mycroft Exp $");
+__RCSID("$NetBSD: tree.c,v 1.18 1998/07/27 19:58:43 mycroft Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3388,7 +3388,7 @@ nulleff(tn)
 			 * operands has a side effect
 			 */
 			tn = tn->tn_right;
-		} else if (tn->tn_op == COLON) {
+		} else if (tn->tn_op == COLON || tn->tn_op == COMMA) {
 			/*
 			 * : has a side effect if at least one of its operands
 			 * has a side effect
