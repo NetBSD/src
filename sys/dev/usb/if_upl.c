@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.4 2000/06/01 14:28:58 augustss Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.4.2.1 2000/08/09 08:27:48 drochner Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1064,6 +1064,7 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 	schednetisr(NETISR_IP);
 	inq = &ipintrq;
 
+	s = splimp();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
 		splx(s);
