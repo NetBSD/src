@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.11 1995/01/10 16:15:20 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.12 1995/03/10 16:56:27 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,9 +165,10 @@ extern vm_offset_t	vm_first_phys, vm_num_phys;
 #define	PMAP_NC		4		/* tells pmap_enter to set PG_NC */
 #define	PMAP_TNC	7		/* mask to get PG_TYPE & PG_NC */
 
-void	pmap_bootstrap __P((int nmmu, int nctx));
-int	pmap_count_ptes __P((struct pmap *));
+void		pmap_bootstrap __P((int nmmu, int nctx));
+int		pmap_count_ptes __P((struct pmap *));
 vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
+int		pmap_pa_exists __P((vm_offset_t));
 
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
 #define	managed(pa)	((unsigned)((pa) - vm_first_phys) < vm_num_phys)
