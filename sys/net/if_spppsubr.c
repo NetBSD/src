@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.51 2002/07/13 11:08:03 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.52 2002/07/27 19:09:07 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.51 2002/07/13 11:08:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.52 2002/07/27 19:09:07 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -4195,8 +4195,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	struct lcp_header *h;
 	int len, x;
 	u_char mlen;
-	char *name, *passwd;
-	int name_len, passwd_len;
+	char *name, *secret, sname, ssecret;
+	int name_len, secret_len;
 
 	len = m->m_pkthdr.len;
 	if (len < 5) {
@@ -4220,9 +4220,9 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		}
 		name = 1 + (u_char*)(h+1);
 		name_len = name[-1];
-		passwd = name + name_len + 1;
+		secret = name + name_len + 1;
 		if (name_len > len - 6 ||
-		    (passwd_len = passwd[-1]) > len - 6 - name_len) {
+		    (secret_len = secret[-1]) > len - 6 - name_len) {
 			if (debug) {
 				log(LOG_DEBUG, SPP_FMT "pap corrupted input "
 				    "<%s id=0x%x len=%d",
@@ -4243,12 +4243,18 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			    sppp_auth_type_name(PPP_PAP, h->type),
 			    h->ident, ntohs(h->len));
 			sppp_print_string((char*)name, name_len);
-			addlog(" passwd=");
-			sppp_print_string((char*)passwd, passwd_len);
+			addlog(" secret=");
+			sppp_print_string((char*)secret, secret_len);
 			addlog(">\n");
 		}
-		if (memcmp(name, sp->hisauth.name, name_len) != 0 ||
-		    memcmp(passwd, sp->hisauth.secret, passwd_len) != 0) {
+		sname = name[name_len];
+		ssecret = secret[secret_len];
+		name[name_len] = '\0';
+		secret[secret_len] = '\0';
+		if (strcmp(name, sp->hisauth.name) != 0 ||
+		    strcmp(secret, sp->hisauth.secret) != 0) {
+			name[name_len] = sname;
+			secret[secret_len] = ssecret;
 			/* action scn, tld */
 			sp->pp_auth_failures++;
 			mlen = sizeof(FAILMSG) - 1;
@@ -4259,6 +4265,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			pap.tld(sp);
 			break;
 		}
+		name[name_len] = sname;
+		secret[secret_len] = ssecret;
 		/* action sca, perhaps tlu */
 		if (sp->state[IDX_PAP] == STATE_REQ_SENT ||
 		    sp->state[IDX_PAP] == STATE_OPENED) {
