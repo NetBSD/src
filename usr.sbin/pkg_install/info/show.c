@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.19 1999/12/01 14:51:52 hubertf Exp $	*/
+/*	$NetBSD: show.c,v 1.20 2000/02/22 01:24:32 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.19 1999/12/01 14:51:52 hubertf Exp $");
+__RCSID("$NetBSD: show.c,v 1.20 2000/02/22 01:24:32 hubertf Exp $");
 #endif
 #endif
 
@@ -41,7 +41,8 @@ __RCSID("$NetBSD: show.c,v 1.19 1999/12/01 14:51:52 hubertf Exp $");
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Hubert Feyrer.
+ *      This product includes software developed by Hubert Feyrer for
+ *      the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
