@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.409 2003/05/04 00:54:41 gmcgarry Exp $
+# $NetBSD: mi,v 1.410 2003/05/11 19:01:27 ragge Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -643,7 +643,6 @@
 ./usr/sbin/kdc			base-krb5-bin
 ./usr/sbin/kstash		base-krb5-bin
 ./usr/sbin/ktutil		base-krb5-bin
-./usr/sbin/kvm_mkdb		base-sysutil-bin
 ./usr/sbin/lastlogin		base-sysutil-bin
 ./usr/sbin/link			base-sysutil-bin
 ./usr/sbin/lpc			base-lpr-bin
