@@ -1,5 +1,5 @@
-/*	$NetBSD: key_debug.c,v 1.10 2000/06/12 10:40:47 itojun Exp $	*/
-/*	$KAME: key_debug.c,v 1.20 2000/06/10 06:39:54 sakane Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.11 2000/06/15 12:37:09 itojun Exp $	*/
+/*	$KAME: key_debug.c,v 1.21 2000/06/15 11:54:01 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -660,18 +660,19 @@ kdebug_mbuf(m0)
 	struct mbuf *m = m0;
 	int i, j;
 
-	kdebug_mbufhdr(m);
-	printf("  m_data=\n");
 	for (j = 0; m; m = m->m_next) {
+		kdebug_mbufhdr(m);
+		printf("  m_data:\n");
 		for (i = 0; i < m->m_len; i++) {
-			if (i != 0 && i % 32 == 0) printf("\n");
-			if (i % 4 == 0) printf(" ");
+			if (i && i % 32 == 0)
+				printf("\n");
+			if (i % 4 == 0)
+				printf(" ");
 			printf("%02x", mtod(m, u_char *)[i]);
 			j++;
 		}
+		printf("\n");
 	}
-
-	printf("\n");
 
 	return;
 }
