@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.3 2004/04/26 17:26:58 tron Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.4 2004/05/11 10:30:48 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,17 +46,17 @@
 #include <sys/ansi.h>
 #include <sys/fstypes.h>
 
-#define _VFS_NAMELEN	32
-#define _VFS_MNAMELEN	1024
+#define	_VFS_NAMELEN	32
+#define	_VFS_MNAMELEN	1024
 
 #ifndef	fsblkcnt_t
 typedef	__fsblkcnt_t	fsblkcnt_t;	/* fs block count (statvfs) */
-#define fsblkcnt_t	__fsblkcnt_t
+#define	fsblkcnt_t	__fsblkcnt_t
 #endif
 
 #ifndef	fsfilcnt_t
 typedef	__fsfilcnt_t	fsfilcnt_t;	/* fs file count */
-#define fsfilcnt_t	__fsfilcnt_t
+#define	fsfilcnt_t	__fsfilcnt_t
 #endif
 
 #ifndef	uid_t
@@ -66,7 +66,7 @@ typedef	__uid_t		uid_t;		/* user id */
 
 #ifdef	_BSD_SIZE_T_
 typedef	_BSD_SIZE_T_		size_t;
-#define _SIZE_T
+#define	_SIZE_T
 #undef	_BSD_SIZE_T_
 #endif
 
@@ -107,8 +107,8 @@ struct statvfs {
 
 #if defined(_NETBSD_SOURCE) && !defined(_POSIX_SOURCE) && \
     !defined(_XOPEN_SOURCE)
-#define VFS_NAMELEN	_VFS_NAMELEN
-#define VFS_MNAMELEN	_VFS_MNAMELEN
+#define	VFS_NAMELEN	_VFS_NAMELEN
+#define	VFS_MNAMELEN	_VFS_MNAMELEN
 #endif
 
 #define	ST_RDONLY	MNT_RDONLY
@@ -134,8 +134,8 @@ struct statvfs {
 #define	ST_EXNORESPORT	MNT_EXNORESPORT
 #define	ST_EXPUBLIC	MNT_EXPUBLIC
 
-#define ST_WAIT		MNT_WAIT
-#define ST_NOWAIT	MNT_NOWAIT
+#define	ST_WAIT		MNT_WAIT
+#define	ST_NOWAIT	MNT_NOWAIT
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 struct mount;
