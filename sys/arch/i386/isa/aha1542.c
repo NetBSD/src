@@ -16,8 +16,8 @@
 /*
  * HISTORY
  * $Log: aha1542.c,v $
- * Revision 1.5  1993/04/15 07:11:01  glass
- * NDDB made a re-appearance....
+ * Revision 1.6  1993/04/15 07:57:50  deraadt
+ * ioconf changes, see previous cvs's that dumped core
  *
  * Revision 1.4  1993/04/12  08:17:23  deraadt
  * new scsi subsystem.
@@ -514,37 +514,25 @@ ahaprobe(struct isa_device *dev)
 int
 ahaattach(struct isa_device *dev)
 {
-	int unit = dev->id_unit;
-	extern struct isa_device isa_biotab_dktp[];
-	struct isa_device *dvp;
+	static int firsttime;
+	int masunit = dev->id_masunit;
+	short id = dev->id_unit;
 
-	printf("aha%d: bus speed %dns\n", unit, speed[unit]);
+	if(!firsttime) {
+		firsttime = 1;
+		printf("aha%d: bus speed %dns\n", masunit, speed[masunit]);
+	}
 
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &ahadriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid == -1)
-			continue;
-		scsi_attach(dev->id_unit, aha_scsi_dev[unit], &aha_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	for (dvp = isa_biotab_dktp; dvp->id_driver != 0; dvp++) {
-		if (dvp->id_driver != &ahadriver)
-			continue;
-		if (dvp->id_masunit != dev->id_unit)
-			continue;
-		if (dvp->id_physid != -1)
-			continue;
-		scsi_attach(dev->id_unit, aha_scsi_dev[unit], &aha_switch,
-			&dvp->id_physid, &dvp->id_unit, dvp->id_flags);
-	}
-	scsi_warn(dev->id_unit, aha_scsi_dev[unit], &aha_switch);
+	scsi_attach(masunit, aha_scsi_dev[masunit], &aha_switch,
+		&dev->id_physid, &id, dev->id_flags);
+
+	/*scsi_warn(dev->id_unit, aha_scsi_dev[unit], &aha_switch);*/
 
 	/* only one for all boards */
-	if(!unit)
+	if(masunit==0 && firsttime==1) {
+		firsttime = 2;
 		aha_timeout(0);
+	}
 	return;
 }
 
