@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.7 2003/12/03 12:09:32 bouyer Exp $	*/
+/*	$NetBSD: kauai.c,v 1.8 2003/12/31 02:50:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.7 2003/12/03 12:09:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.8 2003/12/31 02:50:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.7 2003/12/03 12:09:32 bouyer Exp $");
 
 struct kauai_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc *wdc_chanptr;
+	struct channel_softc wdc_chanlist[1];
 	struct channel_softc wdc_channel;
 	struct channel_queue wdc_queue;
 	dbdma_regmap_t *sc_dmareg;
@@ -176,8 +176,8 @@ kauai_attach(parent, self, aux)
 	sc->sc_wdcdev.UDMA_cap = 5;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_MODE;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-	sc->wdc_chanptr = chp;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = chp;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->sc_wdcdev.dma_arg = sc;
 	sc->sc_wdcdev.dma_init = kauai_dma_init;
