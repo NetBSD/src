@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.6 1994/06/29 06:41:32 cgd Exp $	*/
+/*	$NetBSD: ns.c,v 1.7 1995/02/01 09:10:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -296,31 +296,23 @@ ns_ifinit(ifp, ia, sns, scrub)
 	if (ns_hosteqnh(ns_thishost, ns_zerohost)) {
 		if (ifp->if_ioctl &&
 		     (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR,
-		    (caddr_t)ia))) {
-			ia->ia_addr = oldaddr;
-			splx(s);
-			return (error);
-		}
+		    (caddr_t)ia)))
+			goto bad;
 		ns_thishost = *h;
 	} else if (ns_hosteqnh(sns->sns_addr.x_host, ns_zerohost)
 	    || ns_hosteqnh(sns->sns_addr.x_host, ns_thishost)) {
 		*h = ns_thishost;
 		if (ifp->if_ioctl &&
 		     (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR,
-		    (caddr_t)ia))) {
-			ia->ia_addr = oldaddr;
-			splx(s);
-			return (error);
-		}
-		if (!ns_hosteqnh(ns_thishost,*h)) {
-			ia->ia_addr = oldaddr;
-			splx(s);
-			return (EINVAL);
+		    (caddr_t)ia)))
+			goto bad;
+		if (!ns_hosteqnh(ns_thishost, *h)) {
+			error = EINVAL;
+			goto bad;
 		}
 	} else {
-		ia->ia_addr = oldaddr;
-		splx(s);
-		return (EINVAL);
+		error = EINVAL;
+		goto bad;
 	}
 	ia->ia_ifa.ifa_metric = ifp->if_metric;
 	/*
@@ -338,7 +330,12 @@ ns_ifinit(ifp, ia, sns, scrub)
 		rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_UP);
 	}
 	ia->ia_flags |= IFA_ROUTE;
+	splx(s);
 	return (0);
+bad:
+	ia->ia_addr = oldaddr;
+	splx(s);
+	return (error);
 }
 
 /*
