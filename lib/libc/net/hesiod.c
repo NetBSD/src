@@ -1,388 +1,551 @@
-/*	$NetBSD: hesiod.c,v 1.5 1999/01/21 12:40:07 mycroft Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.6 1999/01/25 00:17:55 lukem Exp $	*/
 
-/* This file is part of the Hesiod library.
+/* Copyright (c) 1996 by Internet Software Consortium.
  *
- *  Copyright (C) 1988, 1989 by the Massachusetts Institute of Technology
- * 
- *    Export of software employing encryption from the United States of
- *    America is assumed to require a specific license from the United
- *    States Government.  It is the responsibility of any person or
- *    organization contemplating export to obtain such a license before
- *    exporting.
- * 
- * WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
- * distribute this software and its documentation for any purpose and
- * without fee is hereby granted, provided that the above copyright
- * notice appear in all copies and that both that copyright notice and
- * this permission notice appear in supporting documentation, and that
- * the name of M.I.T. not be used in advertising or publicity pertaining
- * to distribution of the software without specific, written prior
- * permission.  M.I.T. makes no representations about the suitability of
- * this software for any purpose.  It is provided "as is" without express
- * or implied warranty.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ */
+
+/* Copyright 1996 by the Massachusetts Institute of Technology.
+ *
+ * Permission to use, copy, modify, and distribute this
+ * software and its documentation for any purpose and without
+ * fee is hereby granted, provided that the above copyright
+ * notice appear in all copies and that both that copyright
+ * notice and this permission notice appear in supporting
+ * documentation, and that the name of M.I.T. not be used in
+ * advertising or publicity pertaining to distribution of the
+ * software without specific, written prior permission.
+ * M.I.T. makes no representations about the suitability of
+ * this software for any purpose.  It is provided "as is"
+ * without express or implied warranty.
+ */
+
+/* This file is part of the hesiod library.  It implements the core
+ * portion of the hesiod resolver.
+ *
+ * This file is loosely based on an interim version of hesiod.c from
+ * the BIND IRS library, which was in turn based on an earlier version
+ * of this file.  Extensive changes have been made on each step of the
+ * path.
+ *
+ * This implementation is not truly thread-safe at the moment because
+ * it uses res_send() and accesses _res.
  */
 
 #include <sys/cdefs.h>
 
-#ifndef lint
-__IDSTRING(rcsid_hesiod_c, "#Header: /afs/rel-eng.athena.mit.edu/project/release/current/source/athena/athena.lib/hesiod/RCS/hesiod.c,v 1.11 93/06/15 10:26:37 mar Exp #");
-__IDSTRING(rcsid_resolve_c, "#Header: /afs/rel-eng.athena.mit.edu/project/release/current/source/athena/athena.lib/hesiod/RCS/resolve.c,v 1.7 93/06/15 10:25:45 mar Exp #");
-#endif
+#if defined(LIBC_SCCS) && !defined(lint)
+__IDSTRING(rcsid_hesiod_c,
+    "#Id: hesiod.c,v 1.18.2.1 1997/01/03 20:48:20 ghudson Exp #");
+__IDSTRING(rcsid_hesiod_p_h,
+    "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
+__IDSTRING(rcsid_hescompat_c,
+    "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
+__RCSID("$NetBSD: hesiod.c,v 1.6 1999/01/25 00:17:55 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <hesiod.h>
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stringlist.h>
-#include <unistd.h>
 
-typedef struct rr {
-	u_int16_t	 type;		/* RR type */
-	u_int16_t	 class;		/* RR class */
-	int		 dlen;		/* len of data section */
-	u_char		*data;		/* pointer to data */
-} rr_t, *rr_p;
+#ifdef __weak_alias
+__weak_alias(hesiod_init,_hesiod_init);
+__weak_alias(hesiod_end,_hesiod_end);
+__weak_alias(hesiod_to_bind,_hesiod_to_bind);
+__weak_alias(hesiod_resolve,_hesiod_resolve);
+__weak_alias(hesiod_free_list,_hesiod_free_list);
+__weak_alias(hes_init,_hes_init);
+__weak_alias(hes_to_bind,_hes_to_bind);
+__weak_alias(hes_resolve,_hes_resolve);
+__weak_alias(hes_error,_hes_error);
+__weak_alias(hes_free,_hes_free);
+#endif
 
-typedef struct nsmsg {
-	int	 len;		/* sizeof(msg) */
-	int	 ns_off;	/* offset to name server RRs */
-	int	 ar_off;	/* offset to additional RRs */
-	int	 count;		/* total number of RRs */
-	HEADER	*hd;		/* message header */
-	rr_t	 rr;		/* vector of (stripped-down) RR descriptors */
-} nsmsg_t, *nsmsg_p;
+struct hesiod_p {
+	char	*lhs;			/* normally ".ns" */
+	char	*rhs;			/* AKA the default hesiod domain */
+	int	 classes[2];		/* The class search order. */
+};
 
-static int	 Hes_Errno	= HES_ER_UNINIT;
-char		*HesConfigFile	= _PATH_HESIOD_CONF;
-static char	 Hes_LHS[MAXDNAME + 1];
-static char	 Hes_RHS[MAXDNAME + 1];
-static u_char	*Hes_eoM;
+#define	MAX_HESRESP	1024
 
-#define DEF_RETRANS 4
-#define DEF_RETRY 3
+static int	  read_config_file __P((struct hesiod_p *, const char *));
+static char	**get_txt_records __P((int, const char *));
+static int	  init_context __P((void));
+static void	  translate_errors __P((void));
 
-static	void   *_hes_rr_scan __P((u_char *, rr_t *));
-static	nsmsg_p	_hes_res_scan __P((u_char *));
-static	nsmsg_p	_hes_res __P((u_char *, int, int));
-	int	hes_init __P((void));
 
-static void *
-_hes_rr_scan(cp, rr)
-	u_char *cp;
-	rr_t *rr;
+/*
+ * hesiod_init --
+ *	initialize a hesiod_p.
+ */
+int 
+hesiod_init(context)
+	void	**context;
 {
-	int n;
+	struct hesiod_p	*ctx;
+	const char	*p, *configname;
 
-	if ((n = dn_skipname(cp, Hes_eoM)) < 0) {
-		errno = EINVAL;
-		return NULL;
-	}
-
-	cp += n;
-	rr->type = _getshort(cp);
-	cp += sizeof(u_int16_t /*type*/);
-
-	rr->class = _getshort(cp);
-	cp += sizeof(u_int16_t /*class*/) + sizeof(u_int32_t /*ttl*/);
-
-	rr->dlen = (int)_getshort(cp);
-	rr->data = cp + sizeof(u_int16_t /*dlen*/);
-
-	return (rr->data + rr->dlen);
-}
-
-
-static nsmsg_p
-_hes_res_scan(msg)
-	u_char *msg;
-{
-	static u_char	 bigmess[sizeof(nsmsg_t) + sizeof(rr_t) *
-				((PACKETSZ-sizeof(HEADER))/RRFIXEDSZ)];
-	static u_char	 datmess[PACKETSZ-sizeof(HEADER)];
-	u_char		*cp;
-	rr_t		*rp;
-	HEADER		*hp;
-	u_char		*data = datmess;
-	int	 	 n, n_an, n_ns, n_ar, nrec;
-	nsmsg_t		*mess = (nsmsg_t *)(void *)bigmess;
-
-	hp = (HEADER *)(void *)msg;
-	cp = msg + sizeof(HEADER);
-	n_an = ntohs(hp->ancount);
-	n_ns = ntohs(hp->nscount);
-	n_ar = ntohs(hp->arcount);
-	nrec = n_an + n_ns + n_ar;
-
-	mess->len = 0;
-	mess->hd = hp;
-	mess->ns_off = n_an;
-	mess->ar_off = n_an + n_ns;
-	mess->count = nrec;
-	rp = &mess->rr;
-
-	/* skip over questions */
-	if ((n = ntohs(hp->qdcount)) != 0) {
-		while (--n >= 0) {
-			int i;
-			if ((i = dn_skipname(cp, Hes_eoM)) < 0)
-				return NULL;
-			cp += i + (sizeof(u_int16_t /*type*/)
-				+ sizeof(u_int16_t /*class*/));
+	ctx = malloc(sizeof(struct hesiod_p));
+	if (ctx) {
+		*context = ctx;
+		configname = getenv("HESIOD_CONFIG");
+		if (!configname)
+			configname = _PATH_HESIOD_CONF;
+		if (read_config_file(ctx, configname) >= 0) {
+			/*
+			 * The default rhs can be overridden by an
+			 * environment variable.
+			 */
+			p = getenv("HES_DOMAIN");
+			if (p) {
+				if (ctx->rhs)
+					free(ctx->rhs);
+				ctx->rhs = malloc(strlen(p) + 2);
+				if (ctx->rhs) {
+					*ctx->rhs = '.';
+					strcpy(ctx->rhs + 1,
+					    (*p == '.') ? p + 1 : p);
+					return 0;
+				} else
+					errno = ENOMEM;
+			} else
+				return 0;
 		}
-	}
-#define GRABDATA \
-		while (--n >= 0) { \
-			if ((cp = _hes_rr_scan(cp, rp)) == NULL) \
-				return NULL; \
-			(void)strncpy((char *)data, (char *)rp->data, \
-			    (size_t)rp->dlen); \
-			rp->data = data; \
-			data += rp->dlen; \
-			*data++ = '\0'; \
-			rp++; \
-		}
+	} else
+		errno = ENOMEM;
 
-	/* scan answers */
-	if ((n = n_an) != 0)
-		GRABDATA
-
-	/* scan name servers */
-	if ((n = n_ns) != 0)
-		GRABDATA
-
-	/* scan additional records */
-	if ((n = n_ar) != 0)
-		GRABDATA
-
-	mess->len = (int)((long)cp - (long)msg);
-
-	return(mess);
+	if (ctx->lhs)
+		free(ctx->lhs);
+	if (ctx->rhs)
+		free(ctx->rhs);
+	if (ctx)
+		free(ctx);
+	return -1;
 }
 
 /*
- * Resolve name into data records
+ * hesiod_end --
+ *	Deallocates the hesiod_p.
  */
-
-static nsmsg_p
-_hes_res(name, class, type)
-	u_char *name;
-	int class, type;
+void 
+hesiod_end(context)
+	void	*context;
 {
-	static u_char		qbuf[PACKETSZ], abuf[PACKETSZ];
-	int			n;
-	u_int32_t		res_options = (u_int32_t)_res.options;
-	int			res_retrans = _res.retrans;
-	int			res_retry = _res.retry;
+	struct hesiod_p *ctx = (struct hesiod_p *) context;
 
-#ifdef DEBUG
-	if (_res.options & RES_DEBUG)
-		printf("_hes_res: class = %d, type = %d\n", class, type);
-#endif
+	free(ctx->rhs);
+	if (ctx->lhs)
+		free(ctx->lhs);
+	free(ctx);
+}
 
-	if (class < 0 || type < 0) {
-		errno = EINVAL;
-		return((nsmsg_t *)NULL);
-	}
+/*
+ * hesiod_to_bind --
+ * 	takes a hesiod (name, type) and returns a DNS
+ *	name which is to be resolved.
+ */
+char *
+hesiod_to_bind(void *context, const char *name, const char *type)
+{
+	struct hesiod_p *ctx = (struct hesiod_p *) context;
+	char		 bindname[MAXDNAME], *p, *ret, **rhs_list = NULL;
+	const char	*rhs;
+	int		 len;
 
-	_res.options |= RES_IGNTC;
+	strcpy(bindname, name);
 
-	n = res_mkquery(QUERY, (char *)name, class, type, NULL, 0,
-	    NULL, qbuf, PACKETSZ);
-	if (n < 0) {
+		/*
+		 * Find the right right hand side to use, possibly
+		 * truncating bindname.
+		 */
+	p = strchr(bindname, '@');
+	if (p) {
+		*p++ = 0;
+		if (strchr(p, '.'))
+			rhs = name + (p - bindname);
+		else {
+			rhs_list = hesiod_resolve(context, p, "rhs-extension");
+			if (rhs_list)
+				rhs = *rhs_list;
+			else {
+				errno = ENOENT;
+				return NULL;
+			}
+		}
+	} else
+		rhs = ctx->rhs;
+
+		/* See if we have enough room. */
+	len = strlen(bindname) + 1 + strlen(type);
+	if (ctx->lhs)
+		len += strlen(ctx->lhs) + ((ctx->lhs[0] != '.') ? 1 : 0);
+	len += strlen(rhs) + ((rhs[0] != '.') ? 1 : 0);
+	if (len > sizeof(bindname) - 1) {
+		if (rhs_list)
+			hesiod_free_list(context, rhs_list);
 		errno = EMSGSIZE;
-		return((nsmsg_t *)NULL);
+		return NULL;
 	}
+		/* Put together the rest of the domain. */
+	strcat(bindname, ".");
+	strcat(bindname, type);
+	if (ctx->lhs) {
+		if (ctx->lhs[0] != '.')
+			strcat(bindname, ".");
+		strcat(bindname, ctx->lhs);
+	}
+	if (rhs[0] != '.')
+		strcat(bindname, ".");
+	strcat(bindname, rhs);
 
-	_res.retrans = DEF_RETRANS;
-	_res.retry = DEF_RETRY;
+		/* rhs_list is no longer needed, since we're done with rhs. */
+	if (rhs_list)
+		hesiod_free_list(context, rhs_list);
 
-	n = res_send(qbuf, n, abuf, PACKETSZ);
+		/* Make a copy of the result and return it to the caller. */
+	ret = strdup(bindname);
+	if (!ret)
+		errno = ENOMEM;
+	return ret;
+}
 
-	_res.options = res_options;
-	_res.retrans = res_retrans;
-	_res.retry = res_retry;
+/*
+ * hesiod_resolve --
+ *	Given a hesiod name and type, return an array of strings returned
+ *	by the resolver.
+ */
+char **
+hesiod_resolve(context, name, type)
+	void		*context;
+	const char	*name;
+	const char	*type;
+{
+	struct hesiod_p	*ctx = (struct hesiod_p *) context;
+	char		*bindname, **retvec;
 
+	bindname = hesiod_to_bind(context, name, type);
+	if (!bindname)
+		return NULL;
+
+	retvec = get_txt_records(ctx->classes[0], bindname);
+	if (retvec == NULL && errno == ENOENT && ctx->classes[1])
+		retvec = get_txt_records(ctx->classes[1], bindname);
+
+	free(bindname);
+	return retvec;
+}
+
+/*ARGSUSED*/
+void 
+hesiod_free_list(context, list)
+	void	 *context;
+	char	**list;
+{
+	char  **p;
+
+	for (p = list; *p; p++)
+		free(*p);
+	free(list);
+}
+
+
+/* read_config_file --
+ *	Parse the /etc/hesiod.conf file.  Returns 0 on success,
+ *	-1 on failure.  On failure, it might leave values in ctx->lhs
+ *	or ctx->rhs which need to be freed by the caller.
+ */
+static int 
+read_config_file(ctx, filename)
+	struct hesiod_p	*ctx;
+	const char	*filename;
+{
+	char	*key, *data, *p, **which;
+	char	 buf[MAXDNAME + 7];
+	int	 n;
+	FILE	*fp;
+
+		/* Set default query classes. */
+	ctx->classes[0] = C_IN;
+	ctx->classes[1] = C_HS;
+
+		/* Try to open the configuration file. */
+	fp = fopen(filename, "r");
+	if (!fp) {
+		/* Use compiled in default domain names. */
+		ctx->lhs = strdup(DEF_LHS);
+		ctx->rhs = strdup(DEF_RHS);
+		if (ctx->lhs && ctx->rhs)
+			return 0;
+		else {
+			errno = ENOMEM;
+			return -1;
+		}
+	}
+	ctx->lhs = NULL;
+	ctx->rhs = NULL;
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
+		p = buf;
+		if (*p == '#' || *p == '\n' || *p == '\r')
+			continue;
+		while (*p == ' ' || *p == '\t')
+			p++;
+		key = p;
+		while (*p != ' ' && *p != '\t' && *p != '=')
+			p++;
+		*p++ = 0;
+
+		while (isspace(*p) || *p == '=')
+			p++;
+		data = p;
+		while (!isspace(*p))
+			p++;
+		*p = 0;
+
+		if (strcasecmp(key, "lhs") == 0 ||
+		    strcasecmp(key, "rhs") == 0) {
+			which = (strcasecmp(key, "lhs") == 0)
+			    ? &ctx->lhs : &ctx->rhs;
+			*which = strdup(data);
+			if (!*which) {
+				errno = ENOMEM;
+				return -1;
+			}
+		} else {
+			if (strcasecmp(key, "classes") == 0) {
+				n = 0;
+				while (*data && n < 2) {
+					p = data;
+					while (*p && *p != ',')
+						p++;
+					if (*p)
+						*p++ = 0;
+					if (strcasecmp(data, "IN") == 0)
+						ctx->classes[n++] = C_IN;
+					else
+						if (strcasecmp(data, "HS") == 0)
+							ctx->classes[n++] =
+							    C_HS;
+					data = p;
+				}
+				while (n < 2)
+					ctx->classes[n++] = 0;
+			}
+		}
+	}
+	fclose(fp);
+
+	if (!ctx->rhs || ctx->classes[0] == 0 ||
+	    ctx->classes[0] == ctx->classes[1]) {
+		errno = ENOEXEC;
+		return -1;
+	}
+	return 0;
+}
+
+/*
+ * get_txt_records --
+ *	Given a DNS class and a DNS name, do a lookup for TXT records, and
+ *	return a list of them.
+ */
+static char **
+get_txt_records(qclass, name)
+	int		 qclass;
+	const char	*name;
+{
+	HEADER		*hp;
+	unsigned char	 qbuf[PACKETSZ], abuf[MAX_HESRESP], *p, *eom, *eor;
+	char		*dst, **list;
+	int		 ancount, qdcount, i, j, n, skip, type, class, len;
+
+		/* Make sure the resolver is initialized. */
+	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
+		return NULL;
+
+		/* Construct the query. */
+	n = res_mkquery(QUERY, name, qclass, T_TXT, NULL, 0,
+	    NULL, qbuf, PACKETSZ);
+	if (n < 0)
+		return NULL;
+
+		/* Send the query. */
+	n = res_send(qbuf, n, abuf, MAX_HESRESP);
 	if (n < 0) {
 		errno = ECONNREFUSED;
-		return((nsmsg_t *)NULL);
+		return NULL;
 	}
-	Hes_eoM = abuf+n;
+		/* Parse the header of the result. */
+	hp = (HEADER *) (void *) abuf;
+	ancount = ntohs(hp->ancount);
+	qdcount = ntohs(hp->qdcount);
+	p = abuf + sizeof(HEADER);
+	eom = abuf + n;
 
-	return(_hes_res_scan(abuf));
+		/*
+		 * Skip questions, trying to get to the answer section
+		 * which follows.
+		 */
+	for (i = 0; i < qdcount; i++) {
+		skip = dn_skipname(p, eom);
+		if (skip < 0 || p + skip + QFIXEDSZ > eom) {
+			errno = EMSGSIZE;
+			return NULL;
+		}
+		p += skip + QFIXEDSZ;
+	}
+
+		/* Allocate space for the text record answers. */
+	list = malloc((ancount + 1) * sizeof(char *));
+	if (!list) {
+		errno = ENOMEM;
+		return NULL;
+	}
+		/* Parse the answers. */
+	j = 0;
+	for (i = 0; i < ancount; i++) {
+		/* Parse the header of this answer. */
+		skip = dn_skipname(p, eom);
+		if (skip < 0 || p + skip + 10 > eom)
+			break;
+		type = p[skip + 0] << 8 | p[skip + 1];
+		class = p[skip + 2] << 8 | p[skip + 3];
+		len = p[skip + 8] << 8 | p[skip + 9];
+		p += skip + 10;
+		if (p + len > eom) {
+			errno = EMSGSIZE;
+			break;
+		}
+		/* Skip entries of the wrong class and type. */
+		if (class != qclass || type != T_TXT) {
+			p += len;
+			continue;
+		}
+		/* Allocate space for this answer. */
+		list[j] = malloc((size_t)len);
+		if (!list[j]) {
+			errno = ENOMEM;
+			break;
+		}
+		dst = list[j++];
+
+		/* Copy answer data into the allocated area. */
+		eor = p + len;
+		while (p < eor) {
+			n = (unsigned char) *p++;
+			if (p + n > eor) {
+				errno = EMSGSIZE;
+				break;
+			}
+			memcpy(dst, p, (size_t)n);
+			p += n;
+			dst += n;
+		}
+		if (p < eor) {
+			errno = EMSGSIZE;
+			break;
+		}
+		*dst = 0;
+	}
+
+		/*
+		 * If we didn't terminate the loop normally, something
+		 * went wrong.
+		 */
+	if (i < ancount) {
+		for (i = 0; i < j; i++)
+			free(list[i]);
+		free(list);
+		return NULL;
+	}
+	if (j == 0) {
+		errno = ENOENT;
+		free(list);
+		return NULL;
+	}
+	list[j] = NULL;
+	return list;
 }
+
+		/*
+		 *	COMPATIBILITY FUNCTIONS
+		 */
+
+static int	  inited = 0;
+static void	 *context;
+static int	  errval = HES_ER_UNINIT;
 
 int
 hes_init()
 {
-	FILE	*fp;
-	char	*key, *cp, *cpp;
-	char	 buf[MAXDNAME+7];
-
-	Hes_Errno = HES_ER_UNINIT;
-	Hes_LHS[0] = '\0';
-	Hes_RHS[0] = '\0';
-	if ((fp = fopen(HesConfigFile, "r")) == NULL) {
-		/* use defaults compiled in */
-		/* no file or no access uses defaults */
-		/* but poorly formed file returns error */
-		if (DEF_LHS) strncpy(Hes_LHS, DEF_LHS, MAXDNAME);
-		if (DEF_RHS) strncpy(Hes_RHS, DEF_RHS, MAXDNAME);
-
-		/* if DEF_RHS == "", use getdomainname() */
-		if (Hes_RHS[0] == '\0')
-			(void)getdomainname(Hes_RHS, MAXDNAME);
-	} else {
-		while(fgets(buf, MAXDNAME+7, fp) != NULL) {
-			cp = buf;
-			if (*cp == '#' || *cp == '\n')
-				continue;
-			while(*cp == ' ' || *cp == '\t')
-				cp++;
-			key = cp;
-			while(*cp != ' ' && *cp != '\t' && *cp != '=')
-				cp++;
-			*cp++ = '\0';
-			if (strcmp(key, "lhs") == 0)
-				cpp = Hes_LHS;
-			else if (strcmp(key, "rhs") == 0)
-				cpp = Hes_RHS;
-			else
-				continue;
-			while(*cp == ' ' || *cp == '\t' || *cp == '=')
-				cp++;
-			if (*cp != '.' && *cp != '\n') {
-				Hes_Errno = HES_ER_CONFIG;
-				fclose(fp);
-				return(Hes_Errno);
-			}
-			(void) strncpy(cpp, cp, strlen(cp)-1);
-		}
-		fclose(fp);
-	}
-	/* see if the RHS is overridden by environment variable */
-	if ((cp = getenv("HES_DOMAIN")) != NULL)
-		strncpy(Hes_RHS, cp, MAXDNAME);
-	/* the LHS may be null, the RHS must not be null */
-	if (Hes_RHS[0] == '\0')
-		Hes_Errno = HES_ER_CONFIG;
-	else
-		Hes_Errno = HES_ER_OK;	
-	return(Hes_Errno);
+	init_context();
+	return errval;
 }
 
 char *
-hes_to_bind(HesiodName, HesiodNameType)
-	char *HesiodName, *HesiodNameType;
+hes_to_bind(name, type)
+	const char	*name;
+	const char	*type;
 {
-	static char	 bindname[MAXDNAME];
-	char		*cp, **cpp, *x;
-	char		*RHS;
-	int		 bni = 0;
-
-#define STRADDBIND(y)	for (x = y; *x; x++, bni++) { \
-				if (bni >= MAXDNAME) \
-					return NULL; \
-				bindname[bni] = *x; \
-			}
-
-	if (Hes_Errno == HES_ER_UNINIT || Hes_Errno == HES_ER_CONFIG)
-		(void) hes_init();
-	if (Hes_Errno == HES_ER_CONFIG)
-		return(NULL);
-	if ((cp = strchr(HesiodName,'@')) != NULL) {
-		if (strchr(++cp,'.'))
-			RHS = cp;
-		else
-			if ((cpp = hes_resolve(cp, "rhs-extension")) != NULL)
-				RHS = *cpp;
-			else {
-				Hes_Errno = HES_ER_NOTFOUND;
-				return(NULL);
-			}
-		STRADDBIND(HesiodName);
-		*strchr(bindname,'@') = '\0';
-	} else {
-		RHS = Hes_RHS;
-		STRADDBIND(HesiodName);
-	}
-	STRADDBIND(".");
-	STRADDBIND(HesiodNameType);
-	if (Hes_LHS && Hes_LHS[0]) {
-		if (Hes_LHS[0] != '.')
-			STRADDBIND(".");
-		STRADDBIND(Hes_LHS);
-	}
-	if (RHS[0] != '.')
-		STRADDBIND(".");
-	STRADDBIND(RHS);
-	if (bni == MAXDNAME)
-		bni--;
-	bindname[bni] = '\0';
-	return(bindname);
+	static	char	*bindname;
+	if (init_context() < 0)
+		return NULL;
+	if (bindname)
+		free(bindname);
+	bindname = hesiod_to_bind(context, name, type);
+	if (!bindname)
+		translate_errors();
+	return bindname;
 }
 
-/* XXX: convert to resolv directly */
 char **
-hes_resolve(HesiodName, HesiodNameType)
-	char *HesiodName, *HesiodNameType;
+hes_resolve(name, type)
+	const char	*name;
+	const char	*type;
 {
-	char		**retvec;
-	char		 *cp, *ocp, *dst;
-	int		  i, n;
-	struct nsmsg	 *ns;
-	rr_t		 *rp;
-	StringList	 *sl;
+	static char	**list;
 
-	sl = sl_init();
+	if (init_context() < 0)
+		return NULL;
 
-	cp = hes_to_bind(HesiodName, HesiodNameType);
-	if (cp == NULL)
-		return(NULL);
-	errno = 0;
-	ns = _hes_res((u_char *)cp, C_IN, T_TXT);
-	if (errno == ETIMEDOUT || errno == ECONNREFUSED) {
-		Hes_Errno = HES_ER_NET;
-		return(NULL);
-	}
-	if (ns == NULL || ns->ns_off <= 0) {
-		Hes_Errno = HES_ER_NOTFOUND;
-		return(NULL);
-	}
-	for(i = 0, rp = &ns->rr; i < ns->ns_off; rp++, i++) {
-		if (rp->class == C_IN && rp->type == T_TXT) {
-			dst = calloc((size_t)(rp->dlen + 1), sizeof(char));
-			if (dst == NULL) {
-				sl_free(sl, 1);
-				return NULL;
-			}
-			sl_add(sl, dst);
-			ocp = cp = (char *)rp->data;
-			while (cp < ocp + rp->dlen) {
-				n = (unsigned char) *cp++;
-				(void) memmove(dst, cp, (size_t)n);
-				cp += n;
-				dst += n;
-			}
-			*dst = 0;
-		}
-	}
-	sl_add(sl, NULL);
-	retvec = sl->sl_str;	/* XXX: nasty, knows stringlist internals */
-	free(sl);
-	return(retvec);
+	/*
+	 * In the old Hesiod interface, the caller was responsible for
+	 * freeing the returned strings but not the vector of strings itself.
+	 */
+	if (list)
+		free(list);
+
+	list = hesiod_resolve(context, name, type);
+	if (!list)
+		translate_errors();
+	return list;
 }
 
 int
 hes_error()
 {
-	return(Hes_Errno);
+	return errval;
 }
 
 void
@@ -395,4 +558,37 @@ hes_free(hp)
 	for (i = 0; hp[i]; i++)
 		free(hp[i]);
 	free(hp);
+}
+
+static int
+init_context()
+{
+	if (!inited) {
+		inited = 1;
+		if (hesiod_init(&context) < 0) {
+			errval = HES_ER_CONFIG;
+			return -1;
+		}
+		errval = HES_ER_OK;
+	}
+	return 0;
+}
+
+static void
+translate_errors()
+{
+	switch (errno) {
+	case ENOENT:
+		errval = HES_ER_NOTFOUND;
+		break;
+	case ECONNREFUSED:
+	case EMSGSIZE:
+		errval = HES_ER_NET;
+		break;
+	case ENOMEM:
+	default:
+		/* Not a good match, but the best we can do. */
+		errval = HES_ER_CONFIG;
+		break;
+	}
 }
