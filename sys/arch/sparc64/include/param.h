@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.26 2001/12/04 00:53:19 darrenr Exp $ */
+/*	$NetBSD: param.h,v 1.27 2002/02/09 04:58:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,9 +212,9 @@ extern int nbpg, pgofset, pgshift;
 
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 
