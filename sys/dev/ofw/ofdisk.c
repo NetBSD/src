@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.18 2001/11/13 07:26:28 lukem Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.18.8.1 2002/05/16 12:01:36 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.18 2001/11/13 07:26:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.18.8.1 2002/05/16 12:01:36 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.18 2001/11/13 07:26:28 lukem Exp $");
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -59,9 +60,6 @@ struct ofdisk_softc {
 	char sc_name[16];
 };
 
-bdev_decl(ofdisk_);
-cdev_decl(ofdisk_);
-
 /* sc_flags */
 #define OFDF_ISFLOPPY	0x01		/* we are a floppy drive */
 
@@ -74,7 +72,24 @@ struct cfattach ofdisk_ca = {
 
 extern struct cfdriver ofdisk_cd;
 
-void ofdisk_strategy (struct buf *);
+dev_type_open(ofdisk_open);
+dev_type_close(ofdisk_close);
+dev_type_read(ofdisk_read);
+dev_type_write(ofdisk_write);
+dev_type_ioctl(ofdisk_ioctl);
+dev_type_strategy(ofdisk_strategy);
+dev_type_dump(ofdisk_dump);
+dev_type_size(ofdisk_size);
+
+const struct bdevsw ofdisk_bdevsw = {
+	ofdisk_open, ofdisk_close, ofdisk_strategy, ofdisk_ioctl,
+	ofdisk_dump, ofdisk_size, D_DISK
+};
+
+const struct cdevsw ofdisk_cdevsw = {
+	ofdisk_open, ofdisk_close, ofdisk_read, ofdisk_write, ofdisk_ioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };
 
