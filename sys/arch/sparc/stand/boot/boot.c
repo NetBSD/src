@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2003/03/01 13:01:56 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.16 2003/07/10 09:06:52 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -98,6 +98,8 @@ bootoptions(ap)
 
 	while (*ap != '\0' && *ap != ' ' && *ap != '\t' && *ap != '\n') {
 		BOOT_FLAG(*ap, v);
+		if (*ap == 'C')
+			compatmode = 1;
 		ap++;
 	}
 
@@ -181,12 +183,19 @@ loadk(char *kernel, u_long *marks)
 
 	size = marks[MARK_END] - marks[MARK_START];
 
-	/* We want that leading 4K in front of the kernel image */
+	/* We want that leading 16K in front of the kernel image */
 	size += PROM_LOADADDR;
 	va = marks[MARK_START] - PROM_LOADADDR;
 
-	/* Extra space for bootinfo and kernel bootstrap */
-	size += 512 * 1024;
+	/*
+	 * Extra space for bootinfo and kernel bootstrap.
+	 * In compat mode, we get to re-use the space occupied by the
+	 * boot program. Traditionally, we've silently assumed that
+	 * is enough for the kernel to work with.
+	 */
+	size += BOOTINFO_SIZE;
+	if (!compatmode)
+		size += 512 * 1024;
 
 	/* Get a physical load address */
 	pa = getphysmem(size);
@@ -204,9 +213,17 @@ loadk(char *kernel, u_long *marks)
 
 	/* XXX - to do: inspect kernel image and set compat mode */
 	if (compatmode) {
-		/* Double-map at VA 0 for compatibility; ignore errors */
-		if (pa + size < bstart)
-			(void)pmap_map(0, pa, size);
+		/* Double-map at VA 0 for compatibility */
+		if (pa + size >= bstart) {
+			printf("%s: too large for compat mode\n", kernel);
+			error = EFBIG;
+			goto out;
+		}
+
+		if (pmap_map(0, pa, size) != 0) {
+			error = EFAULT;
+			goto out;
+		}
 		loadaddrmask = 0x07ffffffUL;
 	}
 
