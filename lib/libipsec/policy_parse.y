@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.7.2.1 2002/08/02 00:42:07 lukem Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.7.2.2 2003/10/02 20:55:52 tron Exp $	*/
 /*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -320,17 +320,19 @@ set_x_request(src, dst)
 {
 	struct sadb_x_ipsecrequest *p;
 	int reqlen;
+	caddr_t n;
 
 	reqlen = sizeof(*p)
 		+ (src ? src->sa_len : 0)
 		+ (dst ? dst->sa_len : 0);
-	tlen += reqlen;		/* increment to total length */
 
-	pbuf = realloc(pbuf, tlen);
+	n = realloc(pbuf, tlen + reqlen);
 	if (pbuf == NULL) {
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	tlen += reqlen;
+	pbuf = n;
 	p = (struct sadb_x_ipsecrequest *)&pbuf[offset];
 	p->sadb_x_ipsecrequest_len = reqlen;
 	p->sadb_x_ipsecrequest_proto = p_protocol;
