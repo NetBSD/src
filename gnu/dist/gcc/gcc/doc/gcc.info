@@ -1,5 +1,5 @@
-This is doc/gcc.info, produced by makeinfo version 4.2 from
-doc/gcc.texi.
+Ceci est le fichier Info doc/gcc.info, produit par Makeinfo version 4.6
+à partir doc/gcc.texi.
 
 Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
@@ -58,9 +58,9 @@ File: gcc.info,  Node: Top,  Next: G++ and GCC,  Up: (DIR)
 Introduction
 ************
 
-   This manual documents how to use the GNU compilers, as well as their
+This manual documents how to use the GNU compilers, as well as their
 features and incompatibilities, and how to report bugs.  It corresponds
-to GCC version 3.3.2.  The internals of the GNU compilers, including
+to GCC version 3.3.3.  The internals of the GNU compilers, including
 how to port them to new targets and some information about how to write
 front ends for new languages, are documented in a separate manual.
 *Note Introduction: (gccint)Top.
@@ -98,7 +98,7 @@ File: gcc.info,  Node: G++ and GCC,  Next: Standards,  Prev: Top,  Up: Top
 Compile C, C++, Objective-C, Ada, Fortran, Java, or treelang
 ************************************************************
 
-   Several versions of the compiler (C, C++, Objective-C, Ada, Fortran,
+Several versions of the compiler (C, C++, Objective-C, Ada, Fortran,
 Java and treelang) are integrated; this is why we use the name "GNU
 Compiler Collection".  GCC can compile programs written in any of these
 languages.  The Ada, Fortran, Java and treelang compilers are described
@@ -150,7 +150,7 @@ File: gcc.info,  Node: Standards,  Next: Invoking GCC,  Prev: G++ and GCC,  Up: 
 Language Standards Supported by GCC
 ***********************************
 
-   For each language compiled by GCC for which there is a standard, GCC
+For each language compiled by GCC for which there is a standard, GCC
 attempts to follow one or more versions of that standard, possibly with
 some exceptions, and possibly with some extensions.
 
@@ -289,7 +289,7 @@ File: gcc.info,  Node: Invoking GCC,  Next: C Implementation,  Prev: Standards, 
 GCC Command Options
 *******************
 
-   When you invoke GCC, it normally does preprocessing, compilation,
+When you invoke GCC, it normally does preprocessing, compilation,
 assembly and linking.  The "overall options" allow you to stop this
 process at an intermediate stage.  For example, the `-c' option says
 not to run the linker.  Then the output consists of object files output
@@ -362,8 +362,8 @@ File: gcc.info,  Node: Option Summary,  Next: Overall Options,  Up: Invoking GCC
 Option Summary
 ==============
 
-   Here is a summary of all the options, grouped by type.  Explanations
-are in the following sections.
+Here is a summary of all the options, grouped by type.  Explanations are
+in the following sections.
 
 _Overall Options_
      *Note Options Controlling the Kind of Output: Overall Options.
@@ -686,7 +686,7 @@ _Machine Dependent Options_
           -mno-fp-ret-in-387  -msoft-float  -msvr3-shlib 
           -mno-wide-multiply  -mrtd  -malign-double 
           -mpreferred-stack-boundary=NUM 
-          -mmmx  -msse  -msse2  -m3dnow 
+          -mmmx  -msse  -msse2 -msse3 -m3dnow 
           -mthreads  -mno-align-stringops  -minline-all-stringops 
           -mpush-args  -maccumulate-outgoing-args  -m128bit-long-double 
           -m96bit-long-double  -mregparm=NUM  -momit-leaf-frame-pointer 
@@ -877,6 +877,7 @@ _Code Generation Options_
           -ftls-model=MODEL 
           -ftrapv  -fbounds-check
 
+
 * Menu:
 
 * Overall Options::     Controlling the kind of output:
@@ -905,7 +906,7 @@ File: gcc.info,  Node: Overall Options,  Next: Invoking G++,  Prev: Option Summa
 Options Controlling the Kind of Output
 ======================================
 
-   Compilation can involve up to four stages: preprocessing, compilation
+Compilation can involve up to four stages: preprocessing, compilation
 proper, assembly and linking, always in that order.  The first three
 stages apply to an individual source file, and end by producing an
 object file; linking combines all the object files (those newly
@@ -1098,7 +1099,7 @@ File: gcc.info,  Node: Invoking G++,  Next: C Dialect Options,  Prev: Overall Op
 Compiling C++ Programs
 ======================
 
-   C++ source files conventionally use one of the suffixes `.C', `.cc',
+C++ source files conventionally use one of the suffixes `.C', `.cc',
 `.cpp', `.c++', `.cp', or `.cxx'; preprocessed C++ files use the suffix
 `.ii'.  GCC recognizes files with these names and compiles them as C++
 programs even if you call the compiler the same way as for compiling C
@@ -1127,7 +1128,7 @@ File: gcc.info,  Node: C Dialect Options,  Next: C++ Dialect Options,  Prev: Inv
 Options Controlling C Dialect
 =============================
 
-   The following options control the dialect of C (or languages derived
+The following options control the dialect of C (or languages derived
 from C, such as C++ and Objective-C) that the compiler accepts:
 
 `-ansi'
@@ -1192,7 +1193,6 @@ from C, such as C++ and Objective-C) that the compiler accepts:
           features).
 
     `gnu99'
-
     `gnu9x'
           ISO C99 plus GNU extensions.  When ISO C99 is fully
           implemented in GCC, this will become the default.  The name
@@ -1371,10 +1371,10 @@ File: gcc.info,  Node: C++ Dialect Options,  Next: Objective-C Dialect Options, 
 Options Controlling C++ Dialect
 ===============================
 
-   This section describes the command-line options that are only
-meaningful for C++ programs; but you can also use most of the GNU
-compiler options regardless of what language your program is in.  For
-example, you might compile a file `firstClass.C' like this:
+This section describes the command-line options that are only meaningful
+for C++ programs; but you can also use most of the GNU compiler options
+regardless of what language your program is in.  For example, you might
+compile a file `firstClass.C' like this:
 
      g++ -g -frepo -O -c firstClass.C
 
@@ -1805,10 +1805,10 @@ File: gcc.info,  Node: Objective-C Dialect Options,  Next: Language Independent 
 Options Controlling Objective-C Dialect
 =======================================
 
-   This section describes the command-line options that are only
-meaningful for Objective-C programs, but you can also use most of the
-GNU compiler options regardless of what language your program is in.
-For example, you might compile a file `some_class.m' like this:
+This section describes the command-line options that are only meaningful
+for Objective-C programs, but you can also use most of the GNU compiler
+options regardless of what language your program is in.  For example,
+you might compile a file `some_class.m' like this:
 
      gcc -g -fgnu-runtime -O -c some_class.m
 
@@ -1872,20 +1872,20 @@ programs:
      enforces the coding style convention that methods and selectors
      must be declared before being used.
 
+
 
 File: gcc.info,  Node: Language Independent Options,  Next: Warning Options,  Prev: Objective-C Dialect Options,  Up: Invoking GCC
 
 Options to Control Diagnostic Messages Formatting
 =================================================
 
-   Traditionally, diagnostic messages have been formatted irrespective
-of the output device's aspect (e.g. its width, ...).  The options
-described below can be used to control the diagnostic messages
-formatting algorithm, e.g. how many characters per line, how often
-source location information should be reported.  Right now, only the
-C++ front end can honor these options.  However it is expected, in the
-near future, that the remaining front ends would be able to digest them
-correctly.
+Traditionally, diagnostic messages have been formatted irrespective of
+the output device's aspect (e.g. its width, ...).  The options described
+below can be used to control the diagnostic messages formatting
+algorithm, e.g. how many characters per line, how often source location
+information should be reported.  Right now, only the C++ front end can
+honor these options.  However it is expected, in the near future, that
+the remaining front ends would be able to digest them correctly.
 
 `-fmessage-length=N'
      Try to format error messages so that they fit on lines of about N
@@ -1908,13 +1908,14 @@ correctly.
      prefix) for physical lines that result from the process of breaking
      a message which is too long to fit on a single line.
 
+
 
 File: gcc.info,  Node: Warning Options,  Next: Debugging Options,  Prev: Language Independent Options,  Up: Invoking GCC
 
 Options to Request or Suppress Warnings
 =======================================
 
-   Warnings are diagnostic messages that report constructions which are
+Warnings are diagnostic messages that report constructions which are
 not inherently erroneous but which are risky or suggest there may have
 been an error.
 
@@ -2068,7 +2069,7 @@ produced by GCC; for further, language-specific options also refer to
      -Wformat-security'.
 
 `-Wnonnull'
-     Enable warning about passing a null pointer for arguments marked as
+     Warn about passing a null pointer for arguments marked as
      requiring a non-null value by the `nonnull' function attribute.
 
      `-Wnonnull' is included in `-Wall' and `-Wformat'.  It can be
@@ -2723,8 +2724,8 @@ File: gcc.info,  Node: Debugging Options,  Next: Optimize Options,  Prev: Warnin
 Options for Debugging Your Program or GCC
 =========================================
 
-   GCC has various special options that are used for debugging either
-your program or GCC:
+GCC has various special options that are used for debugging either your
+program or GCC:
 
 `-g'
      Produce debugging information in the operating system's native
@@ -3239,7 +3240,7 @@ File: gcc.info,  Node: Optimize Options,  Next: Preprocessor Options,  Prev: Deb
 Options That Control Optimization
 =================================
 
-   These options control various sorts of optimizations.
+These options control various sorts of optimizations.
 
    Without any optimization option, the compiler's goal is to reduce the
 cost of compilation and to make debugging produce the expected results.
@@ -3744,7 +3745,6 @@ optimizations to be performed is desired.
      levels `-O2', `-O3', `-Os'.
 
 `-fbranch-probabilities'
-
 `-fno-guess-branch-probability'
      Do not guess branch probabilities using a randomized model.
 
@@ -3905,6 +3905,7 @@ optimizations to be performed is desired.
 
      Disabled at levels `-O', `-O2', `-O3', `-Os'.
 
+
    The following options control compiler behavior regarding floating
 point arithmetic.  These options trade off between speed and
 correctness.  All must be specifically enabled.
@@ -4007,6 +4008,7 @@ correctness.  All must be specifically enabled.
      Treat floating point constant as single precision constant instead
      of implicitly converting it to double precision constant.
 
+
    The following options control optimizations that may improve
 performance, but are not enabled by any `-O' options.  This section
 includes experimental options that may produce broken code.
@@ -4100,6 +4102,10 @@ includes experimental options that may produce broken code.
      functions that contain more that a certain number of instructions.
      You can control some of these constants on the command-line using
      the `--param' option.
+
+     The names of specific parameters, and the meaning of the values,
+     are tied to the internals of the compiler, and are subject to
+     change without notice in future releases.
 
      In each case, the VALUE is an integer.  The allowable choices for
      NAME are given in the following table:
@@ -4276,14 +4282,15 @@ includes experimental options that may produce broken code.
           parameter and `ggc-min-expand' to zero causes a full
           collection to occur at every opportunity.
 
+
 
 File: gcc.info,  Node: Preprocessor Options,  Next: Assembler Options,  Prev: Optimize Options,  Up: Invoking GCC
 
 Options Controlling the Preprocessor
 ====================================
 
-   These options control the C preprocessor, which is run on each C
-source file before actual compilation.
+These options control the C preprocessor, which is run on each C source
+file before actual compilation.
 
    If you use the `-E' option, nothing is done except preprocessing.
 Some of these options make sense only together with `-E' because they
@@ -4799,7 +4806,7 @@ File: gcc.info,  Node: Assembler Options,  Next: Link Options,  Prev: Preprocess
 Passing Options to the Assembler
 ================================
 
-   You can pass options to the assembler.
+You can pass options to the assembler.
 
 `-Wa,OPTION'
      Pass OPTION as an option to the assembler.  If OPTION contains
@@ -4811,9 +4818,9 @@ File: gcc.info,  Node: Link Options,  Next: Directory Options,  Prev: Assembler 
 Options for Linking
 ===================
 
-   These options come into play when the compiler links object files
-into an executable output file.  They are meaningless if the compiler is
-not doing a link step.
+These options come into play when the compiler links object files into
+an executable output file.  They are meaningless if the compiler is not
+doing a link step.
 
 `OBJECT-FILE-NAME'
      A file name that does not end in a special recognized suffix is
@@ -4991,7 +4998,7 @@ File: gcc.info,  Node: Directory Options,  Next: Spec Files,  Prev: Link Options
 Options for Directory Search
 ============================
 
-   These options specify directories to search for header files, for
+These options specify directories to search for header files, for
 libraries and for parts of the compiler:
 
 `-IDIR'
@@ -5096,12 +5103,12 @@ File: gcc.info,  Node: Spec Files,  Next: Target Options,  Prev: Directory Optio
 Specifying subprocesses and the switches to pass to them
 ========================================================
 
-   `gcc' is a driver program.  It performs its job by invoking a
-sequence of other programs to do the work of compiling, assembling and
-linking.  GCC interprets its command-line parameters and uses these to
-deduce which programs it should invoke, and which command-line options
-it ought to place on their command lines.  This behavior is controlled
-by "spec strings".  In most cases there is one spec string for each
+`gcc' is a driver program.  It performs its job by invoking a sequence
+of other programs to do the work of compiling, assembling and linking.
+GCC interprets its command-line parameters and uses these to deduce
+which programs it should invoke, and which command-line options it
+ought to place on their command lines.  This behavior is controlled by
+"spec strings".  In most cases there is one spec string for each
 program that GCC can invoke, but a few programs have multiple spec
 strings to control their behavior.  The spec strings built into GCC can
 be overridden by using the `-specs=' command-line switch to specify a
@@ -5126,6 +5133,7 @@ character on the line and it can be one of the following:
 
     `%rename OLD_NAME NEW_NAME'
           Rename the spec string OLD_NAME to NEW_NAME.
+
 
 `*[SPEC_NAME]:'
      This tells the compiler to create, override or delete the named
@@ -5178,6 +5186,7 @@ character on the line and it can be one of the following:
      since the list is searched from the end backwards, it is
      effectively possible to override earlier entries using this
      technique.
+
 
    GCC has the following spec strings built into it.  Spec files can
 override these strings or create their own.  Note that individual
@@ -5314,7 +5323,9 @@ or combine them with constant text in a single argument.
      `_L', where L is an uppercase letter.  This is for ISO C.
 
 `%I'
-     Substitute a `-iprefix' option made from `GCC_EXEC_PREFIX'.
+     Substitute any of `-iprefix' (made from `GCC_EXEC_PREFIX'),
+     `-isysroot' (made from `TARGET_SYSTEM_ROOT'), and `-isystem' (made
+     from `COMPILER_PATH' and `-B' options) as necessary.
 
 `%s'
      Current argument is the name of a library or startup file of some
@@ -5535,6 +5546,7 @@ or combine them with constant text in a single argument.
           -d fred.c     -foo -baz -boggle
           -d jim.d      -bar -baz -boggle
 
+
    The conditional text `X' in a %{`S':`X'} or %{!`S':`X'} construct
 may contain other nested `%' constructs or spaces, or even newlines.
 They are processed as usual, as described above.
@@ -5567,7 +5579,7 @@ File: gcc.info,  Node: Target Options,  Next: Submodel Options,  Prev: Spec File
 Specifying Target Machine and Compiler Version
 ==============================================
 
-   The usual way to run GCC is to run the executable called `gcc', or
+The usual way to run GCC is to run the executable called `gcc', or
 `<machine>-gcc' when cross-compiling, or `<machine>-gcc-<version>' to
 run a version other than the one that was installed last.  Sometimes
 this is inconvenient, so GCC provides options that will switch to
@@ -5597,7 +5609,7 @@ File: gcc.info,  Node: Submodel Options,  Next: Code Gen Options,  Prev: Target 
 Hardware Models and Configurations
 ==================================
 
-   Earlier we discussed the standard option `-b' which chooses among
+Earlier we discussed the standard option `-b' which chooses among
 different installed compilers for completely different target machines,
 such as VAX vs. 68000 vs. 80386.
 
@@ -5661,7 +5673,7 @@ File: gcc.info,  Node: M680x0 Options,  Next: M68hc1x Options,  Up: Submodel Opt
 M680x0 Options
 --------------
 
-   These are the `-m' options defined for the 68000 series.  The default
+These are the `-m' options defined for the 68000 series.  The default
 values for these options depends on which style of 68000 was selected
 when the compiler was configured; the defaults for the most common
 choices are given below.
@@ -5806,13 +5818,14 @@ choices are given below.
      Do not (do) assume that unaligned memory references will be
      handled by the system.
 
+
 
 File: gcc.info,  Node: M68hc1x Options,  Next: VAX Options,  Prev: M680x0 Options,  Up: Submodel Options
 
 M68hc1x Options
 ---------------
 
-   These are the `-m' options defined for the 68hc11 and 68hc12
+These are the `-m' options defined for the 68hc11 and 68hc12
 microcontrollers.  The default values for these options depends on
 which style of microcontroller was selected when the compiler was
 configured; the defaults for the most common choices are given below.
@@ -5854,13 +5867,14 @@ configured; the defaults for the most common choices are given below.
      register may or may not result in better code depending on the
      program.  The default is 4 for 68HC11 and 2 for 68HC12.
 
+
 
 File: gcc.info,  Node: VAX Options,  Next: SPARC Options,  Prev: M68hc1x Options,  Up: Submodel Options
 
 VAX Options
 -----------
 
-   These `-m' options are defined for the VAX:
+These `-m' options are defined for the VAX:
 
 `-munix'
      Do not output certain jump instructions (`aobleq' and so on) that
@@ -5880,7 +5894,7 @@ File: gcc.info,  Node: SPARC Options,  Next: ARM Options,  Prev: VAX Options,  U
 SPARC Options
 -------------
 
-   These `-m' switches are supported on the SPARC:
+These `-m' switches are supported on the SPARC:
 
 `-mno-app-regs'
 `-mapp-regs'
@@ -6050,6 +6064,7 @@ SPARC Options
      `supersparc', `hypersparc', `f930', `f934', `sparclite86x',
      `tsc701', `ultrasparc', and `ultrasparc3'.
 
+
    These `-m' switches are supported in addition to the above on the
 SPARCLET processor.
 
@@ -6121,7 +6136,7 @@ File: gcc.info,  Node: ARM Options,  Next: MN10200 Options,  Prev: SPARC Options
 ARM Options
 -----------
 
-   These `-m' options are defined for Advanced RISC Machines (ARM)
+These `-m' options are defined for Advanced RISC Machines (ARM)
 architectures:
 
 `-mapcs-frame'
@@ -6376,13 +6391,14 @@ architectures:
      compiled for interworking or not.  There is a small overhead in
      the cost of executing a function pointer if this option is enabled.
 
+
 
 File: gcc.info,  Node: MN10200 Options,  Next: MN10300 Options,  Prev: ARM Options,  Up: Submodel Options
 
 MN10200 Options
 ---------------
 
-   These `-m' options are defined for Matsushita MN10200 architectures:
+These `-m' options are defined for Matsushita MN10200 architectures:
 `-mrelax'
      Indicate to the linker that it should perform a relaxation
      optimization pass to shorten branches, calls and absolute memory
@@ -6397,7 +6413,7 @@ File: gcc.info,  Node: MN10300 Options,  Next: M32R/D Options,  Prev: MN10200 Op
 MN10300 Options
 ---------------
 
-   These `-m' options are defined for Matsushita MN10300 architectures:
+These `-m' options are defined for Matsushita MN10300 architectures:
 
 `-mmult-bug'
      Generate code to avoid bugs in the multiply instructions for the
@@ -6431,7 +6447,7 @@ File: gcc.info,  Node: M32R/D Options,  Next: M88K Options,  Prev: MN10300 Optio
 M32R/D Options
 --------------
 
-   These `-m' options are defined for Mitsubishi M32R/D architectures:
+These `-m' options are defined for Mitsubishi M32R/D architectures:
 
 `-m32rx'
      Generate code for the M32R/X.
@@ -6490,13 +6506,14 @@ M32R/D Options
      doesn't the linker will give an error message--incorrect code will
      not be generated.
 
+
 
 File: gcc.info,  Node: M88K Options,  Next: RS/6000 and PowerPC Options,  Prev: M32R/D Options,  Up: Submodel Options
 
 M88K Options
 ------------
 
-   These `-m' options are defined for Motorola 88k architectures:
+These `-m' options are defined for Motorola 88k architectures:
 
 `-m88000'
      Generate code that works well on both the m88100 and the m88110.
@@ -6675,7 +6692,7 @@ File: gcc.info,  Node: RS/6000 and PowerPC Options,  Next: Darwin Options,  Prev
 IBM RS/6000 and PowerPC Options
 -------------------------------
 
-   These `-m' options are defined for the IBM RS/6000 and PowerPC:
+These `-m' options are defined for the IBM RS/6000 and PowerPC:
 `-mpower'
 `-mno-power'
 `-mpower2'
@@ -7178,13 +7195,14 @@ IBM RS/6000 and PowerPC Options
      Adds support for multithreading with the "pthreads" library.  This
      option sets flags for both the preprocessor and linker.
 
+
 
 File: gcc.info,  Node: Darwin Options,  Next: RT Options,  Prev: RS/6000 and PowerPC Options,  Up: Submodel Options
 
 Darwin Options
 --------------
 
-   These options are defined for all architectures running the Darwin
+These options are defined for all architectures running the Darwin
 operating system.  They are useful for compatibility with other Mac OS
 compilers.
 
@@ -7210,113 +7228,59 @@ compilers.
      output file being linked. See man ld(1) for more information.
 
 `-allowable_client  CLIENT_NAME'
-
 `-arch_only'
-
 `-client_name'
-
 `-compatibility_version'
-
 `-current_version'
-
 `-dependency-file'
-
 `-dylib_file'
-
 `-dylinker_install_name'
-
 `-dynamic'
-
 `-dynamiclib'
-
 `-exported_symbols_list'
-
 `-filelist'
-
 `-flat_namespace'
-
 `-force_cpusubtype_ALL'
-
 `-force_flat_namespace'
-
 `-headerpad_max_install_names'
-
 `-image_base'
-
 `-init'
-
 `-install_name'
-
 `-keep_private_externs'
-
 `-multi_module'
-
 `-multiply_defined'
-
 `-multiply_defined_unused'
-
 `-noall_load'
-
 `-nomultidefs'
-
 `-noprebind'
-
 `-noseglinkedit'
-
 `-pagezero_size'
-
 `-prebind'
-
 `-prebind_all_twolevel_modules'
-
 `-private_bundle'
-
 `-read_only_relocs'
-
 `-sectalign'
-
 `-sectobjectsymbols'
-
 `-whyload'
-
 `-seg1addr'
-
 `-sectcreate'
-
 `-sectobjectsymbols'
-
 `-sectorder'
-
 `-seg_addr_table'
-
 `-seg_addr_table_filename'
-
 `-seglinkedit'
-
 `-segprot'
-
 `-segs_read_only_addr'
-
 `-segs_read_write_addr'
-
 `-single_module'
-
 `-static'
-
 `-sub_library'
-
 `-sub_umbrella'
-
 `-twolevel_namespace'
-
 `-umbrella'
-
 `-undefined'
-
 `-unexported_symbols_list'
-
 `-weak_reference_mismatches'
-
 `-whatsloaded'
      This options are available for Darwin linker. Darwin linker man
      page describes them in detail.
@@ -7327,7 +7291,7 @@ File: gcc.info,  Node: RT Options,  Next: MIPS Options,  Prev: Darwin Options,  
 IBM RT Options
 --------------
 
-   These `-m' options are defined for the IBM RT PC:
+These `-m' options are defined for the IBM RT PC:
 
 `-min-line-mul'
      Use an in-line code sequence for integer multiplies.  This is the
@@ -7374,7 +7338,7 @@ File: gcc.info,  Node: MIPS Options,  Next: i386 and x86-64 Options,  Prev: RT O
 MIPS Options
 ------------
 
-   These `-m' options are defined for the MIPS family of computers:
+These `-m' options are defined for the MIPS family of computers:
 
 `-march=ARCH'
      Generate code that will run on ARCH, which can be the name of a
@@ -7685,7 +7649,7 @@ File: gcc.info,  Node: i386 and x86-64 Options,  Next: HPPA Options,  Prev: MIPS
 Intel 386 and AMD x86-64 Options
 --------------------------------
 
-   These `-m' options are defined for the i386 and x86-64 family of
+These `-m' options are defined for the i386 and x86-64 family of
 computers:
 
 `-mcpu=CPU-TYPE'
@@ -7718,7 +7682,7 @@ computers:
      synonyms are deprecated.
 
 `-mfpmath=UNIT'
-     generate floating point arithmetics for selected unit UNIT.  the
+     Generate floating point arithmetics for selected unit UNIT.  The
      choices for UNIT are:
 
     `387'
@@ -7748,21 +7712,20 @@ computers:
           option effective.  For x86-64 compiler, these extensions are
           enabled by default.
 
-          The resulting code should be considerably faster in majority
-          of cases and avoid the numerical instability problems of 387
-          code, but may break some existing code that expects
-          temporaries to be 80bit.
+          The resulting code should be considerably faster in the
+          majority of cases and avoid the numerical instability
+          problems of 387 code, but may break some existing code that
+          expects temporaries to be 80bit.
 
-          This is the default choice for x86-64 compiler.
+          This is the default choice for the x86-64 compiler.
 
     `sse,387'
           Attempt to utilize both instruction sets at once.  This
           effectively double the amount of available registers and on
           chips with separate execution units for 387 and SSE the
           execution resources too.  Use this option with care, as it is
-          still experimental, because gcc register allocator does not
-          model separate functional units well resulting in instable
-          performance.
+          still experimental, because the gcc register allocator does
+          not model separate functional units well.
 
 `-masm=DIALECT'
      Output asm instructions using selected DIALECT. Supported choices
@@ -7821,7 +7784,6 @@ computers:
      without that switch.
 
 `-m96bit-long-double'
-
 `-m128bit-long-double'
      These switches control the size of `long double' type. The i386
      application binary interface specifies the size to be 96 bits, so
@@ -7842,11 +7804,11 @@ computers:
      over the x87 standard of 80 bits for a `long double'.
 
      *Warning:* if you override the default value for your target ABI,
-     the structures and arrays containing `long double' will change
-     their size as well as function calling convention for function
-     taking `long double' will be modified.  Hence they will not be
-     binary compatible with arrays or structures in code compiled
-     without that switch.
+     the structures and arrays containing `long double' variables will
+     change their size as well as function calling convention for
+     function taking `long double' will be modified.  Hence they will
+     not be binary compatible with arrays or structures in code
+     compiled without that switch.
 
 `-msvr3-shlib'
 `-mno-svr3-shlib'
@@ -7925,11 +7887,14 @@ computers:
 `-msse2'
 `-mno-sse2'
 
+`-msse3'
+`-mno-sse3'
+
 `-m3dnow'
 `-mno-3dnow'
      These switches enable or disable the use of built-in functions
-     that allow direct access to the MMX, SSE and 3Dnow extensions of
-     the instruction set.
+     that allow direct access to the MMX, SSE, SSE2, SSE3 and 3Dnow
+     extensions of the instruction set.
 
      *Note X86 Built-in Functions::, for details of the functions
      enabled and disabled by these switches.
@@ -8028,7 +7993,7 @@ File: gcc.info,  Node: HPPA Options,  Next: Intel 960 Options,  Prev: i386 and x
 HPPA Options
 ------------
 
-   These `-m' options are defined for the HPPA family of computers:
+These `-m' options are defined for the HPPA family of computers:
 
 `-march=ARCHITECTURE-TYPE'
      Generate code for the specified architecture.  The choices for
@@ -8206,7 +8171,7 @@ File: gcc.info,  Node: Intel 960 Options,  Next: DEC Alpha Options,  Prev: HPPA 
 Intel 960 Options
 -----------------
 
-   These `-m' options are defined for the Intel 960 implementations:
+These `-m' options are defined for the Intel 960 implementations:
 
 `-mCPU-TYPE'
      Assume the defaults for the machine type CPU-TYPE for some of the
@@ -8277,13 +8242,14 @@ Intel 960 Options
      useful for people using soft-float targets.  Otherwise, we should
      recommend against use of it.
 
+
 
 File: gcc.info,  Node: DEC Alpha Options,  Next: DEC Alpha/VMS Options,  Prev: Intel 960 Options,  Up: Submodel Options
 
 DEC Alpha Options
 -----------------
 
-   These `-m' options are defined for the DEC Alpha implementations:
+These `-m' options are defined for the DEC Alpha implementations:
 
 `-mno-soft-float'
 `-msoft-float'
@@ -8500,7 +8466,6 @@ DEC Alpha Options
      Supported values for CPU_TYPE are
 
     `ev4'
-
     `ev45'
     `21064'
           Schedules as an EV4 and has no instruction set extensions.
@@ -8524,7 +8489,6 @@ DEC Alpha Options
           extensions.
 
     `ev67'
-
     `21264a'
           Schedules as an EV6 and supports the BWX, CIX, FIX, and MAX
           extensions.
@@ -8553,13 +8517,14 @@ DEC Alpha Options
           (also called Dcache, Scache, and Bcache), as well as to main
           memory.  Note that L3 is only valid for EV5.
 
+
 
 File: gcc.info,  Node: DEC Alpha/VMS Options,  Next: H8/300 Options,  Prev: DEC Alpha Options,  Up: Submodel Options
 
 DEC Alpha/VMS Options
 ---------------------
 
-   These `-m' options are defined for the DEC Alpha/VMS implementations:
+These `-m' options are defined for the DEC Alpha/VMS implementations:
 
 `-mvms-return-codes'
      Return VMS condition codes from main.  The default is to return
@@ -8571,12 +8536,12 @@ File: gcc.info,  Node: H8/300 Options,  Next: SH Options,  Prev: DEC Alpha/VMS O
 H8/300 Options
 --------------
 
-   These `-m' options are defined for the H8/300 implementations:
+These `-m' options are defined for the H8/300 implementations:
 
 `-mrelax'
      Shorten some address references at link time, when possible; uses
      the linker option `-relax'.  *Note `ld' and the H8/300:
-     (ld.info)H8/300, for a fuller description.
+     (ld)H8/300, for a fuller description.
 
 `-mh'
      Generate code for the H8/300H.
@@ -8608,7 +8573,7 @@ File: gcc.info,  Node: SH Options,  Next: System V Options,  Prev: H8/300 Option
 SH Options
 ----------
 
-   These `-m' options are defined for the SH implementations:
+These `-m' options are defined for the SH implementations:
 
 `-m1'
      Generate code for the SH1.
@@ -8696,7 +8661,7 @@ File: gcc.info,  Node: System V Options,  Next: TMS320C3x/C4x Options,  Prev: SH
 Options for System V
 --------------------
 
-   These additional options are available on System V Release 4 for
+These additional options are available on System V Release 4 for
 compatibility with other compilers on those systems:
 
 `-G'
@@ -8725,7 +8690,7 @@ File: gcc.info,  Node: TMS320C3x/C4x Options,  Next: V850 Options,  Prev: System
 TMS320C3x/C4x Options
 ---------------------
 
-   These `-m' options are defined for TMS320C3x/C4x implementations:
+These `-m' options are defined for TMS320C3x/C4x implementations:
 
 `-mcpu=CPU_TYPE'
      Set the instruction set, register set, and instruction scheduling
@@ -8734,7 +8699,6 @@ TMS320C3x/C4x Options
      is `c40' to generate code for the TMS320C40.
 
 `-mbig-memory'
-
 `-mbig'
 `-msmall-memory'
 `-msmall'
@@ -8845,13 +8809,14 @@ TMS320C3x/C4x Options
      These instructions have tight register constraints which can
      pessimize the code generation of large functions.
 
+
 
 File: gcc.info,  Node: V850 Options,  Next: ARC Options,  Prev: TMS320C3x/C4x Options,  Up: Submodel Options
 
 V850 Options
 ------------
 
-   These `-m' options are defined for V850 implementations:
+These `-m' options are defined for V850 implementations:
 
 `-mlong-calls'
 `-mno-long-calls'
@@ -8924,13 +8889,14 @@ V850 Options
      the v850e flavors of the v850 architecture.  The default is
      `-mno-disable-callt' which allows the CALLT instruction to be used.
 
+
 
 File: gcc.info,  Node: ARC Options,  Next: NS32K Options,  Prev: V850 Options,  Up: Submodel Options
 
 ARC Options
 -----------
 
-   These options are defined for ARC implementations:
+These options are defined for ARC implementations:
 
 `-EL'
      Compile code for little endian mode.  This is the default.
@@ -8959,13 +8925,14 @@ ARC Options
      This can be overridden with the `section' attribute.  *Note
      Variable Attributes::.
 
+
 
 File: gcc.info,  Node: NS32K Options,  Next: AVR Options,  Prev: ARC Options,  Up: Submodel Options
 
 NS32K Options
 -------------
 
-   These are the `-m' options defined for the 32000 series.  The default
+These are the `-m' options defined for the 32000 series.  The default
 values for these options depends on which style of 32000 was selected
 when the compiler was configured; the defaults for the most common
 choices are given below.
@@ -9080,13 +9047,14 @@ choices are given below.
      Assume code will be loaded in the first 512MB of virtual address
      space.  This is the default for all platforms.
 
+
 
 File: gcc.info,  Node: AVR Options,  Next: MCore Options,  Prev: NS32K Options,  Up: Submodel Options
 
 AVR Options
 -----------
 
-   These options are defined for AVR implementations:
+These options are defined for AVR implementations:
 
 `-mmcu=MCU'
      Specify ATMEL AVR instruction set or MCU type.
@@ -9138,8 +9106,7 @@ File: gcc.info,  Node: MCore Options,  Next: IA-64 Options,  Prev: AVR Options, 
 MCore Options
 -------------
 
-   These are the `-m' options defined for the Motorola M*Core
-processors.
+These are the `-m' options defined for the Motorola M*Core processors.
 
 `-mhardlit'
 `-mno-hardlit'
@@ -9184,7 +9151,7 @@ File: gcc.info,  Node: IA-64 Options,  Next: D30V Options,  Prev: MCore Options,
 IA-64 Options
 -------------
 
-   These are the `-m' options defined for the Intel IA-64 architecture.
+These are the `-m' options defined for the Intel IA-64 architecture.
 
 `-mbig-endian'
      Generate code for a big endian target.  This is the default for
@@ -9269,7 +9236,7 @@ File: gcc.info,  Node: D30V Options,  Next: S/390 and zSeries Options,  Prev: IA
 D30V Options
 ------------
 
-   These `-m' options are defined for D30V implementations:
+These `-m' options are defined for D30V implementations:
 
 `-mextmem'
      Link the `.text', `.data', `.bss', `.strings', `.rodata',
@@ -9306,7 +9273,7 @@ File: gcc.info,  Node: S/390 and zSeries Options,  Next: CRIS Options,  Prev: D3
 S/390 and zSeries Options
 -------------------------
 
-   These are the `-m' options defined for the S/390 and zSeries
+These are the `-m' options defined for the S/390 and zSeries
 architecture.
 
 `-mhard-float'
@@ -9351,13 +9318,14 @@ architecture.
      Print (or do not print) additional debug information when
      compiling.  The default is to not print debug information.
 
+
 
 File: gcc.info,  Node: CRIS Options,  Next: MMIX Options,  Prev: S/390 and zSeries Options,  Up: Submodel Options
 
 CRIS Options
 ------------
 
-   These options are defined specifically for the CRIS ports.
+These options are defined specifically for the CRIS ports.
 
 `-march=ARCHITECTURE-TYPE'
 `-mcpu=ARCHITECTURE-TYPE'
@@ -9469,7 +9437,7 @@ File: gcc.info,  Node: MMIX Options,  Next: PDP-11 Options,  Prev: CRIS Options,
 MMIX Options
 ------------
 
-   These options are defined for the MMIX:
+These options are defined for the MMIX:
 
 `-mlibfuncs'
 `-mno-libfuncs'
@@ -9538,7 +9506,7 @@ File: gcc.info,  Node: PDP-11 Options,  Next: Xstormy16 Options,  Prev: MMIX Opt
 PDP-11 Options
 --------------
 
-   These options are defined for the PDP-11:
+These options are defined for the PDP-11:
 
 `-mfpu'
      Use hardware FPP floating point.  This is the default.  (FIS
@@ -9583,7 +9551,6 @@ PDP-11 Options
      Use 64-bit `float'.  This is the default.
 
 `-mfloat32'
-
 `-mno-float64'
      Use 32-bit `float'.
 
@@ -9620,7 +9587,7 @@ File: gcc.info,  Node: Xstormy16 Options,  Next: Xtensa Options,  Prev: PDP-11 O
 Xstormy16 Options
 -----------------
 
-   These options are defined for Xstormy16:
+These options are defined for Xstormy16:
 
 `-msim'
      Choose startup files and linker script suitable for the simulator.
@@ -9778,13 +9745,14 @@ FRV Options
      Select the processor type for which to generate code.  Possible
      values are `simple', `tomcat', `fr500', `fr400', `fr300', `frv'.
 
+
 
 File: gcc.info,  Node: Xtensa Options,  Next: FRV Options,  Prev: Xstormy16 Options,  Up: Submodel Options
 
 Xtensa Options
 --------------
 
-   The Xtensa architecture is designed to support many different
+The Xtensa architecture is designed to support many different
 configurations.  The compiler's default options can be set to match a
 particular Xtensa configuration by copying a configuration file into the
 GCC sources when building GCC.  The options below may be used to
@@ -9932,7 +9900,7 @@ File: gcc.info,  Node: Code Gen Options,  Next: Environment Variables,  Prev: Su
 Options for Code Generation Conventions
 =======================================
 
-   These machine-independent options control the interface conventions
+These machine-independent options control the interface conventions
 used in code generation.
 
    Most of them have both positive and negative forms; the negative form
@@ -10294,9 +10262,9 @@ File: gcc.info,  Node: Environment Variables,  Next: Running Protoize,  Prev: Co
 Environment Variables Affecting GCC
 ===================================
 
-   This section describes several environment variables that affect how
-GCC operates.  Some of them work by specifying directories or prefixes
-to use when searching for various kinds of files.  Some are used to
+This section describes several environment variables that affect how GCC
+operates.  Some of them work by specifying directories or prefixes to
+use when searching for various kinds of files.  Some are used to
 specify other aspects of the compilation environment.
 
    Note that you can also specify places to search using options such as
@@ -10466,8 +10434,8 @@ File: gcc.info,  Node: Running Protoize,  Prev: Environment Variables,  Up: Invo
 Running Protoize
 ================
 
-   The program `protoize' is an optional part of GCC.  You can use it
-to add prototypes to a program, thus converting the program to ISO C in
+The program `protoize' is an optional part of GCC.  You can use it to
+add prototypes to a program, thus converting the program to ISO C in
 one respect.  The companion program `unprotoize' does the reverse: it
 removes argument types from any prototypes that are found.
 
@@ -10616,10 +10584,10 @@ File: gcc.info,  Node: C Implementation,  Next: C Extensions,  Prev: Invoking GC
 C Implementation-defined behavior
 *********************************
 
-   A conforming implementation of ISO C is required to document its
-choice of behavior in each of the areas that are designated
-"implementation defined."  The following lists all such areas, along
-with the section number from the ISO/IEC 9899:1999 standard.
+A conforming implementation of ISO C is required to document its choice
+of behavior in each of the areas that are designated "implementation
+defined."  The following lists all such areas, along with the section
+number from the ISO/IEC 9899:1999 standard.
 
 * Menu:
 
@@ -10658,8 +10626,8 @@ File: gcc.info,  Node: Environment implementation,  Next: Identifiers implementa
 Environment
 ===========
 
-   The behavior of these points are dependent on the implementation of
-the C library, and are not defined by GCC itself.
+The behavior of these points are dependent on the implementation of the
+C library, and are not defined by GCC itself.
 
 
 File: gcc.info,  Node: Identifiers implementation,  Next: Characters implementation,  Prev: Environment implementation,  Up: C Implementation
@@ -10952,8 +10920,8 @@ File: gcc.info,  Node: Library functions implementation,  Next: Architecture imp
 Library functions
 =================
 
-   The behavior of these points are dependent on the implementation of
-the C library, and are not defined by GCC itself.
+The behavior of these points are dependent on the implementation of the
+C library, and are not defined by GCC itself.
 
 
 File: gcc.info,  Node: Architecture implementation,  Next: Locale-specific behavior implementation,  Prev: Library functions implementation,  Up: C Implementation
@@ -10977,8 +10945,8 @@ File: gcc.info,  Node: Locale-specific behavior implementation,  Prev: Architect
 Locale-specific behavior
 ========================
 
-   The behavior of these points are dependent on the implementation of
-the C library, and are not defined by GCC itself.
+The behavior of these points are dependent on the implementation of the
+C library, and are not defined by GCC itself.
 
 
 File: gcc.info,  Node: C Extensions,  Next: C++ Extensions,  Prev: C Implementation,  Up: Top
@@ -10986,7 +10954,7 @@ File: gcc.info,  Node: C Extensions,  Next: C++ Extensions,  Prev: C Implementat
 Extensions to the C Language Family
 ***********************************
 
-   GNU C provides several language features not found in ISO standard C.
+GNU C provides several language features not found in ISO standard C.
 (The `-pedantic' option directs GCC to print a warning message if any
 of these features is used.)  To test for the availability of these
 features in conditional compilation, check for a predefined macro
@@ -11060,9 +11028,9 @@ File: gcc.info,  Node: Statement Exprs,  Next: Local Labels,  Up: C Extensions
 Statements and Declarations in Expressions
 ==========================================
 
-   A compound statement enclosed in parentheses may appear as an
-expression in GNU C.  This allows you to use loops, switches, and local
-variables within an expression.
+A compound statement enclosed in parentheses may appear as an expression
+in GNU C.  This allows you to use loops, switches, and local variables
+within an expression.
 
    Recall that a compound statement is a sequence of statements
 surrounded by braces; in this construct, parentheses go around the
@@ -11137,7 +11105,7 @@ File: gcc.info,  Node: Local Labels,  Next: Labels as Values,  Prev: Statement E
 Locally Declared Labels
 =======================
 
-   Each statement expression is a scope in which "local labels" can be
+Each statement expression is a scope in which "local labels" can be
 declared.  A local label is simply an identifier; you can jump to it
 with an ordinary `goto' statement, but only from within the statement
 expression it belongs to.
@@ -11187,8 +11155,8 @@ File: gcc.info,  Node: Labels as Values,  Next: Nested Functions,  Prev: Local L
 Labels as Values
 ================
 
-   You can get the address of a label defined in the current function
-(or a containing function) with the unary operator `&&'.  The value has
+You can get the address of a label defined in the current function (or
+a containing function) with the unary operator `&&'.  The value has
 type `void *'.  This value is a constant and can be used wherever a
 constant of that type is valid.  For example:
 
@@ -11251,7 +11219,7 @@ File: gcc.info,  Node: Nested Functions,  Next: Constructing Calls,  Prev: Label
 Nested Functions
 ================
 
-   A "nested function" is a function defined inside another function.
+A "nested function" is a function defined inside another function.
 (Nested functions are not supported for GNU C++.)  The nested function's
 name is local to the block where it is defined.  For example, here we
 define a nested function named `square', and call it twice:
@@ -11366,7 +11334,7 @@ File: gcc.info,  Node: Constructing Calls,  Next: Typeof,  Prev: Nested Function
 Constructing Function Calls
 ===========================
 
-   Using the built-in functions described below, you can record the
+Using the built-in functions described below, you can record the
 arguments a function received, and call another function with the same
 arguments, without knowing the number or types of the arguments.
 
@@ -11413,7 +11381,7 @@ File: gcc.info,  Node: Typeof,  Next: Lvalues,  Prev: Constructing Calls,  Up: C
 Referring to a Type with `typeof'
 =================================
 
-   Another way to refer to the type of an expression is with `typeof'.
+Another way to refer to the type of an expression is with `typeof'.
 The syntax of using of this keyword looks like `sizeof', but the
 construct acts semantically like a type name defined with `typedef'.
 
@@ -11507,9 +11475,9 @@ File: gcc.info,  Node: Lvalues,  Next: Conditionals,  Prev: Typeof,  Up: C Exten
 Generalized Lvalues
 ===================
 
-   Compound expressions, conditional expressions and casts are allowed
-as lvalues provided their operands are lvalues.  This means that you
-can take their addresses or store values into them.
+Compound expressions, conditional expressions and casts are allowed as
+lvalues provided their operands are lvalues.  This means that you can
+take their addresses or store values into them.
 
    Standard C++ allows compound expressions and conditional expressions
 as lvalues, and permits casts to reference type, so use of this
@@ -11575,9 +11543,9 @@ File: gcc.info,  Node: Conditionals,  Next: Long Long,  Prev: Lvalues,  Up: C Ex
 Conditionals with Omitted Operands
 ==================================
 
-   The middle operand in a conditional expression may be omitted.  Then
-if the first operand is nonzero, its value is the value of the
-conditional expression.
+The middle operand in a conditional expression may be omitted.  Then if
+the first operand is nonzero, its value is the value of the conditional
+expression.
 
    Therefore, the expression
 
@@ -11602,13 +11570,13 @@ File: gcc.info,  Node: Long Long,  Next: Complex,  Prev: Conditionals,  Up: C Ex
 Double-Word Integers
 ====================
 
-   ISO C99 supports data types for integers that are at least 64 bits
-wide, and as an extension GCC supports them in C89 mode and in C++.
-Simply write `long long int' for a signed integer, or `unsigned long
-long int' for an unsigned integer.  To make an integer constant of type
-`long long int', add the suffix `LL' to the integer.  To make an
-integer constant of type `unsigned long long int', add the suffix `ULL'
-to the integer.
+ISO C99 supports data types for integers that are at least 64 bits wide,
+and as an extension GCC supports them in C89 mode and in C++.  Simply
+write `long long int' for a signed integer, or `unsigned long long int'
+for an unsigned integer.  To make an integer constant of type `long
+long int', add the suffix `LL' to the integer.  To make an integer
+constant of type `unsigned long long int', add the suffix `ULL' to the
+integer.
 
    You can use these types in arithmetic like any other integer types.
 Addition, subtraction, and bitwise boolean operations on these types
@@ -11632,7 +11600,7 @@ File: gcc.info,  Node: Complex,  Next: Hex Floats,  Prev: Long Long,  Up: C Exte
 Complex Numbers
 ===============
 
-   ISO C99 supports complex floating data types, and as an extension GCC
+ISO C99 supports complex floating data types, and as an extension GCC
 supports them in C89 mode and in C++, and supports complex integer data
 types which are not part of ISO C99.  You can declare complex types
 using the keyword `_Complex'.  As an extension, the older GNU keyword
@@ -11682,7 +11650,7 @@ File: gcc.info,  Node: Hex Floats,  Next: Zero Length,  Prev: Complex,  Up: C Ex
 Hex Floats
 ==========
 
-   ISO C99 supports floating-point numbers written not only in the usual
+ISO C99 supports floating-point numbers written not only in the usual
 decimal notation, such as `1.55e1', but also numbers such as `0x1.fp3'
 written in hexadecimal format.  As a GNU extension, GCC supports this
 in C89 mode (except in some cases when strictly conforming) and in C++.
@@ -11704,7 +11672,7 @@ File: gcc.info,  Node: Zero Length,  Next: Variable Length,  Prev: Hex Floats,  
 Arrays of Length Zero
 =====================
 
-   Zero-length arrays are allowed in GNU C.  They are very useful as the
+Zero-length arrays are allowed in GNU C.  They are very useful as the
 last element of a structure which is really a header for a
 variable-length object:
 
@@ -11787,7 +11755,7 @@ File: gcc.info,  Node: Empty Structures,  Next: Variadic Macros,  Prev: Variable
 Structures With No Members
 ==========================
 
-   GCC permits a C structure to have no members:
+GCC permits a C structure to have no members:
 
      struct empty {
      };
@@ -11802,7 +11770,7 @@ File: gcc.info,  Node: Variable Length,  Next: Empty Structures,  Prev: Zero Len
 Arrays of Variable Length
 =========================
 
-   Variable-length automatic arrays are allowed in ISO C99, and as an
+Variable-length automatic arrays are allowed in ISO C99, and as an
 extension GCC accepts them in C89 mode and in C++.  (However, GCC's
 implementation of variable-length arrays does not yet conform in detail
 to the ISO C99 standard.)  These arrays are declared like any other
@@ -11873,7 +11841,7 @@ File: gcc.info,  Node: Variadic Macros,  Next: Escaped Newlines,  Prev: Empty St
 Macros with a Variable Number of Arguments.
 ===========================================
 
-   In the ISO C standard of 1999, a macro can be declared to accept a
+In the ISO C standard of 1999, a macro can be declared to accept a
 variable number of arguments much as a function can.  The syntax for
 defining the macro is similar to that of a function.  Here is an
 example:
@@ -11929,7 +11897,7 @@ File: gcc.info,  Node: Escaped Newlines,  Next: Subscripting,  Prev: Variadic Ma
 Slightly Looser Rules for Escaped Newlines
 ==========================================
 
-   Recently, the preprocessor has relaxed its treatment of escaped
+Recently, the preprocessor has relaxed its treatment of escaped
 newlines.  Previously, the newline had to immediately follow a
 backslash.  The current implementation allows whitespace in the form of
 spaces, horizontal and vertical tabs, and form feeds between the
@@ -11946,7 +11914,7 @@ File: gcc.info,  Node: Subscripting,  Next: Pointer Arith,  Prev: Escaped Newlin
 Non-Lvalue Arrays May Have Subscripts
 =====================================
 
-   In ISO C99, arrays that are not lvalues still decay to pointers, and
+In ISO C99, arrays that are not lvalues still decay to pointers, and
 may be subscripted, although they may not be modified or used after the
 next sequence point and the unary `&' operator may not be applied to
 them.  As an extension, GCC allows such arrays to be subscripted in C89
@@ -11968,9 +11936,9 @@ File: gcc.info,  Node: Pointer Arith,  Next: Initializers,  Prev: Subscripting, 
 Arithmetic on `void'- and Function-Pointers
 ===========================================
 
-   In GNU C, addition and subtraction operations are supported on
-pointers to `void' and on pointers to functions.  This is done by
-treating the size of a `void' or of a function as 1.
+In GNU C, addition and subtraction operations are supported on pointers
+to `void' and on pointers to functions.  This is done by treating the
+size of a `void' or of a function as 1.
 
    A consequence of this is that `sizeof' is also allowed on `void' and
 on function types, and returns 1.
@@ -11984,7 +11952,7 @@ File: gcc.info,  Node: Initializers,  Next: Compound Literals,  Prev: Pointer Ar
 Non-Constant Initializers
 =========================
 
-   As in standard C++ and ISO C99, the elements of an aggregate
+As in standard C++ and ISO C99, the elements of an aggregate
 initializer for an automatic variable are not required to be constant
 expressions in GNU C.  Here is an example of an initializer with
 run-time varying elements:
@@ -12001,7 +11969,7 @@ File: gcc.info,  Node: Compound Literals,  Next: Designated Inits,  Prev: Initia
 Compound Literals
 =================
 
-   ISO C99 supports compound literals.  A compound literal looks like a
+ISO C99 supports compound literals.  A compound literal looks like a
 cast containing an initializer.  Its value is an object of the type
 specified in the cast, containing the elements specified in the
 initializer; it is an lvalue.  As an extension, GCC supports compound
@@ -12059,7 +12027,7 @@ File: gcc.info,  Node: Designated Inits,  Next: Cast to Union,  Prev: Compound L
 Designated Initializers
 =======================
 
-   Standard C89 requires the elements of an initializer to appear in a
+Standard C89 requires the elements of an initializer to appear in a
 fixed order, the same as the order of the elements in the array or
 structure being initialized.
 
@@ -12166,8 +12134,8 @@ File: gcc.info,  Node: Case Ranges,  Next: Mixed Declarations,  Prev: Cast to Un
 Case Ranges
 ===========
 
-   You can specify a range of consecutive values in a single `case'
-label, like this:
+You can specify a range of consecutive values in a single `case' label,
+like this:
 
      case LOW ... HIGH:
 
@@ -12195,7 +12163,7 @@ File: gcc.info,  Node: Cast to Union,  Next: Case Ranges,  Prev: Designated Init
 Cast to a Union Type
 ====================
 
-   A cast to union type is similar to other casts, except that the type
+A cast to union type is similar to other casts, except that the type
 specified is a union type.  You can specify the type either with `union
 TAG' or with a typedef name.  A cast to union is actually a constructor
 though, not a cast, and hence does not yield an lvalue like normal
@@ -12230,7 +12198,7 @@ File: gcc.info,  Node: Mixed Declarations,  Next: Function Attributes,  Prev: Ca
 Mixed Declarations and Code
 ===========================
 
-   ISO C99 and ISO C++ allow declarations and code to be freely mixed
+ISO C99 and ISO C++ allow declarations and code to be freely mixed
 within compound statements.  As an extension, GCC also allows this in
 C89 mode.  For example, you could do:
 
@@ -12248,7 +12216,7 @@ File: gcc.info,  Node: Function Attributes,  Next: Attribute Syntax,  Prev: Mixe
 Declaring Attributes of Functions
 =================================
 
-   In GNU C, you declare certain things about functions called in your
+In GNU C, you declare certain things about functions called in your
 program which help the compiler optimize function calls and check your
 code more carefully.
 
@@ -12795,7 +12763,7 @@ attributes.
      attribute is applied to a symbol _definition_, an error is
      reported.  If a symbol previously declared `dllimport' is later
      defined, the attribute is ignored in subsequent references, and a
-     warning is emitted.  The attribute is also overriden by a
+     warning is emitted.  The attribute is also overridden by a
      subsequent declaration as `dllexport'.
 
      When applied to C++ classes, the attribute marks non-inlined
@@ -12844,6 +12812,7 @@ attributes.
      table are to use a .def file with an `EXPORTS' section or, with
      GNU ld, using the `--export-all' linker flag.
 
+
    You can specify multiple attributes in a declaration by separating
 them by commas within the double parentheses or by immediately
 following an attribute declaration with another attribute declaration.
@@ -12876,7 +12845,7 @@ File: gcc.info,  Node: Attribute Syntax,  Next: Function Prototypes,  Prev: Func
 Attribute Syntax
 ================
 
-   This section describes the syntax with which `__attribute__' may be
+This section describes the syntax with which `__attribute__' may be
 used, and the constructs to which attribute specifiers bind, for the C
 language.  Some details may vary for C++ and Objective-C.  Because of
 infelicities in the grammar for attributes, some forms described here
@@ -13079,7 +13048,7 @@ File: gcc.info,  Node: Function Prototypes,  Next: C++ Comments,  Prev: Attribut
 Prototypes and Old-Style Function Definitions
 =============================================
 
-   GNU C extends ISO C to allow a function prototype to override a later
+GNU C extends ISO C to allow a function prototype to override a later
 old-style non-prototype definition.  Consider the following example:
 
      /* Use prototypes unless the compiler is old-fashioned.  */
@@ -13133,7 +13102,7 @@ File: gcc.info,  Node: C++ Comments,  Next: Dollar Signs,  Prev: Function Protot
 C++ Style Comments
 ==================
 
-   In GNU C, you may use C++ style comments, which start with `//' and
+In GNU C, you may use C++ style comments, which start with `//' and
 continue until the end of the line.  Many other C implementations allow
 such comments, and they are included in the 1999 C standard.  However,
 C++ style comments are not recognized if you specify an `-std' option
@@ -13146,11 +13115,10 @@ File: gcc.info,  Node: Dollar Signs,  Next: Character Escapes,  Prev: C++ Commen
 Dollar Signs in Identifier Names
 ================================
 
-   In GNU C, you may normally use dollar signs in identifier names.
-This is because many traditional C implementations allow such
-identifiers.  However, dollar signs in identifiers are not supported on
-a few target machines, typically because the target assembler does not
-allow them.
+In GNU C, you may normally use dollar signs in identifier names.  This
+is because many traditional C implementations allow such identifiers.
+However, dollar signs in identifiers are not supported on a few target
+machines, typically because the target assembler does not allow them.
 
 
 File: gcc.info,  Node: Character Escapes,  Next: Variable Attributes,  Prev: Dollar Signs,  Up: C Extensions
@@ -13158,7 +13126,7 @@ File: gcc.info,  Node: Character Escapes,  Next: Variable Attributes,  Prev: Dol
 The Character <ESC> in Constants
 ================================
 
-   You can use the sequence `\e' in a string or character constant to
+You can use the sequence `\e' in a string or character constant to
 stand for the ASCII character <ESC>.
 
 
@@ -13167,8 +13135,8 @@ File: gcc.info,  Node: Alignment,  Next: Inline,  Prev: Type Attributes,  Up: C 
 Inquiring on Alignment of Types or Variables
 ============================================
 
-   The keyword `__alignof__' allows you to inquire about how an object
-is aligned, or the minimum alignment usually required by a type.  Its
+The keyword `__alignof__' allows you to inquire about how an object is
+aligned, or the minimum alignment usually required by a type.  Its
 syntax is just like `sizeof'.
 
    For example, if the target machine requires a `double' value to be
@@ -13198,8 +13166,8 @@ File: gcc.info,  Node: Variable Attributes,  Next: Type Attributes,  Prev: Chara
 Specifying Attributes of Variables
 ==================================
 
-   The keyword `__attribute__' allows you to specify special attributes
-of variables or structure fields.  This keyword is followed by an
+The keyword `__attribute__' allows you to specify special attributes of
+variables or structure fields.  This keyword is followed by an
 attribute specification inside double parentheses.  Some attributes are
 currently defined generically for variables.  Other attributes are
 defined for variables on particular target systems.  Other attributes
@@ -13474,6 +13442,7 @@ attributes.
      The `dllexport' attribute is described in *Note Function
      Attributes::.
 
+
    To specify multiple attributes, separate them by commas within the
 double parentheses: for example, `__attribute__ ((aligned (16),
 packed))'.
@@ -13484,10 +13453,10 @@ File: gcc.info,  Node: Type Attributes,  Next: Alignment,  Prev: Variable Attrib
 Specifying Attributes of Types
 ==============================
 
-   The keyword `__attribute__' allows you to specify special attributes
-of `struct' and `union' types when you define such types.  This keyword
-is followed by an attribute specification inside double parentheses.
-Six attributes are currently defined for types: `aligned', `packed',
+The keyword `__attribute__' allows you to specify special attributes of
+`struct' and `union' types when you define such types.  This keyword is
+followed by an attribute specification inside double parentheses.  Six
+attributes are currently defined for types: `aligned', `packed',
 `transparent_union', `unused', `deprecated' and `may_alias'.  Other
 attributes are defined for functions (*note Function Attributes::) and
 for variables (*note Variable Attributes::).
@@ -13726,13 +13695,13 @@ File: gcc.info,  Node: Inline,  Next: Extended Asm,  Prev: Alignment,  Up: C Ext
 An Inline Function is As Fast As a Macro
 ========================================
 
-   By declaring a function `inline', you can direct GCC to integrate
-that function's code into the code for its callers.  This makes
-execution faster by eliminating the function-call overhead; in
-addition, if any of the actual argument values are constant, their known
-values may permit simplifications at compile time so that not all of the
-inline function's code needs to be included.  The effect on code size is
-less predictable; object code may be larger or smaller with function
+By declaring a function `inline', you can direct GCC to integrate that
+function's code into the code for its callers.  This makes execution
+faster by eliminating the function-call overhead; in addition, if any
+of the actual argument values are constant, their known values may
+permit simplifications at compile time so that not all of the inline
+function's code needs to be included.  The effect on code size is less
+predictable; object code may be larger or smaller with function
 inlining, depending on the particular case.  Inlining of functions is an
 optimization and it really "works" only in optimizing compilation.  If
 you don't use `-O', no function is really inline.
@@ -13805,7 +13774,7 @@ If any uses of the function remain, they will refer to the single copy
 in the library.
 
    Since GCC eventually will implement ISO C99 semantics for inline
-functions, it is best to use `static inline' only to guarentee
+functions, it is best to use `static inline' only to guarantee
 compatibility.  (The existing semantics will remain available when
 `-std=gnu89' is specified, but eventually the default will be
 `-std=gnu99' and that will implement the C99 semantics, though it does
@@ -13823,10 +13792,10 @@ File: gcc.info,  Node: Extended Asm,  Next: Constraints,  Prev: Inline,  Up: C E
 Assembler Instructions with C Expression Operands
 =================================================
 
-   In an assembler instruction using `asm', you can specify the
-operands of the instruction using C expressions.  This means you need
-not guess which registers or memory locations will contain the data you
-want to use.
+In an assembler instruction using `asm', you can specify the operands
+of the instruction using C expressions.  This means you need not guess
+which registers or memory locations will contain the data you want to
+use.
 
    You must specify an assembler instruction template much like what
 appears in a machine description, plus an operand constraint string for
@@ -13966,13 +13935,30 @@ serves to name this register.  On other machines, the condition code is
 handled differently, and specifying `cc' has no effect.  But it is
 valid no matter what the machine.
 
-   If your assembler instruction modifies memory in an unpredictable
+   If your assembler instructions access memory in an unpredictable
 fashion, add `memory' to the list of clobbered registers.  This will
 cause GCC to not keep memory values cached in registers across the
-assembler instruction.  You will also want to add the `volatile'
-keyword if the memory affected is not listed in the inputs or outputs
-of the `asm', as the `memory' clobber does not count as a side-effect
-of the `asm'.
+assembler instruction and not optimize stores or loads to that memory.
+You will also want to add the `volatile' keyword if the memory affected
+is not listed in the inputs or outputs of the `asm', as the `memory'
+clobber does not count as a side-effect of the `asm'.  If you know how
+large the accessed memory is, you can add it as input or output but if
+this is not known, you should add `memory'.  As an example, if you
+access ten bytes of a string, you can use a memory input like:
+
+     {"m"( ({ struct { char x[10]; } *p = (void *)ptr ; *p; }) )}.
+
+   Note that in the following example the memory input is necessary,
+otherwise GCC might optimize the store to `x' away:
+     int foo ()
+     {
+       int x = 42;
+       int *y = &x;
+       int result;
+       asm ("magic stuff accessing an 'int' pointed to by '%1'"
+             "=&d" (r) : "a" (y), "m" (*y));
+       return result;
+     }
 
    You can put multiple assembler instructions together in a single
 `asm' template, separated by the characters normally used in assembly
@@ -14106,9 +14092,8 @@ programs, write `__asm__' instead of `asm'.  *Note Alternate Keywords::.
 i386 floating point asm operands
 --------------------------------
 
-   There are several rules on the usage of stack-like regs in
-asm_operands insns.  These rules apply only to the operands that are
-stack-like regs:
+There are several rules on the usage of stack-like regs in asm_operands
+insns.  These rules apply only to the operands that are stack-like regs:
 
   1. Given a set of input regs that die in an asm_operands, it is
      necessary to know which are implicitly popped by the asm, and
@@ -14186,7 +14171,7 @@ File: gcc.info,  Node: Constraints,  Next: Asm Labels,  Prev: Extended Asm,  Up:
 Constraints for `asm' Operands
 ==============================
 
-   Here are specific details on what constraint letters you can use with
+Here are specific details on what constraint letters you can use with
 `asm' operands.  Constraints can say whether an operand may be in a
 register, and which kinds of register; whether the operand can be a
 memory reference, and which kinds of address; whether the operand may
@@ -14206,7 +14191,7 @@ File: gcc.info,  Node: Simple Constraints,  Next: Multi-Alternative,  Up: Constr
 Simple Constraints
 ------------------
 
-   The simplest kind of constraint is a string full of letters, each of
+The simplest kind of constraint is a string full of letters, each of
 which describes one kind of operand that is permitted.  Here are the
 letters that are allowed:
 
@@ -14357,17 +14342,18 @@ OTHER-LETTERS
      types.  `d', `a' and `f' are defined on the 68000/68020 to stand
      for data, address and floating point registers.
 
+
 
 File: gcc.info,  Node: Multi-Alternative,  Next: Modifiers,  Prev: Simple Constraints,  Up: Constraints
 
 Multiple Alternative Constraints
 --------------------------------
 
-   Sometimes a single instruction has multiple alternative sets of
-possible operands.  For example, on the 68000, a logical-or instruction
-can combine register or an immediate value into memory, or it can
-combine any kind of operand into a register; but it cannot combine one
-memory location into another.
+Sometimes a single instruction has multiple alternative sets of possible
+operands.  For example, on the 68000, a logical-or instruction can
+combine register or an immediate value into memory, or it can combine
+any kind of operand into a register; but it cannot combine one memory
+location into another.
 
    These constraints are represented as multiple alternatives.  An
 alternative can be described by a series of letters for each operand.
@@ -14401,7 +14387,7 @@ File: gcc.info,  Node: Modifiers,  Next: Machine Constraints,  Prev: Multi-Alter
 Constraint Modifier Characters
 ------------------------------
 
-   Here are constraint modifier characters.
+Here are constraint modifier characters.
 
 `='
      Means that this operand is write-only for this instruction: the
@@ -14457,15 +14443,16 @@ Constraint Modifier Characters
      register preferences.  `*' has no effect on the meaning of the
      constraint as a constraint, and no effect on reloading.
 
+
 
 File: gcc.info,  Node: Machine Constraints,  Prev: Modifiers,  Up: Constraints
 
 Constraints for Particular Machines
 -----------------------------------
 
-   Whenever possible, you should use the general-purpose constraint
-letters in `asm' arguments, since they will convey meaning more readily
-to people reading your code.  Failing that, use the constraint letters
+Whenever possible, you should use the general-purpose constraint letters
+in `asm' arguments, since they will convey meaning more readily to
+people reading your code.  Failing that, use the constraint letters
 that usually have very similar meanings across architectures.  The most
 commonly used constraints are `m' and `r' (for memory and
 general-purpose registers respectively; *note Simple Constraints::), and
@@ -14954,6 +14941,7 @@ _FRV--`frv.h'_
           12-bit signed integer constant that is greater than
           zero--i.e. in the range of 1 to 2047.
 
+
 _IP2K--`ip2k.h'_
 
     `a'
@@ -15180,6 +15168,7 @@ _Motorola 68HC11 & 68HC12 families--`m68hc11.h'_
     `P'
           Constants in the range -8 to 2
 
+
 _SPARC--`sparc.h'_
 
     `f'
@@ -15258,6 +15247,7 @@ _SPARC--`sparc.h'_
 
     `W'
           Memory address for `e' constraint registers.
+
 
 _TMS320C3x/C4x--`c4x.h'_
 
@@ -15341,6 +15331,7 @@ _TMS320C3x/C4x--`c4x.h'_
     `U'
           Symbolic address
 
+
 _S/390 and zSeries--`s390.h'_
 
     `a'
@@ -15369,6 +15360,7 @@ _S/390 and zSeries--`s390.h'_
 
     `S'
           Symbolic constant suitable for use with the `larl' instruction
+
 
 _Xstormy16--`stormy16.h'_
 
@@ -15436,6 +15428,7 @@ _Xstormy16--`stormy16.h'_
     `U'
           A constant that is not between 2 and 15 inclusive.
 
+
 _Xtensa--`xtensa.h'_
 
     `a'
@@ -15459,13 +15452,15 @@ _Xtensa--`xtensa.h'_
     `L'
           Unsigned constant valid for BccUI instructions
 
+
+
 
 File: gcc.info,  Node: Asm Labels,  Next: Explicit Reg Vars,  Prev: Constraints,  Up: C Extensions
 
 Controlling Names Used in Assembler Code
 ========================================
 
-   You can specify the name to be used in the assembler code for a C
+You can specify the name to be used in the assembler code for a C
 function or variable by writing the `asm' (or `__asm__') keyword after
 the declarator as follows:
 
@@ -15507,9 +15502,9 @@ File: gcc.info,  Node: Explicit Reg Vars,  Next: Alternate Keywords,  Prev: Asm 
 Variables in Specified Registers
 ================================
 
-   GNU C allows you to put a few global variables into specified
-hardware registers.  You can also specify the register in which an
-ordinary register variable should be allocated.
+GNU C allows you to put a few global variables into specified hardware
+registers.  You can also specify the register in which an ordinary
+register variable should be allocated.
 
    * Global register variables reserve registers throughout the program.
      This may be useful in programs such as programming language
@@ -15542,7 +15537,7 @@ File: gcc.info,  Node: Global Reg Vars,  Next: Local Reg Vars,  Up: Explicit Reg
 Defining Global Register Variables
 ----------------------------------
 
-   You can define a global register variable in GNU C like this:
+You can define a global register variable in GNU C like this:
 
      register int *foo asm ("a5");
 
@@ -15632,8 +15627,8 @@ File: gcc.info,  Node: Local Reg Vars,  Prev: Global Reg Vars,  Up: Explicit Reg
 Specifying Registers for Local Variables
 ----------------------------------------
 
-   You can define a local register variable with a specified register
-like this:
+You can define a local register variable with a specified register like
+this:
 
      register int *foo asm ("a5");
 
@@ -15673,8 +15668,8 @@ File: gcc.info,  Node: Alternate Keywords,  Next: Incomplete Enums,  Prev: Expli
 Alternate Keywords
 ==================
 
-   `-ansi' and the various `-std' options disable certain keywords.
-This causes trouble when you want to use GNU C extensions, or a
+`-ansi' and the various `-std' options disable certain keywords.  This
+causes trouble when you want to use GNU C extensions, or a
 general-purpose header file that should be usable by all programs,
 including ISO C programs.  The keywords `asm', `typeof' and `inline'
 are not available in programs compiled with `-ansi' or `-std' (although
@@ -15707,7 +15702,7 @@ File: gcc.info,  Node: Incomplete Enums,  Next: Function Names,  Prev: Alternate
 Incomplete `enum' Types
 =======================
 
-   You can define an `enum' tag without specifying its possible values.
+You can define an `enum' tag without specifying its possible values.
 This results in an incomplete type, much like what you get if you write
 `struct foo' without describing the elements.  A later declaration
 which does specify the possible values completes the type.
@@ -15726,7 +15721,7 @@ File: gcc.info,  Node: Function Names,  Next: Return Address,  Prev: Incomplete 
 Function Names as Strings
 =========================
 
-   GCC predefines two magic identifiers to hold the name of the current
+GCC predefines two magic identifiers to hold the name of the current
 function.  The identifier `__FUNCTION__' holds the name of the function
 as it appears in the source.  The identifier `__PRETTY_FUNCTION__'
 holds the name of the function pretty printed in a language specific
@@ -15797,7 +15792,7 @@ File: gcc.info,  Node: Return Address,  Next: Vector Extensions,  Prev: Function
 Getting the Return or Frame Address of a Function
 =================================================
 
-   These functions may be used to get information about the callers of a
+These functions may be used to get information about the callers of a
 function.
 
  - Built-in Function: void * __builtin_return_address (unsigned int
@@ -15856,10 +15851,10 @@ File: gcc.info,  Node: Vector Extensions,  Next: Other Builtins,  Prev: Return A
 Using vector instructions through built-in functions
 ====================================================
 
-   On some targets, the instruction set contains SIMD vector
-instructions that operate on multiple values contained in one large
-register at the same time.  For example, on the i386 the MMX, 3Dnow!
-and SSE extensions can be used this way.
+On some targets, the instruction set contains SIMD vector instructions
+that operate on multiple values contained in one large register at the
+same time.  For example, on the i386 the MMX, 3Dnow! and SSE extensions
+can be used this way.
 
    The first step in using these extensions is to provide the necessary
 data types.  This should be done using an appropriate `typedef':
@@ -15950,7 +15945,7 @@ File: gcc.info,  Node: Other Builtins,  Next: Target Builtins,  Prev: Vector Ext
 Other built-in functions provided by GCC
 ========================================
 
-   GCC provides a large number of built-in functions other than the ones
+GCC provides a large number of built-in functions other than the ones
 mentioned above.  Some of these are for internal use in the processing
 of exceptions or variable-length argument lists and will not be
 documented here because they may change from time to time; we do not
@@ -16266,9 +16261,9 @@ File: gcc.info,  Node: Target Builtins,  Next: Pragmas,  Prev: Other Builtins,  
 Built-in Functions Specific to Particular Target Machines
 =========================================================
 
-   On some target machines, GCC supports many built-in functions
-specific to those machines.  Generally these generate calls to specific
-machine instructions, but allow the compiler to schedule those calls.
+On some target machines, GCC supports many built-in functions specific
+to those machines.  Generally these generate calls to specific machine
+instructions, but allow the compiler to schedule those calls.
 
 * Menu:
 
@@ -16282,7 +16277,7 @@ File: gcc.info,  Node: Alpha Built-in Functions,  Next: X86 Built-in Functions, 
 Alpha Built-in Functions
 ------------------------
 
-   These built-in functions are available for the Alpha family of
+These built-in functions are available for the Alpha family of
 processors, depending on the command-line switches used.
 
    The following built-in functions are always available.  They all
@@ -16356,7 +16351,7 @@ File: gcc.info,  Node: X86 Built-in Functions,  Next: PowerPC AltiVec Built-in F
 X86 Built-in Functions
 ----------------------
 
-   These built-in functions are available for the i386 and x86-64 family
+These built-in functions are available for the i386 and x86-64 family
 of computers, depending on the command-line switches used.
 
    The following machine modes are available for use with MMX built-in
@@ -16537,6 +16532,27 @@ All of them generate the machine instruction that is part of the name.
 `void __builtin_ia32_storelps (v4sf, v2si *)'
      Generates the `movlps' machine instruction as a store to memory.
 
+   The following built-in functions are available when `-msse3' is used.
+All of them generate the machine instruction that is part of the name.
+
+     v2df __builtin_ia32_addsubpd (v2df, v2df)
+     v2df __builtin_ia32_addsubps (v2df, v2df)
+     v2df __builtin_ia32_haddpd (v2df, v2df)
+     v2df __builtin_ia32_haddps (v2df, v2df)
+     v2df __builtin_ia32_hsubpd (v2df, v2df)
+     v2df __builtin_ia32_hsubps (v2df, v2df)
+     v16qi __builtin_ia32_lddqu (char const *)
+     void __builtin_ia32_monitor (void *, unsigned int, unsigned int)
+     v2df __builtin_ia32_movddup (v2df)
+     v4sf __builtin_ia32_movshdup (v4sf)
+     v4sf __builtin_ia32_movsldup (v4sf)
+     void __builtin_ia32_mwait (unsigned int, unsigned int)
+
+   The following built-in functions are available when `-msse3' is used.
+
+`v2df __builtin_ia32_loadddup (double const *)'
+     Generates the `movddup' machine instruction as a load from memory.
+
    The following built-in functions are available when `-m3dnow' is
 used.  All of them generate the machine instruction that is part of the
 name.
@@ -16579,7 +16595,7 @@ File: gcc.info,  Node: PowerPC AltiVec Built-in Functions,  Prev: X86 Built-in F
 PowerPC AltiVec Built-in Functions
 ----------------------------------
 
-   These built-in functions are available for the PowerPC family of
+These built-in functions are available for the PowerPC family of
 computers, depending on the command-line switches used.
 
    The following machine modes are available for use with AltiVec
@@ -17668,7 +17684,7 @@ File: gcc.info,  Node: Pragmas,  Next: Unnamed Fields,  Prev: Target Builtins,  
 Pragmas Accepted by GCC
 =======================
 
-   GCC supports several types of pragmas, primarily in order to compile
+GCC supports several types of pragmas, primarily in order to compile
 code originally written for other compilers.  Note that in general we
 do not recommend the use of pragmas; *Note Function Attributes::, for
 further explanation.
@@ -17687,10 +17703,9 @@ File: gcc.info,  Node: ARM Pragmas,  Next: RS/6000 and PowerPC Pragmas,  Up: Pra
 ARM Pragmas
 -----------
 
-   The ARM target defines pragmas for controlling the default addition
-of `long_call' and `short_call' attributes to functions.  *Note
-Function Attributes::, for information about the effects of these
-attributes.
+The ARM target defines pragmas for controlling the default addition of
+`long_call' and `short_call' attributes to functions.  *Note Function
+Attributes::, for information about the effects of these attributes.
 
 `long_calls'
      Set all subsequent functions to have the `long_call' attribute.
@@ -17708,7 +17723,7 @@ File: gcc.info,  Node: RS/6000 and PowerPC Pragmas,  Next: Darwin Pragmas,  Prev
 RS/6000 and PowerPC Pragmas
 ---------------------------
 
-   The RS/6000 and PowerPC targets define one pragma for controlling
+The RS/6000 and PowerPC targets define one pragma for controlling
 whether or not the `longcall' attribute is added to function
 declarations by default.  This pragma overrides the `-mlongcall'
 option, but not the `longcall' and `shortcall' attributes.  *Note
@@ -17729,7 +17744,7 @@ File: gcc.info,  Node: Darwin Pragmas,  Next: Solaris Pragmas,  Prev: RS/6000 an
 Darwin Pragmas
 --------------
 
-   The following pragmas are available for all architectures running the
+The following pragmas are available for all architectures running the
 Darwin operating system.  These are useful for compatibility with other
 Mac OS compilers.
 
@@ -17758,7 +17773,7 @@ File: gcc.info,  Node: Solaris Pragmas,  Next: Tru64 Pragmas,  Prev: Darwin Prag
 Solaris Pragmas
 ---------------
 
-   For compatibility with the SunPRO compiler, the following pragma is
+For compatibility with the SunPRO compiler, the following pragma is
 supported.
 
 `redefine_extname OLDNAME NEWNAME'
@@ -17774,8 +17789,8 @@ File: gcc.info,  Node: Tru64 Pragmas,  Prev: Solaris Pragmas,  Up: Pragmas
 Tru64 Pragmas
 -------------
 
-   For compatibility with the Compaq C compiler, the following pragma
-is supported.
+For compatibility with the Compaq C compiler, the following pragma is
+supported.
 
 `extern_prefix STRING'
      This pragma renames all subsequent function and variable
@@ -17795,7 +17810,7 @@ File: gcc.info,  Node: Unnamed Fields,  Next: Thread-Local,  Prev: Pragmas,  Up:
 Unnamed struct/union fields within structs/unions.
 ==================================================
 
-   For compatibility with other compilers, GCC allows you to define a
+For compatibility with other compilers, GCC allows you to define a
 structure or union that contains, as fields, structures and unions
 without names.  For example:
 
@@ -17832,7 +17847,7 @@ File: gcc.info,  Node: Thread-Local,  Prev: Unnamed Fields,  Up: C Extensions
 Thread-Local Storage
 ====================
 
-   Thread-local storage (TLS) is a mechanism by which variables are
+Thread-local storage (TLS) is a mechanism by which variables are
 allocated such that there is one instance of the variable per extant
 thread.  The run-time model GCC uses to implement this originates in
 the IA-64 processor-specific ABI, but has since been migrated to other
@@ -17885,8 +17900,8 @@ File: gcc.info,  Node: C99 Thread-Local Edits,  Next: C++98 Thread-Local Edits, 
 ISO/IEC 9899:1999 Edits for Thread-Local Storage
 ------------------------------------------------
 
-   The following are a set of changes to ISO/IEC 9899:1999 (aka C99)
-that document the exact semantics of the language extension.
+The following are a set of changes to ISO/IEC 9899:1999 (aka C99) that
+document the exact semantics of the language extension.
 
    * `5.1.2  Execution environments'
 
@@ -17940,7 +17955,7 @@ File: gcc.info,  Node: C++98 Thread-Local Edits,  Prev: C99 Thread-Local Edits, 
 ISO/IEC 14882:1998 Edits for Thread-Local Storage
 -------------------------------------------------
 
-   The following are a set of changes to ISO/IEC 14882:1998 (aka C++98)
+The following are a set of changes to ISO/IEC 14882:1998 (aka C++98)
 that document the exact semantics of the language extension.
 
    * [intro.execution]
@@ -18050,13 +18065,13 @@ File: gcc.info,  Node: C++ Extensions,  Next: Objective-C,  Prev: C Extensions, 
 Extensions to the C++ Language
 ******************************
 
-   The GNU compiler provides these extensions to the C++ language (and
-you can also use most of the C language extensions in your C++
-programs).  If you want to write code that checks whether these
-features are available, you can test for the GNU compiler the same way
-as for C programs: check for a predefined macro `__GNUC__'.  You can
-also use `__GNUG__' to test specifically for GNU C++ (*note Predefined
-Macros: (cpp)Common Predefined Macros.).
+The GNU compiler provides these extensions to the C++ language (and you
+can also use most of the C language extensions in your C++ programs).
+If you want to write code that checks whether these features are
+available, you can test for the GNU compiler the same way as for C
+programs: check for a predefined macro `__GNUC__'.  You can also use
+`__GNUG__' to test specifically for GNU C++ (*note Predefined Macros:
+(cpp)Common Predefined Macros.).
 
 * Menu:
 
@@ -18081,8 +18096,8 @@ File: gcc.info,  Node: Min and Max,  Next: Volatiles,  Up: C++ Extensions
 Minimum and Maximum Operators in C++
 ====================================
 
-   It is very convenient to have operators which return the "minimum"
-or the "maximum" of two arguments.  In GNU C++ (but not in GNU C),
+It is very convenient to have operators which return the "minimum" or
+the "maximum" of two arguments.  In GNU C++ (but not in GNU C),
 
 `A <? B'
      is the "minimum", returning the smaller of the numeric values A
@@ -18119,21 +18134,21 @@ File: gcc.info,  Node: Volatiles,  Next: Restricted Pointers,  Prev: Min and Max
 When is a Volatile Object Accessed?
 ===================================
 
-   Both the C and C++ standard have the concept of volatile objects.
-These are normally accessed by pointers and used for accessing
-hardware.  The standards encourage compilers to refrain from
-optimizations concerning accesses to volatile objects that it might
-perform on non-volatile objects.  The C standard leaves it
-implementation defined as to what constitutes a volatile access.  The
-C++ standard omits to specify this, except to say that C++ should
-behave in a similar manner to C with respect to volatiles, where
-possible.  The minimum either standard specifies is that at a sequence
-point all previous accesses to volatile objects have stabilized and no
-subsequent accesses have occurred.  Thus an implementation is free to
-reorder and combine volatile accesses which occur between sequence
-points, but cannot do so for accesses across a sequence point.  The use
-of volatiles does not allow you to violate the restriction on updating
-objects multiple times within a sequence point.
+Both the C and C++ standard have the concept of volatile objects.  These
+are normally accessed by pointers and used for accessing hardware.  The
+standards encourage compilers to refrain from optimizations concerning
+accesses to volatile objects that it might perform on non-volatile
+objects.  The C standard leaves it implementation defined as to what
+constitutes a volatile access.  The C++ standard omits to specify this,
+except to say that C++ should behave in a similar manner to C with
+respect to volatiles, where possible.  The minimum either standard
+specifies is that at a sequence point all previous accesses to volatile
+objects have stabilized and no subsequent accesses have occurred.  Thus
+an implementation is free to reorder and combine volatile accesses
+which occur between sequence points, but cannot do so for accesses
+across a sequence point.  The use of volatiles does not allow you to
+violate the restriction on updating objects multiple times within a
+sequence point.
 
    In most expressions, it is intuitively obvious what is a read and
 what is a write.  For instance
@@ -18192,7 +18207,7 @@ File: gcc.info,  Node: Restricted Pointers,  Next: Vague Linkage,  Prev: Volatil
 Restricting Pointer Aliasing
 ============================
 
-   As with gcc, g++ understands the C99 feature of restricted pointers,
+As with gcc, g++ understands the C99 feature of restricted pointers,
 specified with the `__restrict__', or `__restrict' type qualifier.
 Because you cannot compile C++ by specifying the `-std=c99' language
 flag, `restrict' is not a keyword in C++.
@@ -18235,7 +18250,7 @@ File: gcc.info,  Node: Vague Linkage,  Next: C++ Interface,  Prev: Restricted Po
 Vague Linkage
 =============
 
-   There are several constructs in C++ which require space in the object
+There are several constructs in C++ which require space in the object
 file but are not clearly tied to a single translation unit.  We say that
 these constructs have "vague linkage".  Typically such constructs are
 emitted wherever they are needed, though sometimes we can be more
@@ -18287,6 +18302,7 @@ Template Instantiations
      instantiations, but there are other options as well.  *Note
      Where's the Template?: Template Instantiation.
 
+
    When used with GNU ld version 2.8 or later on an ELF system such as
 Linux/GNU or Solaris 2, or on Microsoft Windows, duplicate copies of
 these constructs will be discarded at link time.  This is known as
@@ -18311,9 +18327,9 @@ File: gcc.info,  Node: C++ Interface,  Next: Template Instantiation,  Prev: Vagu
 Declarations and Definitions in One Header
 ==========================================
 
-   C++ object definitions can be quite complex.  In principle, your
-source code will need two kinds of things for each object that you use
-across more than one source file.  First, you need an "interface"
+C++ object definitions can be quite complex.  In principle, your source
+code will need two kinds of things for each object that you use across
+more than one source file.  First, you need an "interface"
 specification, describing its structure with type declarations and
 function prototypes.  Second, you need the "implementation" itself.  It
 can be tedious to maintain a separate interface description in a header
@@ -18415,7 +18431,7 @@ File: gcc.info,  Node: Template Instantiation,  Next: Bound member functions,  P
 Where's the Template?
 =====================
 
-   C++ templates are the first language feature to require more
+C++ templates are the first language feature to require more
 intelligence from the environment than one usually finds on a UNIX
 system.  Somehow the compiler and linker have to make sure that each
 template instance occurs exactly once in the executable if it is needed,
@@ -18553,10 +18569,10 @@ File: gcc.info,  Node: Bound member functions,  Next: C++ Attributes,  Prev: Tem
 Extracting the function pointer from a bound pointer to member function
 =======================================================================
 
-   In C++, pointer to member functions (PMFs) are implemented using a
-wide pointer of sorts to handle all the possible call mechanisms; the
-PMF needs to store information about how to adjust the `this' pointer,
-and if the function pointed to is virtual, where to find the vtable, and
+In C++, pointer to member functions (PMFs) are implemented using a wide
+pointer of sorts to handle all the possible call mechanisms; the PMF
+needs to store information about how to adjust the `this' pointer, and
+if the function pointed to is virtual, where to find the vtable, and
 where in the vtable to look for the member function.  If you are using
 PMFs in an inner loop, you should really reconsider that decision.  If
 that is not an option, you can extract the pointer to the function that
@@ -18590,7 +18606,7 @@ File: gcc.info,  Node: C++ Attributes,  Next: Java Exceptions,  Prev: Bound memb
 C++-Specific Variable, Function, and Type Attributes
 ====================================================
 
-   Some attributes only make sense for C++ programs.
+Some attributes only make sense for C++ programs.
 
 `init_priority (PRIORITY)'
      In Standard C++, objects defined at namespace scope are guaranteed
@@ -18619,13 +18635,14 @@ C++-Specific Variable, Function, and Type Attributes
      interface will be dispatched using GCJ's interface table
      mechanism, instead of regular virtual table dispatch.
 
+
 
 File: gcc.info,  Node: Java Exceptions,  Next: Deprecated Features,  Prev: C++ Attributes,  Up: C++ Extensions
 
 Java Exceptions
 ===============
 
-   The Java language uses a slightly different exception handling model
+The Java language uses a slightly different exception handling model
 from C++.  Normally, GNU C++ will automatically detect when you are
 writing C++ code that uses Java exceptions, and handle them
 appropriately.  However, if C++ code only needs to execute destructors
@@ -18660,7 +18677,7 @@ File: gcc.info,  Node: Deprecated Features,  Next: Backwards Compatibility,  Pre
 Deprecated Features
 ===================
 
-   In the past, the GNU C++ compiler was extended to experiment with new
+In the past, the GNU C++ compiler was extended to experiment with new
 features, at a time when the C++ language was still evolving.  Now that
 the C++ standard is complete, some of those features are superseded by
 superior alternatives.  Using the old features might cause a warning in
@@ -18706,14 +18723,14 @@ File: gcc.info,  Node: Backwards Compatibility,  Prev: Deprecated Features,  Up:
 Backwards Compatibility
 =======================
 
-   Now that there is a definitive ISO standard C++, G++ has a
-specification to adhere to.  The C++ language evolved over time, and
-features that used to be acceptable in previous drafts of the standard,
-such as the ARM [Annotated C++ Reference Manual], are no longer
-accepted.  In order to allow compilation of C++ written to such drafts,
-G++ contains some backwards compatibilities.  _All such backwards
-compatibility features are liable to disappear in future versions of
-G++._ They should be considered deprecated *Note Deprecated Features::.
+Now that there is a definitive ISO standard C++, G++ has a specification
+to adhere to.  The C++ language evolved over time, and features that
+used to be acceptable in previous drafts of the standard, such as the
+ARM [Annotated C++ Reference Manual], are no longer accepted.  In order
+to allow compilation of C++ written to such drafts, G++ contains some
+backwards compatibilities.  _All such backwards compatibility features
+are liable to disappear in future versions of G++._ They should be
+considered deprecated *Note Deprecated Features::.
 
 `For scope'
      If a variable is declared at for scope, it used to remain in scope
@@ -18735,11 +18752,10 @@ File: gcc.info,  Node: Objective-C,  Next: Compatibility,  Prev: C++ Extensions,
 GNU Objective-C runtime features
 ********************************
 
-   This document is meant to describe some of the GNU Objective-C
-runtime features.  It is not intended to teach you Objective-C, there
-are several resources on the Internet that present the language.
-Questions and comments about this document to Ovidiu Predescu
-<ovidiu@cup.hp.com>.
+This document is meant to describe some of the GNU Objective-C runtime
+features.  It is not intended to teach you Objective-C, there are
+several resources on the Internet that present the language.  Questions
+and comments about this document to Ovidiu Predescu <ovidiu@cup.hp.com>.
 
 * Menu:
 
@@ -18755,7 +18771,7 @@ File: gcc.info,  Node: Executing code before main,  Next: Type encoding,  Prev: 
 `+load': Executing code before main
 ===================================
 
-   The GNU Objective-C runtime provides a way that allows you to execute
+The GNU Objective-C runtime provides a way that allows you to execute
 code before the execution of the program enters the `main' function.
 The code is executed on a per-class and a per-category basis, through a
 special class method `+load'.
@@ -18831,7 +18847,7 @@ File: gcc.info,  Node: What you can and what you cannot do in +load,  Prev: Exec
 What you can and what you cannot do in `+load'
 ----------------------------------------------
 
-   The `+load' implementation in the GNU runtime guarantees you the
+The `+load' implementation in the GNU runtime guarantees you the
 following things:
 
    * you can write whatever C code you like;
@@ -18883,7 +18899,7 @@ File: gcc.info,  Node: Type encoding,  Next: Garbage Collection,  Prev: Executin
 Type encoding
 =============
 
-   The Objective-C compiler generates type encodings for all the types.
+The Objective-C compiler generates type encodings for all the types.
 These type encodings are used at runtime to find out information about
 selectors and methods and about objects and classes.
 
@@ -18978,7 +18994,7 @@ File: gcc.info,  Node: Garbage Collection,  Next: Constant string objects,  Prev
 Garbage Collection
 ==================
 
-   Support for a new memory management policy has been added by using a
+Support for a new memory management policy has been added by using a
 powerful conservative garbage collector, known as the
 Boehm-Demers-Weiser conservative garbage collector.  It is available
 from `http://www.hpl.hp.com/personal/Hans_Boehm/gc/'.
@@ -19052,7 +19068,7 @@ File: gcc.info,  Node: Constant string objects,  Next: compatibility_alias,  Pre
 Constant string objects
 =======================
 
-   GNU Objective-C provides constant string objects that are generated
+GNU Objective-C provides constant string objects that are generated
 directly by the compiler.  You declare a constant string object by
 prefixing a C constant string with the character `@':
 
@@ -19109,7 +19125,7 @@ File: gcc.info,  Node: compatibility_alias,  Prev: Constant string objects,  Up:
 compatibility_alias
 ===================
 
-   This is a feature of the Objective-C compiler rather than of the
+This is a feature of the Objective-C compiler rather than of the
 runtime, anyway since it is documented nowhere and its existence was
 forgotten, we are documenting it here.
 
@@ -19135,7 +19151,7 @@ File: gcc.info,  Node: Compatibility,  Next: Gcov,  Prev: Objective-C,  Up: Top
 Binary Compatibility
 ********************
 
-   Binary compatibility encompasses several related concepts:
+Binary compatibility encompasses several related concepts:
 
 "application binary interface (ABI)"
      The set of runtime conventions followed by all of the tools that
@@ -19281,7 +19297,7 @@ File: gcc.info,  Node: Gcov,  Next: Trouble,  Prev: Compatibility,  Up: Top
 `gcov'--a Test Coverage Program
 *******************************
 
-   `gcov' is a tool you can use in conjunction with GCC to test code
+`gcov' is a tool you can use in conjunction with GCC to test code
 coverage in your programs.
 
 * Menu:
@@ -19297,7 +19313,7 @@ File: gcc.info,  Node: Gcov Intro,  Next: Invoking Gcov,  Up: Gcov
 Introduction to `gcov'
 ======================
 
-   `gcov' is a test coverage program.  Use it in concert with GCC to
+`gcov' is a test coverage program.  Use it in concert with GCC to
 analyze your programs to help create more efficient, faster running
 code and to discover untested parts of your program.  You can use
 `gcov' as a profiling tool to help discover where your optimization
@@ -19416,6 +19432,7 @@ Invoking gcov
      name, without its extension. If a file is specified here, the data
      files are named after that file, without its extension. If this
      option is not supplied, it defaults to the current directory.
+
 
    `gcov' should be run with the current directory the same as that
 when you invoked the compiler. Otherwise it will not be able to locate
@@ -19563,7 +19580,7 @@ File: gcc.info,  Node: Gcov and Optimization,  Next: Gcov Data Files,  Prev: Inv
 Using `gcov' with GCC Optimization
 ==================================
 
-   If you plan to use `gcov' to help optimize your code, you must first
+If you plan to use `gcov' to help optimize your code, you must first
 compile your program with two special GCC options: `-fprofile-arcs
 -ftest-coverage'.  Aside from that, you can use any other GCC options;
 but if you want to prove that every single line in your program was
@@ -19599,10 +19616,10 @@ File: gcc.info,  Node: Gcov Data Files,  Prev: Gcov and Optimization,  Up: Gcov
 Brief description of `gcov' data files
 ======================================
 
-   `gcov' uses three files for doing profiling.  The names of these
-files are derived from the original _source_ file by substituting the
-file suffix with either `.bb', `.bbg', or `.da'.  All of these files
-are placed in the same directory as the source file, and contain data
+`gcov' uses three files for doing profiling.  The names of these files
+are derived from the original _source_ file by substituting the file
+suffix with either `.bb', `.bbg', or `.da'.  All of these files are
+placed in the same directory as the source file, and contain data
 stored in a platform-independent method.
 
    The `.bb' and `.bbg' files are generated when the source file is
@@ -19704,7 +19721,7 @@ File: gcc.info,  Node: Trouble,  Next: Bugs,  Prev: Gcov,  Up: Top
 Known Causes of Trouble with GCC
 ********************************
 
-   This section describes known problems that affect users of GCC.  Most
+This section describes known problems that affect users of GCC.  Most
 of these are not GCC bugs per se--if they were, we would fix them.  But
 the result for a user may be like the result of a bug.
 
@@ -19759,7 +19776,7 @@ File: gcc.info,  Node: Cross-Compiler Problems,  Next: Interoperation,  Prev: Ac
 Cross-Compiler Problems
 =======================
 
-   You may run into problems with cross compilation on certain machines,
+You may run into problems with cross compilation on certain machines,
 for several reasons.
 
    * Cross compilation can run into trouble for certain machines because
@@ -19793,7 +19810,7 @@ File: gcc.info,  Node: Interoperation,  Next: External Bugs,  Prev: Cross-Compil
 Interoperation
 ==============
 
-   This section lists various difficulties encountered in using GCC
+This section lists various difficulties encountered in using GCC
 together with other compilers or with the assemblers, linkers,
 libraries and debuggers on certain systems.
 
@@ -20005,7 +20022,7 @@ File: gcc.info,  Node: External Bugs,  Next: Incompatibilities,  Prev: Interoper
 Problems Compiling Certain Programs
 ===================================
 
-   Certain programs have problems compiling.
+Certain programs have problems compiling.
 
    * Parse errors may occur compiling X11 on a Decstation running
      Ultrix 4.2 because of problems in DEC's versions of the X11 header
@@ -20043,7 +20060,7 @@ File: gcc.info,  Node: Incompatibilities,  Next: Fixed Headers,  Prev: External 
 Incompatibilities of GCC
 ========================
 
-   There are several noteworthy incompatibilities between GNU C and K&R
+There are several noteworthy incompatibilities between GNU C and K&R
 (non-ISO) versions of C.
 
    * GCC normally makes string constants read-only.  If several
@@ -20239,7 +20256,7 @@ File: gcc.info,  Node: Fixed Headers,  Next: Standard Libraries,  Prev: Incompat
 Fixed Header Files
 ==================
 
-   GCC needs to install corrected versions of some system header files.
+GCC needs to install corrected versions of some system header files.
 This is because most target systems have some header files that won't
 work with GCC unless they are changed.  Some have bugs, some are
 incompatible with ISO C, and some depend on special features of other
@@ -20289,13 +20306,13 @@ File: gcc.info,  Node: Standard Libraries,  Next: Disappointments,  Prev: Fixed 
 Standard Libraries
 ==================
 
-   GCC by itself attempts to be a conforming freestanding
-implementation.  *Note Language Standards Supported by GCC: Standards,
-for details of what this means.  Beyond the library facilities required
-of such an implementation, the rest of the C library is supplied by the
-vendor of the operating system.  If that C library doesn't conform to
-the C standards, then your programs might get warnings (especially when
-using `-Wall') that you don't expect.
+GCC by itself attempts to be a conforming freestanding implementation.
+*Note Language Standards Supported by GCC: Standards, for details of
+what this means.  Beyond the library facilities required of such an
+implementation, the rest of the C library is supplied by the vendor of
+the operating system.  If that C library doesn't conform to the C
+standards, then your programs might get warnings (especially when using
+`-Wall') that you don't expect.
 
    For example, the `sprintf' function on SunOS 4.1.3 returns `char *'
 while the C standard says that `sprintf' returns an `int'.  The
@@ -20317,8 +20334,8 @@ File: gcc.info,  Node: Disappointments,  Next: C++ Misunderstandings,  Prev: Sta
 Disappointments and Misunderstandings
 =====================================
 
-   These problems are perhaps regrettable, but we don't know any
-practical way around them.
+These problems are perhaps regrettable, but we don't know any practical
+way around them.
 
    * Certain local variables aren't recognized by debuggers when you
      compile with optimization.
@@ -20413,7 +20430,7 @@ File: gcc.info,  Node: C++ Misunderstandings,  Next: Protoize Caveats,  Prev: Di
 Common Misunderstandings with GNU C++
 =====================================
 
-   C++ is a complex language and an evolving one, and its standard
+C++ is a complex language and an evolving one, and its standard
 definition (the ISO C++ standard) was only recently completed.  As a
 result, your C++ compiler may occasionally surprise you, even when its
 behavior is correct.  This section discusses some areas that frequently
@@ -20431,8 +20448,8 @@ File: gcc.info,  Node: Static Definitions,  Next: Temporaries,  Up: C++ Misunder
 Declare _and_ Define Static Members
 -----------------------------------
 
-   When a class has static data members, it is not enough to _declare_
-the static member; you must also _define_ it.  For example:
+When a class has static data members, it is not enough to _declare_ the
+static member; you must also _define_ it.  For example:
 
      class Foo
      {
@@ -20461,7 +20478,7 @@ File: gcc.info,  Node: Temporaries,  Next: Copy Assignment,  Prev: Static Defini
 Temporaries May Vanish Before You Expect
 ----------------------------------------
 
-   It is dangerous to use pointers or references to _portions_ of a
+It is dangerous to use pointers or references to _portions_ of a
 temporary object.  The compiler may very well delete the object before
 you expect it to, leaving a pointer to garbage.  The most common place
 where this problem crops up is in classes like string classes,
@@ -20513,7 +20530,7 @@ File: gcc.info,  Node: Copy Assignment,  Prev: Temporaries,  Up: C++ Misundersta
 Implicit Copy-Assignment for Virtual Bases
 ------------------------------------------
 
-   When a base class is virtual, only one subobject of the base class
+When a base class is virtual, only one subobject of the base class
 belongs to each full object.  Also, the constructors and destructors are
 invoked only once, and called from the most-derived class.  However,
 such objects behave unspecified when being assigned.  For example:
@@ -20569,7 +20586,7 @@ File: gcc.info,  Node: Protoize Caveats,  Next: Non-bugs,  Prev: C++ Misundersta
 Caveats of using `protoize'
 ===========================
 
-   The conversion programs `protoize' and `unprotoize' can sometimes
+The conversion programs `protoize' and `unprotoize' can sometimes
 change a source file in a way that won't work unless you rearrange it.
 
    * `protoize' can insert references to a type name or type tag before
@@ -20647,8 +20664,8 @@ File: gcc.info,  Node: Non-bugs,  Next: Warnings and Errors,  Prev: Protoize Cav
 Certain Changes We Don't Want to Make
 =====================================
 
-   This section lists changes that people frequently request, but which
-we do not make because we think GCC is better without them.
+This section lists changes that people frequently request, but which we
+do not make because we think GCC is better without them.
 
    * Checking the number and type of arguments to a function which has
      an old-fashioned definition and no prototype.
@@ -20858,7 +20875,7 @@ File: gcc.info,  Node: Warnings and Errors,  Prev: Non-bugs,  Up: Trouble
 Warning Messages and Error Messages
 ===================================
 
-   The GNU compiler can produce two kinds of diagnostics: errors and
+The GNU compiler can produce two kinds of diagnostics: errors and
 warnings.  Each kind has a different purpose:
 
      "Errors" report problems that make it impossible to compile your
@@ -20895,7 +20912,7 @@ File: gcc.info,  Node: Bugs,  Next: Service,  Prev: Trouble,  Up: Top
 Reporting Bugs
 **************
 
-   Your bug reports play an essential role in making GCC reliable.
+Your bug reports play an essential role in making GCC reliable.
 
    When you encounter a problem, the first thing to do is to see if it
 is already known.  *Note Trouble::.  If it isn't known, then you should
@@ -20914,7 +20931,7 @@ File: gcc.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: Bugs
 Have You Found a Bug?
 =====================
 
-   If you are not sure whether you have found a bug, here are some
+If you are not sure whether you have found a bug, here are some
 guidelines:
 
    * If the compiler gets a fatal signal, for any input whatever, that
@@ -20965,7 +20982,7 @@ File: gcc.info,  Node: Bug Reporting,  Prev: Bug Criteria,  Up: Bugs
 How and where to Report Bugs
 ============================
 
-   Bugs should be reported to our bug database.  Please refer to
+Bugs should be reported to our bug database.  Please refer to
 `http://gcc.gnu.org/bugs.html' for up-to-date instructions how to
 submit bug reports.  Copies of this file in HTML (`bugs.html') and
 plain text (`BUGS') are also part of GCC releases.
@@ -20976,8 +20993,8 @@ File: gcc.info,  Node: Service,  Next: Contributing,  Prev: Bugs,  Up: Top
 How To Get Help with GCC
 ************************
 
-   If you need help installing, using or changing GCC, there are two
-ways to find it:
+If you need help installing, using or changing GCC, there are two ways
+to find it:
 
    * Send a message to a suitable network mailing list.  First try
      <gcc-help@gcc.gnu.org> (for help installing or using GCC), and if
@@ -20998,8 +21015,8 @@ File: gcc.info,  Node: Contributing,  Next: Funding,  Prev: Service,  Up: Top
 Contributing to GCC Development
 *******************************
 
-   If you would like to help pretest GCC releases to assure they work
-well, our current development sources are available by CVS (see
+If you would like to help pretest GCC releases to assure they work well,
+our current development sources are available by CVS (see
 `http://gcc.gnu.org/cvs.html').  Source and binary snapshots are also
 available for FTP; see `http://gcc.gnu.org/snapshots.html'.
 
@@ -21019,7 +21036,7 @@ File: gcc.info,  Node: Funding,  Next: GNU Project,  Prev: Contributing,  Up: To
 Funding Free Software
 *********************
 
-   If you want to have more free software a few years from now, it makes
+If you want to have more free software a few years from now, it makes
 sense for you to help encourage people to contribute funds for its
 development.  The most effective approach known is to encourage
 commercial redistributors to donate.
@@ -21069,7 +21086,7 @@ File: gcc.info,  Node: GNU Project,  Next: Copying,  Prev: Funding,  Up: Top
 The GNU Project and GNU/Linux
 *****************************
 
-   The GNU Project was launched in 1984 to develop a complete Unix-like
+The GNU Project was launched in 1984 to develop a complete Unix-like
 operating system which is free software: the GNU system.  (GNU is a
 recursive acronym for "GNU's Not Unix"; it is pronounced "guh-NEW".)
 Variants of the GNU operating system, which use the kernel Linux, are
@@ -21096,9 +21113,9 @@ GNU GENERAL PUBLIC LICENSE
 Preamble
 ========
 
-   The licenses for most software are designed to take away your
-freedom to share and change it.  By contrast, the GNU General Public
-License is intended to guarantee your freedom to share and change free
+The licenses for most software are designed to take away your freedom
+to share and change it.  By contrast, the GNU General Public License is
+intended to guarantee your freedom to share and change free
 software--to make sure the software is free for all its users.  This
 General Public License applies to most of the Free Software
 Foundation's software and to any other program whose authors commit to
@@ -21379,7 +21396,7 @@ modification follow.
 How to Apply These Terms to Your New Programs
 =============================================
 
-   If you develop a new program, and you want it to be of the greatest
+If you develop a new program, and you want it to be of the greatest
 possible use to the public, the best way to achieve this is to make it
 free software which everyone can redistribute and change under these
 terms.
@@ -21843,7 +21860,7 @@ GNU Free Documentation License
 ADDENDUM: How to use this License for your documents
 ====================================================
 
-   To use this License in a document you have written, include a copy of
+To use this License in a document you have written, include a copy of
 the License in the document and put the following copyright and license
 notices just after the title page:
 
@@ -21877,7 +21894,7 @@ File: gcc.info,  Node: Contributors,  Next: Option Index,  Prev: GNU Free Docume
 Contributors to GCC
 *******************
 
-   The GCC project would like to thank its many contributors.  Without
+The GCC project would like to thank its many contributors.  Without
 them the project would not have been nearly as successful as it has
 been.  Any omissions in this list are accidental.  Feel free to contact
 <law@redhat.com> or <gerald@pfeifer.com> if you have been left out or
@@ -21894,6 +21911,9 @@ alphabetical order.
      Intel 80387 register stack.
 
    * Alasdair Baird for various bug fixes.
+
+   * Giovanni Bajo for analyzing lots of complicated C++ problem
+     reports.
 
    * Gerald Baumgartner added the signature extension to the C++ front
      end.
@@ -22098,6 +22118,9 @@ alphabetical order.
      the c30/c40 ports functional.  Lots of loop and unroll
      improvements and fixes.
 
+   * Dara Hazeghi for wading through myriads of target-specific bug
+     reports.
+
    * Kate Hedstrom for staking the g77 folks with an initial testsuite.
 
    * Richard Henderson for his ongoing SPARC, alpha, ia32, and ia64
@@ -22120,6 +22143,8 @@ alphabetical order.
    * Steve Holmgren for MachTen patches.
 
    * Jan Hubicka for his x86 port improvements.
+
+   * Falk Hueffner for working on C and optimization bug reports.
 
    * Christian Iseli for various bug fixes.
 
@@ -22350,6 +22375,8 @@ alphabetical order.
    * Gerald Pfeifer for his direction via the steering committee,
      pointing out lots of problems we need to solve, maintenance of the
      web pages, and taking care of documentation maintenance in general.
+
+   * Andrew Pinski for processing bug reports by the dozen.
 
    * Ovidiu Predescu for his work on the Objective-C front end and
      runtime libraries.
@@ -22690,8 +22717,8 @@ File: gcc.info,  Node: Option Index,  Next: Keyword Index,  Prev: Contributors, 
 Option Index
 ************
 
-   GCC's command line options are indexed here without any initial `-'
-or `--'.  Where an option has both positive and negative forms (such as
+GCC's command line options are indexed here without any initial `-' or
+`--'.  Where an option has both positive and negative forms (such as
 `-fOPTION' and `-fno-OPTION'), relevant entries in the manual are
 indexed under the most appropriate form; it may sometimes be useful to
 look up both forms.
@@ -24706,203 +24733,203 @@ Keyword Index
 
 
 Tag Table:
-Node: Top1226
-Node: G++ and GCC3782
-Node: Standards6373
-Node: Invoking GCC13568
-Node: Option Summary17217
-Node: Overall Options40915
-Node: Invoking G++47797
-Node: C Dialect Options49243
-Node: C++ Dialect Options59892
+Node: Top2117
+Node: G++ and GCC3800
+Node: Standards6388
+Node: Invoking GCC13580
+Node: Option Summary17226
+Node: Overall Options40928
+Node: Invoking G++47807
+Node: C Dialect Options49250
+Node: C++ Dialect Options59895
 Node: Objective-C Dialect Options77643
-Node: Language Independent Options81027
-Node: Warning Options82814
-Node: Debugging Options118273
-Node: Optimize Options138242
-Node: Preprocessor Options182097
-Ref: -MF189909
-Node: Assembler Options202951
-Node: Link Options203318
-Ref: Link Options-Footnote-1211397
-Node: Directory Options211733
-Node: Spec Files216725
-Node: Target Options235585
-Node: Submodel Options236886
-Node: M680x0 Options238645
-Node: M68hc1x Options244652
-Node: VAX Options246204
-Node: SPARC Options246740
-Node: ARM Options257034
-Node: MN10200 Options268901
-Node: MN10300 Options269423
-Node: M32R/D Options270474
-Node: M88K Options272932
-Node: RS/6000 and PowerPC Options280815
-Node: Darwin Options301982
-Node: RT Options304100
-Node: MIPS Options305769
-Node: i386 and x86-64 Options318105
-Node: HPPA Options333263
-Node: Intel 960 Options341146
-Node: DEC Alpha Options344088
-Node: DEC Alpha/VMS Options355103
-Node: H8/300 Options355480
-Node: SH Options356537
-Node: System V Options358853
-Node: TMS320C3x/C4x Options359671
-Node: V850 Options365183
-Node: ARC Options368110
-Node: NS32K Options369311
-Node: AVR Options373835
-Node: MCore Options375636
-Node: IA-64 Options376641
-Node: D30V Options379364
-Node: S/390 and zSeries Options380607
-Node: CRIS Options382541
-Node: MMIX Options386575
-Node: PDP-11 Options389043
-Node: Xstormy16 Options390869
-Node: FRV Options391145
-Node: Xtensa Options395089
-Node: Code Gen Options401820
-Node: Environment Variables418378
-Node: Running Protoize426018
-Node: C Implementation432374
-Node: Translation implementation433308
-Node: Environment implementation433743
-Node: Identifiers implementation434036
-Node: Characters implementation434649
-Node: Integers implementation436506
-Node: Floating point implementation437461
-Node: Arrays and pointers implementation439310
-Ref: Arrays and pointers implementation-Footnote-1440613
-Node: Hints implementation440739
-Node: Structures unions enumerations and bit-fields implementation442178
-Node: Qualifiers implementation442987
-Node: Preprocessing directives implementation443298
-Node: Library functions implementation445097
-Node: Architecture implementation445422
-Node: Locale-specific behavior implementation445987
-Node: C Extensions446285
-Node: Statement Exprs450405
-Node: Local Labels453459
-Node: Labels as Values455530
-Ref: Labels as Values-Footnote-1457595
-Node: Nested Functions457780
-Node: Constructing Calls461672
-Node: Typeof463753
-Node: Lvalues466929
-Node: Conditionals469369
-Node: Long Long470260
-Node: Complex471759
-Node: Hex Floats474330
-Node: Zero Length475359
-Node: Empty Structures478656
-Node: Variable Length479067
-Node: Variadic Macros481842
-Node: Escaped Newlines484233
-Node: Subscripting485065
-Node: Pointer Arith485791
-Node: Initializers486356
-Node: Compound Literals486845
-Node: Designated Inits489008
-Node: Case Ranges492682
-Node: Cast to Union493362
-Node: Mixed Declarations494457
-Node: Function Attributes494958
-Node: Attribute Syntax524068
-Node: Function Prototypes534445
-Node: C++ Comments536238
-Node: Dollar Signs536750
-Node: Character Escapes537208
-Node: Alignment537495
-Node: Variable Attributes538813
-Node: Type Attributes551133
-Node: Inline562566
-Node: Extended Asm567288
-Node: Constraints584586
-Node: Simple Constraints585429
-Node: Multi-Alternative591936
-Node: Modifiers593647
-Node: Machine Constraints596177
-Node: Asm Labels617437
-Node: Explicit Reg Vars619119
-Node: Global Reg Vars620573
-Node: Local Reg Vars625138
-Node: Alternate Keywords626938
-Node: Incomplete Enums628365
-Node: Function Names629121
-Node: Return Address631558
-Node: Vector Extensions634344
-Node: Other Builtins637900
-Node: Target Builtins653407
-Node: Alpha Built-in Functions653937
-Node: X86 Built-in Functions656926
-Node: PowerPC AltiVec Built-in Functions666425
-Node: Pragmas724235
-Node: ARM Pragmas724733
-Node: RS/6000 and PowerPC Pragmas725340
-Node: Darwin Pragmas726070
-Node: Solaris Pragmas727126
-Node: Tru64 Pragmas727689
-Node: Unnamed Fields728430
-Node: Thread-Local729522
-Node: C99 Thread-Local Edits731613
-Node: C++98 Thread-Local Edits733614
-Node: C++ Extensions737048
-Node: Min and Max738600
-Node: Volatiles739984
-Node: Restricted Pointers743354
-Node: Vague Linkage744936
-Node: C++ Interface748594
-Ref: C++ Interface-Footnote-1753682
-Node: Template Instantiation753821
-Node: Bound member functions760958
-Node: C++ Attributes762509
-Node: Java Exceptions764113
-Node: Deprecated Features765510
-Node: Backwards Compatibility767476
-Node: Objective-C768824
-Node: Executing code before main769403
-Node: What you can and what you cannot do in +load772041
-Node: Type encoding774207
-Node: Garbage Collection777459
-Node: Constant string objects780123
-Node: compatibility_alias782636
-Node: Compatibility783515
-Node: Gcov790102
-Node: Gcov Intro790571
-Node: Invoking Gcov793293
-Node: Gcov and Optimization801741
-Node: Gcov Data Files803178
-Node: Trouble807885
-Node: Actual Bugs809479
-Node: Cross-Compiler Problems810387
-Node: Interoperation811897
-Node: External Bugs822039
-Node: Incompatibilities823475
-Node: Fixed Headers831922
-Node: Standard Libraries834231
-Node: Disappointments835601
-Node: C++ Misunderstandings840095
-Node: Static Definitions840821
-Node: Temporaries841868
-Node: Copy Assignment843845
-Node: Protoize Caveats845667
-Node: Non-bugs849622
-Node: Warnings and Errors859490
-Node: Bugs861250
-Node: Bug Criteria861813
-Node: Bug Reporting864004
-Node: Service864385
-Node: Contributing865203
-Node: Funding865946
-Node: GNU Project868450
-Node: Copying869101
-Node: GNU Free Documentation License888309
-Node: Contributors910718
-Node: Option Index937112
-Node: Keyword Index1013117
+Node: Language Independent Options81026
+Node: Warning Options82811
+Node: Debugging Options118257
+Node: Optimize Options138223
+Node: Preprocessor Options182262
+Ref: -MF190071
+Node: Assembler Options203113
+Node: Link Options203477
+Ref: Link Options-Footnote-1211553
+Node: Directory Options211889
+Node: Spec Files216878
+Node: Target Options235867
+Node: Submodel Options237165
+Node: M680x0 Options238921
+Node: M68hc1x Options244926
+Node: VAX Options246476
+Node: SPARC Options247009
+Node: ARM Options257301
+Node: MN10200 Options269166
+Node: MN10300 Options269685
+Node: M32R/D Options270733
+Node: M88K Options273189
+Node: RS/6000 and PowerPC Options281069
+Node: Darwin Options302234
+Node: RT Options304295
+Node: MIPS Options305961
+Node: i386 and x86-64 Options318294
+Node: HPPA Options333460
+Node: Intel 960 Options341340
+Node: DEC Alpha Options344280
+Node: DEC Alpha/VMS Options355291
+Node: H8/300 Options355665
+Node: SH Options356714
+Node: System V Options359027
+Node: TMS320C3x/C4x Options359842
+Node: V850 Options365351
+Node: ARC Options368276
+Node: NS32K Options369475
+Node: AVR Options373997
+Node: MCore Options375795
+Node: IA-64 Options376797
+Node: D30V Options379517
+Node: S/390 and zSeries Options380757
+Node: CRIS Options382689
+Node: MMIX Options386720
+Node: PDP-11 Options389185
+Node: Xstormy16 Options391007
+Node: FRV Options391280
+Node: Xtensa Options395225
+Node: Code Gen Options401953
+Node: Environment Variables418508
+Node: Running Protoize426145
+Node: C Implementation432498
+Node: Translation implementation433429
+Node: Environment implementation433864
+Node: Identifiers implementation434154
+Node: Characters implementation434767
+Node: Integers implementation436624
+Node: Floating point implementation437579
+Node: Arrays and pointers implementation439428
+Ref: Arrays and pointers implementation-Footnote-1440731
+Node: Hints implementation440857
+Node: Structures unions enumerations and bit-fields implementation442296
+Node: Qualifiers implementation443105
+Node: Preprocessing directives implementation443416
+Node: Library functions implementation445215
+Node: Architecture implementation445537
+Node: Locale-specific behavior implementation446102
+Node: C Extensions446397
+Node: Statement Exprs450514
+Node: Local Labels453565
+Node: Labels as Values455633
+Ref: Labels as Values-Footnote-1457695
+Node: Nested Functions457880
+Node: Constructing Calls461769
+Node: Typeof463847
+Node: Lvalues467020
+Node: Conditionals469457
+Node: Long Long470345
+Node: Complex471842
+Node: Hex Floats474410
+Node: Zero Length475436
+Node: Empty Structures478730
+Node: Variable Length479138
+Node: Variadic Macros481910
+Node: Escaped Newlines484298
+Node: Subscripting485127
+Node: Pointer Arith485850
+Node: Initializers486412
+Node: Compound Literals486898
+Node: Designated Inits489058
+Node: Case Ranges492729
+Node: Cast to Union493406
+Node: Mixed Declarations494498
+Node: Function Attributes494996
+Node: Attribute Syntax524105
+Node: Function Prototypes534479
+Node: C++ Comments536269
+Node: Dollar Signs536778
+Node: Character Escapes537233
+Node: Alignment537517
+Node: Variable Attributes538832
+Node: Type Attributes551150
+Node: Inline562581
+Node: Extended Asm567300
+Node: Constraints585265
+Node: Simple Constraints586105
+Node: Multi-Alternative592610
+Node: Modifiers594318
+Node: Machine Constraints596846
+Node: Asm Labels618111
+Node: Explicit Reg Vars619790
+Node: Global Reg Vars621241
+Node: Local Reg Vars625803
+Node: Alternate Keywords627600
+Node: Incomplete Enums629025
+Node: Function Names629778
+Node: Return Address632212
+Node: Vector Extensions634995
+Node: Other Builtins638548
+Node: Target Builtins654052
+Node: Alpha Built-in Functions654579
+Node: X86 Built-in Functions657565
+Node: PowerPC AltiVec Built-in Functions667975
+Node: Pragmas725782
+Node: ARM Pragmas726277
+Node: RS/6000 and PowerPC Pragmas726881
+Node: Darwin Pragmas727608
+Node: Solaris Pragmas728661
+Node: Tru64 Pragmas729221
+Node: Unnamed Fields729959
+Node: Thread-Local731048
+Node: C99 Thread-Local Edits733136
+Node: C++98 Thread-Local Edits735134
+Node: C++ Extensions738565
+Node: Min and Max740113
+Node: Volatiles741494
+Node: Restricted Pointers744862
+Node: Vague Linkage746441
+Node: C++ Interface750097
+Ref: C++ Interface-Footnote-1755182
+Node: Template Instantiation755321
+Node: Bound member functions762455
+Node: C++ Attributes764003
+Node: Java Exceptions765605
+Node: Deprecated Features766999
+Node: Backwards Compatibility768962
+Node: Objective-C770307
+Node: Executing code before main770884
+Node: What you can and what you cannot do in +load773519
+Node: Type encoding775682
+Node: Garbage Collection778931
+Node: Constant string objects781592
+Node: compatibility_alias784102
+Node: Compatibility784978
+Node: Gcov791562
+Node: Gcov Intro792028
+Node: Invoking Gcov794747
+Node: Gcov and Optimization803196
+Node: Gcov Data Files804630
+Node: Trouble809334
+Node: Actual Bugs810925
+Node: Cross-Compiler Problems811833
+Node: Interoperation813340
+Node: External Bugs823479
+Node: Incompatibilities824912
+Node: Fixed Headers833356
+Node: Standard Libraries835662
+Node: Disappointments837028
+Node: C++ Misunderstandings841519
+Node: Static Definitions842242
+Node: Temporaries843286
+Node: Copy Assignment845260
+Node: Protoize Caveats847079
+Node: Non-bugs851031
+Node: Warnings and Errors860896
+Node: Bugs862653
+Node: Bug Criteria863213
+Node: Bug Reporting865401
+Node: Service865779
+Node: Contributing866594
+Node: Funding867334
+Node: GNU Project869835
+Node: Copying870483
+Node: GNU Free Documentation License889685
+Node: Contributors912091
+Node: Option Index938773
+Node: Keyword Index1014775
 
 End Tag Table
