@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: print-tcp.c,v 1.2 1994/04/03 05:17:11 mycroft Exp $
+ * $Id: print-tcp.c,v 1.3 1994/04/03 05:19:05 mycroft Exp $
  */
 
 #ifndef lint
@@ -86,6 +86,7 @@ tcp_print(tp, length, ip)
 	register u_char flags;
 	register int hlen;
 	u_short sport, dport;
+	tcp_seq seq, ack;
 
 	if ((u_char *)(tp + 1)  > snapend) {
 		printf("[|tcp]");
@@ -98,6 +99,8 @@ tcp_print(tp, length, ip)
 
 	sport = ntohs(tp->th_sport);
 	dport = ntohs(tp->th_dport);
+	seq = ntohl(tp->th_seq);
+	ack = ntohl(tp->th_ack);
 
 	(void)printf("%s.%s > %s.%s: ",
 		ipaddr_string(&ip->ip_src), tcpport_string(sport),
@@ -139,8 +142,6 @@ tcp_print(tp, length, ip)
 		register struct tcp_seq_hash *th;
 		register int rev;
 		struct tha tha;
-		tcp_seq seq = ntohl(tp->th_seq);
-		tcp_seq ack = ntohl(tp->th_ack);
 
 		/*
 		 * Find (or record) the initial sequence numbers for
