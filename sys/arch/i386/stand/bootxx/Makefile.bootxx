@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.12 2003/10/13 06:15:00 lukem Exp $
+# $NetBSD: Makefile.bootxx,v 1.13 2003/10/15 03:49:57 gson Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -150,7 +150,7 @@ ${PROG}: ${OBJS} ${LIBLIST}
 	else \
 		: pad to sector boundary; \
 		pad=$$(( 512 - ( $$sz & 511 ) )); \
-		[ $$pad != 512 ] && \
+		[ $$pad = 512 ] || \
 		    dd if=/dev/zero bs=1 count=$$pad >>${PROG} 2>/dev/null; \
 		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
 	fi
