@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.4 2000/08/21 20:50:13 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.5 2000/09/19 19:35:52 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,6 +115,18 @@ mvmebus_offboard_ram(sc)
 	 * visible through. This will tell us the address
 	 * modifier and datasizes it uses, as well as allowing
 	 * us to calculate its `real' VMEbus address.
+	 *
+	 * XXX FIXME: This is broken if the RAM is mapped through
+	 * a translated address space. For example, on mvme167 it's
+	 * perfectly legal to set up the following A32 mapping:
+	 *
+	 *  vr_locaddr  == 0x80000000
+	 *  vr_vmestart == 0x10000000
+	 *  vr_vmeend   == 0x10ffffff
+	 *
+	 * In this case, RAM at VMEbus address 0x10800000 will appear at local
+	 * address 0x80800000, but we need to set the slave vr_vmestart to
+	 * 0x10800000.
 	 */
 	for (i = 0, mvr = sc->sc_masters; i < sc->sc_nmasters; i++, mvr++) {
 		vme_addr_t vstart = mvr->vr_locstart + mvr->vr_vmestart;
@@ -403,7 +415,8 @@ mvmebus_intr_establish(vsc, handle, prior, func, arg)
 
 	first = (sc->sc_irqref[level]++ == 0);
 
-	(*sc->sc_intr_establish)(sc->sc_chip, level, vector, first, func, arg);
+	(*sc->sc_intr_establish)(sc->sc_chip, prior, level, vector, first,
+	    func, arg);
 
 	return ((void *) handle);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.9 2000/09/06 19:51:44 scw Exp $ */
+/*	$NetBSD: vme_two.c,v 1.10 2000/09/19 19:35:53 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * VME support specific to the VMEchip2 found on the MVME-1[67]7 boards.
+ * VME support specific to the VMEchip2 found on the MVME-1[67][27] boards.
  */
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ void vmetwo_master_range __P((struct vmetwo_softc *, int,
 void vmetwo_slave_range __P((struct vmetwo_softc *, int, vme_am_t,
 			      struct mvmebus_range *));
 int vmetwo_local_isr_trampoline __P((void *));
-void vmetwo_intr_establish __P((void *, int, int, int,
+void vmetwo_intr_establish __P((void *, int, int, int, int,
 				int (*)(void *), void *));
 void vmetwo_intr_disestablish __P((void *, int, int, int));
 
@@ -279,7 +279,8 @@ vmetwo_attach(parent, self, aux)
 		 * Let the NMI handler deal with level 7 ABORT switch
 		 * interrupts
 		 */
-		vmetwo_intr_establish(sc, 7, VME2_VEC_ABORT, 1, nmihand, NULL);
+		vmetwo_intr_establish(sc, 7, 7, VME2_VEC_ABORT, 1,
+		    nmihand, NULL);
 	}
 
 	/* Attach to the mvme68k common VMEbus front-end */
@@ -362,29 +363,28 @@ vmetwo_master_range(sc, range, vr)
 	/*
 	 * Local->VMEbus map '4' has optional translation bits, so
 	 * the VMEbus start and end addresses may need to be adjusted.
-	 *
-	 * Note that if the translation register is zero, translation
-	 * is not enabled. This code works either way.
 	 */
-	if (range == 3) {
+	if (range == 3 && (reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS))!=0) {
+		uint32_t addr, sel, len = end - start;
+
 		vr->vr_locstart = start;
 
 		reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS);
 		reg &= VME2_MAST4_TRANS_SELECT_MASK;
-		reg <<= VME2_MAST4_TRANS_SELECT_SHIFT;
-		vr->vr_mask &= ~reg;
-		start &= ~reg;
-		end &= ~reg;
+		sel = reg << VME2_MAST4_TRANS_SELECT_SHIFT;
 
 		reg = vme2_lcsr_read(sc, VME2LCSR_MAST4_TRANS);
 		reg &= VME2_MAST4_TRANS_ADDRESS_MASK;
-		reg <<= VME2_MAST4_TRANS_ADDRESS_SHIFT;
-		start |= reg;
-		end |= reg;
+		addr = reg << VME2_MAST4_TRANS_ADDRESS_SHIFT;
+
+		start = (addr & sel) | (start & (~sel));
+		end = start + len;
+		vr->vr_mask &= len - 1;
 	} else
 		vr->vr_locstart = 0;
 
 	/* XXX Deal with overlap of onboard RAM address space */
+	/* XXX Then again, 167-Bug warns about this at setup time ... */
 
 	/*
 	 * Fixup the addresses this range corresponds to
@@ -505,9 +505,9 @@ vmetwo_local_isr_trampoline(arg)
 }
 
 void
-vmetwo_intr_establish(csc, lvl, vec, first, hand, arg)
+vmetwo_intr_establish(csc, prior, lvl, vec, first, hand, arg)
 	void *csc;
-	int lvl, vec, first;
+	int prior, lvl, vec, first;
 	int (*hand)(void *);
 	void *arg;
 {
@@ -547,7 +547,7 @@ vmetwo_intr_establish(csc, lvl, vec, first, hand, arg)
 	}
 
 	/* Hook the interrupt */
-	isrlink_vectored(hand, arg, lvl, vec);
+	isrlink_vectored(hand, arg, prior, vec);
 
 	/*
 	 * Do we need to tell the VMEChip2 to let the interrupt through?
@@ -559,10 +559,10 @@ vmetwo_intr_establish(csc, lvl, vec, first, hand, arg)
 		    VME2LCSR_INTERRUPT_LEVEL_BASE;
 		ilshift = VME2_ILSHIFT_FROM_VECTOR(bitoff);
 
-		/* Program the specified interrupt to signal at 'lvl' */
+		/* Program the specified interrupt to signal at 'prior' */
 		reg = vme2_lcsr_read(sc, iloffset);
 		reg &= ~(VME2_INTERRUPT_LEVEL_MASK << ilshift);
-		reg |= (lvl << ilshift);
+		reg |= (prior << ilshift);
 		vme2_lcsr_write(sc, iloffset, reg);
 
 		/* Clear it */
@@ -574,6 +574,20 @@ vmetwo_intr_establish(csc, lvl, vec, first, hand, arg)
 		reg |= VME2_LOCAL_INTERRUPT(bitoff);
 		vme2_lcsr_write(sc, VME2LCSR_LOCAL_INTERRUPT_ENABLE, reg);
 	}
+#ifdef DIAGNOSTIC
+	else {
+		/* Verify the interrupt priority is the same */
+		iloffset = VME2_ILOFFSET_FROM_VECTOR(bitoff) +
+		    VME2LCSR_INTERRUPT_LEVEL_BASE;
+		ilshift = VME2_ILSHIFT_FROM_VECTOR(bitoff);
+
+		reg = vme2_lcsr_read(sc, iloffset);
+		reg &= (VME2_INTERRUPT_LEVEL_MASK << ilshift);
+
+		if ((prior << ilshift) != reg)
+			panic("vmetwo_intr_establish: priority mismatch!");
+	}
+#endif
 	splx(s);
 }
 
