@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.6 1997/05/23 23:09:37 jtc Exp $	*/
+/*	$NetBSD: init.c,v 1.7 1997/10/12 00:53:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.6 1997/05/23 23:09:37 jtc Exp $";
+__RCSID("$NetBSD: init.c,v 1.7 1997/10/12 00:53:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,13 +48,14 @@ static char rcsid[] = "$NetBSD: init.c,v 1.6 1997/05/23 23:09:37 jtc Exp $";
  * @(#)init.c	1.1 (Berkeley) 4/1/82
  */
 
-init() {
+void
+init()
+{
+	PLAY	*pp;
+	int	i, j;
+	CARD	card;
 
-	register PLAY	*pp;
-	register int		i, j;
-	register CARD	card;
-
-	bzero(Numseen, sizeof Numseen);
+	memset(Numseen, 0, sizeof Numseen);
 	Numgos = 0;
 
 	for (i = 0; i < 2; i++) {
@@ -90,15 +92,16 @@ init() {
 	End = 700;
 }
 
-shuffle() {
-
-	register int		i, r;
-	register CARD	temp;
+void
+shuffle()
+{
+	int	i, r;
+	CARD	temp;
 
 	for (i = 0; i < DECK_SZ; i++) {
 		r = roll(1, DECK_SZ) - 1;
 		if (r < 0 || r > DECK_SZ - 1) {
-			fprintf(stderr, "shuffle: card no. error: %d\n", r);
+			warnx("shuffle: card no. error: %d", r);
 			die(1);
 		}
 		temp = Deck[r];
@@ -108,10 +111,11 @@ shuffle() {
 	Topcard = &Deck[DECK_SZ];
 }
 
-newboard() {
-
-	register int	i;
-	register PLAY	*pp;
+void
+newboard()
+{
+	int		i;
+	PLAY		*pp;
 	static int	first = TRUE;
 
 	if (first) {
@@ -166,10 +170,11 @@ newboard() {
 	newscore();
 }
 
-newscore() {
-
-	register int	i, new;
-	register PLAY	*pp;
+void
+newscore()
+{
+	int		i, new;
+	PLAY		*pp;
 	static int	was_full = -1;
 	static int	last_win = -1;
 

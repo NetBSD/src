@@ -1,4 +1,4 @@
-/*	$NetBSD: varpush.c,v 1.5 1997/05/23 23:09:45 jtc Exp $	*/
+/*	$NetBSD: varpush.c,v 1.6 1997/10/12 00:54:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)varpush.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: varpush.c,v 1.5 1997/05/23 23:09:45 jtc Exp $";
+__RCSID("$NetBSD: varpush.c,v 1.6 1997/10/12 00:54:44 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,34 +49,41 @@ static char rcsid[] = "$NetBSD: varpush.c,v 1.5 1997/05/23 23:09:45 jtc Exp $";
  * @(#)varpush.c	1.1 (Berkeley) 4/1/82
  */
 
-int	read(), write();
-
 /*
  *	push variables around via the routine func() on the file
  * channel file.  func() is either read or write.
  */
+bool
 varpush(file, func)
-register int	file;
-register int	(*func)(); 
+	int	file;
+	ssize_t	(*func) __P((int, const struct iovec *, int)); 
 {
+	int		temp;
+	const struct iovec vec[] = {
+		{ (void *) &Debug, sizeof Debug },
+		{ (void *) &Finished, sizeof Finished },
+		{ (void *) &Order, sizeof Order },
+		{ (void *) &End, sizeof End },
+		{ (void *) &On_exit, sizeof On_exit },
+		{ (void *) &Handstart, sizeof Handstart },
+		{ (void *) &Numgos, sizeof Numgos },
+		{ (void *) Numseen, sizeof Numseen },
+		{ (void *) &Play, sizeof Play },
+		{ (void *) &Window, sizeof Window },
+		{ (void *) Deck, sizeof Deck },
+		{ (void *) &Discard, sizeof Discard },
+		{ (void *) Player, sizeof Player }
+	};
 
-	int	temp;
-
-	(*func)(file, (char *) &Debug, sizeof Debug);
-	(*func)(file, (char *) &Finished, sizeof Finished);
-	(*func)(file, (char *) &Order, sizeof Order);
-	(*func)(file, (char *) &End, sizeof End);
-	(*func)(file, (char *) &On_exit, sizeof On_exit);
-	(*func)(file, (char *) &Handstart, sizeof Handstart);
-	(*func)(file, (char *) &Numgos, sizeof Numgos);
-	(*func)(file, (char *)  Numseen, sizeof Numseen);
-	(*func)(file, (char *) &Play, sizeof Play);
-	(*func)(file, (char *) &Window, sizeof Window);
-	(*func)(file, (char *)  Deck, sizeof Deck);
-	(*func)(file, (char *) &Discard, sizeof Discard);
-	(*func)(file, (char *)  Player, sizeof Player);
-	if (func == read) {
-		read(file, (char *) &temp, sizeof temp);
+	if (((func)(file, vec, sizeof(vec) / sizeof(vec[0]))) < 0) {
+		error(strerror(errno));
+		return FALSE;
+	}
+	if (func == readv) {
+		if ((read(file, (void *) &temp, sizeof temp)) < 0) {
+			error(strerror(errno));
+			return FALSE;
+		}
 		Topcard = &Deck[temp];
 #ifdef DEBUG
 		if (Debug) {
@@ -84,16 +92,19 @@ over:
 			printf("Debug file:");
 			gets(buf);
 			if ((outf = fopen(buf, "w")) == NULL) {
-				perror(buf);
+				warn("%s", buf);
 				goto over;
 			}
 			if (strcmp(buf, _PATH_DEVNULL) != 0)
 				setbuf(outf, (char *)NULL);
 		}
 #endif
-	}
-	else {
+	} else {
 		temp = Topcard - Deck;
-		write(file, (char *) &temp, sizeof temp);
+		if ((write(file, (void *) &temp, sizeof temp)) < 0) {
+			error(strerror(errno));
+			return FALSE;
+		}
 	}
+	return TRUE;
 }
