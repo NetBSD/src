@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.5 2001/05/28 12:40:37 lukem Exp $	*/
+/*	$NetBSD: emit.c,v 1.6 2001/08/20 12:00:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: emit.c,v 1.5 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: emit.c,v 1.6 2001/08/20 12:00:57 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -210,7 +210,7 @@ outint(int i)
 
 /*
  * write the name of a symbol to the output buffer
- * the name is preceeded by its length
+ * the name is preceded by its length
  */
 void
 outname(const char *name)

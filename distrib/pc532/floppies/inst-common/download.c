@@ -1,4 +1,4 @@
-/*	$NetBSD: download.c,v 1.2 2001/04/06 11:13:55 wiz Exp $	*/
+/*	$NetBSD: download.c,v 1.3 2001/08/20 12:00:47 wiz Exp $	*/
 
 /*
    Hacked by Phil Nelson for use with NetBSD, 10/5/95.
@@ -135,7 +135,7 @@ usage(name)
   exit (1);
 }
 
-/* Output a character.  If it is a CLT_C or ESC, then quote (preceed)
+/* Output a character.  If it is a CLT_C or ESC, then quote (precede)
  * it with a ESC.
  */
 void

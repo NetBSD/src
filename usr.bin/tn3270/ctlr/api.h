@@ -1,4 +1,4 @@
-/*	$NetBSD: api.h,v 1.4 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: api.h,v 1.5 2001/08/20 12:00:56 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -326,7 +326,7 @@ typedef struct {
 #define	FP_OFF(y)	((unsigned int)(((unsigned long)(y))&0xFFFF))
 
 /*
- * Undo the preceeding.
+ * Undo the preceding.
  */
 
 #define	SEG_OFF_BACK(x,y)	(((x)<<16)|(y))

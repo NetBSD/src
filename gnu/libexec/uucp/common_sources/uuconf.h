@@ -240,7 +240,7 @@ struct uuconf_system
      is the high baud rate.  */
   long uuconf_ihighbaud;
   /* Port name to use.  May be NULL.  If an HDB configuration file
-     contains a modem class (alphabetic characters preceeding the baud
+     contains a modem class (alphabetic characters preceding the baud
      rate), the class is appended to the port name.  */
   char *uuconf_zport;
   /* Specific port information, if the system entry includes port
@@ -1296,7 +1296,7 @@ extern int uuconf_error_lineno ();
    interpreted.  Each type will either assign a value to a variable or
    call a function.  In all cases, a line of input is parsed into
    separate fields, separated by whitespace; comments beginning with
-   '#' are discarded, except that a '#' preceeded by a backslash is
+   '#' are discarded, except that a '#' preceded by a backslash is
    retained.  The first field is taken as the command to execute, and
    the remaining fields are its arguments.  */
 

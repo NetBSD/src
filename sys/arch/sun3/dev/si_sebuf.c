@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.13 2001/04/25 17:53:25 bouyer Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.14 2001/08/20 12:00:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -342,7 +342,7 @@ se_intr_off(ncr_sc)
 
 /*
  * This function is called during the COMMAND or MSG_IN phase
- * that preceeds a DATA_IN or DATA_OUT phase, in case we need
+ * that precedes a DATA_IN or DATA_OUT phase, in case we need
  * to setup the DMA engine before the bus enters a DATA phase.
  *
  * On the VME version, setup the start addres, but clear the

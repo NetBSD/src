@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.71 2001/07/03 18:08:51 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.72 2001/08/20 12:00:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.71 2001/07/03 18:08:51 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.72 2001/08/20 12:00:55 wiz Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.71 2001/07/03 18:08:51 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.72 2001/08/20 12:00:55 wiz Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2438,7 +2438,7 @@ test_char:
 
 	/*
 	 * Strip trailing blanks and tabs from the line.
-	 * Do not strip a blank or tab that is preceeded by
+	 * Do not strip a blank or tab that is preceded by
 	 * a '\'
 	 */
 	ep = line;

@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.3 1998/02/04 11:08:51 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.4 2001/08/20 12:00:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.3 1998/02/04 11:08:51 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.4 2001/08/20 12:00:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ back_line(curr_pos)
 		{
 			/*
 			 * The "current" line was blank.
-			 * Skip over any preceeding blank lines,
+			 * Skip over any preceding blank lines,
 			 * since we skipped them in forw_line().
 			 */
 			while ((c = ch_back_get()) == '\n')
