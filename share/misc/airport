@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.7 1999/01/02 03:36:54 hubertf Exp $
+#	$NetBSD: airport,v 1.8 1999/01/05 16:07:16 hubertf Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -15,6 +15,7 @@ ALB:Albany, New York, USA
 AMM:Amman, Jordan
 ANC:Anchorage International, Alaska, USA
 ANU:Antigua, Leeward Islands
+ARN:Arlanda Airport, Stockholm, Sweden
 ATH:Athens, Greece
 ATL:Atlanta William B. Hartsfield International, Georgia, USA
 AUS:Austin Robert Mueller Municipal, Texas, USA
@@ -57,6 +58,7 @@ CMH:Columbus International, Ohio, USA
 COS:Peterson, Colorado Springs, USA
 CPR:Casper/Natrone County International, Wyoming, USA
 CRM:Charleston (WV) Yeager, South Carolina, USA
+CPH:Copenhagen, Denmark
 CRP:Corpus Christi International, Texas, USA
 CUN:Cancun, Mexico
 CVG:Cincinnati International, Ohio, USA
@@ -72,6 +74,7 @@ DFW:Dallas-Ft. Worth International, Texas, USA
 DSM:Des Moines International, Iowa, USA
 DTT:All Airports around Detroit, Michigan, USA
 DTW:Detroit Metropolitan/Wayne County, Michigan, USA
+DUB:Dublin Airport, Ireland
 DUS:Dusseldorf, Germany
 ELP:El Paso International, El Paso, Texas, USA
 EWR:Newark International, New Jersey, USA
