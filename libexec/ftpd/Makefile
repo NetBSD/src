@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1997/10/12 14:06:21 mycroft Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 1997/11/11 06:18:50 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 # XXX Work-around a compiler bug for now... can't use -O
@@ -12,6 +12,7 @@ CPPFLAGS+=-DHASSETPROCTITLE -Dunix
 DPADD+=	${LIBCRYPT}
 LDADD+=	-lcrypt
 MAN=	ftpd.8
+MLINKS+=ftpd.8 ftpd.conf.5
 CLEANFILES+=ftpcmd.c y.tab.h
 .PATH:	${.CURDIR}/../../usr.bin/ftp ${.CURDIR}/../../usr.bin/login
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1997/09/23 13:56:40 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.5.2.1 1997/11/11 06:18:55 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,4 +90,5 @@ struct ftpclass {
 	char		*notify;	/* Files to notify about upon chdir */
 	unsigned int	 timeout;	/* Default timeout */
 	mode_t		 umask;		/* Umask to use */
+	int		 checkportcmd;	/* check PORT commands are valid */
 };
