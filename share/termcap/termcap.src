@@ -2070,17 +2070,21 @@ pro350|decpro|dec pro console:\
 	:li#24:nd=\EC:pt:sr=\EI:up=\EA:do=\EB:\
 	:se=\E^N:so=\E^H:us=\E^D:ue=\E^C:\
 	:ae=\EG:as=\EF:
-#
-# From: Bracy H. Elton  <elton@lll-crg>
+# DEC VT220
 vt200|vt220|dec-vt220|vt200-js|vt220-js|dec vt200 series with jump scroll:\
-	:im=\E[4h:ei=\E[4l:mi:dc=\E[P:dm=:ed=:al=\E[L:\
-	:cs=\E[%i%d;%dr:sf=\ED:sr=\EM:sb=\EM:\
-	:ce=\E[K:cl=\E[H\E[J:cd=\E[J:cm=\E[%i%d;%dH:nd=\E[C:up=\E[A:\
-	:so=\E[7m:se=\E[27m:us=\E[4m:ue=\E[24m:\
-	:md=\E[1m:mr=\E[7m:mb=\E[5m:me=\E[m:\
-	:is=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:\
-	:rs=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:\
-	:tc=vt100:
+	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:LE=\E[%dD:\
+	:RI=\E[%dC:SF=\E%dD:SR=\E%dM:UP=\E[%dA:ae=^O:al=\E[L:am:as=^N:\
+	:bl=^G:bs:cb=\E[1K:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:\
+	:cr=^M:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:do=^J:ei=\E[4l:\
+	:ho=\E[H:im=\E[4h:it#8:k1=\E[17~:k2=\E[18~:k3=\E[19~:k4=\E[20~:\
+	:k5=\E[21~:k6=\E[23~:k7=\E[24~:k8=\E[25~:kD=\E[3~:kH=\E[4~:\
+	:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=\177:kd=\EOB:ke=\E[?1l\E>:kh=\E[1~:\
+	:kl=\EOD:km:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:\
+	:me=\E[m:mi:mr=\E[7m:ms:nd=\E[C:pt:rc=\E8:\
+	:rf=/usr/share/tabset/vt100:rs=\Ec\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:\
+	:sc=\E7:se=\E[27m:sf=\ED:so=\E[7m:sr=\EM:st=\EH:ue=\E[24m:up=\E[A:\
+	:us=\E[4m:vt#3:xn:\
+	:ed=:sb=\EM:is=\Ec\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:
 vt200-ss|vt220-ss|dec-vt220-ss|dec vt200 series with smooth scroll:\
 	:is=\E>\E[?3l\E[?4h\E[?5l\E[?7h\E[?8h\E[1;24r\E[24;1H:\
 	:rs=\E>\E[?3l\E[?4h\E[?5l\E[?7h\E[?8h:\
