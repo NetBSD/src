@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.1 1996/05/15 21:42:31 jtc Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.1.4.1 1996/06/02 19:48:31 ghudson Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -87,10 +87,8 @@ pw_mkdb()
 		exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
-	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0) {
-		unlink(_PATH_MASTERPASSWD_LOCK);
+	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
 		return(-1);
-	}
 	return(0);
 }
 
