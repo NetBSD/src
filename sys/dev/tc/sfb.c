@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.24 1999/10/27 04:32:35 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.25 1999/11/05 03:28:40 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.24 1999/10/27 04:32:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.25 1999/11/05 03:28:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1076,8 +1076,8 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 	struct rcons *rc = id;
 	struct raster *rap = rc->rc_sp;
 	caddr_t sp, dp, basex, sfb;
-	int scanspan, height, width, align, shift, w, y;
-	u_int32_t lmask, rmask;
+	int scanspan, height, width, aligns, alignd, shift, w, y;
+	u_int32_t lmasks, rmasks, lmaskd, rmaskd;
 
 	scanspan = rap->linelongs * 4;
 	y = rc->rc_yorigin + rc->rc_font->height * row;
@@ -1085,34 +1085,39 @@ sfb_copycols(id, row, srccol, dstcol, ncols)
 	height = rc->rc_font->height;
 	w = rc->rc_font->width * ncols;
 
-	dp = basex + rc->rc_font->width * dstcol;
 	sp = basex + rc->rc_font->width * srccol;
+	aligns = (long)sp & SFBALIGNMASK;
+	dp = basex + rc->rc_font->width * dstcol;
+	alignd = (long)dp & SFBALIGNMASK;
 
-	align = shift = (long)sp & SFBALIGNMASK;
-	sp -= align;
-	width = w + align;
-	align = (long)dp & SFBALIGNMASK;
-	dp -= align;
-	shift = align - shift; 
-#if 1
+	shift = alignd - aligns;
+	/* right shift; prime left edge compensating width */
 	if (shift < 0) {
-		align += 8;
 		dp -= 8;
+		alignd += 8;
+		w += 8;
 	}
-#endif
-	lmask = SFBCOPYALL1 << align;
-	rmask = SFBCOPYALL1 >> (-(w + align) & SFBCOPYBITMASK);
+	/* left shift; increase width to drain right edge */
+	else if (shift > 0) {
+		w += 8;
+	}
+	width = w + aligns;
+	lmasks = SFBSTIPPLEALL1 << aligns;
+	rmasks = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
+	lmaskd = SFBSTIPPLEALL1 << alignd;
+	rmaskd = SFBSTIPPLEALL1 >> (-(w + alignd) & SFBSTIPPLEBITMASK);
 	sfb = rap->data;
 
 	SFBMODE(sfb, MODE_COPY);
 	SFBPLANEMASK(sfb, ~0);
 	SFBPIXELSHIFT(sfb, shift);
 	if (width <= SFBCOPYBITS) {
-		lmask = lmask & rmask;
+		lmasks = lmasks & rmasks;
+		lmaskd = lmaskd & rmaskd;
 		while (height > 0) {
-			*(u_int32_t *)sp = SFBCOPYALL1;
+			*(u_int32_t *)sp = lmasks;
 WRITE_MB();
-			*(u_int32_t *)dp = lmask;
+			*(u_int32_t *)dp = lmaskd;
 WRITE_MB();
 			sp += scanspan;
 			dp += scanspan;
@@ -1125,9 +1130,9 @@ WRITE_MB();
 
 		w = width;
 		while (height > 0) {
-			*(u_int32_t *)sp = SFBCOPYALL1;
+			*(u_int32_t *)sp = lmasks;
 WRITE_MB();
-			*(u_int32_t *)dp = lmask;
+			*(u_int32_t *)dp = lmaskd;
 WRITE_MB();
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
@@ -1141,9 +1146,9 @@ WRITE_MB();
 			}
 			sp += SFBCOPYBYTESDONE;
 			dp += SFBCOPYBYTESDONE;
-			*(u_int32_t *)sp = SFBCOPYALL1;
+			*(u_int32_t *)sp = rmasks;
 WRITE_MB();
-			*(u_int32_t *)dp = rmask;
+			*(u_int32_t *)dp = rmaskd;
 WRITE_MB();
 
 			sp = (sq += scanspan);
@@ -1158,9 +1163,9 @@ WRITE_MB();
 
 		w = width;
 		while (height > 0) {
-			*(u_int32_t *)sp = SFBCOPYALL1;
+			*(u_int32_t *)sp = rmasks;
 WRITE_MB();
-			*(u_int32_t *)dp = rmask;
+			*(u_int32_t *)dp = rmaskd;
 WRITE_MB();
 			width -= 2 * SFBCOPYBITS;
 			while (width > 0) {
@@ -1174,9 +1179,9 @@ WRITE_MB();
 			}
 			sp -= SFBCOPYBYTESDONE;
 			dp -= SFBCOPYBYTESDONE;
-			*(u_int32_t *)sp = SFBCOPYALL1;
+			*(u_int32_t *)sp = lmasks;
 WRITE_MB();
-			*(u_int32_t *)dp = lmask;
+			*(u_int32_t *)dp = lmaskd;
 WRITE_MB();
 
 			sp = (sq += scanspan);
