@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.94 2003/12/07 20:30:28 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.95 2003/12/18 22:36:18 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.94 2003/12/07 20:30:28 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.95 2003/12/18 22:36:18 jmc Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.94 2003/12/07 20:30:28 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.95 2003/12/18 22:36:18 jmc Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1027,6 +1027,16 @@ ReadMakefile(ClientData p, ClientData q)
 				path = erealloc(path, len = 2 * plen);
 			
 			(void)snprintf(path, len, "%s/%s", curdir, fname);
+			if ((stream = fopen(path, "r")) != NULL) {
+				fname = path;
+				goto found;
+			}
+			
+			/* If curdir failed, try objdir (ala .depend) */
+			plen = strlen(objdir) + strlen(fname) + 2;
+			if (len < plen)
+				path = erealloc(path, len = 2 * plen);
+			(void)snprintf(path, len, "%s/%s", objdir, fname);
 			if ((stream = fopen(path, "r")) != NULL) {
 				fname = path;
 				goto found;
