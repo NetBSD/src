@@ -1,6 +1,7 @@
-/*	$NetBSD: init_main.c,v 1.75 1995/03/19 23:27:03 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.76 1995/03/25 22:05:15 cgd Exp $	*/
 
 /*
+ * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
@@ -92,7 +93,12 @@ int	boothowto;
 struct	timeval boottime;
 struct	timeval runtime;
 
-static void start_init __P((struct proc *p, void *framep));
+static void start_init __P((struct proc *));
+static void start_pagedaemon __P((struct proc *));
+
+#ifdef cpu_set_init_frame
+void *initframep;				/* XXX should go away */
+#endif
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -102,7 +108,7 @@ static void start_init __P((struct proc *p, void *framep));
  */
 int
 main(framep)
-	void *framep;
+	void *framep;				/* XXX should go away */
 {
 	register struct proc *p;
 	register struct filedesc0 *fdp;
@@ -289,25 +295,32 @@ main(framep)
 	/* Create process 1 (init(8)). */
 	if (fork(p, NULL, rval))
 		panic("fork init");
+#ifdef cpu_set_init_frame			/* XXX should go away */
 	if (rval[1]) {
-		start_init(curproc, framep);
+		/*
+		 * Now in process 1.
+		 */
+		initframep = framep;
+		start_init(curproc);
 		return;
 	}
+#else
+	cpu_set_kpc(pfind(1), start_init);
+#endif
 
 	/* Create process 2 (the pageout daemon). */
 	if (fork(p, NULL, rval))
 		panic("fork pager");
+#ifdef cpu_set_init_frame			/* XXX should go away */
 	if (rval[1]) {
 		/*
 		 * Now in process 2.
 		 */
-		p = curproc;
-		pageproc = p;
-		p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
-		bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
-		vm_pageout();
-		/* NOTREACHED */
+		start_pagedaemon(curproc);
 	}
+#else
+	cpu_set_kpc(pfind(2), start_pagedaemon);
+#endif
 
 	/* The scheduler is an infinite loop. */
 	scheduler();
@@ -329,9 +342,8 @@ static char *initpaths[] = {
  * The program is invoked with one argument containing the boot flags.
  */
 static void
-start_init(p, framep)
+start_init(p)
 	struct proc *p;
-	void *framep;
 {
 	vm_offset_t addr;
 	struct execve_args /* {
@@ -344,8 +356,12 @@ start_init(p, framep)
 	char flags[4], *flagsp;
 	char **pathp, *path, *ucp, **uap, *arg0, *arg1;
 
+	/*
+	 * Now in process 1.
+	 */
 	initproc = p;
 
+#ifdef cpu_set_init_frame			/* XXX should go away */
 	/*
 	 * We need to set the system call frame as if we were entered through
 	 * a syscall() so that when we call execve() below, it will be able
@@ -353,7 +369,8 @@ start_init(p, framep)
 	 * startup code in "locore.s" has allocated space for the frame and
 	 * passed a pointer to that space as main's argument.
 	 */
-	cpu_set_init_frame(p, framep);
+	cpu_set_init_frame(p, initframep);
+#endif
 
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
@@ -435,4 +452,19 @@ start_init(p, framep)
 	}
 	printf("init: not found\n");
 	panic("no init");
+}
+
+static void
+start_pagedaemon(p)
+	struct proc *p;
+{
+
+	/*
+	 * Now in process 2.
+	 */
+	pageproc = p;
+	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
+	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
+	vm_pageout();
+	/* NOTREACHED */
 }
