@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc.c,v 1.8 1997/10/05 15:12:10 mrg Exp $	*/
+/*	$NetBSD: lpc.c,v 1.9 1997/10/05 16:45:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpc.c,v 1.8 1997/10/05 15:12:10 mrg Exp $");
+__RCSID("$NetBSD: lpc.c,v 1.9 1997/10/05 16:45:44 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -289,7 +289,7 @@ help(argc, argv)
 		else if (c == (struct cmd *)0)
 			printf("?Invalid help command %s\n", arg);
 		else
-			printf("%-*s\t%s\n", HELPINDENT,
+			printf("%-*s\t%s\n", (int)HELPINDENT,
 				c->c_name, c->c_help);
 	}
 }
