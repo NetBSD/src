@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.78 2004/07/25 01:37:14 thorpej Exp $
+# $NetBSD: postinstall,v 1.79 2004/08/12 02:30:23 lukem Exp $
 #
 # Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,6 @@
 
 #
 # checks to add:
-#	- obsolete minor/teeny shared libraries in /lib
 #	- sysctl(8) renames
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
@@ -321,6 +320,107 @@ stat()
 	return $?
 }
 
+# obsolete_paths op
+#	obsolete the list of paths provided on stdin.
+#	each path is relative to ${DEST_DIR}, and should
+#	be an absolute path or start with `./'.
+#
+obsolete_paths()
+{
+	[ -n "$1" ] || err 2 "USAGE: obsolete_paths  fix|check"
+	op=$1
+
+	failed=0
+	while read ofile; do
+		ofile=${DEST_DIR}${ofile#.}
+		cmd="rm"
+		ftype="file"
+		if [ -h "${ofile}" ]; then
+			ftype="link"
+		elif [ -d "${ofile}" ]; then
+			ftype="directory"
+			cmd="rmdir"
+		elif [ ! -e "${ofile}" ]; then
+			continue
+		fi
+		if [ "${op}" = "check" ]; then
+			msg "Remove obsolete ${ftype} ${ofile}"
+			failed=1
+		elif ! eval ${cmd} ${ofile}; then
+			msg "Can't remove obsolete ${ftype} ${ofile}"
+			failed=1
+		else
+			msg "Removed obsolete ${ftype} ${ofile}"
+		fi
+	done
+	return ${failed}
+}
+
+# obsolete_libs dir
+#	display the minor/teeny shared libraries in dir that are considered
+#	to be obsolete.
+#
+#	the implementation supports removing obsolete major libraries
+#	if the awk variable AllLibs is set, although there is no way to
+#	enable that in the enclosing shell function as this time.
+#
+obsolete_libs()
+{
+	[ $# -eq 1 ] || err 2 "USAGE: obsolete_paths dir"
+	dir=$1
+
+	(
+
+	cd "${DEST_DIR}/${dir}" || exit 1
+	echo lib*.so.* \
+	| tr ' ' '\n' \
+	| awk -v LibDir="${dir}/" '
+#{
+
+function digit(v, c, n) { return (n <= c) ? v[n] : 0 }
+
+function checklib(results, line, regex) {
+	if (! match(line, regex))
+		return
+	lib = substr(line, RSTART, RLENGTH)
+	rev = substr($0, RLENGTH+1)
+	if (! (lib in results)) {
+		results[lib] = rev
+		return
+	}
+	orevc = split(results[lib], orev, ".")
+	nrevc = split(rev, nrev, ".")
+	maxc = (orevc > nrevc) ? orevc : nrevc
+	for (i = 1; i <= maxc; i++) {
+		res = digit(orev, orevc, i) - digit(nrev, nrevc, i)
+		if (res < 0) {
+			print LibDir lib results[lib]
+			results[lib] = rev
+			return
+		} else if (res > 0) {
+			print LibDir lib rev
+			return
+		}
+	}
+}
+
+/^lib.*\.so\.[0-9]+\.[0-9]+(\.[0-9]+)?$/ {
+	if (AllLibs)
+		checklib(minor, $0, "^lib.*\.so\.")
+	else
+		checklib(found, $0, "^lib.*\.so\.[0-9]+\.")
+}
+
+/^lib.*\.so\.[0-9]+$/ {
+	if (AllLibs)
+		checklib(major, $0, "^lib.*\.so\.")
+}
+
+#}'
+	
+	)
+}
+
 
 #
 #	items
@@ -451,18 +551,10 @@ do_rc()
 		# check for obsolete rc.d files
 	for f in NETWORK fsck.sh kerberos nfsiod servers systemfs \
 	    daemon gated login portmap sunndd xntpd; do
-		fd=${DEST_DIR}/etc/rc.d/${f}
-		[ ! -e "${fd}" ] && continue
-		if [ "${op}" = "check" ]; then
-			msg "Remove obsolete ${fd}"
-			failed=1
-		elif ! rm ${fd}; then
-			msg "Can't remove obsolete ${fd}"
-			failed=1
-		else
-			msg "Removed obsolete ${fd}"
-		fi
-	done
+		fd=/etc/rc.d/${f}
+		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
+	done | obsolete_paths ${op}
+	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.conf(5) variables
 	set --	amd amd_master \
@@ -705,40 +797,23 @@ do_postfix()
 #
 #	obsolete
 #
-additem obsolete "obsolete file sets"
+additem obsolete "obsolete file sets and minor libraries"
 do_obsolete()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_obsolete  fix|check"
 	op=$1
+	failed=0
 
-	sort -ru ${DEST_DIR}/var/db/obsolete/* | (
-		failed=0
-		while read ofile; do
-			ofile=${DEST_DIR}${ofile#.}
-			cmd="rm"
-			ftype="file"
-			if [ -h "${ofile}" ]; then
-				ftype="link"
-			elif [ -d "${ofile}" ]; then
-				ftype="directory"
-				cmd="rmdir"
-			elif [ ! -e "${ofile}" ]; then
-				continue
-			fi
-			if [ "${op}" = "check" ]; then
-				msg "Remove obsolete ${ftype} ${ofile}"
-				failed=1
-			elif ! eval ${cmd} ${ofile}; then
-				msg "Can't remove obsolete ${ftype} ${ofile}"
-				failed=1
-			else
-				msg "Removed obsolete ${ftype} ${ofile}"
-			fi
-		done
-		exit ${failed}
-	)
+	sort -ru ${DEST_DIR}/var/db/obsolete/* | obsolete_paths ${op}
+	failed=$(( ${failed} + $? ))
 
-	return $?
+	(
+		obsolete_libs /lib
+		obsolete_libs /usr/lib
+	) | obsolete_paths ${op}
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
@@ -928,7 +1003,7 @@ do_sendmail()
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m machine] operation [item [...]]
+Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m mach] [-a arch] op [item [...]]
 	Perform post-installation checks and/or fixes on a system's
 	configuration files.
 	If no items are provided, all checks or fixes are applied.
@@ -936,10 +1011,10 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] [-m machine] operation [item [...]]
 	Options:
 	-s srcdir	Source directory to compare from.
 			This can either be src/etc or
-			an extracted copy of "etc.tgz".    [${SRC_DIR:-/}]
-	-d destdir	Destination directory to check.    [${DEST_DIR:-/}]
-	-m machine	Machine architecture.              [${MACHINE}]
-	-a arch		Machine architecture.              [${MACHINE_ARCH}]
+			an extracted copy of "etc.tgz".	[${SRC_DIR:-/}]
+	-d destdir	Destination directory to check.	[${DEST_DIR:-/}]
+	-m mach		MACHINE.			[${MACHINE}]
+	-a arch		MACHINE_ARCH.			[${MACHINE_ARCH}]
 
 	Operation may be one of:
 		help	display this help
