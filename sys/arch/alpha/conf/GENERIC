@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.248 2004/07/20 00:08:52 perseant Exp $
+# $NetBSD: GENERIC,v 1.249 2004/08/09 14:16:02 mycroft Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.248 $"
+#ident 		"GENERIC-$Revision: 1.249 $"
 
 maxusers 32
 
@@ -456,15 +456,25 @@ le*	at	depca?
 uha*	at	eisa? slot ?			# UltraStor 24f SCSI (unt.)
 
 # PCMCIA device
-aic*	at	pcmcia? function ?		# Adaptec APA-1460 SCSI
-com*	at	pcmcia? function ?		# Modems and serial cards
-wdc*	at	pcmcia? function ?		# PCMCIA IDE controllers
-ep*	at	pcmcia? function ?		# 3Com 3c589 and 3c562 Eth.
-mbe*	at	pcmcia? function ?		# MB8696x based Ethernet
-ne*	at	pcmcia? function ?		# NE2000-compatible Eth.
-sm*	at	pcmcia? function ?		# Megahertz Ethernet
-ray*	at	pcmcia? function ?		# Raytheon Raylink (802.11)
-wi*	at	pcmcia? function ?		# Lucent/Intersil WaveLAN/IEEE
+com*	at	pcmcia? function ?	# Modems and serial cards
+
+aic*	at	pcmcia? function ?	# Adaptec APA-1460 SCSI
+spc*	at	pcmcia? function ?	# Fujitsu MB87030 SCSI
+
+wdc*	at	pcmcia? function ?	# PCMCIA IDE controllers
+
+ep*	at	pcmcia? function ?	# 3Com 3c589 and 3c562 Eth.
+mbe*	at	pcmcia? function ?	# MB8696x based Ethernet
+ne*	at	pcmcia? function ?	# NE2000-compatible Eth.
+ray*	at	pcmcia? function ?	# Raytheon Raylink (802.11)
+sm*	at	pcmcia? function ?	# Megahertz Ethernet
+wi*	at	pcmcia? function ?	# Lucent/Intersil WaveLAN/IEEE
+xirc*	at	pcmcia? function ?	# Xircom CreditCard Ethernet
+com*	at	xirc?
+xi*	at	xirc?
+mhzc*	at	pcmcia? function ?	# Megahertz Ethernet/Modem combo cards
+com*	at	mhzc?
+sm*	at	mhzc?
 
 # SCSI bus support
 scsibus* at	scsi?
