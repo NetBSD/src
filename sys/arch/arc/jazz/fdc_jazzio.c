@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.5 2002/12/28 16:25:39 tsutsui Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.6 2003/02/10 15:19:44 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -80,22 +80,15 @@
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/device.h>
-#include <sys/buf.h>
-#include <sys/queue.h>
-
-#include <mips/cache.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
-#include <machine/cpu.h>
 
 #include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/jazz/fdreg.h>
 #include <arc/jazz/fdcvar.h>
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/dma.h>
-
-#include "locators.h"
 
 /* controller driver configuration */
 int fdc_jazzio_probe(struct device *, struct cfdata *, void *);
@@ -111,8 +104,11 @@ struct fdc_jazzio_softc {
 	struct fdc_softc sc_fdc;	/* base fdc device */
 
 	bus_space_handle_t sc_baseioh;	/* base I/O handle */
-	struct dma_softc __dma;
-	struct dma_softc *dma;
+	bus_space_handle_t sc_dmaioh;	/* dma I/O handle */
+
+	bus_dma_tag_t sc_dmat;		/* bus dma tag */
+	bus_dmamap_t sc_dmamap;		/* bus dma map */
+	int sc_datain;			/* data direction */
 };
 
 CFATTACH_DECL(fdc_jazzio, sizeof(struct fdc_jazzio_softc),
@@ -175,13 +171,12 @@ fdc_jazzio_attach(parent, self, aux)
 
 	fdc->sc_iot = ja->ja_bust;
 
-	fdc->sc_maxiosize = 4096; /* XXX */
+	fdc->sc_maxiosize = MAXPHYS;
 	fdc->sc_dma_start = fdc_jazzio_dma_start;
 	fdc->sc_dma_abort = fdc_jazzio_dma_abort;
 	fdc->sc_dma_done = fdc_jazzio_dma_done;
 
-	jsc->dma = &jsc->__dma;
-	fdc_dma_init(jsc->dma);
+	jsc->sc_dmat = ja->ja_dmat;
 
 	if (bus_space_map(fdc->sc_iot, ja->ja_addr,
 	    FDC_OFFSET + FDC_NPORT, 0, &jsc->sc_baseioh)) {
@@ -192,9 +187,19 @@ fdc_jazzio_attach(parent, self, aux)
 	if (bus_space_subregion(fdc->sc_iot, jsc->sc_baseioh,
 	    FDC_OFFSET, FDC_NPORT, &fdc->sc_ioh)) {
 		printf(": unable to subregion I/O space\n");
-		bus_space_unmap(fdc->sc_iot, jsc->sc_baseioh,
-		    FDC_OFFSET + FDC_NPORT);
-		return;
+		goto out_unmap1;
+	}
+
+	if (bus_space_map(fdc->sc_iot, jazzio_conf->jc_fdcdmareg,
+	    R4030_DMA_RANGE, 0, &jsc->sc_dmaioh)) {
+		printf(": unable to map dma I/O space\n");
+		goto out_unmap1;
+	}
+
+	if (bus_dmamap_create(jsc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
+	    BUS_DMA_ALLOCNOW|BUS_DMA_NOWAIT, &jsc->sc_dmamap)) {
+		printf(": unable to create DMA map\n");
+		goto out_unmap2;
 	}
 
 	printf("\n");
@@ -202,6 +207,12 @@ fdc_jazzio_attach(parent, self, aux)
 	jazzio_intr_establish(ja->ja_intr, fdcintr, fdc);
 
 	fdcattach(fdc);
+	return;
+
+ out_unmap2:
+	bus_space_unmap(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_RANGE);
+ out_unmap1:
+	bus_space_unmap(fdc->sc_iot, jsc->sc_baseioh, FDC_OFFSET + FDC_NPORT);
 }
 
 void
@@ -213,8 +224,31 @@ fdc_jazzio_dma_start(fdc, addr, size, datain)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;
 
-	mips_dcache_wbinv_range((vaddr_t)addr, (vsize_t)size);
-	DMA_START(jsc->dma, addr, size, datain ? DMA_FROM_DEV : DMA_TO_DEV);
+	/* halt DMA */
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_ENAB, 0);
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_MODE, 0);
+
+	jsc->sc_datain = datain;
+
+	bus_dmamap_load(jsc->sc_dmat, jsc->sc_dmamap, addr, size, NULL,
+	    BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    (datain ? BUS_DMA_READ : BUS_DMA_WRITE));
+	bus_dmamap_sync(jsc->sc_dmat, jsc->sc_dmamap,
+	    0, jsc->sc_dmamap->dm_mapsize,
+	    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+
+	/* load new transfer parameters */
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh,
+	    R4030_DMA_ADDR, jsc->sc_dmamap->dm_segs[0].ds_addr);
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh,
+	    R4030_DMA_COUNT, jsc->sc_dmamap->dm_segs[0].ds_len);
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh,
+	    R4030_DMA_MODE, R4030_DMA_MODE_160NS | R4030_DMA_MODE_8);
+
+	/* start DMA */
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh,
+	    R4030_DMA_ENAB, R4030_DMA_ENAB_RUN |
+	    (datain ? R4030_DMA_ENAB_READ : R4030_DMA_ENAB_WRITE));
 }
 
 void
@@ -223,7 +257,9 @@ fdc_jazzio_dma_abort(fdc)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;
 
-	DMA_RESET(jsc->dma);
+	/* halt DMA */
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_ENAB, 0);
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_MODE, 0);
 }
 
 void
@@ -232,5 +268,13 @@ fdc_jazzio_dma_done(fdc)
 {
 	struct fdc_jazzio_softc *jsc = (void *)fdc;
 
-	DMA_END(jsc->dma);
+	/* halt DMA */
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_COUNT, 0);
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_ENAB, 0);
+	bus_space_write_4(fdc->sc_iot, jsc->sc_dmaioh, R4030_DMA_MODE, 0);
+
+	bus_dmamap_sync(jsc->sc_dmat, jsc->sc_dmamap,
+	    0, jsc->sc_dmamap->dm_mapsize,
+	    jsc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(jsc->sc_dmat, jsc->sc_dmamap);
 }
