@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50 2000/12/22 22:58:54 jdolecek Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.51 2001/05/09 20:31:00 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -245,8 +245,6 @@ svr4_setmcontext(p, mc, flags)
 	tf->tf_edx = r[SVR4_X86_EDX];
 	tf->tf_ecx = r[SVR4_X86_ECX];
 	tf->tf_eax = r[SVR4_X86_EAX];
-	tf->tf_trapno = r[SVR4_X86_TRAPNO];
-	tf->tf_err = r[SVR4_X86_ERR];
 	tf->tf_eip = r[SVR4_X86_EIP];
 	tf->tf_cs = r[SVR4_X86_CS];
 	tf->tf_ss = r[SVR4_X86_SS];
