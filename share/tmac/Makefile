@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	6.13 (Berkeley) 3/20/91
-#	$NetBSD: Makefile,v 1.18 1997/05/09 07:50:25 mycroft Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/8/93
+#	$NetBSD: Makefile,v 1.19 1997/07/02 02:55:38 phil Exp $
 
 MSRCS=  andoc doc doc-ditroff doc-common doc-nroff doc-syms
 MMACS=  ${MSRCS:S@^@tmac.@g}
