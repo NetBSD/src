@@ -1,4 +1,4 @@
-/*	$NetBSD: user.c,v 1.3 1998/01/31 14:40:45 christos Exp $	*/
+/*	$NetBSD: user.c,v 1.4 2005/03/16 02:53:55 xtraeme Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: user.c,v 2.8 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: user.c,v 1.3 1998/01/31 14:40:45 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.4 2005/03/16 02:53:55 xtraeme Exp $");
 #endif
 #endif
 
@@ -34,8 +34,7 @@ __RCSID("$NetBSD: user.c,v 1.3 1998/01/31 14:40:45 christos Exp $");
 
 
 void
-free_user(u)
-	user	*u;
+free_user(user *u)
 {
 	entry	*e, *ne;
 
@@ -49,10 +48,8 @@ free_user(u)
 
 
 user *
-load_user(crontab_fd, pw, name)
-	int		crontab_fd;
-	struct passwd	*pw;		/* NULL implies syscrontab */
-	char		*name;
+load_user(int crontab_fd, struct passwd *pw, /* NULL implies syscrontab */
+          const char *name)
 {
 	char	envstr[MAX_ENVSTR];
 	FILE	*file;
