@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.14 2002/10/31 02:40:41 christos Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.15 2002/11/21 19:53:41 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.14 2002/10/31 02:40:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.15 2002/11/21 19:53:41 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -154,7 +154,10 @@ exec_macho_load_segment(struct exec_package *epp, struct vnode *vp,
     u_long foff, struct exec_macho_segment_command *ls, int type)
 {
 	int flags;
+	struct exec_macho_emul_arg *emea;
 	u_long addr = trunc_page(ls->vmaddr), size = round_page(ls->filesize);
+
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
 
 	if (type != MACHO_MOH_DYLIB)
 		flags = VMCMD_BASE;
@@ -178,6 +181,8 @@ exec_macho_load_segment(struct exec_package *epp, struct vnode *vp,
 		if (strcmp(ls->segname, "__TEXT") == 0) {
 			epp->ep_taddr = addr;
 			epp->ep_tsize = round_page(ls->vmsize);
+			emea->macho_hdr = 
+			    (struct exec_macho_object_header *)addr;
 		}
 		if (strcmp(ls->segname, "__DATA") == 0) {
 			epp->ep_daddr = addr;
@@ -212,14 +217,16 @@ static int
 exec_macho_load_dylinker(struct proc *p, struct exec_package *epp,
     struct exec_macho_dylinker_command *dy, u_long *entry)
 {
+	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->name.offset;
 	char path[MAXPATHLEN];
 	int error;
 #ifdef DEBUG_MACHO
 	exec_macho_print_dylinker_command(dy);
 #endif
-	(void)snprintf(path, sizeof(path), "%s%s",
-	    (const char *)epp->ep_emul_arg, name);
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+
+	(void)snprintf(path, sizeof(path), "%s%s", emea->path, name);
 	DPRINTF(("loading linker %s\n", path));
 	if ((error = exec_macho_load_file(p, epp, path, entry,
 	    MACHO_MOH_DYLINKER)) != 0)
@@ -231,6 +238,7 @@ static int
 exec_macho_load_dylib(struct proc *p, struct exec_package *epp,
     struct exec_macho_dylib_command *dy) {
 #ifdef notdef
+	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->dylib.name.offset;
 	char path[MAXPATHLEN];
 	int error;
@@ -240,8 +248,8 @@ exec_macho_load_dylib(struct proc *p, struct exec_package *epp,
 	exec_macho_print_dylib_command(dy);
 #endif
 #ifdef notdef
-	(void)snprintf(path, sizeof(path), "%s%s",
-	    (const char *)epp->ep_emul_arg, name);
+	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
+	(void)snprintf(path, sizeof(path), "%s%s", emea->path, name);
 	DPRINTF(("loading library %s\n", path));
 	if ((error = exec_macho_load_file(p, epp, path, &entry,
 	    MACHO_MOH_DYLIB)) != 0)
@@ -507,6 +515,7 @@ int
 exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 {
 	struct exec_macho_fat_header *fat = epp->ep_hdr;
+	struct exec_macho_emul_arg *emea;
 	int error;
 
 	if (epp->ep_hdrvalid < sizeof(*fat))
@@ -527,12 +536,15 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 	if (error)
 		return (error);
 
+	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
+	epp->ep_emul_arg = (void *)emea;
+
 	if (!epp->ep_esch->u.mach_probe_func)
-		epp->ep_emul_arg = "/";
+		emea->path = "/";
 	else {
 	    if ((error = (*epp->ep_esch->u.mach_probe_func)((char **)
-		&epp->ep_emul_arg)) != 0)
-		    return error;
+		&emea->path)) != 0)
+		    goto bad2;
 	}
 		
 	if ((error = exec_macho_load_vnode(p, epp, epp->ep_vp, fat,
@@ -541,17 +553,20 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 
 	/*
 	 * stash a copy of the program name in epp->ep_emul_arg because
-	 * might need it later.
+	 * we will need it later.
 	 */
-	MALLOC(epp->ep_emul_arg, char *, MAXPATHLEN, M_EXEC, M_WAITOK);
-	if ((error = copyinstr(epp->ep_name, epp->ep_emul_arg,
+	if ((error = copyinstr(epp->ep_name, emea->filename,
 	    MAXPATHLEN, NULL)) != 0) {
 		DPRINTF(("Copyinstr %p failed\n", epp->ep_name));
 		goto bad;
 	}
+	uprintf("PATH: %s\n", emea->filename);
+
 	return exec_macho_setup_stack(p, epp);
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
+bad2:
+	free(emea, M_EXEC);
 	return error;
 }
 
