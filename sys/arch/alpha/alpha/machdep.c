@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.215 2000/06/26 14:20:27 mrg Exp $ */
+/* $NetBSD: machdep.c,v 1.216 2000/06/28 02:02:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2000/06/26 14:20:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2000/06/28 02:02:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1866,18 +1866,39 @@ void
 delay(n)
 	unsigned long n;
 {
-	long N = cycles_per_usec * (n);
+	unsigned long pcc0, pcc1, curcycle, cycles, usec;
 
-	/*
-	 * XXX Should be written to use RPCC?
-	 */
+	if (n == 0)
+		return;
 
-	__asm __volatile(
-		"# The 2 corresponds to the insn count\n"
-		"1:	subq	%2, %1, %0	\n"
-		"	bgt	%0, 1b"
-		: "=r" (N)
-		: "i" (2), "0" (N));
+	pcc0 = alpha_rpcc() & 0xffffffffUL;
+	cycles = 0;
+	usec = 0;
+
+	while (usec <= n) {
+		/*
+		 * Get the next CPU cycle count- assumes that we cannot
+		 * have had more than one 32 bit overflow.
+		 */
+		pcc1 = alpha_rpcc() & 0xffffffffUL;
+		if (pcc1 < pcc0)
+			curcycle = (pcc1 + 0x100000000UL) - pcc0;
+		else
+			curcycle = pcc1 - pcc0;
+
+		/*
+		 * We now have the number of processor cycles since we
+		 * last checked. Add the current cycle count to the
+		 * running total. If it's over cycles_per_usec, increment
+		 * the usec counter.
+		 */
+		cycles += curcycle;
+		while (cycles > cycles_per_usec) {
+			usec++;
+			cycles -= cycles_per_usec;
+		}
+		pcc0 = pcc1;
+	}
 }
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
