@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.6 1999/07/31 18:41:16 itojun Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.7 1999/08/20 10:07:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -229,6 +229,8 @@ int in6_gif_input(mp, offp, proto)
 		    sc->gif_pdst->sa_family != AF_INET6) {
 			continue;
 		}
+		if ((sc->gif_if.if_flags & IFF_UP) == 0)
+			continue;
 		if ((sc->gif_if.if_flags & IFF_LINK0) &&
 		    IN6_ARE_ADDR_EQUAL(&satoin6(sc->gif_psrc), &ip6->ip6_dst) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&satoin6(sc->gif_pdst))) {
