@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.18 1996/01/11 11:19:01 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.19 1996/01/12 21:44:16 chuck Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -104,7 +104,7 @@ busprint(args, obio)
 		ca->ca_ra.ra_name = "<unknown>";
 	if (obio)
 		printf("[%s at %s]", ca->ca_ra.ra_name, obio);
-	printf(" addr %x", ca->ca_ra.ra_paddr);
+	printf(" addr 0x%x", ca->ca_ra.ra_paddr);
 	if (ca->ca_ra.ra_intr[0].int_vec != -1)
 		printf(" vec 0x%x", ca->ca_ra.ra_intr[0].int_vec);
 	return (UNCONF);
@@ -171,17 +171,19 @@ busattach(parent, child, args, bustype)
 		return 0;
 
 	/*
-	 * check if XXmatch routine replaced the
-	 * temporary mapping with a real mapping.
+	 * check if XXmatch routine replaced the temporary mapping with 
+	 * a real mapping.   If not, then make sure we don't pass the
+	 * tmp mapping to the attach routine.
 	 */
-	if (tmp == oca.ca_ra.ra_vaddr)
-		oca.ca_ra.ra_vaddr = NULL;
+	if (oca.ca_ra.ra_vaddr == tmp)
+		oca.ca_ra.ra_vaddr = NULL; /* wipe out tmp address */
 	/*
-	 * or if it has asked us to create a mapping..
+	 * the match routine will set "ra_len" if it wants us to 
+	 * establish a mapping for it.
 	 * (which won't be seen on future XXmatch calls,
 	 * so not as useful as it seems.)
 	 */
-	if (oca.ca_ra.ra_len)
+	if (oca.ca_ra.ra_len) 
 		oca.ca_ra.ra_vaddr =
 		    bus_map(oca.ca_ra.ra_reg,
 		    oca.ca_ra.ra_len, oca.ca_bustype);
@@ -383,7 +385,9 @@ bus_map(pa, len, bustype)
 			pte = getpte(va);
 			if ((pte & PG_V) != 0 && (pte & PG_TYPE) == pgtype &&
 			    (pte & PG_PFNUM) == pf)
-				return ((void *)va);
+				return ((void *)
+				    (va | ((u_long)pa->rr_paddr & PGOFSET)) );
+					/* note: preserve page offset */
 		}
 	}
 	return mapiodev(pa, 0, len, bustype);
@@ -400,7 +404,7 @@ bus_tmp(pa, bustype)
 	pmap_enter(pmap_kernel(), TMPMAP_VA,
 	    addr | pmtype | PMAP_NC,
 	    VM_PROT_READ | VM_PROT_WRITE, 1);
-	return ((void *)TMPMAP_VA);
+	return ((void *)(TMPMAP_VA | ((u_long) pa & PGOFSET)) );
 }
 
 void
