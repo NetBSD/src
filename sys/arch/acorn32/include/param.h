@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2001/11/18 13:09:27 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2001/11/18 13:10:57 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	_ARM32_PARAM_H_
-#define	_ARM32_PARAM_H_
+#ifndef	_ACORN32_PARAM_H_
+#define	_ACORN32_PARAM_H_
 
 /*
  * Machine dependent constants for ARM6+ processors
@@ -46,4 +46,4 @@
 
 #include <arm/arm32/param.h>
 
-#endif	/* _ARM32_PARAM_H_ */
+#endif	/* _ACORN32_PARAM_H_ */
