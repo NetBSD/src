@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.403 2003/04/18 05:15:48 thorpej Exp $
+# $NetBSD: mi,v 1.404 2003/04/18 05:17:28 gmcgarry Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1197,7 +1197,7 @@
 ./usr/share/man/cat4/acorn26			base-man-share
 ./usr/share/man/cat4/alpha			base-man-share
 ./usr/share/man/cat4/amiga			base-man-share
-./usr/share/man/cat4/arm32			base-man-share
+./usr/share/man/cat4/acorn32			base-man-share
 ./usr/share/man/cat4/atari			base-man-share
 ./usr/share/man/cat4/dreamcast			base-man-share
 ./usr/share/man/cat4/evbarm			base-man-share
@@ -1294,7 +1294,7 @@
 ./usr/share/man/man4/acorn26		base-man-share
 ./usr/share/man/man4/alpha		base-man-share
 ./usr/share/man/man4/amiga		base-man-share
-./usr/share/man/man4/arm32		base-man-share
+./usr/share/man/man4/acorn32		base-man-share
 ./usr/share/man/man4/atari		base-man-share
 ./usr/share/man/man4/dreamcast		base-man-share
 ./usr/share/man/man4/evbarm		base-man-share
@@ -1390,7 +1390,7 @@
 ./usr/share/man/html4/acorn26		base-man-share
 ./usr/share/man/html4/alpha		base-man-share
 ./usr/share/man/html4/amiga		base-man-share
-./usr/share/man/html4/arm32		base-man-share
+./usr/share/man/html4/acorn32		base-man-share
 ./usr/share/man/html4/atari		base-man-share
 ./usr/share/man/html4/dreamcast		base-man-share
 ./usr/share/man/html4/evbarm		base-man-share
