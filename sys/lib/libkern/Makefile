@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1994/05/16 06:25:21 deraadt Exp $
+#	$Id: Makefile,v 1.10 1994/05/16 11:01:45 cgd Exp $
 
 LIB=	kern
 NOPIC=
@@ -6,7 +6,7 @@ OBJMACHINE=
 CFLAGS+= -I${.CURDIR} -Imachine/.. -I. -I${.CURDIR}/../..
 
 machine-links:
-	-rm -f machine &&
+	-rm -f machine && \
 	    ln -s ${.CURDIR}/../../arch/${MACHINE}/include machine
 	-rm -f ${MACHINE_ARCH} && \
 	    ln -s ${.CURDIR}/../../arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
