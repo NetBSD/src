@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.60 1998/07/05 06:49:10 jonathan Exp $	 */
+/* $NetBSD: machdep.c,v 1.61 1998/09/30 14:10:00 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -49,6 +49,7 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ns.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,13 +487,53 @@ consinit()
 #endif
 }
 
+#ifdef COMPAT_13
 int
-sys_sigreturn(p, v, retval)
+compat_13_sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct compat_13_sys_sigreturn_args /* {
+		syscallarg(struct sigcontext13 *) sigcntxp;
+	} */ *uap = v;
+	struct trapframe *scf;
+	struct sigcontext13 *cntx;
+	sigset_t mask;
+
+	scf = p->p_addr->u_pcb.framep;
+	cntx = SCARG(uap, sigcntxp);
+
+	/* Compatibility mode? */
+	if ((cntx->sc_ps & (PSL_IPL | PSL_IS)) ||
+	    ((cntx->sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (cntx->sc_ps & PSL_CM)) {
+		return (EINVAL);
+	}
+	if (cntx->sc_onstack & SS_ONSTACK)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	native_sigset13_to_sigset(&cntx->sc_mask, &mask);
+	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+
+	scf->fp = cntx->sc_fp;
+	scf->ap = cntx->sc_ap;
+	scf->pc = cntx->sc_pc;
+	scf->sp = cntx->sc_sp;
+	scf->psl = cntx->sc_ps;
+	return (EJUSTRETURN);
+}
+#endif
+
+int
+sys___sigreturn14(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct trapframe *scf;
@@ -511,7 +552,8 @@ sys_sigreturn(p, v, retval)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = cntx->sc_mask & ~sigcantmask;
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &cntx->sc_mask, 0);
 
 	scf->fp = cntx->sc_fp;
 	scf->ap = cntx->sc_ap;
@@ -535,40 +577,29 @@ struct trampframe {
 void
 sendsig(catcher, sig, mask, code)
 	sig_t		catcher;
-	int		sig, mask;
+	int		sig;
+	sigset_t	*mask;
 	u_long		code;
 {
 	struct	proc	*p = curproc;
 	struct	sigacts *psp = p->p_sigacts;
 	struct	trapframe *syscf;
-	struct	sigcontext *sigctx;
-	struct	trampframe *trampf;
+	struct	sigcontext *sigctx, gsigctx;
+	struct	trampframe *trampf, gtrampf;
 	unsigned	cursp;
-	int	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
-	extern	char sigcode[], esigcode[];
-	/*
-	 * Allocate and validate space for the signal handler context. Note
-	 * that if the stack is in P0 space, the call to grow() is a nop, and
-	 * the useracc() check will fail if the process has not already
-	 * allocated the space with a `brk'. We shall allocate space on the
-	 * stack for both struct sigcontext and struct calls...
-	 */
+	int	onstack;
+
 	syscf = p->p_addr->u_pcb.framep;
 
-	/* First check what stack to work on */
-	if ((psp->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		cursp = (int)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size);
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		cursp = ((int)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size);
+	else
 		cursp = syscf->sp;
-	if (cursp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
-#if !defined(UVM)
-		(void) grow(p, cursp);
-#else
-		(void) uvm_grow(p, cursp);
-#endif
 
 	/* Set up positions for structs on stack */
 	sigctx = (struct sigcontext *) (cursp - sizeof(struct sigcontext));
@@ -578,45 +609,35 @@ sendsig(catcher, sig, mask, code)
 	 /* Place for pointer to arg list in sigreturn */
 	cursp = (unsigned)sigctx - 8;
 
-#if defined(UVM)
-	if (uvm_useracc((caddr_t) cursp, sizeof(struct sigcontext) +
-		    sizeof(struct trampframe), B_WRITE) == 0) {
-#else
-	if (useracc((caddr_t) cursp, sizeof(struct sigcontext) +
-		    sizeof(struct trampframe), B_WRITE) == 0) {
+	gtrampf.arg = (int) sigctx;
+	gtrampf.pc = (unsigned) catcher;
+	gtrampf.scp = (int) sigctx;
+	gtrampf.code = code;
+	gtrampf.sig = sig;
+
+	gsigctx.sc_pc = syscf->pc;
+	gsigctx.sc_ps = syscf->psl;
+	gsigctx.sc_ap = syscf->ap;
+	gsigctx.sc_fp = syscf->fp; 
+	gsigctx.sc_sp = syscf->sp; 
+	gsigctx.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	gsigctx.sc_mask = *mask;
+
+#ifdef COMPAT_13
+	native_sigset_to_sigset13(mask, &gsigctx.__sc_mask13);
 #endif
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		SIGACTION(p, SIGILL) = SIG_DFL;
-		sig = sigmask(SIGILL);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, SIGILL);
-		return;
-	}
-	/* Set up pointers for sigreturn args */
-	trampf->arg = (int) sigctx;
-	trampf->pc = (unsigned) catcher;
-	trampf->scp = (int) sigctx;
-	trampf->code = code;
-	trampf->sig = sig;
 
+	if (copyout(&gtrampf, trampf, sizeof(gtrampf)) ||
+	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
+		sigexit(p, SIGILL);
 
-	sigctx->sc_pc = syscf->pc;
-	sigctx->sc_ps = syscf->psl;
-	sigctx->sc_ap = syscf->ap;
-	sigctx->sc_fp = syscf->fp;
-	sigctx->sc_sp = syscf->sp;
-	sigctx->sc_onstack = oonstack;
-	sigctx->sc_mask = mask;
-
-	syscf->pc = (unsigned) (((char *) PS_STRINGS) - (esigcode - sigcode));
+	syscf->pc = (int)psp->ps_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
 	syscf->sp = cursp;
+
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 int	waittime = -1;
