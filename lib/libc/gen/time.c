@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.7 1998/03/30 14:34:48 kleink Exp $	*/
+/*	$NetBSD: time.c,v 1.8 1998/09/07 15:26:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.7 1998/03/30 14:34:48 kleink Exp $");
+__RCSID("$NetBSD: time.c,v 1.8 1998/09/07 15:26:18 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,8 +59,8 @@ time(t)
 	struct timeval tt;
 
 	if (gettimeofday(&tt, (struct timezone *)0) < 0)
-		return(-1);
-	if (t)
+		return ((time_t)-1);
+	if (t != NULL)
 		*t = tt.tv_sec;
-	return(tt.tv_sec);
+	return (tt.tv_sec);
 }
