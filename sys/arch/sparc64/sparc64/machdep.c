@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.148 2003/09/26 12:02:56 simonb Exp $ */
+/*	$NetBSD: machdep.c,v 1.149 2003/10/18 06:51:42 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 2003/09/26 12:02:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2003/10/18 06:51:42 petrov Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_compat_sunos.h"
@@ -2139,7 +2139,7 @@ cpu_getmcontext(l, mcp, flags)
 		}
 		memcpy(&fpr->__fpu_fr, fsp->fs_regs, sizeof (fpr->__fpu_fr));
 		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
-		mcp->__fpregs.__fpu_fsr = fs.fs_fsr;
+		mcp->__fpregs.__fpu_fsr = fsp->fs_fsr;
 		mcp->__fpregs.__fpu_qcnt = 0 /*fs.fs_qsize*/; /* See above */
 		mcp->__fpregs.__fpu_q_entrysize =
 		    (unsigned char) sizeof (*mcp->__fpregs.__fpu_q);
