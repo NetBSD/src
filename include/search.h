@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.11 1999/02/16 18:23:01 kleink Exp $	*/
+/*	$NetBSD: search.h,v 1.12 1999/02/22 10:34:28 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>
@@ -31,6 +31,13 @@ typedef enum {
 	endorder,
 	leaf
 } VISIT;
+
+#ifdef _SEARCH_PRIVATE
+typedef struct node {
+	char         *key;
+	struct node  *llink, *rlink;
+} node_t;
+#endif
 
 __BEGIN_DECLS
 extern void	*bsearch __P((const void *, const void *, size_t, size_t,
