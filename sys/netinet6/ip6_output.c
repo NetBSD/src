@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.49 2002/06/07 14:29:10 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.50 2002/06/07 14:43:11 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.49 2002/06/07 14:29:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.50 2002/06/07 14:43:11 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1414,20 +1414,8 @@ do { \
 
 			case IPV6_OPTIONS:
 			case IPV6_RETOPTS:
-#if 0
-				*mp = m = m_get(M_WAIT, MT_SOOPTS);
-				if (in6p->in6p_options) {
-					m->m_len = in6p->in6p_options->m_len;
-					bcopy(mtod(in6p->in6p_options, caddr_t),
-					    mtod(m, caddr_t),
-					    (unsigned)m->m_len);
-				} else
-					m->m_len = 0;
-				break;
-#else
 				error = ENOPROTOOPT;
 				break;
-#endif
 
 			case IPV6_PKTOPTIONS:
 				if (in6p->in6p_options) {
