@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)util.c	8.34 (Berkeley) 12/23/93"; */
-static char *rcsid = "$Id: util.c,v 1.2 1994/01/24 06:39:21 cgd Exp $";
+static char *rcsid = "$Id: util.c,v 1.3 1994/02/09 07:06:11 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -532,6 +532,14 @@ baud_from_bval(sp)
 		return (19200);
 	case B38400:
 		return (38400);
+#ifdef B57600
+	case B57600:
+		return (57600);
+#endif
+#ifdef B115200
+	case B115200:
+		return (B115200);
+#endif
 	default:
 		/*
 		 * EXTA and EXTB aren't required by POSIX 1003.1, and
