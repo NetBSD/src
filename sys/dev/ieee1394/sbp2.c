@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.13 2003/01/09 19:16:30 thorpej Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.14 2003/02/28 23:31:41 enami Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.13 2003/01/09 19:16:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.14 2003/02/28 23:31:41 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -704,7 +704,7 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	u_int32_t t;
 	u_int64_t addr;
 	
-#ifdef FW_DEBUG
+#if defined(FW_DEBUG) && defined(SBP2_DEBUG)
 	if (sbp2debug > 2)
 		fwdebug = 3;
 #endif
