@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2000/07/13 21:00:43 he Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -54,4 +54,12 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 #	${OBJCOPY} --input-target=elf32-powerpc \
 #	    --output-target=xcoff-powermac ${PROG}.elf ${PROG}.xcf
 
+.if !defined(RELEASEDIR)
+release:
+	@echo setenv RELEASEDIR before doing that!
+	@false
+.else
+release: ${PROG}.elf
+	${INSTALL} -c ${PROG}.elf ${RELEASEDIR}/binary/kernel/${PROG}.elf
+.endif
 .include <bsd.prog.mk>

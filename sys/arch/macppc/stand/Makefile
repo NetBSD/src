@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 1998/06/12 21:07:23 tsubai Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2000/07/13 21:01:10 he Exp $
 
 SUBDIR=	bootxx installboot ofwboot
+
+.PHONY: release
+TARGETS+= release
 
 .include <bsd.subdir.mk>
