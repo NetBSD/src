@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 1997/02/03 17:32:54 scottr Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 1997/02/11 07:37:41 scottr Exp $	*/
 
 /*
  * Copyright "g" (c) 1997 Scott Reynolds.  All rights reserved.
@@ -48,8 +48,8 @@ typedef u_long bus_size_t;
 /*
  * Access methods for bus resources and address space.
  */
-typedef u_long	bus_space_tag_t;
-typedef caddr_t	bus_space_handle_t;
+typedef int	bus_space_tag_t;
+typedef u_long	bus_space_handle_t;
 
 int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				int, bus_space_handle_t *));
