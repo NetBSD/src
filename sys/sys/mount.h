@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.34 1994/09/22 02:06:10 mycroft Exp $	*/
+/*	$NetBSD: mount.h,v 1.35 1994/10/29 08:20:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -40,7 +40,7 @@
 #endif
 #include <sys/queue.h>
 
-typedef struct { long val[2]; } fsid_t;		/* file system id type */
+typedef struct { int32_t val[2]; } fsid_t;	/* file system id type */
 
 /*
  * File identifier.
