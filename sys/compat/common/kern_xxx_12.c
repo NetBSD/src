@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.33 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.1 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,108 +33,33 @@
  * SUCH DAMAGE.
  *
  *	@(#)kern_xxx.c	8.2 (Berkeley) 11/14/93
+ * from NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp
  */
+
+/*#ifdef COMPAT_12*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
 /* ARGSUSED */
 int
-sys_reboot(p, v, retval)
+compat_12_sys_reboot(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_reboot_args /* {
+	struct compat_12_sys_reboot_args /* {
 		syscallarg(int) opt;
-		syscallarg(char *) bootstr;
 	} */ *uap = v;
 	int error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
-	/*
-	 * Not all ports use the bootstr currently.
-	 */
-	boot(SCARG(uap, opt), SCARG(uap, bootstr));
+	boot(SCARG(uap, opt), NULL);
 	return (0);
 }
-
-#ifdef SYSCALL_DEBUG
-#define	SCDEBUG_CALLS		0x0001	/* show calls */
-#define	SCDEBUG_RETURNS		0x0002	/* show returns */
-#define	SCDEBUG_ALL		0x0004	/* even syscalls that are implemented */
-#define	SCDEBUG_SHOWARGS	0x0008	/* show arguments to calls */
-
-int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
-
-void
-scdebug_call(p, code, args)
-	struct proc *p;
-	register_t code, args[];
-{
-	struct sysent *sy;
-	struct emul *em;
-	int i;
-
-	if (!(scdebug & SCDEBUG_CALLS))
-		return;
-
-	em = p->p_emul;
-	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	     sy->sy_call == nosys))
-		return;
-		
-	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= em->e_nsysent)
-		printf("OUT OF RANGE (%d)", code);
-	else {
-		printf("%d call: %s", code, em->e_syscallnames[code]);
-		if (scdebug & SCDEBUG_SHOWARGS) {
-			printf("(");
-			for (i = 0; i < sy->sy_argsize / sizeof(register_t);
-			    i++)
-				printf("%s0x%lx", i == 0 ? "" : ", ",
-				    (long)args[i]);
-			printf(")");
-		}
-	}
-	printf("\n");
-}
-
-void
-scdebug_ret(p, code, error, retval)
-	struct proc *p;
-	register_t code;
-	int error;
-	register_t retval[];
-{
-	struct sysent *sy;
-	struct emul *em;
-
-	if (!(scdebug & SCDEBUG_RETURNS))
-		return;
-
-	em = p->p_emul;
-	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	    sy->sy_call == nosys))
-		return;
-		
-	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= em->e_nsysent)
-		printf("OUT OF RANGE (%d)", code);
-	else
-		printf("%d ret: err = %d, rv = 0x%lx,0x%lx", code,
-		    error, (long)retval[0], (long)retval[1]);
-	printf("\n");
-}
-#endif /* SYSCALL_DEBUG */
+/*#endif COMPAT_12 */

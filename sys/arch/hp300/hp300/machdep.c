@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1996/05/18 23:30:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1103,8 +1103,9 @@ sys_sigreturn(p, v, retval)
 int	waittime = -1;
 
 void
-boot(howto)
+boot(howto, bootstr)
 	register int howto;
+	char *bootstr;
 {
 	extern int cold;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 1996/06/14 20:40:46 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -276,7 +276,7 @@ setroot()
 				len = strlen(buf);
 			}
 			if (len == 4 && !strcmp(buf, "halt"))
-				boot(RB_HALT);
+				boot(RB_HALT, NULL);
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
@@ -326,7 +326,7 @@ setroot()
 				break;
 			}
 			if (len == 4 && !strcmp(buf, "halt"))
-				boot(RB_HALT);
+				boot(RB_HALT, NULL);
 			dv = getdisk(buf, len, 1, &nswapdev);
 			if (dv) {
 				if (dv->dv_class == DV_IFNET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
+/*	$NetBSD: reboot.h,v 1.10 1996/08/09 10:30:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -92,7 +92,7 @@
 
 __BEGIN_DECLS
 
-void	boot __P((int))
+void	boot __P((int, char *))
     __attribute__((__noreturn__));
 
 __END_DECLS

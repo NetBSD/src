@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.10 1996/06/03 22:20:32 mark Exp $ */
+/* $NetBSD: kbd.c,v 1.11 1996/08/09 10:30:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -1478,11 +1478,11 @@ kbddecodekey(sc, code)
 #endif
 				case 0x21b:
 					printf("Kernel interruption\n");
-					boot(RB_HALT);
+					boot(RB_HALT, NULL);
 					break;
 				case 0x209:
 					printf("Kernel interruption - nosync\n");
-					boot(RB_NOSYNC | RB_HALT);
+					boot(RB_NOSYNC | RB_HALT, NULL);
 					break;
 	
 				default:
