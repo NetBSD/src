@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.23 1994/09/28 15:00:31 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.24 1994/10/20 04:26:43 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -1780,7 +1780,7 @@ msdosfs_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 

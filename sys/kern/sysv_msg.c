@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.9 1994/06/29 06:33:13 cgd Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.10 1994/10/20 04:23:15 cgd Exp $	*/
 
 /*
  * Implementation of SVID messages
@@ -26,12 +26,11 @@
 #include <sys/msg.h>
 #include <sys/malloc.h>
 
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 #define MSG_DEBUG
 #undef MSG_DEBUG_OK
-
-static int	msgctl(), msgget(), msgsnd(), msgrcv();
-
-int	(*msgcalls[])() = { msgctl, msgget, msgsnd, msgrcv };
 
 int nfree_msgmaps;		/* # of free map entries */
 short free_msgmaps;		/* head of linked list of free map entries */
@@ -94,26 +93,6 @@ msginit()
 	}
 }
 
-/*
- * Entry point for all MSG calls
- */
-
-struct msgsys_args {
-	u_int	which;
-};
-
-int
-msgsys(p, uap, retval)
-	struct caller *p;
-	struct msgsys_args *uap;
-	int *retval;
-{
-
-	if (uap->which >= sizeof(msgcalls)/sizeof(msgcalls[0]))
-		return (EINVAL);
-	return ((*msgcalls[uap->which])(p, &uap[1], retval));
-}
-
 static void
 msg_freehdr(msghdr)
 	struct msg *msghdr;
@@ -138,21 +117,19 @@ msg_freehdr(msghdr)
 	free_msghdrs = msghdr;
 }
 
-struct msgctl_args {
-	int	msqid;
-	int	cmd;
-	struct	msqid_ds *user_msqptr;
-};
-
 int
 msgctl(p, uap, retval)
 	struct proc *p;
-	register struct msgctl_args *uap;
-	int *retval;
+	register struct msgctl_args /* {
+		syscallarg(int) msqid;
+		syscallarg(int) cmd;
+		syscallarg(struct msqid_ds *) buf;
+	} */ *uap;
+	register_t *retval;
 {
-	int msqid = uap->msqid;
-	int cmd = uap->cmd;
-	struct msqid_ds *user_msqptr = uap->user_msqptr;
+	int msqid = SCARG(uap, msqid);
+	int cmd = SCARG(uap, cmd);
+	struct msqid_ds *user_msqptr = SCARG(uap, buf);
 	struct ucred *cred = p->p_ucred;
 	int i, rval, eval;
 	struct msqid_ds msqbuf;
@@ -180,7 +157,7 @@ msgctl(p, uap, retval)
 #endif
 		return(EINVAL);
 	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(uap->msqid)) {
+	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 #ifdef MSG_DEBUG_OK
 		printf("wrong sequence number\n");
 #endif
@@ -273,20 +250,18 @@ msgctl(p, uap, retval)
 	return(eval);
 }
 
-struct msgget_args {
-	key_t	key;
-	int	msgflg;
-};
-
 int
 msgget(p, uap, retval)
 	struct proc *p;
-	register struct msgget_args *uap;
-	int *retval;
+	register struct msgget_args /* {
+		syscallarg(key_t) key;
+		syscallarg(int) msgflg;
+	} */ *uap;
+	register_t *retval;
 {
 	int msqid, eval;
-	int key = uap->key;
-	int msgflg = uap->msgflg;
+	int key = SCARG(uap, key);
+	int msgflg = SCARG(uap, msgflg);
 	struct ucred *cred = p->p_ucred;
 	register struct msqid_ds *msqptr;
 
@@ -378,23 +353,21 @@ found:
 	return(0);
 }
 
-struct msgsnd_args {
-	int	msqid;
-	void	*user_msgp;
-	size_t	msgsz;
-	int	msgflg;
-};
-
 int
 msgsnd(p, uap, retval)
 	struct proc *p;
-	register struct msgsnd_args *uap;
-	int *retval;
+	register struct msgsnd_args /* {
+		syscallarg(int) msqid;
+		syscallarg(void *) msgp;
+		syscallarg(size_t) msgsz;
+		syscallarg(int) msgflg;
+	} */ *uap;
+	register_t *retval;
 {
-	int msqid = uap->msqid;
-	void *user_msgp = uap->user_msgp;
-	size_t msgsz = uap->msgsz;
-	int msgflg = uap->msgflg;
+	int msqid = SCARG(uap, msqid);
+	char *user_msgp = SCARG(uap, msgp);
+	size_t msgsz = SCARG(uap, msgsz);
+	int msgflg = SCARG(uap, msgflg);
 	int segs_needed, eval;
 	struct ucred *cred = p->p_ucred;
 	register struct msqid_ds *msqptr;
@@ -423,7 +396,7 @@ msgsnd(p, uap, retval)
 #endif
 		return(EINVAL);
 	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(uap->msqid)) {
+	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 #ifdef MSG_DEBUG_OK
 		printf("wrong sequence number\n");
 #endif
@@ -712,25 +685,23 @@ msgsnd(p, uap, retval)
 	return(0);
 }
 
-struct msgrcv_args {
-	int	msqid;
-	void	*msgp;
-	size_t	msgsz;
-	long	msgtyp;
-	int	msgflg;
-};
-
 int
 msgrcv(p, uap, retval)
 	struct proc *p;
-	register struct msgrcv_args *uap;
-	int *retval;
+	register struct msgrcv_args /* {
+		syscallarg(int) msqid;
+		syscallarg(void *) msgp;
+		syscallarg(size_t) msgsz;
+		syscallarg(long) msgtyp;
+		syscallarg(int) msgflg;
+	} */ *uap;
+	register_t *retval;
 {
-	int msqid = uap->msqid;
-	void *user_msgp = uap->msgp;
-	size_t msgsz = uap->msgsz;
-	long msgtyp = uap->msgtyp;
-	int msgflg = uap->msgflg;
+	int msqid = SCARG(uap, msqid);
+	char *user_msgp = SCARG(uap, msgp);
+	size_t msgsz = SCARG(uap, msgsz);
+	long msgtyp = SCARG(uap, msgtyp);
+	int msgflg = SCARG(uap, msgflg);
 	size_t len;
 	struct ucred *cred = p->p_ucred;
 	register struct msqid_ds *msqptr;
@@ -760,7 +731,7 @@ msgrcv(p, uap, retval)
 #endif
 		return(EINVAL);
 	}
-	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(uap->msqid)) {
+	if (msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 #ifdef MSG_DEBUG_OK
 		printf("wrong sequence number\n");
 #endif
@@ -910,7 +881,7 @@ msgrcv(p, uap, retval)
 		 */
 
 		if (msqptr->msg_qbytes == 0 ||
-		    msqptr->msg_perm.seq != IPCID_TO_SEQ(uap->msqid)) {
+		    msqptr->msg_perm.seq != IPCID_TO_SEQ(SCARG(uap, msqid))) {
 #ifdef MSG_DEBUG_OK
 			printf("msqid deleted\n");
 #endif
@@ -1004,3 +975,74 @@ msgrcv(p, uap, retval)
 	*retval = msgsz;
 	return(0);
 }
+
+#if defined(COMPAT_10) && !defined(alpha)
+int
+compat_10_msgsys(p, uap, retval)
+	struct caller *p;
+	struct compat_10_msgsys_args /* {
+		syscallarg(int) which;
+		syscallarg(int) a2;
+		syscallarg(int) a3;
+		syscallarg(int) a4;
+		syscallarg(int) a5;
+		syscallarg(int) a6;
+	} */ *uap;
+	register_t *retval;
+{
+	struct msgctl_args {
+		syscallarg(int) msqid;
+		syscallarg(int) cmd;
+		syscallarg(struct msqid_ds *) buf;
+	} msgctl_args;
+	struct msgget_args {
+		syscallarg(key_t) key;
+		syscallarg(int) msgflg;
+	} msgget_args;
+	struct msgsnd_args {
+		syscallarg(int) msqid;
+		syscallarg(void *) msgp;
+		syscallarg(size_t) msgsz;
+		syscallarg(int) msgflg;
+	} msgsnd_args;
+	struct msgrcv_args {
+		syscallarg(int) msqid;
+		syscallarg(void *) msgp;
+		syscallarg(size_t) msgsz;
+		syscallarg(long) msgtyp;
+		syscallarg(int) msgflg;
+	} msgrcv_args;
+
+	switch (SCARG(uap, which)) {
+	case 0:					/* msgctl()*/
+		SCARG(&msgctl_args, msqid) = SCARG(uap, a2);
+		SCARG(&msgctl_args, cmd) = SCARG(uap, a3);
+		SCARG(&msgctl_args, buf) =
+		    (struct msqid_ds *)SCARG(uap, a4);
+		return (msgctl(p, &msgctl_args, retval));
+
+	case 1:					/* msgget() */
+		SCARG(&msgctl_args, key) = SCARG(uap, a2);
+		SCARG(&msgctl_args, msgflg) = SCARG(uap, a3);
+		return (msgget(p, &msgget_args, retval));
+
+	case 2:					/* msgsnd() */
+		SCARG(&msgsnd_args, msqid) = SCARG(uap, a2);
+		SCARG(&msgsnd_args, msgp) = (void *)SCARG(uap, a3);
+		SCARG(&msgsnd_args, msgsz) = SCARG(uap, a4);
+		SCARG(&msgsnd_args, msgflg) = SCARG(uap, a5);
+		return (msgget(p, &msgget_args, retval));
+
+	case 3:					/* msgrcv() */
+		SCARG(&msgsnd_args, msqid) = SCARG(uap, a2);
+		SCARG(&msgsnd_args, msgp) = (void *)SCARG(uap, a3);
+		SCARG(&msgsnd_args, msgsz) = SCARG(uap, a4);
+		SCARG(&msgsnd_args, msgtyp) = SCARG(uap, a5);
+		SCARG(&msgsnd_args, msgflg) = SCARG(uap, a6);
+		return (msgget(p, &msgget_args, retval));
+
+	default:
+		return (EINVAL);
+	}
+}
+#endif /* defined(COMPAT_10) && !defined(alpha) */

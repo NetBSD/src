@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.17 1994/08/19 11:25:31 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.18 1994/10/20 04:26:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -785,7 +785,7 @@ fdesc_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.67 1994/10/18 06:28:06 cgd Exp $	*/
+/*	$NetBSD: init_main.c,v 1.68 1994/10/20 04:22:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -62,6 +62,8 @@
 #include <sys/reboot.h>
 #include <sys/user.h>
 
+#include <sys/syscallargs.h>
+
 #include <ufs/ufs/quota.h>
 
 #include <machine/cpu.h>
@@ -105,7 +107,8 @@ main(framep)
 	register struct filedesc0 *fdp;
 	register struct pdevinit *pdev;
 	register int i;
-	int s, rval[2];
+	int s;
+	register_t rval[2];
 	extern int (*mountroot) __P((void));
 	extern struct pdevinit pdevinit[];
 	extern void roundrobin __P((void *));
@@ -334,8 +337,13 @@ start_init(p, framep)
 	void *framep;
 {
 	vm_offset_t addr;
-	struct execve_args args;
-	int options, i, retval[2], error;
+	struct execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char * *) argp;
+		syscallarg(char * *) envp;
+	} */ args;
+	int options, i, error;
+	register_t retval[2];
 	char flags[4], *flagsp;
 	char **pathp, *path, *ucp, **uap, *arg0, *arg1;
 
@@ -409,7 +417,7 @@ start_init(p, framep)
 		/*
 		 * Move out the arg pointers.
 		 */
-		uap = (char **)((int)ucp & ~(NBPW-1));
+		uap = (char **)(ALIGN(ucp) - sizeof(char **));
 		(void)suword((caddr_t)--uap, 0);	/* terminator */
 		if (options != 0)
 			(void)suword((caddr_t)--uap, (long)arg1);
@@ -418,9 +426,9 @@ start_init(p, framep)
 		/*
 		 * Point at the arguments.
 		 */
-		args.path = arg0;
-		args.argp = uap;
-		args.envp = NULL;
+		SCARG(&args, path) = arg0;
+		SCARG(&args, argp) = uap;
+		SCARG(&args, envp) = NULL;
 
 		/*
 		 * Now try to exec the program.  If can't for any reason
