@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.29 2003/10/18 03:03:20 itojun Exp $	*/
+/*	$NetBSD: fsort.c,v 1.30 2004/02/15 11:54:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.29 2003/10/18 03:03:20 itojun Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.30 2004/02/15 11:54:17 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 	struct field *ftbl;
 {
 	const u_char **keypos;
-	u_char *bufend, *tmpbuf;
+	u_char *bufend;
 	u_char *weights;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
 	int c, nelem, base;
@@ -231,12 +231,13 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 					 */
 					int nodata = (bufend >= (u_char *)crec
 					    && bufend <= crec->data);
+					size_t sz=0;
+					u_char *tmpbuf=NULL;
 
 					if (!nodata) {
-						tmpbuf = malloc(bufend -
-						    crec->data);
-						memmove(tmpbuf, crec->data,
-						    bufend - crec->data);
+						sz = bufend - crec->data;
+						tmpbuf = malloc(sz);
+						memmove(tmpbuf, crec->data, sz);
 					}
 
 					CHECKFSTACK(base + ntfiles);
@@ -249,8 +250,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 					mfct = 0;
 
 					if (!nodata) {
-						memmove(crec->data, tmpbuf,
-						    bufend - crec->data);
+						memmove(crec->data, tmpbuf, sz);
 						free(tmpbuf);
 					}
 				}
