@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.18 1996/03/31 22:52:38 pk Exp $
+#	$NetBSD: files.sparc,v 1.19 1996/04/04 22:57:55 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -55,8 +55,8 @@ device fdc {}
 attach fdc at mainbus, obio
 device fd: disk
 attach fd at fdc
-file	arch/sparc/dev/fd.c			fd needs-flag
-file	arch/sparc/sparc/bsd_fdintr.s		fd
+file	arch/sparc/dev/fd.c			fdc | fd needs-flag
+file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
 device iommu {}
 attach iommu at mainbus
