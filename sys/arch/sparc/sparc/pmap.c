@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1995/02/23 20:00:57 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.39 1995/03/10 16:54:40 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -598,6 +598,21 @@ pmap_page_index(pa)
 	}
 
 	return (idx + atop(pa - mp->addr));
+}
+
+int
+pmap_pa_exists(pa)
+	vm_offset_t pa;
+{
+	register int nmem;
+	register struct memarr *mp;
+
+	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
+		if (pa >= mp->addr && pa < mp->addr + mp->len)
+			return 1;
+	}
+
+	return 0;
 }
 #endif /* MACHINE_NONCONTIG */
 
@@ -1450,12 +1465,15 @@ pmap_bootstrap(nmmu, nctx)
 	vpage[1] = p, p += NBPG;
 	vmempage = p, p += NBPG;
 	p = reserve_dumppages(p);
+
+#ifdef MACHINE_NONCONTIG
 	/*
 	 * Allocate virtual memory for pv_table[], which will be mapped
 	 * sparsely in pmap_init().
 	 */
 	pv_table = (struct pvlist *)p;
 	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
+#endif
 
 	virtual_avail = (vm_offset_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -2430,6 +2448,7 @@ pmap_enter(pm, va, pa, prot, wired)
 
 	if (pm == NULL)
 		return;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter(%x, %x, %x, %x, %x)\n",
@@ -2444,6 +2463,10 @@ pmap_enter(pm, va, pa, prot, wired)
 	 * new mapping.
 	 */
 	if ((pteproto & PG_TYPE) == PG_OBMEM && managed(pa)) {
+#ifdef DIAGNOSTIC
+		if (!pmap_pa_exists(pa))
+			panic("pmap_enter: no such address: %x", pa);
+#endif
 		pteproto |= SWTOHW(atop(pa));
 		pv = pvhead(pa);
 	} else {
